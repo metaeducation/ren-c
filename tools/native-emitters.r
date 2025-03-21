@@ -88,7 +88,7 @@ export /extract-native-protos: func [
                 replace proto unspaced [newline "//"] newline
                 replace proto "//  " -{}-
 
-                keep make native-info! compose1 [
+                keep make native-info! compose [
                     proto: (proto)
                     name: (name)
                     exported: (quote exported)
@@ -321,7 +321,7 @@ export /extract-generic-implementations: func [
                     replace type* "_" "-"
                     replace type* "is-" void
 
-                    keep make generic-info! compose1 [
+                    keep make generic-info! compose [
                         name: (name)
                         type: (quote as word! type*)
                         proper-type: (proper-type)

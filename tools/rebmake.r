@@ -1096,9 +1096,9 @@ object-file-class: make object! [
             .output
             .source
 
-            :I compose1 [(maybe spread .includes) (maybe spread I)]
-            :D compose1 [(maybe spread .definitions) (maybe spread D)]
-            :F compose1 [(maybe spread F) (maybe spread .cflags)]
+            :I compose [(maybe spread .includes) (maybe spread I)]
+            :D compose [(maybe spread .definitions) (maybe spread D)]
+            :F compose [(maybe spread F) (maybe spread .cflags)]
                                                 ; ^-- reverses priority, why?
 
             ; "current setting overwrites :refinement"
@@ -1209,7 +1209,7 @@ generator-class: make object! [
                 apply any [
                     get $.gen-cmd-strip
                     get $target-platform/gen-cmd-strip
-                ] compose1 [
+                ] compose [
                     cmd
                 ]
             ]

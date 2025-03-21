@@ -169,7 +169,7 @@ bind construct [
                 let /d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
             )
-        ] compose:deep $() [
+        ] compose:deep [
             case [
                 on [d' #on]
                 off [d' #off]

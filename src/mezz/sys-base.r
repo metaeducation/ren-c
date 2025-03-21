@@ -59,7 +59,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
     quit* [action!]
     :console "Just integer, no argument acts like quit 0"  ; [1]
 ][
-    func compose:deep $() [
+    func compose:deep [
         ^result "If not :value, integer! exit code (non-zero is failure)"
             [any-atom? (if console [<end>])]  ; endability has pitfalls [2]
         :value "Return any value, non-raised are exit code 0"
@@ -86,7 +86,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
             if console [exit-code]  ; console gives code to shell, not to DO
             if exit-code = 0 [~]  ; suppresses display when given back to DO
         ] else [
-            raise make error! compose $() '[  ; give definitional error back
+            raise make error! compose [  ; give definitional error back
                 message: [
                     "Script returned non-zero exit code:" exit-code
                 ]

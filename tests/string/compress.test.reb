@@ -11,7 +11,7 @@
 ; will be STORE-d.  Assume %core-tests.r gets some net compression ratio.
 (
     str: "This is a test of a string that is long enough to use DEFLATE"
-    list: compose $() [
+    list: compose [
         %abc.txt (str) %test.r (read %../core-tests.r) %def.txt #{646566}
     ]
     zipped: unzipped: ~

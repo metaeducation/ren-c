@@ -21,7 +21,7 @@
 ; the components are not there, but the loss of a datatype (e.g. null vs. %"")
 ; may complicate the result when trying to join back.
 (
-    split-path-tests: compose:deep $() [
+    split-path-tests: compose:deep [
         %foo                            [_ %foo]
         %""                             [_ _]
         %/c/rebol/tools/test/test.r     [%/c/rebol/tools/test/ %test.r]

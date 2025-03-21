@@ -110,7 +110,7 @@ optimize: "s"
 ;
 ; https://webassembly.org/roadmap/
 ;
-extensions: to map! compose1 [
+extensions: to map! compose [
     Clipboard -
     Crypt -
     Console +
@@ -131,7 +131,7 @@ extensions: to map! compose1 [
 ]
 
 
-cflags: compose1 [
+cflags: compose [
     (spread switch abrupt-failure-model [
         #uses-try-catch [[
             "-DFAIL_USES_TRY_CATCH=1"
@@ -167,7 +167,7 @@ cflags: compose1 [
     ]])
 ]
 
-ldflags: compose1 [
+ldflags: compose [
     ; We no longer test any configurations with asm.js (wasm is supported by
     ; all browsers of interest now).  But you'd set this to 0 for that.
     ;

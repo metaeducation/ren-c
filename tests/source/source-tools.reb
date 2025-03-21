@@ -50,7 +50,7 @@ import %% (repo-dir)/tools/read-deep.reb
 ;
 
 /logfn: func [message][
-    message: compose (inside message '()) message
+    message: compose message
     new-line:all message 'no
     print mold message
 ]
@@ -119,7 +119,7 @@ whitelisted: [
     label [tag!]
     body [block!]
 ][
-    body: compose (inside body '()) body
+    body: compose body
     new-line:all body 'no
     append:line log spread (head of insert body label)
 ]

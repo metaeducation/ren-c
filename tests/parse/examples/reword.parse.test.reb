@@ -64,7 +64,7 @@ bind construct [
                 fail ["Invalid keyword type:" keyword]
             ]
 
-            keep:line compose $() [
+            keep:line compose [
                 (if match [integer! word!] keyword [
                     to-text keyword  ; `parse "a1" ['a '1]` illegal for now
                 ] else [

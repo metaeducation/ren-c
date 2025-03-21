@@ -71,5 +71,5 @@
             curtail spaced ["Date:" date]
         ]
     )
-    (void? curtail compose $() [benefit of no nulls! (find [a b c] 'd)])
+    (void? curtail compose [benefit of no nulls! (find [a b c] 'd)])
 ]

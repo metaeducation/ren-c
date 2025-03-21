@@ -33,7 +33,7 @@ import <parsing-tools.reb>
     text [text!]
     <local> position  ; no LET in parse :-/
 ][
-    let wsp: compose1 [some (charset -{ ^-}-)]
+    let wsp: compose [some (charset -{ ^-}-)]
 
     let dummy  ; :NEXT3 requires arg
     let rebol-value: parsing-at 'x [

@@ -143,7 +143,7 @@ bool Combinator_Details_Querier(
 //
 // The original usermode version of this was:
 //
-//     compose $() [
+//     compose [
 //         ; Get the text description if given
 //
 //         (if text? spec.1 [spec.1, elide spec: my next])

@@ -34,14 +34,14 @@
         ok
     )
     (all [
-        let e: sys.util/rescue [extend obj compose $() '[(setify $z) 300 c: 40]]
+        let e: sys.util/rescue [extend obj compose [(setify $z) 300 c: 40]]
         e.id = 'collectable-bound
         e.arg1 = 'z:
         z = 30
         obj = make object! [a: 10 b: 20]
     ])
     (all [
-        extend:prebound obj compose $() '[(setify $z) 300 c: 40]
+        extend:prebound obj compose [(setify $z) 300 c: 40]
         z = 300
         obj = make object! [a: 10 b: 20 c: 40]
     ])

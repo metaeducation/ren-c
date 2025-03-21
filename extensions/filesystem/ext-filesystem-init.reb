@@ -14,7 +14,7 @@ sys.util/make-scheme [
     /init: func [return: [~] port <local> path] [
         if url? port.spec.ref [
             parse3 port.spec.ref [thru #":" 0 2 slash path: <here>]
-            append port.spec spread compose $() '[path: (to file! path)]
+            append port.spec spread compose [path: (to file! path)]
         ]
     ]
 ]

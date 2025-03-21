@@ -13,7 +13,7 @@
 (
     /do-script-returning: lambda [value <local> script] [
         script: %tmp-inner.reb
-        save:header script compose $() [quit:value (value)] []
+        save:header script compose [quit:value (value)] []
         do script
         elide delete %tmp-inner.reb
     ]

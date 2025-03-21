@@ -49,6 +49,8 @@ lib
 delimit  ; built in %base-defs.r on JOIN TEXT!, but called by system
 print  ; used by PRINT* hack
 
+compose  ; core implementation is COMPOSE2, but some want the specialization
+
 ; When building PATH! and TUPLE! the system collapses 2-element sequences
 ; that are all BLANK! to these words.  Different meanings in bootstrap exe
 ; so just use strings.

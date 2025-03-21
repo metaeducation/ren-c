@@ -535,7 +535,7 @@ Bounce Stepper_Executor(Level* L)
     //=//// FRAME! ////////////////////////////////////////////////////////=//
     //
     // If a FRAME! makes it to the SWITCH statement, that means it is either
-    // literally a frame in the array (eval compose $() [(unrun :add) 1 2]) or
+    // literally a frame in the array (eval compose [(unrun :add) 1 2]) or
     // is being retriggered via REEVAL.
     //
     // Most FRAME! evaluations come from the antiform ("actions") triggered

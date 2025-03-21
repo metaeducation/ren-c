@@ -63,7 +63,7 @@ bind construct [
     open-include: charset -{"<}-
     close-include: charset -{">}-
 ][
-    let include-rule: compose1 [
+    let include-rule: compose [
         (if stdio [
             [open-include name: across "stdio.h" close-include |]
         ])

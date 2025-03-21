@@ -110,7 +110,7 @@ export /cscape: func [
                 )
                 suffix: across remove to newline
             ] (
-                keep compose1 [
+                keep compose [
                     (reify pattern) (col) (mode) (expr)
                     (reify prefix) (reify suffix)
                 ]
@@ -319,7 +319,7 @@ export /make-emitter: func [
 
     let is-js: did parse3:match stem [thru ".js" <end>]
 
-    let e: construct compose1 [
+    let e: construct compose [
         ;
         ; NOTE: %make-headers.r directly manipulates the buffer, because it
         ; wishes to merge #ifdef and #endif cases
@@ -412,7 +412,7 @@ export /make-emitter: func [
     ]
     else [
         e/emit unspaced ["REBOL" space]  ; no COMPOSE:DEEP in bootstrap shim
-        e/emit mold spread compose1 [
+        e/emit mold spread compose [
             System: "REBOL [R3] Language Interpreter and Run-time Environment"
             Title: (title)
             File: (stem)

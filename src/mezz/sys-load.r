@@ -152,7 +152,7 @@ bind construct [
     ]
 
     if find maybe hdr.options 'content [
-        append hdr spread compose $() '[content (data)]  ; as of start of header
+        append hdr spread compose [content (data)]  ; as of start of header
     ]
 
     if 10 = try rest.1 [rest: next rest, line: me + 1]  ; skip LF
@@ -547,7 +547,7 @@ bind construct [
 
     let original-script: system.script
 
-    system.script: make system.standard.script compose $() [
+    system.script: make system.standard.script compose [
         title: select maybe hdr 'title
         header: hdr
         parent: original-script

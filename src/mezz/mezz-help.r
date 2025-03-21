@@ -28,14 +28,14 @@ REBOL [
         let r-param: return of action
 
         if r-param and (r-param.spec or r-param.text) [
-            keep spread compose $() '[
+            keep spread compose [
                 return: (? r-param.spec)
                     (? r-param.text)
             ]
         ]
 
         for-each [key param] (parameters of action) [
-            keep spread compose $() '[
+            keep spread compose [
                 (decorate-parameter param key) (? param.spec)
                     (? param.text)
             ]

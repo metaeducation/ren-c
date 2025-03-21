@@ -122,7 +122,7 @@ bind construct [
 ][
     let autopipe: ~
 
-    let /action: func compose $() [
+    let /action: func compose [
         ; Get the text description if given
         (if text? spec.1 [spec.1, elide spec: my next])
 
@@ -136,7 +136,7 @@ bind construct [
                 pack [ensure text! spec.2, ensure block! spec.3]
                 elide spec: my skip 3
             ]
-            spread compose:deep $() [
+            spread compose:deep [
                 return: (maybe description)
                     [~[(types) any-series? [blank! block!]]~]
             ]
@@ -160,7 +160,7 @@ bind construct [
         ; Whatever arguments the combinator takes, if any
         ;
         (spread spec)
-    ] compose $() [
+    ] compose [
         ;
         ; !!! If we are "autopipe" then we need to make it so the parsers that
         ; we receive in will automatically bubble up their pending contents in
@@ -201,7 +201,7 @@ bind construct [
             ]
         ])
 
-        /return: lambda [^atom] compose:deep ${} [  ; can't use $(), composing!
+        /return: lambda [^atom] compose2:deep '{} [  ; already composing $()
             {unrun return/} pack [
                 unmeta atom except e -> [{unrun return/} raise e]
                 remainder
@@ -1690,7 +1690,7 @@ default-combinators: to map! reduce [
 
     elide let quasi-return-spec: [return: [~void~ ~[]~ element? splice!]]
 
-    quasiform! combinator compose $() [
+    quasiform! combinator compose [
         (spread quasi-return-spec)
         :pending [blank! block!]
         value [quasiform!]
@@ -2068,7 +2068,7 @@ default-combinators: to map! reduce [
 
     ; @ combinator is used for a different purpose [1]
 
-    the-word! combinator compose $() [
+    the-word! combinator compose [
         (spread quasi-return-spec)
         :pending [blank! block!]
         value [the-word!]
@@ -2082,7 +2082,7 @@ default-combinators: to map! reduce [
 
     ; THE-PATH! has no meaning at this time [3]
 
-    the-tuple! combinator compose $() [
+    the-tuple! combinator compose [
         (spread quasi-return-spec)
         :pending [blank! block!]
         value [the-tuple!]
@@ -2094,7 +2094,7 @@ default-combinators: to map! reduce [
         return [{~} remainder pending]: run comb state input lookup'
     ]
 
-    the-group! combinator compose $() [
+    the-group! combinator compose [
         (spread quasi-return-spec)
         :pending [blank! block!]
         value [the-group!]
@@ -2117,7 +2117,7 @@ default-combinators: to map! reduce [
         return unmeta result'
     ]
 
-    the-block! combinator compose $() [  ; match literal block is redundant [4]
+    the-block! combinator compose [  ; match literal block is redundant [4]
         (spread quasi-return-spec)
         :pending [blank! block!]
         value [the-block!]
@@ -2998,7 +2998,7 @@ comment [/combinatorize: func [
                 for-each 'key (words of gotten) [
                     let param: select gotten key
                     if not param.optional [
-                        keep spread compose $() '[
+                        keep spread compose [
                             (to word! unspaced ["param" n]) [action!]
                         ]
                         n: n + 1
@@ -3240,7 +3240,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
                     "break PARSE-THRU.  Review if this comes up."
                 ]
             ]
-            rules: compose $() [(rules) accept <here>]
+            rules: compose [(rules) accept <here>]
         ]
         try/  ; want to return NULL instead of raised error on mismatch
     ]
@@ -3299,7 +3299,7 @@ sys.util.parse: parse/  ; !!! expose UPARSE to SYS.UTIL module, hack...
     var "Variable to hold furthest position reached"
         [word! tuple!]
 ][
-    /hook: specialize parse-furthest-hook/ compose $() '[var: '(var)]
+    /hook: specialize parse-furthest-hook/ compose [var: '(var)]
     set var input
 ]
 

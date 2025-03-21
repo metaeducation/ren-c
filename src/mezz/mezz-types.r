@@ -43,7 +43,7 @@ use [word] [
         word: as word! head of remove back tail of unspaced ["to-" type]
         word: has lib word else [continue]
         if set? word [continue]  ; don't overwrite existing definition
-        set word redescribe compose $() '[
+        set word redescribe compose [
             (spaced ["Converts to" form type "value."])
         ](
             specialize to/ [type: get type]

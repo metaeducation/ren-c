@@ -187,7 +187,7 @@
         if valid-in-path [
             let ['pos path]: transcode:next unspaced ["a/" str "/b"]
             assert [pos = ""]
-            assert [path = compose $() 'a/(word)/b]
+            assert [path = compose $a/(word)/b]
         ] else [
             comment [  ; !!! Path scan with arrow words is buggy, scans tags
                 let e: trap [transcode:next unspaced ["a/" str "/b"]]

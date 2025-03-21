@@ -221,7 +221,7 @@ last: redescribe [
         ]
     ]
 
-    let line-start-rule: compose $() [
+    let line-start-rule: compose [
         remove (if indent '[opt [repeat (indent) rule]] else '[opt some rule])
     ]
 

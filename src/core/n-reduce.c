@@ -352,9 +352,9 @@ DECLARE_NATIVE(REDUCE_EACH)
 }}
 
 
-// 1. Here the idea is that `compose $() [@(first [a b])]` will give `[@a]`,
+// 1. Here the idea is that `compose [@(first [a b])]` will give `[@a]`,
 //    so ANY-GROUP? will count for a group pattern.  But once you go a level
-//    deeper, `compose $(()) [@(@(first [a b]))] won't match.  It would have
+//    deeper, `compose [@(@(first [a b]))] won't match.  It would have
 //    to be `[@((first [a b]))]`
 //
 bool Try_Match_For_Compose(
@@ -468,7 +468,7 @@ static void Push_Composer_Level(
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// 1. If you write something like `compose $() '(void)/3:`, it tried to leave
+// 1. If you write something like `compose @ (void)/3:`, it tried to leave
 //    behind something like the "SET-INTEGER!" of `3:`.
 //
 // 2. See Try_Pop_Sequence_Or_Element_Or_Nulled() for how reduced cases like
@@ -481,7 +481,7 @@ static void Push_Composer_Level(
 // 4. It is legal to COMPOSE:DEEP into lists that are antiforms or quoted
 //    (or potentially both).  So we transfer the QUOTE_BYTE.
 //
-//        >> compose:deep $() [a ''~[(1 + 2)]~ b]
+//        >> compose:deep [a ''~[(1 + 2)]~ b]
 //        == [a ''~[3]~ b]
 //
 static Option(Error*) Trap_Finalize_Composer_Level(
@@ -551,7 +551,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 //
 // 2. HEART byte is used as a GROUP! matches regardless of quoting, so:
 //
-//        >> compose $() [a ''(1 + 2) b]
+//        >> compose [a ''(1 + 2) b]
 //        == [a ''3 b]
 //
 // 3. Splicing semantics match the rules for APPEND etc.
@@ -565,7 +565,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 //               thing3
 //           ]
 //
-//        >> compose $() [thing1 (spread block-of-things)]  ; no newline flag
+//        >> compose [thing1 (spread block-of-things)]  ; no newline flag
 //        == [thing1
 //               thing2  ; we proxy the flag, but is this what you wanted?
 //               thing3
@@ -601,7 +601,7 @@ Bounce Composer_Executor(Level* const L)
 
     Level* level_ = main_level;  // level_ is L outside this scope
 
-    INCLUDE_PARAMS_OF_COMPOSE;
+    INCLUDE_PARAMS_OF_COMPOSE2;
 
     UNUSED(ARG(TEMPLATE));  // accounted for by Level feed
     deep = REF(DEEP);
@@ -657,14 +657,14 @@ Bounce Composer_Executor(Level* const L)
 
     if (not Try_Match_For_Compose(SPARE, at, pattern)) {
         if (deep or Any_Sequence_Type(heart)) {  // sequences same level
-            // compose:deep $() [does [(1 + 2)] nested] => [does [3] nested]
+            // compose:deep [does [(1 + 2)] nested] => [does [3] nested]
 
             Push_Composer_Level(OUT, main_level, at, L_binding);
             STATE = ST_COMPOSER_RECURSING_DEEP;
             return CONTINUE_SUBLEVEL(SUBLEVEL);
         }
 
-        // compose $() [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
+        // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
         //
         Copy_Cell(PUSH(), at);  // keep newline flag
         goto handle_next_item;
@@ -699,7 +699,7 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Void(OUT)) {
         if (Any_Plain_Type(list_heart) and list_quote_byte == NOQUOTE_1) {
             L->u.compose.changed = true;
-            goto handle_next_item;  // compose $() [(void)] => []
+            goto handle_next_item;  // compose [(void)] => []
         }
 
         // We can actually handle e.g. [''(void)] now as being some levels of
@@ -744,7 +744,7 @@ Bounce Composer_Executor(Level* const L)
 
   push_out_spliced:  /////////////////////////////////////////////////////////
 
-    // compose $() [(spread [a b]) merges] => [a b merges]... [3]
+    // compose [(spread [a b]) merges] => [a b merges]... [3]
 
     if (list_quote_byte != NOQUOTE_1 or not Any_Plain_Type(list_heart))
         return RAISE("Currently can only splice plain unquoted ANY-LIST?s");
@@ -802,7 +802,7 @@ Bounce Composer_Executor(Level* const L)
         return FAIL(unwrap e);
 
     if (Is_Nulled(OUT)) {
-        // compose:deep $() [a (void)/(void) b] => path makes null, vaporize it
+        // compose:deep [a (void)/(void) b] => path makes null, vaporize it
     }
     else {
         assert(not Is_Antiform(OUT));
@@ -824,7 +824,7 @@ Bounce Composer_Executor(Level* const L)
 
 
 //
-//  /compose: native [
+//  /compose2: native [
 //
 //  "Evaluates only contents of GROUP!-delimited expressions in the argument"
 //
@@ -835,7 +835,7 @@ Bounce Composer_Executor(Level* const L)
 //          any-string?
 //          ~null~ quasi-word? blank! trash?  ; :CONFLATE can produce these
 //      ]
-//      pattern "Supplies the pattern as well as the binding for composing"
+//      pattern "Use ANY-THE-LIST-TYPE? (e.g. @{{}}) to use pattern's binding"
 //          [any-list?]
 //      template "The template to fill in (no-op if WORD!)"
 //          [<maybe> any-list? any-sequence? any-word? any-string?]
@@ -851,12 +851,12 @@ Bounce Composer_Executor(Level* const L)
 //  ; Note: :ONLY is intentionally no longer supported
 //  https://forum.rebol.info/t/the-superpowers-of-ren-cs-revamped-compose/979/7
 //
-DECLARE_NATIVE(COMPOSE)
+DECLARE_NATIVE(COMPOSE2)
 {
-    INCLUDE_PARAMS_OF_COMPOSE;
+    INCLUDE_PARAMS_OF_COMPOSE2;
 
     Element* pattern = Element_ARG(PATTERN);
-    Element* t = Element_ARG(TEMPLATE);
+    Element* input = Element_ARG(TEMPLATE);  // template is C++ keyword
 
     USED(ARG(PREDICATE));  // used by Composer_Executor() via main_level
     USED(ARG(DEEP));
@@ -870,13 +870,24 @@ DECLARE_NATIVE(COMPOSE)
 
     switch (STATE) {
       case ST_COMPOSE_INITIAL_ENTRY: {
-        if (Any_Word(t))
-            return COPY(t);  // makes it easier to `set compose target`
+        if (Any_Word(input))
+            return COPY(input);  // makes it easier to `set compose target`
 
-        if (Any_String(t))
+        if (Any_The_Value(pattern)) {  // @() means use pattern's binding
+            if (Cell_Binding(pattern) == nullptr)
+                return FAIL("@... patterns must have bindings");
+            HEART_BYTE(pattern) = Plainify_Any_The_Heart(Cell_Heart(pattern));
+        }
+        else if (Any_Plain_Value(pattern)) {
+            Tweak_Cell_Binding(pattern, Cell_List_Binding(input));
+        }
+        else
+            return FAIL("COMPOSE2 takes plain and @... list patterns only");
+
+        if (Any_String(input))
             goto string_initial_entry;
 
-        assert(Any_List(t) or Any_Sequence(t));
+        assert(Any_List(input) or Any_Sequence(input));
         goto list_initial_entry; }
 
       case ST_COMPOSE_COMPOSING_LIST:
@@ -893,7 +904,7 @@ DECLARE_NATIVE(COMPOSE)
 
   list_initial_entry: {  /////////////////////////////////////////////////////
 
-    Push_Composer_Level(OUT, level_, t, Cell_List_Binding(t));
+    Push_Composer_Level(OUT, level_, input, Cell_List_Binding(input));
 
     STATE = ST_COMPOSE_COMPOSING_LIST;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
@@ -903,7 +914,7 @@ DECLARE_NATIVE(COMPOSE)
     if (not Is_Raised(OUT)) {  // sublevel was killed
         assert(Is_Trash(OUT));
         Option(Error*) e = Trap_Finalize_Composer_Level(
-            OUT, SUBLEVEL, t, REF(CONFLATE)
+            OUT, SUBLEVEL, input, REF(CONFLATE)
         );
         if (e)
             return FAIL(unwrap e);
@@ -914,10 +925,10 @@ DECLARE_NATIVE(COMPOSE)
 
 } string_initial_entry: {  ///////////////////////////////////////////////////
 
-    if (not (Is_Group(pattern) and Cell_Series_Len_At(pattern) == 0))
-        return FAIL("Preliminary string compose only works with $()");
+    if (not (Is_The_Group(pattern) and Cell_Series_Len_At(pattern) == 0))
+        return FAIL("Preliminary string compose only works with @()");
 
-    Utf8(const*) head = Cell_Utf8_At(t);
+    Utf8(const*) head = Cell_Utf8_At(input);
     Utf8(const*) at = head;
 
     Codepoint c;
@@ -930,7 +941,7 @@ DECLARE_NATIVE(COMPOSE)
         next = Utf8_Next(&c, at);
     }
 
-    return rebValue(CANON(COPY), t);  // didn't find anything to substitute.
+    return rebValue(CANON(COPY), input);  // didn't find anything to substitute
 
   found_first_string_pattern: { ///////////////////////////////////////////////
 
@@ -967,7 +978,7 @@ DECLARE_NATIVE(COMPOSE)
 
     TranscodeState* ss = Cell_Handle_Pointer(TranscodeState, SCRATCH);
 
-    Utf8(const*) head = Cell_Utf8_At(t);
+    Utf8(const*) head = Cell_Utf8_At(input);
     Offset end_offset = ss->at - head;
     Init_Integer(PUSH(), end_offset);
 
@@ -1048,7 +1059,7 @@ DECLARE_NATIVE(COMPOSE)
     Offset at_offset = 0;
 
     Size size;
-    Utf8(const*) head = Cell_Utf8_Size_At(&size, t);
+    Utf8(const*) head = Cell_Utf8_Size_At(&size, input);
 
     for (; index < TOP_INDEX; index += 3) {
         Offset start_offset = VAL_INT32(Data_Stack_At(Element, index - 1));
@@ -1101,10 +1112,11 @@ DECLARE_NATIVE(PRINT_P)
 {
     INCLUDE_PARAMS_OF_PRINT_P;
 
-    Init_Group(SPARE, EMPTY_ARRAY);
-    Tweak_Cell_Binding(SPARE, Level_Binding(level_));
+    Element* pattern = Init_Any_List(SPARE, TYPE_THE_GROUP, EMPTY_ARRAY);
+    Tweak_Cell_Binding(pattern, Level_Binding(level_));
 
-    return rebDelegate(CANON(PRINT), CANON(COMPOSE), rebQ(SPARE), ARG(LINE));
+    Quotify(pattern);
+    return rebDelegate(CANON(PRINT), CANON(COMPOSE2), pattern, ARG(LINE));
 }
 
 

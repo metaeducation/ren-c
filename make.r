@@ -315,7 +315,7 @@ rebmake/set-target-platform platform-config.os-base
         ]
         'c++98 'c++0x 'c++11 'c++14 'c++17 'c++20 'c++latest [
             cfg-cplusplus: cplusplus: 'yes
-            compose1 [
+            compose [
                 ; Compile C files as C++.
                 ;
                 ; !!! Original code appeared to make it so that if a Visual
@@ -391,7 +391,7 @@ rebmake/set-target-platform platform-config.os-base
     ;
     append flags spread switch rigorous [
         'yes [
-            compose1 [
+            compose [
                 <gnu:-Werror> <msc:/WX>  ; convert warnings to errors
 
                 ; If you use pedantic in a C build on an older GNU compiler,
@@ -738,7 +738,7 @@ rebmake/set-target-platform platform-config.os-base
     ; With the flags and settings ready, make a rebmake object and ask it
     ; to build the requested object file.
     ;
-    return make rebmake.object-file-class compose1 [
+    return make rebmake.object-file-class compose [
         assert [any [file? s path? s tuple? s word? s]]
             ; ^-- e.g. TUPLE! like `foo.o`
 
@@ -832,7 +832,7 @@ extensions: copy []
     ; be precarious in bootstrap.  Instead, the bootstrap-shim puts its versions
     ; of COMPOSE and PARSE into the lib context.
     ;
-    let ext: make extension-class compose1 [
+    let ext: make extension-class compose [
         comment [import (join (clean-path repo-dir) %tools/bootstrap-shim.r)]
         (spread spec)
     ]
@@ -869,7 +869,7 @@ use [extension-dir entry][
             ; !!! The specs use `repo-dir` and some other variables.
             ; Splice those in for starters, but will need deep thought.
             ;
-            insert spec spread compose1 [
+            insert spec spread compose [
                 repo-dir: (repo-dir)
                 platform-config: (platform-config)
                 user-config: (user-config)
@@ -1348,7 +1348,7 @@ cfg-pre-vista: 'no
 append app-config.definitions spread switch user-config.pre-vista [
     'yes [
         cfg-pre-vista: 'yes
-        compose1 [
+        compose [
             "PRE_VISTA"
         ]
     ]
@@ -1366,7 +1366,7 @@ append app-config.ldflags spread switch user-config.static [
         []  ; empty for spread
     ]
     'yes [
-        compose1 [
+        compose [
             <gnu:-static-libgcc>
             (if yes? cfg-cplusplus [<gnu:-static-libstdc++>])
             (if on? cfg-sanitize [<gnu:-static-libasan>])
@@ -1805,7 +1805,7 @@ for-each 'ext extensions [
     add-project-flags // [
         ext-objlib
         :I app-config.includes
-        :D compose1 [
+        :D compose [
             (
                 either ext.mode = <builtin> [
                     "REB_API"
@@ -1845,7 +1845,7 @@ for-each 'ext extensions [
             name: join either platform-config.os-base = 'windows ["r3-"]["libr3-"]
                 lowercase to text! ext.name
             output: to file! name
-            depends: compose1 [
+            depends: compose [
                 (ext-objlib)  ; !!! Pulls in in all of extensions deps?
                 ;
                 ; (app) all dynamic extensions depend on r3, but app not ready
@@ -1863,7 +1863,7 @@ for-each 'ext extensions [
                 ]
             ]
 
-            ldflags: compose1 [
+            ldflags: compose [
                 (maybe spread ext.ldflags)
                 (maybe spread app-config.ldflags)
 
@@ -2018,7 +2018,7 @@ prep: make rebmake.entry-class [
 app: make rebmake.application-class [
     name: 'r3-exe
     output: %r3  ; no suffix
-    depends: compose1 [
+    depends: compose [
         (libr3-core)
         (spread builtin-ext-objlibs)
         (spread app-config.libraries)
@@ -2053,7 +2053,7 @@ for-each 'proj dynamic-libs [
 library: make rebmake.dynamic-library-class [
     name: 'libr3
     output: %libr3  ; no suffix
-    depends: compose1 [
+    depends: compose [
         (libr3-core)
         (spread builtin-ext-objlibs)
         (spread app-config.libraries)
@@ -2084,7 +2084,7 @@ t-folders: make rebmake.entry-class [
     ; Sort it so that the parent folder gets created first
     ;
     commands: map-each 'dir sort folders [
-        make rebmake.cmd-create-class compose1 [
+        make rebmake.cmd-create-class compose [
             file: (dir)
         ]
     ]

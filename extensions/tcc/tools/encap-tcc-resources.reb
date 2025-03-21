@@ -112,7 +112,7 @@ change-dir config-tccdir
 ;
 ; http://lists.nongnu.org/archive/html/tinycc-devel/2018-12/msg00011.html
 ;
-encap: compose1 [
+encap: compose [
     ;
     ; !!! Is it worth it to put %rebol.h in a `rebol` subdirectory?
     ;
@@ -135,7 +135,7 @@ encap: compose1 [
     ; The Windows directory contains some other junk, like examples.
     ;
     (if platform-config.os-base = 'Windows [
-        compose1 [
+        compose [
             ; typically %(...)/win32/include
             %win32/include/  ; `(config-tccdir)/include/` see CHANGE_DIR above
             %win32/lib/  ; `(config-tccdir)/lib/` see CHANGE-DIR above

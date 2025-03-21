@@ -242,7 +242,7 @@ bind construct [
                 fail ["Invalid keyword type:" keyword]
             ]
 
-            keep spread compose:deep $(<*>) [
+            keep spread compose2:deep '(<*>) [
                 (<*> if match [integer! word!] keyword [
                     to-text keyword  ; `parse "a1" ['a '1]` illegal for now
                 ] else [
@@ -587,7 +587,7 @@ bind construct [
     ] else [
         assert [quoted? dlm]
         let mk1
-        compose:deep $(<*>) [
+        compose2:deep '(<*>) [
             some [not <end> [
                 mk1: across [to (<*> dlm) | to <end>]
                 (keep mk1)

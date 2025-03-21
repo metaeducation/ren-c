@@ -51,7 +51,7 @@ compilables: [
     call-librebol
 ]
 
-opts: compose $() '[
+opts: compose [
     ; This can be specified with LIBREBOL_INCLUDE_DIR as an environment
     ; variable, but you can also do it here for convenience.
     ;
@@ -61,7 +61,7 @@ opts: compose $() '[
     ; but you can also do it here for convenience.  Lack of a trailing
     ; slash is tolerated as that is CONFIG_TCCDIR convention in TCC.
     ;
-    (if CONFIG_TCCDIR [spread compose $() '[
+    (if CONFIG_TCCDIR [spread compose [
         runtime-path (CONFIG_TCCDIR)  ; e.g. %/home/hostilefork/Projects/tcc
     ]])
 ]

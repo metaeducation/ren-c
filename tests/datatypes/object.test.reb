@@ -71,13 +71,13 @@
 (
     o: make object! []
     c: "c"
-    extend o compose $() [b: "b" b: (c)]
+    extend o compose [b: "b" b: (c)]
     same? c o.b
 )
 (
     o: make object! [b: "a"]
     c: "c"
-    extend o compose $() [b: "b" b: (c)]
+    extend o compose [b: "b" b: (c)]
     same? c o.b
 )
 
@@ -145,7 +145,7 @@
             ; ...
             ; var-256: 256
             ;
-            keep spread compose $() '[
+            keep spread compose [
                 (join 'var- [n]): (n)
             ]
         ]
@@ -156,11 +156,11 @@
             ; ...
             ; /fun-256: method [] [.var-1 + .var-2 ... + .var-256]
             ;
-            keep spread compose $() '[
+            keep spread compose [
                 /(join 'meth- [n]): method [] (collect [
                     keep 'return
                     count-up 'i n [
-                        keep spread compose $() '[
+                        keep spread compose [
                             .(join 'var- [i]) (if i <> n ['+])
                         ]
                     ]

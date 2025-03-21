@@ -6,7 +6,7 @@ includes: [
     %prep/extensions/stdio
 ]
 
-depends: compose1 [
+depends: compose [
     %stdio/p-stdio.c
 
     (switch platform-config.os-base [

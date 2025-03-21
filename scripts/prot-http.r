@@ -62,7 +62,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
     "Make an error for the HTTP protocol"
     message [text! block!]
 ][
-    make error! compose $() '[
+    make error! compose [
         type: 'Access
         id: 'Protocol
         arg1: (unspaced message)  ; ERROR! has a `message` field, must COMPOSE
@@ -698,7 +698,7 @@ sys.util/make-scheme [
                 connection: ~
                 info: make port.scheme.info [type: 'file]
             ]
-            port.state.connection: conn: make port! compose $() [
+            port.state.connection: conn: make port! compose [
                 scheme: (
                     either port.spec.scheme = 'http [the 'tcp][the 'tls]
                 )

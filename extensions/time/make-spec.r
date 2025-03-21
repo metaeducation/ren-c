@@ -6,7 +6,7 @@ includes: [
     %prep/extensions/time
 ]
 
-depends: compose1 [
+depends: compose [
     (switch platform-config.os-base [
         'Windows [
             spread [

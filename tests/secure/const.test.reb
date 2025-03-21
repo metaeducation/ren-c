@@ -75,24 +75,24 @@
 
     ~const-value~ !! (
         block: []
-        eval compose:deep $() [repeat 2 [append (block) <illegal>]]
+        eval compose:deep [repeat 2 [append (block) <illegal>]]
     )
 
     ~const-value~ !! (  ; CELL_FLAG_EXPLICITLY_MUTABLE killed off
         block: mutable []
-        eval compose:deep $() [repeat 2 [append (block) <legal>]]
+        eval compose:deep [repeat 2 [append (block) <legal>]]
         block = [<legal> <legal>]
     )
 
     (  ; quotes can work around it
         block: []
-        eval compose:deep $() [repeat 2 [append '(block) <legal>]]
+        eval compose:deep [repeat 2 [append '(block) <legal>]]
         block = [<legal> <legal>]
     )
 
     (  ; mutable after the compose can work around it
         block: []
-        eval compose:deep $() [repeat 2 [append mutable (block) <legal>]]
+        eval compose:deep [repeat 2 [append mutable (block) <legal>]]
         block = [<legal> <legal>]
     )
 ]
@@ -122,7 +122,7 @@
 )(
     sub: ~
     repeat 1 [sub: copy:deep [b [c]]]
-    data: copy compose $() [a (sub)]
+    data: copy compose [a (sub)]
     append data <success>
     append data.2 <success>
     append data.2.2 <success>

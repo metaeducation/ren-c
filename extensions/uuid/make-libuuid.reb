@@ -142,7 +142,7 @@ comment-out-includes: [
     return text
 ]
 
-files: compose1 [
+files: compose [
     %include/nls.h              _
     %include/randutils.h        _
     %lib/randutils.c            (unrun fix-randutils-c/)

@@ -13,7 +13,7 @@
 (
     stuff: []
     /log: func [x] [
-        if block? x [x: compose (inside x '()) x]
+        if block? x [x: compose x]
         append stuff x
     ]
 

@@ -592,11 +592,7 @@ get-path!: func3 [] [
     specialize 'else [branch: [copy []]]
 ]
 
-; COMPOSE1 is a single-arity compose, which uses a GROUP! with the same binding
-; as the list passed for the pattern.  This is distinct from COMPOSE3 which is
-; the historical compose that splices blocks.
-;
-/compose1: func3 [block [block!] /deep <local> result pos product count] [
+/compose: func3 [block [block!] /deep <local> result pos product count] [
     if deep [
         fail:blame "COMPOSE bootstrap shim doesn't recurse, yet" $block
     ]

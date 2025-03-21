@@ -239,12 +239,11 @@ bind construct [
                 insert instruction item
             ]
             text! [
-                append:line instruction spread compose $() '[comment (item)]
+                append:line instruction spread compose [comment (item)]
             ]
             block! [
                 if not empty? instruction [append:line instruction ',]
-                let pattern: inside item '(<*>)
-                append:line instruction spread compose:deep pattern item
+                append:line instruction spread compose2:deep '(<*>) item
             ]
             fail ~<unreachable>~
         ]

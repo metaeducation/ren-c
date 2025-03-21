@@ -267,7 +267,7 @@ bind construct [
             fail:blame make error! [
                 type: 'Script
                 id: 'assertion-failure
-                arg1: compose $() '[(:left) is (:right)]
+                arg1: compose [(:left) is (:right)]
             ] $return
         ]
         :left  ; choose left in case binding or case matters somehow

@@ -191,7 +191,7 @@
 ; COMPOSE test
 (
     /g: generator [
-        yield compose:deep $() [
+        yield compose:deep [
             So (yield "How") [(yield "About")] (yield "This") ?
         ]
     ]
@@ -266,7 +266,7 @@
 ;
 ;    (
 ;        /g: generator [yield (get-obj elide yield <foo>).(yield 'sub).f/]
-;        (compose $() [<foo> sub (twenty/) _ _]) == reduce [g g g try g try g]
+;        (compose [<foo> sub (twenty/) _ _]) == reduce [g g g try g try g]
 ;    )
 ;
 ;    (

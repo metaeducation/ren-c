@@ -53,8 +53,8 @@
 ]
 
 [#1457
-    (#a == parse "a" compose $() [thru (charset "a")])
-    ~parse-mismatch~ !! (parse "a" compose $() [thru (charset "a") <next>])
+    (#a == parse "a" compose [thru (charset "a")])
+    ~parse-mismatch~ !! (parse "a" compose [thru (charset "a") <next>])
 ]
 
 [#2141 (

@@ -59,7 +59,7 @@
 ; 1. The implementation of shuffling with non-ASCII codepoints is done very
 ;    slowly for now.  But a correct implementation is better than none at all.
 (
-    for-each 'series compose $(<*>) [
+    for-each 'series compose2 '(<*>) [
         #{}
         #{DECAFBAD}
         #{DECAFBAD02}
@@ -124,7 +124,7 @@
 )
 
 (
-    for-each 'series compose $(<*>) [
+    for-each 'series compose [
         #{}
         #{DECAFBAD}
         ""

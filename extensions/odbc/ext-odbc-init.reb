@@ -254,7 +254,7 @@ sys.util/make-scheme [
     ; !!! This INSERT takes a BLOCK!, not spread--this all ties into questions
     ; about the wisdom of reusing these verbs the way R3-Alpha did.
     ;
-    return insert statement compose $() '[(query) (spread parameters)]
+    return insert statement compose [(query) (spread parameters)]
 ]
 
 export [odbc-execute]

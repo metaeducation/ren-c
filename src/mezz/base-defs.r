@@ -57,6 +57,8 @@ lib: system.contexts.lib  ; alias for faster access
 
 /??: probe/  ; shorthand for debug sessions, not to be committed
 
+compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
+
 ; Pre-decaying specializations for THEN?, ELSE?, THEN, ELSE, ALSO
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
@@ -220,15 +222,6 @@ each: quote/
         quote:depth get:any $result num-quotes
     ] else [null])
 ]
-
-; COMPOSE1 is the classic compose (may be renamed to COMPOSE*), which assumes
-; you want to compose groups..and that the binding you want to use for the
-; group is the binding of the passed-in list.
-;
-compose1: specialize (adapt compose/ [
-    pattern: inside template pattern
-]) [pattern: just ()]
-
 
 ; https://forum.rebol.info/t/for-lightweight-lambda-arrow-functions/2172
 ;

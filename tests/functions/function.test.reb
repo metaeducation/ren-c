@@ -287,7 +287,7 @@
 
         /test: lambda [expr [block!]] [
             got: '~junk~
-            compose $() [(eval expr), (:got)]
+            compose [(eval expr), (:got)]
         ]
         ok
     )
@@ -331,13 +331,13 @@
 ~expect-arg~ !! (
     /f: func [code value] [return either blank? code [$value] [eval code]]
     f-value: f blank blank
-    f compose $() [2 * (f-value)] 21  ; re-entering same function
+    f compose [2 * (f-value)] 21  ; re-entering same function
 )
 ~expect-arg~ !! (
     /f: func [code value] [return either blank? code [$value] [eval code]]
     /g: func [code value] [return either blank? code [$value] [eval code]]
     f-value: f blank blank
-    g compose $() [2 * (f-value)] 21  ; re-entering different function
+    g compose [2 * (f-value)] 21  ; re-entering different function
 )
 
 [#19

@@ -11,7 +11,7 @@
         body [block!]
         <local> context
     ][
-        [vars context]: wrap:set compose (inside vars '()) vars
+        [vars context]: wrap:set compose vars
         body: overbind context body
         return while [(not empty? maybe blk1) or (not empty? maybe blk2)] [
             (vars): pack [(try first maybe blk1) (try first maybe blk2)]
