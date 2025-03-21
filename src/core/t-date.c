@@ -1067,32 +1067,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
           case SYM_ODD_Q:
             return Init_Logic(OUT, (day & 1) == 0);
 
-          case SYM_DIFFERENCE: {
-            INCLUDE_PARAMS_OF_DIFFERENCE;
-
-            Value* val1 = ARG(VALUE1);
-            Value* val2 = ARG(VALUE2);
-
-            if (Bool_ARG(CASE))
-                return FAIL(Error_Bad_Refines_Raw());
-
-            if (Bool_ARG(SKIP))
-                return FAIL(Error_Bad_Refines_Raw());
-
-            // !!! Plain SUBTRACT on dates has historically given INTEGER! of
-            // days, while DIFFERENCE has given back a TIME!.  This is not
-            // consistent with the "symmetric difference" that all other
-            // applications of difference are for.  Review.
-            //
-            // https://forum.rebol.info/t/486
-            //
-            if (not Is_Date(val2))
-                return FAIL(
-                    Error_Unexpected_Type(Type_Of(val1), Type_Of(val2))
-                );
-
-            return Time_Between_Dates(OUT, val1, val2); }
-
           default:
             break;
         }
@@ -1198,6 +1172,35 @@ IMPLEMENT_GENERIC(RANDOM, Is_Date)
     if (rand_nano == NO_DATE_TIME)
         VAL_ZONE(OUT) = NO_DATE_ZONE;
     return OUT;
+}
+
+
+// !!! Plain SUBTRACT on dates has historically given INTEGER! of days, while
+// DIFFERENCE has given back a TIME!.  This is not consistent with the
+// "symmetric difference" that all other applications of difference are for.
+// Review.
+//
+// https://forum.rebol.info/t/486
+//
+IMPLEMENT_GENERIC(DIFFERENCE, Is_Date)
+{
+    INCLUDE_PARAMS_OF_DIFFERENCE;
+
+    Value* val1 = ARG(VALUE1);
+    Value* val2 = ARG(VALUE2);
+
+    if (Bool_ARG(CASE))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    if (Bool_ARG(SKIP))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    if (not Is_Date(val2))
+        return FAIL(
+            Error_Unexpected_Type(Type_Of(val1), Type_Of(val2))
+        );
+
+    return Time_Between_Dates(OUT, val1, val2);
 }
 
 

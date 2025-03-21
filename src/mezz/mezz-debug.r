@@ -80,7 +80,7 @@ REBOL [
     block [block!]
 ][
     let timer: unrun get $lib/now:precise  ; Note: NOW comes from an Extension
-    results: reduce reduce [  ; resolve word lookups first, run fetched items
+    let results: reduce reduce [  ; resolve word lookups first, run fetched
         timer
         (unrun elide/) (unrun eval/) block
         timer
