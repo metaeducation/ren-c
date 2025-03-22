@@ -434,7 +434,7 @@ DECLARE_NATIVE(RANDOM_PICK)
     if (Try_Dispatch_Generic(&bounce, RANDOM_PICK, collection, LEVEL))
         return bounce;
 
-    Heart heart = Cell_Heart_Ensure_Noquote(collection);
+    Heart heart = Heart_Of_Fundamental(collection);
     if (
         not Handles_Generic(LENGTH_OF, heart)
         or not Handles_Generic(PICK, heart)
@@ -490,7 +490,7 @@ DECLARE_NATIVE(SHUFFLE_OF)
     if (Try_Dispatch_Generic(&bounce, SHUFFLE_OF, elem, LEVEL))
         return bounce;
 
-    Heart heart = Cell_Heart_Ensure_Noquote(elem);
+    Heart heart = Heart_Of_Fundamental(elem);
     if (
         not Handles_Generic(SHUFFLE, heart)
         or not Handles_Generic(COPY, heart)

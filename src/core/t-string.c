@@ -1027,7 +1027,7 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 
     return Init_Any_String(
         OUT,
-        Cell_Heart_Ensure_Noquote(any_string),
+        Heart_Of_Fundamental(any_string),
         Copy_String_At_Limit(any_string, &len)
     );
 }
@@ -1097,7 +1097,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     if (Bool_ARG(PART)) {
         len = Part_Len_May_Modify_Index(v, ARG(PART));
         if (len == 0) {
-            Heart heart = Cell_Heart_Ensure_Noquote(v);
+            Heart heart = Heart_Of_Fundamental(v);
             return Init_Any_String(OUT, heart, Make_String(0));
         }
     } else
@@ -1119,14 +1119,14 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     if (VAL_INDEX(v) >= tail) {
         if (not Bool_ARG(PART))
             return RAISE(Error_Nothing_To_Take_Raw());
-        Heart heart = Cell_Heart_Ensure_Noquote(v);
+        Heart heart = Heart_Of_Fundamental(v);
         return Init_Any_String(OUT, heart, Make_String(0));
     }
 
     // if no :PART, just return value, else return string
     //
     if (Bool_ARG(PART)) {
-        Heart heart = Cell_Heart_Ensure_Noquote(v);
+        Heart heart = Heart_Of_Fundamental(v);
         Init_Any_String(OUT, heart, Copy_String_At_Limit(v, &len));
     }
     else

@@ -798,7 +798,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     Element* blob = Element_ARG(SERIES);
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
-    Heart heart = Cell_Heart_Ensure_Noquote(blob);
+    Heart heart = Heart_Of_Fundamental(blob);
 
     if (Bool_ARG(DEEP))
         return FAIL(Error_Bad_Refines_Raw());

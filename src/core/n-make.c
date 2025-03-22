@@ -153,7 +153,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     assert(to_or_as != TYPE_0);
 
     Element* input = cast(Element*, Level_Spare(L));
-    Heart from = Cell_Heart_Ensure_Noquote(input);
+    Heart from = Heart_Of_Fundamental(input);
 
     Atom* reverse = Level_Scratch(L);
 

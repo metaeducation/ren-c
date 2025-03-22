@@ -198,7 +198,7 @@ DECLARE_NATIVE(REDUCE)
     if (Get_Source_Flag(Cell_Array(v), NEWLINE_AT_TAIL))
         Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
-    Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(v), a);
+    Init_Any_List(OUT, Heart_Of_Fundamental(v), a);
     Tweak_Cell_Binding(OUT, Cell_Binding(v));
     return OUT;
 }}

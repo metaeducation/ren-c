@@ -938,7 +938,7 @@ static Element* Copy_Any_Context(
 
     return Init_Context_Cell(
         out,
-        Cell_Heart_Ensure_Noquote(context),
+        Heart_Of_Fundamental(context),
         Copy_Varlist_Extra_Managed(Cell_Varlist(context), 0, deep)
     );
 }

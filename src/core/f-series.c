@@ -306,7 +306,7 @@ IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
 {
     INCLUDE_PARAMS_OF_UNIQUE;
 
-    Heart heart = Cell_Heart_Ensure_Noquote(ARG(SERIES));
+    Heart heart = Heart_Of_Fundamental(ARG(SERIES));
 
     Flex* flex = Make_Set_Operation_Flex(
         ARG(SERIES),
@@ -330,7 +330,7 @@ Option(Error*) Trap_Resolve_Dual_Hearts(
     Value* value2
 ){
     UNUSED(value2);
-    *heart = Cell_Heart_Ensure_Noquote(value1);
+    *heart = Heart_Of_Fundamental(value1);
     return nullptr;
 }
 

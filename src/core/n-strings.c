@@ -242,7 +242,7 @@ DECLARE_NATIVE(JOIN)
     if (Is_Type_Block(base))
         result_heart = Cell_Datatype_Heart(base);
     else
-        result_heart = Cell_Heart_Ensure_Noquote(base);
+        result_heart = Heart_Of_Fundamental(base);
 
     if (Any_Utf8_Type(result_heart) or result_heart == TYPE_BLOB)
         goto start_mold_join;
@@ -528,7 +528,7 @@ DECLARE_NATIVE(JOIN)
     if (Is_Type_Block(base))
         heart = Cell_Datatype_Heart(base);
     else
-        heart = Cell_Heart_Ensure_Noquote(base);
+        heart = Heart_Of_Fundamental(base);
 
     if (heart == TYPE_BLOB)
         goto finish_blob_join;
@@ -714,7 +714,7 @@ DECLARE_NATIVE(JOIN)
     if (Is_Type_Block(base))
         heart = Cell_Datatype_Heart(base);
     else
-        heart = Cell_Heart_Ensure_Noquote(base);
+        heart = Heart_Of_Fundamental(base);
 
     if (Any_Sequence_Type(heart)) {
         Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
@@ -883,7 +883,7 @@ DECLARE_NATIVE(ENHEX)
 
     return Init_Any_String(
         OUT,
-        Cell_Heart_Ensure_Noquote(ARG(STRING)),
+        Heart_Of_Fundamental(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -996,7 +996,7 @@ DECLARE_NATIVE(DEHEX)
 
     return Init_Any_String(
         OUT,
-        Cell_Heart_Ensure_Noquote(ARG(STRING)),
+        Heart_Of_Fundamental(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -1242,7 +1242,7 @@ DECLARE_NATIVE(ENTAB)
         }
     }
 
-    Heart heart = Cell_Heart_Ensure_Noquote(ARG(STRING));
+    Heart heart = Heart_Of_Fundamental(ARG(STRING));
     return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 
@@ -1301,7 +1301,7 @@ DECLARE_NATIVE(DETAB)
         Append_Codepoint(mo->string, c);
     }
 
-    Heart heart = Cell_Heart_Ensure_Noquote(ARG(STRING));
+    Heart heart = Heart_Of_Fundamental(ARG(STRING));
     return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 

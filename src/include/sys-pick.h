@@ -30,13 +30,13 @@
 //
 #define Dispatch_Generic(name,cue,L) \
     Dispatch_Generic_Core( \
-        SYM_##name, g_generic_##name, Cell_Heart_Ensure_Noquote(cue), (L) \
+        SYM_##name, g_generic_##name, Heart_Of_Fundamental(cue), (L) \
     )
 
 #define Try_Dispatch_Generic(bounce,name,cue,L) \
     Try_Dispatch_Generic_Core( \
         bounce, SYM_##name, g_generic_##name, \
-        Cell_Heart_Ensure_Noquote(cue), (L) \
+        Heart_Of_Fundamental(cue), (L) \
     )
 
 // Generic Dispatch if you just want it to fail if there's no handler.

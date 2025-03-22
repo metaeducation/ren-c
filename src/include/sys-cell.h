@@ -437,7 +437,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 #define Heart_Of(c) \
     Cell_Heart_Unchecked(Ensure_Readable(c))
 
-INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* c) {
+INLINE Heart Heart_Of_Fundamental(const Cell* c) {
     assert(QUOTE_BYTE(c) == NOQUOTE_1);
     return Cell_Heart_Unchecked(c);
 }

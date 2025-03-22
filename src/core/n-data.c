@@ -273,7 +273,7 @@ DECLARE_NATIVE(WITHOUT)
             return nullptr;
         return Init_Any_Word_Bound(
             OUT,
-            Cell_Heart_Ensure_Noquote(v),
+            Heart_Of_Fundamental(v),
             symbol,  // !!! incoming case...consider impact of strict if false?
             ctx,
             unwrap index

@@ -978,7 +978,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
         Bool_ARG(DEEP)
     ));
 
-    Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
+    Init_Any_List(OUT, Heart_Of_Fundamental(list), copy);
     Tweak_Cell_Binding(OUT, Cell_List_Binding(list));
     return OUT;
 }
@@ -1039,7 +1039,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
         return FAIL(Error_Bad_Refines_Raw());
 
     Element* list = Element_ARG(SERIES);
-    Heart heart = Cell_Heart_Ensure_Noquote(list);  // TAKE gives same heart
+    Heart heart = Heart_Of_Fundamental(list);  // TAKE gives same heart
 
     Source* arr = Cell_Array_Ensure_Mutable(list);
 

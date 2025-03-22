@@ -317,7 +317,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
     INCLUDE_PARAMS_OF_MOLDIFY;
 
     Element* v = Element_ARG(ELEMENT);
-    Heart heart = Cell_Heart_Ensure_Noquote(v);
+    Heart heart = Heart_Of_Fundamental(v);
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
@@ -398,7 +398,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 if (id == SYM_DIVIDE)
                     heart = TYPE_DECIMAL;
                 else if (not Is_Percent(val))
-                    heart = Cell_Heart_Ensure_Noquote(val);
+                    heart = Heart_Of_Fundamental(val);
             }
             else if (heart == TYPE_MONEY) {
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
@@ -456,7 +456,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         return FAIL(Error_Math_Args(Type_Of(val), verb));
     }
 
-    heart = Cell_Heart_Ensure_Noquote(val);
+    heart = Heart_Of_Fundamental(val);
 
     // unary actions
     switch (id) {
@@ -588,7 +588,7 @@ IMPLEMENT_GENERIC(RANDOM, Any_Float)
     INCLUDE_PARAMS_OF_RANDOM;
 
     const Element* val = Element_ARG(MAX);
-    Heart heart = Cell_Heart_Ensure_Noquote(val);
+    Heart heart = Heart_Of_Fundamental(val);
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     REBDEC d = VAL_DECIMAL(val);
@@ -604,7 +604,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Float)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Heart heart = Cell_Heart_Ensure_Noquote(ARG(VALUE1));
+    Heart heart = Heart_Of_Fundamental(ARG(VALUE1));
     REBDEC d1 = VAL_DECIMAL(ARG(VALUE1));
 
     Value* v2 = ARG(VALUE2);

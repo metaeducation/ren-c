@@ -918,7 +918,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             continue;
         }
 
-        Heart heart = Cell_Heart_Ensure_Noquote(les->data);
+        Heart heart = Heart_Of_Fundamental(les->data);
 
         if (Any_List_Type(heart)) {
             if (var)

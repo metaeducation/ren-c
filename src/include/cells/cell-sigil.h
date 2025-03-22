@@ -64,4 +64,4 @@ INLINE Option(Sigil) Sigil_For_Heart(Heart heart) {
 }
 
 #define Sigil_Of(e) \
-    Sigil_For_Heart(Cell_Heart_Ensure_Noquote(e))
+    Sigil_For_Heart(Heart_Of_Fundamental(e))

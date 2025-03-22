@@ -115,7 +115,7 @@
 #define P_RULE              At_Level(level_)  // rvalue
 #define P_RULE_BINDING      Level_Binding(level_)
 
-#define P_HEART             Cell_Heart_Ensure_Noquote(ARG(INPUT))
+#define P_HEART             Heart_Of_Fundamental(ARG(INPUT))
 #define P_INPUT             Cell_Flex(ARG(INPUT))
 #define P_INPUT_BINARY      Cell_Binary(ARG(INPUT))
 #define P_INPUT_STRING      Cell_String(ARG(INPUT))
