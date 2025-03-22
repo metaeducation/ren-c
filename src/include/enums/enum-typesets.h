@@ -104,7 +104,7 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
 
 INLINE Heart Sigilize_Any_Plain_Heart(Sigil sigil, Heart h) {
     assert(Any_Plain_Type(h));
-    assert(sigil != SIGIL_0 and sigil <= MAX_SIGIL_FUNDAMENTAL);
+    assert(sigil != SIGIL_0);
     return cast(Heart, h + u_cast(Byte, sigil));
 }
 

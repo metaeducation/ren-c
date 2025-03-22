@@ -6,15 +6,11 @@
 ;     SIGIL_META = 1,     // ^
 ;     SIGIL_TYPE = 2,     // &
 ;     SIGIL_THE = 3,      // @
-;     SIGIL_VAR = 4,      // $
-;     SIGIL_QUOTE = 5     // '
-;     SIGIL_QUASI = 6     // ~~
-;
-; REVIEW: AS TEXT! behavior for SIGIL! ?
+;     SIGIL_VAR = 4      // $
 ;
 
 (
-    for-each 'sigil [^ & @ $ ' ~~] [
+    for-each 'sigil [^ & @ $] [
         if not sigil? sigil [
             fail [mold sigil]
         ]
@@ -28,8 +24,6 @@
     ("&" = mold first [&])
     ("@" = mold first [@])
     ("$" = mold first [$])
-    ("'" = mold first ['])
-    ("~~" = mold first [~~])
 ]
 
 ; try termination by whitespace (and forming)
@@ -38,8 +32,6 @@
     ("&" = form first [& <something>])
     ("@" = form first [@ <something>])
     ("$" = form first [$ <something>])
-    ("'" = form first [' <something>])
-    ("~~" = form first [~~ <something>])
 ]
 
 ; Try quoted forms (and molding)
@@ -48,8 +40,6 @@
     ("'&" = mold first ['&])
     ("'@" = mold first ['@])
     ("'$" = mold first ['$])
-    ("''" = mold first [''])
-    ("'~~" = mold first ['~~])
 ]
 
 ; Try TO TEXT! and MATCH
@@ -58,8 +48,6 @@
     ("&" = to text! match sigil! '&)
     ("@" = to text! match sigil! '@)
     ("$" = to text! match sigil! '$)
-    ("'" = to text! match sigil! '')
-    ("~~" = to text! match sigil! '~~)
 ]
 
 ; Quasiforms of sigil don't exist (and probably should not, as combining the
@@ -70,8 +58,6 @@
     ~scan-invalid~ !! (transcode "~&~")
     ~scan-invalid~ !! (transcode "~@~")
     ~scan-invalid~ !! (transcode "~$~")
-    ~scan-invalid~ !! (transcode "~'~")
-    ~scan-invalid~ !! (transcode "~~~~")
 ]
 
 
@@ -83,8 +69,6 @@
         &       [ &word   &tu.p.le   &pa/th   &[bl o ck]   &(gr o up)  ]
         @       [ @word   @tu.p.le   @pa/th   @[bl o ck]   @(gr o up)  ]
         $       [ $word   $tu.p.le   $pa/th   $[bl o ck]   $(gr o up)  ]
-        '       [ 'word   'tu.p.le   'pa/th   '[bl o ck]   '(gr o up)  ]
-        ~~      [ ~word~      _         _     ~[bl o ck]~  ~(gr o up)~ ]
     ][
         for-each 'item items [
             if blank? item [continue]
@@ -144,30 +128,4 @@
         1020 = get word
     )
     ~need-non-end~ !! (@)
-]
-
-; ' is JUST, which does not bind its argument.  It also has the API exception.
-[
-    ('x = ' x)
-    ('(a b c) = ' (a b c))
-    (''3 = ' '3)
-
-    ('~null~ = ' ~null~)
-
-    ~not-bound~ !! (
-        var: 1020
-        word: ' var  ; no binding
-        1020 = get word
-    )
-    ~not-bound~ !! (
-        var: 1020
-        word: just var  ; no binding
-        1020 = get word
-    )
-    ~need-non-end~ !! (')
-]
-
-; ~~ has no meaning in the evaluator yet.
-[
-    ~???~ !! (~~ <no> <meaning>)
 ]

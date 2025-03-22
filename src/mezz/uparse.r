@@ -2735,7 +2735,6 @@ default-combinators.(tuple!): default-combinators.(word!)
 default-combinators.opt: default-combinators.optional
 default-combinators.lit: default-combinators.literal
 default-combinators.(just @): default-combinators.one
-default-combinators.(just '): default-combinators.just
 
 
 === HACKS TO COVER FOR LACK OF REFINEMENT SUPPORT ===

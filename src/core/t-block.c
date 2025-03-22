@@ -496,7 +496,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
         return NOTHING;
     }
 
-    Sigil sigil = maybe Sigil_Of_Type(heart);
+    Sigil sigil = maybe Sigil_For_Heart(heart);
     switch (sigil) {
       case SIGIL_0:  // no decoration
         break;

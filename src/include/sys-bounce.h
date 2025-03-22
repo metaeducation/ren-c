@@ -44,6 +44,8 @@
 //
 
 INLINE void Init_Bounce_Wild(WildTwo out, char ch) {
+    assert(out[0] == 0);  // is there any good reason Erase_Bounce_Wild()
+    assert(out[1] == 0);
     out[0] = NODE_BYTE_WILD;
     out[1] = ch;
 }

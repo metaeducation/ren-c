@@ -138,7 +138,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
 
     UNUSED(form);
 
-    Option(Sigil) sigil = Sigil_Of_Type(Heart_Of(v));
+    Option(Sigil) sigil = Sigil_For_Heart(Heart_Of(v));
     if (sigil)
         Append_Codepoint(mo->string, Symbol_For_Sigil(unwrap sigil));
 

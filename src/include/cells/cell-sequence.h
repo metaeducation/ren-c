@@ -120,7 +120,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
     if (is_head) {
         if (
             Is_Quoted(e)  // note quasiforms legal, even at head [1]
-            or Sigil_Of_Type(h)
+            or Sigil_For_Heart(h)
         ){
             goto bad_sequence_item;
         }
@@ -562,7 +562,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
                 return error;
         }
 
-        Sigil sigil = maybe Sigil_Of_Type(sequence_heart);
+        Sigil sigil = maybe Sigil_For_Heart(sequence_heart);
         if (not sigil)  // just wanted a plain pa/th or tu.p.le
             return nullptr;  // let the item just decay to itself as-is
 

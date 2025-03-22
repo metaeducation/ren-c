@@ -275,6 +275,8 @@ INLINE Element* Unquasify(Element* elem) {
 
 INLINE Element* Quasify_Isotopic_Fundamental(Element* elem) {
     assert(Any_Isotopic(elem));
+    if (Is_Bindable(elem))
+        assert(not Cell_Binding(elem));
     assert(QUOTE_BYTE(elem) == NOQUOTE_1);
     QUOTE_BYTE(elem) = QUASIFORM_2_COERCE_ONLY;
     return elem;

@@ -50,23 +50,15 @@
     LEVEL_FLAG_25
 
 
-//=//// SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL //////////////////////////////////=//
+//=//// SCAN_EXECUTOR_FLAG_26 /////////////////////////////////////////////=//
 //
-// NULL splice in top level of rebValue()
-//
-// !!! No longer used; null antiforms now always splice as ~null~ quasiform
-//
-#define SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL \
+#define SCAN_EXECUTOR_FLAG_26 \
     LEVEL_FLAG_26
 
 
-//=//// SCAN_EXECUTOR_FLAG_LOCK_SCANNED ///////////////////////////////////=//
+//=//// SCAN_EXECUTOR_FLAG_27 /////////////////////////////////////////////=//
 //
-// Lock Flexes as they are loaded.
-//
-// !!! This also does not seem to be used, likely supplanted by CONST.
-//
-#define SCAN_EXECUTOR_FLAG_LOCK_SCANNED \
+#define SCAN_EXECUTOR_FLAG_27 \
     LEVEL_FLAG_27
 
 
@@ -99,14 +91,13 @@
     LEVEL_FLAG_31
 
 
-// Flags that should be preserved when recursing the scanner
+// Flags that should be preserved when recursing the scanner (currently no
+// such flags exist, but this is a placeholder for future use).
 //
-#define SCAN_EXECUTOR_MASK_RECURSE \
-    (SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL \
-        | SCAN_EXECUTOR_FLAG_LOCK_SCANNED)
+#define SCAN_EXECUTOR_MASK_RECURSE  0
 
 
-struct TranscodeStateStruct {  // shared across all levels of a scan
+typedef struct {  // shared state for all ScanState levels of a transcode
     Option(const String*) file;  // currently scanning (or anonymous)
 
     LineNumber line;  // line number where current scan position is
@@ -119,12 +110,10 @@ struct TranscodeStateStruct {  // shared across all levels of a scan
     // scanning variadics which merge cells and UTF-8 strings together...
     //
     /* const Byte* limit; */
-};
-
-typedef struct TranscodeStateStruct TranscodeState;
+} TranscodeState;
 
 
-struct ScannerExecutorStateStruct {  // each array scan has a level
+typedef struct {  // each array scan has a level
     TranscodeState* transcode;  // shared state of where the scan head is
 
     // Beginning and end positions of currently processed token.
@@ -135,11 +124,12 @@ struct ScannerExecutorStateStruct {  // each array scan has a level
     LineNumber start_line;
     const Byte* start_line_head;
 
-    Count quotes_pending;
-    Option(Sigil) sigil_pending;  // includes SIGIL_QUASI
-};
+    Count num_quotes_pending;
+    Option(Sigil) sigil_pending;
+    bool quasi_pending;
+} ScannerExecutorState;
 
-typedef struct ScannerExecutorStateStruct ScanState;
+typedef ScannerExecutorState ScanState;
 
 
 //=//// SCANNER LEVEL STATE BYTES /////////////////////////////////////////=//

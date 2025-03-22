@@ -195,7 +195,7 @@ STATIC_ASSERT(
     LEVEL_FLAG_31
 
 
-struct ActionExecutorStateStruct {
+typedef struct {
     //
     // If a function call is currently in effect, Level_Phase() is how you get
     // at the current function being run.  This is the action that started
@@ -243,7 +243,7 @@ struct ActionExecutorStateStruct {
     // that space is used to hold the specialized value cell.
     //
     const Param* param;
-};
+} ActionExecutorState;
 
 
 enum {

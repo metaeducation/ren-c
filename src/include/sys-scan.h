@@ -36,14 +36,9 @@ enum SigilEnum {
     SIGIL_TYPE = 2,     // &
     SIGIL_THE = 3,      // @
     SIGIL_VAR = 4,      // $
-    MAX_SIGIL_FUNDAMENTAL = SIGIL_VAR,
-    SIGIL_QUOTE = 5,    // '
-    SIGIL_QUASI = 6,    // ~~
-    MAX_SIGIL = SIGIL_QUASI
+    MAX_SIGIL = SIGIL_VAR
 };
 typedef enum SigilEnum Sigil;
-
-#define NUM_SIGILS 6
 
 
 //

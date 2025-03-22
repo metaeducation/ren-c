@@ -91,7 +91,7 @@ DECLARE_NATIVE(QUOTES_OF)
 //  "Get the SIGIL! on a value, e.g. $WORD has the $ sigil, WORD has none"
 //
 //      return: [~null~ sigil!]
-//      element [<maybe> element?]
+//      element [<maybe> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(SIGIL_OF)

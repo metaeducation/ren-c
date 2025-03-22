@@ -1937,8 +1937,9 @@ Level* Make_Scan_Level(
 
     S->start_line_head = transcode->line_head;
     S->start_line = transcode->line;
-    S->quotes_pending = 0;
+    S->num_quotes_pending = 0;
     S->sigil_pending = SIGIL_0;
+    S->quasi_pending = false;
 
     Corrupt_Pointer_If_Debug(S->begin);
     Corrupt_Pointer_If_Debug(S->end);
@@ -1947,25 +1948,32 @@ Level* Make_Scan_Level(
 }
 
 
+// This function is called when we reach the end of a scan or end list
+// delimiter but have seen only sigils and quotes.  So "[~]" or "[$]" would be
+// called here when it sees the "]".
+//
+// 1. At one time, ' was a SIGIL!, and the answer to (sigil of first ['foo]).
+//    It has been reclaimed as an illegal state, so it might be used for
+//    other out of band purposes in the scanner, such as line continuation.
+//
 static Option(Error*) Trap_Flush_Pending_Sigils(ScanState* S) {
-    if (S->sigil_pending) {
-        assert(S->sigil_pending != SIGIL_QUOTE);
-        if (S->sigil_pending == SIGIL_QUASI)
-            Init_Trash(PUSH());  // When flushing we want ~ and not ~~
-        else
-            Init_Sigil(PUSH(), unwrap S->sigil_pending);
+    if (S->sigil_pending) {  // e.g. "$]" or "''$]"
+        assert(not S->quasi_pending);
+        Init_Sigil(PUSH(), unwrap S->sigil_pending);
         S->sigil_pending = SIGIL_0;
-        if (S->quotes_pending) {
-            Quotify_Depth(TOP_ELEMENT, S->quotes_pending);
-            S->quotes_pending = 0;
-        }
     }
-    else if (S->quotes_pending != 0) {
-        Init_Sigil(PUSH(), SIGIL_QUOTE);
-        Quotify_Depth(TOP_ELEMENT, S->quotes_pending - 1);
-        S->quotes_pending = 0;
+    else if (S->quasi_pending) {  // "~]" or "''~]"
+        Init_Trash(PUSH());
+        S->quasi_pending = false;
+    }
+    else if (S->num_quotes_pending) {  // "']" or "''']" are illegal [1]
+        return Error_Syntax(S, TOKEN_APOSTROPHE);
     }
 
+    if (S->num_quotes_pending != 0) {
+        Quotify_Depth(TOP_ELEMENT, S->num_quotes_pending);
+        S->num_quotes_pending = 0;
+    }
     return nullptr;
 }
 
@@ -1984,9 +1992,9 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
         );
         S->sigil_pending = SIGIL_0;
     }
-    if (S->quotes_pending != 0) {
-        Quotify_Depth(top, S->quotes_pending);
-        S->quotes_pending = 0;
+    if (S->num_quotes_pending != 0) {
+        Quotify_Depth(top, S->num_quotes_pending);
+        S->num_quotes_pending = 0;
     }
     return nullptr;
 }
@@ -2097,8 +2105,9 @@ Bounce Scanner_Executor(Level* const L) {
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    assert(S->quotes_pending == 0);
-    assert(S->sigil_pending == SIGIL_0);
+    assert(S->num_quotes_pending == 0);
+    assert(not S->sigil_pending);
+    assert(not S->quasi_pending);
 
 } loop: {  //////////////////////////////////////////////////////////////////
 
@@ -2155,18 +2164,18 @@ Bounce Scanner_Executor(Level* const L) {
         assert(*S->begin == ',' and len == 1);
 
         if (*S->end == '~') {
-            if (S->sigil_pending != SIGIL_QUASI)
+            if (not S->quasi_pending)
                 return FAIL("Comma only followed by ~ for ~,~ quasiform");
             Quasify_Isotopic_Fundamental(Init_Comma(PUSH()));
             S->sigil_pending = SIGIL_0;
         }
         else {
-            if (S->sigil_pending) {  // ['$, 10] => '$ , 10
+            if (S->quasi_pending or S->sigil_pending) {  // ['$, 10] => '$ , 10
                 Option(Error*) error = Trap_Flush_Pending_Sigils(S);
                 if (error)
                     return RAISE(unwrap error);
             }
-            else if (S->quotes_pending) {
+            else if (S->num_quotes_pending) {
                 // fall through normally, want [', 10] => ', 10
             }
             if (Is_Interstitial_Scan(L)) {
@@ -2225,32 +2234,16 @@ Bounce Scanner_Executor(Level* const L) {
         if (S->sigil_pending)  // can't do @'foo: or :'foo or ~'foo~
             return RAISE(Error_Syntax(S, token));
 
-        S->quotes_pending = len;  // apply quoting to next token
+        S->num_quotes_pending = len;  // apply quoting to next token
         goto loop_if_next_token_modifiable; }
 
       case TOKEN_TILDE: {
         assert(*S->begin == '~' and len == 1);
 
-        if (S->sigil_pending)  // can't do @~foo:~ or :~foo~ or ~~foo~~
+        if (S->quasi_pending or S->sigil_pending)  // no @~foo:~ or ~~foo~~
             return RAISE(Error_Syntax(S, token));
 
-        if (*S->end == '~') {  // Note: looking past bounds of token!
-            if (
-                Is_Lex_Whitespace(S->end[1])
-                or Is_Lex_End_List(S->end[1])
-            ){
-                Init_Sigil(PUSH(), SIGIL_QUASI);  // it's ~~
-                Quotify_Depth(TOP_ELEMENT, S->quotes_pending);
-                S->quotes_pending = 0;
-
-                assert(transcode->at == S->end);  // token consumed one tilde
-                transcode->at = S->end + 1;  // extend amount consumed by 1
-                goto loop;
-            }
-            return RAISE(Error_Syntax(S, token));
-        }
-
-        S->sigil_pending = SIGIL_QUASI;  // apply to next token
+        S->quasi_pending = true;  // apply to next token
         goto loop_if_next_token_modifiable; }
 
     // R3-Alpha's scanner was not designed to give back TOKEN_WHITESPACE, so
@@ -2329,9 +2322,9 @@ Bounce Scanner_Executor(Level* const L) {
         // continuing one in progress).  So just do that push and "unconsume"
         // the delimiter so the lookahead sees it.
         //
-        if (S->sigil_pending == SIGIL_QUASI) {
+        if (S->quasi_pending) {
             Init_Trash(PUSH());  // if we end up with ~/~, we decay it to word
-            S->sigil_pending = SIGIL_0;  // quasi-sequences don't exist
+            S->quasi_pending = 0;  // quasi-sequences don't exist
         }
         else
             Init_Blank(PUSH());
@@ -2566,7 +2559,7 @@ Bounce Scanner_Executor(Level* const L) {
   // quasiform, we are able to unambiguously interpret `~abc~.~def~` or
   // similar.  It may be useful, so enabling it for now.
 
-    if (S->sigil_pending == SIGIL_QUASI) {
+    if (S->quasi_pending) {
         if (*transcode->at != '~')
             return RAISE(Error_Syntax(S, TOKEN_TILDE));
 
@@ -2575,11 +2568,11 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(unwrap e);
 
         ++transcode->at;  // must compensate the `transcode->at = S->end`
-        S->sigil_pending = SIGIL_0;
+        S->quasi_pending = false;
     }
 
     // At this point the item at TOP is the last token pushed.  It has
-    // not had any `sigil_pending` or `quotes_pending` applied...so when
+    // not had any `sigil_pending` or `num_quotes_pending` applied...so when
     // processing something like `'$foo/bar` on the first step we'd only see
     // `foo` pushed.  This is the point where we look for the `/` or `.`
     // to either start or continue a tuple or path.
@@ -2917,8 +2910,9 @@ Bounce Scanner_Executor(Level* const L) {
 
     assert(mo->string == nullptr);  // mold should have been handled
 
-    assert(S->quotes_pending == 0);
-    assert(S->sigil_pending == SIGIL_0);
+    assert(S->num_quotes_pending == 0);
+    assert(not S->sigil_pending);
+    assert(not S->quasi_pending);
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 

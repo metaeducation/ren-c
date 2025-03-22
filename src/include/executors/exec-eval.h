@@ -112,7 +112,7 @@
     LEVEL_FLAG_31
 
 
-struct EvaluatorExecutorStateStruct {
+typedef struct {
     //
     // Invisibility is a critical feature in Ren-C:
     //
@@ -146,7 +146,7 @@ struct EvaluatorExecutorStateStruct {
     uintptr_t expr_index;
 
     Option(StackIndex) stackindex_circled;  // used only by multi-return
-};
+} EvaluatorExecutorState;
 
 
 // The stepper publishes its internal states in this header file, so that

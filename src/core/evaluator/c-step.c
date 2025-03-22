@@ -631,7 +631,6 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_SIGIL: {
         Sigil sigil = Cell_Sigil(CURRENT);
         switch (sigil) {
-          case SIGIL_QUOTE:
           case SIGIL_THE: {
             if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
                 return FAIL(Error_Need_Non_End(CURRENT));
@@ -642,12 +641,7 @@ Bounce Stepper_Executor(Level* L)
             bool antiform = Get_Cell_Flag(elem, FEED_NOTE_META);  // [2]
             Clear_Cell_Flag(m_cast(Element*, elem), FEED_NOTE_META);  // [3]
 
-            if (sigil == SIGIL_THE)
-                The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
-            else {
-                assert(sigil == SIGIL_QUOTE);
-                Just_Next_In_Feed(L->out, L->feed);  // !!! review infix
-            }
+            The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
 
             if (antiform)  // exception [2]
                 Meta_Unquotify_Known_Stable(L->out);
@@ -661,9 +655,6 @@ Bounce Stepper_Executor(Level* L)
                 goto sigil_rightside_in_out;
 
             return CONTINUE_SUBLEVEL(right); }
-
-          case SIGIL_QUASI:  // ~~
-            return FAIL("No evaluator behavior defined for ~~ yet");
 
           default:
             assert(false);

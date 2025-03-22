@@ -565,7 +565,7 @@ DECLARE_NATIVE(JOIN)
         if (Any_Sequence(v))  // can have lists in them, dicey [4]
             return FAIL("JOIN requires @var to mold sequences");
 
-        if (Sigil_Of(cast(Element*, v)))
+        if (Is_Metaform(cast(Element*, v)) or Sigil_Of(cast(Element*, v)))
             return FAIL("JOIN requires @var for elements with sigils");
 
         if (Is_Blank(v))

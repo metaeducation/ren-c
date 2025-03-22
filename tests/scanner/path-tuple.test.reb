@@ -81,10 +81,6 @@
 
         ; Again there should be many more of these.
 
-        "a/'"  ->  [a ']
-        "a/' b/'"  ->  [a '] [b ']
-        "a.'' b.'''" -> (a '') (b ''')
-
         "a/'b"  ->  [a 'b]
         "a/'b/"  ->  [a 'b _]
 

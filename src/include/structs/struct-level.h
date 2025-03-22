@@ -336,16 +336,16 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     // uses its space for an extra "scratch" GC-safe cell)
     //
   union {
-    struct EvaluatorExecutorStateStruct eval;
+    EvaluatorExecutorState eval;
 
-    struct ActionExecutorStateStruct action;
+    ActionExecutorState action;
 
     struct {
         Level* main_level;
         bool changed;
     } compose;
 
-    struct ScannerExecutorStateStruct scan;  // !! Fairly fat, trim down?
+    ScannerExecutorState scan;  // !! Fairly fat, trim down?
   } u;
 
     // The "executor" is the function the Trampoline delegates to for running

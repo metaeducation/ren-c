@@ -37,4 +37,3 @@
 ; The second form is called LIT for LITERAL.
 
 ('a = parse [] [just a])
-('a = parse [] [' a])  ; shorthand
