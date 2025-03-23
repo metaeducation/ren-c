@@ -358,6 +358,7 @@
 %string/encode.test.reb
 %string/decompress.test.reb
 %string/dehex.test.reb
+%string/interpolate.test.reb
 %string/transcode.test.reb
 %string/utf8.test.reb
 

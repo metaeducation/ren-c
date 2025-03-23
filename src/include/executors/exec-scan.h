@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -73,13 +73,22 @@
     LEVEL_FLAG_28
 
 
-//=//// SCAN_EXECUTOR_FLAG_29 /////////////////////////////////////////////=//
+//=//// SCAN_EXECUTOR_FLAG_SAVE_LEVEL_DONT_POP_ARRAY //////////////////////=//
 //
-#define SCAN_EXECUTOR_FLAG_29 \
+// When interpolation asks the scanner to do something like:
+//
+//     interpolate "({[1 + 2]})"
+//
+// It pushes 3 levels to cue the scanner about the terminals it needs, so it
+// will properly close "]})".  But despite pushing a stack of levels for that
+// recognition, all it really wants to get back is 1, +, and 2 pushed to
+// the data stack.
+//
+#define SCAN_EXECUTOR_FLAG_SAVE_LEVEL_DONT_POP_ARRAY \
     LEVEL_FLAG_29
 
 
-//=//// SCAN_EXECUTOR_FLAG_30 /////////////////////////////////////////////=//
+//=//// SCAN_EXECUTOR_FLAG_30 ////////////////////////////////////////////=//
 //
 #define SCAN_EXECUTOR_FLAG_30 \
     LEVEL_FLAG_30
@@ -110,6 +119,7 @@ typedef struct {  // shared state for all ScanState levels of a transcode
     // scanning variadics which merge cells and UTF-8 strings together...
     //
     /* const Byte* limit; */
+    Level* saved_levels;
 } TranscodeState;
 
 
@@ -152,7 +162,7 @@ typedef ScannerExecutorState ScanState;
 //    with what we are seeking to find a match for (and also more useful in
 //    error messages)
 //
-enum {
+typedef enum {
     ST_SCANNER_UNUSED_STATE = STATE_0,  // won't work with BOUNCE_CONTINUE [1]
 
     ST_SCANNER_OUTERMOST_SCAN,  // used instead of STATE_0 [1]
@@ -163,4 +173,48 @@ enum {
     ST_SCANNER_CHAIN_MODE = 58,  // ':'
     ST_SCANNER_BLOCK_MODE = 93,  // ']' terminal character [2]
     ST_SCANNER_FENCE_MODE = 125  // '}'
-};
+} ScannerStateByte;
+
+#if NO_RUNTIME_CHECKS
+    #define Scanner_State_For_Terminal(term) \
+        u_cast(ScannerStateByte, (term))
+#else
+    INLINE ScannerStateByte Scanner_State_For_Terminal(Byte term) {
+        assert(
+            term == ST_SCANNER_BLOCK_MODE
+            or term == ST_SCANNER_GROUP_MODE
+            or term == ST_SCANNER_FENCE_MODE
+        );
+        return u_cast(ScannerStateByte, term);
+    }
+#endif
+
+INLINE Byte Begin_Delimit_For_List(Heart heart)
+{
+    switch (heart) {
+      case TYPE_GROUP:
+        return '(';
+      case TYPE_BLOCK:
+        return '[';
+      case TYPE_FENCE:
+        return '{';
+      default:
+        assert(false);
+        return 0;  // unreachable
+    }
+}
+
+INLINE Byte End_Delimit_For_List(Heart heart)
+{
+    switch (heart) {
+      case TYPE_GROUP:
+        return ')';
+      case TYPE_BLOCK:
+        return ']';
+      case TYPE_FENCE:
+        return '}';
+      default:
+        assert(false);
+        return 0;  // unreachable
+    }
+}

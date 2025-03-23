@@ -450,7 +450,7 @@ static void Update_Error_Near_For_Line(
 //
 static Error* Error_Missing(ScanState* S, Byte wanted) {
     DECLARE_ELEMENT (expected);
-    Init_Text(expected, Make_Codepoint_String(wanted));
+    Init_Char_Unchecked(expected, wanted);
 
     Error* error = Error_Scan_Missing_Raw(expected);
 
@@ -1806,11 +1806,58 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         else
             return LOCATED(TOKEN_WORD);
 
-        do {  // saw `::` or `://`, okay treat as URL, look for its end
+        StackIndex base = TOP_INDEX;
+        while (true) {  // saw `::` or `://`, okay treat as URL, look for its end
             ++cp;
-            while (Is_Lex_Not_Delimit(*cp) or not Is_Lex_Delimit_Hard(*cp))
+
+            while (Is_Lex_Not_Delimit(*cp))
                 ++cp;  // not delimiter, e.g. `http://example.com]` stops it
-        } while (Is_Lex_Interstitial(*cp));  // slash, dots, and colons legal
+
+            switch (*cp) {
+              case '[':
+                Init_Char_Unchecked(PUSH(), ']');
+                continue;
+
+              case '(':
+                Init_Char_Unchecked(PUSH(), ')');
+                continue;
+
+              case '{':
+                Init_Char_Unchecked(PUSH(), '}');
+                continue;
+
+              case ']':
+              case ')':
+              case '}':
+                if (base == TOP_INDEX) {  // closing the code
+                    S->end = cp;
+                    return LOCATED(TOKEN_URL);
+                }
+
+                if (*cp != Cell_Codepoint(TOP)) {
+                    Byte want = cast(Byte, Cell_Codepoint(TOP));
+                    Drop_Data_Stack_To(base);
+                    return Error_Mismatch(want, *cp);
+                }
+                DROP();
+                continue;  // loop will increment
+
+              default:
+                break;
+            }
+            if (TOP_INDEX != base)
+                continue;  // allow http://(what + ever, you want).com
+            if (Is_Lex_Interstitial(*cp) or not Is_Lex_Delimit_Hard(*cp))
+                continue;  // slash, dots, and colons legal... and tilde
+            break;  // other delimiters are not
+        }
+
+        if (base != TOP_INDEX) {
+            Byte want = cast(Byte, Cell_Codepoint(TOP));
+            Drop_Data_Stack_To(base);
+            return Error_Mismatch(want, *cp);
+        }
+
         S->end = cp;
         return LOCATED(TOKEN_URL);
     }
@@ -2692,11 +2739,25 @@ Bounce Scanner_Executor(Level* const L) {
         panic (L);
     }
 
-    Source* a = Pop_Managed_Source_From_Stack(SUBLEVEL->baseline.stack_base);
-    if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
+    Level* sub = SUBLEVEL;
+
+    if (Get_Scan_Executor_Flag(L, SAVE_LEVEL_DONT_POP_ARRAY)) {  // see flag
+        if (*transcode->at != STATE)
+            return FAIL("Delimiters malformed in interpolation");
+        ++transcode->at;
+
+        assert(sub->prior == L);  // sanity check
+        g_ts.top_level = sub->prior;
+        sub->prior = transcode->saved_levels;
+        transcode->saved_levels = sub;
+        goto done;  // skip over the pop, leave elements on stack
+    }
+
+    Source* a = Pop_Managed_Source_From_Stack(sub->baseline.stack_base);
+    if (Get_Scan_Executor_Flag(sub, NEWLINE_PENDING))
         Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
-    Drop_Level(SUBLEVEL);
+    Drop_Level(sub);
 
     // Tag array with line where the beginning bracket/group/etc. was found
     //

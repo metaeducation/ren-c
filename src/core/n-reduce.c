@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -832,13 +832,13 @@ Bounce Composer_Executor(Level* const L)
 //      [
 //          any-list? any-sequence?
 //          any-word?  ; passed through as-is, or :CONFLATE can produce
-//          any-string?
+//          any-utf8?
 //          ~null~ quasi-word? blank! trash?  ; :CONFLATE can produce these
 //      ]
 //      pattern "Use ANY-THE-LIST-TYPE? (e.g. @{{}}) to use pattern's binding"
 //          [any-list?]
 //      template "The template to fill in (no-op if WORD!)"
-//          [<maybe> any-list? any-sequence? any-word? any-string?]
+//          [<maybe> any-list? any-sequence? any-word? any-utf8?]
 //      :deep "Compose deeply into nested lists and sequences"
 //      :conflate "Let illegal sequence compositions produce lookalike WORD!s"
 //      :predicate "Function to run on composed slots"
@@ -862,41 +862,30 @@ DECLARE_NATIVE(COMPOSE2)
     USED(ARG(DEEP));
 
     enum {
-        ST_COMPOSE_INITIAL_ENTRY = STATE_0,
-        ST_COMPOSE_COMPOSING_LIST,
-        ST_COMPOSE_STRING_SCAN,
-        ST_COMPOSE_STRING_EVAL
+        ST_COMPOSE2_INITIAL_ENTRY = STATE_0,
+        ST_COMPOSE2_COMPOSING_LIST,
+        ST_COMPOSE2_STRING_SCAN,
+        ST_COMPOSE2_STRING_EVAL
     };
 
     switch (STATE) {
-      case ST_COMPOSE_INITIAL_ENTRY: {
+      case ST_COMPOSE2_INITIAL_ENTRY: {
         if (Any_Word(input))
             return COPY(input);  // makes it easier to `set compose target`
 
-        if (Any_The_Value(pattern)) {  // @() means use pattern's binding
-            if (Cell_Binding(pattern) == nullptr)
-                return FAIL("@... patterns must have bindings");
-            HEART_BYTE(pattern) = Plainify_Any_The_Heart(Heart_Of(pattern));
-        }
-        else if (Any_Plain_Value(pattern)) {
-            Tweak_Cell_Binding(pattern, Cell_List_Binding(input));
-        }
-        else
-            return FAIL("COMPOSE2 takes plain and @... list patterns only");
-
-        if (Any_String(input))
+        if (Any_Utf8(input))
             goto string_initial_entry;
 
         assert(Any_List(input) or Any_Sequence(input));
         goto list_initial_entry; }
 
-      case ST_COMPOSE_COMPOSING_LIST:
+      case ST_COMPOSE2_COMPOSING_LIST:
         goto list_compose_finished;
 
-      case ST_COMPOSE_STRING_SCAN:
-        goto string_scan_result_in_top_scratch_is_transcode_state;
+      case ST_COMPOSE2_STRING_SCAN:
+        goto string_scan_results_on_stack;
 
-      case ST_COMPOSE_STRING_EVAL:
+      case ST_COMPOSE2_STRING_EVAL:
         goto string_eval_in_out;
 
       default: assert(false);
@@ -904,9 +893,20 @@ DECLARE_NATIVE(COMPOSE2)
 
   list_initial_entry: {  /////////////////////////////////////////////////////
 
+    if (Any_The_Value(pattern)) {  // @() means use pattern's binding
+        if (Cell_Binding(pattern) == nullptr)
+            return FAIL("@... patterns must have bindings");
+        HEART_BYTE(pattern) = Plainify_Any_The_Heart(Heart_Of(pattern));
+    }
+    else if (Any_Plain_Value(pattern)) {
+        Tweak_Cell_Binding(pattern, Cell_List_Binding(input));
+    }
+    else
+        return FAIL("COMPOSE2 takes plain and @... list patterns only");
+
     Push_Composer_Level(OUT, level_, input, Cell_List_Binding(input));
 
-    STATE = ST_COMPOSE_COMPOSING_LIST;
+    STATE = ST_COMPOSE2_COMPOSING_LIST;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } list_compose_finished: {  //////////////////////////////////////////////////
@@ -925,25 +925,19 @@ DECLARE_NATIVE(COMPOSE2)
 
 } string_initial_entry: {  ///////////////////////////////////////////////////
 
-    if (not (Is_The_Group(pattern) and Cell_Series_Len_At(pattern) == 0))
-        return FAIL("Preliminary string compose only works with @()");
+    assert(Any_List_Type(Heart_Of(pattern)));
+
+    if (Any_The_Value(pattern)) {  // @() means use pattern's binding
+        if (Cell_Binding(pattern) == nullptr)
+            return FAIL("@... patterns must have bindings");
+        HEART_BYTE(pattern) = Plainify_Any_The_Heart(Heart_Of(pattern));
+    }
+    else
+        return FAIL("COMPOSE2 text needs @... patterns for pattern binding");
+
+    QUOTE_BYTE(pattern) = NOQUOTE_1;
 
     Utf8(const*) head = Cell_Utf8_At(input);
-    Utf8(const*) at = head;
-
-    Codepoint c;
-    Utf8(const*) next = Utf8_Next(&c, at);
-
-    while (c != '\0') {
-        if (c == '(')
-            goto found_first_string_pattern;
-        at = next;
-        next = Utf8_Next(&c, at);
-    }
-
-    return rebValue(CANON(COPY), input);  // didn't find anything to substitute
-
-  found_first_string_pattern: { ///////////////////////////////////////////////
 
     TranscodeState* transcode = Try_Alloc_Memory(TranscodeState);
     Init_Handle_Cdata(SCRATCH, transcode, 1);
@@ -951,120 +945,271 @@ DECLARE_NATIVE(COMPOSE2)
     const LineNumber start_line = 1;
     Init_Transcode(
         transcode,
-        ANONYMOUS,  // %tmp-boot.r name in boot overwritten currently by this
+        ANONYMOUS,  // %tmp-boot.r name in boot overwritten by this
         start_line,
-        at  // we'll reset this on each pattern find
+        head  // we'll assign this after each pattern find
     );
 
-    Flags flags =
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
-        /*| LEVEL_FLAG_RAISED_RESULT_OK*/  // definitional errors?
-        | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN)
-        | SCAN_EXECUTOR_FLAG_JUST_ONCE;
+    transcode->saved_levels = nullptr;  // level reuse optimization
 
-    Level* sub = Make_Scan_Level(transcode, TG_End_Feed, flags);
+    STATE = ST_COMPOSE2_STRING_SCAN;
+    goto string_find_next_pattern;
 
-    Push_Level_Erase_Out_If_State_0(OUT, sub);
+} string_find_next_pattern: {  ///////////////////////////////////////////////
 
-    Offset start_offset = at - head;
-    Init_Integer(PUSH(), start_offset);
-    STATE = ST_COMPOSE_STRING_SCAN;
-    return CONTINUE_SUBLEVEL(sub);
-
-}} string_scan_result_in_top_scratch_is_transcode_state: { ///////////////////
-
-    // 1. While transcoding in a general case can't assume the data is valid
-    //    UTF-8, we're scanning an already validated UTF-8 TEXT! here.
+    StackIndex base = TOP_INDEX;  // base above the triples pushed so far
 
     TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, SCRATCH);
 
     Utf8(const*) head = Cell_Utf8_At(input);
-    Offset end_offset = transcode->at - head;
-    Init_Integer(PUSH(), end_offset);
+    Utf8(const*) at = cast(Utf8(const*), transcode->at);
 
-    Utf8(const*) at = cast(Utf8(const*), transcode->at);  // validated UTF-8 [1]
+  //=//// PUSH PATTERN TERMINATORS TO DATA STACK //////////////////////////=//
+
+    // 1. If we're matching @(([])) and we see "((some(([thing]))", then when
+    //    we see the "s" that means we didn't see "(([".  So the scan has to
+    //    start looking for the first paren again.
+    //
+    // 2. When we call into the scanner for a pattern like "({[foo]})" we
+    //    start it scanning at "foo]})".  The reason we can get away with it
+    //    is that we've push levels manually that account for if the scanner
+    //    had seen "({[", so it expects to have consumed those tokens and
+    //    knows what end delimiters it's looking for.
 
     Codepoint c;
     Utf8(const*) next = Utf8_Next(&c, at);
 
-    while (c != '\0') {
-        if (c == '(') {
-            transcode->at = at;
-            goto found_subsequent_string_pattern;
+    Copy_Cell(PUSH(), pattern); // top of stack is pattern currently matching
+
+    Byte begin_delimiter = Begin_Delimit_For_List(Heart_Of(TOP));
+    Option(Byte) end_delimiter = 0;
+
+    while (true) {
+        if (c == '\0') {
+            possibly(TOP_INDEX > base + 1);  // compose2 @{{}} "abc {"  ; legal
+            Drop_Data_Stack_To(base);
+            goto string_scan_finished;
         }
+
         at = next;
-        next = Utf8_Next(&c, cast(Utf8(const*), at));
+
+        if (c == begin_delimiter) {
+            if (Cell_Series_Len_At(TOP) == 0)  // no more nests in pattern
+                break;
+
+            end_delimiter = End_Delimit_For_List(Heart_Of(TOP));
+
+            const Element* pattern_at = Cell_List_Item_At(TOP);
+            Copy_Cell(PUSH(), pattern_at);  // step into pattern
+
+            if (not Any_List(TOP))
+                return FAIL("COMPOSE2 pattern must be composed of lists");
+            if (Cell_Series_Len_At(TOP) > 1)
+                return FAIL("COMPOSE2 pattern layers must be length 1 or 0");
+
+            begin_delimiter = Begin_Delimit_For_List(Heart_Of(TOP));
+        }
+        else if (end_delimiter and c == end_delimiter) {
+            DROP();
+            begin_delimiter = Begin_Delimit_For_List(Heart_Of(TOP));
+            if (TOP_INDEX == base + 1)
+                end_delimiter = 0;
+            else
+                end_delimiter = End_Delimit_For_List(
+                    Heart_Of(Data_Stack_At(Element, base - 1))
+            );
+        }
+        else if (end_delimiter) {  // back the pattern out to the start [1]
+            Drop_Data_Stack_To(base + 1);
+            begin_delimiter = Begin_Delimit_For_List(Heart_Of(TOP));
+            end_delimiter = 0;
+        }
+
+        next = Utf8_Next(&c, at);
     }
 
-    Drop_Level(SUBLEVEL);
+    transcode->at = at;  // scanner needs at, e.g. "a])", not "([a])", see [2]
+
+    Count pattern_depth = TOP_INDEX - base;  // number of pattern levels pushed
+    Utf8(const*) start = at - pattern_depth;  // start replacement at "([a])"
+
+  //=//// ALLOCATE OR PUSH LEVELS FOR EACH PATTERN END DELIMITER //////////=//
+
+    // We don't want to allocate or push a scanner level until we are sure
+    // it's necessary.  (If no patterns are found, all we need to do is COPY
+    // the string if there aren't any substitutions.)
+
+    if (not transcode->saved_levels) {  // first match... no Levels yet
+        StackIndex stack_index = base;
+        for (; stack_index != TOP_INDEX; ++stack_index) {
+            Element* pattern_at = Data_Stack_At(Element, stack_index + 1);
+            Byte terminal = End_Delimit_For_List(Heart_Of(pattern_at));
+
+            Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+                /*| LEVEL_FLAG_RAISED_RESULT_OK*/  // definitional errors?
+                | FLAG_STATE_BYTE(Scanner_State_For_Terminal(terminal));
+
+            if (stack_index != TOP_INDEX - 1)
+                flags |= SCAN_EXECUTOR_FLAG_SAVE_LEVEL_DONT_POP_ARRAY;
+
+            Level* sub = Make_Scan_Level(transcode, TG_End_Feed, flags);
+            sub->baseline.stack_base = base;  // we will drop to this
+
+            Push_Level_Erase_Out_If_State_0(OUT, sub);
+
+          #if RUNTIME_CHECKS
+            --pattern_depth;
+          #endif
+        }
+    }
+    else {  // Subsequent scan
+        Level* sub = transcode->saved_levels;
+        while (sub) {
+            Level* prior = sub->prior;
+            transcode->saved_levels = prior;
+            sub->baseline.stack_base = base;  // we drop to here before scan
+            Push_Level_Erase_Out_If_State_0(OUT, sub);
+            sub = prior;
+
+          #if RUNTIME_CHECKS
+            --pattern_depth;
+          #endif
+        }
+    }
+
+  #if RUNTIME_CHECKS
+    assert(pattern_depth == 0);
+  #endif
+
+    Drop_Data_Stack_To(base);  // clear end delimiters off the stack
+
+    Offset start_offset = start - head;
+    Init_Integer(SPARE, start_offset);  // will push in a triple after scan
+
+    assert(STATE = ST_COMPOSE2_STRING_SCAN);
+    return CONTINUE_SUBLEVEL(TOP_LEVEL);
+
+} string_scan_results_on_stack: { ////////////////////////////////////////////
+
+    // 1. While transcoding in a general case can't assume the data is valid
+    //    UTF-8, we're scanning an already validated ANY-UTF8? value here.
+    //
+    // 2. Each pattern found will push 3 values to the data stack: the
+    //    start offset where the pattern first begins, the code that was
+    //    scanned from inside the pattern, and the offset right after the
+    //    end character of where the pattern matched.
+
+    TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, SCRATCH);
+    Element* elem_start_offset = Known_Element(SPARE);
+    assert(Is_Integer(elem_start_offset));
+
+    Utf8(const*) at = cast(Utf8(const*), transcode->at);  // valid UTF-8 [1]
+    Utf8(const*) head = Cell_Utf8_At(input);
+    Offset end_offset = at - head;
+
+    Source* a = Pop_Managed_Source_From_Stack(SUBLEVEL->baseline.stack_base);
+    if (Get_Executor_Flag(SCAN, SUBLEVEL, NEWLINE_PENDING))
+        Set_Source_Flag(a, NEWLINE_AT_TAIL);
+
+    Level* sub = SUBLEVEL;
+    g_ts.top_level = sub->prior;
+    sub->prior = transcode->saved_levels;
+    transcode->saved_levels = sub;
+
+    Copy_Cell(PUSH(), elem_start_offset);  // push start, code, end [2]
+    Init_Block(PUSH(), a);
+    Init_Integer(PUSH(), end_offset);
+
+    if (*at != '\0')
+        goto string_find_next_pattern;
+
+    goto string_scan_finished;
+
+} string_scan_finished: { ///////////////////////////////////////////////////
+
+    // 1. !!! If we never found our pattern, should we validate that the
+    //    pattern was legal?  Or we could just say that if you use an illegal
+    //    pattern but no instances come up, that's ok?
+
+    TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, SCRATCH);
+
+    if (TOP_INDEX == STACK_BASE) {  // no triples pushed, so no matches [1]
+        assert(not transcode->saved_levels);
+        Free_Memory(TranscodeState, transcode);
+        return rebValue(CANON(COPY), input);
+    }
+
+    while (transcode->saved_levels) {
+        Level* sub = transcode->saved_levels;
+        transcode->saved_levels = sub->prior;
+        Free_Level_Internal(sub);
+    }
+
     Free_Memory(TranscodeState, transcode);
-    goto string_start_evaluations;
 
-  found_subsequent_string_pattern: { /////////////////////////////////////////
+    Init_Integer(SCRATCH, STACK_BASE + 1);  // stackindex of first triple
+    goto do_string_eval_scratch_is_stackindex;
 
-    Offset start_offset = transcode->at - head;
-    Init_Integer(PUSH(), start_offset);
-    assert(STATE == ST_COMPOSE_STRING_SCAN);
-    return CONTINUE_SUBLEVEL(SUBLEVEL);
-
-}} string_start_evaluations: { ///////////////////////////////////////////////
+} do_string_eval_scratch_is_stackindex: { ////////////////////////////////////
 
     // We do all the scans first, and then the evaluations.  This means that
     // no user code is run if the string being interpolated is malformed,
     // which is preferable.  It also helps with locality.  But it means the
     // evaluations have to be done on an already built stack.
 
-    Init_Integer(SCRATCH, 2);
-    goto do_string_eval_from_stack_scratch_is_offset;
+    StackIndex triples = VAL_INT32(SCRATCH);
+
+    assert(Is_Integer(Data_Stack_At(Element, triples)));  // start offset
+    OnStack(Element*) code = Data_Stack_At(Element, triples + 1);
+    assert(Is_Block(code));  // code to evaluate
+    assert(Is_Integer(Data_Stack_At(Element, triples + 2)));  // end offset
+
+    Tweak_Cell_Binding(code, Cell_Binding(pattern));  // bind unbound code
+
+    STATE = ST_COMPOSE2_STRING_EVAL;
+    return CONTINUE_CORE(
+        OUT,
+        LEVEL_FLAG_RAISED_RESULT_OK,  // we will bubble out raised errors
+        SPECIFIED,
+        Copy_Cell(SPARE, code)  // pass non-stack code
+    );
 
 } string_eval_in_out: { //////////////////////////////////////////////////////
 
-    Decay_If_Unstable(OUT);
+    if (Is_Raised(OUT)) {
+        Drop_Data_Stack_To(STACK_BASE);
+        return OUT;
+    }
 
-    StackIndex index = VAL_INT32(SCRATCH) + STACK_BASE;
-    Copy_Cell(Data_Stack_At(Value, index), stable_OUT);
+    Value* result = Decay_If_Unstable(OUT);
 
-    index += 3;
+    StackIndex triples = VAL_INT32(SCRATCH);
+    assert(Is_Block(Data_Stack_At(Element, triples + 1)));  // evaluated code
+    Copy_Cell(Data_Stack_At(Value, triples + 1), result);  // replace w/eval
 
-    if (index > TOP_INDEX)
+    triples += 3;  // skip to next set of 3
+    if (triples > TOP_INDEX)
         goto string_evaluations_done;
 
-    Init_Integer(SCRATCH, index - STACK_BASE);
-    goto do_string_eval_from_stack_scratch_is_offset;
-
-} do_string_eval_from_stack_scratch_is_offset: { /////////////////////////////
-
-    StackIndex index = VAL_INT32(SCRATCH) + STACK_BASE;
-
-    assert(Is_Integer(Data_Stack_At(Element, index - 1)));  // start offset
-    assert(Type_Of(Data_Stack_At(Element, index)) == Type_Of(pattern));
-    assert(Is_Integer(Data_Stack_At(Element, index + 1)));  // end offset
-
-    Copy_Cell(SPARE, Data_Stack_At(Element, index));
-    HEART_BYTE(SPARE) = TYPE_BLOCK;
-    Tweak_Cell_Binding(SPARE, Cell_Binding(pattern));
-
-    Init_Integer(SCRATCH, index - STACK_BASE);
-
-    STATE = ST_COMPOSE_STRING_EVAL;
-    return CONTINUE(OUT, stable_SPARE);
+    Init_Integer(SCRATCH, triples);
+    goto do_string_eval_scratch_is_stackindex;
 
 } string_evaluations_done: { /////////////////////////////////////////////////
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    StackIndex index = STACK_BASE + 2;
+    StackIndex triples = STACK_BASE + 1;  // [start_offset, code, end_offset]
 
     Offset at_offset = 0;
 
     Size size;
     Utf8(const*) head = Cell_Utf8_Size_At(&size, input);
 
-    for (; index < TOP_INDEX; index += 3) {
-        Offset start_offset = VAL_INT32(Data_Stack_At(Element, index - 1));
-        Value* eval = Data_Stack_At(Value, index);
-        Offset end_offset = VAL_INT32(Data_Stack_At(Element, index + 1));
+    for (; triples < TOP_INDEX; triples += 3) {
+        Offset start_offset = VAL_INT32(Data_Stack_At(Element, triples));
+        Value* eval = Data_Stack_At(Value, triples + 1);
+        Offset end_offset = VAL_INT32(Data_Stack_At(Element, triples + 2));
 
         Append_UTF8_May_Fail(
             mo->string,
@@ -1095,28 +1240,33 @@ DECLARE_NATIVE(COMPOSE2)
 
     Drop_Data_Stack_To(STACK_BASE);
 
-    return Init_Text(OUT, Pop_Molded_String(mo));
+    String* str = Pop_Molded_String(mo);
+    if (not Any_String(input))
+        Freeze_Flex(str);
+
+    return Init_Series_At_Core(OUT, Heart_Of(input), str, 0, nullptr);
 }}
 
 
 //
-//  /print*: native [
+//  /interpolate: native [
 //
-//  "Sneaky capturing PRINT with interpolation, native to be sneaky for now"
+//  "Variation of COMPOSE that uses the binding environment from the callsite"
 //
-//      return: [~]
-//      line [text!]
+//      return: [any-list? any-sequence? any-word? any-utf8?]
+//      template "The template to fill in (no-op if WORD!)"
+//          [<maybe> any-list? any-sequence? any-word? any-utf8?]
 //  ]
 //
-DECLARE_NATIVE(PRINT_P)
+DECLARE_NATIVE(INTERPOLATE)
 {
-    INCLUDE_PARAMS_OF_PRINT_P;
+    INCLUDE_PARAMS_OF_INTERPOLATE;
 
     Element* pattern = Init_Any_List(SPARE, TYPE_THE_GROUP, EMPTY_ARRAY);
     Tweak_Cell_Binding(pattern, Level_Binding(level_));
 
     Quotify(pattern);
-    return rebDelegate(CANON(PRINT), CANON(COMPOSE2), pattern, ARG(LINE));
+    return rebDelegate(CANON(COMPOSE2), pattern, ARG(TEMPLATE));
 }
 
 

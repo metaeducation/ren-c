@@ -382,6 +382,7 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
                 String_Len(mo->string) - mo->base.index,
                 String_Size(mo->string) - mo->base.size
             )){
+                Drop_Mold(mo);
                 return OUT;
             }
             s = Pop_Molded_String(mo);

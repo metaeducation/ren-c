@@ -784,9 +784,9 @@ bind construct [
             ; needs to be closed.  Invert the symbol.
             ;
             switch error.arg1 [
-                "}" ["{"]
-                ")" ["("]
-                "]" ["["]
+                #"}" [#"{"]
+                #")" [#"("]
+                #"]" [#"["]
             ] also unclosed -> [
                 ;
                 ; Backslash is used in the second column to help make a

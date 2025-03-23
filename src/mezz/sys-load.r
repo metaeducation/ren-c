@@ -328,7 +328,7 @@ bind construct [
     return: [~null~ url!]
     url [<maybe> url!]
 ][
-    let text: to text! url  ; URL! may become immutable, try thinking ahead
+    let text: to text! url  ; URL! is immutable, must copy to mutate in parse
 
     try parse text [
         "http" opt "s" "://gitlab.com/"
@@ -341,23 +341,22 @@ bind construct [
     ]
 
     ; Adjust a decorated GitHub UI to https://raw.githubusercontent.com
-    let start
+    ;
     try parse text [
         "http" opt "s" "://github.com/"
-        start: <here>
+        let start: <here>
         thru "/"  ; user name
         thru "/"  ; repository name
         change "blob/" ("")  ; GitHub puts the "raw" in the subdomain name
 
-        (return as url! unspaced [
-            https://raw.githubusercontent.com/ start
-        ])
+        (return interpolate https://raw.githubusercontent.com/(start))
     ]
 
     ; Adjust a Github Gist URL to https://gist.github.com/.../raw/
+    ;
     try parse text [
         "http" opt "s" "://gist.github.com/"
-        start: <here>
+        let start: <here>
         thru "/"  ; user name
         [
             to "#file="
@@ -367,9 +366,7 @@ bind construct [
         ]
         insert ("/raw/")
 
-        (return as url! unspaced [
-            https://gist.githubusercontent.com/ start
-        ])
+        (return interpolate https://gist.githubusercontent.com/(start))
     ]
 
     return null

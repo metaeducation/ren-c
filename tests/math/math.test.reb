@@ -129,10 +129,9 @@ bind construct [
             1 = length of ret
             any-number? ret.1
         ] else [
-            fail [
-                unspaced ["Cannot be REDUCED to a number (" mold ret ")"]
-                ":" mold res
-            ]
+            fail interpolate (
+                -{Cannot be REDUCED to a number (mold ret) : (mold res)}-
+            )
         ]
         return ret.1
     ]
