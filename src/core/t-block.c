@@ -497,29 +497,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
     }
 
     Sigil sigil = maybe Sigil_For_Heart(heart);
-    switch (sigil) {
-      case SIGIL_0:  // no decoration
-        break;
-
-      case SIGIL_META:
-        Append_Codepoint(mo->string, '^');
-        break;
-
-      case SIGIL_THE:
-        Append_Codepoint(mo->string, '@');
-        break;
-
-      case SIGIL_TYPE:
-        Append_Codepoint(mo->string, '&');
-        break;
-
-      case SIGIL_VAR:
-        Append_Codepoint(mo->string, '$');
-        break;
-
-      default:
-        panic (v);  // cell heart should not have quote/quasi sigils
-    }
+    if (sigil)
+        Append_Codepoint(mo->string, Char_For_Sigil(sigil));
 
     const char *sep;
 

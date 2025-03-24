@@ -140,7 +140,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
 
     Option(Sigil) sigil = Sigil_For_Heart(Heart_Of(v));
     if (sigil)
-        Append_Codepoint(mo->string, Symbol_For_Sigil(unwrap sigil));
+        Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
 
     Append_Spelling(mo->string, Cell_Word_Symbol(v));
 

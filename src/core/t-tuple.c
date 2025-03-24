@@ -656,14 +656,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
         interstitial = '/';
     }
 
-    if (Any_Meta_Type(heart))
-        Append_Codepoint(mo->string, '^');
-    else if (Any_The_Type(heart))
-        Append_Codepoint(mo->string, '@');
-    else if (Any_Type_Type(heart))
-        Append_Codepoint(mo->string, '&');
-    else if (Any_Var_Type(heart))
-        Append_Codepoint(mo->string, '$');
+    Sigil sigil = maybe Sigil_For_Heart(heart);
+    if (sigil)
+        Append_Codepoint(mo->string, Char_For_Sigil(sigil));
 
     DECLARE_ELEMENT (element);
     Length len = Cell_Sequence_Len(c);

@@ -25,7 +25,7 @@
 // was lifted, it became feasible to give them the type SIGIL!
 //
 
-INLINE char Symbol_For_Sigil(Sigil sigil) {
+INLINE char Char_For_Sigil(Sigil sigil) {
     switch (sigil) {
       case SIGIL_META:  return '^';
       case SIGIL_TYPE:  return '&';
@@ -38,7 +38,7 @@ INLINE char Symbol_For_Sigil(Sigil sigil) {
 }
 
 INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
-    Init_Char_Unchecked(out, Symbol_For_Sigil(sigil));
+    Init_Char_Unchecked(out, Char_For_Sigil(sigil));
     HEART_BYTE(out) = TYPE_SIGIL;
     out->extra.at_least_4[IDX_EXTRA_SIGIL] = sigil;
     return out;
