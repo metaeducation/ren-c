@@ -213,7 +213,7 @@ REBI64 Int64s(const Value* val, REBINT sign)
 const Value* Datatype_From_Type(Type type)
 {
     assert(type <= MAX_TYPE);
-    SymId id = cast(SymId, MAX_TYPE + type);
+    SymId id = u_cast(SymId, MAX_TYPE_BYTE + u_cast(Byte, type));
     const Value* datatype = Lib_Var(id);  // should always succeed
     assert(Is_Type_Block(datatype));
     return datatype;
@@ -268,10 +268,10 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 // !!! Overlaps with Assert_Varlist, review folding them together.
 //
-void Extra_Init_Context_Cell_Checks_Debug(Type type, VarList* v) {
-    assert(CTX_TYPE(v) == type);
+void Extra_Init_Context_Cell_Checks_Debug(Heart heart, VarList* v) {
+    assert(CTX_TYPE(v) == heart);
 
-    if (type == TYPE_FRAME)  // may not have Misc_Varlist_Adjunct()
+    if (heart == TYPE_FRAME)  // may not have Misc_Varlist_Adjunct()
         assert(
             (v->leader.bits & FLEX_MASK_LEVEL_VARLIST)
             == FLEX_MASK_LEVEL_VARLIST
@@ -285,7 +285,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Type type, VarList* v) {
     // Currently only FRAME! uses the extra field, in order to capture the
     // ->coupling of the function value it links to (which is in ->phase)
     //
-    assert(archetype->extra.node == nullptr or type == TYPE_FRAME);
+    assert(archetype->extra.node == nullptr or heart == TYPE_FRAME);
 
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
@@ -532,9 +532,9 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
         return nullptr;
     }
 
-    Heart h = u_cast(Heart, MIRROR_BYTE(c_cast(Source*, f)));
-    if (h != TYPE_0) {  // no length 2 sequence arrays unless mirror
-        HEART_BYTE(out) = h;
+    Option(Heart) mirror = Mirror_Of(c_cast(Source*, f));
+    if (mirror) {  // no length 2 sequence arrays unless mirror
+        HEART_BYTE(out) = unwrap mirror;
         Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary
         return nullptr;
     }

@@ -933,9 +933,9 @@ void Swap_Flex_Content(Flex* a, Flex* b)
     assert(Stub_Holds_Cells(a) == Stub_Holds_Cells(b));  // also seems sane
 
     if (Stub_Flavor(a) == FLAVOR_SOURCE)  // mirror bytes complicate things [1]
-        assert(MIRROR_BYTE(cast(Source*, a)) == TYPE_0);
+        assert(not Mirror_Of(cast(Source*, a)));
     if (Stub_Flavor(b) == FLAVOR_SOURCE)
-        assert(MIRROR_BYTE(cast(Source*, b)) == TYPE_0);
+        assert(not Mirror_Of(cast(Source*, b)));
 
     bool a_managed = Is_Node_Managed(a);
     bool b_managed = Is_Node_Managed(b);

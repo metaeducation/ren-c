@@ -223,8 +223,8 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     if (Any_List(e)) {  // try mirror optimization
         assert(Is_Group(e) or Is_Block(e));  // only valid kinds
         const Source* a = Cell_Array(e);
-        if (MIRROR_BYTE(a) == TYPE_0 or MIRROR_BYTE(a) == Heart_Of(e)) {
-            MIRROR_BYTE(a) = Heart_Of(e);  // remember what kind it is
+        if (not Mirror_Of(a) or Mirror_Of(a) == Heart_Of(e)) {
+            MIRROR_BYTE(a) = HEART_BYTE(e);  // remember what kind it is
             HEART_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;
             return nullptr;
@@ -609,7 +609,7 @@ INLINE Length Cell_Sequence_Len(const Cell* c) {
 
       case FLAVOR_SOURCE : {  // uncompressed sequence
         const Source* a = c_cast(Source*, node1);
-        if (MIRROR_BYTE(a) != TYPE_0)
+        if (Mirror_Of(a))
             return 2;  // e.g. `(a):` stores TYPE_GROUP in the mirror byte
         assert(Array_Len(a) >= 2);
         assert(Is_Source_Frozen_Shallow(a));
@@ -675,7 +675,7 @@ INLINE Element* Derelativize_Sequence_At(
 
       case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
         const Source* a = c_cast(Source*, CELL_SERIESLIKE_NODE(sequence));
-        if (MIRROR_BYTE(a) != TYPE_0) {  // [4]
+        if (Mirror_Of(a)) {  // [4]
             assert(n < 2);
             if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
                 return Init_Blank(out);
@@ -732,7 +732,7 @@ INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
 
       case FLAVOR_SOURCE: {  // uncompressed sequence
         const Source* a = Cell_Array(sequence);
-        if (MIRROR_BYTE(a) != TYPE_0)
+        if (Mirror_Of(a))
             return SPECIFIED;
         return Cell_Binding(sequence); }
 
@@ -833,14 +833,14 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         return Trailing_Blank_And(TYPE_WORD);
     }
 
-    Heart mirror = u_cast(Heart, MIRROR_BYTE(u_cast(const Source*, f)));
-    if (mirror == TYPE_0)  // s actually is sequence elements, not one element
+    Option(Heart) mirror = Mirror_Of(u_cast(const Source*, f));
+    if (not mirror)  // s actually is sequence elements, not one element
         return NOT_SINGLEHEART_0;
 
     if (c->header.bits & CELL_FLAG_LEADING_BLANK)
-        return Leading_Blank_And(mirror);
+        return Leading_Blank_And(unwrap mirror);
 
-    return Trailing_Blank_And(mirror);
+    return Trailing_Blank_And(unwrap mirror);
 }
 
 

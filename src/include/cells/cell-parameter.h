@@ -420,7 +420,7 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
   #endif
     out->header.bits = (
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(TYPE_WORD)
+            | FLAG_HEART(WORD)
             | FLAG_QUOTE_BYTE(ANTIFORM_0_COERCE_ONLY)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked

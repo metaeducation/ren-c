@@ -358,7 +358,7 @@ uint32_t Hash_Value(const Cell* cell)
         panic (nullptr); // List should be comprehensive
     }
 
-    return hash ^ crc32_table[heart];
+    return hash ^ crc32_table[u_cast(Byte, heart)];
 }
 
 

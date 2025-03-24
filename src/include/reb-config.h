@@ -889,10 +889,41 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_POISON_DROPPED_STACK_CELLS  RUNTIME_CHECKS
 #endif
 
-#if !defined(DEBUG_HOOK_HEART_BYTE)
-    #define DEBUG_HOOK_HEART_BYTE 0
+#if !defined(DEBUG_EXTRA_HEART_CHECKS)
+  #if !defined(__clang__)  // Note: MSVC has more lax enum conversion than gcc
+    #define DEBUG_EXTRA_HEART_CHECKS  (RUNTIME_CHECKS && CPLUSPLUS_11)
+  #else
+    #define DEBUG_EXTRA_HEART_CHECKS  0  // clang won't cross switch() enums
+  #endif
 #endif
 
+#if DEBUG_EXTRA_HEART_CHECKS
+    //
+    // Note: There's actually a benefit to clang not tolerating this, as
+    // it means that enum comparisons that aren't intentional from distinct
+    // enums will be caught in clang builds.
+    //
+  #if defined(__clang__)
+    #error "DEBUG_EXTRA_HEART_CHECKS won't work in clang (partial gcc support)"
+    #include <stophere>  // https://stackoverflow.com/a/45661130
+  #endif
+#endif
+
+#if !defined(DEBUG_HOOK_HEART_BYTE)
+  #if defined(_MSC_VER)  // can use enum class for TYPE_XXX, so needs hook
+    #define DEBUG_HOOK_HEART_BYTE  DEBUG_EXTRA_HEART_CHECKS
+  #else
+    #define DEBUG_HOOK_HEART_BYTE  0
+  #endif
+#endif
+
+#if !defined(DEBUG_HOOK_MIRROR_BYTE)
+  #if defined(_MSC_VER)  // can use enum class for TYPE_XXX, so needs hook
+    #define DEBUG_HOOK_MIRROR_BYTE  DEBUG_EXTRA_HEART_CHECKS
+  #else
+    #define DEBUG_HOOK_MIRROR_BYTE  0  // without enum class, it's useless
+  #endif
+#endif
 
 // This checks to make sure that when you are assigning or fetching something
 // like Stub.misc.node, then the flag like STUB_FLAG_MISC_NODE_NEEDS_MARK

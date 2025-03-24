@@ -133,7 +133,7 @@ INLINE Element* Init_Handle_Cdata(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(TYPE_HANDLE) | CELL_MASK_NO_NODES
+        FLAG_HEART(HANDLE) | CELL_MASK_NO_NODES
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_CDATA_P(out) = cdata;
@@ -148,7 +148,7 @@ INLINE Element* Init_Handle_Cfunc(
 ){
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(TYPE_HANDLE) | CELL_MASK_NO_NODES
+        FLAG_HEART(HANDLE) | CELL_MASK_NO_NODES
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_CFUNC_P(out) = cfunc;
@@ -162,7 +162,7 @@ INLINE Element* Init_Handle_Node(
 ){
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(TYPE_HANDLE) | CELL_FLAG_DONT_MARK_NODE1
+        FLAG_HEART(HANDLE) | CELL_FLAG_DONT_MARK_NODE1
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_NODE_P(out) = m_cast(Node*, node);  // extracted as const
@@ -181,7 +181,7 @@ INLINE void Init_Handle_Managed_Common(
     Cell* single = Stub_Cell(stub);
     Reset_Cell_Header_Noquote(
         single,
-        FLAG_HEART_BYTE(TYPE_HANDLE)
+        FLAG_HEART(HANDLE)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // points to singular
             | CELL_FLAG_DONT_MARK_NODE2
     );
@@ -196,7 +196,7 @@ INLINE void Init_Handle_Managed_Common(
     //
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(TYPE_HANDLE)
+        FLAG_HEART(HANDLE)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // points to stub
             | CELL_FLAG_DONT_MARK_NODE2
     );

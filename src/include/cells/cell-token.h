@@ -186,7 +186,7 @@ INLINE Element* Init_Utf8_Non_String(
 INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(TYPE_ISSUE) | CELL_MASK_NO_NODES
+        FLAG_HEART(ISSUE) | CELL_MASK_NO_NODES
     );
 
     if (c == 0) {  // NUL is #{00}, a BLOB! not an ISSUE! (see Is_NUL())

@@ -769,10 +769,9 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 Value* Init_Typechecker(Init(Value) out, const Element* types) {
     if (Is_Type_Block(types)) {
         Type t = Cell_Datatype_Type(types);
-        Offset n = cast(Offset, t);
+        SymId16 id16 = u_cast(SymId16, u_cast(Byte, t)) + MAX_TYPE_BYTE;
 
-        SymId constraint_sym = cast(SymId, MAX_TYPE + n);
-        return Copy_Cell(out, Lib_Var(constraint_sym));
+        return Copy_Cell(out, Lib_Var(u_cast(SymId, id16)));
     }
 
     assert(Is_Type_Word(types));

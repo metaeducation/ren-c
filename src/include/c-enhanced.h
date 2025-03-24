@@ -497,6 +497,46 @@
 #endif
 
 
+//=//// ENABLE IF FOR SAME TYPE ///////////////////////////////////////////=//
+//
+// This is useful for SFINAE (Substitution Failure Is Not An Error), as a
+// very common pattern.  It's variadic, so you can use it like:
+//
+//   template <typename T, EnableIfSame<T, TypeOne, TypeTwo> = nullptr>
+//   INLINE bool operator==(const TypeThree& three, T&& t) = delete;
+//
+// Written out long form that would look like:
+//
+//    template <
+//        typename T,
+//        typename std::enable_if<
+//            std::is_same<T, TypeOne>::value
+//            or std::is_same<T, TypeTwo>::value
+//        >::type* = nullptr
+//     >
+//     INLINE bool operator==(const TypeThree& three, T&& t) = delete;
+//
+#if CPLUSPLUS_11
+    template <typename T, typename... Allowed>
+    struct IsSameAny;
+
+    template <typename T, typename First, typename... Rest>
+    struct IsSameAny<T, First, Rest...> {
+        static constexpr bool value =
+            std::is_same<T, First>::value or IsSameAny<T, Rest...>::value;
+    };
+
+    template <typename T>
+    struct IsSameAny<T> {
+        static constexpr bool value = false;
+    };
+
+    template <typename T, typename... Allowed>
+    using EnableIfSame =
+        typename std::enable_if<IsSameAny<T, Allowed...>::value>::type*;
+#endif
+
+
 //=//// NOOP a.k.a. VOID GENERATOR ////////////////////////////////////////=//
 //
 // VOID would be a more purposeful name, but Windows headers define that
@@ -1136,10 +1176,12 @@
         OptionWrapper () = default;  // garbage, or 0 if global [2]
 
         template <typename U>
-        OptionWrapper (U something) : wrapped (something) {}
+        OptionWrapper (U something) : wrapped (something)
+          {}
 
         template <typename X>
-        OptionWrapper (OptionWrapper<X> other) : wrapped (other.wrapped) {}
+        OptionWrapper (const OptionWrapper<X>& other) : wrapped (other.wrapped)
+          {}
 
         operator uintptr_t() const  // so it works in switch() statements
           { return cast(uintptr_t, wrapped); }
@@ -1154,27 +1196,27 @@
     };
 
     template<typename L, typename R>
-    bool operator==(OptionWrapper<L> left, OptionWrapper<R> right)
+    bool operator==(const OptionWrapper<L>& left, const OptionWrapper<R>& right)
         { return left.wrapped == right.wrapped; }
 
     template<typename L, typename R>
-    bool operator==(OptionWrapper<L> left, R right)
+    bool operator==(const OptionWrapper<L>& left, R right)
         { return left.wrapped == right; }
 
     template<typename L, typename R>
-    bool operator==(L left, OptionWrapper<R> right)
+    bool operator==(L left, const OptionWrapper<R>& right)
         { return left == right.wrapped; }
 
     template<typename L, typename R>
-    bool operator!=(OptionWrapper<L> left, OptionWrapper<R> right)
+    bool operator!=(const OptionWrapper<L>& left, const OptionWrapper<R>& right)
         { return left.wrapped != right.wrapped; }
 
     template<typename L, typename R>
-    bool operator!=(OptionWrapper<L> left, R right)
+    bool operator!=(const OptionWrapper<L>& left, R right)
         { return left.wrapped != right; }
 
     template<typename L, typename R>
-    bool operator!=(L left, OptionWrapper<R> right)
+    bool operator!=(L left, const OptionWrapper<R>& right)
         { return left != right.wrapped; }
 
     struct UnwrapHelper {};

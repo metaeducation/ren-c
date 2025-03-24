@@ -327,7 +327,7 @@ Bounce Stepper_Executor(Level* L)
     /* assert(Not_Level_At_End(L)); */  // edge case with rebValue("") [1]
     if (Is_Level_At_End(L)) {
         Init_Void(OUT);
-        STATE = TYPE_BLANK;  // can't leave as STATE_0
+        STATE = cast(StepperState, TYPE_BLANK);  // can't leave as STATE_0
         goto finished;
     }
 
@@ -442,12 +442,12 @@ Bounce Stepper_Executor(Level* L)
         Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
 
         if (Is_Word(CURRENT)) {
-            STATE = TYPE_WORD;
+            STATE = cast(StepperState, TYPE_WORD);
             goto word_common;
         }
 
         assert(Is_Path(CURRENT));
-        STATE = TYPE_PATH;
+        STATE = cast(StepperState, TYPE_PATH);
         goto path_common;
     }
 
@@ -498,11 +498,11 @@ Bounce Stepper_Executor(Level* L)
             if (e)
                 return FAIL(unwrap e);
 
-            STATE = TYPE_QUASIFORM;  // can't leave as STATE_0
+            STATE = cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
         }
         else {
             QUOTE_BYTE(OUT) -= Quote_Shift(1);
-            STATE = TYPE_QUOTED;  // can't leave as STATE_0
+            STATE = cast(StepperState, TYPE_QUOTED);  // can't leave STATE_0
         }
     }
     else switch ((STATE = HEART_BYTE(CURRENT))) {  // states include type [2]
@@ -574,7 +574,7 @@ Bounce Stepper_Executor(Level* L)
         // Gather args and execute function (the arg gathering makes nested
         // eval calls that lookahead, but no lookahead after the action runs)
         //
-        STATE = TYPE_FRAME;
+        STATE = cast(StepperState, TYPE_FRAME);
         return CONTINUE_SUBLEVEL(TOP_LEVEL); }
 
 
@@ -914,7 +914,10 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_META_WORD: {
         assert(
             (STATE == ST_STEPPER_GET_WORD and Is_Word(CURRENT))
-            or (STATE == TYPE_META_WORD and Is_Meta_Word(CURRENT))
+            or (
+                STATE == cast(StepperState, TYPE_META_WORD)
+                and Is_Meta_Word(CURRENT)
+            )
         );
         Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
             OUT,
@@ -924,7 +927,7 @@ Bounce Stepper_Executor(Level* L)
         if (error)
             return FAIL(unwrap error);
 
-        if (STATE == TYPE_META_WORD)
+        if (STATE == cast(StepperState, TYPE_META_WORD))
             Meta_Quotify(OUT);
 
         goto lookahead; }
@@ -951,7 +954,7 @@ Bounce Stepper_Executor(Level* L)
 
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // [2]
 
-        if (STATE == TYPE_META_GROUP)
+        if (STATE == cast(StepperState, TYPE_META_GROUP))
             flags |= LEVEL_FLAG_META_RESULT;
 
         Level* sub = Make_Level_At_Inherit_Const(
@@ -1277,7 +1280,10 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_META_TUPLE: {
         assert(
             (STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(CURRENT))
-            or (STATE == TYPE_META_TUPLE and Is_Meta_Tuple(CURRENT))
+            or (
+                STATE == cast(StepperState, TYPE_META_TUPLE)
+                and Is_Meta_Tuple(CURRENT)
+            )
         );
         Option(Error*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
             OUT,
@@ -1291,7 +1297,7 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;  // e.g. EXCEPT might want to see raised error
         }
 
-        if (STATE == TYPE_META_TUPLE)
+        if (STATE == cast(StepperState, TYPE_META_TUPLE))
             Meta_Quotify(OUT);
 
         goto lookahead; }
@@ -1743,7 +1749,7 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_VAR_TUPLE:
       case TYPE_VAR_CHAIN:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        HEART_BYTE(OUT) = Plainify_Any_Var_Heart(cast(Heart, STATE));
+        HEART_BYTE(OUT) = Plainify_Any_Var_Heart(cast(HeartEnum, STATE));
         goto lookahead;
 
 

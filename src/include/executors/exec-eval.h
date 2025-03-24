@@ -154,7 +154,7 @@ typedef struct {
 // to start in various points of the evaluation process.  When doing so, be
 // sure the expected level variables for that state are initialized.
 //
-enum {
+typedef enum {
     ST_STEPPER_INITIAL_ENTRY = STATE_0,
 
 
@@ -166,9 +166,9 @@ enum {
     // easy use in the "hot" level header location.
     //
     // Since we can only evaluate Element, we start the stepper custom states
-    // right after MAX_TYPE_ELEMENT (inclusive... TYPE_QUOTED = MAX_TYPE_ELEMENT)
+    // after MAX_TYPE_ELEMENT (inclusive, e.g. TYPE_QUOTED = MAX_TYPE_ELEMENT)
 
-    ST_STEPPER_MAX_TYPE = MAX_TYPE_ELEMENT,
+    ST_STEPPER_MAX_TYPE = MAX_TYPE_BYTE_ELEMENT,
 
 
   //=//// STEPPER STATES ABOVE MAX_TYPE ////////////////////////////////////=//
@@ -184,7 +184,7 @@ enum {
     ST_STEPPER_SET_VOID,
     ST_STEPPER_SET_BLOCK,
     ST_STEPPER_SET_GROUP
-};
+} StepperState;
 
 // There's a rule that the Level's OUT has to be fresh if it's in the
 // initial state.  So if an evaluator Level gets reused, it needs to

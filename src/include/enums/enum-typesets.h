@@ -105,32 +105,32 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
 INLINE Heart Sigilize_Any_Plain_Heart(Sigil sigil, Heart h) {
     assert(Any_Plain_Type(h));
     assert(sigil != SIGIL_0);
-    return cast(Heart, h + u_cast(Byte, sigil));
+    return cast(HeartEnum, u_cast(Byte, h) + u_cast(Byte, sigil));
 }
 
 INLINE Heart Plainify_Any_Meta_Heart(Heart h) {
     assert(Any_Meta_Type(h));
-    return cast(Heart, h - 1);
+    return cast(HeartEnum, u_cast(Byte, h) - 1);
 }
 
 INLINE Heart Plainify_Any_Type_Heart(Heart h) {
     assert(Any_Meta_Type(h));
-    return cast(Heart, h - 2);
+    return cast(HeartEnum, u_cast(Byte, h) - 2);
 }
 
 INLINE Heart Plainify_Any_The_Heart(Heart h) {
     assert(Any_The_Type(h));
-    return cast(Heart, h - 3);
+    return cast(HeartEnum, u_cast(Byte, h) - 3);
 }
 
 INLINE Heart Plainify_Any_Var_Heart(Heart h) {
     assert(Any_Var_Type(h));
-    return cast(Heart, h - 4);
+    return cast(HeartEnum, u_cast(Byte, h) - 4);
 }
 
 
-INLINE bool Any_Sequence_Or_List_Type(Byte k)  // !!! optimize?
-  { return Any_Sequence_Type(k) or Any_List_Type(k); }
+INLINE bool Any_Sequence_Or_List_Type(Heart h)  // !!! optimize?
+  { return Any_Sequence_Type(h) or Any_List_Type(h); }
 
-INLINE bool Any_Bytes_Type(Byte k)
-  { return Any_Utf8_Type(k) or k == TYPE_BLOB; }
+INLINE bool Any_Bytes_Type(Heart h)
+  { return Any_Utf8_Type(h) or h == TYPE_BLOB; }

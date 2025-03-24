@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -38,16 +38,51 @@
 // make-work to check for them when you're sure you're dealing with something
 // that is constrained to being a valid cell heart.
 //
-// Unfortunately, there's no such thing as "enum inheritance" in C++ to step
-// in and help, by making the result of Type_Of() a superset of states that
-// are returned from Heart_Of(), and prohibiting passing the superset
-// state to routines that only expect the subset.  This file does the next
-// best thing by making a wrapper class that can accept either of two
-// enums as initialization, but can only be passed where the superset is
-// accepted.
+// Hence, only some TYPE_XXX values can be written into HEART_BYTE():
 //
-// **THIS ONLY SEEMS TO WORK IN MSVC AND GCC, CLANG HAS MORE AGGRESSIVE
-//   IMPLEMENTATIONS OF THE -Wenum-compare WARNING!!!**.
+//    HEART_BYTE(cell) = TYPE_INTEGER;  // valid
+//    HEART_BYTE(cell) = TYPE_QUOTED;  // invalid, it's a pseudotype
+//
+// And you shouldn't really be comparing Heart against pseudotypes:
+//
+//    void Some_Function(Heart heart) {
+//       if (heart == TYPE_QUOTED)  // invalid, it's a pseudotype
+//         { ... }
+//    }
+//
+// But to make a long story short, the desire to use the TYPE_XXX values
+// in switch() statements is a thorny one.  C++ doesn't have enum inheritance.
+// So you either have two enums with overlapping values (e.g. HEART_INTEGER
+// in the HeartEnum, and TYPE_INTEGER in the TypeEnum), or you have two enums
+// that spread TYPE_XXX values across the enums...and hope the compiler lets
+// you get away with lax conversions between them.
+//
+// Using a enums with redundancy (HEART_INTEGER/TYPE_INTEGER) is the least
+// dodgy way to do it.  But it means that if you change between switch(type)
+// and switch(heart) you need to rename all your case labels.  It's also
+// cleaner reading if people only have to see TYPE_XXX constants.  So for
+// now, this goes the hard road of only using TYPE_XXX constants.
+//
+// The only way to do static analysis to stop the invalid bytes is to make
+// HEART_BYTE() a macro that creates a C++ class that holds onto the cell,
+// and has an assignment operator that does the desired check before it
+// writes the byte to the intended location.  In order to do this, TYPE_XXX
+// values can't be "plain" C enums, because there's no way to overload
+// them distinctly.  They have to be a class, or an "enum class".
+//
+// Only MSVC is willing to ignore the C++ standard and allow you to switch()
+// on mixed enum class values.  So even though TYPE_INTEGER comes from the
+// HeartEnum and TYPE_QUOTED comes from the TypeEnum, you can mix and match
+// them in a switch().  So only MSVC is able to statically prevent non-heart
+// assignments to HEART_BYTE(), or comparisons of Pseudotypes against literal
+// heart TYPE_XXX enum states.
+//
+// GCC won't interconvert enum classes, which rules out that ability.  But
+// it does allow the minor (but useful) prevention of passing a Type where
+// a Heart is expected.  It also stops (Heart_Of(cell) == TYPE_QUOTED) types
+// of mistakes.
+//
+// Clang doesn't allow any of it, so just forget it.
 //
 // 1. The technique requires splitting the enum into two parts (where the
 //    TypeEnum has dummy values to cover the HeartEnum cases so that switch()
@@ -57,52 +92,167 @@
 //    A consolidated enum seems to have to be used if you're not going to
 //    be doing the class trick.
 //
-// 2. Originally there were two explicit conversion operators in Type to
-//    handle the cases of Heart and SymId.  This worked fine in GCC, but
-//    MSVC's left shift operator seemed to be able to find not only the
-//    implicit operator but also the explicit ones, considering it to
-//    be ambiguous.  So this uses the cast_helper<> tool instead, since the
-//    calls all use the `cast()` macro anyway.
-//
 
 #include "tmp-hearts.h"  // HeartEnum and TypeEnum (TYPE_BLOCK, TYPE_TEXT...)
 
-#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11 || defined(__clang__)
-    typedef TypeEnum Heart;  // avoid enum compare warnings [1]
+#if (! DEBUG_EXTRA_HEART_CHECKS)
+    typedef TypeEnum HeartEnum;
+
+    typedef HeartEnum Heart;  // avoid enum compare warnings [1]
     typedef TypeEnum Type;
 #else
-    typedef HeartEnum Heart;
+    struct Heart {
+        HeartEnum h;  // an "enum class" in MSVC (members are HeartEnum::XXX)
+
+        Heart () = default;
+        Heart (HeartEnum heart) : h (u_cast(HeartEnum, heart)) {}
+        explicit Heart (Byte byte) : h (u_cast(HeartEnum, byte)) {}
+        explicit Heart (SymId id) {
+            assert(id <= MAX_HEART_BYTE);
+            h = u_cast(HeartEnum, id);
+        }
+
+        explicit operator bool() const  // for Option(Heart) in if() statements
+          { return cast(Byte, h) != 0; }
+
+        explicit operator Byte() const
+          { return u_cast(Byte, h); }
+
+        explicit operator SymId() const
+          { return u_cast(SymId, h); }
+
+        operator HeartEnum() const
+          { return h; }
+    };
 
     struct Type {
-        TypeEnum t;
+        TypeEnum t;  // an "enum class" in MSVC (members are TypeEnum::XXX)
 
         Type () = default;
         Type (HeartEnum heart) : t (u_cast(TypeEnum, heart)) {}
+        Type (const Heart& heart) : t (u_cast(TypeEnum, heart.h)) {}
         Type (TypeEnum type) : t (type) {}
         explicit Type (Byte byte) : t (u_cast(TypeEnum, byte)) {}
         explicit Type (SymId id) {
-            assert(id <= MAX_TYPE);
+            assert(id <= MAX_TYPE_BYTE);
             t = u_cast(TypeEnum, id);
         }
 
-        operator TypeEnum()
+        explicit operator bool() const  // for Option(Type) in if() statements
+          { return cast(Byte, t) != 0; }
+
+        explicit operator Byte() const
+          { return u_cast(Byte, t); }
+
+        explicit operator SymId() const
+          { return u_cast(SymId, t); }
+
+        operator TypeEnum() const
           { return t; }
-
-        bool operator==(HeartEnum heart)
-          { return t == u_cast(TypeEnum, heart); }
     };
 
-    template<>  // explicit conversion operators ambiguous in MSVC [2]
-    struct cast_helper<Type,Heart> {
-        static Heart convert(Type type)
-          { return u_cast(Heart, type.t); }
-    };
+    // Disable comparing literally against elements from TypeEnum, e.g.
+    //
+    //     if (heart == TYPE_QUOTED) { ... }  // cause an error
+    //
+    // This doesn't stop comparing Type variables to Heart variables, which
+    // is considered to be valid.  (Should it be?)
 
-    template<>  // explicit conversion operators ambiguous in MSVC [2]
-    struct cast_helper<Type,SymId> {
-        static SymId convert(Type type)
-          { return u_cast(SymId, type.t);}
-    };
+    template <typename T, EnableIfSame<T, TypeEnum> = nullptr>
+    INLINE bool operator==(const Heart& heart, T&& t) = delete;
+
+    template <typename T, EnableIfSame<T, TypeEnum> = nullptr>
+    INLINE bool operator==(T&& t, const Heart& heart) = delete;
+
+    template <typename T, EnableIfSame<T, TypeEnum> = nullptr>
+    INLINE bool operator!=(const Heart& heart, T&& t) = delete;
+
+    template <typename T, EnableIfSame<T, TypeEnum> = nullptr>
+    INLINE bool operator!=(T&& t, const Heart& heart) = delete;
+
+    // If using enum classes, things get complicated.  Because there are
+    // non-explicit conversions betwen the two types, it's a hodgepodge of
+    // default behaviors that become ambiguous with the overloads.  Without
+    // overloads it won't work, but with overloads it doesn't work either.
+    // You have to add the overloads and then use SFINAE to disable very
+    // narrow cases of ambiguity.  This is a bit of a mess, but it works.
+
+  #if defined(_MSC_VER)
+    INLINE bool operator==(Heart& left, Heart& right)
+      { return u_cast(Byte, left.h) == u_cast(Byte, right.h); }
+
+    INLINE bool operator!=(Heart& left, Heart& right)
+      { return u_cast(Byte, left.h) != u_cast(Byte, right.h); }
+
+    INLINE bool operator==(Type& left, Type& right)
+      { return u_cast(Byte, left.t) == u_cast(Byte, right.t); }
+
+    INLINE bool operator!=(Type& left, Type& right)
+      { return u_cast(Byte, left.t) != u_cast(Byte, right.t); }
+
+    // Very narrow equality tests, only applying to literal HeartEnum values.
+
+    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    INLINE bool operator==(const Heart& heart, T&& h)
+      { return heart.h == h; }
+
+    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    INLINE bool operator==(T&& h, const Heart& heart)
+      { return h == heart.h; }
+
+    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    INLINE bool operator!=(const Heart& heart, T&& h)
+      { return heart.h != h; }
+
+    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    INLINE bool operator!=(T&& h, const Heart& heart)
+      { return h != heart.h; }
+
+    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    INLINE bool operator==(const Type& type, T&& h)
+      { return u_cast(Byte, type.t) == u_cast(Byte, h); }
+
+    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    INLINE bool operator==(T&& h, const Type& type)
+      { return u_cast(Byte, h) == u_cast(Byte, type.t); }
+
+    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    INLINE bool operator!=(const Type& type, T&& h)
+      { return u_cast(Byte, type.t) != u_cast(Byte, h); }
+
+    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    INLINE bool operator!=(T&& h, const Type& type)
+      { return u_cast(Byte, h) != u_cast(Byte, type.t); }
+
+    // Comparisons for TypeEnum and Type (not needed for Heart, it implicitly
+    // converts to HeartEnum which is able to compare with other HeartEnum).
+    // Because Heart can become a type, this covers Type and Heart comparisons
+    // as well as Type and Type comparisons.
+
+    INLINE bool operator>=(const Type& type, TypeEnum t)
+      { return type.t >= t; }
+
+    INLINE bool operator>=(TypeEnum t, const Type& type)
+      { return t >= type.t; }
+
+    INLINE bool operator<=(const Type& type, TypeEnum t)
+      { return type.t <= t; }
+
+    INLINE bool operator<=(TypeEnum t, const Type& type)
+      { return t <= type.t; }
+
+    INLINE bool operator>(const Type& type, TypeEnum t)
+      { return type.t > t; }
+
+    INLINE bool operator>(TypeEnum t, const Type& type)
+      { return t > type.t; }
+
+    INLINE bool operator<(const Type& type, TypeEnum t)
+      { return type.t < t; }
+
+    INLINE bool operator<(TypeEnum t, const Type& type)
+      { return t < type.t; }
+  #endif
 #endif
 
 
@@ -121,15 +271,13 @@
 // single hearted type.  Static analysis caught bugs of that kind, and they
 // are easy to make.)
 //
-// This is defined as an enum type because we want to use it in a switch()
-// but don't want to generically turn it into an integer, because that would
-// mean you could accidentally test against Heart like TYPE_CHAIN etc. and
-// that would be incorrect, due to the multiplexed information.
+// (See notes on SingleHeart definition for more...)
 
-typedef enum SingleHeartEnum SingleHeart;
+#define Leading_Blank_And(heart) \
+    u_cast(SingleHeart, (u_cast(Byte, heart) << 8) + 1)
 
-#define Leading_Blank_And(heart)    u_cast(SingleHeart, ((heart) << 8) + 1)
-#define Trailing_Blank_And(heart)   u_cast(SingleHeart, (heart) << 8)
+#define Trailing_Blank_And(heart) \
+    u_cast(SingleHeart, u_cast(Byte, heart) << 8)
 
 #define LEADING_BLANK_AND(name)     Leading_Blank_And(TYPE_##name)
 #define TRAILING_BLANK_AND(name)    Trailing_Blank_And(TYPE_##name)
@@ -144,7 +292,7 @@ INLINE bool Singleheart_Has_Leading_Blank(SingleHeart single) {
 
 INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
     assert(single != NOT_SINGLEHEART_0);
-    Heart heart = u_cast(Heart, u_cast(uint_fast16_t, single) >> 8);
+    HeartEnum heart = u_cast(HeartEnum, u_cast(uint_fast16_t, single) >> 8);
     assert(heart != TYPE_0 and heart != TYPE_BLANK);
     return heart;
 }

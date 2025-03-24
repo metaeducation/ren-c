@@ -10,14 +10,15 @@
 //
 
 INLINE VarList* Cell_Varlist(const Cell* c) {
+    Heart heart = Heart_Of(c);
     assert(
-        HEART_BYTE(c) != TYPE_MODULE
-        and Any_Context_Type(HEART_BYTE(c))
+        heart != TYPE_MODULE
+        and Any_Context_Type(heart)
     );
 
     Node* node = CELL_NODE1(c);  // ParamList or Details
     if (Not_Node_Readable(node)) {
-        if (HEART_BYTE(c) == TYPE_FRAME)
+        if (heart == TYPE_FRAME)
             fail (Error_Expired_Frame_Raw());  // !!! different error?
         fail (Error_Series_Data_Freed_Raw());
     }

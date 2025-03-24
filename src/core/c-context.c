@@ -929,7 +929,7 @@ Option(Index) Find_Symbol_In_Context(
     const Symbol* symbol,
     bool strict
 ){
-    Byte heart = HEART_BYTE(context);
+    Heart heart = Heart_Of(context);
 
     if (heart == TYPE_MODULE) {
         //

@@ -283,7 +283,7 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
     assert(Any_Context_Type(Heart_Of(b)));
 
     if (Heart_Of(a) != Heart_Of(b))  // e.g. ERROR! won't equal OBJECT!
-        return Heart_Of(a) > Heart_Of(b) ? 1 : 0;
+        return HEART_BYTE(a) > HEART_BYTE(b) ? 1 : 0;
 
     Node* n1 = CELL_NODE1(a);
     Node* n2 = CELL_NODE1(b);
@@ -1112,7 +1112,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
         return Init_Port(OUT, copy);
     }
 
-    if (to == Type_Of(context)) {  // can't TO FRAME! an ERROR!, etc.
+    if (to == heart) {  // can't TO FRAME! an ERROR!, etc.
         bool deep = false;
         return Copy_Any_Context(OUT, context, deep);
     }
@@ -1738,9 +1738,15 @@ DECLARE_NATIVE(CONSTRUCT)
     const Element* tail;
     const Element* at = Cell_List_At(&tail, spec);
 
+    Heart heart;  // using ?: operator breaks in DEBUG_EXTRA_HEART_CHECKS
+    if (parent)
+        heart = CTX_TYPE(parent);
+    else
+        heart = TYPE_OBJECT;
+
     VarList* varlist = Make_Varlist_Detect_Managed(
         COLLECT_ONLY_SET_WORDS,
-        parent ? CTX_TYPE(parent) : TYPE_OBJECT,  // !!! Presume object?
+        heart,  // !!! Presume object?
         at,
         tail,
         parent

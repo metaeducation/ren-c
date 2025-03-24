@@ -291,7 +291,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 #define CELL_MASK_UNREADABLE \
     (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
         | CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2 \
-        | FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
+        | FLAG_HEART_BYTE_255 | FLAG_QUOTE_BYTE(255))
 
 #define Init_Unreadable_Untracked(out) do { \
     STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
@@ -409,9 +409,13 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 //    a noticeable amount, so we don't put it in all checked builds...only
 //    special situations.
 //
+
+#define HEART_BYTE_RAW(cell) \
+    SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
+
 #if (! DEBUG_HOOK_HEART_BYTE)
     #define HEART_BYTE(cell) \
-        SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
+        HEART_BYTE_RAW(cell)
 #else
     struct HeartHolder {  // class for intercepting heart assignments [2]
         Cell* & ref;
@@ -420,19 +424,48 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
             : ref (const_cast<Cell* &>(ref))
           {}
 
-        void operator=(Byte right) {
-            SECOND_BYTE(&(ref)->header.bits) = right;
+        operator Byte() const {  // implicit cast, add read checks here
+            return HEART_BYTE_RAW(ref);
         }
 
-        operator Heart () const
-          { return static_cast<Heart>(SECOND_BYTE(&(ref)->header.bits)); }
+        void operator=(Byte right) {  // add any write checks you want here
+            HEART_BYTE_RAW(ref) = right;
+        }
+
+        void operator=(const HeartHolder& right)  // must write explicitly
+          { *this = u_cast(Byte, right); }
+
+        template <typename T, EnableIfSame<T,
+            HeartEnum, HeartHolder, Heart
+        > = nullptr>
+        void operator=(T right)
+          { *this = u_cast(Byte, right); }  // inherit operator=(Byte) checks
+
+        template <typename T, EnableIfSame<T,
+            Heart, HeartEnum
+        > = nullptr>
+        explicit operator T() const   // inherit Byte() cast extraction checks
+          { return u_cast(T, u_cast(Byte, *this)); }
     };
+
+    INLINE bool operator==(const HeartHolder& holder, HeartEnum h)
+      { return HEART_BYTE_RAW(holder.ref) == cast(Byte, h); }
+
+    INLINE bool operator==(HeartEnum h, const HeartHolder& holder)
+      { return cast(Byte, h) == HEART_BYTE_RAW(holder.ref); }
+
+    INLINE bool operator!=(const HeartHolder& holder, HeartEnum h)
+      { return HEART_BYTE_RAW(holder.ref) != cast(Byte, h); }
+
+    INLINE bool operator!=(HeartEnum h, const HeartHolder& holder)
+      { return cast(Byte, h) != HEART_BYTE_RAW(holder.ref); }
+
     #define HEART_BYTE(cell) \
-        HeartHolder {cell}
+        HeartHolder{cell}
 #endif
 
 #define Cell_Heart_Unchecked(c) \
-    u_cast(Heart, HEART_BYTE(c))
+    u_cast(Heart, HEART_BYTE_RAW(c))
 
 #define Heart_Of(c) \
     Cell_Heart_Unchecked(Ensure_Readable(c))
@@ -450,15 +483,14 @@ INLINE Heart Heart_Of_Fundamental(const Cell* c) {
 //
 // (Instead of Type_Of(), use Heart_Of() if you wish to know that the cell
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
-//
 
 INLINE Type Type_Of_Unchecked(const Atom* atom) {
     switch (QUOTE_BYTE(atom)) {
       case ANTIFORM_0_COERCE_ONLY:  // use this constant rarely!
-        return u_cast(Type, HEART_BYTE(atom) + TYPE_QUOTED);
+        return u_cast(TypeEnum, HEART_BYTE(atom) + MAX_TYPE_BYTE_ELEMENT);
 
       case NOQUOTE_1:
-        return u_cast(Type, HEART_BYTE(atom));
+        return u_cast(HeartEnum, HEART_BYTE(atom));
 
       case QUASIFORM_2_COERCE_ONLY:  // use this constant rarely!
         return TYPE_QUASIFORM;
@@ -845,7 +877,7 @@ INLINE Cell* Copy_Cell_Untracked(
 
 #define CELL_MASK_TRASH \
     (NODE_FLAG_NODE | NODE_FLAG_CELL \
-        | FLAG_HEART_BYTE(TYPE_BLANK) | FLAG_QUOTE_BYTE(NOQUOTE_1) \
+        | FLAG_HEART(BLANK) | FLAG_QUOTE_BYTE(NOQUOTE_1) \
         | CELL_MASK_NO_NODES)
 
 INLINE Cell* Move_Cell_Untracked(

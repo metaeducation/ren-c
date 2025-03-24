@@ -339,7 +339,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             );
             Reset_Cell_Header_Noquote(
                 TRACK(OUT),
-                FLAG_HEART_BYTE(Type_Of(to)) | CELL_MASK_NO_NODES
+                FLAG_HEART_BYTE(Heart_Of_Fundamental(to)) | CELL_MASK_NO_NODES
             );
             VAL_DECIMAL(OUT) = dec;
             return OUT;

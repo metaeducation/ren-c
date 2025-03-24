@@ -45,17 +45,17 @@
 //
 Source* Startup_Datatypes(Array* boot_typespecs)
 {
-    if (Array_Len(boot_typespecs) != MAX_TYPE)  // exclude TYPE_0
+    if (Array_Len(boot_typespecs) != MAX_TYPE_BYTE)  // exclude TYPE_0
         panic (boot_typespecs);
 
-    Source* catalog = Make_Source(MAX_TYPE);
+    Source* catalog = Make_Source(MAX_TYPE_BYTE);
 
-    Index n = 1;
+    Byte n = 1;
 
-    for (; n <= MAX_TYPE; ++n) {
-        Type type = cast(Type, n);
+    for (; n <= MAX_TYPE_BYTE; ++n) {
+        Type type = u_cast(TypeEnum, n);
 
-        SymId datatype_id = cast(SymId, MAX_TYPE + n);
+        SymId datatype_id = cast(SymId, MAX_TYPE_BYTE + n);
         Element* datatype = cast(Element*, Sink_Lib_Var(datatype_id));
         Protect_Cell(Init_Builtin_Datatype(datatype, type));  // datatype [1]
         assert(datatype == Datatype_From_Type(type));  // convenient [2]

@@ -494,9 +494,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         or id == SYM_REMAINDER
     ){
         Value* arg = ARG_N(2);
-        REBINT type = Type_Of(arg);
+        Heart heart = Heart_Of_Fundamental(arg);
 
-        if (type == TYPE_TIME) {     // handle TIME - TIME cases
+        if (heart == TYPE_TIME) {     // handle TIME - TIME cases
             REBI64 secs2 = VAL_NANO(arg);
 
             switch (id) {
@@ -526,7 +526,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 return FAIL(Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (type == TYPE_INTEGER) {     // handle TIME - INTEGER cases
+        else if (heart == TYPE_INTEGER) {     // handle TIME - INTEGER cases
             REBI64 num = VAL_INT64(arg);
 
             switch (id) {
@@ -555,7 +555,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 return FAIL(Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (type == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
+        else if (heart == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
             REBDEC dec = VAL_DECIMAL(arg);
 
             switch (id) {
@@ -592,7 +592,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 return FAIL(Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (type == TYPE_DATE and id == SYM_ADD) {
+        else if (heart == TYPE_DATE and id == SYM_ADD) {
             //
             // We're adding a time and a date, code for which exists in the
             // date dispatcher already.  Instead of repeating the code here in

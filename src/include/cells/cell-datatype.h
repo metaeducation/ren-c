@@ -56,16 +56,18 @@
 
 INLINE bool Is_Symbol_Id_For_A_Type(SymId id) {
     assert(id != SYM_0);
-    return u_cast(SymId16, id) <= u_cast(SymId16, MAX_TYPE);
+    return u_cast(SymId16, id) <= u_cast(SymId16, MAX_TYPE_BYTE);
 }
 
 INLINE Type Type_From_Symbol_Id(SymId id) {
     assert(Is_Symbol_Id_For_A_Type(id));
-    return cast(Type, id);
+    return u_cast(TypeEnum, id);
 }
 
-#define Symbol_Id_From_Type(k) \
-    cast(SymId, u_cast(SymId16, (k)))
+INLINE SymId Symbol_Id_From_Type(Type type) {
+    assert(type != TYPE_0);
+    return cast(SymId, u_cast(SymId16, u_cast(Byte, type)));
+}
 
 INLINE Type Cell_Datatype_Type(const Cell* v) {
     assert(Heart_Of(v) == TYPE_TYPE_BLOCK);
@@ -77,14 +79,14 @@ INLINE Type Cell_Datatype_Type(const Cell* v) {
     Option(SymId) id = Cell_Word_Id(item);
     if (not id or not Is_Symbol_Id_For_A_Type(unwrap id))
         fail ("Type blocks only allowed builtin types for now");
-    return cast(Type, unwrap id);
+    return u_cast(TypeEnum, unwrap id);
 }
 
 INLINE Heart Cell_Datatype_Heart(const Cell* v) {
     Type t = Cell_Datatype_Type(v);
     assert(t != TYPE_0);
-    assert(t <= MAX_HEART);  // should not be a QUOTED or QUASIFORM or ANTIFORM
-    return cast(Heart, t);
+    assert(cast(Byte, t) <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
+    return u_cast(HeartEnum, u_cast(Byte, t));
 }
 
 // Ren-C uses TYPE-BLOCK! with WORD! for built in datatypes
@@ -113,8 +115,9 @@ INLINE bool Builtin_Typeset_Check(TypesetByte typeset_byte, Type type) {
     if (typeset & TYPESET_FLAG_0_RANGE) {  // trivial ranges ok (one datatype)
         Byte start = THIRD_BYTE(&typeset);
         Byte end = FOURTH_BYTE(&typeset);
-        return start <= type and type <= end;
+        return start <= u_cast(Byte, type) and u_cast(Byte, type) <= end;
     }
-
-    return did (g_sparse_memberships[type] & typeset);  // just a typeset flag
+    else {  // just a typeset flag
+        return did (g_sparse_memberships[u_cast(Byte, type)] & typeset);
+    }
 }

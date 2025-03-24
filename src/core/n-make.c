@@ -149,7 +149,7 @@ DECLARE_NATIVE(COPY)
 //
 Bounce To_Or_As_Checker_Executor(Level* const L)
 {
-    Heart to_or_as = cast(Heart, LEVEL_STATE_BYTE(L));
+    Heart to_or_as = cast(HeartEnum, LEVEL_STATE_BYTE(L));
     assert(to_or_as != TYPE_0);
 
     Element* input = cast(Element*, Level_Spare(L));
@@ -180,7 +180,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
 
     Decay_If_Unstable(OUT);  // should packs from TO be legal?
 
-    if (Type_Of(OUT) != to_or_as)
+    if (Heart_Of_Fundamental(OUT) != to_or_as)
         return FAIL("Forward TO/AS transform produced wrong type");
 
     if (
@@ -258,7 +258,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
     Option(const Symbol*) label = Level_Label(level_);
 
     Element* type = Element_ARG(TYPE);
-    STATE = Cell_Datatype_Heart(type);  // generic code may trash TYPE when it runs
+    STATE = cast(Byte, Cell_Datatype_Heart(type));  // generic may trash TYPE
     Copy_Cell(SPARE, ARG(ELEMENT));  // may trash ELEMENT too, save in SPARE
 
     Level* sub = Push_Downshifted_Level(OUT, level_);

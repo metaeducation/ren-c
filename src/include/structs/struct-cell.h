@@ -159,7 +159,13 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // HEART, because that treats quoted cells differently.  If you only check
 // the heart, then (''''x) will equal (x) because both hearts are WORD!.
 
-#define FLAG_HEART_BYTE(heart)       FLAG_SECOND_BYTE(heart)
+#define FLAG_HEART_BYTE(heart) \
+    FLAG_SECOND_BYTE(cast(Byte, ensure(HeartEnum, (heart))))
+
+#define FLAG_HEART(name) \
+    FLAG_SECOND_BYTE(u_cast(Byte, u_cast(HeartEnum, TYPE_##name)))
+
+#define FLAG_HEART_BYTE_255  FLAG_SECOND_BYTE(255)  // for masking only
 
 
 //=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//

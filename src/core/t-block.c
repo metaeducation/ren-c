@@ -874,8 +874,8 @@ Option(Error*) Trap_Alias_Any_List_As(
     Heart as
 ){
     if (Any_List_Type(as)) {
-        HEART_BYTE(list) = as;
         Copy_Cell(out, list);
+        HEART_BYTE(out) = as;
         return nullptr;
     }
 
@@ -1619,7 +1619,7 @@ void Assert_Array_Core(const Array* a)
         }
 
         Assert_Cell_Readable(item);
-        if (HEART_BYTE(item) > MAX_TYPE) {
+        if (HEART_BYTE(item) > MAX_HEART_BYTE) {
             printf("Invalid HEART_BYTE() at index %d\n", cast(int, n));
             panic (a);
         }

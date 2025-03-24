@@ -1012,13 +1012,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
 
     if (id == SYM_SUBTRACT or id == SYM_ADD) {
         Value* arg = ARG_N(2);
-        REBINT type = Type_Of(arg);
+        Heart heart = Heart_Of_Fundamental(arg);
 
-        if (type == TYPE_DATE) {
+        if (heart == TYPE_DATE) {
             if (id == SYM_SUBTRACT)
                 return Init_Integer(OUT, Days_Between_Dates(v, arg));
         }
-        else if (type == TYPE_TIME) {
+        else if (heart == TYPE_TIME) {
             if (id == SYM_ADD) {
                 if (secs == NO_DATE_TIME)
                     secs = 0;
@@ -1032,7 +1032,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
                 goto fix_time;
             }
         }
-        else if (type == TYPE_INTEGER) {
+        else if (heart == TYPE_INTEGER) {
             REBINT num = Int32(arg);
             if (id == SYM_ADD) {
                 day += num;
@@ -1043,7 +1043,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
                 goto fix_date;
             }
         }
-        else if (type == TYPE_DECIMAL) {
+        else if (heart == TYPE_DECIMAL) {
             REBDEC dec = Dec64(arg);
             if (id == SYM_ADD) {
                 if (secs == NO_DATE_TIME)

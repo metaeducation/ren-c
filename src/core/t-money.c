@@ -265,7 +265,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Money)
             REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
             Reset_Cell_Header_Noquote(
                 TRACK(OUT),
-                FLAG_HEART_BYTE(Type_Of(to)) | CELL_MASK_NO_NODES
+                FLAG_HEART_BYTE(Heart_Of_Fundamental(to)) | CELL_MASK_NO_NODES
             );
             VAL_DECIMAL(OUT) = dec;
             return OUT;
