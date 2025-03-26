@@ -35,17 +35,17 @@
     ('true = match [boolean?] 'true)
     ('false = match [boolean?] 'false)
 
-    (''~preserved~ = ^ match &quasi-word? '~preserved~)
+    (''~preserved~ = ^ match quasi-word?/ '~preserved~)
 ]
 
 [
     (10 = match integer! 10)
     (null = match integer! <tag>)
 
-    (null = match &any-tuple? 'a.b:)
-    ('a.b: = match &any-chain? 'a.b:)
-    ('a.b: = match &any-sequence? 'a.b:)
-    (null = match &any-list? 'a.b:)
+    (null = match any-tuple?/ 'a.b:)
+    ('a.b: = match any-chain?/ 'a.b:)
+    ('a.b: = match any-sequence?/ 'a.b:)
+    (null = match any-list?/ 'a.b:)
 ]
 
 ; ENSURE is a version of MATCH that fails vs. returning NULL on no match
@@ -62,8 +62,8 @@
     (null = non integer! 10)
     (append/ = non integer! append/)
 
-    ~need-non-null~ !! (non null null)
-    ~???~ !! (non null 10)
+    ~need-non-null~ !! (non [~null~] null)
+    ~???~ !! (non null?/ 10)
     (null = non:meta null null)
     ((the '10) = non:meta null 10)
 

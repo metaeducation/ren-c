@@ -23,7 +23,7 @@ Rebol [
     let result': ^void
     let combinators: copy default-combinators
     parse dialect [while [not <end>] [
-        let set-word: *in* &set-word?, let rule: *in* block! (
+        let set-word: *in* set-word?/, let rule: *in* block! (
             combinators.(unchain set-word): compose [(set-word) (rule)]
         )
         |

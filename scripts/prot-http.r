@@ -176,7 +176,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
         spec.method: [word! | ('post)]
         opt [spec.path: [file! | url!]]
         spec.headers: [block! | ([])]
-        spec.content: opt [&any-string? | blob!]
+        spec.content: opt [any-string?/ | blob!]
         <end>
     ]
 ]

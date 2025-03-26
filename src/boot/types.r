@@ -206,15 +206,15 @@ varargs     "evaluator position for variable numbers of arguments"
                 (node1)
                 [any-utf8? any-meta-value? any-sequencable?]
 
-    type-word   "inert form of word"
+    wild-word   "inert form of word"
                 (node1)
-                [any-utf8? any-type-value? any-sequencable?]
+                [any-utf8? any-wild-value? any-sequencable?]
 
-    the-word    "inert form of word"
+    the-word    "evaluates to the bound version of the word as a word!"
                 (node1)
                 [any-utf8? any-the-value? any-sequencable?]
 
-    var-word    "word that evaluates to the bound version of the word"
+    var-word    "evaluates to the bound version of the word as a the-word!"
                 (node1)
                 [any-utf8? any-var-value? any-sequencable?]
 
@@ -233,15 +233,15 @@ varargs     "evaluator position for variable numbers of arguments"
                 (:node1)
                 [any-meta-value?]
 
-    type-tuple  "inert form of tuple"
+    wild-tuple  "inert form of tuple"
                 (:node1)
-                [any-scalar? any-type-value?]
+                [any-scalar? any-wild-value?]
 
-    the-tuple   "inert form of tuple"
+    the-tuple   "evaluates to the bound version of the tuple as a tuple!"
                 (:node1)
                 [any-scalar? any-the-value?]
 
-    var-tuple   "tuple that evaluates to the bound form of the tuple"
+    var-tuple   "evaluates to the bound version of the tuple as a the-tuple!"
                 (:node1)
                 [any-scalar? any-var-value?]
 
@@ -257,15 +257,15 @@ varargs     "evaluator position for variable numbers of arguments"
                 (:node1)
                 [any-meta-value?]
 
-    type-chain  "inert form of chain"
+    wild-chain  "inert form of chain"
                 (:node1)
-                [any-type-value?]
+                [any-wild-value?]
 
-    the-chain   "inert form of chain"
+    the-chain   "evaluates to the bound version of the chain as a the-chain!"
                 (:node1)
                 [any-the-value?]
 
-    var-chain   "chain that evaluates to the bound form of the chain"
+    var-chain   "evaluates to the bound version of the chain as a chain!"
                 (:node1)
                 [any-var-value?]
 
@@ -281,15 +281,15 @@ varargs     "evaluator position for variable numbers of arguments"
                 (:node1)
                 [any-meta-value?]
 
-    type-path   "inert form of path"
+    wild-path   "inert form of path"
                 (:node1)
-                [any-type-value?]
+                [any-wild-value?]
 
-    the-path    "inert form of path"
+    the-path    "evaluates to the bound version of the path as a the-path!"
                 (:node1)
                 [any-the-value?]
 
-    var-path    "path that evaluates to the bound version of the path"
+    var-path    "evaluates to the bound version of the path as a path!"
                 (:node1)
                 [any-var-value?]
 
@@ -311,15 +311,15 @@ varargs     "evaluator position for variable numbers of arguments"
                 (node1)
                 [any-series? any-branch? any-meta-value? any-sequencable?]
 
-    type-block  "alternative inert form of block"
+    wild-block  "inert form of block"
                 (node1)
-                [any-series? any-branch? any-type-value? any-sequencable?]
+                [any-series? any-branch? any-wild-value? any-sequencable?]
 
-    the-block   "alternative inert form of block"
+    the-block   "evaluates to the bound version of the block as a the-block!"
                 (node1)
                 [any-series? any-branch? any-the-value? any-sequencable?]
 
-    var-block   "block that evaluates to the bound version of the block"
+    var-block   "evaluates to the bound version of the block as a block!"
                 (node1)
                 [any-series? any-branch? any-var-value? any-sequencable?]
 
@@ -329,6 +329,7 @@ varargs     "evaluator position for variable numbers of arguments"
   <ANY-FENCE?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     fence       "list of elements that are used in construction via MAKE"
+    ~datatype~  "the type of a value expressed as an antiform"
                 (node1)
                 [any-series? any-branch? any-plain-value? any-sequencable?]
 
@@ -336,15 +337,15 @@ varargs     "evaluator position for variable numbers of arguments"
                 (node1)
                 [any-series? any-branch? any-meta-value? any-sequencable?]
 
-    type-fence  "alternative inert form of fence"
+    wild-fence  "inert form of fence"
                 (node1)
-                [any-series? any-branch? any-type-value? any-sequencable?]
+                [any-series? any-branch? any-wild-value? any-sequencable?]
 
-    the-fence   "alternative inert form of fence"
+    the-fence   "evaluates to the bound version of the fence as a the-fence!"
                 (node1)
                 [any-series? any-branch? any-the-value? any-sequencable?]
 
-    var-fence   "fence that evaluates to the bound version of the fence"
+    var-fence   "evaluates to the bound version of the fence as a fence!"
                 (node1)
                 [any-series? any-branch? any-var-value? any-sequencable?]
 
@@ -362,15 +363,15 @@ varargs     "evaluator position for variable numbers of arguments"
                 (node1)
                 [any-series? any-meta-value? any-sequencable?]
 
-    type-group  "inert form of group"
+    wild-group  "inert form of group"
                 (node1)
-                [any-series? any-type-value? any-sequencable?]
+                [any-series? any-wild-value? any-sequencable?]
 
-    the-group   "inert form of group"
+    the-group   "evaluates to the bound version of the group as a the-group!"
                 (node1)
                 [any-series? any-the-value? any-branch? any-sequencable?]
 
-    var-group   "group that evaluates to the bound version of the group"
+    var-group   "evaluates to the bound version of the group as a group!"
                 (node1)
                 [any-series? any-var-value? any-sequencable?]
 

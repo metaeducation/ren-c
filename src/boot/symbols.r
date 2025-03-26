@@ -70,7 +70,7 @@ class  ; parameter.fields
 escapable
 #optional
 spec
-#text
+text
 
 normal  ; parameter classes
 #meta
@@ -97,8 +97,8 @@ second
 year
 month
 day
-#time
-#date
+time
+date
 weekday
 julian
 yearday
@@ -114,7 +114,6 @@ local
 
 ; properties for action TWEAK function
 ;
-#barrier
 defer
 postpone
 
@@ -175,7 +174,6 @@ shutdown*
 
 ; Event:
 key
-#port
 mode
 window
 double
@@ -218,8 +216,6 @@ scroll-line
 scroll-page
 
 drop-file
-
-#error
 
 
 ; === EVENT KEYS ===

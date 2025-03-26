@@ -91,7 +91,7 @@ INLINE Element* Init_Any_Word_Untracked(
     TRACK(Init_Any_Word_Untracked((out), (heart), NOQUOTE_1, (spelling)))
 
 #define Init_Word(out,str)          Init_Any_Word((out), TYPE_WORD, (str))
-#define Init_Type_Word(out,str)     Init_Any_Word((out), TYPE_TYPE_WORD, (str))
+#define Init_Wild_Word(out,str)     Init_Any_Word((out), TYPE_WILD_WORD, (str))
 #define Init_The_Word(out,str)      Init_Any_Word((out), TYPE_THE_WORD, (str))
 #define Init_Meta_Word(out,str)     Init_Any_Word((out), TYPE_META_WORD, (str))
 #define Init_Var_Word(out,str)      Init_Any_Word((out), TYPE_VAR_WORD, (str))

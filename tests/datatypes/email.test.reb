@@ -49,7 +49,9 @@
         let email: transcode:one text
         let type: type of email
         if type <> email! [
-            fail ["LOAD of" mold text "should've been email but was" mold type]
+            fail [
+                "LOAD of" mold text "should've been email, was" to word! type
+            ]
         ]
     ] then e -> [
         if supported = '+ [

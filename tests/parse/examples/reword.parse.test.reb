@@ -8,11 +8,11 @@
     source [any-string? blob!]
     values [map! object! block!]
     :case
-    :escape [char?! any-string? word! blob! block!]
+    :escape [word! blob! block! any-string?/ char?/]
 ]
 bind construct [
-    delimiter-types: [char?! &any-string? word! blob!]
-    keyword-types: [char?! &any-string? integer! word! blob!]
+    delimiter-types: [word! blob! char?/ any-string?/]
+    keyword-types: [integer! word! blob! char?/ any-string?/]
 ][
     let case_REWORD: case
     case: get $lib/case

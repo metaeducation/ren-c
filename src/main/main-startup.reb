@@ -52,7 +52,7 @@ loud-print: redescribe [
         some [
             [
                 a: text! (s: format ["**  " 68 "**"] a)
-              | '= a: [text! | word! | &set-word?] [
+              | '= a: [text! | word! | set-word?/] [
                         b: <here>
                           tuple! (b: get inside fmt b.1)
                         | word! (b: get inside fmt b.1)
@@ -254,7 +254,7 @@ bind construct [
 
         return: []
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
-            [integer! tag! group! type-block!]
+            [integer! tag! group! datatype!]
         <with> instruction
         <local> /return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
     ][
@@ -282,8 +282,8 @@ bind construct [
                 assert [empty? instruction]
                 state
             ]
-            type-block! [  ; type assertion, how to enforce this?
-                emit spaced ["^^-- Result should be" @state]
+            datatype! [  ; type assertion, how to enforce this?
+                emit spaced ["^^-- Result should be" to word! state]
                 instruction
             ]
             group! [  ; means "submit user code"
@@ -335,7 +335,7 @@ bind construct [
     if defined? $get-current-exec [
         switch:type system.options.boot: get-current-exec [
             file! []  ; found it
-            null?! []  ; also okay (not foolproof!)
+            null?/ []  ; also okay (not foolproof!)
             fail "GET-CURRENT-EXEC returned unexpected datatype"
         ]
     ] else [

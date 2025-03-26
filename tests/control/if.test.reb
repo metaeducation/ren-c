@@ -41,7 +41,7 @@
 ; datatype
 (if blank! [okay])
 ; typeset
-(if &any-number? [okay])
+(if any-number?/ [okay])
 ; date
 (if 1/1/0000 [okay])
 ; decimal

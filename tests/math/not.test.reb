@@ -1,38 +1,53 @@
 ; functions/math/not.r
-(null = not :abs)
-(null = not #{})
-(null = not charset "")
-(null = not [])
-(null = not #"a")
-(null = not type-word!)
-(null = not 1/1/2007)
-(null = not 0.0)
-(null = not me@mydomain.com)
-(null = not %myfile)
-(null = not func [] [])
-(null = not first [:a])
-(null = not 0)
-(null = not #1444)
-(null = not first ['a/b])
-(null = not first ['a])
+
 (null = not okay)
 (okay = not null)
-(null = not to map! [])
-(null = not $0.00)
+
 (null = not :append)
-(null = not blank)
-(null = not make object! [])
+(null = not :abs)
+(null = not func [] [])
+
 (null = not type of +/)
-(null = not 0x0)
-(null = not first [()])
-(null = not first [a/b])
-(null = not make port! http://)
-(null = not '/refinement)
-(null = not first [a.b:])
-(null = not first [a:])
-(null = not "")
-(null = not <tag>)
-(null = not 1:00)
-(null = not 1.2.3)
-(null = not http://)
-(null = not 'a)
+(null = not integer!)
+
+(
+    for-each 'item compose [
+        a
+        #{}
+        (charset "")
+        []
+        #"a"
+        datatype!
+        1/1/2007
+        0.0
+        me@mydomain.com
+        %myfile
+        :a
+        0
+        #1444
+        'a/b
+        'a
+        (to map! [])
+        $0.00
+        _
+        (make object! [])
+        (0x0)
+        ()
+        a/b
+        (make port! http://)
+        /refinement
+        a.b:
+        a:
+        ""
+        <tag>
+        1:00
+        1.2.3
+        http://
+    ][
+        if null = not item [
+            continue
+        ]
+
+        fail ["NOT did not return ~null~ antiform for:" mold item]
+    ]
+)

@@ -32,7 +32,7 @@
 //
 //  "Give back the type of a value (all quoted values return QUOTED!)"
 //
-//      return: [type-block!]
+//      return: [datatype! word!]
 //      value "TYPE-OF null will return a raised error, use TRY if meant"
 //          [any-value?]
 //  ]
@@ -55,7 +55,7 @@ DECLARE_NATIVE(TYPE_OF)
 //
 //  "Give back a cell's heart (e.g. HEART OF ~FOO~ or ''FOO is WORD!)"
 //
-//      return: [~null~ type-block!]
+//      return: [~null~ datatype!]
 //      element "Antiforms not accepted, use (heart of meta value) if needed"
 //          [<maybe> element?]
 //  ]

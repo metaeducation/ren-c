@@ -29,9 +29,9 @@
 // when this test is meaningful was believed to add some safety.
 //
 #if CHECK_CELL_SUBCLASSES
-    struct Param : public Value {};
+    struct Param : public Element {};
 #else
-    typedef Value Param;
+    typedef Element Param;
 #endif
 
 

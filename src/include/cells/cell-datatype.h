@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -33,20 +33,39 @@
 //    r3-alpha>> mold:all reduce [integer! block!]
 //    == "[#[datatype! integer!] #[datatype! block!]]"
 //
-// Ren-C's approach is to introduce several lexical types to represent types
-// and type constraints.
+// Ren-C's approach is to leverage antiform fences to act as datatypes:
 //
 //    >> integer!
-//    == &[integer]
+//    == ~{integer}~  ; anti
 //
-//    >> kind of 10
-//    == &[integer]
+//    >> type of first ['''10]
+//    == ~{quoted}~  ; anti
 //
-//    >> match &any-series? [a b c]
+//    >> heart of first ['''10]
+//    == ~{integer}~   ; anti
+//
+// They cannot be put in blocks, but their metaforms can.  Not being able to
+// appear in blocks has advantages, such as disambiguating situations like
+// this historical code:
+//
+//     rebol2>> find [a 1 b c] integer!
+//     == [1 b c]
+//
+//     rebol2>> find compose [a (integer!) b c] integer!
+//     == [integer! b c]  ; not a word!, should render as [#[integer!] b c]
+//
+// The TYPESET! datatype is replaced with the idea of type predicates, which
+// are actions (antiform FRAME!)
+//
+//    >> match any-series?/ [a b c]
 //    == [a b c]
 //
-//    >> match &any-series? 10
+//    >> match any-series?/ 10
 //    == ~null~  ; anti
+//
+// Enhancements to the speed of type checking predicates are done using
+// "intrinsics" as well as a new concept of "typesets" as a table built up
+// from %types.r that mixes sparse and ranged byte checking for speed.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -69,8 +88,9 @@ INLINE SymId Symbol_Id_From_Type(Type type) {
     return cast(SymId, u_cast(SymId16, u_cast(Byte, type)));
 }
 
-INLINE Type Cell_Datatype_Type(const Cell* v) {
-    assert(Heart_Of(v) == TYPE_TYPE_BLOCK);
+
+INLINE SymId Cell_Datatype_Id(const Atom* v) {
+    assert(Type_Of(v) == TYPE_DATATYPE);
     if (Cell_Series_Len_At(v) != 1)
         fail ("Type blocks only allowed one element for now");
     const Element* item = Cell_List_At(nullptr, v);
@@ -79,14 +99,18 @@ INLINE Type Cell_Datatype_Type(const Cell* v) {
     Option(SymId) id = Cell_Word_Id(item);
     if (not id or not Is_Symbol_Id_For_A_Type(unwrap id))
         fail ("Type blocks only allowed builtin types for now");
+    return unwrap id;
+}
+
+INLINE Type Cell_Datatype_Type(const Atom* v) {
+    SymId id = Cell_Datatype_Id(v);
     return u_cast(TypeEnum, unwrap id);
 }
 
-INLINE Heart Cell_Datatype_Heart(const Cell* v) {
-    Type t = Cell_Datatype_Type(v);
-    assert(t != TYPE_0);
-    assert(cast(Byte, t) <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
-    return u_cast(HeartEnum, u_cast(Byte, t));
+INLINE Heart Cell_Datatype_Heart(const Atom* v) {
+    SymId id = Cell_Datatype_Id(v);
+    assert(id <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
+    return u_cast(Heart, id);
 }
 
 // Ren-C uses TYPE-BLOCK! with WORD! for built in datatypes
@@ -99,7 +123,9 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
 
     Init_Word(Stub_Cell(a), Canon_Symbol(cast(SymId, type)));
-    return Init_Any_List(out, TYPE_TYPE_BLOCK, a);
+    Init_Fence(out, a);
+    QUOTE_BYTE(out) = ANTIFORM_0_COERCE_ONLY;
+    return out;
 }
 
 #define Init_Builtin_Datatype(out,type) \

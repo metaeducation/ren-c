@@ -47,8 +47,8 @@
 
 ; New feature for doing typeset matches
 [
-    ("COOL!" = switch:type <asdf> [&any-string? ["COOL!"]])
-    ("COOL!" = switch:type "asdf" [&any-string? ["COOL!"]])
+    ("COOL!" = switch:type <asdf> [any-string?/ ["COOL!"]])
+    ("COOL!" = switch:type "asdf" [any-string?/ ["COOL!"]])
 
-    (null? switch 1020 [&any-string? [fail ~<unreachable>~]])
+    (null? switch 1020 [any-string?/ [fail ~<unreachable>~]])
 ]

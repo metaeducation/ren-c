@@ -27,13 +27,13 @@
 // This order needs to match the ordering of the corresponding types for
 // within each category that carry sigils.
 //
-// Also, there is an optimization that the scanner uses the same values for
-// its tokens as the sigils (where applicable, there is no `::` token)
+// Also, there is a silly optimization that the scanner uses the same values
+// for sits tokens as the sigils.
 
 enum SigilEnum {
     SIGIL_0 = 0,
     SIGIL_META = 1,     // ^
-    SIGIL_TYPE = 2,     // &
+    SIGIL_WILD = 2,     // &
     SIGIL_THE = 3,      // @
     SIGIL_VAR = 4,      // $
     MAX_SIGIL = SIGIL_VAR
@@ -50,7 +50,7 @@ typedef enum SigilEnum Sigil;
 enum TokenEnum {
     TOKEN_0 = 0,
     TOKEN_CARET = 1,  // SIGIL_META
-    TOKEN_AMPERSAND = 2,  // SIGIL_TYPE
+    TOKEN_AMPERSAND = 2,  // SIGIL_WILD
     TOKEN_AT = 3,  // SIGIL_THE
     TOKEN_DOLLAR = 4,  // SIGIL_VAR
     TOKEN_NEWLINE,
@@ -91,7 +91,7 @@ enum TokenEnum {
 typedef enum TokenEnum Token;
 
 STATIC_ASSERT(TOKEN_CARET == cast(int, SIGIL_META));
-STATIC_ASSERT(TOKEN_AMPERSAND == cast(int, SIGIL_TYPE));
+STATIC_ASSERT(TOKEN_AMPERSAND == cast(int, SIGIL_WILD));
 STATIC_ASSERT(TOKEN_AT == cast(int, SIGIL_THE));
 STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_VAR));
 

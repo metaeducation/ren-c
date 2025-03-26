@@ -32,8 +32,8 @@
 
     [3 -1] = collect [
         destructure:multi [1 2] wrap [
-            x: [integer!] y: [&any-value?]
-            m: [&any-value?] n: [integer!]
+            x: [integer!] y: [any-value?/]
+            m: [any-value?/] n: [integer!]
 
             [x y] => [keep x + y]
             [m n] => [keep x - y]

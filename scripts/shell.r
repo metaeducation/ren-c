@@ -134,8 +134,8 @@ REBOL [
         switch:type item [
             group! [splice-it: 'no, item: eval inside code item]
 
-            &get-group? [splice-it: 'yes, item: eval inside code item]
-            &get-block? [splice-it: 'yes, item: as block! inside code item]
+            get-group?/ [splice-it: 'yes, item: eval inside code item]
+            get-block?/ [splice-it: 'yes, item: as block! inside code item]
         ]
         let /needs-quotes?: func [return: [logic?] item] [
             if match [word! issue!] item [return null]  ; never quoted

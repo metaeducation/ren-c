@@ -6,8 +6,8 @@
     words: ~
     strings: ~
     parse [x: $y z "a" <b> %c] [
-        words: accumulate [&any-word? | &set-word?]
-        strings: accumulate &any-string?
+        words: accumulate [any-word?/ | set-word?/]
+        strings: accumulate any-string?/
     ]
     all [
        words = [x: $y z]
@@ -19,8 +19,8 @@
     words: ~
     strings: ~
     parse ["a" <b> %c] [
-        words: accumulate &any-word?
-        strings: accumulate &any-string?
+        words: accumulate any-word?/
+        strings: accumulate any-string?/
     ]
     all [
        words = []
@@ -34,10 +34,10 @@
     b: ~
     parse [x: [$y z] "a" <b> %c] [
         words: accumulate [
-            &any-word? | &set-word?
-            | b: subparse block! [some &any-word? <subinput>] (spread b)
+            any-word?/ | set-word?/
+            | b: subparse block! [some any-word?/ <subinput>] (spread b)
         ]
-        strings: accumulate &any-string?
+        strings: accumulate any-string?/
     ]
     all [
        words = [x: $y z]

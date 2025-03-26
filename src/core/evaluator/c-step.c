@@ -648,13 +648,15 @@ Bounce Stepper_Executor(Level* L)
             break; }
 
           case SIGIL_META:  // ^
-          case SIGIL_TYPE:  // &
           case SIGIL_VAR: {  // $
             Level* right = Maybe_Rightward_Continuation_Needed(L);
             if (not right)
                 goto sigil_rightside_in_out;
 
             return CONTINUE_SUBLEVEL(right); }
+
+          case SIGIL_WILD:  // &
+            return FAIL("No behavior defined for & sigil yet");
 
           default:
             assert(false);
@@ -665,13 +667,6 @@ Bounce Stepper_Executor(Level* L)
         switch (Cell_Sigil(CURRENT)) {
           case SIGIL_META:  // ^
             Meta_Quotify(OUT);
-            break;
-
-          case SIGIL_TYPE:  // &
-            Copy_Cell(SPARE, OUT);
-            Decay_If_Unstable(SPARE);
-            if (rebRunThrows(stable_OUT, "try type of", stable_SPARE))
-                goto return_thrown;
             break;
 
           case SIGIL_VAR:  // $
@@ -1749,7 +1744,7 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_VAR_TUPLE:
       case TYPE_VAR_CHAIN:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        HEART_BYTE(OUT) = Plainify_Any_Var_Heart(cast(HeartEnum, STATE));
+        HEART_BYTE(OUT) = Plainify_Any_Var_Heart(u_cast(HeartEnum, STATE));
         goto lookahead;
 
 
@@ -1795,13 +1790,13 @@ Bounce Stepper_Executor(Level* L)
         //
       case TYPE_PARAMETER:
         //
-      case TYPE_TYPE_BLOCK:
-      case TYPE_TYPE_FENCE:
-      case TYPE_TYPE_GROUP:
-      case TYPE_TYPE_WORD:
-      case TYPE_TYPE_PATH:
-      case TYPE_TYPE_CHAIN:
-      case TYPE_TYPE_TUPLE:
+      case TYPE_WILD_BLOCK:
+      case TYPE_WILD_FENCE:
+      case TYPE_WILD_GROUP:
+      case TYPE_WILD_WORD:
+      case TYPE_WILD_PATH:
+      case TYPE_WILD_CHAIN:
+      case TYPE_WILD_TUPLE:
         //
       case TYPE_HANDLE:
 

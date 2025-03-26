@@ -103,9 +103,9 @@
     parse a-value [b-value: <here>, to <end>]
     strict-equal? a-value b-value
 )]
-(not strict-equal? &any-number? integer!)
+(not strict-equal? any-number?/ integer!)
 ; symmetry
-(equal? strict-equal? &any-number? integer! strict-equal? integer! &any-number?)
+(equal? strict-equal? any-number?/ integer! strict-equal? integer! any-number?/)
 ; reflexivity
 (strict-equal? -1 -1)
 ; reflexivity
@@ -259,7 +259,7 @@
 
 ; time!
 (strict-equal? 00:00 00:00)
-; char?! symmetry
+; char?/ symmetry
 (equal? strict-equal? #"a" 97 strict-equal? 97 #"a")
 ; symmetry
 (equal? strict-equal? #"a" 97.0 strict-equal? 97.0 #"a")

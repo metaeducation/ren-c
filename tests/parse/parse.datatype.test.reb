@@ -44,16 +44,16 @@
 
 [
     (123 == parse [a 123] ['a integer!])
-    ~parse-mismatch~ !! (parse [a 123] ['a char?!])
+    ~parse-mismatch~ !! (parse [a 123] ['a char?/])
 
     (123 == parse [a 123] [['a] [integer!]])
-    ~parse-mismatch~ !! (parse [a 123] ['a [char?!]])
+    ~parse-mismatch~ !! (parse [a 123] ['a [char?/]])
 
-    (123 == parse [123] [&any-number?])
-    ~parse-mismatch~ !! (parse [123] [&any-string?])
+    (123 == parse [123] [any-number?/])
+    ~parse-mismatch~ !! (parse [123] [any-string?/])
 
-    (123 == parse [123] [[&any-number?]])
-    ~parse-mismatch~ !! (parse [123] [[&any-string?]])
+    (123 == parse [123] [[any-number?/]])
+    ~parse-mismatch~ !! (parse [123] [[any-string?/]])
 ]
 
 [
@@ -61,7 +61,7 @@
         res: ~
         all [
             3 == parse [a 123] [
-                'a (res: 1) [char?! (res: 2) | integer! (res: 3)]
+                'a (res: 1) [char?/ (res: 2) | integer! (res: 3)]
             ]
             res = 3
         ]
@@ -70,7 +70,7 @@
         res: ~
         all [
             raised? parse [a 123] [
-                'a (res: 1) [char?! (res: 2) | text! (res: 3)]
+                'a (res: 1) [char?/ (res: 2) | text! (res: 3)]
             ]
             res = 1
         ]

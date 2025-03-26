@@ -166,8 +166,8 @@ bind construct [
     ; Note: this list should be the same as above with delimiters, with
     ; BLOCK! excluded.
     ;
-    delimiter-types: [char?! | &any-string? | word! | blob!]
-    keyword-types: [char?! | &any-string? | integer! | word! | blob!]
+    delimiter-types: [word! | blob! | any-string?/ | char?/]
+    keyword-types: [integer! | word! | blob! | char?/ | any-string?/]
 ][
     let case_REWORD: case
     case: lib.case/
@@ -439,7 +439,7 @@ bind construct [
         val: me + switch:type rule [
             integer! [abs rule]
             text! [length of rule]
-            char?! [1]
+            char?/ [1]
         ] else [0]
     ]
 
@@ -467,7 +467,7 @@ bind construct [
                 out: skip out pad ; spacing (remainder)
             ]
             text! [out: change out rule]
-            char?! [out: change out rule]
+            char?/ [out: change out rule]
         ]
     ]
 
@@ -619,7 +619,7 @@ bind construct [
         ;
         switch:type dlm [
             bitset! [boolean select dlm maybe last series]
-            char?! [boolean dlm = last series]
+            char?/ [boolean dlm = last series]
             text! [
                 boolean (find series dlm) and (
                     empty? [# {#}]: find-last series dlm

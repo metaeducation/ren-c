@@ -405,17 +405,17 @@ REBOL [
 
         ; We are going to test for %rebol.h in the path, so need a FILE!
         ;
+        if not config.librebol-path [
+            fail [
+                "LIBREBOL_INCLUDE_DIR currently must be set either as an"
+                "environment variable or as LIBREBOL-PATH in /OPTIONS so"
+                -{that the TCC extension knows where to find "rebol.h"}-
+                "(e.g. in %make/prep/include)"
+            ]
+        ]
         switch:type config.librebol-path [
             text! [config.librebol-path: my local-to-file]
             file! []
-            null?! [
-                fail [
-                    "LIBREBOL_INCLUDE_DIR currently must be set either as an"
-                    "environment variable or as LIBREBOL-PATH in /OPTIONS so"
-                    -{that the TCC extension knows where to find "rebol.h"}-
-                    "(e.g. in %make/prep/include)"
-                ]
-            ]
             fail ["Invalid LIBREBOL_INCLUDE_DIR:" config.librebol-path]
         ]
 

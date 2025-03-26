@@ -32,7 +32,7 @@
 // the integer datatype value).  Returns an array of words for the added
 // datatypes to use in SYSTEM/CATALOG/DATATYPES.  See %boot/types.r
 //
-// 1. Things like INTEGER! are defined to be &[INTEGER]
+// 1. Things like INTEGER! are defined to be ~{integer!}~ antiforms.
 //
 // 2. Many places in the system want to be able to just off-the-cuff refer to
 //    a built-in datatype, without allocating a cell to initialize.  This is
@@ -55,10 +55,11 @@ Source* Startup_Datatypes(Array* boot_typespecs)
     for (; n <= MAX_TYPE_BYTE; ++n) {
         Type type = u_cast(TypeEnum, n);
 
-        SymId datatype_id = cast(SymId, MAX_TYPE_BYTE + n);
+        SymId datatype_id = cast(SymId, n);  // includes the "!", e.g. integer!
         Element* datatype = cast(Element*, Sink_Lib_Var(datatype_id));
         Protect_Cell(Init_Builtin_Datatype(datatype, type));  // datatype [1]
         assert(datatype == Datatype_From_Type(type));  // convenient [2]
+        assert(Cell_Datatype_Type(datatype) == type);  // sanity check
 
         Element* word = Init_Any_Word(
             Alloc_Tail_Array(catalog),

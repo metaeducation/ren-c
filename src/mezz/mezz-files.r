@@ -186,7 +186,7 @@ decode-url: sys.util/decode-url/
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
         [any-value?]
     question "Prompt to user, datatype to request, or dialect block"
-        [block! text! type-block!]
+        [block! text! datatype!]
     :hide "mask input with * (Rebol2 feature, not yet implemented)"
     ; !!! What about /MULTILINE ?
 ][
@@ -201,13 +201,13 @@ decode-url: sys.util/decode-url/
     let type: text!
     switch:type question [
         text! [prompt: question]  ; `ask "Input:"` doesn't filter type
-        type-block! [type: question]  ; `ask text!` has no prompt (like INPUT)
+        datatype! [type: question]  ; `ask text!` has no prompt (like INPUT)
         block! [
             parse question [
                 opt prompt: text!
-                opt let word: *in* word! (type: ensure type-block! get word)
+                opt let word: *in* word! (type: ensure datatype! get word)
             ] except [
-                fail -{ASK currently only supports ["Prompt:" type-block!]}-
+                fail -{ASK currently only supports ["Prompt:" datatype!]}-
             ]
         ]
         fail ~<unreachable>~
@@ -308,7 +308,7 @@ decode-url: sys.util/decode-url/
     ]
 
     switch:type :path [
-        null?! []  ; Stay here
+        null?/ []  ; Stay here
         file! [change-dir path]
         text! [change-dir local-to-file path]
         word! path! [change-dir to-file path]

@@ -33,7 +33,7 @@
 //
 //      return: [element?]
 //      type "The datatype or parent context to construct from"
-//          [<maybe> type-block! any-context?]
+//          [<maybe> datatype! any-context?]
 //      def "Definition or size of the new value (binding may be modified)"
 //          [<maybe> <unrun> element?]  ; <unrun> action for FRAME!
 //  ]
@@ -42,10 +42,18 @@ DECLARE_NATIVE(MAKE)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Element* type = Element_ARG(TYPE);
-    UNUSED(ARG(DEF));
+    Value* type = ARG(TYPE);  // !!! may not be datatype, but parent context
+    USED(ARG(DEF));  // delegated to generic
 
-    return Dispatch_Generic(MAKE, type, LEVEL);
+    Heart heart;
+    if (Is_Datatype(type)) {
+        heart = Cell_Datatype_Heart(type);
+    }
+    else {
+        heart = Heart_Of_Fundamental(Known_Element(type));
+    }
+
+    return Dispatch_Generic_Core(SYM_MAKE, GENERIC_TABLE(MAKE), heart, LEVEL);
 }
 
 
@@ -149,7 +157,7 @@ DECLARE_NATIVE(COPY)
 //
 Bounce To_Or_As_Checker_Executor(Level* const L)
 {
-    Heart to_or_as = cast(HeartEnum, LEVEL_STATE_BYTE(L));
+    Heart to_or_as = u_cast(HeartEnum, LEVEL_STATE_BYTE(L));
     assert(to_or_as != TYPE_0);
 
     Element* input = cast(Element*, Level_Spare(L));
@@ -257,8 +265,8 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
     Option(const Symbol*) label = Level_Label(level_);
 
-    Element* type = Element_ARG(TYPE);
-    STATE = cast(Byte, Cell_Datatype_Heart(type));  // generic may trash TYPE
+    Value* datatype = ARG(TYPE);
+    STATE = cast(Byte, Cell_Datatype_Heart(datatype));  // generic may trash it
     Copy_Cell(SPARE, ARG(ELEMENT));  // may trash ELEMENT too, save in SPARE
 
     Level* sub = Push_Downshifted_Level(OUT, level_);
@@ -286,18 +294,24 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 //
 //      return: "ELEMENT converted to TYPE (copied if same type as ELEMENT)"
 //          [element?]
-//      type [<maybe> type-block!]
-//      element [<maybe> fundamental?]
+//      type [<maybe> datatype!]
+//      element [<maybe> fundamental? datatype!]
 //  ]
 //
 DECLARE_NATIVE(TO)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* e = Element_ARG(ELEMENT);
     Type to = Cell_Datatype_Type(ARG(TYPE));
     if (to > MAX_HEART)
         return FAIL("TO can't produce quoted/quasiform/antiform");
+
+    if (Is_Datatype(ARG(ELEMENT))) {  // do same coercions as WORD!
+        SymId id = Symbol_Id_From_Type(Cell_Datatype_Type(ARG(ELEMENT)));
+        Init_Word(ARG(ELEMENT), Canon_Symbol(id));
+    }
+
+    Element* e = Element_ARG(ELEMENT);
 
   #if NO_RUNTIME_CHECKS
 
@@ -324,7 +338,7 @@ DECLARE_NATIVE(TO)
 //  "Aliases underlying data of one value to act as another of same class"
 //
 //      return: [~null~ fundamental?]
-//      type [type-block!]
+//      type [datatype!]
 //      element [<maybe> fundamental?]
 //  ]
 //

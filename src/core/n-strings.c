@@ -111,7 +111,7 @@ DECLARE_NATIVE(LATIN1_Q)
 //
 //      return: "Null if no base element and no material in rest to join"
 //          [~null~ any-utf8? any-list? any-sequence? blob!]
-//      base [type-block! any-utf8? any-list? any-sequence? blob!]
+//      base [datatype! any-utf8? any-list? any-sequence? blob!]
 //      rest "Plain [...] blocks reduced, @[...] block items used as is"
 //          [~void~ block! the-block! any-utf8? blob!]
 //      :with [element? splice!]
@@ -124,7 +124,18 @@ DECLARE_NATIVE(JOIN)
 {
     INCLUDE_PARAMS_OF_JOIN;
 
-    Element* base = Element_ARG(BASE);
+    Option(const Element*) base;  // const (we derive result_heart each time)
+    Heart heart;
+    if (Is_Datatype(ARG(BASE))) {
+        base = nullptr;
+        heart = Cell_Datatype_Heart(ARG(BASE));
+    }
+    else {
+        base = Element_ARG(BASE);
+        heart = Heart_Of_Fundamental(unwrap base);
+    }
+    bool joining_datatype = not base;  // compiler should optimize out
+
     Option(Element*) rest = Is_Void(ARG(REST))
         ? nullptr
         : Element_ARG(REST);
@@ -154,11 +165,11 @@ DECLARE_NATIVE(JOIN)
         Clear_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED);
 
         if (not rest) {  // simple base case: nullptr or COPY
-            if (Is_Type_Block(base))
+            if (joining_datatype)
                 return nullptr;
-            return rebValue(CANON(COPY), base);
+            return rebValue(CANON(COPY), unwrap base);
         }
-        if (Is_Type_Block(base) and Any_Utf8(unwrap rest))
+        if (joining_datatype and Any_Utf8(unwrap rest))
             goto simple_join;
         goto join_initial_entry; }
 
@@ -238,22 +249,16 @@ DECLARE_NATIVE(JOIN)
     if (delimiter)
         assert(Not_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING));
 
-    Heart result_heart;
-    if (Is_Type_Block(base))
-        result_heart = Cell_Datatype_Heart(base);
-    else
-        result_heart = Heart_Of_Fundamental(base);
-
-    if (Any_Utf8_Type(result_heart) or result_heart == TYPE_BLOB)
+    if (Any_Utf8_Type(heart) or heart == TYPE_BLOB)
         goto start_mold_join;
 
-    assert(Any_List_Type(result_heart) or Any_Sequence_Type(result_heart));
+    assert(Any_List_Type(heart) or Any_Sequence_Type(heart));
     goto start_stack_join;
 
   start_mold_join: { /////////////////////////////////////////////////////////
 
-    if (not Is_Type_Block(base))
-        Copy_Cell(PUSH(), base);
+    if (not joining_datatype)
+        Copy_Cell(PUSH(), unwrap base);
 
     if (Bool_ARG(HEAD) and delimiter)  // speculatively start with
         Copy_Cell(PUSH(), unwrap delimiter);  // may be tossed
@@ -269,18 +274,18 @@ DECLARE_NATIVE(JOIN)
     //    anything (e.g. the output is non-null) and if it didn't, we will
     //    add a blank back.
 
-    if (not Is_Type_Block(base)) {
-        if (Any_Sequence_Type(result_heart)) {
-            Length len = Cell_Sequence_Len(base);
+    if (not joining_datatype) {
+        if (Any_Sequence_Type(heart)) {
+            Length len = Cell_Sequence_Len(unwrap base);
             REBINT i;
             for (i = 0; i < len; ++i)
-                Copy_Sequence_At(PUSH(), base, i);
+                Copy_Sequence_At(PUSH(), unwrap base, i);
             if (Is_Blank(TOP))
                 DROP();  // will add back if join produces nothing [1]
         }
         else {
             const Element* tail;
-            const Element* at = Cell_List_At(&tail, base);
+            const Element* at = Cell_List_At(&tail, unwrap base);
 
             for (; at != tail; ++at)
                 Copy_Cell(PUSH(), at);
@@ -516,19 +521,13 @@ DECLARE_NATIVE(JOIN)
 
     if (TOP_INDEX == VAL_INT32(original_index)) {  // nothing pushed
         Drop_Data_Stack_To(STACK_BASE);
-        if (Is_Type_Block(base))
+        if (joining_datatype)
             return nullptr;
-        return rebValue(CANON(COPY), rebQ(base));
+        return rebValue(CANON(COPY), rebQ(unwrap base));
     }
 
     if (Bool_ARG(TAIL) and delimiter)
         Copy_Cell(PUSH(), unwrap delimiter);
-
-    Heart heart;
-    if (Is_Type_Block(base))
-        heart = Cell_Datatype_Heart(base);
-    else
-        heart = Heart_Of_Fundamental(base);
 
     if (heart == TYPE_BLOB)
         goto finish_blob_join;
@@ -626,7 +625,7 @@ DECLARE_NATIVE(JOIN)
 
     Set_Flex_Len(buf, 0);
 
-  blockscope {
+  blockscope {  // needed so Drop_Stack_To() can be outside the block
     OnStack(Value*) at = Data_Stack_At(Value, STACK_BASE + 1);
     OnStack(Value*) tail = Data_Stack_At(Value, TOP_INDEX + 1);
 
@@ -700,36 +699,21 @@ DECLARE_NATIVE(JOIN)
 
     Drop_Level_Unbalanced(SUBLEVEL);
 
-    if (TOP_INDEX == VAL_INT32(original_index)) {  // nothing pushed
-        Drop_Data_Stack_To(STACK_BASE);
-        if (Is_Type_Block(base))
-            return nullptr;
-        return rebValue(CANON(COPY), rebQ(base));
-    }
-
     if (Bool_ARG(TAIL) and delimiter)
         Copy_Cell(PUSH(), unwrap delimiter);
-
-    Heart heart;
-    if (Is_Type_Block(base))
-        heart = Cell_Datatype_Heart(base);
-    else
-        heart = Heart_Of_Fundamental(base);
 
     if (Any_Sequence_Type(heart)) {
         Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
         if (error)
             return RAISE(unwrap error);
-
-        if (not Is_Type_Block(base))
-            Tweak_Cell_Binding(OUT, Cell_Binding(base));
     }
     else {
-        Init_Any_List(OUT, heart, Pop_Managed_Source_From_Stack(STACK_BASE));
-
-        if (not Is_Type_Block(base))
-            Tweak_Cell_Binding(OUT, Cell_Binding(base));
+        Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
+        Init_Any_List(OUT, heart, a);
     }
+
+    if (not joining_datatype)
+        Tweak_Cell_Binding(OUT, Cell_Binding(unwrap base));
 
     return OUT;
 }}

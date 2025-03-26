@@ -877,7 +877,7 @@ INLINE Cell* Copy_Cell_Untracked(
 
 #define CELL_MASK_TRASH \
     (NODE_FLAG_NODE | NODE_FLAG_CELL \
-        | FLAG_HEART(BLANK) | FLAG_QUOTE_BYTE(NOQUOTE_1) \
+        | FLAG_HEART(BLANK) | FLAG_QUOTE_BYTE(QUASIFORM_2_COERCE_ONLY) \
         | CELL_MASK_NO_NODES)
 
 INLINE Cell* Move_Cell_Untracked(

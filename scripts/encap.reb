@@ -600,7 +600,7 @@ pe-format: context [
         let word
         let block-rule
         let group-rule: [
-            word: &set-word?
+            word: set-word?/
             (find-a-word unchain word)
             | ahead block! into block-rule  ; recursively look into the array
             | one
@@ -608,7 +608,7 @@ pe-format: context [
         block-rule: [
             ahead group! into [opt some group-rule]
             | ahead block! into [opt some block-rule]
-            | word: &set-word? (find-a-word unchain word)
+            | word: set-word?/ (find-a-word unchain word)
             | one
         ]
 

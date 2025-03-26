@@ -42,16 +42,6 @@ lf: LF:    newline
 
 nul: NUL:  #{00}  ; ^(NULL) no longer legal internal to strings
 
-; Type predicates.  These are planned to all go away in favor of plain &
-; decorations (e.g. &any-series?) when needed.  Use e.g. plain any-series?
-; in function specs.
-
-null?!: &null?
-nothing?!: &nothing?
-void?!: &void?
-char?!: &char?
-space?!: &space?
-
 blank: _
 
 null: ~null~

@@ -103,8 +103,7 @@ INLINE void Force_Flex_Managed(const Flex* f) {
 // before a level returns to the trampoline.
 //
 
-#define Push_Lifeguard(node) \
-    Push_Guard_Node(node)
+// Push_Lifeguard() is not INLINE
 
 INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Node)
   #if NO_RUNTIME_CHECKS

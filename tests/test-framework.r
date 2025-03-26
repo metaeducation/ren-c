@@ -107,7 +107,7 @@ error: ~
         (elide result: unmeta result)
 
         <default> [
-            spaced ["was" (mold type of :result) ", not true or false"]
+            spaced ["was" (to word! type of :result) ", not true or false"]
         ]
     ] then message -> [
         test-failures: me + 1

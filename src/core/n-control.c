@@ -1322,8 +1322,8 @@ DECLARE_NATIVE(SWITCH)
     if (Bool_ARG(TYPE)) {
         Decay_If_Unstable(right);
 
-        if (not Any_Type_Value(right))
-            return FAIL("switch:type requires comparisons to TYPE-XXX!");
+        if (not Is_Datatype(right) and not Is_Action(right))
+            return FAIL("switch:type conditions must be DATATYPE! or ACTION!");
 
         Copy_Cell(Level_Spare(SUBLEVEL), left);
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(  // *sublevel*'s SPARE!

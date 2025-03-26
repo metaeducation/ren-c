@@ -23,7 +23,7 @@
 ; see the number of quotes more clearly.  If quotes are part of the name of
 ; the variable, it might read better--e.g.
 ;
-;     parse [x: result'] [&set-word? just result']
+;     parse [x: result'] [set-word?/ just result']
 ;
 ; However, the first case actually has important uses under composition.
 ; Not needing to introduce a GROUP! to get a literal value has turned out to

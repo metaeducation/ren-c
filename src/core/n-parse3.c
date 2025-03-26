@@ -403,7 +403,7 @@ static const Element* Get_Parse_Value(
 
         Get_Var_May_Fail(sink, rule, context);
     }
-    else if (Is_Tuple(rule)) {
+    else if (Is_Tuple(rule) or Is_Path(rule)) {
         Get_Var_May_Fail(sink, rule, context);
     }
     else
@@ -426,8 +426,15 @@ static const Element* Get_Parse_Value(
 
         if (Is_Logic(sink) or Is_Splice(sink))
             Quasify_Antiform(sink);
-        else
+        else if (Is_Datatype(sink)) {  // convert to functions for now
+            Type type = Cell_Datatype_Type(sink);
+            Init_Typechecker(sink, Datatype_From_Type(type));
+            assert(Heart_Of(sink) == TYPE_FRAME);
+            QUOTE_BYTE(sink) = NOQUOTE_1;
+        }
+        else {
             fail (Error_Bad_Antiform(sink));
+        }
     }
     else {
         if (Is_Integer(sink))
@@ -628,19 +635,24 @@ static REBIXO Parse_One_Rule(
     if (Stub_Holds_Cells(P_INPUT)) {
         const Element* item = Array_At(P_INPUT_ARRAY, pos);
 
-        switch (Type_Of(rule)) {
-          case TYPE_QUOTED:
+        if (Is_Quoted(rule)) {  // fall through to direct match
             rule = Unquotify(Copy_Cell(SPARE, rule));
-            break;  // fall through to direct match
-
+        }
+        else switch (Heart_Of_Fundamental(rule)) {
           case TYPE_THE_WORD: {
             Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
             rule = Ensure_Element(SPARE);
             break; }  // all through to direct match
 
-          case TYPE_TYPE_WORD:
-          case TYPE_TYPE_BLOCK:
-          case TYPE_TYPE_GROUP:
+          case TYPE_FRAME: {  // want to run a type constraint...
+            Copy_Cell(SPARE, item);
+            if (Typecheck_Spare_With_Predicate_Uses_Scratch(
+                level_, rule, Cell_Frame_Label(rule)
+            )){
+                return pos + 1;
+            }
+            return END_FLAG; }
+
           case TYPE_PARAMETER: {
             assert(rule != SPARE);
             Copy_Cell(SPARE, item);
@@ -828,10 +840,11 @@ static REBIXO To_Thru_Block_Rule(
                 else
                     fail ("TAG! combinator must be <here> or <end> ATM");
             }
-            else if (Is_Tuple(rule))
+            else if (Is_Tuple(rule) or Is_Path(rule))
                 rule = Get_Parse_Value(cell, rule, P_RULE_BINDING);
-            else if (Is_Path(rule))
-                fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
+            else {
+                // fallthrough to literal match of rule (text, bitset, etc)
+            }
 
             // Try to match it:
             if (Any_List_Type(P_HEART) or Any_Sequence_Type(P_HEART)) {
@@ -1017,7 +1030,8 @@ static REBIXO To_Thru_Non_Block_Rule(
         ){
             return P_POS;  // no-op
         }
-        fail ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
+        if (not Is_Meta_Of_Datatype(rule))
+            fail ("PARSE3 supports ~void~, ~okay~, and datatype antiforms");
     }
 
     Type t = Type_Of(rule);
@@ -1053,8 +1067,11 @@ static REBIXO To_Thru_Non_Block_Rule(
         else if (Is_The_Word(rule)) {
             Get_Var_May_Fail(temp, rule, P_RULE_BINDING);
         }
-        else if (Is_Type_Word(rule) or Is_Type_Block(rule)) {
-            Init_Typechecker(temp, rule);
+        else if (Is_Meta_Of_Datatype(rule)) {
+            DECLARE_ELEMENT (rule_value);
+            Copy_Cell(rule_value, rule);
+            Quasify_Isotopic_Fundamental(rule_value);
+            Init_Typechecker(temp, rule_value);
         }
         else {
             Copy_Cell(temp, rule);
@@ -1727,8 +1744,18 @@ DECLARE_NATIVE(SUBPARSE)
     }
     else if (Is_Tuple(rule)) {
         Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
-        if (Is_Antiform(SPARE))
-            fail (Error_Bad_Antiform(SPARE));
+        if (Is_Datatype(SPARE)) {
+            Init_Typechecker(P_SAVE, stable_SPARE);
+            QUOTE_BYTE(SPARE) = NOQUOTE_1;
+            rule = Known_Element(SPARE);
+        }
+        else
+            rule = cast(Element*, Copy_Cell(P_SAVE, stable_SPARE));
+    }
+    else if (Is_Path(rule)) {
+        Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
+        assert(Is_Action(SPARE));
+        QUOTE_BYTE(SPARE) = NOQUOTE_1;
         rule = cast(Element*, Copy_Cell(P_SAVE, stable_SPARE));
     }
     else if (Is_Set_Tuple(rule)) {
@@ -1757,9 +1784,6 @@ DECLARE_NATIVE(SUBPARSE)
 
         P_FLAGS |= PF_SET;
         goto pre_rule;
-    }
-    else if (Any_Path(rule)) {
-        fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
     }
 
     if (Is_Bar(rule))

@@ -88,7 +88,7 @@ ok)
 ([<integer!> <any-value?>] = collect [
     switch2:multi 1 [
         match integer! => [keep <integer!>]
-        match &any-value? => [keep <any-value?>]
+        match any-value?/ => [keep <any-value?>]
     ]
 ])
 ]

@@ -53,7 +53,7 @@ bind construct [
 
     let /dump-one: func [return: [~] item] [
         switch:type item [
-            &refinement?  ; treat as label, /a no shift and shorter than "a"
+            refinement?/  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.
                 let trunc
                 print unspaced [
@@ -194,7 +194,7 @@ bind construct [
         [~null~ block!]
     obj [object! port! module!]
     :pattern "Include only fields that match a string or datatype"
-        [text! type-block!]
+        [text! datatype!]
 ][
     let /form-pad: lambda [
         "Form a value with fixed size (space padding follows)"
@@ -221,9 +221,9 @@ bind construct [
             ]
 
             switch:type pattern [  ; filter out any non-matching items
-                null?! []
+                null?/ []
 
-                type-block! [
+                datatype! [
                     if type != pattern [continue]
                 ]
 

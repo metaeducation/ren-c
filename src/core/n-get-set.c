@@ -317,16 +317,18 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
 
         assert(Is_Action(out));
 
-        DECLARE_VALUE (action);
-        Move_Cell(action, out);
-        Deactivate_If_Action(action);
+        if (TOP_INDEX != base) {
+            DECLARE_VALUE (action);
+            Move_Cell(action, out);
+            Deactivate_If_Action(action);
 
-        Option(Element*) def = nullptr;  // !!! EMPTY_BLOCK causes problems, why?
-        bool threw = Specialize_Action_Throws(  // has cost, try to avoid [1]
-            out, action, def, base
-        );
-        assert(not threw);  // can only throw if `def`
-        UNUSED(threw);
+            Option(Element*) def = nullptr;  // !!! EMPTY_BLOCK doesn't work?
+            bool threw = Specialize_Action_Throws(  // costly, try to avoid [1]
+                out, action, def, base
+            );
+            assert(not threw);  // can only throw if `def`
+            UNUSED(threw);
+        }
 
         if (steps_out and steps_out != GROUPS_OK)
             Init_Nothing(unwrap steps_out);  // !!! What to return?

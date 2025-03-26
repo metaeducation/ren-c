@@ -63,8 +63,8 @@ REBOL [
         v: unrun v
     ]
     return (switch:type :v [
-        &any-list? [spaced ["list of length:" length of v]]
-        type-block! [
+        any-list?/ [spaced ["list of length:" length of v]]
+        datatype! [
             mold v
         ]
         frame! [
@@ -246,7 +246,7 @@ REBOL [
     let value: unmeta atom'
     atom': ~
 
-    print [maybe name "is an element of type" mold type of value]
+    print [maybe name "is an element of type" to word! type of value]
     if free? value [
         print "!!! contents no longer available, as it has been FREE'd !!!"
         return ~
@@ -307,7 +307,7 @@ REBOL [
     To see all words of a specific datatype:
 
         help object!
-        help type-block!}--
+        help datatype!}--
 
     return: [~]
     @topic "WORD! to explain, or other HELP target (if no args, general help)"
@@ -400,7 +400,7 @@ REBOL [
             ]
         ]
 
-        type-word! [
+        datatype! [
             if instances: summarize-obj:pattern make-libuser value [
                 print ["Found these" (uppercase form topic) "words:"]
                 for-each 'line instances [

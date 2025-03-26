@@ -118,8 +118,7 @@ void Begin_Non_Lexical_Mold(Molder* mo, const Cell* v)
     Append_Ascii(mo->string, "#[");
 
     const Symbol* type_name = Canon_Symbol(Symbol_Id_From_Type(Heart_Of(v)));
-    Append_Spelling(mo->string, type_name);
-    Append_Codepoint(mo->string, '!');  // `#[object!` not `#[object`
+    Append_Spelling(mo->string, type_name);  // includes the "!"
 
     Append_Codepoint(mo->string, ' ');
 }

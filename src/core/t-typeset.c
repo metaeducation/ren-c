@@ -89,6 +89,7 @@ void Startup_Type_Predicates(void)
             Canon_Symbol(cast(SymId, id)),  // cached symbol for function
             UNBOUND
         );
+        assert(Ensure_Cell_Frame_Details(Lib_Var(cast(SymId, id))));
     }
 
     // Shorthands used in native specs, so have to be available in boot
@@ -129,11 +130,11 @@ void Shutdown_Typesets(void)
 // 3. Everything non-TAG! can be abstracted via WORD!.  This can lead to some
 //    strange mixtures:
 //
-//        func compose:deep [x [word! (integer!)]] [ ... ]
+//        func compose:deep [x [word! (^integer!)]] [ ... ]
 //
-//    (But then the help will show the types as [word! &integer].  Is it
+//    (But then the help will show the types as [word! ~{integer}~].  Is it
 //    preferable to enforce words for some things?  That's not viable for
-//    type predicate actions, like SPLICE?...)
+//    type predicate actions, like ANY-ELEMENT?...)
 //
 // 4. Ren-C disallows unbounds, and validates what the word looks up to
 //    at the time of creation.  If it didn't, then optimizations could not
@@ -266,17 +267,13 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
-            if (Is_Antiform(lookup) and Heart_Of(lookup) != TYPE_FRAME)
-                fail (item);
-            if (Is_Quoted(lookup))
-                fail (item);
         }
         else
             lookup = item;
 
-        Heart heart = Heart_Of(lookup);
+        Type type = Type_Of(lookup);
 
-        if (heart == TYPE_TYPE_BLOCK) {
+        if (type == TYPE_DATATYPE) {
             if (optimized == optimized_tail) {
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
@@ -285,24 +282,7 @@ void Set_Parameter_Spec(
             ++optimized;
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
         }
-        else if (
-            heart == TYPE_TYPE_WORD
-            or heart == TYPE_TYPE_PATH or heart == TYPE_TYPE_TUPLE
-        ){
-            const Value* slot;
-            Option(Error*) error = Trap_Lookup_Word(
-                &slot, Ensure_Element(lookup), SPECIFIED
-            );
-            if (error)
-                fail (unwrap error);
-            if (not Is_Action(slot))
-                fail ("TYPE-WORD! must look up to an action for now");
-            heart = TYPE_FRAME;
-            lookup = slot;
-            goto handle_predicate;
-        }
-        else if (heart == TYPE_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
-          handle_predicate: {
+        else if (type == TYPE_ACTION) {
             Details* details = maybe Try_Cell_Frame_Details(lookup);
             if (
                 details
@@ -334,7 +314,6 @@ void Set_Parameter_Spec(
             }
             else
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-          }
         }
         else {
             // By pre-checking we can avoid needing to double check in the

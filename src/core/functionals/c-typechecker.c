@@ -79,7 +79,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
     }
     else {
         bool check_datatype = Cell_Logic(Level_Arg(L, 2));
-        if (check_datatype and not Is_Type_Block(v))
+        if (check_datatype and not Is_Datatype(v))
             return RAISE("Datatype check on non-datatype (use TRY for NULL)");
 
         if (check_datatype)
@@ -257,6 +257,162 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
 
 //
+//  Typecheck_Spare_With_Predicate_Uses_Scratch: C
+//
+bool Typecheck_Spare_With_Predicate_Uses_Scratch(
+    Level* const L,
+    const Value* test,
+    Option(const Symbol*) label
+){
+    USE_LEVEL_SHORTHANDS (L);
+
+    assert(Is_Action(test) or Is_Frame(test));
+
+    bool result;
+
+    assert(test != SCRATCH);
+    assert(test != SPARE);
+
+    const Value* v = stable_SPARE;
+
+{ //=//// TRY BUILTIN TYPESET CHECKER DISPATCH ////////////////////////////=//
+
+    // The fastest (and most common case) is when we recognize the dispatcher
+    // as being the Typechecker_Dispatcher.  This means it's one of the 255
+    // built-in type checks, such as ANY-WORD? or INTEGER? or INTEGER!.
+    //
+    // Note things like SET-WORD? and ANY-VALUE? are not built-in type checks,
+    // but they are intrinsic type checks.
+
+    Details* details = maybe Try_Cell_Frame_Details(test);
+    if (not details)
+        goto non_intrinsic_dispatch;
+
+    Dispatcher* dispatcher = Details_Dispatcher(details);
+    if (dispatcher == &Typechecker_Dispatcher) {
+        TypesetByte typeset_byte = VAL_UINT8(
+            Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
+        );
+        if (Builtin_Typeset_Check(typeset_byte, Type_Of(SPARE)))
+            goto test_succeeded;
+        goto test_failed;
+    }
+
+  //=//// TRY DISPATCHING AS AN INTRINSIC ///////////////////////////////=//
+
+  #if (! DEBUG_DISABLE_INTRINSICS)
+    if (
+        Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
+        and not SPORADICALLY(100)
+    ){
+        Copy_Cell(SCRATCH, test);  // intrinsic may need action
+
+      #if DEBUG_CELL_READ_WRITE
+        assert(Not_Cell_Flag(SPARE, PROTECTED));
+        Set_Cell_Flag(SPARE, PROTECTED);
+      #endif
+
+        assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
+        Set_Level_Flag(L, DISPATCHING_INTRINSIC);
+        Bounce bounce = (*dispatcher)(L);
+        Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
+
+      #if DEBUG_CELL_READ_WRITE
+        Clear_Cell_Flag(SPARE, PROTECTED);
+      #endif
+
+        if (bounce == nullptr or bounce == BOUNCE_BAD_INTRINSIC_ARG)
+            goto test_failed;
+        if (bounce == BOUNCE_OKAY)
+            goto test_succeeded;
+
+        if (bounce == BOUNCE_FAIL)
+            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
+        if (Is_Raised(L->out))
+            fail (Cell_Error(L->out));
+        fail (Error_No_Logic_Typecheck(label));
+    }
+  #endif
+
+} non_intrinsic_dispatch: { //////////////////////////////////////////////////
+
+    Flags flags = 0;
+    Level* sub = Make_End_Level(
+        &Action_Executor,
+        FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
+    );
+    Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // sub's out is L->scratch
+    Push_Action(sub, test);
+    Begin_Action(sub, Cell_Frame_Label_Deep(test), PREFIX_0);
+
+    const Key* key = sub->u.action.key;
+    const Param* param = sub->u.action.param;
+    Atom* arg = sub->u.action.arg;
+    for (; key != sub->u.action.key_tail; ++key, ++param, ++arg) {
+        if (Is_Specialized(param))
+            Blit_Param_Drop_Mark(arg, param);
+        else {
+            Erase_Cell(arg);
+            if (Get_Parameter_Flag(param, REFINEMENT))
+                Init_Nulled(arg);
+            else
+                Init_Nothing(arg);
+        }
+    }
+
+    arg = First_Unspecialized_Arg(&param, sub);
+    if (not arg)
+        fail (Error_No_Arg_Typecheck(label));  // must take argument
+
+    Copy_Cell(arg, v);  // do not decay [4]
+
+    if (Cell_ParamClass(param) == PARAMCLASS_META)
+        Meta_Quotify(arg);
+
+    if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
+        sub, param, arg, false
+    )){
+        Drop_Action(sub);
+        Drop_Level(sub);
+        goto test_failed;
+    }
+
+    if (Trampoline_With_Top_As_Root_Throws())
+        fail (Error_No_Catch_For_Throw(sub));
+
+    Drop_Level(sub);
+
+    if (not Is_Logic(SCRATCH))  // sub wasn't limited to intrinsics
+        fail (Error_No_Logic_Typecheck(label));
+
+    if (Cell_Logic(SCRATCH))
+        goto test_succeeded;
+
+    goto test_failed;
+
+} test_failed: { /////////////////////////////////////////////////////////////
+
+    result = false;
+    goto return_result;
+
+} test_succeeded: { //////////////////////////////////////////////////////////
+
+    result = true;
+    goto return_result;
+
+} return_result: {
+
+  #if RUNTIME_CHECKS
+    assert(v == stable_SPARE);
+    Init_Unreadable(SCRATCH);
+  #endif
+
+    return result;
+}}
+
+
+//
 //  Typecheck_Atom_In_Spare_Uses_Scratch: C
 //
 // Ren-C has eliminated the concept of TYPESET!, instead gaining behaviors
@@ -294,7 +450,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         match_all = false;
     }
     else switch (Type_Of(tests)) {
-      case TYPE_TYPE_BLOCK:
+      case TYPE_DATATYPE:
         return Is_Stable(v) and (Type_Of(v) == Cell_Datatype_Type(tests));
 
       case TYPE_BLOCK:
@@ -304,7 +460,6 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         break;
 
       case TYPE_GROUP:
-      case TYPE_TYPE_GROUP:
         item = Cell_List_At(&tail, tests);
         derived = Derive_Binding(tests_binding, tests);
         match_all = true;
@@ -312,13 +467,19 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
       case TYPE_QUASIFORM:
       case TYPE_QUOTED:
-      case TYPE_TYPE_WORD:
       case TYPE_WORD:
         item = c_cast(Element*, tests);
         tail = c_cast(Element*, tests) + 1;
         derived = tests_binding;
         match_all = true;
         break;
+
+      case TYPE_ACTION:
+        return Typecheck_Spare_With_Predicate_Uses_Scratch(
+            L,
+            tests,
+            Cell_Frame_Label(tests)
+        );
 
       default:
         assert(false);
@@ -389,10 +550,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
         Type type;
         const Value* test;
-        if (
-            Type_Of_Unchecked(item) == TYPE_WORD
-            or Type_Of_Unchecked(item) == TYPE_TYPE_WORD
-        ){
+        if (Type_Of_Unchecked(item) == TYPE_WORD) {
             label = Cell_Word_Symbol(item);
             Option(Error*) error = Trap_Lookup_Word(&test, item, derived);
             if (error)
@@ -401,19 +559,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         }
         else {
             test = item;
-            switch (Type_Of_Unchecked(test)) {
-              case TYPE_BLOCK:
-                type = TYPE_TYPE_BLOCK;
-                break;
-
-              case TYPE_GROUP:
-                type = TYPE_TYPE_GROUP;
-                break;
-
-              default:
-                type = Type_Of_Unchecked(test);
-                break;
-            }
+            type = Type_Of_Unchecked(test);
         }
 
         if (Is_Action(test))
@@ -421,114 +567,9 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
         switch (type) {
           run_action: {
-          #if (! DEBUG_DISABLE_INTRINSICS)
-            Details* details = maybe Try_Cell_Frame_Details(test);
-            if (
-                details
-                and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
-                and not SPORADICALLY(100)
-            ){
-                Dispatcher* dispatcher = Details_Dispatcher(details);
-
-                Copy_Cell(SCRATCH, test);  // intrinsic may need action
-
-              #if DEBUG_CELL_READ_WRITE
-                assert(Not_Cell_Flag(SPARE, PROTECTED));
-                Set_Cell_Flag(SPARE, PROTECTED);
-              #endif
-
-                assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
-                Set_Level_Flag(L, DISPATCHING_INTRINSIC);
-                Bounce bounce = (*dispatcher)(L);
-                Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
-
-              #if DEBUG_CELL_READ_WRITE
-                Clear_Cell_Flag(SPARE, PROTECTED);
-              #endif
-
-                if (bounce == nullptr or bounce == BOUNCE_BAD_INTRINSIC_ARG)
-                    goto test_failed;
-                if (bounce == BOUNCE_OKAY)
-                    goto test_succeeded;
-
-                if (bounce == BOUNCE_FAIL)
-                    fail (Error_No_Catch_For_Throw(TOP_LEVEL));
-                assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
-                if (Is_Raised(L->out))
-                    fail (Cell_Error(L->out));
-                fail (Error_No_Logic_Typecheck(label));
-            }
-          #endif
-
-            Flags flags = 0;
-            Level* sub = Make_End_Level(
-                &Action_Executor,
-                FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
-            );
-            Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // write sub's output to L->scratch
-            Push_Action(sub, test);
-            Begin_Action(sub, Cell_Frame_Label_Deep(test), PREFIX_0);
-
-            const Key* key = sub->u.action.key;
-            const Param* param = sub->u.action.param;
-            Atom* arg = sub->u.action.arg;
-            for (; key != sub->u.action.key_tail; ++key, ++param, ++arg) {
-                if (Is_Specialized(param))
-                    Blit_Param_Drop_Mark(arg, param);
-                else {
-                    Erase_Cell(arg);
-                    if (Get_Parameter_Flag(param, REFINEMENT))
-                        Init_Nulled(arg);
-                    else
-                        Init_Nothing(arg);
-                }
-            }
-
-            arg = First_Unspecialized_Arg(&param, sub);
-            if (not arg)
-                fail (Error_No_Arg_Typecheck(label));  // must take argument
-
-            Copy_Cell(arg, v);  // do not decay [4]
-
-            if (Cell_ParamClass(param) == PARAMCLASS_META)
-                Meta_Quotify(arg);
-
-            if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
-                sub, param, arg, false
-            )) {
-                Drop_Action(sub);
-                Drop_Level(sub);
-                goto test_failed;
-            }
-
-            if (Trampoline_With_Top_As_Root_Throws())
-                fail (Error_No_Catch_For_Throw(sub));
-
-            Drop_Level(sub);
-
-            if (not Is_Logic(SCRATCH))  // sub wasn't limited to intrinsics
-                fail (Error_No_Logic_Typecheck(label));
-
-            if (not Cell_Logic(SCRATCH))
-                goto test_failed;
-            break; }
-
-          case TYPE_TYPE_WORD:
-            if (not Typecheck_Atom_In_Spare_Uses_Scratch(
-                L, test, tests_binding
-            )){
-                goto test_failed;
-            }
-            break;
-
-          case TYPE_TYPE_GROUP: {
-            Context* sub_binding = Derive_Binding(tests_binding, test);
-            if (not Typecheck_Atom_In_Spare_Uses_Scratch(
-                L, test, sub_binding
-            )){
-                goto test_failed;
-            }
-            break; }
+            if (Typecheck_Spare_With_Predicate_Uses_Scratch(L, test, label))
+                goto test_succeeded;
+            goto test_failed; }
 
           case TYPE_QUOTED:
           case TYPE_QUASIFORM: {
@@ -542,7 +583,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             }
             break; }
 
-          case TYPE_TYPE_BLOCK: {
+          case TYPE_DATATYPE: {
             Type t = Type_Of(v);
             if (Cell_Datatype_Type(test) != t)
                 goto test_failed;
@@ -766,17 +807,42 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 //
 // Give back an action antiform which can act as a checker for a datatype.
 //
-Value* Init_Typechecker(Init(Value) out, const Element* types) {
-    if (Is_Type_Block(types)) {
-        Type t = Cell_Datatype_Type(types);
-        SymId16 id16 = u_cast(SymId16, u_cast(Byte, t)) + MAX_TYPE_BYTE;
+Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
+    if (Is_Datatype(datatype_or_block)) {
+        Type t = Cell_Datatype_Type(datatype_or_block);
+        SymId16 id16 = u_cast(SymId16, u_cast(Byte, t)) + MIN_SYM_TYPESETS - 1;
 
-        return Copy_Cell(out, Lib_Var(u_cast(SymId, id16)));
+        Copy_Cell(out, Lib_Var(u_cast(SymId, id16)));
+        assert(Ensure_Cell_Frame_Details(out));  // need TypesetByte
+
+        return out;
     }
 
-    assert(Is_Type_Word(types));
+    Source* a = Make_Source_Managed(2);
+    Set_Flex_Len(a, 2);
+    Init_Set_Word(Array_At(a, 0), CANON(TEST));
 
-    return Get_Var_May_Fail(out, types, SPECIFIED);
+    Element* param = Init_Unconstrained_Parameter(
+        Array_At(a, 1), FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+    );
+    Set_Parameter_Spec(
+        param, datatype_or_block, Cell_Binding(datatype_or_block)
+    );
+
+    DECLARE_ELEMENT (def);
+
+    Init_Block(def, a);
+    Push_Lifeguard(def);
+
+    bool threw = Specialize_Action_Throws(
+        out, LIB(MATCH), def, TOP_INDEX  // !!! should be TYPECHECK
+    );
+    Drop_Lifeguard(def);
+
+    if (threw)
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+
+    return out;
 }
 
 
@@ -786,7 +852,7 @@ Value* Init_Typechecker(Init(Value) out, const Element* types) {
 //  "Make a function for checking types (generated function gives LOGIC!)"
 //
 //      return: [action!]
-//      types [type-word! type-block!]
+//      types [datatype! block!]
 //  ]
 //
 DECLARE_NATIVE(TYPECHECKER)
@@ -806,8 +872,7 @@ DECLARE_NATIVE(TYPECHECKER)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    Element* types = Element_ARG(TYPES);
-    return Init_Typechecker(OUT, types);
+    return Init_Typechecker(OUT, ARG(TYPES));
 }
 
 
@@ -818,9 +883,8 @@ DECLARE_NATIVE(TYPECHECKER)
 //
 //      return: "Input if it matched, NULL if it did not"
 //          [any-value?]
-//      test "Type specification, can use NULL instead of [null?]"  ; [1]
-//          [~null~ block! type-word! type-group! type-block! parameter!]
-//      value "If not :META, NULL values illegal, and VOID returns NULL"  ; [2]
+//      test [block! datatype! parameter! action!]
+//      value "If not :META, NULL values illegal (null return is no match)"
 //          [any-value?]
 //      :meta "Return the ^^META result (allows checks on NULL and VOID)"
 //  ]
@@ -832,19 +896,7 @@ DECLARE_NATIVE(MATCH)
 //
 //   https://forum.rebol.info/t/time-to-meet-your-match-dialect/1009/5
 //
-// 1. Passing in NULL for test is taken as a synonym for [null?], which isn't
-//    usually very useful for MATCH, but it's useful for things built on it
-//    (like ENSURE and NON):
-//
-//        >> result: null
-//
-//        >> ensure null result
-//        == null
-//
-//        >> non null result
-//        ** Error: NON argument cannot be [null?]
-//
-// 2. Passing in NULL for *value* creates a problem, because it conflates the
+// 1. Passing in NULL for value creates a problem, because it conflates the
 //    "didn't match" signal with the "did match" signal.  To solve this problem
 //    requires MATCH:META
 //
@@ -880,11 +932,19 @@ DECLARE_NATIVE(MATCH)
     }
 
     switch (Type_Of(test)) {
+      case TYPE_ACTION:
+        Copy_Cell(SPARE, v);
+        if (not Typecheck_Spare_With_Predicate_Uses_Scratch(
+            LEVEL, test, Cell_Frame_Label(test)
+        )){
+            return nullptr;
+        }
+        break;
+
+        // fall through
       case TYPE_PARAMETER:
       case TYPE_BLOCK:
-      case TYPE_TYPE_WORD:
-      case TYPE_TYPE_GROUP:
-      case TYPE_TYPE_BLOCK:
+      case TYPE_DATATYPE:
         Copy_Cell(SPARE, v);
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
             return nullptr;
@@ -897,7 +957,7 @@ DECLARE_NATIVE(MATCH)
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
-    if (Is_Void(v) and not Bool_ARG(META))  // not a good case of void-in-null-out
+    if (Is_Void(v) and not Bool_ARG(META))  // not good for void-in-null-out
         return FAIL("~void~ antiform needs MATCH:META if in set being tested");
 
     Copy_Cell(OUT, v);
@@ -915,8 +975,7 @@ DECLARE_NATIVE(MATCH)
 //  "Make a specialization of the MATCH function for a fixed type argument"
 //
 //      return: [action!]
-//      test "Type specification, can use NULL instead of [null?]"  ; [1]
-//          [~null~ block! type-word! type-group! type-block! parameter!]
+//      test [block! datatype! parameter! action!]
 //  ]
 //
 DECLARE_NATIVE(MATCHER)
@@ -938,8 +997,6 @@ DECLARE_NATIVE(MATCHER)
 //
 //    >> m:meta null
 //    == ~null~
-//
-// 1. See MATCH for comments.
 {
     INCLUDE_PARAMS_OF_MATCHER;
 

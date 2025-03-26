@@ -154,10 +154,10 @@
 (equal? decimal! decimal!)
 (not equal? decimal! integer!)
 (equal? equal? decimal! integer! equal? integer! decimal!)
-(not equal? &any-number? integer!)
-(equal? equal? &any-number? integer! equal? integer! &any-number?)
-(equal? &any-number? &any-number?)
-(not equal? &any-number? &any-series?)
+(not equal? any-number?/ integer!)
+(equal? equal? any-number?/ integer! equal? integer! any-number?/)
+(equal? any-number?/ any-number?/)
+(not equal? any-number?/ any-series?/)
 (equal? -1 -1)
 (equal? 0 0)
 (equal? 1 1)
@@ -349,17 +349,17 @@
     (not equal? 0 00:00)
 ]
 (equal? #"a" #"a")
-; char?! vs. integer!
+; char? vs. integer!
 ; No implicit to char from integer! in R3.
 (not equal? #"a" 97)
-; char?! vs. integer! symmetry
+; char? vs. integer! symmetry
 (equal? equal? #"a" 97 equal? 97 #"a")
-; char?! vs. decimal!
+; char? vs. decimal!
 ; No implicit to char from decimal! in R3.
 (not equal? #"a" 97.0)
-; char?! vs. decimal! symmetry
+; char? vs. decimal! symmetry
 (equal? equal? #"a" 97.0 equal? 97.0 #"a")
-; char?! case
+; char? case
 (not equal? #"a" #"A")
 ; text! case
 (equal? "a" "A")

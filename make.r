@@ -1622,7 +1622,7 @@ for-each [mode label] [
     :D "definitions" [block!]
     :c "cflags" [block!]
     :O "optimization" [word! integer!]
-    :g "debug" [onoff?!]
+    :g "debug" [onoff?]
 ][
     assert [
         find [

@@ -93,7 +93,7 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
 
 #define Any_Get_Type    Any_Get_Value_Type
 #define Any_Set_Type    Any_Set_Value_Type
-#define Any_Type_Type   Any_Type_Value_Type
+#define Any_Wild_Type   Any_Wild_Value_Type
 #define Any_Meta_Type   Any_Meta_Value_Type
 #define Any_The_Type    Any_The_Value_Type
 #define Any_Plain_Type  Any_Plain_Value_Type
@@ -113,7 +113,7 @@ INLINE Heart Plainify_Any_Meta_Heart(Heart h) {
     return cast(HeartEnum, u_cast(Byte, h) - 1);
 }
 
-INLINE Heart Plainify_Any_Type_Heart(Heart h) {
+INLINE Heart Plainify_Any_Wild_Heart(Heart h) {
     assert(Any_Meta_Type(h));
     return cast(HeartEnum, u_cast(Byte, h) - 2);
 }

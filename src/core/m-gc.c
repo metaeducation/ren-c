@@ -1249,7 +1249,7 @@ REBLEN Recycle(void)
 
 
 //
-//  Push_Guard_Node: C
+//  Push_Lifeguard: C
 //
 // 1. It is legal to guard erased cells, which do not have the NODE_FLAG_NODE
 //    bit set.  So an exemption is made if a header slot is all 0 bits.
@@ -1265,7 +1265,7 @@ REBLEN Recycle(void)
 //    didn't get any usage, and allowing unmanaged guards here just obfuscated
 //    errors when they occurred.  So the assert has been put back.  Review.
 //
-void Push_Guard_Node(const void* p)  // NODE_FLAG_NODE may not be set [1]
+void Push_Lifeguard(const void* p)  // NODE_FLAG_NODE may not be set [1]
 {
     if (FIRST_BYTE(p) == 0) {  // assume erased cell [1]
         assert(Is_Cell_Erased(c_cast(Cell*, p)));

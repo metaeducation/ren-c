@@ -317,12 +317,6 @@ REBINT Find_In_Array(
     if (Is_Antiform(pattern))
         fail ("Only Antiforms Supported by FIND are ACTION and SPLICE");
 
-    if (Any_Type_Value(pattern) and not (flags & AM_FIND_CASE))
-        fail (
-            "FIND without :CASE temporarily not taking TYPE-XXX! use MATCHES"
-            " see https://forum.rebol.info/t/1881"
-        );
-
     if (Is_Nulled(pattern)) {  // never match [1]
         *len = 0;
         return NOT_FOUND;
@@ -1352,28 +1346,6 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     return OUT;
 }
 
-
-// !!! TYPE-XXX! are being rethought, but right now TYPE-BLOCK! has the
-// particular behavior of re-dispatching.
-//
-IMPLEMENT_GENERIC(MAKE, Type_Block)
-{
-    INCLUDE_PARAMS_OF_MAKE;
-
-    Element* type = Element_ARG(TYPE);
-
-    Element* def = Element_ARG(DEF);
-    USED(def);  // will be inherited via the level
-
-    if (not Is_Type_Block(type))
-        return UNHANDLED;
-
-    Heart heart = Cell_Datatype_Heart(type);
-
-    return Dispatch_Generic_Core(SYM_MAKE, GENERIC_TABLE(MAKE), heart, level_);
-}
-
-
 //
 //  /blockify: native [
 //
@@ -1441,7 +1413,7 @@ DECLARE_NATIVE(GROUPIFY)
 //
 //      return: [any-list?]
 //      example "Example's binding (or lack of) will be used"
-//          [type-block! any-list?]
+//          [datatype! any-list?]
 //      content "Void input is treated the same as an empty splice"
 //          [~void~ element? splice!]
 //  ]
@@ -1452,14 +1424,19 @@ DECLARE_NATIVE(ENVELOP)
 {
     INCLUDE_PARAMS_OF_ENVELOP;
 
+    Value* example = ARG(EXAMPLE);
     Value* content = ARG(CONTENT);
 
     Element* copy;
 
-    if (Is_Type_Block(ARG(EXAMPLE)))
-        copy = cast(Element*, rebValue(CANON(MAKE), ARG(EXAMPLE), rebI(1)));
+    if (Is_Datatype(example)) {
+        if (not Any_List_Type(Cell_Datatype_Type(example)))
+            return FAIL("If ENVELOP example is datatype, must be a list type");
+
+        copy = Known_Element(rebValue(CANON(MAKE), ARG(EXAMPLE), rebI(1)));
+    }
     else
-        copy = cast(Element*, rebValue("copy:deep", rebQ(ARG(EXAMPLE))));
+        copy = Known_Element(rebValue("copy:deep", rebQ(ARG(EXAMPLE))));
 
     Length len;
     if (

@@ -1225,7 +1225,7 @@ default-combinators: to map! reduce [
     ; value is the rule in the string and binary case, but the item in the
     ; data in the block case.
 
-    text! combinator [
+    (meta text!) combinator [
         return: "The rule series matched against (not input value)"
             [text!]
         value [text!]
@@ -1275,7 +1275,7 @@ default-combinators: to map! reduce [
     ; it good for representing characters, but it can also represent short
     ; strings.  It matches case-sensitively.
 
-    issue! combinator [
+    (meta issue!) combinator [
         return: "The token matched against (not input value)"
             [issue!]
         value [issue!]
@@ -1345,7 +1345,7 @@ default-combinators: to map! reduce [
     ; may not be desirable.  Also you could match partial characters and
     ; then not be able to set a string position.  So we don't do that.
 
-    blob! combinator [
+    (meta blob!) combinator [
         return: "The binary matched against (not input value)"
             [blob!]
         value [blob!]
@@ -1421,7 +1421,7 @@ default-combinators: to map! reduce [
     ; counts as a phase).  This is done using the <delay> tag (may not be
     ; the best name).
 
-    group! combinator [
+    (meta group!) combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-value? pack!]
         :pending [blank! block!]
@@ -1545,8 +1545,10 @@ default-combinators: to map! reduce [
             r: :[r]  ; enable 0-arity combinators [4]
         ]
 
-        if not comb: select state.combinators type of r [
-            fail ["Unhandled type in GET-GROUP! combinator:" mold type of r]
+        if not comb: select state.combinators (meta type of r) [
+            fail [
+                "Unhandled type in GET-GROUP! combinator:" to word! type of r
+            ]
         ]
 
         return [{~} remainder pending]: run comb state input r  ; [5]
@@ -1573,7 +1575,7 @@ default-combinators: to map! reduce [
     ; a sort of "INTO" switch that could change the way the input is being
     ; viewed, e.g. being able to do INTO BLOB! on a TEXT! (?)
 
-    bitset! combinator [
+    (meta bitset!) combinator [
         return: "The matched input value"
             [char? integer!]
         value [bitset!]
@@ -1614,7 +1616,7 @@ default-combinators: to map! reduce [
     ;     >> parse "<a> 100 (b c)" ['<a> space '100 space '(b c)]
     ;     == (b c)
 
-    quoted! combinator [
+    (meta quoted!) combinator [
         return: "The matched value"
             [element?]
         value [quoted!]
@@ -1665,78 +1667,58 @@ default-combinators: to map! reduce [
         ; Though generic quoting exists, being able to say [lit ''x] instead
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
-        comb: (state.combinators).(quoted!)
+        comb: (state.combinators).(meta quoted!)
         return [{~} remainder pending]: run comb state input ^value
     ]
 
-    === QUASIFORM! COMBINATOR ===
+    === ANTIFORM COMBINATORS ===
 
-    ; The combinator map can't hold antiforms as keys or values.  So for the
-    ; behavior of things like splices or voids, that's done through their
-    ; quasiforms, as it is assumed they would be equivalent:
-    ;
-    ;     >> parse [a b a b] [some ~(a b)~]
-    ;     == ~(a b)~  ; anti
-    ;
-    ;     >> splice: ~(a b)~
-    ;
-    ;     >> parse [a b a b] [some splice]
-    ;     == ~(a b)~  ; anti
-    ;
-    ; This is called e.g. by the @xxx combinators when they fetch an antiform.
-    ; Fetching a quasiform has no meaning, and is an error...so acting like
-    ; what you'd think a quasiform would do in source rules (by becoming an
-    ; antiform) works.
-
-    elide let quasi-return-spec: [return: [~void~ ~[]~ element? splice!]]
-
-    quasiform! combinator compose [
-        (spread quasi-return-spec)
-        :pending [blank! block!]
-        value [quasiform!]
+    (meta keyword!) combinator [
+        return: []
+        value [keyword!]
         <local> comb neq?
     ][
-        if '~null~ = value [
+        switch value [
+          ~null~ [
             fail make error! [type: 'Script, id: 'need-non-null]
+          ]
+          ~void~ [
+            return void  ; does not vanish
+          ]
+          ~okay~ [
+            return ~[]~  ; let okay just act as a "guard", no influence
+          ]
         ]
+        fail ["Unknown keyword" mold ^value]
+    ]
 
+    (meta splice!) combinator [
+        return: []
+        :pending [blank! block!]
+        value [splice!]
+        <local> comb neq?
+    ][
         pending: _
         remainder: input
 
-        if '~void~ = value [
-            return void  ; does not vanish
-        ]
-
-        if '~okay~ = value [
-            return ~[]~  ; let okay just act as a "guard", no influence
-        ]
-
-        if '~[]~ = value [
-            return ~[]~  ; act invisibly (same as ~okay~... make sense?)
-        ]
-
         if tail? input [
-            return raise "QUASIFORM! cannot match at end of input"
+            return raise "SPLICE! cannot match at end of input"
         ]
 
-        if not splice? unmeta value [
-            fail "Only antiform matched against list content is splice"
+        if not any-list? input [
+            fail "Splice combinators only match ANY-LIST? input"
         ]
 
-        if any-list? input [
-            neq?: either state.case [:strict-not-equal?] [:not-equal?]
-            for-each 'item unquasi value [
-                if neq? remainder.1 item [
-                    return raise [
-                        "Value at input position didn't match splice element"
-                    ]
+        neq?: either state.case [:strict-not-equal?] [:not-equal?]
+        for-each 'item unquasi value [
+            if neq? remainder.1 item [
+                return raise [
+                    "Value at input position didn't match splice element"
                 ]
-                remainder: next remainder
             ]
-            return unmeta value  ; matched splice is result
+            remainder: next remainder
         ]
-
-        fail "Splice combinators only match ANY-LIST? input"
+        return unmeta value  ; matched splice is result
     ]
 
     === BLANK! COMBINATOR ===
@@ -1752,7 +1734,7 @@ default-combinators: to map! reduce [
     ; In strings, they are matched as spaces, saving you the need to write out
     ; the full word "space" or use an ugly abbreviation like "sp"
 
-    blank! combinator [
+    (meta blank!) combinator [
         return: "BLANK! if matched in list or space character in strings"
             [blank! char?]
         value [blank!]
@@ -1791,7 +1773,7 @@ default-combinators: to map! reduce [
     ;
     ; Note that REPEAT allows the use of BLANK! to opt out of an iteration.
 
-    integer! combinator [
+    (meta integer!) combinator [
         return: "Just the INTEGER! (see REPEAT for repeating rules)"
             [integer!]
         value [integer!]
@@ -1889,10 +1871,10 @@ default-combinators: to map! reduce [
     ;     == 1020
     ;
 
-    type-block! combinator [
+    (meta datatype!) combinator [
         return: "Matched or synthesized value"
             [element?]
-        value [type-block!]
+        value [datatype!]
         :negated
         <local> item error
     ][
@@ -1926,79 +1908,6 @@ default-combinators: to map! reduce [
             ;
             if value != type of item [
                 return raise "Could not TRANSCODE the datatype from input"
-            ]
-            return item
-        ]
-    ]
-
-    type-group! combinator [
-        return: "Matched or synthesized value"
-            [element?]
-        value [type-group!]
-        <local> item error
-    ][
-        if tail? input [
-            return raise "TYPE-GROUP! cannot match at end of input"
-        ]
-        either any-list? input [
-            if not match value input.1 [
-                return raise "Value at parse position did not match TYPE-GROUP!"
-            ]
-            remainder: next input
-            return input.1
-        ][
-            [remainder item]: transcode:next input except e -> [return raise e]
-
-            ; If TRANSCODE knew what kind of item we were looking for, it could
-            ; shortcut this.  Since it doesn't, we might waste time and memory
-            ; doing something like transcoding a very long block, only to find
-            ; afterward it's not something like a requested integer!.  Red
-            ; has some type sniffing in their fast lexer, review relevance.
-            ;
-            match value item else [
-                return raise "Could not TRANSCODE the TYPE-GROUP! from input"
-            ]
-            return item
-        ]
-    ]
-
-    type-word! combinator [
-        return: "Matched or synthesized value"
-            [element?]
-        value [type-word!]
-        :negated
-        <local> item error
-    ][
-        if tail? input [
-            return raise "TYPE-WORD! cannot match at end of input"
-        ]
-        either any-list? input [
-            if not match value input.1 [
-                if negated [
-                    remainder: next input
-                    return input.1
-                ]
-                return raise "Value at parse position did not match TYPE-WORD!"
-            ]
-            if negated [
-                return raise "Value at parse position matched TYPE-WORD!"
-            ]
-            remainder: next input
-            return input.1
-        ][
-            if negated [
-                fail "TYPE-WORD! only supported negated for array input"
-            ]
-            [remainder item]: transcode:next input except e -> [return raise e]
-
-            ; If TRANSCODE knew what kind of item we were looking for, it could
-            ; shortcut this.  Since it doesn't, we might waste time and memory
-            ; doing something like transcoding a very long block, only to find
-            ; afterward it's not something like a requested integer!.  Red
-            ; has some type sniffing in their fast lexer, review relevance.
-            ;
-            match value item else [
-                return raise "Could not TRANSCODE the TYPE-WORD! from input"
             ]
             return item
         ]
@@ -2068,46 +1977,41 @@ default-combinators: to map! reduce [
 
     ; @ combinator is used for a different purpose [1]
 
-    the-word! combinator compose [
-        (spread quasi-return-spec)
+    (meta the-word!) combinator compose [
+        return: [any-atom?]
         :pending [blank! block!]
         value [the-word!]
         <local> comb lookup'
     ][
-        lookup': meta get value
-        ensure [quoted! quasiform!] lookup'  ; quasi means antiform [2]
-        comb: (state.combinators).(type of lookup')
+        comb: (state.combinators).(meta type of get value)
         return [{~} remainder pending]: run comb state input lookup'
     ]
 
     ; THE-PATH! has no meaning at this time [3]
 
-    the-tuple! combinator compose [
-        (spread quasi-return-spec)
+    (meta the-tuple!) combinator compose [
+        return: [any-atom?]
         :pending [blank! block!]
         value [the-tuple!]
         <local> comb lookup'
     ][
-        lookup': meta get value
-        ensure [quoted! quasiform!] lookup'  ; quasi means antiform [2]
-        comb: (state.combinators).(type of lookup')
+        comb: (state.combinators).(meta type of get value)
         return [{~} remainder pending]: run comb state input lookup'
     ]
 
-    the-group! combinator compose [
-        (spread quasi-return-spec)
+    (meta the-group!) combinator compose [
+        return: [any-atom?]
         :pending [blank! block!]
         value [the-group!]
         <local> result' comb subpending single
     ][
         value: as group! value  ; remove @ decoration
-        comb: runs (state.combinators).(group!)
+        comb: runs (state.combinators).(meta group!)
         [^result' remainder pending]: comb state input value except e -> [
             return raise e
         ]
 
-        ensure [quoted! quasiform!] result'  ; quasi means antiform [2]
-        comb: runs state.combinators.(type of result')
+        comb: runs state.combinators.(meta type of decay unmeta result')
         [^result' remainder subpending]: comb state remainder result'
             except e -> [
                 return raise e
@@ -2117,20 +2021,20 @@ default-combinators: to map! reduce [
         return unmeta result'
     ]
 
-    the-block! combinator compose [  ; match literal block is redundant [4]
-        (spread quasi-return-spec)
+    (meta the-block!) combinator compose [  ; match literal block redundant [4]
+        return: [any-atom?]
         :pending [blank! block!]
         value [the-block!]
         <local> result' comb subpending
     ][
         value: as block! value  ; remove @ decoration
-        comb: runs (state.combinators).(block!)
+        comb: runs (state.combinators).(meta block!)
         [^result' remainder pending]: comb state input value except e -> [
             return raise e
         ]
 
         ensure [quoted! quasiform!] result' ; quasi means antiform [2]
-        comb: runs (state.combinators).(type of result')
+        comb: runs (state.combinators).(meta type of decay unmeta result')
         [^result' remainder subpending]: comb state remainder result'
             except e -> [
                 return raise e
@@ -2162,58 +2066,58 @@ default-combinators: to map! reduce [
         return [{^} remainder]: parser input
     ]
 
-    meta-word! combinator [
+    (meta meta-word!) combinator [
         return: "Meta quoted" [~null~ quasiform! quoted!]
         :pending [blank! block!]
         value [meta-word!]
         <local> comb
     ][
         value: as word! value
-        comb: runs state.combinators.(word!)
+        comb: runs state.combinators.(meta word!)
         return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
-    meta-tuple! combinator [
+    (meta meta-tuple!) combinator [  ; !!! reuse word combinator?
         return: "Meta quoted" [~null~ quasiform! quoted!]
         :pending [blank! block!]
         value [meta-tuple!]
         <local> comb
     ][
         value: as tuple! value
-        comb: runs state.combinators.(tuple!)
+        comb: runs state.combinators.(meta tuple!)
         return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
-    meta-path! combinator [
+    (meta meta-path!) combinator [
         return: "Meta quoted" [~null~ quasiform! quoted!]
         :pending [blank! block!]
         value [meta-path!]
         <local> comb
     ][
         value: as path! value
-        comb: runs state.combinators.(path!)
+        comb: runs state.combinators.(meta path!)
         return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
-    meta-group! combinator [
+    (meta meta-group!) combinator [
         return: "Meta quoted" [~null~ quasiform! quoted!]
         :pending [blank! block!]
         value [meta-group!]
         <local> comb
     ][
         value: as group! value
-        comb: runs state.combinators.(group!)
+        comb: runs state.combinators.(meta group!)
         return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
-    meta-block! combinator [
+    (meta meta-block!) combinator [
         return: "Meta quoted" [~null~ quasiform! quoted!]
         :pending [blank! block!]
         value [meta-block!]
         <local> comb
     ][
         value: as block! value
-        comb: runs state.combinators.(block!)
+        comb: runs state.combinators.(meta block!)
         return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
@@ -2316,7 +2220,7 @@ default-combinators: to map! reduce [
     ; you can make a PATH! that starts with / and that will be run as a normal
     ; action but whose arguments are fulfilled via PARSE.
 
-    frame! combinator [
+    (meta frame!) combinator [
         "Run an ordinary action with parse rule products as its arguments"
         return: "The return value of the action"
             [any-value? pack!]
@@ -2376,7 +2280,7 @@ default-combinators: to map! reduce [
     ;
     ; The operation is basically the same for TUPLE!, so the same code is used.
 
-    word! combinator [
+    (meta word!) combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-value? pack!]
         :pending [blank! block!]
@@ -2408,11 +2312,7 @@ default-combinators: to map! reduce [
 
             ; Datatypes looked up by words (e.g. TAG!) are legal as rules
             ;
-            type-word! []
-            type-tuple! []
-            type-path! []
-            type-block! []
-            type-group! []
+            datatype! []
 
             ; Bitsets were also legal as rules without decoration
             ;
@@ -2423,17 +2323,17 @@ default-combinators: to map! reduce [
             ;
             blank! []
 
-            &void? [
+            void?/ [
                 remainder: input
                 pending: _  ; not delegating to combinator with pending
                 return void  ; yield void
             ]
 
-            &okay? [
+            okay?/ [
                 fail "WORD! fetches cannot be ~okay~ in UPARSE (see WHEN)"
             ]
 
-            &null? [
+            null?/ [
                 fail "WORD! fetches cannot be ~null~ in UPARSE (see WHEN)"
             ]
 
@@ -2443,8 +2343,8 @@ default-combinators: to map! reduce [
             ]
         ]
 
-        if not comb: select state.combinators type of r [
-            fail ["Unhandled type in WORD! combinator:" mold type of r]
+        if not comb: select state.combinators (meta type of r) [
+            fail ["Unhandled type in WORD! combinator:" to word! type of r]
         ]
 
         ; !!! We don't need to call COMBINATORIZE because we can't handle
@@ -2526,7 +2426,7 @@ default-combinators: to map! reduce [
     ; function...rather than being able to build a small function for each
     ; step that could short circuit before the others were needed.)
 
-    block! (block-combinator: combinator [
+    (meta block!) (block-combinator: combinator [
         return: "Last result value"
             [any-value? pack!]
         :pending [blank! block!]
@@ -2720,14 +2620,6 @@ default-combinators: to map! reduce [
         fail e
     ]
 ]
-
-
-=== MAKE TUPLE! COMBINATOR SAME AS WORD! COMBINATOR ===
-
-; There's no easy way to do this in a MAP!, like `word!: tuple!: ...` would
-; work for OBJECT!.
-
-default-combinators.(tuple!): default-combinators.(word!)
 
 
 === ABBREVIATIONS ===
@@ -2988,7 +2880,7 @@ comment [/combinatorize: func [
             if not frame? let gotten: unrun get:any r [
                 fail "In UPARSE PATH starting in / must be action or frame"
             ]
-            if not comb: select state.combinators frame! [
+            if not comb: select state.combinators (meta frame!) [
                 fail "No frame! combinator, can't use PATH starting with /"
             ]
 
@@ -3039,9 +2931,9 @@ comment [/combinatorize: func [
                 comb: try state.combinators.(as type of r '.*)  ; hack!
             ]
         ]]
-        try state.combinators.(type of r)
+        try state.combinators.(meta type of r)  ; datatypes dispatch meta
     ] [
-        fail ["Unhandled type in PARSIFY:" mold type of r "-" mold r]
+        fail ["Unhandled type in PARSIFY:" to word! type of r "-" mold r]
     ]
 
     return combinatorize:value comb rules state r
@@ -3150,7 +3042,7 @@ comment [/combinatorize: func [
     ;
     let state: binding of $return
 
-    let f: make frame! combinators.(block!)
+    let f: make frame! combinators.(meta block!)
     f.state: state
     f.input: input
     f.value: rules

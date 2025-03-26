@@ -80,7 +80,7 @@ REBOL [
         item: predicate item
 
         switch:type item [
-            void?! []
+            void?/ []
 
             path! [
                 case [

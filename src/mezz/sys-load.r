@@ -679,7 +679,7 @@ bind construct [
             (match types val) else [
                 fail [
                     "EXPORT expected" word "to be in" @types
-                    "but it was" (mold type of val) else ["null"]
+                    "but it was" (to word! type of val) else ["null"]
                 ]
             ]
             items: next items

@@ -257,7 +257,7 @@ int main(int argc, char *argv_ansi[])
     // command line arguments.
     //
     Value* main_startup = rebValue(
-        "ensure &action? eval inside lib transcode", rebR(startup_bin)
+        "ensure action! eval inside lib transcode", rebR(startup_bin)
     );
 
     // This runs the MAIN-STARTUP, which returns *requests* to execute

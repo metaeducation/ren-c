@@ -513,7 +513,7 @@ bind construct [
         "Hooked RETURN function which finalizes any gathered EMIT lines"
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
-            [integer! tag! group! type-block! meta-group! handle!]
+            [integer! tag! group! datatype! meta-group! handle!]
         <with> instruction
         <local> /return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
     ][
@@ -547,8 +547,8 @@ bind construct [
                 assert [empty? instruction]
                 state
             ]
-            type-block! [  ; type assertion, how to enforce this?
-                emit spaced ["^-- Result should be" @state]
+            datatype! [  ; type assertion, how to enforce this?
+                emit spaced ["^-- Result should be" to word! state]
                 instruction
             ]
             group! [  ; means "submit user code"

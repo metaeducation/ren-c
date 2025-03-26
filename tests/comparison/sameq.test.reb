@@ -118,9 +118,9 @@
     parse a-value [b-value: <here>, to <end>]
     equal? same? a-value b-value same? b-value a-value
 )
-(not same? &any-number? integer!)
+(not same? any-number?/ integer!)
 ; symmetry
-(equal? same? &any-number? integer! same? integer! &any-number?)
+(equal? same? any-number?/ integer! same? integer! any-number?/)
 ; reflexivity
 (same? -1 -1)
 ; reflexivity
@@ -278,7 +278,7 @@
 (same? 00:00 00:00:00)
 ; no timezone math
 (not same? 22:20 20:20)
-; char?! symmetry
+; char?/ symmetry
 (equal? same? #"a" 97 same? 97 #"a")
 ; symmetry
 (equal? same? #"a" 97.0 same? 97.0 #"a")

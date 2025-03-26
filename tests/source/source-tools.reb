@@ -227,7 +227,7 @@ export analyse: context [
                 let name: ~
                 if parse proto-parser.data [
                     opt 'export
-                    name: ['//: | &set-run-word?] (name: resolve name)
+                    name: ['//: | set-run-word?/] (name: resolve name)
                     opt ['infix | 'infix:defer | 'infix:postpone]
                     [
                         'native

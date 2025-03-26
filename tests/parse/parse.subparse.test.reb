@@ -11,18 +11,18 @@
     ; the default behavior that functions which do not support NIHIL returns
     ; will react by producing a VOID when passed a NIHIL.
     ;
-    (void? parse [[]] [subparse &any-series? []])
+    (void? parse [[]] [subparse any-series?/ []])
 
-    ('a == parse [[a]] [subparse &any-series? ['a]])
-    ('c == parse [b [a] c] ['b subparse &any-series? ['a] 'c])
-    (#a == parse ["a"] [subparse &any-series? [#a]])
-    ('c == parse [b "a" c] ['b subparse &any-series? ["a"] 'c])
-    (#a == parse [["a"]] [subparse block! [subparse &any-series? [#a]]])
+    ('a == parse [[a]] [subparse any-series?/ ['a]])
+    ('c == parse [b [a] c] ['b subparse any-series?/ ['a] 'c])
+    (#a == parse ["a"] [subparse any-series?/ [#a]])
+    ('c == parse [b "a" c] ['b subparse any-series?/ ["a"] 'c])
+    (#a == parse [["a"]] [subparse block! [subparse any-series?/ [#a]]])
 
-    ~parse-mismatch~ !! (parse [[a]] [subparse &any-series? ['a 'b]])
-    ~parse-mismatch~ !! (parse [[a]] [subparse &any-series? [some 'b]])
+    ~parse-mismatch~ !! (parse [[a]] [subparse any-series?/ ['a 'b]])
+    ~parse-mismatch~ !! (parse [[a]] [subparse any-series?/ [some 'b]])
 
-    ([a] == parse [[a]] [subparse &any-series? ['a 'b] | block!])
+    ([a] == parse [[a]] [subparse any-series?/ ['a 'b] | block!])
 ]
 
 ("a" == parse ["aa"] [subparse text! ["a" "a"]])

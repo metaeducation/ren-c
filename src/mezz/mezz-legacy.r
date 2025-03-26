@@ -99,7 +99,7 @@ comment [
     value [~null~ element?]
 ][
     write-stdout switch:type value [
-        null?! [return ~]  ; type of VOID is currently null
+        null?/ [return ~]  ; type of VOID is currently null
         text! issue! [value]
         block! [spaced value]
     ] else [
