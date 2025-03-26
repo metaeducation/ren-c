@@ -222,6 +222,8 @@ rebmake/set-target-platform platform-config.os-base
     let cplusplus: 'no  ; determined for just this file
     let flags: make block! 8
 
+    append flags <msc:/FC>  ; absolute paths for error messages
+
     ; Microsoft shouldn't bother having the C warning that foo() in standard
     ; C doesn't mean the same thing as foo(void), when in their own published
     ; headers (ODBC, Windows.h) they treat them interchangeably.  See for
@@ -1590,7 +1592,7 @@ for-each 'ext extensions [
         '- [
             ext.mode: null
         ]
-        fail ["Unrecognized extension mode:" mold mode]
+        fail ["Unrecognized extension mode:" reify mode]
     ]
 ]
 
