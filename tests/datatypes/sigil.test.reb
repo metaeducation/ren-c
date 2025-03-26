@@ -7,58 +7,66 @@
 ;     SIGIL_TYPE = 2,     // &
 ;     SIGIL_THE = 3,      // @
 ;     SIGIL_VAR = 4      // $
-;
 
+[ ; Establish FOR-EACH test to simplify further testing
 (
-    for-each 'sigil [^ & @ $] [
-        if not sigil? sigil [
-            fail [mold sigil]
-        ]
+    for-each-sigil: specialize for-each/ [
+        data: [^ & @ $ &]
     ]
     ok
 )
 
-; try termination by delimiter (and molding)
-[
-    ("^^" = mold first [^])  ; caret is escape in Rebol strings
-    ("&" = mold first [&])
-    ("@" = mold first [@])
-    ("$" = mold first [$])
-]
+; MOLD sigil (once verified, can take for granted in subsequent tests)
 
-; try termination by whitespace (and forming)
-[
-    ("^^" = form first [^ <something>])  ; caret is escape in Rebol strings
-    ("&" = form first [& <something>])
-    ("@" = form first [@ <something>])
-    ("$" = form first [$ <something>])
-]
+    ("^^" = mold '^)  ; caret is escape in Rebol strings
+    ("&" = mold '&)
+    ("@" = mold '@)
+    ("$" = mold '$)
 
-; Try quoted forms (and molding)
-[
-    ("'^^" = mold first ['^])  ; caret is escape in Rebol strings
-    ("'&" = mold first ['&])
-    ("'@" = mold first ['@])
-    ("'$" = mold first ['$])
-]
+; SIGIL? sigil
+(
+    for-each-sigil 'sig [
+        assert [sigil? sig]
+        assert [sigil! = type of sig]
+    ]
+    ok
+)
 
-; Try TO TEXT! and MATCH
-[
-    ("^^" = to text! match sigil! '^)  ; caret is escape in Rebol strings
-    ("&" = to text! match sigil! '&)
-    ("@" = to text! match sigil! '@)
-    ("$" = to text! match sigil! '$)
-]
+; MOLD and FORM
+(
+    for-each-sigil 'sig [
+        assert [(mold sig) = to text! sig]
+        assert [(form sig) = to text! sig]
+    ]
+    ok
+)
 
-; Quasiforms of sigil don't exist (and probably should not, as combining the
-; tildes with the sigil symbols is considered undesirable, so unless there
-; is a really good reason sigils shouldn't have quasi/antiforms)
-[
-    ~scan-invalid~ !! (transcode "~^^~")  ; caret is escape in Rebol strings
-    ~scan-invalid~ !! (transcode "~&~")
-    ~scan-invalid~ !! (transcode "~@~")
-    ~scan-invalid~ !! (transcode "~$~")
-]
+; MATCH SIGIL!
+(
+    for-each-sigil 'sig [
+        assert [sig = match sigil! sig]
+    ]
+    ok
+)
+
+; TRANSCODE
+(
+    let roundtrip: cascade [unspaced/ transcode:one/]
+
+    for-each-sigil 'sig [
+        assert [(quote sig) = roundtrip [-{'}- mold sig]]
+        assert [(quote sig) = roundtrip [_ -{'}- mold sig]]
+        assert [sig = second roundtrip ["[" "<t>" _ mold sig "]"]]
+        assert [sig = second roundtrip ["[" "<t>" _ mold sig _ "]"]]
+        assert [sig = first roundtrip ["[" mold sig _ "<t>" "]"]]
+        assert [sig = first roundtrip ["[" _ mold sig space "<t>]"]]
+        assert [
+            let e: trap [roundtrip ["~" mold sig "~"]]
+            e.id = 'scan-invalid  ; quasi/anti forms of sigil are illegal ATM
+        ]
+    ]
+    ok
+)
 
 
 ; Test SIGIL OF for each bindable type
@@ -82,35 +90,27 @@
 )
 
 ; ^ is META
-[
+
     ((@ '3) = ^ 1 + 2)
     (^null = ^ null)
 
     ~need-non-end~ !! (^)
-]
 
-; & is a TRY TYPE OF alias (well, what else would it be?)
-[
-    (integer! = & 10 + 20)
-    (null = & null)  ; TRY is built-in
-
-    ~need-non-end~ !! (&)
-]
 
 ; $ is bind to current context (faster version of IN [])
-[
+
     (
         foo: 10
         10 = get $ first [foo bar]
     )
 
     ~need-non-end~ !! ($)
-]
+
 
 ; @ is THE, with exception that it has special handling in API feeds to
 ; be able to reconstitute antiforms.  (See TEST-LIBREBOL)  It will bind
 ; its argument.
-[
+
     ('x = @ x)
     ('(a b c) = @ (a b c))
     (''3 = @ '3)
