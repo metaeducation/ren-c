@@ -485,7 +485,7 @@ export /for-each-platform: func [
     ]
 
     parse3:match platforms overbind p [ some [
-        name: set-word?! (
+        name: set-word3! (
             name: unchain name
         )
         number: integer!
@@ -507,7 +507,7 @@ export /for-each-platform: func [
             cflags: across [opt some tag!] (
                 cflags: map-each 'x cflags [to-word to-text x]
             )
-            ldflags: across [opt some &run-word?] (
+            ldflags: across [opt some refinement3!] (
                 ldflags: map-each 'x ldflags [unpath x]
             )
             libraries: across [opt some file!] (

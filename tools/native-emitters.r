@@ -211,8 +211,8 @@ export /emit-include-params-macro: func [
             if group? item [
                 item: first item
             ]
-            if not match [word! &refinement? &lit-word?] item [
-                continue
+            if not match [word! get-word3! lit-word3!] item [
+                continue  ; note get-word3! is refinement?
             ]
 
             let param-name: resolve noquote item

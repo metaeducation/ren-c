@@ -335,7 +335,7 @@ export /make-emitter: func [
             "Write data to the emitter using CSCAPE templating (see HELP)"
 
             return: [~]
-            template [text! char?! block!]
+            template [text! block! char?]
         ][
             case [  ; no switch:type in bootstrap
                 text? template [

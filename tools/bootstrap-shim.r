@@ -127,18 +127,15 @@ sys.util/rescue [
         fail:blame "Don't use UNLESS in Bootstrap, definition in flux" $return
     ]
 
-    export /boolean?!: boolean?/
-    export /onoff?!: onoff?/
-    export /yesno?!: yesno?/
-
-    export set-word?!: &set-word?
-    export get-word?!: &get-word?
-    export set-tuple?!: &set-tuple?
-    export get-tuple?!: &get-tuple?
-
     export /bind: augment bind/ [
         :copy3  ; modern BIND is non-mutating, but bootstrap EXE needs :COPY
     ]
+
+    export /set-word3!: set-word?/
+    export /set-path3!: set-tuple?/
+    export /get-word3!: get-word?/
+    export /refinement3!: run-word?/
+    export /char3!: char?/
 
     quit 0
 ]
@@ -162,18 +159,23 @@ sys.util/rescue [
 ; This defaults all the functions that need shims to errors, and offer a
 ; shorter name for lib3 variants while doing so (e.g. FUNC3 for LIB3/FUNC)
 ;
-; 1. Using SET-WORD!s here also helps searchability if you're looking for
+; 1. Words not mentioned don't get bound and mentioned in system.contexts.user
+;    Mention them so that (system.contexts.(word): <...>) will work.
+;
+; 2. Using SET-WORD!s here also helps searchability if you're looking for
 ;    where `func3: ...` is defined.
 
-system.contexts.user.tail: <!!! REVIEW WHY THIS ASSIGNMENT IS NEEDED !!!>
+comment [tail char! any-word! any-path! lit-word! lit-path!]  ; workaround [1]
 
 for-each [alias] [
     parse3:                     ; PARSE is a completely new model ("UPARSE")
     func3:                      ; FUNC refinements are their own args, more...
     function3:                  ; no FUNCTION at present (TBD: FUNC synonym)
+    method3:                    ; same issues as FUNC
     append3:                    ; APPEND handles splices
     change3:                    ; CHANGE handles splices
     insert3:                    ; INSERT handles splices
+    replace3:                   ; REPLACE handles splices
     join3:                      ; JOIN handles splices
     compose3:                   ; COMPOSE now arity-2, processes splices
     split-path3:                ; bootstrap uses SPLIT-PATH3 not SPLIT-PATH
@@ -181,13 +183,25 @@ for-each [alias] [
     mold3:                      ; MOLD takes splices instead of MOLD/ONLY
     and3:                       ; AND takes GROUP!s on right (not BLOCK!)
     or3:                        ; OR takes GROUP!s on right (not BLOCK!)
-    refinement3?:               ; Former refinements of /FOO now :FOO
-    refinement3!:               ; ...
     bind3:                      ; BIND's arguments reversed
     head3:                      ; use HEAD OF instead
     tail3:                      ; use TAIL OF instead
+
+    ; Type constraints
+
+    refinement3?:               ; Former refinements of /FOO now :FOO
+    refinement3!:               ; ...
+
+    set-word3!:                 ; use set-word?
+    set-path3!:                 ; use set-path?
+    get-word3!:                 ; use get-word?
+    char3!:                     ; use get-path?
+    any-word3!:                 ; use any-word?
+    lit-word3!:                 ; use lit-word?
+    lit-path3!:                 ; use lit-word?
+    any-path3!:                 ; use any-path?
 ][
-    assert [set-word? alias]  ; SET-WORD!s for readability + findability [1]
+    assert [set-word? alias]  ; SET-WORD!s for readability + findability [2]
 
     ; Assign the alias what the existing version (minus the terminal "3") is
     ; (e.g. func3: func/)
@@ -238,10 +252,6 @@ for-each [alias] [
 /boolean?: func3 [x] [any [:x = 'true, :x = 'false]]
 /yesno?: func3 [x] [any [:x = 'on, :x = 'off]]
 /onoff?: func3 [x] [any [:x = 'yes, :x = 'no]]
-
-boolean?!: word!
-onoff?!: word!
-yesno?!: word!
 
 blob!: binary!
 /blob?: binary?/
@@ -357,8 +367,8 @@ set '^continue does [does [continue/]]
 
 /quote: func3 [x [~null~ any-value!]] [  ; see the more general UNEVAL
     switch type of x [
-        word! [to lit-word! x]  ; to lit-word! not legal in new EXE
-        path! [to lit-path! x]  ; to lit-path! not legal in new EXE
+        word! [to lit-word3! x]  ; to lit-word! not legal in new EXE
+        path! [to lit-path3! x]  ; to lit-path! not legal in new EXE
 
         fail:blame [
             "QUOTE can only work on WORD!, PATH!, NULL in old Rebols"
@@ -379,22 +389,13 @@ set '^continue does [does [continue/]]
 ; LIT-WORD and REFINEMENT will never be datatypes, so shim the type constraint
 ; so it works in old parse.
 
-set '&any-word? any-word!  ; modern any-word is type constraint
-set '&lit-word? lit-word!  ; modern lit-word is QUOTED! constraint
-set '&refinement? get-word!  ; modern refinement is CHAIN! constraint
 /run-word?: refinement3?/
 run-word!: refinement3!
-set '&run-word? refinement3!
-refinement!: get-word!
+refinement!: get-word3!
 /refinement?: get-word?/
 
 chain!: path!  ; works in some places (a:b scans as a PATH! in bootstrap EXE)
 
-char?!: char!  ; modern char is ISSUE! constraint
-set-word?!: set-word!  ; modern set-word is CHAIN constraint
-get-word?!: get-word!  ; modern get-word is CHAIN constraint
-set-tuple?!: set-path!  ; modern tuple exists, set-tuple is CHAIN constraint
-get-tuple?!: get-path!  ; modern tuple exists, set-tuple is CHAIN constraint
 set-word!: func3 [] [
     fail:blame "SET-WORD! is now a CHAIN!, try SET-WORD?!" $return
 ]
@@ -412,7 +413,7 @@ get-path!: func3 [] [
     either word? plain [to-set-word plain] [to-set-path plain]
 ]
 
-/unchain: func3 [chain [set-word?! set-tuple?!]] [
+/unchain: func3 [chain [set-word3! set-path3!]] [
     either set-word? chain [to-word chain] [to-path chain]
 ]
 
@@ -530,6 +531,30 @@ get-path!: func3 [] [
     change3:(blank-to-void only):(blank-to-void line) series :value
 ]
 
+/replace: func3 [target pattern replacement] [
+    any [
+        logic? :target, logic? :pattern
+        action? :target, action? :replacement
+    ][
+        fail:blame "ACTION? and LOGIC? illegal in REPLACE" $target
+    ]
+    if block? pattern [
+        if #splice! = (first pattern) [
+            pattern: second pattern
+        ] else [
+            pattern: reduce [pattern]
+        ]
+    ]
+    if block? replacement [
+        if #splice! = (first replacement) [
+            pattern: second replacement
+        ] else [
+            pattern: reduce [pattern]
+        ]
+    ]
+    replace3 target pattern replacement
+]
+
 /join: func3 [
     base [blob! any-string! path! datatype!]
     value [void! any-value!]
@@ -639,7 +664,7 @@ get-path!: func3 [] [
         case [
             item.1 = 'let [
                 item: next item
-                if match [set-word?! word! block!] item.1 [
+                if match [word! block! set-word3!] item.1 [
                     append3 lets item.1
                 ]
             ]
@@ -664,13 +689,28 @@ get-path!: func3 [] [
     types [block!]
 ][
     types: copy types
-    replace types 'any-value? [~null~ any-value!]
-    replace types 'any-string? 'any-string!
-    replace types 'element? 'any-value!
-    replace types 'action? 'action!
-    replace types 'lit-word? 'lit-word!
-    replace types 'logic? 'logic!
-    replace types <variadic> <...>
+    for-each [old new] [
+        any-value?      [~null~ any-value!]
+        any-string?     any-string!
+        element?        any-value!
+        action?         action!
+        logic?          logic!
+        <variadic>      <...>
+        boolean?        word!
+        onoff?          word!
+        yesno?          word!
+        run-word?       refinement3!
+        any-word?       any-word3!
+        lit-word?       lit-word3!
+        refinement?     get-word3!
+        char?           char3!
+        set-word?       set-word3!
+        get-word?       get-word3!
+        set-tuple?      set-path3!
+        get-tuple?      get-path3!
+    ][
+        replace3 types old new  ; splices blocks
+    ]
     return types
 ]
 
@@ -733,7 +773,7 @@ get-path!: func3 [] [
 
             ; Find ANY-WORD!s (args and locals)
             ;
-            if w: match any-word! spec.1 [
+            if w: match (get $any-word3!) spec.1 [
                 if set-word? w [
                     assert [w = first [return:]]
                     keep3 spec.1, spec: my next
@@ -754,7 +794,7 @@ get-path!: func3 [] [
                 ;
                 keep3 case [
                     lit-word? w [to-get-word w]
-                    get-word? w [to lit-word! w]
+                    get-word? w [to lit-word3! w]
                     true [w]
                 ]
 
@@ -801,7 +841,7 @@ get-path!: func3 [] [
     ; or WORD! and add that to locals.
     ;
     append3 new-spec <local>
-    append3 new-spec collect-lets body  ; append3 splices blocks without /ONLY
+    append3 new-spec collect-lets body  ; append3 splices blocks without :ONLY
 
     new-body: compose3 [  ; splices
         (tryers)
@@ -821,6 +861,7 @@ get-path!: func3 [] [
     take find spec <local>
     make action! compose3:only [(spec) (body)]  ; gets no RETURN
 ]
+/method: adapt method3/ [set [spec body] modernize-action spec body]
 
 /function: func3 [] [
     fail:blame "FUNCTION deprecated (will be FUNC synonym, eventually)" $return
@@ -841,13 +882,13 @@ get-path!: func3 [] [
 /noquote: func3 [x [~null~ any-value!]] [
     assert [not action? get $x]
     switch type of x [
-        lit-word! [return to word! x]
-        lit-path! [return to path! x]
+        lit-word3! [return to word! x]
+        lit-path3! [return to path! x]
     ]
     x
 ]
 
-/resolve: func3 [x [any-word! any-path!]] [
+/resolve: func3 [x [any-word3! any-path3!]] [
     if any-word? x [return to word! x]
     return to path! x
 ]

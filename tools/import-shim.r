@@ -49,21 +49,15 @@ write-stdout "LOADING %import-shim.r --- "  ; when finished, adds "COMPLETE!"
 append lib [lib3: _]  ; see header notes: `Exports` broken
 lib.lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
 
-; Bootstrap shim does this to a greater extent, just help make this file
-; clearer that it's using the old definitions.
-;
-set-word?!: set-word!
-any-value?!: any-value!
-
 
 === "EXPORT" ===
 
 /export: lib3/func [
     "%import-shim.r variant of EXPORT which just puts the definition into LIB"
 
-    :set-word [<skip> set-word?!]  ; old style unescapable literal, old <skip>!
+    :set-word [<skip> set-word!]  ; old style unescapable literal, old <skip>!
     args "`export x: ...` for single or `export [...]` for words list"
-        [~null~ any-value?! <...>]  ; <...> is old-style variadic indicator
+        [~null~ any-value! <...>]  ; <...> is old-style variadic indicator
     <local>
         items
 ][
@@ -167,6 +161,8 @@ any-value?!: any-value!
 ;
 wrap-module: 'no
 
+replace3: default [replace/]
+
 /old-do: lib3.do/
 /do: lib3/enclose lib3.do/ lib3/func [
     f [frame!]
@@ -198,11 +194,11 @@ wrap-module: 'no
         ; in case you plan to overwrite something like IF but are using the
         ; old definition.
         ;
-        replace f.source "Type: module" ""
+        replace3 f.source "Type: module" ""
 
         ; Wrap the whole thing in an object if needed
         ;
-        replace:one f.source unspaced [newline "]"] unspaced lib3/compose [
+        replace3:one f.source unspaced [newline "]"] unspaced lib3/compose [
             newline
             "]" newline
             (if yes? wrap-module ["make object! ["]) newline
@@ -225,7 +221,7 @@ already-imported: to map! []  ; avoid importing things twice
     "%import-shim.r variant of IMPORT which acts like DO and loads only once"
 
     :set-word "optional left argument, used by `rebmake: import <rebmake.r>`"
-        [<skip> set-word?!]  ; old <skip>!
+        [<skip> set-word!]  ; old <skip>!
 
     f [tag!]  ; help catch mistakes, all bootstrap uses TAG!
 

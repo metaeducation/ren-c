@@ -491,7 +491,7 @@ gcc: make compiler-class [
         :D "definitions" [block!]
         :F "cflags" [block!]
         :O "opt-level" [word! integer!]
-        :g "debug" [onoff?!]
+        :g "debug" [onoff?]
         :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         :E "only preprocessing"
     ][
@@ -732,7 +732,7 @@ ld: make linker-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         :dynamic
-        :debug [onoff?!]
+        :debug [onoff?]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -839,7 +839,7 @@ llvm-link: make linker-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         :dynamic
-        :debug [onoff?!]
+        :debug [onoff?]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -924,7 +924,7 @@ link: make linker-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         :dynamic
-        :debug [onoff?!]
+        :debug [onoff?]
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -1289,7 +1289,7 @@ generator-class: make object! [
     /flip-flag: method [
         return: [~]
         project [object!]
-        to [yesno?!]
+        to [yesno?]
     ][
         all [
             find words-of project 'generated
