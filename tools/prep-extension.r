@@ -269,7 +269,7 @@ if yes? use-librebol [
     for-each 'info all-protos [
         let proto-name
         parse3 info.proto [
-            opt ["export" space] "/" proto-name: across to ":"
+            opt ["export" space] proto-name: across to ":"
             to <end>
         ]
         proto-name: to-c-name proto-name
@@ -333,13 +333,13 @@ e1/write-emitted
 ;    ; They must be in the same order as `cfunc-names`, because that's
 ;    ; the array that NATIVE steps through on each call to find the C code!
 ;    ;
-;    export /alpha: native [...]  ; v-- see EXPORT note below
-;    /beta: infix native [...]
+;    export alpha: native [...]  ; v-- see EXPORT note below
+;    beta: infix native [...]
 ;
 ;    ; The rest of the code was the body of %ext-xxx-init.reb
 ;    ;
 ;    something: <value>
-;    /gamma: func [...] [alpha ..., beta ...]
+;    gamma: func [...] [alpha ..., beta ...]
 ;
 ; At the moment this script is executed, the system has internal state that
 ; lets it make each successive call to NATIVE pick the next native out of

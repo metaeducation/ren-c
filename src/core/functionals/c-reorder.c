@@ -108,7 +108,7 @@ bool Reorderer_Details_Querier(
 
 
 //
-//  /reorder: native [
+//  reorder: native [
 //
 //  "Create variation of a frame with its parameters reordered"
 //

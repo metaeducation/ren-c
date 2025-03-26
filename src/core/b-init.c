@@ -650,7 +650,7 @@ void Startup_Core(void)
 
     // For many of the built-in symbols, we know there will be variables in
     // the Lib module for them.  e.g. since FOR-EACH is in the list of native
-    // functions, we know Startup_Natives() will run (/for-each: native [...])
+    // functions, we know Startup_Natives() will run (for-each: native [...])
     // during the boot.
     //
     // Since we know that, variables for the built-in symbols are constructed

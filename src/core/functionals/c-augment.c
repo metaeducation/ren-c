@@ -58,7 +58,7 @@
 
 
 //
-//  /augment: native [
+//  augment: native [
 //
 //  "Create an action variant that acts the same, but has added parameters"
 //

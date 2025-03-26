@@ -307,7 +307,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
 
 //
-//  /make-char: native [
+//  make-char: native [
 //
 //  "Codepoint from integer, e.g. make-char 65 -> #A (see also TO-CHAR)"
 //
@@ -337,7 +337,7 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
 
 
 //
-//  /to-char: native [
+//  to-char: native [
 //
 //  "Character representation, e.g. to-char 1 -> #1 (see also MAKE-CHAR)"
 //
@@ -400,7 +400,7 @@ DECLARE_NATIVE(TO_CHAR)
 
 
 //
-//  /NUL?: native [
+//  NUL?: native [
 //
 //  "Test if a value is the #{00} binary BLOB!, representing codepoint 0"
 //
@@ -1055,7 +1055,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
 
 
 //
-//  /codepoint-of: native:generic [
+//  codepoint-of: native:generic [
 //
 //  "Get the singular codepoint that an ISSUE! or BINARY! correspond to"
 //
@@ -1116,7 +1116,7 @@ IMPLEMENT_GENERIC(SIZE_OF, Any_Utf8)
 
 
 //
-//  /trailing-bytes-for-utf8: native [
+//  trailing-bytes-for-utf8: native [
 //
 //  "Given the first byte of a UTF-8 encoding, how many bytes should follow"
 //

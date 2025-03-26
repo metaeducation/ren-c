@@ -66,7 +66,7 @@ bool Is_Error_Done_Signal(const Cell* c) {
 
 
 //
-//  /done: native [
+//  done: native [
 //
 //  "Give back a raised error with the id DONE-ENUMERATING (pass to YIELD)"
 //
@@ -82,7 +82,7 @@ DECLARE_NATIVE(DONE) {
 
 
 //
-//  /done?: native:intrinsic [
+//  done?: native:intrinsic [
 //
 //  "Detect whether argument is the DONE-ENUMERATING raised error"
 //
@@ -488,7 +488,7 @@ bool Yielder_Details_Querier(
 
 
 //
-//  /yielder: native [
+//  yielder: native [
 //
 //      return: "Action that can be called repeatedly until it yields NULL"
 //          [action!]
@@ -530,7 +530,7 @@ DECLARE_NATIVE(YIELDER)
 
 
 //
-//  /generator: native [
+//  generator: native [
 //
 //      return: "Arity-0 action you can call repeatedly until it yields NULL"
 //          [action!]
@@ -552,7 +552,7 @@ DECLARE_NATIVE(GENERATOR)  // could also be made in LIB with SPECIALIZE
 
 
 //
-//  /definitional-yield: native [
+//  definitional-yield: native [
 //
 //  "Function used with GENERATOR and YIELDER to emit results"
 //

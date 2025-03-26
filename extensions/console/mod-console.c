@@ -200,7 +200,7 @@ void Enable_Ctrl_C(void)
 
 
 //
-//  export /console: native [
+//  export console: native [
 //
 //  "Runs customizable Read-Eval-Print Loop, may 'provoke' code before input"
 //

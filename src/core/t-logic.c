@@ -26,7 +26,7 @@
 
 
 //
-//  /null?: native:intrinsic [
+//  null?: native:intrinsic [
 //
 //  "Tells you if the argument is a ~null~ antiform (branch inhibitor)"
 //
@@ -48,7 +48,7 @@ DECLARE_NATIVE(NULL_Q)
 
 
 //
-//  /okay?: native:intrinsic [
+//  okay?: native:intrinsic [
 //
 //  "Tells you if the argument is an ~okay~ antiform (canon branch trigger)"
 //
@@ -70,7 +70,7 @@ DECLARE_NATIVE(OKAY_Q)
 
 
 //
-//  /logic?: native:intrinsic [
+//  logic?: native:intrinsic [
 //
 //  "Tells you if the argument is either the ~null~ or ~okay~ antiform"
 //
@@ -92,7 +92,7 @@ DECLARE_NATIVE(LOGIC_Q)
 
 
 //
-//  /logical: native [
+//  logical: native [
 //
 //  "Produces ~null~ antiform for 0, or ~okay~ antiform for all other integers"
 //
@@ -110,7 +110,7 @@ DECLARE_NATIVE(LOGICAL)
 
 
 //
-//  /boolean?: native:intrinsic [
+//  boolean?: native:intrinsic [
 //
 //  "Tells you if the argument is the TRUE or FALSE word"
 //
@@ -132,7 +132,7 @@ DECLARE_NATIVE(BOOLEAN_Q)
 
 
 //
-//  /onoff?: native:intrinsic [
+//  onoff?: native:intrinsic [
 //
 //  "Tells you if the argument is the ON or OFF word"
 //
@@ -154,7 +154,7 @@ DECLARE_NATIVE(ONOFF_Q)
 
 
 //
-//  /yesno?: native:intrinsic [
+//  yesno?: native:intrinsic [
 //
 //  "Tells you if the argument is the YES or NO word"
 //
@@ -176,7 +176,7 @@ DECLARE_NATIVE(YESNO_Q)
 
 
 //
-//  /true?: native [
+//  true?: native [
 //
 //  "Tests if word is the word TRUE (errors if not TRUE or FALSE)"
 //
@@ -193,7 +193,7 @@ DECLARE_NATIVE(TRUE_Q)
 
 
 //
-//  /false?: native [
+//  false?: native [
 //
 //  "Tests if value is the word FALSE (errors if not TRUE or FALSE)"
 //
@@ -210,7 +210,7 @@ DECLARE_NATIVE(FALSE_Q)
 
 
 //
-//  /boolean: native [
+//  boolean: native [
 //
 //  "The word TRUE if the supplied value is a branch trigger, otherwise FALSE"
 //
@@ -227,7 +227,7 @@ DECLARE_NATIVE(BOOLEAN)
 
 
 //
-//  /yes?: native [
+//  yes?: native [
 //
 //  "Tests if word is the word YES (errors if not YES or NO)"
 //
@@ -244,7 +244,7 @@ DECLARE_NATIVE(YES_Q)
 
 
 //
-//  /no?: native [
+//  no?: native [
 //
 //  "Tests if value is the word NO (errors if not YES or NO)"
 //
@@ -261,7 +261,7 @@ DECLARE_NATIVE(NO_Q)
 
 
 //
-//  /to-yesno: native [
+//  to-yesno: native [
 //
 //  "The word YES if the supplied value is a branch trigger, otherwise NO"
 //
@@ -278,7 +278,7 @@ DECLARE_NATIVE(TO_YESNO)
 
 
 //
-//  /on?: native [
+//  on?: native [
 //
 //  "Tests if word is the word ON (errors if not ON or OFF)"
 //
@@ -295,7 +295,7 @@ DECLARE_NATIVE(ON_Q)
 
 
 //
-//  /off?: native [
+//  off?: native [
 //
 //  "Tests if value is the word OFF (errors if not ON or OFF)"
 //
@@ -312,7 +312,7 @@ DECLARE_NATIVE(OFF_Q)
 
 
 //
-//  /to-onoff: native [
+//  to-onoff: native [
 //
 //  "The word ON if the supplied value is a branch trigger, otherwise OFF"
 //
@@ -329,7 +329,7 @@ DECLARE_NATIVE(TO_ONOFF)
 
 
 //
-//  /and?: native [
+//  and?: native [
 //
 //  "Returns true if both values are conditionally true (no 'short-circuit')"
 //
@@ -350,7 +350,7 @@ DECLARE_NATIVE(AND_Q)
 
 
 //
-//  /nor?: native [
+//  nor?: native [
 //
 //  "Returns true if both values are conditionally false (no 'short-circuit')"
 //
@@ -371,7 +371,7 @@ DECLARE_NATIVE(NOR_Q)
 
 
 //
-//  /nand?: native [
+//  nand?: native [
 //
 //  "Returns false if both values are conditionally true (no 'short-circuit')"
 //
@@ -392,7 +392,7 @@ DECLARE_NATIVE(NAND_Q)
 
 
 //
-//  /null-if-zero: native [
+//  null-if-zero: native [
 //
 //  "Null if the integer input is a zero"
 //
@@ -409,7 +409,7 @@ DECLARE_NATIVE(NULL_IF_ZERO)
 
 
 //
-//  /not: native:intrinsic [
+//  not: native:intrinsic [
 //
 //  "Returns the logic complement (inverts the nullness of what's passed in)"
 //
@@ -431,7 +431,7 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
 
 
 //
-//  /to-logic: native:intrinsic [
+//  to-logic: native:intrinsic [
 //
 //  "Returns logic of what's given (null if null, okay for everything else)"
 //
@@ -484,7 +484,7 @@ INLINE bool Do_Logic_Right_Side_Throws(
 
 
 //
-//  /and: infix native [
+//  and: infix native [
 //
 //  "Boolean AND, right hand side must be in GROUP! to allow short-circuit"
 //
@@ -512,7 +512,7 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
 
 
 //
-//  /or: infix native [
+//  or: infix native [
 //
 //  "Boolean OR, right hand side must be in GROUP! to allow short-circuit"
 //
@@ -540,7 +540,7 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
 
 
 //
-//  /xor: infix native [
+//  xor: infix native [
 //
 //  "Boolean XOR (operation cannot be short-circuited)"
 //
@@ -568,7 +568,7 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 
 
 //
-//  /unless: infix native [
+//  unless: infix native [
 //
 //  "Give left hand side when right hand side is not null or void"
 //

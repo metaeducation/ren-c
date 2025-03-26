@@ -535,7 +535,7 @@ Option(Error*) Trap_Wrap_Extend_Core(
 
 
 //
-//  /wrap*: native [
+//  wrap*: native [
 //
 //  "Expand context with top-level set-words from a block"
 //
@@ -572,7 +572,7 @@ DECLARE_NATIVE(WRAP_P)
 
 
 //
-//  /wrap: native [
+//  wrap: native [
 //
 //  "Bind code in context made from top-level set-words from a block"
 //
@@ -619,7 +619,7 @@ DECLARE_NATIVE(WRAP)
 
 
 //
-//  /collect-words: native [
+//  collect-words: native [
 //
 //  "Collect unique words used in a block (used for context construction)"
 //

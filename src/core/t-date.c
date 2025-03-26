@@ -1205,7 +1205,7 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Date)
 
 
 //
-//  /make-date-ymdsnz: native [
+//  make-date-ymdsnz: native [
 //
 //  "Make a date from Year, Month, Day, Seconds, Nanoseconds, time Zone"
 //
@@ -1252,7 +1252,7 @@ DECLARE_NATIVE(MAKE_DATE_YMDSNZ)
 
 
 //
-//  /make-time-sn: native [
+//  make-time-sn: native [
 //
 //  "Make a TIME! from Seconds and Nanoseconds"
 //

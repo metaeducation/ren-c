@@ -54,7 +54,7 @@ typedef RebolValue Value;
 
 
 //
-//  /generate: native [
+//  generate: native [
 //
 //  "Generate a UUID"
 //

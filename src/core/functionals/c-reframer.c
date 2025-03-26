@@ -405,7 +405,7 @@ Details* Alloc_Action_From_Exemplar(
 
 
 //
-//  /reframer: native [
+//  reframer: native [
 //
 //  "Make a function that manipulates an invocation at the callsite"
 //

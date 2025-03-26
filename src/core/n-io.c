@@ -26,7 +26,7 @@
 
 
 //
-//  /form: native [
+//  form: native [
 //
 //  "Converts a value to a human-readable string"
 //
@@ -47,7 +47,7 @@ DECLARE_NATIVE(FORM)
 
 
 //
-//  /moldify: native:generic [
+//  moldify: native:generic [
 //
 //  "Stopgap concept for methodizing mold using new generics"
 //
@@ -71,7 +71,7 @@ DECLARE_NATIVE(MOLDIFY)
 
 
 //
-//  /mold: native [
+//  mold: native [
 //
 //  "Converts value to a REBOL-readable string"
 //
@@ -125,7 +125,7 @@ DECLARE_NATIVE(MOLD)
 
 
 //
-//  /write-stdout: native [
+//  write-stdout: native [
 //
 //  "Boot-only implementation of WRITE-STDOUT (HIJACK'd by STDIO module)"
 //
@@ -166,7 +166,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
 
 
 //
-//  /new-line: native [
+//  new-line: native [
 //
 //  "Sets or clears the new-line marker within a block or group"
 //
@@ -229,7 +229,7 @@ DECLARE_NATIVE(NEW_LINE)
 
 
 //
-//  /new-line?: native [
+//  new-line?: native [
 //
 //  "Returns the state of the new-line marker within a block or group"
 //
@@ -333,7 +333,7 @@ REBLEN Milliseconds_From_Value(const Value* v) {
 #endif
 
 //
-//  /basic-read: native [
+//  basic-read: native [
 //
 //  "Very simplistic function for reading files, provided for WASI"
 //
@@ -377,7 +377,7 @@ DECLARE_NATIVE(BASIC_READ)
 
 
 //
-//  /basic-write: native [
+//  basic-write: native [
 //
 //  "Very simplistic function for writing files, provided for WASI"
 //

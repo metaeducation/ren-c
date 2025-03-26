@@ -264,7 +264,7 @@ bool Hijacker_Details_Querier(
 
 
 //
-//  /hijack: native [
+//  hijack: native [
 //
 //  "Cause all existing references to a frame to invoke another frame"
 //

@@ -420,7 +420,7 @@ Element* Decorate_According_To_Parameter(
 
 
 //
-//  /decorate-parameter: native [
+//  decorate-parameter: native [
 //
 //  "Based on the parameter type, this gives you e.g. @(foo) or :foo or 'foo"
 //

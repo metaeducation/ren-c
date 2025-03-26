@@ -821,7 +821,7 @@ DetailsQuerier* Details_Querier(Details *details) {
 
 
 //
-//  /couple: native [
+//  couple: native [
 //
 //  "Associate an ACTION! with OBJECT! to use for `.field` member references"
 //
@@ -854,7 +854,7 @@ DECLARE_NATIVE(COUPLE)
 
 
 //
-//  /uncouple: native [
+//  uncouple: native [
 //
 //  "Disassociate an ACTION from OBJECT!"
 //

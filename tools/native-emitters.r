@@ -73,7 +73,7 @@ export /extract-native-protos: func [
                 not ahead space [
                     name: across some "/" ":"  ; things like //:
                     |
-                    "/" name: across to ":" one  ; all else is like /foo:
+                    name: across to ":" one  ; all else is like foo:
                 ]
                 space
                 opt ["infix" opt [":" to space] space]
@@ -124,7 +124,7 @@ export /emit-include-params-macro: func [
         opt ["export" space] [
             native-name: across some "/" ":"  ; e.g. //:
             |
-            "/" native-name: across to ":" one  ; everything else is /foo:
+            native-name: across to ":" one  ; everything else is /foo:
         ]
         accept (okay)
     ] else [

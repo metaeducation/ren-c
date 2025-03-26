@@ -10,7 +10,7 @@ static Bounce Delegate_Kill_Process(pid_t pid, int signal);
 #if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
 
 //
-//  /get-pid: native [
+//  get-pid: native [
 //
 //  "Get ID of the process"
 //
@@ -27,7 +27,7 @@ DECLARE_NATIVE(GET_PID)
 
 
 //
-//  /get-uid: native [
+//  get-uid: native [
 //
 //  "Get real user ID of the process"
 //
@@ -43,7 +43,7 @@ DECLARE_NATIVE(GET_UID)
 
 
 //
-//  /get-euid: native [
+//  get-euid: native [
 //
 //  "Get effective user ID of the process"
 //
@@ -59,7 +59,7 @@ DECLARE_NATIVE(GET_EUID)
 
 
 //
-//  /get-gid: native [
+//  get-gid: native [
 //
 //  "Get real group ID of the process"
 //
@@ -75,7 +75,7 @@ DECLARE_NATIVE(GET_GID)
 
 
 //
-//  /get-egid: native [
+//  get-egid: native [
 //
 //  "Get effective group ID of the process"
 //
@@ -91,7 +91,7 @@ DECLARE_NATIVE(GET_EGID)
 
 
 //
-//  /set-uid: native [
+//  set-uid: native [
 //
 //  "Set real user ID of the process"
 //
@@ -122,7 +122,7 @@ DECLARE_NATIVE(SET_UID)
 
 
 //
-//  /set-euid: native [
+//  set-euid: native [
 //
 //  "Get effective user ID of the process"
 //
@@ -153,7 +153,7 @@ DECLARE_NATIVE(SET_EUID)
 
 
 //
-//  /set-gid: native [
+//  set-gid: native [
 //
 //  "Set real group ID of the process"
 //
@@ -184,7 +184,7 @@ DECLARE_NATIVE(SET_GID)
 
 
 //
-//  /set-egid: native [
+//  set-egid: native [
 //
 //  "Get effective group ID of the process"
 //
@@ -216,7 +216,7 @@ DECLARE_NATIVE(SET_EGID)
 
 
 //
-//  /send-signal: native [
+//  send-signal: native [
 //
 //  "Send signal to a process"
 //

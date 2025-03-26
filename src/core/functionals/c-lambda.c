@@ -125,7 +125,7 @@ bool Lambda_Details_Querier(
 
 
 //
-//  /lambda: native [
+//  lambda: native [
 //
 //  "Make an anonymous function that doesn't define a local RETURN"
 //

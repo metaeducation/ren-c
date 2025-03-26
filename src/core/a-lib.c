@@ -2781,7 +2781,7 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
 
 
 //
-//  /api-transient: native [
+//  api-transient: native [
 //
 //  "Produce an API handle pointer (returned via INTEGER!) for a value"
 //

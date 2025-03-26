@@ -142,7 +142,7 @@ static String* Decode_UCS2(  // [1]
 
 
 //
-//  export /identify-text?: native [
+//  export identify-text?: native [
 //
 //  "Codec for identifying BLOB! data for a .TXT file"
 //
@@ -161,7 +161,7 @@ DECLARE_NATIVE(IDENTIFY_TEXT_Q)
 
 
 //
-//  export /decode-text: native [
+//  export decode-text: native [
 //
 //  "Codec for decoding BLOB! data for a .TXT file"
 //
@@ -194,7 +194,7 @@ DECLARE_NATIVE(DECODE_TEXT)
 
 
 //
-//  export /encode-text: native [
+//  export encode-text: native [
 //
 //  "Codec for encoding a .TXT file"
 //
@@ -255,7 +255,7 @@ static Binary* Encode_UCS2(  // [1]
 
 
 //
-//  export /identify-utf16le?: native [
+//  export identify-utf16le?: native [
 //
 //  "Codec for identifying BLOB! data for a little-endian UTF16 file"
 //
@@ -279,7 +279,7 @@ DECLARE_NATIVE(IDENTIFY_UTF16LE_Q)
 
 
 //
-//  export /decode-utf16le: native [
+//  export decode-utf16le: native [
 //
 //  "Codec for decoding BLOB! data for a little-endian UTF16 file"
 //
@@ -312,7 +312,7 @@ DECLARE_NATIVE(DECODE_UTF16LE)
 
 
 //
-//  export /encode-utf16le: native [
+//  export encode-utf16le: native [
 //
 //  "Codec for encoding a little-endian UTF16 file"
 //
@@ -342,7 +342,7 @@ DECLARE_NATIVE(ENCODE_UTF16LE)
 
 
 //
-//  export /identify-utf16be?: native [
+//  export identify-utf16be?: native [
 //
 //  "Codec for identifying BLOB! data for a big-endian UTF16 file"
 //
@@ -366,7 +366,7 @@ DECLARE_NATIVE(IDENTIFY_UTF16BE_Q)
 
 
 //
-//  export /decode-utf16be: native [
+//  export decode-utf16be: native [
 //
 //  "Codec for decoding BLOB! data for a big-endian UTF16 file"
 //
@@ -399,7 +399,7 @@ DECLARE_NATIVE(DECODE_UTF16BE)
 
 
 //
-//  export /encode-utf16be: native [
+//  export encode-utf16be: native [
 //
 //  "Codec for encoding a big-endian UTF16 file"
 //

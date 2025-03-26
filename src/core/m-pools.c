@@ -960,7 +960,7 @@ void Swap_Flex_Content(Flex* a, Flex* b)
 
 
 //
-//  /swap-contents: native [
+//  swap-contents: native [
 //
 //  "Low-level operation for swapping the underlying data for two series"
 //

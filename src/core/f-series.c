@@ -158,7 +158,7 @@ IMPLEMENT_GENERIC(OFFSET_OF, Any_Series)  // 0-based
 
 
 //
-//  /head-of: native:generic [
+//  head-of: native:generic [
 //
 //  "Get the head of a series (or other type...? HEAD of a PORT?)"
 //
@@ -175,7 +175,7 @@ DECLARE_NATIVE(HEAD_OF)
 
 
 //
-//  /tail-of: native:generic [
+//  tail-of: native:generic [
 //
 //  "Get the tail of a series (or other type...? TAIL of a PORT?)"
 //
@@ -192,7 +192,7 @@ DECLARE_NATIVE(TAIL_OF)
 
 
 //
-//  /head?: native:generic [
+//  head?: native:generic [
 //
 //  "Test if something is at the head position"
 //
@@ -209,7 +209,7 @@ DECLARE_NATIVE(HEAD_Q)
 
 
 //
-//  /tail?: native:generic [
+//  tail?: native:generic [
 //
 //  "Test if something is at the tail position"
 //
@@ -226,7 +226,7 @@ DECLARE_NATIVE(TAIL_Q)
 
 
 //
-//  /past?: native:generic [
+//  past?: native:generic [
 //
 //  "Test if something is past the tail position"
 //

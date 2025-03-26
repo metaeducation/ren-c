@@ -258,7 +258,7 @@ bool Cascader_Details_Querier(
 
 
 //
-//  /cascade*: native [
+//  cascade*: native [
 //
 //  "Create a processing pipeline of actions, each consuming the last result"
 //

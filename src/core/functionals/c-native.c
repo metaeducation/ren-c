@@ -68,7 +68,7 @@ bool Raw_Native_Details_Querier(
 //
 // Entries look like:
 //
-//    /some-name: native [spec content]
+//    some-name: native [spec content]
 //
 // It is optional to put INFIX between the assignment and NATIVE.
 //
@@ -174,7 +174,7 @@ Details* Make_Native_Dispatch_Details(
 
 
 //
-//  /native: native [
+//  native: native [
 //
 //  "(Internal Function) Create a native, using compiled C code"
 //
@@ -331,7 +331,7 @@ Bounce Delegate_Operation_With_Part(
 
 
 //
-//  /oldgeneric: native:generic [
+//  oldgeneric: native:generic [
 //
 //  "Generic aggregator for the old-style generic dispatch"
 //
@@ -427,7 +427,7 @@ Source* Startup_Natives(const Element* boot_natives)
 
     g_current_uses_librebol = false;  // raw natives don't use librebol
 
-    // Due to the bootstrapping of `/native: native [...]`, we can't actually
+    // Due to the bootstrapping of `native: native [...]`, we can't actually
     // create NATIVE itself that way.  So the prep process should have moved
     // it to be the first native in the list, and we make it manually.
     //

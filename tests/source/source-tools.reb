@@ -227,7 +227,7 @@ export analyse: context [
                 let name: ~
                 if parse proto-parser.data [
                     opt 'export
-                    name: ['//: | set-run-word?/] (name: resolve name)
+                    name: ['//: | set-word?/] (name: resolve name)
                     opt ['infix | 'infix:defer | 'infix:postpone]
                     [
                         'native
@@ -240,23 +240,26 @@ export analyse: context [
                     accept (null)
                 ] [
                     ;
-                    ; It's a `/some-name?: native [...]`, so we expect
+                    ; It's a `some-name?: native [...]`, so we expect
                     ; `DECLARE_NATIVE(SOME_NAME_Q)` to be correctly lined up
                     ; as the "to-c-name" of the Rebol set-word
                     ;
                     if (
                         proto-parser.proto-arg-1
-                        <> to-c-name:scope name #prefixed
+                        <> uppercase to-c-name:scope name #prefixed
                     )[
                         let line: text-line-of proto-parser.parse-position
                         emit <id-mismatch> [
-                            (mold proto-parser.data.1) (file) (line)
+                            (name) (file) (line)
                         ]
                     ]
                 ] else [
                     ;
                     ; ... ? (not a native)
                     ;
+                    if not set-word? proto-parser.data.1 [
+                        fail ["UNRECOGNIZED PROTO:" mold proto-parser.data]
+                    ]
                     any [
                         (proto-parser.proto-id =
                             form unchain proto-parser.data.1)

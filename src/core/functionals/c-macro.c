@@ -176,7 +176,7 @@ bool Macro_Details_Querier(
 
 
 //
-//  /macro: native [
+//  macro: native [
 //
 //  "Makes function that generates code to splice into the execution stream"
 //
@@ -207,7 +207,7 @@ DECLARE_NATIVE(MACRO)
 
 
 //
-//  /inline: native [
+//  inline: native [
 //
 //  "Inject a list of content into the execution stream, or single value"
 //

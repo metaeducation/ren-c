@@ -175,7 +175,7 @@ bool Is_Varlist_Running_Or_Pending(VarList* varlist)
 
 
 //
-//  /running?: native [
+//  running?: native [
 //
 //  "Returns TRUE if a FRAME! is on the stack and executing (arguments done)"
 //
@@ -199,7 +199,7 @@ DECLARE_NATIVE(RUNNING_Q)
 
 
 //
-//  /pending?: native [
+//  pending?: native [
 //
 //  "Returns TRUE if a FRAME! is on the stack, but is gathering arguments"
 //

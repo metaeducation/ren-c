@@ -336,7 +336,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
 
 //
-//  /panic: native [
+//  panic: native [
 //
 //  "Terminate abnormally with a message, optionally diagnosing a value cell"
 //
@@ -390,7 +390,7 @@ DECLARE_NATIVE(PANIC)
 
 
 //
-//  /raise*: native [
+//  raise*: native [
 //
 //  "Version of RAISE of definitional error that only takes ERROR!"
 //
@@ -409,7 +409,7 @@ DECLARE_NATIVE(RAISE_P)
 
 
 //
-//  /fail: native [
+//  fail: native [
 //
 //  "Early-boot version of FAIL (overridden by more complex usermode version)"
 //
@@ -428,7 +428,7 @@ DECLARE_NATIVE(FAIL)
   #if NO_RUNTIME_CHECKS
     UNUSED(blame);
   #else
-    printf("!!! Early-Boot FAIL, e.g. /fail: native [], not /fail: func []\n");
+    printf("!!! Early-Boot FAIL, e.g. fail: native [], not /fail: func []\n");
     PROBE(blame);
 
     rebElide(CANON(WRITE_STDOUT), CANON(DELIMIT), CANON(SPACE), reason);

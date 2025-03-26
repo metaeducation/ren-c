@@ -823,7 +823,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Map)
 
 
 //
-//  /put: native:generic [
+//  put: native:generic [
 //
 //  "Replaces the value following a key, and returns the new value"
 //

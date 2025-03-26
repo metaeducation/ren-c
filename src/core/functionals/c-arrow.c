@@ -144,7 +144,7 @@ bool Arrow_Details_Querier(
 
 
 //
-//  /arrow: native [
+//  arrow: native [
 //
 //  "Makes an anonymous function that doesn't copy its body, can unpack args"
 //

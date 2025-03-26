@@ -3117,7 +3117,7 @@ Option(Error*) Trap_Transcode_One(
 
 
 //
-//  /transcode: native [
+//  transcode: native [
 //
 //  "Translates UTF-8 source (from a text or binary) to Rebol elements"
 //

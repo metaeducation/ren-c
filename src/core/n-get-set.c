@@ -765,7 +765,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
 
 
 //
-//  /get: native [
+//  get: native [
 //
 //  "Gets the value of a word or path, or block of words/paths"
 //
@@ -1144,7 +1144,7 @@ void Set_Var_May_Fail(
 
 
 //
-//  /set: native [
+//  set: native [
 //
 //  "Sets a word or path to specified value (see also: UNPACK)"
 //
@@ -1233,7 +1233,7 @@ DECLARE_NATIVE(SET)
 
 
 //
-//  /set-accessor: native [
+//  set-accessor: native [
 //
 //  "Put a function in charge of getting/setting a variable's value"
 //
@@ -1267,7 +1267,7 @@ DECLARE_NATIVE(SET_ACCESSOR)
 
 
 //
-//  /.: native [
+//  .: native [
 //
 //  "Get the current coupling from the binding environment"
 //

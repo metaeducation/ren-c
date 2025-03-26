@@ -397,7 +397,7 @@ Details* Make_Interpreted_Action_May_Fail(
 
 
 //
-//  /function: native [
+//  function: native [
 //
 //  "Defines an ACTION! with given spec and body"
 //
@@ -497,7 +497,7 @@ Bounce Init_Thrown_Unwind_Value(
 
 
 //
-//  /unwind: native [
+//  unwind: native [
 //
 //  "Jump up the stack to return from a specific frame or call"
 //
@@ -578,7 +578,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
 
 
 //
-//  /definitional-return: native [
+//  definitional-return: native [
 //
 //  "RETURN, giving a result to the caller"
 //
@@ -689,7 +689,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 
 
 //
-//  /definitional-redo: native [
+//  definitional-redo: native [
 //
 //  "Internal throw signal used by RETURN:RUN"
 //

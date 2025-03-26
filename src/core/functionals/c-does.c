@@ -48,7 +48,7 @@
 
 
 //
-//  /does: native [
+//  does: native [
 //
 //  "Make action that will EVAL a BLOCK!"
 //

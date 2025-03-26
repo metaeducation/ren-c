@@ -43,7 +43,7 @@
 
 
 //
-//  /the: native [
+//  the: native [
 //
 //  "Returns value passed in without evaluation, but with binding"
 //
@@ -78,7 +78,7 @@ DECLARE_NATIVE(THE)
 
 
 //
-//  /just: native [
+//  just: native [
 //
 //  "Returns value passed in without evaluation, and no additional binding"
 //
@@ -99,7 +99,7 @@ DECLARE_NATIVE(JUST)
 
 
 //
-//  /quote: native [
+//  quote: native [
 //
 //  "Constructs a quoted form of the evaluated argument"
 //
@@ -126,7 +126,7 @@ DECLARE_NATIVE(QUOTE)
 
 
 //
-//  /meta: native [
+//  meta: native [
 //
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
@@ -173,7 +173,7 @@ DECLARE_NATIVE(META)
 
 
 //
-//  /meta*: native:intrinsic [
+//  meta*: native:intrinsic [
 //
 //  "META operator that works on any value (errors, packs, barriers, etc.)"
 //
@@ -192,7 +192,7 @@ DECLARE_NATIVE(META_P)
 
 
 //
-//  /unquote: native [
+//  unquote: native [
 //
 //  "Remove quoting levels from the evaluated argument"
 //
@@ -221,7 +221,7 @@ DECLARE_NATIVE(UNQUOTE)
 
 
 //
-//  /quasi: native [
+//  quasi: native [
 //
 //  "Constructs a quasi form of the evaluated argument (if legal)"
 //
@@ -260,7 +260,7 @@ DECLARE_NATIVE(QUASI)
 
 
 //
-//  /unquasi: native [
+//  unquasi: native [
 //
 //  "Turn quasiforms into fundamental forms"
 //
@@ -278,7 +278,7 @@ DECLARE_NATIVE(UNQUASI)
 
 
 //
-//  /antiform?: native:intrinsic [
+//  antiform?: native:intrinsic [
 //
 //  "Tells you whether argument is a stable or unstable antiform"
 //
@@ -303,7 +303,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
 
 
 //
-//  /anti: native [
+//  anti: native [
 //
 //  "Give the antiform of the plain argument (like UNMETA QUASI)"
 //
@@ -335,7 +335,7 @@ DECLARE_NATIVE(ANTI)
 
 
 //
-//  /unmeta: native [
+//  unmeta: native [
 //
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
@@ -379,7 +379,7 @@ DECLARE_NATIVE(UNMETA)
 
 
 //
-//  /unmeta*: native [
+//  unmeta*: native [
 //
 //  "Variant of UNMETA that can synthesize any atom (raised, pack, barrier...)"
 //
@@ -397,7 +397,7 @@ DECLARE_NATIVE(UNMETA_P)
 
 
 //
-//  /spread: native [
+//  spread: native [
 //
 //  "Make block arguments splice"
 //
@@ -457,7 +457,7 @@ DECLARE_NATIVE(SPREAD)
 
 
 //
-//  /lazy: native [
+//  lazy: native [
 //
 //  "Make objects lazy"
 //
@@ -537,7 +537,7 @@ INLINE bool Pack_Native_Core_Throws(
 
 
 //
-//  /pack: native [
+//  pack: native [
 //
 //  "Create a pack of arguments from a list, no raised errors (or see PACK*)"
 //
@@ -565,7 +565,7 @@ DECLARE_NATIVE(PACK)
 
 
 //
-//  /pack*: native [
+//  pack*: native [
 //
 //  "Create a pack of arguments from a list, raised errors okay (or see PACK)"
 //
@@ -593,7 +593,7 @@ DECLARE_NATIVE(PACK_P)
 
 
 //
-//  /lazy?: native:intrinsic [
+//  lazy?: native:intrinsic [
 //
 //  "Tells you if argument is a lazy value (antiform object)"
 //
@@ -614,7 +614,7 @@ DECLARE_NATIVE(LAZY_Q)
 
 
 //
-//  /pack?: native:intrinsic [
+//  pack?: native:intrinsic [
 //
 //  "Tells you if argument is a parameter pack (antiform block)"
 //
@@ -635,7 +635,7 @@ DECLARE_NATIVE(PACK_Q)
 
 
 //
-//  /runs: native [
+//  runs: native [
 //
 //  "Make frames run when fetched through word access"
 //
@@ -667,7 +667,7 @@ DECLARE_NATIVE(RUNS)
 
 
 //
-//  /unrun: native [
+//  unrun: native [
 //
 //  "Give back a frame! for action! input"
 //
@@ -686,7 +686,7 @@ DECLARE_NATIVE(UNRUN)
 
 
 //
-//  /maybe: native:intrinsic [
+//  maybe: native:intrinsic [
 //
 //  "If argument is null, make it void (also pass through voids)"
 //
@@ -724,7 +724,7 @@ DECLARE_NATIVE(MAYBE)
 
 
 //
-//  /noquote: native:intrinsic [
+//  noquote: native:intrinsic [
 //
 //  "Removes all levels of quoting from a (potentially) quoted element"
 //

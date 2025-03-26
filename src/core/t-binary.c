@@ -90,7 +90,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Blob)
 
 
 //
-//  /encode-IEEE-754: native [
+//  encode-IEEE-754: native [
 //      "Encode a decimal as binary blob according to the IEEE-754 standard"
 //
 //      return: "Default return is double format (64 bits, 53-bit precision)"
@@ -134,7 +134,7 @@ DECLARE_NATIVE(ENCODE_IEEE_754) {
 
 
 //
-//  /decode-IEEE-754: native [
+//  decode-IEEE-754: native [
 //      "Decode binary blob as decimal according to the IEEE-754 standard"
 //
 //      return: [decimal!]  ; review ~NaN~, ~inf~ as antiforms
@@ -1051,7 +1051,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
 
 
 //
-//  /encode-integer: native [
+//  encode-integer: native [
 //
 //  "Encode integer as a Little Endian or Big Endian BLOB!, signed/unsigned"
 //
@@ -1147,7 +1147,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
 
 
 //
-//  /decode-integer: native [
+//  decode-integer: native [
 //
 //  "Decode BLOB! as Little Endian or Big Endian, signed/unsigned integer"
 //
@@ -1281,7 +1281,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
 
 
 //
-//  /add-to-binary: native [
+//  add-to-binary: native [
 //
 //  "Do big-endian math on a binary blob with an integer"
 //

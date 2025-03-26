@@ -48,7 +48,7 @@ extern Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb);
 
 
 //
-//  /startup*: native [  ; Note: DO NOT EXPORT!
+//  startup*: native [  ; Note: DO NOT EXPORT!
 //
 //  "Startup the filesystem device"
 //
@@ -64,7 +64,7 @@ DECLARE_NATIVE(STARTUP_P)
 
 
 //
-//  export /get-file-actor-handle: native [
+//  export get-file-actor-handle: native [
 //
 //  "Retrieve handle to the native actor for files"
 //
@@ -79,7 +79,7 @@ DECLARE_NATIVE(GET_FILE_ACTOR_HANDLE)
 
 
 //
-//  /shutdown*: native [  ; Note: DO NOT EXPORT!
+//  shutdown*: native [  ; Note: DO NOT EXPORT!
 //
 //  "Shut down the filesystem device"
 //
@@ -95,7 +95,7 @@ DECLARE_NATIVE(SHUTDOWN_P)
 
 
 //
-//  /get-dir-actor-handle: native [
+//  get-dir-actor-handle: native [
 //
 //  "Retrieve handle to the native actor for directories"
 //
@@ -489,7 +489,7 @@ String* To_Local_Path(const Value* file, Flags flags) {
 
 
 //
-//  export /local-to-file: native [
+//  export local-to-file: native [
 //
 //  "Converts a local system file path TEXT! to a Rebol FILE! path"
 //
@@ -520,7 +520,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 
 
 //
-//  export /file-to-local: native [
+//  export file-to-local: native [
 //
 //  "Converts a Rebol FILE! path to TEXT! of the local system file path"
 //
@@ -558,7 +558,7 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
 
 
 //
-//  export /what-dir: native [
+//  export what-dir: native [
 //
 //  "Returns the current directory path"
 //
@@ -598,7 +598,7 @@ DECLARE_NATIVE(WHAT_DIR)
 
 
 //
-//  export /change-dir: native [
+//  export change-dir: native [
 //
 //  "Changes the current path (where scripts with relative paths will be run)"
 //
@@ -638,7 +638,7 @@ DECLARE_NATIVE(CHANGE_DIR)
 extern Value* Get_Current_Exec(void);
 
 //
-//  export /get-current-exec: native [
+//  export get-current-exec: native [
 //
 //  "Get the current path to the running executable"
 //

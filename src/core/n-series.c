@@ -26,7 +26,7 @@
 
 
 //
-//  /insert: native:generic [
+//  insert: native:generic [
 //
 //  "Inserts element(s); for series, returns just past the insert"
 //
@@ -52,7 +52,7 @@ DECLARE_NATIVE(INSERT)  // Must be frame-compatible with APPEND, CHANGE
 
 
 //
-//  /append: native:generic [
+//  append: native:generic [
 //
 //  "Inserts element(s) at tail; for series, returns head"
 //
@@ -76,7 +76,7 @@ DECLARE_NATIVE(APPEND)  // Must be frame-compatible with CHANGE, INSERT
 
 
 //
-//  /change: native:generic [
+//  change: native:generic [
 //
 //  "Replaces element(s); returns just past the change"
 //
@@ -100,7 +100,7 @@ DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT
 
 
 //
-//  /take: native:generic [
+//  take: native:generic [
 //
 //  "Removes and returns one or more elements"
 //
@@ -121,7 +121,7 @@ DECLARE_NATIVE(TAKE)
 
 
 //
-//  /remove: native:generic [
+//  remove: native:generic [
 //
 //  "Removes element(s); returns same position"
 //
@@ -140,7 +140,7 @@ DECLARE_NATIVE(REMOVE)
 
 
 //
-//  /clear: native:generic [
+//  clear: native:generic [
 //
 //  "Removes elements from current position to tail; returns at new tail"
 //
@@ -157,7 +157,7 @@ DECLARE_NATIVE(CLEAR)
 
 
 //
-//  /swap: native:generic [
+//  swap: native:generic [
 //
 //  "Swaps elements between two series or the same series"
 //
@@ -174,7 +174,7 @@ DECLARE_NATIVE(SWAP)
 
 
 //
-//  /reverse: native:generic [
+//  reverse: native:generic [
 //
 //  "Reverses the order of elements; returns at same position"
 //
@@ -193,7 +193,7 @@ DECLARE_NATIVE(REVERSE)
 
 
 //
-//  /reverse-of: native:generic [
+//  reverse-of: native:generic [
 //
 //  "Give a copy of the reversal of a value (works on immutable types)"
 //
@@ -226,7 +226,7 @@ DECLARE_NATIVE(REVERSE_OF)
 
 
 //
-//  /sort: native:generic [
+//  sort: native:generic [
 //
 //  "Sorts a series; default sort order is ascending"
 //
@@ -252,7 +252,7 @@ DECLARE_NATIVE(SORT)
 
 
 //
-//  /skip: native:generic [
+//  skip: native:generic [
 //
 //  "Returns the series forward or backward from the current position"
 //
@@ -280,7 +280,7 @@ DECLARE_NATIVE(SKIP)
 
 
 //
-//  /at: native:generic [
+//  at: native:generic [
 //
 //  "Returns the series at the specified index"
 //
@@ -299,7 +299,7 @@ DECLARE_NATIVE(AT)
 
 
 //
-//  /find: native:generic [
+//  find: native:generic [
 //
 //  "Searches for the position where a matching value is found"
 //
@@ -324,7 +324,7 @@ DECLARE_NATIVE(FIND)  // Must be frame-compatible with SELECT
 
 
 //
-//  /select: native:generic [
+//  select: native:generic [
 //
 //  "Searches for a value; returns the value that follows, else null"
 //

@@ -28,7 +28,7 @@
 
 
 //
-//  /type-of: native [
+//  type-of: native [
 //
 //  "Give back the type of a value (all quoted values return QUOTED!)"
 //
@@ -51,7 +51,7 @@ DECLARE_NATIVE(TYPE_OF)
 
 
 //
-//  /heart-of: native [
+//  heart-of: native [
 //
 //  "Give back a cell's heart (e.g. HEART OF ~FOO~ or ''FOO is WORD!)"
 //
@@ -69,7 +69,7 @@ DECLARE_NATIVE(HEART_OF)
 
 
 //
-//  /quotes-of: native [
+//  quotes-of: native [
 //
 //  "Return how many quote levels are on a value (quasiforms have 0 quotes)"
 //
@@ -86,7 +86,7 @@ DECLARE_NATIVE(QUOTES_OF)
 
 
 //
-//  /sigil-of: native:generic [
+//  sigil-of: native:generic [
 //
 //  "Get the SIGIL! on a value, e.g. $WORD has the $ sigil, WORD has none"
 //
@@ -108,7 +108,7 @@ DECLARE_NATIVE(SIGIL_OF)
 
 
 //
-//  /length-of: native:generic [
+//  length-of: native:generic [
 //
 //  "Get the length (in series units, e.g. codepoints) of series or other type"
 //
@@ -131,7 +131,7 @@ DECLARE_NATIVE(LENGTH_OF)
 
 
 //
-//  /size-of: native:generic [
+//  size-of: native:generic [
 //
 //  "Get the size (in bytes, e.g. UTF-encoded bytes) of series or other type"
 //
@@ -161,7 +161,7 @@ DECLARE_NATIVE(SIZE_OF)
 
 
 //
-//  /index-of: native:generic [
+//  index-of: native:generic [
 //
 //  "Get the index of a series type"
 //
@@ -181,7 +181,7 @@ DECLARE_NATIVE(INDEX_OF)
 
 
 //
-//  /offset-of: native:generic [
+//  offset-of: native:generic [
 //
 //  "Get the offset of a series type or port (zero-based?)"
 //
@@ -198,7 +198,7 @@ DECLARE_NATIVE(OFFSET_OF)
 
 
 //
-//  /of: infix native [
+//  of: infix native [
 //
 //  "Call XXX-OF functions without a hyphen, e.g. HEAD OF X => HEAD-OF X"
 //
@@ -1028,7 +1028,7 @@ Option(const Byte*) Try_Scan_Binary_To_Stack(
 
 
 //
-//  /scan-net-header: native [
+//  scan-net-header: native [
 //
 //  "Scan an Internet-style header (HTTP, SMTP)"
 //

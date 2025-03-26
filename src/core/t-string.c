@@ -315,7 +315,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
 
 
 //
-//  /to-text: native [
+//  to-text: native [
 //
 //  "Variant of TO TEXT! with option to tolerate invisible codepoints"
 //
@@ -1333,7 +1333,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
 
 
 //
-//  /encode-UTF-8: native [
+//  encode-UTF-8: native [
 //      "Encode a string to the UTF-8 standard (see also AS TEXT!)"
 //
 //      return: [blob!]
@@ -1361,7 +1361,7 @@ DECLARE_NATIVE(ENCODE_UTF_8) {
 
 
 //
-//  /decode-UTF-8: native [
+//  decode-UTF-8: native [
 //      "Decode (and validate) bytes as text according to the UTF-8 standard"
 //
 //      return: [text!]  ; review ~NaN~, ~inf~ as antiforms

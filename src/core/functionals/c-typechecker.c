@@ -37,7 +37,7 @@
 
 
 //
-//  /typechecker-archetype: native [
+//  typechecker-archetype: native [
 //
 //  "For internal use (builds parameters and return slot)"
 //
@@ -847,7 +847,7 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
 
 
 //
-//  /typechecker: native [
+//  typechecker: native [
 //
 //  "Make a function for checking types (generated function gives LOGIC!)"
 //
@@ -877,7 +877,7 @@ DECLARE_NATIVE(TYPECHECKER)
 
 
 //
-//  /match: native [
+//  match: native [
 //
 //  "Check value using the same typechecking that functions use for parameters"
 //
@@ -970,7 +970,7 @@ DECLARE_NATIVE(MATCH)
 
 
 //
-//  /matcher: native [
+//  matcher: native [
 //
 //  "Make a specialization of the MATCH function for a fixed type argument"
 //

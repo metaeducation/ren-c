@@ -96,7 +96,7 @@ typedef RebolValue Value;
 
 
 //
-//  export /request-file*: native [
+//  export request-file*: native [
 //
 //  "Asks user to select file(s) and returns full file path(s)"
 //
@@ -476,7 +476,7 @@ int CALLBACK ReqDirCallbackProc(
 
 
 //
-//  export /request-dir*: native [
+//  export request-dir*: native [
 //
 //  "Asks user to select a directory and returns it as file path"
 //

@@ -28,7 +28,7 @@
 
 
 //
-//  /reduce: native [
+//  reduce: native [
 //
 //  "Evaluates expressions, keeping each result (EVAL only gives last result)"
 //
@@ -205,7 +205,7 @@ DECLARE_NATIVE(REDUCE)
 
 
 //
-//  /reduce-each: native [
+//  reduce-each: native [
 //
 //  "Evaluates expressions, keeping each result (EVAL only gives last result)"
 //
@@ -824,7 +824,7 @@ Bounce Composer_Executor(Level* const L)
 
 
 //
-//  /compose2: native [
+//  compose2: native [
 //
 //  "Evaluates only contents of GROUP!-delimited expressions in the argument"
 //
@@ -1249,7 +1249,7 @@ DECLARE_NATIVE(COMPOSE2)
 
 
 //
-//  /interpolate: native [
+//  interpolate: native [
 //
 //  "Variation of COMPOSE that uses the binding environment from the callsite"
 //
@@ -1304,7 +1304,7 @@ static void Flatten_Core(
 
 
 //
-//  /flatten: native [
+//  flatten: native [
 //
 //  "Flattens a block of blocks"
 //

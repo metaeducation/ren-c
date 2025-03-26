@@ -29,7 +29,7 @@
 
 
 //
-//  /bind: native [
+//  bind: native [
 //
 //  "Binds words or words in lists to the specified context"
 //
@@ -121,7 +121,7 @@ DECLARE_NATIVE(BIND)
 
 
 //
-//  /binding-of: native:generic [
+//  binding-of: native:generic [
 //
 //  "Get the binding of a value (binding is a loooong work in progress...)"
 //
@@ -138,7 +138,7 @@ DECLARE_NATIVE(BINDING_OF)
 
 
 //
-//  /inside: native [
+//  inside: native [
 //
 //  "Returns a view of the input bound virtually to the context"
 //
@@ -170,7 +170,7 @@ DECLARE_NATIVE(INSIDE)
 
 
 //
-//  /overbind: native [
+//  overbind: native [
 //
 //  "Add definitions from context to environment of value"
 //
@@ -203,7 +203,7 @@ DECLARE_NATIVE(OVERBIND)
 
 
 //
-//  /has: native [
+//  has: native [
 //
 //  "Returns a word bound into the context, if it's available, else null"
 //
@@ -241,7 +241,7 @@ DECLARE_NATIVE(HAS)
 
 
 //
-//  /without: native [
+//  without: native [
 //
 //  "Remove a virtual binding from a value"
 //
@@ -290,7 +290,7 @@ DECLARE_NATIVE(WITHOUT)
 
 
 //
-//  /use: native [
+//  use: native [
 //
 //  "Defines words local to a block (See also: LET)"
 //
@@ -389,7 +389,7 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
 
 
 //
-//  /refinement?: native:intrinsic [
+//  refinement?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank"
 //
@@ -411,7 +411,7 @@ DECLARE_NATIVE(REFINEMENT_Q)
 
 
 //
-//  /set-word?: native:intrinsic [
+//  set-word?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a word and trailing blank"
 //
@@ -433,7 +433,7 @@ DECLARE_NATIVE(SET_WORD_Q)
 
 
 //
-//  /set-run-word?: native:intrinsic [
+//  set-run-word?: native:intrinsic [
 //
 //  "Test if argument is a path like /WORD: (for setting action variables)"
 //
@@ -455,7 +455,7 @@ DECLARE_NATIVE(SET_RUN_WORD_Q)
 
 
 //
-//  /run-word?: native:intrinsic [
+//  run-word?: native:intrinsic [
 //
 //  "Test if argument is a path like /WORD"
 //
@@ -481,7 +481,7 @@ DECLARE_NATIVE(RUN_WORD_Q)
 
 
 //
-//  /get-word?: native:intrinsic [
+//  get-word?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank and a word"
 //
@@ -503,7 +503,7 @@ DECLARE_NATIVE(GET_WORD_Q)
 
 
 //
-//  /set-tuple?: native:intrinsic [
+//  set-tuple?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a tuple and trailing blank"
 //
@@ -525,7 +525,7 @@ DECLARE_NATIVE(SET_TUPLE_Q)
 
 
 //
-//  /get-tuple?: native:intrinsic [
+//  get-tuple?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank and a tuple"
 //
@@ -547,7 +547,7 @@ DECLARE_NATIVE(GET_TUPLE_Q)
 
 
 //
-//  /set-group?: native:intrinsic [
+//  set-group?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a group and trailing blank"
 //
@@ -569,7 +569,7 @@ DECLARE_NATIVE(SET_GROUP_Q)
 
 
 //
-//  /get-group?: native:intrinsic [
+//  get-group?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank and a group"
 //
@@ -591,7 +591,7 @@ DECLARE_NATIVE(GET_GROUP_Q)
 
 
 //
-//  /set-block?: native:intrinsic [
+//  set-block?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a block and trailing blank"
 //
@@ -613,7 +613,7 @@ DECLARE_NATIVE(SET_BLOCK_Q)
 
 
 //
-//  /get-block?: native:intrinsic [
+//  get-block?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank and a block"
 //
@@ -635,7 +635,7 @@ DECLARE_NATIVE(GET_BLOCK_Q)
 
 
 //
-//  /any-set-value?: native:intrinsic [
+//  any-set-value?: native:intrinsic [
 //
 //  "Test if an argument is a 2-element chain with a trailing blank"
 //
@@ -657,7 +657,7 @@ DECLARE_NATIVE(ANY_SET_VALUE_Q)
 
 
 //
-//  /any-get-value?: native:intrinsic [
+//  any-get-value?: native:intrinsic [
 //
 //  "Test if an argument is a 2-element chain with a leading blank"
 //
@@ -679,7 +679,7 @@ DECLARE_NATIVE(ANY_GET_VALUE_Q)
 
 
 //
-//  /quasi-word?: native:intrinsic [
+//  quasi-word?: native:intrinsic [
 //
 //  "Test if an argument is an QUASI form of word"
 //
@@ -701,7 +701,7 @@ DECLARE_NATIVE(QUASI_WORD_Q)
 
 
 //
-//  /char?: native:intrinsic [
+//  char?: native:intrinsic [
 //
 //  "Test if an argument is an issue with one codepoint (or #{00} NUL blob)"
 //
@@ -723,7 +723,7 @@ DECLARE_NATIVE(CHAR_Q)
 
 
 //
-//  /lit-word?: native:intrinsic [
+//  lit-word?: native:intrinsic [
 //
 //  "Test if an argument is quoted word"
 //
@@ -747,7 +747,7 @@ DECLARE_NATIVE(LIT_WORD_Q)
 
 
 //
-//  /lit-path?: native:intrinsic [
+//  lit-path?: native:intrinsic [
 //
 //  "Test if an argument is a quoted path"
 //
@@ -771,7 +771,7 @@ DECLARE_NATIVE(LIT_PATH_Q)
 
 
 //
-//  /any-inert?: native:intrinsic [
+//  any-inert?: native:intrinsic [
 //
 //  "Test if a value type always produces itself in the evaluator"
 //
@@ -793,7 +793,7 @@ DECLARE_NATIVE(ANY_INERT_Q)
 
 
 //
-//  /unbind: native [
+//  unbind: native [
 //
 //  "Unbinds words from context"
 //
@@ -826,7 +826,7 @@ DECLARE_NATIVE(UNBIND)
 
 
 //
-//  /bindable: native [
+//  bindable: native [
 //
 //  "Remove Tip Binding of a Value"
 //
@@ -853,7 +853,7 @@ DECLARE_NATIVE(BINDABLE)
 
 
 //
-//  /resolve: native [
+//  resolve: native [
 //
 //  "Extract the inner variable target, e.g. (/a: -> a)"
 //
@@ -919,7 +919,7 @@ DECLARE_NATIVE(RESOLVE)
 
 
 //
-//  /proxy-exports: native [
+//  proxy-exports: native [
 //
 //  "Copy context by setting values in the target from those in the source"
 //
@@ -991,7 +991,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 
 
 //
-//  /infix?: native [
+//  infix?: native [
 //
 //  "non-null if a function that gets first argument before the call"
 //
@@ -1009,7 +1009,7 @@ DECLARE_NATIVE(INFIX_Q)
 
 
 //
-//  /infix: native [
+//  infix: native [
 //
 //  "For functions that gets 1st argument from left, e.g (/+: infix get $add)"
 //
@@ -1048,7 +1048,7 @@ DECLARE_NATIVE(INFIX)
 
 
 //
-//  /identity: native [
+//  identity: native [
 //
 //  "Returns input value (https://en.wikipedia.org/wiki/Identity_function)"
 //
@@ -1067,7 +1067,7 @@ DECLARE_NATIVE(IDENTITY) // sample uses: https://stackoverflow.com/q/3136338
 
 
 //
-//  /free: native [
+//  free: native [
 //
 //  "Releases the underlying data of a value so it can no longer be accessed"
 //
@@ -1096,7 +1096,7 @@ DECLARE_NATIVE(FREE)
 
 
 //
-//  /free?: native [
+//  free?: native [
 //
 //  "Tells if data has been released with FREE"
 //
@@ -1137,7 +1137,7 @@ DECLARE_NATIVE(FREE_Q)
 
 
 //
-//  /aliases?: native [
+//  aliases?: native [
 //
 //  "Return whether or not the underlying data of one value aliases another"
 //
@@ -1155,7 +1155,7 @@ DECLARE_NATIVE(ALIASES_Q)
 
 
 //
-//  /any-value?: native:intrinsic [
+//  any-value?: native:intrinsic [
 //
 //  "Tells you if the argument (taken as meta) is storable in a variable"
 //
@@ -1184,7 +1184,7 @@ DECLARE_NATIVE(ANY_VALUE_Q)
 
 
 //
-//  /non-void-value?: native:intrinsic [
+//  non-void-value?: native:intrinsic [
 //
 //  "If the argument (taken as meta) non void, and storable in a variable"
 //
@@ -1216,7 +1216,7 @@ DECLARE_NATIVE(NON_VOID_VALUE_Q)
 
 
 //
-//  /any-atom?: native:intrinsic [
+//  any-atom?: native:intrinsic [
 //
 //  "Accepts absolutely any argument state (unstable antiforms included)"
 //
@@ -1237,7 +1237,7 @@ DECLARE_NATIVE(ANY_ATOM_Q)
 
 
 //
-//  /nihil?: native:intrinsic [
+//  nihil?: native:intrinsic [
 //
 //  "Tells you if argument is an ~[]~ antiform, e.g. an empty pack"
 //
@@ -1257,7 +1257,7 @@ DECLARE_NATIVE(NIHIL_Q)
 
 
 //
-//  /barrier?: native:intrinsic [
+//  barrier?: native:intrinsic [
 //
 //  "Tells you if argument is a comma antiform (unstable)"
 //
@@ -1278,7 +1278,7 @@ DECLARE_NATIVE(BARRIER_Q)
 
 
 //
-//  /elision?: native:intrinsic [
+//  elision?: native:intrinsic [
 //
 //  "If argument is either nihil or a barrier (empty pack or antiform comma)"
 //
@@ -1298,7 +1298,7 @@ DECLARE_NATIVE(ELISION_Q)
 
 
 //
-//  /void?: native:intrinsic [
+//  void?: native:intrinsic [
 //
 //  "Tells you if argument is void"
 //
@@ -1320,7 +1320,7 @@ DECLARE_NATIVE(VOID_Q)
 
 
 //
-//  /nothing?: native:intrinsic [
+//  nothing?: native:intrinsic [
 //
 //  "Is argument antiform blank (the state used to indicate an unset variable)"
 //
@@ -1351,7 +1351,7 @@ DECLARE_NATIVE(NOTHING_Q)
 
 
 //
-//  /noop: native [  ; native:intrinsic currently needs at least 1 argument
+//  noop: native [  ; native:intrinsic currently needs at least 1 argument
 //
 //  "Has no effect, besides returning antiform BLANK! (aka NOTHING)"
 //
@@ -1371,7 +1371,7 @@ DECLARE_NATIVE(NOOP)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
 
 
 //
-//  /something?: native:intrinsic [
+//  something?: native:intrinsic [
 //
 //  "Tells you if the argument is not antiform blank (e.g. not nothing)"
 //
@@ -1400,7 +1400,7 @@ DECLARE_NATIVE(SOMETHING_Q)
 
 
 //
-//  /trash?: native:intrinsic [
+//  trash?: native:intrinsic [
 //
 //  "Tells you if argument is a quasiform blank (~)"
 //
@@ -1422,7 +1422,7 @@ DECLARE_NATIVE(TRASH_Q)
 
 
 //
-//  /space?: native:intrinsic [
+//  space?: native:intrinsic [
 //
 //  "Tells you if argument is a space character (#)"
 //
@@ -1444,7 +1444,7 @@ DECLARE_NATIVE(SPACE_Q)
 
 
 //
-//  /heavy: native [
+//  heavy: native [
 //
 //  "Make the heavy form of NULL or VOID (passes through all other values)"
 //
@@ -1468,7 +1468,7 @@ DECLARE_NATIVE(HEAVY) {
 
 
 //
-//  /light: native [
+//  light: native [
 //
 //  "Make the light form of NULL or VOID (passes through all other values)"
 //
@@ -1501,7 +1501,7 @@ DECLARE_NATIVE(LIGHT) {
 
 
 //
-//  /decay: native:intrinsic [
+//  decay: native:intrinsic [
 //
 //  "Handle unstable isotopes like assignments do, pass through other values"
 //
@@ -1530,7 +1530,7 @@ DECLARE_NATIVE(DECAY)
 
 
 //
-//  /reify: native:intrinsic [
+//  reify: native:intrinsic [
 //
 //  "Make antiforms into their quasiforms, quote all other values"
 //
@@ -1561,7 +1561,7 @@ DECLARE_NATIVE(REIFY)
 
 
 //
-//  /noquasi: native:intrinsic [
+//  noquasi: native:intrinsic [
 //
 //  "Make quasiforms into their plain forms, pass through all other elements"
 //
@@ -1584,7 +1584,7 @@ DECLARE_NATIVE(NOQUASI)
 
 
 //
-//  /degrade: native [
+//  degrade: native [
 //
 //  "Make quasiforms into their antiforms, pass thru other values"
 //
@@ -1611,7 +1611,7 @@ DECLARE_NATIVE(DEGRADE)
 
 
 //
-//  /noantiform: native:intrinsic [
+//  noantiform: native:intrinsic [
 //
 //  "Turn antiforms into their plain forms, pass thru other values"
 //

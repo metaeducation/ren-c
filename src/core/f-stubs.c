@@ -548,7 +548,7 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
 
 
 //
-//  /setify: native [
+//  setify: native [
 //
 //  "If possible, convert a value to a SET-XXX! representation"
 //
@@ -582,7 +582,7 @@ Element* Getify(Element* out) {  // called on stack values; can't call eval
 
 
 //
-//  /getify: native [
+//  getify: native [
 //
 //  "If possible, convert a value to a GET-XXX! representation"
 //
@@ -633,7 +633,7 @@ Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
 
 
 //
-//  /metafy: native [
+//  metafy: native [
 //
 //  "If possible, convert a value to a META-XXX! representation"
 //
@@ -682,7 +682,7 @@ Value* Theify(Value* out) {  // called on stack values; can't call evaluator
 
 
 //
-//  /inert: native [
+//  inert: native [
 //
 //  "If possible, convert a value to a THE-XXX! representation"
 //
@@ -729,7 +729,7 @@ Element* Plainify(Element* e) {
 
 
 //
-//  /plain: native [
+//  plain: native [
 //
 //  "Convert a value into its plain representation"
 //
@@ -748,7 +748,7 @@ DECLARE_NATIVE(PLAIN)
 
 
 //
-//  /unchain: native [
+//  unchain: native [
 //
 //  "Remove CHAIN!, e.g. leading colon or trailing colon from an element"
 //
@@ -771,7 +771,7 @@ DECLARE_NATIVE(UNCHAIN)
 
 
 //
-//  /unpath: native [
+//  unpath: native [
 //
 //  "Remove PATH!, e.g. leading slash or trailing slash from an element"
 //
@@ -794,7 +794,7 @@ DECLARE_NATIVE(UNPATH)
 
 
 //
-//  /untuple: native [
+//  untuple: native [
 //
 //  "Remove TUPLE!, e.g. leading dot or trailing dot from a tuple"
 //

@@ -27,7 +27,7 @@
 
 
 //
-//  /make: native:generic [
+//  make: native:generic [
 //
 //  "Constructs or allocates the specified datatype"
 //
@@ -72,7 +72,7 @@ Bounce Copy_Quoter_Executor(Level* level_)
 
 
 //
-//  /copy: native:generic [
+//  copy: native:generic [
 //
 //  "Copies a series, object, or other value"
 //
@@ -288,7 +288,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
 
 //
-//  /to: native:generic [
+//  to: native:generic [
 //
 //  "Converts to a specified datatype, copying any underying data"
 //
@@ -333,7 +333,7 @@ DECLARE_NATIVE(TO)
 
 
 //
-//  /as: native:generic [
+//  as: native:generic [
 //
 //  "Aliases underlying data of one value to act as another of same class"
 //

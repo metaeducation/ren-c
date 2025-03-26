@@ -29,7 +29,7 @@
 
 
 //
-//  /as-pair: native [
+//  as-pair: native [
 //
 //  "Combine X and Y values into a pair"
 //

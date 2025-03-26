@@ -38,7 +38,7 @@ REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  /open?: native:generic [
+//  open?: native:generic [
 //
 //  "Test if a port is open (or other type?)"
 //

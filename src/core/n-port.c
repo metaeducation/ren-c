@@ -26,7 +26,7 @@
 
 
 //
-//  /create: native:generic [
+//  create: native:generic [
 //
 //  "Send port a create request"
 //
@@ -42,7 +42,7 @@ DECLARE_NATIVE(CREATE)
 
 
 //
-//  /delete: native:generic [
+//  delete: native:generic [
 //
 //  "Send port a delete request"
 //
@@ -58,7 +58,7 @@ DECLARE_NATIVE(DELETE)
 
 
 //
-//  /open: native:generic [
+//  open: native:generic [
 //
 //  "Opens a port; makes a new port from a specification if necessary"
 //
@@ -77,7 +77,7 @@ DECLARE_NATIVE(OPEN)
 
 
 //
-//  /connect: native:generic [
+//  connect: native:generic [
 //
 //  "Connects a port (used to be 'second open step')"
 //
@@ -93,7 +93,7 @@ DECLARE_NATIVE(CONNECT)
 
 
 //
-//  /close: native:generic [
+//  close: native:generic [
 //
 //  "Closes a port"  ; !!! Used to also close LIBRARY!
 //
@@ -109,7 +109,7 @@ DECLARE_NATIVE(CLOSE)
 
 
 //
-//  /read: native:generic [
+//  read: native:generic [
 //
 //  "Read from a file, URL, or other port"
 //
@@ -138,7 +138,7 @@ DECLARE_NATIVE(READ)
 
 
 //
-//  /write: native:generic [
+//  write: native:generic [
 //
 //  "Writes to a file, URL, or port - auto-converts text strings"
 //
@@ -162,7 +162,7 @@ DECLARE_NATIVE(WRITE)
 
 
 //
-//  /query: native:generic [
+//  query: native:generic [
 //
 //  "Returns information about a port, file, or URL"
 //
@@ -178,7 +178,7 @@ DECLARE_NATIVE(QUERY)
 
 
 //
-//  /modify: native:generic [
+//  modify: native:generic [
 //
 //  "Change mode or control for port or file"
 //
@@ -197,7 +197,7 @@ DECLARE_NATIVE(MODIFY)
 
 
 //
-//  /rename: native:generic [
+//  rename: native:generic [
 //
 //  "Rename a file"
 //

@@ -26,7 +26,7 @@
 
 
 //
-//  /halt: native [
+//  halt: native [
 //
 //  "Stops evaluation and returns to the input prompt"
 //
@@ -42,7 +42,7 @@ DECLARE_NATIVE(HALT)
 
 
 //
-//  /exit: native [
+//  exit: native [
 //
 //  "Stop the interpreter, return exit status"
 //
@@ -66,7 +66,7 @@ DECLARE_NATIVE(EXIT)  // moved to SYS.UTIL/EXIT by boot code, for safety
 
 
 //
-//  /recycle: native [
+//  recycle: native [
 //
 //  "Recycles unused memory"
 //
@@ -152,7 +152,7 @@ DECLARE_NATIVE(RECYCLE)
 
 
 //
-//  /limit-usage: native [
+//  limit-usage: native [
 //
 //  "Set a usage limit only once (used for SECURE)"
 //
@@ -185,7 +185,7 @@ DECLARE_NATIVE(LIMIT_USAGE)
 
 
 //
-//  /check: native [
+//  check: native [
 //
 //  "Run integrity check on value in RUNTIME_CHECKS builds of the interpreter"
 //
@@ -258,7 +258,7 @@ int ceil_log2(unsigned long long x) {
 
 
 //
-//  /c-debug-tick: native [
+//  c-debug-tick: native [
 //
 //  "Get the evaluator tick count (currently only available in checked builds)"
 //
@@ -278,7 +278,7 @@ DECLARE_NATIVE(C_DEBUG_TICK)
 
 
 //
-//  /c-debug-break: native [
+//  c-debug-break: native [
 //
 //  "Break at next evaluation point (only use when running under C debugger)"
 //
