@@ -294,7 +294,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
 {
     INCLUDE_PARAMS_OF_ANTIFORM_Q;
 
-    Heart heart;
+    Option(Heart) heart;
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
@@ -605,7 +605,7 @@ DECLARE_NATIVE(LAZY_Q)
 {
     INCLUDE_PARAMS_OF_LAZY_Q;
 
-    Heart heart;
+    Option(Heart) heart;
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
@@ -626,7 +626,7 @@ DECLARE_NATIVE(PACK_Q)
 {
     INCLUDE_PARAMS_OF_PACK_Q;
 
-    Heart heart;
+    Option(Heart) heart;
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 

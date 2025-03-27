@@ -96,7 +96,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_INTEGER);
+    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_INTEGER);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -337,9 +337,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             REBDEC dec = Round_Dec(
                 cast(REBDEC, num), level_, VAL_DECIMAL(to)
             );
+            Heart to_heart = Heart_Of_Builtin_Fundamental(to);
             Reset_Cell_Header_Noquote(
                 TRACK(OUT),
-                FLAG_HEART_BYTE(Heart_Of_Fundamental(to)) | CELL_MASK_NO_NODES
+                FLAG_HEART_BYTE(to_heart) | CELL_MASK_NO_NODES
             );
             VAL_DECIMAL(OUT) = dec;
             return OUT;
@@ -363,7 +364,7 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
     INCLUDE_PARAMS_OF_TO;
 
     Element* val = Element_ARG(ELEMENT);
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_Utf8_Type(to) and not Any_Word_Type(to)) {
         DECLARE_MOLDER (mo);

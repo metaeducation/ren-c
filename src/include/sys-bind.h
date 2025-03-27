@@ -57,7 +57,7 @@ INLINE Element* Derelativize_Untracked(
     Copy_Cell_Header(out, v);
     out->payload = v->payload;
 
-    Heart heart = Cell_Heart_Unchecked(v);
+    Option(Heart) heart = Cell_Heart_Unchecked(v);
 
     if (
         not context  // should bindings always be left as-is in this case?
@@ -69,7 +69,7 @@ INLINE Element* Derelativize_Untracked(
 
     Context* binding = Cell_Binding(v);
 
-    if (Bindable_Heart_Is_Any_Word(heart)) {  // any-word?
+    if (Bindable_Heart_Is_Any_Word(unwrap heart)) {
       any_wordlike:
         if (
             binding
@@ -89,7 +89,7 @@ INLINE Element* Derelativize_Untracked(
             }
         }
     }
-    else if (Bindable_Heart_Is_Any_List(heart)) {  // any-block? or any-group?
+    else if (Bindable_Heart_Is_Any_List(unwrap heart)) {
       any_listlike:
         if (binding) {  // currently not overriding (review: hole punch)
             assert(not Is_Stub_Details(binding));  // shouldn't be relativized

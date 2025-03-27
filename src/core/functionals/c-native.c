@@ -266,9 +266,13 @@ bool Try_Dispatch_Generic_Core(
     Sink(Bounce) bounce,
     SymId symid,
     GenericTable* table,
-    Heart heart,  // no quoted/quasi/anti [1]
+    const Value* datatype,  // no quoted/quasi/anti [1]
     Level* const L
 ){
+    Option(Heart) heart = Cell_Datatype_Builtin_Heart(datatype);
+    if (not heart)
+        fail ("No support for dispatching extension generics yet");
+
     if (heart == TYPE_PORT and symid != SYM_OLDGENERIC) {  // !!! Legacy [2]
         switch (symid) {  // exempt port's IMPLEMENT_GENERIC() cases
           case SYM_MAKE:
@@ -284,11 +288,14 @@ bool Try_Dispatch_Generic_Core(
         }
     }
 
-    Dispatcher* dispatcher = maybe Try_Get_Generic_Dispatcher(table, heart);
+    Option(Dispatcher*) dispatcher = Get_Generic_Dispatcher(
+        table,
+        datatype
+    );
     if (not dispatcher)
         return false;  // not handled--some clients want to try more things
 
-    *bounce = (*dispatcher)(L);
+    *bounce = (*(unwrap dispatcher))(L);
     return true;  // handled, even if it threw
 }
 

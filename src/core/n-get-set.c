@@ -877,7 +877,7 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_ATOM (temp);  // target might be same as out (e.g. spare)
 
-    Heart var_heart = Heart_Of(var);
+    Heart var_heart = Heart_Of_Builtin(var);
 
     if (Any_Word_Type(var_heart)) {
 

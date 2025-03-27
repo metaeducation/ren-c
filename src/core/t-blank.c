@@ -97,28 +97,30 @@ IMPLEMENT_GENERIC(TO, Is_Blank)
 {
     INCLUDE_PARAMS_OF_TO;
 
+    assert(Is_Blank(ARG(ELEMENT)));
     UNUSED(ARG(ELEMENT));
-    Heart as = Cell_Datatype_Heart(ARG(TYPE));
 
-    if (Any_List_Type(as))
-        return Init_Any_List(OUT, as, Make_Source(0));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_String_Type(as))
-        return Init_Any_String(OUT, as, Make_String(0));
+    if (Any_List_Type(to))
+        return Init_Any_List(OUT, to, Make_Source(0));
 
-    if (Any_Word_Type(as))
+    if (Any_String_Type(to))
+        return Init_Any_String(OUT, to, Make_String(0));
+
+    if (Any_Word_Type(to))
         return UNHANDLED;
 
-    if (as == TYPE_ISSUE) {
+    if (to == TYPE_ISSUE) {
         bool check = Try_Init_Small_Utf8(
-            OUT, as, cast(Utf8(const*), ""), 0, 0
+            OUT, to, cast(Utf8(const*), ""), 0, 0
         );
         assert(check);
         UNUSED(check);
         return OUT;
     }
 
-    if (as == TYPE_BLOB)
+    if (to == TYPE_BLOB)
         return Init_Blob(OUT, Make_Binary(0));
 
     return UNHANDLED;
@@ -133,12 +135,8 @@ IMPLEMENT_GENERIC(TO, Is_Blank)
 //
 Option(Error*) Trap_Alias_Blank_As(
     Sink(Element) out,  // unlike TO BLANK!, AS BLANK! result will be immutable
-    const Element* blank,
     Heart as
 ){
-    assert(Is_Blank(blank));
-    UNUSED(blank);
-
     if (Any_List_Type(as)) {
         Init_Any_List(out, as, Cell_Array(g_empty_block));
         return nullptr;
@@ -171,11 +169,12 @@ IMPLEMENT_GENERIC(AS, Is_Blank)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Option(Error*) e = Trap_Alias_Blank_As(
-        OUT,
-        Element_ARG(ELEMENT),  // note: not used, just asserts that it's blank
-        Cell_Datatype_Heart(ARG(TYPE))
-    );
+    assert(Is_Blank(ARG(ELEMENT)));
+    UNUSED(ARG(ELEMENT));
+
+    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+
+    Option(Error*) e = Trap_Alias_Blank_As(OUT, as);
     if (e)
         return FAIL(unwrap e);
 

@@ -115,7 +115,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 ){
     assert(Any_Sequence_Type(sequence_heart));
 
-    Heart h = Heart_Of(e);
+    Option(Heart) h = Heart_Of(e);
 
     if (is_head) {
         if (
@@ -223,7 +223,9 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     if (Any_List(e)) {  // try mirror optimization
         assert(Is_Group(e) or Is_Block(e));  // only valid kinds
         const Source* a = Cell_Array(e);
-        if (not Mirror_Of(a) or Mirror_Of(a) == Heart_Of(e)) {
+        Option(Heart) mirror = Mirror_Of(a);
+        Option(Heart) h = Heart_Of(e);
+        if (not mirror or ((unwrap mirror) == (unwrap h))) {
             MIRROR_BYTE(a) = HEART_BYTE(e);  // remember what kind it is
             HEART_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;
@@ -566,20 +568,25 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
         if (not sigil)  // just wanted a plain pa/th or tu.p.le
             return nullptr;  // let the item just decay to itself as-is
 
-        if (not Any_Plain_Value(out))
-            return Error_Cant_Decorate_Type_Raw(out);
+        Option(Heart) heart = Heart_Of_Fundamental(out);
 
-        if (
-            not Is_Word(out)
-            and not Is_Block(out)
-            and not Is_Group(out)
-            and not Is_Block(out)
-            and not Is_Tuple(out)
-        ){
+        switch (heart) {  // Should there be Any_Decorable()? Any_Sigilable?
+          case TYPE_WORD:
+          case TYPE_TUPLE:
+          case TYPE_CHAIN:
+          case TYPE_PATH:
+          case TYPE_BLOCK:
+          case TYPE_GROUP:
+          case TYPE_FENCE:
+            break;
+
+          default:
             return Error_Cant_Decorate_Type_Raw(out);
         }
 
-        HEART_BYTE(out) = Sigilize_Any_Plain_Heart(sigil, Heart_Of(out));
+        HEART_BYTE(out) = Sigilize_Any_Plain_Heart(
+            sigil, unwrap heart
+        );
         return nullptr;  // pathness or tupleness vanished, just the value
     }
 
@@ -817,10 +824,10 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         const Pairing* p = u_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(c));
 
         if (Is_Blank(Pairing_First(p)))
-            return Leading_Blank_And(Heart_Of(Pairing_Second(p)));
+            return Leading_Blank_And(Heart_Of_Builtin(Pairing_Second(p)));
 
         if (Is_Blank(Pairing_Second(p)))
-            return Trailing_Blank_And(Heart_Of(Pairing_First(p)));
+            return Trailing_Blank_And(Heart_Of_Builtin(Pairing_First(p)));
 
         return NOT_SINGLEHEART_0;
     }

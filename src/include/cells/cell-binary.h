@@ -66,7 +66,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     const Cell* c,
     Option(const Length*) limit_in
 ){
-    Heart heart = Heart_Of(c);
+    Option(Heart) heart = Heart_Of(c);
     assert(Any_Bytes_Type(heart));
 
     Length len_at;

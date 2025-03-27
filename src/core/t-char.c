@@ -246,7 +246,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
+    Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_Utf8_Type(heart));
 
     Element* arg = Element_ARG(DEF);
@@ -665,7 +665,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(ELEMENT);  // issue, email, etc.
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
     possibly(Any_Word(v));  // delegates some cases
 
     if (Any_String_Type(to)) {  // always need mutable new copy of data
@@ -938,11 +938,10 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Option(Error*) e = Trap_Alias_Any_Utf8_As(
-        OUT,
-        Element_ARG(ELEMENT),
-        Cell_Datatype_Heart(ARG(TYPE))
-    );
+    Element* any_utf8 = Element_ARG(ELEMENT);
+    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+
+    Option(Error*) e = Trap_Alias_Any_Utf8_As(OUT, any_utf8, as);
     if (e)
         return FAIL(unwrap e);
 

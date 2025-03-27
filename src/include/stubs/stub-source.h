@@ -83,7 +83,7 @@
         MIRROR_BYTE_RAW(ensure(const Source*, (source)))
 
     #define Mirror_Of(source) \
-      u_cast(Option(Heart), MIRROR_BYTE(source))
+      u_cast(Option(Heart), u_cast(HeartEnum, MIRROR_BYTE(source)))
 #else
     struct MirrorHolder {
         Source* & ref;

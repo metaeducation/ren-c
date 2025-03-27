@@ -1377,7 +1377,7 @@ Bounce Stepper_Executor(Level* L)
             if (Is_Quoted(check))
                 return FAIL("QUOTED? not currently permitted in SET-BLOCK!s");
 
-            Heart heart = Heart_Of(check);
+            Option(Heart) heart = Heart_Of(check);
 
             bool circle_this;
 
@@ -1547,7 +1547,7 @@ Bounce Stepper_Executor(Level* L)
             Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
 
             assert(QUOTE_BYTE(var) == NOQUOTE_1 or Is_Trash(var));
-            Heart var_heart = Heart_Of(var);
+            Heart var_heart = Heart_Of_Builtin(var);
 
             if (pack_meta_at == pack_meta_tail) {
                 if (not is_optional)

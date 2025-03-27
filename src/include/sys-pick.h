@@ -30,13 +30,13 @@
 //
 #define Dispatch_Generic(name,cue,L) \
     Dispatch_Generic_Core( \
-        SYM_##name, g_generic_##name, Heart_Of_Fundamental(cue), (L) \
+        SYM_##name, g_generic_##name, Datatype_Of_Fundamental(cue), (L) \
     )
 
 #define Try_Dispatch_Generic(bounce,name,cue,L) \
     Try_Dispatch_Generic_Core( \
         bounce, SYM_##name, g_generic_##name, \
-        Heart_Of_Fundamental(cue), (L) \
+        Datatype_Of_Fundamental(cue), (L) \
     )
 
 // Generic Dispatch if you just want it to fail if there's no handler.
@@ -51,7 +51,7 @@
 INLINE Bounce Dispatch_Generic_Core(
     SymId symid,
     GenericTable* table,
-    Heart heart,  // no quoted/quasi/anti [1]
+    const Value* datatype,  // no quoted/quasi/anti [1]
     Level* level_
 ){
     Bounce bounce;
@@ -59,7 +59,7 @@ INLINE Bounce Dispatch_Generic_Core(
         &bounce,
         symid,
         table,
-        heart,
+        datatype,
         level_
     )){
         return bounce;
@@ -70,17 +70,13 @@ INLINE Bounce Dispatch_Generic_Core(
 
     return Native_Fail_Result(  // can't use FAIL() macro in %sys-core.h [1]
         level_, Derive_Error_From_Pointer(
-            Error_Cannot_Use_Raw(name, Datatype_From_Type(heart))
+            Error_Cannot_Use_Raw(name, datatype)
         )
     );
 }
 
 
-#define Handles_Generic(name, type) \
-    (did Try_Get_Generic_Dispatcher(g_generic_##name, type))
-
-
-INLINE Option(Dispatcher*) Try_Get_Generic_Dispatcher(
+INLINE Option(Dispatcher*) Get_Builtin_Generic_Dispatcher(
     const GenericTable* table,
     Heart heart
 ){
@@ -90,6 +86,27 @@ INLINE Option(Dispatcher*) Try_Get_Generic_Dispatcher(
     }
     return nullptr;
 }
+
+#define Handles_Builtin_Generic(name,heart) \
+    (did Get_Builtin_Generic_Dispatcher(g_generic_##name, heart))
+
+
+INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
+    const GenericTable* table,
+    const Value* datatype
+){
+    Option(Heart) heart = Cell_Datatype_Builtin_Heart(datatype);
+    if (not heart)
+        fail ("Generic dispatch not supported for extension types yet");
+
+    return Get_Builtin_Generic_Dispatcher(table, unwrap heart);
+}
+
+#define Handles_Generic(name,datatype) \
+    (did Get_Generic_Dispatcher(g_generic_##name, datatype))
+
+
+
 
 
 // If you pass in a nullptr for the steps in the Get_Var() and Set_Var()

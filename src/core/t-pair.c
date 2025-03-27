@@ -82,7 +82,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_PAIR);
+    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_PAIR);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -250,7 +250,7 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(ELEMENT);
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_List_Type(to)) {
         Source* a = Make_Source_Managed(2);

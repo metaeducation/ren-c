@@ -46,8 +46,8 @@
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
 // indicators in the quote byte do not affect it.
 
-#define Is_Extra_Mark_Heart(heart) \
-    ((heart) >= TYPE_VARARGS)
+INLINE bool Is_Extra_Mark_Heart(Option(Heart) heart)
+  { return (maybe heart) >= TYPE_VARARGS; }
 
 #define Cell_Extra_Needs_Mark(cell) \
     Is_Extra_Mark_Heart(HEART_BYTE(cell))  // readable checked elsewhere
@@ -66,8 +66,8 @@
 //    comparison.  Is_Bindable() was the historical name of the function
 //    and reads a bit beter than Any_Bindable().
 
-INLINE bool Is_Bindable_Heart(Heart h)
-  { return h >= TYPE_WORD; }
+INLINE bool Is_Bindable_Heart(Option(Heart) h)
+  { return (maybe h) >= TYPE_WORD; }
 
 #undef Any_Bindable  // use Is_Bindable(), faster than a range check [1]
 
@@ -129,8 +129,8 @@ INLINE Heart Plainify_Any_Var_Heart(Heart h) {
 }
 
 
-INLINE bool Any_Sequence_Or_List_Type(Heart h)  // !!! optimize?
+INLINE bool Any_Sequence_Or_List_Type(Option(Heart) h)  // !!! optimize?
   { return Any_Sequence_Type(h) or Any_List_Type(h); }
 
-INLINE bool Any_Bytes_Type(Heart h)
+INLINE bool Any_Bytes_Type(Option(Heart) h)
   { return Any_Utf8_Type(h) or h == TYPE_BLOB; }

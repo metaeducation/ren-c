@@ -465,14 +465,32 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 #endif
 
 #define Cell_Heart_Unchecked(c) \
-    u_cast(Heart, HEART_BYTE_RAW(c))
+    u_cast(Option(Heart), u_cast(HeartEnum, HEART_BYTE_RAW(c)))
 
 #define Heart_Of(c) \
     Cell_Heart_Unchecked(Ensure_Readable(c))
 
-INLINE Heart Heart_Of_Fundamental(const Cell* c) {
+INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
     assert(QUOTE_BYTE(c) == NOQUOTE_1);
     return Cell_Heart_Unchecked(c);
+}
+
+INLINE Heart Heart_Of_Builtin(const Cell* c) {
+    assert(HEART_BYTE(c) != TYPE_0);
+    return u_cast(HeartEnum, HEART_BYTE_RAW(c));
+}
+
+INLINE Heart Heart_Of_Builtin_Fundamental(const Cell* c) {
+    assert(QUOTE_BYTE(c) == NOQUOTE_1);
+    assert(HEART_BYTE(c) != TYPE_0);
+    return u_cast(HeartEnum, HEART_BYTE_RAW(c));
+}
+
+#define Heart_Of_Is_0(cell) \
+    (0 == HEART_BYTE_RAW(Ensure_Readable(cell)))
+
+INLINE bool Type_Of_Is_0(const Cell* cell) {
+    return Heart_Of_Is_0(cell) and QUOTE_BYTE(cell) == NOQUOTE_1;
 }
 
 
@@ -484,12 +502,12 @@ INLINE Heart Heart_Of_Fundamental(const Cell* c) {
 // (Instead of Type_Of(), use Heart_Of() if you wish to know that the cell
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 
-INLINE Type Type_Of_Unchecked(const Atom* atom) {
+INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
     switch (QUOTE_BYTE(atom)) {
       case ANTIFORM_0_COERCE_ONLY:  // use this constant rarely!
         return u_cast(TypeEnum, HEART_BYTE(atom) + MAX_TYPE_BYTE_ELEMENT);
 
-      case NOQUOTE_1:
+      case NOQUOTE_1:  // heart might be TYPE_0 to be extension type
         return u_cast(HeartEnum, HEART_BYTE(atom));
 
       case QUASIFORM_2_COERCE_ONLY:  // use this constant rarely!

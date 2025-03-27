@@ -336,7 +336,7 @@ void Remove_Any_Series_Len(Value* v, REBLEN index, REBINT len)
         DECLARE_VALUE (temp);
         Init_Series_At(
             temp,
-            Heart_Of_Fundamental(v),
+            Heart_Of_Builtin_Fundamental(v),
             Cell_Flex(v),
             index
         );

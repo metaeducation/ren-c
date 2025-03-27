@@ -46,7 +46,11 @@ DECLARE_NATIVE(TYPE_OF)
     if (Is_Nulled(v))
         return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
 
-    return Init_Builtin_Datatype(OUT, Type_Of(v));
+    Option(Type) type = Type_Of(v);
+    if (type)
+        return Init_Builtin_Datatype(OUT, unwrap type);
+
+    return FAIL("TYPE OF not supported for extension types...yet!");
 }
 
 
@@ -64,7 +68,11 @@ DECLARE_NATIVE(HEART_OF)
 {
     INCLUDE_PARAMS_OF_HEART_OF;
 
-    return Init_Builtin_Datatype(OUT, Heart_Of(ARG(ELEMENT)));
+    Option(Heart) heart = Heart_Of(ARG(ELEMENT));
+    if (heart)
+        return Init_Builtin_Datatype(OUT, unwrap heart);
+
+    return FAIL("HEART OF not supported for extension types...yet!");
 }
 
 

@@ -84,33 +84,41 @@ INLINE Type Type_From_Symbol_Id(SymId id) {
 }
 
 INLINE SymId Symbol_Id_From_Type(Type type) {
-    assert(type != TYPE_0);
+    assert(type != HEART_ENUM(0));
     return cast(SymId, u_cast(SymId16, u_cast(Byte, type)));
 }
 
 
-INLINE SymId Cell_Datatype_Id(const Atom* v) {
+INLINE Option(SymId) Cell_Datatype_Id(const Atom* v) {
     assert(Type_Of(v) == TYPE_DATATYPE);
     if (Cell_Series_Len_At(v) != 1)
         fail ("Type blocks only allowed one element for now");
     const Element* item = Cell_List_At(nullptr, v);
     if (not Is_Word(item))
         fail ("Type blocks only allowed WORD! items for now");
-    Option(SymId) id = Cell_Word_Id(item);
-    if (not id or not Is_Symbol_Id_For_A_Type(unwrap id))
-        fail ("Type blocks only allowed builtin types for now");
-    return unwrap id;
+    return Cell_Word_Id(item);
 }
 
-INLINE Type Cell_Datatype_Type(const Atom* v) {
-    SymId id = Cell_Datatype_Id(v);
-    return u_cast(TypeEnum, unwrap id);
+INLINE Option(Type) Cell_Datatype_Type(const Atom* v) {
+    Option(SymId) id = Cell_Datatype_Id(v);
+    if (id and (unwrap id) <= MAX_TYPE_BYTE)
+        return cast(TypeEnum, unwrap id);
+    return TYPE_0;
 }
 
-INLINE Heart Cell_Datatype_Heart(const Atom* v) {
-    SymId id = Cell_Datatype_Id(v);
-    assert(id <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
-    return u_cast(Heart, id);
+INLINE Option(Heart) Cell_Datatype_Heart(const Atom* v) {
+    Option(SymId) id = Cell_Datatype_Id(v);
+    if (not id)
+        return TYPE_0;
+
+    assert((unwrap id) <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
+    return u_cast(HeartEnum, unwrap id);
+}
+
+INLINE Heart Cell_Datatype_Builtin_Heart(const Atom* v) {
+    Option(SymId) id = Cell_Datatype_Id(v);
+    assert(id and (unwrap id) <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
+    return u_cast(HeartEnum, unwrap id);
 }
 
 // Ren-C uses TYPE-BLOCK! with WORD! for built in datatypes
@@ -135,7 +143,14 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
 // Used by the Typechecker intrinsic, but also Generic dispatch and PARAMETER!
 // typechecking optimization.
 //
-INLINE bool Builtin_Typeset_Check(TypesetByte typeset_byte, Type type) {
+// 1. This routine as only acceps builtin types.  This means checkers like
+//    ANY-ELEMENT? which need to answer true for extension types can't be
+//    auto-generated from the range checks, but written as intrinsic natives.
+//
+INLINE bool Builtin_Typeset_Check(
+    TypesetByte typeset_byte,
+    Type type  // not Option(Type), can't call this with extension types [1]
+){
     TypesetFlags typeset = g_typesets[typeset_byte];
 
     if (typeset & TYPESET_FLAG_0_RANGE) {  // trivial ranges ok (one datatype)

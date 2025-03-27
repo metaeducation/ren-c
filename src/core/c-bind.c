@@ -984,7 +984,7 @@ void Clonify_And_Bind_Relative(
 ){
     assert(flags & NODE_FLAG_MANAGED);
 
-    Heart heart = Cell_Heart_Unchecked(v);
+    Option(Heart) heart = Cell_Heart_Unchecked(v);
 
     if (
         relative
@@ -1394,7 +1394,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
 //
 void Assert_Cell_Binding_Valid_Core(const Cell* cell)
 {
-    Heart heart = Cell_Heart_Unchecked(cell);
+    Option(Heart) heart = Cell_Heart_Unchecked(cell);
     assert(Is_Bindable_Heart(heart));
 
     Context* binding = u_cast(Context*, cell->extra.node);

@@ -302,7 +302,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
+    Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_String_Type(heart) or Any_Utf8_Type(heart));  // issue calls [1]
 
     Element* def = Element_ARG(DEF);
@@ -662,7 +662,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 
     String* buf = mo->string;
 
-    Heart heart = Heart_Of(v);
+    Heart heart = Heart_Of_Builtin_Fundamental(v);
     assert(Any_Utf8_Type(heart));
 
     if (form) {  // TAG! is not an exception--forms without delimiters [1]
@@ -1003,11 +1003,10 @@ IMPLEMENT_GENERIC(AS, Any_String)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Option(Error*) e = Trap_Any_String_As(
-        OUT,
-        Element_ARG(ELEMENT),
-        Cell_Datatype_Heart(ARG(TYPE))
-    );
+    Element* any_string = Element_ARG(ELEMENT);
+    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+
+    Option(Error*) e = Trap_Any_String_As(OUT, any_string, as);
     if (e)
         return FAIL(unwrap e);
 
@@ -1027,7 +1026,7 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 
     return Init_Any_String(
         OUT,
-        Heart_Of_Fundamental(any_string),
+        Heart_Of_Builtin_Fundamental(any_string),
         Copy_String_At_Limit(any_string, &len)
     );
 }
@@ -1097,7 +1096,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     if (Bool_ARG(PART)) {
         len = Part_Len_May_Modify_Index(v, ARG(PART));
         if (len == 0) {
-            Heart heart = Heart_Of_Fundamental(v);
+            Heart heart = Heart_Of_Builtin_Fundamental(v);
             return Init_Any_String(OUT, heart, Make_String(0));
         }
     } else
@@ -1119,14 +1118,14 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     if (VAL_INDEX(v) >= tail) {
         if (not Bool_ARG(PART))
             return RAISE(Error_Nothing_To_Take_Raw());
-        Heart heart = Heart_Of_Fundamental(v);
+        Heart heart = Heart_Of_Builtin_Fundamental(v);
         return Init_Any_String(OUT, heart, Make_String(0));
     }
 
     // if no :PART, just return value, else return string
     //
     if (Bool_ARG(PART)) {
-        Heart heart = Heart_Of_Fundamental(v);
+        Heart heart = Heart_Of_Builtin_Fundamental(v);
         Init_Any_String(OUT, heart, Copy_String_At_Limit(v, &len));
     }
     else

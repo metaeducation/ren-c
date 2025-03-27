@@ -317,7 +317,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
     INCLUDE_PARAMS_OF_MOLDIFY;
 
     Element* v = Element_ARG(ELEMENT);
-    Heart heart = Heart_Of_Fundamental(v);
+    Heart heart = Heart_Of_Builtin_Fundamental(v);
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
@@ -352,7 +352,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 
     Value* arg;
     REBDEC  d2;
-    Heart heart;
+    Heart heart;  // heart of ARG guaranteed to be integer, decimal, or percent
+    // (this invariant hasn't been taken advantage of yet, but will be when
+    // this is converted to sane new generic code)
 
     // !!! This used to use IS_BINARY_ACT() which is no longer available with
     // symbol-based dispatch.  Consider doing this another way.
@@ -366,9 +368,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
     ){
         arg = ARG_N(2);
         if (QUOTE_BYTE(arg) != NOQUOTE_1)
-            return FAIL(Error_Math_Args(Type_Of(arg), verb));
+            return FAIL(Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
-        heart = Heart_Of(arg);
+        heart = Heart_Of_Builtin_Fundamental(arg);
         if ((
             heart == TYPE_PAIR
             or heart == TYPE_TUPLE
@@ -398,7 +400,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 if (id == SYM_DIVIDE)
                     heart = TYPE_DECIMAL;
                 else if (not Is_Percent(val))
-                    heart = Heart_Of_Fundamental(val);
+                    heart = Heart_Of_Builtin_Fundamental(val);
             }
             else if (heart == TYPE_MONEY) {
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
@@ -410,7 +412,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
             }
             else {
                 d2 = cast(REBDEC, VAL_INT64(arg));
-                heart = Heart_Of(val);  // 10% * 2 => 20%
+                heart = Heart_Of_Builtin_Fundamental(val);  // 10% * 2 => 20%
             }
 
             switch (id) {
@@ -450,13 +452,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 return Init_Decimal_Or_Percent(OUT, heart, d1);
 
             default:
-                return FAIL(Error_Math_Args(Type_Of(val), verb));
+                return FAIL(Error_Not_Related_Raw(verb, Datatype_Of(val)));
             }
         }
-        return FAIL(Error_Math_Args(Type_Of(val), verb));
+        return FAIL(Error_Not_Related_Raw(verb, Datatype_Of(val)));
     }
 
-    heart = Heart_Of_Fundamental(val);
+    heart = Heart_Of_Builtin_Fundamental(val);
 
     // unary actions
     switch (id) {
@@ -531,7 +533,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
     INCLUDE_PARAMS_OF_TO;
 
     Element* val = Element_ARG(ELEMENT);
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     REBDEC d = VAL_DECIMAL(val);
 
@@ -588,7 +590,7 @@ IMPLEMENT_GENERIC(RANDOM, Any_Float)
     INCLUDE_PARAMS_OF_RANDOM;
 
     const Element* val = Element_ARG(MAX);
-    Heart heart = Heart_Of_Fundamental(val);
+    Heart heart = Heart_Of_Builtin_Fundamental(val);
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     REBDEC d = VAL_DECIMAL(val);
@@ -604,7 +606,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Float)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Heart heart = Heart_Of_Fundamental(ARG(VALUE1));
+    Heart heart = Heart_Of_Builtin_Fundamental(ARG(VALUE1));
     REBDEC d1 = VAL_DECIMAL(ARG(VALUE1));
 
     Value* v2 = ARG(VALUE2);

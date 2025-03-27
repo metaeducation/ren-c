@@ -45,15 +45,20 @@ DECLARE_NATIVE(MAKE)
     Value* type = ARG(TYPE);  // !!! may not be datatype, but parent context
     USED(ARG(DEF));  // delegated to generic
 
-    Heart heart;
+    const Value* datatype;
     if (Is_Datatype(type)) {
-        heart = Cell_Datatype_Heart(type);
+        datatype = type;
     }
     else {
-        heart = Heart_Of_Fundamental(Known_Element(type));
+        datatype = Datatype_Of_Fundamental(type);
     }
 
-    return Dispatch_Generic_Core(SYM_MAKE, GENERIC_TABLE(MAKE), heart, LEVEL);
+    return Dispatch_Generic_Core(
+        SYM_MAKE,
+        GENERIC_TABLE(MAKE),
+        datatype,
+        LEVEL
+    );
 }
 
 
@@ -101,9 +106,13 @@ DECLARE_NATIVE(COPY)
 
     Element* elem = Element_ARG(VALUE);
 
-    GenericTable* table = GENERIC_TABLE(COPY);
-    Heart heart = Heart_Of(elem);
-    Dispatcher* dispatcher = maybe Try_Get_Generic_Dispatcher(table, heart);
+    QuoteByte quote_byte = QUOTE_BYTE(elem);
+    QUOTE_BYTE(elem) = NOQUOTE_1;  // dispatch requires unquoted items
+
+    Option(Dispatcher*) dispatcher = Get_Generic_Dispatcher(
+        GENERIC_TABLE(COPY),
+        Datatype_Of(elem)
+    );
 
     if (not dispatcher) {  // trivial copy, is it good to do so? [1]
         if (Bool_ARG(PART))
@@ -111,14 +120,12 @@ DECLARE_NATIVE(COPY)
 
         UNUSED(Bool_ARG(DEEP));  // historically we ignore it
 
+        QUOTE_BYTE(elem) = quote_byte;  // restore quote byte
         return COPY(elem);
     }
 
-    if (QUOTE_BYTE(elem) == NOQUOTE_1)  // don't have to requote/etc.
-        return (*dispatcher)(LEVEL);
-
-    QuoteByte quote_byte = QUOTE_BYTE(elem);
-    QUOTE_BYTE(elem) = NOQUOTE_1;
+    if (quote_byte == NOQUOTE_1)  // don't have to requote/etc.
+        return (*(unwrap dispatcher))(LEVEL);
 
     Option(const Symbol*) label = Level_Label(level_);
     Option(VarList*) coupling = Level_Coupling(level_);
@@ -161,7 +168,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     assert(to_or_as != TYPE_0);
 
     Element* input = cast(Element*, Level_Spare(L));
-    Heart from = Heart_Of_Fundamental(input);
+    Heart from = Heart_Of_Builtin_Fundamental(input);
 
     Atom* reverse = Level_Scratch(L);
 
@@ -266,7 +273,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
     Option(const Symbol*) label = Level_Label(level_);
 
     Value* datatype = ARG(TYPE);
-    STATE = cast(Byte, Cell_Datatype_Heart(datatype));  // generic may trash it
+    STATE = cast(Byte, Cell_Datatype_Builtin_Heart(datatype));  // might trash
     Copy_Cell(SPARE, ARG(ELEMENT));  // may trash ELEMENT too, save in SPARE
 
     Level* sub = Push_Downshifted_Level(OUT, level_);
@@ -302,12 +309,19 @@ DECLARE_NATIVE(TO)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Type to = Cell_Datatype_Type(ARG(TYPE));
-    if (to > MAX_HEART)
+    Option(Type) to = Cell_Datatype_Type(ARG(TYPE));
+    if (not to)
+        return FAIL("TO doesn't work with extension types");
+    if (unwrap to > MAX_HEART)
         return FAIL("TO can't produce quoted/quasiform/antiform");
 
     if (Is_Datatype(ARG(ELEMENT))) {  // do same coercions as WORD!
-        SymId id = Symbol_Id_From_Type(Cell_Datatype_Type(ARG(ELEMENT)));
+        Value* datatype = ARG(ELEMENT);
+        Option(Type) type = Cell_Datatype_Type(datatype);
+        if (not type)
+            return FAIL("TO doesn't work with extension types");
+
+        SymId id = Symbol_Id_From_Type(unwrap type);
         Init_Word(ARG(ELEMENT), Canon_Symbol(id));
     }
 
@@ -347,8 +361,10 @@ DECLARE_NATIVE(AS)
     INCLUDE_PARAMS_OF_AS;
 
     Element* e = Element_ARG(ELEMENT);
-    Type as = Cell_Datatype_Type(ARG(TYPE));
-    if (as > MAX_HEART)
+    Option(Type) as = Cell_Datatype_Type(ARG(TYPE));
+    if (not as)
+        return FAIL("TO doesn't work with extension types");
+    if ((unwrap as) > MAX_HEART)
         return FAIL("AS can't alias to quoted/quasiform/antiform");
 
   #if NO_RUNTIME_CHECKS

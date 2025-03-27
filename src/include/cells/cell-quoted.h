@@ -180,7 +180,9 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
 #define Is_Antiform_Stable(a) \
     (not Is_Antiform_Unstable(a))
 
-INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
+// !!! Would this be faster as a flag in g_sparse_memberships[]?  Test that.
+//
+INLINE bool Is_Stable_Antiform_Heart(Option(Heart) heart) {
     return (
         heart != TYPE_BLOCK  // Is_Pack()
         and heart != TYPE_ERROR  // Is_Raised()

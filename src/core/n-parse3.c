@@ -115,7 +115,7 @@
 #define P_RULE              At_Level(level_)  // rvalue
 #define P_RULE_BINDING      Level_Binding(level_)
 
-#define P_HEART             Heart_Of_Fundamental(ARG(INPUT))
+#define P_HEART             Heart_Of_Builtin_Fundamental(ARG(INPUT))
 #define P_INPUT             Cell_Flex(ARG(INPUT))
 #define P_INPUT_BINARY      Cell_Binary(ARG(INPUT))
 #define P_INPUT_STRING      Cell_String(ARG(INPUT))
@@ -427,9 +427,10 @@ static const Element* Get_Parse_Value(
         if (Is_Logic(sink) or Is_Splice(sink))
             Quasify_Antiform(sink);
         else if (Is_Datatype(sink)) {  // convert to functions for now
-            Type type = Cell_Datatype_Type(sink);
-            Init_Typechecker(sink, Datatype_From_Type(type));
-            assert(Heart_Of(sink) == TYPE_FRAME);
+            DECLARE_VALUE (checker);
+            Init_Typechecker(checker, sink);
+            assert(Heart_Of(checker) == TYPE_FRAME);
+            Copy_Cell(sink, checker);
             QUOTE_BYTE(sink) = NOQUOTE_1;
         }
         else {
@@ -702,7 +703,7 @@ static REBIXO Parse_One_Rule(
         //
         // The return value may also be more useful.
         //
-        Heart rule_heart = Heart_Of(rule);
+        Option(Heart) rule_heart = Heart_Of(rule);
         if (
             Quotes_Of(rule) == 1  // '<a> will mold to "<a>"
             or (Quotes_Of(rule) == 0 and (
@@ -1034,7 +1035,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             fail ("PARSE3 supports ~void~, ~okay~, and datatype antiforms");
     }
 
-    Type t = Type_Of(rule);
+    Option(Type) t = Type_Of(rule);
     assert(t != TYPE_BLOCK);
 
     if (t == TYPE_WORD and Cell_Word_Id(rule) == SYM_END)
@@ -1143,7 +1144,7 @@ static void Handle_Mark_Rule(
 
     Quotify_Depth(Element_ARG(POSITION), P_NUM_QUOTES);
 
-    Type t = Type_Of(rule);
+    Option(Type) t = Type_Of(rule);
     if (t == TYPE_WORD or Is_Set_Word(rule)) {
         Copy_Cell(Sink_Word_May_Fail(rule, context), ARG(POSITION));
     }
@@ -1177,7 +1178,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    Type t = Type_Of(rule);
+    Option(Type) t = Type_Of(rule);
     if (t == TYPE_WORD or t == TYPE_TUPLE) {
         Get_Var_May_Fail(SPARE, rule, context);
         if (Is_Antiform(SPARE))

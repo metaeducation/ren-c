@@ -280,8 +280,8 @@ for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
 
     e-types/emit newline
     e-types/emit [tr --{
-        INLINE bool Any_${Proper-Name}_Type(Type t)
-          { return u_cast(Byte, t) >= $<TR.START> and u_cast(Byte, t) <= $<TR.END>; }
+        INLINE bool Any_${Proper-Name}_Type(Option(Type) t)
+          { return u_cast(Byte, unwrap t) >= $<TR.START> and u_cast(Byte, unwrap t) <= $<TR.END>; }
 
         #define Any_${Proper-Name}(v) \
             Any_${Proper-Name}_Type(Type_Of(v))
@@ -339,8 +339,8 @@ e-types/emit newline
 for-each [ts-name types] sparse-typesets [
     e-types/emit newline
     e-types/emit [propercase-of ts-name --{
-        INLINE bool Any_${propercase-of Ts-Name}_Type(Type t) {
-            return did (g_sparse_memberships[u_cast(Byte, t)] & TYPESET_FLAG_${TS-NAME});
+        INLINE bool Any_${propercase-of Ts-Name}_Type(Option(Type) t) {
+            return did (g_sparse_memberships[u_cast(Byte, unwrap t)] & TYPESET_FLAG_${TS-NAME});
         }
 
         #define Any_${propercase-of Ts-Name}(v) \
@@ -710,6 +710,8 @@ e-hearts/emit [rebs --{
             TYPE_0 = 0,  /* reserved */
             $(Types),
         } TypeEnum;
+
+        #define HEART_ENUM(name)  TYPE_##name
     #else
         /*
          * The "Extra Heart Byte Checks" are designed to make sure you don't
@@ -756,7 +758,6 @@ e-hearts/emit [rebs --{
       #define TYPE_ENUM(name)   ENUM_TYPE_##name
     #endif
 
-        #define TYPE_0  HEART_ENUM(0)
         $[Typedefines]
     #endif
 

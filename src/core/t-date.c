@@ -548,7 +548,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_DATE);
+    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_DATE);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -1012,7 +1012,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
 
     if (id == SYM_SUBTRACT or id == SYM_ADD) {
         Value* arg = ARG_N(2);
-        Heart heart = Heart_Of_Fundamental(arg);
+        Heart heart = Heart_Of_Builtin_Fundamental(arg);
 
         if (heart == TYPE_DATE) {
             if (id == SYM_SUBTRACT)
@@ -1197,7 +1197,7 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Date)
 
     if (not Is_Date(val2))
         return FAIL(
-            Error_Unexpected_Type(Type_Of(val1), Type_Of(val2))
+            Error_Unexpected_Type(TYPE_DATE, Datatype_Of(val2))
         );
 
     return Time_Between_Dates(OUT, val1, val2);

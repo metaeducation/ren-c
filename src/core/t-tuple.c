@@ -33,7 +33,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
+    Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_Sequence_Type(heart));
 
     Element* arg = Element_ARG(DEF);
@@ -265,7 +265,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 
     Element* seq = Element_ARG(ELEMENT);
 
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_Sequence_Type(to))  // e.g. `to the-chain! 'a.b.c` [1]
         return GENERIC_CFUNC(AS, Any_Sequence)(LEVEL);  // immutable, same code
@@ -426,11 +426,10 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Option(Error*) e = Trap_Alias_Any_Sequence_As(
-        OUT,
-        Element_ARG(ELEMENT),
-        Cell_Datatype_Heart(ARG(TYPE))
-    );
+    Element* seq = Element_ARG(ELEMENT);
+    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+
+    Option(Error*) e = Trap_Alias_Any_Sequence_As(OUT, seq, as);
     if (e)
         return FAIL(unwrap e);
 
@@ -467,8 +466,8 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     Offset n;
     for (n = 0; n < len; ++len) {  // first let's see if it's a trivial copy
         Copy_Sequence_At(SPARE, seq, n);
-        Heart item_heart = Heart_Of(SPARE);
-        if (Handles_Generic(COPY, item_heart)) {
+        Heart item_heart = Heart_Of_Builtin_Fundamental(SPARE);
+        if (Handles_Builtin_Generic(COPY, item_heart)) {
             trivial_copy = false;
             break;
         }
@@ -644,7 +643,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
 
     UNUSED(form);
 
-    Heart heart = Heart_Of(c);
+    Heart heart = Heart_Of_Builtin_Fundamental(c);
 
     char interstitial;
     if (Any_Tuple_Type(heart))

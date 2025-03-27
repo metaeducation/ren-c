@@ -128,11 +128,14 @@ DECLARE_NATIVE(JOIN)
     Heart heart;
     if (Is_Datatype(ARG(BASE))) {
         base = nullptr;
-        heart = Cell_Datatype_Heart(ARG(BASE));
+        Option(Heart) datatype_heart = Cell_Datatype_Heart(ARG(BASE));
+        if (not datatype_heart)
+            return FAIL(PARAM(BASE));
+        heart = unwrap datatype_heart;
     }
     else {
         base = Element_ARG(BASE);
-        heart = Heart_Of_Fundamental(unwrap base);
+        heart = Heart_Of_Builtin_Fundamental(unwrap base);
     }
     bool joining_datatype = not base;  // compiler should optimize out
 
@@ -867,7 +870,7 @@ DECLARE_NATIVE(ENHEX)
 
     return Init_Any_String(
         OUT,
-        Heart_Of_Fundamental(ARG(STRING)),
+        Heart_Of_Builtin_Fundamental(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -980,7 +983,7 @@ DECLARE_NATIVE(DEHEX)
 
     return Init_Any_String(
         OUT,
-        Heart_Of_Fundamental(ARG(STRING)),
+        Heart_Of_Builtin_Fundamental(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -1226,7 +1229,7 @@ DECLARE_NATIVE(ENTAB)
         }
     }
 
-    Heart heart = Heart_Of_Fundamental(ARG(STRING));
+    Heart heart = Heart_Of_Builtin_Fundamental(ARG(STRING));
     return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 
@@ -1285,7 +1288,7 @@ DECLARE_NATIVE(DETAB)
         Append_Codepoint(mo->string, c);
     }
 
-    Heart heart = Heart_Of_Fundamental(ARG(STRING));
+    Heart heart = Heart_Of_Builtin_Fundamental(ARG(STRING));
     return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 

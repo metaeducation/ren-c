@@ -50,7 +50,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 {
     Assert_Cell_Readable(v);  // then we use unchecked() on v below
 
-    Heart heart = Cell_Heart_Unchecked(v);
+    Option(Heart) heart = Cell_Heart_Unchecked(v);
 
     while (Is_Bindable_Heart(heart)) {  // for `break` convenience
         Context* binding = Cell_Binding(v);
@@ -90,8 +90,13 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     // still can speed things up to go in order.
     //
     switch (heart) {
-      case 0:  // legal if using Mark_Maybe_Erased()
-        assert(Is_Cell_Erased(v));
+      case HEART_ENUM(0):
+        if (Is_Cell_Erased(v)) {  // legal if Mark_Maybe_Erased() was called
+            NOOP;
+        }
+        else {  // it's an extension type
+            fail ("Extension type GC checking not defined yet");
+        }
         break;
 
       case TYPE_BLANK:

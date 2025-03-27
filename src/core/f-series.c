@@ -306,7 +306,7 @@ IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
 {
     INCLUDE_PARAMS_OF_UNIQUE;
 
-    Heart heart = Heart_Of_Fundamental(ARG(SERIES));
+    Heart heart = Heart_Of_Builtin_Fundamental(ARG(SERIES));
 
     Flex* flex = Make_Set_Operation_Flex(
         ARG(SERIES),
@@ -330,7 +330,7 @@ Option(Error*) Trap_Resolve_Dual_Hearts(
     Value* value2
 ){
     UNUSED(value2);
-    *heart = Heart_Of_Fundamental(value1);
+    *heart = Heart_Of_Builtin_Fundamental(value1);
     return nullptr;
 }
 
@@ -438,11 +438,17 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
     if (QUOTE_BYTE(s) != QUOTE_BYTE(t))
         return false;
 
-    Heart s_heart = Heart_Of(s);
-    Heart t_heart = Heart_Of(t);
+    Option(Heart) s_heart = Heart_Of(s);
+    Option(Heart) t_heart = Heart_Of(t);
+
+    if (not s_heart and not t_heart)
+        fail ("Custom type Equal_Values not implemented yet");
+
+    if (not s_heart or not t_heart)
+        return false;  // one is a custom type, the other is not, so not equal
 
     if (
-        s_heart != t_heart
+        (unwrap s_heart) != (unwrap t_heart)
         and not (Any_Number_Type(s_heart) and Any_Number_Type(t_heart))
     ){
         return false;
@@ -491,11 +497,17 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     if (QUOTE_BYTE(s) != QUOTE_BYTE(t))
         return false;  // comparisons against different-quoting levels illegal
 
-    Heart s_heart = Heart_Of(s);
-    Heart t_heart = Heart_Of(t);
+    Option(Heart) s_heart = Heart_Of(s);
+    Option(Heart) t_heart = Heart_Of(t);
+
+    if (not s_heart and not t_heart)
+        fail ("Custom type Try_Lesser_Value not implemented yet");
+
+    if (not s_heart or not t_heart)
+        return false;  // one is a custom type, the other is not, so not equal
 
     if (
-        s_heart != t_heart
+        (unwrap s_heart) != (unwrap t_heart)
         and not (Any_Number_Type(s_heart) and Any_Number_Type(t_heart))
     ){
         return false;

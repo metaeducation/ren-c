@@ -101,7 +101,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
+    Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_Word_Type(heart));
 
     Element* arg = Element_ARG(DEF);
@@ -159,7 +159,7 @@ IMPLEMENT_GENERIC(TO, Any_Word)
 
     USED(ARG(ELEMENT));  // deferred to other generic implementations
 
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_Word_Type(to))
         return GENERIC_CFUNC(AS, Any_Word)(LEVEL);  // immutable alias
@@ -223,7 +223,7 @@ IMPLEMENT_GENERIC(AS, Any_Word)
     Option(Error*) e = Trap_Alias_Any_Word_As(
         OUT,
         Element_ARG(ELEMENT),
-        Cell_Datatype_Heart(ARG(TYPE))
+        Cell_Datatype_Builtin_Heart(ARG(TYPE))
     );
     if (e)
         return FAIL(unwrap e);

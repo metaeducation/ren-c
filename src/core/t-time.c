@@ -267,7 +267,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_TIME);
+    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_TIME);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -494,7 +494,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         or id == SYM_REMAINDER
     ){
         Value* arg = ARG_N(2);
-        Heart heart = Heart_Of_Fundamental(arg);
+        Heart heart = Heart_Of_Builtin_Fundamental(arg);
 
         if (heart == TYPE_TIME) {     // handle TIME - TIME cases
             REBI64 secs2 = VAL_NANO(arg);

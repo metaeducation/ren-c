@@ -263,7 +263,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
 
     Element* sequence = Element_ARG(EXAMPLE);
 
-    Heart heart = Heart_Of(sequence);
+    Heart heart = Heart_Of_Builtin(sequence);
     assert(Any_Sequence_Type(heart));
 
     REBLEN len = Cell_Sequence_Len(sequence);

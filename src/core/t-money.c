@@ -263,9 +263,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Money)
 
         if (Is_Decimal(to) or Is_Percent(to)) {
             REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
+            Heart to_heart = Heart_Of_Builtin_Fundamental(to);
             Reset_Cell_Header_Noquote(
                 TRACK(OUT),
-                FLAG_HEART_BYTE(Heart_Of_Fundamental(to)) | CELL_MASK_NO_NODES
+                FLAG_HEART_BYTE(to_heart) | CELL_MASK_NO_NODES
             );
             VAL_DECIMAL(OUT) = dec;
             return OUT;
@@ -297,7 +298,7 @@ IMPLEMENT_GENERIC(TO, Is_Money)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(ELEMENT);
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     deci d = VAL_MONEY_AMOUNT(v);
 

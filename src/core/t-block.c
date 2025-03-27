@@ -126,7 +126,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
+    Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_List_Type(heart));
 
     Element* arg = Element_ARG(DEF);
@@ -481,7 +481,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 
     assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
 
-    Heart heart = Heart_Of(v);  // may be quoted, but mold renders the quotes
+    Heart heart = Heart_Of_Builtin_Fundamental(v);
 
     if (form) {
         Option(VarList*) context = nullptr;
@@ -749,7 +749,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
     INCLUDE_PARAMS_OF_TO;
 
     Element* list = Element_ARG(ELEMENT);
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_List_Type(to)) {
         Length len;
@@ -911,11 +911,10 @@ IMPLEMENT_GENERIC(AS, Any_List)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Option(Error*) e = Trap_Alias_Any_List_As(
-        OUT,
-        Element_ARG(ELEMENT),
-        Cell_Datatype_Heart(ARG(TYPE))
-    );
+    Element* list = Element_ARG(ELEMENT);
+    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+
+    Option(Error*) e = Trap_Alias_Any_List_As(OUT, list, as);
     if (e)
         return FAIL(unwrap e);
 
@@ -951,7 +950,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
         Bool_ARG(DEEP)
     ));
 
-    Init_Any_List(OUT, Heart_Of_Fundamental(list), copy);
+    Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(list), copy);
     Tweak_Cell_Binding(OUT, Cell_List_Binding(list));
     return OUT;
 }
@@ -1012,7 +1011,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
         return FAIL(Error_Bad_Refines_Raw());
 
     Element* list = Element_ARG(SERIES);
-    Heart heart = Heart_Of_Fundamental(list);  // TAKE gives same heart
+    Heart heart = Heart_Of_Builtin_Fundamental(list);  // TAKE gives same heart
 
     Source* arr = Cell_Array_Ensure_Mutable(list);
 

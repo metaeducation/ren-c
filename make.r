@@ -264,6 +264,11 @@ rebmake/set-target-platform platform-config.os-base
     ;
     append flags <msc:/wd4946>
 
+    ; C++17 added a weird warning about left to right evaluation order that
+    ; triggers with (Option(Xxx*) = maybe Yyy()).  Disable that.
+    ;
+    append flags <msc:/wd4866>
+
     if block? s [
         for-each 'flag next s [
             switch flag [

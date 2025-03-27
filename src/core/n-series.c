@@ -212,10 +212,10 @@ DECLARE_NATIVE(REVERSE_OF)
     if (Try_Dispatch_Generic(&bounce, REVERSE_OF, elem, LEVEL))
         return bounce;
 
-    Heart heart = Heart_Of_Fundamental(elem);
+    const Value* datatype = Datatype_Of_Fundamental(elem);
     if (
-        not Handles_Generic(REVERSE, heart)
-        or not Handles_Generic(COPY, heart)
+        not Handles_Generic(REVERSE, datatype)
+        or not Handles_Generic(COPY, datatype)
     ){
         return UNHANDLED;
     }

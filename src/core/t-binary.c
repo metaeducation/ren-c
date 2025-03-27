@@ -455,7 +455,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_BITWISE_AND_NOT: {
         Value* arg = ARG_N(2);
         if (not Is_Blob(arg))
-            return FAIL(Error_Math_Args(Type_Of(arg), verb));
+            return FAIL(Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
         Size t0;
         const Byte* p0 = Cell_Blob_Size_At(&t0, v);
@@ -560,7 +560,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(ELEMENT);
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_String_Type(to)) {  // (to text! binary) questionable [1]
         Size size;
@@ -715,11 +715,10 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Option(Error*) e = Trap_Alias_Blob_As(
-        OUT,
-        Element_ARG(ELEMENT),
-        Cell_Datatype_Heart(ARG(TYPE))
-    );
+    Element* blob = Element_ARG(ELEMENT);
+    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+
+    Option(Error*) e = Trap_Alias_Blob_As(OUT, blob, as);
     if (e)
         return FAIL(unwrap e);
 
@@ -798,7 +797,6 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     Element* blob = Element_ARG(SERIES);
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
-    Heart heart = Heart_Of_Fundamental(blob);
 
     if (Bool_ARG(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
@@ -807,7 +805,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     if (Bool_ARG(PART)) {
         len = Part_Len_May_Modify_Index(blob, ARG(PART));
         if (len == 0)
-            return Init_Series(OUT, heart, Make_Binary(0));
+            return Init_Blob(OUT, Make_Binary(0));
     } else
         len = 1;
 
@@ -828,7 +826,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
         if (not Bool_ARG(PART))
             return RAISE(Error_Nothing_To_Take_Raw());
 
-        return Init_Series(OUT, heart, Make_Binary(0));
+        return Init_Blob(OUT, Make_Binary(0));
     }
 
     if (not Bool_ARG(PART))  // just return byte value

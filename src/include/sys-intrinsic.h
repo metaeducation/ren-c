@@ -82,7 +82,7 @@
 // another Cell at the callsite.
 //
 INLINE void Get_Heart_And_Quote_Of_Atom_Intrinsic(
-    Sink(Heart) heart,
+    Sink(Option(Heart)) heart,
     Sink(QuoteByte) quote_byte,
     Level* L
 ){

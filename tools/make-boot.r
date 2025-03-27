@@ -628,7 +628,8 @@ e-symbols/emit [syms-cscape --{
      * by preventing such comparisons.
      */
     enum SymIdEnum {
-        SYM_0 = 0,
+        /* SYM_0 defined as Option(SymId) for safety, see definition */
+
         $(Sym-Enum-Items),
         /* SYM_MAX would conflate w/symbol for `max`, use MAX_SYM_BUILTIN */
     };

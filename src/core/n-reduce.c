@@ -198,7 +198,7 @@ DECLARE_NATIVE(REDUCE)
     if (Get_Source_Flag(Cell_Array(v), NEWLINE_AT_TAIL))
         Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
-    Init_Any_List(OUT, Heart_Of_Fundamental(v), a);
+    Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(v), a);
     Tweak_Cell_Binding(OUT, Cell_Binding(v));
     return OUT;
 }}
@@ -436,27 +436,45 @@ bool Try_Match_For_Compose(
 static void Push_Composer_Level(
     Atom* out,
     Level* main_level,
-    const Element* e,  // list or sequence, may be quasi or quoted
+    const Element* list_or_seq,  // may be quasi or quoted
     Context* context
 ){
-    Heart heart = Heart_Of(e);
-    Option(const Element*) adjusted = nullptr;
-    if (Any_Sequence_Type(heart))  // allow sequences [1]
-        adjusted = Known_Element(rebValue(CANON(AS), CANON(BLOCK_X), rebQ(e)));
+    possibly(Is_Quoted(list_or_seq) or Is_Quasiform(list_or_seq));
+
+    Heart heart = Heart_Of_Builtin(list_or_seq);
+
+    DECLARE_ELEMENT (adjusted);
+    assert(Is_Cell_Erased(adjusted));
+
+    if (Any_Sequence_Type(heart)) {  // allow sequences [1]
+        QuoteByte quote_byte = QUOTE_BYTE(list_or_seq);
+
+        DECLARE_ELEMENT (fundamental);
+        Copy_Cell(fundamental, list_or_seq);
+        QUOTE_BYTE(fundamental) = NOQUOTE_1;
+
+        Option(Error*) e = Trap_Alias_Any_Sequence_As(
+            adjusted, list_or_seq, TYPE_BLOCK
+        );
+        assert(not e);  // all sequences can alias as block
+        UNUSED(e);
+
+        QUOTE_BYTE(adjusted) = quote_byte;  // restore quote byte
+    }
     else
         assert(Any_List_Type(heart));
 
     Level* sub = Make_Level_At_Inherit_Const(
         &Composer_Executor,
-        adjusted ? unwrap adjusted : e,
-        Derive_Binding(context, adjusted ? unwrap adjusted : e),
+        Is_Cell_Erased(adjusted) ? list_or_seq : adjusted,
+        Derive_Binding(
+            context,
+            Is_Cell_Erased(adjusted) ? list_or_seq : adjusted
+        ),
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
     );
     Push_Level_Erase_Out_If_State_0(out, sub);  // sublevel may raise definitional failure
-
-    if (adjusted)
-        rebRelease(unwrap adjusted);
 
     sub->u.compose.main_level = main_level;   // pass options [2]
     sub->u.compose.changed = false;
@@ -490,12 +508,13 @@ static Option(Error*) Trap_Finalize_Composer_Level(
     const Element* composee,  // special handling if the output is a sequence
     bool conflate
 ){
-    Heart heart = Heart_Of(composee);
+    possibly(Is_Quoted(composee) or Is_Quasiform(composee));
+    Heart heart = Heart_Of_Builtin(composee);
 
     if (Any_Sequence_Type(heart)) {
         Option(Error*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
             out,
-            Heart_Of(composee),
+            Heart_Of_Builtin_Fundamental(composee),
             L->baseline.stack_base
         );
         if (error)
@@ -648,7 +667,7 @@ Bounce Composer_Executor(Level* const L)
 
     const Element* at = At_Level(L);
 
-    Heart heart = Heart_Of(at);  // quoted groups match [1]
+    Option(Heart) heart = Heart_Of(at);  // quoted groups match [1]
 
     if (not Any_Sequence_Or_List_Type(heart)) {  // won't substitute/recurse
         Copy_Cell(PUSH(), at);  // keep newline flag
@@ -685,8 +704,8 @@ Bounce Composer_Executor(Level* const L)
         or STATE == ST_COMPOSER_RUNNING_PREDICATE
     );
 
-    Heart list_heart = Heart_Of(At_Level(L));
-    Byte list_quote_byte = QUOTE_BYTE(At_Level(L));
+    QuoteByte list_quote_byte = QUOTE_BYTE(At_Level(L));
+    Heart list_heart = Heart_Of_Builtin(At_Level(L));
 
     Decay_If_Unstable(OUT);
 
@@ -896,7 +915,8 @@ DECLARE_NATIVE(COMPOSE2)
     if (Any_The_Value(pattern)) {  // @() means use pattern's binding
         if (Cell_Binding(pattern) == nullptr)
             return FAIL("@... patterns must have bindings");
-        HEART_BYTE(pattern) = Plainify_Any_The_Heart(Heart_Of(pattern));
+        Heart pattern_heart = Heart_Of_Builtin_Fundamental(pattern);
+        HEART_BYTE(pattern) = Plainify_Any_The_Heart(pattern_heart);
     }
     else if (Any_Plain_Value(pattern)) {
         Tweak_Cell_Binding(pattern, Cell_List_Binding(input));
@@ -930,7 +950,8 @@ DECLARE_NATIVE(COMPOSE2)
     if (Any_The_Value(pattern)) {  // @() means use pattern's binding
         if (Cell_Binding(pattern) == nullptr)
             return FAIL("@... patterns must have bindings");
-        HEART_BYTE(pattern) = Plainify_Any_The_Heart(Heart_Of(pattern));
+        Heart pattern_heart = Heart_Of_Builtin_Fundamental(pattern);
+        HEART_BYTE(pattern) = Plainify_Any_The_Heart(pattern_heart);
     }
     else
         return FAIL("COMPOSE2 text needs @... patterns for pattern binding");
@@ -981,7 +1002,9 @@ DECLARE_NATIVE(COMPOSE2)
 
     Copy_Cell(PUSH(), pattern); // top of stack is pattern currently matching
 
-    Byte begin_delimiter = Begin_Delimit_For_List(Heart_Of(TOP));
+    Byte begin_delimiter = Begin_Delimit_For_List(
+        Heart_Of_Builtin_Fundamental(TOP)
+    );
     Option(Byte) end_delimiter = 0;
 
     while (true) {
@@ -997,7 +1020,9 @@ DECLARE_NATIVE(COMPOSE2)
             if (Cell_Series_Len_At(TOP) == 0)  // no more nests in pattern
                 break;
 
-            end_delimiter = End_Delimit_For_List(Heart_Of(TOP));
+            end_delimiter = End_Delimit_For_List(
+                Heart_Of_Builtin_Fundamental(TOP)
+            );
 
             const Element* pattern_at = Cell_List_Item_At(TOP);
             Copy_Cell(PUSH(), pattern_at);  // step into pattern
@@ -1007,21 +1032,29 @@ DECLARE_NATIVE(COMPOSE2)
             if (Cell_Series_Len_At(TOP) > 1)
                 return FAIL("COMPOSE2 pattern layers must be length 1 or 0");
 
-            begin_delimiter = Begin_Delimit_For_List(Heart_Of(TOP));
+            begin_delimiter = Begin_Delimit_For_List(
+                Heart_Of_Builtin_Fundamental(TOP)
+            );
         }
         else if (end_delimiter and c == end_delimiter) {
             DROP();
-            begin_delimiter = Begin_Delimit_For_List(Heart_Of(TOP));
+            begin_delimiter = Begin_Delimit_For_List(
+                Heart_Of_Builtin_Fundamental(TOP)
+            );
             if (TOP_INDEX == base + 1)
                 end_delimiter = 0;
             else
                 end_delimiter = End_Delimit_For_List(
-                    Heart_Of(Data_Stack_At(Element, base - 1))
+                    Heart_Of_Builtin_Fundamental(
+                        Data_Stack_At(Element, base - 1)
+                    )
             );
         }
         else if (end_delimiter) {  // back the pattern out to the start [1]
             Drop_Data_Stack_To(base + 1);
-            begin_delimiter = Begin_Delimit_For_List(Heart_Of(TOP));
+            begin_delimiter = Begin_Delimit_For_List(
+                Heart_Of_Builtin_Fundamental(TOP)
+            );
             end_delimiter = 0;
         }
 
@@ -1043,7 +1076,9 @@ DECLARE_NATIVE(COMPOSE2)
         StackIndex stack_index = base;
         for (; stack_index != TOP_INDEX; ++stack_index) {
             Element* pattern_at = Data_Stack_At(Element, stack_index + 1);
-            Byte terminal = End_Delimit_For_List(Heart_Of(pattern_at));
+            Byte terminal = End_Delimit_For_List(
+                Heart_Of_Builtin_Fundamental(pattern_at)
+            );
 
             Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
                 /*| LEVEL_FLAG_RAISED_RESULT_OK*/  // definitional errors?
@@ -1244,7 +1279,8 @@ DECLARE_NATIVE(COMPOSE2)
     if (not Any_String(input))
         Freeze_Flex(str);
 
-    return Init_Series_At_Core(OUT, Heart_Of(input), str, 0, nullptr);
+    Heart input_heart = Heart_Of_Builtin_Fundamental(input);
+    return Init_Series_At_Core(OUT, input_heart, str, 0, nullptr);
 }}
 
 

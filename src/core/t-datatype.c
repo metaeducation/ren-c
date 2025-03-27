@@ -45,7 +45,7 @@
 //
 Source* Startup_Datatypes(Array* boot_typespecs)
 {
-    if (Array_Len(boot_typespecs) != MAX_TYPE_BYTE)  // exclude TYPE_0
+    if (Array_Len(boot_typespecs) != MAX_TYPE_BYTE)  // exclude TYPE_0 (custom)
         panic (boot_typespecs);
 
     Source* catalog = Make_Source(MAX_TYPE_BYTE);

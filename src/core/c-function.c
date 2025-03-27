@@ -265,7 +265,9 @@ void Push_Keys_And_Params_May_Fail(
             quoted = true;
         }
 
-        Heart heart = Heart_Of(item);
+        Option(Heart) heart = Heart_Of(item);
+        if (not heart)
+            fail ("Extension types not supported in function spec");
 
         const Symbol* symbol = nullptr;  // avoids compiler warning
         ParamClass pclass = PARAMCLASS_0;  // error if not changed

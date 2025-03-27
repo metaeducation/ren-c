@@ -92,6 +92,13 @@
 //    A consolidated enum seems to have to be used if you're not going to
 //    be doing the class trick.
 //
+// 2. All extension types use the 0 byte for their heart.  This means that
+//    you can't say (Type_Of(cell1) == Type_Of(cell2)) and get a correct
+//    answer in the case of extension types.  To avoid that problem, we
+//    have Type_Of() return an Optional(Type), which we then prohibit the
+//    comparison of Option(Type) to Option(Type).  You can still compare an
+//    unwrapped Type to an Option(Type).
+//
 
 #include "tmp-hearts.h"  // HeartEnum and TypeEnum (TYPE_BLOCK, TYPE_TEXT...)
 
@@ -121,6 +128,9 @@
         explicit operator SymId() const
           { return u_cast(SymId, h); }
 
+        explicit operator uintptr_t() const
+          { return u_cast(uintptr_t, h); }
+
         operator HeartEnum() const
           { return h; }
     };
@@ -146,6 +156,9 @@
 
         explicit operator SymId() const
           { return u_cast(SymId, t); }
+
+        explicit operator uintptr_t() const
+          { return u_cast(uintptr_t, t); }
 
         operator TypeEnum() const
           { return t; }
@@ -252,6 +265,70 @@
 
     INLINE bool operator<(TypeEnum t, const Type& type)
       { return t < type.t; }
+  #endif
+#endif
+
+
+//=//// CUSTOM DATATYPE HEART (0) /////////////////////////////////////////=//
+//
+// There are a finite number of builtin datatypes (hearts and pseudotypes),
+// and then some builtin sparse and ranged typesets.  The sum of all of these
+// is up to 255 before running up against an implementation barrier.
+//
+// So extension types all use the same heart value of 0.  This means that the
+// actual extension type's information is stored in the Cell's "extra" slot.
+//
+// The choice of 0 is purposeful.  It means that Type can be tested for
+// quickly in an if() statement to see if the type is not built in, and it
+// can work with the Option() wrapper in the C++ build to do systemic type
+// checking that differentiates places that haven't checked if the type is
+// built in or not.
+//
+// 1. The enum value is called TYPE_0, but it's legal to in the preprocessor
+//    define TYPE_0 to add the extra safety of the Option().  This is good
+//    because it helps stop people from using the raw TYPE_0 value without
+//    the protections.  (You can't omit the value 0 in the enum, or that can
+//    cause problems, so it's best to overwrite the unsafe value via a
+//    preprocessor define.)  HEART_ENUM(0) can be used in the rare cases where
+//    you want the raw value and don't want to just say "0".
+//
+// 2. Disabling comparison of Option(Heart) and Option(Type) with each other
+//    helps avoid the false positives of extension types comparing as equal:
+//
+//        if (Type_Of(cell) == Type_Of(other_cell)) { ... }
+//
+//    The problem is that all extension types are TYPE_0, so they all would
+//    compare equal if this were allowed.  Thankfully the C++ build lets
+//    us catch this case at compile time.
+//
+#define TYPE_0 /* #define w/same name as enum TYPE_0 sneaky but legal [1] */ \
+    u_cast(Option(Heart), u_cast(HeartEnum, 0))
+
+#if CHECK_OPTIONAL_TYPEMACRO  // make safe for extension types [2]
+    bool operator==(Option(Type)& a, Option(Type)& b) = delete;
+    void operator!=(Option(Type)& a, Option(Type)& b) = delete;
+
+  #if DEBUG_EXTRA_HEART_CHECKS  // in this mode, Heart is distinct from Type
+    bool operator==(Option(Heart)& a, Option(Heart)& b) = delete;
+    bool operator!=(Option(Heart)& a, Option(Heart)& b) = delete;
+
+    #if defined(_MSC_VER)
+        template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+        INLINE bool operator==(const Option(Type)& a, T b)
+          { return u_cast(Byte, maybe a) == u_cast(Byte, b); }
+
+        template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+        INLINE bool operator==(T a, const Option(Type)& b)
+          { return u_cast(Byte, a) == u_cast(Byte, maybe b); }
+
+        template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+        INLINE bool operator!=(const Option(Type)& a, T b)
+          {  return u_cast(Byte, maybe a) != u_cast(Byte, b); }
+
+        template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+        INLINE bool operator!=(T a, const Option(Type)& b)
+          {  return u_cast(Byte, a) != u_cast(Byte, maybe b); }
+    #endif
   #endif
 #endif
 

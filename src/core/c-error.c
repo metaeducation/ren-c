@@ -1045,15 +1045,12 @@ Error* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 //
 //  Error_Unexpected_Type: C
 //
-Error* Error_Unexpected_Type(Type expected, Type actual)
+Error* Error_Unexpected_Type(Type expected, const Value* actual)
 {
     assert(expected <= MAX_TYPE);
-    assert(actual <= MAX_TYPE);
+    assert(Is_Datatype(actual));
 
-    return Error_Expect_Val_Raw(
-        Datatype_From_Type(expected),
-        Datatype_From_Type(actual)
-    );
+    return Error_Expect_Val_Raw(Datatype_From_Type(expected), actual);
 }
 
 

@@ -46,7 +46,7 @@ typedef uint_fast16_t SymId16;  // 16 bits for SymId in symbol header
 #define SYM_0 \
     cast(Option(SymId),  cast(SymId, 0))  // 0 cast needed if not -fpermissive
 
-#if CHECK_OPTIONAL_TYPEMACRO && CPLUSPLUS_11
+#if CHECK_OPTIONAL_TYPEMACRO
     bool operator==(Option(SymId)& a, Option(SymId)& b) = delete;
-    void operator!=(Option(SymId)& a, Option(SymId)& b) = delete;
+    bool operator!=(Option(SymId)& a, Option(SymId)& b) = delete;
 #endif

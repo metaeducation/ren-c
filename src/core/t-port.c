@@ -69,7 +69,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_PORT);
+    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_PORT);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);

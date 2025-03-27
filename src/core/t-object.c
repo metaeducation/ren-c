@@ -56,7 +56,7 @@
 // Try_Advance_Evars() on even the first.
 //
 void Init_Evars(EVARS *e, const Cell* v) {
-    Heart heart = Heart_Of(v);
+    Heart heart = Heart_Of_Builtin_Fundamental(v);
 
     e->lens_mode = LENS_MODE_ALL_UNSEALED;  // ensure not uninitialized
 
@@ -279,10 +279,13 @@ void Shutdown_Evars(EVARS *e)
 //
 REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 {
-    assert(Any_Context_Type(Heart_Of(a)));
-    assert(Any_Context_Type(Heart_Of(b)));
+    Heart a_heart = Heart_Of_Builtin_Fundamental(a);
+    Heart b_heart = Heart_Of_Builtin_Fundamental(b);
 
-    if (Heart_Of(a) != Heart_Of(b))  // e.g. ERROR! won't equal OBJECT!
+    assert(Any_Context_Type(a_heart));
+    assert(Any_Context_Type(b_heart));
+
+    if (a_heart != b_heart)  // e.g. ERROR! won't equal OBJECT!
         return HEART_BYTE(a) > HEART_BYTE(b) ? 1 : 0;
 
     Node* n1 = CELL_NODE1(a);
@@ -455,7 +458,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_MODULE);
+    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_MODULE);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -476,7 +479,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Is_Object(ARG(TYPE)) or Cell_Datatype_Heart(ARG(TYPE)) == TYPE_OBJECT);
+    assert(Is_Object(ARG(TYPE)) or Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_OBJECT);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -938,7 +941,7 @@ static Element* Copy_Any_Context(
 
     return Init_Context_Cell(
         out,
-        Heart_Of_Fundamental(context),
+        Heart_Of_Builtin_Fundamental(context),
         Copy_Varlist_Extra_Managed(Cell_Varlist(context), 0, deep)
     );
 }
@@ -1095,8 +1098,8 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 
     Element* context = Element_ARG(ELEMENT);
     Context* c = Cell_Context(context);
-    Heart heart = Heart_Of(context);
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart heart = Heart_Of_Builtin_Fundamental(context);
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
     assert(heart != to);  // TO should have called COPY in this case
 
     if (to == TYPE_PORT) {

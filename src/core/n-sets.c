@@ -61,13 +61,14 @@ Flex* Make_Set_Operation_Flex(
     REBLEN skip
 ){
     assert(Any_Series(val1));
+    Type type1 = unwrap Type_Of(val1);
 
     if (val2) {
         assert(Any_Series(val2));
 
         if (Any_List(val1)) {
             if (!Any_List(val2))
-                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
+                fail (Error_Unexpected_Type(type1, Datatype_Of(val2)));
 
             // As long as they're both arrays, we're willing to do:
             //
@@ -84,13 +85,13 @@ Flex* Make_Set_Operation_Flex(
             //      <abcde>
 
             if (not Any_String((val2)))
-                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
+                fail (Error_Unexpected_Type(type1, Datatype_Of(val2)));
         }
         else {
             // Binaries only operate with other binaries
             assert(Is_Blob(val1));
             if (not Is_Blob(val2))
-                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
+                fail (Error_Unexpected_Type(type1, Datatype_Of(val2)));
         }
     }
 

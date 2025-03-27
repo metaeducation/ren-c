@@ -684,7 +684,7 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
     INCLUDE_PARAMS_OF_TO;
 
     Element* map = Element_ARG(ELEMENT);
-    Heart to = Cell_Datatype_Heart(ARG(TYPE));
+    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_List_Type(to))  // !!! not ordered! [1]
         return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));

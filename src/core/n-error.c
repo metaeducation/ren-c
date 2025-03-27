@@ -284,7 +284,7 @@ DECLARE_NATIVE(RAISED_Q)
 {
     INCLUDE_PARAMS_OF_RAISED_Q;
 
-    Heart heart;
+    Option(Heart) heart;
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
@@ -317,7 +317,7 @@ DECLARE_NATIVE(UNRAISED_Q)
 {
     INCLUDE_PARAMS_OF_UNRAISED_Q;
 
-    Heart heart;
+    Option(Heart) heart;
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 

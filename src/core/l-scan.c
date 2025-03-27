@@ -2029,7 +2029,7 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
     OnStack(Element*) top
 ){
     if (S->sigil_pending) {
-        Heart heart = Heart_Of_Fundamental(top);
+        Heart heart = Heart_Of_Builtin_Fundamental(top);
         if (not Any_Plain_Type(heart))
             return Error_Syntax(S, TOKEN_BLANK);  // !!! token?
 

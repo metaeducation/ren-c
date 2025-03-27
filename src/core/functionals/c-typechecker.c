@@ -70,7 +70,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
     if (bounce)
         return unwrap bounce;
 
-    Type type;
+    Option(Type) type;
     Details* details;
 
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
@@ -90,12 +90,15 @@ Bounce Typechecker_Dispatcher(Level* const L)
         details = Ensure_Level_Details(L);
     }
 
+    if (not type)  // not a built-in type, no typechecks apply
+        return LOGIC(false);
+
     assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
 
     TypesetByte typeset_byte = VAL_UINT8(
         Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
     );
-    return LOGIC(Builtin_Typeset_Check(typeset_byte, type));
+    return LOGIC(Builtin_Typeset_Check(typeset_byte, unwrap type));
 }
 
 
@@ -293,7 +296,8 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         TypesetByte typeset_byte = VAL_UINT8(
             Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
         );
-        if (Builtin_Typeset_Check(typeset_byte, Type_Of(SPARE)))
+        Option(Type) type = Type_Of(SPARE);
+        if (type and Builtin_Typeset_Check(typeset_byte, unwrap type))
             goto test_succeeded;
         goto test_failed;
     }
@@ -548,24 +552,20 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             goto test_failed;
         }
 
-        Type type;
         const Value* test;
         if (Type_Of_Unchecked(item) == TYPE_WORD) {
             label = Cell_Word_Symbol(item);
             Option(Error*) error = Trap_Lookup_Word(&test, item, derived);
             if (error)
                 fail (unwrap error);
-            type = Type_Of(test);  // e.g. TYPE-BLOCK! <> BLOCK!
         }
-        else {
+        else
             test = item;
-            type = Type_Of_Unchecked(test);
-        }
 
         if (Is_Action(test))
             goto run_action;
 
-        switch (type) {
+        switch (Type_Of_Unchecked(test)) {
           run_action: {
             if (Typecheck_Spare_With_Predicate_Uses_Scratch(L, test, label))
                 goto test_succeeded;
@@ -584,10 +584,14 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             break; }
 
           case TYPE_DATATYPE: {
-            Type t = Type_Of(v);
-            if (Cell_Datatype_Type(test) != t)
-                goto test_failed;
-            break; }
+            Option(Type) t = Type_Of(v);
+            if (t) {
+                if (Cell_Datatype_Type(test) == t)
+                    goto test_succeeded;
+                else
+                    goto test_failed;
+            }
+            fail ("Typechecking for extension types not implemented yet"); }
 
           default:
             fail ("Invalid element in TYPE-GROUP!");
@@ -732,13 +736,15 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
         = optimized + sizeof(spec->misc.at_least_4);
 
     if (Is_Stable(atom)) {
-        Type type = Type_Of(Stable_Unchecked(atom));
-        for (; optimized != optimized_tail; ++optimized) {
-            if (*optimized == 0)
-                break;  // premature end of list
+        Option(Type) type = Type_Of(Stable_Unchecked(atom));
+        if (type) {
+            for (; optimized != optimized_tail; ++optimized) {
+                if (*optimized == 0)
+                    break;  // premature end of list
 
-            if (Builtin_Typeset_Check(*optimized, type))
-                goto return_true;
+                if (Builtin_Typeset_Check(*optimized, unwrap type))
+                    goto return_true;
+            }
         }
     }
 
@@ -809,8 +815,12 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 //
 Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
     if (Is_Datatype(datatype_or_block)) {
-        Type t = Cell_Datatype_Type(datatype_or_block);
-        SymId16 id16 = u_cast(SymId16, u_cast(Byte, t)) + MIN_SYM_TYPESETS - 1;
+        Option(Type) t = Cell_Datatype_Type(datatype_or_block);
+        if (not t)
+            fail ("TYPECHECKER does not support extension types yet");
+
+        Byte type_byte = u_cast(Byte, unwrap t);
+        SymId16 id16 = u_cast(SymId16, type_byte) + MIN_SYM_TYPESETS - 1;
 
         Copy_Cell(out, Lib_Var(u_cast(SymId, id16)));
         assert(Ensure_Cell_Frame_Details(out));  // need TypesetByte

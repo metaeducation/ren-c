@@ -228,7 +228,51 @@ const Value* Datatype_From_Type(Type type)
 //
 const Value* Datatype_Of(const Atom* value)
 {
-    return Datatype_From_Type(Type_Of(value));
+    Option(Type) type = Type_Of(value);
+    if (not type)
+        fail ("Datatype_Of() doesn't support extension types yet");
+
+    return Datatype_From_Type(unwrap type);
+}
+
+
+//
+//  Datatype_Of_Fundamental: C
+//
+const Value* Datatype_Of_Fundamental(const Atom* value)
+{
+    assert(Any_Fundamental(value));
+
+    Option(Type) type = Type_Of(value);
+    if (not type)
+        fail ("Datatype_Of() doesn't support extension types yet");
+
+    return Datatype_From_Type(unwrap type);
+}
+
+
+//
+//  Datatype_Of_Builtin_Fundamental: C
+//
+const Value* Datatype_Of_Builtin_Fundamental(const Atom* value)
+{
+    assert(Any_Fundamental(value));
+
+    Option(Type) type = Type_Of(value);
+    assert(type);
+    return Datatype_From_Type(unwrap type);
+}
+
+//
+//  Type_Of_Builtin_Fundamental: C
+//
+Type Type_Of_Builtin_Fundamental(const Atom* value)
+{
+    assert(Any_Fundamental(value));
+
+    Option(Type) type = Type_Of(value);
+    assert(type);
+    return unwrap type;
 }
 
 
@@ -609,7 +653,7 @@ Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
     if (Is_Void(out))
         return Init_Sigil(out, SIGIL_META);
 
-    Heart heart = Heart_Of(out);
+    Option(Heart) heart = Heart_Of(out);
     if (Any_Word_Type(heart)) {
         HEART_BYTE(out) = TYPE_META_WORD;
     }
@@ -658,7 +702,7 @@ Value* Theify(Value* out) {  // called on stack values; can't call evaluator
     if (Is_Void(out))
         return Init_Sigil(out, SIGIL_THE);
 
-    Heart heart = Heart_Of(out);
+    Option(Heart) heart = Heart_Of(out);
     if (Any_Word_Type(heart)) {
         HEART_BYTE(out) = TYPE_THE_WORD;
     }
@@ -708,7 +752,7 @@ DECLARE_NATIVE(INERT)
 // Turn a value into its "plain" equivalent.  This works for all Elements.
 //
 Element* Plainify(Element* e) {
-    Heart heart = Heart_Of(e);
+    Option(Heart) heart = Heart_Of(e);
     if (Any_Word_Type(heart)) {
         HEART_BYTE(e) = TYPE_WORD;
     }

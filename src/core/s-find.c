@@ -511,8 +511,9 @@ REBLEN Find_Value_In_Binstr(
     REBLEN flags,
     REBINT skip
 ){
-    Heart binstr_heart = Heart_Of(binstr);
-    Heart pattern_heart = Heart_Of(pattern);
+    Heart binstr_heart = Heart_Of_Builtin_Fundamental(binstr);
+    Heart pattern_heart = Heart_Of_Builtin(pattern);
+    Count pattern_quotes = Quotes_Of(pattern);
 
     if (TYPE_BLOB == pattern_heart and binstr_heart != TYPE_BLOB) {
         //
@@ -523,10 +524,9 @@ REBLEN Find_Value_In_Binstr(
             fail (Error_Find_String_Binary_Raw());
     }
 
-    Count num_quotes = Quotes_Of(pattern);
     if (
-        num_quotes == 1
-        or (num_quotes == 0 and (
+        pattern_quotes == 1
+        or (pattern_quotes == 0 and (
             Any_Utf8_Type(pattern_heart)
             or TYPE_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
             or TYPE_BLOB == pattern_heart  // binstr_heart checked for TYPE_BLOB
@@ -549,7 +549,7 @@ REBLEN Find_Value_In_Binstr(
         //   == "<c>d"
 
         String* molded = nullptr;
-        if (num_quotes == 1 or Heart_Of(pattern) == TYPE_INTEGER)
+        if (pattern_quotes == 1 or Heart_Of(pattern) == TYPE_INTEGER)
             molded = Copy_Mold_Cell_Ignore_Quotes(pattern, 0);
 
         DECLARE_ELEMENT (temp);  // !!! Note: unmanaged

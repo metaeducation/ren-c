@@ -10,7 +10,7 @@
 //
 
 INLINE VarList* Cell_Varlist(const Cell* c) {
-    Heart heart = Heart_Of(c);
+    Option(Heart) heart = Heart_Of(c);
     assert(
         heart != TYPE_MODULE
         and Any_Context_Type(heart)

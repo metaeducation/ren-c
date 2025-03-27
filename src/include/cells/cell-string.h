@@ -6,7 +6,7 @@ INLINE bool Stringlike_Cell(const Cell* v) {
 }
 
 INLINE const String* Cell_String(const Cell* v) {
-    Heart heart = Heart_Of(v);
+    Option(Heart) heart = Heart_Of(v);
     if (Any_Word_Type(heart))
         return Cell_Word_Symbol(v);
 
@@ -63,7 +63,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
 }
 
 INLINE Utf8(const*) Cell_String_At(const Cell* v) {
-    Heart heart = Heart_Of(v);
+    Option(Heart) heart = Heart_Of(v);
 
     if (not Any_String_Type(heart))  // non-positional: URL, ISSUE, WORD...
         return Cell_Utf8_Head(v);  // might store utf8 directly in cell
@@ -98,7 +98,7 @@ INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
 
 
 INLINE REBLEN Cell_String_Len_At(const Cell* c) {
-    Heart heart = Heart_Of(c);
+    Option(Heart) heart = Heart_Of(c);
     if (Any_String_Type(heart))  // can have an index position
         return Cell_Series_Len_At(c);
 

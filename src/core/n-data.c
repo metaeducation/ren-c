@@ -219,7 +219,7 @@ DECLARE_NATIVE(HAS)
     Value* v = ARG(VALUE);
 
     assert(Any_Word(v));
-    Heart heart = Heart_Of(v);
+    Heart heart = Heart_Of_Builtin(v);
 
     const Symbol* symbol = Cell_Word_Symbol(v);
     const bool strict = true;
@@ -273,7 +273,7 @@ DECLARE_NATIVE(WITHOUT)
             return nullptr;
         return Init_Any_Word_Bound(
             OUT,
-            Heart_Of_Fundamental(v),
+            Heart_Of_Builtin_Fundamental(v),
             symbol,  // !!! incoming case...consider impact of strict if false?
             ctx,
             unwrap index
@@ -1172,7 +1172,7 @@ DECLARE_NATIVE(ANY_VALUE_Q)
 {
     INCLUDE_PARAMS_OF_ANY_VALUE_Q;
 
-    Heart heart;
+    Option(Heart) heart;
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
@@ -1269,7 +1269,7 @@ DECLARE_NATIVE(BARRIER_Q)
 {
     INCLUDE_PARAMS_OF_BARRIER_Q;
 
-    Heart heart;
+    Option(Heart) heart;
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 

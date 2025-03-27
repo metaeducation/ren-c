@@ -271,7 +271,7 @@ void Set_Parameter_Spec(
         else
             lookup = item;
 
-        Type type = Type_Of(lookup);
+        Option(Type) type = Type_Of(lookup);
 
         if (type == TYPE_DATATYPE) {
             if (optimized == optimized_tail) {

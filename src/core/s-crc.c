@@ -115,11 +115,14 @@ uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, Length len) {
 //
 uint32_t Hash_Value(const Cell* cell)
 {
-    Heart heart = Heart_Of(cell);
+    Option(Heart) heart = Heart_Of(cell);
 
     uint32_t hash;
 
     switch (heart) {
+      case HEART_ENUM(0):
+          fail ("Cannot hash 0-custom datatype");
+
       case TYPE_BLANK:
       case TYPE_COMMA:
         hash = 0;
@@ -284,7 +287,7 @@ uint32_t Hash_Value(const Cell* cell)
         //
         // !!! Why not?
         //
-        fail (Error_Invalid_Type(heart));
+        fail (Error_Invalid_Type(TYPE_PARAMETER));
 
       hash_any_word:
         //
@@ -352,7 +355,7 @@ uint32_t Hash_Value(const Cell* cell)
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //
-        fail (Error_Invalid_Type(heart));
+        fail (Error_Invalid_Type(TYPE_HANDLE));
 
       default:
         panic (nullptr); // List should be comprehensive

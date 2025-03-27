@@ -124,10 +124,12 @@ ATTRIBUTE_NO_RETURN void Panic_Cell_Debug(const Cell* c) {
     Printf_Stderr("No Cell track info (see DEBUG_TRACK_EXTEND_CELLS)\n");
   #endif
 
-    Heart heart = Heart_Of(c);
-    const char *type = String_UTF8(Canon_Symbol(Symbol_Id_From_Type(heart)));
-    Printf_Stderr("cell_heart=%s\n", type);
-    Printf_Stderr("quote_byte=%d\n", QUOTE_BYTE(c));
+    Option(Heart) heart = Heart_Of(c);
+    Option(SymId) id = heart ? Symbol_Id_From_Type(unwrap heart) : SYM_0;
+    const char *name = id ? String_UTF8(Canon_Symbol(unwrap id)) : "custom-0";
+    Printf_Stderr("cell_heart=%d\n", u_cast(int, HEART_BYTE(c)));
+    Printf_Stderr("cell heart name=%s\n", name);
+    Printf_Stderr("quote_byte=%d\n", u_cast(int, QUOTE_BYTE(c)));
 
     if (Cell_Has_Node1(c))
         Printf_Stderr("has node1: %p\n", c_cast(void*, CELL_NODE1(c)));

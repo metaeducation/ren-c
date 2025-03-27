@@ -51,7 +51,7 @@ INLINE Sigil Cell_Sigil(const Cell* cell) {
     return u_cast(Sigil, sigil_byte);
 }
 
-INLINE Option(Sigil) Sigil_For_Heart(Heart heart) {
+INLINE Option(Sigil) Sigil_For_Heart(Option(Heart) heart) {
     if (Any_Meta_Type(heart))
         return SIGIL_META;
     if (Any_Wild_Type(heart))

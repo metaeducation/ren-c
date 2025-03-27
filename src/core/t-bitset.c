@@ -306,7 +306,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     }
 
     if (not Is_Block(val))
-        fail (Error_Invalid_Type(Type_Of(val)));
+        fail (Error_Invalid_Type_Raw(Datatype_Of(val)));
 
     const Element* tail;
     const Element* item = Cell_List_At(&tail, val);
@@ -452,7 +452,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     }
 
     if (!Any_List(val))
-        fail (Error_Invalid_Type(Type_Of(val)));
+        fail (Error_Invalid_Type_Raw(Datatype_Of(val)));
 
     // Loop through block of bit specs
 
@@ -527,7 +527,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
             break;
 
         default:
-            fail (Error_Invalid_Type(Type_Of(item)));
+            fail (Error_Invalid_Type_Raw(Datatype_Of(item)));
         }
     }
     return false;
@@ -732,6 +732,8 @@ Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
     if (Bool_ARG(SKIP))
         return Error_Bad_Refines_Raw();
 
+    UNUSED(ARG(CASE));
+
     if (Is_Bitset(arg)) {
         if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
             return Error_User(
@@ -741,7 +743,7 @@ Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
         Init_Blob(arg, VAL_BITSET(arg));
     }
     else if (not Is_Blob(arg))
-        return Error_Math_Args(Type_Of(arg), Canon_Symbol(id));
+        return Error_Not_Related_Raw(Canon_Symbol(id), Datatype_Of(arg));
 
     if (BITS_NOT(VAL_BITSET(bset))) {  // !!! see #2365
         //
@@ -766,15 +768,13 @@ Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
 
 IMPLEMENT_GENERIC(INTERSECT, Is_Bitset)
 {
-    INCLUDE_PARAMS_OF_INTERSECT;
-
     Element* blob1;
     Element* blob2;
     Option(Error*) e = Blobify_Args_For_Bitset_Arity_2_Set_Operation(
         &blob1, &blob2, SYM_INTERSECT, LEVEL
     );
     if (e)
-        return RAISE(e);
+        return RAISE(unwrap e);
 
     Value* processed = rebValue(CANON(BITWISE_AND), blob1, blob2);
 
@@ -795,7 +795,7 @@ IMPLEMENT_GENERIC(UNION, Is_Bitset)
         &blob1, &blob2, SYM_UNION, LEVEL
     );
     if (e)
-        return RAISE(e);
+        return RAISE(unwrap e);
 
     Value* processed = rebValue(CANON(BITWISE_OR), blob1, blob2);
 
@@ -816,7 +816,7 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Bitset)
         &blob1, &blob2, SYM_DIFFERENCE, LEVEL
     );
     if (e)
-        return RAISE(e);
+        return RAISE(unwrap e);
 
     Value* processed = rebValue(CANON(BITWISE_XOR), blob1, blob2);
 
@@ -831,8 +831,6 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Bitset)
 
 IMPLEMENT_GENERIC(EXCLUDE, Is_Bitset)
 {
-    INCLUDE_PARAMS_OF_EXCLUDE;
-
     bool negated_result = (
         Is_Bitset(ARG_N(1)) and BITS_NOT(VAL_BITSET(ARG_N(1)))
     );
@@ -843,7 +841,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Is_Bitset)
         &blob1, &blob2, SYM_EXCLUDE, LEVEL
     );
     if (e)
-        return RAISE(e);
+        return RAISE(unwrap e);
 
     const Symbol* operation =   // use UNION semantics if negated
         negated_result ? CANON(BITWISE_OR) : CANON(BITWISE_AND_NOT);

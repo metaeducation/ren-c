@@ -530,7 +530,8 @@ void Force_Value_Frozen_Core(
     if (Is_Value_Frozen_Deep(v))
         return;
 
-    Heart heart = Heart_Of(v);
+    possibly(Is_Quoted(v) or Is_Quasiform(v));
+    Heart heart = Heart_Of_Builtin(v);
 
     if (heart == TYPE_FRAME and Is_Frame_Details(v))
         return;  // special form, immutable

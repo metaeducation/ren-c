@@ -329,7 +329,7 @@ static Bounce Loop_Integer_Common(
         }
 
         if (not Is_Integer(var))
-            return FAIL(Error_Invalid_Type(Type_Of(var)));
+            return FAIL(Error_Invalid_Type_Raw(Datatype_Of(var)));
 
         if (REB_I64_ADD_OF(*state, bump, state))
             return FAIL(Error_Overflow_Raw());
@@ -412,7 +412,7 @@ static Bounce Loop_Number_Common(
         }
 
         if (not Is_Decimal(var))
-            return FAIL(Error_Invalid_Type(Type_Of(var)));
+            return FAIL(Error_Invalid_Type_Raw(Datatype_Of(var)));
 
         *state += b;
     }
@@ -918,7 +918,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             continue;
         }
 
-        Heart heart = Heart_Of_Fundamental(les->data);
+        Heart heart = Heart_Of_Builtin_Fundamental(les->data);
 
         if (Any_List_Type(heart)) {
             if (var)
@@ -1623,7 +1623,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         Swap_Flex_Content(popped, s);  // swap Flex identity [3]
 
         Free_Unmanaged_Flex(popped);  // frees incoming Flex's data
-        Init_Any_String(OUT, Heart_Of(data), s);
+        Init_Any_String(OUT, Heart_Of_Builtin_Fundamental(data), s);
     }
 
   done_finalizing:
@@ -2045,7 +2045,7 @@ DECLARE_NATIVE(FOR)
     Value* var = Varlist_Slot(Cell_Varlist(vars), 1);  // not movable, see #2274
 
     if (not Is_Integer(var))
-        return FAIL(Error_Invalid_Type(Type_Of(var)));
+        return FAIL(Error_Invalid_Type_Raw(Datatype_Of(var)));
 
     if (VAL_INT64(var) == VAL_INT64(value))
         return BRANCHED(OUT);
