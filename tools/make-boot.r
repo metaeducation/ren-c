@@ -91,22 +91,6 @@ e-version/write-emitted
 
 === "SET UP COLLECTION OF SYMBOL NUMBERS" ===
 
-; !!! The symbol strategy in Ren-C is expected to move to using a fixed table
-; of words that commit to their identity, as opposed to picking on each build.
-; Concept would be to fit every common word that would be used in Rebol to
-; the low 65535 indices, while allowing numbers beyond that to be claimed
-; over time...so they could still be used in C switch() statements (but might
-; have to be stored and managed in a less efficient way)
-;
-; For now, the symbols are gathered from the various phases, and can change
-; as things are added or removed.  Hence C code using SYM_XXX must be
-; recompiled with changes to the core.  These symbols aren't in libRebol,
-; however, so it only affects clients of the core API for now.
-
-e-symbols: make-emitter "Symbol ID (SymId) Enumeration Type and Values" (
-    join prep-dir %include/tmp-symid.h
-)
-
 sym-table: copy []
 
 ; Symbols are added to the list without corresponding to any specific number.
@@ -119,11 +103,21 @@ sym-table: copy []
     return: "position of an already existing symbol if found"
         [~null~ block!]
     item "If TAG!, then the / in </FOO> means mark *before* last added symbol"
-        [word! text! tag!]
+        [word! text! tag! block!]
     :relax "tolerate an already-added symbol"
     :placeholder "add marker, filtered out and made a #define at end"
 ][
     if placeholder [
+        case [
+            tag! [if find item "-" [
+                fail [
+                    "Use _ not - in placeholders so it's easier to search"
+                    "for references matching the generated C macros"
+                ]
+            ]]
+            block! [noop]
+            fail "ADD-SYM:PLACHOLDER must be TAG! or BLOCK!"
+        ]
         append sym-table item
         return null
     ]
@@ -283,14 +277,15 @@ add-sym:placeholder </MAX_SYM_LIB_PREMADE>
 ; type might come along and use one of these terms...meaning they have to
 ; yield to that position.  That's why there's no guarantee of order.
 
-for-each 'term load %symbols.r [
-    if word? term [
-        add-sym term
-    ] else [
-        assert [issue? term]
-        if not find sym-table as text! term [
-            fail ["Expected symbol for" term "from [native type]"]
+for-each 'item load %symbols.r [
+    switch type of item [
+        word! [add-sym item]
+        issue! [
+            if not find sym-table as text! item [
+                fail ["Expected symbol for" item "from [native type]"]
+            ]
         ]
+        fail ["bad %symbols.r item:" mold item]
     ]
 ]
 
@@ -552,9 +547,32 @@ for-each 'item sys-toplevel [
 ]
 
 
-=== "EMIT SYMBOLS AND PRUNE SPECIAL SIGNALS FROM sym-table" ===
+=== "EXTENSION SYMBOLS (NOT BUILT-IN, BUT USABLE IN SWITCH() STATEMENTS)" ===
+
+; The extension words are reserved IDs which are intended to (someday) be set
+; in stone.  The core executable doesn't ship with the strings embedded or
+; pay for the cost of pre-creating them (so this list could get large... up
+; to 65535 at present), and not be a problem.
 
 add-sym:placeholder </MAX_SYM_BUILTIN>
+
+for-each 'item load %ext-words.r [
+    switch type of item [
+        word! [add-sym item]
+        block! [  ; will someday define reserved groups
+            add-sym:placeholder item
+        ]
+        issue! [
+            if not find sym-table as text! item [
+                fail ["Expected symbol for" item "from [native type]"]
+            ]
+        ]
+        fail ["bad %symbols.r item:" mold item]
+    ]
+]
+
+
+=== "EMIT SYMBOLS AND PRUNE SPECIAL SIGNALS FROM sym-table" ===
 
 symid: 1  ; SYM_0 is reserved for symbols that do not have baked-in ID numbers
 
@@ -562,6 +580,12 @@ lib-syms-max: ~
 
 sym-enum-items: copy []
 placeholder-define-items: copy []
+
+emitting-extension-syms: null
+
+e-ext-symids: make-emitter "Extension SymId Commitment Table" (
+    join prep-dir %include/tmp-ext-symid.r
+)
 
 for-next 'pos sym-table [
     while [tag? pos.1] [  ; remove placeholders, add defines
@@ -590,18 +614,55 @@ for-next 'pos sym-table [
         break
     ]
 
+    if block? pos.1 [
+        if emitting-extension-syms [
+            e-ext-symids/emit newline
+        ] else [
+            emitting-extension-syms: okay
+        ]
+        e-ext-symids/emit spaced [";" form pos.1 newline]
+        take pos
+        pos: back pos  ; so for-next gets us back to this position
+        continue
+    ]
+
     if not text? pos.1 [
         fail ["Unknown item in sym-table table:" pos.1]
     ]
 
     let name: pos.1
-    append sym-enum-items cscape [symid name
-        --{/* $<Name> */  SYM_${FORM NAME} = $<symid>}--
+    if emitting-extension-syms [
+        ;
+        ; !!! Ultimately we won't put EXT_SYM_XXX in the SymId table, but
+        ; the extension build system will use %tmp-ext-symid.r in order to
+        ; do those #defines and symbol registrations for the extensions that
+        ; request them.
+        ;
+        append sym-enum-items cscape [symid name
+            --{/* $<Name> */  EXT_SYM_${FORM NAME} = $<symid>}--
+        ]
+        e-ext-symids/emit [symid name
+            --{$<name> $<symid>}--
+        ]
+        take pos  ; remove so it's not put in the builtin compressed strings
+        pos: back pos  ; so for-next gets us back to this position
     ]
+    else [
+        append sym-enum-items cscape [symid name
+            --{/* $<Name> */  SYM_${FORM NAME} = $<symid>}--
+        ]
+    ]
+
     symid: symid + 1
 ]
 
-e-symbols/emit [syms-cscape --{
+e-ext-symids/write-emitted
+
+e-symids: make-emitter "Symbol ID (SymId) Enumeration Type and Values" (
+    join prep-dir %include/tmp-symid.h
+)
+
+e-symids/emit [syms-cscape --{
     /*
      * CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
      *
@@ -631,20 +692,22 @@ e-symbols/emit [syms-cscape --{
         /* SYM_0 defined as Option(SymId) for safety, see definition */
 
         $(Sym-Enum-Items),
-        /* SYM_MAX would conflate w/symbol for `max`, use MAX_SYM_BUILTIN */
     };
 
     /*
      * These definitions are derived from markers added during the symbol
      * table creation process via ADD-SYM:PLACEHOLDER (and are much better
      * than hardcoding symbol IDs in source the way R3-Alpha did it!)
+     *
+     * Note that the naming convention is MAX_SYM_XXX and not SYM_MAX_XXX,
+     * to avoid thinking the symbol is literally for the letters "max-xxx"
      */
     $[Placeholder-Define-Items]
 }--]
 
 print [symid "words + natives + errors"]
 
-e-symbols/write-emitted
+e-symids/write-emitted
 
 /add-sym: func [:relax :placeholder] [
     ;

@@ -569,6 +569,67 @@ void Startup_Builtin_Symbols(
 
 
 //
+//  Register_Symbol: C
+//
+// This is used by extensions to register a symbol under a fixed ID number so
+// that it can be used in switch() statements.  It's required that all
+// extensions that register the same symbol use the same ID number.
+//
+// The symbol will be protected from GC, so that it doesn't get garbage
+// collected and then come back into existence without an ID number.
+//
+// There's not really anywhere to put a refcount in the Symbol, so the best
+// way to do that counting is to give back an API handle of the WORD! which
+// has the symbol in it that the caller has to hang on to.  They pass it back
+// in when they want to unregister.
+//
+RebolValue* Register_Symbol(const char* utf8, SymId16 id16)
+{
+    assert(id16 > MAX_SYM_BUILTIN);
+
+    const Symbol* symbol = Intern_UTF8_Managed(cb_cast(utf8), strlen(utf8));
+    Option(SymId) id = Symbol_Id(symbol);
+    if (id) {
+        if (not (id16 == u_cast(SymId16, id)))
+            fail ("Extensions using conflicting Register_Symbol() IDs");
+    }
+
+    const Symbol* synonym = symbol;
+    do {
+        assert(SECOND_UINT16(&synonym->info) == 0);
+        SET_SECOND_UINT16(&m_cast(Symbol*, synonym)->info, id16);
+        assert(u_cast(SymId, id16) == unwrap Symbol_Id(synonym));
+
+        synonym = Link_Next_Synonym(synonym);
+    } while (synonym != symbol);
+
+    RebolValue* word = Alloc_Value();
+    Init_Word(word, symbol);
+    return rebUnmanage(word);
+}
+
+
+//
+//  Unregister_Symbol: C
+//
+// Just frees the API handle that was returned from Register_Symbol().
+//
+// It does not clear out the ID number, because other extensions may have also
+// registered the Symbol and depend on it.
+//
+void Unregister_Symbol(RebolValue* word, SymId16 id16)
+{
+    assert(id16 != 0);
+
+    assert(Is_Word(word));
+    assert(Cell_Word_Id(word) == u_cast(SymIdEnum, id16));  // unnecessary?
+    UNUSED(id16);
+
+    rebRelease(word);
+}
+
+
+//
 //  Shutdown_Builtin_Symbols: C
 //
 // The Shutdown_Interning() code checks for g_symbols.by_hash to be empty...

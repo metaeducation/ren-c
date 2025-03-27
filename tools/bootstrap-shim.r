@@ -365,13 +365,24 @@ quasiform!: word!  ; conflated, but can work in a very limited sense
 set '^break does [does [break/]]
 set '^continue does [does [continue/]]
 
-/quote: func3 [x [~null~ any-value!]] [  ; see the more general UNEVAL
+/quote: func3 [x [any-value!]] [  ; see the more general UNEVAL
     switch type of x [
         word! [to lit-word3! x]  ; to lit-word! not legal in new EXE
         path! [to lit-path3! x]  ; to lit-path! not legal in new EXE
 
         fail:blame [
-            "QUOTE can only work on WORD!, PATH!, NULL in old Rebols"
+            "Bootstrap QUOTE only works on WORD!, PATH!:" mold x
+        ] $x
+    ]
+]
+
+/unquote: func3 [x [any-value!]] [  ; see the more general EVAL
+    switch type of x [
+        lit-word3! [to word! x]  ; to word! of quoted not legal in new EXE
+        lit-path3! [to path! x]  ; to path! of quoted not legal in new EXE
+
+        fail:blame [
+            "Bootstrap UNQUOTE only works on LIT-WORD?, LIT-PATH?:" mold x
         ] $x
     ]
 ]

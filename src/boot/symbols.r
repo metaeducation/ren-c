@@ -26,8 +26,6 @@ REBOL [
     }--
 ]
 
-unreadable  ; needed for Init_Unreadable()
-
 ; === WORD!-based LOGIC ===
 
 true
@@ -83,7 +81,6 @@ y
 +
 -
 *
-unsigned
 code        ; error field
 
 eval
@@ -106,39 +103,25 @@ zone
 utc
 
 
-; !!! Legacy: Used to report an error on usage of /LOCAL when <local> was
-; intended.  Should be removed from code when the majority of such uses have
-; been found, as the responsibility for that comes from %r2-warn.reb
-;
-local
+; === CHECKSUM (CORE) ===
 
-; properties for action TWEAK function
-;
-defer
-postpone
-
-; Checksum (CHECKSUM-CORE only, others are looked up by string or libRebol)
 crc32
 adler32
 
-; Codec actions
+
+; === CODEC ===
+
 identify
 decode
 encode
 
 
-... ; !!! Temporary placeholder for ellipsis; will have to be special trick
+...  ; SYM_ELLIPSIS_1
 
 bits
 
 data
 flags
-
-uid
-euid
-gid
-egid
-pid
 
 id
 exit-code
@@ -172,20 +155,6 @@ shutdown*
 ; identifiers.  However, symbol numbers are hypothesized to be expandable
 ; via a pre-published dictionary of strings, committed to as a registry.
 
-; Event:
-key
-mode
-window
-double
-control
-#shift  ; there's a bit shift native
-
-ignore          ; ignore event (0)
-interrupt       ; user interrupt
-device          ; misc device request
-callback        ; callback event
-custom          ; custom events
-init
 
 #open
 #close
@@ -201,44 +170,3 @@ ready
 
 show
 hide
-
-move
-down
-up
-alt-down
-alt-up
-aux-down
-aux-up
-#key
-key-up
-
-scroll-line
-scroll-page
-
-drop-file
-
-
-; === EVENT KEYS ===
-
-page-up
-page-down
-#end  ; parse keyword
-home
-left
-#up
-right
-#down
-#insert  ; GENERIC action insert
-#delete  ; GENERIC action delete
-f1
-f2
-f3
-f4
-f5
-f6
-f7
-f8
-f9
-f10
-f11
-f12
