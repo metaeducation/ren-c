@@ -2489,15 +2489,10 @@ RebolValue* API_rebManage(RebolValue* v)
 //
 // This converts an API handle value to indefinite lifetime.
 //
-void API_rebUnmanage(void *p)
+RebolValue* API_rebUnmanage(RebolValue *v)
 {
     ENTER_API;
 
-    Node* n = cast(Node*, p);
-    if (Is_Node_A_Stub(n))
-        fail ("rebUnmanage() not yet implemented for rebAlloc() data");
-
-    Value* v = cast(Value*, n);
     assert(Is_Api_Value(v));
 
     Stub* stub = Compact_Stub_From_Cell(v);
@@ -2514,6 +2509,8 @@ void API_rebUnmanage(void *p)
     //
     Clear_Node_Managed_Bit(stub);
     Disconnect_Api_Handle_From_Level(stub);
+
+    return v;
 }
 
 
