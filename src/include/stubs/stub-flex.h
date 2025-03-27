@@ -87,7 +87,7 @@ INLINE bool Is_Stub_Decayed(const Stub* s) {
     (not Is_Stub_Decayed(s))
 
 #define STUB_MASK_NON_CANON_UNREADABLE \
-    NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | FLAG_FLAVOR_BYTE(255)
+    NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | FLAG_TASTE_BYTE(255)
 
 INLINE Stub* Set_Stub_Unreadable(Stub* s) {
     assert(Is_Node_Readable(s));

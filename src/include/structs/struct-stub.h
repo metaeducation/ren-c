@@ -120,7 +120,7 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// BITS 8-15: STUB SUBCLASS ("FLAVOR")
+// BITS 8-15: STUB SUBCLASS ("FLAVOR") STORED IN "TASTE" BYTE
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
@@ -129,17 +129,32 @@
 // Stubs that hold Cells are in a range, all the Flexes with width of 1
 // are together...)
 //
-// 1. In lieu of typechecking Stub is-a Stub, we assume the macro finding
+// The byte is called the TASTE_BYTE and not FLAVOR_BYTE, because the latter
+// would make it look like one of the values in the Flavor enumerated type.
+// (In fact, FLAVOR_BYTES is specifically one of the Flavor values.)  Taste
+// is a weird name (weirder than Flavor?) but you don't see it often since
+// usually Stub_Flavor() is used to get the value, and FLAG_FLAVOR() in the
+// process of setting it.
+//
+// Note: Flavor does not have an analogue to TYPE_0 and ExtraHeart, where
+// extensions can take over something like Stub.misc to get MiscFlavor and
+// uniquely identify their extension Stubs.  Instead they have to use the
+// generic FLAVOR_CELLS, FLAVOR_POINTERS, and FLAVOR_BYTES.  This gives them
+// freedom in terms of how to use Stub.misc, Stub.link, Stub.info, and
+// Stub.bonus ... but there's no identity mechanism standardized that would
+// distinguish one extension's Stubs from another.
+//
+// 1. In lieu of typechecking stub is-a Stub, we assume the macro finding
 //    a field called ->leader with .bits in it is good enough.  All methods of
 //    checking seem to add overhead in the checked build that isn't worth it.
-//    To help avoid accidentally passing cell, the HeaderUnion in a Stub
+//    To help avoid accidentally passing Cell, the HeaderUnion in a Stub
 //    is named "leader" instead of "header".
 
-#define FLAVOR_BYTE(stub) \
-    SECOND_BYTE(&(stub)->leader.bits)
+#define TASTE_BYTE(stub) \
+    SECOND_BYTE(&(stub)->leader.bits)  // assume has ->leader means Stub [1]
 
-#define FLAG_FLAVOR_BYTE(flavor)        FLAG_SECOND_BYTE(flavor)
-#define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
+#define FLAG_TASTE_BYTE(flavor)         FLAG_SECOND_BYTE(flavor)
+#define FLAG_FLAVOR(name)               FLAG_TASTE_BYTE(FLAVOR_##name)
 
 
 //=////////////////////////////////////////////////////////////////////////=//

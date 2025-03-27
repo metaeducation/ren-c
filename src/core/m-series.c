@@ -149,7 +149,7 @@ void Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 Flex* Copy_Flex_Core(Flags flags, const Flex* f)
 {
     if (Flavor_From_Flags(flags) == FLAVOR_0)
-        flags |= FLAG_FLAVOR_BYTE(Stub_Flavor(f));  // use source's type
+        flags |= FLAG_TASTE_BYTE(Stub_Flavor(f));  // use source's type
     else
         assert(Flavor_From_Flags(flags) == Stub_Flavor(f));
 
@@ -479,8 +479,8 @@ void Assert_Flex_Basics_Core(const Flex* f)
     if (Not_Node_Readable(f))
         panic (f);
 
-    assert(FLAVOR_BYTE(f) != FLAVOR_0);
-    assert(FLAVOR_BYTE(f) <= MAX_FLAVOR);
+    assert(TASTE_BYTE(f) != FLAVOR_0);
+    assert(TASTE_BYTE(f) <= MAX_FLAVOR);
 
     assert(Flex_Used(f) <= Flex_Rest(f));
 

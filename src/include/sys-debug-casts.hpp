@@ -118,6 +118,9 @@
 //
 
 
+INLINE Flavor Stub_Flavor(const Stub* s);  // forward declaration
+
+
 //=//// cast(Node*, ...) //////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
@@ -355,7 +358,7 @@ struct cast_helper<V*,const String*> {  // [2]
             panic (p);
         }
 
-        const Byte flavor = FLAVOR_BYTE(stub);
+        Flavor flavor = Stub_Flavor(stub);
         if (flavor != FLAVOR_NONSYMBOL and flavor != FLAVOR_SYMBOL)
             panic (p);
 
@@ -391,7 +394,7 @@ struct cast_helper<V*,const Symbol*> {  // [2]
             FLEX_MASK_SYMBOL
                 | NODE_FLAG_UNREADABLE
                 | NODE_FLAG_CELL
-                | FLAG_FLAVOR_BYTE(255)
+                | FLAG_TASTE_BYTE(255)
         ))
         ) !=
             FLEX_MASK_SYMBOL
@@ -496,7 +499,7 @@ struct cast_helper<V*,VarList*> {  // [2]
             FLEX_MASK_LEVEL_VARLIST  // MISC_NODE_NEEDS_MARK
                 | NODE_FLAG_UNREADABLE
                 | NODE_FLAG_CELL
-                | FLAG_FLAVOR_BYTE(255)
+                | FLAG_TASTE_BYTE(255)
         )) !=
             FLEX_MASK_LEVEL_VARLIST
         ){
@@ -544,12 +547,12 @@ struct cast_helper<V*,Phase*> {  // [2]
 
         const Stub* stub = reinterpret_cast<Stub*>(p);
 
-        if (FLAVOR_BYTE(stub) == FLAVOR_DETAILS) {
+        if (Stub_Flavor(stub) == FLAVOR_DETAILS) {
             if ((stub->leader.bits & (
                 FLEX_MASK_DETAILS
                     | NODE_FLAG_UNREADABLE
                     | NODE_FLAG_CELL
-                    | FLAG_FLAVOR_BYTE(255)
+                    | FLAG_TASTE_BYTE(255)
             )) !=
                 FLEX_MASK_DETAILS
             ){
@@ -561,7 +564,7 @@ struct cast_helper<V*,Phase*> {  // [2]
                 FLEX_MASK_LEVEL_VARLIST  // maybe no MISC_NODE_NEEDS_MARK
                     | NODE_FLAG_UNREADABLE
                     | NODE_FLAG_CELL
-                    | FLAG_FLAVOR_BYTE(255)
+                    | FLAG_TASTE_BYTE(255)
                 )
             )) !=
                 FLEX_MASK_LEVEL_VARLIST

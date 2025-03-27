@@ -290,7 +290,7 @@ void* Probe_Core_Debug(
         Append_Ascii(mo->string, ">>");
         break; }
 
-      case FLAVOR_POINTER:
+      case FLAVOR_POINTERS:
         Probe_Print_Helper(p, expr, "Flex of void*", file, line);
         break;
 

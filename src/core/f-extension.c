@@ -219,7 +219,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     //
     if (SPORADICALLY(2)) {
         Binary* b = Cell_Binary_Ensure_Mutable(script);
-        FLAVOR_BYTE(b) = FLAVOR_NONSYMBOL;
+        TASTE_BYTE(b) = FLAVOR_NONSYMBOL;
         Term_String_Len_Size(
             cast(String*, b),  // legal for tweaking cached data
             script_num_codepoints,

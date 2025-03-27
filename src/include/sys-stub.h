@@ -117,14 +117,14 @@ INLINE Flavor Flavor_From_Flags(Flags flags)
   { return u_cast(Flavor, SECOND_BYTE(&flags)); }
 
 #define Stub_Flavor_Unchecked(s) \
-    u_cast(Flavor, FLAVOR_BYTE(s))
+    u_cast(Flavor, TASTE_BYTE(s))
 
 #if NO_RUNTIME_CHECKS
     #define Stub_Flavor  Stub_Flavor_Unchecked
 #else
     INLINE Flavor Stub_Flavor(const Stub *s) {
         assert(Is_Node_Readable(s));
-        assert(FLAVOR_BYTE(s) != FLAVOR_0);
+        assert(TASTE_BYTE(s) != FLAVOR_0);
         return Stub_Flavor_Unchecked(s);
     }
 #endif

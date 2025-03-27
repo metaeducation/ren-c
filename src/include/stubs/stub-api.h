@@ -166,7 +166,7 @@ INLINE Value* Alloc_Value_Core(Flags flags)
 INLINE void Free_Value(Value* v)
 {
     Stub* stub = Compact_Stub_From_Cell(v);
-    assert(FLAVOR_BYTE(stub) == FLAVOR_API);
+    assert(Stub_Flavor(stub) == FLAVOR_API);
     assert(Is_Node_Root_Bit_Set(stub));
 
     if (Is_Node_Managed(stub))

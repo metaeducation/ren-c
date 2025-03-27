@@ -37,7 +37,7 @@
 //
 
 
-enum StubFlavorEnum {
+typedef enum {
     //
     // FLAVOR_0 is reserved as an illegal flavor byte, which can be used to
     // make an Optional(Flavor).
@@ -127,13 +127,20 @@ enum StubFlavorEnum {
     //
     FLAVOR_PATCH,
 
-    MAX_FLAVOR_HOLDS_CELLS = FLAVOR_PATCH,  //=//// ^-- WIDTH IS sizeof(Cell)
+    // Extensions use FLAVOR_CELLS to indicate that they are making something
+    // with cells that need to be marked, but are using the MISC, LINK, INFO,
+    // and BONUS slots in a way that doesn't have anything to do with how
+    // FLAVOR_SOURCE would use them.
+    //
+    FLAVOR_CELLS,
+
+    MAX_FLAVOR_HOLDS_CELLS = FLAVOR_CELLS,  //=//// ^-- WIDTH IS sizeof(Cell)
 
     // For the moment all Flexes that don't store Cells or or byte data of
     // WIDTH=1 store items of size pointer.
     //
     FLAVOR_KEYLIST,  // width = sizeof(Symbol*)
-    FLAVOR_POINTER,  // generic
+    FLAVOR_POINTERS,  // generic
     FLAVOR_CANONTABLE,  // for canons table
     FLAVOR_NODELIST,  // e.g. GC protect list
     FLAVOR_FLEXLIST,  // e.g. the list of manually allocated Flexes
@@ -143,9 +150,16 @@ enum StubFlavorEnum {
     FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(Bookmark)
     FLAVOR_DISPATCHERTABLE,  // also outlier, sizeof(DispatcherAndQuerier)
 
-    MIN_FLAVOR_BYTESIZE,  //=/////////////////// BELOW THIS LINE HAS WIDTH = 1
+    MIN_FLAVOR_BYTESIZE,  //=////////////////// BELOW THIS LINE HAS WIDTH = 1
 
     FLAVOR_BINARY = MIN_FLAVOR_BYTESIZE,
+
+    // FLAVOR_BINARY has to keep the MISC and LINK slots available, because a
+    // BLOB! can be generically aliased as a TEXT! or WORD!, which would mean
+    // that the stub suddenly starts using those fields.  Stubs which want to
+    // use the Stub.misc and Stub.link fields should use FLAVOR_BYTES.
+    //
+    FLAVOR_BYTES,
 
     MIN_FLAVOR_STRING,  //=////////////// BELOW THIS LINE IS UTF-8 (OR CORRUPT)
 
@@ -174,6 +188,6 @@ enum StubFlavorEnum {
     FLAVOR_THE_GLOBAL_INACCESSIBLE,
 
     MAX_FLAVOR = FLAVOR_THE_GLOBAL_INACCESSIBLE
-};
+} FlavorEnum;
 
-typedef enum StubFlavorEnum Flavor;
+typedef FlavorEnum Flavor;  // may become more complex wrapper in the future

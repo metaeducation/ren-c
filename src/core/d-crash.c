@@ -264,7 +264,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       #if DEBUG_FANCY_PANIC
         const Stub* s = c_cast(Stub*, p);
         Printf_Stderr("Stub detected...\n");
-        if (FLAVOR_BYTE(s) == FLAVOR_VARLIST) {
+        if (Stub_Flavor(s) == FLAVOR_VARLIST) {
             Printf_Stderr("...and it's a varlist...\n");
             if (CTX_TYPE(x_cast(VarList*, s)) == TYPE_ERROR) {
                 Printf_Stderr("...and it's an Error, trying to PROBE...\n");
