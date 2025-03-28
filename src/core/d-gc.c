@@ -32,6 +32,8 @@
 
 #include "sys-core.h"
 
+#undef fail  /* cannot fail in this file, use assert() and panic() instead */
+
 #if RUNTIME_CHECKS
 
 static bool Not_Node_Accessible_Canon(const Node* n) {
