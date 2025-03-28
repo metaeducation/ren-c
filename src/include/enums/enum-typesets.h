@@ -84,6 +84,9 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
     return heart >= TYPE_BLOCK;
 }
 
+#define Any_Fundamental(v) \
+    (QUOTE_BYTE(Ensure_Readable(v)) == NOQUOTE_1)
+
 
 //=//// SHORTHANDS ////////////////////////////////////////////////////////=//
 //

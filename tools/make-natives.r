@@ -306,7 +306,9 @@ for-each 'info natives [
     if info.native-type != 'generic [continue]
 
     e-forward/emit [info -{
-        extern GenericTable g_generic_${INFO.NAME}[];
+        extern GenericInfo const g_generic_${INFO.NAME}_info[];
+
+        extern GenericTable g_generic_${INFO.NAME};  /* pair together */
     }-]
 ]
 
@@ -354,8 +356,13 @@ for-each 'n-info natives [
     ]
 
     e-tables/emit [n-info -{
-        GenericTable g_generic_${N-INFO.NAME}[] = {
+        const GenericInfo g_generic_${N-INFO.NAME}_info[] = {
             $(Entries),
+        };
+
+        GenericTable g_generic_${N-INFO.NAME} = {
+            g_generic_${N-INFO.NAME}_info,  /* immutable field, fixed array */
+            nullptr  /* mutable field (linked list of ExtraGenericInfo*) */
         };
     }-]
 

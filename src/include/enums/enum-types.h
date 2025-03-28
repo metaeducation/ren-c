@@ -332,6 +332,8 @@
   #endif
 #endif
 
+typedef Value ExtraHeart;
+
 
 //=//// SINGLEHEART OPTIMIZED SEQUENCE TYPE ///////////////////////////////=//
 //

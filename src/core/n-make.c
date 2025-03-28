@@ -55,7 +55,7 @@ DECLARE_NATIVE(MAKE)
 
     return Dispatch_Generic_Core(
         SYM_MAKE,
-        GENERIC_TABLE(MAKE),
+        &GENERIC_TABLE(MAKE),
         datatype,
         LEVEL
     );
@@ -110,7 +110,7 @@ DECLARE_NATIVE(COPY)
     QUOTE_BYTE(elem) = NOQUOTE_1;  // dispatch requires unquoted items
 
     Option(Dispatcher*) dispatcher = Get_Generic_Dispatcher(
-        GENERIC_TABLE(COPY),
+        &GENERIC_TABLE(COPY),
         Datatype_Of(elem)
     );
 

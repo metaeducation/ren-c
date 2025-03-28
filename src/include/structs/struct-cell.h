@@ -412,6 +412,8 @@ union AnyUnion {
     RebolValue* cell_pun;  // *maybe* see node as a Cell
   #endif
 
+    ExtraHeart* extra_heart;  // in extra slot when Heart_Of() cell is TYPE_0
+
     bool bit;  // "wasteful" to just use for one flag, but fast read and write
 
     char ch;

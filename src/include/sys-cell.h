@@ -617,6 +617,21 @@ INLINE void Reset_Cell_Header(Cell* c, QuoteByte quote_byte, uintptr_t flags)
     );
 }
 
+INLINE void Reset_Extended_Cell_Header_Noquote(
+    Cell* c,
+    ExtraHeart* extra_heart,
+    uintptr_t flags
+){
+    assert((flags & FLAG_HEART_BYTE_255) == 0);
+    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
+
+    Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
+    c->header.bits |= (  // need to ensure node+cell flag get set
+        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_QUOTE_BYTE(NOQUOTE_1)
+    );
+    c->extra.extra_heart = extra_heart;
+}
+
 
 //=//// CELL PAYLOAD ACCESS ///////////////////////////////////////////////=//
 

@@ -232,6 +232,72 @@ DECLARE_NATIVE(NATIVE)
 
 
 //
+//  Register_Generics: C
+//
+// This is called from the extension's startup function, and it registers
+// the generics that have IMPLEMENT_GENERIC() from that extension.
+//
+void Register_Generics(const ExtraGenericTable* generics)
+{
+    const ExtraGenericTable* entry = generics;
+    for (; entry->table != nullptr; ++entry) {
+        assert(entry->ext_info->ext_heart == nullptr);
+        assert(Is_Datatype(*entry->ext_heart_ptr));
+        entry->ext_info->ext_heart = *entry->ext_heart_ptr;
+
+        assert(entry->ext_info->next == nullptr);
+        entry->ext_info->next = entry->table->ext_info;
+        entry->table->ext_info = entry->ext_info;
+        assert(entry->ext_info->next != entry->ext_info);
+    }
+    assert(entry->ext_info == nullptr);
+    assert(entry->ext_heart_ptr == nullptr);
+}
+
+
+//
+//  Unregister_Generics: C
+//
+// 1. We want to make it possible to cleanly Unregister_Generics() and then
+//    call Register_Generics() again.  So we have to return ExtraGenericInfo
+//    to its default state that we assert() on... that the ext_heart is null
+//    and the ->next is null.
+//
+void Unregister_Generics(const ExtraGenericTable* generics)
+{
+    const ExtraGenericTable* entry = generics;
+    for (; entry->table != nullptr; ++entry) {
+        assert(entry->ext_info->ext_heart == *entry->ext_heart_ptr);
+        assert(Is_Datatype(entry->ext_info->ext_heart));
+        entry->ext_info->ext_heart = nullptr;  // null out datatype [1]
+
+        ExtraGenericInfo* seek = entry->table->ext_info;
+        if (seek == nullptr) {
+            assert(false);
+            fail ("Unregister_Generics: no ext_info in table");
+        }
+        if (seek == entry->ext_info)  // have to update list head
+            entry->table->ext_info = seek->next;
+        else
+            while (seek != entry->ext_info) {
+                if (seek->next == entry->ext_info) {
+                    seek->next = seek->next->next;
+                    break;
+                }
+                seek = seek->next;
+                if (seek == nullptr) {
+                    assert(false);
+                    fail ("Unregister_Generics: ext_info not found");
+                }
+            }
+        entry->ext_info->next = nullptr;  // null out list link [1]
+    }
+    assert(entry->ext_info == nullptr);
+    assert(entry->ext_heart_ptr == nullptr);
+}
+
+
+//
 //  Dispatch_Generic_Core: C
 //
 // When you define a native as `native:generic`, this means you can register
@@ -265,15 +331,30 @@ DECLARE_NATIVE(NATIVE)
 bool Try_Dispatch_Generic_Core(
     Sink(Bounce) bounce,
     SymId symid,
-    GenericTable* table,
+    const GenericTable* table,
     const Value* datatype,  // no quoted/quasi/anti [1]
     Level* const L
 ){
-    Option(Heart) heart = Cell_Datatype_Builtin_Heart(datatype);
-    if (not heart)
-        fail ("No support for dispatching extension generics yet");
+    Option(Heart) heart = Cell_Datatype_Heart(datatype);
+    if (not heart) {
+        ExtraGenericInfo* ext_info = table->ext_info;
+        const ExtraHeart* ext_heart = Cell_Datatype_Extra_Heart(datatype);
+        while (ext_info) {
+            if (ext_info->ext_heart == ext_heart) {
+                L->u.action.label = Canon_Symbol(symid);  // !!! Level_Verb()
+                *bounce = (*ext_info->dispatcher)(L);
+                return true;
+            }
+            ext_info = ext_info->next;
+        }
 
-    if (heart == TYPE_PORT and symid != SYM_OLDGENERIC) {  // !!! Legacy [2]
+        UNUSED(ext_heart);  // should check extension generics
+        NOOP;  // fall through to default for ANY-ELEMENT?, ANY-FUNDAMENTAL?
+    }
+    else if (
+        heart == TYPE_PORT
+        and symid != SYM_OLDGENERIC  // !!! legacy generics for port [2]
+    ){
         switch (symid) {  // exempt port's IMPLEMENT_GENERIC() cases
           case SYM_MAKE:
           case SYM_EQUAL_Q:
@@ -288,9 +369,9 @@ bool Try_Dispatch_Generic_Core(
         }
     }
 
-    Option(Dispatcher*) dispatcher = Get_Generic_Dispatcher(
+    Option(Dispatcher*) dispatcher = Get_Builtin_Generic_Dispatcher(
         table,
-        datatype
+        heart  // maybe fallthrough of TYPE_0 for ELEMENT?/FUNDAMENTAL?
     );
     if (not dispatcher)
         return false;  // not handled--some clients want to try more things

@@ -229,10 +229,9 @@ const Value* Datatype_From_Type(Type type)
 const Value* Datatype_Of(const Atom* value)
 {
     Option(Type) type = Type_Of(value);
-    if (not type)
-        fail ("Datatype_Of() doesn't support extension types yet");
-
-    return Datatype_From_Type(unwrap type);
+    if (type)
+        return Datatype_From_Type(unwrap type);
+    return Cell_Extra_Heart(value);
 }
 
 
@@ -242,12 +241,7 @@ const Value* Datatype_Of(const Atom* value)
 const Value* Datatype_Of_Fundamental(const Atom* value)
 {
     assert(Any_Fundamental(value));
-
-    Option(Type) type = Type_Of(value);
-    if (not type)
-        fail ("Datatype_Of() doesn't support extension types yet");
-
-    return Datatype_From_Type(unwrap type);
+    return Datatype_Of(value);
 }
 
 

@@ -682,6 +682,10 @@ INLINE Level* Prep_Level_Core(
 #define ARG_N(n) \
     Level_Arg(level_, (n))
 
+#define PARAM_N(n) \
+    Phase_Param(Level_Phase(level_), (n))
+
+
 INLINE Bounce Native_Thrown_Result(Level* L) {
     Erase_Cell(L->out);
     assert(Is_Throwing(L));

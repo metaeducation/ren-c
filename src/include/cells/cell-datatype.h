@@ -73,6 +73,30 @@
 //   start of the enumeration.
 //
 
+INLINE ExtraHeart* Register_Datatype(const char* name)
+{
+    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+    Size size = strsize(name);
+    Init_Word(Stub_Cell(a), Intern_UTF8_Managed(cb_cast(name), size));
+
+    Value* datatype = Alloc_Value();
+    Init_Fence(datatype, a);
+    QUOTE_BYTE(datatype) = ANTIFORM_0_COERCE_ONLY;
+
+    Stub* stub = Compact_Stub_From_Cell(datatype);
+    assert(Is_Node_Root_Bit_Set(stub));
+    Disconnect_Api_Handle_From_Level(stub);
+    Clear_Node_Managed_Bit(stub);
+
+    return datatype;
+}
+
+INLINE void Unregister_Datatype(ExtraHeart* name)
+{
+    rebRelease(name);
+}
+
+
 INLINE bool Is_Symbol_Id_For_A_Type(SymId id) {
     assert(id != SYM_0);
     return u_cast(SymId16, id) <= u_cast(SymId16, MAX_TYPE_BYTE);
@@ -121,6 +145,18 @@ INLINE Heart Cell_Datatype_Builtin_Heart(const Atom* v) {
     return u_cast(HeartEnum, unwrap id);
 }
 
+INLINE const ExtraHeart* Cell_Datatype_Extra_Heart(const Atom* v) {
+    assert(Is_Datatype(v));
+    return c_cast(Value*, v);
+}
+
+
+INLINE const ExtraHeart* Cell_Extra_Heart(const Cell* v) {
+    assert(Heart_Of_Is_0(v));
+    return v->extra.extra_heart;
+}
+
+
 // Ren-C uses TYPE-BLOCK! with WORD! for built in datatypes
 //
 INLINE Value* Init_Builtin_Datatype_Untracked(
@@ -140,16 +176,27 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
     TRACK(Init_Builtin_Datatype_Untracked((out), (type)))
 
 
+INLINE Value* Init_Extended_Datatype_Untracked(
+    Init(Value) out,
+    ExtraHeart* ext_heart
+){
+    return Copy_Cell(out, ext_heart);
+}
+
+#define Init_Extended_Datatype(out,type) \
+    TRACK(Init_Extended_Datatype_Untracked((out), (type)))
+
+
 // Used by the Typechecker intrinsic, but also Generic dispatch and PARAMETER!
 // typechecking optimization.
 //
-// 1. This routine as only acceps builtin types.  This means checkers like
-//    ANY-ELEMENT? which need to answer true for extension types can't be
-//    auto-generated from the range checks, but written as intrinsic natives.
+// 1. The built-in typeset checks can only really match extension types with
+//    ANY-ELEMENT? and ANY-FUNDAMENTAL?.  So this should only be checked on
+//    extension types *after* the hooks for their ExtraHeart have been done.
 //
 INLINE bool Builtin_Typeset_Check(
     TypesetByte typeset_byte,
-    Type type  // not Option(Type), can't call this with extension types [1]
+    Option(Type) type  // includes extension types for ANY-ELEMENT?, etc. [1]
 ){
     TypesetFlags typeset = g_typesets[typeset_byte];
 

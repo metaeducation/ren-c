@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,13 +20,64 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// These are function pointers that need to be defined early, before the
-// aggregated forward declarations for the core.
+// While there were once a variety of C function pointer types for handling
+// different kinds of functionalities for types (molding, comparing, etc.)
+// everything is now run through a common generics system:
+//
+//   https://forum.rebol.info/t/breaking-the-64-type-barrier/2369
 //
 
 
+//=//// GENERIC TABLES /////////////////////////////////////////////////////=//
 //
-// EXTENSION COLLATOR FUNCTION DEFINITION
+// To make looking up generic implementations more optimal, the idea is not to
+// build a runtime mapping from symbol IDs to dispatchers.  Instead, there
+// are const global arrays of GenericInfo structs built at compile time.
+// These are directly addressed by macros that use token pasting to combine
+// the symbol name with the name of the type for the generic implementation.
+//
+// e.g. using (&GENERIC_TABLE(APPEND).info) will give you the address of the
+// table mapping TypesetByte to dispatchers for the APPEND generic.  If you
+// want the dispatcher for a specific generic's implementation of a given
+// typeset byte, you can say something like &GENERIC_CFUNC(APPEND, Any_List).
+// These give you compile-time constants.
+//
+// For dispatchers that are added at runtime by loaded extensions, it's a
+// little trickier.  But the extension builds a mapping from the pointer for
+// the generic table to the pointer for an entry that maps an ExtraHeart* to
+// a dispatcher--with room for a pointer to a link to the next entry.
+//
+// 1. The ExtraHeart* for extension types doesn't exist until runtime.  The
+//    easiest way to refer to it in the table passed to Register_Generics()
+//    is thus by a pointer to where the ExtraHeart* will eventually be stored.
+//    But Register_Generics() will turn that into a plain pointer in the
+//    ExtraGenericInfo struct...so no double-dereference needed for lookups.
+//
+
+typedef struct {
+    TypesetByte typeset_byte;  // derived from IMPLEMENT_GENERIC()'s type
+    Dispatcher* dispatcher;  // the function defined by IMPLEMENT_GENERIC()
+} GenericInfo;
+
+typedef struct ExtraGenericInfoStruct {
+    ExtraHeart* ext_heart;
+    Dispatcher* dispatcher;  // the function defined by IMPLEMENT_GENERIC()
+    struct ExtraGenericInfoStruct* next;  // link for next extension type
+} ExtraGenericInfo;
+
+typedef struct {  // pairs builtins and extensions to pass together
+    const GenericInfo* const info;
+    ExtraGenericInfo* ext_info;
+} GenericTable;
+
+typedef struct {  // passed to Register_Generics() for extension types
+    GenericTable* table;
+    ExtraGenericInfo* ext_info;
+    ExtraHeart** ext_heart_ptr;  // plain pointer in ExtraGenericInfo [1]
+} ExtraGenericTable;
+
+
+//=//// EXTENSION COLLATOR FUNCTION ///////////////////////////////////////=//
 //
 // Rebol Extensions generate DLLs (or embed into the EXE) with a function
 // that does initialization.  But that init function does not actually
@@ -52,14 +103,3 @@ enum {
 };
 
 #define CELL_FLAG_CFUNCS_NOTE_USE_LIBREBOL  CELL_FLAG_NOTE
-
-
-typedef struct {
-    TypesetByte typeset_byte;  // derived from IMPLEMENT_GENERIC()'s type
-    Dispatcher* dispatcher;  // the function defined by IMPLEMENT_GENERIC()
-} GenericTable;
-
-
-// Port hook: for implementing generic ACTION!s on a PORT! class
-//
-typedef Bounce (PORT_HOOK)(Level* level_, Value* port, const Symbol* verb);

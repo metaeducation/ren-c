@@ -637,7 +637,24 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
     index: index + 1
 ]
 
-; add ANY-ELEMENT? to the absolute end of the list, so it hooks last
+
+; Add ANY-FUNDAMENTAL? to go right up to the max heart byte (don't include
+; quoted or quasi).  Include TYPE_0 for ExtraHeart types.
+(
+    e-typeset-bytes/emit [ts-name -{
+        any-fundamental $<index>
+    }-]
+
+    append typeset-flags cscape [tr --{
+        /* $<index> - any-fundamental */
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_HEART_BYTE)
+    }--]
+    index: index + 1
+)
+
+
+; Add ANY-ELEMENT? to the absolute end of the list, so it hooks last.  Include
+; TYPE_QUOTED and TYPE_QUASI, and TYPE_0 for ExtraHeart extension types.
 (
     e-typeset-bytes/emit [ts-name -{
         any-element $<index>
@@ -645,7 +662,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --{
         /* $<index> - any-element */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(1) | FLAG_FOURTH_BYTE(TYPE_QUOTED)
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPE_ELEMENT)
     }--]
     index: index + 1
 )

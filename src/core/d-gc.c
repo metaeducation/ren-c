@@ -97,7 +97,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             NOOP;
         }
         else {  // it's an extension type
-            fail ("Extension type GC checking not defined yet");
+            if (Not_Cell_Flag(v, DONT_MARK_NODE1))
+                assert(Is_Node_Marked(CELL_NODE1(v)));
+            if (Not_Cell_Flag(v, DONT_MARK_NODE2))
+                assert(Is_Node_Marked(CELL_NODE2(v)));
         }
         break;
 

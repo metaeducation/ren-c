@@ -296,8 +296,8 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         TypesetByte typeset_byte = VAL_UINT8(
             Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
         );
-        Option(Type) type = Type_Of(SPARE);
-        if (type and Builtin_Typeset_Check(typeset_byte, unwrap type))
+        Option(Type) type = Type_Of(SPARE);  // ELEMENT? tests ExtraHeart types
+        if (Builtin_Typeset_Check(typeset_byte, unwrap type))
             goto test_succeeded;
         goto test_failed;
     }
@@ -737,14 +737,12 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
     if (Is_Stable(atom)) {
         Option(Type) type = Type_Of(Stable_Unchecked(atom));
-        if (type) {
-            for (; optimized != optimized_tail; ++optimized) {
-                if (*optimized == 0)
-                    break;  // premature end of list
+        for (; optimized != optimized_tail; ++optimized) {
+            if (*optimized == 0)
+                break;  // premature end of list
 
-                if (Builtin_Typeset_Check(*optimized, unwrap type))
-                    goto return_true;
-            }
+            if (Builtin_Typeset_Check(*optimized, type))
+                goto return_true;  // ELEMENT?/FUNDAMENTAL? test TYPE_0 types
         }
     }
 

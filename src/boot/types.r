@@ -47,9 +47,6 @@ REBOL [
     }--
 ]
 
-; ===== BEGIN "FUNDAMENTALS" THAT AREN'T QUOTED, QUASI, OR ANTIFORM ==========
-<ANY-FUNDAMENTAL?>
-; ============================================================================
 
 blank       "placeholder unit type"
 ~nothing~   "state held by unset variables, can't be passed as normal argument"
@@ -391,9 +388,10 @@ comma         "separator between full evaluations (otherwise invisible)"
 </ANY-BINDABLE?>
 
 ; ======= END "FUNDAMENTALS" THAT AREN'T QUOTED, QUASI, OR ANTIFORM ==========
-</ANY-FUNDAMENTAL?>
-; ============================================================================
 
+; Note: We don't use <ANY-FUNDAMENTAL></ANY-FUNDAMENTAL> in this file because
+; fundamentals must include TYPE_0 for all extension types.  So that typerange
+; is made explicitly in %make-types.r
 
 ; ============================================================================
 ; ABOVE THESE ARE QUOTED, QUASIFORM, and ANTIFORM "PSEUDOTYPES"

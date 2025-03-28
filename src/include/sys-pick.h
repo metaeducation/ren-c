@@ -30,12 +30,12 @@
 //
 #define Dispatch_Generic(name,cue,L) \
     Dispatch_Generic_Core( \
-        SYM_##name, g_generic_##name, Datatype_Of_Fundamental(cue), (L) \
+        SYM_##name, &g_generic_##name, Datatype_Of_Fundamental(cue), (L) \
     )
 
 #define Try_Dispatch_Generic(bounce,name,cue,L) \
     Try_Dispatch_Generic_Core( \
-        bounce, SYM_##name, g_generic_##name, \
+        bounce, SYM_##name, &g_generic_##name, \
         Datatype_Of_Fundamental(cue), (L) \
     )
 
@@ -78,17 +78,18 @@ INLINE Bounce Dispatch_Generic_Core(
 
 INLINE Option(Dispatcher*) Get_Builtin_Generic_Dispatcher(
     const GenericTable* table,
-    Heart heart
+    Option(Heart) heart
 ){
-    for (; table->typeset_byte != 0; ++table) {
-        if (Builtin_Typeset_Check(table->typeset_byte, heart))
-            return table->dispatcher;
+    const GenericInfo* info = table->info;
+    for (; info->typeset_byte != 0; ++info) {
+        if (Builtin_Typeset_Check(info->typeset_byte, heart))
+            return info->dispatcher;
     }
     return nullptr;
 }
 
 #define Handles_Builtin_Generic(name,heart) \
-    (did Get_Builtin_Generic_Dispatcher(g_generic_##name, heart))
+    (did Get_Builtin_Generic_Dispatcher(&g_generic_##name, heart))
 
 
 INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
@@ -103,7 +104,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 }
 
 #define Handles_Generic(name,datatype) \
-    (did Get_Generic_Dispatcher(g_generic_##name, datatype))
+    (did Get_Generic_Dispatcher(&g_generic_##name, datatype))
 
 
 

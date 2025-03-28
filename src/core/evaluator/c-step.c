@@ -1779,6 +1779,7 @@ Bounce Stepper_Executor(Level* L)
     //=///////////////////////////////////////////////////////////////////=//
 
     inert:
+      case HEART_ENUM(0):
       case TYPE_BLANK:  // once blanks evaluated to null, but that was panned
       case TYPE_INTEGER:
       case TYPE_DECIMAL:
@@ -2077,7 +2078,7 @@ Bounce Stepper_Executor(Level* L)
   #if RUNTIME_CHECKS
     Evaluator_Exit_Checks_Debug(L);
 
-    assert(STATE != ST_STEPPER_INITIAL_ENTRY);
+    possibly(STATE == ST_STEPPER_INITIAL_ENTRY);  // TYPE_0 is state 0
     STATE = ST_STEPPER_FINISHED_DEBUG;  // must reset to STATE_0 if reused
   #endif
 

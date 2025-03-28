@@ -316,6 +316,18 @@ struct Reb_Enum_Vars {
 typedef struct Reb_Enum_Vars EVARS;
 
 
+//=//// LEGACY PORT HOOK //////////////////////////////////////////////////=//
+//
+// R3-Alpha PORT! had an ad-hoc method of delegating to either usermode code
+// or native code to handle actions taken on that PORT! (like APPEND or
+// LENGTH-OF).  There are a lot of questions about what the port model really
+// even was... and this is a remnant of that.  It all needs redesign.
+//
+// (It's referenced by the tmp-internals.c, but won't be once it dies.)
+//
+typedef Bounce (PORT_HOOK)(Level* level_, Value* port, const Symbol* verb);
+
+
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // #INCLUDE THE AUTO-GENERATED FUNCTION PROTOTYPES FOR THE INTERNAL API

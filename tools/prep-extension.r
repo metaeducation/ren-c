@@ -125,7 +125,9 @@ parse3:match inc-name [
 ; of the C module file, though it's not clear what kind of actionable
 ; information should be put there.
 
-all-protos: extract-native-protos c-src
+natives: extract-native-protos c-src
+
+generics: extract-generic-implementations c-src
 
 
 === "COUNT NATIVES AND DETERMINE IF THERE IS A NATIVE STARTUP* FUNCTION" ===
@@ -137,7 +139,7 @@ all-protos: extract-native-protos c-src
 has-startup*: 'no
 
 num-natives: 0
-for-each 'info all-protos [
+for-each 'info natives [
     if info.name = "startup*" [
         if yes? info.exported [
             ;
@@ -169,7 +171,7 @@ for-each 'info all-protos [
 
 specs-uncompressed: make text! 10000
 
-for-each 'info all-protos [
+for-each 'info natives [
     append specs-uncompressed info.proto
     append specs-uncompressed newline
 ]
@@ -187,13 +189,72 @@ if yes? use-librebol [
 
         #define LIBREBOL_BINDING_NAME  librebol_binding_$<l-m-name>
         #include "rebol.h"  /* not %rebol-internals.h ! */
+
+        /*
+         * Define DECLARE_NATIVE macro to include extension name.
+         * This avoids name collisions with the core, or with other extensions.
+         *
+         * The API form takes a Context*, e.g. a varlist.  Its name should be
+         * whatever the LIBREBOL_BINDING_NAME macro expands to (can't be 0).
+         */
+        #define DECLARE_NATIVE(name) \
+            RebolBounce N_${MOD}_##name(RebolContext* LIBREBOL_BINDING_NAME)
+
     }--]
 ] else [
     e1/emit [--{
         /* extension configuration says [use-librebol: 'no] */
 
         #define LIBREBOL_BINDING_NAME  librebol_binding_$<l-m-name>
-        #include "rebol-internals.h"  /* superset of %rebol.h */
+        #include "sys-core.h"  /* superset of %rebol.h */
+
+        /*
+         * We replace the declaration-based macros with ones that put the
+         * module in them, since all the DECLARE_NATIVE() using the core
+         * definitions have been included and expanded (the source would be
+         * uglier if we had to write EXT_DECLARE_NATIVE() in extensions.)
+         */
+
+        #undef DECLARE_NATIVE
+        #define DECLARE_NATIVE(name) \
+            Bounce N_${MOD}_##name(Level* level_)
+
+        #undef IMPLEMENT_GENERIC
+        #define IMPLEMENT_GENERIC(name,type) \
+            Bounce G_${MOD}_##name##_##type(Level* level_)
+
+        /*
+         * We save the definitions of NATIVE_CFUNC() and GENERIC_CFUNC() in
+         * case the extension wants to use the core's definitions.  Then
+         * redefine them to include the module name.
+         */
+
+        #define CORE_NATIVE_CFUNC  NATIVE_CFUNC
+        #define CORE_GENERIC_CFUNC  GENERIC_CFUNC
+
+        #undef NATIVE_CFUNC
+        #define NATIVE_CFUNC(name)  N_${MOD}_##name
+
+        #undef GENERIC_CFUNC
+        #define GENERIC_CFUNC(name,type)  G_${MOD}_##name##_##type
+
+        #define GENERIC_ENTRY(name,type) \
+            g_generic_${MOD}_##name##_##type
+
+        #define EXTENDED_HEART(name) /* name looks like Is_Image */ \
+            g_extension_type_##name
+
+        /* Note: I like using parentheses with such a macro to help notice
+         * when it's used in a variable name slot that it can't be the name
+         * of the variable.  But this runs up against something else I like,
+         * which is to use & at callsites on arrays to emphasize that it's
+         * an address being passed (even though arrays decay to pointers
+         * anyway).  Something has to give as &EXTENDED_GENERICS() is being
+         * interpreted as `ExtraGenericTable (*)[]` in the definition.  So
+         * I just don't use the & at the callsites.  :-(
+         */
+        #define EXTENDED_GENERICS() \
+            g_generics_${MOD}
     }--]
 ]
 e1/emit newline
@@ -223,29 +284,6 @@ e1/emit [--{
 }--]
 e1/emit newline
 
-if yes? use-librebol [
-    e1/emit [--{
-        /*
-         * Define DECLARE_NATIVE macro to include extension name.
-         * This avoids name collisions with the core, or with other extensions.
-         *
-         * The API form takes a Context*, e.g. a varlist.  Its name should be
-         * whatever the LIBREBOL_BINDING_NAME macro expands to (can't be 0).
-         */
-        #define DECLARE_NATIVE(name) \
-            RebolBounce N_${MOD}_##name(RebolContext* LIBREBOL_BINDING_NAME)
-    }--]
-] else [
-    e1/emit [--{
-        /*
-         * Define DECLARE_NATIVE macro to include extension name.
-         * This avoids name collisions with the core, or with other extensions.
-         */
-        #define DECLARE_NATIVE(name) \
-            Bounce N_${MOD}_##name(Level* level_)
-    }--]
-]
-e1/emit newline
 
 e1/emit --{
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
@@ -266,7 +304,7 @@ e1/emit --{
 e1/emit newline
 
 if yes? use-librebol [
-    for-each 'info all-protos [
+    for-each 'info natives [
         let proto-name
         parse3 info.proto [
             opt ["export" space] proto-name: across to ":"
@@ -287,7 +325,7 @@ if yes? use-librebol [
     ]
 ]
 else [
-    for-each 'info all-protos [
+    for-each 'info natives [
         emit-include-params-macro e1 info.proto
         e1/emit newline
     ]
@@ -302,7 +340,7 @@ else [
 ; to get at the addresses of those functions.
 
 cfunc-forward-decls: collect [
-    for-each 'info all-protos [
+    for-each 'info natives [
         keep cscape [info "DECLARE_NATIVE(${INFO.NAME})"]
     ]
 ]
@@ -314,6 +352,77 @@ e1/emit [cfunc-forward-decls --{
     $[Cfunc-Forward-Decls];
 }--]
 e1/emit newline
+
+
+=== "FORWARD DECLARE EXTENSION TYPES" ===
+
+; There really should be a DECLARE_TYPE() as a module may want to define
+; handlers for types from other extensions, or define multiple types, etc.
+; As a hack assume just one type per extension that uses IMPLEMENT_GENERIC()
+
+if no? use-librebol [
+    e1/emit --{
+        /*
+         * Current lame implementation is that if you use IMPLEMENT_GENERIC()
+         * it assumes they're all for the same type, and it defines a place
+         * to put the ExtraHeart* that comes back from registering it.  The
+         * table passed to Register_Generics() holds a pointer to this
+         * pointer, so when the Register_Datatype() puts a value into that
+         * space it can be propagated to the generic entries getting linked.
+         */
+    }--
+
+    e1/emit newline
+
+    if not empty? generics [
+        let Is_Xxx: generics.1.proper-type
+        e1/emit [info --{
+            extern ExtraHeart* EXTENDED_HEART(${Is_Xxx});
+        }--]
+
+        e1/emit newline
+
+        e1/emit [info --{
+            INLINE bool ${Is_Xxx}(const Cell* v) {
+                if (not Type_Of_Is_0(v))
+                    return false;
+                return Cell_Extra_Heart(v) == EXTENDED_HEART(${Is_Xxx});
+            }
+        }--]
+
+        e1/emit newline
+    ]
+]
+
+
+=== "FORWARD DECLARE ExtraGenericInfo FOR GENERIC IMPLEMENTATIONS" ===
+
+; Non-built-in generics are registered as a linked list for each generic.
+; Each element in the linked list is a global at a fixed address, so no
+; dynamic allocations are necessary to build the list.
+
+if no? use-librebol [
+    for-each 'info generics [
+        e1/emit [info
+            -{IMPLEMENT_GENERIC(${INFO.NAME}, ${Info.Proper-Type});}-
+        ]
+        e1/emit newline
+    ]
+
+    e1/emit newline
+
+    for-each 'info generics [
+        e1/emit [info --{
+            extern ExtraGenericInfo GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type});
+        }--]
+    ]
+
+    e1/emit newline
+
+    e1/emit [--{
+        extern const ExtraGenericTable (EXTENDED_GENERICS())[];  /* name macro! */
+    }--]
+]
 
 e1/write-emitted
 
@@ -386,7 +495,7 @@ write (join output-dir %script-uncompressed.r) script-uncompressed
 script-compressed: gzip script-uncompressed
 
 cfunc-names: collect [  ; must be in the order that NATIVE is called!
-    for-each 'info all-protos [
+    for-each 'info natives [
         keep cscape [mod info "N_${MOD}_${INFO.NAME}"]
     ]
 ]
@@ -485,5 +594,75 @@ e/emit [--{
         );
     }
 }--]
+
+e/emit newline
+
+if no? use-librebol [  ; you can't write generics with librebol... yet!
+
+    if not empty? generics [
+        let info: generics.1
+        e/emit [info --{
+            ExtraHeart* EXTENDED_HEART(${Info.Proper-Type}) = nullptr;
+        }--]
+    ]
+
+    e/emit newline
+
+    e/emit --{
+        /*
+        * These are the static globals that are used as the linked list entries
+        * when the extension registers its generics.  No dynamic allocations are
+        * needed--the pointers in the globals are simply updated.
+        */
+    }--
+
+    e/emit newline
+
+    for-each 'info generics [
+        e/emit [info --{
+            ExtraGenericInfo GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type}) = {
+                nullptr,  /* replaced with *ExtraGenericTable.ext_heart_ptr */
+                GENERIC_CFUNC(${INFO.NAME}, ${Info.Proper-Type}),
+                nullptr  /* used as pointer for next in linked list */
+            };
+        }--]
+    ]
+
+    e/emit newline
+
+    table-items: collect [
+        for-each 'info generics [
+            let table: cscape [info
+                "&GENERIC_TABLE(${INFO.NAME})"
+            ]
+            let ext_info: cscape [info
+                "&GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type})"
+            ]
+            let ext_heart_ptr: cscape [info
+                "&EXTENDED_HEART(${Info.Proper-Type})"
+            ]
+
+            keep cscape [table ext_info ext_heart_ptr
+                "{ $<Table>, $<Ext_Info>, $<Ext_Heart_Ptr> }"
+            ]
+        ]
+        keep --{{ nullptr, nullptr, nullptr }}--
+    ]
+
+    ; Micro-optimization could avoid making this if no IMPLEMENT_GENERIC()s.
+    ; But the code has fewer branches and edge cases if we always make it.
+    ;
+    e/emit [--{
+        /*
+        * This table is passed to Register_Generics() and Unregister_Generics().
+        * It maps from the generic tables to the entry that is added and removed
+        * from the linked list of the table in that particular generic for the
+        * non-built-in types.
+        */
+        const ExtraGenericTable (EXTENDED_GENERICS())[] = {  /* name macro! */
+            $[Table-Items],
+        };
+    }--]
+]
 
 e/write-emitted

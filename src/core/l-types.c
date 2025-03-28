@@ -50,7 +50,11 @@ DECLARE_NATIVE(TYPE_OF)
     if (type)
         return Init_Builtin_Datatype(OUT, unwrap type);
 
-    return FAIL("TYPE OF not supported for extension types...yet!");
+    assert(QUOTE_BYTE(v) == NOQUOTE_1);
+
+    const ExtraHeart* ext_heart = Cell_Extra_Heart(v);
+    Copy_Cell(OUT, ext_heart);
+    return OUT;
 }
 
 
