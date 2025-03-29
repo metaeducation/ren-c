@@ -132,13 +132,6 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
     process-conditional directive proto-parser.parse-position e-funcs
 ]
 
-/process: func [return: [~] file] [
-    /proto-parser.emit-proto: emit-proto/
-    proto-parser.file: file
-    /proto-parser.emit-directive: emit-directive/
-    proto-parser/process (as text! read file)
-]
-
 
 ;-------------------------------------------------------------------------
 
@@ -149,7 +142,7 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 ; more solid mechanism.
 
 
-e-funcs/emit --{
+e-funcs/emit [--{
     /*
      * Once there was a rule that C++ builds would not be different in function
      * from a C build.  This way, an extension DLL could be compiled to run
@@ -165,10 +158,9 @@ e-funcs/emit --{
     #if 0
     extern "C" {
     #endif
-}--
-e-funcs/emit newline
+}--]
 
-e-funcs/emit --{
+e-funcs/emit [--{
     /*
      * These are the functions that are scanned for in the %.c files by
      * %make-headers.r, and then their prototypes placed here.  This means it
@@ -176,8 +168,7 @@ e-funcs/emit --{
      * functions living in different sources.  (`static` functions are skipped
      * by the scan.)
      */
-}--
-e-funcs/emit newline
+}--]
 
 for-each 'item file-base.core [
     ;
@@ -203,7 +194,10 @@ for-each 'item file-base.core [
         not find:match file "os-"
     ]
 
-    process file
+    proto-parser.emit-proto: emit-proto/
+    proto-parser.file: file
+    proto-parser.emit-directive: emit-directive/
+    proto-parser/process (as text! read file)
 ]
 
 
@@ -216,7 +210,7 @@ e-funcs/emit --{
 e-funcs/write-emitted
 
 print [length of prototypes "function prototypes"]
-;wait 1
+
 
 ;-------------------------------------------------------------------------
 
@@ -228,12 +222,11 @@ sys-globals-parser: context [
     id: null
     data: ~
 
-    /process: func [return: [~] text] [
+    process: func [return: [~] text] [
         parse3 text grammar.rule  ; Review: no END (return result unused?)
     ]
 
     grammar: context bind:copy3 c-lexical.grammar [
-
         rule: [
             opt some [
                 parse-position: <here>
@@ -281,9 +274,7 @@ sys-globals-parser: context [
         ]
 
         other-segment: [thru newline]
-
     ]
-
 ]
 
 
@@ -295,13 +286,14 @@ e-strings: make-emitter "REBOL Constants with Global Linkage" (
     join output-dir %include/tmp-constants.h
 )
 
-e-strings/emit --{
+e-strings/emit [--{
     /*
      * This file comes from scraping %a-constants.c for any `const XXX =` or
      * `#define` definitions, and it is included in %sys-core.h in order to
      * to conveniently make the global data available in other source files.
      */
-}--
+}--]
+
 for-each 'line read:lines %a-constants.c [
     let constd
     case [

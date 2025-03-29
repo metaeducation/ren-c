@@ -257,7 +257,6 @@ if yes? use-librebol [
             g_generics_${MOD}
     }--]
 ]
-e1/emit newline
 
 e1/emit [--{
     /*
@@ -282,26 +281,23 @@ e1/emit [--{
      */
     #define LIBREBOL_BINDING_USED() (void)LIBREBOL_BINDING_NAME
 }--]
-e1/emit newline
 
 
-e1/emit --{
+e1/emit [--{
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
-}--
-e1/emit newline
+}--]
 
 
 === "IF NOT USING LIBREBOL, DEFINE INCLUDE_PARAMS_OF_XXX MACROS" ===
 
-e1/emit --{
+e1/emit [--{
     /*
      * INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), Bool_ARG(), ARG()
      *
      * Note these are not technically required if the extension uses
      * librebol.
      */
-}--
-e1/emit newline
+}--]
 
 if yes? use-librebol [
     for-each 'info natives [
@@ -321,13 +317,11 @@ if yes? use-librebol [
             #define INCLUDE_PARAMS_OF_${PROTO-NAME} \
                 LIBREBOL_BINDING_USED()
         }--]
-        e1/emit newline
     ]
 ]
 else [
     for-each 'info natives [
         emit-include-params-macro e1 info.proto
-        e1/emit newline
     ]
 ]
 
@@ -351,7 +345,6 @@ e1/emit [cfunc-forward-decls --{
      */
     $[Cfunc-Forward-Decls];
 }--]
-e1/emit newline
 
 
 === "FORWARD DECLARE EXTENSION TYPES" ===
@@ -361,7 +354,7 @@ e1/emit newline
 ; As a hack assume just one type per extension that uses IMPLEMENT_GENERIC()
 
 if no? use-librebol [
-    e1/emit --{
+    e1/emit [--{
         /*
          * Current lame implementation is that if you use IMPLEMENT_GENERIC()
          * it assumes they're all for the same type, and it defines a place
@@ -370,17 +363,13 @@ if no? use-librebol [
          * pointer, so when the Register_Datatype() puts a value into that
          * space it can be propagated to the generic entries getting linked.
          */
-    }--
-
-    e1/emit newline
+    }--]
 
     if not empty? generics [
         let Is_Xxx: generics.1.proper-type
         e1/emit [info --{
             extern ExtraHeart* EXTENDED_HEART(${Is_Xxx});
         }--]
-
-        e1/emit newline
 
         e1/emit [info --{
             INLINE bool ${Is_Xxx}(const Cell* v) {
@@ -389,8 +378,6 @@ if no? use-librebol [
                 return Cell_Extra_Heart(v) == EXTENDED_HEART(${Is_Xxx});
             }
         }--]
-
-        e1/emit newline
     ]
 ]
 
@@ -406,18 +393,13 @@ if no? use-librebol [
         e1/emit [info
             -{IMPLEMENT_GENERIC(${INFO.NAME}, ${Info.Proper-Type});}-
         ]
-        e1/emit newline
     ]
-
-    e1/emit newline
 
     for-each 'info generics [
         e1/emit [info --{
             extern ExtraGenericInfo GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type});
         }--]
     ]
-
-    e1/emit newline
 
     e1/emit [--{
         extern const ExtraGenericTable (EXTENDED_GENERICS())[];  /* name macro! */
@@ -524,11 +506,11 @@ e/emit [--{
     RebolContext* LIBREBOL_BINDING_NAME;
 
     /*
-     * Gzip compression of $<Script-Name> (no \0 terminator in array)
+     * Gzip compression of $<Script-Name>
      * Originally $<length of script-uncompressed> bytes
      */
     static const unsigned char script_compressed[$<script-len>] = {
-        $<Binary-To-C Script-Compressed>
+    $<Binary-To-C:Indent Script-Compressed 4>
     };
 
     /*
@@ -595,8 +577,6 @@ e/emit [--{
     }
 }--]
 
-e/emit newline
-
 if no? use-librebol [  ; you can't write generics with librebol... yet!
 
     if not empty? generics [
@@ -606,17 +586,13 @@ if no? use-librebol [  ; you can't write generics with librebol... yet!
         }--]
     ]
 
-    e/emit newline
-
-    e/emit --{
+    e/emit [--{
         /*
         * These are the static globals that are used as the linked list entries
         * when the extension registers its generics.  No dynamic allocations are
         * needed--the pointers in the globals are simply updated.
         */
-    }--
-
-    e/emit newline
+    }--]
 
     for-each 'info generics [
         e/emit [info --{
@@ -627,8 +603,6 @@ if no? use-librebol [  ; you can't write generics with librebol... yet!
             };
         }--]
     ]
-
-    e/emit newline
 
     table-items: collect [
         for-each 'info generics [

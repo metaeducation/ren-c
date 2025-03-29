@@ -77,15 +77,16 @@ e-version/emit [version --{
      *
      * !!! While using 5 byte-sized integers to denote a Rebol version might
      * not be ideal, it's a standard that's been around a long time.
+     *
+     * (Using years would make more sense, e.g. version 2025)
      */
-
     #define REBOL_VER $<version.1>
     #define REBOL_REV $<version.2>
     #define REBOL_UPD $<version.3>
     #define REBOL_SYS $<version.4>
     #define REBOL_VAR $<version.5>
 }--]
-e-version/emit newline
+
 e-version/write-emitted
 
 
@@ -396,7 +397,7 @@ e-errfuncs/emit [fields --{
     } ERROR_VARS;
 }--]
 
-e-errfuncs/emit --{
+e-errfuncs/emit [--{
     /*
      * The variadic Make_Error_Managed() function must be passed the exact
      * number of fully resolved Value* that the error spec specifies.  This is
@@ -407,7 +408,7 @@ e-errfuncs/emit --{
      * They shouldn't add overhead in release builds, but help catch mistakes
      * at compile time.
      */
-}--
+}--]
 
 add-sym:placeholder <MIN_SYM_ERRORS>
 
@@ -490,7 +491,6 @@ for-each [sw-cat list] boot-errors [
                 );
             }
         }--]
-        e-errfuncs/emit newline
     ]
 ]
 
@@ -672,6 +672,24 @@ e-symids/emit [syms-cscape --{
      * assigned 16-bit integer "SYM" compile-time-constants, to be used in
      * switch() for efficiency in the core.
      *
+     *     switch (Cell_Word_Id(color)) {
+     *       case SYM_BLUE: ...
+     *       case SYM_RED: ...
+     *     }
+     *
+     * (Note that since the built-in symbols are collected from scanning
+     * the source, the IDs will change if the source changes.  This means
+     * any change affecting symbols will require recompiling everything.)
+     *
+     * Built-in symbols are quickly allocated in a batch at boot time, loaded
+     * from a set of compressed strings in the boot block.  The symbols are
+     * never garbage collected, because they need to stick around to hold on
+     * to their embedded ID so they are recognized by the switches.
+     *
+     * There's also a feature of reserving numbers for symbols that aren't
+     * built in, but that any extension which uses them agrees to use the
+     * same number and provide it at registration time.  See Register_Symbol().
+     *
      * Datatypes are given symbol numbers at the start of the list, so that
      * their SYM_XXX values will be identical to their TYPE_XXX values.
      *
@@ -731,9 +749,9 @@ e-bootblock: make-emitter "Natives and Bootstrap" (
     join prep-dir %core/tmp-boot-block.c
 )
 
-e-bootblock/emit --{
+e-bootblock/emit [--{
     #include "sys-core.h"
-}--
+}--]
 
 sections: [
     :boot-natives
@@ -771,8 +789,9 @@ e-bootblock/emit [compressed --{
      * is enough to sync up the referencing sites.
      */
     const Size Symbol_Strings_Compressed_Size = $<length of compressed>;
+
     const Byte Symbol_Strings_Compressed[$<length of compressed>] = {
-        $<Binary-To-C Compressed>
+    $<Binary-To-C:Indent Compressed 4>
     };
 }--]
 
@@ -834,8 +853,9 @@ e-bootblock/emit [compressed --{
      * is enough to sync up the referencing sites.
      */
     const Size Boot_Block_Compressed_Size = $<length of compressed>;
+
     const Byte Boot_Block_Compressed[$<length of compressed>] = {
-        $<Binary-To-C Compressed>
+        $<Binary-To-C:Indent Compressed 4>
     };
 }--]
 

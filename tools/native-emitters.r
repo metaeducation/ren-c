@@ -261,8 +261,6 @@ export /emit-include-params-macro: func [
             $[Varlist-Hold] \
             $(Items); \
     }--]
-    e/emit newline
-    e/emit newline
 ]
 
 

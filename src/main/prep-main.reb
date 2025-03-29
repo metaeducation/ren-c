@@ -113,8 +113,9 @@ e/emit [compressed --{
      * Originally $<length of buf> bytes
      */
     #define MAIN_STARTUP_SIZE $<length of compressed>
+
     const unsigned char Main_Startup_Code[MAIN_STARTUP_SIZE] = {
-        $<Binary-To-C Compressed>
+    $<Binary-To-C:Indent Compressed 4>
     };
 }--]
 

@@ -195,10 +195,15 @@ export /binary-to-c: func [
 
     return: [text!]
     data [blob!]
+    :indent [integer!]
 ][
     let data-len: length of data
 
     let out: make text! 6 * (length of data)  ; array, not string literal [1]
+    if indent [
+        repeat indent [append out space]  ; no APPEND:DUP in bootstrap
+    ]
+
     while [not empty? maybe data] [
         let hexed: enbase:base (copy:part data 8) 16
         data: skip data 8
@@ -211,6 +216,9 @@ export /binary-to-c: func [
             take:last out  ; lose that last comma
         ]
         append out newline  ; newline after each group, and at end
+        if indent [
+            repeat indent [append out space]  ; no APPEND:DUP in bootstrap
+        ]
     ]
 
     let comma-count

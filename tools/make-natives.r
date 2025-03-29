@@ -224,7 +224,7 @@ e-forward: make-emitter "DECLARE_NATIVE() forward decls" (
     join output-dir %include/tmp-native-fwd-decls.h
 )
 
-e-forward/emit --{
+e-forward/emit [--{
     /*
      * NATIVE PROTOTYPES
      *
@@ -233,12 +233,10 @@ e-forward/emit --{
      * system-wide header so you can call a native dispatcher directly if
      * you need to.
      */
-}--
-e-forward/emit newline
+}--]
 
 for-each 'info natives [
     e-forward/emit [info -{DECLARE_NATIVE(${INFO.NAME});}-]
-    e-forward/emit newline
 ]
 
 e-forward/write-emitted
@@ -294,7 +292,6 @@ for-each 'info generics [
     e-forward/emit [info
         -{IMPLEMENT_GENERIC(${INFO.NAME}, ${Info.Proper-Type});}-
     ]
-    e-forward/emit newline
 ]
 
 e-forward/emit newline
@@ -306,9 +303,9 @@ for-each 'info natives [
     if info.native-type != 'generic [continue]
 
     e-forward/emit [info -{
+        /* ${INFO.NAME} ExtraGenericInfo fragments contributed by extensions */
         extern GenericInfo const g_generic_${INFO.NAME}_info[];
-
-        extern GenericTable g_generic_${INFO.NAME};  /* pair together */
+        extern GenericTable g_generic_${INFO.NAME};  /* pairs info with extra */
     }-]
 ]
 
@@ -365,8 +362,6 @@ for-each 'n-info natives [
             nullptr  /* mutable field (linked list of ExtraGenericInfo*) */
         };
     }-]
-
-    e-tables/emit newline
 ]
 
 for-each 'info generics [

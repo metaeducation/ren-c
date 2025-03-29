@@ -224,9 +224,8 @@ e-types/emit [--{
     extern TypesetFlags const g_typesets[];  // up to 255 allowed
     extern uint_fast32_t const g_sparse_memberships[MAX_TYPE_BYTE_ELEMENT + 1];
 }--]
-e-types/emit newline
 
-e-types/emit --{
+e-types/emit [--{
     /*
      * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
      *
@@ -253,8 +252,7 @@ e-types/emit --{
 
     #define CELL_HEART_QUOTE_MASK \
         (FLAG_HEART_BYTE_255 | FLAG_QUOTE_BYTE(255))
-}--
-e-types/emit newline
+}--]
 
 for-each-datatype 't [
     if t.cellmask [
@@ -262,7 +260,6 @@ for-each-datatype 't [
             #define CELL_MASK_${T.NAME} \
                 (FLAG_HEART(${T.NAME}) | $<MOLD T.CELLMASK>)
         }--]
-        e-types/emit newline
     ]
 
     e-types/emit [propercase-of t --{
@@ -270,7 +267,6 @@ for-each-datatype 't [
             ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
               == (FLAG_HEART(${T.NAME}) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
     }--]
-    e-types/emit newline
 ]
 
 sparse-typesets: copy []
@@ -278,7 +274,6 @@ sparse-typesets: copy []
 for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
     let proper-name: propercase-of tr.name
 
-    e-types/emit newline
     e-types/emit [tr --{
         INLINE bool Any_${Proper-Name}_Type(Option(Type) t)
           { return u_cast(Byte, unwrap t) >= $<TR.START> and u_cast(Byte, unwrap t) <= $<TR.END>; }
@@ -321,7 +316,7 @@ e-types/emit -{
 shift-by: 1  ; start at 1, since FLAG_LEFT_BIT(0) indicates a ranged typeset
 
 for-each [ts-name types] sparse-typesets [
-    e-types/emit [ts-name --{
+    e-types/emit cscape [ts-name --{
         #define TYPESET_FLAG_${TS-NAME}  FLAG_LEFT_BIT($<shift-by>)
     }--]
     shift-by: me + 1
@@ -337,7 +332,6 @@ for-each [ts-name types] sparse-typesets [
 e-types/emit newline
 
 for-each [ts-name types] sparse-typesets [
-    e-types/emit newline
     e-types/emit [propercase-of ts-name --{
         INLINE bool Any_${propercase-of Ts-Name}_Type(Option(Type) t) {
             return did (g_sparse_memberships[u_cast(Byte, unwrap t)] & TYPESET_FLAG_${TS-NAME});
@@ -374,7 +368,6 @@ for-each-datatype 't [
         #define Is_Quasi_$<Propercase-Of T.Name>(v) \
             Is_Meta_Of_$<Proper-Name>(v)  /* alternative */
     }--]
-    e-types/emit newline
 ]
 
 e-types/write-emitted
@@ -412,10 +405,9 @@ for-each-datatype 't [
 e-typesets: make-emitter "Built-in Typesets (Ranged and Sparse)" (
     join prep-dir %core/tmp-typesets.c
 )
-e-typesets/emit --{
+e-typesets/emit [--{
     #include "sys-core.h"
-}--
-e-typesets/emit newline
+}--]
 
 e-typeset-bytes: make-emitter "Typeset Byte Mapping" (
     join prep-dir %boot/tmp-typeset-bytes.r
@@ -678,7 +670,7 @@ e-typesets/emit [--{
      * bytes that you test to see if the Type byte is between.
      */
     TypesetFlags const g_typesets[] = {
-        /* 0 - <reserved> */  0,
+        /* 0 - <ExtraHeart> */  0,
         $(Typeset-Flags),
     };
 
@@ -689,7 +681,7 @@ e-typesets/emit [--{
      * on 64-bit integers, which we are attempting to excise from the system).
      */
     uint_fast32_t const g_sparse_memberships[MAX_TYPE_BYTE_ELEMENT + 1] = {
-        /* 0 - <reserved> */  0,
+        /* 0 - <ExtraHeart> */  0,
         $(Memberships),
     };
 }--]
@@ -826,6 +818,5 @@ e-hearts/emit [rebs --{
         $(Singlehearts),
     } SingleHeart;
 }--]
-e-hearts/emit newline
 
 e-hearts/write-emitted

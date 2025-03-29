@@ -335,17 +335,26 @@ export /make-emitter: func [
             "Write data to the emitter using CSCAPE templating (see HELP)"
 
             return: [~]
-            template [text! block! char?]
+            template "Adds newline if BLOCK! (use EMIT CSCAPE [...] to avoid)"
+                [text! block! char?]
         ][
             case [  ; no switch:type in bootstrap
                 text? template [
-                    append .buf-emit trim:auto copy template
+                    if not find template #"$" [
+                        append .buf-emit trim:auto copy template
+                    ]
+                    else [
+                        append .buf-emit cscape reduce [template]
+                    ]
                 ]
                 char? template [
                     append .buf-emit template
                 ]
-            ] else [
-                append .buf-emit cscape template
+                block? template [
+                    append .buf-emit cscape template
+                    append .buf-emit newline
+                ]
+                fail
             ]
         ]
 
@@ -379,7 +388,7 @@ export /make-emitter: func [
     ]
 
     any [is-c is-js] then [
-        e/emit [title boot-version stem by -{
+        e/emit [title boot-version stem by --{
             /**********************************************************************
             **
             **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -398,38 +407,29 @@ export /make-emitter: func [
             **      Licensed under the Apache License, Version 2.0.
             **      See: http://www.apache.org/licenses/LICENSE-2.0
             **  }--
-        }-]
-        if true? temporary [
-            e/emit -{
-                **  Note: "AUTO-GENERATED FILE - Do not modify"
-            }-
-        ]
-        e/emit -{
+            **  Note: "!!! AUTO-GENERATED FILE !!!"
             **
             ***********************************************************************/
-        }-
-        e/emit newline
+        }--]
     ]
     else [
-        e/emit unspaced ["REBOL" space]  ; no COMPOSE:DEEP in bootstrap shim
-        e/emit mold spread compose [
-            System: "REBOL [R3] Language Interpreter and Run-time Environment"
-            Title: (title)
-            File: (stem)
-            Rights: --{
-                Copyright 2012 REBOL Technologies
-                Copyright 2012-2018 Ren-C Open Source Contributors
-                REBOL is a trademark of REBOL Technologies
-            }--
-            License: --{
-                Licensed under the Apache License, Version 2.0.
-                See: http://www.apache.org/licenses/LICENSE-2.0
-            }--
-            (if true? temporary [
-                spread [Note: "AUTO-GENERATED FILE - Do not modify"]
-            ])
-        ]
-        e/emit newline
+        e/emit [title stem --{
+            REBOL [
+                System: "REBOL [R3] Language Interpreter and Run-time Environment"
+                Title: $<mold title>
+                File: $<mold stem>
+                Rights: --{
+                    Copyright 2012 REBOL Technologies
+                    Copyright 2012-2025 Ren-C Open Source Contributors
+                    REBOL is a trademark of REBOL Technologies
+                }--
+                License: --{
+                    Licensed under the Apache License, Version 2.0.
+                    See: http://www.apache.org/licenses/LICENSE-2.0
+                }--
+                Note: "!!! AUTO-GENERATED FILE !!!"
+            ]
+        }--]
     ]
     return e
 ]
