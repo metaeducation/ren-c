@@ -132,13 +132,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     VarList* ctx = Cell_Varlist(port);
     Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
 
-    // If actor is a HANDLE!, it should be a PAF
+    // If actor is an ACTION!, it should be an OLDGENERIC Dispatcher for PORT!
     //
-    // !!! Review how user-defined types could make this better/safer, as if
-    // it's some other kind of handle value this could crash.
-    //
-    if (Is_Native_Port_Actor(actor)) {
-        Bounce b = cast(PORT_HOOK*, Cell_Handle_Cfunc(actor))(level_, port, verb);
+    if (Is_Action(actor)) {
+        level_->u.action.label = verb;  // legacy hack, used by Level_Verb()
+
+        Details* details = Ensure_Cell_Frame_Details(actor);
+        Dispatcher* dispatcher = Details_Dispatcher(details);
+        Bounce b = (*dispatcher)(level_);
         if (b == BOUNCE_FAIL)
             return b;
 

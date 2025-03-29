@@ -1182,8 +1182,6 @@ Error* Error_Bad_Make(Type type, const Element* spec)
 //
 Error* Error_On_Port(SymId id, Value* port, REBINT err_code)
 {
-    FAIL_IF_BAD_PORT(port);
-
     VarList* ctx = Cell_Varlist(port);
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 

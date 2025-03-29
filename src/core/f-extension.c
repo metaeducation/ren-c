@@ -338,10 +338,10 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
         if (not IS_LIBRARY(lib))
             return FAIL(PARAM(EXT));
 
-        if (IS_LIB_CLOSED(VAL_LIBRARY(lib)))
+        if (Is_Library_Closed(Cell_Library(lib)))
             return FAIL(Error_Bad_Library_Raw());
 
-        OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
+        OS_CLOSE_LIBRARY(Cell_Library_FD(lib));
     */
 
    Value* shutdown_action = Sea_Var(

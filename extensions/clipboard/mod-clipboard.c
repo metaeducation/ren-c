@@ -35,18 +35,24 @@
 
 #include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.
 
+
 //
-//  Clipboard_Actor: C
+//  export clipboard-actor: native [
+//
+//  "Handler for OLDGENERIC dispatch on Clipboard PORT!s"
+//
+//      return: [any-value?]
+//  ]
+//
+DECLARE_NATIVE(CLIPBOARD_ACTOR)
 //
 // !!! Note: All state is in Windows, nothing in the port at the moment.  It
 // could track whether it's "open" or not, but the details of what is needed
 // depends on the development of a coherent port model.
-//
-static Bounce Clipboard_Actor(
-    Level* level_,
-    Value* port,
-    const Symbol* verb
-){
+{
+    Value* port = ARG_N(1);
+    const Symbol* verb = Level_Verb(LEVEL);
+
     switch (Symbol_Id(verb)) {
       case SYM_OPEN_Q:
         return Init_Logic(OUT, true); // !!! need "port state"?  :-/
@@ -179,19 +185,4 @@ static Bounce Clipboard_Actor(
     }
 
     return UNHANDLED;
-}
-
-
-//
-//  export get-clipboard-actor-handle: native [
-//
-//  "Retrieve handle to the native actor for clipboard"
-//
-//      return: [handle!]
-//  ]
-//
-DECLARE_NATIVE(GET_CLIPBOARD_ACTOR_HANDLE)
-{
-    Make_Port_Actor_Handle(OUT, &Clipboard_Actor);
-    return OUT;
 }

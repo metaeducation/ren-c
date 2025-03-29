@@ -86,36 +86,6 @@ INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
     return out;
 }
 
-// Ports are unusual hybrids of user-mode code dispatched with native code, so
-// some things the user can do to the internals of a port might cause the
-// C code to crash.  This wasn't very well thought out in R3-Alpha, but there
-// was some validation checking.  This factors out that check instead of
-// repeating the code.
-//
-INLINE void FAIL_IF_BAD_PORT(Value* port) {
-    if (not Any_Context(port))
-        fail (Error_Invalid_Port_Raw());
-
-    VarList* ctx = Cell_Varlist(port);
-    if (
-        Varlist_Len(ctx) < MAX_STD_PORT
-        or not Is_Object(Varlist_Slot(ctx, STD_PORT_SPEC))
-    ){
-        fail (Error_Invalid_Port_Raw());
-    }
-}
-
-// It's helpful to show when a test for a native port actor is being done,
-// rather than just having the code say Is_Handle().
-//
-INLINE bool Is_Native_Port_Actor(const Value* actor) {
-    if (Is_Handle(actor))
-        return true;
-    assert(Is_Object(actor));
-    return false;
-}
-
-
 INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
     const Value* context,
     const Symbol* symbol,

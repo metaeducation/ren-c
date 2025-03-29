@@ -16,5 +16,5 @@ REBOL [
 sys.util/make-scheme [
     title: "Clipboard"
     name: 'clipboard
-    actor: get-clipboard-actor-handle
+    actor: clipboard-actor/
 ]

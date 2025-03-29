@@ -36,8 +36,8 @@
 
 #include "tmp-mod-filesystem.h"
 
-extern Bounce File_Actor(Level* level_, Value* port, const Symbol* verb);
-extern Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb);
+extern Bounce File_Actor_Dispatcher(Level* level_);
+extern Bounce Dir_Actor_Dispatcher(Level* level_);
 
 
 #if TO_WINDOWS
@@ -64,17 +64,30 @@ DECLARE_NATIVE(STARTUP_P)
 
 
 //
-//  export get-file-actor-handle: native [
+//  export file-actor: native [
 //
-//  "Retrieve handle to the native actor for files"
+//  "Handler for OLDGENERIC dispatch on File PORT!s"
 //
-//      return: [handle!]
+//      return: [any-value?]
 //  ]
 //
-DECLARE_NATIVE(GET_FILE_ACTOR_HANDLE)
+DECLARE_NATIVE(FILE_ACTOR)
 {
-    Make_Port_Actor_Handle(OUT, &File_Actor);
-    return OUT;
+    return File_Actor_Dispatcher(LEVEL);
+}
+
+
+//
+//  export dir-actor: native [
+//
+//  "Handler for OLDGENERIC dispatch on Directory PORT!s"
+//
+//      return: [any-value?]
+//  ]
+//
+DECLARE_NATIVE(DIR_ACTOR)
+{
+    return Dir_Actor_Dispatcher(LEVEL);
 }
 
 
@@ -91,21 +104,6 @@ DECLARE_NATIVE(SHUTDOWN_P)
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
     return rebNothing();
-}
-
-
-//
-//  get-dir-actor-handle: native [
-//
-//  "Retrieve handle to the native actor for directories"
-//
-//      return: [handle!]
-//  ]
-//
-DECLARE_NATIVE(GET_DIR_ACTOR_HANDLE)
-{
-    Make_Port_Actor_Handle(OUT, &Dir_Actor);
-    return OUT;
 }
 
 

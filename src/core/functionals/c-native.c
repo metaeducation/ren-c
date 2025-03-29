@@ -355,6 +355,16 @@ bool Try_Dispatch_Generic_Core(
         heart == TYPE_PORT
         and symid != SYM_OLDGENERIC  // !!! legacy generics for port [2]
     ){
+        if (symid != SYM_MAKE) {
+            VarList* ctx = Cell_Varlist(Level_Arg(L, 1));
+            if (
+                Varlist_Len(ctx) < MAX_STD_PORT
+                or not Is_Object(Varlist_Slot(ctx, STD_PORT_SPEC))
+            ){
+                *bounce = Native_Raised_Result(L, Error_Invalid_Port_Raw());
+            }  // "old check" for invalid port
+        }
+
         switch (symid) {  // exempt port's IMPLEMENT_GENERIC() cases
           case SYM_MAKE:
           case SYM_EQUAL_Q:

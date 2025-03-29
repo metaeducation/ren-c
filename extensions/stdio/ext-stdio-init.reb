@@ -7,12 +7,12 @@ REBOL [
 ]
 
 sys.util/make-scheme [
-    title: "Console Access"
-    name: 'console
-    actor: get-console-actor-handle
+    title: "Terminal/Stdio Access"
+    name: 'stdio
+    actor: stdio-actor/
 ]
 
-system.ports.input: open [scheme: 'console]
+system.ports.input: open [scheme: 'stdio]
 
 
 ; During boot, there shouldn't be any output.  However, it would be annoying

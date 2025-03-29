@@ -31,7 +31,7 @@ export /wait: adapt wait*/ [if block? :value [value: reduce value]]
 sys.util/make-scheme [
     title: "TCP Networking"
     name: 'tcp
-    actor: get-tcp-actor-handle
+    actor: tcp-actor/
     spec: system.standard.port-spec-net
     info: system.standard.net-info  ; !!! comment here said "for C enums"
 ]
@@ -42,7 +42,7 @@ sys.util/make-scheme [
 sys.util/make-scheme [
     title: "UDP Networking"
     name: 'udp
-    actor: get-udp-actor-handle
+    actor: udp-actor/
     spec: system.standard.port-spec-net
     info: system.standard.net-info  ; !!! comment here said "for C enums"
 ]

@@ -95,16 +95,16 @@ DECLARE_NATIVE(CONNECT)
 //
 //  close: native:generic [
 //
-//  "Closes a port"  ; !!! Used to also close LIBRARY!
+//  "Closes a port, library, etc."
 //
-//      return: [port!]  ; !!! Is returning the port useful?
-//      port [port!]
+//      return: [fundamental?]  ; !!! Is returning the port useful?
+//      port [fundamental?]  ; "target", "value", "element" instead of port?
 //  ]
 //
 DECLARE_NATIVE(CLOSE)
 {
     Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, CANON(CLOSE));
+    return Dispatch_Generic(CLOSE, port, LEVEL);
 }
 
 

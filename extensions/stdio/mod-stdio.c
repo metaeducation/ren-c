@@ -43,21 +43,20 @@ extern void Write_IO(const Value* data, REBLEN len);
 extern bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out);
 
 
-extern Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb);
+extern Bounce Stdio_Actor_Dispatcher(Level* level_);
 
 
 //
-//  get-console-actor-handle: native [
+//  export stdio-actor: native [
 //
-//  "Retrieve handle to the native actor for console"
+//  "Handler for OLDGENERIC dispatch on Stdio PORT!s"
 //
-//      return: [handle!]
+//      return: [any-value?]
 //  ]
 //
-DECLARE_NATIVE(GET_CONSOLE_ACTOR_HANDLE)
+DECLARE_NATIVE(STDIO_ACTOR)
 {
-    Make_Port_Actor_Handle(OUT, &Console_Actor);
-    return OUT;
+    return Stdio_Actor_Dispatcher(LEVEL);
 }
 
 

@@ -9,6 +9,6 @@ REBOL [
 sys.util/make-scheme [
     title: "DNS Lookup"
     name: 'dns
-    actor: get-dns-actor-handle
+    actor: dns-actor/
     spec: system.standard.port-spec-net
 ]

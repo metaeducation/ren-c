@@ -94,7 +94,7 @@ Value* Get_File_Size_Cacheable(uint64_t *size, const Value* port)
 
     if (file->size_cache != FILESIZE_UNKNOWN) {
         *size = file->size_cache;
-        return nullptr;  // assume accurate (checked each entry to File_Actor)
+        return nullptr;  // assume accurate (checked each entry to File Actor)
     }
 
     uv_fs_t req;
@@ -455,7 +455,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
 
     // !!! The concept of R3-Alpha was that it would keep the file size up to
     // date...theoretically.  But it actually didn't do that here.  Adding it,
-    // but also adding a check in File_Actor() to make sure the cache is right.
+    // but also adding a check in File Actor to make sure the cache is right.
     //
     if (file->size_cache != FILESIZE_UNKNOWN) {
         if (file->offset + num_bytes_written > file->size_cache) {

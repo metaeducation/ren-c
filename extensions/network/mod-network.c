@@ -647,15 +647,12 @@ void on_write_finished(uv_write_t *req, int status)
 }
 
 
+// Shared code between UDP and TCP handling
 //
-//  Transport_Actor: C
-//
-static Bounce Transport_Actor(
-    Level* level_,
-    Value* port,
-    const Symbol* verb,
-    enum Transport_Type transport
-){
+static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
+    Value* port = ARG_N(1);
+    const Symbol* verb = Level_Verb(LEVEL);
+
     if (transport == TRANSPORT_UDP)  // disabled for now
         return FAIL(
             "https://forum.rebol.info/t/fringe-udp-support-archiving/1730"
@@ -982,56 +979,30 @@ static Bounce Transport_Actor(
 
 
 //
-//  TCP_Actor: C
+//  export tcp-actor: native [
 //
-static Bounce TCP_Actor(Level* level_, Value* port, const Symbol* verb)
-{
-    return Transport_Actor(level_, port, verb, TRANSPORT_TCP);
-}
-
-
+//  "Handler for OLDGENERIC dispatch on TCP PORT!s"
 //
-//  UDP_Actor: C
-//
-static Bounce UDP_Actor(Level* level_, Value* port, const Symbol* verb)
-{
-    return Transport_Actor(level_, port, verb, TRANSPORT_UDP);
-}
-
-
-//
-//  get-tcp-actor-handle: native [
-//
-//  "Retrieve handle to the native actor for TCP"
-//
-//      return: [handle!]
+//      return: [any-value?]
 //  ]
 //
-DECLARE_NATIVE(GET_TCP_ACTOR_HANDLE)
+DECLARE_NATIVE(TCP_ACTOR)
 {
-    INCLUDE_PARAMS_OF_GET_TCP_ACTOR_HANDLE;
-
-    Make_Port_Actor_Handle(OUT, &TCP_Actor);
-    return OUT;
+    return Transport_Actor(level_, TRANSPORT_TCP);
 }
 
 
 //
-//  get-udp-actor-handle: native [
+//  export udp-actor: native [
 //
-//  "Retrieve handle to the native actor for UDP"
+//  "Handler for OLDGENERIC dispatch on UDP PORT!s"
 //
-//      return: [handle!]
+//      return: [any-value?]
 //  ]
 //
-DECLARE_NATIVE(GET_UDP_ACTOR_HANDLE)
-//
-// !!! Note: has not been ported to libuv.
+DECLARE_NATIVE(UDP_ACTOR)
 {
-    INCLUDE_PARAMS_OF_GET_UDP_ACTOR_HANDLE;
-
-    Make_Port_Actor_Handle(OUT, &UDP_Actor);
-    return OUT;
+    return Transport_Actor(level_, TRANSPORT_UDP);
 }
 
 

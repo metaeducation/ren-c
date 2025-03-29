@@ -26,7 +26,7 @@
 // going through a port.  system.ports.INPUT was thus created from it.
 //
 
-#include "rebol-internals.h"
+#include "tmp-mod-stdio.h"
 
 #include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.
 
@@ -291,11 +291,11 @@ Value* Read_Line(STD_TERM *t)
 #endif  // if defined(REBOL_SMART_CONSOLE)
 
 
-//
-//  Console_Actor: C
-//
-Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
+Bounce Stdio_Actor_Dispatcher(Level* level_)
 {
+    Value* port = ARG_N(1);
+    const Symbol* verb = Level_Verb(LEVEL);
+
     VarList* ctx = Cell_Varlist(port);
 
     switch (Symbol_Id(verb)) {

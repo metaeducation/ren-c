@@ -74,7 +74,7 @@
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
 
-#include "rebol-internals.h"
+#include "tmp-mod-filesystem.h"
 
 #include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.
 
@@ -103,13 +103,11 @@ INLINE uint64_t File_Size_Cacheable_May_Fail(const Value* port)
 }
 
 
-//
-//  File_Actor: C
-//
-// Internal port handler for files.
-//
-Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
+Bounce File_Actor_Dispatcher(Level* level_)
 {
+    Value* port = ARG_N(1);
+    const Symbol* verb = Level_Verb(LEVEL);
+
     VarList* ctx = Cell_Varlist(port);
 
     // The first time the port code gets entered the state field will be NULL.
@@ -166,7 +164,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
         file = File_Of_Port(port);
         file->id = FILEHANDLE_NONE;
-        file->is_dir = false;  // would be dispatching to Dir_Actor if dir
+        file->is_dir = false;  // would be dispatching to Dir Actor if dir
         file->size_cache = FILESIZE_UNKNOWN;
         file->offset = FILEOFFSET_UNKNOWN;
 
@@ -258,7 +256,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         // :PART has traditionally meant a maximum limit, and it has not
         // errored if it gave back less).  The size might be cached in which
         // case there's no need to do a fstat (cache integrity is checked in
-        // the RUNTIME_CHECKS build at the top of the File_Actor).
+        // the RUNTIME_CHECKS build at the top of the File Actor).
         //
         uint64_t file_size = File_Size_Cacheable_May_Fail(port);
         if (file->offset > file_size) {

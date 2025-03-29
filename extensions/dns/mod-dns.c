@@ -146,11 +146,20 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value) out)
 #endif
 
 
+
 //
-//  DNS_Actor: C
+//  export dns-actor: native [
 //
-static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
+//  "Handler for OLDGENERIC dispatch on DNS PORT!s"
+//
+//      return: [any-value?]
+//  ]
+//
+DECLARE_NATIVE(DNS_ACTOR)
 {
+    Value* port = ARG_N(1);
+    const Symbol* verb = Level_Verb(LEVEL);
+
     VarList* ctx = Cell_Varlist(port);
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
@@ -275,19 +284,4 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
     }
 
     return UNHANDLED;
-}
-
-
-//
-//  export get-dns-actor-handle: native [
-//
-//  "Retrieve handle to the native actor for DNS"
-//
-//      return: [handle!]
-//  ]
-//
-DECLARE_NATIVE(GET_DNS_ACTOR_HANDLE)
-{
-    Make_Port_Actor_Handle(OUT, &DNS_Actor);
-    return OUT;
 }

@@ -227,7 +227,7 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
     if not scheme.name [cause-error 'access 'no-scheme-name scheme]
 
     ; If actor is block build a non-contextual actor object:
-    if block? scheme.actor [
+    if block? :scheme.actor [
         let actor: make object! (length of scheme.actor) / 4
         for-each [name op args body] scheme.actor [
             assert [
@@ -245,8 +245,10 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
         scheme.actor: actor
     ]
 
-    match [object! handle!] scheme.actor else [
-        fail ["Scheme actor" scheme.name "can't be" type of scheme.actor]
+    match [object! action!] :scheme.actor else [
+        fail [
+            "Scheme actor" scheme.name "can't be" to word! type of scheme.actor
+        ]
     ]
 
     set (extend system.schemes scheme.name) scheme

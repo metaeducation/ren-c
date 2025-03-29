@@ -53,7 +53,7 @@
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
 
-#include "rebol-internals.h"
+#include "tmp-mod-filesystem.h"
 
 #include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.
 
@@ -68,13 +68,10 @@ extern Value* Rename_File_Or_Directory(const Value* port, const Value* to);
 Value* Try_Read_Directory_Entry(FILEREQ *dir);
 
 
-//
-//  Dir_Actor: C
-//
-// Internal port handler for file directories.
-//
-Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
+Bounce Dir_Actor_Dispatcher(Level* level_)
 {
+    Value* port = ARG_N(1);
+    const Symbol* verb = Level_Verb(LEVEL);
     VarList* ctx = Cell_Varlist(port);
 
     Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
@@ -116,7 +113,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         dir = File_Of_Port(port);
         dir->handle = nullptr;
         dir->id = FILEHANDLE_NONE;
-        dir->is_dir = true;  // would be dispatching to File_Actor if dir
+        dir->is_dir = true;  // would be dispatching to File Actor if dir
         dir->size_cache = FILESIZE_UNKNOWN;
         dir->offset = FILEOFFSET_UNKNOWN;
 
