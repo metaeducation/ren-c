@@ -62,7 +62,6 @@
 (if first ['a] [okay])
 (if ok [okay])
 (^void = ^ if null [okay])
-(if $1 [okay])
 (if (specialize of/ [property: 'type]) [okay])
 (okay = if blank [okay])
 (if make object! [] [okay])

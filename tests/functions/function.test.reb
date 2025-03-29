@@ -109,11 +109,7 @@
     'false = f
 )
 (
-    /f: does [$1]
-    $1 == f
-)
-(
-    /f: does [:append]
+    f: does [:append]
     same? :append f
 )
 (

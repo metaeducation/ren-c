@@ -216,28 +216,16 @@
 
 ; datatype differences
 (not strict-equal? 0 0.0)
-; datatype differences
-(not strict-equal? 0 $0)
-; datatype differences
-(not strict-equal? 0 0%)
-; datatype differences
-(not strict-equal? 0.0 $0)
-; datatype differences
 (not strict-equal? 0.0 0%)
-; datatype differences
-(not strict-equal? $0 0%)
+
 ; symmetry
 (equal? strict-equal? 1 1.0 strict-equal? 1.0 1)
 ; symmetry
-(equal? strict-equal? 1 $1 strict-equal? $1 1)
-; symmetry
 (equal? strict-equal? 1 100% strict-equal? 100% 1)
-; symmetry
-(equal? strict-equal? 1.0 $1 strict-equal? $1 1.0)
+
 ; symmetry
 (equal? strict-equal? 1.0 100% strict-equal? 100% 1.0)
-; symmetry
-(equal? strict-equal? $1 100% strict-equal? 100% $1)
+
 ; approximate equality
 (not strict-equal? 10% + 10% + 10% 30%)
 ; symmetry

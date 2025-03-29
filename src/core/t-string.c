@@ -29,7 +29,6 @@
 
 #include "sys-int-funcs.h"
 
-#include "cells/cell-money.h"
 
 #define MAX_QUOTED_STR  50  // max length of "string" before going to { }
 
@@ -611,6 +610,22 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Email)
 }
 
 
+IMPLEMENT_GENERIC(MOLDIFY, Is_Money)
+{
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = Bool_ARG(FORM);
+
+    UNUSED(form);
+    Append_Codepoint(mo->string, '$');
+    Append_Any_Utf8(mo->string, v);
+
+    return NOTHING;
+}
+
+
 static void Mold_File(Molder* mo, const Cell* v)
 {
 
@@ -737,7 +752,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
     Option(SymId) id = Symbol_Id(verb);
 
     Element* v = cast(Element*, ARG_N(1));
-    assert(Any_String(v));
+    assert(Any_String(v) or Any_Utf8(v));  // UTF-8 delegates, but immutable
 
     switch (id) {
       case SYM_REMOVE: {

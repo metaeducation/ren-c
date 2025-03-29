@@ -24,8 +24,6 @@
 
 #include "sys-core.h"
 
-#include "cells/cell-money.h"
-
 
 #define Dec_Trunc(x) (((x) < 0.0) ? -1.0 : 1.0) * floor(fabs(x))
 #define Dec_Away(x) (((x) < 0.0) ? -1.0 : 1.0) * ceil(fabs(x))
@@ -185,30 +183,4 @@ REBI64 Round_Int(REBI64 num, Level* level_, REBI64 scale)
     if (Bool_ARG(HALF_CEILING)) {Int_Ceil; return num;}
 
     Int_Away; return num; /* this is round_half_away */
-}
-
-//
-//  Round_Deci: C
-//
-// Identical to ROUND mezzanine function.
-//
-deci Round_Deci(deci num, Level* level_)
-{
-    INCLUDE_PARAMS_OF_ROUND;
-    UNUSED(ARG(VALUE));  // was extracted as `num`
-
-    deci scale = decimal_to_deci(Bool_ARG(TO) ? Dec64(ARG(TO)) : 1.0);
-
-    if (deci_is_zero(scale))
-        fail (Error_Zero_Divide_Raw());
-    scale = deci_abs(scale);
-
-    if (Bool_ARG(EVEN)) return deci_half_even(num, scale);
-    if (Bool_ARG(DOWN)) return deci_truncate(num, scale);
-    if (Bool_ARG(HALF_DOWN)) return deci_half_truncate(num, scale);
-    if (Bool_ARG(FLOOR)) return deci_floor(num, scale);
-    if (Bool_ARG(CEILING)) return deci_ceil(num, scale);
-    if (Bool_ARG(HALF_CEILING)) return deci_half_ceil(num, scale);
-
-    return deci_half_away(num, scale);
 }

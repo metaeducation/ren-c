@@ -138,7 +138,7 @@
 )
 ('true == eval ['true])
 ('false == eval ['false])
-($1 == eval [$1])
+
 (same? :append eval [:append])
 (null? eval [~null~])
 (

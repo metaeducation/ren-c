@@ -91,7 +91,6 @@
 )
 (okay = all [okay])
 (null? all [null])
-($1 == all [$1])
 (same? :append all [:append])
 
 (null? all [~null~])
@@ -187,7 +186,6 @@
     a-value: first ['a]
     :a-value == all [okay :a-value]
 )
-($1 == all [okay $1])
 (same? ^append all [okay ^append])
 
 (null? all [okay ~null~])
@@ -285,7 +283,7 @@
 (okay = all [okay okay])
 (null? all [null okay])
 (null? all [okay null])
-(okay = all [$1 okay])
+
 (okay = all [:append okay])
 (okay = all [_ okay])
 (

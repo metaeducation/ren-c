@@ -689,7 +689,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return Init_Any_Word(OUT, to, sym);
     }
 
-    if (to == TYPE_ISSUE) {  // may have to make node if source mutable
+    if (to == TYPE_ISSUE or to == TYPE_MONEY) {  // may make node if mutable
         if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v))) {
             possibly(Any_Word(v));
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
@@ -878,7 +878,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         return nullptr;
     }
 
-    if (as == TYPE_ISSUE) {  // try to fit in cell, or use frozen string
+    if (as == TYPE_ISSUE or as == TYPE_MONEY) {  // fits cell or freeze string
         assert(not Any_Word_Type(as) and not (Any_String_Type(as)));
 
         if (Stringlike_Has_Node(v)) {

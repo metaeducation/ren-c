@@ -44,6 +44,7 @@
 %datatypes/logic.test.reb
 %datatypes/module.test.reb
 %datatypes/money.test.reb
+; %datatypes/money-math.test.reb  ; not currently working
 %datatypes/null.test.reb
 %datatypes/object.test.reb
 %datatypes/pair.test.reb

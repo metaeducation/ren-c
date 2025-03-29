@@ -24,8 +24,6 @@
 
 #include "sys-core.h"
 
-#include "cells/cell-money.h" // !!! Needed for hash (should be a method?)
-
 #undef Byte  // sys-zlib.h defines it compatibly (unsigned char)
 #include "sys-zlib.h" // re-use CRC code from zlib
 const z_crc_t *crc32_table; // pointer to the zlib CRC32 table

@@ -73,10 +73,6 @@ pair        "two dimensional point or size"
             (node1)
             [any-scalar? any-inert?]
 
-money       "high precision decimals with denomination (opt)"
-            (CELL_MASK_NO_NODES)
-            [any-scalar? any-inert?]
-
 time        "time of day or duration"
             (CELL_MASK_NO_NODES)
             [any-scalar? any-inert?]
@@ -132,6 +128,10 @@ email       "email address"
 
 issue       "immutable codepoint or codepoint sequence"
             (:node1)  ; may or may not embed data in issue vs. use node
+            [any-utf8? any-inert? any-sequencable?]
+
+money       "digits and decimal points as a string, preserved precisely"
+            (CELL_MASK_NO_NODES)
             [any-utf8? any-inert? any-sequencable?]
 
 sigil       "Decorators like $ ^ & @ ' ~~"

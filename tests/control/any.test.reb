@@ -81,7 +81,6 @@
 )
 (okay = any [okay])
 (null? any [null])
-($1 == any [$1])
 
 (same? ^append any [^append])
 
@@ -181,7 +180,6 @@
 )
 (okay = any [null okay])
 (null? any [null null])
-($1 == any [null $1])
 (same? unrun :append any [null unrun :append])
 
 (null? any [null ~null~])
@@ -277,7 +275,6 @@
     :a-value == any [:a-value null]
 )
 (okay = any [okay null])
-($1 == any [$1 null])
 
 (same? unrun :append any [unrun :append null])
 (_ = any [_ null])

@@ -289,28 +289,20 @@
 )
 ; integer! vs. decimal!
 (equal? 0 0.0)
-; integer! vs. money!
-(equal? 0 $0)
 ; integer! vs. percent!
 (equal? 0 0%)
-; decimal! vs. money!
-(equal? 0.0 $0)
 ; decimal! vs. percent!
 (equal? 0.0 0%)
-; money! vs. percent!
-(equal? $0 0%)
+
 ; integer! vs. decimal! symmetry
 (equal? equal? 1 1.0 equal? 1.0 1)
-; integer! vs. money! symmetry
-(equal? equal? 1 $1 equal? $1 1)
+
 ; integer! vs. percent! symmetry
 (equal? equal? 1 100% equal? 100% 1)
-; decimal! vs. money! symmetry
-(equal? equal? 1.0 $1 equal? $1 1.0)
+
 ; decimal! vs. percent! symmetry
 (equal? equal? 1.0 100% equal? 100% 1.0)
-; money! vs. percent! symmetry
-(equal? equal? $1 100% equal? 100% $1)
+
 ; percent! approximate equality
 (equal? 10% + 10% + 10% 30%)
 ; percent! approximate equality symmetry

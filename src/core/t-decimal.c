@@ -26,8 +26,6 @@
 #include <math.h>
 #include <float.h>
 
-#include "cells/cell-money.h"
-
 #define COEF 0.0625 // Coefficient used for float comparision
 #define EQ_RANGE 4
 
@@ -137,7 +135,14 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 
     Element* arg = Element_ARG(DEF);
 
-    switch (Type_Of(arg)) {
+    Option(Type) type = Type_Of(arg);
+    if (Any_Utf8_Type(type)) {
+        Option(Error*) e = Trap_Transcode_One(OUT, TYPE_DECIMAL, arg);
+        if (e)
+            return RAISE(unwrap e);
+        return OUT;
+    }
+    else switch (type) {
       case TYPE_ISSUE: {
         REBDEC d = cast(REBDEC, Cell_Codepoint(arg));
         return Init_Decimal(OUT, d); }
@@ -402,10 +407,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 else if (not Is_Percent(val))
                     heart = Heart_Of_Builtin_Fundamental(val);
             }
-            else if (heart == TYPE_MONEY) {
-                Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
-                return GENERIC_CFUNC(OLDGENERIC, Is_Money)(level_);
-            }
             else if (heart == TYPE_ISSUE) {
                 d2 = cast(REBDEC, Cell_Codepoint(arg));
                 heart = TYPE_DECIMAL;
@@ -495,9 +496,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 Init_Integer(ARG(TO), 1);
         }
 
-        if (Is_Money(ARG(TO)))
-            return Init_Money(OUT, Round_Deci(decimal_to_deci(d1), level_));
-
         if (Is_Time(ARG(TO)))
             return FAIL(PARAM(TO));
 
@@ -519,7 +517,23 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 }
 
 
-// 1. Right now the intelligence that gets 1% to render that way instead
+// 1. You can't convert a DECIMAL! to a MONEY! in a way that keeps it exact
+//    in such a way that it could round trip consistently through TO TEXT!.
+//
+//        >> m: to money! 10.20  ; gets passed 10.2
+//        == $10.20  ; we'd be faking the terminal 0
+//
+//        >> to text! m
+//        == "$10.20"  ; seems good
+//
+//        >> to text! to decimal! m
+//        == "10.2"  ; not "10.20" as you might expect
+//
+//    The concept that TO is going for is that if you can successfully perform
+//    the conversion, then these round trips should give consistent answers.
+//    It's a theory and being tried out to make TO "actually useful".
+//
+// 2. Right now the intelligence that gets 1% to render that way instead
 //    of 1.0% is in FORM.  We don't repeat that here, but just call the
 //    form process and drop the trailing %.  Should be factored better.
 //
@@ -538,24 +552,45 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
     REBDEC d = VAL_DECIMAL(val);
 
     if (Any_Utf8_Type(to)) {
+        if (to == TYPE_MONEY)
+            return RAISE(  // (to money! 10.20) acts as (to money! 10.2) [1]
+                "TO MONEY! of DECIMAL! can't conserve precision"
+            );
+
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);
         Mold_Element(mo, val);
+
+        if (Is_Percent(val)) { // leverage (buggy) rendering 1% vs 1.0% [2]
+            Term_String_Len_Size(
+                mo->string,
+                String_Len(mo->string) - 1,
+                String_Size(mo->string) - 1
+            );
+        }
+
+        if (Any_String_Type(to))
+            return Init_Any_String(OUT, to, Pop_Molded_String(mo));
+
+        if (Try_Init_Small_Utf8(
+            OUT,
+            to,
+            cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
+            String_Len(mo->string) - mo->base.index,
+            String_Size(mo->string) - mo->base.size
+        )){
+            Drop_Mold(mo);
+            return OUT;
+        }
         const String* s = Pop_Molded_String(mo);
-        if (not Any_String_Type(to))
-            Freeze_Flex(s);
-        Init_Any_String(OUT, to, s);
-        if (Is_Percent(val))  // leverage (buggy) rendering 1% vs 1.0% [1]
-            rebElide("take:last", OUT);
-        return OUT;
+        Freeze_Flex(s);
+        return Init_Any_String(OUT, to, s);
     }
 
     if (to == TYPE_DECIMAL or to == TYPE_PERCENT)
         return Init_Decimal_Or_Percent(OUT, to, d);
 
-    if (to == TYPE_MONEY)
-        return Init_Money(OUT, decimal_to_deci(d));
 
     if (to == TYPE_INTEGER) {
         REBDEC leftover = d - cast(REBDEC, cast(REBI64, d));

@@ -24,8 +24,6 @@
 
 #include "sys-core.h"
 
-#include "cells/cell-money.h"
-
 
 //
 //  Get_Num_From_Arg: C
@@ -147,8 +145,6 @@ REBI64 Int64(const Value* val)
         return VAL_INT64(val);
     if (Is_Decimal(val) or Is_Percent(val))
         return cast(REBI64, VAL_DECIMAL(val));
-    if (Is_Money(val))
-        return deci_to_int(VAL_MONEY_AMOUNT(val));
 
     fail (val);
 }
@@ -163,8 +159,6 @@ REBDEC Dec64(const Value* val)
         return VAL_DECIMAL(val);
     if (Is_Integer(val))
         return cast(REBDEC, VAL_INT64(val));
-    if (Is_Money(val))
-        return deci_to_decimal(VAL_MONEY_AMOUNT(val));
 
     fail (val);
 }

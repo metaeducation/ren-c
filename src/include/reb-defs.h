@@ -387,8 +387,6 @@ typedef struct rebol_time_fields {
     REBLEN n;
 } REB_TIMEF;
 
-#include "sys-deci.h"
-
 enum act_modify_mask {
     AM_PART = 1 << 0,
     AM_SPLICE = 1 << 1,

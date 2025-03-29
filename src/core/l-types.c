@@ -887,6 +887,81 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 
 
 //
+//  Try_Scan_Money_To_Stack: C
+//
+// MONEY! in historical Rebol was numeric with an abandoned and esoteric
+// implementation.  Ren-C makes it an ANY-UTF8? type instead, giving it the
+// ability to hold a string of any length.  If you want to do math on it, you
+// have to convert it to a numeric type.  (The original "deci" implementation
+// for MONEY! is now a separate type available in an extension as DECI! for
+// those who want it, but it's not part of the core distribution.)
+//
+// 1. It's conceivable that we could broaden the type to allow for more
+//    than just digits and two decimal places.  But there are diminishing
+//    returns, and more benefit to keeping it tame.  The most interesting
+//    use for dialecting is simply as integers, e.g. $1 $2 $3 $4 $5 for
+//    locating substitution points.
+//
+Option(const Byte*) Try_Scan_Money_To_Stack(const Byte* cp, REBLEN len)
+{
+    String* s = Make_String(len);  // only ASCII allowed, "1"-"9" and "."
+    Utf8(*) up = String_Head(s);
+
+    assert(*cp == '$');
+    ++cp;
+    --len;
+
+    if (*cp == '-' or *cp == '+') {  // -$1.00 no longer legal, use $-1.00
+        up = Write_Codepoint(up, *cp);
+        ++cp;
+        --len;
+    }
+
+    uint_fast8_t dot_and_digits_len = 0;
+
+    REBLEN n;
+    for (n = 0; n < len; ++n, ++cp) {
+        if (*cp == '.') {
+            if (dot_and_digits_len != 0)
+                return nullptr;  // don't allow $10.00.0, etc [1]
+
+            dot_and_digits_len = 1;  // need exactly two more...
+        }
+        else if (Is_Lex_Number(*cp)) {
+            if (dot_and_digits_len != 0)
+                ++dot_and_digits_len;
+        }
+        else
+            return nullptr;
+
+        up = Write_Codepoint(up, *cp);
+    }
+
+    if (dot_and_digits_len != 0 and dot_and_digits_len != 3)
+        return nullptr;  // Only allow 2 digits after the dot, if present [1]
+
+    Term_String_Len_Size(s, len, up - String_Head(s));
+
+    PUSH();
+
+    if (Try_Init_Small_Utf8(
+        TOP,
+        TYPE_MONEY,
+        String_Head(s),
+        String_Len(s),
+        String_Size(s)
+    )){
+        Free_Unmanaged_Flex(s);
+        return cp;
+    }
+
+    Freeze_Flex(s);
+    Init_Any_String(TOP, TYPE_MONEY, s);
+    return cp;
+}
+
+
+//
 //  Try_Scan_URL_To_Stack: C
 //
 // While Rebol2, R3-Alpha, and Red attempted to apply some amount of decoding

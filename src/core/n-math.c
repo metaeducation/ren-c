@@ -26,8 +26,6 @@
 
 #include "sys-core.h"
 
-#include "cells/cell-money.h"
-
 #include <math.h>
 #include <float.h>
 
@@ -174,29 +172,19 @@ DECLARE_NATIVE(MULTIPLY)
 //    such that more complex types come later, so that we dispatch to the
 //    more complex type...e.g. multiplying a PAIR! by a DECIMAL! should
 //    should dispatch to the PAIR! code.)
-//
-// 2. Historical Redbol was very liberal about allowing you to perform a
-//    multiplication with non-DECIMAL!, non-INTEGER!.  For the sake of sanity
-//    it's being restricted.  MONEY! multiplication by MONEY! is an exception,
-//    due to the fact that it's a way of doing numbers in the fixed point
-//    math domain.
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
     Element* e1 = Element_ARG(VALUE1);
     Element* e2 = Element_ARG(VALUE2);
 
-    if (HEART_BYTE(e1) < HEART_BYTE(e2)) {  // simpler type is on left [1]
+    if (
+        not Heart_Of_Is_0(e1)  // left is not an extension type
+        and HEART_BYTE(e1) < HEART_BYTE(e2)  // simpler type is on left [1]
+    ){
         Move_Cell(stable_SPARE, e2);
         Move_Cell(e2, e1);  // ...so move simpler type to be on the right
         Move_Cell(e1, cast(Element*, SPARE));
-    }
-
-    if (
-        (not Is_Integer(e2) and not Is_Decimal(e2))
-        and not (Is_Money(e1) and Is_Money(e2))  // exception [2]
-    ){
-        return FAIL("Can only multiply by INTEGER! or DECIMAL!");  // [2]
     }
 
     return Dispatch_Generic(MULTIPLY, e1, LEVEL);
@@ -1038,23 +1026,6 @@ DECLARE_NATIVE(SAME_Q)
         return Init_Logic(
             OUT,
             0 == memcmp(&VAL_DECIMAL(v1), &VAL_DECIMAL(v2), sizeof(REBDEC))
-        );
-    }
-
-    if (Is_Money(v1)) {
-        //
-        // There is apparently a distinction between "strict equal" and "same"
-        // when it comes to the MONEY! type:
-        //
-        // >> strict-equal? $1 $1.0
-        // == true
-        //
-        // >> same? $1 $1.0
-        // == false
-        //
-        return Init_Logic(
-            OUT,
-            deci_is_same(VAL_MONEY_AMOUNT(v1), VAL_MONEY_AMOUNT(v2))
         );
     }
 

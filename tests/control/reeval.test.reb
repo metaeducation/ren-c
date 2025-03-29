@@ -70,7 +70,6 @@
 ~expect-arg~ !! (reeval okay)
 ~expect-arg~ !! (reeval null)
 
-($1 == reeval $1)
 (null? eval maybe null)
 (
     a-value: make object! []

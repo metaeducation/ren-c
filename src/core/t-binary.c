@@ -34,8 +34,6 @@
 #undef Byte  // sys-zlib.h defines it compatibly (unsigned char)
 #include "sys-zlib.h"  // for crc32_z()
 
-#include "cells/cell-money.h"
-
 
 //
 //  CT_Blob: C
@@ -211,12 +209,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
                 Cell_Series_Len_Head(arg)
             )
         );
-
-      case TYPE_MONEY: {
-        Binary* b = Make_Binary(12);
-        deci_to_binary(Binary_Head(b), VAL_MONEY_AMOUNT(arg));
-        Term_Binary_Len(b, 12);
-        return Init_Blob(OUT, b); }
 
       default:
         break;

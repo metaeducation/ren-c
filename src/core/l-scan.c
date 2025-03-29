@@ -1248,7 +1248,11 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         S->end = cp + 1;
         return LOCATED(TOKEN_AMPERSAND);
     }
-    else if (*cp == '$' and Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER) {
+    else if (
+        *cp == '$'
+        and Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER
+        and not (cp[1] == '-' and Get_Lex_Class(cp[2]) == LEX_CLASS_NUMBER)
+    ){
         S->end = cp + 1;
         return LOCATED(TOKEN_DOLLAR);
     }
@@ -1563,16 +1567,11 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             S->end = cp;
             return LOCATED(TOKEN_TAG);
 
-          case LEX_SPECIAL_PLUS:  // +123 +123.45 +$123
-          case LEX_SPECIAL_MINUS:  // -123 -123.45 -$123
+          case LEX_SPECIAL_PLUS:  // +123 +123.45
+          case LEX_SPECIAL_MINUS:  // -123 -123.45
             if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
                 token = TOKEN_EMAIL;
                 goto prescan_subsume_all_dots;
-            }
-            if (Has_Lex_Flag(flags, LEX_SPECIAL_DOLLAR)) {
-                ++cp;
-                token = TOKEN_MONEY;
-                goto prescan_subsume_up_to_one_dot;
             }
             cp++;
             if (Is_Lex_Number(*cp)) {
@@ -1885,9 +1884,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     assert(token == TOKEN_MONEY or token == TOKEN_TIME);
 
     // By default, `.` is a delimiter class which stops token scaning.  So if
-    // scanning +$10.20 or -$10.20 or $3.04, there is common code to look
-    // past the delimiter hit.  The same applies to times.  (DECIMAL! has
-    // its own code)
+    // scanning $10.20 or $3.04, there is common code to look past the
+    // delimiter hit.  The same applies to times.  (DECIMAL! has its own code)
     //
     // !!! This is all hacked together at this point, CHAIN! threw in more
     // curveballs as a delimiter class.  It is now believed that backtick

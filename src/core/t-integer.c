@@ -26,8 +26,6 @@
 
 #include "sys-int-funcs.h"
 
-#include "cells/cell-money.h"
-
 //
 //  CT_Integer: C
 //
@@ -123,9 +121,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 
         return Init_Integer(OUT, cast(REBI64, VAL_DECIMAL(arg)));;
     }
-
-    if (Is_Money(arg))  // !!! Better idea than MAKE for this?
-        return Init_Integer(OUT, deci_to_int(VAL_MONEY_AMOUNT(arg)));
 
     return FAIL(Error_Bad_Make(TYPE_INTEGER, arg));
 }
@@ -228,10 +223,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
                     Init_Decimal(val, cast(REBDEC, num));  // convert
                     return GENERIC_CFUNC(OLDGENERIC, Is_Decimal)(level_);
                 }
-                if (Is_Money(val2)) {
-                    Init_Money(val, int_to_deci(VAL_INT64(val)));
-                    return GENERIC_CFUNC(OLDGENERIC, Is_Money)(level_);
-                }
                 if (n > 0) {
                     if (Is_Time(val2)) {
                         Init_Time_Nanoseconds(val, SEC_TIME(VAL_INT64(val)));
@@ -327,12 +318,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
         if (Is_Nulled(to))
             Init_Integer(to, 1);
 
-        if (Is_Money(to))
-            return Init_Money(
-                OUT,
-                Round_Deci(int_to_deci(num), level_)
-            );
-
         if (Is_Decimal(to) || Is_Percent(to)) {
             REBDEC dec = Round_Dec(
                 cast(REBDEC, num), level_, VAL_DECIMAL(to)
@@ -400,10 +385,6 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
         return Init_Decimal_Or_Percent(OUT, to, d);
     }
 
-    if (to == TYPE_MONEY) {
-        deci d = int_to_deci(VAL_INT64(val));
-        return Init_Money(OUT, d);
-    }
 
     if (to == TYPE_INTEGER)
         return COPY(val);

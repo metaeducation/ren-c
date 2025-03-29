@@ -80,7 +80,6 @@ core: [
 
     %c-function.c
     %c-path.c
-    %c-port.c
     %c-signal.c
     %c-state.c
     %c-value.c
@@ -99,17 +98,6 @@ core: [
 
     ; (F)???
     %f-blocks.c
-    [
-        %f-deci.c
-
-        ; May 2018 update to MSVC 2017 added warnings for Spectre mitigation.
-        ; %f-deci.c is a lot of twiddly custom C code for implementing a fixed
-        ; precision math type, that was for some reason a priority in R3-Alpha
-        ; but isn't very central to Ren-C.  It is not a priority to audit
-        ; it for speed, so allow it to be slow if MSVC compiles with /Qspectre
-        ;
-        <msc:/wd5045>  ; https://stackoverflow.com/q/50399940
-    ]
     [
         %f-dtoa.c
 
@@ -202,7 +190,6 @@ core: [
     %t-integer.c
     %t-logic.c
     %t-map.c
-    %t-money.c
     %t-object.c
     %t-pair.c
     %t-port.c

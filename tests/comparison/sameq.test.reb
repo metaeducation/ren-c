@@ -231,28 +231,17 @@
 
 ; datatype differences
 (not same? 0 0.0)
-; datatype differences
-(not same? 0 $0)
-; datatype differences
 (not same? 0 0%)
-; datatype differences
-(not same? 0.0 $0)
+
 ; datatype differences
 (not same? 0.0 0%)
-; datatype differences
-(not same? $0 0%)
+
 ; symmetry
 (equal? same? 1 1.0 same? 1.0 1)
 ; symmetry
-(equal? same? 1 $1 same? $1 1)
-; symmetry
 (equal? same? 1 100% same? 100% 1)
 ; symmetry
-(equal? same? 1.0 $1 same? $1 1.0)
-; symmetry
 (equal? same? 1.0 100% same? 100% 1.0)
-; symmetry
-(equal? same? $1 100% same? 100% $1)
 ; approximate equality
 (not same? 10% + 10% + 10% 30%)
 ; symmetry

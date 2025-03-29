@@ -24,8 +24,6 @@
 
 #include "sys-core.h"
 
-#include "cells/cell-money.h"
-
 
 static bool Check_Char_Range(const Value* val, Codepoint limit)
 {
