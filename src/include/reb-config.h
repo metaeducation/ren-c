@@ -339,8 +339,6 @@ Special internal defines used by RT, not Host-Kit developers:
 
 #if !defined(TO_AMIGA)
     #define TO_AMIGA 0
-#elif TO_AMIGA
-    #define NO_DL_LIB
 #endif
 
 

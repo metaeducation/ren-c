@@ -375,7 +375,7 @@ e-lib/emit [ver --{
      *
      * The following options are available before you #include "rebol.h"
      *
-     *   LIBREBOL_USE_C89         Expose functions like rebValue_c89(...)
+     *   LIBREBOL_USE_C89         Force using functions like rebValue_c89(...)
      *
      *   LIBREBOL_NO_CPLUSPLUS    Disable conversions like rebValue("1 +", 2);
      *
@@ -434,9 +434,9 @@ e-lib/emit [ver --{
      * from LIB if null.  Note that APIs with a fixed number of parameters
      * (such as rebI()) do not have a distinct `_c89` version.
      *
-     * At time of writing, there are no clients of this API.  But it is kept
-     * in the spirit of being careful about dependency control, to help count
-     * exactly how many steps away from baseline the system is making.
+     * This API is useful even if you aren't using C89, in the case of wanting
+     * to put #ifdefs inside of the call... which you aren't allowed to do
+     * when you the arguments are being gathered by a __VA_ARGS__ macro.
      */
 
     #if !defined(LIBREBOL_USE_C89)
@@ -1080,7 +1080,11 @@ e-lib/emit [ver --{
      *    uses `void* vaptr` instead of `va_list* vaptr`.
      */
 
-    #if LIBREBOL_NO_CPLUSPLUS
+    #if LIBREBOL_USE_C89
+
+        #include <stdarg.h>  /* only included in C builds [1] */
+
+    #elif LIBREBOL_NO_CPLUSPLUS
 
         #include <stdarg.h>  /* only included in C builds [1] */
 
@@ -1204,11 +1208,16 @@ e-lib/emit [ver --{
 
 
     /*
-     * ALIASED NAMES OF THE HELPER FUNCTIONS IF USING C89
+     * ALIASED NAMES OF THE HELPER FUNCTIONS FOR C89 (OR NON-MACRO CLIENTS)
      *
      * The "C89 API" is really just requiring you to call the C helper
      * functions directly for variadic APIs.  But to make it clearer and
      * shorter to type, the helpers are aliased as `rebXXX_c89`.
+     *
+     * These aliases are included even if you didn't define LIBREBOL_USE_C89
+     * because they are useful when you want to put #ifdef statements in the`
+     * body of the parameters in the call to the function.  That isn't legal
+     * inside of the __VA_ARGS__ of a macro argument.
      *
      * (Note that naming the C helpers `rebXXX_c89` in the first place would
      * not give the desired polymorphism of having the wrapping macros work
@@ -1216,11 +1225,7 @@ e-lib/emit [ver --{
      * as well, which is unnecessarily misleading.)
      */
 
-    #if LIBREBOL_USE_C89
-
-        $[Variadic-Api-C89-Alias-Macros]
-
-    #endif  /* LIBREBOL_USE_C89 */
+    $[Variadic-Api-C89-Alias-Macros]
 
 
     /*
