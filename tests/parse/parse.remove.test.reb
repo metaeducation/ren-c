@@ -3,6 +3,18 @@
 ; Mutating operations in UPARSE raise some large questions; they were removed
 ; from Topaz entirely.  For the moment they are being considered.
 
+
+[#2289 (
+    count: 0
+    catch [
+        parse "" [some [remove <end> (  ; infinite loop, use FURTHER to stop
+            count: me + 1, if count > 10 [throw ~okay~]
+        )]]
+    ]
+)(
+    parse "" [opt some further [remove <end>] (okay)]
+)]
+
 (all wrap [
     '~<remove>~ == meta parse text: "a ^/ " [
         some [newline remove [to <end>] | "a" [remove [to newline]] | <next>]

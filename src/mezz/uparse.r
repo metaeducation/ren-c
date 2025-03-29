@@ -687,7 +687,7 @@ default-combinators: to map! reduce [
         ]
 
         remainder: remove:part input remainder
-        return ~<remove>~
+        return ~<remove>~  ; note that REMOVE <END> is considered successful
     ]
 
     'insert combinator [
