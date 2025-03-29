@@ -960,22 +960,74 @@
 #endif
 
 
-//=//// MIN AND MAX ///////////////////////////////////////////////////////=//
+//=//// SLIGHTLY SAFER MIN AND MAX MACROS IN C++ //////////////////////////=//
 //
 // The standard definition in C for MIN and MAX uses preprocessor macros, and
 // this has fairly notorious problems of double-evaluating anything with
 // side-effects:
 //
-// https://stackoverflow.com/a/3437484/211160
+// https://stackoverflow.com/a/3437484
 //
-// It is common for MIN and MAX to be defined in C to macros; and equally
-// common to assume that undefining them and redefining them to something
-// that acts as it does in most codebases is "probably ok".  :-/
+// Sadly, there's no C++ template magic for detecting if expressions have side
+// effects that we can use to verify that the callsites as compiled in C are
+// safe usages MIN and MAX.  This boils down to the fact that in the C++
+// function model, "an int is an int", whether it's a literal or if it's the
+// result of a function call:
 //
-#undef MIN
+// https://stackoverflow.com/questions/50667501/
+//
+// But what we can do is make a function that takes the duplicated arguments
+// and compares them with each other.
+//
+// 1. It is common for MIN and MAX to be defined in C to macros; and equally
+//    common to assume that undefining them and redefining them to something
+//    that acts as it does in most codebases is "probably ok".  :-/
+//
+// 2. As mentioned above, no magic exists at time of writing that can help
+//    enforce T1 and T2 didn't arise from potential-side-effect expressions.
+//    `consteval` in C++20 can force compile-time evaluation, but that would
+//    only allow MIN(10, 20).  Putting this here in case some future trickery
+//    comes along.
+//
+// 3. In order to make it as similar to the C as possible, we make MIN and
+//    MAX macros so they can be #undef'd or redefined (as opposed to just
+//    naming the helper templated functions MIN and MAX).
+//
+#undef MIN  // common for these to be defined [1]
 #undef MAX
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#if NO_CPLUSPLUS_11 || NO_RUNTIME_CHECKS
+    #define MIN(a,b) (((a) < (b)) ? (a) : (b))
+    #define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#else
+    template <
+        typename T1,
+        typename T2,
+        typename std::enable_if<true>::type* = nullptr  // no magic checks [2]
+    >
+    inline constexpr auto cpp_min_helper(
+        T1 a, T1 aa, T2 b, T2 bb
+    ) -> typename std::common_type<T1, T2>::type{
+        assert(a == aa);
+        assert(b == bb);
+        return (a < b) ? a : b;
+    }
+
+    template <
+        typename T1,
+        typename T2,
+        typename std::enable_if<true>::type* = nullptr  // no magic checks [2]
+    >
+    inline constexpr auto cpp_max_helper(
+        T1 a, T1 aa, T2 b, T2 bb
+    ) -> typename std::common_type<T1, T2>::type{
+        assert(a == aa);
+        assert(b == bb);
+        return (a > b) ? a : b;
+    }
+
+    #define MIN(a,b)  cpp_min_helper((a), (a), (b), (b))  // use macros [3]
+    #define MAX(a,b)  cpp_max_helper((a), (a), (b), (b))
+#endif
 
 
 //=//// BYTE STRINGS VS UNENCODED CHARACTER STRINGS ///////////////////////=//
