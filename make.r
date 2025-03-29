@@ -1973,6 +1973,10 @@ prep: make rebmake.entry-class [
         ]
 
         for-each 'ext extensions [
+            if not ext.mode [
+                continue
+            ]
+
             keep [
                 "$(REBOL)" join tools-dir %prep-extension.r
                 unspaced ["MODULE=" ext.name]
