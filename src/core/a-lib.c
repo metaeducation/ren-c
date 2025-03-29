@@ -2606,43 +2606,33 @@ void *API_rebZinflateAlloc(
     #define MAX_POSIX_ERROR_LEN 1024
 #endif
 
-//
-//  rebError_OS: API
-//
-// Produce an error from an OS error code, by asking the OS for textual
-// information it knows internally from its database of error strings.
-//
-// Note that error codes coming from WSAGetLastError are the same as codes
-// coming from GetLastError in 32-bit and above Windows:
-//
-// https://stackoverflow.com/q/15586224/
-//
-// !!! Should not be in core, but extensions need a way to trigger the
-// common functionality one way or another.
-//
-RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
-{
-    ENTER_API;
 
+//
+//  Error_OS: C
+//
+// See API_rebError_OS() for information.
+//
+Error* Error_OS(int errnum) {
     Error* error;
 
-  #if TO_WINDOWS
+  #if TO_WINDOWS /////////////////////////////////////////////////////////=//
+
+    // 1. Specific errors have %1 %2 slots, and if you know the error ID and
+    //    that it's one of those then this lets you pass arguments to fill
+    //    those in.  But since this is a generic error, we have no more
+    //     parameterization (hence FORMAT_MESSAGE_IGNORE_INSERTS)
+    //
+    // 2. Apparently FormatMessage can find its error strings in a variety of
+    //    DLLs, but we don't have any context here so just use the default.
+
     if (errnum == 0)
         errnum = GetLastError();
 
     WCHAR* lpMsgBuf;  // FormatMessage writes allocated buffer address here
 
-    // Specific errors have %1 %2 slots, and if you know the error ID and
-    // that it's one of those then this lets you pass arguments to fill
-    // those in.  But since this is a generic error, we have no more
-    // parameterization (hence FORMAT_MESSAGE_IGNORE_INSERTS)
-    //
-    va_list* Arguments = nullptr;
+    va_list* Arguments = nullptr;  // no arguments to pass [1]
 
-    // Apparently FormatMessage can find its error strings in a variety of
-    // DLLs, but we don't have any context here so just use the default.
-    //
-    LPCVOID lpSource = nullptr;
+    LPCVOID lpSource = nullptr;  // no context for specific DLL to search [2]
 
     DWORD ok = FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER // see lpMsgBuf
@@ -2656,11 +2646,7 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
         Arguments
     );
 
-    if (ok == 0) {
-        //
-        // Might want to show the value of GetLastError() in this message,
-        // but trying to FormatMessage() on *that* would be excessive.
-        //
+    if (ok == 0) {  // couldn't get message (should we put errnum in?)
         error = Error_User("FormatMessage() gave no error description");
     }
     else {
@@ -2670,10 +2656,16 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
         error = Make_Error_Managed(SYM_0, SYM_0, message, rebEND);
         rebRelease(message);
     }
-  #elif defined(USE_STRERROR_NOT_STRERROR_R)
-    char* shared = strerror(errnum);  // not thread safe, deprecated
+
+  #elif defined(USE_STRERROR_NOT_STRERROR_R) //////////////////////////////=//
+
+    // This is posix handling with strerror(), which is not thread-safe.
+
+    char* shared = strerror(errnum);
     error = Error_User(shared);
-  #else
+
+  #else //=///// POSIX THREAD-SAFE strerror_r() ///////////////////////////=//
+
     // strerror() is not thread-safe, but strerror_r is. Unfortunately, at
     // least in glibc, there are two different protocols for strerror_r(),
     // depending on whether you are using the POSIX-compliant implementation
@@ -2698,55 +2690,61 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
     // 1. Use old-style parentheses cast to get past ambiguity of whether the
     //    strerr_r function returns a char* or an int.  (The "casts for the
     //    masses) casts like c_cast/x_cast etc. don't support this scenario.)
+    //
+    // 2. !!! TCC appears to use the `int` returning form of strerror_r().
+    //    But it seems to return a random positive or negative value.  It is
+    //    probably just broken.  More research would be needed, but we can
+    //    just give up an go with non-thread-safe strerror().  Leaving in the
+    //    call to strerror_r() to show that it's there...and it links in TCC.
+    //
+    // 3. errno was changed, so probably the return value is just -1 or
+    //    something else that doesn't provide info, and errno is the error.
+    //
+    // 4. Quoting glibc's strerror_r manpage: "The XSI-compliant strerror_r()
+    //    function returns 0 on success. On error, a (positive) error number
+    //    is returned (since glibc 2.13), or -1 is returned and errno is set
+    //    to indicate the error (glibc versions before 2.13)."  GNU version
+    //    always succeeds and should never return 0 (a null char*).
+    //
+    //    Documentation isn't clear on whether the buffer is terminated if
+    //    the message is too long, or ERANGE always returned.  Terminate.
+    //
+    // 5. The POSIX version gives us our error back as a pointer if it
+    //    filled the buffer successfully.  Sanity check that's what happened.
+    //
+    // 6. The GNU version never fails, but may return an immutable string
+    //    instead of filling the buffer. Unknown errors get an
+    //    "unknown error" message.  The result is always null terminated.
+    //
+    //    (This is the risky part, if `r` is not a valid pointer but some
+    //    weird large int return result from POSIX strerror_r.)
 
     char buf[MAX_POSIX_ERROR_LEN];
     buf[0] = cast(char, 255);  // never valid in UTF-8 sequences
     int old_errno = errno;
     intptr_t r = (intptr_t)strerror_r(errnum, buf, MAX_POSIX_ERROR_LEN);  // [1]
 
-    // !!! TCC appears to use the `int` returning form of strerror_r().  But
-    // it appears to return a random positive or negative value.  It simply
-    // appears to be broken.  More research would be needed, but we can just
-    // give up an go with strerror.  Leaving in the call to strerror_r() to
-    // show that it's there...and it links in TCC.
-    //
-  #if defined(__TINYC__)
+  #if defined(__TINYC__)  // TCC strerror_r() appears broken [2]
     r = (intptr_t)strerror(errnum); // [1] for why old-style cast used
   #endif
 
     int new_errno = errno;
 
-    if (r == -1 or new_errno != old_errno) {
-        //
-        // errno was changed, so probably the return value is just -1 or
-        // something else that doesn't provide info, and errno is the error.
-        //
+    if (r == -1 or new_errno != old_errno) {  // errno was changed [3]
         assert(false);
         error = Error_User("Error during strerror_r call");  // w/new_errno?
     }
-    else if (r == 0) {
-        //
-        // Quoting glibc's strerror_r manpage: "The XSI-compliant strerror_r()
-        // function returns 0 on success. On error, a (positive) error number
-        // is returned (since glibc 2.13), or -1 is returned and errno is set
-        // to indicate the error (glibc versions before 2.13)."  GNU version
-        // always succeds and should never return 0 (a null char*).
-        //
-        // Documentation isn't clear on whether the buffer is terminated if
-        // the message is too long, or ERANGE always returned.  Terminate.
-        //
+    else if (r == 0) {  // interpret as success, but NUL-terminate buffer [4]
         buf[MAX_POSIX_ERROR_LEN - 1] = '\0';
         error = Error_User(buf);
     }
-    else if (r == EINVAL)  // documented result from POSIX strerror_r
+    else if (r == EINVAL) {  // documented result from POSIX strerror_r
         error = Error_User("EINVAL: bad errno passed to strerror_r()");
-    else if (r == ERANGE)  // documented result from POSIX strerror_r
+    }
+    else if (r == ERANGE) {  // documented result from POSIX strerror_r
         error = Error_User("ERANGE: insufficient buffer size for error");
-    else if (r == i_cast(intptr_t, buf)) {
-        //
-        // The POSIX version gives us our error back as a pointer if it
-        // filled the buffer successfully.  Sanity check that's what happened.
-        //
+    }
+    else if (r == i_cast(intptr_t, buf)) {  // sanity check POSIX return [5]
         if (buf[0] == cast(char, 255)) {
             assert(false);
             error = Error_User("Buffer not correctly updated by strerror_r");
@@ -2761,19 +2759,34 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
         assert(false);
         error = Error_User("Unknown POSIX strerror_r error result code");
     }
-    else {
-        // The GNU version never fails, but may return an immutable string
-        // instead of filling the buffer. Unknown errors get an
-        // "unknown error" message.  The result is always null terminated.
-        //
-        // (This is the risky part, if `r` is not a valid pointer but some
-        // weird large int return result from POSIX strerror_r.)
-        //
+    else {  // GNU version never fails, but may give immutable string [6]
         error = Error_User(p_cast(const char*, r));
     }
+
   #endif
 
-    return Init_Error(Alloc_Value(), error);
+    return error;
+}
+
+
+//
+//  rebError_OS: API
+//
+// Produce an error from an OS error code, by asking the OS for textual
+// information it knows internally from its database of error strings.
+//
+// Note that error codes coming from WSAGetLastError are the same as codes
+// coming from GetLastError in 32-bit and above Windows:
+//
+// https://stackoverflow.com/q/15586224/
+//
+// !!! Should not be in core, but extensions need a way to trigger the
+// common functionality one way or another.
+//
+RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
+{
+    ENTER_API;
+    return Init_Error(Alloc_Value(), Error_OS(errnum));
 }
 
 
