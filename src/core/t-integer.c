@@ -305,37 +305,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             return Init_Logic(OUT, true);
         return Init_Logic(OUT, false);
 
-      case SYM_ROUND: {
-        INCLUDE_PARAMS_OF_ROUND;
-        USED(ARG(VALUE));  // extracted as d1, others are passed via level_
-        USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
-        USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
-
-        if (not Bool_ARG(TO))
-            return Init_Integer(OUT, Round_Int(num, level_, 0L));
-
-        Value* to = ARG(TO);
-        if (Is_Nulled(to))
-            Init_Integer(to, 1);
-
-        if (Is_Decimal(to) || Is_Percent(to)) {
-            REBDEC dec = Round_Dec(
-                cast(REBDEC, num), level_, VAL_DECIMAL(to)
-            );
-            Heart to_heart = Heart_Of_Builtin_Fundamental(to);
-            Reset_Cell_Header_Noquote(
-                TRACK(OUT),
-                FLAG_HEART_BYTE(to_heart) | CELL_MASK_NO_NODES
-            );
-            VAL_DECIMAL(OUT) = dec;
-            return OUT;
-        }
-
-        if (Is_Time(ARG(TO)))
-            return FAIL(PARAM(TO));
-
-        return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to))); }
-
       default:
         break;
     }
@@ -447,4 +416,40 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Integer)
     if (REB_I64_MUL_OF(num1, num2, &result))
         return RAISE(Error_Overflow_Raw());
     return Init_Integer(OUT, result);
+}
+
+
+IMPLEMENT_GENERIC(ROUND, Is_Integer)
+{
+    INCLUDE_PARAMS_OF_ROUND;
+
+    REBI64 num = VAL_INT64(Element_ARG(VALUE));
+
+    USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
+    USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
+
+    if (not Bool_ARG(TO))
+        return Init_Integer(OUT, Round_Int(num, level_, 0L));
+
+    Value* to = ARG(TO);
+    if (Is_Nulled(to))
+        Init_Integer(to, 1);
+
+    if (Is_Decimal(to) || Is_Percent(to)) {
+        REBDEC dec = Round_Dec(
+            cast(REBDEC, num), level_, VAL_DECIMAL(to)
+        );
+        Heart to_heart = Heart_Of_Builtin_Fundamental(to);
+        Reset_Cell_Header_Noquote(
+            TRACK(OUT),
+            FLAG_HEART_BYTE(to_heart) | CELL_MASK_NO_NODES
+        );
+        VAL_DECIMAL(OUT) = dec;
+        return OUT;
+    }
+
+    if (Is_Time(ARG(TO)))
+        return FAIL(PARAM(TO));
+
+    return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to)));
 }

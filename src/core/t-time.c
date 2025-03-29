@@ -622,40 +622,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
             if (secs < 0) secs = -secs;
             return Init_Time_Nanoseconds(OUT, secs);
 
-          case SYM_ROUND: {
-            INCLUDE_PARAMS_OF_ROUND;
-            USED(ARG(VALUE));  // aliased as v, others are passed via level_
-            USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
-            USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
-
-            if (not Bool_ARG(TO)) {
-                Init_True(ARG(TO));  // by default make it /TO seconds
-                secs = Round_Int(secs, level_, SEC_SEC);
-                return Init_Time_Nanoseconds(OUT, secs);
-            }
-
-            Value* to = ARG(TO);
-            if (Is_Time(to)) {
-                secs = Round_Int(secs, level_, VAL_NANO(to));
-                return Init_Time_Nanoseconds(OUT, secs);
-            }
-            else if (Is_Decimal(to)) {
-                VAL_DECIMAL(to) = Round_Dec(
-                    cast(REBDEC, secs),
-                    level_,
-                    Dec64(to) * SEC_SEC
-                );
-                VAL_DECIMAL(to) /= SEC_SEC;
-                return COPY(to);
-            }
-            else if (Is_Integer(to)) {
-                mutable_VAL_INT64(to)
-                    = Round_Int(secs, level_, Int32(to) * SEC_SEC) / SEC_SEC;
-                return COPY(to);
-            }
-
-            return FAIL(PARAM(TO)); }
-
           default:
             break;
         }
@@ -735,4 +701,43 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Time)
         return FAIL(PARAM(VALUE2));
 
     return Init_Time_Nanoseconds(OUT, secs);
+}
+
+
+IMPLEMENT_GENERIC(ROUND, Is_Time)
+{
+    INCLUDE_PARAMS_OF_ROUND;
+
+    REBI64 secs = VAL_NANO(ARG(VALUE));  // guaranteed to be a time
+
+    USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
+    USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
+
+    if (not Bool_ARG(TO)) {
+        Init_True(ARG(TO));  // by default make it /TO seconds
+        secs = Round_Int(secs, level_, SEC_SEC);
+        return Init_Time_Nanoseconds(OUT, secs);
+    }
+
+    Value* to = ARG(TO);
+    if (Is_Time(to)) {
+        secs = Round_Int(secs, level_, VAL_NANO(to));
+        return Init_Time_Nanoseconds(OUT, secs);
+    }
+    else if (Is_Decimal(to)) {
+        VAL_DECIMAL(to) = Round_Dec(
+            cast(REBDEC, secs),
+            level_,
+            Dec64(to) * SEC_SEC
+        );
+        VAL_DECIMAL(to) /= SEC_SEC;
+        return COPY(to);
+    }
+    else if (Is_Integer(to)) {
+        mutable_VAL_INT64(to)
+            = Round_Int(secs, level_, Int32(to) * SEC_SEC) / SEC_SEC;
+        return COPY(to);
+    }
+
+    return FAIL(PARAM(TO));
 }

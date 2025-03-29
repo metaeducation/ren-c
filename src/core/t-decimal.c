@@ -483,32 +483,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
             return Init_Logic(OUT, false);
         return Init_Logic(OUT, true);
 
-      case SYM_ROUND: {
-        INCLUDE_PARAMS_OF_ROUND;
-        USED(ARG(VALUE));  // extracted as d1, others are passed via level_
-        USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
-        USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
-
-        if (not Bool_ARG(TO)) {
-            if (heart == TYPE_PERCENT)
-                Init_Decimal(ARG(TO), 0.01L);  // round 5.5% -> 6%
-            else
-                Init_Integer(ARG(TO), 1);
-        }
-
-        if (Is_Time(ARG(TO)))
-            return FAIL(PARAM(TO));
-
-        d1 = Round_Dec(d1, level_, Dec64(ARG(TO)));
-        if (Is_Percent(ARG(TO))) {
-            heart = TYPE_PERCENT;
-            return Init_Decimal_Or_Percent(OUT, heart, d1);
-        }
-
-        if (Is_Integer(ARG(TO)))
-            return Init_Integer(OUT, cast(REBI64, d1));
-        return Init_Decimal_Or_Percent(OUT, heart, d1); }
-
       default:
         break;
     }
@@ -652,6 +626,38 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Float)
         d2 = VAL_DECIMAL(v2);  // decimal/percent ensured by MULTIPLY [1]
 
     return Init_Decimal_Or_Percent(OUT, heart, d1 * d2);
+}
+
+
+IMPLEMENT_GENERIC(ROUND, Any_Float)
+{
+    INCLUDE_PARAMS_OF_ROUND;
+
+    REBDEC d1 = VAL_DECIMAL(ARG(VALUE));
+    Heart heart = Heart_Of_Builtin_Fundamental(ARG(VALUE));
+
+    USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
+    USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
+
+    if (not Bool_ARG(TO)) {
+        if (heart == TYPE_PERCENT)
+            Init_Decimal(ARG(TO), 0.01L);  // round 5.5% -> 6%
+        else
+            Init_Integer(ARG(TO), 1);
+    }
+
+    if (Is_Time(ARG(TO)))
+        return FAIL(PARAM(TO));
+
+    d1 = Round_Dec(d1, level_, Dec64(ARG(TO)));
+    if (Is_Percent(ARG(TO))) {
+        heart = TYPE_PERCENT;
+        return Init_Decimal_Or_Percent(OUT, heart, d1);
+    }
+
+    if (Is_Integer(ARG(TO)))
+        return Init_Integer(OUT, cast(REBI64, d1));
+    return Init_Decimal_Or_Percent(OUT, heart, d1);
 }
 
 

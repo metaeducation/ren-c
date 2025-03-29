@@ -154,9 +154,9 @@ DECLARE_NATIVE(SUBTRACT)
 //
 //  "Returns the second value multiplied by the first"
 //
-//      return: [char? any-scalar?]
-//      value1 [char? any-scalar?]
-//      value2 [char? any-scalar?]
+//      return: [char? any-scalar? element?]
+//      value1 [char? any-scalar? element?]  ; !!! expand types for DECI!
+//      value2 [char? any-scalar? element?]
 //  ]
 //
 DECLARE_NATIVE(MULTIPLY)
@@ -278,8 +278,30 @@ DECLARE_NATIVE(ABSOLUTE)
 //
 DECLARE_NATIVE(ROUND)
 {
-    Element* e = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e, LEVEL, CANON(ROUND));
+    INCLUDE_PARAMS_OF_ROUND;
+
+    USED(ARG(TO));  // passed through via LEVEL
+
+    Count num_refinements = 0;
+    if (Bool_ARG(EVEN))
+        ++num_refinements;
+    if (Bool_ARG(DOWN))
+        ++num_refinements;
+    if (Bool_ARG(HALF_DOWN))
+        ++num_refinements;
+    if (Bool_ARG(FLOOR))
+        ++num_refinements;
+    if (Bool_ARG(CEILING))
+        ++num_refinements;
+    if (Bool_ARG(HALF_CEILING))
+        ++num_refinements;
+
+    if (num_refinements > 1)
+        return RAISE("ROUND only accepts one of EVEN, DOWN, HALF-DOWN,"
+            " FLOOR, CEILING, or HALF-CEILING refinements");
+
+    Element* elem = Element_ARG(VALUE);
+    return Dispatch_Generic(ROUND, elem, LEVEL);
 }
 
 
