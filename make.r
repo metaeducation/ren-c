@@ -187,6 +187,26 @@ repo-dir: relative-to-path repo-dir output-dir
 if commands [user-config.target: null]  ; was `target: load commands`  Why? :-/
 
 
+=== "LOAD CFLAGS DATABASE" ===
+
+; To tame this file a bit, the cflags map is in a separate file.
+
+cflags-map: make map! []
+left: right: pos: ~
+
+parse3 load (join tools-dir %cflags-map.r) [some [
+    pos: <here>
+    left: tag! '=> right: [tag! | block!] (
+        if tag? right [right: reduce [right]]
+        cflags-map.(left): right
+    )
+    |
+    <end> accept (okay)
+    |
+    (fail ["Malformed %cflags-map.r, near:" mold:limit pos 200])
+]]
+
+
 === "MODULES AND EXTENSIONS" ===
 
 platform-config: configure-platform user-config.os-id
@@ -679,65 +699,21 @@ rebmake/set-target-platform platform-config.os-base
     ;
     if block? s [
         for-each 'flag next s [
-            append flags spread (switch flag [  ; boot ELSE, ()
-                <no-uninitialized> [
-                    [
-                        <gnu:-Wno-uninitialized>
-
-                        ;-Wno-unknown-warning seems to only modify the
-                        ; immediately following option
-                        ;
-                        ;<gnu:-Wno-unknown-warning>
-                        ;<gnu:-Wno-maybe-uninitialized>
-
-                        <msc:/wd4701> <msc:/wd4703>
-                    ]
+            let mapped: cflags-map.(flag)  ; if found, it's a block
+            case [
+                mapped [
+                    append flags spread mapped
                 ]
-                <no-sign-compare> [
-                    [
-                        <gnu:-Wno-sign-compare>
-                        <msc:/wd4388>
-                        <msc:/wd4018>  ; a 32-bit variant of the error
-                    ]
-                ]
-                <implicit-fallthru> [
-                    [
-                        <gnu:-Wno-unknown-warning>
-                        <gnu:-Wno-implicit-fallthrough>
-                    ]
-                ]
-                <no-unused-parameter> [
-                    [<gnu:-Wno-unused-parameter>]
-                ]
-                <no-shift-negative-value> [
-                    [<gnu:-Wno-shift-negative-value>]
-                ]
-                <no-make-header> [
-                    ;for make-header. ignoring
-                    []
-                ]
-                <no-unreachable> [
-                    [<msc:/wd4702>]
-                ]
-                <no-hidden-local> [
-                    [<msc:/wd4456>]
-                ]
-                <no-constant-conditional> [
-                    [<msc:/wd4127>]
-                ]
-
-                #prefer-O2-optimization [
+                flag = #prefer-O2-optimization [
                     prefer-O2: 'yes
-                    []
                 ]
-
-                #no-c++ [
+                flag = #no-c++ [
                     standard: 'c
-                    []
                 ]
-            ] else [
-                reduce [ensure [text! tag!] flag]
-            ])
+                <else> [
+                    append flags (ensure [text! tag!] flag)
+                ]
+            ]
         ]
         s: s.1
     ]
