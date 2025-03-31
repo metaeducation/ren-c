@@ -83,7 +83,7 @@
 #define REBOL_LEVEL_SHORTHAND_MACROS 0  // we include Windows.h for errors
 #include "sys-core.h"
 
-static bool PG_Api_Initialized = false;
+static bool g_api_initialized = false;
 
 
 // The API tolerates internal cells that are Is_Nulled(), but all handles that
@@ -112,7 +112,7 @@ INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
 //
 #define ENTER_API_RECYCLING_OK \
     do { \
-        if (not PG_Api_Initialized) \
+        if (not g_api_initialized) \
             panic ("rebStartup() not called before API call"); \
     } while (0)
 
@@ -449,8 +449,8 @@ void* API_rebUnmanageMemory(void* ptr)
 //
 void Startup_Api(void)
 {
-    assert(not PG_Api_Initialized);
-    PG_Api_Initialized = true;
+    assert(not g_api_initialized);
+    g_api_initialized = true;
 }
 
 
@@ -462,8 +462,8 @@ void Startup_Api(void)
 //
 void Shutdown_Api(void)
 {
-    assert(PG_Api_Initialized);
-    PG_Api_Initialized = false;
+    assert(g_api_initialized);
+    g_api_initialized = false;
 }
 
 
@@ -2211,6 +2211,96 @@ unsigned char* API_rebBytes(
     if (bytes == nullptr)
         fail ("rebBytes() does not take NULL, see rebBytesMaybe()");
     return bytes;
+}
+
+
+//
+//  rebLockBytes: API
+//
+// Give immutable direct access to the underlying implementation bytes of an
+// ANY-BYTES? value.  It cannot be modified while locked.
+//
+// Locks must be released before returning from the native that locked it,
+// but will be released automatically on failure.  [TBD]
+//
+// 1. The lock code is not implemented yet.
+//
+const unsigned char* API_rebLockBytes(
+    RebolContext* binding,
+    size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
+    const void* p, void* vaptr
+){
+    ENTER_API_RECYCLING_OK;
+
+    DECLARE_VALUE (v);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    if (not Any_Fundamental(v) or not Any_Bytes_Type(Heart_Of(v)))
+        fail ("rebLockBytes() only works with types with byte storage");
+
+    // !!! lock code here [1]
+
+    Size size;
+    const Byte* bytes = Cell_Bytes_At(&size, v);
+
+    *size_out = size;
+    return bytes;
+}
+
+
+//
+//  rebLockMutableBytes: API
+//
+// Give mutable direct access to the underlying implementation bytes of an
+// ANY-BYTES? value.  It cannot be modified while locked.
+//
+// Locks must be released before returning from the native that locked it,
+// but will be released automatically on failure.  [TBD]
+//
+// 1. The lock code is not implemented yet.
+//
+unsigned char* API_rebLockMutableBytes(
+    RebolContext* binding,
+    size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
+    const void* p, void* vaptr
+){
+    ENTER_API_RECYCLING_OK;
+
+    DECLARE_VALUE (v);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    if (not Any_Fundamental(v) or not Any_Bytes_Type(Heart_Of(v)))
+        fail ("rebLockBytes() only works with types with byte storage");
+
+    if (Is_Flex_Read_Only(Cell_Flex(v)))
+        fail ("rebLockMutableBytes() called on read-only input");
+
+    // !!! lock code here [1]
+
+    Size size;
+    const Byte* bytes = Cell_Bytes_At(&size, v);
+
+    *size_out = size;
+    return m_cast(Byte*, bytes);  // we checked it was mutable
+}
+
+
+//
+//  rebUnlockBytes: API
+//
+// Release a lock taken by rebLockBytes() or rebLockMutableBytes().
+//
+// 1. Unlocking logic not implemented yet.
+//
+void API_rebUnlockBytes(const unsigned char* bytes)
+{
+    ENTER_API_RECYCLING_OK;
+
+    // !!! unlock code here [1]
+
+    UNUSED(bytes);  // should check same as previous lock.  keep list?
+
+    return;
 }
 
 
