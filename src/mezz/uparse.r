@@ -100,7 +100,7 @@ Rebol [
 ; declare a return value for the `pending:` then that means you're going to
 ; manage it yourself, otherwise it will be automagic.
 
-/combinator: func [
+combinator: func [
     "Make stylized code that fulfills the interface of a combinator"
 
     return: [frame!]
@@ -109,7 +109,7 @@ Rebol [
     body [block!]
 ]
 bind construct [
-    /wrapper: lambda [
+    wrapper: lambda [
         "Enclosing function for hooking all combinators"
         f [frame!]
     ][
@@ -122,7 +122,7 @@ bind construct [
 ][
     let autopipe: ~
 
-    let /action: func compose [
+    let action: func compose [
         ; Get the text description if given
         (if text? spec.1 [spec.1, elide spec: my next])
 
@@ -201,7 +201,7 @@ bind construct [
             ]
         ])
 
-        /return: lambda [^atom] compose2:deep '{} [  ; already composing $()
+        return: lambda [^atom] compose2:deep '{} [  ; already composing $()
             {unrun return/} pack [
                 unmeta atom except e -> [{unrun return/} raise e]
                 remainder
@@ -235,7 +235,7 @@ bind construct [
 ; It should be possible to find out if something is a combinator in a more
 ; rigorous way than this.  But just check the parameters for now.
 ;
-/combinator?: func [
+combinator?: func [
     "Crude test to try and determine if an ACTION! is a combinator"
     return: [logic?]
     frame [<unrun> frame!]
@@ -252,7 +252,7 @@ bind construct [
     ]
 ]
 
-/negatable-parser?: func [
+negatable-parser?: func [
     return: [logic?]
     frame [<unrun> frame!]
 ][
@@ -2651,7 +2651,7 @@ comment [
 ]
 
 
-comment [/combinatorize: func [
+comment [combinatorize: func [
 
     "Analyze combinator parameters in rules to produce a specialized parser"
 
@@ -2824,7 +2824,7 @@ comment [/combinatorize: func [
 ;    to take an argument while `:(code)` does not.  Hence this hacks up an
 ;    answer of calling the types *: and :* depending.  Better answer needed.
 ;
-/parsify: func [
+parsify: func [
     "Transform one step's worth of rules into a parser combinator action"
 
     return: "Parser action for a full rule, advanced rules position"
@@ -2972,7 +2972,7 @@ comment [/combinatorize: func [
 ; in the text...but these need to be able to participate in the rollback
 ; mechanism.  So they are gathered in pending.
 
-/parse*: func [
+parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
     return: "Synthesized value from last match rule, and any pending values"
@@ -3146,7 +3146,7 @@ sys.util.parse: parse/  ; !!! expose UPARSE to SYS.UTIL module, hack...
 ; These are some very primordial hooks; for an elaborate demo see EPARSE's
 ; rule-stepwise debugger.
 
-/parse-trace-hook: func [
+parse-trace-hook: func [
     return: [pack!]
     f [frame!]
 ][
@@ -3166,10 +3166,10 @@ sys.util.parse: parse/  ; !!! expose UPARSE to SYS.UTIL module, hack...
     return unmeta result'
 ]
 
-/parse-trace: specialize parse/ [hook: parse-trace-hook/]
+parse-trace: specialize parse/ [hook: parse-trace-hook/]
 
 
-/parse-furthest-hook: func [
+parse-furthest-hook: func [
     return: [pack!]
     f [frame!]
     var [word! tuple!]
@@ -3200,7 +3200,7 @@ sys.util.parse: parse/  ; !!! expose UPARSE to SYS.UTIL module, hack...
 ; !!! This operation will likely take over the name USE.  It is put here since
 ; the UPARSE tests involve it.
 ;
-/using: func [
+using: func [
     return: [~]  ; should it return a value?  (e.g. the object?)
     obj [<maybe> object!]
 ][

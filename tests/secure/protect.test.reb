@@ -20,7 +20,7 @@
 
 [#1748
     (
-        /rescue-protected?: func [code [block!]] [
+        rescue-protected?: func [code [block!]] [
             for-each 'original [
                 [1 + 2 + 3]
                 -{1 + 2 + 3}-

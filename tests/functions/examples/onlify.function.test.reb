@@ -6,7 +6,7 @@
 ; could be used by anyone who thought they needed it.
 
 [(
-/onlify: func [
+onlify: func [
     return: [action!]
     frame [<unrun> frame!]
     :param [word!]

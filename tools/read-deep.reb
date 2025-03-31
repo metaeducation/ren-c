@@ -25,7 +25,7 @@ import <bootstrap-shim.r>
 ; each returned file.
 ;
 
-/read-deep-seq: func [
+read-deep-seq: func [
     "Iterative read deep"
     queue [block!]
 ][
@@ -41,7 +41,7 @@ import <bootstrap-shim.r>
 ; read-deep provide convenience over read-deep-seq.
 ;
 
-export /read-deep: func [
+export read-deep: func [
     "Return files and folders using recursive read strategy"
 
     root [file! url! block!]

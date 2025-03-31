@@ -99,7 +99,7 @@ sym-table: copy []
 ; you add the <reorderable> placeholder all symbols after that point are
 ; subject to reordering.
 ;
-/add-sym: func [
+add-sym: func [
     "Add SYM_XXX or <PLACEHOLDER> signal to enumeration (order may adjust)"
     return: "position of an already existing symbol if found"
         [~null~ block!]
@@ -297,7 +297,7 @@ e-sysobj: make-emitter "System Object" (
     join prep-dir %include/tmp-sysobj.h
 )
 
-/at-value: func [field] [return next find boot-sysobj setify field]
+at-value: func [field] [return next find boot-sysobj setify field]
 
 boot-sysobj: load %sysobj.r
 change (at-value 'version) version
@@ -317,9 +317,9 @@ c-debug-break: :void
 
 ob: make object! boot-sysobj
 
-/c-debug-break: get $lib/c-debug-break
+c-debug-break: get $lib/c-debug-break
 
-/make-obj-defs: func [
+make-obj-defs: func [
     "Given a Rebol OBJECT!, write C structs that can access its raw variables"
 
     return: [~]
@@ -727,7 +727,7 @@ print [symid "words + natives + errors"]
 
 e-symids/write-emitted
 
-/add-sym: func [:relax :placeholder] [
+add-sym: func [:relax :placeholder] [
     ;
     ; Tripwires not available in bootstrap, see:
     ; https://forum.rebol.info/t/tripwire-in-the-wild/2278/4

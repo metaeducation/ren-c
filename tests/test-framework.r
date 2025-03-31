@@ -20,7 +20,7 @@ import %test-parsing.r
 
 log-file: ~
 
-/log: func [
+log: func [
     return: [~]
     report [block!]
 ][
@@ -45,7 +45,7 @@ test-block: ~
 
 error: ~
 
-/run-single-test: func [
+run-single-test: func [
     "Run code and write the success or failure to the log file"
 
     return: [~]
@@ -115,7 +115,7 @@ error: ~
     ]
 ]
 
-/run-test-cluster: func [
+run-test-cluster: func [
     return: [~]
     flags [block!]
     cluster "Block of GROUP!s to be run together in a common isolated context"
@@ -140,7 +140,7 @@ error: ~
     ; specialized versions of assert.
     ;
     let isolate: module void inside lib '[
-        /print: lambda [x] [
+        print: lambda [x] [
             fail:blame "Don't use PRINT in tests" $x
         ]
     ]
@@ -188,7 +188,7 @@ error: ~
 ; The tests are collected in a pre-phase with COLLECT-TESTS.  It produces a
 ; long list of BLOCK!s that are test groups.
 ;
-/process-tests: func [
+process-tests: func [
     return: [~]
     test-sources [block!]
     handler [action!]
@@ -254,7 +254,7 @@ error: ~
     ]
 ]
 
-export /do-recover: func [
+export do-recover: func [
     "Executes tests in the FILE and recovers from crash"
 
     return: "The log file that was generated, and textual summary of results"

@@ -30,7 +30,7 @@
     ;
     ;        specialize append/ [value: [d e]]  ; leave series unspecialized
     ;
-    /pointfree*: func [
+    pointfree*: func [
         "Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming"
 
         return: [action!]

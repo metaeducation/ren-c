@@ -11,10 +11,10 @@
 
 ; NORMAL parameter
 [
-    (/left-normal: infix lambda [left right] [
+    (left-normal: infix lambda [left right] [
         reduce [left right]
     ]
-    /right-normal: infix lambda [one two] [
+    right-normal: infix lambda [one two] [
         reduce [one two]
     ]
     value: [whatever]
@@ -28,10 +28,10 @@
 
 ; ^META parameter
 [
-    (/left-meta: infix lambda [^left right] [
+    (left-meta: infix lambda [^left right] [
         reduce [left right]
     ]
-    /right-meta: infix lambda [^one two] [
+    right-meta: infix lambda [^one two] [
         reduce [one two]
     ]
     ok)
@@ -44,10 +44,10 @@
 
 ; @LITERAL bound parameter
 [
-    (/left-lit-bound: infix lambda [@left right] [
+    (left-lit-bound: infix lambda [@left right] [
         reduce [left right]
     ]
-    /right-lit-bound: infix lambda [@one two] [
+    right-lit-bound: infix lambda [@one two] [
         reduce [one two]
     ]
     ok)
@@ -72,10 +72,10 @@
 
 ; 'LITERAL as-is parameter
 [
-    (/left-lit-as-is: infix lambda ['left right] [
+    (left-lit-as-is: infix lambda ['left right] [
         reduce [left right]
     ]
-    /right-lit-as-is: infix lambda ['one two] [
+    right-lit-as-is: infix lambda ['one two] [
         reduce [one two]
     ]
     value: <whatever>
@@ -104,10 +104,10 @@
 ; 1. There was only one convention for what needs to be two: @(LITERAL) and
 ;    '(LITERAL).
 [
-    (/left-soft-as-is: infix lambda [@(left) right] [
+    (left-soft-as-is: infix lambda [@(left) right] [
         reduce [left right]
     ]
-    /right-soft-as-is: infix lambda [@(one) two] [
+    right-soft-as-is: infix lambda [@(one) two] [
         reduce [one two]
     ]
     value: <whatever>
@@ -148,7 +148,7 @@
 ; SHOVE should be able to handle refinements and contexts.
 [
     (did obj: make object! [
-        /magic: infix lambda [a b :minus] [
+        magic: infix lambda [a b :minus] [
             either minus [a - b] [a + b]
         ]
     ])
@@ -162,8 +162,8 @@
 ; PATH! cannot be directly quoted left, must use ->-
 [
     (
-        /left-the: infix :the
-        o: make object! [i: 10 /f: does [20]]
+        left-the: infix :the
+        o: make object! [i: 10 f: does [20]]
         ok
     )
 

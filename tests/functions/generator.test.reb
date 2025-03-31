@@ -2,14 +2,14 @@
 
 ; Basic disallowal of re-entry
 (
-    /g: generator [g]
+    g: generator [g]
     'yielder-reentered = (sys.util/rescue [g]).id
 )
 
 
 ; Errors that cross a yielder will always fail thereafter
 (
-    /g: generator [yield 1 fail "Bad!" yield 2]
+    g: generator [yield 1 fail "Bad!" yield 2]
 
     all [
         g = 1
@@ -22,9 +22,8 @@
 ; Throws that cross a yielder are equivalent to exiting it normally
 (
     data: copy []
-    /gmaker: func [] [
-        let g
-        /g: generator [yield 1 yield 2 yield 3 return g/ yield 4]
+    gmaker: func [] [
+        let g: generator [yield 1 yield 2 yield 3 return g/ yield 4]
         cycle [
             append data g
         ]
@@ -41,8 +40,8 @@
 ; Trying to run YIELD while a generator is suspended is an error
 (
     stolen-yield: ~
-    /g: generator [
-        /stolen-yield: yield/
+    g: generator [
+        stolen-yield: yield/
         yield 1
         yield 2
     ]
@@ -56,7 +55,7 @@
 
 ; WHILE loop with generator
 (
-    /g: generator [while [okay] [yield 1]]
+    g: generator [while [okay] [yield 1]]
     sum: 0
     repeat 1000 [sum: sum + g]
     sum = 1000
@@ -74,7 +73,7 @@
 )
 (
     x: 1
-    /g: generator [
+    g: generator [
         while [okay] [
             x: 10 + yield x
         ]
@@ -85,7 +84,7 @@
 
 ; ANY with generator
 (
-    /g: generator [
+    g: generator [
         yield 1
         yield any [
             if 1 > 2 [<bad-news>]
@@ -109,7 +108,7 @@
 
 ; ENCLOSE compatibility
 (
-    /g: generator [
+    g: generator [
         let /yy: enclose yield/ func [f] [
             f.atom: meta (unmeta f.atom) * 10
             return 1 + eval-free f
@@ -132,9 +131,9 @@
 ; Here's a trick to make it possible to generate them, and turn null into
 ; what generates the termination condition.
 (
-    /e-generator: func [body [block!]] [
-        let /g: generator [
-            /yield: enclose yield/ func [f [frame!] <local> temp] [
+    e-generator: func [body [block!]] [
+        let g: generator [
+            yield: enclose yield/ func [f [frame!] <local> temp] [
                 f.atom: either f.atom = ^null [^ done] [meta f.atom]
                 return unmeta eval-free f
             ]
@@ -190,7 +189,7 @@
 
 ; COMPOSE test
 (
-    /g: generator [
+    g: generator [
         yield compose:deep [
             So (yield "How") [(yield "About")] (yield "This") ?
         ]
@@ -209,7 +208,7 @@
 
 ; DELIMIT (SPACED) test
 (
-    /g: generator [
+    g: generator [
         let n: 1
         while [okay] [
             yield spaced [yield "Step" yield n]
@@ -230,7 +229,7 @@
 
 ; PARSE tests
 (
-    /vowelizer: func [text [text!]] [
+    vowelizer: func [text [text!]] [
         let vowel: charset "aeiouAEIOU"
         return generator [
             parse text [opt some [
@@ -260,17 +259,17 @@
 ;    )
 ;
 ;    (
-;        /g: generator [yield (get-obj elide yield <foo>).(yield 'sub).f]
+;        g: generator [yield (get-obj elide yield <foo>).(yield 'sub).f]
 ;        [<foo> sub 20 _ _] == reduce [g g g try g try g]
 ;    )
 ;
 ;    (
-;        /g: generator [yield (get-obj elide yield <foo>).(yield 'sub).f/]
+;        g: generator [yield (get-obj elide yield <foo>).(yield 'sub).f/]
 ;        (compose [<foo> sub (twenty/) _ _]) == reduce [g g g try g try g]
 ;    )
 ;
 ;    (
-;        /g: generator [yield (get-obj elide yield <foo>).(yield 'sub).x: 1 + 2]
+;        g: generator [yield (get-obj elide yield <foo>).(yield 'sub).x: 1 + 2]
 ;        all [
 ;            [<foo> sub 3 _ _] == reduce [g g g try g try g]
 ;            obj.sub.x = 3
@@ -280,7 +279,7 @@
 
 ; Interoperability with multiple return values
 (
-    /g: generator [
+    g: generator [
         yield pack ["FOO!" <foo>]
         yield pack ["BAR!" <bar>]
     ]

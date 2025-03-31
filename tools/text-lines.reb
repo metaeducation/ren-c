@@ -16,7 +16,7 @@ REBOL [
 
 import <bootstrap-shim.r>
 
-/decode-lines: func [
+decode-lines: func [
     "Decode text encoded using a line prefix e.g. comments (modifies)"
     text [~null~ text! error!]  ; raised? in modern exe, not ERROR!
     line-prefix [text! block!] "matched using parse, usually ** or // -"
@@ -45,7 +45,7 @@ import <bootstrap-shim.r>
     return text
 ]
 
-/encode-lines: func [
+encode-lines: func [
     "Encode text using a line prefix (e.g. comments)"
 
     text [text!]
@@ -80,7 +80,7 @@ import <bootstrap-shim.r>
     return text
 ]
 
-/for-each-line: func [
+for-each-line: func [
     "Iterate over text lines"
 
     return: [~]
@@ -108,7 +108,7 @@ import <bootstrap-shim.r>
     ]
 ]
 
-/lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
+lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
     "Return the line numbers of lines exceeding line-length"
 
     return: "Returns null if no lines (is this better than returning []?)"
@@ -147,7 +147,7 @@ import <bootstrap-shim.r>
     return line-list
 ]
 
-/text-line-of: func [
+text-line-of: func [
     "Returns line number of position within text"
 
     return: "Line 0 does not exist, no counting is performed for empty text"
@@ -180,7 +180,7 @@ import <bootstrap-shim.r>
     return line
 ]
 
-/text-location-of: func [
+text-location-of: func [
     "Returns line and column of position within text"
     position [text! blob!]
 ] [

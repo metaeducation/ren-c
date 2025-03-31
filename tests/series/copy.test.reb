@@ -33,7 +33,7 @@
 ;]
 
 [#2043 (
-    /f: func [] []
+    f: func [] []
     error? trap [copy :f]
     ok
 )]

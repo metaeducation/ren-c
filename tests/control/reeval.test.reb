@@ -36,7 +36,7 @@
     same? a-value reeval a-value
 )
 (
-    /a-value: does [5]
+    a-value: does [5]
     5 == reeval :a-value
 )
 (

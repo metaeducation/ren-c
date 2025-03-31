@@ -18,14 +18,14 @@
 
 ; RETURN stops the evaluation
 (
-    /f1: func [return: [integer!]] [
+    f1: func [return: [integer!]] [
         either okay [return 1 2] [2]
         2
     ]
     1 = f1
 )
 (
-    /f1: func [return: [integer!]] [
+    f1: func [return: [integer!]] [
         either null [2] [return 1 2]
         2
     ]
@@ -91,8 +91,8 @@
     ; has to wait.
 
     (
-        /takes-2-logics: func [x [logic?] y [logic?]] [return x]
-        /infix-voider: infix func [return: [quasi-word?] x y] [
+        takes-2-logics: func [x [logic?] y [logic?]] [return x]
+        infix-voider: infix func [return: [quasi-word?] x y] [
             return '~bad~
         ]
         ok

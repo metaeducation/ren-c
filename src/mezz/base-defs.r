@@ -25,17 +25,17 @@ REBOL [
 
 ; Start with basic debugging
 
-/c-break-debug: c-debug-break/  ; easy to mix up
+c-break-debug: c-debug-break/  ; easy to mix up
 
-/func: function/  ; historical and heavily-used abbreviation
+func: function/  ; historical and heavily-used abbreviation
 
 lib: system.contexts.lib  ; alias for faster access
 
-/?: maybe/  ; commonly used in Ren-C, more deserving of ? than HELP !!!
+?: maybe/  ; commonly used in Ren-C, more deserving of ? than HELP !!!
 
-/eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
+eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 
-/probe: func [
+probe: func [
     "Debug print a molded value and returns that same value"
 
     return: "Same as the input value"
@@ -147,7 +147,7 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 
 ; Common "Invisibles"
 
-/comment: func [
+comment: func [
     "Ignores the argument value, but does no evaluation (see also ELIDE)"
 
     return: "Evaluator will skip over the result (not seen)"
@@ -158,7 +158,7 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
     return ~[]~
 ]
 
-/elide: func [
+elide: func [
     "Argument is evaluative, but discarded (see also COMMENT)"
 
     return: "The evaluator will skip over the result (not seen)"
@@ -169,7 +169,7 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
     return ~[]~
 ]
 
-/elide-if-void: func [
+elide-if-void: func [
     "Argument is evaluative, but discarded if void"
 
     return: [any-value? pack!]
@@ -183,9 +183,9 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 ; COMMA! is the new expression barrier.  But `||` is included as a way to
 ; make comma antiforms to show how to create custom barrier-like constructs.
 ;
-/||: func [] [return ~,~]
+||: func [] [return ~,~]
 
-/|||: func [
+|||: func [
     "Inertly consumes all subsequent data, evaluating to previous result"
 
     return: [~[]~]
@@ -253,18 +253,18 @@ each: quote/
 
 ; Function synonyms
 
-/min: minimum/
-/max: maximum/
-/abs: absolute/
+min: minimum/
+max: maximum/
+abs: absolute/
 
-/delimit: lambda [delimiter line :head :tail] [
+delimit: lambda [delimiter line :head :tail] [
     join // [text! line :with delimiter :head head :tail tail]
 ]
 /unspaced: specialize delimit/ [delimiter: null]
 /spaced: specialize delimit/ [delimiter: space]
 /newlined: specialize delimit/ [delimiter: newline, tail: ok]
 
-/an: lambda [
+an: lambda [
     "Prepends the correct 'a' or 'an' to a string, based on leading character"
     value <local> s
 ][
@@ -273,7 +273,7 @@ each: quote/
 ]
 
 
-/empty?: func [
+empty?: func [
     "OKAY if blank or void, if empty, or if index is at or beyond its tail"
     return: [logic?]
     container [
@@ -288,7 +288,7 @@ each: quote/
 ]
 
 
-/print: func [
+print: func [
     "Output SPACED text with newline (evaluating elements if BLOCK!)"
 
     return: "Returns null if line outputs nothing, e.g. print [void]"
@@ -320,7 +320,7 @@ each: quote/
     ]
 ]
 
-/echo: func [
+echo: func [
     "Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes"
 
     return: [~]

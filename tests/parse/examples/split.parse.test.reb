@@ -2,7 +2,7 @@
 
 [
     (
-        /split-test5: func [
+        split-test5: func [
             series [text!]
             dlm [text! char?]
             <local> value rule

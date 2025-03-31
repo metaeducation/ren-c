@@ -59,7 +59,7 @@
 // means that if you use a GROUP! there, the parameter gathering process will
 // pre-evaluate it.
 //
-//     >> /branchy: func [flag] [either flag '[<a>] '[<b>]]
+//     >> branchy: func [flag] [either flag '[<a>] '[<b>]]
 //
 //     >> either okay (print "a" branchy true) (print "b" branchy false)
 //     a

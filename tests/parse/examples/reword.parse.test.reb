@@ -3,7 +3,7 @@
 ; Test of REWORD written with UPARSE instead of parse.
 ; See comments on non-UPARSE REWORD implementation.
 
-[(/uparse-reword: func [
+[(uparse-reword: func [
     return: [any-string? blob!]
     source [any-string? blob!]
     values [map! object! block!]

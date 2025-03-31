@@ -1,7 +1,7 @@
 ; AES streaming cipher tests
 
 [
-    (/test: func [data check] [
+    (test: func [data check] [
         let bin: as blob! data
         let bin-len: length of bin
         let key-128: #{01020304050607080910111213141516}

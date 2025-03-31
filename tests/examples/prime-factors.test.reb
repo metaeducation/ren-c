@@ -3,7 +3,7 @@
 ; by iArnold
 
 [(
-    /prime-factors: func [n [integer!]][
+    prime-factors: func [n [integer!]][
         let m: 2
         let s: 1
         let a: copy []

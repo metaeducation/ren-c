@@ -13,21 +13,21 @@
 
 
 (
-    foo: :+
+    foo: +/
     all [
         infix? foo/
         3 = (1 foo 2)
     ]
 )
 (
-    /foo: infix add/
+    foo: infix add/
     all [
         infix? foo/
         1 foo 2 = 3
     ]
 )
 (
-    /postfix-thing: infix lambda [x] [x * 2]
+    postfix-thing: infix lambda [x] [x * 2]
     all [
        infix? postfix-thing/
        20 = (10 postfix-thing)
@@ -55,7 +55,7 @@
 (
     count: 0
     o: make object! [x: null]
-    /nuller: func [y] [return null]
+    nuller: func [y] [return null]
     o.(count: count + 1, first [x]): my nuller
     all [
         :o.x = null
@@ -67,7 +67,7 @@
     https://github.com/metaeducation/ren-c/issues/581
 
     (
-        /foo: func [] [
+        foo: func [] [
             fail "foo should not run, it's prefix and runs on *next* step"
         ]
         all wrap [
@@ -75,7 +75,7 @@
             pos == [foo 304]
         ]
     )(
-        /i-foo: infix func [
+        i-foo: infix func [
             "0-arity function, but infix so runs in *same* step"
         ][
             return <i-foo>
@@ -87,7 +87,7 @@
     )
 
     (
-        /bar: func [
+        bar: func [
             "Invisible normal arity-0 function should run on next eval"
             return: [~[]~]
         ][
@@ -103,7 +103,7 @@
             null? bar
         ]
     )(
-        /i-bar: infix func [
+        i-bar: infix func [
             "Invisible infix arity-0 function should run on same step"
             left
         ][
@@ -124,13 +124,13 @@
 ; first.
 [
     (
-        /rightq: lambda [@(x)] [compose [<rightq> was (x)]]
-        /leftq: infix lambda [@(y)] [compose [<leftq> was (y)]]
+        rightq: lambda [@(x)] [compose [<rightq> was (x)]]
+        leftq: infix lambda [@(y)] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )(
-        /rightq: lambda [@(x)] [compose [<rightq> was (x)]]
-        /leftq: infix lambda ['y] [compose [<leftq> was (y)]]
+        rightq: lambda [@(x)] [compose [<rightq> was (x)]]
+        leftq: infix lambda ['y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )

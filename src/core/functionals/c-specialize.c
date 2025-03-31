@@ -421,7 +421,7 @@ DECLARE_NATIVE(SPECIALIZE)
 //
 // Note that refinement promotion can make this a bit strange:
 //
-//     >> /foo: func [:a [block!] :b [block!] :c [block!] :d [block!]] [...]
+//     >> foo: func [:a [block!] :b [block!] :c [block!] :d [block!]] [...]
 //     >> foo-d: foo:d/
 //
 // This means that the last parameter (D) is actually the first of FOO-D.

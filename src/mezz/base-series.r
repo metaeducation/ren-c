@@ -52,7 +52,7 @@ last: redescribe [
 ; CHARSET was moved from "Mezzanine" because it is called by TRIM which is
 ; in "Base" - see TRIM.
 ;
-/charset: func [
+charset: func [
     "Makes a bitset of chars for the parse function"
 
     return: [bitset!]
@@ -68,7 +68,7 @@ last: redescribe [
 ; TRIM is used by PORT! implementations, which currently rely on "Base" and
 ; not "Mezzanine", so this can't be in %mezz-series at the moment.  Review.
 ;
-/trim: func [
+trim: func [
     "Removes spaces from strings or blanks from blocks or objects"
 
     return: [any-string? any-list? blob! any-context?]

@@ -23,9 +23,9 @@
 // with another function, based on identity.  This is distinct from overwriting
 // a variable, because all references are affected:
 //
-//     >> /victim: func [] [print "This gets hijacked."]
+//     >> victim: func [] [print "This gets hijacked."]
 //
-//     >> /reference: victim/  ; both words point to the same function identity
+//     >> reference: victim/  ; both words point to the same function identity
 //
 //     >> victim
 //     This gets hijacked.
@@ -98,7 +98,7 @@ enum {
 // and repetition of logic in Eval_Core.  Because R3-Alpha refinements took
 // multiple arguments, it could also fail with "adversarial" prototypes:
 //
-//     /foo: func [a :b c] [...]  =>  /bar: func [:b d e] [...]
+//     mfoo: func [a :b c] [...]  =>  bar: func [:b d e] [...]
 //                     foo:b 1 2  =>  bar:b 1 2
 //
 void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)

@@ -38,7 +38,7 @@ REBOL [
 
 digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
-/idate-to-date: lambda [
+idate-to-date: lambda [
     idate [text!]
     <local> day month year time zone
 ][
@@ -58,7 +58,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
     make date! unspaced [day "-" month "-" year "/" time zone]
 ]
 
-/make-http-error: lambda [
+make-http-error: lambda [
     "Make an error for the HTTP protocol"
     message [text! block!]
 ][
@@ -69,7 +69,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
     ]
 ]
 
-/make-http-request: func [
+make-http-request: func [
     return: [blob!]
     method "E.g. GET, HEAD, POST etc."
         [word! text!]
@@ -105,7 +105,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
     return result
 ]
 
-/do-request: func [
+do-request: func [
     "Synchronously process an HTTP request on a port"
 
     return: "Result of the request (BLOCK! for HEAD requests, BLOB! read...)"
@@ -162,7 +162,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
 ; if a no-redirect keyword is found in the write dialect after 'headers then
 ; 302 redirects will not be followed
 ;
-/parse-write-dialect: func [
+parse-write-dialect: func [
     "Sets PORT.SPEC fields: DEBUG, FOLLOW, METHOD, PATH, HEADERS, CONTENT"
 
     return: [~]
@@ -181,7 +181,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
     ]
 ]
 
-/check-response: func [
+check-response: func [
     return: [~]
     port [port!]
 ][
@@ -394,7 +394,7 @@ http-response-headers: context [
     Last-Modified: null
 ]
 
-/do-redirect: func [
+do-redirect: func [
     return: [~]
     port [port!]
     new-uri [url! text! file!]
@@ -461,7 +461,7 @@ http-response-headers: context [
     port.data: data
 ]
 
-/read-body: func [
+read-body: func [
     "Based on the information in the HTTP headers, read body into PORT.DATA"
     return: [~]
     port [port!]
@@ -606,7 +606,7 @@ sys.util/make-scheme [
     ]
 
     actor: [
-        /read: func [
+        read: func [
             return: [blob!]
             port [port!]
             :lines
@@ -645,7 +645,7 @@ sys.util/make-scheme [
             return data
         ]
 
-        /write: func [
+        write: func [
             port [port!]
             value
             <local> data
@@ -685,7 +685,7 @@ sys.util/make-scheme [
             return data
         ]
 
-        /open: func [
+        open: func [
             port [port!]
             <local> conn
         ][
@@ -714,15 +714,15 @@ sys.util/make-scheme [
             return port
         ]
 
-        /open?: func [port [port!]] [
+        open?: func [port [port!]] [
             return all [port.state, open? port.state.connection]
         ]
 
-        /length-of: func [port [port!]] [
+        length-of: func [port [port!]] [
             return if port.data [length of port.data] else [0]
         ]
 
-        /close: func [
+        close: func [
             port [port!]
         ][
             let state: port.state
@@ -751,7 +751,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        /query: lambda [
+        query: lambda [
             port [port!]
             <local> error state
         ][

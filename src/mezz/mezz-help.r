@@ -12,7 +12,7 @@ REBOL [
 ]
 
 
-/spec-of: func [
+spec-of: func [
     "Generate a block which could be used as a 'spec block' from an action"
 
     return: [block!]
@@ -43,7 +43,7 @@ REBOL [
     ]
 ]
 
-/decorated-words-of: func [
+decorated-words-of: func [
     "Get the decorated parameters as a block (useful for testing)"
     return: [block!]
     frame [<unrun> frame!]
@@ -53,7 +53,7 @@ REBOL [
     ]
 ]
 
-/description-of: func [
+description-of: func [
     "One-line summary of a value's purpose"
 
     return: [~null~ text!]
@@ -79,7 +79,7 @@ REBOL [
 ]
 
 
-/print-general-help: func [
+print-general-help: func [
     return: [~]
 ][
     print trim:auto copy --{
@@ -114,7 +114,7 @@ REBOL [
 ]
 
 
-/help-action: func [
+help-action: func [
     return: [~]
     frame [<unrun> frame!]
     :name [word! tuple! path!]
@@ -201,7 +201,7 @@ REBOL [
 ]
 
 
-/help-value: func [
+help-value: func [
     "Give non-dialected help for an atom with any datatype"
 
     return: [~]
@@ -263,7 +263,7 @@ REBOL [
 ]
 
 
-/help: func [
+help: func [
     --{HELP is a dialected function.  If you want non-dialected help on any
     particular value, then pass that value in a GROUP! to get some very
     literal information back:
@@ -357,7 +357,7 @@ REBOL [
         return ~
     ]
 
-    let /make-libuser: does [  ; hacky unified context for searching
+    let make-libuser: does [  ; hacky unified context for searching
         let libuser: copy system.contexts.lib
         for-each [key val] system.contexts.user [
             if not vacant? $val [
@@ -419,7 +419,7 @@ REBOL [
 ]
 
 
-/source: func [
+source: func [
     "Prints the source code for an ACTION! (if available)"
 
     return: [~]
@@ -496,7 +496,7 @@ REBOL [
 ]
 
 
-/what: func [
+what: func [
     "Prints a list of known actions"
 
     return: [~ block!]
@@ -542,7 +542,7 @@ REBOL [
 ]
 
 
-/bugs: func [return: [~]] [
+bugs: func [return: [~]] [
     "View bug database."
 ][
     browse https://github.com/metaeducation/ren-c/issues
@@ -551,7 +551,7 @@ REBOL [
 
 ; temporary solution to ensuring scripts run on a minimum build
 ;
-/require-commit: func [
+require-commit: func [
     "checks current commit against required commit"
 
     return: [~]

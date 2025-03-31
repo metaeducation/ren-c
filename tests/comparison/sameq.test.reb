@@ -7,7 +7,7 @@
 (same? :+ :+)
 ; reflexivity test for action
 (
-    /a-value: func [] []
+    a-value: func [] []
     same? a-value/ a-value/
 )
 ; no structural equality for action

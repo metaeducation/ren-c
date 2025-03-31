@@ -54,7 +54,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
 ;    the console's QUIT does this--for convenience.  All other places must
 ;    write out the "long" form of (quit 0)
 ;
-/make-quit: lambda [
+make-quit: lambda [
     "Make a quit function out of a plain THROW"
     quit* [action!]
     :console "Just integer, no argument acts like quit 0"  ; [1]
@@ -119,7 +119,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
 ;    fill it in with a custom THROW word to catch it.  If we don't catch it,
 ;    the result is just set to be NOTHING.
 ;
-/module: func [
+module: func [
     "Creates a new module (used by both IMPORT and DO)"
 
     return: "Module and meta-result of running the body (may be raised)"  ; [1]
@@ -206,7 +206,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
         product': quasi error
     ]
 
-    /mod.quit: func [atom] [
+    mod.quit: func [atom] [
         fail // [
             "Module finished init, no QUIT (do you want SYS.UTIL/EXIT?)"
             :blame $atom
@@ -252,7 +252,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
 ; return the same context every time it is called--so modules are loaded only
 ; once--while DO performs an action that you can run any number of times.
 ;
-/do: func [
+do: func [
     "Execution facility for Rebol or other Languages/Dialects (see also: EVAL)"
 
     return: "Evaluative product, or error"

@@ -19,7 +19,7 @@
     ]
     output: null
 
-    /form-grid: func [grid [block!] <local> text] [
+    form-grid: func [grid [block!] <local> text] [
         text: copy ""
         count-up 'i 81 [
             append text grid.(i)
@@ -45,7 +45,7 @@
         return text
     ]
 
-    /possible?: func [
+    possible?: func [
         y
         x
         n
@@ -73,7 +73,7 @@
         return okay
     ]
 
-    /solve: func [] [
+    solve: func [] [
         count-up 'y 9 [
             count-up 'x 9 [
                 if 0 = input.(9 * (y - 1) + x) [

@@ -51,7 +51,7 @@
 )
 ; RETURN stops the evaluation
 (
-    /f1: func [return: [integer!]] [compose [(return 1)] 2]
+    f1: func [return: [integer!]] [compose [(return 1)] 2]
     1 = f1
 )
 ; THROW stops the evaluation
@@ -251,7 +251,7 @@
     (
         condition: 1 = 2
         messages: []
-        /log: func [msg] [append messages msg]
+        log: func [msg] [append messages msg]
         ok
     )
     (

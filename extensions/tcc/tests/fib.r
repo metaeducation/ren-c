@@ -32,7 +32,7 @@ c-fib: make-native [
     return rebInteger(i1);
 }--
 
-/rebol-fib: func [
+rebol-fib: func [
     n [integer!]
 ][
     if n < 0 [return -1]

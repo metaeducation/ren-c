@@ -81,7 +81,7 @@
 // evaluator to do it.  But they need to use the logic of the evaluator for
 // noticing when to defer infix:
 //
-//     /foo: func [...] [
+//     foo: func [...] [
 //          return the 1 then ["this needs to be returned"]
 //     ]
 //
@@ -238,7 +238,7 @@ Bounce Action_Executor(Level* L)
         // match the "consumption order" of the expressions that need to
         // be fetched from the callsite.  For instance:
         //
-        //     /foo: func [a :b [integer!] :c [integer!]] [...]
+        //     foo: func [a :b [integer!] :c [integer!]] [...]
         //
         //     foo:b:c 10 20 30
         //     foo:c:b 10 20 30
@@ -444,7 +444,7 @@ Bounce Action_Executor(Level* L)
         // `(1 + non-infix-action <we-are-here>) * 3`.  Contrast with the
         // zero-arity case:
         //
-        //     >> /two: does [2]
+        //     >> two: does [2]
         //     >> 1 + two * 3
         //     == 9
         //
@@ -473,7 +473,7 @@ Bounce Action_Executor(Level* L)
         //
         // The situation also arises in multiple arity infix:
         //
-        //     /arity-3-op: func [a b c] [...]
+        //     arity-3-op: func [a b c] [...]
         //
         //     1 arity-3-op 2 + 3 <ambiguous>
         //     1 arity-3-op (2 + 3) <unambiguous>

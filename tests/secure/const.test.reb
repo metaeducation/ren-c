@@ -141,8 +141,8 @@
 
 ; Functions mark their body CONST by default
 [
-    (did /symbol-to-string: func [s] [
-       return switch s [
+    (did symbol-to-string: func [s] [
+        return switch s [
            '+ ["plus"]
            '- ["minus"]
        ]
@@ -162,7 +162,7 @@
 ]
 
 [
-    (did /symbol-to-string: func [s] [
+    (did symbol-to-string: func [s] [
        return case [
            s = '+ ["plus"]
            s = '- ["minus"]
@@ -188,8 +188,8 @@
 ; !!! RESKINNED is temporarily out of service, pending reworking of the way
 ; functions are built from frames.
 ;
-;    /func-r2: reskinned [body [block!]] adapt func/ []
-;    /aggregator: func-r2 [x] [data: [] append data x]
+;    func-r2: reskinned [body [block!]] adapt func/ []
+;    aggregator: func-r2 [x] [data: [] append data x]
 ;    all [
 ;        [10] = aggregator 10
 ;        [10 20] = aggregator 20

@@ -8,7 +8,7 @@
 
 [
     (
-        /foo: func [:A [integer!] :B [integer!] :C [integer!]] [
+        foo: func [:A [integer!] :B [integer!] :C [integer!]] [
             return compose [
                 :A (reify A) :B (reify B) :C (reify C)
             ]
@@ -56,7 +56,7 @@
     [a b c [d e f]] = eval f
 )
 (
-    /foo: func [return: [integer!]] [
+    foo: func [return: [integer!]] [
         ;
         ; !!! Note that RETURN's parameter is done with the ^-convention.  This
         ; is an implementation detail that affects code that subverts the

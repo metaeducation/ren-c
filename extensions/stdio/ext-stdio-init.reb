@@ -32,7 +32,7 @@ hijack lib.write-stdout/ write-stdout/
 ;
 ; But for now it's the buffer to edit and the position the cursor was in.
 ;
-/tab-complete: func [
+tab-complete: func [
     return: "new cursor position in the buffer"
         [integer!]
     buffer "buffer to edit into the new state (modified)"

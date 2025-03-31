@@ -668,7 +668,7 @@
 )]
 
 [(
-    /countify: func [things data] [
+    countify: func [things data] [
         let counts: to map! []
         let rules: collect [
             for-each 't things [

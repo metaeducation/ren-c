@@ -31,7 +31,7 @@
 ; even when no text is provided.
 [
     (
-        /foo: func [x] [fail @x]
+        foo: func [x] [fail @x]
 
         e: sys.util/rescue [foo 10]
         all [
@@ -42,7 +42,7 @@
             [foo 10] = copy:part e.near 2  ; implicates callsite
         ]
     )(
-        /foo: func [x] [fail:blame "error reason" $x]
+        foo: func [x] [fail:blame "error reason" $x]
 
         e: sys.util/rescue [foo 10]
         all [

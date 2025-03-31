@@ -58,7 +58,7 @@ REBOL [
 ]
 
 
-/shell: func [
+shell: func [
     "Run code in the shell dialect"
     return: [text!]
     code "Dialected shell code"
@@ -70,7 +70,7 @@ REBOL [
     ; code runs before the CALL and wouldn't pick up changes to the
     ; environment.
     ;
-    let /shellify-block: func [block [block!]] [
+    let shellify-block: func [block [block!]] [
         if 1 <> length of block [
             fail ["SHELL expects BLOCK!s to have one item:" mold block]
         ]
@@ -89,7 +89,7 @@ REBOL [
     ; GET-ENV function here, because we haven't run the shell code yet...and
     ; the environment might change by the time it is reached.
     ;
-    let /shellify-tag: func [value [element?]] [
+    let shellify-tag: func [value [element?]] [
         if not tag? value [return value]
 
         return if system.version.4 = 3 [   ; Windows
@@ -104,7 +104,7 @@ REBOL [
     ; But we want to be able to substitute environment variables as parts of
     ; the expressions.
     ;
-    let /process-tag: func [container [path! tuple! block!]] [
+    let process-tag: func [container [path! tuple! block!]] [
         return to type-of-container map-each 'item container [
             if group? item [
                 item: inside container eval item
@@ -137,7 +137,7 @@ REBOL [
             get-group?/ [splice-it: 'yes, item: eval inside code item]
             get-block?/ [splice-it: 'yes, item: as block! inside code item]
         ]
-        let /needs-quotes?: func [return: [logic?] item] [
+        let needs-quotes?: func [return: [logic?] item] [
             if match [word! issue!] item [return null]  ; never quoted
             if file? item [
                 return did find item space  ; !!! check other escapes
@@ -199,7 +199,7 @@ REBOL [
 ]
 
 
-/shell+: func [  ; was $ but that now has a binding purpose
+shell+: func [  ; was $ but that now has a binding purpose
     "Run SHELL code to end of line (or continue on next line with `...`)"
     @(args) "See documentation for SHELL"
         [any-value? <variadic>]

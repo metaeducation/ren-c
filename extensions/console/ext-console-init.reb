@@ -84,7 +84,7 @@ export console!: make object! [
   HELP    - For starting information
   ABOUT   - Information about your Rebol}--
 
-    /print-greeting: method [
+    print-greeting: method [
         "Adds live elements to static greeting content (build #, version)"
         return: [~]
     ][
@@ -97,7 +97,7 @@ export console!: make object! [
         boot-print greeting
     ]
 
-    /print-prompt: method [return: [~]] [
+    print-prompt: method [return: [~]] [
         ;
         ; Note: See example override in skin in the Debugger extension, which
         ; adds the stack "level" number and "current" function name.
@@ -109,7 +109,7 @@ export console!: make object! [
         write-stdout space
     ]
 
-    /print-result: method [
+    print-result: method [
         return: [~]
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-atom?]
@@ -249,27 +249,27 @@ export console!: make object! [
         ]
     ]
 
-    /print-warning: method [return: [~] s] [print [warning reduce s]]
+    print-warning: method [return: [~] s] [print [warning reduce s]]
 
-    /print-error: method [return: [~] e [error!]] [
+    print-error: method [return: [~] e [error!]] [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
         print form e
     ]
 
-    /print-halted: method [return: [~]] [
+    print-halted: method [return: [~]] [
         print newline  ; interrupts happen anytime, clearer to start newline
         print "[interrupted by Ctrl-C or HALT instruction]"
     ]
 
-    /print-info: method [return: [~] s] [print [info reduce s]]
+    print-info: method [return: [~] s] [print [info reduce s]]
 
-    /print-gap: method [return: [~]] [print newline]
+    print-gap: method [return: [~]] [print newline]
 
     === BEHAVIOR (can be overridden) ===
 
-    /input-hook: method [
+    input-hook: method [
         "Receives line input, parse and transform, send back to CONSOLE eval"
 
         return: "~escape~ if canceled, null on no input, else line of text"
@@ -305,7 +305,7 @@ export console!: make object! [
     ;    whatever binding was on the block.  Leave it open for now, as these
     ;    unbound block cases aren't the only ones to consider.
     ;
-    /dialect-hook: method [
+    dialect-hook: method [
         "Receives full code block, bind and process, send back to CONSOLE eval"
         return: [block!]
         b [block!]
@@ -336,7 +336,7 @@ export console!: make object! [
 
     === HELPERS (could be overridden!) ===
 
-    /add-shortcut: method [
+    add-shortcut: method [
         "Add/Change console shortcut"
         return: [~]
         name [word!] "Shortcut name"
@@ -347,7 +347,7 @@ export console!: make object! [
 ]
 
 
-/start-console: func [
+start-console: func [
     "Called when a REPL is desired after command-line processing, vs quitting"
 
     return: [~]
@@ -450,7 +450,7 @@ bind construct [
 ]
 
 
-/console*: func [
+console*: func [
     "Rebol ACTION! that is called from C in a loop to implement the console"
 
     return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
@@ -485,7 +485,7 @@ bind construct [
 
     let instruction: copy []
 
-    let /emit: func [
+    let emit: func [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
         return: [~]
@@ -509,7 +509,7 @@ bind construct [
         ]
     ]
 
-    /return: func [
+    return: func [
         "Hooked RETURN function which finalizes any gathered EMIT lines"
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
@@ -862,7 +862,7 @@ bind construct [
 ; means these will be seen by scripts, e.g. `do "why"` will work.
 ;
 
-export /why: func [
+export why: func [
     "Explain the last error in more detail."
     return: [~]
     'err [<end> word! path! error!] "Optional error value"
@@ -883,7 +883,7 @@ export /why: func [
 ]
 
 
-export /upgrade: func [
+export upgrade: func [
     "Check for newer versions."
     return: [~]
 ][

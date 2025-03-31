@@ -3,7 +3,7 @@
 ; Simple example, if extended could be quite useful
 
 [(
-    /flow: func [
+    flow: func [
         block [block!]
         :placeholder [element?]
         <local> flow-result

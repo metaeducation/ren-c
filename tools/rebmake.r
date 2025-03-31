@@ -48,7 +48,7 @@ default-linker: null
 default-strip: null
 target-platform: null
 
-/map-files-to-local: func [
+map-files-to-local: func [
     return: [block!]
     files [<maybe> file! block!]
 ][
@@ -58,7 +58,7 @@ target-platform: null
     ]
 ]
 
-/ends-with?: func [
+ends-with?: func [
     return: [logic?]
     s [any-string?]
     suffix [~void~ any-string?]
@@ -70,7 +70,7 @@ target-platform: null
     ]
 ]
 
-/filter-flag: func [
+filter-flag: func [
     return: [~null~ text! file!]
     flag "If TAG! then <prefix:flag>, e.g. <gnu:-Wno-unknown-warning>"
         [tag! text! file!]
@@ -94,7 +94,7 @@ target-platform: null
     ]
 ]
 
-/run-command: func [
+run-command: func [
     return: [text!]
     cmd [block! text!]
 ][
@@ -103,7 +103,7 @@ target-platform: null
     return trim:with x "^/^M"
 ]
 
-/pkg-config: func [  ; !!! Note: Does not appear to be used
+pkg-config: func [  ; !!! Note: Does not appear to be used
     return: [text! block!]
     pkg [any-string?]
     var [word!]
@@ -176,7 +176,7 @@ posix: make platform-class [
     obj-suffix: ".o"
     archive-suffix: ".a"
 
-    /gen-cmd-create: method [
+    gen-cmd-create: method [
         return: [text!]
         cmd [object!]
     ][
@@ -187,14 +187,14 @@ posix: make platform-class [
         ]
     ]
 
-    /gen-cmd-delete: method [
+    gen-cmd-delete: method [
         return: [text!]
         cmd [object!]
     ][
         return spaced ["rm -fr" cmd.file]
     ]
 
-    /gen-cmd-strip: method [
+    gen-cmd-strip: method [
         return: [text!]
         cmd [object!]
     ][
@@ -238,7 +238,7 @@ windows: make platform-class [
     obj-suffix: ".obj"
     archive-suffix: ".lib"
 
-    /gen-cmd-create: method [
+    gen-cmd-create: method [
         return: [text!]
         cmd [object!]
     ][
@@ -251,7 +251,7 @@ windows: make platform-class [
         ]
     ]
 
-    /gen-cmd-delete: method [
+    gen-cmd-delete: method [
         return: [text!]
         cmd [object!]
     ][
@@ -269,7 +269,7 @@ windows: make platform-class [
         ]
     ]
 
-    /gen-cmd-strip: method [
+    gen-cmd-strip: method [
         return: [text!]
         cmd [object!]
     ][
@@ -278,7 +278,7 @@ windows: make platform-class [
     ]
 ]
 
-/set-target-platform: func [
+set-target-platform: func [
     return: [~]
     platform
 ][
@@ -367,11 +367,11 @@ application-class: make project-class [
     searches: null
     ldflags: null
 
-    /link: method [return: [~]] [
+    link: method [return: [~]] [
         linker/link .output .depends .ldflags
     ]
 
-    /command: method [return: [text!]] [
+    command: method [return: [text!]] [
         let ld: any [linker, default-linker]
         return ld.command // [
             .output, .depends, .searches, .ldflags,
@@ -389,11 +389,11 @@ dynamic-library-class: make project-class [
 
     searches: null
     ldflags: null
-    /link: method [return: [~]] [
+    link: method [return: [~]] [
         linker/link .output .depends .ldflags
     ]
 
-    /command: method [
+    command: method [
         return: [text!]
         <with>
         default-linker
@@ -422,7 +422,7 @@ compiler-class: make object! [
     id: null  ; flag prefix
     version: null
     exec-file: null
-    /compile: method [
+    compile: method [
         return: [~]
         output [file!]
         source [file!]
@@ -432,7 +432,7 @@ compiler-class: make object! [
     ][
     ]
 
-    /command: method [
+    command: method [
         return: [text!]
         output
         source
@@ -442,7 +442,7 @@ compiler-class: make object! [
     ][
     ]
 
-    /check: method [
+    check: method [
         "Check if the compiler is available"
         return: [logic?]
         path [<maybe> any-string?]
@@ -455,7 +455,7 @@ gcc: make compiler-class [
     name: 'gcc
     id: "gnu"
 
-    /check: method [
+    check: method [
         "Assigns .exec-file, extracts the compiler version"
         return: [logic?]
         :exec [file!]
@@ -483,7 +483,7 @@ gcc: make compiler-class [
         ]
     ]
 
-    /command: method [
+    command: method [
         return: [text!]
         output [file!]
         source [file!]
@@ -595,7 +595,7 @@ clang: make gcc [
 cl: make compiler-class [
     name: 'cl
     id: "msc" ;flag id
-    /command: method [
+    command: method [
         return: [text!]
         output [file!]
         source
@@ -696,12 +696,12 @@ linker-class: make object! [
     name: null
     id: null  ; flag prefix
     version: null
-    /link: method [
+    link: method [
         return: [~]
     ][
         ...  ; overridden
     ]
-    /commands: method [
+    commands: method [
         return: [~null~ block!]
         output [file!]
         depends [~null~ block!]
@@ -710,7 +710,7 @@ linker-class: make object! [
     ][
         ...  ; overridden
     ]
-    /check: does [
+    check: does [
         ...  ; overridden
     ]
 ]
@@ -725,7 +725,7 @@ ld: make linker-class [
     version: null
     exec-file: null
     id: "gnu"
-    /command: method [
+    command: method [
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -772,7 +772,7 @@ ld: make linker-class [
         ]
     ]
 
-    /accept: method [
+    accept: method [
         return: [~null~ text!]
         dep [object!]
     ][
@@ -816,7 +816,7 @@ ld: make linker-class [
         ]
     ]
 
-    /check: method [
+    check: method [
         return: [logic?]
         :exec [file!]
     ][
@@ -832,7 +832,7 @@ llvm-link: make linker-class [
     version: null
     exec-file: null
     id: "llvm"
-    /command: method [
+    command: method [
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -876,7 +876,7 @@ llvm-link: make linker-class [
         ]
     ]
 
-    /accept: method [
+    accept: method [
         return: [~null~ text!]
         dep [object!]
     ][
@@ -917,7 +917,7 @@ link: make linker-class [
     version: null
     exec-file: null
 
-    /command: method [
+    command: method [
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -963,7 +963,7 @@ link: make linker-class [
         ]
     ]
 
-    /accept: method [
+    accept: method [
         return: [~null~ text!]
         dep [object!]
     ][
@@ -1014,7 +1014,7 @@ strip-class: make object! [
     id: null  ; flag prefix
     exec-file: null
     options: null
-    /commands: method [
+    commands: method [
         return: [block!]
         target [file!]
         params [~null~ blank! block! any-string?]
@@ -1035,14 +1035,14 @@ strip-class: make object! [
             keep file-to-local target
         ]]
     ]
-    /check: does [
+    check: does [
         ...  ; overridden
     ]
 ]
 
 strip: make strip-class [
     id: "gnu"
-    /check: method [
+    check: method [
         return: [logic?]
         :exec [file!]
     ][
@@ -1066,11 +1066,11 @@ object-file-class: make object! [
     generated: 'no
     depends: null
 
-    /compile: method [return: [~]] [
+    compile: method [return: [~]] [
         compiler/compile
     ]
 
-    /command: method [
+    command: method [
         return: [text!]
         :I "extra includes" [block!]
         :D "extra definitions" [block!]
@@ -1112,7 +1112,7 @@ object-file-class: make object! [
         ]
     ]
 
-    /gen-entries: method [
+    gen-entries: method [
         return: [object!]
         parent [object!]
         :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
@@ -1184,7 +1184,7 @@ generator-class: make object! [
     gen-cmd-delete: null
     gen-cmd-strip: null
 
-    /gen-cmd: method [
+    gen-cmd: method [
         return: [text!]
         cmd [object!]
     ][
@@ -1218,7 +1218,7 @@ generator-class: make object! [
         ]
     ]
 
-    /do-substitutions: method [
+    do-substitutions: method [
         "Substitute variables (recursively) in the command with its value"
 
         return: [~null~ object! any-string?]
@@ -1265,7 +1265,7 @@ generator-class: make object! [
         return cmd
     ]
 
-    /prepare: method [
+    prepare: method [
         return: [~]
         solution [object!]
     ][
@@ -1286,7 +1286,7 @@ generator-class: make object! [
         ]
     ]
 
-    /flip-flag: method [
+    flip-flag: method [
         return: [~]
         project [object!]
         to [yesno?]
@@ -1304,7 +1304,7 @@ generator-class: make object! [
         ]
     ]
 
-    /setup-output: method [
+    setup-output: method [
         return: [~]
         project [object!]
     ][
@@ -1357,7 +1357,7 @@ generator-class: make object! [
         project.basename: basename
     ]
 
-    /setup-outputs: method [
+    setup-outputs: method [
         "Set the output and implib for the project tree"
         return: [~]
         project [object!]
@@ -1394,7 +1394,7 @@ makefile: make generator-class [
     /gen-cmd-delete: get $posix.gen-cmd-delete
     /gen-cmd-strip: get $posix.gen-cmd-strip
 
-    /gen-rule: method [
+    gen-rule: method [
         return: "Possibly multi-line text for rule, with extra newline @ end"
             [text!]
         entry [object!]
@@ -1477,7 +1477,7 @@ makefile: make generator-class [
         ; to the caller to decide to add the spacing line or not
     ]
 
-    /emit: method [
+    emit: method [
         return: [~]
         buf [blob!]
         project [object!]
@@ -1546,7 +1546,7 @@ makefile: make generator-class [
         ]
     ]
 
-    /generate: method [
+    generate: method [
         return: [~]
         output [file!]
         solution [object!]
@@ -1601,7 +1601,7 @@ export execution: make generator-class [
     gen-cmd-delete: get $host.gen-cmd-delete
     gen-cmd-strip: get $host.gen-cmd-strip
 
-    /run-target: method [
+    run-target: method [
         return: [~]
         target [object!]
         :cwd "change working directory"  ; !!! Not heeded (?)
@@ -1637,7 +1637,7 @@ export execution: make generator-class [
         ]
     ]
 
-    /run: method [
+    run: method [
         return: [~]
         project [object!]
         :parent "parent project"

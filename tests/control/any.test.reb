@@ -59,7 +59,7 @@
     same? a-value any [a-value]
 )
 (
-    /a-value: does []
+    a-value: does []
     same? :a-value any [:a-value]
 )
 (
@@ -158,7 +158,7 @@
     same? a-value any [null a-value]
 )
 (
-    /a-value: does []
+    a-value: does []
     same? unrun :a-value any [null unrun :a-value]
 )
 (
@@ -254,7 +254,7 @@
     same? a-value any [a-value null]
 )
 (
-    /a-value: does []
+    a-value: does []
     same? unrun :a-value any [unrun :a-value null]
 )
 (
@@ -342,7 +342,7 @@
 )
 ; RETURN stops evaluation
 (
-    /f1: func [return: [integer!]] [any [return 1 2] 2]
+    f1: func [return: [integer!]] [any [return 1 2] 2]
     1 = f1
 )
 ; THROW stops evaluation

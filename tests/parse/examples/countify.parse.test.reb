@@ -5,7 +5,7 @@
 ; for that demo, it was turned into a test.
 
 [(
-    /countify: func [things data] [
+    countify: func [things data] [
         let counts: to map! []
         let rules: collect [
             for-each 't things [

@@ -2069,8 +2069,8 @@ Bounce Stepper_Executor(Level* L)
     // Want to keep this flag between an operation and an ensuing infix in
     // the same level, so can't clear in Drop_Action(), e.g. due to:
     //
-    //     /left-the: infix the/
-    //     o: make object! [/f: does [1]]
+    //     left-the: infix the/
+    //     o: make object! [f: does [1]]
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
     Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);

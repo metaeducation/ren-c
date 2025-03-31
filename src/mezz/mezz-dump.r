@@ -12,7 +12,7 @@ REBOL [
     }--
 ]
 
-/dump: func [
+dump: func [
     "Show the name of a value or expressions with the value (See Also: --)"
 
     return: "Doesn't return anything, not even void (so like a COMMENT)"
@@ -26,7 +26,7 @@ REBOL [
 bind construct [
     enablements: to map! []
 ][
-    let /print: enclose lib.print/ lambda [f [frame!]] [
+    let print: enclose lib.print/ lambda [f [frame!]] [
         if prefix [
             if #on <> select enablements prefix [return ~]
             write-stdout prefix
@@ -35,7 +35,7 @@ bind construct [
         eval f
     ]
 
-    let /val-to-text: func [return: [text!] ^val [any-value?]] [
+    let val-to-text: func [return: [text!] ^val [any-value?]] [
         return case [
             void? val ["; void"]
             quasi? val [unspaced [mold val space space "; anti"]]
@@ -51,7 +51,7 @@ bind construct [
         ]
     ]
 
-    let /dump-one: func [return: [~] item] [
+    let dump-one: func [return: [~] item] [
         switch:type item [
             refinement?/  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.
@@ -101,7 +101,7 @@ bind construct [
     return ~[]~
 ]
 
-/contains-newline: func [return: [logic?] pos [block! group!]] [
+contains-newline: func [return: [logic?] pos [block! group!]] [
     while [pos] [
         any [
             new-line? pos
@@ -164,7 +164,7 @@ bind construct [
         ; have a way to be called--in spirit they are like infix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
-        /d: func [return: [~[]~] :on :off] bind construct [
+        d: func [return: [~[]~] :on :off] bind construct [
             /d': (
                 let /d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
@@ -187,7 +187,7 @@ bind construct [
 ; so it uses that as a string pattern.  Review how to better factor that
 ; (as part of a general help review)
 ;
-/summarize-obj: func [
+summarize-obj: func [
     "Returns a block of information about an object or port"
 
     return: "Block of short lines (fitting in roughly 80 columns)"
@@ -196,7 +196,7 @@ bind construct [
     :pattern "Include only fields that match a string or datatype"
         [text! datatype!]
 ][
-    let /form-pad: lambda [
+    let form-pad: lambda [
         "Form a value with fixed size (space padding follows)"
         val
         size
@@ -266,7 +266,7 @@ bind construct [
 ; Notice that if line breaks occur internal to an element on the line, that
 ; is detected, and lets that element be the last commented element.
 ;
-/**: func [
+**: func [
     "Comment until end of line, or end of current list"
 
     return: [~[]~]

@@ -17,7 +17,7 @@ REBOL [
     }--
 ]
 
-/assert: func [
+assert: func [
     "Ensure conditions are branch triggers if hooked by debugging"
 
     return: [~[]~]
@@ -32,7 +32,7 @@ REBOL [
     return ~[]~
 ]
 
-/steal: lambda [
+steal: lambda [
     "Return a variable's value prior to an assignment, then do the assignment"
 
     evaluation "Takes assigned value (variadic enables STEAL X: DEFAULT [...])"
@@ -66,7 +66,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
 ; it could dump those remarks out...perhaps based on how many == there are.
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
-/===: func [
+===: func [
     return: [~[]~]
     'remarks [element? <variadic>]
     :visibility [onoff?]
@@ -87,14 +87,14 @@ bind construct [
     return ~[]~
 ]
 
-/what-dir: func [  ; This can be HIJACK'd by a "smarter" version
+what-dir: func [  ; This can be HIJACK'd by a "smarter" version
     "Returns the current directory path"
     return: [~null~ file! url!]
 ][
     return system.options.current-path
 ]
 
-/change-dir: func [  ; This can be HIJACK'd by a "smarter" version
+change-dir: func [  ; This can be HIJACK'd by a "smarter" version
     "Changes the current path (where scripts with relative paths will be run)"
     return: [file! url!]
     path [file! url!]
@@ -103,7 +103,7 @@ bind construct [
 ]
 
 
-/redescribe: func [
+redescribe: func [
     "Mutate action description with new title and/or new argument notes"
 
     return: [action!]
@@ -141,7 +141,7 @@ bind construct [
     cascade [get:any/ vacancy?/]
 )
 
-/defined?: func [
+defined?: func [
     "Determine if a variable has a binding and is not unset"
     return: [logic?]
     var [word! path! tuple!]
@@ -149,7 +149,7 @@ bind construct [
     return not trap [get var]
 ]
 
-/undefined?: func [
+undefined?: func [
     "Determine if a variable does not have a binding or is unset"
     return: [logic?]
     var [word! path! tuple!]
@@ -157,16 +157,16 @@ bind construct [
     return did trap [get var]
 ]
 
-/unspecialized?: func [
-    "Determine if a variable looks up to a parameter antiform"
+unspecialized?: func [
+    "Determine if a variable looks up to a PARAMETER!"
     return: [logic?]
     var [word! tuple!]
 ][
     return parameter? get:any var
 ]
 
-/specialized?: func [
-    "Determine if a variable doesn't look up to a parameter antiform"
+specialized?: func [
+    "Determine if a variable doesn't look up to a PARAMETER!"
     return: [logic?]
     var [word! tuple!]
 ][
@@ -377,7 +377,7 @@ bind construct [
     ]
 )
 
-/attempt: func [
+attempt: func [
     "Evaluate a block and returns result or NULL if an expression fails"
 
     return: "Returns NULL on failure (-or- if last evaluative result is NULL)"
@@ -389,7 +389,7 @@ bind construct [
     return unmeta temp
 ]
 
-/trap: func [
+trap: func [
     "If evaluation raises an error, return it, otherwise NULL"
 
     return: [~null~ error!]
@@ -398,7 +398,7 @@ bind construct [
     return match error! entrap code
 ]
 
-/trap+: func [
+trap+: func [
     "Experimental variation of TRAP using THENable mechanics"
 
     return: [pack!]
@@ -477,7 +477,7 @@ bind construct [
 )
 
 
-/count-up: func [
+count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
     return: [any-value?]
     var [word!]
@@ -536,7 +536,7 @@ bind construct [
     cascade [specialize copy/ [deep: ok], freeze/]
 )
 
-/eval-all: func [
+eval-all: func [
     "Evaluate any number of expressions and discard them"
 
     return: [~[]~]
@@ -579,7 +579,7 @@ bind construct [
 ]
 
 
-/cause-error: func [
+cause-error: func [
     "Causes an immediate error throw with the provided information"
     err-type [word!]
     err-id [word!]
@@ -603,7 +603,7 @@ bind construct [
 ;
 ; Though HIJACK would have to be aware of it and preserve the rule.
 ;
-/raise: func [
+raise: func [
     "Interrupts execution by reporting an error (a TRAP can intercept it)"
 
     return: []

@@ -11,7 +11,7 @@ REBOL [
     }--
 ]
 
-/verify: func [
+verify: func [
     "Verify all the conditions in the passed-in block are conditionally true"
 
     return: [~[]~]
@@ -75,7 +75,7 @@ REBOL [
 /native-assert: hijack assert/ verify/
 
 
-/delta-time: func [
+delta-time: func [
     "Returns the time it takes to evaluate the block"
     block [block!]
 ][
@@ -88,7 +88,7 @@ REBOL [
     return difference results.2 results.1
 ]
 
-/delta-profile: func [
+delta-profile: func [
     "Delta-profile of running a specific block"
     block [block!]
     <local> start end
@@ -105,7 +105,7 @@ REBOL [
     start
 ]
 
-/speed?: func [
+speed?: func [
     "Returns approximate speed benchmarks [eval cpu memory file-io]"
     :no-io "Skip the IO test"
     :times "Show time for each test"
@@ -162,9 +162,9 @@ REBOL [
     return result
 ]
 
-/net-log: lambda [txt :C :S][txt]
+net-log: lambda [txt :C :S][txt]
 
-/net-trace: func [
+net-trace: func [
     "Switch between using a no-op or a print operation for net-tracing"
 
     return: [~]

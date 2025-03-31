@@ -18,7 +18,7 @@ REBOL [
 
 binary!: blob!
 
-/loop: func [] [
+loop: func [] [
     fail:blame [
         "Short word LOOP is reserved for a generalized looping dialect:"
         https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878
@@ -26,7 +26,7 @@ binary!: blob!
 ]
 
 
-/REBOL: func [] [
+REBOL: func [] [
     fail:blame [
         "The REBOL [] header of a script must be interpreted by LOAD (and"
         "functions like DO).  It cannot be executed directly."
@@ -34,7 +34,7 @@ binary!: blob!
 ]
 
 
-/input: func [] [
+input: func [] [
     fail:blame [
         "Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):"
         https://forum.rebol.info/t/1124
@@ -42,21 +42,21 @@ binary!: blob!
 ]
 
 
-/repend: func [] [
+repend: func [] [
     fail:blame [
         "REPEND is just `adapt append/ [value: reduce :value]`, and is not"
         "provided in the box."
     ] $return
 ]
 
-/remold: func [] [
+remold: func [] [
     fail:blame [
         "REMOLD is just `adapt mold/ [value: reduce :value]`, but is not"
         "provided in the box."
     ] $return
 ]
 
-/rejoin: func [] [
+rejoin: func [] [
     fail:blame [
         "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
         "general cases by JOIN, which accepts datatypes as a first parameter,"
@@ -92,7 +92,7 @@ comment [
 
 ; The legacy PRIN construct is replaced by WRITE-STDOUT SPACED and similar
 ;
-/prin: func [
+prin: func [
     "Print without implicit line break, blocks are SPACED."
 
     return: [~]

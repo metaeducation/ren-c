@@ -44,7 +44,7 @@ comment-out-includes: [
 ]
 
 
-/fix-randutils-c: func [
+fix-randutils-c: func [
     text [text!]
 ][
     exclude-headers: [
@@ -77,7 +77,7 @@ comment-out-includes: [
     return text
 ]
 
-/fix-gen_uuid-c: func [
+fix-gen_uuid-c: func [
     text [text!]
     <with> exclude-headers comment-out-includes add-config-h space
 ][

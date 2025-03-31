@@ -4,7 +4,7 @@
 ; and a nihil`
 
 [
-    (did /detector: lambda [^x [<end> any-value? pack!]] [x])
+    (did detector: lambda [^x [<end> any-value? pack!]] [x])
 
     ((the '10) = detector 10)
     (^null = detector null)
@@ -13,7 +13,7 @@
     ('~[]~ = detector (comment "hi"))
     (null = detector)
 
-    (did /left-detector: infix detector/)
+    (did left-detector: infix detector/)
 
     ((the '1) = (1 left-detector))
     (null = left-detector)

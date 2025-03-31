@@ -189,7 +189,7 @@ debug: (comment [print/] blank)
 ; SHA1 was removed from the core.  We could do it in userspace if it were
 ; deemed important.
 ;
-/random-secure: lambda [range [integer!]] [random range]
+random-secure: lambda [range [integer!]] [random range]
 
 
 version-to-bytes: [
@@ -200,7 +200,7 @@ version-to-bytes: [
 bytes-to-version: reverse copy version-to-bytes
 
 
-/emit: func [
+emit: func [
     "Emits binary data, optionally marking positions with SET-WORD!"
 
     return: [~]
@@ -241,7 +241,7 @@ bytes-to-version: reverse copy version-to-bytes
 /to-4bin: specialize encode/ [type: [BE + 4]]
 /to-8bin: specialize encode/ [type: [BE + 8]]
 
-/make-tls-error: lambda [
+make-tls-error: lambda [
     message [text! block!]
 ][
     if block? message [message: unspaced message]
@@ -269,7 +269,7 @@ bytes-to-version: reverse copy version-to-bytes
 ;
 ; Yet it's a good, short, real-world case to look at through a Rebol lens.
 
-/parse-asn: func [
+parse-asn: func [
     "Create a legible Rebol-structured BLOCK! from an ASN.1 BLOB! encoding"
 
     return: [~null~ block!]
@@ -398,7 +398,7 @@ bind construct [
 ; represents a state that can be final, and a TAG! represents a state that may
 ; move to the competed state.
 
-/make-state-updater: func [
+make-state-updater: func [
     return: [action!]
     direction ['read 'write]
     transdialect "dialected mapping from state to legal next states"
@@ -460,7 +460,7 @@ update-write-state: make-state-updater 'write [
 
 === TLS PROTOCOL CODE ===
 
-/client-hello: func [
+client-hello: func [
     return: [~]
     ctx [object!]
     :version "TLS version to request (block is [lowest highest] allowed)"
@@ -670,7 +670,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/client-key-exchange: func [
+client-key-exchange: func [
     return: [~]
     ctx [object!]
 ][
@@ -779,7 +779,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/change-cipher-spec: func [
+change-cipher-spec: func [
     return: [~]
     ctx [object!]
 ][
@@ -792,7 +792,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/encrypted-handshake-msg: func [
+encrypted-handshake-msg: func [
     return: [~]
     ctx [object!]
     unencrypted [blob!]
@@ -808,7 +808,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/application-data: func [
+application-data: func [
     return: [~]
     ctx [object!]
     unencrypted [blob! text!]
@@ -823,7 +823,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/alert-close-notify: func [
+alert-close-notify: func [
     return: [~]
     ctx [object!]
 ][
@@ -837,7 +837,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/finished: func [
+finished: func [
     return: [blob!]
     ctx [object!]
 ][
@@ -875,7 +875,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/encrypt-data: func [
+encrypt-data: func [
     return: [blob!]
     ctx [object!]
     content [blob!]
@@ -951,7 +951,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/decrypt-data: func [
+decrypt-data: func [
     return: [blob!]
     ctx [object!]
     data [blob!]
@@ -978,7 +978,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/parse-protocol: func [
+parse-protocol: func [
     return: [object!]
     data [blob!]
 ]
@@ -1028,7 +1028,7 @@ bind construct [
 ]
 
 
-/parse-messages: func [
+parse-messages: func [
     return: [block!]
 
     ctx [object!]
@@ -1501,7 +1501,7 @@ bind construct [
 ]
 
 
-/parse-response: func [
+parse-response: func [
     return: [object!]
     ctx [object!]
     msg [blob!]
@@ -1528,7 +1528,7 @@ bind construct [
 ]
 
 
-/prf: func [
+prf: func [
     "(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries"
 
     return: [blob!]
@@ -1589,7 +1589,7 @@ bind construct [
 ]
 
 
-/make-key-block: func [
+make-key-block: func [
     return: [blob!]
     ctx [object!]
 ][
@@ -1606,7 +1606,7 @@ bind construct [
 ]
 
 
-/make-master-secret: func [
+make-master-secret: func [
     return: [blob!]
     ctx [object!]
     pre-master-secret [blob!]
@@ -1621,7 +1621,7 @@ bind construct [
 ]
 
 
-/do-commands: func [
+do-commands: func [
     return: [~]  ; some paths returned LOGIC!, others none...was unused
     tls-port [port!]
     commands [block!]
@@ -1679,7 +1679,7 @@ bind construct [
 === TLS SCHEME ===
 
 
-/tls-init: func [
+tls-init: func [
     return: [~]
     ctx [object!]
 ][
@@ -1691,7 +1691,7 @@ bind construct [
 ]
 
 
-/tls-read-data: func [
+tls-read-data: func [
     return: [logic?]
     ctx [object!]
     port-data [blob!]
@@ -1742,7 +1742,7 @@ bind construct [
 ]
 
 
-/perform-read: func [
+perform-read: func [
     return: [~]
     port [port!]
 ][
@@ -1753,7 +1753,7 @@ bind construct [
     ]
 ]
 
-/check-response: func [
+check-response: func [
     return: [logic?]
     tls-port [port!]
 ][
@@ -1810,7 +1810,7 @@ sys.util/make-scheme [
     title: "TLS protocol v1.0"
     spec: make system.standard.port-spec-net []
     actor: [
-        /read: func [
+        read: func [
             return: [port!]
             port [port!]
         ][
@@ -1818,7 +1818,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        /write: func [
+        write: func [
             return: [~null~ port!]
             port [port!]
             value [any-value?]
@@ -1843,7 +1843,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        /open: func [
+        open: func [
             return: [port!]
             port [port!]
         ][
@@ -1981,7 +1981,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        /connect: func [port [port!]] [
+        connect: func [port [port!]] [
             connect port.state.connection
 
             tls-init port.state
@@ -1998,17 +1998,17 @@ sys.util/make-scheme [
             return port
         ]
 
-        /open?: func [port [port!]] [
+        open?: func [port [port!]] [
             return all [port.state, open? port.state.connection]
         ]
 
-        /length-of: func [port [port!]] [
+        length-of: func [port [port!]] [
             ; actor is not an object!, so this isn't a recursive call
             ;
             return either port.data [length of port.data] [0]
         ]
 
-        /close: func [return: [port!] port [port!]] [
+        close: func [return: [port!] port [port!]] [
             if not port.state [return port]
 
             close port.state.connection
@@ -2044,11 +2044,11 @@ sys.util/make-scheme [
             return port
         ]
 
-        /copy: func [port [port!]] [
+        copy: func [port [port!]] [
             return if port.data [copy port.data]
         ]
 
-        /query: func [return: [~null~ object!] port [port!]] [
+        query: func [return: [~null~ object!] port [port!]] [
             return all [port.state, query port.state.connection]
         ]
     ]

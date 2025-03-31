@@ -7,7 +7,7 @@
 ; Preserved as a test.  (But switched to use UPARSE instead of PARSE3.)
 
 [
-(/function3: func [
+(function3: func [
     "Augment action with <static>, <in>, <with> features"
 
     return: [action!]
@@ -169,9 +169,9 @@
 ], ok)
 
     (
-       /accumulator: function3 [x [integer!] <static> state (0)] [
-          return state: state + x
-       ]
+        accumulator: function3 [x [integer!] <static> state (0)] [
+            return state: state + x
+        ]
 
         all [
             1 = accumulator 1

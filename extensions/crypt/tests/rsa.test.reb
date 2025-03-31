@@ -54,7 +54,7 @@
   if 1 = random 12 [
     hash-sizes: [#md5 16 #sha512 64]
 
-    /rsa-capacity: func [num-key-bits padding] [
+    rsa-capacity: func [num-key-bits padding] [
         let hash-size: if not try padding.2 [
             0
         ] else [

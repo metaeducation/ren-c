@@ -22,8 +22,8 @@
 // AUGMENT is designed to create a version of a function with an expanded
 // frame, adding new parameters.  It does so without affecting the execution:
 //
-//     >> /foo-x: func [x [integer!]] [print ["x is" x]]
-//     >> /foo-xy: augment foo-x/ [y [integer!]]
+//     >> foo-x: func [x [integer!]] [print ["x is" x]]
+//     >> foo-xy: augment foo-x/ [y [integer!]]
 //
 //     >> foo-x 10
 //     x is 10
@@ -38,7 +38,7 @@
 // is only useful when combined with something like ADAPT or ENCLOSE... to
 // inject in phases of code at a higher level that see these parameters:
 //
-//     >> /foo-xy: adapt (augment foo-x/ [y [integer!]]) [print ["y is" y]]
+//     >> foo-xy: adapt (augment foo-x/ [y [integer!]]) [print ["y is" y]]
 //
 //     >> foo-xy 10 20
 //     y is 20

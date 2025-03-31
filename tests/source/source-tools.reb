@@ -49,12 +49,12 @@ import %% (repo-dir)/tools/read-deep.reb
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
-/logfn: func [message][
+logfn: func [message][
     message: compose message
     new-line:all message 'no
     print mold message
 ]
-/log: logfn/
+log: logfn/
 
 standard: context [
     ;
@@ -111,7 +111,7 @@ whitelisted: [
 ]
 
 
-/log-emit: func [
+log-emit: func [
     "Append a COMPOSE'd block to a log block, clearing any new-line flags"
 
     return: [~]
@@ -126,7 +126,7 @@ whitelisted: [
 
 export analyse: context [
 
-    /files: func [
+    files: func [
         "Analyse the source files of Rebol"
         return: [block!]
     ][
@@ -139,7 +139,7 @@ export analyse: context [
         ]
     ]
 
-    /file: func [
+    file: func [
         "Analyse a file returning facts"
         return: [~null~ block!]
         file
@@ -155,7 +155,7 @@ export analyse: context [
 
     source: context [
 
-        /c: func [
+        c: func [
             "Analyse a C file at the C preprocessing token level"
 
             return: "Facts about the file (lines that are too long, etc)"
@@ -201,7 +201,7 @@ export analyse: context [
 
             let non-std-func-space: null
 
-            let /emit-proto: func [return: [~] proto] [
+            let emit-proto: func [return: [~] proto] [
                 if not block? proto-parser.data [return ~]
 
                 eval overbind c-parser-extension [
@@ -286,7 +286,7 @@ export analyse: context [
             return analysis
         ]
 
-        /rebol: func [
+        rebol: func [
             "Analyse a Rebol file (no checks beyond those for text yet)"
 
             return: [block!]
@@ -299,7 +299,7 @@ export analyse: context [
         ]
     ]
 
-    /text: func [
+    text: func [
         "Analyse textual formatting irrespective of language"
 
         return: [block!]
@@ -423,7 +423,7 @@ export analyse: context [
 
 list: context [
 
-    /source-files: func [
+    source-files: func [
         "Retrieves a list of source files (relative paths)"
     ][
         let files: read-deep:full:strategy source-paths source-files-seq/
@@ -434,7 +434,7 @@ list: context [
         return files
     ]
 
-    /source-files-seq: func [
+    source-files-seq: func [
         "Take next file from a sequence that is represented by a queue"
         return: [~null~ file!]
         queue [block!]
@@ -488,7 +488,7 @@ c-parser-extension: context bind c-lexical.grammar bind proto-parser [
     )
 ]
 
-/extension-of: func [
+extension-of: func [
     "Return file extension for file"
     return: [file!]
     file [file!]

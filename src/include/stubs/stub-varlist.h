@@ -134,8 +134,8 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 // a running frame gets re-executed.  More study is needed.
 //
 // 1. The way that a FRAME! cell made by METHOD gets connected with an object
-//    is when the TUPLE! dispatch happens.  `/foo: method [...]` is uncoupled
-//    until the moment that you say `obj.foo`, at which point the returned
+//    is when the TUPLE! dispatch happens.  (foo: method [...]) is uncoupled
+//    until the moment that you say (obj.foo), at which point the returned
 //    action gets OBJ's pointer poked into the result.  But not all functions
 //    have this happen: it would stow arbitrary unintentional data in
 //    non-methods just because they were accessed from an object--and worse,

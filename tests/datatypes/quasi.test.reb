@@ -59,7 +59,7 @@
 )
 
 [
-    (/foo: lambda [] [], ok)
+    (foo: lambda [] [], ok)
 
     (void? foo)
 
@@ -73,7 +73,7 @@
 ]
 
 [
-    (/foo: func [] [], ok)
+    (foo: func [] [], ok)
 
     (nothing? foo)
 
@@ -88,7 +88,7 @@
 
 ; Explicit return of VOID
 [
-    (did /foo: func [return: [any-value?]] [return void])
+    (did foo: func [return: [any-value?]] [return void])
 
     (void? foo)
     (^void = ^ foo)
@@ -99,14 +99,14 @@
 ; Not providing an argument is an error (too easy to pick up random arguments
 ; from another line if 0-arity were allowed)
 [
-    (did /foo: func [return: [any-value?] x] [])
+    (did foo: func [return: [any-value?] x] [])
 
     ~unspecified-arg~ !! (foo)
 ]
 
 ; ~()~ antiforms were VOID for a short time, but void is now its own thing
 [
-    (did /foo: func [return: [any-value?]] [return ~()~])
+    (did foo: func [return: [any-value?]] [return ~()~])
 
     (not void? foo)
     ('~()~ = ^ foo)
@@ -117,26 +117,26 @@
 
 
 [(
-    /foo: func [return: [~]] []
+    foo: func [return: [~]] []
     ^nothing = ^ foo
 )(
     data: [a b c]
-    /f: func [return: [~]] [append data spread [1 2 3]]
+    f: func [return: [~]] [append data spread [1 2 3]]
     ^nothing = ^ f
 )]
 
 ; locals are unset before they are assigned
 (
-    /f: func [<local> loc] [return get:any $loc]
+    f: func [<local> loc] [return get:any $loc]
     nothing? f
 )(
-    /f: func [<local> loc] [return reify get:any $loc]
+    f: func [<local> loc] [return reify get:any $loc]
     f = '~
 )(
-    /f: func [<local> loc] [return ^loc]
+    f: func [<local> loc] [return ^loc]
     f = '~
 )(
-    /f: lambda [<local> loc] [^loc]
+    f: lambda [<local> loc] [^loc]
     f = '~
 )
 

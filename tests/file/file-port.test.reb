@@ -14,7 +14,7 @@
 ; directory, make some simple small files and then delete them just to
 ; test that up front.
 [
-    (/delete-recurse: func [f [file!]] [
+    (delete-recurse: func [f [file!]] [
         if not exists? f [
             fail [f "does not exist"]
         ]

@@ -430,7 +430,7 @@ DECLARE_NATIVE(FAIL)
   #if NO_RUNTIME_CHECKS
     UNUSED(blame);
   #else
-    printf("!!! Early-Boot FAIL, e.g. fail: native [], not /fail: func []\n");
+    printf("!!! Early-Boot FAIL, e.g. fail: native [], not fail: func []\n");
     PROBE(blame);
 
     rebElide(CANON(WRITE_STDOUT), CANON(DELIMIT), CANON(SPACE), reason);

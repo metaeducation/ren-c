@@ -152,7 +152,7 @@ lib.lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
 ; modularization in Rebol2).
 ;
 ; However, this will erase all top level SET-WORD!s in the module.  So you
-; can't use any words you redefine.  e.g. if you say `/func: func [...] [...]`
+; can't use any words you redefine.  e.g. if you say `func: func [...] [...]`
 ; then that won't work because `make object! [func: ...]` unsets FUNC in
 ; advance.  We only use the trick if they're trying to set a result back,
 ; such as with:

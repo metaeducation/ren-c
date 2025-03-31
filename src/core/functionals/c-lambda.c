@@ -27,8 +27,8 @@
 // more often, it the meaning of RETURN will be whatever was in effect
 // when the lambda was defined:
 //
-//      /outer: func [x] [
-//          let /inner: lambda [y] [
+//      outer: func [x] [
+//          let inner: lambda [y] [
 //              return x + y  ; would return from OUTER, not INNER
 //          ]
 //          return inner/

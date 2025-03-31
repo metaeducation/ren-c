@@ -70,7 +70,7 @@ export test-source-rule: [
     ]
 ]
 
-/load-testfile: func [
+load-testfile: func [
     "Read the test source, preprocessing if necessary"
     test-file [file!]
 ][
@@ -81,7 +81,7 @@ export test-source-rule: [
     return test-source
 ]
 
-export /collect-tests: func [
+export collect-tests: func [
     return: [block!]
     file "Name of file written in the test dialect to gather tests from"
         [file!]
@@ -190,7 +190,7 @@ export /collect-tests: func [
     return into
 ]
 
-export /collect-logs: func [
+export collect-logs: func [
     return: [~]
     collected-logs "collect the logged results here (modified)"
         [block!]

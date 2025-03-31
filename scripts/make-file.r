@@ -48,7 +48,7 @@ REBOL [
     }--
 ]
 
-/doubled-file-slash-error: lambda [item] [
+doubled-file-slash-error: lambda [item] [
     make error! [
         id: 'doubled-file-slash
         message: ["Doubled / encountered while generating filename:" :arg1]
@@ -56,7 +56,7 @@ REBOL [
     ]
 ]
 
-/embedded-file-slash-error: lambda [item] [
+embedded-file-slash-error: lambda [item] [
     make error! [
         id: 'embedded-file-slash
         message: ["Embedded `/` encountered in filename component:" :arg1]
@@ -64,7 +64,7 @@ REBOL [
     ]
 ]
 
-/make-file-block-parts: func [
+make-file-block-parts: func [
     return: [block!]
     block [block!]
     predicate [action!]
@@ -138,7 +138,7 @@ REBOL [
     ]]
 ]
 
-/make-file-tuple-parts: func [
+make-file-tuple-parts: func [
     return: [block!]
     tuple [tuple!]
     predicate [action!]
@@ -174,7 +174,7 @@ REBOL [
     ]]
 ]
 
-/make-file-path-parts: func [
+make-file-path-parts: func [
     return: [block!]
     path [path!]
     predicate [action!]
@@ -227,7 +227,7 @@ REBOL [
     ]]
 ]
 
-/make-file: func [
+make-file: func [
     "Create a FILE! using the file path specification dialect"
 
     return: [~null~ file!]

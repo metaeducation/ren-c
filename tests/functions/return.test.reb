@@ -1,23 +1,23 @@
 ; functions/control/return.r
 
 (
-    /f1: func [return: [integer!]] [return 1 2]
+    f1: func [return: [integer!]] [return 1 2]
     1 = f1
 )
 (
     success: 'true
-    /f1: func [return: [integer!]] [return 1 success: 'false]
+    f1: func [return: [integer!]] [return 1 success: 'false]
     f1
     true? success
 )
 
 ; return value tests
 (
-    /f1: func [return: [any-value?]] [return null]
+    f1: func [return: [any-value?]] [return null]
     null? f1
 )
 (
-    /f1: func [return: [error!]] [return trap [1 / 0]]
+    f1: func [return: [error!]] [return trap [1 / 0]]
     error? f1
 )
 
@@ -50,12 +50,12 @@
 
 (
     success: 'true
-    /f1: func [return: [~]] [return ~, success: 'false]
+    f1: func [return: [~]] [return ~, success: 'false]
     f1
     true? success
 )
 (
-    /f1: func [return: [~]] [return ~]
+    f1: func [return: [~]] [return ~]
     ^nothing = ^ f1
 )
 [#1515 (  ; the "result" of a return should not be assignable
@@ -83,7 +83,7 @@
 
 ; RETURN:RUN with current values of frame arguments
 (
-    /foo: func [return: [tag!] n <local> clear-me] [
+    foo: func [return: [tag!] n <local> clear-me] [
         assert [unset? $clear-me]
         if n = 0 [
             return <success>
@@ -99,7 +99,7 @@
 ; RETURN:RUN with a new call (doesn't reuse arg cells, because it needs the
 ; old values while calculating the new ones)
 (
-    /foo: func [return: [tag!] n <local> clear-me] [
+    foo: func [return: [tag!] n <local> clear-me] [
         assert [unset? $clear-me]
         if n = 0 [
            return <success>
@@ -114,7 +114,7 @@
 ; RETURN:RUN can call any function, not just the one you're returning from
 ; (But the savings are less, as it's only reusing the Level structure)
 (
-    /foo: func [return: [tag!] block] [
+    foo: func [return: [tag!] block] [
         return:run append/ block [d e]
     ]
 
@@ -125,7 +125,7 @@
 ; (args and refinements must pass function's type checking)
 ;
 ~expect-arg~ !! (
-    /foo: func [return: [tag!] n i [integer!]] [
+    foo: func [return: [tag!] n i [integer!]] [
         if n = 0 [
             return <success>  ; impossible for this case
         ]
@@ -137,10 +137,10 @@
     foo 100 1020
 )
 
-; RETURN/RUN <REDO> phase test
+; RETURN:RUN <REDO> phase test
 ; (shared frame compositions should redo the appropriate "phase")
 (
-    /inner: func [return: [tag!] n] [
+    inner: func [return: [tag!] n] [
         if n = 0 [
             return <success>
         ]

@@ -213,7 +213,7 @@ typedef enum {
     // `PARAMCLASS_NORMAL` is cued by an ordinary WORD! in the function spec
     // to indicate that you would like that argument to be evaluated normally.
     //
-    //     >> /foo: function [a] [print ["a is" a]]
+    //     >> foo: function [a] [print ["a is" a]]
     //
     //     >> foo 1 + 2
     //     a is 3
@@ -224,7 +224,7 @@ typedef enum {
     // dialect.  It indicates that a single value of content at the callsite
     // should be passed through *literally*, with no evaluation or binding:
     //
-    //     >> /foo: lambda ['a] [a]
+    //     >> foo: lambda ['a] [a]
     //
     //     >> foo (1 + 2)
     //     == (1 + 2)
@@ -241,7 +241,7 @@ typedef enum {
     // dialect.  It indicates that a single value of content at the callsite
     // should be passed through literally, BUT it will pick up binding:
     //
-    //     >> /foo: lambda [@a] [a]
+    //     >> foo: lambda [@a] [a]
     //
     //     >> foo (1 + 2)
     //     == (1 + 2)
@@ -257,7 +257,7 @@ typedef enum {
     // `PARAMCLASS_SOFT` is cued by a THE-GROUP! in the function spec
     // dialect.  It quotes with the exception of GROUP!, which is evaluated:
     //
-    //     >> /foo: function [@(a)] [print [{a is} a]
+    //     >> foo: function [@(a)] [print [{a is} a]
     //
     //     >> foo x
     //     a is x
@@ -273,8 +273,8 @@ typedef enum {
     // different from hard quoting, regarding how it resolves contention
     // with other hard quotes.  If you have a situation like:
     //
-    //     /right-soft: func [@(arg)] [...]
-    //     /left-literal: infix func [@left right] [...]
+    //     right-soft: func [@(arg)] [...]
+    //     left-literal: infix func [@left right] [...]
     //
     // Soft quoting will "tie break" by assuming the soft literal operation
     // is willing to let the hard literal operation run:
@@ -289,7 +289,7 @@ typedef enum {
     // isotopes.  Antiforms become quasiforms when they are an argument, and
     // all other types receive one added quote level.
     //
-    //     >> /foo: function [^a] [print [{a is} a]
+    //     >> foo: function [^a] [print [{a is} a]
     //
     //     >> foo 1 + 2
     //     a is '3

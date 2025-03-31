@@ -45,7 +45,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
     focus-frame: null
     focus-index: null
 
-    /print-greeting: method [return: [~]] [
+    print-greeting: method [return: [~]] [
         ;
         ; We override in order to avoid printing out the redundant Rebol
         ; version information (and to print the greeting only once, which
@@ -61,7 +61,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
         focus-index: 1
     ]
 
-    /print-prompt: func [return: [~]] [
+    print-prompt: func [return: [~]] [
         ;
         ; If a debug frame is in focus then show it in the prompt, e.g.
         ; as `if:|4|>>` to indicate stack frame 4 is being examined, and
@@ -82,7 +82,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
         write-stdout space
     ]
 
-    /dialect-hook: method [
+    dialect-hook: method [
         "Receives code block, parse and transform, send back to CONSOLE eval"
         return: [block!]
         b [block!]
@@ -108,7 +108,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
 ]
 
 
-/backtrace*: func [
+backtrace*: func [
     "Backtrace to find a specific FRAME!, or other queried property."
 
     return: [~null~ block! frame!]
@@ -295,7 +295,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
 ]
 
 
-/backtrace: func [
+backtrace: func [
     "Prints out a backtrace at the current location"
 
     return: [~]
@@ -335,7 +335,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
 ]
 
 
-/debug: func [
+debug: func [
     "Dialect for interactive debugging, see documentation for details"
     return: [~]
     'value "Stack level to inspect or dialect block, or enter debug mode"
@@ -354,7 +354,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
 ]
 
 
-/locals: func [return: [~]] [
+locals: func [return: [~]] [
     print [debug-console-skin.focus-frame]
 ]
 

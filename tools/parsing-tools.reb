@@ -46,7 +46,7 @@ import <bootstrap-shim.r>
 ;    have to create one.  To be compatible with bootstrap, we need a context
 ;    to "overbind" the variable to.
 ;
-export /parsing-at: func [
+export parsing-at: func [
     "Make rule that evaluates a block for next input position, fails otherwise"
 
     return: "PARSE rule block"

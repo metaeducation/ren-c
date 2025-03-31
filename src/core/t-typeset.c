@@ -125,7 +125,7 @@ void Shutdown_Typesets(void)
 // 2. TAG! parameter modifiers can't be abstracted.  So you can't say:
 //
 //        modifier: either condition [<end>] [<maybe>]
-//        /foo: func [arg [modifier integer!]] [...]
+//        foo: func [arg [modifier integer!]] [...]
 //
 // 3. Everything non-TAG! can be abstracted via WORD!.  This can lead to some
 //    strange mixtures:
@@ -206,7 +206,7 @@ void Set_Parameter_Spec(
             }
             continue;
         }
-        if (Is_Quoted(item)) {  // /foo: func [size ['small 'medium 'large]]...
+        if (Is_Quoted(item)) {  // foo: func [size ['small 'medium 'large]]...
             *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             continue;
         }

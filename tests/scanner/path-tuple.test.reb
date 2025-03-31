@@ -139,7 +139,7 @@
     ]
 
 
-    /transform: func [
+    transform: func [
         "Turn sequences into lists for validation testing"
 
         value [element?]
@@ -216,7 +216,7 @@
 
         let compares: copy []
 
-        let /!!failure!!: does [
+        let !!failure!!: does [
             print [mold text "=>" mold items "vs." mold compares]
             fail ["Transformation mismatch for" text]
         ]

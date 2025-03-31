@@ -24,7 +24,7 @@
 // FUNC is a common means for creating an action from a BLOCK! of code, with
 // another block serving as the "spec" for parameters and HELP:
 //
-//     >> /print-sum-twice: func [
+//     >> print-sum-twice: func [
 //            "Prints the sum of two integers, and return the sum"
 //            return: "The sum" [integer!]
 //            x "First Value" [integer!]
@@ -329,7 +329,7 @@ bool Func_Details_Querier(
 //    created.  The default FUNC dispatcher takes the body as <const>, but
 //    alternatives could be made which did not:
 //
-//        >> /f: func:mutable [] [b: [1 2 3] clear b]]
+//        >> f: func:mutable [] [b: [1 2 3] clear b]]
 //
 //        >> f
 //        == []

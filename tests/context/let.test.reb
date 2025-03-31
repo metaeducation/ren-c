@@ -44,11 +44,11 @@
 ; and slipped into the stream to be handled normally.
 [(
     saved: null
-    /leftq: infix func ['x] [saved: x]
+    leftq: infix func ['x] [saved: x]
     let [a 'b ''(c)]: leftq
     saved = the '[a b '(c)]:
 )(
-    /leftq: infix func ['x] [saved: x]
+    leftq: infix func ['x] [saved: x]
     saved: let [a 'b ''(c)]
     saved = [a b '(c)]
 )]
@@ -110,7 +110,7 @@
 
 ; ADD-LET-BINDING is a conceptual step for making your own LET-like thing.
 (
-    /maker: func [name] [
+    maker: func [name] [
         frame: binding of $return
         add-let-binding frame (join word! [name 1]) <one>
         add-let-binding frame (join word! [name 2]) <two>
@@ -123,22 +123,22 @@
 )
 
 (
-    /bar: func [] [
+    bar: func [] [
         let x: 10
         let y: [x + z]
 
-        let /foo: func [] compose [let z: 20, (spread y)]
+        let foo: func [] compose [let z: 20, (spread y)]
         foo
     ]
     bar = 30
 )
 
 (
-    /bar: func [] [
+    bar: func [] [
         let x: 10
         let y: [x + z]
 
-        let /foo: func [] compose [let z: 20, (y)]
+        let foo: func [] compose [let z: 20, (y)]
         func [] compose collect [
             keep [let z: 2000]
             keep y
@@ -170,26 +170,26 @@
 ; if it was part of the input feed or not...e.g. REEVAL needs be different.
 [
     (
-        /bar: func [b] [
+        bar: func [b] [
             let n: 10
             reeval b.1  ; should not apply LET of N to fetched result
         ]
 
-        /foo: func [n] [
+        foo: func [n] [
            bar [(n)]
         ]
 
         1 = foo 1
     )
     (
-        /bar: func [b] [
+        bar: func [b] [
             eval compose [
                 let n: 10
                 reeval (b.1)  ; updated LET of N should apply (LET "sees" (n))
             ]
         ]
 
-        /foo: func [n] [
+        foo: func [n] [
            bar [(n)]
         ]
 

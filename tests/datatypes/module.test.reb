@@ -99,16 +99,16 @@
     eval-before: :eval
     import m: module [Exports: [test]] [
         throw: ~  ; needs to be provided, no archetypal throw
-        /eval: func [source] [throw <override>]
+        eval: func [source] [throw <override>]
 
-        /emulate: func [source [block!] <local> rebound] [
+        emulate: func [source [block!] <local> rebound] [
             assert ['eval = first source]
 
             rebound: inside lib bindable source
             return lib/eval rebound
         ]
 
-        /test: does [emulate [eval [1 + 2]]]
+        test: does [emulate [eval [1 + 2]]]
     ]
     all [
         3 = test

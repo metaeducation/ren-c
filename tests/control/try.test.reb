@@ -28,7 +28,7 @@
 )
 #rescue (
     success: 'true
-    /f1: does [
+    f1: does [
         1 / 0
         success: 'false
     ]

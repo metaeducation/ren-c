@@ -122,7 +122,7 @@ s3root: https://metaeducation.s3.amazonaws.com/travis-builds/  ; sees updates
 cloudroot: https://dd498l1ilnrxu.cloudfront.net/travis-builds/  ; perma-cached
 
 
-/latest-of: func [
+latest-of: func [
     "INTERNAL USE ONLY!  Link to unstable S3 CI build of the interpreter"
 
     return: [url!]

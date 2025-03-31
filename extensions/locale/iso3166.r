@@ -9,7 +9,7 @@ if #{EFBBBF} = as blob! copy:part count 3 [  ; UTF-8 BOM
 lower: charset [#"a" - #"z"]
 letter: charset [#"a" - #"z" #"A" - #"Z"]
 
-/capitalize: func [
+capitalize: func [
     return: [text!]
     n
 ][

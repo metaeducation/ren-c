@@ -89,7 +89,7 @@ sys.util/rescue [
     ; It is more brittle and less composable, but it is available in the
     ; bootstrap executable..and much faster (at time of writing) than UPARSE.
 
-    export /parse: func [] [
+    export parse: func [] [
         fail:blame "Use PARSE3 in Bootstrap Code, not PARSE" $return
     ]
 
@@ -100,7 +100,7 @@ sys.util/rescue [
         set maybe f.file unmeta results.2
         unmeta results.1
     ]
-    export /split-path: func [] [
+    export split-path: func [] [
         fail:blame "Use SPLIT-PATH3 in Bootstrap (no multi-return)" $return
     ]
 
@@ -119,11 +119,11 @@ sys.util/rescue [
 
     export /cscape-inside: inside/  ; modern string interpolation tool
 
-    export /for: func [] [
+    export for: func [] [
         fail:blame "FOR is being repurposed, use CFOR" $return
     ]
 
-    export /unless: func [] [
+    export unless: func [] [
         fail:blame "Don't use UNLESS in Bootstrap, definition in flux" $return
     ]
 
@@ -222,7 +222,7 @@ for-each [alias] [
     ]
 ]
 
-/function3: func3 [] [
+function3: func3 [] [
     fail:blame "FUNCTION slated for synonym of FUNC, so no FUNCTION3" 'return
 ]
 
@@ -249,27 +249,27 @@ for-each [alias] [
     ]
 ]
 
-/boolean?: func3 [x] [any [:x = 'true, :x = 'false]]
-/yesno?: func3 [x] [any [:x = 'on, :x = 'off]]
-/onoff?: func3 [x] [any [:x = 'yes, :x = 'no]]
+boolean?: func3 [x] [any [:x = 'true, :x = 'false]]
+yesno?: func3 [x] [any [:x = 'on, :x = 'off]]
+onoff?: func3 [x] [any [:x = 'yes, :x = 'no]]
 
 blob!: binary!
-/blob?: binary?/
+blob?: binary?/
 
-/to-logic: func3 [x] [
+to-logic: func3 [x] [
     either x [~] [null]
 ]
 
-/boolean: func3 [x [~null~ any-value!]] [
+boolean: func3 [x [~null~ any-value!]] [
     either x ['true] ['false]
 ]
 
-/to-yesno: func3 [x [~null~ any-value!]] [  ; should this be DID?
+to-yesno: func3 [x [~null~ any-value!]] [  ; should this be DID?
     either x ['yes] ['no]
 ]
 
 ok: okay: true
-/okay?: true?/
+okay?: true?/
 
 
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
@@ -278,7 +278,7 @@ ok: okay: true
 ; to not remember that the KEEP is the kind that takes /ONLY.  Renaming the
 ; keeper to KEEP3 makes that clearer.
 
-/collect3: adapt lib3.collect/ [
+collect3: adapt lib3.collect/ [
     body: compose3 [
         keep3: keep/  ; help point out keep3 will splice blocks, has /ONLY
         keep: ~
@@ -293,11 +293,11 @@ ok: okay: true
 ; can't be emulated by older executables.  Here we raise errors in the old
 ; executable on any undecorated functions that have no emulation equivalent.
 
-/parse: func3 [] [
+parse: func3 [] [
     fail:blame "Use PARSE3 in bootstrap code, not PARSE" $return
 ]
 
-/split-path: func3 [] [
+split-path: func3 [] [
     fail:blame "Use SPLIT-PATH3 in Bootstrap (no multi-return)" $return
 ]
 
@@ -313,14 +313,14 @@ ok: okay: true
 inert: func3 [word [word!]] [return to-issue word]
 
 quasiform!: word!  ; conflated, but can work in a very limited sense
-/quasi?: func3 [v <local> spelling] [
+quasi?: func3 [v <local> spelling] [
     if not word? v [return false]
     spelling: as text! v
     if #"~" <> first spelling [return false]
     if #"~" <> last spelling [return false]
     return true
 ]
-/unquasi: func3 [v <local> spelling] [
+unquasi: func3 [v <local> spelling] [
     assert [quasi? v]
     spelling: to text! v
     assert [#"~" = take spelling]
@@ -333,10 +333,10 @@ quasiform!: word!  ; conflated, but can work in a very limited sense
 ; hand side, but a GROUP! would be run.  That was deemed ugly, so group
 ; now short-circuits.
 ;
-/and: infix and3/ [assert [not block? right] right: as block! :right]
-/or: infix or3/ [assert [not block? right] right: as block! :right]
+and: infix and3/ [assert [not block? right] right: as block! :right]
+or: infix or3/ [assert [not block? right] right: as block! :right]
 
-/to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
+to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
     case [
         void? :optional [fail "Can't turn void (null proxied) TO-LOGIC"]
         null? :optional [false]
@@ -345,17 +345,17 @@ quasiform!: word!  ; conflated, but can work in a very limited sense
     ]
 ]
 
-/unrun: func3 [] [
+unrun: func3 [] [
     fail:blame "No UNRUN in bootstrap, but could be done w/make FRAME!" $return
 ]
 
-/has: in/  ; old IN behavior of word lookup achieved by HAS now
-/overbind: in/  ; works in a limited sense
-/bindable: func3 [what] [:what]
-/inside: func3 [where value] [:value]  ; no-op in bootstrap
-/wrap: identity/  ; no op in bootstrap
+has: in/  ; old IN behavior of word lookup achieved by HAS now
+overbind: in/  ; works in a limited sense
+bindable: func3 [what] [:what]
+inside: func3 [where value] [:value]  ; no-op in bootstrap
+wrap: identity/  ; no op in bootstrap
 
-/in: func3 [] [
+in: func3 [] [
     fail:blame "Use HAS or OVERBIND instead of IN in bootstrap" $return
 ]
 
@@ -365,7 +365,7 @@ quasiform!: word!  ; conflated, but can work in a very limited sense
 set '^break does [does [break/]]
 set '^continue does [does [continue/]]
 
-/quote: func3 [x [any-value!]] [  ; see the more general UNEVAL
+quote: func3 [x [any-value!]] [  ; see the more general UNEVAL
     switch type of x [
         word! [to lit-word3! x]  ; to lit-word! not legal in new EXE
         path! [to lit-path3! x]  ; to lit-path! not legal in new EXE
@@ -376,7 +376,7 @@ set '^continue does [does [continue/]]
     ]
 ]
 
-/unquote: func3 [x [any-value!]] [  ; see the more general EVAL
+unquote: func3 [x [any-value!]] [  ; see the more general EVAL
     switch type of x [
         lit-word3! [to word! x]  ; to word! of quoted not legal in new EXE
         lit-path3! [to path! x]  ; to path! of quoted not legal in new EXE
@@ -387,7 +387,7 @@ set '^continue does [does [continue/]]
     ]
 ]
 
-/blank-to-void: func3 [x [~null~ any-value!]] [
+blank-to-void: func3 [x [~null~ any-value!]] [
     either blank? :x [void] [:x]
 ]
 
@@ -400,10 +400,10 @@ set '^continue does [does [continue/]]
 ; LIT-WORD and REFINEMENT will never be datatypes, so shim the type constraint
 ; so it works in old parse.
 
-/run-word?: refinement3?/
+run-word?: refinement3?/
 run-word!: refinement3!
 refinement!: get-word3!
-/refinement?: get-word?/
+refinement?: get-word?/
 
 chain!: path!  ; works in some places (a:b scans as a PATH! in bootstrap EXE)
 
@@ -420,22 +420,22 @@ get-path!: func3 [] [
     fail:blame "GET-PATH! can no longer exist, try GET-TUPLE?!" $return
 ]
 
-/setify: func3 [plain [word! path!]] [
+setify: func3 [plain [word! path!]] [
     either word? plain [to-set-word plain] [to-set-path plain]
 ]
 
-/unchain: func3 [chain [set-word3! set-path3!]] [
+unchain: func3 [chain [set-word3! set-path3!]] [
     either set-word? chain [to-word chain] [to-path chain]
 ]
 
-/unpath: func3 [path [refinement3!]] [
+unpath: func3 [path [refinement3!]] [
     to-word path
 ]
 
-/any-value?: func3 [x] [true]  ; now inclusive of null
-/element?: any-value?/  ; used to exclude null
+any-value?: func3 [x] [true]  ; now inclusive of null
+element?: any-value?/  ; used to exclude null
 
-/typechecker: func3 [x [datatype! typeset! block!]] [
+typechecker: func3 [x [datatype! typeset! block!]] [
     if x [if block? x [make typeset! x] else [x]]
 ]
 
@@ -455,7 +455,7 @@ get-path!: func3 [] [
 ; bootstrap executable can build itself with the prior bootstrap executable.
 ; These few shims have worked well enough.
 
-/spread: func3 [
+spread: func3 [
     return: [~void~ ~null~ block!]
     x [~null~ blank! block!]
 ][
@@ -466,7 +466,7 @@ get-path!: func3 [] [
     ]
 ]
 
-/append: func3 [series value [any-value!] /line <local> only] [
+append: func3 [series value [any-value!] /line <local> only] [
     any [
         object? series
         map? series
@@ -501,7 +501,7 @@ get-path!: func3 [] [
     append3:(blank-to-void only):(blank-to-void line) series :value
 ]
 
-/insert: func3 [series value [any-value!] /line <local> only] [
+insert: func3 [series value [any-value!] /line <local> only] [
     only: 'only
     case [
         logic? :value [
@@ -523,7 +523,7 @@ get-path!: func3 [] [
     insert3:(blank-to-void only):(blank-to-void line) series :value
 ]
 
-/change: func3 [series value [any-value!] /line <local> only] [
+change: func3 [series value [any-value!] /line <local> only] [
     only: 'only
     case [
         logic? :value [
@@ -542,7 +542,7 @@ get-path!: func3 [] [
     change3:(blank-to-void only):(blank-to-void line) series :value
 ]
 
-/replace: func3 [target pattern replacement] [
+replace: func3 [target pattern replacement] [
     any [
         logic? :target, logic? :pattern
         action? :target, action? :replacement
@@ -566,7 +566,7 @@ get-path!: func3 [] [
     replace3 target pattern replacement
 ]
 
-/join: func3 [
+join: func3 [
     base [blob! any-string! path! datatype!]
     value [void! any-value!]
 ][
@@ -596,7 +596,7 @@ get-path!: func3 [] [
     return append3 copy base value
 ]
 
-/collect*: func3 [  ; variant giving NULL if no actual material kept
+collect*: func3 [  ; variant giving NULL if no actual material kept
     return: [~null~ block!]
     body [block!]
     <local> out keeper
@@ -628,7 +628,7 @@ get-path!: func3 [] [
     specialize 'else [branch: [copy []]]
 ]
 
-/compose: func3 [block [block!] /deep <local> result pos product count] [
+compose: func3 [block [block!] /deep <local> result pos product count] [
     if deep [
         fail:blame "COMPOSE bootstrap shim doesn't recurse, yet" $block
     ]
@@ -665,7 +665,7 @@ get-path!: func3 [] [
 ]
 
 
-/collect-lets: func3 [
+collect-lets: func3 [
     return: [block!]
     list [block! group!]
     <local> lets
@@ -688,14 +688,14 @@ get-path!: func3 [] [
 ]
 
 
-/let: func3 [
+let: func3 [
     return: []  ; [] was old-style invisibility
     :look [any-value! <...>]  ; old-style variadic
 ][
     if word? first look [take look]  ; otherwise leave SET-WORD! to runs
 ]
 
-/modernize-typespec: func3 [
+modernize-typespec: func3 [
     return: [block!]
     types [block!]
 ][
@@ -725,7 +725,7 @@ get-path!: func3 [] [
     return types
 ]
 
-/modernize-action: func3 [
+modernize-action: func3 [
     "Account for <maybe> annotation, refinements as own arguments"
     return: [block!]
     spec [block!]
@@ -863,8 +863,8 @@ get-path!: func3 [] [
     return reduce [new-spec new-body]
 ]
 
-/func: adapt func3/ [set [spec body] modernize-action spec body]
-/lambda: func3 [spec body] [
+func: adapt func3/ [set [spec body] modernize-action spec body]
+lambda: func3 [spec body] [
     set [spec body] modernize-action spec body
     if not tail? next find spec <local> [
         fail "Lambda bootstrap doesn't support <local>"
@@ -872,15 +872,15 @@ get-path!: func3 [] [
     take find spec <local>
     make action! compose3:only [(spec) (body)]  ; gets no RETURN
 ]
-/method: adapt method3/ [set [spec body] modernize-action spec body]
+method: adapt method3/ [set [spec body] modernize-action spec body]
 
-/function: func3 [] [
+function: func3 [] [
     fail:blame "FUNCTION deprecated (will be FUNC synonym, eventually)" $return
 ]
 
-/method: infix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
+method: infix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
 
-/mold: adapt mold3/ [  ; update so MOLD SPREAD works
+mold: adapt mold3/ [  ; update so MOLD SPREAD works
     if all [
         block? value
         #splice! = first value
@@ -890,7 +890,7 @@ get-path!: func3 [] [
     ]
 ]
 
-/noquote: func3 [x [~null~ any-value!]] [
+noquote: func3 [x [~null~ any-value!]] [
     assert [not action? get $x]
     switch type of x [
         lit-word3! [return to word! x]
@@ -899,7 +899,7 @@ get-path!: func3 [] [
     x
 ]
 
-/resolve: func3 [x [any-word3! any-path3!]] [
+resolve: func3 [x [any-word3! any-path3!]] [
     if any-word? x [return to word! x]
     return to path! x
 ]
@@ -909,7 +909,7 @@ get-path!: func3 [] [
 ;
 ; https://forum.rebol.info/t/1813
 ;
-/apply: func3 [
+apply: func3 [
     action [action!]
     args [block!]
     <local> f params result pos
@@ -971,7 +971,7 @@ get-path!: func3 [] [
 
 ; For commentary purposes, e.g. old-append: runs lib.append
 ;
-/runs: func3 [action [~void~ action!]] [
+runs: func3 [action [~void~ action!]] [
     if void? action [return null]
     return action
 ]
@@ -983,7 +983,7 @@ get-path!: func3 [] [
 ;
 ; Another big change is that the parameters are reversed.
 ;
-/bind: func3 [context element /copy3] [
+bind: func3 [context element /copy3] [
     either copy3 [
         bind3:copy element context
     ][
@@ -996,7 +996,7 @@ get-path!: func3 [] [
 ; context or lib have to be mentioned explicitly inside the block.  If you
 ; want to bind to an object as well, name it with a GET-WORD!.
 ;
-/cscape-inside: func3 [
+cscape-inside: func3 [
     return: [block!]
     template [block!]
     code [block!]
@@ -1025,7 +1025,7 @@ get-path!: func3 [] [
 
 ; Weak subsetting of ENCODE capabilities needed by bootstrap.
 ;
-/encode: func3 [codec arg [text! integer!]] [
+encode: func3 [codec arg [text! integer!]] [
     if codec = [BE + 1] [
         assert [all [integer? arg, arg < 256, arg >= 0]]
         return head of change copy #{00} arg
@@ -1037,14 +1037,14 @@ get-path!: func3 [] [
     fail ["Very limited ENCODE abilities in bootstrap, no:" mold codec]
 ]
 
-/decode: func3 [codec bin [blob!]] [
+decode: func3 [codec bin [blob!]] [
     if codec = 'UTF-8 [
         return to text! bin
     ]
     fail ["Very limited DECODE abilities in bootstrap, no:" mold codec]
 ]
 
-/noop: does []
+noop: does []
 
 blockify: func [x] [
     if null? x [

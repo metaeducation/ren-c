@@ -25,10 +25,10 @@
 ; Enclose should be able to be invisible
 [(
     var: #before
-    /inner: func [] [
+    inner: func [] [
         return var: 1020
     ]
-    /outer: enclose inner/ func [f] [
+    outer: enclose inner/ func [f] [
         assert [1020 = eval-free f]
         return ~[]~
     ]
@@ -39,11 +39,11 @@
     ]
 )(
     var: #before
-    /inner: func [return: [~[]~]] [
+    inner: func [return: [~[]~]] [
         var: 1020
         return ~[]~
     ]
-    /outer: enclose inner/ func [return: [quoted! quasiform!] f] [
+    outer: enclose inner/ func [return: [quoted! quasiform!] f] [
         return ^(eval-free:undecayed f)  ; don't unquote it here
     ]
     all [
@@ -52,7 +52,7 @@
     ]
 )(
     var: #before
-    /inner: func [return: [~[]~]] [
+    inner: func [return: [~[]~]] [
         var: 1020
         return ~[]~
     ]

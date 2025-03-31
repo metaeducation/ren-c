@@ -53,7 +53,7 @@ mkdir:deep join prep-dir %core/
 
 type-table: load %types.r
 
-/for-each-datatype: func [
+for-each-datatype: func [
     "Iterate type table by creating an object for each row"
 
     var "Word to set each time to the row made into an object record"
@@ -138,7 +138,7 @@ type-table: load %types.r
 ;    done so that checks of a single type look more sensible when done with
 ;    a range (e.g. start and end are the same)
 ;
-/for-each-typerange: func [
+for-each-typerange: func [
     "Iterate type table and create object for each <TYPE!>...</TYPE!> range"
 
     var "Word to set each time to the typerange as an object record"

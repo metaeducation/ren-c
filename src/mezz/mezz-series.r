@@ -41,7 +41,7 @@ REBOL [
     encode-IEEE-754/)
 
 
-/last?: /single?: lambda [
+last?: single?: lambda [
     "Returns okay if the series length is 1."
     series [any-series? port! map! tuple! bitset! object! any-word?]
 ][
@@ -49,7 +49,7 @@ REBOL [
 ]
 
 
-/array: func [
+array: func [
     "Makes and initializes a block of a given size"
 
     return: "Generated block or null if blank input"
@@ -95,7 +95,7 @@ REBOL [
 ]
 
 
-/replace: func [
+replace: func [
     "Replaces a search value with the replace value within the target series"
 
     return: [any-series?]
@@ -149,7 +149,7 @@ REBOL [
 ;
 ; reword "$1 is $2." [1 "This" 2 "that"] => "This is that."
 ;
-/reword: func [
+reword: func [
     "Make a string or binary based on a template and substitution values"
 
     return: [any-string? blob!]
@@ -298,7 +298,7 @@ bind construct [
 ]
 
 
-/move: func [
+move: func [
     "Move a value or span of values in a series"
 
     return: [~]  ; !!! Define return value?
@@ -325,7 +325,7 @@ bind construct [
 ]
 
 
-/extract: func [
+extract: func [
     "Extracts a value from a series at regular intervals"
 
     series [any-series?]
@@ -351,7 +351,7 @@ bind construct [
 ]
 
 
-/alter: func [
+alter: func [
     "Append value if not found, else remove it; returns true if added"
 
     return: [logic?]
@@ -378,7 +378,7 @@ bind construct [
 ]
 
 
-/collect*: func [
+collect*: func [
     "Evaluate body, and return block of values collected via keep function"
 
     return: "Result block, or null if no KEEPs (prevent nulls with KEEP [])"
@@ -420,7 +420,7 @@ bind construct [
     specialize else/ [branch: [copy []]]
 ]
 
-/format: func [
+format: func [
     "Format a string according to the format dialect."
     rules "A block in the format dialect. E.g. [10 -10 #- 4]"
     values
@@ -477,7 +477,7 @@ bind construct [
 ]
 
 
-/printf: func [
+printf: func [
     "Formatted print."
     return: [~]
     fmt "Format"
@@ -487,7 +487,7 @@ bind construct [
 ]
 
 
-/split: func [
+split: func [
     "Split series in pieces: fixed/variable size, fixed number, or delimited"
 
     return: [~null~ block!]
@@ -601,8 +601,8 @@ bind construct [
     ; or where the dlm was a char/string/charset and it was the last char
     ; (so we want to append an empty field that the above rule misses).
     ;
-    let /fill-val: does [copy either any-list? series [[]] [""]]
-    let /add-fill-val: does [append result fill-val]
+    let fill-val: does [copy either any-list? series [[]] [""]]
+    let add-fill-val: does [append result fill-val]
     if integer? dlm [
         if into [
             ; If the result is too short, i.e., less items than 'size, add
@@ -640,7 +640,7 @@ bind construct [
 ]
 
 
-/find-all: func [
+find-all: func [
     "Find all occurrences of a value within a series (allows modification)."
 
     return: [~]

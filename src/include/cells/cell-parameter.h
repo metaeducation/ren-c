@@ -27,9 +27,9 @@
 //
 // So for example, for the paramlist generated from the following spec:
 //
-//     /foo: func [
+//     foo: func [
 //         return: [integer!]  ; specialized to plain PARAMETER! (not antiform)
-//         arg [~null~ block!]  ; PARAMCLASS_NORMAL
+//         arg [~null~ block!] ; PARAMCLASS_NORMAL
 //         'qarg [word!]       ; PARAMCLASS_QUOTED
 //         earg [<end> time!]  ; PARAMCLASS_NORMAL + PARAMETER_FLAG_ENDABLE
 //         :refine [tag!]      ; PARAMCLASS_NORMAL + PARAMETER_FLAG_REFINEMENT

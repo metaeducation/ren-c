@@ -1,7 +1,7 @@
 ; functions/define/func.r
 ; recursive safety
 (
-    /f: func [return: [action!]] [
+    f: func [return: [action!]] [
         return lambda [x] [
             either x = 1 [
                 reeval f 2
@@ -23,7 +23,7 @@
 ; DATATYPE!s and type checking work...)
 [
 (
-    /get-params: func [f [frame!]] [
+    get-params: func [f [frame!]] [
         return map-each [key param] f [
             assert [parameter? param]
             reduce [key (reify param.spec) (reify param.text)]
@@ -90,10 +90,10 @@
 ; Literal parameter checking
 [
     (
-        /foo: func [control ['on 'off]] [return control]
-        /bar: func [decoration ['[*] '(())]] [return decoration]
-        /baz: func [evil ['~mojo~ '~jojo~ '~(mojo jojo)~]] [return evil]
-        /mumble: func [splice [~(a b c)~]] [return splice]
+        foo: func [control ['on 'off]] [return control]
+        bar: func [decoration ['[*] '(())]] [return decoration]
+        baz: func [evil ['~mojo~ '~jojo~ '~(mojo jojo)~]] [return evil]
+        mumble: func [splice [~(a b c)~]] [return splice]
         ok
     )
 

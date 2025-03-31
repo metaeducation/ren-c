@@ -40,7 +40,7 @@
 
 [
     (
-        /foo: func [
+        foo: func [
             return: [frame!]
             public
             <local> private
@@ -147,7 +147,7 @@
 
 [
     (
-        /foo: func [
+        foo: func [
             return: [frame!]
             public
             <local> private

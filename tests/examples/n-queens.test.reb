@@ -27,15 +27,15 @@
 [(
     number-of-solutions: 0
 
-    /reset-number-of-solutions: does [
+    reset-number-of-solutions: does [
         number-of-solutions: 0
     ]
 
-    /add-one-to-number-of-solutions: does [
+    add-one-to-number-of-solutions: does [
         number-of-solutions: number-of-solutions + 1
     ]
 
-    /get-number-of-solutions: does [
+    get-number-of-solutions: does [
         number-of-solutions
     ]
 
@@ -44,28 +44,28 @@
     ;
     odd-symmetry-limit: 0
 
-    /reset-symmetry-limit: does [
+    reset-symmetry-limit: does [
         odd-symmetry-limit: 0
     ]
 
-    /add-to-symmetry-limit: does [
+    add-to-symmetry-limit: does [
         odd-symmetry-limit: odd-symmetry-limit + 1
     ]
 
     logic-countonly: 0
     solved-boards: null
 
-    /set-countonly-true: does [
+    set-countonly-true: does [
         logic-countonly: 1
     ]
 
-    /set-countonly-false: does [
+    set-countonly-false: does [
         logic-countonly: 0
     ]
 
     ; Function to print the board for a solution
 
-    /form-board: func [
+    form-board: func [
         return: [text!]
         n [integer!]
         board-values [block!]
@@ -83,7 +83,7 @@
     ]
 
     ; Function for recursion
-    /add-queen: func [n [integer!]
+    add-queen: func [n [integer!]
         solution [block!]
         free-places [block!]
     ][
@@ -136,7 +136,7 @@
 
     ; Function for main solution
 
-    /solve-n-queens: func [
+    solve-n-queens: func [
         return: "The number of solutions, and solutions (if requested)"
             [integer! ~[integer! block!]~]
         n "The number queens on to place the board of size nxn"

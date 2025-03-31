@@ -48,7 +48,7 @@
 )
 ; functions are word-active
 (
-    /a-value: does [1]
+    a-value: does [1]
     1 == a-value
 )
 (

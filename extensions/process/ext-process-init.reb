@@ -99,7 +99,7 @@ REBOL [
     ]
 ]
 
-/parse-command-to-argv*: func [
+parse-command-to-argv*: func [
     "Helper for when POSIX gets a TEXT! and the /SHELL refinement not used"
 
     return: [block!]
@@ -133,7 +133,7 @@ REBOL [
 ]
 
 
-/argv-block-to-command*: func [
+argv-block-to-command*: func [
     "Helper for when Windows gets an argv BLOCK! and needs a command line"
 
     return: [text!]
@@ -158,7 +158,7 @@ REBOL [
 ; as some potentially OS-specific detection on how to launch URLs (e.g. looks
 ; at registry keys on Windows)
 
-/browse: func [
+browse: func [
     "Open web browser to a URL or local file."
 
     return: [~]

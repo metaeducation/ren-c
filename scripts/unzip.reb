@@ -68,7 +68,7 @@ data-descriptor-sig: #{504B0708}
 
 /to-long: specialize encode/ [type: [BE + 4]]  ; Big endian 4-byte + int
 
-/to-msdos-time: func [
+to-msdos-time: func [
     "Converts to a MS-DOS time"
     return: [blob!]
     time [time!] "AnyValue to convert"
@@ -78,7 +78,7 @@ data-descriptor-sig: #{504B0708}
         or+ round:down time.second / 2
 ]
 
-/to-msdos-date: func [
+to-msdos-date: func [
     "Converts to a MS-DOS date"
     return: [blob!]
     date [date!]
@@ -87,7 +87,7 @@ data-descriptor-sig: #{504B0708}
         or+ (date.month * 32) or+ date.day
 ]
 
-/get-msdos-time: func [
+get-msdos-time: func [
     "Converts from a MS-DOS time"
     return: [time!]
     binary [blob!]
@@ -100,7 +100,7 @@ data-descriptor-sig: #{504B0708}
     ]
 ]
 
-/get-msdos-date: func [
+get-msdos-date: func [
     "Converts from a MS-DOS date"
     return: [date!]
     binary [blob!]
@@ -113,7 +113,7 @@ data-descriptor-sig: #{504B0708}
     ]
 ]
 
-/zip-entry: func [
+zip-entry: func [
     "Compresses a file"
 
     return: "local header and central directory entry"
@@ -190,7 +190,7 @@ data-descriptor-sig: #{504B0708}
     return pack [local-file-entry central-dir-entry]
 ]
 
-/to-path-file: func [
+to-path-file: func [
     "Converts url! to file! and removes / from beginning"
     return: [file!]
     value [file! url!] "AnyValue to convert"
@@ -203,7 +203,7 @@ data-descriptor-sig: #{504B0708}
     return join %"" [value.host "/" value.path value.target]
 ]
 
-/zip: func [
+zip: func [
     "Build zip archive from a file or dialected data specification block"
 
     return: "Number of entries in archive"
@@ -305,7 +305,7 @@ data-descriptor-sig: #{504B0708}
     return num-entries
 ]
 
-/unzip: func [
+unzip: func [
     "Decompresses a zip archive to a directory or a block"
 
     return: "If `where` was a block, then position after archive insertion"

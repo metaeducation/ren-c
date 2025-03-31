@@ -15,7 +15,7 @@
 ; that can take advantage of the shorthand.
 
 [
-    (/test: func [x] [
+    (test: func [x] [
         return pack [304 <y-result> <z-result>]
     ]
     ok)
@@ -86,7 +86,7 @@
 
 [
     (
-        /foo: func [return: [~[integer! integer!]~] arg] [
+        foo: func [return: [~[integer! integer!]~] arg] [
             return pack [20 10]
         ]
         null? until [[{~} #]: foo break]
@@ -148,7 +148,7 @@
     )
 
     (
-        /foo: func [return: [~[integer! integer!]~]] [
+        foo: func [return: [~[integer! integer!]~]] [
             return pack [20 10]
         ]
         all wrap [
@@ -159,7 +159,7 @@
     )
 
     (
-        /foo: func [return: [~[integer! integer!]~]] [
+        foo: func [return: [~[integer! integer!]~]] [
             return pack [20 10]
         ]
         all wrap [

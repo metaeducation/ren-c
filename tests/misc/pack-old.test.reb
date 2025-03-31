@@ -23,7 +23,7 @@
 ; dialected notion of what the words represent.
 
 
-[(/pack-old: infix func [
+[(pack-old: infix func [
     "Prepare a BLOCK! of values for storing each in a SET-BLOCK!"
     return: [any-value?]
     @vars [set-block? set-group?]

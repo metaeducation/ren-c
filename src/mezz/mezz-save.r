@@ -27,7 +27,7 @@ REBOL [
 )
 
 
-/mold64: func [
+mold64: func [
     "Temporary function to mold binary base 64." ; fix the need for this! -CS
     data
 ][
@@ -41,7 +41,7 @@ REBOL [
 ;    but keeping things working well enough to run the tests helps expose
 ;    thinking points.
 ;
-/save: func [
+save: func [
     "Saves a value, block, or other data to a file, URL, binary, or text"
 
     ; !!! what RETURN values make sense?

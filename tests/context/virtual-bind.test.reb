@@ -22,7 +22,7 @@
 ; which exposed an issue with virtual binding and PARSE (which was applying
 ; bindings twice in cases of fetched words).  This is isolated from that
 (
-    /make-rule: func [:make-rule] [  ; refinement helps recognize in C Probe()
+    make-rule: func [:make-rule] [  ; refinement helps recognize in C Probe()
         use [rule position][
             rule: compose:deep [
                 [[position: <here>, "a"]]
@@ -45,14 +45,14 @@
 ; in a nested faction.
 [
     (
-        /add1020: func [x] [return use [y] [y: 1020, $(((x + y)))]]
-        /add1324: func [x] [
+        add1020: func [x] [return use [y] [y: 1020, $(((x + y)))]]
+        add1324: func [x] [
             return use [z] compose2:deep '(<*>) [
                 z: 304
                 $(((z + (<*> add1020 x))))
             ]
         ]
-        /add2020: func [x] [
+        add2020: func [x] [
             return use [zz] compose2:deep '(<*>) [
                 zz: 696
                 $(((zz + (<*> add1324 x))))

@@ -47,7 +47,7 @@ e-funcs: make-emitter "Internal API" (
 
 prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
-/emit-proto: func [
+emit-proto: func [
     return: [~]
     proto [text!]
 ][
@@ -107,7 +107,7 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
     }--]
 ]
 
-/process-conditional: func [
+process-conditional: func [
     return: [~]
     directive
     dir-position
@@ -128,7 +128,7 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
     ]
 ]
 
-/emit-directive: func [return: [~] directive] [
+emit-directive: func [return: [~] directive] [
     process-conditional directive proto-parser.parse-position e-funcs
 ]
 

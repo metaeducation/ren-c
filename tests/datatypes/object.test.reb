@@ -32,7 +32,7 @@
 )
 ; RETURN out of make object!
 [#848 (
-    /f: func [return: [integer!]] [
+    f: func [return: [integer!]] [
         make object! [return 1]
         2
     ]
@@ -41,8 +41,8 @@
 ; object cloning
 [#2045 (
     a: 1
-    /f: lambda [] [a]
-    /g: get $f
+    f: lambda [] [a]
+    g: get $f
     o: make object! [a: 2 /g: get $f]
     p: make o [a: 3]
     1 == p/g
@@ -125,12 +125,12 @@
 ; when derived objects are created.  You have to use METHOD, and you have
 ; to use .WORD accesses to indicate you want a member variable.
 (
-    o1: make object! [a: 10 /b: func [] [let /f: lambda [] [a] return f]]
+    o1: make object! [a: 10 b: func [] [let f: lambda [] [a] return f]]
     o2: make o1 [a: 20]
 
     o2/b = 10
 )(
-    o1: make object! [a: 10 /b: method [] [let /f: lambda [] [.a] return f]]
+    o1: make object! [a: 10 b: method [] [let f: lambda [] [.a] return f]]
     o2: make o1 [a: 20]
 
     o2/b = 20
@@ -151,13 +151,13 @@
         ]
         count-up 'n 256 [
             ;
-            ; /fun-1: method [] [.var-1]
-            ; /fun-2: method [] [.var-1 + .var-2]
+            ; fun-1: method [] [.var-1]
+            ; fun-2: method [] [.var-1 + .var-2]
             ; ...
-            ; /fun-256: method [] [.var-1 + .var-2 ... + .var-256]
+            ; fun-256: method [] [.var-1 + .var-2 ... + .var-256]
             ;
             keep spread compose [
-                /(join 'meth- [n]): method [] (collect [
+                (join 'meth- [n]): method [] (collect [
                     keep 'return
                     count-up 'i n [
                         keep spread compose [
@@ -210,8 +210,8 @@
 (
     obj: construct [
         x: 10
-        /foo: method [] [
-            let /helper: does [.]  ; . looks in frame binding for coupling
+        foo: method [] [
+            let helper: does [.]  ; . looks in frame binding for coupling
             return helper
         ]
     ]

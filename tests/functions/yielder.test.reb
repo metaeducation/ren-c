@@ -12,12 +12,12 @@
 ; to close themselves.
 (
     stuff: []
-    /log: func [x] [
+    log: func [x] [
         if block? x [x: compose x]
         append stuff x
     ]
 
-    /producer: func [sentence [text!] next-coroutine [action!]] [
+    producer: func [sentence [text!] next-coroutine [action!]] [
         log <start-producing>
         let tokens: split sentence space
         for-each 'token tokens [
@@ -28,7 +28,7 @@
         log <end-producing>
     ]
 
-    /pattern-filter: func [next-coroutine [action!] :pattern [text!]] [
+    pattern-filter: func [next-coroutine [action!] :pattern [text!]] [
         pattern: default ["ing"]
 
         return yielder [token [~null~ text!]] [
@@ -47,7 +47,7 @@
         ]
     ]
 
-    /emit-token: yielder [token [~null~ text!]] [
+    emit-token: yielder [token [~null~ text!]] [
         log <start-emitting>
         while [token] [  ; Python does a blocking `token = (yield)`
             log [emit: (token)]
@@ -59,8 +59,8 @@
         yield:final ~
     ]
 
-    /et: emit-token/
-    /pf: pattern-filter et/
+    et: emit-token/
+    pf: pattern-filter et/
 
     sentence: "Bob is running behind a fast moving car"
     producer sentence pf/

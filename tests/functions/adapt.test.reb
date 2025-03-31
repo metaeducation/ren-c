@@ -31,8 +31,8 @@
 [
     (
         captured-x: ~
-        /foo: func [x] [return "available now"]
-        /bar: adapt foo/ [
+        foo: func [x] [return "available now"]
+        bar: adapt foo/ [
             captured-x: x
             assert [not has binding of $x 'return]
         ]
@@ -47,7 +47,7 @@
 ; interface.
 (
     y: <outside>
-    /test: func [x <local> y] [return :y]
-    /adapted: adapt test/ [assert [y = <outside>]]
+    test: func [x <local> y] [return :y]
+    adapted: adapt test/ [assert [y = <outside>]]
     nothing? adapted 10
 )
