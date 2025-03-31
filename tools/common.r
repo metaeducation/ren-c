@@ -488,3 +488,65 @@ export /stripload: func [
 
     return contents
 ]
+
+
+; Some places (like SOURCES: in %make-spec.r for extensions) are permissive
+; in terms of their format:
+;
+;     sources-A: %file.jpg
+;
+;     sources-B: [%file.jpg <some> <options>]
+;
+;     sources-C: [
+;         %file1.jpg
+;         [%file2.jpg <some> <options>]
+;         %file3.jpg
+;     ]
+;
+; It's a bit irregular, but convenient.  This function regularizes it:
+;
+;     sources-A: [
+;         [%file.c]
+;     ]
+;
+;     sources-B: [
+;         [%file.c <some> <options>]
+;     ]
+;
+;     sources-C: [
+;         [%file1.c]
+;         [%file2.c <some> <options>]
+;         [%file3.c]
+;     ]
+;
+export to-block-of-file-blocks: func [
+    return: "Will be a top-level COPY of the block, or new block"
+        [block!]
+    x [file! block! void!]
+][
+    if file? x [
+        return reduce [blockify x]  ; case A
+    ]
+    any [
+        void? x
+        x = []
+    ] then [
+        return copy []
+    ]
+    if file? x.1 [
+        all [
+            not find (next x) file!
+            not find (next x) block!
+        ] then [
+            return reduce [x]  ; case B
+        ]
+        ; fallthrough
+    ]
+    if find x tag! [  ; light check for mistakes
+        fail [
+            "FILE!/BLOCK! list can't contain TAG!s if multiple files:"
+            mold:limit x 200
+        ]
+    ]
+    return copy x  ; case C
+]

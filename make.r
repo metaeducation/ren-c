@@ -837,6 +837,15 @@ extensions: copy []
         ]
     ]
 
+    ; Normalize format to [[%file1.c] [%file2.c <options>] [%file3.c]]
+    ;
+    ext.source: to-block-of-file-blocks maybe ext.source
+    ext.depends: to-block-of-file-blocks maybe ext.depends
+
+    ; Blockify libraries
+    ;
+    ext.libraries: blockify maybe ext.libraries
+
     return ext
 ]
 
@@ -1712,8 +1721,9 @@ for-each 'ext extensions [
 
     let ext-objlib: make rebmake.object-library-class [  ; #object-library
         name: ext.name
+
         depends: map-each 's (
-            append reduce [ext.source] maybe spread ext.depends
+            append copy ext.source maybe spread ext.depends
         )[
             let dep: case [
                 match [file! block!] s [
@@ -1732,22 +1742,20 @@ for-each 'ext extensions [
                 fail [type of s "can't be a dependency of a module"]
             ]
         ]
-        libraries: all [
-            ext.libraries
-            map-each 'lib ext.libraries [
-                case [
-                    file? lib [
-                        make rebmake.ext-dynamic-class [
-                            output: lib
-                        ]
+
+        libraries: map-each 'lib ext.libraries [
+            case [
+                file? lib [
+                    make rebmake.ext-dynamic-class [
+                        output: lib
                     ]
-                    (object? lib) and (
-                        find [#dynamic-extension #static-extension] lib.class
-                    )[
-                        lib
-                    ]
-                    fail ["unrecognized library" lib "in extension" ext]
                 ]
+                (object? lib) and (
+                    find [#dynamic-extension #static-extension] lib.class
+                )[
+                    lib
+                ]
+                fail ["unrecognized library" lib "in extension" ext]
             ]
         ]
 
@@ -1956,11 +1964,7 @@ prep: make rebmake.entry-class [
             keep [
                 "$(REBOL)" join tools-dir %prep-extension.r
                 unspaced ["MODULE=" ext.name]
-                unspaced ["SRC=extensions/" switch type of ext.source [
-                    file! [ext.source]
-                    block! [first find ext.source typechecker file!]
-                    fail "ext.source must be BLOCK! or FILE!"
-                ]]
+                unspaced ["SRC=extensions/" ensure file! ext.source.1.1]
                 unspaced ["OS_ID=" mold platform-config.id]
                 unspaced ["USE_LIBREBOL=" ext.use-librebol]
             ]

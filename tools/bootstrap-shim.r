@@ -1046,6 +1046,18 @@ get-path!: func3 [] [
 
 /noop: does []
 
+blockify: func [x] [
+    if null? x [
+        fail:blame "BLOCKIFY can't take ~null~ antiform" $x
+    ]
+    if void? x [
+        return copy []
+    ]
+    if block? x [
+        return x
+    ]
+    return reduce [x]
+]
 
 === "END ENCLOSURE THAT AVOIDED OVERWRITING TOP-LEVEL DECLS" ===
 
