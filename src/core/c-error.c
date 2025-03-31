@@ -768,43 +768,33 @@ Error* Make_Error_Managed_Vaptr(
                 assert(p != nullptr);
 
                 if (IS_END(p)) {
-                  #if NO_RUNTIME_CHECKS
-                    //
-                    // If the C code passed too few args in a debug build,
-                    // prevent a crash in the release build by filling it.
-                    //
-                    p = BLANK_VALUE; // ...or perhaps ISSUE! `#404` ?
-                  #else
-                    //
-                    // Termination is currently optional, but catches mistakes
-                    // (requiring it could check for too *many* arguments.)
-                    //
-                    panic ("too few args passed for error");
-                  #endif
+                    assert(!"too few args passed for error");
+                    p = BLANK_VALUE;  // tolerate in release build?
                 }
-
-              #if RUNTIME_CHECKS
-                if (IS_RELATIVE(cast(const Cell*, p))) {
+                else if (IS_RELATIVE(cast(const Cell*, p))) {
                     //
                     // Make_Error doesn't have any way to pass in a specifier,
                     // so only specific values should be used.
                     //
-                    printf("Relative value passed to Make_Error()\n");
-                    panic (p);
+                    assert(!"Relative value passed to Make_Error()\n");
+                    p = BLANK_VALUE;  // release tolerance?
                 }
-              #endif
 
                 const Value* arg = cast(const Value*, p);
+                if (Is_Nulled(arg))
+                    Init_Word(value, Canon(SYM__TNULL_T));
+                else if (Is_Void(arg))
+                    Init_Word(value, Canon(SYM__TVOID_T));
+                else
+                    Copy_Cell(value, arg);
+                value++;
 
                 Init_Typeset(
                     key,
                     TS_VALUE, // !!! Currently not in use
                     Cell_Word_Symbol(temp)
                 );
-                Copy_Cell(value, arg);
-
                 key++;
-                value++;
             }
         }
 
