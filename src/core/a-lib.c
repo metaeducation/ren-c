@@ -900,15 +900,17 @@ void API_rebModifyHandleLength(RebolValue* v, size_t length) {
 //
 //  rebModifyHandleCleaner: API
 //
-void API_rebModifyHandleCleaner(RebolValue* v, RebolHandleCleaner* cleaner) {
+void API_rebModifyHandleCleaner(
+    RebolValue* v,
+    RebolHandleCleaner* opt_cleaner
+){
     ENTER_API;
 
     if (not Is_Handle(v))
         fail ("rebModifyHandleCleaner() called on non-HANDLE!");
 
-    assert(Cell_Has_Node1(v));  // api only sees managed handles
-
-    Extract_Cell_Handle_Stub(v)->misc.cleaner = cleaner;
+    Stub* stub = Extract_Cell_Handle_Stub(v);  // api only sees managed handles
+    stub->misc.handle_cleaner = opt_cleaner;
 }
 
 
@@ -1841,8 +1843,7 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
     if (Type_Of(v) != TYPE_HANDLE)
         fail ("rebUnboxHandleCleaner() called on non-HANDLE!");
 
-    Stub* stub = Extract_Cell_Handle_Stub(v);
-    return maybe stub->misc.cleaner;
+    return maybe Cell_Handle_Cleaner(v);
 }
 
 

@@ -654,7 +654,9 @@ Option(Error*) Trap_Alias_Blob_As(
 
                 ++num_codepoints;
             }
-            TASTE_BYTE(m_cast(Binary*, bin)) = FLAVOR_NONSYMBOL;
+            TASTE_BYTE(m_cast(Binary*, bin)) = FLAVOR_0;  // next step sets
+            m_cast(Binary*, bin)->leader.bits |= FLEX_MASK_STRING;
+
             str = c_cast(String*, bin);
 
             Term_String_Len_Size(

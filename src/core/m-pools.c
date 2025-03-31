@@ -1079,11 +1079,33 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 //
 //  Decay_Stub: C
 //
+// 1. There's a generic feature for stubs of storing an arbitrary function in
+//    the Stub.misc.cleaner field to run when the stub is GC'd.  But some
+//    built-in stub flavors would rather pay for the switch() here than give
+//    up the misc slot for that purpose.  (Extension types can't add new
+//    FLAVOR_XXX constants, so they *have* to give up the misc slot if they
+//    want their Stubs to have GC cleanup behavior.)
+//
+// 2. HANDLE! has a cleaner that takes a Cell, not a Stub.  Avoid the need
+//    for two cleaners (e.g. a stub_cleaner() that calls handle_cleaner())
+//    since all handles would use the same stub_cleaner in that case.
+//
+// 3. Unlike the policy for CELL_FLAG_DONT_MARK_NODE1-style flags, the cleaner
+//    can't be nullptr if MISC_IS_GC_CLEANER is set.  Generally speaking
+//    there isn't as much dynamism of tweaking cleaners on and off--once
+//    a stub is created and gets a cleaner, it tends to keep it for its
+//    entire lifetime.  It may be that Stub flags like LINK_NODE_NEEDS_MARK
+//    should also not tolerate nullptr, for efficiency, as Stub fields tend
+//    not to be fiddled to null and back as often as Cell flags.
+//
 Stub* Decay_Stub(Stub* s)
 {
     assert(Is_Node_Readable(s));
 
-    switch (Stub_Flavor(s)) {
+    if (Not_Stub_Flag(s, CLEANS_UP_BEFORE_GC_DECAY))
+        goto do_decay;
+
+    switch (Stub_Flavor(s)) {  // flavors that clean, but can't spare misc [1]
       case FLAVOR_NONSYMBOL:
         Free_Bookmarks_Maybe_Null(cast(String*, s));
         break;
@@ -1092,13 +1114,7 @@ Stub* Decay_Stub(Stub* s)
         GC_Kill_Interning(cast(Symbol*, s));  // special handling adjust canons
         break;
 
-      case FLAVOR_PATCH: {
-        //
-        // This is a variable definition for a module.  It is a member of a
-        // circularly-linked list that goes through the other variables of the
-        // same name in other modules...with the name itself as a symbol
-        // being in that circular list.  Remove this patch from that list.
-        //
+      case FLAVOR_PATCH: {  // remove from Hitch list (see STUB_MASK_PATCH)
         Stub* temp = Misc_Hitch(s);
         while (Misc_Hitch(temp) != s) {
             temp = Misc_Hitch(temp);
@@ -1106,33 +1122,36 @@ Stub* Decay_Stub(Stub* s)
         Tweak_Misc_Hitch(temp, Misc_Hitch(s));
         break; }
 
-      case FLAVOR_LET:
-        break;
-
-      case FLAVOR_USE:
-        //
-        // At one point, this would remove the USE from a linked list of
-        // "variants" which were other examples of the USE.  That feature was
-        // removed for the moment.
-        //
-        break;
-
-      case FLAVOR_HANDLE: {  // Stub for managed form, so all cells see changes
+      case FLAVOR_HANDLE: {  // managed HANDLE! has FLAVOR_HANDLE Stub
         RebolValue* v = cast(RebolValue*, Stub_Cell(s));
         assert(Type_Of(v) == TYPE_HANDLE);
-        if (s->misc.cleaner)
-            (unwrap s->misc.cleaner)(v);
+        if (s->misc.handle_cleaner)  // takes Cell [2]
+            (unwrap s->misc.handle_cleaner)(v);
         break; }
 
-      default:
+      default:  // flavors that clean, but CAN spare misc [1]
+        assert(s->misc.stub_cleaner != nullptr);  // disallow nullptr [3]
+        (s->misc.stub_cleaner)(s);
         break;
     }
 
-    // Remove Flex from expansion list, if found:
-    REBLEN n;
-    for (n = 1; n < MAX_EXPAND_LIST; n++) {
+  do_decay: { /////////////////////////////////////////////////////////////=//
+
+    // 1. !!! Contexts and actions keep their archetypes, for now, in the
+    //    now collapsed node.  For FRAME! this means holding onto the binding
+    //    which winds up being used in Derelativize().  See SPC_BINDING.
+    //    Preserving ACTION!'s archetype is speculative--to point out the
+    //    possibility exists for the other array with a "canon" [0]
+    //
+    // 2. !!! This indicates reclaiming the data pointer, not the Flex Stubs
+    //    themselves...have they never been accounted for, e.g. in R3-Alpha?
+    //    If not, they should be...additional sizeof(Stub), also tracking
+    //    overhead for that.  Review the question of how the GC watermarks
+    //    interact with Try_Alloc_Memory() and "higher level" allocations.
+
+    for (REBLEN n = 1; n < MAX_EXPAND_LIST; n++) {  // might be in expand list
         if (g_mem.prior_expand[n] == s)
-            g_mem.prior_expand[n] = nullptr;
+            g_mem.prior_expand[n] = nullptr;  // remove it if found
     }
 
     if (Get_Stub_Flag(s, DYNAMIC)) {
@@ -1142,13 +1161,7 @@ Stub* Decay_Stub(Stub* s)
         REBLEN total = (bias + Flex_Rest(f)) * wide;
         char *unbiased = f->content.dynamic.data - (wide * bias);
 
-        // !!! Contexts and actions keep their archetypes, for now, in the
-        // now collapsed node.  For FRAME! this means holding onto the binding
-        // which winds up being used in Derelativize().  See SPC_BINDING.
-        // Preserving ACTION!'s archetype is speculative--to point out the
-        // possibility exists for the other array with a "canon" [0]
-        //
-        if (Is_Stub_Varlist(f) or Is_Stub_Details(f))
+        if (Is_Stub_Varlist(f) or Is_Stub_Details(f))  // save archetype [1]
             Mem_Copy(
                 &f->content.fixed.cell,
                 Array_Head(c_cast(Array*, f)),
@@ -1157,22 +1170,15 @@ Stub* Decay_Stub(Stub* s)
 
         Free_Unbiased_Flex_Data(unbiased, total);
 
-        // !!! This indicates reclaiming of the space, not for the Flex
-        // Stubs themselves...have they never been accounted for, e.g. in
-        // R3-Alpha?  If not, they should be...additional sizeof(Stub),
-        // also tracking overhead for that.  Review the question of how
-        // the GC watermarks interact with Try_Alloc_Memory() and the "higher
-        // level" allocations.
-
         int tmp;
         g_gc.depletion = REB_I32_ADD_OF(g_gc.depletion, total, &tmp)
             ? INT32_MAX
-            : tmp;
+            : tmp;  // what about the space for the Stub itself? [2]
     }
 
     Set_Stub_Unreadable(s);
     return s;
-}
+}}
 
 
 //

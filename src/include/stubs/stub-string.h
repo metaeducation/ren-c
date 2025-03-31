@@ -465,7 +465,7 @@ INLINE REBLEN Num_Codepoints_For_Bytes(
 // data they are given is not UTF-8.
 
 #define Make_String(encoded_capacity) \
-    Make_String_Core(FLEX_MASK_UNMANAGED_STRING, (encoded_capacity))
+    Make_String_Core(FLEX_MASK_STRING, (encoded_capacity))
 
 INLINE String* Make_String_UTF8(const char *utf8) {
     return Append_UTF8_May_Fail(nullptr, utf8, strsize(utf8), STRMODE_NO_CR);

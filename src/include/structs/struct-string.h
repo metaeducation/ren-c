@@ -109,13 +109,18 @@
         | FLAG_FLAVOR(SYMBOL) \
         | FLEX_FLAG_FIXED_SIZE \
         | NODE_FLAG_MANAGED \
+        | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* kill interning in table */ \
         | not STUB_FLAG_MISC_NODE_NEEDS_MARK  /* hitches not marked */ \
         | not STUB_FLAG_LINK_NODE_NEEDS_MARK  /* synonym not marked [1] */)
 
-#define FLEX_MASK_UNMANAGED_STRING  FLAG_FLAVOR(NONSYMBOL)
+#define FLEX_MASK_STRING \
+    (FLAG_FLAVOR(NONSYMBOL) \
+        | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* needs to kill bookmarks */)
 
-#define FLEX_MASK_MANAGED_STRING \
-    (FLAG_FLAVOR(NONSYMBOL) | NODE_FLAG_MANAGED)
+#define FLEX_MASK_SYMBOL_STRING_COMMON \
+    (NODE_FLAG_NODE \
+        | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY)
+
 
 #define MISC_HITCH(symbol_or_patch_or_stump) \
     STUB_MISC_UNMANAGED(symbol_or_patch_or_stump)

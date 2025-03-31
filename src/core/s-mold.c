@@ -683,7 +683,9 @@ void Startup_Mold(Size encoded_capacity)
     g_mold.stack = Make_Flex(FLAG_FLAVOR(MOLDSTACK), Flex, 10);
 
     ensure(nullptr, g_mold.buffer) = Make_String_Core(
-        FLEX_MASK_UNMANAGED_STRING | STUB_FLAG_DYNAMIC,
+        FLEX_MASK_STRING
+            | (not NODE_FLAG_MANAGED)
+            | STUB_FLAG_DYNAMIC,
         encoded_capacity
     );
 }

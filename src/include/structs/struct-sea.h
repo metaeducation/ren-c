@@ -75,16 +75,17 @@
 
 //=//// "PATCHES" FOR MODULE VARIABLES ////////////////////////////////////=//
 //
-// 1. While it may seem that context keeps the module alive and not vice-versa
-//    (which marking the context in link might suggest) the reason for this is
-//    when patches are cached in variables; then the variable no longer refers
-//    directly to the module.
-//
-// 2. Module variables are in a circularly linked list that includes the
+// 1. Module variables are in a circularly linked list that includes the
 //    symbol series holding that variable's name.  This means the variable
 //    can be looked up in that module by following the list reachable through
 //    the symbol in a WORD!.  It also means the spelling can be found in
-//    that list looking for the symbol.
+//    that list looking for the symbol.  When GC occurs, the Patch must be
+//    removed from the Hitch list before the Patch gets destroyed.
+//
+// 2. While it may seem that context keeps the module alive and not vice-versa
+//    (which marking the context in link might suggest) the reason for this is
+//    when patches are cached in variables; then the variable no longer refers
+//    directly to the module.
 //
 
 #if CPLUSPLUS_11
@@ -97,12 +98,13 @@
     FLAG_FLAVOR(PATCH) \
         | NODE_FLAG_NODE \
         | NODE_FLAG_MANAGED \
-        | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* context, weird keepalive [1] */ \
+        | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* remove from hitches [1] */ \
+        | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* context, weird keepalive [2] */ \
         | not STUB_FLAG_LINK_NODE_NEEDS_MARK  /* reserved */ \
     )
 
 #define LINK_PATCH_RESERVED(patch)  STUB_LINK_UNMANAGED(patch)
-// MISC is used for MISC_HITCH() [2]
+// MISC is used for MISC_HITCH() [1]
 #define INFO_PATCH_SEA(patch)       STUB_INFO(patch)
 
 

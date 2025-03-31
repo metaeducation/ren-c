@@ -38,7 +38,7 @@ String* Make_String_Core(Flags flags, Size encoded_capacity)
     assert(Flavor_From_Flags(flags) == FLAVOR_NONSYMBOL);
 
     String* str = Make_Flex(
-        FLAG_FLAVOR(NONSYMBOL) | flags,
+        FLEX_MASK_STRING | flags,
         String,
         encoded_capacity + 1  // + 1 makes room for '\0' terminator
     );

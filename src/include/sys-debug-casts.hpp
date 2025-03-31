@@ -118,9 +118,6 @@
 //
 
 
-INLINE Flavor Stub_Flavor(const Stub* s);  // forward declaration
-
-
 //=//// cast(Node*, ...) //////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
@@ -349,18 +346,21 @@ struct cast_helper<V*,const String*> {  // [2]
             return nullptr;
 
         const Stub* stub = reinterpret_cast<const Stub*>(p);
-        if (((stub->leader.bits & (
-            NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
-        ))
-        ) !=
-            NODE_FLAG_NODE
+
+        Byte taste = TASTE_BYTE(stub);
+        if (taste != FLAVOR_NONSYMBOL and taste != FLAVOR_SYMBOL)
+            panic (p);
+
+        if ((stub->leader.bits & (
+            FLEX_MASK_SYMBOL_STRING_COMMON
+                | NODE_FLAG_UNREADABLE
+                | NODE_FLAG_CELL
+        )) !=
+            FLEX_MASK_SYMBOL_STRING_COMMON
         ){
+            assert(stub->leader.bits & STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY);
             panic (p);
         }
-
-        Flavor flavor = Stub_Flavor(stub);
-        if (flavor != FLAVOR_NONSYMBOL and flavor != FLAVOR_SYMBOL)
-            panic (p);
 
         return reinterpret_cast<const String*>(p);
     }
@@ -390,13 +390,12 @@ struct cast_helper<V*,const Symbol*> {  // [2]
         if (not p)
             return nullptr;
 
-        if (((reinterpret_cast<const Stub*>(p)->leader.bits & (
-            FLEX_MASK_SYMBOL
+        const Stub* stub = reinterpret_cast<const Stub*>(p);
+        if ((stub->leader.bits & (
+            (FLEX_MASK_SYMBOL | FLAG_TASTE_BYTE(255))
                 | NODE_FLAG_UNREADABLE
                 | NODE_FLAG_CELL
-                | FLAG_TASTE_BYTE(255)
-        ))
-        ) !=
+        )) !=
             FLEX_MASK_SYMBOL
         ){
             panic (p);
@@ -547,12 +546,11 @@ struct cast_helper<V*,Phase*> {  // [2]
 
         const Stub* stub = reinterpret_cast<Stub*>(p);
 
-        if (Stub_Flavor(stub) == FLAVOR_DETAILS) {
+        if (TASTE_BYTE(stub) == FLAVOR_DETAILS) {
             if ((stub->leader.bits & (
-                FLEX_MASK_DETAILS
+                (FLEX_MASK_DETAILS | FLAG_TASTE_BYTE(255))
                     | NODE_FLAG_UNREADABLE
                     | NODE_FLAG_CELL
-                    | FLAG_TASTE_BYTE(255)
             )) !=
                 FLEX_MASK_DETAILS
             ){
@@ -561,13 +559,12 @@ struct cast_helper<V*,Phase*> {  // [2]
         }
         else {
             if ((stub->leader.bits & ((
-                FLEX_MASK_LEVEL_VARLIST  // maybe no MISC_NODE_NEEDS_MARK
+                (FLEX_MASK_LEVEL_VARLIST | FLAG_TASTE_BYTE(255))
                     | NODE_FLAG_UNREADABLE
                     | NODE_FLAG_CELL
-                    | FLAG_TASTE_BYTE(255)
                 )
             )) !=
-                FLEX_MASK_LEVEL_VARLIST
+                FLEX_MASK_LEVEL_VARLIST  // maybe no MISC_NODE_NEEDS_MARK
             ){
                 panic (p);
             }

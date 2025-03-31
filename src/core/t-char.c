@@ -819,7 +819,10 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
         assert(size + 1 <= Size_Of(v->payload.at_least_8));
 
-        String* str = Make_String_Core(FLEX_MASK_MANAGED_STRING, size);
+        String* str = Make_String_Core(
+            FLEX_MASK_STRING | NODE_FLAG_MANAGED,
+            size
+        );
         memcpy(Flex_Data(str), utf8, size + 1);  // +1 to include '\0'
         Term_String_Len_Size(str, len, size);
         Freeze_Flex(str);

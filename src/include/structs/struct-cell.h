@@ -77,6 +77,7 @@
 
 typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
+typedef void (StubCleaner)(Stub*);  // forward decl to appear in AnyUnion
 
 
 //=//// BITS 0-7: NODE FLAGS //////////////////////////////////////////////=//
@@ -445,7 +446,9 @@ union AnyUnion {
 
     Length length;  // UTF-8 Everywhere caches to get num_codepoints
 
-    Option(RebolHandleCleaner*) cleaner;  // HANDLE!s use for GC finalization
+    StubCleaner* stub_cleaner;  // Stubs use for GC finalization
+
+    Option(RebolHandleCleaner*) handle_cleaner;  // passes Cells, not Stubs
 
     Level* level;  // running frames map back to Level, yielder plugs suspend
 };

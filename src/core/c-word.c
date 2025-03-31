@@ -290,7 +290,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
             slot -= num_slots;
     }
 
-  new_interning: {
+  new_interning: { ////////////////////////////////////////////////////////=//
 
     Binary* b = cast(Binary*, Make_Flex_Into(
         FLEX_MASK_SYMBOL
@@ -305,7 +305,6 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     // calculate it during the hash.  But it's not such a huge deal because
     // we only run this the first time a symbol is interned.
     //
-  blockscope {
     assert(Get_Lex_Class(utf8[0]) != LEX_CLASS_NUMBER);  // no leading digit
     for (Offset i = 0; i < utf8_size; ++i) {
         assert(not Is_Lex_Whitespace(utf8[i]));  // spaces/newlines illegal
@@ -342,7 +341,6 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
             continue;
         }
     }
-  }
 
     // The incoming string isn't always null terminated, e.g. if you are
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
