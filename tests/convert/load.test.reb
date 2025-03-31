@@ -76,3 +76,8 @@
     ([abc/def] = transcode "abc.def")
     ([abc/def/ghi.txt] = transcode "abc/def/ghi.txt")
 ]
+
+; Leading slash indicates path desired
+[
+    ([abc/def:] = transcode "/abc.def:")
+]

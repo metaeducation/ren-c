@@ -1663,6 +1663,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         if (
             *S->end == '.'
             and S->mode == '/'
+            and not Is_Blank(TOP)  // want /a.b: to be a/b:
             and not (flags & LEX_FLAGS_NONWORD_SPECIALS)
 
         ){
