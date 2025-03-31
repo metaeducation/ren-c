@@ -61,6 +61,29 @@ prebuilt/*
 tests/r_2*.log
 tests/source-analysis.log
 
+# Some extensions are part of the main repository, while others are not.
+# Right now if you want to build a non-main-repository extension you git clone
+# it into the extensions directory.  You should be able to build an extension
+# from the network without cloning it locally, and if you wish to clone it
+# locally it should probably go in a different directory.  But for now let's
+# just ignore any extensions that aren't part of the main repo if you happen
+# to have cloned them into %extensions/
+
+extensions/*
+!extensions/README.md
+!extensions/console
+!extensions/crypt
+!extensions/debugger
+!extensions/dns
+!extensions/filesystem
+!extensions/network
+!extensions/process
+!extensions/stdio
+!extensions/time
+!extensions/uuid
+!extensions/view
+
+
 #################
 ## Eclipse
 #################
