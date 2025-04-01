@@ -547,8 +547,8 @@ void Virtual_Bind_Deep_To_New_Context(
                 TS_VALUE, // !!! Currently not paid attention to
                 Cell_Word_Symbol(item)
             );
-            TYPE_SET(key, REB_TS_UNBINDABLE);
-            TYPE_SET(key, REB_TS_HIDDEN);
+            Set_Typeset_Flag(key, REB_TS_UNBINDABLE);
+            Set_Typeset_Flag(key, REB_TS_HIDDEN);
             Derelativize(var, item, specifier);
             Set_Cell_Flag(var, PROTECTED);
             Set_Cell_Flag(var, VAR_MARKED_REUSE);

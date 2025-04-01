@@ -336,7 +336,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // not "passed in" that way...the refinement is inactive.
             //
             if (refinement_seen) {
-                if (TYPE_CHECK(typeset, REB_MAX_NULLED))
+                if (Typeset_Check(typeset, REB_MAX_NULLED))
                     fail (Error_Refinement_Arg_Opt_Raw());
             }
 
@@ -874,7 +874,7 @@ REBACT *Make_Action(
 
             // See notes on CELL_FLAG_ACTION_INVISIBLE.
             //
-            if (VAL_TYPESET_BITS(param) == 0)
+            if (Cell_Typeset_Bits(param) == 0)
                 Set_Cell_Flag(rootparam, ACTION_INVISIBLE);
             break; }
 
@@ -909,7 +909,7 @@ REBACT *Make_Action(
             break;
 
         case PARAMCLASS_HARD_QUOTE:
-            if (TYPE_CHECK(param, REB_MAX_NULLED))
+            if (Typeset_Check(param, REB_MAX_NULLED))
                 fail ("Hard quoted function parameters cannot receive nulls");
 
             goto quote_check;
@@ -1227,7 +1227,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         else if (Get_Cell_Flag(value, ACTION_RETURN)) {
             Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
             assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
-            if (not TYPE_CHECK(typeset, REB_MAX_NULLED)) // what eval [] returns
+            if (not Typeset_Check(typeset, REB_MAX_NULLED)) // eval [] returns
                 ACT_DISPATCHER(a) = &Returner_Dispatcher; // error when run
         }
         else {
@@ -1414,7 +1414,7 @@ Bounce Typeset_Checker_Dispatcher(Level* L)
     Cell* typeset = Array_Head(details);
     assert(Is_Typeset(typeset));
 
-    return Init_Logic(L->out, TYPE_CHECK(typeset, VAL_TYPE(Level_Arg(L, 1))));
+    return Init_Logic(L->out, Typeset_Check(typeset, VAL_TYPE(Level_Arg(L, 1))));
 }
 
 
@@ -1483,7 +1483,7 @@ Bounce Returner_Dispatcher(Level* L)
     // local uses them for the return types of a "virtual" definitional return
     // if the parameter is PARAMCLASS_RETURN_1.
     //
-    if (not TYPE_CHECK(typeset, VAL_TYPE(L->out)))
+    if (not Typeset_Check(typeset, VAL_TYPE(L->out)))
         fail (Error_Bad_Return_Type(L, VAL_TYPE(L->out)));
 
     return L->out;

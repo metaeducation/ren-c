@@ -213,7 +213,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
             Value* param = ACT_PARAMS_HEAD(Level_Phase(param_level))
                 + arg->payload.varargs.param_offset;
 
-            if (TYPE_CHECK(param, REB_MAX_NULLED))
+            if (Typeset_Check(param, REB_MAX_NULLED))
                 fail (Error_Null_Vararg_Array_Raw());
         }
 
@@ -377,15 +377,15 @@ REBLEN Find_In_Array(
                 }
             }
             else if (Is_Typeset(target)) {
-                if (TYPE_CHECK(target, VAL_TYPE(item)))
+                if (Typeset_Check(target, VAL_TYPE(item)))
                     return index;
                 if (
                     Is_Datatype(item)
-                    && TYPE_CHECK(target, VAL_TYPE_KIND(item))
+                    && Typeset_Check(target, VAL_TYPE_KIND(item))
                 ){
                     return index;
                 }
-                if (Is_Typeset(item) && EQUAL_TYPESET(item, target))
+                if (Is_Typeset(item) && Typesets_Equal(item, target))
                     return index;
             }
             if (flags & AM_FIND_MATCH)
@@ -949,7 +949,7 @@ REBTYPE(List)
             if (Is_Datatype(ARG(KINDS)))
                 types |= FLAGIT_KIND(VAL_TYPE(ARG(KINDS)));
             else
-                types |= VAL_TYPESET_BITS(ARG(KINDS));
+                types |= Cell_Typeset_Bits(ARG(KINDS));
         }
 
         Array* copy = Copy_Array_Core_Managed(

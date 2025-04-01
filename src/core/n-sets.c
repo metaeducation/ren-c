@@ -363,7 +363,7 @@ DECLARE_NATIVE(EXCLUDE)
             fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
         Copy_Cell(OUT, val1);
-        VAL_TYPESET_BITS(OUT) &= ~VAL_TYPESET_BITS(val2);
+        Cell_Typeset_Bits(OUT) &= ~Cell_Typeset_Bits(val2);
         return OUT;
     }
 

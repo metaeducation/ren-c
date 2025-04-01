@@ -70,7 +70,7 @@ const struct {
 REBINT CT_Typeset(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode < 0) return -1;
-    return EQUAL_TYPESET(a, b);
+    return Typesets_Equal(a, b);
 }
 
 
@@ -130,7 +130,7 @@ Value* Init_Typeset(Cell* out, REBU64 bits, Symbol* opt_name)
 {
     RESET_CELL(out, REB_TYPESET);
     INIT_TYPESET_NAME(out, opt_name);
-    VAL_TYPESET_BITS(out) = bits;
+    Cell_Typeset_Bits(out) = bits;
     return cast(Value*, out);
 }
 
@@ -152,7 +152,7 @@ bool Update_Typeset_Bits_Core(
     Specifier* specifier
 ) {
     assert(Is_Typeset(typeset));
-    VAL_TYPESET_BITS(typeset) = 0;
+    Cell_Typeset_Bits(typeset) = 0;
 
     const Cell* maybe_word = head;
     for (; NOT_END(maybe_word); ++maybe_word) {
@@ -160,15 +160,15 @@ bool Update_Typeset_Bits_Core(
 
         if (Is_Word(maybe_word)) {
             if (Cell_Word_Id(maybe_word) == SYM_TILDE_1) {  // ~
-                TYPE_SET(typeset, REB_NOTHING);
+                Set_Typeset_Flag(typeset, REB_NOTHING);
                 continue;
             }
             if (Cell_Word_Id(maybe_word) == SYM__TNULL_T) {  // ~null~
-                TYPE_SET(typeset, REB_MAX_NULLED);
+                Set_Typeset_Flag(typeset, REB_MAX_NULLED);
                 continue;
             }
             else if (Cell_Word_Id(maybe_word) == SYM__TVOID_T) {  // ~void~
-                TYPE_SET(typeset, REB_VOID);
+                Set_Typeset_Flag(typeset, REB_VOID);
                 continue;
             }
             item = Get_Opt_Var_May_Fail(maybe_word, specifier);
@@ -186,28 +186,28 @@ bool Update_Typeset_Bits_Core(
         const bool keywords = true;
         if (keywords and Is_Tag(item)) {
             if (0 == Compare_String_Vals(item, Root_Ellipsis_Tag, true)) {
-                TYPE_SET(typeset, REB_TS_VARIADIC);
+                Set_Typeset_Flag(typeset, REB_TS_VARIADIC);
             }
             else if (0 == Compare_String_Vals(item, Root_End_Tag, true)) {
-                TYPE_SET(typeset, REB_TS_ENDABLE);
+                Set_Typeset_Flag(typeset, REB_TS_ENDABLE);
             }
             else if (0 == Compare_String_Vals(item, Root_Maybe_Tag, true)) {
-                TYPE_SET(typeset, REB_TS_NOOP_IF_VOID);
+                Set_Typeset_Flag(typeset, REB_TS_NOOP_IF_VOID);
             }
             else if (0 == Compare_String_Vals(item, Root_Skip_Tag, true)) {
                 if (Cell_Parameter_Class(typeset) != PARAMCLASS_HARD_QUOTE)
                     fail ("Only hard-quoted parameters are <skip>-able");
 
-                TYPE_SET(typeset, REB_TS_SKIPPABLE);
-                TYPE_SET(typeset, REB_TS_ENDABLE); // skip => null
+                Set_Typeset_Flag(typeset, REB_TS_SKIPPABLE);
+                Set_Typeset_Flag(typeset, REB_TS_ENDABLE); // skip => null
             }
         }
         else if (Is_Datatype(item)) {
             assert(VAL_TYPE_KIND(item) != REB_0);
-            TYPE_SET(typeset, VAL_TYPE_KIND(item));
+            Set_Typeset_Flag(typeset, VAL_TYPE_KIND(item));
         }
         else if (Is_Typeset(item)) {
-            VAL_TYPESET_BITS(typeset) |= VAL_TYPESET_BITS(item);
+            Cell_Typeset_Bits(typeset) |= Cell_Typeset_Bits(item);
         }
         else
             fail (Error_Invalid_Core(maybe_word, specifier));
@@ -259,7 +259,7 @@ Array* Typeset_To_Array(const Value* tset)
 
     REBINT n;
     for (n = 1; n < REB_MAX_NULLED; ++n) {
-        if (TYPE_CHECK(tset, cast(enum Reb_Kind, n))) {
+        if (Typeset_Check(tset, cast(enum Reb_Kind, n))) {
             if (n == REB_MAX_NULLED) {
                 Init_Word(PUSH(), Canon(SYM__TNULL_T));
             }
@@ -297,7 +297,7 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
         // generally legal in user typesets.  Only legal "key" typesets
         // (that have symbols).
         //
-        assert(not TYPE_CHECK(v, REB_MAX_NULLED));
+        assert(not Typeset_Check(v, REB_MAX_NULLED));
     }
     else {
         //
@@ -319,12 +319,12 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
     }
 #endif
 
-    assert(not TYPE_CHECK(v, REB_0)); // REB_0 is used for internal purposes
+    assert(not Typeset_Check(v, REB_0)); // REB_0 is used for internal purposes
 
     // Convert bits to types.
     //
     for (n = REB_0 + 1; n < REB_MAX; n++) {
-        if (TYPE_CHECK(v, cast(enum Reb_Kind, n))) {
+        if (Typeset_Check(v, cast(enum Reb_Kind, n))) {
             Emit(mo, "+DN ", SYM_DATATYPE_X, Canon(cast(SymId, n)));
         }
     }
@@ -353,7 +353,7 @@ REBTYPE(Typeset)
         if (not Is_Datatype(arg))
             fail (Error_Invalid(arg));
 
-        if (TYPE_CHECK(val, VAL_TYPE_KIND(arg)))
+        if (Typeset_Check(val, VAL_TYPE_KIND(arg)))
             return Init_Nothing(OUT);
 
         return nullptr;
@@ -362,23 +362,23 @@ REBTYPE(Typeset)
     case SYM_UNION:
     case SYM_DIFFERENCE:
         if (Is_Datatype(arg)) {
-            VAL_TYPESET_BITS(arg) = FLAGIT_KIND(VAL_TYPE(arg));
+            Cell_Typeset_Bits(arg) = FLAGIT_KIND(VAL_TYPE(arg));
         }
         else if (not Is_Typeset(arg))
             fail (Error_Invalid(arg));
 
         if (Cell_Word_Id(verb) == SYM_UNION)
-            VAL_TYPESET_BITS(val) |= VAL_TYPESET_BITS(arg);
+            Cell_Typeset_Bits(val) |= Cell_Typeset_Bits(arg);
         else if (Cell_Word_Id(verb) == SYM_INTERSECT)
-            VAL_TYPESET_BITS(val) &= VAL_TYPESET_BITS(arg);
+            Cell_Typeset_Bits(val) &= Cell_Typeset_Bits(arg);
         else {
             assert(Cell_Word_Id(verb) == SYM_DIFFERENCE);
-            VAL_TYPESET_BITS(val) ^= VAL_TYPESET_BITS(arg);
+            Cell_Typeset_Bits(val) ^= Cell_Typeset_Bits(arg);
         }
         RETURN (val);
 
     case SYM_COMPLEMENT:
-        VAL_TYPESET_BITS(val) = ~VAL_TYPESET_BITS(val);
+        Cell_Typeset_Bits(val) = ~Cell_Typeset_Bits(val);
         RETURN (val);
 
     default:

@@ -75,19 +75,19 @@ INLINE Symbol* Get_Type_Name(const Cell* value)
 //
 // Operations when typeset is done with a bitset (currently all typesets)
 
-#define VAL_TYPESET_BITS(v) ((v)->payload.typeset.bits)
+#define Cell_Typeset_Bits(v) ((v)->payload.typeset.bits)
 
-#define TYPE_CHECK(v,n) \
-    (did (VAL_TYPESET_BITS(v) & FLAGIT_KIND(n)))
+#define Typeset_Check(v,n) \
+    (did (Cell_Typeset_Bits(v) & FLAGIT_KIND(n)))
 
-#define TYPE_SET(v,n) \
-    (VAL_TYPESET_BITS(v) |= FLAGIT_KIND(n))
+#define Set_Typeset_Flag(v,n) \
+    (Cell_Typeset_Bits(v) |= FLAGIT_KIND(n))
 
-#define TYPE_CLEAR(v,n) \
-    (VAL_TYPESET_BITS(v) &= ~FLAGIT_KIND(n))
+#define Clear_Typeset_Flag(v,n) \
+    (Cell_Typeset_Bits(v) &= ~FLAGIT_KIND(n))
 
-#define EQUAL_TYPESET(v,w) \
-    (VAL_TYPESET_BITS(v) == VAL_TYPESET_BITS(w))
+#define Typesets_Equal(v,w) \
+    (Cell_Typeset_Bits(v) == Cell_Typeset_Bits(w))
 
 // !!! R3-Alpha made frequent use of these predefined typesets.  In Ren-C
 // they have been called into question, as to exactly how copying mechanics
@@ -267,7 +267,7 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 //
 #define REB_TS_ENDABLE REB_0
 #define Is_Param_Endable(v) \
-    TYPE_CHECK((v), REB_TS_ENDABLE)
+    Typeset_Check((v), REB_TS_ENDABLE)
 
 // Indicates that when this parameter is fulfilled, it will do so with a
 // value of type VARARGS!, that actually just holds a pointer to the frame
@@ -280,7 +280,7 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 //
 #define REB_TS_VARIADIC REB_MAX_PLUS_ONE
 #define Is_Param_Variadic(v) \
-    TYPE_CHECK((v), REB_TS_VARIADIC)
+    Typeset_Check((v), REB_TS_VARIADIC)
 
 // Skippability is used on quoted arguments to indicate that they are willing
 // to "pass" on something that isn't a matching type.  This gives an ability
@@ -289,13 +289,13 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 //
 #define REB_TS_SKIPPABLE REB_MAX_PLUS_TWO
 #define Is_Param_Skippable(v) \
-    TYPE_CHECK((v), REB_TS_SKIPPABLE)
+    Typeset_Check((v), REB_TS_SKIPPABLE)
 
 // Can't be reflected (set with PROTECT/HIDE) or local in spec as `foo:`
 //
 #define REB_TS_HIDDEN REB_MAX_PLUS_THREE
 #define Is_Param_Hidden(v) \
-    TYPE_CHECK((v), REB_TS_HIDDEN)
+    Typeset_Check((v), REB_TS_HIDDEN)
 
 // Can't be bound to beyond the current bindings.
 //
@@ -311,7 +311,7 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 //
 #define REB_TS_UNBINDABLE REB_MAX_PLUS_FOUR
 #define Is_Param_Unbindable(v) \
-    TYPE_CHECK((v), REB_TS_UNBINDABLE)
+    Typeset_Check((v), REB_TS_UNBINDABLE)
 
 // Parameters can be marked such that if they are blank, the action will not
 // be run at all.  This is done via the `<maybe>` annotation, which indicates

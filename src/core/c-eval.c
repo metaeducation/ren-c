@@ -260,14 +260,14 @@ INLINE void Finalize_Arg(
             fail (Error_Bad_Refine_Revoke(param, arg));
     }
 
-    if (Is_Void(arg) and TYPE_CHECK(param, REB_TS_NOOP_IF_VOID)) {
+    if (Is_Void(arg) and Typeset_Check(param, REB_TS_NOOP_IF_VOID)) {
         Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
         LVL_PHASE_OR_DUMMY(L_state) = PG_Dummy_Action;
         return;
     }
 
     if (not Is_Param_Variadic(param)) {
-        if (TYPE_CHECK(param, VAL_TYPE(arg))) {
+        if (Typeset_Check(param, VAL_TYPE(arg))) {
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             return;
         }
@@ -652,7 +652,7 @@ bool Eval_Core_Throws(Level* const L)
         ){
             Seek_First_Param(L, VAL_ACTION(current_gotten));
             if (Is_Param_Skippable(L->param))
-                if (not TYPE_CHECK(L->param, VAL_TYPE(L->value)))
+                if (not Typeset_Check(L->param, VAL_TYPE(L->value)))
                     goto give_up_forward_quote_priority;
 
             goto give_up_backward_quote_priority;
@@ -717,7 +717,7 @@ bool Eval_Core_Throws(Level* const L)
 
     Seek_First_Param(L, VAL_ACTION(L->gotten));
     if (Is_Param_Skippable(L->param))
-        if (not TYPE_CHECK(L->param, VAL_TYPE(current)))
+        if (not Typeset_Check(L->param, VAL_TYPE(current)))
             goto give_up_backward_quote_priority;
 
     Push_Action(L, VAL_ACTION(L->gotten), VAL_BINDING(L->gotten));
@@ -1014,7 +1014,7 @@ bool Eval_Core_Throws(Level* const L)
                 //
                 assert(
                     (L->refine != ORDINARY_ARG and Is_Nulled(L->special))
-                    or TYPE_CHECK(L->param, VAL_TYPE(L->special))
+                    or Typeset_Check(L->param, VAL_TYPE(L->special))
                 );
 
                 if (L->arg != L->special) {
@@ -1296,7 +1296,7 @@ bool Eval_Core_Throws(Level* const L)
 
               case PARAMCLASS_HARD_QUOTE:
                 if (Is_Param_Skippable(L->param)) {
-                    if (not TYPE_CHECK(L->param, VAL_TYPE(L->value))) {
+                    if (not Typeset_Check(L->param, VAL_TYPE(L->value))) {
                         assert(Is_Param_Endable(L->param));
                         Init_Endish_Nulled(L->arg);
                         Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);

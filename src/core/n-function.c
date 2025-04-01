@@ -235,7 +235,7 @@ DECLARE_NATIVE(RETURN)
         // take [~null~ any-value!] as its argument, and then report the error
         // itself...implicating the frame (in a way parallel to this native).
         //
-        if (not TYPE_CHECK(typeset, VAL_TYPE(v)))
+        if (not Typeset_Check(typeset, VAL_TYPE(v)))
             fail (Error_Bad_Return_Type(target_level, VAL_TYPE(v)));
     }
 

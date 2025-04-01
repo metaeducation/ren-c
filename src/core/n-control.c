@@ -211,7 +211,7 @@ bool Either_Test_Core_Throws(
         return false;
 
       case REB_TYPESET:
-        Init_Logic(out, TYPE_CHECK(test, VAL_TYPE(arg)));
+        Init_Logic(out, Typeset_Check(test, VAL_TYPE(arg)));
         return false;
 
     case REB_BLOCK: {
@@ -254,7 +254,7 @@ bool Either_Test_Core_Throws(
                 }
             }
             else if (Is_Typeset(var)) {
-                if (TYPE_CHECK(var, VAL_TYPE(arg))) {
+                if (Typeset_Check(var, VAL_TYPE(arg))) {
                     Init_True(out);
                     return false;
                 }
@@ -459,7 +459,7 @@ DECLARE_NATIVE(NON)
         if (Is_Nothing(value))
             fail ("NON expected value to not be trash, but it was");
     }
-    else if (not TYPE_CHECK(value, VAL_TYPE_KIND(test))) {
+    else if (not Typeset_Check(value, VAL_TYPE_KIND(test))) {
         fail ("NON expected value to not match a type, but it did match");
     }
 

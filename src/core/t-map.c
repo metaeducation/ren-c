@@ -859,7 +859,7 @@ REBTYPE(Map)
             if (Is_Datatype(ARG(KINDS)))
                 types |= FLAGIT_KIND(VAL_TYPE(ARG(KINDS)));
             else
-                types |= VAL_TYPESET_BITS(ARG(KINDS));
+                types |= Cell_Typeset_Bits(ARG(KINDS));
         }
 
         return Init_Map(OUT, Copy_Map(map, types)); }

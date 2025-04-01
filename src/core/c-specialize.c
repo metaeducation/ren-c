@@ -410,7 +410,7 @@ bool Specialize_Action_Throws(
         if (Is_Param_Variadic(param))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (not TYPE_CHECK(param, VAL_TYPE(arg)))
+        if (not Typeset_Check(param, VAL_TYPE(arg)))
             fail (Error_Invalid(arg)); // !!! merge w/Error_Invalid_Arg()
 
        Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
@@ -422,7 +422,7 @@ bool Specialize_Action_Throws(
         // of the underlying function.
 
         Copy_Cell(PUSH(), param);
-        TYPE_SET(TOP, REB_TS_HIDDEN);
+        Set_Typeset_Flag(TOP, REB_TS_HIDDEN);
         continue;
     }
 

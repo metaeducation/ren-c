@@ -692,7 +692,7 @@ static REBIXO Parse_Array_One_Rule_Core(
         return END_FLAG;
 
     case REB_TYPESET:
-        if (TYPE_CHECK(rule, VAL_TYPE(item))) // type was found in the typeset
+        if (Typeset_Check(rule, VAL_TYPE(item))) // type was found in the typeset
             return pos + 1;
         return END_FLAG;
 
