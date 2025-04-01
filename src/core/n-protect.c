@@ -421,7 +421,7 @@ void Force_Value_Frozen_Deep(const Cell* v, Flex* opt_locker) {
         if (opt_locker != nullptr)
             Set_Flex_Info(Cell_Flex(v), AUTO_LOCKED);
     } else
-        fail (Error_Invalid_Type(VAL_TYPE(v))); // not yet implemented
+        fail (Error_Invalid_Type(Type_Of(v))); // not yet implemented
 }
 
 
@@ -468,7 +468,7 @@ DECLARE_NATIVE(LOCK)
         if (Any_List(v)) {
             Init_Any_List_At(
                 OUT,
-                VAL_TYPE(v),
+                Type_Of(v),
                 Copy_Array_Deep_Managed(
                     Cell_Array(v),
                     VAL_SPECIFIER(v)
@@ -479,20 +479,20 @@ DECLARE_NATIVE(LOCK)
         else if (Any_Context(v)) {
             Init_Any_Context(
                 OUT,
-                VAL_TYPE(v),
+                Type_Of(v),
                 Copy_Context_Core_Managed(Cell_Varlist(v), TS_STD_SERIES)
             );
         }
         else if (Any_Series(v)) {
             Init_Any_Series_At(
                 OUT,
-                VAL_TYPE(v),
+                Type_Of(v),
                 Copy_Non_Array_Flex_Core(Cell_Flex(v), NODE_FLAG_MANAGED),
                 VAL_INDEX(v)
             );
         }
         else
-            fail (Error_Invalid_Type(VAL_TYPE(v))); // not yet implemented
+            fail (Error_Invalid_Type(Type_Of(v))); // not yet implemented
     }
 
     Flex* locker = nullptr;

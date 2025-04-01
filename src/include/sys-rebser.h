@@ -596,7 +596,7 @@ STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
 // `info` is not the start of a "Rebol Node" (REBNODE, e.g. either a Stub or
 // a value Cell).  But in the singular case it is positioned right where
 // the next cell after the embedded cell *would* be.  Hence the second byte
-// in the info corresponding to VAL_TYPE() is 0, making it conform to the
+// in the info corresponding to Type_Of() is 0, making it conform to the
 // "terminating array" pattern.  To lower the risk of this implicit terminator
 // being accidentally overwritten (which would corrupt link and misc), the
 // bit corresponding to NODE_FLAG_CELL is clear.

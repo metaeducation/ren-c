@@ -116,13 +116,13 @@ DECLARE_NATIVE(MAKE)
     }
 
     if (Any_Context(type))  // object instance, not a datatype
-        return MAKE_With_Parent(OUT, VAL_TYPE(type), arg, type);
+        return MAKE_With_Parent(OUT, Type_Of(type), arg, type);
 
     enum Reb_Kind kind;
     if (Is_Datatype(type))
         kind = CELL_DATATYPE_TYPE(type);
     else
-        kind = VAL_TYPE(type);
+        kind = Type_Of(type);
 
 #if RUNTIME_CHECKS
     if (Is_Event(type)) {
@@ -153,7 +153,7 @@ DECLARE_NATIVE(MAKE)
     Bounce bounce = hook(OUT, kind, arg);  // might throw, fail...
     if (bounce == BOUNCE_THROWN)
         return bounce;
-    if (bounce == nullptr or VAL_TYPE(bounce) != kind)
+    if (bounce == nullptr or Type_Of(bounce) != kind)
         fail ("MAKE dispatcher did not return correct type");
     return bounce;  // may be OUT or an API handle
 }
@@ -214,9 +214,9 @@ DECLARE_NATIVE(TO)
         assert(!"Illegal throw in TO conversion handler");
         fail (Error_No_Catch_For_Throw(OUT));
     }
-    if (bounce == nullptr or VAL_TYPE(bounce) != new_kind) {
+    if (bounce == nullptr or Type_Of(bounce) != new_kind) {
         assert(!"TO conversion did not return intended type");
-        fail (Error_Invalid_Type(VAL_TYPE(bounce)));
+        fail (Error_Invalid_Type(Type_Of(bounce)));
     }
     return bounce; // must be either OUT or an API handle
 }
@@ -250,7 +250,7 @@ Bounce Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 
-    enum Reb_Kind kind = VAL_TYPE(ARG(VALUE));
+    enum Reb_Kind kind = Type_Of(ARG(VALUE));
 
     Option(SymId) id = Cell_Word_Id(ARG(PROPERTY));
 

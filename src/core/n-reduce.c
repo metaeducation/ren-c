@@ -160,7 +160,7 @@ DECLARE_NATIVE(REDUCE)
 
         return Init_Any_List(
             OUT,
-            VAL_TYPE(value),
+            Type_Of(value),
             Pop_Stack_Values_Core(base, pop_flags)
         );
     }
@@ -338,7 +338,7 @@ bool Compose_To_Stack_Throws(
             Array* popped = Pop_Stack_Values_Core(deep_base, flags);
             Init_Any_List(
                 PUSH(),
-                VAL_TYPE(L->value),
+                Type_Of(L->value),
                 popped // can't push and pop in same step, need this variable!
             );
 
@@ -402,7 +402,7 @@ DECLARE_NATIVE(COMPOSE)
 
     return Init_Any_List(
         OUT,
-        VAL_TYPE(ARG(VALUE)),
+        Type_Of(ARG(VALUE)),
         Pop_Stack_Values_Core(base, flags)
     );
 }

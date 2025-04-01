@@ -292,7 +292,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     DS_Movable_Top = cast(Value*, Array_At(DS_Array, DS_Index));
 
     // We fill in the data stack with "GC safe trash" (which is void in the
-    // release build, but will raise an alarm if VAL_TYPE() called on it in
+    // release build, but will raise an alarm if Type_Of() called on it in
     // the debug build).  In order to serve as a marker for the stack slot
     // being available, it merely must not be IS_END()...
 

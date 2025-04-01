@@ -897,7 +897,7 @@ Error* Error_Need_Non_End_Core(const Cell* target, Specifier* specifier) {
 Error* Error_Non_Logic_Refinement(const Cell* param, const Value* arg) {
     DECLARE_VALUE (word);
     Init_Word(word, Cell_Parameter_Symbol(param));
-    return Error_Non_Logic_Refine_Raw(word, Type_Of(arg));
+    return Error_Non_Logic_Refine_Raw(word, Datatype_Of(arg));
 }
 
 
@@ -957,7 +957,7 @@ Error* Error_No_Relative_Core(const Cell* any_word)
     DECLARE_VALUE (unbound);
     Init_Any_Word(
         unbound,
-        VAL_TYPE(any_word),
+        Type_Of(any_word),
         Cell_Word_Symbol(any_word)
     );
 

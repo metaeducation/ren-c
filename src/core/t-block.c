@@ -263,7 +263,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 Bounce TO_List(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (
-        kind == VAL_TYPE(arg) // always act as COPY if types match
+        kind == Type_Of(arg) // always act as COPY if types match
         or Splices_Into_Type_Without_Only(kind, arg) // see comments
     ){
         return Init_Any_List(
@@ -320,7 +320,7 @@ REBLEN Find_In_Array(
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
                         Cell_Word_Symbol(item) == Cell_Word_Symbol(target)
-                        && VAL_TYPE(item) == VAL_TYPE(target)
+                        && Type_Of(item) == Type_Of(target)
                     ){
                         return index;
                     }
@@ -367,7 +367,7 @@ REBLEN Find_In_Array(
             Cell* item = Array_At(array, index);
 
             if (Is_Datatype(target)) {
-                if (VAL_TYPE(item) == CELL_DATATYPE_TYPE(target))
+                if (Type_Of(item) == CELL_DATATYPE_TYPE(target))
                     return index;
                 if (
                     Is_Datatype(item)
@@ -377,7 +377,7 @@ REBLEN Find_In_Array(
                 }
             }
             else if (Is_Typeset(target)) {
-                if (Typeset_Check(target, VAL_TYPE(item)))
+                if (Typeset_Check(target, Type_Of(item)))
                     return index;
                 if (
                     Is_Datatype(item)
@@ -705,7 +705,7 @@ void MF_List(Molder* mo, const Cell* v, bool form)
 
     const char *sep;
 
-    enum Reb_Kind kind = VAL_TYPE(v);
+    enum Reb_Kind kind = Type_Of(v);
     switch(kind) {
       case REB_BLOCK:
         if (GET_MOLD_FLAG(mo, MOLD_FLAG_ONLY)) {
@@ -739,7 +739,7 @@ void MF_List(Molder* mo, const Cell* v, bool form)
 
     Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 
-    if (VAL_TYPE(v) == REB_SET_PATH)
+    if (Type_Of(v) == REB_SET_PATH)
         Append_Codepoint(mo->utf8flex, ':');
 }
 
@@ -895,7 +895,7 @@ REBTYPE(List)
         Flags flags = 0;
         if (
             not Bool_ARG(ONLY)
-            and Splices_Into_Type_Without_Only(VAL_TYPE(list), arg)
+            and Splices_Into_Type_Without_Only(Type_Of(list), arg)
         ){
             flags |= AM_SPLICE;
         }
@@ -947,7 +947,7 @@ REBTYPE(List)
 
         if (Bool_ARG(TYPES)) {
             if (Is_Datatype(ARG(KINDS)))
-                types |= FLAGIT_KIND(VAL_TYPE(ARG(KINDS)));
+                types |= FLAGIT_KIND(Type_Of(ARG(KINDS)));
             else
                 types |= Cell_Typeset_Bits(ARG(KINDS));
         }
@@ -961,7 +961,7 @@ REBTYPE(List)
             ARRAY_FLAG_HAS_FILE_LINE, // flags
             types // types to copy deeply
         );
-        return Init_Any_List(OUT, VAL_TYPE(list), copy);
+        return Init_Any_List(OUT, Type_Of(list), copy);
     }
 
     //-- Special actions:

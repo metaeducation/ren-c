@@ -67,7 +67,7 @@ Bounce PD_Unhooked(
     UNUSED(picker);
     UNUSED(opt_setval);
 
-    const Value* type = Datatype_From_Kind(VAL_TYPE(pvs->out));
+    const Value* type = Datatype_From_Kind(Type_Of(pvs->out));
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype is provided by an extension which is not loaded.");
@@ -90,7 +90,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     if (Is_Nulled(pvs->out))
         fail (Error_No_Value_Core(pvs->value, pvs->specifier));
 
-    PATH_HOOK hook = Path_Hooks[VAL_TYPE(pvs->out)];
+    PATH_HOOK hook = Path_Hooks[Type_Of(pvs->out)];
     assert(hook != nullptr);  // &PD_Fail is used instead of nullptr
 
     if (Is_Get_Word(pvs->value)) { // e.g. object/:field
@@ -596,7 +596,7 @@ DECLARE_NATIVE(PICK)
     pvs->opt_label = nullptr;  // applies to e.g. :append/only returning APPEND
     pvs->special = nullptr;
 
-    PATH_HOOK hook = Path_Hooks[VAL_TYPE(location)];
+    PATH_HOOK hook = Path_Hooks[Type_Of(location)];
     assert(hook != nullptr); // &PD_Fail is used instead of null
 
     Bounce bounce = hook(pvs, PVS_PICKER(pvs), nullptr);
@@ -677,7 +677,7 @@ DECLARE_NATIVE(POKE)
     pvs->opt_label = nullptr;  // applies to e.g. :append/only returning APPEND
     pvs->special = ARG(VALUE);
 
-    PATH_HOOK hook = Path_Hooks[VAL_TYPE(location)];
+    PATH_HOOK hook = Path_Hooks[Type_Of(location)];
     assert(hook); // &PD_Fail is used instead of nullptr
 
     const Value* bounce = hook(pvs, PVS_PICKER(pvs), ARG(VALUE));

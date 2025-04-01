@@ -229,7 +229,7 @@ Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
     assert(kind == REB_TIME);
     UNUSED(kind);
 
-    switch (VAL_TYPE(arg)) {
+    switch (Type_Of(arg)) {
     case REB_TIME: // just copy it (?)
         return Copy_Cell(out, arg);
 
@@ -512,7 +512,7 @@ REBTYPE(Time)
         or sym == SYM_DIVIDE
         or sym == SYM_REMAINDER
     ){
-        REBINT  type = VAL_TYPE(arg);
+        REBINT  type = Type_Of(arg);
 
         assert(arg);
 

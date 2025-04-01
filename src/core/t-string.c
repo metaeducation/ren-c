@@ -337,7 +337,7 @@ static Binary* make_binary(const Value* arg, bool make)
     Binary* flex;
 
     // MAKE BINARY! 123
-    switch (VAL_TYPE(arg)) {
+    switch (Type_Of(arg)) {
     case REB_INTEGER:
     case REB_DECIMAL:
         if (make) flex = Make_Binary(Int32s(arg, 0));
@@ -692,7 +692,7 @@ Bounce PD_String(
 
         // Note: pvs->out may point to pvs->store
         //
-        Init_Any_Series(pvs->out, VAL_TYPE(pvs->out), copy);
+        Init_Any_Series(pvs->out, Type_Of(pvs->out), copy);
         return pvs->out;
     }
 
@@ -1128,7 +1128,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         return;
     }
 
-    switch (VAL_TYPE(v)) {
+    switch (Type_Of(v)) {
     case REB_TEXT:
         Mold_Text_Series_At(mo, Cell_String(v), VAL_INDEX(v));
         break;
@@ -1359,7 +1359,7 @@ REBTYPE(String)
         if (Bool_ARG(PART)) {
             len = Part_Len_May_Modify_Index(v, ARG(LIMIT));
             if (len == 0)
-                return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
+                return Init_Any_Series(OUT, Type_Of(v), Make_Binary(0));
         } else
             len = 1;
 
@@ -1377,7 +1377,7 @@ REBTYPE(String)
         if (cast(REBINT, VAL_INDEX(v)) >= tail) {
             if (not Bool_ARG(PART))
                 return nullptr;
-            return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
+            return Init_Any_Series(OUT, Type_Of(v), Make_Binary(0));
         }
 
         Flex* flex = Cell_Flex(v);
@@ -1392,7 +1392,7 @@ REBTYPE(String)
                 str_to_char(OUT, v, VAL_INDEX(v));
         }
         else {
-            enum Reb_Kind kind = VAL_TYPE(v);
+            enum Reb_Kind kind = Type_Of(v);
             if (Is_Binary(v)) {
                 Init_Blob(
                     OUT,
@@ -1437,7 +1437,7 @@ REBTYPE(String)
             flex = Copy_Sequence_At_Len(Cell_Flex(v), VAL_INDEX(v), len);
         else
             flex = Copy_String_At_Len(v, len);
-        return Init_Any_Series(OUT, VAL_TYPE(v), flex); }
+        return Init_Any_Series(OUT, Type_Of(v), flex); }
 
     //-- Bitwise:
 
@@ -1455,14 +1455,14 @@ REBTYPE(String)
 
         return Init_Any_Series(
             OUT,
-            VAL_TYPE(v),
+            Type_Of(v),
             Xandor_Binary(verb, v, arg)); }
 
     case SYM_COMPLEMENT: {
         if (not Is_Binary(v))
             fail (Error_Invalid(v));
 
-        return Init_Any_Series(OUT, VAL_TYPE(v), Complement_Binary(v)); }
+        return Init_Any_Series(OUT, Type_Of(v), Complement_Binary(v)); }
 
     // Arithmetic operations are allowed on BINARY!, because it's too limiting
     // to not allow `#{4B} + 1` => `#{4C}`.  Allowing the operations requires
@@ -1550,7 +1550,7 @@ REBTYPE(String)
     case SYM_SWAP: {
         Fail_If_Read_Only_Flex(Cell_Flex(v));
 
-        if (VAL_TYPE(v) != VAL_TYPE(arg))
+        if (Type_Of(v) != Type_Of(arg))
             fail (Error_Not_Same_Type_Raw());
 
         Fail_If_Read_Only_Flex(Cell_Flex(arg));
@@ -1648,7 +1648,7 @@ REBTYPE(String)
             return T_Port(level_, verb);
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(v), verb));
+    fail (Error_Illegal_Action(Type_Of(v), verb));
 }
 
 

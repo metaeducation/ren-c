@@ -143,7 +143,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     REBDEC d;
 
-    switch (VAL_TYPE(arg)) {
+    switch (Type_Of(arg)) {
     case REB_DECIMAL:
         d = VAL_DECIMAL(arg);
         goto dont_divide_if_percent;
@@ -299,7 +299,7 @@ void MF_Decimal(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
-    switch (VAL_TYPE(v)) {
+    switch (Type_Of(v)) {
     case REB_DECIMAL:
     case REB_PERCENT: {
         Byte buf[60];
@@ -345,7 +345,7 @@ REBTYPE(Decimal)
         || sym == SYM_POWER
     ){
         arg = D_ARG(2);
-        type = VAL_TYPE(arg);
+        type = Type_Of(arg);
         if ((
             type == REB_PAIR
             or type == REB_TUPLE
@@ -358,7 +358,7 @@ REBTYPE(Decimal)
             Copy_Cell(OUT, D_ARG(2));
             Copy_Cell(D_ARG(2), D_ARG(1));
             Copy_Cell(D_ARG(1), OUT);
-            GENERIC_HOOK hook = Generic_Hooks[VAL_TYPE(D_ARG(1))];
+            GENERIC_HOOK hook = Generic_Hooks[Type_Of(D_ARG(1))];
             return hook(level_, verb);
         }
 
@@ -377,7 +377,7 @@ REBTYPE(Decimal)
                 if (sym == SYM_DIVIDE)
                     type = REB_DECIMAL;
                 else if (not Is_Percent(val))
-                    type = VAL_TYPE(val);
+                    type = Type_Of(val);
             }
             else if (type == REB_CHAR) {
                 d2 = cast(REBDEC, VAL_CHAR(arg));
@@ -429,13 +429,13 @@ REBTYPE(Decimal)
                 goto setDec;
 
             default:
-                fail (Error_Math_Args(VAL_TYPE(val), verb));
+                fail (Error_Math_Args(Type_Of(val), verb));
             }
         }
-        fail (Error_Math_Args(VAL_TYPE(val), verb));
+        fail (Error_Math_Args(Type_Of(val), verb));
     }
 
-    type = VAL_TYPE(val);
+    type = Type_Of(val);
 
     // unary actions
     switch (sym) {
@@ -522,7 +522,7 @@ REBTYPE(Decimal)
         ; // put fail outside switch() to catch any leaks
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(val), verb));
+    fail (Error_Illegal_Action(Type_Of(val), verb));
 
 setDec:
     if (not FINITE(d1))

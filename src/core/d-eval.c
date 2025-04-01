@@ -300,14 +300,14 @@ void Do_After_Action_Checks_Debug(Level* L) {
         Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
         assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
         if (
-            not Typeset_Check(typeset, VAL_TYPE(L->out))
+            not Typeset_Check(typeset, Type_Of(L->out))
             and not (
                 GET_ACT_FLAG(phase, ACTION_INVISIBLE)
                 and Is_Nulled(L->out) // this happens with `eval [return]`
             )
         ){
             printf("Native code violated return type contract!\n");
-            panic (Error_Bad_Return_Type(L, VAL_TYPE(L->out)));
+            panic (Error_Bad_Return_Type(L, Type_Of(L->out)));
         }
     }
 }
@@ -347,7 +347,7 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
     // distinction is only offered internally, at the moment.
     //
     if (NOT_END(L->out))
-        assert(VAL_TYPE(L->out) <= REB_MAX_NULLED);
+        assert(Type_Of(L->out) <= REB_MAX_NULLED);
 
     L->flags.bits |= DO_FLAG_FINAL_DEBUG;
 }

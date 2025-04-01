@@ -913,7 +913,7 @@ struct LevelStruct {
 // like `L->refine == BLANK_VALUE` are faster than `Is_Blank(L->refine)`.
 //
 // !!! ^-- While that's presumably true, it would be worth testing if a
-// dereference of the single byte via VAL_TYPE() is ever faster.
+// dereference of the single byte via Type_Of() is ever faster.
 //
 
 #define SKIPPING_REFINEMENT_ARGS \

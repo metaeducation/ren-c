@@ -51,7 +51,7 @@ Flex* Make_Set_Operation_Flex(
 
         if (Any_List(val1)) {
             if (!Any_List(val2))
-                fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
             // As long as they're both arrays, we're willing to do:
             //
@@ -68,13 +68,13 @@ Flex* Make_Set_Operation_Flex(
             //      <abcde>
 
             if (not Any_String((val2)))
-                fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
         }
         else {
             // Binaries only operate with other binaries
             assert(Is_Binary(val1));
             if (not Is_Binary(val2))
-                fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
         }
     }
 
@@ -350,8 +350,8 @@ DECLARE_NATIVE(EXCLUDE)
     Value* val2 = ARG(EXCLUSIONS);
 
     if (Is_Bitset(val1) || Is_Bitset(val2)) {
-        if (VAL_TYPE(val1) != VAL_TYPE(val2))
-            fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+        if (Type_Of(val1) != Type_Of(val2))
+            fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
         DECLARE_VALUE (verb); // initial code did something weird w/this
         Init_Word(verb, Canon(SYM_EXCLUDE));
@@ -359,8 +359,8 @@ DECLARE_NATIVE(EXCLUDE)
     }
 
     if (Is_Typeset(val1) || Is_Typeset(val2)) {
-        if (VAL_TYPE(val1) != VAL_TYPE(val2))
-            fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+        if (Type_Of(val1) != Type_Of(val2))
+            fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
         Copy_Cell(OUT, val1);
         Cell_Typeset_Bits(OUT) &= ~Cell_Typeset_Bits(val2);
@@ -369,7 +369,7 @@ DECLARE_NATIVE(EXCLUDE)
 
     return Init_Any_Series(
         OUT,
-        VAL_TYPE(val1),
+        Type_Of(val1),
         Make_Set_Operation_Flex(
             val1,
             val2,
@@ -405,7 +405,7 @@ DECLARE_NATIVE(UNIQUE)
 
     return Init_Any_Series(
         OUT,
-        VAL_TYPE(val),
+        Type_Of(val),
         Make_Set_Operation_Flex(
             val,
             nullptr,

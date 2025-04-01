@@ -360,7 +360,7 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
     #define DECLARE_PARAM(n,name) \
         struct Native_Param p_##name; \
         p_##name.num = (n); \
-        p_##name.kind_cache = VAL_TYPE(Level_Arg(level_, (n))); \
+        p_##name.kind_cache = Type_Of(Level_Arg(level_, (n))); \
         p_##name.arg = Level_Arg(level_, (n)); \
 
     #define DECLARE_REFINE(n,name) \

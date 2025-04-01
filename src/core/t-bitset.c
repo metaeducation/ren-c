@@ -155,7 +155,7 @@ REBINT Find_Max_Bit(const Cell* val)
     REBINT maxi = 0;
     REBINT n;
 
-    switch (VAL_TYPE(val)) {
+    switch (Type_Of(val)) {
 
     case REB_CHAR:
         maxi = VAL_CHAR(val) + 1;
@@ -317,7 +317,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     }
 
     if (!Any_List(val))
-        fail (Error_Invalid_Type(VAL_TYPE(val)));
+        fail (Error_Invalid_Type(Type_Of(val)));
 
     Cell* item = Cell_List_At(val);
 
@@ -334,7 +334,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
 
     for (; NOT_END(item); item++) {
 
-        switch (VAL_TYPE(item)) {
+        switch (Type_Of(item)) {
         case REB_CHAR: {
             Ucs2Unit c = VAL_CHAR(item);
             if (
@@ -455,14 +455,14 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
     }
 
     if (!Any_List(val))
-        fail (Error_Invalid_Type(VAL_TYPE(val)));
+        fail (Error_Invalid_Type(Type_Of(val)));
 
     // Loop through block of bit specs
 
     Cell* item;
     for (item = Cell_List_At(val); NOT_END(item); item++) {
 
-        switch (VAL_TYPE(item)) {
+        switch (Type_Of(item)) {
 
         case REB_CHAR: {
             Ucs2Unit c = VAL_CHAR(item);
@@ -519,7 +519,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
             break;
 
         default:
-            fail (Error_Invalid_Type(VAL_TYPE(item)));
+            fail (Error_Invalid_Type(Type_Of(item)));
         }
     }
     return false;
@@ -719,10 +719,10 @@ REBTYPE(Bitset)
     case SYM_UNION:
     case SYM_DIFFERENCE:
         if (!Is_Bitset(arg) && !Is_Binary(arg))
-            fail (Error_Math_Args(VAL_TYPE(arg), verb));
+            fail (Error_Math_Args(Type_Of(arg), verb));
         flex = Xandor_Binary(verb, value, arg);
         Trim_Tail_Zeros(flex);
-        return Init_Any_Series(OUT, VAL_TYPE(value), flex);
+        return Init_Any_Series(OUT, Type_Of(value), flex);
 
     default:
         break;

@@ -410,7 +410,7 @@ bool Specialize_Action_Throws(
         if (Is_Param_Variadic(param))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (not Typeset_Check(param, VAL_TYPE(arg)))
+        if (not Typeset_Check(param, Type_Of(arg)))
             fail (Error_Invalid(arg)); // !!! merge w/Error_Invalid_Arg()
 
        Set_Cell_Flag(arg, ARG_MARKED_CHECKED);

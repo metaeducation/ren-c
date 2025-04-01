@@ -495,7 +495,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
 {
     const Cell* v = head;
     for (; NOT_END(v); ++v) {
-        enum Reb_Kind kind = VAL_TYPE(v);
+        enum Reb_Kind kind = Type_Of(v);
         if (Any_Word_Kind(kind)) {
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue; // kind of word we're not interested in collecting
@@ -935,13 +935,13 @@ VarList* Construct_Context_Managed(
     const Cell* value = head;
     for (; NOT_END(value); value += 2) {
         if (not Is_Set_Word(value))
-            fail (Error_Invalid_Type(VAL_TYPE(value)));
+            fail (Error_Invalid_Type(Type_Of(value)));
 
         if (IS_END(value + 1))
             fail ("Unexpected end in context spec block.");
 
         if (Is_Set_Word(value + 1))
-            fail (Error_Invalid_Type(VAL_TYPE(value + 1))); // TBD: support
+            fail (Error_Invalid_Type(Type_Of(value + 1))); // TBD: support
 
         Value* var = Sink_Var_May_Fail(value, specifier);
         Derelativize(var, value + 1, specifier);

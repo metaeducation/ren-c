@@ -118,7 +118,7 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         );
     }
 
-    fail (Error_Unexpected_Type(REB_WORD, VAL_TYPE(arg)));
+    fail (Error_Unexpected_Type(REB_WORD, Type_Of(arg)));
 }
 
 
@@ -143,7 +143,7 @@ void MF_Word(Molder* mo, const Cell* v, bool form) {
 
     Binary* s = mo->utf8flex;
 
-    switch (VAL_TYPE(v)) {
+    switch (Type_Of(v)) {
     case REB_WORD: {
         Append_Utf8_Utf8(s, head, size);
         break; }
@@ -280,5 +280,5 @@ REBTYPE(Word)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(val), verb));
+    fail (Error_Illegal_Action(Type_Of(val), verb));
 }

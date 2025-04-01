@@ -466,8 +466,8 @@ REBINT CT_Unhooked(const Cell* a, const Cell* b, REBINT mode)
 //
 REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 {
-    REBLEN ta = VAL_TYPE(a);
-    REBLEN tb = VAL_TYPE(b);
+    REBLEN ta = Type_Of(a);
+    REBLEN tb = Type_Of(b);
 
     if (ta != tb) {
         if (strictness == 1) return 0;
@@ -526,7 +526,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 
         if (strictness == 0) return 0;
 
-        fail (Error_Invalid_Compare_Raw(Type_Of(a), Type_Of(b)));
+        fail (Error_Invalid_Compare_Raw(Datatype_Of(a), Datatype_Of(b)));
     }
 
     if (ta == REB_MAX_NULLED)
@@ -535,13 +535,13 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
   compare:;
 
     // At this point, both args are of the same datatype.
-    COMPARE_HOOK hook = Compare_Hooks[VAL_TYPE(a)];
+    COMPARE_HOOK hook = Compare_Hooks[Type_Of(a)];
     if (hook == nullptr)
         return 0; // !!! Is this correct (?)
 
     REBINT result = hook(a, b, strictness);
     if (result < 0)
-        fail (Error_Invalid_Compare_Raw(Type_Of(a), Type_Of(b)));
+        fail (Error_Invalid_Compare_Raw(Datatype_Of(a), Datatype_Of(b)));
     return result;
 }
 
@@ -655,7 +655,7 @@ DECLARE_NATIVE(SAME_Q)
     Value* value1 = ARG(VALUE1);
     Value* value2 = ARG(VALUE2);
 
-    if (VAL_TYPE(value1) != VAL_TYPE(value2))
+    if (Type_Of(value1) != Type_Of(value2))
         return Init_False(OUT); // can't be "same" value if not same type
 
     if (Is_Bitset(value1)) {
@@ -893,7 +893,7 @@ DECLARE_NATIVE(NEGATIVE_Q)
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
     DECLARE_VALUE (zero);
-    Init_Zeroed_Hack(zero, VAL_TYPE(ARG(NUMBER)));
+    Init_Zeroed_Hack(zero, Type_Of(ARG(NUMBER)));
 
     if (Compare_Modify_Values(ARG(NUMBER), zero, -1))
         return Init_False(OUT);
@@ -915,7 +915,7 @@ DECLARE_NATIVE(POSITIVE_Q)
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
     DECLARE_VALUE (zero);
-    Init_Zeroed_Hack(zero, VAL_TYPE(ARG(NUMBER)));
+    Init_Zeroed_Hack(zero, Type_Of(ARG(NUMBER)));
 
     if (Compare_Modify_Values(ARG(NUMBER), zero, -2))
         return Init_True(OUT);
@@ -936,7 +936,7 @@ DECLARE_NATIVE(ZERO_Q)
 {
     INCLUDE_PARAMS_OF_ZERO_Q;
 
-    enum Reb_Kind type = VAL_TYPE(ARG(VALUE));
+    enum Reb_Kind type = Type_Of(ARG(VALUE));
 
     if (type >= REB_INTEGER and type <= REB_TIME) {
         DECLARE_VALUE (zero);

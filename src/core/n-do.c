@@ -270,7 +270,7 @@ DECLARE_NATIVE(DO)
     Set_Cell_Flag(ARG(SOURCE), PROTECTED);
   #endif
 
-    switch (VAL_TYPE(source)) {
+    switch (Type_Of(source)) {
     case REB_BLANK:
         return nullptr; // "blank in, null out" convention
 
@@ -366,7 +366,7 @@ DECLARE_NATIVE(EVALUATE)
 
     Value* var = ARG(VAR);
 
-    switch (VAL_TYPE(source)) {
+    switch (Type_Of(source)) {
       case REB_BLOCK:
       case REB_GROUP: {
         REBIXO indexor = Eval_At_Core(

@@ -190,7 +190,7 @@ REBTYPE(Port)
     }
 
     if (not Is_Port(D_ARG(1)))
-        fail (Error_Illegal_Action(VAL_TYPE(D_ARG(1)), verb));
+        fail (Error_Illegal_Action(Type_Of(D_ARG(1)), verb));
 
     Value* port = D_ARG(1);
 

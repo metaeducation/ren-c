@@ -67,7 +67,7 @@ INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
     SYM_FROM_KIND((v)->payload.datatype.kind)
 
 INLINE Symbol* Get_Type_Name(const Cell* value)
-    { return Canon(SYM_FROM_KIND(VAL_TYPE(value))); }
+    { return Canon(SYM_FROM_KIND(Type_Of(value))); }
 
 
 
@@ -111,7 +111,7 @@ INLINE Symbol* Get_Type_Name(const Cell* value)
 //=//// PARAMETER CLASS ///////////////////////////////////////////////////=//
 //
 // R3-Alpha called parameter cells that were used to make keys "unwords", and
-// their VAL_TYPE() dictated their parameter behavior.  Ren-C saw them more
+// their Type_Of() dictated their parameter behavior.  Ren-C saw them more
 // as being like TYPESET!s with an optional symbol, which made the code easier
 // to understand and less likely to crash, which would happen when the special
 // "unwords" fell into any context that would falsely interpret their bindings

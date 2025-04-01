@@ -131,7 +131,7 @@ REBTYPE(Datatype)
             Init_Object(OUT, context);
         }
         else
-            fail (Error_Cannot_Reflect(VAL_TYPE(value), arg));
+            fail (Error_Cannot_Reflect(Type_Of(value), arg));
         break;}
 
     default:

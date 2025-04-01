@@ -901,7 +901,7 @@ REBTYPE(Date)
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     if (sym == SYM_SUBTRACT || sym == SYM_ADD) {
-        REBINT  type = VAL_TYPE(arg);
+        REBINT  type = Type_Of(arg);
 
         if (type == REB_DATE) {
             if (sym == SYM_SUBTRACT)
@@ -1010,7 +1010,7 @@ REBTYPE(Date)
             // https://forum.rebol.info/t/486
             //
             if (not Is_Date(val2))
-                fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
             Subtract_Date(val1, val2, OUT);
             return OUT; }

@@ -132,7 +132,7 @@ INLINE void Tweak_Keylist_Of_Varlist_Unique(VarList* c, Array* keylist) {
     cast(Value*, Keylist_Of_Varlist(c)->content.dynamic.data) // len > 1
 
 #define CTX_TYPE(c) \
-    VAL_TYPE(Varlist_Archetype(c))
+    Type_Of(Varlist_Archetype(c))
 
 // The keys and vars are accessed by positive integers starting at 1
 //
@@ -219,7 +219,7 @@ INLINE void FAIL_IF_INACCESSIBLE_CTX(VarList* c) {
 
 INLINE VarList* Cell_Varlist(const Cell* v) {
     assert(Any_Context(v));
-    assert(not v->payload.any_context.phase or VAL_TYPE(v) == REB_FRAME);
+    assert(not v->payload.any_context.phase or Type_Of(v) == REB_FRAME);
     VarList* c = CTX(v->payload.any_context.varlist);
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;

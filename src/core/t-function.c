@@ -296,7 +296,7 @@ REBTYPE(Action)
             return Init_Integer(OUT, MISC(a).line); }
 
         default:
-            fail (Error_Cannot_Reflect(VAL_TYPE(value), arg));
+            fail (Error_Cannot_Reflect(Type_Of(value), arg));
         }
         break; }
 
@@ -304,7 +304,7 @@ REBTYPE(Action)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(value), verb));
+    fail (Error_Illegal_Action(Type_Of(value), verb));
 }
 
 
