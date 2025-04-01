@@ -104,7 +104,7 @@ DECLARE_NATIVE(MAKE)
 
     if (Is_Event(type)) {  // an event instance, not EVENT! datatype
         if (not Is_Block(arg))
-            fail (Error_Bad_Make(REB_EVENT, arg));
+            fail (Error_Bad_Make(TYPE_EVENT, arg));
 
         Copy_Cell(OUT, type); // !!! very "shallow" clone of the event
         Set_Event_Vars(
@@ -266,7 +266,7 @@ Bounce Reflect_Core(Level* level_)
 
     switch (id) {
     case SYM_TYPE:
-        if (kind == REB_MAX_NULLED)
+        if (kind == TYPE_MAX_NULLED)
             return nullptr; // `() = type of ()`, `null = type of ()`
 
         return Init_Datatype(OUT, kind);;
@@ -280,7 +280,7 @@ Bounce Reflect_Core(Level* level_)
     // but in general actions should not allow null first arguments...there's
     // no entry in the dispatcher table for them.
     //
-    if (kind == REB_MAX_NULLED)
+    if (kind == TYPE_MAX_NULLED)
         fail ("NULL isn't valid for REFLECT, except for TYPE OF ()");
 
     GENERIC_HOOK hook = Generic_Hooks[kind];
@@ -601,7 +601,7 @@ const Byte *Scan_Decimal(
     if (cast(REBLEN, cp - bp) != len)
         return_NULL;
 
-    RESET_CELL(out, REB_DECIMAL);
+    RESET_CELL(out, TYPE_DECIMAL);
 
     char *se;
     VAL_DECIMAL(out) = strtod(s_cast(buf), &se);
@@ -698,7 +698,7 @@ const Byte *Scan_Integer(
     // Convert, check, and return:
     errno = 0;
 
-    RESET_CELL(out, REB_INTEGER);
+    RESET_CELL(out, TYPE_INTEGER);
 
     VAL_INT64(out) = CHR_TO_INT(buf);
     if (errno != 0)
@@ -864,7 +864,7 @@ const Byte *Scan_Date(
     cp = ep;
 
     if (cp >= end) {
-        RESET_CELL(out, REB_DATE);
+        RESET_CELL(out, TYPE_DATE);
         goto end_date; // needs header set
     }
 
@@ -872,7 +872,7 @@ const Byte *Scan_Date(
         sep = *cp++;
 
         if (cp >= end) {
-            RESET_CELL(out, REB_DATE);
+            RESET_CELL(out, TYPE_DATE);
             goto end_date; // needs header set
         }
 
@@ -886,10 +886,10 @@ const Byte *Scan_Date(
             return_NULL;
         }
 
-        Reset_Cell_Header(out, REB_DATE, CELL_FLAG_DATE_HAS_TIME);
+        Reset_Cell_Header(out, TYPE_DATE, CELL_FLAG_DATE_HAS_TIME);
     }
     else
-        RESET_CELL(out, REB_DATE); // no CELL_FLAG_DATE_HAS_TIME
+        RESET_CELL(out, TYPE_DATE); // no CELL_FLAG_DATE_HAS_TIME
 
     // past this point, header is set, so `goto end_date` is legal.
 
@@ -998,7 +998,7 @@ const Byte *Scan_File_Or_Money(
 
     Init_Any_Series(
         out,
-        *bp == '$' ? REB_MONEY : REB_FILE,
+        *bp == '$' ? TYPE_MONEY : TYPE_FILE,
         Pop_Molded_String(mo)
     );
     return cp;
@@ -1086,7 +1086,7 @@ const Byte *Scan_URL(
     const Byte *cp,
     REBLEN len
 ){
-    return Scan_Any(out, cp, len, REB_URL);
+    return Scan_Any(out, cp, len, TYPE_URL);
 }
 
 
@@ -1111,10 +1111,10 @@ const Byte *Scan_Pair(
     if (*ep != 'x' && *ep != 'X')
         return_NULL;
 
-    RESET_CELL(out, REB_PAIR);
+    RESET_CELL(out, TYPE_PAIR);
     out->payload.pair = Alloc_Pairing();
-    RESET_CELL(out->payload.pair, REB_DECIMAL);
-    RESET_CELL(PAIRING_KEY(out->payload.pair), REB_DECIMAL);
+    RESET_CELL(out->payload.pair, TYPE_DECIMAL);
+    RESET_CELL(PAIRING_KEY(out->payload.pair), TYPE_DECIMAL);
 
     if (found_x_point)
         Init_Decimal(VAL_PAIR_FIRST(out), atof(cast(char*, &buf[0])));
@@ -1173,7 +1173,7 @@ const Byte *Scan_Tuple(
     if (size < 3)
         size = 3;
 
-    RESET_CELL(out, REB_TUPLE);
+    RESET_CELL(out, TYPE_TUPLE);
     VAL_TUPLE_LEN(out) = cast(Byte, size);
 
     Byte *tp = VAL_TUPLE(out);

@@ -95,7 +95,7 @@ void Dump_Level_Location(const Cell* current, Level* L)
 
         Init_Any_Series_At_Core(
             dump,
-            REB_BLOCK,
+            TYPE_BLOCK,
             L->source->array,
             cast(REBLEN, L->source->index),
             L->specifier
@@ -347,7 +347,7 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
     // distinction is only offered internally, at the moment.
     //
     if (NOT_END(L->out))
-        assert(Type_Of(L->out) <= REB_MAX_NULLED);
+        assert(Type_Of(L->out) <= TYPE_MAX_NULLED);
 
     L->flags.bits |= DO_FLAG_FINAL_DEBUG;
 }

@@ -293,17 +293,17 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     //
     assert(Not_Cell_Flag(v, THROW_SIGNAL));
 
-    // This switch is done via contiguous REB_XXX values, in order to
+    // This switch is done via contiguous TYPE_XXX values, in order to
     // facilitate use of a "jump table optimization":
     //
     // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
     //
     enum Reb_Kind kind = VAL_TYPE_RAW(v); // Note: unreadable BLANK!s are ok
     switch (kind) {
-    case REB_0_END:
+    case TYPE_0_END:
         break; // use Queue_Mark_Opt_Value_Deep() if END would be a bug
 
-    case REB_ACTION: {
+    case TYPE_ACTION: {
         REBACT *a = VAL_ACTION(v);
         Queue_Mark_Action_Deep(a);
         Queue_Mark_Binding_Deep(v);
@@ -319,12 +319,12 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
       #endif
         break; }
 
-    case REB_WORD:
-    case REB_SET_WORD:
-    case REB_GET_WORD:
-    case REB_LIT_WORD:
-    case REB_REFINEMENT:
-    case REB_ISSUE: {
+    case TYPE_WORD:
+    case TYPE_SET_WORD:
+    case TYPE_GET_WORD:
+    case TYPE_LIT_WORD:
+    case TYPE_REFINEMENT:
+    case TYPE_ISSUE: {
         Symbol* symbol = v->payload.any_word.symbol;
 
         // A word marks the specific spelling it uses, but not the canon
@@ -356,12 +356,12 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     #endif
         break; }
 
-    case REB_PATH:
-    case REB_SET_PATH:
-    case REB_GET_PATH:
-    case REB_LIT_PATH:
-    case REB_BLOCK:
-    case REB_GROUP: {
+    case TYPE_PATH:
+    case TYPE_SET_PATH:
+    case TYPE_GET_PATH:
+    case TYPE_LIT_PATH:
+    case TYPE_BLOCK:
+    case TYPE_GROUP: {
         Flex* s = v->payload.any_series.series;
         if (Get_Flex_Info(s, INACCESSIBLE)) {
             //
@@ -381,15 +381,15 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         }
         break; }
 
-    case REB_BINARY:
-    case REB_TEXT:
-    case REB_FILE:
-    case REB_EMAIL:
-    case REB_URL:
-    case REB_MONEY:
-    case REB_TAG:
-    case REB_TRIPWIRE:
-    case REB_BITSET: {
+    case TYPE_BINARY:
+    case TYPE_TEXT:
+    case TYPE_FILE:
+    case TYPE_EMAIL:
+    case TYPE_URL:
+    case TYPE_MONEY:
+    case TYPE_TAG:
+    case TYPE_TRIPWIRE:
+    case TYPE_BITSET: {
         Flex* s = v->payload.any_series.series;
 
         assert(Flex_Wide(s) <= sizeof(Ucs2Unit));
@@ -397,7 +397,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
         if (Get_Flex_Info(s, INACCESSIBLE)) {
             //
-            // !!! See notes above on REB_BLOCK/etc. RE: letting series die.
+            // !!! See notes above on TYPE_BLOCK/etc. RE: letting series die.
             //
             Mark_Stub_Only(s);
         }
@@ -405,7 +405,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
             Mark_Stub_Only(s);
         break; }
 
-    case REB_HANDLE: { // See %sys-handle.h
+    case TYPE_HANDLE: { // See %sys-handle.h
         Array* singular = v->extra.singular;
         if (singular == nullptr) {
             //
@@ -445,14 +445,14 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         }
         break; }
 
-    case REB_LOGIC:
-    case REB_INTEGER:
-    case REB_DECIMAL:
-    case REB_PERCENT:
-    case REB_CHAR:
+    case TYPE_LOGIC:
+    case TYPE_INTEGER:
+    case TYPE_DECIMAL:
+    case TYPE_PERCENT:
+    case TYPE_CHAR:
         break;
 
-    case REB_PAIR: {
+    case TYPE_PAIR: {
         //
         // Ren-C's PAIR! uses a special kind of node that does no additional
         // memory allocation, but embeds two cellss in a Stub-sized slot.
@@ -465,24 +465,24 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         pairing->leader.bits |= NODE_FLAG_MARKED;  // read via Stub
         break; }
 
-    case REB_TUPLE:
-    case REB_TIME:
-    case REB_DATE:
+    case TYPE_TUPLE:
+    case TYPE_TIME:
+    case TYPE_DATE:
         break;
 
-    case REB_MAP: {
+    case TYPE_MAP: {
         REBMAP* map = VAL_MAP(v);
         Queue_Mark_Map_Deep(map);
         break;
     }
 
-    case REB_DATATYPE:
+    case TYPE_DATATYPE:
         // Type spec is allowed to be nullptr.  See %typespec.r file
         if (CELL_DATATYPE_SPEC(v))
             Queue_Mark_Array_Deep(CELL_DATATYPE_SPEC(v));
         break;
 
-    case REB_TYPESET:
+    case TYPE_TYPESET:
         //
         // Not all typesets have symbols--only those that serve as the
         // keys of objects (or parameters of functions)
@@ -491,18 +491,18 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
             Mark_Stub_Only(v->extra.key_symbol);
         break;
 
-    case REB_VARARGS: {
+    case TYPE_VARARGS: {
         if (v->payload.varargs.phase) // null if came from MAKE VARARGS!
             Queue_Mark_Action_Deep(v->payload.varargs.phase);
 
         Queue_Mark_Binding_Deep(v);
         break; }
 
-    case REB_OBJECT:
-    case REB_FRAME:
-    case REB_MODULE:
-    case REB_ERROR:
-    case REB_PORT: { // Note: Cell_Varlist() fails on SER_INFO_INACCESSIBLE
+    case TYPE_OBJECT:
+    case TYPE_FRAME:
+    case TYPE_MODULE:
+    case TYPE_ERROR:
+    case TYPE_PORT: { // Note: Cell_Varlist() fails on SER_INFO_INACCESSIBLE
         VarList* context = CTX(v->payload.any_context.varlist);
         Queue_Mark_Context_Deep(context);
 
@@ -520,7 +520,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
       #if RUNTIME_CHECKS
         if (v->extra.binding != UNBOUND) {
-            assert(CTX_TYPE(context) == REB_FRAME);
+            assert(CTX_TYPE(context) == TYPE_FRAME);
 
             if (Get_Flex_Info(context, INACCESSIBLE)) {
                 //
@@ -541,11 +541,11 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
         REBACT *phase = v->payload.any_context.phase;
         if (phase) {
-            assert(Type_Of(v) == REB_FRAME); // may be heap-based frame
+            assert(Type_Of(v) == TYPE_FRAME); // may be heap-based frame
             Queue_Mark_Action_Deep(phase);
         }
         else
-            assert(Type_Of(v) != REB_FRAME); // phase if-and-only-if frame
+            assert(Type_Of(v) != TYPE_FRAME); // phase if-and-only-if frame
 
         if (Get_Flex_Info(context, INACCESSIBLE))
             break;
@@ -562,16 +562,16 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
         break; }
 
-    case REB_EVENT:
+    case TYPE_EVENT:
         Queue_Mark_Event_Deep(v);
         break;
 
-    case REB_BLANK:
-    case REB_NOTHING:
-    case REB_VOID:
+    case TYPE_BLANK:
+    case TYPE_NOTHING:
+    case TYPE_VOID:
         break;
 
-    case REB_MAX_NULLED:
+    case TYPE_MAX_NULLED:
         break; // use Queue_Mark_Value_Deep() if NULLED would be a bug
 
     default:
@@ -592,7 +592,7 @@ INLINE void Queue_Mark_Opt_Value_Deep(const Cell* v)
 INLINE void Queue_Mark_Value_Deep(const Cell* v)
 {
     assert(NOT_END(v));
-    assert(VAL_TYPE_RAW(v) != REB_MAX_NULLED); // Note: Unreadable blanks ok
+    assert(VAL_TYPE_RAW(v) != TYPE_MAX_NULLED); // Note: Unreadable blanks ok
     Queue_Mark_Opt_End_Cell_Deep(v);
 }
 
@@ -686,7 +686,7 @@ static void Propagate_All_GC_Marks(void)
             // Currently only FRAME! uses binding
             //
             assert(Any_Context(v));
-            assert(not v->extra.binding or Type_Of(v) == REB_FRAME);
+            assert(not v->extra.binding or Type_Of(v) == TYPE_FRAME);
 
             // These queueings cannot be done in Queue_Mark_Context_Deep
             // because of the potential for overflowing the C stack with calls
@@ -1582,7 +1582,7 @@ void Push_Guard_Node(const Node* node)
         assert(
             IS_END(value)
             or Is_Cell_Unreadable(value)
-            or Type_Of(value) <= REB_MAX_NULLED
+            or Type_Of(value) <= TYPE_MAX_NULLED
         );
 
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER

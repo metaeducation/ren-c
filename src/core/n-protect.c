@@ -63,12 +63,12 @@ static void Protect_Key(VarList* context, REBLEN index, Flags flags)
         Value* key = Varlist_Key(context, index);
 
         if (flags & PROT_SET) {
-            Set_Typeset_Flag(key, REB_TS_HIDDEN);
-            Set_Typeset_Flag(key, REB_TS_UNBINDABLE);
+            Set_Typeset_Flag(key, TYPE_TS_HIDDEN);
+            Set_Typeset_Flag(key, TYPE_TS_UNBINDABLE);
         }
         else {
-            Clear_Typeset_Flag(key, REB_TS_HIDDEN);
-            Clear_Typeset_Flag(key, REB_TS_UNBINDABLE);
+            Clear_Typeset_Flag(key, TYPE_TS_HIDDEN);
+            Clear_Typeset_Flag(key, TYPE_TS_UNBINDABLE);
         }
     }
 }

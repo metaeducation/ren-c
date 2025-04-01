@@ -273,16 +273,16 @@ e-dispatch/emit {
      * This is using the term in the sense of "generic functions":
      * https://en.wikipedia.org/wiki/Generic_function
      */
-    GENERIC_HOOK Generic_Hooks[REB_MAX] = {
-        nullptr, /* REB_0 */
+    GENERIC_HOOK Generic_Hooks[TYPE_MAX] = {
+        nullptr, /* TYPE_0 */
         $(Generic-Hooks),
     };
 
     /*
      * PER-TYPE PATH HOOKS: for `a/b`, `:a/b`, `a/b:`, `pick a b`, `poke a b`
      */
-    PATH_HOOK Path_Hooks[REB_MAX] = {
-        nullptr, /* REB_0 */
+    PATH_HOOK Path_Hooks[TYPE_MAX] = {
+        nullptr, /* TYPE_0 */
         $(Path-Hooks),
     };
 
@@ -293,8 +293,8 @@ e-dispatch/emit {
      * (either in the output cell given or an API cell)...or they can return
      * BOUNCE_THROWN if they throw.  (e.g. `make object! [return]` can throw)
      */
-    MAKE_HOOK Make_Hooks[REB_MAX] = {
-        nullptr, /* REB_0 */
+    MAKE_HOOK Make_Hooks[TYPE_MAX] = {
+        nullptr, /* TYPE_0 */
         $(Make-Hooks),
     };
 
@@ -306,24 +306,24 @@ e-dispatch/emit {
      * throw, and are not supposed to make use of any binding information in
      * blocks they are passed...so no evaluations should be performed.
      */
-    TO_HOOK To_Hooks[REB_MAX] = {
-        nullptr, /* REB_0 */
+    TO_HOOK To_Hooks[TYPE_MAX] = {
+        nullptr, /* TYPE_0 */
         $(To-Hooks),
     };
 
     /*
      * PER-TYPE MOLD HOOKS: for `mold value` and `form value`
      */
-    MOLD_HOOK Mold_Or_Form_Hooks[REB_MAX] = {
-        nullptr, /* REB_0 */
+    MOLD_HOOK Mold_Or_Form_Hooks[TYPE_MAX] = {
+        nullptr, /* TYPE_0 */
         $(Mold-Hooks),
     };
 
     /*
      * PER-TYPE COMPARE HOOKS, to support GREATER?, EQUAL?, LESSER?...
      */
-    COMPARE_HOOK Compare_Hooks[REB_MAX] = {
-        nullptr, /* REB_0 */
+    COMPARE_HOOK Compare_Hooks[TYPE_MAX] = {
+        nullptr, /* TYPE_0 */
         $(Compare-Hooks),
     };
 }
@@ -346,9 +346,9 @@ rebs: collect [
         ensure word! t/name
         ensure word! t/class
 
-        assert [sym-n == n] ;-- SYM_XXX should equal REB_XXX value
+        assert [sym-n == n] ;-- SYM_XXX should equal TYPE_XXX value
         add-sym to-word unspaced [t/name "!"]
-        keep cscape/with {REB_${T/NAME} = $<n>} [n t]
+        keep cscape/with {TYPE_${T/NAME} = $<n>} [n t]
         n: n + 1
     ]
 ]
@@ -359,14 +359,14 @@ for-each-record t type-table [
 
 e-types/emit {
     /*
-     * INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
+     * INTERNAL DATATYPE CONSTANTS, e.g. TYPE_BLOCK or TYPE_TAG
      *
      * Do not export these values via libRebol, as the numbers can change.
      * Their ordering is for supporting certain optimizations, such as being
      * able to quickly check if a type IS_BINDABLE().  When types are added,
      * or removed, the numbers must shuffle around to preserve invariants.
      *
-     * REB_MAX and beyond should not be used to index into arrays of types,
+     * TYPE_MAX and beyond should not be used to index into arrays of types,
      * as there are no corresponding DATATYPE!s for them.  But the values are
      * used for out-of-band purposes, which should be kept in consideration.
      */
@@ -375,28 +375,28 @@ e-types/emit {
   #else
     enum Reb_Kind {
   #endif
-        REB_0 = 0, /* reserved for internal purposes */
-        REB_0_END = REB_0, /* ...most commonly array termination cells... */
+        TYPE_0 = 0, /* reserved for internal purposes */
+        TYPE_0_END = TYPE_0, /* ...most commonly array termination cells... */
         $[Rebs],
-        REB_MAX, /* one past valid types, does double duty as NULL signal */
-        REB_MAX_NULLED = REB_MAX,
+        TYPE_MAX, /* one past valid types, does double duty as NULL signal */
+        TYPE_MAX_NULLED = TYPE_MAX,
 
-        REB_MAX_PLUS_ONE, /* used for internal markings and algorithms */
-        REB_R_THROWN = REB_MAX_PLUS_ONE,
+        TYPE_MAX_PLUS_ONE, /* used for internal markings and algorithms */
+        TYPE_R_THROWN = TYPE_MAX_PLUS_ONE,
 
-        REB_MAX_PLUS_TWO, /* used to indicate trash in the debug build */
-        REB_R_INVISIBLE = REB_MAX_PLUS_TWO,
+        TYPE_MAX_PLUS_TWO, /* used to indicate trash in the debug build */
+        TYPE_R_INVISIBLE = TYPE_MAX_PLUS_TWO,
 
-        REB_MAX_PLUS_THREE, /* used for experimental typeset flag */
-        REB_R_REDO = REB_MAX_PLUS_THREE,
+        TYPE_MAX_PLUS_THREE, /* used for experimental typeset flag */
+        TYPE_R_REDO = TYPE_MAX_PLUS_THREE,
 
-        REB_MAX_PLUS_FOUR, /* also used for experimental typeset flag */
-        REB_R_REFERENCE = REB_MAX_PLUS_FOUR,
+        TYPE_MAX_PLUS_FOUR, /* also used for experimental typeset flag */
+        TYPE_R_REFERENCE = TYPE_MAX_PLUS_FOUR,
 
-        REB_MAX_PLUS_FIVE,
-        REB_R_IMMEDIATE = REB_MAX_PLUS_FIVE,
+        TYPE_MAX_PLUS_FIVE,
+        TYPE_R_IMMEDIATE = TYPE_MAX_PLUS_FIVE,
 
-        REB_MAX_PLUS_MAX
+        TYPE_MAX_PLUS_MAX
   #if CPLUSPLUS_11
     };
   #else
@@ -421,7 +421,7 @@ n: 1
 for-each-record t type-table [
     e-types/emit 't {
         #define Is_${Propercase-Of T/Name}(v) \
-            (Type_Of(v) == REB_${T/NAME}) /* $<n> */
+            (Type_Of(v) == TYPE_${T/NAME}) /* $<n> */
     }
     e-types/emit newline
 
@@ -438,21 +438,21 @@ e-types/emit {
     ** TYPESET DEFINITIONS (e.g. TS_LIST or TS_STRING)
     **
     ** Note: User-facing typesets, such as ANY-VALUE!, do not include null
-    ** (absence of a value), nor do they include the internal "REB_0" type.
+    ** (absence of a value), nor do they include the internal "TYPE_0" type.
     */
 
     /*
-     * Subtract 1 to get mask for everything but REB_MAX_NULLED
-     * Subtract 1 again to take out REB_0 for END (signal for "endability")
+     * Subtract 1 to get mask for everything but TYPE_MAX_NULLED
+     * Subtract 1 again to take out TYPE_0 for END (signal for "endability")
      */
     #define TS_VALUE \
-        ((FLAGIT_KIND(REB_MAX) - 1) - 1)
+        ((FLAGIT_KIND(TYPE_MAX) - 1) - 1)
 
     /*
-     * Similar to TS_VALUE but accept NULL (as REB_MAX)
+     * Similar to TS_VALUE but accept NULL (as TYPE_MAX)
      */
     #define TS_OPT_VALUE \
-        (((FLAGIT_KIND(REB_MAX_NULLED + 1) - 1) - 1))
+        (((FLAGIT_KIND(TYPE_MAX_NULLED + 1) - 1) - 1))
 }
 typeset-sets: copy []
 
@@ -470,7 +470,7 @@ remove/part typeset-sets 2 ; the - markers
 for-each [ts types] typeset-sets [
     flagits: collect [
         for-each t types [
-            keep cscape/with {FLAGIT_KIND(REB_${T})} 't
+            keep cscape/with {FLAGIT_KIND(TYPE_${T})} 't
         ]
     ]
     e-types/emit [flagits ts] {
@@ -923,7 +923,7 @@ e-symbols/emit {
      * switch() for efficiency in the core.
      *
      * Datatypes are given symbol numbers at the start of the list, so that
-     * their SYM_XXX values will be identical to their REB_XXX values.
+     * their SYM_XXX values will be identical to their TYPE_XXX values.
      *
      * The file %words.r contains a list of spellings that are given ID
      * numbers recognized by the core.

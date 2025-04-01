@@ -115,7 +115,7 @@
     SEC_TIME(cast(REBI64, SECS_IN_DAY))
 
 INLINE Value* Init_Time_Nanoseconds(Cell* v, REBI64 nanoseconds) {
-    RESET_CELL(v, REB_TIME);
+    RESET_CELL(v, TYPE_TIME);
     VAL_NANO(v) = nanoseconds;
     return cast(Value*, v);
 }

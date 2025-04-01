@@ -247,7 +247,7 @@ int main(int argc, char *argv_ansi[])
     // design emerges.
     //
     VarList* startup_ctx = Alloc_Context_Core(
-        REB_OBJECT,
+        TYPE_OBJECT,
         80,
         NODE_FLAG_MANAGED // no Push_GC_Guard needed, gets referenced
     );

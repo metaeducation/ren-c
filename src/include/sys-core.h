@@ -674,12 +674,12 @@ enum {
 // as these will be "user defined types" that are more like a context than
 // a built-in "kind".
 
-extern GENERIC_HOOK Generic_Hooks[REB_MAX];
-extern PATH_HOOK Path_Hooks[REB_MAX];
-extern COMPARE_HOOK Compare_Hooks[REB_MAX];
-extern MAKE_HOOK Make_Hooks[REB_MAX];
-extern TO_HOOK To_Hooks[REB_MAX];
-extern MOLD_HOOK Mold_Or_Form_Hooks[REB_MAX];
+extern GENERIC_HOOK Generic_Hooks[TYPE_MAX];
+extern PATH_HOOK Path_Hooks[TYPE_MAX];
+extern COMPARE_HOOK Compare_Hooks[TYPE_MAX];
+extern MAKE_HOOK Make_Hooks[TYPE_MAX];
+extern TO_HOOK To_Hooks[TYPE_MAX];
+extern MOLD_HOOK Mold_Or_Form_Hooks[TYPE_MAX];
 
 #include "sys-roots.h"
 

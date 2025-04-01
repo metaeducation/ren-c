@@ -128,7 +128,7 @@ STATIC_ASSERT(DO_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 
 //=//// DO_FLAG_4_IS_FALSE ////////////////////////////////////////////////=//
 //
-// The second do byte is REB_0 to indicate an END.  That helps reads know
+// The second do byte is TYPE_0 to indicate an END.  That helps reads know
 // there is an END for in-situ enumeration.  But as an added bit of safety,
 // we make sure the bit pattern in the level header also doesn't look like
 // a cell at all by having a 0 bit in the NODE_FLAG_CELL spot.
@@ -392,7 +392,7 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 
 
 #define IS_KIND_INERT(k) \
-    ((k) >= REB_BLOCK)
+    ((k) >= TYPE_BLOCK)
 
 
 struct Reb_Level_Source {

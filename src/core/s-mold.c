@@ -433,17 +433,17 @@ void MF_Fail(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
-    if (Type_Of(v) == REB_0) {
+    if (Type_Of(v) == TYPE_0) {
         //
-        // REB_0 is reserved for special purposes, and should only be molded
+        // TYPE_0 is reserved for special purposes, and should only be molded
         // in debug scenarios.
         //
     #if NO_RUNTIME_CHECKS
         UNUSED(mo);
         panic (v);
     #else
-        printf("!!! Request to MOLD or FORM a REB_0 value !!!\n");
-        Append_Unencoded(mo->utf8flex, "!!!REB_0!!!");
+        printf("!!! Request to MOLD or FORM a TYPE_0 value !!!\n");
+        Append_Unencoded(mo->utf8flex, "!!!TYPE_0!!!");
         debug_break(); // don't crash if under a debugger, just "pause"
     #endif
     }
@@ -504,7 +504,7 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
         // happens a lot, e.g. PROBE() of context arrays when they have unset
         // variables.  This happens so often in debug builds, in fact, that a
         // debug_break() here would be very annoying (the method used for
-        // REB_0 items)
+        // TYPE_0 items)
         //
     #if NO_RUNTIME_CHECKS
         panic (v);

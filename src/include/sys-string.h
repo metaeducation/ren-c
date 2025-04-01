@@ -209,19 +209,19 @@ INLINE void SET_ANY_CHAR(Flex* s, REBLEN n, Ucs2Unit c) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 #define Init_Text(v,s) \
-    Init_Any_Series((v), REB_TEXT, (s))
+    Init_Any_Series((v), TYPE_TEXT, (s))
 
 #define Init_File(v,s) \
-    Init_Any_Series((v), REB_FILE, (s))
+    Init_Any_Series((v), TYPE_FILE, (s))
 
 #define Init_Email(v,s) \
-    Init_Any_Series((v), REB_EMAIL, (s))
+    Init_Any_Series((v), TYPE_EMAIL, (s))
 
 #define Init_Tag(v,s) \
-    Init_Any_Series((v), REB_TAG, (s))
+    Init_Any_Series((v), TYPE_TAG, (s))
 
 #define Init_Url(v,s) \
-    Init_Any_Series((v), REB_URL, (s))
+    Init_Any_Series((v), TYPE_URL, (s))
 
 
 // R3-Alpha did not support unicode codepoints higher than 0xFFFF, because

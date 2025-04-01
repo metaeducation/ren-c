@@ -493,7 +493,7 @@ REBINT CT_Logic(const Cell* a, const Cell* b, REBINT mode)
 //  MAKE_Logic: C
 //
 Bounce MAKE_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
-    assert(kind == REB_LOGIC);
+    assert(kind == TYPE_LOGIC);
     UNUSED(kind);
 
     // As a construction routine, MAKE takes more liberties in the
@@ -521,7 +521,7 @@ Bounce MAKE_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
 //  TO_Logic: C
 //
 Bounce TO_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
-    assert(kind == REB_LOGIC);
+    assert(kind == TYPE_LOGIC);
     UNUSED(kind);
 
     // As a "Rebol conversion", TO falls in line with the rest of the
@@ -540,7 +540,7 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
     if (Is_Blank(arg))
         return false;
 
-    fail (Error_Unexpected_Type(REB_LOGIC, Type_Of(arg)));
+    fail (Error_Unexpected_Type(TYPE_LOGIC, Type_Of(arg)));
 }
 
 
@@ -598,6 +598,6 @@ REBTYPE(Logic)
         return Init_False(OUT); }
 
     default:
-        fail (Error_Illegal_Action(REB_LOGIC, verb));
+        fail (Error_Illegal_Action(TYPE_LOGIC, verb));
     }
 }

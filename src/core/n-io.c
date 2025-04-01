@@ -372,11 +372,11 @@ DECLARE_NATIVE(NOW)
         Clear_Cell_Flag(OUT, DATE_HAS_ZONE);
     }
     else if (Bool_ARG(TIME)) {
-        RESET_CELL(OUT, REB_TIME); // reset clears date flags
+        RESET_CELL(OUT, TYPE_TIME); // reset clears date flags
     }
     else if (Bool_ARG(ZONE)) {
         VAL_NANO(OUT) = VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC;
-        RESET_CELL(OUT, REB_TIME); // reset clears date flags
+        RESET_CELL(OUT, TYPE_TIME); // reset clears date flags
     }
     else if (Bool_ARG(WEEKDAY))
         n = Week_Day(VAL_DATE(OUT));
@@ -405,15 +405,15 @@ REBLEN Milliseconds_From_Value(const Cell* v) {
     REBINT msec;
 
     switch (Type_Of(v)) {
-    case REB_INTEGER:
+    case TYPE_INTEGER:
         msec = 1000 * Int32(v);
         break;
 
-    case REB_DECIMAL:
+    case TYPE_DECIMAL:
         msec = cast(REBINT, 1000 * VAL_DECIMAL(v));
         break;
 
-    case REB_TIME:
+    case TYPE_TIME:
         msec = cast(REBINT, VAL_NANO(v) / (SEC_SEC / 1000));
         break;
 
@@ -479,13 +479,13 @@ DECLARE_NATIVE(WAIT)
 
     if (NOT_END(val)) {
         switch (Type_Of(val)) {
-        case REB_INTEGER:
-        case REB_DECIMAL:
-        case REB_TIME:
+        case TYPE_INTEGER:
+        case TYPE_DECIMAL:
+        case TYPE_TIME:
             timeout = Milliseconds_From_Value(val);
             break;
 
-        case REB_PORT:
+        case TYPE_PORT:
             if (not Pending_Port(KNOWN(val)))
                 return nullptr;
             ports = Make_Array(1);
@@ -493,7 +493,7 @@ DECLARE_NATIVE(WAIT)
             timeout = ALL_BITS;
             break;
 
-        case REB_BLANK:
+        case TYPE_BLANK:
             timeout = ALL_BITS; // wait for all windows
             break;
 

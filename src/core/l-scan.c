@@ -2200,7 +2200,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
         Init_Any_List(
             PUSH(),
-            (token == TOKEN_BLOCK_BEGIN) ? REB_BLOCK : REB_GROUP,
+            (token == TOKEN_BLOCK_BEGIN) ? TYPE_BLOCK : TYPE_GROUP,
             array
         );
         break; }
@@ -2344,7 +2344,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             return RAISE(Error_Syntax(S, token));
 
         if (S->begin[len - 1] == '%') {
-            RESET_CELL(TOP, REB_PERCENT);
+            RESET_CELL(TOP, TYPE_PERCENT);
             VAL_DECIMAL(TOP) /= 100.0;
         }
         break;
@@ -2399,7 +2399,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         const Byte* ep = S->end - 1;  // drop "
         if (ep != Try_Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
             return RAISE(Error_Syntax(S, token));
-        RESET_CELL(TOP, REB_CHAR);
+        RESET_CELL(TOP, TYPE_CHAR);
         break; }
 
       case TOKEN_STRING: {
@@ -2440,7 +2440,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         //
         const Byte* bp = S->begin + 1;  // skip '<'
         const Byte* ep = S->end - 1;  // !!! subtract out what ???
-        if (ep != Scan_Any(PUSH(), bp, len - 2, REB_TAG))
+        if (ep != Scan_Any(PUSH(), bp, len - 2, TYPE_TAG))
             return RAISE(Error_Syntax(S, token));
         break; }
 
@@ -2450,7 +2450,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         //
         const Byte* bp = S->begin + 2;  // skip '~<'
         const Byte* ep = S->end - 2;  // !!! subtract out what ???
-        if (ep != Scan_Any(PUSH(), bp, len - 4, REB_TRIPWIRE))
+        if (ep != Scan_Any(PUSH(), bp, len - 4, TYPE_TRIPWIRE))
             return RAISE(Error_Syntax(S, token));
         break; }
 
@@ -2698,7 +2698,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         ){
             Copy_Cell(TOP - 1, TOP);
             DROP();
-            KIND_BYTE(TOP) = REB_REFINEMENT;
+            KIND_BYTE(TOP) = TYPE_REFINEMENT;
             goto finished_path_scan;
         }
 
@@ -2720,7 +2720,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         Set_Array_Flag(a, HAS_FILE_LINE);
 
         assert(not Is_Get_Word(Array_Head(a)));
-        RESET_CELL(PUSH(), REB_PATH);
+        RESET_CELL(PUSH(), TYPE_PATH);
 
         INIT_VAL_ARRAY(TOP, a);
         VAL_INDEX(TOP) = 0;
@@ -2747,15 +2747,15 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
     if (S->sigil_pending) {
         switch (KIND_BYTE(TOP)) {
-          case REB_WORD:
-            KIND_BYTE(TOP) = REB_GET_WORD;
+          case TYPE_WORD:
+            KIND_BYTE(TOP) = TYPE_GET_WORD;
             break;
-          case REB_PATH:
-            KIND_BYTE(TOP) = REB_GET_PATH;
+          case TYPE_PATH:
+            KIND_BYTE(TOP) = TYPE_GET_PATH;
             break;
           default:
             return RAISE(
-                "Old EXE, only REB_WORD/REB_PATH can be colon-prefixed"
+                "Old EXE, only TYPE_WORD/TYPE_PATH can be colon-prefixed"
             );
         }
         S->sigil_pending = false;
@@ -2763,16 +2763,16 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
     if (*ss->at == ':') {
          switch (KIND_BYTE(TOP)) {
-          case REB_WORD:
-          case REB_REFINEMENT:  // we want /foo: to be foo: (assigns action)
-            KIND_BYTE(TOP) = REB_SET_WORD;
+          case TYPE_WORD:
+          case TYPE_REFINEMENT:  // we want /foo: to be foo: (assigns action)
+            KIND_BYTE(TOP) = TYPE_SET_WORD;
             break;
-          case REB_PATH:
-            KIND_BYTE(TOP) = REB_SET_PATH;
+          case TYPE_PATH:
+            KIND_BYTE(TOP) = TYPE_SET_PATH;
             break;
           default:
             return RAISE(
-                "Old EXE, only REB_WORD/REB_PATH can be colon-prefixed"
+                "Old EXE, only TYPE_WORD/TYPE_PATH can be colon-prefixed"
             );
         }
         ++ss->at;
@@ -2781,13 +2781,13 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
     if (S->num_quotes_pending) {
         assert(S->num_quotes_pending == 1);
         switch (KIND_BYTE(TOP)) {
-          case REB_WORD:
-            KIND_BYTE(TOP) = REB_LIT_WORD;
+          case TYPE_WORD:
+            KIND_BYTE(TOP) = TYPE_LIT_WORD;
             break;
-          case REB_PATH:
-            KIND_BYTE(TOP) = REB_LIT_PATH;
+          case TYPE_PATH:
+            KIND_BYTE(TOP) = TYPE_LIT_PATH;
             break;
-          case REB_BLOCK:
+          case TYPE_BLOCK:
             // we scan '[a b c] as just [a b c]... "compatible enough"
             break;
           default:

@@ -148,7 +148,7 @@ bool Either_Test_Core_Throws(
 ){
     switch (Type_Of(test)) {
 
-    case REB_LOGIC: // test for "truthy" or "falsey"
+    case TYPE_LOGIC: // test for "truthy" or "falsey"
         //
         // If this is the result of composing together a test with a literal,
         // it may be the *test* that changes...so in effect, we could be
@@ -157,8 +157,8 @@ bool Either_Test_Core_Throws(
         Init_Logic(out, VAL_LOGIC(test) == IS_TRUTHY(arg));
         return false;
 
-      case REB_WORD:
-      case REB_PATH: {
+      case TYPE_WORD:
+      case TYPE_PATH: {
         //
         // !!! Because we do not push refinements here, this means that a
         // specialized action will be generated if the user says something
@@ -190,7 +190,7 @@ bool Either_Test_Core_Throws(
             fail ("EITHER-TEST only takes WORD! and PATH! for ACTION! vars");
         goto handle_action; }
 
-      case REB_ACTION: {
+      case TYPE_ACTION: {
       handle_action:;
 
         if (Apply_Only_Throws(
@@ -206,15 +206,15 @@ bool Either_Test_Core_Throws(
         Init_Logic(out, IS_TRUTHY(out));
         return false; }
 
-      case REB_DATATYPE:
+      case TYPE_DATATYPE:
         Init_Logic(out, CELL_DATATYPE_TYPE(test) == Type_Of(arg));
         return false;
 
-      case REB_TYPESET:
+      case TYPE_TYPESET:
         Init_Logic(out, Typeset_Check(test, Type_Of(arg)));
         return false;
 
-    case REB_BLOCK: {
+    case TYPE_BLOCK: {
         Cell* item = Cell_List_At(test);
         if (IS_END(item)) {
             //
@@ -455,7 +455,7 @@ DECLARE_NATIVE(NON)
         if (Is_Nulled(value))
             fail ("NON expected value to not be NULL, but it was");
     }
-    else if (CELL_DATATYPE_TYPE(test) == REB_NOTHING) {  // specialize common case
+    else if (CELL_DATATYPE_TYPE(test) == TYPE_NOTHING) {  // specialize common case
         if (Is_Nothing(value))
             fail ("NON expected value to not be trash, but it was");
     }

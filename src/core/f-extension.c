@@ -186,12 +186,12 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
     VarList* module_ctx = Alloc_Context_Core(
-        REB_MODULE,
+        TYPE_MODULE,
         80,
         NODE_FLAG_MANAGED // !!! Is GC guard unnecessary due to references?
     );
     DECLARE_VALUE (module);
-    Init_Any_Context(module, REB_MODULE, module_ctx);
+    Init_Any_Context(module, TYPE_MODULE, module_ctx);
     Push_GC_Guard(module);
 
     StackIndex base = TOP_INDEX; // for accumulating exports
@@ -286,7 +286,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     // defined in a couple of extensions, but no protocol by which the
     // system will automatically call them on shutdown (yet)
 
-    return Init_Any_Context(OUT, REB_MODULE, module_ctx);
+    return Init_Any_Context(OUT, TYPE_MODULE, module_ctx);
 }
 
 

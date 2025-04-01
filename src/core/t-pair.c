@@ -51,7 +51,7 @@ REBINT CT_Pair(const Cell* a, const Cell* b, REBINT mode)
 //
 Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_PAIR);
+    assert(kind == TYPE_PAIR);
     UNUSED(kind);
 
     if (Is_Pair(arg))
@@ -96,7 +96,7 @@ Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
     return Init_Pair(out, KNOWN(x), KNOWN(y));
 
   bad_make:
-    fail (Error_Bad_Make(REB_PAIR, arg));
+    fail (Error_Bad_Make(TYPE_PAIR, arg));
 }
 
 
@@ -266,7 +266,7 @@ REBTYPE(Pair)
     }
 
     default:  // !!! Should we limit the actions?
-        break;  /* fail (Error_Illegal_Action(REB_PAIR, verb)); */
+        break;  /* fail (Error_Illegal_Action(TYPE_PAIR, verb)); */
     }
 
    // !!! The only way we can generically guarantee the ability to retrigger

@@ -260,7 +260,7 @@ INLINE void Finalize_Arg(
             fail (Error_Bad_Refine_Revoke(param, arg));
     }
 
-    if (Is_Void(arg) and Typeset_Check(param, REB_TS_NOOP_IF_VOID)) {
+    if (Is_Void(arg) and Typeset_Check(param, TYPE_TS_NOOP_IF_VOID)) {
         Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
         LVL_PHASE_OR_DUMMY(L_state) = PG_Dummy_Action;
         return;
@@ -457,7 +457,7 @@ bool Eval_Core_Throws(Level* const L)
     // have to be a test for points to `goto` before running normal eval.
     // This cost is paid on every entry to Eval_Core_Throws().
     //
-    // Trying alternatives (such as a synthetic REB_XXX type to signal it,
+    // Trying alternatives (such as a synthetic TYPE_XXX type to signal it,
     // to fold along in a switch) seem to only make it slower.  Using flags
     // and testing them together as a group seems the fastest option.
     //
@@ -525,7 +525,7 @@ bool Eval_Core_Throws(Level* const L)
     //
     Fetch_Next_In_Level(&current, L);
 
-    assert(eval_type != REB_0_END and eval_type == VAL_TYPE_RAW(current));
+    assert(eval_type != TYPE_0_END and eval_type == VAL_TYPE_RAW(current));
 
   reevaluate:;
 
@@ -546,7 +546,7 @@ bool Eval_Core_Throws(Level* const L)
     // called "current" holds the current head of the expression that the
     // main switch would process.
 
-    if (VAL_TYPE_RAW(L->value) != REB_WORD) // END would be REB_0
+    if (VAL_TYPE_RAW(L->value) != TYPE_WORD) // END would be TYPE_0
         goto give_up_backward_quote_priority;
 
     if (not EVALUATING(L->value))
@@ -636,7 +636,7 @@ bool Eval_Core_Throws(Level* const L)
     //
     //     foo: ('the) => [print the]
 
-    if (eval_type == REB_WORD and EVALUATING(current)) {
+    if (eval_type == TYPE_WORD and EVALUATING(current)) {
         if (not current_gotten)
             current_gotten = Try_Get_Opt_Var(current, L->specifier);
         else
@@ -660,7 +660,7 @@ bool Eval_Core_Throws(Level* const L)
         goto give_up_forward_quote_priority;
     }
 
-    if (eval_type == REB_PATH and EVALUATING(current)) {
+    if (eval_type == TYPE_PATH and EVALUATING(current)) {
         //
         // !!! Words aren't the only way that functions can be dispatched,
         // one can also use paths.  It gets tricky here, because path GETs
@@ -701,7 +701,7 @@ bool Eval_Core_Throws(Level* const L)
         goto give_up_forward_quote_priority;
     }
 
-    if (eval_type == REB_ACTION and EVALUATING(current)) {
+    if (eval_type == TYPE_ACTION and EVALUATING(current)) {
         //
         // A literal ACTION! in a BLOCK! may also forward quote
         //
@@ -741,7 +741,7 @@ bool Eval_Core_Throws(Level* const L)
     //
     //==////////////////////////////////////////////////////////////////==//
 
-    // This switch is done via contiguous REB_XXX values, in order to
+    // This switch is done via contiguous TYPE_XXX values, in order to
     // facilitate use of a "jump table optimization":
     //
     // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
@@ -750,7 +750,7 @@ bool Eval_Core_Throws(Level* const L)
 
     switch (eval_type) {
 
-      case REB_0_END:
+      case TYPE_0_END:
         goto finished;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -766,7 +766,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_ACTION: {
+      case TYPE_ACTION: {
         if (Get_Cell_Flag(current, INFIX_IF_ACTION))
             fail ("Bootstrap EXE only dispatches infix from WORD!");
 
@@ -1088,7 +1088,7 @@ bool Eval_Core_Throws(Level* const L)
                     if (Is_Param_Variadic(L->param)) {
                         Reset_Cell_Header(
                             L->arg,
-                            REB_VARARGS,
+                            TYPE_VARARGS,
                             CELL_FLAG_VARARGS_INFIX // in case anyone cares
                         );
                         INIT_BINDING(L->arg, EMPTY_ARRAY); // feed finished
@@ -1165,7 +1165,7 @@ bool Eval_Core_Throws(Level* const L)
 
                     Reset_Cell_Header(
                         L->arg,
-                        REB_VARARGS,
+                        TYPE_VARARGS,
                         CELL_FLAG_VARARGS_INFIX  // don't evaluate *again* on TAKE
                     );
                     INIT_BINDING(L->arg, array1);
@@ -1183,7 +1183,7 @@ bool Eval_Core_Throws(Level* const L)
             // consume additional arguments during the function run.
             //
             if (Is_Param_Variadic(L->param)) {
-                RESET_CELL(L->arg, REB_VARARGS);
+                RESET_CELL(L->arg, TYPE_VARARGS);
                 INIT_BINDING(L->arg, L->varlist); // frame-based VARARGS!
 
                 Finalize_Current_Arg(L); // sets VARARGS! offset and paramlist
@@ -1383,7 +1383,7 @@ bool Eval_Core_Throws(Level* const L)
             assert(Is_Issue(TOP));
 
             if (not IS_WORD_BOUND(TOP)) { // the loop didn't index it
-                CHANGE_VAL_TYPE_BITS(TOP, REB_REFINEMENT);
+                CHANGE_VAL_TYPE_BITS(TOP, TYPE_REFINEMENT);
                 fail (Error_Bad_Refine_Raw(TOP)); // so duplicate or junk
             }
 
@@ -1474,7 +1474,7 @@ bool Eval_Core_Throws(Level* const L)
         else if (not r) { // API and internal code can both return `nullptr`
             Init_Nulled(L->out);
         }
-        else if (VAL_TYPE_RAW(r) <= REB_MAX) { // should be an API value
+        else if (VAL_TYPE_RAW(r) <= TYPE_MAX) { // should be an API value
             Handle_Api_Dispatcher_Result(L, r);
         }
         else switch (VAL_TYPE_RAW(r)) { // it's a "pseudotype" instruction
@@ -1487,7 +1487,7 @@ bool Eval_Core_Throws(Level* const L)
             // a performance win either way, but recovering the bit in the
             // values is a definite advantage--as header bits are scarce!
             //
-          case REB_R_THROWN:
+          case TYPE_R_THROWN:
             assert(THROWN(L->out));
             if (Is_Action(L->out)) {
                 if (
@@ -1513,7 +1513,7 @@ bool Eval_Core_Throws(Level* const L)
             //
             goto abort_action;
 
-          case REB_R_REDO:
+          case TYPE_R_REDO:
             //
             // This instruction represents the idea that it is desired to
             // run the L->phase again.  The dispatcher may have changed the
@@ -1535,7 +1535,7 @@ bool Eval_Core_Throws(Level* const L)
             L->refine = ORDINARY_ARG; // no gathering, but need for assert
             goto process_action;
 
-          case REB_R_INVISIBLE: {
+          case TYPE_R_INVISIBLE: {
             assert(GET_ACT_FLAG(Level_Phase(L), ACTION_INVISIBLE));
 
             // !!! Ideally we would check that L->out hadn't changed, but
@@ -1575,7 +1575,7 @@ bool Eval_Core_Throws(Level* const L)
     //==////////////////////////////////////////////////////////////////==//
 
         // Here we know the function finished and nothing threw past it or
-        // FAIL / fail()'d.  It should still be in REB_ACTION evaluation
+        // FAIL / fail()'d.  It should still be in TYPE_ACTION evaluation
         // type, and overwritten the L->out with a non-thrown value.  If the
         // function composition is a CASCADE, the cascaded functions are still
         // pending on the stack to be run.
@@ -1630,7 +1630,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_WORD:
+      case TYPE_WORD:
         if (not EVALUATING(current))
             goto inert;
 
@@ -1645,7 +1645,7 @@ bool Eval_Core_Throws(Level* const L)
             );
 
             // Note: The usual dispatch of infix functions is not via a
-            // REB_WORD in this switch, it's by some code at the end of
+            // TYPE_WORD in this switch, it's by some code at the end of
             // the switch.  So you only see infix in cases like `(+ 1 2)`,
             // or after CELL_FLAG_ACTION_INVISIBLE e.g. `10 comment "hi" + 20`.
             //
@@ -1688,7 +1688,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_SET_WORD: {
+      case TYPE_SET_WORD: {
         if (not EVALUATING(current))
             goto inert;
 
@@ -1721,7 +1721,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_GET_WORD:
+      case TYPE_GET_WORD:
         if (not EVALUATING(current))
             goto inert;
 
@@ -1737,18 +1737,18 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_LIT_WORD:
+      case TYPE_LIT_WORD:
         if (not EVALUATING(current))
             goto inert;
 
         Derelativize(L->out, current, L->specifier);
-        CHANGE_VAL_TYPE_BITS(L->out, REB_WORD);
+        CHANGE_VAL_TYPE_BITS(L->out, TYPE_WORD);
         break;
 
 //==//// INERT WORD AND STRING TYPES /////////////////////////////////////==//
 
-    case REB_REFINEMENT:
-    case REB_ISSUE:
+    case TYPE_REFINEMENT:
+    case TYPE_ISSUE:
         // ^-- ANY-WORD!
         goto inert;
 
@@ -1769,7 +1769,7 @@ bool Eval_Core_Throws(Level* const L)
 //     >> 1 + () 2
 //     == 3
 
-      case REB_GROUP: {
+      case TYPE_GROUP: {
         if (not EVALUATING(current))
             goto inert;
 
@@ -1804,7 +1804,7 @@ bool Eval_Core_Throws(Level* const L)
         if (IS_END(Level_Spare(L))) {
             current = L->value;
             eval_type = VAL_TYPE_RAW(L->value);
-            if (eval_type != REB_0_END) {
+            if (eval_type != TYPE_0_END) {
                 Fetch_Next_In_Level(nullptr, L); // advances L->value
                 goto reevaluate;
             }
@@ -1820,7 +1820,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_PATH: {
+      case TYPE_PATH: {
         if (not EVALUATING(current))
             goto inert;
 
@@ -1912,7 +1912,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_SET_PATH: {
+      case TYPE_SET_PATH: {
         if (not EVALUATING(current))
             goto inert;
 
@@ -1964,7 +1964,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_GET_PATH:
+      case TYPE_GET_PATH:
         if (not EVALUATING(current))
             goto inert;
 
@@ -1981,12 +1981,12 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_LIT_PATH:
+      case TYPE_LIT_PATH:
         if (not EVALUATING(current))
             goto inert;
 
         Derelativize(L->out, current, L->specifier);
-        CHANGE_VAL_TYPE_BITS(L->out, REB_PATH);
+        CHANGE_VAL_TYPE_BITS(L->out, TYPE_PATH);
         break;
 
 
@@ -2004,7 +2004,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_TRIPWIRE:
+      case TYPE_TRIPWIRE:
         goto inert;
 
 
@@ -2014,26 +2014,26 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_BLOCK:
+      case TYPE_BLOCK:
         //
-      case REB_BINARY:
-      case REB_TEXT:
-      case REB_FILE:
-      case REB_EMAIL:
-      case REB_URL:
-      case REB_TAG:
+      case TYPE_BINARY:
+      case TYPE_TEXT:
+      case TYPE_FILE:
+      case TYPE_EMAIL:
+      case TYPE_URL:
+      case TYPE_TAG:
         //
-      case REB_BITSET:
+      case TYPE_BITSET:
         //
-      case REB_MAP:
+      case TYPE_MAP:
         //
-      case REB_VARARGS:
+      case TYPE_VARARGS:
         //
-      case REB_OBJECT:
-      case REB_FRAME:
-      case REB_MODULE:
-      case REB_ERROR:
-      case REB_PORT:
+      case TYPE_OBJECT:
+      case TYPE_FRAME:
+      case TYPE_MODULE:
+      case TYPE_ERROR:
+      case TYPE_PORT:
         goto inert;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2042,25 +2042,25 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_BLANK:
-      case REB_VOID:
+      case TYPE_BLANK:
+      case TYPE_VOID:
         //
-      case REB_LOGIC:
-      case REB_INTEGER:
-      case REB_DECIMAL:
-      case REB_PERCENT:
-      case REB_MONEY:
-      case REB_CHAR:
-      case REB_PAIR:
-      case REB_TUPLE:
-      case REB_TIME:
-      case REB_DATE:
+      case TYPE_LOGIC:
+      case TYPE_INTEGER:
+      case TYPE_DECIMAL:
+      case TYPE_PERCENT:
+      case TYPE_MONEY:
+      case TYPE_CHAR:
+      case TYPE_PAIR:
+      case TYPE_TUPLE:
+      case TYPE_TIME:
+      case TYPE_DATE:
         //
-      case REB_DATATYPE:
-      case REB_TYPESET:
+      case TYPE_DATATYPE:
+      case TYPE_TYPESET:
         //
-      case REB_EVENT:
-      case REB_HANDLE:
+      case TYPE_EVENT:
+      case TYPE_HANDLE:
 
       inert:;
 
@@ -2075,7 +2075,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_NOTHING:
+      case TYPE_NOTHING:
         if (not EVALUATING(current))
             goto inert;
 
@@ -2098,7 +2098,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case REB_MAX_NULLED:
+      case TYPE_MAX_NULLED:
         if (not EVALUATING(current))
             goto inert;
 
@@ -2127,7 +2127,7 @@ bool Eval_Core_Throws(Level* const L)
     //    evaluate/step3 [1 + 2 * 3] 'val
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
-    // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,
+    // cannot just dispatch on TYPE_INTEGER in the switch() above, give you 1,
     // and consider its job done.  It has to notice that the word `+` looks up
     // to an ACTION! that had its INFIX flag set, and keep going.
     //
@@ -2176,10 +2176,10 @@ bool Eval_Core_Throws(Level* const L)
 
     eval_type = VAL_TYPE_RAW(L->value);
 
-    if (eval_type == REB_0_END)
+    if (eval_type == TYPE_0_END)
         goto finished; // hitting end is common, avoid do_next's switch()
 
-    if (eval_type == REB_PATH) {
+    if (eval_type == TYPE_PATH) {
         if (
             Cell_Series_Len_At(L->value) != 0
             or (L->flags.bits & DO_FLAG_NO_LOOKAHEAD)
@@ -2207,7 +2207,7 @@ bool Eval_Core_Throws(Level* const L)
         goto process_action;
     }
 
-    if (eval_type != REB_WORD or not EVALUATING(L->value)) {
+    if (eval_type != TYPE_WORD or not EVALUATING(L->value)) {
         if (not (L->flags.bits & DO_FLAG_TO_END))
             goto finished; // only want 1 EVALUATE of work, so stop evaluating
 
@@ -2280,7 +2280,7 @@ bool Eval_Core_Throws(Level* const L)
         current_gotten = L->gotten; // if nullptr, the word will error
         Fetch_Next_In_Level(&current, L);
 
-        // Were we to jump to the REB_WORD switch case here, LENGTH would
+        // Were we to jump to the TYPE_WORD switch case here, LENGTH would
         // cause an error in the expression below:
         //
         //     if true [] length of "hello"

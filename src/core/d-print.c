@@ -230,7 +230,7 @@ void Debug_Values(const Cell* value, REBLEN count, REBLEN limit)
     REBLEN n;
 
     for (n = 0; n < count; n++, value++) {
-        if (n > 0 && Type_Of(value) <= REB_BLANK) Debug_Chars('.', 1);
+        if (n > 0 && Type_Of(value) <= TYPE_BLANK) Debug_Chars('.', 1);
         else {
             DECLARE_MOLDER (mo);
             if (limit != 0) {

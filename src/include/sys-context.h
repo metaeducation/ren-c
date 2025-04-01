@@ -103,7 +103,7 @@ INLINE Array* Keylist_Of_Varlist(VarList* c) {
     // just the keylist of the underlying function.
     //
     Value* archetype = Varlist_Archetype(c);
-    assert(VAL_TYPE_RAW(archetype) == REB_FRAME);
+    assert(VAL_TYPE_RAW(archetype) == TYPE_FRAME);
     return ACT_PARAMLIST(archetype->payload.any_context.phase);
 }
 
@@ -211,7 +211,7 @@ INLINE void FREE_CONTEXT(VarList* c) {
 
 INLINE void FAIL_IF_INACCESSIBLE_CTX(VarList* c) {
     if (Get_Flex_Info(c, INACCESSIBLE)) {
-        if (CTX_TYPE(c) == REB_FRAME)
+        if (CTX_TYPE(c) == TYPE_FRAME)
             fail (Error_Do_Expired_Frame_Raw()); // !!! different error?
         fail (Error_Series_Data_Freed_Raw());
     }
@@ -219,7 +219,7 @@ INLINE void FAIL_IF_INACCESSIBLE_CTX(VarList* c) {
 
 INLINE VarList* Cell_Varlist(const Cell* v) {
     assert(Any_Context(v));
-    assert(not v->payload.any_context.phase or Type_Of(v) == REB_FRAME);
+    assert(not v->payload.any_context.phase or Type_Of(v) == TYPE_FRAME);
     VarList* c = CTX(v->payload.any_context.varlist);
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
@@ -285,13 +285,13 @@ INLINE Value* Init_Any_Context(
 }
 
 #define Init_Object(out,c) \
-    Init_Any_Context((out), REB_OBJECT, (c))
+    Init_Any_Context((out), TYPE_OBJECT, (c))
 
 #define Init_Port(out,c) \
-    Init_Any_Context((out), REB_PORT, (c))
+    Init_Any_Context((out), TYPE_PORT, (c))
 
 #define Init_Frame(out,c) \
-    Init_Any_Context((out), REB_FRAME, (c))
+    Init_Any_Context((out), TYPE_FRAME, (c))
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -367,7 +367,7 @@ INLINE bool Is_Context_Deeply_Frozen(VarList* c) {
     ERR_VARS(Cell_Varlist(v))
 
 #define Init_Error(v,c) \
-    Init_Any_Context((v), REB_ERROR, (c))
+    Init_Any_Context((v), TYPE_ERROR, (c))
 
 
 // Ports are unusual hybrids of user-mode code dispatched with native code, so
@@ -452,7 +452,7 @@ INLINE VarList* Steal_Context_Vars(VarList* c, Node* keysource) {
 
     Value* single = cast(Value*, &stub->content.fixed);
     single->header.bits =
-        NODE_FLAG_NODE | NODE_FLAG_CELL | FLAG_KIND_BYTE(REB_FRAME);
+        NODE_FLAG_NODE | NODE_FLAG_CELL | FLAG_KIND_BYTE(TYPE_FRAME);
     INIT_BINDING(single, VAL_BINDING(rootvar));
     single->payload.any_context.varlist = cast_Array(stub);
     Corrupt_Pointer_If_Debug(single->payload.any_context.phase);

@@ -39,86 +39,86 @@ REBOL [
            flag, while these tests are very fast. */
 
         #define Is_Bindable(v) \
-            (VAL_TYPE_RAW(v) < REB_LOGIC)
+            (VAL_TYPE_RAW(v) < TYPE_LOGIC)
 
         #define Not_Bindable(v) \
-            (VAL_TYPE_RAW(v) >= REB_LOGIC)
+            (VAL_TYPE_RAW(v) >= TYPE_LOGIC)
 
         /* For other checks, we pay the cost in the debug build of all the
            associated baggage that Type_Of() carries over VAL_TYPE_RAW() */
 
         #define Any_Value(v) \
-            (Type_Of(v) != REB_MAX_NULLED)
+            (Type_Of(v) != TYPE_MAX_NULLED)
 
         INLINE bool Any_Scalar_Kind(enum Reb_Kind k) {
-            return k >= REB_LOGIC and k <= REB_DATE;
+            return k >= TYPE_LOGIC and k <= TYPE_DATE;
         }
 
         #define Any_Scalar(v) \
             Any_Scalar_Kind(Type_Of(v))
 
         INLINE bool Any_Series_Kind(enum Reb_Kind k) {
-            return k >= REB_PATH and k <= REB_BITSET;
+            return k >= TYPE_PATH and k <= TYPE_BITSET;
         }
 
         #define Any_Series(v) \
             Any_Series_Kind(Type_Of(v))
 
         INLINE bool Any_String_Kind(enum Reb_Kind k) {
-            return k >= REB_TEXT and k <= REB_TAG;
+            return k >= TYPE_TEXT and k <= TYPE_TAG;
         }
 
         #define Any_String(v) \
             Any_String_Kind(Type_Of(v))
 
         INLINE bool Any_List_Kind(enum Reb_Kind k) {
-            return k >= REB_PATH and k <= REB_BLOCK;
+            return k >= TYPE_PATH and k <= TYPE_BLOCK;
         }
 
         #define Any_List(v) \
             Any_List_Kind(Type_Of(v))
 
         INLINE bool Any_Word_Kind(enum Reb_Kind k) {
-            return k >= REB_WORD and k <= REB_ISSUE;
+            return k >= TYPE_WORD and k <= TYPE_ISSUE;
         }
 
         #define Any_Word(v) \
             Any_Word_Kind(Type_Of(v))
 
         INLINE bool Any_Path_Kind(enum Reb_Kind k) {
-            return k >= REB_PATH and k <= REB_LIT_PATH;
+            return k >= TYPE_PATH and k <= TYPE_LIT_PATH;
         }
 
         #define Any_Path(v) \
             Any_Path_Kind(Type_Of(v))
 
         INLINE bool Any_Context_Kind(enum Reb_Kind k) {
-            return k >= REB_OBJECT and k <= REB_PORT;
+            return k >= TYPE_OBJECT and k <= TYPE_PORT;
         }
 
         #define Any_Context(v) \
             Any_Context_Kind(Type_Of(v))
 
         /* !!! There was an IS_NUMBER() macro defined in R3-Alpha which was
-           REB_INTEGER and REB_DECIMAL.  But ANY-NUMBER! the typeset included
+           TYPE_INTEGER and TYPE_DECIMAL.  But ANY-NUMBER! the typeset included
            PERCENT! so this adds that and gets rid of IS_NUMBER() */
 
         INLINE bool Any_Number_Kind(enum Reb_Kind k) {
-            return k == REB_INTEGER or k == REB_DECIMAL or k == REB_PERCENT;
+            return k == TYPE_INTEGER or k == TYPE_DECIMAL or k == TYPE_PERCENT;
         }
 
         #define Any_Number(v) \
             Any_Number_Kind(Type_Of(v))
 
         /* !!! Being able to locate inert types based on range *almost* works,
-           but REB_ISSUE and REB_REFINEMENT want to be picked up as ANY-WORD!.
+           but TYPE_ISSUE and TYPE_REFINEMENT want to be picked up as ANY-WORD!.
            This trick will have to be rethought, esp if words and strings
            get unified, but it's here to show how choosing these values
            carefully can help with speeding up tests. */
 
         INLINE bool Any_Inert_Kind(enum Reb_Kind k) {
-            return (k >= REB_BLOCK and k <= REB_BLANK)
-                or k == REB_ISSUE or k == REB_REFINEMENT;
+            return (k >= TYPE_BLOCK and k <= TYPE_BLANK)
+                or k == TYPE_ISSUE or k == TYPE_REFINEMENT;
         }
 
         #define Any_Inert(v) \
@@ -129,14 +129,14 @@ REBOL [
 
 [name       class       path    make    mold     typesets]
 
-; Note: 0 is reserved for an array terminator (REB_0), and not a "type"
+; Note: 0 is reserved for an array terminator (TYPE_0), and not a "type"
 
 ; There is only one "invokable" type in Ren-C, and it takes the name ACTION!
 ; instead of the name FUNCTION!: https://forum.rebol.info/t/596
 
 action      action      +       +       +       -
 
-; ANY-WORD!, order matters (tests like ANY_WORD use >= REB_WORD, <= REB_ISSUE)
+; ANY-WORD!, order matters (tests like ANY_WORD use >= TYPE_WORD, <= TYPE_ISSUE)
 ;
 word        word        +       +       +       word
 set-word    word        +       +       +       word
@@ -212,4 +212,4 @@ nothing     unit        -       +       +       -
 void        unit        -       +       +       -
 
 ; Note that the "null?" state has no associated NULL! datatype.  Internally
-; it uses REB_MAX, but like the REB_0 it stays off the type map.
+; it uses TYPE_MAX, but like the TYPE_0 it stays off the type map.

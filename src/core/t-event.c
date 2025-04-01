@@ -178,13 +178,13 @@ static Value* Get_Event_Var(Cell* out, const Cell* v, Symbol* name)
 //  MAKE_Event: C
 //
 Bounce MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
-    assert(kind == REB_EVENT);
+    assert(kind == TYPE_EVENT);
     UNUSED(kind);
 
     if (not Is_Block(arg))
-        fail (Error_Unexpected_Type(REB_EVENT, Type_Of(arg)));
+        fail (Error_Unexpected_Type(TYPE_EVENT, Type_Of(arg)));
 
-    RESET_CELL(out, REB_EVENT);
+    RESET_CELL(out, TYPE_EVENT);
     Set_Event_Vars(
         out,
         Cell_List_At(arg),
@@ -199,7 +199,7 @@ Bounce MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 Bounce TO_Event(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_EVENT);
+    assert(kind == TYPE_EVENT);
     UNUSED(kind);
 
     UNUSED(out);
@@ -244,7 +244,7 @@ REBTYPE(Event)
 {
     UNUSED(level_);
 
-    fail (Error_Illegal_Action(REB_EVENT, verb));
+    fail (Error_Illegal_Action(TYPE_EVENT, verb));
 }
 
 

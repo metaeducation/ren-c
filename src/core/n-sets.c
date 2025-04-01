@@ -225,7 +225,7 @@ Flex* Make_Set_Operation_Flex(
                     )
                 ){
                     DECLARE_VALUE (temp);
-                    Init_Any_Series_At(temp, REB_TEXT, flex, i);
+                    Init_Any_Series_At(temp, TYPE_TEXT, flex, i);
                     Append_Utf8_String(mo->utf8flex, temp, skip);
                 }
             }

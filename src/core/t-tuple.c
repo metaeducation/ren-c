@@ -50,13 +50,13 @@ REBINT CT_Tuple(const Cell* a, const Cell* b, REBINT mode)
 //
 Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_TUPLE);
+    assert(kind == TYPE_TUPLE);
     UNUSED(kind);
 
     if (Is_Tuple(arg))
         return Copy_Cell(out, arg);
 
-    RESET_CELL(out, REB_TUPLE);
+    RESET_CELL(out, TYPE_TUPLE);
     Byte *vp = VAL_TUPLE(out);
 
     // !!! Net lookup parses IP addresses out of `tcp://93.184.216.34` or
@@ -142,7 +142,7 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     return out;
 
   bad_make:
-    fail (Error_Bad_Make(REB_TUPLE, arg));
+    fail (Error_Bad_Make(TYPE_TUPLE, arg));
 }
 
 
@@ -368,7 +368,7 @@ REBTYPE(Tuple)
             a = 646699; // unused but avoid maybe uninitialized warning
         }
         else
-            fail (Error_Math_Args(REB_TUPLE, verb));
+            fail (Error_Math_Args(TYPE_TUPLE, verb));
 
         for (;len > 0; len--, vp++) {
             REBINT v = *vp;
@@ -420,7 +420,7 @@ REBTYPE(Tuple)
                 break;
 
             default:
-                fail (Error_Illegal_Action(REB_TUPLE, verb));
+                fail (Error_Illegal_Action(TYPE_TUPLE, verb));
             }
 
             if (v > 255)
@@ -518,5 +518,5 @@ REBTYPE(Tuple)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_TUPLE, verb));
+    fail (Error_Illegal_Action(TYPE_TUPLE, verb));
 }

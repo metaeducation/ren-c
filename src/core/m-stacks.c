@@ -118,7 +118,7 @@ void Startup_Level_Stack(void)
     );
     MISC(paramlist).meta = nullptr;
 
-    Value* archetype = RESET_CELL(Array_Head(paramlist), REB_ACTION);
+    Value* archetype = RESET_CELL(Array_Head(paramlist), TYPE_ACTION);
     archetype->extra.binding = UNBOUND;
     archetype->payload.action.paramlist = paramlist;
     Term_Array_Len(paramlist, 1);

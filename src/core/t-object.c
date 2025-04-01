@@ -262,7 +262,7 @@ REBINT CT_Context(const Cell* a, const Cell* b, REBINT mode)
 //
 Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    if (kind == REB_FRAME) {
+    if (kind == TYPE_FRAME) {
         //
         // !!! The feature of MAKE FRAME! from a VARARGS! would be interesting
         // as a way to support usermode authoring of things like MATCH.
@@ -297,14 +297,14 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Frame(out, exemplar);
     }
 
-    if (kind == REB_OBJECT && Is_Block(arg)) {
+    if (kind == TYPE_OBJECT && Is_Block(arg)) {
         //
         // Simple object creation with no evaluation, so all values are
         // handled "as-is".  Should have a spec block and a body block.
 
         return MAKE_With_Parent(
             out,
-            REB_OBJECT,
+            TYPE_OBJECT,
             arg,
             nullptr  // no parent
         );
@@ -315,7 +315,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
     // arg is block/string, but let Make_Error_Object_Throws do the
     // type checking.
     //
-    if (kind == REB_ERROR) {
+    if (kind == TYPE_ERROR) {
         if (Make_Error_Object_Throws(out, arg))
             return BOUNCE_THROWN;
 
@@ -365,7 +365,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 Bounce TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    if (kind == REB_ERROR) {
+    if (kind == TYPE_ERROR) {
         //
         // arg is checked to be block or string
         //
@@ -375,7 +375,7 @@ Bounce TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         return out;
     }
 
-    if (kind == REB_OBJECT) {
+    if (kind == TYPE_OBJECT) {
         //
         // !!! Contexts hold canon values now that are typed, this init
         // will assert--a TO conversion would thus need to copy the varlist
@@ -546,7 +546,7 @@ VarList* Copy_Context_Core_Managed(VarList* original, REBU64 types)
     // frame.  The pointer is NULLed out when the stack level completes.
     // If we're copying a frame here, we know it's not running.
     //
-    if (CTX_TYPE(original) == REB_FRAME)
+    if (CTX_TYPE(original) == TYPE_FRAME)
         MISC(varlist).meta = nullptr;
     else {
         // !!! Should the meta object be copied for other context types?
@@ -759,7 +759,7 @@ REBTYPE(Context)
 
     case SYM_REFLECT: {
         Option(SymId) sym = Cell_Word_Id(arg);
-        if (Type_Of(value) != REB_FRAME)
+        if (Type_Of(value) != TYPE_FRAME)
             break;
 
         Level* L = Level_Of_Varlist_May_Fail(c);
@@ -915,7 +915,7 @@ DECLARE_NATIVE(CONSTRUCT)
         Init_Object(
             OUT,
             Construct_Context_Managed(
-                REB_OBJECT,
+                TYPE_OBJECT,
                 Cell_List_At(body),
                 VAL_SPECIFIER(body),
                 Bool_ARG(WITH) ? Cell_Varlist(ARG(OTHER)) : nullptr
@@ -927,7 +927,7 @@ DECLARE_NATIVE(CONSTRUCT)
     if (Bool_ARG(WITH))
         return MAKE_With_Parent(OUT, Type_Of(ARG(OTHER)), body, ARG(OTHER));
 
-    return MAKE_With_Parent(OUT, REB_OBJECT, body, nullptr);
+    return MAKE_With_Parent(OUT, TYPE_OBJECT, body, nullptr);
 }
 
 
@@ -948,7 +948,7 @@ Bounce MAKE_With_Parent(
     VarList* context;
 
     if (
-        (target == REB_OBJECT or target == REB_MODULE)
+        (target == TYPE_OBJECT or target == TYPE_MODULE)
         and (Is_Block(body) or Is_Blank(body))
     ){
         // First we scan the object for top-level set words in
@@ -986,7 +986,7 @@ Bounce MAKE_With_Parent(
     //
     // !!! As with most R3-Alpha concepts, this needs review.
     //
-    if ((target == REB_OBJECT) && parent && Is_Object(body)) {
+    if ((target == TYPE_OBJECT) && parent && Is_Object(body)) {
         //
         // !!! Again, the presumption that the result of a merge is to
         // be selfish should not be hardcoded in the C, but part of

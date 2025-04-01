@@ -87,7 +87,7 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
-        if (kind == REB_ISSUE) {
+        if (kind == TYPE_ISSUE) {
             Erase_Cell(out);
             if (nullptr == Scan_Issue(out, bp, size))
                 fail (Error_Bad_Char_Raw(arg));
@@ -118,7 +118,7 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         );
     }
 
-    fail (Error_Unexpected_Type(REB_WORD, Type_Of(arg)));
+    fail (Error_Unexpected_Type(TYPE_WORD, Type_Of(arg)));
 }
 
 
@@ -144,31 +144,31 @@ void MF_Word(Molder* mo, const Cell* v, bool form) {
     Binary* s = mo->utf8flex;
 
     switch (Type_Of(v)) {
-    case REB_WORD: {
+    case TYPE_WORD: {
         Append_Utf8_Utf8(s, head, size);
         break; }
 
-    case REB_SET_WORD:
+    case TYPE_SET_WORD:
         Append_Utf8_Utf8(s, head, size);
         Append_Codepoint(s, ':');
         break;
 
-    case REB_GET_WORD:
+    case TYPE_GET_WORD:
         Append_Codepoint(s, ':');
         Append_Utf8_Utf8(s, head, size);
         break;
 
-    case REB_LIT_WORD:
+    case TYPE_LIT_WORD:
         Append_Codepoint(s, '\'');
         Append_Utf8_Utf8(s, head, size);
         break;
 
-    case REB_REFINEMENT:
+    case TYPE_REFINEMENT:
         Append_Codepoint(s, '/');
         Append_Utf8_Utf8(s, head, size);
         break;
 
-    case REB_ISSUE:
+    case TYPE_ISSUE:
         Append_Codepoint(s, '#');
         Append_Utf8_Utf8(s, head, size);
         break;

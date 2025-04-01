@@ -261,7 +261,7 @@ Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
         return series; }
 
     default:
-        fail (Error_Illegal_Action(REB_BINARY, verb));
+        fail (Error_Illegal_Action(TYPE_BINARY, verb));
     }
 
     // Copy the residual

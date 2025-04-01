@@ -26,7 +26,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A typeset is a collection of REB_XXX types, implemented as a 64-bit bitset.
+// A typeset is a collection of TYPE_XXX types, implemented as a 64-bit bitset.
 // (Though user-defined types would clearly require a different approach to
 // typechecking, using a bitset for built-in types could still be used as an
 // optimization for common parameter cases.)
@@ -39,9 +39,9 @@
 // called an "unword", but they lack bindings and have more technically
 // in common with the evolving requirements of typesets.
 //
-// If values beyond REB_MAX (but still < 64) are used in the bitset, they are
+// If values beyond TYPE_MAX (but still < 64) are used in the bitset, they are
 // "pseudotypes", which signal properties of the typeset when acting in a
-// paramlist or keylist.  REB_0 is also a pseduotype, as when the first bit
+// paramlist or keylist.  TYPE_0 is also a pseduotype, as when the first bit
 // (for 0) is set in the typeset, that means it is "<end>-able".
 //
 // !!! At present, a TYPESET! created with MAKE TYPESET! cannot set the
@@ -53,7 +53,7 @@
 
 
 #define IS_KIND_SYM(s) \
-    ((s) < cast(SymId, REB_MAX))
+    ((s) < cast(SymId, TYPE_MAX))
 
 INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
     assert(IS_KIND_SYM(s));
@@ -93,7 +93,7 @@ INLINE Symbol* Get_Type_Name(const Cell* value)
 // they have been called into question, as to exactly how copying mechanics
 // should work.
 
-#define TS_NOT_COPIED FLAGIT_KIND(REB_PORT)
+#define TS_NOT_COPIED FLAGIT_KIND(TYPE_PORT)
 
 #define TS_STD_SERIES \
     (TS_SERIES & ~TS_NOT_COPIED)
@@ -250,7 +250,7 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // header.  However, that gets somewhat cramped because three of those bits
 // are used for the PARAM_CLASS.
 //
-// Hence an alternative option is to use out-of-range of 1...REB_MAX datatypes
+// Hence an alternative option is to use out-of-range of 1...TYPE_MAX datatypes
 // as "psuedo-types" in the typeset bits.
 //
 // !!! An experiment switched to using entirely pseudo-type bits, so there was
@@ -265,9 +265,9 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // ordinary argument hit the end (e.g. the trick used for `>> help` when
 // the arity is 1 usually as `>> help foo`)
 //
-#define REB_TS_ENDABLE REB_0
+#define TYPE_TS_ENDABLE TYPE_0
 #define Is_Param_Endable(v) \
-    Typeset_Check((v), REB_TS_ENDABLE)
+    Typeset_Check((v), TYPE_TS_ENDABLE)
 
 // Indicates that when this parameter is fulfilled, it will do so with a
 // value of type VARARGS!, that actually just holds a pointer to the frame
@@ -278,24 +278,24 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // a VARARGS! type are different things.  (A function may accept a
 // variadic number of VARARGS! values, for instance.)
 //
-#define REB_TS_VARIADIC REB_MAX_PLUS_ONE
+#define TYPE_TS_VARIADIC TYPE_MAX_PLUS_ONE
 #define Is_Param_Variadic(v) \
-    Typeset_Check((v), REB_TS_VARIADIC)
+    Typeset_Check((v), TYPE_TS_VARIADIC)
 
 // Skippability is used on quoted arguments to indicate that they are willing
 // to "pass" on something that isn't a matching type.  This gives an ability
 // that a variadic doesn't have, which is to make decisions about rejecting
 // a parameter *before* the function body runs.
 //
-#define REB_TS_SKIPPABLE REB_MAX_PLUS_TWO
+#define TYPE_TS_SKIPPABLE TYPE_MAX_PLUS_TWO
 #define Is_Param_Skippable(v) \
-    Typeset_Check((v), REB_TS_SKIPPABLE)
+    Typeset_Check((v), TYPE_TS_SKIPPABLE)
 
 // Can't be reflected (set with PROTECT/HIDE) or local in spec as `foo:`
 //
-#define REB_TS_HIDDEN REB_MAX_PLUS_THREE
+#define TYPE_TS_HIDDEN TYPE_MAX_PLUS_THREE
 #define Is_Param_Hidden(v) \
-    Typeset_Check((v), REB_TS_HIDDEN)
+    Typeset_Check((v), TYPE_TS_HIDDEN)
 
 // Can't be bound to beyond the current bindings.
 //
@@ -309,17 +309,17 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // solution to separate the property of bindability from visibility, as
 // the SELF solution shakes out--so that SELF may be hidden but bind.
 //
-#define REB_TS_UNBINDABLE REB_MAX_PLUS_FOUR
+#define TYPE_TS_UNBINDABLE TYPE_MAX_PLUS_FOUR
 #define Is_Param_Unbindable(v) \
-    Typeset_Check((v), REB_TS_UNBINDABLE)
+    Typeset_Check((v), TYPE_TS_UNBINDABLE)
 
 // Parameters can be marked such that if they are blank, the action will not
 // be run at all.  This is done via the `<maybe>` annotation, which indicates
 // "handle blanks specially" (in contrast to BLANK!, which just means a
 // parameter can be passed in as a blank, and the function runs normally)
 //
-#define REB_TS_NOOP_IF_VOID \
-    REB_MAX_PLUS_FIVE
+#define TYPE_TS_NOOP_IF_VOID \
+    TYPE_MAX_PLUS_FIVE
 
 
 //=//// PARAMETER SYMBOL //////////////////////////////////////////////////=//

@@ -216,7 +216,7 @@ void Clonify_Values_Len_Managed(
             }
         }
         else if (
-            types & FLAGIT_KIND(Type_Of(v)) & FLAGIT_KIND(REB_ACTION)
+            types & FLAGIT_KIND(Type_Of(v)) & FLAGIT_KIND(TYPE_ACTION)
         ){
             // !!! While Ren-C has abandoned the concept of copying the body
             // of functions (they are black boxes which may not *have* a

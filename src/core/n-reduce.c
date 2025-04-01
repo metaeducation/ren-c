@@ -33,7 +33,7 @@
 static Value* Init_Lib_Word(Cell* out, SymId id) {
     return Init_Any_Word_Bound(
         out,
-        REB_WORD,
+        TYPE_WORD,
         Canon(id),
         Lib_Context,
         Find_Canon_In_Context(Lib_Context, Canon(id), false)

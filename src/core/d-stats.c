@@ -60,7 +60,7 @@ DECLARE_NATIVE(STATS)
     INCLUDE_PARAMS_OF_STATS;
 
     if (Bool_ARG(TIMER)) {
-        RESET_CELL(OUT, REB_TIME);
+        RESET_CELL(OUT, TYPE_TIME);
         VAL_NANO(OUT) = OS_DELTA_TIME(PG_Boot_Time) * 1000;
         return OUT;
     }
@@ -83,7 +83,7 @@ DECLARE_NATIVE(STATS)
         if (Is_Object(OUT)) {
             Value* stats = Cell_Varlist_VAR(OUT, 1);
 
-            RESET_CELL(stats, REB_TIME);
+            RESET_CELL(stats, TYPE_TIME);
             VAL_NANO(stats) = OS_DELTA_TIME(PG_Boot_Time) * 1000;
             stats++;
             Init_Integer(stats, Eval_Cycles + Eval_Dose - Eval_Count);

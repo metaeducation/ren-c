@@ -63,7 +63,7 @@ REBINT CT_Action(const Cell* a1, const Cell* a2, REBINT mode)
 //
 //  MAKE_Action: C
 //
-// For REB_ACTION and "make spec", there is a function spec block and then
+// For TYPE_ACTION and "make spec", there is a function spec block and then
 // a block of Rebol code implementing that function.  In that case we expect
 // that `def` should be:
 //
@@ -71,7 +71,7 @@ REBINT CT_Action(const Cell* a1, const Cell* a2, REBINT mode)
 //
 Bounce MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_ACTION);
+    assert(kind == TYPE_ACTION);
     UNUSED(kind);
 
     if (
@@ -80,7 +80,7 @@ Bounce MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
         or not Is_Block(Cell_List_At(arg))
         or not Is_Block(Cell_List_At(arg) + 1)
     ){
-        fail (Error_Bad_Make(REB_ACTION, arg));
+        fail (Error_Bad_Make(TYPE_ACTION, arg));
     }
 
     DECLARE_VALUE (spec);
@@ -114,7 +114,7 @@ Bounce MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 Bounce TO_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_ACTION);
+    assert(kind == TYPE_ACTION);
     UNUSED(kind);
 
     UNUSED(out);

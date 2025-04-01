@@ -106,7 +106,7 @@ void MF_Bitset(Molder* mo, const Cell* v, bool form)
 //
 Bounce MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_BITSET);
+    assert(kind == TYPE_BITSET);
     UNUSED(kind);
 
     REBINT len = Find_Max_Bit(arg);
@@ -157,20 +157,20 @@ REBINT Find_Max_Bit(const Cell* val)
 
     switch (Type_Of(val)) {
 
-    case REB_CHAR:
+    case TYPE_CHAR:
         maxi = VAL_CHAR(val) + 1;
         break;
 
-    case REB_INTEGER:
+    case TYPE_INTEGER:
         maxi = Int32s(val, 0);
         break;
 
-    case REB_TEXT:
-    case REB_FILE:
-    case REB_EMAIL:
-    case REB_URL:
-//  case REB_ISSUE:
-    case REB_TAG: {
+    case TYPE_TEXT:
+    case TYPE_FILE:
+    case TYPE_EMAIL:
+    case TYPE_URL:
+//  case TYPE_ISSUE:
+    case TYPE_TAG: {
         n = VAL_INDEX(val);
         Ucs2(const*) up = Cell_String_At(val);
         for (; n < cast(REBINT, VAL_LEN_HEAD(val)); n++) {
@@ -182,12 +182,12 @@ REBINT Find_Max_Bit(const Cell* val)
         maxi++;
         break; }
 
-    case REB_BINARY:
+    case TYPE_BINARY:
         maxi = Cell_Series_Len_At(val) * 8 - 1;
         if (maxi < 0) maxi = 0;
         break;
 
-    case REB_BLOCK:
+    case TYPE_BLOCK:
         for (val = Cell_List_At(val); NOT_END(val); val++) {
             n = Find_Max_Bit(val);
             if (n > maxi) maxi = n;
@@ -195,7 +195,7 @@ REBINT Find_Max_Bit(const Cell* val)
         //maxi++;
         break;
 
-    case REB_BLANK:
+    case TYPE_BLANK:
         maxi = 0;
         break;
 
@@ -335,7 +335,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     for (; NOT_END(item); item++) {
 
         switch (Type_Of(item)) {
-        case REB_CHAR: {
+        case TYPE_CHAR: {
             Ucs2Unit c = VAL_CHAR(item);
             if (
                 NOT_END(item + 1)
@@ -358,7 +358,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 Set_Bit(bset, c, set);
             break; }
 
-        case REB_INTEGER: {
+        case TYPE_INTEGER: {
             REBLEN n = Int32s(KNOWN(item), 0);
             if (n > MAX_BITSET)
                 return false;
@@ -383,17 +383,17 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 Set_Bit(bset, n, set);
             break; }
 
-        case REB_BINARY:
-        case REB_TEXT:
-        case REB_FILE:
-        case REB_EMAIL:
-        case REB_URL:
-        case REB_TAG:
-//      case REB_ISSUE:
+        case TYPE_BINARY:
+        case TYPE_TEXT:
+        case TYPE_FILE:
+        case TYPE_EMAIL:
+        case TYPE_URL:
+        case TYPE_TAG:
+//      case TYPE_ISSUE:
             Set_Bits(bset, KNOWN(item), set);
             break;
 
-        case REB_WORD: {
+        case TYPE_WORD: {
             // Special: BITS #{000...}
             if (not Is_Word(item) or Cell_Word_Id(item) != SYM_BITS)
                 return false;
@@ -464,7 +464,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
 
         switch (Type_Of(item)) {
 
-        case REB_CHAR: {
+        case TYPE_CHAR: {
             Ucs2Unit c = VAL_CHAR(item);
             if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN_1) {
                 item += 2;
@@ -484,7 +484,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
                     return true;
             break; }
 
-        case REB_INTEGER: {
+        case TYPE_INTEGER: {
             REBLEN n = Int32s(KNOWN(item), 0);
             if (n > 0xffff)
                 return false;
@@ -507,13 +507,13 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
                     return true;
             break; }
 
-        case REB_BINARY:
-        case REB_TEXT:
-        case REB_FILE:
-        case REB_EMAIL:
-        case REB_URL:
-        case REB_TAG:
-//      case REB_ISSUE:
+        case TYPE_BINARY:
+        case TYPE_TEXT:
+        case TYPE_FILE:
+        case TYPE_EMAIL:
+        case TYPE_URL:
+        case TYPE_TAG:
+//      case TYPE_ISSUE:
             if (Check_Bits(bset, KNOWN(item), uncased))
                 return true;
             break;
@@ -703,7 +703,7 @@ REBTYPE(Bitset)
 
         Init_Any_Series_At(
             OUT,
-            REB_BITSET,
+            TYPE_BITSET,
             Copy_Sequence_At_Position(value),
             VAL_INDEX(value) // !!! can bitset ever not be at 0?
         );
@@ -728,7 +728,7 @@ REBTYPE(Bitset)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_BITSET, verb));
+    fail (Error_Illegal_Action(TYPE_BITSET, verb));
 
   return_bitset:;
 

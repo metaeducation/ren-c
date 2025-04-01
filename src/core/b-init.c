@@ -147,8 +147,8 @@ static void Assert_Basics(void)
         panic ("bad structure alignment for internal array termination");
     }
 
-    // While REB_MAX indicates the maximum user-visible type, there are a
-    // list of REB_MAX_PLUS_ONE, REB_MAX_PLUS_TWO, etc. values which are used
+    // While TYPE_MAX indicates the maximum user-visible type, there are a
+    // list of TYPE_MAX_PLUS_ONE, TYPE_MAX_PLUS_TWO, etc. values which are used
     // for special internal states and flags.  Some of these are used in the
     // KIND_BYTE() of value cells to mark their usage of alternate payloads
     // during algorithmic transformations (e.g. specialization).  Others are
@@ -157,7 +157,7 @@ static void Assert_Basics(void)
     //
     // Some rethinking would be necessary if this number exceeds 64.
     //
-    assert(REB_MAX_PLUS_MAX < 64);
+    assert(TYPE_MAX_PLUS_MAX < 64);
 }
 
 
@@ -242,29 +242,29 @@ static void Startup_Sys(Array* boot_sys) {
 // the integer datatype value).  Returns an array of words for the added
 // datatypes to use in SYSTEM/CATALOG/DATATYPES
 //
-// Note the type enum starts at 1 (REB_ACTION), given that REB_0 is used
-// for special purposes and not correspond to a user-visible type.  REB_MAX is
+// Note the type enum starts at 1 (TYPE_ACTION), given that TYPE_0 is used
+// for special purposes and not correspond to a user-visible type.  TYPE_MAX is
 // used for NULL, and also not value type.  Hence the total number of types is
-// REB_MAX - 1.
+// TYPE_MAX - 1.
 //
 static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
 {
-    if (Array_Len(boot_types) != REB_MAX - 1)
-        panic (boot_types); // Every REB_XXX but REB_0 should have a WORD!
+    if (Array_Len(boot_types) != TYPE_MAX - 1)
+        panic (boot_types); // Every TYPE_XXX but TYPE_0 should have a WORD!
 
     Cell* word = Array_Head(boot_types);
 
     if (Cell_Word_Id(word) != SYM_ACTION_X)
         panic (word); // First type should be ACTION!
 
-    Array* catalog = Make_Array(REB_MAX - 1);
+    Array* catalog = Make_Array(TYPE_MAX - 1);
 
     REBINT n;
     for (n = 1; NOT_END(word); word++, n++) {
-        assert(n < REB_MAX);
+        assert(n < TYPE_MAX);
 
         Value* value = Append_Context(Lib_Context, KNOWN(word), nullptr);
-        RESET_CELL(value, REB_DATATYPE);
+        RESET_CELL(value, TYPE_DATATYPE);
         CELL_DATATYPE_TYPE(value) = cast(enum Reb_Kind, n);
         CELL_DATATYPE_SPEC(value) = Cell_Array(Array_At(boot_typespecs, n - 1));
 
@@ -427,7 +427,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
 
 static Value* Make_Locked_Tag(const char *utf8) { // helper
     Value* t = rebText(utf8);
-    RESET_CELL(t, REB_TAG);
+    RESET_CELL(t, TYPE_TAG);
 
     Flex* locker = nullptr;
     Force_Value_Frozen_Deep(t, locker);
@@ -483,7 +483,7 @@ static void Init_Action_Meta_Shim(void) {
         SYM_SELF, SYM_DESCRIPTION, SYM_RETURN_TYPE, SYM_RETURN_NOTE,
         SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
-    VarList* meta = Alloc_Context_Core(REB_OBJECT, 6, NODE_FLAG_MANAGED);
+    VarList* meta = Alloc_Context_Core(TYPE_OBJECT, 6, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 7; ++i)
         Init_Nulled(Append_Context(meta, nullptr, Canon(field_syms[i - 1])));
@@ -698,7 +698,7 @@ static Array* Startup_Natives(const Value* boot_natives)
         Set_Cell_Flag(&Natives[n], PROTECTED);
 
         Value* catalog_item = Copy_Cell(Alloc_Tail_Array(catalog), name);
-        CHANGE_VAL_TYPE_BITS(catalog_item, REB_WORD);
+        CHANGE_VAL_TYPE_BITS(catalog_item, TYPE_WORD);
 
         if (Cell_Word_Id(name) == SYM_GENERIC)
             generic_word = name;
@@ -759,7 +759,7 @@ static Array* Startup_Generics(const Value* boot_generics)
     for (; NOT_END(item); ++item)
         if (Is_Set_Word(item)) {
             Derelativize(PUSH(), item, specifier);
-            CHANGE_VAL_TYPE_BITS(TOP, REB_WORD); // change pushed to WORD!
+            CHANGE_VAL_TYPE_BITS(TOP, TYPE_WORD); // change pushed to WORD!
         }
 
     return Pop_Stack_Values(base);  // catalog of generics
@@ -850,24 +850,24 @@ static void Init_Root_Vars(void)
 
     Erase_Cell(&PG_Bounce_Thrown[0]);
     Erase_Cell(&PG_Bounce_Thrown[1]);
-    RESET_CELL(&PG_Bounce_Thrown[0], REB_R_THROWN);
+    RESET_CELL(&PG_Bounce_Thrown[0], TYPE_R_THROWN);
     Poison_Cell(&PG_Bounce_Thrown[1]);
 
     Erase_Cell(&PG_Bounce_Invisible[0]);
     Erase_Cell(&PG_Bounce_Invisible[1]);
-    RESET_CELL(&PG_Bounce_Invisible[0], REB_R_INVISIBLE);
+    RESET_CELL(&PG_Bounce_Invisible[0], TYPE_R_INVISIBLE);
     Poison_Cell(&PG_Bounce_Invisible[1]);
 
     Erase_Cell(&PG_Bounce_Immediate[0]);
     Erase_Cell(&PG_Bounce_Immediate[1]);
-    RESET_CELL(&PG_Bounce_Immediate[0], REB_R_IMMEDIATE);
+    RESET_CELL(&PG_Bounce_Immediate[0], TYPE_R_IMMEDIATE);
     Poison_Cell(&PG_Bounce_Immediate[1]);
 
     Erase_Cell(&PG_Bounce_Redo_Unchecked[0]);
     Erase_Cell(&PG_Bounce_Redo_Unchecked[1]);
     Reset_Cell_Header(
         &PG_Bounce_Redo_Unchecked[0],
-        REB_R_REDO,
+        TYPE_R_REDO,
         CELL_FLAG_FALSEY // understood by Eval_Core_Throws() as "unchecked"
     );
     Poison_Cell(&PG_Bounce_Redo_Unchecked[1]);
@@ -876,14 +876,14 @@ static void Init_Root_Vars(void)
     Erase_Cell(&PG_Bounce_Redo_Checked[1]);
     Reset_Cell_Header(
         &PG_Bounce_Redo_Checked[0],
-        REB_R_REDO,
+        TYPE_R_REDO,
         0 // no CELL_FLAG_FALSEY is taken by Eval_Core_Throws() as "checked"
     );
     Poison_Cell(&PG_Bounce_Redo_Checked[1]);
 
     Erase_Cell(&PG_Bounce_Reference[0]);
     Erase_Cell(&PG_Bounce_Reference[1]);
-    RESET_CELL(&PG_Bounce_Reference[0], REB_R_REFERENCE);
+    RESET_CELL(&PG_Bounce_Reference[0], TYPE_R_REFERENCE);
     Poison_Cell(&PG_Bounce_Reference[1]);
 
     Flex* locker = nullptr;
@@ -956,7 +956,7 @@ static void Init_System_Object(
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
     VarList* system = Make_Selfish_Context_Detect_Managed(
-        REB_OBJECT, // type
+        TYPE_OBJECT, // type
         Cell_List_At(boot_sysobj_spec), // scan for toplevel set-words
         nullptr  // parent
     );
@@ -1012,7 +1012,7 @@ static void Init_System_Object(
     //
     Init_Object(
         Get_System(SYS_CODECS, 0),
-        Alloc_Context_Core(REB_OBJECT, 10, NODE_FLAG_MANAGED)
+        Alloc_Context_Core(TYPE_OBJECT, 10, NODE_FLAG_MANAGED)
     );
 
     // The "standard error" template was created as an OBJECT!, because the
@@ -1021,10 +1021,10 @@ static void Init_System_Object(
     //
     Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
     assert(Is_Object(std_error));
-    CHANGE_VAL_TYPE_BITS(std_error, REB_ERROR);
-    CHANGE_VAL_TYPE_BITS(Varlist_Archetype(Cell_Varlist(std_error)), REB_ERROR);
+    CHANGE_VAL_TYPE_BITS(std_error, TYPE_ERROR);
+    CHANGE_VAL_TYPE_BITS(Varlist_Archetype(Cell_Varlist(std_error)), TYPE_ERROR);
     assert(CTX_KEY_SYM(Cell_Varlist(std_error), 1) == SYM_SELF);
-    CHANGE_VAL_TYPE_BITS(Cell_Varlist_VAR(std_error, 1), REB_ERROR);
+    CHANGE_VAL_TYPE_BITS(Cell_Varlist_VAR(std_error, 1), TYPE_ERROR);
 }
 
 void Shutdown_System_Object(void)
@@ -1239,7 +1239,7 @@ void Startup_Core(void)
 
     // The timer tick starts at 1, not 0.  This is because the debug build
     // uses signed timer ticks to double as an extra bit of information in
-    // REB_BLANK cells to indicate they are "unreadable".
+    // TYPE_BLANK cells to indicate they are "unreadable".
     //
   #if DEBUG_COUNT_TICKS
     TG_Tick = 1;
@@ -1414,10 +1414,10 @@ void Startup_Core(void)
 
     // !!! Have MAKE-BOOT compute # of words
     //
-    Lib_Context = Alloc_Context_Core(REB_OBJECT, 600, NODE_FLAG_MANAGED);
+    Lib_Context = Alloc_Context_Core(TYPE_OBJECT, 600, NODE_FLAG_MANAGED);
     Push_GC_Guard(Lib_Context);
 
-    Sys_Context = Alloc_Context_Core(REB_OBJECT, 50, NODE_FLAG_MANAGED);
+    Sys_Context = Alloc_Context_Core(TYPE_OBJECT, 50, NODE_FLAG_MANAGED);
     Push_GC_Guard(Sys_Context);
 
     Array* datatypes_catalog = Startup_Datatypes(

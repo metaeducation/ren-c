@@ -292,7 +292,7 @@ REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
     return Type_Of(s) - Type_Of(t);
 
 diff_of_ends:
-    // Treat end as if it were a REB_xxx type of 0, so all other types would
+    // Treat end as if it were a TYPE_xxx type of 0, so all other types would
     // compare larger than it.
     //
     if (IS_END(s)) {
@@ -321,7 +321,7 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool is_case)
     assert(NOT_END(s) and NOT_END(t));
 
     switch(Type_Of(s)) {
-    case REB_INTEGER:
+    case TYPE_INTEGER:
         if (Is_Decimal(t)) {
             d1 = cast(REBDEC, VAL_INT64(s));
             d2 = VAL_DECIMAL(t);
@@ -329,16 +329,16 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool is_case)
         }
         return THE_SIGN(VAL_INT64(s) - VAL_INT64(t));
 
-    case REB_LOGIC:
+    case TYPE_LOGIC:
         return VAL_LOGIC(s) - VAL_LOGIC(t);
 
-    case REB_CHAR:
+    case TYPE_CHAR:
         if (is_case)
             return THE_SIGN(VAL_CHAR(s) - VAL_CHAR(t));
         return THE_SIGN((REBINT)(UP_CASE(VAL_CHAR(s)) - UP_CASE(VAL_CHAR(t))));
 
-    case REB_PERCENT:
-    case REB_DECIMAL:
+    case TYPE_PERCENT:
+    case TYPE_DECIMAL:
         d1 = VAL_DECIMAL(s);
         if (Is_Integer(t))
             d2 = cast(REBDEC, VAL_INT64(t));
@@ -351,63 +351,63 @@ chkDecimal:
             return -1;
         return 1;
 
-    case REB_PAIR:
+    case TYPE_PAIR:
         return Cmp_Pair(s, t);
 
-    case REB_EVENT:
+    case TYPE_EVENT:
         return Cmp_Event(s, t);
 
-    case REB_TUPLE:
+    case TYPE_TUPLE:
         return Cmp_Tuple(s, t);
 
-    case REB_TIME:
+    case TYPE_TIME:
         return Cmp_Time(s, t);
 
-    case REB_DATE:
+    case TYPE_DATE:
         return Cmp_Date(s, t);
 
-    case REB_BLOCK:
-    case REB_GROUP:
-    case REB_MAP:
-    case REB_PATH:
-    case REB_SET_PATH:
-    case REB_GET_PATH:
-    case REB_LIT_PATH:
+    case TYPE_BLOCK:
+    case TYPE_GROUP:
+    case TYPE_MAP:
+    case TYPE_PATH:
+    case TYPE_SET_PATH:
+    case TYPE_GET_PATH:
+    case TYPE_LIT_PATH:
         return Cmp_Array(s, t, is_case);
 
-    case REB_TEXT:
-    case REB_FILE:
-    case REB_EMAIL:
-    case REB_URL:
-    case REB_TAG:
+    case TYPE_TEXT:
+    case TYPE_FILE:
+    case TYPE_EMAIL:
+    case TYPE_URL:
+    case TYPE_TAG:
         return Compare_String_Vals(s, t, not is_case);
 
-    case REB_BITSET:
-    case REB_BINARY:
+    case TYPE_BITSET:
+    case TYPE_BINARY:
         return Compare_Binary_Vals(s, t);
 
-    case REB_DATATYPE:
+    case TYPE_DATATYPE:
         return CELL_DATATYPE_TYPE(s) - CELL_DATATYPE_TYPE(t);
 
-    case REB_WORD:
-    case REB_SET_WORD:
-    case REB_GET_WORD:
-    case REB_LIT_WORD:
-    case REB_REFINEMENT:
-    case REB_ISSUE:
+    case TYPE_WORD:
+    case TYPE_SET_WORD:
+    case TYPE_GET_WORD:
+    case TYPE_LIT_WORD:
+    case TYPE_REFINEMENT:
+    case TYPE_ISSUE:
         return Compare_Word(s,t,is_case);
 
-    case REB_ERROR:
-    case REB_OBJECT:
-    case REB_MODULE:
-    case REB_PORT:
+    case TYPE_ERROR:
+    case TYPE_OBJECT:
+    case TYPE_MODULE:
+    case TYPE_PORT:
         return Cell_Varlist(s) - Cell_Varlist(t);
 
-    case REB_ACTION:
+    case TYPE_ACTION:
         return VAL_ACT_PARAMLIST(s) - VAL_ACT_PARAMLIST(t);
 
-    case REB_BLANK:
-    case REB_MAX_NULLED:
+    case TYPE_BLANK:
+    case TYPE_MAX_NULLED:
     default:
         break;
 

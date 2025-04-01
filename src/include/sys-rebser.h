@@ -355,7 +355,7 @@ STATIC_ASSERT(FLEX_INFO_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 
 //=//// FLEX_INFO_4_IS_FALSE //////////////////////////////////////////////=//
 //
-// The second info byte is REB_0 to indicate an END.  That helps reads know
+// The second info byte is TYPE_0 to indicate an END.  That helps reads know
 // there is an END for in-situ enumeration.  But as an added bit of safety,
 // we make sure the bit pattern in the info header also doesn't look like
 // a cell at all by having a 0 bit in the NODE_FLAG_CELL spot.

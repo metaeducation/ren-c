@@ -49,7 +49,7 @@ REBINT CT_Port(const Cell* a, const Cell* b, REBINT mode)
 //
 Bounce MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_PORT);
+    assert(kind == TYPE_PORT);
     UNUSED(kind);
 
     const bool fully = true; // error if not all arguments consumed
@@ -74,11 +74,11 @@ Bounce MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 Bounce TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_PORT);
+    assert(kind == TYPE_PORT);
     UNUSED(kind);
 
     if (!Is_Object(arg))
-        fail (Error_Bad_Make(REB_PORT, arg));
+        fail (Error_Bad_Make(TYPE_PORT, arg));
 
     // !!! cannot convert TO a PORT! without copying the whole context...
     // which raises the question of why convert an object to a port,
@@ -86,7 +86,7 @@ Bounce TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
     // system/standard/port is made with CONTEXT and not with MAKE PORT!
     //
     VarList* context = Copy_Context_Shallow_Managed(Cell_Varlist(arg));
-    RESET_CELL(Varlist_Archetype(context), REB_PORT);
+    RESET_CELL(Varlist_Archetype(context), TYPE_PORT);
 
     return Init_Port(out, context);
 }

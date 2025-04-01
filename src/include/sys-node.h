@@ -277,8 +277,8 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
         return DETECTED_AS_UTF8;  // < 0x80 is string w/1st char in ASCII range
 
     if (not (b & NODE_BYTEMASK_0x40_UNREADABLE)) {  // test for 10xxxxxx
-        if (SECOND_BYTE(p) == REB_0)  // !!! Wasteful legacy bootstrap idea
-            return DETECTED_AS_END;  // !!! Modern EXE has no REB_END
+        if (SECOND_BYTE(p) == TYPE_0)  // !!! Wasteful legacy bootstrap idea
+            return DETECTED_AS_END;  // !!! Modern EXE has no TYPE_END
 
         if (b & NODE_BYTEMASK_0x08_CELL)  // 10xxxxxx never starts UTF-8
             return DETECTED_AS_CELL;

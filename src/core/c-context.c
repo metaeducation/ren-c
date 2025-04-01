@@ -497,7 +497,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
     for (; NOT_END(v); ++v) {
         enum Reb_Kind kind = Type_Of(v);
         if (Any_Word_Kind(kind)) {
-            if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
+            if (kind != TYPE_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue; // kind of word we're not interested in collecting
 
             Symbol* canon = VAL_WORD_CANON(v);
@@ -534,7 +534,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
         // them which could need to be collected.  This is historical R3-Alpha
         // behavior which is probably wrong.
         //
-        if (kind == REB_BLOCK or kind == REB_GROUP)
+        if (kind == TYPE_BLOCK or kind == TYPE_GROUP)
             Collect_Inner_Loop(cl, Cell_List_At(v));
     }
 }
@@ -598,9 +598,9 @@ Array* Collect_Keylist_Managed(
             );
 
             // !!! See notes on the flags about why SELF is set hidden but
-            // not unbindable with REB_TS_UNBINDABLE.
+            // not unbindable with TYPE_TS_UNBINDABLE.
             //
-            Set_Typeset_Flag(self_key, REB_TS_HIDDEN);
+            Set_Typeset_Flag(self_key, TYPE_TS_HIDDEN);
 
             assert(cl->index == 1);
             Add_Binder_Index(&cl->binder, Key_Canon(self_key), cl->index);
@@ -978,7 +978,7 @@ Array* Context_To_Array(VarList* context, REBINT mode)
             if (mode & 1) {
                 Init_Any_Word_Bound(
                     PUSH(),
-                    (mode & 2) ? REB_SET_WORD : REB_WORD,
+                    (mode & 2) ? TYPE_SET_WORD : TYPE_WORD,
                     Key_Symbol(key),
                     context,
                     n
