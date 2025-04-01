@@ -107,8 +107,8 @@ static Bounce Transport_Actor(
         case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
 
-            UNUSED(ARG(value)); // covered by `port`
-            Option(SymId) property = Cell_Word_Id(ARG(property));
+            UNUSED(ARG(VALUE)); // covered by `port`
+            Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
             assert(property != SYM_0);
 
             switch (property) {
@@ -209,8 +209,8 @@ static Bounce Transport_Actor(
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value)); // covered by `port`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE)); // covered by `port`
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -258,18 +258,18 @@ static Bounce Transport_Actor(
     case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
+        UNUSED(PARAM(SOURCE));
 
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(seek)) {
-            UNUSED(ARG(index));
+        if (Bool_ARG(SEEK)) {
+            UNUSED(ARG(INDEX));
             fail (Error_Bad_Refines_Raw());
         }
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(STRING)); // handled in dispatcher
+        UNUSED(PARAM(LINES)); // handled in dispatcher
 
         // Read data into a buffer, expanding the buffer if needed.
         // If no length is given, program must stop it at some point.
@@ -322,19 +322,19 @@ static Bounce Transport_Actor(
     case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
 
-        UNUSED(PAR(destination));
+        UNUSED(PARAM(DESTINATION));
 
-        if (REF(seek)) {
-            UNUSED(ARG(index));
+        if (Bool_ARG(SEEK)) {
+            UNUSED(ARG(INDEX));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(append))
+        if (Bool_ARG(APPEND))
             fail (Error_Bad_Refines_Raw());
-        if (REF(allow)) {
-            UNUSED(ARG(access));
+        if (Bool_ARG(ALLOW)) {
+            UNUSED(ARG(ACCESS));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(lines))
+        if (Bool_ARG(LINES))
             fail (Error_Bad_Refines_Raw());
 
         // Write the entire argument string to the network.
@@ -348,11 +348,11 @@ static Bounce Transport_Actor(
         }
 
         // Determine length. Clip /PART to size of string if needed.
-        Value* data = ARG(data);
+        Value* data = ARG(DATA);
 
         REBLEN len = Cell_Series_Len_At(data);
-        if (REF(part)) {
-            REBLEN n = Int32s(ARG(limit), 0);
+        if (Bool_ARG(PART)) {
+            REBLEN n = Int32s(ARG(LIMIT), 0);
             if (n <= len)
                 len = n;
         }
@@ -415,17 +415,17 @@ static Bounce Transport_Actor(
 
     case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
-        UNUSED(PAR(series));
+        UNUSED(PARAM(SERIES));
 
         if (not (sock->modes & RST_LISTEN) or (sock->modes & RST_UDP))
             fail ("TAKE is only available on TCP LISTEN ports");
 
-        UNUSED(REF(part)); // non-null limit accounts for
+        UNUSED(Bool_ARG(PART)); // non-null limit accounts for
 
         return rebValue(
-            "take/part/(", ARG(deep), ")/(", ARG(last), ")",
+            "take/part/(", ARG(DEEP), ")/(", ARG(LAST), ")",
                 Varlist_Slot(ctx, STD_PORT_CONNECTIONS),
-                ARG(limit)
+                ARG(LIMIT)
         ); }
 
     case SYM_PICK: {
@@ -507,7 +507,7 @@ static Bounce UDP_Actor(Level* level_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_tcp_actor_handle)
+DECLARE_NATIVE(GET_TCP_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &TCP_Actor);
     return OUT;
@@ -522,7 +522,7 @@ DECLARE_NATIVE(get_tcp_actor_handle)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_udp_actor_handle)
+DECLARE_NATIVE(GET_UDP_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &UDP_Actor);
     return OUT;
@@ -545,7 +545,7 @@ DECLARE_NATIVE(get_udp_actor_handle)
 //          {Leave the group (default is to add)}
 //  ]
 //
-DECLARE_NATIVE(set_udp_multicast)
+DECLARE_NATIVE(SET_UDP_MULTICAST)
 //
 // !!! SET-MODES was never standardized or implemented for R3-Alpha, so there
 // was no RDC_MODIFY written.  While it is tempting to just go ahead and
@@ -567,7 +567,7 @@ DECLARE_NATIVE(set_udp_multicast)
 {
     INCLUDE_PARAMS_OF_SET_UDP_MULTICAST;
 
-    REBREQ *sock = Ensure_Port_State(ARG(port), RDI_NET);
+    REBREQ *sock = Ensure_Port_State(ARG(PORT), RDI_NET);
 
     sock->common.data = cast(Byte*, level_);
 
@@ -577,9 +577,9 @@ DECLARE_NATIVE(set_udp_multicast)
     //
     sock->flags = 3171;
 
-    UNUSED(ARG(group));
-    UNUSED(ARG(member));
-    UNUSED(REF(drop));
+    UNUSED(ARG(GROUP));
+    UNUSED(ARG(MEMBER));
+    UNUSED(Bool_ARG(DROP));
 
     OS_DO_DEVICE_SYNC(sock, RDC_MODIFY);
     return nullptr;
@@ -598,11 +598,11 @@ DECLARE_NATIVE(set_udp_multicast)
 //          {0 = local machine only, 1 = subnet (default), or up to 255}
 //  ]
 //
-DECLARE_NATIVE(set_udp_ttl)
+DECLARE_NATIVE(SET_UDP_TTL)
 {
     INCLUDE_PARAMS_OF_SET_UDP_TTL;
 
-    REBREQ *sock = Ensure_Port_State(ARG(port), RDI_NET);
+    REBREQ *sock = Ensure_Port_State(ARG(PORT), RDI_NET);
 
     sock->common.data = cast(Byte*, level_);
 
@@ -612,7 +612,7 @@ DECLARE_NATIVE(set_udp_ttl)
     //
     sock->flags = 2365;
 
-    UNUSED(ARG(ttl));
+    UNUSED(ARG(TTL));
 
     OS_DO_DEVICE_SYNC(sock, RDC_MODIFY);
     return nullptr;

@@ -55,30 +55,30 @@
 //          "-1 for all pools"
 //  ]
 //
-DECLARE_NATIVE(stats)
+DECLARE_NATIVE(STATS)
 {
     INCLUDE_PARAMS_OF_STATS;
 
-    if (REF(timer)) {
+    if (Bool_ARG(TIMER)) {
         RESET_CELL(OUT, REB_TIME);
         VAL_NANO(OUT) = OS_DELTA_TIME(PG_Boot_Time) * 1000;
         return OUT;
     }
 
-    if (REF(evals)) {
+    if (Bool_ARG(EVALS)) {
         REBI64 n = Eval_Cycles + Eval_Dose - Eval_Count;
         return Init_Integer(OUT, n);
     }
 
 #if NO_RUNTIME_CHECKS
-    UNUSED(REF(show));
-    UNUSED(REF(profile));
-    UNUSED(REF(dump_series));
-    UNUSED(ARG(pool_id));
+    UNUSED(Bool_ARG(SHOW));
+    UNUSED(Bool_ARG(PROFILE));
+    UNUSED(Bool_ARG(DUMP_SERIES));
+    UNUSED(ARG(POOL_ID));
 
     fail (Error_Debug_Only_Raw());
 #else
-    if (REF(profile)) {
+    if (Bool_ARG(PROFILE)) {
         Copy_Cell(OUT, Get_System(SYS_STANDARD, STD_STATS));
         if (Is_Object(OUT)) {
             Value* stats = Cell_Varlist_VAR(OUT, 1);
@@ -113,16 +113,16 @@ DECLARE_NATIVE(stats)
         return OUT;
     }
 
-    if (REF(dump_series)) {
-        Value* pool_id = ARG(pool_id);
+    if (Bool_ARG(DUMP_SERIES)) {
+        Value* pool_id = ARG(POOL_ID);
         Dump_Flex_In_Pool(VAL_INT32(pool_id));
         return nullptr;
     }
 
-    if (REF(show))
+    if (Bool_ARG(SHOW))
         Dump_Pools();
 
-    return Init_Integer(OUT, Inspect_Flex(REF(show)));
+    return Init_Integer(OUT, Inspect_Flex(Bool_ARG(SHOW)));
 #endif
 }
 
@@ -141,7 +141,7 @@ DECLARE_NATIVE(stats)
 //          {Currently just either ON or OFF}
 //  ]
 //
-DECLARE_NATIVE(callgrind)
+DECLARE_NATIVE(CALLGRIND)
 //
 // Note: In order to start callgrind without collecting data by default (so
 // that you can instrument just part of the code) use:
@@ -153,7 +153,7 @@ DECLARE_NATIVE(callgrind)
     INCLUDE_PARAMS_OF_CALLGRIND;
 
   #if defined(INCLUDE_CALLGRIND_NATIVE)
-    switch (Cell_Word_Id(ARG(instruction))) {
+    switch (Cell_Word_Id(ARG(INSTRUCTION))) {
     case SYM_ON:
         CALLGRIND_START_INSTRUMENTATION;
         CALLGRIND_TOGGLE_COLLECT;
@@ -169,7 +169,7 @@ DECLARE_NATIVE(callgrind)
     }
     return Init_Nothing(OUT);
   #else
-    UNUSED(ARG(instruction));
+    UNUSED(ARG(INSTRUCTION));
     fail ("This executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");
   #endif
 }

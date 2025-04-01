@@ -593,8 +593,8 @@ REBTYPE(Bitset)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value)); // covered by `value`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE)); // covered by `value`
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -616,28 +616,28 @@ REBTYPE(Bitset)
     case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
 
-        UNUSED(PAR(series));
-        UNUSED(PAR(value));
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        UNUSED(PARAM(SERIES));
+        UNUSED(PARAM(VALUE));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(only))
+        if (Bool_ARG(ONLY))
             fail (Error_Bad_Refines_Raw());
-        if (REF(skip)) {
-            UNUSED(ARG(size));
+        if (Bool_ARG(SKIP)) {
+            UNUSED(ARG(SIZE));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(last))
+        if (Bool_ARG(LAST))
             fail (Error_Bad_Refines_Raw());
-        if (REF(reverse))
+        if (Bool_ARG(REVERSE))
             fail (Error_Bad_Refines_Raw());
-        if (REF(tail))
+        if (Bool_ARG(TAIL))
             fail (Error_Bad_Refines_Raw());
-        if (REF(match))
+        if (Bool_ARG(MATCH))
             fail (Error_Bad_Refines_Raw());
 
-        if (not Check_Bits(Cell_Bitset(value), arg, REF(case)))
+        if (not Check_Bits(Cell_Bitset(value), arg, Bool_ARG(CASE)))
             return nullptr;
         return Init_Nothing(OUT);
     }
@@ -672,32 +672,32 @@ REBTYPE(Bitset)
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
-        UNUSED(PAR(series));
-        if (REF(map)) {
-            UNUSED(ARG(key));
+        UNUSED(PARAM(SERIES));
+        if (Bool_ARG(MAP)) {
+            UNUSED(ARG(KEY));
             fail (Error_Bad_Refines_Raw());
         }
 
-        if (not REF(part))
+        if (not Bool_ARG(PART))
             fail (Error_Missing_Arg_Raw());
 
-        if (not Set_Bits(Cell_Bitset(value), ARG(limit), false))
-            fail (ARG(limit));
+        if (not Set_Bits(Cell_Bitset(value), ARG(LIMIT), false))
+            fail (ARG(LIMIT));
 
         goto return_bitset; }
 
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        UNUSED(PARAM(VALUE));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(deep))
+        if (Bool_ARG(DEEP))
             fail (Error_Bad_Refines_Raw());
-        if (REF(types)) {
-            UNUSED(ARG(kinds));
+        if (Bool_ARG(TYPES)) {
+            UNUSED(ARG(KINDS));
             fail (Error_Bad_Refines_Raw());
         }
 

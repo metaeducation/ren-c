@@ -172,7 +172,7 @@ INLINE bool Is_Level_Gotten_Shoved(Level* L) {
     if (L->gotten != Level_Shove(L))
         return false;
     assert(Get_Cell_Flag(L->gotten, INFIX_IF_ACTION));
-    return true; // see DECLARE_NATIVE(shove)
+    return true; // see DECLARE_NATIVE(SHOVE)
 }
 
 #define LVL_PHASE_OR_DUMMY(L) \
@@ -298,7 +298,7 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 //     PARAM(1, foo);
 //     REFINE(2, bar);
 //
-//     if (Is_Integer(ARG(foo)) and REF(bar)) { ... }
+//     if (Is_Integer(ARG(FOO)) and Bool_ARG(BAR)) { ... }
 //
 // Though REF can only be used with a REFINE() declaration, ARG can be used
 // with either.  By contract, Rebol functions are allowed to mutate their
@@ -311,7 +311,7 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 // the release build.  Under optimization they disappear completely, so that
 // addressing is done directly into the call frame's cached `arg` pointer.
 // It is also possible to get the typeset-with-symbol for a particular
-// parameter or refinement, e.g. with `PAR(foo)` or `PAR(bar)`.
+// parameter or refinement, e.g. with `PARAM(FOO)` or `PARAM(BAR)`.
 //
 // The PARAM and REFINE macros use token pasting to name the variables they
 // are declaring `p_name` instead of just `name`.  This prevents collisions
@@ -327,20 +327,20 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 //
 
 #if NO_RUNTIME_CHECKS
-    #define PARAM(n,name) \
+    #define DECLARE_PARAM(n,name) \
         static const int p_##name = n
 
-    #define REFINE(n,name) \
+    #define DECLARE_REFINE(n,name) \
         static const int p_##name = n
 
     #define ARG(name) \
-        Level_Arg(level_, (p_##name))
+        Level_Arg(level_, p_##name)
 
-    #define PAR(name) \
-        ACT_PARAM(Level_Phase(level_), (p_##name)) /* a TYPESET! */
+    #define PARAM(name) \
+        ACT_PARAM(Level_Phase(level_), p_##name) /* a TYPESET! */
 
-    #define REF(name) \
-        (not Is_Blank(ARG(name))) /* should be faster than IS_FALSEY() */
+    #define Bool_ARG(name) \
+        (not Is_Blank(Level_Arg(level_, p_##name)))
 #else
     struct Native_Param {
         int num;
@@ -357,13 +357,13 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
     // Note: Assigning non-const initializers to structs, e.g. `= {var, f()};`
     // is a non-standard extension to C.  So we break out the assignments.
 
-    #define PARAM(n,name) \
+    #define DECLARE_PARAM(n,name) \
         struct Native_Param p_##name; \
         p_##name.num = (n); \
         p_##name.kind_cache = VAL_TYPE(Level_Arg(level_, (n))); \
         p_##name.arg = Level_Arg(level_, (n)); \
 
-    #define REFINE(n,name) \
+    #define DECLARE_REFINE(n,name) \
         struct Native_Refine p_##name; \
         p_##name.num = (n); \
         p_##name.used_cache = IS_TRUTHY(Level_Arg(level_, (n))); \
@@ -372,13 +372,13 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
     #define ARG(name) \
         Level_Arg(level_, (p_##name).num)
 
-    #define PAR(name) \
+    #define PARAM(name) \
         ACT_PARAM(Level_Phase(level_), (p_##name).num) /* a TYPESET! */
 
-    #define REF(name) \
-        ((p_##name).used_cache /* used_cache use stops REF() on PARAM()s */ \
-            ? not Is_Blank(ARG(name)) \
-            : not Is_Blank(ARG(name)))
+    #define Bool_ARG(name) \
+        ((p_##name).used_cache /* stops Bool_ARG() on DECLARE_PARAM()s */ \
+            ? not Is_Blank(Level_Arg(level_, (p_##name).num)) \
+            : not Is_Blank(Level_Arg(level_, (p_##name).num)))
 #endif
 
 
@@ -428,7 +428,7 @@ INLINE void Begin_Action(
 
 
 // Allocate the series of REBVALs inspected by a function when executed (the
-// values behind ARG(name), REF(name), D_ARG(3),  etc.)
+// values behind ARG(NAME), Bool_ARG(NAME), D_ARG(3),  etc.)
 //
 // This only allocates space for the arguments, it does not initialize.
 // Eval_Core initializes as it goes, and updates L->param so the GC knows how

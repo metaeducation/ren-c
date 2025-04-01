@@ -692,8 +692,8 @@ REBTYPE(Map)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value)); // covered by `val`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE)); // covered by `val`
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -722,26 +722,26 @@ REBTYPE(Map)
     case SYM_SELECT: {
         INCLUDE_PARAMS_OF_FIND;
 
-        UNUSED(PAR(series));
-        UNUSED(PAR(value)); // handled as `arg`
+        UNUSED(PARAM(SERIES));
+        UNUSED(PARAM(VALUE)); // handled as `arg`
 
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(only))
+        if (Bool_ARG(ONLY))
             fail (Error_Bad_Refines_Raw());
-        if (REF(skip)) {
-            UNUSED(ARG(size));
+        if (Bool_ARG(SKIP)) {
+            UNUSED(ARG(SIZE));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(last))
+        if (Bool_ARG(LAST))
             fail (Error_Bad_Refines_Raw());
-        if (REF(reverse))
+        if (Bool_ARG(REVERSE))
             fail (Error_Bad_Refines_Raw());
-        if (REF(tail))
+        if (Bool_ARG(TAIL))
             fail (Error_Bad_Refines_Raw());
-        if (REF(match))
+        if (Bool_ARG(MATCH))
             fail (Error_Bad_Refines_Raw());
 
         REBINT n = Find_Map_Entry(
@@ -750,7 +750,7 @@ REBTYPE(Map)
             SPECIFIED,
             nullptr,
             SPECIFIED,
-            REF(case)
+            Bool_ARG(CASE)
         );
 
         if (n == 0)
@@ -768,19 +768,19 @@ REBTYPE(Map)
 
     case SYM_PUT: {
         INCLUDE_PARAMS_OF_PUT;
-        UNUSED(ARG(series)); // extracted to `map`
+        UNUSED(ARG(SERIES)); // extracted to `map`
 
         REBINT n = Find_Map_Entry(
             map,
-            ARG(key),
+            ARG(KEY),
             SPECIFIED,
-            ARG(value),
+            ARG(VALUE),
             SPECIFIED,
-            REF(case)
+            Bool_ARG(CASE)
         );
         UNUSED(n);
 
-        RETURN (ARG(value)); }
+        RETURN (ARG(VALUE)); }
 
     case SYM_INSERT:
     case SYM_APPEND: {
@@ -793,23 +793,23 @@ REBTYPE(Map)
 
         Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));
 
-        UNUSED(PAR(series));
-        UNUSED(PAR(value)); // handled as arg
+        UNUSED(PARAM(SERIES));
+        UNUSED(PARAM(VALUE)); // handled as arg
 
-        if (REF(only))
+        if (Bool_ARG(ONLY))
             fail (Error_Bad_Refines_Raw());
-        if (REF(line))
+        if (Bool_ARG(LINE))
             fail (Error_Bad_Refines_Raw());
-        if (REF(dup)) {
-            UNUSED(ARG(count));
+        if (Bool_ARG(DUP)) {
+            UNUSED(ARG(COUNT));
             fail (Error_Bad_Refines_Raw());
         }
 
         if (not Is_Block(arg))
             fail (Error_Invalid(arg));
 
-        REBLEN len = Part_Len_May_Modify_Index(arg, ARG(limit));
-        UNUSED(REF(part)); // detected by if limit is nulled
+        REBLEN len = Part_Len_May_Modify_Index(arg, ARG(LIMIT));
+        UNUSED(Bool_ARG(PART)); // detected by if limit is nulled
 
         Append_Map(
             map,
@@ -826,40 +826,40 @@ REBTYPE(Map)
 
         Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(SERIES));
 
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
-        if (not REF(map))
+        if (not Bool_ARG(MAP))
             fail (Error_Illegal_Action(REB_MAP, verb));
 
         Copy_Cell(OUT, val);
         Find_Map_Entry(
-            map, ARG(key), SPECIFIED, NULLED_CELL, SPECIFIED, true
+            map, ARG(KEY), SPECIFIED, NULLED_CELL, SPECIFIED, true
         );
         return OUT; }
 
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        UNUSED(PARAM(VALUE));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
 
         REBU64 types = 0; // which types to copy non-"shallowly"
 
-        if (REF(deep))
-            types |= REF(types) ? 0 : TS_CLONE;
+        if (Bool_ARG(DEEP))
+            types |= Bool_ARG(TYPES) ? 0 : TS_CLONE;
 
-        if (REF(types)) {
-            if (Is_Datatype(ARG(kinds)))
-                types |= FLAGIT_KIND(VAL_TYPE(ARG(kinds)));
+        if (Bool_ARG(TYPES)) {
+            if (Is_Datatype(ARG(KINDS)))
+                types |= FLAGIT_KIND(VAL_TYPE(ARG(KINDS)));
             else
-                types |= VAL_TYPESET_BITS(ARG(kinds));
+                types |= VAL_TYPESET_BITS(ARG(KINDS));
         }
 
         return Init_Map(OUT, Copy_Map(map, types)); }

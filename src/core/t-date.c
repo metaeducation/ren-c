@@ -955,14 +955,14 @@ REBTYPE(Date)
         case SYM_RANDOM: {
             INCLUDE_PARAMS_OF_RANDOM;
 
-            UNUSED(PAR(value));
+            UNUSED(PARAM(VALUE));
 
-            if (REF(only))
+            if (Bool_ARG(ONLY))
                 fail (Error_Bad_Refines_Raw());
 
-            const bool secure = REF(secure);
+            const bool secure = Bool_ARG(SECURE);
 
-            if (REF(seed)) {
+            if (Bool_ARG(SEED)) {
                 //
                 // Note that nsecs not set often for dates (requires /precise)
                 //
@@ -992,15 +992,15 @@ REBTYPE(Date)
         case SYM_DIFFERENCE: {
             INCLUDE_PARAMS_OF_DIFFERENCE;
 
-            Value* val1 = ARG(value1);
-            Value* val2 = ARG(value2);
+            Value* val1 = ARG(VALUE1);
+            Value* val2 = ARG(VALUE2);
 
-            if (REF(case))
+            if (Bool_ARG(CASE))
                 fail (Error_Bad_Refines_Raw());
 
-            if (REF(skip))
+            if (Bool_ARG(SKIP))
                 fail (Error_Bad_Refines_Raw());
-            UNUSED(PAR(size));
+            UNUSED(PARAM(SIZE));
 
             // !!! Plain SUBTRACT on dates has historically given INTEGER! of
             // days, while DIFFERENCE has given back a TIME!.  This is not
@@ -1058,7 +1058,7 @@ setDate:
 //      zone [integer!]
 //  ]
 //
-DECLARE_NATIVE(make_date_ymdsnz)
+DECLARE_NATIVE(MAKE_DATE_YMDSNZ)
 //
 // !!! This native exists to avoid adding specialized C routines to the API
 // for the purposes of date creation in NOW.  Ideally there would be a nicer
@@ -1070,16 +1070,16 @@ DECLARE_NATIVE(make_date_ymdsnz)
     INCLUDE_PARAMS_OF_MAKE_DATE_YMDSNZ;
 
     RESET_CELL(OUT, REB_DATE);
-    VAL_YEAR(OUT) = VAL_INT32(ARG(year));
-    VAL_MONTH(OUT) = VAL_INT32(ARG(month));
-    VAL_DAY(OUT) = VAL_INT32(ARG(day));
+    VAL_YEAR(OUT) = VAL_INT32(ARG(YEAR));
+    VAL_MONTH(OUT) = VAL_INT32(ARG(MONTH));
+    VAL_DAY(OUT) = VAL_INT32(ARG(DAY));
 
     Set_Cell_Flag(OUT, DATE_HAS_ZONE);
-    INIT_VAL_ZONE(OUT, VAL_INT32(ARG(zone)) / ZONE_MINS);
+    INIT_VAL_ZONE(OUT, VAL_INT32(ARG(ZONE)) / ZONE_MINS);
 
     Set_Cell_Flag(OUT, DATE_HAS_TIME);
     VAL_NANO(OUT)
-        = SECS_TO_NANO(VAL_INT64(ARG(seconds))) + VAL_INT64(ARG(nano));
+        = SECS_TO_NANO(VAL_INT64(ARG(SECONDS))) + VAL_INT64(ARG(NANO));
 
     return OUT;
 }

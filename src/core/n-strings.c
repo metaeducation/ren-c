@@ -109,11 +109,11 @@ static struct {
 //      /tail "Include delimiter at tail of result (if non-NULL)"
 //  ]
 //
-DECLARE_NATIVE(delimit)
+DECLARE_NATIVE(DELIMIT)
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
-    Value* line = ARG(line);
+    Value* line = ARG(LINE);
     if (Is_Text(line))
         return rebValue("copy", line);  // !!! Review performance
 
@@ -124,17 +124,17 @@ DECLARE_NATIVE(delimit)
         Cell_Array(line),
         VAL_INDEX(line),
         VAL_SPECIFIER(line),
-        ARG(delimiter)
+        ARG(DELIMITER)
     )){
         return BOUNCE_THROWN;
     }
 
-    if (Is_Nulled(OUT) or not REF(tail))
+    if (Is_Nulled(OUT) or not Bool_ARG(TAIL))
         return OUT;
 
     assert(Is_Text(OUT));
 
-    return rebValue("append", OUT, ARG(delimiter));
+    return rebValue("append", OUT, ARG(DELIMITER));
 }
 
 
@@ -166,31 +166,31 @@ DECLARE_NATIVE(delimit)
 //          "Key to use"
 //  ]
 //
-DECLARE_NATIVE(checksum)
+DECLARE_NATIVE(CHECKSUM)
 {
     INCLUDE_PARAMS_OF_CHECKSUM;
 
-    Value* arg = ARG(data);
+    Value* arg = ARG(DATA);
 
-    REBLEN len = Part_Len_May_Modify_Index(arg, ARG(limit));
-    UNUSED(REF(part)); // checked by if limit is nulled
+    REBLEN len = Part_Len_May_Modify_Index(arg, ARG(LIMIT));
+    UNUSED(Bool_ARG(PART)); // checked by if limit is nulled
 
     Byte *data = VAL_RAW_DATA_AT(arg); // after Partial() in case of change
     REBLEN wide = Flex_Wide(Cell_Flex(arg));
 
     SymId sym;
-    if (REF(method)) {
-        sym = maybe Cell_Word_Id(ARG(word));
+    if (Bool_ARG(METHOD)) {
+        sym = maybe Cell_Word_Id(ARG(WORD));
         if (sym == SYM_0) // not in %words.r, no SYM_XXX constant
-            fail (Error_Invalid(ARG(word)));
+            fail (Error_Invalid(ARG(WORD)));
     }
     else
         sym = SYM_SHA1;
 
     // If method, secure, or key... find matching digest:
-    if (REF(method) || REF(secure) || REF(key)) {
+    if (Bool_ARG(METHOD) || Bool_ARG(SECURE) || Bool_ARG(KEY)) {
         if (sym == SYM_CRC32) {
-            if (REF(secure) || REF(key))
+            if (Bool_ARG(SECURE) || Bool_ARG(KEY))
                 fail (Error_Bad_Refines_Raw());
 
             // CRC32 is typically an unsigned 32-bit number and uses the full
@@ -203,7 +203,7 @@ DECLARE_NATIVE(checksum)
         }
 
         if (sym == SYM_ADLER32) {
-            if (REF(secure) || REF(key))
+            if (Bool_ARG(SECURE) || Bool_ARG(KEY))
                 fail (Error_Bad_Refines_Raw());
 
             // adler32() is a Saphirion addition since 64-bit INTEGER! was
@@ -221,10 +221,10 @@ DECLARE_NATIVE(checksum)
 
             Binary* digest = Make_Binary(digests[i].len + 1);
 
-            if (not REF(key))
+            if (not Bool_ARG(KEY))
                 digests[i].digest(data, len, Binary_Head(digest));
             else {
-                Value* key = ARG(key_value);
+                Value* key = ARG(KEY_VALUE);
 
                 REBLEN blocklen = digests[i].hmacblock;
 
@@ -284,14 +284,14 @@ DECLARE_NATIVE(checksum)
             return Init_Blob(OUT, digest);
         }
 
-        fail (Error_Invalid(ARG(word)));
+        fail (Error_Invalid(ARG(WORD)));
     }
-    else if (REF(tcp)) {
+    else if (Bool_ARG(TCP)) {
         REBINT ipc = Compute_IPC(data, len);
         Init_Integer(OUT, ipc);
     }
-    else if (REF(hash)) {
-        REBINT sum = VAL_INT32(ARG(size));
+    else if (Bool_ARG(HASH)) {
+        REBINT sum = VAL_INT32(ARG(SIZE));
         if (sum <= 1)
             sum = 1;
 
@@ -322,14 +322,14 @@ DECLARE_NATIVE(checksum)
 //          {ZLIB (adler32, no size) or GZIP (crc32, uncompressed size)}
 //  ]
 //
-DECLARE_NATIVE(deflate)
+DECLARE_NATIVE(DEFLATE)
 {
     INCLUDE_PARAMS_OF_DEFLATE;
 
-    Value* data = ARG(data);
+    Value* data = ARG(DATA);
 
-    REBLEN len = Part_Len_May_Modify_Index(data, ARG(limit));
-    UNUSED(PAR(part)); // checked by if limit is nulled
+    REBLEN len = Part_Len_May_Modify_Index(data, ARG(LIMIT));
+    UNUSED(PARAM(PART)); // checked by if limit is nulled
 
     Size size;
     Byte *bp;
@@ -344,17 +344,17 @@ DECLARE_NATIVE(deflate)
     }
 
     Symbol* envelope;
-    if (not REF(envelope))
+    if (not Bool_ARG(ENVELOPE))
         envelope = Canon(SYM_NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
-        envelope = Cell_Word_Symbol(ARG(format));
+        envelope = Cell_Word_Symbol(ARG(FORMAT));
         switch (Symbol_Id(envelope)) {
           case SYM_ZLIB:
           case SYM_GZIP:
             break;
 
           default:
-            fail (Error_Invalid(ARG(format)));
+            fail (Error_Invalid(ARG(FORMAT)));
         }
     }
 
@@ -389,38 +389,38 @@ DECLARE_NATIVE(deflate)
 //          {ZLIB, GZIP, or DETECT (for http://stackoverflow.com/a/9213826)}
 //  ]
 //
-DECLARE_NATIVE(inflate)
+DECLARE_NATIVE(INFLATE)
 {
     INCLUDE_PARAMS_OF_INFLATE;
 
-    Value* data = ARG(data);
+    Value* data = ARG(DATA);
 
     REBINT max;
-    if (REF(max)) {
-        max = Int32s(ARG(bound), 1);
+    if (Bool_ARG(MAX)) {
+        max = Int32s(ARG(BOUND), 1);
         if (max < 0)
-            fail (Error_Invalid(ARG(bound)));
+            fail (Error_Invalid(ARG(BOUND)));
     }
     else
         max = -1;
 
     // v-- measured in bytes (length of a BINARY!)
-    REBLEN len = Part_Len_May_Modify_Index(data, ARG(limit));
-    UNUSED(REF(part)); // checked by if limit is nulled
+    REBLEN len = Part_Len_May_Modify_Index(data, ARG(LIMIT));
+    UNUSED(Bool_ARG(PART)); // checked by if limit is nulled
 
     Symbol* envelope;
-    if (not REF(envelope))
+    if (not Bool_ARG(ENVELOPE))
         envelope = Canon(SYM_NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
-        switch (Cell_Word_Id(ARG(format))) {
+        switch (Cell_Word_Id(ARG(FORMAT))) {
           case SYM_ZLIB:
           case SYM_GZIP:
           case SYM_DETECT:
-            envelope = Cell_Word_Symbol(ARG(format));
+            envelope = Cell_Word_Symbol(ARG(FORMAT));
             break;
 
           default:
-            fail (Error_Invalid(ARG(format)));
+            fail (Error_Invalid(ARG(FORMAT)));
         }
     }
 
@@ -452,24 +452,24 @@ DECLARE_NATIVE(inflate)
 //          "The base to convert from: 64, 16, or 2"
 //  ]
 //
-DECLARE_NATIVE(debase)
+DECLARE_NATIVE(DEBASE)
 {
     INCLUDE_PARAMS_OF_DEBASE;
 
     Size offset;
     Size size;
     Binary* temp = Temp_UTF8_At_Managed(
-        &offset, &size, ARG(value), Cell_Series_Len_At(ARG(value))
+        &offset, &size, ARG(VALUE), Cell_Series_Len_At(ARG(VALUE))
     );
 
     REBINT base = 64;
-    if (REF(base))
-        base = VAL_INT32(ARG(base_value));
+    if (Bool_ARG(BASE))
+        base = VAL_INT32(ARG(BASE_VALUE));
     else
         base = 64;
 
     if (!Decode_Binary(OUT, Binary_At(temp, offset), size, base, 0))
-        fail (Error_Invalid_Data_Raw(ARG(value)));
+        fail (Error_Invalid_Data_Raw(ARG(VALUE)));
 
     return OUT;
 }
@@ -489,17 +489,17 @@ DECLARE_NATIVE(debase)
 //          "The base to convert to: 64, 16, or 2"
 //  ]
 //
-DECLARE_NATIVE(enbase)
+DECLARE_NATIVE(ENBASE)
 {
     INCLUDE_PARAMS_OF_ENBASE;
 
     REBINT base;
-    if (REF(base))
-        base = VAL_INT32(ARG(base_value));
+    if (Bool_ARG(BASE))
+        base = VAL_INT32(ARG(BASE_VALUE));
     else
         base = 64;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     Size size;
     Byte *bp;
@@ -530,7 +530,7 @@ DECLARE_NATIVE(enbase)
         break;
 
     default:
-        fail (Error_Invalid(ARG(base_value)));
+        fail (Error_Invalid(ARG(BASE_VALUE)));
     }
 
     // !!! Enbasing code is common with how a BINARY! molds out.  That needed
@@ -558,7 +558,7 @@ DECLARE_NATIVE(enbase)
 //          "String to encode, all non-ASCII or illegal URL bytes encoded"
 //  ]
 //
-DECLARE_NATIVE(enhex)
+DECLARE_NATIVE(ENHEX)
 {
     INCLUDE_PARAMS_OF_ENHEX;
 
@@ -575,7 +575,7 @@ DECLARE_NATIVE(enhex)
             "-._~:/?#[]@!$&'()*+,;=";
   #endif
 
-    REBLEN len = Cell_Series_Len_At(ARG(string));
+    REBLEN len = Cell_Series_Len_At(ARG(STRING));
 
     DECLARE_MOLDER (mo);
     Push_Mold (mo);
@@ -593,9 +593,9 @@ DECLARE_NATIVE(enhex)
     //
     Byte *dp = Prep_Mold_Overestimated(mo, len * 12);
 
-    Flex* s = Cell_Flex(ARG(string));
+    Flex* s = Cell_Flex(ARG(STRING));
 
-    REBLEN i = VAL_INDEX(ARG(string));
+    REBLEN i = VAL_INDEX(ARG(STRING));
     for (; i < len; ++i) {
         Ucs2Unit c = GET_ANY_CHAR(s, i);
 
@@ -705,7 +705,7 @@ DECLARE_NATIVE(enhex)
 
     return Init_Any_Series(
         OUT,
-        VAL_TYPE(ARG(string)),
+        VAL_TYPE(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -722,11 +722,11 @@ DECLARE_NATIVE(enhex)
 //          "See http://en.wikipedia.org/wiki/Percent-encoding"
 //  ]
 //
-DECLARE_NATIVE(dehex)
+DECLARE_NATIVE(DEHEX)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
-    REBLEN len = Cell_Series_Len_At(ARG(string));
+    REBLEN len = Cell_Series_Len_At(ARG(STRING));
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -743,9 +743,9 @@ DECLARE_NATIVE(dehex)
     Byte scan[5];
     Size scan_size = 0;
 
-    Flex* s = Cell_Flex(ARG(string));
+    Flex* s = Cell_Flex(ARG(STRING));
 
-    REBLEN i = VAL_INDEX(ARG(string));
+    REBLEN i = VAL_INDEX(ARG(STRING));
 
     Ucs2Unit c = GET_ANY_CHAR(s, i);
     while (i < len) {
@@ -837,7 +837,7 @@ DECLARE_NATIVE(dehex)
 
     return Init_Any_Series(
         OUT,
-        VAL_TYPE(ARG(string)),
+        VAL_TYPE(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -855,13 +855,13 @@ DECLARE_NATIVE(dehex)
 //          {Return block of lines (works for LF, CR, CR-LF endings)}
 //  ]
 //
-DECLARE_NATIVE(deline)
+DECLARE_NATIVE(DELINE)
 {
     INCLUDE_PARAMS_OF_DELINE;
 
-    Value* val = ARG(string);
+    Value* val = ARG(STRING);
 
-    if (REF(lines))
+    if (Bool_ARG(LINES))
         return Init_Block(OUT, Split_Lines(val));
 
     String* s = Cell_String(val);
@@ -891,7 +891,7 @@ DECLARE_NATIVE(deline)
 
     Term_String_Len(s, len_head);
 
-    RETURN (ARG(string));
+    RETURN (ARG(STRING));
 }
 
 
@@ -904,11 +904,11 @@ DECLARE_NATIVE(deline)
 //      string [any-string!] "(modified)"
 //  ]
 //
-DECLARE_NATIVE(enline)
+DECLARE_NATIVE(ENLINE)
 {
     INCLUDE_PARAMS_OF_ENLINE;
 
-    Value* val = ARG(string);
+    Value* val = ARG(STRING);
 
     String* flex = Cell_String(val);
     REBLEN idx = VAL_INDEX(val);
@@ -938,7 +938,7 @@ DECLARE_NATIVE(enline)
     }
 
     if (delta == 0)
-        RETURN (ARG(string)); // nothing to do
+        RETURN (ARG(STRING)); // nothing to do
 
     Expand_Flex_Tail(flex, delta);
 
@@ -966,7 +966,7 @@ DECLARE_NATIVE(enline)
         --len;
     }
 
-    RETURN (ARG(string));
+    RETURN (ARG(STRING));
 }
 
 
@@ -982,15 +982,15 @@ DECLARE_NATIVE(enline)
 //      number [integer!]
 //  ]
 //
-DECLARE_NATIVE(entab)
+DECLARE_NATIVE(ENTAB)
 {
     INCLUDE_PARAMS_OF_ENTAB;
 
-    Value* val = ARG(string);
+    Value* val = ARG(STRING);
 
     REBINT tabsize;
-    if (REF(size))
-        tabsize = Int32s(ARG(number), 1);
+    if (Bool_ARG(SIZE))
+        tabsize = Int32s(ARG(NUMBER), 1);
     else
         tabsize = TAB_SIZE;
 
@@ -1057,17 +1057,17 @@ DECLARE_NATIVE(entab)
 //      number [integer!]
 //  ]
 //
-DECLARE_NATIVE(detab)
+DECLARE_NATIVE(DETAB)
 {
     INCLUDE_PARAMS_OF_DETAB;
 
-    Value* val = ARG(string);
+    Value* val = ARG(STRING);
 
     REBLEN len = Cell_Series_Len_At(val);
 
     REBINT tabsize;
-    if (REF(size))
-        tabsize = Int32s(ARG(number), 1);
+    if (Bool_ARG(SIZE))
+        tabsize = Int32s(ARG(NUMBER), 1);
     else
         tabsize = TAB_SIZE;
 
@@ -1136,12 +1136,12 @@ DECLARE_NATIVE(detab)
 //      limit [any-number! any-string!]
 //  ]
 //
-DECLARE_NATIVE(lowercase)
+DECLARE_NATIVE(LOWERCASE)
 {
     INCLUDE_PARAMS_OF_LOWERCASE;
 
-    UNUSED(REF(part)); // checked by if limit is null
-    Change_Case(OUT, ARG(string), ARG(limit), false);
+    UNUSED(Bool_ARG(PART)); // checked by if limit is null
+    Change_Case(OUT, ARG(STRING), ARG(LIMIT), false);
     return OUT;
 }
 
@@ -1158,12 +1158,12 @@ DECLARE_NATIVE(lowercase)
 //      limit [any-number! any-string!]
 //  ]
 //
-DECLARE_NATIVE(uppercase)
+DECLARE_NATIVE(UPPERCASE)
 {
     INCLUDE_PARAMS_OF_UPPERCASE;
 
-    UNUSED(REF(part)); // checked by if limit is nulled
-    Change_Case(OUT, ARG(string), ARG(limit), true);
+    UNUSED(Bool_ARG(PART)); // checked by if limit is nulled
+    Change_Case(OUT, ARG(STRING), ARG(LIMIT), true);
     return OUT;
 }
 
@@ -1180,21 +1180,21 @@ DECLARE_NATIVE(uppercase)
 //      len [integer!]
 //  ]
 //
-DECLARE_NATIVE(to_hex)
+DECLARE_NATIVE(TO_HEX)
 {
     INCLUDE_PARAMS_OF_TO_HEX;
 
-    Value* arg = ARG(value);
+    Value* arg = ARG(VALUE);
 
     Byte buffer[(MAX_TUPLE * 2) + 4];  // largest value possible
 
     Byte *buf = &buffer[0];
 
     REBINT len;
-    if (REF(size)) {
-        len = cast(REBINT, VAL_INT64(ARG(len)));
+    if (Bool_ARG(SIZE)) {
+        len = cast(REBINT, VAL_INT64(ARG(LEN)));
         if (len < 0)
-            fail (Error_Invalid(ARG(len)));
+            fail (Error_Invalid(ARG(LEN)));
     }
     else
         len = -1;
@@ -1240,11 +1240,11 @@ DECLARE_NATIVE(to_hex)
 //      script [binary!]
 //  ]
 //
-DECLARE_NATIVE(find_script)
+DECLARE_NATIVE(FIND_SCRIPT)
 {
     INCLUDE_PARAMS_OF_FIND_SCRIPT;
 
-    Value* arg = ARG(script);
+    Value* arg = ARG(SCRIPT);
 
     REBINT offset = Scan_Header(Cell_Blob_At(arg), Cell_Series_Len_At(arg));
     if (offset == -1)
@@ -1264,11 +1264,11 @@ DECLARE_NATIVE(find_script)
 //      data [binary!]
 //  ]
 //
-DECLARE_NATIVE(invalid_utf8_q)
+DECLARE_NATIVE(INVALID_UTF8_Q)
 {
     INCLUDE_PARAMS_OF_INVALID_UTF8_Q;
 
-    Value* arg = ARG(data);
+    Value* arg = ARG(DATA);
 
     Byte *bp = Check_UTF8(Cell_Blob_At(arg), Cell_Series_Len_At(arg));
     if (not bp)

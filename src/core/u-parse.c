@@ -233,7 +233,7 @@ static bool Subparse_Throws(
 
     Push_Level_Core(L); // checks for C stack overflow
     Reuse_Varlist_If_Available(L);
-    Push_Action(L, NAT_ACTION(subparse), UNBOUND);
+    Push_Action(L, NAT_ACTION(SUBPARSE), UNBOUND);
 
     Begin_Action(L, Canon(SYM_SUBPARSE), m_cast(Value*, END_NODE));
 
@@ -257,9 +257,9 @@ static bool Subparse_Throws(
     Init_Nulled(Erase_Cell(Level_Args_Head(L) + 2));
 
   #if NO_RUNTIME_CHECKS
-    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 3); // elides RETURN:
+    assert(ACT_NUM_PARAMS(NAT_ACTION(SUBPARSE)) == 3); // elides RETURN:
   #else
-    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 4); // checks RETURN:
+    assert(ACT_NUM_PARAMS(NAT_ACTION(SUBPARSE)) == 4); // checks RETURN:
     Init_Nulled(Erase_Cell(Level_Args_Head(L) + 3));
   #endif
 
@@ -267,7 +267,7 @@ static bool Subparse_Throws(
     // vs. going through the evaluator, we don't get the opportunity to do
     // things like HIJACK it.  Consider APPLY-ing it.
     //
-    const Value* r = N_subparse(L);
+    const Value* r = (NATIVE_CFUNC(SUBPARSE))(L);
     assert(NOT_END(out));
 
     Drop_Action(L);
@@ -287,14 +287,14 @@ static bool Subparse_Throws(
         // ignored by most callers, but makes that fact more apparent.
         //
         if (Is_Action(out)) {
-            if (VAL_ACTION(out) == NAT_ACTION(parse_reject)) {
+            if (VAL_ACTION(out) == NAT_ACTION(PARSE_REJECT)) {
                 CATCH_THROWN(out, out);
                 assert(Is_Nulled(out));
                 *interrupted_out = true;
                 return false;
             }
 
-            if (VAL_ACTION(out) == NAT_ACTION(parse_break)) {
+            if (VAL_ACTION(out) == NAT_ACTION(PARSE_BREAK)) {
                 CATCH_THROWN(out, out);
                 assert(Is_Integer(out));
                 *interrupted_out = true;
@@ -1230,7 +1230,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 //      <local> num-quotes
 //  ]
 //
-DECLARE_NATIVE(subparse)
+DECLARE_NATIVE(SUBPARSE)
 //
 // Rules are matched until one of these things happens:
 //
@@ -1260,12 +1260,12 @@ DECLARE_NATIVE(subparse)
 //
 {
     INCLUDE_PARAMS_OF_SUBPARSE;
-    UNUSED(ARG(find_flags));  // !!! access via macro
+    UNUSED(ARG(FIND_FLAGS));  // !!! access via macro
 
     Level* L = level_; // nice alias of implicit native parameter
 
-    Set_Parse_Series(L, ARG(input));  // doesn't reset, just checks
-    UNUSED(ARG(num_quotes));  // Set_Parse_Series sets this
+    Set_Parse_Series(L, ARG(INPUT));  // doesn't reset, just checks
+    UNUSED(ARG(NUM_QUOTES));  // Set_Parse_Series sets this
 
     assert(IS_END(P_OUT)); // invariant provided by evaluator
 
@@ -1648,7 +1648,7 @@ DECLARE_NATIVE(subparse)
                         else
                             fail ("PARSE3 ACCEPT only works with GROUP! and <here>");
 
-                        Copy_Cell(P_OUT, NAT_VALUE(parse_accept));
+                        Copy_Cell(P_OUT, NAT_VALUE(PARSE_ACCEPT));
                         CONVERT_NAME_TO_THROWN(P_OUT, thrown_arg);
                         return BOUNCE_THROWN; }
 
@@ -1660,7 +1660,7 @@ DECLARE_NATIVE(subparse)
                         //
                         DECLARE_VALUE (thrown_arg);
                         Init_Integer(thrown_arg, P_POS);
-                        Copy_Cell(P_OUT, NAT_VALUE(parse_break));
+                        Copy_Cell(P_OUT, NAT_VALUE(PARSE_BREAK));
 
                         // Unfortunately, when the warnings are set all the
                         // way high for uninitialized variable use, the
@@ -1678,7 +1678,7 @@ DECLARE_NATIVE(subparse)
                         //
                         // Similarly, this is a break/continue style "throw"
                         //
-                        Copy_Cell(P_OUT, NAT_VALUE(parse_reject));
+                        Copy_Cell(P_OUT, NAT_VALUE(PARSE_REJECT));
                         CONVERT_NAME_TO_THROWN(P_OUT, NULLED_CELL);
                         return BOUNCE_THROWN;
                     }
@@ -2461,7 +2461,7 @@ DECLARE_NATIVE(subparse)
 //      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"
 //  ]
 //
-DECLARE_NATIVE(parse)
+DECLARE_NATIVE(PARSE)
 //
 // 1. In modern Ren-C beyond this bootstrap branch, PARSE is designed to
 //    extract and synthesize results, e.g.:
@@ -2477,19 +2477,19 @@ DECLARE_NATIVE(parse)
 {
     INCLUDE_PARAMS_OF_PARSE;
 
-    Value* input = ARG(input);
-    Value* rules = ARG(rules);
+    Value* input = ARG(INPUT);
+    Value* rules = ARG(RULES);
 
     bool interrupted;
     if (Subparse_Throws(
         &interrupted,
         OUT,
-        ARG(input),
+        ARG(INPUT),
         SPECIFIED, // input is a non-relative Value
         rules,
         SPECIFIED, // rules is a non-relative Value
-        (REF(case) or Is_Binary(ARG(input)) ? AM_FIND_CASE : 0)
-            | (REF(redbol) ? PF_REDBOL : 0)
+        (Bool_ARG(CASE) or Is_Binary(ARG(INPUT)) ? AM_FIND_CASE : 0)
+            | (Bool_ARG(REDBOL) ? PF_REDBOL : 0)
         //
         // We always want "case-sensitivity" on binary bytes, vs. treating
         // as case-insensitive bytes for ASCII characters.
@@ -2500,7 +2500,7 @@ DECLARE_NATIVE(parse)
         assert(THROWN(OUT));
         if (Is_Action(OUT)) {
             if (
-                VAL_ACTION(OUT) == NAT_ACTION(parse_accept)
+                VAL_ACTION(OUT) == NAT_ACTION(PARSE_ACCEPT)
                 // !!! no binding check that it's this parse, not definitional
                 // (but it's an outdated PARSE so not worth worrying about)
             ){
@@ -2513,7 +2513,7 @@ DECLARE_NATIVE(parse)
     }
 
     if (Is_Nulled(OUT)) {
-        if (REF(match))
+        if (Bool_ARG(MATCH))
             return nullptr;
         fail (Error_Parse_Mismatch_Raw(rules));
     }
@@ -2521,12 +2521,12 @@ DECLARE_NATIVE(parse)
     REBLEN progress = VAL_UINT32(OUT);
     assert(progress <= VAL_LEN_HEAD(input));
     if (progress < VAL_LEN_HEAD(input)) {
-        if (REF(match))
+        if (Bool_ARG(MATCH))
             return nullptr;
         fail (Error_Parse_Incomplete_Raw(rules));
     }
 
-    if (REF(match))
+    if (Bool_ARG(MATCH))
         return Copy_Cell(OUT, input);
 
     return Init_Nothing(OUT);  // should be synthesized value, see [1]
@@ -2540,7 +2540,7 @@ DECLARE_NATIVE(parse)
 //
 //  ]
 //
-DECLARE_NATIVE(parse_accept)
+DECLARE_NATIVE(PARSE_ACCEPT)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "accept".
@@ -2557,7 +2557,7 @@ DECLARE_NATIVE(parse_accept)
 //
 //  ]
 //
-DECLARE_NATIVE(parse_reject)
+DECLARE_NATIVE(PARSE_REJECT)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "reject".
@@ -2574,7 +2574,7 @@ DECLARE_NATIVE(parse_reject)
 //
 //  ]
 //
-DECLARE_NATIVE(parse_break)
+DECLARE_NATIVE(PARSE_BREAK)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "break".

@@ -864,11 +864,11 @@ Bounce Specializer_Dispatcher(Level* L)
 //          {Definition for FRAME! fields for args and refinements}
 //  ]
 //
-DECLARE_NATIVE(specialize)
+DECLARE_NATIVE(SPECIALIZE)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
 
-    Value* specializee = ARG(specializee);
+    Value* specializee = ARG(SPECIALIZEE);
 
     StackIndex lowest_stackindex = TOP_INDEX;
 
@@ -899,7 +899,7 @@ DECLARE_NATIVE(specialize)
         OUT,
         specializee,
         opt_name,
-        ARG(def),
+        ARG(DEF),
         lowest_stackindex
     )){
         // e.g. `specialize 'append/dup [value: throw 10]`
@@ -1005,11 +1005,11 @@ Bounce Block_Dispatcher(Level* L)
 //      value [block!]
 //  ]
 //
-DECLARE_NATIVE(does)
+DECLARE_NATIVE(DOES)
 {
     INCLUDE_PARAMS_OF_DOES;
 
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
     Array* paramlist = Make_Array_Core(
         1, // archetype only...DOES always makes action with no arguments

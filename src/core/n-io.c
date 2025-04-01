@@ -43,11 +43,11 @@
 //          "The value to form"
 //  ]
 //
-DECLARE_NATIVE(form)
+DECLARE_NATIVE(FORM)
 {
     INCLUDE_PARAMS_OF_FORM;
 
-    return Init_Text(OUT, Copy_Form_Value(ARG(value), 0));
+    return Init_Text(OUT, Copy_Form_Value(ARG(VALUE), 0));
 }
 
 
@@ -64,24 +64,24 @@ DECLARE_NATIVE(form)
 //      amount [integer!]
 //  ]
 //
-DECLARE_NATIVE(mold)
+DECLARE_NATIVE(MOLD)
 {
     INCLUDE_PARAMS_OF_MOLD;
 
     DECLARE_MOLDER (mo);
-    if (REF(flat))
+    if (Bool_ARG(FLAT))
         SET_MOLD_FLAG(mo, MOLD_FLAG_INDENT);
-    if (REF(limit)) {
+    if (Bool_ARG(LIMIT)) {
         SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
-        mo->limit = Int32(ARG(amount));
+        mo->limit = Int32(ARG(AMOUNT));
     }
 
     Push_Mold(mo);
 
-    if (REF(only) and Is_Block(ARG(value)))
+    if (Bool_ARG(ONLY) and Is_Block(ARG(VALUE)))
         SET_MOLD_FLAG(mo, MOLD_FLAG_ONLY);
 
-    Mold_Value(mo, ARG(value));
+    Mold_Value(mo, ARG(VALUE));
 
     return Init_Text(OUT, Pop_Molded_String(mo));
 }
@@ -97,11 +97,11 @@ DECLARE_NATIVE(mold)
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
-DECLARE_NATIVE(write_stdout)
+DECLARE_NATIVE(WRITE_STDOUT)
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     if (Is_Binary(v)) {
         //
@@ -167,12 +167,12 @@ DECLARE_NATIVE(write_stdout)
 //      count [integer!]
 //  ]
 //
-DECLARE_NATIVE(new_line)
+DECLARE_NATIVE(NEW_LINE)
 {
     INCLUDE_PARAMS_OF_NEW_LINE;
 
-    bool mark = VAL_LOGIC(ARG(mark));
-    Value* pos = ARG(position);
+    bool mark = VAL_LOGIC(ARG(MARK));
+    Value* pos = ARG(POSITION);
     Array* a = Cell_Array(pos);
 
     Fail_If_Read_Only_Flex(a);
@@ -190,10 +190,10 @@ DECLARE_NATIVE(new_line)
     }
 
     REBINT skip;
-    if (REF(all))
+    if (Bool_ARG(ALL))
         skip = 1;
-    else if (REF(skip)) {
-        skip = Int32s(ARG(count), 1);
+    else if (Bool_ARG(SKIP)) {
+        skip = Int32s(ARG(COUNT), 1);
         if (skip < 1)
             skip = 1;
     }
@@ -226,11 +226,11 @@ DECLARE_NATIVE(new_line)
 //      position [block! group! varargs!] "Position to check marker"
 //  ]
 //
-DECLARE_NATIVE(new_line_q)
+DECLARE_NATIVE(NEW_LINE_Q)
 {
     INCLUDE_PARAMS_OF_NEW_LINE_Q;
 
-    Value* pos = ARG(position);
+    Value* pos = ARG(POSITION);
 
     Array* arr;
     const Cell* item;
@@ -311,7 +311,7 @@ DECLARE_NATIVE(new_line_q)
 //          "Give time in current zone without including the time zone"
 //  ]
 //
-DECLARE_NATIVE(now)
+DECLARE_NATIVE(NOW)
 {
     INCLUDE_PARAMS_OF_NOW;
 
@@ -327,7 +327,7 @@ DECLARE_NATIVE(now)
     Copy_Cell(OUT, timestamp);
     rebRelease(timestamp);
 
-    if (not REF(precise)) {
+    if (not Bool_ARG(PRECISE)) {
         //
         // The "time" field is measured in nanoseconds, and the historical
         // meaning of not using precise measurement was to use only the
@@ -337,14 +337,14 @@ DECLARE_NATIVE(now)
         VAL_NANO(OUT) = SECS_TO_NANO(VAL_SECS(OUT));
     }
 
-    if (REF(utc)) {
+    if (Bool_ARG(UTC)) {
         //
         // Say it has a time zone component, but it's 0:00 (as opposed
         // to saying it has no time zone component at all?)
         //
         INIT_VAL_ZONE(OUT, 0);
     }
-    else if (REF(local)) {
+    else if (Bool_ARG(LOCAL)) {
         //
         // Clear out the time zone flag
         //
@@ -352,13 +352,13 @@ DECLARE_NATIVE(now)
     }
     else {
         if (
-            REF(year)
-            || REF(month)
-            || REF(day)
-            || REF(time)
-            || REF(date)
-            || REF(weekday)
-            || REF(yearday)
+            Bool_ARG(YEAR)
+            || Bool_ARG(MONTH)
+            || Bool_ARG(DAY)
+            || Bool_ARG(TIME)
+            || Bool_ARG(DATE)
+            || Bool_ARG(WEEKDAY)
+            || Bool_ARG(YEARDAY)
         ){
             const bool to_utc = false;
             Adjust_Date_Zone(OUT, to_utc); // Add timezone, adjust date/time
@@ -367,26 +367,26 @@ DECLARE_NATIVE(now)
 
     REBINT n = -1;
 
-    if (REF(date)) {
+    if (Bool_ARG(DATE)) {
         Clear_Cell_Flag(OUT, DATE_HAS_TIME);
         Clear_Cell_Flag(OUT, DATE_HAS_ZONE);
     }
-    else if (REF(time)) {
+    else if (Bool_ARG(TIME)) {
         RESET_CELL(OUT, REB_TIME); // reset clears date flags
     }
-    else if (REF(zone)) {
+    else if (Bool_ARG(ZONE)) {
         VAL_NANO(OUT) = VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC;
         RESET_CELL(OUT, REB_TIME); // reset clears date flags
     }
-    else if (REF(weekday))
+    else if (Bool_ARG(WEEKDAY))
         n = Week_Day(VAL_DATE(OUT));
-    else if (REF(yearday))
+    else if (Bool_ARG(YEARDAY))
         n = Julian_Date(VAL_DATE(OUT));
-    else if (REF(year))
+    else if (Bool_ARG(YEAR))
         n = VAL_YEAR(OUT);
-    else if (REF(month))
+    else if (Bool_ARG(MONTH))
         n = VAL_MONTH(OUT);
-    else if (REF(day))
+    else if (Bool_ARG(DAY))
         n = VAL_DAY(OUT);
 
     if (n > 0)
@@ -438,7 +438,7 @@ REBLEN Milliseconds_From_Value(const Cell* v) {
 //      /only "only check for ports given in the block to this function"
 //  ]
 //
-DECLARE_NATIVE(wait)
+DECLARE_NATIVE(WAIT)
 {
     INCLUDE_PARAMS_OF_WAIT;
 
@@ -448,11 +448,11 @@ DECLARE_NATIVE(wait)
 
 
     Cell* val;
-    if (not Is_Block(ARG(value)))
-        val = ARG(value);
+    if (not Is_Block(ARG(VALUE)))
+        val = ARG(VALUE);
     else {
         StackIndex base = TOP_INDEX;
-        if (Reduce_To_Stack_Throws(OUT, ARG(value)))
+        if (Reduce_To_Stack_Throws(OUT, ARG(VALUE)))
             return BOUNCE_THROWN;
 
         // !!! This takes the stack array and creates an unmanaged array from
@@ -509,7 +509,7 @@ DECLARE_NATIVE(wait)
         Init_Block(OUT, ports);
 
     // Process port events [stack-move]:
-    if (Wait_Ports_Throws(OUT, ports, timeout, REF(only)))
+    if (Wait_Ports_Throws(OUT, ports, timeout, Bool_ARG(ONLY)))
         return BOUNCE_THROWN;
 
     assert(Is_Logic(OUT));
@@ -525,7 +525,7 @@ DECLARE_NATIVE(wait)
     // Determine what port(s) waked us:
     Sieve_Ports(ports);
 
-    if (not REF(all)) {
+    if (not Bool_ARG(ALL)) {
         val = Array_Head(ports);
         if (not Is_Port(val))
             return nullptr;
@@ -547,16 +547,16 @@ DECLARE_NATIVE(wait)
 //      event [event!]
 //  ]
 //
-DECLARE_NATIVE(wake_up)
+DECLARE_NATIVE(WAKE_UP)
 //
 // Calls port update for native actors.
 // Calls port awake function.
 {
     INCLUDE_PARAMS_OF_WAKE_UP;
 
-    FAIL_IF_BAD_PORT(ARG(port));
+    FAIL_IF_BAD_PORT(ARG(PORT));
 
-    VarList* ctx = Cell_Varlist(ARG(port));
+    VarList* ctx = Cell_Varlist(ARG(PORT));
 
     Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
     if (Is_Native_Port_Actor(actor)) {
@@ -570,7 +570,7 @@ DECLARE_NATIVE(wake_up)
         //
         DECLARE_VALUE (verb);
         Init_Word(verb, Canon(SYM_ON_WAKE_UP));
-        const Value* r = Do_Port_Action(level_, ARG(port), verb);
+        const Value* r = Do_Port_Action(level_, ARG(PORT), verb);
         assert(Is_Nothing(r));
         UNUSED(r);
     }
@@ -581,7 +581,7 @@ DECLARE_NATIVE(wake_up)
     if (Is_Action(awake)) {
         const bool fully = true; // error if not all arguments consumed
 
-        if (Apply_Only_Throws(OUT, fully, awake, ARG(event), rebEND))
+        if (Apply_Only_Throws(OUT, fully, awake, ARG(EVENT), rebEND))
             fail (Error_No_Catch_For_Throw(OUT));
 
         if (not (Is_Logic(OUT) and VAL_LOGIC(OUT)))
@@ -607,13 +607,13 @@ DECLARE_NATIVE(wake_up)
 //          {Ensure input path is treated as a directory}
 //  ]
 //
-DECLARE_NATIVE(local_to_file)
+DECLARE_NATIVE(LOCAL_TO_FILE)
 {
     INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
-    Value* path = ARG(path);
+    Value* path = ARG(PATH);
     if (Is_File(path)) {
-        if (not REF(pass))
+        if (not Bool_ARG(PASS))
             fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
 
         return Init_File(
@@ -628,7 +628,7 @@ DECLARE_NATIVE(local_to_file)
 
     return Init_File(
         OUT,
-        To_REBOL_Path(path, REF(dir) ? PATH_OPT_SRC_IS_DIR : 0)
+        To_REBOL_Path(path, Bool_ARG(DIR) ? PATH_OPT_SRC_IS_DIR : 0)
     );
 }
 
@@ -652,13 +652,13 @@ DECLARE_NATIVE(local_to_file)
 //          {For directories, add a * to the end}
 //  ]
 //
-DECLARE_NATIVE(file_to_local)
+DECLARE_NATIVE(FILE_TO_LOCAL)
 {
     INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
-    Value* path = ARG(path);
+    Value* path = ARG(PATH);
     if (Is_Text(path)) {
-        if (not REF(pass))
+        if (not Bool_ARG(PASS))
             fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
 
         return Init_Text(
@@ -676,9 +676,9 @@ DECLARE_NATIVE(file_to_local)
         To_Local_Path(
             path,
             REB_FILETOLOCAL_0
-                | (REF(full) ? REB_FILETOLOCAL_FULL : 0)
-                | (REF(no_tail_slash) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
-                | (REF(wild) ? REB_FILETOLOCAL_WILD : 0)
+                | (Bool_ARG(FULL) ? REB_FILETOLOCAL_FULL : 0)
+                | (Bool_ARG(NO_TAIL_SLASH) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
+                | (Bool_ARG(WILD) ? REB_FILETOLOCAL_WILD : 0)
         )
     );
 }
@@ -690,7 +690,7 @@ DECLARE_NATIVE(file_to_local)
 //      ; No arguments
 //  ]
 //
-DECLARE_NATIVE(what_dir)
+DECLARE_NATIVE(WHAT_DIR)
 {
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
@@ -737,11 +737,11 @@ DECLARE_NATIVE(what_dir)
 //      path [<maybe> file! url!]
 //  ]
 //
-DECLARE_NATIVE(change_dir)
+DECLARE_NATIVE(CHANGE_DIR)
 {
     INCLUDE_PARAMS_OF_CHANGE_DIR;
 
-    Value* arg = ARG(path);
+    Value* arg = ARG(PATH);
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
     if (Is_Url(arg)) {
@@ -762,5 +762,5 @@ DECLARE_NATIVE(change_dir)
 
     Copy_Cell(current_path, arg);
 
-    RETURN (ARG(path));
+    RETURN (ARG(PATH));
 }

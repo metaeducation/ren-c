@@ -202,12 +202,12 @@ e-funcs/emit {
     /*
      * NATIVE PROTOTYPES
      *
-     * DECLARE_NATIVE is a macro which expands such that DECLARE_NATIVE(parse)
-     * defines a function named `N_parse`.  The prototypes are included in a
+     * DECLARE_NATIVE is a macro which expands such that DECLARE_NATIVE(PARSE)
+     * defines a function named `N_PARSE`.  The prototypes are included in a
      * system-wide header in order to allow recognizing a given native by
      * identity in the C code, e.g.:
      *
-     *     if (VAL_ACT_DISPATCHER(native) == &N_parse) { ... }
+     *     if (VAL_ACT_DISPATCHER(native) == &NATIVE_CFUNC(PARSE)) { ... }
      */
 }
 e-funcs/emit newline
@@ -215,7 +215,7 @@ e-funcs/emit newline
 for-each val boot-natives [
     if set-word? val [
         e-funcs/emit 'val {
-            DECLARE_NATIVE(${to word! val});
+            DECLARE_NATIVE(${TO WORD! VAL});
         }
     ]
 ]

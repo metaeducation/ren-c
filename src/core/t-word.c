@@ -243,8 +243,8 @@ REBTYPE(Word)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value));
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE));
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {

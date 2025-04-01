@@ -342,12 +342,12 @@ Flex* Make_Set_Operation_Flex(
 //      size [integer!]
 //  ]
 //
-DECLARE_NATIVE(exclude)
+DECLARE_NATIVE(EXCLUDE)
 {
     INCLUDE_PARAMS_OF_EXCLUDE;
 
-    Value* val1 = ARG(series);
-    Value* val2 = ARG(exclusions);
+    Value* val1 = ARG(SERIES);
+    Value* val2 = ARG(EXCLUSIONS);
 
     if (Is_Bitset(val1) || Is_Bitset(val2)) {
         if (VAL_TYPE(val1) != VAL_TYPE(val2))
@@ -374,8 +374,8 @@ DECLARE_NATIVE(exclude)
             val1,
             val2,
             SOP_FLAG_CHECK | SOP_FLAG_INVERT,
-            REF(case),
-            REF(skip) ? Int32s(ARG(size), 1) : 1
+            Bool_ARG(CASE),
+            Bool_ARG(SKIP) ? Int32s(ARG(SIZE), 1) : 1
         )
     );
 }
@@ -394,11 +394,11 @@ DECLARE_NATIVE(exclude)
 //      size [integer!]
 //  ]
 //
-DECLARE_NATIVE(unique)
+DECLARE_NATIVE(UNIQUE)
 {
     INCLUDE_PARAMS_OF_UNIQUE;
 
-    Value* val = ARG(series);
+    Value* val = ARG(SERIES);
 
     if (Is_Bitset(val) or Is_Typeset(val))
         return val; // bitsets & typesets already unique (by definition)
@@ -410,8 +410,8 @@ DECLARE_NATIVE(unique)
             val,
             nullptr,
             SOP_NONE,
-            REF(case),
-            REF(skip) ? Int32s(ARG(size), 1) : 1
+            Bool_ARG(CASE),
+            Bool_ARG(SKIP) ? Int32s(ARG(SIZE), 1) : 1
         )
     );
 }

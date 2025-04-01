@@ -48,13 +48,13 @@
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(func)
+DECLARE_NATIVE(FUNC)
 {
     INCLUDE_PARAMS_OF_FUNC;
 
     REBACT *func = Make_Interpreted_Action_May_Fail(
-        ARG(spec),
-        ARG(body),
+        ARG(SPEC),
+        ARG(BODY),
         MKF_RETURN | MKF_KEYWORDS
     );
 
@@ -76,7 +76,7 @@ void Make_Thrown_Unwind_Value(
     const Value* value,
     Level* base // required if level is INTEGER! or ACTION!
 ) {
-    Copy_Cell(out, NAT_VALUE(unwind));
+    Copy_Cell(out, NAT_VALUE(UNWIND));
 
     if (Is_Frame(level)) {
         INIT_BINDING(out, Cell_Varlist(level));
@@ -140,7 +140,7 @@ void Make_Thrown_Unwind_Value(
 //      value [any-value!]
 //  ]
 //
-DECLARE_NATIVE(unwind)
+DECLARE_NATIVE(UNWIND)
 //
 // UNWIND is implemented via a THROWN() value that bubbles through the stack.
 // Using UNWIND's action cell with a target `binding` field is the
@@ -152,9 +152,9 @@ DECLARE_NATIVE(unwind)
 {
     INCLUDE_PARAMS_OF_UNWIND;
 
-    UNUSED(REF(with)); // implied by non-null value
+    UNUSED(Bool_ARG(WITH)); // implied by non-null value
 
-    Make_Thrown_Unwind_Value(OUT, ARG(level), ARG(value), level_);
+    Make_Thrown_Unwind_Value(OUT, ARG(LEVEL), ARG(VALUE), level_);
     return BOUNCE_THROWN;
 }
 
@@ -168,7 +168,7 @@ DECLARE_NATIVE(unwind)
 //          [<end> ~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(return)
+DECLARE_NATIVE(RETURN)
 {
     INCLUDE_PARAMS_OF_RETURN;
 
@@ -206,7 +206,7 @@ DECLARE_NATIVE(return)
     //
     REBACT *target_fun = LVL_UNDERLYING(target_level);
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     // Defininitional returns are "locals"--there's no argument type check.
     // So TYPESET! bits in the RETURN param are used for legal return types.
@@ -241,7 +241,7 @@ DECLARE_NATIVE(return)
 
     assert(L_binding->leader.bits & ARRAY_FLAG_IS_VARLIST);
 
-    Copy_Cell(OUT, NAT_VALUE(unwind)); // see also Make_Thrown_Unwind_Value
+    Copy_Cell(OUT, NAT_VALUE(UNWIND)); // see also Make_Thrown_Unwind_Value
     INIT_BINDING_MAY_MANAGE(OUT, L_binding);
 
     CONVERT_NAME_TO_THROWN(OUT, v);
@@ -258,11 +258,11 @@ DECLARE_NATIVE(return)
 //      type [datatype! typeset!]
 //  ]
 //
-DECLARE_NATIVE(typechecker)
+DECLARE_NATIVE(TYPECHECKER)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    Value* type = ARG(type);
+    Value* type = ARG(TYPE);
 
     Array* paramlist = Make_Array_Core(
         2,
@@ -310,18 +310,18 @@ DECLARE_NATIVE(typechecker)
 //          {Do not reduce the pipeline--use the values as-is.}
 //  ]
 //
-DECLARE_NATIVE(cascade)
+DECLARE_NATIVE(CASCADE)
 {
     INCLUDE_PARAMS_OF_CASCADE;
 
     Value* out = OUT; // plan ahead for factoring into Cascade_Action(out..
 
     Array* pipeline;
-    if (REF(quote))
-        pipeline = COPY_ANY_LIST_AT_DEEP_MANAGED(ARG(pipeline));
+    if (Bool_ARG(QUOTE))
+        pipeline = COPY_ANY_LIST_AT_DEEP_MANAGED(ARG(PIPELINE));
     else {
         StackIndex base = TOP_INDEX;
-        if (Reduce_To_Stack_Throws(out, ARG(pipeline)))
+        if (Reduce_To_Stack_Throws(out, ARG(PIPELINE)))
             return out;
 
         // No more evaluations *should* run before putting this array in a
@@ -395,11 +395,11 @@ DECLARE_NATIVE(cascade)
 //          {Code to run in constructed frame before adapted function runs}
 //  ]
 //
-DECLARE_NATIVE(adapt)
+DECLARE_NATIVE(ADAPT)
 {
     INCLUDE_PARAMS_OF_ADAPT;
 
-    Value* adaptee = ARG(adaptee);
+    Value* adaptee = ARG(ADAPTEE);
 
     Symbol* opt_adaptee_name;
     const bool push_refinements = false;
@@ -460,7 +460,7 @@ DECLARE_NATIVE(adapt)
     // would need be made if input was R/O.  For now, we copy to relativize.
     //
     Array* prelude = Copy_And_Bind_Relative_Deep_Managed(
-        ARG(prelude),
+        ARG(PRELUDE),
         ACT_PARAMLIST(underlying), // relative bindings ALWAYS use underlying
         TS_WORD
     );
@@ -490,11 +490,11 @@ DECLARE_NATIVE(adapt)
 //          {Gets a FRAME! for INNER before invocation, can DO it (or not)}
 //  ]
 //
-DECLARE_NATIVE(enclose)
+DECLARE_NATIVE(ENCLOSE)
 {
     INCLUDE_PARAMS_OF_ENCLOSE;
 
-    Value* inner = ARG(inner);
+    Value* inner = ARG(INNER);
     Symbol* opt_inner_name;
     const bool push_refinements = false;
     if (Get_If_Word_Or_Path_Throws(
@@ -511,7 +511,7 @@ DECLARE_NATIVE(enclose)
         fail (Error_Invalid(inner));
     Copy_Cell(inner, OUT); // Frees OUT, and GC safe (in ARG slot)
 
-    Value* outer = ARG(outer);
+    Value* outer = ARG(OUTER);
     Symbol* opt_outer_name;
     if (Get_If_Word_Or_Path_Throws(
         OUT,
@@ -599,7 +599,7 @@ DECLARE_NATIVE(enclose)
 //          {The action to run in its place}
 //  ]
 //
-DECLARE_NATIVE(hijack)
+DECLARE_NATIVE(HIJACK)
 //
 // Hijacking an action does not change its interface--and cannot.  While
 // it may seem tempting to use low-level tricks to keep the same paramlist
@@ -615,7 +615,7 @@ DECLARE_NATIVE(hijack)
     if (Get_If_Word_Or_Path_Throws(
         OUT,
         &opt_victim_name,
-        ARG(victim),
+        ARG(VICTIM),
         SPECIFIED,
         push_refinements
     )){
@@ -624,14 +624,14 @@ DECLARE_NATIVE(hijack)
 
     if (not Is_Action(OUT))
         fail ("Victim of HIJACK must be an ACTION!");
-    Copy_Cell(ARG(victim), OUT); // Frees up OUT
-    REBACT *victim = VAL_ACTION(ARG(victim)); // GC safe (in ARG slot)
+    Copy_Cell(ARG(VICTIM), OUT); // Frees up OUT
+    REBACT *victim = VAL_ACTION(ARG(VICTIM)); // GC safe (in ARG slot)
 
     Symbol* opt_hijacker_name;
     if (Get_If_Word_Or_Path_Throws(
         OUT,
         &opt_hijacker_name,
-        ARG(hijacker),
+        ARG(HIJACKER),
         SPECIFIED,
         push_refinements
     )){
@@ -640,8 +640,8 @@ DECLARE_NATIVE(hijack)
 
     if (not Is_Action(OUT))
         fail ("Hijacker in HIJACK must be an ACTION!");
-    Copy_Cell(ARG(hijacker), OUT); // Frees up OUT
-    REBACT *hijacker = VAL_ACTION(ARG(hijacker)); // GC safe (in ARG slot)
+    Copy_Cell(ARG(HIJACKER), OUT); // Frees up OUT
+    REBACT *hijacker = VAL_ACTION(ARG(HIJACKER)); // GC safe (in ARG slot)
 
     if (victim == hijacker)
         return nullptr; // permitting no-op hijack has some practical uses
@@ -702,7 +702,7 @@ DECLARE_NATIVE(hijack)
 
         if (Array_Len(victim_details) < 1)
             Alloc_Tail_Array(victim_details);
-        Copy_Cell(Array_Head(victim_details), ARG(hijacker));
+        Copy_Cell(Array_Head(victim_details), ARG(HIJACKER));
         Term_Array_Len(victim_details, 1);
     }
 
@@ -710,7 +710,7 @@ DECLARE_NATIVE(hijack)
     // alone?  Add a note about the hijacking?  Also: how should binding and
     // hijacking interact?
 
-    return Init_Action_Maybe_Bound(OUT, victim, VAL_BINDING(ARG(hijacker)));
+    return Init_Action_Maybe_Bound(OUT, victim, VAL_BINDING(ARG(HIJACKER)));
 }
 
 
@@ -723,11 +723,11 @@ DECLARE_NATIVE(hijack)
 //      action [action!]
 //  ]
 //
-DECLARE_NATIVE(variadic_q)
+DECLARE_NATIVE(VARIADIC_Q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    Value* param = VAL_ACT_PARAMS_HEAD(ARG(action));
+    Value* param = VAL_ACT_PARAMS_HEAD(ARG(ACTION));
     for (; NOT_END(param); ++param) {
         if (Is_Param_Variadic(param))
             return Init_True(OUT);
@@ -746,7 +746,7 @@ DECLARE_NATIVE(variadic_q)
 //      action [action!]
 //  ]
 //
-DECLARE_NATIVE(tighten)
+DECLARE_NATIVE(TIGHTEN)
 //
 // This routine exists to avoid the overhead of a user-function stub where
 // all the parameters are #tight, e.g. the behavior of R3-Alpha's OP!s.
@@ -761,7 +761,7 @@ DECLARE_NATIVE(tighten)
 {
     INCLUDE_PARAMS_OF_TIGHTEN;
 
-    REBACT *original = VAL_ACTION(ARG(action));
+    REBACT *original = VAL_ACTION(ARG(ACTION));
 
     // Copy the paramlist, which serves as the function's unique identity,
     // and set the tight flag on all the parameters.
@@ -823,7 +823,7 @@ DECLARE_NATIVE(tighten)
     return Init_Action_Maybe_Bound(
         OUT,
         tightened, // REBACT* archetype doesn't contain a binding
-        VAL_BINDING(ARG(action)) // e.g. keep binding for `tighten 'return`
+        VAL_BINDING(ARG(ACTION)) // e.g. keep binding for `tighten 'return`
     );
 }
 
@@ -875,11 +875,11 @@ Bounce N_Upshot_Dispatcher(Level* L)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(n_shot)
+DECLARE_NATIVE(N_SHOT)
 {
     INCLUDE_PARAMS_OF_N_SHOT;
 
-    REBI64 n = VAL_INT64(ARG(n));
+    REBI64 n = VAL_INT64(ARG(N));
 
     Array* paramlist = Make_Array_Core(
         2,
@@ -904,7 +904,7 @@ DECLARE_NATIVE(n_shot)
 
     REBACT *n_shot = Make_Action(
         paramlist,
-        n >= 0 ? &N_Shot_Dispatcher : &N_Upshot_Dispatcher,
+        n >= 0 ? N_Shot_Dispatcher : &N_Upshot_Dispatcher,
         nullptr, // no underlying action (use paramlist)
         nullptr, // no specialization exemplar (or inherited exemplar)
         1 // details array capacity

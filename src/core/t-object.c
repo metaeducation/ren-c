@@ -428,13 +428,13 @@ Bounce PD_Context(
 //      value [<maybe> action! any-context!]
 //  ]
 //
-DECLARE_NATIVE(meta_of)
+DECLARE_NATIVE(META_OF)
 //
 // See notes accompanying the `meta` field in the StubStruct definition.
 {
     INCLUDE_PARAMS_OF_META_OF;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     VarList* meta;
     if (Is_Action(v))
@@ -461,25 +461,25 @@ DECLARE_NATIVE(meta_of)
 //      meta [~null~ any-context!]
 //  ]
 //
-DECLARE_NATIVE(set_meta)
+DECLARE_NATIVE(SET_META)
 //
 // See notes accompanying the `meta` field in the StubStruct definition.
 {
     INCLUDE_PARAMS_OF_SET_META;
 
     VarList* meta;
-    if (Any_Context(ARG(meta))) {
-        if (VAL_BINDING(ARG(meta)) != UNBOUND)
+    if (Any_Context(ARG(META))) {
+        if (VAL_BINDING(ARG(META)) != UNBOUND)
             fail ("SET-META can't store context bindings, must be unbound");
 
-        meta = Cell_Varlist(ARG(meta));
+        meta = Cell_Varlist(ARG(META));
     }
     else {
-        assert(Is_Nulled(ARG(meta)));
+        assert(Is_Nulled(ARG(META)));
         meta = nullptr;
     }
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     if (Is_Action(v))
         MISC(VAL_ACT_PARAMLIST(v)).meta = meta;
@@ -830,21 +830,21 @@ REBTYPE(Context)
       case SYM_COPY: { // Note: words are not copied and bindings not changed!
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
 
         REBU64 types;
-        if (REF(types)) {
-            if (Is_Datatype(ARG(kinds)))
-                types = FLAGIT_KIND(VAL_TYPE_KIND(ARG(kinds)));
+        if (Bool_ARG(TYPES)) {
+            if (Is_Datatype(ARG(KINDS)))
+                types = FLAGIT_KIND(VAL_TYPE_KIND(ARG(KINDS)));
             else
-                types = VAL_TYPESET_BITS(ARG(kinds));
+                types = VAL_TYPESET_BITS(ARG(KINDS));
         }
-        else if (REF(deep))
+        else if (Bool_ARG(DEEP))
             types = TS_STD_SERIES;
         else
             types = 0;
@@ -889,7 +889,7 @@ REBTYPE(Context)
 //      other [any-context!]
 //  ]
 //
-DECLARE_NATIVE(construct)
+DECLARE_NATIVE(CONSTRUCT)
 //
 // CONSTRUCT in Ren-C is an effective replacement for what MAKE ANY-OBJECT!
 // was able to do in Rebol2 and R3-Alpha.  It takes a spec that can be an
@@ -906,26 +906,26 @@ DECLARE_NATIVE(construct)
 {
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
-    Value* body = ARG(body);
+    Value* body = ARG(BODY);
 
     // This parallels the code originally in CONSTRUCT.  Run it if the /ONLY
     // refinement was passed in.
     //
-    if (REF(only)) {
+    if (Bool_ARG(ONLY)) {
         Init_Object(
             OUT,
             Construct_Context_Managed(
                 REB_OBJECT,
                 Cell_List_At(body),
                 VAL_SPECIFIER(body),
-                REF(with) ? Cell_Varlist(ARG(other)) : nullptr
+                Bool_ARG(WITH) ? Cell_Varlist(ARG(OTHER)) : nullptr
             )
         );
         return OUT;
     }
 
-    if (REF(with))
-        return MAKE_With_Parent(OUT, VAL_TYPE(ARG(other)), body, ARG(other));
+    if (Bool_ARG(WITH))
+        return MAKE_With_Parent(OUT, VAL_TYPE(ARG(OTHER)), body, ARG(OTHER));
 
     return MAKE_With_Parent(OUT, REB_OBJECT, body, nullptr);
 }

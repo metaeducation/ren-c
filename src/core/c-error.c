@@ -221,7 +221,7 @@ void Trapped_Helper(struct Reb_State *s)
 // !!! Previously, detecting a value would use that value as the ubiquitous
 // (but vague) "Invalid Arg" error.  However, since this is called by fail(),
 // that is misleading as rebFail() takes ERROR! values, STRING!s, or BLOCK!s
-// so those cases were changed to `fail (Invalid_Arg(v))` instead.
+// so those cases were changed to `fail (Invalid_Arg(V))` instead.
 //
 // Note: Over the long term, one does not want to hard-code error strings in
 // the executable.  That makes them more difficult to hook with translations,
@@ -510,7 +510,7 @@ bool Make_Error_Object_Throws(
         // apply the same logic as if an OBJECT! had been passed in above.
 
         // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
-        // code in REBTYPE(Context) and code in DECLARE_NATIVE(construct))
+        // code in REBTYPE(Context) and code in DECLARE_NATIVE(CONSTRUCT))
 
         varlist = Make_Selfish_Context_Detect_Managed(
             REB_ERROR, // type
@@ -1458,11 +1458,11 @@ void MF_Error(Molder* mo, const Cell* v, bool form)
 //      value [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(try)
+DECLARE_NATIVE(TRY)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    Value *v = ARG(value);
+    Value *v = ARG(VALUE);
 
     if (Is_Error(v))
         return nullptr;
@@ -1480,11 +1480,11 @@ DECLARE_NATIVE(try)
 //      code [block!]
 //  ]
 //
-DECLARE_NATIVE(trap)
+DECLARE_NATIVE(TRAP)
 {
     INCLUDE_PARAMS_OF_TRAP;
 
-    Value *code = ARG(code);
+    Value *code = ARG(CODE);
 
     DECLARE_LEVEL (L);
     Push_Level(L, code);
@@ -1525,15 +1525,15 @@ DECLARE_NATIVE(trap)
 //      branch [block! action!]
 //  ]
 //
-DECLARE_NATIVE(except)
+DECLARE_NATIVE(EXCEPT)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Value* left = ARG(left);
+    Value* left = ARG(LEFT);
     if (not Is_Error(left))
         RETURN (left);
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), left))
+    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
 
     return OUT;

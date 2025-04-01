@@ -52,8 +52,8 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value));
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE));
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -69,19 +69,19 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
     case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        UNUSED(PARAM(SOURCE));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
 
-        if (REF(seek)) {
-            UNUSED(ARG(index));
+        if (Bool_ARG(SEEK)) {
+            UNUSED(ARG(INDEX));
             fail (Error_Bad_Refines_Raw());
         }
 
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(STRING)); // handled in dispatcher
+        UNUSED(PARAM(LINES)); // handled in dispatcher
 
         if (not (sock->flags & RRF_OPEN))
             OS_DO_DEVICE_SYNC(sock, RDC_OPEN);
@@ -151,17 +151,17 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PAR(spec));
-        if (REF(new))
+        UNUSED(PARAM(SPEC));
+        if (Bool_ARG(NEW))
             fail (Error_Bad_Refines_Raw());
-        if (REF(read))
+        if (Bool_ARG(READ))
             fail (Error_Bad_Refines_Raw());
-        if (REF(write))
+        if (Bool_ARG(WRITE))
             fail (Error_Bad_Refines_Raw());
-        if (REF(seek))
+        if (Bool_ARG(SEEK))
             fail (Error_Bad_Refines_Raw());
-        if (REF(allow)) {
-            UNUSED(ARG(access));
+        if (Bool_ARG(ALLOW)) {
+            UNUSED(ARG(ACCESS));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -191,7 +191,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_dns_actor_handle)
+DECLARE_NATIVE(GET_DNS_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &DNS_Actor);
     return OUT;

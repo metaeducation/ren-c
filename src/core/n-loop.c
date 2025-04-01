@@ -55,14 +55,14 @@ bool Catching_Break_Or_Continue(Value* val, bool *broke)
     if (not Is_Action(val))
         return false;
 
-    if (VAL_ACT_DISPATCHER(val) == &N_break) {
+    if (VAL_ACT_DISPATCHER(val) == &NATIVE_CFUNC(BREAK)) {
         *broke = true;
         CATCH_THROWN(val, val);
         assert(Is_Nulled(val)); // BREAK must always return NULL
         return true;
     }
 
-    if (VAL_ACT_DISPATCHER(val) == &N_continue) {
+    if (VAL_ACT_DISPATCHER(val) == &NATIVE_CFUNC(CONTINUE)) {
         //
         // !!! Currently continue with no argument acts the same as asking
         // for CONTINUE NULL (the form with an argument).  This makes sense
@@ -85,7 +85,7 @@ bool Catching_Break_Or_Continue(Value* val, bool *broke)
 //
 //  ]
 //
-DECLARE_NATIVE(break)
+DECLARE_NATIVE(BREAK)
 //
 // BREAK is implemented via a THROWN() value that bubbles up through
 // the stack.  It uses the value of its own native function as the
@@ -93,7 +93,7 @@ DECLARE_NATIVE(break)
 {
     INCLUDE_PARAMS_OF_BREAK;
 
-    Copy_Cell(OUT, NAT_VALUE(break));
+    Copy_Cell(OUT, NAT_VALUE(BREAK));
     CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
     return BOUNCE_THROWN;
 }
@@ -108,7 +108,7 @@ DECLARE_NATIVE(break)
 //      value [any-value!]
 //  ]
 //
-DECLARE_NATIVE(continue)
+DECLARE_NATIVE(CONTINUE)
 //
 // CONTINUE is implemented via a THROWN() value that bubbles up through
 // the stack.  It uses the value of its own native function as the
@@ -116,11 +116,11 @@ DECLARE_NATIVE(continue)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    if (not REF(with))  // it's an END (should change to CONTINUE/WITH)
-        Init_Void(ARG(value));
+    if (not Bool_ARG(WITH))  // it's an END (should change to CONTINUE/WITH)
+        Init_Void(ARG(VALUE));
 
-    Copy_Cell(OUT, NAT_VALUE(continue));
-    CONVERT_NAME_TO_THROWN(OUT, ARG(value)); // null if e.g. `eval [continue]`
+    Copy_Cell(OUT, NAT_VALUE(CONTINUE));
+    CONVERT_NAME_TO_THROWN(OUT, ARG(VALUE)); // null if e.g. `eval [continue]`
 
     return BOUNCE_THROWN;
 }
@@ -639,8 +639,8 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
     struct Loop_Each_State les;
     les.mode = mode;
     les.out = OUT;
-    les.data = ARG(data);
-    les.body = ARG(body);
+    les.data = ARG(DATA);
+    les.body = ARG(BODY);
 
     if (Is_Blank(les.data)) {
         if (mode == LOOP_MAP_EACH)
@@ -649,11 +649,11 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
     }
 
     Virtual_Bind_Deep_To_New_Context(
-        ARG(body), // may be updated, will still be GC safe
+        ARG(BODY), // may be updated, will still be GC safe
         &les.pseudo_vars_ctx,
-        ARG(vars)
+        ARG(VARS)
     );
-    Init_Object(ARG(vars), les.pseudo_vars_ctx); // keep GC safe
+    Init_Object(ARG(VARS), les.pseudo_vars_ctx); // keep GC safe
 
     // Currently the data stack is only used by MAP-EACH to accumulate results
     // but it's faster to just save it than test the loop mode.
@@ -811,62 +811,62 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
 //          "Code to evaluate"
 //  ]
 //
-DECLARE_NATIVE(for)
+DECLARE_NATIVE(FOR)
 {
     INCLUDE_PARAMS_OF_FOR;
 
     VarList* context;
     Virtual_Bind_Deep_To_New_Context(
-        ARG(body), // may be updated, will still be GC safe
+        ARG(BODY), // may be updated, will still be GC safe
         &context,
-        ARG(word)
+        ARG(WORD)
     );
-    Init_Object(ARG(word), context); // keep GC safe
+    Init_Object(ARG(WORD), context); // keep GC safe
 
     Value* var = Varlist_Slot(context, 1); // not movable, see #2274
 
     if (
-        Is_Integer(ARG(start))
-        and Is_Integer(ARG(end))
-        and Is_Integer(ARG(bump))
+        Is_Integer(ARG(START))
+        and Is_Integer(ARG(END))
+        and Is_Integer(ARG(BUMP))
     ){
         return Loop_Integer_Common(
             OUT,
             var,
-            ARG(body),
-            VAL_INT64(ARG(start)),
-            Is_Decimal(ARG(end))
-                ? cast(REBI64, VAL_DECIMAL(ARG(end)))
-                : VAL_INT64(ARG(end)),
-            VAL_INT64(ARG(bump))
+            ARG(BODY),
+            VAL_INT64(ARG(START)),
+            Is_Decimal(ARG(END))
+                ? cast(REBI64, VAL_DECIMAL(ARG(END)))
+                : VAL_INT64(ARG(END)),
+            VAL_INT64(ARG(BUMP))
         );
     }
 
-    if (Any_Series(ARG(start))) {
-        if (Any_Series(ARG(end))) {
+    if (Any_Series(ARG(START))) {
+        if (Any_Series(ARG(END))) {
             return Loop_Series_Common(
                 OUT,
                 var,
-                ARG(body),
-                ARG(start),
-                VAL_INDEX(ARG(end)),
-                Int32(ARG(bump))
+                ARG(BODY),
+                ARG(START),
+                VAL_INDEX(ARG(END)),
+                Int32(ARG(BUMP))
             );
         }
         else {
             return Loop_Series_Common(
                 OUT,
                 var,
-                ARG(body),
-                ARG(start),
-                Int32s(ARG(end), 1) - 1,
-                Int32(ARG(bump))
+                ARG(BODY),
+                ARG(START),
+                Int32s(ARG(END), 1) - 1,
+                Int32(ARG(BUMP))
             );
         }
     }
 
     return Loop_Number_Common(
-        OUT, var, ARG(body), ARG(start), ARG(end), ARG(bump)
+        OUT, var, ARG(BODY), ARG(START), ARG(END), ARG(BUMP)
     );
 }
 
@@ -888,18 +888,18 @@ DECLARE_NATIVE(for)
 //          [block! action!]
 //  ]
 //
-DECLARE_NATIVE(for_skip)
+DECLARE_NATIVE(FOR_SKIP)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    Value* series = ARG(series);
+    Value* series = ARG(SERIES);
 
     Init_Void(OUT);  // result if body never runs, like `while [null] [...]`
 
     if (Is_Blank(series))
         return OUT;
 
-    REBINT skip = Int32(ARG(skip));
+    REBINT skip = Int32(ARG(SKIP));
     if (skip == 0) {
         //
         // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
@@ -909,11 +909,11 @@ DECLARE_NATIVE(for_skip)
 
     VarList* context;
     Virtual_Bind_Deep_To_New_Context(
-        ARG(body), // may be updated, will still be GC safe
+        ARG(BODY), // may be updated, will still be GC safe
         &context,
-        ARG(word)
+        ARG(WORD)
     );
-    Init_Object(ARG(word), context); // keep GC safe
+    Init_Object(ARG(WORD), context); // keep GC safe
 
     Value* pseudo_var = Varlist_Slot(context, 1); // not movable, see #2274
     Value* var = Real_Var_From_Pseudo(pseudo_var);
@@ -939,7 +939,7 @@ DECLARE_NATIVE(for_skip)
             VAL_INDEX(var) = index;
         }
 
-        if (Do_Branch_Throws(OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(BODY))) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return BOUNCE_THROWN;
@@ -957,7 +957,7 @@ DECLARE_NATIVE(for_skip)
         var = Real_Var_From_Pseudo(pseudo_var);
 
         if (Is_Nulled(var))
-            fail (Error_No_Value(ARG(word)));
+            fail (Error_No_Value(ARG(WORD)));
         if (not Any_Series(var))
             fail (Error_Invalid(var));
 
@@ -977,7 +977,7 @@ DECLARE_NATIVE(for_skip)
 //          [~null~ <end> any-value!]
 //  ]
 //
-DECLARE_NATIVE(stop)
+DECLARE_NATIVE(STOP)
 //
 // Most loops are not allowed to explicitly return a value and stop looping,
 // because that would make it impossible to tell from the outside whether
@@ -994,9 +994,9 @@ DECLARE_NATIVE(stop)
 {
     INCLUDE_PARAMS_OF_STOP;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
-    Copy_Cell(OUT, NAT_VALUE(stop));
+    Copy_Cell(OUT, NAT_VALUE(STOP));
     if (Is_Endish_Nulled(v))
         CONVERT_NAME_TO_THROWN(OUT, NOTHING_VALUE); // `if true [stop]`
     else
@@ -1017,17 +1017,17 @@ DECLARE_NATIVE(stop)
 //          "Block or action to evaluate each time"
 //  ]
 //
-DECLARE_NATIVE(cycle)
+DECLARE_NATIVE(CYCLE)
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
     do {
-        if (Do_Branch_Throws(OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(BODY))) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke)) {
                 if (
                     Is_Action(OUT)
-                    and VAL_ACT_DISPATCHER(OUT) == &N_stop
+                    and VAL_ACT_DISPATCHER(OUT) == &NATIVE_CFUNC(STOP)
                 ){
                     // See notes on STOP for why CYCLE is unique among loop
                     // constructs, with a BREAK variant that returns a value.
@@ -1063,7 +1063,7 @@ DECLARE_NATIVE(cycle)
 //          "Block to evaluate each time"
 //  ]
 //
-DECLARE_NATIVE(for_each)
+DECLARE_NATIVE(FOR_EACH)
 {
     return Loop_Each(level_, LOOP_FOR_EACH);
 }
@@ -1084,7 +1084,7 @@ DECLARE_NATIVE(for_each)
 //          "Block to evaluate each time"
 //  ]
 //
-DECLARE_NATIVE(every)
+DECLARE_NATIVE(EVERY)
 {
     return Loop_Each(level_, LOOP_EVERY);
 }
@@ -1381,12 +1381,12 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
 //          "Block to evaluate (return TRUE to remove)"
 //  ]
 //
-DECLARE_NATIVE(remove_each)
+DECLARE_NATIVE(REMOVE_EACH)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
     struct Remove_Each_State res;
-    res.data = ARG(data);
+    res.data = ARG(DATA);
 
     if (Is_Blank(res.data))
         return Init_Integer(OUT, 0);
@@ -1416,16 +1416,16 @@ DECLARE_NATIVE(remove_each)
 
     // Create a context for the loop variables, and bind the body to it.
     // Do this before PUSH_TRAP, so that if there is any failure related to
-    // memory or a poorly formed ARG(vars) that it doesn't try to finalize
+    // memory or a poorly formed ARG(VARS) that it doesn't try to finalize
     // the REMOVE-EACH, as `res` is not ready yet.
     //
     Virtual_Bind_Deep_To_New_Context(
-        ARG(body), // may be updated, will still be GC safe
+        ARG(BODY), // may be updated, will still be GC safe
         &res.context,
-        ARG(vars)
+        ARG(VARS)
     );
-    Init_Object(ARG(vars), res.context); // keep GC safe
-    res.body = ARG(body);
+    Init_Object(ARG(VARS), res.context); // keep GC safe
+    res.body = ARG(BODY);
 
     res.start = VAL_INDEX(res.data);
 
@@ -1504,7 +1504,7 @@ DECLARE_NATIVE(remove_each)
 //          "Block to evaluate each time"
 //  ]
 //
-DECLARE_NATIVE(map_each)
+DECLARE_NATIVE(MAP_EACH)
 {
     return Loop_Each(level_, LOOP_MAP_EACH);
 }
@@ -1523,21 +1523,21 @@ DECLARE_NATIVE(map_each)
 //          "Block to evaluate or action to run."
 //  ]
 //
-DECLARE_NATIVE(repeat)
+DECLARE_NATIVE(REPEAT)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
     Init_Void(OUT);  // result if body never runs, like `while [null] [...]`
 
-    if (IS_FALSEY(ARG(count))) {
-        assert(Is_Logic(ARG(count))); // is false...opposite of infinite loop
+    if (IS_FALSEY(ARG(COUNT))) {
+        assert(Is_Logic(ARG(COUNT))); // is false...opposite of infinite loop
         return OUT;
     }
 
     REBI64 count;
 
-    if (Is_Logic(ARG(count))) {
-        assert(VAL_LOGIC(ARG(count)) == true);
+    if (Is_Logic(ARG(COUNT))) {
+        assert(VAL_LOGIC(ARG(COUNT)) == true);
 
         // Run forever, and as a micro-optimization don't handle specially
         // in the loop, just seed with a very large integer.  In the off
@@ -1546,10 +1546,10 @@ DECLARE_NATIVE(repeat)
         count = INT64_MAX;
     }
     else
-        count = Int64(ARG(count));
+        count = Int64(ARG(COUNT));
 
     for (; count > 0; count--) {
-        if (Do_Branch_Throws(OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(BODY))) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return BOUNCE_THROWN;
@@ -1559,7 +1559,7 @@ DECLARE_NATIVE(repeat)
         Nothingify_Branched(OUT);  // null->BREAK, blank->empty
     }
 
-    if (Is_Logic(ARG(count)))
+    if (Is_Logic(ARG(COUNT)))
         goto restart; // "infinite" loop exhausted MAX_I64 steps (rare case)
 
     return OUT;
@@ -1581,28 +1581,28 @@ DECLARE_NATIVE(repeat)
 //          "Block to evaluate each time"
 //  ]
 //
-DECLARE_NATIVE(for_next)
+DECLARE_NATIVE(FOR_NEXT)
 {
     INCLUDE_PARAMS_OF_FOR_NEXT;
 
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
     if (Is_Decimal(value) or Is_Percent(value))
         Init_Integer(value, Int64(value));
 
     VarList* context;
     Virtual_Bind_Deep_To_New_Context(
-        ARG(body),
+        ARG(BODY),
         &context,
-        ARG(word)
+        ARG(WORD)
     );
-    Init_Object(ARG(word), context); // keep GC safe
+    Init_Object(ARG(WORD), context); // keep GC safe
 
     assert(Varlist_Len(context) == 1);
 
     Value* var = Varlist_Slot(context, 1); // not movable, see #2274
     return Loop_Series_Common(
-        OUT, var, ARG(body), value, VAL_LEN_HEAD(value) - 1, 1
+        OUT, var, ARG(BODY), value, VAL_LEN_HEAD(value) - 1, 1
     );
 }
 
@@ -1617,7 +1617,7 @@ DECLARE_NATIVE(for_next)
 //      body [block! action!]
 //  ]
 //
-DECLARE_NATIVE(until)
+DECLARE_NATIVE(UNTIL)
 {
     INCLUDE_PARAMS_OF_UNTIL;
 
@@ -1625,7 +1625,7 @@ DECLARE_NATIVE(until)
 
     skip_check:;
 
-        if (Do_Branch_Throws(OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(BODY))) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return BOUNCE_THROWN;
@@ -1654,7 +1654,7 @@ DECLARE_NATIVE(until)
 //      body [block! action!]
 //  ]
 //
-DECLARE_NATIVE(while)
+DECLARE_NATIVE(WHILE)
 {
     INCLUDE_PARAMS_OF_WHILE;
 
@@ -1665,7 +1665,7 @@ DECLARE_NATIVE(while)
     Init_Void(OUT);  // result if body never runs
 
     do {
-        if (Do_Branch_Throws(cell, ARG(condition))) {
+        if (Do_Branch_Throws(cell, ARG(CONDITION))) {
             Copy_Cell(OUT, cell);
             Drop_GC_Guard(cell);
             return BOUNCE_THROWN; // don't see BREAK/CONTINUE in the *condition*
@@ -1676,7 +1676,7 @@ DECLARE_NATIVE(while)
             return OUT; // trigger didn't match, return last body result
         }
 
-        if (Do_Branch_With_Throws(OUT, ARG(body), cell)) {
+        if (Do_Branch_With_Throws(OUT, ARG(BODY), cell)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke)) {
                 Drop_GC_Guard(cell);

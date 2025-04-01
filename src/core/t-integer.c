@@ -114,7 +114,7 @@ Bounce TO_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 // REBU64, a request for unsigned interpretation is limited to using
 // 63 of those bits.  A range error will be thrown otherwise.
 //
-// If a type is added or removed, update DECLARE_NATIVE(to_integer)'s spec
+// If a type is added or removed, update DECLARE_NATIVE(TO_INTEGER)'s spec
 //
 void Value_To_Int64(Value* out, const Value* value, bool no_sign)
 {
@@ -350,11 +350,11 @@ check_sign:
 //      {For BINARY! interpret as unsigned, otherwise error if signed.}
 //  ]
 //
-DECLARE_NATIVE(to_integer)
+DECLARE_NATIVE(TO_INTEGER)
 {
     INCLUDE_PARAMS_OF_TO_INTEGER;
 
-    Value_To_Int64(OUT, ARG(value), REF(unsigned));
+    Value_To_Int64(OUT, ARG(VALUE), Bool_ARG(UNSIGNED));
 
     return OUT;
 }
@@ -528,20 +528,20 @@ REBTYPE(Integer)
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
         Flags flags = (
-            (REF(to) ? RF_TO : 0)
-            | (REF(even) ? RF_EVEN : 0)
-            | (REF(down) ? RF_DOWN : 0)
-            | (REF(half_down) ? RF_HALF_DOWN : 0)
-            | (REF(floor) ? RF_FLOOR : 0)
-            | (REF(ceiling) ? RF_CEILING : 0)
-            | (REF(half_ceiling) ? RF_HALF_CEILING : 0)
+            (Bool_ARG(TO) ? RF_TO : 0)
+            | (Bool_ARG(EVEN) ? RF_EVEN : 0)
+            | (Bool_ARG(DOWN) ? RF_DOWN : 0)
+            | (Bool_ARG(HALF_DOWN) ? RF_HALF_DOWN : 0)
+            | (Bool_ARG(FLOOR) ? RF_FLOOR : 0)
+            | (Bool_ARG(CEILING) ? RF_CEILING : 0)
+            | (Bool_ARG(HALF_CEILING) ? RF_HALF_CEILING : 0)
         );
 
-        Value* val2 = ARG(scale);
-        if (REF(to)) {
+        Value* val2 = ARG(SCALE);
+        if (Bool_ARG(TO)) {
             if (Is_Money(val2))
                 return Init_Money(
                     OUT,
@@ -569,18 +569,18 @@ REBTYPE(Integer)
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
-        if (REF(only))
+        if (Bool_ARG(ONLY))
             fail (Error_Bad_Refines_Raw());
 
-        if (REF(seed)) {
+        if (Bool_ARG(SEED)) {
             Set_Random(num);
             return nullptr;
         }
         if (num == 0)
             break;
-        return Init_Integer(OUT, Random_Range(num, REF(secure))); }
+        return Init_Integer(OUT, Random_Range(num, Bool_ARG(SECURE))); }
 
     default:
         break;
@@ -602,7 +602,7 @@ REBTYPE(Integer)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(enbin)
+DECLARE_NATIVE(ENBIN)
 //
 // !!! This routine may wind up being folded into ENCODE as a block-oriented
 // syntax for talking to the "little endian" and "big endian" codecs, but
@@ -612,7 +612,7 @@ DECLARE_NATIVE(enbin)
 {
     INCLUDE_PARAMS_OF_ENBIN;
 
-    Value* settings = rebValue("compose", ARG(settings));
+    Value* settings = rebValue("compose", ARG(SETTINGS));
     if (Cell_Series_Len_At(settings) != 3)
         fail ("ENBIN requires array of length 3 for settings for now");
     bool little = rebDid(
@@ -648,7 +648,7 @@ DECLARE_NATIVE(enbin)
     if (not little)
         bp += num_bytes - 1;  // go backwards for big endian
 
-    REBI64 i = VAL_INT64(ARG(value));
+    REBI64 i = VAL_INT64(ARG(VALUE));
     if (no_sign and i < 0)
         fail ("ENBIN request for unsigned but passed-in value is signed");
 
@@ -677,7 +677,7 @@ DECLARE_NATIVE(enbin)
     }
     if (i != 0)
         rebJumps (
-            "fail [", ARG(value), "{exceeds}", rebI(num_bytes), "{bytes}]"
+            "fail [", ARG(VALUE), "{exceeds}", rebI(num_bytes), "{bytes}]"
         );
 
     // The process of byte production of a positive number shouldn't give us
@@ -686,7 +686,7 @@ DECLARE_NATIVE(enbin)
     if (not no_sign and not negative and *(bp - delta) >= 0x80)
         rebJumps (
             "fail [",
-                ARG(value), "{aliases a negative value with signed}",
+                ARG(VALUE), "{aliases a negative value with signed}",
                 "{encoding of only}", rebI(num_bytes), "{bytes}",
             "]"
         );
@@ -708,7 +708,7 @@ DECLARE_NATIVE(enbin)
 //          [binary!]
 //  ]
 //
-DECLARE_NATIVE(debin)
+DECLARE_NATIVE(DEBIN)
 //
 // !!! This routine may wind up being folded into DECODE as a block-oriented
 // syntax for talking to the "little endian" and "big endian" codecs, but
@@ -718,7 +718,7 @@ DECLARE_NATIVE(debin)
 {
     INCLUDE_PARAMS_OF_DEBIN;
 
-    Value* settings = rebValue("compose", ARG(settings));
+    Value* settings = rebValue("compose", ARG(SETTINGS));
     if (Cell_Series_Len_At(settings) != 2 and Cell_Series_Len_At(settings) != 3)
         fail("DEBIN requires array of length 2 or 3 for settings for now");
     bool little = rebDid(
@@ -737,12 +737,12 @@ DECLARE_NATIVE(debin)
     REBLEN num_bytes;
     Cell* third = Cell_List_At_Head(settings, index + 2);
     if (IS_END(third))
-        num_bytes = Cell_Series_Len_At(ARG(binary));
+        num_bytes = Cell_Series_Len_At(ARG(BINARY));
     else {
         if (not Is_Integer(third))
             fail ("Third element of DEBIN settings must be an integer}");
         num_bytes = VAL_INT32(third);
-        if (Cell_Series_Len_At(ARG(binary)) != num_bytes)
+        if (Cell_Series_Len_At(ARG(BINARY)) != num_bytes)
             fail ("Input binary is longer than number of bytes to DEBIN");
     }
     if (num_bytes <= 0) {
@@ -760,7 +760,7 @@ DECLARE_NATIVE(debin)
     // to be correct for starters...
 
     REBINT delta = little ? -1 : 1;
-    Byte* bp = Cell_Blob_At(ARG(binary));
+    Byte* bp = Cell_Blob_At(ARG(BINARY));
     if (little)
         bp += num_bytes - 1;  // go backwards
 
@@ -805,7 +805,7 @@ DECLARE_NATIVE(debin)
     // leading 0x00 or 0xFF stripped away
     //
     if (n > 8)
-        fail (Error_Out_Of_Range_Raw(ARG(binary)));
+        fail (Error_Out_Of_Range_Raw(ARG(BINARY)));
 
     REBI64 i = 0;
 
@@ -829,7 +829,7 @@ DECLARE_NATIVE(debin)
         //
         // bits may become signed via shift due to 63-bit limit
         //
-        fail (Error_Out_Of_Range_Raw(ARG(binary)));
+        fail (Error_Out_Of_Range_Raw(ARG(BINARY)));
     }
 
     return Init_Integer(OUT, i);

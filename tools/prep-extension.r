@@ -23,7 +23,7 @@ REBOL [
     Notes: {
         Currently the build process does not distinguish between an extension
         that wants to use just "rebol.h" and one that depends on "sys-core.h"
-        Hence it includes things like ARG() and REF() macros, which access
+        Hence it includes things like ARG() and Bool_ARG() macros, which access
         frame internals that do not currently go through the libRebol API.
 
         It should be possible to build an extension that does not use the
@@ -236,7 +236,7 @@ names: collect [
     for-each item native-list [
         if set-word? item [
             item: to word! item
-            keep cscape/with {N_${MOD}_${Item}} 'item
+            keep cscape/with {N_${MOD}_${ITEM}} 'item
         ]
     ]
 ]
@@ -245,7 +245,7 @@ native-forward-decls: collect [
     for-each item native-list [
         if set-word? item [
             item: to word! item
-            keep cscape/with {DECLARE_NATIVE(${Item})} 'item
+            keep cscape/with {DECLARE_NATIVE(${ITEM})} 'item
         ]
     ]
 ]
@@ -255,7 +255,7 @@ e1/emit {
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
 
     /*
-    ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
+    ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), Bool_ARG(), ARG()
     */
 }
 e1/emit newline
@@ -282,8 +282,8 @@ e1/emit {
      * This avoids name collisions with the core, or with other extensions.
      */
     #undef DECLARE_NATIVE
-    #define DECLARE_NATIVE(n) \
-        Value* N_${MOD}_##n(Level* level_)
+    #define DECLARE_NATIVE(name) \
+        Value* N_${MOD}_##name(Level* level_)
 
     /*
      * Forward-declare DECLARE_NATIVE() dispatcher prototypes

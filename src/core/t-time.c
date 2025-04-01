@@ -651,20 +651,20 @@ REBTYPE(Time)
         case SYM_ROUND: {
             INCLUDE_PARAMS_OF_ROUND;
 
-            UNUSED(PAR(value));
+            UNUSED(PARAM(VALUE));
 
             Flags flags = (
-                (REF(to) ? RF_TO : 0)
-                | (REF(even) ? RF_EVEN : 0)
-                | (REF(down) ? RF_DOWN : 0)
-                | (REF(half_down) ? RF_HALF_DOWN : 0)
-                | (REF(floor) ? RF_FLOOR : 0)
-                | (REF(ceiling) ? RF_CEILING : 0)
-                | (REF(half_ceiling) ? RF_HALF_CEILING : 0)
+                (Bool_ARG(TO) ? RF_TO : 0)
+                | (Bool_ARG(EVEN) ? RF_EVEN : 0)
+                | (Bool_ARG(DOWN) ? RF_DOWN : 0)
+                | (Bool_ARG(HALF_DOWN) ? RF_HALF_DOWN : 0)
+                | (Bool_ARG(FLOOR) ? RF_FLOOR : 0)
+                | (Bool_ARG(CEILING) ? RF_CEILING : 0)
+                | (Bool_ARG(HALF_CEILING) ? RF_HALF_CEILING : 0)
             );
 
-            if (REF(to)) {
-                arg = ARG(scale);
+            if (Bool_ARG(TO)) {
+                arg = ARG(SCALE);
                 if (Is_Time(arg)) {
                     secs = Round_Int(secs, flags, VAL_NANO(arg));
                 }
@@ -676,13 +676,13 @@ REBTYPE(Time)
                     );
                     VAL_DECIMAL(arg) /= SEC_SEC;
                     RESET_CELL(arg, REB_DECIMAL);
-                    Copy_Cell(OUT, ARG(scale));
+                    Copy_Cell(OUT, ARG(SCALE));
                     return OUT;
                 }
                 else if (Is_Integer(arg)) {
                     VAL_INT64(arg) = Round_Int(secs, 1, Int32(arg) * SEC_SEC) / SEC_SEC;
                     RESET_CELL(arg, REB_INTEGER);
-                    Copy_Cell(OUT, ARG(scale));
+                    Copy_Cell(OUT, ARG(SCALE));
                     return OUT;
                 }
                 else
@@ -696,16 +696,16 @@ REBTYPE(Time)
         case SYM_RANDOM: {
             INCLUDE_PARAMS_OF_RANDOM;
 
-            UNUSED(PAR(value));
+            UNUSED(PARAM(VALUE));
 
-            if (REF(only))
+            if (Bool_ARG(ONLY))
                 fail (Error_Bad_Refines_Raw());
 
-            if (REF(seed)) {
+            if (Bool_ARG(SEED)) {
                 Set_Random(secs);
                 return nullptr;
             }
-            secs = Random_Range(secs / SEC_SEC, REF(secure)) * SEC_SEC;
+            secs = Random_Range(secs / SEC_SEC, Bool_ARG(SECURE)) * SEC_SEC;
             goto fixTime; }
 
         default:

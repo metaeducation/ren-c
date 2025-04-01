@@ -46,8 +46,8 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value)); // implied by `port`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE)); // implied by `port`
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -63,18 +63,18 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
     case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
+        UNUSED(PARAM(SOURCE));
 
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(seek)) {
-            UNUSED(ARG(index));
+        if (Bool_ARG(SEEK)) {
+            UNUSED(ARG(INDEX));
             fail (Error_Bad_Refines_Raw());
         }
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(STRING)); // handled in dispatcher
+        UNUSED(PARAM(LINES)); // handled in dispatcher
 
         // If not open, open it:
         if (not (req->flags & RRF_OPEN))
@@ -125,7 +125,7 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_console_actor_handle)
+DECLARE_NATIVE(GET_CONSOLE_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &Console_Actor);
     return OUT;

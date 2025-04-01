@@ -1250,7 +1250,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 assert(
                     (
                         Is_Action(single)
-                        and VAL_ACTION(single) == NAT_ACTION(null)
+                        and VAL_ACTION(single) == NAT_ACTION(NULL)
                     ) or (
                         Is_Group(single) and (
                             Get_Flex_Info(Cell_Array(single), HOLD)
@@ -2982,26 +2982,26 @@ void Shutdown_Scanner(void)
 //          line-number [integer! word!]
 //  ]
 //
-DECLARE_NATIVE(transcode)
+DECLARE_NATIVE(TRANSCODE)
 {
     INCLUDE_PARAMS_OF_TRANSCODE;
 
     // !!! Should the base name and extension be stored, or whole path?
     //
-    String* filename = REF(file)
-        ? Cell_String(ARG(file_name))
+    String* filename = Bool_ARG(FILE)
+        ? Cell_String(ARG(FILE_NAME))
         : nullptr;
 
     LineNumber start_line;
-    if (REF(line)) {
+    if (Bool_ARG(LINE)) {
         Value* ival;
-        if (Is_Word(ARG(line_number)))  // get mutable, to fail early
-            ival = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);
+        if (Is_Word(ARG(LINE_NUMBER)))  // get mutable, to fail early
+            ival = Get_Mutable_Var_May_Fail(ARG(LINE_NUMBER), SPECIFIED);
         else
-            ival = ARG(line_number);
+            ival = ARG(LINE_NUMBER);
 
         if (not Is_Integer(ival))
-            fail (ARG(line_number));
+            fail (ARG(LINE_NUMBER));
 
         start_line = VAL_INT32(ival);
         if (start_line <= 0)
@@ -3010,7 +3010,7 @@ DECLARE_NATIVE(transcode)
     else
         start_line = 1;
 
-    Value* source = ARG(source);
+    Value* source = ARG(SOURCE);
     Binary* converted = nullptr;
     if (Is_Text(source)) {
         converted = Make_Utf8_From_Cell_String_At_Limit(
@@ -3030,7 +3030,7 @@ DECLARE_NATIVE(transcode)
     ScanState scan;
     Init_Scan_Level(
         &scan,
-        REF(next3) ? SCAN_FLAG_NEXT : SCAN_MASK_NONE,
+        Bool_ARG(NEXT3) ? SCAN_FLAG_NEXT : SCAN_MASK_NONE,
         &transcode,
         '\0'
     );
@@ -3049,11 +3049,11 @@ DECLARE_NATIVE(transcode)
         return Init_Error(OUT, unwrap error);
     }
 
-    if (Is_Word(ARG(line_number))) {
-        Value* ivar = Get_Mutable_Var_May_Fail(ARG(line_number), SPECIFIED);
+    if (Is_Word(ARG(LINE_NUMBER))) {
+        Value* ivar = Get_Mutable_Var_May_Fail(ARG(LINE_NUMBER), SPECIFIED);
         Init_Integer(ivar, transcode.line);
     }
-    if (REF(next3) and TOP_INDEX != base) {
+    if (Bool_ARG(NEXT3) and TOP_INDEX != base) {
         Copy_Cell(OUT, source);  // result will be new position
         if (converted) {
             assert(Is_Text(OUT));  // had to be binary converted
@@ -3074,8 +3074,8 @@ DECLARE_NATIVE(transcode)
     if (converted)
         Free_Unmanaged_Flex(converted);  // release temporary binary created
 
-    if (REF(next3)) {
-        Value* nvar = Get_Mutable_Var_May_Fail(ARG(next_arg), SPECIFIED);
+    if (Bool_ARG(NEXT3)) {
+        Value* nvar = Get_Mutable_Var_May_Fail(ARG(NEXT_ARG), SPECIFIED);
 
         if (TOP_INDEX == base) {
             Init_Nulled(nvar);  // matches modern Ren-C optional unpack
@@ -3087,7 +3087,7 @@ DECLARE_NATIVE(transcode)
         return OUT;  // position set above
     }
 
-    if (REF(one)) {
+    if (Bool_ARG(ONE)) {
         if (TOP_INDEX == base)
             fail ("TRANSCODE:ONE got zero values");
         if (TOP_INDEX > base + 1)

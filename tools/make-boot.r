@@ -795,7 +795,7 @@ boot-natives: load boot/tmp-natives.r
 nats: collect [
     for-each val boot-natives [
         if set-word? val [
-            keep cscape/with {N_${to word! val}} 'val
+            keep cscape/with {N_${TO WORD! VAL}} 'val
         ]
     ]
 ]
@@ -862,7 +862,7 @@ nids: collect [
     for-each val boot-natives [
         if set-word? val [
             keep cscape/with
-                {N_${to word! val}_ID = $<nat-index>} [nat-index val]
+                {N_${TO WORD! VAL}_ID = $<nat-index>} [nat-index val]
             nat-index: nat-index + 1
         ]
     ]

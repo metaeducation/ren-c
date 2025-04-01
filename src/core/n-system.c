@@ -39,11 +39,11 @@
 //      ; No arguments
 //  ]
 //
-DECLARE_NATIVE(halt)
+DECLARE_NATIVE(HALT)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    Copy_Cell(OUT, NAT_VALUE(halt));
+    Copy_Cell(OUT, NAT_VALUE(HALT));
     CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
     return OUT;
 }
@@ -59,7 +59,7 @@ DECLARE_NATIVE(halt)
 //      /value "Allow non-integers for yielding values to calling scripts"
 //  ]
 //
-DECLARE_NATIVE(quit)
+DECLARE_NATIVE(QUIT)
 //
 // QUIT is implemented via a THROWN() value that bubbles up through
 // the stack.  It uses the value of its own native function as the
@@ -67,9 +67,9 @@ DECLARE_NATIVE(quit)
 {
     INCLUDE_PARAMS_OF_QUIT;
 
-    Value* atom = ARG(atom);
+    Value* atom = ARG(ATOM);
 
-    if (REF(value)) {
+    if (Bool_ARG(VALUE)) {
         // don't convert end to integer 0 for success synonym
     }
     else {
@@ -79,9 +79,9 @@ DECLARE_NATIVE(quit)
             fail ("QUIT must receive INTEGER! unless /VALUE used");
     }
 
-    Copy_Cell(OUT, NAT_VALUE(quit));
+    Copy_Cell(OUT, NAT_VALUE(QUIT));
 
-    CONVERT_NAME_TO_THROWN(OUT, ARG(atom));
+    CONVERT_NAME_TO_THROWN(OUT, ARG(ATOM));
 
     return BOUNCE_THROWN;
 }
@@ -98,13 +98,13 @@ DECLARE_NATIVE(quit)
 //          "See: http://en.wikipedia.org/wiki/Exit_status"
 //  ]
 //
-DECLARE_NATIVE(exit_rebol)
+DECLARE_NATIVE(EXIT_REBOL)
 {
     INCLUDE_PARAMS_OF_EXIT_REBOL;
 
     int code;
-    if (REF(with))
-        code = VAL_INT32(ARG(value));
+    if (Bool_ARG(WITH))
+        code = VAL_INT32(ARG(VALUE));
     else
         code = EXIT_SUCCESS;
 
@@ -134,26 +134,26 @@ DECLARE_NATIVE(exit_rebol)
 //          "Dump out information about series being recycled (debug only)"
 //  ]
 //
-DECLARE_NATIVE(recycle)
+DECLARE_NATIVE(RECYCLE)
 {
     INCLUDE_PARAMS_OF_RECYCLE;
 
-    if (REF(off)) {
+    if (Bool_ARG(OFF)) {
         GC_Disabled = true;
         return nullptr;
     }
 
-    if (REF(on)) {
+    if (Bool_ARG(ON)) {
         GC_Disabled = false;
         TG_Ballast = TG_Max_Ballast;
     }
 
-    if (REF(ballast)) {
-        TG_Max_Ballast = VAL_INT32(ARG(size));
+    if (Bool_ARG(BALLAST)) {
+        TG_Max_Ballast = VAL_INT32(ARG(SIZE));
         TG_Ballast = TG_Max_Ballast;
     }
 
-    if (REF(torture)) {
+    if (Bool_ARG(TORTURE)) {
         GC_Disabled = false;
         TG_Ballast = 0;
     }
@@ -163,7 +163,7 @@ DECLARE_NATIVE(recycle)
 
     REBLEN count;
 
-    if (REF(verbose)) {
+    if (Bool_ARG(VERBOSE)) {
       #if NO_RUNTIME_CHECKS
         fail (Error_Debug_Only_Raw());
       #else
@@ -188,7 +188,7 @@ DECLARE_NATIVE(recycle)
         count = Recycle();
     }
 
-    if (REF(watch)) {
+    if (Bool_ARG(WATCH)) {
       #if NO_RUNTIME_CHECKS
         fail (Error_Debug_Only_Raw());
       #else
@@ -213,7 +213,7 @@ DECLARE_NATIVE(recycle)
 //          {System will terminate abnormally if this value is corrupt.}
 //  ]
 //
-DECLARE_NATIVE(check)
+DECLARE_NATIVE(CHECK)
 //
 // This forces an integrity check to run on a series.  In R3-Alpha there was
 // no debug build, so this was a simple validity check and it returned an
@@ -225,11 +225,11 @@ DECLARE_NATIVE(check)
     INCLUDE_PARAMS_OF_CHECK;
 
 #if NO_RUNTIME_CHECKS
-    UNUSED(ARG(value));
+    UNUSED(ARG(VALUE));
 
     fail (Error_Debug_Only_Raw());
 #else
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
     // For starters, check the memory (if it's bad, all other bets are off)
     //
@@ -296,12 +296,12 @@ int ceil_log2(unsigned long long x) {
 //          {Round tick up, as in https://math.stackexchange.com/q/2521219/}
 // ]
 //
-DECLARE_NATIVE(c_debug_break_at)
+DECLARE_NATIVE(C_DEBUG_BREAK_AT)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK_AT;
 
   #if RUNTIME_CHECKS && DEBUG_COUNT_TICKS
-    if (REF(compensate)) {
+    if (Bool_ARG(COMPENSATE)) {
         //
         // Imagine two runs of Rebol console initialization.  In the first,
         // the tick count is 304 when C-DEBUG-BREAK/COMPENSATE is called,
@@ -320,7 +320,7 @@ DECLARE_NATIVE(c_debug_break_at)
         // C-DEBUG-BREAK/COMPENSATE, this time at tick 403.  Imagine our goal
         // is to make the parameter to /COMPENSATE something that can be used
         // to conservatively guess the same value to set the tick to, and
-        // that /COMPENSATE ARG(bound) that gives a maximum of how far off we
+        // that /COMPENSATE ARG(BOUND) that gives a maximum of how far off we
         // could possibly be from the "real" tick. (e.g. "argument processing
         // took no more than 200 additional ticks", which this is consistent
         // with...since 403-304 = 99).
@@ -333,20 +333,20 @@ DECLARE_NATIVE(c_debug_break_at)
         Tick one = 1; // MSVC gives misguided warning for cast(Tick, 1)
         TG_Tick =
             (one << (ceil_log2(TG_Tick) + 1))
-            + VAL_INT64(ARG(tick))
+            + VAL_INT64(ARG(TICK))
             - 1;
         return nullptr;
     }
 
-    if (REF(relative))
-        TG_Break_At_Tick = level_->tick + 1 + VAL_INT64(ARG(tick));
+    if (Bool_ARG(RELATIVE))
+        TG_Break_At_Tick = level_->tick + 1 + VAL_INT64(ARG(TICK));
     else
-        TG_Break_At_Tick = VAL_INT64(ARG(tick));
+        TG_Break_At_Tick = VAL_INT64(ARG(TICK));
     return nullptr;
   #else
-    UNUSED(ARG(tick));
-    UNUSED(ARG(relative));
-    UNUSED(REF(compensate));
+    UNUSED(ARG(TICK));
+    UNUSED(ARG(RELATIVE));
+    UNUSED(Bool_ARG(COMPENSATE));
 
     fail (Error_Debug_Only_Raw());
   #endif
@@ -362,7 +362,7 @@ DECLARE_NATIVE(c_debug_break_at)
 //          {Invisibly returns what the expression to the right would have}
 //  ]
 //
-DECLARE_NATIVE(c_debug_break)
+DECLARE_NATIVE(C_DEBUG_BREAK)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
@@ -395,10 +395,10 @@ DECLARE_NATIVE(c_debug_break)
 //          {An argument (which test code may or may not use)}
 //  ]
 //
-DECLARE_NATIVE(test)
+DECLARE_NATIVE(TEST)
 {
     INCLUDE_PARAMS_OF_TEST;
-    UNUSED(ARG(value));
+    UNUSED(ARG(VALUE));
 
     rebElide(
         "print", rebI(10), // won't leak, rebI() releases during variadic walk

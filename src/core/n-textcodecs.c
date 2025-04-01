@@ -151,11 +151,11 @@ int Decode_UTF16_Negative_If_ASCII(
 //      data [binary!]
 //  ]
 //
-DECLARE_NATIVE(identify_text_q)
+DECLARE_NATIVE(IDENTIFY_TEXT_Q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_TEXT_Q;
 
-    UNUSED(ARG(data)); // see notes on decode-text
+    UNUSED(ARG(DATA)); // see notes on decode-text
 
     return Init_True(OUT);
 }
@@ -170,7 +170,7 @@ DECLARE_NATIVE(identify_text_q)
 //      data [binary!]
 //  ]
 //
-DECLARE_NATIVE(decode_text)
+DECLARE_NATIVE(DECODE_TEXT)
 {
     INCLUDE_PARAMS_OF_DECODE_TEXT;
 
@@ -184,7 +184,7 @@ DECLARE_NATIVE(decode_text)
     // is to UTF-8 for source code, a .TXT file is a different beast, so
     // having wider format support might be a good thing.
 
-    Init_Text(OUT, Make_String_UTF8(cs_cast(Cell_Blob_At(ARG(data)))));
+    Init_Text(OUT, Make_String_UTF8(cs_cast(Cell_Blob_At(ARG(DATA)))));
     return OUT;
 }
 
@@ -198,11 +198,11 @@ DECLARE_NATIVE(decode_text)
 //      string [text!]
 //  ]
 //
-DECLARE_NATIVE(encode_text)
+DECLARE_NATIVE(ENCODE_TEXT)
 {
     INCLUDE_PARAMS_OF_ENCODE_TEXT;
 
-    if (not VAL_BYTE_SIZE(ARG(string))) {
+    if (not VAL_BYTE_SIZE(ARG(STRING))) {
         //
         // For the moment, only write out strings to .txt if they are Latin1.
         // (Other support was unimplemented in R3-Alpha, and would just wind
@@ -211,7 +211,7 @@ DECLARE_NATIVE(encode_text)
         fail ("Can only write out strings to .txt if they are Latin1.");
     }
 
-    return Init_Blob(OUT, Copy_Sequence_At_Position(ARG(string)));
+    return Init_Blob(OUT, Copy_Sequence_At_Position(ARG(STRING)));
 }
 
 
@@ -284,7 +284,7 @@ static void Decode_Utf16_Core(
 //      data [binary!]
 //  ]
 //
-DECLARE_NATIVE(identify_utf16le_q)
+DECLARE_NATIVE(IDENTIFY_UTF16LE_Q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_UTF16LE_Q;
 
@@ -293,7 +293,7 @@ DECLARE_NATIVE(identify_utf16le_q)
     // general ".txt" codec...because if you ask specifically to decode a
     // stream as UTF-16-LE, then you may be willing to tolerate no BOM.
     //
-    UNUSED(ARG(data));
+    UNUSED(ARG(DATA));
 
     return Init_True(OUT);
 }
@@ -308,12 +308,12 @@ DECLARE_NATIVE(identify_utf16le_q)
 //      data [binary!]
 //  ]
 //
-DECLARE_NATIVE(decode_utf16le)
+DECLARE_NATIVE(DECODE_UTF16LE)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
-    Byte *data = Cell_Blob_At(ARG(data));
-    REBLEN len = Cell_Series_Len_At(ARG(data));
+    Byte *data = Cell_Blob_At(ARG(DATA));
+    REBLEN len = Cell_Series_Len_At(ARG(DATA));
 
     const bool little_endian = true;
 
@@ -341,7 +341,7 @@ DECLARE_NATIVE(decode_utf16le)
 //      text [text!]
 //  ]
 //
-DECLARE_NATIVE(encode_utf16le)
+DECLARE_NATIVE(ENCODE_UTF16LE)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
 
@@ -351,8 +351,8 @@ DECLARE_NATIVE(encode_utf16le)
     const bool little_endian = true;
     Encode_Utf16_Core(
         OUT,
-        Cell_String_At(ARG(text)),
-        Cell_Series_Len_At(ARG(text)),
+        Cell_String_At(ARG(TEXT)),
+        Cell_Series_Len_At(ARG(TEXT)),
         little_endian
     );
     return OUT;
@@ -369,7 +369,7 @@ DECLARE_NATIVE(encode_utf16le)
 //      data [binary!]
 //  ]
 //
-DECLARE_NATIVE(identify_utf16be_q)
+DECLARE_NATIVE(IDENTIFY_UTF16BE_Q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_UTF16BE_Q;
 
@@ -378,7 +378,7 @@ DECLARE_NATIVE(identify_utf16be_q)
     // general ".txt" codec...because if you ask specifically to decode a
     // stream as UTF-16-BE, then you may be willing to tolerate no BOM.
     //
-    UNUSED(ARG(data));
+    UNUSED(ARG(DATA));
 
     return Init_True(OUT);
 }
@@ -393,12 +393,12 @@ DECLARE_NATIVE(identify_utf16be_q)
 //      data [binary!]
 //  ]
 //
-DECLARE_NATIVE(decode_utf16be)
+DECLARE_NATIVE(DECODE_UTF16BE)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
-    Byte *data = Cell_Blob_At(ARG(data));
-    REBLEN len = Cell_Series_Len_At(ARG(data));
+    Byte *data = Cell_Blob_At(ARG(DATA));
+    REBLEN len = Cell_Series_Len_At(ARG(DATA));
 
     const bool little_endian = false;
 
@@ -426,7 +426,7 @@ DECLARE_NATIVE(decode_utf16be)
 //      text [text!]
 //  ]
 //
-DECLARE_NATIVE(encode_utf16be)
+DECLARE_NATIVE(ENCODE_UTF16BE)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 
@@ -437,8 +437,8 @@ DECLARE_NATIVE(encode_utf16be)
 
     Encode_Utf16_Core(
         OUT,
-        Cell_String_At(ARG(text)),
-        Cell_Series_Len_At(ARG(text)),
+        Cell_String_At(ARG(TEXT)),
+        Cell_Series_Len_At(ARG(TEXT)),
         little_endian
     );
     return OUT;

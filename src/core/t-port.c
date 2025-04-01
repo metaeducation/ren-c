@@ -114,27 +114,27 @@ Bounce Retrigger_Append_As_Write(Level* level_) {
     // `append %foo.txt "data"` you get `%foo.txtdata`.  Some actions are like
     // this, e.g. PICK, where they can't do the automatic conversion.
     //
-    assert(Is_Port(ARG(series))); // !!! poorly named
-    UNUSED(ARG(series));
+    assert(Is_Port(ARG(SERIES))); // !!! poorly named
+    UNUSED(ARG(SERIES));
     if (not (
-        Is_Binary(ARG(value))
-        or Is_Text(ARG(value))
-        or Is_Block(ARG(value)))
+        Is_Binary(ARG(VALUE))
+        or Is_Text(ARG(VALUE))
+        or Is_Block(ARG(VALUE)))
     ){
-        fail (Error_Invalid(ARG(value)));
+        fail (Error_Invalid(ARG(VALUE)));
     }
 
-    if (REF(part)) {
-        UNUSED(ARG(limit));
+    if (Bool_ARG(PART)) {
+        UNUSED(ARG(LIMIT));
         fail (Error_Bad_Refines_Raw());
     }
-    if (REF(only))
+    if (Bool_ARG(ONLY))
         fail (Error_Bad_Refines_Raw());
-    if (REF(dup)) {
-        UNUSED(ARG(count));
+    if (Bool_ARG(DUP)) {
+        UNUSED(ARG(COUNT));
         fail (Error_Bad_Refines_Raw());
     }
-    if (REF(line))
+    if (Bool_ARG(LINE))
         fail (Error_Bad_Refines_Raw());
 
     return rebValue("write/append", D_ARG(1), D_ARG(2));

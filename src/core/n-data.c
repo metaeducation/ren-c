@@ -64,11 +64,11 @@ static bool Check_Char_Range(const Value* val, REBINT limit)
 //      value [any-string! char! integer!]
 //  ]
 //
-DECLARE_NATIVE(ascii_q)
+DECLARE_NATIVE(ASCII_Q)
 {
     INCLUDE_PARAMS_OF_ASCII_Q;
 
-    return Init_Logic(OUT, Check_Char_Range(ARG(value), 0x7f));
+    return Init_Logic(OUT, Check_Char_Range(ARG(VALUE), 0x7f));
 }
 
 
@@ -80,11 +80,11 @@ DECLARE_NATIVE(ascii_q)
 //      value [any-string! char! integer!]
 //  ]
 //
-DECLARE_NATIVE(latin1_q)
+DECLARE_NATIVE(LATIN1_Q)
 {
     INCLUDE_PARAMS_OF_LATIN1_Q;
 
-    return Init_Logic(OUT, Check_Char_Range(ARG(value), 0xff));
+    return Init_Logic(OUT, Check_Char_Range(ARG(VALUE), 0xff));
 }
 
 
@@ -97,12 +97,12 @@ DECLARE_NATIVE(latin1_q)
 //      y [any-number!]
 //  ]
 //
-DECLARE_NATIVE(as_pair)
+DECLARE_NATIVE(AS_PAIR)
 {
     INCLUDE_PARAMS_OF_AS_PAIR;
 
-    Value* x = ARG(x);
-    Value* y = ARG(y);
+    Value* x = ARG(X);
+    Value* y = ARG(Y);
 
     if (
         not (Is_Integer(x) or Is_Decimal(x))
@@ -134,22 +134,22 @@ DECLARE_NATIVE(as_pair)
 //          "Add to context any new set-words found"
 //  ]
 //
-DECLARE_NATIVE(bind)
+DECLARE_NATIVE(BIND)
 {
     INCLUDE_PARAMS_OF_BIND;
 
-    Value* v = ARG(value);
-    Value* target = ARG(target);
+    Value* v = ARG(VALUE);
+    Value* target = ARG(TARGET);
 
-    REBLEN flags = REF(only) ? BIND_0 : BIND_DEEP;
+    REBLEN flags = Bool_ARG(ONLY) ? BIND_0 : BIND_DEEP;
 
     REBU64 bind_types = TS_WORD;
 
     REBU64 add_midstream_types;
-    if (REF(new)) {
+    if (Bool_ARG(NEW)) {
         add_midstream_types = TS_WORD;
     }
-    else if (REF(set)) {
+    else if (Bool_ARG(SET)) {
         add_midstream_types = FLAGIT_KIND(REB_SET_WORD);
     }
     else
@@ -182,7 +182,7 @@ DECLARE_NATIVE(bind)
 
         // not in context, bind/new means add it if it's not.
         //
-        if (REF(new) or (Is_Set_Word(v) and REF(set))) {
+        if (Bool_ARG(NEW) or (Is_Set_Word(v) and Bool_ARG(SET))) {
             Append_Context(context, v, nullptr);
             RETURN (v);
         }
@@ -204,7 +204,7 @@ DECLARE_NATIVE(bind)
     assert(Any_List(v));
 
     Cell* at;
-    if (REF(copy)) {
+    if (Bool_ARG(COPY)) {
         Array* copy = Copy_Array_Core_Managed(
             Cell_Array(v),
             VAL_INDEX(v), // at
@@ -246,7 +246,7 @@ DECLARE_NATIVE(bind)
 //          {Block to evaluate}
 //  ]
 //
-DECLARE_NATIVE(use)
+DECLARE_NATIVE(USE)
 //
 // !!! R3-Alpha's USE was written in userspace and was based on building a
 // CLOSURE! that it would DO.  Hence it took advantage of the existing code
@@ -267,12 +267,12 @@ DECLARE_NATIVE(use)
 
     VarList* context;
     Virtual_Bind_Deep_To_New_Context(
-        ARG(body), // may be replaced with rebound copy, or left the same
+        ARG(BODY), // may be replaced with rebound copy, or left the same
         &context, // winds up managed; if no references exist, GC is ok
-        ARG(vars) // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
+        ARG(VARS) // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
     );
 
-    if (Eval_List_At_Throws(OUT, ARG(body)))
+    if (Eval_List_At_Throws(OUT, ARG(BODY)))
         return BOUNCE_THROWN;
 
     return OUT;
@@ -367,11 +367,11 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
 //      optional [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(value_q)
+DECLARE_NATIVE(VALUE_Q)
 {
     INCLUDE_PARAMS_OF_VALUE_Q;
 
-    return Init_Logic(OUT, Any_Value(ARG(optional)));
+    return Init_Logic(OUT, Any_Value(ARG(OPTIONAL)));
 }
 
 
@@ -383,11 +383,11 @@ DECLARE_NATIVE(value_q)
 //      optional [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(element_q)
+DECLARE_NATIVE(ELEMENT_Q)
 {
     INCLUDE_PARAMS_OF_ELEMENT_Q;
 
-    return Init_Logic(OUT, Any_Value(ARG(optional)));
+    return Init_Logic(OUT, Any_Value(ARG(OPTIONAL)));
 }
 
 
@@ -402,16 +402,16 @@ DECLARE_NATIVE(element_q)
 //          "Process nested blocks"
 //  ]
 //
-DECLARE_NATIVE(unbind)
+DECLARE_NATIVE(UNBIND)
 {
     INCLUDE_PARAMS_OF_UNBIND;
 
-    Value* word = ARG(word);
+    Value* word = ARG(WORD);
 
     if (Any_Word(word))
         Unbind_Any_Word(word);
     else
-        Unbind_Values_Core(Cell_List_At(word), nullptr, REF(deep));
+        Unbind_Values_Core(Cell_List_At(word), nullptr, Bool_ARG(DEEP));
 
     RETURN (word);
 }
@@ -433,25 +433,25 @@ DECLARE_NATIVE(unbind)
 //          "Words to ignore"
 //  ]
 //
-DECLARE_NATIVE(collect_words)
+DECLARE_NATIVE(COLLECT_WORDS)
 {
     INCLUDE_PARAMS_OF_COLLECT_WORDS;
 
     Flags flags;
-    if (REF(set))
+    if (Bool_ARG(SET))
         flags = COLLECT_ONLY_SET_WORDS;
     else
         flags = COLLECT_ANY_WORD;
 
-    if (REF(deep))
+    if (Bool_ARG(DEEP))
         flags |= COLLECT_DEEP;
 
-    UNUSED(REF(ignore)); // implied used or unused by ARG(hidden)'s voidness
+    UNUSED(Bool_ARG(IGNORE)); // implied used or unused by ARG(HIDDEN)'s voidness
 
-    Cell* head = Cell_List_At(ARG(block));
+    Cell* head = Cell_List_At(ARG(BLOCK));
     return Init_Block(
         OUT,
-        Collect_Unique_Words_Managed(head, flags, ARG(hidden))
+        Collect_Unique_Words_Managed(head, flags, ARG(HIDDEN))
     );
 }
 
@@ -494,16 +494,16 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on trash)"
 //  ]
 //
-DECLARE_NATIVE(get)
+DECLARE_NATIVE(GET)
 //
 // Note: `get [x y] [some-var :some-unset-var]` would fail without /TRY
 {
     INCLUDE_PARAMS_OF_GET;
 
-    Value* source = ARG(source);
+    Value* source = ARG(SOURCE);
 
     if (not Is_Block(source)) {
-        Get_Opt_Polymorphic_May_Fail(OUT, source, SPECIFIED, REF(any));
+        Get_Opt_Polymorphic_May_Fail(OUT, source, SPECIFIED, Bool_ARG(ANY));
         return OUT;
     }
 
@@ -516,7 +516,7 @@ DECLARE_NATIVE(get)
             dest,
             item,
             VAL_SPECIFIER(source),
-            REF(any)
+            Bool_ARG(ANY)
         );
         Nothingify_Branched(dest);  // !!! can't put nulls in blocks (blankify?)
     }
@@ -536,7 +536,7 @@ DECLARE_NATIVE(get)
 //          [<maybe> <dequote> any-word! any-path!]
 //  ]
 //
-DECLARE_NATIVE(get_p)
+DECLARE_NATIVE(GET_P)
 //
 // This is added as a compromise, as `:var` won't efficiently get ANY-VALUE!.
 // At least `get* 'var` doesn't make you pay for path processing, and it's
@@ -546,7 +546,7 @@ DECLARE_NATIVE(get_p)
 
     Get_Opt_Polymorphic_May_Fail(
         OUT,
-        ARG(source),
+        ARG(SOURCE),
         SPECIFIED,
         true  // allow trash, e.g. GET/ANY
     );
@@ -596,16 +596,16 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
 //      /off "turn the infix bit off instead of on"
 //  ]
 //
-DECLARE_NATIVE(infix)
+DECLARE_NATIVE(INFIX)
 //
 // !!! See CELL_FLAG_INFIX_IF_ACTION regarding old vs. modern interpretation.
 {
     INCLUDE_PARAMS_OF_INFIX;
 
-    Value* v = ARG(action);
+    Value* v = ARG(ACTION);
 
     Copy_Cell(OUT, v);
-    if (REF(off))
+    if (Bool_ARG(OFF))
         Clear_Cell_Flag(OUT, INFIX_IF_ACTION);
     else
         Set_Cell_Flag(OUT, INFIX_IF_ACTION);
@@ -631,7 +631,7 @@ DECLARE_NATIVE(infix)
 //      /any "do not error on unset words"
 //  ]
 //
-DECLARE_NATIVE(set)
+DECLARE_NATIVE(SET)
 //
 // R3-Alpha and Red let you write `set [a b] 10`, since the thing you were
 // setting to was not a block, would assume you meant to set all the values to
@@ -655,10 +655,10 @@ DECLARE_NATIVE(set)
 {
     INCLUDE_PARAMS_OF_SET;
 
-    Value* target = ARG(target);
-    Value* value = ARG(value);
+    Value* target = ARG(TARGET);
+    Value* value = ARG(VALUE);
 
-    UNUSED(REF(any));  // !!!provided for bootstrap at this time
+    UNUSED(Bool_ARG(ANY));  // !!!provided for bootstrap at this time
 
     if (not Is_Block(target)) {
         assert(Any_Word(target) or Any_Path(target));
@@ -666,7 +666,7 @@ DECLARE_NATIVE(set)
         Set_Opt_Polymorphic_May_Fail(
             target,
             SPECIFIED,
-            Is_Blank(value) and REF(some) ? NULLED_CELL : value,
+            Is_Blank(value) and Bool_ARG(SOME) ? NULLED_CELL : value,
             SPECIFIED
         );
 
@@ -676,7 +676,7 @@ DECLARE_NATIVE(set)
     const Cell* item = Cell_List_At(target);
 
     const Cell* v;
-    if (Is_Block(value) and not REF(single))
+    if (Is_Block(value) and not Bool_ARG(SINGLE))
         v = Cell_List_At(value);
     else
         v = value;
@@ -684,9 +684,9 @@ DECLARE_NATIVE(set)
     for (
         ;
         NOT_END(item);
-        ++item, (REF(single) or IS_END(v)) ? NOOP : (++v, NOOP)
+        ++item, (Bool_ARG(SINGLE) or IS_END(v)) ? NOOP : (++v, NOOP)
      ){
-        if (REF(some)) {
+        if (Bool_ARG(SOME)) {
             if (IS_END(v))
                 break; // won't be setting any further values
             if (Is_Blank(v))
@@ -697,13 +697,13 @@ DECLARE_NATIVE(set)
             item,
             VAL_SPECIFIER(target),
             IS_END(v) ? BLANK_VALUE : v, // R3-Alpha/Red blank after END
-            (Is_Block(value) and not REF(single))
+            (Is_Block(value) and not Bool_ARG(SINGLE))
                 ? VAL_SPECIFIER(value)
                 : SPECIFIED
         );
     }
 
-    RETURN (ARG(value));
+    RETURN (ARG(VALUE));
 }
 
 
@@ -715,7 +715,7 @@ DECLARE_NATIVE(set)
 //      return: [~void~]
 //  ]
 //
-DECLARE_NATIVE(void) {
+DECLARE_NATIVE(VOID) {
     INCLUDE_PARAMS_OF_VOID;
 
     return Init_Void(OUT);
@@ -731,14 +731,14 @@ DECLARE_NATIVE(void) {
 //      optional [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(maybe)
+DECLARE_NATIVE(MAYBE)
 {
     INCLUDE_PARAMS_OF_MAYBE;
 
-    if (Is_Nulled(ARG(optional)))
+    if (Is_Nulled(ARG(OPTIONAL)))
         return Init_Void(OUT);
 
-    RETURN (ARG(optional));
+    RETURN (ARG(OPTIONAL));
 }
 
 
@@ -752,15 +752,15 @@ DECLARE_NATIVE(maybe)
 //      word [any-word! block! group!] "(modified if series)"
 //  ]
 //
-DECLARE_NATIVE(in)
+DECLARE_NATIVE(IN)
 //
 // !!! The argument names here are bad... not necessarily a context and not
 // necessarily a word.  `code` or `source` to be bound in a `target`, perhaps?
 {
     INCLUDE_PARAMS_OF_IN;
 
-    Value* val = ARG(context); // object, error, port, block
-    Value* word = ARG(word);
+    Value* val = ARG(CONTEXT); // object, error, port, block
+    Value* word = ARG(WORD);
 
     DECLARE_VALUE (safe);
 
@@ -836,25 +836,25 @@ DECLARE_NATIVE(in)
 //          "Add source words to the target if necessary"
 //  ]
 //
-DECLARE_NATIVE(resolve)
+DECLARE_NATIVE(RESOLVE)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    if (Is_Integer(ARG(from))) {
+    if (Is_Integer(ARG(FROM))) {
         // check range and sign
-        Int32s(ARG(from), 1);
+        Int32s(ARG(FROM), 1);
     }
 
-    UNUSED(REF(only)); // handled by noticing if ARG(from) is void
+    UNUSED(Bool_ARG(ONLY)); // handled by noticing if ARG(FROM) is void
     Resolve_Context(
-        Cell_Varlist(ARG(target)),
-        Cell_Varlist(ARG(source)),
-        ARG(from),
-        REF(all),
-        REF(extend)
+        Cell_Varlist(ARG(TARGET)),
+        Cell_Varlist(ARG(SOURCE)),
+        ARG(FROM),
+        Bool_ARG(ALL),
+        Bool_ARG(EXTEND)
     );
 
-    RETURN (ARG(target));
+    RETURN (ARG(TARGET));
 }
 
 
@@ -866,11 +866,11 @@ DECLARE_NATIVE(resolve)
 //      action [action!]
 //  ]
 //
-DECLARE_NATIVE(infix_q)
+DECLARE_NATIVE(INFIX_Q)
 {
     INCLUDE_PARAMS_OF_INFIX_Q;
 
-    Value* action = ARG(action);
+    Value* action = ARG(ACTION);
     return Init_Logic(OUT, Get_Cell_Flag(action, INFIX_IF_ACTION));
 }
 
@@ -885,7 +885,7 @@ DECLARE_NATIVE(infix_q)
 //          {!!! <end> flag is hack to limit infix reach to the left}
 //  ]
 //
-DECLARE_NATIVE(identity)
+DECLARE_NATIVE(IDENTITY)
 //
 // https://en.wikipedia.org/wiki/Identity_function
 // https://stackoverflow.com/q/3136338
@@ -896,7 +896,7 @@ DECLARE_NATIVE(identity)
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    Copy_Cell(OUT, ARG(value));
+    Copy_Cell(OUT, ARG(VALUE));
 
     return OUT;
 }
@@ -911,11 +911,11 @@ DECLARE_NATIVE(identity)
 //      memory [any-series! any-context! handle!]
 //  ]
 //
-DECLARE_NATIVE(free)
+DECLARE_NATIVE(FREE)
 {
     INCLUDE_PARAMS_OF_FREE;
 
-    Value* v = ARG(memory);
+    Value* v = ARG(MEMORY);
 
     if (Any_Context(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
@@ -940,11 +940,11 @@ DECLARE_NATIVE(free)
 //      value [any-value!]
 //  ]
 //
-DECLARE_NATIVE(free_q)
+DECLARE_NATIVE(FREE_Q)
 {
     INCLUDE_PARAMS_OF_FREE_Q;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     Flex* s;
     if (Any_Context(v))
@@ -970,12 +970,12 @@ DECLARE_NATIVE(free_q)
 //      value [<maybe> any-series! any-word!]
 //  ]
 //
-DECLARE_NATIVE(as)
+DECLARE_NATIVE(AS)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Value* v = ARG(value);
-    enum Reb_Kind new_kind = VAL_TYPE_KIND(ARG(type));
+    Value* v = ARG(VALUE);
+    enum Reb_Kind new_kind = VAL_TYPE_KIND(ARG(TYPE));
 
     switch (new_kind) {
     case REB_BLOCK:
@@ -1125,7 +1125,7 @@ DECLARE_NATIVE(as)
     bad_cast:;
     default:
         // all applicable types should be handled above
-        fail (Error_Bad_Cast_Raw(v, ARG(type)));
+        fail (Error_Bad_Cast_Raw(v, ARG(TYPE)));
     }
 
     Copy_Cell(OUT, v);
@@ -1143,11 +1143,11 @@ DECLARE_NATIVE(as)
 //     value2 [any-series!]
 //  ]
 //
-DECLARE_NATIVE(aliases_q)
+DECLARE_NATIVE(ALIASES_Q)
 {
     INCLUDE_PARAMS_OF_ALIASES_Q;
 
-    return Init_Logic(OUT, Cell_Flex(ARG(value1)) == Cell_Flex(ARG(value2)));
+    return Init_Logic(OUT, Cell_Flex(ARG(VALUE1)) == Cell_Flex(ARG(VALUE2)));
 }
 
 
@@ -1179,11 +1179,11 @@ INLINE bool Is_Set(const Value* location)
 //      value? get location
 //  ]
 //
-DECLARE_NATIVE(set_q)
+DECLARE_NATIVE(SET_Q)
 {
     INCLUDE_PARAMS_OF_SET_Q;
 
-    return Init_Logic(OUT, Is_Set(ARG(location)));
+    return Init_Logic(OUT, Is_Set(ARG(LOCATION)));
 }
 
 
@@ -1197,11 +1197,11 @@ DECLARE_NATIVE(set_q)
 //      null? get location
 //  ]
 //
-DECLARE_NATIVE(unset_q)
+DECLARE_NATIVE(UNSET_Q)
 {
     INCLUDE_PARAMS_OF_UNSET_Q;
 
-    return Init_Logic(OUT, not Is_Set(ARG(location)));
+    return Init_Logic(OUT, not Is_Set(ARG(LOCATION)));
 }
 
 
@@ -1217,13 +1217,13 @@ DECLARE_NATIVE(unset_q)
 //      /soft {Evaluate if a GROUP!, GET-WORD!, or GET-PATH!}
 //  ]
 //
-DECLARE_NATIVE(the)
+DECLARE_NATIVE(THE)
 {
     INCLUDE_PARAMS_OF_THE;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
-    if (REF(soft) and IS_QUOTABLY_SOFT(v))
+    if (Bool_ARG(SOFT) and IS_QUOTABLY_SOFT(v))
         fail ("QUOTE/SOFT not currently implemented, should clone EVAL");
 
     Copy_Cell(OUT, v);
@@ -1239,7 +1239,7 @@ DECLARE_NATIVE(the)
 //      return: [~null~]
 //  ]
 //
-DECLARE_NATIVE(null)
+DECLARE_NATIVE(NULL)
 {
     INCLUDE_PARAMS_OF_NULL;
 
@@ -1258,9 +1258,9 @@ DECLARE_NATIVE(null)
 //      null = type of :optional
 //  ]
 //
-DECLARE_NATIVE(null_q)
+DECLARE_NATIVE(NULL_Q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    return Init_Logic(OUT, Is_Nulled(ARG(optional)));
+    return Init_Logic(OUT, Is_Nulled(ARG(OPTIONAL)));
 }

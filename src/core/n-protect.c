@@ -205,33 +205,33 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
-    UNUSED(PAR(hide)); // unused here, but processed in caller
+    UNUSED(PARAM(HIDE)); // unused here, but processed in caller
 
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
     // flags has PROT_SET bit (set or not)
 
-    if (REF(deep))
+    if (Bool_ARG(DEEP))
         flags |= PROT_DEEP;
-    //if (REF(words))
+    //if (Bool_ARG(WORDS))
     //  flags |= PROT_WORDS;
 
     if (Is_Word(value) || Is_Path(value)) {
         Protect_Word_Value(value, flags); // will unmark if deep
-        RETURN (ARG(value));
+        RETURN (ARG(VALUE));
     }
 
     if (Is_Block(value)) {
-        if (REF(words)) {
+        if (Bool_ARG(WORDS)) {
             Cell* val;
             for (val = Cell_List_At(value); NOT_END(val); val++) {
                 DECLARE_VALUE (word); // need binding, can't pass Cell
                 Derelativize(word, val, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
-            RETURN (ARG(value));
+            RETURN (ARG(VALUE));
         }
-        if (REF(values)) {
+        if (Bool_ARG(VALUES)) {
             Value* var;
             Cell* item;
 
@@ -261,7 +261,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                 if (flags & PROT_DEEP)
                     Uncolor(var);
             }
-            RETURN (ARG(value));
+            RETURN (ARG(VALUE));
         }
     }
 
@@ -273,7 +273,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     if (flags & PROT_DEEP)
         Uncolor(value);
 
-    RETURN (ARG(value));
+    RETURN (ARG(VALUE));
 }
 
 
@@ -293,20 +293,20 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 //          "Hide variables (avoid binding and lookup)"
 //  ]
 //
-DECLARE_NATIVE(protect)
+DECLARE_NATIVE(PROTECT)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
     // Avoid unused parameter warnings (core routine handles them via frame)
     //
-    UNUSED(PAR(value));
-    UNUSED(PAR(deep));
-    UNUSED(PAR(words));
-    UNUSED(PAR(values));
+    UNUSED(PARAM(VALUE));
+    UNUSED(PARAM(DEEP));
+    UNUSED(PARAM(WORDS));
+    UNUSED(PARAM(VALUES));
 
     Flags flags = PROT_SET;
 
-    if (REF(hide))
+    if (Bool_ARG(HIDE))
         flags |= PROT_HIDE;
     else
         flags |= PROT_WORD; // there is no unhide
@@ -331,18 +331,18 @@ DECLARE_NATIVE(protect)
 //          "HACK to make PROTECT and UNPROTECT have the same signature"
 //  ]
 //
-DECLARE_NATIVE(unprotect)
+DECLARE_NATIVE(UNPROTECT)
 {
     INCLUDE_PARAMS_OF_UNPROTECT;
 
     // Avoid unused parameter warnings (core handles them via frame)
     //
-    UNUSED(PAR(value));
-    UNUSED(PAR(deep));
-    UNUSED(PAR(words));
-    UNUSED(PAR(values));
+    UNUSED(PARAM(VALUE));
+    UNUSED(PARAM(DEEP));
+    UNUSED(PARAM(WORDS));
+    UNUSED(PARAM(VALUES));
 
-    if (REF(hide))
+    if (Bool_ARG(HIDE))
         fail ("Cannot un-hide an object field once hidden");
 
     return Protect_Unprotect_Core(level_, PROT_WORD);
@@ -384,11 +384,11 @@ bool Is_Value_Immutable(const Cell* v) {
 //      value [any-value!]
 //  ]
 //
-DECLARE_NATIVE(locked_q)
+DECLARE_NATIVE(LOCKED_Q)
 {
     INCLUDE_PARAMS_OF_LOCKED_Q;
 
-    return Init_Logic(OUT, Is_Value_Immutable(ARG(value)));
+    return Init_Logic(OUT, Is_Value_Immutable(ARG(VALUE)));
 }
 
 
@@ -436,7 +436,7 @@ void Force_Value_Frozen_Deep(const Cell* v, Flex* opt_locker) {
 //          {Will lock a clone of the original (if not already immutable)}
 //  ]
 //
-DECLARE_NATIVE(lock)
+DECLARE_NATIVE(LOCK)
 //
 // !!! COPY in Rebol truncates before the index.  You can't `y: copy next x`
 // and then `first back y` to get at a copy of the the original `first x`.
@@ -460,9 +460,9 @@ DECLARE_NATIVE(lock)
 {
     INCLUDE_PARAMS_OF_LOCK;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
-    if (!REF(clone))
+    if (!Bool_ARG(CLONE))
         Copy_Cell(OUT, v);
     else {
         if (Any_List(v)) {

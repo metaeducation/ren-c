@@ -113,11 +113,11 @@ static void Arc_Trans(Value* out, const Value* value, bool radians, REBLEN kind)
 //          "Value is specified in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(cosine)
+DECLARE_NATIVE(COSINE)
 {
     INCLUDE_PARAMS_OF_COSINE;
 
-    REBDEC dval = cos(Trig_Value(ARG(angle), REF(radians), COSINE));
+    REBDEC dval = cos(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), COSINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -136,11 +136,11 @@ DECLARE_NATIVE(cosine)
 //          "Value is specified in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(sine)
+DECLARE_NATIVE(SINE)
 {
     INCLUDE_PARAMS_OF_SINE;
 
-    REBDEC dval = sin(Trig_Value(ARG(angle), REF(radians), SINE));
+    REBDEC dval = sin(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -159,11 +159,11 @@ DECLARE_NATIVE(sine)
 //          "Value is specified in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(tangent)
+DECLARE_NATIVE(TANGENT)
 {
     INCLUDE_PARAMS_OF_TANGENT;
 
-    REBDEC dval = Trig_Value(ARG(angle), REF(radians), TANGENT);
+    REBDEC dval = Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         fail (Error_Overflow_Raw());
 
@@ -182,11 +182,11 @@ DECLARE_NATIVE(tangent)
 //          "Returns result in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(arccosine)
+DECLARE_NATIVE(ARCCOSINE)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
-    Arc_Trans(OUT, ARG(cosine), REF(radians), COSINE);
+    Arc_Trans(OUT, ARG(COSINE), Bool_ARG(RADIANS), COSINE);
     return OUT;
 }
 
@@ -202,11 +202,11 @@ DECLARE_NATIVE(arccosine)
 //          "Returns result in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(arcsine)
+DECLARE_NATIVE(ARCSINE)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    Arc_Trans(OUT, ARG(sine), REF(radians), SINE);
+    Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SINE);
     return OUT;
 }
 
@@ -222,11 +222,11 @@ DECLARE_NATIVE(arcsine)
 //          "Returns result in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(arctangent)
+DECLARE_NATIVE(ARCTANGENT)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
-    Arc_Trans(OUT, ARG(tangent), REF(radians), TANGENT);
+    Arc_Trans(OUT, ARG(TANGENT), Bool_ARG(RADIANS), TANGENT);
     return OUT;
 }
 
@@ -239,12 +239,12 @@ DECLARE_NATIVE(arctangent)
 //      power [any-number!]
 //  ]
 //
-DECLARE_NATIVE(exp)
+DECLARE_NATIVE(EXP)
 {
     INCLUDE_PARAMS_OF_EXP;
 
     static REBDEC eps = EPS;
-    REBDEC dval = pow(eps, AS_DECIMAL(ARG(power)));
+    REBDEC dval = pow(eps, AS_DECIMAL(ARG(POWER)));
 
     // !!! Check_Overflow(dval);
 
@@ -260,11 +260,11 @@ DECLARE_NATIVE(exp)
 //      value [any-number!]
 //  ]
 //
-DECLARE_NATIVE(log_10)
+DECLARE_NATIVE(LOG_10)
 {
     INCLUDE_PARAMS_OF_LOG_10;
 
-    REBDEC dval = AS_DECIMAL(ARG(value));
+    REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
@@ -280,11 +280,11 @@ DECLARE_NATIVE(log_10)
 //      value [any-number!]
 //  ]
 //
-DECLARE_NATIVE(log_2)
+DECLARE_NATIVE(LOG_2)
 {
     INCLUDE_PARAMS_OF_LOG_2;
 
-    REBDEC dval = AS_DECIMAL(ARG(value));
+    REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
@@ -300,11 +300,11 @@ DECLARE_NATIVE(log_2)
 //      value [any-number!]
 //  ]
 //
-DECLARE_NATIVE(log_e)
+DECLARE_NATIVE(LOG_E)
 {
     INCLUDE_PARAMS_OF_LOG_E;
 
-    REBDEC dval = AS_DECIMAL(ARG(value));
+    REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
@@ -320,11 +320,11 @@ DECLARE_NATIVE(log_e)
 //      value [any-number!]
 //  ]
 //
-DECLARE_NATIVE(square_root)
+DECLARE_NATIVE(SQUARE_ROOT)
 {
     INCLUDE_PARAMS_OF_SQUARE_ROOT;
 
-    REBDEC dval = AS_DECIMAL(ARG(value));
+    REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval < 0)
         fail (Error_Positive_Raw());
 
@@ -360,23 +360,23 @@ DECLARE_NATIVE(square_root)
 //          "Logical shift (sign bit ignored)"
 //  ]
 //
-DECLARE_NATIVE(shift)
+DECLARE_NATIVE(SHIFT)
 {
     INCLUDE_PARAMS_OF_SHIFT;
 
-    REBI64 b = VAL_INT64(ARG(bits));
-    Value* a = ARG(value);
+    REBI64 b = VAL_INT64(ARG(BITS));
+    Value* a = ARG(VALUE);
 
     if (b < 0) {
         REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above
         if (c >= 64) {
-            if (REF(logical))
+            if (Bool_ARG(LOGICAL))
                 VAL_INT64(a) = 0;
             else
                 VAL_INT64(a) >>= 63;
         }
         else {
-            if (REF(logical))
+            if (Bool_ARG(LOGICAL))
                 VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) >> c;
             else
                 VAL_INT64(a) >>= cast(REBI64, c);
@@ -384,13 +384,13 @@ DECLARE_NATIVE(shift)
     }
     else {
         if (b >= 64) {
-            if (REF(logical))
+            if (Bool_ARG(LOGICAL))
                 VAL_INT64(a) = 0;
             else if (VAL_INT64(a) != 0)
                 fail (Error_Overflow_Raw());
         }
         else {
-            if (REF(logical))
+            if (Bool_ARG(LOGICAL))
                 VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) << b;
             else {
                 REBU64 c = cast(REBU64, INT64_MIN) >> b;
@@ -409,7 +409,7 @@ DECLARE_NATIVE(shift)
         }
     }
 
-    RETURN (ARG(value));
+    RETURN (ARG(VALUE));
 }
 
 
@@ -568,11 +568,11 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 //      value2 [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(equal_q)
+DECLARE_NATIVE(EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(value1), ARG(value2), 0))
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 0))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -589,11 +589,11 @@ DECLARE_NATIVE(equal_q)
 //      value2 [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(not_equal_q)
+DECLARE_NATIVE(NOT_EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_NOT_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(value1), ARG(value2), 0))
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 0))
         return Init_False(OUT);
 
     return Init_True(OUT);
@@ -610,11 +610,11 @@ DECLARE_NATIVE(not_equal_q)
 //      value2 [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(strict_equal_q)
+DECLARE_NATIVE(STRICT_EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_STRICT_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(value1), ARG(value2), 1))
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 1))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -631,11 +631,11 @@ DECLARE_NATIVE(strict_equal_q)
 //      value2 [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(strict_not_equal_q)
+DECLARE_NATIVE(STRICT_NOT_EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_STRICT_NOT_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(value1), ARG(value2), 1))
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 1))
         return Init_False(OUT);
 
     return Init_True(OUT);
@@ -652,7 +652,7 @@ DECLARE_NATIVE(strict_not_equal_q)
 //      value2 [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(same_q)
+DECLARE_NATIVE(SAME_Q)
 //
 // This used to be "strictness mode 3" of Compare_Modify_Values.  However,
 // folding SAME?-ness in required the comparisons to take REBVALs instead
@@ -662,8 +662,8 @@ DECLARE_NATIVE(same_q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    Value* value1 = ARG(value1);
-    Value* value2 = ARG(value2);
+    Value* value1 = ARG(VALUE1);
+    Value* value2 = ARG(VALUE2);
 
     if (VAL_TYPE(value1) != VAL_TYPE(value2))
         return Init_False(OUT); // can't be "same" value if not same type
@@ -767,11 +767,11 @@ DECLARE_NATIVE(same_q)
 //      value1 value2
 //  ]
 //
-DECLARE_NATIVE(lesser_q)
+DECLARE_NATIVE(LESSER_Q)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    if (Compare_Modify_Values(ARG(value1), ARG(value2), -1))
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), -1))
         return Init_False(OUT);
 
     return Init_True(OUT);
@@ -787,11 +787,11 @@ DECLARE_NATIVE(lesser_q)
 //      value1 value2
 //  ]
 //
-DECLARE_NATIVE(equal_or_lesser_q)
+DECLARE_NATIVE(EQUAL_OR_LESSER_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_OR_LESSER_Q;
 
-    if (Compare_Modify_Values(ARG(value1), ARG(value2), -2))
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), -2))
         return Init_False(OUT);
 
     return Init_True(OUT);
@@ -807,11 +807,11 @@ DECLARE_NATIVE(equal_or_lesser_q)
 //      value1 value2
 //  ]
 //
-DECLARE_NATIVE(greater_q)
+DECLARE_NATIVE(GREATER_Q)
 {
     INCLUDE_PARAMS_OF_GREATER_Q;
 
-    if (Compare_Modify_Values(ARG(value1), ARG(value2), -2))
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), -2))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -827,11 +827,11 @@ DECLARE_NATIVE(greater_q)
 //      value1 value2
 //  ]
 //
-DECLARE_NATIVE(greater_or_equal_q)
+DECLARE_NATIVE(GREATER_OR_EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_GREATER_OR_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(value1), ARG(value2), -1))
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), -1))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -847,12 +847,12 @@ DECLARE_NATIVE(greater_or_equal_q)
 //      value2 [any-scalar! date! any-series!]
 //  ]
 //
-DECLARE_NATIVE(maximum)
+DECLARE_NATIVE(MAXIMUM)
 {
     INCLUDE_PARAMS_OF_MAXIMUM;
 
-    const Value* value1 = ARG(value1);
-    const Value* value2 = ARG(value2);
+    const Value* value1 = ARG(VALUE1);
+    const Value* value2 = ARG(VALUE2);
 
     if (Is_Pair(value1) || Is_Pair(value2)) {
         Min_Max_Pair(OUT, value1, value2, true);
@@ -881,15 +881,15 @@ DECLARE_NATIVE(maximum)
 //      value2 [any-scalar! date! any-series!]
 //  ]
 //
-DECLARE_NATIVE(minimum)
+DECLARE_NATIVE(MINIMUM)
 {
     INCLUDE_PARAMS_OF_MINIMUM;
 
-    const Value* value1 = ARG(value1);
-    const Value* value2 = ARG(value2);
+    const Value* value1 = ARG(VALUE1);
+    const Value* value2 = ARG(VALUE2);
 
-    if (Is_Pair(ARG(value1)) || Is_Pair(ARG(value2))) {
-        Min_Max_Pair(OUT, ARG(value1), ARG(value2), false);
+    if (Is_Pair(ARG(VALUE1)) || Is_Pair(ARG(VALUE2))) {
+        Min_Max_Pair(OUT, ARG(VALUE1), ARG(VALUE2), false);
     }
     else {
         DECLARE_VALUE (coerced1);
@@ -914,14 +914,14 @@ DECLARE_NATIVE(minimum)
 //      number [any-number! money! time! pair!]
 //  ]
 //
-DECLARE_NATIVE(negative_q)
+DECLARE_NATIVE(NEGATIVE_Q)
 {
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
     DECLARE_VALUE (zero);
-    Init_Zeroed_Hack(zero, VAL_TYPE(ARG(number)));
+    Init_Zeroed_Hack(zero, VAL_TYPE(ARG(NUMBER)));
 
-    if (Compare_Modify_Values(ARG(number), zero, -1))
+    if (Compare_Modify_Values(ARG(NUMBER), zero, -1))
         return Init_False(OUT);
 
     return Init_True(OUT);
@@ -936,14 +936,14 @@ DECLARE_NATIVE(negative_q)
 //      number [any-number! money! time! pair!]
 //  ]
 //
-DECLARE_NATIVE(positive_q)
+DECLARE_NATIVE(POSITIVE_Q)
 {
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
     DECLARE_VALUE (zero);
-    Init_Zeroed_Hack(zero, VAL_TYPE(ARG(number)));
+    Init_Zeroed_Hack(zero, VAL_TYPE(ARG(NUMBER)));
 
-    if (Compare_Modify_Values(ARG(number), zero, -2))
+    if (Compare_Modify_Values(ARG(NUMBER), zero, -2))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -958,17 +958,17 @@ DECLARE_NATIVE(positive_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(zero_q)
+DECLARE_NATIVE(ZERO_Q)
 {
     INCLUDE_PARAMS_OF_ZERO_Q;
 
-    enum Reb_Kind type = VAL_TYPE(ARG(value));
+    enum Reb_Kind type = VAL_TYPE(ARG(VALUE));
 
     if (type >= REB_INTEGER and type <= REB_TIME) {
         DECLARE_VALUE (zero);
         Init_Zeroed_Hack(zero, type);
 
-        if (Compare_Modify_Values(ARG(value), zero, 1))
+        if (Compare_Modify_Values(ARG(VALUE), zero, 1))
             return Init_True(OUT);
     }
     return Init_False(OUT);

@@ -259,8 +259,8 @@ void Do_Process_Action_Checks_Debug(Level* L) {
         // and this check is here pending a more elegant sorting of this.
         //
         assert(
-            Level_Phase(L->prior) == NAT_ACTION(do)
-            or Level_Phase(L->prior) == NAT_ACTION(applique)
+            Level_Phase(L->prior) == NAT_ACTION(DO)
+            or Level_Phase(L->prior) == NAT_ACTION(APPLIQUE)
         );
     }
 

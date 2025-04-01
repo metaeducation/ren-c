@@ -248,16 +248,16 @@ REBTYPE(Char)
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
-        if (REF(only))
+        UNUSED(PARAM(VALUE));
+        if (Bool_ARG(ONLY))
             fail (Error_Bad_Refines_Raw());
 
-        if (REF(seed)) {
+        if (Bool_ARG(SEED)) {
             Set_Random(chr);
             return nullptr;
         }
         if (chr == 0) break;
-        chr = cast(Ucs2Unit, 1 + cast(REBLEN, Random_Int(REF(secure)) % chr));
+        chr = cast(Ucs2Unit, 1 + cast(REBLEN, Random_Int(Bool_ARG(SECURE)) % chr));
         break; }
 
     default:

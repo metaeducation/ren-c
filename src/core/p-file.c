@@ -282,8 +282,8 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value)); // implicitly comes from `port`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE)); // implicitly comes from `port`
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -327,9 +327,9 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(SOURCE));
+        UNUSED(PARAM(STRING)); // handled in dispatcher
+        UNUSED(PARAM(LINES)); // handled in dispatcher
 
         Flags flags = 0;
 
@@ -341,17 +341,17 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             opened = false; // was already open
         else {
             REBLEN nargs = AM_OPEN_READ;
-            if (REF(seek))
+            if (Bool_ARG(SEEK))
                 nargs |= AM_OPEN_SEEK;
             Setup_File(file, nargs, path);
             Open_File_Port(port, file, path);
             opened = true; // had to be opened (shortcut case)
         }
 
-        if (REF(seek))
-            Set_Seek(file, ARG(index));
+        if (Bool_ARG(SEEK))
+            Set_Seek(file, ARG(INDEX));
 
-        REBLEN len = Set_Length(file, REF(part) ? VAL_INT64(ARG(limit)) : -1);
+        REBLEN len = Set_Length(file, Bool_ARG(PART) ? VAL_INT64(ARG(LIMIT)) : -1);
         Read_File_Port(OUT, port, file, path, flags, len);
 
         if (opened) {
@@ -379,14 +379,14 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
 
-        UNUSED(PAR(destination));
+        UNUSED(PARAM(DESTINATION));
 
-        if (REF(allow)) {
-            UNUSED(ARG(access));
+        if (Bool_ARG(ALLOW)) {
+            UNUSED(ARG(ACCESS));
             fail (Error_Bad_Refines_Raw());
         }
 
-        Value* data = ARG(data); // binary, string, or block
+        Value* data = ARG(DATA); // binary, string, or block
 
         // Handle the WRITE %file shortcut case, where the FILE! is converted
         // to a PORT! but it hasn't been opened yet.
@@ -400,7 +400,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         }
         else {
             REBLEN nargs = AM_OPEN_WRITE;
-            if (REF(seek) || REF(append))
+            if (Bool_ARG(SEEK) || Bool_ARG(APPEND))
                 nargs |= AM_OPEN_SEEK;
             else
                 nargs |= AM_OPEN_NEW;
@@ -409,21 +409,21 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             opened = true;
         }
 
-        if (REF(append)) {
+        if (Bool_ARG(APPEND)) {
             file->index = -1; // append
             req->modes |= RFM_RESEEK;
         }
-        if (REF(seek))
-            Set_Seek(file, ARG(index));
+        if (Bool_ARG(SEEK))
+            Set_Seek(file, ARG(INDEX));
 
         // Determine length. Clip /PART to size of string if needed.
         REBLEN len = Cell_Series_Len_At(data);
-        if (REF(part)) {
-            REBLEN n = Int32s(ARG(limit), 0);
+        if (Bool_ARG(PART)) {
+            REBLEN n = Int32s(ARG(LIMIT), 0);
             if (n <= len) len = n;
         }
 
-        Write_File_Port(file, data, len, REF(lines));
+        Write_File_Port(file, data, len, Bool_ARG(LINES));
 
         if (opened) {
             Value* result = OS_DO_DEVICE(req, RDC_CLOSE);
@@ -442,18 +442,18 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PAR(spec));
-        if (REF(allow)) {
-            UNUSED(ARG(access));
+        UNUSED(PARAM(SPEC));
+        if (Bool_ARG(ALLOW)) {
+            UNUSED(ARG(ACCESS));
             fail (Error_Bad_Refines_Raw());
         }
 
         Flags flags = (
-            (REF(new) ? AM_OPEN_NEW : 0)
-            | (REF(read) or not REF(write) ? AM_OPEN_READ : 0)
-            | (REF(write) or not REF(read) ? AM_OPEN_WRITE : 0)
-            | (REF(seek) ? AM_OPEN_SEEK : 0)
-            | (REF(allow) ? AM_OPEN_ALLOW : 0)
+            (Bool_ARG(NEW) ? AM_OPEN_NEW : 0)
+            | (Bool_ARG(READ) or not Bool_ARG(WRITE) ? AM_OPEN_READ : 0)
+            | (Bool_ARG(WRITE) or not Bool_ARG(READ) ? AM_OPEN_WRITE : 0)
+            | (Bool_ARG(SEEK) ? AM_OPEN_SEEK : 0)
+            | (Bool_ARG(ALLOW) ? AM_OPEN_ALLOW : 0)
         );
         Setup_File(file, flags, path);
 
@@ -466,25 +466,25 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
-        if (REF(deep))
+        UNUSED(PARAM(VALUE));
+        if (Bool_ARG(DEEP))
             fail (Error_Bad_Refines_Raw());
-        if (REF(types)) {
-            UNUSED(ARG(kinds));
+        if (Bool_ARG(TYPES)) {
+            UNUSED(ARG(KINDS));
             fail (Error_Bad_Refines_Raw());
         }
 
         if (not (req->flags & RRF_OPEN))
             fail (Error_Not_Open_Raw(path)); // !!! wrong msg
 
-        REBLEN len = Set_Length(file, REF(part) ? VAL_INT64(ARG(limit)) : -1);
+        REBLEN len = Set_Length(file, Bool_ARG(PART) ? VAL_INT64(ARG(LIMIT)) : -1);
         Flags flags = 0;
         Read_File_Port(OUT, port, file, path, flags, len);
         return OUT; }
 
     case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
-        UNUSED(PAR(port));
+        UNUSED(PARAM(PORT));
 
         if (req->flags & RRF_OPEN) {
             Value* result = OS_DO_DEVICE(req, RDC_CLOSE);
@@ -501,7 +501,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
     case SYM_DELETE: {
         INCLUDE_PARAMS_OF_DELETE;
-        UNUSED(PAR(port));
+        UNUSED(PARAM(PORT));
 
         if (req->flags & RRF_OPEN)
             fail (Error_No_Delete_Raw(path));
@@ -524,7 +524,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
         Setup_File(file, 0, path);
 
-        req->common.data = cast(Byte*, ARG(to)); // !!! hack!
+        req->common.data = cast(Byte*, ARG(TO)); // !!! hack!
 
         Value* result = OS_DO_DEVICE(req, RDC_RENAME);
         assert(result != nullptr);  // should be synchronous
@@ -532,7 +532,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             rebJumps("FAIL", result);
         rebRelease(result); // ignore result
 
-        RETURN (ARG(from)); }
+        RETURN (ARG(FROM)); }
 
     case SYM_CREATE: {
         if (not (req->flags & RRF_OPEN)) {
@@ -558,9 +558,9 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     case SYM_QUERY: {
         INCLUDE_PARAMS_OF_QUERY;
 
-        UNUSED(PAR(target));
-        if (REF(mode)) {
-            UNUSED(ARG(field));
+        UNUSED(PARAM(TARGET));
+        if (Bool_ARG(MODE)) {
+            UNUSED(ARG(FIELD));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -583,9 +583,9 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     case SYM_MODIFY: {
         INCLUDE_PARAMS_OF_MODIFY;
 
-        UNUSED(PAR(target));
-        UNUSED(PAR(field));
-        UNUSED(PAR(value));
+        UNUSED(PARAM(TARGET));
+        UNUSED(PARAM(FIELD));
+        UNUSED(PARAM(VALUE));
 
         // !!! Set_Mode_Value() was called here, but a no-op in R3-Alpha
         if (not (req->flags & RRF_OPEN)) {
@@ -604,10 +604,10 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     case SYM_SKIP: {
         INCLUDE_PARAMS_OF_SKIP;
 
-        UNUSED(PAR(series));
-        UNUSED(REF(only)); // !!! Should /ONLY behave differently?
+        UNUSED(PARAM(SERIES));
+        UNUSED(Bool_ARG(ONLY)); // !!! Should /ONLY behave differently?
 
-        file->index += Get_Num_From_Arg(ARG(offset));
+        file->index += Get_Num_From_Arg(ARG(OFFSET));
         req->modes |= RFM_RESEEK;
         RETURN (port); }
 
@@ -636,7 +636,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_file_actor_handle)
+DECLARE_NATIVE(GET_FILE_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &File_Actor);
     return OUT;

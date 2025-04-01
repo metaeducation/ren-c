@@ -301,7 +301,7 @@ bool Eval_Path_Throws_Core(
     if (IS_END(Array_At(array, index))) {
         if (label_out)
             *label_out = nullptr;
-        Copy_Cell(out, NAT_VALUE(path_0));
+        Copy_Cell(out, NAT_VALUE(PATH_0));
         return false;
     }
 
@@ -557,7 +557,7 @@ VarList* Resolve_Path(const Value* path, REBLEN *index_out)
 //          {Index offset, symbol, or other value to use as index}
 //  ]
 //
-DECLARE_NATIVE(pick)
+DECLARE_NATIVE(PICK)
 //
 // In R3-Alpha, PICK was an "action", which dispatched on types through the
 // "action mechanic" for the following types:
@@ -569,7 +569,7 @@ DECLARE_NATIVE(pick)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    Value* location = ARG(location);
+    Value* location = ARG(LOCATION);
 
     // PORT!s are kind of a "user defined type" which historically could
     // react to PICK and POKE, but which could not override path dispatch.
@@ -588,7 +588,7 @@ DECLARE_NATIVE(pick)
     Copy_Cell(OUT, location);
     pvs->out = OUT;
 
-    Copy_Cell(PVS_PICKER(pvs), ARG(picker));
+    Copy_Cell(PVS_PICKER(pvs), ARG(PICKER));
 
     pvs->value = END_NODE;
     pvs->specifier = SPECIFIED;
@@ -643,14 +643,14 @@ DECLARE_NATIVE(pick)
 //          {The new value}
 //  ]
 //
-DECLARE_NATIVE(poke)
+DECLARE_NATIVE(POKE)
 //
 // As with PICK*, POKE is changed in Ren-C from its own action to "whatever
 // path-setting (now path-poking) would do".
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    Value* location = ARG(location);
+    Value* location = ARG(LOCATION);
 
     // PORT!s are kind of a "user defined type" which historically could
     // react to PICK and POKE, but which could not override path dispatch.
@@ -669,18 +669,18 @@ DECLARE_NATIVE(poke)
     Copy_Cell(OUT, location);
     pvs->out = OUT;
 
-    Copy_Cell(PVS_PICKER(pvs), ARG(picker));
+    Copy_Cell(PVS_PICKER(pvs), ARG(PICKER));
 
     pvs->value = END_NODE;
     pvs->specifier = SPECIFIED;
 
     pvs->opt_label = nullptr;  // applies to e.g. :append/only returning APPEND
-    pvs->special = ARG(value);
+    pvs->special = ARG(VALUE);
 
     PATH_HOOK hook = Path_Hooks[VAL_TYPE(location)];
     assert(hook); // &PD_Fail is used instead of nullptr
 
-    const Value* bounce = hook(pvs, PVS_PICKER(pvs), ARG(value));
+    const Value* bounce = hook(pvs, PVS_PICKER(pvs), ARG(VALUE));
     switch (VAL_TYPE_RAW(bounce)) {
       case REB_0_END:
         assert(bounce == BOUNCE_UNHANDLED);
@@ -690,7 +690,7 @@ DECLARE_NATIVE(poke)
         break;
 
       case REB_R_REFERENCE: // wants us to write it
-        Copy_Cell(pvs->u.ref.cell, ARG(value));
+        Copy_Cell(pvs->u.ref.cell, ARG(VALUE));
         break;
 
       default:
@@ -698,7 +698,7 @@ DECLARE_NATIVE(poke)
         fail (Error_Invalid(PVS_PICKER(pvs))); // raise error in release build
     }
 
-    RETURN (ARG(value)); // return the value we got in
+    RETURN (ARG(VALUE)); // return the value we got in
 }
 
 
@@ -711,12 +711,12 @@ DECLARE_NATIVE(poke)
 //      #right [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(path_0)
+DECLARE_NATIVE(PATH_0)
 {
     INCLUDE_PARAMS_OF_PATH_0;
 
-    Value* left = ARG(left);
-    Value* right = ARG(right);
+    Value* left = ARG(LEFT);
+    Value* right = ARG(RIGHT);
 
     // !!! Somewhat whimsically, this goes ahead and guesses at a possible
     // behavior for "dividing" strings using SPLIT.  This is a placeholder

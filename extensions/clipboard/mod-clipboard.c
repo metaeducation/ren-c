@@ -60,8 +60,8 @@ static Bounce Clipboard_Actor(
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value)); // implied by `port`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE)); // implied by `port`
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != 0);
 
         switch (property) {
@@ -77,17 +77,17 @@ static Bounce Clipboard_Actor(
     case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source)); // already accounted for
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        UNUSED(PARAM(SOURCE)); // already accounted for
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(seek)) {
-            UNUSED(ARG(index));
+        if (Bool_ARG(SEEK)) {
+            UNUSED(ARG(INDEX));
             fail (Error_Bad_Refines_Raw());
         }
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(STRING)); // handled in dispatcher
+        UNUSED(PARAM(LINES)); // handled in dispatcher
 
         SetLastError(NO_ERROR);
         if (not IsClipboardFormatAvailable(CF_UNICODETEXT)) {
@@ -148,20 +148,20 @@ static Bounce Clipboard_Actor(
     case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
 
-        UNUSED(PAR(destination));
-        UNUSED(PAR(data)); // used as arg
+        UNUSED(PARAM(DESTINATION));
+        UNUSED(PARAM(DATA)); // used as arg
 
-        if (REF(seek)) {
-            UNUSED(ARG(index));
+        if (Bool_ARG(SEEK)) {
+            UNUSED(ARG(INDEX));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(append))
+        if (Bool_ARG(APPEND))
             fail (Error_Bad_Refines_Raw());
-        if (REF(allow)) {
-            UNUSED(ARG(access));
+        if (Bool_ARG(ALLOW)) {
+            UNUSED(ARG(ACCESS));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(lines))
+        if (Bool_ARG(LINES))
             fail (Error_Bad_Refines_Raw());
 
         // !!! Traditionally the currency of READ and WRITE is binary data.
@@ -174,8 +174,8 @@ static Bounce Clipboard_Actor(
         // Handle /part refinement:
         //
         REBINT len = Cell_Series_Len_At(arg);
-        if (REF(part) and VAL_INT32(ARG(limit)) < len)
-            len = VAL_INT32(ARG(limit));
+        if (Bool_ARG(PART) and VAL_INT32(ARG(LIMIT)) < len)
+            len = VAL_INT32(ARG(LIMIT));
 
         if (not OpenClipboard(nullptr))
             rebJumps(
@@ -218,17 +218,17 @@ static Bounce Clipboard_Actor(
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PAR(spec));
-        if (REF(new))
+        UNUSED(PARAM(SPEC));
+        if (Bool_ARG(NEW))
             fail (Error_Bad_Refines_Raw());
-        if (REF(read))
+        if (Bool_ARG(READ))
             fail (Error_Bad_Refines_Raw());
-        if (REF(write))
+        if (Bool_ARG(WRITE))
             fail (Error_Bad_Refines_Raw());
-        if (REF(seek))
+        if (Bool_ARG(SEEK))
             fail (Error_Bad_Refines_Raw());
-        if (REF(allow)) {
-            UNUSED(ARG(access));
+        if (Bool_ARG(ALLOW)) {
+            UNUSED(ARG(ACCESS));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -258,7 +258,7 @@ static Bounce Clipboard_Actor(
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_clipboard_actor_handle)
+DECLARE_NATIVE(GET_CLIPBOARD_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &Clipboard_Actor);
     return OUT;

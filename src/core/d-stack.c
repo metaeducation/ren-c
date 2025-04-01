@@ -217,11 +217,11 @@ bool Is_Context_Running_Or_Pending(VarList* frame_ctx)
 //      frame [frame!]
 //  ]
 //
-DECLARE_NATIVE(running_q)
+DECLARE_NATIVE(RUNNING_Q)
 {
     INCLUDE_PARAMS_OF_RUNNING_Q;
 
-    VarList* frame_ctx = Cell_Varlist(ARG(frame));
+    VarList* frame_ctx = Cell_Varlist(ARG(FRAME));
 
     Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
 
@@ -240,11 +240,11 @@ DECLARE_NATIVE(running_q)
 //      frame [frame!]
 //  ]
 //
-DECLARE_NATIVE(pending_q)
+DECLARE_NATIVE(PENDING_Q)
 {
     INCLUDE_PARAMS_OF_PENDING_Q;
 
-    VarList* frame_ctx = Cell_Varlist(ARG(frame));
+    VarList* frame_ctx = Cell_Varlist(ARG(FRAME));
 
     Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
 

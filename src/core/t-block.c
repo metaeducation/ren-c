@@ -775,15 +775,15 @@ REBTYPE(List)
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        UNUSED(PAR(series));
-        if (REF(deep))
+        UNUSED(PARAM(SERIES));
+        if (Bool_ARG(DEEP))
             fail (Error_Bad_Refines_Raw());
 
         Fail_If_Read_Only_Flex(arr);
 
         REBLEN len;
-        if (REF(part)) {
-            len = Part_Len_May_Modify_Index(list, ARG(limit));
+        if (Bool_ARG(PART)) {
+            len = Part_Len_May_Modify_Index(list, ARG(LIMIT));
             if (len == 0)
                 return Init_Block(OUT, Make_Array(0)); // new empty block
         }
@@ -792,17 +792,17 @@ REBTYPE(List)
 
         REBLEN index = VAL_INDEX(list); // Partial() can change index
 
-        if (REF(last))
+        if (Bool_ARG(LAST))
             index = VAL_LEN_HEAD(list) - len;
 
         if (index >= VAL_LEN_HEAD(list)) {
-            if (not REF(part))
+            if (not Bool_ARG(PART))
                 return nullptr;
 
             return Init_Block(OUT, Make_Array(0)); // new empty block
         }
 
-        if (REF(part))
+        if (Bool_ARG(PART))
             Init_Block(
                 OUT, Copy_Array_At_Max_Shallow(arr, index, specifier, len)
             );
@@ -818,25 +818,25 @@ REBTYPE(List)
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_FIND; // must be same as select
 
-        UNUSED(PAR(series));
-        UNUSED(PAR(value)); // aliased as arg
+        UNUSED(PARAM(SERIES));
+        UNUSED(PARAM(VALUE)); // aliased as arg
 
         REBINT len = Any_List(arg) ? VAL_ARRAY_LEN_AT(arg) : 1;
 
-        REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(limit));
-        UNUSED(REF(part)); // checked by if limit is nulled
+        REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(LIMIT));
+        UNUSED(Bool_ARG(PART)); // checked by if limit is nulled
 
         REBLEN index = VAL_INDEX(list);
 
         Flags flags = (
-            (REF(only) ? AM_FIND_ONLY : 0)
-            | (REF(match) ? AM_FIND_MATCH : 0)
-            | (REF(reverse) ? AM_FIND_REVERSE : 0)
-            | (REF(case) ? AM_FIND_CASE : 0)
-            | (REF(last) ? AM_FIND_LAST : 0)
+            (Bool_ARG(ONLY) ? AM_FIND_ONLY : 0)
+            | (Bool_ARG(MATCH) ? AM_FIND_MATCH : 0)
+            | (Bool_ARG(REVERSE) ? AM_FIND_REVERSE : 0)
+            | (Bool_ARG(CASE) ? AM_FIND_CASE : 0)
+            | (Bool_ARG(LAST) ? AM_FIND_LAST : 0)
         );
 
-        REBLEN skip = REF(skip) ? Int32s(ARG(size), 1) : 1;
+        REBLEN skip = Bool_ARG(SKIP) ? Int32s(ARG(SIZE), 1) : 1;
 
         REBLEN ret = Find_In_Array(
             arr, index, limit, arg, len, flags, skip
@@ -845,11 +845,11 @@ REBTYPE(List)
         if (ret >= limit)
             return nullptr;
 
-        if (REF(only))
+        if (Bool_ARG(ONLY))
             len = 1;
 
         if (Cell_Word_Id(verb) == SYM_FIND) {
-            if (REF(tail) || REF(match))
+            if (Bool_ARG(TAIL) || Bool_ARG(MATCH))
                 ret += len;
             VAL_INDEX(list) = ret;
             Copy_Cell(OUT, list);
@@ -869,16 +869,16 @@ REBTYPE(List)
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
 
-        UNUSED(PAR(series));
-        UNUSED(PAR(value));
+        UNUSED(PARAM(SERIES));
+        UNUSED(PARAM(VALUE));
 
         FAIL_IF_ERROR(arg);
 
         REBLEN len; // length of target
         if (Cell_Word_Id(verb) == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(list, ARG(limit));
+            len = Part_Len_May_Modify_Index(list, ARG(LIMIT));
         else
-            len = Part_Len_Append_Insert_May_Modify_Index(arg, ARG(limit));
+            len = Part_Len_Append_Insert_May_Modify_Index(arg, ARG(LIMIT));
 
         // Note that while inserting or removing NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
@@ -894,14 +894,14 @@ REBTYPE(List)
 
         Flags flags = 0;
         if (
-            not REF(only)
+            not Bool_ARG(ONLY)
             and Splices_Into_Type_Without_Only(VAL_TYPE(list), arg)
         ){
             flags |= AM_SPLICE;
         }
-        if (REF(part))
+        if (Bool_ARG(PART))
             flags |= AM_PART;
-        if (REF(line))
+        if (Bool_ARG(LINE))
             flags |= AM_LINE;
 
         Copy_Cell(OUT, list);
@@ -912,7 +912,7 @@ REBTYPE(List)
             arg,
             flags,
             len,
-            REF(dup) ? Int32(ARG(count)) : 1
+            Bool_ARG(DUP) ? Int32(ARG(COUNT)) : 1
         );
         return OUT; }
 
@@ -934,22 +934,22 @@ REBTYPE(List)
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
         REBU64 types = 0;
-        REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(limit));
-        UNUSED(REF(part));
+        REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(LIMIT));
+        UNUSED(Bool_ARG(PART));
 
         REBLEN index = VAL_INDEX(list);
 
-        if (REF(deep))
-            types |= REF(types) ? 0 : TS_STD_SERIES;
+        if (Bool_ARG(DEEP))
+            types |= Bool_ARG(TYPES) ? 0 : TS_STD_SERIES;
 
-        if (REF(types)) {
-            if (Is_Datatype(ARG(kinds)))
-                types |= FLAGIT_KIND(VAL_TYPE(ARG(kinds)));
+        if (Bool_ARG(TYPES)) {
+            if (Is_Datatype(ARG(KINDS)))
+                types |= FLAGIT_KIND(VAL_TYPE(ARG(KINDS)));
             else
-                types |= VAL_TYPESET_BITS(ARG(kinds));
+                types |= VAL_TYPESET_BITS(ARG(KINDS));
         }
 
         Array* copy = Copy_Array_Core_Managed(
@@ -1046,21 +1046,21 @@ REBTYPE(List)
     case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
 
-        UNUSED(PAR(series));
-        UNUSED(REF(part)); // checks limit as void
-        UNUSED(REF(skip)); // checks size as void
-        UNUSED(REF(compare)); // checks comparator as void
+        UNUSED(PARAM(SERIES));
+        UNUSED(Bool_ARG(PART)); // checks limit as void
+        UNUSED(Bool_ARG(SKIP)); // checks size as void
+        UNUSED(Bool_ARG(COMPARE)); // checks comparator as void
 
         Fail_If_Read_Only_Flex(arr);
 
         Sort_List(
             list,
-            REF(case),
-            ARG(size), // skip size (may be void if no /SKIP)
-            ARG(comparator), // (may be void if no /COMPARE)
-            ARG(limit), // (may be void if no /PART)
-            REF(all),
-            REF(reverse)
+            Bool_ARG(CASE),
+            ARG(SIZE), // skip size (may be void if no /SKIP)
+            ARG(COMPARATOR), // (may be void if no /COMPARE)
+            ARG(LIMIT), // (may be void if no /PART)
+            Bool_ARG(ALL),
+            Bool_ARG(REVERSE)
         );
         RETURN (list);
     }
@@ -1068,23 +1068,23 @@ REBTYPE(List)
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
         REBLEN index = VAL_INDEX(list);
 
-        if (REF(seed))
+        if (Bool_ARG(SEED))
             fail (Error_Bad_Refines_Raw());
 
-        if (REF(only)) { // pick an element out of the list
+        if (Bool_ARG(ONLY)) { // pick an element out of the list
             if (index >= VAL_LEN_HEAD(list))
                 return nullptr;
 
             Init_Integer(
-                ARG(seed),
-                1 + (Random_Int(REF(secure)) % (VAL_LEN_HEAD(list) - index))
+                ARG(SEED),
+                1 + (Random_Int(Bool_ARG(SECURE)) % (VAL_LEN_HEAD(list) - index))
             );
 
-            Cell* slot = Pick_Block(OUT, list, ARG(seed));
+            Cell* slot = Pick_Block(OUT, list, ARG(SEED));
             if (Is_Nulled(OUT)) {
                 assert(slot);
                 UNUSED(slot);
@@ -1094,7 +1094,7 @@ REBTYPE(List)
 
         }
 
-        Shuffle_List(list, REF(secure));
+        Shuffle_List(list, Bool_ARG(SECURE));
         RETURN (list);
     }
 

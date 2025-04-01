@@ -164,8 +164,8 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value)); // implicitly supplied as `port`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE)); // implicitly supplied as `port`
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
 
         switch (property) {
         case SYM_LENGTH: {
@@ -184,17 +184,17 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
     case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        UNUSED(PARAM(SOURCE));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(seek)) {
-            UNUSED(ARG(index));
+        if (Bool_ARG(SEEK)) {
+            UNUSED(ARG(INDEX));
             fail (Error_Bad_Refines_Raw());
         }
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        UNUSED(PARAM(STRING)); // handled in dispatcher
+        UNUSED(PARAM(LINES)); // handled in dispatcher
 
         if (not Is_Block(state)) {     // !!! ignores /SKIP and /PART, for now
             Init_Dir_Path(&dir, path, POL_READ);
@@ -247,8 +247,8 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 
         Init_Dir_Path(&dir, path, POL_WRITE); // Sets RFM_DIR
 
-        UNUSED(ARG(from)); // implicit
-        dir.devreq.common.data = cast(Byte*, ARG(to)); // !!! hack!
+        UNUSED(ARG(FROM)); // implicit
+        dir.devreq.common.data = cast(Byte*, ARG(TO)); // !!! hack!
 
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_RENAME);
         assert(result != nullptr); // should be synchronous
@@ -282,15 +282,15 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PAR(spec));
-        if (REF(read))
+        UNUSED(PARAM(SPEC));
+        if (Bool_ARG(READ))
             fail (Error_Bad_Refines_Raw());
-        if (REF(write))
+        if (Bool_ARG(WRITE))
             fail (Error_Bad_Refines_Raw());
-        if (REF(seek))
+        if (Bool_ARG(SEEK))
             fail (Error_Bad_Refines_Raw());
-        if (REF(allow)) {
-            UNUSED(ARG(access));
+        if (Bool_ARG(ALLOW)) {
+            UNUSED(ARG(ACCESS));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -298,7 +298,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         if (Is_Block(state))
             fail (Error_Already_Open_Raw(path));
 
-        if (REF(new))
+        if (Bool_ARG(NEW))
             goto create;
 
         Init_Dir_Path(&dir, path, POL_READ);
@@ -342,7 +342,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_dir_actor_handle)
+DECLARE_NATIVE(GET_DIR_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &Dir_Actor);
     return OUT;

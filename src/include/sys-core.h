@@ -524,7 +524,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 // %tmp-paramlists.h is the file that contains macros for natives and actions
 // that map their argument names to indices in the frame.  This defines the
 // macros like INCLUDE_ARGS_FOR_INSERT which then allow you to naturally
-// write things like REF(part) and ARG(limit), instead of the brittle integer
+// write things like Bool_ARG(PART) and ARG(LIMIT), instead of the brittle integer
 // based system used in R3-Alpha such as D_REF(7) and D_ARG(3).
 //
 #include "tmp-paramlists.h"

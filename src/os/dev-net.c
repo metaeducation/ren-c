@@ -576,19 +576,19 @@ DEVICE_CMD Modify_Socket(REBREQ *sock)
     case 3171: {
         INCLUDE_PARAMS_OF_SET_UDP_MULTICAST;
 
-        UNUSED(ARG(port)); // implicit from sock, which caller extracted
+        UNUSED(ARG(PORT)); // implicit from sock, which caller extracted
 
         if (not (sock->modes & RST_UDP)) // !!! other checks?
             rebJumps("FAIL {SET-UDP-MULTICAST used on non-UDP port}");
 
         struct ip_mreq mreq;
-        memcpy(&mreq.imr_multiaddr.s_addr, VAL_TUPLE(ARG(group)), 4);
-        memcpy(&mreq.imr_interface.s_addr, VAL_TUPLE(ARG(member)), 4);
+        memcpy(&mreq.imr_multiaddr.s_addr, VAL_TUPLE(ARG(GROUP)), 4);
+        memcpy(&mreq.imr_interface.s_addr, VAL_TUPLE(ARG(MEMBER)), 4);
 
         result = setsockopt(
             sock->requestee.socket,
             IPPROTO_IP,
-            REF(drop) ? IP_DROP_MEMBERSHIP : IP_ADD_MEMBERSHIP,
+            Bool_ARG(DROP) ? IP_DROP_MEMBERSHIP : IP_ADD_MEMBERSHIP,
             cast(char*, &mreq),
             sizeof(mreq)
         );
@@ -598,12 +598,12 @@ DEVICE_CMD Modify_Socket(REBREQ *sock)
     case 2365: {
         INCLUDE_PARAMS_OF_SET_UDP_TTL;
 
-        UNUSED(ARG(port)); // implicit from sock, which caller extracted
+        UNUSED(ARG(PORT)); // implicit from sock, which caller extracted
 
         if (not (sock->modes & RST_UDP)) // !!! other checks?
             rebJumps("FAIL {SET-UDP-TTL used on non-UDP port}");
 
-        int ttl = VAL_INT32(ARG(ttl));
+        int ttl = VAL_INT32(ARG(TTL));
         result = setsockopt(
             sock->requestee.socket,
             IPPROTO_IP,

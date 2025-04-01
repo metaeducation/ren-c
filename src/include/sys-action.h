@@ -290,12 +290,16 @@ INLINE VarList* VAL_ACT_META(const Cell* v) {
 // Native values are stored in an array at boot time.  These are convenience
 // routines for accessing them, which should compile to be as efficient as
 // fetching any global pointer.
+//
+// Note: In Modern Ren-C, this is simply LIB(name)... there's no separate
+// list beyond the values in the lib context, and they are looked up in O(1)
+// time because the stubs are globally allocated in an array ordered by SymId.
 
 #define NAT_VALUE(name) \
     (&Natives[N_##name##_ID])
 
 #define NAT_ACTION(name) \
-    VAL_ACTION(NAT_VALUE(name))
+    VAL_ACTION(&Natives[N_##name##_ID])
 
 
 // A fully constructed action can reconstitute the ACTION! cell

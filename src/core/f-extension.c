@@ -73,7 +73,7 @@ void cleanup_extension_quit_handler(const Value* v)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(builtin_extensions)
+DECLARE_NATIVE(BUILTIN_EXTENSIONS)
 //
 // The config file used by %make.r marks extensions to be built into the
 // executable (`+`), or not built at all (`-`).  (built as a dynamic
@@ -116,7 +116,7 @@ DECLARE_NATIVE(builtin_extensions)
 //      /no-lib "Do not export to the lib context"
 //  ]
 //
-DECLARE_NATIVE(load_extension)
+DECLARE_NATIVE(LOAD_EXTENSION)
 //
 // !!! It is not ideal that this code be all written as C, as it is really
 // kind of a variation of LOAD-MODULE and will have to repeat a lot of work.
@@ -127,7 +127,7 @@ DECLARE_NATIVE(load_extension)
     // and shutdown functions, as well as native specs and Rebol script
     // source, plus the REBNAT functions for each native.
     //
-    Array* details = Cell_Array(ARG(where));
+    Array* details = Cell_Array(ARG(WHERE));
 
     assert(Array_Len(details) == IDX_COLLATOR_MAX);
     Push_GC_Guard(details);
@@ -273,8 +273,8 @@ DECLARE_NATIVE(load_extension)
     // !!! If these were the right refinements that should be tunneled through
     // they'd be tunneled here, but isn't this part of the module's spec?
     //
-    UNUSED(REF(no_user));
-    UNUSED(REF(no_lib));
+    UNUSED(Bool_ARG(NO_USER));
+    UNUSED(Bool_ARG(NO_LIB));
 
     Drop_GC_Guard(exports);
     Drop_GC_Guard(module);

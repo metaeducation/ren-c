@@ -43,11 +43,11 @@
 //          [word!]
 //  ]
 //
-DECLARE_NATIVE(true_q)
+DECLARE_NATIVE(TRUE_Q)
 {
     INCLUDE_PARAMS_OF_TRUE_Q;
 
-    Value* word = ARG(word);
+    Value* word = ARG(WORD);
 
     if (Cell_Word_Id(word) == SYM_TRUE)
         return Init_Logic(OUT, true);
@@ -66,11 +66,11 @@ DECLARE_NATIVE(true_q)
 //          [word!]
 //  ]
 //
-DECLARE_NATIVE(false_q)
+DECLARE_NATIVE(FALSE_Q)
 {
     INCLUDE_PARAMS_OF_FALSE_Q;
 
-    Value* word = ARG(word);
+    Value* word = ARG(WORD);
 
     if (Cell_Word_Id(word) == SYM_FALSE)
         return Init_Logic(OUT, true);
@@ -89,11 +89,11 @@ DECLARE_NATIVE(false_q)
 //          [word!]
 //  ]
 //
-DECLARE_NATIVE(yes_q)
+DECLARE_NATIVE(YES_Q)
 {
     INCLUDE_PARAMS_OF_YES_Q;
 
-    Value* word = ARG(word);
+    Value* word = ARG(WORD);
 
     if (Cell_Word_Id(word) == SYM_YES)
         return Init_Logic(OUT, true);
@@ -112,11 +112,11 @@ DECLARE_NATIVE(yes_q)
 //          [word!]
 //  ]
 //
-DECLARE_NATIVE(no_q)
+DECLARE_NATIVE(NO_Q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    Value* word = ARG(word);
+    Value* word = ARG(WORD);
 
     if (Cell_Word_Id(word) == SYM_NO)
         return Init_Logic(OUT, true);
@@ -135,11 +135,11 @@ DECLARE_NATIVE(no_q)
 //          [word!]
 //  ]
 //
-DECLARE_NATIVE(on_q)
+DECLARE_NATIVE(ON_Q)
 {
     INCLUDE_PARAMS_OF_ON_Q;
 
-    Value* word = ARG(word);
+    Value* word = ARG(WORD);
 
     if (Cell_Word_Id(word) == SYM_ON)
         return Init_Logic(OUT, true);
@@ -158,11 +158,11 @@ DECLARE_NATIVE(on_q)
 //          [word!]
 //  ]
 //
-DECLARE_NATIVE(off_q)
+DECLARE_NATIVE(OFF_Q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    Value* word = ARG(word);
+    Value* word = ARG(WORD);
 
     if (Cell_Word_Id(word) == SYM_OFF)
         return Init_Logic(OUT, true);
@@ -181,11 +181,11 @@ DECLARE_NATIVE(off_q)
 //      value2 [any-value!]
 //  ]
 //
-DECLARE_NATIVE(and_q)
+DECLARE_NATIVE(AND_Q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
-    if (IS_TRUTHY(ARG(value1)) && IS_TRUTHY(ARG(value2)))
+    if (IS_TRUTHY(ARG(VALUE1)) && IS_TRUTHY(ARG(VALUE2)))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -201,11 +201,11 @@ DECLARE_NATIVE(and_q)
 //      value2 [any-value!]
 //  ]
 //
-DECLARE_NATIVE(nor_q)
+DECLARE_NATIVE(NOR_Q)
 {
     INCLUDE_PARAMS_OF_NOR_Q;
 
-    if (IS_FALSEY(ARG(value1)) && IS_FALSEY(ARG(value2)))
+    if (IS_FALSEY(ARG(VALUE1)) && IS_FALSEY(ARG(VALUE2)))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -221,13 +221,13 @@ DECLARE_NATIVE(nor_q)
 //      value2 [any-value!]
 //  ]
 //
-DECLARE_NATIVE(nand_q)
+DECLARE_NATIVE(NAND_Q)
 {
     INCLUDE_PARAMS_OF_NAND_Q;
 
     return Init_Logic(
         OUT,
-        IS_TRUTHY(ARG(value1)) and IS_TRUTHY(ARG(value2))
+        IS_TRUTHY(ARG(VALUE1)) and IS_TRUTHY(ARG(VALUE2))
     );
 }
 
@@ -242,11 +242,11 @@ DECLARE_NATIVE(nand_q)
 //      value [any-value!]
 //  ]
 //
-DECLARE_NATIVE(did_q)
+DECLARE_NATIVE(DID_Q)
 {
     INCLUDE_PARAMS_OF_DID_Q;
 
-    return Init_Logic(OUT, IS_TRUTHY(ARG(value)));
+    return Init_Logic(OUT, IS_TRUTHY(ARG(VALUE)));
 }
 
 
@@ -262,11 +262,11 @@ DECLARE_NATIVE(did_q)
 //      not not :optional
 //  ]
 //
-DECLARE_NATIVE(did)
+DECLARE_NATIVE(DID)
 {
     INCLUDE_PARAMS_OF_DID;
 
-    return Init_Logic(OUT, IS_TRUTHY(ARG(optional)));
+    return Init_Logic(OUT, IS_TRUTHY(ARG(OPTIONAL)));
 }
 
 
@@ -280,11 +280,11 @@ DECLARE_NATIVE(did)
 //      value [any-value!]
 //  ]
 //
-DECLARE_NATIVE(not_q)
+DECLARE_NATIVE(NOT_Q)
 {
     INCLUDE_PARAMS_OF_NOT_Q;
 
-    return Init_Logic(OUT, IS_FALSEY(ARG(value)));
+    return Init_Logic(OUT, IS_FALSEY(ARG(VALUE)));
 }
 
 
@@ -298,11 +298,11 @@ DECLARE_NATIVE(not_q)
 //      optional [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(not)
+DECLARE_NATIVE(NOT)
 {
     INCLUDE_PARAMS_OF_NOT;
 
-    return Init_Logic(OUT, IS_FALSEY(ARG(optional)));
+    return Init_Logic(OUT, IS_FALSEY(ARG(OPTIONAL)));
 }
 
 
@@ -315,13 +315,13 @@ DECLARE_NATIVE(not)
 //      value2 [any-value!]
 //  ]
 //
-DECLARE_NATIVE(or_q)
+DECLARE_NATIVE(OR_Q)
 {
     INCLUDE_PARAMS_OF_OR_Q;
 
     return Init_Logic(
         OUT,
-        IS_TRUTHY(ARG(value1)) or IS_TRUTHY(ARG(value2))
+        IS_TRUTHY(ARG(VALUE1)) or IS_TRUTHY(ARG(VALUE2))
     );
 }
 
@@ -335,7 +335,7 @@ DECLARE_NATIVE(or_q)
 //      value2 [any-value!]
 //  ]
 //
-DECLARE_NATIVE(xor_q)
+DECLARE_NATIVE(XOR_Q)
 {
     INCLUDE_PARAMS_OF_XOR_Q;
 
@@ -343,7 +343,7 @@ DECLARE_NATIVE(xor_q)
     //
     return Init_Logic(
         OUT,
-        IS_TRUTHY(ARG(value1)) != IS_TRUTHY(ARG(value2))
+        IS_TRUTHY(ARG(VALUE1)) != IS_TRUTHY(ARG(VALUE2))
     );
 }
 
@@ -361,12 +361,12 @@ DECLARE_NATIVE(xor_q)
 //          [block! group!]
 //  ]
 //
-DECLARE_NATIVE(and)
+DECLARE_NATIVE(AND)
 {
     INCLUDE_PARAMS_OF_AND;
 
-    Value* left = ARG(left);
-    Value* right = ARG(right);
+    Value* left = ARG(LEFT);
+    Value* right = ARG(RIGHT);
 
     if (IS_FALSEY(left)) {
         if (Is_Group(right)) { // no need to evaluate right if BLOCK!
@@ -394,12 +394,12 @@ DECLARE_NATIVE(and)
 //      :right "If BLOCK!, evaluated only if TO LOGIC! of LEFT is false"
 //          [block! group!]
 //  ]
-DECLARE_NATIVE(or)
+DECLARE_NATIVE(OR)
 {
     INCLUDE_PARAMS_OF_OR;
 
-    Value* left = ARG(left);
-    Value* right = ARG(right);
+    Value* left = ARG(LEFT);
+    Value* right = ARG(RIGHT);
 
     if (IS_TRUTHY(left)) {
         if (Is_Group(right)) { // no need to evaluate right if BLOCK!
@@ -429,13 +429,13 @@ DECLARE_NATIVE(or)
 //          [group!]
 //  ]
 //
-DECLARE_NATIVE(xor)
+DECLARE_NATIVE(XOR)
 {
     INCLUDE_PARAMS_OF_XOR;
 
-    Value* left = ARG(left);
+    Value* left = ARG(LEFT);
 
-    if (Eval_List_At_Throws(OUT, ARG(right))) // always evaluated
+    if (Eval_List_At_Throws(OUT, ARG(RIGHT))) // always evaluated
         return BOUNCE_THROWN;
 
     Value* right = OUT;
@@ -467,7 +467,7 @@ DECLARE_NATIVE(xor)
 //          [~null~ any-value!] ;-- not a literal GROUP! as with XOR
 //  ]
 //
-DECLARE_NATIVE(unless)
+DECLARE_NATIVE(UNLESS)
 //
 // Though this routine is similar to XOR, it is different enough in usage and
 // looks from AND/OR/XOR to warrant not needing XOR's protection (e.g. forcing
@@ -475,10 +475,10 @@ DECLARE_NATIVE(unless)
 {
     INCLUDE_PARAMS_OF_UNLESS;
 
-    if (IS_TRUTHY(ARG(right)))
-        RETURN (ARG(right));
+    if (IS_TRUTHY(ARG(RIGHT)))
+        RETURN (ARG(RIGHT));
 
-    RETURN (ARG(left)); // preserve the exact truthy or falsey value
+    RETURN (ARG(LEFT)); // preserve the exact truthy or falsey value
 }
 
 
@@ -587,17 +587,17 @@ REBTYPE(Logic)
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
-        if (REF(only))
+        if (Bool_ARG(ONLY))
             fail (Error_Bad_Refines_Raw());
 
-        if (REF(seed)) {
+        if (Bool_ARG(SEED)) {
             // random/seed false restarts; true randomizes
             Set_Random(b1 ? cast(REBINT, OS_DELTA_TIME(0)) : 1);
             return nullptr;
         }
-        if (Random_Int(REF(secure)) & 1)
+        if (Random_Int(Bool_ARG(SECURE)) & 1)
             return Init_True(OUT);
         return Init_False(OUT); }
 

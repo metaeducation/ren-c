@@ -84,9 +84,9 @@ emit-include-params-macro: function [
 
             param-name: copy as text! item
             either refinement? item [
-                keep cscape/with {REFINE($<n>, ${param-name})} [n param-name]
+                keep cscape/with {DECLARE_REFINE($<n>, ${PARAM-NAME})} [n param-name]
             ][
-                keep cscape/with {PARAM($<n>, ${param-name})} [n param-name]
+                keep cscape/with {DECLARE_PARAM($<n>, ${PARAM-NAME})} [n param-name]
             ]
             n: n + 1
         ]

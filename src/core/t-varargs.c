@@ -460,8 +460,8 @@ REBTYPE(Varargs)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value)); // already have `value`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE)); // already have `value`
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -486,13 +486,13 @@ REBTYPE(Varargs)
     case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        UNUSED(PAR(series));
-        if (REF(deep))
+        UNUSED(PARAM(SERIES));
+        if (Bool_ARG(DEEP))
             fail (Error_Bad_Refines_Raw());
-        if (REF(last))
+        if (Bool_ARG(LAST))
             fail (Error_Varargs_Take_Last_Raw());
 
-        if (not REF(part)) {
+        if (not Bool_ARG(PART)) {
             if (Do_Vararg_Op_Maybe_End_Throws(
                 OUT,
                 value,
@@ -508,13 +508,13 @@ REBTYPE(Varargs)
         StackIndex base = TOP_INDEX;
 
         REBINT limit;
-        if (Is_Integer(ARG(limit))) {
-            limit = VAL_INT32(ARG(limit));
+        if (Is_Integer(ARG(LIMIT))) {
+            limit = VAL_INT32(ARG(LIMIT));
             if (limit < 0)
                 limit = 0;
         }
         else
-            fail (Error_Invalid(ARG(limit)));
+            fail (Error_Invalid(ARG(LIMIT)));
 
         while (limit-- > 0) {
             if (Do_Vararg_Op_Maybe_End_Throws(

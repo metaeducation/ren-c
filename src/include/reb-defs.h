@@ -301,15 +301,17 @@ typedef void (*MOLD_HOOK)(Molder* mo, const Cell* v, bool form);
 // C function implementing a native ACTION!
 //
 typedef Bounce (*REBNAT)(Level* level_);
-#define DECLARE_NATIVE(n) \
-    Bounce N_##n(Level* level_)
+#define DECLARE_NATIVE(name) \
+    Bounce N_##name(Level* level_)
+
+#define NATIVE_CFUNC(name)  N_##name
 
 // Generic hooks: implementing a "verb" ACTION! for a particular
 // type (or class of types).
 //
 typedef Bounce (*GENERIC_HOOK)(Level* level_, Value* verb);
-#define REBTYPE(n) \
-    Bounce T_##n(Level* level_, Value* verb)
+#define REBTYPE(name) \
+    Bounce T_##name(Level* level_, Value* verb)
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //

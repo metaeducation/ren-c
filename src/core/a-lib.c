@@ -609,12 +609,12 @@ const void *API_rebUneval(const RebolValue* v)
         // should be revisited where instructions encode what they are in the
         // header/info/link/misc.
         //
-        Copy_Cell(single, NAT_VALUE(null));  // the NULL function
+        Copy_Cell(single, NAT_VALUE(NULL));  // the NULL function
     }
     else {
         Array* a = Make_Array(2);
         Set_Flex_Info(a, HOLD);
-        Copy_Cell(Alloc_Tail_Array(a), NAT_VALUE(the));  // the THE function
+        Copy_Cell(Alloc_Tail_Array(a), NAT_VALUE(THE));  // the THE function
         Copy_Cell(Alloc_Tail_Array(a), v);
 
         Init_Group(single, a);

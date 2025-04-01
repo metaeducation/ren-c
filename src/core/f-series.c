@@ -109,8 +109,8 @@ Bounce Series_Common_Action_Maybe_Unhandled(
     case SYM_AT: {
         INCLUDE_PARAMS_OF_SKIP; // must be compatible with AT
 
-        UNUSED(ARG(series)); // is already `value`
-        UNUSED(ARG(offset)); // is already `arg` (AT calls this ARG(index))
+        UNUSED(ARG(SERIES)); // is already `value`
+        UNUSED(ARG(OFFSET)); // is already `arg` (AT calls this ARG(INDEX))
 
         REBINT len = Get_Num_From_Arg(arg);
         REBI64 i;
@@ -146,12 +146,12 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         }
 
         if (i > cast(REBI64, tail)) {
-            if (REF(only))
+            if (Bool_ARG(ONLY))
                 return nullptr;
             i = cast(REBI64, tail); // past tail clips to tail if not /ONLY
         }
         else if (i < 0) {
-            if (REF(only))
+            if (Bool_ARG(ONLY))
                 return nullptr;
             i = 0; // past head clips to head if not /ONLY
         }
@@ -162,18 +162,18 @@ Bounce Series_Common_Action_Maybe_Unhandled(
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
-        UNUSED(PAR(series)); // already accounted for
+        UNUSED(PARAM(SERIES)); // already accounted for
 
-        if (REF(map)) {
-            UNUSED(ARG(key));
+        if (Bool_ARG(MAP)) {
+            UNUSED(ARG(KEY));
             fail (Error_Bad_Refines_Raw());
         }
 
         Fail_If_Read_Only_Flex(Cell_Flex(value));
 
         REBINT len;
-        if (REF(part))
-            len = Part_Len_May_Modify_Index(value, ARG(limit));
+        if (Bool_ARG(PART))
+            len = Part_Len_May_Modify_Index(value, ARG(LIMIT));
         else
             len = 1;
 
@@ -189,17 +189,17 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
         INCLUDE_PARAMS_OF_INTERSECT;
 
-        UNUSED(ARG(value1)); // covered by value
+        UNUSED(ARG(VALUE1)); // covered by value
 
         return Init_Any_Series(
             OUT,
             VAL_TYPE(value),
             Make_Set_Operation_Flex(
                 value,
-                ARG(value2),
+                ARG(VALUE2),
                 SOP_FLAG_CHECK,
-                REF(case),
-                REF(skip) ? Int32s(ARG(size), 1) : 1
+                Bool_ARG(CASE),
+                Bool_ARG(SKIP) ? Int32s(ARG(SIZE), 1) : 1
             )
         ); }
 
@@ -209,17 +209,17 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
         INCLUDE_PARAMS_OF_UNION;
 
-        UNUSED(ARG(value1)); // covered by value
+        UNUSED(ARG(VALUE1)); // covered by value
 
         return Init_Any_Series(
             OUT,
             VAL_TYPE(value),
             Make_Set_Operation_Flex(
                 value,
-                ARG(value2),
+                ARG(VALUE2),
                 SOP_FLAG_BOTH,
-                REF(case),
-                REF(skip) ? Int32s(ARG(size), 1) : 1
+                Bool_ARG(CASE),
+                Bool_ARG(SKIP) ? Int32s(ARG(SIZE), 1) : 1
             )
         ); }
 
@@ -229,17 +229,17 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
         INCLUDE_PARAMS_OF_DIFFERENCE;
 
-        UNUSED(ARG(value1)); // covered by value
+        UNUSED(ARG(VALUE1)); // covered by value
 
         return Init_Any_Series(
             OUT,
             VAL_TYPE(value),
             Make_Set_Operation_Flex(
                 value,
-                ARG(value2),
+                ARG(VALUE2),
                 SOP_FLAG_BOTH | SOP_FLAG_CHECK | SOP_FLAG_INVERT,
-                REF(case),
-                REF(skip) ? Int32s(ARG(size), 1) : 1
+                Bool_ARG(CASE),
+                Bool_ARG(SKIP) ? Int32s(ARG(SIZE), 1) : 1
             )
         ); }
 

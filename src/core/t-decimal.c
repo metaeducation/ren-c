@@ -475,20 +475,20 @@ REBTYPE(Decimal)
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
         Flags flags = (
-            (REF(to) ? RF_TO : 0)
-            | (REF(even) ? RF_EVEN : 0)
-            | (REF(down) ? RF_DOWN : 0)
-            | (REF(half_down) ? RF_HALF_DOWN : 0)
-            | (REF(floor) ? RF_FLOOR : 0)
-            | (REF(ceiling) ? RF_CEILING : 0)
-            | (REF(half_ceiling) ? RF_HALF_CEILING : 0)
+            (Bool_ARG(TO) ? RF_TO : 0)
+            | (Bool_ARG(EVEN) ? RF_EVEN : 0)
+            | (Bool_ARG(DOWN) ? RF_DOWN : 0)
+            | (Bool_ARG(HALF_DOWN) ? RF_HALF_DOWN : 0)
+            | (Bool_ARG(FLOOR) ? RF_FLOOR : 0)
+            | (Bool_ARG(CEILING) ? RF_CEILING : 0)
+            | (Bool_ARG(HALF_CEILING) ? RF_HALF_CEILING : 0)
         );
 
-        arg = ARG(scale);
-        if (REF(to)) {
+        arg = ARG(SCALE);
+        if (Bool_ARG(TO)) {
             if (Is_Money(arg))
                 return Init_Money(OUT, Round_Deci(
                     decimal_to_deci(d1), flags, VAL_MONEY_AMOUNT(arg)
@@ -513,11 +513,11 @@ REBTYPE(Decimal)
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
-        if (REF(only))
+        UNUSED(PARAM(VALUE));
+        if (Bool_ARG(ONLY))
             fail (Error_Bad_Refines_Raw());
 
-        if (REF(seed)) {
+        if (Bool_ARG(SEED)) {
             REBDEC d = VAL_DECIMAL(val);
             REBI64 i;
             assert(sizeof(d) == sizeof(i));
@@ -525,7 +525,7 @@ REBTYPE(Decimal)
             Set_Random(i); // use IEEE bits
             return nullptr;
         }
-        d1 = Random_Dec(d1, REF(secure));
+        d1 = Random_Dec(d1, Bool_ARG(SECURE));
         goto setDec; }
 
     case SYM_COMPLEMENT:

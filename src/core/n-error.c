@@ -43,7 +43,7 @@
 static const Value* Rescue_Dangerous(Level* level_) {
     INCLUDE_PARAMS_OF_RESCUE;
 
-    if (Do_Branch_Throws(OUT, ARG(code)))
+    if (Do_Branch_Throws(OUT, ARG(CODE)))
         return NOTHING_VALUE;  // not API value, no proxying needed
 
     return nullptr;
@@ -61,12 +61,12 @@ static const Value* Rescue_Dangerous(Level* level_) {
 //          [block! action!]
 //  ]
 //
-DECLARE_NATIVE(rescue)
+DECLARE_NATIVE(RESCUE)
 {
     INCLUDE_PARAMS_OF_RESCUE;
 
     Value* error = rebRescue(cast(REBDNG*, &Rescue_Dangerous), level_);
-    UNUSED(ARG(code));  // gets used by the above call, via the level_ pointer
+    UNUSED(ARG(CODE));  // gets used by the above call, via the level_ pointer
 
     if (not error)  // code didn't fail() or throw
         return nullptr;
@@ -83,7 +83,7 @@ DECLARE_NATIVE(rescue)
 static Value* Enrescue_Dangerous(Level* level_) {
     INCLUDE_PARAMS_OF_ENRESCUE;
 
-    if (Do_Branch_Throws(OUT, ARG(code))) {
+    if (Do_Branch_Throws(OUT, ARG(CODE))) {
         Init_Error(OUT, Error_No_Catch_For_Throw(OUT));
         return nullptr;
     }
@@ -109,12 +109,12 @@ static Value* Enrescue_Dangerous(Level* level_) {
 //          [block! action!]
 //  ]
 //
-DECLARE_NATIVE(enrescue)
+DECLARE_NATIVE(ENRESCUE)
 {
     INCLUDE_PARAMS_OF_ENRESCUE;
 
     Bounce error = rebRescue(cast(REBDNG*, &Enrescue_Dangerous), level_);
-    UNUSED(ARG(code)); // gets used by the above call, via the level_ pointer
+    UNUSED(ARG(CODE)); // gets used by the above call, via the level_ pointer
 
     if (error)
         return error;
@@ -133,11 +133,11 @@ DECLARE_NATIVE(enrescue)
 //      location [frame! any-word!]
 //  ]
 //
-DECLARE_NATIVE(set_location_of_error)
+DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
 {
     INCLUDE_PARAMS_OF_SET_LOCATION_OF_ERROR;
 
-    Value* location = ARG(location);
+    Value* location = ARG(LOCATION);
 
     VarList* context;
     if (Is_Word(location)) {
@@ -152,7 +152,7 @@ DECLARE_NATIVE(set_location_of_error)
 
     Level* where = Level_Of_Varlist_May_Fail(context);
 
-    Error* error = cast(Error*, Cell_Varlist(ARG(error)));
+    Error* error = cast(Error*, Cell_Varlist(ARG(ERROR)));
     Set_Location_Of_Error(error, where);
 
     return nullptr;

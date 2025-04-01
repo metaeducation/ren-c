@@ -167,16 +167,16 @@ REBTYPE(Action)
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
-        if (REF(part)) {
-            UNUSED(ARG(limit));
+        UNUSED(PARAM(VALUE));
+        if (Bool_ARG(PART)) {
+            UNUSED(ARG(LIMIT));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(types)) {
-            UNUSED(ARG(kinds));
+        if (Bool_ARG(TYPES)) {
+            UNUSED(ARG(KINDS));
             fail (Error_Bad_Refines_Raw());
         }
-        if (REF(deep)) {
+        if (Bool_ARG(DEEP)) {
             // !!! always "deep", allow it?
         }
 

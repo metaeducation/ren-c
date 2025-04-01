@@ -71,7 +71,7 @@
 //      return: [nothing!]
 //  ]
 //
-DECLARE_NATIVE(init_crypto)
+DECLARE_NATIVE(INIT_CRYPTO)
 {
     CRYPT_INCLUDE_PARAMS_OF_INIT_CRYPTO;
 
@@ -106,7 +106,7 @@ DECLARE_NATIVE(init_crypto)
 //
 //  ]
 //
-DECLARE_NATIVE(shutdown_crypto)
+DECLARE_NATIVE(SHUTDOWN_CRYPTO)
 {
     CRYPT_INCLUDE_PARAMS_OF_SHUTDOWN_CRYPTO;
 
@@ -147,7 +147,7 @@ static void cleanup_rc4_ctx(const Value* v)
 //          "Data to encrypt/decrypt."
 //  ]
 //
-DECLARE_NATIVE(rc4)
+DECLARE_NATIVE(RC4)
 //
 // !!! RC4 was originally included for use with TLS.  However, the insecurity
 // of RC4 led the IETF to prohibit RC4 for TLS use in 2015:
@@ -160,13 +160,13 @@ DECLARE_NATIVE(rc4)
 {
     CRYPT_INCLUDE_PARAMS_OF_RC4;
 
-    if (REF(stream)) {
-        Value* data = ARG(data);
+    if (Bool_ARG(STREAM)) {
+        Value* data = ARG(DATA);
 
-        if (VAL_HANDLE_CLEANER(ARG(ctx)) != cleanup_rc4_ctx)
-            rebJumps("fail [{Not a RC4 Context:}", ARG(ctx), "]");
+        if (VAL_HANDLE_CLEANER(ARG(CTX)) != cleanup_rc4_ctx)
+            rebJumps("fail [{Not a RC4 Context:}", ARG(CTX), "]");
 
-        RC4_CTX *rc4_ctx = VAL_HANDLE_POINTER(RC4_CTX, ARG(ctx));
+        RC4_CTX *rc4_ctx = VAL_HANDLE_POINTER(RC4_CTX, ARG(CTX));
 
         RC4_crypt(
             rc4_ctx,
@@ -181,13 +181,13 @@ DECLARE_NATIVE(rc4)
         return rebLogic(true);
     }
 
-    if (REF(key)) { // Key defined - setup new context
+    if (Bool_ARG(KEY)) { // Key defined - setup new context
         RC4_CTX *rc4_ctx = ALLOC_ZEROFILL(RC4_CTX);
 
         RC4_setup(
             rc4_ctx,
-            Cell_Blob_At(ARG(crypt_key)),
-            Cell_Series_Len_At(ARG(crypt_key))
+            Cell_Blob_At(ARG(CRYPT_KEY)),
+            Cell_Series_Len_At(ARG(CRYPT_KEY))
         );
 
         return Init_Handle_Managed(OUT, rc4_ctx, 0, &cleanup_rc4_ctx);
@@ -210,11 +210,11 @@ DECLARE_NATIVE(rc4)
 //         "Uses an RSA private key (default is a public key)"
 //  ]
 //
-DECLARE_NATIVE(rsa)
+DECLARE_NATIVE(RSA)
 {
     CRYPT_INCLUDE_PARAMS_OF_RSA;
 
-    Value* obj = ARG(key_object);
+    Value* obj = ARG(KEY_OBJECT);
 
     // N and E are required
     //
@@ -224,7 +224,7 @@ DECLARE_NATIVE(rsa)
     RSA_CTX *rsa_ctx = nullptr;
 
     REBINT binary_len;
-    if (REF(private)) {
+    if (Bool_ARG(PRIVATE)) {
         Value* d = rebValue("ensure binary! pick", obj, "'d");
 
         if (not d)
@@ -295,8 +295,8 @@ DECLARE_NATIVE(rsa)
 
     // !!! See notes above about direct binary access via libRebol
     //
-    Byte *dataBuffer = Cell_Blob_At(ARG(data));
-    REBINT data_len = rebUnbox("length of", ARG(data));
+    Byte *dataBuffer = Cell_Blob_At(ARG(DATA));
+    REBINT data_len = rebUnbox("length of", ARG(DATA));
 
     BI_CTX *bi_ctx = rsa_ctx->bi_ctx;
     bigint *data_bi = bi_import(bi_ctx, dataBuffer, data_len);
@@ -306,13 +306,13 @@ DECLARE_NATIVE(rsa)
     //
     Byte *crypted = rebAllocN(Byte, binary_len);
 
-    if (REF(decrypt)) {
+    if (Bool_ARG(DECRYPT)) {
         int result = RSA_decrypt(
             rsa_ctx,
             dataBuffer,
             crypted,
             binary_len,
-            REF(private) ? 1 : 0
+            Bool_ARG(PRIVATE) ? 1 : 0
         );
 
         if (result == -1) {
@@ -321,7 +321,7 @@ DECLARE_NATIVE(rsa)
 
             rebFree(crypted); // would free automatically due to failure...
             rebJumps(
-                "fail [{Failed to decrypt:}", ARG(data), "]"
+                "fail [{Failed to decrypt:}", ARG(DATA), "]"
             );
         }
 
@@ -333,7 +333,7 @@ DECLARE_NATIVE(rsa)
             dataBuffer,
             data_len,
             crypted,
-            REF(private) ? 1 : 0
+            Bool_ARG(PRIVATE) ? 1 : 0
         );
 
         if (result == -1) {
@@ -342,7 +342,7 @@ DECLARE_NATIVE(rsa)
 
             rebFree(crypted); // would free automatically due to failure...
             rebJumps(
-                "fail [{Failed to encrypt:}", ARG(data), "]"
+                "fail [{Failed to encrypt:}", ARG(DATA), "]"
             );
         }
 
@@ -367,14 +367,14 @@ DECLARE_NATIVE(rsa)
 //         "(modified) Diffie-Hellman object, with generator(g) / modulus(p)"
 //  ]
 //
-DECLARE_NATIVE(dh_generate_key)
+DECLARE_NATIVE(DH_GENERATE_KEY)
 {
     CRYPT_INCLUDE_PARAMS_OF_DH_GENERATE_KEY;
 
     DH_CTX dh_ctx;
     memset(&dh_ctx, 0, sizeof(dh_ctx));
 
-    Value* obj = ARG(obj);
+    Value* obj = ARG(OBJ);
 
     // !!! This used to ensure that all other fields, besides SELF, were blank
     //
@@ -426,14 +426,14 @@ DECLARE_NATIVE(dh_generate_key)
 //          "Peer's public key"
 //  ]
 //
-DECLARE_NATIVE(dh_compute_key)
+DECLARE_NATIVE(DH_COMPUTE_KEY)
 {
     CRYPT_INCLUDE_PARAMS_OF_DH_COMPUTE_KEY;
 
     DH_CTX dh_ctx;
     memset(&dh_ctx, 0, sizeof(dh_ctx));
 
-    Value* obj = ARG(obj);
+    Value* obj = ARG(OBJ);
 
     // !!! used to ensure object only had other fields SELF, PUB-KEY, G
     // otherwise gave Error(RE_EXT_CRYPT_INVALID_KEY_FIELD)
@@ -447,7 +447,7 @@ DECLARE_NATIVE(dh_compute_key)
     dh_ctx.x = Cell_Blob_At(priv_key);
     // !!! No length check here, should there be?
 
-    dh_ctx.gy = Cell_Blob_At(ARG(public_key));
+    dh_ctx.gy = Cell_Blob_At(ARG(PUBLIC_KEY));
     // !!! No length check here, should there be?
 
     dh_ctx.k = rebAllocN(Byte, dh_ctx.len);
@@ -491,20 +491,20 @@ static void cleanup_aes_ctx(const Value* v)
 //          "Use the crypt-key for decryption (default is to encrypt)"
 //  ]
 //
-DECLARE_NATIVE(aes)
+DECLARE_NATIVE(AES)
 {
     CRYPT_INCLUDE_PARAMS_OF_AES;
 
-    if (REF(stream)) {
-        if (VAL_HANDLE_CLEANER(ARG(ctx)) != cleanup_aes_ctx)
+    if (Bool_ARG(STREAM)) {
+        if (VAL_HANDLE_CLEANER(ARG(CTX)) != cleanup_aes_ctx)
             rebJumps(
-                "fail [{Not a AES context:}", ARG(ctx), "]"
+                "fail [{Not a AES context:}", ARG(CTX), "]"
             );
 
-        AES_CTX *aes_ctx = VAL_HANDLE_POINTER(AES_CTX, ARG(ctx));
+        AES_CTX *aes_ctx = VAL_HANDLE_POINTER(AES_CTX, ARG(CTX));
 
-        Byte *dataBuffer = Cell_Blob_At(ARG(data));
-        REBINT len = Cell_Series_Len_At(ARG(data));
+        Byte *dataBuffer = Cell_Blob_At(ARG(DATA));
+        REBINT len = Cell_Series_Len_At(ARG(DATA));
 
         if (len == 0)
             return nullptr;  // !!! Is nullptr a good result for 0 data?
@@ -548,23 +548,23 @@ DECLARE_NATIVE(aes)
         return rebRepossess(data_out, pad_len);
     }
 
-    if (REF(key)) {
+    if (Bool_ARG(KEY)) {
         uint8_t iv[AES_IV_SIZE];
 
-        if (Is_Binary(ARG(iv))) {
-            if (Cell_Series_Len_At(ARG(iv)) < AES_IV_SIZE)
+        if (Is_Binary(ARG(IV))) {
+            if (Cell_Series_Len_At(ARG(IV)) < AES_IV_SIZE)
                 fail ("Length of initialization vector less than AES size");
 
-            memcpy(iv, Cell_Blob_At(ARG(iv)), AES_IV_SIZE);
+            memcpy(iv, Cell_Blob_At(ARG(IV)), AES_IV_SIZE);
         }
         else {
-            assert(Is_Blank(ARG(iv)));
+            assert(Is_Blank(ARG(IV)));
             memset(iv, 0, AES_IV_SIZE);
         }
 
         //key defined - setup new context
 
-        REBINT len = Cell_Series_Len_At(ARG(crypt_key)) << 3;
+        REBINT len = Cell_Series_Len_At(ARG(CRYPT_KEY)) << 3;
         if (len != 128 and len != 256) {
             DECLARE_VALUE (i);
             Init_Integer(i, len);
@@ -578,12 +578,12 @@ DECLARE_NATIVE(aes)
 
         AES_set_key(
             aes_ctx,
-            cast(const uint8_t *, Cell_Blob_At(ARG(crypt_key))),
+            cast(const uint8_t *, Cell_Blob_At(ARG(CRYPT_KEY))),
             cast(const uint8_t *, iv),
             (len == 128) ? AES_MODE_128 : AES_MODE_256
         );
 
-        if (REF(decrypt))
+        if (Bool_ARG(DECRYPT))
             AES_convert_key(aes_ctx);
 
         return Init_Handle_Managed(OUT, aes_ctx, 0, &cleanup_aes_ctx);
@@ -604,11 +604,11 @@ DECLARE_NATIVE(aes)
 //          {Data to hash, TEXT! will be converted to UTF-8}
 //  ]
 //
-DECLARE_NATIVE(sha256)
+DECLARE_NATIVE(SHA256)
 {
     CRYPT_INCLUDE_PARAMS_OF_SHA256;
 
-    Value* data = ARG(data);
+    Value* data = ARG(DATA);
 
     Byte *bp;
     Size size;

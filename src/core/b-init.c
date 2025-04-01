@@ -321,7 +321,7 @@ static void Startup_True_And_False(void)
 //      spec [block!]
 //  ]
 //
-DECLARE_NATIVE(generic)
+DECLARE_NATIVE(GENERIC)
 //
 // The `generics` native is searched for explicitly by %make-natives.r and put
 // in second place for initialization (after the `native` native).
@@ -332,7 +332,7 @@ DECLARE_NATIVE(generic)
 {
     INCLUDE_PARAMS_OF_GENERIC;
 
-    Value* spec = ARG(spec);
+    Value* spec = ARG(SPEC);
 
     // We only want to check the return type in the debug build.  In the
     // release build, we want to have as few argument slots as possible...
@@ -352,7 +352,7 @@ DECLARE_NATIVE(generic)
     Set_Cell_Flag(ACT_ARCHETYPE(generic), ACTION_NATIVE);
 
     Array* details = ACT_DETAILS(generic);
-    Init_Word(Array_At(details, IDX_NATIVE_BODY), VAL_WORD_CANON(ARG(verb)));
+    Init_Word(Array_At(details, IDX_NATIVE_BODY), VAL_WORD_CANON(ARG(VERB)));
     Init_Object(Array_At(details, IDX_NATIVE_CONTEXT), Lib_Context);
 
     // A lookback quoting function that quotes a SET-WORD! on its left is
@@ -361,7 +361,7 @@ DECLARE_NATIVE(generic)
     // assignment, it's good practice to evaluate the whole expression to
     // the result the SET-WORD! was set to, so `x: y: op z` makes `x = y`.
     //
-    Init_Action_Unbound(Sink_Var_May_Fail(ARG(verb), SPECIFIED), generic);
+    Init_Action_Unbound(Sink_Var_May_Fail(ARG(VERB), SPECIFIED), generic);
 
     return Init_Action_Unbound(OUT, generic);
 }
@@ -642,7 +642,7 @@ Value* Make_Native(
 // "fakes it" just by calling a C function for each item...and there is no
 // actual "native native".
 //
-// If there *were* a DECLARE_NATIVE(native) this would be its spec:
+// If there *were* a DECLARE_NATIVE(NATIVE) this would be its spec:
 //
 //  native: native [
 //      spec [block!]

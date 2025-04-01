@@ -63,14 +63,14 @@
 //          [block! action!]
 //  ]
 //
-DECLARE_NATIVE(if)
+DECLARE_NATIVE(IF)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    if (IS_FALSEY(ARG(condition))) // fails on void and trash
+    if (IS_FALSEY(ARG(CONDITION))) // fails on void and trash
         return Init_Void(OUT);
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
+    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(CONDITION)))
         return BOUNCE_THROWN;
 
     return Nothingify_Branched(OUT);  // trash means no branch (cues ELSE)
@@ -88,14 +88,14 @@ DECLARE_NATIVE(if)
 //      branch [block! action!]
 //  ]
 //
-DECLARE_NATIVE(if_not)
+DECLARE_NATIVE(IF_NOT)
 {
     INCLUDE_PARAMS_OF_IF_NOT;
 
-    if (IS_TRUTHY(ARG(condition)))  // fails on void and trash
+    if (IS_TRUTHY(ARG(CONDITION)))  // fails on void and trash
         return nullptr;
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(condition)))
+    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(CONDITION)))
         return BOUNCE_THROWN;
 
     return Nothingify_Branched(OUT);  // trash means no branch (cues ELSE)
@@ -115,16 +115,16 @@ DECLARE_NATIVE(if_not)
 //      false-branch [block! action!]
 //  ]
 //
-DECLARE_NATIVE(either)
+DECLARE_NATIVE(EITHER)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
     if (Do_Branch_With_Throws(
         OUT,
-        IS_TRUTHY(ARG(condition))  // fails on void and trash
-            ? ARG(true_branch)
-            : ARG(false_branch),
-        ARG(condition)
+        IS_TRUTHY(ARG(CONDITION))  // fails on void and trash
+            ? ARG(TRUE_BRANCH)
+            : ARG(FALSE_BRANCH),
+        ARG(CONDITION)
     )){
         return BOUNCE_THROWN;
     }
@@ -291,17 +291,17 @@ bool Either_Test_Core_Throws(
 //          [block! action!]
 //  ]
 //
-DECLARE_NATIVE(either_test)
+DECLARE_NATIVE(EITHER_TEST)
 {
     INCLUDE_PARAMS_OF_EITHER_TEST;
 
-    if (Either_Test_Core_Throws(OUT, ARG(test), ARG(arg)))
+    if (Either_Test_Core_Throws(OUT, ARG(TEST), ARG(ARG)))
         return BOUNCE_THROWN;
 
     if (VAL_LOGIC(OUT))
-        RETURN (ARG(arg));
+        RETURN (ARG(ARG));
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), ARG(arg)))
+    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(ARG)))
         return BOUNCE_THROWN;
 
     return OUT;
@@ -320,15 +320,15 @@ DECLARE_NATIVE(either_test)
 //      branch [block! action!]
 //  ]
 //
-DECLARE_NATIVE(else)
+DECLARE_NATIVE(ELSE)
 {
     INCLUDE_PARAMS_OF_ELSE; // faster than EITHER-TEST specialized w/`VALUE?`
 
-    Value* left = ARG(left);
+    Value* left = ARG(LEFT);
     if (not Is_Nulled(left) and not Is_Void(left))
         RETURN (left);
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), NULLED_CELL))
+    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), NULLED_CELL))
         return BOUNCE_THROWN;
 
     return OUT;  // don't trashify, allows chaining: `else [...] then [...]`
@@ -348,15 +348,15 @@ DECLARE_NATIVE(else)
 //          [block! action!]
 //  ]
 //
-DECLARE_NATIVE(then)
+DECLARE_NATIVE(THEN)
 {
     INCLUDE_PARAMS_OF_THEN; // faster than EITHER-TEST specialized w/`NULL?`
 
-    Value* left = ARG(left);
+    Value* left = ARG(LEFT);
     if (Is_Nulled(left) or Is_Void(left))
         return nullptr;  // left didn't run, so signal THEN didn't run either
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), left))
+    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
 
     return Nothingify_Branched(OUT);  // if left ran, make THEN signal it did
@@ -376,15 +376,15 @@ DECLARE_NATIVE(then)
 //          [block! action!]
 //  ]
 //
-DECLARE_NATIVE(also)
+DECLARE_NATIVE(ALSO)
 {
     INCLUDE_PARAMS_OF_ALSO; // `then func [x] [(...) :x]` => `also [...]`
 
-    Value* left = ARG(left);
+    Value* left = ARG(LEFT);
     if (Is_Nulled(left) or Is_Void(left))
         return nullptr;
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), left))
+    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
 
     RETURN (left); // just passing thru the input
@@ -405,13 +405,13 @@ DECLARE_NATIVE(also)
 //      value [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(match)
+DECLARE_NATIVE(MATCH)
 {
     INCLUDE_PARAMS_OF_MATCH;
 
-    Value* test = ARG(test);
+    Value* test = ARG(TEST);
 
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
     DECLARE_VALUE (temp);
     if (Either_Test_Core_Throws(temp, test, value))
@@ -440,7 +440,7 @@ DECLARE_NATIVE(match)
 //          [~null~ any-value!]
 // ]
 //
-DECLARE_NATIVE(non)
+DECLARE_NATIVE(NON)
 //
 // !!! This is a partial implementation of NON implemented for R3C, just good
 // enough for `non [nothing!]` and `non null` cases to give validation options to
@@ -448,8 +448,8 @@ DECLARE_NATIVE(non)
 {
     INCLUDE_PARAMS_OF_NON;
 
-    Value* test = ARG(test);
-    Value* value = ARG(value);
+    Value* test = ARG(TEST);
+    Value* value = ARG(VALUE);
 
     if (Is_Nulled(test)) {  // not a datatype, needs special case
         if (Is_Nulled(value))
@@ -478,12 +478,12 @@ DECLARE_NATIVE(non)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(all)
+DECLARE_NATIVE(ALL)
 {
     INCLUDE_PARAMS_OF_ALL;
 
     DECLARE_LEVEL (L);
-    Push_Level(L, ARG(block));
+    Push_Level(L, ARG(BLOCK));
 
     Init_Void(OUT);  // default return result
 
@@ -522,12 +522,12 @@ DECLARE_NATIVE(all)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(any)
+DECLARE_NATIVE(ANY)
 {
     INCLUDE_PARAMS_OF_ANY;
 
     DECLARE_LEVEL (L);
-    Push_Level(L, ARG(block));
+    Push_Level(L, ARG(BLOCK));
 
     Init_Void(OUT);  // default return result
 
@@ -566,7 +566,7 @@ DECLARE_NATIVE(any)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(none)
+DECLARE_NATIVE(NONE)
 //
 // !!! In order to reduce confusion and accidents in the near term, the
 // %mezz-legacy.r renames this to NONE-OF and makes NONE report an error.
@@ -574,7 +574,7 @@ DECLARE_NATIVE(none)
     INCLUDE_PARAMS_OF_NONE;
 
     DECLARE_LEVEL (L);
-    Push_Level(L, ARG(block));
+    Push_Level(L, ARG(BLOCK));
 
     Init_Nulled(OUT); // default return result
 
@@ -608,7 +608,7 @@ static Bounce Case_Choose_Core_May_Throw(
 ){
     INCLUDE_PARAMS_OF_CASE;
 
-    Value* block = ARG(cases); // for CHOOSE, it's "choices" not "cases"
+    Value* block = ARG(CASES); // for CHOOSE, it's "choices" not "cases"
 
     DECLARE_LEVEL (L);
     Push_Level(L, block); // array GC safe now, can re-use `block` cell
@@ -693,7 +693,7 @@ static Bounce Case_Choose_Core_May_Throw(
 
             L->gotten = nullptr; // can't hold onto cache, running user code
 
-            Copy_Cell(block, OUT); // can't evaluate into ARG(block)
+            Copy_Cell(block, OUT); // can't evaluate into ARG(BLOCK)
             if (Is_Block(block)) {
                 if (Eval_List_At_Throws(OUT, block)) {
                     Abort_Level(L);
@@ -713,7 +713,7 @@ static Bounce Case_Choose_Core_May_Throw(
             Nothingify_Branched(OUT);  // null is reserved for no branch taken
         }
 
-        if (not REF(all)) {
+        if (not Bool_ARG(ALL)) {
             Drop_GC_Guard(cell);
             Abort_Level(L);
             return OUT;
@@ -739,7 +739,7 @@ static Bounce Case_Choose_Core_May_Throw(
 //          "Evaluate all cases (do not stop at first logically true case)"
 //  ]
 //
-DECLARE_NATIVE(case)
+DECLARE_NATIVE(CASE)
 {
     const bool choose = false; // jsut a plain CASE
     return Case_Choose_Core_May_Throw(level_, choose);
@@ -759,7 +759,7 @@ DECLARE_NATIVE(case)
 //          "Return the value for the last matched choice (instead of first)"
 //  ]
 //
-DECLARE_NATIVE(choose)
+DECLARE_NATIVE(CHOOSE)
 //
 // Note: The choose can't be run backwards, only forwards.  So implementation
 // means that "/LAST" really can only be done as an /ALL, there's no way to
@@ -793,22 +793,22 @@ DECLARE_NATIVE(choose)
 //      default-branch [block!]
 //  ]
 //
-DECLARE_NATIVE(switch)
+DECLARE_NATIVE(SWITCH)
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
-    if (REF(default))
+    if (Bool_ARG(DEFAULT))
         fail (
             "SWITCH/DEFAULT is no longer supported by the core.  Use the"
             " DEFAULT [...] as the last clause, or ELSE/UNLESS/!!/etc. based"
             " on null result: https://forum.rebol.info/t/312"
         );
-    UNUSED(ARG(default_branch));
+    UNUSED(ARG(DEFAULT_BRANCH));
 
     DECLARE_LEVEL (L);
-    Push_Level(L, ARG(cases));
+    Push_Level(L, ARG(CASES));
 
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
     Init_Nulled(OUT); // used for "fallout"
 
@@ -841,7 +841,7 @@ DECLARE_NATIVE(switch)
             );
         }
 
-        if (REF(quote))
+        if (Bool_ARG(QUOTE))
             Quote_Next_In_Level(OUT, L);
         else {
             if (Eval_Step_Throws(SET_END(OUT), L)) {
@@ -869,7 +869,7 @@ DECLARE_NATIVE(switch)
         // !!! A branch composed into the switch cases block may want to see
         // the un-mutated condition value.
 
-        if (!Compare_Modify_Values(value, OUT, REF(strict) ? 1 : 0))
+        if (!Compare_Modify_Values(value, OUT, Bool_ARG(STRICT) ? 1 : 0))
             continue;
 
         // Skip ahead to try and find a block, to treat as code for the match
@@ -898,7 +898,7 @@ DECLARE_NATIVE(switch)
 
         Nothingify_Branched(OUT);  // null is reserved for no branch run
 
-        if (not REF(all)) {
+        if (not Bool_ARG(ALL)) {
             Abort_Level(L);
             return OUT;
         }
@@ -927,18 +927,18 @@ DECLARE_NATIVE(switch)
 //      /only "Consider target being BLANK! to be a value not to overwrite"
 //  ]
 //
-DECLARE_NATIVE(default)
+DECLARE_NATIVE(DEFAULT)
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
-    Value* target = ARG(target);
+    Value* target = ARG(TARGET);
 
     if (Is_Nulled(target)) { // e.g. `case [... default [...]]`
-        UNUSED(ARG(look));
+        UNUSED(ARG(LOOK));
         if (NOT_END(level_->value)) // !!! shortcut using variadic for now
             fail ("DEFAULT usage with no left hand side must be at <end>");
 
-        if (Do_Branch_Throws(OUT, ARG(branch)))
+        if (Do_Branch_Throws(OUT, ARG(BRANCH)))
             return BOUNCE_THROWN;
 
         return OUT; // NULL is okay in this case
@@ -954,12 +954,12 @@ DECLARE_NATIVE(default)
     if (
         not Is_Nulled(OUT)
         and not Is_Nothing(OUT)
-        and (not Is_Blank(OUT) or REF(only))
+        and (not Is_Blank(OUT) or Bool_ARG(ONLY))
     ){
         return OUT;  // count it as "already set"
     }
 
-    if (Do_Branch_Throws(OUT, ARG(branch)))
+    if (Do_Branch_Throws(OUT, ARG(BRANCH)))
         return BOUNCE_THROWN;
 
     if (Is_Set_Word(target))
@@ -990,7 +990,7 @@ DECLARE_NATIVE(default)
 //      /any "Catch all throws except QUIT (can be used with /QUIT)"
 //  ]
 //
-DECLARE_NATIVE(catch)
+DECLARE_NATIVE(CATCH)
 //
 // There's a refinement for catching quits, and CATCH/ANY will not alone catch
 // it (you have to CATCH/ANY/QUIT).  Currently the label for quitting is the
@@ -1014,54 +1014,54 @@ DECLARE_NATIVE(catch)
 
     // /ANY would override /NAME, so point out the potential confusion
     //
-    if (REF(any) and REF(name))
+    if (Bool_ARG(ANY) and Bool_ARG(NAME))
         fail (Error_Bad_Refines_Raw());
 
-    if (not Eval_List_At_Throws(OUT, ARG(block))) {
-        if (REF(result))
-            rebElide(rebEval(NAT_VALUE(set)), ARG(uncaught), OUT);
+    if (not Eval_List_At_Throws(OUT, ARG(BLOCK))) {
+        if (Bool_ARG(RESULT))
+            rebElide(rebEval(NAT_VALUE(SET)), ARG(UNCAUGHT), OUT);
 
         return nullptr;  // no throw means just return null
     }
 
-    if (REF(any) and not (
+    if (Bool_ARG(ANY) and not (
         Is_Action(OUT)
-        and VAL_ACT_DISPATCHER(OUT) == &N_quit
+        and VAL_ACT_DISPATCHER(OUT) == &NATIVE_CFUNC(QUIT)
     )){
         goto was_caught;
     }
 
-    if (REF(quit) and (
+    if (Bool_ARG(QUIT) and (
         Is_Action(OUT)
-        and VAL_ACT_DISPATCHER(OUT) == &N_quit
+        and VAL_ACT_DISPATCHER(OUT) == &NATIVE_CFUNC(QUIT)
     )){
         goto was_caught;
     }
 
-    if (REF(name)) {
+    if (Bool_ARG(NAME)) {
         //
         // We use equal? by way of Compare_Modify_Values, and re-use the
         // refinement slots for the mutable space
 
-        Value* temp1 = ARG(quit);
-        Value* temp2 = ARG(any);
+        Value* temp1 = ARG(QUIT);
+        Value* temp2 = ARG(ANY);
 
         // !!! The reason we're copying isn't so the CELL_FLAG_THROW_SIGNAL
         // bit won't confuse the equality comparison...but would it have?
 
-        if (Is_Block(ARG(names))) {
+        if (Is_Block(ARG(NAMES))) {
             //
             // Test all the words in the block for a match to catch
 
-            Cell* candidate = Cell_List_At(ARG(names));
+            Cell* candidate = Cell_List_At(ARG(NAMES));
             for (; NOT_END(candidate); candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?
                 //
                 if (Is_Block(candidate))
-                    fail (Error_Invalid(ARG(names)));
+                    fail (Error_Invalid(ARG(NAMES)));
 
-                Derelativize(temp1, candidate, VAL_SPECIFIER(ARG(names)));
+                Derelativize(temp1, candidate, VAL_SPECIFIER(ARG(NAMES)));
                 Copy_Cell(temp2, OUT);
 
                 // Return the THROW/NAME's arg if the names match
@@ -1072,7 +1072,7 @@ DECLARE_NATIVE(catch)
             }
         }
         else {
-            Copy_Cell(temp1, ARG(names));
+            Copy_Cell(temp1, ARG(NAMES));
             Copy_Cell(temp2, OUT);
 
             // Return the THROW/NAME's arg if the names match
@@ -1085,7 +1085,7 @@ DECLARE_NATIVE(catch)
     else {
         // Return THROW's arg only if it did not have a /NAME supplied
         //
-        if (Is_Blank(OUT) and (REF(any) or not REF(quit)))
+        if (Is_Blank(OUT) and (Bool_ARG(ANY) or not Bool_ARG(QUIT)))
             goto was_caught;
     }
 
@@ -1093,7 +1093,7 @@ DECLARE_NATIVE(catch)
 
   was_caught:
 
-    if (REF(name) or REF(any)) {
+    if (Bool_ARG(NAME) or Bool_ARG(ANY)) {
         Array* a = Make_Array(2);
 
         CATCH_THROWN(Array_At(a, 1), OUT); // thrown value--may be null!
@@ -1110,8 +1110,8 @@ DECLARE_NATIVE(catch)
     // !!! You are not allowed to run evaluations while a throw is in effect,
     // so this assignment has to wait until the end.
     //
-    if (REF(result))  // caught case voids result to minimize likely use
-        rebElide(NAT_VALUE(set), ARG(uncaught), NOTHING_VALUE);
+    if (Bool_ARG(RESULT))  // caught case voids result to minimize likely use
+        rebElide(NAT_VALUE(SET), ARG(UNCAUGHT), NOTHING_VALUE);
 
     return OUT;
 }
@@ -1128,7 +1128,7 @@ DECLARE_NATIVE(catch)
 //      name-value [word! action! object!]
 //  ]
 //
-DECLARE_NATIVE(throw)
+DECLARE_NATIVE(THROW)
 //
 // Choices are currently limited for what one can use as a "name" of a THROW.
 // Note blocks as names would conflict with the `name_list` feature in CATCH.
@@ -1137,10 +1137,10 @@ DECLARE_NATIVE(throw)
 {
     INCLUDE_PARAMS_OF_THROW;
 
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
-    if (REF(name))
-        Copy_Cell(OUT, ARG(name_value));
+    if (Bool_ARG(NAME))
+        Copy_Cell(OUT, ARG(NAME_VALUE));
     else {
         // Blank values serve as representative of THROWN() means "no name"
         //

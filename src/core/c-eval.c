@@ -562,7 +562,7 @@ bool Eval_Core_Throws(Level* const L)
     // aggressive scenario.  Once it finds out the infixee wants normal or
     // tight, though, it could get in trouble.
     //
-    if (VAL_ACTION(L->gotten) == NAT_ACTION(shove)) {
+    if (VAL_ACTION(L->gotten) == NAT_ACTION(SHOVE)) {
         Fetch_Next_In_Level(nullptr, L);
         if (IS_END(L->value))
             goto finished; // proposed behavior, drop out result...
@@ -1018,7 +1018,7 @@ bool Eval_Core_Throws(Level* const L)
 
               case PARAM_CLASS_RETURN:
                 assert(Cell_Parameter_Id(L->param) == SYM_RETURN);
-                Copy_Cell(L->arg, NAT_VALUE(return)); // !!! L->special?
+                Copy_Cell(L->arg, NAT_VALUE(RETURN)); // !!! L->special?
                 INIT_BINDING(L->arg, L->varlist);
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
@@ -1525,7 +1525,7 @@ bool Eval_Core_Throws(Level* const L)
             assert(THROWN(L->out));
             if (Is_Action(L->out)) {
                 if (
-                    VAL_ACTION(L->out) == NAT_ACTION(unwind)
+                    VAL_ACTION(L->out) == NAT_ACTION(UNWIND)
                     and VAL_BINDING(L->out) == L->varlist
                 ){
                     // Eval_Core catches unwinds to the current frame, so throws
@@ -1542,7 +1542,7 @@ bool Eval_Core_Throws(Level* const L)
                     goto dispatch_completed;
                 }
                 else if (
-                    VAL_ACTION(L->out) == NAT_ACTION(redo)
+                    VAL_ACTION(L->out) == NAT_ACTION(REDO)
                     and VAL_BINDING(L->out) == L->varlist
                 ){
                     // This was issued by REDO, and should be a FRAME! with
@@ -2286,7 +2286,7 @@ bool Eval_Core_Throws(Level* const L)
         // compatibly with history.
 
         Stub* binding = nullptr;
-        Push_Action(L, NAT_ACTION(path_0), binding);
+        Push_Action(L, NAT_ACTION(PATH_0), binding);
 
         Symbol* opt_label = nullptr;
         Begin_Action(L, opt_label, LOOKBACK_ARG);

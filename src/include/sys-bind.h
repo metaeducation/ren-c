@@ -677,8 +677,8 @@ INLINE Specifier* Derive_Specifier(Specifier* parent, const Cell* item) {
 //
 // So don't do this:
 //
-//     Value* block = ARG(block);
-//     Value* something = ARG(next_arg_after_block);
+//     Value* block = ARG(BLOCK);
+//     Value* something = ARG(NEXT_ARG_AFTER_BLOCK);
 //     Bind_Values_Deep(block, context);
 //
 // What will happen is that the block will be treated as an array of values

@@ -302,15 +302,15 @@ void Dump_Stack(Level* L, REBLEN level)
 //      :value [any-word!]
 //  ]
 //
-DECLARE_NATIVE(dump)
+DECLARE_NATIVE(DUMP)
 {
     INCLUDE_PARAMS_OF_DUMP;
 
 #if NO_RUNTIME_CHECKS
-    UNUSED(ARG(value));
+    UNUSED(ARG(VALUE));
     fail (Error_Debug_Only_Raw());
 #else
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     PROBE(v);
     printf("=> ");

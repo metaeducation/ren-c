@@ -223,22 +223,22 @@ REBTYPE(Money)
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
         Flags flags = (
-            (REF(to) ? RF_TO : 0)
-            | (REF(even) ? RF_EVEN : 0)
-            | (REF(down) ? RF_DOWN : 0)
-            | (REF(half_down) ? RF_HALF_DOWN : 0)
-            | (REF(floor) ? RF_FLOOR : 0)
-            | (REF(ceiling) ? RF_CEILING : 0)
-            | (REF(half_ceiling) ? RF_HALF_CEILING : 0)
+            (Bool_ARG(TO) ? RF_TO : 0)
+            | (Bool_ARG(EVEN) ? RF_EVEN : 0)
+            | (Bool_ARG(DOWN) ? RF_DOWN : 0)
+            | (Bool_ARG(HALF_DOWN) ? RF_HALF_DOWN : 0)
+            | (Bool_ARG(FLOOR) ? RF_FLOOR : 0)
+            | (Bool_ARG(CEILING) ? RF_CEILING : 0)
+            | (Bool_ARG(HALF_CEILING) ? RF_HALF_CEILING : 0)
         );
 
-        Value* scale = ARG(scale);
+        Value* scale = ARG(SCALE);
 
         DECLARE_VALUE (temp);
-        if (REF(to)) {
+        if (Bool_ARG(TO)) {
             if (Is_Integer(scale))
                 Init_Money(temp, int_to_deci(VAL_INT64(scale)));
             else if (Is_Decimal(scale) or Is_Percent(scale))
@@ -257,7 +257,7 @@ REBTYPE(Money)
             VAL_MONEY_AMOUNT(temp)
         ));
 
-        if (REF(to)) {
+        if (Bool_ARG(TO)) {
             if (Is_Decimal(scale) or Is_Percent(scale)) {
                 REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
                 RESET_CELL(OUT, VAL_TYPE(scale));

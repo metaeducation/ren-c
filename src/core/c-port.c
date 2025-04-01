@@ -202,7 +202,7 @@ bool Wait_Ports_Throws(
         if (GET_SIGNAL(SIG_HALT)) {
             CLR_SIGNAL(SIG_HALT);
 
-            Copy_Cell(out, NAT_VALUE(halt));
+            Copy_Cell(out, NAT_VALUE(HALT));
             CONVERT_NAME_TO_THROWN(out, NULLED_CELL);
             return true; // thrown
         }
@@ -463,15 +463,15 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
     if (Cell_Word_Id(verb) == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PAR(source));
-        UNUSED(PAR(part));
-        UNUSED(PAR(limit));
-        UNUSED(PAR(seek));
-        UNUSED(PAR(index));
+        UNUSED(PARAM(SOURCE));
+        UNUSED(PARAM(PART));
+        UNUSED(PARAM(LIMIT));
+        UNUSED(PARAM(SEEK));
+        UNUSED(PARAM(INDEX));
 
         assert(bounce == OUT);
 
-        if ((REF(string) or REF(lines)) and not Is_Text(OUT)) {
+        if ((Bool_ARG(STRING) or Bool_ARG(LINES)) and not Is_Text(OUT)) {
             if (not Is_Binary(OUT))
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
@@ -482,7 +482,7 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
             Init_Text(OUT, decoded);
         }
 
-        if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
+        if (Bool_ARG(LINES)) { // caller wants a BLOCK! of STRING!s, not one string
             assert(Is_Text(OUT));
 
             DECLARE_VALUE (temp);

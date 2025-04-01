@@ -229,11 +229,11 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //          "Message to report (evaluation not counted in ticks)"
 //  ]
 //
-DECLARE_NATIVE(panic)
+DECLARE_NATIVE(PANIC)
 {
     INCLUDE_PARAMS_OF_PANIC;
 
-    Value* v = ARG(reason);
+    Value* v = ARG(REASON);
     void *p;
 
     // panic() on the string value itself would report information about the
@@ -284,7 +284,7 @@ DECLARE_NATIVE(panic)
 //          "Suspicious value to panic on (debug build shows diagnostics)"
 //  ]
 //
-DECLARE_NATIVE(panic_value)
+DECLARE_NATIVE(PANIC_VALUE)
 {
     INCLUDE_PARAMS_OF_PANIC_VALUE;
 
@@ -303,10 +303,10 @@ DECLARE_NATIVE(panic_value)
     // is the exact moment before the PANIC-VALUE ACTION! was invoked.
     //
     Panic_Core(
-        ARG(value), level_->tick, file_utf8, LVL_LINE(level_)
+        ARG(VALUE), level_->tick, file_utf8, LVL_LINE(level_)
     );
   #else
     const Tick tick = 0;
-    Panic_Core(ARG(value), tick, file_utf8, LVL_LINE(level_));
+    Panic_Core(ARG(VALUE), tick, file_utf8, LVL_LINE(level_));
   #endif
 }

@@ -207,7 +207,7 @@ static Value* Run_Sandboxed_Code(Value* group_or_block) {
 //      /resumable "Allow RESUME instruction (will return a PATH!)"
 //  ]
 //
-DECLARE_NATIVE(console)
+DECLARE_NATIVE(CONSOLE)
 //
 // !!! The idea behind the console is that it can be called with skinning;
 // so that if BREAKPOINT wants to spin up a console, it can...but with a
@@ -233,8 +233,8 @@ DECLARE_NATIVE(console)
     bool no_recover = false; // allow one try at HOST-CONSOLE internal error
 
     Value* code;
-    if (REF(provoke)) {
-        code = rebValue("the", ARG(provocation));
+    if (Bool_ARG(PROVOKE)) {
+        code = rebValue("the", ARG(PROVOCATION));
         goto provoked;
     }
     else
@@ -257,7 +257,7 @@ DECLARE_NATIVE(console)
                 "ext-console-impl", // action! that takes 2 args, run it
                 rebUneval(code), // group!/block! executed prior (or blank!)
                 rebUneval(result), // prior result in a block, or error/null
-                rebR(rebLogic(REF(resumable))),
+                rebR(rebLogic(Bool_ARG(RESUMABLE))),
             "]"
         );
 
@@ -295,7 +295,7 @@ DECLARE_NATIVE(console)
             break; // when HOST-CONSOLE returns INTEGER! it means an exit code
 
         if (rebDid("path?", code)) {
-            assert(REF(resumable));
+            assert(Bool_ARG(RESUMABLE));
             break;
         }
 

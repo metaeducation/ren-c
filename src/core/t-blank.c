@@ -146,14 +146,14 @@ REBTYPE(Unit)
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value)); // covered by val above
+        UNUSED(ARG(VALUE)); // covered by val above
 
         // !!! If reflectors had specs the way actions do, it might be that
         // the return type could be searched to see if void was an option,
         // and that would mean it would be legal.  For now, carry over ad
         // hoc things that R3-Alpha returned BLANK! for.
 
-        switch (Cell_Word_Id(ARG(property))) {
+        switch (Cell_Word_Id(ARG(PROPERTY))) {
         case SYM_INDEX:
         case SYM_LENGTH:
             return nullptr;

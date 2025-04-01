@@ -441,16 +441,16 @@ REBTYPE(Tuple)
     if (sym == SYM_RANDOM) {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
-        if (REF(only))
+        if (Bool_ARG(ONLY))
             fail (Error_Bad_Refines_Raw());
 
-        if (REF(seed))
+        if (Bool_ARG(SEED))
             fail (Error_Bad_Refines_Raw());
         for (; len > 0; len--, vp++) {
             if (*vp)
-                *vp = cast(Byte, Random_Int(REF(secure)) % (1 + *vp));
+                *vp = cast(Byte, Random_Int(Bool_ARG(SECURE)) % (1 + *vp));
         }
         RETURN (value);
     }
@@ -460,8 +460,8 @@ REBTYPE(Tuple)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value));
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE));
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -477,10 +477,10 @@ REBTYPE(Tuple)
     case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(SERIES));
 
-        if (REF(part)) {
-            len = Get_Num_From_Arg(ARG(limit));
+        if (Bool_ARG(PART)) {
+            len = Get_Num_From_Arg(ARG(LIMIT));
             len = MIN(len, VAL_TUPLE_LEN(value));
         }
         if (len > 0) {

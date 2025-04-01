@@ -54,25 +54,25 @@
 //          {Suppress evaluation on any ensuing arguments value consumes}
 //  ]
 //
-DECLARE_NATIVE(reeval)
+DECLARE_NATIVE(REEVAL)
 {
     INCLUDE_PARAMS_OF_REEVAL;
 
     // EVAL only *acts* variadic, but uses DO_FLAG_REEVALUATE_CELL
     //
-    UNUSED(ARG(expressions));
+    UNUSED(ARG(EXPRESSIONS));
 
     DECLARE_SUBLEVEL (child, level_);
 
     // We need a way to slip the value through to the evaluator.  Can't run
     // it from the frame's cell.
     //
-    child->u.reval.value = ARG(value);
+    child->u.reval.value = ARG(VALUE);
 
     Flags flags = DO_FLAG_REEVALUATE_CELL;
-    if (REF(only)) {
+    if (Bool_ARG(ONLY)) {
         flags |= DO_FLAG_EXPLICIT_EVALUATE;
-        ARG(value)->header.bits ^= CELL_FLAG_EVAL_FLIP;
+        ARG(VALUE)->header.bits ^= CELL_FLAG_EVAL_FLIP;
     }
 
     Init_Nothing(OUT);  // !!! R3C patch, better than error on `reeval :elide`
@@ -99,18 +99,18 @@ DECLARE_NATIVE(reeval)
 //          "Will handle args the way the infixee expects"
 //  ]
 //
-DECLARE_NATIVE(shove)
+DECLARE_NATIVE(SHOVE)
 {
     INCLUDE_PARAMS_OF_SHOVE;
 
-    UNUSED(ARG(left));
-    UNUSED(ARG(infixee));
-    UNUSED(ARG(args));
+    UNUSED(ARG(LEFT));
+    UNUSED(ARG(INFIXEE));
+    UNUSED(ARG(ARGS));
 
     // !!! It's nice to imagine the system evolving to where actions this odd
     // could be written generically vs. being hardcoded in the evaluator.
     // But for now it is too "meta", and Eval_Core_Throws() detects
-    // NAT_ACTION(shove) when used as infix...and implements it there.
+    // NAT_ACTION(SHOVE) when used as infix...and implements it there.
     //
     // Only way this native would be called would be if it were not infixed.
 
@@ -132,7 +132,7 @@ DECLARE_NATIVE(shove)
 //          {Variant used when rest is prefix (e.g. for MY operator vs. ME)}
 //  ]
 //
-DECLARE_NATIVE(eval_infix)
+DECLARE_NATIVE(EVAL_INFIX)
 //
 // !!! Being able to write `some-var: me + 10` isn't as "simple" <ahem> as:
 //
@@ -157,7 +157,7 @@ DECLARE_NATIVE(eval_infix)
     INCLUDE_PARAMS_OF_EVAL_INFIX;
 
     Level* L;
-    if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(rest))) {
+    if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(REST))) {
         //
         // It wouldn't be *that* hard to support block-style varargs, but as
         // this routine is a hack to implement ME, don't make it any longer
@@ -201,7 +201,7 @@ DECLARE_NATIVE(eval_infix)
     // Get_If_Word_Or_Path_Throws() does not pass back that information.  But
     // if PATH! is going to do infix dispatch, it should be addressed then.
     //
-    UNUSED(REF(prefix));
+    UNUSED(Bool_ARG(PREFIX));
 
     // Since infix dispatch only works for words (for the moment), we lie
     // and use the label found in path processing as a word.
@@ -213,7 +213,7 @@ DECLARE_NATIVE(eval_infix)
     // Simulate as if the passed-in value was calculated into the output slot,
     // which is where infix functions usually find their left hand values.
     //
-    Copy_Cell(OUT, ARG(left));
+    Copy_Cell(OUT, ARG(LEFT));
 
     // We're kind-of-abusing an internal mechanism, where it is checked that
     // we are actually doing a deferment.  Try not to make that abuse break
@@ -261,13 +261,13 @@ DECLARE_NATIVE(eval_infix)
 //          "Don't catch QUIT (default behavior for BLOCK!)"
 //  ]
 //
-DECLARE_NATIVE(do)
+DECLARE_NATIVE(DO)
 {
     INCLUDE_PARAMS_OF_DO;
 
-    Value* source = ARG(source); // may be only GC reference, don't lose it!
+    Value* source = ARG(SOURCE); // may be only GC reference, don't lose it!
   #if RUNTIME_CHECKS
-    Set_Cell_Flag(ARG(source), PROTECTED);
+    Set_Cell_Flag(ARG(SOURCE), PROTECTED);
   #endif
 
     switch (VAL_TYPE(source)) {
@@ -301,7 +301,7 @@ DECLARE_NATIVE(do)
         Value* sys_do_helper = Varlist_Slot(Sys_Context, SYS_CTX_DO_P);
         assert(Is_Action(sys_do_helper));
 
-        UNUSED(REF(args)); // detected via `value? :arg`
+        UNUSED(Bool_ARG(ARGS)); // detected via `value? :arg`
 
         const bool fully = true; // error if not all arguments consumed
         if (Apply_Only_Throws(
@@ -309,8 +309,8 @@ DECLARE_NATIVE(do)
             fully,
             sys_do_helper,
             source,
-            ARG(arg), // may be nulled cell
-            REF(only) ? TRUE_VALUE : FALSE_VALUE,
+            ARG(ARG), // may be nulled cell
+            Bool_ARG(ONLY) ? TRUE_VALUE : FALSE_VALUE,
             rebEND
         )){
             return BOUNCE_THROWN;
@@ -355,16 +355,16 @@ DECLARE_NATIVE(do)
 //          "If not void, then a variable updated with new position"
 //  ]
 //
-DECLARE_NATIVE(evaluate)
+DECLARE_NATIVE(EVALUATE)
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
-    Value* source = ARG(source); // may be only GC reference, don't lose it!
+    Value* source = ARG(SOURCE); // may be only GC reference, don't lose it!
   #if RUNTIME_CHECKS
-    Set_Cell_Flag(ARG(source), PROTECTED);
+    Set_Cell_Flag(ARG(SOURCE), PROTECTED);
   #endif
 
-    Value* var = ARG(var);
+    Value* var = ARG(VAR);
 
     switch (VAL_TYPE(source)) {
       case REB_BLOCK:
@@ -375,13 +375,13 @@ DECLARE_NATIVE(evaluate)
             Cell_Array(source),
             VAL_INDEX(source),
             VAL_SPECIFIER(source),
-            REF(step3) ? DO_MASK_NONE : DO_FLAG_TO_END
+            Bool_ARG(STEP3) ? DO_MASK_NONE : DO_FLAG_TO_END
         );
 
         if (indexor == THROWN_FLAG)
             return BOUNCE_THROWN;
 
-        if (not REF(step3)) {
+        if (not Bool_ARG(STEP3)) {
             if (IS_END(OUT))
                 Init_Void(OUT);
             return OUT;
@@ -402,7 +402,7 @@ DECLARE_NATIVE(evaluate)
         return OUT; }
 
       case REB_ACTION: {
-        if (REF(step3))
+        if (Bool_ARG(STEP3))
             fail ("Can't use EVAL/STEP3 on actions");
 
         // Ren-C will only run arity 0 functions from DO, otherwise REEVAL
@@ -423,7 +423,7 @@ DECLARE_NATIVE(evaluate)
         return OUT; }
 
       case REB_FRAME: {
-        if (REF(step3))
+        if (Bool_ARG(STEP3))
             fail ("Can't use EVAL/STEP3 on frames");
 
         VarList* c = Cell_Varlist(source); // checks for INACCESSIBLE
@@ -495,7 +495,7 @@ DECLARE_NATIVE(evaluate)
                 Cell_Array(position),
                 VAL_INDEX(position),
                 VAL_SPECIFIER(source),
-                REF(step3) ? DO_MASK_NONE : DO_FLAG_TO_END
+                Bool_ARG(STEP3) ? DO_MASK_NONE : DO_FLAG_TO_END
             );
 
             if (indexor == THROWN_FLAG) {
@@ -509,7 +509,7 @@ DECLARE_NATIVE(evaluate)
                 return BOUNCE_THROWN;
             }
 
-            if (not REF(step3)) {
+            if (not Bool_ARG(STEP3)) {
                 if (IS_END(OUT))
                     Init_Void(OUT);
                 return OUT;
@@ -545,11 +545,11 @@ DECLARE_NATIVE(evaluate)
             if (Eval_Step_In_Subframe_Throws(SET_END(OUT), L, flags, child))
                 return BOUNCE_THROWN;
 
-            if (REF(step3))
+            if (Bool_ARG(STEP3))
                 break;
         }
 
-        if (not REF(step3)) {
+        if (not Bool_ARG(STEP3)) {
             if (IS_END(OUT))
                 Init_Void(OUT);
             return OUT;
@@ -592,7 +592,7 @@ DECLARE_NATIVE(evaluate)
 //      source [block! group!]
 //  ]
 //
-DECLARE_NATIVE(sync_invisibles)
+DECLARE_NATIVE(SYNC_INVISIBLES)
 {
     INCLUDE_PARAMS_OF_SYNC_INVISIBLES;
 
@@ -600,10 +600,10 @@ DECLARE_NATIVE(sync_invisibles)
     // an adaptation of Eval_Core_Throws() with some kind of mode flag, and
     // would take some redesign to do efficiently.
 
-    if (Cell_Series_Len_At(ARG(source)) == 0)
+    if (Cell_Series_Len_At(ARG(SOURCE)) == 0)
         return nullptr;
 
-    RETURN (ARG(source));
+    RETURN (ARG(SOURCE));
 }
 
 
@@ -621,7 +621,7 @@ DECLARE_NATIVE(sync_invisibles)
 //          [action!]
 //  ]
 //
-DECLARE_NATIVE(redo)
+DECLARE_NATIVE(REDO)
 //
 // This can be used to implement tail-call recursion:
 //
@@ -630,7 +630,7 @@ DECLARE_NATIVE(redo)
 {
     INCLUDE_PARAMS_OF_REDO;
 
-    Value* restartee = ARG(restartee);
+    Value* restartee = ARG(RESTARTEE);
     if (not Is_Frame(restartee)) {
         if (not Did_Get_Binding_Of(OUT, restartee))
             fail ("No context found from restartee in REDO");
@@ -658,8 +658,8 @@ DECLARE_NATIVE(redo)
     // compatible with one that has 2, and the test would be more expensive
     // than the established check for a common "ancestor".
     //
-    if (REF(other)) {
-        Value* sibling = ARG(sibling);
+    if (Bool_ARG(OTHER)) {
+        Value* sibling = ARG(SIBLING);
         if (LVL_UNDERLYING(L) != ACT_UNDERLYING(VAL_ACTION(sibling)))
             fail ("/OTHER function passed to REDO has incompatible FRAME!");
 
@@ -678,7 +678,7 @@ DECLARE_NATIVE(redo)
     // of the frame.  Use REDO as the throw label that Eval_Core_Throws() will
     // identify for that behavior.
     //
-    Copy_Cell(OUT, NAT_VALUE(redo));
+    Copy_Cell(OUT, NAT_VALUE(REDO));
     INIT_BINDING(OUT, c);
 
     // The FRAME! contains its ->phase and ->binding, which should be enough
@@ -703,7 +703,7 @@ DECLARE_NATIVE(redo)
 //      /opt "Treat nulls as unspecialized <<experimental!>>"
 //  ]
 //
-DECLARE_NATIVE(applique)
+DECLARE_NATIVE(APPLIQUE)
 //
 // !!! Because APPLIQUE is being written as a regular native (and not a
 // special exception case inside of Eval_Core) it has to "re-enter" Eval_Core
@@ -718,7 +718,7 @@ DECLARE_NATIVE(applique)
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    Value* applicand = ARG(applicand);
+    Value* applicand = ARG(APPLICAND);
 
     DECLARE_END_LEVEL (L);  // captures L->stack_base as current TOP_INDEX
     L->out = OUT;
@@ -767,7 +767,7 @@ DECLARE_NATIVE(applique)
     //
     Bind_Values_Inner_Loop(
         &binder,
-        VAL_ARRAY_HEAD(ARG(def)), // !!! bindings are mutated!  :-(
+        VAL_ARRAY_HEAD(ARG(DEF)), // !!! bindings are mutated!  :-(
         exemplar,
         FLAGIT_KIND(REB_SET_WORD), // types to bind (just set-word!),
         0, // types to "add midstream" to binding as we go (nothing)
@@ -791,7 +791,7 @@ DECLARE_NATIVE(applique)
     //
     Push_GC_Guard(exemplar);
     DECLARE_VALUE (temp);
-    bool def_threw = Eval_List_At_Throws(temp, ARG(def));
+    bool def_threw = Eval_List_At_Throws(temp, ARG(DEF));
     Drop_GC_Guard(exemplar);
 
     assert(Varlist_Keys_Head(exemplar) == ACT_PARAMS_HEAD(VAL_ACTION(applicand)));
@@ -809,7 +809,7 @@ DECLARE_NATIVE(applique)
 
     Push_Level_At_End(L, DO_FLAG_PROCESS_ACTION);
 
-    if (REF(opt))
+    if (Bool_ARG(OPT))
         L->u.defer.arg = nullptr; // needed if !(DO_FLAG_FULLY_SPECIALIZED)
     else {
         //

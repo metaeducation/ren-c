@@ -1202,18 +1202,18 @@ REBTYPE(String)
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
 
-        UNUSED(PAR(series));
-        UNUSED(PAR(value));
+        UNUSED(PARAM(SERIES));
+        UNUSED(PARAM(VALUE));
 
-        UNUSED(REF(only)); // all strings appends are /ONLY...currently unused
+        UNUSED(Bool_ARG(ONLY)); // all strings appends are /ONLY...currently unused
 
         FAIL_IF_ERROR(arg);
 
         REBLEN len; // length of target
         if (Cell_Word_Id(verb) == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(v, ARG(limit));
+            len = Part_Len_May_Modify_Index(v, ARG(LIMIT));
         else
-            len = Part_Len_Append_Insert_May_Modify_Index(arg, ARG(limit));
+            len = Part_Len_Append_Insert_May_Modify_Index(arg, ARG(LIMIT));
 
         // Note that while inserting or removing NULL is a no-op, CHANGE with
         // a /PART can actually erase data.
@@ -1226,13 +1226,13 @@ REBTYPE(String)
         Fail_If_Read_Only_Flex(Cell_Flex(v));
 
         Flags flags = 0;
-        if (REF(part))
+        if (Bool_ARG(PART))
             flags |= AM_PART;
-        if (REF(line))
+        if (Bool_ARG(LINE))
             flags |= AM_LINE;
 
         if (Is_Binary(v)) {
-            if (REF(line))
+            if (Bool_ARG(LINE))
                 fail ("APPEND+INSERT+CHANGE cannot use /LINE with BINARY!");
 
             VAL_INDEX(v) = Modify_Binary(
@@ -1241,11 +1241,11 @@ REBTYPE(String)
                 arg,
                 flags,
                 len,
-                REF(dup) ? Int32(ARG(count)) : 1
+                Bool_ARG(DUP) ? Int32(ARG(COUNT)) : 1
             );
         }
         else {
-            if (REF(line))
+            if (Bool_ARG(LINE))
                 flags |= AM_LINE;
 
             VAL_INDEX(v) = Modify_String(
@@ -1254,7 +1254,7 @@ REBTYPE(String)
                 arg,
                 flags,
                 len,
-                REF(dup) ? Int32(ARG(count)) : 1
+                Bool_ARG(DUP) ? Int32(ARG(COUNT)) : 1
             );
         }
         RETURN (v); }
@@ -1264,16 +1264,16 @@ REBTYPE(String)
     case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
 
-        UNUSED(PAR(series));
-        UNUSED(PAR(value));
+        UNUSED(PARAM(SERIES));
+        UNUSED(PARAM(VALUE));
 
         Flags flags = (
-            (REF(only) ? AM_FIND_ONLY : 0)
-            | (REF(match) ? AM_FIND_MATCH : 0)
-            | (REF(reverse) ? AM_FIND_REVERSE : 0)
-            | (REF(case) ? AM_FIND_CASE : 0)
-            | (REF(last) ? AM_FIND_LAST : 0)
-            | (REF(tail) ? AM_FIND_TAIL : 0)
+            (Bool_ARG(ONLY) ? AM_FIND_ONLY : 0)
+            | (Bool_ARG(MATCH) ? AM_FIND_MATCH : 0)
+            | (Bool_ARG(REVERSE) ? AM_FIND_REVERSE : 0)
+            | (Bool_ARG(CASE) ? AM_FIND_CASE : 0)
+            | (Bool_ARG(LAST) ? AM_FIND_LAST : 0)
+            | (Bool_ARG(TAIL) ? AM_FIND_TAIL : 0)
         );
 
         REBINT len;
@@ -1310,12 +1310,12 @@ REBTYPE(String)
             }
         }
 
-        if (REF(part))
-            tail = Part_Tail_May_Modify_Index(v, ARG(limit));
+        if (Bool_ARG(PART))
+            tail = Part_Tail_May_Modify_Index(v, ARG(LIMIT));
 
         REBLEN skip;
-        if (REF(skip))
-            skip = Part_Len_May_Modify_Index(v, ARG(size));
+        if (Bool_ARG(SKIP))
+            skip = Part_Len_May_Modify_Index(v, ARG(SIZE));
         else
             skip = 1;
 
@@ -1326,11 +1326,11 @@ REBTYPE(String)
         if (ret >= cast(REBLEN, tail))
             return nullptr;
 
-        if (REF(only))
+        if (Bool_ARG(ONLY))
             len = 1;
 
         if (Cell_Word_Id(verb) == SYM_FIND) {
-            if (REF(tail) || REF(match))
+            if (Bool_ARG(TAIL) || Bool_ARG(MATCH))
                 ret += len;
             VAL_INDEX(v) = ret;
         }
@@ -1352,14 +1352,14 @@ REBTYPE(String)
 
         Fail_If_Read_Only_Flex(Cell_Flex(v));
 
-        UNUSED(PAR(series));
+        UNUSED(PARAM(SERIES));
 
-        if (REF(deep))
+        if (Bool_ARG(DEEP))
             fail (Error_Bad_Refines_Raw());
 
         REBINT len;
-        if (REF(part)) {
-            len = Part_Len_May_Modify_Index(v, ARG(limit));
+        if (Bool_ARG(PART)) {
+            len = Part_Len_May_Modify_Index(v, ARG(LIMIT));
             if (len == 0)
                 return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
         } else
@@ -1367,7 +1367,7 @@ REBTYPE(String)
 
         // Note that /PART can change index
 
-        if (REF(last)) {
+        if (Bool_ARG(LAST)) {
             if (tail - len < 0) {
                 VAL_INDEX(v) = 0;
                 len = tail;
@@ -1377,7 +1377,7 @@ REBTYPE(String)
         }
 
         if (cast(REBINT, VAL_INDEX(v)) >= tail) {
-            if (not REF(part))
+            if (not Bool_ARG(PART))
                 return nullptr;
             return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
         }
@@ -1387,7 +1387,7 @@ REBTYPE(String)
 
         // if no /PART, just return value, else return string
         //
-        if (not REF(part)) {
+        if (not Bool_ARG(PART)) {
             if (Is_Binary(v))
                 Init_Integer(OUT, *Cell_Blob_At(v));
             else
@@ -1422,17 +1422,17 @@ REBTYPE(String)
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
-        if (REF(deep))
+        if (Bool_ARG(DEEP))
             fail (Error_Bad_Refines_Raw());
-        if (REF(types)) {
-            UNUSED(ARG(kinds));
+        if (Bool_ARG(TYPES)) {
+            UNUSED(ARG(KINDS));
             fail (Error_Bad_Refines_Raw());
         }
 
-        REBINT len = Part_Len_May_Modify_Index(v, ARG(limit));
-        UNUSED(REF(part)); // checked by if limit is nulled
+        REBINT len = Part_Len_May_Modify_Index(v, ARG(LIMIT));
+        UNUSED(Bool_ARG(PART)); // checked by if limit is nulled
 
         Flex* flex;
         if (Is_Binary(v))
@@ -1578,35 +1578,35 @@ REBTYPE(String)
 
         Fail_If_Read_Only_Flex(Cell_Flex(v));
 
-        UNUSED(PAR(series));
-        UNUSED(REF(skip));
-        UNUSED(REF(compare));
-        UNUSED(REF(part));
+        UNUSED(PARAM(SERIES));
+        UNUSED(Bool_ARG(SKIP));
+        UNUSED(Bool_ARG(COMPARE));
+        UNUSED(Bool_ARG(PART));
 
-        if (REF(all)) // Not Supported
-            fail (Error_Bad_Refine_Raw(ARG(all)));
+        if (Bool_ARG(ALL)) // Not Supported
+            fail (Error_Bad_Refine_Raw(ARG(ALL)));
 
         if (Any_String(v))  // always true here
             fail ("UTF-8 Everywhere: String sorting temporarily unavailable");
 
         Sort_String(
             v,
-            REF(case),
-            ARG(size), // skip size (void if not /SKIP)
-            ARG(comparator), // (void if not /COMPARE)
-            ARG(limit),   // (void if not /PART)
-            REF(reverse)
+            Bool_ARG(CASE),
+            ARG(SIZE), // skip size (void if not /SKIP)
+            ARG(COMPARATOR), // (void if not /COMPARE)
+            ARG(LIMIT),   // (void if not /PART)
+            Bool_ARG(REVERSE)
         );
         RETURN (v); }
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        UNUSED(PAR(value));
+        UNUSED(PARAM(VALUE));
 
         Fail_If_Read_Only_Flex(Cell_Flex(v));
 
-        if (REF(seed)) {
+        if (Bool_ARG(SEED)) {
             //
             // Use the string contents as a seed.  R3-Alpha would try and
             // treat it as byte-sized hence only take half the data into
@@ -1626,10 +1626,10 @@ REBTYPE(String)
             return nullptr;
         }
 
-        if (REF(only)) {
+        if (Bool_ARG(ONLY)) {
             if (index >= tail)
                 return nullptr;
-            index += (REBLEN)Random_Int(REF(secure)) % (tail - index);
+            index += (REBLEN)Random_Int(Bool_ARG(SECURE)) % (tail - index);
             if (Is_Binary(v)) // same as PICK
                 return Init_Integer(OUT, *Cell_Blob_At_Head(v, index));
 
@@ -1640,7 +1640,7 @@ REBTYPE(String)
         if (Any_String(v))  // always true here
             fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");
 
-        Shuffle_String(v, REF(secure));
+        Shuffle_String(v, Bool_ARG(SECURE));
         RETURN (v); }
 
     default:

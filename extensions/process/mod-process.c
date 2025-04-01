@@ -168,7 +168,7 @@ INLINE void Fail_Terminate_Failed(DWORD err) { // from GetLastError()
 // Return -1 on error.
 //
 int OS_Create_Process(
-    Level* level_, // stopgap: allows access to CALL's ARG() and REF()
+    Level* level_, // stopgap: allows access to CALL's ARG() and Bool_ARG()
     const WCHAR *call,
     int argc,
     const WCHAR * argv[],
@@ -184,10 +184,10 @@ int OS_Create_Process(
 ) {
     PROCESS_INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
-    UNUSED(ARG(command)); // turned into `call` and `argv/argc` by CALL
-    UNUSED(REF(wait)); // covered by flag_wait
+    UNUSED(ARG(COMMAND)); // turned into `call` and `argv/argc` by CALL
+    UNUSED(Bool_ARG(WAIT)); // covered by flag_wait
 
-    UNUSED(REF(console)); // actually not paid attention to
+    UNUSED(Bool_ARG(CONSOLE)); // actually not paid attention to
 
     if (call == nullptr)
         fail ("'argv[]'-style launching not implemented on Windows CALL");
@@ -210,7 +210,7 @@ int OS_Create_Process(
     WCHAR *cmd = nullptr;
     char *oem_input = nullptr;
 
-    UNUSED(REF(info));
+    UNUSED(Bool_ARG(INFO));
 
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -228,8 +228,8 @@ int OS_Create_Process(
     si.cbReserved2 = 0;
     si.lpReserved2 = nullptr;
 
-    UNUSED(REF(input)); // implicitly covered by void ARG(in)
-    switch (VAL_TYPE(ARG(in))) {
+    UNUSED(Bool_ARG(INPUT)); // implicitly covered by void ARG(IN)
+    switch (VAL_TYPE(ARG(IN))) {
     case REB_TEXT:
     case REB_BINARY:
         if (!CreatePipe(&hInputRead, &hInputWrite, nullptr, 0)) {
@@ -246,7 +246,7 @@ int OS_Create_Process(
         break;
 
     case REB_FILE: {
-        WCHAR *local_wide = rebSpellW("file-to-local", ARG(in));
+        WCHAR *local_wide = rebSpellW("file-to-local", ARG(IN));
 
         hInputRead = CreateFile(
             local_wide,
@@ -271,11 +271,11 @@ int OS_Create_Process(
         break;
 
     default:
-        panic (ARG(in));
+        panic (ARG(IN));
     }
 
-    UNUSED(REF(output)); // implicitly covered by void ARG(out)
-    switch (VAL_TYPE(ARG(out))) {
+    UNUSED(Bool_ARG(OUTPUT)); // implicitly covered by void ARG(OUT)
+    switch (VAL_TYPE(ARG(OUT))) {
     case REB_TEXT:
     case REB_BINARY:
         if (!CreatePipe(&hOutputRead, &hOutputWrite, nullptr, 0)) {
@@ -293,7 +293,7 @@ int OS_Create_Process(
         break;
 
     case REB_FILE: {
-        WCHAR *local_wide = rebSpellW("file-to-local", ARG(out));
+        WCHAR *local_wide = rebSpellW("file-to-local", ARG(OUT));
 
         si.hStdOutput = CreateFile(
             local_wide,
@@ -332,11 +332,11 @@ int OS_Create_Process(
         break;
 
     default:
-        panic (ARG(out));
+        panic (ARG(OUT));
     }
 
-    UNUSED(REF(error)); // implicitly covered by void ARG(err)
-    switch (VAL_TYPE(ARG(err))) {
+    UNUSED(Bool_ARG(ERROR)); // implicitly covered by void ARG(ERR)
+    switch (VAL_TYPE(ARG(ERR))) {
     case REB_TEXT:
     case REB_BINARY:
         if (!CreatePipe(&hErrorRead, &hErrorWrite, nullptr, 0)) {
@@ -354,7 +354,7 @@ int OS_Create_Process(
         break;
 
     case REB_FILE: {
-        WCHAR *local_wide = rebSpellW("file-to-local", ARG(out));
+        WCHAR *local_wide = rebSpellW("file-to-local", ARG(OUT));
 
         si.hStdError = CreateFile(
             local_wide,
@@ -393,10 +393,10 @@ int OS_Create_Process(
         break;
 
     default:
-        panic (ARG(err));
+        panic (ARG(ERR));
     }
 
-    if (REF(shell)) {
+    if (Bool_ARG(SHELL)) {
         // command to cmd.exe needs to be surrounded by quotes to preserve the inner quotes
         const WCHAR *sh = L"cmd.exe /C \"";
 
@@ -452,7 +452,7 @@ int OS_Create_Process(
         DWORD err_size = 0;
 
         if (hInputWrite != nullptr && input_len > 0) {
-            if (Is_Text(ARG(in))) {
+            if (Is_Text(ARG(IN))) {
                 DWORD dest_len = 0;
                 /* convert input encoding from UNICODE to OEM */
                 // !!! Is cast to WCHAR here legal?
@@ -485,7 +485,7 @@ int OS_Create_Process(
                     }
                 }
             } else {
-                assert(Is_Binary(ARG(in)));
+                assert(Is_Binary(ARG(IN)));
                 handles[count ++] = hInputWrite;
             }
         }
@@ -635,7 +635,7 @@ int OS_Create_Process(
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 
-        if (Is_Text(ARG(out)) and *output and *output_len > 0) {
+        if (Is_Text(ARG(OUT)) and *output and *output_len > 0) {
             /* convert to wide char string */
             int dest_len = 0;
             WCHAR *dest = nullptr;
@@ -658,7 +658,7 @@ int OS_Create_Process(
             *output_len = dest_len;
         }
 
-        if (Is_Text(ARG(err)) && *err != nullptr && *err_len > 0) {
+        if (Is_Text(ARG(ERR)) && *err != nullptr && *err_len > 0) {
             /* convert to wide char string */
             int dest_len = 0;
             WCHAR *dest = nullptr;
@@ -728,17 +728,17 @@ cleanup:
     if (hErrorRead != nullptr)
         CloseHandle(hErrorRead);
 
-    if (Is_File(ARG(err))) {
+    if (Is_File(ARG(ERR))) {
         CloseHandle(si.hStdError);
     }
 
 error_error:
-    if (Is_File(ARG(out))) {
+    if (Is_File(ARG(OUT))) {
         CloseHandle(si.hStdOutput);
     }
 
 output_error:
-    if (Is_File(ARG(in))) {
+    if (Is_File(ARG(IN))) {
         CloseHandle(si.hStdInput);
     }
 
@@ -810,11 +810,11 @@ INLINE bool Set_Nonblocking_Fails(int fd) {
 // This uses 'execvp' which is "POSIX.1 conforming, UNIX compatible"
 //
 int OS_Create_Process(
-    Level* level_, // stopgap: allows access to CALL's ARG() and REF()
+    Level* level_, // stopgap: allows access to CALL's ARG() and Bool_ARG()
     const char *call,
     int argc,
     const char* argv[],
-    bool flag_wait, // distinct from REF(wait)
+    bool flag_wait, // distinct from Bool_ARG(WAIT)
     uint64_t *pid,
     int *exit_code,
     char *input,
@@ -825,15 +825,15 @@ int OS_Create_Process(
     uint32_t *err_len
 ){
     PROCESS_INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
-    UNUSED(REF(relax));  // handled by CALL_INTERNAL*
+    UNUSED(Bool_ARG(RELAX));  // handled by CALL_INTERNAL*
 
-    UNUSED(ARG(command)); // translated into call and argc/argv
-    UNUSED(REF(wait)); // flag_wait controls this
-    UNUSED(REF(input));
-    UNUSED(REF(output));
-    UNUSED(REF(error));
+    UNUSED(ARG(COMMAND)); // translated into call and argc/argv
+    UNUSED(Bool_ARG(WAIT)); // flag_wait controls this
+    UNUSED(Bool_ARG(INPUT));
+    UNUSED(Bool_ARG(OUTPUT));
+    UNUSED(Bool_ARG(ERROR));
 
-    UNUSED(REF(console)); // actually not paid attention to
+    UNUSED(Bool_ARG(CONSOLE)); // actually not paid attention to
 
     UNUSED(call);
 
@@ -851,8 +851,8 @@ int OS_Create_Process(
     uint32_t info_len = 0;
 
     // suppress unused warnings but keep flags for future use
-    UNUSED(REF(info));
-    UNUSED(REF(console));
+    UNUSED(Bool_ARG(INFO));
+    UNUSED(Bool_ARG(CONSOLE));
 
     const unsigned int R = 0;
     const unsigned int W = 1;
@@ -861,17 +861,17 @@ int OS_Create_Process(
     int stderr_pipe[] = {-1, -1};
     int info_pipe[] = {-1, -1};
 
-    if (Is_Text(ARG(in)) or Is_Binary(ARG(in))) {
+    if (Is_Text(ARG(IN)) or Is_Binary(ARG(IN))) {
         if (Open_Pipe_Fails(stdin_pipe))
             goto stdin_pipe_err;
     }
 
-    if (Is_Text(ARG(out)) or Is_Binary(ARG(out))) {
+    if (Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT))) {
         if (Open_Pipe_Fails(stdout_pipe))
             goto stdout_pipe_err;
     }
 
-    if (Is_Text(ARG(err)) or Is_Binary(ARG(err))) {
+    if (Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR))) {
         if (Open_Pipe_Fails(stderr_pipe))
             goto stdout_pipe_err;
     }
@@ -888,14 +888,14 @@ int OS_Create_Process(
         //
         // http://stackoverflow.com/questions/15126925/
 
-        if (Is_Text(ARG(in)) or Is_Binary(ARG(in))) {
+        if (Is_Text(ARG(IN)) or Is_Binary(ARG(IN))) {
             close(stdin_pipe[W]);
             if (dup2(stdin_pipe[R], STDIN_FILENO) < 0)
                 goto child_error;
             close(stdin_pipe[R]);
         }
-        else if (Is_File(ARG(in))) {
-            char *local_utf8 = rebSpell("file-to-local", ARG(in));
+        else if (Is_File(ARG(IN))) {
+            char *local_utf8 = rebSpell("file-to-local", ARG(IN));
 
             int fd = open(local_utf8, O_RDONLY);
 
@@ -907,7 +907,7 @@ int OS_Create_Process(
                 goto child_error;
             close(fd);
         }
-        else if (Is_Blank(ARG(in))) {
+        else if (Is_Blank(ARG(IN))) {
             int fd = open("/dev/null", O_RDONLY);
             if (fd < 0)
                 goto child_error;
@@ -916,18 +916,18 @@ int OS_Create_Process(
             close(fd);
         }
         else {
-            assert(Is_Nulled(ARG(in)));
+            assert(Is_Nulled(ARG(IN)));
             // inherit stdin from the parent
         }
 
-        if (Is_Text(ARG(out)) or Is_Binary(ARG(out))) {
+        if (Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT))) {
             close(stdout_pipe[R]);
             if (dup2(stdout_pipe[W], STDOUT_FILENO) < 0)
                 goto child_error;
             close(stdout_pipe[W]);
         }
-        else if (Is_File(ARG(out))) {
-            char *local_utf8 = rebSpell("file-to-local", ARG(out));
+        else if (Is_File(ARG(OUT))) {
+            char *local_utf8 = rebSpell("file-to-local", ARG(OUT));
 
             int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
 
@@ -939,7 +939,7 @@ int OS_Create_Process(
                 goto child_error;
             close(fd);
         }
-        else if (Is_Blank(ARG(out))) {
+        else if (Is_Blank(ARG(OUT))) {
             int fd = open("/dev/null", O_WRONLY);
             if (fd < 0)
                 goto child_error;
@@ -948,18 +948,18 @@ int OS_Create_Process(
             close(fd);
         }
         else {
-            assert(Is_Nulled(ARG(out)));
+            assert(Is_Nulled(ARG(OUT)));
             // inherit stdout from the parent
         }
 
-        if (Is_Text(ARG(err)) or Is_Binary(ARG(err))) {
+        if (Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR))) {
             close(stderr_pipe[R]);
             if (dup2(stderr_pipe[W], STDERR_FILENO) < 0)
                 goto child_error;
             close(stderr_pipe[W]);
         }
-        else if (Is_File(ARG(err))) {
-            char *local_utf8 = rebSpell("file-to-local", ARG(err));
+        else if (Is_File(ARG(ERR))) {
+            char *local_utf8 = rebSpell("file-to-local", ARG(ERR));
 
             int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
 
@@ -971,7 +971,7 @@ int OS_Create_Process(
                 goto child_error;
             close(fd);
         }
-        else if (Is_Blank(ARG(err))) {
+        else if (Is_Blank(ARG(ERR))) {
             int fd = open("/dev/null", O_WRONLY);
             if (fd < 0)
                 goto child_error;
@@ -980,7 +980,7 @@ int OS_Create_Process(
             close(fd);
         }
         else {
-            assert(Is_Nulled(ARG(err)));
+            assert(Is_Nulled(ARG(ERR)));
             // inherit stderr from the parent
         }
 
@@ -994,7 +994,7 @@ int OS_Create_Process(
         //
         char * const *argv_hack;
 
-        if (REF(shell)) {
+        if (Bool_ARG(SHELL)) {
             const char *sh = getenv("SHELL");
 
             if (sh == nullptr) { // shell does not exist
@@ -1456,30 +1456,30 @@ stdin_pipe_err:
 //      /relax "If exit code is non-zero, return the integer vs. raising error"
 //  ]
 //
-DECLARE_NATIVE(call_internal_p)
+DECLARE_NATIVE(CALL_INTERNAL_P)
 //
 // !!! Parameter usage may require WAIT mode even if not explicitly requested.
 // /WAIT is CALL wrapper default, see CALL* and CALL!
 {
     PROCESS_INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
-    UNUSED(REF(relax));  // handled by CALL_INTERNAL_P
+    UNUSED(Bool_ARG(RELAX));  // handled by CALL_INTERNAL_P
 
-    UNUSED(REF(shell)); // looked at via level_ by OS_Create_Process
-    UNUSED(REF(console)); // same
+    UNUSED(Bool_ARG(SHELL)); // looked at via level_ by OS_Create_Process
+    UNUSED(Bool_ARG(CONSOLE)); // same
 
     // Make sure that if the output or error series are STRING! or BINARY!,
     // they are not read-only, before we try appending to them.
     //
-    if (Is_Text(ARG(out)) or Is_Binary(ARG(out)))
-        Fail_If_Read_Only_Flex(Cell_Flex(ARG(out)));
-    if (Is_Text(ARG(err)) or Is_Binary(ARG(err)))
-        Fail_If_Read_Only_Flex(Cell_Flex(ARG(err)));
+    if (Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT)))
+        Fail_If_Read_Only_Flex(Cell_Flex(ARG(OUT)));
+    if (Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR)))
+        Fail_If_Read_Only_Flex(Cell_Flex(ARG(ERR)));
 
     char *os_input;
     REBLEN input_len;
 
-    UNUSED(REF(input)); // implicit by void ARG(in)
-    switch (VAL_TYPE(ARG(in))) {
+    UNUSED(Bool_ARG(INPUT)); // implicit by void ARG(IN)
+    switch (VAL_TYPE(ARG(IN))) {
     case REB_BLANK:
     case REB_MAX_NULLED: // no /INPUT, so no argument provided
         os_input = nullptr;
@@ -1488,36 +1488,36 @@ DECLARE_NATIVE(call_internal_p)
 
     case REB_TEXT: {
         size_t size;
-        os_input = s_cast(rebBytes(&size, ARG(in)));
+        os_input = s_cast(rebBytes(&size, ARG(IN)));
         input_len = size;
         break; }
 
     case REB_FILE: {
         size_t size;  // !!! why fileNAME size passed in???
-        os_input = s_cast(rebBytes(&size, "file-to-local", ARG(in)));
+        os_input = s_cast(rebBytes(&size, "file-to-local", ARG(IN)));
         input_len = size;
         break; }
 
     case REB_BINARY: {
         size_t size;
-        os_input = s_cast(rebBytes(&size, ARG(in)));
+        os_input = s_cast(rebBytes(&size, ARG(IN)));
         input_len = size;
         break; }
 
     default:
-        panic(ARG(in));
+        panic(ARG(IN));
     }
 
-    UNUSED(REF(output));
-    UNUSED(REF(error));
+    UNUSED(Bool_ARG(OUTPUT));
+    UNUSED(Bool_ARG(ERROR));
 
     bool flag_wait;
     if (
-        REF(wait)
+        Bool_ARG(WAIT)
         or (
-            Is_Text(ARG(in)) or Is_Binary(ARG(in))
-            or Is_Text(ARG(out)) or Is_Binary(ARG(out))
-            or Is_Text(ARG(err)) or Is_Binary(ARG(err))
+            Is_Text(ARG(IN)) or Is_Binary(ARG(IN))
+            or Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT))
+            or Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR))
         ) // I/O redirection implies /WAIT
     ){
         flag_wait = true;
@@ -1533,29 +1533,29 @@ DECLARE_NATIVE(call_internal_p)
     int argc;
     const OSCHR **argv;
 
-    if (Is_Text(ARG(command))) {
+    if (Is_Text(ARG(COMMAND))) {
         // `call {foo bar}` => execute %"foo bar"
 
         // !!! Interpreting string case as an invocation of %foo with argument
         // "bar" has been requested and seems more suitable.  Question is
         // whether it should go through the shell parsing to do so.
 
-        cmd = rebValSpellingAllocOS(ARG(command));
+        cmd = rebValSpellingAllocOS(ARG(COMMAND));
 
         argc = 1;
         argv = rebAllocN(const OSCHR*, (argc + 1));
 
         // !!! Make two copies because it frees cmd and all the argv.  Review.
         //
-        argv[0] = rebValSpellingAllocOS(ARG(command));
+        argv[0] = rebValSpellingAllocOS(ARG(COMMAND));
         argv[1] = nullptr;
     }
-    else if (Is_Block(ARG(command))) {
+    else if (Is_Block(ARG(COMMAND))) {
         // `call ["foo" "bar"]` => execute %foo with arg "bar"
 
         cmd = nullptr;
 
-        Value* block = ARG(command);
+        Value* block = ARG(COMMAND);
         argc = Cell_Series_Len_At(block);
         if (argc == 0)
             fail (Error_Too_Short_Raw());
@@ -1580,7 +1580,7 @@ DECLARE_NATIVE(call_internal_p)
         }
         argv[argc] = nullptr;
     }
-    else if (Is_File(ARG(command))) {
+    else if (Is_File(ARG(COMMAND))) {
         // `call %"foo bar"` => execute %"foo bar"
 
         cmd = nullptr;
@@ -1589,15 +1589,15 @@ DECLARE_NATIVE(call_internal_p)
         argv = rebAllocN(const OSCHR*, (argc + 1));
 
       #ifdef OS_WIDE_CHAR
-        argv[0] = rebSpellW("file-to-local", ARG(command));
+        argv[0] = rebSpellW("file-to-local", ARG(COMMAND));
       #else
-        argv[0] = rebSpell("file-to-local", ARG(command));
+        argv[0] = rebSpell("file-to-local", ARG(COMMAND));
       #endif
 
         argv[1] = nullptr;
     }
     else
-        fail (Error_Invalid(ARG(command)));
+        fail (Error_Invalid(ARG(COMMAND)));
 
     REBU64 pid;
     int exit_code;
@@ -1628,10 +1628,10 @@ DECLARE_NATIVE(call_internal_p)
         &exit_code,
         os_input,
         input_len,
-        Is_Text(ARG(out)) or Is_Binary(ARG(out)) ? &os_output : nullptr,
-        Is_Text(ARG(out)) or Is_Binary(ARG(out)) ? &output_len : nullptr,
-        Is_Text(ARG(err)) or Is_Binary(ARG(err)) ? &os_err : nullptr,
-        Is_Text(ARG(err)) or Is_Binary(ARG(err)) ? &err_len : nullptr
+        Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT)) ? &os_output : nullptr,
+        Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT)) ? &output_len : nullptr,
+        Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR)) ? &os_err : nullptr,
+        Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR)) ? &err_len : nullptr
     );
 
     // Call may not succeed if r != 0, but we still have to run cleanup
@@ -1648,27 +1648,27 @@ DECLARE_NATIVE(call_internal_p)
 
     rebFree(m_cast(OSCHR**, argv));
 
-    if (Is_Text(ARG(out))) {
+    if (Is_Text(ARG(OUT))) {
         if (output_len > 0) {
-            Append_OS_Str(ARG(out), os_output, output_len);
+            Append_OS_Str(ARG(OUT), os_output, output_len);
             free(os_output);
         }
     }
-    else if (Is_Binary(ARG(out))) {
+    else if (Is_Binary(ARG(OUT))) {
         if (output_len > 0) {
-            Append_Unencoded_Len(Cell_Binary(ARG(out)), os_output, output_len);
+            Append_Unencoded_Len(Cell_Binary(ARG(OUT)), os_output, output_len);
             free(os_output);
         }
     }
 
-    if (Is_Text(ARG(err))) {
+    if (Is_Text(ARG(ERR))) {
         if (err_len > 0) {
-            Append_OS_Str(ARG(err), os_err, err_len);
+            Append_OS_Str(ARG(ERR), os_err, err_len);
             free(os_err);
         }
-    } else if (Is_Binary(ARG(err))) {
+    } else if (Is_Binary(ARG(ERR))) {
         if (err_len > 0) {
-            Append_Unencoded_Len(Cell_Binary(ARG(err)), os_err, err_len);
+            Append_Unencoded_Len(Cell_Binary(ARG(ERR)), os_err, err_len);
             free(os_err);
         }
     }
@@ -1676,11 +1676,11 @@ DECLARE_NATIVE(call_internal_p)
     if (os_input != nullptr)
         rebFree(os_input);
 
-    if (REF(info)) {
+    if (Bool_ARG(INFO)) {
         VarList* info = Alloc_Context(REB_OBJECT, 2);
 
         Init_Integer(Append_Context(info, nullptr, Canon(SYM_ID)), pid);
-        if (REF(wait))
+        if (Bool_ARG(WAIT))
             Init_Integer(
                 Append_Context(info, nullptr, Canon(SYM_EXIT_CODE)),
                 exit_code
@@ -1695,12 +1695,12 @@ DECLARE_NATIVE(call_internal_p)
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
-    if (REF(wait)) {
+    if (Bool_ARG(WAIT)) {
         //
-        // !!! should REF(relax) and exit_code == 0 return trash instead of 0?
+        // !!! should Bool_ARG(RELAX) and exit_code == 0 return trash instead of 0?
         // it would be less visually noisy in the console.
         //
-        if (REF(relax) or exit_code == 0)
+        if (Bool_ARG(RELAX) or exit_code == 0)
             return Init_Integer(OUT, exit_code);
 
         rebJumps (
@@ -1724,7 +1724,7 @@ DECLARE_NATIVE(call_internal_p)
 //          {Block of strings, where %1 should be substituted with the string}
 //  ]
 //
-DECLARE_NATIVE(get_os_browsers)
+DECLARE_NATIVE(GET_OS_BROWSERS)
 //
 // !!! Using the %1 convention is not necessarily ideal vs. having some kind
 // of more "structural" result, it was just easy because it's how the string
@@ -1821,7 +1821,7 @@ DECLARE_NATIVE(get_os_browsers)
 //
 //  ]
 //
-DECLARE_NATIVE(sleep)
+DECLARE_NATIVE(SLEEP)
 //
 // !!! This is a temporary workaround for the fact that it is not currently
 // possible to do a WAIT on a time from within an AWAKE handler.  A proper
@@ -1835,7 +1835,7 @@ DECLARE_NATIVE(sleep)
 {
     PROCESS_INCLUDE_PARAMS_OF_SLEEP;
 
-    REBLEN msec = Milliseconds_From_Value(ARG(duration));
+    REBLEN msec = Milliseconds_From_Value(ARG(DURATION));
 
   #ifdef TO_WINDOWS
     Sleep(msec);
@@ -1860,17 +1860,17 @@ static void kill_process(pid_t pid, int signal);
 //          {The process ID}
 //  ]
 //
-DECLARE_NATIVE(terminate)
+DECLARE_NATIVE(TERMINATE)
 {
     PROCESS_INCLUDE_PARAMS_OF_TERMINATE;
 
   #ifdef TO_WINDOWS
 
-    if (GetCurrentProcessId() == cast(DWORD, VAL_INT32(ARG(pid))))
+    if (GetCurrentProcessId() == cast(DWORD, VAL_INT32(ARG(PID))))
         fail ("Use QUIT or EXIT-REBOL to terminate current process, instead");
 
     DWORD err = 0;
-    HANDLE ph = OpenProcess(PROCESS_TERMINATE, FALSE, VAL_INT32(ARG(pid)));
+    HANDLE ph = OpenProcess(PROCESS_TERMINATE, FALSE, VAL_INT32(ARG(PID)));
     if (ph == nullptr) {
         err = GetLastError();
         switch (err) {
@@ -1878,7 +1878,7 @@ DECLARE_NATIVE(terminate)
             Fail_Permission_Denied();
 
           case ERROR_INVALID_PARAMETER:
-            Fail_No_Process(ARG(pid));
+            Fail_No_Process(ARG(PID));
 
           default:
             Fail_Terminate_Failed(err);
@@ -1894,7 +1894,7 @@ DECLARE_NATIVE(terminate)
     CloseHandle(ph);
     switch (err) {
       case ERROR_INVALID_HANDLE:
-        Fail_No_Process(ARG(pid));
+        Fail_No_Process(ARG(PID));
 
       default:
         Fail_Terminate_Failed(err);
@@ -1902,12 +1902,12 @@ DECLARE_NATIVE(terminate)
 
   #elif defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
 
-    if (getpid() == VAL_INT32(ARG(pid))) {
+    if (getpid() == VAL_INT32(ARG(PID))) {
         // signal is not as reliable for this purpose
         // it's caught in host-main.c as to stop the evaluation
         fail ("Use QUIT or EXIT-REBOL to terminate current process, instead");
     }
-    kill_process(VAL_INT32(ARG(pid)), SIGTERM);
+    kill_process(VAL_INT32(ARG(PID)), SIGTERM);
     return nullptr;
 
   #else
@@ -1930,7 +1930,7 @@ DECLARE_NATIVE(terminate)
 //          [text! word!]
 //  ]
 //
-DECLARE_NATIVE(get_env)
+DECLARE_NATIVE(GET_ENV)
 //
 // !!! Prescriptively speaking, it is typically considered a bad idea to treat
 // an empty string environment variable as different from an unset one:
@@ -1944,7 +1944,7 @@ DECLARE_NATIVE(get_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_ENV;
 
-    Value* variable = ARG(variable);
+    Value* variable = ARG(VARIABLE);
 
     Error* error = nullptr;
 
@@ -2016,12 +2016,12 @@ DECLARE_NATIVE(get_env)
 //          "Value to set the variable to, or NULL to unset it"
 //  ]
 //
-DECLARE_NATIVE(set_env)
+DECLARE_NATIVE(SET_ENV)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_ENV;
 
-    Value* variable = ARG(variable);
-    Value* value = ARG(value);
+    Value* variable = ARG(VARIABLE);
+    Value* value = ARG(VALUE);
 
   #ifdef TO_WINDOWS
     WCHAR *key_wide = rebSpellW(variable);
@@ -2095,7 +2095,7 @@ DECLARE_NATIVE(set_env)
     rebFree(key_utf8);
   #endif
 
-    RETURN (ARG(value));
+    RETURN (ARG(VALUE));
 }
 
 
@@ -2107,7 +2107,7 @@ DECLARE_NATIVE(set_env)
 //      ; No arguments
 //  ]
 //
-DECLARE_NATIVE(list_env)
+DECLARE_NATIVE(LIST_ENV)
 {
     PROCESS_INCLUDE_PARAMS_OF_LIST_ENV;
 
@@ -2193,7 +2193,7 @@ DECLARE_NATIVE(list_env)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(get_pid)
+DECLARE_NATIVE(GET_PID)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_PID;
 
@@ -2212,7 +2212,7 @@ DECLARE_NATIVE(get_pid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(get_uid)
+DECLARE_NATIVE(GET_UID)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_UID;
 
@@ -2230,7 +2230,7 @@ DECLARE_NATIVE(get_uid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(get_euid)
+DECLARE_NATIVE(GET_EUID)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
 
@@ -2247,7 +2247,7 @@ DECLARE_NATIVE(get_euid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(get_gid)
+DECLARE_NATIVE(GET_GID)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_UID;
 
@@ -2265,7 +2265,7 @@ DECLARE_NATIVE(get_gid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(get_egid)
+DECLARE_NATIVE(GET_EGID)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
 
@@ -2285,16 +2285,16 @@ DECLARE_NATIVE(get_egid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(set_uid)
+DECLARE_NATIVE(SET_UID)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_UID;
 
-    if (setuid(VAL_INT32(ARG(uid))) >= 0)
-        RETURN (ARG(uid));
+    if (setuid(VAL_INT32(ARG(UID))) >= 0)
+        RETURN (ARG(UID));
 
     switch (errno) {
       case EINVAL:
-        fail (Error_Invalid(ARG(uid)));
+        fail (Error_Invalid(ARG(UID)));
 
       case EPERM:
         Fail_Permission_Denied();
@@ -2317,16 +2317,16 @@ DECLARE_NATIVE(set_uid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(set_euid)
+DECLARE_NATIVE(SET_EUID)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_EUID;
 
-    if (seteuid(VAL_INT32(ARG(euid))) >= 0)
-        RETURN (ARG(euid));
+    if (seteuid(VAL_INT32(ARG(EUID))) >= 0)
+        RETURN (ARG(EUID));
 
     switch (errno) {
       case EINVAL:
-        fail (Error_Invalid(ARG(euid)));
+        fail (Error_Invalid(ARG(EUID)));
 
       case EPERM:
         Fail_Permission_Denied();
@@ -2349,16 +2349,16 @@ DECLARE_NATIVE(set_euid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(set_gid)
+DECLARE_NATIVE(SET_GID)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_GID;
 
-    if (setgid(VAL_INT32(ARG(gid))) >= 0)
-        RETURN (ARG(gid));
+    if (setgid(VAL_INT32(ARG(GID))) >= 0)
+        RETURN (ARG(GID));
 
     switch (errno) {
       case EINVAL:
-        fail (Error_Invalid(ARG(gid)));
+        fail (Error_Invalid(ARG(GID)));
 
       case EPERM:
         Fail_Permission_Denied();
@@ -2381,16 +2381,16 @@ DECLARE_NATIVE(set_gid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(set_egid)
+DECLARE_NATIVE(SET_EGID)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_EGID;
 
-    if (setegid(VAL_INT32(ARG(egid))) >= 0)
-        RETURN (ARG(egid));
+    if (setegid(VAL_INT32(ARG(EGID))) >= 0)
+        RETURN (ARG(EGID));
 
     switch (errno) {
       case EINVAL:
-        fail (Error_Invalid(ARG(egid)));
+        fail (Error_Invalid(ARG(EGID)));
 
       case EPERM:
         Fail_Permission_Denied();
@@ -2437,13 +2437,13 @@ static void kill_process(pid_t pid, int signal)
 //  ]
 //  platforms: [linux android posix osx]
 //
-DECLARE_NATIVE(send_signal)
+DECLARE_NATIVE(SEND_SIGNAL)
 {
     PROCESS_INCLUDE_PARAMS_OF_SEND_SIGNAL;
 
     // !!! Is called `send-signal` but only seems to call kill (?)
     //
-    kill_process(rebUnboxInteger(ARG(pid)), rebUnboxInteger(ARG(signal)));
+    kill_process(rebUnboxInteger(ARG(PID)), rebUnboxInteger(ARG(SIGNAL)));
 
     return Init_Nothing(OUT);
 }

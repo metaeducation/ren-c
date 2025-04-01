@@ -51,7 +51,7 @@ static Value* Init_Lib_Word(Cell* out, SymId id) {
 //      value [~null~ any-value!]
 //   ]
 //
-DECLARE_NATIVE(uneval)
+DECLARE_NATIVE(UNEVAL)
 //
 // Note: UNEVAL is done far more elegantly as the new META concept in a
 // generalized way in mainline.  This exists in R3C prior to arbitrary quoting
@@ -63,7 +63,7 @@ DECLARE_NATIVE(uneval)
 {
     INCLUDE_PARAMS_OF_UNEVAL;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     if (Is_Void(v))
         return Init_Lib_Word(OUT, SYM__TVOID_T);
@@ -142,11 +142,11 @@ bool Reduce_To_Stack_Throws(
 //          [any-value!]
 //  ]
 //
-DECLARE_NATIVE(reduce)
+DECLARE_NATIVE(REDUCE)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
     if (Is_Block(value) or Is_Group(value)) {
         StackIndex base = TOP_INDEX;
@@ -373,7 +373,7 @@ bool Compose_To_Stack_Throws(
 //      /only "Insert arrays as single value (not as contents of array)"
 //  ]
 //
-DECLARE_NATIVE(compose)
+DECLARE_NATIVE(COMPOSE)
 //
 // Note: /INTO is intentionally no longer supported
 // https://forum.rebol.info/t/stopping-the-into-virus/705
@@ -384,11 +384,11 @@ DECLARE_NATIVE(compose)
 
     if (Compose_To_Stack_Throws(
         OUT,
-        ARG(value),
-        VAL_SPECIFIER(ARG(value)),
-        ARG(pattern),
-        REF(deep),
-        REF(only)
+        ARG(VALUE),
+        VAL_SPECIFIER(ARG(VALUE)),
+        ARG(PATTERN),
+        Bool_ARG(DEEP),
+        Bool_ARG(ONLY)
     )){
         return BOUNCE_THROWN;
     }
@@ -397,12 +397,12 @@ DECLARE_NATIVE(compose)
     // flags.  Borrow the one for the tail directly from the input Array.
     //
     Flags flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
-    if (Get_Array_Flag(Cell_Array(ARG(value)), NEWLINE_AT_TAIL))
+    if (Get_Array_Flag(Cell_Array(ARG(VALUE)), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
     return Init_Any_List(
         OUT,
-        VAL_TYPE(ARG(value)),
+        VAL_TYPE(ARG(VALUE)),
         Pop_Stack_Values_Core(base, flags)
     );
 }
@@ -448,16 +448,16 @@ static void Flatten_Core(
 //      /deep
 //  ]
 //
-DECLARE_NATIVE(flatten)
+DECLARE_NATIVE(FLATTEN)
 {
     INCLUDE_PARAMS_OF_FLATTEN;
 
     StackIndex base = TOP_INDEX;
 
     Flatten_Core(
-        Cell_List_At(ARG(block)),
-        VAL_SPECIFIER(ARG(block)),
-        REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
+        Cell_List_At(ARG(BLOCK)),
+        VAL_SPECIFIER(ARG(BLOCK)),
+        Bool_ARG(DEEP) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
     return Init_Block(OUT, Pop_Stack_Values(base));

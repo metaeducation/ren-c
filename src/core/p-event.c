@@ -154,8 +154,8 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
-        UNUSED(ARG(value)); // implicit in port
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+        UNUSED(ARG(VALUE)); // implicit in port
+        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -213,17 +213,17 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PAR(spec));
-        if (REF(new))
+        UNUSED(PARAM(SPEC));
+        if (Bool_ARG(NEW))
             fail (Error_Bad_Refines_Raw());
-        if (REF(read))
+        if (Bool_ARG(READ))
             fail (Error_Bad_Refines_Raw());
-        if (REF(write))
+        if (Bool_ARG(WRITE))
             fail (Error_Bad_Refines_Raw());
-        if (REF(seek))
+        if (Bool_ARG(SEEK))
             fail (Error_Bad_Refines_Raw());
-        if (REF(allow)) {
-            UNUSED(ARG(access));
+        if (Bool_ARG(ALLOW)) {
+            UNUSED(ARG(ACCESS));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -295,7 +295,7 @@ void Shutdown_Event_Scheme(void)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_event_actor_handle)
+DECLARE_NATIVE(GET_EVENT_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &Event_Actor);
     return OUT;

@@ -174,7 +174,7 @@ quit
 ;return ;-- covered by parse below
 continue
 
-subparse ;-- recursions of parse use this for DECLARE_NATIVE(subparse) in backtrace
+subparse ;-- recursions of parse use this for DECLARE_NATIVE(SUBPARSE) in backtrace
 
 ; PARSE - These words must not be reserved above!!  The range of consecutive
 ; index numbers are used by PARSE to detect keywords.
@@ -282,7 +282,7 @@ detect
 ;
 reflect
 
-; There was a special case in R3-Alpha for DECLARE_NATIVE(exclude) which wasn't an
+; There was a special case in R3-Alpha for DECLARE_NATIVE(EXCLUDE) which wasn't an
 ; "ACTION!" (which meant no enum value) but it called a common routine that
 ; expected an action number.  So it passed zero.  Now that "type actions"
 ; use symbols as identity, this formalizes the hack by adding exclude.

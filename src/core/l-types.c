@@ -90,7 +90,7 @@ Bounce MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //          {Definition or size of the new value (binding may be modified)}
 //  ]
 //
-DECLARE_NATIVE(make)
+DECLARE_NATIVE(MAKE)
 //
 // 1. !!! The bootstrap executable was created in the midst of some strange
 //    ideas about MAKE and CONSTRUCT.  MAKE was not allowed to take an
@@ -100,8 +100,8 @@ DECLARE_NATIVE(make)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Value* type = ARG(type);
-    Value* arg = ARG(def);
+    Value* type = ARG(TYPE);
+    Value* arg = ARG(DEF);
 
     if (Is_Event(type)) {  // an event instance, not EVENT! datatype
         if (not Is_Block(arg))
@@ -199,12 +199,12 @@ Bounce TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //      value [<maybe> any-value!]
 //  ]
 //
-DECLARE_NATIVE(to)
+DECLARE_NATIVE(TO)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Value* v = ARG(value);
-    enum Reb_Kind new_kind = VAL_TYPE_KIND(ARG(type));
+    Value* v = ARG(VALUE);
+    enum Reb_Kind new_kind = VAL_TYPE_KIND(ARG(TYPE));
 
     TO_HOOK hook = To_Hooks[new_kind];
     if (not hook)
@@ -251,9 +251,9 @@ Bounce Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 
-    enum Reb_Kind kind = VAL_TYPE(ARG(value));
+    enum Reb_Kind kind = VAL_TYPE(ARG(VALUE));
 
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Option(SymId) id = Cell_Word_Id(ARG(PROPERTY));
 
     if (not id) {
         //
@@ -262,7 +262,7 @@ Bounce Reflect_Core(Level* level_)
         // operate on SYMs in a switch().  Longer term, a more extensible
         // idea will be necessary.
         //
-        fail (Error_Cannot_Reflect(kind, ARG(property)));
+        fail (Error_Cannot_Reflect(kind, ARG(PROPERTY)));
     }
 
     switch (id) {
@@ -303,7 +303,7 @@ Bounce Reflect_Core(Level* level_)
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
 //
-DECLARE_NATIVE(reflect)
+DECLARE_NATIVE(REFLECT)
 //
 // Although REFLECT goes through dispatch to the REBTYPE(), it was needing
 // a null check in Type_Action_Dispatcher--which no other type needs.  So
@@ -325,7 +325,7 @@ DECLARE_NATIVE(reflect)
 //          [~null~ any-value!]
 //  ]
 //
-DECLARE_NATIVE(of)
+DECLARE_NATIVE(OF)
 //
 // Common enough to be worth it to do some kind of optimization so it's not
 // much slower than a REFLECT; e.g. you don't want it building a separate
@@ -340,9 +340,9 @@ DECLARE_NATIVE(of)
     // property in the second.
     //
     DECLARE_VALUE (temp);
-    Copy_Cell(temp, ARG(property));
-    Copy_Cell(ARG(property), ARG(value));
-    Copy_Cell(ARG(value), temp);
+    Copy_Cell(temp, ARG(PROPERTY));
+    Copy_Cell(ARG(PROPERTY), ARG(VALUE));
+    Copy_Cell(ARG(VALUE), temp);
 
     return Reflect_Core(level_);
 }
@@ -1304,7 +1304,7 @@ const Byte *Scan_Any(
 //          {Fields with duplicate words will be merged into a block.}
 //  ]
 //
-DECLARE_NATIVE(scan_net_header)
+DECLARE_NATIVE(SCAN_NET_HEADER)
 //
 // !!! This routine used to be a feature of CONSTRUCT in R3-Alpha, and was
 // used by %prot-http.r.  The idea was that instead of providing a parent
@@ -1319,7 +1319,7 @@ DECLARE_NATIVE(scan_net_header)
 
     Array* result = Make_Array(10); // Just a guess at size (use STD_BUF?)
 
-    Value* header = ARG(header);
+    Value* header = ARG(HEADER);
     REBLEN index = VAL_INDEX(header);
     Binary* utf8 = Cell_Binary(header);
 
