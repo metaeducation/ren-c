@@ -162,6 +162,7 @@ text        string      +       +       +       [series string]
 file        string      +       +       +       [series string]
 email       string      +       +       +       [series string]
 url         string      +       +       +       [series string]
+tripwire    string      +       +       +       [series string]
 tag         string      +       +       +       [series string]
 
 bitset      bitset      +       +       +       -

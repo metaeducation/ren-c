@@ -1750,6 +1750,11 @@ bool Eval_Core_Throws(Level* const L)
         if (Is_Nothing(current_gotten))  // need `:x` if `x` is unset
             fail (Error_No_Value_Core(current, L->specifier));
 
+        if (Is_Tripwire(current_gotten))
+            fail (Error_Fetched_Tripwire_Core(
+                current, L->specifier, current_gotten
+            ));
+
         Copy_Cell(L->out, current_gotten);
         break;
 
@@ -1926,6 +1931,11 @@ bool Eval_Core_Throws(Level* const L)
         if (Is_Nothing(L->out))  // need GET/ANY if path is trash
             fail (Error_No_Value_Core(current, L->specifier));
 
+        if (Is_Tripwire(L->out))
+            fail (Error_Fetched_Tripwire_Core(
+                current, L->specifier, L->out
+            ));
+
         if (tail_blank) {  // like/this/ means GET action
             if (not Is_Action(L->out)) {
                 Derelativize(Level_Spare(L), current, L->specifier);
@@ -2066,6 +2076,25 @@ bool Eval_Core_Throws(Level* const L)
         Derelativize(L->out, current, L->specifier);
         CHANGE_VAL_TYPE_BITS(L->out, REB_PATH);
         break;
+
+
+//==//////////////////////////////////////////////////////////////////////==//
+//
+// While the idea in modern Ren-C is that tripwires are antiforms, the
+// bootstrap executable can only vaguely simulate a fused quasiform/antiform
+// version of it.  So evaluating a "fused" tripwire! is just inert:
+//
+//     >> thing: ~<tripwire>~
+//     == ~<tripwire>~
+//
+// Their key value comes in giving a message upon being fetched via WORD!
+// or "TUPLE!" (path in bootstrap) references.
+//
+//==//////////////////////////////////////////////////////////////////////==//
+
+      case REB_TRIPWIRE:
+        goto inert;
+
 
 //==//////////////////////////////////////////////////////////////////////==//
 //

@@ -1158,6 +1158,12 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         Mold_Tag(mo, v);
         break;
 
+    case REB_TRIPWIRE:
+        Append_Codepoint(mo->utf8flex, '~');
+        Mold_Tag(mo, v);
+        Append_Codepoint(mo->utf8flex, '~');
+        break;
+
     default:
         panic (v);
     }

@@ -59,6 +59,7 @@ enum TokenEnum {
     TOKEN_URL,
     TOKEN_ISSUE,
     TOKEN_TAG,
+    TOKEN_TRIPWIRE,
     TOKEN_PATH,
     TOKEN_CONSTRUCT,
     TOKEN_MAX
@@ -293,7 +294,7 @@ struct ScanStateStruct {
 
     // Number of quotes pending (this old system supports 1, on a few types)
     //
-    REBLEN quotes_pending;
+    Count num_quotes_pending;
 
     // If we see an "out of turn" : in the scan, we remember that we did so
     // we can produce a GET-WORD! or GET-PATH!.

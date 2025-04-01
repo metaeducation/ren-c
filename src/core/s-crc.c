@@ -267,6 +267,7 @@ uint32_t Hash_Value(const Cell* v)
     case REB_EMAIL:
     case REB_URL:
     case REB_TAG:
+    case REB_TRIPWIRE:
         hash = Hash_Bytes_Or_Uni(
             VAL_RAW_DATA_AT(v),
             VAL_LEN_HEAD(v),

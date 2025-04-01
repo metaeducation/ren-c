@@ -1660,6 +1660,17 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         }
 
     case LEX_CLASS_WORD:
+        if (*cp == '~' and cp[1] == '<') {  // ~<it's a tripwire...>~
+            cp = Skip_Tag(cp);
+            if (cp == nullptr)
+                return Error_Syntax(S, TOKEN_TRIPWIRE);
+            assert(cp[-1] == '>');
+            if (*cp != '~')
+                return Error_Syntax(S, TOKEN_TRIPWIRE);
+            S->end = cp + 1;
+            return LOCATED(TOKEN_TRIPWIRE);
+        }
+
         if (
             *S->end == '.'
             and S->mode == '/'
@@ -1978,7 +1989,7 @@ void Init_Scan_Level(
     S->start_line_head = ss->line_head;
 
     S->newline_pending = false;
-    S->quotes_pending = 0;
+    S->num_quotes_pending = 0;
     S->sigil_pending = false;
 }
 
@@ -2090,7 +2101,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
     S->stack_base = TOP_INDEX;  // roll back to here on RAISE()
     assert(not S->newline_pending);
-    assert(S->quotes_pending == 0);
+    assert(S->num_quotes_pending == 0);
     assert(not S->sigil_pending);
 
     DECLARE_MOLDER (mo);
@@ -2154,25 +2165,17 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             or *S->end == ']' or *S->end == ')'
             or *S->end == ';'
         ){
-            /*assert(len > 0);
-            assert(S->quotes_pending == 0);
-
-            // A single ' is the SIGIL_QUOTE
-            // If you have something like '' then that is quoted quote SIGIL!
-            // The number of quote levels is len - 1
+            // !!! Isolated apostrophe is reserved for scanner purposes, most
+            // likely for line continuations.
             //
-            Init_Sigil(PUSH(), SIGIL_QUOTE);
-            Quotify(TOP, len - 1); */
-            return RAISE(
-                "Old EXE, Isolated quote SIGIL! ' not supported"
-            );
+            return RAISE("Illegal isolated quote ' ... may get some purpose");
         }
         else {
             if (len != 1)
                 return RAISE(
                     "Old EXE, multiple quoting (e.g. '''x) not supported"
                 );
-            S->quotes_pending = len;  // apply quoting to next token
+            S->num_quotes_pending = len;  // apply quoting to next token
         }
         goto loop; }
 
@@ -2439,6 +2442,16 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         const Byte* bp = S->begin + 1;  // skip '<'
         const Byte* ep = S->end - 1;  // !!! subtract out what ???
         if (ep != Scan_Any(PUSH(), bp, len - 2, REB_TAG))
+            return RAISE(Error_Syntax(S, token));
+        break; }
+
+      case TOKEN_TRIPWIRE: {
+        // The Scan_Any routine (only used here for tag) doesn't
+        // know where the tag ends, so it scans the len.
+        //
+        const Byte* bp = S->begin + 2;  // skip '~<'
+        const Byte* ep = S->end - 2;  // !!! subtract out what ???
+        if (ep != Scan_Any(PUSH(), bp, len - 4, REB_TRIPWIRE))
             return RAISE(Error_Syntax(S, token));
         break; }
 
@@ -2766,8 +2779,8 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         ++ss->at;
     }
 
-    if (S->quotes_pending) {
-        assert(S->quotes_pending == 1);
+    if (S->num_quotes_pending) {
+        assert(S->num_quotes_pending == 1);
         switch (KIND_BYTE(TOP)) {
           case REB_WORD:
             KIND_BYTE(TOP) = REB_LIT_WORD;
@@ -2783,7 +2796,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
                 "Old EXE, WORD/PATH can be quoted once, BLOCK quote ignored!"
             );
         }
-        S->quotes_pending = 0;
+        S->num_quotes_pending = 0;
     }
 
     // Set the newline on the new value, indicating molding should put a
@@ -2807,7 +2820,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
     Drop_Mold_If_Pushed(mo);
 
-    assert(S->quotes_pending == 0);
+    assert(S->num_quotes_pending == 0);
     assert(not S->sigil_pending);
 
     // S->newline_pending may be true; used for ARRAY_FLAG_NEWLINE_AT_TAIL

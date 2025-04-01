@@ -501,9 +501,7 @@ really: func [
 oneshot: specialize 'n-shot [n: 1]
 upshot: specialize 'n-shot [n: -1]
 
-attempt: func [] [
-    fail/blame "Use SYS/UTIL/RESCUE instead of ATTEMPT" 'return
-]
+attempt: ~<Use SYS.UTIL/RESCUE instead of ATTEMPT>~
 
 for-next: redescribe [
     "Evaluates a block for each position until the end, using NEXT to skip"

@@ -81,6 +81,7 @@ Syntax: [
 
 Script: [
     no-value:           [:arg1 {has no value (~ antiform) See: GET/ANY}]
+    fetched-tripwire:   [:arg1 {is a tripwire!:} :arg2]
     need-non-end:       [{end was reached while trying to set} :arg1]
     need-non-null:      {non-NULL value required (see MAYBE, TRY, REIFY)}
 
@@ -201,8 +202,6 @@ Script: [
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]
 
     void-conditional:   [{Void antiforms (~void~) not conditionally true/false}]
-
-    native-unloaded:    [{Native has been unloaded:} :arg1]
 ]
 
 Math: [

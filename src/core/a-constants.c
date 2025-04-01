@@ -141,6 +141,7 @@ const char * const Token_Names[] = {
     "email",
     "url",
     "issue",
+    "tripwire",
     "tag",
     "path",
     "construct",

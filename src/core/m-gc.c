@@ -387,6 +387,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_EMAIL:
     case REB_URL:
     case REB_TAG:
+    case REB_TRIPWIRE:
     case REB_BITSET: {
         Flex* s = v->payload.any_series.series;
 

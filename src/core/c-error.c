@@ -1077,6 +1077,21 @@ Error* Error_No_Value_Core(const Cell* target, Specifier* specifier) {
 
 
 //
+//  Error_Fetched_Tripwire_Core: C
+//
+Error* Error_Fetched_Tripwire_Core(
+    const Cell* target,
+    Specifier* specifier,
+    const Value* tripwire
+){
+    DECLARE_VALUE (specified);
+    Derelativize(specified, target, specifier);
+
+    return Error_Fetched_Tripwire_Raw(specified, tripwire);
+}
+
+
+//
 //  Error_No_Value: C
 //
 Error* Error_No_Value(const Value* target) {
