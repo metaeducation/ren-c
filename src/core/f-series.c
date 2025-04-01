@@ -387,7 +387,7 @@ chkDecimal:
         return Compare_Binary_Vals(s, t);
 
     case REB_DATATYPE:
-        return VAL_TYPE_KIND(s) - VAL_TYPE_KIND(t);
+        return CELL_DATATYPE_TYPE(s) - CELL_DATATYPE_TYPE(t);
 
     case REB_WORD:
     case REB_SET_WORD:

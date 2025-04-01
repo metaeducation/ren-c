@@ -840,7 +840,7 @@ REBTYPE(Context)
         REBU64 types;
         if (Bool_ARG(TYPES)) {
             if (Is_Datatype(ARG(KINDS)))
-                types = FLAGIT_KIND(VAL_TYPE_KIND(ARG(KINDS)));
+                types = FLAGIT_KIND(CELL_DATATYPE_TYPE(ARG(KINDS)));
             else
                 types = Cell_Typeset_Bits(ARG(KINDS));
         }

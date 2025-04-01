@@ -367,11 +367,11 @@ REBLEN Find_In_Array(
             Cell* item = Array_At(array, index);
 
             if (Is_Datatype(target)) {
-                if (VAL_TYPE(item) == VAL_TYPE_KIND(target))
+                if (VAL_TYPE(item) == CELL_DATATYPE_TYPE(target))
                     return index;
                 if (
                     Is_Datatype(item)
-                    && VAL_TYPE_KIND(item) == VAL_TYPE_KIND(target)
+                    && CELL_DATATYPE_TYPE(item) == CELL_DATATYPE_TYPE(target)
                 ){
                     return index;
                 }
@@ -381,7 +381,7 @@ REBLEN Find_In_Array(
                     return index;
                 if (
                     Is_Datatype(item)
-                    && Typeset_Check(target, VAL_TYPE_KIND(item))
+                    && Typeset_Check(target, CELL_DATATYPE_TYPE(item))
                 ){
                     return index;
                 }

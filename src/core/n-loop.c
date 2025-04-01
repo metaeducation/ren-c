@@ -697,7 +697,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
             // debugging...as well as showing a case where the enumerated
             // data has to be snapshotted and freed.
             //
-            switch (VAL_TYPE_KIND(les.data)) {
+            switch (CELL_DATATYPE_TYPE(les.data)) {
               case REB_ACTION:
                 les.data_ser = Snapshot_All_Actions();
                 assert(Not_Node_Managed(les.data_ser));

@@ -203,8 +203,8 @@ bool Update_Typeset_Bits_Core(
             }
         }
         else if (Is_Datatype(item)) {
-            assert(VAL_TYPE_KIND(item) != REB_0);
-            Set_Typeset_Flag(typeset, VAL_TYPE_KIND(item));
+            assert(CELL_DATATYPE_TYPE(item) != REB_0);
+            Set_Typeset_Flag(typeset, CELL_DATATYPE_TYPE(item));
         }
         else if (Is_Typeset(item)) {
             Cell_Typeset_Bits(typeset) |= Cell_Typeset_Bits(item);
@@ -353,7 +353,7 @@ REBTYPE(Typeset)
         if (not Is_Datatype(arg))
             fail (Error_Invalid(arg));
 
-        if (Typeset_Check(val, VAL_TYPE_KIND(arg)))
+        if (Typeset_Check(val, CELL_DATATYPE_TYPE(arg)))
             return Init_Nothing(OUT);
 
         return nullptr;

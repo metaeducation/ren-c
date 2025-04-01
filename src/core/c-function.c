@@ -1398,7 +1398,7 @@ Bounce Datatype_Checker_Dispatcher(Level* L)
 
     return Init_Logic(
         L->out,
-        VAL_TYPE(Level_Arg(L, 1)) == VAL_TYPE_KIND(datatype)
+        VAL_TYPE(Level_Arg(L, 1)) == CELL_DATATYPE_TYPE(datatype)
     );
 }
 
