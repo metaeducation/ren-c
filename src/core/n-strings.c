@@ -1277,3 +1277,67 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
     VAL_INDEX(OUT) = bp - Cell_Blob_Head(arg);
     return OUT;
 }
+
+
+//
+//  identify-utf8?: native [
+//
+//  {Codec for identifying BINARY! data for a .TXT file}
+//
+//      return: [logic!]
+//      data [binary!]
+//  ]
+//
+DECLARE_NATIVE(IDENTIFY_UTF8_Q)
+{
+    INCLUDE_PARAMS_OF_IDENTIFY_UTF8_Q;
+
+    UNUSED(ARG(DATA)); // see notes on decode-text
+
+    return Init_True(OUT);
+}
+
+
+//
+//  decode-utf8: native [
+//
+//  {Codec for decoding BINARY! data for a .TXT file}
+//
+//      return: [text!]
+//      data [binary!]
+//  ]
+//
+DECLARE_NATIVE(DECODE_UTF8)
+//
+// !!! The original code for R3-Alpha would simply alias the incoming binary
+// as a string.  That would be essentially a Latin1 interpretation.
+{
+    INCLUDE_PARAMS_OF_DECODE_UTF8;
+
+    Init_Text(OUT, Make_String_UTF8(cs_cast(Cell_Blob_At(ARG(DATA)))));
+    return OUT;
+}
+
+
+//
+//  encode-utf8: native [
+//
+//  {Codec for encoding a .TXT file}
+//
+//      return: [binary!]
+//      string [text!]
+//  ]
+//
+DECLARE_NATIVE(ENCODE_UTF8)
+{
+    INCLUDE_PARAMS_OF_ENCODE_UTF8;
+
+    Value* string = ARG(STRING);
+
+    Binary* bin = Make_Utf8_From_Cell_String_At_Limit(
+        string,
+        Cell_Series_Len_At(string)
+    );
+
+    return Init_Blob(OUT, bin);
+}

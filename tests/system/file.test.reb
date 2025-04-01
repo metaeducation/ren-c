@@ -13,10 +13,8 @@
 ; Byte order mark only transparent via LOAD with text codecs supporting it
 
 (#{FFFEE400F600FC00} == read %fixtures/umlauts-utf16le.txt)
-("äöü" == load/type %fixtures/umlauts-utf16le.txt 'utf-16le)
 
 (#{FEFF00E400F600FC} == read %fixtures/umlauts-utf16be.txt)
-("äöü" == load/type %fixtures/umlauts-utf16be.txt 'utf-16be)
 
 ; No codec support started yet for UTF-32
 

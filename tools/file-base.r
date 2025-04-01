@@ -108,7 +108,6 @@ core: [
     %n-sets.c
     %n-strings.c
     %n-system.c
-    %n-textcodecs.c ; !!! should be moved to extensions
 
     ; (P)orts
     %p-console.c

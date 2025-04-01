@@ -322,31 +322,15 @@ host-start: function [
     ;
     sys/util/init-schemes
 
-    ; The text codecs should also probably be extensions as well.  But the
-    ; old Register_Codec() function was C code taking up space in %b-init.c
-    ; so this at least allows that function to be deleted...the registration
-    ; as an extension would also be done like this in user-mode.
+    ; Modern Ren-C text codecs have an extension that supports UTF-16.
+    ; Bootstrap executable is UTF-8 only.
     ;
     (sys/util/register-codec*
-        'text
+        'utf8
         %.txt
-        :identify-text?
-        :decode-text
-        :encode-text)
-
-    (sys/util/register-codec*
-        'utf-16le
-        %.txt
-        :identify-utf16le?
-        :decode-utf16le
-        :encode-utf16le)
-
-    (sys/util/register-codec*
-        'utf-16be
-        %.txt
-        :identify-utf16be?
-        :decode-utf16be
-        :encode-utf16be)
+        :identify-utf8?
+        :decode-utf8
+        :encode-utf8)
 
     system/product: 'core
 
