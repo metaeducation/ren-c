@@ -478,8 +478,8 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
     case REB_DATATYPE:
         // Type spec is allowed to be nullptr.  See %typespec.r file
-        if (VAL_TYPE_SPEC(v))
-            Queue_Mark_Array_Deep(VAL_TYPE_SPEC(v));
+        if (CELL_DATATYPE_SPEC(v))
+            Queue_Mark_Array_Deep(CELL_DATATYPE_SPEC(v));
         break;
 
     case REB_TYPESET:

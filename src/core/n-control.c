@@ -207,7 +207,7 @@ bool Either_Test_Core_Throws(
         return false; }
 
       case REB_DATATYPE:
-        Init_Logic(out, VAL_TYPE_KIND(test) == VAL_TYPE(arg));
+        Init_Logic(out, CELL_DATATYPE_TYPE(test) == VAL_TYPE(arg));
         return false;
 
       case REB_TYPESET:
@@ -248,7 +248,7 @@ bool Either_Test_Core_Throws(
             }
 
             if (Is_Datatype(var)) {
-                if (VAL_TYPE_KIND(var) == VAL_TYPE(arg)) {
+                if (CELL_DATATYPE_TYPE(var) == VAL_TYPE(arg)) {
                     Init_True(out);
                     return false;
                 }
@@ -455,11 +455,11 @@ DECLARE_NATIVE(NON)
         if (Is_Nulled(value))
             fail ("NON expected value to not be NULL, but it was");
     }
-    else if (VAL_TYPE_KIND(test) == REB_NOTHING) {  // specialize common case
+    else if (CELL_DATATYPE_TYPE(test) == REB_NOTHING) {  // specialize common case
         if (Is_Nothing(value))
             fail ("NON expected value to not be trash, but it was");
     }
-    else if (not Typeset_Check(value, VAL_TYPE_KIND(test))) {
+    else if (not Typeset_Check(value, CELL_DATATYPE_TYPE(test))) {
         fail ("NON expected value to not match a type, but it did match");
     }
 

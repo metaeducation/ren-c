@@ -120,7 +120,7 @@ DECLARE_NATIVE(MAKE)
 
     enum Reb_Kind kind;
     if (Is_Datatype(type))
-        kind = VAL_TYPE_KIND(type);
+        kind = CELL_DATATYPE_TYPE(type);
     else
         kind = VAL_TYPE(type);
 
@@ -203,7 +203,7 @@ DECLARE_NATIVE(TO)
     INCLUDE_PARAMS_OF_TO;
 
     Value* v = ARG(VALUE);
-    enum Reb_Kind new_kind = VAL_TYPE_KIND(ARG(TYPE));
+    enum Reb_Kind new_kind = CELL_DATATYPE_TYPE(ARG(TYPE));
 
     TO_HOOK hook = To_Hooks[new_kind];
     if (not hook)

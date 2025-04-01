@@ -36,7 +36,7 @@
 //
 REBINT CT_Datatype(const Cell* a, const Cell* b, REBINT mode)
 {
-    if (mode >= 0) return (VAL_TYPE_KIND(a) == VAL_TYPE_KIND(b));
+    if (mode >= 0) return (CELL_DATATYPE_TYPE(a) == CELL_DATATYPE_TYPE(b));
     return -1;
 }
 
@@ -86,7 +86,7 @@ REBTYPE(Datatype)
 {
     Value* value = D_ARG(1);
     Value* arg = D_ARG(2);
-    enum Reb_Kind kind = VAL_TYPE_KIND(value);
+    enum Reb_Kind kind = CELL_DATATYPE_TYPE(value);
 
     switch (Cell_Word_Id(verb)) {
 
@@ -114,7 +114,7 @@ REBTYPE(Datatype)
             ++key; ++var;
 
             Cell* item = Array_Head(
-                VAL_TYPE_SPEC(Varlist_Slot(Lib_Context, SYM_FROM_KIND(kind)))
+                CELL_DATATYPE_SPEC(Varlist_Slot(Lib_Context, SYM_FROM_KIND(kind)))
             );
 
             for (; NOT_END(var); ++var, ++key) {

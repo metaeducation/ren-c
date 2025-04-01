@@ -751,10 +751,10 @@ INLINE bool VAL_LOGIC(const Cell* v) {
 // !!! Consider renaming (or adding a synonym) to just TYPE!
 //
 
-#define VAL_TYPE_KIND(v) \
+#define CELL_DATATYPE_TYPE(v) \
     ((v)->payload.datatype.kind)
 
-#define VAL_TYPE_SPEC(v) \
+#define CELL_DATATYPE_SPEC(v) \
     ((v)->payload.datatype.spec)
 
 

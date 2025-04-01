@@ -975,7 +975,7 @@ DECLARE_NATIVE(AS)
     INCLUDE_PARAMS_OF_AS;
 
     Value* v = ARG(VALUE);
-    enum Reb_Kind new_kind = VAL_TYPE_KIND(ARG(TYPE));
+    enum Reb_Kind new_kind = CELL_DATATYPE_TYPE(ARG(TYPE));
 
     switch (new_kind) {
     case REB_BLOCK:
