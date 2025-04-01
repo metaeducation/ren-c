@@ -26,7 +26,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The VARARGS! data type implements an abstraction layer over a call frame
-// or arbitrary array of values.  All copied instances of a REB_VARARGS value
+// or arbitrary array of values.  All copied instances of a TYPE_VARARGS value
 // remain in sync as values are TAKE-d out of them.  Once they report
 // reaching a TAIL? they will always report TAIL?...until the call that
 // spawned them is off the stack, at which point they will report an error.
@@ -79,7 +79,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 
         const Value* child_gotten = Try_Get_Opt_Var(opt_look, specifier);
 
-        if (child_gotten and Type_Of(child_gotten) == REB_ACTION) {
+        if (child_gotten and Type_Of(child_gotten) == TYPE_ACTION) {
             if (Get_Cell_Flag(child_gotten, INFIX_IF_ACTION)) {
                 if (
                     pclass == PARAMCLASS_TIGHT
@@ -360,7 +360,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
 //
 Bounce MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_VARARGS);
+    assert(kind == TYPE_VARARGS);
     UNUSED(kind);
 
     // With MAKE VARARGS! on an ANY-ARRAY!, the array is the backing store
@@ -381,7 +381,7 @@ Bounce MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
         else
             Copy_Cell(ARR_SINGLE(array1), arg);
 
-        RESET_CELL(out, REB_VARARGS);
+        RESET_CELL(out, TYPE_VARARGS);
         out->payload.varargs.phase = nullptr;
         UNUSED(out->payload.varargs.param_offset); // trashes in C++11 build
         INIT_BINDING(out, array1);
@@ -391,7 +391,7 @@ Bounce MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 
     // !!! Permit FRAME! ?
 
-    fail (Error_Bad_Make(REB_VARARGS, arg));
+    fail (Error_Bad_Make(TYPE_VARARGS, arg));
 }
 
 
@@ -400,7 +400,7 @@ Bounce MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 Bounce TO_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_VARARGS);
+    assert(kind == TYPE_VARARGS);
     UNUSED(kind);
 
     UNUSED(out);
@@ -529,7 +529,7 @@ REBTYPE(Varargs)
             Copy_Cell(PUSH(), OUT);
         }
 
-        // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?
+        // !!! What if caller wanted a TYPE_GROUP, TYPE_PATH, or an /INTO?
         //
         return Init_Block(OUT, Pop_Stack_Values(base)); }
 
@@ -537,7 +537,7 @@ REBTYPE(Varargs)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_VARARGS, verb));
+    fail (Error_Illegal_Action(TYPE_VARARGS, verb));
 }
 
 
@@ -588,19 +588,19 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
         enum Reb_Kind kind;
         switch ((pclass = Cell_Parameter_Class(param))) {
         case PARAMCLASS_NORMAL:
-            kind = REB_WORD;
+            kind = TYPE_WORD;
             break;
 
         case PARAMCLASS_TIGHT:
-            kind = REB_ISSUE;
+            kind = TYPE_ISSUE;
             break;
 
         case PARAMCLASS_HARD_QUOTE:
-            kind = REB_GET_WORD;
+            kind = TYPE_GET_WORD;
             break;
 
         case PARAMCLASS_SOFT_QUOTE:
-            kind = REB_LIT_WORD;
+            kind = TYPE_LIT_WORD;
             break;
 
         default:

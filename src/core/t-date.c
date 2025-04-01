@@ -323,7 +323,7 @@ static REBDAT Normalize_Date(REBINT day, REBINT month, REBINT year, REBINT tz)
     }
 
     if (year < 0 || year > MAX_YEAR)
-        fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_DATE)));
+        fail (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_DATE)));
 
     dr.date.year = year;
     dr.date.month = month+1;
@@ -398,7 +398,7 @@ void Subtract_Date(Value* d1, Value* d2, Value* result)
     else
         t2 = 0L;
 
-    RESET_CELL(result, REB_TIME);
+    RESET_CELL(result, TYPE_TIME);
     VAL_NANO(result) = (t1 - t2) + (cast(REBI64, diff) * TIME_IN_DAY);
 }
 
@@ -430,7 +430,7 @@ REBINT Cmp_Date(const Cell* d1, const Cell* d2)
 //  MAKE_Date: C
 //
 Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
-    assert(kind == REB_DATE);
+    assert(kind == TYPE_DATE);
     UNUSED(kind);
 
     if (Is_Date(arg))
@@ -520,7 +520,7 @@ Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
 
         Normalize_Time(&secs, &day);
 
-        Reset_Cell_Header(out, REB_DATE, CELL_FLAG_DATE_HAS_TIME);
+        Reset_Cell_Header(out, TYPE_DATE, CELL_FLAG_DATE_HAS_TIME);
         VAL_DATE(out) = Normalize_Date(day, month, year, tz);
         VAL_NANO(out) = secs;
 
@@ -530,7 +530,7 @@ Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     }
 
   bad_make:
-    fail (Error_Bad_Make(REB_DATE, arg));
+    fail (Error_Bad_Make(TYPE_DATE, arg));
 }
 
 
@@ -610,7 +610,7 @@ void Pick_Or_Poke_Date(
             else {
                 Copy_Cell(opt_out, v); // want v's adjusted VAL_NANO()
                 Adjust_Date_Zone(opt_out, false);
-                RESET_CELL(opt_out, REB_TIME); // clears date flags
+                RESET_CELL(opt_out, TYPE_TIME); // clears date flags
             }
             break;
 
@@ -890,7 +890,7 @@ REBTYPE(Date)
 
     Option(SymId) sym = Cell_Word_Id(verb);
 
-    RESET_CELL(OUT, REB_DATE); // so we can set flags on it
+    RESET_CELL(OUT, TYPE_DATE); // so we can set flags on it
 
     REBDAT date = VAL_DATE(val);
     REBLEN day = VAL_DAY(val) - 1;
@@ -903,11 +903,11 @@ REBTYPE(Date)
     if (sym == SYM_SUBTRACT || sym == SYM_ADD) {
         REBINT  type = Type_Of(arg);
 
-        if (type == REB_DATE) {
+        if (type == TYPE_DATE) {
             if (sym == SYM_SUBTRACT)
                 return Init_Integer(OUT, Diff_Date(date, VAL_DATE(arg)));
         }
-        else if (type == REB_TIME) {
+        else if (type == TYPE_TIME) {
             if (sym == SYM_ADD) {
                 Set_Cell_Flag(OUT, DATE_HAS_TIME);
                 secs += VAL_NANO(arg);
@@ -919,7 +919,7 @@ REBTYPE(Date)
                 goto fixTime;
             }
         }
-        else if (type == REB_INTEGER) {
+        else if (type == TYPE_INTEGER) {
             REBINT num = Int32(arg);
             if (sym == SYM_ADD) {
                 day += num;
@@ -930,7 +930,7 @@ REBTYPE(Date)
                 goto fixDate;
             }
         }
-        else if (type == REB_DECIMAL) {
+        else if (type == TYPE_DECIMAL) {
             REBDEC dec = Dec64(arg);
             if (sym == SYM_ADD) {
                 Set_Cell_Flag(OUT, DATE_HAS_TIME);
@@ -1016,10 +1016,10 @@ REBTYPE(Date)
             return OUT; }
 
         default:
-            fail (Error_Illegal_Action(REB_DATE, verb));
+            fail (Error_Illegal_Action(TYPE_DATE, verb));
         }
     }
-    fail (Error_Illegal_Action(REB_DATE, verb));
+    fail (Error_Illegal_Action(TYPE_DATE, verb));
 
 fixTime:
     Normalize_Time(&secs, &day);
@@ -1069,7 +1069,7 @@ DECLARE_NATIVE(MAKE_DATE_YMDSNZ)
 {
     INCLUDE_PARAMS_OF_MAKE_DATE_YMDSNZ;
 
-    RESET_CELL(OUT, REB_DATE);
+    RESET_CELL(OUT, TYPE_DATE);
     VAL_YEAR(OUT) = VAL_INT32(ARG(YEAR));
     VAL_MONTH(OUT) = VAL_INT32(ARG(MONTH));
     VAL_DAY(OUT) = VAL_INT32(ARG(DAY));

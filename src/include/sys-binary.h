@@ -100,4 +100,4 @@ INLINE Byte *Cell_Blob_Tail(const Cell* v) {
 // defined as an inline to avoid side effects in:
 
 #define Init_Blob(out,binary) \
-    Init_Any_Series((out), REB_BINARY, (binary))
+    Init_Any_Series((out), TYPE_BINARY, (binary))

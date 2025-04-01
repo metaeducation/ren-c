@@ -324,7 +324,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // So the best thing to do is to pass in whatever Value* or Flex* subclass
 // (including Array*, VarList*, REBACT*...) is the most useful "smoking gun":
 //
-//     if (Type_Of(value) == REB_NOTHING)
+//     if (Type_Of(value) == TYPE_NOTHING)
 //         panic (value);
 //
 //     if (Array_Len(array) < 2)

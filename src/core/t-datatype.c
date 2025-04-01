@@ -47,7 +47,7 @@ REBINT CT_Datatype(const Cell* a, const Cell* b, REBINT mode)
 Bounce MAKE_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (Is_Word(arg)) {
         Option(SymId) sym = Cell_Word_Id(arg);
-        if (not sym or (unwrap sym >= SYM_FROM_KIND(REB_MAX)))
+        if (not sym or (unwrap sym >= SYM_FROM_KIND(TYPE_MAX)))
             goto bad_make;
 
         return Init_Datatype(out, KIND_FROM_SYM(unwrap sym));
@@ -102,7 +102,7 @@ REBTYPE(Datatype)
                 Cell_Varlist(Get_System(SYS_STANDARD, STD_TYPE_SPEC))
             );
 
-            assert(CTX_TYPE(context) == REB_OBJECT);
+            assert(CTX_TYPE(context) == TYPE_OBJECT);
 
             Value* var = Varlist_Slots_Head(context);
             Value* key = Varlist_Keys_Head(context);
@@ -135,7 +135,7 @@ REBTYPE(Datatype)
         break;}
 
     default:
-        fail (Error_Illegal_Action(REB_DATATYPE, verb));
+        fail (Error_Illegal_Action(TYPE_DATATYPE, verb));
     }
 
     return OUT;

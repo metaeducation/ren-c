@@ -51,7 +51,7 @@ struct Reb_Event_Payload {
 
 union Reb_Eventee {
     REBREQ *req; // request (for device events)
-#ifdef REB_DEF
+#ifdef TYPE_DEF
     Flex* flex; // port or object
 #else
     void *flex;

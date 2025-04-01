@@ -128,7 +128,7 @@ VarList* Make_Managed_Context_For_Action_May_Fail(
         SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
     );
 
-    Value* rootvar = RESET_CELL(Array_Head(varlist), REB_FRAME);
+    Value* rootvar = RESET_CELL(Array_Head(varlist), TYPE_FRAME);
     rootvar->payload.any_context.varlist = varlist;
     rootvar->payload.any_context.phase = VAL_ACTION(action);
     INIT_BINDING(rootvar, VAL_BINDING(action));
@@ -316,7 +316,7 @@ bool Specialize_Action_Throws(
         &binder,
         Cell_List_At(opt_def),
         exemplar,
-        FLAGIT_KIND(REB_SET_WORD), // types to bind (just set-word!)
+        FLAGIT_KIND(TYPE_SET_WORD), // types to bind (just set-word!)
         0, // types to "add midstream" to binding as we go (nothing)
         BIND_DEEP
     );
@@ -422,7 +422,7 @@ bool Specialize_Action_Throws(
         // of the underlying function.
 
         Copy_Cell(PUSH(), param);
-        Set_Typeset_Flag(TOP, REB_TS_HIDDEN);
+        Set_Typeset_Flag(TOP, TYPE_TS_HIDDEN);
         continue;
     }
 
@@ -666,7 +666,7 @@ DECLARE_NATIVE(DOES)
         SERIES_MASK_ACTION
     );
 
-    Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
+    Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), TYPE_ACTION);
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
     Term_Array_Len(paramlist, 1);

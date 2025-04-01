@@ -145,7 +145,7 @@ const Byte *Scan_Time(Value* out, const Byte *cp, REBLEN len)
     else
         merid = '\0';
 
-    RESET_CELL(out, REB_TIME);
+    RESET_CELL(out, TYPE_TIME);
 
     if (part3 >= 0 || part4 < 0) { // HH:MM mode
         if (merid != '\0') {
@@ -226,14 +226,14 @@ REBINT CT_Time(const Cell* a, const Cell* b, REBINT mode)
 //
 Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_TIME);
+    assert(kind == TYPE_TIME);
     UNUSED(kind);
 
     switch (Type_Of(arg)) {
-    case REB_TIME: // just copy it (?)
+    case TYPE_TIME: // just copy it (?)
         return Copy_Cell(out, arg);
 
-    case REB_TEXT: { // scan using same decoding as LOAD would
+    case TYPE_TEXT: { // scan using same decoding as LOAD would
         Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
 
@@ -243,13 +243,13 @@ Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 
         return out; }
 
-    case REB_INTEGER: // interpret as seconds
+    case TYPE_INTEGER: // interpret as seconds
         if (VAL_INT64(arg) < -MAX_SECONDS || VAL_INT64(arg) > MAX_SECONDS)
             fail (Error_Out_Of_Range(arg));
 
         return Init_Time_Nanoseconds(out, VAL_INT64(arg) * SEC_SEC);
 
-    case REB_DECIMAL:
+    case TYPE_DECIMAL:
         if (
             VAL_DECIMAL(arg) < cast(REBDEC, -MAX_SECONDS)
             || VAL_DECIMAL(arg) > cast(REBDEC, MAX_SECONDS)
@@ -258,7 +258,7 @@ Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
         }
         return Init_Time_Nanoseconds(out, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
-    case REB_BLOCK: { // [hh mm ss]
+    case TYPE_BLOCK: { // [hh mm ss]
         if (VAL_ARRAY_LEN_AT(arg) > 3)
             goto no_time;
 
@@ -328,7 +328,7 @@ Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
     }
 
   no_time:
-    fail (Error_Bad_Make(REB_TIME, arg));
+    fail (Error_Bad_Make(TYPE_TIME, arg));
 }
 
 
@@ -516,23 +516,23 @@ REBTYPE(Time)
 
         assert(arg);
 
-        if (type == REB_TIME) {     // handle TIME - TIME cases
+        if (type == TYPE_TIME) {     // handle TIME - TIME cases
             REBI64 secs2 = VAL_NANO(arg);
 
             switch (sym) {
             case SYM_ADD:
-                secs = Add_Max(REB_TIME, secs, secs2, MAX_TIME);
+                secs = Add_Max(TYPE_TIME, secs, secs2, MAX_TIME);
                 goto fixTime;
 
             case SYM_SUBTRACT:
-                secs = Add_Max(REB_TIME, secs, -secs2, MAX_TIME);
+                secs = Add_Max(TYPE_TIME, secs, -secs2, MAX_TIME);
                 goto fixTime;
 
             case SYM_DIVIDE:
                 if (secs2 == 0)
                     fail (Error_Zero_Divide_Raw());
                 //secs /= secs2;
-                RESET_CELL(OUT, REB_DECIMAL);
+                RESET_CELL(OUT, TYPE_DECIMAL);
                 VAL_DECIMAL(OUT) = cast(REBDEC, secs) / cast(REBDEC, secs2);
                 return OUT;
 
@@ -543,25 +543,25 @@ REBTYPE(Time)
                 goto setTime;
 
             default:
-                fail (Error_Math_Args(REB_TIME, verb));
+                fail (Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (type == REB_INTEGER) {     // handle TIME - INTEGER cases
+        else if (type == TYPE_INTEGER) {     // handle TIME - INTEGER cases
             REBI64 num = VAL_INT64(arg);
 
             switch (Cell_Word_Id(verb)) {
             case SYM_ADD:
-                secs = Add_Max(REB_TIME, secs, num * SEC_SEC, MAX_TIME);
+                secs = Add_Max(TYPE_TIME, secs, num * SEC_SEC, MAX_TIME);
                 goto fixTime;
 
             case SYM_SUBTRACT:
-                secs = Add_Max(REB_TIME, secs, num * -SEC_SEC, MAX_TIME);
+                secs = Add_Max(TYPE_TIME, secs, num * -SEC_SEC, MAX_TIME);
                 goto fixTime;
 
             case SYM_MULTIPLY:
                 secs *= num;
                 if (secs < -MAX_TIME || secs > MAX_TIME)
-                    fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_TIME)));
+                    fail (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_TIME)));
                 goto setTime;
 
             case SYM_DIVIDE:
@@ -578,16 +578,16 @@ REBTYPE(Time)
                 goto setTime;
 
             default:
-                fail (Error_Math_Args(REB_TIME, verb));
+                fail (Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (type == REB_DECIMAL) {     // handle TIME - DECIMAL cases
+        else if (type == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
             REBDEC dec = VAL_DECIMAL(arg);
 
             switch (Cell_Word_Id(verb)) {
             case SYM_ADD:
                 secs = Add_Max(
-                    REB_TIME,
+                    TYPE_TIME,
                     secs,
                     cast(int64_t, dec * SEC_SEC),
                     MAX_TIME
@@ -596,7 +596,7 @@ REBTYPE(Time)
 
             case SYM_SUBTRACT:
                 secs = Add_Max(
-                    REB_TIME,
+                    TYPE_TIME,
                     secs,
                     cast(int64_t, dec * -SEC_SEC),
                     MAX_TIME
@@ -618,17 +618,17 @@ REBTYPE(Time)
 //              goto decTime;
 
             default:
-                fail (Error_Math_Args(REB_TIME, verb));
+                fail (Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (type == REB_DATE and sym == SYM_ADD) { // TIME + DATE case
+        else if (type == TYPE_DATE and sym == SYM_ADD) { // TIME + DATE case
             // Swap args and call DATE datatupe:
             Copy_Cell(D_ARG(3), val); // (temporary location for swap)
             Copy_Cell(D_ARG(1), arg);
             Copy_Cell(D_ARG(2), D_ARG(3));
             return T_Date(level_, verb);
         }
-        fail (Error_Math_Args(REB_TIME, verb));
+        fail (Error_Math_Args(TYPE_TIME, verb));
     }
     else {
         // unary actions
@@ -675,13 +675,13 @@ REBTYPE(Time)
                         Dec64(arg) * SEC_SEC
                     );
                     VAL_DECIMAL(arg) /= SEC_SEC;
-                    RESET_CELL(arg, REB_DECIMAL);
+                    RESET_CELL(arg, TYPE_DECIMAL);
                     Copy_Cell(OUT, ARG(SCALE));
                     return OUT;
                 }
                 else if (Is_Integer(arg)) {
                     VAL_INT64(arg) = Round_Int(secs, 1, Int32(arg) * SEC_SEC) / SEC_SEC;
-                    RESET_CELL(arg, REB_INTEGER);
+                    RESET_CELL(arg, TYPE_INTEGER);
                     Copy_Cell(OUT, ARG(SCALE));
                     return OUT;
                 }
@@ -712,11 +712,11 @@ REBTYPE(Time)
             break;
         }
     }
-    fail (Error_Illegal_Action(REB_TIME, verb));
+    fail (Error_Illegal_Action(TYPE_TIME, verb));
 
 fixTime:
 setTime:
-    RESET_CELL(OUT, REB_TIME);
+    RESET_CELL(OUT, TYPE_TIME);
     VAL_NANO(OUT) = secs;
     return OUT;
 }

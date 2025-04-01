@@ -226,7 +226,7 @@ static Bounce Loop_Integer_Common(
     // if they change `var` during the loop, it affects the iteration.  Hence
     // it must be checked for changing to a non-integer form.
     //
-    RESET_CELL(var, REB_INTEGER);
+    RESET_CELL(var, TYPE_INTEGER);
     REBI64 *state = &VAL_INT64(var);
     *state = start;
 
@@ -312,7 +312,7 @@ static Bounce Loop_Number_Common(
     // As in Loop_Integer_Common(), the state is actually in a cell; so each
     // loop iteration it must be checked to ensure it's still a decimal...
     //
-    RESET_CELL(var, REB_DECIMAL);
+    RESET_CELL(var, TYPE_DECIMAL);
     REBDEC *state = &VAL_DECIMAL(var);
     *state = s;
 
@@ -430,9 +430,9 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
 
             enum Reb_Kind kind = Type_Of(les->data);
             switch (kind) {
-              case REB_BLOCK:
-              case REB_GROUP:
-              case REB_PATH:
+              case TYPE_BLOCK:
+              case TYPE_GROUP:
+              case TYPE_PATH:
                 Derelativize(
                     var,
                     Array_At(cast_Array(les->data_ser), les->data_idx),
@@ -442,7 +442,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                     more_data = false;
                 break;
 
-              case REB_DATATYPE:
+              case TYPE_DATATYPE:
                 Derelativize(
                     var,
                     Array_At(cast_Array(les->data_ser), les->data_idx),
@@ -452,11 +452,11 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                     more_data = false;
                 break;
 
-              case REB_OBJECT:
-              case REB_ERROR:
-              case REB_PORT:
-              case REB_MODULE:
-              case REB_FRAME: {
+              case TYPE_OBJECT:
+              case TYPE_ERROR:
+              case TYPE_PORT:
+              case TYPE_MODULE:
+              case TYPE_FRAME: {
                 Value* key;
                 Value* val;
                 REBLEN bind_index;
@@ -474,7 +474,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
 
                 Init_Any_Word_Bound( // key is typeset, user wants word
                     var,
-                    REB_WORD,
+                    TYPE_WORD,
                     Cell_Parameter_Symbol(key),
                     Cell_Varlist(les->data),
                     bind_index
@@ -496,7 +496,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                     fail ("Loop enumeration of contexts must be 1 or 2 vars");
                 break; }
 
-              case REB_MAP: {
+              case TYPE_MAP: {
                 assert(les->data_idx % 2 == 0); // should be on key slot
 
                 Value* key;
@@ -533,7 +533,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
 
                 break; }
 
-              case REB_BINARY:
+              case TYPE_BINARY:
                 Init_Integer(
                     var,
                     Binary_Head(cast(Binary*, les->data_ser))[les->data_idx]
@@ -542,17 +542,17 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                     more_data = false;
                 break;
 
-              case REB_TEXT:
-              case REB_TAG:
-              case REB_FILE:
-              case REB_EMAIL:
-              case REB_URL:
+              case TYPE_TEXT:
+              case TYPE_TAG:
+              case TYPE_FILE:
+              case TYPE_EMAIL:
+              case TYPE_URL:
                 Init_Char(var, GET_ANY_CHAR(les->data_ser, les->data_idx));
                 if (++les->data_idx == les->data_len)
                     more_data = false;
                 break;
 
-              case REB_ACTION: {
+              case TYPE_ACTION: {
                 Value* generated = rebValue(rebEval(les->data));
                 if (generated) {
                     Copy_Cell(var, generated);
@@ -698,7 +698,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
             // data has to be snapshotted and freed.
             //
             switch (CELL_DATATYPE_TYPE(les.data)) {
-              case REB_ACTION:
+              case TYPE_ACTION:
                 les.data_ser = Snapshot_All_Actions();
                 assert(Not_Node_Managed(les.data_ser));
                 les.data_idx = 0;

@@ -136,21 +136,21 @@ bool Next_Path_Throws(REBPVS *pvs)
 
         switch (VAL_TYPE_RAW(bounce)) {
 
-        case REB_0_END: // unhandled
+        case TYPE_0_END: // unhandled
             assert(bounce == BOUNCE_UNHANDLED); // shouldn't be other ends
             fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
-        case REB_R_THROWN:
+        case TYPE_R_THROWN:
             panic ("Path dispatch isn't allowed to throw, only GROUP!s");
 
-        case REB_R_INVISIBLE: // dispatcher assigned target with opt_setval
+        case TYPE_R_INVISIBLE: // dispatcher assigned target with opt_setval
             break; // nothing left to do, have to take the dispatcher's word
 
-        case REB_R_REFERENCE: { // dispatcher wants a set *if* at end of path
+        case TYPE_R_REFERENCE: { // dispatcher wants a set *if* at end of path
             Copy_Cell(pvs->u.ref.cell, PVS_OPT_SETVAL(pvs));
             break; }
 
-        case REB_R_IMMEDIATE: {
+        case TYPE_R_IMMEDIATE: {
             //
             // Imagine something like:
             //
@@ -207,21 +207,21 @@ bool Next_Path_Throws(REBPVS *pvs)
                 fail ("NULL used in path picking but was not handled");
             fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
         }
-        else if (VAL_TYPE_RAW(r) <= REB_MAX_NULLED) {
+        else if (VAL_TYPE_RAW(r) <= TYPE_MAX_NULLED) {
             Handle_Api_Dispatcher_Result(pvs, r);
         }
         else switch (VAL_TYPE_RAW(r)) {
 
-        case REB_0_END:
+        case TYPE_0_END:
             fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
 
-        case REB_R_THROWN:
+        case TYPE_R_THROWN:
             panic ("Path dispatch isn't allowed to throw, only GROUP!s");
 
-        case REB_R_INVISIBLE:
+        case TYPE_R_INVISIBLE:
             panic("SET-PATH! evaluation ran assignment before path end");
 
-        case REB_R_REFERENCE:
+        case TYPE_R_REFERENCE:
             Derelativize(
                 pvs->out,
                 pvs->u.ref.cell,
@@ -314,7 +314,7 @@ bool Eval_Path_Throws_Core(
     if (Any_Inert(Array_At(array, index))) {
         if (opt_setval)
             fail ("Can't perform SET_PATH! on path with inert head");
-        Init_Any_List_At(out, REB_PATH, array, index);
+        Init_Any_List_At(out, TYPE_PATH, array, index);
         return false;
     }
 
@@ -604,15 +604,15 @@ DECLARE_NATIVE(PICK)
         return bounce;
 
     switch (VAL_TYPE_RAW(bounce)) {
-    case REB_0_END:
+    case TYPE_0_END:
         assert(bounce == BOUNCE_UNHANDLED);
         fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
 
-    case REB_R_INVISIBLE:
+    case TYPE_R_INVISIBLE:
         assert(false); // only SETs should do this
         break;
 
-    case REB_R_REFERENCE:
+    case TYPE_R_REFERENCE:
         Derelativize(
             OUT,
             pvs->u.ref.cell,
@@ -682,14 +682,14 @@ DECLARE_NATIVE(POKE)
 
     const Value* bounce = hook(pvs, PVS_PICKER(pvs), ARG(VALUE));
     switch (VAL_TYPE_RAW(bounce)) {
-      case REB_0_END:
+      case TYPE_0_END:
         assert(bounce == BOUNCE_UNHANDLED);
         fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
-      case REB_R_INVISIBLE: // is saying it did the write already
+      case TYPE_R_INVISIBLE: // is saying it did the write already
         break;
 
-      case REB_R_REFERENCE: // wants us to write it
+      case TYPE_R_REFERENCE: // wants us to write it
         Copy_Cell(pvs->u.ref.cell, ARG(VALUE));
         break;
 

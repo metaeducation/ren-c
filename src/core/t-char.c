@@ -57,21 +57,21 @@ REBINT CT_Char(const Cell* a, const Cell* b, REBINT mode)
 //
 Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_CHAR);
+    assert(kind == TYPE_CHAR);
     UNUSED(kind);
 
     switch(Type_Of(arg)) {
-    case REB_CHAR:
+    case TYPE_CHAR:
         return Init_Char(out, VAL_CHAR(arg));
 
-    case REB_INTEGER:
-    case REB_DECIMAL: {
+    case TYPE_INTEGER:
+    case TYPE_DECIMAL: {
         REBINT n = Int32(arg);
         if (n > MAX_UNI or n < 0)
             goto bad_make;
         return Init_Char(out, n); }
 
-      case REB_BINARY: {
+      case TYPE_BINARY: {
         const Byte *bp = Cell_Blob_Head(arg);
         Size len = Cell_Series_Len_At(arg);
         if (len == 0)
@@ -92,7 +92,7 @@ Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
         }
         return Init_Char(out, uni); }
 
-      case REB_TEXT:
+      case TYPE_TEXT:
         if (VAL_INDEX(arg) >= VAL_LEN_HEAD(arg))
             goto bad_make;
         return Init_Char(out, GET_ANY_CHAR(Cell_Flex(arg), VAL_INDEX(arg)));
@@ -102,7 +102,7 @@ Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
     }
 
   bad_make:
-    fail (Error_Bad_Make(REB_CHAR, arg));
+    fail (Error_Bad_Make(TYPE_CHAR, arg));
 }
 
 
@@ -118,17 +118,17 @@ Bounce TO_Char(Value* out, enum Reb_Kind kind, const Value* arg)
 static REBINT Math_Arg_For_Char(Value* arg, Value* verb)
 {
     switch (Type_Of(arg)) {
-    case REB_CHAR:
+    case TYPE_CHAR:
         return VAL_CHAR(arg);
 
-    case REB_INTEGER:
+    case TYPE_INTEGER:
         return VAL_INT32(arg);
 
-    case REB_DECIMAL:
+    case TYPE_DECIMAL:
         return cast(REBINT, VAL_DECIMAL(arg));
 
     default:
-        fail (Error_Math_Args(REB_CHAR, verb));
+        fail (Error_Math_Args(TYPE_CHAR, verb));
     }
 }
 
@@ -261,11 +261,11 @@ REBTYPE(Char)
         break; }
 
     default:
-        fail (Error_Illegal_Action(REB_CHAR, verb));
+        fail (Error_Illegal_Action(TYPE_CHAR, verb));
     }
 
     if (chr < 0 || chr > 0xffff)  // see main branch build for UTF-8 Everywhere
-        fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_CHAR)));
+        fail (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_CHAR)));
 
     return Init_Char(OUT, cast(Ucs2Unit, chr));
 }

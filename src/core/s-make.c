@@ -374,24 +374,24 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
     Cell* val;
     for (val = Cell_List_At(blk); limit > 0; val++, limit--) {
         switch (Type_Of(val)) {
-        case REB_INTEGER:
+        case TYPE_INTEGER:
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
                 fail (Error_Out_Of_Range(KNOWN(val)));
             Expand_Flex_Tail(series, 1);
             *Binary_At(series, tail) = (Byte)VAL_INT32(val);
             break;
 
-        case REB_BINARY: {
+        case TYPE_BINARY: {
             REBLEN len = Cell_Series_Len_At(val);
             Expand_Flex_Tail(series, len);
             memcpy(Binary_At(series, tail), Cell_Blob_At(val), len);
             break; }
 
-        case REB_TEXT:
-        case REB_FILE:
-        case REB_EMAIL:
-        case REB_URL:
-        case REB_TAG: {
+        case TYPE_TEXT:
+        case TYPE_FILE:
+        case TYPE_EMAIL:
+        case TYPE_URL:
+        case TYPE_TAG: {
             REBLEN val_len = Cell_Series_Len_At(val);
             size_t val_size = Size_As_UTF8(Cell_String_At(val), val_len);
 
@@ -407,7 +407,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
             );
             break; }
 
-        case REB_CHAR: {
+        case TYPE_CHAR: {
             Expand_Flex_Tail(series, 6);
             REBLEN len =
                 Encode_UTF8_Char(Binary_At(series, tail), VAL_CHAR(val));

@@ -338,29 +338,29 @@ static Binary* make_binary(const Value* arg, bool make)
 
     // MAKE BINARY! 123
     switch (Type_Of(arg)) {
-    case REB_INTEGER:
-    case REB_DECIMAL:
+    case TYPE_INTEGER:
+    case TYPE_DECIMAL:
         if (make) flex = Make_Binary(Int32s(arg, 0));
         else flex = Make_Binary_BE64(arg);
         break;
 
     // MAKE/TO BINARY! BINARY!
-    case REB_BINARY:
+    case TYPE_BINARY:
         flex = Copy_Bytes(Cell_Blob_At(arg), Cell_Series_Len_At(arg));
         break;
 
     // MAKE/TO BINARY! <any-string>
-    case REB_MONEY:
-    case REB_TEXT:
-    case REB_FILE:
-    case REB_EMAIL:
-    case REB_URL:
-    case REB_TAG:
-//  case REB_ISSUE:
+    case TYPE_MONEY:
+    case TYPE_TEXT:
+    case TYPE_FILE:
+    case TYPE_EMAIL:
+    case TYPE_URL:
+    case TYPE_TAG:
+//  case TYPE_ISSUE:
         flex = Make_Utf8_From_Cell_String_At_Limit(arg, Cell_Series_Len_At(arg));
         break;
 
-    case REB_BLOCK:
+    case TYPE_BLOCK:
         // Join_Binary returns a shared buffer, so produce a copy:
         flex = cast(
             Binary*,
@@ -369,18 +369,18 @@ static Binary* make_binary(const Value* arg, bool make)
         break;
 
     // MAKE/TO BINARY! <tuple!>
-    case REB_TUPLE:
+    case TYPE_TUPLE:
         flex = Copy_Bytes(VAL_TUPLE(arg), VAL_TUPLE_LEN(arg));
         break;
 
     // MAKE/TO BINARY! <char!>
-    case REB_CHAR:
+    case TYPE_CHAR:
         flex = Make_Binary(6);
         Term_Non_Array_Flex_Len(flex, Encode_UTF8_Char(Binary_Head(flex), VAL_CHAR(arg)));
         break;
 
     // MAKE/TO BINARY! <bitset!>
-    case REB_BITSET:
+    case TYPE_BITSET:
         flex = Copy_Bytes(Cell_Blob_Head(arg), VAL_LEN_HEAD(arg));
         break;
 
@@ -403,7 +403,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         // !!! R3-Alpha tolerated decimal, e.g. `make text! 3.14`, which
         // is semantically nebulous (round up, down?) and generally bad.
         //
-        if (kind == REB_BINARY)
+        if (kind == TYPE_BINARY)
             return Init_Blob(out, Make_Binary(Int32s(def, 0)));
         else
             return Init_Any_Series(out, kind, Make_String(Int32s(def, 0)));
@@ -424,7 +424,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         Cell* any_binstr = Cell_List_At(def);
         if (not (Is_Binary(any_binstr) or Any_String(any_binstr)))
             goto bad_make;
-        if (Is_Binary(any_binstr) != (kind == REB_BINARY))
+        if (Is_Binary(any_binstr) != (kind == TYPE_BINARY))
             goto bad_make;
 
         Cell* index = Cell_List_At(def) + 1;
@@ -438,7 +438,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         return Init_Any_Series_At(out, kind, Cell_Flex(any_binstr), i);
     }
 
-    if (kind == REB_BINARY)
+    if (kind == TYPE_BINARY)
         flex = make_binary(def, true);
     else
         flex = MAKE_TO_String_Common(def);
@@ -459,7 +459,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
 Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     Flex* flex;
-    if (kind == REB_BINARY)
+    if (kind == TYPE_BINARY)
         flex = make_binary(arg, false);
     else
         flex = MAKE_TO_String_Common(arg);
@@ -587,8 +587,8 @@ Bounce PD_String(
     /*
         REBINT len = Get_Num_From_Arg(arg);
         if (
-            REB_I32_SUB_OF(len, 1, &len)
-            || REB_I32_ADD_OF(index, len, &index)
+            TYPE_I32_SUB_OF(len, 1, &len)
+            || TYPE_I32_ADD_OF(index, len, &index)
             || index < 0 || index >= tail
         ){
             fail (Error_Out_Of_Range(arg));
@@ -747,7 +747,7 @@ Bounce PD_String(
 }
 
 
-typedef struct REB_Str_Flags {
+typedef struct TYPE_Str_Flags {
     REBLEN escape;      // escaped chars
     REBLEN brace_in;    // {
     REBLEN brace_out;   // }
@@ -756,10 +756,10 @@ typedef struct REB_Str_Flags {
     REBLEN paren;       // (1234)
     REBLEN chr1e;
     REBLEN malign;
-} REB_STRF;
+} TYPE_STRF;
 
 
-static void Sniff_String(String* str, REBLEN idx, REB_STRF *sf)
+static void Sniff_String(String* str, REBLEN idx, TYPE_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
 
@@ -902,7 +902,7 @@ void Mold_Text_Series_At(
 
     REBLEN len_at = String_Len(str) - index;
 
-    REB_STRF sf;
+    TYPE_STRF sf;
     CLEARS(&sf);
     Sniff_String(str, index, &sf);
     bool non_ascii_parened = true;
@@ -1129,16 +1129,16 @@ void MF_String(Molder* mo, const Cell* v, bool form)
     }
 
     switch (Type_Of(v)) {
-    case REB_TEXT:
+    case TYPE_TEXT:
         Mold_Text_Series_At(mo, Cell_String(v), VAL_INDEX(v));
         break;
 
-    case REB_MONEY:
+    case TYPE_MONEY:
         Append_Codepoint(mo->utf8flex, '$');
         Mold_File_Or_Money(mo, v);
         break;
 
-    case REB_FILE:
+    case TYPE_FILE:
         if (Cell_Series_Len_At(v) == 0) {
             Append_Unencoded(s, "%\"\"");
             break;
@@ -1147,16 +1147,16 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         Mold_File_Or_Money(mo, v);
         break;
 
-    case REB_EMAIL:
-    case REB_URL:
+    case TYPE_EMAIL:
+    case TYPE_URL:
         Mold_Url(mo, v);
         break;
 
-    case REB_TAG:
+    case TYPE_TAG:
         Mold_Tag(mo, v);
         break;
 
-    case REB_TRIPWIRE:
+    case TYPE_TRIPWIRE:
         Append_Codepoint(mo->utf8flex, '~');
         Mold_Tag(mo, v);
         Append_Codepoint(mo->utf8flex, '~');

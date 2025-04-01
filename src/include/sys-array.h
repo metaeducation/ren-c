@@ -117,7 +117,7 @@ INLINE void Term_Array_Len(Array* a, REBLEN len) {
         Assert_Cell_Writable(at);
   #endif
 
-    KIND_BYTE(at) = REB_0_END;
+    KIND_BYTE(at) = TYPE_0_END;
 }
 
 INLINE void SET_ARRAY_LEN_NOTERM(Array* a, REBLEN len) {
@@ -514,13 +514,13 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
     Init_Any_List_At((v), (t), (a), 0)
 
 #define Init_Block(v,s) \
-    Init_Any_List((v), REB_BLOCK, (s))
+    Init_Any_List((v), TYPE_BLOCK, (s))
 
 #define Init_Group(v,s) \
-    Init_Any_List((v), REB_GROUP, (s))
+    Init_Any_List((v), TYPE_GROUP, (s))
 
 #define Init_Path(v,s) \
-    Init_Any_List((v), REB_PATH, (s))
+    Init_Any_List((v), TYPE_PATH, (s))
 
 
 // PATH! types will splice into each other, but not into a BLOCK! or GROUP!.
@@ -561,7 +561,7 @@ INLINE bool Splices_Into_Type_Without_Only(
 INLINE bool Is_Doubled_Group(const Cell* group) {
     assert(Is_Group(group));
     Cell* inner = Cell_List_At(group);
-    if (VAL_TYPE_RAW(inner) != REB_GROUP or Cell_Series_Len_At(group) != 1)
+    if (VAL_TYPE_RAW(inner) != TYPE_GROUP or Cell_Series_Len_At(group) != 1)
         return false; // plain (...) GROUP!
     return true; // a ((...)) GROUP!, inject as rule
 }

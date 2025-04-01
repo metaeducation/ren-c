@@ -541,7 +541,7 @@ RebolValue* API_rebValueInline(const RebolValue* array)
 
     DECLARE_VALUE (group);
     Copy_Cell(group, array);
-    CHANGE_VAL_TYPE_BITS(group, REB_GROUP);
+    CHANGE_VAL_TYPE_BITS(group, TYPE_GROUP);
 
     return rebValue(rebEval(group));
 }
@@ -864,7 +864,7 @@ RebolValue* API_rebRescue(
     // a failure.  Use VAL_TYPE_RAW() as BOUNCE_THROWN or other special things can
     // be used internally.
     //
-    if (VAL_TYPE_RAW(result) == REB_ERROR) {
+    if (VAL_TYPE_RAW(result) == TYPE_ERROR) {
         if (Is_Api_Value(result))
             rebRelease(result);
         return rebNothing();
@@ -970,13 +970,13 @@ long API_rebUnbox(const void *p, va_list *vaptr)
         fail (Error_No_Catch_For_Throw(result));
 
     switch (Type_Of(result)) {
-      case REB_INTEGER:
+      case TYPE_INTEGER:
         return VAL_INT64(result);
 
-      case REB_CHAR:
+      case TYPE_CHAR:
         return VAL_CHAR(result);
 
-      case REB_LOGIC:
+      case TYPE_LOGIC:
         return VAL_LOGIC(result) ? 1 : 0;
 
       default:
@@ -994,7 +994,7 @@ long API_rebUnboxInteger(const void *p, va_list *vaptr)
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
-    if (Type_Of(result) != REB_INTEGER)
+    if (Type_Of(result) != TYPE_INTEGER)
         fail ("rebUnboxInteger() called on non-INTEGER!");
 
     return VAL_INT64(result);
@@ -1010,10 +1010,10 @@ double API_rebUnboxDecimal(const void *p, va_list *vaptr)
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
-    if (Type_Of(result) == REB_DECIMAL)
+    if (Type_Of(result) == TYPE_DECIMAL)
         return VAL_DECIMAL(result);
 
-    if (Type_Of(result) == REB_INTEGER)
+    if (Type_Of(result) == TYPE_INTEGER)
         return cast(double, VAL_INT64(result));
 
     fail ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
@@ -1029,7 +1029,7 @@ uint32_t API_rebUnboxChar(const void *p, va_list *vaptr)
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
-    if (Type_Of(result) != REB_CHAR)
+    if (Type_Of(result) != TYPE_CHAR)
         fail ("rebUnboxChar() called on non-CHAR!");
 
     return VAL_CHAR(result);

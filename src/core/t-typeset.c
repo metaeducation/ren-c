@@ -128,7 +128,7 @@ void Shutdown_Typesets(void)
 //
 Value* Init_Typeset(Cell* out, REBU64 bits, Symbol* opt_name)
 {
-    RESET_CELL(out, REB_TYPESET);
+    RESET_CELL(out, TYPE_TYPESET);
     INIT_TYPESET_NAME(out, opt_name);
     Cell_Typeset_Bits(out) = bits;
     return cast(Value*, out);
@@ -160,15 +160,15 @@ bool Update_Typeset_Bits_Core(
 
         if (Is_Word(maybe_word)) {
             if (Cell_Word_Id(maybe_word) == SYM_TILDE_1) {  // ~
-                Set_Typeset_Flag(typeset, REB_NOTHING);
+                Set_Typeset_Flag(typeset, TYPE_NOTHING);
                 continue;
             }
             if (Cell_Word_Id(maybe_word) == SYM__TNULL_T) {  // ~null~
-                Set_Typeset_Flag(typeset, REB_MAX_NULLED);
+                Set_Typeset_Flag(typeset, TYPE_MAX_NULLED);
                 continue;
             }
             else if (Cell_Word_Id(maybe_word) == SYM__TVOID_T) {  // ~void~
-                Set_Typeset_Flag(typeset, REB_VOID);
+                Set_Typeset_Flag(typeset, TYPE_VOID);
                 continue;
             }
             item = Get_Opt_Var_May_Fail(maybe_word, specifier);
@@ -186,24 +186,24 @@ bool Update_Typeset_Bits_Core(
         const bool keywords = true;
         if (keywords and Is_Tag(item)) {
             if (0 == Compare_String_Vals(item, Root_Ellipsis_Tag, true)) {
-                Set_Typeset_Flag(typeset, REB_TS_VARIADIC);
+                Set_Typeset_Flag(typeset, TYPE_TS_VARIADIC);
             }
             else if (0 == Compare_String_Vals(item, Root_End_Tag, true)) {
-                Set_Typeset_Flag(typeset, REB_TS_ENDABLE);
+                Set_Typeset_Flag(typeset, TYPE_TS_ENDABLE);
             }
             else if (0 == Compare_String_Vals(item, Root_Maybe_Tag, true)) {
-                Set_Typeset_Flag(typeset, REB_TS_NOOP_IF_VOID);
+                Set_Typeset_Flag(typeset, TYPE_TS_NOOP_IF_VOID);
             }
             else if (0 == Compare_String_Vals(item, Root_Skip_Tag, true)) {
                 if (Cell_Parameter_Class(typeset) != PARAMCLASS_HARD_QUOTE)
                     fail ("Only hard-quoted parameters are <skip>-able");
 
-                Set_Typeset_Flag(typeset, REB_TS_SKIPPABLE);
-                Set_Typeset_Flag(typeset, REB_TS_ENDABLE); // skip => null
+                Set_Typeset_Flag(typeset, TYPE_TS_SKIPPABLE);
+                Set_Typeset_Flag(typeset, TYPE_TS_ENDABLE); // skip => null
             }
         }
         else if (Is_Datatype(item)) {
-            assert(CELL_DATATYPE_TYPE(item) != REB_0);
+            assert(CELL_DATATYPE_TYPE(item) != TYPE_0);
             Set_Typeset_Flag(typeset, CELL_DATATYPE_TYPE(item));
         }
         else if (Is_Typeset(item)) {
@@ -222,7 +222,7 @@ bool Update_Typeset_Bits_Core(
 //
 Bounce MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_TYPESET);
+    assert(kind == TYPE_TYPESET);
     UNUSED(kind);
 
     if (Is_Typeset(arg))
@@ -235,7 +235,7 @@ Bounce MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
     return out;
 
   bad_make:
-    fail (Error_Bad_Make(REB_TYPESET, arg));
+    fail (Error_Bad_Make(TYPE_TYPESET, arg));
 }
 
 
@@ -258,12 +258,12 @@ Array* Typeset_To_Array(const Value* tset)
     StackIndex base = TOP_INDEX;
 
     REBINT n;
-    for (n = 1; n < REB_MAX_NULLED; ++n) {
+    for (n = 1; n < TYPE_MAX_NULLED; ++n) {
         if (Typeset_Check(tset, cast(enum Reb_Kind, n))) {
-            if (n == REB_MAX_NULLED) {
+            if (n == TYPE_MAX_NULLED) {
                 Init_Word(PUSH(), Canon(SYM__TNULL_T));
             }
-            else if (n == REB_VOID) {
+            else if (n == TYPE_VOID) {
                 Init_Word(PUSH(), Canon(SYM__TVOID_T));
             }
             else
@@ -291,13 +291,13 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
     Symbol* symbol = Key_Symbol(v);
     if (symbol == nullptr) {
         //
-        // Note that although REB_MAX_NULLED is used as an implementation detail
+        // Note that although TYPE_MAX_NULLED is used as an implementation detail
         // for special typesets in function paramlists or context keys to
         // indicate ~null~-style optionality, the "absence of a type" is not
         // generally legal in user typesets.  Only legal "key" typesets
         // (that have symbols).
         //
-        assert(not Typeset_Check(v, REB_MAX_NULLED));
+        assert(not Typeset_Check(v, TYPE_MAX_NULLED));
     }
     else {
         //
@@ -319,11 +319,11 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
     }
 #endif
 
-    assert(not Typeset_Check(v, REB_0)); // REB_0 is used for internal purposes
+    assert(not Typeset_Check(v, TYPE_0)); // TYPE_0 is used for internal purposes
 
     // Convert bits to types.
     //
-    for (n = REB_0 + 1; n < REB_MAX; n++) {
+    for (n = TYPE_0 + 1; n < TYPE_MAX; n++) {
         if (Typeset_Check(v, cast(enum Reb_Kind, n))) {
             Emit(mo, "+DN ", SYM_DATATYPE_X, Canon(cast(SymId, n)));
         }
@@ -385,5 +385,5 @@ REBTYPE(Typeset)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_TYPESET, verb));
+    fail (Error_Illegal_Action(TYPE_TYPESET, verb));
 }

@@ -78,7 +78,7 @@ INLINE REBI64 VAL_PAIR_Y_INT(const Cell* v) {
 }
 
 INLINE Value* Init_Pair_Dec(Cell* out, float x, float y) {
-    RESET_CELL(out, REB_PAIR);
+    RESET_CELL(out, TYPE_PAIR);
     out->payload.pair = Alloc_Pairing();
     Init_Decimal(PAIRING_KEY(out->payload.pair), x);
     Init_Decimal(out->payload.pair, y);
@@ -87,7 +87,7 @@ INLINE Value* Init_Pair_Dec(Cell* out, float x, float y) {
 }
 
 INLINE Value* Init_Pair_Int(Cell* out, REBI64 x, REBI64 y) {
-    RESET_CELL(out, REB_PAIR);
+    RESET_CELL(out, TYPE_PAIR);
     out->payload.pair = Alloc_Pairing();
     Init_Integer(PAIRING_KEY(out->payload.pair), x);
     Init_Integer(out->payload.pair, y);
@@ -100,7 +100,7 @@ INLINE Value* Init_Pair(
     const Value* first,
     const Value* second
 ){
-    RESET_CELL(out, REB_PAIR);
+    RESET_CELL(out, TYPE_PAIR);
     assert(Is_Integer(first) or Is_Decimal(first));
     assert(Is_Integer(second) or Is_Decimal(second));
     out->payload.pair = Alloc_Pairing();
@@ -117,7 +117,7 @@ INLINE Value* Init_Zeroed_Hack(Cell* out, enum Reb_Kind kind) {
     // that clearing the payload of a value and then setting the header made
     // it the `zero?` of that type.  Review uses.
     //
-    if (kind == REB_PAIR) {
+    if (kind == TYPE_PAIR) {
         Init_Pair_Int(out, 0, 0);
     }
     else {

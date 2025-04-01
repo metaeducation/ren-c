@@ -523,12 +523,12 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
     }
 
     switch (Type_Of(rule)) {
-    case REB_BLANK:
+    case TYPE_BLANK:
         if (GET_ANY_CHAR(P_INPUT, P_POS) == ' ')  // treat as space
             return P_POS + 1;
         return END_FLAG;
 
-    case REB_CHAR:
+    case TYPE_CHAR:
         //
         // Try matching character against current string parse position
         //
@@ -546,9 +546,9 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
         }
         return END_FLAG;
 
-    case REB_EMAIL:
-    case REB_TEXT:
-    case REB_BINARY: {
+    case TYPE_EMAIL:
+    case TYPE_TEXT:
+    case TYPE_BINARY: {
         REBLEN index = Find_Str_Str(
             P_INPUT,
             0,
@@ -564,7 +564,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             return END_FLAG;
         return index; }
 
-    case REB_FILE: {
+    case TYPE_FILE: {
         //
         // !!! The content to be matched does not have the delimiters in the
         // actual series data.  This FORMs it, but could be more optimized.
@@ -586,7 +586,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             return END_FLAG;
         return index; }
 
-    case REB_BITSET:
+    case TYPE_BITSET:
         //
         // Check the current character against a character set, advance matches
         //
@@ -597,7 +597,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
         }
         return END_FLAG;
 
-    case REB_BLOCK: {
+    case TYPE_BLOCK: {
         //
         // This parses a sub-rule block.  It may throw, and it may mutate the
         // input series.
@@ -681,32 +681,32 @@ static REBIXO Parse_Array_One_Rule_Core(
     }
 
     switch (Type_Of(rule)) {
-    case REB_BLANK:
-        if (Type_Of(item) == REB_BLANK)
+    case TYPE_BLANK:
+        if (Type_Of(item) == TYPE_BLANK)
             return pos + 1;
         return END_FLAG;
 
-    case REB_DATATYPE:
+    case TYPE_DATATYPE:
         if (Type_Of(item) == CELL_DATATYPE_TYPE(rule)) // specific datatype match
             return pos + 1;
         return END_FLAG;
 
-    case REB_TYPESET:
+    case TYPE_TYPESET:
         if (Typeset_Check(rule, Type_Of(item))) // type was found in the typeset
             return pos + 1;
         return END_FLAG;
 
-    case REB_LIT_WORD:
+    case TYPE_LIT_WORD:
         if (Is_Word(item) and VAL_WORD_CANON(item) == VAL_WORD_CANON(rule))
             return pos + 1;
         return END_FLAG;
 
-    case REB_LIT_PATH:
+    case TYPE_LIT_PATH:
         if (Is_Path(item) and Cmp_Array(item, rule, false) == 0)
             return pos + 1;
         return END_FLAG;
 
-    case REB_BLOCK: {
+    case TYPE_BLOCK: {
         //
         // Process a subrule.  The subrule will run in its own frame, so it
         // will not change P_POS directly (it will have its own P_INPUT_VALUE)
@@ -743,8 +743,8 @@ static REBIXO Parse_Array_One_Rule_Core(
         assert(index >= 0);
         return cast(REBLEN, index); }
 
-    case REB_TEXT:
-    case REB_ISSUE:
+    case TYPE_TEXT:
+    case TYPE_ISSUE:
         break;
 
     default:
@@ -882,7 +882,7 @@ static REBIXO To_Thru_Block_Rule(
                     return pos - 1; // back up
                 }
             }
-            else if (P_TYPE == REB_BINARY) {
+            else if (P_TYPE == TYPE_BINARY) {
                 Byte ch1 = *Binary_At(Cell_Binary(P_INPUT_VALUE), pos);
 
                 // Handle special string types:
@@ -1102,7 +1102,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         DECLARE_VALUE (word);
         if (Is_Lit_Word(rule)) {
             Derelativize(word, rule, P_RULE_SPECIFIER);
-            CHANGE_VAL_TYPE_BITS(word, REB_WORD);
+            CHANGE_VAL_TYPE_BITS(word, TYPE_WORD);
             rule = word;
         }
 
@@ -1394,7 +1394,7 @@ DECLARE_NATIVE(SUBPARSE)
         const Cell* subrule = nullptr;
 
         // If word, set-word, or get-word, process it:
-        if (Type_Of(rule) >= REB_WORD and Type_Of(rule) <= REB_GET_WORD) {
+        if (Type_Of(rule) >= TYPE_WORD and Type_Of(rule) <= TYPE_GET_WORD) {
 
             Option(SymId) cmd = VAL_CMD(rule);
             if (cmd) {
@@ -2285,7 +2285,7 @@ DECLARE_NATIVE(SUBPARSE)
                                 set_or_copy_word, P_RULE_SPECIFIER
                             );
                             Ucs2Unit ch = GET_ANY_CHAR(P_INPUT, begin);
-                            if (P_TYPE == REB_BINARY)
+                            if (P_TYPE == TYPE_BINARY)
                                 Init_Integer(var, ch);
                             else
                                 Init_Char(var, ch);
@@ -2377,7 +2377,7 @@ DECLARE_NATIVE(SUBPARSE)
                         if (Is_Lit_Word(rule))
                             CHANGE_VAL_TYPE_BITS( // keeps binding flags
                                 Array_At(cast_Array(P_INPUT), P_POS - 1),
-                                REB_WORD
+                                TYPE_WORD
                             );
                     }
                     else {
@@ -2388,7 +2388,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                         REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
 
-                        if (P_TYPE == REB_BINARY)
+                        if (P_TYPE == TYPE_BINARY)
                             P_POS = Modify_Binary(
                                 P_INPUT_VALUE,
                                 (P_FLAGS & PF_CHANGE)

@@ -71,15 +71,15 @@ void MF_Unit(Molder* mo, const Cell* v, bool form)
     UNUSED(form); // no distinction between MOLD and FORM
 
     switch (Type_Of(v)) {
-      case REB_BLANK:
+      case TYPE_BLANK:
         Append_Unencoded(mo->utf8flex, "_");
         break;
 
-      case REB_NOTHING:  // In modern Ren-C, nothing is an antiform of blank
+      case TYPE_NOTHING:  // In modern Ren-C, nothing is an antiform of blank
         Append_Unencoded(mo->utf8flex, "~");
         break;
 
-      case REB_VOID:  // In modern Ren-C, void is the antiform of the word VOID
+      case TYPE_VOID:  // In modern Ren-C, void is the antiform of the word VOID
         Append_Unencoded(mo->utf8flex, "~void~");
         break;
 
@@ -217,5 +217,5 @@ REBTYPE(Handle)
 {
     UNUSED(level_);
 
-    fail (Error_Illegal_Action(REB_HANDLE, verb));
+    fail (Error_Illegal_Action(TYPE_HANDLE, verb));
 }

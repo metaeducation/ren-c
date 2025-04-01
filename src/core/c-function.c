@@ -49,23 +49,23 @@ Array* List_Func_Words(const Cell* func, bool pure_locals)
 
         switch (Cell_Parameter_Class(param)) {
         case PARAMCLASS_NORMAL:
-            kind = REB_WORD;
+            kind = TYPE_WORD;
             break;
 
         case PARAMCLASS_TIGHT:
-            kind = REB_ISSUE;
+            kind = TYPE_ISSUE;
             break;
 
         case PARAMCLASS_REFINEMENT:
-            kind = REB_REFINEMENT;
+            kind = TYPE_REFINEMENT;
             break;
 
         case PARAMCLASS_HARD_QUOTE:
-            kind = REB_GET_WORD;
+            kind = TYPE_GET_WORD;
             break;
 
         case PARAMCLASS_SOFT_QUOTE:
-            kind = REB_LIT_WORD;
+            kind = TYPE_LIT_WORD;
             break;
 
         case PARAMCLASS_LOCAL:
@@ -73,7 +73,7 @@ Array* List_Func_Words(const Cell* func, bool pure_locals)
             if (not pure_locals)
                 continue; // treat as invisible, e.g. for WORDS-OF
 
-            kind = REB_SET_WORD;
+            kind = TYPE_SET_WORD;
             break;
 
         default:
@@ -108,7 +108,7 @@ Array* List_Func_Typesets(Value* func)
         // bits.  This may not be desirable over the long run (what if
         // a typeset wishes to encode hiddenness, protectedness, etc?)
         //
-        RESET_CELL(value, REB_TYPESET);
+        RESET_CELL(value, TYPE_TYPESET);
     }
 
     return array;
@@ -336,7 +336,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // not "passed in" that way...the refinement is inactive.
             //
             if (refinement_seen) {
-                if (Typeset_Check(typeset, REB_MAX_NULLED))
+                if (Typeset_Check(typeset, TYPE_MAX_NULLED))
                     fail (Error_Refinement_Arg_Opt_Raw());
             }
 
@@ -381,7 +381,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         // SPECIALIZE and other scenarios.
         //
         // Note there are currently two ways to get NULL: ~null~ and <end>.
-        // If the typeset bits contain REB_MAX_NULLED, that indicates ~null~.
+        // If the typeset bits contain TYPE_MAX_NULLED, that indicates ~null~.
         // But Is_Param_Endable() indicates <end>.
         //
         Value* typeset = Init_Typeset(
@@ -389,8 +389,8 @@ Array* Make_Paramlist_Managed_May_Fail(
             (flags & MKF_Any_Value)
                 ? TS_OPT_VALUE
                 : TS_VALUE & ~(
-                    FLAGIT_KIND(REB_ACTION)
-                    | FLAGIT_KIND(REB_NOTHING)
+                    FLAGIT_KIND(TYPE_ACTION)
+                    | FLAGIT_KIND(TYPE_NOTHING)
                 ),
             Cell_Word_Symbol(item) // don't canonize, see #2258
         );
@@ -432,7 +432,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         }
 
         switch (Type_Of(item)) {
-        case REB_WORD:
+        case TYPE_WORD:
             assert(mode != SPEC_MODE_WITH); // should have continued...
             Tweak_Parameter_Class(
                 typeset,
@@ -442,17 +442,17 @@ Array* Make_Paramlist_Managed_May_Fail(
             );
             break;
 
-        case REB_GET_WORD:
+        case TYPE_GET_WORD:
             assert(mode == SPEC_MODE_NORMAL);
             Tweak_Parameter_Class(typeset, PARAMCLASS_HARD_QUOTE);
             break;
 
-        case REB_LIT_WORD:
+        case TYPE_LIT_WORD:
             assert(mode == SPEC_MODE_NORMAL);
             Tweak_Parameter_Class(typeset, PARAMCLASS_SOFT_QUOTE);
             break;
 
-        case REB_REFINEMENT:
+        case TYPE_REFINEMENT:
             refinement_seen = true;
             Tweak_Parameter_Class(typeset, PARAMCLASS_REFINEMENT);
 
@@ -462,7 +462,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // bits available in it for another purpose.
             break;
 
-        case REB_SET_WORD:
+        case TYPE_SET_WORD:
             // tolerate as-is if in <local> or <with> mode...
             Tweak_Parameter_Class(typeset, PARAMCLASS_LOCAL);
             //
@@ -472,7 +472,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             //
             break;
 
-        case REB_ISSUE:
+        case TYPE_ISSUE:
             //
             // !!! Because of their role in the preprocessor in Red, and a
             // likely need for a similar behavior in Rebol, ISSUE! might not
@@ -559,7 +559,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     if (true) {
         Value* canon = Reset_Cell_Header(
             Array_Head(paramlist),
-            REB_ACTION,
+            TYPE_ACTION,
             header_bits
         );
         canon->payload.action.paramlist = paramlist;
@@ -672,7 +672,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         MISC(types_varlist).meta = nullptr;  // GC sees this, must initialize
         Tweak_Keylist_Of_Varlist_Shared(CTX(types_varlist), paramlist);
 
-        Value* rootvar = RESET_CELL(Array_Head(types_varlist), REB_FRAME);
+        Value* rootvar = RESET_CELL(Array_Head(types_varlist), TYPE_FRAME);
         rootvar->payload.any_context.varlist = types_varlist; // canon FRAME!
         rootvar->payload.any_context.phase = ACT(paramlist);
         INIT_BINDING(rootvar, UNBOUND);
@@ -719,7 +719,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
         Init_Any_Context(
             Varlist_Slot(meta, STD_ACTION_META_PARAMETER_TYPES),
-            REB_FRAME,
+            TYPE_FRAME,
             CTX(types_varlist)
         );
     }
@@ -734,7 +734,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         MISC(notes_varlist).meta = nullptr;  // GC sees this, must initialize
         Tweak_Keylist_Of_Varlist_Shared(CTX(notes_varlist), paramlist);
 
-        Value* rootvar = RESET_CELL(Array_Head(notes_varlist), REB_FRAME);
+        Value* rootvar = RESET_CELL(Array_Head(notes_varlist), TYPE_FRAME);
         rootvar->payload.any_context.varlist = notes_varlist; // canon FRAME!
         rootvar->payload.any_context.phase = ACT(paramlist);
         INIT_BINDING(rootvar, UNBOUND);
@@ -849,7 +849,7 @@ REBACT *Make_Action(
     Assert_Flex_Managed(paramlist);
 
     Cell* rootparam = Array_Head(paramlist);
-    assert(VAL_TYPE_RAW(rootparam) == REB_ACTION); // !!! not fully formed...
+    assert(VAL_TYPE_RAW(rootparam) == TYPE_ACTION); // !!! not fully formed...
     assert(rootparam->payload.action.paramlist == paramlist);
     assert(rootparam->extra.binding == UNBOUND); // archetype
 
@@ -909,7 +909,7 @@ REBACT *Make_Action(
             break;
 
         case PARAMCLASS_HARD_QUOTE:
-            if (Typeset_Check(param, REB_MAX_NULLED))
+            if (Typeset_Check(param, TYPE_MAX_NULLED))
                 fail ("Hard quoted function parameters cannot receive nulls");
 
             goto quote_check;
@@ -962,7 +962,7 @@ REBACT *Make_Action(
     else {
         // The parameters of the paramlist should line up with the slots of
         // the exemplar (though some of these parameters may be hidden due to
-        // specialization, see REB_TS_HIDDEN).
+        // specialization, see TYPE_TS_HIDDEN).
         //
         assert(Is_Node_Managed(opt_exemplar));
         assert(Varlist_Len(opt_exemplar) == Array_Len(paramlist) - 1);
@@ -1015,7 +1015,7 @@ VarList* Make_Expired_Level_Ctx_Managed(REBACT *a)
     Set_Flex_Info(varlist, INACCESSIBLE);
     MISC(varlist).meta = nullptr;
 
-    Cell* rootvar = RESET_CELL(ARR_SINGLE(varlist), REB_FRAME);
+    Cell* rootvar = RESET_CELL(ARR_SINGLE(varlist), TYPE_FRAME);
     rootvar->payload.any_context.varlist = varlist;
     rootvar->payload.any_context.phase = a;
     INIT_BINDING(rootvar, UNBOUND); // !!! is a binding relevant?
@@ -1118,7 +1118,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
             Cell* slot = Array_At(maybe_fake_body, real_body_index); // #BODY
             assert(Is_Issue(slot));
 
-            Reset_Cell_Header(slot, REB_GROUP, 0); // clear VAL_FLAG_LINE
+            Reset_Cell_Header(slot, TYPE_GROUP, 0); // clear VAL_FLAG_LINE
             INIT_VAL_ARRAY(slot, Cell_Array(body));
             VAL_INDEX(slot) = 0;
             INIT_BINDING(slot, a); // relative binding
@@ -1127,7 +1127,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         // Cannot give user a relative value back, so make the relative
         // body specific to a fabricated expired frame.  See #2221
 
-        Reset_Cell_Header(out, REB_BLOCK, 0);
+        Reset_Cell_Header(out, TYPE_BLOCK, 0);
         INIT_VAL_ARRAY(out, maybe_fake_body);
         VAL_INDEX(out) = 0;
         INIT_BINDING(out, Make_Expired_Level_Ctx_Managed(a));
@@ -1227,7 +1227,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         else if (Get_Cell_Flag(value, ACTION_RETURN)) {
             Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
             assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
-            if (not Typeset_Check(typeset, REB_MAX_NULLED)) // eval [] returns
+            if (not Typeset_Check(typeset, TYPE_MAX_NULLED)) // eval [] returns
                 ACT_DISPATCHER(a) = &Returner_Dispatcher; // error when run
         }
         else {
@@ -1256,7 +1256,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         );
     }
 
-    Cell* body = RESET_CELL(Array_Head(ACT_DETAILS(a)), REB_BLOCK);
+    Cell* body = RESET_CELL(Array_Head(ACT_DETAILS(a)), TYPE_BLOCK);
     INIT_VAL_ARRAY(body, copy);
     VAL_INDEX(body) = 0;
     INIT_BINDING(body, a); // Record that block is relative to a function
@@ -1305,7 +1305,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
 // !!! Currently all types have a REBTYPE() handler for either themselves or
 // their class.  But having a handler that could be "swapped in" from a
 // default failing case is an idea that could be used as an interim step
-// to allow something like REB_GOB to fail by default, but have the failing
+// to allow something like TYPE_GOB to fail by default, but have the failing
 // type handler swapped out by an extension.
 //
 REBTYPE(Fail)
@@ -1345,7 +1345,7 @@ Bounce Generic_Dispatcher(Level* L)
     enum Reb_Kind kind = Type_Of(Level_Arg(L, 1));
     Value* verb = KNOWN(Array_Head(details));
     assert(Is_Word(verb));
-    assert(kind < REB_MAX);
+    assert(kind < TYPE_MAX);
 
     GENERIC_HOOK hook = Generic_Hooks[kind];
     return hook(L, verb);

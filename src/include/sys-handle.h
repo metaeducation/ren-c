@@ -120,7 +120,7 @@ INLINE Value* Init_Handle_Simple(
     void *pointer,
     uintptr_t length
 ){
-    RESET_CELL(out, REB_HANDLE);
+    RESET_CELL(out, TYPE_HANDLE);
     out->extra.singular = nullptr;
     out->payload.handle.data.pointer = pointer;
     out->payload.handle.length = length;
@@ -132,7 +132,7 @@ INLINE Value* Init_Handle_Cfunc(
     CFUNC *cfunc,
     uintptr_t length
 ){
-    Reset_Cell_Header(out, REB_HANDLE, CELL_FLAG_HANDLE_CFUNC);
+    Reset_Cell_Header(out, TYPE_HANDLE, CELL_FLAG_HANDLE_CFUNC);
     out->extra.singular = nullptr;
     out->payload.handle.data.cfunc = cfunc;
     out->payload.handle.length = length;
@@ -163,7 +163,7 @@ INLINE void Init_Handle_Managed_Common(
     // effectively update all instances...since the bits live in the shared
     // series component.
     //
-    RESET_CELL(out, REB_HANDLE);
+    RESET_CELL(out, TYPE_HANDLE);
     out->extra.singular = singular;
     Corrupt_Pointer_If_Debug(out->payload.handle.data.pointer);
 }
@@ -178,9 +178,9 @@ INLINE Value* Init_Handle_Managed(
 
     // Leave the non-singular cfunc as corrupt; clients should not be using
     //
-    Reset_Cell_Header(out, REB_HANDLE, 0);
+    Reset_Cell_Header(out, TYPE_HANDLE, 0);
 
-    RESET_CELL(Array_Head(out->extra.singular), REB_HANDLE);
+    RESET_CELL(Array_Head(out->extra.singular), TYPE_HANDLE);
     Array_Head(out->extra.singular)->payload.handle.data.pointer = pointer;
     return KNOWN(out);
 }
@@ -195,11 +195,11 @@ INLINE Value* Init_Handle_Managed_Cfunc(
 
     // Leave the non-singular cfunc as corrupt; clients should not be using
     //
-    Reset_Cell_Header(out, REB_HANDLE, CELL_FLAG_HANDLE_CFUNC);
+    Reset_Cell_Header(out, TYPE_HANDLE, CELL_FLAG_HANDLE_CFUNC);
 
     Reset_Cell_Header(
         Array_Head(out->extra.singular),
-        REB_HANDLE,
+        TYPE_HANDLE,
         CELL_FLAG_HANDLE_CFUNC
     );
     Array_Head(out->extra.singular)->payload.handle.data.cfunc = cfunc;

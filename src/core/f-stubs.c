@@ -215,7 +215,7 @@ REBI64 Int64s(const Value* val, REBINT sign)
 //
 const Value* Datatype_From_Kind(enum Reb_Kind kind)
 {
-    assert(kind > REB_0 and kind < REB_MAX);
+    assert(kind > TYPE_0 and kind < TYPE_MAX);
     Value* type = Varlist_Slot(Lib_Context, SYM_FROM_KIND(kind));
     assert(Is_Datatype(type));
     return type;
@@ -227,7 +227,7 @@ const Value* Datatype_From_Kind(enum Reb_Kind kind)
 //
 Value* Init_Datatype(Cell* out, enum Reb_Kind kind)
 {
-    assert(kind > REB_0 and kind < REB_MAX);
+    assert(kind > TYPE_0 and kind < TYPE_MAX);
     Copy_Cell(out, Datatype_From_Kind(kind));
     return KNOWN(out);
 }
@@ -329,7 +329,7 @@ void Set_Tuple(Value* value, Byte *bytes, REBLEN len)
 {
     Byte *bp;
 
-    RESET_CELL(value, REB_TUPLE);
+    RESET_CELL(value, TYPE_TUPLE);
     VAL_TUPLE_LEN(value) = (Byte)len;
     for (bp = VAL_TUPLE(value); len > 0; len--)
         *bp++ = *bytes++;
@@ -353,7 +353,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, VarList* c) {
     // Currently only FRAME! uses the ->binding field, in order to capture the
     // ->binding of the function value it links to (which is in ->phase)
     //
-    assert(VAL_BINDING(archetype) == UNBOUND or CTX_TYPE(c) == REB_FRAME);
+    assert(VAL_BINDING(archetype) == UNBOUND or CTX_TYPE(c) == TYPE_FRAME);
 
     Array* varlist = Varlist_Array(c);
     Array* keylist = Keylist_Of_Varlist(c);
@@ -368,7 +368,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, VarList* c) {
     // cell is reserved for future use in other context types...so make
     // sure it's null at this point in time.
     //
-    if (CTX_TYPE(c) == REB_FRAME) {
+    if (CTX_TYPE(c) == TYPE_FRAME) {
         assert(Is_Action(CTX_ROOTKEY(c)));
         assert(archetype->payload.any_context.phase);
     }
@@ -536,7 +536,7 @@ int64_t Add_Max(enum Reb_Kind kind_or_0, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n + m;
     if (r < -maxi or r > maxi) {
-        if (kind_or_0 != REB_0)
+        if (kind_or_0 != TYPE_0)
             fail (Error_Type_Limit_Raw(Datatype_From_Kind(kind_or_0)));
         r = r > 0 ? maxi : -maxi;
     }

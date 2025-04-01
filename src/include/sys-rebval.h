@@ -34,8 +34,8 @@
 // system should be *able* to work even if the size is different.
 //
 // Of the four 32-or-64-bit slots that each value has, the first is used for
-// the value's "Header".  This includes the data type, such as REB_INTEGER,
-// REB_BLOCK, REB_TEXT, etc.  Then there are flags which are for general
+// the value's "Header".  This includes the data type, such as TYPE_INTEGER,
+// TYPE_BLOCK, TYPE_TEXT, etc.  Then there are flags which are for general
 // purposes that could apply equally well to any type of value (including
 // whether the value should have a new-line after it when molded out inside
 // of a block).  Followed by that are bits which are custom to each type (for
@@ -454,7 +454,7 @@ struct Reb_Context_Payload {
     // may be shared with an arbitrary number of other contexts.  Changing
     // the keylist involves making a copy if it is shared.
     //
-    // REB_MODULE depends on a property stored in the "meta" Stub.link
+    // TYPE_MODULE depends on a property stored in the "meta" Stub.link
     // field of the keylist, which is another object's-worth of data *about*
     // the module's contents (e.g. the processed header)
     //
@@ -595,7 +595,7 @@ union Reb_Value_Extra {
     //
     Stub* binding;
 
-    // See REB_X_PARTIAL.
+    // See TYPE_X_PARTIAL.
     //
     Value* next_partial; // links to next potential partial refinement arg
 

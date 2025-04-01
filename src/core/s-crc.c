@@ -191,24 +191,24 @@ uint32_t Hash_Value(const Cell* v)
     uint32_t hash;
 
     switch(Type_Of(v)) {
-    case REB_MAX_NULLED:
+    case TYPE_MAX_NULLED:
         //
         // While a void might technically be hashed, it can't be a value *or*
         // a key in a map.
         //
         panic (nullptr);
 
-    case REB_BLANK:
-    case REB_NOTHING:
-    case REB_VOID:
+    case TYPE_BLANK:
+    case TYPE_NOTHING:
+    case TYPE_VOID:
         hash = 0;
         break;
 
-    case REB_LOGIC:
+    case TYPE_LOGIC:
         hash = VAL_LOGIC(v) ? 1 : 0;
         break;
 
-    case REB_INTEGER:
+    case TYPE_INTEGER:
         //
         // R3-Alpha XOR'd with (VAL_INT64(val) >> 32).  But: "XOR with high
         // bits collapses -1 with 0 etc.  (If your key k is |k| < 2^32 high
@@ -217,40 +217,40 @@ uint32_t Hash_Value(const Cell* v)
         hash = cast(uint32_t, VAL_INT64(v));
         break;
 
-    case REB_DECIMAL:
-    case REB_PERCENT:
+    case TYPE_DECIMAL:
+    case TYPE_PERCENT:
         // depends on INT64 sharing the DEC64 bits
         hash = (VAL_INT64(v) >> 32) ^ (VAL_INT64(v));
         break;
 
-    case REB_CHAR:
+    case TYPE_CHAR:
         hash = LO_CASE(VAL_CHAR(v));
         break;
 
-    case REB_PAIR: {
+    case TYPE_PAIR: {
         hash = Hash_Value(VAL_PAIR(v));
         hash ^= Hash_Value(PAIRING_KEY(VAL_PAIR(v)));
         break; }
 
-    case REB_TUPLE:
+    case TYPE_TUPLE:
         hash = Hash_Bytes_Or_Uni(VAL_TUPLE(v), VAL_TUPLE_LEN(v), 1);
         break;
 
-    case REB_TIME:
-    case REB_DATE:
+    case TYPE_TIME:
+    case TYPE_DATE:
         hash = cast(REBLEN, VAL_NANO(v) ^ (VAL_NANO(v) / SEC_SEC));
         if (Is_Date(v))
             hash ^= VAL_DATE(v).bits;
         break;
 
-    case REB_BINARY:
-    case REB_TEXT:
-    case REB_FILE:
-    case REB_EMAIL:
-    case REB_URL:
-    case REB_TAG:
-    case REB_MONEY:
-    case REB_TRIPWIRE:
+    case TYPE_BINARY:
+    case TYPE_TEXT:
+    case TYPE_FILE:
+    case TYPE_EMAIL:
+    case TYPE_URL:
+    case TYPE_TAG:
+    case TYPE_MONEY:
+    case TYPE_TRIPWIRE:
         hash = Hash_Bytes_Or_Uni(
             VAL_RAW_DATA_AT(v),
             VAL_LEN_HEAD(v),
@@ -258,12 +258,12 @@ uint32_t Hash_Value(const Cell* v)
         );
         break;
 
-    case REB_BLOCK:
-    case REB_GROUP:
-    case REB_PATH:
-    case REB_SET_PATH:
-    case REB_GET_PATH:
-    case REB_LIT_PATH:
+    case TYPE_BLOCK:
+    case TYPE_GROUP:
+    case TYPE_PATH:
+    case TYPE_SET_PATH:
+    case TYPE_GET_PATH:
+    case TYPE_LIT_PATH:
         //
         // !!! Lame hash just to get it working.  There will be lots of
         // collisions.  Intentionally bad to avoid writing something that
@@ -280,12 +280,12 @@ uint32_t Hash_Value(const Cell* v)
         hash = Array_Len(Cell_Array(v));
         break;
 
-    case REB_DATATYPE: {
+    case TYPE_DATATYPE: {
         hash = Hash_String(Canon(VAL_TYPE_SYM(v)));
         break; }
 
-    case REB_BITSET:
-    case REB_TYPESET:
+    case TYPE_BITSET:
+    case TYPE_TYPESET:
         //
         // These types are currently not supported.
         //
@@ -293,12 +293,12 @@ uint32_t Hash_Value(const Cell* v)
         //
         fail (Error_Invalid_Type(Type_Of(v)));
 
-    case REB_WORD:
-    case REB_SET_WORD:
-    case REB_GET_WORD:
-    case REB_LIT_WORD:
-    case REB_REFINEMENT:
-    case REB_ISSUE: {
+    case TYPE_WORD:
+    case TYPE_SET_WORD:
+    case TYPE_GET_WORD:
+    case TYPE_LIT_WORD:
+    case TYPE_REFINEMENT:
+    case TYPE_ISSUE: {
         //
         // Note that the canon symbol may change for a group of word synonyms
         // if that canon is GC'd--it picks another synonym.  Thus the pointer
@@ -311,7 +311,7 @@ uint32_t Hash_Value(const Cell* v)
         hash = Hash_String(Cell_Word_Symbol(v));
         break; }
 
-    case REB_ACTION:
+    case TYPE_ACTION:
         //
         // Because function equality is by identity only and they are
         // immutable once created, it is legal to put them in hashes.  The
@@ -320,11 +320,11 @@ uint32_t Hash_Value(const Cell* v)
         hash = cast(REBLEN, i_cast(uintptr_t, VAL_ACTION(v)) >> 4);
         break;
 
-    case REB_FRAME:
-    case REB_MODULE:
-    case REB_ERROR:
-    case REB_PORT:
-    case REB_OBJECT:
+    case TYPE_FRAME:
+    case TYPE_MODULE:
+    case TYPE_ERROR:
+    case TYPE_PORT:
+    case TYPE_OBJECT:
         //
         // !!! ANY-CONTEXT has a uniquely identifying context pointer for that
         // context.  However, this does not help with "natural =" comparison
@@ -340,7 +340,7 @@ uint32_t Hash_Value(const Cell* v)
         hash = cast(uint32_t, i_cast(uintptr_t, Cell_Varlist(v)) >> 4);
         break;
 
-    case REB_MAP:
+    case TYPE_MAP:
         //
         // Looking up a map in a map is fairly analogous to looking up an
         // object in a map.  If one is permitted, so should the other be.
@@ -350,8 +350,8 @@ uint32_t Hash_Value(const Cell* v)
         hash = cast(uint32_t, i_cast(uintptr_t, VAL_MAP(v)) >> 4);
         break;
 
-    case REB_EVENT:
-    case REB_HANDLE:
+    case TYPE_EVENT:
+    case TYPE_HANDLE:
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //
@@ -403,7 +403,7 @@ Value* Init_Map(Cell* out, REBMAP *map)
 
     Force_Flex_Managed(MAP_PAIRLIST(map));
 
-    RESET_CELL(out, REB_MAP);
+    RESET_CELL(out, TYPE_MAP);
     INIT_BINDING(out, UNBOUND);
     out->payload.any_series.series = MAP_PAIRLIST(map);
     out->payload.any_series.index = 0;

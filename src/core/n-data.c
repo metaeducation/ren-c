@@ -150,7 +150,7 @@ DECLARE_NATIVE(BIND)
         add_midstream_types = TS_WORD;
     }
     else if (Bool_ARG(SET)) {
-        add_midstream_types = FLAGIT_KIND(REB_SET_WORD);
+        add_midstream_types = FLAGIT_KIND(TYPE_SET_WORD);
     }
     else
         add_midstream_types = 0;
@@ -285,7 +285,7 @@ DECLARE_NATIVE(USE)
 bool Did_Get_Binding_Of(Value* out, const Value* v)
 {
     switch (Type_Of(v)) {
-    case REB_ACTION: {
+    case TYPE_ACTION: {
         Stub *binding = VAL_BINDING(v); // see METHOD, RETURNs also have it
         if (not binding)
             return false;
@@ -293,12 +293,12 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
         Init_Frame(out, CTX(binding));
         break; }
 
-    case REB_WORD:
-    case REB_SET_WORD:
-    case REB_GET_WORD:
-    case REB_LIT_WORD:
-    case REB_REFINEMENT:
-    case REB_ISSUE: {
+    case TYPE_WORD:
+    case TYPE_SET_WORD:
+    case TYPE_GET_WORD:
+    case TYPE_LIT_WORD:
+    case TYPE_REFINEMENT:
+    case TYPE_ISSUE: {
         if (IS_WORD_UNBOUND(v))
             return false;
 
@@ -978,11 +978,11 @@ DECLARE_NATIVE(AS)
     enum Reb_Kind new_kind = CELL_DATATYPE_TYPE(ARG(TYPE));
 
     switch (new_kind) {
-    case REB_BLOCK:
-    case REB_GROUP:
-    case REB_PATH:
-    case REB_LIT_PATH:
-    case REB_GET_PATH:
+    case TYPE_BLOCK:
+    case TYPE_GROUP:
+    case TYPE_PATH:
+    case TYPE_LIT_PATH:
+    case TYPE_GET_PATH:
         if (new_kind == Type_Of(v))
             RETURN (v); // no-op
 
@@ -990,11 +990,11 @@ DECLARE_NATIVE(AS)
             goto bad_cast;
         break;
 
-    case REB_TEXT:
-    case REB_TAG:
-    case REB_FILE:
-    case REB_URL:
-    case REB_EMAIL: {
+    case TYPE_TEXT:
+    case TYPE_TAG:
+    case TYPE_FILE:
+    case TYPE_URL:
+    case TYPE_EMAIL: {
         if (new_kind == Type_Of(v))
             RETURN (v); // no-op
 
@@ -1040,12 +1040,12 @@ DECLARE_NATIVE(AS)
             goto bad_cast;
         break; }
 
-    case REB_WORD:
-    case REB_GET_WORD:
-    case REB_SET_WORD:
-    case REB_LIT_WORD:
-    case REB_ISSUE:
-    case REB_REFINEMENT: {
+    case TYPE_WORD:
+    case TYPE_GET_WORD:
+    case TYPE_SET_WORD:
+    case TYPE_LIT_WORD:
+    case TYPE_ISSUE:
+    case TYPE_REFINEMENT: {
         if (new_kind == Type_Of(v))
             RETURN (v); // no-op
 
@@ -1093,7 +1093,7 @@ DECLARE_NATIVE(AS)
             goto bad_cast;
         break; }
 
-    case REB_BINARY: {
+    case TYPE_BINARY: {
         if (new_kind == Type_Of(v))
             RETURN (v); // no-op
 

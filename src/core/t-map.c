@@ -508,7 +508,7 @@ INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
 //
 Bounce TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_MAP);
+    assert(kind == TYPE_MAP);
     UNUSED(kind);
 
     if (Is_Block(arg) || Is_Group(arg)) {
@@ -595,7 +595,7 @@ VarList* Alloc_Context_From_Map(REBMAP *map)
 
     // See Alloc_Context() - cannot use it directly because no Collect_Words
 
-    VarList* context = Alloc_Context(REB_OBJECT, count);
+    VarList* context = Alloc_Context(TYPE_OBJECT, count);
     Value* key = Varlist_Keys_Head(context);
     Value* var = Varlist_Slots_Head(context);
 
@@ -716,7 +716,7 @@ REBTYPE(Map)
             break;
         }
 
-        fail (Error_Cannot_Reflect(REB_MAP, arg)); }
+        fail (Error_Cannot_Reflect(TYPE_MAP, arg)); }
 
     case SYM_FIND:
     case SYM_SELECT: {
@@ -833,7 +833,7 @@ REBTYPE(Map)
             fail (Error_Bad_Refines_Raw());
         }
         if (not Bool_ARG(MAP))
-            fail (Error_Illegal_Action(REB_MAP, verb));
+            fail (Error_Illegal_Action(TYPE_MAP, verb));
 
         Copy_Cell(OUT, val);
         Find_Map_Entry(
@@ -880,5 +880,5 @@ REBTYPE(Map)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_MAP, verb));
+    fail (Error_Illegal_Action(TYPE_MAP, verb));
 }

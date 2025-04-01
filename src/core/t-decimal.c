@@ -116,7 +116,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 Value* Init_Decimal_Bits(Cell* out, const Byte *bp)
 {
-    RESET_CELL(out, REB_DECIMAL);
+    RESET_CELL(out, TYPE_DECIMAL);
 
     Byte *dp = cast(Byte*, &VAL_DECIMAL(out));
 
@@ -144,48 +144,48 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
     REBDEC d;
 
     switch (Type_Of(arg)) {
-    case REB_DECIMAL:
+    case TYPE_DECIMAL:
         d = VAL_DECIMAL(arg);
         goto dont_divide_if_percent;
 
-    case REB_PERCENT:
+    case TYPE_PERCENT:
         d = VAL_DECIMAL(arg);
         goto dont_divide_if_percent;
 
-    case REB_INTEGER:
+    case TYPE_INTEGER:
         d = cast(REBDEC, VAL_INT64(arg));
         goto dont_divide_if_percent;
 
-    case REB_LOGIC:
+    case TYPE_LOGIC:
         d = VAL_LOGIC(arg) ? 1.0 : 0.0;
         goto dont_divide_if_percent;
 
-    case REB_CHAR:
+    case TYPE_CHAR:
         d = cast(REBDEC, VAL_CHAR(arg));
         goto dont_divide_if_percent;
 
-    case REB_TIME:
+    case TYPE_TIME:
         d = cast(REBDEC, VAL_NANO(arg)) * NANO;
         break;
 
-    case REB_MONEY:
-    case REB_TEXT: {
+    case TYPE_MONEY:
+    case TYPE_TEXT: {
         Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
         Erase_Cell(out);
-        if (nullptr == Scan_Decimal(out, bp, size, kind != REB_PERCENT))
+        if (nullptr == Scan_Decimal(out, bp, size, kind != TYPE_PERCENT))
             goto bad_make;
 
         d = VAL_DECIMAL(out); // may need to divide if percent, fall through
         break; }
 
-    case REB_BINARY:
+    case TYPE_BINARY:
         if (Cell_Series_Len_At(arg) < 8)
             fail (Error_Invalid(arg));
 
-        Init_Decimal_Bits(out, Cell_Blob_At(arg)); // makes REB_DECIMAL
-        RESET_CELL(out, kind); // override type if REB_PERCENT
+        Init_Decimal_Bits(out, Cell_Blob_At(arg)); // makes TYPE_DECIMAL
+        RESET_CELL(out, kind); // override type if TYPE_PERCENT
         d = VAL_DECIMAL(out);
         break;
 
@@ -228,7 +228,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
             fail (Error_Bad_Make(kind, arg));
     }
 
-    if (kind == REB_PERCENT)
+    if (kind == TYPE_PERCENT)
         d /= 100.0;
 
 dont_divide_if_percent:
@@ -300,8 +300,8 @@ void MF_Decimal(Molder* mo, const Cell* v, bool form)
     UNUSED(form);
 
     switch (Type_Of(v)) {
-    case REB_DECIMAL:
-    case REB_PERCENT: {
+    case TYPE_DECIMAL:
+    case TYPE_PERCENT: {
         Byte buf[60];
         REBINT len = Emit_Decimal(
             buf,
@@ -347,10 +347,10 @@ REBTYPE(Decimal)
         arg = D_ARG(2);
         type = Type_Of(arg);
         if ((
-            type == REB_PAIR
-            or type == REB_TUPLE
-            or type == REB_MONEY
-            or type == REB_TIME
+            type == TYPE_PAIR
+            or type == TYPE_TUPLE
+            or type == TYPE_MONEY
+            or type == TYPE_TIME
         ) and (
             sym == SYM_ADD ||
             sym == SYM_MULTIPLY
@@ -363,29 +363,29 @@ REBTYPE(Decimal)
         }
 
         // If the type of the second arg is something we can handle:
-        if (type == REB_DECIMAL
-            || type == REB_INTEGER
-            || type == REB_PERCENT
-            || type == REB_MONEY
-            || type == REB_CHAR
+        if (type == TYPE_DECIMAL
+            || type == TYPE_INTEGER
+            || type == TYPE_PERCENT
+            || type == TYPE_MONEY
+            || type == TYPE_CHAR
         ){
-            if (type == REB_DECIMAL) {
+            if (type == TYPE_DECIMAL) {
                 d2 = VAL_DECIMAL(arg);
             }
-            else if (type == REB_PERCENT) {
+            else if (type == TYPE_PERCENT) {
                 d2 = VAL_DECIMAL(arg);
                 if (sym == SYM_DIVIDE)
-                    type = REB_DECIMAL;
+                    type = TYPE_DECIMAL;
                 else if (not Is_Percent(val))
                     type = Type_Of(val);
             }
-            else if (type == REB_CHAR) {
+            else if (type == TYPE_CHAR) {
                 d2 = cast(REBDEC, VAL_CHAR(arg));
-                type = REB_DECIMAL;
+                type = TYPE_DECIMAL;
             }
             else {
                 d2 = cast(REBDEC, VAL_INT64(arg));
-                type = REB_DECIMAL;
+                type = TYPE_DECIMAL;
             }
 
             switch (sym) {
@@ -489,11 +489,11 @@ REBTYPE(Decimal)
                 return Init_Integer(OUT, cast(REBI64, d1));
 
             if (Is_Percent(arg))
-                type = REB_PERCENT;
+                type = TYPE_PERCENT;
         }
         else
             d1 = Round_Dec(
-                d1, flags | RF_TO, type == REB_PERCENT ? 0.01L : 1.0L
+                d1, flags | RF_TO, type == TYPE_PERCENT ? 0.01L : 1.0L
             );
         goto setDec; }
 

@@ -62,7 +62,7 @@
 #define BOUNCE_INVISIBLE \
     cast(Value*, &PG_Bounce_Invisible)
 
-// If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
+// If Eval_Core gets back an TYPE_R_REDO from a dispatcher, it will re-execute
 // the L->phase in the frame.  This function may be changed by the dispatcher
 // from what was originally called.
 //
@@ -83,7 +83,7 @@
 // set, and if it were doing a set then to write the value to set into the
 // target cell.  That means it had to keep track of a pointer to a cell vs.
 // putting the bits of the cell into the output.  This is now done with a
-// special REB_R_REFERENCE type which holds in its payload a Cell and a
+// special TYPE_R_REFERENCE type which holds in its payload a Cell and a
 // specifier, which is enough to be able to do either a read or a write,
 // depending on the need.
 //

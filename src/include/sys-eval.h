@@ -160,7 +160,7 @@ INLINE void Push_Level_Core(Level* L)
 
     // Some initialized bit pattern is needed to check to see if a
     // function call is actually in progress, or if eval_type is just
-    // REB_ACTION but doesn't have valid args/state.  The original action is a
+    // TYPE_ACTION but doesn't have valid args/state.  The original action is a
     // good choice because it is only affected by the function call case,
     // see Is_Action_Level_Fulfilling().
     //
@@ -218,7 +218,7 @@ INLINE void Push_Level_Core(Level* L)
   #endif
 }
 
-// Pretend the input source has ended; used with REB_E_PROCESS_ACTION.
+// Pretend the input source has ended; used with TYPE_E_PROCESS_ACTION.
 //
 INLINE void Push_Level_At_End(Level* L, Flags flags) {
     L->flags = Endlike_Header(flags);
@@ -256,7 +256,7 @@ INLINE void Push_Level_At(
 ){
     L->flags = Endlike_Header(flags);
 
-    L->gotten = nullptr; // Eval_Core_Throws() must fetch for REB_WORD, etc.
+    L->gotten = nullptr; // Eval_Core_Throws() must fetch for TYPE_WORD, etc.
     SET_FRAME_VALUE(L, Array_At(array, index));
 
     L->source->vaptr = nullptr;

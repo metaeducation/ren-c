@@ -157,7 +157,7 @@ void Assert_State_Balanced_Debug(
 void Trapped_Helper(struct Reb_State *s)
 {
     ASSERT_CONTEXT(s->error);
-    assert(CTX_TYPE(s->error) == REB_ERROR);
+    assert(CTX_TYPE(s->error) == TYPE_ERROR);
 
     // Restore Rebol data stack pointer at time of Push_Trap
     //
@@ -275,7 +275,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     }
 
     ASSERT_CONTEXT(error);
-    assert(CTX_TYPE(error) == REB_ERROR);
+    assert(CTX_TYPE(error) == TYPE_ERROR);
 
     // If we raise the error we'll lose the stack, and if it's an early
     // error we always want to see it (do not use ATTEMPT or TRAP on
@@ -513,7 +513,7 @@ bool Make_Error_Object_Throws(
         // code in REBTYPE(Context) and code in DECLARE_NATIVE(CONSTRUCT))
 
         varlist = Make_Selfish_Context_Detect_Managed(
-            REB_ERROR, // type
+            TYPE_ERROR, // type
             Cell_List_At(arg), // values to scan for toplevel set-words
             root_error // parent
         );
@@ -974,7 +974,7 @@ Error* Error_Not_Varargs(
     enum Reb_Kind kind
 ){
     assert(Is_Param_Variadic(param));
-    assert(kind != REB_VARARGS);
+    assert(kind != TYPE_VARARGS);
 
     // Since the "types accepted" are a lie (an [integer! <...>] takes
     // VARARGS! when fulfilled in a frame directly, not INTEGER!) then
@@ -983,7 +983,7 @@ Error* Error_Not_Varargs(
     DECLARE_VALUE (honest_param);
     Init_Typeset(
         honest_param,
-        FLAGIT_KIND(REB_VARARGS), // actually expected
+        FLAGIT_KIND(TYPE_VARARGS), // actually expected
         Cell_Parameter_Symbol(param)
     );
 
@@ -1174,8 +1174,8 @@ Error* Error_Math_Args(enum Reb_Kind type, Value* verb)
 //
 Error* Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 {
-    assert(expected < REB_MAX);
-    assert(actual < REB_MAX);
+    assert(expected < TYPE_MAX);
+    assert(actual < TYPE_MAX);
 
     return Error_Expect_Val_Raw(
         Datatype_From_Kind(expected),
@@ -1203,14 +1203,14 @@ Error* Error_Arg_Type(
     DECLARE_VALUE (label);
     Get_Level_Label_Or_Blank(label, L);
 
-    if (actual != REB_MAX_NULLED)
+    if (actual != TYPE_MAX_NULLED)
         return Error_Expect_Arg_Raw(
             label,
             Datatype_From_Kind(actual),
             param_word
         );
 
-    // Although REB_MAX_NULLED is not a type, the typeset bits are used
+    // Although TYPE_MAX_NULLED is not a type, the typeset bits are used
     // to check it.  Since Datatype_From_Kind() will fail, use another error.
     //
     return Error_Arg_Required_Raw(label, param_word);
@@ -1224,10 +1224,10 @@ Error* Error_Bad_Return_Type(Level* L, enum Reb_Kind kind) {
     DECLARE_VALUE (label);
     Get_Level_Label_Or_Blank(label, L);
 
-    if (kind == REB_MAX_NULLED)
+    if (kind == TYPE_MAX_NULLED)
         return Error_Needs_Return_Opt_Raw(label);
 
-    if (kind == REB_NOTHING)
+    if (kind == TYPE_NOTHING)
         return Error_Needs_Return_Value_Raw(label);
 
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
@@ -1296,7 +1296,7 @@ VarList* Startup_Errors(const Value* boot_errors)
 
     assert(VAL_INDEX(boot_errors) == 0);
     VarList* catalog = Construct_Context_Managed(
-        REB_OBJECT,
+        TYPE_OBJECT,
         Cell_List_At(boot_errors),
         VAL_SPECIFIER(boot_errors),
         nullptr
@@ -1308,7 +1308,7 @@ VarList* Startup_Errors(const Value* boot_errors)
     Value* val;
     for (val = Varlist_Slot(catalog, SELFISH(1)); NOT_END(val); val++) {
         VarList* error = Construct_Context_Managed(
-            REB_OBJECT,
+            TYPE_OBJECT,
             VAL_ARRAY_HEAD(val),
             SPECIFIED, // source array not in a function body
             nullptr

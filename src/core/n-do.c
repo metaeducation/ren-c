@@ -271,11 +271,11 @@ DECLARE_NATIVE(DO)
   #endif
 
     switch (Type_Of(source)) {
-    case REB_BLANK:
+    case TYPE_BLANK:
         return nullptr; // "blank in, null out" convention
 
-    case REB_BLOCK:
-    case REB_GROUP: {
+    case TYPE_BLOCK:
+    case TYPE_GROUP: {
         REBIXO indexor = Eval_At_Core(
             Init_Void(OUT),  // so `eval []` vanishes
             nullptr, // opt_head (interpreted as no head, not nulled cell)
@@ -290,11 +290,11 @@ DECLARE_NATIVE(DO)
 
         return OUT; }
 
-    case REB_BINARY:
-    case REB_TEXT:
-    case REB_URL:
-    case REB_FILE:
-    case REB_TAG: {
+    case TYPE_BINARY:
+    case TYPE_TEXT:
+    case TYPE_URL:
+    case TYPE_FILE:
+    case TYPE_TAG: {
         //
         // See code called in system/intrinsic/do*
         //
@@ -317,7 +317,7 @@ DECLARE_NATIVE(DO)
         }
         return OUT; }
 
-    case REB_ERROR:
+    case TYPE_ERROR:
         //
         // FAIL is the preferred operation for triggering errors, as it has
         // a natural behavior for blocks passed to construct readable messages
@@ -367,8 +367,8 @@ DECLARE_NATIVE(EVALUATE)
     Value* var = ARG(VAR);
 
     switch (Type_Of(source)) {
-      case REB_BLOCK:
-      case REB_GROUP: {
+      case TYPE_BLOCK:
+      case TYPE_GROUP: {
         REBIXO indexor = Eval_At_Core(
             SET_END(OUT), // use END to distinguish residual non-values
             nullptr, // opt_head
@@ -401,7 +401,7 @@ DECLARE_NATIVE(EVALUATE)
         assert(VAL_INDEX(OUT) <= VAL_LEN_HEAD(source));
         return OUT; }
 
-      case REB_ACTION: {
+      case TYPE_ACTION: {
         if (Bool_ARG(STEP3))
             fail ("Can't use EVAL/STEP3 on actions");
 
@@ -422,7 +422,7 @@ DECLARE_NATIVE(EVALUATE)
             return BOUNCE_THROWN;
         return OUT; }
 
-      case REB_FRAME: {
+      case TYPE_FRAME: {
         if (Bool_ARG(STEP3))
             fail ("Can't use EVAL/STEP3 on frames");
 
@@ -478,7 +478,7 @@ DECLARE_NATIVE(EVALUATE)
 
         return L->out; }
 
-      case REB_VARARGS: {
+      case TYPE_VARARGS: {
         Value* position;
         if (Is_Block_Style_Varargs(&position, source)) {
             //
@@ -566,7 +566,7 @@ DECLARE_NATIVE(EVALUATE)
 
         RETURN (source); } // original VARARGS! will have an updated position
 
-      case REB_ERROR:
+      case TYPE_ERROR:
         //
         // FAIL is the preferred operation for triggering errors, as it has
         // a natural behavior for blocks passed to construct readable messages
@@ -685,7 +685,7 @@ DECLARE_NATIVE(APPLIQUE)
         &binder,
         VAL_ARRAY_HEAD(ARG(DEF)), // !!! bindings are mutated!  :-(
         exemplar,
-        FLAGIT_KIND(REB_SET_WORD), // types to bind (just set-word!),
+        FLAGIT_KIND(TYPE_SET_WORD), // types to bind (just set-word!),
         0, // types to "add midstream" to binding as we go (nothing)
         BIND_DEEP
     );

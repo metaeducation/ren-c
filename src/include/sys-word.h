@@ -124,22 +124,22 @@ INLINE Value* Init_Any_Word(
 }
 
 #define Init_Word(out,symbol) \
-    Init_Any_Word((out), REB_WORD, (symbol))
+    Init_Any_Word((out), TYPE_WORD, (symbol))
 
 #define Init_Get_Word(out,symbol) \
-    Init_Any_Word((out), REB_GET_WORD, (symbol))
+    Init_Any_Word((out), TYPE_GET_WORD, (symbol))
 
 #define Init_Set_Word(out,symbol) \
-    Init_Any_Word((out), REB_SET_WORD, (symbol))
+    Init_Any_Word((out), TYPE_SET_WORD, (symbol))
 
 #define Init_Lit_Word(out,symbol) \
-    Init_Any_Word((out), REB_LIT_WORD, (symbol))
+    Init_Any_Word((out), TYPE_LIT_WORD, (symbol))
 
 #define Init_Refinement(out,symbol) \
-    Init_Any_Word((out), REB_REFINEMENT, (symbol))
+    Init_Any_Word((out), TYPE_REFINEMENT, (symbol))
 
 #define Init_Issue(out,symbol) \
-    Init_Any_Word((out), REB_ISSUE, (symbol))
+    Init_Any_Word((out), TYPE_ISSUE, (symbol))
 
 // Initialize an ANY-WORD! type with a binding to a context.
 //

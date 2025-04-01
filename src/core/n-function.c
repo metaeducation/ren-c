@@ -269,7 +269,7 @@ DECLARE_NATIVE(TYPECHECKER)
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );
 
-    Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
+    Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), TYPE_ACTION);
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
 
@@ -467,7 +467,7 @@ DECLARE_NATIVE(ADAPT)
 
     Array* details = ACT_DETAILS(adaptation);
 
-    Value* block = RESET_CELL(Array_At(details, 0), REB_BLOCK);
+    Value* block = RESET_CELL(Array_At(details, 0), TYPE_BLOCK);
     INIT_VAL_ARRAY(block, prelude);
     VAL_INDEX(block) = 0;
     INIT_BINDING(block, underlying); // relative binding
@@ -886,7 +886,7 @@ DECLARE_NATIVE(N_SHOT)
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );
 
-    Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
+    Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), TYPE_ACTION);
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
 
@@ -894,7 +894,7 @@ DECLARE_NATIVE(N_SHOT)
     //
     Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
-        FLAGIT_KIND(REB_BLOCK) | FLAGIT_KIND(REB_ACTION),
+        FLAGIT_KIND(TYPE_BLOCK) | FLAGIT_KIND(TYPE_ACTION),
         Canon(SYM_VALUE) // SYM_CODE ?
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);

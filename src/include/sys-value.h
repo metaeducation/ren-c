@@ -176,7 +176,7 @@
                 NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE
             )) == (NODE_FLAG_NODE | NODE_FLAG_CELL)
         ){
-            assert(VAL_TYPE_RAW(v) <= REB_MAX);
+            assert(VAL_TYPE_RAW(v) <= TYPE_MAX);
             return VAL_TYPE_RAW(v); // majority of calls hopefully return here
         }
 
@@ -193,14 +193,14 @@
 
         // Cell is good, so let the good cases pass through
         //
-        if (VAL_TYPE_RAW(v) == REB_MAX_NULLED)
-            return REB_MAX_NULLED;
-        if (VAL_TYPE_RAW(v) == REB_LOGIC)
-            return REB_LOGIC;
+        if (VAL_TYPE_RAW(v) == TYPE_MAX_NULLED)
+            return TYPE_MAX_NULLED;
+        if (VAL_TYPE_RAW(v) == TYPE_LOGIC)
+            return TYPE_LOGIC;
 
         // Special messages for END and trash (as these are common)
         //
-        if (VAL_TYPE_RAW(v) == REB_0_END) {
+        if (VAL_TYPE_RAW(v) == TYPE_0_END) {
             printf("Type_Of() called on END marker\n");
             panic (v);
         }
@@ -344,7 +344,7 @@ INLINE Value* Reset_Cell_Header_Untracked(
     (NODE_FLAG_NODE | NODE_FLAG_CELL)
 
 #define CELL_MASK_ERASE_END \
-    (CELL_MASK_ERASE | FLAG_KIND_BYTE(REB_0)) // same, but more explicit
+    (CELL_MASK_ERASE | FLAG_KIND_BYTE(TYPE_0)) // same, but more explicit
 
 INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     Assert_Cell_Aligned(c);
@@ -422,7 +422,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* v) {
 INLINE Value* SET_END_Untracked(Cell* v){
     Assert_Cell_Writable(v);
     v->header.bits &= CELL_MASK_PERSIST;  // clears unreadable flag
-    assert(SECOND_BYTE(&v->header) == REB_0_END);
+    assert(SECOND_BYTE(&v->header) == TYPE_0_END);
     return cast(Value*, v);
 }
 
@@ -430,7 +430,7 @@ INLINE Value* SET_END_Untracked(Cell* v){
     SET_END_Untracked(v)
 
 #define IS_END(p) \
-    (cast(const Byte*, p)[1] == REB_0_END)
+    (cast(const Byte*, p)[1] == TYPE_0_END)
 
 #define NOT_END(v) \
     (not IS_END(v))
@@ -528,7 +528,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 // if they are to represent an "optional" value, there must be a special
 // bit pattern used to mark them as not containing any value at all.  These
 // are called "nulled cells" and marked by means of their Type_Of(), but they
-// use REB_MAX--because that is one past the range of valid REB_XXX values
+// use TYPE_MAX--because that is one past the range of valid TYPE_XXX values
 // in the enumeration created for the actual types.
 //
 
@@ -536,10 +536,10 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     c_cast(const Value*, &PG_Nulled_Cell[0])
 
 #define Is_Nulled(v) \
-    (Type_Of(v) == REB_MAX_NULLED)
+    (Type_Of(v) == TYPE_MAX_NULLED)
 
 #define Init_Nulled(out) \
-    Reset_Cell_Header((out), REB_MAX_NULLED, CELL_FLAG_FALSEY)
+    Reset_Cell_Header((out), TYPE_MAX_NULLED, CELL_FLAG_FALSEY)
 
 #define CELL_FLAG_NULL_IS_ENDISH FLAG_TYPE_SPECIFIC_BIT(0)
 
@@ -549,7 +549,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 // here just to make a note of the concept, and tag it via the callsites.
 //
 #define Init_Endish_Nulled(out) \
-    Reset_Cell_Header((out), REB_MAX_NULLED, \
+    Reset_Cell_Header((out), TYPE_MAX_NULLED, \
         CELL_FLAG_FALSEY | CELL_FLAG_NULL_IS_ENDISH)
 
 INLINE bool Is_Endish_Nulled(const Cell* v) {
@@ -578,7 +578,7 @@ INLINE bool Is_Endish_Nulled(const Cell* v) {
     c_cast(const Value*, &PG_Nothing_Value[0])
 
 #define Init_Nothing(out) \
-    RESET_CELL((out), REB_NOTHING)
+    RESET_CELL((out), TYPE_NOTHING)
 
 INLINE Value* Nothingify_Branched(Value* cell) {
     if (Is_Nulled(cell) or Is_Void(cell))
@@ -598,7 +598,7 @@ INLINE Value* Nothingify_Branched(Value* cell) {
 //
 
 #define Init_Void(out) \
-    RESET_CELL((out), REB_VOID)
+    RESET_CELL((out), TYPE_VOID)
 
 
 
@@ -643,7 +643,7 @@ INLINE Value* Nothingify_Branched(Value* cell) {
     c_cast(const Value*, &PG_Blank_Value[0])
 
 #define Init_Blank(v) \
-    Reset_Cell_Header((v), REB_BLANK, CELL_FLAG_FALSEY)
+    Reset_Cell_Header((v), TYPE_BLANK, CELL_FLAG_FALSEY)
 
 
 //=//// UNREADABLE CELLS //////////////////////////////////////////////////=//
@@ -719,7 +719,7 @@ INLINE bool IS_TRUTHY(const Cell* v) {
 
 
 #define Init_Logic(out,b) \
-    Reset_Cell_Header((out), REB_LOGIC, (b) ? 0 : CELL_FLAG_FALSEY)
+    Reset_Cell_Header((out), TYPE_LOGIC, (b) ? 0 : CELL_FLAG_FALSEY)
 
 #define Init_True(out) \
     Init_Logic((out), true)
@@ -744,8 +744,8 @@ INLINE bool VAL_LOGIC(const Cell* v) {
 // for simplification, pending a broader review of what was needed.
 //
 // %words.r is arranged so symbols for types are at the start of the enum.
-// Note REB_0 is not a type, which lines up with SYM_0 used for symbol IDs as
-// "no symbol".  Also, NULL is not a value type, and is at REB_MAX past the
+// Note TYPE_0 is not a type, which lines up with SYM_0 used for symbol IDs as
+// "no symbol".  Also, NULL is not a value type, and is at TYPE_MAX past the
 // end of the list.
 //
 // !!! Consider renaming (or adding a synonym) to just TYPE!
@@ -770,7 +770,7 @@ INLINE bool VAL_LOGIC(const Cell* v) {
     ((v)->payload.character)
 
 INLINE Value* Init_Char(Cell* out, Ucs2Unit uni) {
-    RESET_CELL(out, REB_CHAR);
+    RESET_CELL(out, TYPE_CHAR);
     VAL_CHAR(out) = uni;
     return cast(Value*, out);
 }
@@ -819,7 +819,7 @@ INLINE Value* Init_Char(Cell* out, Ucs2Unit uni) {
 #endif
 
 INLINE Value* Init_Integer_Untracked(Cell* out, REBI64 i64) {
-    Reset_Cell_Header_Untracked(out, REB_INTEGER, 0);
+    Reset_Cell_Header_Untracked(out, TYPE_INTEGER, 0);
     out->payload.integer = i64;
     return cast(Value*, out);
 }
@@ -880,13 +880,13 @@ INLINE Byte VAL_UINT8(const Cell* v) {
 #endif
 
 INLINE Value* Init_Decimal(Cell* out, REBDEC d) {
-    RESET_CELL(out, REB_DECIMAL);
+    RESET_CELL(out, TYPE_DECIMAL);
     out->payload.decimal = d;
     return cast(Value*, out);
 }
 
 INLINE Value* Init_Percent(Cell* out, REBDEC d) {
-    RESET_CELL(out, REB_PERCENT);
+    RESET_CELL(out, TYPE_PERCENT);
     out->payload.decimal = d;
     return cast(Value*, out);
 }
@@ -959,7 +959,7 @@ INLINE Value* Init_Percent(Cell* out, REBDEC d) {
 
 
 INLINE Value* Init_Tuple(Cell* out, const Byte *data) {
-    RESET_CELL(out, REB_TUPLE);
+    RESET_CELL(out, TYPE_TUPLE);
     memcpy(VAL_TUPLE_DATA(out), data, sizeof(out->payload.tuple.tuple));
     return cast(Value*, out);
 }
@@ -1133,7 +1133,7 @@ INLINE void Move_Value_Header(Cell* out, const Cell* v)
 {
     assert(out != v); // usually a sign of a mistake; not worth supporting
     assert(NOT_END(v)); // SET_END() is the only way to write an end
-    assert(VAL_TYPE_RAW(v) <= REB_MAX_NULLED); // don't move pseudotypes
+    assert(VAL_TYPE_RAW(v) <= TYPE_MAX_NULLED); // don't move pseudotypes
 
     Assert_Cell_Writable(out);
 

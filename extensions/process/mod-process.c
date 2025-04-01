@@ -230,8 +230,8 @@ int OS_Create_Process(
 
     UNUSED(Bool_ARG(INPUT)); // implicitly covered by void ARG(IN)
     switch (Type_Of(ARG(IN))) {
-    case REB_TEXT:
-    case REB_BINARY:
+    case TYPE_TEXT:
+    case TYPE_BINARY:
         if (!CreatePipe(&hInputRead, &hInputWrite, nullptr, 0)) {
             goto input_error;
         }
@@ -245,7 +245,7 @@ int OS_Create_Process(
         si.hStdInput = hInputRead;
         break;
 
-    case REB_FILE: {
+    case TYPE_FILE: {
         WCHAR *local_wide = rebSpellW("file-to-local", ARG(IN));
 
         hInputRead = CreateFile(
@@ -262,11 +262,11 @@ int OS_Create_Process(
         rebFree(local_wide);
         break; }
 
-    case REB_BLANK:
+    case TYPE_BLANK:
         si.hStdInput = 0;
         break;
 
-    case REB_MAX_NULLED:
+    case TYPE_MAX_NULLED:
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
         break;
 
@@ -276,8 +276,8 @@ int OS_Create_Process(
 
     UNUSED(Bool_ARG(OUTPUT)); // implicitly covered by void ARG(OUT)
     switch (Type_Of(ARG(OUT))) {
-    case REB_TEXT:
-    case REB_BINARY:
+    case TYPE_TEXT:
+    case TYPE_BINARY:
         if (!CreatePipe(&hOutputRead, &hOutputWrite, nullptr, 0)) {
             goto output_error;
         }
@@ -292,7 +292,7 @@ int OS_Create_Process(
         si.hStdOutput = hOutputWrite;
         break;
 
-    case REB_FILE: {
+    case TYPE_FILE: {
         WCHAR *local_wide = rebSpellW("file-to-local", ARG(OUT));
 
         si.hStdOutput = CreateFile(
@@ -323,11 +323,11 @@ int OS_Create_Process(
         rebFree(local_wide);
         break; }
 
-    case REB_BLANK:
+    case TYPE_BLANK:
         si.hStdOutput = 0;
         break;
 
-    case REB_MAX_NULLED:
+    case TYPE_MAX_NULLED:
         si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
         break;
 
@@ -337,8 +337,8 @@ int OS_Create_Process(
 
     UNUSED(Bool_ARG(ERROR)); // implicitly covered by void ARG(ERR)
     switch (Type_Of(ARG(ERR))) {
-    case REB_TEXT:
-    case REB_BINARY:
+    case TYPE_TEXT:
+    case TYPE_BINARY:
         if (!CreatePipe(&hErrorRead, &hErrorWrite, nullptr, 0)) {
             goto error_error;
         }
@@ -353,7 +353,7 @@ int OS_Create_Process(
         si.hStdError = hErrorWrite;
         break;
 
-    case REB_FILE: {
+    case TYPE_FILE: {
         WCHAR *local_wide = rebSpellW("file-to-local", ARG(OUT));
 
         si.hStdError = CreateFile(
@@ -384,11 +384,11 @@ int OS_Create_Process(
         rebFree(local_wide);
         break; }
 
-    case REB_BLANK:
+    case TYPE_BLANK:
         si.hStdError = 0;
         break;
 
-    case REB_MAX_NULLED:
+    case TYPE_MAX_NULLED:
         si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
         break;
 
@@ -1480,25 +1480,25 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
 
     UNUSED(Bool_ARG(INPUT)); // implicit by void ARG(IN)
     switch (Type_Of(ARG(IN))) {
-    case REB_BLANK:
-    case REB_MAX_NULLED: // no /INPUT, so no argument provided
+    case TYPE_BLANK:
+    case TYPE_MAX_NULLED: // no /INPUT, so no argument provided
         os_input = nullptr;
         input_len = 0;
         break;
 
-    case REB_TEXT: {
+    case TYPE_TEXT: {
         size_t size;
         os_input = s_cast(rebBytes(&size, ARG(IN)));
         input_len = size;
         break; }
 
-    case REB_FILE: {
+    case TYPE_FILE: {
         size_t size;  // !!! why fileNAME size passed in???
         os_input = s_cast(rebBytes(&size, "file-to-local", ARG(IN)));
         input_len = size;
         break; }
 
-    case REB_BINARY: {
+    case TYPE_BINARY: {
         size_t size;
         os_input = s_cast(rebBytes(&size, ARG(IN)));
         input_len = size;
@@ -1677,7 +1677,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
         rebFree(os_input);
 
     if (Bool_ARG(INFO)) {
-        VarList* info = Alloc_Context(REB_OBJECT, 2);
+        VarList* info = Alloc_Context(TYPE_OBJECT, 2);
 
         Init_Integer(Append_Context(info, nullptr, Canon(SYM_ID)), pid);
         if (Bool_ARG(WAIT))

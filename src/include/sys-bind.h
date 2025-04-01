@@ -62,7 +62,7 @@
         assert(p != SPECIFIED);  // use SPECIFIED, not SPC(SPECIFIED)
 
         VarList* c = CTX(p);
-        assert(CTX_TYPE(c) == REB_FRAME);
+        assert(CTX_TYPE(c) == TYPE_FRAME);
 
         // Note: May be managed or unamanged.
 
@@ -80,7 +80,7 @@
         // paramlist, which should have an ACTION! value in keylist[0]
         //
         VarList* c = CTX(v->extra.binding);
-        assert(CTX_TYPE(c) == REB_FRAME); // may be inaccessible
+        assert(CTX_TYPE(c) == TYPE_FRAME); // may be inaccessible
         return cast(Specifier*, c);
     }
 #endif
@@ -114,7 +114,7 @@ INLINE bool Is_Overriding_Context(VarList* stored, VarList* override)
     // frames are tied to a function they invoke, they cannot be expanded.
     // For now, deriving from FRAME! is just disabled.
     //
-    // Use a faster check for REB_FRAME than CTX_TYPE() == REB_FRAME, since
+    // Use a faster check for TYPE_FRAME than CTX_TYPE() == TYPE_FRAME, since
     // we were extracting keysources anyway.
     //
     // !!! Note that in virtual binding, something like a FOR-EACH would
@@ -342,7 +342,7 @@ INLINE Stub* SPC_BINDING(Specifier* specifier)
 // The Get_Opt_Var_May_Fail() function takes the conservative default that
 // only const access is needed.  A const pointer to a Value is given back
 // which may be inspected, but the contents not modified.  While a bound
-// variable that is not currently set will return a REB_MAX_NULLED value,
+// variable that is not currently set will return a TYPE_MAX_NULLED value,
 // Get_Opt_Var_May_Fail() on an *unbound* word will raise an error.
 //
 // Get_Mutable_Var_May_Fail() offers a parallel facility for getting a
@@ -672,7 +672,7 @@ INLINE Specifier* Derive_Specifier(Specifier* parent, const Cell* item) {
 // BINDING CONVENIENCE MACROS
 //
 // WARNING: Don't pass these routines something like a singular Value* (such
-// as a REB_BLOCK) which you wish to have bound.  You must pass its *contents*
+// as a TYPE_BLOCK) which you wish to have bound.  You must pass its *contents*
 // as an array...as the plural "values" in the name implies!
 //
 // So don't do this:
@@ -710,7 +710,7 @@ INLINE Specifier* Derive_Specifier(Specifier* parent, const Cell* item) {
 //
 #define Bind_Values_Set_Midstream_Shallow(values, context) \
     Bind_Values_Core( \
-        (values), (context), TS_WORD, FLAGIT_KIND(REB_SET_WORD), BIND_0)
+        (values), (context), TS_WORD, FLAGIT_KIND(TYPE_SET_WORD), BIND_0)
 
 #define Unbind_Values_Deep(values) \
     Unbind_Values_Core((values), nullptr, true)

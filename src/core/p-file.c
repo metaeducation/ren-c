@@ -624,7 +624,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, verb));
+    fail (Error_Illegal_Action(TYPE_PORT, verb));
 }
 
 

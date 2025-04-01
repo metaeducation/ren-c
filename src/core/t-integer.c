@@ -48,7 +48,7 @@ REBINT CT_Integer(const Cell* a, const Cell* b, REBINT mode)
 //
 Bounce MAKE_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_INTEGER);
+    assert(kind == TYPE_INTEGER);
     UNUSED(kind);
 
     if (Is_Logic(arg)) {
@@ -87,7 +87,7 @@ Bounce MAKE_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 Bounce TO_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 {
-    assert(kind == REB_INTEGER);
+    assert(kind == TYPE_INTEGER);
     UNUSED(kind);
 
     // use signed logic by default (use TO-INTEGER/UNSIGNED to force
@@ -269,7 +269,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
 
         Erase_Cell(out);
         if (!Scan_Hex(out, bp, size, size))
-            fail (Error_Bad_Make(REB_INTEGER, value));
+            fail (Error_Bad_Make(TYPE_INTEGER, value));
 
         // !!! Unlike binary, always assumes unsigned (should it?).  Yet still
         // might run afoul of 64-bit range limit.
@@ -305,7 +305,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         if (Scan_Integer(out, bp, size))
             goto check_sign;
 
-        fail (Error_Bad_Make(REB_INTEGER, value));
+        fail (Error_Bad_Make(TYPE_INTEGER, value));
     }
     else if (Is_Logic(value)) {
         //
@@ -313,7 +313,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // "falsehood" condition, e.g. `if 0 [print "this prints"]`.  So to
         // say TO LOGIC! 0 is FALSE would be disingenuous.
         //
-        fail (Error_Bad_Make(REB_INTEGER, value));
+        fail (Error_Bad_Make(TYPE_INTEGER, value));
     }
     else if (Is_Char(value)) {
         Init_Integer(out, VAL_CHAR(value)); // always unsigned
@@ -324,7 +324,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         return;
     }
     else
-        fail (Error_Bad_Make(REB_INTEGER, value));
+        fail (Error_Bad_Make(TYPE_INTEGER, value));
 
 check_sign:
     if (no_sign && VAL_INT64(out) < 0)
@@ -428,7 +428,7 @@ REBTYPE(Integer)
                 if (n > 0) {
                     if (Is_Time(val2)) {
                         VAL_NANO(val) = SEC_TIME(VAL_INT64(val));
-                        CHANGE_VAL_TYPE_BITS(val, REB_TIME);
+                        CHANGE_VAL_TYPE_BITS(val, TYPE_TIME);
                         return T_Time(level_, verb);
                     }
                     if (Is_Date(val2))
@@ -438,7 +438,7 @@ REBTYPE(Integer)
             default:
                 break;
             }
-            fail (Error_Math_Args(REB_INTEGER, verb));
+            fail (Error_Math_Args(TYPE_INTEGER, verb));
         }
     }
     else
@@ -570,7 +570,7 @@ REBTYPE(Integer)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_INTEGER, verb));
+    fail (Error_Illegal_Action(TYPE_INTEGER, verb));
 }
 
 

@@ -411,7 +411,7 @@ INLINE void Begin_Action(
     assert(not L->original);
     L->original = LVL_PHASE_OR_DUMMY(L);
 
-    assert(Is_Pointer_Corrupt_Debug(L->opt_label)); // only valid w/REB_ACTION
+    assert(Is_Pointer_Corrupt_Debug(L->opt_label)); // only valid w/TYPE_ACTION
     assert(not opt_label or Get_Flex_Flag(opt_label, UTF8_SYMBOL));
     L->opt_label = opt_label;
   #if DEBUG_FRAME_LABELS  // helpful for looking in the debugger
@@ -452,7 +452,7 @@ INLINE void Push_Action(
     Stub* binding
 ){
     L->param = ACT_PARAMS_HEAD(act); // Specializations hide some params...
-    REBLEN num_args = ACT_NUM_PARAMS(act); // ...so see REB_TS_HIDDEN
+    REBLEN num_args = ACT_NUM_PARAMS(act); // ...so see TYPE_TS_HIDDEN
 
     // !!! Note: Should pick "smart" size when allocating varlist storage due
     // to potential reuse--but use exact size for *this* action, for now.
@@ -490,7 +490,7 @@ INLINE void Push_Action(
     TRACK(L->rootvar)->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_CELL
         | CELL_FLAG_PROTECTED // cell payload/binding tweaked, not by user
-        | FLAG_KIND_BYTE(REB_FRAME);
+        | FLAG_KIND_BYTE(TYPE_FRAME);
     L->rootvar->payload.any_context.varlist = L->varlist;
 
   sufficient_allocation:
@@ -500,7 +500,7 @@ INLINE void Push_Action(
 
     s->content.dynamic.len = num_args + 1;
     Cell* tail = Array_Tail(L->varlist);
-    TRACK(tail)->header.bits = FLAG_KIND_BYTE(REB_0);
+    TRACK(tail)->header.bits = FLAG_KIND_BYTE(TYPE_0);
 
     // Current invariant for all arrays (including fixed size), last cell in
     // the allocation is an end.

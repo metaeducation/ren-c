@@ -542,7 +542,7 @@ INLINE Binary* Cell_Bitset(const Cell* cell) {
 }
 
 #define Init_Bitset(v,s) \
-    Init_Any_Series((v), REB_BITSET, (s))
+    Init_Any_Series((v), TYPE_BITSET, (s))
 
 
 // Make a series of a given width (unit size).  The series will be zero

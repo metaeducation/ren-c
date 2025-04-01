@@ -213,7 +213,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
             Value* param = ACT_PARAMS_HEAD(Level_Phase(param_level))
                 + arg->payload.varargs.param_offset;
 
-            if (Typeset_Check(param, REB_MAX_NULLED))
+            if (Typeset_Check(param, TYPE_MAX_NULLED))
                 fail (Error_Null_Vararg_Array_Raw());
         }
 
@@ -707,7 +707,7 @@ void MF_List(Molder* mo, const Cell* v, bool form)
 
     enum Reb_Kind kind = Type_Of(v);
     switch(kind) {
-      case REB_BLOCK:
+      case TYPE_BLOCK:
         if (GET_MOLD_FLAG(mo, MOLD_FLAG_ONLY)) {
             CLEAR_MOLD_FLAG(mo, MOLD_FLAG_ONLY); // only top level
             sep = "\000\000";
@@ -716,20 +716,20 @@ void MF_List(Molder* mo, const Cell* v, bool form)
             sep = "[]";
         break;
 
-      case REB_GROUP:
+      case TYPE_GROUP:
         sep = "()";
         break;
 
-      case REB_GET_PATH:
+      case TYPE_GET_PATH:
         Append_Codepoint(mo->utf8flex, ':');
         sep = "/";
         break;
 
-      case REB_LIT_PATH:
+      case TYPE_LIT_PATH:
         Append_Codepoint(mo->utf8flex, '\'');
         // fall through
-      case REB_PATH:
-      case REB_SET_PATH:
+      case TYPE_PATH:
+      case TYPE_SET_PATH:
         sep = "/";
         break;
 
@@ -739,7 +739,7 @@ void MF_List(Molder* mo, const Cell* v, bool form)
 
     Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 
-    if (Type_Of(v) == REB_SET_PATH)
+    if (Type_Of(v) == TYPE_SET_PATH)
         Append_Codepoint(mo->utf8flex, ':');
 }
 

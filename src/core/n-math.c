@@ -473,53 +473,53 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
         if (strictness == 1) return 0;
 
         switch (ta) {
-        case REB_MAX_NULLED:
+        case TYPE_MAX_NULLED:
             return 0; // nothing coerces to void
 
-        case REB_INTEGER:
-            if (tb == REB_DECIMAL || tb == REB_PERCENT) {
+        case TYPE_INTEGER:
+            if (tb == TYPE_DECIMAL || tb == TYPE_PERCENT) {
                 REBDEC dec_a = cast(REBDEC, VAL_INT64(a));
                 Init_Decimal(a, dec_a);
                 goto compare;
             }
-            else if (tb == REB_MONEY) {
+            else if (tb == TYPE_MONEY) {
                 fail ("Money-to-int comparison not implemented in bootstrap");
             }
             break;
 
-        case REB_DECIMAL:
-        case REB_PERCENT:
-            if (tb == REB_INTEGER) {
+        case TYPE_DECIMAL:
+        case TYPE_PERCENT:
+            if (tb == TYPE_INTEGER) {
                 REBDEC dec_b = cast(REBDEC, VAL_INT64(b));
                 Init_Decimal(b, dec_b);
                 goto compare;
             }
-            else if (tb == REB_MONEY) {
+            else if (tb == TYPE_MONEY) {
                 fail ("Numeric money comparisons not implemented in bootstrap");
             }
-            else if (tb == REB_DECIMAL || tb == REB_PERCENT) // equivalent types
+            else if (tb == TYPE_DECIMAL || tb == TYPE_PERCENT) // equivalent types
                 goto compare;
             break;
 
-        case REB_MONEY:
-            if (tb == REB_INTEGER or tb == REB_DECIMAL or tb == REB_PERCENT)
+        case TYPE_MONEY:
+            if (tb == TYPE_INTEGER or tb == TYPE_DECIMAL or tb == TYPE_PERCENT)
                 fail ("Numeric money comparisons not implemented in bootstrap");
             break;
 
-        case REB_WORD:
-        case REB_SET_WORD:
-        case REB_GET_WORD:
-        case REB_LIT_WORD:
-        case REB_REFINEMENT:
-        case REB_ISSUE:
+        case TYPE_WORD:
+        case TYPE_SET_WORD:
+        case TYPE_GET_WORD:
+        case TYPE_LIT_WORD:
+        case TYPE_REFINEMENT:
+        case TYPE_ISSUE:
             if (Any_Word(b)) goto compare;
             break;
 
-        case REB_TEXT:
-        case REB_FILE:
-        case REB_EMAIL:
-        case REB_URL:
-        case REB_TAG:
+        case TYPE_TEXT:
+        case TYPE_FILE:
+        case TYPE_EMAIL:
+        case TYPE_URL:
+        case TYPE_TAG:
             if (Any_String(b)) goto compare;
             break;
         }
@@ -529,7 +529,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
         fail (Error_Invalid_Compare_Raw(Datatype_Of(a), Datatype_Of(b)));
     }
 
-    if (ta == REB_MAX_NULLED)
+    if (ta == TYPE_MAX_NULLED)
         return 1; // nulls always equal
 
   compare:;
@@ -938,7 +938,7 @@ DECLARE_NATIVE(ZERO_Q)
 
     enum Reb_Kind type = Type_Of(ARG(VALUE));
 
-    if (type >= REB_INTEGER and type <= REB_TIME) {
+    if (type >= TYPE_INTEGER and type <= TYPE_TIME) {
         DECLARE_VALUE (zero);
         Init_Zeroed_Hack(zero, type);
 

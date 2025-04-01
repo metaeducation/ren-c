@@ -477,7 +477,7 @@ void Virtual_Bind_Deep_To_New_Context(
     // Keylists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
-    *context_out = Alloc_Context(REB_OBJECT, num_vars);
+    *context_out = Alloc_Context(TYPE_OBJECT, num_vars);
 
     VarList* c = *context_out; // for convenience...
 
@@ -547,8 +547,8 @@ void Virtual_Bind_Deep_To_New_Context(
                 TS_VALUE, // !!! Currently not paid attention to
                 Cell_Word_Symbol(item)
             );
-            Set_Typeset_Flag(key, REB_TS_UNBINDABLE);
-            Set_Typeset_Flag(key, REB_TS_HIDDEN);
+            Set_Typeset_Flag(key, TYPE_TS_UNBINDABLE);
+            Set_Typeset_Flag(key, TYPE_TS_HIDDEN);
             Derelativize(var, item, specifier);
             Set_Cell_Flag(var, PROTECTED);
             Set_Cell_Flag(var, VAR_MARKED_REUSE);

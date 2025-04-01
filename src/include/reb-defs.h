@@ -35,7 +35,7 @@
 
 
 // Defines `enum Reb_Kind`, which is the enumeration of low-level cell types
-// in Rebol (e.g. REB_BLOCK, REB_TEXT, etc.)
+// in Rebol (e.g. TYPE_BLOCK, TYPE_TEXT, etc.)
 //
 // The ordering encodes properties of the types for efficiency, so adding or
 // removing a type generally means shuffling their values.  They are generated
@@ -241,7 +241,7 @@ typedef enum SymIdEnum SymId;
 
 
 // The Bounce type is a Value* but with the idea that it is legal to hold
-// types like REB_R_THROWN, etc. which are understood specially by the
+// types like TYPE_R_THROWN, etc. which are understood specially by the
 // evaluator as return values from natives.
 //
 // It is called a "Bounce" to match modern Ren-C because these are signals
