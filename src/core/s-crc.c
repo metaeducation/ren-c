@@ -190,7 +190,7 @@ uint32_t Hash_Value(const Cell* v)
 {
     uint32_t hash;
 
-    switch(VAL_TYPE(v)) {
+    switch(Type_Of(v)) {
     case REB_MAX_NULLED:
         //
         // While a void might technically be hashed, it can't be a value *or*
@@ -291,7 +291,7 @@ uint32_t Hash_Value(const Cell* v)
         //
         // !!! Why not?
         //
-        fail (Error_Invalid_Type(VAL_TYPE(v)));
+        fail (Error_Invalid_Type(Type_Of(v)));
 
     case REB_WORD:
     case REB_SET_WORD:
@@ -355,7 +355,7 @@ uint32_t Hash_Value(const Cell* v)
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //
-        fail (Error_Invalid_Type(VAL_TYPE(v)));
+        fail (Error_Invalid_Type(Type_Of(v)));
 
     default:
         // The list above should be comprehensive.  panic in order to keep
@@ -364,7 +364,7 @@ uint32_t Hash_Value(const Cell* v)
         panic (nullptr);
     }
 
-    return hash ^ crc32_table[VAL_TYPE(v)];
+    return hash ^ crc32_table[Type_Of(v)];
 }
 
 

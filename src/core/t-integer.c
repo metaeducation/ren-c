@@ -411,7 +411,7 @@ REBTYPE(Integer)
                 Copy_Cell(OUT, val2);  // Use as temp workspace
                 Copy_Cell(val2, val);
                 Copy_Cell(val, OUT);
-                GENERIC_HOOK hook = Generic_Hooks[VAL_TYPE(val)];
+                GENERIC_HOOK hook = Generic_Hooks[Type_Of(val)];
                 return hook(level_, verb); }
 
             // Only type valid to subtract from, divide into, is decimal/money:
@@ -537,7 +537,7 @@ REBTYPE(Integer)
                 REBDEC dec = Round_Dec(
                     cast(REBDEC, num), flags, VAL_DECIMAL(val2)
                 );
-                RESET_CELL(OUT, VAL_TYPE(val2));
+                RESET_CELL(OUT, Type_Of(val2));
                 VAL_DECIMAL(OUT) = dec;
                 return OUT;
             }

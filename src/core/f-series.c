@@ -192,7 +192,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
         return Init_Any_Series(
             OUT,
-            VAL_TYPE(value),
+            Type_Of(value),
             Make_Set_Operation_Flex(
                 value,
                 ARG(VALUE2),
@@ -212,7 +212,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
         return Init_Any_Series(
             OUT,
-            VAL_TYPE(value),
+            Type_Of(value),
             Make_Set_Operation_Flex(
                 value,
                 ARG(VALUE2),
@@ -232,7 +232,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
         return Init_Any_Series(
             OUT,
-            VAL_TYPE(value),
+            Type_Of(value),
             Make_Set_Operation_Flex(
                 value,
                 ARG(VALUE2),
@@ -275,7 +275,7 @@ REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
         goto diff_of_ends;
 
     while (
-        VAL_TYPE(s) == VAL_TYPE(t)
+        Type_Of(s) == Type_Of(t)
         or (Any_Number(s) and Any_Number(t))
     ){
         REBINT diff;
@@ -289,7 +289,7 @@ REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
             goto diff_of_ends;
     }
 
-    return VAL_TYPE(s) - VAL_TYPE(t);
+    return Type_Of(s) - Type_Of(t);
 
 diff_of_ends:
     // Treat end as if it were a REB_xxx type of 0, so all other types would
@@ -315,12 +315,12 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool is_case)
 {
     REBDEC  d1, d2;
 
-    if (VAL_TYPE(t) != VAL_TYPE(s) and not (Any_Number(s) and Any_Number(t)))
-        return VAL_TYPE(s) - VAL_TYPE(t);
+    if (Type_Of(t) != Type_Of(s) and not (Any_Number(s) and Any_Number(t)))
+        return Type_Of(s) - Type_Of(t);
 
     assert(NOT_END(s) and NOT_END(t));
 
-    switch(VAL_TYPE(s)) {
+    switch(Type_Of(s)) {
     case REB_INTEGER:
         if (Is_Decimal(t)) {
             d1 = cast(REBDEC, VAL_INT64(s));

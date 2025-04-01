@@ -433,7 +433,7 @@ void MF_Fail(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
-    if (VAL_TYPE(v) == REB_0) {
+    if (Type_Of(v) == REB_0) {
         //
         // REB_0 is reserved for special purposes, and should only be molded
         // in debug scenarios.
@@ -460,7 +460,7 @@ void MF_Unhooked(Molder* mo, const Cell* v, bool form)
     UNUSED(mo);
     UNUSED(form);
 
-    const Value* type = Datatype_From_Kind(VAL_TYPE(v));
+    const Value* type = Datatype_From_Kind(Type_Of(v));
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype does not have extension with a MOLD handler registered");
@@ -515,7 +515,7 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
     #endif
     }
 
-    MOLD_HOOK hook = Mold_Or_Form_Hooks[VAL_TYPE(v)];
+    MOLD_HOOK hook = Mold_Or_Form_Hooks[Type_Of(v)];
     assert(hook != nullptr); // all types have a hook, even if it just fails
     hook(mo, v, form);
 

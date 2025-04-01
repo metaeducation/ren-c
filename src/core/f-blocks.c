@@ -159,7 +159,7 @@ void Clonify_Values_Len_Managed(
 
     REBLEN index;
     for (index = 0; index < len; ++index, ++v) {
-        if (types & FLAGIT_KIND(VAL_TYPE(v)) & TS_SERIES_OBJ) {
+        if (types & FLAGIT_KIND(Type_Of(v)) & TS_SERIES_OBJ) {
             //
             // Objects and series get shallow copied at minimum
             //
@@ -205,7 +205,7 @@ void Clonify_Values_Len_Managed(
             // in Clonify_Values will be threading through any updated
             // specificity through to the new values.
             //
-            if (types & FLAGIT_KIND(VAL_TYPE(v)) & TS_LISTS_OBJ) {
+            if (types & FLAGIT_KIND(Type_Of(v)) & TS_LISTS_OBJ) {
                 Specifier* derived = Derive_Specifier(specifier, v);
                 Clonify_Values_Len_Managed(
                      Array_Head(cast_Array(series)),
@@ -216,7 +216,7 @@ void Clonify_Values_Len_Managed(
             }
         }
         else if (
-            types & FLAGIT_KIND(VAL_TYPE(v)) & FLAGIT_KIND(REB_ACTION)
+            types & FLAGIT_KIND(Type_Of(v)) & FLAGIT_KIND(REB_ACTION)
         ){
             // !!! While Ren-C has abandoned the concept of copying the body
             // of functions (they are black boxes which may not *have* a

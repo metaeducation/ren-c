@@ -44,7 +44,7 @@ static bool Equal_Context(const Cell* val, const Cell* arg)
     // ERROR! and OBJECT! may both be contexts, for instance, but they will
     // not compare equal just because their keys and fields are equal
     //
-    if (VAL_TYPE(arg) != VAL_TYPE(val))
+    if (Type_Of(arg) != Type_Of(val))
         return false;
 
     f1 = Cell_Varlist(val);
@@ -759,7 +759,7 @@ REBTYPE(Context)
 
     case SYM_REFLECT: {
         Option(SymId) sym = Cell_Word_Id(arg);
-        if (VAL_TYPE(value) != REB_FRAME)
+        if (Type_Of(value) != REB_FRAME)
             break;
 
         Level* L = Level_Of_Varlist_May_Fail(c);
@@ -812,7 +812,7 @@ REBTYPE(Context)
           default:
             break;
         }
-        fail (Error_Cannot_Reflect(VAL_TYPE(value), arg)); }
+        fail (Error_Cannot_Reflect(Type_Of(value), arg)); }
 
 
       case SYM_APPEND:
@@ -823,7 +823,7 @@ REBTYPE(Context)
 
         FAIL_IF_READ_ONLY_CONTEXT(c);
         if (not Is_Object(value) and not Is_Module(value))
-            fail (Error_Illegal_Action(VAL_TYPE(value), verb));
+            fail (Error_Illegal_Action(Type_Of(value), verb));
         Append_To_Context(c, arg);
         RETURN (value);
 
@@ -851,7 +851,7 @@ REBTYPE(Context)
 
         return Init_Any_Context(
             OUT,
-            VAL_TYPE(value),
+            Type_Of(value),
             Copy_Context_Core_Managed(c, types)
         ); }
 
@@ -873,7 +873,7 @@ REBTYPE(Context)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(value), verb));
+    fail (Error_Illegal_Action(Type_Of(value), verb));
 }
 
 
@@ -925,7 +925,7 @@ DECLARE_NATIVE(CONSTRUCT)
     }
 
     if (Bool_ARG(WITH))
-        return MAKE_With_Parent(OUT, VAL_TYPE(ARG(OTHER)), body, ARG(OTHER));
+        return MAKE_With_Parent(OUT, Type_Of(ARG(OTHER)), body, ARG(OTHER));
 
     return MAKE_With_Parent(OUT, REB_OBJECT, body, nullptr);
 }

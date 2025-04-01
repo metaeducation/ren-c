@@ -79,7 +79,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 
         const Value* child_gotten = Try_Get_Opt_Var(opt_look, specifier);
 
-        if (child_gotten and VAL_TYPE(child_gotten) == REB_ACTION) {
+        if (child_gotten and Type_Of(child_gotten) == REB_ACTION) {
             if (Get_Cell_Flag(child_gotten, INFIX_IF_ACTION)) {
                 if (
                     pclass == PARAMCLASS_TIGHT
@@ -335,7 +335,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         return false;
     }
 
-    if (param and not Typeset_Check(param, VAL_TYPE(out))) {
+    if (param and not Typeset_Check(param, Type_Of(out))) {
         //
         // !!! Array-based varargs only store the parameter list they are
         // stamped with, not the frame.  This is because storing non-reified
@@ -346,7 +346,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         if (opt_vararg_level == nullptr)
             fail (Error_Invalid(out));
 
-        fail (Error_Arg_Type(opt_vararg_level, param, VAL_TYPE(out)));
+        fail (Error_Arg_Type(opt_vararg_level, param, Type_Of(out)));
     }
 
     // Note: may be at end now, but reflect that at *next* call

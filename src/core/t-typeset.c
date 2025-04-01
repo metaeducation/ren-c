@@ -362,7 +362,7 @@ REBTYPE(Typeset)
     case SYM_UNION:
     case SYM_DIFFERENCE:
         if (Is_Datatype(arg)) {
-            Cell_Typeset_Bits(arg) = FLAGIT_KIND(VAL_TYPE(arg));
+            Cell_Typeset_Bits(arg) = FLAGIT_KIND(Type_Of(arg));
         }
         else if (not Is_Typeset(arg))
             fail (Error_Invalid(arg));

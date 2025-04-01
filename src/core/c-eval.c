@@ -267,21 +267,21 @@ INLINE void Finalize_Arg(
     }
 
     if (not Is_Param_Variadic(param)) {
-        if (Typeset_Check(param, VAL_TYPE(arg))) {
+        if (Typeset_Check(param, Type_Of(arg))) {
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             return;
         }
 
         FAIL_IF_ERROR(arg);  // simulate definitional error somewhat
 
-        fail (Error_Arg_Type(L_state, param, VAL_TYPE(arg)));
+        fail (Error_Arg_Type(L_state, param, Type_Of(arg)));
     }
 
     // Varargs are odd, because the type checking doesn't actually check the
     // types inside the parameter--it always has to be a VARARGS!.
     //
     if (not Is_Varargs(arg))
-        fail (Error_Not_Varargs(L_state, param, VAL_TYPE(arg)));
+        fail (Error_Not_Varargs(L_state, param, Type_Of(arg)));
 
     // While "checking" the variadic argument we actually re-stamp it with
     // this parameter and frame's signature.  It reuses whatever the original
@@ -486,7 +486,7 @@ bool Eval_Core_Throws(Level* const L)
         current = L->u.reval.value;
         Corrupt_Pointer_If_Debug(L->u.defer.arg); // same memory location
         current_gotten = nullptr;
-        eval_type = VAL_TYPE(current);
+        eval_type = Type_Of(current);
 
         L->flags.bits &= ~DO_FLAG_REEVALUATE_CELL;
         goto reevaluate;
@@ -652,7 +652,7 @@ bool Eval_Core_Throws(Level* const L)
         ){
             Seek_First_Param(L, VAL_ACTION(current_gotten));
             if (Is_Param_Skippable(L->param))
-                if (not Typeset_Check(L->param, VAL_TYPE(L->value)))
+                if (not Typeset_Check(L->param, Type_Of(L->value)))
                     goto give_up_forward_quote_priority;
 
             goto give_up_backward_quote_priority;
@@ -717,7 +717,7 @@ bool Eval_Core_Throws(Level* const L)
 
     Seek_First_Param(L, VAL_ACTION(L->gotten));
     if (Is_Param_Skippable(L->param))
-        if (not Typeset_Check(L->param, VAL_TYPE(current)))
+        if (not Typeset_Check(L->param, Type_Of(current)))
             goto give_up_backward_quote_priority;
 
     Push_Action(L, VAL_ACTION(L->gotten), VAL_BINDING(L->gotten));
@@ -1014,7 +1014,7 @@ bool Eval_Core_Throws(Level* const L)
                 //
                 assert(
                     (L->refine != ORDINARY_ARG and Is_Nulled(L->special))
-                    or Typeset_Check(L->param, VAL_TYPE(L->special))
+                    or Typeset_Check(L->param, Type_Of(L->special))
                 );
 
                 if (L->arg != L->special) {
@@ -1296,7 +1296,7 @@ bool Eval_Core_Throws(Level* const L)
 
               case PARAMCLASS_HARD_QUOTE:
                 if (Is_Param_Skippable(L->param)) {
-                    if (not Typeset_Check(L->param, VAL_TYPE(L->value))) {
+                    if (not Typeset_Check(L->param, Type_Of(L->value))) {
                         assert(Is_Param_Endable(L->param));
                         Init_Endish_Nulled(L->arg);
                         Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
@@ -1557,7 +1557,7 @@ bool Eval_Core_Throws(Level* const L)
 
             current_gotten = L->gotten;
             Fetch_Next_In_Level(&current, L);
-            eval_type = VAL_TYPE(current);
+            eval_type = Type_Of(current);
 
             Drop_Action(L);
             goto reevaluate; }

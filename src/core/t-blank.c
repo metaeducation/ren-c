@@ -35,7 +35,7 @@
 //
 REBINT CT_Unit(const Cell* a, const Cell* b, REBINT mode)
 {
-    if (mode >= 0) return (VAL_TYPE(a) == VAL_TYPE(b));
+    if (mode >= 0) return (Type_Of(a) == Type_Of(b));
     return -1;
 }
 
@@ -70,7 +70,7 @@ void MF_Unit(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // no distinction between MOLD and FORM
 
-    switch (VAL_TYPE(v)) {
+    switch (Type_Of(v)) {
       case REB_BLANK:
         Append_Unencoded(mo->utf8flex, "_");
         break;
@@ -179,7 +179,7 @@ REBTYPE(Unit)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(val), verb));
+    fail (Error_Illegal_Action(Type_Of(val), verb));
 }
 
 

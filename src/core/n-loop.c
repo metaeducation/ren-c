@@ -189,7 +189,7 @@ static Bounce Loop_Series_Common(
         }
         Nothingify_Branched(out);  // null->BREAK, void->empty
         if (
-            VAL_TYPE(var) != VAL_TYPE(start)
+            Type_Of(var) != Type_Of(start)
             or Cell_Flex(var) != Cell_Flex(start)
         ){
             fail ("Can only change series index, not series to iterate");
@@ -262,7 +262,7 @@ static Bounce Loop_Integer_Common(
         Nothingify_Branched(out);  // null->BREAK, void->empty
 
         if (not Is_Integer(var))
-            fail (Error_Invalid_Type(VAL_TYPE(var)));
+            fail (Error_Invalid_Type(Type_Of(var)));
 
         if (REB_I64_ADD_OF(*state, bump, state))
             fail (Error_Overflow_Raw());
@@ -346,7 +346,7 @@ static Bounce Loop_Number_Common(
         Nothingify_Branched(out);  // null->BREAK, void->empty
 
         if (not Is_Decimal(var))
-            fail (Error_Invalid_Type(VAL_TYPE(var)));
+            fail (Error_Invalid_Type(Type_Of(var)));
 
         *state += b;
     }
@@ -428,7 +428,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                 continue;
             }
 
-            enum Reb_Kind kind = VAL_TYPE(les->data);
+            enum Reb_Kind kind = Type_Of(les->data);
             switch (kind) {
               case REB_BLOCK:
               case REB_GROUP:

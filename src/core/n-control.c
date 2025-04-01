@@ -146,7 +146,7 @@ bool Either_Test_Core_Throws(
     Value* test, // modified
     const Value* arg
 ){
-    switch (VAL_TYPE(test)) {
+    switch (Type_Of(test)) {
 
     case REB_LOGIC: // test for "truthy" or "falsey"
         //
@@ -207,11 +207,11 @@ bool Either_Test_Core_Throws(
         return false; }
 
       case REB_DATATYPE:
-        Init_Logic(out, CELL_DATATYPE_TYPE(test) == VAL_TYPE(arg));
+        Init_Logic(out, CELL_DATATYPE_TYPE(test) == Type_Of(arg));
         return false;
 
       case REB_TYPESET:
-        Init_Logic(out, Typeset_Check(test, VAL_TYPE(arg)));
+        Init_Logic(out, Typeset_Check(test, Type_Of(arg)));
         return false;
 
     case REB_BLOCK: {
@@ -248,19 +248,19 @@ bool Either_Test_Core_Throws(
             }
 
             if (Is_Datatype(var)) {
-                if (CELL_DATATYPE_TYPE(var) == VAL_TYPE(arg)) {
+                if (CELL_DATATYPE_TYPE(var) == Type_Of(arg)) {
                     Init_True(out);
                     return false;
                 }
             }
             else if (Is_Typeset(var)) {
-                if (Typeset_Check(var, VAL_TYPE(arg))) {
+                if (Typeset_Check(var, Type_Of(arg))) {
                     Init_True(out);
                     return false;
                 }
             }
             else
-                fail (Error_Invalid_Type(VAL_TYPE(var)));
+                fail (Error_Invalid_Type(Type_Of(var)));
         }
         Init_False(out);
         return false; }
@@ -269,7 +269,7 @@ bool Either_Test_Core_Throws(
         break;
     }
 
-    fail (Error_Invalid_Type(VAL_TYPE(arg)));
+    fail (Error_Invalid_Type(Type_Of(arg)));
 }
 
 

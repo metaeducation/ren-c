@@ -82,7 +82,7 @@
 #define P_RULE_SPECIFIER    (L->specifier + 0) // rvalue, don't change pointer
 
 #define P_INPUT_VALUE       (Level_Args_Head(L) + 0)
-#define P_TYPE              VAL_TYPE(P_INPUT_VALUE)
+#define P_TYPE              Type_Of(P_INPUT_VALUE)
 #define P_INPUT             Cell_Flex(P_INPUT_VALUE)
 #define P_INPUT_SPECIFIER   VAL_SPECIFIER(P_INPUT_VALUE)
 #define P_POS               VAL_INDEX(P_INPUT_VALUE)
@@ -522,7 +522,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
         // was a doubled group ((...)), use result as rule
     }
 
-    switch (VAL_TYPE(rule)) {
+    switch (Type_Of(rule)) {
     case REB_BLANK:
         if (GET_ANY_CHAR(P_INPUT, P_POS) == ' ')  // treat as space
             return P_POS + 1;
@@ -680,19 +680,19 @@ static REBIXO Parse_Array_One_Rule_Core(
         // was a doubled group ((...)), use result as rule
     }
 
-    switch (VAL_TYPE(rule)) {
+    switch (Type_Of(rule)) {
     case REB_BLANK:
-        if (VAL_TYPE(item) == REB_BLANK)
+        if (Type_Of(item) == REB_BLANK)
             return pos + 1;
         return END_FLAG;
 
     case REB_DATATYPE:
-        if (VAL_TYPE(item) == CELL_DATATYPE_TYPE(rule)) // specific datatype match
+        if (Type_Of(item) == CELL_DATATYPE_TYPE(rule)) // specific datatype match
             return pos + 1;
         return END_FLAG;
 
     case REB_TYPESET:
-        if (Typeset_Check(rule, VAL_TYPE(item))) // type was found in the typeset
+        if (Typeset_Check(rule, Type_Of(item))) // type was found in the typeset
             return pos + 1;
         return END_FLAG;
 
@@ -1394,7 +1394,7 @@ DECLARE_NATIVE(SUBPARSE)
         const Cell* subrule = nullptr;
 
         // If word, set-word, or get-word, process it:
-        if (VAL_TYPE(rule) >= REB_WORD and VAL_TYPE(rule) <= REB_GET_WORD) {
+        if (Type_Of(rule) >= REB_WORD and Type_Of(rule) <= REB_GET_WORD) {
 
             Option(SymId) cmd = VAL_CMD(rule);
             if (cmd) {

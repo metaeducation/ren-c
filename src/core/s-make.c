@@ -373,7 +373,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
 
     Cell* val;
     for (val = Cell_List_At(blk); limit > 0; val++, limit--) {
-        switch (VAL_TYPE(val)) {
+        switch (Type_Of(val)) {
         case REB_INTEGER:
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
                 fail (Error_Out_Of_Range(KNOWN(val)));

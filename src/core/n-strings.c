@@ -704,7 +704,7 @@ DECLARE_NATIVE(ENHEX)
 
     return Init_Any_Series(
         OUT,
-        VAL_TYPE(ARG(STRING)),
+        Type_Of(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -836,7 +836,7 @@ DECLARE_NATIVE(DEHEX)
 
     return Init_Any_Series(
         OUT,
-        VAL_TYPE(ARG(STRING)),
+        Type_Of(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -1040,7 +1040,7 @@ DECLARE_NATIVE(ENTAB)
 
     Term_Binary_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex));
 
-    return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
+    return Init_Any_Series(OUT, Type_Of(val), Pop_Molded_String(mo));
 }
 
 
@@ -1119,7 +1119,7 @@ DECLARE_NATIVE(DETAB)
 
     Term_Binary_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex));
 
-    return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
+    return Init_Any_Series(OUT, Type_Of(val), Pop_Molded_String(mo));
 }
 
 

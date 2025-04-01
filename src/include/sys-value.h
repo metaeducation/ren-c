@@ -142,7 +142,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Every value has 6 bits reserved for its VAL_TYPE().  The reason only 6
+// Every value has 6 bits reserved for its Type_Of().  The reason only 6
 // are used is because low-level TYPESET!s are only 64-bits (so they can fit
 // into a cell payload, along with a key symbol to represent a function
 // parameter).  If there were more types, they couldn't be flagged in a
@@ -160,10 +160,10 @@
     (cast(REBU64, 1) << (t)) // makes a 64-bit bitflag
 
 #if NO_RUNTIME_CHECKS
-    #define VAL_TYPE(v) \
+    #define Type_Of(v) \
         VAL_TYPE_RAW(v)
 #else
-    INLINE enum Reb_Kind VAL_TYPE(const Cell* v){
+    INLINE enum Reb_Kind Type_Of(const Cell* v){
         // VAL_TYPE is called *a lot*, so that makes it a great place to do
         // sanity checks in the debug build.  But a debug build will not
         // inline this function, and makes *no* optimizations.  Using no
@@ -183,11 +183,11 @@
         // Could be a LOGIC! false, blank, or NULL bit pattern in bad cell
         //
         if (not (v->header.bits & NODE_FLAG_CELL)) {
-            printf("VAL_TYPE() called on non-cell\n");
+            printf("Type_Of() called on non-cell\n");
             panic (v);
         }
         if (v->header.bits & NODE_FLAG_UNREADABLE) {
-            printf("VAL_TYPE() called on cell marked UNREADABLE\n");
+            printf("Type_Of() called on cell marked UNREADABLE\n");
             panic (v);
         }
 
@@ -201,11 +201,11 @@
         // Special messages for END and trash (as these are common)
         //
         if (VAL_TYPE_RAW(v) == REB_0_END) {
-            printf("VAL_TYPE() called on END marker\n");
+            printf("Type_Of() called on END marker\n");
             panic (v);
         }
 
-        printf("non-RAW VAL_TYPE() called on pseudotype (or garbage)");
+        printf("non-RAW Type_Of() called on pseudotype (or garbage)");
         panic (v);
     }
 #endif
@@ -283,7 +283,7 @@
 // RESET_VAL_HEADER clears out the header of *most* bits, setting it to a
 // new type.  The type takes up the full "rightmost" byte of the header,
 // despite the fact it only needs 6 bits.  However, the performance advantage
-// of not needing to mask to do VAL_TYPE() is worth it...also there may be a
+// of not needing to mask to do Type_Of() is worth it...also there may be a
 // use for 256 types (although type bitsets are only 64-bits at the moment)
 //
 // The value is expected to already be "pre-formatted" with the NODE_FLAG_CELL
@@ -527,7 +527,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 // But that's the API.  Internal to Rebol, cells are the currency used, and
 // if they are to represent an "optional" value, there must be a special
 // bit pattern used to mark them as not containing any value at all.  These
-// are called "nulled cells" and marked by means of their VAL_TYPE(), but they
+// are called "nulled cells" and marked by means of their Type_Of(), but they
 // use REB_MAX--because that is one past the range of valid REB_XXX values
 // in the enumeration created for the actual types.
 //
@@ -536,7 +536,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     c_cast(const Value*, &PG_Nulled_Cell[0])
 
 #define Is_Nulled(v) \
-    (VAL_TYPE(v) == REB_MAX_NULLED)
+    (Type_Of(v) == REB_MAX_NULLED)
 
 #define Init_Nulled(out) \
     Reset_Cell_Header((out), REB_MAX_NULLED, CELL_FLAG_FALSEY)

@@ -132,7 +132,7 @@ void Set_Event_Vars(Value* evt, Cell* blk, Specifier* specifier)
         ++blk;
 
         if (!Set_Event_Var(evt, var, val))
-            fail (Error_Bad_Field_Set_Raw(var, Type_Of(val)));
+            fail (Error_Bad_Field_Set_Raw(var, Datatype_Of(val)));
     }
 }
 
@@ -182,7 +182,7 @@ Bounce MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
     UNUSED(kind);
 
     if (not Is_Block(arg))
-        fail (Error_Unexpected_Type(REB_EVENT, VAL_TYPE(arg)));
+        fail (Error_Unexpected_Type(REB_EVENT, Type_Of(arg)));
 
     RESET_CELL(out, REB_EVENT);
     Set_Event_Vars(

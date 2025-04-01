@@ -541,11 +541,11 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
         REBACT *phase = v->payload.any_context.phase;
         if (phase) {
-            assert(VAL_TYPE(v) == REB_FRAME); // may be heap-based frame
+            assert(Type_Of(v) == REB_FRAME); // may be heap-based frame
             Queue_Mark_Action_Deep(phase);
         }
         else
-            assert(VAL_TYPE(v) != REB_FRAME); // phase if-and-only-if frame
+            assert(Type_Of(v) != REB_FRAME); // phase if-and-only-if frame
 
         if (Get_Flex_Info(context, INACCESSIBLE))
             break;
@@ -686,7 +686,7 @@ static void Propagate_All_GC_Marks(void)
             // Currently only FRAME! uses binding
             //
             assert(Any_Context(v));
-            assert(not v->extra.binding or VAL_TYPE(v) == REB_FRAME);
+            assert(not v->extra.binding or Type_Of(v) == REB_FRAME);
 
             // These queueings cannot be done in Queue_Mark_Context_Deep
             // because of the potential for overflowing the C stack with calls
@@ -1582,7 +1582,7 @@ void Push_Guard_Node(const Node* node)
         assert(
             IS_END(value)
             or Is_Cell_Unreadable(value)
-            or VAL_TYPE(value) <= REB_MAX_NULLED
+            or Type_Of(value) <= REB_MAX_NULLED
         );
 
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER

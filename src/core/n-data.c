@@ -215,7 +215,7 @@ DECLARE_NATIVE(BIND)
             TS_LIST // types to copy deeply
         );
         at = Array_Head(copy);
-        Init_Any_List(OUT, VAL_TYPE(v), copy);
+        Init_Any_List(OUT, Type_Of(v), copy);
     }
     else {
         at = Cell_List_At(v); // only affects binding from current index
@@ -284,7 +284,7 @@ DECLARE_NATIVE(USE)
 //
 bool Did_Get_Binding_Of(Value* out, const Value* v)
 {
-    switch (VAL_TYPE(v)) {
+    switch (Type_Of(v)) {
     case REB_ACTION: {
         Stub *binding = VAL_BINDING(v); // see METHOD, RETURNs also have it
         if (not binding)
@@ -784,7 +784,7 @@ DECLARE_NATIVE(IN)
                     if (index != 0)
                         return Init_Any_Word_Bound(
                             OUT,
-                            VAL_TYPE(word),
+                            Type_Of(word),
                             Cell_Word_Symbol(word),
                             context,
                             index
@@ -811,7 +811,7 @@ DECLARE_NATIVE(IN)
 
     return Init_Any_Word_Bound(
         OUT,
-        VAL_TYPE(word),
+        Type_Of(word),
         Cell_Word_Symbol(word),
         context,
         index
@@ -983,7 +983,7 @@ DECLARE_NATIVE(AS)
     case REB_PATH:
     case REB_LIT_PATH:
     case REB_GET_PATH:
-        if (new_kind == VAL_TYPE(v))
+        if (new_kind == Type_Of(v))
             RETURN (v); // no-op
 
         if (not Any_List(v))
@@ -995,7 +995,7 @@ DECLARE_NATIVE(AS)
     case REB_FILE:
     case REB_URL:
     case REB_EMAIL: {
-        if (new_kind == VAL_TYPE(v))
+        if (new_kind == Type_Of(v))
             RETURN (v); // no-op
 
         // !!! Until UTF-8 Everywhere, turning ANY-WORD! into an ANY-STRING!
@@ -1046,7 +1046,7 @@ DECLARE_NATIVE(AS)
     case REB_LIT_WORD:
     case REB_ISSUE:
     case REB_REFINEMENT: {
-        if (new_kind == VAL_TYPE(v))
+        if (new_kind == Type_Of(v))
             RETURN (v); // no-op
 
         // !!! Until UTF-8 Everywhere, turning ANY-STRING! into an ANY-WORD!
@@ -1094,7 +1094,7 @@ DECLARE_NATIVE(AS)
         break; }
 
     case REB_BINARY: {
-        if (new_kind == VAL_TYPE(v))
+        if (new_kind == Type_Of(v))
             RETURN (v); // no-op
 
         // !!! A locked BINARY! shouldn't (?) complain if it exposes a

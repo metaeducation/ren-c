@@ -969,7 +969,7 @@ long API_rebUnbox(const void *p, va_list *vaptr)
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
-    switch (VAL_TYPE(result)) {
+    switch (Type_Of(result)) {
       case REB_INTEGER:
         return VAL_INT64(result);
 
@@ -994,7 +994,7 @@ long API_rebUnboxInteger(const void *p, va_list *vaptr)
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
-    if (VAL_TYPE(result) != REB_INTEGER)
+    if (Type_Of(result) != REB_INTEGER)
         fail ("rebUnboxInteger() called on non-INTEGER!");
 
     return VAL_INT64(result);
@@ -1010,10 +1010,10 @@ double API_rebUnboxDecimal(const void *p, va_list *vaptr)
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
-    if (VAL_TYPE(result) == REB_DECIMAL)
+    if (Type_Of(result) == REB_DECIMAL)
         return VAL_DECIMAL(result);
 
-    if (VAL_TYPE(result) == REB_INTEGER)
+    if (Type_Of(result) == REB_INTEGER)
         return cast(double, VAL_INT64(result));
 
     fail ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
@@ -1029,7 +1029,7 @@ uint32_t API_rebUnboxChar(const void *p, va_list *vaptr)
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
-    if (VAL_TYPE(result) != REB_CHAR)
+    if (Type_Of(result) != REB_CHAR)
         fail ("rebUnboxChar() called on non-CHAR!");
 
     return VAL_CHAR(result);

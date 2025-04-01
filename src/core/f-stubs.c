@@ -234,14 +234,14 @@ Value* Init_Datatype(Cell* out, enum Reb_Kind kind)
 
 
 //
-//  Type_Of: C
+//  Datatype_Of: C
 //
 // Returns the datatype value for the given value.
 // The datatypes are all at the head of the context.
 //
-Value* Type_Of(const Cell* value)
+Value* Datatype_Of(const Cell* value)
 {
-    return Varlist_Slot(Lib_Context, SYM_FROM_KIND(VAL_TYPE(value)));
+    return Varlist_Slot(Lib_Context, SYM_FROM_KIND(Type_Of(value)));
 }
 
 
@@ -432,7 +432,7 @@ static REBLEN Part_Len_Core(
     else {
         assert(Any_Series(limit)); // must be same series (same series, even)
         if (
-            VAL_TYPE(series) != VAL_TYPE(limit) // !!! should AS be tolerated?
+            Type_Of(series) != Type_Of(limit) // !!! should AS be tolerated?
             or Cell_Flex(series) != Cell_Flex(limit)
         ){
             fail (Error_Invalid_Part_Raw(limit));

@@ -409,7 +409,7 @@ e-types/emit {
     /*
      * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
      *
-     * These routines are based on VAL_TYPE(), which does much more checking
+     * These routines are based on Type_Of(), which does much more checking
      * than VAL_TYPE_RAW() in the debug build.  In some commonly called
      * routines, it may be worth it to use the less checked version.
      */
@@ -421,7 +421,7 @@ n: 1
 for-each-record t type-table [
     e-types/emit 't {
         #define Is_${Propercase-Of T/Name}(v) \
-            (VAL_TYPE(v) == REB_${T/NAME}) /* $<n> */
+            (Type_Of(v) == REB_${T/NAME}) /* $<n> */
     }
     e-types/emit newline
 

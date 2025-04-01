@@ -60,7 +60,7 @@ Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
     assert(kind == REB_CHAR);
     UNUSED(kind);
 
-    switch(VAL_TYPE(arg)) {
+    switch(Type_Of(arg)) {
     case REB_CHAR:
         return Init_Char(out, VAL_CHAR(arg));
 
@@ -117,7 +117,7 @@ Bounce TO_Char(Value* out, enum Reb_Kind kind, const Value* arg)
 
 static REBINT Math_Arg_For_Char(Value* arg, Value* verb)
 {
-    switch (VAL_TYPE(arg)) {
+    switch (Type_Of(arg)) {
     case REB_CHAR:
         return VAL_CHAR(arg);
 

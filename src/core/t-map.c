@@ -155,7 +155,7 @@ REBINT Find_Key_Hashed(
         REBLEN n;
         while ((n = indexes[slot]) != 0) {
             Cell* k = Array_At(array, (n - 1) * wide); // stored key
-            if (VAL_TYPE(k) == VAL_TYPE(key)) {
+            if (Type_Of(k) == Type_Of(key)) {
                 if (0 == Compare_String_Vals(k, key, false))
                     FOUND_EXACT;
                 else if (not cased and not Is_Binary(key))
@@ -174,7 +174,7 @@ REBINT Find_Key_Hashed(
         REBLEN n;
         while ((n = indexes[slot]) != 0) {
             Cell* k = Array_At(array, (n - 1) * wide); // stored key
-            if (VAL_TYPE(k) == VAL_TYPE(key)) {
+            if (Type_Of(k) == Type_Of(key)) {
                 if (0 == Cmp_Value(k, key, true))
                     FOUND_EXACT;
                 else if (not cased)
@@ -857,7 +857,7 @@ REBTYPE(Map)
 
         if (Bool_ARG(TYPES)) {
             if (Is_Datatype(ARG(KINDS)))
-                types |= FLAGIT_KIND(VAL_TYPE(ARG(KINDS)));
+                types |= FLAGIT_KIND(Type_Of(ARG(KINDS)));
             else
                 types |= Cell_Typeset_Bits(ARG(KINDS));
         }

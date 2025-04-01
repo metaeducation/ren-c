@@ -431,7 +431,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             continue;
         }
 
-        switch (VAL_TYPE(item)) {
+        switch (Type_Of(item)) {
         case REB_WORD:
             assert(mode != SPEC_MODE_WITH); // should have continued...
             Tweak_Parameter_Class(
@@ -1342,7 +1342,7 @@ Bounce Generic_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
 
-    enum Reb_Kind kind = VAL_TYPE(Level_Arg(L, 1));
+    enum Reb_Kind kind = Type_Of(Level_Arg(L, 1));
     Value* verb = KNOWN(Array_Head(details));
     assert(Is_Word(verb));
     assert(kind < REB_MAX);
@@ -1398,7 +1398,7 @@ Bounce Datatype_Checker_Dispatcher(Level* L)
 
     return Init_Logic(
         L->out,
-        VAL_TYPE(Level_Arg(L, 1)) == CELL_DATATYPE_TYPE(datatype)
+        Type_Of(Level_Arg(L, 1)) == CELL_DATATYPE_TYPE(datatype)
     );
 }
 
@@ -1414,7 +1414,7 @@ Bounce Typeset_Checker_Dispatcher(Level* L)
     Cell* typeset = Array_Head(details);
     assert(Is_Typeset(typeset));
 
-    return Init_Logic(L->out, Typeset_Check(typeset, VAL_TYPE(Level_Arg(L, 1))));
+    return Init_Logic(L->out, Typeset_Check(typeset, Type_Of(Level_Arg(L, 1))));
 }
 
 
@@ -1483,8 +1483,8 @@ Bounce Returner_Dispatcher(Level* L)
     // local uses them for the return types of a "virtual" definitional return
     // if the parameter is PARAMCLASS_RETURN_1.
     //
-    if (not Typeset_Check(typeset, VAL_TYPE(L->out)))
-        fail (Error_Bad_Return_Type(L, VAL_TYPE(L->out)));
+    if (not Typeset_Check(typeset, Type_Of(L->out)))
+        fail (Error_Bad_Return_Type(L, Type_Of(L->out)));
 
     return L->out;
 }

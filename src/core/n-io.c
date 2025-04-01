@@ -404,7 +404,7 @@ DECLARE_NATIVE(NOW)
 REBLEN Milliseconds_From_Value(const Cell* v) {
     REBINT msec;
 
-    switch (VAL_TYPE(v)) {
+    switch (Type_Of(v)) {
     case REB_INTEGER:
         msec = 1000 * Int32(v);
         break;
@@ -478,7 +478,7 @@ DECLARE_NATIVE(WAIT)
     }
 
     if (NOT_END(val)) {
-        switch (VAL_TYPE(val)) {
+        switch (Type_Of(val)) {
         case REB_INTEGER:
         case REB_DECIMAL:
         case REB_TIME:
@@ -722,7 +722,7 @@ DECLARE_NATIVE(WHAT_DIR)
     //
     return Init_Any_Series_At(
         OUT,
-        VAL_TYPE(current_path),
+        Type_Of(current_path),
         Copy_Non_Array_Flex_Core(Cell_Flex(current_path), NODE_FLAG_MANAGED),
         VAL_INDEX(current_path)
     );

@@ -229,7 +229,7 @@ int OS_Create_Process(
     si.lpReserved2 = nullptr;
 
     UNUSED(Bool_ARG(INPUT)); // implicitly covered by void ARG(IN)
-    switch (VAL_TYPE(ARG(IN))) {
+    switch (Type_Of(ARG(IN))) {
     case REB_TEXT:
     case REB_BINARY:
         if (!CreatePipe(&hInputRead, &hInputWrite, nullptr, 0)) {
@@ -275,7 +275,7 @@ int OS_Create_Process(
     }
 
     UNUSED(Bool_ARG(OUTPUT)); // implicitly covered by void ARG(OUT)
-    switch (VAL_TYPE(ARG(OUT))) {
+    switch (Type_Of(ARG(OUT))) {
     case REB_TEXT:
     case REB_BINARY:
         if (!CreatePipe(&hOutputRead, &hOutputWrite, nullptr, 0)) {
@@ -336,7 +336,7 @@ int OS_Create_Process(
     }
 
     UNUSED(Bool_ARG(ERROR)); // implicitly covered by void ARG(ERR)
-    switch (VAL_TYPE(ARG(ERR))) {
+    switch (Type_Of(ARG(ERR))) {
     case REB_TEXT:
     case REB_BINARY:
         if (!CreatePipe(&hErrorRead, &hErrorWrite, nullptr, 0)) {
@@ -1479,7 +1479,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
     REBLEN input_len;
 
     UNUSED(Bool_ARG(INPUT)); // implicit by void ARG(IN)
-    switch (VAL_TYPE(ARG(IN))) {
+    switch (Type_Of(ARG(IN))) {
     case REB_BLANK:
     case REB_MAX_NULLED: // no /INPUT, so no argument provided
         os_input = nullptr;
