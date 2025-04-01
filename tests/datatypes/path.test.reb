@@ -210,11 +210,6 @@
     (append/ = get 'append)
 
     (
-        apd: append:dup/
-        [a b c d e d e] = apd [a b c] [d e] 2
-    )
-
-    (
         x: 10
         e: sys.util.rescue [x/]
         e.id = 'bad-get-action

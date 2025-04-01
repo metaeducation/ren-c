@@ -31,89 +31,93 @@
 // refinements available as APPEND, but otherwise just takes one series arg,
 // as it will always be appending 10.
 //
-// The method used is to store a FRAME! in the specialization's ACT_BODY.
+// The method used is to store a FRAME! in the specialization's Action Body.
 // It contains non-null values for any arguments that have been specialized.
 // Eval_Core_Throws() heeds these when walking parameters (see `L->special`),
 // and processes slots with nulls in them normally.
 //
 // Code is shared between the SPECIALIZE native and specialization of a
-// GET-PATH! via refinements, such as `adp: :append/dup/part`.  However,
-// specifying a refinement without all its arguments is made complicated
-// because ordering matters:
+// GET-PATH! via refinements, such as `adp: :append/dup/part`.
 //
-//     foo: func [/ref1 arg1 /ref2 arg2 /ref3 arg3] [...]
+//=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-//     foo23: :foo/ref2/ref3
-//     foo32: :foo/ref3/ref2
+// A. The original design of the specialize mechanic attempted to do some very
+//    complicated things with partial specialization.  This was aggravated by
+//    the fact that refinement signals were separate from the arguments that
+//    they corresponded to...and synchronizing that was a pain.  Refinements
+//    could also take multiple arguments.  Modern Ren-C has simplified that:
 //
-//     foo23 A B ;-- should give A to arg2 and B to arg3
-//     foo32 A B ;-- should give B to arg2 and A to arg3
+//    https://forum.rebol.info/t/simplifying-refinements-to-1-or-0-args/1120
 //
-// Merely filling in the slots for the refinements specified with TRUE will
-// not provide enough information for a call to be able to tell the difference
-// between the intents.  Also, a call to `foo23/ref1 A B C` does not want to
-// make arg1 A, because it should act like `foo/ref2/ref3/ref1 A B C`.
+//    Hence this buggy codebase has been pared down such that it doesn't try
+//    to do anything that modern Ren-C can't.  Asking for conflicting behavior
+//    (like setting a refinement to true, while its argument is null) will
+//    produce arbitrary (but hopefully non-crashing) behavior.
 //
-// The current trick for solving this efficiently involves exploiting the
-// fact that refinements in exemplar frames are nominally only unspecialized
-// (null), in use (LOGIC! true) or disabled (LOGIC! false).  So a REFINEMENT!
-// is put in refinement slots that aren't fully specialized, to give a partial
-// that should be pushed to the top of the list of refinements in use.
-//
-// Mechanically it's "simple", but may look a little counterintuitive.  These
-// words are appearing in refinement slots that they don't have any real
-// correspondence to.  It's just that they want to be able to pre-empt those
-// refinements from fulfillment, while pushing to the in-use-refinements stack
-// in reverse order given in the specialization.
-//
-// More concretely, the exemplar frame slots for `foo23: :foo/ref2/ref3` are:
-//
-// * REF1's slot would contain the REFINEMENT! ref3.  As Eval_Core_Throws()
-//   traverses arguments it pushes ref3 as the current first-in-line to take
-//   arguments at the callsite.  Yet REF1 has not been "specialized out", so
-//   a call like `foo23/ref1` is legal...it's just that pushing ref3 from the
-//   ref1 slot means ref1 defers gathering arguments at the callsite.
-//
-// * REF2's slot would contain the REFINEMENT! ref2.  This will push ref2 to
-//   now be first in line in fulfillment.
-//
-// * REF3's slot would hold a null, having the typical appearance of not
-//   being specialized.
-//
+
 
 #include "sys-core.h"
 
 
 //
-//  Make_Context_For_Action_Int_Partials: C
+//  Cleanup_Specialization_Binder: C
+//
+// Binders are strange, in that they're implemented by storing information
+// in places that are slow to enumerate.  So you have to apply whatever you
+// used to make the binder in reverse to remove the information.
+//
+void Cleanup_Specialization_Binder(
+    struct Reb_Binder* binder,
+    VarList* exemplar
+){
+    Value* key = Varlist_Keys_Head(exemplar);
+    Value* var = Varlist_Slots_Head(exemplar);
+    for (; NOT_END(key); ++key, ++var) {
+        if (Is_Param_Unbindable(key))
+            continue; // !!! is this flag still relevant?
+        if (Is_Param_Hidden(key)) {
+            assert(Get_Cell_Flag(var, ARG_MARKED_CHECKED));  // ??
+            continue; // was part of a specialization internal to the action
+        }
+        if (Get_Cell_Flag(var, ARG_MARKED_CHECKED))  // ??
+            continue; // may be refinement from stack, now specialized out
+        Remove_Binder_Index(binder, Key_Canon(key));
+    }
+    SHUTDOWN_BINDER(binder);  // must do before running code that might BIND
+}
+
+
+//
+//  Make_Managed_Context_For_Action_May_Fail: C
 //
 // This creates a FRAME! context with "Nulled" in all the unspecialized slots
-// that are available to be filled.  For partial refinement specializations
-// in the action, it will push the refinement to the stack and fill the arg
-// slot in the new context with an INTEGER! indicating the data stack
-// position of the partial.  In this way it retains the ordering information
-// implicit in the refinements of an action's existing specialization.
+// that are available to be filled.  It looks on the stack to find any pushed
+// refinements, and if they are present they will be set in the frame if they
+// take no arguments.
 //
-// It is able to take in more specialized refinements on the stack.  These
-// will be ordered *after* partial specializations in the function already.
-// The caller passes in the stack pointer of the lowest priority refinement,
-// which goes up to TOP_INDEX for the highest of those added specializations.
+// Support is not provided for stack arguments that specify refinements that
+// take parameters, e.g.
 //
-// Since this is walking the parameters to make the frame already--and since
-// we don't want to bind to anything specialized out (including the ad-hoc
-// refinements added on the stack) we go ahead and collect bindings from the
-// frame if needed.
+//     >> specialize :append/dup []
+//     ** Error: SPECIALIZE does not support refinement promotion
 //
-// Note: For added refinements, as with any other parameter specialized out,
-// the bindings are not added at all, vs. some kind of error...
+//     >> specialize :append [dup: true]
+//     ** Error: SPECIALIZE does not support refinement promotion
 //
-//     specialize 'append/dup [dup: false] ; Note DUP: isn't frame /DUP
+//     >> specialize :append [dup: true count: 5]
+//     ; this is okay
 //
-VarList* Make_Context_For_Action_Int_Partials(
+//     >> specialize :append [count: 5]
+//     ; this is also okay (automatically assumes dup as true)
+//
+VarList* Make_Managed_Context_For_Action_May_Fail(
     const Value* action,   // need ->binding, so can't just be a REBACT*
     StackIndex lowest_stackindex, // caller can add refinement specializations
-    struct Reb_Binder *opt_binder
+    struct Reb_Binder *opt_binder  // must call cleanup if passed non-null
 ){
+    if (opt_binder)
+        INIT_BINDER(opt_binder, nullptr);
+
     StackIndex highest_stackindex = TOP_INDEX;  // highest ordered refinement
 
     REBACT *act = VAL_ACTION(action);
@@ -121,7 +125,7 @@ VarList* Make_Context_For_Action_Int_Partials(
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;
     Array* varlist = Make_Array_Core(
         num_slots, // includes +1 for the Varlist_Archetype() at [0]
-        SERIES_MASK_CONTEXT
+        SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
     );
 
     Value* rootvar = RESET_CELL(Array_Head(varlist), REB_FRAME);
@@ -129,9 +133,7 @@ VarList* Make_Context_For_Action_Int_Partials(
     rootvar->payload.any_context.phase = VAL_ACTION(action);
     INIT_BINDING(rootvar, VAL_BINDING(action));
 
-    // Copy values from any prior specializations, transforming REFINEMENT!
-    // used for partial specializations into INTEGER! or null, depending
-    // on whether that slot was actually specialized out.
+    // Copy values from any prior specializations.
 
     const Value* param = ACT_PARAMS_HEAD(act);
     Value* arg = rootvar + 1;
@@ -178,68 +180,6 @@ VarList* Make_Context_For_Action_Int_Partials(
             goto continue_specialized;
         }
 
-        // Refinement argument slots are tricky--they can be unspecialized,
-        // -but- have an ISSUE! in them we need to push to the stack.
-        // (they're in *reverse* order of use).  Or they may be specialized
-        // and have a NULL in them pushed by an earlier slot.  Refinements
-        // in use must be turned into INTEGER! partials, to point to the
-        // StackIndex of their stack order.
-
-        if (Is_Issue(special)) {
-            REBLEN partial_index = VAL_WORD_INDEX(special);
-            Init_Any_Word_Bound( // push an ISSUE! to data stack
-                PUSH(),
-                REB_ISSUE,
-                VAL_STORED_CANON(special),
-                exemplar,
-                partial_index
-            );
-
-            if (partial_index <= index) {
-                //
-                // We've already passed the slot we need to mark partial.
-                // Go back and fill it in, and consider the stack item
-                // to be completed/bound
-                //
-                Value* passed = rootvar + partial_index;
-                assert(passed->header.bits == CELL_MASK_ERASE);
-
-                assert(
-                    VAL_STORED_CANON(special) ==
-                    Cell_Param_Canon(
-                        Varlist_Keys_Head(exemplar) + partial_index - 1
-                    )
-                );
-
-                Init_Integer(passed, TOP_INDEX);
-                Set_Cell_Flag(passed, ARG_MARKED_CHECKED); // passed, not arg
-
-                if (partial_index == index)
-                    goto continue_specialized; // just filled in *this* slot
-            }
-
-            // We know this is partial (and should be set to an INTEGER!)
-            // but it may have been pushed to the stack already, or it may
-            // be coming along later.  Search only the higher priority
-            // pushes since the call began.
-            //
-            canon = Cell_Param_Canon(param);
-            StackIndex stackindex = TOP_INDEX;
-            for (; stackindex != highest_stackindex; --stackindex) {
-                Value* ordered = Data_Stack_At(stackindex);
-                assert(IS_WORD_BOUND(ordered));
-                if (VAL_WORD_INDEX(ordered) == index) { // prescient push
-                    assert(canon == VAL_STORED_CANON(ordered));
-                    Init_Integer(arg, stackindex);
-                    Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
-                    goto continue_specialized;
-                }
-            }
-
-            assert(arg->header.bits == CELL_MASK_ERASE);  // skip slot for now
-            continue;
-        }
-
         assert(
             special == param
             or Is_Nulled(special)
@@ -272,7 +212,7 @@ VarList* Make_Context_For_Action_Int_Partials(
                 // bound into this frame--even before the specialization
                 // based on the outcome of that code has been calculated.
                 //
-                Init_Integer(arg, stackindex);
+                Init_Refinement(arg, Cell_Parameter_Symbol(param));
                 Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
                 goto continue_specialized;
             }
@@ -301,50 +241,24 @@ VarList* Make_Context_For_Action_Int_Partials(
     MISC(varlist).meta = nullptr;  // GC sees this, we must initialize
 
     Tweak_Keylist_Of_Varlist_Shared(CTX(varlist), ACT_PARAMLIST(act));
+
+    while (TOP_INDEX != lowest_stackindex) {
+        if (not IS_WORD_BOUND(TOP)) {
+            DECLARE_VALUE (bad);
+            Copy_Cell(bad, TOP);
+
+            Drop_Data_Stack_To(lowest_stackindex);
+            if (opt_binder)
+                Cleanup_Specialization_Binder(opt_binder, CTX(varlist));
+
+            fail (Error_Bad_Refine_Raw(bad));
+        }
+
+        DROP();
+    }
+
     return CTX(varlist);
 }
-
-
-//
-//  Make_Context_For_Action: C
-//
-// !!! The ultimate concept is that it would be possible for a FRAME! to
-// preserve ordering information such that an ACTION! could be made from it.
-// Right now the information is the stack ordering numbers of the refinements
-// which to make it usable should be relative to the lowest ordered stackindex
-// and not absolute.
-//
-VarList* Make_Context_For_Action(
-    const Value* action, // need ->binding, so can't just be a REBACT*
-    StackIndex lowest_stackindex,
-    struct Reb_Binder *opt_binder
-){
-    VarList* exemplar = Make_Context_For_Action_Int_Partials(
-        action,
-        lowest_stackindex,
-        opt_binder
-    );
-
-    Manage_Flex(Varlist_Array(exemplar)); // !!! was needed before, review
-    Drop_Data_Stack_To(lowest_stackindex);
-    return exemplar;
-}
-
-
-// Each time we transition the refine field we need to check to see if a
-// partial became fulfilled, and if so transition it to not being put into
-// the partials.  Better to do it with a macro than repeat the code.  :-/
-//
-#define FINALIZE_REFINE_IF_FULFILLED \
-    assert(evoked != refine or evoked->payload.partial.stackindex == 0); \
-    if (VAL_TYPE_RAW(refine) == REB_X_PARTIAL) { \
-        if (not Get_Cell_Flag(refine, PARTIAL_SAW_NULL_ARG)) { \
-            if (refine->payload.partial.stackindex != 0) \
-    /* full! */ Init_Blank(Data_Stack_At(refine->payload.partial.stackindex)); \
-            else if (refine == evoked) \
-                evoked = nullptr;  /* allow other evoke to be last partial! */ \
-        } \
-    }
 
 
 //
@@ -354,11 +268,6 @@ VarList* Make_Context_For_Action(
 // but just takes fewer arguments or refinements.  It does this by storing a
 // heap-based "exemplar" FRAME! in the specialized action; this stores the
 // values to preload in the stack frame cells when it is invoked.
-//
-// The caller may provide information on the order in which refinements are
-// to be specialized, using the data stack.  These refinements should be
-// pushed in the *reverse* order of their invocation, so append/dup/part
-// has /DUP at TOP, and /PART under it.  List stops at lowest_stackindex.
 //
 bool Specialize_Action_Throws(
     Value* out,
@@ -370,259 +279,120 @@ bool Specialize_Action_Throws(
     assert(out != specializee);
 
     struct Reb_Binder binder;
-    if (opt_def)
-        INIT_BINDER(&binder, nullptr);
 
     REBACT *unspecialized = VAL_ACTION(specializee);
 
-    // This produces a context where partially specialized refinement slots
-    // will be INTEGER! pointing into the stack at the partial order
-    // position. (This takes into account any we are adding "virtually", from
-    // the current TOP_INDEX down to the lowest_stackindex).
-    //
-    // Note that REB_X_PARTIAL can't be used in slots yet, because the GC
-    // will be able to see this frame (code runs bound into it).
-    //
-    VarList* exemplar = Make_Context_For_Action_Int_Partials(
+  //=//// MAKE CONTEXT TO STORE SPECIALIZED ARGUMENT VALUES ///////////////=//
+
+    // The slots in the frame will be specialized if they were specialized
+    // in the original, otherwise they'll be set to null...unless there is
+    // a symbol pushed on the stack (e.g. specialize :append/only [...])
+    // in which case ONLY will be on the stack, and incorporated as a
+    // "specialized out" value not visible to any code running in the body.
+
+    VarList* exemplar = Make_Managed_Context_For_Action_May_Fail(
         specializee,
         lowest_stackindex,
         opt_def ? &binder : nullptr
     );
-    Manage_Flex(Varlist_Array(exemplar)); // destined to be managed, guarded
 
-    if (opt_def) { // code that fills the frame...fully or partially
-        //
-        // Bind all the SET-WORD! in the body that match params in the frame
-        // into the frame.  This means `value: value` can very likely have
-        // `value:` bound for assignments into the frame while `value` refers
-        // to whatever value was in the context the specialization is running
-        // in, but this is likely the more useful behavior.
-        //
-        // !!! This binds the actual arg data, not a copy of it--following
-        // OBJECT!'s lead.  However, ordinary functions make a copy of the
-        // body they are passed before rebinding.  Rethink.
+    if (not opt_def)
+        goto build_paramlist_on_stack;
 
-        // See Bind_Values_Core() for explanations of how the binding works.
+{ //=//// BIND PROVIDED CODE THAT FILLS FRAME (FULLY OR PARTIALLY) ////////=//
 
-        Bind_Values_Inner_Loop(
-            &binder,
-            Cell_List_At(opt_def),
-            exemplar,
-            FLAGIT_KIND(REB_SET_WORD), // types to bind (just set-word!)
-            0, // types to "add midstream" to binding as we go (nothing)
-            BIND_DEEP
-        );
+    // Bind all the SET-WORD! in the body that match params in the frame
+    // into the frame.  This means `value: value` can very likely have
+    // `value:` bound for assignments into the frame while `value` refers
+    // to whatever value was in the context the specialization is running
+    // in, but this is likely the more useful behavior.
+    //
+    // !!! This binds the actual arg data, not a copy of it--following
+    // OBJECT!'s lead.  However, ordinary functions make a copy of the
+    // body they are passed before rebinding.  Virtual binding in modern
+    // Ren-C resolves all of this.
 
-        // !!! Only one binder can be in effect, and we're calling arbitrary
-        // code.  Must clean up now vs. in loop we do at the end.  :-(
-        //
-        Cell* key = Varlist_Keys_Head(exemplar);
-        Value* var = Varlist_Slots_Head(exemplar);
-        for (; NOT_END(key); ++key, ++var) {
-            if (Is_Param_Unbindable(key))
-                continue; // !!! is this flag still relevant?
-            if (Is_Param_Hidden(key)) {
-                assert(Get_Cell_Flag(var, ARG_MARKED_CHECKED));
-                continue;
-            }
-            if (Get_Cell_Flag(var, ARG_MARKED_CHECKED))
-                continue; // may be refinement from stack, now specialized out
-            Remove_Binder_Index(&binder, Key_Canon(key));
-        }
-        SHUTDOWN_BINDER(&binder);
+    Bind_Values_Inner_Loop(
+        &binder,
+        Cell_List_At(opt_def),
+        exemplar,
+        FLAGIT_KIND(REB_SET_WORD), // types to bind (just set-word!)
+        0, // types to "add midstream" to binding as we go (nothing)
+        BIND_DEEP
+    );
 
-        // Run block and ignore result (unless it is thrown)
-        //
-        Push_GC_Guard(exemplar);
-        bool threw = Eval_List_At_Throws(out, opt_def);
-        Drop_GC_Guard(exemplar);
+    Cleanup_Specialization_Binder(&binder, exemplar);
 
-        if (threw) {
-            Drop_Data_Stack_To(lowest_stackindex);
-            return true;
-        }
+  //=//// RUN PROVIDED CODE (IGNORE RESULT, UNLESS IT IS THROWN) //////////=//
+
+    Push_GC_Guard(exemplar);
+    bool threw = Eval_List_At_Throws(out, opt_def);
+    Drop_GC_Guard(exemplar);
+
+    if (threw) {
+        Drop_Data_Stack_To(lowest_stackindex);
+        return true;
     }
 
-    Value* rootkey = CTX_ROOTKEY(exemplar);
+} build_paramlist_on_stack: { /////////////////////////////////////////////=//
 
-    // Build up the paramlist for the specialized function on the stack.
-    // The same walk used for that is used to link and process REB_X_PARTIAL
-    // arguments for whether they become fully specialized or not.
+    Value* rootkey = CTX_ROOTKEY(exemplar);
 
     StackIndex paramlist_base = TOP_INDEX;
     Copy_Cell(PUSH(), ACT_ARCHETYPE(unspecialized));
 
     Value* param = rootkey + 1;
     Value* arg = Varlist_Slots_Head(exemplar);
-    Value* refine = ORDINARY_ARG; // parallels states in Eval_Core_Throw()
     REBLEN index = 1;
-
-    Value* first_partial = nullptr;
-    Value* last_partial = nullptr;
-
-    Value* evoked = nullptr;
 
     for (; NOT_END(param); ++param, ++arg, ++index) {
         switch (VAL_PARAM_CLASS(param)) {
-        case PARAM_CLASS_REFINEMENT: {
-            FINALIZE_REFINE_IF_FULFILLED; // see macro
-            refine = arg;
-
+          case PARAM_CLASS_REFINEMENT: {
+            enum Reb_Param_Class pclass_next = PARAM_CLASS_LOCAL;  // or END
+            if (not IS_END(param + 1))
+                pclass_next = VAL_PARAM_CLASS(param + 1);
             if (
-                Is_Nulled(refine)
-                or (
-                    Is_Integer(refine)
-                    and Get_Cell_Flag(refine, ARG_MARKED_CHECKED)
-                )
+                pclass_next != PARAM_CLASS_NORMAL
+                and pclass_next != PARAM_CLASS_HARD_QUOTE
+                and pclass_next != PARAM_CLASS_SOFT_QUOTE
             ){
-                // /DUP is implicitly "evoked" to be true in the following
-                // case, despite being void, since an argument is supplied:
-                //
-                //     specialize 'append [count: 10]
-                //
-                // But refinements with one argument that get evoked might
-                // cause partial refinement specialization.  Since known
-                // partials are checked to see if they become complete anyway,
-                // use the same mechanic for voids.
+                // Assume refinement takes no arguments.
 
-                StackIndex partial_stackindex =
-                    Is_Nulled(refine) ? 0 : VAL_INT32(refine);
+                if (Is_Nulled(arg))
+                    goto unspecialized_arg;
 
-                if (not first_partial)
-                    first_partial = refine;
+                if (IS_TRUTHY(arg))
+                    Init_Refinement(arg, Cell_Parameter_Symbol(param));
                 else
-                    last_partial->extra.next_partial = refine;
+                    Init_Blank(arg);
 
-                RESET_CELL(refine, REB_X_PARTIAL);
-                refine->payload.partial.stackindex = partial_stackindex;
-                refine->payload.partial.index = index;
-                Corrupt_Pointer_If_Debug(refine->extra.next_partial);
-
-                last_partial = refine;
-
-                if (partial_stackindex == 0)
-                    goto unspecialized_arg_but_may_evoke;
-
-                // Though Make_Level_For_Specialization() knew this slot was
-                // partial when it ran, user code might have run to fill in
-                // all the null arguments.  We need to know the stack position
-                // of the ordering, to BLANK! it from the partial stack if so.
-                //
-                Set_Cell_Flag(refine, PARTIAL_IN_USE);
+                Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
                 goto specialized_arg_no_typecheck;
             }
 
-            assert(
-                Not_Cell_Flag(refine, ARG_MARKED_CHECKED)
-                or (
-                    Is_Refinement(refine)
-                    and (
-                        Cell_Word_Symbol(refine)
-                        == Cell_Parameter_Symbol(param)
-                    )
-                )
-            );
-
-            if (IS_TRUTHY(refine))
-                Init_Refinement(refine, Cell_Parameter_Symbol(param));
-            else
-                Init_Blank(arg);
-
+            if (Is_Nulled(arg + 1)) {  // takes arg, but revoke refinement
+                Init_Nulled(arg);
+                goto unspecialized_arg;
+            }
+            Init_Refinement(arg, Cell_Parameter_Symbol(param));
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             goto specialized_arg_no_typecheck; }
 
-        case PARAM_CLASS_RETURN:
-        case PARAM_CLASS_LOCAL:
+          case PARAM_CLASS_RETURN:
+          case PARAM_CLASS_LOCAL:
             assert(Is_Nulled(arg)); // no bindings, you can't set these
             goto unspecialized_arg;
 
-        default:
+          default:
             break;
         }
 
         // It's an argument, either a normal one or a refinement arg.
 
-        if (refine == ORDINARY_ARG) {
-            if (Is_Nulled(arg))
-                goto unspecialized_arg;
+        if (Is_Nulled(arg))
+            goto unspecialized_arg;
 
-            goto specialized_arg;
-        }
-
-        if (VAL_TYPE_RAW(refine) == REB_X_PARTIAL) {
-            if (Is_Nulled(arg)) { // we *know* it's not completely fulfilled
-                Set_Cell_Flag(refine, PARTIAL_SAW_NULL_ARG);
-                goto unspecialized_arg;
-            }
-
-            if (refine->payload.partial.stackindex != 0)  // started true
-                goto specialized_arg;
-
-            if (evoked == refine)
-                goto specialized_arg; // already evoking this refinement
-
-            // If we started out with a null refinement this arg "evokes" it.
-            // (Opposite of void "revocation" at callsites).
-            // An "evoked" refinement from the code block has no order,
-            // so only one such partial is allowed, unless it turns out to
-            // be completely fulfilled.
-            //
-            if (evoked)
-                fail (Error_Ambiguous_Partial_Raw());
-
-            // added at `unspecialized_but_may_evoke` unhidden, now hide it
-            TYPE_SET(TOP, REB_TS_HIDDEN);
-
-            evoked = refine;  // gets reset to nullptr if ends up fulfilled
-            Set_Cell_Flag(refine, PARTIAL_IN_USE);
-            goto specialized_arg;
-        }
-
-        assert(Is_Blank(refine) or Is_Refinement(refine));
-
-        if (Is_Blank(refine)) {
-            //
-            // `specialize 'append [dup: false count: 10]` is not legal.
-            //
-            if (not Is_Nulled(arg))
-                fail (Error_Bad_Refine_Revoke(param, arg));
-            goto specialized_arg_no_typecheck;
-        }
-
-        if (not Is_Nulled(arg))
-            goto specialized_arg;
-
-        // A previously *fully* specialized TRUE should not have null args.
-        // But code run for the specialization may have set the refinement
-        // to true without setting all its arguments.
-        //
-        // Unlike with the REB_X_PARTIAL cases, we have no ordering info
-        // besides "after all of those", we can only do that *once*.
-
-        if (evoked)
-            fail (Error_Ambiguous_Partial_Raw());
-
-        // Link into partials list (some repetition with code above)
-
-        if (not first_partial)
-            first_partial = refine;
-        else
-            last_partial->extra.next_partial = refine;
-
-        Reset_Cell_Header(refine, REB_X_PARTIAL, CELL_FLAG_PARTIAL_IN_USE);
-        refine->payload.partial.stackindex = 0;  // no ordered stack position
-        refine->payload.partial.index = index - (arg - refine);
-        Corrupt_Pointer_If_Debug(refine->extra.next_partial);
-
-        last_partial = refine;
-
-        Set_Cell_Flag(refine, PARTIAL_SAW_NULL_ARG); // this is a null arg
-        evoked = refine;  // ...we won't ever set this back to nulltpr later
-        goto unspecialized_arg;
-
-    unspecialized_arg_but_may_evoke:;
-
-        assert(refine->payload.partial.stackindex == 0);
+        goto specialized_arg;
 
     unspecialized_arg:;
 
@@ -656,11 +426,6 @@ bool Specialize_Action_Throws(
         continue;
     }
 
-    if (first_partial) {
-        FINALIZE_REFINE_IF_FULFILLED; // last chance (no more refinements)
-        last_partial->extra.next_partial = nullptr; // not needed until now
-    }
-
     Array* paramlist = Pop_Stack_Values_Core(
         paramlist_base,
         SERIES_MASK_ACTION
@@ -668,121 +433,6 @@ bool Specialize_Action_Throws(
     Manage_Flex(paramlist);
     Cell* rootparam = Array_Head(paramlist);
     rootparam->payload.action.paramlist = paramlist;
-
-    // PARAM_CLASS_REFINEMENT slots which started partially specialized (or
-    // unspecialized) in the exemplar now all contain REB_X_PARTIAL, but we
-    // must now convert these transitional placeholders to...
-    //
-    // * NOTHING -- Unspecialized, BUT in traversal order before a partial
-    //   refinement.  That partial must pre-empt Eval_Core_Throws() fulfilling
-    //   a use of this unspecialized refinement from a PATH! at the callsite.
-    //
-    // * NULL -- Unspecialized with no outranking partials later in traversal.
-    //   So Eval_Core_Throws() is free to fulfill a use of this refinement
-    //   from a PATH! at the callsite when it first comes across it.
-    //
-    // * REFINEMENT! (with symbol of the parameter) -- All arguments were
-    //   filled in, it's no longer partial.
-    //
-    // * ISSUE! -- Partially specialized.  Note the symbol of the issue
-    //   is probably different from the slot it's in...this is how the
-    //   priority order of usage of partial refinements is encoded.
-
-    // We start filling in slots with the lowest priority ordered refinements
-    // and move on to the higher ones, so that when those refinements are
-    // pushed the end result will be a stack with the highest priority
-    // refinements at the top.
-    //
-    Value* ordered = Data_Stack_At(lowest_stackindex);
-    while (ordered != TOP) {
-        if (Is_Blank(ordered + 1)) // blanked when seen no longer partial
-            ++ordered;
-        else
-            break;
-    }
-
-    Value* partial = first_partial;
-    while (partial) {
-        assert(VAL_TYPE_RAW(partial) == REB_X_PARTIAL);
-        Value* next_partial = partial->extra.next_partial; // overwritten
-
-        if (Not_Cell_Flag(partial, PARTIAL_IN_USE)) {
-            if (ordered == TOP)
-                Init_Nulled(partial); // no more partials coming
-            else {
-                Init_Nothing(partial);  // still partials to go, signal pre-empt
-                Set_Cell_Flag(partial, ARG_MARKED_CHECKED);
-            }
-            goto continue_loop;
-        }
-
-        if (Not_Cell_Flag(partial, PARTIAL_SAW_NULL_ARG)) { // filled
-            Init_Refinement(
-                partial,
-                Cell_Parameter_Symbol(rootkey + partial->payload.partial.index)
-            );
-            Set_Cell_Flag(partial, ARG_MARKED_CHECKED);
-            goto continue_loop;
-        }
-
-        if (evoked) {
-            //
-            // A non-position-bearing refinement use coming from running the
-            // code block will come after all the refinements in the path,
-            // making it *first* in the exemplar partial/unspecialized slots.
-            //
-            REBLEN evoked_index = evoked->payload.partial.index;
-            Init_Any_Word_Bound(
-                partial,
-                REB_ISSUE,
-                Cell_Param_Canon(rootkey + evoked_index),
-                exemplar,
-                evoked_index
-            );
-            Set_Cell_Flag(partial, ARG_MARKED_CHECKED);
-
-            evoked = nullptr;
-            goto continue_loop;
-        }
-
-        if (ordered == TOP) { // some partials fully specialized
-            Init_Nulled(partial);
-            goto continue_loop;
-        }
-
-        ++ordered;
-        if (IS_WORD_UNBOUND(ordered)) // not in paramlist, or a duplicate
-            fail (Error_Bad_Refine_Raw(ordered));
-
-        Init_Any_Word_Bound(
-            partial,
-            REB_ISSUE,
-            VAL_STORED_CANON(ordered),
-            exemplar,
-            VAL_WORD_INDEX(ordered)
-        );
-        Set_Cell_Flag(partial, ARG_MARKED_CHECKED);
-
-        while (ordered != TOP) {
-            if (Is_Blank(ordered + 1))
-                ++ordered; // loop invariant, no BLANK! in next stack
-            else
-                break;
-        }
-
-        goto continue_loop;
-
-    continue_loop:;
-
-        partial = next_partial;
-    }
-
-    // Everything should have balanced out for a valid specialization
-    //
-    assert(not evoked);
-    if (ordered != TOP)
-        fail (Error_Bad_Refine_Raw(ordered)); // specialize 'print/asdf
-    Drop_Data_Stack_To(lowest_stackindex);
 
     // See %sysobj.r for `specialized-meta:` object template
 
@@ -826,7 +476,7 @@ bool Specialize_Action_Throws(
 
     Init_Action_Unbound(out, specialized);
     return false; // code block did not throw
-}
+}}
 
 
 //

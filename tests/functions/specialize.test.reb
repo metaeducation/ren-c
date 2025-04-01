@@ -7,32 +7,6 @@
 ;     :append/dup/part
 
 (
-    foo: func [/A aa /B bb /C cc] [  ; would be nice if refinements were null
-        return compose [
-            (maybe any [A]) (maybe aa)  ; ANY makes blanks into nulls
-            (maybe any [B]) (maybe bb)
-            (maybe any [C]) (maybe cc)
-        ]
-    ]
-
-    fooBC: :foo/B/C
-    fooCB: :foo/C/B
-
-    did all [
-        [/B 10 /C 20] = fooBC 10 20
-        [/A 30 /B 10 /C 20] = fooBC/A 10 20 30
-
-        [/B 20 /C 10] = fooCB 10 20
-        [/A 30 /B 20 /C 10] = fooCB/A 10 20 30
-
-        error? sys/util/rescue [fooBC/B 1 2 3 4 5 6]
-        error? sys/util/rescue [fooBC/C 1 2 3 4 5 6]
-        error? sys/util/rescue [fooCB/B 1 2 3 4 5 6]
-        error? sys/util/rescue [fooCB/C 1 2 3 4 5 6]
-    ]
-)
-
-(
     append-123: specialize :append [value: [1 2 3] only: true]
     [a b c [1 2 3] [1 2 3]] = append-123/dup copy [a b c] 2
 )
@@ -64,46 +38,6 @@
 )
 
 (
-    apd: specialize 'append/part [dup: true]
-    apd3: specialize 'apd [count: 3]
-    ap2d: specialize 'apd [limit: 2]
-
-    xy: [<X> #Y]
-    abc: [A B C]
-    r: [<X> #Y A B A B A B]
-
-    did all [
-        r = apd copy xy abc 2 3
-        r = applique 'apd [series: copy xy  value: abc  limit: 2  count: 3]
-
-        r = apd3 copy xy abc 2
-        r = applique 'apd3 [series: copy xy  value: abc  limit: 2]
-
-        r = ap2d copy xy abc 3
-        r = applique 'ap2d [series: copy xy  value: abc  count: 3]
-    ]
-)(
-    adp: specialize 'append/dup [part: true]
-    adp2: specialize 'adp [limit: 2]
-    ad3p: specialize 'adp [count: 3]
-
-    xy: [<X> #Y]
-    abc: [A B C]
-    r: [<X> #Y A B A B A B]
-
-    did all [
-        r = adp copy xy abc 3 2
-        r = applique 'adp [series: copy xy  value: abc  count: 3  limit: 2]
-
-        r = adp2 copy xy abc 3
-        r = applique 'adp2 [series: copy xy  value: abc  count: 3]
-
-        r = ad3p copy xy abc 2
-        r = applique 'ad3p [series: copy xy  value: abc  limit: 2]
-    ]
-)
-
-(
     aopd3: specialize the (specialize 'append/only [])/part [
         count: 3
         limit: 1
@@ -129,16 +63,4 @@
     ]
 
     is-bad
-)
-
-
-(
-    ap10d: specialize 'append/dup [value: 10]
-    f: make frame! :ap10d
-    f/series: copy [a b c]
-    did all [
-        [a b c 10] = eval copy f
-        f/count: 2
-        [a b c 10 10 10] = eval f
-    ]
 )

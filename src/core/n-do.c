@@ -667,13 +667,12 @@ DECLARE_NATIVE(APPLIQUE)
     // were pushed during the Get of the ACTION!.
     //
     struct Reb_Binder binder;
-    INIT_BINDER(&binder, nullptr);
-    VarList* exemplar = Make_Context_For_Action_Int_Partials(
+
+    VarList* exemplar = Make_Managed_Context_For_Action_May_Fail(
         applicand,
         L->stack_base,  // lowest_stackindex of refinements to weave in
         &binder
     );
-    Manage_Flex(Varlist_Array(exemplar)); // binding code into it
 
     // Bind any SET-WORD!s in the supplied code block into the FRAME!, so
     // e.g. APPLY 'APPEND [VALUE: 10]` will set VALUE in exemplar to 10.
@@ -693,16 +692,7 @@ DECLARE_NATIVE(APPLIQUE)
 
     // Reset all the binder indices to zero, balancing out what was added.
     //
-    Value* key = Varlist_Keys_Head(exemplar);
-    Value* var = Varlist_Slots_Head(exemplar);
-    for (; NOT_END(key); key++, ++var) {
-        if (Is_Param_Unbindable(key))
-            continue; // shouldn't have been in the binder
-        if (Is_Param_Hidden(key))
-            continue; // was part of a specialization internal to the action
-        Remove_Binder_Index(&binder, Key_Canon(key));
-    }
-    SHUTDOWN_BINDER(&binder); // must do before running code that might BIND
+    Cleanup_Specialization_Binder(&binder, exemplar);
 
     // Run the bound code, ignore evaluative result (unless thrown)
     //

@@ -284,7 +284,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         if (not Is_Action(out))
             fail (Error_Bad_Make(kind, arg));
 
-        VarList* exemplar = Make_Context_For_Action(
+        VarList* exemplar = Make_Managed_Context_For_Action_May_Fail(
             out,  // being used here as input (e.g. the ACTION!)
             lowest_stackindex,  // will weave in the refinements pushed
             nullptr  // no binder needed, not running any code

@@ -513,27 +513,6 @@ struct Reb_Varargs_Payload {
 };
 
 
-// SPECIALIZE attempts to be smart enough to do automatic partial specializing
-// when it can, and to allow you to augment the APPLY-style FRAME! with an
-// order of refinements that is woven into the single operation.  It links
-// all the partially specialized (or unspecified) refinements as it traverses
-// in order to revisit them and fill them in more efficiently.  This special
-// payload is used along with a singly linked list via extra.next_partial
-//
-#define REB_X_PARTIAL REB_MAX_PLUS_ONE
-
-#define CELL_FLAG_PARTIAL_IN_USE \
-    FLAG_TYPE_SPECIFIC_BIT(0)
-
-#define CELL_FLAG_PARTIAL_SAW_NULL_ARG \
-    FLAG_TYPE_SPECIFIC_BIT(1)
-
-struct Reb_Partial_Payload {
-    StackIndex stackindex;  // for this partial slot (if ordered on the stack)
-    REBLEN index; // maps to the index of this parameter in the paramlist
-};
-
-
 // Handles hold a pointer and a size...which allows them to stand-in for
 // a binary series.
 //
@@ -688,10 +667,6 @@ union Reb_Value_Payload {
     struct Reb_Action_Payload action;
     struct Reb_Context_Payload any_context;
     struct Reb_Varargs_Payload varargs;
-
-    // Internal-only payloads for cells that use > REB_MAX as the VAL_TYPE()
-    //
-    struct Reb_Partial_Payload partial; // used with REB_X_PARTIAL
 };
 
 #if CPLUSPLUS_11

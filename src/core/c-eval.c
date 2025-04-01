@@ -903,45 +903,13 @@ bool Eval_Core_Throws(Level* const L)
                     goto used_refinement;
                 }
 
-                if (Is_Refinement(L->special)) {
-                    assert(
-                        Cell_Word_Symbol(L->special)
-                        == Cell_Parameter_Symbol(L->param)
-                    ); // !!! Maybe not, if REDESCRIBE renamed args, but...
-                    L->refine = L->arg;
-                    goto used_refinement; // !!! ...this would fix it up.
-                }
-
-                // A "typechecked" trash means it's unspecialized, but partial
-                // refinements are still coming that may have higher priority
-                // in taking arguments at the callsite than the current
-                // refinement, if it's in use due to a PATH! invocation.
-                //
-                if (Is_Nothing(L->special))
-                    goto unspecialized_refinement_must_pickup; // defer this
-
-                // A "typechecked" ISSUE! with binding indicates a partial
-                // refinement with parameter index that needs to be pushed
-                // to top of stack, hence HIGHER priority for fulfilling
-                // @ the callsite than any refinements added by a PATH!.
-                //
-                if (Is_Issue(L->special)) {
-                    REBLEN partial_index = VAL_WORD_INDEX(L->special);
-                    Symbol* partial_canon = VAL_STORED_CANON(L->special);
-
-                    Init_Issue(PUSH(), partial_canon);
-                    INIT_BINDING(TOP, L->varlist);
-                    TOP->payload.any_word.index = partial_index;
-
-                    L->refine = SKIPPING_REFINEMENT_ARGS;
-                    goto used_refinement;
-                }
-
-                assert(Is_Integer(L->special)); // DO FRAME! leaves these
-
-                assert(L->flags.bits & DO_FLAG_FULLY_SPECIALIZED);
-                L->refine = L->arg; // remember so we can revoke!
-                goto used_refinement;
+                assert(Is_Refinement(L->special));
+                assert(
+                    Cell_Word_Symbol(L->special)
+                    == Cell_Parameter_Symbol(L->param)
+                ); // !!! Maybe not, if REDESCRIBE renamed args, but...
+                L->refine = L->arg;
+                goto used_refinement; // !!! ...this would fix it up.
 
     //=//// UNSPECIALIZED REFINEMENT SLOT (no consumption) ////////////////=//
 
@@ -960,8 +928,6 @@ bool Eval_Core_Throws(Level* const L)
                 }
 
                 --ordered; // not lucky: if in use, this is out of order
-
-              unspecialized_refinement_must_pickup:; // fulfill on 2nd pass
 
                 for (; ordered != Data_Stack_At(L->stack_base); --ordered) {
                     if (Is_Action(ordered))
