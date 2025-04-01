@@ -600,7 +600,7 @@ Array* Collect_Keylist_Managed(
             // !!! See notes on the flags about why SELF is set hidden but
             // not unbindable with REB_TS_UNBINDABLE.
             //
-            TYPE_SET(self_key, REB_TS_HIDDEN);
+            Set_Typeset_Flag(self_key, REB_TS_HIDDEN);
 
             assert(cl->index == 1);
             Add_Binder_Index(&cl->binder, Key_Canon(self_key), cl->index);

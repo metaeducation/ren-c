@@ -842,7 +842,7 @@ REBTYPE(Context)
             if (Is_Datatype(ARG(KINDS)))
                 types = FLAGIT_KIND(VAL_TYPE_KIND(ARG(KINDS)));
             else
-                types = VAL_TYPESET_BITS(ARG(KINDS));
+                types = Cell_Typeset_Bits(ARG(KINDS));
         }
         else if (Bool_ARG(DEEP))
             types = TS_STD_SERIES;

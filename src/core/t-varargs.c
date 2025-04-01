@@ -335,7 +335,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         return false;
     }
 
-    if (param and not TYPE_CHECK(param, VAL_TYPE(out))) {
+    if (param and not Typeset_Check(param, VAL_TYPE(out))) {
         //
         // !!! Array-based varargs only store the parameter list they are
         // stamped with, not the frame.  This is because storing non-reified

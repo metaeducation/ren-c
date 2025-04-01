@@ -300,7 +300,7 @@ void Do_After_Action_Checks_Debug(Level* L) {
         Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
         assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
         if (
-            not TYPE_CHECK(typeset, VAL_TYPE(L->out))
+            not Typeset_Check(typeset, VAL_TYPE(L->out))
             and not (
                 GET_ACT_FLAG(phase, ACTION_INVISIBLE)
                 and Is_Nulled(L->out) // this happens with `eval [return]`
