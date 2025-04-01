@@ -18,8 +18,6 @@
 (not negative? 1e-8 - abs 0.9999 - (99'999'999.9999 mod 1))
 (not negative? 1e-8 - abs 0.99999 - (99'999'999.99999 mod 1))
 (not negative? 1e-8 - abs 0.999999 - (99'999'999.999999 mod 1))
-(zero? $999'999'999'999'999 mod 1)
-(zero? $999'999'999'999'999 mod $1)
 (zero? 9'999'999'999'999'999 mod 1.0)
 (zero? 999'999'999'999'999 mod 1.0)
 (zero? 562'949'953'421'311.0 mod 1)
@@ -47,8 +45,6 @@
 (zero? modulo/adjusted 0.3 0.1 + 0.1 + 0.1)
 (zero? modulo/adjusted 0.1 + 0.1 + 0.1 0.3)
 (zero? modulo/adjusted 0.3 0.1 + 0.1 + 0.1)
-(zero? modulo/adjusted $0.1 + $0.1 + $0.1 $0.3)
-(zero? modulo/adjusted $0.3 $0.1 + $0.1 + $0.1)
 (zero? modulo/adjusted 1 0.1)
 (zero? modulo/adjusted 0.15 - 0.05 - 0.1 0.1)
 [#56

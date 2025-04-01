@@ -389,5 +389,3 @@ typedef struct rebol_time_fields {
     REBLEN s;
     REBLEN n;
 } REB_TIMEF;
-
-#include "sys-deci.h"

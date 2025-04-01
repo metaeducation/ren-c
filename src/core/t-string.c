@@ -29,7 +29,6 @@
 //
 
 #include "sys-core.h"
-#include "sys-deci-funcs.h"
 #include "sys-int-funcs.h"
 
 
@@ -351,6 +350,7 @@ static Binary* make_binary(const Value* arg, bool make)
         break;
 
     // MAKE/TO BINARY! <any-string>
+    case REB_MONEY:
     case REB_TEXT:
     case REB_FILE:
     case REB_EMAIL:
@@ -382,12 +382,6 @@ static Binary* make_binary(const Value* arg, bool make)
     // MAKE/TO BINARY! <bitset!>
     case REB_BITSET:
         flex = Copy_Bytes(Cell_Blob_Head(arg), VAL_LEN_HEAD(arg));
-        break;
-
-    case REB_MONEY:
-        flex = Make_Binary(12);
-        deci_to_binary(Binary_Head(flex), VAL_MONEY_AMOUNT(arg));
-        Term_Non_Array_Flex_Len(flex, 12);
         break;
 
     default:
@@ -1019,7 +1013,7 @@ static void Mold_Url(Molder* mo, const Cell* v)
 }
 
 
-static void Mold_File(Molder* mo, const Cell* v)
+static void Mold_File_Or_Money(Molder* mo, const Cell* v)
 {
     Flex* series = Cell_Flex(v);
     REBLEN len = Cell_Series_Len_At(v);
@@ -1038,8 +1032,6 @@ static void Mold_File(Molder* mo, const Cell* v)
     ++estimated_bytes; // room for % at start
 
     Byte *dp = Prep_Mold_Overestimated(mo, estimated_bytes);
-
-    *dp++ = '%';
 
     for (n = VAL_INDEX(v); n < VAL_LEN_HEAD(v); ++n) {
         Ucs2Unit c = GET_ANY_CHAR(series, n);
@@ -1141,12 +1133,18 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         Mold_Text_Series_At(mo, Cell_String(v), VAL_INDEX(v));
         break;
 
+    case REB_MONEY:
+        Append_Codepoint(mo->utf8flex, '$');
+        Mold_File_Or_Money(mo, v);
+        break;
+
     case REB_FILE:
         if (Cell_Series_Len_At(v) == 0) {
             Append_Unencoded(s, "%\"\"");
             break;
         }
-        Mold_File(mo, v);
+        Append_Codepoint(mo->utf8flex, '%');
+        Mold_File_Or_Money(mo, v);
         break;
 
     case REB_EMAIL:

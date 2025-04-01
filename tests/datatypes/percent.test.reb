@@ -29,12 +29,7 @@
 [#57
     (6% = round 5.55%)
 ]
-[#97
-    ($59.0 = (10% * $590))
-]
-[#97
-    ($100.6 = ($100 + 60%))
-]
+
 ; 64-bit IEEE 754 maximum
 ; Minimal positive normalized
 [#1475

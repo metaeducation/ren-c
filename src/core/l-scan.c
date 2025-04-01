@@ -1541,16 +1541,11 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             S->end = cp;
             return LOCATED(TOKEN_TAG);
 
-        case LEX_SPECIAL_PLUS:          /* +123 +123.45 +$123 */
-        case LEX_SPECIAL_MINUS:         /* -123 -123.45 -$123 */
+        case LEX_SPECIAL_PLUS:          /* +123 +123.45 */
+        case LEX_SPECIAL_MINUS:         /* -123 -123.45 */
             if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
                 token = TOKEN_EMAIL;
                 goto prescan_subsume_all_dots;
-            }
-            if (Has_Lex_Flag(flags, LEX_SPECIAL_DOLLAR)) {
-                ++cp;
-                token = TOKEN_MONEY;
-                goto prescan_subsume_up_to_one_dot;
             }
             cp++;
             if (Is_Lex_Number(*cp)) {
@@ -1639,8 +1634,10 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             return Error_Syntax(S, TOKEN_INTEGER);
 
         case LEX_SPECIAL_DOLLAR:
-            if (Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER) {
-                //
+            if (  // $10 and $-10 are MONEY!, $a and $-- are "quoted words"
+                (cp[1] == '-' and Get_Lex_Class(cp[2]) != LEX_CLASS_NUMBER)
+                or (cp[1] != '-' and Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER)
+            ){
                 // In the bootstrap process, (get 'x) won't work because X
                 // will be unbound.  Allow (get $x) to act like (get 'x) so
                 // when the code is run in a new executable it will be bound.
@@ -1844,7 +1841,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     );
 
     // By default, `.` is a delimiter class which stops token scaning.  So if
-    // scanning +$10.20 or -$10.20 or $3.04, there is common code to look
+    // scanning $-10.20 or $-10.20 or $3.04, there is common code to look
     // past the delimiter hit.  The same applies to times.  (DECIMAL! has
     // its own code)
 
@@ -2357,7 +2354,9 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             ++S->end;  // include the slash in the error
             return RAISE(Error_Syntax(S, token));
         }
-        if (S->end != Scan_Money(PUSH(), S->begin, len))
+        if (*S->begin == '-')
+            return RAISE(Error_Syntax(S, token));
+        if (S->end != Scan_File_Or_Money(PUSH(), S->begin, len))
             return RAISE(Error_Syntax(S, token));
         break;
 
@@ -2421,7 +2420,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         break;
 
       case TOKEN_FILE:
-        if (S->end != Scan_File(PUSH(), S->begin, len))
+        if (S->end != Scan_File_Or_Money(PUSH(), S->begin, len))
             return RAISE(Error_Syntax(S, token));
         break;
 

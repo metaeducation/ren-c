@@ -31,7 +31,6 @@
 //
 
 #include "sys-core.h"
-#include "sys-deci-funcs.h"
 
 #include <math.h>
 #include <float.h>
@@ -484,9 +483,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
                 goto compare;
             }
             else if (tb == REB_MONEY) {
-                deci amount = int_to_deci(VAL_INT64(a));
-                Init_Money(a, amount);
-                goto compare;
+                fail ("Money-to-int comparison not implemented in bootstrap");
             }
             break;
 
@@ -498,22 +495,15 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
                 goto compare;
             }
             else if (tb == REB_MONEY) {
-                Init_Money(a, decimal_to_deci(VAL_DECIMAL(a)));
-                goto compare;
+                fail ("Numeric money comparisons not implemented in bootstrap");
             }
             else if (tb == REB_DECIMAL || tb == REB_PERCENT) // equivalent types
                 goto compare;
             break;
 
         case REB_MONEY:
-            if (tb == REB_INTEGER) {
-                Init_Money(b, int_to_deci(VAL_INT64(b)));
-                goto compare;
-            }
-            if (tb == REB_DECIMAL || tb == REB_PERCENT) {
-                Init_Money(b, decimal_to_deci(VAL_DECIMAL(b)));
-                goto compare;
-            }
+            if (tb == REB_INTEGER or tb == REB_DECIMAL or tb == REB_PERCENT)
+                fail ("Numeric money comparisons not implemented in bootstrap");
             break;
 
         case REB_WORD:
@@ -733,22 +723,6 @@ DECLARE_NATIVE(SAME_Q)
         return Init_False(OUT);
     }
 
-    if (Is_Money(value1)) {
-        //
-        // There is apparently a distinction between "strict equal" and "same"
-        // when it comes to the MONEY! type:
-        //
-        // >> strict-equal? $1 $1.0
-        // == true
-        //
-        // >> same? $1 $1.0
-        // == false
-        //
-        if (deci_is_same(VAL_MONEY_AMOUNT(value1), VAL_MONEY_AMOUNT(value2)))
-            return Init_True(OUT);
-        return Init_False(OUT);
-    }
-
     // For other types, just fall through to strict equality comparison
     //
     if (Compare_Modify_Values(value1, value2, 1))
@@ -911,7 +885,7 @@ DECLARE_NATIVE(MINIMUM)
 //
 //  "Returns TRUE if the number is negative."
 //
-//      number [any-number! money! time! pair!]
+//      number [any-number! time! pair!]
 //  ]
 //
 DECLARE_NATIVE(NEGATIVE_Q)
@@ -933,7 +907,7 @@ DECLARE_NATIVE(NEGATIVE_Q)
 //
 //  "Returns TRUE if the value is positive."
 //
-//      number [any-number! money! time! pair!]
+//      number [any-number! time! pair!]
 //  ]
 //
 DECLARE_NATIVE(POSITIVE_Q)

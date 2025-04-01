@@ -23,14 +23,7 @@
 (not even? #"^a")
 (even? #"^b")
 (not even? #"^(ff)")
-; money
-(even? $0)
-(not even? $1)
-(even? $2)
-(not even? -$1)
-(even? -$2)
-(not even? $999999999999999)
-(not even? -$999999999999999)
+
 ; time
 (even? 0:00)
 (even? 0:1:00)

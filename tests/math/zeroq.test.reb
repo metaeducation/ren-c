@@ -26,13 +26,7 @@
 (zero? #"^@")
 (not zero? #"^a")
 (not zero? #"^(ff)")
-; money
-(zero? $0)
-(not zero? $0.01)
-(not zero? -$0.01)
-(not zero? $999999999999999.87)
-(not zero? -$999999999999999.87)
-(zero? negate $0)
+
 ; time
 (zero? 0:00)
 (not zero? 0:00:0.000000001)

@@ -894,48 +894,6 @@ INLINE Value* Init_Percent(Cell* out, REBDEC d) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  MONEY!
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// R3-Alpha's MONEY! type is "unitless" currency, such that $10/$10 = $1
-// (and not 1).  This is because the feature in Rebol2 of being able to
-// store the ISO 4217 code (~15 bits) was not included:
-//
-// https://en.wikipedia.org/wiki/ISO_4217
-//
-// According to @Ladislav:
-//
-// "The money datatype is neither a bignum, nor a fixpoint arithmetic.
-//  It actually is unnormalized decimal floating point."
-//
-// !!! The naming of "deci" used by MONEY! as "decimal" is a confusing overlap
-// with DECIMAL!, although that name may be changing also.
-//
-
-INLINE deci VAL_MONEY_AMOUNT(const Cell* v) {
-    deci amount;
-    amount.m0 = v->extra.m0;
-    amount.m1 = v->payload.money.m1;
-    amount.m2 = v->payload.money.m2;
-    amount.s = v->payload.money.s;
-    amount.e = v->payload.money.e;
-    return amount;
-}
-
-INLINE Value* Init_Money(Cell* out, deci amount) {
-    RESET_CELL(out, REB_MONEY);
-    out->extra.m0 = amount.m0;
-    out->payload.money.m1 = amount.m1;
-    out->payload.money.m2 = amount.m2;
-    out->payload.money.s = amount.s;
-    out->payload.money.e = amount.e;
-    return cast(Value*, out);
-}
-
-
-//=////////////////////////////////////////////////////////////////////////=//
-//
 //  TUPLE!
 //
 //=////////////////////////////////////////////////////////////////////////=//

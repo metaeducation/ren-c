@@ -333,20 +333,6 @@ struct Reb_Datatype_Payload {
     Array* spec;
 };
 
-// !!! In R3-alpha, the money type was implemented under a type called "deci".
-// The payload for a deci was more than 64 bits in size, which meant it had
-// to be split across the separated union components in Ren-C.  (The 64-bit
-// aligned "payload" and 32-bit aligned "extra" were broken out independently,
-// so that setting one union member would not disengage the other.)
-
-struct Reb_Money_Payload {
-    unsigned m1:32; /* significand, continuation */
-    unsigned m2:23; /* significand, highest part */
-    unsigned s:1;   /* sign, 0 means nonnegative, 1 means nonpositive */
-    int e:8;        /* exponent */
-};
-
-
 // The same payload is used for TIME! and DATE!.  The extra bits needed by
 // DATE! (as REBYMD) fit into 32 bits, so can live in the ->extra field,
 // which is the size of a platform pointer.
@@ -632,8 +618,6 @@ union Reb_Value_Extra {
 
     union Reb_Eventee eventee;
 
-    unsigned m0:32; // !!! significand, lowest part - see notes on Reb_Money
-
     // There are two types of HANDLE!, and one version leverages the GC-aware
     // ability of a Stub to know when no references to the handle exist and
     // call a cleanup function.  The GC-aware variant allocates a "singular"
@@ -649,7 +633,6 @@ union Reb_Value_Payload {
     REBDEC decimal;
 
     Value* pair; // actually a "pairing" pointer
-    struct Reb_Money_Payload money;
     struct Reb_Handle_Payload handle;
     struct Reb_Time_Payload time;
     struct Reb_Tuple_Payload tuple;

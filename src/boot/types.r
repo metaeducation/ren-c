@@ -162,6 +162,7 @@ text        string      +       +       +       [series string]
 file        string      +       +       +       [series string]
 email       string      +       +       +       [series string]
 url         string      +       +       +       [series string]
+money       string      +       +       +       [series string]
 tripwire    string      +       +       +       [series string]
 tag         string      +       +       +       [series string]
 
@@ -187,7 +188,6 @@ logic       logic       -       +       +       -
 integer     integer     -       +       +       [number scalar]
 decimal     decimal     -       +       +       [number scalar]
 percent     decimal     -       +       +       [number scalar]
-money       money       -       +       +       scalar
 char        char        -       +       +       scalar
 pair        pair        +       +       +       scalar
 tuple       tuple       +       +       +       scalar

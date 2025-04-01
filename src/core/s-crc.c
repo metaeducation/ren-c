@@ -223,24 +223,6 @@ uint32_t Hash_Value(const Cell* v)
         hash = (VAL_INT64(v) >> 32) ^ (VAL_INT64(v));
         break;
 
-    case REB_MONEY: {
-        //
-        // !!! R3-Alpha used a sketchy "Reb_All" union for this, violating the
-        // rule of only reading from the union you last read from.  Access
-        // via unsigned char* to use the actual bytes of the money payload to
-        // accomplish the same thing (whether it was good or not, at least it
-        // isn't breaking the C standard)
-
-        const Byte *payload = cast(const Byte*, &v->payload.money);
-
-        uintptr_t bits0;
-        uintptr_t bits1;
-        memcpy(&bits0, payload, sizeof(uintptr_t));
-        memcpy(&bits1, payload + sizeof(uintptr_t), sizeof(uintptr_t));
-
-        hash = bits0 ^ bits1 ^ v->extra.m0;
-        break; }
-
     case REB_CHAR:
         hash = LO_CASE(VAL_CHAR(v));
         break;
@@ -267,6 +249,7 @@ uint32_t Hash_Value(const Cell* v)
     case REB_EMAIL:
     case REB_URL:
     case REB_TAG:
+    case REB_MONEY:
     case REB_TRIPWIRE:
         hash = Hash_Bytes_Or_Uni(
             VAL_RAW_DATA_AT(v),

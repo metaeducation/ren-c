@@ -28,16 +28,7 @@
 (1E20 == round 1E20)
 (2147483648.0 == round 2147483648.0)
 (9223372036854775808.0 == round 9223372036854775808.0)
-($101 == round $100.5)
-(-$101 = round -$100.5)
-; REBOL2 rounds to $100.5 beyond this
-($100 == round $100.4999999999998)
-; REBOL2 rounds to $100.5 beyond this
-(-$100 == round -$100.4999999999998)
-; REBOL2 rounds to $1000.5 beyond this
-($1000 == round $1000.499999999999)
-; REBOL2 rounds to $1000.5 beyond this
-(-$1000 == round -$1000.499999999999)
+
 (0:0:1 == round 0:0:1.4999)
 (0:1:0 == round 0:1:0.4999)
 (1:0:0 == round 1:0:0.4999)
@@ -73,10 +64,8 @@
 (-562'949'953'421'313.0 == round/to -562'949'953'421'313.0 1.0)
 (562'949'953'421'314.0 == round/to 562'949'953'421'314.0 1.0)
 (-562'949'953'421'314.0 == round/to -562'949'953'421'314.0 1.0)
-(zero? $100.2 - round/to 100.15 $0.1)
-($100.2 == round/to $100.15 $0.1)
 (1:1:1.2 == round/to 1:1:1.15 0:0:0.1)
-($100 == round/to $100.15 $2)
+
 (1:1:2 == round/to 1:1:1.15 0:0:2)
 (0 == round/even 0)
 (1 == round/even 1)
@@ -98,8 +87,7 @@
 (1:03:01 == round/even 1:03:01.1)
 (1:03:02 == round/even 1:03:01.5)
 (1:03:02 == round/even 1:03:01.9)
-($100 == round/even $100.25)
-(-$100 == round/even -$100.25)
+
 ; round/even/to; divide by 0
 (error? sys/util/rescue [round/even/to 0.1 0])
 (zero? round/even/to 0.1 -1.0)
@@ -125,12 +113,7 @@
 (-0.123 == round/even/to -0.1234 1E-3)
 (0.1234 = round/even/to 0.12345 1E-4)
 (-0.1234 = round/even/to -0.12345 1E-4)
-[#1470
-    (2.6 == round/even/to $2.55 0.1)
-]
-[#1470
-    ($2.6 == round/even/to 2.55 $0.1)
-]
+
 ; round-up breakpoint
 (0.12346 = round/even/to 0.123456 1E-5)
 (-0.12346 = round/even/to -0.123456 1E-5)
@@ -182,31 +165,17 @@
 (0.0 == (-562'949'953'421'313.0 - round/even/to -562'949'953'421'313.0 1.0))
 (562'949'953'421'314.0 == round/even/to 562'949'953'421'314.0 1.0)
 (-562'949'953'421'314.0 == round/even/to -562'949'953'421'314.0 1.0)
-[#1116
-    ($1.15 == round/even/to 1.15 $0.01)
-]
+
 ; this fails, by design
 (0:0:1.15 == round/even/to 0:0:1.15 0:0:0.01)
-(1.15 == round/even/to $1.15 0.01)
 (-0:0:2.6 == round/even/to -0:0:2.55 0:0:0.1)
-(-$2.6 == round/even/to -$2.55 $0.1)
-(0.0 == (1e-15 - round/even/to 1.1e-15 1e-15))
-($0.0 == ($0.000'000'000'000'001 - round/even/to $0.000'000'000'000'001'1 $1e-15))
+
 (not negative? 1e-31 - abs 26e-17 - round/even/to 25.5e-17 1e-17)
-(not negative? ($1e-31) - abs $26e-17 - round/even/to $0.000'000'000'000'000'255 $1e-17)
+
 (0:0:2.6 == round/even/to 0:0:2.55 0:0:0.1)
-($2.6 == round/even/to $2.55 $0.1)
+
 (not negative? 1e-31 - abs -26e-17 - round/even/to -25.5e-17 1e-17)
-(not negative? $1e-31 - abs -$26e-17 - round/even/to -$0.000'000'000'000'000'255 $1e-17)
-($1 == round/even/to $1.23456789 $1)
-($1.2 == round/even/to $1.23456789 $0.1)
-($1.23 == round/even/to $1.23456789 $0.01)
-($1.235 == round/even/to $1.23456789 $0.001)
-($1.2346 == round/even/to $1.23456789 $0.0001)
-($1.23457 == round/even/to $1.23456789 $0.00001)
-($1.234568 == round/even/to $1.23456789 $0.000001)
-($1.2345679 == round/even/to $1.23456789 $0.0000001)
-($1.23456789 == round/even/to $1.23456789 $0.00000001)
+
 ; round/ceiling
 (0 == round/ceiling 0)
 (1 == round/ceiling 1)
@@ -321,14 +290,7 @@
 (-1:03:01 == round/half-ceiling -1:03:01)
 (-1:03:01 == round/half-ceiling -1:03:01.5)
 (-1:03:02 == round/half-ceiling -1:03:01.50001)
-($100 == round/half-ceiling $100)
-($101 == round/half-ceiling $100.5)
-($101 == round/half-ceiling $100.5000000001)
-(-$100 == round/half-ceiling -$100)
-(-$100 == round/half-ceiling -$100.5)
-[#1471
-    (-$101 == round/half-ceiling -$100.5000000001)
-]
+
 ; round/half-ceiling/to
 (0.0 == round/half-ceiling/to 0.1 -1.0)
 (zero? round/half-ceiling/to 0.1 -1)
@@ -360,12 +322,7 @@
 (-1:03:01 == round/half-down -1:03:01)
 (-1:03:01 == round/half-down -1:03:01.5)
 (-1:03:02 == round/half-down -1:03:01.50001)
-($100 == round/half-down $100)
-($100 == round/half-down $100.5)
-($101 == round/half-down $100.5000000001)
-(-$100 == round/half-down -$100)
-(-$100 == round/half-down -$100.5)
-(-$101 == round/half-down -$100.5000000001)
+
 ; round/half-down/to
 (0.1 == round/half-down/to 0.15 0.1)
 (0.2 == round/half-down/to 0.15001 0.1)

@@ -29,7 +29,6 @@
 //
 
 #include "sys-core.h"
-#include "sys-deci-funcs.h"
 #include "sys-int-funcs.h"
 
 
@@ -130,10 +129,6 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
             fail (Error_Overflow_Raw());
 
         Init_Integer(out, cast(REBI64, VAL_DECIMAL(value)));
-        goto check_sign;
-    }
-    else if (Is_Money(value)) {
-        Init_Integer(out, deci_to_int(VAL_MONEY_AMOUNT(value)));
         goto check_sign;
     }
     else if (Is_Binary(value)) { // must be before Any_String() test...
@@ -430,10 +425,6 @@ REBTYPE(Integer)
                     Init_Decimal(val, cast(REBDEC, num)); // convert main arg
                     return T_Decimal(level_, verb);
                 }
-                if (Is_Money(val2)) {
-                    Init_Money(val, int_to_deci(VAL_INT64(val)));
-                    return T_Money(level_, verb);
-                }
                 if (n > 0) {
                     if (Is_Time(val2)) {
                         VAL_NANO(val) = SEC_TIME(VAL_INT64(val));
@@ -542,13 +533,6 @@ REBTYPE(Integer)
 
         Value* val2 = ARG(SCALE);
         if (Bool_ARG(TO)) {
-            if (Is_Money(val2))
-                return Init_Money(
-                    OUT,
-                    Round_Deci(
-                        int_to_deci(num), flags, VAL_MONEY_AMOUNT(val2)
-                    )
-                );
             if (Is_Decimal(val2) || Is_Percent(val2)) {
                 REBDEC dec = Round_Dec(
                     cast(REBDEC, num), flags, VAL_DECIMAL(val2)

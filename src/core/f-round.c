@@ -29,7 +29,6 @@
 //
 
 #include "sys-core.h"
-#include "sys-deci-funcs.h"
 
 
 #define Dec_Trunc(x) (((x) < 0.0) ? -1.0 : 1.0) * floor(fabs(x))
@@ -183,30 +182,4 @@ REBI64 Round_Int(REBI64 num, REBLEN flags, REBI64 scale)
     if (flags & RF_HALF_CEILING) {Int_Ceil; return num;}
 
     Int_Away; return num; /* this is round_half_away */
-}
-
-//
-//  Round_Deci: C
-//
-// Identical to ROUND mezzanine function.
-// Note: scale arg only valid if RF_TO is set
-//
-deci Round_Deci(deci num, REBLEN flags, deci scale)
-{
-    deci deci_one = {1u, 0u, 0u, 0u, 0};
-
-    if (flags & RF_TO) {
-        if (deci_is_zero(scale)) fail (Error_Zero_Divide_Raw());
-        scale = deci_abs(scale);
-    }
-    else scale = deci_one;
-
-    if (flags & RF_EVEN) return deci_half_even(num, scale);
-    if (flags & RF_DOWN) return deci_truncate(num, scale);
-    if (flags & RF_HALF_DOWN) return deci_half_truncate(num, scale);
-    if (flags & RF_FLOOR) return deci_floor(num, scale);
-    if (flags & RF_CEILING) return deci_ceil(num, scale);
-    if (flags & RF_HALF_CEILING) return deci_half_ceil(num, scale);
-
-    return deci_half_away(num, scale);
 }
