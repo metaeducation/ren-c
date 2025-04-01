@@ -342,16 +342,16 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
         if (Get_Cell_Flag(L->special, ARG_MARKED_CHECKED))
             continue; // a parameter that was "specialized out" of this phase
 
-        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(L->param);
+        ParamClass pclass = Cell_Parameter_Class(L->param);
 
         if (
-            pclass == PARAM_CLASS_LOCAL
-            or pclass == PARAM_CLASS_RETURN
+            pclass == PARAMCLASS_LOCAL
+            or pclass == PARAMCLASS_RETURN
         ){
              continue; // don't add a callsite expression for it (can't)!
         }
 
-        if (pclass == PARAM_CLASS_REFINEMENT) {
+        if (pclass == PARAMCLASS_REFINEMENT) {
             if (Is_Blank(L->arg)) {
                 ignoring = true; // don't add to PATH!
                 continue;

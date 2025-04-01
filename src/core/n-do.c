@@ -411,7 +411,7 @@ DECLARE_NATIVE(EVALUATE)
         Value* param = ACT_PARAMS_HEAD(VAL_ACTION(source));
         while (
             NOT_END(param)
-            and (VAL_PARAM_CLASS(param) == PARAM_CLASS_LOCAL)
+            and (Cell_Parameter_Class(param) == PARAMCLASS_LOCAL)
         ){
             ++param;
         }

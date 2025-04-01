@@ -335,7 +335,7 @@ INLINE void Seek_First_Param(Level* L, REBACT *action) {
         ){
             continue;
         }
-        if (VAL_PARAM_CLASS(L->param) == PARAM_CLASS_LOCAL)
+        if (Cell_Parameter_Class(L->param) == PARAMCLASS_LOCAL)
             continue;
         return;
     }
@@ -814,7 +814,7 @@ bool Eval_Core_Throws(Level* const L)
       process_args_for_pickup_or_to_end:;
 
         for (; NOT_END(L->param); ++L->param, ++L->arg, ++L->special) {
-            enum Reb_Param_Class pclass = VAL_PARAM_CLASS(L->param);
+            ParamClass pclass = Cell_Parameter_Class(L->param);
 
             // !!! If not an APPLY or a typecheck of existing values, the data
             // array which backs the frame may not have any initialization of
@@ -856,7 +856,7 @@ bool Eval_Core_Throws(Level* const L)
             // storing the parameter indices to revisit in the binding of the
             // REFINEMENT! words (e.g. /B and /C above) on the data stack.
 
-            if (pclass == PARAM_CLASS_REFINEMENT) {
+            if (pclass == PARAMCLASS_REFINEMENT) {
                 if (L->flags.bits & DO_FLAG_DOING_PICKUPS) {
                     if (TOP_INDEX != L->stack_base)
                         goto next_pickup;
@@ -977,12 +977,12 @@ bool Eval_Core_Throws(Level* const L)
             // refinement pickups ending prevents double-doing this work.
 
             switch (pclass) {
-              case PARAM_CLASS_LOCAL:
+              case PARAMCLASS_LOCAL:
                 Init_Nothing(L->arg);  // !!! L->special?
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
-              case PARAM_CLASS_RETURN:
+              case PARAMCLASS_RETURN:
                 assert(Cell_Parameter_Id(L->param) == SYM_RETURN);
                 Copy_Cell(L->arg, NAT_VALUE(RETURN)); // !!! L->special?
                 INIT_BINDING(L->arg, L->varlist);
@@ -1112,21 +1112,21 @@ bool Eval_Core_Throws(Level* const L)
                 // !!! See notes on potential semantics problem below.
 
                 switch (pclass) {
-                  case PARAM_CLASS_NORMAL:
+                  case PARAMCLASS_NORMAL:
                     Copy_Cell(L->arg, L->out);
                     break;
 
-                  case PARAM_CLASS_TIGHT:
+                  case PARAMCLASS_TIGHT:
                     Copy_Cell(L->arg, L->out);
                     break;
 
-                  case PARAM_CLASS_HARD_QUOTE:
+                  case PARAMCLASS_HARD_QUOTE:
                     // Is_Param_Skippable() accounted for in pre-lookback
 
                     Copy_Cell(L->arg, L->out);
                     break;
 
-                  case PARAM_CLASS_SOFT_QUOTE:
+                  case PARAMCLASS_SOFT_QUOTE:
                     if (IS_QUOTABLY_SOFT(L->out)) {
                         if (Eval_Value_Throws(L->arg, L->out)) {
                             Copy_Cell(L->out, L->arg);
@@ -1259,7 +1259,7 @@ bool Eval_Core_Throws(Level* const L)
 
    //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) ////=//
 
-              case PARAM_CLASS_NORMAL: {
+              case PARAMCLASS_NORMAL: {
                 Flags flags = DO_FLAG_FULFILLING_ARG
                     | (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
@@ -1271,9 +1271,9 @@ bool Eval_Core_Throws(Level* const L)
                 }
                 break; }
 
-              case PARAM_CLASS_TIGHT: {
+              case PARAMCLASS_TIGHT: {
                 //
-                // PARAM_CLASS_NORMAL does "normal" normal infix lookahead,
+                // PARAMCLASS_NORMAL does "normal" normal infix lookahead,
                 // e.g. `square 1 + 2` would pass 3 to single-arity `square`.
                 // But if the argument to square is declared #tight, it will
                 // act as `(square 1) + 2`, by not applying lookahead to see
@@ -1294,7 +1294,7 @@ bool Eval_Core_Throws(Level* const L)
 
     //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG /////////////////////////////=//
 
-              case PARAM_CLASS_HARD_QUOTE:
+              case PARAMCLASS_HARD_QUOTE:
                 if (Is_Param_Skippable(L->param)) {
                     if (not TYPE_CHECK(L->param, VAL_TYPE(L->value))) {
                         assert(Is_Param_Endable(L->param));
@@ -1311,7 +1311,7 @@ bool Eval_Core_Throws(Level* const L)
 
     //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  ////////////////////////////=//
 
-              case PARAM_CLASS_SOFT_QUOTE:
+              case PARAMCLASS_SOFT_QUOTE:
                 if (not IS_QUOTABLY_SOFT(L->value)) {
                     Quote_Next_In_Level(L->arg, L);
                     Finalize_Current_Arg(L);
@@ -1337,8 +1337,8 @@ bool Eval_Core_Throws(Level* const L)
             // this code which checks the typeset and also handles it when
             // a void arg signals the revocation of a refinement usage.
 
-            assert(pclass != PARAM_CLASS_REFINEMENT);
-            assert(pclass != PARAM_CLASS_LOCAL);
+            assert(pclass != PARAMCLASS_REFINEMENT);
+            assert(pclass != PARAMCLASS_LOCAL);
             assert(
                 not In_Typecheck_Mode(L) // already handled, unless...
                 or not (L->flags.bits & DO_FLAG_FULLY_SPECIALIZED) // ...this!
@@ -1406,7 +1406,7 @@ bool Eval_Core_Throws(Level* const L)
             );
 
             assert(VAL_STORED_CANON(TOP) == Cell_Param_Canon(L->param - 1));
-            assert(VAL_PARAM_CLASS(L->param - 1) == PARAM_CLASS_REFINEMENT);
+            assert(Cell_Parameter_Class(L->param - 1) == PARAMCLASS_REFINEMENT);
 
             DROP();
             L->flags.bits |= DO_FLAG_DOING_PICKUPS;
@@ -2317,7 +2317,7 @@ bool Eval_Core_Throws(Level* const L)
         and Not_Cell_Flag(L->gotten, ACTION_INVISIBLE)
     ){
         // Don't do infix lookahead if asked *not* to look.  See the
-        // PARAM_CLASS_TIGHT parameter convention for the use of this, as
+        // PARAMCLASS_TIGHT parameter convention for the use of this, as
         // well as it being set if DO_FLAG_TO_END wants to clear out the
         // invisibles at this frame level before returning.
         //

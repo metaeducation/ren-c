@@ -156,7 +156,7 @@ VarList* Make_Managed_Context_For_Action_May_Fail(
 
     //=//// NON-REFINEMENT SLOT HANDLING //////////////////////////////////=//
 
-        if (VAL_PARAM_CLASS(param) != PARAM_CLASS_REFINEMENT) {
+        if (Cell_Parameter_Class(param) != PARAMCLASS_REFINEMENT) {
             if (Is_Param_Hidden(param)) {
                 assert(Get_Cell_Flag(special, ARG_MARKED_CHECKED));
                 Copy_Cell(arg, special); // !!! copy the flag?
@@ -346,15 +346,15 @@ bool Specialize_Action_Throws(
     REBLEN index = 1;
 
     for (; NOT_END(param); ++param, ++arg, ++index) {
-        switch (VAL_PARAM_CLASS(param)) {
-          case PARAM_CLASS_REFINEMENT: {
-            enum Reb_Param_Class pclass_next = PARAM_CLASS_LOCAL;  // or END
+        switch (Cell_Parameter_Class(param)) {
+          case PARAMCLASS_REFINEMENT: {
+            ParamClass pclass_next = PARAMCLASS_LOCAL;  // or END
             if (not IS_END(param + 1))
-                pclass_next = VAL_PARAM_CLASS(param + 1);
+                pclass_next = Cell_Parameter_Class(param + 1);
             if (
-                pclass_next != PARAM_CLASS_NORMAL
-                and pclass_next != PARAM_CLASS_HARD_QUOTE
-                and pclass_next != PARAM_CLASS_SOFT_QUOTE
+                pclass_next != PARAMCLASS_NORMAL
+                and pclass_next != PARAMCLASS_HARD_QUOTE
+                and pclass_next != PARAMCLASS_SOFT_QUOTE
             ){
                 // Assume refinement takes no arguments.
 
@@ -378,8 +378,8 @@ bool Specialize_Action_Throws(
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             goto specialized_arg_no_typecheck; }
 
-          case PARAM_CLASS_RETURN:
-          case PARAM_CLASS_LOCAL:
+          case PARAMCLASS_RETURN:
+          case PARAMCLASS_LOCAL:
             assert(Is_Nulled(arg)); // no bindings, you can't set these
             goto unspecialized_arg;
 
@@ -402,7 +402,7 @@ bool Specialize_Action_Throws(
 
     specialized_arg:;
 
-        assert(VAL_PARAM_CLASS(param) != PARAM_CLASS_REFINEMENT);
+        assert(Cell_Parameter_Class(param) != PARAMCLASS_REFINEMENT);
 
         // !!! If argument was previously specialized, should have been type
         // checked already... don't type check again (?)

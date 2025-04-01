@@ -54,7 +54,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
     enum Reb_Vararg_Op op,
     const Cell* opt_look, // the first value in the varargs input
     Specifier* specifier,
-    enum Reb_Param_Class pclass
+    ParamClass pclass
 ){
     if (IS_END(opt_look)) {
         Init_For_Vararg_End(out, op); // exhausted
@@ -62,7 +62,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
     }
 
     if (
-        (pclass == PARAM_CLASS_NORMAL || pclass == PARAM_CLASS_TIGHT)
+        (pclass == PARAMCLASS_NORMAL || pclass == PARAMCLASS_TIGHT)
         && Is_Word(opt_look)
     ){
         // When a variadic argument is being TAKE-n, deferred left hand side
@@ -82,7 +82,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         if (child_gotten and VAL_TYPE(child_gotten) == REB_ACTION) {
             if (Get_Cell_Flag(child_gotten, INFIX_IF_ACTION)) {
                 if (
-                    pclass == PARAM_CLASS_TIGHT
+                    pclass == PARAMCLASS_TIGHT
                     or Get_Cell_Flag(child_gotten, ACTION_DEFERS_LOOKBACK)
                 ){
                     Init_For_Vararg_End(out, op);
@@ -101,7 +101,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
     }
 
     if (op == VARARG_OP_FIRST) {
-        if (pclass != PARAM_CLASS_HARD_QUOTE)
+        if (pclass != PARAMCLASS_HARD_QUOTE)
             fail (Error_Varargs_No_Look_Raw()); // hard quote only
 
         Derelativize(out, opt_look, specifier);
@@ -142,8 +142,8 @@ bool Do_Vararg_Op_Maybe_End_Throws(
     Erase_Cell(out);
 
     const Cell* param = Param_For_Varargs_Maybe_Null(vararg);
-    enum Reb_Param_Class pclass =
-        (param == nullptr) ? PARAM_CLASS_HARD_QUOTE :  VAL_PARAM_CLASS(param);
+    ParamClass pclass =
+        (param == nullptr) ? PARAMCLASS_HARD_QUOTE :  Cell_Parameter_Class(param);
 
     Level* opt_vararg_level;
 
@@ -184,15 +184,15 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         }
 
         switch (pclass) {
-        case PARAM_CLASS_NORMAL:
-        case PARAM_CLASS_TIGHT: {
+        case PARAMCLASS_NORMAL:
+        case PARAMCLASS_TIGHT: {
             DECLARE_LEVEL (L_temp);
             Push_Level_At(
                 L_temp,
                 Cell_Array(shared),
                 VAL_INDEX(shared),
                 VAL_SPECIFIER(shared),
-                pclass == PARAM_CLASS_NORMAL
+                pclass == PARAMCLASS_NORMAL
                     ? DO_FLAG_FULFILLING_ARG
                     : DO_FLAG_FULFILLING_ARG | DO_FLAG_NO_LOOKAHEAD
             );
@@ -220,12 +220,12 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             Drop_Level(L_temp);
             break; }
 
-        case PARAM_CLASS_HARD_QUOTE:
+        case PARAMCLASS_HARD_QUOTE:
             Derelativize(out, Cell_List_At(shared), VAL_SPECIFIER(shared));
             VAL_INDEX(shared) += 1;
             break;
 
-        case PARAM_CLASS_SOFT_QUOTE:
+        case PARAMCLASS_SOFT_QUOTE:
             if (IS_QUOTABLY_SOFT(Cell_List_At(shared))) {
                 if (Eval_Value_Core_Throws(
                     out, Cell_List_At(shared), VAL_SPECIFIER(shared)
@@ -273,7 +273,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         // overwritten by an arbitrary evaluation.
         //
         switch (pclass) {
-        case PARAM_CLASS_NORMAL: {
+        case PARAMCLASS_NORMAL: {
             DECLARE_SUBLEVEL (child, L);
             if (Eval_Step_In_Subframe_Throws(
                 SET_END(out),
@@ -286,7 +286,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             L->gotten = nullptr; // cache must be forgotten...
             break; }
 
-        case PARAM_CLASS_TIGHT: {
+        case PARAMCLASS_TIGHT: {
             DECLARE_LEVEL_CORE (child, L->source);
             if (Eval_Step_In_Subframe_Throws(
                 SET_END(out),
@@ -299,11 +299,11 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             L->gotten = nullptr; // cache must be forgotten...
             break; }
 
-        case PARAM_CLASS_HARD_QUOTE:
+        case PARAMCLASS_HARD_QUOTE:
             Quote_Next_In_Level(out, L);
             break;
 
-        case PARAM_CLASS_SOFT_QUOTE:
+        case PARAMCLASS_SOFT_QUOTE:
             if (IS_QUOTABLY_SOFT(L->value)) {
                 if (Eval_Value_Core_Throws(
                     SET_END(out),
@@ -578,28 +578,28 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
 
     Append_Codepoint(mo->utf8flex, '[');
 
-    enum Reb_Param_Class pclass;
+    ParamClass pclass;
     const Cell* param = Param_For_Varargs_Maybe_Null(v);
     if (param == nullptr) {
-        pclass = PARAM_CLASS_HARD_QUOTE;
+        pclass = PARAMCLASS_HARD_QUOTE;
         Append_Unencoded(mo->utf8flex, "???"); // never bound to an argument
     }
     else {
         enum Reb_Kind kind;
-        switch ((pclass = VAL_PARAM_CLASS(param))) {
-        case PARAM_CLASS_NORMAL:
+        switch ((pclass = Cell_Parameter_Class(param))) {
+        case PARAMCLASS_NORMAL:
             kind = REB_WORD;
             break;
 
-        case PARAM_CLASS_TIGHT:
+        case PARAMCLASS_TIGHT:
             kind = REB_ISSUE;
             break;
 
-        case PARAM_CLASS_HARD_QUOTE:
+        case PARAMCLASS_HARD_QUOTE:
             kind = REB_GET_WORD;
             break;
 
-        case PARAM_CLASS_SOFT_QUOTE:
+        case PARAMCLASS_SOFT_QUOTE:
             kind = REB_LIT_WORD;
             break;
 
@@ -619,7 +619,7 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (IS_END(shared))
             Append_Unencoded(mo->utf8flex, "[]");
-        else if (pclass == PARAM_CLASS_HARD_QUOTE)
+        else if (pclass == PARAMCLASS_HARD_QUOTE)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
         else
             Append_Unencoded(mo->utf8flex, "[...]"); // can't look ahead
@@ -629,7 +629,7 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
             Append_Unencoded(mo->utf8flex, "!!!");
         else if (IS_END((unwrap L)->value))
             Append_Unencoded(mo->utf8flex, "[]");
-        else if (pclass == PARAM_CLASS_HARD_QUOTE) {
+        else if (pclass == PARAMCLASS_HARD_QUOTE) {
             Append_Unencoded(mo->utf8flex, "[");
             Mold_Value(mo, (unwrap L)->value); // hard quote can show one
             Append_Unencoded(mo->utf8flex, " ...]");

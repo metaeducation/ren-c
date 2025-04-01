@@ -195,7 +195,7 @@ bool Update_Typeset_Bits_Core(
                 TYPE_SET(typeset, REB_TS_NOOP_IF_VOID);
             }
             else if (0 == Compare_String_Vals(item, Root_Skip_Tag, true)) {
-                if (VAL_PARAM_CLASS(typeset) != PARAM_CLASS_HARD_QUOTE)
+                if (Cell_Parameter_Class(typeset) != PARAMCLASS_HARD_QUOTE)
                     fail ("Only hard-quoted parameters are <skip>-able");
 
                 TYPE_SET(typeset, REB_TS_SKIPPABLE);

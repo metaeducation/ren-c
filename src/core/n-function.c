@@ -212,7 +212,7 @@ DECLARE_NATIVE(RETURN)
     // So TYPESET! bits in the RETURN param are used for legal return types.
     //
     Value* typeset = ACT_PARAM(target_fun, ACT_NUM_PARAMS(target_fun));
-    assert(VAL_PARAM_CLASS(typeset) == PARAM_CLASS_RETURN);
+    assert(Cell_Parameter_Class(typeset) == PARAMCLASS_RETURN);
     assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
 
     if (
@@ -278,7 +278,7 @@ DECLARE_NATIVE(TYPECHECKER)
         TS_OPT_VALUE, // Allow null (e.g. ~null~), returns false
         Canon(SYM_VALUE)
     );
-    INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_NORMAL);
+    Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);
     assert(not Is_Param_Endable(param));
 
     MISC(paramlist).meta = nullptr;  // !!! auto-generate info for HELP?
@@ -774,9 +774,9 @@ DECLARE_NATIVE(TIGHTEN)
 
     Cell* param = Array_At(paramlist, 1); // first parameter (0 is ACTION!)
     for (; NOT_END(param); ++param) {
-        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
-        if (pclass == PARAM_CLASS_NORMAL)
-            INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_TIGHT);
+        ParamClass pclass = Cell_Parameter_Class(param);
+        if (pclass == PARAMCLASS_NORMAL)
+            Tweak_Parameter_Class(param, PARAMCLASS_TIGHT);
     }
 
     Cell* rootparam = Array_Head(paramlist);
@@ -897,7 +897,7 @@ DECLARE_NATIVE(N_SHOT)
         FLAGIT_KIND(REB_BLOCK) | FLAGIT_KIND(REB_ACTION),
         Canon(SYM_VALUE) // SYM_CODE ?
     );
-    INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_NORMAL);
+    Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);
     assert(not Is_Param_Endable(param));
 
     MISC(paramlist).meta = nullptr;  // !!! auto-generate info for HELP?

@@ -120,20 +120,20 @@ INLINE Symbol* Get_Type_Name(const Cell* value)
 // Yet there needed to be a place to put the parameter's class.  So it is
 // packed in to the typeset header (via the CUSTOM_BYTE())
 //
-// Note: It was checked to see if giving the VAL_PARAM_CLASS() the entire byte
+// Note: It was checked to see if giving the Cell_Parameter_Class() the entire byte
 // and not need to mask out the flags would make a difference, but performance
 // wasn't affected much.
 //
 
-enum Reb_Param_Class {
+typedef enum {
     //
-    // `PARAM_CLASS_LOCAL` is a "pure" local, which will be set to null by
+    // `PARAMCLASS_LOCAL` is a "pure" local, which will be set to null by
     // argument fulfillment.  It is indicated by a SET-WORD! in the function
     // spec, or by coming after a <local> tag in the function generators.
     //
-    PARAM_CLASS_LOCAL = 0,
+    PARAMCLASS_LOCAL = 0,
 
-    // `PARAM_CLASS_NORMAL` is cued by an ordinary WORD! in the function spec
+    // `PARAMCLASS_NORMAL` is cued by an ordinary WORD! in the function spec
     // to indicate that you would like that argument to be evaluated normally.
     //
     //     >> foo: function [a] [print [{a is} a]]
@@ -147,9 +147,9 @@ enum Reb_Param_Class {
     //     a is 1
     //     ** Script error: + does not allow trash for its value1 argument
     //
-    PARAM_CLASS_NORMAL = 0x01,
+    PARAMCLASS_NORMAL = 0x01,
 
-    // `PARAM_CLASS_HARD_QUOTE` is cued by a GET-WORD! in the function spec
+    // `PARAMCLASS_HARD_QUOTE` is cued by a GET-WORD! in the function spec
     // dialect.  It indicates that a single value of content at the callsite
     // should be passed through *literally*, without any evaluation:
     //
@@ -161,13 +161,13 @@ enum Reb_Param_Class {
     //     >> foo (1 + 2)
     //     a is (1 + 2)
     //
-    PARAM_CLASS_HARD_QUOTE = 0x02, // GET-WORD! in spec
+    PARAMCLASS_HARD_QUOTE = 0x02, // GET-WORD! in spec
 
-    // `PARAM_CLASS_REFINEMENT`
+    // `PARAMCLASS_REFINEMENT`
     //
-    PARAM_CLASS_REFINEMENT = 0x03,
+    PARAMCLASS_REFINEMENT = 0x03,
 
-    // `PARAM_CLASS_TIGHT` makes infixed first arguments "lazy" and other
+    // `PARAMCLASS_TIGHT` makes infixed first arguments "lazy" and other
     // arguments will use the DO_FLAG_NO_LOOKAHEAD.
     //
     // R3-Alpha's notion of infix OP!s changed the way parameters were
@@ -185,14 +185,14 @@ enum Reb_Param_Class {
     // completed as far as they can be on both the left and right hand side of
     // infixed expressions.
     //
-    PARAM_CLASS_TIGHT = 0x04,
+    PARAMCLASS_TIGHT = 0x04,
 
-    // PARAM_CLASS_RETURN acts like a pure local, but is pre-filled with a
+    // PARAMCLASS_RETURN acts like a pure local, but is pre-filled with a
     // ACTION! bound to the frame, that takes 0 or 1 arg and returns it.
     //
-    PARAM_CLASS_RETURN = 0x05,
+    PARAMCLASS_RETURN = 0x05,
 
-    // `PARAM_CLASS_SOFT_QUOTE` is cued by a LIT-WORD! in the function spec
+    // `PARAMCLASS_SOFT_QUOTE` is cued by a LIT-WORD! in the function spec
     // dialect.  It quotes with the exception of GROUP!, GET-WORD!, and
     // GET-PATH!...which will be evaluated:
     //
@@ -210,28 +210,30 @@ enum Reb_Param_Class {
     //
     // Note: Value chosen for PCLASS_ANY_QUOTE_MASK in common with hard quote
     //
-    PARAM_CLASS_SOFT_QUOTE = 0x06,
+    PARAMCLASS_SOFT_QUOTE = 0x06,
 
-    PARAM_CLASS_UNUSED_0x07 = 0x07,
+    PARAMCLASS_UNUSED_0x07 = 0x07,
 
-    PARAM_CLASS_MAX
-};
+    MAX_PARAMCLASS = PARAMCLASS_UNUSED_0x07
+} ParamClass;
 
 #define PCLASS_ANY_QUOTE_MASK 0x02
 
 #define PCLASS_NUM_BITS 3
 #define PCLASS_BYTE_MASK 0x07 // for 3 bits, 0x00000111
 
-INLINE enum Reb_Param_Class VAL_PARAM_CLASS(const Cell* v) {
+STATIC_ASSERT(MAX_PARAMCLASS <= PCLASS_BYTE_MASK);
+
+INLINE ParamClass Cell_Parameter_Class(const Cell* v) {
     assert(Is_Typeset(v));
     return cast(
-        enum Reb_Param_Class,
+        ParamClass,
         CUSTOM_BYTE(v)
         /* (CUSTOM_BYTE(v) & PCLASS_BYTE_MASK) */ // resurrect if needed
     );
 }
 
-INLINE void INIT_VAL_PARAM_CLASS(Cell* v, enum Reb_Param_Class c) {
+INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
     /* CUSTOM_BYTE(v) &= ~PCLASS_BYTE_MASK;
     CUSTOM_BYTE(v) |= c; */ // can resurrect if needed
     CUSTOM_BYTE(v) = c;
@@ -252,7 +254,7 @@ INLINE void INIT_VAL_PARAM_CLASS(Cell* v, enum Reb_Param_Class c) {
 // as "psuedo-types" in the typeset bits.
 //
 // !!! An experiment switched to using entirely pseudo-type bits, so there was
-// no sharing of the PARAM_CLASS byte, to see if that sped up VAL_PARAM_CLASS
+// no sharing of the PARAM_CLASS byte, to see if that sped up Cell_Parameter_Class
 // to make a difference.  It was a somewhat minor speedup, so it has been
 // kept...but could be abandoned if having more bits were at issue.
 //

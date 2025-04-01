@@ -47,29 +47,29 @@ Array* List_Func_Words(const Cell* func, bool pure_locals)
 
         enum Reb_Kind kind;
 
-        switch (VAL_PARAM_CLASS(param)) {
-        case PARAM_CLASS_NORMAL:
+        switch (Cell_Parameter_Class(param)) {
+        case PARAMCLASS_NORMAL:
             kind = REB_WORD;
             break;
 
-        case PARAM_CLASS_TIGHT:
+        case PARAMCLASS_TIGHT:
             kind = REB_ISSUE;
             break;
 
-        case PARAM_CLASS_REFINEMENT:
+        case PARAMCLASS_REFINEMENT:
             kind = REB_REFINEMENT;
             break;
 
-        case PARAM_CLASS_HARD_QUOTE:
+        case PARAMCLASS_HARD_QUOTE:
             kind = REB_GET_WORD;
             break;
 
-        case PARAM_CLASS_SOFT_QUOTE:
+        case PARAMCLASS_SOFT_QUOTE:
             kind = REB_LIT_WORD;
             break;
 
-        case PARAM_CLASS_LOCAL:
-        case PARAM_CLASS_RETURN: // "magic" local - prefilled invisibly
+        case PARAMCLASS_LOCAL:
+        case PARAMCLASS_RETURN: // "magic" local - prefilled invisibly
             if (not pure_locals)
                 continue; // treat as invisible, e.g. for WORDS-OF
 
@@ -434,27 +434,27 @@ Array* Make_Paramlist_Managed_May_Fail(
         switch (VAL_TYPE(item)) {
         case REB_WORD:
             assert(mode != SPEC_MODE_WITH); // should have continued...
-            INIT_VAL_PARAM_CLASS(
+            Tweak_Parameter_Class(
                 typeset,
                 (mode == SPEC_MODE_LOCAL)
-                    ? PARAM_CLASS_LOCAL
-                    : PARAM_CLASS_NORMAL
+                    ? PARAMCLASS_LOCAL
+                    : PARAMCLASS_NORMAL
             );
             break;
 
         case REB_GET_WORD:
             assert(mode == SPEC_MODE_NORMAL);
-            INIT_VAL_PARAM_CLASS(typeset, PARAM_CLASS_HARD_QUOTE);
+            Tweak_Parameter_Class(typeset, PARAMCLASS_HARD_QUOTE);
             break;
 
         case REB_LIT_WORD:
             assert(mode == SPEC_MODE_NORMAL);
-            INIT_VAL_PARAM_CLASS(typeset, PARAM_CLASS_SOFT_QUOTE);
+            Tweak_Parameter_Class(typeset, PARAMCLASS_SOFT_QUOTE);
             break;
 
         case REB_REFINEMENT:
             refinement_seen = true;
-            INIT_VAL_PARAM_CLASS(typeset, PARAM_CLASS_REFINEMENT);
+            Tweak_Parameter_Class(typeset, PARAMCLASS_REFINEMENT);
 
             // !!! The typeset bits of a refinement are not currently used.
             // They are checked for TRUE or FALSE but this is done literally
@@ -464,7 +464,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
         case REB_SET_WORD:
             // tolerate as-is if in <local> or <with> mode...
-            INIT_VAL_PARAM_CLASS(typeset, PARAM_CLASS_LOCAL);
+            Tweak_Parameter_Class(typeset, PARAMCLASS_LOCAL);
             //
             // !!! Typeset bits of pure locals also not currently used,
             // though definitional return should be using it for the return
@@ -479,7 +479,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // be the ideal choice to mark tight parameters.
             //
             assert(mode == SPEC_MODE_NORMAL);
-            INIT_VAL_PARAM_CLASS(typeset, PARAM_CLASS_TIGHT);
+            Tweak_Parameter_Class(typeset, PARAMCLASS_TIGHT);
             break;
 
         default:
@@ -515,7 +515,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // checks are on the input side, not the output.
             //
             Init_Typeset(PUSH(), TS_OPT_VALUE, Canon(SYM_RETURN));
-            INIT_VAL_PARAM_CLASS(TOP, PARAM_CLASS_RETURN);
+            Tweak_Parameter_Class(TOP, PARAMCLASS_RETURN);
             return_stackindex = TOP_INDEX;
 
             Copy_Cell(PUSH(), EMPTY_BLOCK);
@@ -524,8 +524,8 @@ Array* Make_Paramlist_Managed_May_Fail(
         }
         else {
             Value* param = Data_Stack_At(return_stackindex);
-            assert(VAL_PARAM_CLASS(param) == PARAM_CLASS_LOCAL);
-            INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_RETURN);
+            assert(Cell_Parameter_Class(param) == PARAMCLASS_LOCAL);
+            Tweak_Parameter_Class(param, PARAMCLASS_RETURN);
 
             // definitional_return handled specially when paramlist copied
             // off of the stack...
@@ -865,11 +865,11 @@ REBACT *Make_Action(
 
     Value* param = KNOWN(rootparam) + 1;
     for (; NOT_END(param); ++param) {
-        switch (VAL_PARAM_CLASS(param)) {
-        case PARAM_CLASS_LOCAL:
+        switch (Cell_Parameter_Class(param)) {
+        case PARAMCLASS_LOCAL:
             break; // skip
 
-        case PARAM_CLASS_RETURN: {
+        case PARAMCLASS_RETURN: {
             assert(Cell_Parameter_Id(param) == SYM_RETURN);
 
             // See notes on CELL_FLAG_ACTION_INVISIBLE.
@@ -878,7 +878,7 @@ REBACT *Make_Action(
                 Set_Cell_Flag(rootparam, ACTION_INVISIBLE);
             break; }
 
-        case PARAM_CLASS_REFINEMENT:
+        case PARAMCLASS_REFINEMENT:
             //
             // hit before hitting any basic args, so not a brancher, and not
             // a candidate for deferring lookback arguments.
@@ -886,7 +886,7 @@ REBACT *Make_Action(
             first_arg = false;
             break;
 
-        case PARAM_CLASS_NORMAL:
+        case PARAMCLASS_NORMAL:
             //
             // First argument is not tight, and not specialized, so cache flag
             // to report that fact.
@@ -900,7 +900,7 @@ REBACT *Make_Action(
         // Otherwise, at least one argument but not one that requires the
         // deferring of lookback.
 
-        case PARAM_CLASS_TIGHT:
+        case PARAMCLASS_TIGHT:
             //
             // If first argument is tight, and not specialized, no flag needed
             //
@@ -908,13 +908,13 @@ REBACT *Make_Action(
                 first_arg = false;
             break;
 
-        case PARAM_CLASS_HARD_QUOTE:
+        case PARAMCLASS_HARD_QUOTE:
             if (TYPE_CHECK(param, REB_MAX_NULLED))
                 fail ("Hard quoted function parameters cannot receive nulls");
 
             goto quote_check;
 
-        case PARAM_CLASS_SOFT_QUOTE:
+        case PARAMCLASS_SOFT_QUOTE:
 
         quote_check:;
 
@@ -1481,7 +1481,7 @@ Bounce Returner_Dispatcher(Level* L)
 
     // Typeset bits for locals in frames are usually ignored, but the RETURN:
     // local uses them for the return types of a "virtual" definitional return
-    // if the parameter is PARAM_CLASS_RETURN_1.
+    // if the parameter is PARAMCLASS_RETURN_1.
     //
     if (not TYPE_CHECK(typeset, VAL_TYPE(L->out)))
         fail (Error_Bad_Return_Type(L, VAL_TYPE(L->out)));

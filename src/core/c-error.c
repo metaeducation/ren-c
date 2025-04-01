@@ -1050,7 +1050,7 @@ Error* Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
     DECLARE_VALUE (param_name);
     Init_Word(param_name, Cell_Parameter_Symbol(param));
 
-    while (VAL_PARAM_CLASS(param) != PARAM_CLASS_REFINEMENT)
+    while (Cell_Parameter_Class(param) != PARAMCLASS_REFINEMENT)
         --param;
 
     DECLARE_VALUE (refine_name);

@@ -206,7 +206,7 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 // infix `*` when gathering its argument, that was saved until the `1 + 2`
 // finished its processing.
 //
-// See PARAM_CLASS_TIGHT for more explanation on the parameter class which
+// See PARAMCLASS_TIGHT for more explanation on the parameter class which
 // adds this flag to its argument gathering call.
 //
 #define DO_FLAG_NO_LOOKAHEAD \
@@ -730,8 +730,8 @@ struct LevelStruct {
     //
     // In the former case, the evaluated 10 is fulfilling the one and only
     // argument to BLOCK?.  The latter case has it fulfilling the *first* of
-    // two arguments to IF.  Since AND has PARAM_CLASS_NORMAL for its left
-    // argument (as opposed to PARAM_CLASS_TIGHT), it wishes to interpret the
+    // two arguments to IF.  Since AND has PARAMCLASS_NORMAL for its left
+    // argument (as opposed to PARAMCLASS_TIGHT), it wishes to interpret the
     // first case as `if (block? 10) and ... [...], but still let the second
     // case work too.  Yet discerning these in advance is costly/complex.
     //
