@@ -727,13 +727,7 @@ print [symid "words + natives + errors"]
 
 e-symids/write-emitted
 
-add-sym: func [:relax :placeholder] [
-    ;
-    ; Tripwires not available in bootstrap, see:
-    ; https://forum.rebol.info/t/tripwire-in-the-wild/2278/4
-    ;
-    fail "Symbol table finalized, can't ADD-SYM at this point"
-]
+add-sym: ~<Symbol table finalized, can't ADD-SYM at this point>~
 
 
 === "MAKE BOOT BLOCK!" ===

@@ -18,52 +18,26 @@ REBOL [
 
 binary!: blob!
 
-loop: func [] [
-    fail:blame [
-        "Short word LOOP is reserved for a generalized looping dialect:"
-        https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878
-    ] $return
-]
+loop: ~<Short word LOOP is reserved for a generalized looping dialect:
+        https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878>~
 
 
-REBOL: func [] [
-    fail:blame [
-        "The REBOL [] header of a script must be interpreted by LOAD (and"
-        "functions like DO).  It cannot be executed directly."
-    ] $return
-]
+REBOL: ~<The REBOL [] header of a script must be interpreted by LOAD (and
+       functions like DO).  It cannot be executed directly.>~
 
+input: ~<Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):
+       https://forum.rebol.info/t/1124>~
 
-input: func [] [
-    fail:blame [
-        "Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):"
-        https://forum.rebol.info/t/1124
-    ] $return
-]
+repend: ~<REPEND is just (adapt append/ [value: reduce :value]), and is not
+        provided in the box.>~
 
+remold: ~<REMOLD is just (adapt mold/ [value: reduce :value]), but is not
+        provided in the box.>~
 
-repend: func [] [
-    fail:blame [
-        "REPEND is just `adapt append/ [value: reduce :value]`, and is not"
-        "provided in the box."
-    ] $return
-]
-
-remold: func [] [
-    fail:blame [
-        "REMOLD is just `adapt mold/ [value: reduce :value]`, but is not"
-        "provided in the box."
-    ] $return
-]
-
-rejoin: func [] [
-    fail:blame [
-        "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
-        "general cases by JOIN, which accepts datatypes as a first parameter,"
-        "e.g. `join blob! [-{ABC}- 1 + 2 3 + 4]`"
-        https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/
-    ] $return
-]
+rejoin: ~<REJOIN is replaced in textual sceanarios by UNSPACED, but in more
+        general cases by JOIN, which accepts datatypes as a first parameter,
+        e.g. (join blob! [-{ABC}- 1 + 2 3 + 4])
+        https://forum.rebol.info/t/248>~
 
 
 ; CONSTRUCT is a "verb-ish" word slated to replace the "noun-ish" CONTEXT:

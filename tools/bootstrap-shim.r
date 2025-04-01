@@ -89,9 +89,7 @@ sys.util/rescue [
     ; It is more brittle and less composable, but it is available in the
     ; bootstrap executable..and much faster (at time of writing) than UPARSE.
 
-    export parse: func [] [
-        fail:blame "Use PARSE3 in Bootstrap Code, not PARSE" $return
-    ]
+    export parse: ~<Use PARSE3 in Bootstrap Code, not PARSE>~
 
     export /split-path3: enclose (
         augment split-path/ [:file [any-word? any-tuple?]]
@@ -100,9 +98,7 @@ sys.util/rescue [
         set maybe f.file unmeta results.2
         unmeta results.1
     ]
-    export split-path: func [] [
-        fail:blame "Use SPLIT-PATH3 in Bootstrap (no multi-return)" $return
-    ]
+    export split-path: ~<Use SPLIT-PATH3 in Bootstrap (no multi-return)>~
 
     export /transcode: enclose (
         augment lib.transcode/ [:next3 [word!] "set to transcoded value"]
@@ -117,25 +113,21 @@ sys.util/rescue [
         return eval compose the () [(setify block) eval-free f]
     ]
 
-    export /cscape-inside: inside/  ; modern string interpolation tool
+    export cscape-inside: inside/  ; modern string interpolation tool
 
-    export for: func [] [
-        fail:blame "FOR is being repurposed, use CFOR" $return
+    export for: ~<FOR is being repurposed, use CFOR>~
+
+    export unless: ~<Don't use UNLESS in Bootstrap, definition in flux>~
+
+    export /bind: augment bind/ [  ; !!! this is broken, what did it mean?
+        copy3/  ; modern BIND is non-mutating, but bootstrap EXE needs :COPY
     ]
 
-    export unless: func [] [
-        fail:blame "Don't use UNLESS in Bootstrap, definition in flux" $return
-    ]
-
-    export /bind: augment bind/ [
-        :copy3  ; modern BIND is non-mutating, but bootstrap EXE needs :COPY
-    ]
-
-    export /set-word3!: set-word?/
-    export /set-path3!: set-tuple?/
-    export /get-word3!: get-word?/
-    export /refinement3!: run-word?/
-    export /char3!: char?/
+    export set-word3!: set-word?/
+    export set-path3!: set-tuple?/
+    export get-word3!: get-word?/
+    export refinement3!: run-word?/
+    export char3!: char?/
 
     quit 0
 ]
@@ -212,19 +204,13 @@ for-each [alias] [
     lib3/append system.contexts.user reduce [alias :lib3.(name)]
 
     ; Make calling the undecorated version an error, until it becomes shimmed
-    ; (e.g. func: does [fail ...])
     ;
-    error: spaced [
+    system.contexts.user.(name): to tripwire! spaced [
         (lib/mold name) "not shimmed yet, see" as word! (lib/mold alias)
-    ]
-    system.contexts.user.(name): lib3/func [] lib3/compose [
-        fail:blame (error) $return
     ]
 ]
 
-function3: func3 [] [
-    fail:blame "FUNCTION slated for synonym of FUNC, so no FUNCTION3" 'return
-]
+function3: ~<FUNCTION slated for synonym of FUNC, so no FUNCTION3>~
 
 
 === "WORD!-BASED LOGIC" ===
@@ -293,13 +279,9 @@ collect3: adapt lib3.collect/ [
 ; can't be emulated by older executables.  Here we raise errors in the old
 ; executable on any undecorated functions that have no emulation equivalent.
 
-parse: func3 [] [
-    fail:blame "Use PARSE3 in bootstrap code, not PARSE" $return
-]
+parse: ~<Use PARSE3 in bootstrap code, not PARSE>~
 
-split-path: func3 [] [
-    fail:blame "Use SPLIT-PATH3 in Bootstrap (no multi-return)" $return
-]
+split-path: ~<Use SPLIT-PATH3 in Bootstrap (no multi-return)>~
 
 
 === "FAKE UP QUASIFORM! AND THE-WORD! TYPES" ===
@@ -345,9 +327,7 @@ to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
     ]
 ]
 
-unrun: func3 [] [
-    fail:blame "No UNRUN in bootstrap, but could be done w/make FRAME!" $return
-]
+unrun: ~<No UNRUN in bootstrap, but could be done w/make FRAME!>~
 
 has: in/  ; old IN behavior of word lookup achieved by HAS now
 overbind: in/  ; works in a limited sense
@@ -355,9 +335,7 @@ bindable: func3 [what] [:what]
 inside: func3 [where value] [:value]  ; no-op in bootstrap
 wrap: identity/  ; no op in bootstrap
 
-in: func3 [] [
-    fail:blame "Use HAS or OVERBIND instead of IN in bootstrap" $return
-]
+in: ~<Use HAS or OVERBIND instead of IN in bootstrap>~
 
 ; Tricky way of getting simple non-definitional break extraction that looks
 ; like getting a definitional break.
@@ -695,6 +673,17 @@ let: func3 [
     if word? first look [take look]  ; otherwise leave SET-WORD! to runs
 ]
 
+
+=== "MODERNIZE FUNCTION GENERATORS" ===
+
+; Several changes were made, but the most significant is that refinements are
+; now their own named arguments:
+;
+; https://forum.rebol.info/t/implifying-refinements-to-one-or-zero-args/1120
+;
+; This maps the new types in typespecs to old equivalents (or approximations)
+; and does the work to simulate the new refinement mechanisms.
+
 modernize-typespec: func3 [
     return: [block!]
     types [block!]
@@ -864,6 +853,9 @@ modernize-action: func3 [
 ]
 
 func: adapt func3/ [set [spec body] modernize-action spec body]
+
+function: ~<FUNCTION deprecated (will be FUNC synonym, eventually)>~
+
 lambda: func3 [spec body] [
     set [spec body] modernize-action spec body
     if not tail? next find spec <local> [
@@ -872,43 +864,17 @@ lambda: func3 [spec body] [
     take find spec <local>
     make action! compose3:only [(spec) (body)]  ; gets no RETURN
 ]
-method: adapt method3/ [set [spec body] modernize-action spec body]
-
-function: func3 [] [
-    fail:blame "FUNCTION deprecated (will be FUNC synonym, eventually)" $return
-]
 
 method: infix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
 
-mold: adapt mold3/ [  ; update so MOLD SPREAD works
-    if all [
-        block? value
-        #splice! = first value
-    ][
-        only: true
-        value: next value
-    ]
-]
 
-noquote: func3 [x [~null~ any-value!]] [
-    assert [not action? get $x]
-    switch type of x [
-        lit-word3! [return to word! x]
-        lit-path3! [return to path! x]
-    ]
-    x
-]
+=== "FUNCTION APPLICATION" ===
 
-resolve: func3 [x [any-word3! any-path3!]] [
-    if any-word? x [return to word! x]
-    return to path! x
-]
-
-; We've scrapped the form of refinements via GROUP! for function dispatch, and
-; you need to use APPLY now.  This is a poor man's compatibility APPLY
+; This is a poor man's compatibility APPLY, that approximates some of the
+; features of "APPLY II"
 ;
-; https://forum.rebol.info/t/1813
-;
+; https://forum.rebol.info/t/apply-ii-the-revenge/1834
+
 apply: func3 [
     action [action!]
     args [block!]
@@ -975,6 +941,34 @@ runs: func3 [action [~void~ action!]] [
     if void? action [return null]
     return action
 ]
+
+
+mold: adapt mold3/ [  ; update so MOLD SPREAD works
+    if all [
+        block? value
+        #splice! = first value
+    ][
+        only: true
+        value: next value
+    ]
+]
+
+noquote: func3 [x [~null~ any-value!]] [
+    assert [not action? get $x]
+    switch type of x [
+        lit-word3! [return to word! x]
+        lit-path3! [return to path! x]
+    ]
+    x
+]
+
+resolve: func3 [x [any-word3! any-path3!]] [
+    if any-word? x [return to word! x]
+    return to path! x
+]
+
+
+=== "BINDING SHIM" ===
 
 ; The semantics surrounding BIND are completely rethought, and it's not a
 ; mutating operation.  But in the bootstrap executable it is a mutating

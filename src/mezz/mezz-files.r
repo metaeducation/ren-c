@@ -11,7 +11,7 @@ REBOL [
     }--
 ]
 
-decode-url: sys.util/decode-url/
+decode-url: sys.util.decode-url/
 
 
 ; 1. TAG! is a shorthand for getting files relative to the path of the
