@@ -371,7 +371,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     Copy_Cell(arg, v);  // do not decay [4]
 
-    if (Cell_ParamClass(param) == PARAMCLASS_META)
+    if (Cell_Parameter_Class(param) == PARAMCLASS_META)
         Meta_Quotify(arg);
 
     if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
@@ -674,7 +674,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
     //
     bool unquoted = false;
 
-    if (Cell_ParamClass(param) == PARAMCLASS_META) {
+    if (Cell_Parameter_Class(param) == PARAMCLASS_META) {
         if (Is_Nulled(atom))
             return Get_Parameter_Flag(param, ENDABLE);
 

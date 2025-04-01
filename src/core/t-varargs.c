@@ -144,7 +144,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     const Key* key;
     const Param* param = Param_For_Varargs_Maybe_Null(&key, vararg);
     if (pclass == PARAMCLASS_0)
-        pclass = Cell_ParamClass(param);
+        pclass = Cell_Parameter_Class(param);
 
     Option(Level*) vararg_level;
 
@@ -561,7 +561,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
     }
     else {
         DECLARE_ELEMENT (param_word);
-        switch ((pclass = Cell_ParamClass(param))) {
+        switch ((pclass = Cell_Parameter_Class(param))) {
           case PARAMCLASS_NORMAL:
             Init_Word(param_word, Key_Symbol(key));
             break;

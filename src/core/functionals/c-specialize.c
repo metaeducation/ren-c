@@ -455,7 +455,7 @@ Option(ParamClass) Get_First_Param_Literal_Class(Phase* phase) {
     if (Not_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST))
         return PARAMCLASS_0;
 
-    ParamClass pclass = Cell_ParamClass(
+    ParamClass pclass = Cell_Parameter_Class(
         First_Unspecialized_Param(nullptr, phase)
     );
     assert(  // !!! said it quoted its first parameter!

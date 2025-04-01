@@ -59,8 +59,8 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
         return -1;
     }
 
-    if (Cell_ParamClass(a) != Cell_ParamClass(b))
-        return Cell_ParamClass(a) > Cell_ParamClass(b) ? 1 : -1;
+    if (Cell_Parameter_Class(a) != Cell_Parameter_Class(b))
+        return Cell_Parameter_Class(a) > Cell_Parameter_Class(b) ? 1 : -1;
 
     return 0;
 }
@@ -150,7 +150,7 @@ void Set_Parameter_Spec(
     const Cell* spec,
     Context* spec_binding
 ){
-    ParamClass pclass = Cell_ParamClass(param);
+    ParamClass pclass = Cell_Parameter_Class(param);
     assert(pclass != PARAMCLASS_0);  // must have class
 
     uintptr_t* flags = &PARAMETER_FLAGS(param);
@@ -388,7 +388,7 @@ Element* Decorate_According_To_Parameter(
     if (Get_Parameter_Flag(param, REFINEMENT))
         Refinify(e);
 
-    switch (Cell_ParamClass(param)) {
+    switch (Cell_Parameter_Class(param)) {
       case PARAMCLASS_NORMAL:
         break;
 
@@ -466,7 +466,7 @@ IMPLEMENT_GENERIC(PICK, Is_Parameter)
         return Init_Logic(OUT, Get_Parameter_Flag(param, REFINEMENT));
 
       case SYM_CLASS:
-        switch (Cell_ParamClass(param)) {
+        switch (Cell_Parameter_Class(param)) {
           case PARAMCLASS_NORMAL:
             return Init_Word(OUT, CANON(NORMAL));
 
@@ -485,7 +485,7 @@ IMPLEMENT_GENERIC(PICK, Is_Parameter)
         panic (nullptr);
 
       case SYM_ESCAPABLE:
-        return Init_Logic(OUT, Cell_ParamClass(param) == PARAMCLASS_SOFT);
+        return Init_Logic(OUT, Cell_Parameter_Class(param) == PARAMCLASS_SOFT);
 
       /* case SYM_DECORATED: */  // No symbol! Use DECORATE-PARAMETER...
 

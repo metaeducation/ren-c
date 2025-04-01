@@ -183,9 +183,9 @@ DECLARE_NATIVE(SHOVE)
     const Param* param = First_Unspecialized_Param(
         nullptr, Cell_Frame_Phase(shovee)
     );
-    ParamClass pclass = Cell_ParamClass(param);
+    ParamClass pclass = Cell_Parameter_Class(param);
 
-    switch (Cell_ParamClass(param)) {
+    switch (Cell_Parameter_Class(param)) {
       case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative infix [1]
       case PARAMCLASS_META: {
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // will decay if normal
@@ -831,7 +831,7 @@ DECLARE_NATIVE(APPLY)
 
     assert(not Is_Pointer_Corrupt_Debug(param));  // nullptr means toss result
 
-    if (param and Cell_ParamClass(param) == PARAMCLASS_META)
+    if (param and Cell_Parameter_Class(param) == PARAMCLASS_META)
         Set_Level_Flag(SUBLEVEL, META_RESULT);  // get decayed result otherwise
     else
         Clear_Level_Flag(SUBLEVEL, META_RESULT);

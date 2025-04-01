@@ -148,7 +148,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
-            if (Cell_ParamClass(PARAM) != PARAMCLASS_META) {
+            if (Cell_Parameter_Class(PARAM) != PARAMCLASS_META) {
                 if (Is_Barrier(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Nothing_Due_To_End(ARG);
@@ -295,7 +295,7 @@ Bounce Action_Executor(Level* L)
 
       fulfill_arg: ;  // semicolon needed--next statement is declaration
 
-        ParamClass pclass = Cell_ParamClass(PARAM);
+        ParamClass pclass = Cell_Parameter_Class(PARAM);
 
   //=//// HANDLE IF NEXT ARG IS IN OUT SLOT (e.g. INFIX, CHAIN) ///////////=//
 

@@ -1070,7 +1070,7 @@ Error* Error_Arg_Type(
     const Param* param,
     const Value* arg
 ){
-    if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
+    if (Cell_Parameter_Class(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
         return Cell_Error(arg);
 
     const Symbol* param_symbol = Key_Symbol(key);
@@ -1114,7 +1114,7 @@ Error* Error_Phase_Arg_Type(
     if (Level_Phase(L) == L->u.action.original)  // not an internal phase
         return Error_Arg_Type(Level_Label(L), key, param, arg);
 
-    if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
+    if (Cell_Parameter_Class(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
         return Cell_Error(arg);
 
     Error* error = Error_Arg_Type(Level_Label(L), key, param, arg);

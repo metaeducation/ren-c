@@ -739,7 +739,7 @@ Details* Make_Dispatch_Details(
     ParamList* paramlist = Phase_Paramlist(details);
     const Param* first = First_Unspecialized_Param(nullptr, details);
     if (first) {
-        ParamClass pclass = Cell_ParamClass(first);
+        ParamClass pclass = Cell_Parameter_Class(first);
         switch (pclass) {
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META:

@@ -666,7 +666,7 @@ static bool Combinator_Param_Hook(
         //
         return true;  // just leave unspecialized for now
     }
-    else switch (Cell_ParamClass(param)) {
+    else switch (Cell_Parameter_Class(param)) {
       case PARAMCLASS_JUST:
       case PARAMCLASS_THE: {
         //
@@ -684,10 +684,10 @@ static bool Combinator_Param_Hook(
             Init_Nulled(var);
         }
         else {
-            if (Cell_ParamClass(param) == PARAMCLASS_THE)
+            if (Cell_Parameter_Class(param) == PARAMCLASS_THE)
                 Derelativize(var, item, Cell_List_Binding(ARG(RULES)));
             else {
-                assert(Cell_ParamClass(param) == PARAMCLASS_JUST);
+                assert(Cell_Parameter_Class(param) == PARAMCLASS_JUST);
                 Copy_Cell(var, item);
             }
             ++VAL_INDEX_UNBOUNDED(ARG(RULES));

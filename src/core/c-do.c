@@ -78,7 +78,7 @@ void Prep_Action_Level(
 
         Copy_Cell(arg, unwrap with);  // do not decay [1]
 
-        if (Cell_ParamClass(param) == PARAMCLASS_META)
+        if (Cell_Parameter_Class(param) == PARAMCLASS_META)
             Meta_Quotify(arg);
         else
             Decay_If_Unstable(arg);

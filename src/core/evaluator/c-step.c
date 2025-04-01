@@ -757,7 +757,7 @@ Bounce Stepper_Executor(Level* L)
             Param* param = Phase_Param(details, 1);
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
-            switch (Cell_ParamClass(param)) {
+            switch (Cell_Parameter_Class(param)) {
                 case PARAMCLASS_NORMAL:
                 break;
 
@@ -1945,7 +1945,7 @@ Bounce Stepper_Executor(Level* L)
             return FAIL(Error_Literal_Left_Path_Raw());
 
         const Param* first = First_Unspecialized_Param(nullptr, infixed);
-        if (Cell_ParamClass(first) == PARAMCLASS_SOFT) {
+        if (Cell_Parameter_Class(first) == PARAMCLASS_SOFT) {
             if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
                 Clear_Eval_Executor_Flag(L, INERT_OPTIMIZATION);

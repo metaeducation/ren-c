@@ -291,7 +291,7 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
 
 
-INLINE ParamClass Cell_ParamClass(const Cell* param) {
+INLINE ParamClass Cell_Parameter_Class(const Cell* param) {
     assert(HEART_BYTE(param) == TYPE_PARAMETER);
     ParamClass pclass = u_cast(ParamClass, PARAMCLASS_BYTE(param));
     return pclass;
