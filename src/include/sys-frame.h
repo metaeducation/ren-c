@@ -201,7 +201,7 @@ INLINE bool Is_Level_Gotten_Shoved(Level* L) {
 #endif
 
 #define LVL_BINDING(L) \
-    L->rootvar->extra.binding
+    (L)->rootvar->extra.binding
 
 #define LVL_UNDERLYING(L) \
     ACT_UNDERLYING((L)->original)

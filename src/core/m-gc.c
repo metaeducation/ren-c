@@ -532,9 +532,9 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
                 //
             }
             else {
-                Level* L = Level_Of_Varlist_If_Running(context);
+                Option(Level*) L = Level_Of_Varlist_If_Running(context);
                 if (L) // comes from execution, not MAKE FRAME!
-                    assert(VAL_BINDING(v) == LVL_BINDING(L));
+                    assert(VAL_BINDING(v) == LVL_BINDING(unwrap L));
             }
         }
       #endif

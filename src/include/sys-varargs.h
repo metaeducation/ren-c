@@ -95,7 +95,7 @@ INLINE bool Is_Block_Style_Varargs(
 
 
 INLINE bool Is_Level_Style_Varargs_Maybe_Null(
-    Level** L_out,
+    Option(Level*)* L_out,
     const Cell* vararg
 ){
     assert(Is_Varargs(vararg));
@@ -117,12 +117,14 @@ INLINE bool Is_Level_Style_Varargs_May_Fail(
     Level** L_out,
     const Cell* vararg
 ){
-    if (not Is_Level_Style_Varargs_Maybe_Null(L_out, vararg))
+    Option(Level*) L;
+    if (not Is_Level_Style_Varargs_Maybe_Null(&L, vararg))
         return false;
 
-    if (not *L_out)
+    if (not L)
         fail (Error_Frame_Not_On_Stack_Raw());
 
+    *L_out = unwrap L;
     return true;
 }
 

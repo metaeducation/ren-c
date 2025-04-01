@@ -614,7 +614,7 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
 
     Append_Unencoded(mo->utf8flex, " => ");
 
-    Level* L;
+    Option(Level*) L;
     Value* shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (IS_END(shared))
@@ -625,13 +625,13 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
             Append_Unencoded(mo->utf8flex, "[...]"); // can't look ahead
     }
     else if (Is_Level_Style_Varargs_Maybe_Null(&L, v)) {
-        if (L == nullptr)
+        if (not L)
             Append_Unencoded(mo->utf8flex, "!!!");
-        else if (IS_END(L->value))
+        else if (IS_END((unwrap L)->value))
             Append_Unencoded(mo->utf8flex, "[]");
         else if (pclass == PARAM_CLASS_HARD_QUOTE) {
             Append_Unencoded(mo->utf8flex, "[");
-            Mold_Value(mo, L->value); // one value can be shown if hard quoted
+            Mold_Value(mo, (unwrap L)->value); // hard quote can show one
             Append_Unencoded(mo->utf8flex, " ...]");
         }
         Append_Unencoded(mo->utf8flex, "[...]");

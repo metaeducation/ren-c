@@ -143,7 +143,6 @@
 %functions/infix.test.reb
 %functions/invisible.test.reb
 %functions/oneshot.test.reb
-%functions/redo.test.reb
 %functions/specialize.test.reb
 %math/absolute.test.reb
 %math/add.test.reb

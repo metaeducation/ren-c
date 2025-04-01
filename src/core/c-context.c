@@ -1452,8 +1452,8 @@ void Assert_Context_Core(VarList* c)
             panic (rootvar);
         }
 
-        Level* L = Level_Of_Varlist_If_Running(c);
-        if (L != nullptr) {
+        Option(Level*) L = Level_Of_Varlist_If_Running(c);
+        if (L) {
             //
             // If the frame is on the stack, the phase should be something
             // with the same underlying function as the rootkey.

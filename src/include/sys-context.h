@@ -139,7 +139,7 @@ INLINE void Tweak_Keylist_Of_Varlist_Unique(VarList* c, Array* keylist) {
 #define Varlist_Keys_Head(c) \
     Flex_At(Value, Keylist_Of_Varlist(c), 1)  // always "specific"
 
-INLINE Level* Level_Of_Varlist_If_Running(VarList* c) {
+INLINE Option(Level*) Level_Of_Varlist_If_Running(VarList* c) {
     Node* keysource = LINK(c).keysource;
     if (Is_Node_A_Stub(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
@@ -153,10 +153,10 @@ INLINE Level* Level_Of_Varlist_If_Running(VarList* c) {
 }
 
 INLINE Level* Level_Of_Varlist_May_Fail(VarList* c) {
-    Level* L = Level_Of_Varlist_If_Running(c);
+    Option(Level*) L = Level_Of_Varlist_If_Running(c);
     if (not L)
         fail (Error_Frame_Not_On_Stack_Raw());
-    return L;
+    return unwrap L;
 }
 
 #define Varlist_Slots_Head(c) \

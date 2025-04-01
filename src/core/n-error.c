@@ -150,10 +150,15 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
         context = Cell_Varlist(location);
     }
 
-    Level* where = Level_Of_Varlist_May_Fail(context);
+    Option(Level*) where = Level_Of_Varlist_May_Fail(context);
 
-    Error* error = cast(Error*, Cell_Varlist(ARG(ERROR)));
-    Set_Location_Of_Error(error, where);
+    if (not where) {
+        // should this error?
+    }
+    else {
+        Error* error = cast(Error*, Cell_Varlist(ARG(ERROR)));
+        Set_Location_Of_Error(error, unwrap where);
+    }
 
     return nullptr;
 }

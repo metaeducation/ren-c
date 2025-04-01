@@ -335,10 +335,10 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
     //
     if (Is_Frame(out)) {
         VarList* c = Cell_Varlist(out);
-        Level* L = Level_Of_Varlist_If_Running(c);
+        Option(Level*) L = Level_Of_Varlist_If_Running(c);
         if (L) {
-            out->payload.any_context.phase = Level_Phase(L);
-            INIT_BINDING(out, LVL_BINDING(L));
+            out->payload.any_context.phase = Level_Phase(unwrap L);
+            INIT_BINDING(out, LVL_BINDING(unwrap L));
         }
         else {
             // !!! Assume the canon FRAME! value in varlist[0] is useful?

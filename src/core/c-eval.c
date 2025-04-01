@@ -1541,62 +1541,6 @@ bool Eval_Core_Throws(Level* const L)
                     CATCH_THROWN(L->out, L->out);
                     goto dispatch_completed;
                 }
-                else if (
-                    VAL_ACTION(L->out) == NAT_ACTION(REDO)
-                    and VAL_BINDING(L->out) == L->varlist
-                ){
-                    // This was issued by REDO, and should be a FRAME! with
-                    // the phase and binding we are to resume with.
-                    //
-                    CATCH_THROWN(L->out, L->out);
-                    assert(Is_Frame(L->out));
-
-                    // !!! We are reusing the frame and may be jumping to an
-                    // "earlier phase" of a composite function, or even to
-                    // a "not-even-earlier-just-compatible" phase of another
-                    // function.  Type checking is necessary, as is zeroing
-                    // out any locals...but if we're jumping to any higher
-                    // or different phase we need to reset the specialization
-                    // values as well.
-                    //
-                    // Since dispatchers run arbitrary code to pick how (and
-                    // if) they want to change the phase on each redo, we
-                    // have no easy way to tell if a phase is "earlier" or
-                    // "later".  The only thing we have is if it's the same
-                    // we know we couldn't have touched the specialized args
-                    // (no binding to them) so no need to fill those slots
-                    // in via the exemplar.  Otherwise, we have to use the
-                    // exemplar of the phase.
-                    //
-                    // REDO is a fairly esoteric feature to start with, and
-                    // REDO of a frame phase that isn't the running one even
-                    // more esoteric, with REDO/OTHER being *extremely*
-                    // esoteric.  So having a fourth state of how to handle
-                    // L->special (in addition to the three described above)
-                    // seems like more branching in the baseline argument
-                    // loop.  Hence, do a pre-pass here to fill in just the
-                    // specializations and leave everything else alone.
-                    //
-                    VarList* exemplar;
-                    if (
-                        Level_Phase(L) != L->out->payload.any_context.phase
-                        and did (exemplar = ACT_EXEMPLAR(
-                            L->out->payload.any_context.phase
-                        ))
-                    ){
-                        L->special = Varlist_Slots_Head(exemplar);
-                        L->arg = Level_Args_Head(L);
-                        for (; NOT_END(L->arg); ++L->arg, ++L->special) {
-                            if (Is_Nulled(L->special)) // no specialization
-                                continue;
-                            Copy_Cell(L->arg, L->special); // reset it
-                        }
-                    }
-
-                    Level_Phase(L) = L->out->payload.any_context.phase;
-                    LVL_BINDING(L) = VAL_BINDING(L->out);
-                    goto redo_checked;
-                }
             }
 
             // Stay THROWN and let stack levels above try and catch
@@ -1611,6 +1555,8 @@ bool Eval_Core_Throws(Level* const L)
 
             if (Get_Cell_Flag(r, FALSEY)) // BOUNCE_REDO_UNCHECKED
                 goto redo_unchecked;
+
+            goto redo_checked;
 
           redo_checked:; // BOUNCE_REDO_CHECKED
 

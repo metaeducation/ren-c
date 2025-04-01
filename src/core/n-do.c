@@ -429,8 +429,8 @@ DECLARE_NATIVE(EVALUATE)
         VarList* c = Cell_Varlist(source); // checks for INACCESSIBLE
         REBACT *phase = VAL_PHASE(source);
 
-        if (Level_Of_Varlist_If_Running(c)) // see REDO for tail-call recursion
-            fail ("Use REDO to restart a running FRAME! (not DO)");
+        if (Level_Of_Varlist_If_Running(c))
+            fail ("Bootstrap executable cannot REDO already running FRAME!s");
 
         // To DO a FRAME! will "steal" its data.  If a user wishes to use a
         // frame multiple times, they must say DO COPY FRAME, so that the
@@ -604,89 +604,6 @@ DECLARE_NATIVE(SYNC_INVISIBLES)
         return nullptr;
 
     RETURN (ARG(SOURCE));
-}
-
-
-//
-//  redo: native [
-//
-//  {Restart a frame's action from the top with its current state}
-//
-//      return: "Does not return at all (either errors or restarts)"
-//          [~null~]
-//      restartee "Frame to restart, or bound word (e.g. REDO 'RETURN)"
-//          [frame! any-word!]
-//      /other "Restart in a frame-compatible function (sibling tail-call)"
-//      sibling "Action derived from the same underlying frame as restartee"
-//          [action!]
-//  ]
-//
-DECLARE_NATIVE(REDO)
-//
-// This can be used to implement tail-call recursion:
-//
-// https://en.wikipedia.org/wiki/Tail_call
-//
-{
-    INCLUDE_PARAMS_OF_REDO;
-
-    Value* restartee = ARG(RESTARTEE);
-    if (not Is_Frame(restartee)) {
-        if (not Did_Get_Binding_Of(OUT, restartee))
-            fail ("No context found from restartee in REDO");
-
-        if (not Is_Frame(OUT))
-            fail ("Context of restartee in REDO is not a FRAME!");
-
-        Copy_Cell(restartee, OUT);
-    }
-
-    VarList* c = Cell_Varlist(restartee);
-
-    Level* L = Level_Of_Varlist_If_Running(c);
-    if (L == nullptr)
-        fail ("Use DO to start a not-currently running FRAME! (not REDO)");
-
-    // If we were given a sibling to restart, make sure it is frame compatible
-    // (e.g. the product of ADAPT-ing, CHAIN-ing, ENCLOSE-ing, HIJACK-ing a
-    // common underlying function).
-    //
-    // !!! It is possible for functions to be frame-compatible even if they
-    // don't come from the same heritage (e.g. two functions that take an
-    // INTEGER! and have 2 locals).  Such compatibility may seem random to
-    // users--e.g. not understanding why a function with 3 locals is not
-    // compatible with one that has 2, and the test would be more expensive
-    // than the established check for a common "ancestor".
-    //
-    if (Bool_ARG(OTHER)) {
-        Value* sibling = ARG(SIBLING);
-        if (LVL_UNDERLYING(L) != ACT_UNDERLYING(VAL_ACTION(sibling)))
-            fail ("/OTHER function passed to REDO has incompatible FRAME!");
-
-        restartee->payload.any_context.phase = VAL_ACTION(sibling);
-        INIT_BINDING(restartee, VAL_BINDING(sibling));
-    }
-
-    // Phase needs to always be initialized in FRAME! values.
-    //
-    assert(
-        ACT_PARAMLIST(restartee->payload.any_context.phase)->leader.bits
-        & ARRAY_FLAG_IS_PARAMLIST
-    );
-
-    // We need to cooperatively throw a restart instruction up to the level
-    // of the frame.  Use REDO as the throw label that Eval_Core_Throws() will
-    // identify for that behavior.
-    //
-    Copy_Cell(OUT, NAT_VALUE(REDO));
-    INIT_BINDING(OUT, c);
-
-    // The FRAME! contains its ->phase and ->binding, which should be enough
-    // to restart the phase at the point of parameter checking.  Make that
-    // the actual value that Eval_Core_Throws() catches.
-    //
-    CONVERT_NAME_TO_THROWN(OUT, restartee);
-    return BOUNCE_THROWN;
 }
 
 

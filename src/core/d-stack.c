@@ -198,11 +198,11 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
 //
 bool Is_Context_Running_Or_Pending(VarList* frame_ctx)
 {
-    Level* L = Level_Of_Varlist_If_Running(frame_ctx);
+    Option(Level*) L = Level_Of_Varlist_If_Running(frame_ctx);
     if (not L)
         return false;
 
-    if (Is_Action_Level_Fulfilling(L))
+    if (Is_Action_Level_Fulfilling(unwrap L))
         return false;
 
     return true;
@@ -223,9 +223,9 @@ DECLARE_NATIVE(RUNNING_Q)
 
     VarList* frame_ctx = Cell_Varlist(ARG(FRAME));
 
-    Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
+    Option(Level*) L = Level_Of_Varlist_May_Fail(frame_ctx);
 
-    if (Is_Action_Level_Fulfilling(L))
+    if (Is_Action_Level_Fulfilling(unwrap L))
         return Init_False(OUT);
 
     return Init_True(OUT);
@@ -246,9 +246,9 @@ DECLARE_NATIVE(PENDING_Q)
 
     VarList* frame_ctx = Cell_Varlist(ARG(FRAME));
 
-    Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
+    Option(Level*) L = Level_Of_Varlist_May_Fail(frame_ctx);
 
-    if (Is_Action_Level_Fulfilling(L))
+    if (L and Is_Action_Level_Fulfilling(unwrap L))
         return Init_True(OUT);
 
     return Init_False(OUT);
