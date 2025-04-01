@@ -45,7 +45,9 @@
 %datatypes/logic.test.reb
 %datatypes/map.test.reb
 %datatypes/module.test.reb
-%datatypes/money.test.reb
+
+; %datatypes/money.test.reb  ; !!! not tested
+
 %datatypes/native.test.reb
 %datatypes/none.test.reb
 %datatypes/object.test.reb

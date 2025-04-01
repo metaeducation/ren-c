@@ -17,10 +17,7 @@
 (-1x-1 = negate 1x1)
 (1x1 = negate -1x-1)
 (-1x1 = negate 1x-1)
-; money
-($0 = negate $0)
-(-$1 = negate $1)
-($1 = negate -$1)
+
 ; time
 (0:00 = negate 0:00)
 (-1:01 = negate 1:01)

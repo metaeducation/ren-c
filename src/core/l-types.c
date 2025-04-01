@@ -29,7 +29,6 @@
 //
 
 #include "sys-core.h"
-#include "sys-deci-funcs.h"
 #include "sys-dec-to-char.h"
 #include <errno.h>
 
@@ -713,35 +712,6 @@ const Byte *Scan_Integer(
 
 
 //
-//  Scan_Money: C
-//
-// Scan and convert money.  Return zero if error.
-//
-const Byte *Scan_Money(
-    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const Byte *cp,
-    REBLEN len
-) {
-    assert(Is_Cell_Erased(out));
-
-    const Byte *end;
-
-    if (*cp == '$') {
-        ++cp;
-        --len;
-    }
-    if (len == 0)
-        return_NULL;
-
-    Init_Money(out, string_to_deci(cp, &end));
-    if (end != cp + len)
-        return_NULL;
-
-    return end;
-}
-
-
-//
 //  Scan_Date: C
 //
 // Scan and convert a date. Also can include a time and zone.
@@ -990,21 +960,20 @@ end_date:
 
 
 //
-//  Scan_File: C
+//  Scan_File_Or_Money: C
 //
-// Scan and convert a file name.
+// Scan and convert a file name or MONEY!
 //
-const Byte *Scan_File(
+const Byte *Scan_File_Or_Money(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const Byte *cp,
+    const Byte *bp,
     REBLEN len
 ) {
     assert(Is_Cell_Erased(out));
+    assert(*bp == '%' or *bp == '$');
 
-    if (*cp == '%') {
-        cp++;
-        len--;
-    }
+    const Byte* cp = bp + 1;
+    --len;
 
     Ucs2Unit term = 0;
     const Byte *invalid;
@@ -1027,7 +996,11 @@ const Byte *Scan_File(
         return_NULL;
     }
 
-    Init_File(out, Pop_Molded_String(mo));
+    Init_Any_Series(
+        out,
+        *bp == '$' ? REB_MONEY : REB_FILE,
+        Pop_Molded_String(mo)
+    );
     return cp;
 }
 

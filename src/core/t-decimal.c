@@ -31,7 +31,6 @@
 #include "sys-core.h"
 #include <math.h>
 #include <float.h>
-#include "sys-deci-funcs.h"
 
 #define COEF 0.0625 // Coefficient used for float comparision
 #define EQ_RANGE 4
@@ -157,10 +156,6 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         d = cast(REBDEC, VAL_INT64(arg));
         goto dont_divide_if_percent;
 
-    case REB_MONEY:
-        d = deci_to_decimal(VAL_MONEY_AMOUNT(arg));
-        goto dont_divide_if_percent;
-
     case REB_LOGIC:
         d = VAL_LOGIC(arg) ? 1.0 : 0.0;
         goto dont_divide_if_percent;
@@ -173,6 +168,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         d = cast(REBDEC, VAL_NANO(arg)) * NANO;
         break;
 
+    case REB_MONEY:
     case REB_TEXT: {
         Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
@@ -383,10 +379,6 @@ REBTYPE(Decimal)
                 else if (not Is_Percent(val))
                     type = VAL_TYPE(val);
             }
-            else if (type == REB_MONEY) {
-                Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
-                return T_Money(level_, verb);
-            }
             else if (type == REB_CHAR) {
                 d2 = cast(REBDEC, VAL_CHAR(arg));
                 type = REB_DECIMAL;
@@ -489,11 +481,6 @@ REBTYPE(Decimal)
 
         arg = ARG(SCALE);
         if (Bool_ARG(TO)) {
-            if (Is_Money(arg))
-                return Init_Money(OUT, Round_Deci(
-                    decimal_to_deci(d1), flags, VAL_MONEY_AMOUNT(arg)
-                ));
-
             if (Is_Time(arg))
                 fail (Error_Invalid(arg));
 

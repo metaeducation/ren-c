@@ -29,9 +29,6 @@
 //
 
 #include "sys-core.h"
-#include "sys-deci-funcs.h"
-
-
 
 
 //
@@ -512,7 +509,6 @@ Bounce MAKE_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
             (Is_Decimal(arg) || Is_Percent(arg))
             && (VAL_DECIMAL(arg) == 0.0)
         )
-        || (Is_Money(arg) && deci_is_zero(VAL_MONEY_AMOUNT(arg)))
     ){
         return Init_False(out);
     }

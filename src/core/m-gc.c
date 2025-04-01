@@ -386,6 +386,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_FILE:
     case REB_EMAIL:
     case REB_URL:
+    case REB_MONEY:
     case REB_TAG:
     case REB_TRIPWIRE:
     case REB_BITSET: {
@@ -448,7 +449,6 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_INTEGER:
     case REB_DECIMAL:
     case REB_PERCENT:
-    case REB_MONEY:
     case REB_CHAR:
         break;
 

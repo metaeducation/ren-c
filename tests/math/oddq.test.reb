@@ -21,14 +21,7 @@
 (odd? #"^a")
 (not odd? #"^b")
 (odd? #"^(ff)")
-; money
-(not odd? $0)
-(odd? $1)
-(not odd? $2)
-(odd? -$1)
-(not odd? -$2)
-(odd? $999999999999999)
-(odd? -$999999999999999)
+
 ; time
 (not odd? 0:00)
 (not odd? 0:1:00)
