@@ -548,5 +548,5 @@ export to-block-of-file-blocks: func [
             mold:limit x 200
         ]
     ]
-    return copy x  ; case C
+    return map-each 'item x [blockify item]  ; case C
 ]
