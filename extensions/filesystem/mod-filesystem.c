@@ -36,9 +36,6 @@
 
 #include "tmp-mod-filesystem.h"
 
-extern Bounce File_Actor_Dispatcher(Level* level_);
-extern Bounce Dir_Actor_Dispatcher(Level* level_);
-
 
 #if TO_WINDOWS
     #define OS_DIR_SEP '\\'  // file path separator (Thanks Bill.)
@@ -60,34 +57,6 @@ DECLARE_NATIVE(STARTUP_P)
     INCLUDE_PARAMS_OF_STARTUP_P;
 
     return rebNothing();
-}
-
-
-//
-//  export file-actor: native [
-//
-//  "Handler for OLDGENERIC dispatch on File PORT!s"
-//
-//      return: [any-value?]
-//  ]
-//
-DECLARE_NATIVE(FILE_ACTOR)
-{
-    return File_Actor_Dispatcher(LEVEL);
-}
-
-
-//
-//  export dir-actor: native [
-//
-//  "Handler for OLDGENERIC dispatch on Directory PORT!s"
-//
-//      return: [any-value?]
-//  ]
-//
-DECLARE_NATIVE(DIR_ACTOR)
-{
-    return Dir_Actor_Dispatcher(LEVEL);
 }
 
 

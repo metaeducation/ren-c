@@ -43,23 +43,6 @@ extern void Write_IO(const Value* data, REBLEN len);
 extern bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out);
 
 
-extern Bounce Stdio_Actor_Dispatcher(Level* level_);
-
-
-//
-//  export stdio-actor: native [
-//
-//  "Handler for OLDGENERIC dispatch on Stdio PORT!s"
-//
-//      return: [any-value?]
-//  ]
-//
-DECLARE_NATIVE(STDIO_ACTOR)
-{
-    return Stdio_Actor_Dispatcher(LEVEL);
-}
-
-
 //
 //  startup*: native [  ; Note: DO NOT EXPORT!
 //

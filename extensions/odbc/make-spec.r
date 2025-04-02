@@ -1,9 +1,18 @@
-REBOL []
+REBOL [
+    Name: ODBC
+    Notes: "See %extensions/README.md for the format and fields of this file"
+]
 
-name: 'ODBC
+options: [
+    odbc-requires-ltdl [logic?] ()
+]
 
-source: [
-    %odbc/mod-odbc.c
+use-librebol: 'yes  ; ODBC is a great example of not depending on %sys-core.h !
+
+includes: []
+
+sources: [
+    %mod-odbc.c
 
     ; ODBCGetTryWaitValue() is prototyped as a C++-style void argument
     ; function, as opposed to ODBCGetTryWaitValue(void), which is the
@@ -23,10 +32,6 @@ source: [
     <msc:/wd4201>
 ]
 
-includes: [
-    %prep/extensions/odbc ;for %tmp-ext-odbc-init.inc
-]
-
 libraries: switch platform-config.os-base [
     'Windows [
         [%odbc32]
@@ -38,9 +43,3 @@ libraries: switch platform-config.os-base [
         %odbc (if yes? user-config.odbc-requires-ltdl [%ltdl])
     ]
 ]
-
-options: [
-    odbc-requires-ltdl [logic?] ()
-]
-
-use-librebol: 'yes  ; ODBC is a great example of not depending on %sys-core.h !

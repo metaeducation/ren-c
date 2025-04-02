@@ -103,7 +103,15 @@ INLINE uint64_t File_Size_Cacheable_May_Fail(const Value* port)
 }
 
 
-Bounce File_Actor_Dispatcher(Level* level_)
+//
+//  export file-actor: native [
+//
+//  "Handler for OLDGENERIC dispatch on File PORT!s"
+//
+//      return: [any-value?]
+//  ]
+//
+DECLARE_NATIVE(FILE_ACTOR)
 {
     Value* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);

@@ -291,7 +291,16 @@ Value* Read_Line(STD_TERM *t)
 #endif  // if defined(REBOL_SMART_CONSOLE)
 
 
-Bounce Stdio_Actor_Dispatcher(Level* level_)
+
+//
+//  export stdio-actor: native [
+//
+//  "Handler for OLDGENERIC dispatch on Stdio PORT!s"
+//
+//      return: [any-value?]
+//  ]
+//
+DECLARE_NATIVE(STDIO_ACTOR)
 {
     Value* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);

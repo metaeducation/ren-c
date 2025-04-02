@@ -68,7 +68,15 @@ extern Value* Rename_File_Or_Directory(const Value* port, const Value* to);
 Value* Try_Read_Directory_Entry(FILEREQ *dir);
 
 
-Bounce Dir_Actor_Dispatcher(Level* level_)
+//
+//  export dir-actor: native [
+//
+//  "Handler for OLDGENERIC dispatch on Directory PORT!s"
+//
+//      return: [any-value?]
+//  ]
+//
+DECLARE_NATIVE(DIR_ACTOR)
 {
     Value* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);

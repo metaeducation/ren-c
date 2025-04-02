@@ -228,7 +228,7 @@ to-obj-path: func [
 gen-obj: func [
     return: "Rebmake specification object for OBJ"
         [object!]
-    s "file representation, or list if block"
+    spec "single file representation, or spec block with file as first item"
         [file! text! word! path! tuple! block!]
     :dir "directory" [any-string?]
     :D "definitions" [block!]
@@ -236,6 +236,26 @@ gen-obj: func [
     :F "cflags" [block!]
     :main "for main object"
 ][
+    let file
+    let overrides
+    if block? spec [
+        overrides: next spec
+        file: spec.1
+    ] else [
+        overrides: []
+        file: spec
+    ]
+
+    if not match [file! path! tuple! word!] file [
+        fail [
+            "Unexpected argument passed to GEN-OBJ:" mold s, newline
+            "Should be FILE!/PATH!/TUPLE!: %file.c, path/tuple.c, etc." newline
+            "or BLOCK! spec like: [%foo.c <msc:/Wd1020> <gnu:-Wno-whammies>]"
+        ]
+    ]
+
+    file: to file! file
+
     let prefer-O2: 'no  ; overrides -Os to give -O2, e.g. for %c-eval.c
     let standard: user-config.standard  ; may have a per-file override
     let rigorous: user-config.rigorous  ; may have a per-file override
@@ -289,27 +309,25 @@ gen-obj: func [
     ;
     append flags <msc:/wd4866>
 
-    if block? s [
-        for-each 'flag next s [
-            switch flag [
-                #no-c++ [
-                    ;
-                    ; !!! The cfg-cplusplus flag is currently set if any files
-                    ; are C++.  This means that it's a fair indication that
-                    ; a previous call to this routine noticed a C++ compiler
-                    ; is in effect, e.g. the config maps `gcc` tool to `%g++`.
-                    ;
-                    if yes? cfg-cplusplus [
-                        standard: 'c
+    for-each 'flag overrides [
+        switch flag [
+            #no-c++ [
+                ;
+                ; !!! The cfg-cplusplus flag is currently set if any files
+                ; are C++.  This means that it's a fair indication that
+                ; a previous call to this routine noticed a C++ compiler
+                ; is in effect, e.g. the config maps `gcc` tool to `%g++`.
+                ;
+                if yes? cfg-cplusplus [
+                    standard: 'c
 
-                        ; Here we inject "compile as c", but to limit the
-                        ; impact (e.g. on C compilers that don't know what -x
-                        ; is) we only add the flag if it's a C++ build.  MSVC
-                        ; does not need this because it uses the same
-                        ; compiler and only needs switches to turn C++ *on*.
-                        ;
-                        append flags <gnu:-x c>
-                    ]
+                    ; Here we inject "compile as c", but to limit the
+                    ; impact (e.g. on C compilers that don't know what -x
+                    ; is) we only add the flag if it's a C++ build.  MSVC
+                    ; does not need this because it uses the same
+                    ; compiler and only needs switches to turn C++ *on*.
+                    ;
+                    append flags <gnu:-x c>
                 ]
             ]
         ]
@@ -697,64 +715,30 @@ gen-obj: func [
     ; Now add build flags overridden by the inclusion of the specific file
     ; (e.g. third party files we don't want to edit to remove warnings from)
     ;
-    if block? s [
-        for-each 'flag next s [
-            let mapped: cflags-map.(flag)  ; if found, it's a block
-            case [
-                mapped [
-                    append flags spread mapped
-                ]
-                flag = #prefer-O2-optimization [
-                    prefer-O2: 'yes
-                ]
-                flag = #no-c++ [
-                    standard: 'c
-                ]
-                <else> [
-                    append flags (ensure [text! tag!] flag)
-                ]
+    for-each 'flag overrides [
+        let mapped: cflags-map.(flag)  ; if found, it's a block
+        case [
+            mapped [
+                append flags spread mapped
+            ]
+            flag = #prefer-O2-optimization [
+                prefer-O2: 'yes
+            ]
+            flag = #no-c++ [
+                standard: 'c
+            ]
+            <else> [
+                append flags (ensure [text! tag!] flag)
             ]
         ]
-        s: s.1
     ]
 
     ; With the flags and settings ready, make a rebmake object and ask it
     ; to build the requested object file.
     ;
     return make rebmake.object-file-class compose [
-        assert [any [file? s path? s tuple? s word? s]]
-            ; ^-- e.g. TUPLE! like `foo.o`
-
-        ; !!! Note: The TEXT! => FILE! conversions of dir and src-dir are
-        ; important, because if source here comes back as a text something
-        ; filters it out.  rebmake is a hairball that is destined for complete
-        ; rewrite or the recycle bin...so investigating to find why TEXT! isn't
-        ; an error and just gets dropped on the floor to make a bad makefile
-        ; isn't a priority at the instant I'm writing this comment.  Just
-        ; convert the dirs to FILE!.
-        ;
-        source: case [
-            dir [
-                assert [any [file? dir text? dir]]
-                if text? dir [
-                    dir: to file! dir
-                ]
-                join dir (to file! s)
-            ]
-            main [to-file s]
-        ] else [
-            assert [any [file? src-dir text? src-dir]]
-            if text? src-dir [
-                src-dir: to file! src-dir
-            ]
-
-            join src-dir (to file! s)
-        ]
-
-        output: to-obj-path to text! ;\
-            either main [
-                join %main/ to file! (last ensure path! s)
-            ] [s]
+        source: to file! unspaced [maybe dir, file]
+        output: to-obj-path file
         cflags: either empty? flags [_] [flags]
         definitions: D
         includes: I
@@ -770,7 +754,7 @@ extension-class: make object! [
     mode: null  ; [<builtin> <dynamic>] or unused
 
     modules: null
-    source: null  ; main script
+    sources: null  ; searched for DECLARE_NATIVE()/IMPLEMENT_GENERIC()
     depends: null  ; additional C files compiled in
     requires: null  ; it might require other extensions
 
@@ -791,22 +775,77 @@ extension-class: make object! [
     sequence: null  ; the sequence in which the extension should be loaded
     visited: 'no
 
-    directory: method [
-        return: [text!]  ; Should this be [file!]?
-    ][
-        return lowercase to text! name  ; !!! Should remember where it was found
-    ]
+    directory: ~
 ]
 
 
-=== "SCAN TO BUILD LIST OF AVAILABLE EXTENSIONS" ===
+=== "SCAN EXTENSIONS, CONSTRUCT OBJECTS FROM %MAKE-SPEC.R FOR USED ONES" ===
 
-extensions: copy []
+; The user can ask for an extension to be `-` (not built at all) or `+` (which
+; is built into the executable) or `*` (built as dll or so dynamically, and
+; can be selectively loaded by the interpreter).
+;
+; This translates to an ext.mode of <builtin> or <dynamic>.  (Unused extensions
+; do not appear in the extensions array.)
 
-parse-ext-build-spec: func [
-    return: [object!]
-    spec [block!]
-][
+extension-dir: join repo-dir %extensions/
+
+extensions: []
+extension-names: []  ; used by HELP to generate list of extensions
+unmentioned-extensions: []  ; not mentioned in config or command line
+skipped-extensions: []  ; explicitly disabled with "-"
+
+for-each 'entry read extension-dir [
+    all [
+        dir? entry
+        find read (join extension-dir entry) %make-spec.r
+    ] else [
+        continue
+    ]
+
+    let make-spec-file: join (join extension-dir entry) %make-spec.r
+
+    let block: load3:header make-spec-file
+    let hdr: first block
+    let spec: next block
+
+    let ext-name: try hdr.name
+    if (not ext-name) or (not word? ext-name) [
+        fail [mold make-spec-file "needs WORD! extension Name: in header"]
+    ]
+
+    append extension-names ext-name  ; collect names for HELP (used or not)
+
+    let mode: user-config.extensions.(ext-name)
+    if not mode [
+        append unmentioned-extensions ext-name
+        continue
+    ]
+
+    user-config.extensions.(ext-name): null
+
+    switch mode [
+        '- [
+            append skipped-extensions ext-name
+            continue  ; don't run %make-spec.r if unused
+        ]
+        '+ [mode: <builtin>]  ; clearer below
+        '* [mode: <dynamic>]
+        fail ["Mode for extension" ext-name "must be [- + *]"]
+    ]
+
+    ; !!! The specs use `repo-dir` and some other variables.
+    ; Splice those in for starters, but will need deep thought.
+    ;
+    insert spec spread compose [
+        name: (quote ext-name)
+        mode: (mode)
+        repo-dir: (repo-dir)
+        platform-config: (platform-config)
+        user-config: (user-config)
+        directory: (clean-path join extension-dir entry)
+    ]
+
     ; !!! Note: This import does not work, e.g. it won't import shimmed COMPOSE
     ; into a place where the spec would see it.  What we are looking to do
     ; here is an undeveloped feature, of needing a module environment to
@@ -839,44 +878,30 @@ parse-ext-build-spec: func [
 
     ; Normalize format to [[%file1.c] [%file2.c <options>] [%file3.c]]
     ;
-    ext.source: to-block-of-file-blocks maybe ext.source
+    ext.sources: to-block-of-file-blocks maybe ext.sources
     ext.depends: to-block-of-file-blocks maybe ext.depends
 
     ; Blockify libraries
     ;
     ext.libraries: blockify maybe ext.libraries
 
-    return ext
-]
-
-use [extension-dir entry][
-    extension-dir: join repo-dir %extensions/
-    for-each 'entry read extension-dir [
-        all [
-            dir? entry
-            find read (join extension-dir entry) %make-spec.r
-        ] then [
-            let spec: load3 join (join extension-dir entry) %make-spec.r
-
-            ; !!! The specs use `repo-dir` and some other variables.
-            ; Splice those in for starters, but will need deep thought.
-            ;
-            insert spec spread compose [
-                repo-dir: (repo-dir)
-                platform-config: (platform-config)
-                user-config: (user-config)
-            ]
-
-            let parsed: parse-ext-build-spec spec
-            assert [not parsed.mode]  ; no build mode assigned at first yet
-            append extensions parsed
-        ]
+    if (ext.mode = <dynamic>) and (not ext.loadable) [
+        fail ["Extension" name "is not dynamically loadable"]
     ]
+
+    append extensions ext
 ]
 
-extension-names: map-each 'x extensions [
-    quote x.name  ; in bootstrap, can't (delimit "," inert extension-names)
+for-each [name val] user-config.extensions [  ; all found ones were removed
+    print ["!!! Unrecognized extension name in config:" name]
+] then [
+    fail "Unrecognized extensions, aborting"
 ]
+
+extension-names: map-each 'x extension-names [
+    quote x  ; in bootstrap, can't (delimit "," inert extension-names)
+]
+
 
 === "TARGETS" ===
 
@@ -998,7 +1023,7 @@ help-spec: [
     FILES IN %make/configs/ SUBFOLDER:
 
     $<indent:space form sort map-each 'x
-        load (join repo-dir %configs/)
+        load3 (join repo-dir %configs/)
         [to-text x]
     >
   }--
@@ -1451,7 +1476,7 @@ main: make libr3-core [
 
     depends: reduce [
         either user-config.main [
-            gen-obj:main user-config.main
+            gen-obj user-config.main
         ][
             gen-obj:dir file-base.main (join src-dir %main/)
         ]
@@ -1548,64 +1573,24 @@ for-each [category entries] file-base [
     ]
 ]
 
-
-=== "DETERMINE SETTINGS FOR THE EXTENSIONS" ===
-
-; The user can ask for an extension to be `-` (not built at all) or `+` (which
-; is built into the executable) or `*` (built as dll or so dynamically, and
-; can be selectively loaded by the interpreter).
-;
-; This translates to an ext.mode of <builtin>, <dynamic>, or null.
-
-for-each 'ext extensions [
-    let mode
-    if mode: select user-config.extensions ext.name [
-        ;
-        ; Bootstrap executable (at least on mac) had problems setting to null.
-        ; Try workaround.
-        ;
-        append user-config.extensions spread reduce [ext.name #recognized]
-    ] else [
-        mode: '+  ; Currently the default is built in.  Shouldn't be!
-    ]
-
-    switch mode [
-        '+ [
-            ext.mode: <builtin>
-        ]
-        '* [
-            if not ext.loadable [
-                fail ["Extension" name "is not dynamically loadable"]
-            ]
-            ext.mode: <dynamic>
-        ]
-        '- [
-            ext.mode: null
-        ]
-        fail ["Unrecognized extension mode:" reify mode]
-    ]
-]
-
-for-each [name val] user-config.extensions [
-    if val <> #recognized [
-        fail ["Unrecognized extension name:" name]
-    ]
-]
+print newline
 
 for-each [mode label] [
-    <builtin> "BUILTIN EXTENSIONS:"
-    <dynamic> "DYNAMIC EXTENSIONS:"
+    <builtin> "BUILTIN (+) EXTENSIONS:"
+    <dynamic> "DYNAMIC (*) EXTENSIONS:"
 ][
-    print label
-    print mold collect [
+    print [label mold collect [
         for-each 'ext extensions [
             if ext.mode = mode [
                 keep ext.name
             ]
         ]
-    ]
+    ] newline]
 ]
 
+print ["SKIPPED (-) EXTENSIONS:" mold skipped-extensions, newline]
+
+print ["UNMENTIONED EXTENSIONS:" mold unmentioned-extensions, newline]
 
 add-project-flags: func [
     return: [~]
@@ -1715,19 +1700,28 @@ dynamic-libs: copy []  ; #dynamic-library for each DLL
 for-each 'ext extensions [
     assert [ext.class = #extension]  ; basically what we read from %make-spec.r
 
-    if not ext.mode [continue]  ; blank means extension not in use
+    switch ext.mode [
+        null [continue]  ; not in use, don't add it to the build process
+        <builtin> [noop]
+        <dynamic> [noop]
+        fail
+    ]
 
-    assert [find [<builtin> <dynamic>] ext.mode]
+    let ext-name-lower: lowercase to text! ext.name
+
+    let ext-prep-dir: to file! unspaced [
+        output-dir "prep/extensions/" ext-name-lower "/"
+    ]
 
     let ext-objlib: make rebmake.object-library-class [  ; #object-library
         name: ext.name
 
         depends: map-each 's (
-            append copy ext.source maybe spread ext.depends
+            append copy ext.sources maybe spread ext.depends
         )[
             let dep: case [
-                match [file! block!] s [
-                    gen-obj:dir s (join repo-dir %extensions/)
+                block? s [
+                    gen-obj:dir s (ext.directory)
                 ]
                 all [
                     object? s
@@ -1759,7 +1753,19 @@ for-each 'ext extensions [
             ]
         ]
 
-        includes: ext.includes
+        includes: collect [
+            for-each inc maybe ext.includes [
+                ensure file! inc
+                if inc.1 = #"/" [  ; absolute path
+                    keep inc
+                    continue
+                ]
+                keep join ext.directory inc
+            ]
+            keep ext-prep-dir  ; to find %prep/extensions/xxx/tmp-mod-xxx.h
+            keep ext.directory  ; to find includes in the dir itself
+        ]
+
         definitions: ext.definitions
         cflags: ext.cflags
         searches: ext.searches
@@ -1770,13 +1776,12 @@ for-each 'ext extensions [
     ; array of dispatcher CFunction pointers for the natives) and RX_Collate
     ; function.  It is located in the %prep/ directory for the extension.
     ;
-    let ext-name-lower: lowercase to text! ext.name
     let ext-init-source: as file! unspaced [
         "tmp-mod-" ext-name-lower "-init.c"
     ]
     append ext-objlib.depends gen-obj // [
         ext-init-source
-        :dir unspaced ["prep/extensions/" ext-name-lower "/"]
+        :dir ext-prep-dir
         :I ext.includes
         :D ext.definitions
         :F ext.cflags
@@ -1957,14 +1962,16 @@ prep: make rebmake.entry-class [
         ]
 
         for-each 'ext extensions [
-            if not ext.mode [
-                continue
+            let molded-sources: mold map-each 'item ext.sources [
+                ensure file! item.1
             ]
+            replace molded-sources newline space
 
             keep [
                 "$(REBOL)" join tools-dir %prep-extension.r
                 unspaced ["MODULE=" ext.name]
-                unspaced ["SRC=extensions/" ensure file! ext.source.1.1]
+                unspaced ["DIRECTORY=" ext.directory]
+                unspaced [-{SOURCES="}- molded-sources -{"}-]  ; BLOCK of FILE
                 unspaced ["OS_ID=" mold platform-config.id]
                 unspaced ["USE_LIBREBOL=" ext.use-librebol]
             ]

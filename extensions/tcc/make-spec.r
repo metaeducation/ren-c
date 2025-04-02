@@ -1,25 +1,31 @@
 REBOL [
     Title: "TCC Extension Rebmake Compiling/Linking Information"
+    Name: TCC
+    Notes: --{
+        See %extensions/README.md for the format and fields of this file"
+
+     A. If you installed libtcc with `sudo apt-get libtcc-dev`, then the
+        switches for `-ltcc` and `#include "libtcc.h" should just work.
+
+        Otherwise, you have to set environment variables to where TCC is:
+
+            export LIBTCC_INCLUDE_DIR=...
+            export LIBTCC_LIB_DIR=...
+
+        But for convenience, we try to use CONFIG_TCCDIR if you have that set
+        *and* it has %libtcc.h in it.  Then it's *probably* a directory TCC
+        was cloned and built in--not just where the helper library libtcc1.a
+        was installed.
+    }--
 ]
 
-name: 'TCC
+requires: 'Filesystem  ; uses LOCAL-TO-FILE
 
-source: %tcc/mod-tcc.c
+sources: %mod-tcc.c
 
-includes: [
-    %prep/extensions/tcc
-]
+includes: []
 
-
-; If they installed libtcc with `sudo apt-get libtcc-dev`, then the switches
-; for `-ltcc` and `#include "libtcc.h" should just work.  Otherwise, they
-; have to do `export LIBTCC_INCLUDE_DIR=...` and `export LIBTCC_LIB_DIR=...`
-;
-; But for convenience, we try to use CONFIG_TCCDIR if they have that set *and*
-; it has %libtcc.h in it.  Then it's *probably* a directory TCC was cloned
-; and built in--not just where the helper library libtcc1.a was installed.
-
-config-tccdir-with-libtcc-h: all [
+config-tccdir-with-libtcc-h: all [  ; do some guesswork, see [A] above
     ;
     ; CONFIG_TCCDIR will have backslashes on Windows, use LOCAL-TO-FILE on it.
     ;
@@ -28,13 +34,13 @@ config-tccdir-with-libtcc-h: all [
     elide (if #"/" <> last config-tccdir [
         print "NOTE: CONFIG_TCCDIR environment variable doesn't end in '/'"
         print "That's *usually* bad, but since TCC documentation tends to"
-        print "suggest you write it that way, so this extension allows it."
+        print "suggest you write it that way, this extension allows it."
         print unspaced ["CONFIG_TCCDIR=" config-tccdir]
         append config-tccdir "/"  ; normalize to the standard DIR? rule
     ])
 
     exists? (join config-tccdir %libtcc.h)
-    config-tccdir
+    <- config-tccdir
 ]
 
 libtcc-include-dir: any [
@@ -76,8 +82,4 @@ libraries: compose [  ; Note: dependent libraries first, dependencies after.
     ; https://stackoverflow.com/a/38672664/
     ;
     (if not find [Windows Android] platform-config.os-base [%pthread])
-]
-
-requires: [
-    Filesystem  ; uses LOCAL-TO-FILE
 ]

@@ -20,21 +20,16 @@ extensions: to map! [
     ; default.  (Review the general policy for default inclusions.)
     ; Clipboard is only implemented in Windows at the moment.
 
-    Clipboard -
     Console +
     Crypt +
     Debugger +
     DNS +
     Filesystem +
-    JavaScript -
-    Locale +
     Network +
-    ODBC -
     Process +
-    TCC -
+    Stdio +
     Time +
     UUID +
-    UTF +
     View +
 ]
 

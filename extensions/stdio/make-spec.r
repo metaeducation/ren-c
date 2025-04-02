@@ -1,25 +1,27 @@
-REBOL []
+REBOL [
+    Name: Stdio
+    Notes: "See %extensions/README.md for the format and fields of this file"
+]
 
-name: 'Stdio
-source: %stdio/mod-stdio.c
-includes: [
-    %prep/extensions/stdio
+includes: []
+
+sources: [
+    %mod-stdio.c
+    %p-stdio.c
 ]
 
 depends: compose [
-    %stdio/p-stdio.c
-
     (switch platform-config.os-base [
         'Windows [
             spread [
-                [%stdio/stdio-windows.c]
-                [%stdio/readline-windows.c]
+                [%stdio-windows.c]
+                [%readline-windows.c]
             ]
         ]
     ] else [
         spread [
-            [%stdio/stdio-posix.c]
-            [%stdio/readline-posix.c]
+            [%stdio-posix.c]
+            [%readline-posix.c]
         ]
     ])
 ]

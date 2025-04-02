@@ -1,11 +1,6 @@
-REBOL []
-
-name: 'Debugger
-source: %debugger/mod-debugger.c
-includes: copy [
-    %prep/extensions/debugger ;for %tmp-extensions-debugger-init.inc
-]
-depends: [
+REBOL [
+    Name: Debugger
+    Notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
 ; !!! The debugger spawns nested console sessions, with some customization.
@@ -16,3 +11,7 @@ depends: [
 ; already loaded in the sequence.
 ;
 requires: 'Console
+
+use-librebol: 'no
+
+sources: %mod-debugger.c

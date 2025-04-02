@@ -193,7 +193,10 @@ export cscape: func [
                                 unspaced sub
                             ]
                             either prefix [void-marker] [null]
-                            fail ["No vaporizing blocks in CSCAPE $<>"]
+                            fail [
+                                "No vaporizing blocks in CSCAPE $<>" newline
+                                mold:limit template 200
+                            ]
                         ]
                     ] else [
                         form sub  ; UNSPACED doesn't take INTEGER!, should it?
@@ -201,7 +204,10 @@ export cscape: func [
                 ]
                 #delimit [
                     delimit (unspaced [maybe :suffix newline]) sub else [
-                        fail ["No vaporizing blocks in CSCAPE $() or $[]"]
+                        fail [
+                            "No vaporizing blocks in CSCAPE $() or $[]" newline
+                            mold:limit template 200
+                        ]
                     ]
                 ]
                 fail ["Invalid CSCAPE mode:" mode]

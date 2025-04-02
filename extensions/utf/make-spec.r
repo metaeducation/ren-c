@@ -1,7 +1,6 @@
-REBOL []
-
-name: 'UTF
-source: %utf/mod-utf.c
-includes: [
-    %prep/extensions/utf  ; for %tmp-ext-utf-init.inc
+REBOL [
+    Name: UTF
+    Notes: "See %extensions/README.md for the format and fields of this file"
 ]
+
+sources: %mod-utf.c

@@ -1,7 +1,26 @@
-REBOL []
+REBOL [
+    Name: Filesystem
+    Notes: "See %extensions/README.md for the format and fields of this file"
+]
 
-name: 'Filesystem
-source: %filesystem/mod-filesystem.c
+use-librebol: 'no
+
+definitions: []  ; added to by code below
+
+includes: [
+    %libuv/include/  ; sub %uv/
+    %libuv/src/  ; e.g. queue.h
+]
+
+; If you `#include "uv.h"` and try to build as C++ with warnings up you
+; will get warning 5220.
+;
+sources: [
+    [%mod-filesystem.c <msc:/wd5220>]
+    [%p-file.c <msc:/wd5220>]
+    [%p-dir.c <msc:/wd5220>]
+    [%file-posix.c <msc:/wd5220>]
+]
 
 ; !!! Note: There are nuances between os-base, os-name, and platform's name
 ; The most relevant choice here is platform's name, e.g. the `Windows: 3` you
@@ -9,11 +28,8 @@ source: %filesystem/mod-filesystem.c
 ;
 os: platform-config.name
 
-definitions: []
-libraries: []
-
 uv-sources: []
-
+uv-libraries: []
 uv-nowarn: ~
 
 ; Start from a base of files that are common for either Windows or UNIXes
@@ -54,7 +70,7 @@ if os = 'Windows [
         %winapi.c
         %winsock.c
     ]
-    append libraries spread [
+    append uv-libraries spread [
         ;
         ; These include bases like GetMessage(), and are already included by
         ; the Event extension, but needed if you don't build with that.
@@ -167,7 +183,7 @@ else [
         %udp.c
     ]
     if not find [Android OS390 QNX] os [
-        append libraries spread [
+        append uv-libraries spread [
             %pthread  ; Android has pthread in its C library
         ]
     ]
@@ -192,7 +208,7 @@ if os = 'AIX [
         aix.c
         aix-common.c
     ]
-    append libraries spread [
+    append uv-libraries spread [
         %perfstat
     ]
 ]
@@ -213,7 +229,7 @@ if os = 'Android [
        %random-sysctl-linux.c
        %epoll.c
     ]
-    append libraries spread [
+    append uv-libraries spread [
         %dl
     ]
 ]
@@ -282,14 +298,14 @@ if os = 'Linux [
         %random-sysctl-linux.c
         %epoll.c
     ]
-    append libraries spread [
+    append uv-libraries spread [
         %dl
         %rt
     ]
 ]
 
 if os = 'NetBSD [
-    append libraries spread [%kvm]
+    append uv-libraries spread [%kvm]
     append uv-sources spread [
         %netbsd.c
     ]
@@ -307,7 +323,7 @@ if os = 'Sun [
         %no-proctitle.c
         %sunos.c
     ]
-    append libraries spread [
+    append uv-libraries spread [
         %kstat
         %nsl
         %sendfile
@@ -325,7 +341,7 @@ if os = 'Haiku [
         %posix-hrtime.c
         %posix-poll.c
     ]
-    append libraries spread [
+    append uv-libraries spread [
         %bsd
         %network
     ]
@@ -340,7 +356,7 @@ if os = 'QNX [
         %no-proctitle.c
         %no-fsevents.c
     ]
-    append libraries spread [
+    append uv-libraries spread [
         %socket
     ]
 ]
@@ -350,9 +366,9 @@ if os = 'QNX [
 
 uv-depends: map-each 'tuple uv-sources [  ; WORD! in bootstrap
     file: if os = 'Windows [
-        join %filesystem/libuv/src/win/ tuple
+        join %libuv/src/win/ tuple
     ] else [
-        join %filesystem/libuv/src/unix/ tuple
+        join %libuv/src/unix/ tuple
     ]
     compose [(file) #no-c++ (spread uv-nowarn)]
 ]
@@ -371,34 +387,16 @@ append uv-depends spread map-each 'tuple [  ; WORD! in bootstrap
     %version.c
 ][
     compose [
-        (join %filesystem/libuv/src/ tuple) #no-c++ (spread uv-nowarn)
+        (join %libuv/src/ tuple) #no-c++ (spread uv-nowarn)
     ]
 ]
 
-
-
-includes: reduce [
-    %prep/extensions/filesystem
-
-    (join repo-dir %extensions/filesystem/libuv/src/)  ; e.g. queue.h
-    (join repo-dir %extensions/filesystem/libuv/include/)  ; sub %uv/
-]
-
-
 depends: compose [
-    ;
-    ; If you `#include "uv.h"` and try to build as C++ with warnings up you
-    ; will get warning 5220.
-    ;
-    [%filesystem/p-file.c <msc:/wd5220>]
-    [%filesystem/p-dir.c <msc:/wd5220>]
-    [%filesystem/file-posix.c <msc:/wd5220>]
-
     (spread uv-depends)
 
     (if "1" = get-env "USE_BACKDATED_GLIBC" [
         spread [
-            [%filesystem/fcntl-patch.c]
+            [%fcntl-patch.c]
         ]
     ])
 ]
@@ -408,3 +406,5 @@ ldflags: compose [
         "-Wl,--wrap=fcntl64 -Wl,--wrap=log -Wl,--wrap=pow"
     ])
 ]
+
+libraries: uv-libraries

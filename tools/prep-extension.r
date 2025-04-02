@@ -21,8 +21,20 @@ REBOL [
         native specifications is reused.
     }--
     Notes: --{
-        The build process distinguishes between an extension that wants to use
-        just "rebol.h" vs. using all of "rebol-internals.h".
+     A. The build process distinguishes between an extension that wants to use
+        just "rebol.h" vs. all of "rebol-internals.h".  See `use-librebol`
+
+     B. Right now, this script takes a directory on the filesystem to say
+        where the extension can be found.  Longer term, this should work if
+        you want to point at extensions on the web, or a GitHub URL.  It
+        should be able to fetch the sources to a temporary directory, build
+        the extension, and clean up.
+
+     C. In addition to %make-spec.r, there's also a Rebol-style header embedded
+        in the comments at the top of the C source files for modules.  It's
+        not clear what kind of actionable information should be put there.
+        But perhaps things like what EXT_SYM_XXX are used would be better to
+        define there in the source files that use them?
     }--
 ]
 
@@ -39,33 +51,16 @@ import <platforms.r>
 import <native-emitters.r>  ; scans C source for native specs, emits macros
 
 
-; !!! We put the modules .h files and the .inc file for the initialization
-; code into the %prep/<name-of-extension> directory, which is added to the
-; include path for the build of the extension
+=== "PROCESS COMMAND-LINE ARGUMENTS TO %prep-extension.r" ===
 
 args: parse-args system.script.args  ; either from command line or DO:ARGS
-
-; !!! At time of writing, SRC=extensions/name/mod-name.c is what this script
-; gets on the command line.  This is split out to make a directory to put the
-; prep products in, and then assumed to be in the repo's source directory.
-; Longer term, this should work if you want to point at extensions with web
-; addresses to pull and build them, etc.  It should not give the module name,
-; just point at a directory and follow the specification.
-;
-src: to file! :args.SRC
-file-name: ~
-in-dir: split-path3:file src $file-name
-
-; Assume we start up in the directory where build products are being made
-;
-output-dir: join what-dir [%prep/ in-dir]
-
-src: join repo-dir src
-
-mkdir:deep output-dir
-
-
 platform-config: configure-platform args.OS_ID
+
+mod: ensure text! args.MODULE
+
+directory: to file! args.DIRECTORY
+
+sources: ensure block! load3 args.SOURCES
 
 use-librebol: switch args.USE_LIBREBOL [
     "no" ['no]
@@ -73,48 +68,27 @@ use-librebol: switch args.USE_LIBREBOL [
     fail "%prep-extension.r needs USE_LIBREBOL as yes or no"
 ]
 
-mod: ensure text! args.MODULE
+
+=== "CALCULATE NAMES OF BUILD PRODUCTS" ===
+
+; Assume we start up in the directory where build products are being made,
+; e.g. %build/
+;
+; !!! We put the module's .h files and the init.c file for the initialization
+; code into the %prep/<name-of-extension> directory, which is added to the
+; include path for the build of the extension
+
 m-name: mod
 l-m-name: lowercase copy m-name
 u-m-name: uppercase copy m-name
 
-c-src: join repo-dir (as file! ensure text! args.SRC)
+print ["Building Extension" m-name "from" mold sources]
 
+output-dir: join what-dir [%prep/extensions/ l-m-name "/"]
+mkdir:deep output-dir
 
-=== "CALCULATE NAMES OF BUILD PRODUCTS" ===
-
-; !!! This would be a good place to explain what the output goal of this
-; script is.
-
-print ["building" m-name "from" c-src]
-
-script-name: copy c-src
-parse3:match script-name [
-    some [thru "/"]
-    change "mod-" ("ext-")
-    to "."
-    change "." ("-init.")
-    change ["c" <end> | "cpp" <end>] ("reb")
-] else [
-    fail [
-        "Extension main file should have naming pattern %mod-xxx.c(pp),"
-        "and Rebol initialization should be %ext-xxx-init.reb"
-    ]  ; auto-generating version of initial (and poor) manual naming scheme
-]
-
-inc-name: ~
-split-path3:file c-src $inc-name
-parse3:match inc-name [
-    change "mod-" ("tmp-mod-")
-    to "."
-    change "." ("-init.")
-    change ["c" <end> | "cpp" <end>] ("c")  ; !!! Keep as .cpp if it is?
-] else [
-    fail [
-        "Extension main file should have naming pattern %mod-xxx.c(pp),"
-        "so extension init code generates as %tmp-mod-xxx-init.c"
-    ]  ; auto-generating version of initial (and poor) manual naming scheme
-]
+script-name: join directory ["ext-" l-m-name "-init.reb"]
+init-c-name: to file! unspaced ["tmp-mod-" l-m-name "-init.c"]
 
 
 === "USE PROTOTYPE PARSER TO GET NATIVE SPECS FROM COMMENTS IN C CODE" ===
@@ -122,12 +96,17 @@ parse3:match inc-name [
 ; EXTRACT-NATIVE-PROTOS scans the core source for natives.  Reuse it.
 ;
 ; Note: There's also a Rebol-style header embedded in the comments at the top
-; of the C module file, though it's not clear what kind of actionable
+; of the C module files, though it's not clear what kind of actionable
 ; information should be put there.
 
-natives: extract-native-protos c-src
+natives: []
+generics: []
 
-generics: extract-generic-implementations c-src
+for-each 'file sources [
+    file: join directory file
+    append natives spread extract-native-protos file
+    append generics spread extract-generic-implementations file
+]
 
 
 === "COUNT NATIVES AND DETERMINE IF THERE IS A NATIVE STARTUP* FUNCTION" ===
@@ -449,7 +428,7 @@ e1/write-emitted
 ; number of codepoints in the string are passed in, as that's required to
 ; have a validated TEXT!...which is how we'd signal validity to the scanner.
 
-e: make-emitter "Ext custom init code" (join output-dir inc-name)
+e: make-emitter "Ext custom init code" (join output-dir init-c-name)
 
 header: ~
 initscript-body: stripload:header script-name $header

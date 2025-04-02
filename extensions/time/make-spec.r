@@ -1,21 +1,18 @@
-REBOL []
-
-name: 'Time
-source: %time/mod-time.c
-includes: [
-    %prep/extensions/time
+REBOL [
+    Name: Time
+    Notes: "See %extensions/README.md for the format and fields of this file"
 ]
+
+use-librebol: 'no
+
+sources: %mod-time.c
 
 depends: compose [
     (switch platform-config.os-base [
         'Windows [
-            spread [
-                [%time/time-windows.c]
-            ]
+            %time-windows.c
         ]
     ] else [
-        spread [
-            [%time/time-posix.c]
-        ]
+        %time-posix.c
     ])
 ]

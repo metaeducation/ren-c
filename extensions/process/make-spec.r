@@ -1,7 +1,13 @@
-REBOL []
+REBOL [
+    Name: Process
+    Notes: "See %extensions/README.md for the format and fields of this file"
+]
 
-name: 'Process
-source: %process/mod-process.c
+use-librebol: 'no
+
+requires: 'Filesystem  ; for FILE-TO-LOCAL in CALL
+
+sources: %mod-process.c
 
 ; The implementation CALL is pretty much entirely different on Windows.  The
 ; only sensible abstraction is CALL itself.  We don't want to repeat the
@@ -10,14 +16,8 @@ source: %process/mod-process.c
 ;
 depends: switch platform-config.os-base [
     'Windows [
-        [%process/call-windows.c]
+        [%call-windows.c]
     ]
 ] else [
-    [%process/call-posix.c]
+    [%call-posix.c]
 ]
-
-includes: copy [
-    %prep/extensions/process ;for %tmp-extensions-process-init.inc
-]
-
-requires: 'Filesystem  ; for FILE-TO-LOCAL in CALL

@@ -1,8 +1,16 @@
-REBOL []
+REBOL [
+    Name: Locale
+    Notes: "See %extensions/README.md for the format and fields of this file"
+]
 
-name: 'Locale
-source: [
-    %locale/mod-locale.c
+use-librebol: 'yes
+
+requires: 'process  ; for get-env
+
+includes: []
+
+sources: [
+    %mod-locale.c
 
     ; The locale module uses non-constant aggregate initialization,
     ; e.g. LOCALE_WORD_ALL is defined as Ext_Canons_Locale[4], but
@@ -16,10 +24,3 @@ source: [
     ;
     <msc:/wd4204>
 ]
-includes: copy [
-    %prep/extensions/locale ;for %tmp-extensions-locale-init.inc
-]
-
-requires: 'process ;for get-env
-
-use-librebol: 'yes

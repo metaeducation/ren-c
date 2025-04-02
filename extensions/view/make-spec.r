@@ -1,12 +1,11 @@
-REBOL []
+REBOL [
+    Name: View
+    Notes: "See %extensions/README.md for the format and fields of this file"
+]
 
-name: 'View
-source: [
-    %view/mod-view.c
-]
-includes: copy [
-    %prep/extensions/view ;for %tmp-extensions-view-init.inc
-]
+use-librebol: 'yes
+
+sources: %mod-view.c
 
 ; The Windows REQUEST-FILE does not introduce any new dependencies.
 ; REQUEST-DIR depends on OLE32 for CoInitialize() because it is done
@@ -37,5 +36,3 @@ libraries: switch platform-config.os-base [
         []
     ]
 ]
-
-use-librebol: 'yes

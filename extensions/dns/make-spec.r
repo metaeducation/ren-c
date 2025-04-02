@@ -1,7 +1,8 @@
-REBOL []
-
-name: 'DNS
-source: %dns/mod-dns.c
-includes: [
-    %prep/extensions/dns
+REBOL [
+    Name: DNS
+    Notes: "See %extensions/README.md for the format and fields of this file"
 ]
+
+use-librebol: 'no
+
+sources: %mod-dns.c
