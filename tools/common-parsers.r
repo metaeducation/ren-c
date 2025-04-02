@@ -47,7 +47,7 @@ load-until-double-newline: func [
         opt wsp opt [newline opt newline] position: <here>
         to <end>
     ] then [
-        let values: load copy:part text position
+        let values: load3 copy:part text position
         return reduce [values position]
     ]
 

@@ -63,11 +63,11 @@ src-dir: join repo-dir %src/
 ; The file list for the core .c files comes from %file-base.r, while the
 ; file list for extensions comes from that extension's %make-spec.r
 ;
-file-base: make object! load (join repo-dir %tools/file-base.r)
+file-base: make object! load3 (join repo-dir %tools/file-base.r)
 
 ; Start out with a default configuration (may be overridden)
 ;
-user-config: make object! load (join repo-dir %configs/default-config.r)
+user-config: make object! load3 (join repo-dir %configs/default-config.r)
 
 
 === "SPLIT ARGS INTO OPTIONS AND COMMANDS" ===
@@ -116,10 +116,10 @@ for-each [name value] options [
             while [config] [
                 let dir: split-path3:file config $file
                 change-dir dir
-                append config-stack (load read file)
+                append config-stack (load3 read file)
 
                 ; !!! LOAD has changed between bootstrap versions, for the
-                ; handling of the /HEADER.  This just transcodes the file
+                ; handling of the :HEADER.  This just transcodes the file
                 ; again to extract the "Inherits" information.
                 ;
                 ; Note: Inherits may be a good non-config-specific feature.
@@ -137,7 +137,7 @@ for-each [name value] options [
         'EXTENSIONS [
             ; [+|-|*] [NAME --{+|-|*|[modules]}--]...
             use [ext-file user-ext][
-                user-ext: load value
+                user-ext: load3 value
                 if not block? user-ext [
                     fail [
                         "Selected extensions must be a block, not"
@@ -194,7 +194,7 @@ if commands [user-config.target: null]  ; was `target: load commands`  Why? :-/
 cflags-map: make map! []
 left: right: pos: ~
 
-parse3 load (join tools-dir %cflags-map.r) [some [
+parse3 load3 (join tools-dir %cflags-map.r) [some [
     pos: <here>
     left: tag! '=> right: [tag! | block!] (
         if tag? right [right: reduce [right]]
@@ -856,7 +856,7 @@ use [extension-dir entry][
             dir? entry
             find read (join extension-dir entry) %make-spec.r
         ] then [
-            let spec: load join (join extension-dir entry) %make-spec.r
+            let spec: load3 join (join extension-dir entry) %make-spec.r
 
             ; !!! The specs use `repo-dir` and some other variables.
             ; Splice those in for starters, but will need deep thought.

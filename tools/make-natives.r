@@ -257,7 +257,7 @@ e-forward/write-emitted
 ; The generic registry uses this, sorting the more specific values used in
 ; IMPLEMENT_GENERIC() first in the table for each generic.
 
-name-to-typeset-byte: load (join output-dir %boot/tmp-typeset-bytes.r)
+name-to-typeset-byte: load3 (join output-dir %boot/tmp-typeset-bytes.r)
 
 
 === "SORT GATHERED GENERICS IN TYPESET-BYTE ORDER" ===

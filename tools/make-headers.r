@@ -28,7 +28,7 @@ import <text-lines.reb>
 
 c-lexical: import <c-lexicals.r>
 
-file-base: make object! load join repo-dir %tools/file-base.r
+file-base: make object! load3 join repo-dir %tools/file-base.r
 
 tools-dir: system.options.current-path
 output-dir: join system.options.path %prep/

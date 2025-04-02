@@ -51,7 +51,7 @@ mkdir:deep join prep-dir %core/
 
 === "DATATYPE DEFINITIONS" ===
 
-type-table: load %types.r
+type-table: load3 %types.r
 
 for-each-datatype: func [
     "Iterate type table by creating an object for each row"

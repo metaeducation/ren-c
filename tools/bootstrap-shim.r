@@ -129,6 +129,17 @@ sys.util/rescue [
     export refinement3!: run-word?/
     export char3!: char?/
 
+    export load: ~<Use LOAD3 in Bootstrap (no multi-returns for header)>~
+    export load3: enclose load/ func [f] [  ; no multi-return values
+        let result: unquasi meta eval f
+        if f.header [
+            ensure block! first result'
+            ensure object! second result'
+            return insert result'.2 result'.1
+        ]
+        return ensure block! first result
+    ]
+
     quit 0
 ]
 
@@ -171,6 +182,7 @@ for-each [alias] [
     join3:                      ; JOIN handles splices
     compose3:                   ; COMPOSE now arity-2, processes splices
     split-path3:                ; bootstrap uses SPLIT-PATH3 not SPLIT-PATH
+    load3:                      ; bootstrap uses LOAD3 not LOAD
     collect3:                   ; COLLECT's KEEP processes splices
     mold3:                      ; MOLD takes splices instead of MOLD/ONLY
     and3:                       ; AND takes GROUP!s on right (not BLOCK!)
@@ -279,9 +291,11 @@ collect3: adapt lib3.collect/ [
 ; can't be emulated by older executables.  Here we raise errors in the old
 ; executable on any undecorated functions that have no emulation equivalent.
 
-parse: ~<Use PARSE3 in bootstrap code, not PARSE>~
+parse: ~<Use PARSE3 in bootstrap code, not PARSE (UPARSE too slow, for now)>~
 
-split-path: ~<Use SPLIT-PATH3 in Bootstrap (no multi-return)>~
+split-path: ~<Use SPLIT-PATH3 in Bootstrap (:FILE takes WORD! vs multireturn)>~
+
+load: ~<Use LOAD3 in Bootstrap (:HEADER returns BLOCK! with OBJECT!)>~
 
 
 === "FAKE UP QUASIFORM! AND THE-WORD! TYPES" ===

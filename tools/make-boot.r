@@ -185,7 +185,7 @@ add-sym: func [
 ; We use this table to make symbols, e.g. SYM_BLANK or SYM_BLANK_X for `blank!`
 ; or SYM_BLANK_Q for `blank?`
 
-name-to-typeset-byte: load (join prep-dir %boot/tmp-typeset-bytes.r)
+name-to-typeset-byte: load3 (join prep-dir %boot/tmp-typeset-bytes.r)
 
 
 === "SYMBOLS FOR DATATYPES" ===
@@ -222,7 +222,7 @@ add-sym:placeholder </MAX_SYM_TYPESETS>
 ; establish their slots first.  Any natives or types which have the same
 ; name will have to use the slot position established for these words.
 
-for-each 'term load %lib-words.r [
+for-each 'term load3 %lib-words.r [
     case [
         issue? term [
             term: as word! term
@@ -278,7 +278,7 @@ add-sym:placeholder </MAX_SYM_LIB_PREMADE>
 ; type might come along and use one of these terms...meaning they have to
 ; yield to that position.  That's why there's no guarantee of order.
 
-for-each 'item load %symbols.r [
+for-each 'item load3 %symbols.r [
     switch type of item [
         word! [add-sym item]
         issue! [
@@ -299,7 +299,7 @@ e-sysobj: make-emitter "System Object" (
 
 at-value: func [field] [return next find boot-sysobj setify field]
 
-boot-sysobj: load %sysobj.r
+boot-sysobj: load3 %sysobj.r
 change (at-value 'version) version
 change (at-value 'commit) maybe git-commit  ; no-op if no git-commit
 change (at-value 'build) now:utc
@@ -412,7 +412,7 @@ e-errfuncs/emit [--{
 
 add-sym:placeholder <MIN_SYM_ERRORS>
 
-boot-errors: load %errors.r
+boot-errors: load3 %errors.r
 
 for-each [sw-cat list] boot-errors [
     assert [set-word? sw-cat]
@@ -509,7 +509,7 @@ e-errfuncs/write-emitted
 ; made involved LOAD-ing the objects.  While we could rewrite that not to do
 ; a LOAD as well, keep it how it was for the moment.
 
-mezz-files: load %../mezz/boot-files.r  ; base, sys, mezz
+mezz-files: load3 %../mezz/boot-files.r  ; base, sys, mezz
 
 sys-toplevel: copy []
 
@@ -556,7 +556,7 @@ for-each 'item sys-toplevel [
 
 add-sym:placeholder </MAX_SYM_BUILTIN>
 
-for-each 'item load %ext-words.r [
+for-each 'item load3 %ext-words.r [
     switch type of item [
         word! [add-sym item]
         block! [  ; will someday define reserved groups
@@ -810,7 +810,7 @@ e-bootblock/emit [nats --{
 
 ; Build typespecs block (in same order as datatypes table)
 
-types-to-typespec: load join prep-dir %boot/tmp-typespecs.r
+types-to-typespec: load3 join prep-dir %boot/tmp-typespecs.r
 
 boot-typespecs: collect [
     for-each [type typespec] types-to-typespec [
