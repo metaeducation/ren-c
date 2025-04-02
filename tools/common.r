@@ -21,6 +21,10 @@ REBOL [
 
 import <bootstrap-shim.r>
 
+; No specific verboseness/verbosity feature has been defined yet, but this
+; points out places that could output more information if they wanted to.
+;
+export verbose: null
 
 ; When you run a Rebol script, the `current-path` is the directory where the
 ; script is.  We assume that the Rebol source enlistment's root directory is
@@ -318,8 +322,14 @@ export write-if-changed: func [
         not exists? dest
         content != read dest
     ] then [
-        print ["DETECTED CHANGE:" dest]
+        if verbose [
+            print ["CHANGE DETECTED, WRITING =>" dest]
+        ]
         write dest content
+    ] else [
+        if verbose [
+            print ["NO CHANGE DETECTED:" dest]
+        ]
     ]
 ]
 

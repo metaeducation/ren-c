@@ -38,8 +38,11 @@ if find (words of import/) 'into [  ; non-bootstrap Ren-C
     fail "%import-shim.r is only for use with old Ren-C EXEs"
 ]
 
+verbose: null  ; happens before verbose in %common.r
 
-write-stdout "LOADING %import-shim.r --- "  ; when finished, adds "COMPLETE!"
+if verbose [
+    write-stdout "LOADING %import-shim.r --- "  ; adds "COMPLETE!" on finish
+]
 
 
 ; Because the semantics vary greatly, we'd like it to be clear to readers
@@ -52,7 +55,7 @@ lib.lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
 
 === "EXPORT" ===
 
-/export: lib3/func [
+export: lib3/func [
     "%import-shim.r variant of EXPORT which just puts the definition into LIB"
 
     :set-word [<skip> set-word!]  ; old style unescapable literal, old <skip>!
@@ -61,12 +64,10 @@ lib.lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
     <local>
         items
 ][
-    if :set-word [
-        args: take args
-        lib3/append system.contexts.user reduce [  ; splices blocks by default
-            set-word (set set-word :args)
-        ]
-        return get 'args
+    if set-word [
+        return set (extend system.contexts.user to word! set-word) (
+            set set-word take args  ; assign in local context too...
+        )
     ]
 
     items: take args
@@ -98,7 +99,7 @@ lib.lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
 ; So it's left around in case it comes in handy for some change that is
 ; easier to make here than the bootstrap executable.
 
-/rewrite-source-for-bootstrap-exe: lib3/func [
+rewrite-source-for-bootstrap-exe: lib3/func [
     "Hookpoint that allows rewriting source"
     source [text!]
     <local> pushed rule
@@ -163,8 +164,8 @@ wrap-module: 'no
 
 replace3: default [replace/]
 
-/old-do: lib3.do/
-/do: lib3/enclose lib3.do/ lib3/func [
+old-do: lib3.do/
+do: lib3/enclose lib3.do/ lib3/func [
     f [frame!]
     <local> old-system-script file
     <with> wrap-module
@@ -217,7 +218,7 @@ already-imported: to map! []  ; avoid importing things twice
 
 
 ; see header notes: `Exports` broken
-/import: infix lib3/func [
+import: infix lib3/func [
     "%import-shim.r variant of IMPORT which acts like DO and loads only once"
 
     :set-word "optional left argument, used by `rebmake: import <rebmake.r>`"
@@ -284,7 +285,7 @@ already-imported: to map! []  ; avoid importing things twice
 === "LOAD WRAPPING" ===
 
 ; see header notes: `Exports` broken
-/load: adapt lib3.load/ [  ; source [file! url! text! blob! block!]
+load: adapt lib3.load/ [  ; source [file! url! text! blob! block!]
     if all [  ; ALL THEN does not seem to work in bootstrap EXE
         file? source
         not dir? source
@@ -304,4 +305,6 @@ append lib lib3/compose [
     load: (load/)
 ]
 
-print "COMPLETE!"
+if verbose [
+    print "COMPLETE!"  ; finishes the incomplete line started on entry
+]

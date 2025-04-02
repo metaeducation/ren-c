@@ -319,7 +319,9 @@ export make-emitter: func [
         ]
     ]
 
-    print unspaced [-{Generating "}- title -{" (via }- by -{)}-]
+    print cscape [title file
+        --{Generating "$<Title>" ($<Mold File>)}--
+    ]
 
     let stem
     split-path3:file file $stem
@@ -389,8 +391,6 @@ export make-emitter: func [
             if tabbed [
                 replace .buf-emit spaced-tab tab
             ]
-
-            print ["WRITING =>" .file]
 
             write-if-changed .file .buf-emit
 

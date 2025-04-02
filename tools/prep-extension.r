@@ -68,6 +68,12 @@ use-librebol: switch args.USE_LIBREBOL [
     fail "%prep-extension.r needs USE_LIBREBOL as yes or no"
 ]
 
+print newline
+
+if verbose [
+    print ["Building Extension" mod "from" mold sources]
+]
+
 
 === "CALCULATE NAMES OF BUILD PRODUCTS" ===
 
@@ -614,3 +620,5 @@ if no? use-librebol [  ; you can't write generics with librebol... yet!
 ]
 
 e/write-emitted
+
+print newline
