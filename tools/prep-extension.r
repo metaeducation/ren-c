@@ -56,7 +56,7 @@ import <native-emitters.r>  ; scans C source for native specs, emits macros
 args: parse-args system.script.args  ; either from command line or DO:ARGS
 platform-config: configure-platform args.OS_ID
 
-mod: ensure text! args.MODULE
+mod: ensure text! args.MODULE  ; overwrites MOD as MODULO, but that's okay!
 
 directory: to file! args.DIRECTORY
 
@@ -78,17 +78,8 @@ use-librebol: switch args.USE_LIBREBOL [
 ; code into the %prep/<name-of-extension> directory, which is added to the
 ; include path for the build of the extension
 
-m-name: mod
-l-m-name: lowercase copy m-name
-u-m-name: uppercase copy m-name
-
-print ["Building Extension" m-name "from" mold sources]
-
-output-dir: join what-dir [%prep/extensions/ l-m-name "/"]
+output-dir: cscape %prep/extensions/$<mod>/
 mkdir:deep output-dir
-
-script-name: join directory ["ext-" l-m-name "-init.reb"]
-init-c-name: to file! unspaced ["tmp-mod-" l-m-name "-init.c"]
 
 
 === "USE PROTOTYPE PARSER TO GET NATIVE SPECS FROM COMMENTS IN C CODE" ===
@@ -159,14 +150,14 @@ for-each 'info natives [
 === "EMIT THE INCLUDE_PARAMS_OF_XXX MACROS FOR THE EXTENSION NATIVES" ===
 
 e1: make-emitter "Module C Header File Preface" (
-    join output-dir ["tmp-mod-" (l-m-name) ".h"]
+    join output-dir cscape %tmp-mod-$<mod>.h
 )
 
 if yes? use-librebol [
     e1/emit [--{
         /* extension configuration says [use-librebol: 'yes] */
 
-        #define LIBREBOL_BINDING_NAME  librebol_binding_$<l-m-name>
+        #define LIBREBOL_BINDING_NAME  librebol_binding_$<mod>
         #include "rebol.h"  /* not %rebol-internals.h ! */
 
         /*
@@ -184,7 +175,7 @@ if yes? use-librebol [
     e1/emit [--{
         /* extension configuration says [use-librebol: 'no] */
 
-        #define LIBREBOL_BINDING_NAME  librebol_binding_$<l-m-name>
+        #define LIBREBOL_BINDING_NAME  librebol_binding_$<mod>
         #include "sys-core.h"  /* superset of %rebol.h */
 
         /*
@@ -428,10 +419,14 @@ e1/write-emitted
 ; number of codepoints in the string are passed in, as that's required to
 ; have a validated TEXT!...which is how we'd signal validity to the scanner.
 
-e: make-emitter "Ext custom init code" (join output-dir init-c-name)
+e: make-emitter "Extension Initialization Script Code" (
+    join output-dir cscape %tmp-mod-$<mod>-init.c
+)
+
+script-name: cscape %ext-$<mod>-init.reb
 
 header: ~
-initscript-body: stripload:header script-name $header
+initscript-body: stripload:header (join directory script-name) $header
 ensure text! header  ; stripload gives back textual header
 
 script-uncompressed: unspaced [

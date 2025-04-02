@@ -1016,6 +1016,7 @@ cscape-inside: func3 [
         if path? item [item: first item]
         case [
             text? item [continue]  ; should only be last item
+            file? item [continue]
             get-word? item [
                 item: get item
                 assert [object? item]

@@ -1430,9 +1430,11 @@ print ["debug:" app-config.debug]
 print ["optimization:" app-config.optimization]
 
 append app-config.definitions spread reduce [
-    unspaced ["TO_" uppercase to-text platform-config.os-base "=1"]
-    unspaced [
-        "TO_" (uppercase replace to-text platform-config.os-name "-" "_") "=1"
+    cscape [platform-config
+        "TO_${PLATFORM-CONFIG.OS-BASE}=1"
+    ]
+    cscape [platform-config
+        "TO_${PLATFORM-CONFIG.OS-NAME}=1"
     ]
 ]
 
@@ -1707,10 +1709,8 @@ for-each 'ext extensions [
         fail
     ]
 
-    let ext-name-lower: lowercase to text! ext.name
-
-    let ext-prep-dir: to file! unspaced [
-        output-dir "prep/extensions/" ext-name-lower "/"
+    let ext-prep-dir: cscape [ext
+        %prep/extensions/$<ext.name>/
     ]
 
     let ext-objlib: make rebmake.object-library-class [  ; #object-library
@@ -1776,8 +1776,8 @@ for-each 'ext extensions [
     ; array of dispatcher CFunction pointers for the natives) and RX_Collate
     ; function.  It is located in the %prep/ directory for the extension.
     ;
-    let ext-init-source: as file! unspaced [
-        "tmp-mod-" ext-name-lower "-init.c"
+    let ext-init-source: cscape [ext
+        %tmp-mod-$<ext.name>-init.c
     ]
     append ext-objlib.depends gen-obj // [
         ext-init-source

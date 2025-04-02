@@ -51,14 +51,22 @@ export cscape: func [
     "Escape Rebol expressions in templated C source, returns new string"
 
     return: "${} TO-C-NAME, $<> UNSPACED, $[]/$() DELIMIT closed/open"
-        [text!]
+        [text! file!]
     template "${Expr} case as-is, ${expr} lowercased, ${EXPR} is uppercased"
-        [block!]
+        [text! file! block!]
     <local> col start finish prefix suffix expr mode pattern void-marker
 ][
-    assert [text? last template]
+    if match [text! file!] template [
+        template: reduce [template]
+    ]
 
-    let string: trim:auto copy last template
+    let return-type: type of last template
+
+    if (text! <> return-type) and (file! <> return-type) [
+        fail ["CSCAPE requires TEXT! or FILE! as template:" mold last template]
+    ]
+
+    let string: trim:auto to text! last template
 
     ; As we process the string, we CHANGE any substitution expressions into
     ; an INTEGER! for doing the replacements later with REWORD (and not
@@ -125,7 +133,7 @@ export cscape: func [
             one (col: col + 1)
         ]]
     ] else [  ; COLLECT* was NULL, so no substitutions
-        return string
+        return as return-type string
     ]
 
     list: unique:case list
@@ -288,7 +296,7 @@ export cscape: func [
 
     replace string void-marker ""
 
-    return string
+    return as return-type string
 ]
 
 
