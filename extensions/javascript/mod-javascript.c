@@ -55,6 +55,7 @@
 //
 
 
+#include "sys-core.h"
 #include "tmp-mod-javascript.h"
 
 #include <limits.h>  // for UINT_MAX

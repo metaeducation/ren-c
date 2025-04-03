@@ -22,7 +22,7 @@ REBOL [
     }--
     Notes: --{
      A. The build process distinguishes between an extension that wants to use
-        just "rebol.h" vs. all of "rebol-internals.h".  See `use-librebol`
+        just "rebol.h" vs. all of "sys-core.h".  See `use-librebol`
 
      B. Right now, this script takes a directory on the filesystem to say
         where the extension can be found.  Longer term, this should work if
@@ -58,7 +58,7 @@ platform-config: configure-platform args.OS_ID
 
 mod: ensure text! args.MODULE  ; overwrites MOD as MODULO, but that's okay!
 
-directory: to file! args.DIRECTORY
+ext-src-dir: to file! args.DIRECTORY
 
 sources: ensure block! load3 args.SOURCES
 
@@ -77,15 +77,13 @@ if verbose [
 
 === "CALCULATE NAMES OF BUILD PRODUCTS" ===
 
-; Assume we start up in the directory where build products are being made,
-; e.g. %build/
+; Assume we start up in the directory where the makefile was invoked and that
+; build products are being made, e.g. %build/
 ;
-; !!! We put the module's .h files and the init.c file for the initialization
-; code into the %prep/<name-of-extension> directory, which is added to the
-; include path for the build of the extension
+; non-absolute-paths are considered relative to that location.
 
-output-dir: cscape %prep/extensions/$<mod>/
-mkdir:deep output-dir
+ext-prep-subdir: cscape %prep/extensions/$<mod>/
+mkdir:deep ext-prep-subdir
 
 
 === "USE PROTOTYPE PARSER TO GET NATIVE SPECS FROM COMMENTS IN C CODE" ===
@@ -100,7 +98,7 @@ natives: []
 generics: []
 
 for-each 'file sources [
-    file: join directory file
+    file: join ext-src-dir file
     append natives spread extract-native-protos file
     append generics spread extract-generic-implementations file
 ]
@@ -155,16 +153,19 @@ for-each 'info natives [
 
 === "EMIT THE INCLUDE_PARAMS_OF_XXX MACROS FOR THE EXTENSION NATIVES" ===
 
+include-name: cscape %tmp-mod-$<mod>.h
+
 e1: make-emitter "Module C Header File Preface" (
-    join output-dir cscape %tmp-mod-$<mod>.h
+    join ext-prep-subdir include-name
 )
 
 if yes? use-librebol [
     e1/emit [--{
         /* extension configuration says [use-librebol: 'yes] */
 
+        #undef LIBREBOL_BINDING_NAME  /* defaulted by rebol.h */
+
         #define LIBREBOL_BINDING_NAME  librebol_binding_$<mod>
-        #include "rebol.h"  /* not %rebol-internals.h ! */
 
         /*
          * Define DECLARE_NATIVE macro to include extension name.
@@ -181,8 +182,9 @@ if yes? use-librebol [
     e1/emit [--{
         /* extension configuration says [use-librebol: 'no] */
 
+        #undef LIBREBOL_BINDING_NAME  /* defaulted by sys-core.h */
+
         #define LIBREBOL_BINDING_NAME  librebol_binding_$<mod>
-        #include "sys-core.h"  /* superset of %rebol.h */
 
         /*
          * We replace the declaration-based macros with ones that put the
@@ -426,13 +428,13 @@ e1/write-emitted
 ; have a validated TEXT!...which is how we'd signal validity to the scanner.
 
 e: make-emitter "Extension Initialization Script Code" (
-    join output-dir cscape %tmp-mod-$<mod>-init.c
+    join ext-prep-subdir cscape %tmp-mod-$<mod>-init.c
 )
 
 script-name: cscape %ext-$<mod>-init.reb
 
 header: ~
-initscript-body: stripload:header (join directory script-name) $header
+initscript-body: stripload:header (join ext-src-dir script-name) $header
 ensure text! header  ; stripload gives back textual header
 
 script-uncompressed: unspaced [
@@ -450,11 +452,15 @@ script-uncompressed: unspaced [
 
     initscript-body
 ]
-script-num-codepoints: length of script-uncompressed
 
-write (join output-dir %script-uncompressed.r) script-uncompressed
+write (join ext-prep-subdir %script-uncompressed.r) script-uncompressed
 
 script-compressed: gzip script-uncompressed
+script-num-codepoints: length of script-uncompressed
+script-len: length of script-compressed
+
+
+=== "GENERATE MODULE'S TMP-XXX-INIT.C FILE" ===
 
 cfunc-names: collect [  ; must be in the order that NATIVE is called!
     for-each 'info natives [
@@ -462,10 +468,16 @@ cfunc-names: collect [  ; must be in the order that NATIVE is called!
     ]
 ]
 
-script-len: length of script-compressed
+if yes? use-librebol [
+    e/emit [--{
+        #include <assert.h>
+        #include "rebol.h"
+    }--]
+] else [
+    e/emit [--{#include "sys-core.h"}--]
+]
 
 e/emit [--{
-    #include "assert.h"
     #include "tmp-mod-$<mod>.h" /* for DECLARE_NATIVE() forward decls */
 
     /*
@@ -484,7 +496,71 @@ e/emit [--{
      * call things like rebValue() etc.
      */
     RebolContext* LIBREBOL_BINDING_NAME;
+}--]
 
+if no? use-librebol [  ; you can't write generics with librebol... yet!
+
+    if not empty? generics [
+        let info: generics.1
+        e/emit [info --{
+            ExtraHeart* EXTENDED_HEART(${Info.Proper-Type}) = nullptr;
+        }--]
+    ]
+
+    e/emit [--{
+        /*
+        * These are the static globals that are used as the linked list entries
+        * when the extension registers its generics.  No dynamic allocations are
+        * needed--the pointers in the globals are simply updated.
+        */
+    }--]
+
+    for-each 'info generics [
+        e/emit [info --{
+            ExtraGenericInfo GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type}) = {
+                nullptr,  /* replaced with *ExtraGenericTable.ext_heart_ptr */
+                GENERIC_CFUNC(${INFO.NAME}, ${Info.Proper-Type}),
+                nullptr  /* used as pointer for next in linked list */
+            };
+        }--]
+    ]
+
+    table-items: collect [
+        for-each 'info generics [
+            let table: cscape [info
+                "&GENERIC_TABLE(${INFO.NAME})"
+            ]
+            let ext_info: cscape [info
+                "&GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type})"
+            ]
+            let ext_heart_ptr: cscape [info
+                "&EXTENDED_HEART(${Info.Proper-Type})"
+            ]
+
+            keep cscape [table ext_info ext_heart_ptr
+                "{ $<Table>, $<Ext_Info>, $<Ext_Heart_Ptr> }"
+            ]
+        ]
+        keep --{{ nullptr, nullptr, nullptr }}--
+    ]
+
+    ; Micro-optimization could avoid making this if no IMPLEMENT_GENERIC()s.
+    ; But the code has fewer branches and edge cases if we always make it.
+    ;
+    e/emit [--{
+        /*
+        * This table is passed to Register_Generics() and Unregister_Generics().
+        * It maps from the generic tables to the entry that is added and removed
+        * from the linked list of the table in that particular generic for the
+        * non-built-in types.
+        */
+        const ExtraGenericTable (EXTENDED_GENERICS())[] = {  /* name macro! */
+            $[Table-Items],
+        };
+    }--]
+]
+
+e/emit [--{
     /*
      * Gzip compression of $<Script-Name>
      * Originally $<length of script-uncompressed> bytes
@@ -556,68 +632,6 @@ e/emit [--{
         );
     }
 }--]
-
-if no? use-librebol [  ; you can't write generics with librebol... yet!
-
-    if not empty? generics [
-        let info: generics.1
-        e/emit [info --{
-            ExtraHeart* EXTENDED_HEART(${Info.Proper-Type}) = nullptr;
-        }--]
-    ]
-
-    e/emit [--{
-        /*
-        * These are the static globals that are used as the linked list entries
-        * when the extension registers its generics.  No dynamic allocations are
-        * needed--the pointers in the globals are simply updated.
-        */
-    }--]
-
-    for-each 'info generics [
-        e/emit [info --{
-            ExtraGenericInfo GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type}) = {
-                nullptr,  /* replaced with *ExtraGenericTable.ext_heart_ptr */
-                GENERIC_CFUNC(${INFO.NAME}, ${Info.Proper-Type}),
-                nullptr  /* used as pointer for next in linked list */
-            };
-        }--]
-    ]
-
-    table-items: collect [
-        for-each 'info generics [
-            let table: cscape [info
-                "&GENERIC_TABLE(${INFO.NAME})"
-            ]
-            let ext_info: cscape [info
-                "&GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type})"
-            ]
-            let ext_heart_ptr: cscape [info
-                "&EXTENDED_HEART(${Info.Proper-Type})"
-            ]
-
-            keep cscape [table ext_info ext_heart_ptr
-                "{ $<Table>, $<Ext_Info>, $<Ext_Heart_Ptr> }"
-            ]
-        ]
-        keep --{{ nullptr, nullptr, nullptr }}--
-    ]
-
-    ; Micro-optimization could avoid making this if no IMPLEMENT_GENERIC()s.
-    ; But the code has fewer branches and edge cases if we always make it.
-    ;
-    e/emit [--{
-        /*
-        * This table is passed to Register_Generics() and Unregister_Generics().
-        * It maps from the generic tables to the entry that is added and removed
-        * from the linked list of the table in that particular generic for the
-        * non-built-in types.
-        */
-        const ExtraGenericTable (EXTENDED_GENERICS())[] = {  /* name macro! */
-            $[Table-Items],
-        };
-    }--]
-]
 
 e/write-emitted
 

@@ -12,6 +12,7 @@ Extensions and the libraries they link to may have their own licenses besides
 Ren-C's LGPL, so see the LICENSE.txt file in the extension subdirectory for
 that information.
 
+
 ## Building
 
 The build process offers three ways to build an extension, as specified in
@@ -52,6 +53,10 @@ characteristics are identical to natives which are implemented in the core.
 frequently--and is easier to get wrong if one is not fairly well versed in how
 Rebol is implemented.)
 
+(Note: Even if USE-LIBREBOL is selected, it *should* be possible to include
+the full core API.  That feature is currently in flux.)
+
+
 ### cflags
 
 This is simply a BLOCK! of flags that are passed as strings to the compiler.
@@ -67,7 +72,7 @@ with Microsoft C then it will get /wd4324.
 (There are also some cflags that translate into the appropriate switch for
 each compiler, such as <no-unused-parameter>.  See %tools/cflags-map.r)
 
-### definitions
+### definitions:
 
 This lets you do #define options--similar to if you were to pass something
 like "-DSOME_DEFINE=1" as a cflag, except you don't have to worry about the
@@ -78,7 +83,7 @@ specifics of whether the compiler uses "-D" or "/D" etc.
         OTHER_DEFINE=0  ; WORD! is legal too (turned into TEXT!)
     ]
 
-### includes
+### includes:
 
 This is the path for include files.  The paths are relative to the extension's
 directory...or you can use an absolute path (one that starts with /)
@@ -88,24 +93,24 @@ directory...or you can use an absolute path (one that starts with /)
         (join library-path %include/)  ; frequently you'll compose paths in
     ]
 
-### source
+### sources:
 
 This is the list of sources for the extension.  The files you put in here
 will be scanned for DECLARE_NATIVE() and IMPLEMENT_GENERIC().
 
 You can specify a single file:
 
-    source: %mod-vector.c
+    sources: %mod-vector.c
 
 Or you can specify a single file with flags, which is assumed when you have
 a block containing one FILE! and no other BLOCK!s:
 
-    source: [%mod-locale.c <msc:/wd4204>]
+    sources: [%mod-locale.c <msc:/wd4204>]
 
 If the block contains more than one FILE! or has BLOCK!s inside of it, then
 it is assumed to be a list of files and options:
 
-    source: [
+    sources: [
         %mod-filesystem.c
         [%p-file.c <msc:/wd5220>]
         [%p-dir.c <msc:/wd5220>]
@@ -113,13 +118,15 @@ it is assumed to be a list of files and options:
     ]
 
 (Note: Bootstrap issues prevent us from being able to omit the % and use
-just a TUPLE! or PATH!, e.g. `[mod-locale.c <msc:/wd42024>]`  The problem
-is that is loaded by the compatibility layer as `mod-locale/c` to make
-what looks like tuple picking act like path picking, in an executable which
-lacks generic TUPLE!.  The dialect intentionally avoided use of WORD! or
-PATH! to permit omitting the %, so that will likely be resumed in the future.)
+just a TUPLE!, e.g. `[mod-locale.c <msc:/wd42024>]`  The problem is that is
+loaded by the compatibility layer as `mod-locale/c` to make what looks like
+tuple picking act like path picking, in an executable which lacks generic
+TUPLE!.  The dialect intentionally avoided use of WORD! or PATH! to permit
+omitting the %, so that will likely be resumed in the future.  There is a
+hack for PATH!s that end in TUPLE! that preserves the "tuple" as a WORD!, so
+that's okay.)
 
-### depends
+### depends:
 
 These are source files that will not be scanned for DECLARE_NATIVE() or
 IMPLEMENT_GENERIC(), etc.  These are typically third-party sources which
@@ -132,11 +139,11 @@ would not contain any such definitions:
         [%tf_snprintf.c  #no-c++]
     ]
 
-## ldflags
+## ldflags:
 
 Like cflags, these are literal flags passed to the linker by string.
 
-### libraries
+### libraries:
 
 Libraries is an abstraction of ldflags that lets you avoid the specific
 linker flag for including the library.
@@ -149,14 +156,14 @@ linker flag for including the library.
         ]
     ]
 
-### searches
+### searches:
 
 !!! Searches seems to correspond to the -L switch.  Strange name to have to
 remember, and so the make-spec.r have been doing that as an ldflag, but this
 then has to be platform specific.  But generally you already need platform
 specific code to know where to look!
 
-### options
+### options:
 
 Options is a feature which is supposed to let you advertise what options an
 extension has for further configuring it.  This hasn't been really hammered

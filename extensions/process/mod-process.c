@@ -77,6 +77,7 @@
     #endif
 #endif
 
+#include "sys-core.h"
 #include "tmp-mod-process.h"
 
 #include "reb-process.h"

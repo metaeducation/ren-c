@@ -62,6 +62,7 @@
 
 #include "sys-zlib.h"  // needed for the ADLER32 hash
 
+#include "rebol.h"
 #include "tmp-mod-crypt.h"
 typedef RebolValue Value;
 

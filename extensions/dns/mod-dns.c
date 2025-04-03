@@ -64,6 +64,7 @@
     #endif
 #endif
 
+#include "sys-core.h"
 #include "tmp-mod-dns.h"
 
 #include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.

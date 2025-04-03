@@ -34,6 +34,7 @@
     void * __dso_handle = &__dso_handle;
 #endif
 
+#include "sys-core.h"
 #include "tmp-mod-filesystem.h"
 
 

@@ -584,7 +584,7 @@ placeholder-define-items: copy []
 emitting-extension-syms: null
 
 e-ext-symids: make-emitter "Extension SymId Commitment Table" (
-    join prep-dir %include/tmp-ext-symid.r
+    join prep-dir %boot/tmp-ext-symid.r
 )
 
 for-next 'pos sym-table [

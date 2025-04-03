@@ -33,7 +33,9 @@
 #include "assert-fix.h"
 #include "c-enhanced.h"
 
+#include "rebol.h"
 #include "tmp-mod-locale.h"
+
 typedef RebolValue Value;
 
 

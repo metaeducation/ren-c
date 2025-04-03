@@ -53,6 +53,7 @@
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
 
+#include "sys-core.h"
 #include "tmp-mod-filesystem.h"
 
 #include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.

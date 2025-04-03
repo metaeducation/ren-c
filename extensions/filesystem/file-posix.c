@@ -61,7 +61,7 @@
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
 
-#include "rebol-internals.h"
+#include "sys-core.h"
 
 #include "file-req.h"
 

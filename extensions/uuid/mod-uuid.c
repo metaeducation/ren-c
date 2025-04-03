@@ -36,8 +36,8 @@
 #elif TO_OSX
     //
     // CoreFoundation has definitions that conflict with %sys-core.h, so the
-    // UUID extension was the first to employ a USE-LIBREBOL switch, that
-    // defines the `DECLARE_NATIVE` without include params macros.
+    // UUID extension was the first to be librebol-based, that defines the
+    // `DECLARE_NATIVE` without include params macros.
     //
     #include <CoreFoundation/CFUUID.h>
 #else
@@ -49,7 +49,9 @@
 #include "assert-fix.h"
 #include "c-enhanced.h"
 
+#include "rebol.h"
 #include "tmp-mod-uuid.h"
+
 typedef RebolValue Value;
 
 
@@ -137,7 +139,7 @@ DECLARE_NATIVE(GENERATE)
 
   #else
 
-    return rebDelegate("fail -{UUID is not implemented}-");
+    return "fail -{UUID is not implemented}-";
 
   #endif
 }

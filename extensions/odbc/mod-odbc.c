@@ -77,7 +77,9 @@
 #include "assert-fix.h"
 #include "c-enhanced.h"
 
+#include "rebol.h"
 #include "tmp-mod-odbc.h"
+
 typedef RebolValue Value;
 
 

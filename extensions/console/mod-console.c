@@ -40,6 +40,7 @@
 #include "assert-fix.h"
 #include "c-enhanced.h"
 
+#include "rebol.h"
 #include "tmp-mod-console.h"
 
 typedef RebolValue Value;
