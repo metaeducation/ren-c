@@ -4,7 +4,7 @@ REBOL [
     File: %prep-extension.r  ; EMIT-HEADER uses to indicate emitting script
     Rights: --{
         Copyright 2017 Atronix Engineering
-        Copyright 2017-2021 Ren-C Open Source Contributors
+        Copyright 2017-2025 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
     License: --{
@@ -75,15 +75,49 @@ if verbose [
 ]
 
 
-=== "CALCULATE NAMES OF BUILD PRODUCTS" ===
+=== "SET UP DIRECTORIES" ===
 
-; Assume we start up in the directory where the makefile was invoked and that
-; build products are being made, e.g. %build/
-;
-; non-absolute-paths are considered relative to that location.
+; Scripts that are run from the makefile assume they're running from the
+; directory the makefile is in (e.g. %build/), so paths for output files are
+; assumed to be relative to that location.
 
 ext-prep-subdir: cscape %prep/extensions/$<mod>/
 mkdir:deep ext-prep-subdir
+
+
+=== "LOAD HEADER OF %MAKE-SPEC.R FILE" ===
+
+; The concept of the %make-spec.r file is that it's only executed once, by
+; %make.r - which uses the results of running arbitrary code to generate
+; the file list which goes into the makefile.  Hence anything it calculates
+; dynamically has to be tunneled in to %prep-extension.r somehow (e.g.
+; using the command line).
+;
+; But static options for the extension that do not require running arbitrary
+; code can be put in the header of %make-spec.r
+
+ext-header: first load3:header (join ext-src-dir %make-spec.r)
+
+
+=== "SPECIALIZE FAIL TO REPORT EXTENSION BEING BUILT" ===
+
+; Something like this should probably be automatic.  More thinking is needed
+; on contextualizing errors better.
+
+fail: adapt fail/ [
+    print "** FAILURE WHILE PROCESSING:" join ext-src-dir %make-spec.r
+]
+
+
+=== "STARTUP AND SHUTDOWN HOOKS" ===
+
+; The STARTUP* and SHUTDOWN* native functions don't actually run their
+; NATIVE_CFUNC() directly, but run hook functions that contain lines of C
+; that this extension gathers up.  Those hooks then call the actual STARTUP*
+; and SHUTDOWN* implementations.
+
+startup-hooks: []
+shutdown-hooks: []
 
 
 === "USE PROTOTYPE PARSER TO GET NATIVE SPECS FROM COMMENTS IN C CODE" ===
@@ -104,15 +138,16 @@ for-each 'file sources [
 ]
 
 
-=== "COUNT NATIVES AND DETERMINE IF THERE IS A NATIVE STARTUP* FUNCTION" ===
+=== "MAKE NATIVE STARTUP* AND SHUTDOWN* FUNCTIONS IF NONE EXIST" ===
 
-; If there is a native startup function, we want to call it while the module
-; is being initialized...after the natives are loaded but before the Rebol
-; code gets a chance to run.  So this prep code has to insert that call.
+; While the extension developer might not need any startup or shutdown code,
+; this %prep-extension.r process may add code that needs to run on startup
+; or shutdown, and that's done by slipstreaming the code into the natives.
+; So create them automatically if they were not made.
 
-has-startup*: 'no
+has-startup*: null
+has-shutdown*: null
 
-num-natives: 0
 for-each 'info natives [
     if info.name = "startup*" [
         if yes? info.exported [
@@ -122,7 +157,7 @@ for-each 'info natives [
             ;
             fail "Do not EXPORT the STARTUP* function for an extension!"
         ]
-        has-startup*: 'yes
+        has-startup*: okay
     ]
     if info.name = "shutdown*" [
         if yes? info.exported [
@@ -132,8 +167,34 @@ for-each 'info natives [
             ;
             fail "Do not EXPORT the SHUTDOWN* function for an extension!"
         ]
+        has-shutdown*: okay
     ]
-    num-natives: num-natives + 1
+]
+
+if not has-startup* [
+    append natives make native-info! [
+        proto: --{startup*: native ["Startup extension" return: [~]]}--
+
+        name: "startup*"
+        exported: 'no
+        native-type: 'normal
+
+        file: %prep-extension.r
+        line: "???"
+    ]
+]
+
+if not has-shutdown* [
+    append natives make native-info! [
+        proto: --{shutdown*: native ["Shutdown extension" return: [~]]}--
+
+        name: "shutdown*"
+        exported: 'no
+        native-type: 'normal
+
+        file: %prep-extension.r
+        line: "???"
+    ]
 ]
 
 
@@ -145,9 +206,13 @@ for-each 'info natives [
 
 specs-uncompressed: make text! 10000
 
+num-natives: 0
+
 for-each 'info natives [
     append specs-uncompressed info.proto
     append specs-uncompressed newline
+
+    num-natives: num-natives + 1
 ]
 
 
@@ -171,12 +236,18 @@ if yes? use-librebol [
          * Define DECLARE_NATIVE macro to include extension name.
          * This avoids name collisions with the core, or with other extensions.
          *
-         * The API form takes a Context*, e.g. a varlist.  Its name should be
-         * whatever the LIBREBOL_BINDING_NAME macro expands to (can't be 0).
+         * The API form takes a Context*, e.g. a varlist.
+         *
+         * Note: The argument is currently called "level_" for consistency.
+         * It may be that actual consistency is desired to pass a level_ and
+         * make it possible for LIBREBOL_CONTEXT to look at the Node* and
+         * tell the difference.  But right now, that name consistency is
+         * important for the passthru done by STARTUP-HOOKS and SHUTDOWN-HOOKS
          */
         #define DECLARE_NATIVE(name) \
-            RebolBounce N_${MOD}_##name(RebolContext* LIBREBOL_BINDING_NAME)
+            RebolBounce N_${MOD}_##name(RebolContext* level_)
 
+        #define NATIVE_CFUNC(name)  N_${MOD}_##name
     }--]
 ] else [
     e1/emit [--{
@@ -266,6 +337,73 @@ e1/emit [--{
 }--]
 
 
+=== "FORWARD DECLARE EXT_SYM_XXX CONSTANTS AND VARIABLES" ===
+
+; It may be possible to sometimes build an extension using librebol, and
+; sometimes build it using the core.  We validate the Extended-Words: in
+; the header either way, but only output them if use-librebol enabled.
+
+ext-symids: load3 (join what-dir %prep/boot/tmp-ext-symid.r)
+
+symbol-forward-decls: []
+symbol-globals: []
+
+for-each 'symbol maybe try ext-header.extended-words [
+    if not word? symbol [
+        fail ["Extended-Words entries must be WORD!:" mold symbol]
+    ]
+
+    let id: select ext-symids symbol
+    if not id [
+        fail [
+            "Extended-Words: [" mold symbol "]"
+                "must appear in" (join repo-dir %boot/ext-words.r)
+        ]
+    ]
+
+    let ext-sym: cscape [symbol "EXT_SYM_${SYMBOL}"]
+
+    append symbol-forward-decls cscape [symbol id --{
+        #define $<EXT-SYM>  EXT_SYM_$<id>
+        extern RebolValue* g_symbol_holder_${SYMBOL};
+    }--]
+
+    append symbol-globals cscape [symbol
+        --{RebolValue* g_symbol_holder_${SYMBOL} = nullptr;}--
+    ]
+    append startup-hooks cscape [symbol
+        --{g_symbol_holder_${SYMBOL} = Register_Symbol("$<symbol>", $<EXT-SYM>);}--
+    ]
+    insert shutdown-hooks cscape [symbol
+        --{Unregister_Symbol(g_symbol_holder_${SYMBOL}, $<EXT-SYM>);}--
+    ]
+]
+
+if not empty? symbol-forward-decls [
+    if yes? use-librebol [
+        fail ["Extended-Words in %make-spec.r can't be used with USE-LIBREBOL"]
+    ]
+
+    e1/emit [--{
+        /*
+         * #defines for Extended-Symbols: [...] in %make-spec.r header
+         *
+         * These are agreed-upon symbol numbers for symbols whose strings are
+         * not baked into the interpreter or allocated automatically on boot.
+         * But the fact that the numbers are agreed by contract means that an
+         * extension can use uint16_t ID values to recognize the symbols in
+         * switch() statements.
+         *
+         * See %boot/ext-words.r in core, and the Register_Symbol() function.
+         */
+
+        #define EXT_CANON(name)  Cell_Word_Symbol(g_symbol_holder_##name)
+
+        $[Symbol-Forward-Decls]
+    }--]
+]
+
+
 === "IF NOT USING LIBREBOL, DEFINE INCLUDE_PARAMS_OF_XXX MACROS" ===
 
 e1/emit [--{
@@ -293,7 +431,7 @@ if yes? use-librebol [
         ;
         e1/emit [info proto-name --{
             #define INCLUDE_PARAMS_OF_${PROTO-NAME} \
-                LIBREBOL_BINDING_USED()
+                LIBREBOL_BINDING_NAME = level_;
         }--]
     ]
 ]
@@ -431,42 +569,8 @@ e: make-emitter "Extension Initialization Script Code" (
     join ext-prep-subdir cscape %tmp-mod-$<mod>-init.c
 )
 
-script-name: cscape %ext-$<mod>-init.reb
-
-header: ~
-initscript-body: stripload:header (join ext-src-dir script-name) $header
-ensure text! header  ; stripload gives back textual header
-
-script-uncompressed: unspaced [
-    "Rebol" space "["  ; header has no brackets
-        header newline   ; won't actually be indented (indents were stripped)
-    "]" newline
-    newline
-    specs-uncompressed newline
-
-    ; We put a call to the STARTUP* native if there was one, so it runs before
-    ; the rest of the body.  (The user could do this themselves, but it makes
-    ; things read better to do it automatically.)
-    ;
-    if yes? has-startup* [unspaced ["startup*" newline]]
-
-    initscript-body
-]
-
-write (join ext-prep-subdir %script-uncompressed.r) script-uncompressed
-
-script-compressed: gzip script-uncompressed
-script-num-codepoints: length of script-uncompressed
-script-len: length of script-compressed
-
 
 === "GENERATE MODULE'S TMP-XXX-INIT.C FILE" ===
-
-cfunc-names: collect [  ; must be in the order that NATIVE is called!
-    for-each 'info natives [
-        keep cscape [mod info "N_${MOD}_${INFO.NAME}"]
-    ]
-]
 
 if yes? use-librebol [
     e/emit [--{
@@ -498,14 +602,68 @@ e/emit [--{
     RebolContext* LIBREBOL_BINDING_NAME;
 }--]
 
-if no? use-librebol [  ; you can't write generics with librebol... yet!
+if not has-startup* [
+    e/emit [--{
+        DECLARE_NATIVE(STARTUP_P)  /* auto-generated since not in extension */
+        {
+            INCLUDE_PARAMS_OF_STARTUP_P;
+            return rebNothing();
+        }
+    }--]
+]
 
-    if not empty? generics [
-        let info: generics.1
-        e/emit [info --{
-            ExtraHeart* EXTENDED_HEART(${Info.Proper-Type}) = nullptr;
-        }--]
+if not has-shutdown* [
+    e/emit [--{
+        DECLARE_NATIVE(SHUTDOWN_P)  /* auto-generated since not in extension */
+        {
+            INCLUDE_PARAMS_OF_SHUTDOWN_P;
+            return rebNothing();
+        }
+    }--]
+]
+
+if not empty? symbol-globals [
+    e/emit [--{
+        /*
+         * Globals with storage for Extended-Symbols: from %make-spec.r
+         */
+
+        $[Symbol-Globals]
+    }--]
+]
+
+if not empty? generics [
+    e/emit [--{
+        /*
+         * This is a hacky way of declaring generic types, which is evolving.
+         *
+         * Basically we assume if IMPLEMENT_GENERIC() is used in an extension
+         * then it used for a type that extension defines.  If we see
+         * IMPLEMENT_GENERIC(SOMETHING, Is_Xxx) then a datatype is created
+         * for xxx!  This needs lots of work.
+         */
+    }--]
+
+    let proper-type: generics.1.proper-type
+
+    let type
+    parse3 proper-type ["Is_" type: across to <end>]
+    type: append lowercase type "!"
+
+    e/emit [info --{
+        ExtraHeart* EXTENDED_HEART(${Proper-Type}) = nullptr;
+    }--]
+
+    append startup-hooks cscape [proper-type type
+        --{EXTENDED_HEART(${Proper-Type}) = Register_Datatype("$<type>");}--
     ]
+
+    insert shutdown-hooks cscape [proper-type
+        --{Unregister_Datatype(EXTENDED_HEART(${Proper-Type}));}--
+    ]
+]
+
+if not empty? generics [
 
     e/emit [--{
         /*
@@ -558,17 +716,65 @@ if no? use-librebol [  ; you can't write generics with librebol... yet!
             $[Table-Items],
         };
     }--]
+
+    append startup-hooks "Register_Generics(EXTENDED_GENERICS());"
+    insert shutdown-hooks "Unregister_Generics(EXTENDED_GENERICS());"
+]
+
+if empty? startup-hooks [
+    append startup-hooks "/* no startup-hooks */"
+]
+
+if empty? shutdown-hooks [
+    append shutdown-hooks "/* no shutdown-hooks */"
 ]
 
 e/emit [--{
     /*
-     * Gzip compression of $<Script-Name>
-     * Originally $<length of script-uncompressed> bytes
+     * Hooked implementation functions for STARTUP* and SHUTDOWN*
+     *
+     * Based on various features that %prep-extension.r wants to build in
+     * automatically, it needs to run some C code on startup and shutdown
+     * of the extension.  Instead of finding some way to tuck CFunctions
+     * that implement this behavior in a place the extension machinery can
+     * find it, this slips the code into the STARTUP* and SHUTDOWN* natives
+     * themselves... by replacing their native functions in the registration
+     * table with functions that add in additional code.
+     *
+     * When calls are chained through to the original native implementations,
+     * the STARTUP* runs the hooks before the original code, while SHUTDOWN*
+     * runs the hooks after the original code.  This means the auto setup
+     * information is available during both the STARTUP* and SHUTDOWN* native
+     * implementations.
      */
-    static const unsigned char script_compressed[$<script-len>] = {
-    $<Binary-To-C:Indent Script-Compressed 4>
-    };
 
+    static DECLARE_NATIVE(STARTUP_HOOKED) {
+        $[Startup-Hooks]
+
+        return NATIVE_CFUNC(STARTUP_P)(level_);  /* STARTUP* (after hooks) */
+    }
+
+    static DECLARE_NATIVE(SHUTDOWN_HOOKED) {
+        RebolBounce bounce = NATIVE_CFUNC(SHUTDOWN_P)(level_);  /* SHUTDOWN* */
+
+        $[Shutdown-Hooks]
+
+        return bounce;  /* result from running SHUTDOWN* (before hooks) */
+    }
+}--]
+
+cfunc-names: collect [  ; must be in the order that NATIVE is called!
+    for-each 'info natives [
+        let name: info.name
+        case [
+            name = "startup*" [name: "startup-hooked"]
+            name = "shutdown*" [name: "shutdown-hooked"]
+        ]
+        keep cscape [mod name "N_${MOD}_${NAME}"]
+    ]
+]
+
+e/emit [--{
     /*
      * Pointers to function dispatchers for natives (in same order as the
      * order of native specs after being loaded).  Cast is used so that if
@@ -593,7 +799,54 @@ e/emit [--{
         (void (*)(void))$[Cfunc-Names],  /* cast to ick [1] */
         0  /* just here to ensure > 0 length array (language requirement) */
     };
+}--]
 
+
+=== "EMIT COMPRESSED STARTUP SCRIPT CODE AS C BYTE ARRAY" ===
+
+script-name: cscape %ext-$<mod>-init.reb
+
+header: ~
+initscript-body: stripload:header (join ext-src-dir script-name) $header
+ensure text! header  ; stripload gives back textual header
+
+script-uncompressed: cscape [--{
+    Rebol [
+        $<Header>
+    ]
+
+    ; These NATIVE invocations execute to definte the natives, implicitly
+    ; picking up a CFunction from an array in the extension.  The order of
+    ; these natives must match the order of that array (each call to NATIVE
+    ; advances a global pointer into that array)
+
+    $<Specs-Uncompressed>
+
+    startup*  ; STARTUP* will be declared automatically if not in extension
+
+    $<Initscript-Body>
+}--]
+
+write (join ext-prep-subdir %script-uncompressed.r) script-uncompressed
+
+script-compressed: gzip script-uncompressed
+script-num-codepoints: length of script-uncompressed
+script-len: length of script-compressed
+
+e/emit [--{
+    /*
+     * Gzip compression of $<Script-Name>
+     * Originally $<length of script-uncompressed> bytes
+     */
+    static const unsigned char script_compressed[$<script-len>] = {
+    $<Binary-To-C:Indent Script-Compressed 4>
+    };
+}--]
+
+
+=== "EMIT COLLATED STRUCTURE DESCRIBING EXTENSION" ===
+
+e/emit [--{
     /*
      * Hook called by the core to gather all the details of the extension up
      * so the system can process it.  This hook doesn't decompress any of the

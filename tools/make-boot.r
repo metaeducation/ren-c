@@ -633,13 +633,13 @@ for-next 'pos sym-table [
     let name: pos.1
     if emitting-extension-syms [
         ;
-        ; !!! Ultimately we won't put EXT_SYM_XXX in the SymId table, but
-        ; the extension build system will use %tmp-ext-symid.r in order to
-        ; do those #defines and symbol registrations for the extensions that
-        ; request them.
+        ; While the EXT_SYM_XXX values aren't in the symbol table, we need
+        ; their states to be there or compiler warnings will give an
+        ; "illegal switch() case".  Put them in by number (%prep-extension.r
+        ; makes #defines for them on an extension-by-extension basis)
         ;
         append sym-enum-items cscape [symid name
-            --{/* $<Name> */  EXT_SYM_${FORM NAME} = $<symid>}--
+            --{/* $<Name> */  EXT_SYM_$<symid> = $<symid>}--
         ]
         e-ext-symids/emit [symid name
             --{$<name> $<symid>}--
