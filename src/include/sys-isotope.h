@@ -86,6 +86,21 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
 
             Unbind_Any_Word(elem);
         }
+        else if (heart == TYPE_FENCE) {  // canonize datatypes
+            Option(Patch*) patch;
+            if (
+                Cell_Series_Len_At(elem) != 1
+                or not Is_Word(Cell_List_Item_At(elem))
+                or not (patch = Sea_Patch(
+                    g_datatypes_context,
+                    Cell_Word_Symbol(Cell_List_Item_At(elem)),
+                    true
+                ))
+            ){
+                return Error_Bad_Value(elem);
+            }
+            Copy_Cell(atom, cast(Atom*, Stub_Cell(unwrap patch)));
+        }
         else {
             assert(Any_List_Type(heart) or heart == TYPE_COMMA);
             Tweak_Cell_Binding(elem, UNBOUND);

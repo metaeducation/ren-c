@@ -171,32 +171,6 @@ for-each 'info natives [
     ]
 ]
 
-if not has-startup* [
-    append natives make native-info! [
-        proto: --{startup*: native ["Startup extension" return: [~]]}--
-
-        name: "startup*"
-        exported: 'no
-        native-type: 'normal
-
-        file: %prep-extension.r
-        line: "???"
-    ]
-]
-
-if not has-shutdown* [
-    append natives make native-info! [
-        proto: --{shutdown*: native ["Shutdown extension" return: [~]]}--
-
-        name: "shutdown*"
-        exported: 'no
-        native-type: 'normal
-
-        file: %prep-extension.r
-        line: "???"
-    ]
-]
-
 
 === "MAKE TEXT FROM VALIDATED NATIVE SPECS" ===
 
@@ -602,26 +576,6 @@ e/emit [--{
     RebolContext* LIBREBOL_BINDING_NAME;
 }--]
 
-if not has-startup* [
-    e/emit [--{
-        DECLARE_NATIVE(STARTUP_P)  /* auto-generated since not in extension */
-        {
-            INCLUDE_PARAMS_OF_STARTUP_P;
-            return rebNothing();
-        }
-    }--]
-]
-
-if not has-shutdown* [
-    e/emit [--{
-        DECLARE_NATIVE(SHUTDOWN_P)  /* auto-generated since not in extension */
-        {
-            INCLUDE_PARAMS_OF_SHUTDOWN_P;
-            return rebNothing();
-        }
-    }--]
-]
-
 if not empty? symbol-globals [
     e/emit [--{
         /*
@@ -654,13 +608,13 @@ if not empty? generics [
         ExtraHeart* EXTENDED_HEART(${Proper-Type}) = nullptr;
     }--]
 
-    append startup-hooks cscape [proper-type type
-        --{EXTENDED_HEART(${Proper-Type}) = Register_Datatype("$<type>");}--
-    ]
+    append startup-hooks cscape [proper-type type --{
+        EXTENDED_HEART(${Proper-Type}) = Register_Datatype("$<type>");
+    }--]
 
-    insert shutdown-hooks cscape [proper-type
-        --{Unregister_Datatype(EXTENDED_HEART(${Proper-Type}));}--
-    ]
+    insert shutdown-hooks cscape [proper-type type --{
+        Unregister_Datatype(EXTENDED_HEART(${Proper-Type}));
+    }--]
 ]
 
 if not empty? generics [
@@ -731,45 +685,31 @@ if empty? shutdown-hooks [
 
 e/emit [--{
     /*
-     * Hooked implementation functions for STARTUP* and SHUTDOWN*
-     *
      * Based on various features that %prep-extension.r wants to build in
      * automatically, it needs to run some C code on startup and shutdown
      * of the extension.  Instead of finding some way to tuck CFunctions
      * that implement this behavior in a place the extension machinery can
-     * find it, this slips the code into the STARTUP* and SHUTDOWN* natives
-     * themselves... by replacing their native functions in the registration
-     * table with functions that add in additional code.
-     *
-     * When calls are chained through to the original native implementations,
-     * the STARTUP* runs the hooks before the original code, while SHUTDOWN*
-     * runs the hooks after the original code.  This means the auto setup
-     * information is available during both the STARTUP* and SHUTDOWN* native
-     * implementations.
+     * find it, we just use conventional natives.
      */
 
-    static DECLARE_NATIVE(STARTUP_HOOKED) {
+    static DECLARE_NATIVE(REGISTER_EXTENSION_P) {
+        (void)level_;  /* mark unused (didn't emit INCLUDE_PARAMS for this) */
         $[Startup-Hooks]
-
-        return NATIVE_CFUNC(STARTUP_P)(level_);  /* STARTUP* (after hooks) */
+        return rebNothing();
     }
 
-    static DECLARE_NATIVE(SHUTDOWN_HOOKED) {
-        RebolBounce bounce = NATIVE_CFUNC(SHUTDOWN_P)(level_);  /* SHUTDOWN* */
-
+    static DECLARE_NATIVE(UNREGISTER_EXTENSION_P) {
+        (void)level_;  /* mark unused (didn't emit INCLUDE_PARAMS for this) */
         $[Shutdown-Hooks]
-
-        return bounce;  /* result from running SHUTDOWN* (before hooks) */
+        return rebNothing();
     }
 }--]
+
+num-natives: me + 2  ; account for two added natives
 
 cfunc-names: collect [  ; must be in the order that NATIVE is called!
     for-each 'info natives [
         let name: info.name
-        case [
-            name = "startup*" [name: "startup-hooked"]
-            name = "shutdown*" [name: "shutdown-hooked"]
-        ]
         keep cscape [mod name "N_${MOD}_${NAME}"]
     ]
 ]
@@ -788,16 +728,20 @@ e/emit [--{
      * and the latter takes a Context* which is always a varlist and has
      * always been managed and set up for lookup.
      *
-     * 1. This is really just `CFunction* native_cfuncs[...]`, but since the
      *    CFunction is defined in %c-enhanced.h, we don't know all API
+     * 1. This is really just `CFunction* native_cfuncs[...]`, but since the
      *    clients will have it available.  Rather than make up some proxy
      *    name for CFunction that contaminates the interface, assume people
      *    can use AI to ask what this means if they can't read it.  See the
      *    definition of CFunction for why we can't just use void* here.
+     *
+     * 2. The STARTUP-HOOKS native is a special native defined by this
+     *    extension that runs code before the other natives are loaded.
      */
-    static void (*native_cfuncs[$<num-natives> + 1])(void) = {  /* ick [1] */
-        (void (*)(void))$[Cfunc-Names],  /* cast to ick [1] */
-        0  /* just here to ensure > 0 length array (language requirement) */
+    static void (*native_cfuncs[$<num-natives>])(void) = {  /* ick [1] */
+        (void (*)(void))NATIVE_CFUNC(REGISTER_EXTENSION_P),  /* first [2] */
+        (void (*)(void))NATIVE_CFUNC(UNREGISTER_EXTENSION_P),  /* last [2] */
+        (void (*)(void))$(Cfunc-Names),  /* cast to ick [1] */
     };
 }--]
 
@@ -815,14 +759,20 @@ script-uncompressed: cscape [--{
         $<Header>
     ]
 
-    ; These NATIVE invocations execute to definte the natives, implicitly
+    register-extension*: native ["Extension Startup Hooks" return: [~]]
+    unregister-extension*: native ["Extension Shutdown Hooks" return: [~]]
+
+    register-extension*
+    register-extension*: ~<registration of $<mod> complete>~
+
+    ; These NATIVE invocations execute to define the natives, implicitly
     ; picking up a CFunction from an array in the extension.  The order of
     ; these natives must match the order of that array (each call to NATIVE
     ; advances a global pointer into that array)
 
     $<Specs-Uncompressed>
 
-    startup*  ; STARTUP* will be declared automatically if not in extension
+    $<if has-startup* ["startup*  ; extension-author-provided startup code"]>
 
     $<Initscript-Body>
 }--]

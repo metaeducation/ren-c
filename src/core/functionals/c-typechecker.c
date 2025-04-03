@@ -576,27 +576,28 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             fail ("QUOTED? and QUASI? not supported in TYPE-XXX!"); }
 
           case TYPE_PARAMETER: {
-            if (not Typecheck_Atom_In_Spare_Uses_Scratch(
+            if (Typecheck_Atom_In_Spare_Uses_Scratch(
                 L, test, SPECIFIED
             )){
-                goto test_failed;
+                goto test_succeeded;
             }
-            break; }
+            goto test_failed; }
 
           case TYPE_DATATYPE: {
             Option(Type) t = Type_Of(v);
-            if (t) {
+            if (t) {  // builtin type
                 if (Cell_Datatype_Type(test) == t)
                     goto test_succeeded;
-                else
-                    goto test_failed;
+                goto test_failed;
             }
-            fail ("Typechecking for extension types not implemented yet"); }
+            if (Cell_Datatype_Extra_Heart(test) == Cell_Extra_Heart(v))
+                goto test_succeeded;
+            goto test_failed; }
 
           default:
-            fail ("Invalid element in TYPE-GROUP!");
+            break;
         }
-        goto test_succeeded;
+        fail ("Invalid element in TYPE-GROUP!");
 
       test_succeeded:
         if (not match_all) {

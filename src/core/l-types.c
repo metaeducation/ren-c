@@ -53,8 +53,8 @@ DECLARE_NATIVE(TYPE_OF)
     assert(QUOTE_BYTE(v) == NOQUOTE_1);
 
     const ExtraHeart* ext_heart = Cell_Extra_Heart(v);
-    Copy_Cell(OUT, ext_heart);
-    return OUT;
+
+    return Init_Extended_Datatype(OUT, ext_heart);
 }
 
 

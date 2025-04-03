@@ -134,3 +134,17 @@
 
 #define LINK_STUMP_NEXT(stump)      STUB_LINK(stump)
 #define INFO_STUMP_SYMBOL(stump)    STUB_INFO(stump)
+
+
+//=//// "EXTRA HEART" FOR EXTENSION DATATYPES IS A PATCH //////////////////=//
+//
+// The system needs to canonize the pointer in the Cell.extra that represents
+// an extension type.  It's also desirable for the system to be able to
+// give back pointers to an instance of that type without having to allocate
+// a cell each time to do it (e.g. Datatype_Of()).
+//
+// The SeaOfVars mechanism is ideal for this, providing a sparse mapping
+// from Symbol* to Cell* with indefinite lifetime, held onto by a Patch.
+//
+
+typedef Patch ExtraHeart;

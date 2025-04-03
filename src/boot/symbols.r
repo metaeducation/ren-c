@@ -145,6 +145,7 @@ detect
 ; !!! Plain modules do not have any shutdown mechanism, because they are not
 ; "unloaded".  This speaks to missing constructor/destructor mechanics.
 ;
+unregister-extension*
 shutdown*
 
 

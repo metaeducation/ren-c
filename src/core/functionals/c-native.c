@@ -242,7 +242,7 @@ void Register_Generics(const ExtraGenericTable* generics)
     const ExtraGenericTable* entry = generics;
     for (; entry->table != nullptr; ++entry) {
         assert(entry->ext_info->ext_heart == nullptr);
-        assert(Is_Datatype(*entry->ext_heart_ptr));
+        assert(Stub_Flavor(*entry->ext_heart_ptr) == FLAVOR_PATCH);
         entry->ext_info->ext_heart = *entry->ext_heart_ptr;
 
         assert(entry->ext_info->next == nullptr);
@@ -268,7 +268,7 @@ void Unregister_Generics(const ExtraGenericTable* generics)
     const ExtraGenericTable* entry = generics;
     for (; entry->table != nullptr; ++entry) {
         assert(entry->ext_info->ext_heart == *entry->ext_heart_ptr);
-        assert(Is_Datatype(entry->ext_info->ext_heart));
+        assert(Stub_Flavor(entry->ext_info->ext_heart) == FLAVOR_PATCH);
         entry->ext_info->ext_heart = nullptr;  // null out datatype [1]
 
         ExtraGenericInfo* seek = entry->table->ext_info;

@@ -75,35 +75,40 @@
 
 INLINE ExtraHeart* Register_Datatype(const char* name)
 {
-    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
     Size size = strsize(name);
-    Init_Word(Stub_Cell(a), Intern_UTF8_Managed(cb_cast(name), size));
+    const Symbol* symbol = Intern_UTF8_Managed(cb_cast(name), size);
 
-    Value* datatype = Alloc_Value();
+    Option(Patch*) patch = maybe Sea_Patch(g_datatypes_context, symbol, true);
+    if (patch) {
+        assert(!"Duplicate datatype name");
+        return unwrap patch;  // this can't be good
+    }
+
+    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+    Init_Word(Stub_Cell(a), symbol);
+    Freeze_Flex(a);
+
+    Value* datatype = Append_Context(g_datatypes_context, symbol);
     Init_Fence(datatype, a);
     QUOTE_BYTE(datatype) = ANTIFORM_0_COERCE_ONLY;
 
-    Stub* stub = Compact_Stub_From_Cell(datatype);
-    assert(Is_Node_Root_Bit_Set(stub));
-    Disconnect_Api_Handle_From_Level(stub);
-    Clear_Node_Managed_Bit(stub);
-
-    return datatype;
+    return cast(Patch*, Compact_Stub_From_Cell(datatype));;
 }
 
-INLINE void Unregister_Datatype(ExtraHeart* name)
+INLINE void Unregister_Datatype(ExtraHeart* extra_heart)
 {
-    rebRelease(name);
+    // currently we don't do anything to unregister...review
+    UNUSED(extra_heart);
 }
 
 
-INLINE bool Is_Symbol_Id_For_A_Type(SymId id) {
+INLINE bool Is_Symbol_Id_Of_Builtin_Type(SymId id) {
     assert(id != SYM_0);
     return u_cast(SymId16, id) <= u_cast(SymId16, MAX_TYPE_BYTE);
 }
 
 INLINE Type Type_From_Symbol_Id(SymId id) {
-    assert(Is_Symbol_Id_For_A_Type(id));
+    assert(Is_Symbol_Id_Of_Builtin_Type(id));
     return u_cast(TypeEnum, id);
 }
 
@@ -147,13 +152,17 @@ INLINE Heart Cell_Datatype_Builtin_Heart(const Atom* v) {
 
 INLINE const ExtraHeart* Cell_Datatype_Extra_Heart(const Atom* v) {
     assert(Is_Datatype(v));
-    return c_cast(Value*, v);
+
+    const Symbol* s = Cell_Word_Symbol(Cell_List_Item_At(v));
+    Option(Patch*) patch = Sea_Patch(g_datatypes_context, s, true);
+    assert(patch);
+    return unwrap patch;
 }
 
 
 INLINE const ExtraHeart* Cell_Extra_Heart(const Cell* v) {
     assert(Heart_Of_Is_0(v));
-    return v->extra.extra_heart;
+    return c_cast(ExtraHeart*, v->extra.node);
 }
 
 
@@ -178,13 +187,16 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
 
 INLINE Value* Init_Extended_Datatype_Untracked(
     Init(Value) out,
-    ExtraHeart* ext_heart
+    const ExtraHeart* ext_heart
 ){
-    return Copy_Cell(out, ext_heart);
+    assert(Is_Stub_Patch(ext_heart));
+    const Value* datatype = c_cast(Value*, Stub_Cell(ext_heart));
+    assert(Is_Datatype(datatype));
+    return Copy_Cell(out, datatype);
 }
 
-#define Init_Extended_Datatype(out,type) \
-    TRACK(Init_Extended_Datatype_Untracked((out), (type)))
+#define Init_Extended_Datatype(out,ext_heart) \
+    TRACK(Init_Extended_Datatype_Untracked((out), (ext_heart)))
 
 
 // Used by the Typechecker intrinsic, but also Generic dispatch and PARAMETER!

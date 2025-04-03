@@ -30,13 +30,15 @@ PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 //
 PVAR Patch g_lib_patches[MAX_SYM_LIB_PREMADE + 1];  // instances, not pointers
 
-PVAR Element* g_lib_module;
-PVAR Element* g_sys_util_module;
-PVAR Element* g_user_module;
+PVAR SeaOfVars* g_datatypes_context;  // immutable by user, canon datatypes
+PVAR SeaOfVars* g_lib_context;  // inherits g_datatypes_context
+PVAR SeaOfVars* g_sys_util_context;  // inherits g_lib_context
+PVAR SeaOfVars* g_user_context;  // inherits g_lib_context
 
-PVAR SeaOfVars* g_lib_context;
-PVAR SeaOfVars* g_sys_util_context;
-PVAR SeaOfVars* g_user_context;
+PVAR Element* g_datatypes_module;  // keeps g_datatypes_context alive
+PVAR Element* g_lib_module;  // keeps g_lib_context alive
+PVAR Element* g_sys_util_module;  // keeps g_sys_util_context alive
+PVAR Element* g_user_module;  // keeps g_user_context alive
 
 PVAR RebolContext* librebol_binding;  // global, set to g_lib_context
 

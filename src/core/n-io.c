@@ -80,10 +80,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
     Element* custom = Element_ARG(ELEMENT);
     assert(Heart_Of_Is_0(custom));
 
-    const ExtraHeart* ext_heart = Cell_Extra_Heart(custom);
+    const Value* datatype = Datatype_Of(custom);
 
     Append_Ascii(mo->string, "#[");
-    Mold_Or_Form_Cell_Ignore_Quotes(mo, Cell_List_Item_At(ext_heart), false);
+    Mold_Or_Form_Cell_Ignore_Quotes(mo, Cell_List_Item_At(datatype), false);
     Append_Ascii(mo->string, "]");
 
     return NOTHING;  // no return value

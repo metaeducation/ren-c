@@ -70,6 +70,15 @@ Source* Startup_Datatypes(Array* boot_typespecs)
         Tweak_Cell_Binding(word, &g_lib_patches[datatype_id]);
     }
 
+
+    SeaOfVars* datatypes = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+    ensure(nullptr, g_datatypes_module) = Alloc_Element();
+    Init_Module(g_datatypes_module, datatypes);
+    ensure(nullptr, g_datatypes_context) = datatypes;
+
+    assert(Link_Inherit_Bind(g_lib_context) == nullptr);
+    Tweak_Link_Inherit_Bind(g_lib_context, g_datatypes_context);
+
     return catalog;  // could be generated on demand [3]
 }
 
@@ -79,4 +88,6 @@ Source* Startup_Datatypes(Array* boot_typespecs)
 //
 void Shutdown_Datatypes(void)
 {
+    rebReleaseAndNull(&g_datatypes_module);
+    g_datatypes_context = nullptr;
 }

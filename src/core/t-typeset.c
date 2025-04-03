@@ -278,7 +278,12 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
-            *optimized = u_cast(Byte, Cell_Datatype_Type(lookup));
+            Option(Type) datatype_type = Cell_Datatype_Type(lookup);
+            if (not datatype_type) {
+                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                continue;
+            }
+            *optimized = u_cast(Byte, unwrap datatype_type);
             ++optimized;
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
         }

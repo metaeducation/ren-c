@@ -629,7 +629,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     c->header.bits |= (  // need to ensure node+cell flag get set
         NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_QUOTE_BYTE(NOQUOTE_1)
     );
-    c->extra.extra_heart = extra_heart;
+    c->extra.node = extra_heart;
 }
 
 

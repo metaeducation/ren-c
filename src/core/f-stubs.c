@@ -225,7 +225,13 @@ const Value* Datatype_Of(const Atom* value)
     Option(Type) type = Type_Of(value);
     if (type)
         return Datatype_From_Type(unwrap type);
-    return Cell_Extra_Heart(value);
+
+    const ExtraHeart* ext_heart = Cell_Extra_Heart(value);
+    assert(Is_Stub_Patch(ext_heart));
+
+    const Value* datatype = c_cast(Value*, Stub_Cell(ext_heart));
+    assert(Is_Datatype(datatype));
+    return datatype;
 }
 
 
