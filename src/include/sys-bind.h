@@ -234,7 +234,7 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
 
         assert(Is_Node_Readable(stump));
         Set_Node_Unreadable_Bit(stump);
-        GC_Kill_Stub(stump);  // expects node to be decayed/inaccessible (free)
+        GC_Kill_Stub(stump);  // expects node diminished/inaccessible (free)
     }
 
   #if RUNTIME_CHECKS && CPLUSPLUS_11

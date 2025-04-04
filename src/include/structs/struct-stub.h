@@ -227,7 +227,7 @@
 //
 // When a stub gets GC'd, it may need to do something before it goes away.
 //
-// Decay_Stub() uses this flag to indicate whether it has to bother running
+// Diminish_Stub() uses this flag to indicate whether it has to bother running
 // a switch() statement on the Stub_Flavor() to see if there's any handling
 // for that flavor.  And if it runs the switch() statement but doesn't have
 // a case for that Flavor, it assumes that the type wants to run an arbitrary
@@ -238,7 +238,7 @@
 // This prevents the need to have a stub_cleaner that uses up the misc just
 // to call a function that takes a Cell which would have to be stored
 // somewhere else.  Hence FLAVOR_HANDLE has an instance in the switch() of
-// Decay_Stub() that does this call, vs using Stub.misc.stub_cleaner.)
+// Diminish_Stub() that does this call, vs using Stub.misc.stub_cleaner.)
 //
 #define STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY \
     FLAG_LEFT_BIT(19)

@@ -31,7 +31,7 @@
 //   allocated with STUB_FLAG_DYNAMIC and do not need to check for whether
 //   the singular optimization when being used.  This does not apply when a
 //   varlist becomes invalid (e.g. via FREE), when its data allocation is
-//   released and it is decayed to a singular.
+//   released and it is diminished to a singular.
 //
 
 #if NO_RUNTIME_CHECKS

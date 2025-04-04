@@ -1090,7 +1090,7 @@ DECLARE_NATIVE(FREE)
         return FAIL("Cannot FREE already freed series");
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
-    Decay_Stub(f);
+    Diminish_Stub(f);
     return NOTHING; // !!! Could return freed value
 }
 
@@ -1107,9 +1107,9 @@ DECLARE_NATIVE(FREE)
 //
 DECLARE_NATIVE(FREE_Q)
 //
-// 1. Currently we don't have a "decayed" form of pairing...because Cells use
+// 1. Currently we don't have a "diminished" Pairing...because Cells use
 //    the NODE_FLAG_UNREADABLE for meaningfully unreadable cells, that have a
-//    different purpose than canonizing references to a decayed form.
+//    different purpose than canonizing references to a diminished form.
 //
 //    (We could use something like the CELL_FLAG_NOTE or other signal on
 //    pairings to cue that references should be canonized to a single freed
@@ -1129,7 +1129,7 @@ DECLARE_NATIVE(FREE_Q)
     if (n == nullptr or Is_Node_A_Cell(n))
         return nullptr;  // no decayed pairing form at this time [1]
 
-    if (Is_Stub_Decayed(cast(Stub*, n)))
+    if (Is_Stub_Diminished(cast(Stub*, n)))
         return Init_Okay(OUT);  // decayed is as "free" as outstanding refs get
 
     return nullptr;

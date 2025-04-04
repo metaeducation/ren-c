@@ -3,8 +3,8 @@
 //=//// CONTEXT EXTRACTION ////////////////////////////////////////////////=//
 //
 // Extraction of a context from a value is a place where it is checked for if
-// it is valid or has been "decayed" into a stub.  Thus any extraction of
-// stored contexts from other locations (e.g. a META field) must either put
+// it is valid or has been "diminished" into a stub.  Thus any extraction of
+// stored contexts from other locations (e.g. an ADJUNCT field) must either put
 // the pointer directly into a value without dereferencing it and trust it to
 // be checked elsewhere...or also check it before use.
 //

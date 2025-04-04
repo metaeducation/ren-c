@@ -522,7 +522,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 
         if (
             not Any_Sequence(out)  // so instead, things like [~/~ . ///]
-            and not conflate  // do not allow decay to "sequence-looking" words
+            and not conflate  // don't rewrite as "sequence-looking" words
         ){
             return Error_Conflated_Sequence_Raw(Datatype_Of(out), out);
         }

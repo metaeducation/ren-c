@@ -155,4 +155,4 @@ INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Node)
 //=//// FLEX DECAY ////////////////////////////////////////////////////////=//
 
 #define GC_Kill_Flex(f) \
-    GC_Kill_Stub(Decay_Stub(f))
+    GC_Kill_Stub(Diminish_Stub(f))

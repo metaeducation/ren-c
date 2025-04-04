@@ -961,7 +961,7 @@ e-lib/emit [ver --{
      * "Unreadable", the third and fourth bits would pertain to GC behavior
      * if applicable, the fifth bit being clear means it's *not* a Cell.
      * The seventh bit is for GC marking by design (to leverage the special
-     * 0xC0 and 0xC1 as marked and unmarked states of "decayed Stubs")
+     * 0xC0 and 0xC1 as marked and unmarked states of "diminished Stubs")
      *
      * It seems there's not any obvious reason to pick one of these over the
      * other to signify END_SIGNAL_BYTE, so 0xF7 was chosen--and the other

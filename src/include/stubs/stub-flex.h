@@ -70,21 +70,21 @@
 //        0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
 //
 
-INLINE bool Is_Stub_Decayed(const Stub* s) {
+INLINE bool Is_Stub_Diminished(const Stub* s) {
     if (Is_Node_Readable(s))
         return false;
     Byte n = NODE_BYTE(s);
-    assert(n == DECAYED_CANON_BYTE or n == DECAYED_NON_CANON_BYTE);
+    assert(n == DIMINISHED_CANON_BYTE or n == DIMINISHED_NON_CANON_BYTE);
     UNUSED(n);
     return true;
 }
 
-#if CPLUSPLUS_11  // cast(Flex*, stub) of decayed Stub would assert
-    bool Is_Stub_Decayed(const Flex*) = delete;
+#if CPLUSPLUS_11  // cast(Flex*, stub) of diminished Stub would assert
+    bool Is_Stub_Diminished(const Flex*) = delete;
 #endif
 
-#define Not_Stub_Decayed(s) \
-    (not Is_Stub_Decayed(s))
+#define Not_Stub_Diminished(s) \
+    (not Is_Stub_Diminished(s))
 
 #define STUB_MASK_NON_CANON_UNREADABLE \
     NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | FLAG_TASTE_BYTE(255)
@@ -92,7 +92,7 @@ INLINE bool Is_Stub_Decayed(const Stub* s) {
 INLINE Stub* Set_Stub_Unreadable(Stub* s) {
     assert(Is_Node_Readable(s));
     s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
-    assert(NODE_BYTE(s) == DECAYED_NON_CANON_BYTE);
+    assert(NODE_BYTE(s) == DIMINISHED_NON_CANON_BYTE);
 
     Corrupt_Pointer_If_Debug(s->link.corrupt);
     Corrupt_Pointer_If_Debug(s->misc.corrupt);
@@ -317,7 +317,7 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
         if (NODE_BYTE(f) == FREE_POOLUNIT_BYTE)
             printf("Flex_Data_At() asked on free PoolUnit\n");
         else if (Not_Node_Readable(f))
-            printf("Flex_Data_At() asked on decayed Flex\n");
+            printf("Flex_Data_At() asked on diminished Flex\n");
         else
             printf(
                 "Flex_Data_At() asked %d on width=%d\n",

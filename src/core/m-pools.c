@@ -1077,7 +1077,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 
 
 //
-//  Decay_Stub: C
+//  Diminish_Stub: C
 //
 // 1. There's a generic feature for stubs of storing an arbitrary function in
 //    the Stub.misc.cleaner field to run when the stub is GC'd.  But some
@@ -1098,7 +1098,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 //    should also not tolerate nullptr, for efficiency, as Stub fields tend
 //    not to be fiddled to null and back as often as Cell flags.
 //
-Stub* Decay_Stub(Stub* s)
+Stub* Diminish_Stub(Stub* s)
 {
     assert(Is_Node_Readable(s));
 
@@ -1198,7 +1198,7 @@ void GC_Kill_Stub(Stub* s)
     }
   #endif
 
-    assert(Is_Stub_Decayed(s));  // must Decay_Stub() first
+    assert(Is_Stub_Diminished(s));  // must Diminish_Stub() first
 
     // By default the Stub is touched so its tick reflects the tick that
     // freed it.  If you need to know the tick where it was allocated, then

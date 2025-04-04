@@ -181,7 +181,7 @@ INLINE void Init_Handle_Managed_Common(
             | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  // calls the handle_cleaner
             | NODE_FLAG_MANAGED);
 
-    stub->misc.handle_cleaner = cleaner;  // see FLAVOR_HANDLE in Decay_Stub()
+    stub->misc.handle_cleaner = cleaner;  // see FLAVOR_HANDLE in Diminish_Stub()
 
     Cell* single = Stub_Cell(stub);
     Reset_Cell_Header_Noquote(

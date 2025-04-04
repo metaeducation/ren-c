@@ -390,12 +390,12 @@ void Replug_Stack(Level* base, Value* plug) {
             Move_Cell(PUSH(), stacked);
     }
 
-    Decay_Stub(array);  // didn't technically need to be managed...
+    Diminish_Stub(array);  // didn't technically need to be managed...
 
 } finished: {
 
     Stub* stub = Extract_Cell_Handle_Stub(plug);
-    Set_Stub_Unreadable(stub);  // indicate decayed, but skip cleaner
+    Set_Stub_Unreadable(stub);  // indicate diminished, but skip cleaner
     GC_Kill_Stub(stub);
     Init_Unreadable(plug);  // no longer needed
 

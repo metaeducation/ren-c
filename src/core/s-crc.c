@@ -371,7 +371,7 @@ uint32_t Hash_Value(const Cell* cell)
 // or intersection operation.  However, if Init_Map() is used they will be
 // forced managed along with the pairlist they are attached to.
 //
-// (Review making them non-managed, and freed in Decay_Stub(), since they
+// (Review making them non-managed, and freed in Diminish_Stub(), since they
 // are not shared in maps.  Consider impacts on the set operations.)
 //
 HashList* Make_Hashlist(REBLEN len)

@@ -203,8 +203,8 @@ static void Startup_Lib(void)
 //    do something implementation-defined.  (?)  Assume it works.
 //
 // 2. Since the GC never frees the builtin Lib patches, they don't get
-//    "decayed" and unlinked from the Symbol's hitch list.  Rather than do
-//    a Decay_Stub() here, we can take the opportunity to make sure that
+//    "diminished" and unlinked from the Symbol's hitch list.  Rather than do
+//    a Diminish_Stub() here, we can take the opportunity to make sure that
 //    the lib patch really is the last hitch stuck on the symbol (otherwise
 //    there was some kind of leak).
 //

@@ -187,8 +187,8 @@
     FLAG_LEFT_BIT(7)
 #define NODE_BYTEMASK_0x01_MARKED  0x01
 
-#define DECAYED_NON_CANON_BYTE      0xC0  // 11000000: illegal UTF-8 [1]
-#define DECAYED_CANON_BYTE          0xC1  // 11000001: illegal UTF-8 [1]
+#define DIMINISHED_NON_CANON_BYTE      0xC0  // 11000000: illegal UTF-8 [1]
+#define DIMINISHED_CANON_BYTE          0xC1  // 11000001: illegal UTF-8 [1]
 
 
 // All the illegal UTF-8 bit patterns are in use for some purpose in the

@@ -176,7 +176,7 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
         return DETECTED_AS_STUB;
     }
 
-    if (b == DECAYED_CANON_BYTE or b == DECAYED_NON_CANON_BYTE)
+    if (b == DIMINISHED_CANON_BYTE or b == DIMINISHED_NON_CANON_BYTE)
         return DETECTED_AS_FREE;  // 11000000 and 11000001 illegal UTF-8
 
     return DETECTED_AS_UTF8;

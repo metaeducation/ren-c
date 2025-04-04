@@ -421,7 +421,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
     #else
         //
         // For a lighter check, make sure it's marked as a value-bearing array
-        // and that it hasn't been decayed.
+        // and that it hasn't been diminished.
         //
         assert(Is_Node_Readable(a));
         assert(Stub_Holds_Cells(a));

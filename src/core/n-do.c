@@ -553,7 +553,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
 } result_in_out: { ///////////////////////////////////////////////////////////
 
-    Decay_Stub(Cell_Frame_Phase(frame));  // the "FREE" of EVAL-FREE
+    Diminish_Stub(Cell_Frame_Phase(frame));  // the "FREE" of EVAL-FREE
 
     if (not Bool_ARG(UNDECAYED)) {
         if (Is_Elision(OUT))

@@ -69,7 +69,7 @@ typedef Context Let;
 //
 // 1. MISC was once "Variant": a circularly linked list of variations of this
 //    USE with different Link_Inherit_Bind() data.  The idea was to assist in
-//    avoiding creating unnecessary duplicate chains.  Decay_Stub() would
+//    avoiding creating unnecessary duplicate chains.  Diminish_Stub() would
 //    remove patches from the list during GC.  This idea may have some
 //    form that has merit, but that one didn't help anything.
 //

@@ -325,7 +325,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     if (Not_Node_Managed(L->varlist))  // don't need it [2]
         GC_Kill_Flex(L->varlist);
     else
-        Decay_Stub(L->varlist);  // maybe lingering references [3]
+        Diminish_Stub(L->varlist);  // maybe lingering references [3]
 
     Tweak_Misc_Runlevel(original_varlist, L);  // [4]
     L->varlist = Varlist_Array(original_varlist);  // rootvar must match

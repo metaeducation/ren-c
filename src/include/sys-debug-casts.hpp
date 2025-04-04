@@ -309,7 +309,7 @@ struct cast_helper<V*,const Binary*> {  // [2]
         if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
             NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
         )) != (
-            NODE_FLAG_NODE  // NODE_FLAG_UNREADABLE is decayed Stub (not Flex)
+            NODE_FLAG_NODE  // NODE_FLAG_UNREADABLE is diminished Stub
         )){
             panic (p);
         }

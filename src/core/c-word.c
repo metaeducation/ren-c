@@ -631,7 +631,7 @@ void Unregister_Symbol(RebolValue* word, SymId16 id16)
 //  Shutdown_Builtin_Symbols: C
 //
 // The Shutdown_Interning() code checks for g_symbols.by_hash to be empty...
-// the necessary removal happens in Decay_Stub().  (Note that a "dirty"
+// the necessary removal happens in Diminish_Stub().  (Note that a "dirty"
 // shutdown--used in release builds--avoids all these balancing checks!)
 //
 void Shutdown_Builtin_Symbols(void)
@@ -640,7 +640,7 @@ void Shutdown_Builtin_Symbols(void)
 
     for (SymId16 id = 1; id <= MAX_SYM_BUILTIN; ++id) {
         Symbol* canon = &g_symbols.builtin_canons[id];
-        Decay_Stub(canon);
+        Diminish_Stub(canon);
     }
 }
 

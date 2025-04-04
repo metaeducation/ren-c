@@ -110,7 +110,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
         do {
             Option(Error*) error = Trap_Unsingleheart(arg);
             if (error)
-                goto sequence_didnt_decay_to_word;
+                goto sequence_didnt_devolve_to_word;
         } while (Any_Sequence(arg));
 
         if (Any_Word(arg)) {
@@ -118,7 +118,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
             return COPY(arg);
         }
 
-      sequence_didnt_decay_to_word:
+      sequence_didnt_devolve_to_word:
         return RAISE(
             "Can't MAKE ANY-WORD? from sequence unless it wraps one WORD!"
         );

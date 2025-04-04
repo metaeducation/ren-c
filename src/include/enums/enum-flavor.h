@@ -176,14 +176,7 @@ typedef enum {
 
     // Right now there is only one instance of FLAVOR_THE_GLOBAL_INACCESSIBLE
     // Flex.  All Stubs that have NODE_FLAG_UNREADABLE will be canonized
-    // to this Node.  This allows a decayed Flex to still convey what flavor
-    // it was before being decayed.  That's useful at least for debugging, but
-    // maybe for other mechanisms that sometimes might want to propagate some
-    // residual information from decayed Flex to the referencing sites.
-    //
-    // (For instance: Such a mechanism would've been necessary for propagating
-    // Symbols back into words, when bound words gave up their Symbols...if the
-    // Flex they were bound to went away.  Not needed now--but an example.)
+    // to this Node.
     //
     FLAVOR_THE_GLOBAL_INACCESSIBLE,
 

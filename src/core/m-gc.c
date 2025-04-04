@@ -168,8 +168,8 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub*);
 // pointer can be updated.  This allows us to fix up lingering references to
 // Nodes that are conceptually freed, but only being kept around until
 // referencing sites can be fixed up to not refer to them.  As the GC marks
-// the nodes, it canonizes such "decayed" pointers to a single global
-// "decayed thing".  See Decay_Stub()
+// the nodes, it canonizes such "diminished" pointers to a single global
+// "diminished thing".  See Diminish_Stub()
 //
 // Note: This strategy created some friction when bound words depended on
 // contexts to supply their spellings.  This would have required actually
@@ -179,7 +179,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub*);
 //
 static void Queue_Mark_Node_Deep(Node** npp) {  // ** for canonizing
     Byte nodebyte = NODE_BYTE(*npp);
-    if (nodebyte & NODE_BYTEMASK_0x01_MARKED)  // includes canon decayed stub
+    if (nodebyte & NODE_BYTEMASK_0x01_MARKED)  // incl. canon diminished Stub
         return;  // may not be finished marking yet, but has been queued
 
     if (nodebyte & NODE_BYTEMASK_0x08_CELL) {  // e.g. a pairing
@@ -195,7 +195,7 @@ static void Queue_Mark_Node_Deep(Node** npp) {  // ** for canonizing
 
     const Stub* s = u_cast(const Stub*, *npp);
 
-    if (nodebyte == DECAYED_NON_CANON_BYTE) {  // fixup to global decayed stub
+    if (nodebyte == DIMINISHED_NON_CANON_BYTE) {  // fixup to global diminished
         *npp = &PG_Inaccessible_Stub;
         return;
     }
@@ -516,7 +516,7 @@ void Run_All_Handle_Cleaners(void) {
                 continue;  // not a stub
 
             Stub* stub = cast(Stub*, unit);
-            if (Is_Stub_Decayed(stub))
+            if (Is_Stub_Diminished(stub))
                 continue;  // freed, but not canonized
 
             if (Stub_Flavor(stub) != FLAVOR_HANDLE)
@@ -524,7 +524,7 @@ void Run_All_Handle_Cleaners(void) {
 
             assert(Is_Node_Managed(stub));  // it's why handle stubs exist
 
-            Decay_Stub(stub);
+            Diminish_Stub(stub);
         }
     }
 }
@@ -878,7 +878,7 @@ Count Sweep_Stubs(void)
             if (not (unit[0] & NODE_BYTEMASK_0x04_MANAGED)) {
                 assert(not (unit[0] & NODE_BYTEMASK_0x01_MARKED));
 
-                if (unit[0] == DECAYED_NON_CANON_BYTE) {
+                if (unit[0] == DIMINISHED_NON_CANON_BYTE) {
                     Free_Pooled(STUB_POOL, unit);
                     continue;
                 }
@@ -909,7 +909,7 @@ Count Sweep_Stubs(void)
                 // is over we can just free them.
             }
             else
-                Decay_Stub(u_cast(Stub*, unit));
+                Diminish_Stub(u_cast(Stub*, unit));
 
             GC_Kill_Stub(u_cast(Stub*, unit));
         }
@@ -1161,7 +1161,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     Assert_No_GC_Marks_Pending();
 
     // The PG_Inaccessible_Stub always looks marked, so we can skip it
-    // quickly in GC (and not confuse it with non-canon decayed stubs).
+    // quickly in GC (and not confuse it with non-canon diminished stubs).
     //
     assert(Is_Node_Marked(&PG_Inaccessible_Stub));
 
@@ -1310,7 +1310,7 @@ void Push_Lifeguard(const void* p)  // NODE_FLAG_NODE may not be set [1]
       #endif
     }
     else {  // It's a Stub
-        assert(Is_Node_Readable(c_cast(Node*, p)));  // not decayed
+        assert(Is_Node_Readable(c_cast(Node*, p)));  // not diminished
         assert(Not_Node_Marked(c_cast(Node*, p)));  // don't guard during GC
         assert(Is_Node_Managed(c_cast(Node*, p)));  // [3]
     }
@@ -1408,8 +1408,8 @@ void Startup_GC(void)
             | NODE_FLAG_MARKED,
         &PG_Inaccessible_Stub
     );
-    assert(Is_Stub_Decayed(&PG_Inaccessible_Stub));
-    assert(NODE_BYTE(s) == DECAYED_CANON_BYTE);
+    assert(Is_Stub_Diminished(&PG_Inaccessible_Stub));
+    assert(NODE_BYTE(s) == DIMINISHED_CANON_BYTE);
     UNUSED(s);
 }
 
