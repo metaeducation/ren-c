@@ -508,7 +508,7 @@ DECLARE_NATIVE(COMPILE_P)
                 Append_Any_Utf8(mo->string, linkname);
                 Append_Ascii(
                     mo->string,
-                    "(RebolContext* LIBREBOL_BINDING_NAME)\n{"
+                    "(RebolContext* LIBREBOL_BINDING_NAME())\n{"
                 );
 
                 Append_Any_Utf8(mo->string, source);

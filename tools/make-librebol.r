@@ -300,7 +300,7 @@ variadic-api-binding-capturing-macros: map-each-api [
         cscape [:api --{
             #define $<Name>($<Fixed-Params,>...) \
                 $<Name>_helper( \
-                    LIBREBOL_BINDING_NAME,  /* captured from callsite! */ \
+                    LIBREBOL_BINDING_NAME(),  /* captured from callsite! */ \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
         }--]
@@ -383,7 +383,7 @@ e-lib/emit [ver --{
      *   LIBREBOL_NO_STDINT       Suppress inclusion of <stdint.h>
      *   LIBREBOL_NO_STDBOOL      Suppress inclusion of <stdbool.h>
      *
-     *   LIBREBOL_BINDING         Variable name variadics implicitly capture
+     *   LIBREBOL_BINDING_NAME()  Variable name variadics implicitly capture
      *
      *   LIBREBOL_USES_API_TABLE  No plain linker access to API exports
      *
@@ -1159,14 +1159,14 @@ e-lib/emit [ver --{
     #if (! LIBREBOL_USE_C89)
 
         #if !defined(LIBREBOL_BINDING_NAME)  /* must be (RebolContext*) [1] */
-            #define LIBREBOL_BINDING_NAME 0  /* nullptr may not be available */
+            #define LIBREBOL_BINDING_NAME()  0  /* nullptr may be undefined */
         #endif
 
         $[Variadic-Api-Binding-Capturing-Macros]
 
         #define rebFunction(spec,cfunc)  /* not variadic, but captures [2] */ \
             LIBREBOL_PREFIX(rebFunction)( \
-                LIBREBOL_BINDING_NAME,  /* captured from callsite! */ \
+                LIBREBOL_BINDING_NAME(),  /* captured from callsite! */ \
                 spec, cfunc \
             )
 

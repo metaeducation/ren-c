@@ -662,8 +662,10 @@ void Startup_Core(void)
 
     // If you call a librebol API function from an arbitrary point in the
     // core, it will do its lookups in the lib context.
+    //
+    // (We have to cast it because API RebolContext* is a typedef of void*.)
 
-    ensure(nullptr, librebol_binding) = g_lib_context;
+    ensure(nullptr, librebol_binding) = cast(RebolContext*, g_lib_context);
 
   //=//// CREATE GLOBAL OBJECTS ///////////////////////////////////////////=//
 

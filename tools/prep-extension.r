@@ -204,7 +204,7 @@ if yes? use-librebol [
 
         #undef LIBREBOL_BINDING_NAME  /* defaulted by rebol.h */
 
-        #define LIBREBOL_BINDING_NAME  librebol_binding_$<mod>
+        #define LIBREBOL_BINDING_NAME()  librebol_binding_$<mod>
 
         /*
          * Define DECLARE_NATIVE macro to include extension name.
@@ -229,7 +229,7 @@ if yes? use-librebol [
 
         #undef LIBREBOL_BINDING_NAME  /* defaulted by sys-core.h */
 
-        #define LIBREBOL_BINDING_NAME  librebol_binding_$<mod>
+        #define LIBREBOL_BINDING_NAME()  librebol_binding_$<mod>
 
         /*
          * We replace the declaration-based macros with ones that put the
@@ -294,7 +294,7 @@ e1/emit [--{
      * the module with calls to rebValue() and other APIs...but it won't
      * see the parameters of the function that called it.
      */
-    extern RebolContext* LIBREBOL_BINDING_NAME;
+    extern RebolContext* LIBREBOL_BINDING_NAME();
 
     /*
      * Helpful warnings tell us when static variables are unused.  We
@@ -302,7 +302,7 @@ e1/emit [--{
      * do it before they define their own binding.  As long as at least
      * one native is in the file, this works.
      */
-    #define LIBREBOL_BINDING_USED() (void)LIBREBOL_BINDING_NAME
+    #define LIBREBOL_BINDING_USED() (void)LIBREBOL_BINDING_NAME()
 }--]
 
 
@@ -405,7 +405,7 @@ if yes? use-librebol [
         ;
         e1/emit [info proto-name --{
             #define INCLUDE_PARAMS_OF_${PROTO-NAME} \
-                LIBREBOL_BINDING_NAME = level_;
+                LIBREBOL_BINDING_NAME() = level_;
         }--]
     ]
 ]
@@ -594,7 +594,7 @@ e/emit [--{
      * pointer.  It means that lookups will be done in that module when you
      * call things like rebValue() etc.
      */
-    RebolContext* LIBREBOL_BINDING_NAME;
+    RebolContext* LIBREBOL_BINDING_NAME();
 }--]
 
 if not empty? symbol-globals [
@@ -825,7 +825,7 @@ e/emit [--{
       #endif
 
         return rebCollateExtension_internal(
-            &LIBREBOL_BINDING_NAME,  /* where to put module pointer on init */
+            &LIBREBOL_BINDING_NAME(),  /* where to put module pointer on init */
             $<either yes? use-librebol ["true"] ["false"]>,  /* CFunc type */
             script_compressed,  /* script compressed data */
             sizeof(script_compressed),  /* size of script compressed data */

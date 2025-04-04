@@ -122,7 +122,7 @@
 #endif
 
 #if !defined(LIBREBOL_BINDING_NAME)  // core modules define differently
-    #define LIBREBOL_BINDING_NAME  librebol_binding  // set to g_lib_context [1]
+    #define LIBREBOL_BINDING_NAME()  librebol_binding  // => g_lib_context [1]
 #endif
 #include "rebol.h"
 typedef RebolValue Value;
