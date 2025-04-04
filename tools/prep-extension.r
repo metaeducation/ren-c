@@ -264,7 +264,7 @@ if yes? use-librebol [
         #define GENERIC_ENTRY(name,type) \
             g_generic_${MOD}_##name##_##type
 
-        #define EXTENDED_HEART(name) /* name looks like Is_Image */ \
+        #define DATATYPE_HOLDER(name) /* name looks like Is_Image */ \
             g_extension_type_##name
 
         /* Note: I like using parentheses with such a macro to help notice
@@ -439,36 +439,57 @@ e1/emit [cfunc-forward-decls --{
 
 === "FORWARD DECLARE EXTENSION TYPES" ===
 
-; There really should be a DECLARE_TYPE() as a module may want to define
-; handlers for types from other extensions, or define multiple types, etc.
-; As a hack assume just one type per extension that uses IMPLEMENT_GENERIC()
+type-forward-decls: []
+type-globals: []
 
-if no? use-librebol [
-    e1/emit [--{
-        /*
-         * Current lame implementation is that if you use IMPLEMENT_GENERIC()
-         * it assumes they're all for the same type, and it defines a place
-         * to put the ExtraHeart* that comes back from registering it.  The
-         * table passed to Register_Generics() holds a pointer to this
-         * pointer, so when the Register_Datatype() puts a value into that
-         * space it can be propagated to the generic entries getting linked.
-         */
+for-each 'symbol maybe try ext-header.extended-types [
+    if not word? symbol [
+        fail ["Extended-Types entries must be WORD!:" mold symbol]
+    ]
+    let stem: to text! symbol
+    if #"!" <> take:last stem [
+        fail ["Extended-Types entries must end in '!':" mold symbol]
+    ]
+    let Is_Xxx: propercase join "is_" stem
+
+    append type-forward-decls cscape [Is_Xxx --{
+        extern RebolValue* DATATYPE_HOLDER(${Is_Xxx});
+
+        #define EXTRA_HEART_$<STEM> \
+            Cell_Datatype_Extra_Heart(DATATYPE_HOLDER(${Is_Xxx}))
+
+        INLINE bool ${Is_Xxx}(const Cell* cell) {
+            if (not Type_Of_Is_0(cell))
+                return false;
+
+            const ExtraHeart* ext_heart = Cell_Datatype_Extra_Heart(
+                DATATYPE_HOLDER(${Is_Xxx})
+            );
+            return Cell_Extra_Heart(cell) == ext_heart;
+        }
     }--]
 
-    if not empty? generics [
-        let Is_Xxx: generics.1.proper-type
-        e1/emit [info --{
-            extern ExtraHeart* EXTENDED_HEART(${Is_Xxx});
-        }--]
+    append type-globals cscape [Is_Xxx --{
+        RebolValue* DATATYPE_HOLDER(${Is_Xxx}) = nullptr;
+    }--]
 
-        e1/emit [info --{
-            INLINE bool ${Is_Xxx}(const Cell* v) {
-                if (not Type_Of_Is_0(v))
-                    return false;
-                return Cell_Extra_Heart(v) == EXTENDED_HEART(${Is_Xxx});
-            }
-        }--]
-    ]
+    append startup-hooks cscape [Is_Xxx symbol --{
+        DATATYPE_HOLDER(${Is_Xxx}) = Register_Datatype("$<symbol>");
+    }--]
+
+    insert shutdown-hooks cscape [Is_Xxx --{
+        Unregister_Datatype(DATATYPE_HOLDER(${Is_Xxx}));
+    }--]
+]
+
+if not empty? type-forward-decls [
+    e1/emit [--{
+        /*
+         * Forward definitions generated for Extended-Types: [...]
+         */
+
+        $[Type-Forward-Decls]
+    }--]
 ]
 
 
@@ -586,34 +607,13 @@ if not empty? symbol-globals [
     }--]
 ]
 
-if not empty? generics [
+if not empty? type-globals [
     e/emit [--{
         /*
-         * This is a hacky way of declaring generic types, which is evolving.
-         *
-         * Basically we assume if IMPLEMENT_GENERIC() is used in an extension
-         * then it used for a type that extension defines.  If we see
-         * IMPLEMENT_GENERIC(SOMETHING, Is_Xxx) then a datatype is created
-         * for xxx!  This needs lots of work.
+         * Type globals to hold the result from Register_Datatype().
          */
-    }--]
 
-    let proper-type: generics.1.proper-type
-
-    let type
-    parse3 proper-type ["Is_" type: across to <end>]
-    type: append lowercase type "!"
-
-    e/emit [info --{
-        ExtraHeart* EXTENDED_HEART(${Proper-Type}) = nullptr;
-    }--]
-
-    append startup-hooks cscape [proper-type type --{
-        EXTENDED_HEART(${Proper-Type}) = Register_Datatype("$<type>");
-    }--]
-
-    insert shutdown-hooks cscape [proper-type type --{
-        Unregister_Datatype(EXTENDED_HEART(${Proper-Type}));
+        $[Type-Globals]
     }--]
 ]
 
@@ -630,7 +630,7 @@ if not empty? generics [
     for-each 'info generics [
         e/emit [info --{
             ExtraGenericInfo GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type}) = {
-                nullptr,  /* replaced with *ExtraGenericTable.ext_heart_ptr */
+                nullptr,  /* will replace via *ExtraGenericTable.datatype_ptr */
                 GENERIC_CFUNC(${INFO.NAME}, ${Info.Proper-Type}),
                 nullptr  /* used as pointer for next in linked list */
             };
@@ -645,12 +645,12 @@ if not empty? generics [
             let ext_info: cscape [info
                 "&GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type})"
             ]
-            let ext_heart_ptr: cscape [info
-                "&EXTENDED_HEART(${Info.Proper-Type})"
+            let datatype_ptr: cscape [info
+                "&DATATYPE_HOLDER(${Info.Proper-Type})"
             ]
 
-            keep cscape [table ext_info ext_heart_ptr
-                "{ $<Table>, $<Ext_Info>, $<Ext_Heart_Ptr> }"
+            keep cscape [table ext_info datatype_ptr
+                "{ $<Table>, $<Ext_Info>, $<Datatype_Ptr> }"
             ]
         ]
         keep --{{ nullptr, nullptr, nullptr }}--

@@ -73,15 +73,35 @@
 //   start of the enumeration.
 //
 
-INLINE ExtraHeart* Register_Datatype(const char* name)
+
+// 1. This returns a RebolValue* to hold the datatype.  This paves the way
+//    for the ability to GC datatypes if all references disappear.  (Right
+//    now it doesn't work that way because the datatypes live in the
+//    SYS.CONTEXTS.DATATYPES module, and are held alive by the module.  Could
+//    we have "weak" variables that disappear when when all refs vanish?)
+//
+// 2. There are some open questions at the moment about how to handle the
+//    issue of dependencies in native specs on extension types.  For instance,
+//    the FFI extension wants to have parameters that take [library!], but
+//    you might load the FFI extension first and then load the library
+//    extension...so when the FFI native specs are loaded the parameter
+//    generation might crash.  Hence allowing extensions to register the
+//    datatypes they depend on before the actual extension providing it
+//    is something that this is starting with.
+//
+INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
 {
     Size size = strsize(name);
     const Symbol* symbol = Intern_UTF8_Managed(cb_cast(name), size);
 
-    Option(Patch*) patch = maybe Sea_Patch(g_datatypes_context, symbol, true);
+    RebolValue* result = Alloc_Value();
+
+    Option(Patch*) patch = Sea_Patch(g_datatypes_context, symbol, true);
     if (patch) {
-        assert(!"Duplicate datatype name");
-        return unwrap patch;  // this can't be good
+        Value* datatype = c_cast(Value*, Stub_Cell(unwrap patch));
+        assert(Is_Datatype(datatype));
+        Copy_Cell(result, datatype);
+        return rebUnmanage(result);  // "forward" registrations [2]
     }
 
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
@@ -92,13 +112,14 @@ INLINE ExtraHeart* Register_Datatype(const char* name)
     Init_Fence(datatype, a);
     QUOTE_BYTE(datatype) = ANTIFORM_0_COERCE_ONLY;
 
-    return cast(Patch*, Compact_Stub_From_Cell(datatype));;
+    Copy_Cell(result, datatype);
+    return rebUnmanage(result);
 }
 
-INLINE void Unregister_Datatype(ExtraHeart* extra_heart)
+INLINE void Unregister_Datatype(RebolValue* datatype_holder)
 {
-    // currently we don't do anything to unregister...review
-    UNUSED(extra_heart);
+    assert(Is_Datatype(datatype_holder));
+    rebRelease(datatype_holder);
 }
 
 

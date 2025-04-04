@@ -49,8 +49,8 @@
 //
 // 1. The ExtraHeart* for extension types doesn't exist until runtime.  The
 //    easiest way to refer to it in the table passed to Register_Generics()
-//    is thus by a pointer to where the ExtraHeart* will eventually be stored.
-//    But Register_Generics() will turn that into a plain pointer in the
+//    is thus by a pointer to where the ExtraHeart* can eventually be found.
+//    But Register_Generics() will turn that into an ExtraHeart pointer in the
 //    ExtraGenericInfo struct...so no double-dereference needed for lookups.
 //
 
@@ -60,7 +60,7 @@ typedef struct {
 } GenericInfo;
 
 typedef struct ExtraGenericInfoStruct {
-    ExtraHeart* ext_heart;
+    const ExtraHeart* ext_heart;
     Dispatcher* dispatcher;  // the function defined by IMPLEMENT_GENERIC()
     struct ExtraGenericInfoStruct* next;  // link for next extension type
 } ExtraGenericInfo;
@@ -73,7 +73,7 @@ typedef struct {  // pairs builtins and extensions to pass together
 typedef struct {  // passed to Register_Generics() for extension types
     GenericTable* table;
     ExtraGenericInfo* ext_info;
-    ExtraHeart** ext_heart_ptr;  // plain pointer in ExtraGenericInfo [1]
+    RebolValue** datatype_ptr;  // plain pointer in ExtraGenericInfo [1]
 } ExtraGenericTable;
 
 
