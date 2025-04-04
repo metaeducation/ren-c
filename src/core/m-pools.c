@@ -341,7 +341,7 @@ void Shutdown_Pools(void)
   #if RUNTIME_CHECKS
   blockscope {
     Count num_leaks = 0;
-    Flex* leaked = nullptr;
+    Stub* leaked = nullptr;
     Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for(; seg != nullptr; seg = seg->next) {
@@ -354,18 +354,18 @@ void Shutdown_Pools(void)
 
             ++num_leaks;
 
-            Flex* f = x_cast(Flex*, unit);
-            if (Is_Node_Managed(f)) {
-                printf("MANAGED Flex leak, this REALLY shouldn't happen\n");
-                leaked = f;  // report a managed one if found
+            Stub* stub = x_cast(Stub*, unit);
+            if (Is_Node_Managed(stub)) {
+                printf("MANAGED Stub leak, this REALLY shouldn't happen\n");
+                leaked = stub;  // report a managed one if found
             }
             else if (not leaked) {
-                leaked = f;  // first one found
+                leaked = stub;  // first one found
             }
             else if (Not_Node_Managed(leaked)) {
               #if TRAMPOLINE_COUNTS_TICKS && DEBUG_STUB_ORIGINS
-                if (leaked->tick < f->tick)
-                    leaked = f;  // update if earlier tick reference
+                if (leaked->tick < stub->tick)
+                    leaked = stub;  // update if earlier tick reference
               #endif
             }
         }

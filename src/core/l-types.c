@@ -46,15 +46,7 @@ DECLARE_NATIVE(TYPE_OF)
     if (Is_Nulled(v))
         return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
 
-    Option(Type) type = Type_Of(v);
-    if (type)
-        return Init_Builtin_Datatype(OUT, unwrap type);
-
-    assert(QUOTE_BYTE(v) == NOQUOTE_1);
-
-    const ExtraHeart* ext_heart = Cell_Extra_Heart(v);
-
-    return Init_Extended_Datatype(OUT, ext_heart);
+    return COPY(Datatype_Of(v));
 }
 
 
@@ -72,9 +64,11 @@ DECLARE_NATIVE(HEART_OF)
 {
     INCLUDE_PARAMS_OF_HEART_OF;
 
-    Option(Heart) heart = Heart_Of(ARG(ELEMENT));
+    Element* elem = Element_ARG(ELEMENT);
+
+    Option(Heart) heart = Heart_Of(elem);
     if (heart)
-        return Init_Builtin_Datatype(OUT, unwrap heart);
+        return COPY(Datatype_From_Type(unwrap heart));
 
     return FAIL("HEART OF not supported for extension types...yet!");
 }

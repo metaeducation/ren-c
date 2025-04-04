@@ -274,7 +274,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         Codepoint c;
         if (*bp <= 0x80) {
             if (size != 1) {
-                Init_Builtin_Datatype(ARG(TYPE), TYPE_ISSUE);
+                Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_ISSUE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
 
@@ -287,7 +287,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
-                Init_Builtin_Datatype(ARG(TYPE), TYPE_ISSUE);
+                Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_ISSUE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }

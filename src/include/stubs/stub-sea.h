@@ -67,18 +67,37 @@ INLINE void Tweak_Misc_Sea_Adjunct(
 }
 
 
+INLINE Type Type_From_Symbol_Id(SymId id);
+
 // 1. !!! We need to consider the strictness here, with case sensitive binding
 //    we can't be sure it's a match.  :-/  For this moment hope lib doesn't
 //    have two-cased variations of anything.
 //
-INLINE Option(Patch*) Sea_Patch(SeaOfVars* sea, const Symbol* sym, bool strict) {
+INLINE Option(Patch*) Sea_Patch(
+    SeaOfVars* sea,
+    const Symbol* sym,
+    bool strict
+){
     if (sea == g_lib_context) {
         Option(SymId) id = Symbol_Id(sym);
-        if (id != 0 and id <= MAX_SYM_LIB_PREMADE) {
+        if (id and id <= MAX_SYM_LIB_PREMADE) {
             if (INFO_PATCH_SEA(&g_lib_patches[id]) == nullptr)  // [1]
                 return nullptr;
 
             return &g_lib_patches[id];
+        }
+    }
+    else if (sea == g_datatypes_context) {
+        Option(SymId) id = Symbol_Id(sym);
+        if (id and (
+            id >= MIN_SYM_BUILTIN_TYPES and id <= MAX_SYM_BUILTIN_TYPES
+         )){
+            Type type = Type_From_Symbol_Id(unwrap id);
+            assert(
+                INFO_PATCH_SEA(&g_datatype_patches[cast(Byte, type)])
+                == g_datatypes_context
+            );
+            return &g_datatype_patches[cast(Byte, type)];
         }
     }
 

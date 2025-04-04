@@ -188,17 +188,7 @@ add-sym: func [
 name-to-typeset-byte: load3 (join prep-dir %boot/tmp-typeset-bytes.r)
 
 
-=== "SYMBOLS FOR DATATYPES" ===
-
-for-each [name byte] name-to-typeset-byte [
-    if find as text! name "any" [
-        break  ; done with just the datatypes
-    ]
-    if name = '~ [
-        name: unspaced ["antiform-" byte]
-    ]
-    add-sym unspaced [name "!"]  ; integer! holds ~{integer}~
-]
+=== "SYMBOLS FOR BUILTIN TYPESETS" ===
 
 add-sym:placeholder <MIN_SYM_TYPESETS>
 
@@ -268,6 +258,29 @@ for-each 'name native-names [
 ]
 
 add-sym:placeholder </MAX_SYM_LIB_PREMADE>
+
+
+=== "SYMBOLS FOR DATATYPES (INTEGER! or BLOCK!, with the !)" ===
+
+; INTEGER? and BLOCK? are type constraint functions in SYS.CONTEXTS.LIB, but
+; actual datatype instances live in SYS.CONTEXTS.DATATYPES - which is also
+; where extension types are put.  Hence it's not necessary to allocate a
+; variable for INTEGER! or BLOCK! in LIB.  These are past MAX_SYM_LIB_PREMADE,
+; but still included in MAX_SYM_BUILTIN (the Symbol Stubs are preallocated)
+
+add-sym:placeholder <MIN_SYM_BUILTIN_TYPES>
+
+for-each [name byte] name-to-typeset-byte [
+    if find as text! name "any" [
+        break  ; done with just the datatypes
+    ]
+    if name = '~ [
+        name: unspaced ["antiform-" byte]
+    ]
+    add-sym unspaced [name "!"]  ; integer! holds ~{integer}~
+]
+
+add-sym:placeholder </MAX_SYM_BUILTIN_TYPES>
 
 
 === "SYMBOLS FOR SYMBOLS.R" ===
@@ -721,6 +734,12 @@ e-symids/emit [syms-cscape --{
      * to avoid thinking the symbol is literally for the letters "max-xxx"
      */
     $[Placeholder-Define-Items]
+
+    /*
+     * Builtin DATATYPE!s preallocate Patches in SYS.CONTEXTS.DATATYPES
+     */
+    #define NUM_BUILTIN_TYPES \
+        (1 + MAX_SYM_BUILTIN_TYPES - MIN_SYM_BUILTIN_TYPES)
 }--]
 
 print [symid "words + natives + errors"]

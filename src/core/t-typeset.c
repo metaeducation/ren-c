@@ -76,20 +76,17 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
 //
 void Startup_Type_Predicates(void)
 {
-    REBINT id;
-    for (id = MIN_SYM_TYPESETS; id <= MAX_SYM_TYPESETS; id += 1) {
-        REBINT typeset_byte = id - MIN_SYM_TYPESETS + 1;  // starts at 1
+    SymId16 id16;
+    for (id16 = MIN_SYM_TYPESETS; id16 <= MAX_SYM_TYPESETS; id16 += 1) {
+        SymId id = cast(SymId, id16);
+        SymId16 typeset_byte = id16 - MIN_SYM_TYPESETS + 1;
+        assert(typeset_byte == id16);  // MIN_SYM_TYPESETS should be 1
         assert(typeset_byte > 0 and typeset_byte < 256);
 
         Details* details = Make_Typechecker(typeset_byte);
 
-        Init_Action(
-            Sink_Lib_Var(cast(SymId, id)),
-            details,
-            Canon_Symbol(cast(SymId, id)),  // cached symbol for function
-            UNBOUND
-        );
-        assert(Ensure_Cell_Frame_Details(Lib_Var(cast(SymId, id))));
+        Init_Action(Sink_Lib_Var(id), details, Canon_Symbol(id), UNBOUND);
+        assert(Ensure_Cell_Frame_Details(Lib_Var(id)));
     }
 
     // Shorthands used in native specs, so have to be available in boot

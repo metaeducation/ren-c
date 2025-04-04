@@ -1062,6 +1062,22 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // speeds up references that would mark them to see they're spoken for
     // (so they don't have to detect it's an array, queue the cell...)
 
+    assert(Is_Stub_Erased(&g_datatype_patches[cast(Byte, TYPE_0)]));  // skip
+
+    for (
+        SymId16 id16 = MIN_SYM_BUILTIN_TYPES;
+        id16 <= MAX_SYM_BUILTIN_TYPES;
+        ++id16
+    ){
+        Type type = Type_From_Symbol_Id(cast(SymId, id16));
+        Patch* patch = &g_datatype_patches[cast(Byte, type)];
+        if (Not_Node_Marked(patch)) {  // this loop's prior steps can mark
+            Add_GC_Mark(patch);
+            Queue_Mark_Maybe_Erased_Cell_Deep(Stub_Cell(patch));
+        }
+    }
+    Propagate_All_GC_Marks();
+
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
 
     for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
@@ -1162,6 +1178,18 @@ REBLEN Recycle_Core(Flex* sweeplist)
         sweep_count = Sweep_Stubs();
 
     // Unmark the LIB() fixed patches (not in stub pool, never get swept)
+
+    assert(Is_Stub_Erased(&g_datatype_patches[cast(Byte, SYM_0)]));  // skip
+
+    for (
+        SymId16 id = MIN_SYM_BUILTIN_TYPES;
+        id <= MAX_SYM_BUILTIN_TYPES;
+        ++id
+    ){
+        Type type = Type_From_Symbol_Id(cast(SymId, id));
+        Patch* patch = &g_datatype_patches[cast(Byte, type)];
+        Remove_GC_Mark(patch);
+    }
 
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
 
@@ -1408,7 +1436,13 @@ void Shutdown_GC(void)
     // in the manuals list...Catch-22!  This free must happen after all
     // unmanaged Flexes have been freed.
     //
-    assert(Flex_Used(g_gc.manuals) == 0);
+  #if RUNTIME_CHECKS
+    if (Flex_Used(g_gc.manuals) != 0) {
+        printf("g_gc.manuals not empty at shutdown!\n");
+        Flex** leaked = Flex_Head(Flex*, g_gc.manuals);
+        panic (*leaked);
+    }
+  #endif
     GC_Kill_Flex(g_gc.manuals);
     g_gc.manuals = nullptr;
 

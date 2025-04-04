@@ -29,6 +29,7 @@ PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 // fast access to Patches for variables in LIB() by SymId.
 //
 PVAR Patch g_lib_patches[MAX_SYM_LIB_PREMADE + 1];  // instances, not pointers
+PVAR Patch g_datatype_patches[NUM_BUILTIN_TYPES + 1];  // instances
 
 PVAR SeaOfVars* g_datatypes_context;  // immutable by user, canon datatypes
 PVAR SeaOfVars* g_lib_context;  // inherits g_datatypes_context

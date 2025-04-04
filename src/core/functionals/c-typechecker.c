@@ -820,6 +820,7 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
 
         Byte type_byte = u_cast(Byte, unwrap t);
         SymId16 id16 = u_cast(SymId16, type_byte) + MIN_SYM_TYPESETS - 1;
+        assert(id16 == type_byte);  // MIN_SYM_TYPESETS should be 1
 
         Copy_Cell(out, Lib_Var(u_cast(SymId, id16)));
         assert(Ensure_Cell_Frame_Details(out));  // need TypesetByte

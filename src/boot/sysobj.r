@@ -36,14 +36,24 @@ https://www.gnu.org/licenses/lgpl-3.0.html
 
 catalog: construct [
     ;
-    ; These catalogs are filled in by Init_System_Object()
+    ; !!! R3-Alpha had several "catalogs" (natives, errors, datatypes, etc.)
+    ; These were just lists.  They served no obvious purpose, however there
+    ; was a purpose--which was to keep them alive from garbage collection.
     ;
-    datatypes: null
-    natives: null
+    ; !!! Natives in LIB need to be locked from modification "except by people
+    ; who really know what they're doing" (and replace the native with
+    ; something compatible that doesn't crash when used as LIB(NATIVE_NAME)).
+    ;
+    ; !!! Datatypes now have their own module (which LIB inherits) that can
+    ; be used as a "catalog" and also keeps them live from GC.
+    ;
+    ; !!! Errors catalog is all that is left.  Review.
+    ;
     errors: null
 ]
 
 contexts: construct [
+    datatypes:
     lib:
     user:
         null

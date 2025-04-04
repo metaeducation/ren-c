@@ -86,7 +86,7 @@ INLINE ExtraHeart* Register_Datatype(const char* name)
 
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
     Init_Word(Stub_Cell(a), symbol);
-    Freeze_Flex(a);
+    Freeze_Source_Deep(a);
 
     Value* datatype = Append_Context(g_datatypes_context, symbol);
     Init_Fence(datatype, a);
@@ -104,17 +104,22 @@ INLINE void Unregister_Datatype(ExtraHeart* extra_heart)
 
 INLINE bool Is_Symbol_Id_Of_Builtin_Type(SymId id) {
     assert(id != SYM_0);
-    return u_cast(SymId16, id) <= u_cast(SymId16, MAX_TYPE_BYTE);
+    return (
+        u_cast(SymId16, id) >= MIN_SYM_BUILTIN_TYPES
+        and u_cast(SymId16, id) <= MAX_SYM_BUILTIN_TYPES
+    );
 }
 
 INLINE Type Type_From_Symbol_Id(SymId id) {
     assert(Is_Symbol_Id_Of_Builtin_Type(id));
-    return u_cast(TypeEnum, id);
+    return u_cast(TypeEnum, id - MIN_SYM_BUILTIN_TYPES + 1);
 }
 
 INLINE SymId Symbol_Id_From_Type(Type type) {
     assert(type != HEART_ENUM(0));
-    return cast(SymId, u_cast(SymId16, u_cast(Byte, type)));
+    return cast(SymId,
+        u_cast(SymId16, u_cast(Byte, type) + MIN_SYM_BUILTIN_TYPES - 1)
+    );
 }
 
 
@@ -130,8 +135,8 @@ INLINE Option(SymId) Cell_Datatype_Id(const Atom* v) {
 
 INLINE Option(Type) Cell_Datatype_Type(const Atom* v) {
     Option(SymId) id = Cell_Datatype_Id(v);
-    if (id and (unwrap id) <= MAX_TYPE_BYTE)
-        return cast(TypeEnum, unwrap id);
+    if (id and Is_Symbol_Id_Of_Builtin_Type(unwrap id))
+        return Type_From_Symbol_Id(unwrap id);
     return TYPE_0;
 }
 
@@ -140,14 +145,16 @@ INLINE Option(Heart) Cell_Datatype_Heart(const Atom* v) {
     if (not id)
         return TYPE_0;
 
-    assert((unwrap id) <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
-    return u_cast(HeartEnum, unwrap id);
+    Byte type_byte = cast(Byte, Type_From_Symbol_Id(unwrap id));
+    assert(type_byte <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
+    return u_cast(HeartEnum, type_byte);
 }
 
 INLINE Heart Cell_Datatype_Builtin_Heart(const Atom* v) {
     Option(SymId) id = Cell_Datatype_Id(v);
-    assert(id and (unwrap id) <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
-    return u_cast(HeartEnum, unwrap id);
+    Byte type_byte = cast(Byte, Type_From_Symbol_Id(unwrap id));
+    assert(type_byte <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
+    return u_cast(HeartEnum, type_byte);
 }
 
 INLINE const ExtraHeart* Cell_Datatype_Extra_Heart(const Atom* v) {
@@ -164,25 +171,6 @@ INLINE const ExtraHeart* Cell_Extra_Heart(const Cell* v) {
     assert(Heart_Of_Is_0(v));
     return c_cast(ExtraHeart*, v->extra.node);
 }
-
-
-// Ren-C uses TYPE-BLOCK! with WORD! for built in datatypes
-//
-INLINE Value* Init_Builtin_Datatype_Untracked(
-    Init(Element) out,
-    Type type
-){
-    assert(type <= MAX_TYPE);
-    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
-
-    Init_Word(Stub_Cell(a), Canon_Symbol(cast(SymId, type)));
-    Init_Fence(out, a);
-    QUOTE_BYTE(out) = ANTIFORM_0_COERCE_ONLY;
-    return out;
-}
-
-#define Init_Builtin_Datatype(out,type) \
-    TRACK(Init_Builtin_Datatype_Untracked((out), (type)))
 
 
 INLINE Value* Init_Extended_Datatype_Untracked(

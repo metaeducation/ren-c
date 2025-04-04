@@ -117,6 +117,7 @@ gather-natives join src-dir %core/
 leaders: [
     native
     logic?
+    moldify  ; want this early so PROBE() works as early as it can!
     antiform?  ; needs to accept unstable antiforms, overwrites auto-gen case
     infix
     any-value?

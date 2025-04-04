@@ -160,9 +160,8 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 static void Startup_Lib(void)
 {
     SeaOfVars* lib = Alloc_Sea_Core(NODE_FLAG_MANAGED);
-    ensure(nullptr, g_lib_module) = Alloc_Element();
-    Init_Module(g_lib_module, lib);
-    ensure(nullptr, g_lib_context) = lib;
+    assert(Link_Inherit_Bind(lib) == nullptr);
+    Tweak_Link_Inherit_Bind(lib, g_datatypes_context);
 
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // leave invalid
 
@@ -174,7 +173,7 @@ static void Startup_Lib(void)
 
         assert(INFO_PATCH_SEA(patch) == nullptr);
         assert(LINK_PATCH_RESERVED(patch) == nullptr);
-        Tweak_Info_Patch_Sea(patch, g_lib_context);
+        Tweak_Info_Patch_Sea(patch, lib);
 
         Symbol* symbol =  &g_symbols.builtin_canons[id];
         assert(Misc_Hitch(symbol) == symbol);  // no module patches yet
@@ -184,7 +183,7 @@ static void Startup_Lib(void)
         Init_Nothing(Stub_Cell(patch));  // start as unset variable
     }
 
-    ensure(nullptr, librebol_binding) = cast(RebolContext*, g_lib_context);
+    ensure(nullptr, g_lib_context) = lib;
 }
 
 
@@ -196,16 +195,14 @@ static void Startup_Lib(void)
 // are Erase_Cell() and that the patches are Erase_Stub() in case the
 // Startup_Core() gets called again.
 //
-// 1. We have a bit of a catch-22, in that the GC does not free the builtin
-//    Lib patches, but it does free the Lib context itself.  So when we are
-//    freeing the patches, if we tried to assert the context was lib then
-//    we'd be comparing to a freed pointer (which trips up some asserts).
-//    Check the pointer integrity in a pre-pass.
+// 1. The managed g_lib_context SeaOfVars was GC'd in Sweep_Stubs() prior to
+//    this function being called.  It wasn't nulled out so it could be used
+//    in an assert here.  BUT...the C spec isn't completely clear on whether
+//    comparing just the value of a free pointer is undefined behavior or not.
+//    Some optimization levels might assume freed pointers are irrelevant and
+//    do something implementation-defined.  (?)  Assume it works.
 //
-// 2. It might be handy to have the stale value of the g_lib_context on hand
-//    when debugging this function.
-//
-// 3. Since the GC never frees the builtin Lib patches, they don't get
+// 2. Since the GC never frees the builtin Lib patches, they don't get
 //    "decayed" and unlinked from the Symbol's hitch list.  Rather than do
 //    a Decay_Stub() here, we can take the opportunity to make sure that
 //    the lib patch really is the last hitch stuck on the symbol (otherwise
@@ -213,22 +210,6 @@ static void Startup_Lib(void)
 //
 static void Shutdown_Lib(void)
 {
-    assert(librebol_binding == g_lib_context);
-    assert(Is_Stub_Sea(g_lib_context));
-    librebol_binding = nullptr;
-
-  #if RUNTIME_CHECKS  // verify patches point to g_lib_context before free [1]
-    for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
-        Patch* patch = &g_lib_patches[id];
-        assert(Info_Patch_Sea(patch) == g_lib_context);
-    }
-  #endif
-
-    rebReleaseAndNull(&g_lib_module);
-    dont(g_lib_context = nullptr);  // do this at end of function [2]
-
-    Sweep_Stubs();  // free all managed Stubs so Lib is all that's left [3]
-
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));
 
     for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
@@ -236,21 +217,21 @@ static void Shutdown_Lib(void)
 
         Force_Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrite PROTECT
 
-        dont(assert(Info_Patch_Sea(patch) == g_lib_context));  // freed
-        INFO_PATCH_SEA(patch) = nullptr;  // we already checked it [1]
+        assert(INFO_PATCH_SEA(patch) == g_lib_context);  // note: freed [1]
+        INFO_PATCH_SEA(patch) = nullptr;
 
         assert(LINK_PATCH_RESERVED(patch) == nullptr);
 
         Symbol* symbol = &g_symbols.builtin_canons[id];
 
-        assert(Misc_Hitch(patch) == symbol);
+        assert(Misc_Hitch(patch) == symbol);  // assert no other patches [2]
         assert(Misc_Hitch(symbol) == patch);
         Tweak_Misc_Hitch(symbol, symbol);
 
         Erase_Stub(patch);
     }
 
-    g_lib_context = nullptr;  // do this last to have freed value on hand [2]
+    g_lib_context = nullptr;  // do this last to have freed value on hand [1]
 }
 
 
@@ -470,8 +451,6 @@ static void Shutdown_Root_Vars(void)
 //
 static void Init_System_Object(
     const Element* boot_sysobj_spec,
-    Source* datatypes_catalog,
-    Source* natives_catalog,
     VarList* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
@@ -530,10 +509,8 @@ static void Init_System_Object(
         )
     );
 
-    // Create SYSTEM.CATALOG.* for datatypes, natives, generics, errors
+    // Store pointer to errors catalog (for GC protection)
     //
-    Init_Block(Get_System(SYS_CATALOG, CAT_DATATYPES), datatypes_catalog);
-    Init_Block(Get_System(SYS_CATALOG, CAT_NATIVES), natives_catalog);
     Init_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errors_catalog);
 
     // Create SYSTEM.CODECS object
@@ -646,6 +623,14 @@ void Startup_Core(void)
         Symbol_Strings_Compressed_Size
     );
 
+  //=//// MAKE DATATYPES MODULE AND VARIABLES FOR BUILT-IN TYPES //////////=//
+
+    // Builtin datatypes no longer live in LIB, but in SYS.CONTEXTS.DATATYPES
+    // which is inherited by LIB.  This is also where extension datatypes are
+    // put, so that the module Patch can serve as the canon ExtraHeart.
+
+    Startup_Datatypes();
+
   //=//// MAKE LIB MODULE AND VARIABLES FOR BUILT-IN SYMBOLS //////////////=//
 
     // For many of the built-in symbols, we know there will be variables in
@@ -664,6 +649,21 @@ void Startup_Core(void)
     // code to collect the variables before running it.
 
     Startup_Lib();
+
+  //=//// MAKE API HANDLES TO GC PROTECT LIB AND DATATYPES ///////////////=//
+
+    ensure(nullptr, g_datatypes_module) = Alloc_Element();
+    Init_Module(g_datatypes_module, g_datatypes_context);
+
+    ensure(nullptr, g_lib_module) = Alloc_Element();
+    Init_Module(g_lib_module, g_lib_context);
+
+  //=//// INITIALIZE THE API BINDING FOR CORE /////////////////////////////=//
+
+    // If you call a librebol API function from an arbitrary point in the
+    // core, it will do its lookups in the lib context.
+
+    ensure(nullptr, librebol_binding) = g_lib_context;
 
   //=//// CREATE GLOBAL OBJECTS ///////////////////////////////////////////=//
 
@@ -720,6 +720,10 @@ void Startup_Core(void)
         Array_Head(Cell_Array_Known_Mutable(Array_Head(boot_array)))
     );
 
+    Source* typespecs = Cell_Array_Known_Mutable(&boot->typespecs);
+    assert(Array_Len(typespecs) == MAX_TYPE_BYTE);  // exclude TYPE_0 (custom)
+    UNUSED(typespecs);  // not used at this time
+
     // Symbol_Id(), Cell_Word_Id() and CANON(XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
@@ -763,13 +767,7 @@ void Startup_Core(void)
     // undefined.  And while analyzing the function specs during the
     // definition of natives, things like the <maybe> tag are needed as a
     // basis for comparison to see if a usage matches that.
-
-    Source* datatypes_catalog = Startup_Datatypes(
-        Cell_Array_Known_Mutable(&boot->typespecs)
-    );
-    Manage_Flex(datatypes_catalog);
-    Push_Lifeguard(datatypes_catalog);
-
+    //
     // Startup_Type_Predicates() uses symbols, data stack, and adds words
     // to lib--not available until this point in time.
     //
@@ -780,9 +778,7 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
 
-    Source* natives_catalog = Startup_Natives(&boot->natives);
-    Manage_Flex(natives_catalog);
-    Push_Lifeguard(natives_catalog);
+    Startup_Natives(&boot->natives);
 
   //=//// STARTUP CONSTANTS (like NULL, BLANK, etc.) //////////////////////=//
 
@@ -812,16 +808,9 @@ void Startup_Core(void)
     Push_Lifeguard(errors_catalog);
 
     Tweak_Cell_Binding(&boot->sysobj, g_lib_context);
-    Init_System_Object(
-        &boot->sysobj,
-        datatypes_catalog,
-        natives_catalog,
-        errors_catalog
-    );
+    Init_System_Object(&boot->sysobj, errors_catalog);
 
     Drop_Lifeguard(errors_catalog);
-    Drop_Lifeguard(natives_catalog);
-    Drop_Lifeguard(datatypes_catalog);
 
     PG_Boot_Phase = BOOT_ERRORS;
 
@@ -859,6 +848,7 @@ void Startup_Core(void)
     // something tries to use it before startup finishes.
 
   blockscope {
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_DATATYPES), g_datatypes_module);
     Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), g_lib_module);
     RebolValue* tripwire = rebValue(
         "~<SYS.CONTEXTS.USER not available: Mezzanine Startup not finished>~"
@@ -1065,8 +1055,6 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Natives();
 
-    Shutdown_Datatypes();
-
     rebReleaseAndNull(&g_sys_util_module);
     g_sys_util_context = nullptr;
 
@@ -1076,7 +1064,32 @@ void Shutdown_Core(bool clean)
     Shutdown_Action_Spec_Tags();
     Shutdown_Root_Vars();
 
+  //=//// SHUTDOWN THE API BINDING FOR CORE //////////////////////////////=//
+
+    assert(librebol_binding == g_lib_context);
+    librebol_binding = nullptr;
+
+  //=//// FREE API HANDLES PROTECTING DATATYPES AND LIB, SWEEP STUBS //////=//
+
+    rebReleaseAndNull(&g_lib_module);
+    dont(g_lib_context = nullptr);  // do at end of Shutdown_Lib()
+
+    rebReleaseAndNull(&g_datatypes_module);
+    dont(g_datatypes_context = nullptr);  // do at end of Shutdown_Datatypes()
+
+    Sweep_Stubs();  // free all managed Stubs, no more GC [1]
+
+  //=//// SHUTDOWN LIB AND DATATYPES //////////////////////////////////////=//
+
+    // The lib module and datatypes module both have premade stubs that are
+    // not subject to garbage collection.  This means that after all the
+    // managed Stubs are released, Shutdown_Datatypes() and Shutdown_Lib()
+    // have to manually free the premade stubs.
+
     Shutdown_Lib();
+    Shutdown_Datatypes();
+
+  //=//////////////////////////////////////////////////////////////////////=//
 
     Shutdown_Builtin_Symbols();
     Shutdown_Interning();

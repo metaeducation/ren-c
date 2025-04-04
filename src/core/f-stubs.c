@@ -207,8 +207,8 @@ REBI64 Int64s(const Value* val, REBINT sign)
 const Value* Datatype_From_Type(Type type)
 {
     assert(type <= MAX_TYPE);
-    SymId id = u_cast(SymId, type);
-    const Value* datatype = Lib_Var(id);  // should always succeed
+    Patch* patch = &g_datatype_patches[cast(Byte, type)];
+    const Value* datatype = c_cast(Value*, Stub_Cell(patch));
     assert(Is_Datatype(datatype));
     return datatype;
 }

@@ -4,7 +4,7 @@
 ; SET and GET should see through escaping and work anyway
 
 ; HEART is how you get the lower-level type out
-(
+[
     (quoted! = type of first ['''10])
     (integer! = heart of first ['''10])
 
@@ -13,7 +13,7 @@
 
     (quoted! = type of first ['~()~])
     (group! = heart of first ['~()~])
-)
+]
 
 (
     a: ~

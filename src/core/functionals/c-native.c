@@ -498,14 +498,12 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 // 1. See Startup_Lib() for how all the declarations in LIB for the natives
 //    are made in a pre-pass (no need to walk and look for set-words etc.)
 //
-Source* Startup_Natives(const Element* boot_natives)
+void Startup_Natives(const Element* boot_natives)
 {
     Context* lib = g_lib_context;  // native variables already exist [1]
 
     assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
     assert(Cell_Binding(boot_natives) == UNBOUND);
-
-    Source* catalog = Make_Source(g_num_core_natives);
 
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
@@ -591,8 +589,6 @@ Source* Startup_Natives(const Element* boot_natives)
     Count num_find_args = Phase_Num_Params(Cell_Frame_Phase(LIB(FIND)));
     assert(num_find_args == Phase_Num_Params(Cell_Frame_Phase(LIB(SELECT))));
   #endif
-
-    return catalog;
 }
 
 
