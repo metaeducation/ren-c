@@ -143,13 +143,17 @@ DECLARE_NATIVE(LAMBDA)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details = Make_Interpreted_Action_May_Fail(
+    Details* details;
+    Option(Error*) e = Trap_Make_Interpreted_Action(
+        &details,
         spec,
         body,
         SYM_0,  // no RETURN: in the paramlist
         &Lambda_Dispatcher,
         MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
     );
+    if (e)
+        return FAIL(unwrap e);
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }

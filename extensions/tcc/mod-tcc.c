@@ -280,12 +280,16 @@ DECLARE_NATIVE(MAKE_NATIVE)
     Element* source = Element_ARG(SOURCE);
 
     VarList* adjunct;
-    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist;
+    Option(Error*) e = Trap_Make_Paramlist_Managed(
+        &paramlist,
         &adjunct,
         spec,
         MKF_MASK_NONE,
         SYM_RETURN  // want return
     );
+    if (e)
+        return FAIL(unwrap e);
 
     Details* details = Make_Dispatch_Details(
         DETAILS_FLAG_OWNS_PARAMLIST,

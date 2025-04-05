@@ -194,13 +194,17 @@ DECLARE_NATIVE(MACRO)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details = Make_Interpreted_Action_May_Fail(
+    Details* details;
+    Option(Error*) e = Trap_Make_Interpreted_Action(
+        &details,
         spec,
         body,
         SYM_RETURN,
         &Macro_Dispatcher,
         MAX_IDX_MACRO  // details capacity, just body slot (and archetype)
     );
+    if (e)
+        return FAIL(unwrap e);
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }

@@ -314,7 +314,7 @@ bool Func_Details_Querier(
 
 
 //
-//  Make_Interpreted_Action_May_Fail: C
+//  Trap_Make_Interpreted_Action: C
 //
 // This digests the spec block into a `paramlist` for parameter descriptions,
 // along with an associated `keylist` of the names of the parameters and
@@ -334,7 +334,8 @@ bool Func_Details_Querier(
 //        >> f
 //        == []
 //
-Details* Make_Interpreted_Action_May_Fail(
+Option(Error*) Trap_Make_Interpreted_Action(
+    Sink(Details*) out,
     const Element* spec,
     const Element* body,
     Option(SymId) returner,  // SYM_RETURN, SYM_YIELD, SYM_0 ...
@@ -345,12 +346,16 @@ Details* Make_Interpreted_Action_May_Fail(
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
     VarList* adjunct;
-    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist;
+    Option(Error*) e = Trap_Make_Paramlist_Managed(
+        &paramlist,
         &adjunct,
         spec,
         MKF_MASK_NONE,
         returner
     );
+    if (e)
+        return e;
 
     Flags details_flags = DETAILS_FLAG_OWNS_PARAMLIST;
 
@@ -392,7 +397,8 @@ Details* Make_Interpreted_Action_May_Fail(
     if (Get_Cell_Flag(body, CONST))  // capture mutability flag [2]
         Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Value*
 
-    return details;
+    *out = details;
+    return nullptr;  // no error
 }
 
 
@@ -415,13 +421,17 @@ DECLARE_NATIVE(FUNCTION)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details = Make_Interpreted_Action_May_Fail(
+    Details* details;
+    Option(Error*) e = Trap_Make_Interpreted_Action(
+        &details,
         spec,
         body,
         SYM_RETURN,  // has a RETURN: in the paramlist
         &Func_Dispatcher,
         MAX_IDX_FUNC  // archetype and one array slot (will be filled)
     );
+    if (e)
+        return FAIL(unwrap e);
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }

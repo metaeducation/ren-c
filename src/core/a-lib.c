@@ -3139,12 +3139,16 @@ RebolValue* API_rebFunctionFlipped(
         Tweak_Cell_Binding(spec, g_lib_context);  // !!! needs module isolation
 
     VarList* adjunct;
-    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist;
+    Option(Error*) e = Trap_Make_Paramlist_Managed(
+        &paramlist,
         &adjunct,
         spec,
         MKF_MASK_NONE,
         SYM_RETURN  // has return for type checking and continuation use
     );
+    if (e)
+        fail (unwrap e);
 
     Details* details = Make_Dispatch_Details(
         DETAILS_FLAG_OWNS_PARAMLIST |

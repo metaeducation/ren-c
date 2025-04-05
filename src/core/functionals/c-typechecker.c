@@ -162,12 +162,16 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     Init_Block(spec, spec_array);
 
     VarList* adjunct;
-    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist;
+    Option(Error*) e = Trap_Make_Paramlist_Managed(
+        &paramlist,
         &adjunct,
         spec,
         MKF_MASK_NONE,
         SYM_0  // return type for all typecheckers is the same [3]
     );
+    if (e)
+        fail (unwrap e);  // should never happen
     assert(adjunct == nullptr);
 
     Details* details = Make_Dispatch_Details(

@@ -105,7 +105,7 @@ DECLARE_NATIVE(DONE_Q) {
 
 
 enum {
-    IDX_YIELDER_BODY = IDX_INTERPRETED_BODY,  // see Make_Interpreted_Action()
+    IDX_YIELDER_BODY = IDX_INTERPRETED_BODY,  // Trap_Make_Interpreted_Action()
     IDX_YIELDER_ORIGINAL_FRAME,  // varlist identity to steal on resume
     IDX_YIELDER_PLUG,  // saved when you YIELD (captures data stack etc.)
     IDX_YIELDER_META_YIELDED,  // the argument YIELD was passed
@@ -512,13 +512,17 @@ DECLARE_NATIVE(YIELDER)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details = Make_Interpreted_Action_May_Fail(
+    Details* details;
+    Option(Error*) e = Trap_Make_Interpreted_Action(
+        &details,
         spec,
         body,  // relativized and put in Details array at IDX_YIELDER_BODY
         SYM_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)
         &Yielder_Dispatcher,
         MAX_IDX_YIELDER  // details array capacity
     );
+    if (e)
+        return FAIL(unwrap e);
 
     assert(Is_Block(Details_At(details, IDX_YIELDER_BODY)));
     Init_Unreadable(Details_At(details, IDX_YIELDER_ORIGINAL_FRAME));

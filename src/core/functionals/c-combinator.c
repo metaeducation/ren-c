@@ -246,19 +246,23 @@ DECLARE_NATIVE(COMBINATOR)
     Element* body = Element_ARG(BODY);
 
     // This creates the expanded spec and puts it in a block which manages it.
-    // That might not be needed if the Make_Paramlist_Managed() could take an
-    // array and an index.
+    // That might not be needed if the Trap_Make_Paramlist_Managed() could take
+    // an array and an index.
     //
     Sink(Element) expanded_spec = SCRATCH;
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
     VarList* adjunct;
-    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist;
+    Option(Error*) e = Trap_Make_Paramlist_Managed(
+        &paramlist,
         &adjunct,
         expanded_spec,
         MKF_MASK_NONE,
         SYM_RETURN  // want RETURN:
     );
+    if (e)
+        return FAIL(unwrap e);
 
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,

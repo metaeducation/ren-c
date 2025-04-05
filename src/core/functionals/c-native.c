@@ -60,7 +60,7 @@ bool Raw_Native_Details_Querier(
 
 
 //
-//  Make_Native_Dispatch_Details: C
+//  Trap_Make_Native_Dispatch_Details: C
 //
 // Reused function in Startup_Natives() as well as extensions loading natives,
 // which can be parameterized with a different context in which to look up
@@ -81,7 +81,8 @@ bool Raw_Native_Details_Querier(
 // native index is being loaded, which is non-obvious.  But these issues
 // could be addressed (e.g. by passing the native index number / DLL in).
 //
-Details* Make_Native_Dispatch_Details(
+Option(Error*) Trap_Make_Native_Dispatch_Details(
+    Sink(Details*) out,
     Element* spec,
     NativeType native_type,
     Dispatcher* dispatcher
@@ -89,8 +90,8 @@ Details* Make_Native_Dispatch_Details(
     // There are implicit parameters to both NATIVE:COMBINATOR and usermode
     // COMBINATOR.  The native needs the full spec.
     //
-    // !!! Note: This will manage the combinator's array.  Changing this would
-    // need a version of Make_Paramlist_Managed() which took an array + index
+    // !!! Note: Will manage the combinator's array.  Changing this would need
+    // a version of Trap_Make_Paramlist_Managed() which took an array + index
     //
     DECLARE_ELEMENT (expanded_spec);
     if (native_type == NATIVE_COMBINATOR) {
@@ -106,12 +107,17 @@ Details* Make_Native_Dispatch_Details(
     StackIndex base = TOP_INDEX;
 
     VarList* adjunct;
-    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist;
+    Option(Error*) e = Trap_Make_Paramlist_Managed(
+        &paramlist,
         &adjunct,
         spec,
         MKF_DONT_POP_RETURN,  // we put it in Details, not ParamList
         SYM_RETURN  // native RETURN: types checked only if RUNTIME_CHECKS
     );
+    if (e)
+        return e;
+
     Assert_Flex_Term_If_Needed(paramlist);
 
     Flags details_flags = (
@@ -169,7 +175,8 @@ Details* Make_Native_Dispatch_Details(
         UNUSED(param);
     }
 
-    return details;
+    *out = details;
+    return nullptr;  // no error
 }
 
 
@@ -219,11 +226,16 @@ DECLARE_NATIVE(NATIVE)
         rebRelease(action);
     }
     else {
-        Details* details = Make_Native_Dispatch_Details(
+        Details* details;
+        Option(Error*) e = Trap_Make_Native_Dispatch_Details(
+            &details,
             spec,
             native_type,
             cast(Dispatcher*, cfunc)
         );
+        if (e)
+            return FAIL(unwrap e);
+
         Init_Action(OUT, details, ANONYMOUS, UNBOUND);
     }
 
@@ -466,7 +478,7 @@ Bounce Run_Generic_Dispatch(
 //
 //  Init_Action_Adjunct_Shim: C
 //
-// Make_Paramlist_Managed_May_Fail() needs the object archetype ACTION-ADJUNCT
+// Trap_Make_Paramlist_Managed() needs the object archetype ACTION-ADJUNCT
 // from %sysobj.r, to have the keylist to use in generating the info used
 // by HELP for the natives.  However, natives themselves are used in order
 // to run the object construction in %sysobj.r
@@ -508,7 +520,7 @@ void Startup_Natives(const Element* boot_natives)
     assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
     assert(Cell_Binding(boot_natives) == UNBOUND);
 
-    // Must be called before first use of Make_Paramlist_Managed_May_Fail()
+    // Must be called before first use of Trap_Make_Paramlist_Managed()
     //
     Init_Action_Adjunct_Shim();
 
@@ -542,11 +554,16 @@ void Startup_Natives(const Element* boot_natives)
     Derelativize(spec, at, lib);
     ++at;
 
-    Details* the_native_details = Make_Native_Dispatch_Details(
+    Details* the_native_details;
+    Option(Error*) e = Trap_Make_Native_Dispatch_Details(
+        &the_native_details,
         spec,
         NATIVE_NORMAL,  // not a combinator or intrinsic
         cast(Dispatcher*, *g_native_cfunc_pos)
     );
+    if (e)
+        panic (unwrap e);
+
     ++g_native_cfunc_pos;
 
     Init_Action(
