@@ -264,6 +264,14 @@ gen-obj: func [
 
     append flags <msc:/FC>  ; absolute paths for error messages
 
+    ; Ren-C uses labels stylistically to denote sections of code which may
+    ; or may not be jumped to.  This is purposeful, and deemed to be more
+    ; important than being warned when a goto label is unused.  It's a
+    ; sacrifice in rigor, but makes things elegant.
+    ;
+    append flags <msc:/wd4102>
+    append flags <gnu:-Wno-unused-label>
+
     ; Microsoft shouldn't bother having the C warning that foo() in standard
     ; C doesn't mean the same thing as foo(void), when in their own published
     ; headers (ODBC, Windows.h) they treat them interchangeably.  See for
