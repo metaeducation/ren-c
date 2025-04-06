@@ -51,6 +51,24 @@
 #define CELL_HANDLE_NODE_P(c)           (c)->payload.split.two.node
 
 
+#define MISC_HANDLE_CLEANER(stub)       (stub)->misc.cfunc
+
+INLINE Option(HandleCleaner*) Handle_Cleaner(Stub* handle_stub) {
+    assert(Stub_Flavor(handle_stub) == FLAVOR_HANDLE);
+    assert(Get_Stub_Flag(handle_stub, CLEANS_UP_BEFORE_GC_DECAY));
+    return cast(HandleCleaner*, MISC_HANDLE_CLEANER(handle_stub));
+}
+
+INLINE void Tweak_Handle_Cleaner(
+    Stub* handle_stub,
+    Option(HandleCleaner*) cleaner
+){
+    assert(Stub_Flavor(handle_stub) == FLAVOR_HANDLE);
+    assert(Get_Stub_Flag(handle_stub, CLEANS_UP_BEFORE_GC_DECAY));
+    MISC_HANDLE_CLEANER(handle_stub) = cast(CFunction*, maybe cleaner);
+}
+
+
 INLINE bool Is_Handle_Cfunc(const Cell* v) {
     assert(Cell_Heart_Unchecked(v) == TYPE_HANDLE);
     return CELL_HANDLE_LENGTH_U(v) == 0;
@@ -101,12 +119,12 @@ INLINE CFunction* Cell_Handle_Cfunc(const Cell* v) {
     return CELL_HANDLE_CFUNC_P(Extract_Cell_Handle_Canon(v));
 }
 
-INLINE Option(RebolHandleCleaner*) Cell_Handle_Cleaner(const Cell* v) {
+INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Cell* v) {
     assert(Cell_Heart_Unchecked(v) == TYPE_HANDLE);
     if (not Cell_Has_Node1(v))
         return nullptr;
     Stub* stub = Extract_Cell_Handle_Stub(v);
-    return stub->misc.handle_cleaner;
+    return Handle_Cleaner(stub);
 }
 
 INLINE void Tweak_Cell_Handle_Len(Cell* v, uintptr_t length)
@@ -174,14 +192,14 @@ INLINE Element* Init_Handle_Node(
 INLINE void Init_Handle_Managed_Common(
     Init(Element) out,
     uintptr_t length,
-    Option(RebolHandleCleaner*) cleaner
+    Option(HandleCleaner*) cleaner
 ){
     Stub* stub = Make_Untracked_Stub(
         FLAG_FLAVOR(HANDLE)
-            | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  // calls the handle_cleaner
+            | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  // calls the HandleCleaner
             | NODE_FLAG_MANAGED);
 
-    stub->misc.handle_cleaner = cleaner;  // see FLAVOR_HANDLE in Diminish_Stub()
+    Tweak_Handle_Cleaner(stub, cleaner);  // FLAVOR_HANDLE in Diminish_Stub()
 
     Cell* single = Stub_Cell(stub);
     Reset_Cell_Header_Noquote(
@@ -215,7 +233,7 @@ INLINE Element* Init_Handle_Cdata_Managed(
     Init(Element) out,
     void *cdata,
     uintptr_t length,
-    Option(RebolHandleCleaner*) cleaner
+    Option(HandleCleaner*) cleaner
 ){
     Init_Handle_Managed_Common(out, length, cleaner);
 
@@ -229,7 +247,7 @@ INLINE Element* Init_Handle_Cdata_Managed(
 INLINE Element* Init_Handle_Cfunc_Managed(
     Init(Element) out,
     CFunction* cfunc,
-    Option(RebolHandleCleaner*) cleaner
+    Option(HandleCleaner*) cleaner
 ){
     Init_Handle_Managed_Common(out, 0, cleaner);
 
@@ -243,7 +261,7 @@ INLINE Element* Init_Handle_Cfunc_Managed(
 INLINE Element* Init_Handle_Node_Managed(
     Init(Element) out,
     const Node* node,
-    Option(RebolHandleCleaner*) cleaner
+    Option(HandleCleaner*) cleaner
 ){
     Init_Handle_Managed_Common(out, 1, cleaner);
 

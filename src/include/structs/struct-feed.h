@@ -159,7 +159,7 @@ STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 typedef struct FeedStruct Feed;
 
 struct FeedStruct {
-    union HeaderUnion flags;  // quoting level included
+    HeaderUnion flags;  // quoting level included
 
     // This is the "prefetched" value being processed.  Entry points to the
     // evaluator must load a first value pointer into it...which for any

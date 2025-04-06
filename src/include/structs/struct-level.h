@@ -288,7 +288,7 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     // Note: In order to use the memory pools, this must be in first position,
     // and it must not have the NODE_FLAG_UNREADABLE bit set when in use.
     //
-    union HeaderUnion flags;
+    HeaderUnion flags;
 
     // This is the source from which new values will be fetched.  In addition
     // to working with an array, it is also possible to feed the evaluator

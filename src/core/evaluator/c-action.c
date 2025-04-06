@@ -855,7 +855,7 @@ Bounce Action_Executor(Level* L)
     Details* details = Ensure_Level_Details(L);  // guaranteed Details [1]
     Dispatcher* dispatcher = Details_Dispatcher(details);
 
-    Bounce b = (*dispatcher)(L);
+    Bounce b = Apply_Cfunc(dispatcher, L);
 
     if (b == OUT) {  // common case, made fastest
         assert(Is_Cell_Readable(OUT));  // must write output, even if just void

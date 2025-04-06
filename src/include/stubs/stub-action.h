@@ -121,10 +121,10 @@ INLINE Param* Phase_Params_Head(Phase* p) {
 }
 
 INLINE Dispatcher* Details_Dispatcher(Details* details)
-  { return LINK_DETAILS_DISPATCHER(details); }
+  { return cast(Dispatcher*, LINK_DETAILS_DISPATCHER(details)); }
 
 INLINE void Tweak_Details_Dispatcher(Details* details, Dispatcher* dispatcher)
- { LINK_DETAILS_DISPATCHER(details) = dispatcher; }
+ { LINK_DETAILS_DISPATCHER(details) = cast(CFunction*, dispatcher); }
 
 
 // The Array is the details identity itself.

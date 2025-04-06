@@ -850,7 +850,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
     // routines that do calculations operate on the content as a whole, not
     // the Stub, so the content is extracted either way.
     //
-    union StubContentUnion content_old;
+    StubContentUnion content_old;
     REBINT bias_old;
     REBLEN size_old;
     char *data_old;
@@ -860,7 +860,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         size_old = Flex_Total(f);
     }
     else {
-        Mem_Copy(&content_old, &f->content, sizeof(union StubContentUnion));
+        Mem_Copy(&content_old, &f->content, sizeof(StubContentUnion));
         data_old = cast(char*, &content_old);
     }
 
@@ -1023,7 +1023,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
     // updating preservation.)
 
     char *data_old;
-    union StubContentUnion content_old;
+    StubContentUnion content_old;
     if (was_dynamic) {
         assert(f->content.dynamic.data != nullptr);
         data_old = f->content.dynamic.data;
@@ -1031,7 +1031,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
         size_old = Flex_Total(f);
     }
     else {
-        Mem_Copy(&content_old, &f->content, sizeof(union StubContentUnion));
+        Mem_Copy(&content_old, &f->content, sizeof(StubContentUnion));
         data_old = cast(char*, &content_old);
     }
 
@@ -1125,13 +1125,13 @@ Stub* Diminish_Stub(Stub* s)
       case FLAVOR_HANDLE: {  // managed HANDLE! has FLAVOR_HANDLE Stub
         RebolValue* v = cast(RebolValue*, Stub_Cell(s));
         assert(Type_Of(v) == TYPE_HANDLE);
-        if (s->misc.handle_cleaner)  // takes Cell [2]
-            (unwrap s->misc.handle_cleaner)(v);
+        Option(HandleCleaner*) cleaner = Handle_Cleaner(s);
+        if (cleaner)  // takes Cell [2]
+            Apply_Cfunc(unwrap cleaner, v);
         break; }
 
       default:  // flavors that clean, but CAN spare misc [1]
-        assert(s->misc.stub_cleaner != nullptr);  // disallow nullptr [3]
-        (s->misc.stub_cleaner)(s);
+        Apply_Cfunc(*Stub_Cleaner(s), s);
         break;
     }
 

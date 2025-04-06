@@ -1694,7 +1694,7 @@ DECLARE_NATIVE(MAP_EACH)
     Tweak_Level_Coupling(LEVEL, Cell_Frame_Coupling(map_action));
 
     Dispatcher* dispatcher = Details_Dispatcher(details);
-    return (*dispatcher)(LEVEL);
+    return Apply_Cfunc(dispatcher, LEVEL);
 }
 
 

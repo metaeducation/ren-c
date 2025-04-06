@@ -270,7 +270,7 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
 // the DEBUG_USE_BITFIELD_HEADER_PUNS flag should be set with caution.
 //
 #if DEBUG_USE_BITFIELD_HEADER_PUNS
-    struct StubHeaderPun {
+    typedef struct {
         int _07_marked:1;
         int _06_root:1;
         int _05_managed:1;
@@ -299,9 +299,9 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
         int _26_subclass:1;
         int _25_subclass:1;
         int _24_subclass:1;
-    }__attribute__((packed));
+    } __attribute__((packed)) StubHeaderPun;
 
-    struct InfoHeaderPun {
+    typedef struct {
         int _07_flag_07:1;
         int _06_frozen_shallow:1;
         int _05_hold:1;
@@ -314,9 +314,9 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
         unsigned int _08to15_used:8;
 
         unsigned int _16to31_symid_if_sym:8;
-    }__attribute__((packed));
+    } __attribute__((packed)) InfoHeaderPun;
 
-    struct CellHeaderPun {
+    typedef struct {
         int _07_marked:1;
         int _06_root:1;
         int _05_managed:1;
@@ -338,7 +338,7 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
         int _26_flag_26:1;
         int _25_flag_25:1;
         int _24_const:1;
-    }__attribute__((packed));
+    } __attribute__((packed)) CellHeaderPun;
 #endif
 
 
@@ -361,7 +361,7 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
 // https://en.wikipedia.org/wiki/UTF-8#Codepage_layout
 //
 
-union HeaderUnion {
+typedef union {
     //
     // unsigned integer that's the size of a platform pointer (e.g. 32-bits on
     // 32 bit platforms and 64-bits on 64 bit machines).  See macros like
@@ -386,9 +386,9 @@ union HeaderUnion {
     char chars_pun[4];
 
     #if DEBUG_USE_BITFIELD_HEADER_PUNS
-        struct StubHeaderPun stub_pun;
-        struct CellHeaderPun cell_pun;
-        struct InfoHeaderPun info_pun;
+        StubHeaderPun stub_pun;
+        CellHeaderPun cell_pun;
+        InfoHeaderPun info_pun;
     #endif
   #endif
-};
+} HeaderUnion;

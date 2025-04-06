@@ -88,7 +88,7 @@ Bounce Combinator_Dispatcher(Level* L)
         Dispatcher* dispatcher = Details_Dispatcher(
             cast(Details*, Cell_Frame_Phase(body))
         );
-        b = (*dispatcher)(L);
+        b = Apply_Cfunc(dispatcher, L);
     }
     else {  // usermode COMBINATOR
         assert(Is_Block(body));

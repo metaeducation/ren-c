@@ -583,6 +583,9 @@
     typedef void (CFunction)(void);
 #endif
 
+#define Apply_Cfunc(cfunc, ...)  /* make calls clearer at callsites */ \
+    (*(cfunc))(__VA_ARGS__)
+
 
 //=//// TESTING IF A NUMBER IS FINITE /////////////////////////////////////=//
 //

@@ -112,7 +112,13 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 #define SPARE_PROXY     x_cast(Atom*, LIB(BLANK))
 #define SCRATCH_PROXY   x_cast(Atom*, LIB(NULL))
 
-#define PLUG_SUSPENDED_LEVEL(plug)   (plug)->link.level
+#define PLUG_SUSPENDED_LEVEL(plug)   (plug)->link.p
+
+INLINE Level* Plug_Suspended_Level(const Array* plug)
+  { return cast(Level*, PLUG_SUSPENDED_LEVEL(plug)); }
+
+INLINE void Tweak_Plug_Suspended_Level(Array* plug, Level* L)
+  { PLUG_SUSPENDED_LEVEL(plug) = L; }
 
 // Depending on whether they have state to restore (mold buffers, data stacks,
 // or spare and scratch cells), plugs may have an array of data.  It's
@@ -123,7 +129,7 @@ static Level* Level_Of_Plug(const Value* plug) {
     if (Handle_Holds_Node(plug)) {
         const Array* a = c_cast(Array*, Cell_Handle_Node(plug));
         assert(Stub_Flavor(a) == FLAVOR_DATASTACK);
-        return PLUG_SUSPENDED_LEVEL(a);
+        return Plug_Suspended_Level(a);
     }
 
     return Cell_Handle_Pointer(Level, plug);
@@ -288,7 +294,7 @@ void Unplug_Stack(
             flags | FLAG_FLAVOR(DATASTACK) | NODE_FLAG_MANAGED,
             base->baseline.stack_base
         );
-        PLUG_SUSPENDED_LEVEL(a) = L;
+        Tweak_Plug_Suspended_Level(a, L);
         Init_Handle_Node_Managed(plug, a, &Clean_Plug_Handle);
     }
     assert(L == Level_Of_Plug(plug));

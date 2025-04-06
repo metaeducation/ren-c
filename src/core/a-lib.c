@@ -910,7 +910,7 @@ void API_rebModifyHandleCleaner(
         fail ("rebModifyHandleCleaner() called on non-HANDLE!");
 
     Stub* stub = Extract_Cell_Handle_Stub(v);  // api only sees managed handles
-    stub->misc.handle_cleaner = opt_cleaner;
+    Tweak_Handle_Cleaner(stub, cast(Option(RebolHandleCleaner*), opt_cleaner));
 }
 
 

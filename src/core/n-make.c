@@ -125,7 +125,7 @@ DECLARE_NATIVE(COPY)
     }
 
     if (quote_byte == NOQUOTE_1)  // don't have to requote/etc.
-        return (*(unwrap dispatcher))(LEVEL);
+        return Apply_Cfunc(unwrap dispatcher, LEVEL);
 
     Option(const Symbol*) label = Level_Label(level_);
     Option(VarList*) coupling = Level_Coupling(level_);

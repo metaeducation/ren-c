@@ -97,10 +97,10 @@ INLINE void Erase_Stub(Stub* s) {
     (((f)->leader.bits & STUB_FLAG_##name) == 0)
 
 #define Set_Stub_Flag(f,name) \
-    m_cast(union HeaderUnion*, &(f)->leader)->bits |= STUB_FLAG_##name
+    m_cast(HeaderUnion*, &(f)->leader)->bits |= STUB_FLAG_##name
 
 #define Clear_Stub_Flag(f,name) \
-    m_cast(union HeaderUnion*, &(f)->leader)->bits &= ~STUB_FLAG_##name
+    m_cast(HeaderUnion*, &(f)->leader)->bits &= ~STUB_FLAG_##name
 
 
 //=//// STUB FLAVOR ACCESSORS /////////////////////////////////////////////=//
@@ -203,12 +203,12 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
         & subclass##_FLAG_##name) == 0)
 
 #define Set_Flavor_Flag(subclass,stub,name) \
-    m_cast(union HeaderUnion*, /* [1] */ \
+    m_cast(HeaderUnion*, /* [1] */ \
         &ensure_flavor(FLAVOR_##subclass, (stub))->leader)->bits \
         |= subclass##_FLAG_##name
 
 #define Clear_Flavor_Flag(subclass,stub,name)\
-    m_cast(union HeaderUnion*, /* [1] */ \
+    m_cast(HeaderUnion*, /* [1] */ \
         &ensure_flavor(FLAVOR_##subclass, (stub))->leader)->bits \
         &= ~subclass##_FLAG_##name
 
@@ -403,3 +403,24 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
 #define STUB_MISC_UNMANAGED(s)  (s)->misc.node
 #define STUB_INFO_UNMANAGED(s)  (s)->info.node
 #define STUB_BONUS_UNMANAGED(s) (s)->content.dynamic.bonus.node
+
+
+//=//// STUB CLEANER //////////////////////////////////////////////////////=//
+//
+// See STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY for more information.
+//
+
+typedef void (StubCleaner)(Stub*);
+
+#define MISC_STUB_CLEANER(s)  (s)->misc.cfunc
+
+INLINE StubCleaner* Stub_Cleaner(const Stub* s) {
+    assert(Get_Stub_Flag(s, CLEANS_UP_BEFORE_GC_DECAY));
+    assert(MISC_STUB_CLEANER(s) != nullptr);
+    return cast(StubCleaner*, MISC_STUB_CLEANER(s));
+}
+
+INLINE void Tweak_Stub_Cleaner(Stub* s, StubCleaner* cleaner) {
+    assert(Get_Stub_Flag(s, CLEANS_UP_BEFORE_GC_DECAY));
+    MISC_STUB_CLEANER(s) = cast(CFunction*, cleaner);
+}

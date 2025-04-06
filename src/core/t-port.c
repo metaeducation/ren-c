@@ -139,7 +139,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
         Details* details = Ensure_Cell_Frame_Details(actor);
         Dispatcher* dispatcher = Details_Dispatcher(details);
-        Bounce b = (*dispatcher)(level_);
+        Bounce b = Apply_Cfunc(dispatcher, level_);
         if (b == BOUNCE_FAIL)
             return b;
 

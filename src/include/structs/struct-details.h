@@ -157,7 +157,7 @@ typedef enum {
         | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* adjunct needs mark */ \
         | not STUB_FLAG_INFO_NODE_NEEDS_MARK  /* info not currently used */ )
 
-#define LINK_DETAILS_DISPATCHER(details)  (details)->link.dispatcher
+#define LINK_DETAILS_DISPATCHER(details)  (details)->link.cfunc
 #define MISC_DETAILS_ADJUNCT(details)     STUB_MISC(details)
 // INFO in details currently unused, just the info flags
 // BONUS in details currently unused

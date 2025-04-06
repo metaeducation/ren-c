@@ -233,12 +233,12 @@
 // a case for that Flavor, it assumes that the type wants to run an arbitrary
 // function in Stub.misc.stub_cleaner
 //
-// (Note that there is also Stub.misc.handle_cleaner, which is a similar
+// (Note that there is also MISC_HANDLE_CLEANER(stub), which is a similar
 // feature but the callback takes a Cell pointer instead of a Stub pointer.
-// This prevents the need to have a stub_cleaner that uses up the misc just
+// This prevents the need to have a StubCleaner that uses up the misc just
 // to call a function that takes a Cell which would have to be stored
 // somewhere else.  Hence FLAVOR_HANDLE has an instance in the switch() of
-// Diminish_Stub() that does this call, vs using Stub.misc.stub_cleaner.)
+// Diminish_Stub() that does this call, vs using MISC_STUB_CLEANER.)
 //
 #define STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY \
     FLAG_LEFT_BIT(19)
@@ -336,7 +336,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-struct StubDynamicStruct {
+typedef struct {
     //
     // `data` is the "head" of the Flex data.  It might not point directly
     // at the memory location that was returned from the allocator if it has
@@ -364,17 +364,17 @@ struct StubDynamicStruct {
     // something when a Flex is dynamic.  It is the "bias" when a Flex needs
     // to maintain how much the data pointer is offset from the allocation.
     //
-    union AnyUnion bonus;
-};
+    UintptrUnion bonus;
+} StubDynamicStruct;
 
 
-union StubContentUnion {
+typedef union {
     //
     // If the Flex data does not fit into the StubContent, then it must be
     // dynamically allocated.  This is the tracking structure for that
     // dynamic data allocation.
     //
-    struct StubDynamicStruct dynamic;
+    StubDynamicStruct dynamic;
 
     // If not(STUB_FLAG_DYNAMIC), then 0 or 1 length arrays can be held in
     // the Flex Stub.  If the single Cell holds a "Poison", it's 0 length...
@@ -389,7 +389,7 @@ union StubContentUnion {
         REBWCHAR ucs2_pun[sizeof(Cell)/sizeof(Codepoint)];  // wchar_t insight
       #endif
     } fixed;
-};
+} StubContentUnion;
 
 
 #if CPLUSPLUS_11
@@ -404,7 +404,7 @@ union StubContentUnion {
     // "leader" to be distinct from a Cell's "header" to achieve a kind of
     // poor-man's macro typechecking which doesn't incur checked build costs.
     //
-    union HeaderUnion leader;
+    HeaderUnion leader;
 
     // The `link` field is generally used for pointers to something that
     // when updated, all references to this Flex would want to be able
@@ -417,7 +417,7 @@ union StubContentUnion {
     // it is on a 64-bit boundary to start with...in order to position its
     // "payload" which might need to be 64-bit aligned as well.
     //
-    union AnyUnion link;
+    UintptrUnion link;
 
     // `content` is the sizeof(Cell) data for the Flex, which is thus
     // 4 platform pointers in size.  If the Flex is small enough, the header
@@ -425,7 +425,7 @@ union StubContentUnion {
     // bits.  If it's too large, it will instead be a pointer and tracking
     // information for another allocation.
     //
-    union StubContentUnion content;
+    StubContentUnion content;
 
     // If STUB_FLAG_INFO_NODE_NEEDS_MARK, then the `info.node` field is marked
     // by the garbage collector.
@@ -440,12 +440,12 @@ union StubContentUnion {
     //    interesting added caching feature or otherwise that would use
     //    it, while not making any feature specifically require a 64-bit CPU.
     //
-    union AnyUnion info;
+    UintptrUnion info;
 
     // This is the second pointer-sized piece of Flex data that is used
     // for various purposes, similar to link.
     //
-    union AnyUnion misc;
+    UintptrUnion misc;
 
   #if DEBUG_STUB_ORIGINS
     Byte* guard;  // intentionally alloc'd and freed for use by panic()

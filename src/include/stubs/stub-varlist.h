@@ -279,7 +279,7 @@ INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
     assert(Is_Stub_Varlist(varlist));
     assert(CTX_TYPE(varlist) == TYPE_FRAME);
     assert(Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
-    return MISC_VARLIST_RUNLEVEL(varlist);
+    return cast(Level*, MISC_VARLIST_RUNLEVEL(varlist));
 }
 
 INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {

@@ -126,6 +126,7 @@
 #endif
 #include "rebol.h"
 typedef RebolValue Value;
+typedef RebolHandleCleaner HandleCleaner;
 typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 

@@ -193,7 +193,7 @@
 
 // LINK of VarList is LINK_CONTEXT_INHERIT_BIND
 #define BONUS_VARLIST_KEYLIST(varlist)     STUB_BONUS(varlist)
-#define MISC_VARLIST_RUNLEVEL(varlist)     (varlist)->misc.level
+#define MISC_VARLIST_RUNLEVEL(varlist)     (varlist)->misc.p
 #define MISC_VARLIST_ADJUNCT(varlist)      STUB_MISC(varlist)
 
 

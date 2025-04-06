@@ -253,8 +253,8 @@ Bounce Stepper_Executor(Level* L)
 
         possibly(Is_Antiform_Unstable(SPARE));  // intrinsic typechecks/decays
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
-        Set_Level_Flag(L, DISPATCHING_INTRINSIC);
-        Bounce bounce = (*dispatcher)(L);  // flag says level_ is not its Level
+        Set_Level_Flag(L, DISPATCHING_INTRINSIC);  // level_ is not its Level
+        Bounce bounce = Apply_Cfunc(dispatcher, L);
         if (bounce == nullptr)
             Init_Nulled(OUT);
         else if (bounce == BOUNCE_OKAY)

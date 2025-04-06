@@ -322,7 +322,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);
-        Bounce bounce = (*dispatcher)(L);
+        Bounce bounce = Apply_Cfunc(dispatcher, L);
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
 
       #if DEBUG_CELL_READ_WRITE

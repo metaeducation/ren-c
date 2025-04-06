@@ -125,10 +125,10 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
     (((f)->leader.bits & FLEX_FLAG_##name) == 0)
 
 #define Set_Flex_Flag(f,name) \
-    m_cast(union HeaderUnion*, &(f)->leader)->bits |= FLEX_FLAG_##name
+    m_cast(HeaderUnion*, &(f)->leader)->bits |= FLEX_FLAG_##name
 
 #define Clear_Flex_Flag(f,name) \
-    m_cast(union HeaderUnion*, &(f)->leader)->bits &= ~FLEX_FLAG_##name
+    m_cast(HeaderUnion*, &(f)->leader)->bits &= ~FLEX_FLAG_##name
 
 
 //=//// FLEX "INFO" BITS (or INODE) ///////////////////////////////////////=//

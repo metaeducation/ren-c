@@ -357,7 +357,7 @@ bool Try_Dispatch_Generic_Core(
         while (ext_info) {
             if (ext_info->ext_heart == ext_heart) {
                 L->u.action.label = Canon_Symbol(symid);  // !!! Level_Verb()
-                *bounce = (*ext_info->dispatcher)(L);
+                *bounce = Apply_Cfunc(ext_info->dispatcher, L);
                 return true;
             }
             ext_info = ext_info->next;
@@ -401,7 +401,7 @@ bool Try_Dispatch_Generic_Core(
     if (not dispatcher)
         return false;  // not handled--some clients want to try more things
 
-    *bounce = (*(unwrap dispatcher))(L);
+    *bounce = Apply_Cfunc(unwrap dispatcher, L);
     return true;  // handled, even if it threw
 }
 

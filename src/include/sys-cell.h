@@ -552,11 +552,11 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
     (((c)->header.bits & CELL_FLAG_##name) == 0)
 
 #define Set_Cell_Flag(c,name) /* [2] */ \
-    m_cast(union HeaderUnion*, &Ensure_Readable(c)->header)->bits \
+    m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
         |= CELL_FLAG_##name
 
 #define Clear_Cell_Flag(c,name) \
-    m_cast(union HeaderUnion*, &Ensure_Readable(c)->header)->bits \
+    m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
         &= ~CELL_FLAG_##name
 
 

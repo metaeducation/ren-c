@@ -77,8 +77,6 @@
 
 typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
-typedef void (StubCleaner)(Stub*);  // forward decl to appear in AnyUnion
-
 
 //=//// BITS 0-7: NODE FLAGS //////////////////////////////////////////////=//
 //
@@ -405,7 +403,7 @@ struct YmdzStruct  // see %sys-time.h
     int zone:7; // +/-15:00 res: 0:15
 };
 
-union AnyUnion {
+typedef union {
     Node* node;  // all Node subclasses should be assigned to this [1]
 
   #if DEBUG_USE_UNION_PUNS  // dodgy, use in debug watch at your own risk!
@@ -434,8 +432,6 @@ union AnyUnion {
     void *p;
     CFunction* cfunc;  // C function/data pointers pointers may differ in size
 
-    Dispatcher* dispatcher;
-
     Byte at_least_4[sizeof(uintptr_t)];  // 8 bytes on 64-bit systems...
 
     void *corrupt;  // see ASSIGN_UNUSED_FIELDS
@@ -443,13 +439,9 @@ union AnyUnion {
     LineNumber line;  // see ARRAY_FLAG_FILE_LINE
 
     Length length;  // UTF-8 Everywhere caches to get num_codepoints
+} UintptrUnion;
 
-    StubCleaner* stub_cleaner;  // Stubs use for GC finalization
-
-    Option(RebolHandleCleaner*) handle_cleaner;  // passes Cells, not Stubs
-
-    Level* level;  // running frames map back to Level, yielder plugs suspend
-};
+STATIC_ASSERT(sizeof(UintptrUnion) == sizeof(uintptr_t));
 
 
 //=//// CELL's `EXTRA` FIELD DEFINITION ///////////////////////////////////=//
@@ -531,11 +523,11 @@ struct CommaPayloadStruct {
 
 struct SplitPayloadStruct  // generic, for adding payloads after-the-fact
 {
-    union AnyUnion one;
-    union AnyUnion two;
+    UintptrUnion one;
+    UintptrUnion two;
 };
 
-union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
+typedef union { //=///////////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //
     // The i64 field is used by INTEGER!
     //
@@ -591,7 +583,9 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     Phase* phase;  // where to look up parameter by its offset
     //
     struct SplitPayloadStruct split;
-};
+} PayloadUnion;
+
+STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 
 
 //=//// COMPLETED 4-PLATFORM POINTER CELL DEFINITION //////////////////////=//
@@ -635,9 +629,9 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     struct RebolValueStruct  // ...have to just hope the alignment "works out"
 #endif
     {
-        union HeaderUnion header;
-        union AnyUnion extra;
-        union PayloadUnion payload;
+        HeaderUnion header;
+        UintptrUnion extra;
+        PayloadUnion payload;
 
       #if DEBUG_TRACK_EXTEND_CELLS  // can be VERY handy [2]
         const char *file;  // is Byte (UTF-8), but char* for debug watch
