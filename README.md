@@ -63,8 +63,8 @@ The best way to get acquainted with all that is going on would be to
 [**Join The Forum!**][10]  Feel free to post in the [Introductions Category][11]
 and ask anything you would like.
 
-[10]: https://forum.rebol.info/
-[11]: https://forum.rebol.info/c/introductions
+[10]: https://rebol.metaeducation.com/
+[11]: https://rebol.metaeducation.com/c/introductions
 
 It's also possible to contact the developers via [the GitHub Issues][12].
 *(Ren-C inherited Rebol's thousands-strong issue database, so there's a
@@ -130,7 +130,7 @@ and it still supports a [number of older platforms][15].  However, if it is
 compiled with a C++ compiler then there is significantly more static analysis
 at build time, to catch errors.
 
-[14]: https://forum.rebol.info/t/on-building-ren-c-with-c-compilers/1343
+[14]: https://rebol.metaeducation.com/t/on-building-ren-c-with-c-compilers/1343
 [15]: https://github.com/metaeducation/ren-c/blob/master/make/tools/platforms.r
 
 *(Note: The build process is [far more complicated than it should be][16], but
@@ -139,7 +139,7 @@ strongly desirable if community member(s) could get involved to help
 streamline and document it!  Since it's now *all* written in Rebol, that
 should be more possible--and maybe even a little "fun" (?))*
 
-[16]: https://forum.rebol.info/t/new-build-executables-new-build-strategy/1432
+[16]: https://rebol.metaeducation.com/t/new-build-executables-new-build-strategy/1432
 
 
 ## License
@@ -155,7 +155,7 @@ code to be taken back to the Rebol GitHub or other branches.
 Due to limited cases of such any take over an eight-year span, the Ren-C
 license was [changed to the Apache-2-compatible LGPL 3][18].
 
-[19]: https://forum.rebol.info/t/ren-c-license-changed-to-lgpl-3-0/1342
+[19]: https://rebol.metaeducation.com/t/ren-c-license-changed-to-lgpl-3-0/1342
 
 The current way to explore the new features of Ren-C is using the `r3`
 console.  It is *significantly* enhanced from the open-sourced R3-Alpha...with
