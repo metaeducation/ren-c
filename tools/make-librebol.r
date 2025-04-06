@@ -668,12 +668,13 @@ e-lib/emit [ver --{
      * (Richer behavior with splicing of values that does the same thing is
      * offered by rebDelegate(...), but this is just a convenience for that.)
      *
-     * !!! Technically this is a Node* ... but we do not export the derived
-     * relationship between Value and Node in C++ builds (and cannot do so in
-     * a C build).  So a void* is the only way to get a `return` in a libRebol
-     * native to accept either RebolNodeInternal* or RebolValue*.  This has
-     * an advantage though, as the C++ build checks variadic APIs to make sure
-     * they are not passed `void*`, so you can't accidentaly pass them Bounce.
+     * !!! Core natives define `Bounce` as a type that in C++ has more limited
+     * types that can construct it, as opposed to being a void* that you can
+     * pass all kinds of invalid types to.  But the core has more types (e.g.
+     * `Error*`) which might be accidentally passed as native returns.  One
+     * small protection is that the C++ build checks variadic APIs to ensure
+     * they are not passed `void*`, so you can't accidentaly pass them a
+     * RebolBounce.
      */
 
     typedef const void* RebolBounce;

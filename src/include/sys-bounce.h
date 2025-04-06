@@ -56,22 +56,29 @@ INLINE void Erase_Bounce_Wild(WildTwo out) {
 }
 
 INLINE bool Is_Bounce_An_Atom(Bounce b) {
+    const void* p = cast(const void*, b);
     return (
-        FIRST_BYTE(b) & (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL)
+        FIRST_BYTE(p) & (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL)
     ) == (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL);
 }
 
-INLINE bool Is_Bounce_Wild(Bounce b)
-  { return FIRST_BYTE(b) == NODE_BYTE_WILD; }
+INLINE bool Is_Bounce_Wild(Bounce b) {
+    const void* p = cast(const void*, b);
+    return FIRST_BYTE(p) == NODE_BYTE_WILD;
+}
 
 INLINE char Bounce_Type(Bounce b) {
     assert(Is_Bounce_Wild(b));
-    return SECOND_BYTE(b);
+
+    const void* p = cast(const void*, b);
+    return SECOND_BYTE(p);
 }
 
 INLINE Atom* Atom_From_Bounce(Bounce b) {
     assert(Is_Bounce_An_Atom(b));
-    return cast(Atom*, m_cast(void*, b));
+
+    const void* p = cast(const void*, b);
+    return cast(Atom*, m_cast(void*, p));
 }
 
 

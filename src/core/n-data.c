@@ -1604,7 +1604,7 @@ DECLARE_NATIVE(DEGRADE)
 
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
     if (e)
-        return (unwrap e);
+        return FAIL(unwrap e);
 
     return OUT;
 }

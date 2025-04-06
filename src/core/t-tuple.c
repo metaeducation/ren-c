@@ -583,7 +583,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
     Value* part = ARG(PART);
 
     if (Bool_ARG(SECURE) or Bool_ARG(PART))
-        return (Error_Bad_Refines_Raw());
+        return FAIL(Error_Bad_Refines_Raw());
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 

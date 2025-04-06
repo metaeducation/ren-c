@@ -263,12 +263,27 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     (((L)->flags.bits & LEVEL_FLAG_##name) == 0)
 
 
+//=//// INCLUDE EXECUTOR STATE DEFINITIONS ////////////////////////////////=//
+//
+// The Level structure embeds structures for the various executor states, so
+// they have to be defined before the Level structure itself.
+//
+
+struct LevelStruct;
+typedef struct LevelStruct Level;
+
 #include "executors/exec-eval.h"
 #include "executors/exec-action.h"
 #include "executors/exec-scan.h"
 
 
-// NOTE: The ordering of the fields in `Reb_Level` are specifically done so
+// C function implementing a native ACTION!
+//
+typedef Bounce (Executor)(Level* level_);
+typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
+
+
+// NOTE: The ordering of the fields in `LevelStruct` are specifically done so
 // as to accomplish correct 64-bit alignment of pointers on 64-bit systems.
 //
 // Because performance in the core evaluator loop is system-critical, this
@@ -451,6 +466,7 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     int line;
   #endif
 };
+
 
 // These are needed protoyped by the array code because it wants to put file
 // and line numbers into arrays based on the frame in effect at their time

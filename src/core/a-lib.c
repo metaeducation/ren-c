@@ -3026,13 +3026,14 @@ Bounce Api_Function_Dispatcher(Level* const L)
     PointerDetect detect = Detect_Rebol_Pointer(bounce);
 
     if (detect == DETECTED_AS_UTF8) {  // runs code! [3]
-        if (FIRST_BYTE(bounce) == '~' and SECOND_BYTE(bounce) == '\0') {
+        const char* cp = cast(const char*, bounce);
+        if (cp[0] == '~' and cp[1] == '\0') {
             Init_Nothing(L->out);
             goto typecheck_out;  // make return "~" fast!
         }
         // ...could do other optimizations here...
         LEVEL_STATE_BYTE(L) = ST_API_FUNC_DELEGATING;
-        return rebDelegateCore(context, cast(const char*, bounce));
+        return cast(Bounce, rebDelegateCore(context, cp));
     }
 
     return Native_Fail_Result(

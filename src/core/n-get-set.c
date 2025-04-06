@@ -804,7 +804,7 @@ DECLARE_NATIVE(GET)
             return FAIL("GET on GROUP! with steps doesn't have answer ATM");
 
         if (Eval_Any_List_At_Throws(SPARE, source, SPECIFIED))
-            return Error_No_Catch_For_Throw(LEVEL);
+            return FAIL(Error_No_Catch_For_Throw(LEVEL));
 
         Decay_If_Unstable(SPARE);
 

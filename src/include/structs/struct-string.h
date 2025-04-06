@@ -151,6 +151,15 @@
 typedef const Symbol* Key;
 
 
+//=//// BOOKMARKS (codepoint position caches for UTF-8) ///////////////////=//
+
+struct BookmarkStruct {
+    REBLEN index;
+    Size offset;
+};
+typedef struct BookmarkStruct Bookmark;
+
+
 //=//// SYMBOL OR VALUE CONVENIENCE CLASS /////////////////////////////////=//
 //
 // When you make a call to make errors, you can pass a Symbol* or a Value*.

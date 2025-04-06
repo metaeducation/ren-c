@@ -1083,17 +1083,17 @@ INLINE Value* Constify(Value* v) {
 
 #define DECLARE_ATOM(name) \
     Atom name##_atom; \
-    Atom* name = TRACK(&name##_atom); \
+    Atom* const name = TRACK(&name##_atom); \
     Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 #define DECLARE_VALUE(name) \
     Value name##_value; \
-    Value* name = TRACK(&name##_value); \
+    Value* const name = TRACK(&name##_value); \
     Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 #define DECLARE_ELEMENT(name) \
     Element name##_element; \
-    Element* name = TRACK(&name##_element); \
+    Element* const name = TRACK(&name##_element); \
     Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 

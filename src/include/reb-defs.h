@@ -231,15 +231,6 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 typedef uint_fast32_t Codepoint;
 
 
-//=//// BOOKMARKS (codepoint position caches for UTF-8) ///////////////////=//
-
-struct BookmarkStruct {
-    REBLEN index;
-    Size offset;
-};
-typedef struct BookmarkStruct Bookmark;
-
-
 //=//// BINDING ///////////////////////////////////////////////////////////=//
 
 struct BinderStruct;
@@ -254,19 +245,6 @@ typedef struct JumpStruct Jump;
 //=//// DATA STACK ////////////////////////////////////////////////////////=//
 
 typedef intptr_t StackIndex;  // 0 for empty stack ([0] entry poison)
-
-
-//=//// Need(), Sink(), Init() Aliases ////////////////////////////////////=//
-//
-// If you globally declare a macro with a name like "Init" before you include
-// all the include files you want, then that could cause problems if there's
-// something in the system header files called Init (for instance).  We wait
-// to define the core shorthands for these type macros until after all the
-// including is done.
-
-#define Need NeedTypemacro
-#define Sink SinkTypemacro
-#define Init InitTypemacro
 
 
 //=//// STRING MODES //////////////////////////////////////////////////////=//
@@ -320,13 +298,6 @@ enum Reb_Vararg_Op {
     VARARG_OP_TAKE // doesn't modify underlying data stream--advances index
 };
 
-struct LevelStruct;
-typedef struct LevelStruct Level;
-
-// C function implementing a native ACTION!
-//
-typedef Bounce (Executor)(Level* level_);
-typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
 // There are up to 255 built-in type predicates, which can be efficiently
 // referred to by byte and tested quickly.  The acceleration either involves
@@ -337,8 +308,6 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 //
 typedef Byte TypesetByte;
 typedef Flags TypesetFlags;  // Ranged or sparse bitset of typesets
-
-typedef Byte WildTwo[2];
 
 
 //=//// INFIX MODES ///////////////////////////////////////////////////////=//

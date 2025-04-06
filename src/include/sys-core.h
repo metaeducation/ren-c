@@ -92,26 +92,6 @@
 //    need to be able to run API functions before the user context has
 //    been completely formed.
 //
-// 2. An attempt was made for Bounce to be a smart pointer, when I thought
-//    that if it was `struct Bounce { Node* node; }` that it would be able to
-//    do checks on the types it received while being compatible with a void*
-//    in the dispatchers using %rebol.h.  So these would be compatible:
-//
-//      typedef Bounce (Dispatcher)(...);  // %sys-core.h clients
-//      typedef void* (RebolActionCFunction)(...);  // %rebol.h clients
-//
-//    As it turns out the compiler doesn't generate compatible output, even
-//    with Bounce being a standard_layout struct.  :-/
-//
-//    So at best, Bounce could just be Node* in order to prevent you from
-//    using non-Node* values.  However, the C++ inheritance understanding
-//    necessary to understand the relationship between RebolValue* and
-//    RebolNode* would then have to be exported, which we don't want to do.
-//
-//    Hence it's just a void*.  This has at least one advantage, which is that
-//    you can't accidentally pass a Bounce to a varaidic API function, because
-//    the C++ build checks that you don't pass void pointers.
-//
 
 #include <stdlib.h>  // size_t and other types used in rebol.h
 #include <stdint.h>
@@ -121,13 +101,11 @@
   #include <time.h>  // needed for srand()
 #endif
 
-#if !defined(LIBREBOL_BINDING_NAME)  // core modules define differently
-    #define LIBREBOL_BINDING_NAME()  librebol_binding  // => g_lib_context [1]
-#endif
+#define LIBREBOL_BINDING_NAME()  librebol_binding  // [1]
 #include "rebol.h"
+
 typedef RebolValue Value;
 typedef RebolHandleCleaner HandleCleaner;
-typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 
 //=//// STANDARD DEPENDENCIES FOR CORE ////////////////////////////////////=//
@@ -207,13 +185,20 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 #endif
 
 
+//=//// HELPERS GIVING ENHANCEMENTS TO C IF BUILT AS C++ //////////////////=//
+//
 // Don't include C-enhanced until *after* standard includes, in case there
 // is any contention on naming in the compiler header files (for instance,
 // Init() is used in MSVC's xiosbase, and so if you define a macro with
 // that name it will break the compilation).  Generally speaking you should
 // define your macros after including system headers, not before...
 //
+
 #include "c-enhanced.h"
+
+#define Need NeedTypemacro
+#define Sink SinkTypemacro
+#define Init InitTypemacro
 
 
 
@@ -250,6 +235,11 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 #include "structs/struct-stub.h"  // Stub definition, embeds Cell
 #include "structs/struct-flex.h"  // A Flex's identity is its Stub
 
+#include "structs/struct-binary.h"
+
+#include "structs/struct-char.h"  // Utf8(*) is Byte* in validated UTF8
+#include "structs/struct-string.h"
+
 #include "structs/struct-pairing.h"  // Stub-sized (2 cells), but not a Stub
 
 #include "structs/struct-array.h"  // Flex subclass
@@ -259,19 +249,15 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 #include "structs/struct-varlist.h"
 #include "structs/struct-sea.h"  // !!! currently a subclass of VarList
 
+#include "structs/struct-feed.h"
+#include "structs/struct-state.h"  // state of variables restored on jumps
+#include "structs/struct-bounce.h"  // return value from native dispatchers
+#include "structs/struct-level.h"  // C struct for running level, uses feed
+
 #include "structs/struct-details.h"  // Array subclass
 #include "structs/struct-map.h"  // Array subclass (PairList)
 
 #include "structs/struct-patch.h"
-
-#include "structs/struct-binary.h"
-
-#include "structs/struct-char.h"  // Utf8(*) is Byte* in validated UTF8
-#include "structs/struct-string.h"
-
-#include "structs/struct-feed.h"
-#include "structs/struct-state.h"  // state of variables restored on jumps
-#include "structs/struct-level.h"  // C struct for running level, uses feed
 
 #include "enums/enum-typesets.h"  // built-in order dependent type checks
 

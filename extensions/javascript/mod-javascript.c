@@ -249,11 +249,11 @@ INLINE Value* Value_From_Value_Id(heapaddr_t id) {
     return v;
 }
 
-INLINE Bounce* Bounce_From_Bounce_Id(heapaddr_t id) {
+INLINE Bounce Bounce_From_Bounce_Id(heapaddr_t id) {
     if (id == 0)
         return nullptr;
 
-    Bounce* b = cast(Bounce*, Pointer_From_Heapaddr(id));
+    Bounce b = cast(Bounce, Pointer_From_Heapaddr(id));
     return b;
 }
 
@@ -603,7 +603,7 @@ EXTERN_C void API_rebResolveNative_internal(
 
     TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
-    Bounce* bounce = Bounce_From_Bounce_Id(bounce_id);
+    Bounce bounce = Bounce_From_Bounce_Id(bounce_id);
 
     if (bounce == BOUNCE_DELEGATE)
         fail ("reb.Delegate() not yet supported in JavaScript Natives");
@@ -614,7 +614,7 @@ EXTERN_C void API_rebResolveNative_internal(
     if (not Is_Bounce_An_Atom(bounce))
         fail ("non-Value Bounce returned from JavaScript Native");
 
-    Value* result = cast(Value*, bounce);
+    Value* result = cast(Value*, Atom_From_Bounce(bounce));
     Assert_Cell_Stable(result);
 
     if (result == nullptr)

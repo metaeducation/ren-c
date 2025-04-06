@@ -363,7 +363,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     }
 
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
-    panic (c_cast(void*, bounce));
+    panic (bounce);
 
 } ON_ABRUPT_FAILURE(Error* e) {  ///////////////////////////////////////////
 
