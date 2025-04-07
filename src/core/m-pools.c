@@ -1368,6 +1368,64 @@ REBLEN Check_Memory_Debug(void)
 
 
 //
+//  Check_Level_Pool_For_Leaks: C
+//
+void Check_Level_Pool_For_Leaks(void)
+{
+    Segment* seg = g_mem.pools[LEVEL_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = g_mem.pools[LEVEL_POOL].num_units_per_segment;
+        Byte* unit = cast(Byte*, seg + 1);
+
+        for (; n > 0; --n, unit += g_mem.pools[LEVEL_POOL].wide) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
+                continue;
+
+            Level* L = cast(Level*, unit);  // ^-- pool size may round up
+          #if TRAMPOLINE_COUNTS_TICKS
+            printf(
+                "** LEVEL LEAKED at tick %lu\n",
+                cast(unsigned long, L->tick)
+            );
+          #else
+            assert(!"** LEVEL LEAKED but TRAMPOLINE_COUNTS_TICKS not enabled");
+          #endif
+        }
+    }
+}
+
+
+//
+//  Check_Feed_Pool_For_Leaks: C
+//
+void Check_Feed_Pool_For_Leaks(void)
+{
+    Segment* seg = g_mem.pools[FEED_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        REBLEN n = g_mem.pools[FEED_POOL].num_units_per_segment;
+        Byte* unit = cast(Byte*, seg + 1);
+
+        for (; n > 0; --n, unit += g_mem.pools[FEED_POOL].wide) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
+                continue;
+
+            Feed* feed = cast(Feed*, unit);
+          #if TRAMPOLINE_COUNTS_TICKS
+            printf(
+                "** FEED LEAKED at tick %lu\n",
+                cast(unsigned long, feed->tick)
+            );
+          #else
+            assert(!"** FEED LEAKED but no TRAMPOLINE_COUNTS_TICKS enabled\n");
+          #endif
+        }
+    }
+}
+
+
+//
 //  Dump_All_Series_Of_Width: C
 //
 void Dump_All_Series_Of_Width(Size wide)

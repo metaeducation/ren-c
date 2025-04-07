@@ -835,6 +835,46 @@ static void Mark_All_Levels(void)
 }
 
 
+#if UNUSUAL_CELL_SIZE
+
+static REBLEN Sweep_Distinct_Pairing_Pool(void)
+{
+    Count sweep_count = 0;
+
+    Segment* seg = g_mem.pools[PAIR_POOL].segments;
+    Size wide = g_mem.pools[PAIR_POOL].wide;
+    assert(wide >= 2 * Size_Of(Cell));
+
+    for (; seg != nullptr; seg = seg->next) {
+        Length n = g_mem.pools[PAIR_POOL].num_units_per_segment;
+
+        Byte *unit = cast(Byte*, seg + 1);
+        for (; n > 0; --n, unit += wide) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
+                continue;
+
+            assert(unit[0] & NODE_BYTEMASK_0x08_CELL);
+
+            Value* v = cast(Value*, unit);
+            if (v->header.bits & NODE_FLAG_MANAGED) {
+                assert(not (v->header.bits & NODE_FLAG_ROOT));
+                if (Is_Node_Marked(v)) {
+                    Remove_GC_Mark(v);
+                }
+                else {
+                    Free_Pooled(PAIR_POOL, unit);  // manuals use Free_Pairing
+                    ++sweep_count;
+                }
+            }
+        }
+    }
+
+    return sweep_count;
+}
+
+#endif
+
+
 //
 //  Sweep_Stubs: C
 //
@@ -842,8 +882,6 @@ static void Mark_All_Levels(void)
 // the STUB_POOL.  If a Stub had its lifetime management delegated to the
 // garbage collector with Manage_Flex(), then if it didn't get "marked" as
 // live during the marking phase then free it.
-//
-//////////////////////////////////////////////////////////////////////////////
 //
 // 1. We use a generic byte pointer (unsigned char*) to dodge the rules for
 //    strict aliases, as the pool contain pairs of Cell from Alloc_Pairing(),
@@ -859,7 +897,6 @@ Count Sweep_Stubs(void)
 {
     Count sweep_count = 0;
 
-  blockscope {
     Segment* seg = g_mem.pools[STUB_POOL].segments;
     Size wide = g_mem.pools[STUB_POOL].wide;
     assert(wide == sizeof(Stub));
@@ -914,38 +951,9 @@ Count Sweep_Stubs(void)
             GC_Kill_Stub(u_cast(Stub*, unit));
         }
     }
-  }
 
   #if UNUSUAL_CELL_SIZE  // pairing pool is separate in this case [2]
-  blockscope {
-    Segment* seg = g_mem.pools[PAIR_POOL].segments;
-    Size wide = g_mem.pools[PAIR_POOL].wide;
-    assert(wide >= 2 * Size_Of(Cell));
-
-    for (; seg != nullptr; seg = seg->next) {
-        Length n = g_mem.pools[PAIR_POOL].num_units_per_segment;
-
-        Byte *unit = cast(Byte*, seg + 1);
-        for (; n > 0; --n, unit += wide) {
-            if (unit[0] == FREE_POOLUNIT_BYTE)
-                continue;
-
-            assert(unit[0] & NODE_BYTEMASK_0x08_CELL);
-
-            Value* v = cast(Value*, unit);
-            if (v->header.bits & NODE_FLAG_MANAGED) {
-                assert(not (v->header.bits & NODE_FLAG_ROOT));
-                if (Is_Node_Marked(v)) {
-                    Remove_GC_Mark(v);
-                }
-                else {
-                    Free_Pooled(PAIR_POOL, unit);  // manuals use Free_Pairing
-                    ++sweep_count;
-                }
-            }
-        }
-    }
-  }
+    sweep_count += Sweep_Distinct_Pairing_Pool();
   #endif
 
     return sweep_count;
