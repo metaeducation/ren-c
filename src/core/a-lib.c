@@ -218,8 +218,8 @@ unsigned char* API_rebTryAllocBytes(size_t size)
         p = API_rebAllocBytes(size);
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return p;
-    } ON_ABRUPT_FAILURE (Error* e) {
-        UNUSED(e);
+    } ON_ABRUPT_FAILURE (error) {
+        UNUSED(error);
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return nullptr;
     }

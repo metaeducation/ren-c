@@ -365,7 +365,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     panic (bounce);
 
-} ON_ABRUPT_FAILURE(Error* e) {  ///////////////////////////////////////////
+} ON_ABRUPT_FAILURE (error) {  ///////////////////////////////////////////////
 
     // A fail() can happen at any moment--even due to something like a failed
     // memory allocation requested by an executor itself.  These are called
@@ -382,10 +382,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Level* L = TOP_LEVEL;  // may not be same as L whose executor() called [1]
 
-    Assert_Varlist(e);
-    assert(CTX_TYPE(e) == TYPE_ERROR);
+    Assert_Varlist(error);
+    assert(CTX_TYPE(error) == TYPE_ERROR);
 
-    Init_Thrown_Failure(L, e);
+    Init_Thrown_Failure(L, error);
 
     possibly(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // fail in intrinsic
     Clear_Level_Flag(L, DISPATCHING_INTRINSIC);

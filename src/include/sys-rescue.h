@@ -32,9 +32,9 @@
 //        //
 //        // code that may trigger a fail() ...
 //        //
-//     } ON_ABRUPT_FAILURE(Error* e) {
+//     } ON_ABRUPT_FAILURE (error) {
 //        //
-//        // code that handles the error in `e`
+//        // code that handles the error in `error`
 //        //
 //     }
 //
@@ -207,10 +207,11 @@ struct JumpStruct {
         assert(jump.error == nullptr); \
         g_ts.jump_list = jump.last_jump
 
-    #define ON_ABRUPT_FAILURE(decl) \
+    #define ON_ABRUPT_FAILURE(name) \
       longjmp_happened: \
         NOOP; /* must be statement after label */ \
-        decl = jump.error; \
+        Error* name; /* can't initialize here, or goto couldn't cross it */ \
+        name = jump.error; \
         jump.error = nullptr; \
         /* fall through to subsequent block */
 
@@ -228,8 +229,8 @@ struct JumpStruct {
     #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
         g_ts.jump_list = jump.last_jump
 
-    #define ON_ABRUPT_FAILURE(decl) \
-        catch (decl) /* picks up subsequent {...} block */
+    #define ON_ABRUPT_FAILURE(name) \
+        catch (Error* name) /* picks up subsequent {...} block */
 
 #else
 
@@ -246,10 +247,11 @@ struct JumpStruct {
     #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
         g_ts.jump_list = jump.last_jump
 
-    #define ON_ABRUPT_FAILURE(decl) \
+    #define ON_ABRUPT_FAILURE(name) \
       abrupt_failure: /* impossible jump here to avoid unreachable warning */ \
         assert(!"ON_ABRUPT_FAILURE() reached w/FAIL_JUST_ABORTS=1"); \
-        decl = Error_User("FAIL_JUST_ABORTS=1, should not reach!");
+        Error* name; \
+        name = Error_User("FAIL_JUST_ABORTS=1, should not reach!");
 
 #endif
 
