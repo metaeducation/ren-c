@@ -50,6 +50,7 @@
         typename std::enable_if<
             std::is_pointer<T>::value  // assume pointers are Node*
             or std::is_convertible<T,Cell*>::value
+            or std::is_convertible<T,Stub*>::value
         >::type* = nullptr
     >
     T Probe_Cpp_Helper(
@@ -68,6 +69,7 @@
         typename std::enable_if<
             !std::is_pointer<T>::value  // ordinary << output operator
             and !std::is_convertible<T,Cell*>::value
+            and !std::is_convertible<T,Stub*>::value
         >::type* = nullptr
     >
     T Probe_Cpp_Helper(
@@ -79,9 +81,10 @@
     ){
         std::stringstream ss;
         ss << v;
-        printf("C++ PROBE(%s) => %s\n", limit, expr, ss.str().c_str());
+        printf("C++ PROBE(%s) => %s\n", expr, ss.str().c_str());
         UNUSED(file);
         UNUSED(line);
+        UNUSED(limit);
         return v;
     }
 
