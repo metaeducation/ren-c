@@ -217,32 +217,19 @@ static void Expand_Word_Table(void)
 //    compares.  If that canon form is GC'd, the agreed upon canon for the
 //    group will change.
 //
-// 3. A newly interned Symbol will have SYM_0 as the answer to Symbol_Id().
-//    Startup_Symbols() tags the builtin SYM_XXX values from %symbols.r and
-//    %lib-words.r on the terms that it interns after they are returned.
-//    This lets them be used in compiled C switch() cases (e.g. SYM_ANY,
-//    SYM_INTEGER_X, etc.)  But non-builtin words will be left at SYM_0.
-//
-//    (Idea to extend SYM_XXX values: https://forum.rebol.info/t/1188)
-//
-// 4. In addition to a circularly linked list of synonyms via Symbol.link, the
-//    Symbol.misc field is another circularly linked list of Stubs called
-//    "Patch" that hold module-level variables with that Symbol as a name.
-//    Upon the initial interning of a Symbol, this list is empty.
+// 3. For the hash search to be guaranteed to terminate, the table must be
+//    large enough that we are able to find nullptr if there's a miss.  (It's
+//    actually kept larger than that, but to be on the right side of theory,
+//    the table is always checked for expansion needs *before* the search.)
 //
 const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     Option(void*) preallocated,  // most calls don't know if allocation needed
     const Byte* utf8,  // case-sensitive [2]
     Size utf8_size
 ){
-    // For the hash search to be guaranteed to terminate, the table must be
-    // large enough that we are able to find nullptr if there's a miss.  (It's
-    // actually kept larger than that, but to be on the right side of theory,
-    // the table is always checked for expansion needs *before* the search.)
-    //
     Length num_slots = Flex_Used(g_symbols.by_hash);
     if (g_symbols.num_slots_in_use > num_slots / 2) {
-        Expand_Word_Table();
+        Expand_Word_Table();  // must be able to find nullptr if miss [3]
         num_slots = Flex_Used(g_symbols.by_hash);  // got larger, update
     }
 
@@ -256,16 +243,23 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     );
 
     Symbol* synonym = nullptr;
-    Symbol** deleted_slot = nullptr;
     Symbol* symbol;
+    Symbol** deleted_slot = nullptr;
+
+  find_synonym_or_unused_hash_slot: { ////////////////////////////////////////
+
+    // 1. The > 0 result means that the canon word that was found is an
+    //    alternate casing ("synonym") for the string we're interning.
+    //    Synonyms are attached to the canon form with a circular list.
+
     while ((symbol = symbols_by_hash[slot])) {
         if (symbol == DELETED_SYMBOL) {
             deleted_slot = &symbols_by_hash[slot];
             goto next_candidate_slot;
         }
 
-      blockscope {
-        REBINT cmp = Compare_UTF8(String_Head(symbol), utf8, utf8_size);
+        REBINT cmp;  // initialization would be crossed by goto
+        cmp = Compare_UTF8(String_Head(symbol), utf8, utf8_size);
         if (cmp == 0) {
             assert(not preallocated);
             return symbol;  // was a case-sensitive match
@@ -273,24 +267,16 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
         if (cmp < 0)
             goto next_candidate_slot;  // wasn't an alternate casing
 
-        // The > 0 result means that the canon word that was found is an
-        // alternate casing ("synonym") for the string we're interning.  The
-        // synonyms are attached to the canon form with a circular list.
-        //
-        synonym = symbol;  // save for linking into synonyms list
-        goto next_candidate_slot;
-      }
+        synonym = symbol;  // save for linking into synonyms list [1]
 
-        goto new_interning;  // no synonym matched, make new synonym for canon
+      next_candidate_slot: { /////////////////////////////////////////////
 
-      next_candidate_slot:  // https://en.wikipedia.org/wiki/Linear_probing
-
-        slot += skip;
+        slot += skip;  // https://en.wikipedia.org/wiki/Linear_probing
         if (slot >= num_slots)
             slot -= num_slots;
-    }
+    }}
 
-  new_interning: { ////////////////////////////////////////////////////////=//
+} new_interning: { ///////////////////////////////////////////////////////////
 
     Binary* b = cast(Binary*, Make_Flex_Into(
         FLEX_MASK_SYMBOL
@@ -299,12 +285,15 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
         utf8_size + 1  // small sizes fit in a Stub (no dynamic allocation)
     ));
 
-    // Cache whether this is an arrow word.
+  detect_arrow_words: { ///////////////////////////////////////////////////////
+
+    // !!! Note: The scanner should already know if the word has > or < in
+    // it, also we could calculate it during the hash.  But it's not such a
+    // huge deal because we only run this the first time a symbol is interned.
     //
-    // !!! Note: The scanner should already know this, and also we could
-    // calculate it during the hash.  But it's not such a huge deal because
-    // we only run this the first time a symbol is interned.
-    //
+    // (If we *have* to do this here, we should be copying as we did it vs.
+    // doing the memcpy() as a separate step.)
+
     assert(Get_Lex_Class(utf8[0]) != LEX_CLASS_NUMBER);  // no leading digit
     for (Offset i = 0; i < utf8_size; ++i) {
         assert(not Is_Lex_Whitespace(utf8[i]));  // spaces/newlines illegal
@@ -342,36 +331,50 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
         }
     }
 
-    // The incoming string isn't always null terminated, e.g. if you are
-    // interning `foo` in `foo: bar + 1` it would be colon-terminated.
-    //
-    memcpy(Binary_Head(b), utf8, utf8_size);
-    Term_Binary_Len(b, utf8_size);
+} copy_terminate_and_freeze: { ///////////////////////////////////////////////
 
-    // The UTF-8 Flex can be aliased with AS to become an ANY-STRING? or a
-    // BLOB!.  If it is, then it should not be modified.
+    // 1. The incoming string isn't always null terminated, e.g. if you are
+    //    interning `foo` in `foo: bar + 1` it would be colon-terminated.
     //
-    Freeze_Flex(b);
+    // 2. The UTF-8 Flex can be aliased with AS to become an ANY-STRING? or a
+    //    BLOB!.  If it is, then it should not be modified.
+
+    memcpy(Binary_Head(b), utf8, utf8_size);
+    Term_Binary_Len(b, utf8_size);  // not always terminated [1]
+    Freeze_Flex(b);  // signal immutability to non-WORD! aliasese [2]
+
+} setup_synonyms_and_symbol_id: { ////////////////////////////////////////////
+
+    // 1. Newly interned Symbols will have SYM_0 as the answer to Symbol_Id().
+    //    Startup_Symbols() tags the builtin SYM_XXX values from %symbols.r and
+    //    %lib-words.r on the terms that it interns after they are returned.
+    //    This lets them be used in compiled C switch() cases (e.g. SYM_ANY,
+    //    SYM_INTEGER_X, etc.)  But non-builtin words will be left at SYM_0.
+    //
+    // 2. !!! The system is getting more strict about case-sensitivity, but
+    //    it may still be useful to store the SymId in synonyms...but not
+    //    give the answer as the SymId of the word unless it's a canon.
+    //
+    // 3. In addition to a circularly linked list of synonyms via Symbol.link,
+    //    Symbol.misc field has another circularly linked list of Stubs called
+    //    "Patch" that hold module-level variables with that Symbol as a name.
+    //    Upon the initial interning of a Symbol, this list is empty.
 
     if (not synonym) {
         Tweak_Link_Next_Synonym(b, c_cast(Symbol*, b));  // 1-item circle list
-        assert(SECOND_UINT16(&b->info) == SYM_0);  // Startup may assign [3]
+        assert(SECOND_UINT16(&b->info) == SYM_0);  // Startup may assign [1]
     }
-    else {
-        // This is a synonym for an existing canon.  Link it into the synonyms
-        // circularly linked list, and direct link the canon form.
-        //
+    else {  // synonym for existing canon, add to circularly linked list
         Tweak_Link_Next_Synonym(b, Link_Next_Synonym(synonym));
         Tweak_Link_Next_Synonym(synonym, c_cast(Symbol*, b));
 
-        // If the canon form had a SYM_XXX for quick comparison of %words.r
-        // words in C switch statements, the synonym inherits that number.
-        //
         assert(SECOND_UINT16(&b->info) == SYM_0);
-        SET_SECOND_UINT16(&b->info, Symbol_Id(synonym));
+        SET_SECOND_UINT16(&b->info, Symbol_Id(synonym));  // same symid [2]
     }
 
-    Tweak_Misc_Hitch(b, b);  // circular list of module vars and bind info [4]
+    Tweak_Misc_Hitch(b, b);  // circular list of module vars and bind info [3]
+
+} add_to_symbol_hash_table: { /////////////////////////////////////////////////
 
     if (deleted_slot) {
         *deleted_slot = cast(Symbol*, b);  // reuse the deleted slot
@@ -385,8 +388,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     }
 
     return cast(Symbol*, b);
-  }
-}
+}}}
 
 
 //

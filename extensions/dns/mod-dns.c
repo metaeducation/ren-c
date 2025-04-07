@@ -110,21 +110,23 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value) out)
         goto cleanup_and_fail_if_error;
     }
 
-    // create socket
+  create_socket: { ///////////////////////////////////////////////////////////
+
     sock = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
     if (sock <= 0) {
         error = "Socket creation error to 8.8.8.8 for dns://";
         goto cleanup_and_fail_if_error;
     }
 
-    // connect to server
+} connect_to_server: { ///////////////////////////////////////////////////////
+
     if (connect(sock, info->ai_addr, info->ai_addrlen) < 0) {
         error = "Connection error to 8.8.8.8 for dns://";
         goto cleanup_and_fail_if_error;
     }
 
-    // get local socket info
-  blockscope {
+} get_local_socket_info: { ///////////////////////////////////////////////////
+
     struct sockaddr_in local_addr;
     socklen_t addr_len = sizeof(local_addr);
     if (getsockname(sock, cast(struct sockaddr*, &local_addr), &addr_len) < 0) {
@@ -133,9 +135,8 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value) out)
     }
 
     Init_Tuple_Bytes(out, cast(Byte*, &local_addr.sin_addr.s_addr), 4);
-  }
 
-  cleanup_and_fail_if_error:
+} cleanup_and_fail_if_error: { ///////////////////////////////////////////////
 
     if (sock > 0)
         close(sock);
@@ -143,7 +144,7 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value) out)
         freeaddrinfo(info);
     if (error)
         fail (error);
-}
+}}
 #endif
 
 

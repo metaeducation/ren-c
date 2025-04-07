@@ -415,18 +415,19 @@ Value* Start_Listening_On_Socket(const Value* port)
 
     assert(sock->stream != nullptr);  // must be open
 
-    // Setup socket address range and port:
-    //
+  setup_address_range_and_port: { /////////////////////////////////////////////
+
     struct sockaddr_in sa;
     Set_Addr(&sa, INADDR_ANY, sock->local_port_number);
 
-  blockscope {
+  bind_socket: { /////////////////////////////////////////////////////////////
+
     int r = uv_tcp_bind(&sock->tcp, cast(struct sockaddr*, &sa), 0);
     if (r < 0)
         return rebError_UV(r);
-  }
 
-  blockscope {
+} listen_on_socket: { ////////////////////////////////////////////////////////
+
     sock->tcp.data = Cell_Varlist(port);
     int r = uv_listen(
         cast(uv_stream_t*, &sock->tcp),
@@ -435,14 +436,13 @@ Value* Start_Listening_On_Socket(const Value* port)
     );
     if (r < 0)
         return rebError_UV(r);
-  }
 
     sock->modes |= RSM_BIND;
 
     Get_Local_IP(sock);
 
     return nullptr;
-}
+}}}
 
 
 // libuv actually enforces allocating a buffer on each read request, and it

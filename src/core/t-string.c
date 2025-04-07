@@ -57,7 +57,8 @@ enum {
 // to iterate much faster, and most of the strings in the system might be able
 // to get away with not having any bookmarks at all.
 //
-Utf8(*) String_At(const_if_c String* s, REBLEN at) {
+Utf8(*) String_At(const_if_c String* s, REBLEN at)
+{
     assert(s != g_mold.buffer);  // String_At() makes bookmarks, don't want!
 
     assert(at <= String_Len(s));
@@ -122,30 +123,35 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         }
     }
 
-    // Theoretically, a large UTF-8 string could have multiple "bookmarks".
-    // That would complicate this logic by having to decide which one was
-    // closest to be using.  For simplicity we just use one right now to
-    // track the last access--which speeds up the most common case of an
-    // iteration.  Improve as time permits!
-    //
-    assert(not book or Flex_Used(unwrap book) == 1);  // only one
+  decide_where_to_scan_from: { ///////////////////////////////////////////////
 
-  blockscope {
+    // The bookmark may be helpful as where to scan from, but if the position
+    // is closer to the head or the tail of the string, it may be faster to
+    // scan from there.
+    //
+    // 1. Theoretically, a large UTF-8 string could have multiple "bookmarks".
+    //    That would complicate this logic by having to decide which one was
+    //    closest to be using.  For simplicity we just use one right now to
+    //    track the last access--which speeds up the most common case of an
+    //    iteration.  Improve as time permits!
+    //
+    // 2. `at` is always positive.  `booked - at` may be negative, but if it
+    //    is positive and bigger than `at`, faster to seek from head.
+    //
+    // 3. `len - at` is always positive.  `at - booked` may be negative, but
+    //    if positive and bigger than `len - at`, faster to seek from tail.
+
+    assert(not book or Flex_Used(unwrap book) == 1);  // max of one [1]
+
     REBLEN booked = book ? BOOKMARK_INDEX(unwrap book) : 0;
 
-    // `at` is always positive.  `booked - at` may be negative, but if it
-    // is positive and bigger than `at`, faster to seek from head.
-    //
-    if (at < booked - at) {
+    if (at < booked - at) {  // `at` is always positive [2]
         if (at < Size_Of(Cell))
             book = nullptr;  // don't update bookmark for near head search
         goto scan_from_head;
     }
 
-    // `len - at` is always positive.  `at - booked` may be negative, but if
-    // it is positive and bigger than `len - at`, faster to seek from tail.
-    //
-    if ((len - at) < at - booked) {
+    if ((len - at) < at - booked) {  // `len - at` is always positive [3]
         if (len - at < Size_Of(Cell))
             book = nullptr;  // don't update bookmark for near tail search
         goto scan_from_tail;
@@ -156,7 +162,6 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         cp = cast(Utf8(*), Flex_Data(s) + BOOKMARK_OFFSET(unwrap book));
     else
         cp = cast(Utf8(*), Flex_Data(s));
-  }
 
     if (index > at) {
       #if DEBUG_TRACE_BOOKMARKS
@@ -170,14 +175,16 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
   #endif
     goto scan_forward;
 
-  scan_from_head:
+} scan_from_head: { //////////////////////////////////////////////////////////
+
   #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("scan from head");
   #endif
     cp = String_Head(s);
     index = 0;
 
-  scan_forward:
+} scan_forward: { ////////////////////////////////////////////////////////////
+
     assert(index <= at);
     for (; index != at; ++index)
         cp = Skip_Codepoint(cp);
@@ -187,14 +194,16 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 
     goto update_bookmark;
 
-  scan_from_tail:
+} scan_from_tail: { //////////////////////////////////////////////////////////
+
   #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("scan from tail");
   #endif
     cp = String_Tail(s);
     index = len;
 
-  scan_backward:
+} scan_backward: { //////////////////////////////////////////////////////////
+
     assert(index >= at);
     for (; index != at; --index)
         cp = Step_Back_Codepoint(cp);
@@ -206,7 +215,8 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         return cp;
     }
 
-  update_bookmark:
+} update_bookmark: { /////////////////////////////////////////////////////////
+
   #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("caching %ld\n", index);
   #endif
@@ -222,7 +232,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
   #endif
 
     return cp;
-}
+}}
 
 
 /***********************************************************************

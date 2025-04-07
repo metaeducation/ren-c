@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -42,7 +42,7 @@
 //
 //    But our goal is that a loop which never runs its body be distinguishable
 //    from one that has CONTINUE'd each body.  Unless those are allowed to be
-//    indistinguishable, loop compositions that work don't work.  So instead:
+//    indistinguishable, loop compositions don't work.  So instead:
 //
 //        for-each 'x [1 2 3] [if x != 3 [x]]  =>  ~[~void~]~ antiform
 //
@@ -688,20 +688,6 @@ void Add_Definitional_Stop(
 //  ]
 //
 DECLARE_NATIVE(CYCLE)
-//
-// 1. Most loops are not allowed to explicitly return a value and stop looping,
-//    because that would make it impossible to tell from the outside whether
-//    they'd requested a stop or if they'd naturally completed.  It would be
-//    impossible to propagate a value-bearing break request to an aggregate
-//    looping construct without invasively rebinding the break.
-//
-//    CYCLE is different because it doesn't have any loop exit condition.
-//    Hence it responds to a STOP request, which lets it return any value.
-//
-// 2. Technically, we know CYCLE's body will always run.  So we could make an
-//    exception to having it return void from STOP (or pure NULL).  There's
-//    probably no good reason to do that, so right now we stick with the usual
-//    branch policies.  Review if a good use case shows up.
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
@@ -737,6 +723,20 @@ DECLARE_NATIVE(CYCLE)
     return CONTINUE(OUT, body);  // no break or stop, so keep going
 
 } handle_thrown: {  /////////////////////////////////////////////////////////
+
+    // 1. Most loops can't explicitly return a value and stop looping, since
+    //    that would make it impossible to tell from the outside whether they
+    //    requested a stop or if they'd naturally completed.  It would be
+    //    impossible to propagate a value-bearing break request to aggregate
+    //    looping constructs without invasively rebinding the break.
+    //
+    //    CYCLE is different because it doesn't have any loop exit condition.
+    //    Hence it responds to a STOP request, which lets it return any value.
+    //
+    // 2. Technically, we know CYCLE's body will always run.  We could make an
+    //    exception to having it return void from STOP, or pure NULL.  There's
+    //    probably no good reason to do that, so right now we stick with the
+    //    usual branch policies.  Review if a good use case shows up.
 
     bool breaking;
     if (Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking)) {
@@ -1192,16 +1192,6 @@ DECLARE_NATIVE(FOR_EACH)
 //  ]
 //
 DECLARE_NATIVE(EVERY)
-//
-// 1. In light of other tolerances in the system for voids in logic tests
-//    (see ALL & ANY), EVERY treats a void as "no vote".
-//
-//        every 'x [1 2 3 4] [if even? x [x]]  =>  4
-//
-//        every 'x [1 2 3 4] [if odd? x [x]]  => ~[~void~]~ antiform
-//
-//    It returns heavy void on skipped bodies, as loop composition breaks down
-//    if we try to keep old values.
 {
     INCLUDE_PARAMS_OF_EVERY;
 
@@ -1260,6 +1250,16 @@ DECLARE_NATIVE(EVERY)
     return CONTINUE(SPARE, body);
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
+
+    // 1. In light of other tolerances in the system for voids in logic tests
+    //    (see ALL & ANY), EVERY treats a void as "no vote".
+    //
+    //        every 'x [1 2 3 4] [if even? x [x]]  =>  4
+    //
+    //        every 'x [1 2 3 4] [if odd? x [x]]  => ~[~void~]~ antiform
+    //
+    //    It returns heavy void on skipped bodies, as loop composition breaks
+    //    down if we try to keep old values.
 
     if (THROWING) {
         bool breaking;
@@ -1321,37 +1321,12 @@ DECLARE_NATIVE(EVERY)
 //
 DECLARE_NATIVE(REMOVE_EACH)
 //
-// 1. For reasons of semantics and performance, REMOVE-EACH does not actually
-//    perform removals "as it goes".  It could run afoul of any number of
-//    problems, including the mutable series becoming locked during iteration.
-//    Hence the series is locked, and removals aren't applied until the end.
-//    However, this means that there's state which must be finalized on every
-//    possible exit path.  (Errors, throws, completion)
-//
-// 2. Updating arrays in place may not be better than pushing kept values to
-//    the data stack and creating a precisely-sized output Flex to swap as
-//    underlying memory for the array.  (Imagine a large array from which there
-//    are many removals, and the ensuing wasted space being left behind).  We
-//    use the method anyway, to test novel techniques and error handling.
-//
-// 3. For binaries and strings, we push new data as the loop runs.  Then at
-//    the end of the enumeration, the identity of the incoming series is kept
-//    but the new underlying data is poked into it--and the old data free.
-//
-// 4. When a BREAK happens there is no change applied to the series.  It is
-//    conceivable that might not be what people want--and that if they did
-//    want that, they would likely use a MAP-EACH or something to generate
-//    a new series.  However, NULL is reserved for when loops break, so there
-//    would not be a way to get the number of removals in this case.  Hence
-//    it is semantically easiest to say BREAK goes along with "no effect".
-//
-// 6. The only signals allowed are ~okay~, ~null~ and ~void~.  This is believed
-//    to be more coherent, and likely would catch more errors than just
-//    allowing any Is_Trigger() value to mean "remove".
-//
-// 7. We are reusing the mold buffer for BLOB!, but *not putting UTF-8 data*
-//    into it.  Revisit if this inhibits cool UTF-8 based tricks the mold
-//    buffer might do otherwise.
+// Note: For semantics and performance, REMOVE-EACH doesn't actually perform
+// removals "as it goes".  It could run afoul of any number of problems,
+// including the mutable series becoming locked during iteration.  Hence the
+// series is locked, and removals aren't applied until the end.  However, this
+// means that there's state which must be finalized on every possible exit
+// path.  (Errors, throws, completion)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
@@ -1366,9 +1341,28 @@ DECLARE_NATIVE(REMOVE_EACH)
         goto return_pack;
     }
 
-    goto process_non_blank;
-
   process_non_blank: { ////////////////////////////////////////////////////=//
+
+    // 1. Updating arrays in place may not be better than pushingvalues to
+    //    the data stack and creating a precisely-sized output Flex to swap as
+    //    underlying memory for the array.  (Imagine a large array with many
+    //    removals, and the ensuing wasted space being left behind).  We use
+    //    the method anyway, to test novel techniques and error handling.
+    //
+    // 2. For blobs and strings, we push new data as the loop runs.  Then at
+    //    the end of the enumeration, the identity of the incoming series is
+    //    kept but new underlying data is poked into it, old data is freed.
+    //
+    // 3. When a BREAK happens there is no change applied to the series.  It's
+    //    conceivable that might not be what people want--and that if they did
+    //    want that, they would likely use a MAP-EACH or something to generate
+    //    a new series.  But NULL is reserved for when loops break, so there
+    //    would not be a way to get the removal count in this case.  Hence it
+    //    is semantically easiest to say BREAK goes along with "no effect".
+    //
+    // 4. The only signals allowed are ~okay~, ~null~ and ~void~.  This seems
+    //    more coherent, and likely would catch more errors than allowing any
+    //    Is_Trigger() value to mean "remove".
 
     Flex* flex = Cell_Flex_Ensure_Mutable(data);  // check even if empty
 
@@ -1387,17 +1381,10 @@ DECLARE_NATIVE(REMOVE_EACH)
     REBLEN start = VAL_INDEX(data);
 
     DECLARE_MOLDER (mo);
-    if (Any_List(data)) {
-        //
-        // We're going to use NODE_FLAG_MARKED on the elements of data's
-        // array for those items we wish to remove later.  [2]
-        //
+    if (Any_List(data)) {  // use NODE_FLAG_MARKED to mark for removal [1]
         Corrupt_Pointer_If_Debug(mo);
     }
-    else {
-        // Generate a new data allocation, but then swap its underlying content
-        // to back the Flex we were given.  [3]
-        //
+    else {  // generate new data allocation and swap content in the Flex [2]
         Push_Mold(mo);
     }
 
@@ -1448,7 +1435,7 @@ DECLARE_NATIVE(REMOVE_EACH)
                 goto finalize_remove_each;
             }
 
-            if (breaking) {  // break semantics are no-op [4]
+            if (breaking) {  // break semantics are no-op [3]
                 assert(start < len);
                 goto finalize_remove_each;
             }
@@ -1461,7 +1448,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         if (Is_Void(OUT)) {
             keep = true;  // treat same as logic false (e.g. don't remove)
         }
-        else if (Is_Okay(OUT)) {  // pure logic required [6]
+        else if (Is_Okay(OUT)) {  // pure logic required [4]
             keep = false;  // okay is remove
         }
         else if (Is_Nulled(OUT)) {  // don't remove
@@ -1523,6 +1510,10 @@ DECLARE_NATIVE(REMOVE_EACH)
     assert(start == len);  // normal completion (otherwise a `goto` happened)
 
   finalize_remove_each: {  ///////////////////////////////////////////////////
+
+    // 7. We are reusing the mold buffer for BLOB!, but *not putting UTF-8
+    //    data* into it.  Revisit if this inhibits cool UTF-8 based tricks
+    //    the mold buffer might do otherwise.
 
     assert(Get_Flex_Info(flex, HOLD));
     Clear_Flex_Info(flex, HOLD);
@@ -1593,7 +1584,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         assert(Binary_Len(popped) <= Cell_Series_Len_Head(data));
         removals = Cell_Series_Len_Head(data) - Binary_Len(popped);
 
-        Swap_Flex_Content(popped, b);  // swap Flex identity [3]
+        Swap_Flex_Content(popped, b);  // swap identity, process_non_blank:[1]
 
         Free_Unmanaged_Flex(popped);  // now frees incoming Flex's data
         Init_Blob(OUT, b);
@@ -1715,17 +1706,6 @@ DECLARE_NATIVE(MAP_EACH)
 //  ]
 //
 DECLARE_NATIVE(MAP)
-//
-// 1. Void is allowed for skipping map elements:
-//
-//        map x each [1 2 3] [if even? x [x * 10]] => [20]
-//
-// 2. We use APPEND semantics on the body result; whatever APPEND would do with
-//    the value, we do the same.  (Ideally the logic could be unified.)
-//
-// 3. MAP and MAP-EACH always return blocks except in cases of BREAK, e.g.
-//    there's no way to detect from the outside if the body never ran.  Review
-//    if variants would be useful (e.g. COLLECT* is NULL if nothing collected)
 {
     INCLUDE_PARAMS_OF_MAP;
 
@@ -1811,6 +1791,13 @@ DECLARE_NATIVE(MAP)
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
+    // Use APPEND semantics on the body result; whatever APPEND would do with
+    // the value, we do the same.  (Ideally the code could be unified.)
+    //
+    // e.g. void is allowed for skipping map elements:
+    //
+    //        map-each 'x [1 2 3] [if even? x [x * 10]] => [20]
+
     if (THROWING) {
         bool breaking;
         if (not Try_Catch_Break_Or_Continue(SPARE, LEVEL, &breaking))
@@ -1848,6 +1835,10 @@ DECLARE_NATIVE(MAP)
 
 } finalize_map: {  ///////////////////////////////////////////////////////////
 
+    // 1. MAP and MAP-EACH always return blocks except in cases of BREAK, e.g.
+    //    there's no way to detect from the outside if the body never ran.
+    //    Are variants useful? (e.g. COLLECT* is NULL if nothing collected)
+
     Shutdown_Loop_Each(iterator);
 
     if (THROWING)
@@ -1859,7 +1850,7 @@ DECLARE_NATIVE(MAP)
         return nullptr;
     }
 
-    return Init_Block(  // always returns block unless break [3]
+    return Init_Block(  // always returns block unless break [1]
         OUT,
         Pop_Source_From_Stack(STACK_BASE)
     );
@@ -2072,22 +2063,6 @@ DECLARE_NATIVE(FOR)
 //  ]
 //
 DECLARE_NATIVE(UNTIL)
-//
-// 1. When CONTINUE has an argument, it acts as if the loop body evaluated to
-//    that argument.  But UNTIL's condition and body are the same.  That means
-//    CONTINUE:WITH OKAY will stop the UNTIL and return OKAY, CONTINUE:WITH 10
-//    will stop and return 10, etc.
-//
-// 2. Testing the body result for truthiness or falseyness means that the
-//    evaluated-to-value must be decayed.  Hence UNTIL cannot return something
-//    like a pack...it must be META'd and the result UNMETA'd...with all
-//    packs quasiforms being considered truthy.
-//
-// 3. Purusant to [1], we want CONTINUE (or CONTINUE VOID) to keep the loop
-//    running.  For parity between what continue does with an argument and
-//    what the loop does if the body evaluates to that argument, it suggests
-//    tolerating a void body result as intent to continue the loop also.
-//
 {
     INCLUDE_PARAMS_OF_UNTIL;
 
@@ -2120,6 +2095,11 @@ DECLARE_NATIVE(UNTIL)
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
+    // 1. When CONTINUE has an argument, it acts like the loop body evaluated
+    //    to that argument.  But UNTIL's condition and body are the same, so
+    //    CONTINUE:WITH OKAY will stop the UNTIL and return OKAY, while
+    //    CONTINUE:WITH 10 will stop and return 10, etc.
+
     if (THROWING) {
         bool breaking;
         if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
@@ -2148,9 +2128,20 @@ DECLARE_NATIVE(UNTIL)
 
 } test_condition: {  /////////////////////////////////////////////////////////
 
-    Decay_If_Unstable(condition);  // must decay for truth test [2]
+    // 1. Today we don't test undecayed values for truthiness or falseyness.
+    //    Hence UNTIL cannot return something like a pack...it must be META'd
+    //    and the result UNMETA'd.  That would mean all pack quasiforms would
+    //    be considered truthy.
+    //
+    // 2. Due to body_result_in_out:[1], we want CONTINUE (or CONTINUE VOID)
+    //    to keep the loop running.  For parity between what continue does
+    //    with an argument and what the loop does if the body evaluates to
+    //    that argument, it suggests tolerating a void body result as intent
+    //    to continue the loop also.
 
-    if (not Is_Void(condition)) {  // skip voids [3]
+    Decay_If_Unstable(condition);  // must decay for truth test [1]
+
+    if (not Is_Void(condition)) {  // skip voids [2]
         if (Is_Trigger(Stable_Unchecked(condition)))
             return BRANCHED(OUT);  // truthy result, return value!
     }
@@ -2180,22 +2171,6 @@ DECLARE_NATIVE(WHILE)
 //    safer to require a BLOCK! vs. falling back on such behaviors.
 //
 //    (It's now easy for people to make their own weird polymorphic loops.)
-//
-// 2. We could make it so CONTINUE in the condition of a WHILE meant you skip
-//    the execution of the body of that loop, and run the condition again.
-//    That *might* be interesting for some strange stylized usage that puts
-//    complex branching code in a condition.  But it adds some cost, and would
-//    override the default meaning of CONTINUE (of continuing some enclosing
-//    loop)...which is free, and enables other strange stylized usages.
-//
-// 3. If someone writes:
-//
-//        flag: 'true
-//        while [true? flag] [flag: 'false, null]
-//
-//    We don't want that to evaluate to NULL--because NULL is reserved for
-//    signaling BREAK.  Similarly, VOID results are reserved for when the body
-//    never runs.  BRANCHED() encloses these states in single-element packs.
 {
     INCLUDE_PARAMS_OF_WHILE;
 
@@ -2217,10 +2192,17 @@ DECLARE_NATIVE(WHILE)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    // 1. We could make it so CONTINUE in the condition of a WHILE skipped
+    //    the execution of the body of that loop, and run the condition again.
+    //    That *may* be interesting for some stylized usage that puts complex
+    //    branching code in a condition.  But it adds some cost, and would
+    //    override the default meaning of CONTINUE continuing some enclosing
+    //    loop...which is free, and enables other strange stylized usages.
+
     STATE = ST_WHILE_EVALUATING_CONDITION;  // have to set before catching
 
     if (Is_Block(body))
-        Add_Definitional_Break_Continue(body, LEVEL);  // no condition bind [2]
+        Add_Definitional_Break_Continue(body, LEVEL);  // no condition bind [1]
     else
         assert(Is_Frame(body));
 
@@ -2264,8 +2246,17 @@ DECLARE_NATIVE(WHILE)
 
 } return_out: {  /////////////////////////////////////////////////////////////
 
+    // 1. If someone writes:
+    //
+    //        flag: 'true
+    //        while [true? flag] [flag: 'false, null]
+    //
+    //    We don't want that to evaluate to NULL--because NULL is reserved for
+    //    signaling BREAK.  And VOID results are reserved for when the body
+    //    never runs.  BRANCHED() encloses these in single-element packs.
+
     if (Is_Cell_Erased(OUT))
         return VOID;  // body never ran, so no result to return!
 
-    return BRANCHED(OUT);  // put void and null in packs [3]
+    return BRANCHED(OUT);  // put void and null in packs [1]
 }}

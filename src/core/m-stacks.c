@@ -30,13 +30,9 @@
 //
 //  Startup_Data_Stack: C
 //
-// 1. Start the data stack out with just one element in it.  We could start
-//    it off as a dynamic allocation, but by letting it be a singular array
-//    and then expanding it here it's a chance to test that logic early on.
-//
-// 2. Poison the cell at the head of the data stack (unreadable/unwritable).
-//    Having nothing at [0] means that StackIndex can be unsigned (no need
-//    for -1 to mean empty, because 0 means that).
+// 1. We could start the stack off as a large dynamic pre-allocation.  But
+//    letting it be a singular array and then expanding it here is a chance
+//    to test the expansion logic early on.
 //
 void Startup_Data_Stack(Length capacity)
 {
@@ -44,23 +40,30 @@ void Startup_Data_Stack(Length capacity)
     Set_Flex_Len(g_ds.array, 1);  // one element, helps test expansion [1]
     assert(Not_Stub_Flag(g_ds.array, DYNAMIC));
 
-  blockscope {  // head will move after expansion
-    Cell* head = Array_Head(g_ds.array);
+  mark_head_unreadable: { ////////////////////////////////////////////////////
+
+    Cell* head = Array_Head(g_ds.array);  // head will move after expansion
     assert(Is_Cell_Erased(head));  // non-dynamic array, length 1 indicator
     Init_Unreadable(head);
-  }
 
     g_ds.movable_tail = Array_Tail(g_ds.array);  // signals PUSH() out of space
 
     g_ds.index = 1;
     g_ds.movable_top = Flex_At(Value, g_ds.array, g_ds.index);
-    Expand_Data_Stack_May_Fail(capacity);  // leverage expansion logic [1]
+
+} expand_stack: { ////////////////////////////////////////////////////////////
+
+    // 1. Poison cell at the head of the data stack (unreadable/unwritable).
+    //    Having nothing at [0] means that StackIndex can be unsigned (no need
+    //    for -1 to mean empty, because 0 means that).
+
+    Expand_Data_Stack_May_Fail(capacity);  // leverage expansion logic
 
     DROP();  // drop the hypothetical thing that triggered the expand
 
     assert(Get_Stub_Flag(g_ds.array, DYNAMIC));
-    Force_Poison_Cell(Array_Head(g_ds.array));  // poison the head [2]
-}
+    Force_Poison_Cell(Array_Head(g_ds.array));  // poison the head [1]
+}}
 
 
 //
