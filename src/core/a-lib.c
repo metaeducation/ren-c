@@ -2305,6 +2305,24 @@ void API_rebUnlockBytes(const unsigned char* bytes)
 
 
 //
+//  rebUnlockBytesMaybe: API
+//
+// Nullptr-tolerant version of rebUnlockBytes().
+//
+// 1. Unlocking logic not implemented yet.
+//
+void API_rebUnlockBytesMaybe(const unsigned char* bytes)
+{
+    ENTER_API_RECYCLING_OK;
+
+    if (bytes)
+        rebUnlockBytes(bytes);
+
+    return;
+}
+
+
+//
 //  rebRequestHalt: API
 //
 // This function sets a signal that is checked during evaluation of code
