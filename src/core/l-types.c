@@ -204,6 +204,56 @@ DECLARE_NATIVE(OFFSET_OF)
 
 
 //
+//  address-of: native:generic [
+//
+//  "Get the memory address of a type's data (low-level, beware!)"
+//
+//      return: [~null~ integer!]
+//      element [<maybe> <unrun> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(ADDRESS_OF)
+//
+// !!! This really needs to lock types, so that the memory can't move.  But
+// for now it's a hack just to get the FFI able to find out the buffer
+// behind a VECTOR!, etc.
+{
+    INCLUDE_PARAMS_OF_ADDRESS_OF;
+
+    Element* elem = Element_ARG(ELEMENT);
+
+    return Dispatch_Generic(ADDRESS_OF, elem, LEVEL);
+}
+
+
+// Asking for the ADDRESS OF a FRAME! delegates that to the DetailsQuerier.
+//
+// !!! It's an open question of whether functions will use the new extended
+// types system to add types for ROUTINE! and ENCLOSURE! and ADAPTATION! etc.
+// such that the DetailsQuerier would be obsolete.
+//
+IMPLEMENT_GENERIC(ADDRESS_OF, Is_Frame)
+{
+    INCLUDE_PARAMS_OF_ADDRESS_OF;
+
+    Element* frame = Element_ARG(ELEMENT);
+
+    Phase* phase = Cell_Frame_Phase(frame);
+    if (not Is_Stub_Details(phase))
+        return FAIL("Phase isn't details, can't get ADDRESS-OF");
+
+    Details* details = cast(Details*, phase);
+    DetailsQuerier* querier = Details_Querier(details);
+    if (not (*querier)(OUT, details, SYM_ADDRESS_OF))
+        return RAISE(
+            "Frame Details does not offer ADDRESS-OF, use TRY for NULL"
+        );
+
+    return OUT;
+}
+
+
+//
 //  of: infix native [
 //
 //  "Call XXX-OF functions without a hyphen, e.g. HEAD OF X => HEAD-OF X"
