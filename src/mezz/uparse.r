@@ -1913,6 +1913,20 @@ default-combinators: to map! reduce [
         ]
     ]
 
+    === MATCH COMBINATOR ===
+
+    'match combinator [
+        return: "Element if it matches the match rule" [element?]
+        value [frame!]
+    ][
+        if run value maybe try input.1 [
+            remainder: next input
+            return input.1
+        ]
+
+        return raise "MATCH didn't match type of current input position item"
+    ]
+
     === JUST COMBINATOR ===
 
     ; The JUST combinator gives you "just the value", without matching it.
@@ -2914,6 +2928,12 @@ parsify: func [
             ]
 
             return combinatorize:value comb rules state gotten
+        ]
+
+        (path? r) and (blank? last r) [  ; type constraint combinator
+            let action: get r
+            comb: state.combinators.match
+            return combinatorize:value comb rules state action/
         ]
 
         ; !!! Here is where we would let GET-TUPLE! and GET-WORD! be used to
