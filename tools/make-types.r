@@ -276,7 +276,7 @@ for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
 
     e-types/emit [tr --{
         INLINE bool Any_${Proper-Name}_Type(Option(Type) t)
-          { return u_cast(Byte, unwrap t) >= $<TR.START> and u_cast(Byte, unwrap t) <= $<TR.END>; }
+          { return u_cast(Byte, maybe t) >= $<TR.START> and u_cast(Byte, maybe t) <= $<TR.END>; }
 
         #define Any_${Proper-Name}(v) \
             Any_${Proper-Name}_Type(Type_Of(v))
@@ -334,7 +334,7 @@ e-types/emit newline
 for-each [ts-name types] sparse-typesets [
     e-types/emit [propercase-of ts-name --{
         INLINE bool Any_${propercase-of Ts-Name}_Type(Option(Type) t) {
-            return did (g_sparse_memberships[u_cast(Byte, unwrap t)] & TYPESET_FLAG_${TS-NAME});
+            return did (g_sparse_memberships[u_cast(Byte, maybe t)] & TYPESET_FLAG_${TS-NAME});
         }
 
         #define Any_${propercase-of Ts-Name}(v) \
