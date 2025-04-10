@@ -255,7 +255,7 @@ console!: make object! [
         name [any-word!] "Shortcut name"
         block [block!] "Command(s) expanded to"
     ][
-        extend shortcuts name block
+        set (extend shortcuts 'name) block
     ]
 ]
 

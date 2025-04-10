@@ -36,14 +36,19 @@ last?: single?: func [
 
 
 extend: func [
-    "Extend an object, map, or block type with word and value pair."
-    return: [~null~ any-value!]
-    obj [object! map! block! group!] {object to extend (modified)}
-    word [any-word!]
-    val [~null~ any-value!]
+    "Extend object with words or a block of code"
+    return: [~null~ word! object!]
+    context [<maybe> word! object!]
+    def "Note: if BLOCK!, can't have null evaluations"
+        [word! block!]
 ][
-    append obj reduce [to-set-word word :val]
-    :val
+    if word? def [
+        append context reduce [to-set-word def _]
+        context/(def): ~
+        return bind def context
+    ]
+    append context reduce def  ; won't work with null
+    return context
 ]
 
 
