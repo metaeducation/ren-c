@@ -479,13 +479,11 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Is_Object(ARG(TYPE)) or Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_OBJECT);
-    UNUSED(ARG(TYPE));
-
+    Value* type = ARG(TYPE);  // may be antiform datatype
     Element* arg = Element_ARG(DEF);
 
-    if (Is_Object(ARG(TYPE))) {
-        VarList* varlist = cast(VarList*, Cell_Context(ARG(TYPE)));
+    if (Is_Object(type)) {
+        VarList* varlist = cast(VarList*, Cell_Context(type));
         if (Is_Block(arg)) {
             const Element* tail;
             const Element* at = Cell_List_At(&tail, arg);
@@ -513,6 +511,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 
         return RAISE(Error_Bad_Make(TYPE_OBJECT, arg));
     }
+
+    assert(Cell_Datatype_Builtin_Heart(type) == TYPE_OBJECT);
 
     if (Is_Block(arg)) {
         const Element* tail;

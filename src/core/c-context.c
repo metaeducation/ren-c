@@ -837,6 +837,7 @@ VarList* Make_Varlist_Detect_Managed(
             Copy_Cell(dest, src);
             bool deeply = true;  // !!! Copies series deeply, why? [1]
             Clonify(dest, clone_flags, deeply);
+            Clear_Cell_Flag(dest, CONST);  // remove constness from copies
         }
     }
 
