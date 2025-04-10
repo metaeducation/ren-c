@@ -33,6 +33,6 @@ libraries: switch platform-config.os-base [
 
 ldflags: switch platform-config.os-base [
     'OSX [
-        "-framework CoreFoundation"
+        ["-framework CoreFoundation"]
     ]
 ]
