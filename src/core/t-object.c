@@ -1259,6 +1259,24 @@ IMPLEMENT_GENERIC(VALUES_OF, Any_Context)
 }
 
 
+
+//
+//  bytes-of: native:generic [
+//
+//  "Get the underlying data e.g. of an image or struct as a BLOB! value"
+//
+//      return: [~null~ blob!]
+//      value [<maybe> element?]
+//  ]
+//
+DECLARE_NATIVE(BYTES_OF)
+{
+    INCLUDE_PARAMS_OF_BYTES_OF;
+
+    return Dispatch_Generic(BYTES_OF, Element_ARG(VALUE), LEVEL);
+}
+
+
 IMPLEMENT_GENERIC(TAIL_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
