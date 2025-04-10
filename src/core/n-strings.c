@@ -111,7 +111,7 @@ DECLARE_NATIVE(LATIN1_Q)
 //          [~null~ any-utf8? any-list? any-sequence? blob!]
 //      base [datatype! any-utf8? any-list? any-sequence? blob!]
 //      rest "Plain [...] blocks reduced, @[...] block items used as is"
-//          [~void~ block! the-block! any-utf8? blob!]
+//          [~void~ block! the-block! any-utf8? blob! integer!]
 //      :with [element? splice!]
 //      :head "Include delimiter at head of a non-NULL result"
 //      :tail "Include delimiter at tail of a non-NULL result"
@@ -164,6 +164,16 @@ DECLARE_NATIVE(JOIN)
         );
         assert(Get_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED));
         Clear_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED);
+
+        if (Any_List(ARG(BASE)) or Any_Sequence(ARG(BASE))) {
+            if (
+                rest and (
+                    not Is_Block(unwrap rest) and not Is_The_Block(unwrap rest)
+                )
+            ){
+                return FAIL("JOIN of list or sequence must join with BLOCK!");
+            }
+        }
 
         if (not rest) {  // simple base case: nullptr or COPY
             if (joining_datatype)
