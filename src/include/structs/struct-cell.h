@@ -311,6 +311,7 @@ typedef Byte QuoteByte;  // help document when Byte means a quoting byte
 #define CELL_FLAG_STACK_NOTE_SEALED CELL_FLAG_NOTE
 #define CELL_FLAG_FEED_NOTE_META CELL_FLAG_NOTE
 #define CELL_FLAG_CURRENT_NOTE_SET_ACTION CELL_FLAG_NOTE
+#define CELL_FLAG_CURRENT_NOTE_RUN_WORD CELL_FLAG_NOTE
 
 
 //=//// CELL_FLAG_NEWLINE_BEFORE //////////////////////////////////////////=//

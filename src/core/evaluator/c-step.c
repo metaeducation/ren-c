@@ -711,6 +711,12 @@ Bounce Stepper_Executor(Level* L)
         if (Is_Action(OUT))
             goto run_action_in_out;
 
+        if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD)) {
+            if (Is_Frame(OUT))
+                goto run_action_in_out;
+            return FAIL("Leading slash means execute FRAME! or ACTION! only");
+        }
+
         if (Any_Vacancy(stable_OUT))  // checked second
             return FAIL(Error_Bad_Word_Get(CURRENT, OUT));
 
@@ -1078,7 +1084,9 @@ Bounce Stepper_Executor(Level* L)
         }
         else switch (unwrap single) {
           case LEADING_BLANK_AND(WORD):
-            return FAIL("Killing off refinement evaluations!");
+            Unpath(CURRENT);
+            Set_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD);
+            goto word_common;
 
           case LEADING_BLANK_AND(CHAIN): {  // /abc: or /?:?:?
             Unpath(CURRENT);
