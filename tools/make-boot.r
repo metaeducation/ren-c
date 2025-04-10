@@ -569,6 +569,8 @@ for-each 'item sys-toplevel [
 
 add-sym:placeholder </MAX_SYM_BUILTIN>
 
+add-sym:placeholder <MIN_SYM_EXTENDED>
+
 for-each 'item load3 %ext-words.r [
     switch type of item [
         word! [add-sym item]
@@ -583,6 +585,8 @@ for-each 'item load3 %ext-words.r [
         fail ["bad %symbols.r item:" mold item]
     ]
 ]
+
+add-sym:placeholder </MAX_SYM_EXTENDED>
 
 
 === "EMIT SYMBOLS AND PRUNE SPECIAL SIGNALS FROM sym-table" ===
@@ -616,10 +620,8 @@ for-next 'pos sym-table [
             name: first pos
         ]
 
-        assert [text? name]
-
         append placeholder-define-items cscape [
-            -{#define $<DEFINITION>  $<symid + delta>  /* $<Name> */}-
+            -{#define $<DEFINITION>  $<symid + delta>}-
         ]
     ]
 

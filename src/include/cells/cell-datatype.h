@@ -163,7 +163,7 @@ INLINE Option(Type) Cell_Datatype_Type(const Atom* v) {
 
 INLINE Option(Heart) Cell_Datatype_Heart(const Atom* v) {
     Option(SymId) id = Cell_Datatype_Id(v);
-    if (not id)
+    if (not id or not Is_Symbol_Id_Of_Builtin_Type(unwrap id))
         return TYPE_0;
 
     Byte type_byte = cast(Byte, Type_From_Symbol_Id(unwrap id));

@@ -234,10 +234,6 @@ Script: [
     parse3-multi-set:   "PARSE3 - SET can capture at most one value"
     parse3-incomplete:  "PARSE3 rules did not reach end of input"
 
-    bad-library:        "bad library (already closed?)"
-    only-callback-ptr:  "Only callback functions may be passed by FFI pointer"
-    free-needs-routine: "Function to destroy struct storage must be routine"
-
     block-skip-wrong:   "Block is not even multiple of skip size"
 
     frame-already-used: ["Frame currently in use by a function call" :arg1]
