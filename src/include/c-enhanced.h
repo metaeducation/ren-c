@@ -1007,7 +1007,7 @@
         typename T2,
         typename std::enable_if<true>::type* = nullptr  // no magic checks [2]
     >
-    inline constexpr auto cpp_min_helper(
+    inline auto cpp_min_helper(  // Note: constexpr can't assert in C++11
         T1 a, T1 aa, T2 b, T2 bb
     ) -> typename std::common_type<T1, T2>::type{
         assert(a == aa);
@@ -1020,7 +1020,7 @@
         typename T2,
         typename std::enable_if<true>::type* = nullptr  // no magic checks [2]
     >
-    inline constexpr auto cpp_max_helper(
+    inline auto cpp_max_helper(  // Note: constexpr can't assert in C++11
         T1 a, T1 aa, T2 b, T2 bb
     ) -> typename std::common_type<T1, T2>::type{
         assert(a == aa);
