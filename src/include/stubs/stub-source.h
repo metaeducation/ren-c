@@ -55,7 +55,7 @@
     cast(Source*, Make_Array_Core(FLEX_MASK_UNMANAGED_SOURCE, (capacity)))
 
 #define Make_Source_Managed(capacity) \
-    cast(Source*, Make_Array_Core(FLEX_MASK_UNMANAGED_SOURCE, (capacity)))
+    cast(Source*, Make_Array_Core(FLEX_MASK_MANAGED_SOURCE, (capacity)))
 
 
 //=//// MIRROR BYTE ///////////////////////////////////////////////////////=//
