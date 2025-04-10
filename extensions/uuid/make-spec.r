@@ -7,13 +7,16 @@ includes: reduce [
     %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
 ]
 depends: null-to-blank switch system-config/os-base [
-    'linux [
+    'Linux [
         [
             %uuid/libuuid/gen_uuid.c
             %uuid/libuuid/unpack.c
             %uuid/libuuid/pack.c
             %uuid/libuuid/randutils.c
         ]
+    ]
+    'OSX [
+        repo-dir/extensions/uuid/uuid-mac.c
     ]
 ]
 

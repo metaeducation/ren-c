@@ -38,7 +38,10 @@
     #undef VOID  // %winnt.h defines this, we have a better use for it
 
 #elif defined(TO_OSX)
-    #include <CoreFoundation/CFUUID.h>
+    // Can't include <CoreFoundation/CFUUID.h> in a file including %sys-core.h
+    // due to incompatibly typedef'ing Size.
+    //
+    extern void Get_Sixteen_Uuid_Bytes(unsigned char buf[16]);
 #else
     #include <uuid.h>
 #endif
@@ -85,31 +88,14 @@ DECLARE_NATIVE(GENERATE)
     Init_Blob(OUT, flex);
 
 #elif defined(TO_OSX)
-    CFUUIDRef newId = CFUUIDCreate(nullptr);
-    CFUUIDBytes bytes = CFUUIDGetUUIDBytes(newId);
-    CFRelease(newId);
 
     Binary* flex = Make_Binary(16);
-    *Binary_At(flex, 0) = bytes.byte0;
-    *Binary_At(flex, 1) = bytes.byte1;
-    *Binary_At(flex, 2) = bytes.byte2;
-    *Binary_At(flex, 3) = bytes.byte3;
-    *Binary_At(flex, 4) = bytes.byte4;
-    *Binary_At(flex, 5) = bytes.byte5;
-    *Binary_At(flex, 6) = bytes.byte6;
-    *Binary_At(flex, 7) = bytes.byte7;
-    *Binary_At(flex, 8) = bytes.byte8;
-    *Binary_At(flex, 9) = bytes.byte9;
-    *Binary_At(flex, 10) = bytes.byte10;
-    *Binary_At(flex, 11) = bytes.byte11;
-    *Binary_At(flex, 12) = bytes.byte12;
-    *Binary_At(flex, 13) = bytes.byte13;
-    *Binary_At(flex, 14) = bytes.byte14;
-    *Binary_At(flex, 15) = bytes.byte15;
-
+    Get_Sixteen_Uuid_Bytes(Binary_Head(flex));
     Term_Binary_Len(flex, 16);
 
     Init_Blob(OUT, flex);
+
+    Init_Blank(OUT);
 
 #elif defined(TO_LINUX)
     uuid_t uuid;
