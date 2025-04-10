@@ -779,6 +779,7 @@ static void Propagate_All_GC_Marks(void)
                 not Is_Cell_Unreadable(v)
                 and Is_Nulled(v)
                 and Not_Array_Flag(a, IS_VARLIST)
+                and Not_Array_Flag(a, IS_PAIRLIST)
                 and Not_Array_Flag(a, NULLEDS_LEGAL)
             ){
                 panic(a);
