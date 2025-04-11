@@ -533,7 +533,7 @@ gcc: make compiler-class [
                     ;         "-D" (filter-flag flg id else [continue])
                     ;     ]
                     ;
-                    if flg: filter-flag flg id [
+                    if flg: filter-flag flg .id [
                         keep unspaced ["-D" flg]
                     ]
                 ]
@@ -559,7 +559,7 @@ gcc: make compiler-class [
             ]
             if F [
                 for-each 'flg F [
-                    keep maybe filter-flag flg id
+                    keep maybe filter-flag flg .id
                 ]
             ]
 
@@ -646,7 +646,7 @@ cl: make compiler-class [
                     ;         "/D" (filter-flag flg id else [continue])
                     ;     ]
                     ;
-                    if flg: filter-flag flg id [
+                    if flg: filter-flag flg .id [
                         keep unspaced ["/D" flg]
                     ]
                 ]
@@ -669,7 +669,7 @@ cl: make compiler-class [
             ]
             if F [
                 for-each 'flg F [
-                    keep maybe filter-flag flg id
+                    keep maybe filter-flag flg .id
                 ]
             ]
 
@@ -763,7 +763,7 @@ ld: make linker-class [
             ]
 
             for-each 'flg ldflags [
-                keep maybe filter-flag flg id
+                keep maybe filter-flag flg .id
             ]
 
             for-each 'dep depends [
@@ -782,7 +782,7 @@ ld: make linker-class [
             ]
             #dynamic-extension [
                 either tag? dep.output [
-                    if let lib: filter-flag dep.output id [
+                    if let lib: filter-flag dep.output .id [
                         unspaced ["-l" lib]
                     ]
                 ][
@@ -831,7 +831,7 @@ llvm-link: make linker-class [
     name: 'llvm-link
     version: null
     exec-file: null
-    id: "llvm"
+    id: "llvm"  ; handles all flags like <llvm:XXX>
     command: method [
         return: [text!]
         output [file!]
@@ -866,11 +866,11 @@ llvm-link: make linker-class [
                 ]
             ]
 
-            for-each 'flg .ldflags [
-                keep maybe filter-flag flg id
+            for-each 'flg ldflags [
+                keep maybe filter-flag flg .id
             ]
 
-            for-each 'dep .depends [
+            for-each 'dep depends [
                 keep maybe accept dep
             ]
         ]
@@ -954,7 +954,7 @@ link: make linker-class [
             ]
 
             for-each 'flg ldflags [
-                keep maybe filter-flag flg id
+                keep maybe filter-flag flg .id
             ]
 
             for-each 'dep depends [
@@ -975,7 +975,7 @@ link: make linker-class [
                 comment [import file]  ; static property is ignored
 
                 reify either tag? dep.output [
-                    filter-flag dep.output id
+                    filter-flag dep.output .id
                 ][
                     ;dump dep.output
                     file-to-local:pass either ends-with? dep.output ".lib" [
@@ -1025,7 +1025,7 @@ strip-class: make object! [
             switch type of params [  ; switch:type not in bootstrap
                 block! [
                     for-each 'flag params [
-                        keep filter-flag flag id
+                        keep filter-flag flag .id
                     ]
                 ]
                 text! [
