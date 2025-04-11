@@ -72,16 +72,16 @@ ends-with?: func [
 
 filter-flag: func [
     return: [~null~ text! file!]
-    flag "If TAG! then <prefix:flag>, e.g. <gnu:-Wno-unknown-warning>"
+    flag "If TAG! then <prefix:flag>, e.g. <gcc:-Wno-unknown-warning>"
         [tag! text! file!]
-    prefix "gnu -> GCC-compatible compilers, msc -> Microsoft C"
-        [text!]
+    prefixes "gnu -> GCC-compatible compilers, msc -> Microsoft C"
+        [text! block!]
 ][
     if not tag? flag [return flag]  ; no filtering
 
     let header
     let option
-    parse3:match flag [
+    parse3:match as text! flag [  ; !!! should ACROSS of TAG! make TEXT! ?
         header: across to ":"
         ":" option: across to <end>
     ] else [
@@ -89,8 +89,8 @@ filter-flag: func [
     ]
 
     return all [
-        prefix = header
-        to-text option
+        find (blockify prefixes) header
+        option
     ]
 ]
 
@@ -313,7 +313,6 @@ set-target-platform: func [
 project-class: make object! [
     class: #project
     name: null
-    id: null
     type: null  ;  dynamic, static, object or application
     depends: null  ; a dependency could be a library, object file
     output: null  ; file path
@@ -453,7 +452,7 @@ compiler-class: make object! [
 
 gcc: make compiler-class [
     name: 'gcc
-    id: "gnu"
+    id: ["gcc" "gnu"]  ; apply all <gcc:XXX> and <gnu:XXX> flags
 
     check: method [
         "Assigns .exec-file, extracts the compiler version"
@@ -589,12 +588,13 @@ tcc: make gcc [
 
 clang: make gcc [
     name: 'clang
+    id: ["gcc" "clang"]
 ]
 
 ; Microsoft CL compiler
 cl: make compiler-class [
     name: 'cl
-    id: "msc" ;flag id
+    id: "msc"  ; match all flags like <msc:XXX>
     command: method [
         return: [text!]
         output [file!]
@@ -724,7 +724,7 @@ ld: make linker-class [
     name: 'ld
     version: null
     exec-file: null
-    id: "gnu"
+    id: ["gcc" "gnu"]
     command: method [
         return: [text!]
         output [file!]
@@ -852,16 +852,16 @@ llvm-link: make linker-class [
 
             keep "-o"
 
-            .output: file-to-local .output
-            either ends-with? .output maybe suffix [
-                keep .output
+            output: file-to-local output
+            either ends-with? output maybe suffix [
+                keep output
             ][
-                keep unspaced [.output suffix]
+                keep unspaced [output suffix]
             ]
 
             ; llvm-link doesn't seem to deal with libraries
             comment [
-                for-each 'search (maybe map-files-to-local maybe .searches) [
+                for-each 'search (maybe map-files-to-local maybe searches) [
                     keep unspaced ["-L" search]
                 ]
             ]
@@ -1041,7 +1041,7 @@ strip-class: make object! [
 ]
 
 strip: make strip-class [
-    id: "gnu"
+    id: ["gcc" "gnu"]
     check: method [
         return: [logic?]
         :exec [file!]
@@ -1143,7 +1143,6 @@ object-file-class: make object! [
 
 entry-class: make object! [
     class: #entry
-    id: null
     target: ~
     depends: null
     commands: ~

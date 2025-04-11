@@ -18,31 +18,31 @@ REBOL [
 ]
 
 <no-uninitialized> => [
-    <gnu:-Wno-uninitialized>
+    <gcc:-Wno-uninitialized>
 
     ;-Wno-unknown-warning seems to only modify the
     ; immediately following option
     ;
-    ;<gnu:-Wno-unknown-warning>
-    ;<gnu:-Wno-maybe-uninitialized>
+    ;<gcc:-Wno-unknown-warning>
+    ;<gcc:-Wno-maybe-uninitialized>
 
     <msc:/wd4701> <msc:/wd4703>
 ]
 
 <no-sign-compare> => [
-    <gnu:-Wno-sign-compare>
+    <gcc:-Wno-sign-compare>
     <msc:/wd4388>
     <msc:/wd4018>  ; a 32-bit variant of the error
 ]
 
 <implicit-fallthru> => [
-    <gnu:-Wno-unknown-warning>
-    <gnu:-Wno-implicit-fallthrough>
+    <gcc:-Wno-unknown-warning-option>
+    <gcc:-Wno-implicit-fallthrough>
 ]
 
-<no-unused-parameter> => <gnu:-Wno-unused-parameter>
+<no-unused-parameter> => <gcc:-Wno-unused-parameter>
 
-<no-shift-negative-value> => <gnu:-Wno-shift-negative-value>
+<no-shift-negative-value> => <gcc:-Wno-shift-negative-value>
 
 <no-unreachable> => <msc:/wd4702>
 

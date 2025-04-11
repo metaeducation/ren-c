@@ -114,8 +114,8 @@ core: [
 
         <msc:/analyze->  ; explicitly don't static analyze
 
-        <gnu:-Wno-cast-qual>  ; e.g. `*sp = (char*)s0 - 1;`
-        <gnu:-Wno-unused-const-variable>  ; e.g. `tinytens`, `bigtens`, `tens`
+        <gcc:-Wno-cast-qual>  ; e.g. `*sp = (char*)s0 - 1;`
+        <gcc:-Wno-unused-const-variable>  ; e.g. `tinytens`, `bigtens`, `tens`
 
         <no-sign-compare>
         <no-uninitialized>
@@ -133,7 +133,10 @@ core: [
     %f-int.c
     %f-math.c
     %f-modify.c
-    %f-qsort.c
+    [
+        %f-qsort.c
+        <gcc:-Wno-null-pointer-subtraction>
+    ]
     %f-random.c
     %f-round.c
     %f-series.c
@@ -210,7 +213,7 @@ core: [
         <implicit-fallthru>
         <no-constant-conditional>
 
-        <gnu:-Wno-unused-const-variable>  ; e.g. z_deflate_copyright
+        <gcc:-Wno-unused-const-variable>  ; e.g. z_deflate_copyright
 
         ; Zlib is an active project so it would be worth it to check to see
         ; if minor patches for subverting Spectre mitigation would be taken.

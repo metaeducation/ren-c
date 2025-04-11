@@ -189,9 +189,9 @@ else [
     ]
     uv-nowarn: [
         <no-unused-parameter>
-        <gnu:-Wno-redundant-decls>  ; `environ`, `uv__static_assert`
+        <gcc:-Wno-redundant-decls>  ; `environ`, `uv__static_assert`
         <gnu:-Wno-logical-op>  ; logical OR of equal expressions
-        <gnu:-Wno-pedantic>  ; casts object pointers to functions
+        <gcc:-Wno-pedantic>  ; casts object pointers to functions
         <gnu:-Wno-dangling-pointer>  ; queue in %async.c
     ]
 ]

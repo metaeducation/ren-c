@@ -250,7 +250,7 @@ gen-obj: func [
         fail [
             "Unexpected argument passed to GEN-OBJ:" mold s, newline
             "Should be FILE!/PATH!/TUPLE!: %file.c, path/tuple.c, etc." newline
-            "or BLOCK! spec like: [%foo.c <msc:/Wd1020> <gnu:-Wno-whammies>]"
+            "or BLOCK! spec like: [%foo.c <msc:/Wd1020> <gcc:-Wno-whammies>]"
         ]
     ]
 
@@ -261,61 +261,6 @@ gen-obj: func [
     let rigorous: user-config.rigorous  ; may have a per-file override
     let cplusplus: 'no  ; determined for just this file
     let flags: make block! 8
-
-    append flags <msc:/FC>  ; absolute paths for error messages
-
-    ; Ren-C uses labels stylistically to denote sections of code which may
-    ; or may not be jumped to.  This is purposeful, and deemed to be more
-    ; important than being warned when a goto label is unused.  It's a
-    ; sacrifice in rigor, but makes things elegant.
-    ;
-    append flags <msc:/wd4102>
-    append flags <gnu:-Wno-unused-label>
-
-    ; Microsoft shouldn't bother having the C warning that foo() in standard
-    ; C doesn't mean the same thing as foo(void), when in their own published
-    ; headers (ODBC, Windows.h) they treat them interchangeably.  See for
-    ; instance EnableMouseInPointerForThread().  Or ODBCGetTryWaitValue().
-    ;
-    ; Just disable the warning, and hope the Linux build catches most of it.
-    ;
-    ;     'function' : no function prototype given:
-    ;     converting '()' to '(void)'
-    ;
-    append flags <msc:/wd4255>
-
-    ; Warnings when __declspec(uuid(x)) is used on types, or __declspec is
-    ; used before linkage specifications, etc. etc.  These are violated
-    ; e.g. by older versions of %shlobj.h and %ocidl.h.  You can get them if
-    ; you use something like a Windows XP-era SDK with a more modern Visual
-    ; Studio compiler (e.g. 2019, which deprecated support for targeting XP).
-    ;
-    append flags spread [<msc:/wd4917> <msc:/wd4768> <msc:/wd4091>]
-
-    ; The May 2018 update of Visual Studio 2017 added a warning for when you
-    ; use an #ifdef on something that is #define'd, but 0.  Then the internal
-    ; %yvals.h in MSVC tests #ifdef __has_builtin, which has to be defined
-    ; to 0 to work in MSVC.  Disable the warning for now.
-    ;
-    append flags <msc:/wd4574>
-
-    ; Building as C++ using nmake seems to trigger this warning to say there
-    ; is no exception handling policy in place.  We don't use C++ exceptions
-    ; in the C++ build, so we ignore the warning...but if exceptions were used
-    ; there'd have to be an implementation choice made there.
-    ;
-    append flags <msc:/wd4577>
-
-    ; There's a warning on reinterpret_cast between related classes, trying to
-    ; suggest you use static_cast instead.  This complicates the `cast` macro
-    ; tricks, which just use reinterpret_cast.
-    ;
-    append flags <msc:/wd4946>
-
-    ; C++17 added a weird warning about left to right evaluation order that
-    ; triggers with (Option(Xxx*) = maybe Yyy()).  Disable that.
-    ;
-    append flags <msc:/wd4866>
 
     for-each 'flag overrides [
         switch flag [
@@ -335,7 +280,7 @@ gen-obj: func [
                     ; does not need this because it uses the same
                     ; compiler and only needs switches to turn C++ *on*.
                     ;
-                    append flags <gnu:-x c>
+                    append flags <gcc:-x c>
                 ]
             ]
         ]
@@ -362,7 +307,7 @@ gen-obj: func [
         'c++ [
             cfg-cplusplus: cplusplus: 'yes
             [
-                <gnu:-x c++>
+                <gcc:-x c++>
                 <msc:/TP>
             ]
         ]
@@ -383,7 +328,7 @@ gen-obj: func [
                 ; the files would (sadly) need to be renamed to .cpp or .cxx
                 ;
                 <msc:/TP>
-                <gnu:-x c++>
+                <gcc:-x c++>
 
                 ; C++ standard, MSVC only supports "c++14/17/latest"
                 ;
@@ -396,7 +341,7 @@ gen-obj: func [
                 ; when building as pre-C++11 where it was introduced, unless
                 ; you disable that warning.
                 ;
-                (if user-config.standard = 'c++98 [<gnu:-Wno-c++0x-compat>])
+                (if user-config.standard = 'c++98 [<gcc:-Wno-c++0x-compat>])
 
                 ; Note: The C and C++ standards do not dictate if `char` is
                 ; signed or unsigned.  If you think environments all settled
@@ -407,7 +352,7 @@ gen-obj: func [
                 ; In order to give the option some exercise, make GCC C++
                 ; builds use unsigned chars.
                 ;
-                <gnu:-funsigned-char>
+                <gcc:-funsigned-char>
 
                 ; MSVC never bumped the __cplusplus version past 1997, even if
                 ; you compile with C++17.  Hence CPLUSPLUS_11 is used by Rebol
@@ -424,6 +369,8 @@ gen-obj: func [
             "not" (user-config.standard)
         ]
     ]
+
+    append flags <msc:/FC>  ; absolute paths for error messages
 
     ; The `rigorous: 'yes` setting in the config turns the warnings up to where
     ; they are considered errors.  However, there are a *lot* of warnings
@@ -445,7 +392,7 @@ gen-obj: func [
     append flags spread switch rigorous [
         'yes [
             compose [
-                <gnu:-Werror> <msc:/WX>  ; convert warnings to errors
+                <gcc:-Werror> <msc:/WX>  ; convert warnings to errors
 
                 ; If you use pedantic in a C build on an older GNU compiler,
                 ; (that defaults to thinking it's a C89 compiler), it will
@@ -453,11 +400,11 @@ gen-obj: func [
                 ; way to turn this complaint off.  So don't use pedantic
                 ; warnings unless you're at c99 or higher, or C++.
                 ;
-                (if not find [c gnu89] standard [<gnu:--pedantic>])
+                (if not find [c gnu89] standard [<gcc:--pedantic>])
 
-                <gnu:-Wextra>
+                <gcc:-Wextra>
 
-                <gnu:-Wall>
+                <gcc:-Wall>
                 <msc:/Wall>  ; see note above why we use instead of /W4
 
                 ; MSVC has a static analyzer, but it doesn't seem to catch much
@@ -467,24 +414,27 @@ gen-obj: func [
                 ;
                 (comment <msc:/analyze>)
 
-                <gnu:-Wchar-subscripts>
-                <gnu:-Wwrite-strings>
-                <gnu:-Wundef>
-                <gnu:-Wformat=2>
-                <gnu:-Wdisabled-optimization>
+                <gcc:-Wchar-subscripts>
+                <gcc:-Wwrite-strings>
+                <gcc:-Wundef>
+                <gcc:-Wformat=2>
+                <gcc:-Wdisabled-optimization>
+                <gcc:-Wredundant-decls>
+                <gcc:-Woverflow>
+                <gcc:-Wpointer-arith>
+                <gcc:-Wparentheses>
+                <gcc:-Wmain>
+                <gcc:-Wtype-limits>
+
+                ; These are GNU flags only (not in clang)
+                ;
                 <gnu:-Wlogical-op>
-                <gnu:-Wredundant-decls>
-                <gnu:-Woverflow>
-                <gnu:-Wpointer-arith>
-                <gnu:-Wparentheses>
-                <gnu:-Wmain>
-                <gnu:-Wtype-limits>
                 <gnu:-Wclobbered>
 
                 ; Neither C++98 nor C89 had "long long" integers, but they
                 ; were fairly pervasive before being present in the standard.
                 ;
-                <gnu:-Wno-long-long>
+                <gcc:-Wno-long-long>
 
                 ; When constness is being deliberately cast away, `m_cast` is
                 ; used (for "m"utability).  However, this is just a plain cast
@@ -500,9 +450,9 @@ gen-obj: func [
                         yes? cplusplus
                         find app-config.definitions "NDEBUG"
                     ][
-                        <gnu:-Wcast-qual>
+                        <gcc:-Wcast-qual>
                     ][
-                        <gnu:-Wno-cast-qual>
+                        <gcc:-Wno-cast-qual>
                     ]
                 )
 
@@ -525,7 +475,7 @@ gen-obj: func [
                 ;  signed/unsigned mismatch
                 ;
                 <msc:/wd4365> <msc:/wd4245>
-                <gnu:-Wsign-compare>
+                <gcc:-Wsign-compare>
 
                 ; The majority of Rebol's C code was written with little
                 ; attention to overflow in arithmetic.  In many places a
@@ -539,8 +489,8 @@ gen-obj: func [
                 ; The issue needs systemic review.
                 ;
                 <msc:/wd4242>
-                <gnu:-Wno-conversion> <gnu:-Wno-strict-overflow>
-                ;<gnu:-Wstrict-overflow=5>
+                <gcc:-Wno-conversion> <gcc:-Wno-strict-overflow>
+                ;<gcc:-Wstrict-overflow=5>
 
                 ; Warning about std::is_pod<OptionWrapper<const Value*>>
                 ; having a different answer in different versions, affects the
@@ -719,6 +669,59 @@ gen-obj: func [
     ; Now add the flags for the project overall.
     ;
     append flags maybe spread F
+
+    ; Ren-C uses labels stylistically to denote sections of code which may
+    ; or may not be jumped to.  This is purposeful, and deemed to be more
+    ; important than being warned when a goto label is unused.  It's a
+    ; sacrifice in rigor, but makes things elegant.
+    ;
+    append flags <msc:/wd4102>
+    append flags <gcc:-Wno-unused-label>
+
+    ; Microsoft shouldn't bother having the C warning that foo() in standard
+    ; C doesn't mean the same thing as foo(void), when in their own published
+    ; headers (ODBC, Windows.h) they treat them interchangeably.  See for
+    ; instance EnableMouseInPointerForThread().  Or ODBCGetTryWaitValue().
+    ;
+    ; Just disable the warning, and hope the Linux build catches most of it.
+    ;
+    ;     'function' : no function prototype given:
+    ;     converting '()' to '(void)'
+    ;
+    append flags <msc:/wd4255>
+
+    ; Warnings when __declspec(uuid(x)) is used on types, or __declspec is
+    ; used before linkage specifications, etc. etc.  These are violated
+    ; e.g. by older versions of %shlobj.h and %ocidl.h.  You can get them if
+    ; you use something like a Windows XP-era SDK with a more modern Visual
+    ; Studio compiler (e.g. 2019, which deprecated support for targeting XP).
+    ;
+    append flags spread [<msc:/wd4917> <msc:/wd4768> <msc:/wd4091>]
+
+    ; The May 2018 update of Visual Studio 2017 added a warning for when you
+    ; use an #ifdef on something that is #define'd, but 0.  Then the internal
+    ; %yvals.h in MSVC tests #ifdef __has_builtin, which has to be defined
+    ; to 0 to work in MSVC.  Disable the warning for now.
+    ;
+    append flags <msc:/wd4574>
+
+    ; Building as C++ using nmake seems to trigger this warning to say there
+    ; is no exception handling policy in place.  We don't use C++ exceptions
+    ; in the C++ build, so we ignore the warning...but if exceptions were used
+    ; there'd have to be an implementation choice made there.
+    ;
+    append flags <msc:/wd4577>
+
+    ; There's a warning on reinterpret_cast between related classes, trying to
+    ; suggest you use static_cast instead.  This complicates the `cast` macro
+    ; tricks, which just use reinterpret_cast.
+    ;
+    append flags <msc:/wd4946>
+
+    ; C++17 added a weird warning about left to right evaluation order that
+    ; triggers with (Option(Xxx*) = maybe Yyy()).  Disable that.
+    ;
+    append flags <msc:/wd4866>
 
     ; Now add build flags overridden by the inclusion of the specific file
     ; (e.g. third party files we don't want to edit to remove warnings from)
@@ -1198,7 +1201,7 @@ parse3:match user-config.toolset [
         )
         | 'strip strip-exec: opt [file! | text! | blank!] (
             rebmake.default-strip: rebmake.strip
-            rebmake.default-strip.options: [<gnu:-S> <gnu:-x> <gnu:-X>]
+            rebmake.default-strip.options: [<gcc:-S> <gcc:-x> <gcc:-X>]
             if strip-exec [
                 set-exec-path rebmake.default-strip strip-exec
             ]
@@ -1299,8 +1302,8 @@ switch user-config.debug [
         cfg-symbols: 'on
         cfg-sanitize: 'on
 
-        append app-config.cflags <gnu:-fsanitize=address>
-        append app-config.ldflags <gnu:-fsanitize=address>
+        append app-config.cflags <gcc:-fsanitize=address>
+        append app-config.ldflags <gcc:-fsanitize=address>
 
         ; MSVC added support for address sanitizer in 2019.  At first it wasn't
         ; great, but it got improved and got working reasonably in March 2021.
@@ -1392,9 +1395,9 @@ append app-config.ldflags spread switch user-config.static [
     ]
     'yes [
         compose [
-            <gnu:-static-libgcc>
-            (if yes? cfg-cplusplus [<gnu:-static-libstdc++>])
-            (if on? cfg-sanitize [<gnu:-static-libasan>])
+            <gcc:-static-libgcc>
+            (if yes? cfg-cplusplus [<gcc:-static-libstdc++>])
+            (if on? cfg-sanitize [<gcc:-static-libasan>])
         ]
     ]
 
@@ -1874,7 +1877,7 @@ for-each 'ext extensions [
                 ; GCC has this but Clang does not, and currently Clang is
                 ; being called through a gcc alias.  Review.
                 ;
-                ;<gnu:-Wl,--as-needed>  ; Switch ignores linking unused libs
+                ;<gcc:-Wl,--as-needed>  ; Switch ignores linking unused libs
             ]
         ]
 

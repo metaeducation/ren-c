@@ -62,7 +62,7 @@ the full core API.  That feature is currently in flux.)
 This is simply a BLOCK! of flags that are passed as strings to the compiler.
 
 You can use literal strings, or tags which specify the compiler that the
-switch is for (such as <msc:xxx> or <gnu:xxx>).  For instance:
+switch is for (such as <msc:xxx> or <gcc:xxx>).  For instance:
 
     cflags: ["-Isome-dir/" <msc:/wd4324>]
 
