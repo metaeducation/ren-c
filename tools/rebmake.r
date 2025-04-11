@@ -372,7 +372,7 @@ application-class: make project-class [
 
     command: method [return: [text!]] [
         let ld: any [linker, default-linker]
-        return ld.command // [
+        return ld.link // [
             .output, .depends, .searches, .ldflags,
             :debug .debug
         ]
@@ -398,7 +398,7 @@ dynamic-library-class: make project-class [
         default-linker
     ][
         let l: any [.linker, default-linker]
-        return l.command // [
+        return l.link // [
             .output, .depends, .searches, .ldflags
             :dynamic ok
         ]
@@ -421,23 +421,14 @@ compiler-class: make object! [
     id: null  ; flag prefix
     version: null
     exec-file: null
+
     compile: method [
-        return: [~]
+        return: [text!]
         output [file!]
         source [file!]
-        include [file! block!]
-        definition [any-string?]
-        cflags [any-string?]
-    ][
-    ]
-
-    command: method [
-        return: [text!]
-        output
-        source
-        includes
-        definitions
-        cflags
+        includes [file! block!]
+        definitions [text! tag! block!]
+        cflags [text! tag! block!]
     ][
     ]
 
@@ -482,7 +473,7 @@ gcc: make compiler-class [
         ]
     ]
 
-    command: method [
+    compile: method [
         return: [text!]
         output [file!]
         source [file!]
@@ -594,8 +585,9 @@ clang: make gcc [
 ; Microsoft CL compiler
 cl: make compiler-class [
     name: 'cl
-    id: "msc"  ; match all flags like <msc:XXX>
-    command: method [
+    id: "msc" ; match all flags like <msc:XXX>
+
+    compile: method [
         return: [text!]
         output [file!]
         source
@@ -725,7 +717,8 @@ ld: make linker-class [
     version: null
     exec-file: null
     id: ["gcc" "gnu"]
-    command: method [
+
+    link: method [
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -832,7 +825,8 @@ llvm-link: make linker-class [
     version: null
     exec-file: null
     id: "llvm"  ; handles all flags like <llvm:XXX>
-    command: method [
+
+    link: method [
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -917,7 +911,7 @@ link: make linker-class [
     version: null
     exec-file: null
 
-    command: method [
+    link: method [
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -1066,11 +1060,7 @@ object-file-class: make object! [
     generated: 'no
     depends: null
 
-    compile: method [return: [~]] [
-        compiler/compile
-    ]
-
-    command: method [
+    compile: method [
         return: [text!]
         :I "extra includes" [block!]
         :D "extra definitions" [block!]
@@ -1092,7 +1082,7 @@ object-file-class: make object! [
             optimization: 0
         ]
 
-        return cc.command // [
+        return cc.compile // [
             .output
             .source
 
@@ -1129,7 +1119,7 @@ object-file-class: make object! [
         return make entry-class [
             target: .output
             depends: append (copy any [.depends []]) .source
-            commands: reduce [.command // [
+            commands: reduce [.compile // [
                 :I maybe parent.includes
                 :D maybe parent.definitions
                 :F maybe parent.cflags
