@@ -250,6 +250,11 @@ e-cwrap/emit ---{
      }
 }---
 
+
+; 1. While type construction in JavaScript is done with capital type names
+;    (e.g. Number(1)), the typeof operator returns lowercase names, and
+;    Emscripten uses lowercase names in cwrap/ccall.
+;
 to-js-type: func [
     return: [~null~ text! tag!]
     s [text!] "C type as string"
@@ -265,13 +270,13 @@ to-js-type: func [
         ; will allow returning nullptr if the input is null, for example
         ; `rebSpellMaybe("second [{a}]")` gives nullptr
         ;
-        (s = "char*") or (s = "const char*") ["'string'"]
+        (s = "char*") or (s = "const char*") ["'string'"]  ; see [1]
 
         ; A RebolBounce is actually a void* (attempts to make it a struct
         ; holding a void* in some builds fail at runtime at present, but it
         ; can be used as a static compilation check anyway)
         ;
-        s = "RebolBounce" ["'number"]
+        s = "RebolBounce" ["'number"]  ; see [1]
 
         ; Other pointer types aren't strings.  `unsigned char *` is a byte
         ; array, and should perhaps use ArrayBuffer.  But for now, just assume
@@ -282,18 +287,18 @@ to-js-type: func [
         ; maybe have some kind of .toString() method, so that it would mold
         ; automatically?  Maybe wrap the emscripten number in an object?
         ;
-        find s "*" ["'number'"]
+        find s "*" ["'number'"]  ; see [1]
 
         ; !!! There are currently no APIs that deal in arrays directly
         ;
-        find s "[" ["'array'"]
+        find s "[" ["'array'"]  ; see [1]
 
         ; !!! JavaScript has a Boolean type...figure out how to use correctly
         ;
-        s = "bool" ["'Boolean'"]
+        s = "bool" ["'boolean'"]  ; see [1]
 
-        ; !!! JavaScript does not differentiate numeric types, though it does
-        ; have a BigInt, which should be considered when bignum is added:
+        ; For the moment, emscripten is 32-bit, and all of these types map
+        ; to JavaScript's simple "Number" type:
         ;
         ; https://developers.google.com/web/updates/2018/05/bigint
         ;
@@ -303,18 +308,31 @@ to-js-type: func [
             "double"
             "intptr_t"
             "uintptr_t"
-            "int64_t"
+            "int32_t"
             "uint32_t"
             "size_t"
-            "REBRXT"
-        ] s ["'number'"]
+        ] s ["'number'"]  ; see [1]
+
+        ; As of Emscripten 4.0.0 (14-Jan-2025) the C int64_t type maps to
+        ; JavaScript's BigInt by default:
+        ;
+        ;  https://github.com/emscripten-core/emscripten/pull/22993
+        ;
+        ; But BigInt is awkward in JavaScript and not seamlessly compatible
+        ; with Number.  Hence this forced the hand of dividing up the API
+        ; functions to rebInteger() vs. rebInteger64() etc.
+        ;
+        find:case [
+            "int64_t"
+            "uint64_t"
+        ] s ["'bigint'"]  ; see [1]
 
         ; JavaScript has undefined as what `function() {return;}` returns.
         ; The differences between undefined and null are subtle and easy to
         ; get wrong, but a void-returning function should map to undefined.
         ;
         (parse3:match s ["void" opt some space]) [
-            "undefined"
+            "undefined"  ; "undefined" = typeof "undefined"
         ]
     ]
 ]
@@ -883,6 +901,9 @@ e-cwrap/emit ---{
 
           case 'number':
             return reb.Integer(js_value)
+
+          case 'bigint':
+            return reb.Integer64(js_value);
 
           case 'string':
             return reb.Text(js_value)

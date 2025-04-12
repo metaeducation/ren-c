@@ -668,14 +668,14 @@ SQLRETURN ODBC_BindParameter(
         sql_type = SQL_INTEGER;
         p->buffer_size = sizeof(SQLUBIGINT);  // !!! See notes RE: ODBC BIGINT
         p->buffer = rebAllocN(char, p->buffer_size);
-        *cast(SQLUBIGINT*, p->buffer) = rebUnboxInteger(v);
+        *cast(SQLUBIGINT*, p->buffer) = rebUnboxInteger64(v);
         break; }
 
       case SQL_C_SBIGINT: {  // signed INTEGER! below 32-bit negative range
         sql_type = SQL_INTEGER;
         p->buffer_size = sizeof(SQLBIGINT);  // !!! See notes RE: ODBC BIGINT
         p->buffer = rebAllocN(char, p->buffer_size);
-        *cast(SQLBIGINT*, p->buffer) = rebUnboxInteger(v);
+        *cast(SQLBIGINT*, p->buffer) = rebUnboxInteger64(v);
         break; }
 
       case SQL_C_DOUBLE: {  // DECIMAL!
@@ -1481,13 +1481,13 @@ Value* ODBC_Column_To_Rebol_Value(
     // !!! Review: bug may not exist if SQLGetData() is used.
 
       case SQL_C_SBIGINT:  // signed: -2[63]..2[63]-1
-        return rebInteger(*cast(SQLBIGINT*, col->buffer));
+        return rebInteger64(*cast(SQLBIGINT*, col->buffer));
 
       case SQL_C_UBIGINT:  // unsigned: 0..2[64] - 1
         if (*cast(SQLUBIGINT*, col->buffer) > INT64_MAX)
             rebJumps ("fail -{INTEGER! can't hold all unsigned 64-bit ints}-");
 
-        return rebInteger(*cast(SQLUBIGINT*, col->buffer));
+        return rebInteger64(*cast(SQLUBIGINT*, col->buffer));
 
     // ODBC was asked at column binding time to give back all floating
     // point types as SQL_C_DOUBLE, regardless of actual size.

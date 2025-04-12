@@ -94,7 +94,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 
   blockscope {
     Set_Cell_Flag(Init_Integer(PUSH(), 2), NEWLINE_BEFORE);
-    intptr_t getter = rebUnboxInteger("api-transient -{Hello}-");
+    intptr_t getter = rebUnboxInteger64("api-transient -{Hello}-");
     Recycle();  // transient should survive a recycle
     Node* getter_node = p_cast(Node*, getter);
     bool equal = rebUnboxLogic("-{Hello}- = @", getter_node);

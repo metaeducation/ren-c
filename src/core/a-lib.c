@@ -644,10 +644,28 @@ RebolValue* API_rebChar(uint32_t codepoint)
 //
 //  rebInteger: API
 //
+// Note: This was narrowed to int32_t, in order to work with the JavaScript
+// version of the API.  (In JavaScript, Number is a IEEE754 double for all
+// integers and floating point values, and the only integers it can represent
+// are 53 bits.)
+//
 // !!! Should there be rebSigned() and rebUnsigned(), in order to catch cases
 // of using out of range values?
 //
-RebolValue* API_rebInteger(int64_t i)
+RebolValue* API_rebInteger(int32_t i)
+{
+    ENTER_API;
+
+    return Init_Integer(Alloc_Value(), i);
+}
+
+
+//
+//  rebInteger64: API
+//
+// See rebInteger().
+//
+RebolValue* API_rebInteger64(int64_t i)
 {
     ENTER_API;
 
@@ -1747,7 +1765,30 @@ bool API_rebUnboxOnOff(
 //
 //  rebUnboxInteger: API
 //
-intptr_t API_rebUnboxInteger(
+int32_t API_rebUnboxInteger(
+    RebolContext* binding,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    DECLARE_VALUE (result);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+
+    if (not Is_Integer(result))
+        fail ("rebUnboxInteger() called on non-INTEGER!");
+
+    REBI64 i = VAL_INT64(result);
+    if (i < INT32_MIN or i > INT32_MAX)
+        fail ("rebUnboxInteger() called on INTEGER! out of range!");
+
+    return cast(int32_t, i);
+}
+
+
+//
+//  rebUnboxInteger64: API
+//
+int64_t API_rebUnboxInteger64(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
@@ -1966,7 +2007,7 @@ static unsigned int Spell_Into_Wide(
     Codepoint c;
     cp = Utf8_Next(&c, cp);
 
-    REBLEN i = 0;
+    unsigned int i = 0;
     while (c != '\0' and i < buf_wchars) {
         if (c <= 0xFFFF) {
             buf[i] = c;
