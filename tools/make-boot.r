@@ -908,13 +908,13 @@ e-boot/emit [fields --{
     /*
      * Raw C function pointers for natives, take Level* and return Bounce.
      */
-    EXTERN_C const REBLEN g_num_core_natives;
+    EXTERN_C const Count g_num_core_natives;
     EXTERN_C Dispatcher* const g_core_native_dispatchers[];
 
     /*
      * Builtin Extensions
      */
-    EXTERN_C const unsigned int g_num_builtin_extensions;
+    EXTERN_C const Count g_num_builtin_extensions;
     EXTERN_C ExtensionCollator* const g_builtin_collators[];
 
 

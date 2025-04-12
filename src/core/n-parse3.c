@@ -1972,7 +1972,7 @@ DECLARE_NATIVE(SUBPARSE)
                     i = END_FLAG;
                 }
                 else {
-                    if (VAL_UINT32(OUT) != Cell_Series_Len_Head(into))
+                    if (VAL_INT32(OUT) != Cell_Series_Len_Head(into))
                         i = END_FLAG;
                     else
                         i = P_POS + 1;

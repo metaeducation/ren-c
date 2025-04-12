@@ -72,7 +72,7 @@ e/emit [extensions --{
     /*
      * NUM_BUILTIN_EXTENSIONS macro not visible outside this file, export
      */
-    const unsigned int g_num_builtin_extensions = NUM_BUILTIN_EXTENSIONS;
+    const Count g_num_builtin_extensions = NUM_BUILTIN_EXTENSIONS;
 
     /*
      * List of C functions that can be called to fetch the collated info that

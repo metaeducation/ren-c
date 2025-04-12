@@ -200,7 +200,7 @@ Byte* Compress_Alloc_Core(
         uint32_t gzip_len = Bytes_To_U32_BE(  // verify compressed size [2]
             output + strm.total_out - sizeof(uint32_t)
         );
-        assert(size_in == gzip_len);  // !!! 64-bit REBLEN would need modulo
+        assert(size_in == cast(Size, gzip_len));  // !!! 64-bit needs modulo
         UNUSED(gzip_len);
     }
   #endif
