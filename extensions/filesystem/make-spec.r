@@ -376,7 +376,10 @@ uv-depends: map-each 'tuple uv-sources [  ; WORD! in bootstrap
 append uv-depends spread map-each 'tuple [  ; WORD! in bootstrap
     %fs-poll.c
     %idna.c
-    %inet.c
+    [
+        %inet.c
+        <clang:-Wno-deprecated-declarations>  ; uses sprintf()
+    ]
     %random.c
     %strscpy.c
     %strtok.c  ; Note: seems only used in unix build (?)
@@ -386,8 +389,10 @@ append uv-depends spread map-each 'tuple [  ; WORD! in bootstrap
     %uv-data-getter-setters.c
     %version.c
 ][
+    let file: if block? tuple [first tuple] else [tuple]
+    let flags: if block? tuple [next tuple] else [[]]
     compose [
-        (join %libuv/src/ tuple) #no-c++ (spread uv-nowarn)
+        (join %libuv/src/ file) #no-c++ (spread uv-nowarn) (spread flags)
     ]
 ]
 
