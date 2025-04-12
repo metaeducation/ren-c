@@ -889,6 +889,20 @@ DECLARE_NATIVE(COMPOSE2)
 
     switch (STATE) {
       case ST_COMPOSE2_INITIAL_ENTRY: {
+        assert(Any_List(pattern));
+
+        if (Any_The_Value(pattern)) {  // @() means use pattern's binding
+            if (Cell_Binding(pattern) == nullptr)
+                return FAIL("@... patterns must have bindings");
+            Heart pattern_heart = Heart_Of_Builtin_Fundamental(pattern);
+            HEART_BYTE(pattern) = Plainify_Any_The_Heart(pattern_heart);
+        }
+        else if (Any_Plain_Value(pattern)) {
+            Tweak_Cell_Binding(pattern, Level_Binding(level_));
+        }
+        else
+            return FAIL("COMPOSE2 takes plain and @... list patterns only");
+
         if (Any_Word(input))
             return COPY(input);  // makes it easier to `set compose target`
 
@@ -912,18 +926,6 @@ DECLARE_NATIVE(COMPOSE2)
 
   list_initial_entry: {  /////////////////////////////////////////////////////
 
-    if (Any_The_Value(pattern)) {  // @() means use pattern's binding
-        if (Cell_Binding(pattern) == nullptr)
-            return FAIL("@... patterns must have bindings");
-        Heart pattern_heart = Heart_Of_Builtin_Fundamental(pattern);
-        HEART_BYTE(pattern) = Plainify_Any_The_Heart(pattern_heart);
-    }
-    else if (Any_Plain_Value(pattern)) {
-        Tweak_Cell_Binding(pattern, Cell_List_Binding(input));
-    }
-    else
-        return FAIL("COMPOSE2 takes plain and @... list patterns only");
-
     Push_Composer_Level(OUT, level_, input, Cell_List_Binding(input));
 
     STATE = ST_COMPOSE2_COMPOSING_LIST;
@@ -944,19 +946,6 @@ DECLARE_NATIVE(COMPOSE2)
     return OUT;
 
 } string_initial_entry: {  ///////////////////////////////////////////////////
-
-    assert(Any_List_Type(Heart_Of(pattern)));
-
-    if (Any_The_Value(pattern)) {  // @() means use pattern's binding
-        if (Cell_Binding(pattern) == nullptr)
-            return FAIL("@... patterns must have bindings");
-        Heart pattern_heart = Heart_Of_Builtin_Fundamental(pattern);
-        HEART_BYTE(pattern) = Plainify_Any_The_Heart(pattern_heart);
-    }
-    else
-        return FAIL("COMPOSE2 text needs @... patterns for pattern binding");
-
-    QUOTE_BYTE(pattern) = NOQUOTE_1;
 
     Utf8(const*) head = Cell_Utf8_At(input);
 
@@ -1311,28 +1300,6 @@ DECLARE_NATIVE(COMPOSE2)
     Heart input_heart = Heart_Of_Builtin_Fundamental(input);
     return Init_Series_At_Core(OUT, input_heart, str, 0, nullptr);
 }}
-
-
-//
-//  interpolate: native [
-//
-//  "Variation of COMPOSE that uses the binding environment from the callsite"
-//
-//      return: [any-list? any-sequence? any-word? any-utf8?]
-//      template "The template to fill in (no-op if WORD!)"
-//          [<maybe> any-list? any-sequence? any-word? any-utf8?]
-//  ]
-//
-DECLARE_NATIVE(INTERPOLATE)
-{
-    INCLUDE_PARAMS_OF_INTERPOLATE;
-
-    Element* pattern = Init_Any_List(SPARE, TYPE_THE_GROUP, EMPTY_ARRAY);
-    Tweak_Cell_Binding(pattern, Level_Binding(level_));
-
-    Quotify(pattern);
-    return rebDelegate(CANON(COMPOSE2), pattern, ARG(TEMPLATE));
-}
 
 
 enum FLATTEN_LEVEL {

@@ -503,7 +503,9 @@ console*: func [
             ]
             block! [
                 if not empty? instruction [append:line instruction ',]
-                append:line instruction spread compose2:deep '(<*>) item
+                append:line instruction spread (  ; use item's tip binding
+                    compose2:deep inside item '@(<*>) item
+                )
             ]
             fail
         ]

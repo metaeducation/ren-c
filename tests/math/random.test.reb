@@ -124,7 +124,7 @@
 )
 
 (
-    for-each 'series compose [
+    for-each 'series compose2 '(<*>) [
         #{}
         #{DECAFBAD}
         ""
@@ -177,4 +177,5 @@
             fail ["Canon contents differ:" mold canon1 mold canon2]
         ]
     ]
+    ok
 )

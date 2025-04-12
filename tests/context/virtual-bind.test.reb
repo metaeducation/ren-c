@@ -38,7 +38,7 @@
     ]
 )
 
-; Compounding bindingss is tricky, and many of the situations only arise
+; Compounding bindings is tricky, and many of the situations only arise
 ; when you return still-relative material (e.g. from nested blocks in a
 ; function body) that has only been derelativized at the topmost level.
 ; Using GROUP!s is a good way to catch this since they're easy to evaluate

@@ -1,9 +1,15 @@
 ; %interpolate.test.reb
+;
+; While there was initial reluctance to making COMPOSE default to being
+; sensitive to its callsite's environment, the usefulness of interpolation of
+; strings was undeniable... and putting that functionality under a long word
+; like INTERPOLATE was not optimal.  So COMPOSE took on the function.
+;
 
 ; Smoke tests
 [
-    ("1" = interpolate "(1)")
-    ("1 2" = interpolate "(1) (2)")
+    ("1" = compose "(1)")
+    ("1 2" = compose "(1) (2)")
 
     ("1" = compose2 @{{}} "{{1}}")
     ("1 2" = compose2 @{{}} "{{1}} {{2}}")
@@ -24,19 +30,19 @@
 
 (
     let foo: 1000
-    let text: interpolate "Hello (foo + 20) World"
+    let text: compose "Hello (foo + 20) World"
     text = "Hello 1020 World"
 )
 
 (
     let foo: 1000
-    let tag: interpolate <Hello (foo + 20) Tag (foo - 696) World!>
+    let tag: compose <Hello (foo + 20) Tag (foo - 696) World!>
     tag = <Hello 1020 Tag 304 World!>
 )
 
 (
     let id: 2114
-    let url: interpolate https://(reverse of 'info.rebol.forum)/t/(id)
+    let url: compose https://(reverse of 'info.rebol.forum)/t/(id)
     url = https://forum.rebol.info/t/2114
 )
 
@@ -44,15 +50,15 @@
 [
     ~nothing-to-take~ !! (
         let block: [a]
-        assert ["Item is a!" = interpolate "Item is (take block)!"]
-        interpolate "Item is (take block)!"
+        assert ["Item is a!" = compose "Item is (take block)!"]
+        compose "Item is (take block)!"
     )
 
     (
         let block: [a]
         all [
-            "Item is a!" = interpolate "Item is (take block)!"
-            not try interpolate "Item is (take block)!"
+            "Item is a!" = compose "Item is (take block)!"
+            not try compose "Item is (take block)!"
         ]
     )
 ]

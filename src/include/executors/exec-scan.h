@@ -77,7 +77,7 @@
 //
 // When interpolation asks the scanner to do something like:
 //
-//     interpolate "({[1 + 2]})"
+//     compose "({[1 + 2]})"
 //
 // It pushes 3 levels to cue the scanner about the terminals it needs, so it
 // will properly close "]})".  But despite pushing a stack of levels for that

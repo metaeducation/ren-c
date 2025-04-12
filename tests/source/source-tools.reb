@@ -119,7 +119,7 @@ log-emit: func [
     label [tag!]
     body [block!]
 ][
-    body: compose body
+    body: compose2 inside body '@() body
     new-line:all body 'no
     append:line log spread (head of insert body label)
 ]

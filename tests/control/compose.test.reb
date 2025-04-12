@@ -205,7 +205,7 @@
 ; antiforms besides splices are not legal in compose, but you can reify them
 [
     ([<a> ~null~ <b>] = compose // [
-        $() [<a> (if ok [null]) <b>]
+        [<a> (if ok [null]) <b>]
         :predicate cascade [eval/ reify/]
     ])
     ([<a>] = compose [<a> (~()~)])
@@ -290,7 +290,7 @@
 
 (
     let test: func [block] [  ; can't see foo
-        return compose2 @{{}} block  ; @ means use block's binding
+        return compose2 (inside block '@{{}}) block
     ]
 
     let foo: 1000

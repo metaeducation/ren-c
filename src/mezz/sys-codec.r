@@ -83,7 +83,7 @@ decode: func [
         [blob!]
 ][
     let options: either block? type [
-        type: compose type
+        type: compose2 inside type '@() type
         next type
         elide type: first type
     ][
@@ -108,7 +108,7 @@ encode: func [
     data [element?]
 ][
     let options: either block? type [
-        type: compose type
+        type: compose2 inside type '@() type
         next type
         elide type: first type
     ][

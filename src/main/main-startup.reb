@@ -22,7 +22,7 @@ REBOL [
         established.  That includes a Ctrl-C handler.  It therefore should
         not be running any user code directly.  Instead it should return a
         request of code to be handed to the console extension to be provoked
-        with (see the /PROVOKE refinement of CONSOLE for more information).
+        with (see the :PROVOKE refinement of CONSOLE for more information).
     }--
 ]
 
@@ -243,7 +243,9 @@ bind construct [
             ]
             block! [
                 if not empty? instruction [append:line instruction ',]
-                append:line instruction spread compose2:deep '(<*>) item
+                append:line instruction spread (  ; use item's tip binding
+                    compose2:deep inside item '@(<*>) item
+                )
             ]
             fail ~<unreachable>~
         ]

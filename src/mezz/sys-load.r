@@ -349,7 +349,7 @@ adjust-url-for-raw: func [
         thru "/"  ; repository name
         change "blob/" ("")  ; GitHub puts the "raw" in the subdomain name
 
-        (return interpolate https://raw.githubusercontent.com/(start))
+        (return compose https://raw.githubusercontent.com/(start))
     ]
 
     ; Adjust a Github Gist URL to https://gist.github.com/.../raw/
@@ -366,7 +366,7 @@ adjust-url-for-raw: func [
         ]
         insert ("/raw/")
 
-        (return interpolate https://gist.githubusercontent.com/(start))
+        (return compose https://gist.githubusercontent.com/(start))
     ]
 
     return null
