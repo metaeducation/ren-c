@@ -6,7 +6,8 @@ REBOL [
 sources: [
     %mod-javascript.c
 
-    ; This is where you'd put warning disablements, etc.
+    ; Emscripten says "wontfix"
+    ; https://github.com/emscripten-core/emscripten/issues/7113
     ;
-    ; <msc:/wd4255>
+    <clang:-Wno-dollar-in-identifier-extension>
 ]

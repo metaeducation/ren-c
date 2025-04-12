@@ -423,7 +423,8 @@ EXTERN_C intptr_t API_rebPromise(
     PG_Promises = info;
 
     EM_ASM(
-        { setTimeout(function() { reb.m._API_rebIdle_internal(); }, 0); }
+        { setTimeout(function() { reb.m._API_rebIdle_internal(); }, $0); },
+        0  // => $0 (arg avoids C++20-only empty variadic warning)
     );  // note `_RL` (leading underscore means no cwrap)
 
     return info->promise_id;
@@ -631,7 +632,8 @@ EXTERN_C void API_rebResolveNative_internal(
     else {
         assert(STATE == ST_JS_NATIVE_SUSPENDED);  // needs wakeup
         EM_ASM(
-            { setTimeout(function() { reb.m._API_rebIdle_internal(); }, 0); }
+            { setTimeout(function() { reb.m._API_rebIdle_internal(); }, 0); },
+            0  // => $0 (arg avoids C++20-only empty variadic warning)
         );  // note `_RL` (leading underscore means no cwrap)
     }
 
@@ -670,7 +672,8 @@ EXTERN_C void API_rebRejectNative_internal(
     else {
         assert(STATE == ST_JS_NATIVE_SUSPENDED);  // needs wakeup
         EM_ASM(
-            { setTimeout(function() { reb.m._API_rebIdle_internal(); }, 0); }
+            { setTimeout(function() { reb.m._API_rebIdle_internal(); }, $0); },
+            0  // => $0 (arg avoids C++20-only empty variadic warning)
         );  // note `_RL` (leading underscore means no cwrap)
     }
 
@@ -906,8 +909,6 @@ DECLARE_NATIVE(JS_NATIVE)
 
     Element* spec = Element_ARG(SPEC);
     Element* source = Element_ARG(SOURCE);
-
-    StackIndex base = TOP_INDEX;
 
     VarList* adjunct;
     ParamList* paramlist;
@@ -1150,7 +1151,7 @@ DECLARE_NATIVE(JS_EVAL_P)
         );
     }
     else {
-        heapaddr_t addr = EM_ASM_INT(
+        addr = EM_ASM_INT(
             { try { return reb.Box((1,eval)(UTF8ToString($0))) }  // indirect
               catch(e) { return reb.JavaScriptError(e, $1) }
             },
