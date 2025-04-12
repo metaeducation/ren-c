@@ -1231,6 +1231,10 @@ DECLARE_NATIVE(COMPOSE2)
 
 } string_evaluations_done: { /////////////////////////////////////////////////
 
+    // 1. "File calculus" says that if we are splicing a FILE! into a FILE!,
+    //    then if the splice ends in slash the template must have a slash
+    //    after the splicing slot.  MORE RULES TO BE ADDED...
+
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
@@ -1263,6 +1267,31 @@ DECLARE_NATIVE(COMPOSE2)
 
         if (QUOTE_BYTE(eval) != NOQUOTE_1)
             return FAIL("For the moment, COMPOSE string only does NOQUOTE_1");
+
+        if (Is_File(eval) and Is_File(input)) {  // "File calculus" [1]
+            const Byte* at = c_cast(Byte*, head) + at_offset;
+            bool eval_slash_tail = (
+                Cell_Series_Len_At(eval) != 0
+                and Cell_String_Tail(eval)[-1] == '/'
+            );
+            bool slash_after_splice = (at[0] == '/');
+
+            if (eval_slash_tail) {
+                if (not slash_after_splice)
+                    return FAIL(
+                        "FILE! spliced into FILE! must end in slash"
+                        " if splice slot is followed by slash"
+                    );
+                ++at_offset;  // skip the slash (use the one we're forming)
+            }
+            else {
+                if (slash_after_splice)
+                    return FAIL(
+                        "FILE! spliced into FILE! can't end in slash"
+                        " unless splice slot followed by slash"
+                    );
+            }
+        }
 
         Form_Element(mo, cast(Element*, eval));
     }

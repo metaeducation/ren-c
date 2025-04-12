@@ -189,7 +189,7 @@ compile: func [
         append config.runtime-path "/"
     ]
 
-    if not exists? make-file [(config.runtime-path) include /] [
+    if not exists? compose %(config.runtime-path)/include/ [
         fail [
             "Runtime path" config.runtime-path "does not have an %include/"
             "directory.  It should have files like %stddef.h and %stdarg.h"
@@ -211,14 +211,14 @@ compile: func [
 
     if 3 = fourth system.version [  ; e.g. Windows (32-bit or 64-bit)
         if empty? config.include-path [
-            append config.include-path file-to-local:full make-file [
-                (config.runtime-path) win32/include /
-            ]
+            append config.include-path file-to-local:full (
+                compose %(config.runtime-path)/win32/include/
+            )
         ]
         if empty? config.library-path [
-            append config.library-path file-to-local:full make-file [
-                (config.runtime-path) win32/library /
-            ]
+            append config.library-path file-to-local:full (
+                compose %(config.runtime-path)/win32/library/
+            )
         ]
 
         ; !!! For unknown reasons, on Win32 it does not seem that the API
@@ -236,9 +236,9 @@ compile: func [
     ;
     ; https://stackoverflow.com/questions/53154898/
 
-    insert config.include-path file-to-local:full make-file [
-        (config.runtime-path) include /
-    ]
+    insert config.include-path file-to-local:full (
+        compose %(config.runtime-path)/include/
+    )
 
     ; The other complicating factor is that once emitted code has these
     ; references to TCC-specific internal routines not in libc, the
@@ -426,7 +426,7 @@ compile: func [
             ]
         ]
 
-        if not exists? make-file [(config.librebol-path) rebol.h] [
+        if not exists? compose %(config.librebol-path)/rebol.h [
             fail [
                 "Looked for %rebol.h in" config.librebol-path "and did not"
                 "find it.  Check your definition of LIBREBOL_INCLUDE_DIR"
@@ -447,7 +447,7 @@ compile: func [
         :config config
         :files files
         :inspect inspect
-        :librebol: yes? use-librebol
+        :librebol yes? use-librebol
     ]
 
     if inspect [
@@ -659,7 +659,7 @@ bootstrap: func [
     ; that hasn't been done, use fetching from a web build as a proxy for it.
     ;
     unzip/quiet %./tccencap https://metaeducation.s3.amazonaws.com/travis-builds/0.4.40/r3-06ac629-debug-cpp-tcc-encap.zip
-    lib/set-env "CONFIG_TCCDIR" file-to-local make-file [(what-dir) %tccencap/]
+    lib/set-env "CONFIG_TCCDIR" file-to-local compose %(what-dir)/tccencap/
 
     cd ren-c-master
 

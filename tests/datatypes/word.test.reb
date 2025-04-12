@@ -228,12 +228,15 @@
 )]
 
 
-; `%%` was added as a WORD! to serve as a quoting-based MAKE FILE! operator.
+; `%%` was added as a WORD! to serve as a quoting-based MAKE FILE! operator
+; (essentially obsoleted by interpolation).
 ;
-; Single % is not a good idea to have as a WORD!, because `%/foo` would be
-; ambiguous as a PATH! vs. FILE!.  Sacrificing %% as a shorthand for %"%"
-; and giving it to WORD! is worth it.  How many other forms would be worth
-; it is up in the air, so only %% is legal for now.
+; Single % may not be a good idea to have as a WORD!, since if you tried to
+; pick out of it as a TUPLE! you'd get things like %.git being a directory
+; starting with dot, or %/foo/ being a directory etc.
+;
+; Sacrificing %% and making it a WORD! may still be worth it, vs saying
+; that %% is a FILE! named percent?  Unclear.  Review.
 [
     ("%%" = as text! match word! '%%)
     ("%%" = as text! unchain match [set-word?] '%%:)

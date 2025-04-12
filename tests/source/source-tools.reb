@@ -41,10 +41,10 @@ REBOL [
 
 import %../../tools/common.r  ; sets REPO-DIR (among other things)
 
-c-lexical: import %% (repo-dir)/tools/c-lexicals.r
-import %% (repo-dir)/tools/common-parsers.r
-import %% (repo-dir)/tools/text-lines.reb
-import %% (repo-dir)/tools/read-deep.reb
+c-lexical: import compose %(repo-dir)/tools/c-lexicals.r
+import compose %(repo-dir)/tools/common-parsers.r
+import compose %(repo-dir)/tools/text-lines.reb
+import compose %(repo-dir)/tools/read-deep.reb
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
@@ -149,7 +149,7 @@ export analyse: context [
             let filetype: select extensions extension-of file
             let type: has source filetype
             (reeval (ensure action! get type) file
-                (read %% (repo-dir)/(file)))
+                (read compose %(repo-dir)/(file)))
         ]
     ]
 
@@ -311,7 +311,7 @@ export analyse: context [
         let analysis: copy []
         let /emit: specialize log-emit/ [log: analysis]
 
-        data: read %% (repo-dir)/(file)
+        data: read compose %(repo-dir)/(file)
 
         let bol: null  ; beginning of line
         let line: null
@@ -446,7 +446,7 @@ list: context [
         ]
 
         if equal? #"/" last item [
-            let contents: read %% (repo-dir)/(item)
+            let contents: read compose %(repo-dir)/(item)/
             insert queue spread map-each 'x contents [join item x]
             item: null
         ] else [

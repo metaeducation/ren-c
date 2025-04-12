@@ -51,9 +51,6 @@ for-each 'file reduce [
     %scripts/unzip.reb
     %scripts/encap.reb
 
-    %scripts/make-file.r  ; Work in progress for FILE! conversion
-    %scripts/shell.r  ; here vs. in module for easier editing
-
     ; %prot-http.r and %prot-tls.r don't have any native code directly in them,
     ; so they don't need to be "extensions".  They could just be encapped
     ; (unlike the encap and compression code itself.)  But they represent

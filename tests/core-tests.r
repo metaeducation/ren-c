@@ -386,8 +386,6 @@
 
 %misc/assert.test.reb
 %misc/fail.test.reb
-%misc/make-file.test.reb
-%misc/shell.test.reb
 %misc/pack-old.test.reb
 %misc/help.test.reb  ; Do this last, as it has a lot of output
 

@@ -246,7 +246,7 @@ zip: func [
         let root+name: if find "\/" name.1 [
             info ["Warning: absolute path" name]
             name
-        ] else [%% (root)/(name)]
+        ] else [compose %(root)/(name)]
 
         let no-modes: (url? root+name) or (dir? root+name)
 
@@ -254,7 +254,7 @@ zip: func [
             name: dirize name
             let files: ensure block! read root+name
             for-each 'file files [
-                append source %% (name)/(file)
+                append source compose %(name)/(file)
             ]
             continue
         ]
@@ -587,20 +587,20 @@ unzip: func [
                 ][
                     ; make directory and/or write file
                     either #"/" = last name [
-                        if not exists? %% (where)/(name) [
-                            make-dir:deep %%(where)/(name)
+                        if not exists? compose %(where)/(name) [
+                            make-dir:deep compose %(where)/(name)
                         ]
                     ][
                         let [path file]: split-path name
-                        if not exists? %% (where)/(path) [
-                            make-dir:deep %% (where)/(path)
+                        if not exists? compose %(where)/(path) [
+                            make-dir:deep compose %(where)/(path)
                         ]
                         if uncompressed-data [
-                            write %% (where)/(name) uncompressed-data
+                            write compose %(where)/(name) uncompressed-data
 
                             ; !!! R3-Alpha didn't support SET-MODES
                             comment [
-                                set-modes %% (where)/(name) [
+                                set-modes compose %(where)/(name) [
                                     modification-date: date
                                 ]
                             ]
