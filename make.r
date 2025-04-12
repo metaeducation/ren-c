@@ -1177,83 +1177,33 @@ set-exec-path: func [
     ]
 ]
 
-cc-exec: linker-exec: strip-exec: ~  ; no LET in PARSE3
-pos: ~
-parse3:match user-config.toolset [
-    opt some [
-        'gcc cc-exec: opt [file! | text! | blank!] (
-            rebmake.default-compiler: rebmake.gcc
-        )
-        | 'clang cc-exec: opt [file! | text! | blank!] (
-            rebmake.default-compiler: rebmake.clang
-        )
-        | 'cl cc-exec: opt [file! | text! | blank!] (
-            rebmake.default-compiler: rebmake.cl
-        )
-        | 'ld linker-exec: opt [file! | text! | blank!] (
-            rebmake.default-linker: rebmake.ld
-        )
-        | 'llvm-link linker-exec: opt [file! | text! | blank!] (
-            rebmake.default-linker: rebmake.llvm-link
-        )
-        | 'link linker-exec: opt [file! | text! | blank!] (
-            rebmake.default-linker: rebmake.link
-        )
-        | 'strip strip-exec: opt [file! | text! | blank!] (
-            rebmake.default-strip: rebmake.strip
-            rebmake.default-strip.options: [<gcc:-S> <gcc:-x> <gcc:-X>]
-            if strip-exec [
-                set-exec-path rebmake.default-strip strip-exec
-            ]
-        )
-    ]
-    pos: <here>
-] else [
-    fail ["failed to parse toolset at:" mold pos]
+
+=== "SET UP COMPILER AND STRIPPER" ===
+
+; There used to be an option to specify a linker as well, but trying to call
+; linkers manually vs. using the front end is fraught with problems.  (Missing
+; libraries or paths to produce a nominal working executable, and knowing the
+; incantation to pass to the linker to get a working C++ program out is not
+; trivial, vs. just calling G++ or CLANG++ to do the link.)
+;
+; So it's best to just use the compiler as a linker, and if you have special
+; switches you need do pass through for those switches through the front end.
+
+rebmake.default-compiler: select rebmake (any [
+    user-config.compiler
+    'cc
+]) else [
+    fail ["Unknown compiler type in configuration:" mold user-config.compiler]
 ]
-pos: ~  ; avoid leaks, FWIW
+rebmake.default-compiler/check user-config.compiler-path
 
-
-=== "SANITY CHECK COMPILER AND LINKER" ===
-
-if not rebmake.default-compiler [fail "Compiler is not set"]
-if not rebmake.default-linker [fail "Default linker is not set"]
-
-switch rebmake.default-compiler.name [
-    'gcc [
-        if rebmake.default-linker.name != 'ld [
-            fail [
-                "Incompatible compiler (GCC) and linker:"
-                    rebmake.default-linker.name
-            ]
-        ]
-    ]
-    'clang [
-        if not find [ld llvm-link] rebmake.default-linker.name [
-            fail [
-                "Incompatible compiler (CLANG) and linker:"
-                rebmake.default-linker.name
-            ]
-        ]
-    ]
-    'cl [
-        if rebmake.default-linker.name != 'link [
-            fail [
-                "Incompatible compiler (CL) and linker:"
-                rebmake.default-linker.name
-            ]
-        ]
-    ]
-
-    fail ["Unrecognized compiler (gcc, clang or cl):" cc]
+rebmake.default-stripper: select rebmake (any [
+    user-config.stripper
+    'strip
+]) else [
+    fail ["Unknown stripper type in configuration:" mold user-config.stripper]
 ]
-
-if cc-exec [
-    set-exec-path rebmake.default-compiler cc-exec
-]
-if linker-exec [
-    set-exec-path rebmake.default-linker linker-exec
-]
+rebmake.default-stripper/check user-config.stripper-path
 
 
 === "GENERATE OVERALL APPLICATION CONFIGURATION" ===

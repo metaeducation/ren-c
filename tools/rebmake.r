@@ -44,8 +44,8 @@ if not find (words of import/) 'into [  ; See %import-shim.r
 import <bootstrap-shim.r>
 
 default-compiler: null
-default-linker: null
-default-strip: null
+default-stripper: null
+
 target-platform: null
 
 map-files-to-local: func [
@@ -198,7 +198,7 @@ posix: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        if let tool: any [get $cmd.strip, get $default-strip] [
+        if let tool: any [get $cmd.strip, get $default-stripper] [
             let b: ensure block! tool/commands cmd.file cmd.options
             assert [1 = length of b]
             return b.1
@@ -362,17 +362,15 @@ application-class: make project-class [
     type: 'application
     generated: 'no
 
-    linker: null
     searches: null
     ldflags: null
 
-    link: method [return: [~]] [
-        linker/link .output .depends .ldflags
-    ]
-
-    command: method [return: [text!]] [
-        let ld: any [linker, default-linker]
-        return ld.link // [
+    command: method [
+        return: [text!]
+        <with> default-compiler
+    ][
+        let cc: any [.compiler, default-compiler]
+        return cc.link // [
             .output, .depends, .searches, .ldflags,
             :debug .debug
         ]
@@ -384,21 +382,17 @@ dynamic-library-class: make project-class [
     class: #dynamic-library
     type: 'dynamic
     generated: 'no
-    linker: null
 
     searches: null
     ldflags: null
-    link: method [return: [~]] [
-        linker/link .output .depends .ldflags
-    ]
 
     command: method [
         return: [text!]
         <with>
-        default-linker
+        default-compiler
     ][
-        let l: any [.linker, default-linker]
-        return l.link // [
+        let cc: any [.compiler, default-compiler]
+        return cc.link // [
             .output, .depends, .searches, .ldflags
             :dynamic ok
         ]
@@ -422,6 +416,14 @@ compiler-class: make object! [
     version: null
     exec-file: null
 
+    check: method [
+        "Check if the compiler is available"
+        return: [logic?]
+        path [<maybe> any-string?]
+    ][
+        fail "TBD"
+    ]
+
     compile: method [
         return: [text!]
         output [file!]
@@ -432,30 +434,66 @@ compiler-class: make object! [
     ][
     ]
 
-    check: method [
-        "Check if the compiler is available"
-        return: [logic?]
-        path [<maybe> any-string?]
+    link: method [
+        return: [~null~ block!]
+        output [file!]
+        depends [~null~ block!]
+        searches [~null~ block!]
+        ldflags [~null~ block! any-string?]
     ][
-        fail "TBD"
+        ...  ; overridden
     ]
 ]
 
-gcc: make compiler-class [
-    name: 'gcc
-    id: ["gcc" "gnu"]  ; apply all <gcc:XXX> and <gnu:XXX> flags
+
+cc: make compiler-class [
+    name: null  ; derived classes (gcc, clang, tcc override)
+    id: null
+    exec-file: %cc
 
     check: method [
         "Assigns .exec-file, extracts the compiler version"
-        return: [logic?]
-        :exec [file!]
+        return: [~]
+        exec [~null~ file!]
     ][
-        let digit: charset "0123456789"
+        .exec-file: any [exec, .exec-file]
 
+        if .name [  ; don't need to try and guess what kind of compiler it is
+            return ~
+        ]
+
+        ; Try auto-detecting what kind of compiler it is
+        ;
         version: copy ""
+        call:output [(.exec-file) "--version"] version
+        case [
+            find version "clang" [
+                .name: clang.name
+                .id: clang.id
+            ]
+            ; gcc co-opts name of its executable, so when run as cc it will
+            ; say "cc (Ubuntu ...) 13.3.0" etc.  But always cites FSF.
+            ;
+            find version "Free Software Foundation" [
+                .name: gcc.name
+                .id: gcc.id
+            ]
+            find:match version "tcc" [
+                .name: tcc.name
+                .id: tcc.id
+            ]
+        ]
+        then [
+            print [.name "detected from COMPILER-PATH:" .exec-file]
+        ]
+        else [
+            .name: "cc"
+            .id: "cc"
+            print ["Unknown C compiler, COMPILER-PATH:" .exec-file]
+        ]
 
-        .exec-file: exec: default ["gcc"]
-        call:output [(exec) "--version"] version
+      comment [  ; versioning
+        let digit: charset "0123456789"
         let letter: charset [#"a" - #"z" #"A" - #"Z"]
         parse3:match version [
             "gcc (" some [letter | digit | #"_"] ")" space
@@ -469,8 +507,8 @@ gcc: make compiler-class [
                 to integer! minor
                 to integer! macro
             ]
-            return ~
         ]
+      ]
     ]
 
     compile: method [
@@ -513,9 +551,7 @@ gcc: make compiler-class [
                     ; This is a stopgap workaround that ultimately would
                     ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
                     ;
-                    if find [gcc g++ cl] name [
-                        flg: replace copy flg -{"}- -{\"}-
-                    ]
+                    flg: replace copy flg -{"}- -{\"}-
 
                     ; Note: bootstrap executable hangs on:
                     ;
@@ -566,6 +602,100 @@ gcc: make compiler-class [
             keep file-to-local source
         ]
     ]
+
+    link: method [
+        return: [text!]
+        output [file!]
+        depends [~null~ block!]
+        searches [~null~ block!]
+        ldflags [~null~ block! any-string?]
+        :dynamic
+        :debug [onoff?]
+    ][
+        let suffix: either dynamic [
+            target-platform.dll-suffix
+        ][
+            target-platform.exe-suffix
+        ]
+        return spaced collect [
+            keep any [(file-to-local:pass maybe .exec-file) "gcc"]
+
+            ; !!! This was breaking emcc.  However, it is needed in order to
+            ; get shared libraries on Posix.  That feature is being resurrected
+            ; so turn it back on.
+            ; https://github.com/emscripten-core/emscripten/issues/11814
+            ;
+            if dynamic [keep "-shared"]
+
+            keep "-o"
+
+            output: file-to-local output
+            either ends-with? output maybe suffix [
+                keep output
+            ][
+                keep unspaced [output suffix]
+            ]
+
+            for-each 'search (maybe map-files-to-local maybe searches) [
+                keep unspaced ["-L" search]
+            ]
+
+            for-each 'flg ldflags [
+                keep maybe filter-flag flg .id
+            ]
+
+            for-each 'dep depends [
+                keep maybe accept dep
+            ]
+        ]
+    ]
+
+    accept: method [
+        return: [~null~ text!]
+        dep [object!]
+    ][
+        return degrade switch dep.class [
+            #object-file [
+                file-to-local dep.output
+            ]
+            #dynamic-extension [
+                either tag? dep.output [
+                    if let lib: filter-flag dep.output .id [
+                        unspaced ["-l" lib]
+                    ]
+                    else [
+                        reify null
+                    ]
+                ][
+                    spaced [
+                        if dep.flags [
+                            if find dep.flags 'static ["-static"]
+                        ]
+                        unspaced ["-l" dep.output]
+                    ]
+                ]
+            ]
+            #static-extension [
+                file-to-local dep.output
+            ]
+            #object-library [
+                spaced map-each 'ddep dep.depends [
+                    file-to-local ddep.output
+                ]
+            ]
+            #application [
+                '~null~
+            ]
+            #variable [
+                '~null~
+            ]
+            #entry [
+                '~null~
+            ]
+            (elide dump dep)
+            fail "unrecognized dependency"
+        ]
+    ]
 ]
 
 ; !!! In the original rebmake.r, tcc was a full copy of the GCC code, while
@@ -573,19 +703,52 @@ gcc: make compiler-class [
 ; for Rebol itself--only to do some preprocessing of %sys-core.i, but this
 ; mechanism is no longer used (see %extensions/tcc/README.md)
 
+gcc: make cc [
+    name: 'gcc
+    id: ["gcc" "gnu"]  ; apply all <gcc:XXX> and <gnu:XXX> flags
+    exec-file: %gcc
+]
+
+g++: make cc [
+    name: 'gcc
+    id: ["gcc" "gnu"]  ; apply all <gcc:XXX> and <gnu:XXX> flags
+    exec-file: %g++
+]
+
 tcc: make gcc [
     name: 'tcc
+    id: "tcc"
+    exec-file: %tcc
 ]
 
 clang: make gcc [
     name: 'clang
     id: ["gcc" "clang"]
+    exec-file: %clang
 ]
+
+clang++: make gcc [
+    name: 'clang
+    id: ["gcc" "clang"]
+    exec-file: %clang++
+]
+
 
 ; Microsoft CL compiler
 cl: make compiler-class [
     name: 'cl
     id: "msc" ; match all flags like <msc:XXX>
+    exec-file: %cl.exe
+
+    check: method [
+        "Assigns .exec-file, extracts the compiler version"
+        return: [~]
+        exec [~null~ file!]
+    ][
+        .exec-file: any [exec, .exec-file]
+
+        ; TBD: extract version
+    ]
 
     compile: method [
         return: [text!]
@@ -681,235 +844,6 @@ cl: make compiler-class [
             keep file-to-local:pass source
         ]
     ]
-]
-
-linker-class: make object! [
-    class: #linker
-    name: null
-    id: null  ; flag prefix
-    version: null
-    link: method [
-        return: [~]
-    ][
-        ...  ; overridden
-    ]
-    commands: method [
-        return: [~null~ block!]
-        output [file!]
-        depends [~null~ block!]
-        searches [~null~ block!]
-        ldflags [~null~ block! any-string?]
-    ][
-        ...  ; overridden
-    ]
-    check: does [
-        ...  ; overridden
-    ]
-]
-
-ld: make linker-class [
-    ;
-    ; Note that `gcc` is used as the ld executable by default.  There are
-    ; some switches (such as -m32) which it seems `ld` does not recognize,
-    ; even when processing a similar looking link line.
-    ;
-    name: 'ld
-    version: null
-    exec-file: null
-    id: ["gcc" "gnu"]
-
-    link: method [
-        return: [text!]
-        output [file!]
-        depends [~null~ block!]
-        searches [~null~ block!]
-        ldflags [~null~ block! any-string?]
-        :dynamic
-        :debug [onoff?]
-    ][
-        let suffix: either dynamic [
-            target-platform.dll-suffix
-        ][
-            target-platform.exe-suffix
-        ]
-        return spaced collect [
-            keep any [(file-to-local:pass maybe .exec-file) "gcc"]
-
-            ; !!! This was breaking emcc.  However, it is needed in order to
-            ; get shared libraries on Posix.  That feature is being resurrected
-            ; so turn it back on.
-            ; https://github.com/emscripten-core/emscripten/issues/11814
-            ;
-            if dynamic [keep "-shared"]
-
-            keep "-o"
-
-            output: file-to-local output
-            either ends-with? output maybe suffix [
-                keep output
-            ][
-                keep unspaced [output suffix]
-            ]
-
-            for-each 'search (maybe map-files-to-local maybe searches) [
-                keep unspaced ["-L" search]
-            ]
-
-            for-each 'flg ldflags [
-                keep maybe filter-flag flg .id
-            ]
-
-            for-each 'dep depends [
-                keep maybe accept dep
-            ]
-        ]
-    ]
-
-    accept: method [
-        return: [~null~ text!]
-        dep [object!]
-    ][
-        return degrade switch dep.class [
-            #object-file [
-                file-to-local dep.output
-            ]
-            #dynamic-extension [
-                either tag? dep.output [
-                    if let lib: filter-flag dep.output .id [
-                        unspaced ["-l" lib]
-                    ]
-                ][
-                    spaced [
-                        if dep.flags [
-                            if find dep.flags 'static ["-static"]
-                        ]
-                        unspaced ["-l" dep.output]
-                    ]
-                ]
-            ]
-            #static-extension [
-                file-to-local dep.output
-            ]
-            #object-library [
-                spaced map-each 'ddep dep.depends [
-                    file-to-local ddep.output
-                ]
-            ]
-            #application [
-                '~null~
-            ]
-            #variable [
-                '~null~
-            ]
-            #entry [
-                '~null~
-            ]
-            (elide dump dep)
-            fail "unrecognized dependency"
-        ]
-    ]
-
-    check: method [
-        return: [logic?]
-        :exec [file!]
-    ][
-        let version: copy ""
-        .exec-file: exec: default ["gcc"]
-        call:output [(exec) "--version"] version
-        return null  ; !!! Ever called?
-    ]
-]
-
-llvm-link: make linker-class [
-    name: 'llvm-link
-    version: null
-    exec-file: null
-    id: "llvm"  ; handles all flags like <llvm:XXX>
-
-    link: method [
-        return: [text!]
-        output [file!]
-        depends [~null~ block!]
-        searches [~null~ block!]
-        ldflags [~null~ block! any-string?]
-        :dynamic
-        :debug [onoff?]
-    ][
-        let suffix: either dynamic [
-            target-platform.dll-suffix
-        ][
-            target-platform.exe-suffix
-        ]
-
-        return spaced collect [
-            keep any [(file-to-local:pass maybe .exec-file) "llvm-link"]
-
-            keep "-o"
-
-            output: file-to-local output
-            either ends-with? output maybe suffix [
-                keep output
-            ][
-                keep unspaced [output suffix]
-            ]
-
-            ; llvm-link doesn't seem to deal with libraries
-            comment [
-                for-each 'search (maybe map-files-to-local maybe searches) [
-                    keep unspaced ["-L" search]
-                ]
-            ]
-
-            for-each 'flg ldflags [
-                keep maybe filter-flag flg .id
-            ]
-
-            for-each 'dep depends [
-                keep maybe accept dep
-            ]
-        ]
-    ]
-
-    accept: method [
-        return: [~null~ text!]
-        dep [object!]
-    ][
-        return degrade switch dep.class [
-            #object-file [
-                file-to-local dep.output
-            ]
-            #dynamic-extension [
-                '~null~
-            ]
-            #static-extension [
-                '~null~
-            ]
-            #object-library [
-                spaced map-each 'ddep dep.depends [
-                    file-to-local ddep.output
-                ]
-            ]
-            #application [
-                '~null~
-            ]
-            #variable [
-                '~null~
-            ]
-            #entry [
-                '~null~
-            ]
-            (elide dump dep)
-            fail "unrecognized dependency"
-        ]
-    ]
-]
-
-; Microsoft linker
-link: make linker-class [
-    name: 'link
-    id: "msc"
-    version: null
-    exec-file: null
 
     link: method [
         return: [text!]
@@ -928,31 +862,46 @@ link: make linker-class [
         return spaced collect [
             keep any [(file-to-local:pass maybe .exec-file) "link"]
 
-            ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
-            if all [debug, on? debug] [keep "/DEBUG"]
+            ; don't show startup banner
+            ; (link.exe takes uppercase, but cl.exe mandates lowercase!)
+            ;
+            keep "/nologo"
 
-            keep "/NOLOGO"  ; don't show startup banner (link takes uppercase!)
-            if dynamic [keep "/DLL"]
+            if dynamic [keep "/dll"]
 
+            ; link.exe takes e.g. `/OUT:r3.exe`, the front end takes `/Fer3`
+            ;
             output: file-to-local output
             keep unspaced [
-                "/OUT:" either ends-with? output maybe suffix [
+                "/Fe" either ends-with? output maybe suffix [
                     output
                 ][
                     unspaced [output suffix]
                 ]
             ]
 
+            for-each 'dep depends [
+                keep maybe accept dep
+            ]
+
+            ; /link must precede linker-specific options
+            ; it also must be lowercase!s
+            ;
+            keep "/link"
+
+            ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
+            ; /DEBUG must be uppercase when passed to cl.exe
+            ;
+            all [debug, on? debug] then [
+                keep "/DEBUG"
+            ]
+
             for-each 'search (maybe map-files-to-local maybe searches) [
-                keep unspaced ["/LIBPATH:" search]
+                keep unspaced ["/libpath:" search]
             ]
 
             for-each 'flg ldflags [
                 keep maybe filter-flag flg .id
-            ]
-
-            for-each 'dep depends [
-                keep maybe accept dep
             ]
         ]
     ]
@@ -1002,6 +951,7 @@ link: make linker-class [
     ]
 ]
 
+
 strip-class: make object! [
     class: #strip
     name: null
@@ -1037,11 +987,10 @@ strip-class: make object! [
 strip: make strip-class [
     id: ["gcc" "gnu"]
     check: method [
-        return: [logic?]
+        return: [~]
         :exec [file!]
     ][
         .exec-file: exec: default ["strip"]
-        return ~
     ]
 ]
 

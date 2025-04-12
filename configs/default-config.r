@@ -35,15 +35,10 @@ extensions: to map! [
 
 rebol-tool: null  ; fallback value if system.options.boot fails
 
-; possible combination:
-; [gcc _ ld _]
-; [cl _ link _]
-toolset: [
-    ;name executable-file-path (_ being default)
-    gcc _
-    ld _
-    strip _
-]
+compiler: null  ; e.g. g++ clang etc. default to cc if not set
+compiler-path: null  ; will use compiler name as default if not overridden
+
+stripper: null  ; will use strip if nothing is set
 
 debug: 'none  ; [none asserts symbols sanitize]
 

@@ -57,11 +57,8 @@ wasi-sysroot: to file! (get-env 'WASI_SYSROOT else [
     ]
 ])
 
-toolset: compose [
-    gcc (wasi-clang)
-    ld (wasi-clang)
-]
-
+compiler: 'clang
+compiler-path: %wasi-clang
 
 ; Historically, checked builds of Emscripten did not include asserts of the
 ; whole codebase...trusting the desktop builds to test that.  The only part

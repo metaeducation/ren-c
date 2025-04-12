@@ -4,7 +4,5 @@ REBOL [
 
 os-id: 0.4.40
 
-toolset: compose [
-    gcc (spaced [system.options.boot -{--do "c99" --}-])
-    ld (spaced [system.options.boot -{--do "c99" --}-])
-]
+compiler: 'tcc
+compiler-path: spaced [system.options.boot -{--do "c99" --}-]

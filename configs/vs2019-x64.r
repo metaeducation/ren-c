@@ -6,10 +6,8 @@ os-id: 0.3.40
 
 target: 'nmake
 
-toolset: [
-    cl %cl.exe
-    link %link.exe
-]
+compiler: 'cl
+compiler-path: %cl.exe
 
 with-ffi: [
     definitions: ["FFI_BUILDING"]  ; the prebuilt library is static

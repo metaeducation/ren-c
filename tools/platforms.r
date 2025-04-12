@@ -445,10 +445,10 @@ export linker-flags: make object! [
 
 export platform-libraries: make object! [
     ;
-    ; Math library, needed only when compiling with GCC
+    ; Math library, needed only when compiling with GCC/Clang/TCC
     ; (Haiku has it in libroot)
     ;
-    M: <gcc:m>
+    M: [<gcc:m> <tcc:m>]  ; clang does gcc:XXX flags (<gnu:XXX> is GCC only)
 
     DL: "dl" ; dynamic lib
     LOG: "log" ; Link with liblog.so on Android

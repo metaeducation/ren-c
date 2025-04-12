@@ -2,10 +2,7 @@ REBOL [
     File: %llvm-bc.r
 ]
 
-toolset: [
-    clang
-    llvm-link
-]
+compiler: 'clang
 
 extensions: [
     - ODBC _

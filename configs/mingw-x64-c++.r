@@ -8,11 +8,11 @@ os-id: 0.3.40
 
 standard: default ['c++]
 
-toolset: [
-    gcc %x86_64-w64-mingw32-g++
-    ld %x86_64-w64-mingw32-g++; linking is done via calling g++, not ld
-    strip %x86_64-w64-mingw32-strip
-]
+compiler: 'gcc
+compiler-path: %x86_64-w64-mingw32-g++
+
+stripper: 'strip
+stripper-path: %x86_64-w64-mingw32-strip
 
 ; When using <stdint.h> with some older compilers, these definitions are
 ; needed, otherwise you won't get INT32_MAX or UINT64_C() etc.
