@@ -1065,7 +1065,7 @@ Error* Error_Unexpected_Type(Type expected, const Value* actual)
 // really equipped to handle it.
 //
 Error* Error_Arg_Type(
-    Option(const Symbol*) name,
+    Option(const Symbol*) label,  // function's name
     const Key* key,
     const Param* param,
     const Value* arg
@@ -1074,12 +1074,6 @@ Error* Error_Arg_Type(
         return Cell_Error(arg);
 
     const Symbol* param_symbol = Key_Symbol(key);
-
-    DECLARE_VALUE (label);
-    if (name)
-        Init_Word(label, unwrap name);
-    else
-        Init_Nulled(label);
 
     DECLARE_ELEMENT (spec);
     Option(const Source*) param_array = Cell_Parameter_Spec(param);
