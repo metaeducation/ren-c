@@ -265,7 +265,7 @@ if yes? use-librebol [
             g_generic_${MOD}_##name##_##type
 
         #define DATATYPE_HOLDER(name) /* name looks like Is_Image */ \
-            g_extension_type_##name
+            g_extension_type_${MOD}_##name
 
         /* Note: I like using parentheses with such a macro to help notice
          * when it's used in a variable name slot that it can't be the name
