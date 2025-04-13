@@ -1171,7 +1171,7 @@ Stub* Diminish_Stub(Stub* s)
         Free_Unbiased_Flex_Data(unbiased, total);
 
         int tmp;
-        g_gc.depletion = REB_I32_ADD_OF(g_gc.depletion, total, &tmp)
+        g_gc.depletion = Add_I32_Overflows(&tmp, g_gc.depletion, total)
             ? INT32_MAX
             : tmp;  // what about the space for the Stub itself? [2]
     }

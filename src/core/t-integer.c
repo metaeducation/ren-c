@@ -244,13 +244,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
     switch (id) {
       case SYM_ADD: {
         REBI64 anum;
-        if (REB_I64_ADD_OF(num, arg, &anum))
+        if (Add_I64_Overflows(&anum, num, arg))
             return RAISE(Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
       case SYM_SUBTRACT: {
         REBI64 anum;
-        if (REB_I64_SUB_OF(num, arg, &anum))
+        if (Subtract_I64_Overflows(&anum, num, arg))
             return RAISE(Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
@@ -402,18 +402,18 @@ IMPLEMENT_GENERIC(RANDOM_BETWEEN, Is_Integer)
 }
 
 
-// 1. Both arguments are guaranteed to be integers due to the commutativity
-//    provided by DECLARE_NATIVE(MULTIPLY), see definition.
-//
 IMPLEMENT_GENERIC(MULTIPLY, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
+    if (not Is_Integer(ARG(VALUE2)))
+        return FAIL(PARAM(VALUE2));
+
     REBI64 num1 = VAL_INT64(ARG(VALUE1));
-    REBI64 num2 = VAL_INT64(ARG(VALUE2));  // must be integer [1]
+    REBI64 num2 = VAL_INT64(ARG(VALUE2));
 
     REBI64 result;
-    if (REB_I64_MUL_OF(num1, num2, &result))
+    if (Multipy_I64_Overflows(&result, num1, num2))
         return RAISE(Error_Overflow_Raw());
     return Init_Integer(OUT, result);
 }

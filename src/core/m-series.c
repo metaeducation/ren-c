@@ -262,7 +262,7 @@ void Remove_Flex_Units(Flex* f, Size byteoffset, REBLEN quantity)
         else {
             // Add bias to head:
             unsigned int bias;
-            if (REB_U32_ADD_OF(Flex_Bias(f), quantity, &bias))
+            if (Add_U32_Overflows(&bias, Flex_Bias(f), quantity))
                 fail (Error_Overflow_Raw());
 
             if (bias > 0xffff) { // 16-bit, simple Add_Flex_Bias could overflow

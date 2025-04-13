@@ -23,7 +23,7 @@
 //
 
 #include "sys-core.h"
-#include "sys-int-funcs.h" //REB_I64_ADD_OF
+#include "sys-int-funcs.h" //Add_I64_Overflows
 
 
 //
@@ -331,7 +331,7 @@ static Bounce Loop_Integer_Common(
         if (not Is_Integer(var))
             return FAIL(Error_Invalid_Type_Raw(Datatype_Of(var)));
 
-        if (REB_I64_ADD_OF(*state, bump, state))
+        if (Add_I64_Overflows(state, *state, bump))
             return FAIL(Error_Overflow_Raw());
     }
 
@@ -2041,7 +2041,7 @@ DECLARE_NATIVE(FOR)
     if (VAL_INT64(var) == VAL_INT64(value))
         return BRANCHED(OUT);
 
-    if (REB_I64_ADD_OF(VAL_INT64(var), 1, &mutable_VAL_INT64(var)))
+    if (Add_I64_Overflows(&mutable_VAL_INT64(var), VAL_INT64(var), 1))
         return FAIL(Error_Overflow_Raw());
 
     assert(STATE == ST_FOR_RUNNING_BODY);
