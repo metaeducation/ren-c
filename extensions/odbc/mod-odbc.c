@@ -1238,7 +1238,7 @@ DECLARE_NATIVE(INSERT_ODBC)
 
     bool get_catalog = rebUnboxBoolean(
         "switch:type first sql [",
-            "&lit-word? ['true]",  // like Rebol2: 'tables, 'columns, 'types
+            "lit-word?/ ['true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! ['false]",
         "] else [",
             "fail [",
