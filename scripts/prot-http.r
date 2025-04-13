@@ -114,17 +114,21 @@ do-request: func [
 ][
     let spec: port.spec
     let info: port.state.info
-    spec.headers: body-of make make object! [
+    spec.headers: compose [
         Accept: "*/*"
         Accept-Charset: "utf-8"
-        Host: if not find [80 443] spec.port-id [
+        Host: (if not find [80 443] spec.port-id [
             unspaced [@spec.host ":" spec.port-id]  ; spec.host can be TUPLE!
         ]
         else [
             form spec.host
-        ]
+        ])
         User-Agent: "REBOL"
-    ] spec.headers
+        (spread map-each [key val] spec.headers [
+            assert [not antiform? val]
+            spread [setify key val]
+        ])
+    ]
 
     port.state.mode: <doing-request>
 
