@@ -60,12 +60,11 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 //
 static Option(Error*) Trap_Push_Keys_And_Params_Core(
     VarList* *adjunct,
-    const Element* spec,
+    Level* L,
     Flags flags,
-    Option(SymId) returner,  // e.g. SYM_RETURN or SYM_YIELD
-    StackIndex base
+    Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
 ){
-    assert(Is_Block(spec));
+    StackIndex base = L->baseline.stack_base;
 
     if (returner) {
         Init_Word(PUSH(), Canon_Symbol(unwrap returner));  // top of stack
@@ -74,9 +73,6 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
     enum Reb_Spec_Mode mode = SPEC_MODE_DEFAULT;
 
-    Level* L = Make_Level_At(
-        &Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-    );
     Atom* eval = Level_Lifetime_Atom(L);
     Push_Level_Erase_Out_If_State_0(eval, L);
 
@@ -127,7 +123,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 "<with> must be followed by WORD!s in FUNCTION spec"
             );
 
-        if (not Lookup_Word(item, Cell_Binding(spec)))
+        if (not Lookup_Word(item, Level_Binding(L)))
             return Error_Not_Bound_Raw(item);
 
         continue;
@@ -248,7 +244,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             if (Cell_Parameter_Spec(param))  // `func [x [integer!] [blank!]]`
                 fail (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
 
-            Context* derived = Derive_Binding(Cell_List_Binding(spec), item);
+            Context* derived = Derive_Binding(Level_Binding(L), item);
             Set_Parameter_Spec(param, item, derived);
 
             continue;
@@ -456,7 +452,6 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
     if (*adjunct)
         Drop_Lifeguard(*adjunct);
 
-    Drop_Level_Unbalanced(L);
     return nullptr;
 }
 
@@ -473,14 +468,18 @@ Option(Error*) Trap_Push_Keys_And_Params(
     Flags flags,
     Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
 ){
-    StackIndex base = TOP_INDEX;
+    Level* L = Make_Level_At(
+        &Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+    );
     Option(Error*) e = Trap_Push_Keys_And_Params_Core(
-        adjunct, spec, flags, returner, base
+        adjunct, L, flags, returner
     );
     if (e) {
-        Drop_Data_Stack_To(base);
+        Drop_Data_Stack_To(L->baseline.stack_base);
+        Drop_Level(L);
         return e;
     }
+    Drop_Level_Unbalanced(L);  // pushed values on stack meant to be there
     return nullptr;
 }
 
