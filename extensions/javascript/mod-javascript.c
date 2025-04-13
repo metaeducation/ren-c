@@ -199,8 +199,9 @@ INLINE heapaddr_t Heapaddr_From_Pointer(const void *p) {
 INLINE void* Pointer_From_Heapaddr(heapaddr_t addr)
   { return p_cast(void*, cast(uintptr_t, addr)); }
 
-static void cleanup_js_object(const Value* v) {
-    heapaddr_t id = Heapaddr_From_Pointer(Cell_Handle_Void_Pointer(v));
+static void Js_Object_Handle_Cleaner(void *p, size_t length) {
+    heapaddr_t id = Heapaddr_From_Pointer(p);
+    UNUSED(length);
 
     // If a lot of JS items are GC'd, would it be better to queue this in
     // a batch, as `reb.UnregisterId_internal([304, 1020, ...])`?  (That was
@@ -1066,7 +1067,7 @@ DECLARE_NATIVE(JS_NATIVE)
         Details_At(details, IDX_JS_NATIVE_OBJECT),
         details,
         1,  // 0 size interpreted to mean it's a C function
-        &cleanup_js_object
+        &Js_Object_Handle_Cleaner
     );
 
     assert(Misc_Phase_Adjunct(details) == nullptr);

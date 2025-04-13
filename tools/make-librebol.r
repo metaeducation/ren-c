@@ -803,7 +803,7 @@ e-lib/emit [ver --{
      * this might create some unpredictable nesting.
      */
 
-    typedef void (RebolHandleCleaner)(const RebolValue*);
+    typedef void (RebolHandleCleaner)(void* p, size_t length);
 
 
     /*

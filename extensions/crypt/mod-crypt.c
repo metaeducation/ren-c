@@ -1337,10 +1337,12 @@ DECLARE_NATIVE(DH_COMPUTE_SECRET)
 }}}
 
 
-static void cleanup_aes_ctx(const Value* v)
+static void Aes_Ctx_Handle_Cleaner(void* p, size_t length)
 {
     struct mbedtls_cipher_context_t *ctx
-        = rebUnboxHandle(struct mbedtls_cipher_context_t*, v);
+        = cast(struct mbedtls_cipher_context_t*, p);
+    UNUSED(length);
+
     mbedtls_cipher_free(ctx);
     rebFree(ctx);
 }
@@ -1437,7 +1439,7 @@ DECLARE_NATIVE(AES_KEY)
     return rebHandle(
         ctx,
         sizeof(struct mbedtls_cipher_context_t),
-        &cleanup_aes_ctx
+        &Aes_Ctx_Handle_Cleaner
     );
 }}}
 
@@ -1458,7 +1460,7 @@ DECLARE_NATIVE(AES_STREAM)
 {
     INCLUDE_PARAMS_OF_AES_STREAM;
 
-    if (rebExtractHandleCleaner("ctx") != cleanup_aes_ctx)
+    if (rebExtractHandleCleaner("ctx") != Aes_Ctx_Handle_Cleaner)
         return "fail [-{Not a AES context HANDLE!:}- @ctx]";
 
     size_t ilen;

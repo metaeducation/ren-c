@@ -143,8 +143,10 @@ static Level* Level_Of_Plug(const Value* plug) {
 // collection where the legal operations are more limited.  It's very much
 // a work in progress.
 //
-static void Clean_Plug_Handle(const RebolValue* plug) {
-    Level* L = Level_Of_Plug(plug);
+static void Plug_Handle_Cleaner(void* p, size_t length) {
+    Level* L = cast(Level*, p);
+    UNUSED(length);
+
     while (L != nullptr) {
         Level* prior = L->prior;
         if (Is_Action_Level(L))
@@ -287,7 +289,7 @@ void Unplug_Stack(
         flags |= DATASTACK_FLAG_HAS_PUSHED_CELLS;
 
     if (not flags) {
-        Init_Handle_Cdata_Managed(plug, L, 1, &Clean_Plug_Handle);
+        Init_Handle_Cdata_Managed(plug, L, 1, &Plug_Handle_Cleaner);
     }
     else {
         Array* a = Pop_Stack_Values_Core(
@@ -295,7 +297,7 @@ void Unplug_Stack(
             base->baseline.stack_base
         );
         Tweak_Plug_Suspended_Level(a, L);
-        Init_Handle_Node_Managed(plug, a, &Clean_Plug_Handle);
+        Init_Handle_Node_Managed(plug, a, &Plug_Handle_Cleaner);
     }
     assert(L == Level_Of_Plug(plug));
 

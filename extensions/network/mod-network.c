@@ -155,8 +155,10 @@ static void Close_Sock_If_Needed(SOCKREQ* sock) {
     }
 }
 
-static void cleanup_sockreq(const Value* v) {
-    SOCKREQ* sock = Cell_Handle_Pointer(SOCKREQ, v);
+static void Sockreq_Handle_Cleaner(void* p, size_t length) {
+    SOCKREQ* sock = cast(SOCKREQ*, p);
+    UNUSED(length);
+
     Close_Sock_If_Needed(sock);
     Free_Memory(SOCKREQ, sock);
 }
@@ -363,7 +365,9 @@ void on_new_connection(uv_stream_t *server, int status) {
     SOCKREQ* sock = Try_Alloc_Memory(SOCKREQ);
     memset(sock, 0, sizeof(SOCKREQ));
 
-    Init_Handle_Cdata_Managed(c_state, sock, sizeof(SOCKREQ), &cleanup_sockreq);
+    Init_Handle_Cdata_Managed(
+        c_state, sock, sizeof(SOCKREQ), &Sockreq_Handle_Cleaner
+    );
 
     SOCKREQ *sock_new = Sock_Of_Port(Varlist_Archetype(client));
 
@@ -689,7 +693,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             state,
             sock,
             sizeof(SOCKREQ),
-            &cleanup_sockreq
+            &Sockreq_Handle_Cleaner
         );
         sock->transport = transport;
         sock->stream = nullptr;

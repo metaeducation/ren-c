@@ -300,8 +300,10 @@ static void Force_Connection_Cleanup(Connection* conn) {
     conn->hdbc = SQL_NULL_HANDLE;
 }
 
-static void Free_Connection(const Value* v) {
-    Connection* conn = rebUnboxHandle(Connection*, v);
+static void Connection_Handle_Cleaner(void* p, size_t length) {
+    Connection* conn = cast(Connection*, p);
+    UNUSED(length);
+
     Force_Connection_Cleanup(conn);
 
     if (conn == all_connections)
@@ -495,7 +497,9 @@ DECLARE_NATIVE(OPEN_CONNECTION)
     conn->next = all_connections;
     all_connections = conn;
 
-    Value* hdbc_value = rebHandle(conn, sizeof(Connection*), &Free_Connection);
+    Value* hdbc_value = rebHandle(
+        conn, sizeof(Connection*), &Connection_Handle_Cleaner
+    );
 
     return rebValue(
         "make database-prototype [",
@@ -933,8 +937,10 @@ static void Force_ColumnList_Cleanup(ColumnList* list) {
     list->columns = nullptr;
 }
 
-static void Free_ColumnList(const Value* v) {
-    ColumnList* list = rebUnboxHandle(ColumnList*, v);
+static void Column_List_Handle_Cleaner(void* p, size_t length) {
+    ColumnList* list = cast(ColumnList*, p);
+    UNUSED(length);
+
     Force_ColumnList_Cleanup(list);
 
     if (list == all_columnlists)
@@ -1419,7 +1425,7 @@ DECLARE_NATIVE(INSERT_ODBC)
     list->next = all_columnlists;
     all_columnlists = list;
 
-    Value* columns_value = rebHandle(list, 1, &Free_ColumnList);
+    Value* columns_value = rebHandle(list, 1, &Column_List_Handle_Cleaner);
 
     rebElide("statement.columns:", rebR(columns_value));
 

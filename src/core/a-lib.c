@@ -1853,7 +1853,7 @@ void* API_rebUnboxHandleCData(
     size_t* size_out,
     const void* p, void* vaptr
 ){
-    ENTER_API_RECYCLING_OK;
+    ENTER_API;
 
     DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
@@ -1876,7 +1876,7 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
-    ENTER_API_RECYCLING_OK;
+    ENTER_API;
 
     DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
@@ -2271,7 +2271,7 @@ const unsigned char* API_rebLockBytes(
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
     const void* p, void* vaptr
 ){
-    ENTER_API_RECYCLING_OK;
+    ENTER_API;
 
     DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
@@ -2305,7 +2305,7 @@ unsigned char* API_rebLockMutableBytes(
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
     const void* p, void* vaptr
 ){
-    ENTER_API_RECYCLING_OK;
+    ENTER_API;
 
     DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
@@ -2335,7 +2335,7 @@ unsigned char* API_rebLockMutableBytes(
 //
 void API_rebUnlockBytes(const unsigned char* bytes)
 {
-    ENTER_API_RECYCLING_OK;
+    ENTER_API;
 
     // !!! unlock code here [1]
 
@@ -2354,7 +2354,7 @@ void API_rebUnlockBytes(const unsigned char* bytes)
 //
 void API_rebUnlockBytesMaybe(const unsigned char* bytes)
 {
-    ENTER_API_RECYCLING_OK;
+    ENTER_API;
 
     if (bytes)
         rebUnlockBytes(bytes);
@@ -2376,7 +2376,7 @@ void API_rebUnlockBytesMaybe(const unsigned char* bytes)
 //
 void API_rebRequestHalt(void)
 {
-    ENTER_API_RECYCLING_OK;
+    ENTER_API;  // !!! Was ENTER_API_RECYCLING_OK.  Why?
 
     Set_Trampoline_Flag(HALT);
 }

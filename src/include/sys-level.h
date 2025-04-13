@@ -408,7 +408,7 @@ INLINE void Set_Action_Level_Label(Level* L, Option(const Symbol*) label) {
 //    the trampoline when it drops the levels automatically.
 //
 INLINE void Free_Level_Internal(Level* L) {
-    possibly(L != TOP_LEVEL);  // e.g. called by Clean_Plug_Handle()
+    possibly(L != TOP_LEVEL);  // e.g. called by Plug_Handle_Cleaner()
 
   #if RUNTIME_CHECKS
     Node* n = L->alloc_value_list;

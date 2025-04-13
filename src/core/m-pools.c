@@ -1086,9 +1086,11 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 //    FLAVOR_XXX constants, so they *have* to give up the misc slot if they
 //    want their Stubs to have GC cleanup behavior.)
 //
-// 2. HANDLE! has a cleaner that takes a Cell, not a Stub.  Avoid the need
-//    for two cleaners (e.g. a stub_cleaner() that calls handle_cleaner())
-//    since all handles would use the same stub_cleaner in that case.
+// 2. We don't want to give a RebolValue* here to the handle cleaner, because
+//    then the only way API clients could clean up would be to use API calls
+//    to extract the data pointer and length.  Yet this code is running
+//    during the garbage collector, and arbitrary API calls are not allowed.
+//    So pass the extracted properties instead.
 //
 // 3. Unlike the policy for CELL_FLAG_DONT_MARK_NODE1-style flags, the cleaner
 //    can't be nullptr if MISC_IS_GC_CLEANER is set.  Generally speaking
@@ -1126,8 +1128,12 @@ Stub* Diminish_Stub(Stub* s)
         RebolValue* v = cast(RebolValue*, Stub_Cell(s));
         assert(Type_Of(v) == TYPE_HANDLE);
         Option(HandleCleaner*) cleaner = Handle_Cleaner(s);
-        if (cleaner)  // takes Cell [2]
-            Apply_Cfunc(unwrap cleaner, v);
+        if (cleaner)  // can't call librebol API during GC [2]
+            Apply_Cfunc(
+                unwrap cleaner,
+                Cell_Handle_Void_Pointer(v),
+                Cell_Handle_Len(v)
+            );
         break; }
 
       default:  // flavors that clean, but CAN spare misc [1]

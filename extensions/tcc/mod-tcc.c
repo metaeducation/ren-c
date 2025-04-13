@@ -220,9 +220,11 @@ static void Add_API_Symbol_Helper(
 // blob via a HANDLE!.  When the last reference to the last native goes away,
 // the GC will run this handle cleanup function.
 //
-static void cleanup(const Value* val)
+static void Tcc_State_Handle_Cleaner(void* p, size_t length)
 {
-    TCCState *state = Cell_Handle_Pointer(TCCState, val);
+    TCCState *state = cast(TCCState*, p);
+    UNUSED(length);
+
     assert(state != nullptr);
     tcc_delete(state);
 }
@@ -389,7 +391,7 @@ DECLARE_NATIVE(COMPILE_P)
         handle,
         state, // "data" pointer
         1,  // unused length (can't be 0, reserved for CFunction)
-        cleanup // called upon GC
+        &Tcc_State_Handle_Cleaner  // called upon GC
     );
     Push_Lifeguard(handle);
 
