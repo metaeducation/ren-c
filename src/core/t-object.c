@@ -1353,7 +1353,7 @@ DECLARE_NATIVE(PARAMETERS_OF)
 //  "Get the return parameter specification (if any) of a frame"
 //
 //      return: "Raised error if no return available (use TRY to get NULL)"
-//          [parameter!]
+//          [~null~ parameter!]
 //      frame [<unrun> frame!]
 //  ]
 //
