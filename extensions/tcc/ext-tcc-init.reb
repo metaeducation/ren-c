@@ -60,12 +60,6 @@ compile: func [
     :inspect "Return the C source code as text, but don't compile it"
     :nostdlib "Do not include <stdlib.h> automatically with librebol"
 ][
-    ; !!! Due to module dependencies there's some problem with GET-ENV not
-    ; being available in some builds.  It gets added to lib but is somehow not
-    ; available here.  This is a bug to look into.
-    ;
-    get-env: lib.get-env/
-
     if 0 = length of compilables [
         fail ["COMPILABLES must have at least one element"]
     ]
@@ -99,7 +93,8 @@ compile: func [
 
     let b: settings
     while [not tail? b] [
-        var: get ((in config match word! key: b.1) else [
+        let key: b.1
+        let var: get inside config (match word! key else [
             fail ["COMPILE:SETTINGS parameter" key "is not supported"]
         ])
         b: next b
@@ -293,8 +288,8 @@ compile: func [
         ; help get the bootstrap demo going.
         ;
         4 = fourth system.version [  ; Linux
-            lddir: "lib"
-            triplet: if 40 = fifth system.version [  ; 64-bit
+            let lddir: "lib"
+            let triplet: if 40 = fifth system.version [  ; 64-bit
                 "x86_64-linux-gnu"
             ]
             insert config.library-path spread compose [
@@ -319,15 +314,15 @@ compile: func [
     ; would be to encap the executable you already have as a copy with the
     ; natives loaded into it.
 
-    let use-librebol: 'yes
+    let use-librebol: null
 
     compilables: map-each 'item compilables [
-        if match [word! path!] :item [item: get item]
+        if match [word! tuple!] :item [item: get inside compilables item]
 
-        switch:type :item [
-            action! [
-                use-librebol: 'yes
-                unrun :item
+        switch:type item [
+            frame! [
+                use-librebol: okay
+                item
             ]
             text! [
                 item
@@ -354,7 +349,11 @@ compile: func [
              */
             #define LIBREBOL_NO_STDINT 1
             #include <stddef.h>
+
+            #define LIBREBOL_BINDING_NAME()  librebol_binding
             #include "rebol.h"
+
+            RebolContext* librebol_binding = 0;  /* review... */
         }--
 
         ; The nostdlib feature is specific to a bare-bones demo environment
@@ -447,7 +446,7 @@ compile: func [
         :config config
         :files files
         :inspect inspect
-        :librebol yes? use-librebol
+        :librebol use-librebol
     ]
 
     if inspect [
@@ -470,7 +469,8 @@ c99: func [
     :runtime "Alternate way of specifying CONFIG_TCCDIR environment variable"
         [text! file!]
 ][
-    command: spaced any [command, system.options.args]
+    command: default [system.options.args]  ; not set if end
+    command: spaced command
 
     let compilables: copy []
 
@@ -557,15 +557,13 @@ c99: func [
             option-with-arg-rule
             |
             ahead "-W"  ; !!! Not technically POSIX, but we use it
-            to [space | <end>]  ; ...just skip all warning settings
+            option-with-arg-rule
             |
-            "-w" to [space | <end>]  ; !!! Disables warnings (also not POSIX)
-            (keep [options "-w"])
+            "-w" to [space | <end>]  ; !!! Disables warnings, also not POSIX
+            (keep [options "-w"])  ; (...but tcc supports it, no arg)
             |
-            "-f" ["sanitize" | "visibility"]  ; !!! Also not POSIX, tolerate
-            to [space | <end>]
-            |
-            "-rdynamic"  ; !!! Again, not POSIX
+            "-rdynamic"  ; !!! Again, not POSIX, but TCC supports
+            (keep [options "-rdynamic"])
             |
             filename: across [
                 some [
@@ -587,6 +585,8 @@ c99: func [
             ]
         ]
     ]
+
+    print ["Outtype is" mold reify outtype]
 
     if not outtype [  ; no -c or -E, so assume EXE
         append settings spread compose [output-type EXE]
@@ -624,7 +624,7 @@ c99: func [
     ;
     compile // [
         compilables
-        :files true  ; compilables represents a list of files
+        :files okay  ; compilables represents a list of files
         :inspect inspect  ; return C source as text but don't compile it
         :settings settings
     ]

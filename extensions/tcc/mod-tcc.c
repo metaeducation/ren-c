@@ -248,7 +248,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
         Level_Spare(L), details, Level_Label(L), Level_Coupling(L)
     );
 
-    rebElide("compile [", rebQ(frame), "]");
+    rebElide("compile [", frame, "]");
     //
     // ^-- !!! Today's COMPILE doesn't return a result on success (just fails
     // on errors), but if it changes to return one consider what to do.
@@ -256,6 +256,32 @@ Bounce Pending_Native_Dispatcher(Level* L) {
     assert(Details_Dispatcher(details) == &Api_Function_Dispatcher);
 
     return BOUNCE_REDO_UNCHECKED;
+}
+
+
+//
+//  Pending_Native_Details_Querier: C
+//
+static bool Pending_Native_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    switch (property) {
+      case SYM_RETURN_OF: {
+        Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
+        return true; }
+
+      case SYM_BODY_OF: {
+        assert(!"Body of not supported by Pending Native yet");
+        Init_Blank(out);
+        return true; }
+
+      default:
+        break;
+    }
+
+    return false;
 }
 
 
@@ -294,7 +320,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
         return FAIL(unwrap e);
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_OWNS_PARAMLIST,
+        NODE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
         MAX_IDX_TCC_NATIVE  // details len [source module linkname tcc_state]
@@ -510,7 +536,7 @@ DECLARE_NATIVE(COMPILE_P)
                 // !!! Review: how to choose LIBREBOL_BINDING_NAME when doing
                 // TCC natives?  It includes "rebol.h".
 
-                Append_Ascii(mo->string, "const Value* ");
+                Append_Ascii(mo->string, "RebolBounce ");
                 Append_Any_Utf8(mo->string, linkname);
                 Append_Ascii(
                     mo->string,
@@ -665,7 +691,8 @@ DECLARE_NATIVE(COMPILE_P)
         memcpy(&cfunc, &sym, sizeof(cfunc));
 
         Details* details_api = Make_Dispatch_Details(
-            DETAILS_FLAG_OWNS_PARAMLIST,
+            (not NODE_FLAG_MANAGED)  // we swap and free, need unmanaged
+                | DETAILS_FLAG_OWNS_PARAMLIST,
             Phase_Archetype(details_tcc),  // reuse paramlist
             &Api_Function_Dispatcher,
             MAX_IDX_API_ACTION
@@ -691,4 +718,40 @@ DECLARE_NATIVE(COMPILE_P)
     Drop_Lifeguard(handle);
 
     return nullptr;
+}
+
+
+//
+//  startup*: native [
+//
+//  "Initialize TCC extension"
+//
+//      return: [~]
+//  ]
+//
+DECLARE_NATIVE(STARTUP_P)
+{
+    INCLUDE_PARAMS_OF_STARTUP_P;
+
+    Register_Dispatcher(
+        &Pending_Native_Dispatcher,
+        &Pending_Native_Details_Querier
+    );
+    return rebNothing();
+}
+
+
+//
+//  shutdown*: native [
+//
+//  "Shut down TCC extension"
+//
+//      return: [~]
+//  ]
+//
+DECLARE_NATIVE(SHUTDOWN_P)
+{
+    INCLUDE_PARAMS_OF_SHUTDOWN_P;
+
+    return rebNothing();
 }

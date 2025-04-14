@@ -422,7 +422,7 @@ compiler-class: make object! [
         exec -{Executable path (can be text!, e.g. "r3 --do c99 --")}-
             [~null~ file! text!]
     ][
-        fail "TBD"
+        fail ~<archetype check invoked>~
     ]
 
     compile: method [
@@ -433,6 +433,7 @@ compiler-class: make object! [
         definitions [text! tag! block!]
         cflags [text! tag! block!]
     ][
+        fail ~<archetype compile invoked>~
     ]
 
     link: method [
@@ -442,7 +443,7 @@ compiler-class: make object! [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
     ][
-        ...  ; overridden
+        fail ~<archetype link invoked>~
     ]
 ]
 
@@ -455,7 +456,7 @@ cc: make compiler-class [
     check: method [
         "Assigns .exec-file, extracts the compiler version"
         return: [~]
-        exec [~null~ file!]
+        exec [~null~ file! text!]
     ][
         .exec-file: any [exec, .exec-file]
 
@@ -765,7 +766,7 @@ cl: make compiler-class [
     check: method [
         "Assigns .exec-file, extracts the compiler version"
         return: [~]
-        exec [~null~ file!]
+        exec [~null~ file! text!]
     ][
         .exec-file: any [exec, .exec-file]
 
