@@ -229,7 +229,7 @@ DECLARE_NATIVE(ENCLOSE)
     Element* outer = Element_ARG(OUTER);
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_MASK_NONE,
+        NODE_FLAG_MANAGED,
         inner,  // same interface as inner [1]
         &Encloser_Dispatcher,
         MAX_IDX_ENCLOSER  // details array capacity => [inner, outer]

@@ -394,7 +394,7 @@ Details* Alloc_Action_From_Exemplar(
     Init_Frame(elem, paramlist, ANONYMOUS, NONMETHOD);
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_MASK_NONE,
+        NODE_FLAG_MANAGED,
         elem,
         dispatcher,
         details_capacity

@@ -121,9 +121,11 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
     Assert_Flex_Term_If_Needed(paramlist);
 
     Flags details_flags = (
-        DETAILS_FLAG_RAW_NATIVE
+        NODE_FLAG_MANAGED
+            | DETAILS_FLAG_RAW_NATIVE
             | DETAILS_FLAG_API_CONTINUATIONS_OK
-            | DETAILS_FLAG_OWNS_PARAMLIST);
+            | DETAILS_FLAG_OWNS_PARAMLIST
+    );
 
     if (native_type == NATIVE_INTRINSIC)
         details_flags |= DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC;
@@ -146,7 +148,7 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
         DECLARE_ELEMENT (native);
         Init_Frame(native, details, ANONYMOUS, NONMETHOD);
         details = Make_Dispatch_Details(
-            DETAILS_MASK_NONE,  // *not* a native, calls one...
+            NODE_FLAG_MANAGED,  // *not* a native, calls one...
             native,
             &Combinator_Dispatcher,
             MAX_IDX_COMBINATOR  // details array capacity

@@ -3211,8 +3211,9 @@ RebolValue* API_rebFunctionFlipped(
         fail (unwrap e);
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_OWNS_PARAMLIST |
-            DETAILS_FLAG_API_CONTINUATIONS_OK,
+        NODE_FLAG_MANAGED
+            | DETAILS_FLAG_OWNS_PARAMLIST
+            | DETAILS_FLAG_API_CONTINUATIONS_OK,
         Phase_Archetype(paramlist),
         &Api_Function_Dispatcher,
         MAX_IDX_API_ACTION

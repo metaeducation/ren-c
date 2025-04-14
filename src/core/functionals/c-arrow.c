@@ -267,7 +267,7 @@ DECLARE_NATIVE(ARROW)
         return FAIL(unwrap e);
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_OWNS_PARAMLIST,
+        NODE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Lambda_Dispatcher,
         MAX_IDX_ARROW

@@ -316,7 +316,7 @@ DECLARE_NATIVE(HIJACK)
     Option(VarList*) adjunct = Misc_Phase_Adjunct(victim);
 
     Details* proxy = Make_Dispatch_Details(
-        DETAILS_MASK_NONE,
+        NODE_FLAG_MANAGED,
         ARG(VICTIM),  // not changing the interface [1]
         hijack_void
             ? &Unimplemented_Dispatcher

@@ -924,7 +924,8 @@ DECLARE_NATIVE(JS_NATIVE)
         return FAIL(unwrap e);
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_OWNS_PARAMLIST
+        NODE_FLAG_MANAGED
+            | DETAILS_FLAG_OWNS_PARAMLIST
             | DETAILS_FLAG_API_CONTINUATIONS_OK,
         Phase_Archetype(paramlist),
         &JavaScript_Dispatcher,
