@@ -89,9 +89,10 @@ top: 'library
 
 os-id: default [0.16.1]  ; 0.16.2 was "pthread" version, no longer supported
 
-compiler: 'clang
-compiler-path: %emcc  ; emcc is actually clang
-
+; emcc is actually clang, but we have to have special knowledge of it inside
+; rebmake to know how to do DLLs as SIDE_MODULE, etc.
+;
+compiler: 'emcc
 
 ; Using the -Os or -Oz size optimizations will drastically improve the size
 ; of the download...cutting it in as much as half compared to -O2.  But it

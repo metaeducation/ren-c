@@ -665,13 +665,13 @@ collect-lets: func3 [
     lets: copy []
     for-next 'item list [
         case [
-            item.1 = 'let [
+            :item.1 = 'let [
                 item: next item
                 if match [word! block! set-word3!] item.1 [
                     append3 lets item.1
                 ]
             ]
-            match [block! group!] item.1 [
+            match [block! group!] :item.1 [
                 append3 lets collect-lets item.1
             ]
         ]

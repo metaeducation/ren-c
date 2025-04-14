@@ -418,8 +418,9 @@ compiler-class: make object! [
 
     check: method [
         "Check if the compiler is available"
-        return: [logic?]
-        path [<maybe> any-string?]
+        return: [~]
+        exec -{Executable path (can be text!, e.g. "r3 --do c99 --")}-
+            [~null~ file! text!]
     ][
         fail "TBD"
     ]
@@ -603,7 +604,7 @@ cc: make compiler-class [
         ]
     ]
 
-    link: method [
+    link: link-backup: method [  ; !!! hacky inheritance mechanism
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -733,6 +734,27 @@ clang++: make gcc [
     exec-file: %clang++
 ]
 
+emcc: make gcc [
+    name: 'emcc
+    id: ["gcc" "clang"]
+    exec-file: %emcc
+
+    link: method [
+        return: [text!]
+        output [file!]
+        depends [~null~ block!]
+        searches [~null~ block!]
+        ldflags [~null~ block! any-string?]
+        :dynamic
+        :debug [onoff?]
+    ][
+        ; custom link behavior could go here
+
+        return link-backup // [
+            output depends searches ldflags :dynamic dynamic :debug debug
+        ]
+    ]
+]
 
 ; Microsoft CL compiler
 cl: make compiler-class [
@@ -988,7 +1010,7 @@ strip: make strip-class [
     id: ["gcc" "gnu"]
     check: method [
         return: [~]
-        :exec [file!]
+        exec [~null~ file! text!]
     ][
         .exec-file: exec: default ["strip"]
     ]
