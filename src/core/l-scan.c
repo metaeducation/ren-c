@@ -754,7 +754,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
   finished:
 
     *out = cp;
-    return nullptr;  // not an error (success)
+    return SUCCESS;
 }
 
 
@@ -1039,7 +1039,7 @@ static LexFlags Prescan_Fingerprint(ScanState* S)
 //
 // as just `return LOCATED(TOKEN_XXX);`
 //
-#define LOCATED(tok) (*token_out = tok, nullptr)
+#define LOCATED(tok) (*token_out = tok, SUCCESS)
 
 
 //
@@ -2019,7 +2019,7 @@ static Option(Error*) Trap_Flush_Pending_Sigils(ScanState* S) {
         Quotify_Depth(TOP_ELEMENT, S->num_quotes_pending);
         S->num_quotes_pending = 0;
     }
-    return nullptr;
+    return SUCCESS;
 }
 
 static Option(Error*) Trap_Apply_Pending_Decorations(
@@ -2041,7 +2041,7 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
         Quotify_Depth(top, S->num_quotes_pending);
         S->num_quotes_pending = 0;
     }
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -3110,7 +3110,7 @@ Option(Error*) Trap_Transcode_One(
     }
     Copy_Cell(out, cast(Element*, trapped));
     rebRelease(trapped);
-    return nullptr;
+    return SUCCESS;
 }
 
 

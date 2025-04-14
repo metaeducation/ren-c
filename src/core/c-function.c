@@ -452,7 +452,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
     if (*adjunct)
         Drop_Lifeguard(*adjunct);
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -480,7 +480,7 @@ Option(Error*) Trap_Push_Keys_And_Params(
         return e;
     }
     Drop_Level_Unbalanced(L);  // pushed values on stack meant to be there
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -607,7 +607,7 @@ Option(Error*) Trap_Pop_Paramlist(
 
     Assert_Flex_Term_If_Needed(paramlist);
     *out = cast(ParamList*, paramlist);
-    return nullptr;  // no error
+    return SUCCESS;
 }
 
 

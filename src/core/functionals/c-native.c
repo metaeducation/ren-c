@@ -176,7 +176,7 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
     }
 
     *out = details;
-    return nullptr;  // no error
+    return SUCCESS;
 }
 
 

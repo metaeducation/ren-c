@@ -1240,7 +1240,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     DECLARE_BINDER (binder);
     Construct_Binder(binder);  // only used if `rebinding`
 
-    Option(Error*) error = nullptr;
+    Option(Error*) error = SUCCESS;
 
     SymId dummy_sym = SYM_DUMMY1;
 

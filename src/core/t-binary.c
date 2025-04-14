@@ -602,7 +602,7 @@ Option(Error*) Trap_Alias_Blob_As(
 
     if (as == TYPE_BLOB) {  // (as blob! data) when data may be text or blob
         Copy_Cell(out, blob);
-        return nullptr;
+        return SUCCESS;
     }
 
     if (Any_Utf8_Type(as)) {  // convert to a string as first step [1]
@@ -682,7 +682,7 @@ Option(Error*) Trap_Alias_Blob_As(
 
         if (Any_String_Type(as)) {
             Init_Any_String_At(out, as, str, index);
-            return nullptr;
+            return SUCCESS;
         }
 
         DECLARE_ELEMENT (any_string);
@@ -696,7 +696,7 @@ Option(Error*) Trap_Alias_Blob_As(
         Cell_Bytes_At(&size, blob);
         if (size == 0) {
             Init_Blank(out);
-            return nullptr;
+            return SUCCESS;
         }
         return Error_User("Can only AS/TO convert empty series to BLANK!");
     }

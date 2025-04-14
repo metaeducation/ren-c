@@ -762,7 +762,7 @@ Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
     *blob1 = bset;
     *blob2 = arg;
 
-    return nullptr;
+    return SUCCESS;
 }
 
 

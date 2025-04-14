@@ -112,7 +112,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
     }
 
     QUOTE_BYTE(atom) = ANTIFORM_0_COERCE_ONLY;  // nowhere else should assign!
-    return nullptr;  // no error
+    return SUCCESS;
 }
 
 // 1. There's an exception in the case of KEYWORD! which is the antiform of
@@ -128,7 +128,7 @@ INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
     }
 
     QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // few places should assign
-    return nullptr;
+    return SUCCESS;
 }
 
 

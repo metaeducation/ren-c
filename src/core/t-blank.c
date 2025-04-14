@@ -139,12 +139,12 @@ Option(Error*) Trap_Alias_Blank_As(
 ){
     if (Any_List_Type(as)) {
         Init_Any_List(out, as, Cell_Array(g_empty_block));
-        return nullptr;
+        return SUCCESS;
     }
 
     if (Any_String_Type(as)) {
         Init_Any_String(out, as, Cell_String(g_empty_text));
-        return nullptr;
+        return SUCCESS;
     }
 
     if (as == TYPE_ISSUE) {
@@ -153,12 +153,12 @@ Option(Error*) Trap_Alias_Blank_As(
         );
         assert(check);
         UNUSED(check);
-        return nullptr;
+        return SUCCESS;
     }
 
     if (as == TYPE_BLOB) {
         Init_Blob(out, Cell_Binary(g_empty_blob));
-        return nullptr;
+        return SUCCESS;
     }
 
     return Error_Invalid_Type(as);

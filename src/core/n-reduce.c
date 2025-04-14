@@ -532,7 +532,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 
         if (not Is_Nulled(out))  // don't add quoting levels (?)
             Quotify_Depth(Known_Element(out), num_quotes);
-        return nullptr;
+        return SUCCESS;
     }
 
     Source* a = Pop_Source_From_Stack(L->baseline.stack_base);
@@ -543,7 +543,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 
     Tweak_Cell_Binding(out, Cell_Binding(composee));  // preserve binding
     QUOTE_BYTE(out) = QUOTE_BYTE(composee);  // apply quote byte [4]
-    return nullptr;
+    return SUCCESS;
 }
 
 

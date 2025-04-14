@@ -221,7 +221,7 @@ INLINE Option(Error*) Trap_Init_Char_Untracked(Cell* out, uint32_t c) {
     // UTF-8 codepoint stream, it shouldn't be used.
 
     Init_Char_Unchecked_Untracked(out, c);
-    return nullptr;
+    return SUCCESS;
 }
 
 #define Trap_Init_Char(out,c) \

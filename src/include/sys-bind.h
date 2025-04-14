@@ -427,12 +427,12 @@ INLINE Option(Error*) Trap_Lookup_Word(
 
     if (Is_Stub_Let(s) or Is_Stub_Patch(s)) {
         *out = Stub_Cell(s);
-        return nullptr;
+        return SUCCESS;
     }
     assert(Is_Node_Readable(s));
     VarList* c = cast(VarList*, s);
     *out = Varlist_Slot(c, index);
-    return nullptr;
+    return SUCCESS;
 }
 
 INLINE Option(const Value*) Lookup_Word(

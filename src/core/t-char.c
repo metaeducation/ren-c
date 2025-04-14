@@ -175,7 +175,7 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
 
     *out = c;
     *bp += trail;
-    return nullptr;  // no error to return, success!
+    return SUCCESS;
 }
 
 
@@ -809,7 +809,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
             possibly(Is_Stub_Symbol(Cell_String(v)));
             Copy_Cell(out, v);
             HEART_BYTE(out) = as;
-            return nullptr;
+            return SUCCESS;
         }
 
     make_small_utf8_at_index_0: { //////////////////////////////////////
@@ -828,7 +828,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Freeze_Flex(str);
         possibly(as == TYPE_BLOB);  // index 0 so byte transform not needed
         Init_Series(out, as, str);
-        return nullptr;
+        return SUCCESS;
     }}
 
     if (Any_Word_Type(as)) {  // aliasing as an ANY-WORD? freezes data
@@ -839,7 +839,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
 
             if (Is_String_Symbol(str)) {  // already frozen and checked!
                 Init_Any_Word(out, as, cast(const Symbol*, str));
-                return nullptr;
+                return SUCCESS;
             }
 
             if (not Is_Flex_Frozen(str)) {  // always force frozen
@@ -855,7 +855,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
         const Symbol* sym = Intern_UTF8_Managed(at, size);
         Init_Any_Word(out, as, sym);
-        return nullptr;
+        return SUCCESS;
     }
 
     if (as == TYPE_BLOB) {  // resulting binary is UTF-8 constrained [2]
@@ -866,7 +866,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
                 VAL_BYTEOFFSET(v)  // index has to be in terms of bytes
             );
             HEART_BYTE(out) = TYPE_BLOB;
-            return nullptr;
+            return SUCCESS;
         }
 
         goto make_small_utf8_at_index_0;
@@ -878,7 +878,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
                 "AS INTEGER! only supports what-were-CHAR! issues ATM"
             );
         Init_Integer(out, Cell_Codepoint(v));
-        return nullptr;
+        return SUCCESS;
     }
 
     if (as == TYPE_ISSUE or as == TYPE_MONEY) {  // fits cell or freeze string
@@ -897,11 +897,11 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Size size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
 
         if (Try_Init_Small_Utf8(out, as, Cell_String_At(v), len, size))
-            return nullptr;
+            return SUCCESS;
 
         Copy_Cell(out, v);  // index heeded internally, not exposed
         HEART_BYTE(out) = as;
-        return nullptr;
+        return SUCCESS;
     }
 
     if (as == TYPE_EMAIL or as == TYPE_URL or as == TYPE_SIGIL) {
@@ -920,7 +920,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Value* result = rebValue(CANON(TO), rebQ(datatype_as), rebQ(v));
         Copy_Cell(out, Known_Element(result));
         rebRelease(result);
-        return nullptr;
+        return SUCCESS;
     }
 
     if (as == TYPE_BLANK) {
@@ -928,7 +928,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Cell_Utf8_Size_At(&size, v);
         if (size == 0) {
             Init_Blank(out);
-            return nullptr;
+            return SUCCESS;
         }
         return Error_User("Can only AS/TO convert empty series to BLANK!");
     }

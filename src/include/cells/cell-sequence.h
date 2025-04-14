@@ -131,19 +131,19 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 
     if (Any_Chain_Type(h)) {  // inserting a chain
         if (Any_Path_Type(sequence_heart))
-            return nullptr;  // chains can only be put in paths
+            return SUCCESS;  // chains can only be put in paths
         goto bad_sequence_item;
     }
 
     if (Any_Tuple_Type(h)) {  // inserting a tuple
         if (not Any_Tuple_Type(sequence_heart))
-            return nullptr;  // legal in non-tuple sequences (path, chain)
+            return SUCCESS;  // legal in non-tuple sequences (path, chain)
         goto bad_sequence_item;
     }
 
     if (h == TYPE_BLANK) {
         if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform blank (trash)
-            return nullptr;  // Legal, e.g. `~/home/Projects/ren-c/README.md`
+            return SUCCESS;  // Legal, e.g. `~/home/Projects/ren-c/README.md`
 
         assert(not is_head); // callers should check blank at head or tail
         return Error_Bad_Sequence_Blank_Raw();  // blank only legal at head
@@ -155,7 +155,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
     if (h == TYPE_WORD) {
         const Symbol* symbol = Cell_Word_Symbol(e);
         if (symbol == CANON(DOT_1) and not Any_Tuple_Type(sequence_heart))
-            return nullptr;
+            return SUCCESS;
         if (
             sequence_heart != TYPE_CHAIN  // !!! temporary for //: -- review
             and Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE)
@@ -163,12 +163,12 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
             goto bad_sequence_item;  //  [<| |>] => <|/|>  ; tag
         }
         if (Any_Path_Type(sequence_heart))
-            return nullptr;
+            return SUCCESS;
         if (Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_TUPLE))
             goto bad_sequence_item;  // e.g. contains a slash
     }
 
-    return nullptr;  // all other words should be okay
+    return SUCCESS;  // all other words should be okay
 
   bad_sequence_item:
 
@@ -217,7 +217,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
         e->header.bits &= (~ CELL_FLAG_LEADING_BLANK);
         e->header.bits |= flag;
         HEART_BYTE(e) = heart;  // e.g. TYPE_WORD => TYPE_PATH
-        return nullptr;
+        return SUCCESS;
     }
 
     if (Any_List(e)) {  // try mirror optimization
@@ -229,7 +229,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
             MIRROR_BYTE(a) = HEART_BYTE(e);  // remember what kind it is
             HEART_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;
-            return nullptr;
+            return SUCCESS;
         }
     }
 
@@ -262,7 +262,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     CELL_SERIESLIKE_NODE(e) = p;
     Corrupt_Unused_Field(e->payload.split.two.corrupt);
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -376,7 +376,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         }
         if (Is_Trash(first))
             Quasify_Isotopic_Fundamental(out);
-        return nullptr;
+        return SUCCESS;
     }
 
     if (Is_Blank(first)) {  // try optimize e.g. `/a` or `.a` or `:a` etc.
@@ -406,13 +406,13 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
 
             REBDEC d = cast(REBDEC, i1) + cast(REBDEC, i2) / magnitude;
             Init_Decimal(out, d);
-            return nullptr;
+            return SUCCESS;
         }
 
         if (Any_Chain_Type(heart)) {  // conflates with time, e.g. 10:20
             REBI64 nano = ((i1 * 60 * 60) + (i2 * 60)) * SEC_SEC;
             Init_Time_Nanoseconds(out, nano);
-            return nullptr;
+            return SUCCESS;
         }
 
         Byte buf[2];
@@ -420,7 +420,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             buf[0] = cast(Byte, i1);
             buf[1] = cast(Byte, i2);
             Init_Any_Sequence_Bytes(out, heart, buf, 2);
-            return nullptr;
+            return SUCCESS;
         }
 
         // fall through
@@ -448,7 +448,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     CELL_PAIRLIKE_PAIRING_NODE(out) = pairing;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -467,7 +467,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Pairlike(
     if (not Any_Sequence(out))
         return Error_Conflated_Sequence_Raw(Datatype_Of(out), out);
 
-    return nullptr;
+    return SUCCESS;
 }
 
 INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
@@ -498,7 +498,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
         TOP_INDEX - base
     )){
         Drop_Data_Stack_To(base);  // optimization worked! drop stack...
-        return nullptr;
+        return SUCCESS;
     }
 
     assert(TOP_INDEX - base > 2);  // guaranteed from above
@@ -519,7 +519,7 @@ INLINE Option(Error*) Trap_Pop_Sequence(
     if (not Any_Sequence(out))
         return Error_Conflated_Sequence_Raw(Datatype_Of(out), out);
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -548,7 +548,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
 ){
     if (TOP_INDEX == base) {  // nothing to pop
         Init_Nulled(out);
-        return nullptr;
+        return SUCCESS;
     }
 
     if (TOP_INDEX - 1 == base) {  // only one item, use as-is if possible
@@ -566,7 +566,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
 
         Sigil sigil = maybe Sigil_For_Heart(sequence_heart);
         if (not sigil)  // just wanted a plain pa/th or tu.p.le
-            return nullptr;  // let the item just decay to itself as-is
+            return SUCCESS;  // let the item just decay to itself as-is
 
         Option(Heart) heart = Heart_Of_Fundamental(out);
 
@@ -587,7 +587,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
         HEART_BYTE(out) = Sigilize_Any_Plain_Heart(
             sigil, unwrap heart
         );
-        return nullptr;  // pathness or tupleness vanished, just the value
+        return SUCCESS;  // pathness or tupleness vanished, just the value
     }
 
     return Trap_Pop_Sequence_Or_Conflation(out, sequence_heart, base);

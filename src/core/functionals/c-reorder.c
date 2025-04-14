@@ -154,7 +154,7 @@ DECLARE_NATIVE(REORDER)
     // without cleaning the binder up first, balancing it all out to zeros.
     // Errors must be stored and reported after the cleanup.
     //
-    Option(Error*) error = nullptr;
+    Option(Error*) error = SUCCESS;
 
     // We proceed through the list, and remove the binder indices as we go.
     // This lets us check for double uses or use of words that aren't in the

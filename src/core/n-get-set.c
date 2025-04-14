@@ -82,7 +82,7 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
 
     if (not (lookup->header.bits & CELL_FLAG_VAR_IS_ACCESSOR)) {
         Copy_Cell(out, lookup);  // non-accessor variable, just plain value
-        return nullptr;
+        return SUCCESS;
     }
 
     assert(HEART_BYTE(lookup) == TYPE_FRAME);  // alias accessors as WORD! ?
@@ -102,7 +102,7 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
     Drop_Lifeguard(accessor);
     if (threw)
         return Error_No_Catch_For_Throw(TOP_LEVEL);
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -162,7 +162,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
                     Tweak_Cell_Frame_Coupling(out, cast(VarList*, context));
             }
         }
-        return nullptr; }
+        return SUCCESS; }
 
       case FLAVOR_SOURCE:
         break;
@@ -229,7 +229,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
     else
         Drop_Data_Stack_To(base);
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -253,7 +253,7 @@ Option(Error*) Trap_Get_Any_Tuple(
     if (Any_Vacancy(out))
         return Error_Bad_Word_Get(tuple, out);
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -289,7 +289,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
             Derelativize(unwrap steps_out, var, context);
             HEART_BYTE(unwrap steps_out) = TYPE_THE_WORD;
         }
-        return nullptr;
+        return SUCCESS;
     }
 
     if (
@@ -333,7 +333,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         if (steps_out and steps_out != GROUPS_OK)
             Init_Nothing(unwrap steps_out);  // !!! What to return?
 
-        return nullptr;
+        return SUCCESS;
     }
 
     if (Any_Tuple(var))
@@ -362,7 +362,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         if (steps_out and steps_out != GROUPS_OK)
             Copy_Cell(unwrap steps_out, var);
 
-        return nullptr;
+        return SUCCESS;
     }
 
     fail (var);
@@ -389,7 +389,7 @@ Option(Error*) Trap_Get_Var(
     if (Any_Vacancy(out))
         return Error_Bad_Word_Get(var, out);
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -501,7 +501,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             fail (item);
     }
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -521,16 +521,16 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         Copy_Cell(out, path);
         goto ensure_out_is_action;  // will fail, it's not an action
 
-      ensure_out_is_action: //////////////////////////////////////////////////
+      ensure_out_is_action: { ////////////////////////////////////////////////
 
         if (Is_Action(out))
-            return nullptr;
+            return SUCCESS;
         if (Is_Frame(out)) {
             Actionify(out);
-            return nullptr;
+            return SUCCESS;
         }
         fail ("PATH! must retrieve an action or frame");
-    }
+    }}
 
     const Node* node1 = CELL_NODE1(path);
     if (Is_Node_A_Cell(node1)) {
@@ -589,7 +589,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         );
         if (error)
             return error;
-        return nullptr;
+        return SUCCESS;
     }
     else
         fail (at);  // what else could it have been?
@@ -615,7 +615,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
             );
             if (error)
                 return error;
-            return nullptr;
+            return SUCCESS;
         }
 
         possibly(Is_Frame(out));
@@ -662,7 +662,7 @@ Option(Error*) Trap_Get_Any_Word(
     if (Any_Vacancy(out))
         return Error_Bad_Word_Get(word, out);
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -760,7 +760,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
     }
 
     Drop_Lifeguard(temp);
-    return nullptr;
+    return SUCCESS;
 }
 
 

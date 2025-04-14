@@ -398,7 +398,7 @@ Option(Error*) Trap_Make_Interpreted_Action(
         Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Value*
 
     *out = details;
-    return nullptr;  // no error
+    return SUCCESS;
 }
 
 

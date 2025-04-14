@@ -209,8 +209,61 @@
 // a word that conflates the Stub with the ERROR! cell, we go along with
 // Option(Error*) as the pragmatically cleanest answer.
 //
+// 1. Every time a function returning Option(Error*) returned nullptr, I felt
+//    inclined to document that as saying "// no error".  It's a little bit
+//    of a toss-up as to whether that obfuscates that it's just nullptr, but
+//    I think it's more grounding.  At first this was NO_ERROR, but since
+//    Windows.h defines that we use SUCCESS.
+//
+// 2. Enforcement of use of SUCCESS instead of nullptr is done by making a
+//    specialization of the OptionWrapper<> template for Error*.  All we
+//    want to do is stop it from constructing from nullptr and allow it to
+//    initialize with a dummy struct (SuccessSentinal) that is SUCCESS.  But
+//    trying to factor out some common OptionWrapperImpl<> class really
+//    messes with ambiguities for global comparison operators, and tons of
+//    other confusing errors...so the simplest answer is just to write out
+//    the specialization as its own class.  Improvements welcome.
+
 #if CPLUSPLUS_11
     struct Error : public VarList {};
 #else
     typedef VarList Error;
+#endif
+
+#if (! CHECK_OPTIONAL_TYPEMACRO)
+    #define SUCCESS  nullptr
+#else
+    struct SuccessSentinel {};
+    static const SuccessSentinel SUCCESS = SuccessSentinel();  // global ok
+
+    template<>
+    struct OptionWrapper<Error*> {  // repeats some code, but that's life [2]
+        Error* wrapped;
+
+        OptionWrapper() = default;
+
+        OptionWrapper(SuccessSentinel) : wrapped(nullptr) {}
+
+        OptionWrapper(Error* ptr) : wrapped(ptr) {
+            assert(ptr != nullptr && "Use SUCCESS for success, not nullptr");
+        }
+
+        OptionWrapper(std::nullptr_t) = delete;  // explicitly disallow
+
+        template<typename X>
+        OptionWrapper(const OptionWrapper<X>& other)
+            : wrapped(other.wrapped) {
+            static_assert(std::is_convertible<X, Error*>::value,
+                "Incompatible pointer type");
+            assert(wrapped != nullptr and "Use SUCCESS for null values");
+        }
+
+        operator uintptr_t() const
+          { return reinterpret_cast<uintptr_t>(wrapped); }
+
+        explicit operator Error*() { return wrapped; }
+
+        explicit operator bool()
+          { return wrapped != nullptr; }
+    };
 #endif

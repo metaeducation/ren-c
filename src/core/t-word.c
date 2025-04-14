@@ -184,12 +184,12 @@ Option(Error*) Trap_Alias_Any_Word_As(
     if (Any_Word_Type(as)) {
         Copy_Cell(out, word);
         HEART_BYTE(out) = as;
-        return nullptr;
+        return SUCCESS;
     }
 
     if (Any_String_Type(as)) {  // will be an immutable string
         Init_Any_String(out, as, Cell_Word_Symbol(word));
-        return nullptr;
+        return SUCCESS;
     }
 
     if (as == TYPE_ISSUE) {  // immutable (note no EMAIL! or URL! possible)
@@ -201,15 +201,15 @@ Option(Error*) Trap_Alias_Any_Word_As(
             String_Len(s),
             String_Size(s)
         )){
-            return nullptr;
+            return SUCCESS;
         }
         Init_Any_String(out, as, s);
-        return nullptr;
+        return SUCCESS;
     }
 
     if (as == TYPE_BLOB) {  // will be an immutable blob
         Init_Blob(out, Cell_Word_Symbol(word));
-        return nullptr;
+        return SUCCESS;
     }
 
     return Error_Invalid_Type(as);

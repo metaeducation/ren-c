@@ -1017,7 +1017,7 @@ Option(Error*) Trap_Any_String_As(
         Copy_Cell(out, any_string);
         HEART_BYTE(out) = as;
         Inherit_Const(out, any_string);
-        return nullptr;
+        return SUCCESS;
     }
 
     return Trap_Alias_Any_Utf8_As(out, any_string, as);

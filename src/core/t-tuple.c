@@ -343,7 +343,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
         Trust_Const(Copy_Cell(out, seq));
         HEART_BYTE(out) = as;
         possibly(Get_Cell_Flag(out, LEADING_BLANK));
-        return nullptr;
+        return SUCCESS;
     }
 
     if (Any_List_Type(as)) {  // give immutable form, try to share memory
@@ -354,7 +354,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
             for (i = 0; i < len; ++i)
                 Copy_Sequence_At(Array_At(a, i), seq, i);
             Init_Any_List(out, as, a);
-            return nullptr;
+            return SUCCESS;
         }
 
         const Node* node1 = CELL_NODE1(seq);
@@ -415,7 +415,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
           default:
             assert(false);
         }
-        return nullptr;
+        return SUCCESS;
     }
 
     return Error_Invalid_Type(as);;

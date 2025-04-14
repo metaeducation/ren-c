@@ -329,7 +329,7 @@ Option(Error*) Trap_Resolve_Dual_Hearts(
 ){
     UNUSED(value2);
     *heart = Heart_Of_Builtin_Fundamental(value1);
-    return nullptr;
+    return SUCCESS;
 }
 
 

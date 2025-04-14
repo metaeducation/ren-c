@@ -575,7 +575,7 @@ static Option(Error*) Trap_Arc_Trans(
         dval = dval * 180.0 / PI; // to degrees
 
     Init_Decimal(out, dval);
-    return nullptr;
+    return SUCCESS;
 }
 
 

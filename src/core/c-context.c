@@ -496,7 +496,7 @@ static Option(Error*) Trap_Collect_Inner_Loop(
             return error;
     }
 
-    return nullptr;
+    return SUCCESS;
 }
 
 
@@ -530,7 +530,7 @@ Option(Error*) Trap_Wrap_Extend_Core(
     }
 
     Destruct_Collector(cl);
-    return nullptr;
+    return SUCCESS;
 }
 
 

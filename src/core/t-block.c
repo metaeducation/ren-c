@@ -870,7 +870,7 @@ Option(Error*) Trap_Alias_Any_List_As(
     if (Any_List_Type(as)) {
         Copy_Cell(out, list);
         HEART_BYTE(out) = as;
-        return nullptr;
+        return SUCCESS;
     }
 
     if (Any_Sequence_Type(as)) {
@@ -890,7 +890,7 @@ Option(Error*) Trap_Alias_Any_List_As(
         /* Tweak_Cell_Binding(temp) = Cell_Binding(list); */  // may be unfit
         Derelativize(out, temp, Cell_Binding(list));  // try this instead (?)
 
-        return nullptr;
+        return SUCCESS;
     }
 
     if (as == TYPE_BLANK) {  // !!! think it needs to make list immutable?
@@ -898,7 +898,7 @@ Option(Error*) Trap_Alias_Any_List_As(
         Cell_List_Len_At(&len, list);
         if (len == 0) {
             Init_Blank(out);
-            return nullptr;
+            return SUCCESS;
         }
         return Error_User("Can only AS/TO convert empty series to BLANK!");
     }

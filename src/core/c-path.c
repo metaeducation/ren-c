@@ -64,7 +64,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
         Array_At(a, offset),
         len_at
     )){
-        return nullptr;
+        return SUCCESS;
     }
 
     const Element* tail = Array_Tail(a);
@@ -96,7 +96,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     // PATH! from non-head positions.
 
     Init_Series_At_Core(out, heart, a, offset, SPECIFIED);
-    return nullptr;
+    return SUCCESS;
 }
 
 

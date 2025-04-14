@@ -552,11 +552,11 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
         if (Is_Blank(Pairing_First(pairing))) {
             assert(not Is_Blank(Pairing_Second(pairing)));
             Derelativize(out, Pairing_Second(pairing), Cell_Binding(out));
-            return nullptr;
+            return SUCCESS;
         }
         if (Is_Blank(Pairing_Second(pairing))) {
             Derelativize(out, Pairing_First(pairing), Cell_Binding(out));
-            return nullptr;
+            return SUCCESS;
         }
         goto unchain_error;
     }
@@ -567,14 +567,14 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
     if (Is_Stub_Symbol(f)) {
         HEART_BYTE(out) = TYPE_WORD;
         Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary?
-        return nullptr;
+        return SUCCESS;
     }
 
     Option(Heart) mirror = Mirror_Of(c_cast(Source*, f));
     if (mirror) {  // no length 2 sequence arrays unless mirror
         HEART_BYTE(out) = unwrap mirror;
         Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary
-        return nullptr;
+        return SUCCESS;
     }
 
 }} unchain_error: {
