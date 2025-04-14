@@ -831,44 +831,6 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
 
 
 //
-//  Try_Scan_File_To_Stack: C
-//
-// Scan and convert a file name.
-//
-Option(const Byte*) Try_Scan_File_To_Stack(const Byte* cp, REBLEN len)
-{
-    if (*cp == '%') {
-        cp++;
-        len--;
-    }
-
-    Codepoint term;
-    const Byte* invalids;
-    if (*cp == '"') {
-        cp++;
-        len--;
-        term = '"';
-        invalids = cb_cast(":;\"");
-    }
-    else {
-        term = '\0';
-        invalids = cb_cast(":;()[]\"");
-    }
-
-    DECLARE_MOLDER (mo);
-
-    cp = maybe Try_Scan_Utf8_Item_Push_Mold(mo, cp, cp + len, term, invalids);
-    if (cp == nullptr) {
-        Drop_Mold(mo);
-        return nullptr;
-    }
-
-    Init_File(PUSH(), Pop_Molded_String(mo));
-    return cp;
-}
-
-
-//
 //  Try_Scan_Email_To_Stack: C
 //
 // Scan and convert email.

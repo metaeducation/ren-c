@@ -638,7 +638,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Money)
 
 static void Mold_File(Molder* mo, const Cell* v)
 {
-
     Append_Codepoint(mo->string, '%');
 
     REBLEN len;
@@ -649,10 +648,16 @@ static void Mold_File(Molder* mo, const Cell* v)
         Codepoint c;
         cp = Utf8_Next(&c, cp);
 
+        // This was the old logic.  We could conceivably just remember if the
+        // file had quotes to begin with.
+        /*
         if (IS_FILE_ESC(c))
             Form_Hex_Esc(mo, c); // c => %xx
         else
             Append_Codepoint(mo->string, c);
+        */
+
+        Append_Codepoint(mo->string, c);
     }
 }
 

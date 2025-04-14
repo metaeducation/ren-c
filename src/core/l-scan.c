@@ -588,9 +588,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 //
 #define Mold_Buffer(mo) mo->string
 
-//
-//  Trap_Scan_String_Push_Mold: C
-//
+
 // Scan a quoted or braced string, handling all the escape characters.  e.g.
 // an input stream might have "a^(1234)b" and need to turn "^(1234)" into the
 // right UTF-8 bytes for that codepoint in the string.
@@ -606,16 +604,14 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 //    as easy as possible to work with BLOB! using string-based routines
 //    like FIND, etc., so use BLOB! if you need UTF-8 with '\0' in it.
 //
-static Option(Error*) Trap_Scan_String_Push_Mold(
+static Option(Error*) Trap_Scan_String_Into_Mold_Core(
     Sink(const Byte*) out,
-    Molder* mo,
+    Molder* mo,  // pushed by calling wrapper, dropped if error returned
     const Byte* bp,
     Count dashes,
-    ScanState* S  // used for errors
+    ScanState* S,  // used for errors
+    StackIndex base  // accrue nest counts on stack
 ){
-    StackIndex base = TOP_INDEX;  // accrue nest counts on stack
-
-    Push_Mold(mo);
     const Byte* cp = bp;
 
     Init_Integer(PUSH(), dashes);  // so nest code is uniform
@@ -758,94 +754,213 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
 }
 
 
+// Wrapper which handles dropping the stack and mold buffer on error case.
 //
-//  Try_Scan_Utf8_Item_Push_Mold: C
+static Option(Error*) Trap_Scan_String_Push_Mold(
+    Sink(const Byte*) out,
+    Molder* mo,
+    const Byte* bp,
+    Count dashes,
+    ScanState* S  // used for errors
+){
+    StackIndex base = TOP_INDEX;
+    Push_Mold(mo);
+    Option(Error*) e = Trap_Scan_String_Into_Mold_Core(
+        out, mo, bp, dashes, S, base
+    );
+    if (e) {
+        Drop_Data_Stack_To(base);
+        Drop_Mold(mo);
+    }
+    return e;
+}
+
+
+// This does a scan of a UTF-8 item like a FILE! or an ISSUE!, when it's not
+// enclosed in quotes.  This means it's terminated by delimiters--such as a
+// space or a closing bracket, parentheses, or brace.  However, we want things
+// like %(get $dir)/foo.bar to be legal, and since we're aiming to put code
+// in these places which might have things like strings saying ")" we need to
+// use the scanner's logic for GROUP! or BLOCK! or FENCE!.
 //
-// Scan as UTF8 an item like a file.  Handles *some* forms of escaping, which
-// may not be a great idea (see notes below on how URL! moved away from that)
+// Puts result into the temporary mold buffer as UTF-8.
 //
-// Returns continuation point or NULL for error.  Puts result into the
-// temporary mold buffer as UTF-8.
-//
-// 1. !!! This code forces %\foo\bar to become %/foo/bar.  But it may be that
-//    this kind of lossy scanning is a poor idea, and it's better to preserve
-//    what the user entered then have FILE-TO-LOCAL complain it's malformed
-//    when turning to a TEXT!--or be overridden explicitly to be lax and
-//    tolerate it.
-//
+// 1. This code once forced %\foo\bar to become %/foo/bar.  That's dodgy.
 //    (URL! has already come under scrutiny for these kinds of automatic
 //    translations that affect round-trip copy and paste, and it seems
 //    applicable to FILE! too.)
 //
-Option(const Byte*) Try_Scan_Utf8_Item_Push_Mold(
+Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
+    Sink(const Byte*) end_out,
     Molder* mo,
-    const Byte* bp,
-    const Byte* ep,
-    Option(Byte) term,  // '\0' if file like %foo - '"' if file like %"foo bar"
-    Option(const Byte*) invalids
+    const Byte* begin,
+    Token token,
+    ScanState* S
 ){
-    assert(maybe term < 128);  // method below doesn't search for high chars
+    Option(const Byte*) invalids;
+    if (token == TOKEN_FILE)  // percent-encoded historically :-/
+        invalids = cb_cast(":;\"");
+    else {
+        assert(token == TOKEN_ISSUE);
+        invalids = nullptr;
+    }
 
-    Push_Mold(mo);
+    String* buf = Mold_Buffer(mo);
 
-    while (bp != ep and *bp != maybe term) {
-        Codepoint c = *bp;
+    const Byte* cp = begin;
 
-        if (c == '\0')
-            break;  // End of stream
+    while (
+        *cp != '\0'
+        and (not Is_Codepoint_Whitespace(*cp))
+        and *cp != ']' and *cp != ')' and *cp != '}' and *cp != ','
+    ){
+        Codepoint c = *cp;  // may be first byte of UTF-8 encoded char
 
-        if (not term and Is_Codepoint_Whitespace(c))
-            break;  // Unless terminator like '"' %"...", any whitespace ends
+      call_scanner_if_list: { ////////////////////////////////////////////////
 
-        if (c < ' ')
-            return nullptr;  // Ctrl characters not valid in filenames, fail
+        if (c == '(' or c == '[' or c == '{') {
+            Byte terminal = End_Delimit_For_Char(cast(Byte, c));
 
-        if (c == '\\') {
-            c = '/';  // !!! Implicit conversion of \ to / is sketchy [1]
-        }
-        else if (c == '%') { // Accept %xx encoded char:
-            Byte decoded;
-            if (not (bp = maybe Try_Scan_Hex2(&decoded, bp + 1)))
-                return nullptr;
-            c = decoded;
-            --bp;
-        }
-        else if (c == '^') {  // Accept ^X encoded char:
-            if (bp + 1 == ep)
-                return nullptr;  // error if nothing follows ^
-            if (not (bp = maybe Try_Scan_UTF8_Char_Escapable(&c, bp)))
-                return nullptr;
-            if (not term and Is_Codepoint_Whitespace(c))
-                break;
-            --bp;
-        }
-        else if (c >= 0x80) { // Accept UTF8 encoded char:
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
-            if (e) {
-                UNUSED(e);  // should this be Trap_Scan_Utf8_Item_Push_Mold()?
-                return nullptr;
+            TranscodeState transcode;
+            Init_Transcode(  // don't make scanner re-scan the '(', use cp + 1
+                &transcode, S->transcode->file, S->transcode->line, cp + 1
+            );
+
+            Flags flags = (
+                 FLAG_STATE_BYTE(Scanner_State_For_Terminal(terminal))
+              /* | LEVEL_FLAG_RAISED_RESULT_OK */  // definitional errors?
+            );
+
+            Level* scan = Make_Scan_Level(&transcode, TG_End_Feed, flags);
+
+            DECLARE_ATOM (discard);
+            Push_Level_Erase_Out_If_State_0(discard, scan);
+            bool threw = Trampoline_With_Top_As_Root_Throws();
+            Drop_Data_Stack_To(scan->baseline.stack_base);  // !!! new mode?
+            Drop_Level(scan);
+
+            if (threw) {
+                DECLARE_VALUE (label);
+                Copy_Cell(label, VAL_THROWN_LABEL(TOP_LEVEL));
+                assert(Is_Error(label));
+
+                DECLARE_ATOM (arg);
+                CATCH_THROWN(arg, TOP_LEVEL);
+
+                return Cell_Error(label);
             }
+
+            Size size = transcode.at - cp;
+            Size original_used = Binary_Len(buf);
+            Expand_Flex_Tail(buf, size);  // updates used size
+            Byte* dest = Binary_At(buf, original_used);
+            Length len = 0;
+            for (; cp != transcode.at; ++cp, ++dest) {
+                if (not Is_Continuation_Byte(*cp))
+                    ++len;
+                *dest = *cp;
+            }
+            Term_String_Len_Size(
+                buf, String_Len(buf) + len, original_used + size
+            );
+            continue;
         }
-        else if (invalids and strchr(cs_cast(unwrap invalids), c)) {
+
+    } handle_hex_encoded_chars: { ////////////////////////////////////////////
+
+        // 1. !!! Filename hex-encoding (if it's a good idea at all) appears
+        //    to predate UTF-8, so it only decoded one byte.  Most likely this
+        //    should just be deleted.
+
+        if (token == TOKEN_FILE and c == '%') {
+            Byte decoded;
+            if (not (cp = maybe Try_Scan_Hex2(&decoded, cp + 1)))
+                return Error_User("Bad Hex Encoded Character");
+            c = decoded;
+            if (c >= 0x80)
+                return Error_User(  // [1]
+                    "Hex encoding for UTF-8 in Filenames not supported yet"
+                );
+            goto check_for_invalid_ascii;
+        }
+
+    } handle_caret_encoded_chars: { //////////////////////////////////////////
+
+        // !!! Rebol encoding is up in the air as to if it will be kept.
+
+        if (c == '^') {  // Accept ^X encoded char:
+            if (not (cp = maybe Try_Scan_UTF8_Char_Escapable(&c, cp)))
+                return SUCCESS;
+            goto check_for_invalid_unicode;
+        }
+
+    } handle_multibyte_utf8_chars: { /////////////////////////////////////////
+
+        if (c >= 0x80) {
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &cp, nullptr);
+            if (e)
+                return e;
+            ++cp;  // UTF-8 back scanning doesn't do the increment
+            goto check_for_invalid_unicode;
+        }
+
+        ++cp;
+        goto check_for_invalid_ascii;
+
+    } check_for_invalid_unicode: { //////////////////////////////////////////
+
+        // None of these declared invalid yet (but probably should)
+        // would fall through to the check_for_invalid_ascii
+
+    } check_for_invalid_ascii: { /////////////////////////////////////////////
+
+        if (c >= 128 or not invalids) {
+            // not valid ASCII, so don't check it
+        }
+        else if (strchr(cs_cast(unwrap invalids), c)) {
             //
             // Is char as literal valid? (e.g. () [] etc.)
             // Only searches ASCII characters.
             //
-            return nullptr;
+            return Error_User("Invalid character in filename");
+        }
+        else if (c < ' ') {
+            return Error_User("Control characters not allowed in filenames");
+        }
+        else if (c == '\\') {
+            return Error_User("Backslash not allowed in filenames");  // [1]
         }
 
-        ++bp;
+    } append_codepoint_and_continue: { ///////////////////////////////////////
 
-        if (c == '\0')  // e.g. ^(00) or ^@
-            fail (Error_Illegal_Zero_Byte_Raw());  // legal CHAR!, not string
+        Append_Codepoint(buf, c);
 
-        Append_Codepoint(mo->string, c);
+    }}
+
+    *end_out = cp;
+
+    return SUCCESS;
+}
+
+
+// Wrapper which handles dropping the stack and mold buffer on error case.
+//
+Option(Error*) Trap_Scan_Utf8_Item_Push_Mold(
+    Sink(const Byte*) out,
+    Molder* mo,
+    const Byte* bp,
+    Token token,
+    ScanState* S  // used for errors
+){
+    Push_Mold(mo);
+    Option(Error*) e = Trap_Scan_Utf8_Item_Into_Mold(
+        out, mo, bp, token, S
+    );
+    if (e) {
+        Drop_Mold(mo);
+        return e;
     }
-
-    if (*bp != '\0' and *bp == maybe term)
-        ++bp;
-
-    return bp;
+    return SUCCESS;
 }
 
 
@@ -1495,54 +1610,45 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             panic ("@ dead end");
 
           case LEX_SPECIAL_PERCENT:  // %filename
-            if (cp[1] == '%') {  // %% is WORD! exception
-                if (not Is_Lex_Delimit(cp[2]) and cp[2] != ':') {
-                    S->end = cp + 3;
+            ++cp;
+            if (*cp == '%') {  // %% is WORD! exception
+                if (not Is_Lex_Delimit(cp[1]) and cp[1] != ':') {
+                    S->end = cp + 2;
                     return Error_Syntax(S, TOKEN_FILE);
                 }
-                S->end = cp + 2;
+                S->end = cp + 1;
                 return LOCATED(TOKEN_WORD);
             }
 
             token = TOKEN_FILE;
 
-          issue_or_file_token:  // issue jumps here, should set `token`
+          issue_or_file_token: {  // issue jumps here, should set `token`
             assert(token == TOKEN_FILE or token == TOKEN_ISSUE);
 
-            cp = S->end;
             if (*cp == ';') {
                 //
-                // !!! Help catch errors when writing `#;` which is an easy
-                // mistake to make thinking it's like `#:` and a way to make
-                // a single character.
-                //
-                S->end = cp;
-                return Error_Syntax(S, token);
+                // !!! This used to be illegal in `#;` but should it be?  Is
+                // there more value in allowing `#a;b` or similar, as with
+                // URL! having semicolons intenrally?
             }
             if (*cp == '"') {
+                /*Option(const Byte*) invalids = cb_cast(":;\""); */
+
                 Option(Error*) e = Trap_Scan_String_Push_Mold(
                     &cp, mo, cp, 0, S
                 );
-                Drop_Mold(mo);  // !!! not used ??
                 if (e)
                     return e;
                 S->end = cp;
                 return LOCATED(token);
             }
-            while (
-                *cp == '~' or (
-                    token == TOKEN_FILE
-                    and Is_Lex_Interstitial(*cp)  // %: and %/ not sequences
-                )
-            ){
-                cp++;
-
-                while (Is_Lex_Not_Delimit(*cp))
-                    ++cp;
-            }
-
+            Option(Error*) e = Trap_Scan_Utf8_Item_Push_Mold(
+                &cp, mo, cp, token, S
+            );
+            if (e)
+                return e;
             S->end = cp;
-            return LOCATED(token);
+            return LOCATED(token); }
 
           case LEX_SPECIAL_APOSTROPHE:
             while (*cp == '\'')  // get sequential apostrophes as one token
@@ -1606,7 +1712,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
           case LEX_SPECIAL_POUND:
           pound:
-            cp++;
+            ++cp;
             if (*cp == '[') {
                 S->end = ++cp;
                 return LOCATED(TOKEN_CONSTRUCT);
@@ -1651,12 +1757,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 //
                 return Error_Missing(S, '}');
             }
-            if (cp - 1 == S->begin) {
-                --cp;
-                token = TOKEN_ISSUE;
-                goto issue_or_file_token;  // different policies on / : .
-            }
-            return Error_Syntax(S, TOKEN_INTEGER);
+            token = TOKEN_ISSUE;
+            goto issue_or_file_token;  // different policies on / : .
 
           case LEX_SPECIAL_DOLLAR:
             if (
@@ -2268,10 +2370,20 @@ Bounce Scanner_Executor(Level* const L) {
         Init_Word(PUSH(), Intern_UTF8_Managed(S->begin, len));
         break;
 
-      case TOKEN_ISSUE:
-        if (S->end != Try_Scan_Issue_To_Stack(S->begin + 1, len - 1))
-            return RAISE(Error_Syntax(S, token));
-        break;
+      case TOKEN_ISSUE: {
+        Size mold_size = String_Size(mo->string) - mo->base.size;
+        Length mold_len = String_Len(mo->string) - mo->base.index;
+        Utf8(const*) utf8 = Binary_At(mo->string, mo->base.size);
+
+        if (mold_size == 0) {
+            assert(mold_len == 0);
+            Init_Space(PUSH());  // !!! can't discern #"", for now
+        }
+        else  // small strings fit in cell
+            Init_Issue(PUSH(), utf8, mold_size, mold_len);
+
+        Drop_Mold(mo);
+        break; }
 
       case TOKEN_APOSTROPHE: {
         assert(*S->begin == '\'');  // should be `len` sequential apostrophes
@@ -2529,10 +2641,10 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Syntax(S, token));
         break;
 
-      case TOKEN_FILE:
-        if (S->end != Try_Scan_File_To_Stack(S->begin, len))
-            return RAISE(Error_Syntax(S, token));
-        break;
+      case TOKEN_FILE: {
+        String* s = Pop_Molded_String(mo);
+        Init_File(PUSH(), s);
+        break; }
 
       case TOKEN_EMAIL:
         if (S->end != Try_Scan_Email_To_Stack(S->begin, len))
@@ -2975,7 +3087,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 
-    return NOTHING;
+    return VOID;
 
 }}
 

@@ -218,3 +218,18 @@ INLINE Byte End_Delimit_For_List(Heart heart)
         return 0;  // unreachable
     }
 }
+
+INLINE Byte End_Delimit_For_Char(Byte c)
+{
+    switch (c) {
+      case '(':
+        return ')';
+      case '[':
+        return ']';
+      case '{':
+        return '}';
+      default:
+        assert(false);
+        return 0;  // unreachable
+    }
+}
