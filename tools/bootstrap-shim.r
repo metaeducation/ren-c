@@ -927,10 +927,16 @@ apply: func3 [
                 ][
                     f.(to word! pos.1): null
                 ]
-                true = :result [
+                any [
+                    true = :result
+                    refinement3? :result
+                ][
                     f.(to word! pos.1): true
                 ]
-                fail "No-Arg Refinements in Bootstrap must be TRUE or NULL"
+                fail [
+                    "No-Arg Refinements in Bootstrap must be TRUE or NULL:"
+                        mold pos.1 "=" mold :result
+                ]
             ]
         ] else [  ; takes an arg, so set refinement to true and set NEXT param
             f.(to word! pos.1): true

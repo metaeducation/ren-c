@@ -1409,7 +1409,7 @@ append app-config.ldflags maybe spread user-config.ldflags
 
 libr3-core: make rebmake.object-library-class [
     name: 'libr3-core
-    definitions: append copy ["REB_API"] spread app-config.definitions
+    definitions: app-config.definitions
 
     ; might be modified by the generator, thus copying
     includes: append copy app-config.includes %prep/core
@@ -1756,20 +1756,14 @@ for-each 'ext extensions [
     ; Not only do these settings get used by the mod-xxx.c file, but they are
     ; propagated to the dependencies (I think?)
     ;
-    ; We add a #define of either REB_API or LIBREBOL_USES_API_TABLE based on
-    ; if it's a DLL
+    ; If we're building as a DLL, we need to #define LIBREBOL_USES_API_TABLE
+    ; to 1, because there's no generalized
     ;
     add-project-flags // [
         ext-objlib
         :I app-config.includes
         :D compose [
-            (
-                either ext.mode = <builtin> [
-                    "REB_API"
-                ][
-                    "LIBREBOL_USES_API_TABLE"
-                ]
-            )
+            (if ext.mode = <dynamic> ["LIBREBOL_USES_API_TABLE=1"])
             (spread app-config.definitions)
         ]
         :c app-config.cflags
@@ -1836,7 +1830,10 @@ for-each 'ext extensions [
         add-project-flags // [
             ext-proj
             :I app-config.includes
-            :D join ["LIBREBOL_USES_API_TABLE"] inert app-config.definitions
+            :D compose [
+                "LIBREBOL_USES_API_TABLE=1"
+                (spread app-config.definitions)
+            ]
             :c app-config.cflags
             :O app-config.optimization
             :g app-config.debug

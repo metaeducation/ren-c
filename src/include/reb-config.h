@@ -118,11 +118,11 @@ Special internal defines used by RT, not Host-Kit developers:
 
 //* Common *************************************************************
 
+#if !defined(LIBREBOL_USES_API_TABLE)
+    #define LIBREBOL_USES_API_TABLE  0  // !!! librebol has this same define
+#endif
 
-#ifdef REB_API
-    // r3lib dll from RT
-    #define RL_API API_EXPORT
-#elif defined(LIBREBOL_USES_API_TABLE) || defined(REB_HOST)
+#if LIBREBOL_USES_API_TABLE
     // Building extensions as external libraries (.dll, .so etc.)
     // or r3 host against r3lib dll
     #define RL_API API_IMPORT

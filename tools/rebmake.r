@@ -867,8 +867,6 @@ cl: make compiler-class [
             ;
             keep "/nologo"
 
-            if dynamic [keep "/dll"]
-
             ; link.exe takes e.g. `/OUT:r3.exe`, the front end takes `/Fer3`
             ;
             output: file-to-local output
@@ -888,6 +886,8 @@ cl: make compiler-class [
             ; it also must be lowercase!s
             ;
             keep "/link"
+
+            if dynamic [keep "/dll"]
 
             ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
             ; /DEBUG must be uppercase when passed to cl.exe

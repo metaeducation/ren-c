@@ -585,7 +585,7 @@ e/emit [--{
      * things like "import libraries for an EXE that a DLL can import" are
      * Windows peculiarities).
      */
-    #ifdef LIBREBOL_USES_API_TABLE  /* e.g. a DLL */
+    #if LIBREBOL_USES_API_TABLE  /* e.g. a DLL */
         RebolApiTable* g_librebol;  /* API macros like rebValue() use this */
     #endif
 
@@ -812,7 +812,7 @@ e/emit [--{
      * extension implementations.
      */
     DECLARE_EXTENSION_COLLATOR(${Mod}) {
-      #ifdef LIBREBOL_USES_API_TABLE
+      #if LIBREBOL_USES_API_TABLE
         /*
          * Librebol extensions use `rebXXX()` APIs => `g_librebol->rebXXX()`
          *

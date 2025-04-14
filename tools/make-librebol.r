@@ -366,12 +366,8 @@ e-lib: make-emitter "Rebol External Library Interface" (
 )
 
 e-lib/emit [ver --{
-    #ifndef REBOL_H_1020_0304  /* "include guard" allows multiple #includes */
-    #define REBOL_H_1020_0304  /* numbers in case REBOL_H defined elsewhere */
-
-
     /*
-     * API #DEFINE OPTIONS
+     * API #DEFINE OPTIONS (note: this should be in file header!)
      *
      * The following options are available before you #include "rebol.h"
      *
@@ -390,21 +386,8 @@ e-lib/emit [ver --{
      * For more details on each, read the comments further down in this file.
      */
 
-
-    /*
-     * API VERSION
-     *
-     * These constants are part of an old Rebol versioning system that hasn't
-     * been paid much attention to:
-     *
-     *   http://rebol.com/release-archive.html
-     *
-     * Keeping as a placeholder.
-     */
-
-    #define LIBREBOL_VERSION        $<ver.1>
-    #define LIBREBOL_MAJOR          $<ver.2>
-    #define LIBREBOL_MINOR          $<ver.3>
+    #ifndef REBOL_H_1020_0304  /* "include guard" allows multiple #includes */
+    #define REBOL_H_1020_0304  /* numbers in case REBOL_H defined elsewhere */
 
 
     /*
@@ -441,32 +424,6 @@ e-lib/emit [ver --{
 
     #if !defined(LIBREBOL_USE_C89)
         #define LIBREBOL_USE_C89 0
-    #endif
-
-
-    /*
-     * TRIGGER UP-FRONT ERROR IF COMPILER LACKS __VA_ARGS__ FEATURE
-     *
-     * C99 and C++11 standardize an interface for variadic macros:
-     *
-     * https://stackoverflow.com/questions/4786649/
-     *
-     * If not using the C89 manual calls, this feature is a requirement.
-     *
-     * We'd like to give a targeted error message if the feature is missing,
-     * vs. have the compiler spew out gibberish that is harder to decipher.
-     * But since some pre-C99 compilers actually support __VA_ARGS__, don't
-     * use the compiler version to preemptively error.  Instead, try to call
-     * a dummy variadic macro...which will lead users to this spot if it
-     * does not work.
-     */
-
-    #if (! LIBREBOL_USE_C89)
-        #define Compiler_Lacks_Variadic_Macros_If_This_Errors(...) \
-            (__VA_ARGS__ + 304)
-
-        static inline int Feature_Test_Compiler_For_Variadic_Macros(void)
-            { return Compiler_Lacks_Variadic_Macros_If_This_Errors(1020); }
     #endif
 
 
@@ -523,6 +480,70 @@ e-lib/emit [ver --{
         #define LIBREBOL_NO_STDBOOL LIBREBOL_USE_C89
     #endif
 
+
+    /*
+     * LIBREBOL_USES_API_TABLE option
+     *
+     * This option is needed if you are doing something like building a DLL,
+     * because there's no cross-platform way for a dynamic library to import
+     * symbols from the executable that loads it.  What has to happen instead
+     * is that the EXE passes a table of function pointers to the DLL's
+     * initialization routine.  (See RebolApiTable)
+     *
+     * This is defined automatically by the build system for extensions that
+     * are being built dynamically.
+     */
+    #if !defined(LIBREBOL_USES_API_TABLE)
+        #define LIBREBOL_USES_API_TABLE  0
+    #endif
+
+
+    /*
+     * API VERSION
+     *
+     * These constants are part of an old Rebol versioning system that hasn't
+     * been paid much attention to:
+     *
+     *   http://rebol.com/release-archive.html
+     *
+     * Keeping as a placeholder.
+     */
+
+    #define LIBREBOL_VERSION        $<ver.1>
+    #define LIBREBOL_MAJOR          $<ver.2>
+    #define LIBREBOL_MINOR          $<ver.3>
+
+
+    /*
+     * TRIGGER UP-FRONT ERROR IF COMPILER LACKS __VA_ARGS__ FEATURE
+     *
+     * C99 and C++11 standardize an interface for variadic macros:
+     *
+     * https://stackoverflow.com/questions/4786649/
+     *
+     * If not using the C89 manual calls, this feature is a requirement.
+     *
+     * We'd like to give a targeted error message if the feature is missing,
+     * vs. have the compiler spew out gibberish that is harder to decipher.
+     * But since some pre-C99 compilers actually support __VA_ARGS__, don't
+     * use the compiler version to preemptively error.  Instead, try to call
+     * a dummy variadic macro...which will lead users to this spot if it
+     * does not work.
+     */
+
+    #if (! LIBREBOL_USE_C89)
+        #define Compiler_Lacks_Variadic_Macros_If_This_Errors(...) \
+            (__VA_ARGS__ + 304)
+
+        static inline int Feature_Test_Compiler_For_Variadic_Macros(void)
+            { return Compiler_Lacks_Variadic_Macros_If_This_Errors(1020); }
+    #endif
+
+
+    /*
+     * Include <stdlib.h>, <stdbool.h>, <stdint.h> or shim appropriately.
+     */
+
     #if LIBREBOL_NO_STDLIB
         /*
          * This file won't compile without definitions for uintptr_t and
@@ -544,6 +565,7 @@ e-lib/emit [ver --{
             #endif
         #endif
     #endif
+
 
     /*
      * !!! Needed by following two macros.
@@ -846,7 +868,7 @@ e-lib/emit [ver --{
 
 
 
-    #ifdef LIBREBOL_USES_API_TABLE  /* can't direct call into EXE entry points */
+    #if LIBREBOL_USES_API_TABLE  /* can't direct call into EXE entry points */
         /*
         * We will translate rebXXX() into g_librebol->rebXXX()
         */

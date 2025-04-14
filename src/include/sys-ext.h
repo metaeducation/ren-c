@@ -37,7 +37,7 @@
 #endif
 
 
-#if defined(LIBREBOL_USES_API_TABLE)
+#if LIBREBOL_USES_API_TABLE
     //
     // This indicates an "external extension".  Its entry point has a
     // predictable name of RX_Collate() exported from the DLL.
