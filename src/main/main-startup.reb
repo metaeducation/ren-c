@@ -384,12 +384,12 @@ bind construct [
         "Return HOME path (e.g. $HOME on *nix)"
         return: [~null~ element? file!]
     ][
-        let get-env: if select system.modules 'Process [
-            runs :system.modules.Process.get-env
+        let get-env: if select system.modules 'Environment [
+            runs :system.modules.Environment.get-env
         ] else [
             loud-print [
                 "Interpreter not built with GET-ENV, can't detect HOME dir" LF
-                "(Build with Process extension enabled to address this)"
+                "(Build with Environment extension enabled to address this)"
             ]
             return null
         ]

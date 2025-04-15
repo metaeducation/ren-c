@@ -728,12 +728,11 @@ e/emit [--{
      * and the latter takes a Context* which is always a varlist and has
      * always been managed and set up for lookup.
      *
-     *    CFunction is defined in %c-enhanced.h, we don't know all API
-     * 1. This is really just `CFunction* native_cfuncs[...]`, but since the
-     *    clients will have it available.  Rather than make up some proxy
-     *    name for CFunction that contaminates the interface, assume people
-     *    can use AI to ask what this means if they can't read it.  See the
-     *    definition of CFunction for why we can't just use void* here.
+     * 1. This is really just `CFunction* native_cfuncs[...]`, but rather than
+     *    make up some proxy name for CFunction that contaminates the namespace
+     *    we assume people can use AI to ask what this means if they can't
+     *    read it.  See the definition of CFunction for why we can't just use
+     *    void* here.
      *
      * 2. The STARTUP-HOOKS native is a special native defined by this
      *    extension that runs code before the other natives are loaded.
@@ -762,7 +761,8 @@ script-uncompressed: cscape [--{
     register-extension*: native ["Extension Startup Hooks" return: [~]]
     unregister-extension*: native ["Extension Shutdown Hooks" return: [~]]
 
-    register-extension*
+    /register-extension*
+
     register-extension*: ~<registration of $<mod> complete>~
 
     ; These NATIVE invocations execute to define the natives, implicitly

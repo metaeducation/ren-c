@@ -5,7 +5,7 @@ REBOL [
 
 use-librebol: 'yes
 
-requires: 'process  ; for get-env
+requires: 'Environment
 
 includes: []
 

@@ -15,15 +15,13 @@ extensions: to map! [
     ; * dynamic
     ; [modules] dynamic with selected modules
 
-    ; FFI and ODBC have dependencies outside of what's available on a stock
-    ; standard C compiler with POSIX or Win32.  Disable these extensions by
-    ; default.  (Review the general policy for default inclusions.)
-    ; Clipboard is only implemented in Windows at the moment.
+    ; !!! Review default clipboard inclusion
 
     Console +
     Crypt +
     Debugger +
     DNS +
+    Environment +
     Filesystem +
     Network +
     Process +
