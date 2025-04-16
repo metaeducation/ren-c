@@ -146,11 +146,7 @@
 
 #define did !!  // Not in iso646.h
 
-#if defined(__cplusplus) && (! defined(__HAIKU__))
-    //
-    // HaikuOS's GCC 2.95 apparently not only doesn't define the keywords for
-    // C++, but #include <iso646.h> has no effect.
-    //
+#if defined(__cplusplus)
   #if defined(_MSC_VER)
     #include <iso646.h>  // MSVC doesn't have `and`, `not`, etc. w/o this
   #else
