@@ -38,11 +38,24 @@ cscape: function [
     return: "${} TO-C-NAME, $<> UNSPACED, $[]/$() DELIMIT closed/open"
         [text!]
     template "${Expr} case as-is, ${expr} lowercased, ${EXPR} is uppercased"
-        [text!]
-    /with "Lookup var words in additional context (besides user context)"
-    context [any-word! any-context! block!]
+        [block! text! file!]
 ][
-    string: trim/auto copy template
+    if match [text! file!] template [
+        template: reduce [template]
+    ]
+    else [
+        assert [block? template]
+        template: copy template
+    ]
+
+    return-type: type of last template
+
+    if (text! <> return-type) and [file! <> return-type] [
+        fail ["CSCAPE requires TEXT! or FILE! as template:" mold last template]
+    ]
+
+    string: trim/auto to text! last template
+    take back tail template
 
     ; As we process the string, we CHANGE any substitution expressions into
     ; an INTEGER! for doing the replacements later with REWORD (and not
@@ -96,7 +109,7 @@ cscape: function [
         ]]
     ]
 
-    if empty? list [return string]
+    if empty? list [return as return-type string]
 
     list: unique/case list
 
@@ -109,14 +122,12 @@ cscape: function [
             keep pattern
 
             code: load/all expr
-            if with [
-                context: compose [(context)] ;-- convert to block
-                for-each item context [
-                    if any-context? item [
-                        bind code item
-                    ] else [
-                        bind code binding of item
-                    ]
+            for-each item template [  ; string was removed
+                if get-word? item [
+                    bind code get item
+                ] else [
+                    assert [word? item]
+                    bind code binding of item
                 ]
             ]
             sub: eval code
@@ -189,7 +200,7 @@ cscape: function [
         ]
     ]
 
-    return string
+    return as return-type string
 ]
 
 
@@ -243,24 +254,16 @@ make-emitter: function [
             {Write data to the emitter using CSCAPE templating (see HELP)}
 
             return: [~]
-            :look [any-value! <...>]
-            data [text! char! <...>]
+            data [block! text! char!]
             <with> buf-emit
         ][
-            context: _
-            firstlook: first look
-            if any [
-                lit-word? :firstlook
-                block? :firstlook
-                any-context? :firstlook
-            ][
-                context: take look
-            ]
-
-            data: take data
             switch type of data [
+                block! [
+                    append buf-emit cscape data
+                    append buf-emit newline
+                ]
                 text! [
-                    append buf-emit cscape/with data maybe- context
+                    append buf-emit cscape data
                 ]
                 char! [
                     append buf-emit data
@@ -299,7 +302,7 @@ make-emitter: function [
     ]
 
     if (is-c or [is-js]) [
-        e/emit 'return {
+        e/emit [title stem by temporary {
             /**********************************************************************
             **
             **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -318,20 +321,13 @@ make-emitter: function [
             **      Licensed under the Apache License, Version 2.0.
             **      See: http://www.apache.org/licenses/LICENSE-2.0
             **  }
-        }
-        if temporary [
-            e/emit {
-                **  Note: {AUTO-GENERATED FILE - Do not modify.}
-            }
-        ]
-        e/emit {
+            **  Note: "AUTO-GENERATED FILE - Do not modify."
             **
             ***********************************************************************/
-        }
-        e/emit newline
+        }]
     ]
     else [
-        e/emit mold/only compose/deep [
+        e/emit [title stem temporary {
             REBOL [
                 System: "REBOL [R3] Language Interpreter and Run-time Environment"
                 Title: (title)
@@ -345,12 +341,9 @@ make-emitter: function [
                     Licensed under the Apache License, Version 2.0.
                     See: http://www.apache.org/licenses/LICENSE-2.0
                 }
-                (if temporary [
-                    [Note: {AUTO-GENERATED FILE - Do not modify.}]
-                ])
+                Note: "AUTO-GENERATED FILE - Do not modify."
             ]
-        ]
-        e/emit newline
+        }]
     ]
     return e
 ]

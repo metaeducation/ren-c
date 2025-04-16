@@ -98,18 +98,18 @@ emit-proto: func [
 
     append prototypes proto
 
-    e-funcs/emit [proto the-file] {
+    e-funcs/emit [proto the-file {
         $<Proto>; /* $<The-File> */
-    }
+    }]
 
     if "REBTYPE" = proto-parser/proto-id [
-        e-syms/emit [the-file proto-parser] {
+        e-syms/emit [the-file proto-parser {
             /* $<The-File> */ SYM_CFUNC(T_$<Proto-Parser/Proto-Arg-1>),
-        }
+        }]
     ] else [
-        e-syms/emit [the-file proto-parser] {
+        e-syms/emit [the-file proto-parser {
             /* $<The-File> */ SYM_CFUNC($<Proto-Parser/Proto-Id>),
-        }
+        }]
     ]
 ]
 
@@ -119,9 +119,9 @@ process-conditional: function [
     dir-position
     emitter [object!]
 ][
-    emitter/emit [directive the-file dir-position] {
+    emitter/emit [directive the-file dir-position {
         $<Directive> /* $<The-File> #$<text-line-of dir-position> */
-    }
+    }]
 
     ; Minimise conditionals for the reader - unnecessary for compilation.
     ;
@@ -187,7 +187,7 @@ e-syms/emit {
 
 boot-natives: load output-dir/boot/tmp-natives.r
 
-e-funcs/emit {
+e-funcs/emit [{
     /*
      * When building as C++, the linkage on these functions should be done
      * without "name mangling" so that library clients will not notice a
@@ -209,18 +209,17 @@ e-funcs/emit {
      *
      *     if (VAL_ACT_DISPATCHER(native) == &NATIVE_CFUNC(PARSE)) { ... }
      */
-}
-e-funcs/emit newline
+}]
 
 for-each val boot-natives [
     if set-word? val [
-        e-funcs/emit 'val {
+        e-funcs/emit [val {
             DECLARE_NATIVE(${TO WORD! VAL});
-        }
+        }]
     ]
 ]
 
-e-funcs/emit {
+e-funcs/emit [{
     /*
      * OTHER PROTOTYPES
      *
@@ -230,8 +229,7 @@ e-funcs/emit {
      * functions living in different sources.  (`static` functions are skipped
      * by the scan.)
      */
-}
-e-funcs/emit newline
+}]
 
 for-each item file-base/core [
     ;
@@ -305,9 +303,9 @@ sys-globals-parser: context [
 
         declaration: [
             some [opt wsp [copy id identifier | not #";" punctuator] ] #";" thru newline (
-                e-syms/emit 'id {
+                e-syms/emit [id {
                     SYM_DATA($<Id>),
-                }
+                }]
             )
         ]
 
@@ -331,13 +329,13 @@ e-syms/emit "^/    {nullptr, nullptr} //Terminator^/};"
 e-syms/emit "^/// Globals from sys-globals.h^/"
 e-syms/emit {
 extern const struct rebol_sym_data_t rebol_sym_data [];
-const struct rebol_sym_data_t rebol_sym_data [] = ^{^/}
+const struct rebol_sym_data_t rebol_sym_data [] = ^{
+}
 
 the-file: %sys-globals.h
 sys-globals-parser/process read/string %../include/sys-globals.h
 
-e-syms/emit "^/    {nullptr, nullptr} //Terminator^/};"
-e-syms/emit newline
+e-syms/emit ["^/    {nullptr, nullptr} //Terminator^/};"]
 
 e-syms/write-emitted
 

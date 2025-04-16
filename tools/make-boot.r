@@ -148,7 +148,7 @@ add-sym: function [
         fail ["Duplicate word specified" word]
     ]
 
-    append syms cscape/with {/* $<Word> */ SYM_${WORD} = $<sym-n>} [sym-n word]
+    append syms cscape [sym-n word {/* $<Word> */ SYM_${WORD} = $<sym-n>}]
     sym-n: sym-n + 1
 
     if text? word [
@@ -171,11 +171,12 @@ generic-hooks: collect [
     for-each-record t type-table [
         switch t/class [
             '* [
-                keep cscape/with {T_Unhooked /* $<T/Name> */} [t]
+                keep cscape [t {T_Unhooked /* $<T/Name> */}]
             ]
             default [
-                keep cscape/with
-                    {T_$<Propercase-Of t/class> /* $<T/Name> */} [t]
+                keep cscape [t
+                    {T_$<Propercase-Of t/class> /* $<T/Name> */}
+                ]
             ]
         ]
     ]
@@ -184,18 +185,18 @@ generic-hooks: collect [
 path-hooks: collect [
     for-each-record t type-table [
         switch t/path [
-            '- [keep cscape/with {PD_Fail /* $<T/Name> */} [t]]
+            '- [keep cscape [t {PD_Fail /* $<T/Name> */}]]
             '+ [
                 proper: propercase-of t/class
-                keep cscape/with {PD_$<Proper> /* $<T/Name> */} [proper t]
+                keep cscape [proper t {PD_$<Proper> /* $<T/Name> */}]
             ]
-            '* [keep cscape/with {PD_Unhooked /* $<T/Name> */} [t]]
+            '* [keep cscape [t {PD_Unhooked /* $<T/Name> */}]]
             default [
                 ; !!! Today's PORT! path dispatches through context although
                 ; that isn't its technical "class" for responding to generics.
                 ;
                 proper: propercase-of t/path
-                keep cscape/with {PD_$<Proper> /* $<T/Name> */} [proper t]
+                keep cscape [proper t {PD_$<Proper> /* $<T/Name> */}]
             ]
         ]
     ]
@@ -204,12 +205,12 @@ path-hooks: collect [
 make-hooks: collect [
     for-each-record t type-table [
         switch t/make [
-            '- [keep cscape/with {/* $<T/Name> */ MAKE_Fail} [t]]
+            '- [keep cscape [t {/* $<T/Name> */ MAKE_Fail}]]
             '+ [
                 proper: propercase-of t/class
-                keep cscape/with {/* $<T/Name> */ MAKE_$<Proper>} [proper t]
+                keep cscape [proper t {/* $<T/Name> */ MAKE_$<Proper>}]
             ]
-            '* [keep cscape/with {/* $<T/Name> */ MAKE_Unhooked} [t]]
+            '* [keep cscape [t {/* $<T/Name> */ MAKE_Unhooked}]]
 
             fail "MAKE in %types.r should be, -, +, or *"
         ]
@@ -219,12 +220,12 @@ make-hooks: collect [
 to-hooks: collect [
     for-each-record t type-table [
         switch t/make [
-            '- [keep cscape/with {/* $<T/Name> */ TO_Fail} [t]]
+            '- [keep cscape [t {/* $<T/Name> */ TO_Fail}]]
             '+ [
                 proper: propercase-of T/Class
-                keep cscape/with {TO_$<Proper> /* $<T/Name> */} [proper t]
+                keep cscape [t {TO_$<Proper> /* $<T/Name> */}]
             ]
-            '* [keep cscape/with {TO_Unhooked /* $T/Name> */} [t]]
+            '* [keep cscape [t {TO_Unhooked /* $T/Name> */}]]
 
             fail "TO in %types.r should be -, +, or *"
         ]
@@ -234,12 +235,12 @@ to-hooks: collect [
 mold-hooks: collect [
     for-each-record t type-table [
         switch t/mold [
-            '- [keep cscape/with {/* $<T/Name> */ MF_Fail"} [t]]
+            '- [keep cscape [t {/* $<T/Name> */ MF_Fail"}]]
             '+ [
                 proper: propercase-of t/class
-                keep cscape/with {/* $<T/Name> */ MF_$<Proper>} [proper t]
+                keep cscape [proper t {/* $<T/Name> */ MF_$<Proper>}]
             ]
-            '* [keep cscape/with {/* $<T/Name> */ MF_Unhooked} [t]]
+            '* [keep cscape [t {/* $<T/Name> */ MF_Unhooked}]]
             default [
                 ;
                 ; ERROR! may be a context, but it has its own special forming
@@ -247,7 +248,7 @@ mold-hooks: collect [
                 ; and BINARY! has a different handler than strings
                 ;
                 proper: propercase-of t/mold
-                keep cscape/with {MF_$<Proper> /* $<T/Name> */} [proper t]
+                keep cscape [proper t {MF_$<Proper> /* $<T/Name> */}]
             ]
         ]
     ]
@@ -256,10 +257,10 @@ mold-hooks: collect [
 compare-hooks: collect [
     for-each-record t type-table [
         either t/class = '* [
-            keep cscape/with {CT_Unhooked /* $<T/Class> */} [t]
+            keep cscape [t {CT_Unhooked /* $<T/Class> */}]
         ][
             proper: Propercase-Of T/Class
-            keep cscape/with {CT_$<Proper> /* $<T/Class> */} [proper t]
+            keep cscape [proper t {CT_$<Proper> /* $<T/Class> */}]
         ]
     ]
 ]
@@ -348,16 +349,12 @@ rebs: collect [
 
         assert [sym-n == n] ;-- SYM_XXX should equal TYPE_XXX value
         add-sym to-word unspaced [t/name "!"]
-        keep cscape/with {TYPE_${T/NAME} = $<n>} [n t]
+        keep cscape [n t {TYPE_${T/NAME} = $<n>}]
         n: n + 1
     ]
 ]
 
-for-each-record t type-table [
-
-]
-
-e-types/emit {
+e-types/emit [{
     /*
      * INTERNAL DATATYPE CONSTANTS, e.g. TYPE_BLOCK or TYPE_TAG
      *
@@ -408,10 +405,9 @@ e-types/emit {
      * intended to be read.
      */
     #define TYPE_255_UNREADABLE  255
-} ;-- weird close brace thing needed to pair braces inside string literal
-e-types/emit newline
+}]  ;-- weird close brace thing needed to pair braces inside string literal
 
-e-types/emit {
+e-types/emit [{
     /*
      * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
      *
@@ -419,17 +415,15 @@ e-types/emit {
      * than VAL_TYPE_RAW() in the debug build.  In some commonly called
      * routines, it may be worth it to use the less checked version.
      */
-}
-e-types/emit newline
+}]
 
 boot-types: copy []
 n: 1
 for-each-record t type-table [
-    e-types/emit 't {
+    e-types/emit [t {
         #define Is_${Propercase-Of T/Name}(v) \
             (Type_Of(v) == TYPE_${T/NAME}) /* $<n> */
-    }
-    e-types/emit newline
+    }]
 
     append boot-types to-word append form t/name "!"
     n: n + 1
@@ -476,12 +470,12 @@ remove/part typeset-sets 2 ; the - markers
 for-each [ts types] typeset-sets [
     flagits: collect [
         for-each t types [
-            keep cscape/with {FLAGIT_KIND(TYPE_${T})} 't
+            keep cscape [t {FLAGIT_KIND(TYPE_${T})}]
         ]
     ]
-    e-types/emit [flagits ts] {
+    e-types/emit [flagits ts {
         #define TS_${TS} ($<Delimit "|" Flagits>)
-    } ;-- !!! TS_ANY_XXX is wordy, considering TS_XXX denotes a typeset
+    }]  ;-- !!! TS_ANY_XXX is wordy, considering TS_XXX denotes a typeset
 ]
 
 e-types/write-emitted
@@ -496,7 +490,7 @@ e-types/write-emitted
 e-version: make-emitter "Version Information" inc/tmp-version.h
 
 
-e-version/emit {
+e-version/emit [{
     /*
     ** VERSION INFORMATION
     **
@@ -509,8 +503,7 @@ e-version/emit {
     #define REBOL_UPD $<version/3>
     #define REBOL_SYS $<version/4>
     #define REBOL_VAR $<version/5>
-}
-e-version/emit newline
+}]
 e-version/write-emitted
 
 
@@ -581,23 +574,23 @@ make-obj-defs: function [
         either selfless [
             n: 1
         ][
-            keep cscape/with {${PREFIX}_SELF = 1} [prefix]
+            keep cscape [prefix {${PREFIX}_SELF = 1}]
             n: 2
         ]
 
         for-each field words-of obj [
-            keep cscape/with {${PREFIX}_${FIELD} = $<n>} [prefix field n]
+            keep cscape [prefix field n {${PREFIX}_${FIELD} = $<n>}]
             n: n + 1
         ]
 
-        keep cscape/with {${PREFIX}_MAX} [prefix]
+        keep cscape [prefix {${PREFIX}_MAX}]
     ]
 
-    e/emit [prefix items] {
+    e/emit [prefix items {
         enum ${PREFIX}_object {
             $(Items),
         };
-    }
+    }]
 
     if depth > 1 [
         for-each field words-of obj [
@@ -642,7 +635,7 @@ fields: collect [
         either word = 'near [
             keep {/* near/far are old C keywords */ Cell nearest}
         ][
-            keep cscape/with {Cell ${word}} 'word
+            keep cscape [word {Cell ${word}}]
         ]
     ]
 ]
@@ -716,15 +709,14 @@ for-each [sw-cat list] boot-errors [
             ]
         ]
 
-        e-errfuncs/emit [message cat id f-name params args] {
+        e-errfuncs/emit [message cat id f-name params args {
             /* $<Mold Message> */
             INLINE Error* Error_${F-Name}_Raw($<Delimit ", " Params>) {
                 return Make_Error_Managed(
                     SYM_${CAT}, SYM_${ID}, $<Delimit ", " Args>
                 );
             }
-        }
-        e-errfuncs/emit newline
+        }]
     ]
 ]
 
@@ -801,7 +793,7 @@ boot-natives: load boot/tmp-natives.r
 nats: collect [
     for-each val boot-natives [
         if set-word? val [
-            keep cscape/with {N_${TO WORD! VAL}} 'val
+            keep cscape [val {N_${TO WORD! VAL}}]
         ]
     ]
 ]
@@ -867,8 +859,9 @@ nat-index: 0
 nids: collect [
     for-each val boot-natives [
         if set-word? val [
-            keep cscape/with
-                {N_${TO WORD! VAL}_ID = $<nat-index>} [nat-index val]
+            keep cscape [nat-index val
+                {N_${TO WORD! VAL}_ID = $<nat-index>}
+            ]
             nat-index: nat-index + 1
         ]
     ]
@@ -878,7 +871,7 @@ fields: collect [
     for-each word sections [
         word: form word
         remove/part word 5 ; boot_
-        keep cscape/with {Cell ${word}} 'word
+        keep cscape [word {Cell ${word}}]
     ]
 ]
 

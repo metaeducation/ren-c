@@ -236,7 +236,7 @@ names: collect [
     for-each item native-list [
         if set-word? item [
             item: to word! item
-            keep cscape/with {N_${MOD}_${ITEM}} 'item
+            keep cscape [item {N_${MOD}_${ITEM}}]
         ]
     ]
 ]
@@ -245,20 +245,19 @@ native-forward-decls: collect [
     for-each item native-list [
         if set-word? item [
             item: to word! item
-            keep cscape/with {DECLARE_NATIVE(${ITEM})} 'item
+            keep cscape [item {DECLARE_NATIVE(${ITEM})}]
         ]
     ]
 ]
 
 
-e1/emit {
+e1/emit [{
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
 
     /*
     ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), Bool_ARG(), ARG()
     */
-}
-e1/emit newline
+}]
 
 iterate native-list [
     if native-list/1 = 'export [native-list: next native-list]
@@ -276,7 +275,7 @@ iterate native-list [
 ]
 
 
-e1/emit {
+e1/emit [{
     /*
      * Redefine DECLARE_NATIVE macro locally to include extension name.
      * This avoids name collisions with the core, or with other extensions.
@@ -289,8 +288,7 @@ e1/emit {
      * Forward-declare DECLARE_NATIVE() dispatcher prototypes
      */
     $[Native-Forward-Decls];
-}
-e1/emit newline
+}]
 
 e1/write-emitted
 

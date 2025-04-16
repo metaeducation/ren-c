@@ -57,7 +57,7 @@ write-c-file: function [
 
     compressed: gzip data
 
-    e/emit 'compressed {
+    e/emit [compressed {
         /*
          * Gzip compression of host initialization code
          * Originally $<length of data> bytes
@@ -66,7 +66,7 @@ write-c-file: function [
         const unsigned char Reb_Init_Code[REB_INIT_SIZE] = {
             $<Binary-To-C Compressed>
         };
-    }
+    }]
 
     e/write-emitted
 ]

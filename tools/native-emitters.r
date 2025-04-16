@@ -84,19 +84,22 @@ emit-include-params-macro: function [
 
             param-name: copy as text! item
             either refinement? item [
-                keep cscape/with {DECLARE_REFINE($<n>, ${PARAM-NAME})} [n param-name]
+                keep cscape [n param-name
+                    {DECLARE_REFINE($<n>, ${PARAM-NAME})}
+                ]
             ][
-                keep cscape/with {DECLARE_PARAM($<n>, ${PARAM-NAME})} [n param-name]
+                keep cscape [n param-name
+                    {DECLARE_PARAM($<n>, ${PARAM-NAME})}
+                ]
             ]
             n: n + 1
         ]
     ]
 
     prefix: either ext [unspaced [ext-name "_"]] [""]
-    e/emit [prefix word items] {
+    e/emit [prefix word items {
         #define $<PREFIX>INCLUDE_PARAMS_OF_${WORD} \
             $[Items]; \
             Enter_Native(level_);
-    }
-    e/emit newline
+    }]
 ]

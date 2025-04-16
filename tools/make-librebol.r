@@ -151,9 +151,7 @@ process src-dir/a-lib.c
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 extern-prototypes: map-each-api [
-    cscape/with
-        <- {$<Proto>}
-        <- api
+    cscape [:api {$<Proto>}]
 ]
 
 direct-call-inlines: make block! length of api-objects
@@ -208,7 +206,7 @@ for-each api api-objects [eval in api [
         return: [text!]
         internal [text!]
     ][
-        cscape/with {
+        cscape [:api internal {
             $<OPT-NORETURN>
             inline static $<Returns> $<Name>_inline($<Wrapper-Params>) {
                 $<Enter>
@@ -216,7 +214,7 @@ for-each api api-objects [eval in api [
                 $<opt-return> $<Internal>($<Proxied-Args>);
                 $<OPT-DEAD-END>
             }
-        } reduce [api 'internal]
+        }]
     ]
 
     append direct-call-inlines make-inline-proxy unspaced ["API_" name]
@@ -224,13 +222,13 @@ for-each api api-objects [eval in api [
 
 c99-or-c++11-macros: map-each-api [
     if find paramlist 'vaptr [
-        cscape/with
-            <- {#define $<Name>(...) $<Name>_inline(__VA_ARGS__, rebEND)}
-            <- api
+        cscape [:api
+            {#define $<Name>(...) $<Name>_inline(__VA_ARGS__, rebEND)}
+        ]
     ] else [
-        cscape/with
-            <- {#define $<Name> $<Name>_inline}
-            <- api
+        cscape [:api
+            {#define $<Name> $<Name>_inline}
+        ]
     ]
 ]
 
