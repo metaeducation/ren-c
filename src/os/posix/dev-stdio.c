@@ -55,7 +55,7 @@ typedef struct term_data {
     int hist;
 } STD_TERM;
 
-extern STD_TERM *Init_Terminal();
+extern STD_TERM *Init_Terminal(void);
 extern void Quit_Terminal(STD_TERM*);
 extern int Read_Line(STD_TERM*, unsigned char*, int);
 

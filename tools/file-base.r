@@ -169,6 +169,7 @@ core: [
         <no-constant-conditional>
 
         <clang:-Wno-unused-const-variable>
+        <clang:-Wno-strict-prototypes>  ; in C mode, has () instead of (void)
 
         ; Zlib is an active project so it would be worth it to check to see
         ; if minor patches for suverting Spectre mitigation would be taken.

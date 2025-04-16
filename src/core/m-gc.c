@@ -125,10 +125,6 @@ INLINE void Mark_Stub_Only(Stub* s)
     s->leader.bits |= NODE_FLAG_MARKED; // may be already set
 }
 
-INLINE void Unmark_Stub(Stub* s) {
-    s->leader.bits &= ~NODE_FLAG_MARKED;
-}
-
 
 //
 //  Queue_Mark_Array_Subclass_Deep: C
@@ -247,27 +243,6 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
 
     if (binding->leader.bits & NODE_FLAG_MANAGED)
         Queue_Mark_Array_Subclass_Deep(cast_Array(binding));
-}
-
-// A singular array, if you know it to be singular, can be marked a little
-// faster by avoiding a queue step for the array node or walk.
-//
-INLINE void Queue_Mark_Singular_Array(Array* a) {
-    assert(
-        0 == (a->leader.bits & (
-            ARRAY_FLAG_IS_VARLIST | ARRAY_FLAG_IS_PAIRLIST | ARRAY_FLAG_IS_PARAMLIST
-            | ARRAY_FLAG_HAS_FILE_LINE
-        ))
-    );
-
-    assert(not Is_Flex_Dynamic(a));
-
-    // While it would be tempting to just go ahead and try to queue the
-    // ARR_SINGLE() value here, that could keep recursing if that value had
-    // further singular array values to mark.  It's really no different for
-    // an array with one value than with many.
-    //
-    Queue_Mark_Array_Subclass_Deep(a);
 }
 
 

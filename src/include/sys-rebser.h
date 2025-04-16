@@ -918,8 +918,6 @@ struct StubStruct {
 
 //=//// FLEX SUBCLASSES ///////////////////////////////////////////////////=//
 
-typedef struct StubStruct Flex;
-
 #if CPLUSPLUS_11
     struct Binary : public Flex {};
     struct String : public Flex {};  // derives from Binary in main branch
@@ -933,17 +931,8 @@ typedef struct StubStruct Flex;
     struct REBACT : public Stub {};
     struct REBMAP : public Stub {};
 #else
-    typedef Flex Binary;
-    typedef Flex String;
-    typedef Flex Symbol;
-
-    typedef Flex Array;
-
-    typedef Flex VarList;
-    typedef Flex Error;
-
-    typedef Flex REBACT;
-    typedef Flex REBMAP;
+    // see typedefs in %reb-defs.h
+    // (this is all much cleaner in main branch!)
 #endif
 
 

@@ -1429,7 +1429,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     res.start = VAL_INDEX(res.data);
 
-    MolderStruct mold_struct;
+    Molder molder;
     if (Any_List(res.data)) {
         //
         // We're going to use NODE_FLAG_MARKED on the elements of data's
@@ -1457,8 +1457,8 @@ DECLARE_NATIVE(REMOVE_EACH)
         // stacks already exists and the mold buffer is "hot", so it's not
         // necessarily *that* wasteful in the scheme of things.
         //
-        CLEARS(&mold_struct);
-        res.mo = &mold_struct;
+        CLEARS(&molder);
+        res.mo = &molder;
         Push_Mold(res.mo);
     }
 

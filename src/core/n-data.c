@@ -558,7 +558,7 @@ DECLARE_NATIVE(GET_P)
 //
 //  Set_Opt_Polymorphic_May_Fail: C
 //
-INLINE void Set_Opt_Polymorphic_May_Fail(
+static void Set_Opt_Polymorphic_May_Fail(
     const Cell* target,
     Specifier* target_specifier,
     const Cell* value,

@@ -99,7 +99,7 @@ INLINE Value* Data_Stack_At(StackIndex i) {
 
 // Note: DS_Movable_Top is TOP, but it asserts on ENDs...
 //
-INLINE Value* PUSH() {
+INLINE Value* PUSH(void) {
     ++DS_Index;
     ++DS_Movable_Top;
 

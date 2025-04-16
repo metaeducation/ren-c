@@ -619,74 +619,9 @@ clang++: make cc [
 ]
 
 
-tcc: make compiler-class [
+tcc: make cc [
     name: 'tcc
     id: "tcc"
-
-    compile: method [
-        return: [text!]
-        output [file!]
-        source [file!]
-        /E {Preprocess}
-        /I includes
-        /D definitions
-        /F cflags
-        /O opt-level
-        /g debug
-        /PIC
-    ][
-        collect-text [
-            keep ("tcc" unless file-to-local/pass exec-file)
-            keep either E ["-E"]["-c"]
-
-            if PIC [keep "-fPIC"]
-            if I [
-                for-each inc (map-files-to-local includes) [
-                    keep ["-I" inc]
-                ]
-            ]
-            if D [
-                for-each flg definitions [
-                    keep ["-D" (filter-flag flg id else [continue])]
-                ]
-            ]
-            if O [
-                case [
-                    opt-level = true [keep "-O2"]
-                    opt-level = false [keep "-O0"]
-                    integer? opt-level [keep ["-O" opt-level]]
-
-                    fail ["unknown optimization level" opt-level]
-                ]
-            ]
-            if g [
-                case [
-                    debug = true [keep "-g"]
-                    debug = false []
-                    integer? debug [keep ["-g" debug]]
-
-                    fail ["unrecognized debug option:" debug]
-                ]
-            ]
-            if F [
-                for-each flg cflags [
-                    keep maybe- filter-flag flg id
-                ]
-            ]
-
-            keep "-o"
-
-            output: file-to-local output
-
-            if (E or [ends-with? output target-platform/obj-suffix]) [
-                keep output
-            ] else [
-                keep [output target-platform/obj-suffix]
-            ]
-
-            keep file-to-local source
-        ]
-    ]
 ]
 
 

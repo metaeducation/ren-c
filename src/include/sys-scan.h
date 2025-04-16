@@ -240,7 +240,7 @@ enum rebol_esc_codes {
 **  Scanner State Structure
 */
 
-struct TranscodeStateStruct {
+typedef struct {
     //
     // If vaptr is nullptr, then it's assumed that the `at` is the source of
     // the UTF-8 data to scan.  Otherwise, it is a variadic feed of UTF-8
@@ -267,12 +267,10 @@ struct TranscodeStateStruct {
     struct Reb_Binder *binder;
     VarList* lib; // does not expand, has negative indices in binder
     VarList* context; // expands, has positive indices in binder
-};
-
-typedef TranscodeStateStruct TranscodeState;
+} TranscodeState;
 
 
-struct ScanStateStruct {
+typedef struct {
     TranscodeState* ss;
 
     StackIndex stack_base;
@@ -303,9 +301,7 @@ struct ScanStateStruct {
 
     const Byte* begin;
     const Byte* end;
-};
-
-typedef struct ScanStateStruct ScanState;
+} ScanState;
 
 
 #define ANY_CR_LF_END(c) ((c) == '\0' or (c) == CR or (c) == LF)

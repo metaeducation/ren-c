@@ -870,7 +870,7 @@ bool Eval_Core_Throws(Level* const L)
                 Value* ordered = TOP;
                 Symbol* param_canon = Cell_Param_Canon(L->param); // #2258
 
-                if (L->special == L->param) // acquire all args at callsite
+                if (In_Unspecialized_Mode(L)) // acquire all args at callsite
                     goto unspecialized_refinement; // most common case
 
                 // All tests below are on special, but if L->special is not
