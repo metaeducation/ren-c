@@ -166,7 +166,7 @@ else [
         %async.c
         %core.c
         %dl.c
-        %fs.c
+        [%fs.c <gcc:-Wno-unused-variable>]  ; "r" unused in Haiku builds
         %getaddrinfo.c
         %getnameinfo.c
         %loop-watcher.c
@@ -364,13 +364,15 @@ if os = 'QNX [
 
 === "TRANSFORM PATHS FOR SOURCES TO FULL PATHS AND DISABLE WARNINGS" ===
 
-uv-depends: map-each 'tuple uv-sources [  ; WORD! in bootstrap
+uv-depends: map-each 'item uv-sources [  ; WORD! in bootstrap
+    let file: ensure file! either block? item [item.1] [item]
+    let flags: either block? item [next item] [null]
     file: if os = 'Windows [
-        join %libuv/src/win/ tuple
+        join %libuv/src/win/ file
     ] else [
-        join %libuv/src/unix/ tuple
+        join %libuv/src/unix/ file
     ]
-    compose [(file) #no-c++ (spread uv-nowarn)]
+    compose [(file) #no-c++ (spread uv-nowarn) (maybe spread flags)]
 ]
 
 append uv-depends spread map-each 'tuple [  ; WORD! in bootstrap
