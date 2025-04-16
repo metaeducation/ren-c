@@ -334,7 +334,7 @@ if os = 'Sun [
 if os = 'Haiku [
     append definitions spread [_BSD_SOURCE]
     append uv-sources spread [
-        [%haiku.c <gcc:-Wno-incompatible-pointer-types>]
+        %haiku.c
         %bsd-ifaddrs.c
         %no-fsevents.c
         %no-proctitle.c
