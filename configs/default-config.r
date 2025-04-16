@@ -26,15 +26,8 @@ extensions: make map! [
 
 rebol-tool: _ ; fallback value if system/options/boot fails
 
-; possible combination:
-; [gcc _ ld _]
-; [cl _ link _]
-toolset: [
-    ;name executable-file-path (_ being default)
-    gcc _
-    ld _
-    strip _
-]
+compiler: _
+compiler-path: _
 
 ;one of 'none', 'assert', 'symbols' or 'sanitize'
 debug: 'none

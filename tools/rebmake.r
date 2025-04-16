@@ -43,7 +43,6 @@ REBOL [
 rebmake: make object! [ ;-- hack to workaround lack of Type: 'module
 
 default-compiler: _
-default-linker: _
 default-strip: _
 target-platform: _
 
@@ -280,17 +279,12 @@ application-class: make project-class [
     type: 'application
     generated?: false
 
-    linker: _
     searches: _
     ldflags: _
 
-    link: method [return: [~]] [
-        linker/link output depends ldflags
-    ]
-
     command: method [return: [text!]] [
-        ld: linker or [default-linker]
-        ld/command
+        cc: compiler or [default-compiler]
+        cc/link
             output
             depends
             searches
@@ -303,21 +297,17 @@ dynamic-library-class: make project-class [
     class: #dynamic-library
     type: 'dynamic
     generated?: false
-    linker: _
 
     searches: _
     ldflags: _
-    link: method [return: [~]] [
-        linker/link output depends ldflags
-    ]
 
     command: method [
         return: [text!]
         <with>
-        default-linker
+        default-compiler
     ][
-        l: linker or [default-linker]
-        l/command/dynamic
+        cc: compiler or [default-compiler]
+        cc/link/dynamic
             output
             depends
             searches
@@ -341,6 +331,15 @@ compiler-class: make object! [
     id: _ ;flag prefix
     version: _
     exec-file: _
+
+    ;check if the compiler is available
+    check: method [
+        return: [~]
+        exec [blank! file! text!]
+    ][
+        fail "archetype check"
+    ]
+
     compile: method [
         return: [~]
         output [file!]
@@ -349,58 +348,70 @@ compiler-class: make object! [
         definition [any-string!]
         cflags [any-string!]
     ][
+        fail "archetype compile"
     ]
 
-    command: method [
+    link: method [
         return: [text!]
-        output
-        source
-        includes
-        definitions
-        cflags
+        output [file!]
+        depends [block! blank!]
+        searches [block! blank!]
+        ldflags [block! any-string! blank!]
+        /dynamic
     ][
+        fail "archetype link"
     ]
-    ;check if the compiler is available
-    check: method [
-        return: [logic!]
-        path [<maybe> any-string!]
+
+    accept: method [
+        return: [~null~ text!]
+        dep [object!]
     ][
+        fail "archetype link"
     ]
 ]
 
-gcc: make compiler-class [
-    name: 'gcc
-    id: "gnu"
+cc: make compiler-class [
+    name: 'cc
+    id: _
+
     check: method [
-        return: [logic!]
-        /exec path [file!]
+        return: [~]
+        exec [blank! file! text!]
         <static>
         digit (charset "0123456789")
     ][
-        version: copy ""
-        sys/util/rescue [
-            exec-file: path: default ["gcc"]
-            call/output reduce [path "--version"] version
-            parse2/match version [
-                {gcc (GCC)} space
-                copy major: some digit #"."
-                copy minor: some digit #"."
-                copy macro: some digit
-                to end
-            ] then [
-                version: reduce [ ;; !!!! It appears this is not used (?)
-                    to integer! major
-                    to integer! minor
-                    to integer! macro
+        exec-file: any [
+            exec
+            exec-file
+            to file! name
+        ]
+
+        comment [
+            version: copy ""
+            sys/util/rescue [
+                exec-file: path: default ["gcc"]
+                call/output reduce [path "--version"] version
+                parse2/match version [
+                    {gcc (GCC)} space
+                    copy major: some digit #"."
+                    copy minor: some digit #"."
+                    copy macro: some digit
+                    to end
+                ] then [
+                    version: reduce [ ;; !!!! It appears this is not used (?)
+                        to integer! major
+                        to integer! minor
+                        to integer! macro
+                    ]
+                    true
+                ] else [
+                    false
                 ]
-                true
-            ] else [
-                false
             ]
         ]
     ]
 
-    command: method [
+    compile: method [
         return: [text!]
         output [file!]
         source [file!]
@@ -438,9 +449,7 @@ gcc: make compiler-class [
                     ; This is a stopgap workaround that ultimately would
                     ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
                     ;
-                    if find [gcc g++ cl] name [
-                        flg: replace copy flg {"} {\"}
-                    ]
+                    flg: replace copy flg {"} {\"}
 
                     keep ["-D" (filter-flag flg id else [continue])]
                 ]
@@ -485,21 +494,133 @@ gcc: make compiler-class [
             keep file-to-local source
         ]
     ]
+
+    link: method [
+        return: [text!]
+        output [file!]
+        depends [block! blank!]
+        searches [block! blank!]
+        ldflags [block! any-string! blank!]
+        /debug
+        /dynamic
+    ][
+        suffix: either dynamic [
+            target-platform/dll-suffix
+        ][
+            target-platform/exe-suffix
+        ]
+
+        collect-text [
+            keep file-to-local/pass exec-file  ; gcc, g++, clang, tcc, etc...
+
+            if debug [keep "-g"]
+
+            if dynamic [keep "-shared"]
+
+            keep "-o"
+
+            output: file-to-local output
+            either ends-with? output suffix [
+                keep output
+            ][
+                keep [output suffix]
+            ]
+
+            for-each search (map-files-to-local searches) [
+                keep ["-L" search]
+            ]
+
+            for-each flg ldflags [
+                keep maybe- filter-flag flg id
+            ]
+
+            for-each dep depends [
+                keep accept dep
+            ]
+        ]
+    ]
+
+    accept: method [
+        return: [~null~ text!]
+        dep [object!]
+    ][
+        return degrade switch dep/class [
+            #object-file [
+                comment [ ;-- !!! This was commented out, why?
+                    if find words-of dep 'depends [
+                        for-each ddep dep/depends [
+                            dump ddep
+                        ]
+                    ]
+                ]
+                file-to-local dep/output
+            ]
+            #dynamic-extension [
+                either tag? dep/output [
+                    if lib: filter-flag dep/output id [
+                        unspaced ["-l" lib]
+                    ]
+                    else [
+                        reify null
+                    ]
+                ][
+                    unspaced [
+                        if find dep/flags 'static ["-static "]
+                        "-l" dep/output
+                    ]
+                ]
+            ]
+            #static-extension [
+                file-to-local dep/output
+            ]
+            #object-library [
+                spaced map-each ddep dep/depends [
+                    file-to-local ddep/output
+                ]
+            ]
+            #application [
+                '~null~
+            ]
+            #variable [
+                '~null~
+            ]
+            #entry [
+                '~null~
+            ]
+            default [
+                dump dep
+                fail "unrecognized dependency"
+            ]
+        ]
+    ]
 ]
+
+gcc: make cc [
+    name: 'gcc
+    id: "gnu"
+]
+
+g++: make cc [
+    name: 'g++
+    id: "gnu"
+]
+
+clang: make cc [
+    name: 'clang
+    id: "clang"
+]
+
+clang++: make cc [
+    name: 'clang++
+    id: "clang"
+]
+
 
 tcc: make compiler-class [
     name: 'tcc
     id: "tcc"
 
-    ;; Note: For the initial implementation of user natives, TCC has to be run
-    ;; as a preprocessor for %sys-core.h, to expand its complicated inclusions
-    ;; into a single file which could be embedded into the executable.  The
-    ;; new plan is to only allow "rebol.h" in user natives, which would mean
-    ;; that TCC would not need to be run during the make process.  However,
-    ;; for the moment TCC is run to do this preprocessing even when it is not
-    ;; the compiler being used for the actual build of the interpreter.
-    ;;
-    command: method [
+    compile: method [
         return: [text!]
         output [file!]
         source [file!]
@@ -565,15 +686,21 @@ tcc: make compiler-class [
     ]
 ]
 
-clang: make gcc [
-    name: 'clang
-]
 
 ; Microsoft CL compiler
 cl: make compiler-class [
     name: 'cl
     id: "msc" ;flag id
-    command: method [
+    exec-file: %cl.exe
+
+    check: method [
+        return: [~]
+        exec [blank! file! text!]
+    ][
+        exec-file: any [exec exec-file]
+    ]
+
+    compile: method [
         return: [text!]
         output [file!]
         source
@@ -586,7 +713,7 @@ cl: make compiler-class [
         /E
     ][
         collect-text [
-            keep ("cl" unless file-to-local/pass exec-file)
+            keep file-to-local/pass exec-file
             keep "/nologo" ; don't show startup banner
             keep either E ["/P"]["/c"]
 
@@ -658,46 +785,14 @@ cl: make compiler-class [
             keep file-to-local/pass source
         ]
     ]
-]
 
-linker-class: make object! [
-    class: #linker
-    name: _
-    id: _ ;flag prefix
-    version: _
-    link: method [][
-        return: [~]
-    ]
-    commands: method [
-        return: [~null~ block!]
-        output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
-    ][
-        ... ;-- overridden
-    ]
-    check: does [
-        ... ;-- overridden
-    ]
-]
-
-ld: make linker-class [
-    ;;
-    ;; Note that `gcc` is used as the ld executable by default.  There are
-    ;; some switches (such as -m32) which it seems `ld` does not recognize,
-    ;; even when processing a similar looking link line.
-    ;;
-    name: 'ld
-    version: _
-    exec-file: _
-    id: "gnu"
-    command: method [
+    link: method [
         return: [text!]
         output [file!]
         depends [block! blank!]
         searches [block! blank!]
         ldflags [block! any-string! blank!]
+        /debug
         /dynamic
     ][
         suffix: either dynamic [
@@ -706,222 +801,45 @@ ld: make linker-class [
             target-platform/exe-suffix
         ]
         collect-text [
-            keep ("gcc" unless file-to-local/pass exec-file)
+            keep file-to-local/pass exec-file  ; cl.exe
 
-            if dynamic [keep "-shared"]
+            keep "/nologo"  ; link.exe takes uppercase, cl.exe lowercase!
 
-            keep "-o"
-
-            output: file-to-local output
-            either ends-with? output suffix [
-                keep output
-            ][
-                keep [output suffix]
-            ]
-
-            for-each search (map-files-to-local searches) [
-                keep ["-L" search]
-            ]
-
-            for-each flg ldflags [
-                keep maybe- filter-flag flg id
-            ]
-
-            for-each dep depends [
-                keep accept dep
-            ]
-        ]
-    ]
-
-    accept: method [
-        return: [~null~ text!]
-        dep [object!]
-    ][
-        degrade switch dep/class [
-            #object-file [
-                comment [ ;-- !!! This was commented out, why?
-                    if find words-of dep 'depends [
-                        for-each ddep dep/depends [
-                            dump ddep
-                        ]
-                    ]
-                ]
-                file-to-local dep/output
-            ]
-            #dynamic-extension [
-                either tag? dep/output [
-                    if lib: filter-flag dep/output id [
-                        unspaced ["-l" lib]
-                    ]
-                ][
-                    unspaced [
-                        if find dep/flags 'static ["-static "]
-                        "-l" dep/output
-                    ]
-                ]
-            ]
-            #static-extension [
-                file-to-local dep/output
-            ]
-            #object-library [
-                spaced map-each ddep dep/depends [
-                    file-to-local ddep/output
-                ]
-            ]
-            #application [
-                '~null~
-            ]
-            #variable [
-                '~null~
-            ]
-            #entry [
-                '~null~
-            ]
-            default [
-                dump dep
-                fail "unrecognized dependency"
-            ]
-        ]
-    ]
-
-    check: method [
-        return: [logic!]
-        /exec path [file!]
-    ][
-        version: copy ""
-        exec-file: path: default ["gcc"]
-        call/output reduce [path "--version"] version
-    ]
-]
-
-llvm-link: make linker-class [
-    name: 'llvm-link
-    version: _
-    exec-file: _
-    id: "llvm"
-    command: method [
-        return: [text!]
-        output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
-        /dynamic
-    ][
-        suffix: either dynamic [
-            target-platform/dll-suffix
-        ][
-            target-platform/exe-suffix
-        ]
-
-        collect-text [
-            keep ("llvm-link" unless file-to-local/pass exec-file)
-
-            keep "-o"
-
-            output: file-to-local output
-            either ends-with? output suffix [
-                keep output
-            ][
-                keep [output suffix]
-            ]
-
-            ; llvm-link doesn't seem to deal with libraries
-            comment [
-                for-each search (map-files-to-local searches) [
-                    keep ["-L" search]
-                ]
-            ]
-
-            for-each flg ldflags [
-                keep maybe- filter-flag flg id
-            ]
-
-            for-each dep depends [
-                keep accept dep
-            ]
-        ]
-    ]
-
-    accept: method [
-        return: [~null~ text!]
-        dep [object!]
-    ][
-        degrade switch dep/class [
-            #object-file [
-                file-to-local dep/output
-            ]
-            #dynamic-extension [
-                '~null~
-            ]
-            #static-extension [
-                '~null~
-            ]
-            #object-library [
-                spaced map-each ddep dep/depends [
-                    file-to-local ddep/output
-                ]
-            ]
-            #application [
-                '~null~
-            ]
-            #variable [
-                '~null~
-            ]
-            #entry [
-                '~null~
-            ]
-            default [
-                dump dep
-                fail "unrecognized dependency"
-            ]
-        ]
-    ]
-]
-
-; Microsoft linker
-link: make linker-class [
-    name: 'link
-    id: "msc"
-    version: _
-    exec-file: _
-    command: method [
-        return: [text!]
-        output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
-        /dynamic
-    ][
-        suffix: either dynamic [
-            target-platform/dll-suffix
-        ][
-            target-platform/exe-suffix
-        ]
-        collect-text [
-            keep (file-to-local/pass exec-file else [{link}])
-            keep "/NOLOGO"
-            if dynamic [keep "/DLL"]
-
+            ; link.exe takes e.g. `/OUT:r3.exe`, the cl.exe takes `/Fer3`
+            ;
             output: file-to-local output
             keep [
-                "/OUT:" either ends-with? output suffix [
+                "/Fe" either ends-with? output suffix [
                     output
                 ][
                     unspaced [output suffix]
                 ]
             ]
 
+            for-each dep depends [
+                keep maybe- accept dep
+            ]
+
+            ; /link must precede linker-specific options
+            ; it also must be lowercase!s
+            ;
+            keep "/link"
+
+            if dynamic [keep "/dll"]
+
+            ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
+            ; /DEBUG must be uppercase when passed to cl.exe
+            ;
+            if debug [keep "/DEBUG"]
+
             for-each search (map-files-to-local searches) [
-                keep ["/LIBPATH:" search]
+                keep ["/libpath:" search]
             ]
 
             for-each flg ldflags [
                 keep maybe- filter-flag flg id
             ]
 
-            for-each dep depends [
-                keep maybe- accept dep
-            ]
         ]
     ]
 
@@ -929,7 +847,7 @@ link: make linker-class [
         return: [~null~ text!]
         dep [object!]
     ][
-        degrade switch dep/class [
+        return degrade switch dep/class [
             #object-file [
                 file-to-local to-file dep/output
             ]
@@ -972,6 +890,7 @@ link: make linker-class [
     ]
 ]
 
+
 strip-class: make object! [
     class: #strip
     name: _
@@ -1001,7 +920,7 @@ strip-class: make object! [
     ]
 ]
 
-strip: make strip-class [
+strip: make strip-class [  ; options were [<gnu:-S> <gnu:-x> <gnu:-X>] ?
     id: "gnu"
 ]
 
@@ -1020,11 +939,7 @@ object-file-class: make object! [
     generated?: false
     depends: _
 
-    compile: method [return: [~]] [
-        compiler/compile
-    ]
-
-    command: method [
+    compile: method [
         return: [text!]
         /I ex-includes
         /D ex-definitions
@@ -1035,7 +950,7 @@ object-file-class: make object! [
         /E {only preprocessing}
     ][
         cc: any [compiler default-compiler]
-        cc/command/I/D/F/O/g/(maybe+ PIC)/(maybe+ E) output source
+        cc/compile/I/D/F/O/g/(maybe+ PIC)/(maybe+ E) output source
             <- compose [(maybe- includes) (if I [ex-includes])]
             <- compose [(maybe- definitions) (if D [ex-definitions])]
             <- compose [(if F [ex-cflags]) (maybe- cflags)] ;; ex-cflags override
@@ -1063,7 +978,7 @@ object-file-class: make object! [
         make entry-class [
             target: output
             depends: append-of either depends [depends][[]] source
-            commands: reduce [command/I/D/F/O/g/(
+            commands: reduce [compile/I/D/F/O/g/(
                 maybe+ all [PIC or [parent/class = #dynamic-library] 'PIC]
             )
                 maybe- parent/includes

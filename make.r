@@ -379,79 +379,14 @@ set-exec-path: func [
     ]
 ]
 
-parse2 user-config/toolset [
-    opt some [
-        'gcc opt set cc-exec [file! | blank!] (
-            rebmake/default-compiler: rebmake/gcc
-        )
-        | 'clang opt set cc-exec [file! | blank!] (
-            rebmake/default-compiler: rebmake/clang
-        )
-        | 'cl opt set cc-exec [file! | blank!] (
-            rebmake/default-compiler: rebmake/cl
-        )
-        | 'ld opt set linker-exec [file! | blank!] (
-            rebmake/default-linker: rebmake/ld
-        )
-        | 'llvm-link opt set linker-exec [file! | blank!] (
-            rebmake/default-linker: rebmake/llvm-link
-        )
-        | 'link opt set linker-exec [file! | blank!] (
-            rebmake/default-linker: rebmake/link
-        )
-        | 'strip opt set strip-exec [file! | blank!] (
-            rebmake/default-strip: rebmake/strip
-            rebmake/default-strip/options: [<gnu:-S> <gnu:-x> <gnu:-X>]
-            if all [set? 'strip-exec strip-exec][
-                set-exec-path rebmake/default-strip strip-exec
-            ]
-        )
-        | pos: (
-            if not tail? pos [fail ["failed to parset toolset at:" mold pos]]
-        )
-    ]
-]
-
-; sanity checking the compiler and linker
+user-config/compiler: default ['cc]
+probe user-config/compiler
+rebmake/default-compiler: rebmake/(user-config/compiler)
 
 rebmake/default-compiler: default [fail "Compiler is not set"]
-rebmake/default-linker: default [fail "Default linker is not set"]
 
-switch rebmake/default-compiler/name [
-    'gcc [
-        if rebmake/default-linker/name != 'ld [
-            fail [
-                "Incompatible compiler (GCC) and linker:"
-                    rebmake/default-linker/name
-            ]
-        ]
-    ]
-    'clang [
-        if not find [ld llvm-link] rebmake/default-linker/name [
-            fail [
-                "Incompatible compiler (CLANG) and linker:"
-                rebmake/default-linker/name
-            ]
-        ]
-    ]
-    'cl [
-        if rebmake/default-linker/name != 'link [
-            fail [
-                "Incompatible compiler (CL) and linker:"
-                rebmake/default-linker/name
-            ]
-        ]
-    ]
+rebmake/default-compiler/check user-config/compiler-path
 
-    fail ["Unrecognized compiler (gcc, clang or cl):" cc]
-]
-
-all [set? 'cc-exec  cc-exec] then [
-    set-exec-path rebmake/default-compiler cc-exec
-]
-all [set? 'linker-exec  linker-exec] then [
-    set-exec-path rebmake/default-linker linker-exec
-]
 
 app-config: make object! [
     cflags: make block! 8
