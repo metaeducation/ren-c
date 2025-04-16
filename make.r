@@ -182,20 +182,20 @@ gen-obj: func [
             append flags degrade switch flag [
                 <no-uninitialized> [
                     [
-                        <gnu:-Wno-uninitialized>
+                        <gcc:-Wno-uninitialized>
 
                         ;-Wno-unknown-warning seems to only modify the
                         ; immediately following option
                         ;
                         ;<gnu:-Wno-unknown-warning>
-                        ;<gnu:-Wno-maybe-uninitialized>
+                        ;<gcc:-Wno-maybe-uninitialized>
 
                         <msc:/wd4701> <msc:/wd4703>
                     ]
                 ]
                 <no-sign-compare> [
                     [
-                        <gnu:-Wno-sign-compare>
+                        <gcc:-Wno-sign-compare>
                         <msc:/wd4388>
                         <msc:/wd4018>  ; a 32-bit variant of the error
                     ]
@@ -203,15 +203,15 @@ gen-obj: func [
                 <implicit-fallthru> [
                     [
                         <gnu:-Wno-unknown-warning>
-                        <gnu:-Wno-implicit-fallthrough>
+                        <gcc:-Wno-implicit-fallthrough>
                         <msc:/wd5262>
                     ]
                 ]
                 <no-unused-parameter> [
-                    <gnu:-Wno-unused-parameter>
+                    <gcc:-Wno-unused-parameter>
                 ]
                 <no-shift-negative-value> [
-                    <gnu:-Wno-shift-negative-value>
+                    <gcc:-Wno-shift-negative-value>
                 ]
                 <no-make-header> [
                     ;for make-header. ignoring
@@ -425,8 +425,8 @@ switch user-config/debug [
         app-config/debug: true
         cfg-symbols: true
         cfg-sanitize: true
-        append app-config/cflags <gnu:-fsanitize=address>
-        append app-config/ldflags <gnu:-fsanitize=address>
+        append app-config/cflags <gcc:-fsanitize=address>
+        append app-config/ldflags <gcc:-fsanitize=address>
     ]
 
     ; Because it has symbols but no debugging, the callgrind option can also
@@ -481,7 +481,7 @@ append app-config/cflags switch user-config/standard [
     'c++ [
         cfg-cplusplus: true
         [
-            <gnu:-x c++>
+            <gcc:-x c++>
             <msc:/TP>
         ]
     ]
@@ -503,7 +503,7 @@ append app-config/cflags switch user-config/standard [
             ; the files would (sadly) need to be renamed to .cpp or .cxx
             ;
             <msc:/TP>
-            <gnu:-x c++>
+            <gcc:-x c++>
 
             ; C++ standard, MSVC only supports "c++14/17/latest"
             ;
@@ -516,7 +516,7 @@ append app-config/cflags switch user-config/standard [
             ; when building as pre-C++11 where it was introduced, unless you
             ; disable that warning.
             ;
-            (if user-config/standard = 'c++98 [<gnu:-Wno-c++0x-compat>])
+            (if user-config/standard = 'c++98 [<gcc:-Wno-c++0x-compat>])
 
             ; Note: The C and C++ user-config/standards do not dictate if
             ; `char` is signed or unsigned.  Lest anyone think environments
@@ -528,7 +528,7 @@ append app-config/cflags switch user-config/standard [
             ; In order to give the option some exercise, make GCC C++ builds
             ; use unsigned chars.
             ;
-            <gnu:-funsigned-char>
+            <gcc:-funsigned-char>
 
             ; MSVC never bumped their __cplusplus version past 1997, even if
             ; you compile with C++17.  Hence CPLUSPLUS_11 is used by Rebol
@@ -570,7 +570,7 @@ append app-config/cflags switch user-config/rigorous [
     'yes [
         cfg-rigorous: true
         compose [
-            <gnu:-Werror> <msc:/WX>;-- convert warnings to errors
+            <gcc:-Werror> <msc:/WX>;-- convert warnings to errors
 
             ; If you use pedantic in a C build on an older GNU compiler,
             ; (that defaults to thinking it's a C89 compiler), it will
@@ -582,31 +582,32 @@ append app-config/cflags switch user-config/rigorous [
                 any [
                     cfg-cplusplus  not find [c gnu89] user-config/standard
                 ] then [
-                    <gnu:--pedantic>
+                    <gcc:--pedantic>
                 ]
             )
 
-            <gnu:-Wextra>
-            <gnu:-Wall> <msc:/Wall>
+            <gcc:-Wextra>
+            <gcc:-Wall> <msc:/Wall>
 
-            <gnu:-Wchar-subscripts>
-            <gnu:-Wwrite-strings>
-            <gnu:-Wundef>
-            <gnu:-Wformat=2>
-            <gnu:-Wdisabled-optimization>
+            <gcc:-Wchar-subscripts>
+            <gcc:-Wwrite-strings>
+            <gcc:-Wundef>
+            <gcc:-Wformat=2>
+            <gcc:-Wdisabled-optimization>
+            <gcc:-Wredundant-decls>
+            <gcc:-Woverflow>
+            <gcc:-Wpointer-arith>
+            <gcc:-Wparentheses>
+            <gcc:-Wmain>
+            <gcc:-Wtype-limits>
+
             <gnu:-Wlogical-op>
-            <gnu:-Wredundant-decls>
-            <gnu:-Woverflow>
-            <gnu:-Wpointer-arith>
-            <gnu:-Wparentheses>
-            <gnu:-Wmain>
-            <gnu:-Wtype-limits>
             <gnu:-Wclobbered>
 
             ; Neither C++98 nor C89 had "long long" integers, but they
             ; were fairly pervasive before being present in the standard.
             ;
-            <gnu:-Wno-long-long>
+            <gcc:-Wno-long-long>
 
             ; When constness is being deliberately cast away, `m_cast` is
             ; used (for "m"utability).  However, this is just a plain cast
@@ -622,9 +623,9 @@ append app-config/cflags switch user-config/rigorous [
                     cfg-cplusplus
                     find app-config/definitions "NDEBUG"
                 ][
-                    <gnu:-Wcast-qual>
+                    <gcc:-Wcast-qual>
                 ][
-                    <gnu:-Wno-cast-qual>
+                    <gcc:-Wno-cast-qual>
                 ]
             )
 
@@ -662,7 +663,7 @@ append app-config/cflags switch user-config/rigorous [
             ;    signed/unsigned mismatch
             ;
             <msc:/wd4365> <msc:/wd4245>
-            <gnu:-Wsign-compare>
+            <gcc:-Wsign-compare>
 
             ; The majority of Rebol's C code was written with little
             ; attention to overflow in arithmetic.  There are a lot of places
@@ -676,8 +677,8 @@ append app-config/cflags switch user-config/rigorous [
             ; The issue needs systemic review.
             ;
             <msc:/wd4242>
-            <gnu:-Wno-conversion> <gnu:-Wno-strict-overflow>
-            ;<gnu:-Wstrict-overflow=5>
+            <gcc:-Wno-conversion> <gcc:-Wno-strict-overflow>
+            ;<gcc:-Wstrict-overflow=5>
 
             ; When an inline function is not referenced, there can be a
             ; warning about this; but it makes little sense to do so since
@@ -804,9 +805,9 @@ append app-config/ldflags switch user-config/static [
     ]
     'yes 'on #[true] [
         compose [
-            <gnu:-static-libgcc>
-            (if cfg-cplusplus [<gnu:-static-libstdc++>])
-            (if cfg-sanitize [<gnu:-static-libasan>])
+            <gcc:-static-libgcc>
+            (if cfg-cplusplus [<gcc:-static-libstdc++>])
+            (if cfg-sanitize [<gcc:-static-libasan>])
         ]
     ]
 

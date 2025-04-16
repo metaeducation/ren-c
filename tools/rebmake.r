@@ -71,9 +71,9 @@ ends-with?: func [
 filter-flag: function [
     return: [~null~ text! file!]
     flag [tag! text! file!]
-        {If TAG! then must be <prefix:flag>, e.g. <gnu:-Wno-unknown-warning>}
-    prefix [text!]
-        {gnu -> GCC-compatible compilers, msc -> Microsoft C}
+        {If TAG! then must be <prefix:flag>, e.g. <gcc:-Wno-unknown-warning>}
+    prefixes "gnu -> GCC-compatible compilers, msc -> Microsoft C"
+        [text! block!]
 ][
     if not tag? flag [return flag] ;-- no filtering
 
@@ -84,7 +84,10 @@ filter-flag: function [
         fail ["Tag must be <prefix:flag> ->" (flag)]
     ]
 
-    return all [prefix = header  to-text option]
+    return all [
+        find (any [match block! prefixes reduce [prefixes]]) header
+        option
+    ]
 ]
 
 run-command: function [
@@ -597,22 +600,22 @@ cc: make compiler-class [
 
 gcc: make cc [
     name: 'gcc
-    id: "gnu"
+    id: ["gcc" "gnu"]
 ]
 
 g++: make cc [
     name: 'g++
-    id: "gnu"
+    id: ["gcc" "gnu"]
 ]
 
 clang: make cc [
     name: 'clang
-    id: "clang"
+    id: ["gcc" "clang"]
 ]
 
 clang++: make cc [
     name: 'clang++
-    id: "clang"
+    id: ["gcc" "clang"]
 ]
 
 
@@ -920,7 +923,7 @@ strip-class: make object! [
     ]
 ]
 
-strip: make strip-class [  ; options were [<gnu:-S> <gnu:-x> <gnu:-X>] ?
+strip: make strip-class [  ; options were [<gcc:-S> <gcc:-x> <gcc:-X>] ?
     id: "gnu"
 ]
 

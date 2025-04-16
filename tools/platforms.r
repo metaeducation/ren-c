@@ -364,17 +364,17 @@ system-definitions: make object! [
 ]
 
 compiler-flags: make object! [
-    M32: <gnu:-m32>                 ;use 32-bit memory model
-    ARC: <gnu:-arch i386>           ; x86 32 bit architecture (OSX)
-    HID: <gnu:-fvisibility=hidden>  ; all sysms are hidden
-    NPS: <gnu:-Wno-pointer-sign>    ; OSX fix
-    PIE: <gnu:-fPIE>                ; position independent (executable)
-    NCM: <gnu:-fno-common>          ; lib cannot have common vars
-    UFS: <gnu:-U_FORTIFY_SOURCE>    ; _chk variants of C calls
+    M32: <gcc:-m32>                 ;use 32-bit memory model
+    ARC: <gcc:-arch i386>           ; x86 32 bit architecture (OSX)
+    HID: <gcc:-fvisibility=hidden>  ; all sysms are hidden
+    NPS: <gcc:-Wno-pointer-sign>    ; OSX fix
+    PIE: <gcc:-fPIE>                ; position independent (executable)
+    NCM: <gcc:-fno-common>          ; lib cannot have common vars
+    UFS: <gcc:-U_FORTIFY_SOURCE>    ; _chk variants of C calls
 
     ; See comments about the glibc version above
-    NSP: <gnu:-fno-stack-protector> ; stack protect pulls in glibc 2.4 calls
-    PIC: <gnu:-fPIC>                ; Android requires this
+    NSP: <gcc:-fno-stack-protector> ; stack protect pulls in glibc 2.4 calls
+    PIC: <gcc:-fPIC>                ; Android requires this
 
     WLOSS: [
         ; conversion from 'type1' to 'type2', possible loss of data
@@ -388,14 +388,14 @@ compiler-flags: make object! [
 ]
 
 linker-flags: make object! [
-    M32: <gnu:-m32>
-    ARC: <gnu:-arch i386>
-    PIE: <gnu:-pie>
-    HID: <gnu:-fvisibility=hidden>  ; all syms are hidden
-    DYN: <gnu:-rdynamic>
+    M32: <gcc:-m32>
+    ARC: <gcc:-arch i386>
+    PIE: <gcc:-pie>
+    HID: <gcc:-fvisibility=hidden>  ; all syms are hidden
+    DYN: <gcc:-rdynamic>
 
-    CON: [<gnu:-mconsole> <msc:/subsystem:console>]
-    S4M: [<gnu:-Wl,--stack=4194300> <msc:/stack:4194300>]
+    CON: [<gcc:-mconsole> <msc:/subsystem:console>]
+    S4M: [<gcc:-Wl,--stack=4194300> <msc:/stack:4194300>]
     NOWASM: "-s WASM=0" ; emscripten webassembly
 ]
 
@@ -404,7 +404,7 @@ system-libraries: make object! [
     ; Math library, needed only when compiling with GCC
     ; (Haiku has it in libroot)
     ;
-    M: <gnu:m>
+    M: <gcc:m>
 
     DL: "dl" ; dynamic lib
     LOG: "log" ; Link with liblog.so on Android

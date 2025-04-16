@@ -59,8 +59,8 @@ core: [
         <msc:/wd5045> ;-- https://stackoverflow.com/q/50399940
         <msc:/wd4146>  ; unary minus operator applied to unsigned type
 
-        <gnu:-Wno-cast-qual>  ; e.g. `*sp = (char*)s0 - 1;`
-        <gnu:-Wno-unused-const-variable>  ; e.g. `tinytens`, `bigtens`, `tens`
+        <gcc:-Wno-cast-qual>  ; e.g. `*sp = (char*)s0 - 1;`
+        <gcc:-Wno-unused-const-variable>  ; e.g. `tinytens`, `bigtens`, `tens`
 
         <no-sign-compare>
         <no-uninitialized>
@@ -78,7 +78,10 @@ core: [
     %f-int.c
     %f-math.c
     %f-modify.c
-    %f-qsort.c
+    [
+        %f-qsort.c
+        <clang:-Wno-null-pointer-subtraction>
+    ]
     %f-random.c
     %f-round.c
     %f-series.c
@@ -164,6 +167,8 @@ core: [
         <no-make-header>
         <implicit-fallthru>
         <no-constant-conditional>
+
+        <clang:-Wno-unused-const-variable>
 
         ; Zlib is an active project so it would be worth it to check to see
         ; if minor patches for suverting Spectre mitigation would be taken.
