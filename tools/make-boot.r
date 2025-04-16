@@ -371,7 +371,7 @@ e-types/emit {
      * used for out-of-band purposes, which should be kept in consideration.
      */
   #if CPLUSPLUS_11
-    enum Reb_Kind : int_fast8_t {
+    enum Reb_Kind : uint_fast8_t {
   #else
     enum Reb_Kind {
   #endif
@@ -402,6 +402,12 @@ e-types/emit {
   #else
     };
   #endif
+
+    /*
+     * Not really a type, but a state cells can be in that's valid but not
+     * intended to be read.
+     */
+    #define TYPE_255_UNREADABLE  255
 } ;-- weird close brace thing needed to pair braces inside string literal
 e-types/emit newline
 

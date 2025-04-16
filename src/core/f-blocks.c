@@ -355,7 +355,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
         //
         assert(VAL_RELATIVE(src) == before);
 
-        Move_Value_Header(dest, src);
+        Copy_Cell_Header(dest, src);
 
         if (Any_List(src)) {
             dest->payload.any_series.series =
