@@ -59,23 +59,6 @@ register-codec*: func [
 ]
 
 
-; Special import case for extensions:
-append system/options/file-types switch fourth system/version [
-    3 [
-        [%.rx %.dll extension] ; Windows
-    ]
-    2 [
-        [%.rx %.dylib %.so extension] ; OS X
-    ]
-    4
-    7 [
-        [%.rx %.so extension] ; Other Posix
-    ]
-] else [
-    [%.rx extension]
-]
-
-
 decode: function [
     {Decodes a series of bytes into the related datatype (e.g. image!).}
 
