@@ -137,7 +137,7 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
     uint_fast8_t trail = g_trailing_bytes_for_utf8[*source];
 
     if (size) {  // Check that we have enough valid source bytes
-        if (cast(uint_fast8_t, trail + 1) > *(unwrap size))
+        if (cast(Size, trail + 1) > *(unwrap size))
             return Cell_Error(g_error_utf8_too_short);  // cached [3]
     }
     else if (trail != 0) {
