@@ -372,7 +372,7 @@ application-class: make project-class [
         let cc: any [.compiler, default-compiler]
         return cc.link // [
             .output, .depends, .searches, .ldflags,
-            :debug .debug
+            :debug on? .debug
         ]
     ]
 
@@ -394,6 +394,7 @@ dynamic-library-class: make project-class [
         let cc: any [.compiler, default-compiler]
         return cc.link // [
             .output, .depends, .searches, .ldflags
+            :debug on? .debug
             :dynamic ok
         ]
     ]
@@ -612,7 +613,7 @@ cc: make compiler-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         :dynamic
-        :debug [onoff?]
+        :debug
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -620,7 +621,7 @@ cc: make compiler-class [
             target-platform.exe-suffix
         ]
         return spaced collect [
-            keep any [(file-to-local:pass maybe .exec-file) "gcc"]
+            keep file-to-local:pass .exec-file
 
             ; !!! This was breaking emcc.  However, it is needed in order to
             ; get shared libraries on Posix.  That feature is being resurrected
@@ -875,7 +876,7 @@ cl: make compiler-class [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         :dynamic
-        :debug [onoff?]
+        :debug
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -883,7 +884,7 @@ cl: make compiler-class [
             target-platform.exe-suffix
         ]
         return spaced collect [
-            keep any [(file-to-local:pass maybe .exec-file) "link"]
+            keep file-to-local:pass .exec-file
 
             ; don't show startup banner
             ; (link.exe takes uppercase, but cl.exe mandates lowercase!)
@@ -915,9 +916,7 @@ cl: make compiler-class [
             ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
             ; /DEBUG must be uppercase when passed to cl.exe
             ;
-            all [debug, on? debug] then [
-                keep "/DEBUG"
-            ]
+            if debug [keep "/DEBUG"]
 
             for-each 'search (maybe map-files-to-local maybe searches) [
                 keep unspaced ["/libpath:" search]

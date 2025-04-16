@@ -43,15 +43,14 @@ rebmake: import <tools/rebmake.r>
 ; the repository directory itself.  Otherwise we build wherever they are.
 
 output-dir: ~
-launched-from-root: ~
 
 if repo-dir = what-dir [
-    launched-from-root: 'yes
     output-dir: join repo-dir %build/
     make-dir output-dir
+
+    print ["Launched from root dir, so building in:" output-dir]
 ] else [
     output-dir: what-dir  ; out-of-source build
-    launched-from-root: 'no
 ]
 
 tools-dir: join repo-dir %tools/
@@ -1155,25 +1154,6 @@ if commands [
             ]
             quit 0
         ]
-    ]
-]
-
-
-=== "DETECT TOOLCHAIN FOR BUILDING" ===
-
-if yes? launched-from-root [
-    print ["Launched from root dir, so building in:" output-dir]
-]
-
-set-exec-path: func [
-    return: [~]
-    tool [object!]
-    path
-][
-    switch type of path [  ; can't use switch:type in bootstrap
-        blank! [tool/check]
-        file! text! [tool.exec-file: path]
-        fail "Tool path has to be a file!"
     ]
 ]
 
