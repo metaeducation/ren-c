@@ -603,7 +603,7 @@ void Free_Pairing(Value* paired) {
     Flex* s = cast(Flex*, paired);
     Free_Pooled(STUB_POOL, s);
 
-  #if DEBUG_TRACK_EXTEND_CELLS
+  #if DEBUG_STUB_ORIGINS
     s->tick = TICK;  // update to be tick on which node was freed
   #endif
 }
