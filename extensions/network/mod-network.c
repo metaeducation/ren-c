@@ -218,7 +218,8 @@ Value* Lookup_Socket_Synchronously(
     // use the simpler-seeming libuv case.
     //
     struct addrinfo hints;
-    hints.ai_family = PF_INET;
+    Mem_Fill(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;  // should only return IPv4 addresses
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = 0;
@@ -242,6 +243,13 @@ Value* Lookup_Socket_Synchronously(
     if (r != 0)
         return rebError_UV(r);
 
+    // This assert used to check that ai_addrlen for an IPv4 address was 16,
+    // but it appears on HaikuOS it was 32.  Changed assert, still works.  :-/
+    //
+    // https://stackoverflow.com/q/31343855/
+    //
+    assert(req.addrinfo->ai_addrlen >= 16);
+
     // Synchronously fill in the port's remote_ip with the answer to looking
     // up the hostname.
     //
@@ -250,10 +258,6 @@ Value* Lookup_Socket_Synchronously(
     //      memcpy(&sock->remote_ip, *host->h_addr_list, 4);
     //
     struct sockaddr_in *sa = cast(struct sockaddr_in*, req.addrinfo->ai_addr);
-
-    // https://stackoverflow.com/q/31343855/
-    //
-    assert(req.addrinfo->ai_addrlen == 16);
     assert(sizeof(sa->sin_addr) == 4);
     memcpy(&sock->remote_ip, &sa->sin_addr, 4);
 
