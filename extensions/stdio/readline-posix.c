@@ -44,6 +44,13 @@ typedef RebolValue Value;
 #include <unistd.h>  // has POSIX read() and write()
 #include <errno.h>
 
+// Note: Haiku is more strict about this, and pulling in termios doesn't
+// pull these files in as well.
+//
+#include <sys/select.h>  // for FD_ZERO, FD_SET, select()
+#include <sys/time.h>    // for struct timeval
+#include <sys/types.h>   // for fd_set
+
 #include <termios.h>
 
 #define UNI_ENCODED_MAX 4
