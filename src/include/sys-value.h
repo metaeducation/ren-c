@@ -655,7 +655,7 @@ INLINE Value* Nothingify_Branched(Value* cell) {
 #define CELL_MASK_UNREADABLE \
     (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
         | NODE_FLAG_GC_ONE | NODE_FLAG_GC_TWO \
-        | FLAG_KIND_BYTE(255))
+        | FLAG_KIND_BYTE(TYPE_255_UNREADABLE))
 
 #define Init_Unreadable_Untracked(out) do { \
     STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
@@ -1129,11 +1129,14 @@ INLINE void INIT_BINDING(Cell* v, Stub* binding) {
   #endif
 }
 
-INLINE void Move_Value_Header(Cell* out, const Cell* v)
+INLINE void Copy_Cell_Header(Cell* out, const Cell* v)
 {
     assert(out != v); // usually a sign of a mistake; not worth supporting
     assert(NOT_END(v)); // SET_END() is the only way to write an end
-    assert(VAL_TYPE_RAW(v) <= TYPE_MAX_NULLED); // don't move pseudotypes
+    assert(
+        KIND_BYTE(v) == TYPE_255_UNREADABLE
+        or KIND_BYTE(v) <= TYPE_MAX_NULLED // don't move pseudotypes
+    );
 
     Assert_Cell_Writable(out);
 
@@ -1177,7 +1180,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, Stub* binding) {
 //
 INLINE Value* Copy_Cell(Cell* out, const Value* v)
 {
-    Move_Value_Header(out, v);
+    Copy_Cell_Header(out, v);
 
     if (Not_Bindable(v))
         out->extra = v->extra; // extra isn't a binding (INTEGER! MONEY!...)

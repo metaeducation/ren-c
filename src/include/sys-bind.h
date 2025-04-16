@@ -552,7 +552,7 @@ INLINE Value* Derelativize(
     const Cell* v,
     Specifier* specifier
 ){
-    Move_Value_Header(out, v);
+    Copy_Cell_Header(out, v);
     out->payload = v->payload;
 
     if (Not_Bindable(v)) {
