@@ -556,9 +556,18 @@
 //    required for a double, or 8 bytes. In code that targets 64-bit
 //    platforms, it's 16 bytes.)
 //
+// 1. HaikuOS ignores the standard and returns malloc()s on 4-byte boundaries
+//    (at least on 32-bit).  Hence they are probably just accepting the slower
+//    processing of the x86 processor for misaligned doubles, and don't plan
+//    to port to other platforms any time soon.  Just use the sizeof(void*).
+//
 
-#define ALIGN_SIZE \
-    (sizeof(double) > sizeof(void*) ? sizeof(double) : sizeof(void*))
+#ifdef __HAIKU__
+    #define ALIGN_SIZE sizeof(void*)  // ignores standard [1]
+#else
+    #define ALIGN_SIZE \
+        (sizeof(double) > sizeof(void*) ? sizeof(double) : sizeof(void*))
+#endif
 
 #define ALIGN(s,a) \
     (((s) + (a) - 1) & ~((a) - 1)) // !!! this macro not used anywhere ATM
