@@ -269,7 +269,7 @@ find-record-unique: function [
         fail [key {not found in table headers:} (first table)]
     ]
 
-    result: _
+    result: null
     for-each-record rec table [
         if value <> select rec key [continue]
 
@@ -291,7 +291,7 @@ parse-args: function [
     args: any [args copy []]
     if not block? args [args: split args [some " "]]
     iterate args [
-        name: _
+        name: null
         value: args/1
         case [
             idx: find value #"=" [; name=value

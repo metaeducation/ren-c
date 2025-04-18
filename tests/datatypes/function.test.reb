@@ -330,7 +330,7 @@
 ; called, `a` has been cleared so `a [d]` doesn't recapture the local, and
 ; `c` holds the `[d]` from the first call.
 (
-    a: func [b] [a: _ c: b]
+    a: func [b] [a: null c: b]
     f: func [d] [a [d] eval c]
     did all [
         1 = f 1

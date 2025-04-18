@@ -4,7 +4,7 @@
     x = 10
 )
 (
-    x: _
+    x: null
     x: default [10]
     x = 10
 )
@@ -14,7 +14,7 @@
     x = 20
 )
 (
-    o: make object! [x: 10 y: _ set the z: null]
+    o: make object! [x: 10 y: null set the z: null]
     o/x: default [20]
     o/y: default [20]
     o/z: default [20]
@@ -30,9 +30,9 @@
     ]
 )
 (
-    x: _
+    x: null
     all [
-        _ = was x: default [20]
+        null = was x: default [20]
         x = 20
     ]
 )

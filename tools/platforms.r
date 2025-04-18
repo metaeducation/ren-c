@@ -317,14 +317,14 @@ system-definitions: make object! [
     LEN: "ENDIAN_LITTLE"          ; little endian byte order
 
     LLC: "HAS_LL_CONSTS"          ; supports e.g. 0xffffffffffffffffLL
-    ;LL?: _                       ; might have LL consts, reb-config.h checks
+    ;LL?: null                    ; might have LL consts, reb-config.h checks
 
     ; See C_STACK_OVERFLOWING for an explanation of the dodgy technique used
     ; to try and preempt a C stackoverflow crash with a trappable error.
     ;
     SGD: "OS_STACK_GROWS_DOWN"    ; most widespread choice in C compilers
     ;SGU: "OS_STACK_GROWS_UP"     ; rarer (Debian HPPA, some emscripten/wasm)
-    SG?: _                        ; try to detect growth direction at runtime
+    SG?: null                     ; try to detect growth direction at runtime
 
     W32: <msc:WIN32>              ; aes.c requires this
     UNI: "UNICODE"                ; win32 wants it
@@ -424,17 +424,17 @@ for-each-system: function [
         {Body of code to run for each system}
 ][
     s: make object! [
-        platform-name: _
-        platform-number: _
-        id: _
-        os: _
-        os-name: _
-        os-base: _
-        build-label: _
-        definitions: _
-        cflags: _
-        libraries: _
-        ldflags: _
+        platform-name: null
+        platform-number: null
+        id: null
+        os: null
+        os-name: null
+        os-base: null
+        build-label: null
+        definitions: null
+        cflags: null
+        libraries: null
+        ldflags: null
     ]
 
     parse2/match systems in s [ some [
@@ -445,9 +445,9 @@ for-each-system: function [
         opt some [
             set id tuple!
             [quote _ (
-                os: _
-                os-name: _
-                os-base: _
+                os: null
+                os-name: null
+                os-base: null
             )
                 |
             set os path! (
@@ -455,7 +455,7 @@ for-each-system: function [
                 os-base: os/2
             )]
             [
-                quote _ (build-label: _)
+                quote _ (build-label: null)
                     |
                 set build-label text! (
                     build-label: to-word build-label
@@ -496,7 +496,7 @@ use [
         assert in s [
             word? platform-name
             integer? platform-number
-            any [word? build-label  blank? build-label]
+            any [word? build-label  not build-label]
             tuple? id
             id/1 = 0  id/2 = platform-number
             (to-text os-name) == (lowercase to-text os-name)
@@ -548,24 +548,24 @@ use [
 
 config-system: function [
     {Return build configuration information}
-    hint [blank! text! tuple!]
+    hint [~null~ text! tuple!]
         {Version ID (blank means guess)}
 ][
-    version: switch type of hint [
-        blank! [ ;-- Try same version as this r3-make was built with
-            to tuple! reduce [0 system/version/4 system/version/5]
+    if not hint [  ;-- Try same version as this r3-make was built with
+        version: to tuple! reduce [0 system/version/4 system/version/5]
+    ]
+    else [
+        version: switch type of hint [
+            text! [load hint]
+            tuple! [hint]
         ]
-        text! [load hint]
-        tuple! [hint]
     ]
 
     if not tuple? version [
-        print mold type of version
-        wait 5
         fail ["Expected OS_ID tuple like 0.3.1, not:" version]
     ]
 
-    result: _
+    result: null
     for-each-system s [
         if s/id = version [
             result: copy s ;-- RETURN won't work in R3-Alpha in FOR-EACH-XXX

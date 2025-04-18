@@ -49,9 +49,9 @@ read-binary: :read
 
 make object! [
 
-    position: _
-    success: _
-    dummy: _
+    position: null
+    success: null
+    dummy: null
 
     ;; TEST-SOURCE-RULE matches the internal text of a test
     ;; even if that text is invalid rebol syntax.
@@ -139,7 +139,7 @@ make object! [
         ]
 
         types: context [
-            wsp: cmt: val: tst: grpb: grpe: flg: fil: isu: str: end: _
+            wsp: cmt: val: tst: grpb: grpe: flg: fil: isu: str: end: null
         ]
 
         flags: copy []
@@ -197,7 +197,7 @@ make object! [
         token: [
             position: <here>
 
-            (type: value: _)
+            (type: value: null)
 
             wsp emit-token
                 |
@@ -231,7 +231,7 @@ make object! [
                     ]
                 ]
             )
-            position: <here> (type: value: _)
+            position: <here> (type: value: null)
         ]
 
         rule: [opt some token <end>]
@@ -299,7 +299,7 @@ make object! [
                         )
                     ]
                         |
-                    "system/version:" to <end> (guard: _)
+                    "system/version:" to <end> (guard: null)
                         |
                     (fail "collect-logs - log file parsing problem")
                 ] position: <here> guard break ; Break when error detected.

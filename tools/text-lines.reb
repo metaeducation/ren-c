@@ -176,7 +176,7 @@ text-location-of: function [
         advance
     ]
 
-    if zero? line [line: _] else [
+    if zero? line [line: null] else [
         line: reduce [line 1 + subtract index? position index? eol]
     ]
 

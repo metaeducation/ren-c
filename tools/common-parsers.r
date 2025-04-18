@@ -76,14 +76,14 @@ decode-key-value-text: function [
     new-line/all/skip meta true 2
 ]
 
-load-until-blank: function [
+load-until-null: function [
     {Load rebol values from text until double newline.}
-    return: [blank! block!]
+    return: [~null~ block!]
     text [text!]
     /next {Return values and next position.}
 ][
     wsp: compose [some (charset { ^-})]
-    dummy: _
+    dummy: null
 
     rebol-value: parsing-at x [
         try transcode/next3 x 'dummy
@@ -100,7 +100,7 @@ load-until-blank: function [
         values: load copy/part text position
         reduce [values position]
     ][
-        blank
+        null
     ]
 ]
 
@@ -111,16 +111,16 @@ bind collapse-whitespace c-lexical/grammar
 
 proto-parser: context [
 
-    emit-fileheader: _
-    emit-proto: _
-    emit-directive: _
-    parse-position: _
-    notes: _
-    lines: _
-    proto-id: _
-    proto-arg-1: _
-    data: _
-    eoh: _ ; End of file header.
+    emit-fileheader: null
+    emit-proto: null
+    emit-directive: null
+    parse-position: null
+    notes: null
+    lines: null
+    proto-id: null
+    proto-arg-1: null
+    data: null
+    eoh: null  ; End of file header.
 
     process: func [return: [~] text] [
         parse2/match text [grammar/rule]
@@ -134,7 +134,7 @@ proto-parser: context [
         ]
 
         fileheader: [
-            (data: _)
+            (data: null)
             doubleslashed-lines
             and is-fileheader
             eoh:
@@ -144,7 +144,7 @@ proto-parser: context [
         ]
 
         segment: [
-            (proto-id: proto-arg-1: _)
+            (proto-id: proto-arg-1: null)
             format-func-section
             | span-comment
             | line-comment opt some [newline line-comment] newline
@@ -208,10 +208,10 @@ proto-parser: context [
         doubleslashed-lines: [copy lines some ["//" thru newline]]
 
         is-fileheader: parsing-at position [
-            null-to-blank all [
+            all [
                 lines: try decode-lines lines {//} { }
                 parse2/match lines [copy data to {=///} to end]
-                data: try load-until-blank trim/auto data
+                data: try load-until-null trim/auto data
                 data: all [
                     data/1
                     block? data/1
@@ -223,9 +223,9 @@ proto-parser: context [
         ]
 
         is-intro: parsing-at position [
-            null-to-blank all [
+            all [
                 lines: try decode-lines lines {//} { }
-                data: load-until-blank lines
+                data: load-until-null lines
                 data: all [
                     ;
                     ; !!! The recognition of Rebol-styled comment headers

@@ -243,7 +243,7 @@ rebsource: context [
                     ]
                 ]
 
-                non-std-func-space: _
+                non-std-func-space: null
                 proto-parser/emit-proto: :emit-proto
                 proto-parser/process data
 
@@ -280,15 +280,15 @@ rebsource: context [
 
             data: read join repo-dir file
 
-            bol: _
-            line: _
+            bol: null
+            line: null
 
             stop-char: charset { ^-^M^/}
             ws-char: charset { ^-}
             wsp: [some ws-char]
 
             eol: [line-ending | alt-ending (append inconsistent-eol line)]
-            line-ending: _
+            line-ending: null
 
             ;
             ; Identify line termination.
@@ -431,7 +431,7 @@ rebsource: context [
 
         ; Extend parser to support checking of function spacing.
 
-        last-func-end: _
+        last-func-end: null
 
         lbrace: [and punctuator "{"]
         rbrace: [and punctuator "}"]
@@ -449,7 +449,7 @@ rebsource: context [
         ]
 
         append/only grammar/other-segment the (
-            last-func-end: _
+            last-func-end: null
         )
 
     ] proto-parser c-lexical/grammar

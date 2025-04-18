@@ -37,7 +37,7 @@ user-config: make object! load join repo-dir %configs/default-config.r
 args: parse-args system/options/args
 ; now args are ordered and separated by bar:
 ; [NAME VALUE ... '| COMMAND ...]
-either commands: null-to-blank find args '| [
+either commands: find args '| [
     options: copy/part args commands
     commands: next commands
 ] [options: args]
@@ -78,7 +78,7 @@ for-each [name value] options [
 ]
 
 ; process commands
-if not empty? maybe+ commands [user-config/target: load commands]
+if not empty? maybe commands [user-config/target: load commands]
 
 ;;;; MODULES & EXTENSIONS
 system-config: config-system user-config/os-id
@@ -247,30 +247,30 @@ gen-obj: func [
             either main [
                 join %main/ (last ensure path! s)
             ] [s]
-        cflags: either empty? flags [_] [flags]
-        definitions: (get 'definitions else [_])
-        includes: (get 'includes else [_])
+        cflags: degrade either empty? flags [reify null] [flags]
+        definitions: (get 'definitions else [reify null])
+        includes: (get 'includes else [reify null])
     ]
 ]
 
 extension-class: make object! [
     class: #extension
-    name: _
-    modules: _
-    source: _ ; main script
-    depends: _ ; additional C files compiled in
-    requires: _ ; it might require other extensions
+    name: null
+    modules: null
+    source: null  ; main script
+    depends: null  ; additional C files compiled in
+    requires: null ; it might require other extensions
 
-    includes: _
-    definitions: _
-    cflags: _
+    includes: null
+    definitions: null
+    cflags: null
 
-    searches: _
-    libraries: _
-    ldflags: _
+    searches: null
+    libraries: null
+    ldflags: null
 
     ;internal
-    sequence: _ ; the sequence in which the extension should be loaded
+    sequence: null  ; the sequence in which the extension should be loaded
     visited: false
 ]
 
@@ -817,15 +817,13 @@ append app-config/ldflags switch user-config/static [
 
 ;add system settings
 add-app-def: adapt specialize :append [series: app-config/definitions] [
-    value: replace (
-        flatten/deep reduce bind value system-definitions
-    ) blank []
+    value: flatten/deep reduce bind value system-definitions
+    assert [not find value _]
 ]
 add-app-cflags: adapt specialize :append [series: app-config/cflags] [
-    value: either block? value [
-        replace (
-            flatten/deep reduce bind value compiler-flags
-        ) blank []
+    either block? value [
+        value: flatten/deep reduce bind value compiler-flags
+        assert [not find value _]
     ][
         assert [any-string? value]
     ]
@@ -877,11 +875,11 @@ append app-config/definitions reduce [
 
 ;; Add user settings
 ;;
-append app-config/definitions maybe- user-config/definitions
-append app-config/includes maybe- user-config/includes
-append app-config/cflags maybe- user-config/cflags
-append app-config/libraries maybe- user-config/libraries
-append app-config/ldflags maybe- user-config/ldflags
+append app-config/definitions maybe user-config/definitions
+append app-config/includes maybe user-config/includes
+append app-config/cflags maybe user-config/cflags
+append app-config/libraries maybe user-config/libraries
+append app-config/ldflags maybe user-config/ldflags
 
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
@@ -942,14 +940,14 @@ builtin-extensions: copy available-extensions
 assert [map? user-config/extensions]
 for-each name user-config/extensions [
     action: user-config/extensions/(name)
-    modules: _
+    modules: null
     if block? action [modules: action action: '*]
     switch action [
         '+ [; builtin
             ;pass, default action
         ]
         '- [
-            item: _
+            item: null
             iterate builtin-extensions [
                 if builtin-extensions/1/name = name [
                     item: take builtin-extensions
@@ -971,7 +969,7 @@ for-each [label list] reduce [
     for-each ext list [
         print collect [ ;-- CHAR! values don't auto-space in Ren-C PRINT
             keep ["ext:" ext/name #":" space #"["]
-            for-each mod (maybe+ ext/modules) [
+            for-each mod (maybe ext/modules) [
                 keep to-text mod/name
             ]
             keep #"]"
@@ -1001,7 +999,7 @@ add-project-flags: func [
         if block? project/definitions [
             append project/definitions definitions
         ] else [
-            ensure blank! project/definitions
+            ensure [~null~] project/definitions
             project/definitions: definitions
         ]
     ]
@@ -1010,7 +1008,7 @@ add-project-flags: func [
         if block? project/includes [
             append project/includes includes
         ] else [
-            ensure blank! project/includes
+            ensure [~null~] project/includes
             project/includes: includes
         ]
     ]
@@ -1018,7 +1016,7 @@ add-project-flags: func [
         if block? project/cflags [
             append project/cflags cflags
         ] else [
-            ensure blank! project/cflags
+            ensure [~null~] project/cflags
             project/cflags: cflags
         ]
     ]
@@ -1035,7 +1033,7 @@ process-module: func [
     assert [mod/class = #extension]
     ret: make rebmake/object-library-class [
         name: mod/name
-        depends: map-each s (append reduce [mod/source] maybe- mod/depends) [
+        depends: map-each s (append reduce [mod/source] maybe mod/depends) [
             case [
                 match [file! block!] s [
                     gen-obj/dir s repo-dir/extensions/%
@@ -1051,7 +1049,7 @@ process-module: func [
                 ]
             ]
         ]
-        libraries: null-to-blank all [
+        libraries: all [
             mod/libraries
             map-each lib mod/libraries [
                 case [
@@ -1086,7 +1084,7 @@ process-module: func [
 
 ext-objs: make block! 8
 for-each ext builtin-extensions [
-    mod-obj: _
+    mod-obj: null
 
     ; extract object-library, because an object-library can't depend on
     ; another object-library
@@ -1102,9 +1100,9 @@ for-each ext builtin-extensions [
 
     append ext-objs mod-obj: process-module ext
 
-    append app-config/libraries maybe- mod-obj/libraries
-    append app-config/searches maybe- ext/searches
-    append app-config/ldflags maybe- ext/ldflags
+    append app-config/libraries maybe mod-obj/libraries
+    append app-config/searches maybe ext/searches
+    append app-config/ldflags maybe ext/ldflags
 
     ; Modify module properties
     add-project-flags/I/D/c/O/g mod-obj
@@ -1126,9 +1124,9 @@ for-each ext builtin-extensions [
     append any [all [mod-obj mod-obj/depends] ext-objs] gen-obj/dir/I/D/F
         ext-init-source
         unspaced ["prep/extensions/" ext-name-lower "/"]
-        maybe- ext/includes
-        maybe- ext/definitions
-        maybe- ext/cflags
+        maybe ext/includes
+        maybe ext/definitions
+        maybe ext/cflags
 ]
 
 
@@ -1139,7 +1137,7 @@ calculate-sequence: function [
 ][
     if integer? ext/sequence [return ext/sequence]
     if ext/visited [fail ["circular dependency on" ext]]
-    if blank? ext/requires [ext/sequence: 0 return ext/sequence]
+    if not ext/requires [ext/sequence: 0 return ext/sequence]
     ext/visited: true
     seq: 0
     if word? ext/requires [ext/requires: reduce [ext/requires]]
@@ -1232,6 +1230,7 @@ prep: make rebmake/entry-class [
             ]
         ]
     ]
+    assert [not find commands _]
     depends: reduce [
         reb-tool
     ]
@@ -1295,11 +1294,11 @@ app: make rebmake/application-class [
         (main)
     ]
     post-build-commands: either cfg-symbols [
-        _
+        null
     ][
         reduce [
             make rebmake/cmd-strip-class [
-                file: join output maybe- rebmake/target-platform/exe-suffix
+                file: join output maybe rebmake/target-platform/exe-suffix
             ]
         ]
     ]
@@ -1348,6 +1347,7 @@ t-folders: make rebmake/entry-class [
             file: (dir)
         ]
     ]
+    assert [not find commands _]
 ]
 
 clean: make rebmake/entry-class [
@@ -1356,9 +1356,10 @@ clean: make rebmake/entry-class [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
         make rebmake/cmd-delete-class [
-            file: join %r3 maybe- rebmake/target-platform/exe-suffix
+            file: join %r3 maybe rebmake/target-platform/exe-suffix
         ]
     ]
+    assert [not find commands _]
 ]
 
 check: make rebmake/entry-class [
@@ -1366,14 +1367,15 @@ check: make rebmake/entry-class [
     depends: append copy dynamic-libs app
     commands: collect [
         keep make rebmake/cmd-strip-class [
-            file: join app/output maybe- rebmake/target-platform/exe-suffix
+            file: join app/output maybe rebmake/target-platform/exe-suffix
         ]
         for-each s dynamic-libs [
             keep make rebmake/cmd-strip-class [
-                file: join s/output maybe- rebmake/target-platform/dll-suffix
+                file: join s/output maybe rebmake/target-platform/dll-suffix
             ]
         ]
     ]
+    assert [not find commands _]
 ]
 
 solution: make rebmake/solution-class [

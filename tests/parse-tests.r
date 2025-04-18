@@ -86,7 +86,7 @@
 ; parse/match THRU tag!
 
 [#682 (
-    t: _
+    t: ~
     parse/match "<tag>text</tag>" [thru "<tag>" t: across to "</tag>"]
     t == "text"
 )]

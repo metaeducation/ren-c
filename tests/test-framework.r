@@ -16,20 +16,20 @@ Rebol [
 do %test-parsing.r
 
 make object! compose [
-    log-file: _
+    log-file: null
 
     log: func [report [block!]] [
         write/append log-file unspaced report
     ]
 
     ; counters
-    skipped: _
-    test-failures: _
-    crashes: _
-    dialect-failures: _
-    successes: _
+    skipped: null
+    test-failures: null
+    crashes: null
+    dialect-failures: null
+    successes: null
 
-    allowed-flags: _
+    allowed-flags: null
 
     process-vector: function [
         return: [~]
@@ -148,7 +148,7 @@ make object! compose [
             all [
                 parse/match read log-file [
                     (
-                        last-vector: _
+                        last-vector: null
                         guard: [<end> one]
                     )
                     opt some [
@@ -171,7 +171,7 @@ make object! compose [
                                     ; crash found
                                     crashes: crashes + 1
                                     log [{ "crashed"^/}]
-                                    guard: _
+                                    guard: null
                                 )
                                     |
                                 {"} value: across to {"} one
@@ -197,7 +197,7 @@ make object! compose [
                                 |
                             "system/version:"
                             to <end>
-                            (last-vector: guard: _)
+                            (last-vector: guard: null)
 
                         ] position: <seek> guard break
                             |

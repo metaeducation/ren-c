@@ -17,7 +17,7 @@
 ("a/b:" = mold first [a/b:])
 ; set-paths are active
 (
-    a: make object! [b: _]
+    a: make object! [b: null]
     a/b: 5
     5 == a/b
 )

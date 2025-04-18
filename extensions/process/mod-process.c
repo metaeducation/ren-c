@@ -2191,7 +2191,6 @@ DECLARE_NATIVE(LIST_ENV)
 //      return: [integer!]
 //
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(GET_PID)
 {
@@ -2210,7 +2209,6 @@ DECLARE_NATIVE(GET_PID)
 //      return: [integer!]
 //
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(GET_UID)
 {
@@ -2228,7 +2226,6 @@ DECLARE_NATIVE(GET_UID)
 //      return: [integer!]
 //
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(GET_EUID)
 {
@@ -2245,7 +2242,6 @@ DECLARE_NATIVE(GET_EUID)
 //
 //      return: [integer!]
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(GET_GID)
 {
@@ -2263,7 +2259,6 @@ DECLARE_NATIVE(GET_GID)
 //      return: [integer!]
 //
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(GET_EGID)
 {
@@ -2283,7 +2278,6 @@ DECLARE_NATIVE(GET_EGID)
 //      uid {The effective user ID}
 //          [integer!]
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(SET_UID)
 {
@@ -2315,7 +2309,6 @@ DECLARE_NATIVE(SET_UID)
 //      euid "The effective user ID"
 //          [integer!]
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(SET_EUID)
 {
@@ -2347,7 +2340,6 @@ DECLARE_NATIVE(SET_EUID)
 //      gid "The effective group ID"
 //          [integer!]
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(SET_GID)
 {
@@ -2379,7 +2371,6 @@ DECLARE_NATIVE(SET_GID)
 //      egid "The effective group ID"
 //          [integer!]
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(SET_EGID)
 {
@@ -2435,7 +2426,6 @@ static void kill_process(pid_t pid, int signal)
 //      signal [integer!]
 //          {The signal number}
 //  ]
-//  platforms: [linux android posix osx]
 //
 DECLARE_NATIVE(SEND_SIGNAL)
 {

@@ -42,9 +42,9 @@ REBOL [
 
 rebmake: make object! [ ;-- hack to workaround lack of Type: 'module
 
-default-compiler: _
-default-strip: _
-target-platform: _
+default-compiler: null
+default-strip: null
+target-platform: null
 
 map-files-to-local: function [
     return: [block!]
@@ -57,12 +57,11 @@ map-files-to-local: function [
 ]
 
 ends-with?: func [
-    return: [logic!]
+    return: [~null~ logic!]
     s [any-string!]
-    suffix [blank! any-string!]
+    suffix [<maybe> any-string!]
 ][
     did any [
-        blank? suffix
         empty? suffix
         suffix = (skip tail-of s negate length of suffix)
     ]
@@ -99,15 +98,15 @@ run-command: function [
 ]
 
 platform-class: make object! [
-    name: _
-    exe-suffix: _
-    dll-suffix: _
-    archive-suffix: _ ;static library
-    obj-suffix: _
+    name: null
+    exe-suffix: null
+    dll-suffix: null
+    archive-suffix: null  ; static library
+    obj-suffix: null
 
-    gen-cmd-create: _
-    gen-cmd-delete: _
-    gen-cmd-strip: _
+    gen-cmd-create: null
+    gen-cmd-delete: null
+    gen-cmd-strip: null
 ]
 
 unknown-platform: make platform-class [
@@ -143,7 +142,7 @@ posix: make platform-class [
         cmd [object!]
     ][
         if tool: any [:cmd/strip :default-strip] [
-            b: ensure block! tool/commands/params cmd/file maybe- cmd/options
+            b: ensure block! tool/commands/params cmd/file maybe cmd/options
             assert [1 = length of b]
             return b/1
         ]
@@ -233,32 +232,32 @@ set-target-platform: func [
 
 project-class: make object! [
     class: #project
-    name: _
-    id: _
-    type: _ ; dynamic, static, object or application
-    depends: _ ;a dependency could be a library, object file
-    output: _ ;file path
-    basename: _ ;output without extension part
+    name: null
+    id: null
+    type: null  ; dynamic, static, object or application
+    depends: null  ; a dependency could be a library, object file
+    output: null  ; file path
+    basename: null  ; output without extension part
     generated?: false
-    implib: _ ;for windows, an application/library with exported symbols will generate an implib file
+    implib: null  ; for windows, an application/library with exported symbols will generate an implib file
 
-    post-build-commands: _ ; commands to run after the "build" command
+    post-build-commands: null  ; commands to run after the "build" command
 
-    compiler: _
+    compiler: null
 
     ; common settings applying to all included obj-files
     ; setting inheritage:
     ; they can only be inherited from project to obj-files
     ; _not_ from project to project.
     ; They will be applied _in addition_ to the obj-file level settings
-    includes: _
-    definitions: _
-    cflags: _
+    includes: null
+    definitions: null
+    cflags: null
 
     ; These can be inherited from project to obj-files and will be overwritten
     ; at the obj-file level
-    optimization: _
-    debug: _
+    optimization: null
+    debug: null
 ]
 
 solution-class: make project-class [
@@ -267,14 +266,14 @@ solution-class: make project-class [
 
 ext-dynamic-class: make object! [
     class: #dynamic-extension
-    output: _
-    flags: _ ;static?
+    output: null
+    flags: null  ; static?
 ]
 
 ext-static-class: make object! [
     class: #static-extension
-    output: _
-    flags: _ ;static?
+    output: null
+    flags: null  ; static?
 ]
 
 application-class: make project-class [
@@ -282,8 +281,8 @@ application-class: make project-class [
     type: 'application
     generated?: false
 
-    searches: _
-    ldflags: _
+    searches: null
+    ldflags: null
 
     command: method [return: [text!]] [
         cc: compiler or [default-compiler]
@@ -301,8 +300,8 @@ dynamic-library-class: make project-class [
     type: 'dynamic
     generated?: false
 
-    searches: _
-    ldflags: _
+    searches: null
+    ldflags: null
 
     command: method [
         return: [text!]
@@ -330,15 +329,15 @@ object-library-class: make project-class [
 
 compiler-class: make object! [
     class: #compiler
-    name: _
-    id: _ ;flag prefix
-    version: _
-    exec-file: _
+    name: null
+    id: null  ; flag prefix
+    version: null
+    exec-file: null
 
     ;check if the compiler is available
     check: method [
         return: [~]
-        exec [blank! file! text!]
+        exec [~null~ file! text!]
     ][
         fail "archetype check"
     ]
@@ -357,9 +356,9 @@ compiler-class: make object! [
     link: method [
         return: [text!]
         output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
+        depends [block! ~null~]
+        searches [block! ~null~]
+        ldflags [block! any-string! ~null~]
         /dynamic
     ][
         fail "archetype link"
@@ -375,11 +374,11 @@ compiler-class: make object! [
 
 cc: make compiler-class [
     name: 'cc
-    id: _
+    id: null
 
     check: method [
         return: [~]
-        exec [blank! file! text!]
+        exec [~null~ file! text!]
         <static>
         digit (charset "0123456789")
     ][
@@ -388,6 +387,8 @@ cc: make compiler-class [
             exec-file
             to file! name
         ]
+
+        id: default [[]]
 
         comment [
             version: copy ""
@@ -480,7 +481,7 @@ cc: make compiler-class [
             ]
             if F [
                 for-each flg cflags [
-                    keep maybe- filter-flag flg id
+                    keep maybe filter-flag flg id
                 ]
             ]
 
@@ -501,9 +502,9 @@ cc: make compiler-class [
     link: method [
         return: [text!]
         output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
+        depends [block! ~null~]
+        searches [block! ~null~]
+        ldflags [block! any-string! ~null~]
         /debug
         /dynamic
     ][
@@ -523,10 +524,10 @@ cc: make compiler-class [
             keep "-o"
 
             output: file-to-local output
-            either ends-with? output suffix [
+            either ends-with? output maybe suffix [
                 keep output
             ][
-                keep [output suffix]
+                keep [output maybe suffix]
             ]
 
             for-each search (map-files-to-local searches) [
@@ -534,11 +535,11 @@ cc: make compiler-class [
             ]
 
             for-each flg ldflags [
-                keep maybe- filter-flag flg id
+                keep maybe filter-flag flg id
             ]
 
             for-each dep depends [
-                keep accept dep
+                keep maybe accept dep
             ]
         ]
     ]
@@ -568,7 +569,7 @@ cc: make compiler-class [
                     ]
                 ][
                     unspaced [
-                        if find dep/flags 'static ["-static "]
+                        if find (any [dep/flags []]) 'static ["-static "]
                         "-l" dep/output
                     ]
                 ]
@@ -633,7 +634,7 @@ cl: make compiler-class [
 
     check: method [
         return: [~]
-        exec [blank! file! text!]
+        exec [~null~ file! text!]
     ][
         exec-file: any [exec exec-file]
     ]
@@ -706,7 +707,7 @@ cl: make compiler-class [
             ]
             if F [
                 for-each flg cflags [
-                    keep maybe- filter-flag flg id
+                    keep maybe filter-flag flg id
                 ]
             ]
 
@@ -727,9 +728,9 @@ cl: make compiler-class [
     link: method [
         return: [text!]
         output [file!]
-        depends [block! blank!]
-        searches [block! blank!]
-        ldflags [block! any-string! blank!]
+        depends [block! ~null~]
+        searches [block! ~null~]
+        ldflags [block! any-string! ~null~]
         /debug
         /dynamic
     ][
@@ -747,15 +748,15 @@ cl: make compiler-class [
             ;
             output: file-to-local output
             keep [
-                "/Fe" either ends-with? output suffix [
+                "/Fe" either ends-with? output maybe suffix [
                     output
                 ][
-                    unspaced [output suffix]
+                    unspaced [output maybe suffix]
                 ]
             ]
 
             for-each dep depends [
-                keep maybe- accept dep
+                keep maybe accept dep
             ]
 
             ; /link must precede linker-specific options
@@ -775,7 +776,7 @@ cl: make compiler-class [
             ]
 
             for-each flg ldflags [
-                keep maybe- filter-flag flg id
+                keep maybe filter-flag flg id
             ]
 
         ]
@@ -831,10 +832,10 @@ cl: make compiler-class [
 
 strip-class: make object! [
     class: #strip
-    name: _
-    id: _ ;flag prefix
-    exec-file: _
-    options: _
+    name: null
+    id: null  ; flag prefix
+    exec-file: null
+    options: null
     commands: method [
         return: [block!]
         target [file!]
@@ -846,7 +847,7 @@ strip-class: make object! [
             switch type of flags [
                 block! [
                     for-each flag flags [
-                        keep maybe- filter-flag flag id
+                        keep maybe filter-flag flag id
                     ]
                 ]
                 text! [
@@ -865,17 +866,17 @@ strip: make strip-class [  ; options were [<gcc:-S> <gcc:-x> <gcc:-X>] ?
 ; includes/definitions/cflags will be inherited from its immediately ancester
 object-file-class: make object! [
     class: #object-file
-    compiler: _
-    cflags: _
-    definitions: _
-    source: _
-    output: _
-    basename: _ ;output without extension part
-    optimization: _
-    debug: _
-    includes: _
+    compiler: null
+    cflags: null
+    definitions: null
+    source: null
+    output: null
+    basename: null  ; output without extension part
+    optimization: null
+    debug: null
+    includes: null
     generated?: false
-    depends: _
+    depends: null
 
     compile: method [
         return: [text!]
@@ -888,15 +889,15 @@ object-file-class: make object! [
         /E {only preprocessing}
     ][
         cc: any [compiler default-compiler]
-        cc/compile/I/D/F/O/g/(maybe+ PIC)/(maybe+ E) output source
-            <- compose [(maybe- includes) (if I [ex-includes])]
-            <- compose [(maybe- definitions) (if D [ex-definitions])]
-            <- compose [(if F [ex-cflags]) (maybe- cflags)] ;; ex-cflags override
+        cc/compile/I/D/F/O/g/(maybe+ all [PIC 'PIC])/(maybe+ all [E 'E]) output source
+            <- compose [(maybe includes) (if I [ex-includes])]
+            <- compose [(maybe definitions) (if D [ex-definitions])]
+            <- compose [(if F [ex-cflags]) (maybe cflags)] ;; ex-cflags override
 
             ; current setting overwrites /refinement
             ; because the refinements are inherited from the parent
-            maybe- either O [either optimization [optimization][opt-level]][optimization]
-            maybe- either g [either debug [debug][dbg]][debug]
+            maybe either O [either optimization [optimization][opt-level]][optimization]
+            maybe either g [either debug [debug][dbg]][debug]
     ]
 
     gen-entries: method [
@@ -919,11 +920,11 @@ object-file-class: make object! [
             commands: reduce [compile/I/D/F/O/g/(
                 maybe+ all [PIC or [parent/class = #dynamic-library] 'PIC]
             )
-                maybe- parent/includes
-                maybe- parent/definitions
-                maybe- parent/cflags
-                maybe- parent/optimization
-                maybe- parent/debug
+                maybe parent/includes
+                maybe parent/definitions
+                maybe parent/cflags
+                maybe parent/optimization
+                maybe parent/debug
             ]
         ]
     ]
@@ -931,36 +932,36 @@ object-file-class: make object! [
 
 entry-class: make object! [
     class: #entry
-    id: _
-    target:
-    depends:
-    commands: _
+    id: null
+    target: null
+    depends: null
+    commands: null
     generated?: false
 ]
 
 var-class: make object! [
     class: #variable
-    name: _
-    value: _
-    default: _
+    name: null
+    value: null
+    default: null
     generated?: false
 ]
 
 cmd-create-class: make object! [
     class: #cmd-create
-    file: _
+    file: null
 ]
 
 cmd-delete-class: make object! [
     class: #cmd-delete
-    file: _
+    file: null
 ]
 
 cmd-strip-class: make object! [
     class: #cmd-strip
-    file: _
-    options: _
-    strip: _
+    file: null
+    options: null
+    strip: null
 ]
 
 generator-class: make object! [
@@ -968,9 +969,9 @@ generator-class: make object! [
 
     vars: make map! 128
 
-    gen-cmd-create: _
-    gen-cmd-delete: _
-    gen-cmd-strip: _
+    gen-cmd-create: null
+    gen-cmd-delete: null
+    gen-cmd-strip: null
 
     gen-cmd: method [
         return: [text!]
@@ -991,7 +992,7 @@ generator-class: make object! [
         ]
     ]
 
-    reify: method [
+    substitute: method [
         {Substitute variables in the command with its value}
         {(will recursively substitute if the value has variables)}
 
@@ -1082,17 +1083,17 @@ generator-class: make object! [
         project [object!]
     ][
         if not suffix: find reduce [
-            #application target-platform/exe-suffix
-            #dynamic-library target-platform/dll-suffix
-            #static-library target-platform/archive-suffix
-            #object-library target-platform/archive-suffix
-            #object-file target-platform/obj-suffix
+            #application (reify target-platform/exe-suffix)
+            #dynamic-library (reify target-platform/dll-suffix)
+            #static-library (reify target-platform/archive-suffix)
+            #object-library (reify target-platform/archive-suffix)
+            #object-file (reify target-platform/obj-suffix)
         ] project/class [return]
 
-        suffix: second suffix
+        suffix: degrade second suffix
 
         case [
-            blank? project/output [
+            not project/output [
                 switch project/class [
                     #object-file [
                         project/output: copy project/source
@@ -1107,9 +1108,9 @@ generator-class: make object! [
                     remove output-ext
                 ]
                 basename: project/output
-                project/output: join basename suffix
+                project/output: join basename maybe suffix
             ]
-            ends-with? project/output suffix [
+            ends-with? project/output maybe suffix [
                 basename: either suffix [
                     copy/part project/output
                         (length of project/output) - (length of suffix)
@@ -1119,7 +1120,7 @@ generator-class: make object! [
             ]
             default [
                 basename: project/output
-                project/output: join basename suffix
+                project/output: join basename maybe suffix
             ]
         ]
 
@@ -1201,8 +1202,8 @@ makefile: make generator-class [
                         ]
                         fail ["Unknown entry/target type" entry/target]
                     ]
-                    ensure [block! blank!] entry/depends
-                    for-each w entry/depends [
+                    ensure [block! ~null~] entry/depends
+                    for-each w maybe entry/depends [
                         switch w/class [
                             #variable [
                                 keep ["$(" w/name ")"]
@@ -1227,8 +1228,8 @@ makefile: make generator-class [
                 ;; lines of shell code that run to build the target.  These
                 ;; may use escaped makefile variables that get substituted.
                 ;;
-                ensure [block! blank!] entry/commands
-                for-each cmd entry/commands [
+                ensure [block! ~null~] entry/commands
+                for-each cmd maybe entry/commands [
                     c: ((match text! cmd) else [gen-cmd cmd]) else [continue]
                     if empty? c [continue] ;; !!! Review why this happens
                     keep [tab c] ;; makefiles demand TAB codepoint :-(
@@ -1282,7 +1283,8 @@ makefile: make generator-class [
                         depends: append objs map-each ddep dep/depends [
                             if ddep/class <> #object-library [ddep]
                         ]
-                        commands: append reduce [dep/command] maybe- dep/post-build-commands
+                        commands: append reduce [dep/command] maybe dep/post-build-commands
+                        assert [not find commands _]
                     ]
                     emit buf dep
                 ]
@@ -1340,17 +1342,17 @@ nmake: make makefile [
     nmake?: true
 
     ; reset them, so they will be chosen by the target platform
-    gen-cmd-create: _
-    gen-cmd-delete: _
-    gen-cmd-strip: _
+    gen-cmd-create: null
+    gen-cmd-delete: null
+    gen-cmd-strip: null
 ]
 
 ; For mingw-make on Windows
 mingw-make: make makefile [
     ; reset them, so they will be chosen by the target platform
-    gen-cmd-create: _
-    gen-cmd-delete: _
-    gen-cmd-strip: _
+    gen-cmd-create: null
+    gen-cmd-delete: null
+    gen-cmd-strip: null
 ]
 
 ; Execute the command to generate the target directly
@@ -1390,12 +1392,12 @@ Execution: make generator-class [
                 ] [return] ;TODO: Check the timestamp to see if it needs to be updated
                 either block? target/commands [
                     for-each cmd target/commands [
-                        cmd: reify cmd
+                        cmd: substitute cmd
                         print ["Running:" cmd]
                         call/shell cmd
                     ]
                 ][
-                    cmd: reify target/commands
+                    cmd: substitute target/commands
                     print ["Running:" cmd]
                     call/shell cmd
                 ]
@@ -1439,6 +1441,7 @@ Execution: make generator-class [
                     target: project/output
                     depends: append copy project/depends objs
                     commands: reduce [project/command]
+                    assert [not find commands _]
                 ]
             ]
             #object-library [

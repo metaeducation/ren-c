@@ -93,7 +93,7 @@
 
 ; :HARD-QUOTE parameter
 (
-    x: _
+    x: null
     x: >- default [10 + 20]
     x: >- default [1000000]
     x = 30

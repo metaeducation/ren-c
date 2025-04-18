@@ -195,7 +195,7 @@ static void Startup_Base(Array* boot_base)
     if (Eval_Array_At_Throws(result, boot_base, 0, SPECIFIED))
         panic (result);
 
-    if (not Is_Blank(result))
+    if (not Is_Nothing(result))
         panic (result);
 }
 
@@ -230,7 +230,7 @@ static void Startup_Sys(Array* boot_sys) {
     if (Eval_Array_At_Throws(result, boot_sys, 0, SPECIFIED))
         panic (result);
 
-    if (not Is_Blank(result))
+    if (not Is_Nothing(result))
         panic (result);
 }
 

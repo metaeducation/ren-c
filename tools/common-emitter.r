@@ -70,7 +70,7 @@ cscape: function [
           start:  ; <here>
           opt some [
             [
-                (prefix: _ suffix: _) finish:  ; <here>
+                (prefix: null suffix: null) finish:  ; <here>
 
                 "${" change [copy expr: [to "}"]] num-text skip (
                     mode: #cname
@@ -97,13 +97,14 @@ cscape: function [
                 copy suffix: remove to newline
             ] (
                 keep/only compose [
-                    (pattern) (col) (mode) (expr) (prefix) (suffix)
+                    (reify pattern) (col) (mode) (expr)
+                        (reify prefix) (reify suffix)
                 ]
                 num: num + 1
                 num-text: to text! num
             )
                 |
-            newline (col: 0 prefix: _ suffix: _) start:  ; <here>
+            newline (col: 0 prefix: null suffix: null) start:  ; <here>
                 |
             skip (col: col + 1)
         ]]
@@ -115,7 +116,12 @@ cscape: function [
 
     substitutions: collect [
         for-each item list [
-            set [pattern: col: mode: expr: prefix: suffix:] item
+            pattern: degrade item/1
+            col: item/2
+            mode: item/3
+            expr: item/4
+            prefix: degrade item/5
+            suffix: degrade item/6
 
             any-upper: did find/case expr charset [#"A" - #"Z"]
             any-lower: did find/case expr charset [#"a" - #"z"]
@@ -133,9 +139,15 @@ cscape: function [
             sub: eval code
 
             sub: case [
+                null? :sub [
+                    fail [
+                        "Substitution was null (old BLANK! in bootstrap):"
+                            mold expr
+                    ]
+                ]
                 any [
-                    void? :sub  ; new style void
-                    not sub  ; old style void (blank null)
+                    void? :sub  ; old NULL in bootstrap
+                    sub = '~  ; weird new "accept reified" idea
                 ][
                     copy "/* _ */"  ; replaced in post phase, vaporization
                 ]
@@ -163,7 +175,7 @@ cscape: function [
             ; If the substitution started at a certain column, make any line
             ; breaks continue at the same column.
             ;
-            indent: unspaced collect [keep newline  keep prefix]
+            indent: unspaced collect [keep newline  keep maybe prefix]
             replace sub newline indent
 
             keep sub

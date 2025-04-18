@@ -274,10 +274,10 @@ print [length of prototypes "function prototypes"]
 
 sys-globals-parser: context [
 
-    emit-directive: _
-    emit-identifier: _
-    parse-position: _
-    id: _
+    emit-directive: null
+    emit-identifier: null
+    parse-position: null
+    id: null
 
     process: func [return: [~] text] [
         parse2 text grammar/rule ;-- Review: no END (return result unused?)
@@ -293,7 +293,7 @@ sys-globals-parser: context [
         ]
 
         segment: [
-            (id: _)
+            (id: null)
             span-comment
             | line-comment opt some [newline line-comment] newline
             | opt wsp directive

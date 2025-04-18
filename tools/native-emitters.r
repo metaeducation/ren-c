@@ -20,7 +20,7 @@ emit-native-proto: function [
     proto
     <with> proto-count
 ][
-    line: null-to-blank text-line-of proto-parser/parse-position
+    line: text-line-of proto-parser/parse-position
 
     all [
         block? proto-parser/data
@@ -35,7 +35,7 @@ emit-native-proto: function [
                 fail [
                     "Native" (uppercase form to word! name)
                     "needs loadable specification block."
-                    (mold the-file) (line)
+                    (mold the-file) (reify line)
                 ]
             )]
             opt block! ;-- optional body

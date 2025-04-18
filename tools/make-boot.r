@@ -34,12 +34,12 @@ change-dir repo-dir
 change-dir %src/boot/
 
 args: parse-args system/options/args
-config: config-system (get 'args/OS_ID else [_])
+config: config-system degrade ((get 'args/OS_ID) else [reify null])
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
 if args/GIT_COMMIT = "unknown" [
-    git-commit: _
+    git-commit: null
 ] else [
     git-commit: args/GIT_COMMIT
     if (length of git-commit) != (length of first-rebol-commit) [
@@ -152,8 +152,11 @@ add-sym: function [
     sym-n: sym-n + 1
 
     if text? word [
-        assert [word = "|"]
-        append boot-words '|
+        append boot-words switch word [
+            "|" ['|]
+            "~" ['~]
+            fail "Only | and ~ are strings in words.r"
+        ]
     ] else [
         append boot-words word
     ]
@@ -548,7 +551,7 @@ at-value: func ['field] [next find boot-sysobj to-set-word field]
 
 boot-sysobj: load %sysobj.r
 change at-value version version
-change at-value commit git-commit
+change at-value commit (any [git-commit 'null])
 change at-value build now/utc
 change at-value product to lit-word! product
 
@@ -737,10 +740,10 @@ for-each section [boot-base boot-sys boot-mezz] [
         append get section load join %../mezz/ file
     ]
 
-    ; Make section evaluation return a BLANK! (something like <section-done>
+    ; Make section evaluation return NOTHING! (something like <section-done>
     ; may be better, but calling code is C and that complicates checking).
     ;
-    append get section _
+    append get section '~
 
     mezz-files: next mezz-files
 ]

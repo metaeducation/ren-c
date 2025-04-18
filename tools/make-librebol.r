@@ -118,7 +118,7 @@ emit-proto: func [return: [~] proto] [
     ; https://github.com/rebol/rebol-issues/issues/2317
     ;
     append api-objects make object! compose/only [
-        spec: null-to-blank match block! third header ;-- metadata API comment
+        spec: match block! third header  ; metadata API comment
         name: (ensure text! name)
         returns: (ensure text! trim/tail returns)
         paramlist: (ensure block! paramlist)
@@ -163,7 +163,7 @@ for-each api api-objects [eval in api [
         continue
     ]
 
-    opt-va-start: _
+    opt-va-start: '~  ; weird opt-out idea
     if va-pos: find paramlist "va_list *" [
         assert ['vaptr first next va-pos]
         assert ['p = first back va-pos]
@@ -179,27 +179,29 @@ for-each api api-objects [eval in api [
         ]
     ]) else ["void"]
 
-    proxied-args: null-to-blank delimit ", " map-each [type var] paramlist [
+    opt-proxied-args: (delimit ", " map-each [type var] paramlist [
         if type = "va_list *" [
             "&va" ;-- to produce vaptr
         ] else [
             to text! var
         ]
-    ]
+    ]) else ['~]
 
-    if find maybe+ spec #noreturn [
+    if find (any [spec []]) #noreturn [
         assert [returns = "void"]
         opt-dead-end: "DEAD_END;"
         opt-noreturn: "ATTRIBUTE_NO_RETURN"
     ] else [
-        opt-dead-end: _
-        opt-noreturn: _
+        opt-dead-end: '~
+        opt-noreturn: '~
     ]
 
-    opt-return: null-to-blank if returns != "void" ["return"]
+    opt-return: if returns != "void" ["return"] else ['~]
 
-    enter: null-to-blank if name != "rebStartup" [
+    opt-enter: if name != "rebStartup" [
         copy "API_rebEnterApi_internal();^/"
+    ] else [
+        '~
     ]
 
     make-inline-proxy: func [
@@ -209,9 +211,9 @@ for-each api api-objects [eval in api [
         cscape [:api internal {
             $<OPT-NORETURN>
             inline static $<Returns> $<Name>_inline($<Wrapper-Params>) {
-                $<Enter>
+                $<Opt-Enter>
                 $<Opt-Va-Start>
-                $<opt-return> $<Internal>($<Proxied-Args>);
+                $<opt-return> $<Internal>($<Opt-Proxied-Args>);
                 $<OPT-DEAD-END>
             }
         }]

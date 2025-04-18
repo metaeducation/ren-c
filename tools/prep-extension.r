@@ -58,7 +58,7 @@ output-dir: system/options/path/prep/(in-dir)
 mkdir/deep output-dir
 
 
-config: config-system (get 'args/OS_ID else [_])
+config: config-system degrade (get 'args/OS_ID else [reify null])
 
 mod: ensure text! args/MODULE
 m-name: mod
@@ -78,7 +78,7 @@ e1: (make-emitter "Module C Header File Preface"
 verbose: false
 
 proto-count: 0
-module-header: _
+module-header: null
 
 source-text: read c-src
 if system/version > 2.100.0 [ ;-- !!! Why is this necessary?
@@ -111,10 +111,9 @@ native-list: load unsorted-buffer
 ;print ["*** specs:" mold native-list]
 
 natdef: make object! [
-    export: _
-    spec: _
-    platforms: _
-    name: _
+    export: null
+    spec: null
+    name: null
 ]
 
 ; === PARSE NATIVES INTO NATIVE-DEFINITION OBJECTS, CHECKING FOR VALIDITY ===
@@ -122,11 +121,10 @@ natdef: make object! [
 native-defs: collect [
     native-rule: [
         (
-            n-export: _
-            n-spec: _
-            n-platforms: _
-            n-name: _
-            n-spec: _
+            n-export: null
+            n-spec: null
+            n-name: null
+            n-spec: null
         )
         ['export (n-export: true) | (n-export: false)]
         set n-name set-word! copy n-spec [
@@ -134,13 +132,11 @@ native-defs: collect [
                 |
             'native/body 2 block!
         ]
-        opt [quote platforms: set n-platforms block!]
         (
             keep make natdef compose/only [
                 export: (n-export)
                 name: (to lit-word! n-name)
                 spec: (n-spec) ;-- includes NATIVE or NATIVE/BODY
-                platforms: ((copy maybe+ n-platforms) else [_])
             ]
         )
     ]
@@ -163,30 +159,6 @@ clear native-list
 
 num-natives: 0
 for-each native native-defs [
-    catch [
-        if blank? native/platforms [
-            throw true ;-- no PLATFORM: in def means it's on all platforms
-        ]
-        for-each plat native/platforms [
-            case [
-                word? plat [; could be os-base or os-name
-                    if find reduce [config/os-name config/os-base] plat [
-                        throw true
-                    ]
-                ]
-                path? plat [; os-base/os-name format
-                    if plat = as path! reduce [config/os-base config/os-name][
-                        throw true
-                    ]
-                ]
-                fail ["Unrecognized platform spec:" mold plat]
-            ]
-        ]
-        null ;-- not needed in newer Ren-C (CATCH w/no throw is NULL)
-    ] else [
-        continue ;-- not supported
-    ]
-
     num-natives: num-natives + 1
 
     if native/export [

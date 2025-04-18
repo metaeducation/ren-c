@@ -43,6 +43,18 @@ REBOL [
         JOIN...and this one has to run before the shim makes those versions
         of JOIN do copying.
     }
+    Notes: {
+     A. Some routines in r3-8994d23 treat //NULL as opt out (e.g. APPEND,
+        COMPOSE) while others treat BLANK! like an opt out (e.g. FIND,
+        TO-WORD).  These have been consolidated to take NOTHING to opt out in
+        modern Ren-C, and MAYBE is consolidated to just taking ~null~ and
+        making NOTHING.
+
+        BLANK! acts as ~null~ in the bootstrap case.  We can shim some places,
+        but others we can't (e.g. GROUP!s in path dispatch of r3-8994d23 only
+        take BLANK!).  The MAYBE+ will act like MAYBE in the new executable,
+        but in the old executable passes through blanks.
+    }
 ]
 
 read: lib/read: adapt 'lib/read [
@@ -51,22 +63,6 @@ read: lib/read: adapt 'lib/read [
     ; about where a bad read is reading from (fixed in R3C and later)
     ;
     ; if not port? source [print ["READING:" mold source "from" what-dir]]
-]
-
-; 2. Some routines in r3-8994d23 treat NULL as opt out (e.g. APPEND, COMPOSE)
-; while others treat BLANK! like an opt out (e.g. FIND, TO-WORD).  These have
-; been consolidated to all take VOID to opt out in modern Ren-C, and MAYBE is
-; consolidated to just taking NULL and making VOID.
-;
-; For bootstrap purposes here, use MAYBE+ to make blank opt-outs and MAYBE-
-; to make null opt-outs.  The newer executable produces voids for both.
-;
-; 1. The older bootstrap executable calls blame "WHERE".  We shim this below
-;    but it's not shim'd at the moment of this definition (shouldn't matter
-;    unless it's called before the shim).
-;
-maybe: func [] [
-    fail/blame "MAYBE+ => blank or MAYBE- => null" 'return  ; BLAME shim'd [1]
 ]
 
 
@@ -83,12 +79,7 @@ maybe: func [] [
 trap [  ; in even older bootstrap executable, this means SYS.UTIL/RESCUE
     func [i [<maybe> integer!]] [...]
 ] else [
-    nulled?: func [var [word! path!]] [return null = get var]
-    null-to-blank: func [x [~null~ any-value!]] [either null? :x [_] [:x]]
-
-    maybe-: maybe+: func [x [~null~ any-value!]] [  ; see [2]
-        either any [blank? :x null? :x] [void] [:x]
-    ]
+    maybe+: :maybe  ; see [A]
 
     parse2: :parse/redbol  ; no `pos: <here>`, etc.
 
@@ -101,9 +92,17 @@ trap [  ; in even older bootstrap executable, this means SYS.UTIL/RESCUE
 
 print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
 
+; Use FUNC3 to mean old func conventions
+
+func3: :lib/func
+function3: :lib/function
+
+if3: :lib/if
+either3: :lib/either
+
 ; ALIAS DO AS EVAL
 ;
-eval: evaluate: :do
+eval: evaluate: :lib/do
 
 ; "WORKAROUND FOR BUGGY PRINT IN BOOTSTRAP EXECUTABLE"
 ;
@@ -113,15 +112,15 @@ eval: evaluate: :do
 ; This seems to avoid the issue.
 ;
 prin3-buggy: :lib/prin
-print: lib/print: lib/func [value <local> pos] [
-    if value = newline [  ; new: allow newline, to mean print newline only
+print: lib/print: func3 [value <local> pos] [
+    if3 value = newline [  ; new: allow newline, to mean print newline only
         prin3-buggy newline
         return
     ]
-    value: spaced value  ; uses bootstrap shim spaced (once available)
+    value: lib/spaced value  ; uses bootstrap shim spaced (once available)
     while [true] [
         prin3-buggy copy/part value 256
-        if tail? value: skip value 256 [break]
+        if3 tail? value: lib/skip value 256 [break]
     ]
     prin3-buggy newline
 ]
@@ -148,14 +147,14 @@ infix: enfix :enfix
 ;
 fail-with-where: :lib/fail
 
-lib/fail: fail: func [
+fail: func3 [
     reason [<end> error! text! block!]
     /blame location [frame! any-word!]
 ][
-    if not reason [  ; <end> becomes null, not legal arg to fail
+    if3 not reason [  ; <end> becomes null, not legal arg to fail
         reason: "<end>"
     ]
-    if not blame [
+    if3 not blame [
         fail-with-where reason
     ]
     fail-with-where/where reason location
@@ -168,7 +167,7 @@ lib/fail: fail: func [
 append sys 'util
 sys/util: make object! [rescue: 1]
 sys/util/rescue: :trap
-trap: func [] [fail/blame "USE RESCUE instead of TRAP for bootstrap" 'return]
+trap: func3 [] [fail/blame "USE RESCUE instead of TRAP for bootstrap" 'return]
 
 
 ; The bootstrap executable was picked without noticing it had an issue with
@@ -180,7 +179,7 @@ trap: func [] [fail/blame "USE RESCUE instead of TRAP for bootstrap" 'return]
 ; So augment the READ with a bit more information.
 ;
 lib-read: copy :lib/read
-lib/read: read: enclose :lib-read function [f [frame!]] [
+lib/read: read: enclose :lib-read function3 [f [frame!]] [
     saved-source: :f/source
     if error? e: sys/util/rescue [bin: eval f] [
         parse2 e/message [
@@ -199,25 +198,175 @@ lib/read: read: enclose :lib-read function [f [frame!]] [
 ]
 
 
-if: adapt :if [
+; === RE-STYLE OLD VOID AS "JUNK" ===
+
+; r3-8994d23 lacks TRIPWIRE!, so in places where we would use a tripwire
+; we have to use what it called "void".  It's meaner than tripwire in some
+; sense, because you can't assign it via SET-WORD!
+
+junk: :lib/void  ; function that returns a very ornery value
+junk?: :lib/void?
+
+junkify: func3 [x [<opt> any-value!]] [
+    if3 lib/blank? :x [return junk]
+    ; if3 lib/null? :x [return junk]  ; assume null is pure null
+    :x
+]
+
+
+; === RE-STYLE //NULL AS BOOTSTRAP EXE's VOID ===
+
+; The properties of the bootstrap executable's "// NULL" are such that it has
+; to be VOID... it vanishes in COMPOSE, etc.  It also creates errors from
+; access, so it's NOTHING too... but bootstrap code doesn't generally deal
+; in nothing as in most code variables are simply not supposed to be unset
+; if you care about them.
+
+null3?: :lib/null?
+null3: :lib/null
+
+~: :null3  ; conflated
+nothing?: func [] [
+    fail/blame "NOTHING? conflated with VOID? in bootstrap" 'return
+]
+
+void?: :null3?
+~void~: :null3
+void: :null3
+
+void!: func3 [] [  ; MODERNIZE-ACTION should convert all these away
+    fail/blame "NOTHING! converted to <opt> in bootstrap-shim" 'return
+]
+
+
+; === RE-STYLE BLANK! AS BOOTSTRAP EXE's ~NULL~ ===
+
+; Because the bootstrap EXE's BLANK! is falsey, that makes it the candidate
+; for serving the role of the "~null~ antiform~.  Unfortunately that needs
+; a lot of work to shim in...many functions take BLANK! to "opt out" and
+; that has to be converted to take the shim VOID (e.g. null3)
+
+blank3?: :lib/blank?
+blank: blank?: func3 [] [fail/blame "No BLANK in bootstrap-shim" 'return]
+
+null: ~null~: _
+null?: :blank3?
+
+null3-to-blank3: func3 [x [<opt> any-value!]] [  ; bootstrap TRY no "voids"
+    if3 null3? :x [return _]
+    :x
+]
+blank3-to-null3: func3 [x [<opt> any-value!]] [  ; bootstrap OPT makes "voids"
+    if3 blank3? :x [return null3]
+    :x
+]
+
+maybe: :blank3-to-null3
+maybe+: func3 [x [<opt> any-value!]] [  ; see [A]
+    if3 null3? :x [fail "MAYBE+: X is BOOTSTRAP VOID (// NULL)"]
+    return :x
+]
+
+all: chain [:lib/all :null3-to-blank3]
+any: chain [:lib/any :null3-to-blank3]
+switch: chain [:lib/switch :null3-to-blank3]
+case: chain [:lib/case :null3-to-blank3]
+
+match: specialize :lib/either-test [branch: [_]]  ; LIB/MATCH is variadic :-(
+ensure: adapt :lib/ensure [
     all [
-        :condition
-        find [true false yes no on off] :condition
-        fail/blame "IF not supposed to take [true false yes no off]" 'return
+        block? test
+        find test '~null~
+    ] then [
+        test: replace copy test '~null~ 'blank!
     ]
 ]
 
-either: adapt :either [
-    all [
+delimit: chain [:lib/delimit :null3-to-blank3]
+unspaced: chain [:lib/unspaced :null3-to-blank3]
+spaced: chain [:lib/spaced :null3-to-blank3]
+
+get-env: chain [:lib/get-env :null3-to-blank3]
+
+then: enfix enclose :lib/then func3 [f] [
+    set/opt 'f/optional blank3-to-null3 :f/optional
+    junkify lib/do f
+]
+else: enfix enclose :lib/else func3 [f] [
+    set/opt 'f/optional blank3-to-null3 :f/optional
+    junkify lib/do f
+]
+
+empty?: func3 [x [<opt> any-value!]] [  ; need to expand typespec for null3
+    if3 blank3? :x [fail "EMPTY?: series is bootstrap NULL (BLANK!)"]
+    if3 null3? :x [return true]
+    return lib/empty? :x
+]
+for-each: func ['var data [<opt> any-value!] body] [  ; need to take NULL3
+    if3 blank3? :data [fail "FOR-EACH: data is bootstrap NULL (BLANK!)"]
+    data: null3-to-blank3 :data
+    lib/for-each (var) data body
+]
+append: adapt :lib/append [
+    if3 blank3? :value [fail "APPEND: value is bootstrap NULL (BLANK!)"]
+]
+insert: adapt :lib/insert [
+    if3 blank3? :value [fail "INSERT: value is bootstrap NULL (BLANK!)"]
+]
+change: adapt :lib/change [
+    if3 blank3? :value [fail "CHANGE: value is bootstrap NULL (BLANK!)"]
+]
+join: adapt :lib/join-of [
+    if3 blank3? :value [fail "JOIN: value is bootstrap NULL (BLANK!)"]
+]
+
+find: enclose :lib/find func3 [f] [  ; !!! interface won't take null
+    if3 blank3? :f/series [fail "FIND: series is bootstrap NULL (BLANK!)"]
+    ; do `any [arg []]` if you want to opt out of find
+    return null3-to-blank3 lib/do f
+]
+
+copy: enclose :lib/copy func3 [f] [
+    if3 blank3? :f/value [fail "COPY: value is bootstrap NULL (BLANK!)"]
+    return null3-to-blank3 lib/do f
+]
+
+to-file: enclose :lib/to-file func3 [f] [
+    if3 blank3? :f/value [fail "TO-FILE: value is bootstrap NULL (BLANK!)"]
+    return null3-to-blank3 lib/do f
+]
+
+collect: adapt :lib/collect [
+    body: compose [keep: enclose 'keep func [f] [
+        if3 blank3? f/value [fail "KEEP: value is bootstrap NULL (BLANK!)"]
+        f/value: blank3-to-null3 :f/value
+        return null3-to-blank3 lib/do f
+    ]]
+]
+
+
+; === "FLEXIBLE LOGIC": ELIMINATE TRUE AND FALSE ===
+
+if: enclose :if3 func [f] [
+    lib/all [
         :condition
-        find [true false yes no on off] :condition
+        lib/find [true false yes no on off] :f/condition
+        fail/blame "IF not supposed to take [true false yes no off]" 'return
+    ]
+    junkify lib/do f
+]
+
+either: adapt :either [
+    lib/all [
+        :condition
+        lib/find [true false yes no on off] :condition
         fail/blame "EITHER not supposed to take [true false yes no off]" 'return
     ]
 ]
 
-wordtester: infix func ['name [set-word!] want [word!] dont [word!]] [
-    set name func [x] [
-        case [
+wordtester: infix func3 ['name [set-word!] want [word!] dont [word!]] [
+    set name func3 [x] [
+        lib/case [
             :x = want [true]
             :x = dont [false]
         ]
@@ -233,38 +382,40 @@ yes?: wordtester 'yes 'no
 no?: wordtester 'no 'yes
 
 
-maybe+: :try  ; see [2]
-maybe-: func [x [<opt> any-value!]] [either blank? :x [null] [:x]]
+; === MAKE TRY A POOR-MAN'S DEFINITIONAL ERROR HANDLER ===
 
-null-to-blank: :try  ; if we put null in variables, word accesses will fail
-opt: func [] [fail/blame "Use REIFY instead of OPT for bootstrap" 'return]
-try: func [value [<opt> any-value!]] [  ; poor man's definitional error handler
+try: func3 [value [<opt> any-value!]] [  ; poor man's definitional error handler
     if error? :value [return null]
     return :value
 ]
 
-trash: :void
-nothing!: :void!
-void!: func [] [fail/blame "No VOID! in bootstrap-shim" 'return]
-void: :null
 
-reify: func [value [<opt> any-value!]] [
+; === REIFY and DEGRADE parallels ===
+
+; There's a bit of a problem here in that old-null causes errors on variable
+; access -and- it vanishes when COMPOSE'd or appended.  So it is both void
+; and nothing.  When it gets reified, assume the void intent is the more
+; likely one that you're trying to preserve (usually it's null that the
+; bootstrap reifies)
+
+reify: func3 [value [<opt> any-value!]] [
     case [
-        void? :value [return '~trash~]
-        ; there is no actual "void" type, null acts as void sometimes
-        null? :value [return '~null~]
+        lib/null? :value [return '~void~]  ; bootstrap-EXE's //NULL
+        null? :value [return '~null~]  ; bootstrap-EXE's blank
     ]
     return :value
 ]
 
-degrade: func [value [any-value!]] [
+degrade: func3 [value [any-value!]] [
     case [
-        '~trash~ = :value [return void]
-        '~void~ = :value [return null]  ; append [a b c] null is no-op
+        '~void~ = :value [return lib/null]  ; append [a b c] null is no-op
         '~null~ = :value [return null]
     ]
     return :value
 ]
+
+opt: func3 [] [fail/blame "Use DEGRADE instead of OPT for bootstrap" 'return]
+
 
 ; New interpreters do not change the working directory when a script is
 ; executed to the directory of the script.  This is in line with what most
@@ -276,8 +427,8 @@ degrade: func [value [any-value!]] [
 ; script and then DO it, so that DO does not receive a FILE!.  But this means
 ; we have to manually update the system/script object.
 ;
-do: enclose :lib/do func [f <local> old-system-script] [
-    old-system-script: _
+do: enclose :lib/do func3 [f <local> old-system-script] [
+    old-system-script: null
     if tag? :f/source [
         f/source: append copy system/script/path to text! f/source
         f/source: clean-path f/source
@@ -296,7 +447,7 @@ do: enclose :lib/do func [f <local> old-system-script] [
         system/script: old-system-script
     ]
 ]
-load: func [source /all /header] [  ; can't ENCLOSE, does not take TAG!
+load: func3 [source /all /header] [  ; can't ENCLOSE, does not take TAG!
     if tag? source [
         source: append copy system/script/path to text! source
     ]
@@ -319,7 +470,7 @@ construct: specialize :construct [spec: []]
 ; PARSE/MATCH switches in a mode to give you the input, or null on failure.
 ; Result is given as void to prepare for the arbitrary synthesized result.
 ;
-parse2: func [input rules /case /match] [
+parse2: func3 [input rules /case /match] [
     f: make frame! :lib/parse
     f/input: input
     f/rules: rules
@@ -331,16 +482,12 @@ parse2: func [input rules /case /match] [
         probe rules
         fail "Error: PARSE rules did not match (or did not reach end)"
     ]
-    return void
+    return junk
 ]
 
-parse: func [] [
+parse: func3 [] [
     fail/blame "Use PARSE2 in Bootstrap" 'return
 ]
-
-; Older Ren-C considers nulled variables to be "unset".
-;
-nulled?: :unset?
 
 ; The "real apply" hasn't really been designed, but it would be able to mix
 ; positional arguments with named ones.  This is changed by the nature of
@@ -352,19 +499,19 @@ applique: :apply
 unset 'apply
 
 the: :quote
-quote: func [] [fail/blame "Use THE instead of QUOTE for literalizing" 'return]
+quote: func3 [] [fail/blame "Use THE instead of QUOTE for literalizing" 'return]
 
 collect*: :collect
 collect: :collect-block
 
-modernize-action: function [
+modernize-action: function3 [
     "Account for the <maybe> annotation as a usermode feature"
     return: [block!]
     spec [block!]
     body [block!]
 ][
     blankers: copy []
-    spec: collect [
+    spec: lib/collect [
         iterate spec [
             all [
                 spec/1 = the return:
@@ -377,7 +524,7 @@ modernize-action: function [
 
             ; Find ANY-WORD!s (args/locals)
             ;
-            if keep w: match any-word! spec/1 [
+            if3 keep w: lib/match any-word! spec/1 [
                 ;
                 ; Feed through any TEXT!s following the ANY-WORD!
                 ;
@@ -391,16 +538,18 @@ modernize-action: function [
                 ; Substitute BLANK! for any <maybe> found, and save some code
                 ; to inject for that parameter to return null if it's blank
                 ;
-                if block? spec/1 [
+                if3 block? spec/1 [
                     typespec: copy spec/1
-                    replace typespec '~null~ <opt>
+                    if find typespec 'blank! [
+                        fail "No BLANK! in bootstrap (it's acting like null)"
+                    ]
+                    replace typespec '~null~ blank!
                     replace typespec '~void~ <opt>
                     if find typespec <maybe> [
-                        replace typespec <maybe> 'blank!
+                        replace typespec <maybe> <opt>
                         append blankers compose [
-                            if blank? (as get-word! w) [return null]
+                            if void? (as get-word! w) [return null]
                         ]
-                        continue
                     ]
                     keep/only typespec
                     continue
@@ -416,8 +565,8 @@ modernize-action: function [
     return reduce [spec body]
 ]
 
-func: adapt 'func [set [spec body] modernize-action spec body]
-function: adapt 'function [set [spec body] modernize-action spec body]
+func: adapt 'func3 [set [spec body] modernize-action spec body]
+function: adapt 'function3 [set [spec body] modernize-action spec body]
 
 meth: infix adapt 'meth [set [spec body] modernize-action spec body]
 method: infix adapt 'method [set [spec body] modernize-action spec body]
@@ -432,9 +581,9 @@ trim: adapt 'trim [ ; there's a bug in TRIM/AUTO in 8994d23
 
 replace: specialize 'replace [all: /all]
 
-transcode: lib/function [
+transcode: function3 [
     return: "full block or remainder if /next3, or 'definitional' error"
-        [<opt> block! text! binary! error!]
+        [blank! block! text! binary! error!]  ; BLANK! is bootstrap null
     source [text! binary!]
     /next3
     next-arg [any-word!] "variable to set the transcoded element to"
@@ -461,9 +610,9 @@ transcode: lib/function [
             rest: to text! pos
             pos: skip source subtract (length of source) (length of rest)
         ]
-        if null? pick values 1 [
-            set* next-arg null  ; match modern Ren-C optional pack item
-            return null
+        if null3? pick values 1 [
+            set next-arg _  ; match modern Ren-C optional pack item
+            return _
         ]
         set next-arg pick values 1
         return pos
@@ -472,7 +621,7 @@ transcode: lib/function [
     return values
 ]
 
-split-path: lib/func [
+split-path: func3 [
     "Splits and returns directory component, variable for file optionally set"
     return: [<opt> file!]
     location [<opt> file! url! text!]
@@ -481,7 +630,7 @@ split-path: lib/func [
     <local> pos dir
 ][
     if null? :location [return null]
-    pos: _
+    pos: null
     parse2 location [
         [#"/" | 1 2 #"." opt #"/"] end (dir: dirize location) |
         pos: opt some [thru #"/" [end | pos:]] (
@@ -496,13 +645,20 @@ split-path: lib/func [
     if :farg [
         set farg pos
     ]
-    return maybe- dir
+    return dir
 ]
 
-join: :join-of  ; Note: JOIN now for strings and paths only (not arrays)
 
 ; High-level CALL now defaults to being synchronous
 ;
 call: specialize :call [wait: /wait]
+
+
+; === MAKE SURE OUR IF / ELSE LOGIC IS WORKING ===
+
+; Since we're shimming blank as null, that could break things if not careful.
+
+assert [junk? if true [null] else [fail "This should not have run"]]
+assert [1020 = (if false [null] else [1020])]
 
 quit/with system/options/path  ; see [1]

@@ -433,9 +433,9 @@ host-start: function [
 
     sys/util/script-pre-load-hook: :host-script-pre-load
 
-    do-string: _ ;-- will be set if a string is given with --do
+    do-string: null  ; will be set if a string is given with --do
 
-    quit-when-done: _ ;-- by default run CONSOLE
+    quit-when-done: null  ; by default run CONSOLE
 
     ; Process the option syntax out of the command line args in order to get
     ; the intended arguments.  TAKEs each option string as it goes so the
