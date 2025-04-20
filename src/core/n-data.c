@@ -260,7 +260,7 @@ DECLARE_NATIVE(WITHOUT)
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
     // input word as-is if the word wasn't in the requested context, while
-    // IN would return TRASH! on failure.  We carry forward the NULL-failing
+    // IN would return trash on failure.  We carry forward the NULL-failing
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (Any_Word(v)) {
@@ -1400,7 +1400,7 @@ DECLARE_NATIVE(SOMETHING_Q)
 
 
 //
-//  trash?: native:intrinsic [
+//  quasar?: native:intrinsic [
 //
 //  "Tells you if argument is a quasiform blank (~)"
 //
@@ -1408,16 +1408,16 @@ DECLARE_NATIVE(SOMETHING_Q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(TRASH_Q)
+DECLARE_NATIVE(QUASAR_Q)
 {
-    INCLUDE_PARAMS_OF_TRASH_Q;
+    INCLUDE_PARAMS_OF_QUASAR_Q;
 
     DECLARE_ELEMENT (e);
     Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
-    return LOGIC(Is_Trash(e));
+    return LOGIC(Is_Quasar(e));
 }
 
 

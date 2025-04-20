@@ -273,8 +273,8 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
     Option(const Symbol*) label = Level_Label(level_);
 
     Value* datatype = ARG(TYPE);
-    STATE = cast(Byte, Cell_Datatype_Builtin_Heart(datatype));  // might trash
-    Copy_Cell(SPARE, ARG(ELEMENT));  // may trash ELEMENT too, save in SPARE
+    STATE = cast(Byte, Cell_Datatype_Builtin_Heart(datatype));  // might alter
+    Copy_Cell(SPARE, ARG(ELEMENT));  // may alter ELEMENT too, save in SPARE
 
     Level* sub = Push_Downshifted_Level(OUT, level_);
 

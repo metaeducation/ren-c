@@ -260,7 +260,7 @@ void Unplug_Stack(
         if (Is_Cell_Readable(&base->spare))
             Copy_Meta_Cell(PUSH(), Level_Spare(base));
         else
-            Init_Trash(PUSH());
+            Init_Quasar(PUSH());
         flags |= DATASTACK_FLAG_HAS_SPARE;
     }
 
@@ -268,7 +268,7 @@ void Unplug_Stack(
         if (Is_Cell_Readable(&base->scratch))
             Copy_Meta_Cell(PUSH(), Level_Scratch(base));
         else
-            Init_Trash(PUSH());
+            Init_Quasar(PUSH());
 
         flags |= DATASTACK_FLAG_HAS_SCRATCH;
     }
@@ -370,7 +370,7 @@ void Replug_Stack(Level* base, Value* plug) {
 
     if (Get_Flavor_Flag(DATASTACK, array, HAS_SCRATCH)) {
         --item;
-        if (Is_Trash(item))
+        if (Is_Quasar(item))
             Init_Unreadable(Level_Scratch(base));
         else {
             Copy_Cell(Level_Scratch(base), item);
@@ -382,7 +382,7 @@ void Replug_Stack(Level* base, Value* plug) {
 
     if (Get_Flavor_Flag(DATASTACK, array, HAS_SPARE)) {
         --item;
-        if (Is_Trash(item))
+        if (Is_Quasar(item))
             Init_Unreadable(Level_Spare(base));
         else {
             Copy_Cell(&base->spare, item);

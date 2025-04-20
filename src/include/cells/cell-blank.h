@@ -71,21 +71,21 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out) {
     TRACK(Init_Blank_Untracked(out))
 
 
-//=//// '~' QUASIFORM (a.k.a. TRASH) //////////////////////////////////////=//
+//=//// '~' QUASIFORM (a.k.a. QUASAR) /////////////////////////////////////=//
 //
-// The quasiform of BLANK! is a tilde (instead of ~_~), and called TRASH
+// The quasiform of BLANK! is a tilde (instead of ~_~), and called QUASAR
 //
-//    >> meta print "Quasiform of BLANK is TRASH"
-//    Quasiform of BLANK is TRASH
+//    >> meta print "Quasiform of BLANK is QUASAR"
+//    Quasiform of BLANK is QUASAR
 //    == ~
 //
-// Trash cannot be SPREAD or passed to routines like EMPTY?, so it is a more
+// Quasar cannot be SPREAD or passed to routines like EMPTY?, so it is a more
 // ornery placeholder than blank.  Depending on one's desires, it can be
 // a better substitution for Rebol's historical NONE! type than BLANK!.
-// (Although both TRASH and BLANK! are truthy in Ren-C.)
+// (Although both QUASAR and BLANK! are truthy in Ren-C.)
 //
 
-INLINE Element* Init_Trash_Untracked(Init(Element) out) {
+INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     Reset_Cell_Header(out, QUASIFORM_2_COERCE_ONLY, CELL_MASK_BLANK);
     Corrupt_Unused_Field(out->extra.corrupt);  // doesn't get marked
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
@@ -94,10 +94,10 @@ INLINE Element* Init_Trash_Untracked(Init(Element) out) {
     return out;
 }
 
-#define Init_Trash(out) \
-    TRACK(Init_Trash_Untracked(out))
+#define Init_Quasar(out) \
+    TRACK(Init_Quasar_Untracked(out))
 
-INLINE bool Is_Trash(Need(const Element*) v)
+INLINE bool Is_Quasar(Need(const Element*) v)
   { return HEART_BYTE(v) == TYPE_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }
 
 
@@ -145,7 +145,7 @@ INLINE Value* Init_Nothing_Untracked(Init(Value) out) {
 #define Init_Nothing(out) \
     TRACK(Init_Nothing_Untracked(out))
 
-#define Init_Meta_Of_Nothing(out)  Init_Trash(out)
+#define Init_Meta_Of_Nothing(out)  Init_Quasar(out)
 
 #define NOTHING_VALUE \
     cast(const Value*, &PG_Nothing_Value)  // LIB(NOTHING) would be an action

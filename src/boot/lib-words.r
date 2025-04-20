@@ -28,7 +28,7 @@ REBOL [
 ]
 
 void
-trash
+quasar
 null
 okay
 blank

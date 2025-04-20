@@ -799,7 +799,7 @@ void Startup_Core(void)
     Protect_Cell(Mutable_Lib_Var(SYM_NULL));
     Protect_Cell(Mutable_Lib_Var(SYM_VOID));
     Protect_Cell(Mutable_Lib_Var(SYM_BLANK));
-    Protect_Cell(Mutable_Lib_Var(SYM_TRASH));
+    Protect_Cell(Mutable_Lib_Var(SYM_QUASAR));
     Protect_Cell(Mutable_Lib_Var(SYM_NUL));
 
   //=//// STARTUP ERRORS AND SYSTEM OBJECT ////////////////////////////////=//

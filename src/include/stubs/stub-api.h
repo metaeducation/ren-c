@@ -161,7 +161,7 @@ INLINE Value* Alloc_Value_Core(Flags flags)
     TRACK(Alloc_Value_Core(CELL_MASK_API_INITABLE))  // not eval target! [3]
 
 #define Alloc_Element() \
-    Init_Trash(Alloc_Value_Core(CELL_MASK_API_INITABLE))  // same [3]
+    Init_Quasar(Alloc_Value_Core(CELL_MASK_API_INITABLE))  // same [3]
 
 INLINE void Free_Value(Value* v)
 {

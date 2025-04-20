@@ -142,7 +142,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
     }
 
     if (h == TYPE_BLANK) {
-        if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform blank (trash)
+        if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform blank (quasar)
             return SUCCESS;  // Legal, e.g. `~/home/Projects/ren-c/README.md`
 
         assert(not is_head); // callers should check blank at head or tail
@@ -365,7 +365,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     assert(Any_Sequence_Type(heart));
 
     if (
-        (Is_Trash(first) and Is_Trash(second))  // ~/~ is a WORD!
+        (Is_Quasar(first) and Is_Quasar(second))  // ~/~ is a WORD!
         or (Is_Blank(first) and Is_Blank(second))  // plain / is a WORD!
     ){
         if (Any_Path_Type(heart))
@@ -374,7 +374,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             assert(Any_Tuple_Type(heart));
             Init_Word(out, CANON(DOT_1));
         }
-        if (Is_Trash(first))
+        if (Is_Quasar(first))
             Quasify_Isotopic_Fundamental(out);
         return SUCCESS;
     }

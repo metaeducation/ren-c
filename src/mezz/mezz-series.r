@@ -60,7 +60,7 @@ array: func [
         [element? action!]
     <local> rest block
 ][
-    initial: default ['~]  ; if not specified, array will be all trash
+    initial: default ['~]  ; if not specified, array will be all quasars
     if block? size [
         rest: next size else [
             ;

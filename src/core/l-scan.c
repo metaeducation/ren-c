@@ -2110,7 +2110,7 @@ static Option(Error*) Trap_Flush_Pending_Sigils(ScanState* S) {
         S->sigil_pending = SIGIL_0;
     }
     else if (S->quasi_pending) {  // "~]" or "''~]"
-        Init_Trash(PUSH());
+        Init_Quasar(PUSH());
         S->quasi_pending = false;
     }
     else if (S->num_quotes_pending) {  // "']" or "''']" are illegal [1]
@@ -2480,7 +2480,7 @@ Bounce Scanner_Executor(Level* const L) {
         // the delimiter so the lookahead sees it.
         //
         if (S->quasi_pending) {
-            Init_Trash(PUSH());  // if we end up with ~/~, we decay it to word
+            Init_Quasar(PUSH());  // if we end up with ~/~, we decay it to word
             S->quasi_pending = 0;  // quasi-sequences don't exist
         }
         else

@@ -1446,7 +1446,7 @@ Bounce Stepper_Executor(Level* L)
                 else if (heart == TYPE_META_GROUP)
                     Metafy(stable_SPARE);  // transfer ^ decoration to product
                 else if (heart == TYPE_GROUP and Is_Void(SPARE))
-                    Init_Trash(SPARE);  // [(void)]: ... pass thru
+                    Init_Quasar(SPARE);  // [(void)]: ... pass thru
 
                 heart = Heart_Of(SPARE);
                 Copy_Cell(PUSH(), stable_SPARE);
@@ -1473,7 +1473,7 @@ Bounce Stepper_Executor(Level* L)
             if (heart == TYPE_WORD or heart == TYPE_TUPLE)
                 continue;
 
-            if (Is_Space(TOP) or Is_Trash(TOP))  // nameless decay vs. no decay
+            if (Is_Space(TOP) or Is_Quasar(TOP))  // nameless decay vs. no decay
                 continue;
 
             return FAIL("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or ~/#");
@@ -1554,7 +1554,7 @@ Bounce Stepper_Executor(Level* L)
             Element* var = CURRENT;  // stable location, safe across SET of var
             Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
 
-            assert(QUOTE_BYTE(var) == NOQUOTE_1 or Is_Trash(var));
+            assert(QUOTE_BYTE(var) == NOQUOTE_1 or Is_Quasar(var));
             Heart var_heart = Heart_Of_Builtin(var);
 
             if (pack_meta_at == pack_meta_tail) {
@@ -1588,7 +1588,7 @@ Bounce Stepper_Executor(Level* L)
             Meta_Unquotify_Undecayed(SPARE);
 
             if (var_heart == TYPE_BLANK) {
-                assert(Is_Trash(var));  // [~ ...]: -> no name, but don't decay
+                assert(Is_Quasar(var));  // [~ ...]: -> no name, but don't decay
                 goto circled_check;
             }
 

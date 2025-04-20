@@ -796,7 +796,7 @@ Bounce Composer_Executor(Level* const L)
         return OUT;
     }
 
-    assert(Is_Trash(OUT));  // "return values" are data stack contents
+    assert(Is_Quasar(OUT));  // "return values" are data stack contents
 
     if (not SUBLEVEL->u.compose.changed) {
         //
@@ -838,7 +838,7 @@ Bounce Composer_Executor(Level* const L)
 
     assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs [5]
 
-    return Init_Trash(OUT);  // signal finished, avoid leaking temp evaluations
+    return Init_Quasar(OUT);  // signal finished, avoid leaking temp evaluations
 }}
 
 
@@ -852,7 +852,7 @@ Bounce Composer_Executor(Level* const L)
 //          any-list? any-sequence?
 //          any-word?  ; passed through as-is, or :CONFLATE can produce
 //          any-utf8?
-//          ~null~ quasi-word? blank! trash?  ; :CONFLATE can produce these
+//          ~null~ quasi-word? blank! quasar?  ; :CONFLATE can produce these
 //      ]
 //      pattern "Use ANY-THE-LIST-TYPE? (e.g. @{{}}) to use pattern's binding"
 //          [any-list?]
@@ -934,7 +934,7 @@ DECLARE_NATIVE(COMPOSE2)
 } list_compose_finished: {  //////////////////////////////////////////////////
 
     if (not Is_Raised(OUT)) {  // sublevel was killed
-        assert(Is_Trash(OUT));
+        assert(Is_Quasar(OUT));
         Option(Error*) e = Trap_Finalize_Composer_Level(
             OUT, SUBLEVEL, input, Bool_ARG(CONFLATE)
         );

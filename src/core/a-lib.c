@@ -582,13 +582,13 @@ RebolValue* API_rebNothing(void)
 
 
 //
-//  rebTrash: API
+//  rebQuasar: API
 //
-RebolValue* API_rebTrash(void)
+RebolValue* API_rebQuasar(void)
 {
     ENTER_API;
 
-    return Init_Trash(Alloc_Value());
+    return Init_Quasar(Alloc_Value());
 }
 
 

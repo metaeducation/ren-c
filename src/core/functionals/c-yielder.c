@@ -197,7 +197,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         if (Is_Blank(original_frame))
             goto invoke_completed_yielder;
 
-        assert(Is_Trash(original_frame));
+        assert(Is_Quasar(original_frame));
         goto invoke_yielder_that_abruptly_failed; }
 
       case ST_YIELDER_RUNNING_BODY: {
@@ -399,7 +399,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     }
 
     if (Is_Throwing_Failure(L)) {  // abrupt fail inside yielder
-        Init_Trash(original_frame);
+        Init_Quasar(original_frame);
         return THROWN;
     }
 
@@ -418,7 +418,7 @@ Bounce Yielder_Dispatcher(Level* const L)
             Init_Blank(original_frame);
             goto invoke_completed_yielder;
         }
-        Init_Trash(original_frame);
+        Init_Quasar(original_frame);
         Init_Thrown_Failure(L, Cell_Error(OUT));
         return THROWN;
     }
@@ -450,7 +450,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // a previous failure...which is probably better than conflating it
     // with saying that the yielder is done.
 
-    assert(Is_Trash(original_frame));
+    assert(Is_Quasar(original_frame));
 
     return FAIL(Error_Yielder_Failed_Raw());
 }}

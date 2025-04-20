@@ -305,7 +305,7 @@ const Value* Find_Error_For_Sym(SymId id)
 // 2. The WHERE is a backtrace of a block of words, starting from the top of
 //    the stack and going downwards.  If a label is not available for a level,
 //    we could omit it (which would be deceptive) or we could put ~anonymous~
-//    there.  The lighter tidle of trash (~) is a fairly slight choice, but
+//    there.  The lighter tilde of quasar (~) is a fairly slight choice, but
 //    so far it has seemed to be less abrasive while still useful.
 //
 // 3. A Level that is in the process of gathering its arguments isn't running
@@ -348,7 +348,7 @@ void Set_Location_Of_Error(
             if (label)
                 Init_Word(PUSH(), unwrap label);
             else
-                Init_Trash(PUSH());  // less space than ~ANYONYMOUS~ [2]
+                Init_Quasar(PUSH());  // less space than ~ANYONYMOUS~ [2]
             continue;
         }
 
@@ -360,7 +360,7 @@ void Set_Location_Of_Error(
         if (label)
             Init_Word(TOP, unwrap label);
         else
-            Init_Trash(TOP);  // [2]
+            Init_Quasar(TOP);  // [2]
 
         if (Is_Level_Fulfilling(L)) { // differentiate fulfilling levels [3]
             Source* a = Alloc_Singular(FLAG_FLAVOR(SOURCE) | NODE_FLAG_MANAGED);
