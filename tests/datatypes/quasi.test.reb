@@ -75,15 +75,15 @@
 [
     (foo: func [] [], ok)
 
-    (nothing? foo)
+    (trash? foo)
 
-    (^nothing = ^ applique foo/ [])
-    (nothing? applique foo/ [])
+    (^trash = ^ applique foo/ [])
+    (trash? applique foo/ [])
 
-    (^nothing = ^ eval foo/)
-    (nothing? eval foo/)
+    (^trash = ^ eval foo/)
+    (trash? eval foo/)
 
-    (^nothing = ^ eval foo/)
+    (^trash = ^ eval foo/)
 ]
 
 ; Explicit return of VOID
@@ -118,17 +118,17 @@
 
 [(
     foo: func [return: [~]] []
-    ^nothing = ^ foo
+    ^trash = ^ foo
 )(
     data: [a b c]
     f: func [return: [~]] [append data spread [1 2 3]]
-    ^nothing = ^ f
+    ^trash = ^ f
 )]
 
 ; locals are unset before they are assigned
 (
     f: func [<local> loc] [return get:any $loc]
-    nothing? f
+    trash? f
 )(
     f: func [<local> loc] [return reify get:any $loc]
     f = '~
@@ -160,7 +160,7 @@
 ; a script, or IMPORT.  They are variants of THROW.
 [
     (1 = do "Rebol [] quit:value 1")
-    (nothing? do "Rebol [] quit 0")
+    (trash? do "Rebol [] quit 0")
     (do "Rebol [] quit 1" except e -> [e.exit-code = 1])
     (quasi? do "Rebol [] quit:value ^^ raise -{some error}-")  ; ^^ escapes ^
     (raised? do "Rebol [] quit:value raise* make error! -{some error}-")

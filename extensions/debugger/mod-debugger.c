@@ -85,7 +85,7 @@ bool Do_Breakpoint_Throws(
         // longer available.  Debugging is being reviewed in light of a
         // stackless model and is non-functional at time of writing.
 
-        Init_Nothing(out);
+        Init_Trash(out);
         return false;  // no throw, run normally (but now, hooked)
     }
 
@@ -131,7 +131,7 @@ DECLARE_NATIVE(BREAKPOINT_P)
     if (not Is_Quasi_Word(SPARE))
         return FAIL("BREAKPOINT invisible, can't RESUME:WITH code (use PAUSE)");
 
-    return NOTHING;
+    return TRASH;
 }
 
 

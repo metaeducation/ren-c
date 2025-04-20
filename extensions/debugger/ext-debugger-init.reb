@@ -112,7 +112,7 @@ backtrace*: func [
     "Backtrace to find a specific FRAME!, or other queried property."
 
     return: [~null~ block! frame!]
-        "Nothing if printing, if specific level a frame! else block"
+        "Null if printing, if specific level a frame! else block"
     start [frame!]
         "Where to consider the trace point as starting from"
     level [blank! integer!]

@@ -62,7 +62,7 @@
 //      return: "Block of test numbers and failures"
 //          [text! block!]
 //      ^value "Argument that may be useful for ad hoc tests"
-//          [any-value?]  ; ^META to allow passing antiform blank (NOTHING)
+//          [any-value?]  ; ^META to allow passing antiform blank (TRASH)
 //  ]
 //
 DECLARE_NATIVE(TEST_LIBREBOL)
@@ -224,7 +224,7 @@ DECLARE_NATIVE(FUZZ)
         assert(Is_Percent(ARG(FACTOR)));
         g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(FACTOR));  // positive [2]
     }
-    return NOTHING;
+    return TRASH;
   #else
     UNUSED(ARG(FACTOR));
     return FAIL("FUZZ is only availble in RUNTIME_CHECKS builds");

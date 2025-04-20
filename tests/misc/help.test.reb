@@ -12,45 +12,45 @@
 ; It has had a tendency to break, so these tests are here even though they
 ; spew a large amount of output, in the interests of making HELP stay working.
 
-(nothing? help)
-(nothing? help help)
-(nothing? help system)
-(nothing? help to)
-(nothing? help "to-")
-(nothing? help "to")
-(nothing? help void)
-(nothing? help xxx)
-(nothing? help function)
+(trash? help)
+(trash? help help)
+(trash? help system)
+(trash? help to)
+(trash? help "to-")
+(trash? help "to")
+(trash? help void)
+(trash? help xxx)
+(trash? help function)
 
 (
     for-each 'w words of lib [
         dump w
         if vacant? w [continue]
         if action? get w
-            (compose:deep [assert [nothing? help (w)]])
+            (compose:deep [assert [trash? help (w)]])
         else [
             if not issue? get w [  ; "don't open web browser"
-                assert [nothing? help (get w)]
+                assert [trash? help (get w)]
             ]
         ]
     ]
     ok
 )
 (
-    nothing? source ||   ; Was once a tricky case, SOURCE of a barrier
+    trash? source ||   ; Was once a tricky case, SOURCE of a barrier
 )
 (
     for-each 'w words of lib [
         dump w
         if quasi? ^(get:any w) [continue]
         if action? get w
-            (compose:deep [assert [nothing? source (w)]])
+            (compose:deep [assert [trash? source (w)]])
     ]
     ok
 )
 
 [https://github.com/metaeducation/ren-c/issues/1106
-    (nothing? help "any")
+    (trash? help "any")
 ]
 
-(nothing? about)
+(trash? about)

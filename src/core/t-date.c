@@ -147,7 +147,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
         or VAL_DAY(v) > 31
     ) {
         Append_Ascii(mo->string, "?date?");
-        return NOTHING;
+        return TRASH;
     }
 
     // Date bits are stored in canon UTC form.  But for rendering, the year
@@ -175,7 +175,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
     if (Does_Date_Have_Time(v)) {
         Append_Codepoint(mo->string, '/');
         Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // Bool_ARG(FORM)?
-        assert(bounce == NOTHING);  // !!! generically might BOUNCE_CONTINUE...
+        assert(bounce == TRASH);  // !!! generically might BOUNCE_CONTINUE...
         UNUSED(bounce);
 
         if (zone != NO_DATE_ZONE) {
@@ -197,7 +197,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
         }
     }
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -1134,7 +1134,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Date)
         + (cast(REBI64, Julian_Date(date)) << 32)
         + nano
     );
-    return NOTHING;
+    return TRASH;
 }
 
 

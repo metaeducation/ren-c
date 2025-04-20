@@ -228,15 +228,15 @@ Bounce Func_Dispatcher(Level* const L)
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-    // 1. If no RETURN is used, the result is NOTHING, and typechecking is
-    //    performed to make sure NOTHING? was a legitimate return.  This has a
+    // 1. If no RETURN is used, the result is TRASH, and typechecking is
+    //    performed to make sure TRASH? was a legitimate return.  This has a
     //    little bit of a negative side that if someone is to hook the RETURN
     //    function, it won't be called in these "fallout" cases.  It's deemed
     //    too ugly to slip in a "hidden" call to RETURN for this case, and too
     //    big a hassle to force people to put RETURN ~ or RETURN at the end.
     //    So this is the compromise chosen...at the moment.
 
-    Init_Nothing(OUT);  // NOTHING, regardless of body result [1]
+    Init_Trash(OUT);  // TRASH, regardless of body result [1]
 
     const Element* param = Quoted_Returner_Of_Paramlist(
         Phase_Paramlist(details), SYM_RETURN
@@ -561,7 +561,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     if (Is_Raised(atom))
         return true;  // For now, all functions return definitional errors
 
-    if (Get_Parameter_Flag(param, NOTHING_DEFINITELY_OK) and Is_Nothing(atom))
+    if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(atom))
         return true;  // common case, make fast
 
     if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(atom))
@@ -572,13 +572,13 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
 
     if (Is_Nihil(atom)) {  // RETURN NIHIL
         //
-        // !!! Treating a return of NIHIL as a return of NOTHING helps some
+        // !!! Treating a return of NIHIL as a return of TRASH helps some
         // scenarios, for instance piping UPARSE combinators which do not
         // want to propagate pure invisibility.  The idea should be reviewed
         // to see if VOID makes more sense...but start with a more "ornery"
         // value to see how it shapes up.
         //
-        Init_Nothing(atom);
+        Init_Trash(atom);
     }
 
     return Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true);

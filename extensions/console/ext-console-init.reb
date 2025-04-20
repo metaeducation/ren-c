@@ -168,7 +168,7 @@ export console!: make object! [
             v: first v  ; items in pack are ^META'd
         ]
 
-        === PRINT NO OUTPUT FOR "NOTHING" (antiform blank) ===
+        === PRINT NO OUTPUT FOR "TRASH" (antiform blank) ===
 
         ; By default, we've decided that some value needs to not display in
         ; the console, to suppress output from things like HELP or PRINT,
@@ -179,12 +179,12 @@ export console!: make object! [
         ;
         ; Whatever doesn't display will be a "lie" in some sense.  The two
         ; competing lies are VOID (a.k.a. the ~void~ WORD! antiform) and
-        ; NOTHING (a.k.a. the antiform of blank, contents of an unset
-        ; variable).  The decision has flipped many times, but nothing wins.
+        ; TRASH (a.k.a. the antiform of blank, contents of an unset
+        ; variable).  The decision has flipped many times, but trash wins.
         ;
-        ; https://forum.rebol.info/t/console-treatment-of-void-vs-nothing/2045
+        ; https://forum.rebol.info/t/console-treatment-of-void-vs-trash/2045
 
-        if v = ^nothing [
+        if v = ^trash [
             return ~
         ]
 

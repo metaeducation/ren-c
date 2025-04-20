@@ -343,7 +343,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
     if (heart == TYPE_PERCENT)
         Append_Ascii(mo->string, "%");
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -590,7 +590,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Any_Float)
     assert(sizeof(d) == sizeof(i));
     memcpy(&i, &d, sizeof(d));  // use IEEE bits (is there a better way?)
     Set_Random(i);
-    return NOTHING;
+    return TRASH;
 }
 
 

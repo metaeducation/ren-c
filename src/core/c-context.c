@@ -526,7 +526,7 @@ Option(Error*) Trap_Wrap_Extend_Core(
     Option(Stump*) stump = cl->binder.stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
         const Symbol* symbol = Info_Stump_Bind_Symbol(unwrap stump);
-        Init_Nothing(Append_Context(context, symbol));
+        Init_Trash(Append_Context(context, symbol));
     }
 
     Destruct_Collector(cl);
@@ -567,7 +567,7 @@ DECLARE_NATIVE(WRAP_P)
         return COPY(list);  // should this return a list?
     */
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -811,7 +811,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     Destruct_Collector(cl);  // !!! binder might be useful for ensuing operations...
 
-  //=//// COPY INHERITED VALUES FROM PARENT, OR INIT TO NOTHING ///////////=//
+  //=//// COPY INHERITED VALUES FROM PARENT, OR INIT TO TRASH ///////////=//
 
     // 1. !!! Lacking constructors, there is an idea that extending an object
     //    means copying its series values deeply.  This is kind of clearly
@@ -825,7 +825,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     REBINT i;
     for (i = 1; i <= len; ++i, ++var)  // 0th item is rootvar, already filled
-        Init_Nothing(var);
+        Init_Trash(var);
 
     if (parent) {
         Value* dest = Flex_At(Value, a, 1);
@@ -833,7 +833,7 @@ VarList* Make_Varlist_Detect_Managed(
         Value* src = Varlist_Slots(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
             Flags clone_flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
-            assert(Is_Nothing(dest));
+            assert(Is_Trash(dest));
             Copy_Cell(dest, src);
             bool deeply = true;  // !!! Copies series deeply, why? [1]
             Clonify(dest, clone_flags, deeply);

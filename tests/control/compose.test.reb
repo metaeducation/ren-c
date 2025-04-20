@@ -246,7 +246,7 @@
 ]
 
 ; We allow the reduced case of `eval []` or `eval [comment "hi"]` to be VOID,
-; and this is an example of why we choose that instead of NOTHING.
+; and this is an example of why we choose that instead of TRASH.
 [
     (
         condition: 1 = 2

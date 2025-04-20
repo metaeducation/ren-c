@@ -444,7 +444,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
         arg,  // being used here as input (e.g. the ACTION!)
         lowest_stackindex,  // will weave in any refinements pushed
         nullptr,  // no binder needed, not running any code
-        NOTHING_VALUE  // use COPY UNRUN FRAME! for parameters vs. nothing
+        LIB(TRASH)  // use COPY UNRUN FRAME! for parameters vs. nothing
     );
 
     ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(arg));
@@ -813,7 +813,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Append_Codepoint(s, ']');
             End_Non_Lexical_Mold(mo);
         }
-        return NOTHING;
+        return TRASH;
     }
     Push_Pointer_To_Flex(g_mold.stack, c);
 
@@ -846,7 +846,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Trim_Tail(mo, '\n');
 
         Drop_Pointer_From_Flex(g_mold.stack, c);
-        return NOTHING;
+        return TRASH;
     }
 
     // Otherwise we are molding
@@ -899,7 +899,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 
     Drop_Pointer_From_Flex(g_mold.stack, c);
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -1024,7 +1024,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
                     Tweak_Cell_Binding(def, c);
                 return COPY(def);
             }
-            Init_Nothing(Append_Context_Bind_Word(c, def));
+            Init_Trash(Append_Context_Bind_Word(c, def));
             return COPY(def);
         }
 
@@ -1409,7 +1409,7 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
 //
 //  "Get what object a FRAME! or ACTION? uses to looks up .XXX references"
 //
-//      return: "Returns NOTHING if uncoupled, ~null~ if non-method"
+//      return: "Returns TRASH if uncoupled, ~null~ if non-method"
 //          [~ ~null~ object!]
 //      frame [<unrun> frame!]
 //  ]
@@ -1425,7 +1425,7 @@ DECLARE_NATIVE(COUPLING_OF)
         return nullptr;
 
     if (unwrap coupling == UNCOUPLED)
-        return NOTHING;
+        return TRASH;
 
     return COPY(Varlist_Archetype(unwrap coupling));
 }
@@ -1697,7 +1697,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     Append_Codepoint(mo->string, ']');
     End_Non_Lexical_Mold(mo);
 
-    return NOTHING;
+    return TRASH;
 }
 
 

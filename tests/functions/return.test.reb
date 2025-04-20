@@ -56,7 +56,7 @@
 )
 (
     f1: func [return: [~]] [return ~]
-    ^nothing = ^ f1
+    ^trash = ^ f1
 )
 [#1515 (  ; the "result" of a return should not be assignable
     a: 1
@@ -71,11 +71,11 @@
     a = 1
 )]
 [#1535
-    (nothing? reeval noquasi reify func [return: [~]] [words of return ~])
+    (trash? reeval noquasi reify func [return: [~]] [words of return ~])
 ]
-(nothing? run func [return: [~]] [values of return ~])
+(trash? run func [return: [~]] [values of return ~])
 [#1945
-    (nothing? run func [return: [~]] [spec-of return ~])
+    (trash? run func [return: [~]] [spec-of return ~])
 ]
 
 

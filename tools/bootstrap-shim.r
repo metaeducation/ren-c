@@ -644,8 +644,8 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
                 void? :product [
                     change3:part pos void 1
                 ]
-                nothing? :product [  ; e.g. compose [(if ok [null])]
-                    fail:blame "nothing compose found" $return
+                trash? :product [  ; e.g. compose [(if ok [null])]
+                    fail:blame "trash compose found" $return
                 ]
             ] else [
                 change3:only pos :product

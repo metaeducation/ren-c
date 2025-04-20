@@ -180,7 +180,7 @@ static void Startup_Lib(void)
         Tweak_Misc_Hitch(symbol, patch);  // ...but now it has one!
         Tweak_Misc_Hitch(patch, symbol);  // link back for singly-linked-list
 
-        Init_Nothing(Stub_Cell(patch));  // start as unset variable
+        Init_Trash(Stub_Cell(patch));  // start as unset variable
     }
 
     ensure(nullptr, g_lib_context) = lib;
@@ -289,12 +289,6 @@ static void Shutdown_Action_Spec_Tags(void)
 //
 static void Init_Root_Vars(void)
 {
-    // Simple isolated values, not available via lib, e.g. not LIB(BLANK)
-
-    Init_Nothing(&PG_Nothing_Value);
-    Set_Cell_Flag(&PG_Nothing_Value, PROTECTED);  // prevent overwriting
-    assert(Is_Nothing(NOTHING_VALUE));
-
     // Return signals should only be accessed by macros which cast them as
     // as `const`, to avoid the risk of accidentally changing them.  (This
     // rule is broken by some special system code which `m_cast`s them for
@@ -413,8 +407,6 @@ static void Shutdown_Root_Vars(void)
 {
     Free_Unmanaged_Flex(g_dispatcher_table);
     g_dispatcher_table = nullptr;
-
-    Force_Erase_Cell(&PG_Nothing_Value);
 
     Erase_Bounce_Wild(g_bounce_thrown);
     Erase_Bounce_Wild(g_bounce_fail);

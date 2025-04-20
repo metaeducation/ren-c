@@ -204,11 +204,11 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     FLAG_LEFT_BIT(13)
 
 
-//=//// PARAMETER_FLAG_NOTHING_DEFINITELY_OK //////////////////////////////=//
+//=//// PARAMETER_FLAG_TRASH_DEFINITELY_OK ////////////////////////////////=//
 //
 // See notes on NULL_DEFINITELY_OK
 //
-#define PARAMETER_FLAG_NOTHING_DEFINITELY_OK \
+#define PARAMETER_FLAG_TRASH_DEFINITELY_OK \
     FLAG_LEFT_BIT(14)
 
 
@@ -351,7 +351,7 @@ INLINE bool Is_Typechecked(const Value* v) {
 
 INLINE void Mark_Typechecked(const Value* v) {
     Assert_Cell_Stable(v);
-    assert(not Is_Nothing(v));  // only local creation can flag nothing
+    assert(not Is_Trash(v));  // only local creation can flag nothing
     Set_Cell_Flag(v, PARAM_NOTE_TYPECHECKED);
 }
 

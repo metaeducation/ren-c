@@ -686,7 +686,7 @@ Bounce Stepper_Executor(Level* L)
     //
     // A plain word tries to fetch its value through its binding.  It fails
     // if the word is unbound (or if the binding is to a variable which is
-    // set, but to the antiform of blank e.g. NOTHING).  Should the word
+    // set, but to the antiform of blank e.g. TRASH).  Should the word
     // look up to an antiform FRAME!, then that "Action" will be invoked.
     //
     // NOTE: The usual dispatch of infix functions is *not* via a TYPE_WORD in

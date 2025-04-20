@@ -20,7 +20,7 @@
 )
 (
     a: ~
-    nothing? :a
+    trash? :a
 )
 
 [#1477

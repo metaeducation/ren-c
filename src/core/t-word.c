@@ -144,7 +144,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
 
     Append_Spelling(mo->string, Cell_Word_Symbol(v));
 
-    return NOTHING;
+    return TRASH;
 }
 
 

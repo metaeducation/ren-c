@@ -117,7 +117,7 @@ make-quit: lambda [
 ;
 ; 4. We add a QUIT slot to the module (alongside like IMPORT* and EXPORT*), and
 ;    fill it in with a custom THROW word to catch it.  If we don't catch it,
-;    the result is just set to be NOTHING.
+;    the result is just set to be TRASH.
 ;
 module: func [
     "Creates a new module (used by both IMPORT and DO)"

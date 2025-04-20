@@ -445,7 +445,7 @@
         use [x] [return ~]
         42
     ]
-    ^nothing = ^ f
+    ^trash = ^ f
 )]
 
 (

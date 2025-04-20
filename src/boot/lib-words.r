@@ -29,6 +29,7 @@ REBOL [
 
 void
 quasar
+trash
 null
 okay
 blank

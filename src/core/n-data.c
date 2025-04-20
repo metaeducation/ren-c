@@ -1081,7 +1081,7 @@ DECLARE_NATIVE(FREE)
 
     Value* v = ARG(MEMORY);
     if (Is_Blank(v))
-        return NOTHING;
+        return TRASH;
 
     if (Any_Context(v) or Is_Handle(v))
         return FAIL("FREE only implemented for ANY-SERIES? at the moment");
@@ -1091,7 +1091,7 @@ DECLARE_NATIVE(FREE)
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
     Diminish_Stub(f);
-    return NOTHING; // !!! Could return freed value
+    return TRASH; // !!! Could return freed value
 }
 
 
@@ -1320,7 +1320,7 @@ DECLARE_NATIVE(VOID_Q)
 
 
 //
-//  nothing?: native:intrinsic [
+//  trash?: native:intrinsic [
 //
 //  "Is argument antiform blank (the state used to indicate an unset variable)"
 //
@@ -1328,16 +1328,16 @@ DECLARE_NATIVE(VOID_Q)
 //      ^value [any-value?]  ; must be ^META
 //  ]
 //
-DECLARE_NATIVE(NOTHING_Q)
+DECLARE_NATIVE(TRASH_Q)
 //
 // 1. Antiform blanks are considered to be unspecialized slots, as they are
 //    what is used to fill arguments in MAKE FRAME!.  So if you try to invoke
-//    a frame with NOTHING in slots, that gives an "unspecified parameter"
+//    a frame with TRASH in slots, that gives an "unspecified parameter"
 //    error.  It could have been that MAKE FRAME! gave you antiform parameters
 //    in unused slots, but that was "cluttered" and the empty slots would not
 //    work with DEFAULT or other functions that tried to detect emptiness.
 {
-    INCLUDE_PARAMS_OF_NOTHING_Q;
+    INCLUDE_PARAMS_OF_TRASH_Q;
 
     DECLARE_ELEMENT (meta);
     Option(Bounce) bounce = Trap_Bounce_Meta_Decay_Value_Intrinsic(
@@ -1346,27 +1346,27 @@ DECLARE_NATIVE(NOTHING_Q)
     if (bounce)
         return unwrap bounce;
 
-    return LOGIC(Is_Meta_Of_Nothing(meta));
+    return LOGIC(Is_Meta_Of_Trash(meta));
 }
 
 
 //
 //  noop: native [  ; native:intrinsic currently needs at least 1 argument
 //
-//  "Has no effect, besides returning antiform BLANK! (aka NOTHING)"
+//  "Has no effect, besides returning antiform BLANK! (aka TRASH)"
 //
 //      return: [~]
 //  ]
 //
 DECLARE_NATIVE(NOOP)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
 //
-// This function is preferred to having a function called NOTHING, due to the
-// potential confusion of people not realizing that (get $nothing) would be
+// This function is preferred to having a function called TRASH, due to the
+// potential confusion of people not realizing that (get $trash) would be
 // a function, and not the antiform blank state.
 {
     INCLUDE_PARAMS_OF_NOOP;
 
-    return Init_Nothing(OUT);
+    return Init_Trash(OUT);
 }
 
 
@@ -1381,8 +1381,8 @@ DECLARE_NATIVE(NOOP)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
 //
 DECLARE_NATIVE(SOMETHING_Q)
 //
-// See notes on NOTHING?  This is useful because comparisons in particular do
-// not allow you to compare against NOTHING.
+// See notes on TRASH?  This is useful because comparisons in particular do
+// not allow you to compare against TRASH.
 //
 //   https://forum.rebol.info/t/2068
 {
@@ -1395,7 +1395,7 @@ DECLARE_NATIVE(SOMETHING_Q)
     if (bounce)
         return unwrap bounce;
 
-    return LOGIC(not Is_Meta_Of_Nothing(meta));
+    return LOGIC(not Is_Meta_Of_Trash(meta));
 }
 
 

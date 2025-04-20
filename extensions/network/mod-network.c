@@ -1080,7 +1080,7 @@ DECLARE_NATIVE(STARTUP_P)
     uv_timer_init(uv_default_loop(), &wait_timer);
     uv_timer_init(uv_default_loop(), &halt_poll_timer);
 
-    return rebNothing();
+    return rebTrash();
 }
 
 
@@ -1119,7 +1119,7 @@ DECLARE_NATIVE(SHUTDOWN_P)
     if (result != 0)
         fail (rebError_UV(result));
 
-    return rebNothing();
+    return rebTrash();
 }
 
 

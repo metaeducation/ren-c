@@ -383,7 +383,7 @@ DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)
         "]"
     ));
 
-    return rebNothing();
+    return rebTrash();
 }
 
 
@@ -1840,7 +1840,7 @@ DECLARE_NATIVE(UPDATE_ODBC)
     if (not SQL_SUCCEEDED(rc))
         return rebDelegate("fail", Error_ODBC_Dbc(hdbc));
 
-    return rebNothing();
+    return rebTrash();
 }
 
 
@@ -1942,7 +1942,7 @@ DECLARE_NATIVE(STARTUP_P)
     assert(all_connections == nullptr);
     assert(all_columnlists == nullptr);
 
-    return rebNothing();
+    return rebTrash();
 }
 
 
@@ -1988,5 +1988,5 @@ DECLARE_NATIVE(SHUTDOWN_P)
         henv = SQL_NULL_HANDLE;
     }
 
-    return rebNothing();
+    return rebTrash();
 }

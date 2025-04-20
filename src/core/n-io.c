@@ -86,7 +86,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
     Mold_Or_Form_Cell_Ignore_Quotes(mo, Cell_List_Item_At(datatype), false);
     Append_Ascii(mo->string, "]");
 
-    return NOTHING;  // no return value
+    return TRASH;  // no return value
 }
 
 
@@ -180,7 +180,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
         assert(Is_Blob(v));
         PROBE(v);
     }
-    return NOTHING;
+    return TRASH;
   #endif
 }
 
@@ -427,6 +427,6 @@ DECLARE_NATIVE(BASIC_WRITE)
     fwrite(data, size, 1, f);
     fclose(f);
 
-    return NOTHING;
+    return TRASH;
   #endif
 }

@@ -1777,7 +1777,7 @@ DECLARE_NATIVE(STARTUP_P)
     // !!! No random number generation, yet:
     // https://github.com/WebAssembly/wasi-random
     //
-    return rebNothing();
+    return rebTrash();
 
   #elif TO_WINDOWS
 
@@ -1788,7 +1788,7 @@ DECLARE_NATIVE(STARTUP_P)
         PROV_RSA_FULL,
         CRYPT_VERIFYCONTEXT | CRYPT_SILENT
     )){
-        return rebNothing();
+        return rebTrash();
     }
     gCryptProv = 0;
 
@@ -1796,7 +1796,7 @@ DECLARE_NATIVE(STARTUP_P)
 
     rng_fd = open("/dev/urandom", O_RDONLY);
     if (rng_fd != -1)
-        return rebNothing();
+        return rebTrash();
 
   #endif
 
@@ -1831,5 +1831,5 @@ DECLARE_NATIVE(SHUTDOWN_P)
     }
   #endif
 
-    return rebNothing();
+    return rebTrash();
 }

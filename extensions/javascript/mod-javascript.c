@@ -1133,15 +1133,15 @@ DECLARE_NATIVE(JS_EVAL_P)
         );
 
     if (addr == 0)
-        return NOTHING;
+        return TRASH;
 
     goto handle_error;
 
   want_result: {  ////////////////////////////////////////////////////////////
 
-    // Currently, reb.Box() only translates to INTEGER!, TEXT!, NOTHING?, NULL
+    // Currently, reb.Box() only translates to INTEGER!, TEXT!, TRASH, NULL
     //
-    // !!! All other types come back as nothing (~ antiform).  Error instead?
+    // !!! All other types come back as trash (~ antiform).  Error instead?
     //
     if (Bool_ARG(LOCAL)) {
         addr = EM_ASM_INT(
@@ -1206,7 +1206,7 @@ DECLARE_NATIVE(STARTUP_P)
 
     Register_Dispatcher(&JavaScript_Dispatcher, &Javascript_Details_Querier);
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -1225,7 +1225,7 @@ DECLARE_NATIVE(JS_TRACE)
 
   #if DEBUG_JAVASCRIPT_EXTENSION
     PG_Probe_Failures = PG_JS_Trace = Cell_Logic(ARG(ENABLE));
-    return NOTHING;
+    return TRASH;
   #else
     return FAIL(
         "JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r"

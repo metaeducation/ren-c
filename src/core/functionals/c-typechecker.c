@@ -365,7 +365,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
             if (Get_Parameter_Flag(param, REFINEMENT))
                 Init_Nulled(arg);
             else
-                Init_Nothing(arg);
+                Init_Trash(arg);
         }
     }
 
@@ -662,7 +662,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
     assert(atom != SCRATCH and atom != SPARE);
     if (not is_return)
-        assert(not Is_Nothing(atom));  // antiform blank must be ^META as argument
+        assert(not Is_Trash(atom));  // antiform blank must be ^META as argument
 
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
         assert(not Is_Stable(atom) or not Is_Void(atom));  // should bypass
@@ -712,8 +712,8 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
             goto return_true;
 
         if (
-            Get_Parameter_Flag(param, NOTHING_DEFINITELY_OK)
-            and Is_Nothing(atom)
+            Get_Parameter_Flag(param, TRASH_DEFINITELY_OK)
+            and Is_Trash(atom)
         ){
             goto return_true;
         }

@@ -193,10 +193,10 @@
 )
 (
     a-value: "Rebol [] 1"
-    nothing? do :a-value
+    trash? do :a-value
 )
-(nothing? do "Rebol []")
-(nothing? do "Rebol [] 1")
+(trash? do "Rebol []")
+(trash? do "Rebol [] 1")
 (2 = do "Rebol [] 1 quit:value 2 3")
 
 ; RETURN stops the evaluation

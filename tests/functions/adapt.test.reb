@@ -49,5 +49,5 @@
     y: <outside>
     test: func [x <local> y] [return :y]
     adapted: adapt test/ [assert [y = <outside>]]
-    nothing? adapted 10
+    trash? adapted 10
 )

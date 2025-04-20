@@ -143,7 +143,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 
     Mold_Or_Form_Element(mo, Cell_Pair_Second(v), form);
 
-    return NOTHING;
+    return TRASH;
 }
 
 

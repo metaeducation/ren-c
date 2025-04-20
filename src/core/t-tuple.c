@@ -691,5 +691,5 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
         }
     }
 
-    return NOTHING;
+    return TRASH;
 }

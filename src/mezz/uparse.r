@@ -495,7 +495,7 @@ default-combinators: to map! reduce [
 
         cycle [
             [^result' input]: parser input except [
-                result': ^nothing
+                result': ^trash
                 continue
             ]
         ]
@@ -542,7 +542,7 @@ default-combinators: to map! reduce [
         parser [<end> action!]
         <local> f result'
     ][
-        result': ^nothing  ; default `[stop]` returns nothing
+        result': ^trash  ; default `[stop]` returns nothing
         if :parser [  ; parser argument is optional
             [^result' input]: parser input except e -> [
                 return raise e

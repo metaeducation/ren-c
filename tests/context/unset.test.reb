@@ -12,5 +12,5 @@
 )
 
 (
-    nothing? noop
+    trash? noop
 )

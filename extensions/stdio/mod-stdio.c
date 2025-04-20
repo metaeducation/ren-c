@@ -60,7 +60,7 @@ DECLARE_NATIVE(STARTUP_P)
 
     Startup_Stdio();  // platform-specific init, redirect detection [1]
 
-    return rebNothing();
+    return rebTrash();
 }
 
 
@@ -118,7 +118,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
         VAL_INDEX_RAW(v) += part;
     }
 
-    return rebNothing();
+    return rebTrash();
 }
 
 
@@ -520,5 +520,5 @@ DECLARE_NATIVE(SHUTDOWN_P)
 
     Shutdown_Stdio();  // platform-specific teardown (free buffers, etc.)
 
-    return rebNothing();
+    return rebTrash();
 }

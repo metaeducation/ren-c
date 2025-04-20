@@ -446,7 +446,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Sigil)
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -463,7 +463,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
             fail (Error_Illegal_Zero_Byte_Raw());  // don't form #, only mold
 
         Append_Any_Utf8_Limit(mo->string, v, UNLIMITED);
-        return NOTHING;
+        return TRASH;
     }
 
     Length len;
@@ -474,14 +474,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
     if (len == 0) {
         Append_Codepoint(mo->string, '"');
         Append_Codepoint(mo->string, '"');
-        return NOTHING;
+        return TRASH;
     }
 
     bool no_quotes = true;
     Codepoint c = Codepoint_At(cp);
 
     if (len == 1 and c == ' ')
-        return NOTHING;  // # is notationally a space character
+        return TRASH;  // # is notationally a space character
 
     // !!! This should be smarter and share code with FILE! on whether
     // it's necessary to use double quotes or braces, and how escaping
@@ -523,7 +523,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
         Mold_Text_Flex_At(mo, s, 0);
     }
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -1007,7 +1007,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Any_Utf8)
     Size utf8_size;
     Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, any_utf8);
     Set_Random(crc32_z(0L, utf8, utf8_size));
-    return NOTHING;
+    return TRASH;
 }
 
 

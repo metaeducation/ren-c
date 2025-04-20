@@ -216,7 +216,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
         Trim_Tail(mo, '0');
     }
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -665,7 +665,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Time)
     REBI64 secs = VAL_NANO(time);
 
     Set_Random(secs);
-    return NOTHING;
+    return TRASH;
 }
 
 

@@ -612,7 +612,7 @@ DECLARE_NATIVE(APPLIQUE)
         op,
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr,  // no binder needed
-        NOTHING_VALUE  // fill all slots with nothing to start
+        LIB(TRASH)  // fill all slots with nothing to start
     );
     Manage_Flex(exemplar);
     Init_Lensed_Frame(

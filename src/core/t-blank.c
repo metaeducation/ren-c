@@ -58,7 +58,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blank)
 
     Append_Ascii(mo->string, "_");
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -216,7 +216,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Handle)
 
     Append_Ascii(mo->string, "#[handle!]");
 
-    return NOTHING;
+    return TRASH;
 }
 
 

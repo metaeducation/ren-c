@@ -331,7 +331,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         }
 
         if (steps_out and steps_out != GROUPS_OK)
-            Init_Nothing(unwrap steps_out);  // !!! What to return?
+            Init_Trash(unwrap steps_out);  // !!! What to return?
 
         return SUCCESS;
     }
@@ -670,7 +670,7 @@ Option(Error*) Trap_Get_Any_Word(
 //  Trap_Get_Any_Word_Maybe_Vacant: C
 //
 // High-level: see notes on Trap_Get_Any_Word().  This version just gives back
-// "nothing" (antiform blank) or "tripwire" (antiform tag) vs. give an error.
+// "trash" (antiform blank) or "tripwire" (antiform tag) vs. give an error.
 //
 Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
     Sink(Value) out,
@@ -1262,7 +1262,7 @@ DECLARE_NATIVE(SET_ACCESSOR)
     Set_Cell_Flag(var, PROTECTED);  // help trap unintentional writes [1]
     Set_Node_Unreadable_Bit(var);  // help trap unintentional reads [1]
 
-    return NOTHING;
+    return TRASH;
 }
 
 

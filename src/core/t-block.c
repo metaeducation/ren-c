@@ -487,7 +487,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
         Option(VarList*) context = nullptr;
         bool relax = false;
         Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), context, relax);
-        return NOTHING;
+        return TRASH;
     }
 
     Sigil sigil = maybe Sigil_For_Heart(heart);
@@ -511,7 +511,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 
     Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 
-    return NOTHING;
+    return TRASH;
 }
 
 

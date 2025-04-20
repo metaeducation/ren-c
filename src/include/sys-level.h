@@ -714,14 +714,14 @@ INLINE Bounce Native_Unmeta_Result(Level* level_, const Element* v) {
     return Meta_Unquotify_Undecayed(level_->out);
 }
 
-INLINE Bounce Native_Nothing_Result_Untracked(
+INLINE Bounce Native_Trash_Result_Untracked(
     Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
 ){
     assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Nothing(level_->out);
+    return Init_Trash(level_->out);
 }
 
 INLINE Bounce Native_Raised_Result(Level* L, Error* error) {
@@ -843,7 +843,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
     #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
-    #define NOTHING     Native_Nothing_Result_Untracked(TRACK(OUT), level_)
+    #define TRASH       Native_Trash_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define UNMETA(v)   Native_Unmeta_Result(level_, (v))

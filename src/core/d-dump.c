@@ -169,7 +169,7 @@ DECLARE_NATIVE(DUMP)
             PROBE(var);
     }
 
-    return NOTHING;
+    return TRASH;
   #else
     UNUSED(ARG(VALUE));
     return FAIL(Error_Checked_Build_Only_Raw());

@@ -63,7 +63,7 @@ void Bind_Values_Inner_Loop(
                     and Is_Set_Word(v)
                 )
             ){
-                Init_Nothing(Append_Context_Bind_Word(context, v));
+                Init_Trash(Append_Context_Bind_Word(context, v));
             }
           }
           else {
@@ -250,7 +250,7 @@ Let* Make_Let_Variable(
 ){
     Stub* let = Make_Untracked_Stub(STUB_MASK_LET);  // one variable
 
-    Init_Nothing(x_cast(Value*, Stub_Cell(let)));  // start as unset
+    Init_Trash(x_cast(Value*, Stub_Cell(let)));  // start as unset
 
     Tweak_Link_Inherit_Bind(let, inherit);  // linked list [1]
     Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
@@ -943,7 +943,7 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
 
     Tweak_Cell_Binding(Feed_Data(L->feed), use);
 
-    return NOTHING;
+    return TRASH;
 }
 
 
@@ -1270,7 +1270,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
             if (Try_Add_Binder_Index(binder, symbol, index)) {
                 Value* var = Append_Context(c, symbol);
-                Init_Nothing(var);  // code shared with USE, user may see
+                Init_Trash(var);  // code shared with USE, user may see
             }
             else {  // note for-each [x @x] is bad, too
                 DECLARE_ELEMENT (word);

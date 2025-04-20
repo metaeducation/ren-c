@@ -215,7 +215,7 @@ help-value: func [
     if quasiform? atom' [
         let heart: heart of atom'
         let antitype: switch heart [  ; !!! should come from %types.r
-            blank! ["nothing"]
+            blank! ["trash"]
             tag! ["tripwire"]
             word! ["keyword"]
             group! ["splice"]

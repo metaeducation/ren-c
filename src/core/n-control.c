@@ -250,7 +250,7 @@ DECLARE_NATIVE(EITHER)
 // "nothing" or not, where NULL and VOID are the nothing states.
 //
 //    >> if null [<not run>]
-//    ; void
+//    == ~void~  ; anti
 //
 //    >> if null [<not run>] else [print "ELSE triggered by voidness"]
 //    ELSE triggered by voidness

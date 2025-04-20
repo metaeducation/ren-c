@@ -571,13 +571,13 @@ RebolValue* API_rebVoid(void)
 
 
 //
-//  rebNothing: API
+//  rebTrash: API
 //
-RebolValue* API_rebNothing(void)
+RebolValue* API_rebTrash(void)
 {
     ENTER_API;
 
-    return Init_Nothing(Alloc_Value());
+    return Init_Trash(Alloc_Value());
 }
 
 
@@ -3087,7 +3087,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     if (detect == DETECTED_AS_UTF8) {  // runs code! [3]
         const char* cp = cast(const char*, bounce);
         if (cp[0] == '~' and cp[1] == '\0') {
-            Init_Nothing(L->out);
+            Init_Trash(L->out);
             goto typecheck_out;  // make return "~" fast!
         }
         // ...could do other optimizations here...

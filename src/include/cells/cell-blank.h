@@ -101,9 +101,9 @@ INLINE bool Is_Quasar(Need(const Element*) v)
   { return HEART_BYTE(v) == TYPE_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }
 
 
-//=//// '~' ANTIFORM (a.k.a. NOTHING) /////////////////////////////////////=//
+//=//// '~' ANTIFORM (a.k.a. TRASH) ///////////////////////////////////////=//
 //
-// The antiform of BLANK! is called NOTHING, and it is used for the state of
+// The antiform of BLANK! is called TRASH, and it is used for the state of
 // an unset variable.  It is also the result when a function has no meaningful
 // value of return, so it has no display in the console.
 //
@@ -114,15 +114,15 @@ INLINE bool Is_Quasar(Need(const Element*) v)
 //
 //    >> print "Hello"
 //
-//    >> nothing? print "Hello"
+//    >> trash? print "Hello"
 //    == ~true~
 //
-// The name "nothing" (vs. "unset") was meditated on for quite some time,
+// The name "trash" (vs. "unset") was meditated on for quite some time,
 // and resolved as superior to trying to claim there's such a thing as an
 // "unset value".
 //
 // Picking antiform BLANK! as the contents of unset variables has many benefits
-// over choosing a WORD! antiform like `~unset~` or `~nothing~`:
+// over choosing a WORD! antiform like `~unset~` or `~trash~`:
 //
 //  * Reduces noise when looking at a list of variables to see which are unset
 //
@@ -133,7 +133,7 @@ INLINE bool Is_Quasar(Need(const Element*) v)
 //  * Quick way to unset variables, simply `(var: ~)`
 //
 
-INLINE Value* Init_Nothing_Untracked(Init(Value) out) {
+INLINE Value* Init_Trash_Untracked(Init(Value) out) {
     Reset_Cell_Header(out, ANTIFORM_0_COERCE_ONLY, CELL_MASK_BLANK);
     Corrupt_Unused_Field(out->extra.corrupt);  // doesn't get marked
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
@@ -142,28 +142,25 @@ INLINE Value* Init_Nothing_Untracked(Init(Value) out) {
     return out;
 }
 
-#define Init_Nothing(out) \
-    TRACK(Init_Nothing_Untracked(out))
+#define Init_Trash(out) \
+    TRACK(Init_Trash_Untracked(out))
 
-#define Init_Meta_Of_Nothing(out)  Init_Quasar(out)
-
-#define NOTHING_VALUE \
-    cast(const Value*, &PG_Nothing_Value)  // LIB(NOTHING) would be an action
+#define Init_Meta_Of_Trash(out)  Init_Quasar(out)
 
 
-//=//// <end> SIGNALING WITH NOTHING (~ antiform) /////////////////////////=//
+//=//// <end> SIGNALING WITH TRASH (~ antiform) ///////////////////////////=//
 //
 // Special handling is required in order to allow a kind of "light variadic"
 // form, where a parameter can be missing.
 //
 // For a time this was distinguished with a special ~end~ antiform.  But this
-// was rethought in light of the fact that the nothing antiform is unique
+// was rethought in light of the fact that the trash antiform is unique
 // among stable antiforms, as needing to be a ^META parameter in order to be
 // passed to a function.  That means it can signal willingness of a parameter
 // to be "fully missing" no matter what position it is in an argument list.
 //
 // This macro helps keep track of those places in the source that are the
-// implementation of the "nothing due to end" behavior.
+// implementation of the "trash due to end" behavior.
 //
-#define Init_Nothing_Due_To_End(out) \
-    Init_Nothing(out)
+#define Init_Trash_Due_To_End(out) \
+    Init_Trash(out)

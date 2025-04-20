@@ -49,7 +49,7 @@ REBOL [
 
 
 blank       "placeholder unit type"
-~nothing~   "state held by unset variables, can't be passed as normal argument"
+~trash~     "state held by unset variables, can't be passed as normal argument"
             (CELL_MASK_NO_NODES)
             [any-unit? any-inert?]  ; allow as `branch`?
 
@@ -398,7 +398,7 @@ comma         "separator between full evaluations (otherwise invisible)"
 ; ============================================================================
 
 ; The TYPE_QUOTED, TYPE_QUASIFORM, and all the antiform types (TYPE_SPLICE,
-; TYPE_NOTHING, etc.) enum values never appear in the HEART_BYTE() of a cell.
+; TYPE_TRASH, etc.) enum values never appear in the HEART_BYTE() of a cell.
 ; These are synthesized datatypes when the QUOTE_BYTE() contains values other
 ; than one (NOQUOTE_1).
 ;

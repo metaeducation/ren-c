@@ -151,7 +151,7 @@ Bounce Action_Executor(Level* L)
             if (Cell_Parameter_Class(PARAM) != PARAMCLASS_META) {
                 if (Is_Barrier(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
-                    Init_Nothing_Due_To_End(ARG);
+                    Init_Trash_Due_To_End(ARG);
                 }
                 else
                     Decay_If_Unstable(ARG);
@@ -334,7 +334,7 @@ Bounce Action_Executor(Level* L)
     //    first-cut approximation by unbinding.
 
         if (STATE == ST_ACTION_BARRIER_HIT) {
-            Init_Nothing_Due_To_End(ARG);
+            Init_Trash_Due_To_End(ARG);
             goto continue_fulfilling;
         }
 
@@ -358,7 +358,7 @@ Bounce Action_Executor(Level* L)
             }
 
             if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
-                assert(not Is_Nothing(OUT));
+                assert(not Is_Trash(OUT));
                 Decay_If_Unstable(OUT);  // !!! ^META variadics?
                 Init_Varargs_Untyped_Infix(ARG, stable_OUT);
                 Erase_Cell(OUT);
@@ -484,7 +484,7 @@ Bounce Action_Executor(Level* L)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (Is_Level_At_End(L)) {
-            Init_Nothing_Due_To_End(ARG);
+            Init_Trash_Due_To_End(ARG);
             goto continue_fulfilling;
         }
 
@@ -495,7 +495,7 @@ Bounce Action_Executor(Level* L)
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META: {
             if (Is_Level_At_End(L)) {
-                Init_Nothing_Due_To_End(ARG);
+                Init_Trash_Due_To_End(ARG);
                 goto continue_fulfilling;
             }
 
@@ -676,7 +676,7 @@ Bounce Action_Executor(Level* L)
 
     if (Get_Action_Executor_Flag(L, FULFILL_ONLY)) {  // no typecheck
         assert(Is_Cell_Erased(OUT));  // didn't touch out, should be fresh
-        Init_Nothing(OUT);  // trampoline requires some valid OUT result
+        Init_Trash(OUT);  // trampoline requires some valid OUT result
         goto skip_output_check;
     }
 
@@ -735,7 +735,7 @@ Bounce Action_Executor(Level* L)
         Assert_Cell_Stable(ARG);  // implicitly asserts Ensure_Readable(ARG)
 
         if (Is_Typechecked(stable_ARG))
-            continue;  // Note: typechecked nothings are legal (e.g. locals)
+            continue;  // Note: typechecked trash is legal (e.g. locals)
 
         Phase* phase = Level_Phase(L);
         const Param* param = PARAM;
@@ -745,7 +745,7 @@ Bounce Action_Executor(Level* L)
             param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
 
-        if (Is_Nothing(stable_ARG)) {  // other nothings are unspecified/"end"
+        if (Is_Trash(stable_ARG)) {  // other trash are unspecified/"end"
             if (Get_Parameter_Flag(param, ENDABLE))  // !!! "optional?"
                 continue;
             return FAIL(Error_Unspecified_Arg(L));

@@ -126,7 +126,7 @@ redescribe: func [
 /unset?: redescribe [
     "Determine if a variable looks up to a `~` antiform"
 ](
-    cascade [get:any/ nothing?/]
+    cascade [get:any/ trash?/]
 )
 
 /set?: redescribe [

@@ -361,5 +361,5 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
    if (unregister_extension_action != nullptr)
         rebElide(rebRUN(unregister_extension_action));
 
-   return NOTHING;
+   return TRASH;
 }

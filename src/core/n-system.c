@@ -180,7 +180,7 @@ DECLARE_NATIVE(LIMIT_USAGE)
     else
         return FAIL(PARAM(FIELD));
 
-    return NOTHING;
+    return TRASH;
 }
 
 

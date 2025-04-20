@@ -61,13 +61,11 @@ PVAR Codepoint *Lower_Cases;
 #endif
 
 // These are some canon cells that cannot be offered via LIB(XXX).  e.g. if
-// NOTHING were a variable in Lib, users couldn't access it by typing
-// `nothing` (they'd get an error on antiform var access)...so it's a function.
+// TRASH were a variable in Lib, users couldn't access it by typing
+// `trash` (they'd get an error on antiform var access)...so it's a function.
 //
 
 PVAR Value PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
-
-PVAR Value PG_Nothing_Value;
 
 // These are special return values that can be checked easily by pointer.  They
 // are turned into a `Bounce` (which is a `Node*` at time of writing).

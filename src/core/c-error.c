@@ -662,7 +662,7 @@ Error* Make_Error_Managed_Vaptr(
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
                 assert(!"Not enough arguments in Make_Error_Managed()");
-                Init_Nothing_Due_To_End(var);
+                Init_Trash_Due_To_End(var);
                 break;
 
               case DETECTED_AS_CELL: {
@@ -825,7 +825,7 @@ Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 //  Error_Unspecified_Arg: C
 //
 Error* Error_Unspecified_Arg(Level* L) {
-    assert(Is_Nothing(L->u.action.arg));
+    assert(Is_Trash(L->u.action.arg));
 
     const Symbol* param_symbol = Key_Symbol(L->u.action.key);
 
@@ -1488,5 +1488,5 @@ IMPLEMENT_GENERIC(MOLDIFY, Error)
             Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }
 
-    return NOTHING;
+    return TRASH;
 }
