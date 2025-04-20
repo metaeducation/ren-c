@@ -155,7 +155,7 @@ standard: construct [
         ] #BODY
     ]
 
-    proc-return-type: [nothing!]
+    proc-return-type: [trash!]
 
     proc-body: [
         return: make action! [

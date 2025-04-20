@@ -73,7 +73,7 @@ DECLARE_NATIVE(IF)
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(CONDITION)))
         return BOUNCE_THROWN;
 
-    return Nothingify_Branched(OUT);  // trash means no branch (cues ELSE)
+    return Trashify_Branched(OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -98,7 +98,7 @@ DECLARE_NATIVE(IF_NOT)
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(CONDITION)))
         return BOUNCE_THROWN;
 
-    return Nothingify_Branched(OUT);  // trash means no branch (cues ELSE)
+    return Trashify_Branched(OUT);  // trash means no branch (cues ELSE)
 }
 
 
@@ -359,7 +359,7 @@ DECLARE_NATIVE(THEN)
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
 
-    return Nothingify_Branched(OUT);  // if left ran, make THEN signal it did
+    return Trashify_Branched(OUT);  // if left ran, make THEN signal it did
 }
 
 
@@ -419,7 +419,7 @@ DECLARE_NATIVE(MATCH)
 
     if (VAL_LOGIC(temp)) {
         if (IS_FALSEY(value)) // see above for why false match not passed thru
-            return Init_Nothing(OUT);
+            return Init_Trash(OUT);
         return Copy_Cell(OUT, value);
     }
 
@@ -443,7 +443,7 @@ DECLARE_NATIVE(MATCH)
 DECLARE_NATIVE(NON)
 //
 // !!! This is a partial implementation of NON implemented for R3C, just good
-// enough for `non [nothing!]` and `non null` cases to give validation options to
+// enough for `non [trash!]` and `non null` cases to give validation options to
 // those wanting a less permissive SET (now that it has no /ANY refinement).
 {
     INCLUDE_PARAMS_OF_NON;
@@ -455,8 +455,8 @@ DECLARE_NATIVE(NON)
         if (Is_Nulled(value))
             fail ("NON expected value to not be NULL, but it was");
     }
-    else if (CELL_DATATYPE_TYPE(test) == TYPE_NOTHING) {  // specialize common case
-        if (Is_Nothing(value))
+    else if (CELL_DATATYPE_TYPE(test) == TYPE_TRASH) {  // specialize common case
+        if (Is_Trash(value))
             fail ("NON expected value to not be trash, but it was");
     }
     else if (not Typeset_Check(value, CELL_DATATYPE_TYPE(test))) {
@@ -561,7 +561,7 @@ DECLARE_NATIVE(ANY)
 //  {Short circuiting version of NOR, using a block of expressions as input}
 //
 //      return: "NOTHING! if all expressions are falsey, null if any are truthy"
-//          [nothing! ~null~]
+//          [trash! ~null~]
 //      block "Block of expressions."
 //          [block!]
 //  ]
@@ -595,7 +595,7 @@ DECLARE_NATIVE(NONE)
     }
 
     Drop_Level(L);
-    return Init_Nothing(OUT);  // truthy, but doesn't suggest LOGIC! on failure
+    return Init_Trash(OUT);  // truthy, but doesn't suggest LOGIC! on failure
 }
 
 
@@ -710,7 +710,7 @@ static Bounce Case_Choose_Core_May_Throw(
             } else
                 fail (Error_Invalid_Core(OUT, L->specifier));
 
-            Nothingify_Branched(OUT);  // null is reserved for no branch taken
+            Trashify_Branched(OUT);  // null is reserved for no branch taken
         }
 
         if (not Bool_ARG(ALL)) {
@@ -896,7 +896,7 @@ DECLARE_NATIVE(SWITCH)
             return BOUNCE_THROWN;
         }
 
-        Nothingify_Branched(OUT);  // null is reserved for no branch run
+        Trashify_Branched(OUT);  // null is reserved for no branch run
 
         if (not Bool_ARG(ALL)) {
             Abort_Level(L);
@@ -953,7 +953,7 @@ DECLARE_NATIVE(DEFAULT)
 
     if (
         not Is_Nulled(OUT)
-        and not Is_Nothing(OUT)
+        and not Is_Trash(OUT)
         and (not Is_Blank(OUT) or Bool_ARG(ONLY))
     ){
         return OUT;  // count it as "already set"
@@ -1111,7 +1111,7 @@ DECLARE_NATIVE(CATCH)
     // so this assignment has to wait until the end.
     //
     if (Bool_ARG(RESULT))  // caught case voids result to minimize likely use
-        rebElide(NAT_VALUE(SET), ARG(UNCAUGHT), NOTHING_VALUE);
+        rebElide(NAT_VALUE(SET), ARG(UNCAUGHT), TRASH_VALUE);
 
     return OUT;
 }

@@ -97,7 +97,7 @@ PVAR Value PG_Blank_Value[2];
 PVAR Value PG_Bar_Value[2];
 PVAR Value PG_False_Value[2];
 PVAR Value PG_True_Value[2];
-PVAR Value PG_Nothing_Value[2];
+PVAR Value PG_Trash_Value[2];
 
 PVAR Value PG_Bounce_Invisible[2]; // has "pseudotype" TYPE_R_INVISIBLE
 PVAR Value PG_Bounce_Immediate[2]; // has "pseudotype" TYPE_R_IMMEDIATE

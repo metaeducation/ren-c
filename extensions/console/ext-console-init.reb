@@ -128,7 +128,7 @@ console!: make object! [
 
     print-result: function [return: [~] v [~null~ any-value!]]  [
 
-        if nothing? last-result: get/any 'v [
+        if trash? last-result: get/any 'v [
             ;
             ; There are no antiforms in the R3C branch, but we can lie and
             ; make this legacy bootstrapping branch at least look a bit like

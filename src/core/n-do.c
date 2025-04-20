@@ -75,7 +75,7 @@ DECLARE_NATIVE(REEVAL)
         ARG(VALUE)->header.bits ^= CELL_FLAG_EVAL_FLIP;
     }
 
-    Init_Nothing(OUT);  // !!! R3C patch, better than error on `reeval :elide`
+    Init_Trash(OUT);  // !!! R3C patch, better than error on `reeval :elide`
 
     if (Eval_Step_In_Subframe_Throws(OUT, level_, flags, child))
         return BOUNCE_THROWN;

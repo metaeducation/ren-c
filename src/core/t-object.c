@@ -228,7 +228,7 @@ static void Append_To_Context(VarList* context, Value* arg)
         }
 
         if (IS_END(word + 1)) {
-            Init_Nothing(var);
+            Init_Trash(var);
             break; // fix bug#708
         }
         else {
@@ -865,7 +865,7 @@ REBTYPE(Context)
             return nullptr;
 
         if (Cell_Word_Id(verb) == SYM_FIND)
-            return Init_Nothing(OUT); // TRUE would obscure non-LOGIC! result
+            return Init_Trash(OUT); // TRUE would obscure non-LOGIC! result
 
         RETURN (Varlist_Slot(c, n)); }
 

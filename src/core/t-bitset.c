@@ -639,7 +639,7 @@ REBTYPE(Bitset)
 
         if (not Check_Bits(Cell_Bitset(value), arg, Bool_ARG(CASE)))
             return nullptr;
-        return Init_Nothing(OUT);
+        return Init_Trash(OUT);
     }
 
     case SYM_COMPLEMENT:

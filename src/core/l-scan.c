@@ -2536,7 +2536,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
                 break;
 
               case SYM_TRASH:
-                Init_Nothing(PUSH());
+                Init_Trash(PUSH());
                 break;
 
               default: {

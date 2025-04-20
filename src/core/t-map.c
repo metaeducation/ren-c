@@ -763,7 +763,7 @@ REBTYPE(Map)
         );
 
         if (Cell_Word_Id(verb) == SYM_FIND)
-            return Is_Zombie(OUT) ? nullptr : Init_Nothing(OUT);
+            return Is_Zombie(OUT) ? nullptr : Init_Trash(OUT);
 
         return OUT; }
 

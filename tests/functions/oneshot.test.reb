@@ -16,5 +16,5 @@
     ]
 )(
     once: oneshot
-    nothing? once [null]
+    trash? once [null]
 )

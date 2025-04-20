@@ -44,7 +44,7 @@ static const Value* Rescue_Dangerous(Level* level_) {
     INCLUDE_PARAMS_OF_RESCUE;
 
     if (Do_Branch_Throws(OUT, ARG(CODE)))
-        return NOTHING_VALUE;  // not API value, no proxying needed
+        return TRASH_VALUE;  // not API value, no proxying needed
 
     return nullptr;
 }
@@ -71,7 +71,7 @@ DECLARE_NATIVE(RESCUE)
     if (not error)  // code didn't fail() or throw
         return nullptr;
 
-    if (Is_Nothing(error))  // signal used to indicate a throw
+    if (Is_Trash(error))  // signal used to indicate a throw
         return BOUNCE_THROWN;
 
     assert(Is_Error(error));

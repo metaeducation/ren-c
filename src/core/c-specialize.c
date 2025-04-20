@@ -184,7 +184,7 @@ VarList* Make_Managed_Context_For_Action_May_Fail(
             special == param
             or Is_Nulled(special)
             or (
-                Is_Nothing(special)
+                Is_Trash(special)
                 and Get_Cell_Flag(special, ARG_MARKED_CHECKED)
             )
         );

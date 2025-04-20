@@ -219,7 +219,7 @@ dump-obj: function [
         wild: did all [set? 'pat  text? pat  find pat "*"]
 
         for-each [word val] obj [
-            if nothing! = type: type of get* 'val [
+            if trash! = type: type of get* 'val [
                 continue  ; !!! review
             ]
 

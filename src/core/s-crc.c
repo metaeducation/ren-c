@@ -199,7 +199,7 @@ uint32_t Hash_Value(const Cell* v)
         panic (nullptr);
 
     case TYPE_BLANK:
-    case TYPE_NOTHING:
+    case TYPE_TRASH:
     case TYPE_VOID:
         hash = 0;
         break;

@@ -221,7 +221,7 @@ at: generic [
 find: generic [
     {Searches for the position where a matching value is found}
     return: {position found, else null (NOTHING if non-positional)}
-        [~null~ any-series! nothing!]
+        [~null~ any-series! trash!]
     series [<maybe> blank! any-series! any-context! map! bitset! typeset!]
     value [any-value!]
     /part {Limits the search to a given length or position}

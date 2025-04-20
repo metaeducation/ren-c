@@ -8,7 +8,7 @@
     is-barrier? ()
 )
 (void! = type of (eval []))
-(not nothing? 1)
+(not trash? 1)
 
 [
     ('no-value = (sys/util/rescue [a: ~ | a])/id)
@@ -24,7 +24,7 @@
 (not error? sys/util/rescue [set 'a null])
 (
     value: ~
-    error? sys/util/rescue [set the a: non nothing! :value]
+    error? sys/util/rescue [set the a: non trash! :value]
 )
 (not error? sys/util/rescue [set 'a ~])
 

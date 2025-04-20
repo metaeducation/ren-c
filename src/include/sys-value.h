@@ -563,7 +563,7 @@ INLINE bool Is_Endish_Nulled(const Cell* v) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// NOTHING! results are the default for `eval []`, and unlike NULL nothing! *is*
+// NOTHING! results are the default for `eval []`, and unlike NULL trash! *is*
 // a value...however a somewhat unfriendly one.  While NULLs are falsey,
 // nothin is *neither* truthy nor falsey.
 //
@@ -574,15 +574,15 @@ INLINE bool Is_Endish_Nulled(const Cell* v) {
 // to be converted to some ANY-VALUE!.
 //
 
-#define NOTHING_VALUE \
-    c_cast(const Value*, &PG_Nothing_Value[0])
+#define TRASH_VALUE \
+    c_cast(const Value*, &PG_Trash_Value[0])
 
-#define Init_Nothing(out) \
-    RESET_CELL((out), TYPE_NOTHING)
+#define Init_Trash(out) \
+    RESET_CELL((out), TYPE_TRASH)
 
-INLINE Value* Nothingify_Branched(Value* cell) {
+INLINE Value* Trashify_Branched(Value* cell) {
     if (Is_Nulled(cell) or Is_Void(cell))
-        Init_Nothing(cell);
+        Init_Trash(cell);
     return cell;
 }
 

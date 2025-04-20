@@ -160,7 +160,7 @@ bool Update_Typeset_Bits_Core(
 
         if (Is_Word(maybe_word)) {
             if (Cell_Word_Id(maybe_word) == SYM_TILDE_1) {  // ~
-                Set_Typeset_Flag(typeset, TYPE_NOTHING);
+                Set_Typeset_Flag(typeset, TYPE_TRASH);
                 continue;
             }
             if (Cell_Word_Id(maybe_word) == SYM__TNULL_T) {  // ~null~
@@ -354,7 +354,7 @@ REBTYPE(Typeset)
             fail (Error_Invalid(arg));
 
         if (Typeset_Check(val, CELL_DATATYPE_TYPE(arg)))
-            return Init_Nothing(OUT);
+            return Init_Trash(OUT);
 
         return nullptr;
 

@@ -75,7 +75,7 @@ void MF_Unit(Molder* mo, const Cell* v, bool form)
         Append_Unencoded(mo->utf8flex, "_");
         break;
 
-      case TYPE_NOTHING:  // In modern Ren-C, nothing is an antiform of blank
+      case TYPE_TRASH:  // In modern Ren-C, nothing is an antiform of blank
         Append_Unencoded(mo->utf8flex, "~");
         break;
 

@@ -127,7 +127,7 @@ Script: [
     bad-func-arg:       [{function argument} :arg1 {is not valid}]
 
     needs-return-opt:   [:arg1 {can't return null (see RETURN: [~null~ ...])}]
-    needs-return-value: [:arg1 {can't return trash (see RETURN: [nothing!])}]
+    needs-return-value: [:arg1 {can't return trash (see RETURN: [trash!])}]
     bad-return-type:    [:arg1 {doesn't have RETURN: enabled for} :arg2]
 
     no-refine:          [:arg1 {has no refinement called} :arg2]

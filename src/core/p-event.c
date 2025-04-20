@@ -169,7 +169,7 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
         break; }
 
     case SYM_ON_WAKE_UP:
-        return Init_Nothing(OUT);
+        return Init_Trash(OUT);
 
     // Normal block actions done on events:
     case SYM_POKE:

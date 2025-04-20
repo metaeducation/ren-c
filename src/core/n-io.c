@@ -92,7 +92,7 @@ DECLARE_NATIVE(MOLD)
 //
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
 //
-//      return: [~null~ nothing!]
+//      return: [~null~ trash!]
 //      value [<maybe> text! char! binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
@@ -147,7 +147,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
         Drop_GC_Guard(temp);
     }
 
-    return Init_Nothing(OUT);
+    return Init_Trash(OUT);
 }
 
 
@@ -571,7 +571,7 @@ DECLARE_NATIVE(WAKE_UP)
         DECLARE_VALUE (verb);
         Init_Word(verb, Canon(SYM_ON_WAKE_UP));
         const Value* r = Do_Port_Action(level_, ARG(PORT), verb);
-        assert(Is_Nothing(r));
+        assert(Is_Trash(r));
         UNUSED(r);
     }
 

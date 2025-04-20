@@ -542,7 +542,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         break;
 
     case TYPE_BLANK:
-    case TYPE_NOTHING:
+    case TYPE_TRASH:
     case TYPE_VOID:
         break;
 

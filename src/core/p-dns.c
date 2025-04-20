@@ -173,7 +173,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
         RETURN (port); }
 
     case SYM_ON_WAKE_UP:
-        return Init_Nothing(OUT);
+        return Init_Trash(OUT);
 
     default:
         break;

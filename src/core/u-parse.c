@@ -406,7 +406,7 @@ static const Value* Get_Parse_Value(
 
         Move_Opt_Var_May_Fail(out, rule, specifier);
 
-        if (Is_Nothing(out))
+        if (Is_Trash(out))
             fail (Error_No_Value_Core(rule, specifier));
 
         if (Is_Nulled(out))
@@ -425,7 +425,7 @@ static const Value* Get_Parse_Value(
         if (Get_Path_Throws_Core(out, rule, specifier))
             fail (Error_No_Catch_For_Throw(out));
 
-        if (Is_Nothing(out))
+        if (Is_Trash(out))
             fail (Error_No_Value_Core(rule, specifier));
 
         if (Is_Nulled(out))
@@ -470,8 +470,8 @@ Bounce Process_Group_For_Parse(
     if (Is_Void(cell))  // even for doubled groups, void evals are discarded
         return BOUNCE_INVISIBLE;
 
-    if (Is_Nothing(cell))
-        fail ("Doubled GROUP! eval returned NOTHING!");
+    if (Is_Trash(cell))
+        fail ("Doubled GROUP! eval returned TRASH!");
 
     if (Is_Nulled(cell))
         fail ("Doubled GROUP! eval returned NULL!");
@@ -1639,7 +1639,7 @@ DECLARE_NATIVE(SUBPARSE)
                         Get_Opt_Var_May_Fail(rule, SPECIFIED)
                     );
 
-                    if (Is_Nulled(rule) or Is_Nothing(rule))
+                    if (Is_Nulled(rule) or Is_Trash(rule))
                         fail (Error_No_Value_Core(rule, P_RULE_SPECIFIER));
                 }
                 else {

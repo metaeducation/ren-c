@@ -243,7 +243,7 @@ Value* Append_Context(
     REBLEN len = Array_Len(Varlist_Array(context)); // length we just bumped
     REBLEN index = len - 1;
 
-    Value* value = Init_Nothing(Array_Last(Varlist_Array(context)));
+    Value* value = Init_Trash(Array_Last(Varlist_Array(context)));
     Term_Array_Len(Varlist_Array(context), len);
 
     if (any_word) {
@@ -1239,10 +1239,10 @@ void Resolve_Context(
             // "the remove succeeded, so it's marked as set now" (old comment)
             if (
                 Not_Cell_Flag(var, PROTECTED)
-                and (all or Is_Nothing(var))
+                and (all or Is_Trash(var))
             ){
                 if (m < 0)
-                    Init_Nothing(var);  // treat as undefined in source context
+                    Init_Trash(var);  // treat as undefined in source context
                 else
                     Move_Var(var, Varlist_Slot(source, m));
             }

@@ -164,7 +164,7 @@ static Bounce Loop_Series_Common(
             if (broke)
                 return nullptr;
         }
-        return Nothingify_Branched(out);  // null->BREAK, void->empty
+        return Trashify_Branched(out);  // null->BREAK, void->empty
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -187,7 +187,7 @@ static Bounce Loop_Series_Common(
             if (broke)
                 return nullptr;
         }
-        Nothingify_Branched(out);  // null->BREAK, void->empty
+        Trashify_Branched(out);  // null->BREAK, void->empty
         if (
             Type_Of(var) != Type_Of(start)
             or Cell_Flex(var) != Cell_Flex(start)
@@ -240,7 +240,7 @@ static Bounce Loop_Integer_Common(
             if (broke)
                 return nullptr;
         }
-        return Nothingify_Branched(out);  // null->BREAK, void->empty
+        return Trashify_Branched(out);  // null->BREAK, void->empty
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -259,7 +259,7 @@ static Bounce Loop_Integer_Common(
             if (broke)
                 return nullptr;
         }
-        Nothingify_Branched(out);  // null->BREAK, void->empty
+        Trashify_Branched(out);  // null->BREAK, void->empty
 
         if (not Is_Integer(var))
             fail (Error_Invalid_Type(Type_Of(var)));
@@ -326,7 +326,7 @@ static Bounce Loop_Number_Common(
             if (broke)
                 return nullptr;
         }
-        return Nothingify_Branched(out);  // null->BREAK, void->empty
+        return Trashify_Branched(out);  // null->BREAK, void->empty
     }
 
     // As per #1993, see notes in Loop_Integer_Common()
@@ -343,7 +343,7 @@ static Bounce Loop_Number_Common(
             if (broke)
                 return nullptr;
         }
-        Nothingify_Branched(out);  // null->BREAK, void->empty
+        Trashify_Branched(out);  // null->BREAK, void->empty
 
         if (not Is_Decimal(var))
             fail (Error_Invalid_Type(Type_Of(var)));
@@ -588,7 +588,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            Nothingify_Branched(les->out);  // null->BREAK, void->empty
+            Trashify_Branched(les->out);  // null->BREAK, void->empty
             break;
 
           case LOOP_EVERY:
@@ -601,7 +601,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
             if (Is_Nulled(les->out))  // null body is error now
                 fail (Error_Need_Non_Null_Raw());
             if (Is_Void(les->out))  // vanish result
-                Init_Nothing(les->out);  // nulled is used to signal breaking only
+                Init_Trash(les->out);  // nulled is used to signal breaking only
             else
                 Copy_Cell(PUSH(), les->out);  // not void, added to the result
             break;
@@ -773,7 +773,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
         // any other value is the last body result, and is truthy
         // only illegal value here is trash (would cause error if body gave it)
         //
-        assert(not Is_Nothing(OUT));
+        assert(not Is_Trash(OUT));
         return OUT;
 
       case LOOP_MAP_EACH:
@@ -946,7 +946,7 @@ DECLARE_NATIVE(FOR_SKIP)
             if (broke)
                 return nullptr;
         }
-        Nothingify_Branched(OUT);  // null->BREAK, blank->empty
+        Trashify_Branched(OUT);  // null->BREAK, blank->empty
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
         //
@@ -998,7 +998,7 @@ DECLARE_NATIVE(STOP)
 
     Copy_Cell(OUT, NAT_VALUE(STOP));
     if (Is_Endish_Nulled(v))
-        CONVERT_NAME_TO_THROWN(OUT, NOTHING_VALUE); // `if true [stop]`
+        CONVERT_NAME_TO_THROWN(OUT, TRASH_VALUE); // `if true [stop]`
     else
         CONVERT_NAME_TO_THROWN(OUT, v); // `if true [stop ...]`
 
@@ -1409,7 +1409,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         // If index is past the series end, then there's nothing removable.
         //
         // !!! Should REMOVE-EACH follow the "loop conventions" where if the
-        // body never gets a chance to run, the return value is nothing?
+        // body never gets a chance to run, the return value is trash?
         //
         return Init_Integer(OUT, 0);
     }
@@ -1556,7 +1556,7 @@ DECLARE_NATIVE(REPEAT)
             if (broke)
                 return nullptr;
         }
-        Nothingify_Branched(OUT);  // null->BREAK, blank->empty
+        Trashify_Branched(OUT);  // null->BREAK, blank->empty
     }
 
     if (Is_Logic(ARG(COUNT)))
@@ -1687,7 +1687,7 @@ DECLARE_NATIVE(WHILE)
                 return Init_Nulled(OUT);
             }
         }
-        Nothingify_Branched(OUT);  // null->BREAK, blank->empty
+        Trashify_Branched(OUT);  // null->BREAK, blank->empty
     } while (true);
 
     DEAD_END;

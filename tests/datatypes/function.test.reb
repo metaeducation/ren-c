@@ -413,5 +413,5 @@
         use [x] [return] ;-- https://github.com/metaeducation/ren-c/issues/755
         42
     ]
-    nothing? f
+    trash? f
 )]

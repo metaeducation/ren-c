@@ -39,7 +39,7 @@ probe: func [
     value [~null~ any-value!]
 ][
     case [
-        nothing? :value [write-stdout "~  ; anti"]
+        trash? :value [write-stdout "~  ; anti"]
         void? :value [write-stdout "~void~  ; anti"]
         null? :value [write-stdout "~null~  ; anti"]
         true [write-stdout mold :value]
@@ -196,7 +196,7 @@ reeval func [
         ]
     ]
 ]
-    nothing?:
+    trash?:
     void?:
     blank?:
     logic?:
@@ -254,6 +254,9 @@ reeval func [
     <end>
 
 
+trashified?: :trash?  ; helps make tests clearer for trashification
+
+
 ; For some reason, the WRITE-STDOUT facility is broken in VSCode terminal for
 ; longer strings.  It was found that printing in smaller chunks helped.
 ; Delving into repair of old device model code is not a high priority, since
@@ -277,7 +280,7 @@ print: func [
     {Textually output spaced line (evaluating elements if a block)}
 
     return: "NULL if blank input or effectively empty block, otherwise trash"
-        [~null~ nothing!]
+        [~null~ trash!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
         [<maybe> char! text! block!]
 ][

@@ -253,7 +253,7 @@ static Bounce Transport_Actor(
         else if (sock->command == RDC_WRITE) {
             Init_Nulled(port_data); // Write is done.
         }
-        return Init_Nothing(OUT); }
+        return Init_Trash(OUT); }
 
     case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;

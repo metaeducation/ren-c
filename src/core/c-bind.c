@@ -511,7 +511,7 @@ void Virtual_Bind_Deep_To_New_Context(
             // unreadable blank.  But since this code is also shared with USE,
             // it doesn't do any initialization...so go ahead and put trash.
             //
-            Init_Nothing(var);
+            Init_Trash(var);
 
             assert(rebinding); // shouldn't get here unless we're rebinding
 

@@ -208,7 +208,7 @@ handle      handle      -       -       +       -
 
 blank       unit        blank   +       +       -
 ; end of inert unbindable types
-nothing     unit        -       +       +       -
+trash       unit        -       +       +       -
 void        unit        -       +       +       -
 
 ; Note that the "null?" state has no associated NULL! datatype.  Internally

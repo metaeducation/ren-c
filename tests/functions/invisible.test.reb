@@ -150,8 +150,8 @@
     ]
 )
 
-(nothing? (if true [] else [<else>]))
-(nothing? (if true [comment <true-branch>] else [<else>]))
+(trash? (if true [] else [<else>]))
+(trash? (if true [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <invisible>])
 (1 = any [1 elide <invisible>])
@@ -166,11 +166,11 @@
 ; It's likely more useful for EVAL to give NOTHING than error if asked to
 ; evaluate something that turns out to be invisible.
 ;
-(nothing? reeval the (comment "void is better than failing here"))
+(trash? reeval the (comment "void is better than failing here"))
 (
     x: <before>
     did all [
-        nothing? reeval :elide x: <after>
+        trash? reeval :elide x: <after>
         x = <after>
     ]
 )

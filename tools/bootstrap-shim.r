@@ -226,7 +226,7 @@ null3?: :lib/null?
 null3: :lib/null
 
 ~: :null3  ; conflated
-nothing?: func [] [
+trash?: func [] [
     fail/blame "NOTHING? conflated with VOID? in bootstrap" 'return
 ]
 

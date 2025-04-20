@@ -546,7 +546,7 @@ INLINE bool Splices_Into_Type_Without_Only(
     // are similar to APPEND/INSERT/CHANGE in their concerns, and *have*
     // an /ONLY option.
     //
-    if (Is_Nothing(arg))
+    if (Is_Trash(arg))
         fail ("Cannot put trash (~) into arrays");
 
     assert(Any_List_Kind(array_kind));

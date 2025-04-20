@@ -130,7 +130,7 @@
     is-barrier? (<| 10)
 )
 (
-    nothing? (10 |>)
+    trash? (10 |>)
 )
 
 (

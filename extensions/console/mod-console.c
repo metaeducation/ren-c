@@ -56,7 +56,7 @@ bool ctrl_c_enabled = true;
 //
 // This is the callback passed to `SetConsoleCtrlHandler()`.
 //
-BOOL WINAPI Handle_Break(DWORD dwCtrlType)
+BOOL WINAPI Halt_On_Ctrl_C_Or_Break(DWORD dwCtrlType)
 {
     switch (dwCtrlType) {
     case CTRL_C_EVENT:
@@ -85,7 +85,7 @@ BOOL WINAPI Handle_Break(DWORD dwCtrlType)
     }
 }
 
-BOOL WINAPI Handle_Nothing(DWORD dwCtrlType)
+BOOL WINAPI Suppress_Ctrl_C(DWORD dwCtrlType)
 {
     if (dwCtrlType == CTRL_C_EVENT)
         return TRUE;
@@ -97,8 +97,8 @@ void Disable_Ctrl_C(void)
 {
     assert(ctrl_c_enabled);
 
-    SetConsoleCtrlHandler(Handle_Break, FALSE);
-    SetConsoleCtrlHandler(Handle_Nothing, TRUE);
+    SetConsoleCtrlHandler(Halt_On_Ctrl_C_Or_Break, FALSE);
+    SetConsoleCtrlHandler(Suppress_Ctrl_C, TRUE);
 
     ctrl_c_enabled = false;
 }
@@ -107,8 +107,8 @@ void Enable_Ctrl_C(void)
 {
     assert(not ctrl_c_enabled);
 
-    SetConsoleCtrlHandler(Handle_Break, TRUE);
-    SetConsoleCtrlHandler(Handle_Nothing, FALSE);
+    SetConsoleCtrlHandler(Halt_On_Ctrl_C_Or_Break, TRUE);
+    SetConsoleCtrlHandler(Suppress_Ctrl_C, FALSE);
 
     ctrl_c_enabled = true;
 }

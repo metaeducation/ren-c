@@ -71,7 +71,7 @@ DECLARE_NATIVE(UNEVAL)
     if (Is_Nulled(v))
         return Init_Lib_Word(OUT, SYM__TNULL_T);
 
-    if (Is_Nothing(v))
+    if (Is_Trash(v))
         return Init_Lib_Word(OUT, SYM_TILDE_1);
 
     Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);

@@ -390,7 +390,7 @@ Array* Make_Paramlist_Managed_May_Fail(
                 ? TS_OPT_VALUE
                 : TS_VALUE & ~(
                     FLAGIT_KIND(TYPE_ACTION)
-                    | FLAGIT_KIND(TYPE_NOTHING)
+                    | FLAGIT_KIND(TYPE_TRASH)
                 ),
             Cell_Word_Symbol(item) // don't canonize, see #2258
         );
@@ -1381,7 +1381,7 @@ Bounce Nothing_Dispatcher(Level* L)
     assert(Cell_Series_Len_At(Array_Head(details)) == 0);
     UNUSED(details);
 
-    return Init_Nothing(L->out);
+    return Init_Trash(L->out);
 }
 
 
@@ -1454,7 +1454,7 @@ Bounce Eraser_Dispatcher(Level* L)
     if (Eval_Array_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
         return BOUNCE_THROWN;
 
-    return Init_Nothing(L->out);
+    return Init_Trash(L->out);
 }
 
 

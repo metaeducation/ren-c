@@ -68,7 +68,7 @@
 //
 //  {Initialize random number generators and OS-provided crypto services}
 //
-//      return: [nothing!]
+//      return: [~]
 //  ]
 //
 DECLARE_NATIVE(INIT_CRYPTO)
@@ -95,7 +95,7 @@ DECLARE_NATIVE(INIT_CRYPTO)
     }
   #endif
 
-    return Init_Nothing(OUT);
+    return Init_Trash(OUT);
 }
 
 
@@ -118,7 +118,7 @@ DECLARE_NATIVE(SHUTDOWN_CRYPTO)
         close(rng_fd);
   #endif
 
-    return Init_Nothing(OUT);
+    return Init_Trash(OUT);
 }
 
 

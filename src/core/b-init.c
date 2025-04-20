@@ -195,7 +195,7 @@ static void Startup_Base(Array* boot_base)
     if (Eval_Array_At_Throws(result, boot_base, 0, SPECIFIED))
         panic (result);
 
-    if (not Is_Nothing(result))
+    if (not Is_Trash(result))
         panic (result);
 }
 
@@ -230,7 +230,7 @@ static void Startup_Sys(Array* boot_sys) {
     if (Eval_Array_At_Throws(result, boot_sys, 0, SPECIFIED))
         panic (result);
 
-    if (not Is_Nothing(result))
+    if (not Is_Trash(result))
         panic (result);
 }
 
@@ -419,7 +419,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
     for (i = 0; names[i] != nullptr; ++i) {
         Symbol* str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
         Value* val = Append_Context(Lib_Context, nullptr, str);
-        assert(Is_Nothing(val));  // functions will fill in
+        assert(Is_Trash(val));  // functions will fill in
         UNUSED(val);
     }
 }
@@ -843,10 +843,10 @@ static void Init_Root_Vars(void)
     Init_True(&PG_True_Value[0]);
     Poison_Cell(&PG_True_Value[1]);
 
-    Erase_Cell(&PG_Nothing_Value[0]);
-    Erase_Cell(&PG_Nothing_Value[1]);
-    Init_Nothing(&PG_Nothing_Value[0]);
-    Poison_Cell(&PG_Nothing_Value[1]);
+    Erase_Cell(&PG_Trash_Value[0]);
+    Erase_Cell(&PG_Trash_Value[1]);
+    Init_Trash(&PG_Trash_Value[0]);
+    Poison_Cell(&PG_Trash_Value[1]);
 
     Erase_Cell(&PG_Bounce_Thrown[0]);
     Erase_Cell(&PG_Bounce_Thrown[1]);
@@ -1562,7 +1562,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
         fail (Error_No_Catch_For_Throw(result));
     }
 
-    if (not Is_Nothing(result))
+    if (not Is_Trash(result))
         panic (result); // FINISH-INIT-CORE is a PROCEDURE, returns void
 
     return nullptr;

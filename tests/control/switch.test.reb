@@ -13,7 +13,7 @@
 )
 
 (null? switch 2 [1 []])
-(nothing? switch 1 [1 []])
+(trash? switch 1 [1 []])
 
 [#2242 (
     11 = reeval func [] [switch/all 1 [1 [return 11 88]] 99]

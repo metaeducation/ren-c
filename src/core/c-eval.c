@@ -978,7 +978,7 @@ bool Eval_Core_Throws(Level* const L)
 
             switch (pclass) {
               case PARAMCLASS_LOCAL:
-                Init_Nothing(L->arg);  // !!! L->special?
+                Init_Trash(L->arg);  // !!! L->special?
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
@@ -1659,7 +1659,7 @@ bool Eval_Core_Throws(Level* const L)
             goto process_action;
         }
 
-        if (Is_Nothing(current_gotten))  // need `:x` if `x` is unset
+        if (Is_Trash(current_gotten))  // need `:x` if `x` is unset
             fail (Error_No_Value_Core(current, L->specifier));
 
         if (Is_Tripwire(current_gotten))
@@ -1697,7 +1697,7 @@ bool Eval_Core_Throws(Level* const L)
 
         Flags flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
-        Init_Nothing(L->out);  // `1 x: comment "hi"` shouldn't set x to 1!
+        Init_Trash(L->out);  // `1 x: comment "hi"` shouldn't set x to 1!
 
         if (CURRENT_CHANGES_IF_FETCH_NEXT) { // must use new frame
             DECLARE_SUBLEVEL(child, L);
@@ -1840,7 +1840,7 @@ bool Eval_Core_Throws(Level* const L)
             goto return_thrown;
         }
 
-        if (Is_Nothing(L->out))  // need GET/ANY if path is trash
+        if (Is_Trash(L->out))  // need GET/ANY if path is trash
             fail (Error_No_Value_Core(current, L->specifier));
 
         if (Is_Tripwire(L->out))
@@ -1921,7 +1921,7 @@ bool Eval_Core_Throws(Level* const L)
 
         Flags flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
-        Init_Nothing(L->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
+        Init_Trash(L->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
 
         if (CURRENT_CHANGES_IF_FETCH_NEXT) { // must use new frame
             DECLARE_SUBLEVEL(child, L);
@@ -2075,7 +2075,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case TYPE_NOTHING:
+      case TYPE_TRASH:
         if (not EVALUATING(current))
             goto inert;
 
