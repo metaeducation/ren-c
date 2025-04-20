@@ -319,7 +319,7 @@ reword: function [
 
             ; Consume the prefix (again, this could be a no-op, which means
             ; there's no guarantee we'll be at the start of a match for
-            ; an `any-keyword-rule`
+            ; an `any-keyword-rule`)
             ;
             prefix
 

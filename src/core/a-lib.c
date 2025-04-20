@@ -609,7 +609,7 @@ const void *API_rebUneval(const RebolValue* v)
         // should be revisited where instructions encode what they are in the
         // header/info/link/misc.
         //
-        Copy_Cell(single, NAT_VALUE(NULL));  // the NULL function
+        Init_Word(single, Canon(SYM__TNULL_T));
     }
     else {
         Array* a = Make_Array(2);

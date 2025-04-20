@@ -308,6 +308,14 @@ static void Startup_True_And_False(void)
     Value* false_value = Append_Context(Lib_Context, nullptr, Canon(SYM_FALSE));
     Init_False(false_value);
     assert(IS_FALSEY(false_value) and VAL_LOGIC(false_value) == false);
+
+    Value* null_value = Append_Context(Lib_Context, nullptr, Canon(SYM_NULL));
+    Init_Nulled(null_value);
+    assert(IS_FALSEY(null_value) and Is_Nulled(null_value));
+
+    Value* void_value = Append_Context(Lib_Context, nullptr, Canon(SYM_VOID));
+    Init_Void(void_value);
+    assert(Is_Void(void_value));
 }
 
 

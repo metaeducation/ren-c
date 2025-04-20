@@ -49,6 +49,8 @@ none
 "~"  ; SYM_TILDE_1 (TRASH in modern Ren-C, but UNDEFINED in R3C)
 ~void~
 ~null~
+void
+null
 
 ...  ; SYM_ELLIPSIS_3
 

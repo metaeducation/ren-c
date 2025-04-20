@@ -1249,8 +1249,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             else { // rebUneval()
                 assert(
                     (
-                        Is_Action(single)
-                        and VAL_ACTION(single) == NAT_ACTION(NULL)
+                        Is_Word(single)
+                        and Cell_Word_Id(single) == SYM__TNULL_T
                     ) or (
                         Is_Group(single) and (
                             Get_Flex_Info(Cell_Array(single), HOLD)

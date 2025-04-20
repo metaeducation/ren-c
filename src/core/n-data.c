@@ -708,21 +708,6 @@ DECLARE_NATIVE(SET)
 
 
 //
-//  void: native [
-//
-//  {Absence of a value, used to opt out of many routines (appending, etc.)}
-//
-//      return: [~void~]
-//  ]
-//
-DECLARE_NATIVE(VOID) {
-    INCLUDE_PARAMS_OF_VOID;
-
-    return Init_Void(OUT);
-}
-
-
-//
 //  maybe: native [
 //
 //  {Convert nulls to voids, pass through most other values}
@@ -1232,18 +1217,21 @@ DECLARE_NATIVE(THE)
 
 
 //
-//  null: native [
+//  noop: native [
 //
-//  "Generator for the absence of a value"
+//  "Do nothing, and return TRASH"
 //
-//      return: [~null~]
+//      return: [~]
 //  ]
 //
-DECLARE_NATIVE(NULL)
+DECLARE_NATIVE(NOOP)
+//
+// Having a function called "TRASH" would be deceiving, as if you fetched it
+// with (get 'trash) it would be a function, not a TRASH! value.
 {
-    INCLUDE_PARAMS_OF_NULL;
+    INCLUDE_PARAMS_OF_NOOP;
 
-    return nullptr;
+    return Init_Trash(OUT);
 }
 
 
