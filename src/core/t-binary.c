@@ -748,9 +748,9 @@ IMPLEMENT_GENERIC(PICK, Is_Blob)
 }
 
 
-IMPLEMENT_GENERIC(POKE, Is_Blob)
+IMPLEMENT_GENERIC(POKE_P, Is_Blob)
 {
-    INCLUDE_PARAMS_OF_POKE;
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* blob = Element_ARG(LOCATION);
 
@@ -759,7 +759,7 @@ IMPLEMENT_GENERIC(POKE, Is_Blob)
     if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
         return FAIL(Error_Out_Of_Range(picker));
 
-    Value* poke = ARG(VALUE);
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
     REBINT i;
     if (IS_CHAR(poke)) {
@@ -769,7 +769,7 @@ IMPLEMENT_GENERIC(POKE, Is_Blob)
         i = Int32(poke);
     }
     else {
-        // !!! See notes in the IMPLEMENT_GENERIC(POKE, Any_String)
+        // !!! See notes in the IMPLEMENT_GENERIC(POKE_P, Any_String)
         // about alternate cases for the POKE'd value.
         //
         return FAIL(PARAM(VALUE));

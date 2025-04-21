@@ -314,6 +314,10 @@ export /extract-generic-implementations: func [
                     lowercase type*
 
                     replace name "_q" "?"  ; use smarter parse rule...
+                    if #"p" = last name [
+                        replace name "_p" "*"
+                    ]
+
                     replace name "_" "-"
 
                     replace type* "_" "-"

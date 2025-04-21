@@ -1079,9 +1079,9 @@ IMPLEMENT_GENERIC(PICK, Any_String)
 }
 
 
-IMPLEMENT_GENERIC(POKE, Any_String)
+IMPLEMENT_GENERIC(POKE_P, Any_String)
 {
-    INCLUDE_PARAMS_OF_POKE;
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* any_string = Element_ARG(LOCATION);
 
@@ -1090,7 +1090,7 @@ IMPLEMENT_GENERIC(POKE, Any_String)
     if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
         return FAIL(Error_Out_Of_Range(picker));
 
-    Value* poke = ARG(VALUE);
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
     Codepoint c;
     if (IS_CHAR(poke)) {

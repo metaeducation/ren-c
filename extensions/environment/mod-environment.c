@@ -130,9 +130,9 @@ IMPLEMENT_GENERIC(PICK, Is_Environment)
 //    only be able to get null back if you set to either an empty string or
 //    a null in this mode).
 //
-IMPLEMENT_GENERIC(POKE, Is_Environment)
+IMPLEMENT_GENERIC(POKE_P, Is_Environment)
 {
-    INCLUDE_PARAMS_OF_POKE;
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* env = Element_ARG(LOCATION);
     Element* picker = Element_ARG(PICKER);
@@ -140,14 +140,14 @@ IMPLEMENT_GENERIC(POKE, Is_Environment)
     if (not Is_Word(picker) and not Is_Text(picker))
         return FAIL("ENVIRONMENT! picker must be WORD! or TEXT!");
 
-    Option(Element*) poke;
-    if (Is_Nulled(ARG(VALUE)))
+    Option(Value*) poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
+    if (Is_Trash(unwrap poke)) {
         poke = nullptr;
+    }
+    else if (not Is_Text(unwrap poke)) {
+        return FAIL("ENVIRONMENT! can only be poked with TRASH! or TEXT!");
+    }
     else {
-        poke = Element_ARG(VALUE);
-        if (not Is_Text(unwrap poke))
-            return FAIL("ENVIRONMENT! can only be poked with null or TEXT!");
-
         if (
             Environment_Conflates_Empty_Strings_As_Absent(env)
             and Cell_Series_Len_At(unwrap poke) == 0

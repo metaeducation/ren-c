@@ -311,7 +311,7 @@ REBLEN Find_Map_Entry(
 
     if (n) {  // found, must set or overwrite the value
         Element* at = Array_At(pairlist, ((n - 1) * 2) + 1);
-        if (Is_Void(unwrap val))
+        if (Is_Trash(unwrap val))
             Init_Zombie(at);
         else {
             assert(Not_Antiform(unwrap val));
@@ -320,7 +320,7 @@ REBLEN Find_Map_Entry(
         return n;
     }
 
-    if (Is_Void(unwrap val))
+    if (Is_Trash(unwrap val))
         return 0;  // trying to remove non-existing key
 
     assert(Not_Antiform(unwrap val));
@@ -609,8 +609,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         Value* key = ARG(KEY);
         Value* val = ARG(VALUE);
 
-        if (Is_Void(key))
-            return FAIL(Error_Bad_Void());  // tolerate?
+        if (Is_Trash(key))
+            return FAIL("PUT doesn't tolerate TRASH!... should it?");
         if (Is_Antiform(key))
             return FAIL(Error_Bad_Antiform(key));
 
@@ -728,14 +728,14 @@ IMPLEMENT_GENERIC(PICK, Is_Map)
     );
 
     if (n == 0)
-        return nullptr;
+        return RAISE(Error_Bad_Pick_Raw(picker));
 
     const Element* val = Array_At(
         MAP_PAIRLIST(VAL_MAP(map)),
         ((n - 1) * 2) + 1
     );
     if (Is_Zombie(val))
-        return nullptr;
+        return RAISE(Error_Bad_Pick_Raw(picker));
 
     return Copy_Cell(OUT, val);
 }
@@ -748,21 +748,21 @@ IMPLEMENT_GENERIC(PICK, Is_Map)
 //    the operation tentatively named PUT should be used if a map is to
 //    distinguish multiple casings of the same key.
 //
-IMPLEMENT_GENERIC(POKE, Is_Map) {
-    INCLUDE_PARAMS_OF_POKE;
+IMPLEMENT_GENERIC(POKE_P, Is_Map) {
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* map = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
     bool strict = false;  // case-preserving [1]
 
-    Value* poke = ARG(VALUE);  // Note: VOID interpreted as remove key
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
-    if (Is_Void(poke)) {
+    if (Is_Trash(poke)) {
         // removal signal
     }
     else if (Is_Antiform(poke))  // other antiforms not allowed in maps
-        return RAISE(Error_Bad_Antiform(poke));
+        return FAIL(Error_Bad_Antiform(poke));
 
     REBINT n = Find_Map_Entry(
         VAL_MAP_Ensure_Mutable(map),  // modified

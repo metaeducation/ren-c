@@ -1105,14 +1105,14 @@ IMPLEMENT_GENERIC(PICK, Is_Date)
 }
 
 
-IMPLEMENT_GENERIC(POKE, Is_Date)
+IMPLEMENT_GENERIC(POKE_P, Is_Date)
 {
-    INCLUDE_PARAMS_OF_POKE;
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* date = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Value* poke = ARG(VALUE);
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
     Pick_Or_Poke_Date(nullptr, date, picker, poke);
 

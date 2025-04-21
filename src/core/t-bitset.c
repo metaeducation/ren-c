@@ -642,13 +642,13 @@ IMPLEMENT_GENERIC(PICK, Is_Bitset)
 }
 
 
-IMPLEMENT_GENERIC(POKE, Is_Bitset) {
-    INCLUDE_PARAMS_OF_POKE;
+IMPLEMENT_GENERIC(POKE_P, Is_Bitset) {
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* bset = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Value* poke = ARG(VALUE);
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
     Binary* bits = cast(Binary*, VAL_BITSET_Ensure_Mutable(bset));
     if (not Set_Bits(

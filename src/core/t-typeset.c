@@ -499,9 +499,9 @@ IMPLEMENT_GENERIC(PICK, Is_Parameter)
 }
 
 
-IMPLEMENT_GENERIC(POKE, Is_Parameter)
+IMPLEMENT_GENERIC(POKE_P, Is_Parameter)
 {
-    INCLUDE_PARAMS_OF_POKE;
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* param = Element_ARG(LOCATION);
 
@@ -509,7 +509,7 @@ IMPLEMENT_GENERIC(POKE, Is_Parameter)
     if (not Is_Word(picker))
         return FAIL(picker);
 
-    Value* poke = ARG(VALUE);
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
     switch (Cell_Word_Id(picker)) {
       case SYM_TEXT: {

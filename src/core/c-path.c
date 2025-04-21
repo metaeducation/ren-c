@@ -143,22 +143,69 @@ DECLARE_NATIVE(PICK)
 
 
 //
-//  poke: native:generic [
+//  poke: native [
 //
 //  "Perform a path poking operation, same as `(location).(picker): :value`"
 //
-//      return: "Updated location state"  ; not the input value, see [1]
-//          [~null~ fundamental?]
+//      return: "Input value, or raised error propagated (no assignment)"
+//          [any-value? raised!]
 //      location "(modified)"
 //          [<maybe> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element?]
-//      value [any-value?]
+//      ^value [any-value? raised!]
+//      <local> store
 //  ]
 //
 DECLARE_NATIVE(POKE)
 //
-// Note: In Ren-C, POKE underlies the implementation of SET on TUPLE!.
+// 1. We don't want to limit the POKE* function from changing value, and
+//    also want it to have full use of SPARE, SCRATCH, and OUT.  So POKE
+//    just has a slightly larger frame where it stores the value in a local.
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* location = Element_ARG(LOCATION);
+    USED(ARG(PICKER));  // passed to handler via LEVEL
+    Element* meta_value = Element_ARG(VALUE);
+
+    if (Is_Meta_Of_Raised(meta_value)) {
+        Copy_Cell(OUT, meta_value);
+        return Meta_Unquotify_Undecayed(OUT);
+    }
+
+    Copy_Cell(ARG(STORE), meta_value);  // save value to return [1]
+
+    Bounce bounce = Dispatch_Generic(POKE_P, location, LEVEL);
+
+    if (bounce != nullptr)
+        return FAIL("Cannot write-back to location in POKE");
+
+    Copy_Cell(OUT, ARG(STORE));
+    return Meta_Unquotify_Known_Stable(OUT);
+}
+
+
+//
+//  poke*: native:generic [
+//
+//  "Implementation helper for POKE"
+//
+//      return: "Updated location state"  ; not the input value, see [1]
+//          [~null~ any-value?]
+//      location "(modified)"
+//          [<maybe> fundamental?]  ; can't poke a quoted/quasi
+//      picker "Index offset, symbol, or other value to use as index"
+//          [<maybe> element?]
+//      ^value [any-value?]
+//  ]
+//
+DECLARE_NATIVE(POKE_P)
+//
+// Users can call POKE* directly, but usually they will use POKE which gives
+// back the value that was poked.
+//
+// Note: In Ren-C, POKE* underlies the implementation of SET on TUPLE!.
 // For it to work, the return value is the cell contents that should be
 // written back for immediate types.  This makes its return value somewhat
 // useless for users, as it's an implementation detail, that if anything
@@ -175,9 +222,8 @@ DECLARE_NATIVE(POKE)
 // in obj.date would have to be changed.
 {
     Element* location = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(POKE, location, LEVEL);
+    return Dispatch_Generic(POKE_P, location, LEVEL);
 }
-
 
 
 // 1. R3-Alpha and Red considered TUPLE! with any number of trailing zeros to

@@ -301,16 +301,16 @@ IMPLEMENT_GENERIC(PICK, Is_Pair)
 }
 
 
-IMPLEMENT_GENERIC(POKE, Is_Pair)
+IMPLEMENT_GENERIC(POKE_P, Is_Pair)
 {
-    INCLUDE_PARAMS_OF_POKE;
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* pair = Element_ARG(LOCATION);
 
     const Element* picker = Element_ARG(PICKER);
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
 
-    Value* poke = ARG(VALUE);
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
     if (not Is_Integer(poke))
         return FAIL(PARAM(VALUE));

@@ -1168,9 +1168,9 @@ IMPLEMENT_GENERIC(PICK, Any_Context)
 }
 
 
-IMPLEMENT_GENERIC(POKE, Any_Context)
+IMPLEMENT_GENERIC(POKE_P, Any_Context)
 {
-    INCLUDE_PARAMS_OF_POKE;
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* context = Element_ARG(LOCATION);
     possibly(Is_Port(context));
@@ -1178,14 +1178,14 @@ IMPLEMENT_GENERIC(POKE, Any_Context)
     const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    Value* setval = ARG(VALUE);
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
     Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
     if (not var)
         return FAIL(Error_Bad_Pick_Raw(picker));
 
     assert(Not_Cell_Flag(var, PROTECTED));
-    Copy_Cell(var, setval);
+    Copy_Cell(var, poke);
     return nullptr;  // VarList* in cell not changed, caller need not update
 }
 

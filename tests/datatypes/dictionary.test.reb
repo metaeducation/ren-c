@@ -157,12 +157,12 @@
     )
 ]
 
-; Void can be used to remove keys from maps
+; Trash can be used to remove keys from maps
 (
     m: to map! [key <initial>]
     all [
         m.key = <initial>
-        m.key: void  ; opts out of the all
-        null? m.key
+        elide m.key: ~
+        null? try m.key
     ]
 )

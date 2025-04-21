@@ -974,17 +974,17 @@ IMPLEMENT_GENERIC(PICK, Any_List)
 }
 
 
-IMPLEMENT_GENERIC(POKE, Any_List)
+IMPLEMENT_GENERIC(POKE_P, Any_List)
 {
-    INCLUDE_PARAMS_OF_POKE;
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* list = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    const Value* setval = ARG(VALUE);
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
-    if (Is_Antiform(setval))
-        return FAIL(Error_Bad_Antiform(setval));  // can't put in blocks
+    if (Is_Antiform(poke))
+        return FAIL(Error_Bad_Antiform(poke));  // can't put in blocks
 
     // !!! If we are jumping here from getting updated bits, then
     // if the block isn't immutable or locked from modification, the
@@ -997,7 +997,7 @@ IMPLEMENT_GENERIC(POKE, Any_List)
 
     Array* mut_arr = Cell_Array_Ensure_Mutable(list);
     Element* at = Array_At(mut_arr, n);
-    Copy_Cell(at, c_cast(Element*, setval));
+    Copy_Cell(at, c_cast(Element*, poke));
 
     return nullptr;  // Array* is still fine, caller need not update
 }

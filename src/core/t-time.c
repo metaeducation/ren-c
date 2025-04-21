@@ -643,14 +643,14 @@ IMPLEMENT_GENERIC(PICK, Is_Time)
 }
 
 
-IMPLEMENT_GENERIC(POKE, Is_Time)
+IMPLEMENT_GENERIC(POKE_P, Is_Time)
 {
-    INCLUDE_PARAMS_OF_POKE;
+    INCLUDE_PARAMS_OF_POKE_P;
 
     Element* time = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Value* poke = ARG(VALUE);
+    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
 
     Poke_Time_Immediate(time, picker, poke);
     return COPY(time);  // caller needs to update their time bits
