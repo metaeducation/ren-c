@@ -1828,8 +1828,10 @@ RebolValue* API_rebError_OS(int errnum)
 
         char buffer[MAX_POSIX_ERROR_LEN];
         char *maybe_str = strerror_r(errnum, buffer, MAX_POSIX_ERROR_LEN);
-        if (maybe_str != buffer)
-            strncpy(buffer, maybe_str, MAX_POSIX_ERROR_LEN);
+        if (maybe_str != buffer) {
+            strncpy(buffer, maybe_str, MAX_POSIX_ERROR_LEN - 1);
+            buffer[MAX_POSIX_ERROR_LEN - 1] = '\0';
+        }
         error = Error_User(buffer);
     #else
         // Quoting glibc's strerror_r manpage: "The XSI-compliant strerror_r()

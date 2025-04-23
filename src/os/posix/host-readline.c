@@ -229,7 +229,7 @@ static bool Read_Bytes_Interrupted(STD_TERM *term, unsigned char *buf, int len)
         int end = LEN_BYTES(term->residue);
         if (end < len)
             len = end;
-        strncpy(s_cast(buf), s_cast(term->residue), len); // terminated below
+        memcpy(s_cast(buf), s_cast(term->residue), len); // terminated below
         memmove(term->residue, term->residue + len, end - len); // remove
         term->residue[end - len] = '\0';
     }
