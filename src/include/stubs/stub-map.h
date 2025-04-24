@@ -35,6 +35,17 @@
 //   other higher priority design questions...
 //
 
+// "Zombie" keys in map, represent missing or deleted entries.
+//
+// We use unreadable (vs. void or null) because it's not an antiform, and we'd
+// like to keep the arrays backing a MAP! free of antiforms (vs. making one
+// exception for the zombie).  Also, unreadable has nice properties of erroring
+// if you try to read it in the checked build.
+//
+#define Is_Zombie Not_Cell_Readable
+#define Init_Zombie Init_Unreadable
+
+
 INLINE PairList* MAP_PAIRLIST(const_if_c Map* map)
   { return x_cast(PairList*, map); }
 

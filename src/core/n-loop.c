@@ -992,11 +992,11 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 ++les->u.eser.index;
                 if (les->u.eser.index == les->u.eser.len)
                     les->more_data = false;
-                if (not Is_Nulled(val))
+                if (not Is_Zombie(val))
                     break;
                 if (not les->more_data)
                     return false;
-            } while (Is_Nulled(val));
+            } while (Is_Zombie(val));
 
             if (var)
                 Copy_Cell(var, key);
