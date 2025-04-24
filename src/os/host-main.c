@@ -270,8 +270,8 @@ int main(int argc, char *argv_ansi[])
     Value* host_start = rebValueInline(host_code); // HOST-START is an ACTION!
     rebRelease(host_code);
 
-    if (rebNot("lib/action?", host_start))
-        rebJumps("lib/PANIC-VALUE", host_start);
+    if (rebNot("lib/action?", rebQ(host_start)))
+        rebJumps("lib/PANIC-VALUE", rebQ(host_start));
 
     // While some people may think that argv[0] in C contains the path to
     // the running executable, this is not necessarily the case.  The actual

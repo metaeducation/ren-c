@@ -19,7 +19,6 @@
 (null? catch/name [()] 'catch)
 (null? catch/name [sys/util/rescue [1 / 0]] 'catch)
 (null? catch/name [1] 'catch)
-([catch #[trash]] = catch/name [throw/name (~) 'catch] 'catch)
 ([catch 1] = catch/name [throw/name 1 'catch] 'catch)
 ; recursive cases
 (

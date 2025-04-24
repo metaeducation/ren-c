@@ -203,17 +203,10 @@
     FLAG_LEFT_BIT(21)
 
 
-//=//// CELL_FLAG_EVAL_FLIP ///////////////////////////////////////////////=//
+//=//// CELL_FLAG_22 //////////////////////////////////////////////////////=//
 //
-// This is a bit which should not be present on cells in user-exposed arrays.
-//
-// If a DO is happening with DO_FLAG_EXPLICIT_EVALUATE, only values which
-// carry this bit will override it.  It may be the case that the flag on a
-// value would signal a kind of quoting to suppress evaluation in ordinary
-// evaluation (without DO_FLAG_EXPLICIT_EVALUATE), hence it is a "flip" bit.
-//
-#define CELL_FLAG_EVAL_FLIP \
-    FLAG_LEFT_BIT(22) // IMPORTANT: Same bit as DO_FLAG_EXPLICIT_EVALUATE
+#define CELL_FLAG_22 \
+    FLAG_LEFT_BIT(22)
 
 
 //=//// CELL_FLAG_UNUSED_23 //////////////////////////////////////////////=//
@@ -301,7 +294,7 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 
 #define CELL_MASK_COPY \
     ~(CELL_MASK_PERSIST | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED \
-        | CELL_FLAG_EVAL_FLIP | CELL_FLAG_NOTE)
+        | CELL_FLAG_NOTE)
 
 
 //=////////////////////////////////////////////////////////////////////////=//

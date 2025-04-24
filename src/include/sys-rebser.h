@@ -230,18 +230,17 @@
     FLAG_LEFT_BIT(16)
 
 
-//=//// ARRAY_FLAG_NULLEDS_LEGAL //////////////////////////////////////////=//
+//=//// ARRAY_FLAG_ANTIFORMS_LEGAL ////////////////////////////////////////=//
 //
-// Identifies Arrays in which it is legal to have nulled elements.  This is
-// true for reified C va_list()s which treated slots as if they had already
-// abeen evaluated.  (See CELL_FLAG_EVAL_FLIP).  When those va_lists need to
-// be put into arrays for the purposes of GC protection, they may contain
-// nulled cells.  (How to present this in the debugger will be a UI issue.)
+// Identifies Arrays in which it is legal for VOID, NULL, or TRASH to appear.
+// This is true for reified C va_list()s which treated slots as if they have
+// been evaluated.  When those va_lists need to be put into arrays for the
+// purposes of GC protection, they may contain antiform cells.  (How to
+// present this in the debugger will be a UI issue.)
 //
-// Note: ARRAY_FLAG_IS_VARLIST also implies legality of nulleds, which in that
-// case are used to represent unset variables.
+// Note: ARRAY_FLAG_IS_VARLIST also implies legality of antiforms.
 //
-#define ARRAY_FLAG_NULLEDS_LEGAL \
+#define ARRAY_FLAG_ANTIFORMS_LEGAL \
     FLAG_LEFT_BIT(17)
 
 
@@ -551,7 +550,7 @@ STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
 //=//// FLEX_INFO_API_INSTRUCTION ///////////////////////////////////////=//
 //
 // Rather than have LINK() and MISC() fields used to distinguish an API
-// handle like an INTEGER! from something like a rebEval(), a flag helps
+// handle like an INTEGER! from something like a rebQ(), a flag helps
 // keep those free for different purposes.
 //
 #define FLEX_INFO_API_INSTRUCTION \

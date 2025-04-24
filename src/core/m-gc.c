@@ -746,16 +746,15 @@ static void Propagate_All_GC_Marks(void)
             //
         #if RUNTIME_CHECKS
             //
-            // Voids are illegal in most arrays, but the varlist of a context
-            // uses void values to denote that the variable is not set.  Also
-            // reified C va_lists as Eval_Core_Throws() sources can have them.
+            // The enforcement of antiforms not making it into certain places
+            // is done with compile-time checking in the main branch, but
+            // all we do in this old bootstrap executable are periodic checks.
             //
             if (
                 not Is_Cell_Unreadable(v)
-                and Is_Nulled(v)
+                and Is_Antiform(v)
                 and Not_Array_Flag(a, IS_VARLIST)
-                and Not_Array_Flag(a, IS_PAIRLIST)
-                and Not_Array_Flag(a, NULLEDS_LEGAL)
+                and Not_Array_Flag(a, ANTIFORMS_LEGAL)
             ){
                 panic(a);
             }

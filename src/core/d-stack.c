@@ -144,7 +144,7 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
             // for display purposes and is "lossy" (as evidenced by the ...)
             // substitute a placeholder to avoid crashing the GC.
             //
-            assert(Get_Array_Flag(LVL_ARRAY(L), NULLEDS_LEGAL));
+            assert(Get_Array_Flag(LVL_ARRAY(L), ANTIFORMS_LEGAL));
             Init_Word(PUSH(), Canon(SYM__TNULL_T));  // ~null~ WORD!
         }
         else

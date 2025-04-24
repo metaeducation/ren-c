@@ -76,7 +76,7 @@ INLINE bool Do_Va_Throws(
         Init_Trash(out),
         opt_first,
         vaptr,
-        DO_FLAG_TO_END | DO_FLAG_EXPLICIT_EVALUATE
+        DO_FLAG_TO_END
     );
 }
 
@@ -100,14 +100,12 @@ INLINE bool Apply_Only_Throws(
 
     DECLARE_VALUE (applicand_eval);
     Copy_Cell(applicand_eval, applicand);
-    Set_Cell_Flag(applicand_eval, EVAL_FLIP);
 
     REBIXO indexor = Eval_Va_Core(
         SET_END(out), // start at END to detect error if no eval product
         applicand_eval, // opt_first
         &va, // va_end() handled by Eval_Va_Core on success, fail, throw, etc.
-        DO_FLAG_EXPLICIT_EVALUATE
-            | DO_FLAG_NO_LOOKAHEAD
+        DO_FLAG_NO_LOOKAHEAD
             | (fully ? DO_FLAG_NO_RESIDUE : 0)
     );
 

@@ -381,7 +381,6 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
     else {
         Init_Path(first, Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED));
     }
-    Set_Cell_Flag(first, EVAL_FLIP);  // make path/action active
 
     // Invoke DO with the special mode requesting non-evaluation on all
     // args, as they were evaluated the first time around.
@@ -392,8 +391,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
         code_arr,
         0, // index
         SPECIFIED, // reusing existing Value arguments, no relative cells
-        DO_FLAG_EXPLICIT_EVALUATE // DON'T double-evaluate arguments
-            | DO_FLAG_NO_RESIDUE // raise an error if all args not consumed
+        DO_FLAG_NO_RESIDUE // raise an error if all args not consumed
     );
 
     if (IS_END(L->out))

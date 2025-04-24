@@ -553,7 +553,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                 break;
 
               case TYPE_ACTION: {
-                Value* generated = rebValue(rebEval(les->data));
+                Value* generated = rebValue(les->data);
                 if (generated) {
                     Copy_Cell(var, generated);
                     rebRelease(generated);

@@ -368,8 +368,8 @@ ext-console-impl: function [
         [block! group! integer! path!] ;-- Note: RETURN is hooked below!!!
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [blank! block! group!]
-    result "Result from evaluating PRIOR in a 1-element BLOCK!, or error/null"
-        [~null~ block! error!]
+    result "Unevaluated result of evaluating PRIOR, or error"
+        [~null~ word! group! error!]  ; null if never ran before
     resumable "Is the RESUME function allowed to exit this console"
         [logic!]
 ][
@@ -610,12 +610,7 @@ ext-console-impl: function [
         return <prompt>
     ]
 
-    if block? result [
-        assert [length of result = 1]
-        result: get/any 'result/1
-    ] else [
-        assert [null? result]
-    ]
+    result: reeval result
 
     if group? prior [ ;-- plain execution of user code
         emit [system/console/print-result ((<*> uneval get/any 'result))]

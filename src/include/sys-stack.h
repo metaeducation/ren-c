@@ -158,10 +158,6 @@ INLINE Value* PUSH(void) {
 #define Pop_Stack_Values(base) \
     Pop_Stack_Values_Core((base), ARRAY_FLAG_HAS_FILE_LINE)
 
-#define Pop_Stack_Values_Keep_Eval_Flip(base) \
-    Pop_Stack_Values_Core((base), \
-        ARRAY_FLAG_HAS_FILE_LINE | ARRAY_FLAG_NULLEDS_LEGAL)
-
 
 //=////////////////////////////////////////////////////////////////////////=//
 //

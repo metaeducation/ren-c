@@ -248,19 +248,10 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(21)
 
 
-//=//// DO_FLAG_EXPLICIT_EVALUATE /////////////////////////////////////////=//
+//=//// DO_FLAG_22 ////////////////////////////////////////////////////////=//
 //
-// Sometimes a DO operation has already calculated values, and does not want
-// to interpret them again.  e.g. the call to the function wishes to use a
-// precalculated WORD! value, and not look up that word as a variable.  This
-// is common when calling Rebol functions from C code when the parameters are
-// known (also present in what R3-Alpha called "APPLY/ONLY")
-//
-// Special escaping operations must be used in order to get evaluation
-// behavior.
-//
-#define DO_FLAG_EXPLICIT_EVALUATE \
-    FLAG_LEFT_BIT(22) // IMPORTANT: Same bit as CELL_FLAG_EVAL_FLIP
+#define DO_FLAG_22 \
+    FLAG_LEFT_BIT(22)
 
 
 //=//// DO_FLAG_PUSH_PATH_REFINEMENTS /////////////////////////////////////=//

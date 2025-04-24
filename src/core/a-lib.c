@@ -455,10 +455,6 @@ RebolValue* API_rebArg(const void *p, va_list *vaptr)
 // Each pointer may either be a Value* or a UTF-8 string which will be
 // scanned to reflect one or more values in the sequence.
 //
-// All Value* are spliced in inert by default, as if they were an evaluative
-// product already.  Use rebEval() to "retrigger" them (which wraps them in
-// a singular Array*, another type of detectable pointer.)
-//
 RebolValue* API_rebValue(const void *p, va_list *vaptr)
 {
     Value* result = Alloc_Value();
@@ -543,52 +539,23 @@ RebolValue* API_rebValueInline(const RebolValue* array)
     Copy_Cell(group, array);
     CHANGE_VAL_TYPE_BITS(group, TYPE_GROUP);
 
-    return rebValue(rebEval(group));
+    return rebValue(group);
 }
 
 
 //
-//  rebEval: API
+//  rebQ: API
 //
-// When rebValue() receives a Value*, the default is to assume it should be
-// spliced into the input stream as if it had already been evaluated.  It's
-// only segments of code supplied via UTF-8 strings, that are live and can
-// execute functions.
+// antiforms are not legal to splice into blocks, and the bootstrap executable
+// does not have generic QUOTE_BYTE() or antiform mechanics.
 //
-// This instruction is used with rebValue() in order to mark a value as being
-// evaluated.  So `rebValue(rebEval(some_word), ...)` will execute that word
-// if it's bound to an ACTION! and dereference if it's a variable.
+// rebQ() works around it by splicing in a GROUP!, or words for certain
+// forms.
 //
-const void *API_rebEval(const RebolValue* v)
-{
-    if (Is_Nulled(v))
-        fail ("Cannot pass NULL to rebEval()");
-
-    Array* instruction = Alloc_Instruction();
-    Cell* single = ARR_SINGLE(instruction);
-    Copy_Cell(single, v);
-
-    // !!! The presence of the CELL_FLAG_EVAL_FLIP is a pretty good
-    // indication that it's an eval instruction.  So it's not necessary to
-    // fill in the ->link or ->misc fields.  But if there were more
-    // instructions like this, there'd probably need to be a misc->opcode or
-    // something to distinguish them.
-    //
-    Set_Cell_Flag(single, EVAL_FLIP);
-
-    return instruction;
-}
-
-
-//
-//  rebUneval: API
-//
-// nulls are not legal to splice into blocks.  So the rebUneval() expression
-// works around it by splicing in a GROUP!, and if it's not null then it puts
-// a QUOTE and the value inside.
-//
-//    null => `(null)`
-//    non-null => `(the ...)`
+//    null => `~null~`
+//    void => `~void~`
+//    trash => `~`
+//    any-element! => `(the ...)`
 //
 // There's a parallel Rebol action! that does this called UNEVAL, which is
 // for use with REDUCE and COMPOSE/ONLY.  However, rather than return Value*
@@ -596,35 +563,47 @@ const void *API_rebEval(const RebolValue* v)
 // variadic stream.  This leaves the implementation method more open, and
 // has the benefit of not requiring a rebRelease().
 //
-const void *API_rebUneval(const RebolValue* v)
+const void *API_rebQ(const RebolValue* v)
 {
     Array* instruction = Alloc_Instruction();
+
     Cell* single = ARR_SINGLE(instruction);
     if (not v) {
-        //
-        // !!! Would like to be using a NULLED cell here, but the current
-        // indicator for whether something is a rebEval() or rebUneval() is
-        // if CELL_FLAG_EVAL_FLIP is set, and we'd have to set that flag to
-        // get the evaluator not to choke on the nulled cell.  The mechanism
-        // should be revisited where instructions encode what they are in the
-        // header/info/link/misc.
-        //
         Init_Word(single, Canon(SYM__TNULL_T));
     }
-    else {
-        Array* a = Make_Array(2);
-        Set_Flex_Info(a, HOLD);
-        Copy_Cell(Alloc_Tail_Array(a), NAT_VALUE(THE));  // the THE function
-        Copy_Cell(Alloc_Tail_Array(a), v);
-
-        Init_Group(single, a);
+    else if (Is_Nulled(v)) {
+        assert(not Is_Api_Value(v));
+        Init_Word(single, Canon(SYM__TNULL_T));
     }
+    else if (Is_Void(v)) {
+        Init_Word(single, Canon(SYM__TVOID_T));
+    }
+    else if (Is_Trash(v)) {
+        Init_Word(single, Canon(SYM_TILDE_1));
+    }
+    else
+        goto not_antiform;
 
-    // !!! See notes in rebEval() about adding opcodes.  No particular need
-    // for one right now, just put in the value.
+    goto bind_word;
+
+  bind_word: { ///////////////////////////////////////////////////////////////
+
+    REBLEN n = Try_Bind_Word(Lib_Context, cast(Value*, single));
+    assert(n != 0);
 
     return instruction;
-}
+
+} not_antiform: { ////////////////////////////////////////////////////////////
+
+    Array* a = Make_Array(2);
+    Set_Flex_Info(a, HOLD);
+    Copy_Cell(Alloc_Tail_Array(a), NAT_VALUE(THE));  // the THE function
+    Copy_Cell(Alloc_Tail_Array(a), v);
+
+    Init_Group(single, a);
+
+    return instruction;  // add opcodes?
+}}
 
 
 //
@@ -1476,13 +1455,12 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     // the va_list into an array to be executed after a timeout.
     //
     // Currently such spooling is not done except with a frame, and there are
-    // a lot of details to get right.  For instance, CELL_FLAG_EVAL_FLIP and
-    // all the rest of that.  Plus there may be some binding context
+    // a lot of details to get right.  Plus there may be some binding context
     // information coming from the callsite (?).  So here we do a reuse of
     // the code the GC uses to reify va_lists in frames, which we presume does
     // all the ps and qs.  It's messy, but refactor if it turns out to work.
 
-    const Flags flags = DO_FLAG_TO_END | DO_FLAG_EXPLICIT_EVALUATE;
+    const Flags flags = DO_FLAG_TO_END;
 
     // !!! The following code is derived from Eval_Va_Core()
 
@@ -1568,7 +1546,7 @@ void API_rebPromise_callback(intptr_t promise_id)
         arr,
         0, // index
         SPECIFIED,
-        DO_FLAG_TO_END | DO_FLAG_EXPLICIT_EVALUATE // was reified w/explicit
+        DO_FLAG_TO_END // was reified w/explicit
     )){
         fail (Error_No_Catch_For_Throw(result)); // no need to release result
     }

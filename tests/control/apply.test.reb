@@ -108,20 +108,6 @@
     1 == reeval func [] [redbol-apply func [a b] [a] [2 return 1]]
 )
 
-; REEVAL/ONLY
-(
-    o: make object! [a: 0]
-    b: reeval/only (the o/a:) 1 + 2
-    did all [
-        o/a = 1
-        b = 3 ;-- above acts as `b: (reeval/only (the o/a:) 1) + 2`
-    ]
-)
-(
-    a: func [b c :d] [reduce [b c d]]
-    [1 + 2] = (reeval/only :a 1 + 2)
-)
-
 (
     trash? redbol-apply func [
         return: [any-value!]

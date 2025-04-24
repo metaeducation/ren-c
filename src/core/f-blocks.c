@@ -120,10 +120,8 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     Cell* dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
         Derelativize(dest, src, specifier);
-        if (flags & ARRAY_FLAG_NULLEDS_LEGAL) {
-            if (Get_Cell_Flag(src, EVAL_FLIP))
-                Set_Cell_Flag(dest, EVAL_FLIP);
-        }
+        if (not (flags & ARRAY_FLAG_ANTIFORMS_LEGAL))
+            assert(not Is_Antiform(dest));
     }
 
     Term_Array_Len(a, len);

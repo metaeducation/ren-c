@@ -256,7 +256,7 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
         int _20_array_pairlist:1;
         int _19_array_varlist:1;
         int _18_array_paramlist:1;
-        int _17_array_nulleds_legal:1;
+        int _17_array_antiforms_legal:1;
         int _16_array_file_line:1;
     }__attribute__((packed));
 
@@ -297,7 +297,7 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
         unsigned int _08to15_kind:8;
 
         int _23_unused:1;
-        int _22_eval_flip:1;
+        int _22_unused:1;
         int _21_infixed:1;
         int _20_unevaluated:1;
         int _19_newline_before:1;

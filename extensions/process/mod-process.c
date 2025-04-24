@@ -96,7 +96,7 @@ OSCHR *rebValSpellingAllocOS(const Value* any_string)
   #ifdef OS_WIDE_CHAR
     return rebSpellW(any_string);
   #else
-    return rebSpell(any_string);
+    return rebSpell(rebQ(any_string));
   #endif
 }
 
@@ -1879,7 +1879,7 @@ DECLARE_NATIVE(GET_ENV)
   #ifdef TO_WINDOWS
     // Note: The Windows variant of this API is NOT case-sensitive
 
-    WCHAR *key = rebSpellW(variable);
+    WCHAR *key = rebSpellW(rebQ(variable));
 
     DWORD val_len_plus_one = GetEnvironmentVariable(key, nullptr, 0);
     if (val_len_plus_one == 0) { // some failure...
@@ -1905,7 +1905,7 @@ DECLARE_NATIVE(GET_ENV)
   #else
     // Note: The Posix variant of this API is case-sensitive
 
-    char *key = rebSpell(variable);
+    char *key = rebSpell(rebQ(variable));
 
     const char* val = getenv(key);
     if (val == nullptr) // key not present in environment
@@ -1952,8 +1952,8 @@ DECLARE_NATIVE(SET_ENV)
     Value* value = ARG(VALUE);
 
   #ifdef TO_WINDOWS
-    WCHAR *key_wide = rebSpellW(variable);
-    WCHAR *opt_val_wide = rebSpellW("ensure [~null~ text!]", value);
+    WCHAR *key_wide = rebSpellW(rebQ(variable));
+    WCHAR *opt_val_wide = rebSpellW("ensure [~null~ text!]", rebQ(value));
 
     if (not SetEnvironmentVariable(key_wide, opt_val_wide)) // null unsets
         fail ("environment variable couldn't be modified");
@@ -1961,7 +1961,7 @@ DECLARE_NATIVE(SET_ENV)
     rebFree(opt_val_wide);
     rebFree(key_wide);
   #else
-    char *key_utf8 = rebSpell(variable);
+    char *key_utf8 = rebSpell(rebQ(variable));
 
     if (Is_Nulled(value)) {
       #ifdef unsetenv
@@ -1984,7 +1984,7 @@ DECLARE_NATIVE(SET_ENV)
     }
     else {
       #ifdef setenv
-        char *val_utf8 = rebSpell(value);
+        char *val_utf8 = rebSpell(rebQ(value));
 
         if (setenv(key_utf8, val_utf8, 1) == -1) // the 1 means "overwrite"
             fail ("setenv() coudln't set environment variable");
@@ -2009,7 +2009,7 @@ DECLARE_NATIVE(SET_ENV)
         // not worth the work.
 
         char *key_equals_val_utf8 = rebSpell(
-            "unspaced [", variable, "{=}", value, "]"
+            "unspaced [", rebQ(variable), "{=}", rebQ(value), "]"
         );
 
         if (putenv(key_equals_val_utf8) == -1) // !!! why mutable?  :-/

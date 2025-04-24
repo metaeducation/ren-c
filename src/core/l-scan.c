@@ -1186,12 +1186,9 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
         if (not p) { // libRebol representation of ~null~/nullptr
 
-            if (not (S->opts & SCAN_FLAG_NULLEDS_LEGAL))
-                return Error_User(
-                    "can't splice null in ANY-ARRAY!...use rebUneval()"
-                );
-
-            Init_Nulled(PUSH());  // convert to cell null for evaluator
+            return Error_User(
+                "can't splice null in ANY-LIST!...use rebQ()"
+            );
 
         } else switch (Detect_Rebol_Pointer(p)) {
 
@@ -1200,17 +1197,12 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
         case DETECTED_AS_CELL: {
             const Value* splice = cast(const Value*, p);
-            if (Is_Nulled(splice) and Is_Api_Value(splice))
-                return Error_User("NULL cell leaked to API");
+            if (Is_Antiform(splice))
+                return Error_User(
+                    "Use rebQ() as VOID, NULL, and TRASH are illegal in API"
+                );
 
             Copy_Cell(PUSH(), splice);
-
-            // !!! The needs of rebValue() are such that it wants to preserve
-            // the non-user-visible EVAL_FLIP bit, which is usually not copied
-            // by Copy_Cell.
-            //
-            if (Get_Cell_Flag(splice, EVAL_FLIP))
-                Set_Cell_Flag(TOP, EVAL_FLIP);
 
             if (S->newline_pending) {
                 S->newline_pending = false;
@@ -1232,35 +1224,24 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
         case DETECTED_AS_STUB: {
             //
-            // An "instruction", currently just rebEval() and rebUneval().
+            // An "instruction", currently just rebQ().
 
             Array* instruction = cast(Array*, m_cast(void*, p));
             Value* single = KNOWN(ARR_SINGLE(instruction));
 
-            if (Get_Cell_Flag(single, EVAL_FLIP)) { // rebEval()
-                if (not (S->opts & SCAN_FLAG_NULLEDS_LEGAL))
-                    return Error_User(
-                        "can only use rebEval() at top level of run"
-                    );
-
-                Copy_Cell(PUSH(), single);
-                Set_Cell_Flag(TOP, EVAL_FLIP);
-            }
-            else { // rebUneval()
+            if (Is_Word(single)) {
                 assert(
-                    (
-                        Is_Word(single)
-                        and Cell_Word_Id(single) == SYM__TNULL_T
-                    ) or (
-                        Is_Group(single) and (
-                            Get_Flex_Info(Cell_Array(single), HOLD)
-                            or Get_Flex_Info(Cell_Array(single), FROZEN_DEEP)
-                        )
-                    )
+                    Cell_Word_Id(single) == SYM__TNULL_T
+                    or Cell_Word_Id(single) == SYM__TVOID_T
+                    or Cell_Word_Id(single) == SYM_TILDE_1
                 );
-
-                Copy_Cell(PUSH(), single);
             }
+            else {
+                assert(Is_Group(single));
+                assert(Get_Flex_Info(Cell_Array(single), HOLD));
+            }
+
+            Copy_Cell(PUSH(), single);
 
             if (S->newline_pending) {
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -2535,10 +2516,6 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
                 Init_True(PUSH());
                 break;
 
-              case SYM_TRASH:
-                Init_Trash(PUSH());
-                break;
-
               default: {
                 DECLARE_VALUE (temp);
                 Init_Block(temp, array);
@@ -2677,7 +2654,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             ScanState child;
             Init_Scan_Level(
                 &child,
-                S->opts & ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT),
+                S->opts & (~ SCAN_FLAG_NEXT),
                 ss,
                 mode
             );
@@ -2727,18 +2704,6 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
     }
 
 } finished_path_scan: { ///////////////////////////////////////////////////////
-
-    // If we get to this point, it means that the value came from UTF-8
-    // source data--it was not "spliced" out of the variadic as a plain
-    // value.  From the API's point of view, such runs of UTF-8 are
-    // considered "evaluator active", vs. the inert default.  (A spliced
-    // value would have to use `rebEval()` to become active.)  To signal
-    // the active state, add a special flag which only the API heeds.
-    // (Ordinary Pop_Stack_Values() will not copy out this bit, as it is
-    // not legal in ordinary user arrays--just as voids aren't--only in
-    // arrays which are internally held by the evaluator)
-    //
-    Set_Cell_Flag(TOP, EVAL_FLIP);
 
     if (S->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
         Flex* locker = nullptr;
@@ -2845,7 +2810,7 @@ static Option(Error*) Trap_Scan_Array(Array** out, ScanState* S, Byte mode)
     ScanState child;
     Init_Scan_Level(
         &child,
-        S->opts & ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT),
+        S->opts & (~ SCAN_FLAG_NEXT),
         ss,
         mode
     );

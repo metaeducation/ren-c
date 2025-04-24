@@ -187,10 +187,10 @@ static Value* Run_Sandboxed_Code(Value* group_or_block) {
     // for its possible future.
     //
     Value* result = rebValueInline(group_or_block);
-    if (not result)
-        return nullptr;
 
-    return rebValue("[", rebR(result), "]"); // ownership gets proxied
+    Value* out = rebValue(NAT_VALUE(UNEVAL), rebQ(result));
+    rebRelease(result);
+    return out;
 }
 
 
@@ -234,7 +234,7 @@ DECLARE_NATIVE(CONSOLE)
 
     Value* code;
     if (Bool_ARG(PROVOKE)) {
-        code = rebValue("the", ARG(PROVOCATION));
+        code = rebValue(rebQ(ARG(PROVOCATION)));  // turn into API value
         goto provoked;
     }
     else
@@ -255,8 +255,8 @@ DECLARE_NATIVE(CONSOLE)
         trapped = rebValue(
             "sys/util/enrescue [",
                 "ext-console-impl", // action! that takes 2 args, run it
-                rebUneval(code), // group!/block! executed prior (or blank!)
-                rebUneval(result), // prior result in a block, or error/null
+                rebQ(code), // group!/block! executed prior (or blank!)
+                rebQ(result), // prior result unevaluated, or error
                 rebR(rebLogic(Bool_ARG(RESUMABLE))),
             "]"
         );
@@ -291,15 +291,15 @@ DECLARE_NATIVE(CONSOLE)
         rebRelease(trapped); // don't need the outer block any more
 
       provoked:;
-        if (rebDid("integer?", code))
+        if (rebDid("integer?", rebQ(code)))
             break; // when HOST-CONSOLE returns INTEGER! it means an exit code
 
-        if (rebDid("path?", code)) {
+        if (rebDid("path?", rebQ(code))) {
             assert(Bool_ARG(RESUMABLE));
             break;
         }
 
-        bool is_console_instruction = rebDid("block?", code);
+        bool is_console_instruction = rebDid("block?", rebQ(code));
 
         if (not is_console_instruction) {
             //

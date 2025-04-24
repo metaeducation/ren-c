@@ -50,8 +50,6 @@
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
 //      expressions [any-value! <...>]
 //          {Depending on VALUE, more expressions may be consumed}
-//      /only
-//          {Suppress evaluation on any ensuing arguments value consumes}
 //  ]
 //
 DECLARE_NATIVE(REEVAL)
@@ -70,12 +68,9 @@ DECLARE_NATIVE(REEVAL)
     child->u.reval.value = ARG(VALUE);
 
     Flags flags = DO_FLAG_REEVALUATE_CELL;
-    if (Bool_ARG(ONLY)) {
-        flags |= DO_FLAG_EXPLICIT_EVALUATE;
-        ARG(VALUE)->header.bits ^= CELL_FLAG_EVAL_FLIP;
-    }
 
     Init_Trash(OUT);  // !!! R3C patch, better than error on `reeval :elide`
+    Set_Cell_Flag(OUT, OUT_MARKED_STALE);
 
     if (Eval_Step_In_Subframe_Throws(OUT, level_, flags, child))
         return BOUNCE_THROWN;
@@ -309,7 +304,7 @@ DECLARE_NATIVE(DO)
             fully,
             sys_do_helper,
             source,
-            ARG(ARG), // may be nulled cell
+            rebQ(ARG(ARG)), // may be nulled cell
             Bool_ARG(ONLY) ? TRUE_VALUE : FALSE_VALUE,
             rebEND
         )){

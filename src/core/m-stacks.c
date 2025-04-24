@@ -46,7 +46,7 @@ void Startup_Data_Stack(REBLEN size)
     // contain them.  But DS_PUSH_MAYBE_VOID allows you to, in case you
     // are building a context varlist or similar.
     //
-    DS_Array = Make_Array_Core(1, ARRAY_FLAG_NULLEDS_LEGAL);
+    DS_Array = Make_Array_Core(1, ARRAY_FLAG_ANTIFORMS_LEGAL);
     Init_Unreadable(Array_Head(DS_Array));
 
     DS_Movable_Tail = cast(Value*, Array_Tail(DS_Array));

@@ -498,21 +498,38 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
     #endif
     }
 
-    if (Is_Nulled(v)) {
+    if (Is_Cell_Unreadable(v)) {
+      #if NO_RUNTIME_CHECKS
+        panic (v);
+      #else
+        printf("!!! Request to MOLD or FORM an unreadable cell !!!\n");
+        Append_Unencoded(s, "!!!unreadable!!!");
+        return;
+      #endif
+    }
+
+    if (Is_Antiform(v)) {
         //
-        // NULLs should only be molded out in debug scenarios, but this still
+        // antiforms should only be mold in debug scenarios, but this still
         // happens a lot, e.g. PROBE() of context arrays when they have unset
         // variables.  This happens so often in debug builds, in fact, that a
         // debug_break() here would be very annoying (the method used for
         // TYPE_0 items)
         //
-    #if NO_RUNTIME_CHECKS
+      #if NO_RUNTIME_CHECKS
         panic (v);
-    #else
-        printf("!!! Request to MOLD or FORM a NULL !!!\n");
-        Append_Unencoded(s, "!!!null!!!");
+      #else
+        printf("!!! Request to MOLD or FORM an antiform !!!\n");
+        if (Is_Nulled(v))
+            Append_Unencoded(s, "!!!null!!!");
+        else if (Is_Void(v))
+            Append_Unencoded(s, "!!!void!!!");
+        else {
+            assert(Is_Trash(v));
+            Append_Unencoded(s, "!!!trash!!!");
+        }
         return;
-    #endif
+      #endif
     }
 
     MOLD_HOOK hook = Mold_Or_Form_Hooks[Type_Of(v)];

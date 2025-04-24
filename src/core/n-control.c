@@ -1019,7 +1019,7 @@ DECLARE_NATIVE(CATCH)
 
     if (not Eval_List_At_Throws(OUT, ARG(BLOCK))) {
         if (Bool_ARG(RESULT))
-            rebElide(rebEval(NAT_VALUE(SET)), ARG(UNCAUGHT), OUT);
+            rebElide(NAT_VALUE(SET), ARG(UNCAUGHT), OUT);
 
         return nullptr;  // no throw means just return null
     }

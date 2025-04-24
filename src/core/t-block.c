@@ -244,7 +244,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         StackIndex base = TOP_INDEX;
         while (true) {
-            Value* generated = rebValue(rebEval(arg));
+            Value* generated = rebValue(arg);
             if (not generated)
                 break;
             Copy_Cell(PUSH(), generated);

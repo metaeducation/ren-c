@@ -332,8 +332,6 @@ INLINE void Set_Level_Detected_Fetch(
         // The Level_Spare(L) is used as the GC-safe location proxied to.
         //
         Copy_Cell(Level_Spare(L), KNOWN(L->value));
-        if (Get_Cell_Flag(L->value, EVAL_FLIP))
-            Set_Cell_Flag(Level_Spare(L), EVAL_FLIP);
         *opt_lookback = Level_Spare(L);
     }
 
@@ -386,7 +384,7 @@ INLINE void Set_Level_Detected_Fetch(
         // from elsewhere.  This is not ideal, but it's just to start.
         //
         ScanState scan;
-        Init_Scan_Level(&scan, SCAN_FLAG_NULLEDS_LEGAL, &transcode, '\0');
+        Init_Scan_Level(&scan, SCAN_MASK_NONE, &transcode, '\0');
 
         // !!! Current hack is to just allow one binder to be passed in for
         // use binding any newly loaded portions (spliced ones are left with
@@ -425,7 +423,7 @@ INLINE void Set_Level_Detected_Fetch(
             goto detect;
         }
 
-        Array* reified = Pop_Stack_Values_Keep_Eval_Flip(base);
+        Array* reified = Pop_Stack_Values(base);
 
         // !!! We really should be able to free this array without managing it
         // when we're done with it, though that can get a bit complicated if
@@ -439,10 +437,9 @@ INLINE void Set_Level_Detected_Fetch(
         L->source->array = reified;
         L->source->index = 1;
 
-        assert(Get_Array_Flag(L->source->array, NULLEDS_LEGAL));
         break; }
 
-      case DETECTED_AS_STUB: { // "instructions" like rebEval(), rebUneval()
+      case DETECTED_AS_STUB: { // "instructions" like rebQ()
         Array* instruction = cast_Array(m_cast(void*, p));
 
         // The instruction should be unmanaged, and will be freed on the next
@@ -467,12 +464,7 @@ INLINE void Set_Level_Detected_Fetch(
 
         L->source->array = nullptr;
         L->value = cell; // note that END is detected separately
-        assert(
-            not IS_RELATIVE(L->value) or (
-                Is_Nulled(L->value)
-                and (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE)
-            )
-        );
+        assert(not IS_RELATIVE(L->value));
         break; }
 
       case DETECTED_AS_END: {
@@ -863,7 +855,7 @@ INLINE REBIXO Eval_At_Core(
     Array* array,
     REBLEN index,
     Specifier* specifier, // must match array, but also opt_first if relative
-    Flags flags // DO_FLAG_TO_END, DO_FLAG_EXPLICIT_EVALUATE, etc.
+    Flags flags // DO_FLAG_TO_END, etc.
 ){
     DECLARE_LEVEL (L);
     L->flags = Endlike_Header(flags); // SET_FRAME_VALUE() *could* use
@@ -942,11 +934,8 @@ INLINE void Reify_Va_To_Array_In_Level(
         assert(L->source->pending == END_NODE);
 
         do {
-            // may be a NULLED cell.  Preserve CELL_FLAG_EVAL_FLIP flag.
-            //
+            assert(not Is_Antiform(L->value));
             Derelativize(PUSH(), L->value, L->specifier);
-            if (Get_Cell_Flag(L->value, EVAL_FLIP))
-                Set_Cell_Flag(TOP, EVAL_FLIP);
 
             Fetch_Next_In_Level(nullptr, L);
         } while (NOT_END(L->value));
@@ -968,9 +957,8 @@ INLINE void Reify_Va_To_Array_In_Level(
     assert(not L->source->vaptr); // feeding forward should have called va_end
 
     // special array...may contain voids and eval flip is kept
-    L->source->array = Pop_Stack_Values_Keep_Eval_Flip(base);
+    L->source->array = Pop_Stack_Values(base);
     Manage_Flex(L->source->array); // held alive while frame running
-    Set_Array_Flag(L->source->array, NULLEDS_LEGAL);
 
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we're holding it.  (This would be more complex
@@ -997,10 +985,7 @@ INLINE void Reify_Va_To_Array_In_Level(
 //
 // The evaluator has a common means of fetching values out of both arrays
 // and C va_lists via Fetch_Next_In_Level(), so this code can behave the
-// same as if the passed in values came from an array.  However, when values
-// originate from C they often have been effectively evaluated already, so
-// it's desired that WORD!s or PATH!s not execute as they typically would
-// in a block.  So this is often used with DO_FLAG_EXPLICIT_EVALUATE.
+// same as if the passed in values came from an array.
 //
 // !!! C's va_lists are very dangerous, there is no type checking!  The
 // C++ build should be able to check this for the callers of this function

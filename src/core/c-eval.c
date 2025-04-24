@@ -109,15 +109,6 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
             g;
 #endif
 
-// Either we're NOT evaluating and there's NO special exemption, or we ARE
-// evaluating and there IS a special exemption on the value saying not to.
-//
-// (Note: DO_FLAG_EXPLICIT_EVALUATE is same bit as CELL_FLAG_EVAL_FLIP)
-//
-#define EVALUATING(v) \
-    ((L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE) \
-        == ((v)->header.bits & CELL_FLAG_EVAL_FLIP))
-
 
 #if DEBUG_COUNT_TICKS
     //
@@ -549,9 +540,6 @@ bool Eval_Core_Throws(Level* const L)
     if (VAL_TYPE_RAW(L->value) != TYPE_WORD) // END would be TYPE_0
         goto give_up_backward_quote_priority;
 
-    if (not EVALUATING(L->value))
-        goto give_up_backward_quote_priority;
-
     assert(not L->gotten); // Fetch_Next_In_Level() cleared it
     L->gotten = Try_Get_Opt_Var(L->value, L->specifier);
     if (not L->gotten or Not_Cell_Flag(L->gotten, INFIX_IF_ACTION))
@@ -636,7 +624,7 @@ bool Eval_Core_Throws(Level* const L)
     //
     //     foo: ('the) => [print the]
 
-    if (eval_type == TYPE_WORD and EVALUATING(current)) {
+    if (eval_type == TYPE_WORD) {
         if (not current_gotten)
             current_gotten = Try_Get_Opt_Var(current, L->specifier);
         else
@@ -660,7 +648,7 @@ bool Eval_Core_Throws(Level* const L)
         goto give_up_forward_quote_priority;
     }
 
-    if (eval_type == TYPE_PATH and EVALUATING(current)) {
+    if (eval_type == TYPE_PATH) {
         //
         // !!! Words aren't the only way that functions can be dispatched,
         // one can also use paths.  It gets tricky here, because path GETs
@@ -701,7 +689,7 @@ bool Eval_Core_Throws(Level* const L)
         goto give_up_forward_quote_priority;
     }
 
-    if (eval_type == TYPE_ACTION and EVALUATING(current)) {
+    if (eval_type == TYPE_ACTION) {
         //
         // A literal ACTION! in a BLOCK! may also forward quote
         //
@@ -769,9 +757,6 @@ bool Eval_Core_Throws(Level* const L)
       case TYPE_ACTION: {
         if (Get_Cell_Flag(current, INFIX_IF_ACTION))
             fail ("Bootstrap EXE only dispatches infix from WORD!");
-
-        if (not EVALUATING(current))
-            goto inert;
 
         Symbol* opt_label = nullptr; // not invoked through a word, "nameless"
 
@@ -1209,9 +1194,7 @@ bool Eval_Core_Throws(Level* const L)
             // put off before, this time using the 10 as AND's left-hand arg.
             //
             if (L->u.defer.arg) {
-                Flags flags =
-                    DO_FLAG_FULFILLING_ARG
-                    | (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
+                Flags flags = DO_FLAG_FULFILLING_ARG;
 
                 DECLARE_SUBLEVEL (child, L);  // capture TOP_INDEX *now*
 
@@ -1260,8 +1243,7 @@ bool Eval_Core_Throws(Level* const L)
    //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) ////=//
 
               case PARAMCLASS_NORMAL: {
-                Flags flags = DO_FLAG_FULFILLING_ARG
-                    | (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
+                Flags flags = DO_FLAG_FULFILLING_ARG;
 
                 DECLARE_SUBLEVEL (child, L);  // capture TOP_INDEX *now*
                 SET_END(L->arg); // Finalize_Arg() sets to Endish_Nulled
@@ -1281,8 +1263,7 @@ bool Eval_Core_Throws(Level* const L)
                 //
                 Flags flags =
                     DO_FLAG_NO_LOOKAHEAD
-                    | DO_FLAG_FULFILLING_ARG
-                    | (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
+                    | DO_FLAG_FULFILLING_ARG;
 
                 DECLARE_SUBLEVEL (child, L);
                 SET_END(L->arg); // Finalize_Arg() sets to Endish_Nulled
@@ -1631,9 +1612,6 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_WORD:
-        if (not EVALUATING(current))
-            goto inert;
-
         if (not current_gotten)
             current_gotten = Get_Opt_Var_May_Fail(current, L->specifier);
 
@@ -1689,13 +1667,10 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_SET_WORD: {
-        if (not EVALUATING(current))
-            goto inert;
-
         if (IS_END(L->value)) // `eval [a:]` is illegal
             fail (Error_Need_Non_End_Core(current, L->specifier));
 
-        Flags flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
+        Flags flags = DO_MASK_NONE;
 
         Init_Trash(L->out);  // `1 x: comment "hi"` shouldn't set x to 1!
 
@@ -1722,9 +1697,6 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_GET_WORD:
-        if (not EVALUATING(current))
-            goto inert;
-
         Move_Opt_Var_May_Fail(L->out, current, L->specifier);
         break;
 
@@ -1738,9 +1710,6 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_LIT_WORD:
-        if (not EVALUATING(current))
-            goto inert;
-
         Derelativize(L->out, current, L->specifier);
         CHANGE_VAL_TYPE_BITS(L->out, TYPE_WORD);
         break;
@@ -1770,9 +1739,6 @@ bool Eval_Core_Throws(Level* const L)
 //     == 3
 
       case TYPE_GROUP: {
-        if (not EVALUATING(current))
-            goto inert;
-
         if (not Is_Level_Gotten_Shoved(L))
             L->gotten = nullptr; // arbitrary code changes fetched variables
 
@@ -1821,9 +1787,6 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_PATH: {
-        if (not EVALUATING(current))
-            goto inert;
-
         assert(Cell_Series_Len_At(current) >= 2);
         bool tail_blank = Is_Blank(Array_Last(Cell_Array(current)));
 
@@ -1913,13 +1876,10 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_SET_PATH: {
-        if (not EVALUATING(current))
-            goto inert;
-
         if (IS_END(L->value)) // `eval [a/b:]` is illegal
             fail (Error_Need_Non_End_Core(current, L->specifier));
 
-        Flags flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
+        Flags flags = DO_MASK_NONE;
 
         Init_Trash(L->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
 
@@ -1965,9 +1925,6 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_GET_PATH:
-        if (not EVALUATING(current))
-            goto inert;
-
         if (Get_Path_Throws_Core(L->out, current, L->specifier))
             goto return_thrown;
         break;
@@ -1982,9 +1939,6 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_LIT_PATH:
-        if (not EVALUATING(current))
-            goto inert;
-
         Derelativize(L->out, current, L->specifier);
         CHANGE_VAL_TYPE_BITS(L->out, TYPE_PATH);
         break;
@@ -2076,21 +2030,17 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_TRASH:
-        if (not EVALUATING(current))
-            goto inert;
-
-        fail ("Nothing cells cannot be evaluated");
+        fail ("Trash cells cannot be evaluated");
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
 // [NULL]
 //
 // NULLs are not an ANY-VALUE!.  Usually a DO shouldn't be able to see them.
-// An exception is in API calls, such as `rebValue("null?", some_null)`.  That
-// is legal due to CELL_FLAG_EVAL_FLIP, which avoids "double evaluation",
-// and is used by the API when constructing runs of values from C va_args.
+// An exception is in API calls, such as `rebValue("null?", some_null)`, but
+// this is caught as an error.  Use rebQ() on the nulls.
 //
-// Another way the evaluator can see NULL is EVAL, such as `eval first []`.
+// Another way the evaluator can see NULL is REEVAL, such as `reeval null`.
 // An error is given there, for consistency:
 //
 //     :foo/bar => pick foo 'bar (null if not present)
@@ -2099,9 +2049,6 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_NULLED:
-        if (not EVALUATING(current))
-            goto inert;
-
         fail (Error_Evaluate_Null_Raw());
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2183,7 +2130,6 @@ bool Eval_Core_Throws(Level* const L)
         if (
             Cell_Series_Len_At(L->value) != 0
             or (L->flags.bits & DO_FLAG_NO_LOOKAHEAD)
-            or not EVALUATING(L->value)
         ){
             if (not (L->flags.bits & DO_FLAG_TO_END))
                 goto finished; // just 1 step of work, so stop evaluating
@@ -2207,7 +2153,7 @@ bool Eval_Core_Throws(Level* const L)
         goto process_action;
     }
 
-    if (eval_type != TYPE_WORD or not EVALUATING(L->value)) {
+    if (eval_type != TYPE_WORD) {
         if (not (L->flags.bits & DO_FLAG_TO_END))
             goto finished; // only want 1 EVALUATE of work, so stop evaluating
 
