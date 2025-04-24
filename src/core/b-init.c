@@ -517,11 +517,9 @@ static void Shutdown_Action_Meta_Shim(void) {
 // which can be parameterized with a different context in which to look up
 // bindings by deafault in the API when that native is on the stack.
 //
-// Each entry should be one of these forms:
+// Each entry should look like this:
 //
-//    some-name: native [spec content]
-//
-//    some-name: native/body [spec content] [equivalent user code]
+//    some-name: native [...spec...]
 //
 // It is optional to put INFIX between the SET-WORD! and the spec.
 //
@@ -558,26 +556,11 @@ Value* Make_Native(
     else
         infix = false;
 
-    // See if it's being invoked with NATIVE or NATIVE/BODY
-    //
-    bool has_body;
-    if (Is_Word(*item)) {
-        if (Cell_Word_Id(*item) != SYM_NATIVE)
-            panic (*item);
-        has_body = false;
-    }
-    else {
-        if (
-            not Is_Path(*item)
-            or VAL_LEN_HEAD(*item) != 2
-            or not Is_Word(Array_Head(Cell_Array(*item)))
-            or Cell_Word_Id(Array_Head(Cell_Array(*item))) != SYM_NATIVE
-            or not Is_Word(Array_At(Cell_Array(*item), 1))
-            or Cell_Word_Id(Array_At(Cell_Array(*item), 1)) != SYM_BODY
-        ){
-            panic (*item);
-        }
-        has_body = true;
+    if (
+        not Is_Word(*item)
+        or Cell_Word_Id(*item) != SYM_NATIVE
+    ){
+        panic (*item);
     }
     ++*item;
 
@@ -609,18 +592,7 @@ Value* Make_Native(
 
     Array* details = ACT_DETAILS(act);
 
-    // If a user-equivalent body was provided, we save it in the native's
-    // body cell for later lookup.
-    //
-    if (has_body) {
-        if (not Is_Block(*item))
-            panic (*item);
-
-        Derelativize(Array_At(details, IDX_NATIVE_BODY), *item, specifier);
-        ++*item;
-    }
-    else
-        Init_Blank(Array_At(details, IDX_NATIVE_BODY));
+    Init_Blank(Array_At(details, IDX_NATIVE_BODY));
 
     // When code in the core calls APIs like `rebValue()`, it consults the
     // stack and looks to see where the native function that is running
@@ -654,9 +626,6 @@ Value* Make_Native(
 //
 //  native: native [
 //      spec [block!]
-//      /body
-//          {Body of user code matching native's behavior (for documentation)}
-//      code [block!]
 //  ]
 //
 // Returns an array of words bound to natives for SYSTEM/CATALOG/NATIVES

@@ -1139,13 +1139,11 @@ INLINE bool Is_Set(const Value* location)
 
 
 //
-//  set?: native/body [
+//  set?: native [
 //
 //  "Whether a bound word or path is set (!!! shouldn't eval GROUP!s)"
 //
 //      location [any-word! any-path!]
-//  ][
-//      value? get location
 //  ]
 //
 DECLARE_NATIVE(SET_Q)
@@ -1157,13 +1155,11 @@ DECLARE_NATIVE(SET_Q)
 
 
 //
-//  unset?: native/body [
+//  unset?: native [
 //
 //  "Whether a bound word or path is unset (!!! shouldn't eval GROUP!s)"
 //
 //      location [any-word! any-path!]
-//  ][
-//      null? get location
 //  ]
 //
 DECLARE_NATIVE(UNSET_Q)
@@ -1220,14 +1216,12 @@ DECLARE_NATIVE(NOOP)
 
 
 //
-//  null?: native/body [
+//  null?: native [
 //
 //  "Tells you if the argument is not a value"
 //
 //      return: [logic!]
 //      optional [any-value!]
-//  ][
-//      null = type of :optional
 //  ]
 //
 DECLARE_NATIVE(NULL_Q)

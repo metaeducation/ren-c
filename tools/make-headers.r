@@ -366,7 +366,6 @@ parse2/match native-list [
         opt 'infix
         ['native | and path! into ['native to end]]
         set spec: block!
-        opt block! ;-- optional body if native/body
         (
             emit-include-params-macro e-params name spec
             e-params/emit newline

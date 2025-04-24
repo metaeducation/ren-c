@@ -248,15 +248,13 @@ DECLARE_NATIVE(DID_Q)
 
 
 //
-//  did: native/body [
+//  did: native [
 //
 //  "Variant of TO-LOGIC which considers null values to also be false"
 //
 //      return: [logic!]
 //          {true if value is NOT a LOGIC! false, BLANK!, or null}
 //      optional [any-value!]
-//  ][
-//      not not :optional
 //  ]
 //
 DECLARE_NATIVE(DID)

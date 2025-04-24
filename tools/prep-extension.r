@@ -129,8 +129,6 @@ native-defs: collect [
         ['export (n-export: true) | (n-export: false)]
         set n-name set-word! copy n-spec [
             'native block!
-                |
-            'native/body 2 block!
         ]
         (
             keep make natdef compose/only [
