@@ -352,7 +352,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
         }
 
         if (pclass == PARAMCLASS_REFINEMENT) {
-            if (Is_Blank(L->arg)) {
+            if (Is_Nulled(L->arg)) {
                 ignoring = true; // don't add to PATH!
                 continue;
             }

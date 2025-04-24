@@ -366,7 +366,7 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
     #define DECLARE_REFINE(n,name) \
         struct Native_Refine p_##name; \
         p_##name.num = (n); \
-        p_##name.used_cache = IS_TRUTHY(Level_Arg(level_, (n))); \
+        p_##name.used_cache = not Is_Nulled(Level_Arg(level_, (n))); \
         p_##name.arg = Level_Arg(level_, (n)); \
 
     #define ARG(name) \
@@ -377,8 +377,8 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 
     #define Bool_ARG(name) \
         ((p_##name).used_cache /* stops Bool_ARG() on DECLARE_PARAM()s */ \
-            ? not Is_Blank(Level_Arg(level_, (p_##name).num)) \
-            : not Is_Blank(Level_Arg(level_, (p_##name).num)))
+            ? not Is_Nulled(Level_Arg(level_, (p_##name).num)) \
+            : not Is_Nulled(Level_Arg(level_, (p_##name).num)))
 #endif
 
 

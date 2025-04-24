@@ -168,8 +168,8 @@ VarList* Make_Managed_Context_For_Action_May_Fail(
 
     //=//// REFINEMENT PARAMETER HANDLING /////////////////////////////////=//
 
-        if (Is_Blank(special)) { // specialized BLANK! => "disabled"
-            Init_Blank(arg);
+        if (Is_Nulled(special)) { // specialized nulled => "disabled"
+            Init_Nulled(arg);
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             goto continue_specialized;
         }
@@ -182,11 +182,7 @@ VarList* Make_Managed_Context_For_Action_May_Fail(
 
         assert(
             special == param
-            or Is_Nulled(special)
-            or (
-                Is_Trash(special)
-                and Get_Cell_Flag(special, ARG_MARKED_CHECKED)
-            )
+            or Is_Trash(special)
         );
 
         // If we get here, then the refinement is unspecified in the
@@ -223,7 +219,7 @@ VarList* Make_Managed_Context_For_Action_May_Fail(
       continue_unspecialized:;
 
         assert(arg->header.bits == CELL_MASK_ERASE);
-        Init_Nulled(arg);
+        Init_Trash(arg);
         if (opt_binder) {
             if (not Is_Param_Unbindable(param))
                 Add_Binder_Index(opt_binder, canon, index);
@@ -232,7 +228,7 @@ VarList* Make_Managed_Context_For_Action_May_Fail(
 
       continue_specialized:;
 
-        assert(not Is_Nulled(arg));
+        assert(not Is_Trash(arg));
         assert(Get_Cell_Flag(arg, ARG_MARKED_CHECKED));
         continue;
     }
@@ -358,21 +354,26 @@ bool Specialize_Action_Throws(
             ){
                 // Assume refinement takes no arguments.
 
-                if (Is_Nulled(arg))
+                if (Is_Trash(arg))
                     goto unspecialized_arg;
 
                 if (IS_TRUTHY(arg))
                     Init_Refinement(arg, Cell_Parameter_Symbol(param));
                 else
-                    Init_Blank(arg);
+                    Init_Nulled(arg);
 
                 Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
                 goto specialized_arg_no_typecheck;
             }
 
-            if (Is_Nulled(arg + 1)) {  // takes arg, but revoke refinement
-                Init_Nulled(arg);
+            if (Is_Trash(arg + 1)) {  // takes arg, but revoke refinement
+                Init_Trash(arg);
                 goto unspecialized_arg;
+            }
+            if (Is_Nulled(arg + 1)) {
+                Init_Nulled(arg);
+                Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
+                goto specialized_arg_no_typecheck;
             }
             Init_Refinement(arg, Cell_Parameter_Symbol(param));
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
@@ -380,7 +381,7 @@ bool Specialize_Action_Throws(
 
           case PARAMCLASS_RETURN:
           case PARAMCLASS_LOCAL:
-            assert(Is_Nulled(arg)); // no bindings, you can't set these
+            assert(Is_Trash(arg)); // no bindings, you can't set these
             goto unspecialized_arg;
 
           default:
@@ -389,7 +390,7 @@ bool Specialize_Action_Throws(
 
         // It's an argument, either a normal one or a refinement arg.
 
-        if (Is_Nulled(arg))
+        if (Is_Trash(arg))
             goto unspecialized_arg;
 
         goto specialized_arg;

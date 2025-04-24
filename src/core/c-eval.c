@@ -211,7 +211,7 @@ INLINE void Finalize_Arg(
         or Is_Refinement(refine) // ensure arg not null
     );
 
-    if (Is_Nulled(arg) or Is_Void(arg)) {
+    if (Is_Nulled(arg) or Is_Void(arg) or Is_Trash(arg)) {
         if (Is_Refinement(refine)) {
             //
             // We can only revoke the refinement if this is the 1st
@@ -221,7 +221,7 @@ INLINE void Finalize_Arg(
             if (refine + 1 != arg)
                 fail (Error_Bad_Refine_Revoke(param, arg));
 
-            Init_Blank(refine); // can't re-enable...
+            Init_Nulled(refine); // can't re-enable...
 
             Init_Nulled(arg);  // canonize revoke state to null
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
@@ -235,6 +235,7 @@ INLINE void Finalize_Arg(
             // BLANK! means refinement already revoked, null is okay
             // false means refinement was never in use, so also okay
             //
+            Init_Nulled(arg);
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             return;
         }
@@ -862,12 +863,12 @@ bool Eval_Core_Throws(Level* const L)
                 // the same as L->arg then L->arg must get assigned somehow
                 // (jumping to unspecialized_refinement will take care of it)
 
-                if (Is_Nulled(L->special)) {
+                if (Is_Trash(L->special)) {
                     assert(Not_Cell_Flag(L->special, ARG_MARKED_CHECKED));
                     goto unspecialized_refinement; // second most common
                 }
 
-                if (Is_Blank(L->special)) // either specialized or not...
+                if (Is_Nulled(L->special)) // either specialized or not...
                     goto unused_refinement; // will get ARG_MARKED_CHECKED
 
                 // If arguments in the frame haven't already gone through
@@ -938,7 +939,7 @@ bool Eval_Core_Throws(Level* const L)
               unused_refinement:;
 
                 L->refine = ARG_TO_UNUSED_REFINEMENT; // "don't consume"
-                Init_Blank(L->arg);
+                Init_Nulled(L->arg);
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 

@@ -917,7 +917,7 @@ struct LevelStruct {
     m_cast(Value*, TRUE_VALUE)
 
 #define ARG_TO_REVOKED_REFINEMENT \
-    m_cast(Value*, BLANK_VALUE)
+    m_cast(Value*, &PG_Nulled_Cell[0])
 
 #define ORDINARY_ARG \
     m_cast(Value*, EMPTY_BLOCK)
