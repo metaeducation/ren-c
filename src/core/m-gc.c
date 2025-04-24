@@ -546,7 +546,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case TYPE_VOID:
         break;
 
-    case TYPE_MAX_NULLED:
+    case TYPE_NULLED:
         break; // use Queue_Mark_Value_Deep() if NULLED would be a bug
 
     default:
@@ -567,7 +567,7 @@ INLINE void Queue_Mark_Opt_Value_Deep(const Cell* v)
 INLINE void Queue_Mark_Value_Deep(const Cell* v)
 {
     assert(NOT_END(v));
-    assert(VAL_TYPE_RAW(v) != TYPE_MAX_NULLED); // Note: Unreadable blanks ok
+    assert(VAL_TYPE_RAW(v) != TYPE_NULLED); // Note: Unreadable blanks ok
     Queue_Mark_Opt_End_Cell_Deep(v);
 }
 
@@ -1558,7 +1558,7 @@ void Push_Guard_Node(const Node* node)
         assert(
             IS_END(value)
             or Is_Cell_Unreadable(value)
-            or Type_Of(value) <= TYPE_MAX_NULLED
+            or Type_Of(value) <= TYPE_NULLED
         );
 
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER

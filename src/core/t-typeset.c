@@ -51,6 +51,7 @@ const struct {
     REBU64 bits;
 } Typesets[] = {
     {SYM_ANY_VALUE_X, TS_VALUE},
+    {SYM_ANY_ELEMENT_X, TS_ELEMENT},
     {SYM_ANY_WORD_X, TS_WORD},
     {SYM_ANY_PATH_X, TS_PATH},
     {SYM_ANY_NUMBER_X, TS_NUMBER},
@@ -164,7 +165,7 @@ bool Update_Typeset_Bits_Core(
                 continue;
             }
             if (Cell_Word_Id(maybe_word) == SYM__TNULL_T) {  // ~null~
-                Set_Typeset_Flag(typeset, TYPE_MAX_NULLED);
+                Set_Typeset_Flag(typeset, TYPE_NULLED);
                 continue;
             }
             else if (Cell_Word_Id(maybe_word) == SYM__TVOID_T) {  // ~void~
@@ -258,9 +259,9 @@ Array* Typeset_To_Array(const Value* tset)
     StackIndex base = TOP_INDEX;
 
     REBINT n;
-    for (n = 1; n < TYPE_MAX_NULLED; ++n) {
+    for (n = 1; n < TYPE_NULLED; ++n) {
         if (Typeset_Check(tset, cast(enum Reb_Kind, n))) {
-            if (n == TYPE_MAX_NULLED) {
+            if (n == TYPE_NULLED) {
                 Init_Word(PUSH(), Canon(SYM__TNULL_T));
             }
             else if (n == TYPE_VOID) {
@@ -287,19 +288,9 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
     Begin_Non_Lexical_Mold(mo, v);  // #[typeset! or make typeset!
     Append_Codepoint(mo->utf8flex, '[');
 
-#if RUNTIME_CHECKS
+  #if RUNTIME_CHECKS
     Symbol* symbol = Key_Symbol(v);
-    if (symbol == nullptr) {
-        //
-        // Note that although TYPE_MAX_NULLED is used as an implementation detail
-        // for special typesets in function paramlists or context keys to
-        // indicate ~null~-style optionality, the "absence of a type" is not
-        // generally legal in user typesets.  Only legal "key" typesets
-        // (that have symbols).
-        //
-        assert(not Typeset_Check(v, TYPE_MAX_NULLED));
-    }
-    else {
+    if (symbol != nullptr) {
         //
         // In debug builds we're probably more interested in the symbol than
         // the typesets, if we are looking at a PARAMLIST or KEYLIST.
@@ -317,7 +308,7 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
             goto skip_types;
         }
     }
-#endif
+  #endif
 
     assert(not Typeset_Check(v, TYPE_0)); // TYPE_0 is used for internal purposes
 
@@ -325,7 +316,8 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
     //
     for (n = TYPE_0 + 1; n < TYPE_MAX; n++) {
         if (Typeset_Check(v, cast(enum Reb_Kind, n))) {
-            Emit(mo, "+DN ", SYM_DATATYPE_X, Canon(cast(SymId, n)));
+            MF_Datatype(mo, Datatype_From_Kind(cast(enum Reb_Kind, n)), false);
+            Append_Codepoint(mo->utf8flex, ' ');
         }
     }
     Trim_Tail(mo->utf8flex, ' ');
@@ -354,7 +346,7 @@ REBTYPE(Typeset)
             fail (Error_Invalid(arg));
 
         if (Typeset_Check(val, CELL_DATATYPE_TYPE(arg)))
-            return Init_Trash(OUT);
+            return Init_True(OUT);
 
         return nullptr;
 

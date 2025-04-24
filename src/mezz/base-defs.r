@@ -35,8 +35,8 @@ probe: func [
     {Debug print a molded value and returns that same value.}
 
     return: "Same as the input value"
-        [~null~ any-value!]
-    value [~null~ any-value!]
+        [any-value!]
+    value [any-value!]
 ][
     case [
         trash? :value [write-stdout "~  ; anti"]
@@ -68,7 +68,7 @@ elide: func [
 
     return: []
         {The evaluator will skip over the result (not seen, not even void)}
-    discarded [~null~ any-value!]
+    discarded [any-value!]
         {Evaluated value to be ignored.}
 ][
 ]
@@ -83,7 +83,7 @@ end: func [
     {Inertly consumes all subsequent data, evaluating to previous result.}
 
     return: []
-    :omit [any-value! <...>]
+    :omit [any-element! <...>]
 ][
     until [null? take omit]
 ]
@@ -105,7 +105,7 @@ back: specialize 'skip [
 
 bound?: cascade [
     specialize 'reflect [property: 'binding]
-    :value?
+    :element?
 ]
 
 unspaced: specialize 'delimit [delimiter: void]
@@ -325,7 +325,7 @@ immediate!: make typeset! [
 
 ok?: func [
     "Returns TRUE on all values that are not ERROR!"
-    value [~null~ any-value!]
+    value [any-value!]
 ][
     not error? :value
 ]

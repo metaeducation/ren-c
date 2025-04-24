@@ -191,7 +191,7 @@ uint32_t Hash_Value(const Cell* v)
     uint32_t hash;
 
     switch(Type_Of(v)) {
-    case TYPE_MAX_NULLED:
+    case TYPE_NULLED:
         //
         // While a void might technically be hashed, it can't be a value *or*
         // a key in a map.

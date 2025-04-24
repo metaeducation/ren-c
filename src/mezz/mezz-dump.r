@@ -17,9 +17,9 @@ dump: function [
 
     return: "Doesn't return anything, not even void (so like a COMMENT)"
         []
-    :value [any-value!]
+    :value [any-element!]
     :extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
-        [any-value! <...>]
+        [any-element! <...>]
     /prefix "Put a custom marker at the beginning of each output line"
     sigil [text!]
 
@@ -33,7 +33,7 @@ dump: function [
         ]
     ]
 
-    val-to-text: function [return: [text!] val [~null~ any-value!]] [
+    val-to-text: function [return: [text!] val [any-value!]] [
         case [
             null? val ["// null"]
             object? :val [unspaced ["make object! [" (dump-obj val) "]"]]
@@ -130,7 +130,7 @@ dumps: infix function [
     :value "If issue, create non-specialized dumper...#on or #off by default"
         [issue! text! integer! word! set-word! set-path! group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
-        [~null~ any-value! <...>]
+        [any-value! <...>]
 ][
     if issue? value [
         d: specialize 'dump-to-newline [sigil: as text! name]
@@ -281,7 +281,7 @@ dump-obj: function [
     return: []
     left "Enfix required for 'fully invisible' infix behavior (ignored)"
         [~null~ <end> any-value!]
-    :args [any-value! <...>]
+    :args [any-element! <...>]
 ][
     while [(not new-line? args) and [value: take args]] [
         all [

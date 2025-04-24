@@ -207,7 +207,7 @@ bool Next_Path_Throws(REBPVS *pvs)
                 fail ("NULL used in path picking but was not handled");
             fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
         }
-        else if (VAL_TYPE_RAW(r) <= TYPE_MAX_NULLED) {
+        else if (VAL_TYPE_RAW(r) <= TYPE_NULLED) {
             Handle_Api_Dispatcher_Result(pvs, r);
         }
         else switch (VAL_TYPE_RAW(r)) {
@@ -550,7 +550,7 @@ VarList* Resolve_Path(const Value* path, REBLEN *index_out)
 //
 //  {Perform a path picking operation, same as `:(:location)/(:picker)`}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          {Picked value, or null if picker can't fulfill the request}
 //      location [any-value!]
 //      picker [any-value!]
@@ -633,13 +633,13 @@ DECLARE_NATIVE(PICK)
 //
 //  {Perform a path poking operation, same as `(:location)/(:picker): :value`}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          {Same as value}
 //      location [any-value!]
 //          {(modified)}
 //      picker
 //          {Index offset, symbol, or other value to use as index}
-//      value [~null~ any-value!]
+//      value [any-value!]
 //          {The new value}
 //  ]
 //
@@ -707,8 +707,8 @@ DECLARE_NATIVE(POKE)
 //
 //  {Temporary native in lieu of PD_Xxx() dispatch so `/` performs division}
 //
-//      #left [~null~ any-value!]
-//      #right [~null~ any-value!]
+//      #left [any-value!]
+//      #right [any-value!]
 //  ]
 //
 DECLARE_NATIVE(PATH_0)

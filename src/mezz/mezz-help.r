@@ -100,7 +100,7 @@ help: function [
     "Prints information about words and values (if no args, general help)."
 
     return: [~]
-    :topic [<end> any-value!]
+    :topic [<end> any-element!]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc
         "Open web browser to related documentation."

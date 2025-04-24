@@ -88,7 +88,7 @@ prin: function [
     "Print without implicit line break, blocks are SPACED."
 
     return: [~]
-    value [~null~ any-value!]
+    value [any-value!]
 ][
     write-stdout switch type of :value [
         null [return]

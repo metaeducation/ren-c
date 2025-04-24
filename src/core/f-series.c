@@ -407,7 +407,7 @@ chkDecimal:
         return VAL_ACT_PARAMLIST(s) - VAL_ACT_PARAMLIST(t);
 
     case TYPE_BLANK:
-    case TYPE_MAX_NULLED:
+    case TYPE_NULLED:
     default:
         break;
 

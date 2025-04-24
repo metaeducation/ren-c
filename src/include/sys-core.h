@@ -352,8 +352,7 @@ enum Boot_Levels {
 enum {
     MKF_RETURN      = 1 << 0,   // give a RETURN (but local RETURN: overrides)
     MKF_KEYWORDS    = 1 << 1,   // respond to tags like ~null~, <with>, <local>
-    MKF_Any_Value   = 1 << 2,   // args and return are [~null~ any-value!]
-    MKF_FAKE_RETURN = 1 << 3    // has RETURN label for HELP, but not in frame
+    MKF_FAKE_RETURN = 1 << 2    // has RETURN label for HELP, but not in frame
 };
 
 #define MKF_MASK_NONE 0 // no special handling (e.g. MAKE ACTION!)

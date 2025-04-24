@@ -1203,14 +1203,14 @@ Error* Error_Arg_Type(
     DECLARE_VALUE (label);
     Get_Level_Label_Or_Blank(label, L);
 
-    if (actual != TYPE_MAX_NULLED)
+    if (actual != TYPE_NULLED)
         return Error_Expect_Arg_Raw(
             label,
             Datatype_From_Kind(actual),
             param_word
         );
 
-    // Although TYPE_MAX_NULLED is not a type, the typeset bits are used
+    // Although TYPE_NULLED is not a type, the typeset bits are used
     // to check it.  Since Datatype_From_Kind() will fail, use another error.
     //
     return Error_Arg_Required_Raw(label, param_word);
@@ -1224,7 +1224,7 @@ Error* Error_Bad_Return_Type(Level* L, enum Reb_Kind kind) {
     DECLARE_VALUE (label);
     Get_Level_Label_Or_Blank(label, L);
 
-    if (kind == TYPE_MAX_NULLED)
+    if (kind == TYPE_NULLED)
         return Error_Needs_Return_Opt_Raw(label);
 
     if (kind == TYPE_TRASH)
@@ -1455,7 +1455,7 @@ void MF_Error(Molder* mo, const Cell* v, bool form)
 //
 //  "Approximation of modern Ren-C definitional error try (nullify ERROR!)"
 //
-//      value [~null~ any-value!]
+//      value [any-value!]
 //  ]
 //
 DECLARE_NATIVE(TRY)
@@ -1476,7 +1476,7 @@ DECLARE_NATIVE(TRY)
 //
 //  "Approximation of modern Ren-C definitional error trap (ERROR! => ERROR!)"
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //      code [block!]
 //  ]
 //
@@ -1519,9 +1519,9 @@ DECLARE_NATIVE(TRAP)
 //  "If left hand side is an ERROR!, run the branch"
 //
 //      return: "Input value if not error, or branch result"
-//          [~null~ any-value!]
+//          [any-value!]
 //      left "Run branch if this is an error"
-//          [~null~ ~void~ any-value!]
+//          [any-value!]
 //      branch [block! action!]
 //  ]
 //

@@ -39,7 +39,7 @@
 //
 //  "Converts a value to a human-readable string."
 //
-//      value [~null~ any-value!]
+//      value [any-value!]
 //          "The value to form"
 //  ]
 //

@@ -47,8 +47,19 @@ REBOL [
         /* For other checks, we pay the cost in the debug build of all the
            associated baggage that Type_Of() carries over VAL_TYPE_RAW() */
 
-        #define Any_Value(v) \
-            (Type_Of(v) != TYPE_MAX_NULLED)
+        INLINE bool Any_Element_Kind(enum Reb_Kind k) {
+            assert(k < TYPE_MAX and k != TYPE_0);
+            return k < TYPE_TRASH;
+        }
+
+        #define Any_Element(v) \
+            Any_Element_Kind(Type_Of(v))
+
+        #define Any_Antiform_Kind(k) \
+            (not Any_Element_Kind(k))
+
+        #define Is_Antiform(v) \
+            (not Any_Element(v))
 
         INLINE bool Any_Scalar_Kind(enum Reb_Kind k) {
             return k >= TYPE_LOGIC and k <= TYPE_DATE;
@@ -208,8 +219,16 @@ handle      handle      -       -       +       -
 
 blank       unit        blank   +       +       -
 ; end of inert unbindable types
+
+; === BEGIN "ANTIFORMS" ===
+;
+; The bootstrap executable has no concept of antiforms, so they're just
+; another kind of cell that is periodically checked to make sure it does not
+; occur in source locations.
+;
 trash       unit        -       +       +       -
 void        unit        -       +       +       -
+nulled      unit        -       +       +       -
 
 ; Note that the "null?" state has no associated NULL! datatype.  Internally
 ; it uses TYPE_MAX, but like the TYPE_0 it stays off the type map.

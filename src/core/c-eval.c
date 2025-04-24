@@ -2098,7 +2098,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      case TYPE_MAX_NULLED:
+      case TYPE_NULLED:
         if (not EVALUATING(current))
             goto inert;
 

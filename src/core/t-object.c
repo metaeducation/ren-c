@@ -657,8 +657,16 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
 
         Append_Unencoded(out, ": ");
 
-        if (Is_Nulled(var))
-            Append_Unencoded(out, "~null~");
+        if (Is_Antiform(var)) {
+            if (Is_Nulled(var))
+                Append_Unencoded(out, "~null~");
+            else if (Is_Void(var))
+                Append_Unencoded(out, "~void~");
+            else {
+                assert(Is_Trash(var));
+                Append_Unencoded(out, "~");
+            }
+        }
         else
             Mold_Value(mo, var);
     }
@@ -865,7 +873,7 @@ REBTYPE(Context)
             return nullptr;
 
         if (Cell_Word_Id(verb) == SYM_FIND)
-            return Init_Trash(OUT); // TRUE would obscure non-LOGIC! result
+            return Init_True(OUT); // !!! not optimal, OKAY would be better
 
         RETURN (Varlist_Slot(c, n)); }
 

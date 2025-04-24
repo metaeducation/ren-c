@@ -45,10 +45,10 @@
 //
 //  {Process received value *inline* as the evaluator loop would.}
 //
-//      return: [~null~ any-value!]
-//      value [~null~ any-value!]
+//      return: [any-value!]
+//      value [any-element!]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
-//      expressions [~null~ any-value! <...>]
+//      expressions [any-value! <...>]
 //          {Depending on VALUE, more expressions may be consumed}
 //      /only
 //          {Suppress evaluation on any ensuing arguments value consumes}
@@ -89,13 +89,13 @@ DECLARE_NATIVE(REEVAL)
 //
 //  {Shove a left hand parameter into an ACTION!, effectively making it infix}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          "REVIEW: How might this handle shoving infix invisibles?"
-//      :left [<...> <end> any-value!]
+//      :left [<...> <end> any-element!]
 //          "Requests parameter convention based on infixee's first argument"
 //      :infixee [<end> word! path! group! action!]
 //          "Needs ACTION!...but WORD!s fetched, PATH!s/GROUP!s evaluated"
-//      :args [<...> <end> any-value!]
+//      :args [<...> <end> any-element!]
 //          "Will handle args the way the infixee expects"
 //  ]
 //
@@ -123,8 +123,8 @@ DECLARE_NATIVE(SHOVE)
 //
 //  {Service routine for implementing ME (needs review/generalization)}
 //
-//      return: [~null~ any-value!]
-//      left [~null~ any-value!]
+//      return: [any-value!]
+//      left [any-value!]
 //          {Value to preload as the left hand-argument (won't reevaluate)}
 //      rest [varargs!]
 //          {The code stream to execute (head element must be infixed)}
@@ -244,7 +244,7 @@ DECLARE_NATIVE(EVAL_INFIX)
 //
 //  {Evaluates a block of source code (directly or fetched according to type)}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //      source [
 //          <maybe> ;-- useful for `do maybe ...` scenarios when no match
 //          text! ;-- source code in text form
@@ -301,7 +301,7 @@ DECLARE_NATIVE(DO)
         Value* sys_do_helper = Varlist_Slot(Sys_Context, SYS_CTX_DO_P);
         assert(Is_Action(sys_do_helper));
 
-        UNUSED(Bool_ARG(ARGS)); // detected via `value? :arg`
+        UNUSED(Bool_ARG(ARGS)); // detected via `not null? :arg`
 
         const bool fully = true; // error if not all arguments consumed
         if (Apply_Only_Throws(
@@ -342,7 +342,7 @@ DECLARE_NATIVE(DO)
 //  "Run a list through the evaluator iteratively, or take a single step"
 //
 //      return: "Evaluation product, or ~[position product]~ pack if /STEP3"
-//          [~null~ any-value!]  ; /STEP3 changes primary return product [1]
+//          [any-value!]  ; /STEP3 changes primary return product [1]
 //      source [
 //          <maybe>  ; useful for `evaluate maybe ...` scenarios
 //          any-list!  ; code
@@ -612,7 +612,7 @@ DECLARE_NATIVE(SYNC_INVISIBLES)
 //
 //  {Invoke an ACTION! with all required arguments specified}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //      applicand "Literal action, or location to find one (preserves name)"
 //          [action! word! path!]
 //      def "Frame definition block (will be bound and evaluated)"

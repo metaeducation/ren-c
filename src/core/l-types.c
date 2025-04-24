@@ -81,11 +81,11 @@ Bounce MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  {Constructs or allocates the specified datatype.}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          {Constructed value, or NULL if BLANK! input}
 //      type [<maybe> datatype! event! any-context!]
 //          {The datatype -or- an examplar value of the type to construct}
-//      def [<maybe> any-value!]
+//      def [<maybe> any-element!]
 //          {Definition or size of the new value (binding may be modified)}
 //  ]
 //
@@ -193,9 +193,9 @@ Bounce TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //  {Converts to a specified datatype, copying any underying data}
 //
 //      return: "VALUE converted to TYPE, null if type or value are blank"
-//          [~null~ any-value!]
+//          [any-value!]
 //      type [<maybe> datatype!]
-//      value [<maybe> any-value!]
+//      value [<maybe> any-element!]
 //  ]
 //
 DECLARE_NATIVE(TO)
@@ -266,7 +266,7 @@ Bounce Reflect_Core(Level* level_)
 
     switch (id) {
     case SYM_TYPE:
-        if (kind == TYPE_MAX_NULLED)
+        if (kind == TYPE_NULLED)
             return nullptr; // `() = type of ()`, `null = type of ()`
 
         return Init_Datatype(OUT, kind);;
@@ -280,7 +280,7 @@ Bounce Reflect_Core(Level* level_)
     // but in general actions should not allow null first arguments...there's
     // no entry in the dispatcher table for them.
     //
-    if (kind == TYPE_MAX_NULLED)
+    if (kind == TYPE_NULLED)
         fail ("NULL isn't valid for REFLECT, except for TYPE OF ()");
 
     GENERIC_HOOK hook = Generic_Hooks[kind];
@@ -295,9 +295,9 @@ Bounce Reflect_Core(Level* level_)
 //
 //  {Returns specific details about a datatype.}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //      value "Accepts NULL so REFLECT () 'TYPE can be returned as NULL"
-//          [~null~ any-value!]
+//          [any-value!]
 //      property [word!]
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
@@ -318,10 +318,10 @@ DECLARE_NATIVE(REFLECT)
 //
 //  {Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //      'property [word!]
 //      value "Accepts NULL so TYPE OF () can be returned as NULL"
-//          [~null~ any-value!]
+//          [any-value!]
 //  ]
 //
 DECLARE_NATIVE(OF)

@@ -239,7 +239,7 @@ DECLARE_NATIVE(BIND)
 //
 //  {Defines words local to a block.}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //      vars [block! word!]
 //          {Local word(s) to the block}
 //      body [block!]
@@ -360,34 +360,18 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
 
 
 //
-//  value?: native [
-//
-//  "Test if an optional cell contains a value (e.g. `value? null` is FALSE)"
-//
-//      optional [~null~ any-value!]
-//  ]
-//
-DECLARE_NATIVE(VALUE_Q)
-{
-    INCLUDE_PARAMS_OF_VALUE_Q;
-
-    return Init_Logic(OUT, Any_Value(ARG(OPTIONAL)));
-}
-
-
-//
 //  element?: native [
 //
 //  "Test if value can be put in a block (e.g. `element? null` is FALSE)"
 //
-//      optional [~null~ any-value!]
+//      value [any-value!]
 //  ]
 //
 DECLARE_NATIVE(ELEMENT_Q)
 {
     INCLUDE_PARAMS_OF_ELEMENT_Q;
 
-    return Init_Logic(OUT, Any_Value(ARG(OPTIONAL)));
+    return Init_Logic(OUT, Any_Element(ARG(VALUE)));
 }
 
 
@@ -488,7 +472,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
 //
 //  {Gets the value of a word or path, or block of words/paths.}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //      source [<maybe> any-word! any-path! block!]
 //          {Word or path to get, or block of words or paths}
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on trash)"
@@ -531,7 +515,7 @@ DECLARE_NATIVE(GET)
 //
 //  {Gets the value of a word or path, allows trash}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //      source "Word or path to get"
 //          [<maybe> <dequote> any-word! any-path!]
 //  ]
@@ -620,11 +604,11 @@ DECLARE_NATIVE(INFIX)
 //
 //  {Sets a word, path, or block of words and paths to specified value(s).}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          {Will be the values set to, or void if any set values are void}
 //      target [<maybe> any-word! any-path! block!]
 //          {Word or path, or block of words and paths}
-//      value [~null~ any-value!]
+//      value [any-value!]
 //          "Value or block of values"
 //      /single "If target and value are blocks, set each to the same value"
 //      /some "blank values (or values past end of block) are not set."
@@ -713,7 +697,7 @@ DECLARE_NATIVE(SET)
 //  {Convert nulls to voids, pass through most other values}
 //
 //      return: [any-value!]
-//      optional [~null~ any-value!]
+//      optional [any-value!]
 //  ]
 //
 DECLARE_NATIVE(MAYBE)
@@ -865,8 +849,8 @@ DECLARE_NATIVE(INFIX_Q)
 //
 //  {Function for returning the same value that it got in (identity function)}
 //
-//      return: [~null~ any-value!]
-//      value [<end> ~null~ any-value!]
+//      return: [any-value!]
+//      value [<end> any-value!]
 //          {!!! <end> flag is hack to limit infix reach to the left}
 //  ]
 //
@@ -1196,9 +1180,9 @@ DECLARE_NATIVE(UNSET_Q)
 //  "Returns value passed in without evaluation."
 //
 //      return: {The input value, verbatim--unless /SOFT and soft quoted type}
-//          [~null~ any-value!]
-//      :value {Value to literalize, ~null~ is impossible (see UNEVAL)}
 //          [any-value!]
+//      :value {Value to literalize, ~null~ is impossible (see UNEVAL)}
+//          [any-element!]
 //      /soft {Evaluate if a GROUP!, GET-WORD!, or GET-PATH!}
 //  ]
 //
@@ -1241,7 +1225,7 @@ DECLARE_NATIVE(NOOP)
 //  "Tells you if the argument is not a value"
 //
 //      return: [logic!]
-//      optional [~null~ any-value!]
+//      optional [any-value!]
 //  ][
 //      null = type of :optional
 //  ]

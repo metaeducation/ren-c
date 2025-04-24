@@ -19,6 +19,7 @@ REBOL [
 |  ; SYM_BAR_1 (was BAR! datatype for a while, but turned back to WORD!)
 
 any-value! ;-- signal typesets start (SYM_ANY_VALUE_X hardcoded reference)
+any-element!
 any-word!
 any-path!
 any-number!

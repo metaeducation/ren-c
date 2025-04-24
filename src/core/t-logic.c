@@ -254,7 +254,7 @@ DECLARE_NATIVE(DID_Q)
 //
 //      return: [logic!]
 //          {true if value is NOT a LOGIC! false, BLANK!, or null}
-//      optional [~null~ any-value!]
+//      optional [any-value!]
 //  ][
 //      not not :optional
 //  ]
@@ -292,7 +292,7 @@ DECLARE_NATIVE(NOT_Q)
 //
 //      return: [logic!]
 //          "Only LOGIC!'s FALSE, BLANK!, and void for cell return TRUE"
-//      optional [~null~ any-value!]
+//      optional [any-value!]
 //  ]
 //
 DECLARE_NATIVE(NOT)
@@ -351,9 +351,9 @@ DECLARE_NATIVE(XOR_Q)
 //  {Boolean AND, with short-circuit mode if right hand side is BLOCK!}
 //
 //      return: "Conditionally true or false value (not coerced to LOGIC!)"
-//          [~null~ any-value!]
+//          [any-value!]
 //      left "Expression which will always be evaluated"
-//          [~null~ any-value!]
+//          [any-value!]
 //      :right "If BLOCK!, evaluated only if TO LOGIC! of LEFT is true"
 //          [block! group!]
 //  ]
@@ -385,9 +385,9 @@ DECLARE_NATIVE(AND)
 //  {Boolean OR, with short-circuit mode if right hand side is BLOCK!}
 //
 //      return: "Conditionally true or false value (not coerced to LOGIC!)"
-//          [~null~ any-value!]
+//          [any-value!]
 //      left "Expression which will always be evaluated"
-//          [~null~ any-value!]
+//          [any-value!]
 //      :right "If BLOCK!, evaluated only if TO LOGIC! of LEFT is false"
 //          [block! group!]
 //  ]
@@ -419,9 +419,9 @@ DECLARE_NATIVE(OR)
 //  {Boolean XOR}
 //
 //      return: "Conditionally true value, or LOGIC! false for failure case"
-//          [~null~ any-value!]
+//          [any-value!]
 //      left "Expression which will always be evaluated"
-//          [~null~ any-value!]
+//          [any-value!]
 //      :right "Expression that's also always evaluated (can't short circuit)"
 //          [group!]
 //  ]
@@ -457,11 +457,11 @@ DECLARE_NATIVE(XOR)
 //  {Variant of non-short-circuit OR which favors the right-hand side result}
 //
 //      return: "Conditionally true or false value (not coerced to LOGIC!)"
-//          [~null~ any-value!]
+//          [any-value!]
 //      left "Expression which will always be evaluated"
-//          [~null~ any-value!]
+//          [any-value!]
 //      right "Expression that's also always evaluated (can't short circuit)"
-//          [~null~ any-value!] ;-- not a literal GROUP! as with XOR
+//          [any-value!] ;-- not a literal GROUP! as with XOR
 //  ]
 //
 DECLARE_NATIVE(UNLESS)

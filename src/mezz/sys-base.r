@@ -46,17 +46,17 @@ lib/enrescue: ~
 ;
 do*: function [
     {SYS: Called by system for DO on datatypes that require special handling.}
-    return: [~null~ any-value!]
+    return: [any-value!]
     source [file! url! text! binary! tag!]
         {Files, urls and modules evaluate as scripts, other strings don't.}
-    arg [~null~ any-value!]
+    arg [any-value!]
         "Args passed as system/script/args to a script (normally a string)"
     only [logic!]
         "Do not catch quits...propagate them."
 ][
     ; Refinements on the original DO, re-derive for helper
 
-    args: value? :arg
+    args: not null? :arg
 
     next: :lib/next
 
@@ -95,7 +95,7 @@ do*: function [
     original-script: null
 
     finalizer: func [
-        value [~null~ any-value!]
+        value [any-value!]
         /quit
         <with> return
     ][

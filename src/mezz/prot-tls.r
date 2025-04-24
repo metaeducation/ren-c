@@ -1586,7 +1586,7 @@ sys/util/make-scheme [
             return port
         ]
 
-        write: func [port [port!] value [~null~ any-value!]] [
+        write: func [port [port!] value [any-value!]] [
             if find [#encrypted-handshake #application] port/state/mode [
                 do-commands/no-wait port/state compose [
                     #application (value)

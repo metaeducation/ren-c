@@ -98,7 +98,7 @@ Bounce MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
     REBACT *act = Make_Interpreted_Action_May_Fail(
         spec,
         body,
-        MKF_Any_Value
+        0
     );
 
     return Init_Action_Unbound(out, act);

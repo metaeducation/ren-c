@@ -94,7 +94,7 @@ DECLARE_NATIVE(QUIT)
 //
 //      /with
 //          {Yield a result (mapped to an integer if given to shell)}
-//      value [any-value!]
+//      value [any-element!]
 //          "See: http://en.wikipedia.org/wiki/Exit_status"
 //  ]
 //
@@ -209,7 +209,7 @@ DECLARE_NATIVE(RECYCLE)
 //
 //  "Run an integrity check on a value in debug builds of the interpreter"
 //
-//      value [~null~ any-value!]
+//      value [any-value!]
 //          {System will terminate abnormally if this value is corrupt.}
 //  ]
 //
@@ -389,9 +389,9 @@ DECLARE_NATIVE(C_DEBUG_BREAK)
 //
 //  "This is a place to put test code in debug builds."
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          {For maximum freedom, can be anything}
-//      :value [<end> any-value!]
+//      :value [<end> any-element!]
 //          {An argument (which test code may or may not use)}
 //  ]
 //

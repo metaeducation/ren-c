@@ -137,7 +137,7 @@ void Make_Thrown_Unwind_Value(
 //      level "Frame, action, or index to exit from"
 //          [frame! action! integer!]
 //      /with "Result for enclosing state (default is void)"
-//      value [any-value!]
+//      value [any-element!]
 //  ]
 //
 DECLARE_NATIVE(UNWIND)
@@ -165,7 +165,7 @@ DECLARE_NATIVE(UNWIND)
 //  {RETURN, giving a result to the caller}
 //
 //      value "If no argument is given, result will be a trash"
-//          [<end> ~null~ any-value!]
+//          [<end> any-value!]
 //  ]
 //
 DECLARE_NATIVE(RETURN)
@@ -232,7 +232,7 @@ DECLARE_NATIVE(RETURN)
         // !!! In the userspace formulation of this abstraction, it indicates
         // it's not RETURN's type signature that is constrained, as if it were
         // then RETURN would be implicated in the error.  Instead, RETURN must
-        // take [~null~ any-value!] as its argument, and then report the error
+        // take [any-value!] as its argument, and then report the error
         // itself...implicating the frame (in a way parallel to this native).
         //
         if (not Typeset_Check(typeset, Type_Of(v)))
@@ -275,7 +275,7 @@ DECLARE_NATIVE(TYPECHECKER)
 
     Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
-        TS_OPT_VALUE, // Allow null (e.g. ~null~), returns false
+        TS_VALUE,  // Allow null (e.g. ~null~), returns false
         Canon(SYM_VALUE)
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);

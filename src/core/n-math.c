@@ -473,7 +473,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
         if (strictness == 1) return 0;
 
         switch (ta) {
-        case TYPE_MAX_NULLED:
+        case TYPE_NULLED:
             return 0; // nothing coerces to void
 
         case TYPE_INTEGER:
@@ -529,7 +529,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
         fail (Error_Invalid_Compare_Raw(Datatype_Of(a), Datatype_Of(b)));
     }
 
-    if (ta == TYPE_MAX_NULLED)
+    if (ta == TYPE_NULLED)
         return 1; // nulls always equal
 
   compare:;
@@ -554,8 +554,8 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 //  {TRUE if the values are equal}
 //
 //      return: [logic!]
-//      value1 [~null~ any-value!]
-//      value2 [~null~ any-value!]
+//      value1 [any-value!]
+//      value2 [any-value!]
 //  ]
 //
 DECLARE_NATIVE(EQUAL_Q)
@@ -575,8 +575,8 @@ DECLARE_NATIVE(EQUAL_Q)
 //  {TRUE if the values are not equal}
 //
 //      return: [logic!]
-//      value1 [~null~ any-value!]
-//      value2 [~null~ any-value!]
+//      value1 [any-value!]
+//      value2 [any-value!]
 //  ]
 //
 DECLARE_NATIVE(NOT_EQUAL_Q)
@@ -596,8 +596,8 @@ DECLARE_NATIVE(NOT_EQUAL_Q)
 //  {TRUE if the values are strictly equal}
 //
 //      return: [logic!]
-//      value1 [~null~ any-value!]
-//      value2 [~null~ any-value!]
+//      value1 [any-value!]
+//      value2 [any-value!]
 //  ]
 //
 DECLARE_NATIVE(STRICT_EQUAL_Q)
@@ -617,8 +617,8 @@ DECLARE_NATIVE(STRICT_EQUAL_Q)
 //  {TRUE if the values are not strictly equal}
 //
 //      return: [logic!]
-//      value1 [~null~ any-value!]
-//      value2 [~null~ any-value!]
+//      value1 [any-value!]
+//      value2 [any-value!]
 //  ]
 //
 DECLARE_NATIVE(STRICT_NOT_EQUAL_Q)
@@ -638,8 +638,8 @@ DECLARE_NATIVE(STRICT_NOT_EQUAL_Q)
 //  {TRUE if the values are identical}
 //
 //      return: [logic!]
-//      value1 [~null~ any-value!]
-//      value2 [~null~ any-value!]
+//      value1 [any-value!]
+//      value2 [any-value!]
 //  ]
 //
 DECLARE_NATIVE(SAME_Q)

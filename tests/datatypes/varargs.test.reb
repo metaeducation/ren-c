@@ -87,7 +87,7 @@
     (eval [(1 + 2) (3 + 4) soft] = [7])
 ][
     (
-        hard: infix function [:v [any-value! <...>]] [
+        hard: infix function [:v [any-element! <...>]] [
             stuff: copy []
             while [not tail? v] [
                 append/only stuff take v

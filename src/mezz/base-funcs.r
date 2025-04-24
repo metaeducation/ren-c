@@ -39,7 +39,7 @@ so: infix func [
 
     return: [~]
     condition "Condition to test (voids are treated as false)"
-        [~null~ any-value!]
+        [any-value!]
 ][
     any [condition false] else [
         fail/blame ["Postfix 'SO assertion' failed"] 'condition
@@ -49,9 +49,9 @@ so: infix func [
 was: func [
     {Return a variable's value prior to an assignment, then do the assignment}
 
-    return: [~null~ any-value!]
+    return: [any-value!]
         {Value of the following SET-WORD! or SET-PATH! before assignment}
-    evaluation [~null~ any-value! <...>]
+    evaluation [any-value! <...>]
         {Used to take the assigned value}
     :look [set-word! set-path! <...>]
 ][
@@ -472,7 +472,7 @@ ensure: redescribe [
     {Pass through value if it matches test, otherwise trigger a FAIL}
 ](
     specialize 'either-test [
-        branch: func [arg [~null~ any-value!]] [
+        branch: func [arg [any-value!]] [
             ;
             ; !!! Can't use FAIL/BLAME until there is a good way to SPECIALIZE
             ; a conditional with a branch referring to invocation parameters:
@@ -620,7 +620,7 @@ lambda: function [
     return: [action!]
     :args [<end> word! block!]
         {Block of argument words, or a single word (if only one argument)}
-    :body [any-value! <...>]
+    :body [any-element! <...>]
         {Block that serves as the body or variadic elements for the body}
 ][
     make action! compose/deep [
@@ -688,7 +688,7 @@ invisible-eval-all: func [
 
     return: []
         {Returns nothing, not even void ("invisible function", like COMMENT)}
-    expressions [~null~ any-value! <...>]
+    expressions [any-value! <...>]
         {Any number of expressions on the right.}
 ][
     eval expressions
@@ -697,9 +697,9 @@ invisible-eval-all: func [
 right-bar: func [
     {Evaluates to first expression on right, discarding ensuing expressions.}
 
-    return: [~null~ any-value!]
+    return: [any-value!]
         {Evaluative result of first of the following expressions.}
-    expressions [~null~ any-value! <...>]
+    expressions [any-value! <...>]
         {Any number of expression.}
     <local> right
 ][
@@ -711,9 +711,9 @@ right-bar: func [
 once-bar: func [
     {Expression barrier that's willing to only run one expression after it}
 
-    return: [~null~ any-value!]
+    return: [any-value!]
     right [~null~ <end> any-value! <...>]
-    :lookahead [any-value! <...>]
+    :lookahead [any-element! <...>]
     look:
 ][
     take right  ; returned value

@@ -336,7 +336,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // not "passed in" that way...the refinement is inactive.
             //
             if (refinement_seen) {
-                if (Typeset_Check(typeset, TYPE_MAX_NULLED))
+                if (Typeset_Check(typeset, TYPE_NULLED))
                     fail (Error_Refinement_Arg_Opt_Raw());
             }
 
@@ -373,25 +373,13 @@ Array* Make_Paramlist_Managed_May_Fail(
             Copy_Cell(PUSH(), EMPTY_TEXT);
         assert(Is_Text(TOP));
 
-        // Non-annotated arguments disallow ACTION!, NOTHING and NULL.  Not
-        // having to worry about ACTION! and NULL means by default, code
-        // does not have to worry about "disarming" arguments via GET-WORD!.
-        // Also, keeping NULL a bit "prickly" helps discourage its use as
-        // an input parameter...because it faces problems being used in
-        // SPECIALIZE and other scenarios.
-        //
         // Note there are currently two ways to get NULL: ~null~ and <end>.
-        // If the typeset bits contain TYPE_MAX_NULLED, that indicates ~null~.
+        // If the typeset bits contain TYPE_NULLED, that indicates ~null~.
         // But Is_Param_Endable() indicates <end>.
         //
         Value* typeset = Init_Typeset(
             PUSH(),  // volatile if you PUSH() again
-            (flags & MKF_Any_Value)
-                ? TS_OPT_VALUE
-                : TS_VALUE & ~(
-                    FLAGIT_KIND(TYPE_ACTION)
-                    | FLAGIT_KIND(TYPE_TRASH)
-                ),
+            TS_VALUE,  // any value (includes trash, void, null, action)
             Cell_Word_Symbol(item) // don't canonize, see #2258
         );
 
@@ -514,7 +502,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // they are allowed to return anything.  Generally speaking, the
             // checks are on the input side, not the output.
             //
-            Init_Typeset(PUSH(), TS_OPT_VALUE, Canon(SYM_RETURN));
+            Init_Typeset(PUSH(), TS_VALUE, Canon(SYM_RETURN));
             Tweak_Parameter_Class(TOP, PARAMCLASS_RETURN);
             return_stackindex = TOP_INDEX;
 
@@ -909,8 +897,13 @@ REBACT *Make_Action(
             break;
 
         case PARAMCLASS_HARD_QUOTE:
-            if (Typeset_Check(param, TYPE_MAX_NULLED))
+            // We no longer enforce this.  Functions that take hard quoted
+            // arguments might want null parameters when invoked via FRAME!
+            // Also, this is contentious with defaulting to ANY-VALUE!
+            /*
+            if (Typeset_Check(param, TYPE_NULLED))
                 fail ("Hard quoted function parameters cannot receive nulls");
+            */
 
             goto quote_check;
 
@@ -1176,7 +1169,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 // acting more like:
 //
 //     return: make action! [
-//         [{Returns a value from a function.} value [~null~ any-value!]]
+//         [{Returns a value from a function.} value [any-value!]]
 //         [unwind/with (binding of 'return) :value]
 //     ]
 //     (body goes here)
@@ -1227,7 +1220,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         else if (Get_Cell_Flag(value, ACTION_RETURN)) {
             Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
             assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
-            if (not Typeset_Check(typeset, TYPE_MAX_NULLED)) // eval [] returns
+            if (not Typeset_Check(typeset, TYPE_NULLED)) // eval [] returns
                 ACT_DISPATCHER(a) = &Returner_Dispatcher; // error when run
         }
         else {

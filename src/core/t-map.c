@@ -33,9 +33,6 @@
 #include "sys-core.h"
 
 
-#define Is_Zombie Is_Nulled
-
-
 //
 //  CT_Map: C
 //
@@ -306,7 +303,11 @@ REBLEN Find_Map_Entry(
     Specifier* val_specifier,
     bool cased // case-sensitive if true
 ) {
-    assert(not Is_Nulled(key));
+    assert(
+        not Is_Nulled(key)
+        and not Is_Void(key)
+        and not Is_Trash(key)
+    );
 
     Flex* hashlist = MAP_HASHLIST(map); // can be null
     Array* pairlist = MAP_PAIRLIST(map);
@@ -333,6 +334,8 @@ REBLEN Find_Map_Entry(
     if (val == nullptr)
         return n; // was just fetching the value
 
+    assert(not Is_Nulled(val) and not Is_Void(val));
+
     // If not just a GET, it may try to set the value in the map.  Which means
     // the key may need to be stored.  Since copies of keys are never made,
     // a SET must always be done with an immutable key...because if it were
@@ -343,15 +346,16 @@ REBLEN Find_Map_Entry(
 
     // Must set the value:
     if (n) {  // re-set it:
-        Derelativize(
-            Array_At(pairlist, ((n - 1) * 2) + 1),
-            val,
-            val_specifier
-        );
+        Cell* dest = Array_At(pairlist, ((n - 1) * 2) + 1);
+        if (Is_Trash(val))
+            Init_Zombie(dest);
+        else
+            Derelativize(dest, val, val_specifier);
         return n;
     }
 
-    if (Is_Nulled(val)) return 0; // trying to remove non-existing key
+    if (Is_Trash(val))
+        return 0; // trying to remove non-existing key
 
     // Create new entry.  Note that it does not copy underlying series (e.g.
     // the data of a string), which is why the immutability test is necessary
@@ -373,8 +377,12 @@ Bounce PD_Map(
 ){
     assert(Is_Map(pvs->out));
 
-    if (opt_setval != nullptr)
+    if (opt_setval != nullptr) {
+        if (Is_Void(opt_setval) or Is_Nulled(opt_setval))
+            fail ("Can't set map entries to void or null");
+
         Fail_If_Read_Only_Flex(Cell_Flex(pvs->out));
+    }
 
     // Fetching and setting with path-based access is case-preserving for any
     // initial insertions.  However, the case-insensitivity means that all
@@ -610,7 +618,7 @@ VarList* Alloc_Context_From_Map(REBMAP *map)
             // that function specs did.)
             Init_Typeset(
                 key,
-                TS_OPT_VALUE, // !!! Not used at the moment
+                TS_VALUE, // !!! Not used at the moment
                 Cell_Word_Symbol(mval)
             );
             ++key;
@@ -763,7 +771,7 @@ REBTYPE(Map)
         );
 
         if (Cell_Word_Id(verb) == SYM_FIND)
-            return Is_Zombie(OUT) ? nullptr : Init_Trash(OUT);
+            return Is_Zombie(OUT) ? nullptr : Init_True(OUT);
 
         return OUT; }
 
@@ -789,8 +797,8 @@ REBTYPE(Map)
 
         FAIL_IF_ERROR(arg);
 
-        if (Is_Nulled(arg) or Is_Blank(arg))
-            RETURN (val); // don't fail on read only if it would be a no-op
+        if (not Is_Block(arg))
+            fail (Error_Invalid(arg));
 
         Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));
 
@@ -805,9 +813,6 @@ REBTYPE(Map)
             UNUSED(ARG(COUNT));
             fail (Error_Bad_Refines_Raw());
         }
-
-        if (not Is_Block(arg))
-            fail (Error_Invalid(arg));
 
         REBLEN len = Part_Len_May_Modify_Index(arg, ARG(LIMIT));
         UNUSED(Bool_ARG(PART)); // detected by if limit is nulled

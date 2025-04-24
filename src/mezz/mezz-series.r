@@ -65,7 +65,7 @@ array: func [
     size [integer! block!] "Size or block of sizes for each dimension"
     /initial "Specify an initial value for all elements"
     value "Initial value (will be called each time if a function)"
-        [any-value!]
+        [any-element!]
     <local> block rest
 ][
     if block? size [
@@ -98,9 +98,9 @@ replace: function [
     target "Series to replace within (modified)"
         [any-series!]
     pattern "Value to be replaced (converted if necessary)"
-        [~void~ any-value!]
+        [~void~ any-element!]
     replacement "Value to replace with (called each time if a function)"
-        [~void~ any-value!]
+        [~void~ any-element!]
 
     ; !!! Note these refinments alias ALL, CASE, TAIL natives!
     /one "Replace one occurrence"

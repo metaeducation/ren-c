@@ -193,8 +193,8 @@
 
         // Cell is good, so let the good cases pass through
         //
-        if (VAL_TYPE_RAW(v) == TYPE_MAX_NULLED)
-            return TYPE_MAX_NULLED;
+        if (VAL_TYPE_RAW(v) == TYPE_NULLED)
+            return TYPE_NULLED;
         if (VAL_TYPE_RAW(v) == TYPE_LOGIC)
             return TYPE_LOGIC;
 
@@ -536,10 +536,10 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     c_cast(const Value*, &PG_Nulled_Cell[0])
 
 #define Is_Nulled(v) \
-    (Type_Of(v) == TYPE_MAX_NULLED)
+    (Type_Of(v) == TYPE_NULLED)
 
 #define Init_Nulled(out) \
-    Reset_Cell_Header((out), TYPE_MAX_NULLED, CELL_FLAG_FALSEY)
+    Reset_Cell_Header((out), TYPE_NULLED, CELL_FLAG_FALSEY)
 
 #define CELL_FLAG_NULL_IS_ENDISH FLAG_TYPE_SPECIFIC_BIT(0)
 
@@ -549,7 +549,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 // here just to make a note of the concept, and tag it via the callsites.
 //
 #define Init_Endish_Nulled(out) \
-    Reset_Cell_Header((out), TYPE_MAX_NULLED, \
+    Reset_Cell_Header((out), TYPE_NULLED, \
         CELL_FLAG_FALSEY | CELL_FLAG_NULL_IS_ENDISH)
 
 INLINE bool Is_Endish_Nulled(const Cell* v) {
@@ -1135,7 +1135,7 @@ INLINE void Copy_Cell_Header(Cell* out, const Cell* v)
     assert(NOT_END(v)); // SET_END() is the only way to write an end
     assert(
         KIND_BYTE(v) == TYPE_255_UNREADABLE
-        or KIND_BYTE(v) <= TYPE_MAX_NULLED // don't move pseudotypes
+        or KIND_BYTE(v) <= TYPE_NULLED // don't move pseudotypes
     );
 
     Assert_Cell_Writable(out);

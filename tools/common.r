@@ -27,10 +27,10 @@ REBOL [
 ; it could dump those remarks out...perhaps based on how many == there are.
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
-===: func [:remarks [any-value! <...>]] [
-    until [
-        equal? '=== take remarks
-    ]
+; !!! Without "Sea of Words" it's best to just do this as TEXT!.
+;
+===: func [remarks [text!] trailer [word!]] [
+    assert [trailer = '===]
 ]
 
 
@@ -214,7 +214,7 @@ binary-to-c: function [
 for-each-record: function [
     {Iterate a table with a header by creating an object for each row}
 
-    return: [~null~ any-value!]
+    return: [any-value!]
     'var "Word to set each time to the row made into an object record"
         [word!]
     table "Table of values with header block as first element"

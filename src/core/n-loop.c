@@ -105,7 +105,7 @@ DECLARE_NATIVE(BREAK)
 //  "Throws control back to top of loop for next iteration."
 //
 //      /with "Act as if loop body finished with this value"
-//      value [any-value!]
+//      value [any-element!]
 //  ]
 //
 DECLARE_NATIVE(CONTINUE)
@@ -508,11 +508,11 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                     ++les->data_idx;
                     if (les->data_idx == les->data_len)
                         more_data = false;
-                    if (not Is_Nulled(val))
+                    if (not Is_Zombie(val))
                         break;
                     if (not more_data)
                         goto finished;
-                } while (Is_Nulled(val));
+                } while (Is_Zombie(val));
 
                 Copy_Cell(var, key);
 
@@ -798,7 +798,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
 //
 //  {Evaluate a block over a range of values. (See also: REPEAT)}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //      'word [word! lit-word! refinement!]
 //          "Variable to hold current value"
 //      start [any-series! any-number!]
@@ -1011,7 +1011,7 @@ DECLARE_NATIVE(STOP)
 //
 //  "Evaluates a block endlessly, until a BREAK or a STOP is hit"
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          {Null if BREAK, or non-null value passed to STOP}
 //      body [block! action!]
 //          "Block or action to evaluate each time"
@@ -1515,7 +1515,7 @@ DECLARE_NATIVE(MAP_EACH)
 //
 //  "Evaluates a block a specified number of times."
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          {Last body result, or null if BREAK}
 //      count [<maybe> any-number! logic!]
 //          "Repetitions (true loops infinitely, false doesn't run)"
@@ -1571,7 +1571,7 @@ DECLARE_NATIVE(REPEAT)
 //
 //  {Evaluates a block over a series.}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          {Last body result or BREAK value}
 //      'word [word! lit-word! refinement!]
 //          "Word to set each time"
@@ -1612,7 +1612,7 @@ DECLARE_NATIVE(FOR_NEXT)
 //
 //  "Evaluates the body until it evaluates to a conditionally true value"
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          {Last body result or BREAK value.}
 //      body [block! action!]
 //  ]
@@ -1648,7 +1648,7 @@ DECLARE_NATIVE(UNTIL)
 //
 //  {While a condition is conditionally true, evaluates the body.}
 //
-//      return: [~null~ any-value!]
+//      return: [any-value!]
 //          "Last body result, or null if BREAK"
 //      condition [block! action!]
 //      body [block! action!]

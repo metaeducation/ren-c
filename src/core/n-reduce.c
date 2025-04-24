@@ -48,7 +48,7 @@ static Value* Init_Lib_Word(Cell* out, SymId id) {
 //
 //      return: {`(null)` if null, or `(the ...)` where ... is passed-in cell}
 //          [word! group!]
-//      value [~null~ any-value!]
+//      value [any-value!]
 //   ]
 //
 DECLARE_NATIVE(UNEVAL)
@@ -137,7 +137,7 @@ bool Reduce_To_Stack_Throws(
 //  {Evaluates expressions, keeping each result (DO only gives last result)}
 //
 //      return: "New array or value"
-//          [~null~ any-value!]
+//          [any-value!]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [any-value!]
 //  ]

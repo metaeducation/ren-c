@@ -213,7 +213,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
             Value* param = ACT_PARAMS_HEAD(Level_Phase(param_level))
                 + arg->payload.varargs.param_offset;
 
-            if (Typeset_Check(param, TYPE_MAX_NULLED))
+            if (Typeset_Check(param, TYPE_NULLED))
                 fail (Error_Null_Vararg_Array_Raw());
         }
 

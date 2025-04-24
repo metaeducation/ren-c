@@ -2251,7 +2251,7 @@ DECLARE_NATIVE(SUBPARSE)
 //  "Parse series according to grammar rules"
 //
 //      return: "Input series if /MATCH, otherwise synthesized result"  ; [1]
-//          [~null~ any-value!]
+//          [any-value!]
 //      input "Input series to parse"
 //          [<maybe> any-series!]
 //      rules "Rules to parse by"

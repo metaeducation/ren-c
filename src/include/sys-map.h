@@ -44,6 +44,9 @@
 //
 
 
+#define Is_Zombie Is_Cell_Unreadable
+#define Init_Zombie Init_Unreadable
+
 INLINE Array* MAP_PAIRLIST(REBMAP *m) {
     assert(Get_Array_Flag(m, IS_PAIRLIST));
     return cast(Array*, m);

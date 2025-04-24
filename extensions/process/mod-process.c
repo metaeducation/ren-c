@@ -266,7 +266,7 @@ int OS_Create_Process(
         si.hStdInput = 0;
         break;
 
-    case TYPE_MAX_NULLED:
+    case TYPE_NULLED:
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
         break;
 
@@ -327,7 +327,7 @@ int OS_Create_Process(
         si.hStdOutput = 0;
         break;
 
-    case TYPE_MAX_NULLED:
+    case TYPE_NULLED:
         si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
         break;
 
@@ -388,7 +388,7 @@ int OS_Create_Process(
         si.hStdError = 0;
         break;
 
-    case TYPE_MAX_NULLED:
+    case TYPE_NULLED:
         si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
         break;
 
@@ -1481,7 +1481,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
     UNUSED(Bool_ARG(INPUT)); // implicit by void ARG(IN)
     switch (Type_Of(ARG(IN))) {
     case TYPE_BLANK:
-    case TYPE_MAX_NULLED: // no /INPUT, so no argument provided
+    case TYPE_NULLED: // no /INPUT, so no argument provided
         os_input = nullptr;
         input_len = 0;
         break;

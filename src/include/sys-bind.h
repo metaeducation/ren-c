@@ -342,7 +342,7 @@ INLINE Stub* SPC_BINDING(Specifier* specifier)
 // The Get_Opt_Var_May_Fail() function takes the conservative default that
 // only const access is needed.  A const pointer to a Value is given back
 // which may be inspected, but the contents not modified.  While a bound
-// variable that is not currently set will return a TYPE_MAX_NULLED value,
+// variable that is not currently set will return a TYPE_NULLED value,
 // Get_Opt_Var_May_Fail() on an *unbound* word will raise an error.
 //
 // Get_Mutable_Var_May_Fail() offers a parallel facility for getting a

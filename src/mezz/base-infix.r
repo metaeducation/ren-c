@@ -131,10 +131,10 @@ for-each [comparison-op function-name] compose [
 me: infix func [
     {Update variable using it as the left hand argument to an infix operator}
 
-    return: [~null~ any-value!]
+    return: [any-value!]
     :var [set-word! set-path!]
         {Variable to assign (and use as the left hand infix argument)}
-    :rest [any-value! <...>]
+    :rest [any-element! <...>]
         {Code to run with var as left (first element should be infixed)}
 ][
     set var eval-infix (get var) rest
@@ -143,10 +143,10 @@ me: infix func [
 my: infix func [
     {Update variable using it as the first argument to a prefix operator}
 
-    return: [~null~ any-value!]
+    return: [any-value!]
     :var [set-word! set-path!]
         {Variable to assign (and use as the first prefix argument)}
-    :rest [any-value! <...>]
+    :rest [any-element! <...>]
         {Code to run with var as left (first element should be prefix)}
 ][
     set var eval-infix/prefix (get var) rest

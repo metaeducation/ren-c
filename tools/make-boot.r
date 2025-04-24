@@ -378,8 +378,7 @@ e-types/emit [{
         TYPE_0 = 0, /* reserved for internal purposes */
         TYPE_0_END = TYPE_0, /* ...most commonly array termination cells... */
         $[Rebs],
-        TYPE_MAX, /* one past valid types, does double duty as NULL signal */
-        TYPE_MAX_NULLED = TYPE_MAX,
+        TYPE_MAX, /* one past valid types (includes "antiforms") */
 
         TYPE_MAX_PLUS_ONE, /* used for internal markings and algorithms */
         TYPE_R_THROWN = TYPE_MAX_PLUS_ONE,
@@ -445,17 +444,17 @@ e-types/emit {
     */
 
     /*
-     * Subtract 1 to get mask for everything but TYPE_MAX_NULLED
+     * Subtract 1 to get mask for everything (including TYPE_0 for END)
      * Subtract 1 again to take out TYPE_0 for END (signal for "endability")
      */
     #define TS_VALUE \
         ((FLAGIT_KIND(TYPE_MAX) - 1) - 1)
 
     /*
-     * Similar to TS_VALUE but accept NULL (as TYPE_MAX)
+     * TS_VALUE minus NULL, VOID, and TRASH
      */
-    #define TS_OPT_VALUE \
-        (((FLAGIT_KIND(TYPE_MAX_NULLED + 1) - 1) - 1))
+    #define TS_ELEMENT \
+        (TS_VALUE - FLAGIT_KIND(TYPE_NULLED) - FLAGIT_KIND(TYPE_VOID) - FLAGIT_KIND(TYPE_TRASH))
 }
 typeset-sets: copy []
 
