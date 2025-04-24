@@ -326,60 +326,20 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 // Whether a refinement was used or not at time of call is also cached.
 //
 
-#if NO_RUNTIME_CHECKS
-    #define DECLARE_PARAM(n,name) \
-        static const int p_##name = n
+#define DECLARE_PARAM(n,name) \
+    static const int p_##name = n
 
-    #define DECLARE_REFINE(n,name) \
-        static const int p_##name = n
+#define DECLARE_REFINE(n,name) \
+    static const int p_##name = n
 
-    #define ARG(name) \
-        Level_Arg(level_, p_##name)
+#define ARG(name) \
+    Level_Arg(level_, p_##name)
 
-    #define PARAM(name) \
-        ACT_PARAM(Level_Phase(level_), p_##name) /* a TYPESET! */
+#define PARAM(name) \
+    ACT_PARAM(Level_Phase(level_), p_##name) /* a TYPESET! */
 
-    #define Bool_ARG(name) \
-        (not Is_Blank(Level_Arg(level_, p_##name)))
-#else
-    struct Native_Param {
-        int num;
-        enum Reb_Kind kind_cache; // for inspecting in watchlist
-        Value* arg; // for inspecting in watchlist
-    };
-
-    struct Native_Refine {
-        int num;
-        bool used_cache; // for inspecting in watchlist
-        Value* arg; // for inspecting in watchlist
-    };
-
-    // Note: Assigning non-const initializers to structs, e.g. `= {var, f()};`
-    // is a non-standard extension to C.  So we break out the assignments.
-
-    #define DECLARE_PARAM(n,name) \
-        struct Native_Param p_##name; \
-        p_##name.num = (n); \
-        p_##name.kind_cache = Type_Of(Level_Arg(level_, (n))); \
-        p_##name.arg = Level_Arg(level_, (n)); \
-
-    #define DECLARE_REFINE(n,name) \
-        struct Native_Refine p_##name; \
-        p_##name.num = (n); \
-        p_##name.used_cache = not Is_Nulled(Level_Arg(level_, (n))); \
-        p_##name.arg = Level_Arg(level_, (n)); \
-
-    #define ARG(name) \
-        Level_Arg(level_, (p_##name).num)
-
-    #define PARAM(name) \
-        ACT_PARAM(Level_Phase(level_), (p_##name).num) /* a TYPESET! */
-
-    #define Bool_ARG(name) \
-        ((p_##name).used_cache /* stops Bool_ARG() on DECLARE_PARAM()s */ \
-            ? not Is_Nulled(Level_Arg(level_, (p_##name).num)) \
-            : not Is_Nulled(Level_Arg(level_, (p_##name).num)))
-#endif
+#define Bool_ARG(name) \
+    (not Is_Nulled(Level_Arg(level_, p_##name)))
 
 
 // The native entry prelude makes sure that once native code starts running,
