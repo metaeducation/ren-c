@@ -200,7 +200,7 @@ DEVICE_CMD Write_IO(REBREQ *req)
             unsigned int start = 0;
             unsigned int end = 0;
 
-            while (true) {
+            while (end < req->length) {
                 while (end < req->length && req->common.data[end] != '\n')
                     ++end;
                 DWORD total_bytes;
@@ -221,19 +221,20 @@ DEVICE_CMD Write_IO(REBREQ *req)
                 if (req->common.data[end] == '\0')
                     break;
 
-                assert(req->common.data[end] == '\n');
-                BOOL ok = WriteFile(
-                    Std_Out,
-                    "\r\n",
-                    2,
-                    &total_bytes,
-                    0
-                );
-                if (not ok)
-                    rebFail_OS (GetLastError());
-                UNUSED(total_bytes);
+                if (req->common.data[end] == '\n') {
+                    BOOL ok = WriteFile(
+                        Std_Out,
+                        "\r\n",
+                        2,
+                        &total_bytes,
+                        0
+                    );
+                    if (not ok)
+                        rebFail_OS (GetLastError());
+                    UNUSED(total_bytes);
+                    ++end;
+                }
 
-                ++end;
                 start = end;
             }
         }

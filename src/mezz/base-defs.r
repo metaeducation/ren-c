@@ -257,25 +257,6 @@ reeval func [
 trashified?: :trash?  ; helps make tests clearer for trashification
 
 
-; For some reason, the WRITE-STDOUT facility is broken in VSCode terminal for
-; longer strings.  It was found that printing in smaller chunks helped.
-; Delving into repair of old device model code is not a high priority, since
-; it's all ripped out in modern executables.
-
-write-stdout-buggy: :write-stdout
-write-stdout: lib/func [value [char! text!] <local> pos] [
-    if char? value [
-        write-stdout-buggy value
-        return ~
-    ]
-    while [true] [
-        write-stdout-buggy copy/part value 256
-        if tail? value: skip value 256 [break]
-    ]
-    return ~
-]
-
-
 print: func [
     {Textually output spaced line (evaluating elements if a block)}
 
