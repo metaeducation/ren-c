@@ -650,7 +650,10 @@ IMPLEMENT_GENERIC(POKE_P, Is_Time)
     Element* time = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
+    Option(const Value*) opt_poke = Optional_ARG(VALUE);
+    if (not opt_poke or Is_Antiform(unwrap opt_poke))
+        return FAIL(PARAM(VALUE));
+    const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     Poke_Time_Immediate(time, picker, poke);
     return COPY(time);  // caller needs to update their time bits

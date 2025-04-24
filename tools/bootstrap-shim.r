@@ -379,10 +379,6 @@ unquote: func3 [x [any-value!]] [  ; see the more general EVAL
     ]
 ]
 
-blank-to-void: func3 [x [~null~ any-value!]] [
-    either blank? :x [void] [:x]
-]
-
 
 ;=== BELOW THIS LINE, TRY NOT TO USE FUNCTIONS IN THE SHIM IMPLEMENTATION ===
 
@@ -486,11 +482,11 @@ append: func3 [series value [any-value!] /line <local> only] [
                     ]
                     return series
                 ]
-                only: _
+                only: null
             ]
         ]
     ]
-    append3:(blank-to-void only):(blank-to-void line) series :value
+    append3:(maybe only):(maybe line) series :value
 ]
 
 insert: func3 [series value [any-value!] /line <local> only] [
@@ -508,11 +504,11 @@ insert: func3 [series value [any-value!] /line <local> only] [
                     ]
                     return series
                 ]
-                only: void
+                only: null
             ]
         ]
     ]
-    insert3:(blank-to-void only):(blank-to-void line) series :value
+    insert3:(maybe only):(maybe line) series :value
 ]
 
 change: func3 [series value [any-value!] /line <local> only] [
@@ -527,11 +523,11 @@ change: func3 [series value [any-value!] /line <local> only] [
                 if not any-list? series [
                     fail ["CHANGE to SPLICE not currently in shim"]
                 ]
-                only: _
+                only: null
             ]
         ]
     ]
-    change3:(blank-to-void only):(blank-to-void line) series :value
+    change3:(maybe only):(maybe line) series :value
 ]
 
 replace: func3 [target pattern replacement] [
@@ -922,7 +918,6 @@ apply: func3 [
                 any [
                     null? :result
                     void? :result
-                    blank? :result
                     false = :result
                 ][
                     f.(to word! pos.1): null
@@ -940,11 +935,7 @@ apply: func3 [
             ]
         ] else [  ; takes an arg, so set refinement to true and set NEXT param
             f.(to word! pos.1): true
-            if blank? :result [
-                f.(to word! pos.2): null
-            ] else [
-                f.(to word! pos.2): :result
-            ]
+            f.(to word! pos.2): :result
         ]
     ]
 

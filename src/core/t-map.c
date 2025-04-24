@@ -266,24 +266,58 @@ void Expand_Hashlist(HashList* hashlist)
 //
 //  Find_Map_Entry: C
 //
-// Try to find the entry in the map. If not found and val isn't nullptr,
-// create the entry and store the key and val.
+// Try to find the entry in the map.  Returns index to value if found.
 //
 // RETURNS: the index to the VALUE or zero if there is none.
 //
-REBLEN Find_Map_Entry(
+Option(Index) Find_Map_Entry(
     Map* map,
     const Element* key,
-    Option(const Value*) val,  // nullptr is fetch only, void is remove
     bool strict
 ) {
-    HashList* hashlist = MAP_HASHLIST(map); // can be null
+    HashList* hashlist = MAP_HASHLIST(map);
     PairList* pairlist = MAP_PAIRLIST(map);
 
-    assert(hashlist);
+    const REBLEN wide = 2;
+    const Byte mode = 0; // just search for key, don't add it
+    REBLEN slot = Find_Key_Hashed(
+        pairlist, hashlist, key, wide, strict, mode
+    );
 
-    // Get hash table, expand it if needed:
-    if (Array_Len(pairlist) > Hashlist_Num_Slots(hashlist) / 2) {
+    REBLEN *indexes = Flex_Head(REBLEN, hashlist);
+    REBLEN n = indexes[slot];
+
+    return n;  // n==0 or pairlist[(n-1)*]=~key
+}
+
+
+//
+//  Update_Map_Entry: C
+//
+// Add or change/remove entry in the map.  Returns the index to the value.
+//
+// 1. Since copies of keys are never made, a SET must always be done with an
+//    immutable key...because if it were changed, there'd be no notification
+//    to rehash the map.  We don't force the caller do the work of freezing the
+//    key since they often won't care it got frozen automatically (if they
+//    don't want to freeze the key they have they can index into the map using
+//    a copy).
+//
+//    We freeze unconditionally, even if the key is already in the map, since
+//    variance in behavior based on the presence of the key is undesirable.
+//
+Option(Index) Update_Map_Entry(
+    Map* map,
+    const Element* key,
+    Option(const Element*) val,  // nullptr is remove
+    bool strict
+){
+    Force_Value_Frozen_Deep_Blame(key, MAP_PAIRLIST(map));  // freeze [1]
+
+    HashList* hashlist = MAP_HASHLIST(map);
+    PairList* pairlist = MAP_PAIRLIST(map);
+
+    if (Array_Len(pairlist) > Hashlist_Num_Slots(hashlist) / 2) {  // expand
         Expand_Hashlist(hashlist);  // modifies size value
         Rehash_Map(map);
     }
@@ -297,39 +331,20 @@ REBLEN Find_Map_Entry(
     REBLEN *indexes = Flex_Head(REBLEN, hashlist);
     REBLEN n = indexes[slot];
 
-    // n==0 or pairlist[(n-1)*]=~key
-
-    if (not val)
-        return n; // was just fetching the value
-
-    // If not just a GET, it may try to set the value in the map.  Which means
-    // the key may need to be stored.  Since copies of keys are never made,
-    // a SET must always be done with an immutable key...because if it were
-    // changed, there'd be no notification to rehash the map.
-    //
-    Force_Value_Frozen_Deep_Blame(key, MAP_PAIRLIST(map));
-
     if (n) {  // found, must set or overwrite the value
         Element* at = Array_At(pairlist, ((n - 1) * 2) + 1);
-        if (Is_Trash(unwrap val))
+        if (not val)  // remove
             Init_Zombie(at);
-        else {
-            assert(Not_Antiform(unwrap val));
-            Copy_Cell(at, cast(const Element*, unwrap val));
-        }
+        else
+            Copy_Cell(at, unwrap val);
         return n;
     }
 
-    if (Is_Trash(unwrap val))
+    if (not val)
         return 0;  // trying to remove non-existing key
 
-    assert(Not_Antiform(unwrap val));
-
-    // Create new entry.  Note that it does not copy the underlying Flex (e.g.
-    // the data of a String), which is why the immutability test is necessary
-    //
-    Append_Value(pairlist, key);
-    Append_Value(pairlist, c_cast(Element*, unwrap val));  // val not void
+    Append_Value(pairlist, key);  // does not copy key (hence why we freeze it)
+    Append_Value(pairlist, unwrap val);
 
     return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
@@ -356,7 +371,7 @@ void Append_Map(
         }
 
         bool strict = true;
-        Find_Map_Entry(
+        Update_Map_Entry(
             map,
             item,
             item + 1,
@@ -586,46 +601,24 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         const Map* m = VAL_MAP(map);
 
-        REBINT n = Find_Map_Entry(
+        Option(Index) n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
             Element_ARG(VALUE),
-            nullptr,  // nullptr indicates it will only search, not modify
             Bool_ARG(CASE)
         );
 
-        if (n == 0)
+        if (not n)
             return nullptr;
 
-        const Value* val = Flex_At(Value, MAP_PAIRLIST(m), ((n - 1) * 2) + 1);
+        const Value* val = Flex_At(
+            Value,
+            MAP_PAIRLIST(m),
+            (((unwrap n) - 1) * 2) + 1
+        );
         if (Is_Zombie(val))
             return nullptr;
 
         return Copy_Cell(OUT, val); }
-
-      case SYM_PUT: {
-        INCLUDE_PARAMS_OF_PUT;
-        UNUSED(ARG(SERIES)); // extracted to `map`
-
-        Value* key = ARG(KEY);
-        Value* val = ARG(VALUE);
-
-        if (Is_Trash(key))
-            return FAIL("PUT doesn't tolerate TRASH!... should it?");
-        if (Is_Antiform(key))
-            return FAIL(Error_Bad_Antiform(key));
-
-        if (Is_Antiform(val))  // Note: void is remove
-            return FAIL(Error_Bad_Antiform(val));
-
-        REBINT n = Find_Map_Entry(
-            VAL_MAP_Ensure_Mutable(map),
-            Element_ARG(KEY),
-            val,  // non-nullptr means modify
-            Bool_ARG(CASE)
-        );
-        UNUSED(n);
-
-        return COPY(ARG(VALUE)); }
 
       case SYM_INSERT:
       case SYM_APPEND: {
@@ -720,19 +713,18 @@ IMPLEMENT_GENERIC(PICK, Is_Map)
 
     bool strict = false;
 
-    REBINT n = Find_Map_Entry(
+    Option(Index) n = Find_Map_Entry(
         m_cast(Map*, VAL_MAP(map)),  // not modified
-        c_cast(Element*, picker),
-        nullptr,  // no value, so map not changed
+        picker,
         strict
     );
 
-    if (n == 0)
+    if (not n)
         return RAISE(Error_Bad_Pick_Raw(picker));
 
     const Element* val = Array_At(
         MAP_PAIRLIST(VAL_MAP(map)),
-        ((n - 1) * 2) + 1
+        (((unwrap n) - 1) * 2) + 1
     );
     if (Is_Zombie(val))
         return RAISE(Error_Bad_Pick_Raw(picker));
@@ -756,23 +748,16 @@ IMPLEMENT_GENERIC(POKE_P, Is_Map) {
 
     bool strict = false;  // case-preserving [1]
 
-    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
+    Option(const Value*) poke = Optional_ARG(VALUE);
+    if (poke and Is_Antiform(unwrap poke))
+        return FAIL(Error_Bad_Antiform(ARG(VALUE)));
 
-    if (Is_Trash(poke)) {
-        // removal signal
-    }
-    else if (Is_Antiform(poke))  // other antiforms not allowed in maps
-        return FAIL(Error_Bad_Antiform(poke));
-
-    REBINT n = Find_Map_Entry(
+    Update_Map_Entry(
         VAL_MAP_Ensure_Mutable(map),  // modified
         picker,
-        poke,  // value to set (either ARG(VALUE) or L->out)
+        cast(Option(const Element*), c_cast(Element*, maybe poke)),
         strict
     );
-
-    assert(n != 0);
-    UNUSED(n);
 
     return nullptr;  // no upstream changes needed for Map* reference
 }
@@ -819,29 +804,4 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Map)
     const Map* m = VAL_MAP(map);
 
     return Init_Logic(OUT, Num_Map_Entries_Used(m) == 0);
-}
-
-
-//
-//  put: native:generic [
-//
-//  "Replaces the value following a key, and returns the new value"
-//
-//      return: [element?]
-//      series [map!]
-//      key [element?]
-//      value [<maybe> element?]
-//      :case "Perform a case-sensitive search"
-//  ]
-//
-DECLARE_NATIVE(PUT)
-//
-// !!! PUT was added by Red as the complement to SELECT, which offers a /CASE
-// refinement for adding keys to MAP!s case-sensitively.  The name may not
-// be ideal, but it's something you can't do with path access, so adopting it
-// for the time-being.  Only implemented for MAP!s at the moment
-//
-{
-    Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, CANON(PUT));
 }

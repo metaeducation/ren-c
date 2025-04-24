@@ -140,9 +140,10 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
     if (not Is_Word(picker) and not Is_Text(picker))
         return FAIL("ENVIRONMENT! picker must be WORD! or TEXT!");
 
-    Option(Value*) poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
-    if (Is_Trash(unwrap poke)) {
-        poke = nullptr;
+    Option(const Value*) poke = Optional_ARG(VALUE);
+
+    if (not poke) {
+        // remove from environment (was a nihil)
     }
     else if (not Is_Text(unwrap poke)) {
         return FAIL("ENVIRONMENT! can only be poked with TRASH! or TEXT!");
@@ -158,7 +159,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
         }
     }
 
-    Option(ErrorValue*) error = Trap_Set_Environment_Variable(picker, poke);
+    Option(ErrorValue*) error = Trap_Update_Environment_Variable(picker, poke);
     if (error)
         return rebDelegate("fail", unwrap error);
 

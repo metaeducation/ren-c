@@ -107,9 +107,6 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
     (did Get_Generic_Dispatcher(&g_generic_##name, datatype))
 
 
-
-
-
 // If you pass in a nullptr for the steps in the Get_Var() and Set_Var()
 // mechanics, they will disallow groups.  This is a safety measure which helps
 // avoid unwanted side effects in SET and GET, and motivates passing in a

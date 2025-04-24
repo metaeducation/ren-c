@@ -832,7 +832,7 @@ for-each 'entry read extension-dir [
         continue
     ]
 
-    user-config.extensions.(ext-name): null
+    user-config.extensions.(ext-name): ~  ; remove
 
     switch mode [
         '- [

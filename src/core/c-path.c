@@ -153,7 +153,7 @@ DECLARE_NATIVE(PICK)
 //          [<maybe> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element?]
-//      ^value [any-value? raised!]
+//      ^value [any-value? raised! nihil?]
 //      <local> store
 //  ]
 //
@@ -197,7 +197,7 @@ DECLARE_NATIVE(POKE)
 //          [<maybe> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element?]
-//      ^value [any-value?]
+//      ^value [any-value? nihil?]
 //  ]
 //
 DECLARE_NATIVE(POKE_P)

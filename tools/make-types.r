@@ -475,7 +475,7 @@ for-each-datatype 't [  ; fundamentals
 
 ; Emit the pseudotype for QUASIFORM!
 (
-    append memberships cscape [-{/* quasiform - $<index> */  0}-]
+    append memberships cscape [--{/* quasiform - $<index> */  (TYPESET_FLAG_BRANCH)}--]
 
     append pseudotypes cscape [--{ENUM_TYPE_QUASIFORM = $<index>}--]
 

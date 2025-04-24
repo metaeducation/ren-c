@@ -1178,14 +1178,18 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
     const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
+    Option(const Value*) poke = Optional_ARG(VALUE);
+    if (not poke)
+        return FAIL(
+            "Can't remove fields from ANY-CONTEXT! by setting to NIHIL"
+        );
 
     Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
     if (not var)
         return FAIL(Error_Bad_Pick_Raw(picker));
 
     assert(Not_Cell_Flag(var, PROTECTED));
-    Copy_Cell(var, poke);
+    Copy_Cell(var, unwrap poke);
     return nullptr;  // VarList* in cell not changed, caller need not update
 }
 

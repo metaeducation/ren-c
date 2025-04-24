@@ -1112,7 +1112,10 @@ IMPLEMENT_GENERIC(POKE_P, Is_Date)
     Element* date = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
+    Option(const Value*) opt_poke = Optional_ARG(VALUE);
+    if (not opt_poke or Is_Antiform(unwrap opt_poke))
+        return FAIL(PARAM(VALUE));
+    const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     Pick_Or_Poke_Date(nullptr, date, picker, poke);
 

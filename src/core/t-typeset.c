@@ -509,7 +509,10 @@ IMPLEMENT_GENERIC(POKE_P, Is_Parameter)
     if (not Is_Word(picker))
         return FAIL(picker);
 
-    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
+    Option(const Value*) opt_poke = Optional_ARG(VALUE);
+    if (not opt_poke or Is_Antiform(unwrap opt_poke))
+        return FAIL(PARAM(VALUE));
+    const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     switch (Cell_Word_Id(picker)) {
       case SYM_TEXT: {

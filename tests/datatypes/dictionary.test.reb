@@ -71,17 +71,17 @@
     ~conflicting-key~ !! (m.aa)
     ~conflicting-key~ !! (select m <BB>)
     ~conflicting-key~ !! (select m <bb>)
-    ~conflicting-key~ !! (m.(#"C"))
-    ~conflicting-key~ !! (m.(#"c"))
+    (m.(#"C") = 50)
+    (m.(#"c") = 60)
 
-    ~conflicting-key~ !! (put m 'Aa 70)
+    ~conflicting-key~ !! (poke m 'Aa 70)
     ~conflicting-key~ !! (m.(<Bb>): 80)
-    ~conflicting-key~ !! (m.(#"C"): 90)
+    (90 = m.(#"C"): 90)
 
     (
-        put:case m 'Aa 100
-        put:case m <Bb> 110
-        put:case m #"C" 120
+        poke m 'Aa 100
+        poke m <Bb> 110
+        poke m #"C" 120
         ok
     )
 
@@ -157,12 +157,12 @@
     )
 ]
 
-; Trash can be used to remove keys from maps
+; Nihil can be used to remove keys from maps
 (
     m: to map! [key <initial>]
     all [
         m.key = <initial>
-        elide m.key: ~
+        elide m.key: ~[]~
         null? try m.key
     ]
 )

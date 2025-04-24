@@ -868,12 +868,10 @@ bool Set_Var_Core_Updater_Throws(
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
     Context* context,
-    const Value* setval,  // e.g. L->out (in the evaluator, right hand side)
+    Option(const Value*) setval,  // e.g. L->out (in evaluator, right hand side)
     const Value* updater
 ){
     // Note: `steps_out` can be equal to `out` can be equal to `target`
-
-    Assert_Cell_Stable(setval);  // paranoid check (Value* means stable)
 
     DECLARE_ATOM (temp);  // target might be same as out (e.g. spare)
 
@@ -888,9 +886,11 @@ bool Set_Var_Core_Updater_Throws(
             // Shortcut past POKE for WORD! (though this subverts hijacking,
             // review that case.)
             //
+            if (not setval)
+                fail ("Can't poke a plain WORD! with NIHIL at this time");
             Copy_Cell(
                 Sink_Word_May_Fail(var, context),
-                setval
+                unwrap setval
             );
         }
         else {
@@ -903,7 +903,8 @@ bool Set_Var_Core_Updater_Throws(
             Push_Lifeguard(temp);
             if (rebRunThrows(
                 out,  // <-- output cell
-                rebRUN(updater), "binding of", temp, temp, rebQ(setval)
+                rebRUN(updater), "binding of", temp, temp,
+                    CANON(EITHER), rebL(did setval), rebQ(unwrap setval), "~[]~"
             )){
                 Drop_Lifeguard(temp);
                 fail (Error_No_Catch_For_Throw(TOP_LEVEL));
@@ -1056,7 +1057,8 @@ bool Set_Var_Core_Updater_Throws(
     assert(Is_Action(updater));
     if (rebRunThrows(
         out,  // <-- output cell
-        rebRUN(updater), temp, ins, rebQ(setval)
+        rebRUN(updater), temp, ins,
+            CANON(EITHER), rebL(did setval), rebQ(unwrap setval), "~[]~"
     )){
         Drop_Lifeguard(temp);
         Drop_Lifeguard(writeback);
@@ -1081,12 +1083,15 @@ bool Set_Var_Core_Updater_Throws(
         if (not Is_Word(Data_Stack_At(Element, base + 1)))
             fail ("Can't POKE back immediate value unless it's to a WORD!");
 
+        if (not setval)
+            fail ("Can't writeback POKE immediate with NIHIL at this time");
+
         Copy_Cell(
             Sink_Word_May_Fail(
                 Data_Stack_At(Element, base + 1),
                 SPECIFIED
             ),
-            setval
+            unwrap setval
         );
     }
   }
@@ -1111,7 +1116,7 @@ bool Set_Var_Core_Throws(
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
     Context* context,
-    const Value* setval  // e.g. L->out (in the evaluator, right hand side)
+    Option(const Value*) setval  // e.g. L->out (in evaluator, right hand side)
 ){
     return Set_Var_Core_Updater_Throws(
         out,

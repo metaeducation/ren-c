@@ -92,7 +92,7 @@ Option(ErrorValue*) Trap_Get_Environment_Variable(
 }
 
 
-Option(ErrorValue*) Trap_Set_Environment_Variable(
+Option(ErrorValue*) Trap_Update_Environment_Variable(
     const Value* key,  // Note: Windows is not case-sensitive w.r.t. keys
     Option(const Value*) value
 ){

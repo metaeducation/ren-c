@@ -1090,7 +1090,10 @@ IMPLEMENT_GENERIC(POKE_P, Any_String)
     if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
         return FAIL(Error_Out_Of_Range(picker));
 
-    Value* poke = Meta_Unquotify_Known_Stable(ARG(VALUE));
+    Option(const Value*) opt_poke = Optional_ARG(VALUE);
+    if (not opt_poke or Is_Antiform(unwrap opt_poke))
+        return FAIL(PARAM(VALUE));
+    const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     Codepoint c;
     if (IS_CHAR(poke)) {

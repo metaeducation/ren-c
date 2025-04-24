@@ -1204,7 +1204,11 @@ Bounce Stepper_Executor(Level* L)
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
         }
         else {
-            Decay_If_Unstable(OUT);  // !!! should likely pass through packs
+            Option(Value*) setval;
+            if (Is_Nihil(OUT))
+                setval = nullptr;
+            else
+                setval = Decay_If_Unstable(OUT);  // !!! packs should passthru
 
             if (Is_Action(OUT)) {  // !!! Review: When to update labels?
                 if (STATE == ST_STEPPER_SET_WORD)
@@ -1222,7 +1226,7 @@ Bounce Stepper_Executor(Level* L)
                 GROUPS_OK,
                 CURRENT,
                 L_binding,
-                stable_OUT  // should take unstable?  handle blocks?
+                setval
             )){
                 goto return_thrown;
             }

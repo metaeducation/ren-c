@@ -77,7 +77,7 @@ Option(ErrorValue*) Trap_Get_Environment_Variable(
 //    build (it's nice if a static analysis build still "works") so just fool
 //    it to thinking we "used" the pointer by putting it in a static variable.
 //
-Option(ErrorValue*) Trap_Set_Environment_Variable(
+Option(ErrorValue*) Trap_Update_Environment_Variable(
     const Value* key,  // Note: POSIX mandates case-sensitive keys
     Option(const Value*) value
 ){

@@ -668,8 +668,6 @@ enum {
 #include "sys-eval.h"  // low-level single-step evaluation API
 #include "sys-continuation.h"
 
-#include "sys-pick.h"
-
 
 //=//// ISOTOPE COERCION AND DECAY ////////////////////////////////////////=//
 
@@ -750,3 +748,5 @@ enum {
     Bounce G_##name##_##type(Level* level_)  // doesn't use GENERIC_CFUNC() [2]
 
 #include "tmp-generic-fwd-decls.h"  // forward generic handler definitions [3]
+
+#include "sys-pick.h"

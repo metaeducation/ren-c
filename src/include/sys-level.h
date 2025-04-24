@@ -664,13 +664,34 @@ INLINE Level* Prep_Level_Core(
     NOOP  // the INCLUDE_PARAMS_OF_XXX macros still make this, may find a use
 
 #define ARG(name) \
-    Level_Arg(level_, (param_##name##_))
+    Level_Arg(level_, param_##name##_)
 
 #define Element_ARG(name) \
     Known_Element(Level_Arg(level_, param_##name##_))  // checked build asserts
 
 #define Bool_ARG(name) \
-    (not Is_Nulled(Level_Arg(level_, (param_##name##_))))
+    (not Is_Nulled(Level_Arg(level_, param_##name##_)))
+
+INLINE Option(const Value*) Optional_Level_Arg(Level* L, REBLEN n)
+{
+    Value* arg = Level_Arg(L, n);
+    Option(const Value*) result;
+    if (Is_Meta_Of_Nihil(arg)) {
+        Init_Quasi_Word(arg, CANON(VOID));  // fib, but helps FAIL(PARAM(...))
+        result = nullptr;
+    }
+    else {
+        Meta_Unquotify_Known_Stable(arg);
+        result = arg;
+    }
+  #if RUNTIME_CHECKS
+    Set_Cell_Flag(arg, PROTECTED);  // helps stop double-unquotify
+  #endif
+    return result;
+}
+
+#define Optional_ARG(name) \
+    Optional_Level_Arg(level_, param_##name##_)  // Note: can only be called ONCE!
 
 #define LOCAL(name) \
     Level_Arg(level_, (param_##name##_))  // alias (enforce not argument?)
