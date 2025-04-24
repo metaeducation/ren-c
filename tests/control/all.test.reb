@@ -54,7 +54,7 @@
 (null? all [false])
 ($1 == all [$1])
 (same? :append all [:append])
-(null? all [_])
+(blank? all [_])
 (
     a-value: make object! []
     same? :a-value all [:a-value]
@@ -145,7 +145,7 @@
 )
 ($1 == all [true $1])
 (same? :append all [true :append])
-(null? all [true _])
+(blank? all [true _])
 (
     a-value: make object! []
     same? :a-value all [true :a-value]
@@ -238,7 +238,7 @@
 (null? all [true false])
 (true = all [$1 true])
 (true = all [:append true])
-(null? all [_ true])
+(null? all [null true])
 (
     a-value: make object! []
     true = all [:a-value true]
@@ -285,7 +285,7 @@
 )
 (
     success: true
-    all [blank success: false]
+    all [null success: false]
     success
 )
 ; evaluation continues otherwise

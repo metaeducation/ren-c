@@ -60,7 +60,7 @@
 (void? if false [true])
 (if $1 [true])
 (if (specialize 'of [property: 'type]) [true])
-(void? if blank [true])
+(void? if null [true])
 (if make object! [] [true])
 (if get '+ [true])
 (if 0x0 [true])

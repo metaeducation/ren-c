@@ -114,14 +114,14 @@
 (
     x: 1020
     did all [
-        _ or [x: 304] = 304
+        null or [x: 304] = 304
         x = 304
     ]
 )
 (
     x: 1020
     did all [
-        _ or [x: true] = true
+        null or [x: true] = true
         x = true
     ]
 )

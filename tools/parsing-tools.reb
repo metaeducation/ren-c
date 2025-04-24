@@ -29,7 +29,7 @@ parsing-at: func [
     use [result position][
         block: compose/only [(as group! block)]  ; code to be run as rule
         if not end [
-            block: compose/deep [either not tail? (word) [(block)] [_]]
+            block: compose/deep [either not tail? (word) [(block)] [null]]
         ]
         block: compose/deep [result: either position: (block) [[:position]] [[end skip]]]
         use compose [(word)] compose/deep [

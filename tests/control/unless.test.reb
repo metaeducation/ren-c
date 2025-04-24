@@ -14,7 +14,7 @@
 (
     20 = (10 unless 20)
 )(
-    10 = (10 unless _)
+    10 = (10 unless false)
 )(
     10 = (10 unless null)
 )(

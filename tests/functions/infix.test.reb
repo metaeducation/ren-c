@@ -71,7 +71,7 @@
         ]
     )
 
-    ([~null~ "hi"] = any [false blank lefty "hi"])
+    ([~null~ "hi"] = any [false null lefty "hi"])
 ]
 
 

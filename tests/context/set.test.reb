@@ -11,7 +11,7 @@
 (
     a: 10
     b: 20
-    did all [blank = set [a b] blank  blank? a  blank? b]
+    did all [blank = set [a b] blank  blank? a  null? b]
 )
 (
     a: 10

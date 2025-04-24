@@ -20,7 +20,7 @@
 (false = not make map! [])
 (false = not $0.00)
 (false = not :append)
-(true = not blank)
+(true = not null)
 (false = not make object! [])
 (false = not type of get '+)
 (false = not 0x0)

@@ -69,21 +69,21 @@
 (error? redbol-apply :make [error! ""])
 
 (/a = redbol-apply func [/a] [a] [true])
-(_ = redbol-apply func [/a] [a] [false])
-(_ = redbol-apply func [/a] [a] [])
+(null = redbol-apply func [/a] [a] [false])
+(null = redbol-apply func [/a] [a] [])
 (/a = redbol-apply/only func [/a] [a] [true])
 ; the word 'false
 (/a = redbol-apply/only func [/a] [a] [false])
-(_ == redbol-apply/only func [/a] [a] [])
+(null == redbol-apply/only func [/a] [a] [])
 (use [a] [a: true /a = redbol-apply func [/a] [a] [a]])
-(use [a] [a: false _ == redbol-apply func [/a] [a] [a]])
+(use [a] [a: false null == redbol-apply func [/a] [a] [a]])
 (use [a] [a: false /a = redbol-apply func [/a] [a] ['a]])
 (use [a] [a: false /a = redbol-apply func [/a] [a] [/a]])
 (use [a] [a: false /a = redbol-apply/only func [/a] [a] [a]])
 (group! == redbol-apply/only (specialize 'of [property: 'type]) [()])
-([1] == head of redbol-apply :insert [copy [] [1] blank blank blank])
-([1] == head of redbol-apply :insert [copy [] [1] blank blank false])
-([[1]] == head of redbol-apply :insert [copy [] [1] blank blank true])
+([1] == head of redbol-apply :insert [copy [] [1] null null null])
+([1] == head of redbol-apply :insert [copy [] [1] null null false])
+([[1]] == head of redbol-apply :insert [copy [] [1] null null true])
 (action! == redbol-apply (specialize 'of [property: 'type]) [:print])
 (get-word! == redbol-apply/only (specialize 'of [property: 'type]) [:print])
 
@@ -188,5 +188,5 @@
 ;
 (1 == reeval func [] [redbol-apply :return [1] 2])
 
-(_ == redbol-apply/only func [/a] [a] [#[false]])
+(null == redbol-apply/only func [/a] [a] [#[false]])
 (group! == redbol-apply/only :type-of [()])

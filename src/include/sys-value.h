@@ -643,7 +643,7 @@ INLINE Value* Trashify_Branched(Value* cell) {
     c_cast(const Value*, &PG_Blank_Value[0])
 
 #define Init_Blank(v) \
-    Reset_Cell_Header((v), TYPE_BLANK, CELL_FLAG_FALSEY)
+    Reset_Cell_Header((v), TYPE_BLANK, 0)
 
 
 //=//// UNREADABLE CELLS //////////////////////////////////////////////////=//

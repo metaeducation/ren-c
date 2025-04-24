@@ -54,7 +54,7 @@
 (null? any [false])
 ($1 == any [$1])
 (same? :append any [:append])
-(null? any [_])
+(blank? any [_])
 (
     a-value: make object! []
     same? :a-value any [:a-value]
@@ -148,7 +148,7 @@
 (null? any [false false])
 ($1 == any [false $1])
 (same? :append any [false :append])
-(null? any [false _])
+(blank? any [false _])
 (
     a-value: make object! []
     same? :a-value any [false :a-value]
@@ -239,7 +239,7 @@
 (true = any [true false])
 ($1 == any [$1 false])
 (same? :append any [:append false])
-(null? any [_ false])
+(null? any [null false])
 (
     a-value: make object! []
     same? :a-value any [:a-value false]
@@ -298,7 +298,7 @@
 )
 (
     success: false
-    any [blank success: true]
+    any [null success: true]
     success
 )
 ; RETURN stops evaluation
