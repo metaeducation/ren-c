@@ -175,6 +175,7 @@ comment [tail char! any-word! any-path! lit-word! lit-path!]  ; workaround [1]
 for-each [alias] [
     parse3:                     ; PARSE is a completely new model ("UPARSE")
     func3:                      ; FUNC refinements are their own args, more...
+    lambda3:                    ; LAMBDA same deal...
     function3:                  ; no FUNCTION at present (TBD: FUNC synonym)
     method3:                    ; same issues as FUNC
     append3:                    ; APPEND handles splices
@@ -608,7 +609,7 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
         series: <replaced>
     ]
 
-    reeval func3 [keep [action!] <with> return] body keeper/
+    reeval lambda3 [keep [action!] <with> return] body keeper/
 
     out
 ]
@@ -864,18 +865,11 @@ modernize-action: func3 [
     return reduce [new-spec new-body]
 ]
 
+lambda: adapt lambda3/ [set [spec body] modernize-action spec body]
+
 func: adapt func3/ [set [spec body] modernize-action spec body]
 
 function: ~<FUNCTION deprecated (will be FUNC synonym, eventually)>~
-
-lambda: func3 [spec body] [
-    set [spec body] modernize-action spec body
-    if not tail? next find spec <local> [
-        fail "Lambda bootstrap doesn't support <local>"
-    ]
-    take find spec <local>
-    make action! compose3:only [(spec) (body)]  ; gets no RETURN
-]
 
 method: infix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
 
