@@ -60,7 +60,7 @@ mod: ensure text! args.MODULE  ; overwrites MOD as MODULO, but that's okay!
 
 ext-src-dir: to file! args.DIRECTORY
 
-sources: ensure block! load3 args.SOURCES
+sources: ensure block! transcode:one args.SOURCES
 
 use-librebol: switch args.USE_LIBREBOL [
     "no" ['no]
@@ -81,7 +81,7 @@ if verbose [
 ; directory the makefile is in (e.g. %build/), so paths for output files are
 ; assumed to be relative to that location.
 
-ext-prep-subdir: cscape %prep/extensions/$<mod>/
+ext-prep-subdir: cscape [%prep/extensions/$<mod>/]
 mkdir:deep ext-prep-subdir
 
 
@@ -104,7 +104,7 @@ ext-header: first load3:header (join ext-src-dir %make-spec.r)
 ; Something like this should probably be automatic.  More thinking is needed
 ; on contextualizing errors better.
 
-fail: adapt fail/ [
+fail: adapt lib.fail/ [
     print "** FAILURE WHILE PROCESSING:" join ext-src-dir %make-spec.r
 ]
 
@@ -192,7 +192,7 @@ for-each 'info natives [
 
 === "EMIT THE INCLUDE_PARAMS_OF_XXX MACROS FOR THE EXTENSION NATIVES" ===
 
-include-name: cscape %tmp-mod-$<mod>.h
+include-name: cscape [%tmp-mod-$<mod>.h]
 
 e1: make-emitter "Module C Header File Preface" (
     join ext-prep-subdir include-name
@@ -561,7 +561,7 @@ e1/write-emitted
 ; have a validated TEXT!...which is how we'd signal validity to the scanner.
 
 e: make-emitter "Extension Initialization Script Code" (
-    join ext-prep-subdir cscape %tmp-mod-$<mod>-init.c
+    join ext-prep-subdir cscape [%tmp-mod-$<mod>-init.c]
 )
 
 
@@ -747,7 +747,7 @@ e/emit [--{
 
 === "EMIT COMPRESSED STARTUP SCRIPT CODE AS C BYTE ARRAY" ===
 
-script-name: cscape %ext-$<mod>-init.reb
+script-name: cscape [%ext-$<mod>-init.reb]
 
 header: ~
 initscript-body: stripload:header (join ext-src-dir script-name) $header
