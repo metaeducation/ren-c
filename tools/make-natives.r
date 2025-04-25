@@ -265,7 +265,7 @@ name-to-typeset-byte: load3 (join output-dir %boot/tmp-typeset-bytes.r)
 
 sort:compare generics func [a b] [
     let bad: null
-    if a.name < b.name [return true]
+    if a.name < b.name [return okay]
     let a-byte: (select name-to-typeset-byte a.type) else [
         bad: a
     ]
@@ -278,8 +278,8 @@ sort:compare generics func [a b] [
             "IMPLEMENT_GENERIC(" bad.name bad.type ") in" bad.file
         ]
     ]
-    if a-byte < b-byte [return true]
-    return false
+    if a-byte < b-byte [return okay]
+    return null
 ]
 
 
