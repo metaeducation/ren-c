@@ -51,10 +51,7 @@
 #define BOUNCE_THROWN \
     cast(Value*, &PG_Bounce_Thrown)
 
-// See CELL_FLAG_ACTION_INVISIBLE...this is what any function with that flag needs
-// to return.
-//
-// It is also used by path dispatch when it has taken performing a SET-PATH!
+// This used by path dispatch when it has taken performing a SET-PATH!
 // into its own hands, but doesn't want to bother saying to move the value
 // into the output slot...instead leaving that to the evaluator (as a
 // SET-PATH! should always evaluate to what was just set)
@@ -227,18 +224,9 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 
 // This flag is set when the native (e.g. extensions) can be unloaded
 //
-#define CELL_FLAG_ACTION_UNLOADABLE_NATIVE FLAG_TYPE_SPECIFIC_BIT(6)
+#define CELL_FLAG_ACTION_UNUSED_6 FLAG_TYPE_SPECIFIC_BIT(6)
 
-// An "invisible" function is one that does not touch its frame output cell,
-// leaving it completely alone.  This is how `10 comment ["hi"] + 20` can
-// work...if COMMENT destroyed the 10 in the output cell it would be lost and
-// the addition could no longer work.
-//
-// !!! One property considered for invisible items was if they might not be
-// quoted in soft-quoted positions.  This would require fetching something
-// that might not otherwise need to be fetched, to test the flag.  Review.
-//
-#define CELL_FLAG_ACTION_INVISIBLE FLAG_TYPE_SPECIFIC_BIT(7)
+#define CELL_FLAG_ACTION_7 FLAG_TYPE_SPECIFIC_BIT(7)
 
 // ^--- !!! STOP AT FLAG_TYPE_SPECIFIC_BIT(7) !!! ---^
 
@@ -247,7 +235,6 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 INLINE void Clear_Action_Cached_Flags(Cell *v) {
     Clear_Cell_Flag(v, ACTION_DEFERS_LOOKBACK);
     Clear_Cell_Flag(v, ACTION_QUOTES_FIRST_ARG);
-    Clear_Cell_Flag(v, ACTION_INVISIBLE);
 }
 
 

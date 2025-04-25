@@ -241,29 +241,21 @@ DECLARE_NATIVE(RETURN)
     assert(Cell_Parameter_Class(typeset) == PARAMCLASS_RETURN);
     assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
 
-    if (
-        GET_ACT_FLAG(target_fun, ACTION_INVISIBLE)
-        and Is_Endish_Nulled(v)
-    ){
-        // The only legal way invisibles can use RETURN is with no argument.
-    }
-    else {
-        if (Is_Endish_Nulled(v))
-            Init_Trash(v);  // `eval [return]` acts as `return trash`
+    if (Is_Endish_Nulled(v))
+        Init_Trash(v);  // `eval [return]` acts as `return trash`
 
-        // Check type NOW instead of waiting and letting Eval_Core_Throws()
-        // check it.  Reasoning is that the error can indicate the callsite,
-        // e.g. the point where `return badly-typed-value` happened.
-        //
-        // !!! In the userspace formulation of this abstraction, it indicates
-        // it's not RETURN's type signature that is constrained, as if it were
-        // then RETURN would be implicated in the error.  Instead, RETURN must
-        // take [any-value!] as its argument, and then report the error
-        // itself...implicating the frame (in a way parallel to this native).
-        //
-        if (not Typeset_Check(typeset, Type_Of(v)))
-            fail (Error_Bad_Return_Type(target_level, Type_Of(v)));
-    }
+    // Check type NOW instead of waiting and letting Eval_Core_Throws()
+    // check it.  Reasoning is that the error can indicate the callsite,
+    // e.g. the point where `return badly-typed-value` happened.
+    //
+    // !!! In the userspace formulation of this abstraction, it indicates
+    // it's not RETURN's type signature that is constrained, as if it were
+    // then RETURN would be implicated in the error.  Instead, RETURN must
+    // take [any-value!] as its argument, and then report the error
+    // itself...implicating the frame (in a way parallel to this native).
+    //
+    if (not Typeset_Check(typeset, Type_Of(v)))
+        fail (Error_Bad_Return_Type(target_level, Type_Of(v)));
 
     assert(L_binding->leader.bits & ARRAY_FLAG_IS_VARLIST);
 

@@ -46,20 +46,6 @@ so: infix func [
     ]
 ]
 
-was: func [
-    {Return a variable's value prior to an assignment, then do the assignment}
-
-    return: [any-value!]
-        {Value of the following SET-WORD! or SET-PATH! before assignment}
-    evaluation [any-value! <...>]
-        {Used to take the assigned value}
-    :look [set-word! set-path! <...>]
-][
-    get first look ;-- returned value
-
-    elide take evaluation
-]
-
 assert [null = binding of :return] ;-- it's archetypal, nowhere to return to
 return: ~  ; so don't let the archetype be visible
 
@@ -533,8 +519,9 @@ iterate-skip: redescribe [
             :result
         ]
 
-        eval f
-        elide set word saved
+        result: eval f
+        set word saved
+        return :result
     ][
         series: <overwritten>
     ]
@@ -666,51 +653,6 @@ degrade: func [value [any-value!]] [
         '~okay~ = :value [return okay]
     ]
     return :value
-]
-
-invisible-eval-all: func [
-    {Evaluate any number of expressions, but completely elide the results.}
-
-    return: []
-        {Returns nothing, not even void ("invisible function", like COMMENT)}
-    expressions [any-value! <...>]
-        {Any number of expressions on the right.}
-][
-    eval expressions
-]
-
-right-bar: func [
-    {Evaluates to first expression on right, discarding ensuing expressions.}
-
-    return: [any-value!]
-        {Evaluative result of first of the following expressions.}
-    expressions [any-value! <...>]
-        {Any number of expression.}
-    <local> right
-][
-    eval <- evaluate/step3 expressions 'right else [return]
-    :right
-]
-
-
-once-bar: func [
-    {Expression barrier that's willing to only run one expression after it}
-
-    return: [any-value!]
-    right [~null~ <end> any-value! <...>]
-    :lookahead [any-element! <...>]
-    look:
-][
-    take right  ; returned value
-
-    elide any [
-        tail? right
-        '|| = look: take lookahead ;-- hack...recognize selfs
-    ] else [
-        fail/blame [
-            "|| expected single expression, found residual of" :look
-        ] 'right
-    ]
 ]
 
 method: infix func [
@@ -929,19 +871,10 @@ cause-error: func [
     ]
 ]
 
-
-; !!! Should there be a special bit or dispatcher used on the FAIL to ensure
-; it does not continue running?  `return: []` is already taken for the
-; "invisible" meaning, but it could be an optimized dispatcher used in
-; wrapping, e.g.:
-;
-;     fail: noreturn func [...] [...]
-;
-; Though HIJACK would have to be aware of it and preserve the rule.
-;
 fail: function [
     {Interrupts execution by reporting an error (a TRAP can intercept it).}
 
+    return: []
     reason "ERROR! value, message text, or failure spec"
         [<end> error! text! block!]
     /blame "Specify an originating location other than the FAIL itself"

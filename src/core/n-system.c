@@ -358,8 +358,7 @@ DECLARE_NATIVE(C_DEBUG_BREAK_AT)
 //
 //  "Break at next evaluation point (only use when running under C debugger)"
 //
-//      return: []
-//          {Invisibly returns what the expression to the right would have}
+//      return: [~void~]
 //  ]
 //
 DECLARE_NATIVE(C_DEBUG_BREAK)
@@ -377,7 +376,7 @@ DECLARE_NATIVE(C_DEBUG_BREAK)
     //
     TG_Break_At_Tick = level_->tick + 1;
 
-    return BOUNCE_INVISIBLE;
+    return Init_Void(OUT);;
   #else
     fail (Error_Debug_Only_Raw());
   #endif

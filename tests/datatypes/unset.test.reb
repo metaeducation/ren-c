@@ -3,10 +3,6 @@
 (null? type of null)
 (not null? 1)
 
-(
-    is-barrier?: func [x [<end> integer!]] [null? x]
-    is-barrier? ()
-)
 (void! = type of (eval []))
 (not trash? 1)
 

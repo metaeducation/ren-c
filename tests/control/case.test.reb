@@ -59,7 +59,7 @@
     flag: null
     result: case [
         1 < 2 [1020]
-        elide (flag: okay)
+        (flag: okay, null) [fail "shouldn't get here"]  ; poor man's elide
         okay [fail "shouldn't get here"]
     ]
     (not flag) and [result = 1020]

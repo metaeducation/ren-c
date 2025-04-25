@@ -298,7 +298,7 @@ void Dump_Stack(Level* L, REBLEN level)
 //
 //  "Temporary debug dump"
 //
-//      return: []
+//      return: [~]
 //      :value [any-word!]
 //  ]
 //
@@ -326,6 +326,6 @@ DECLARE_NATIVE(DUMP)
             PROBE(var);
     }
 
-    return BOUNCE_INVISIBLE;
+    return Init_Trash(OUT);
 #endif
 }

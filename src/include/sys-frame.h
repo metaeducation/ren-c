@@ -233,6 +233,7 @@ INLINE bool Is_Level_Gotten_Shoved(Level* L) {
 #if REBOL_LEVEL_SHORTHAND_MACROS
     #define D_FRAME     level_
     #define OUT         level_->out       // GC-safe slot for output value
+    #define SPARE       Level_Spare(level_)
     #define D_ARGC      Level_Num_Args(level_)  // count of args+refinements/args
     #define D_ARG(n)    Level_Arg(level_, (n))  // pass 1 for first arg
 

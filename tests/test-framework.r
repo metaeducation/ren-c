@@ -50,12 +50,15 @@ make object! compose [
                 "cannot load test source"
             ]
 
-            elide (
+            (
                 print mold test-block ;-- !!! make this an option
 
                 set the result: sys/util/enrescue test-block
                 recycle
-            )
+                null
+            )[
+                ; Poor-man's elide (clause that evaluates to null)
+            ]
 
             error? :result [
                 any [
@@ -65,7 +68,13 @@ make object! compose [
                 ]
             ]
 
-            elide (result: unmeta result)
+
+            (
+                result: unmeta result
+                null
+            )[
+                ; Poor-man's elide (clause that evaluates to null)
+            ]
 
             null? :result [
                 "test returned null"

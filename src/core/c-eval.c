@@ -340,24 +340,10 @@ INLINE void Seek_First_Param(Level* L, REBACT *action) {
 #endif
 
 
-INLINE void Expire_Out_Cell_Unless_Invisible(Level* L) {
-    REBACT *phase = LVL_PHASE_OR_DUMMY(L);
-    if (phase != PG_Dummy_Action)
-        if (GET_ACT_FLAG(phase, ACTION_INVISIBLE)) {
-            if (not GET_ACT_FLAG(L->original, ACTION_INVISIBLE))
-                fail ("All invisible action phases must be invisible");
-            return;
-        }
-
-    if (GET_ACT_FLAG(L->original, ACTION_INVISIBLE))
-        return;
-
+INLINE void Expire_Out_Cell(Level* L) {
   #if RUNTIME_CHECKS
     //
-    // The L->out slot should be initialized well enough for GC safety.
-    // But in the debug build, if we're not running an invisible function
-    // set it to END here, to make sure the non-invisible function writes
-    // *something* to the output.
+    // The L->out slot must be initialized well enough for GC safety.
     //
     // END has an advantage because recycle/torture will catch cases of
     // evaluating into movable memory.  But if END is always set, natives
@@ -366,13 +352,11 @@ INLINE void Expire_Out_Cell_Unless_Invisible(Level* L) {
     // !!! Should natives be able to count on L->out being END?  This was
     // at one time the case, but this code was in one instance.
     //
-    if (not GET_ACT_FLAG(LVL_PHASE_OR_DUMMY(L), ACTION_INVISIBLE)) {
-        if (SPORADICALLY(2))
-            Init_Unreadable(L->out);
-        else
-            SET_END(L->out);
-        Set_Cell_Flag(L->out, OUT_MARKED_STALE);
-    }
+    if (SPORADICALLY(2))
+        Init_Unreadable(L->out);
+    else
+        SET_END(L->out);
+    Set_Cell_Flag(L->out, OUT_MARKED_STALE);
   #endif
 }
 
@@ -757,7 +741,7 @@ bool Eval_Core_Throws(Level* const L)
 
         Push_Action(L, VAL_ACTION(current), VAL_BINDING(current));
         Begin_Action(L, opt_label, ORDINARY_ARG);
-        Expire_Out_Cell_Unless_Invisible(L);
+        Expire_Out_Cell(L);
         goto process_action; }
 
     //==////////////////////////////////////////////////////////////////==//
@@ -1115,7 +1099,7 @@ bool Eval_Core_Throws(Level* const L)
                     assert(false);
                 }
 
-                Expire_Out_Cell_Unless_Invisible(L);
+                Expire_Out_Cell(L);
 
                 // Now that we've gotten the argument figured out, make a
                 // singular array to feed it to the variadic.
@@ -1420,7 +1404,7 @@ bool Eval_Core_Throws(Level* const L)
             or IS_VALUE_IN_ARRAY_DEBUG(L->source->array, L->value)
         );
 
-        Expire_Out_Cell_Unless_Invisible(L);
+        Expire_Out_Cell(L);
         assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg));
 
         if (not Is_Level_Gotten_Shoved(L))
@@ -1495,7 +1479,7 @@ bool Eval_Core_Throws(Level* const L)
 
           redo_checked:; // BOUNCE_REDO_CHECKED
 
-            Expire_Out_Cell_Unless_Invisible(L);
+            Expire_Out_Cell(L);
             assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg));
 
             L->param = ACT_PARAMS_HEAD(Level_Phase(L));
@@ -1503,33 +1487,6 @@ bool Eval_Core_Throws(Level* const L)
             L->special = L->arg;
             L->refine = ORDINARY_ARG; // no gathering, but need for assert
             goto process_action;
-
-          case TYPE_R_INVISIBLE: {
-            assert(GET_ACT_FLAG(Level_Phase(L), ACTION_INVISIBLE));
-
-            // !!! Ideally we would check that L->out hadn't changed, but
-            // that would require saving the old value somewhere...
-
-            if (
-                Not_Cell_Flag(L->out, OUT_MARKED_STALE)
-                or IS_END(L->value)
-            ){
-                goto skip_output_check;
-            }
-
-            // If an invisible is at the start of a frame and nothing is
-            // after it, it has to retrigger until it finds something (or
-            // until it hits the end of the frame).  It should not do a
-            // START_NEW_EXPRESSION()...the expression index doesn't update.
-            //
-            //     eval [comment "a" 1] => 1
-
-            current_gotten = L->gotten;
-            Fetch_Next_In_Level(&current, L);
-            eval_type = Type_Of(current);
-
-            Drop_Action(L);
-            goto reevaluate; }
 
           default:
             assert(!"Invalid pseudotype returned from action dispatcher");
@@ -1552,8 +1509,6 @@ bool Eval_Core_Throws(Level* const L)
       #if RUNTIME_CHECKS
         Do_After_Action_Checks_Debug(L);
       #endif
-
-      skip_output_check:;
 
         // If we have functions pending to run on the outputs (e.g. this was
         // the result of a CASCADE) we can run those cascaded functions in the
@@ -1613,7 +1568,6 @@ bool Eval_Core_Throws(Level* const L)
             // Note: The usual dispatch of infix functions is not via a
             // TYPE_WORD in this switch, it's by some code at the end of
             // the switch.  So you only see infix in cases like `(+ 1 2)`,
-            // or after CELL_FLAG_ACTION_INVISIBLE e.g. `10 comment "hi" + 20`.
             //
             Begin_Action(
                 L,
@@ -1717,14 +1671,14 @@ bool Eval_Core_Throws(Level* const L)
 // The current frame is not reused, as the source array from which values are
 // being gathered changes.
 //
-// Empty groups vaporize, as do ones that only consist of invisibles.  If
-// this is not desired, one should use DO or lead with `(void ...)`
+// This mechanic has been simplified from what vaporization requires:
 //
 //     >> 1 + 2 (comment "vaporize")
 //     == 3
 //
-//     >> 1 + () 2
-//     == 3
+// That works in the main branch, but reliability of the bootstrap executable
+// means more than having a vaporization feature implemented differently.
+//
 
       case TYPE_GROUP: {
         if (not Is_Level_Gotten_Shoved(L))
@@ -1740,32 +1694,16 @@ bool Eval_Core_Throws(Level* const L)
         // skipping it and trying to compare `3 = 4`.  But `3 = () 1 + 2`
         // should consider the empty group stale.
         //
-        // Note we might have something like (1 + 2 elide "Hi") that would
-        // show up as having the stale bit.
-        //
         REBIXO indexor = Eval_At_Core(
-            SET_END(Level_Spare(L)),
+            Init_Void(L->out),
             nullptr, // opt_first (null means nothing, not nulled cell)
             array,
             index,
             derived,
             DO_FLAG_TO_END
         );
-        if (indexor == THROWN_FLAG) {
-            Copy_Cell(L->out, Level_Spare(L));
+        if (indexor == THROWN_FLAG)
             goto return_thrown;
-        }
-        if (IS_END(Level_Spare(L))) {
-            current = L->value;
-            eval_type = VAL_TYPE_RAW(L->value);
-            if (eval_type != TYPE_0_END) {
-                Fetch_Next_In_Level(nullptr, L); // advances L->value
-                goto reevaluate;
-            }
-            goto finished;
-        }
-
-        Copy_Cell(L->out, Level_Spare(L));
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1816,8 +1754,7 @@ bool Eval_Core_Throws(Level* const L)
             // requires overhaul of the R3-Alpha path implementation.
             //
             if (
-                Get_Cell_Flag(L->out, ACTION_INVISIBLE)
-                or Get_Cell_Flag(L->out, INFIX_IF_ACTION)
+                Get_Cell_Flag(L->out, INFIX_IF_ACTION)
             ){
                 fail ("Use `>-` to shove left infix operands into PATH!s");
             }
@@ -1831,7 +1768,7 @@ bool Eval_Core_Throws(Level* const L)
             // something that really should be made to work *when it can*.
             //
             Begin_Action(L, opt_label, ORDINARY_ARG);
-            Expire_Out_Cell_Unless_Invisible(L);
+            Expire_Out_Cell(L);
             goto process_action;
         }
         break; }
@@ -2073,19 +2010,10 @@ bool Eval_Core_Throws(Level* const L)
     // waits for `1 + 2` to finish.  This is because the right hand argument
     // of math operations tend to be declared #tight.
     //
-    // Slightly more nuanced is why CELL_FLAG_ACTION_INVISIBLE functions have to be
-    // considered in the lookahead also.  Consider this case:
-    //
-    //    evaluate/step3 [1 + 2 * comment ["hi"] 3 4 / 5] 'val
-    //
-    // We want `val = 9`, with `pos = [4 / 5]`.  To do this, we
-    // can't consider an evaluation finished until all the "invisibles" have
-    // been processed.
-    //
-    // If that's not enough to consider :-) it can even be the case that
-    // subsequent infix gets "deferred".  Then, possibly later the evaluated
-    // value gets re-fed back in, and we jump right to this post-switch point
-    // to give it a "second chance" to take the infix.  (See 'deferred'.)
+    // It can even be the case that subsequent infix gets "deferred".  Then,
+    // possibly later the evaluated value gets re-fed back in, and we jump
+    // right to this post-switch point to give it a "second chance" to take
+    // the infix.  (See 'deferred'.)
     //
     // So this post-switch step is where all of it happens, and it's tricky!
 
@@ -2193,25 +2121,11 @@ bool Eval_Core_Throws(Level* const L)
             goto finished;
         }
 
-        if (
-            L->gotten
-            and Is_Action(VAL(L->gotten))
-            and Get_Cell_Flag(VAL(L->gotten), ACTION_INVISIBLE)
-        ){
-            // Even if not EVALUATE, we do not want START_NEW_EXPRESSION on
-            // "invisible" functions.  e.g. `eval [1 + 2 comment "hi"]` should
-            // consider that one whole expression.  Reason being that the
-            // comment cannot be broken out and thought of as having a return
-            // result... `comment "hi"` alone cannot have any basis for
-            // evaluating to 3.
-        }
-        else {
-            START_NEW_EXPRESSION_MAY_THROW(L, goto return_thrown);
-            // ^-- resets local tick, corrupts L->out, Ctrl-C may abort
+        START_NEW_EXPRESSION_MAY_THROW(L, goto return_thrown);
+        // ^-- resets local tick, corrupts L->out, Ctrl-C may abort
 
-            UPDATE_TICK_DEBUG(nullptr);
-            // v-- The TICK_BREAKPOINT or C-DEBUG-BREAK landing spot --v
-        }
+        UPDATE_TICK_DEBUG(nullptr);
+        // v-- The TICK_BREAKPOINT or C-DEBUG-BREAK landing spot --v
 
         current_gotten = L->gotten; // if nullptr, the word will error
         Fetch_Next_In_Level(&current, L);
@@ -2248,10 +2162,7 @@ bool Eval_Core_Throws(Level* const L)
 
   post_switch_shove_gotten:; // assert(!CELL_FLAG_ACTION_QUOTES_FIRST_ARG) pre-goto
 
-    if (
-        (L->flags.bits & DO_FLAG_NO_LOOKAHEAD)
-        and Not_Cell_Flag(L->gotten, ACTION_INVISIBLE)
-    ){
+    if (L->flags.bits & DO_FLAG_NO_LOOKAHEAD) {
         // Don't do infix lookahead if asked *not* to look.  See the
         // PARAMCLASS_TIGHT parameter convention for the use of this, as
         // well as it being set if DO_FLAG_TO_END wants to clear out the

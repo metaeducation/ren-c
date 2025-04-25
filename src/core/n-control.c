@@ -486,22 +486,21 @@ DECLARE_NATIVE(ALL)
     Init_Void(OUT);  // default return result
 
     while (NOT_END(L->value)) {
-        if (Eval_Step_Maybe_Stale_Throws(OUT, L)) {
+        if (Eval_Step_Throws(SET_END(SPARE), L)) {
+            Copy_Cell(OUT, SPARE);
             Abort_Level(L);
             return BOUNCE_THROWN;
         }
 
-        if (
-            not Is_Void(OUT)
-            and IS_FALSEY(OUT)
-        ){ // any false/blank/null will trigger failure
+        if (Is_Void(SPARE))
+            continue;
+
+        if (IS_FALSEY(SPARE)) {  // nulled will trigger failure
             Abort_Level(L);
             return nullptr;
         }
 
-        // consider case of `all [okay elide print "hi"]`
-        //
-        Clear_Cell_Flag(OUT, OUT_MARKED_STALE);
+        Copy_Cell(OUT, SPARE); // successful ALL returns the last truthy value
     }
 
     Drop_Level(L);
@@ -530,22 +529,19 @@ DECLARE_NATIVE(ANY)
     Init_Void(OUT);  // default return result
 
     while (NOT_END(L->value)) {
-        if (Eval_Step_Maybe_Stale_Throws(OUT, L)) {
+        if (Eval_Step_Throws(SET_END(SPARE), L)) {
+            Copy_Cell(OUT, SPARE);
             Abort_Level(L);
             return BOUNCE_THROWN;
         }
 
-        if (
-            not Is_Void(OUT)
-            and IS_TRUTHY(OUT)
-        ){ // successful ANY returns the value
-            Abort_Level(L);
-            return OUT;
-        }
+        if (Is_Void(SPARE))
+            continue;
 
-        // consider case of `any [okay elide print "hi"]`
-        //
-        Clear_Cell_Flag(OUT, OUT_MARKED_STALE);
+        if (IS_TRUTHY(SPARE)) { // successful ANY returns the value
+            Abort_Level(L);
+            return Copy_Cell(OUT, SPARE);
+        }
     }
 
     Drop_Level(L);
@@ -558,8 +554,8 @@ DECLARE_NATIVE(ANY)
 //
 //  {Short circuiting version of NOR, using a block of expressions as input}
 //
-//      return: "NOTHING! if all expressions are falsey, null if any are truthy"
-//          [trash! ~null~]
+//      return: "okay if expressions are null, null if any are not, skip void"
+//          [logic!]
 //      block "Block of expressions."
 //          [block!]
 //  ]
@@ -574,26 +570,23 @@ DECLARE_NATIVE(NONE)
     DECLARE_LEVEL (L);
     Push_Level(L, ARG(BLOCK));
 
-    Init_Nulled(OUT); // default return result
-
     while (NOT_END(L->value)) {
-        if (Eval_Step_Maybe_Stale_Throws(OUT, L)) {
+        if (Eval_Step_Throws(SET_END(SPARE), L)) {
             Abort_Level(L);
             return BOUNCE_THROWN;
         }
 
-        if (IS_TRUTHY(OUT)) { // any true results mean failure
+        if (Is_Void(SPARE))
+            continue;
+
+        if (IS_TRUTHY(SPARE)) { // any true results mean failure
             Abort_Level(L);
             return nullptr;
         }
-
-        // consider case of `none [true elide print "hi"]`
-        //
-        Clear_Cell_Flag(OUT, OUT_MARKED_STALE);
     }
 
     Drop_Level(L);
-    return Init_Trash(OUT);  // truthy, but doesn't suggest LOGIC! on failure
+    return Init_Okay(OUT);
 }
 
 

@@ -721,34 +721,6 @@ INLINE bool Eval_Step_Throws(
 }
 
 
-// Unlike Eval_Step_Throws() which relies on tests of IS_END() on out to
-// see if the end was reached, this expects the caller to preload the output
-// with some value, and then test OUT_MARKED_STALE to see if the only thing
-// run in the frame were invisibles (empty groups, comments) or nothing.
-//
-INLINE bool Eval_Step_Maybe_Stale_Throws(
-    Value* out,
-    Level* L
-){
-    assert(NOT_END(out));
-
-    assert(not (L->flags.bits & (DO_FLAG_TO_END | DO_FLAG_NO_LOOKAHEAD)));
-    uintptr_t prior_flags = L->flags.bits;
-    L->flags.bits |= DO_FLAG_PRESERVE_STALE;
-
-    L->out = out;
-    L->stack_base = TOP_INDEX;
-    bool threw = Eval_Core_Throws(L);  // should already be pushed
-
-    // The & on the following line is purposeful.  See Init_Endlike_Header.
-    // DO_FLAG_NO_LOOKAHEAD may be set by an operation like ELIDE.
-    //
-    (&L->flags)->bits = prior_flags;
-
-    return threw;
-}
-
-
 // Bit heavier wrapper of Eval_Core_Throws() than Eval_Step_In_Level_Throws().
 // It also reuses the frame...but has to clear and restore the frame's
 // flags.  It is currently used only by SET-WORD! and SET-PATH!.

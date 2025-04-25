@@ -15,8 +15,7 @@ REBOL [
 dump: function [
     {Show the name of a value or expressions with the value (See Also: --)}
 
-    return: "Doesn't return anything, not even void (so like a COMMENT)"
-        []
+    return: [~]
     :value [any-element!]
     :extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
         [any-element! <...>]
@@ -151,7 +150,7 @@ dumps: infix function [
         ; have a way to be called--in spirit they are like infix functions,
         ; so SHOVE (->) would be used, but it doesn't work yet...review.)
         ;
-        d: function [return: [] /on /off <static> d'] compose/deep [
+        d: function [return: [~] /on /off <static> d'] compose/deep [
             d': default [
                 d'': specialize 'dump [sigil: (as text! name)]
                 d'' #on
@@ -256,38 +255,6 @@ dump-obj: function [
                     newline
                 ]
             ]
-        ]
-    ]
-]
-
-; Invisible (like a comment) but takes data until end of line -or- end of
-; the input stream:
-;
-;     ** this 'is <commented> [out]
-;     print "This is not"
-;
-;     (** this 'is <commented> [out]) print "This is not"
-;
-;     ** this 'is (<commented>
-;       [out]
-;     ) print "This is not"
-;
-; Notice that if line breaks occur internal to an element on the line, that
-; is detected, and lets that element be the last commented element.
-;
-**: infix function [
-    {Comment until end of line, or end of current BLOCK!/GROUP!}
-
-    return: []
-    left "Enfix required for 'fully invisible' infix behavior (ignored)"
-        [~null~ <end> any-value!]
-    :args [any-element! <...>]
-][
-    while [(not new-line? args) and [value: take args]] [
-        all [
-            any-list? :value
-            contains-newline value
-            return
         ]
     ]
 ]

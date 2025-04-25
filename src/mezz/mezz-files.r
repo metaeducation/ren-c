@@ -253,9 +253,11 @@ in-dir: function [
 
     ; You don't want the block to be done if the change-dir fails, for safety.
 
-    eval block  ; return result
+    result: eval block
 
-    elide (change-dir old-dir)
+    change-dir old-dir
+
+    return :result
 ]
 
 

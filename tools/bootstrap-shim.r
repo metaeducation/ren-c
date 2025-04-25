@@ -438,7 +438,7 @@ opt: func3 [] [fail/blame "Use DEGRADE instead of OPT for bootstrap" 'return]
 ; script and then DO it, so that DO does not receive a FILE!.  But this means
 ; we have to manually update the system/script object.
 ;
-do: enclose :lib/do func3 [f <local> old-system-script] [
+do: enclose :lib/do func3 [f <local> old-system-script result] [
     old-system-script: null
     if tag? :f/source [
         f/source: append copy system/script/path to text! f/source
@@ -453,10 +453,11 @@ do: enclose :lib/do func3 [f <local> old-system-script] [
         ]
         f/source: load f/source  ; avoid dir-changing mechanic of DO FILE!
     ]
-    lib/do f  ; avoid SET/ANY vs SET/OPT problem by using ELIDE
-    elide if old-system-script[
+    result: lib/do f
+    if old-system-script[
         system/script: old-system-script
     ]
+    return :result
 ]
 load: func3 [source /all /header] [  ; can't ENCLOSE, does not take TAG!
     if tag? source [

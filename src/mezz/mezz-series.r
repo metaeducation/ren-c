@@ -473,8 +473,8 @@ collect-with: func [
             if void? :f/value [return null] ;-- doesn't "count" as collected
 
             f/series: out: default [make block! 16] ;-- won't return null now
-            :f/value ;-- ELIDE leaves as result (F/VALUE invalid after DO F)
-            elide eval f
+            eval copy f
+            return f/value
         ]
     )[
         series: <replaced>

@@ -264,10 +264,8 @@ void Do_Process_Action_Checks_Debug(Level* L) {
         );
     }
 
-    if (L->refine == ORDINARY_ARG) {
-        if (Not_Cell_Flag(L->out, OUT_MARKED_STALE))
-            assert(GET_ACT_FLAG(phase, ACTION_INVISIBLE));
-    }
+    if (L->refine == ORDINARY_ARG)
+        assert(Get_Cell_Flag(L->out, OUT_MARKED_STALE));
     else
         assert(L->refine == LOOKBACK_ARG);
 }
@@ -299,13 +297,7 @@ void Do_After_Action_Checks_Debug(Level* L) {
     if (GET_ACT_FLAG(phase, ACTION_RETURN)) {
         Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
         assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
-        if (
-            not Typeset_Check(typeset, Type_Of(L->out))
-            and not (
-                GET_ACT_FLAG(phase, ACTION_INVISIBLE)
-                and Is_Nulled(L->out) // this happens with `eval [return]`
-            )
-        ){
+        if (not Typeset_Check(typeset, Type_Of(L->out))) {
             printf("Native code violated return type contract!\n");
             panic (Error_Bad_Return_Type(L, Type_Of(L->out)));
         }

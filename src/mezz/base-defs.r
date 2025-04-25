@@ -51,42 +51,33 @@ probe: func [
 
 
 ; Common "Invisibles"
+;
+; The mechanic by which invisibility was implemented in this bootstrap EXE
+; initially was very complex, and had no bearing on invisibility as it is
+; implemented in the new executable.  Given that the bootstrap EXE is only
+; used for building the modern EXE, simplicity and fewer bugs is better.
+; This just returns VOID, which is good enough to opt out of ANY and ALL.
 
-comment: infix func [
+comment: func [
     {Ignores the argument value, but does no evaluation (see also ELIDE).}
 
-    return: []
+    return: [~void~]
         {The evaluator will skip over the result (not seen, not even void)}
-    #returned [~null~ <end> any-value!]
-        {The returned value.} ;-- by protocol of infixed `return: []`
     :discarded [block! any-string! binary! any-scalar!]
         "Literal value to be ignored." ;-- `comment print "hi"` disallowed
 ][
+    return void
 ]
 
 elide: func [
     {Argument is evaluative, but discarded (see also COMMENT).}
 
-    return: []
+    return: [~void~]
         {The evaluator will skip over the result (not seen, not even void)}
     discarded [any-value!]
         {Evaluated value to be ignored.}
 ][
-]
-
-nihil: infix func [
-    {Arity-0 form of COMMENT}
-    return: [] {Evaluator will skip result}
-][
-]
-
-end: func [
-    {Inertly consumes all subsequent data, evaluating to previous result.}
-
-    return: []
-    :omit [any-element! <...>]
-][
-    until [null? take omit]
+    return void
 ]
 
 

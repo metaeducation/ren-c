@@ -159,13 +159,3 @@ my: infix func [
 set (r3-alpha-quote "->") infix :arrow
 set (r3-alpha-quote "<-") :identity  ; Note: NOT INFIX
 set (r3-alpha-quote ">-") infix :shove
-
-
-; These constructs used to be infix to complete their left hand side.  Yet
-; that form of completion was only one expression's worth, when they wanted
-; to allow longer runs of evaluation.  "Invisible functions" (those which
-; `return: []`) permit a more flexible version of the mechanic.
-
-set (r3-alpha-quote "<|") :invisible-eval-all
-set (r3-alpha-quote "|>") :right-bar
-||: :once-bar

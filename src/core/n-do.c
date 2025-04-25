@@ -579,30 +579,6 @@ DECLARE_NATIVE(EVALUATE)
 
 
 //
-//  sync-invisibles: native [
-//
-//  {If an evaluatable source has pending invisibles, execute and advance}
-//
-//      return: [~null~ block! group! varargs!]
-//      source [block! group!]
-//  ]
-//
-DECLARE_NATIVE(SYNC_INVISIBLES)
-{
-    INCLUDE_PARAMS_OF_SYNC_INVISIBLES;
-
-    // !!! This hasn't been implemented yet.  It is probably best done as
-    // an adaptation of Eval_Core_Throws() with some kind of mode flag, and
-    // would take some redesign to do efficiently.
-
-    if (Cell_Series_Len_At(ARG(SOURCE)) == 0)
-        return nullptr;
-
-    RETURN (ARG(SOURCE));
-}
-
-
-//
 //  applique: native [
 //
 //  {Invoke an ACTION! with all required arguments specified}

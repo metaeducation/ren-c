@@ -461,10 +461,10 @@ Bounce Process_Group_For_Parse(
         P_POS = Flex_Len(P_INPUT);
 
     if (not Is_Doubled_Group(group))  // non-doubled groups always discard
-        return BOUNCE_INVISIBLE;
+        return Init_Void(cell);
 
     if (Is_Void(cell))  // even for doubled groups, void evals are discarded
-        return BOUNCE_INVISIBLE;
+        return cell;
 
     if (Is_Trash(cell))
         fail ("Doubled GROUP! eval returned TRASH!");
@@ -514,7 +514,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             Copy_Cell(P_OUT, P_CELL);
             return THROWN_FLAG;
         }
-        if (rule == BOUNCE_INVISIBLE) {
+        if (Is_Void(rule)) {
             assert(P_POS <= Flex_Len(P_INPUT)); // !!! Process_Group ensures
             return P_POS;
         }
@@ -675,7 +675,7 @@ static REBIXO Parse_Array_One_Rule_Core(
             Copy_Cell(P_OUT, P_CELL);
             return THROWN_FLAG;
         }
-        if (rule == BOUNCE_INVISIBLE) {
+        if (Is_Void(rule)) {
             assert(pos <= Array_Len(array)); // !!! Process_Group ensures
             return pos;
         }
@@ -1180,7 +1180,7 @@ DECLARE_NATIVE(SUBPARSE)
                 Copy_Cell(P_OUT, save);
                 return BOUNCE_THROWN;
             }
-            if (rule == BOUNCE_INVISIBLE) { // was a (...), or null-bearing ((...))
+            if (Is_Void(rule)) { // was a (...), or null-bearing ((...))
                 FETCH_NEXT_RULE(L); // ignore result and go on to next rule
                 continue;
             }

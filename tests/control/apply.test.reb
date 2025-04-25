@@ -21,13 +21,13 @@
     params: words of :action
     using-args: okay
 
-    while [block: sync-invisibles block] [
-        block: degrade if only [
+    while [not tail? block] [
+        block: unmeta (if only [
             arg: block/1
-            reify next block
+            meta next block
         ] else [
-            reify evaluate/step3 block the arg:
-        ]
+            meta evaluate/step3 block the arg:
+        ])
 
         if refinement? first maybe params [
             using-args: did set (in frame params/1) get/any 'arg
@@ -51,7 +51,7 @@
         ]
     ]
 
-    eval frame  comment {nulls are optionals}
+    return eval frame  ; nulls are optionals
 ])
 
 [#44 (

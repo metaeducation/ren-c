@@ -444,7 +444,6 @@ ext-console-impl: function [
                 state
             ]
             datatype! [ ;-- type assertion, how to enforce this?
-                emit spaced ["^-- Result should be" an state]
                 instruction
             ]
             group! [ ;-- means "submit user code"

@@ -819,11 +819,6 @@ REBACT *Make_Action(
 
         case PARAMCLASS_RETURN: {
             assert(Cell_Parameter_Id(param) == SYM_RETURN);
-
-            // See notes on CELL_FLAG_ACTION_INVISIBLE.
-            //
-            if (Cell_Typeset_Bits(param) == 0)
-                Set_Cell_Flag(rootparam, ACTION_INVISIBLE);
             break; }
 
         case PARAMCLASS_REFINEMENT:
@@ -1172,10 +1167,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     Array* copy;
     if (VAL_ARRAY_LEN_AT(code) == 0) { // optimize empty body case
 
-        if (Get_Cell_Flag(value, ACTION_INVISIBLE)) {
-            ACT_DISPATCHER(a) = &Commenter_Dispatcher;
-        }
-        else if (Get_Cell_Flag(value, ACTION_TRASHER)) {
+        if (Get_Cell_Flag(value, ACTION_TRASHER)) {
             ACT_DISPATCHER(a) = &Eraser_Dispatcher;
         }
         else if (Get_Cell_Flag(value, ACTION_RETURN)) {
@@ -1193,10 +1185,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         copy = Make_Array_Core(1, NODE_FLAG_MANAGED);
     }
     else { // body not empty, pick dispatcher based on output disposition
-
-        if (Get_Cell_Flag(value, ACTION_INVISIBLE))
-            ACT_DISPATCHER(a) = &Elider_Dispatcher; // no L->out mutation
-        else if (Get_Cell_Flag(value, ACTION_TRASHER))
+        if (Get_Cell_Flag(value, ACTION_TRASHER))
             ACT_DISPATCHER(a) = &Eraser_Dispatcher; // forces L->out trash
         else if (Get_Cell_Flag(value, ACTION_RETURN))
             ACT_DISPATCHER(a) = &Returner_Dispatcher; // type checks L->out
@@ -1441,52 +1430,6 @@ Bounce Returner_Dispatcher(Level* L)
         fail (Error_Bad_Return_Type(L, Type_Of(L->out)));
 
     return L->out;
-}
-
-
-//
-//  Elider_Dispatcher: C
-//
-// This is used by "invisible" functions (who in their spec say `return: []`).
-// The goal is to evaluate a function call in such a way that its presence
-// doesn't disrupt the chain of evaluation any more than if the call were not
-// there.  (The call can have side effects, however.)
-//
-Bounce Elider_Dispatcher(Level* L)
-{
-    Array* details = ACT_DETAILS(Level_Phase(L));
-
-    Cell* body = Array_Head(details);
-    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
-
-    // !!! It would be nice to use the frame's spare "cell" for the thrownaway
-    // result, but Fetch_Next code expects to use the cell.
-    //
-    DECLARE_VALUE (dummy);
-    SET_END(dummy);
-
-    if (Eval_Array_At_Throws(dummy, Cell_Array(body), 0, SPC(L->varlist))) {
-        Copy_Cell(L->out, dummy); // can't return a local variable
-        return BOUNCE_THROWN;
-    }
-
-    return BOUNCE_INVISIBLE;
-}
-
-
-//
-//  Commenter_Dispatcher: C
-//
-// This is a specialized version of Elider_Dispatcher() for when the body of
-// a function is empty.  This helps COMMENT and functions like it run faster.
-//
-Bounce Commenter_Dispatcher(Level* L)
-{
-    Array* details = ACT_DETAILS(Level_Phase(L));
-    Cell* body = Array_Head(details);
-    assert(Cell_Series_Len_At(body) == 0);
-    UNUSED(body);
-    return BOUNCE_INVISIBLE;
 }
 
 
