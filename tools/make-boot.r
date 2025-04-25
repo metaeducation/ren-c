@@ -252,7 +252,7 @@ for-each 'name native-names [
     if not pos [  ; not a duplicate
         continue
     ]
-    if find <MIN_SYM_NATIVE> pos [
+    if not find pos <MIN_SYM_NATIVE> [
         fail ["Native name collision found:" name]
     ]
 ]
@@ -271,11 +271,13 @@ add-sym:placeholder </MAX_SYM_LIB_PREMADE>
 add-sym:placeholder <MIN_SYM_BUILTIN_TYPES>
 
 for-each [name byte] name-to-typeset-byte [
-    if find as text! name "any" [
-        break  ; done with just the datatypes
-    ]
-    if name = '~ [
-        name: unspaced ["antiform-" byte]
+    case [
+        name = '~ [
+            name: unspaced ["antiform-" byte]
+        ]
+        find as text! name "any" [
+            break  ; done with just the datatypes
+        ]
     ]
     add-sym unspaced [name "!"]  ; integer! holds ~{integer}~
 ]
@@ -787,7 +789,7 @@ nats: collect [
 
 symbol-strings: join blob! collect [
     for-each 'name sym-table [
-        let utf-8: to blob! name
+        let utf-8: as blob! name  ; Note: frees string in bootstrap exe
         keep encode [BE + 1] length of utf-8  ; one byte length max
         keep utf-8
     ]
