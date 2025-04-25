@@ -77,4 +77,3 @@
 )]
 
 (binary? read http://example.com)
-(binary? read https://example.com)

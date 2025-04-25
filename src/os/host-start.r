@@ -25,7 +25,7 @@ REBOL [
     }
 ]
 
-; These used to be loaded by the core, but prot-tls depends on crypt, thus it
+; These used to be loaded by the core, but prot-tls depended on crypt, thus it
 ; needs to be loaded after crypt. It was not an issue when crypt was builtin.
 ; But when it's converted to a module, it breaks the dependency of prot-tls.
 ;

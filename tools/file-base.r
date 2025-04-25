@@ -301,7 +301,6 @@ mezz-files: [
 ]
 
 prot-files: [
-    %prot-tls.r
     %prot-http.r
 ]
 

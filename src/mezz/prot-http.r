@@ -812,11 +812,3 @@ sys/util/make-scheme [
         ]
     ]
 ]
-
-sys/util/make-scheme/with [
-    name: 'https
-    title: "Secure HyperText Transport Protocol v1.1"
-    spec: make spec [
-        port-id: 443
-    ]
-] 'http
