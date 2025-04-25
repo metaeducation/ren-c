@@ -149,19 +149,23 @@ standard: construct [
     ; to find #BODY, just asserts the position is an ISSUE!.
 
     func-body: [
-        return: make action! [
-            [{Returns a value from an action} value [<end> any-value!]]
-            [unwind/with (binding of 'return) either end? 'value [] [:value]]
-        ] #BODY
+        return: lambda [
+            {Returns a value from an action} value [<end> any-value!]
+        ][
+            unwind/with (binding of 'return) either end? 'value [] [:value]
+        ]
+        #BODY
     ]
 
     proc-return-type: [trash!]
 
     proc-body: [
-        return: make action! [
-            [{Returns a value from an action} value [<end> any-value!]]
-            [unwind/with (binding of 'return) either end? 'value [] [:value]]
-        ] #BODY
+        return: lambda [
+            {Returns a value from an action} value [<end> any-value!]
+        ][
+            unwind/with (binding of 'return) either end? 'value [] [:value]
+        ]
+        #BODY
         void
     ]
 

@@ -137,7 +137,7 @@ enum Reb_Spec_Mode {
 //     [foo {doc string1 :-/} {doc string2 :-(} [type!]]
 //
 // Ren-C breaks this into two parts: one is the mechanical understanding of
-// MAKE ACTION! for parameters in the evaluator.  Then it is the job
+// the LAMBDA function for parameters in the evaluator.  Then it is the job
 // of a generator to tag the resulting function with a "meta object" with any
 // descriptions.  As a proxy for the work of a usermode generator, this
 // routine tries to fill in FUNCTION-META (see %sysobj.r) as well as to
@@ -594,6 +594,9 @@ Array* Make_Paramlist_Managed_May_Fail(
                 //
             }
             else {
+                if (not (flags & MKF_RETURN))
+                    fail ("LAMBDA does not have RETURN: in its spec");
+
                 assert(flags & MKF_RETURN);
                 Copy_Cell(dest, definitional_return);
                 ++dest;
@@ -1153,37 +1156,38 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 //
 //  Make_Interpreted_Action_May_Fail: C
 //
-// This is the support routine behind both `MAKE ACTION!` and FUNC.
+// This is the support routine behind both LAMBDA and FUNC.
 //
 // Ren-C's schematic is *very* different from R3-Alpha, whose definition of
 // FUNC was simply:
 //
 //     make function! copy/deep reduce [spec body]
 //
-// Ren-C's `make action!` doesn't need to copy the spec (it does not save
-// it--parameter descriptions are in a meta object).  The body is copied
-// implicitly (as it must be in order to relativize it).
+// Ren-C's doesn't need to copy the spec (it does not save it--parameter
+// descriptions are in a meta object).  The body is copied implicitly (as it
+// must be in order to relativize it).
 //
 // There is also a "definitional return" MKF_RETURN option used by FUNC, so
 // the body will introduce a RETURN specific to each action invocation, thus
 // acting more like:
 //
-//     return: make action! [
-//         [{Returns a value from a function.} value [any-value!]]
-//         [unwind/with (binding of 'return) :value]
+//     return: lambda [
+//         {Returns a value from a function.} value [any-value!]
+//     ][
+//         unwind/with (binding of 'return) :value
 //     ]
 //     (body goes here)
 //
 // This pattern addresses "Definitional Return" in a way that does not need to
 // build in RETURN as a language keyword in any specific form (in the sense
-// that MAKE ACTION! does not itself require it).
+// that LAMBDA does not itself require it).
 //
 // FUNC optimizes by not internally building or executing the equivalent body,
 // but giving it back from BODY-OF.  This gives FUNC the edge to pretend to
 // add containing code and simulate its effects, while really only holding
 // onto the body the caller provided.
 //
-// While plain MAKE ACTION! has no RETURN, UNWIND can be used to exit frames
+// While plain LAMBDA has no RETURN, UNWIND can be used to exit frames
 // but must be explicit about what frame is being exited.  This can be used
 // by usermode generators that want to create something return-like.
 //
@@ -1414,7 +1418,7 @@ Bounce Typeset_Checker_Dispatcher(Level* L)
 //
 //  Unchecked_Dispatcher: C
 //
-// This is the default MAKE ACTION! dispatcher for interpreted functions
+// This is the default action dispatcher for interpreted functions
 // (whose body is a block that runs through DO []).  There is no return type
 // checking done on these simple functions.
 //

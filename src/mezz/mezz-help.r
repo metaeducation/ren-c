@@ -343,7 +343,7 @@ help: function [
 
     ; For reporting what *kind* of action this is, don't dig at all--just
     ; look at the meta information of the action being asked about.  Note that
-    ; not all actions have META-OF (e.g. those from MAKE ACTION!, or FUNC
+    ; not all actions have META-OF (e.g. those from LAMBDA or FUNC
     ; when there was no type annotations or description information.)
     ;
     meta: meta-of :value
@@ -351,7 +351,7 @@ help: function [
     original-name: (ensure [~null~ word!] any [
         select maybe meta 'specializee-name
         select maybe meta 'adaptee-name
-    ]) also lambda name [
+    ]) also arrow name [
         uppercase mold name
     ]
 
@@ -482,7 +482,7 @@ source: function [
     ;; from combining the the META-OF information.
 
     write-stdout unspaced [
-        mold name ":" space "make action! [" space mold spec-of :f
+        mold name ":" space "lambda" space mold spec-of :f
     ]
 
     ; While all interfaces as far as invocation is concerned has been unified
@@ -492,11 +492,11 @@ source: function [
     ;
     switch type of (body: body of :f) [
         block! [ ;-- FUNC, FUNCTION, PROC, PROCEDURE or (DOES of a BLOCK!)
-            print [mold body "]"]
+            print [mold body]
         ]
 
         frame! [ ;-- SPECIALIZE (or DOES of an ACTION!)
-            print [mold body "]"]
+            print [mold body]
         ]
     ] else [
         print "...native code, no source available..."

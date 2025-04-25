@@ -153,10 +153,10 @@ my: infix func [
 ]
 
 
-; Lambdas are experimental quick function generators via a symbol.  The
+; Arrows are experimental quick function generators via a symbol.  The
 ; identity is used to shake up infix ordering.
 ;
-set (r3-alpha-quote "->") infix :lambda
+set (r3-alpha-quote "->") infix :arrow
 set (r3-alpha-quote "<-") :identity  ; Note: NOT INFIX
 set (r3-alpha-quote ">-") infix :shove
 

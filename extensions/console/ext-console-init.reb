@@ -298,7 +298,7 @@ start-console: function [
             proto-skin/name: default ["loaded"]
             append o/loaded skin-file
 
-        ] then lambda e [
+        ] then arrow e [
             skin-error: e       ;; show error later if --verbose
             proto-skin/name: "error"
         ]
@@ -656,7 +656,7 @@ ext-console-impl: function [
         code: load/all delimit newline result
         assert [block? code]
 
-    ] then lambda error [
+    ] then arrow error [
         ;
         ; If loading the string gave back an error, check to see if it
         ; was the kind of error that comes from having partial input
@@ -673,7 +673,7 @@ ext-console-impl: function [
                 "}" ["{"]
                 ")" ["("]
                 "]" ["["]
-            ] also lambda unclosed [
+            ] also arrow unclosed [
                 ;
                 ; Backslash is used in the second column to help make a
                 ; pattern that isn't legal in Rebol code, which is also

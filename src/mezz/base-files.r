@@ -144,7 +144,7 @@ make-dir: func [
     for-each dir dirs [
         path: either empty? path [dir][path/(dir)]
         append path slash
-        sys/util/rescue [make-dir path] then lambda e [
+        sys/util/rescue [make-dir path] then arrow e [
             for-each dir created [
                 sys/util/rescue [delete dir]
             ]

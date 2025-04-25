@@ -355,7 +355,7 @@ enum {
     MKF_FAKE_RETURN = 1 << 2    // has RETURN label for HELP, but not in frame
 };
 
-#define MKF_MASK_NONE 0 // no special handling (e.g. MAKE ACTION!)
+#define MKF_MASK_NONE 0  // no special handling
 
 // Mathematical set operations for UNION, INTERSECT, DIFFERENCE
 enum {

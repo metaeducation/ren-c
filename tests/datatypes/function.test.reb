@@ -5,7 +5,6 @@
 ; minimum
 (action? does [])
 ; literal form
-(action? first [#[action! [[] []]]])
 ; return-less return value tests
 (
     f: does []
@@ -350,8 +349,8 @@
     y: ~
 
     body: [x + y]
-    f: make action! reduce [[x] body]
-    g: make action! reduce [[y] body]
+    f: lambda [x] body
+    g: lambda [y] body
     error? sys/util/rescue [f 1]
 )]
 [#2044 (

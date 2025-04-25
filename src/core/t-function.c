@@ -63,45 +63,16 @@ REBINT CT_Action(const Cell* a1, const Cell* a2, REBINT mode)
 //
 //  MAKE_Action: C
 //
-// For TYPE_ACTION and "make spec", there is a function spec block and then
-// a block of Rebol code implementing that function.  In that case we expect
-// that `def` should be:
-//
-//     [[spec] [body]]
+// MAKE ACTION! is replaced by LAMBDA and FUNC(TION).
+// FUNCTION is a synonym for FUNC in in the main branch.
 //
 Bounce MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == TYPE_ACTION);
     UNUSED(kind);
+    UNUSED(out);
 
-    if (
-        not Is_Block(arg)
-        or Cell_Series_Len_At(arg) != 2
-        or not Is_Block(Cell_List_At(arg))
-        or not Is_Block(Cell_List_At(arg) + 1)
-    ){
-        fail (Error_Bad_Make(TYPE_ACTION, arg));
-    }
-
-    DECLARE_VALUE (spec);
-    Derelativize(spec, Cell_List_At(arg), VAL_SPECIFIER(arg));
-
-    DECLARE_VALUE (body);
-    Derelativize(body, Cell_List_At(arg) + 1, VAL_SPECIFIER(arg));
-
-    // Spec-constructed functions do *not* have definitional returns
-    // added automatically.  They are part of the generators.  So the
-    // behavior comes--as with any other generator--from the projected
-    // code (though round-tripping it via text is not possible in
-    // general in any case due to loss of bindings.)
-    //
-    REBACT *act = Make_Interpreted_Action_May_Fail(
-        spec,
-        body,
-        0
-    );
-
-    return Init_Action_Unbound(out, act);
+    fail (Error_Bad_Make(TYPE_ACTION, arg));
 }
 
 

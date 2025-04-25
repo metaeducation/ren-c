@@ -1163,10 +1163,10 @@ bool Eval_Core_Throws(Level* const L)
 
     //=//// VARIADIC ARG (doesn't consume anything *yet*) /////////////////=//
 
-            // Evaluation argument "hook" parameters (marked in MAKE ACTION!
-            // by a `[[]]` in the spec, and in FUNC by `<...>`).  They point
-            // back to this call through a reified FRAME!, and are able to
-            // consume additional arguments during the function run.
+            // Evaluation argument "hook" parameters (marked in the spec
+            // as `<...>`).  They point back to this call through a reified
+            // FRAME!, and are able to consume additional arguments during
+            // the function run.
             //
             if (Is_Param_Variadic(L->param)) {
                 RESET_CELL(L->arg, TYPE_VARARGS);

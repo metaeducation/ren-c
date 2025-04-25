@@ -39,7 +39,7 @@
 //
 //  func: native [
 //
-//  "Defines an ACTION! with given spec and body"
+//  "Defines an ACTION! with given spec and body, and a definitional RETURN"
 //
 //      return: [action!]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
@@ -56,6 +56,32 @@ DECLARE_NATIVE(FUNC)
         ARG(SPEC),
         ARG(BODY),
         MKF_RETURN | MKF_KEYWORDS
+    );
+
+    return Init_Action_Unbound(OUT, func);
+}
+
+
+//
+//  lambda: native [
+//
+//  "Defines an ACTION! with given spec and body, return result is final value"
+//
+//      return: [action!]
+//      spec "Help string (opt) followed by arg words (and opt type + string)"
+//          [block!]
+//      body "Code implementing the function--use RETURN to yield a result"
+//          [block!]
+//  ]
+//
+DECLARE_NATIVE(LAMBDA)
+{
+    INCLUDE_PARAMS_OF_LAMBDA;
+
+    REBACT *func = Make_Interpreted_Action_May_Fail(
+        ARG(SPEC),
+        ARG(BODY),
+        MKF_KEYWORDS
     );
 
     return Init_Action_Unbound(OUT, func);

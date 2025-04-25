@@ -179,13 +179,7 @@ bool Update_Typeset_Bits_Core(
         else
             item = maybe_word; // wasn't variable
 
-        // Though MAKE ACTION! at its lowest level attempts to avoid any
-        // keywords, there are native-optimized function generators that do
-        // use them.  Since this code is shared by both, it may or may not
-        // set typeset flags as a parameter.  Default to always for now.
-        //
-        const bool keywords = true;
-        if (keywords and Is_Tag(item)) {
+        if (Is_Tag(item)) {
             if (0 == Compare_String_Vals(item, Root_Ellipsis_Tag, true)) {
                 Set_Typeset_Flag(typeset, TYPE_TS_VARIADIC);
             }

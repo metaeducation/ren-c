@@ -525,7 +525,7 @@ iterate-skip: redescribe [
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
-            sys/util/rescue [set the result: eval f] then lambda e [
+            sys/util/rescue [set the result: eval f] then arrow e [
                 set word saved
                 fail e
             ]
@@ -612,27 +612,21 @@ arity-of: function [
 ]
 
 
-;-- -> cannot be loaded by R3-Alpha, or even earlier Ren-C
-;
-lambda: function [
-    {Convenience variadic wrapper for MAKE ACTION!}
+arrow: lambda [
+    {Convenience variadic wrapper for LAMBDA (infix'd as ->)}
 
-    return: [action!]
     :args [<end> word! block!]
         {Block of argument words, or a single word (if only one argument)}
     :body [any-element! <...>]
         {Block that serves as the body or variadic elements for the body}
 ][
-    make action! compose/deep [
-        [(:args then [to block! args])]
-        [(
-            if block? first body [
-                take body
-            ] else [
-                make block! body
-            ]
-        )]
-    ]
+    lambda (either :args [to block! args] [[]]) (
+        if block? first body [
+            take body
+        ] else [
+            make block! body
+        ]
+    )
 ]
 
 find-reverse: specialize :find [
