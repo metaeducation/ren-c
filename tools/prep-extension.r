@@ -450,9 +450,9 @@ for-each 'symbol maybe try ext-header.extended-types [
     if #"!" <> take:last stem [
         fail ["Extended-Types entries must end in '!':" mold symbol]
     ]
-    let Is_Xxx: propercase join "is_" stem
+    let is_xxx: propercase join "is_" stem
 
-    append type-forward-decls cscape [Is_Xxx --{
+    append type-forward-decls cscape [is_xxx --{
         extern RebolValue* DATATYPE_HOLDER(${Is_Xxx});
 
         #define EXTRA_HEART_$<STEM> \
@@ -469,15 +469,15 @@ for-each 'symbol maybe try ext-header.extended-types [
         }
     }--]
 
-    append type-globals cscape [Is_Xxx --{
+    append type-globals cscape [is_xxx --{
         RebolValue* DATATYPE_HOLDER(${Is_Xxx}) = nullptr;
     }--]
 
-    append startup-hooks cscape [Is_Xxx symbol --{
+    append startup-hooks cscape [is_xxx symbol --{
         DATATYPE_HOLDER(${Is_Xxx}) = Register_Datatype("$<symbol>");
     }--]
 
-    insert shutdown-hooks cscape [Is_Xxx --{
+    insert shutdown-hooks cscape [is_xxx --{
         Unregister_Datatype(DATATYPE_HOLDER(${Is_Xxx}));
     }--]
 ]
