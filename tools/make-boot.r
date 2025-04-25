@@ -538,7 +538,7 @@ for-each 'section [boot-constants boot-base boot-system-util boot-mezz] [
     let s: make text! 20000
     append:line s "["
     for-each 'file first mezz-files [  ; doesn't use LOAD to strip
-        text: stripload:gather (
+        let text: stripload:gather (
             join %../mezz/ file
         ) if section = 'boot-system-util [$sys-toplevel]
         append:line s text

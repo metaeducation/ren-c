@@ -328,7 +328,7 @@ for-each 'n-info natives [
     if n-info.native-type != 'generic [continue]
 
     let entries: collect [
-        last-byte: null
+        let last-byte: null
         for-each 'g-info generics [
             assert [text? g-info.name, text? n-info.name]
 

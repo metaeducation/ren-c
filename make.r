@@ -1695,7 +1695,7 @@ for-each 'ext extensions [
         ]
 
         includes: collect [
-            for-each inc maybe ext.includes [
+            for-each 'inc maybe ext.includes [
                 ensure file! inc
                 if inc.1 = #"/" [  ; absolute path
                     keep inc

@@ -31,7 +31,7 @@ import <parsing-tools.reb>
 load-until-double-newline: func [
     "Load rebol values from text until double newline."
     text [text!]
-    <local> position  ; no LET in parse :-/
+    <local> position  ; no LET in parse3 :-/
 ][
     let wsp: compose [some (charset -{ ^-}-)]
 

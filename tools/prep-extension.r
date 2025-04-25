@@ -637,7 +637,7 @@ if not empty? generics [
         }--]
     ]
 
-    table-items: collect [
+    let table-items: collect [
         for-each 'info generics [
             let table: cscape [info
                 "&GENERIC_TABLE(${INFO.NAME})"
