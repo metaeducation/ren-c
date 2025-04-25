@@ -226,7 +226,9 @@ INLINE bool Builtin_Typeset_Check(
         Byte end = FOURTH_BYTE(&typeset);
         return start <= u_cast(Byte, type) and u_cast(Byte, type) <= end;
     }
-    else {  // just a typeset flag
-        return did (g_sparse_memberships[u_cast(Byte, type)] & typeset);
-    }
+
+    if (u_cast(Byte, type) > MAX_TYPE_BYTE_ELEMENT)
+        return false;  // antiform, no sparse_memberships (only ranged)
+
+    return did (g_sparse_memberships[u_cast(Byte, type)] & typeset);
 }
