@@ -648,7 +648,7 @@ cc: make compiler-class [
             ]
 
             for-each 'dep depends [
-                keep maybe accept dep
+                keep maybe .accept dep
             ]
         ]
     ]
@@ -903,7 +903,7 @@ cl: make compiler-class [
             ]
 
             for-each 'dep depends [
-                keep maybe accept dep
+                keep maybe .accept dep
             ]
 
             ; /link must precede linker-specific options

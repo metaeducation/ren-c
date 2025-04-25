@@ -1410,12 +1410,12 @@ libr3-core: make rebmake.object-library-class [
 main: make libr3-core [
     name: 'main
 
-    .definitions: append copy ["REB_CORE"] spread app-config.definitions
+    definitions: append copy ["REB_CORE"] spread app-config.definitions
 
     ; The generator may modify these.
     ;
-    .includes: append copy app-config.includes %prep/main
-    .cflags: copy app-config.cflags
+    includes: append copy app-config.includes %prep/main
+    cflags: copy app-config.cflags
 
     depends: reduce [
         either user-config.main [
