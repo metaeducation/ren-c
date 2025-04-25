@@ -52,7 +52,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
     Length b_len = b_tail - b_item;
 
     if (a_len != b_len)
-        return LOGIC(a_index == b_index);
+        return LOGIC(false);
 
     for (; a_item != a_tail; ++a_item, ++b_item) {
         if (not Equal_Values(a_item, b_item, strict))
