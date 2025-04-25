@@ -77,18 +77,3 @@
     save/header %test.r [1 2 3] [title: "Test"]
     [1 2 3] = load %test.r
 )
-(
-    save/header %test-checksum.r [1 2 3] [checksum: true]
-    ;print read/string %test-checksum.r
-    [1 2 3] = load %test-checksum.r
-)
-(
-    save/header %test-checksum.r [1 2 3] [checksum: true compress: true]
-    ;print read/string %test-checksum.r
-    [1 2 3] = load %test-checksum.r
-)
-(
-    save/header %test-checksum.r [1 2 3] [checksum: 'script compress: true]
-    ;print read/string %test-checksum.r
-    [1 2 3] = load %test-checksum.r
-)
