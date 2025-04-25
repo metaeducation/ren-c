@@ -39,7 +39,7 @@
 //
 //  "Converts a value to a human-readable string."
 //
-//      value [any-value!]
+//      value [any-element!]
 //          "The value to form"
 //  ]
 //
@@ -57,7 +57,7 @@ DECLARE_NATIVE(FORM)
 //  "Converts a value to a REBOL-readable string."
 //
 //      value "The value to mold"
-//          [any-value!]
+//          [any-element!]
 //      /only "For a block value, mold only its contents, no outer []"
 //      /flat "No indentation"
 //      /limit "Limit to a certain length"

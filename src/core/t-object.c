@@ -602,9 +602,13 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
         Value* var = Varlist_Slots_Head(c);
         bool had_output = false;
         for (; NOT_END(key); key++, var++) {
+            DECLARE_VALUE (reified);
+            Copy_Cell(reified, var);
+            if (Is_Antiform(var))
+                Meta_Quotify(reified);
             if (not Is_Param_Hidden(key)) {
                 had_output = true;
-                Emit(mo, "N: V\n", Key_Symbol(key), var);
+                Emit(mo, "N: V\n", Key_Symbol(key), reified);
             }
         }
 
@@ -657,20 +661,11 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
 
         Append_Unencoded(out, ": ");
 
-        if (Is_Antiform(var)) {
-            if (Is_Nulled(var))
-                Append_Unencoded(out, "~null~");
-            else if (Is_Okay(var))
-                Append_Unencoded(out, "~okay~");
-            else if (Is_Void(var))
-                Append_Unencoded(out, "~void~");
-            else {
-                assert(Is_Trash(var));
-                Append_Unencoded(out, "~");
-            }
-        }
-        else
-            Mold_Value(mo, var);
+        DECLARE_VALUE (reified);
+        Copy_Cell(reified, var);
+        if (Is_Antiform(var))
+            Meta_Quotify(reified);
+        Mold_Value(mo, reified);
     }
 
     mo->indent--;

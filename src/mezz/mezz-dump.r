@@ -204,7 +204,7 @@ dump-obj: function [
         if object? :val [val: words of val]
         if typeset? :val [val: make block! val]
         if port? :val [val: reduce [val/spec/title val/spec/ref]]
-        clip-str mold :val
+        clip-str mold reify :val
     ]
 
     form-pad: func [val size] [
@@ -249,7 +249,7 @@ dump-obj: function [
             ][
                 str: form-pad word 15
                 append str #" "
-                append str form-pad type 10 - ((length of str) - 15)
+                append str form-pad reify type 10 - ((length of str) - 15)
                 keep spaced [
                     "  " str
                     if type [form-val :val]

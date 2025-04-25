@@ -860,13 +860,13 @@ write-stdout "Sanity checking on app config.."
 ; !!! TBD: checks
 print "..Good"
 
-print ["definitions:" mold app-config/definitions]
-print ["includes:" mold app-config/includes]
-print ["libraries:" mold app-config/libraries]
-print ["cflags:" mold app-config/cflags]
-print ["ldflags:" mold app-config/ldflags]
-print ["debug:" mold app-config/debug]
-print ["optimization:" mold app-config/optimization]
+print ["definitions:" mold reify app-config/definitions]
+print ["includes:" mold reify app-config/includes]
+print ["libraries:" mold reify app-config/libraries]
+print ["cflags:" mold reify app-config/cflags]
+print ["ldflags:" mold reify app-config/ldflags]
+print ["debug:" mold reify app-config/debug]
+print ["optimization:" mold reify app-config/optimization]
 
 append app-config/definitions reduce [
     unspaced ["TO_" uppercase to-text system-config/os-base]
