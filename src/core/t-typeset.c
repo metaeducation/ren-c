@@ -97,7 +97,7 @@ void Startup_Typesets(void)
         Init_Typeset(PUSH(), Typesets[n].bits, nullptr);
 
         Copy_Cell(
-            Append_Context(Lib_Context, nullptr, Canon(Typesets[n].sym)),
+            Append_Context(Lib_Context, nullptr, Canon_From_Id(Typesets[n].sym)),
             TOP
         );
     }
@@ -257,10 +257,10 @@ Array* Typeset_To_Array(const Value* tset)
     for (n = 1; n < TYPE_NULLED; ++n) {
         if (Typeset_Check(tset, cast(enum Reb_Kind, n))) {
             if (n == TYPE_NULLED) {
-                Init_Word(PUSH(), Canon(SYM__TNULL_T));
+                Init_Word(PUSH(), CANON(_TNULL_T));
             }
             else if (n == TYPE_VOID) {
-                Init_Word(PUSH(), Canon(SYM__TVOID_T));
+                Init_Word(PUSH(), CANON(_TVOID_T));
             }
             else
                 Init_Datatype(PUSH(), cast(enum Reb_Kind, n));

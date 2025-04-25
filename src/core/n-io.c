@@ -576,7 +576,7 @@ DECLARE_NATIVE(WAKE_UP)
         // doesn't throw or return meaningful data... (?)
         //
         DECLARE_VALUE (verb);
-        Init_Word(verb, Canon(SYM_ON_WAKE_UP));
+        Init_Word(verb, CANON(ON_WAKE_UP));
         const Value* r = Do_Port_Action(level_, ARG(PORT), verb);
         assert(Is_Trash(r));
         UNUSED(r);

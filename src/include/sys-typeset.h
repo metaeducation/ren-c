@@ -67,7 +67,7 @@ INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
     SYM_FROM_KIND((v)->payload.datatype.kind)
 
 INLINE Symbol* Get_Type_Name(const Cell* value)
-    { return Canon(SYM_FROM_KIND(Type_Of(value))); }
+    { return CANON(FROM_KIND(Type_Of(value))); }
 
 
 

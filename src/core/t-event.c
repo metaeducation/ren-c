@@ -149,7 +149,7 @@ static Value* Get_Event_Var(Cell* out, const Cell* v, Symbol* name)
         if (VAL_EVENT_TYPE(v) == 0)
             return Init_Blank(out);
 
-        return Init_Word(out, Canon(cast(SymId, VAL_EVENT_TYPE(v)))); }
+        return Init_Word(out, Canon_From_Id(cast(SymId, VAL_EVENT_TYPE(v)))); }
 
     case SYM_PORT: {
         if (IS_EVENT_MODEL(v, EVM_PORT))
@@ -267,13 +267,13 @@ void MF_Event(Molder* mo, const Cell* v, bool form)
     DECLARE_VALUE (var); // declare outside loop (has init code)
 
     for (field = 0; fields[field] != SYM_0; field++) {
-        Get_Event_Var(var, v, Canon(fields[field]));
+        Get_Event_Var(var, v, Canon_From_Id(fields[field]));
         if (Is_Blank(var))
             continue;
 
         New_Indented_Line(mo);
 
-        Symbol* canon = Canon(fields[field]);
+        Symbol* canon = Canon_From_Id(fields[field]);
         Append_Utf8_Utf8(mo->utf8flex, Symbol_Head(canon), Symbol_Size(canon));
         Append_Unencoded(mo->utf8flex, ": ");
         if (Is_Word(var))

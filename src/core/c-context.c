@@ -584,7 +584,7 @@ Array* Collect_Keylist_Managed(
             not prior or (
                 0 == (*self_index_out = Find_Canon_In_Context(
                     prior,
-                    Canon(SYM_SELF),
+                    CANON(SELF),
                     true
                 ))
             )
@@ -594,7 +594,7 @@ Array* Collect_Keylist_Managed(
             Cell* self_key = Init_Typeset(
                 Array_At(BUF_COLLECT, 1),
                 TS_VALUE, // !!! Currently not paid attention to
-                Canon(SYM_SELF)
+                CANON(SELF)
             );
 
             // !!! See notes on the flags about why SELF is set hidden but
@@ -1134,7 +1134,7 @@ VarList* Merge_Contexts_Selfish_Managed(VarList* parent1, VarList* parent2)
 
     // We should have gotten a SELF in the results, one way or another.
     //
-    REBLEN self_index = Find_Canon_In_Context(merged, Canon(SYM_SELF), true);
+    REBLEN self_index = Find_Canon_In_Context(merged, CANON(SELF), true);
     assert(self_index != 0);
     assert(CTX_KEY_SYM(merged, self_index) == SYM_SELF);
     Copy_Cell(Varlist_Slot(merged, self_index), Varlist_Archetype(merged));

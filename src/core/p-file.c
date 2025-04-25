@@ -94,7 +94,7 @@ void Query_File_Or_Dir(Value* out, Value* port, struct devreq_file *file)
 
     Init_Word(
         Varlist_Slot(ctx, STD_FILE_INFO_TYPE),
-        (req->modes & RFM_DIR) ? Canon(SYM_DIR) : Canon(SYM_FILE)
+        (req->modes & RFM_DIR) ? CANON(DIR) : CANON(FILE)
     );
     Init_Integer(Varlist_Slot(ctx, STD_FILE_INFO_SIZE), file->size);
 

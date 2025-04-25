@@ -108,13 +108,13 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         return out;
     }
     else if (Is_Datatype(arg)) {
-        return Init_Any_Word(out, kind, Canon(VAL_TYPE_SYM(arg)));
+        return Init_Any_Word(out, kind, Canon_From_Id(VAL_TYPE_SYM(arg)));
     }
     else if (Is_Logic(arg)) {
         return Init_Any_Word(
             out,
             kind,
-            VAL_LOGIC(arg) ? Canon(SYM_TRUE) : Canon(SYM_FALSE)
+            VAL_LOGIC(arg) ? CANON(TRUE) : CANON(FALSE)
         );
     }
 

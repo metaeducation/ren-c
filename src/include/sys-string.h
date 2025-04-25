@@ -72,11 +72,13 @@ INLINE size_t Symbol_Size(Symbol* str) {
     return Flex_Len(str); // number of bytes in seris is series length, ATM
 }
 
-INLINE Symbol* Canon(SymId sym) {
+INLINE Symbol* Canon_From_Id(SymId sym) {
     assert(cast(REBLEN, sym) != 0);
     assert(cast(REBLEN, sym) < Flex_Len(PG_Symbol_Canons));
     return *Flex_At(Symbol*, PG_Symbol_Canons, cast(REBLEN, sym));
 }
+
+#define CANON(name)  Canon_From_Id(SYM_##name)
 
 INLINE bool Are_Synonyms(Symbol* s1, Symbol* s2) {
     if (s1 == s2)

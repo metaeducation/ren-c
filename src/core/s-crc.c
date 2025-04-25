@@ -278,7 +278,7 @@ uint32_t Hash_Value(const Cell* v)
         break;
 
     case TYPE_DATATYPE: {
-        hash = Hash_String(Canon(VAL_TYPE_SYM(v)));
+        hash = Hash_String(Canon_From_Id(VAL_TYPE_SYM(v)));
         break; }
 
     case TYPE_BITSET:

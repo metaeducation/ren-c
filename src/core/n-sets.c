@@ -354,7 +354,7 @@ DECLARE_NATIVE(EXCLUDE)
             fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
         DECLARE_VALUE (verb); // initial code did something weird w/this
-        Init_Word(verb, Canon(SYM_EXCLUDE));
+        Init_Word(verb, CANON(EXCLUDE));
         return Init_Bitset(OUT, Xandor_Binary(verb, val1, val2));
     }
 

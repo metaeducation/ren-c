@@ -71,7 +71,7 @@ Bounce TO_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 void MF_Datatype(Molder* mo, const Cell* v, bool form)
 {
-    Symbol* name = Canon(VAL_TYPE_SYM(v));
+    Symbol* name = Canon_From_Id(VAL_TYPE_SYM(v));
     if (form)
         Emit(mo, "N", name);
     else

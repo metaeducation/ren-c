@@ -146,7 +146,7 @@ REBINT Awake_System(Array* ports, bool only)
         //
         Array* a = Make_Array(2);
         Append_Value(a, awake);
-        Init_Word(Alloc_Tail_Array(a), Canon(SYM_ONLY));
+        Init_Word(Alloc_Tail_Array(a), CANON(ONLY));
 
         Init_Path(awake_only, a);
     }

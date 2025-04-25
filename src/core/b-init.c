@@ -297,15 +297,15 @@ static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
 //
 static void Startup_Antiforms(void)
 {
-    Value* okay_value = Append_Context(Lib_Context, nullptr, Canon(SYM_OKAY));
+    Value* okay_value = Append_Context(Lib_Context, nullptr, CANON(OKAY));
     Init_Okay(okay_value);
     assert(IS_TRUTHY(okay_value) and VAL_LOGIC(okay_value) == true);
 
-    Value* null_value = Append_Context(Lib_Context, nullptr, Canon(SYM_NULL));
+    Value* null_value = Append_Context(Lib_Context, nullptr, CANON(NULL));
     Init_Nulled(null_value);
     assert(IS_FALSEY(null_value) and Is_Nulled(null_value));
 
-    Value* void_value = Append_Context(Lib_Context, nullptr, Canon(SYM_VOID));
+    Value* void_value = Append_Context(Lib_Context, nullptr, CANON(VOID));
     Init_Void(void_value);
     assert(Is_Void(void_value));
 }
@@ -481,7 +481,9 @@ static void Init_Action_Meta_Shim(void) {
     VarList* meta = Alloc_Context_Core(TYPE_OBJECT, 6, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 7; ++i)
-        Init_Nulled(Append_Context(meta, nullptr, Canon(field_syms[i - 1])));
+        Init_Nulled(
+            Append_Context(meta, nullptr, Canon_From_Id(field_syms[i - 1]))
+        );
 
     Init_Object(Varlist_Slot(meta, 1), meta); // it's "selfish"
 
@@ -709,8 +711,8 @@ static Array* Startup_Generics(const Value* boot_generics)
 
     // Sanity check the symbol transformation
     //
-    if (0 != strcmp("open", Symbol_Head(Canon(SYM_OPEN))))
-        panic (Canon(SYM_OPEN));
+    if (0 != strcmp("open", Symbol_Head(CANON(OPEN))))
+        panic (CANON(OPEN));
 
     StackIndex base = TOP_INDEX;
 
@@ -933,7 +935,7 @@ static void Init_System_Object(
     // and have it bound in lines like `sys: system/contexts/sys`)
     //
     Init_Object(
-        Append_Context(Lib_Context, nullptr, Canon(SYM_SYSTEM)),
+        Append_Context(Lib_Context, nullptr, CANON(SYSTEM)),
         system
     );
 
@@ -1349,7 +1351,7 @@ void Startup_Core(void)
     Init_Bar(&PG_Bar_Value[0]);
     Poison_Cell(&PG_Bar_Value[1]);
 
-    // Symbol_Id(), Cell_Word_Id() and Canon(SYM_XXX) now available
+    // Symbol_Id(), Cell_Word_Id() and CANON(XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
 

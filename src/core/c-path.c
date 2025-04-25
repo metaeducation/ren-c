@@ -578,7 +578,7 @@ DECLARE_NATIVE(PICK)
     //
     if (Is_Port(location)) {
         DECLARE_VALUE (word);
-        Init_Word(word, Canon(SYM_PICK));
+        Init_Word(word, CANON(PICK));
         return Do_Port_Action(level_, location, word);
     }
 
@@ -659,7 +659,7 @@ DECLARE_NATIVE(POKE)
     //
     if (Is_Port(location)) {
         DECLARE_VALUE (word);
-        Init_Word(word, Canon(SYM_POKE));
+        Init_Word(word, CANON(POKE));
         return Do_Port_Action(level_, location, word);
     }
 

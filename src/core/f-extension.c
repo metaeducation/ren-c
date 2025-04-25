@@ -161,7 +161,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
         VAL_HANDLE_POINTER(Byte, specs_compressed),
         VAL_HANDLE_LEN(specs_compressed),
         -1, // max
-        Canon(SYM_GZIP)
+        CANON(GZIP)
     );
 
     Option(String*) filename = nullptr;  // !!! Name of DLL if available?

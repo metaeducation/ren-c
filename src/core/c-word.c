@@ -506,7 +506,7 @@ void Startup_Interning(void)
 // through their pointers.
 //
 // It also creates a table for mapping from SYM_XXX => Symbol series.  This
-// is used e.g. by Canon(SYM_XXX) to get the string name for a symbol.
+// is used e.g. by CANON(XXX) to get the string name for a symbol.
 //
 void Startup_Symbols(Array* words)
 {
@@ -517,7 +517,7 @@ void Startup_Symbols(Array* words)
     );
 
     // All words that not in %words.r will get back Cell_Word_Id(w) == SYM_0
-    // Hence, SYM_0 cannot be canonized.  Letting Canon(SYM_0) return nullptr
+    // Hence, SYM_0 cannot be canonized.  Letting CANON(0) return nullptr
     // and try and use that meaningfully is too risky, so it is simply
     // prohibited to canonize SYM_0, and trash the Symbol* in the [0] slot.
     //
@@ -558,11 +558,11 @@ void Startup_Symbols(Array* words)
 
     // Do some sanity checks.  !!! Fairly critical, is debug-only appropriate?
 
-    if (0 != strcmp("blank!", Symbol_Head(Canon(SYM_BLANK_X))))
-        panic (Canon(SYM_BLANK_X));
+    if (0 != strcmp("blank!", Symbol_Head(CANON(BLANK_X))))
+        panic (CANON(BLANK_X));
 
-    if (0 != strcmp("null", Symbol_Head(Canon(SYM_NULL))))
-        panic (Canon(SYM_NULL));
+    if (0 != strcmp("null", Symbol_Head(CANON(NULL))))
+        panic (CANON(NULL));
 }
 
 

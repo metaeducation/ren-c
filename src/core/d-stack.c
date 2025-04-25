@@ -58,7 +58,7 @@ void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
                 limit + 1
             );
 
-            Init_Word(Array_At(copy, limit), Canon(SYM_ELLIPSIS_3));
+            Init_Word(Array_At(copy, limit), CANON(ELLIPSIS_3));
 
             Collapsify_Array(
                 copy,
@@ -126,7 +126,7 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
 
     REBINT start = LVL_INDEX(L) - 3;
     if (start > 0) {
-        Init_Word(PUSH(), Canon(SYM_ELLIPSIS_3));
+        Init_Word(PUSH(), CANON(ELLIPSIS_3));
     }
     else if (start < 0)
         start = 0;
@@ -145,7 +145,7 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
             // substitute a placeholder to avoid crashing the GC.
             //
             assert(Get_Array_Flag(LVL_ARRAY(L), ANTIFORMS_LEGAL));
-            Init_Word(PUSH(), Canon(SYM__TNULL_T));  // ~null~ WORD!
+            Init_Word(PUSH(), CANON(_TNULL_T));  // ~null~ WORD!
         }
         else
             Derelativize(PUSH(), item, L->specifier);
@@ -159,12 +159,12 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
             // mean "error source is to the left" or just "frame is at a
             // breakpoint at that position".
             //
-            Init_Word(PUSH(), Canon(SYM__T_T));
+            Init_Word(PUSH(), CANON(_T_T));
         }
     }
 
     if (NOT_END(item))
-        Init_Word(PUSH(), Canon(SYM_ELLIPSIS_3));
+        Init_Word(PUSH(), CANON(ELLIPSIS_3));
 
     // !!! This code can be called on an executing frame, such as when an
     // error happens in that frame.  Or it can be called on a pending frame

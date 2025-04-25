@@ -365,7 +365,7 @@ REBLEN Stack_Depth(void)
 //
 const Value* Find_Error_For_Sym(SymId id_sym)
 {
-    Symbol* id_canon = Canon(id_sym);
+    Symbol* id_canon = Canon_From_Id(id_sym);
 
     VarList* categories = Cell_Varlist(Get_System(SYS_CATALOG, CAT_ERRORS));
     assert(CTX_KEY_SYM(categories, 1) == SYM_SELF);
@@ -690,8 +690,8 @@ Error* Make_Error_Managed_Vaptr(
     }
     else {
         assert(cat_sym != SYM_0 and id_sym != SYM_0);
-        Init_Word(type, Canon(cat_sym));
-        Init_Word(id, Canon(id_sym));
+        Init_Word(type, Canon_From_Id(cat_sym));
+        Init_Word(id, Canon_From_Id(id_sym));
 
         // Assume that error IDs are unique across categories (this is checked
         // by %make-boot.r).  If they were not, then this linear search could
@@ -782,13 +782,13 @@ Error* Make_Error_Managed_Vaptr(
 
                 const Value* arg = cast(const Value*, p);
                 if (Is_Nulled(arg))
-                    Init_Word(value, Canon(SYM__TNULL_T));
+                    Init_Word(value, CANON(_TNULL_T));
                 else if (Is_Void(arg))
-                    Init_Word(value, Canon(SYM__TVOID_T));
+                    Init_Word(value, CANON(_TVOID_T));
                 else if (Is_Okay(arg))
-                    Init_Word(value, Canon(SYM__TOKAY_T));
+                    Init_Word(value, CANON(_TOKAY_T));
                 else if (Is_Trash(arg))
-                    Init_Word(value, Canon(SYM_TILDE_1));
+                    Init_Word(value, CANON(TILDE_1));
                 else
                     Copy_Cell(value, arg);
                 value++;

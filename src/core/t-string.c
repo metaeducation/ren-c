@@ -146,7 +146,7 @@ static void reverse_string(Value* v, REBLEN len)
     // the string (from the input value's index to the tail).
 
     DECLARE_VALUE (verb);
-    Init_Word(verb, Canon(SYM_CHANGE));
+    Init_Word(verb, CANON(CHANGE));
     Modify_String(
         v,
         unwrap Cell_Word_Id(verb),

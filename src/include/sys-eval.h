@@ -928,7 +928,7 @@ INLINE void Reify_Va_To_Array_In_Level(
     assert(LVL_IS_VALIST(L));
 
     if (truncated)
-        Init_Word(PUSH(), Canon(SYM___OPTIMIZED_OUT__));
+        Init_Word(PUSH(), CANON(__OPTIMIZED_OUT__));
 
     if (NOT_END(L->value)) {
         assert(L->source->pending == END_NODE);

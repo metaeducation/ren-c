@@ -223,7 +223,7 @@ static bool Subparse_Throws(
     Reuse_Varlist_If_Available(L);
     Push_Action(L, NAT_ACTION(SUBPARSE), UNBOUND);
 
-    Begin_Action(L, Canon(SYM_SUBPARSE), m_cast(Value*, END_NODE));
+    Begin_Action(L, CANON(SUBPARSE), m_cast(Value*, END_NODE));
 
     L->param = END_NODE; // informs infix lookahead
     L->arg = m_cast(Value*, END_NODE);

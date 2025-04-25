@@ -344,7 +344,7 @@ DECLARE_NATIVE(DEFLATE)
 
     Symbol* envelope;
     if (not Bool_ARG(ENVELOPE))
-        envelope = Canon(SYM_NONE);  // Note: nullptr is gzip (for bootstrap)
+        envelope = CANON(NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
         envelope = Cell_Word_Symbol(ARG(FORMAT));
         switch (Symbol_Id(envelope)) {
@@ -409,7 +409,7 @@ DECLARE_NATIVE(INFLATE)
 
     Symbol* envelope;
     if (not Bool_ARG(ENVELOPE))
-        envelope = Canon(SYM_NONE);  // Note: nullptr is gzip (for bootstrap)
+        envelope = CANON(NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
         switch (Cell_Word_Id(ARG(FORMAT))) {
           case SYM_ZLIB:

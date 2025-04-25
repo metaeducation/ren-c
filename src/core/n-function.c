@@ -302,7 +302,7 @@ DECLARE_NATIVE(TYPECHECKER)
     Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
         TS_VALUE,  // Allow null (e.g. ~null~), returns false
-        Canon(SYM_VALUE)
+        CANON(VALUE)
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);
     assert(not Is_Param_Endable(param));
@@ -921,7 +921,7 @@ DECLARE_NATIVE(N_SHOT)
     Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
         FLAGIT_KIND(TYPE_BLOCK) | FLAGIT_KIND(TYPE_ACTION),
-        Canon(SYM_VALUE) // SYM_CODE ?
+        CANON(VALUE) // SYM_CODE ?
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);
     assert(not Is_Param_Endable(param));

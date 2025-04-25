@@ -482,7 +482,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // they are allowed to return anything.  Generally speaking, the
             // checks are on the input side, not the output.
             //
-            Init_Typeset(PUSH(), TS_VALUE, Canon(SYM_RETURN));
+            Init_Typeset(PUSH(), TS_VALUE, CANON(RETURN));
             Tweak_Parameter_Class(TOP, PARAMCLASS_RETURN);
             return_stackindex = TOP_INDEX;
 

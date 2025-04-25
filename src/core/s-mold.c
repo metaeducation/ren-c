@@ -153,7 +153,7 @@ void Emit(Molder* mo, const char *fmt, ...)
 
         case 'D': // Datatype symbol: #[type
             if (ender != '\0') {
-                Symbol* canon = Canon(cast(SymId, va_arg(va, int)));
+                Symbol* canon = Canon_From_Id(cast(SymId, va_arg(va, int)));
                 Append_Utf8_Utf8(s, Symbol_Head(canon), Symbol_Size(canon));
                 Append_Codepoint(s, ' ');
             }

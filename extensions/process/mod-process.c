@@ -1679,10 +1679,10 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
     if (Bool_ARG(INFO)) {
         VarList* info = Alloc_Context(TYPE_OBJECT, 2);
 
-        Init_Integer(Append_Context(info, nullptr, Canon(SYM_ID)), pid);
+        Init_Integer(Append_Context(info, nullptr, CANON(ID)), pid);
         if (Bool_ARG(WAIT))
             Init_Integer(
-                Append_Context(info, nullptr, Canon(SYM_EXIT_CODE)),
+                Append_Context(info, nullptr, CANON(EXIT_CODE)),
                 exit_code
             );
 

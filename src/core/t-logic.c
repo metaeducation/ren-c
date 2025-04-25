@@ -90,7 +90,7 @@ DECLARE_NATIVE(BOOLEAN)
 {
     INCLUDE_PARAMS_OF_BOOLEAN;
 
-    return Init_Word(OUT, Is_Nulled(ARG(VALUE)) ? Canon(SYM_FALSE) : Canon(SYM_TRUE));
+    return Init_Word(OUT, Is_Nulled(ARG(VALUE)) ? CANON(FALSE) : CANON(TRUE));
 }
 
 
@@ -513,7 +513,7 @@ void MF_Logic(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // currently no distinction between MOLD and FORM
 
-    Emit(mo, "+N", VAL_LOGIC(v) ? Canon(SYM_TRUE) : Canon(SYM_FALSE));
+    Emit(mo, "+N", VAL_LOGIC(v) ? CANON(TRUE) : CANON(FALSE));
 }
 
 

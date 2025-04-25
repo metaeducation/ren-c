@@ -285,7 +285,7 @@ Bounce Reflect_Core(Level* level_)
 
     GENERIC_HOOK hook = Generic_Hooks[kind];
     DECLARE_VALUE (verb);
-    Init_Word(verb, Canon(SYM_REFLECT));
+    Init_Word(verb, CANON(REFLECT));
     return hook(level_, verb);
 }
 

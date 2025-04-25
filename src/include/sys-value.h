@@ -610,7 +610,7 @@ INLINE Value* Trashify_Branched(Value* cell) {
     c_cast(const Value*, &PG_Bar_Value[0])
 
 #define Init_Bar(out) \
-    Init_Word((out), Canon(SYM_BAR_1));
+    Init_Word((out), CANON(BAR_1));
 
 #define Is_Bar(v) \
     (Is_Word(v) and Cell_Word_Id(v) == SYM_BAR_1)

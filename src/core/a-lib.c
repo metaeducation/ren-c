@@ -1552,7 +1552,7 @@ void *API_rebDeflateAlloc(
     const void *input,
     size_t in_len
 ){
-    Symbol* envelope = Canon(SYM_NONE);
+    Symbol* envelope = CANON(NONE);
     return Compress_Alloc_Core(out_len, input, in_len, envelope);
 }
 
@@ -1568,7 +1568,7 @@ void *API_rebZdeflateAlloc(
     const void *input,
     size_t in_len
 ){
-    Symbol* envelope = Canon(SYM_ZLIB);
+    Symbol* envelope = CANON(ZLIB);
     return Compress_Alloc_Core(out_len, input, in_len, envelope);
 }
 
@@ -1605,7 +1605,7 @@ void *API_rebInflateAlloc(
     size_t len_in,
     int max
 ){
-    Symbol* envelope = Canon(SYM_NONE);
+    Symbol* envelope = CANON(NONE);
     return Decompress_Alloc_Core(len_out, input, len_in, max, envelope);
 }
 
@@ -1622,7 +1622,7 @@ void *API_rebZinflateAlloc(
     size_t len_in,
     int max
 ){
-    Symbol* envelope = Canon(SYM_ZLIB);
+    Symbol* envelope = CANON(ZLIB);
     return Decompress_Alloc_Core(len_out, input, len_in, max, envelope);
 }
 
@@ -1648,7 +1648,7 @@ void *API_rebGunzipAlloc(
 ){
     // Note: Because GZIP is what Rebol uses for booting, `nullptr` means
     // use GZIP.  That's because symbols in %words.r haven't been loaded yet,
-    // so a call to Canon(SYM_XXX) would fail.
+    // so a call to CANON(XXX) would fail.
     //
     Symbol* envelope = nullptr; // GZIP is the default
     return Decompress_Alloc_Core(len_out, input, len_in, max, envelope);
@@ -1669,7 +1669,7 @@ void *API_rebDeflateDetectAlloc(
     size_t len_in,
     int max
 ){
-    Symbol* envelope = Canon(SYM_DETECT);
+    Symbol* envelope = CANON(DETECT);
     return Decompress_Alloc_Core(len_out, input, len_in, max, envelope);
 }
 
