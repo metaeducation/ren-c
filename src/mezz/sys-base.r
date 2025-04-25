@@ -94,7 +94,7 @@ do*: function [
 
     original-script: null
 
-    finalizer: func [
+    finalizer: lambda [
         value [any-value!]
         /quit
         <with> return
@@ -110,7 +110,7 @@ do*: function [
             quit/value get* 'value  ; "rethrow" the QUIT if DO/ONLY
         ]
 
-        return get* 'value  ; returns from DO*, because of <with> return
+        return get* 'value  ; returns from DO*, because it's a lambda
     ]
 
     ; Load the code (do this before CHANGE-DIR so if there's an error in the

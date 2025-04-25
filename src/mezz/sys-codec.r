@@ -104,7 +104,7 @@ encode: function [
 encoding-of: function [
     "Returns the media codec name for given binary data. (identify)"
 
-    return [word!]
+    return: [word!]
     data [binary!]
 ][
     for-each [name codec] system/codecs [

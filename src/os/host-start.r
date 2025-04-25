@@ -347,7 +347,7 @@ host-start: function [
 
     ; helper functions
     ;
-    die: func [
+    die: lambda [
         {A graceful way to "FAIL" during startup}
         reason [text! block!]
             {Error message}

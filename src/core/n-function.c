@@ -55,7 +55,7 @@ DECLARE_NATIVE(FUNC)
     REBACT *func = Make_Interpreted_Action_May_Fail(
         ARG(SPEC),
         ARG(BODY),
-        MKF_RETURN | MKF_KEYWORDS
+        MKF_RETURN
     );
 
     return Init_Action_Unbound(OUT, func);
@@ -81,7 +81,7 @@ DECLARE_NATIVE(LAMBDA)
     REBACT *func = Make_Interpreted_Action_May_Fail(
         ARG(SPEC),
         ARG(BODY),
-        MKF_KEYWORDS
+        MKF_MASK_NONE
     );
 
     return Init_Action_Unbound(OUT, func);

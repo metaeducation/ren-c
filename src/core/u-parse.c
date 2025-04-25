@@ -244,12 +244,8 @@ static bool Subparse_Throws(
     //
     Init_Nulled(Erase_Cell(Level_Args_Head(L) + 2));
 
-  #if NO_RUNTIME_CHECKS
-    assert(ACT_NUM_PARAMS(NAT_ACTION(SUBPARSE)) == 3); // elides RETURN:
-  #else
     assert(ACT_NUM_PARAMS(NAT_ACTION(SUBPARSE)) == 4); // checks RETURN:
     Init_Nulled(Erase_Cell(Level_Args_Head(L) + 3));
-  #endif
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do

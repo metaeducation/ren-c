@@ -784,9 +784,7 @@ void Rebind_Context_Deep(
 // into something paralleling the non-keyword definitional RETURN:, where
 // the generators (like OBJECT) will be taking responsibility for it.
 //
-// This routine will *always* make a context with a SELF.  This lacks the
-// nuance that is expected of the generators, which will have an equivalent
-// to `<with> return` to suppress it.
+// This routine will *always* make a context with a SELF.
 //
 VarList* Make_Selfish_Context_Detect_Managed(
     enum Reb_Kind kind,

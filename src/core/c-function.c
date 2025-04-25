@@ -162,18 +162,6 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     uintptr_t header_bits = 0;
 
-  #if RUNTIME_CHECKS
-    //
-    // Debug builds go ahead and include a RETURN field and hang onto the
-    // typeset for fake returns (e.g. natives).
-    //
-    if (flags & MKF_FAKE_RETURN) {
-        flags &= ~MKF_FAKE_RETURN;
-        assert(not (flags & MKF_RETURN));
-        flags |= MKF_RETURN;
-    }
-  #endif
-
     StackIndex base = TOP_INDEX;
     assert(TOP == Data_Stack_At(base));
 
@@ -237,7 +225,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     //=//// TOP-LEVEL SPEC TAGS LIKE <local>, <with> etc. /////////////////=//
 
-        if (Is_Tag(item) and (flags & MKF_KEYWORDS)) {
+        if (Is_Tag(item)) {
             if (0 == Compare_String_Vals(item, Root_With_Tag, true)) {
                 mode = SPEC_MODE_WITH;
                 continue;
@@ -383,15 +371,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             Cell_Word_Symbol(item) // don't canonize, see #2258
         );
 
-        // All these would cancel a definitional return (leave has same idea):
-        //
-        //     func [return [integer!]]
-        //     func [/refinement return]
-        //     func [<local> return]
-        //     func [<with> return]
-        //
-        // ...although `return:` is explicitly tolerated ATM for compatibility
-        // (despite violating the "pure locals are NULL" premise)
+        // Use LAMBDA if you don't want a definitional return.
         //
         if (Symbol_Id(canon) == SYM_RETURN) {
             if (return_stackindex != 0) {
@@ -401,8 +381,8 @@ Array* Make_Paramlist_Managed_May_Fail(
             }
             if (Is_Set_Word(item))
                 return_stackindex = TOP_INDEX;  // RETURN: explicitly tolerated
-            else
-                flags &= ~(MKF_RETURN | MKF_FAKE_RETURN);
+            else if (flags & MKF_RETURN)
+                fail ("RETURN normal args in spec not allowed in FUNC(TION)");
         }
 
         if (mode == SPEC_MODE_WITH and not Is_Set_Word(item)) {
@@ -525,13 +505,6 @@ Array* Make_Paramlist_Managed_May_Fail(
     //
     REBLEN num_slots = (TOP_INDEX - base) / 3;
 
-    // If we pushed a typeset for a return and it's a native, it actually
-    // doesn't want a RETURN: key in the frame in release builds.  We'll omit
-    // from the copy.
-    //
-    if (return_stackindex != 0 and (flags & MKF_FAKE_RETURN))
-        --num_slots;
-
     // There should be no more pushes past this point, so a stable pointer
     // into the stack for the definitional return can be found.
     //
@@ -583,24 +556,12 @@ Array* Make_Paramlist_Managed_May_Fail(
         }
 
         if (definitional_return) {
-            if (flags & MKF_FAKE_RETURN) {
-                //
-                // This is where you don't actually want a RETURN key in the
-                // function frame (e.g. because it's native code and would be
-                // wasteful and unused).
-                //
-                // !!! The debug build uses real returns, not fake ones.
-                // This means actions and natives have an extra slot.
-                //
-            }
-            else {
-                if (not (flags & MKF_RETURN))
-                    fail ("LAMBDA does not have RETURN: in its spec");
+            if (not (flags & MKF_RETURN))
+                fail ("LAMBDA does not have RETURN: in its spec");
 
-                assert(flags & MKF_RETURN);
-                Copy_Cell(dest, definitional_return);
-                ++dest;
-            }
+            assert(flags & MKF_RETURN);
+            Copy_Cell(dest, definitional_return);
+            ++dest;
         }
 
         // Must remove binder indexes for all words, even if about to fail
@@ -700,10 +661,8 @@ Array* Make_Paramlist_Managed_May_Fail(
                 );
             }
 
-            if (not (flags & MKF_FAKE_RETURN)) {
-                Init_Nulled(dest); // clear the local RETURN: var's description
-                ++dest;
-            }
+            Init_Nulled(dest); // clear the local RETURN: var's description
+            ++dest;
         }
 
         Term_Array_Len(types_varlist, num_slots);
@@ -761,10 +720,8 @@ Array* Make_Paramlist_Managed_May_Fail(
                 );
             }
 
-            if (not (flags & MKF_FAKE_RETURN)) {
-                Init_Nulled(dest);
-                ++dest;
-            }
+            Init_Nulled(dest);
+            ++dest;
         }
 
         Term_Array_Len(notes_varlist, num_slots);

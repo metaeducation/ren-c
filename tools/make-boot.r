@@ -768,7 +768,7 @@ sctx: make object! collect [
 ; !!! The SYS_CTX has no SELF...it is not produced by the ordinary gathering
 ; constructor, but uses Alloc_Context() directly.  Rather than try and force
 ; it to have a SELF, having some objects that don't helps pave the way
-; to the userspace choice of self-vs-no-self (as with func's `<with> return`)
+; to the userspace choice of self-vs-no-self.
 ;
 make-obj-defs/selfless e-sysctx sctx "SYS_CTX" 1
 

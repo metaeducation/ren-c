@@ -342,12 +342,7 @@ DECLARE_NATIVE(GENERIC)
 
     Value* spec = ARG(SPEC);
 
-    // We only want to check the return type in the debug build.  In the
-    // release build, we want to have as few argument slots as possible...
-    // especially to get the optimization for 1 argument to go in the cell
-    // and not need to push arguments.
-    //
-    Flags flags = MKF_KEYWORDS | MKF_FAKE_RETURN;
+    Flags flags = MKF_RETURN;  // historically only checked in debug builds
 
     REBACT *generic = Make_Action(
         Make_Paramlist_Managed_May_Fail(spec, flags),
@@ -573,12 +568,7 @@ Value* Make_Native(
     // the Natives table.  The associated C function is provided by a
     // table built in the bootstrap scripts, `Native_C_Funcs`.
 
-    // We only want to check the return type in the debug build.  In the
-    // release build, we want to have as few argument slots as possible...
-    // especially to get the optimization for 1 argument to go in the cell
-    // and not need to push arguments.
-    //
-    Flags flags = MKF_KEYWORDS | MKF_FAKE_RETURN;
+    Flags flags = MKF_RETURN;  // historically only checked in debug builds
 
     REBACT *act = Make_Action(
         Make_Paramlist_Managed_May_Fail(KNOWN(spec), flags),

@@ -350,9 +350,7 @@ enum Boot_Levels {
 
 // Modes allowed by Make_Function:
 enum {
-    MKF_RETURN      = 1 << 0,   // give a RETURN (but local RETURN: overrides)
-    MKF_KEYWORDS    = 1 << 1,   // respond to tags like ~null~, <with>, <local>
-    MKF_FAKE_RETURN = 1 << 2    // has RETURN label for HELP, but not in frame
+    MKF_RETURN      = 1 << 0   // function has RETURN: / definitional return
 };
 
 #define MKF_MASK_NONE 0  // no special handling
