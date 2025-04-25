@@ -228,49 +228,10 @@ for-each [alias] [
 function3: ~<FUNCTION slated for synonym of FUNC, so no FUNCTION3>~
 
 
-=== "WORD!-BASED LOGIC" ===
-
-; Modern Ren-C has no LOGIC! fundamental datatype.  The words TRUE and FALSE
-; are used as the currency of logic, while IF only tests for nullness (or
-; NaN-ness).
-
-/if: adapt lib3.if/ [
-    all [
-        :condition
-        find [true false yes no on off] :condition
-        fail:blame "IF not supposed to take [true false yes no off]" $return
-    ]
-]
-
-/either: adapt lib3.either/ [
-    all [
-        :condition
-        find [true false yes no on off] :condition
-        fail:blame "EITHER not supposed to take [true false yes no off]" $return
-    ]
-]
-
-boolean?: func3 [x] [any [:x = 'true, :x = 'false]]
-yesno?: func3 [x] [any [:x = 'on, :x = 'off]]
-onoff?: func3 [x] [any [:x = 'yes, :x = 'no]]
+=== "BINARY! => BLOB!" ===
 
 blob!: binary!
 blob?: binary?/
-
-to-logic: func3 [x] [
-    either x [~] [null]
-]
-
-boolean: func3 [x [~null~ any-value!]] [
-    either x ['true] ['false]
-]
-
-to-yesno: func3 [x [~null~ any-value!]] [  ; should this be DID?
-    either x ['yes] ['no]
-]
-
-ok: okay: true
-okay?: true?/
 
 
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
@@ -313,11 +274,11 @@ inert: func3 [word [word!]] [return to-issue word]
 
 quasiform!: word!  ; conflated, but can work in a very limited sense
 quasi?: func3 [v <local> spelling] [
-    if not word? v [return false]
+    if not word? v [return null]
     spelling: as text! v
-    if #"~" <> first spelling [return false]
-    if #"~" <> last spelling [return false]
-    return true
+    if #"~" <> first spelling [return null]
+    if #"~" <> last spelling [return null]
+    return okay
 ]
 unquasi: func3 [v <local> spelling] [
     assert [quasi? v]
@@ -334,15 +295,6 @@ unquasi: func3 [v <local> spelling] [
 ;
 and: infix and3/ [assert [not block? right] right: as block! :right]
 or: infix or3/ [assert [not block? right] right: as block! :right]
-
-to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
-    case [
-        void? :optional [fail "Can't turn void (null proxied) TO-LOGIC"]
-        null? :optional [false]
-        true = :optional [true]
-        true [true]
-    ]
-]
 
 unrun: ~<No UNRUN in bootstrap, but could be done w/make FRAME!>~
 
@@ -423,7 +375,7 @@ unpath: func3 [path [refinement3!]] [
     to-word path
 ]
 
-any-value?: func3 [x] [true]  ; now inclusive of null
+any-value?: func3 [x] [okay]  ; now inclusive of null
 element?: any-value?/  ; used to exclude null
 
 typechecker: func3 [x [datatype! typeset! block!]] [
@@ -453,7 +405,7 @@ spread: func3 [
     case [
         null? :x [return null]
         blank? :x [return void]
-        true [reduce [#splice! x]]
+        <else> [reduce [#splice! x]]
     ]
 ]
 
@@ -643,7 +595,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
                 void? :product [
                     change3:part pos void 1
                 ]
-                trash? :product [  ; e.g. compose [(if ok [null])]
+                trash? :product [  ; e.g. compose [(if okay [null])]
                     fail:blame "trash compose found" $return
                 ]
             ] else [
@@ -808,7 +760,7 @@ modernize-action: func3 [
                 keep3 case [
                     lit-word? w [to-get-word w]
                     get-word? w [to lit-word3! w]
-                    true [w]
+                    <else> [w]
                 ]
 
                 if last-refine-word [
@@ -899,7 +851,7 @@ apply: func3 [
     ]
 
     ; Now go by the refinements.  If it's a refinement that takes an argument,
-    ; we have to set the refinement to true
+    ; we have to set the refinement to okay
     ;
     while [refinement? :args.1] [  ; new refinements are GET-WORD! in boot
         pos: find params to refinement3! args.1 else [
@@ -914,23 +866,22 @@ apply: func3 [
                 any [
                     null? :result
                     void? :result
-                    false = :result
                 ][
                     f.(to word! pos.1): null
                 ]
                 any [
-                    true = :result
+                    okay = :result
                     refinement3? :result
                 ][
-                    f.(to word! pos.1): true
+                    f.(to word! pos.1): okay
                 ]
                 fail [
-                    "No-Arg Refinements in Bootstrap must be TRUE or NULL:"
+                    "No-Arg Refinements in Bootstrap must be OKAY or NULL:"
                         mold pos.1 "=" mold :result
                 ]
             ]
-        ] else [  ; takes an arg, so set refinement to true and set NEXT param
-            f.(to word! pos.1): true
+        ] else [  ; takes an arg, so set refinement to okay and set NEXT param
+            f.(to word! pos.1): okay
             f.(to word! pos.2): :result
         ]
     ]
@@ -955,7 +906,7 @@ mold: adapt mold3/ [  ; update so MOLD SPREAD works
         block? value
         #splice! = first value
     ][
-        only: true
+        only: okay
         value: next value
     ]
 ]

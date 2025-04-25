@@ -351,7 +351,7 @@ append api-objects make object! [
     return-type: "intptr_t"
     paramlist: []
     proto: "intptr_t rebPromise(void* p, void* vaptr)"
-    is-variadic: 'yes
+    is-variadic: okay
 ]
 
 append api-objects make object! [
@@ -362,7 +362,7 @@ append api-objects make object! [
     proto: unspaced [
         "void rebResolveNative_internal(intptr_t frame_id, intptr_t value_id)"
     ]
-    is-variadic: 'no
+    is-variadic: null
 ]
 
 append api-objects make object! [
@@ -373,7 +373,7 @@ append api-objects make object! [
     proto: unspaced [
         "void rebRejectNative_internal(intptr_t frame_id, intptr_t error_id)"
     ]
-    is-variadic: 'no
+    is-variadic: null
 ]
 
 append api-objects make object! [
@@ -382,7 +382,7 @@ append api-objects make object! [
     return-type: "void"
     paramlist: []
     proto: "void rebIdle_internal(void)"
-    is-variadic: 'no
+    is-variadic: null
 ]
 
 if null [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
@@ -394,7 +394,7 @@ if null [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
         proto: unspaced [
             "intptr_t rebGetSilentTrace_internal(void)"
         ]
-        is-variadic: 'no
+        is-variadic: null
     ]
 ]
 
@@ -432,7 +432,7 @@ for-each-api [
         ]
     ]
 
-    if no? is-variadic [
+    if not is-variadic [
         e-cwrap/emit cscape [:api --{
             reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
                 'API_$<Name>',

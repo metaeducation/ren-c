@@ -395,7 +395,7 @@ dynamic-library-class: make project-class [
         return cc.link // [
             .output, .depends, .searches, .ldflags
             :debug on? .debug
-            :dynamic ok
+            :dynamic okay
         ]
     ]
 ]

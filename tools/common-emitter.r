@@ -153,8 +153,8 @@ export cscape: func [
             prefix: degrade item.5
             suffix: degrade item.6
 
-            let any-upper: to-yesno find:case expr charset [#"A" - #"Z"]
-            let any-lower: to-yesno find:case expr charset [#"a" - #"z"]
+            let any-upper: did find:case expr charset [#"A" - #"Z"]
+            let any-lower: did find:case expr charset [#"a" - #"z"]
             keep maybe pattern
 
             ; With binding being case-sensitive, we lowercase the expression.
@@ -224,10 +224,10 @@ export cscape: func [
             assert [not null? :sub]
 
             case [
-                all [yes? any-upper, no? any-lower] [
+                any-upper and (not any-lower) [
                     uppercase sub
                 ]
-                all [yes? any-lower, no? any-upper] [
+                any-lower and (not any-upper) [
                     lowercase sub
                 ]
             ]
