@@ -307,7 +307,7 @@ DECLARE_NATIVE(AT)
 //          [~null~ ~[any-series? any-series?]~]
 //      series [<maybe> blank! any-series?]
 //      pattern "What to find, if an action call as a predicate on each item"
-//          [<maybe> element? splice! action!]
+//          [<maybe> element? splice! action! datatype!]
 //      :part "Limits the search to a given length or position"
 //          [any-number? any-series? pair!]
 //      :case "Characters are case-sensitive"

@@ -817,6 +817,8 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 // Give back an action antiform which can act as a checker for a datatype.
 //
 Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
+    possibly(out == datatype_or_block);
+
     if (Is_Datatype(datatype_or_block)) {
         Option(Type) t = Cell_Datatype_Type(datatype_or_block);
         if (not t)

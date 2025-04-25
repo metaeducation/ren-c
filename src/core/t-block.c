@@ -537,6 +537,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (Is_Void(pattern))
             return nullptr;  // VOID in, NULL out
 
+        if (Is_Datatype(pattern))
+            Init_Typechecker(pattern, pattern);  // out = in is okay
+
         Flags flags = (
             (Bool_ARG(MATCH) ? AM_FIND_MATCH : 0)
             | (Bool_ARG(CASE) ? AM_FIND_CASE : 0)
