@@ -108,9 +108,9 @@ sys.util/rescue [
         ]
         f.next: okay
         let block: (  ; no SET-BLOCK in boot, no # in boot (space -> #)
-            compose the () [(space) (join chain! [_ f.next3])]  ; synth optional
+            compose [(space) (join chain! [_ f.next3])]  ; synth optional
         )
-        return eval compose the () [(setify block) eval-free f]
+        return eval compose [(setify block) eval-free f]
     ]
 
     export cscape-inside: inside/  ; modern string interpolation tool
