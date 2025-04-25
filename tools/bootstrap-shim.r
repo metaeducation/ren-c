@@ -119,8 +119,8 @@ sys.util/rescue [
 
     export unless: ~<Don't use UNLESS in Bootstrap, definition in flux>~
 
-    export /bind: augment bind/ [  ; !!! this is broken, what did it mean?
-        copy3/  ; modern BIND is non-mutating, but bootstrap EXE needs :COPY
+    export /bind: augment bind/ [
+        :copy3  ; modern BIND is non-mutating, but bootstrap EXE needs :COPY
     ]
 
     export set-word3!: set-word?/
@@ -129,16 +129,18 @@ sys.util/rescue [
     export refinement3!: run-word?/
     export char3!: char?/
 
-    export load: ~<Use LOAD3 in Bootstrap (no multi-returns for header)>~
-    export load3: enclose load/ func [f] [  ; no multi-return values
-        let result: unquasi meta eval f
+    export load3: enclose (
+        augment load/ [:header]  ; no multi-return values
+    ) func [f] [
+        let result': unquasi meta eval f
         if f.header [
-            ensure block! first result'
-            ensure object! second result'
-            return insert result'.2 result'.1
+            ensure block! unquote result'.1
+            ensure object! unquote result'.2
+            return head of insert unquote result'.1 unquote result'.2
         ]
-        return ensure block! first result
+        return ensure block! unquote first result'
     ]
+    export load: ~<Use LOAD3 in Bootstrap (no multi-returns for header)>~
 
     quit 0
 ]
