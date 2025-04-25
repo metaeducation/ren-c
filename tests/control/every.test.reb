@@ -1,10 +1,10 @@
-; EVERY is similar to FOR-EACH but returns #[false] on any falsey body evals
-; Still runs the body fully through for each value (assuming no BREAK)
+; EVERY is similar to FOR-EACH but returns ~null~ antiform on any null body
+; evals.  Still runs the body fully through for each value (assuming no BREAK)
 
 (
     sum: 0
-    did all [
-        true = every x [1 3 7] [
+    all [
+        okay = every x [1 3 7] [
             sum: me + x
             odd? x
         ]
@@ -14,8 +14,8 @@
 
 (
     sum: 0
-    did all [
-        false = every x [1 2 7] [
+    all [
+        null = every x [1 2 7] [
             sum: me + x
             odd? x
         ]
@@ -25,11 +25,11 @@
 
 (
     sum: 0
-    did all [
+    all [
         null = every x [1 2 7] [
             sum: me + x
             if even? x [break]
-            true
+            okay
         ]
         3 = sum
     ]
@@ -37,11 +37,11 @@
 
 (
     sum: 0
-    did all [
-        true = every x [1 2 7] [
+    all [
+        okay = every x [1 2 7] [
             sum: me + x
             if even? x [continue]  ; acts as `continue void`, ignored
-            true
+            okay
         ]
         10 = sum
     ]

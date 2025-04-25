@@ -299,10 +299,10 @@ int main(int argc, char *argv_ansi[])
         "]"
     );
 
-    if (rebDid("lib/error?", trapped))  // error in HOST-START itself
+    if (rebDid("lib/error?", rebQ(trapped)))  // error in HOST-START itself
         rebJumps("lib/PANIC", trapped);
 
-    Value* code = rebValue("lib/first", trapped);  // enrescue []'s output
+    Value* code = rebValue(trapped);  // enrescue metas output
     rebRelease(trapped); // don't need the outer block any more
 
     // !!! For the moment, the CONSOLE extension does all the work of running

@@ -490,13 +490,9 @@ void API_rebElide(const void *p, va_list *vaptr)
 //
 // rebJumps() is like rebElide, but has the noreturn attribute.  This helps
 // inform the compiler that the routine is not expected to return.  Use it
-// with things like `rebJumps("FAIL", ...)` or `rebJumps("THROW", ...)`.  If
+// with things like `rebJumps("fail", ...)` or `rebJumps("throw", ...)`.  If
 // by some chance the code passed to it does not jump and finishes normally,
 // then an error will be raised.
-//
-// (Note: Capitalizing the "FAIL" or other non-returning operation is just a
-// suggestion to help emphasize the operation.  Capitalizing rebJUMPS was
-// considered, but looked odd.)
 //
 // !!! The name is not ideal, but other possibilites aren't great:
 //
@@ -568,42 +564,19 @@ const void *API_rebQ(const RebolValue* v)
     Array* instruction = Alloc_Instruction();
 
     Cell* single = ARR_SINGLE(instruction);
-    if (not v) {
-        Init_Word(single, Canon(SYM__TNULL_T));
-    }
+    if (not v)
+        Init_Nulled(single);
     else if (Is_Nulled(v)) {
         assert(not Is_Api_Value(v));
-        Init_Word(single, Canon(SYM__TNULL_T));
-    }
-    else if (Is_Void(v)) {
-        Init_Word(single, Canon(SYM__TVOID_T));
-    }
-    else if (Is_Trash(v)) {
-        Init_Word(single, Canon(SYM_TILDE_1));
+        Init_Nulled(single);
     }
     else
-        goto not_antiform;
+        Copy_Cell(single, v);
 
-    goto bind_word;
-
-  bind_word: { ///////////////////////////////////////////////////////////////
-
-    REBLEN n = Try_Bind_Word(Lib_Context, cast(Value*, single));
-    assert(n != 0);
-
-    return instruction;
-
-} not_antiform: { ////////////////////////////////////////////////////////////
-
-    Array* a = Make_Array(2);
-    Set_Flex_Info(a, HOLD);
-    Copy_Cell(Alloc_Tail_Array(a), NAT_VALUE(THE));  // the THE function
-    Copy_Cell(Alloc_Tail_Array(a), v);
-
-    Init_Group(single, a);
+    Meta_Quotify(cast(Value*, single));
 
     return instruction;  // add opcodes?
-}}
+}
 
 
 //
@@ -665,10 +638,9 @@ RebolValue* API_rebBlank(void)
 //
 RebolValue* API_rebLogic(bool logic)
 {
-    // Use DID on the bool, in case it's a "shim bool" (e.g. just some integer
-    // type) and hence may have values other than strictly 0 or 1.
-    //
-    return Init_Logic(Alloc_Value(), did logic);
+    if (logic)
+        return Init_Okay(Alloc_Value());
+    return nullptr;
 }
 
 
@@ -955,8 +927,11 @@ long API_rebUnbox(const void *p, va_list *vaptr)
       case TYPE_CHAR:
         return VAL_CHAR(result);
 
-      case TYPE_LOGIC:
-        return VAL_LOGIC(result) ? 1 : 0;
+      case TYPE_NULLED:
+        return 0;
+
+      case TYPE_OKAY:
+        return 1;
 
       default:
         fail ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");
@@ -1405,8 +1380,8 @@ void API_rebUnmanage(void *p)
 //
 void API_rebRelease(const RebolValue* v)
 {
-    if (not v)
-        return; // less rigorous, but makes life easier for C programmers
+    if (not v)  // note that rebLogic() returns nullptr for false... :-/
+        return;  // less rigorous, but makes life easier for C programmers
 
     if (not Is_Api_Value(v))
         panic ("Attempt to rebRelease() a non-API handle");

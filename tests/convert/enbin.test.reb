@@ -33,6 +33,6 @@
         comment [
             print [mold settings value "=>" mold bin "=>" value]
         ]
-     ]
-     true
+    ]
+    okay
 )

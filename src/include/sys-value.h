@@ -195,8 +195,8 @@
         //
         if (VAL_TYPE_RAW(v) == TYPE_NULLED)
             return TYPE_NULLED;
-        if (VAL_TYPE_RAW(v) == TYPE_LOGIC)
-            return TYPE_LOGIC;
+        if (VAL_TYPE_RAW(v) == TYPE_OKAY)
+            return TYPE_OKAY;
 
         // Special messages for END and trash (as these are common)
         //
@@ -543,11 +543,6 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 
 #define CELL_FLAG_NULL_IS_ENDISH FLAG_TYPE_SPECIFIC_BIT(0)
 
-// !!! A theory was that the "evaluated" flag would help a function that took
-// both ~null~ and <end>, which are converted to nulls, distinguish what kind
-// of null it is.  This may or may not be a good idea, but unevaluating it
-// here just to make a note of the concept, and tag it via the callsites.
-//
 #define Init_Endish_Nulled(out) \
     Reset_Cell_Header((out), TYPE_NULLED, \
         CELL_FLAG_FALSEY | CELL_FLAG_NULL_IS_ENDISH)
@@ -684,24 +679,18 @@ INLINE bool Is_Cell_Unreadable(const Cell* c) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  LOGIC!
+//  "Flexible LOGIC!" ~okay~ vs. ~null~ antiforms
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A logic can be either true or false.  For purposes of optimization, logical
-// falsehood is indicated by one of the value option bits in the header--as
-// opposed to in the value payload.  This means it can be tested quickly, and
-// that a single check can test for both BLANK! and logic false.
 //
-// Conditional truth and falsehood allows an interpretation where a BLANK!
-// is a "falsey" value as well.
 //
 
-#define FALSE_VALUE \
-    c_cast(const Value*, &PG_False_Value[0])
+#define OKAY_VALUE \
+    c_cast(const Value*, &PG_Okay_Value[0])
 
-#define TRUE_VALUE \
-    c_cast(const Value*, &PG_True_Value[0])
+#define Init_Okay(out) \
+    Reset_Cell_Header((out), TYPE_OKAY, 0)  // not CELL_FLAG_FALSEY
 
 INLINE void FAIL_IF_ERROR(const Cell* c);
 
@@ -710,6 +699,8 @@ INLINE bool IS_TRUTHY(const Cell* v) {
         return false;
     if (Is_Void(v))
         fail (Error_Void_Conditional_Raw());
+    if (Is_Trash(v))
+        fail ("TRASH conditional not legal");
     FAIL_IF_ERROR(v);  // approximate definitional errors...
     return true;
 }
@@ -717,20 +708,30 @@ INLINE bool IS_TRUTHY(const Cell* v) {
 #define IS_FALSEY(v) \
     (not IS_TRUTHY(v))
 
+INLINE bool Is_Logic(const Cell* v) {
+    return Is_Nulled(v) or Is_Okay(v);
+}
 
-#define Init_Logic(out,b) \
-    Reset_Cell_Header((out), TYPE_LOGIC, (b) ? 0 : CELL_FLAG_FALSEY)
-
-#define Init_True(out) \
-    Init_Logic((out), true)
-
-#define Init_False(out) \
-    Init_Logic((out), false)
+INLINE Value* Init_Logic(Value* out, bool b) {
+    if (b)
+        Init_Okay(out);
+    else
+        Init_Nulled(out);
+    return out;
+}
 
 INLINE bool VAL_LOGIC(const Cell* v) {
-    assert(Is_Logic(v));
-    return Not_Cell_Flag((v), FALSEY);
+    if (Is_Nulled(v))
+        return false;
+    assert(Is_Okay(v));
+    return true;
 }
+
+
+INLINE bool Is_Refine_Unused(const Value* refine) {
+    return refine == ARG_TO_UNUSED_REFINEMENT or IS_FALSEY(refine);
+}
+
 
 
 //=////////////////////////////////////////////////////////////////////////=//

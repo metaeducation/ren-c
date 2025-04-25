@@ -14,11 +14,11 @@
 ; cycle return value
 (
     blk: [1 2 3 4]
-    true = for-each i blk [true]
+    okay = for-each i blk [okay]
 )
 (
     blk: [1 2 3 4]
-    false = for-each i blk [false]
+    'foo = for-each i blk ['foo]
 )
 ; break cycle
 (
@@ -36,15 +36,15 @@
 )
 ; continue cycle
 (
-    success: true
-    for-each i [1] [continue success: false]
+    success: okay
+    for-each i [1] [continue success: null]
     success
 )
 ; zero repetition
 (
-    success: true
+    success: okay
     blk: []
-    for-each i blk [success: false]
+    for-each i blk [success: null]
     success
 )
 ; Test that return stops the loop
@@ -80,20 +80,20 @@
     x: 10
     sum: 0
     for-each x [1 2 3] [sum: sum + x]
-    did all [x = 10  sum = 6]
+    all [x = 10, sum = 6]
 )
 (
     x: 10
     sum: 0
     for-each #x [1 2 3] [sum: sum + x]
-    did all [x = 3  sum = 6]
+    all [x = 3, sum = 6]
 )
 (
     x: 10
     y: 20
     sum: 0
     for-each [#x y] [1 2 3 4] [sum: sum + x + y]
-    did all [x = 3  y = 20  sum = 10]
+    all [x = 3, y = 20, sum = 10]
 )
 
 ; Redundancy is checked for.  LIT-WORD! redundancy is legal because those
@@ -107,7 +107,7 @@
     obj1: make object! [x: 20]
     obj2: make object! [x: 30]
     sum: 0
-    did all [
+    all [
         error? sys/util/rescue [for-each [x x] [1 2 3 4] [sum: sum + x]]
         error? sys/util/rescue [
             for-each (compose [ ;-- see above

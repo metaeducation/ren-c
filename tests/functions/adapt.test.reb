@@ -9,9 +9,9 @@
 (
     capture: blank
     foo: adapt 'any [capture: block]
-    did all [
-      foo [1 2 3]
-      capture = [1 2 3]
+    all [
+        foo [1 2 3]
+        capture = [1 2 3]
     ]
 )
 (

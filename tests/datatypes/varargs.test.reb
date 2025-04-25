@@ -45,7 +45,7 @@
             ]
             return sum
         ]
-        true
+        okay
     )
 
     (eval [normal] = 0)
@@ -62,7 +62,7 @@
             ]
             return sum
         ]
-        true
+        okay
     )
 
     (eval [tight] = 0)
@@ -79,7 +79,7 @@
             ]
             return stuff
         ]
-        true
+        okay
     )
 
     (eval [soft] = [])
@@ -94,7 +94,7 @@
             ]
             return stuff
         ]
-        true
+        okay
     )
 
     (eval [hard] = [])
@@ -114,7 +114,7 @@
 
     3 = (value: 1 + 2 <| 30 + 40 x: value  () ())
 
-    did all [value = 3  x = 3]
+    all [value = 3, x = 3]
 )
 (
     value: ~
@@ -122,7 +122,7 @@
 
     70 = (value: 1 + 2 |> 30 + 40 x: value () () ())
 
-    did all [value = 3  x = 3]
+    all [value = 3, x = 3]
 )
 
 (

@@ -1,8 +1,6 @@
 ; functions/math/complement.r
-[#849
-    (false = complement true)
-]
-(true = complement false)
+
+
 ; integer
 (-1 = complement 0)
 (0 = complement -1)

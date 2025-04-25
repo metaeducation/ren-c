@@ -133,10 +133,15 @@ Bounce PD_Blank(
 REBTYPE(Unit)
 {
     Value* val = D_ARG(1);
-    assert(not Is_Nulled(val));
 
-    if (not Is_Void(val) and not Is_Blank(val))
-        fail (Error_Invalid(val));
+    if (Is_Void(val)) {
+        // allowed to opt out, e.g. index of void is null
+    }
+    else if (Is_Antiform(val)) {
+        fail (Error_Bad_Antiform(val));
+    }
+    else
+        assert(Is_Blank(val));
 
     switch (Cell_Word_Id(verb)) {
 
@@ -156,6 +161,9 @@ REBTYPE(Unit)
         switch (Cell_Word_Id(ARG(PROPERTY))) {
         case SYM_INDEX:
         case SYM_LENGTH:
+            if (Is_Blank(val))
+                return Init_Integer(OUT, 0);
+            assert(Is_Void(val));
             return nullptr;
 
         default:
@@ -171,9 +179,10 @@ REBTYPE(Unit)
         return nullptr;
 
     case SYM_COPY:
-        if (Is_Blank(val))
-            return Init_Blank(OUT);
-        return nullptr;
+        if (Is_Void(val))
+            return Init_Nulled(OUT);
+        assert(Is_Blank(val));
+        return Init_Blank(OUT);
 
     default:
         break;

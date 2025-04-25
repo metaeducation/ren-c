@@ -15,7 +15,7 @@
 (
     val: <overwritten>
     pos: evaluate/step3 [1 + comment "a" comment "b" 2 * 3 fail "too far"] 'val
-    did all [
+    all [
         val = 9
         pos = [fail "too far"]
     ]
@@ -23,7 +23,7 @@
 (
     val: <overwritten>
     pos: evaluate/step3 [1 comment "a" + comment "b" 2 * 3 fail "too far"] 'val
-    did all [
+    all [
         val = 9
         pos = [fail "too far"]
     ]
@@ -31,7 +31,7 @@
 (
     val: <overwritten>
     pos: evaluate/step3 [1 comment "a" comment "b" + 2 * 3 fail "too far"] 'val
-    did all [
+    all [
         val = 9
         pos = [fail "too far"]
     ]
@@ -68,7 +68,7 @@
 )
 (
     pos: evaluate/step3 [1 + 2 * 3 elide "a" elide "b" fail "too far"] 'val
-    did all [
+    all [
         val = 9
         pos = [elide "a" elide "b" fail "too far"]
     ]
@@ -80,12 +80,12 @@
     x: 1 + 2 * 3
     elide (y: :x)
 
-    did all [x = 9  y = 9]
+    all [x = 9  y = 9]
 )
 (
     x: ~
     x: 1 + elide (y: 10) 2 * 3
-    did all [
+    all [
         x = 9
         y = 10
     ]
@@ -98,7 +98,7 @@
     y: 1 comment [+ 2
     z: 30] + 7
 
-    did all [
+    all [
         x = 10
         y = 8
         unset? 'z
@@ -126,32 +126,32 @@
 ; GROUP!s with no content act as invisible
 (
     x: <unchanged>
-    did all [
+    all [
         'no-arg = (sys/util/rescue [<discarded> set 'x ()])/id
         x = <unchanged>
     ]
 )(
     x: <unchanged>
-    did all [
+    all [
         'no-arg = (sys/util/rescue [<discarded> set 'x comment "hi"])/id
         x = <unchanged>
     ]
 )(
     obj: make object! [x: <unchanged>]
-    did all [
+    all [
         'no-arg = (sys/util/rescue [<discarded> set 'obj/x comment "hi"])/id
         obj/x = <unchanged>
     ]
 )(
     obj: make object! [x: <unchanged>]
-    did all [
+    all [
         'no-arg = (sys/util/rescue [<discarded> set 'obj/x ()])/id
         obj/x = <unchanged>
     ]
 )
 
-(trash? (if true [] else [<else>]))
-(trash? (if true [comment <true-branch>] else [<else>]))
+(trash? (if okay [] else [<else>]))
+(trash? (if okay [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <invisible>])
 (1 = any [1 elide <invisible>])
@@ -169,7 +169,7 @@
 (trash? reeval the (comment "void is better than failing here"))
 (
     x: <before>
-    did all [
+    all [
         trash? reeval :elide x: <after>
         x = <after>
     ]

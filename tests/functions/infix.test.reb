@@ -1,18 +1,18 @@
 ; %infix.test.reb
 
 (action! = type of +/)
-(true = infix? +/)
+(okay = infix? +/)
 
 (
     foo: :+
-    did all [
+    all [
         infix? foo/
         3 = 1 foo 2
     ]
 )
 (
     foo: infix tighten :add
-    did all [
+    all [
         infix? foo/
         3 = 1 foo 2
     ]
@@ -35,7 +35,7 @@
     (
         skippy: func [:x [<skip> integer!] y] [reduce [reify :x y]]
         lefty: infix :skippy
-        true
+        okay
     )
 
     ([~null~ "hi"] = skippy "hi")
@@ -49,7 +49,7 @@
     (
         var: ~
         block: [<tag> lefty "hi"]
-        did all [
+        all [
             [lefty "hi"] = block: evaluate/step3 block 'var
             <tag> = var
             [] = evaluate/step3 block 'var
@@ -63,7 +63,7 @@
     (
         var: ~
         block: [the 1 lefty "hi"]
-        did all [
+        all [
             [lefty "hi"] = block: evaluate/step3 block 'var
             1 = var
             [] evaluate/step3 block 'var
@@ -71,7 +71,7 @@
         ]
     )
 
-    ([~null~ "hi"] = any [false null lefty "hi"])
+    ([~null~ "hi"] = any [null null lefty "hi"])
 ]
 
 

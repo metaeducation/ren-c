@@ -30,8 +30,8 @@
     (void? for-each x _ [1020])
     ([] = map-each x _ [1020])
     (void? for-next x _ [1020])
-    (0 = remove-each x _ [true])
-    (void? every x _ [true])
+    (0 = remove-each x _ [okay])
+    (void? every x _ [okay])
     (void? for-skip x _ 2 [1020])
 
     (null = take _)

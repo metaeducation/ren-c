@@ -156,10 +156,6 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         d = cast(REBDEC, VAL_INT64(arg));
         goto dont_divide_if_percent;
 
-    case TYPE_LOGIC:
-        d = VAL_LOGIC(arg) ? 1.0 : 0.0;
-        goto dont_divide_if_percent;
-
     case TYPE_CHAR:
         d = cast(REBDEC, VAL_CHAR(arg));
         goto dont_divide_if_percent;
@@ -455,14 +451,14 @@ REBTYPE(Decimal)
     case SYM_EVEN_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
-            return Init_True(OUT);
-        return Init_False(OUT);
+            return LOGIC(true);
+        return LOGIC(false);
 
     case SYM_ODD_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
-            return Init_False(OUT);
-        return Init_True(OUT);
+            return LOGIC(false);
+        return LOGIC(true);
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;

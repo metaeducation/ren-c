@@ -16,7 +16,7 @@
         eval f
     ]
 
-    did all [
+    all [
         blank? n-add 10 20
         25 = n-add 20 20
     ]

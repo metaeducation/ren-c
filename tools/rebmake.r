@@ -238,7 +238,7 @@ project-class: make object! [
     depends: null  ; a dependency could be a library, object file
     output: null  ; file path
     basename: null  ; output without extension part
-    generated?: false
+    generated?: null
     implib: null  ; for windows, an application/library with exported symbols will generate an implib file
 
     post-build-commands: null  ; commands to run after the "build" command
@@ -279,7 +279,7 @@ ext-static-class: make object! [
 application-class: make project-class [
     class: #application
     type: 'application
-    generated?: false
+    generated?: null
 
     searches: null
     ldflags: null
@@ -298,7 +298,7 @@ application-class: make project-class [
 dynamic-library-class: make project-class [
     class: #dynamic-library
     type: 'dynamic
-    generated?: false
+    generated?: null
 
     searches: null
     ldflags: null
@@ -395,7 +395,7 @@ cc: make compiler-class [
             sys/util/rescue [
                 exec-file: path: default ["gcc"]
                 call/output reduce [path "--version"] version
-                parse2/match version [
+                degrade parse2/match version [
                     {gcc (GCC)} space
                     copy major: some digit #"."
                     copy minor: some digit #"."
@@ -407,9 +407,9 @@ cc: make compiler-class [
                         to integer! minor
                         to integer! macro
                     ]
-                    true
+                    '~okay~
                 ] else [
-                    false
+                    '~null~
                 ]
             ]
         ]
@@ -460,8 +460,8 @@ cc: make compiler-class [
             ]
             if O [
                 case [
-                    opt-level = true [keep "-O2"]
-                    opt-level = false [keep "-O0"]
+                    opt-level = null [keep "-O0"]
+                    opt-level = okay [keep "-O2"]
                     integer? opt-level [keep ["-O" opt-level]]
                     find ["s" "z" "g" 's 'z 'g] opt-level [
                         keep ["-O" opt-level]
@@ -472,8 +472,8 @@ cc: make compiler-class [
             ]
             if g [
                 case [
-                    debug = true [keep "-g -g3"]
-                    debug = false []
+                    debug = null []
+                    debug = okay [keep "-g -g3"]
                     integer? debug [keep ["-g" debug]]
 
                     fail ["unrecognized debug option:" debug]
@@ -686,7 +686,7 @@ cl: make compiler-class [
             ]
             if O [
                 case [
-                    opt-level = true [keep "/O2"]
+                    opt-level = okay [keep "/O2"]
                     opt-level and [not zero? opt-level] [
                         keep ["/O" opt-level]
                     ]
@@ -694,13 +694,13 @@ cl: make compiler-class [
             ]
             if g [
                 case [
+                    debug = null []
                     any [
-                        debug = true
+                        debug = okay
                         integer? debug ;-- doesn't map to a CL option
                     ][
                         keep "/Od /Zi"
                     ]
-                    debug = false []
 
                     fail ["unrecognized debug option:" debug]
                 ]
@@ -875,7 +875,7 @@ object-file-class: make object! [
     optimization: null
     debug: null
     includes: null
-    generated?: false
+    generated?: null
     depends: null
 
     compile: method [
@@ -936,7 +936,7 @@ entry-class: make object! [
     target: null
     depends: null
     commands: null
-    generated?: false
+    generated?: null
 ]
 
 var-class: make object! [
@@ -944,7 +944,7 @@ var-class: make object! [
     name: null
     value: null
     default: null
-    generated?: false
+    generated?: null
 ]
 
 cmd-create-class: make object! [
@@ -1013,9 +1013,9 @@ generator-class: make object! [
         ]
         if not cmd [return null]
 
-        stop: false
+        stop: null
         while [not stop][
-            stop: true
+            stop: okay
             parse2/match cmd [
                 while [
                     change [
@@ -1024,7 +1024,7 @@ generator-class: make object! [
                             | "$" copy name: letter
                         ] (
                             val: localize select vars name
-                            stop: false
+                            stop: null
                         )
                     ] val
                     | skip
@@ -1043,7 +1043,7 @@ generator-class: make object! [
         if find words-of solution 'output [
             setup-outputs solution
         ]
-        flip-flag solution false
+        flip-flag solution null
 
         if find words-of solution 'depends [
             for-each dep solution/depends [
@@ -1142,7 +1142,7 @@ generator-class: make object! [
             #object-library [
                 if project/generated? [return]
                 setup-output project
-                project/generated?: true
+                project/generated?: okay
                 for-each dep project/depends [
                     setup-outputs dep
                 ]
@@ -1158,7 +1158,7 @@ generator-class: make object! [
 ]
 
 makefile: make generator-class [
-    nmake?: false ; Generating for Microsoft nmake
+    nmake?: null ; Generating for Microsoft nmake
 
     ;by default makefiles are for POSIX platform
     gen-cmd-create: :posix/gen-cmd-create
@@ -1254,7 +1254,7 @@ makefile: make generator-class [
         ;print ["emitting..."]
         ;dump project
         ;if project/generated? [return]
-        ;project/generated?: true
+        ;project/generated?: okay
 
         for-each dep project/depends [
             if not object? dep [continue]
@@ -1263,7 +1263,7 @@ makefile: make generator-class [
                 either dep/generated? [
                     continue
                 ][
-                    dep/generated?: true
+                    dep/generated?: okay
                 ]
             ]
             switch dep/class [
@@ -1297,7 +1297,7 @@ makefile: make generator-class [
                     for-each obj dep/depends [
                         assert [obj/class = #object-file]
                         if not obj/generated? [
-                            obj/generated?: true
+                            obj/generated?: okay
                             append buf gen-rule obj/gen-entries/(maybe+ all [
                                 project/class = #dynamic-library
                                 'PIC
@@ -1339,7 +1339,7 @@ makefile: make generator-class [
 ]
 
 nmake: make makefile [
-    nmake?: true
+    nmake?: okay
 
     ; reset them, so they will be chosen by the target platform
     gen-cmd-create: null
@@ -1421,7 +1421,7 @@ Execution: make generator-class [
 
         if not find [#dynamic-extension #static-extension] project/class [
             if project/generated? [return]
-            project/generated?: true
+            project/generated?: okay
         ]
 
         switch project/class [
@@ -1448,7 +1448,7 @@ Execution: make generator-class [
                 for-each obj project/depends [
                     assert [obj/class = #object-file]
                     if not obj/generated? [
-                        obj/generated?: true
+                        obj/generated?: okay
                         run-target obj/gen-entries/(maybe+ all [
                             p-project/class = #dynamic-library
                             'PIC

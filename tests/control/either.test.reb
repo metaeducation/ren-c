@@ -1,32 +1,32 @@
 ; functions/control/either.r
 (
-    either true [success: true] [success: false]
+    either okay [success: okay] [success: null]
     success
 )
 (
-    either false [success: false] [success: true]
+    either null [success: null] [success: okay]
     success
 )
-(1 = either true [1] [2])
-(2 = either false [1] [2])
+(1 = either okay [1] [2])
+(2 = either null [1] [2])
 
-(null? either true [null] [1])
-(null? either false [1] [null])
+(null? either okay [null] [1])
+(null? either null [1] [null])
 
-(error? either true [sys/util/rescue [1 / 0]] [])
-(error? either false [] [sys/util/rescue [1 / 0]])
+(error? either okay [sys/util/rescue [1 / 0]] [])
+(error? either null [] [sys/util/rescue [1 / 0]])
 
 ; RETURN stops the evaluation
 (
     f1: func [] [
-        either true [return 1 2] [2]
+        either okay [return 1 2] [2]
         2
     ]
     1 = f1
 )
 (
     f1: func [] [
-        either false [2] [return 1 2]
+        either null [2] [return 1 2]
         2
     ]
     1 = f1
@@ -34,39 +34,39 @@
 ; THROW stops the evaluation
 (
     1 == catch [
-        either true [throw 1 2] [2]
+        either okay [throw 1 2] [2]
         2
     ]
 )
 (
     1 == catch [
-        either false [2] [throw 1 2]
+        either null [2] [throw 1 2]
         2
     ]
 )
 ; BREAK stops the evaluation
 (
     null? repeat 1 [
-        either true [break 2] [2]
+        either okay [break 2] [2]
         2
     ]
 )
 (
     null? repeat 1 [
-        either false [2] [break 2]
+        either null [2] [break 2]
         2
     ]
 )
 ; recursive behaviour
-(2 = either true [either false [1] [2]] [])
-(1 = either false [] [either true [1] [2]])
+(2 = either okay [either null [1] [2]] [])
+(1 = either null [] [either okay [1] [2]])
 ; infinite recursion
 (
-    blk: [either true blk []]
+    blk: [either okay blk []]
     error? sys/util/rescue blk
 )
 (
-    blk: [either false [] blk]
+    blk: [either null [] blk]
     error? sys/util/rescue blk
 )
 
@@ -78,11 +78,11 @@
 
     (
         takes-2-logics: func [x [logic!] y [logic!]] [x]
-        infix-voider: infix func [return: [~null~] x y] []
-        true
+        infix-voider: infix func [return: [~void~] x y] []
+        okay
     )
 
-    (takes-2-logics (~) = ~ false)
+    (takes-2-logics ~ = ~ null)
 
-    ('arg-required = (sys/util/rescue [takes-2-logics true infix-voider true false])/id)
+    ('expect-arg = (sys/util/rescue [takes-2-logics okay infix-voider okay null])/id)
 ]

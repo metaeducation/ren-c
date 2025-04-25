@@ -48,7 +48,7 @@ idate-to-date: function [return: [date!] date [text!]] [
 sync-op: function [port body] [
     if not port/state [
         open port
-        port/state/close?: true
+        port/state/close?: okay
     ]
 
     state: port/state
@@ -83,21 +83,20 @@ sync-op: function [port body] [
 ]
 
 read-sync-awake: function [return: [logic!] event [event!]] [
-    switch event/type [
+    degrade (switch event/type [
         'connect
         'ready [
             do-request event/port
-            false
+            '~null~
         ]
-        'done [true]
-        'close [true]
+        'done ['~okay~]
+        'close ['~okay~]
         'error [
             error: event/port/state/error
             event/port/state/error: null
             fail error
         ]
-        default [false]
-    ]
+    ] else ['~null~])
 ]
 
 http-awake: function [return: [logic!] event [event!]] [
@@ -107,24 +106,24 @@ http-awake: function [return: [logic!] event [event!]] [
     if action? :http-port/awake [state/awake: :http-port/awake]
     awake: :state/awake
 
-    switch event/type [
+    degrade switch event/type [
         'read [
             awake make event! [type: 'read port: http-port]
-            check-response http-port
+            reify check-response http-port
         ]
         'wrote [
             awake make event! [type: 'wrote port: http-port]
             state/state: 'reading-headers
             read port
-            false
+            '~null~
         ]
         'lookup [
             open port
-            false
+            '~null~
         ]
         'connect [
             state/state: 'ready
-            awake make event! [type: 'connect port: http-port]
+            reify awake make event! [type: 'connect port: http-port]
         ]
         'close [
             res: switch state/state [
@@ -153,9 +152,9 @@ http-awake: function [return: [logic!] event [event!]] [
                 ]
             ]
             close http-port
-            res
+            reify res
         ]
-        default [true]
+        default ['~okay~]
     ]
 ]
 
@@ -267,7 +266,7 @@ do-request: func [
 parse-write-dialect: func [port block <local> spec debug] [
     spec: port/spec
     parse block [
-        opt ['headers (spec/debug: true)]
+        opt ['headers (spec/debug: okay)]
         opt ['no-redirect (spec/follow: 'ok)]
         [block: word! (spec/method: block) | (spec/method: 'post)]
         opt [block: [file! | url!] (spec/path: block)]
@@ -347,10 +346,10 @@ check-response: function [port] [
 
     if not headers [
         read conn
-        return false
+        return null
     ]
 
-    res: false
+    res: null
 
     info/response-parsed: default [
         catch [
@@ -389,7 +388,7 @@ check-response: function [port] [
         ]
     ]
 
-    if spec/debug = true [
+    if spec/debug = okay [
         spec/debug: info
     ]
 
@@ -547,12 +546,12 @@ do-redirect: func [
         close port/state/connection
         open port/state/connection
         do-request port
-        false
+        return null
     ] [
         state/error: make-http-error/otherhost
             "Redirect to other host - requires custom handling"
             as url! unspaced [new-uri/scheme "://" new-uri/host new-uri/path] headers
-        state/awake make event! [type: 'error port: port]
+        return state/awake make event! [type: 'error port: port]
     ]
 ]
 
@@ -564,9 +563,9 @@ check-data: function [
     headers: state/info/headers
     conn: state/connection
 
-    res: false
+    res: null
     awaken-wait-loop: does [
-        not res so res: true ;-- prevent timeout when reading big data
+        not res so res: okay ;-- prevent timeout when reading big data
     ]
 
     case [
@@ -751,7 +750,7 @@ sys/util/make-scheme [
                 state: 'inited
                 connection: null
                 error: null
-                close?: false
+                close?: null
                 info: make port/scheme/info [type: 'file]
                 awake: ensure [~null~ action!] :port/awake
             ]
@@ -806,13 +805,9 @@ sys/util/make-scheme [
             port [port!]
             <local> error state
         ][
-            if state: port/state [
-                either error? error: state/error [
-                    state/error: null
-                    error
-                ][
-                    state/info
-                ]
+            all [
+                state: port/state
+                state/info
             ]
         ]
     ]

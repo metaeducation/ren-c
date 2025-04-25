@@ -13,8 +13,6 @@ REBOL [
     Needs: 2.100.100
 ]
 
-verbose: false
-
 ; **SENSITIVE MAGIC LINE OF VOODOO** - see "Usage" in %bootstrap-shim.r
 (change-dir do join copy system/script/path %bootstrap-shim.r)
 
@@ -22,6 +20,8 @@ do <common.r>
 do <common-emitter.r>
 do <common-parsers.r>
 do <platforms.r>
+
+verbose: null
 
 version: load <../src/boot/version.r>
 

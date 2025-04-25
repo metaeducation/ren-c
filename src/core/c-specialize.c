@@ -101,10 +101,10 @@ void Cleanup_Specialization_Binder(
 //     >> specialize :append/dup []
 //     ** Error: SPECIALIZE does not support refinement promotion
 //
-//     >> specialize :append [dup: true]
+//     >> specialize :append [dup: okay]
 //     ** Error: SPECIALIZE does not support refinement promotion
 //
-//     >> specialize :append [dup: true count: 5]
+//     >> specialize :append [dup: okay count: 5]
 //     ; this is okay
 //
 //     >> specialize :append [count: 5]
@@ -191,7 +191,7 @@ VarList* Make_Managed_Context_For_Action_May_Fail(
         // a "virtual" sense...and remove it from binding consideration
         // for a specialization, e.g.
         //
-        //     specialize 'append/only [only: false] ; won't disable only
+        //     specialize 'append/only [only: null] ; won't disable only
         {
             StackIndex stackindex = highest_stackindex;
             for (; stackindex != lowest_stackindex; --stackindex) {
@@ -598,7 +598,7 @@ Bounce Block_Dispatcher(Level* L)
         //
         // What forces us to copy the block are cases like this:
         //
-        //     o1: make object! [a: 10 b: does [if true [a]]]
+        //     o1: make object! [a: 10 b: does [if okay [a]]]
         //     o2: make o1 [a: 20]
         //     o2/b = 20
         //

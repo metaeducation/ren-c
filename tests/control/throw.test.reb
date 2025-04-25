@@ -10,11 +10,11 @@
     (a: 1 catch [a: error? throw 2] :a =? 1)
 ]
 [#1535
-    (catch [word of throw blank] true)
+    (catch [word of throw blank] okay)
 ]
-(catch [values of throw blank] true)
+(catch [values of throw blank] okay)
 [#1945
-    (catch [spec-of throw blank] true)
+    (catch [spec-of throw blank] okay)
 ]
 (a: 1 catch/name [a: error? throw/name 2 'b] 'b :a =? 1)
 ; throw should not be caught by try

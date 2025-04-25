@@ -163,11 +163,11 @@ delete-dir: func [
     if all [
         dir? dir
         dir: dirize dir
-        sys/util/rescue [
+        degrade (sys/util/rescue [
             files: load dir
         ] then [
-            false
-        ]
+            '~null~
+        ])
     ] [
         for-each file files [delete-dir dir/(file)]
     ]

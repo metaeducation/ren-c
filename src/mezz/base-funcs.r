@@ -41,7 +41,7 @@ so: infix func [
     condition "Condition to test (voids are treated as false)"
         [any-value!]
 ][
-    any [condition false] else [
+    any [condition null] else [
         fail/blame ["Postfix 'SO assertion' failed"] 'condition
     ]
 ]
@@ -132,7 +132,7 @@ function: func [
             ]
             defaulters: default [copy []]
             append defaulters compose/deep [
-                (as set-word! var) default [(uneval eval other/1)]
+                (as set-word! var) default [(meta eval other/1)]
             ]
         )
     |
@@ -146,7 +146,7 @@ function: func [
             if other [
                 defaulters: default [copy []]
                 append defaulters compose/deep [ ;-- always sets
-                    (as set-word! var) (uneval eval other)
+                    (as set-word! var) (meta eval other)
                 ]
             ]
         )]
@@ -458,14 +458,14 @@ gunzip: redescribe [
 default*: infix redescribe [
     {Would be the same as DEFAULT/ONLY if paths could dispatch infix}
 ](
-    specialize 'default [only: true]
+    specialize 'default [only: okay]
 )
 
 
 skip*: redescribe [
     {Variant of SKIP that returns NULL instead of clipping to series bounds}
 ](
-    specialize 'skip [only: true]
+    specialize 'skip [only: okay]
 )
 
 ensure: redescribe [
@@ -578,7 +578,7 @@ count-down: redescribe [
 lock-of: redescribe [
     "If value is already locked, return it...otherwise CLONE it and LOCK it."
 ](
-    specialize 'lock [clone: true]
+    specialize 'lock [clone: okay]
 )
 
 
@@ -630,12 +630,12 @@ arrow: lambda [
 ]
 
 find-reverse: specialize :find [
-    reverse: true
+    reverse: okay
 
     ; !!! Specialize out /SKIP because it was not compatible--R3-Alpha
     ; and Red both say `find/skip tail "abcd" "bc" -1` is none.
     ;
-    skip: false
+    skip: null
 ]
 
 find-last: specialize :find [
@@ -645,7 +645,7 @@ find-last: specialize :find [
     ; null, and fixing that code is not worth it.  So we define FIND-LAST
     ; as simply still using the /LAST refinement.
     ;
-    last: true
+    last: okay
 ]
 
 reify: func [value [~null~ ~void~ trash! any-value!]] [
@@ -653,8 +653,7 @@ reify: func [value [~null~ ~void~ trash! any-value!]] [
         void? :value [return '~void~]
         trash? :value [return '~]
         null? :value [return '~null~]
-        true = :value [return '~true~]
-        false = :value [return '~false~]
+        okay? :value [return '~okay~]
     ]
     return :value
 ]
@@ -664,18 +663,10 @@ degrade: func [value [any-value!]] [
         '~void~ = :value [return void]
         '~ = :value [return ~]
         '~null~ = :value [return null]
-        '~true~ = :value [return true]
-        '~false~ = :value [return false]
+        '~okay~ = :value [return okay]
     ]
     return :value
 ]
-
-; Simulate quasiform evaluation
-;
-~true~: true
-~false~: false
-~null~: null
-~void~: void
 
 invisible-eval-all: func [
     {Evaluate any number of expressions, but completely elide the results.}

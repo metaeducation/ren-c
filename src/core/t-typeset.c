@@ -52,6 +52,7 @@ const struct {
 } Typesets[] = {
     {SYM_ANY_VALUE_X, TS_VALUE},
     {SYM_ANY_ELEMENT_X, TS_ELEMENT},
+    {SYM_LOGIC_X, TS_LOGIC},
     {SYM_ANY_WORD_X, TS_WORD},
     {SYM_ANY_PATH_X, TS_PATH},
     {SYM_ANY_NUMBER_X, TS_NUMBER},
@@ -340,9 +341,9 @@ REBTYPE(Typeset)
             fail (Error_Invalid(arg));
 
         if (Typeset_Check(val, CELL_DATATYPE_TYPE(arg)))
-            return Init_True(OUT);
+            return LOGIC(true);
 
-        return nullptr;
+        return LOGIC(false);
 
     case SYM_INTERSECT:
     case SYM_UNION:

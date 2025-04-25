@@ -37,7 +37,7 @@
 
 INLINE void Init_For_Vararg_End(Value* out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
-        Init_True(out);
+        Init_Logic(out, true);
     else
         SET_END(out);
 }
@@ -96,7 +96,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
     // actual END--are all taken care of, so we're not "at the TAIL?"
     //
     if (op == VARARG_OP_TAIL_Q) {
-        Init_False(out);
+        Init_Logic(out, false);
         return true;
     }
 
@@ -126,7 +126,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 // check the result, and if an error is delivered it will use the name of
 // the parameter symbol in the fail() message.
 //
-// If op is VARARG_OP_TAIL_Q, then it will return TRUE_VALUE or FALSE_VALUE,
+// If op is VARARG_OP_TAIL_Q, then it will return ~okay~ or ~nulled~
 // and this case cannot return a thrown value.
 //
 // For other ops, it will return END_NODE if at the end of variadic input,

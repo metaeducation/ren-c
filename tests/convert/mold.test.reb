@@ -24,7 +24,7 @@
         if error? sys/util/rescue [
             repeat n [a: append/only copy [] a]
             mold a
-        ] [throw true]
+        ] [throw okay]
         n: n * 2
     ]]
 )]
@@ -49,10 +49,10 @@
     (
         mold block = {[a b c]}
     )(
-        new-line block true
+        new-line block 'yes
         mold block = {[^/    a b c]}
     )(
-        new-line tail block true
+        new-line tail block 'yes
         mold block = {[^/    a b c^/]}
     )(
         mold tail block = {[^/]}
@@ -80,16 +80,16 @@
 
 (
     block: copy [a b c]
-    new-line block true
-    new-line tail block true
+    new-line block 'yes
+    new-line tail block 'yes
     append block [d e f]
     mold block = {[^/    a b c^/    d e f]}
 )
 
 (
     block: copy [a b c]
-    new-line block true
-    new-line tail block true
+    new-line block 'yes
+    new-line tail block 'yes
     append/line block [d e f]
     mold block = {[^/    a b c^/    d e f^/]}
 )
@@ -102,8 +102,8 @@
 
 (
     block: copy [a b c]
-    new-line block true
-    new-line tail block true
+    new-line block 'yes
+    new-line tail block 'yes
     append/line block [d e f]
     mold block = {[^/    a b c^/    d e f^/]}
 )
@@ -123,5 +123,5 @@
     ]
     f
     recycle
-    true
+    okay
 )]

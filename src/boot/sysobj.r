@@ -110,11 +110,11 @@ options: construct [  ; Options supplied to REBOL during startup
 
     dump-size: 68   ; used by dump
 
-    quiet: false    ; do not show startup info (compatibility)
-    about: false    ; do not show full banner (about) on start-up
-    cgi: false
-    no-window: false
-    verbose: false
+    quiet: null    ; do not show startup info (compatibility)
+    about: null    ; do not show full banner (about) on start-up
+    cgi: null
+    no-window: null
+    verbose: null
 
     module-paths: [%./]
     default-suffix: %.reb ; Used by IMPORT if no suffix is provided
@@ -124,8 +124,8 @@ options: construct [  ; Options supplied to REBOL during startup
 
     ; Legacy Behaviors Options (paid attention to only by debug builds)
 
-    forever-64-bit-ints: false
-    unlocked-source: false
+    forever-64-bit-ints: null
+    unlocked-source: null
 ]
 
 script: construct [
@@ -432,7 +432,7 @@ standard: construct [
 ;       parity:
 ;       stop-bits:
 ;           null
-;       rts-cts: true
+;       rts-cts: okay
 ;       user-data:
 ;       awake:
 
@@ -491,13 +491,13 @@ console: null  ; console (repl) object created in host-start (os/host-start.r)
 ;   escape:  {(escape)} ; Indicates an escape
 ;   busy:    {|/-\}  ; Spinner for network progress
 ;   tab-size: 4      ; default tab size
-;   break: true      ; whether escape breaks or not
+;   break: okay      ; whether escape breaks or not
 ;]
 
 ;           decimal: #"."   ; The character used as the decimal point in decimal and money vals
 ;           sig-digits: null    ; Significant digits to use for decimals ; null for normal printing
 ;           date-sep: #"-"  ; The character used as the date separator
-;           date-month-num: false   ; True if months are displayed as numbers; False for names
+;           date-month-num: null   ; True if months are displayed as numbers; False for names
 ;           time-sep: #":"  ; The character used as the time separator
 
 cgi: construct [ ; CGI environment variables

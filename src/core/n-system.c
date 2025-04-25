@@ -248,7 +248,7 @@ DECLARE_NATIVE(CHECK)
         Assert_Array(VAL_ACT_DETAILS(value));
     }
 
-    return Init_True(OUT);
+    return LOGIC(true);
 #endif
 }
 
@@ -402,7 +402,7 @@ DECLARE_NATIVE(TEST)
 
     rebElide(
         "print", rebI(10), // won't leak, rebI() releases during variadic walk
-        "if false [print", rebInteger(30), "]"  // rebInteger() leaks here
+        "if null [print", rebInteger(30), "]"  // rebInteger() leaks here
     );
 
     return nullptr;

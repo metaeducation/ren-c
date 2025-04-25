@@ -923,7 +923,7 @@ DECLARE_NATIVE(FREE_Q)
     else if (Any_Series(v))
         s = v->payload.any_series.series;  // VAL_SERIES fails if freed
     else
-        return Init_False(OUT);
+        return LOGIC(false);
 
     return Init_Logic(OUT, Get_Flex_Info(s, INACCESSIBLE));
 }
@@ -1229,4 +1229,57 @@ DECLARE_NATIVE(NULL_Q)
     INCLUDE_PARAMS_OF_NULL_Q;
 
     return Init_Logic(OUT, Is_Nulled(ARG(OPTIONAL)));
+}
+
+
+//
+//  okay?: native [
+//
+//  "Tells you if the argument is antiform okay"
+//
+//      return: [logic!]
+//      optional [any-value!]
+//  ]
+//
+DECLARE_NATIVE(OKAY_Q)
+{
+    INCLUDE_PARAMS_OF_OKAY_Q;
+
+    return Init_Logic(OUT, Is_Okay(ARG(OPTIONAL)));
+}
+
+
+//
+//  logic?: native [
+//
+//  "Tells you if the argument is either the ~null~ or ~okay~ antiform"
+//
+//      return: [logic!]  ; Note: using LOGIC? to typecheck would be recursive
+//      value
+//  ]
+//
+DECLARE_NATIVE(LOGIC_Q)
+{
+    INCLUDE_PARAMS_OF_LOGIC_Q;
+
+    Value* v = ARG(VALUE);
+    return LOGIC(Is_Logic(v));
+}
+
+
+//
+//  logical: native [
+//
+//  "Produces ~null~ antiform for 0, or ~okay~ antiform for all other integers"
+//
+//      return: [logic!]
+//      number [integer!]
+//  ]
+//
+DECLARE_NATIVE(LOGICAL)
+{
+    INCLUDE_PARAMS_OF_LOGICAL;
+
+    Value* num = ARG(NUMBER);
+    return Init_Logic(OUT, VAL_INT64(num) != 0);
 }

@@ -36,7 +36,7 @@
 )
 
 [#1421 (
-    did all [
+    all [
         error? sys/util/rescue [load "[a<]"]
         error? sys/util/rescue [load "[a>]"]
         error? sys/util/rescue [load "[a+<]"]

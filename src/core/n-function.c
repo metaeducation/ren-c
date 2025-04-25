@@ -756,10 +756,10 @@ DECLARE_NATIVE(VARIADIC_Q)
     Value* param = VAL_ACT_PARAMS_HEAD(ARG(ACTION));
     for (; NOT_END(param); ++param) {
         if (Is_Param_Variadic(param))
-            return Init_True(OUT);
+            return LOGIC(true);
     }
 
-    return Init_False(OUT);
+    return LOGIC(false);
 }
 
 

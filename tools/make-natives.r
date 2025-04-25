@@ -29,7 +29,7 @@ src-dir: clean-path append repo-dir %src/
 output-dir: system/options/path/prep
 mkdir/deep output-dir/boot
 
-verbose: false
+verbose: null
 
 unsorted-buffer: make text! 20000
 

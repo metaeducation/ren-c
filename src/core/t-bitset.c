@@ -538,7 +538,7 @@ Bounce PD_Bitset(
 
     if (opt_setval == nullptr) {
         if (Check_Bits(flex, picker, false))
-            return Init_True(pvs->out);
+            return Init_Logic(pvs->out, true);
         return nullptr; // !!! Red false on out of range, R3-Alpha NONE! (?)
     }
 
@@ -638,8 +638,8 @@ REBTYPE(Bitset)
             fail (Error_Bad_Refines_Raw());
 
         if (not Check_Bits(Cell_Bitset(value), arg, Bool_ARG(CASE)))
-            return nullptr;
-        return Init_True(OUT);
+            return LOGIC(false);
+        return LOGIC(true);
     }
 
     case SYM_COMPLEMENT:

@@ -118,7 +118,7 @@ print: lib/print: func3 [value <local> pos] [
         return
     ]
     value: lib/spaced value  ; uses bootstrap shim spaced (once available)
-    while [true] [
+    while [okay] [
         prin3-buggy copy/part value 256
         if3 tail? value: lib/skip value 256 [break]
     ]
@@ -299,7 +299,7 @@ else: enfix enclose :lib/else func3 [f] [
 
 empty?: func3 [x [<opt> any-value!]] [  ; need to expand typespec for null3
     if3 blank3? :x [fail "EMPTY?: series is bootstrap NULL (BLANK!)"]
-    if3 null3? :x [return true]
+    if3 null3? :x [return okay]
     return lib/empty? :x
 ]
 for-each: func ['var data [<opt> any-value!] body] [  ; need to take NULL3
@@ -367,11 +367,18 @@ either: adapt :either [
 wordtester: infix func3 ['name [set-word!] want [word!] dont [word!]] [
     set name func3 [x] [
         lib/case [
-            :x = want [true]
-            :x = dont [false]
+            :x = want [okay]
+            :x = dont [null]
         ]
         fail [to word! name "expects only" mold reduce [want dont]]
     ]
+]
+
+okay: ~okay~: true
+okay?: ok?: func [x] [x = lib/true]
+
+on: true: yes: off: false: no: func [] [
+    fail/blame "No ON TRUE YES OFF FALSE NO definitions any more" 'return
 ]
 
 true?: wordtester 'true 'false
@@ -380,6 +387,8 @@ on?: wordtester 'on 'off
 off?: wordtester 'off 'on
 yes?: wordtester 'yes 'no
 no?: wordtester 'no 'yes
+
+logic!: make typeset! [blank! logic!]
 
 
 ; === MAKE TRY A POOR-MAN'S DEFINITIONAL ERROR HANDLER ===
@@ -401,6 +410,7 @@ try: func3 [value [<opt> any-value!]] [  ; poor man's definitional error handler
 reify: func3 [value [<opt> any-value!]] [
     case [
         lib/null? :value [return '~void~]  ; bootstrap-EXE's //NULL
+        okay? :value [return '~okay~]
         null? :value [return '~null~]  ; bootstrap-EXE's blank
     ]
     return :value
@@ -409,6 +419,7 @@ reify: func3 [value [<opt> any-value!]] [
 degrade: func3 [value [any-value!]] [
     case [
         '~void~ = :value [return lib/null]  ; append [a b c] null is no-op
+        '~okay~ = :value [return okay]
         '~null~ = :value [return null]
     ]
     return :value
@@ -457,7 +468,7 @@ load: func3 [source /all /header] [  ; can't ENCLOSE, does not take TAG!
             lib/load/header source
         ]
         all [lib/load/all source]
-        true [lib/load source]
+        okay [lib/load source]
     ]
 ]
 
@@ -658,7 +669,7 @@ call: specialize :call [wait: /wait]
 
 ; Since we're shimming blank as null, that could break things if not careful.
 
-assert [junk? if true [null] else [fail "This should not have run"]]
-assert [1020 = (if false [null] else [1020])]
+assert [junk? if okay [null] else [fail "This should not have run"]]
+assert [1020 = (if null [null] else [1020])]
 
 quit/with system/options/path  ; see [1]

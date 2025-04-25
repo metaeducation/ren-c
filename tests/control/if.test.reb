@@ -1,90 +1,90 @@
 ; functions/control/if.r
 (
-    success: false
-    if true [success: true]
+    success: null
+    if okay [success: okay]
     success
 )
 (
-    success: true
-    if false [success: false]
+    success: okay
+    if null [success: null]
     success
 )
-(1 = if true [1])
+(1 = if okay [1])
 
-(void? if false [])
-(trash? if true [])
+(void? if null [])
+(trash? if okay [])
 
-(error? if true [sys/util/rescue [1 / 0]])
+(error? if okay [sys/util/rescue [1 / 0]])
 ; RETURN stops the evaluation
 (
     f1: func [] [
-        if true [return 1 2]
+        if okay [return 1 2]
         2
     ]
     1 = f1
 )
 ; condition datatype tests; action
-(if get 'abs [true])
+(if get 'abs [okay])
 ; binary
-(if #{00} [true])
+(if #{00} [okay])
 ; bitset
-(if make bitset! "" [true])
+(if make bitset! "" [okay])
 
-(not error? sys/util/rescue [if [] [true]])  ; no error (CELL_FLAG_UNEVALUATED removed)
-(if identity [] [true])
+(not error? sys/util/rescue [if [] [okay]])  ; no error (CELL_FLAG_UNEVALUATED removed)
+(if identity [] [okay])
 
 ; datatype
-(if blank! [true])
+(if blank! [okay])
 ; typeset
-(if any-number! [true])
+(if any-number! [okay])
 ; date
-(if 1/1/0000 [true])
+(if 1/1/0000 [okay])
 ; decimal
-(if 0.0 [true])
-(if 1.0 [true])
-(if -1.0 [true])
+(if 0.0 [okay])
+(if 1.0 [okay])
+(if -1.0 [okay])
 ; email
-(if me@rt.com [true])
-(if %"" [true])
-(if does [] [true])
-(if first [:first] [true])
-(if #"^@" [true])
+(if me@rt.com [okay])
+(if %"" [okay])
+(if does [] [okay])
+(if first [:first] [okay])
+(if #"^@" [okay])
 ; integer
-(if 0 [true])
-(if 1 [true])
-(if -1 [true])
-(if #a [true])
-(if first ['a/b] [true])
-(if first ['a] [true])
-(if true [true])
-(void? if false [true])
-(if $1 [true])
-(if (specialize 'of [property: 'type]) [true])
-(void? if null [true])
-(if make object! [] [true])
-(if get '+ [true])
-(if 0x0 [true])
-(if first [()] [true])
-(if 'a/b [true])
-(if make port! http:// [true])
-(if /a [true])
-(if first [a/b:] [true])
-(if first [a:] [true])
-(if "" [true])
-(if to tag! "" [true])
-(if 0:00 [true])
-(if 0.0.0 [true])
-(if  http:// [true])
-(if 'a [true])
+(if 0 [okay])
+(if 1 [okay])
+(if -1 [okay])
+(if #a [okay])
+(if first ['a/b] [okay])
+(if first ['a] [okay])
+(if okay [okay])
+(void? if null [okay])
+(if $1 [okay])
+(if (specialize 'of [property: 'type]) [okay])
+(void? if null [okay])
+(if make object! [] [okay])
+(if get '+ [okay])
+(if 0x0 [okay])
+(if first [()] [okay])
+(if 'a/b [okay])
+(if make port! http:// [okay])
+(if /a [okay])
+(if first [a/b:] [okay])
+(if first [a:] [okay])
+(if "" [okay])
+(if to tag! "" [okay])
+(if 0:00 [okay])
+(if 0.0.0 [okay])
+(if  http:// [okay])
+(if 'a [okay])
 
 ; recursive behaviour
 
-(trash? if true [if false [1]])
-(1 = if true [if true [1]])
+(trash? if okay [if null [1]])
+(1 = if okay [if okay [1]])
 
 ; infinite recursion
 (
-    blk: [if true blk]
+    blk: [if okay blk]
     error? sys/util/rescue blk
 )
 
@@ -96,26 +96,26 @@
 ;
 
 (
-    success: false
-    if-not false [success: true]
+    success: null
+    if-not null [success: okay]
     success
 )
 (
-    success: true
-    if-not true [success: false]
+    success: okay
+    if-not okay [success: null]
     success
 )
-(1 = if-not false [1])
+(1 = if-not null [1])
 
-(null? if-not true [1])
-(trash? if-not false [])
+(null? if-not okay [1])
+(trash? if-not null [])
 
-(error? if-not false [sys/util/rescue [1 / 0]])
+(error? if-not null [sys/util/rescue [1 / 0]])
 
 ; RETURN stops the evaluation
 (
     f1: func [] [
-        if-not false [return 1 2]
+        if-not null [return 1 2]
         2
     ]
     1 = f1

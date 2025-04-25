@@ -81,8 +81,8 @@
     a-value: first ['a]
     a-value == :a-value
 )
-(:true == true)
-(:false == false)
+(:okay == okay)
+(:null == null)
 (
     a-value: $1
     :a-value == a-value

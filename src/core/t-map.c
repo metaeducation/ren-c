@@ -378,7 +378,7 @@ Bounce PD_Map(
     assert(Is_Map(pvs->out));
 
     if (opt_setval != nullptr) {
-        if (Is_Void(opt_setval) or Is_Nulled(opt_setval))
+        if (Is_Antiform(opt_setval) and not Is_Trash(opt_setval))
             fail ("Can't set map entries to void or null");
 
         Fail_If_Read_Only_Flex(Cell_Flex(pvs->out));
@@ -771,7 +771,7 @@ REBTYPE(Map)
         );
 
         if (Cell_Word_Id(verb) == SYM_FIND)
-            return Is_Zombie(OUT) ? nullptr : Init_True(OUT);
+            return Is_Zombie(OUT) ? nullptr : Init_Logic(OUT, true);
 
         return OUT; }
 

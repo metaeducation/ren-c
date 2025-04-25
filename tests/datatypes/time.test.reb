@@ -9,7 +9,7 @@
 
 ; small value
 (
-    did any [
+    any [
         error? sys/util/rescue [t: -596522:0:0 - 1:00]
         t = load mold t
     ]
@@ -17,7 +17,7 @@
 
 ; big value
 (
-    did any [
+    any [
         error? sys/util/rescue [t: 596522:0:0 + 1:00]
         t = load mold t
     ]

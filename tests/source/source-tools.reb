@@ -53,7 +53,7 @@ null-to-blank: func [x [any-value!]] [either null? x [_] [:x]]
 
 rebsource: context [
 
-    logfn: func [message][print mold new-line/all compose/only message false]
+    logfn: func [message][print mold new-line/all compose/only message 'no]
     log: :logfn
 
     standard: context [
@@ -106,7 +106,7 @@ rebsource: context [
         label [tag!]
         body [block!]
     ][
-        body: new-line/all compose/only body false
+        body: new-line/all compose/only body 'no
         append/line log (head insert body label)
     ]
 
@@ -397,7 +397,7 @@ rebsource: context [
             files: read-deep/full/strategy source-paths :source-files-seq
 
             sort files
-            new-line/all files true
+            new-line/all files 'yes
 
             files
         ]

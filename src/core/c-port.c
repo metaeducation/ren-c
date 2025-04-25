@@ -221,7 +221,7 @@ bool Wait_Ports_Throws(
 
         // Process any waiting events:
         if ((ret = Awake_System(ports, only)) > 0) {
-            Copy_Cell(out, TRUE_VALUE); // port action happened
+            Init_Logic(out, true); // port action happened
             return false; // not thrown
         }
 
@@ -256,7 +256,7 @@ bool Wait_Ports_Throws(
     //time = (REBLEN)OS_DELTA_TIME(base);
     //Print("dt: %d", time);
 
-    Copy_Cell(out, FALSE_VALUE); // timeout;
+    Init_Logic(out, false); // timeout;
     return false; // not thrown
 }
 

@@ -39,10 +39,10 @@ REBOL [
            flag, while these tests are very fast. */
 
         #define Is_Bindable(v) \
-            (VAL_TYPE_RAW(v) < TYPE_LOGIC)
+            (VAL_TYPE_RAW(v) < TYPE_INTEGER)
 
         #define Not_Bindable(v) \
-            (VAL_TYPE_RAW(v) >= TYPE_LOGIC)
+            (VAL_TYPE_RAW(v) >= TYPE_INTEGER)
 
         /* For other checks, we pay the cost in the debug build of all the
            associated baggage that Type_Of() carries over VAL_TYPE_RAW() */
@@ -62,7 +62,7 @@ REBOL [
             (not Any_Element(v))
 
         INLINE bool Any_Scalar_Kind(enum Reb_Kind k) {
-            return k >= TYPE_LOGIC and k <= TYPE_DATE;
+            return k >= TYPE_INTEGER and k <= TYPE_DATE;
         }
 
         #define Any_Scalar(v) \
@@ -195,7 +195,6 @@ port        port        context +       context context
 
 ; scalars
 
-logic       logic       -       +       +       -
 integer     integer     -       +       +       [number scalar]
 decimal     decimal     -       +       +       [number scalar]
 percent     decimal     -       +       +       [number scalar]
@@ -228,6 +227,7 @@ blank       unit        blank   +       +       -
 ;
 trash       unit        -       +       +       -
 void        unit        -       +       +       -
+okay        unit        -       +       +       -
 nulled      unit        -       +       +       -
 
 ; Note that the "null?" state has no associated NULL! datatype.  Internally

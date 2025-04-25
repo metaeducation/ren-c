@@ -600,6 +600,8 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
           case LOOP_MAP_EACH:
             if (Is_Nulled(les->out))  // null body is error now
                 fail (Error_Need_Non_Null_Raw());
+            if (Is_Okay(les->out))
+                fail ("~okay~ antiforms not legal as MAP-EACH body product");
             if (Is_Void(les->out))  // vanish result
                 Init_Trash(les->out);  // nulled is used to signal breaking only
             else
@@ -767,9 +769,8 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
 
       case LOOP_EVERY:
         //
-        // nulled output means there was a BREAK
+        // nulled output means there was a BREAK or at least one null body eval
         // void means body never ran (`void? every x [] [<unused>]`)
-        // #[false] means loop ran, and at least one body result was "falsey"
         // any other value is the last body result, and is truthy
         // only illegal value here is trash (would cause error if body gave it)
         //
@@ -998,9 +999,9 @@ DECLARE_NATIVE(STOP)
 
     Copy_Cell(OUT, NAT_VALUE(STOP));
     if (Is_Endish_Nulled(v))
-        CONVERT_NAME_TO_THROWN(OUT, TRASH_VALUE); // `if true [stop]`
+        CONVERT_NAME_TO_THROWN(OUT, TRASH_VALUE); // `if okay [stop]`
     else
-        CONVERT_NAME_TO_THROWN(OUT, v); // `if true [stop ...]`
+        CONVERT_NAME_TO_THROWN(OUT, v); // `if okay [stop ...]`
 
     return BOUNCE_THROWN;
 }
@@ -1479,7 +1480,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     if (bounce) {
         assert(Is_Error(bounce));
-        rebJumps("FAIL", rebR(bounce));
+        rebJumps("fail", rebR(bounce));
     }
 
     if (res.broke)

@@ -78,6 +78,23 @@ DECLARE_NATIVE(FALSE_Q)
 
 
 //
+//  boolean: native [
+//
+//  "The word TRUE if the supplied value is a branch trigger, otherwise FALSE"
+//
+//      return: [word!]
+//      value [any-value!]
+//  ]
+//
+DECLARE_NATIVE(BOOLEAN)
+{
+    INCLUDE_PARAMS_OF_BOOLEAN;
+
+    return Init_Word(OUT, Is_Nulled(ARG(VALUE)) ? Canon(SYM_FALSE) : Canon(SYM_TRUE));
+}
+
+
+//
 //  yes?: native [
 //
 //  {Tests if word is the word YES}
@@ -183,9 +200,9 @@ DECLARE_NATIVE(AND_Q)
     INCLUDE_PARAMS_OF_AND_Q;
 
     if (IS_TRUTHY(ARG(VALUE1)) && IS_TRUTHY(ARG(VALUE2)))
-        return Init_True(OUT);
+        return LOGIC(true);
 
-    return Init_False(OUT);
+    return LOGIC(false);
 }
 
 
@@ -203,9 +220,9 @@ DECLARE_NATIVE(NOR_Q)
     INCLUDE_PARAMS_OF_NOR_Q;
 
     if (IS_FALSEY(ARG(VALUE1)) && IS_FALSEY(ARG(VALUE2)))
-        return Init_True(OUT);
+        return LOGIC(true);
 
-    return Init_False(OUT);
+    return LOGIC(false);
 }
 
 
@@ -416,7 +433,7 @@ DECLARE_NATIVE(OR)
 //
 //  {Boolean XOR}
 //
-//      return: "Conditionally true value, or LOGIC! false for failure case"
+//      return: "Conditionally true value, or nullptr for failure case"
 //          [any-value!]
 //      left "Expression which will always be evaluated"
 //          [any-value!]
@@ -437,13 +454,13 @@ DECLARE_NATIVE(XOR)
 
     if (IS_FALSEY(left)) {
         if (IS_FALSEY(right))
-            return Init_False(OUT); // default to logic false if both false
+            return nullptr; // default to logic false if both false
 
         return right;
     }
 
     if (IS_TRUTHY(right))
-        return Init_False(OUT); // default to logic false if both true
+        return nullptr; // default to logic false if both true
 
     RETURN (left);
 }
@@ -477,59 +494,6 @@ DECLARE_NATIVE(UNLESS)
 }
 
 
-//
-//  CT_Logic: C
-//
-REBINT CT_Logic(const Cell* a, const Cell* b, REBINT mode)
-{
-    if (mode >= 0)  return (VAL_LOGIC(a) == VAL_LOGIC(b));
-    return -1;
-}
-
-
-//
-//  MAKE_Logic: C
-//
-Bounce MAKE_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
-    assert(kind == TYPE_LOGIC);
-    UNUSED(kind);
-
-    // As a construction routine, MAKE takes more liberties in the
-    // meaning of its parameters, so it lets zero values be false.
-    //
-    // !!! Is there a better idea for MAKE that does not hinge on the
-    // "zero is false" concept?  Is there a reason it should?
-    //
-    if (
-        IS_FALSEY(arg)
-        || (Is_Integer(arg) && VAL_INT64(arg) == 0)
-        || (
-            (Is_Decimal(arg) || Is_Percent(arg))
-            && (VAL_DECIMAL(arg) == 0.0)
-        )
-    ){
-        return Init_False(out);
-    }
-
-    return Init_True(out);
-}
-
-
-//
-//  TO_Logic: C
-//
-Bounce TO_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
-    assert(kind == TYPE_LOGIC);
-    UNUSED(kind);
-
-    // As a "Rebol conversion", TO falls in line with the rest of the
-    // interpreter canon that all non-none non-logic-false values are
-    // considered effectively "truth".
-    //
-    return Init_Logic(out, IS_TRUTHY(arg));
-}
-
-
 INLINE bool Math_Arg_For_Logic(Value* arg)
 {
     if (Is_Logic(arg))
@@ -538,7 +502,7 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
     if (Is_Blank(arg))
         return false;
 
-    fail (Error_Unexpected_Type(TYPE_LOGIC, Type_Of(arg)));
+    fail (Error_Unexpected_Type(TYPE_BLANK, Type_Of(arg)));
 }
 
 
@@ -592,10 +556,10 @@ REBTYPE(Logic)
             return nullptr;
         }
         if (Random_Int(Bool_ARG(SECURE)) & 1)
-            return Init_True(OUT);
-        return Init_False(OUT); }
+            return LOGIC(true);
+        return LOGIC(false); }
 
     default:
-        fail (Error_Illegal_Action(TYPE_LOGIC, verb));
+        fail (Error_Illegal_Action(TYPE_BLANK, verb));
     }
 }

@@ -74,10 +74,10 @@ boot-welcome:
 ;
 console!: make object! [
     name: null
-    repl: true      ;-- used to identify this as a console! object (quack!)
-    is-loaded:  false ;-- if true then this is a loaded (external) skin
-    was-updated: false ;-- if true then console! object found in loaded skin
-    last-result: ~  ;-- last evaluated result (sent by HOST-CONSOLE)
+    repl: okay  ; used to identify this as a console! object (quack!)
+    is-loaded: null  ; if okay then this is a loaded (external) skin
+    was-updated: null  ; if okay then console! object found in loaded skin
+    last-result: ~  ; last evaluated result (sent by HOST-CONSOLE)
 
     ;; APPEARANCE (can be overridden)
 
@@ -138,7 +138,7 @@ console!: make object! [
         ]
 
         case [
-            void? :v [  ; nothingness (e.g. result of eval [] or if false [...])
+            void? :v [  ; nothingness (e.g. result of eval [] or if null [...])
                 print [result "~void~  ; anti"]
             ]
 
@@ -147,6 +147,10 @@ console!: make object! [
                 ; representation of null, as a WORD! antiform.
                 ;
                 print [result "~null~  ; anti"]
+            ]
+
+            okay? :v [
+                print [result "~okay~  ; anti"]
             ]
 
             free? :v [
@@ -290,11 +294,11 @@ start-console: function [
                 select new-skin 'repl ;; quacks like REPL, it's a console!
             ] then [
                 proto-skin: new-skin
-                proto-skin/was-updated: true
+                proto-skin/was-updated: okay
                 proto-skin/name: default ["updated"]
             ]
 
-            proto-skin/is-loaded: true
+            proto-skin/is-loaded: okay
             proto-skin/name: default ["loaded"]
             append o/loaded skin-file
 
@@ -427,8 +431,8 @@ ext-console-impl: function [
             ]
             <bad> [
                 emit #no-unskin-if-error
-                emit [print (<*> mold uneval prior)]
-                emit [fail ["Bad REPL continuation:" ((<*> uneval result))]]
+                emit [print (<*> mold meta prior)]
+                emit [fail ["Bad REPL continuation:" ((<*> meta result))]]
             ]
         ] then [
             return-to-c instruction
@@ -549,7 +553,7 @@ ext-console-impl: function [
             e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e/near: result/near
             e/where: result/where
-            emit [system/console/print-error (<*> uneval e)]
+            emit [system/console/print-error (<*> meta e)]
             return <prompt>
         ]
         return :result/arg1
@@ -562,9 +566,9 @@ ext-console-impl: function [
         ; interpreter is being called non-interactively from the shell).
         ;
         if object? system/console [
-            emit [system/console/print-error (<*> uneval result)]
+            emit [system/console/print-error (<*> meta result)]
         ] else [
-            emit [print [form (<*> uneval result)]]
+            emit [print [form (<*> meta result)]]
         ]
         if find directives #die-if-error [
             return <die>
@@ -610,10 +614,10 @@ ext-console-impl: function [
         return <prompt>
     ]
 
-    result: reeval result
+    result: unmeta result
 
     if group? prior [ ;-- plain execution of user code
-        emit [system/console/print-result ((<*> uneval get/any 'result))]
+        emit [system/console/print-result ((<*> meta get/any 'result))]
         return <prompt>
     ]
 
@@ -694,7 +698,7 @@ ext-console-impl: function [
         ; Could be an unclosed double quote (unclosed tag?) which more input
         ; on a new line cannot legally close ATM
         ;
-        emit [system/console/print-error (<*> uneval error)]
+        emit [system/console/print-error (<*> meta error)]
         return <prompt>
     ]
 

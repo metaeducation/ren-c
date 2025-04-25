@@ -1,31 +1,31 @@
 (
     success: <bad>
-    if 1 > 2 [success: false] else [success: true]
+    if 1 > 2 [success: null] else [success: okay]
     success
 )
 (
     success: <bad>
-    if 1 < 2 [success: true] else [success: false]
+    if 1 < 2 [success: okay] else [success: null]
     success
 )
 (
     success: <bad>
-    if-not 1 > 2 [success: true] else [success: false]
+    if-not 1 > 2 [success: okay] else [success: null]
     success
 )
 (
     success: <bad>
-    if-not 1 < 2 [success: false] else [success: true]
+    if-not 1 < 2 [success: null] else [success: okay]
     success
 )
 (
     success: <bad>
-    if true does [success: true]
+    if okay does [success: okay]
     success
 )
 (
-    success: true
-    if false does [success: false]
+    success: okay
+    if null does [success: null]
     success
 )
 
@@ -48,7 +48,7 @@
         return <- if i < 15 [30] else [4]
     ]
 
-    did all [
+    all [
         30 = c 10
         4 = c 20 ;-- !!! was () = c 20
         30 = d 10

@@ -11,7 +11,7 @@
 ; https://github.com/rebol/rebol-issues/issues/1993
 
 (
-    success: true
+    success: okay
     num: 0
     for i 1 10 1 [
         num: num + 1
@@ -20,7 +20,7 @@
     success and [10 = num]
 )
 ; cycle return value
-(false = for i 1 1 1 [false])
+('foo = for i 1 1 1 ['foo])
 ; break cycle
 (
     num: 0
@@ -32,14 +32,14 @@
 
 ; continue cycle
 [#58 (
-    success: true
-    for i 1 1 1 [continue success: false]
+    success: okay
+    for i 1 1 1 [continue success: null]
     success
 )]
 (
-    success: true
+    success: okay
     x: "a"
-    for i x tail of x 1 [continue success: false]
+    for i x tail of x 1 [continue success: null]
     success
 )
 ; text! test
@@ -56,8 +56,8 @@
 )
 ; zero repetition block test
 (
-    success: true
-    for i b: [1] tail of :b -1 [success: false]
+    success: okay
+    for i b: [1] tail of :b -1 [success: null]
     success
 )
 ; Test that return stops the loop
@@ -101,14 +101,14 @@
     num: 0
     for i 2147483647 2147483647 1 [
         num: num + 1
-        either num > 1 [break] [true]
+        either num > 1 [break] [okay]
     ]
 )
 (
     num: 0
     for i -2147483648 -2147483648 -1 [
         num: num + 1
-        either num > 1 [break] [true]
+        either num > 1 [break] [okay]
     ]
 )
 <64bit>
@@ -117,7 +117,7 @@
     for i 9223372036854775807 9223372036854775807 -9223372036854775808 [
         num: num + 1
         if num <> 1 [break]
-        true
+        okay
     ]
 )]
 <64bit>
@@ -126,7 +126,7 @@
     for i -9223372036854775808 -9223372036854775808 9223372036854775807 [
         num: num + 1
         if num <> 1 [break]
-        true
+        okay
     ]
 )
 (
@@ -134,7 +134,7 @@
     for i 2147483647 2147483647 2147483647 [
         num: num + 1
         if num <> 1 [break]
-        true
+        okay
     ]
 )
 (
@@ -142,7 +142,7 @@
     for i 2147483647 2147483647 -2147483648 [
         num: num + 1
         if num <> 1 [break]
-        true
+        okay
     ]
 )
 (
@@ -150,7 +150,7 @@
     for i -2147483648 -2147483648 2147483647 [
         num: num + 1
         if num <> 1 [break]
-        true
+        okay
     ]
 )
 (
@@ -158,7 +158,7 @@
     for i -2147483648 -2147483648 -2147483648 [
         num: num + 1
         if num <> 1 [break]
-        true
+        okay
     ]
 )
 [#1993 (
@@ -185,23 +185,23 @@
 )
 ; local variable changeability - this is how it works in R3
 (
-    test: false
+    test: null
     null? for i 1 3 1 [
         if i = 2 [
             if test [break]
-            test: true
+            test: okay
             i: 1
         ]
     ]
 )
 ; local variable type safety
 (
-    test: false
+    test: null
     error? sys/util/rescue [
         for i 1 2 [
             either test [i == 2] [
-                test: true
-                i: false
+                test: okay
+                i: null
             ]
         ]
     ]
@@ -216,7 +216,7 @@
         num: 0
         for i 9223372036854775806 9223372036854775807 2 [
             num: num + 1
-            either num > 1 [break] [true]
+            either num > 1 [break] [okay]
         ]
     ]
     error? e and [e/id = 'overflow]
@@ -226,7 +226,7 @@
         num: 0
         for i -9223372036854775807 -9223372036854775808 -2 [
             num: num + 1
-            either num > 1 [break] [true]
+            either num > 1 [break] [okay]
         ]
     ]
     error? e and [e/id = 'overflow]
@@ -238,7 +238,7 @@
         for i 9223372036854775806 9223372036854775807 9223372036854775807 [
             num: num + 1
             if num <> 1 [break]
-            true
+            okay
         ]
     ]
     error? e and [e/id = 'overflow]
@@ -249,7 +249,7 @@
         for i -9223372036854775807 -9223372036854775808 -9223372036854775808 [
             num: num + 1
             if num <> 1 [break]
-            true
+            okay
         ]
     ]
     error? e and [e/id = 'overflow]

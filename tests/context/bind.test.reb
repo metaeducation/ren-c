@@ -38,7 +38,7 @@
     (not head? bind next [1] binding of 'rebol)
 ]
 [#892 #216
-    (y: 'x reeval func [<local> x] [x: true get bind y binding of 'x])
+    (y: 'x reeval func [<local> x] [x: okay get bind y binding of 'x])
 ]
 
 [#2086 (

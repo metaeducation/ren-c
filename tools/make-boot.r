@@ -455,6 +455,9 @@ e-types/emit {
      */
     #define TS_ELEMENT \
         (TS_VALUE - FLAGIT_KIND(TYPE_NULLED) - FLAGIT_KIND(TYPE_VOID) - FLAGIT_KIND(TYPE_TRASH))
+
+    #define TS_LOGIC \
+        (FLAGIT_KIND(TYPE_NULLED) | FLAGIT_KIND(TYPE_OKAY))
 }
 typeset-sets: copy []
 

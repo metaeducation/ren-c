@@ -329,9 +329,6 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool is_case)
         }
         return THE_SIGN(VAL_INT64(s) - VAL_INT64(t));
 
-    case TYPE_LOGIC:
-        return VAL_LOGIC(s) - VAL_LOGIC(t);
-
     case TYPE_CHAR:
         if (is_case)
             return THE_SIGN(VAL_CHAR(s) - VAL_CHAR(t));
@@ -408,6 +405,9 @@ chkDecimal:
 
     case TYPE_BLANK:
     case TYPE_NULLED:
+    case TYPE_VOID:
+    case TYPE_OKAY:
+    case TYPE_TRASH:
     default:
         break;
 

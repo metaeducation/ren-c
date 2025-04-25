@@ -31,7 +31,7 @@
         "ABCDEFGHIJKLKMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         "-._~:/?#[]@!$&'()*+,;="
     ]
-    did all [
+    all [
         no-encode == enhex no-encode
         no-encode == dehex no-encode
     ]

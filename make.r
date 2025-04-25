@@ -271,7 +271,7 @@ extension-class: make object! [
 
     ;internal
     sequence: null  ; the sequence in which the extension should be loaded
-    visited: false
+    visited: null
 ]
 
 available-extensions: copy []
@@ -399,32 +399,32 @@ app-config: make object! [
     searches: make block! 8
 ]
 
-cfg-sanitize: false
-cfg-symbols: false
+cfg-sanitize: null
+cfg-symbols: null
 switch user-config/debug [
     'none [
         append app-config/definitions ["NDEBUG"]
-        app-config/debug: false
+        app-config/debug: null
     ]
     'asserts [
         ; /debug should only affect the "-g -g3" symbol inclusions in rebmake.
         ; To actually turn off asserts or other checking features, NDEBUG must
         ; be defined.
         ;
-        app-config/debug: false
+        app-config/debug: null
     ]
     'symbols [ ; No asserts, just symbols.
-        app-config/debug: true
+        app-config/debug: okay
         append app-config/definitions ["NDEBUG"]
     ]
     'normal [
-        cfg-symbols: true
-        app-config/debug: true
+        cfg-symbols: okay
+        app-config/debug: okay
     ]
     'sanitize [
-        app-config/debug: true
-        cfg-symbols: true
-        cfg-sanitize: true
+        app-config/debug: okay
+        cfg-symbols: okay
+        cfg-sanitize: okay
         append app-config/cflags <gcc:-fsanitize=address>
         append app-config/ldflags <gcc:-fsanitize=address>
     ]
@@ -434,10 +434,10 @@ switch user-config/debug [
     ; higher optimization levels.
     ;
     'callgrind [
-        cfg-symbols: true
+        cfg-symbols: okay
         append app-config/definitions ["NDEBUG"]
         append app-config/cflags "-g" ;; for symbols
-        app-config/debug: false
+        app-config/debug: null
 
         ; Include debugging features which do not in-and-of-themselves affect
         ; runtime performance (DEBUG_TRACK_EXTEND_CELLS would be an example of
@@ -462,14 +462,14 @@ switch user-config/debug [
 
 switch user-config/optimize [
     0 [
-        app-config/optimization: false
+        app-config/optimization: null
     ]
     1 2 3 4 "s" "z" "g" 's 'z 'g [
         app-config/optimization: user-config/optimize
     ]
 ]
 
-cfg-cplusplus: false
+cfg-cplusplus: null
 ;standard
 append app-config/cflags switch user-config/standard [
     'c [
@@ -479,7 +479,7 @@ append app-config/cflags switch user-config/standard [
         to tag! unspaced ["gnu:--std=" user-config/standard]
     ]
     'c++ [
-        cfg-cplusplus: true
+        cfg-cplusplus: okay
         [
             <gcc:-x c++>
             <msc:/TP>
@@ -487,7 +487,7 @@ append app-config/cflags switch user-config/standard [
     ]
     'c++98 'c++0x 'c++11 'c++14 'c++17 'c++latest [
 
-        cfg-cplusplus: true
+        cfg-cplusplus: okay
         compose [
             ; Compile C files as C++.
             ;
@@ -549,26 +549,26 @@ append app-config/cflags switch user-config/standard [
 ; pre-vista switch
 ; Example. Mingw32 does not have access to windows console api prior to vista.
 ;
-cfg-pre-vista: false
+cfg-pre-vista: null
 append app-config/definitions switch user-config/pre-vista [
     'yes [
-        cfg-pre-vista: true
+        cfg-pre-vista: okay
         compose [
             "PRE_VISTA"
         ]
     ]
     'no [
-        cfg-pre-vista: false
+        cfg-pre-vista: null
         []  ; spliced as empty block
     ]
 
     fail ["PRE-VISTA [yes no] not" (user-config/pre-vista)]
 ]
 
-cfg-rigorous: false
+cfg-rigorous: null
 append app-config/cflags switch user-config/rigorous [
     'yes [
-        cfg-rigorous: true
+        cfg-rigorous: okay
         compose [
             <gcc:-Werror> <msc:/WX>;-- convert warnings to errors
 
@@ -792,7 +792,7 @@ append app-config/cflags switch user-config/rigorous [
         ]
     ]
     'no [
-        cfg-rigorous: false
+        cfg-rigorous: null
         []  ; spliced as empty block
     ]
 
@@ -803,7 +803,7 @@ append app-config/ldflags switch user-config/static [
     'no [
         []  ; splice empty block
     ]
-    'yes 'on #[true] [
+    'yes [
         compose [
             <gcc:-static-libgcc>
             (if cfg-cplusplus [<gcc:-static-libstdc++>])
@@ -811,7 +811,7 @@ append app-config/ldflags switch user-config/static [
         ]
     ]
 
-    fail ["STATIC must be yes, no or logic! not" (user-config/static)]
+    fail ["STATIC must be yes or no, not" (user-config/static)]
 ]
 
 
@@ -1138,7 +1138,7 @@ calculate-sequence: function [
     if integer? ext/sequence [return ext/sequence]
     if ext/visited [fail ["circular dependency on" ext]]
     if not ext/requires [ext/sequence: 0 return ext/sequence]
-    ext/visited: true
+    ext/visited: okay
     seq: 0
     if word? ext/requires [ext/requires: reduce [ext/requires]]
     for-each req ext/requires [

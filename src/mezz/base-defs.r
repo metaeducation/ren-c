@@ -42,7 +42,8 @@ probe: func [
         trash? :value [write-stdout "~  ; anti"]
         void? :value [write-stdout "~void~  ; anti"]
         null? :value [write-stdout "~null~  ; anti"]
-        true [write-stdout mold :value]
+        okay? :value [write-stdout "~okay~  ; anti"]
+        <else> [write-stdout mold :value]
     ]
     write-stdout newline
     :value
@@ -96,11 +97,11 @@ end: func [
 ;
 next: specialize 'skip [
     offset: 1
-    only: true ;-- don't clip (return null if already at head of series)
+    only: okay  ; don't clip (return null if already at head of series)
 ]
 back: specialize 'skip [
     offset: -1
-    only: true ;-- don't clip (return null if already at tail of series)
+    only: okay  ; don't clip (return null if already at tail of series)
 ]
 
 bound?: cascade [
@@ -169,7 +170,7 @@ empty?: func [
     return: [logic!]
     series [any-series! object! port! bitset! map! blank! ~void~]
 ][
-    did any [
+    any [
         void? series
         blank? series
         tail? series

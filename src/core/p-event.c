@@ -236,8 +236,8 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
                 // comment said "stays queued", hence seems pending happens
             }
             else {
-                if (rebDid("error?", result))
-                    rebJumps("FAIL", result);
+                if (rebDid("error?", rebQ(result)))
+                    rebJumps("fail", result);
 
                 assert(false); // !!! can this happen?
                 rebRelease(result); // ignore result

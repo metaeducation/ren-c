@@ -15,7 +15,7 @@
 
 (blank? match blank! _)
 (null = match blank! 10)
-(null = match blank! false)
+(null = match blank! null)
 
 ; Since its other features were implemented with a fairly complex enclosed
 ; specialization, it's good to keep that usermode implementation around,

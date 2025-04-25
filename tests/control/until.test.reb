@@ -7,12 +7,12 @@
 ; Test body-block return values
 (1 = until [1])
 ; Test break
-(null? until [break true])
+(null? until [break okay])
 ; Test continue
 (
-    success: true
-    cycle?: true
-    until [if cycle? [cycle?: false continue success: false] true]
+    success: okay
+    cycle?: okay
+    until [if cycle? [cycle?: null continue success: null] okay]
     success
 )
 ; Test that return stops the loop

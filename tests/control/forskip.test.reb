@@ -8,11 +8,11 @@
 ; cycle return value
 (
     blk: [1 2 3 4]
-    true = iterate-skip blk 1 [true]
+    okay = iterate-skip blk 1 [okay]
 )
 (
     blk: [1 2 3 4]
-    false = iterate-skip blk 1 [false]
+    'foo = iterate-skip blk 1 ['foo]
 )
 ; break cycle
 (
@@ -29,16 +29,16 @@
 )
 ; continue cycle
 (
-    success: true
+    success: okay
     x: "a"
-    iterate-skip x 1 [continue success: false]
+    iterate-skip x 1 [continue success: null]
     success
 )
 ; zero repetition
 (
-    success: true
+    success: okay
     blk: []
-    iterate-skip blk 1 [success: false]
+    iterate-skip blk 1 [success: null]
     success
 )
 ; Test that return stops the loop

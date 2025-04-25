@@ -1294,7 +1294,7 @@ DECLARE_NATIVE(IDENTIFY_UTF8_Q)
 
     UNUSED(ARG(DATA)); // see notes on decode-text
 
-    return Init_True(OUT);
+    return LOGIC(true);
 }
 
 

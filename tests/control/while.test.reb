@@ -9,76 +9,76 @@
     num: 0
     1 = while [num < 1] [num: num + 1]
 )]
-(void? while [false] [])
+(void? while [null] [])
 ; zero repetition
 (
-    success: true
-    while [false] [success: false]
+    success: okay
+    while [null] [success: null]
     success
 )
 ; Test break and continue
 (
-    cycle?: true
-    null? while [cycle?] [break cycle?: false]
+    cycle?: okay
+    null? while [cycle?] [break cycle?: null]
 )
 ; Test reactions to break and continue in the condition
 (
-    was-stopped: true
-    while [true] [
+    was-stopped: okay
+    while [okay] [
         while [break] []
-        was-stopped: false
+        was-stopped: null
         break
     ]
     was-stopped
 )
 (
-    first-time: true
-    was-continued: false
-    while [true] [
+    first-time: okay
+    was-continued: null
+    while [okay] [
         if not first-time [
-            was-continued: true
+            was-continued: okay
             break
         ]
-        first-time: false
+        first-time: null
         while [continue] [break]
         break
     ]
     was-continued
 )
 (
-    success: true
-    cycle?: true
-    while [cycle?] [cycle?: false continue success: false]
+    success: okay
+    cycle?: okay
+    while [cycle?] [cycle?: null continue success: null]
     success
 )
 (
     num: 0
-    while [true] [num: 1 break num: 2]
+    while [okay] [num: 1 break num: 2]
     num = 1
 )
 ; RETURN should stop the loop
 (
-    cycle?: true
-    f1: func [] [while [cycle?] [cycle?: false return 1] 2]
+    cycle?: okay
+    f1: func [] [while [cycle?] [cycle?: null return 1] 2]
     1 = f1
 )
 (  ; bug#1519
-    cycle?: true
-    f1: func [] [while [if cycle? [return 1] cycle?] [cycle?: false 2]]
+    cycle?: okay
+    f1: func [] [while [if cycle? [return 1] cycle?] [cycle?: null 2]]
     1 = f1
 )
 ; UNWIND the IF should stop the loop
 (
-    cycle?: true
-    f1: does [if 1 < 2 [while [cycle?] [cycle?: false unwind :if] 2]]
+    cycle?: okay
+    f1: does [if 1 < 2 [while [cycle?] [cycle?: null unwind :if] 2]]
     null? f1
 )
 
 (  ; bug#1519
-    cycle?: true
+    cycle?: okay
     f1: does [
         if-not 1 > 2 [
-            while [if cycle? [unwind :if-not] cycle?] [cycle?: false 2]
+            while [if cycle? [unwind :if-not] cycle?] [cycle?: null 2]
         ]
     ]
     null? f1
@@ -103,15 +103,15 @@
 )
 
 ; THROW should stop the loop
-(1 = catch [cycle?: true while [cycle?] [throw 1 cycle?: false]])
+(1 = catch [cycle?: okay while [cycle?] [throw 1 cycle?: null]])
 (  ; bug#1519
-    cycle?: true
-    1 = catch [while [if cycle? [throw 1] false] [cycle?: false]]
+    cycle?: okay
+    1 = catch [while [if cycle? [throw 1] null] [cycle?: null]]
 )
-([a 1] = catch/name [cycle?: true while [cycle?] [throw/name 1 'a cycle?: false]] 'a)
+([a 1] = catch/name [cycle?: okay while [cycle?] [throw/name 1 'a cycle?: null]] 'a)
 (  ; bug#1519
-    cycle?: true
-    [a 1] = catch/name [while [if cycle? [throw/name 1 'a] false] [cycle?: false]] 'a
+    cycle?: okay
+    [a 1] = catch/name [while [if cycle? [throw/name 1 'a] null] [cycle?: null]] 'a
 )
 ; Test that disarmed errors do not stop the loop and errors can be returned
 (

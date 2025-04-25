@@ -671,32 +671,7 @@ struct LevelStruct {
     // value can be used to test without typing, but then can also be
     // checked with conditional truth and falsehood.
     //
-    // * If NULLED_CELL, then refinements are being skipped and the arguments
-    //   that follow should not be written to.
-    //
-    // * If BLANK_VALUE, this is an arg to a refinement that was not used in
-    //   the invocation.  No consumption should be performed, arguments should
-    //   be written as unset, and any non-unset specializations of arguments
-    //   should trigger an error.
-    //
-    // * If FALSE_VALUE, this is an arg to a refinement that was used in the
-    //   invocation but has been *revoked*.  It still consumes expressions
-    //   from the callsite for each remaining argument, but those expressions
-    //   must not evaluate to any value.
-    //
-    // * If IS_TRUE() the refinement is active but revokable.  So if evaluation
-    //   produces no value, `refine` must be mutated to be FALSE.
-    //
-    // * If EMPTY_BLOCK, it's an ordinary arg...and not a refinement.  It will
-    //   be evaluated normally but is not involved with revocation.
-    //
-    // * If EMPTY_TEXT, the evaluator's next argument fulfillment is the
-    //   left-hand argument of a lookback operation.  After that fulfillment,
-    //   it will be transitioned to EMPTY_BLOCK.
-    //
-    // Because of how this lays out, IS_TRUTHY() can be used to determine if
-    // an argument should be type checked normally...while IS_FALSEY() means
-    // that the arg must be a NULL.
+    // See notes on SKIPPING_REFINEMENT_ARGS, etc. for details.
     //
     // In path processing, ->refine points to the soft-quoted product of the
     // current path item (the "picker").  So on the second step of processing
@@ -871,15 +846,15 @@ struct LevelStruct {
 // But all the other values that L->refine can hold are read-only pointers
 // that signal something about the argument gathering state:
 //
-// * If NULL, then refinements are being skipped, and the following arguments
-//   should not be written to.
+// * If nullptr, then refinements are being skipped, and the following
+//   arguments should not be written to.
 //
 // * If FALSE_VALUE, this is an arg to a refinement that was not used in
 //   the invocation.  No consumption should be performed, arguments should
 //   be written as unset, and any non-unset specializations of arguments
 //   should trigger an error.
 //
-// * If BLANK_VALUE, this is an arg to a refinement that was used in the
+// * If NULLED_CELL, this is an arg to a refinement that was used in the
 //   invocation but has been *revoked*.  It still consumes expressions
 //   from the callsite for each remaining argument, but those expressions
 //   must not evaluate to any value.
@@ -911,13 +886,13 @@ struct LevelStruct {
     nullptr // 0 pointer comparison generally faster than to arbitrary pointer
 
 #define ARG_TO_UNUSED_REFINEMENT \
-    m_cast(Value*, FALSE_VALUE)
+    m_cast(Value*, BLANK_VALUE)
 
 #define ARG_TO_IRREVOCABLE_REFINEMENT \
-    m_cast(Value*, TRUE_VALUE)
+    m_cast(Value*, OKAY_VALUE)
 
 #define ARG_TO_REVOKED_REFINEMENT \
-    m_cast(Value*, &PG_Nulled_Cell[0])
+    m_cast(Value*, NULLED_CELL)
 
 #define ORDINARY_ARG \
     m_cast(Value*, EMPTY_BLOCK)

@@ -7,12 +7,12 @@
 ;     :append/dup/part
 
 (
-    append-123: specialize :append [value: [1 2 3] only: true]
+    append-123: specialize :append [value: [1 2 3] only: okay]
     [a b c [1 2 3] [1 2 3]] = append-123/dup copy [a b c] 2
 )
 (
-    append-123: specialize :append [value: [1 2 3] only: true]
-    append-123-twice: specialize :append-123 [dup: true count: 2]
+    append-123: specialize :append [value: [1 2 3] only: okay]
+    append-123-twice: specialize :append-123 [dup: okay count: 2]
     [a b c [1 2 3] [1 2 3]] = append-123-twice copy [a b c]
 )
 (
@@ -45,14 +45,14 @@
 
     r: [a b c [d e] [d e] [d e]]
 
-    did all [
+    all [
         r = aopd3 copy [a b c] [d e]
         r = applique 'aopd3 [series: copy [a b c] value: [d e]]
     ]
 )
 
 (
-    is-bad: true
+    is-bad: okay
 
     for-each code [
         [specialize 'append/only/only []]

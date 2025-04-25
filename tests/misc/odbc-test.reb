@@ -9,7 +9,7 @@ Rebol [
 ]
 
 tables: [
-    bit "BIT" [#[false] #[true]]
+    bit "BIT" [false true]
 
     tinyint_s "TINYINT" [-128 -10 0 10 127]
     tinyint_u "TINYINT UNSIGNED" [0 10 20 30 255]

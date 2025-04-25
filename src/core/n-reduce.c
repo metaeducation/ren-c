@@ -42,44 +42,113 @@ static Value* Init_Lib_Word(Cell* out, SymId id) {
 
 
 //
-//  uneval: native [
+//  Meta_Quotify: C
 //
-//  "Make expression that when evaluated, will produce the input"
+// Very dodgy implementation of the "meta" functionality.
 //
-//      return: {`(null)` if null, or `(the ...)` where ... is passed-in cell}
-//          [word! group!]
-//      value [any-value!]
-//   ]
-//
-DECLARE_NATIVE(UNEVAL)
-//
-// Note: UNEVAL is done far more elegantly as the new META concept in a
-// generalized way in mainline.  This exists in R3C prior to arbitrary quoting
-// and quasiforms and isotopes...
-//
-// (This was initially written in usermode, but since REDUCE and COMPOSE and
-// APPEND all won't let you put errors into blocks--as part of the bootstrap
-// executable's "simulation of definitional errors"--a native is needed.)
+Value* Meta_Quotify(Value* v)
 {
-    INCLUDE_PARAMS_OF_UNEVAL;
-
-    Value* v = ARG(VALUE);
-
     if (Is_Void(v))
-        return Init_Lib_Word(OUT, SYM__TVOID_T);
+        return Init_Lib_Word(v, SYM__TVOID_T);
+
+    if (Is_Okay(v))
+        return Init_Lib_Word(v, SYM__TOKAY_T);
 
     if (Is_Nulled(v))
-        return Init_Lib_Word(OUT, SYM__TNULL_T);
+        return Init_Lib_Word(v, SYM__TNULL_T);
 
     if (Is_Trash(v))
-        return Init_Lib_Word(OUT, SYM_TILDE_1);
+        return Init_Lib_Word(v, SYM_TILDE_1);
 
     Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
     Set_Flex_Len(a, 2);
     Init_Lib_Word(Array_At(a, 0), SYM_THE);
     Copy_Cell(Array_At(a, 1), v);
 
-    return Init_Group(OUT, a);  // (the <whatever>)
+    return Init_Group(v, a);  // (the <whatever>)
+}
+
+
+//
+//  Meta_Unquotify: C
+//
+Value* Meta_Unquotify(Value* v)
+{
+    if (Is_Word(v)) {
+        switch (Cell_Word_Id(v)) {
+        case SYM__TVOID_T:
+            return Init_Void(v);
+        case SYM__TOKAY_T:
+            return Init_Okay(v);
+        case SYM__TNULL_T:
+            return Init_Nulled(v);
+        case SYM_TILDE_1:
+            return Init_Trash(v);
+        default:
+            fail ("Invalid WORD! passed to UNMETA");
+        }
+    }
+
+    if (not Is_Group(v))
+        fail ("UMETA only works on GROUP! or WORD!");
+
+    if (
+        Cell_Series_Len_At(v) != 2
+        or not Is_Word(Cell_List_At(v))
+        or Cell_Word_Id(Cell_List_At(v)) != SYM_THE
+    ){
+        fail ("UNMETA only works on (the <whatever>) GROUP!s");
+    }
+
+    return Copy_Cell(v, cast(Value*, Cell_List_At(v) + 1));
+}
+
+
+//
+//  meta: native [
+//
+//  "Make expression that when evaluated, will produce the input"
+//
+//      return: {~null~ if null, or `(the ...)` where ... is passed-in cell}
+//          [word! group!]
+//      value [any-value!]
+//   ]
+//
+DECLARE_NATIVE(META)
+//
+// Note: META is done far more elegantly with quasiforms and quoting in the
+// mainline code.  This exists in R3C prior to those designs.
+//
+// (This was initially written in usermode, but since REDUCE and COMPOSE and
+// APPEND all won't let you put errors into blocks--as part of the bootstrap
+// executable's "simulation of definitional errors"--a native is needed.)
+{
+    INCLUDE_PARAMS_OF_META;
+
+    Value* v = ARG(VALUE);
+    Meta_Quotify(v);
+    return Copy_Cell(OUT, v);
+}
+
+
+//
+//  unmeta: native [
+//
+//  "Narrower form of evaluation that only evaluates META products"
+//
+//      return: [any-value!]
+//      value [word! group!]
+//   ]
+//
+DECLARE_NATIVE(UNMETA)
+//
+// See notes on META
+{
+    INCLUDE_PARAMS_OF_UNMETA;
+
+    Value* v = ARG(VALUE);
+    Meta_Unquotify(v);
+    return Copy_Cell(OUT, v);
 }
 
 
@@ -113,11 +182,11 @@ bool Reduce_To_Stack_Throws(
 
         FAIL_IF_ERROR(out);
 
-        if (Is_Nulled(out))
-            fail (Error_Need_Non_Null_Raw());
-
         if (Is_Void(out)) {
             // ignore
+        }
+        else if (Is_Antiform(out)) {
+            fail (Error_Bad_Antiform(out));
         }
         else {
             Copy_Cell(PUSH(), out);
@@ -277,13 +346,13 @@ bool Compose_To_Stack_Throws(
 
             FAIL_IF_ERROR(out);
 
-            if (Is_Nulled(out))
-                fail (Error_Need_Non_Null_Raw());
-
             if (Is_Void(out)) {
                 //
                 // compose [("voids *vanish*!" null)] => []
                 // compose [(elide "so do 'empty' composes")] => []
+            }
+            else if (Is_Antiform(out)) {
+                fail (Error_Bad_Antiform(out));
             }
             else if (splice and Is_Block(out)) {
                 //

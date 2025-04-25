@@ -33,8 +33,8 @@
 ]
 (error? sys/util/rescue [to integer! -9.2233720368547779e18])
 (0 == to integer! "0")
-(error? sys/util/rescue [to integer! false])
-(error? sys/util/rescue [to integer! true])
+(error? sys/util/rescue [to integer! null])
+(error? sys/util/rescue [to integer! okay])
 (0 == to integer! #"^@")
 (1 == to integer! #"^a")
 (0 == to integer! #0)

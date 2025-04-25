@@ -253,7 +253,7 @@
 ;; They act like a COMPOSE/ONLY that runs each time the GROUP! is passed.
 
 (did parse/match "aaabbb" [(([some "a"])) (([some "b"]))])
-(did parse/match "aaabbb" [(([some "a"])) ((if false [some "c"])) (([some "b"]))])
+(did parse/match "aaabbb" [(([some "a"])) ((if null [some "c"])) (([some "b"]))])
 (did parse/match "aaa" [(('some)) "a"])
 
 (did parse/match "aaabbb" [some "a" foo: <here> some "b" seek foo some "b"])

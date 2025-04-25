@@ -1659,7 +1659,7 @@ Bounce Cascader_Dispatcher(Level* L)
 //     ** Script error: append is missing its series argument
 //
 // If push_refinements is used, then it avoids intermediate specializations...
-// e.g. `specialize 'append/dup [part: true]` can be done with one FRAME!.
+// e.g. `specialize 'append/dup [part: okay]` can be done with one FRAME!.
 //
 bool Get_If_Word_Or_Path_Throws(
     Value* out,

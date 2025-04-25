@@ -15,7 +15,7 @@
     do %source/source-tools.reb
     source-analysis: rebsource/analyse/files
     save %source-analysis.log source-analysis
-    true
+    okay
 )
 (not find source-analysis <whitespace-at-eol>)
 (not find source-analysis <eof-eol-missing>)

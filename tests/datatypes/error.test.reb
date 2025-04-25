@@ -10,7 +10,7 @@
 ; reserved by the system and must be formed from mezzanine/user code in
 ; accordance with the structure the system would form.  Hence, illegal.
 ;
-(sys/util/rescue [make error! [type: 'script id: 'nonexistent-id]] then [true])
+(sys/util/rescue [make error! [type: 'script id: 'nonexistent-id]] then [okay])
 
 ; triggered errors should not be assignable
 ;
@@ -151,7 +151,7 @@
     e1: sys/util/rescue [divide 1 0]
     e2: sys/util/rescue [divide 2 0]
 
-    did all [
+    all [
         e1/id = 'zero-divide
         e2/id = 'zero-divide
         [divide 1 0] = copy/part e1/near 3

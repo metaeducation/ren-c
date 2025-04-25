@@ -1232,13 +1232,14 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (Is_Word(single)) {
                 assert(
                     Cell_Word_Id(single) == SYM__TNULL_T
+                    or Cell_Word_Id(single) == SYM__TOKAY_T
                     or Cell_Word_Id(single) == SYM__TVOID_T
                     or Cell_Word_Id(single) == SYM_TILDE_1
                 );
             }
             else {
                 assert(Is_Group(single));
-                assert(Get_Flex_Info(Cell_Array(single), HOLD));
+                assert(Cell_Series_Len_At(single) == 2);
             }
 
             Copy_Cell(PUSH(), single);
@@ -2489,38 +2490,9 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             Drop_GC_Guard(cell);
         }
         else {
-            if (Array_Len(array) != 1) {
-                DECLARE_VALUE (temp);
-                Init_Block(temp, array);
-                return RAISE(Error_Malconstruct_Raw(temp));
-            }
-
-            // !!! Construction syntax allows the "type" slot to be one of
-            // the literals #[false], #[true]... along with legacy #[none]
-            // while the legacy #[unset] is no longer possible (but
-            // could load some kind of erroring function value)
-            //
-            switch (id) {
-            #if RUNTIME_CHECKS
-              case SYM_NONE:
-                // Should be under a LEGACY flag...
-                Init_Blank(PUSH());
-                break;
-            #endif
-
-              case SYM_FALSE:
-                Init_False(PUSH());
-                break;
-
-              case SYM_TRUE:
-                Init_True(PUSH());
-                break;
-
-              default: {
-                DECLARE_VALUE (temp);
-                Init_Block(temp, array);
-                return RAISE(Error_Malconstruct_Raw(temp)); }
-            }
+            DECLARE_VALUE (temp);
+            Init_Block(temp, array);
+            return RAISE(Error_Malconstruct_Raw(temp));
         }
         break; } // case TOKEN_CONSTRUCT
 

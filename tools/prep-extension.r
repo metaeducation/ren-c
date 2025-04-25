@@ -75,7 +75,7 @@ e1: (make-emitter "Module C Header File Preface"
 )
 
 
-verbose: false
+verbose: null
 
 proto-count: 0
 module-header: null
@@ -126,13 +126,13 @@ native-defs: collect [
             n-name: null
             n-spec: null
         )
-        ['export (n-export: true) | (n-export: false)]
+        ['export (n-export: okay) | (n-export: null)]
         set n-name set-word! copy n-spec [
             'native block!
         ]
         (
             keep make natdef compose/only [
-                export: (n-export)
+                export: (reify n-export)
                 name: (to lit-word! n-name)
                 spec: (n-spec) ;-- includes NATIVE or NATIVE/BODY
             ]

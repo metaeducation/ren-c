@@ -360,8 +360,8 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
             Cleanup_File(file);
 
-            if (rebDid("error?", result))
-                rebJumps("FAIL", result);
+            if (rebDid("error?", rebQ(result)))
+                rebJumps("fail", result);
 
             rebRelease(result); // ignore result
         }
@@ -431,8 +431,8 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
             Cleanup_File(file);
 
-            if (rebDid("error?", result))
-                rebJumps("FAIL", result);
+            if (rebDid("error?", rebQ(result)))
+                rebJumps("fail", result);
 
             rebRelease(result);
         }
@@ -492,8 +492,8 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
             Cleanup_File(file);
 
-            if (rebDid("error?", result))
-                rebJumps("FAIL", result);
+            if (rebDid("error?", rebQ(result)))
+                rebJumps("fail", result);
 
             rebRelease(result); // ignore error
         }
@@ -510,8 +510,8 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         Value* result = OS_DO_DEVICE(req, RDC_DELETE);
         assert(result != nullptr);  // should be synchronous
 
-        if (rebDid("error?", result))
-            rebJumps("FAIL", result);
+        if (rebDid("error?", rebQ(result)))
+            rebJumps("fail", result);
 
         rebRelease(result); // ignore result
         RETURN (port); }
@@ -528,8 +528,8 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
         Value* result = OS_DO_DEVICE(req, RDC_RENAME);
         assert(result != nullptr);  // should be synchronous
-        if (rebDid("error?", result))
-            rebJumps("FAIL", result);
+        if (rebDid("error?", rebQ(result)))
+            rebJumps("fail", result);
         rebRelease(result); // ignore result
 
         RETURN (ARG(FROM)); }
@@ -541,13 +541,13 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             Value* cr_result = OS_DO_DEVICE(req, RDC_CREATE);
             assert(cr_result != nullptr);
             if (rebDid("error?", cr_result))
-                rebJumps("FAIL", cr_result);
+                rebJumps("fail", cr_result);
             rebRelease(cr_result);
 
             Value* cl_result = OS_DO_DEVICE(req, RDC_CLOSE);
             assert(cl_result != nullptr);
             if (rebDid("error?", cl_result))
-                rebJumps("FAIL", cl_result);
+                rebJumps("fail", cl_result);
             rebRelease(cl_result);
         }
 
@@ -568,7 +568,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             Setup_File(file, 0, path);
             Value* result = OS_DO_DEVICE(req, RDC_QUERY);
             assert(result != nullptr);
-            if (rebDid("error?", result)) {
+            if (rebDid("error?", rebQ(result))) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
                 return nullptr;
             }
@@ -593,13 +593,13 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
             Value* result = OS_DO_DEVICE(req, RDC_MODIFY);
             assert(result != nullptr);
-            if (rebDid("error?", result)) {
+            if (rebDid("error?", rebQ(result))) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
-                return Init_False(OUT);
+                return LOGIC(false);
             }
             rebRelease(result); // ignore result
         }
-        return Init_True(OUT); }
+        return LOGIC(true); }
 
     case SYM_SKIP: {
         INCLUDE_PARAMS_OF_SKIP;

@@ -785,6 +785,10 @@ Error* Make_Error_Managed_Vaptr(
                     Init_Word(value, Canon(SYM__TNULL_T));
                 else if (Is_Void(arg))
                     Init_Word(value, Canon(SYM__TVOID_T));
+                else if (Is_Okay(arg))
+                    Init_Word(value, Canon(SYM__TOKAY_T));
+                else if (Is_Trash(arg))
+                    Init_Word(value, Canon(SYM_TILDE_1));
                 else
                     Copy_Cell(value, arg);
                 value++;
@@ -917,6 +921,16 @@ Error* Error_Bad_Func_Def(const Value* spec, const Value* body)
     Init_Block(def, a);
 
     return Error_Bad_Func_Def_Raw(def);
+}
+
+
+//
+//  Error_Bad_Antiform: C
+//
+Error* Error_Bad_Antiform(const Value* anti)
+{
+    assert(Is_Antiform(anti));
+    return Error_Bad_Antiform_Raw(anti);  // should properly escape it
 }
 
 

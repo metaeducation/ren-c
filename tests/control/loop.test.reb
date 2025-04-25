@@ -5,7 +5,7 @@
     10 = num
 )
 ; cycle return value
-(false = repeat 1 [false])
+('foo = repeat 1 ['foo])
 ; break cycle
 (
     num: 0
@@ -16,19 +16,19 @@
 (null? repeat 10 [break])
 ; continue cycle
 (
-    success: true
-    repeat 1 [continue success: false]
+    success: okay
+    repeat 1 [continue success: null]
     success
 )
 ; zero repetition
 (
-    success: true
-    repeat 0 [success: false]
+    success: okay
+    repeat 0 [success: null]
     success
 )
 (
-    success: true
-    repeat -1 [success: false]
+    success: okay
+    repeat -1 [success: null]
     success
 )
 ; Test that return stops the loop
@@ -61,7 +61,7 @@
                     1 = get 'break
                 ]
             ][
-                false
+                null
             ]
         ]
     ]

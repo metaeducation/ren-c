@@ -420,7 +420,6 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         }
         break; }
 
-    case TYPE_LOGIC:
     case TYPE_INTEGER:
     case TYPE_DECIMAL:
     case TYPE_PERCENT:
@@ -542,12 +541,13 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         break;
 
     case TYPE_BLANK:
-    case TYPE_TRASH:
-    case TYPE_VOID:
         break;
 
+    case TYPE_TRASH:
+    case TYPE_VOID:
+    case TYPE_OKAY:
     case TYPE_NULLED:
-        break; // use Queue_Mark_Value_Deep() if NULLED would be a bug
+        break;
 
     default:
         panic (v);

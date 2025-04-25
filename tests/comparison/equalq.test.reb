@@ -125,7 +125,7 @@
     b-value: copy []
     insert/only b-value b-value
     error? sys/util/rescue [equal? a-value b-value]
-    true
+    okay
 )]
 (not equal? [] blank)
 (equal? equal? [] blank equal? blank [])
@@ -441,10 +441,10 @@
 (equal? equal? /a first [a:] equal? first [a:] /a)
 ; set-word! reflexivity
 (equal? first [a:] first [a:])
-(equal? true true)
-(equal? false false)
-(not equal? true false)
-(not equal? false true)
+(equal? okay okay)
+(equal? null null)
+(not equal? okay null)
+(not equal? null okay)
 ; object! reflexivity
 (equal? a-value: make object! [a: 1] a-value)
 ; object! simple structural equivalence

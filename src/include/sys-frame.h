@@ -238,6 +238,8 @@ INLINE bool Is_Level_Gotten_Shoved(Level* L) {
 
     #define RETURN(v) \
         return Copy_Cell(OUT, (v))
+
+    #define LOGIC(v)    cast(Bounce, Init_Logic(OUT, (v)))
 #endif
 
 INLINE bool Is_Action_Level(Level* L) {

@@ -1,7 +1,7 @@
 ; functions/control/leave.r
 (
-    success: true
-    f1: func [return: [~]] [(return) success: false]
+    success: okay
+    f1: func [return: [~]] [(return) success: null]
     f1
     success
 )
@@ -17,9 +17,9 @@
     (a: 1 reeval func [return: [~]] [a: error? return] :a =? 1)
 ]
 [#1535
-    (reeval func [return: [~]] [words of return] true)
+    (reeval func [return: [~]] [words of return] okay)
 ]
-(reeval func [return: [~]] [values of return] true)
+(reeval func [return: [~]] [values of return] okay)
 [#1945
-    (reeval func [return: [~]] [spec-of return] true)
+    (reeval func [return: [~]] [spec-of return] okay)
 ]

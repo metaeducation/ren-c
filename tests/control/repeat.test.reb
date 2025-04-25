@@ -1,6 +1,6 @@
 ; functions/control/repeat.r
 (
-    success: true
+    success: okay
     num: 0
     count-up i 10 [
         num: num + 1
@@ -9,7 +9,7 @@
     success and [10 = num]
 )
 ; cycle return value
-(false = count-up i 1 [false])
+('foo = count-up i 1 ['foo])
 ; break cycle
 (
     num: 0
@@ -20,18 +20,18 @@
 (null? count-up i 10 [break])
 ; continue cycle
 (
-    success: true
-    count-up i 1 [continue success: false]
+    success: okay
+    count-up i 1 [continue success: null]
     success
 )
 (
-    success: true
-    for-next i "a" [continue success: false]
+    success: okay
+    for-next i "a" [continue success: null]
     success
 )
 (
-    success: true
-    for-next i [a] [continue success: false]
+    success: okay
+    for-next i [a] [continue success: null]
     success
 )
 ; decimal! test
@@ -54,13 +54,13 @@
 ; TODO: is hash! test and list! test needed too?
 ; zero repetition
 (
-    success: true
-    count-up i 0 [success: false]
+    success: okay
+    count-up i 0 [success: null]
     success
 )
 (
-    success: true
-    count-up i -1 [success: false]
+    success: okay
+    count-up i -1 [success: null]
     success
 )
 ; Test that return stops the loop
@@ -86,12 +86,12 @@
 )
 ; local variable type safety
 (
-    test: false
+    test: null
     error? sys/util/rescue [
         count-up i 2 [
             either test [i == 2] [
-                test: true
-                i: false
+                test: okay
+                i: null
             ]
         ]
     ]

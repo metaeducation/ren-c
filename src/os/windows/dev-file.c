@@ -194,12 +194,14 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         file_req->modes |= RFM_DIR;
 
+    Value* is_dir = rebLogic(file_req->modes & RFM_DIR);
     file->path = rebValue(
         "applique 'local-to-file [",
             "path:", rebR(rebTextWide(info.cFileName)),
-            "dir:", rebR(rebLogic(file_req->modes & RFM_DIR)),
+            "dir:", rebQ(is_dir),
         "]"
     );
+    rebRelease(is_dir);
 
     // !!! We currently unmanage this, because code using the API may
     // trigger a GC and there is nothing proxying the RebReq's data.
@@ -265,13 +267,15 @@ DEVICE_CMD Open_File(REBREQ *req)
     if (access == 0)
         rebJumps("FAIL {No access modes provided to Open_File()}");
 
+    Value* wild = rebLogic(req->modes & RFM_DIR);
     WCHAR *path_wide = rebSpellW(
         "applique 'file-to-local [",
             "path:", file->path,
-            "wild:", rebR(rebLogic(req->modes & RFM_DIR)),
-            "full: true",
+            "wild:", rebQ(wild),
+            "full: okay",
         "]"
     );
+    rebRelease(wild);
 
     HANDLE h = CreateFile(
         path_wide,

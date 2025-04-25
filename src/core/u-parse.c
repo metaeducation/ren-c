@@ -2325,7 +2325,7 @@ DECLARE_NATIVE(PARSE)
     if (Bool_ARG(MATCH))
         return Copy_Cell(OUT, input);
 
-    return Init_True(OUT);  // should be synthesized value, see [1]
+    return Init_Trash(OUT);  // should be synthesized value, see [1]
 }
 
 

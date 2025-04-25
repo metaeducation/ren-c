@@ -1,7 +1,7 @@
 ; functions/control/do.r
 (
-    success: false
-    eval [success: true]
+    success: null
+    eval [success: okay]
     success
 )
 (1 == reeval :abs -1)
@@ -61,8 +61,8 @@
     a-value: first ['a]
     :a-value == eval [:a-value]
 )
-(#[true] == eval [#[true]])
-(#[false] == eval [#[false]])
+(okay == eval [okay])
+(null == eval [null])
 ($1 == eval [$1])
 (same? :append eval [:append])
 (blank? eval [_])
@@ -148,8 +148,8 @@
         (to-word :a-value) == (reeval :a-value)
     ]
 )
-(true = reeval true)
-(false = reeval false)
+(okay = reeval meta okay)
+(null = reeval meta null)
 ($1 == reeval $1)
 (null? reeval (specialize 'of [property: 'type]) null)
 (null? eval void)
@@ -222,20 +222,20 @@
 )
 ; evaluate block tests
 (
-    success: false
-    evaluate/step3 [success: true success: false] 'dummy
+    success: null
+    evaluate/step3 [success: okay success: null] 'dummy
     success
 )
 (
     b: evaluate/step3 [1 2] 'value
-    did all [
+    all [
         1 = value
         [2] = b
     ]
 )
 (
     value: <untouched>
-    did all [
+    all [
         null? evaluate/step3 [] 'value
         null? value
     ]

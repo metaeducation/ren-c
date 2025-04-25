@@ -2,14 +2,14 @@
 
 (
     once: oneshot
-    did all [
+    all [
         10 = once [5 + 5]
         null = once [5 + 5]
         null = once [5 + 5]
     ]
 )(
     up: upshot
-    did all [
+    all [
         null = up [5 + 5]
         10 = up [5 + 5]
         10 = up [5 + 5]

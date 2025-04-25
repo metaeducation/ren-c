@@ -192,7 +192,7 @@ cscape: function [
     ; intelligence, they should use "".
     ;
     parse2 string [
-        (nonwhite: removed: false) start-line:
+        (nonwhite: removed: null) start-line:
         while [
             space
             |
@@ -203,11 +203,11 @@ cscape: function [
                 |
                 skip
             ]
-            (nonwhite: removed: false) start-line:
+            (nonwhite: removed: null) start-line:
             |
-            remove "/* _ */" (removed: true) opt remove space
+            remove "/* _ */" (removed: okay) opt remove space
             |
-            (nonwhite: true)
+            (nonwhite: okay)
             skip
         ]
     ]

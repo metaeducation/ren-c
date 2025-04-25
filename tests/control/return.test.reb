@@ -4,8 +4,8 @@
     1 = f1
 )
 (
-    success: true
-    f1: func [] [return 1 success: false]
+    success: okay
+    f1: func [] [return 1 success: null]
     f1
     success
 )
@@ -26,11 +26,11 @@
     (a: 1 reeval func [] [a: error? return 2] :a =? 1)
 ]
 [#1535
-    (reeval func [] [words of return blank] true)
+    (reeval func [] [words of return blank] okay)
 ]
-(reeval func [] [values of return blank] true)
+(reeval func [] [values of return blank] okay)
 [#1945
-    (reeval func [] [spec-of return blank] true)
+    (reeval func [] [spec-of return blank] okay)
 ]
 ; return should not be caught by try
 (a: 1 reeval func [] [a: error? sys/util/rescue [return 2]] :a =? 1)

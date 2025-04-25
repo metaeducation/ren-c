@@ -287,27 +287,19 @@ static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
 
 
 //
-//  Startup_True_And_False: C
+//  Startup_Antiforms: C
 //
-// !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the literal
-// forms of logical true and false.  Not only does this frequently lead to
-// confusion, but there's not consensus on what a good literal form would be.
-// R3-Alpha used #[true] and #[false] (but often molded them as looking like
-// the words true and false anyway).  $true and $false have been proposed,
-// but would not be backward compatible in files read by bootstrap.
+// The solution to historical problems of the words TRUE and FALSE both being
+// WORD! and truthy led to a design decision in modern Ren-C to have two
+// antiforms of ~okay~ and ~null~, and functions like TRUE? and FALSE? to
+// convert words into the antiforms, with functions like BOOLEAN to turn the
+// antiforms back into words.
 //
-// Since no good literal form exists, the %sysobj.r file uses the words.  They
-// have to be defined before the point that it runs (along with the natives).
-//
-static void Startup_True_And_False(void)
+static void Startup_Antiforms(void)
 {
-    Value* true_value = Append_Context(Lib_Context, nullptr, Canon(SYM_TRUE));
-    Init_True(true_value);
-    assert(IS_TRUTHY(true_value) and VAL_LOGIC(true_value) == true);
-
-    Value* false_value = Append_Context(Lib_Context, nullptr, Canon(SYM_FALSE));
-    Init_False(false_value);
-    assert(IS_FALSEY(false_value) and VAL_LOGIC(false_value) == false);
+    Value* okay_value = Append_Context(Lib_Context, nullptr, Canon(SYM_OKAY));
+    Init_Okay(okay_value);
+    assert(IS_TRUTHY(okay_value) and VAL_LOGIC(okay_value) == true);
 
     Value* null_value = Append_Context(Lib_Context, nullptr, Canon(SYM_NULL));
     Init_Nulled(null_value);
@@ -800,15 +792,10 @@ static void Init_Root_Vars(void)
     Init_Blank(&PG_Blank_Value[0]);
     Poison_Cell(&PG_Blank_Value[1]);
 
-    Erase_Cell(&PG_False_Value[0]);
-    Erase_Cell(&PG_False_Value[1]);
-    Init_False(&PG_False_Value[0]);
-    Poison_Cell(&PG_False_Value[1]);
-
-    Erase_Cell(&PG_True_Value[0]);
-    Erase_Cell(&PG_True_Value[1]);
-    Init_True(&PG_True_Value[0]);
-    Poison_Cell(&PG_True_Value[1]);
+    Erase_Cell(&PG_Okay_Value[0]);
+    Erase_Cell(&PG_Okay_Value[1]);
+    Init_Okay(&PG_Okay_Value[0]);
+    Poison_Cell(&PG_Okay_Value[1]);
 
     Erase_Cell(&PG_Trash_Value[0]);
     Erase_Cell(&PG_Trash_Value[1]);
@@ -1398,7 +1385,7 @@ void Startup_Core(void)
     //
     Startup_Typesets();
 
-    Startup_True_And_False();
+    Startup_Antiforms();
     Add_Lib_Keys_R3Alpha_Cant_Make();
 
 //==//////////////////////////////////////////////////////////////////////==//

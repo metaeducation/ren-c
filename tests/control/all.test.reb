@@ -50,8 +50,8 @@
     a-value: first ['a]
     :a-value == all [:a-value]
 )
-(true = all [true])
-(null? all [false])
+(okay = all [okay])
+(null? all [null])
 ($1 == all [$1])
 (same? :append all [:append])
 (blank? all [_])
@@ -95,208 +95,208 @@
 (null? all [null])
 ('a == all ['a])
 ; two values
-(:abs = all [true :abs])
+(:abs = all [okay :abs])
 (
     a-value: #{}
-    same? a-value all [true a-value]
+    same? a-value all [okay a-value]
 )
 (
     a-value: charset ""
-    same? a-value all [true a-value]
+    same? a-value all [okay a-value]
 )
 (
     a-value: []
-    same? a-value all [true a-value]
+    same? a-value all [okay a-value]
 )
 (
     a-value: blank!
-    same? a-value all [true a-value]
+    same? a-value all [okay a-value]
 )
-(1/Jan/0000 = all [true 1/Jan/0000])
-(0.0 == all [true 0.0])
-(1.0 == all [true 1.0])
+(1/Jan/0000 = all [okay 1/Jan/0000])
+(0.0 == all [okay 0.0])
+(1.0 == all [okay 1.0])
 (
     a-value: me@here.com
-    same? a-value all [true a-value]
+    same? a-value all [okay a-value]
 )
 (
     a-value: %""
-    same? a-value all [true a-value]
+    same? a-value all [okay a-value]
 )
 (
     a-value: does []
-    same? :a-value all [true :a-value]
+    same? :a-value all [okay :a-value]
 )
 (
     a-value: first [:a]
-    same? :a-value all [true :a-value]
+    same? :a-value all [okay :a-value]
 )
-(#"^@" == all [true #"^@"])
-(0 == all [true 0])
-(1 == all [true 1])
-(#a == all [true #a])
+(#"^@" == all [okay #"^@"])
+(0 == all [okay 0])
+(1 == all [okay 1])
+(#a == all [okay #a])
 (
     a-value: first ['a/b]
-    :a-value == all [true :a-value]
+    :a-value == all [okay :a-value]
 )
 (
     a-value: first ['a]
-    :a-value == all [true :a-value]
+    :a-value == all [okay :a-value]
 )
-($1 == all [true $1])
-(same? :append all [true :append])
-(blank? all [true _])
+($1 == all [okay $1])
+(same? :append all [okay :append])
+(blank? all [okay _])
 (
     a-value: make object! []
-    same? :a-value all [true :a-value]
+    same? :a-value all [okay :a-value]
 )
 (
     a-value: first [()]
-    same? :a-value all [true :a-value]
+    same? :a-value all [okay :a-value]
 )
-(same? get '+ all [true get '+])
-(0x0 == all [true 0x0])
+(same? get '+ all [okay get '+])
+(0x0 == all [okay 0x0])
 (
     a-value: 'a/b
-    :a-value == all [true :a-value]
+    :a-value == all [okay :a-value]
 )
 (
     a-value: make port! http://
-    port? all [true :a-value]
+    port? all [okay :a-value]
 )
-(/a == all [true /a])
+(/a == all [okay /a])
 (
     a-value: first [a/b:]
-    :a-value == all [true :a-value]
+    :a-value == all [okay :a-value]
 )
 (
     a-value: first [a:]
-    :a-value == all [true :a-value]
+    :a-value == all [okay :a-value]
 )
 (
     a-value: ""
-    same? :a-value all [true :a-value]
+    same? :a-value all [okay :a-value]
 )
 (
     a-value: make tag! ""
-    same? :a-value all [true :a-value]
+    same? :a-value all [okay :a-value]
 )
-(0:00 == all [true 0:00])
-(0.0.0 == all [true 0.0.0])
+(0:00 == all [okay 0:00])
+(0.0.0 == all [okay 0.0.0])
 (null? all [1020 null])
-('a == all [true 'a])
-(true = all [:abs true])
+('a == all [okay 'a])
+(okay = all [:abs okay])
 (
     a-value: #{}
-    true = all [a-value true]
+    okay = all [a-value okay]
 )
 (
     a-value: charset ""
-    true = all [a-value true]
+    okay = all [a-value okay]
 )
 (
     a-value: []
-    true = all [a-value true]
+    okay = all [a-value okay]
 )
 (
     a-value: blank!
-    true = all [a-value true]
+    okay = all [a-value okay]
 )
-(true = all [1/Jan/0000 true])
-(true = all [0.0 true])
-(true = all [1.0 true])
+(okay = all [1/Jan/0000 okay])
+(okay = all [0.0 okay])
+(okay = all [1.0 okay])
 (
     a-value: me@here.com
-    true = all [a-value true]
+    okay = all [a-value okay]
 )
 (
     a-value: %""
-    true = all [a-value true]
+    okay = all [a-value okay]
 )
 (
     a-value: does []
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
 (
     a-value: first [:a]
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
-(true = all [#"^@" true])
-(true = all [0 true])
-(true = all [1 true])
-(true = all [#a true])
+(okay = all [#"^@" okay])
+(okay = all [0 okay])
+(okay = all [1 okay])
+(okay = all [#a okay])
 (
     a-value: first ['a/b]
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
 (
     a-value: first ['a]
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
-(true = all [true true])
-(null? all [false true])
-(null? all [true false])
-(true = all [$1 true])
-(true = all [:append true])
-(null? all [null true])
+(okay = all [okay okay])
+(null? all [null okay])
+(null? all [okay null])
+(okay = all [$1 okay])
+(okay = all [:append okay])
+(null? all [null okay])
 (
     a-value: make object! []
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
 (
     a-value: first [()]
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
-(true = all [get '+ true])
-(true = all [0x0 true])
+(okay = all [get '+ okay])
+(okay = all [0x0 okay])
 (
     a-value: 'a/b
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
 (
     a-value: make port! http://
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
-(true = all [/a true])
+(okay = all [/a okay])
 (
     a-value: first [a/b:]
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
 (
     a-value: first [a:]
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
 (
     a-value: ""
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
 (
     a-value: make tag! ""
-    true = all [:a-value true]
+    okay = all [:a-value okay]
 )
-(true = all [0:00 true])
-(true = all [0.0.0 true])
-(true = all ['a true])
+(okay = all [0:00 okay])
+(okay = all [0.0.0 okay])
+(okay = all ['a okay])
 ; evaluation stops after encountering FALSE or NONE
 (
-    success: true
-    all [false success: false]
+    success: okay
+    all [null success: null]
     success
 )
 (
-    success: true
-    all [null success: false]
+    success: okay
+    all [null success: null]
     success
 )
 ; evaluation continues otherwise
 (
-    success: false
-    all [true success: true]
+    success: null
+    all [okay success: okay]
     success
 )
 (
-    success: false
-    all [1 success: true]
+    success: null
+    all [1 success: okay]
     success
 )
 ; RETURN stops evaluation
@@ -323,8 +323,8 @@
     ]
 )
 ; recursivity
-(all [true all [true]])
-(not all [true all [false]])
+(all [okay all [okay]])
+(not all [okay all [null]])
 ; infinite recursion
 (
     blk: [all blk]

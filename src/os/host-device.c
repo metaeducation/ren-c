@@ -298,8 +298,8 @@ void OS_Do_Device_Sync(REBREQ *req, int command)
 {
     Value* result = OS_DO_DEVICE(req, command);
     assert(result != nullptr);  // should be synchronous
-    if (rebDid("error?", result))
-        rebJumps("FAIL", result);
+    if (rebDid("error?", rebQ(result)))
+        rebJumps("fail", result);
     rebRelease(result); // ignore result
 }
 

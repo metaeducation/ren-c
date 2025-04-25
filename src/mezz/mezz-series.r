@@ -396,7 +396,7 @@ extract: func [
     series [any-series!]
     width [integer!] "Size of each entry (the skip)"
     /index "Extract from an offset position"
-    pos "The position(s)" [any-number! logic! block!]
+    pos "The position(s)" [integer!]
     /default "Use a default value instead of blank"
     value "The value to use (will be called each time if a function)"
     <local> len val out default_EXTRACT
@@ -412,30 +412,18 @@ extract: func [
         divide index of series negate width  ; Backward loop, use position
     ]
     if not index [pos: 1]
-    if block? pos [
-        parse/match pos [some [any-number! | logic!]] else [
-            cause-error 'Script 'invalid-arg reduce [pos]
-        ]
-        out: make (type of series) len * length of pos
-        if not default_EXTRACT and [any-string? out] [value: copy ""]
-        iterate-skip series width [iterate pos [
-            val: pick series pos/1 else [value]
-            append/only out :val
-        ]]
-    ] else [
-        out: make (type of series) len
-        if not default_EXTRACT and [any-string? out] [value: copy ""]
-        iterate-skip series width [
-            val: pick series pos else [value]
-            append/only out :val
-        ]
+    out: make (type of series) len
+    if not default_EXTRACT and [any-string? out] [value: copy ""]
+    iterate-skip series width [
+        val: pick series pos else [value]
+        append/only out :val
     ]
     out
 ]
 
 
 alter: func [
-    "Append value if not found, else remove it; returns true if added."
+    "Append value if not found, else remove it; returns okay if added."
 
     series [any-series! port! bitset!] {(modified)}
     value
@@ -448,16 +436,16 @@ alter: func [
     if bitset? series [
         if find series :value [
             remove/part series :value
-            return false
+            return null
         ]
         append series :value
-        return true
+        return okay
     ]
     if remove (find/(if case_ALTER [/case]) series :value) [
         append series :value
-        return true
+        return okay
     ]
-    return false
+    return null
 ]
 
 
@@ -521,7 +509,7 @@ collect: cascade [  ; Gives empty block instead of null if no keeps
 collect-lines: adapt 'collect [  ; https://forum.rebol.info/t/945/1
     body: compose [
         keep: adapt specialize 'keep [
-            line: true  only: false  part: false
+            line: okay  only: null  part: null
         ] [value: maybe spaced maybe :value]
         ((as group! body))
     ]
@@ -531,7 +519,7 @@ collect-text: cascade [  ; https://forum.rebol.info/t/945/2
      adapt 'collect [
          body: compose [
              keep: adapt specialize 'keep [
-                 line: false  only: false  part: false
+                 line: null  only: null  part: null
              ][
                  value: maybe unspaced maybe :value
              ]
@@ -698,14 +686,14 @@ split: function [
         ; If the last thing in the series is a delimiter, there is an
         ; implied empty field after it, which we add here.
         ;
-        switch type of dlm [
-            bitset! [did find dlm maybe last series]
-            char! [dlm = last series]
+        (degrade switch type of dlm [
+            bitset! [reify (did find dlm maybe last series)]
+            char! [reify (dlm = last series)]
             text! [
-                (did find series dlm) and [empty? find/last/tail series dlm]
+                reify ((did find series dlm) and [empty? find/last/tail series dlm])
             ]
-            block! [false]
-        ] and [
+            block! ['~null~]
+        ]) and [
             add-fill-val
         ]
     ]
@@ -726,7 +714,7 @@ find-all: function [
     verify [any-series? orig: get series]
     while [any [
         set series find get series :value
-        (set series orig  false) ;-- reset series and break loop
+        (set series orig  null) ; reset series and break loop (no boot comma)
     ]][
         eval body
         series: next series

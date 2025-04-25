@@ -1,9 +1,3 @@
-; logic!
-(true and+ true = true)
-(true and+ false = false)
-(false and+ true = false)
-(false and+ false = false)
-
 ; integer!
 (1 and+ 1 = 1)
 (1 and+ 0 = 0)
@@ -56,34 +50,34 @@
 ; If BLOCK! is used for the right clause, it is short circuit.  The first
 ; falsey value is returned on failure, and the last truthy value on success.
 ;
-(false and [false] = false)
-(false and [true] = false)
-(true and [false] = false)
-(true and [true] = true)
+(null and [null] = null)
+(null and [okay] = null)
+(okay and [null] = null)
+(okay and [okay] = okay)
 (
     x: 1020
-    did all [
-        true and [x: null] = null
+    all [
+        okay and [x: null] = null
         x = null
     ]
 )
 (
     x: null
-    did all [
-        true and [x: 304] = 304
+    all [
+        okay and [x: 304] = 304
         x = 304
     ]
 )
 (
     x: 1020
-    did all [
+    all [
         <truthy> and [x: 304] = 304
         x = 304
     ]
 )
 (
     x: 1020
-    did all [
+    all [
         <truthy> and [x: null] = null
         x = null
     ]
@@ -93,35 +87,35 @@
 ; If BLOCK! is used for the right clause, it is short circuit.  The first
 ; falsey value is returned on failure, and the last truthy value on success.
 ;
-(false or [false] = false)
-(false or [true] = true)
-(true or [false] = true)
-(true or [true] = true)
+(null or [null] = null)
+(null or [okay] = okay)
+(okay or [null] = okay)
+(okay or [okay] = okay)
 (
     x: 1020
-    did all [
-        false or [x: null] = null
+    all [
+        null or [x: null] = null
         x = null
     ]
 )
 (
     x: null
-    did all [
-        false or [x: 304] = 304
-        x = 304
-    ]
-)
-(
-    x: 1020
-    did all [
+    all [
         null or [x: 304] = 304
         x = 304
     ]
 )
 (
     x: 1020
-    did all [
-        null or [x: true] = true
-        x = true
+    all [
+        null or [x: 304] = 304
+        x = 304
+    ]
+)
+(
+    x: 1020
+    all [
+        null or [x: okay] = okay
+        x = okay
     ]
 )

@@ -6,6 +6,6 @@
             sys/util/rescue [close open open join tcp://localhost: n]
         ]
     ]
-    true
+    okay
     )
 ]

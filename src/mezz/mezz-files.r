@@ -150,11 +150,11 @@ confirm: function [
     response: ask question
 
     return case [
-        empty? choices [true]
+        empty? choices [okay]
         text? choices [did find/match response choices]
         length of choices < 2 [did find/match response first choices]
-        find first choices response [true]
-        find second choices response [false]
+        find first choices response [okay]
+        find second choices response [null]
     ]
 ]
 
@@ -188,7 +188,7 @@ list-dir: function [
         word! path! [change-dir to-file path]
     ]
 
-    if r [l: true]
+    if r [l: okay]
     if not l [l: make text! 62] ; approx width
 
     sys/util/rescue [
@@ -282,7 +282,7 @@ to-relative-file: function [
         ]
         if as-rebol [
             file: local-to-file file
-            no-copy: true
+            no-copy: okay
         ]
     ] else [
         file: any [
@@ -291,7 +291,7 @@ to-relative-file: function [
         ]
         if as-local [
             file: file-to-local file
-            no-copy: true
+            no-copy: okay
         ]
     ]
 

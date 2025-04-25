@@ -660,6 +660,8 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
         if (Is_Antiform(var)) {
             if (Is_Nulled(var))
                 Append_Unencoded(out, "~null~");
+            else if (Is_Okay(var))
+                Append_Unencoded(out, "~okay~");
             else if (Is_Void(var))
                 Append_Unencoded(out, "~void~");
             else {
@@ -873,7 +875,7 @@ REBTYPE(Context)
             return nullptr;
 
         if (Cell_Word_Id(verb) == SYM_FIND)
-            return Init_True(OUT); // !!! not optimal, OKAY would be better
+            return LOGIC(true); // !!! not optimal, OKAY would be better
 
         RETURN (Varlist_Slot(c, n)); }
 

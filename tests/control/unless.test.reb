@@ -14,21 +14,21 @@
 (
     20 = (10 unless 20)
 )(
-    10 = (10 unless false)
+    10 = (10 unless null)
 )(
     10 = (10 unless null)
 )(
     x: 10 + 20 unless case [
-        false [<no>]
-        false [<nope>]
-        false [<nada>]
+        null [<no>]
+        null [<nope>]
+        null [<nada>]
     ]
     x = 30
 )(
     x: 10 + 20 unless case [
-        false [<no>]
-        true [<yip!>]
-        false [<nada>]
+        null [<no>]
+        okay [<yip!>]
+        null [<nada>]
     ]
     x = <yip!>
 )

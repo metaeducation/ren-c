@@ -226,9 +226,9 @@ DECLARE_NATIVE(RUNNING_Q)
     Option(Level*) L = Level_Of_Varlist_May_Fail(frame_ctx);
 
     if (Is_Action_Level_Fulfilling(unwrap L))
-        return Init_False(OUT);
+        return LOGIC(false);
 
-    return Init_True(OUT);
+    return LOGIC(true);
 }
 
 
@@ -249,7 +249,7 @@ DECLARE_NATIVE(PENDING_Q)
     Option(Level*) L = Level_Of_Varlist_May_Fail(frame_ctx);
 
     if (L and Is_Action_Level_Fulfilling(unwrap L))
-        return Init_True(OUT);
+        return LOGIC(true);
 
-    return Init_False(OUT);
+    return LOGIC(false);
 }

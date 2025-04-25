@@ -98,11 +98,11 @@ contains-newline: function [return: [logic!] pos [block! group!]] [
         any [
             new-line? pos
             (match [block! group!] :pos/1) and [contains-newline :pos/1]
-        ] then [return true]
+        ] then [return okay]
 
         pos: next pos
     ]
-    return false
+    return null
 ]
 
 dump-to-newline: adapt 'dump [

@@ -227,7 +227,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_CREATE);
         assert(result != nullptr);  // should be synchronous
 
-        if (rebDid("error?", result)) {
+        if (rebDid("error?", rebQ(result))) {
             rebRelease(result); // !!! throws away details
             fail (Error_No_Create_Raw(path)); // higher level error
         }
@@ -253,7 +253,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_RENAME);
         assert(result != nullptr); // should be synchronous
 
-        if (rebDid("error?", result)) {
+        if (rebDid("error?", rebQ(result))) {
             rebRelease(result); // !!! throws away details
             fail (Error_No_Rename_Raw(path)); // higher level error
         }
@@ -271,7 +271,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_DELETE);
         assert(result != nullptr);  // should be synchronous
 
-        if (rebDid("error?", result)) {
+        if (rebDid("error?", rebQ(result))) {
             rebRelease(result); // !!! throws away details
             fail (Error_No_Delete_Raw(path)); // higher level error
         }
@@ -316,7 +316,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_QUERY);
         assert(result != nullptr);  // should be synchronous
 
-        if (rebDid("error?", result)) {
+        if (rebDid("error?", rebQ(result))) {
             rebRelease(result); // !!! R3-Alpha threw out error, returns null
             return nullptr;
         }

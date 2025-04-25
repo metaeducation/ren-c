@@ -197,7 +197,7 @@
 (not (0.0.255 < 0.0.255))
 
 [#1151 (
-    did all [
+    all [
         error? sys/util/rescue [maximum-of [1 %]]
         error? sys/util/rescue [greater? [a] "a"]
         error? sys/util/rescue [lesser? [a] "a"]

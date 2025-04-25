@@ -1,9 +1,8 @@
 ; functions/control/reduce.r
 ([1 2] = reduce [1 1 + 1])
 (
-    success: false
-    reduce [success: true]
-    success
+    success: null
+    'bad-antiform = (sys/util/rescue [reduce [success: okay]])/id
 )
 ([] = reduce [])
 (error? sys/util/rescue [first reduce [null]])
@@ -26,11 +25,11 @@
 
 [
     (did blk: [1 + 2 null 100 + 200])
-    ('need-non-null = (sys/util/rescue [reduce blk])/id)
+    ('bad-antiform = (sys/util/rescue [reduce blk])/id)
 ]
 
 [
-    (did blk: [1 + 2 if false [10 + 20] 100 + 200])
+    (did blk: [1 + 2 if null [10 + 20] 100 + 200])
     ([3 300] = reduce blk)
 ]
 

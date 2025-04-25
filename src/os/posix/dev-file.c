@@ -304,12 +304,14 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     if (Is_Dir(dir_utf8, file_utf8))
         file_req->modes |= RFM_DIR;
 
+    Value* is_dir = rebLogic(file_req->modes & RFM_DIR);
     file->path = rebValue(
         "applique 'local-to-file [",
             "path:", rebT(file_utf8),
-            "dir:", rebR(rebLogic(file_req->modes & RFM_DIR)),
+            "dir:", rebQ(is_dir),
         "]"
     );
+    rebRelease(is_dir);
 
     // !!! We currently unmanage this, because code using the API may
     // trigger a GC and there is nothing proxying the RebReq's data.
@@ -370,13 +372,15 @@ DEVICE_CMD Open_File(REBREQ *req)
     // Open the file:
     // printf("Open: %s %d %d\n", path, modes, access);
 
+    Value* wild = rebLogic(req->modes & RFM_DIR);
     char *path_utf8 = rebSpell(
         "applique 'file-to-local [",
             "path:", file->path,
-            "wild:", rebR(rebLogic(req->modes & RFM_DIR)), // !!! necessary?
-            "full: true"
+            "wild:", rebQ(wild), // !!! necessary?
+            "full: okay"
         "]"
     );
+    rebRelease(wild);
 
     struct stat info;
     int h = open(path_utf8, modes, access);

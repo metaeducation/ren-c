@@ -59,7 +59,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     switch (VAL_TYPE_RAW(v)) {
     case TYPE_NULLED:
     case TYPE_BLANK:
-    case TYPE_LOGIC:
+    case TYPE_OKAY:
       #if DEBUG_TRACK_EXTEND_CELLS
         printf("Cell init ");
 

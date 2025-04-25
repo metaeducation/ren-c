@@ -73,7 +73,7 @@ decode-key-value-text: function [
         ]
     ]
 
-    new-line/all/skip meta true 2
+    new-line/all/skip meta 'yes 2
 ]
 
 load-until-null: function [
@@ -299,13 +299,13 @@ rewrite-if-directives: function [
 ][
     until [
         parse2 position [
-            (rewritten: false)
+            (rewritten: null)
             some [
                 [
                     change ["#if" thru newline "#endif" thru newline] ""
                     | change ["#elif" thru newline "#endif"] "#endif"
                     | change ["#else" thru newline "#endif"] "#endif"
-                ] (rewritten: true) :position
+                ] (rewritten: okay) :position
                 | thru newline
             ]
         ]

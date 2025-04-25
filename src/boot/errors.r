@@ -84,6 +84,7 @@ Script: [
     fetched-tripwire:   [:arg1 {is a tripwire!:} :arg2]
     need-non-end:       [{end was reached while trying to set} :arg1]
     need-non-null:      {non-NULL value required (see MAYBE, TRY, REIFY)}
+    bad-antiform:       [{invalid use of} :arg1 {antiform}]
 
     not-bound:          [:arg1 {word is not bound to a context}]
     no-relative:        [:arg1 {word is bound relative to context not on stack}]

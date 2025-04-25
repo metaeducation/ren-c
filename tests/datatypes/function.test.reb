@@ -97,12 +97,12 @@
     :a-value == f
 )
 (
-    f: does [true]
-    true = f
+    f: does [okay]
+    okay = f
 )
 (
-    f: does [false]
-    false = f
+    f: does [null]
+    null = f
 )
 (
     f: does [$1]
@@ -227,7 +227,7 @@
 )
 ; THROW out leaves a "running" function in a "clean" state
 (
-    did all [
+    all [
         null? catch [
             f: func [x] [
                 either x = 1 [
@@ -256,7 +256,7 @@
 [
     (
         getf: func [:x] [:x]
-        true
+        okay
     )
 
     (10 == getf 10)
@@ -275,7 +275,7 @@
 [
     (
         litf: func ['x] [:x]
-        true
+        okay
     )
 
     (10 == litf 10)
@@ -322,7 +322,7 @@
 ]
 ; inline function test
 [#1659 (
-    f: does (reduce [does [true]])
+    f: does (reduce [does [okay]])
     f
 )]
 ; no-rebind test--succeeds in R3-Alpha but fails in Ren-C.  Second time f is
@@ -331,7 +331,7 @@
 (
     a: func [b] [a: null c: b]
     f: func [d] [a [d] eval c]
-    did all [
+    all [
         1 = f 1
         error? sys/util/rescue [2 = f 2]
     ]
@@ -340,7 +340,7 @@
     (action? func [self] [])
 ]
 [#1756
-    (reeval does [reduce reduce [:self] true])
+    (reeval does [reduce reduce [:self] okay])
 ]
 [#2025 (
     ; ensure x and y are trash from previous tests, as the test here
@@ -374,7 +374,7 @@
         data: reduce [n x y outer static]
         return case [
             n = 0 [reduce [data]]
-            true [
+            <else> [
                append/only (f/count n - 1) data
             ]
         ]

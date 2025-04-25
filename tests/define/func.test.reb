@@ -7,7 +7,7 @@
                 reeval f 2
                 x = 1
             ][
-                false
+                null
             ]
         ]
     ]

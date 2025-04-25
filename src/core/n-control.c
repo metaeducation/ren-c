@@ -148,15 +148,6 @@ bool Either_Test_Core_Throws(
 ){
     switch (Type_Of(test)) {
 
-    case TYPE_LOGIC: // test for "truthy" or "falsey"
-        //
-        // If this is the result of composing together a test with a literal,
-        // it may be the *test* that changes...so in effect, we could be
-        // "testing the test" on a fixed value.
-        //
-        Init_Logic(out, VAL_LOGIC(test) == IS_TRUTHY(arg));
-        return false;
-
       case TYPE_WORD:
       case TYPE_PATH: {
         //
@@ -232,14 +223,21 @@ bool Either_Test_Core_Throws(
             else {
                 if (Cell_Word_Id(item) == SYM__TNULL_T) {
                     if (Is_Nulled(arg)) {
-                        Init_True(out);
+                        Init_Logic(out, true);
+                        return false;
+                    }
+                    continue;
+                }
+                if (Cell_Word_Id(item) == SYM__TOKAY_T) {
+                    if (Is_Okay(arg)) {
+                        Init_Logic(out, true);
                         return false;
                     }
                     continue;
                 }
                 if (Cell_Word_Id(item) == SYM__TVOID_T) {
                     if (Is_Void(arg)) {
-                        Init_True(out);
+                        Init_Logic(out, true);
                         return false;
                     }
                     continue;
@@ -249,20 +247,20 @@ bool Either_Test_Core_Throws(
 
             if (Is_Datatype(var)) {
                 if (CELL_DATATYPE_TYPE(var) == Type_Of(arg)) {
-                    Init_True(out);
+                    Init_Logic(out, true);
                     return false;
                 }
             }
             else if (Is_Typeset(var)) {
                 if (Typeset_Check(var, Type_Of(arg))) {
-                    Init_True(out);
+                    Init_Logic(out, true);
                     return false;
                 }
             }
             else
                 fail (Error_Invalid_Type(Type_Of(var)));
         }
-        Init_False(out);
+        Init_Logic(out, false);
         return false; }
 
       default:
@@ -501,7 +499,7 @@ DECLARE_NATIVE(ALL)
             return nullptr;
         }
 
-        // consider case of `all [true elide print "hi"]`
+        // consider case of `all [okay elide print "hi"]`
         //
         Clear_Cell_Flag(OUT, OUT_MARKED_STALE);
     }
@@ -545,7 +543,7 @@ DECLARE_NATIVE(ANY)
             return OUT;
         }
 
-        // consider case of `any [true elide print "hi"]`
+        // consider case of `any [okay elide print "hi"]`
         //
         Clear_Cell_Flag(OUT, OUT_MARKED_STALE);
     }
@@ -600,7 +598,7 @@ DECLARE_NATIVE(NONE)
 
 
 // Shared code for CASE (which runs BLOCK! clauses as code) and CHOOSE (which
-// returns values as-is, e.g. `choose [true [print "hi"]]` => `[print "hi]`
+// returns values as-is, e.g. `choose [okay [print "hi"]]` => `[print "hi]`
 //
 static Bounce Case_Choose_Core_May_Throw(
     Level* level_,
@@ -655,7 +653,7 @@ static Bounce Case_Choose_Core_May_Throw(
             }
 
             // Even if branch is being skipped, it gets an evaluation--like
-            // how `if false (print "A" [print "B"])` prints A, but not B.
+            // how `if null (print "A" [print "B"])` prints A, but not B.
             //
             if (Eval_Step_Throws(SET_END(cell), L)) {
                 Abort_Level(L);
@@ -669,7 +667,7 @@ static Bounce Case_Choose_Core_May_Throw(
 
             // Maintain symmetry with IF's typechecking of non-taken branches:
             //
-            // >> if false <some-tag>
+            // >> if null <some-tag>
             // ** Script Error: if does not allow tag! for its branch argument
             //
             if (not Is_Block(cell) and not Is_Action(cell))

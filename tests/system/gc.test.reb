@@ -3,7 +3,7 @@
     a: copy []
     repeat 200'000 [a: append/only copy [] a]
     recycle
-    true
+    okay
 )]
 
 ; !!! simplest possible LOAD/SAVE smoke test, expand!

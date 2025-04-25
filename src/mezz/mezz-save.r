@@ -33,8 +33,8 @@ save: function [
     value {Value(s) to save}
     /header
         {Provide a REBOL header block (or output non-code datatypes)}
-    header-data [block! object! logic!]
-        {Header block, object, or TRUE (header is in value)}
+    header-data [block! object! word!]
+        {Header block, object, or INCLUDED (header is in value)}
 ][
     header-data: default [null]
 
@@ -52,10 +52,13 @@ save: function [
     ;-- Handle the header object:
     if header-data [
 
-        ;-- #[true] indicates the header is the first value in the block
-        if header-data = true [
+        ;-- INCLUDED indicates the header is the first value in the block
+        if header-data = 'included [
             header-data: first ensure block! value
             value: my next ;-- do not use TAKE (leave header in position)
+        ]
+        if word? header-data [
+            fail "INCLUDED is the only valid WORD! for SAVE HEADER-DATA"
         ]
 
         ;; Make it an object if it's not already

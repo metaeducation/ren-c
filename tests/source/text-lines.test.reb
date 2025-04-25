@@ -4,7 +4,7 @@
 (; Setup test.
     do %../tools/common.r
     do tools-dir/text-lines.reb
-    true
+    okay
 )
 
 ;; encode-lines

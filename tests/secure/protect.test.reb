@@ -130,6 +130,6 @@
     ]
 )
 [#1764
-    (blk: ~ protect/deep 'blk true)
+    (blk: ~ protect/deep 'blk okay)
 ]
-(unprotect 'blk true)
+(unprotect 'blk okay)

@@ -29,7 +29,7 @@
     thing2: select m2 1
     append thing/2 'c
     append thing2 'd
-    did all [
+    all [
         thing = [a [b c]]
         thing2 = [a [b] d]
     ]
@@ -45,7 +45,7 @@
 [
     (
         m: make map! [AA 10 aa 20 <BB> 30 <bb> 40 #"C" 50 #"c" 60]
-        true
+        okay
     )
 
     (10 = select/case m 'AA)
@@ -70,7 +70,7 @@
         put/case m 'Aa 100
         put/case m <Bb> 110
         put/case m #"C" 120
-        true
+        okay
     )
 
     (100 = select/case m 'Aa)

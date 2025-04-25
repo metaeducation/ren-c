@@ -17,49 +17,49 @@
 ; avoid a situation where the user modified one end of the AS
 ; expectating the other to change too.
 (
-   bin: as binary! copy {abc}
-   did all [
-      #{616263} = bin
-      #{61626364} = append bin #"d"
-   ]
+    bin: as binary! copy {abc}
+    all [
+        #{616263} = bin
+        #{61626364} = append bin #"d"
+    ]
 )
 (
-   bin: as binary! copy <abc>
-   did all [
-      #{616263} = bin
-      #{61626364} = append bin #"d"
-   ]
+    bin: as binary! copy <abc>
+    all [
+        #{616263} = bin
+        #{61626364} = append bin #"d"
+    ]
 )
 (
-   bin: copy as binary! 'abc
-   did all [
-      #{616263} = bin
-      #{61626364} = append bin #"d"
-   ]
+    bin: copy as binary! 'abc
+    all [
+        #{616263} = bin
+        #{61626364} = append bin #"d"
+    ]
 )
 (
-   bin: copy as binary! #abc
-   did all [
-      #{616263} = bin
-      #{61626364} = append bin #"d"
-   ]
+    bin: copy as binary! #abc
+    all [
+        #{616263} = bin
+        #{61626364} = append bin #"d"
+    ]
 )
 
 (
-   bin: copy #{616263}
-   txt: as text! bin
-   did all [
-      "abc" = txt
-      "abcd" = append txt #"d"
-      free? bin
-   ]
+    bin: copy #{616263}
+    txt: as text! bin
+    all [
+        "abc" = txt
+        "abcd" = append txt #"d"
+        free? bin
+    ]
 )
 (
-   bin: copy #{616263}
-   txt: as text! bin
-   did all [
-      "abc" = txt
-      "abcd" = append txt #"d"
-      free? bin
-   ]
+    bin: copy #{616263}
+    txt: as text! bin
+    all [
+        "abc" = txt
+        "abcd" = append txt #"d"
+        free? bin
+    ]
 )

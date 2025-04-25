@@ -113,7 +113,7 @@ static Bounce Transport_Actor(
 
             switch (property) {
             case SYM_OPEN_Q:
-                return Init_False(OUT);
+                return LOGIC(false);
 
             default:
                 break;
@@ -161,8 +161,8 @@ static Bounce Transport_Actor(
                 Drop_GC_Guard(temp);
 
                 assert(l_result != nullptr);
-                if (rebDid("error?", l_result))
-                    rebJumps("FAIL", l_result);
+                if (rebDid("error?", rebQ(l_result)))
+                    rebJumps("fail", l_result);
                 rebRelease(l_result); // ignore result
 
                 RETURN (port);
@@ -305,8 +305,8 @@ static Bounce Transport_Actor(
             // Request pending
         }
         else {
-            if (rebDid("error?", result))
-                rebJumps("FAIL", result);
+            if (rebDid("error?", rebQ(result)))
+                rebJumps("fail", result);
 
             // a note said "recv CAN happen immediately"
             //
@@ -402,8 +402,8 @@ static Bounce Transport_Actor(
             // Write pending !!! old comment said "do we get here?"
         }
         else {
-            if (rebDid("error?", result))
-                rebJumps("FAIL", result);
+            if (rebDid("error?", rebQ(result)))
+                rebJumps("fail", result);
 
             // Note here said "send CAN happen immediately"
             //
@@ -460,7 +460,7 @@ static Bounce Transport_Actor(
             // Asynchronous connect, this happens in TCP_Actor
         }
         else {
-            if (rebDid("error?", result))
+            if (rebDid("error?", rebQ(result)))
                 rebJumps("libFAIL", result);
 
             // This can happen with UDP, which is connectionless so it

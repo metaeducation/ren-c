@@ -230,11 +230,7 @@ INLINE void Finalize_Arg(
             return; // don't type check for optionality
         }
 
-        if (IS_FALSEY(refine)) {
-            //
-            // BLANK! means refinement already revoked, null is okay
-            // false means refinement was never in use, so also okay
-            //
+        if (Is_Refine_Unused(refine)) {
             Init_Nulled(arg);
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             return;
@@ -248,7 +244,7 @@ INLINE void Finalize_Arg(
         // If the argument is set, then the refinement shouldn't be
         // in a revoked or unused state.
         //
-        if (IS_FALSEY(refine))
+        if (Is_Refine_Unused(refine))
             fail (Error_Bad_Refine_Revoke(param, arg));
     }
 
@@ -312,7 +308,7 @@ INLINE void Finalize_Current_Arg(Level* L) {
 // the first paramlist parameter.
 //
 // Despite being implemented less elegantly than it should be, this is an
-// important feature, since it's how `case [true [a] default [b]]` gets the
+// important feature, since it's how `case [okay [a] default [b]]` gets the
 // infix DEFAULT function to realize the left side is a BLOCK! and not
 // either a SET-WORD! or a SET-PATH!, so it <skip>s the opportunity to hard
 // quote it and defers execution...in this case, meaning it won't run at all.
@@ -713,9 +709,7 @@ bool Eval_Core_Throws(Level* const L)
     Begin_Action(L, Cell_Word_Symbol(L->value), LOOKBACK_ARG);
 
     // Lookback args are fetched from L->out, then copied into an arg
-    // slot.  Put the backwards quoted value into L->out, and in the
-    // debug build annotate it with the unevaluated flag, to indicate
-    // the lookback value was quoted, for some double-check tests.
+    // slot.  Put the backwards quoted value into L->out.
     //
     Derelativize(L->out, current, L->specifier); // lookback in L->out
 
@@ -873,13 +867,6 @@ bool Eval_Core_Throws(Level* const L)
 
                 // If arguments in the frame haven't already gone through
                 // some kind of processing, use the truthiness of the value.
-                //
-                // !!! This must accept what it puts out--the /REFINE-NAME
-                // or a BLANK!, to work with pre-built frames.  Accepting
-                // #[true] and #[false] are a given as well.  It seems that
-                // doing more typechecking than that has limited benefit,
-                // since at minimum it needs to accept any other refinement
-                // name to control it, but it could be considered.
                 //
                 if (Not_Cell_Flag(L->special, ARG_MARKED_CHECKED)) {
                     if (IS_FALSEY(L->special)) // !!! error on void, needed?
@@ -2000,7 +1987,6 @@ bool Eval_Core_Throws(Level* const L)
       case TYPE_BLANK:
       case TYPE_VOID:
         //
-      case TYPE_LOGIC:
       case TYPE_INTEGER:
       case TYPE_DECIMAL:
       case TYPE_PERCENT:
@@ -2051,6 +2037,9 @@ bool Eval_Core_Throws(Level* const L)
 
       case TYPE_NULLED:
         fail (Error_Evaluate_Null_Raw());
+
+      case TYPE_OKAY:
+        fail ("~okay~ antiforms can't be evaluated");
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
@@ -2230,10 +2219,10 @@ bool Eval_Core_Throws(Level* const L)
         // Were we to jump to the TYPE_WORD switch case here, LENGTH would
         // cause an error in the expression below:
         //
-        //     if true [] length of "hello"
+        //     if okay [] length of "hello"
         //
         // `reevaluate` accounts for the extra lookahead of after something
-        // like IF TRUE [], where you have a case that even though LENGTH
+        // like IF OKAY [], where you have a case that even though LENGTH
         // isn't infix itself, infix accounting must be done by looking ahead
         // to see if something after it (like OF) is infix and quotes back!
         //

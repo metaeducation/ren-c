@@ -1172,7 +1172,7 @@ parse-messages: function [
         ]
 
         <change-cipher-spec> [
-            ctx/encrypted?: true
+            ctx/encrypted?: okay
             append result context [
                 type: 'ccs-message-type
             ]
@@ -1388,7 +1388,7 @@ tls-init: function [
     ctx/seq-num-r: 0
     ctx/seq-num-w: 0
     ctx/mode: null
-    ctx/encrypted?: false
+    ctx/encrypted?: null
     assert [not ctx/suite]
 ]
 
@@ -1434,13 +1434,13 @@ tls-read-data: function [
                 same? tail of ctx/data-buffer data
             ]
             clear ctx/data-buffer
-            return true
+            return okay
         ]
     ]
 
     debug ["CONTINUE READING..."]
     clear change ctx/data-buffer data
-    return false
+    return null
 ]
 
 
@@ -1469,7 +1469,7 @@ tls-awake: function [
                 type: 'lookup
                 port: tls-port
             ]
-            return false
+            return null
         ]
 
         'connect [
@@ -1486,24 +1486,24 @@ tls-awake: function [
                 type: 'connect
                 port: tls-port
             ]
-            return false
+            return null
         ]
 
         'wrote [
             switch tls-port/state/mode [
                 <close-notify> [
-                    return true
+                    return okay
                 ]
                 #application [
                     insert system/ports/system make event! [
                         type: 'wrote
                         port: tls-port
                     ]
-                    return false
+                    return null
                 ]
             ]
             read port
-            return false
+            return null
         ]
 
         'read [
@@ -1513,7 +1513,7 @@ tls-awake: function [
             ]
 
             complete?: tls-read-data tls-port/state port/data
-            application?: false
+            application?: null
 
             for-each proto tls-port/state/resp [
                 switch proto/type [
@@ -1524,7 +1524,7 @@ tls-awake: function [
                                     clear tls-port/state/port-data
                                 ]
                                 append tls-port/data msg/content
-                                application?: true
+                                application?: okay
                                 msg/type: null
                             ]
                         ]
@@ -1537,7 +1537,7 @@ tls-awake: function [
                                     type: 'read
                                     port: tls-port
                                 ]
-                                return true
+                                return okay
                             ]
                         ]
                     ]
@@ -1562,7 +1562,7 @@ tls-awake: function [
                 type: 'close
                 port: tls-port
             ]
-            return true
+            return okay
         ]
     ]
 
@@ -1620,7 +1620,7 @@ sys/util/make-scheme [
                     ]
                 ]
 
-                server?: false ; !!! server role of protocol not yet written
+                server?: null ; !!! server role of protocol not yet written
 
                 ; Used by https://en.wikipedia.org/wiki/Server_Name_Indication
                 host-name: port/spec/host
@@ -1665,7 +1665,7 @@ sys/util/make-scheme [
                 ;
                 handshake-messages: make binary! 4096
 
-                encrypted?: false
+                encrypted?: null
 
                 client-random: null
                 server-random: null

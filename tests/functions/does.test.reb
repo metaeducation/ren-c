@@ -12,7 +12,7 @@
     f
     block: copy [x y]
     f
-    did all [
+    all [
         backup = [a b [c d]]
         block = [x y [c d]]
     ]
@@ -27,7 +27,7 @@
 (
     o1: make object! [
         a: 10
-        b: bind (does [if true [a]]) binding of 'b
+        b: bind (does [if okay [a]]) binding of 'b
     ]
     o2: make o1 [a: 20]
     o2/b = 20

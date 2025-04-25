@@ -188,7 +188,7 @@ static Value* Run_Sandboxed_Code(Value* group_or_block) {
     //
     Value* result = rebValueInline(group_or_block);
 
-    Value* out = rebValue(NAT_VALUE(UNEVAL), rebQ(result));
+    Value* out = rebValue(NAT_VALUE(META), rebQ(result));
     rebRelease(result);
     return out;
 }
@@ -252,19 +252,22 @@ DECLARE_NATIVE(CONSOLE)
         // done in Run_Sandboxed_Code().
         //
         Value* trapped; // goto crosses initialization
+        Value* resumable;
+        resumable = rebLogic(Bool_ARG(RESUMABLE));
         trapped = rebValue(
             "sys/util/enrescue [",
                 "ext-console-impl", // action! that takes 2 args, run it
                 rebQ(code), // group!/block! executed prior (or blank!)
-                rebQ(result), // prior result unevaluated, or error
-                rebR(rebLogic(Bool_ARG(RESUMABLE))),
+                rebQ(result), // prior result meta'd, or error
+                rebQ(resumable),
             "]"
         );
 
+        rebRelease(resumable);
         rebRelease(code);
         rebRelease(result);
 
-        if (rebDid("lib/error?", trapped)) {
+        if (rebDid("lib/error?", rebQ(trapped))) {
             //
             // If the HOST-CONSOLE function has any of its own implementation
             // that could raise an error (or act as an uncaught throw) it
@@ -287,7 +290,7 @@ DECLARE_NATIVE(CONSOLE)
             goto recover;
         }
 
-        code = rebValue("first", trapped); // enrescue []'s the output
+        code = rebValue(trapped); // enrescue metas the output
         rebRelease(trapped); // don't need the outer block any more
 
       provoked:;

@@ -18,13 +18,13 @@
 
 ; extreme behaviour
 (
-    did any [
+    any [
         error? sys/util/rescue [date-d: 1-Jan-0000 - 1]
         date-d = load mold date-d
     ]
 )
 (
-    did any [
+    any [
         error? sys/util/rescue [date-d: 31-Dec-16383 + 1]
         date-d = load mold date-d
     ]

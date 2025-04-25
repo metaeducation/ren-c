@@ -364,7 +364,7 @@ ctx-zip: context [
                 (num-entries: me + 1)
                 repeat 2 one  ; version
                 flags: across repeat 2 one
-                    (if not zero? flags/1 and+ 1 [return false])
+                    (if not zero? flags/1 and+ 1 [return null])
                 method-number: across repeat 2 one (
                     method-number: get-ishort method-number
                     method: select [0 store 8 deflate] method-number else [

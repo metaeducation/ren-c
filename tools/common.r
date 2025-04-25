@@ -60,7 +60,7 @@ to-c-name: function [
         return copy "bar_1"
     ]
 
-    fail: specialize :lib/fail [blame: true location: 'value]
+    fail: specialize :lib/fail [blame: okay location: 'value]
 
     all [
         text? value

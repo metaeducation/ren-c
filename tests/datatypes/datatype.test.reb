@@ -20,7 +20,7 @@
 (datatype? issue!)
 (datatype? lit-path!)
 (datatype? lit-word!)
-(datatype? logic!)
+(typeset? logic!)
 (datatype? map!)  ; map! =? hash! in R2/Forward, R2 2.7.7+
 (datatype? module!)
 (datatype? money!)

@@ -22,14 +22,7 @@ verify: function [
     while [pos: evaluate/step3 conditions 'result] [
         if not :result [
             fail/blame [
-                "Assertion condition returned"
-                 choose [
-                    (unset? 'result) "nothing"
-                    (null? result) "null"
-                    (blank? result) "blank"
-                    (result = false) "false"
-                ]
-                ":"
+                "Assertion condition returned null:"
                 copy/part conditions pos
             ] 'conditions
         ]

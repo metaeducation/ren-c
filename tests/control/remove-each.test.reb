@@ -1,10 +1,10 @@
 ; functions/control/remove-each.r
 (
-    remove-each i s: [1 2] [true]
+    remove-each i s: [1 2] [okay]
     empty? s
 )
 (
-    remove-each i s: [1 2] [false]
+    remove-each i s: [1 2] [null]
     [1 2] = s
 )
 
@@ -24,29 +24,29 @@
     block: copy [1 2 3 4]
     remove-each i block [
         if i = 3 [break]
-        true
+        okay
     ]
     block = [1 2 3 4]
 )
 (
     block: copy [1 2 3 4]
-    returned-null: false
+    returned-null: null
     remove-each i block [
         if i = 3 [break]
         i = 2
     ] else [
-        returned-null: true
+        returned-null: okay
     ]
-    did all [
+    all [
         block = [1 2 3 4]
-        returned-null = true
+        returned-null = okay
     ]
 )
 (
     block: copy [1 2 3 4]
     remove-each i block [
-        if i = 3 [continue/with true]
-        if i = 4 [true] else [false]
+        if i = 3 [continue/with okay]
+        degrade (if i = 4 ['~okay~] else ['~null~])
     ]
     block = [1 2]
 )
@@ -55,13 +55,13 @@
     sys/util/rescue [
         remove-each i block [
             if i = 3 [fail "midstream failure"]
-            true
+            okay
         ]
     ]
     block = [3 4]
 )
 (
-    b-was-null: false
+    b-was-null: null
 
     block: copy [1 2 3 4 5]
     remove-each [a b] block [
@@ -82,16 +82,16 @@
 )
 (
     string: copy "1234"
-    returned-null: false
+    returned-null: null
     remove-each i string [
         if i = #"3" [break]
-        true
+        okay
     ] else [
-        returned-null: true
+        returned-null: okay
     ]
-    did all [
+    all [
         string = "1234" comment {not changed if BREAK}
-        returned-null = true
+        returned-null = okay
     ]
 )
 (
@@ -99,13 +99,13 @@
     sys/util/rescue [
         remove-each i string [
             if i = #"3" [fail "midstream failure"]
-            true
+            okay
         ]
     ]
     string = "34"
 )
 (
-    b-was-null: false
+    b-was-null: null
 
     string: copy "12345"
     remove-each [a b] string [
@@ -126,16 +126,16 @@
 )
 (
     binary: copy #{01020304}
-    returned-null: false
+    returned-null: null
     remove-each i binary [
         if i = 3 [break]
-        true
+        okay
     ] else [
-        returned-null: true
+        returned-null: okay
     ]
-    did all [
+    all [
         binary = #{01020304} comment {Not changed with BREAK}
-        returned-null = true
+        returned-null = okay
     ]
 )
 (
@@ -143,13 +143,13 @@
     sys/util/rescue [
         remove-each i binary [
             if i = 3 [fail "midstream failure"]
-            true
+            okay
         ]
     ]
     binary = #{0304}
 )
 (
-    b-was-null: false
+    b-was-null: null
 
     binary: copy #{0102030405}
     remove-each [a b] binary [

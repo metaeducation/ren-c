@@ -88,12 +88,7 @@ static Value* Enrescue_Dangerous(Level* level_) {
         return nullptr;
     }
 
-    if (Is_Nulled(OUT))
-        return nullptr; // don't box it up
-
-    Array* a = Alloc_Singular(ARRAY_FLAG_HAS_FILE_LINE | NODE_FLAG_MANAGED);
-    Copy_Cell(ARR_SINGLE(a), OUT);
-    Init_Block(OUT, a);
+    Meta_Quotify(OUT);
     return nullptr;
 }
 
@@ -101,10 +96,10 @@ static Value* Enrescue_Dangerous(Level* level_) {
 //
 //  enrescue: native [
 //
-//  {DO a block and put result in a 1-item BLOCK!, unless error is raised}
+//  {DO a block and return META'd result, unless error is raised}
 //
-//      return: "ERROR! if raised, null if null, or result in a BLOCK!"
-//          [~null~ block! error!]
+//      return: "ERROR! if raised, or meta result"
+//          [error! word! group!]
 //      code "Code to execute and monitor"
 //          [block! action!]
 //  ]

@@ -1,15 +1,16 @@
 ; datatypes/logic.r
-(logic? true)
-(logic? false)
+
+(logic? okay)
+(logic? null)
 (not logic? 1)
-(logic! = type of true)
-(logic! = type of false)
-(true = #[true])
-(false = #[false])
-(false = make logic! 0)
-(true = make logic! 1)
-(true = to logic! 0)
-(true = to logic! 1)
-(true = to logic! "f")
-("#[true]" = mold true)
-("#[false]" = mold false)
+
+(okay = okay)
+(null = null)
+
+(okay = to-logic 0)
+(okay = to-logic 1)
+(okay = to-logic "f")
+
+(null = logical 0)
+(okay = logical 1)
+(okay = logical -1)

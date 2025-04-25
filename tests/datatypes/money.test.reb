@@ -16,14 +16,14 @@
 ; check, whether these are moldable
 (
     x: $999999999999999
-    did any [
+    any [
         error? sys/util/rescue [x: x + $1]
         not error? sys/util/rescue [mold x]
     ]
 )
 (
     x: $-999999999999999
-    did any [
+    any [
         error? sys/util/rescue [x: x - $1]
         not error? sys/util/rescue [mold x]
     ]
@@ -31,7 +31,7 @@
 
 ; alternative form
 (
-    did any [
+    any [
         error? sys/util/rescue [x: $1234567890123456]
         not error? sys/util/rescue [mold x]
     ]

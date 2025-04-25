@@ -561,8 +561,8 @@ void Startup_Symbols(Array* words)
     if (0 != strcmp("blank!", Symbol_Head(Canon(SYM_BLANK_X))))
         panic (Canon(SYM_BLANK_X));
 
-    if (0 != strcmp("true", Symbol_Head(Canon(SYM_TRUE))))
-        panic (Canon(SYM_TRUE));
+    if (0 != strcmp("null", Symbol_Head(Canon(SYM_NULL))))
+        panic (Canon(SYM_NULL));
 }
 
 

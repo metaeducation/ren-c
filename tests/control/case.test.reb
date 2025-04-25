@@ -1,35 +1,35 @@
 ; functions/control/case.r
 
-(true = case [true [true]])
-(false = case [true [false]])
+(okay = case [okay [okay]])
+(trashified? case [okay [null]])
 (
-    success: false
-    case [true [success: true]]
+    success: null
+    case [okay [success: okay]]
     success
 )
 (
-    success: true
-    case [false [success: false]]
+    success: okay
+    case [null [success: null]]
     success
 )
 
 (
-    null? case [false []] ;-- null indicates no branch was taken
+    null? case [null []] ;-- null indicates no branch was taken
 )
 (
     null? case [] ;-- empty case block is legal (e.g. as COMPOSE product)
 )
 (
-    trash? case [true []]  ;-- trash indicates branch was taken (vs. null)
+    trash? case [okay []]  ;-- trash indicates branch was taken (vs. null)
 )
 (
     trash? case [
-        true []
-        false [1 + 2]
+        okay []
+        null [1 + 2]
     ]
 )
 [#2246 (
-    trash? case [true []]
+    trash? case [okay []]
 )]
 
 (
@@ -39,16 +39,16 @@
 )
 
 (
-    3 = case [true (reduce ['add 1 2])]
+    3 = case [okay (reduce ['add 1 2])]
 )
 (
-    null? case [false (reduce ['add 1 2])]
+    null? case [null (reduce ['add 1 2])]
 )
 
 (
     error? sys/util/rescue [
         case [
-            true add 1 2 ;-- branch slots must be BLOCK!, ACTION!, softquote
+            okay add 1 2 ;-- branch slots must be BLOCK!, ACTION!, softquote
         ]
     ]
 )
@@ -56,11 +56,11 @@
 ; Invisibles should be legal to mix with CASE.
 
 (
-    flag: false
+    flag: null
     result: case [
         1 < 2 [1020]
-        elide (flag: true)
-        true [fail "shouldn't get here"]
+        elide (flag: okay)
+        okay [fail "shouldn't get here"]
     ]
     (not flag) and [result = 1020]
 )
@@ -86,17 +86,17 @@
 )
 
 [#86 (
-    s1: false
-    s2: false
+    s1: null
+    s2: null
     case/all [
-        true [s1: true]
-        true [s2: true]
+        okay [s1: okay]
+        okay [s2: okay]
     ]
     s1 and [s2]
 )]
 
 ; nested calls
-(1 = case [true [case [true [1]]]])
+(1 = case [okay [case [okay [1]]]])
 
 ; infinite recursion
 (

@@ -192,20 +192,17 @@ uint32_t Hash_Value(const Cell* v)
 
     switch(Type_Of(v)) {
     case TYPE_NULLED:
+    case TYPE_TRASH:
+    case TYPE_VOID:
+    case TYPE_OKAY:
         //
-        // While a void might technically be hashed, it can't be a value *or*
-        // a key in a map.
+        // While antiforms might technically be hashed, they can't be keys
+        // in maps.
         //
         panic (nullptr);
 
     case TYPE_BLANK:
-    case TYPE_TRASH:
-    case TYPE_VOID:
         hash = 0;
-        break;
-
-    case TYPE_LOGIC:
-        hash = VAL_LOGIC(v) ? 1 : 0;
         break;
 
     case TYPE_INTEGER:

@@ -305,7 +305,7 @@ DECLARE_NATIVE(DO)
             sys_do_helper,
             source,
             rebQ(ARG(ARG)), // may be nulled cell
-            Bool_ARG(ONLY) ? TRUE_VALUE : FALSE_VALUE,
+            rebQ(Bool_ARG(ONLY) ? OKAY_VALUE : NULLED_CELL),
             rebEND
         )){
             return BOUNCE_THROWN;

@@ -158,8 +158,8 @@ DECLARE_NATIVE(WRITE_STDOUT)
 //
 //      position [block! group!]
 //          "Position to change marker (modified)"
-//      mark [logic!]
-//          "Set TRUE for newline"
+//      mark [word!]
+//          "Set YES for newline, NO for no newline"
 //      /all
 //          "Set/clear marker to end of series"
 //      /skip
@@ -171,7 +171,14 @@ DECLARE_NATIVE(NEW_LINE)
 {
     INCLUDE_PARAMS_OF_NEW_LINE;
 
-    bool mark = VAL_LOGIC(ARG(MARK));
+    bool mark;
+    if (Cell_Word_Id(ARG(MARK)) == SYM_YES)
+        mark = true;
+    else if (Cell_Word_Id(ARG(MARK)) == SYM_NO)
+        mark = false;
+    else
+        fail (PARAM(MARK));
+
     Value* pos = ARG(POSITION);
     Array* a = Cell_Array(pos);
 

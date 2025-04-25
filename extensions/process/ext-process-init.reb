@@ -11,7 +11,7 @@ export call*: adapt 'call-internal* [
     if block? command [command: compose command]
 ]
 
-export call: specialize :call* [wait: true]
+export call: specialize :call* [wait: okay]
 
 
 ; CALL is a native built by the C code, BROWSE depends on using that, as well

@@ -268,8 +268,8 @@ host-start: function [
             ]
             <bad> [
                 emit #no-unskin-if-error
-                emit [print (<*> mold uneval prior)]
-                emit [fail ["Bad REPL continuation:" ((<*> uneval result))]]
+                emit [print (<*> mold meta prior)]
+                emit [fail ["Bad REPL continuation:" ((<*> meta result))]]
             ]
         ] then [
             return-to-c instruction
@@ -435,7 +435,7 @@ host-start: function [
 
     do-string: null  ; will be set if a string is given with --do
 
-    quit-when-done: null  ; by default run CONSOLE
+    when-done: null  ; by default run CONSOLE, but can be set to QUIT
 
     ; Process the option syntax out of the command line args in order to get
     ; the intended arguments.  TAKEs each option string as it goes so the
@@ -499,7 +499,7 @@ host-start: function [
             ) fail
         |
             "--about" <end> (
-                o/about: true   ;; show full banner (ABOUT) on startup
+                o/about: okay   ;; show full banner (ABOUT) on startup
             )
         |
             "--breakpoint" <end> (
@@ -507,34 +507,34 @@ host-start: function [
             )
         |
             ["--cgi" | "-c"] <end> (
-                o/quiet: true
-                o/cgi: true
+                o/quiet: okay
+                o/cgi: okay
             )
         |
             "--debug" <end> (
                 ;-- was coerced to BLOCK! before, but what did this do?
                 ;
-                o/debug: to logic! param-or-die "DEBUG"
+                o/debug: to-logic param-or-die "DEBUG"
             )
         |
             "--do" <end> (
                 ;
                 ; A string of code to run, e.g. `r3 --do "print {Hello}"`
                 ;
-                o/quiet: true ;-- don't print banner, just run code string
-                quit-when-done: default [true] ;-- override blank, not false
+                o/quiet: okay ;-- don't print banner, just run code string
+                when-done: default ['quit] ;-- override null, not CONSOLE
 
                 emit {Use /ONLY so that QUIT/VALUE quits, vs. return DO value}
                 emit [do/only ((<*> param-or-die "DO"))]
             )
         |
             ["--halt" | "-h"] <end> (
-                quit-when-done: false ;-- overrides true
+                when-done: 'console  ; overrides 'quit
             )
         |
             ["--help" | "-?"] <end> (
                 usage
-                quit-when-done: default [true]
+                when-done: default ['quit]
             )
         |
             "--import" <end> (
@@ -542,13 +542,13 @@ host-start: function [
             )
         |
             ["--quiet" | "-q"] <end> (
-                o/quiet: true
+                o/quiet: okay
             )
         |
             "-cs" <end> (
                 ; every tutorial on Rebol CGI shows these flags.
-                o/quiet: true
-                o/cgi: true
+                o/quiet: okay
+                o/cgi: okay
             )
         |
             "--resources" <end> (
@@ -569,7 +569,7 @@ host-start: function [
         |
             "--script" <end> (
                 o/script: local-to-file param-or-die "SCRIPT"
-                quit-when-done: default [true] ;-- overrides blank, not false
+                when-done: default ['quit] ;-- overrides null, not CONSOLE
             )
         |
             ["-t" | "--trace"] <end> (
@@ -577,12 +577,12 @@ host-start: function [
             )
         |
             "--verbose" <end> (
-                o/verbose: true
+                o/verbose: okay
             )
         |
             ["-v" | "-V" | "--version"] <end> (
                 boot-print ["Rebol 3" system/version] ;-- version tuple
-                quit-when-done: default [true]
+                when-done: default ['quit]
             )
         |
             "-w" <end> (
@@ -629,7 +629,7 @@ host-start: function [
     ;
     if not o/script and [not tail? argv] [
         o/script: local-to-file take argv
-        quit-when-done: default [true]
+        when-done: default ['quit]
     ]
 
     ; Whatever is left is the positional arguments, available to the script.
@@ -637,7 +637,7 @@ host-start: function [
     o/args: argv ;-- whatever's left is positional args
 
 
-    if o/script [o/quiet: true]
+    if o/script [o/quiet: okay]
 
     ;-- Set option/paths for /path, /boot, /home, and script path
     o/path: what-dir  ;dirize any [o/path o/home]
@@ -710,10 +710,11 @@ host-start: function [
 
     host-start: 'done
 
-    if quit-when-done [
+    if when-done = 'quit [
         emit [quit 0]
         return <unreachable>
     ]
+    assert [any [when-done = null  when-done = 'console]]
 
     emit #start-console
 

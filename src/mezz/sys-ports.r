@@ -269,10 +269,10 @@ init-schemes: func [
 
             ; Are any of the requested ports awake?
             for-each port ports [
-                find waked port then [return true]
+                find waked port then [return okay]
             ]
 
-            false ; keep waiting
+            null ; keep waiting
         ]
         init: func [port] [
             ;;print ["Init" title]
@@ -313,7 +313,7 @@ init-schemes: func [
         actor: get-event-actor-handle
         awake: func [event] [
             print ["Default GUI event/awake:" event/type]
-            true
+            okay
         ]
     ]
 
@@ -322,7 +322,7 @@ init-schemes: func [
         name: 'dns
         actor: get-dns-actor-handle
         spec: system/standard/port-spec-net
-        awake: func [event] [print event/type true]
+        awake: func [event] [print event/type okay]
     ]
 
     make-scheme [
@@ -331,7 +331,7 @@ init-schemes: func [
         actor: get-tcp-actor-handle
         spec: system/standard/port-spec-net
         info: system/standard/net-info ; for C enums
-        awake: func [event] [print ['TCP-event event/type] true]
+        awake: func [event] [print ['TCP-event event/type] okay]
     ]
 
     make-scheme [
@@ -340,7 +340,7 @@ init-schemes: func [
         actor: get-udp-actor-handle
         spec: system/standard/port-spec-net
         info: system/standard/net-info ; for C enums
-        awake: func [event] [print ['UDP-event event/type] true]
+        awake: func [event] [print ['UDP-event event/type] okay]
     ]
 
     system/ports/system:   open [scheme: 'system]

@@ -85,7 +85,7 @@
 (
     o: make object! []
     append o 'self
-    true
+    okay
 )
 (
     o: make object! []
@@ -155,7 +155,7 @@
         if derived/meth-255 <> 132639 + i [
             break
         ]
-        true
+        okay
     ]
 )
 

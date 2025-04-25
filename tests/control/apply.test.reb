@@ -5,7 +5,7 @@
 ; R3-Alpha's APPLY, demonstrating that such a construct could be written in
 ; userspace--even implementing the /ONLY refinement:
 ;
-; `APPEND/ONLY/DUP A B 2` => `redbol-apply :append [a b none none true true 2]`
+; `APPEND/ONLY/DUP A B 2` => `redbol-apply :append [a b null null okay okay 2]`
 ;
 ; This is hoped to be a "design lab" for figuring out what a better apply
 ; might look like, to actually take the name APPLY.
@@ -19,7 +19,7 @@
 ][
     frame: make frame! :action
     params: words of :action
-    using-args: true
+    using-args: okay
 
     while [block: sync-invisibles block] [
         block: degrade if only [
@@ -68,22 +68,22 @@
 
 (error? redbol-apply :make [error! ""])
 
-(/a = redbol-apply func [/a] [a] [true])
-(null = redbol-apply func [/a] [a] [false])
+(/a = redbol-apply func [/a] [a] [okay])
+(null = redbol-apply func [/a] [a] [null])
 (null = redbol-apply func [/a] [a] [])
-(/a = redbol-apply/only func [/a] [a] [true])
+(/a = redbol-apply/only func [/a] [a] [okay])
 ; the word 'false
-(/a = redbol-apply/only func [/a] [a] [false])
+(/a = redbol-apply/only func [/a] [a] [null])
 (null == redbol-apply/only func [/a] [a] [])
-(use [a] [a: true /a = redbol-apply func [/a] [a] [a]])
-(use [a] [a: false null == redbol-apply func [/a] [a] [a]])
-(use [a] [a: false /a = redbol-apply func [/a] [a] ['a]])
-(use [a] [a: false /a = redbol-apply func [/a] [a] [/a]])
-(use [a] [a: false /a = redbol-apply/only func [/a] [a] [a]])
+(use [a] [a: okay /a = redbol-apply func [/a] [a] [a]])
+(use [a] [a: null null == redbol-apply func [/a] [a] [a]])
+(use [a] [a: null /a = redbol-apply func [/a] [a] ['a]])
+(use [a] [a: null /a = redbol-apply func [/a] [a] [/a]])
+(use [a] [a: null /a = redbol-apply/only func [/a] [a] [a]])
 (group! == redbol-apply/only (specialize 'of [property: 'type]) [()])
 ([1] == head of redbol-apply :insert [copy [] [1] null null null])
-([1] == head of redbol-apply :insert [copy [] [1] null null false])
-([[1]] == head of redbol-apply :insert [copy [] [1] null null true])
+([1] == head of redbol-apply :insert [copy [] [1] null null null])
+([[1]] == head of redbol-apply :insert [copy [] [1] null null okay])
 (action! == redbol-apply (specialize 'of [property: 'type]) [:print])
 (get-word! == redbol-apply/only (specialize 'of [property: 'type]) [:print])
 
@@ -188,5 +188,9 @@
 ;
 (1 == reeval func [] [redbol-apply :return [1] 2])
 
-(null == redbol-apply/only func [/a] [a] [#[false]])
+; !!! This shows a weak spot: how would REDBOL-APPLY/ONLY work on antiforms?
+; It could degrade them, which would be an argument for not using quasars much.
+;
+('~null~ == redbol-apply/only func [/a] [a] [~null~])
+
 (group! == redbol-apply/only :type-of [()])

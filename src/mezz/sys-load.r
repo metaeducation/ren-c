@@ -450,7 +450,7 @@ load-module: function [
                     source: mod
                     version: version
                     set the ver: :ver
-                    as: true
+                    as: okay
                     set the name: opt name
                     no-share: no-share
                     no-lib: no-lib
@@ -509,7 +509,7 @@ load-module: function [
 
     if not no-lib and [not word? :name] [ ; requires name for full import
         ; Unnamed module can't be imported to lib, so /no-lib here
-        no-lib: true  ; Still not /no-lib in IMPORT
+        no-lib: okay  ; Still not /no-lib in IMPORT
 
         if not find maybe hdr/options 'private [
             hdr/options: append any [hdr/options make block! 1] 'private
@@ -551,7 +551,7 @@ load-module: function [
                     ; it's at least as new, use it instead
                     mod: mod0  hdr: hdr0  code: null
                     modver: ver0
-                    override?: false
+                    override?: null
                 ]
             ]
 
@@ -585,7 +585,7 @@ load-module: function [
     if not mod [
         ; not prebuilt or delayed, make a module
 
-        if find maybe hdr/options 'isolate [no-share: true] ; in case of delay
+        if find maybe hdr/options 'isolate [no-share: okay] ; in case of delay
 
         if binary? code [code: make block! code]
 
@@ -656,7 +656,7 @@ import: function [
         set the ver: :ver
         no-share: no-share
         no-lib: no-lib
-        import: true ;-- !!! original code always passed /IMPORT, should it?
+        import: okay ;-- !!! original code always passed /IMPORT, should it?
     ]
 
     case [
@@ -678,7 +678,7 @@ import: function [
                         set the ver: :ver
                         no-share: :no-share
                         no-lib: :no-lib
-                        import: true
+                        import: okay
                     ]
                 ) [
                     break

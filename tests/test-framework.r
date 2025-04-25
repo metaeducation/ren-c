@@ -57,9 +57,6 @@ make object! compose [
                 recycle
             )
 
-            null? :result [
-                "test returned null"
-            ]
             error? :result [
                 any [
                     to text! maybe result/id
@@ -68,13 +65,16 @@ make object! compose [
                 ]
             ]
 
-            elide (result: first result)
+            elide (result: unmeta result)
 
+            null? :result [
+                "test returned null"
+            ]
             not logic? :result [
                 spaced ["was" (an type of :result) ", not logic!"]
             ]
             not :result [
-                "test returned #[false]"
+                "test returned ~null~ antiform"
             ]
         ] then message -> [
             test-failures: me + 1

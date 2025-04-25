@@ -26,12 +26,12 @@
     a: copy []
     insert/only a a
     error? sys/util/rescue [copy/deep a]
-    true
+    okay
 )]
 [#2043 (
     f: func [] []
     error? sys/util/rescue [copy :f]
-    true
+    okay
 )]
 [#648
     (["a"] = deline/lines "a")

@@ -20,6 +20,7 @@ REBOL [
 
 any-value! ;-- signal typesets start (SYM_ANY_VALUE_X hardcoded reference)
 any-element!
+logic!
 any-word!
 any-path!
 any-number!
@@ -50,8 +51,21 @@ none
 "~"  ; SYM_TILDE_1 (TRASH in modern Ren-C, but UNDEFINED in R3C)
 ~void~
 ~null~
+~okay~
 void
 null
+okay
+
+blank
+trash
+
+; don't need lib slots, but need for symids
+true
+false
+on
+off
+yes
+no
 
 ...  ; SYM_ELLIPSIS_3
 
@@ -74,14 +88,6 @@ poke
 infix
 native
 self
-blank
-true
-false
-trash
-on
-off
-yes
-no
 
 rebol
 

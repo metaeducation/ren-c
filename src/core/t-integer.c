@@ -513,8 +513,8 @@ REBTYPE(Integer)
         // falls through
     case SYM_ODD_Q:
         if (num & 1)
-            return Init_True(OUT);
-        return Init_False(OUT);
+            return LOGIC(true);
+        return LOGIC(false);
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
@@ -600,15 +600,15 @@ DECLARE_NATIVE(ENBIN)
     if (Cell_Series_Len_At(settings) != 3)
         fail ("ENBIN requires array of length 3 for settings for now");
     bool little = rebDid(
-        "switch first", settings, "[",
-            "'BE [false] 'LE [true]",
+        "degrade switch first", settings, "[",
+            "'BE ['~null~] 'LE ['~okay~]",
             "fail {First element of ENBIN settings must be BE or LE}",
         "]"
     );
     REBLEN index = VAL_INDEX(settings);
     bool no_sign = rebDid(
-        "switch second", settings, "[",
-            "'+ [true] '+/- [false]",
+        "degrade switch second", settings, "[",
+            "'+ ['~okay~] '+/- ['~null~]",
             "fail {Second element of ENBIN settings must be + or +/-}",
         "]"
     );
@@ -706,15 +706,15 @@ DECLARE_NATIVE(DEBIN)
     if (Cell_Series_Len_At(settings) != 2 and Cell_Series_Len_At(settings) != 3)
         fail("DEBIN requires array of length 2 or 3 for settings for now");
     bool little = rebDid(
-        "switch first", settings, "[",
-            "'BE [false] 'LE [true]",
+        "degrade switch first", settings, "[",
+            "'BE ['~null~] 'LE ['~okay~]",
             "fail {First element of DEBIN settings must be BE or LE}"
         "]"
     );
     REBLEN index = VAL_INDEX(settings);
     bool no_sign = rebDid(
-        "switch second", settings, "[",
-            "'+ [true] '+/- [false]",
+        "degrade switch second", settings, "[",
+            "'+ ['~okay~] '+/- ['~null~]",
             "fail {Second element of DEBIN settings must be + or +/-}"
         "]"
     );

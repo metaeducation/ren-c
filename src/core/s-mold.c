@@ -522,6 +522,8 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
         printf("!!! Request to MOLD or FORM an antiform !!!\n");
         if (Is_Nulled(v))
             Append_Unencoded(s, "!!!null!!!");
+        else if (Is_Okay(v))
+            Append_Unencoded(s, "!!!okay!!!");
         else if (Is_Void(v))
             Append_Unencoded(s, "!!!void!!!");
         else {

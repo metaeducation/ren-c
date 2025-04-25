@@ -138,7 +138,7 @@
     path: 'a/a
     change/only back tail of path path
     error? sys/util/rescue [do path]
-    true
+    okay
 )
 
 [#71 (
@@ -159,7 +159,7 @@
 ; path evaluation order
 (
     a: 1x2
-    did all [
+    all [
         b: a/(a: [3 4] 1)
         b = 1
         a = [3 4]
