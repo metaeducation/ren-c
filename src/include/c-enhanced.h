@@ -1326,7 +1326,7 @@
 // enforcing "covariance" for input parameters, and "contravariance" for
 // output parameters.
 //
-// 1. If USE_CELL_SUBCLASSES is enabled, then the inheritance heirarchy has
+// 1. If CHECK_CELL_SUBCLASSES is enabled, then the inheritance heirarchy has
 //    Atom at the base, with Element at the top.  Since what Elements can
 //    contain is more constrained than what Atoms can contain, this means
 //    you can pass Atom* to Element*, but not vice-versa.

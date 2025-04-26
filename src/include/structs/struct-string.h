@@ -184,12 +184,16 @@ typedef struct BookmarkStruct Bookmark;
         SymbolOrValueHolder(Option(const Symbol*)& s) : p (maybe s) {}
       #endif
 
+      #if DEBUG_USE_SINKS
         SymbolOrValueHolder(Need(Value*)& v) : p (v) {}
-        SymbolOrValueHolder(Need(Element*)& e) : p (e) {}
         SymbolOrValueHolder(Sink(Value)& v) : p (v) {}
-        SymbolOrValueHolder(Sink(Element)& e) : p (e) {}
+        #if CHECK_CELL_SUBCLASSES
+            SymbolOrValueHolder(Need(Element*)& e) : p (e) {}
+            SymbolOrValueHolder(Sink(Element)& e) : p (e) {}
+        #endif
         /*SymbolOrValueHolder(Init(Value)& v) : p (v) {}*/  // Sink / Value*
         /*SymbolOrValueHolder(Init(Element)& e) : p (e) {}*/  // Sink / Element*
+      #endif
     };
 
     #define SymbolOrValue(const_star) \

@@ -158,7 +158,7 @@ INLINE Count Dequotify(Element* elem) {
 INLINE bool Is_Antiform(const Atom* a)
   { return QUOTE_BYTE(Ensure_Readable(a)) == ANTIFORM_0; }
 
-#if CPLUSPLUS_11
+#if CHECK_CELL_SUBCLASSES
     INLINE bool Is_Antiform(const Element* elem) = delete;
 #endif
 
@@ -222,7 +222,7 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
 
 #if NO_RUNTIME_CHECKS
     #define Known_Element(cell) \
-        cast(Element*, (cell))
+        c_cast(Element*, (cell))
 #else
     INLINE Element* Known_Element(const_if_c Atom* cell) {
         assert(QUOTE_BYTE(cell) != ANTIFORM_0);
