@@ -632,10 +632,12 @@ collect-lets: func3 [
 
 
 let: func3 [
-    return: []  ; [] was old-style invisibility
-    :look [any-value! <...>]  ; old-style variadic
+    return: [any-value!]
+    args [any-value! <...>]
+    :look [any-value! <...>]
 ][
-    if word? first look [take look]  ; otherwise leave SET-WORD! to runs
+    if word? first look [return take look]  ; otherwise leave SET-WORD! to run
+    return take args
 ]
 
 

@@ -168,7 +168,7 @@ old-do: lib3.do/
 do: lib3/enclose lib3.do/ lib3/func [
     f [frame!]
     <local> old-system-script file
-    <with> wrap-module
+    <with> wrap-module result
 ][
     old-system-script: system.script
 
@@ -210,8 +210,9 @@ do: lib3/enclose lib3.do/ lib3/func [
         ]
         wrap-module: 'no  ; only wrap one level of DO
     ]
-    eval f
-    elide system.script: old-system-script
+    result: eval f
+    system.script: old-system-script
+    return :result
 ]
 
 already-imported: to map! []  ; avoid importing things twice
