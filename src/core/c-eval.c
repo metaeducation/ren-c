@@ -522,65 +522,6 @@ bool Eval_Core_Throws(Level* const L)
     if (not L->gotten or Not_Cell_Flag(L->gotten, INFIX_IF_ACTION))
         goto give_up_backward_quote_priority;
 
-    // SHOVE says it quotes its left argument, even if it doesn't know that
-    // is what it ultimately wants...because it wants a shot at its most
-    // aggressive scenario.  Once it finds out the infixee wants normal or
-    // tight, though, it could get in trouble.
-    //
-    if (VAL_ACTION(L->gotten) == NAT_ACTION(SHOVE)) {
-        Fetch_Next_In_Level(nullptr, L);
-        if (IS_END(L->value))
-            goto finished; // proposed behavior, drop out result...
-
-        Erase_Cell(Level_Shove(L));
-
-        Symbol* opt_label = nullptr;
-        if (Is_Word(L->value) or Is_Path(L->value)) {
-            //
-            // We've only got one shot for the value.  If we don't push the
-            // refinements here, we'll lose them.  Start by biting the
-            // bullet and letting it synthesize a specialization (?)
-            //
-            if (Get_If_Word_Or_Path_Throws(
-                Level_Shove(L),
-                &opt_label,
-                L->value,
-                L->specifier,
-                false // ok, crazypants, don't push refinements (?)
-            )){
-                Copy_Cell(L->out, Level_Shove(L));
-                goto return_thrown;
-            }
-        }
-        else if (Is_Group(L->value)) {
-            REBIXO indexor = Eval_At_Core(
-                SET_END(Level_Shove(L)),
-                nullptr, // opt_first (null means nothing, not nulled cell)
-                Cell_Array(L->value),
-                VAL_INDEX(L->value),
-                Derive_Specifier(L->specifier, L->value),
-                DO_FLAG_TO_END
-            );
-            if (indexor == THROWN_FLAG) {
-                Copy_Cell(L->out, Level_Shove(L));
-                goto return_thrown;
-            }
-            if (IS_END(Level_Shove(L))) // !!! need SHOVE frame for type error
-                fail ("GROUP! passed to SHOVE did not evaluate to content");
-        }
-        else if (Is_Action(L->value)) {
-            Copy_Cell(Level_Shove(L), KNOWN(L->value));
-        }
-        else
-            fail ("SHOVE only accepts WORD!, PATH!, GROUP!, or ACTION!");
-
-        // Even if the function isn't infix, say it is.  This permits things
-        // like `5 + 5 >- subtract 7` to give 3.
-        //
-        Set_Cell_Flag(Level_Shove(L), INFIX_IF_ACTION);
-        L->gotten = Level_Shove(L);
-    }
-
     // It's known to be an ACTION! since only actions can be infix...
     //
     if (Not_Cell_Flag(L->gotten, ACTION_QUOTES_FIRST_ARG))
@@ -1310,8 +1251,7 @@ bool Eval_Core_Throws(Level* const L)
 
         Expire_Out_Cell(L);
 
-        if (not Is_Level_Gotten_Shoved(L))
-            L->gotten = nullptr; // arbitrary code changes fetched variables
+        L->gotten = nullptr; // arbitrary code changes fetched variables
 
         // Note that the dispatcher may push ACTION! values to the data stack
         // which are used to process the return result after the switch.
@@ -1583,8 +1523,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 
       case TYPE_GROUP: {
-        if (not Is_Level_Gotten_Shoved(L))
-            L->gotten = nullptr; // arbitrary code changes fetched variables
+        L->gotten = nullptr; // arbitrary code changes fetched variables
 
         // Since current may be L->spare, extract properties to reuse it.
         //
@@ -1925,19 +1864,10 @@ bool Eval_Core_Throws(Level* const L)
 
     // For long-pondered technical reasons, only WORD! is able to dispatch
     // infix.  If it's necessary to dispatch an infix function via path, then
-    // a word must be used to do it, e.g. `x: >- lib/method [...] [...]`.
+    // a word must be used to do it, e.g. `x: shove lib/method [...] [...]`.
     // That word can be an action with a variadic left argument, that can
     // decide what parameter convention to use to the left based on what it
     // sees to the right.
-
-    if (Is_Level_Gotten_Shoved(L)) {
-        //
-        // Tried to SHOVE, and didn't hit a situation like `add >- + 1`.  So
-        // now the shoving process falls through, as in `10 >- + 1`.
-        //
-        assert(Not_Cell_Flag(L->gotten, ACTION_QUOTES_FIRST_ARG));
-        goto post_switch_shove_gotten;
-    }
 
     eval_type = VAL_TYPE_RAW(L->value);
 
@@ -2048,18 +1978,10 @@ bool Eval_Core_Throws(Level* const L)
         goto lookback_quote_too_late;
     }
 
-  post_switch_shove_gotten:; // assert(!CELL_FLAG_ACTION_QUOTES_FIRST_ARG) pre-goto
-
     if (L->flags.bits & DO_FLAG_NO_LOOKAHEAD) {
         //
         // Don't do infix lookahead if asked *not* to look.
         //
-        if (Is_Level_Gotten_Shoved(L)) {
-            Erase_Cell(Level_Shove(L->prior));
-            Copy_Cell(Level_Shove(L->prior), L->gotten);
-            Set_Cell_Flag(Level_Shove(L->prior), INFIX_IF_ACTION);
-            L->gotten = Level_Shove(L->prior);
-        }
         goto finished;
     }
 
@@ -2076,13 +1998,6 @@ bool Eval_Core_Throws(Level* const L)
         assert(L->out == L->prior->arg);
 
         L->source->deferring_infix = true;
-
-        if (Is_Level_Gotten_Shoved(L)) {
-            Erase_Cell(Level_Shove(L->prior));
-            Copy_Cell(Level_Shove(L->prior), L->gotten);
-            Set_Cell_Flag(Level_Shove(L->prior), INFIX_IF_ACTION);
-            L->gotten = Level_Shove(L->prior);
-        }
 
         // Leave the infix operator pending in the frame, and it's up to the
         // parent frame to decide whether to use DO_FLAG_POST_SWITCH to jump
@@ -2102,17 +2017,8 @@ bool Eval_Core_Throws(Level* const L)
 
     Push_Action(L, VAL_ACTION(L->gotten), VAL_BINDING(L->gotten));
 
-    if (Is_Word(L->value))
-        Begin_Action(L, Cell_Word_Symbol(L->value), LOOKBACK_ARG);
-    else {
-        // Should be a SHOVE.  There needs to be a way to telegraph the label
-        // on the value if it was a PATH! to here.
-        //
-        assert(Is_Level_Gotten_Shoved(L));
-        assert(Is_Path(L->value) or Is_Group(L->value) or Is_Action(L->value));
-        Symbol* opt_label = nullptr;
-        Begin_Action(L, opt_label, LOOKBACK_ARG);
-    }
+    assert(Is_Word(L->value));
+    Begin_Action(L, Cell_Word_Symbol(L->value), LOOKBACK_ARG);
 
     Fetch_Next_In_Level(nullptr, L); // advances L->value
     goto process_action;

@@ -317,10 +317,10 @@ INLINE void Set_Level_Detected_Fetch(
         // free it.  It has to be kept alive -and- kept safe from GC.  e.g.
         //
         //     Value* word = rebValue("make word! {hello}");
-        //     rebValue(rebR(word), ">- (recycle :the)");
+        //     rebValue(rebR(word), "shove (recycle :the)");
         //
         // The `current` cell the evaluator is looking at is the WORD!, then
-        // L->value receives the "shove" `>-`.  The shove runs the code in
+        // L->value receives the "shove" `shove`.  The shove runs the code in
         // the GROUP!.  But there are no other references to `hello` after
         // the Free_Value() done by rebR(), so it's a candidate for recycle,
         // which would mean shoving a bad `current` as the arg to `:the`

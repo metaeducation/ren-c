@@ -161,4 +161,3 @@ my: infix func [
 ;
 set (r3-alpha-quote "->") infix :arrow
 set (r3-alpha-quote "<-") :identity  ; Note: NOT INFIX
-set (r3-alpha-quote ">-") infix :shove

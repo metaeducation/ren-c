@@ -80,40 +80,6 @@ DECLARE_NATIVE(REEVAL)
 
 
 //
-//  shove: infix native [
-//
-//  {Shove a left hand parameter into an ACTION!, effectively making it infix}
-//
-//      return: [any-value!]
-//          "REVIEW: How might this handle shoving infix invisibles?"
-//      :left [<...> <end> any-element!]
-//          "Requests parameter convention based on infixee's first argument"
-//      :infixee [<end> word! path! group! action!]
-//          "Needs ACTION!...but WORD!s fetched, PATH!s/GROUP!s evaluated"
-//      :args [<...> <end> any-element!]
-//          "Will handle args the way the infixee expects"
-//  ]
-//
-DECLARE_NATIVE(SHOVE)
-{
-    INCLUDE_PARAMS_OF_SHOVE;
-
-    UNUSED(ARG(LEFT));
-    UNUSED(ARG(INFIXEE));
-    UNUSED(ARG(ARGS));
-
-    // !!! It's nice to imagine the system evolving to where actions this odd
-    // could be written generically vs. being hardcoded in the evaluator.
-    // But for now it is too "meta", and Eval_Core_Throws() detects
-    // NAT_ACTION(SHOVE) when used as infix...and implements it there.
-    //
-    // Only way this native would be called would be if it were not infixed.
-
-    fail ("SHOVE may only be run as an INFIX operation");
-}
-
-
-//
 //  eval-infix: native [
 //
 //  {Service routine for implementing ME (needs review/generalization)}

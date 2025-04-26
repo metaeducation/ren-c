@@ -200,10 +200,8 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
     );
 
     if (L->gotten) {
-        if (not Is_Level_Gotten_Shoved(L)) {
-            assert(Is_Word(L->value));
-            assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
-        }
+        assert(Is_Word(L->value));
+        assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
     }
 
     assert(Is_Cell_Unreadable(&TG_Thrown_Arg)); // no evals between throws
@@ -312,12 +310,8 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
     Eval_Core_Shared_Checks_Debug(L);
 
     if (L->gotten) {
-        if (L->gotten == Level_Shove(L->prior))
-            assert(Get_Cell_Flag(Level_Shove(L->prior), INFIX_IF_ACTION));
-        else {
-            assert(Is_Word(L->value));
-            assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
-        }
+        assert(Is_Word(L->value));
+        assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
     }
 
     if (NOT_END(L->value) and not LVL_IS_VALIST(L)) {

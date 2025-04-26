@@ -1081,10 +1081,6 @@ static void Mark_Level_Stack_Deep(void)
         //
         if (not L->gotten)
             NOOP;
-        else if (L->gotten == Level_Shove(L)) {
-            assert(Get_Cell_Flag(Level_Shove(L), INFIX_IF_ACTION));
-            Queue_Mark_Value_Deep(Level_Shove(L));
-        }
         else
             assert(
                 Is_Pointer_Corrupt_Debug(L->gotten)

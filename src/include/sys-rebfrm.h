@@ -445,29 +445,6 @@ struct LevelStruct {
     //
     Cell spare;
 
-    // `shove`
-    //
-    // The SHOVE operation is used to push values from the left--which may
-    // need further evaluation if tight or infix normal--in to act as the left
-    // hand side of an operation, e.g.:
-    //
-    //      add 1 2 >- lib/(print "Hi!" first [multiply]) 10
-    //
-    // The right side of the operator can do arbitrary evaluation, producing
-    // a synthetic ACTION! as the target.  To make matters worse, once this
-    // synthetic value is made it still may be necessary to go back and run
-    // more code on the left side (e.g. infix only saw the `2` on the left
-    // when the `->` was first encountered, and it has to run the add BEFORE
-    // feeding it into the multiply.)
-    //
-    // In addition, the need to run arbitrary code on the left means there
-    // could be multiple shoves in effect.  This requires a GC-safe cell which
-    // can't really be used for anything else.  However, there's no need to
-    // initialize it until L->gotten indicates it...which only happens with
-    // shove operations.
-    //
-    Cell shove;
-
     // `flags`
     //
     // These are DO_FLAG_XXX or'd together--see their documentation above.
