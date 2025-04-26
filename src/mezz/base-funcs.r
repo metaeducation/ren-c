@@ -209,7 +209,7 @@ function: func [
 
     ;; dump [{after} new-spec defaulters]
 
-    func new-spec either defaulters [
+    return func new-spec either defaulters [
         append/only defaulters as group! any [new-body body]
     ][
         any [new-body body]
@@ -222,7 +222,10 @@ function: func [
 ; in that meta information.  Though in order to mutate the information for
 ; the purposes of distinguishing a derived action, it must be copied.
 ;
-dig-action-meta-fields: function [value [action!]] [
+dig-action-meta-fields: function [
+    return: [object!]
+    value [action!]
+][
     meta: meta-of :value or [
         return make system/standard/action-meta [
             description: null
@@ -247,7 +250,10 @@ dig-action-meta-fields: function [value [action!]] [
         dig-action-meta-fields :underlying
     ]
 
-    inherit-frame: function [parent [<maybe> frame!]] [
+    inherit-frame: function [
+        return: [frame!]
+        parent [<maybe> frame!]
+    ][
         child: make frame! :value
         for-each param child [
             child/(param): any [
@@ -407,7 +413,7 @@ redescribe: function [
         meta/parameter-notes: null
     ]
 
-    :value ;-- should have updated the meta
+    return :value ;-- should have updated the meta
 ]
 
 
@@ -479,9 +485,10 @@ really: func [
     {FAIL if value is null, otherwise pass it through}
 
     return: [any-value!]
-    value [any-value!] ;-- always checked for null, since no ~null~
+    value [any-value!]
 ][
-    :value
+    if null? :value [fail "REALLY requires non-NULL"]
+    return :value
 ]
 
 oneshot: specialize 'n-shot [n: 1]
@@ -571,6 +578,7 @@ lock-of: redescribe [
 
 arity-of: function [
     "Get the number of fixed parameters (not refinements or refinement args)"
+    return: [integer!]
     value [any-word! any-path! action!]
 ][
     if path? :value [fail "arity-of for paths is not yet implemented."]
@@ -595,7 +603,7 @@ arity-of: function [
         ]
         arity: arity + 1
     ]
-    arity
+    return arity
 ]
 
 
@@ -635,7 +643,10 @@ find-last: specialize :find [
     last: okay
 ]
 
-reify: func [value [~null~ ~void~ trash! any-value!]] [
+reify: func [
+    return: [any-element!]
+    value [~null~ ~void~ trash! any-value!]
+][
     case [
         void? :value [return '~void~]
         trash? :value [return '~]
@@ -645,7 +656,10 @@ reify: func [value [~null~ ~void~ trash! any-value!]] [
     return :value
 ]
 
-degrade: func [value [any-value!]] [
+degrade: func [
+    return: [any-value!]
+    value [any-value!]
+][
     case [
         '~void~ = :value [return void]
         '~ = :value [return ~]
@@ -667,7 +681,7 @@ method: infix func [
     context: binding of member else [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
-    set member bind (function compose [(spec) <in> (context)] body) context
+    return set member bind (function compose [(spec) <in> (context)] body) context
 ]
 
 meth: infix func [
@@ -688,13 +702,14 @@ meth: infix func [
     ; between not wanting to alter the bindings in the caller's body variable
     ; and wanting to update them for the purposes of the FUNC.  Review.
     ;
-    set member bind (func spec bind copy/deep body context) context
+    return set member bind (func spec bind copy/deep body context) context
 ]
 
 
 module: func [
     {Creates a new module.}
 
+    return: [module!]
     spec "The header block of the module (modified)"
         [block! object!]
     body "The body block of the module (modified)"
@@ -842,12 +857,13 @@ module: func [
     eval body
 
     ;print ["Module created" spec/name spec/version]
-    mod
+    return mod
 ]
 
 
 cause-error: func [
     "Causes an immediate error throw with the provided information."
+    return: []
     err-type [word!]
     err-id [word!]
     args

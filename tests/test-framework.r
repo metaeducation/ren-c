@@ -119,6 +119,7 @@ make object! compose [
 
     set 'do-recover func [
         {Executes tests in the FILE and recovers from crash}
+        return: [block!]
         file [file!] {test file}
         flags [block!] {which flags to accept}
         code-checksum [binary! blank!]
@@ -150,11 +151,13 @@ make object! compose [
 
         case [
             not exists? log-file [
-                print "new log"
+                print ["=== NEW LOG:" log-file "==="]
                 process-tests test-sources :process-vector
             ]
 
             all [
+                elide print ["=== READING OLD LOG:" log-file "==="]
+
                 parse/match read log-file [
                     (
                         last-vector: null
@@ -251,9 +254,9 @@ make object! compose [
 
             log [summary]
 
-            reduce [log-file summary]
+            return reduce [log-file summary]
         ] else [
-            reduce [log-file "testing already complete"]
+            return reduce [log-file "testing already complete"]
         ]
     ]
 ]

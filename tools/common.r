@@ -207,7 +207,7 @@ binary-to-c: function [
     ]
     assert [(comma-count + 1) = (length of head of data)]
 
-    out
+    return out
 ]
 
 
@@ -235,7 +235,7 @@ for-each-record: function [
 
     table: next table
 
-    while [not tail? table] [
+    return while [not tail? table] [
         if (length of headings) > (length of table) [
             fail {Element count isn't even multiple of header count}
         ]
@@ -284,6 +284,7 @@ find-record-unique: function [
 
 
 parse-args: function [
+    return: [block!]
     args
 ][
     ret: make block! 4
@@ -320,9 +321,11 @@ parse-args: function [
     if empty? standalone [return ret]
     append ret '|
     append ret standalone
+    return ret
 ]
 
 fix-win32-path: func [
+    return: [file!]
     path [file!]
     <local> letter colon
 ][
@@ -342,24 +345,29 @@ fix-win32-path: func [
         remove skip path 2 ;remove ":"
     ]
 
-    path
+    return path
 ]
 
 uppercase-of: func [
     {Copying variant of UPPERCASE, also FORMs words}
+    return: [text!]
     string [text! word!]
 ][
-    uppercase form string
+    return uppercase form string
 ]
 
 lowercase-of: func [
     {Copying variant of LOWERCASE, also FORMs words}
+    return: [text!]
     string [text! word!]
 ][
-    lowercase form string
+    return lowercase form string
 ]
 
-propercase: func [text [text!]] [
+propercase: func [
+    return: [text!]
+    text [text!]
+][
     assert [not empty? text]
     change text uppercase text/1
     pos: next text
@@ -372,9 +380,10 @@ propercase: func [text [text!]] [
 
 propercase-of: func [
     {Make a copy of a string with just the first character uppercase}
+    return: [text!]
     string [text! word!]
 ][
-    propercase form string
+    return propercase form string
 ]
 
 write-if-changed: function [
@@ -399,6 +408,7 @@ write-if-changed: function [
 ]
 
 relative-to-path: func [
+    return: [file!]
     target [file!]
     base [file!]
 ][
@@ -415,5 +425,5 @@ relative-to-path: func [
     ]
     iterate base [base/1: %..]
     append base target
-    to-file delimit "/" base
+    return to-file delimit "/" base
 ]

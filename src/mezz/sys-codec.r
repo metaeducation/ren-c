@@ -24,6 +24,7 @@ REBOL [
 ; !!! There should also be an unregister-codec*
 ;
 register-codec*: func [
+    return: [object!]
     name [word!]
         {Descriptive name of the codec.}
     suffixes [file! block!]
@@ -74,7 +75,7 @@ decode: function [
     ] or [
         cause-error 'access 'no-codec type
     ]
-    data
+    return data
 ]
 
 
@@ -97,7 +98,7 @@ encode: function [
     ] or [
         cause-error 'access 'no-codec type
     ]
-    data
+    return data
 ]
 
 
@@ -115,7 +116,7 @@ encoding-of: function [
             return name
         ]
     ]
-    blank
+    return null
 ]
 
 

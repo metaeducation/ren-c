@@ -55,7 +55,7 @@ delta-time: function [
 ][
     start: stats/timer
     eval block
-    stats/timer - start
+    return stats/timer - start
 ]
 
 delta-profile: func [
@@ -72,7 +72,7 @@ delta-profile: func [
     ]
     start: make system/standard/stats []
     set start head of end
-    start
+    return start
 ]
 
 speed?: function [
@@ -127,7 +127,7 @@ speed?: function [
         append result to integer! eval calc
         if times [append result secs]
     ]
-    result
+    return result
 ]
 
 net-log: func [txt /C /S][txt]

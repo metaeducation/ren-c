@@ -71,7 +71,7 @@ title-of: function [
 
     value [any-value!]
 ][
-    degrade switch type of :value [
+    return degrade switch type of :value [
         action! [
             reify all [
                 meta: match object! meta-of :value
@@ -409,7 +409,6 @@ help: function [
                 print unspaced [space4 space4 note]
             ]
         ]
-        null
     ]
 
     print newline
@@ -560,8 +559,9 @@ say-browser: does [
 ]
 
 
-bugs: func [return: [~]] [
+bugs: func [
     "View bug database."
+    return: [~]
 ][
     say-browser
     browse https://github.com/metaeducation/ren-c/issues

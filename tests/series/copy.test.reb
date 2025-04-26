@@ -21,7 +21,7 @@
 ([] = copy/part [] 0)
 ([] = copy/part [] 1)
 ([] = copy/part [] 2147483647)
-(ok? sys/util/rescue [copy void])
+(not error? sys/util/rescue [copy void])
 [#877 (
     a: copy []
     insert/only a a

@@ -34,6 +34,7 @@ verbose: null
 unsorted-buffer: make text! 20000
 
 process: func [
+    return: [~]
     file
     ; <with> the-file ;-- note external variable (can't do this in R3-Alpha)
 ][

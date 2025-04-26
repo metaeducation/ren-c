@@ -49,6 +49,7 @@ loud-print: redescribe [
 
 make-banner: function [
     "Build startup banner."
+    return: [text!]
     fmt [block!]
 ][
     str: make text! 200
@@ -220,11 +221,12 @@ host-start: function [
     emit: function [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
+        return: [~]
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction
     ][
-        really switch type of item [
+        switch type of item [
             issue! [
                 if not empty? instruction [append/line instruction [()]]
                 insert instruction item
@@ -236,12 +238,14 @@ host-start: function [
                 if not empty? instruction [append/line instruction [()]]
                 append/line instruction compose/deep <*> item
             ]
+            fail
         ]
     ]
 
     return: function [
         {Hooked RETURN function which finalizes any gathered EMIT lines}
 
+        return: []
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype!]
         <with> instruction prior
@@ -251,25 +255,12 @@ host-start: function [
             <start-console> [
                 ;-- Done actually via #start-console, but we return something
             ]
-            <prompt> [
-                emit [system/console/print-gap]
-                emit [system/console/print-prompt]
-                emit [reduce [
-                    any [system/console/input-hook  '~escape~]
-                ]] ;-- gather first line (or escape), put in BLOCK!
-            ]
-            <halt> [
-                emit [halt]
-                emit [fail {^-- Shouldn't get here, due to HALT}]
+            <quit> [
+                emit [quit 0]
             ]
             <die> [
                 emit [quit 1] ;-- catch-all bash code for general errors
                 emit [fail {^-- Shouldn't get here, due to QUIT}]
-            ]
-            <bad> [
-                emit #no-unskin-if-error
-                emit [print (<*> mold meta prior)]
-                emit [fail ["Bad REPL continuation:" ((<*> meta result))]]
             ]
         ] then [
             return-to-c instruction
@@ -287,9 +278,7 @@ host-start: function [
                 assert [empty? instruction]
                 state
             ]
-            default [
-                emit [fail [{Bad console instruction:} ((<*> mold state))]]
-            ]
+            fail ["Bad console instruction:" mold state]
         ]
     ]
 
@@ -710,9 +699,9 @@ host-start: function [
     host-start: 'done
 
     if when-done = 'quit [
-        emit [quit 0]
-        return <unreachable>
+        return <quit>
     ]
+
     assert [any [when-done = null  when-done = 'console]]
 
     emit #start-console

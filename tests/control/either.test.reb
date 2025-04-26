@@ -20,14 +20,14 @@
 (
     f1: func [] [
         either okay [return 1 2] [2]
-        2
+        return 2
     ]
     1 = f1
 )
 (
     f1: func [] [
         either null [2] [return 1 2]
-        2
+        return 2
     ]
     1 = f1
 )
@@ -77,8 +77,8 @@
     ; has to wait.
 
     (
-        takes-2-logics: func [x [logic!] y [logic!]] [x]
-        infix-voider: infix func [return: [~void~] x y] []
+        takes-2-logics: lambda [x [logic!] y [logic!]] [x]
+        infix-voider: infix func [return: [~void~] x y] [return void]
         okay
     )
 

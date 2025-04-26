@@ -30,7 +30,7 @@ read-deep-seq: function [
         insert queue map-each x read item [join item x]
     ]
 
-    item
+    return item
 ]
 
 ;; read-deep provide convenience over read-deep-seq.
@@ -66,5 +66,5 @@ read-deep: function [
         ]
     ]
 
-    result
+    return result
 ]

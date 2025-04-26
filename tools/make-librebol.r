@@ -51,7 +51,7 @@ ver: load <../src/boot/version.r>
 
 api-objects: make block! 50
 
-map-each-api: func [code [block!]] [
+map-each-api: lambda [code [block!]] [
     map-each api api-objects compose/only [
         eval in api (code) ;-- want API variable available when code is running
     ]
@@ -126,7 +126,10 @@ emit-proto: func [return: [~] proto] [
     ]
 ]
 
-process: func [file] [
+process: func [
+    return: [~]
+    file [file!]
+][
     data: read the-file: file
     data: to-text data
 
@@ -208,7 +211,7 @@ for-each api api-objects [eval in api [
         return: [text!]
         internal [text!]
     ][
-        cscape [:api internal {
+        return cscape [:api internal {
             $<OPT-NORETURN>
             inline static $<Returns> $<Name>_inline($<Wrapper-Params>) {
                 $<Opt-Enter>

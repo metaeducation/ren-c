@@ -73,6 +73,7 @@ write-c-file: function [
 
 
 load-files: function [
+    return: [block!]
     file-list
 ][
     data: make block! 100
@@ -95,7 +96,7 @@ load-files: function [
         ]
         append data file
     ]
-    data
+    return data
 ]
 
 host-code: load-files [

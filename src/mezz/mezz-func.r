@@ -14,7 +14,8 @@ REBOL [
 
 map: func [
     {Make a map value (hashed associative block).}
+    return: [map!]
     val
 ][
-    make map! :val
+    return make map! :val
 ]

@@ -18,7 +18,7 @@
     ]
 )
 (
-    postfix-thing: infix func [x] [x * 2]
+    postfix-thing: infix lambda [x] [x * 2]
     all [
        infix? postfix-thing/
        20 = (10 postfix-thing)
@@ -28,12 +28,12 @@
 
 ; Only hard-quoted parameters are <skip>-able
 (
-    error? sys/util/rescue [bad-skippy: func [x [<skip> integer!] y] [reduce [reify :x y]]]
+    error? sys/util/rescue [bad-skippy: lambda [x [<skip> integer!] y] [reduce [reify :x y]]]
 )
 
 [
     (
-        skippy: func [:x [<skip> integer!] y] [reduce [reify :x y]]
+        skippy: lambda [:x [<skip> integer!] y] [reduce [reify :x y]]
         lefty: infix :skippy
         okay
     )
@@ -102,7 +102,7 @@
 ; SHOVE should be able to handle refinements and contexts.
 [
     (did obj: make object! [
-        magic: infix func [#a #b /minus] [
+        magic: infix lambda [#a #b /minus] [
             either minus [a - b] [a + b]
         ]
     ])

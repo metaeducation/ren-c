@@ -550,7 +550,7 @@ for-each item boot-generics [
 
 e-sysobj: make-emitter "System Object" inc/tmp-sysobj.h
 
-at-value: func ['field] [next find boot-sysobj to-set-word field]
+at-value: lambda ['field] [next find boot-sysobj to-set-word field]
 
 boot-sysobj: load %sysobj.r
 change at-value version version

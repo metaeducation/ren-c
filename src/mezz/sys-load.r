@@ -52,7 +52,7 @@ intern: function [
     ; Copy only the new values into the user context
     resolve/only usr lib index
 
-    :data
+    return :data
 ]
 
 
@@ -62,25 +62,26 @@ bind-lib: func [
 ][
     bind/only/set block lib ; Note: not bind/new !
     bind block lib
-    block
+    return block
 ]
 
 
 export-words: func [
     {Exports words of a context into both the system lib and user contexts.}
 
+    return: [~]
     ctx "Module context"
         [module! object!]
     words "The exports words block of the module"
         [block! blank!]
 ][
-    if words [
-        ; words already set in lib are not overriden
-        resolve/extend/only lib ctx words
+    if blank? words [return ~]
 
-        ; lib, because of above
-        resolve/extend/only system/contexts/user lib words
-    ]
+    ; words already set in lib are not overriden
+    resolve/extend/only lib ctx words
+
+    ; lib, because of above
+    resolve/extend/only system/contexts/user lib words
 ]
 
 
@@ -621,7 +622,7 @@ load-module: function [
         ]
     ]
 
-    reduce [
+    return reduce [
         reify name
         match module! mod
         ensure integer! line

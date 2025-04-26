@@ -55,7 +55,7 @@ decode-key-value-text: function [
         some data-field-char opt some [#" " some data-field-char] #":"
     ]
 
-    emit-meta: func [<local> key] [
+    emit-meta: func [return: [~] <local> key] [
         key: replace copy/part position eof #" " #"-"
         remove back tail-of key
         append meta reduce [
@@ -73,7 +73,7 @@ decode-key-value-text: function [
         ]
     ]
 
-    new-line/all/skip meta 'yes 2
+    return new-line/all/skip meta 'yes 2
 ]
 
 load-until-null: function [
@@ -96,12 +96,11 @@ load-until-null: function [
         opt wsp opt [1 2 newline] position: to end
     ]
 
-    either parse2/match text rule [
+    if parse2/match text rule [
         values: load copy/part text position
-        reduce [values position]
-    ][
-        null
+        return reduce [values position]
     ]
+    return null
 ]
 
 
@@ -295,6 +294,7 @@ proto-parser: context [
 
 rewrite-if-directives: function [
     {Bottom up rewrite conditional directives to remove unnecessary sections.}
+    return: [~]
     position
 ][
     until [

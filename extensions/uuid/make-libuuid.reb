@@ -47,6 +47,7 @@ comment-out-includes: [
 
 
 fix-randutils.c: func [
+    return: [text!]
     cnt
 ][
     exclude-headers: [
@@ -74,10 +75,11 @@ fix-randutils.c: func [
         ]
     ]
 
-    cnt
+    return cnt
 ]
 
 fix-gen_uuid.c: function [
+    return: [text!]
     cnt
     <with>
     exclude-headers
@@ -85,7 +87,6 @@ fix-gen_uuid.c: function [
     add-config.h
     space
 ][
-
     exclude-headers: [
         {"all-io.h"}
         | {"c.h"}
@@ -133,7 +134,7 @@ fix-gen_uuid.c: function [
             | one
         ]
     ]
-    cnt
+    return cnt
 ]
 
 files: compose [

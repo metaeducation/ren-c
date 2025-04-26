@@ -521,6 +521,7 @@ modernize-action: function3 [
     return: [block!]
     spec [block!]
     body [block!]
+    /fallout "used for LAMBDA (otherwise produces trash on fallout)"
 ][
     blankers: copy []
     spec: lib/collect [
@@ -573,11 +574,14 @@ modernize-action: function3 [
     body: compose [
         (blankers)
         (as group! body)
+        (if not fallout ['~])
     ]
     return reduce [spec body]
 ]
 
 func: adapt 'func3 [set [spec body] modernize-action spec body]
+lambda: adapt 'func3 [set [spec body] modernize-action/fallout spec body]
+
 function: adapt 'function3 [set [spec body] modernize-action spec body]
 
 meth: infix adapt 'meth [set [spec body] modernize-action spec body]

@@ -42,7 +42,7 @@ idate-to-date: function [return: [date!] date [text!]] [
         fail ["Invalid idate:" date]
     ]
     if zone = "GMT" [zone: copy "+0"]
-    to date! unspaced [day "-" month "-" year "/" time zone]
+    return to date! unspaced [day "-" month "-" year "/" time zone]
 ]
 
 sync-op: function [port body] [
@@ -75,7 +75,7 @@ sync-op: function [port body] [
 
     if state/close? [close port]
 
-    either port/spec/debug [
+    return either port/spec/debug [
         state/connection/locals
     ][
         body
@@ -83,7 +83,7 @@ sync-op: function [port body] [
 ]
 
 read-sync-awake: function [return: [logic!] event [event!]] [
-    degrade (switch event/type [
+    return degrade (switch event/type [
         'connect
         'ready [
             do-request event/port
@@ -106,7 +106,7 @@ http-awake: function [return: [logic!] event [event!]] [
     if action? :http-port/awake [state/awake: :http-port/awake]
     awake: :state/awake
 
-    degrade switch event/type [
+    return degrade switch event/type [
         'read [
             awake make event! [type: 'read port: http-port]
             reify check-response http-port
@@ -178,7 +178,7 @@ make-http-error: func [
     ; a conflict where the error had no message.
 
     if block? msg [msg: unspaced msg]
-    case [
+    return case [
         inf [
             make error! [
                 type: 'Access
@@ -234,7 +234,7 @@ make-http-request: func [
     append result unspaced [CR LF]
     result: to binary! result
     if content [append result content]
-    result
+    return result
 ]
 do-request: func [
     "Perform an HTTP request"
@@ -259,13 +259,13 @@ do-request: func [
     write port/state/connection
     req: make-http-request spec/method any [spec/path %/]
     spec/headers spec/content
-    net-log/C to text! req
+    return net-log/C to text! req
 ]
 
 ; if a no-redirect keyword is found in the write dialect after 'headers then 302 redirects will not be followed
 parse-write-dialect: func [port block <local> spec debug] [
     spec: port/spec
-    parse block [
+    return parse block [
         opt ['headers (spec/debug: okay)]
         opt ['no-redirect (spec/follow: 'ok)]
         [block: word! (spec/method: block) | (spec/method: 'post)]
@@ -294,12 +294,12 @@ check-response: function [port] [
             all [
                 d1: find conn/data crlfbin
                 d2: find/tail d1 crlf2bin
-                net-log/C "server standard content separator of #{0D0A0D0A}"
+                elide net-log/C "server standard content separator #{0D0A0D0A}"
             ]
             all [
                 d1: find conn/data #{0A}
                 d2: find/tail d1 #{0A0A}
-                net-log/C "server malformed line separator of #{0A0A}"
+                elide net-log/C "server malformed line separator #{0A0A}"
             ]
         ]
     ] then [
@@ -502,7 +502,7 @@ check-response: function [port] [
             close port
         ]
     ]
-    res
+    return res
 ]
 crlfbin: #{0D0A}
 crlf2bin: #{0D0A0D0A}
@@ -537,7 +537,7 @@ do-redirect: func [
         state/error: make-http-error {Redirect to a protocol different from HTTP or HTTPS not supported}
         return state/awake make event! [type: 'error port: port]
     ]
-    either all [
+    return either all [
         new-uri/host = spec/host
         new-uri/port-id = spec/port-id
     ] [
@@ -732,10 +732,9 @@ sys/util/make-scheme [
                 port/state/awake: :port/awake
                 parse-write-dialect port value
                 do-request port
-                port
-            ] else [
-                sync-op port [parse-write-dialect port value]
+                return port
             ]
+            return sync-op port [parse-write-dialect port value]
         ]
 
         open: func [
@@ -765,11 +764,11 @@ sys/util/make-scheme [
             conn/awake: :http-awake
             conn/locals: port
             open conn
-            port
+            return port
         ]
 
         reflect: func [port [port!] property [word!]] [
-            switch property [
+            return switch property [
                 'open? [
                     port/state and [open? port/state/connection]
                 ]
@@ -788,13 +787,13 @@ sys/util/make-scheme [
                 port/state/connection/awake: null
                 port/state: null
             ]
-            port
+            return port
         ]
 
         copy: func [
             port [port!]
         ][
-            either all [port/spec/method = 'HEAD  port/state] [
+            return either all [port/spec/method = 'HEAD  port/state] [
                 reduce bind [name size date] port/state/info
             ][
                 if port/data [copy port/data]
@@ -805,7 +804,7 @@ sys/util/make-scheme [
             port [port!]
             <local> error state
         ][
-            all [
+            return all [
                 state: port/state
                 state/info
             ]

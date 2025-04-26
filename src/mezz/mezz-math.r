@@ -48,7 +48,7 @@ modulo: function [
             positive? (r + r) - b
         ]
     ] [return 0.0]
-    r
+    return r
 ]
 
 mod: infix tighten :modulo
@@ -57,7 +57,7 @@ sign-of: func [
     "Returns sign of number as 1, 0, or -1 (to use as multiplier)."
     number [any-number! money! time!]
 ][
-    case [
+    return case [
         positive? number [1]
         negative? number [-1]
         default [0]
@@ -80,7 +80,7 @@ extreme-of: func [
     iterate-skip series size [
         if (comparator first series first spot) [spot: series]
     ]
-    spot
+    return spot
 ]
 
 minimum-of: redescribe [
@@ -103,5 +103,5 @@ factorial: func [n [integer!] <local> res] [
     if n < 2 [return 1]
     res: 1
     ; should avoid doing the loop for i = 1...
-    count-up i n [res: res * i]
+    return count-up i n [res: res * i]
 ]

@@ -134,7 +134,7 @@ console!: make object! [
             ; make this legacy bootstrapping branch at least look a bit like
             ; the new branch.
             ;
-            return
+            return ~
         ]
 
         case [
@@ -203,7 +203,7 @@ console!: make object! [
         return: "null if canceled, otherwise processed text line input"
             [~null~ text!]
     ][
-        ask text!
+        return ask text!
     ]
 
     dialect-hook: func [
@@ -225,7 +225,7 @@ console!: make object! [
             ]
         ]
 
-        b
+        return b
     ]
 
     shortcuts: make object! compose/deep [
@@ -385,6 +385,7 @@ ext-console-impl: function [
     emit: function [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
+        return: [~]
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction
@@ -408,6 +409,7 @@ ext-console-impl: function [
     return: function [
         {Hooked RETURN function which finalizes any gathered EMIT lines}
 
+        return: []
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype! path!]
         <with> instruction prior

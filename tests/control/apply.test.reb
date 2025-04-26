@@ -59,27 +59,27 @@
 )]
 (1 == redbol-apply :subtract [2 1])
 (1 = (redbol-apply :- [2 1]))
-(error? sys/util/rescue [redbol-apply func [a] [a] []])
-(error? sys/util/rescue [redbol-apply/only func [a] [a] []])
+(error? sys/util/rescue [redbol-apply lambda [a] [a] []])
+(error? sys/util/rescue [redbol-apply/only lambda [a] [a] []])
 
 ; CC#2237
-(error? sys/util/rescue [redbol-apply func [a] [a] [1 2]])
-(error? sys/util/rescue [redbol-apply/only func [a] [a] [1 2]])
+(error? sys/util/rescue [redbol-apply lambda [a] [a] [1 2]])
+(error? sys/util/rescue [redbol-apply/only lambda [a] [a] [1 2]])
 
 (error? redbol-apply :make [error! ""])
 
-(/a = redbol-apply func [/a] [a] [okay])
-(null = redbol-apply func [/a] [a] [null])
-(null = redbol-apply func [/a] [a] [])
-(/a = redbol-apply/only func [/a] [a] [okay])
+(/a = redbol-apply lambda [/a] [a] [okay])
+(null = redbol-apply lambda [/a] [a] [null])
+(null = redbol-apply lambda [/a] [a] [])
+(/a = redbol-apply/only lambda [/a] [a] [okay])
 ; the word 'false
-(/a = redbol-apply/only func [/a] [a] [null])
-(null == redbol-apply/only func [/a] [a] [])
-(use [a] [a: okay /a = redbol-apply func [/a] [a] [a]])
-(use [a] [a: null null == redbol-apply func [/a] [a] [a]])
-(use [a] [a: null /a = redbol-apply func [/a] [a] ['a]])
-(use [a] [a: null /a = redbol-apply func [/a] [a] [/a]])
-(use [a] [a: null /a = redbol-apply/only func [/a] [a] [a]])
+(/a = redbol-apply/only lambda [/a] [a] [null])
+(null == redbol-apply/only lambda [/a] [a] [])
+(use [a] [a: okay /a = redbol-apply lambda [/a] [a] [a]])
+(use [a] [a: null null == redbol-apply lambda [/a] [a] [a]])
+(use [a] [a: null /a = redbol-apply lambda [/a] [a] ['a]])
+(use [a] [a: null /a = redbol-apply lambda [/a] [a] [/a]])
+(use [a] [a: null /a = redbol-apply/only lambda [/a] [a] [a]])
 (group! == redbol-apply/only (specialize 'of [property: 'type]) [()])
 ([1] == head of redbol-apply :insert [copy [] [1] null null null])
 ([1] == head of redbol-apply :insert [copy [] [1] null null null])
@@ -90,27 +90,26 @@
 ;-- #1760 --
 
 (
-    1 == reeval func [] [redbol-apply does [] [return 1] 2]
+    1 == reeval func [] [redbol-apply does [] [return 1] return 2]
 )
 (
-    1 == reeval func [] [redbol-apply func [a] [a] [return 1] 2]
+    1 == reeval func [] [redbol-apply lambda [a] [a] [return 1] return 2]
 )
 (
     1 == reeval func [] [redbol-apply does [] [return 1]]
 )
 (
-    1 == reeval func [] [redbol-apply func [a] [a] [return 1]]
+    1 == reeval func [] [redbol-apply lambda [a] [a] [return 1]]
 )
 (
-    1 == reeval func [] [redbol-apply func [a b] [a] [return 1 2]]
+    1 == reeval func [] [redbol-apply lambda [a b] [a] [return 1 return 2]]
 )
 (
-    1 == reeval func [] [redbol-apply func [a b] [a] [2 return 1]]
+    1 == reeval func [] [redbol-apply lambda [a b] [a] [2 return 1]]
 )
 
 (
-    trash? redbol-apply func [
-        return: [any-value!]
+    trash? redbol-apply lambda [
         x [any-value!]
     ][
         get/any 'x
@@ -119,8 +118,7 @@
     ]
 )
 (
-    trash? redbol-apply func [
-        return: [any-value!]
+    trash? redbol-apply lambda [
         'x [any-value!]
     ][
         get/any 'x
@@ -155,12 +153,12 @@
         make error! ""
     ]
 )
-(use [x] [x: 1 strict-equal? 1 redbol-apply func ['x] [:x] [:x]])
-(use [x] [x: 1 strict-equal? 1 redbol-apply func ['x] [:x] [:x]])
+(use [x] [x: 1 strict-equal? 1 redbol-apply lambda ['x] [:x] [:x]])
+(use [x] [x: 1 strict-equal? 1 redbol-apply lambda ['x] [:x] [:x]])
 (
     use [x] [
         x: 1
-        strict-equal? first [:x] redbol-apply/only func [:x] [:x] [:x]
+        strict-equal? first [:x] redbol-apply/only lambda [:x] [:x] [:x]
     ]
 )
 (
@@ -171,9 +169,9 @@
         ] [:x]
     ]
 )
-(use [x] [x: 1 strict-equal? 1 redbol-apply func [:x] [:x] [x]])
-(use [x] [x: 1 strict-equal? 'x redbol-apply func [:x] [:x] ['x]])
-(use [x] [x: 1 strict-equal? 'x redbol-apply/only func [:x] [:x] [x]])
+(use [x] [x: 1 strict-equal? 1 redbol-apply lambda [:x] [:x] [x]])
+(use [x] [x: 1 strict-equal? 'x redbol-apply lambda [:x] [:x] ['x]])
+(use [x] [x: 1 strict-equal? 'x redbol-apply/only lambda [:x] [:x] [x]])
 (use [x] [x: 1 strict-equal? 'x redbol-apply/only func [:x] [return :x] [x]])
 (
     use [x] [
@@ -191,6 +189,6 @@
 ; !!! This shows a weak spot: how would REDBOL-APPLY/ONLY work on antiforms?
 ; It could degrade them, which would be an argument for not using quasars much.
 ;
-('~null~ == redbol-apply/only func [/a] [a] [~null~])
+('~null~ == redbol-apply/only lambda [/a] [a] [~null~])
 
 (group! == redbol-apply/only :type-of [()])

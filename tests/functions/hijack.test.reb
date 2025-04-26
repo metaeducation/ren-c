@@ -1,14 +1,14 @@
 ; better than-nothing HIJACK tests
 
 (
-    foo: func [x] [x + 1]
+    foo: lambda [x] [x + 1]
     another-foo: :foo
 
     old-foo: copy :foo
 
     all [
         (old-foo 10) = 11
-        hijack 'foo func [x] [(old-foo x) + 20]
+        hijack 'foo lambda [x] [(old-foo x) + 20]
         (old-foo 10) = 11
         (foo 10) = 31
         (another-foo 10) = 31
@@ -19,7 +19,7 @@
 ; Hijacking and un-hijacking out from under specializations, as well as
 ; specializing hijacked functions afterward.
 (
-    three: func [x y z /available add-me] [
+    three: lambda [x y z /available add-me] [
         x + y + z + either available [add-me] [0]
     ]
     step1: (three 10 20 30) ; 60
@@ -29,7 +29,7 @@
     two-30: specialize 'three [z: 30]
     step2: (two-30 10 20) ; 60
 
-    hijack 'three func [a b c /unavailable /available mul-me] [
+    hijack 'three lambda [a b c /unavailable /available mul-me] [
        a * b * c * either available [mul-me] [1]
     ]
 
@@ -44,7 +44,7 @@
 
     one-20: specialize 'two-30 [y: 20]
 
-    hijack 'three func [q r s] [
+    hijack 'three lambda [q r s] [
         q - r - s
     ]
 
@@ -72,8 +72,8 @@
 
 ; HIJACK of a specialization (needs to notice paramlist has "hidden" params)
 (
-    two: func [a b] [a + b]
+    two: lambda [a b] [a + b]
     one: specialize 'two [a: 10]
-    hijack 'one func [b] [20 - b]
+    hijack 'one lambda [b] [20 - b]
     one 20 = 0
 )

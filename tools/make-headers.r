@@ -141,6 +141,7 @@ emit-directive: function [return: [~] directive] [
 ]
 
 process: function [
+    return: [~]
     file
     <with> the-file ;-- global we set
 ][

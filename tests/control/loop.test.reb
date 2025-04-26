@@ -53,7 +53,7 @@
 ; recursive use of 'break
 (
     f: func [x] [
-        repeat 1 [
+        return repeat 1 [
             either x = 1 [
                 use [break] [
                     break: 1

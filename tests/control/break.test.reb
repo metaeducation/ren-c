@@ -21,18 +21,18 @@
     (a: 1  repeat 1 [a: type of break]  :a = 1)
 ]
 [#1509
-    (foo: func [x y] [9]  a: 1  repeat 1 [a: foo break 5]  :a = 1)
+    (foo: lambda [x y] [9]  a: 1  repeat 1 [a: foo break 5]  :a = 1)
 ]
 [#1509
-    (foo: func [x y] [9]  a: 1  repeat 1 [a: foo 5 break]  :a = 1)
+    (foo: lambda [x y] [9]  a: 1  repeat 1 [a: foo 5 break]  :a = 1)
 ]
 [#1509
-    (foo: func [x y] [9] a: 1 repeat 1 [a: foo break break]  :a = 1)
+    (foo: lambda [x y] [9] a: 1 repeat 1 [a: foo break break]  :a = 1)
 ]
 
 ; check that BREAK is evaluated (and not CONTINUE):
 (
-    foo: func [x y] [] a: 1 repeat 2 [
+    foo: lambda [x y] [] a: 1 repeat 2 [
         a: a + 1 foo (break) continue a: a + 10
     ]
     :a =? 2
@@ -42,7 +42,7 @@
 ; Note: CONTINUE is variadic and will take parameters if available, so there
 ; has to be an expression barrier or otherwise.
 (
-    foo: func [x y] [] a: 1 repeat 2 [
+    foo: lambda [x y] [] a: 1 repeat 2 [
         a: a + 1 foo (continue) break a: a + 10
     ] :a =? 3
 )

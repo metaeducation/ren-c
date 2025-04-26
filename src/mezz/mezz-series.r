@@ -23,7 +23,7 @@ offset-of: func [
     series1 [any-series!]
     series2 [any-series!]
 ][
-    (index of series2) - (index of series1)
+    return (index of series2) - (index of series1)
 ]
 
 
@@ -31,7 +31,7 @@ last?: single?: func [
     "Returns TRUE if the series length is 1."
     series [any-series! port! map! tuple! bitset! object! any-word!]
 ][
-    1 = length of series
+    return 1 = length of series
 ]
 
 
@@ -88,7 +88,7 @@ array: func [
     ] else [
         insert/dup/only (maybe get 'value) size
     ]
-    head of block
+    return head of block
 ]
 
 
@@ -166,7 +166,7 @@ replace: function [
         if one [break]
     ]
 
-    either tail_REPLACE [target] [save-target]
+    return either tail_REPLACE [target] [save-target]
 ]
 
 
@@ -364,7 +364,7 @@ reword: function [
         fail "Unexpected error in REWORD's parse rule, should not happen."
     ]
 
-    out
+    return out
 ]
 
 
@@ -385,7 +385,7 @@ move: func [
         limit: limit * size
     ]
     part: take/part source limit
-    insert either to [at head of source offset] [
+    return insert either to [at head of source offset] [
         lib/skip source offset
     ] part
 ]
@@ -418,7 +418,7 @@ extract: func [
         val: pick series pos else [value]
         append/only out :val
     ]
-    out
+    return out
 ]
 
 
@@ -491,7 +491,7 @@ collect-with: func [
         eval body
     ]
 
-    :out
+    return :out
 ]
 
 
@@ -582,7 +582,7 @@ format: function [
 
     ; Provided enough rules? If not, append rest:
     if not tail? values [append out values]
-    head of out
+    return head of out
 ]
 
 
@@ -712,7 +712,7 @@ find-all: function [
         "Evaluated for each occurrence"
 ][
     verify [any-series? orig: get series]
-    while [any [
+    return while [any [
         set series find get series :value
         (set series orig  null) ; reset series and break loop (no boot comma)
     ]][

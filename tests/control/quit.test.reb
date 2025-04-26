@@ -11,7 +11,7 @@
     do-script-returning: func [value /local script] [
         script: %tmp-inner.reb
         save/header script compose/only [quit/value (value)] []
-        do script
+        return do script
     ]
     all map-each value reduce [
         42

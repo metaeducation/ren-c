@@ -12,12 +12,12 @@ error-template: trim/auto {
     <a href="http://www.rebol.com/rebol3/">REBOL 3</a> $r3</body></html>
 }
 
-error-response: func [code uri <local> values] [
+error-response: lambda [code uri <local> values] [
     values: [code (code) text (code-map/:code) uri (uri) r3 (system/version)]
     reduce [code "text/html" reword error-template compose values]
 ]
 
-start-response: func [port res <local> code text type body] [
+start-response: lambda [port res <local> code text type body] [
     set [code type body] res
     write port unspaced [
         "HTTP/1.0" space code space code-map/:code CR LF
@@ -32,7 +32,7 @@ start-response: func [port res <local> code text type body] [
     port/locals: copy body
 ]
 
-send-chunk: func [port] [
+send-chunk: lambda [port] [
     ;; Trying to send data >32'000 bytes at once will trigger R3's internal
     ;; chunking (which is buggy, see above). So we cannot use chunks >32'000
     ;; for our manual chunking.
@@ -51,12 +51,12 @@ handle-request: function [config req] [
     type: default ["application/octet-stream"]
     if not exists? file: config/root/:uri [return error-response 404 uri]
     if error? sys/util/rescue [data: read file] [return error-response 400 uri]
-    reduce [200 type data]
+    return reduce [200 type data]
 ]
 
 awake-client: function [event] [
     port: event/port
-    switch event/type [
+    return switch event/type [
         'read [
             either find port/data to-binary unspaced [CR LF CR LF] [
                 res: handle-request port/locals/config port/data
@@ -70,7 +70,7 @@ awake-client: function [event] [
     ]
 ]
 
-awake-server: func [event <local> client] [
+awake-server: lambda [event <local> client] [
     if event/type = 'accept [
         client: first event/port
         client/awake: :awake-client
@@ -78,7 +78,7 @@ awake-server: func [event <local> client] [
     ]
 ]
 
-serve: func [web-port web-root <local> listen-port] [
+serve: lambda [web-port web-root <local> listen-port] [
     listen-port: open join tcp://: web-port
     listen-port/locals: make object! compose/deep [
         config: [root: (web-root)]

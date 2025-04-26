@@ -56,7 +56,7 @@ ctx-zip: context [
         "Returns a CRC32 checksum."
         data [text! binary!] "Data to checksum"
     ][
-        copy skip to binary! checksum/method data 'crc32 4
+        return copy skip to binary! checksum/method data 'crc32 4
     ]
 
     local-file-sig: #{504B0304}
@@ -68,42 +68,42 @@ ctx-zip: context [
         "Converts an integer to a little-endian long."
         value [integer!] "AnyValue to convert"
     ][
-        copy reverse skip to binary! value 4
+        return copy reverse skip to binary! value 4
     ]
 
     to-ishort: func [
         "Converts an integer to a little-endian short."
         value [integer!] "AnyValue to convert"
     ][
-        copy/part reverse skip to binary! value 4 2
+        return copy/part reverse skip to binary! value 4 2
     ]
 
     to-long: func [
         "Converts an integer to a big-endian long."
         value [integer!] "AnyValue to convert"
     ][
-        copy skip to binary! value 4
+        return copy skip to binary! value 4
     ]
 
     get-ishort: func [
         "Converts a little-endian short to an integer."
         value [binary! port!] "AnyValue to convert"
     ][
-        to integer! reverse copy/part value 2
+        return to integer! reverse copy/part value 2
     ]
 
     get-ilong: func [
         "Converts a little-endian long to an integer."
         value [binary! port!] "AnyValue to convert"
     ][
-        to integer! reverse copy/part value 4
+        return to integer! reverse copy/part value 4
     ]
 
     to-msdos-time: func [
         "Converts to a msdos time."
         value [time!] "AnyValue to convert"
     ][
-        to-ishort (value/hour * 2048)
+        return to-ishort (value/hour * 2048)
             or+ (value/minute * 32)
             or+ to integer! value/second / 2
     ]
@@ -112,7 +112,7 @@ ctx-zip: context [
         "Converts to a msdos date."
         value [date!]
     ][
-        to-ishort 512 * (max 0 value/year - 1980)
+        return to-ishort 512 * (max 0 value/year - 1980)
             or+ (value/month * 32) or+ value/day
     ]
 
@@ -121,7 +121,7 @@ ctx-zip: context [
         value [binary! port!]
     ][
         value: get-ishort value
-        to time! reduce [
+        return to time! reduce [
             63488 and+ value / 2048
             2016 and+ value / 32
             31 and+ value * 2
@@ -133,7 +133,7 @@ ctx-zip: context [
         value [binary! port!]
     ][
         value: get-ishort value
-        to date! reduce [
+        return to date! reduce [
             65024 and+ value / 512 + 1980
             480 and+ value / 32
             31 and+ value
@@ -228,7 +228,7 @@ ctx-zip: context [
             return value
         ]
         value: decode-url value
-        join %"" unspaced [
+        return join %"" unspaced [
             value/host "/"
             any [value/path ""]
             any [value/target ""]

@@ -21,7 +21,7 @@ REBOL [
 ; ability to tolerate a spec of `[a:]` by transforming it to `[a: none].
 ; That is not pursued in Ren-C.
 ;
-context: func [spec] [construct spec]
+context: lambda [spec] [construct spec]
 
 
 ; To be more visually pleasing, properties like LENGTH can be extracted using
@@ -133,7 +133,7 @@ rejoin: function [
     ] else [
         form first values
     ]
-    append result next values
+    return append result next values
 ]
 
 

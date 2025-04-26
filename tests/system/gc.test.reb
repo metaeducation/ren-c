@@ -21,7 +21,7 @@
 
 ; Nested unspaced
 (
-    nested-unspaced: func [n] [
+    nested-unspaced: lambda [n] [
         either n <= 1 [n] [unspaced [n space nested-unspaced n - 1]]
     ]
     "9 8 7 6 5 4 3 2 1" = nested-unspaced 9

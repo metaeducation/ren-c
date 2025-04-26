@@ -186,7 +186,7 @@
 )
 ; two-function return tests
 (
-    g: func [f [action!]] [f [return 1] 2]
+    g: func [f [action!]] [f [return 1] return 2]
     1 = g :eval
 )
 ; BREAK out of a function
@@ -217,7 +217,7 @@
 (
     1 = repeat 1 [
         f: func [x] [
-            either x = 1 [
+            return either x = 1 [
                 repeat 1 [f 2]
                 x
             ] [break]
@@ -230,7 +230,7 @@
     all [
         null? catch [
             f: func [x] [
-                either x = 1 [
+                return either x = 1 [
                     catch [f 2]
                     x
                 ] [throw 1]
@@ -244,7 +244,7 @@
 ; "error out" leaves a "running" function in a "clean" state
 (
     f: func [x] [
-        either x = 1 [
+        return either x = 1 [
             error? sys/util/rescue [f 2]
             x = 1
         ] [1 / 0]
@@ -255,7 +255,7 @@
 ; Argument passing of "get arguments" ("get-args")
 [
     (
-        getf: func [:x] [:x]
+        getf: lambda [:x] [:x]
         okay
     )
 
@@ -274,7 +274,7 @@
 ; Argument passing of "literal arguments" ("lit-args")
 [
     (
-        litf: func ['x] [:x]
+        litf: lambda ['x] [:x]
         okay
     )
 
@@ -293,7 +293,7 @@
 ; basic test for recursive action! invocation
 (
     i: 0
-    countdown: func [n] [if n > 0 [i: i + 1  countdown n - 1]]
+    countdown: func [n] [return if n > 0 [i: i + 1  countdown n - 1]]
     countdown 10
     i = 10
 )
@@ -301,19 +301,19 @@
 ; In Ren-C's specific binding, a function-local word that escapes the
 ; function's extent cannot be used when re-entering the same function later
 (
-    f: func [code value] [either blank? code ['value] [eval code]]
+    f: lambda [code value] [either blank? code ['value] [eval code]]
     f-value: f blank blank
     error? sys/util/rescue [f compose [2 * (f-value)] 21]  ; re-entering same function
 )
 (
-    f: func [code value] [either blank? code ['value] [eval code]]
-    g: func [code value] [either blank? code ['value] [eval code]]
+    f: lambda [code value] [either blank? code ['value] [eval code]]
+    g: lambda [code value] [either blank? code ['value] [eval code]]
     f-value: f blank blank
     error? sys/util/rescue [g compose [2 * (f-value)] 21]  ; re-entering different function
 )
 [#19 ; but duplicate specializations currently not legal in Ren-C
     (
-    f: func [/r x] [x]
+    f: lambda [/r x] [x]
     error? sys/util/rescue [2 == f/r/r 1 2]
     )
 ]
@@ -329,8 +329,8 @@
 ; called, `a` has been cleared so `a [d]` doesn't recapture the local, and
 ; `c` holds the `[d]` from the first call.
 (
-    a: func [b] [a: null c: b]
-    f: func [d] [a [d] eval c]
+    a: lambda [b] [a: null c: b]
+    f: lambda [d] [a [d] eval c]
     all [
         1 = f 1
         error? sys/util/rescue [2 = f 2]
@@ -354,7 +354,7 @@
     error? sys/util/rescue [f 1]
 )]
 [#2044 (
-    o: make object! [f: func [x] ['x]]
+    o: make object! [f: lambda [x] ['x]]
     p: make o []
     not same? o/f 1 p/f 1
 )]
@@ -403,14 +403,14 @@
 
 ; /LOCAL is an ordinary refinement in Ren-C
 (
-    a-value: func [/local a] [a]
+    a-value: lambda [/local a] [a]
     1 == a-value/local 1
 )
 
 [#539 (
     f: func [return: [~]] [
         use [x] [return] ;-- https://github.com/metaeducation/ren-c/issues/755
-        42
+        return 42
     ]
     trash? f
 )]

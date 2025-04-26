@@ -72,7 +72,7 @@ clean-path: function [
         remove back tail of out
     ]
 
-    reverse out
+    return reverse out
 ]
 
 
@@ -125,7 +125,7 @@ ask: function [
 
     line: to-text data
     trim/with line newline
-    line
+    return line
 ]
 
 
@@ -236,7 +236,7 @@ undirize: function [
 ][
     path: copy path
     if #"/" = last path [clear back tail of path]
-    path
+    return path
 ]
 
 
@@ -313,7 +313,7 @@ detab-file: function [
     return: [~]
     filename [file!]
 ][
-    write filename detab to text! read filename
+    return write filename detab to text! read filename
 ]
 
 ; temporary location

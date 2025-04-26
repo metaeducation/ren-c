@@ -46,14 +46,14 @@ do join tools-dir %common-parsers.r
 do join tools-dir %text-lines.reb
 do join tools-dir %read-deep.reb
 
-null-to-blank: func [x [any-value!]] [either null? x [_] [:x]]
+null-to-blank: lambda [x [any-value!]] [either null? x [_] [:x]]
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
 rebsource: context [
 
-    logfn: func [message][print mold new-line/all compose/only message 'no]
+    logfn: lambda [message][print mold new-line/all compose/only message 'no]
     log: :logfn
 
     standard: context [
@@ -116,7 +116,7 @@ rebsource: context [
             {Analyse the source files of REBOL.}
             return: [block!]
         ][
-            collect [
+            return collect [
                 for-each source list/source-files [
                     if find whitelisted source [continue]
 
@@ -130,7 +130,7 @@ rebsource: context [
             return: [~null~ block!]
             file
         ][
-            all [
+            return all [
                 filetype: select extensions extension-of file
                 type: in source filetype
                 reeval (ensure action! get type) file (read join repo-dir file)
@@ -251,7 +251,7 @@ rebsource: context [
                     emit <non-std-func-space> [(file) (non-std-func-space)]
                 ]
 
-                analysis
+                return analysis
             ]
 
             rebol: function [
@@ -263,7 +263,7 @@ rebsource: context [
                 data
             ][
                 analysis: analyse/text file data
-                analysis
+                return analysis
             ]
         ]
 
@@ -383,7 +383,7 @@ rebsource: context [
                 ]
             ]
 
-            analysis
+            return analysis
         ]
     ]
 
@@ -399,7 +399,7 @@ rebsource: context [
             sort files
             new-line/all files 'yes
 
-            files
+            return files
         ]
 
         source-files-seq: function [
@@ -423,7 +423,7 @@ rebsource: context [
                 ]
             ]
 
-            item ;-- blanked items are to be filtered out
+            return item ;-- blanked items are to be filtered out
         ]
     ]
 
@@ -459,6 +459,6 @@ rebsource: context [
         return: [file!]
         file [file!]
     ][
-        find/last file "." else [copy %""]
+        return find/last file "." else [copy %""]
     ]
 ]

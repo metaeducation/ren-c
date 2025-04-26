@@ -78,10 +78,10 @@ tenth: redescribe [
 
 last: func [
     {Returns the last value of a series.}
-    return: [any-value!]
+    return: [~null~ any-element!]
     value [any-series! tuple!]
 ][
-    pick value length of value
+    return pick value length of value
 ]
 
 ;
@@ -130,6 +130,7 @@ append-of: redescribe [
 charset: function [
     {Makes a bitset of chars for the parse function.}
 
+    return: [bitset!]
     chars [text! block! binary! char! integer!]
     /length "Preallocate this many bits"
     len [integer!] "Must be > 0"
@@ -143,7 +144,7 @@ charset: function [
     length: ~                   ; helps avoid overlooking the ambiguity
 
     init: either length_CHARSET [len][[]]
-    append make bitset! init chars
+    return append make bitset! init chars
 ]
 
 

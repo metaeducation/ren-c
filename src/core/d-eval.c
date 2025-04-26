@@ -289,7 +289,7 @@ void Do_After_Action_Checks_Debug(Level* L) {
 
     //=//// v-- BELOW CHECKS ONLY APPLY WHEN Level_Phase() is VALID ////////=//
 
-    // Usermode functions check the return type via Returner_Dispatcher(),
+    // Usermode functions check the return type via the definitional RETURN,
     // with everything else assumed to return the correct type.  But this
     // double checks any function marked with RETURN in the debug build,
     // so native return types are checked instead of just trusting the C.

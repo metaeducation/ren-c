@@ -41,6 +41,7 @@ cd: func [
 more: func [
     {Print file (shell shortcut function).}
 
+    return: [~]
     'file "Accepts %file and also just words (as file names)"
         [file! word! path! text!]
 ][

@@ -303,7 +303,7 @@
 )
 ; RETURN stops evaluation
 (
-    f1: func [] [any [return 1 2] 2]
+    f1: func [] [return any [return 1 2] 2]
     1 = f1
 )
 ; THROW stops evaluation

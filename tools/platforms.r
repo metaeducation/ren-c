@@ -580,5 +580,5 @@ config-system: function [
         ]
     ]
 
-    result
+    return result
 ]

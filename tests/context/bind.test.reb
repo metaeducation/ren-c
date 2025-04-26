@@ -22,7 +22,7 @@
     b1: [self]
     f: func [/local b2] [
         b2: [self]
-        same? first b2 first bind/copy b1 binding of 'b2
+        return same? first b2 first bind/copy b1 binding of 'b2
     ]
     f
 )]
@@ -38,7 +38,7 @@
     (not head? bind next [1] binding of 'rebol)
 ]
 [#892 #216
-    (y: 'x reeval func [<local> x] [x: okay get bind y binding of 'x])
+    (y: 'x reeval lambda [<local> x] [x: okay get bind y binding of 'x])
 ]
 
 [#2086 (
@@ -47,6 +47,6 @@
 )]
 
 [#1893 (
-    word: reeval func [x] ['x] 1
+    word: reeval lambda [x] ['x] 1
     same? word bind 'x binding of word
 )]

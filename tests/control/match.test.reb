@@ -46,7 +46,7 @@
         if not :arg and [not null? :result] [
             return ~  ; nothing if matched a falsey type
         ]
-        :result  ; return null if no match, else truthy result
+        return :result  ; return null if no match, else truthy result
     ])
 
     (10 = match2 integer! 10)

@@ -175,11 +175,12 @@ do*: function [
         ]
     ]
 
-    finalizer get* 'result
+    return finalizer get* 'result
 ]
 
 export: func [
     "Low level export of values (e.g. functions) to lib."
+    return: [~]
     words [block!] "Block of words (already defined in local context)"
 ][
     for-each word words [append lib reduce [word get word]]

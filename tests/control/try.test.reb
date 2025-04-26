@@ -25,7 +25,7 @@
 ]
 (sys/util/rescue [fail make error! ""] then [okay])
 (sys/util/rescue [1 / 0] then :error?)
-(sys/util/rescue [1 / 0] then func [e] [error? e])
+(sys/util/rescue [1 / 0] then lambda [e] [error? e])
 (sys/util/rescue [] then func [e] [<handler-not-run>] else [okay])
 [#1514
     (error? sys/util/rescue [sys/util/rescue [1 / 0] then :add])

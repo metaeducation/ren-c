@@ -87,7 +87,7 @@ save: function [
         ]
     ]
 
-    case [
+    return case [
         file? where [
             ; WRITE converts to UTF-8, saves overhead
             write where data

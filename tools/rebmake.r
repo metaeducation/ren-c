@@ -51,7 +51,7 @@ map-files-to-local: function [
     files [file! block!]
 ][
     if not block? files [files: reduce [files]]
-    map-each f files [
+    return map-each f files [
         file-to-local f
     ]
 ]
@@ -61,7 +61,7 @@ ends-with?: func [
     s [any-string!]
     suffix [<maybe> any-string!]
 ][
-    did any [
+    return did any [
         empty? suffix
         suffix = (skip tail-of s negate length of suffix)
     ]
@@ -90,11 +90,12 @@ filter-flag: function [
 ]
 
 run-command: function [
+    return: [text!]
     cmd [block! text!]
 ][
     x: copy ""
     call/shell/output cmd x
-    trim/with x "^/^M"
+    return trim/with x "^/^M"
 ]
 
 platform-class: make object! [
@@ -123,7 +124,7 @@ posix: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        either dir? cmd/file [
+        return either dir? cmd/file [
             spaced ["mkdir -p" cmd/file]
         ][
             spaced ["touch" cmd/file]
@@ -134,7 +135,7 @@ posix: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        spaced ["rm -fr" cmd/file]
+        return spaced ["rm -fr" cmd/file]
     ]
 
     gen-cmd-strip: method [
@@ -176,7 +177,7 @@ windows: make platform-class [
     ][
         d: file-to-local cmd/file
         if #"\" = last d [remove back tail-of d]
-        either dir? cmd/file [
+        return either dir? cmd/file [
             spaced ["if not exist" d "mkdir" d]
         ][
             unspaced ["echo . 2>" d]
@@ -188,7 +189,7 @@ windows: make platform-class [
     ][
         d: file-to-local cmd/file
         if #"\" = last d [remove back tail-of d]
-        either dir? cmd/file [
+        return either dir? cmd/file [
             spaced ["rmdir /S /Q" d]
         ][
             spaced ["del" d]
@@ -205,6 +206,7 @@ windows: make platform-class [
 ]
 
 set-target-platform: func [
+    return: [~]
     platform
 ][
     switch platform [
@@ -286,7 +288,7 @@ application-class: make project-class [
 
     command: method [return: [text!]] [
         cc: compiler or [default-compiler]
-        cc/link
+        return cc/link
             output
             depends
             searches
@@ -309,7 +311,7 @@ dynamic-library-class: make project-class [
         default-compiler
     ][
         cc: compiler or [default-compiler]
-        cc/link/dynamic
+        return cc/link/dynamic
             output
             depends
             searches
@@ -427,7 +429,7 @@ cc: make compiler-class [
         /PIC
         /E
     ][
-        collect-text [
+        return collect-text [
             keep (file-to-local/pass exec-file else [
                 to text! name ;; the "gcc" may get overridden as "g++"
             ])
@@ -514,7 +516,7 @@ cc: make compiler-class [
             target-platform/exe-suffix
         ]
 
-        collect-text [
+        return collect-text [
             keep file-to-local/pass exec-file  ; gcc, g++, clang, tcc, etc...
 
             if debug [keep "-g"]
@@ -651,7 +653,7 @@ cl: make compiler-class [
         /PIC {Ignored for cl}
         /E
     ][
-        collect-text [
+        return collect-text [
             keep file-to-local/pass exec-file
             keep "/nologo" ; don't show startup banner
             keep either E ["/P"]["/c"]
@@ -739,7 +741,7 @@ cl: make compiler-class [
         ][
             target-platform/exe-suffix
         ]
-        collect-text [
+        return collect-text [
             keep file-to-local/pass exec-file  ; cl.exe
 
             keep "/nologo"  ; link.exe takes uppercase, cl.exe lowercase!
@@ -841,7 +843,7 @@ strip-class: make object! [
         target [file!]
         /params flags [block! any-string!]
     ][
-        reduce [collect-text [
+        return reduce [collect-text [
             keep ("strip" unless file-to-local/pass exec-file)
             flags: default [options]
             switch type of flags [
@@ -889,7 +891,7 @@ object-file-class: make object! [
         /E {only preprocessing}
     ][
         cc: any [compiler default-compiler]
-        cc/compile/I/D/F/O/g/(maybe+ all [PIC 'PIC])/(maybe+ all [E 'E]) output source
+        return cc/compile/I/D/F/O/g/(maybe+ all [PIC 'PIC])/(maybe+ all [E 'E]) output source
             <- compose [(maybe includes) (if I [ex-includes])]
             <- compose [(maybe definitions) (if D [ex-definitions])]
             <- compose [(if F [ex-cflags]) (maybe cflags)] ;; ex-cflags override
@@ -914,7 +916,7 @@ object-file-class: make object! [
             ] parent/class
         ]
 
-        make entry-class [
+        return make entry-class [
             target: output
             depends: append-of either depends [depends][[]] source
             commands: reduce [compile/I/D/F/O/g/(
@@ -977,7 +979,7 @@ generator-class: make object! [
         return: [text!]
         cmd [object!]
     ][
-        switch cmd/class [
+        return switch cmd/class [
             #cmd-create [
                 applique any [:gen-cmd-create :target-platform/gen-cmd-create] compose [cmd: (cmd)]
             ]
@@ -1033,7 +1035,7 @@ generator-class: make object! [
                 fail ["failed to do var substitution:" cmd]
             ]
         ]
-        cmd
+        return cmd
     ]
 
     prepare: method [
@@ -1170,7 +1172,7 @@ makefile: make generator-class [
             [text!]
         entry [object!]
     ][
-        newlined collect-lines [switch entry/class [
+        return newlined collect-lines [switch entry/class [
 
             ;; Makefile variable, defined on a line by itself
             ;;

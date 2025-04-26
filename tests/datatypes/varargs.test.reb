@@ -1,5 +1,5 @@
 (
-    foo: func [x [integer! <...>]] [
+    foo: lambda [x [integer! <...>]] [
         sum: 0
         while [not tail? x] [
             sum: sum + take x
@@ -9,17 +9,17 @@
     all [y = 5  z = 6]
 )
 (
-    foo: func [x [integer! <...>]] [make block! x]
+    foo: lambda [x [integer! <...>]] [make block! x]
     [1 2 3 4] = foo 1 2 3 4
 )
 
 (
     ;-- leaked VARARGS! cannot be accessed after call is over
-    error? sys/util/rescue [take reeval (foo: func [x [integer! <...>]] [x])]
+    error? sys/util/rescue [take reeval (foo: lambda [x [integer! <...>]] [x])]
 )
 
 (
-    f: func [args [any-value! ~null~ <...>]] [
+    f: lambda [args [any-value! ~null~ <...>]] [
        b: take args
        either tail? args [b] ["not at end"]
     ]
@@ -28,7 +28,7 @@
 )
 
 (
-    f: func [:look [<...>]] [reify first look]
+    f: lambda [:look [<...>]] [reify first look]
     '~null~ = applique 'f [look: make varargs! []]
 )
 

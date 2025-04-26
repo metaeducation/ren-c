@@ -14,6 +14,7 @@ init-crypto
 hmac-sha256: function [
     {computes the hmac-sha256 for message m using key k}
 
+    return: [binary!]
     k [binary!]
     m [binary!]
 ][
@@ -30,14 +31,15 @@ hmac-sha256: function [
     insert/dup ipad: copy #{} #{36} blocksize
     o_key_pad: opad xor+ key
     i_key_pad: ipad xor+ key
-    sha256 join o_key_pad (sha256 join i_key_pad message)
+    return sha256 join o_key_pad (sha256 join i_key_pad message)
 ]
 
 
 rsa-make-key: func [
     {Creates a key object for RSA algorithm.}
+    return: [object!]
 ][
-    make object! [
+    return make object! [
         n:          ;modulus
         e:          ;public exponent
         d:          ;private exponent
@@ -53,12 +55,9 @@ rsa-make-key: func [
 
 dh-make-key: func [
     {Creates a key object for Diffie-Hellman algorithm.}
-;NOT YET IMPLEMENTED
-;   /generate
-;       size [integer!] \"Key length\"
-;       generator [integer!] \"Generator number\"
+    return: [object!]
 ][
-    make object! [
+    rerturn make object! [
         priv-key:   ;private key
         pub-key:    ;public key
         g:          ;generator

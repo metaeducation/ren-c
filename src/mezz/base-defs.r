@@ -23,7 +23,7 @@ REBOL [
 ]
 
 
-unset: func [word [any-word!]] [set/any word ~]
+unset: func [return: [~] word [any-word!]] [set/any word ~]
 eval: :evaluate
 
 ; Start with basic debugging
@@ -46,7 +46,7 @@ probe: func [
         <else> [write-stdout mold :value]
     ]
     write-stdout newline
-    :value
+    return :value
 ]
 
 
@@ -121,14 +121,16 @@ newlined: cascade [
     func [t [~null~ text!]] [
         if null? t [return null]
         append t newline ;; Terminal newline is POSIX standard, more useful
+        return t
     ]
 ]
 
 an: func [
     {Prepends the correct "a" or "an" to a string, based on leading character}
+    return: [text!]
     value <local> s
 ][
-    head of insert (s: form value) either (find "aeiou" s/1) ["an "] ["a "]
+    return head of insert (s: form value) either (find "aeiou" s/1) ["an "] ["a "]
 ]
 
 
@@ -161,7 +163,7 @@ empty?: func [
     return: [logic!]
     series [any-series! object! port! bitset! map! blank! ~void~]
 ][
-    any [
+    return any [
         void? series
         blank? series
         tail? series
@@ -264,7 +266,7 @@ print: func [
         return write-stdout line
     ]
 
-    (write-stdout maybe spaced line) then [write-stdout newline]
+    return (write-stdout maybe spaced line) then [write-stdout newline]
 ]
 
 
@@ -278,10 +280,12 @@ print: func [
 ;
 ===: func [
     ; note: <...> is now a TUPLE!, and : used to be "hard quote" (vs ')
+    return: [~void~]
     label [text!]
     'terminal [word!]
 ][
     assert [equal? terminal '===]
+    return void
 ]
 
 
@@ -294,13 +298,6 @@ internal!: make typeset! [
 immediate!: make typeset! [
     ; Does not include internal datatypes
     blank! logic! any-scalar! date! any-word! datatype! typeset! event!
-]
-
-ok?: func [
-    "Returns TRUE on all values that are not ERROR!"
-    value [any-value!]
-][
-    not error? :value
 ]
 
 ; Convenient alternatives for readability

@@ -85,6 +85,7 @@ system-config: config-system user-config/os-id
 rebmake/set-target-platform system-config/os-base
 
 to-obj-path: func [
+    return: [file!]
     file [any-string!]
     <local> ext
 ][
@@ -93,10 +94,11 @@ to-obj-path: func [
         print ["File with no extension" mold file]
     ]
     remove/part ext (length of ext)
-    join %objs/ head-of append ext rebmake/target-platform/obj-suffix
+    return join %objs/ head-of append ext rebmake/target-platform/obj-suffix
 ]
 
 gen-obj: func [
+    return: [object!]
     s
     /dir directory [any-string!]
     /D definitions [block!]
@@ -237,7 +239,7 @@ gen-obj: func [
 
     if F [append flags :cflags]
 
-    make rebmake/object-file-class compose/only [
+    return make rebmake/object-file-class compose/only [
         source: to-file case [
             dir [join directory s]
             main [s]
@@ -1025,6 +1027,7 @@ add-project-flags: func [
 ]
 
 process-module: func [
+    return: [object!]
     mod [object!]
     <local>
     s
@@ -1079,7 +1082,7 @@ process-module: func [
         searches: mod/searches
     ]
 
-    ret
+    return ret
 ]
 
 ext-objs: make block! 8
@@ -1132,6 +1135,7 @@ for-each ext builtin-extensions [
 
 ; Reorder builtin-extensions by their dependency
 calculate-sequence: function [
+    return: [integer!]
     ext
     <local> req b
 ][
@@ -1153,11 +1157,11 @@ calculate-sequence: function [
             fail ["unrecoginized dependency" req "for" ext/name]
         ]
     ]
-    ext/sequence: seq + 1
+    return ext/sequence: seq + 1
 ]
 
 for-each ext builtin-extensions [calculate-sequence ext]
-sort/compare builtin-extensions func [a b] [a/sequence < b/sequence]
+sort/compare builtin-extensions lambda [a b] [a/sequence < b/sequence]
 
 vars: reduce [
     reb-tool: make rebmake/var-class [

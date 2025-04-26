@@ -33,7 +33,7 @@ dump: function [
     ]
 
     val-to-text: function [return: [text!] val [any-value!]] [
-        case [
+        return case [
             null? val ["// null"]
             object? :val [unspaced ["make object! [" (dump-obj val) "]"]]
             default [mold/limit :val system/options/dump-size]
@@ -162,7 +162,7 @@ dumps: infix function [
             ]
         ]
     ]
-    set name :d
+    return set name :d
 ]
 
 ; Handy specialization for dumping, prefer to DUMP when doing temp output
@@ -190,7 +190,7 @@ dump-obj: function [
         ; Keep string to one line.
         trim/lines str
         if (length of str) > 48 [str: append copy/part str 45 "..."]
-        str
+        return str
     ]
 
     form-val: func [val [any-value!]] [
@@ -203,14 +203,14 @@ dump-obj: function [
         if object? :val [val: words of val]
         if typeset? :val [val: make block! val]
         if port? :val [val: reduce [val/spec/title val/spec/ref]]
-        clip-str mold reify :val
+        return clip-str mold reify :val
     ]
 
     form-pad: func [val size] [
         ; Form a value with fixed size (space padding follows).
         val: form val
         insert/dup tail of val #" " size - length of val
-        val
+        return val
     ]
 
     ; Search for matching strings:

@@ -19,7 +19,7 @@
 (
     f1: func [] [
         if okay [return 1 2]
-        2
+        return 2
     ]
     1 = f1
 )
@@ -116,7 +116,7 @@
 (
     f1: func [] [
         if-not null [return 1 2]
-        2
+        return 2
     ]
     1 = f1
 )

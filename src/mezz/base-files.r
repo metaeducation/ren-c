@@ -61,7 +61,7 @@ size-of: size?: func [
     target [file! url!]
     <local> info
 ][
-    all [
+    return all [
         info: info? target
         info/size
     ]
@@ -73,7 +73,7 @@ modified?: func [
     target [file! url!]
     <local> info
 ][
-    all [
+    return all [
         info: info? target
         info/date
     ]
@@ -84,7 +84,7 @@ suffix-of: function [
     return: [~null~ file!]
     path [file! url! text!]
 ][
-    all [
+    return all [
         pos: find/last path #"."
         not find pos #"/"
         to file! pos
@@ -96,7 +96,7 @@ dir?: func [
     return: [logic!]
     target [file! url!]
 ][
-    did find "/\" last target
+    return did find "/\" last target
 ]
 
 dirize: func [
@@ -105,7 +105,7 @@ dirize: func [
 ][
     path: copy path
     if slash <> last path [append path slash]
-    path
+    return path
 ]
 
 make-dir: func [
@@ -152,11 +152,12 @@ make-dir: func [
         ]
         insert created path
     ]
-    path
+    return path
 ]
 
 delete-dir: func [
     {Deletes a directory including all files and subdirectories.}
+    return: [~]
     dir [file! url!]
     <local> files
 ][
@@ -191,7 +192,7 @@ script?: func [
             source: to binary! source
         ]
     ]
-    find-script source
+    return find-script source
 ]
 
 file-type?: function [
@@ -199,7 +200,7 @@ file-type?: function [
     return: [~null~ word!]
     file [file! url!]
 ][
-    all [
+    return all [
         pos: find system/options/file-types maybe suffix-of file
         first maybe find pos word!
     ]
@@ -236,5 +237,5 @@ intern: function [
     index: 1 + length of usr: system/contexts/user ; optimization
     data: bind/new :data usr   ; Extend the user context with new words
     resolve/only usr lib index ; Copy only the new values into the user context
-    :data
+    return :data
 ]

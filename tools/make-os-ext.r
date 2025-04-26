@@ -90,7 +90,7 @@ count: func [s c /local n] [
         append output-buffer unspaced ["," (#"a" + n)]
         n: n + 1
     ]
-    append output-buffer ")"
+    return append output-buffer ")"
 ]
 
 emit-proto: func [
@@ -147,7 +147,10 @@ emit-proto: func [
     ]
 ]
 
-process: func [file] [
+process: func [
+    return: [~]
+    file
+][
     if verbose [probe [file]]
     data: read the-file: file
     data: to-text data

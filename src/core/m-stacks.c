@@ -83,6 +83,15 @@ void Shutdown_Data_Stack(void)
 
 
 //
+//  Dummy_Dispatcher: C
+//
+Bounce Dummy_Dispatcher(Level* L)
+{
+    return Init_Nulled(L->out);
+}
+
+
+//
 //  Startup_Level_Stack: C
 //
 // We always push one unused frame at the top of the stack.  This way, it is
@@ -125,15 +134,15 @@ void Startup_Level_Stack(void)
 
     PG_Dummy_Action = Make_Action(
         paramlist,
-        &Null_Dispatcher,
+        &Dummy_Dispatcher,
         nullptr, // no underlying action (use paramlist)
         nullptr, // no specialization exemplar (or inherited exemplar)
         1 // details array capacity
     );
 
-    // !!! Null_Dispatcher() currently requires a body for things like fake
+    // !!! Dummy_Dispatcher() currently requires a body for things like fake
     // source.  The user shouldn't get PG_Dummy_Action in their hands to ask
-    // for SOURCE of, but still, the Null_Dispatcher() has asserts.
+    // for SOURCE of.
     //
     Init_Block(Array_Head(ACT_DETAILS(PG_Dummy_Action)), EMPTY_ARRAY);
 
@@ -231,7 +240,7 @@ VarList* Get_Context_From_Stack(void)
     }
 
     // The topmost stack level must be a native if we call this function.
-    // (So don't call it from something like Returner_Dispatcher, where you
+    // (So don't call it from something like Func_Dispatcher(), where you
     // know for a fact it's a user function and not a native on the stack.)
     //
   #if RUNTIME_CHECKS

@@ -111,21 +111,21 @@
 
 ; calling functions through paths: function in object
 (
-    obj: make object! [fun: func [] [1]]
+    obj: make object! [fun: lambda [] [1]]
     1 == obj/fun
 )
 (
-    obj: make object! [fun: func [/ref val] [val]]
+    obj: make object! [fun: lambda [/ref val] [val]]
     1 == obj/fun/ref 1
 )
 ; calling functions through paths: function in block, positional
 (
-    blk: reduce [func [] [10]  func [] [20]]
+    blk: reduce [lambda [] [10]  lambda [] [20]]
     10 == blk/1
 )
 ; calling functions through paths: function in block, "named"
 (
-    blk: reduce ['foo func [] [10]  'bar func [] [20]]
+    blk: reduce ['foo lambda [] [10]  'bar lambda [] [20]]
     20 == blk/bar
 )
 [#26 (

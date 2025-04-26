@@ -13,7 +13,8 @@ REBOL [
 
 wrap: func [
     "Evaluates a block, wrapping all set-words as locals."
+    return: [any-value!]
     body [block!] "Block to evaluate"
 ][
-    eval bind/copy/set body make object! 0
+    return eval bind/copy/set body make object! 0
 ]

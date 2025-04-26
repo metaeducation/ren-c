@@ -193,9 +193,7 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 //
 #define CELL_FLAG_ACTION_RETURN FLAG_TYPE_SPECIFIC_BIT(0)
 
-// Uses the Eraser_Dispatcher() (implies CELL_FLAG_ACTION_RETURN + arity-0 RETURN)
-//
-#define CELL_FLAG_ACTION_TRASHER FLAG_TYPE_SPECIFIC_BIT(1)
+#define CELL_FLAG_ACTION_UNUSED_1 FLAG_TYPE_SPECIFIC_BIT(1)
 
 // DEFERS_LOOKBACK_ARG flag is a cached property, which tells you whether a
 // function defers its first real argument when used as a lookback.  Because

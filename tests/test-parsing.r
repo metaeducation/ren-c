@@ -15,18 +15,19 @@ Rebol [
 
 do %line-numberq.r
 
-null-to-blank: func [x [any-value!]] [either null? x [_] [:x]]
+null-to-blank: func [x [any-value!]] [return either null? x [_] [:x]]
 
 parse2: :parse/redbol
 
 parsing-at: func [  ; redefined here for <here> usage in regular PARSE
     {Defines a rule which evaluates a block for the next input position, fails otherwise.}
+    return: [block!]
     'word [word!] {Word set to input position (will be local).}
     block [block!]
         {Block to evaluate. Return next input position, or blank/false.}
     /end {Drop the default tail check (allows evaluation at the tail).}
-] [
-    use [result position][
+][
+    return use [result position][
         block: compose/only [null-to-blank (as group! block)]
         if not end [
             block: compose/deep [either not tail? (word) [(block)] [_]]
@@ -102,13 +103,14 @@ make object! [
 
     set 'load-testfile function [
         {Read the test source, preprocessing if necessary.}
+        return: [object!]
         test-file [file!]
     ][
         test-source: context [
             filepath: test-file
             contents: read test-file
         ]
-        test-source
+        return test-source
     ]
 
     set 'collect-tests function [
@@ -132,7 +134,7 @@ make object! [
                 test-file 'dialect {^/"failed, cannot read the file"^/}
             ]
             change-dir current-dir
-            return
+            return ~
         ] else [
             change-dir current-dir
             append collected-tests test-file
@@ -263,7 +265,9 @@ make object! [
                 opt some whitespace
                 [
                     position: "%"
-                    (next-position: transcode/next3 position the value)
+                    (
+                        next-position: transcode/next3 position the value
+                    )
                     seek next-position
                         |
                     ; dialect failure?

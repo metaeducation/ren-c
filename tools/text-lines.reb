@@ -60,7 +60,7 @@ encode-lines: func [
     if indent = pos: skip tail-of text 0 - length of indent [clear pos]
     append text newline
 
-    text
+    return text
 ]
 
 for-each-line: function [
@@ -73,7 +73,7 @@ for-each-line: function [
     body [block!]
         {Block to evaluate each time.}
 ][
-    while [not tail? text] [
+    return while [not tail? text] [
         eol: any [
             find text newline
             tail of text
@@ -121,7 +121,7 @@ lines-exceeding: function [ ;-- !!! Doesn't appear used, except in tests (?)
         to end  ; !!! Said plain END here, but didn't check...parse mismatches!
     ]
 
-    line-list
+    return line-list
 ]
 
 text-line-of: function [
@@ -149,7 +149,7 @@ text-line-of: function [
     ]
 
     if zero? line [return null]
-    line
+    return line
 ]
 
 text-location-of: function [
@@ -180,5 +180,5 @@ text-location-of: function [
         line: reduce [line 1 + subtract index? position index? eol]
     ]
 
-    line
+    return line
 ]

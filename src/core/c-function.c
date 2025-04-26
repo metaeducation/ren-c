@@ -241,14 +241,6 @@ Array* Make_Paramlist_Managed_May_Fail(
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
         if (Is_Block(item)) {
-            if (  // legacy behavior: `return: [~]` erases return result
-                VAL_ARRAY_LEN_AT(item) == 1
-                and Is_Word(Cell_List_At(item))
-                and Cell_Word_Id(Cell_List_At(item)) == SYM_TILDE_1
-            ){
-                header_bits |= CELL_FLAG_ACTION_TRASHER;  // Eraser_Dispatcher()
-            }
-
             if (Is_Block(TOP)) // two blocks of types!
                 fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
@@ -1008,11 +1000,8 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
     UNUSED(binding);
 
     if (
-        ACT_DISPATCHER(a) == &Null_Dispatcher
-        or ACT_DISPATCHER(a) == &Nothing_Dispatcher
-        or ACT_DISPATCHER(a) == &Unchecked_Dispatcher
-        or ACT_DISPATCHER(a) == &Eraser_Dispatcher
-        or ACT_DISPATCHER(a) == &Returner_Dispatcher
+        ACT_DISPATCHER(a) == &Lambda_Dispatcher
+        or ACT_DISPATCHER(a) == &Func_Dispatcher
         or ACT_DISPATCHER(a) == &Block_Dispatcher
     ){
         // Interpreted code, the body is a block with some bindings relative
@@ -1027,11 +1016,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 
         Value* example;
         REBLEN real_body_index;
-        if (ACT_DISPATCHER(a) == &Eraser_Dispatcher) {
-            example = Get_System(SYS_STANDARD, STD_PROC_BODY);
-            real_body_index = 4;
-        }
-        else if (GET_ACT_FLAG(a, ACTION_RETURN)) {
+        if (GET_ACT_FLAG(a, ACTION_RETURN)) {
             example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
             real_body_index = 4;
         }
@@ -1150,54 +1135,29 @@ REBACT *Make_Interpreted_Action_May_Fail(
 ) {
     assert(Is_Block(spec) and Is_Block(code));
 
+    REBNAT dispatcher;
+    if (mkf_flags & MKF_RETURN)
+        dispatcher = &Func_Dispatcher;
+    else
+        dispatcher = &Lambda_Dispatcher;
+
     REBACT *a = Make_Action(
         Make_Paramlist_Managed_May_Fail(spec, mkf_flags),
-        &Null_Dispatcher, // will be overwritten if non-[] body
+        dispatcher,
         nullptr, // no underlying action (use paramlist)
         nullptr, // no specialization exemplar (or inherited exemplar)
         1 // details array capacity
     );
 
-    // We look at the *actual* function flags; e.g. the person may have used
-    // the FUNC generator (with MKF_RETURN) but then named a parameter RETURN
-    // which overrides it, so the value won't have CELL_FLAG_ACTION_RETURN.
-    //
-    Value* value = ACT_ARCHETYPE(a);
-
     Array* copy;
-    if (VAL_ARRAY_LEN_AT(code) == 0) { // optimize empty body case
-
-        if (Get_Cell_Flag(value, ACTION_TRASHER)) {
-            ACT_DISPATCHER(a) = &Eraser_Dispatcher;
-        }
-        else if (Get_Cell_Flag(value, ACTION_RETURN)) {
-            Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
-            assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
-            if (not Typeset_Check(typeset, TYPE_NULLED)) // eval [] returns
-                ACT_DISPATCHER(a) = &Returner_Dispatcher; // error when run
-        }
-        else {
-            // Keep the Null_Dispatcher passed in above
-        }
-
-        // Reusing EMPTY_ARRAY won't allow adding ARRAY_FLAG_HAS_FILE_LINE bits
-        //
+    if (VAL_ARRAY_LEN_AT(code) == 0) // optimize empty body case (why?)
         copy = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    }
-    else { // body not empty, pick dispatcher based on output disposition
-        if (Get_Cell_Flag(value, ACTION_TRASHER))
-            ACT_DISPATCHER(a) = &Eraser_Dispatcher; // forces L->out trash
-        else if (Get_Cell_Flag(value, ACTION_RETURN))
-            ACT_DISPATCHER(a) = &Returner_Dispatcher; // type checks L->out
-        else
-            ACT_DISPATCHER(a) = &Unchecked_Dispatcher; // unchecked L->out
-
+    else
         copy = Copy_And_Bind_Relative_Deep_Managed(
             code, // new copy has locals bound relatively to the new action
             ACT_PARAMLIST(a),
             TS_WORD
         );
-    }
 
     Cell* body = RESET_CELL(Array_Head(ACT_DETAILS(a)), TYPE_BLOCK);
     INIT_VAL_ARRAY(body, copy);
@@ -1296,39 +1256,6 @@ Bounce Generic_Dispatcher(Level* L)
 
 
 //
-//  Null_Dispatcher: C
-//
-// If you write `func [...] []` it uses this dispatcher instead of running
-// Eval_Core_Throws() on an empty block.  This serves more of a point than
-// it sounds, because you can make fast stub actions that only cost if they
-// are HIJACK'd (e.g. ASSERT is done this way).
-//
-Bounce Null_Dispatcher(Level* L)
-{
-    Array* details = ACT_DETAILS(LVL_PHASE_OR_DUMMY(L));
-    assert(Cell_Series_Len_At(Array_Head(details)) == 0);
-    UNUSED(details);
-
-    return nullptr;
-}
-
-
-//
-//  Nothing_Dispatcher: C
-//
-// Analogue to Null_Dispatcher() for `func [return: [~] ...] []`.
-//
-Bounce Nothing_Dispatcher(Level* L)
-{
-    Array* details = ACT_DETAILS(Level_Phase(L));
-    assert(Cell_Series_Len_At(Array_Head(details)) == 0);
-    UNUSED(details);
-
-    return Init_Trash(L->out);
-}
-
-
-//
 //  Datatype_Checker_Dispatcher: C
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a datatype.
@@ -1362,13 +1289,11 @@ Bounce Typeset_Checker_Dispatcher(Level* L)
 
 
 //
-//  Unchecked_Dispatcher: C
+//  Lambda_Dispatcher: C
 //
-// This is the default action dispatcher for interpreted functions
-// (whose body is a block that runs through DO []).  There is no return type
-// checking done on these simple functions.
+// This runs a block of code and returns the result unchecked.
 //
-Bounce Unchecked_Dispatcher(Level* L)
+Bounce Lambda_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
     Cell* body = Array_Head(details);
@@ -1382,33 +1307,18 @@ Bounce Unchecked_Dispatcher(Level* L)
 
 
 //
-//  Eraser_Dispatcher: C
+//  Func_Dispatcher: C
 //
-// Variant of Unchecked_Dispatcher, except sets the output value to trash.
-// Pushing that code into the dispatcher means there's no need to do flag
-// testing in the main loop.
+// Contrasts with the Lambda_Dispatcher() because if no RETURN is executed,
+// then it falls through to return trash...and typechecks that trash is a
+// legal return value for the function.  This is particularly convenient if
+// you define a function with [return: [~]].
 //
-Bounce Eraser_Dispatcher(Level* L)
-{
-    Array* details = ACT_DETAILS(Level_Phase(L));
-    Cell* body = Array_Head(details);
-    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
-
-    if (Eval_Array_At_Throws(L->out, Cell_Array(body), 0, SPC(L->varlist)))
-        return BOUNCE_THROWN;
-
-    return Init_Trash(L->out);
-}
-
-
+// Note that the reason RETURN does the typechecking and unwinds the stack
+// past this dispatcher--vs. unwinding to this dispatcher and letting it do
+// type checking--is because you want error messages at the point of RETURN.
 //
-//  Returner_Dispatcher: C
-//
-// Contrasts with the Unchecked_Dispatcher since it ensures the return type is
-// correct.  (Note that natives do not get this type checking, and they
-// probably shouldn't pay for it except in the debug build.)
-//
-Bounce Returner_Dispatcher(Level* L)
+Bounce Func_Dispatcher(Level* L)
 {
     REBACT *phase = Level_Phase(L);
     Array* details = ACT_DETAILS(phase);
@@ -1422,10 +1332,8 @@ Bounce Returner_Dispatcher(Level* L)
     Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
     assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
 
-    // Typeset bits for locals in frames are usually ignored, but the RETURN:
-    // local uses them for the return types of a "virtual" definitional return
-    // if the parameter is PARAMCLASS_RETURN_1.
-    //
+    Init_Trash(L->out);  // didn't use definitional return, just fell through
+
     if (not Typeset_Check(typeset, Type_Of(L->out)))
         fail (Error_Bad_Return_Type(L, Type_Of(L->out)));
 

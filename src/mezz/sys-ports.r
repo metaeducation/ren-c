@@ -78,7 +78,7 @@ make-port*: function [
     ; scheme has not yet been initialized, it can be done
     ; at this time.
     if in scheme 'init [scheme/init port]
-    port
+    return port
 ]
 
 *parse-url: make object! [
@@ -164,12 +164,13 @@ make-port*: function [
 
     decode-url: func [
         "Decode a URL according to rules of sys/util/*parse-url."
+        return: [block!]
         url
     ][
         ; This function is bound in the context of sys/util/*parse-url
         out: make block! 8
         parse url rules
-        out
+        return out
     ]
 ]
 
@@ -179,6 +180,7 @@ decode-url: ~  ; used by sys funcs, defined above, set below
 
 make-scheme: function [
     "Make a scheme from a specification and add it to the system."
+    return: [~]
     def [block!]
         "Scheme specification"
     /with
@@ -219,6 +221,7 @@ make-scheme: function [
 ]
 
 init-schemes: func [
+    return: [~]
     "INIT: Init system native schemes and ports."
 ][
     sys/util/decode-url: lib/decode-url: :sys/util/*parse-url/decode-url
@@ -272,12 +275,12 @@ init-schemes: func [
                 find waked port then [return okay]
             ]
 
-            null ; keep waiting
+            return null ; keep waiting
         ]
         init: func [port] [
             ;;print ["Init" title]
             port/data: copy [] ; The port wake list
-            return
+            return ~
         ]
     ]
 
@@ -297,7 +300,7 @@ init-schemes: func [
                 parse port/spec/ref [thru #":" 0 2 slash path: <here>]
                 append port/spec compose [path: (to file! path)]
             ]
-            return
+            return ~
         ]
     ]
 
@@ -313,7 +316,7 @@ init-schemes: func [
         actor: get-event-actor-handle
         awake: func [event] [
             print ["Default GUI event/awake:" event/type]
-            okay
+            return okay
         ]
     ]
 
@@ -322,7 +325,10 @@ init-schemes: func [
         name: 'dns
         actor: get-dns-actor-handle
         spec: system/standard/port-spec-net
-        awake: func [event] [print event/type okay]
+        awake: func [event] [
+            print event/type
+            return okay
+        ]
     ]
 
     make-scheme [
@@ -331,7 +337,10 @@ init-schemes: func [
         actor: get-tcp-actor-handle
         spec: system/standard/port-spec-net
         info: system/standard/net-info ; for C enums
-        awake: func [event] [print ['TCP-event event/type] okay]
+        awake: func [event] [
+            print ['TCP-event event/type]
+            return okay
+        ]
     ]
 
     make-scheme [
@@ -340,7 +349,10 @@ init-schemes: func [
         actor: get-udp-actor-handle
         spec: system/standard/port-spec-net
         info: system/standard/net-info ; for C enums
-        awake: func [event] [print ['UDP-event event/type] okay]
+        awake: func [event] [
+            print ['UDP-event event/type]
+            return okay
+        ]
     ]
 
     system/ports/system:   open [scheme: 'system]
