@@ -300,12 +300,12 @@ load: function [
     ]
 
     ;-- If appropriate and possible, return singular data value:
-    any [
+    none [
         self/all
         header
         empty? data
         1 < length of data
-    ] or [
+    ] then [
         data: first data
     ]
 
@@ -373,7 +373,7 @@ load-module: function [
 
             ; If no further processing is needed, shortcut return
 
-            if not version and [delay or [module? :mod]] [
+            if (not version) and [delay or [module? :mod]] [
                 return reduce [source (reify match module! :mod)]
             ]
         ]
@@ -391,7 +391,7 @@ load-module: function [
             tmp: file-type? source
             case [
                 tmp = 'rebol [
-                    data: read source or [
+                    data: read source else [
                         return blank
                     ]
                 ]
@@ -508,7 +508,7 @@ load-module: function [
         name: :hdr/name
     ]
 
-    if not no-lib and [not word? :name] [ ; requires name for full import
+    if (not no-lib) and [not word? :name] [ ; requires name for full import
         ; Unnamed module can't be imported to lib, so /no-lib here
         no-lib: okay  ; Still not /no-lib in IMPORT
 
@@ -607,7 +607,7 @@ load-module: function [
         ]
     ]
 
-    if not no-lib and [override?] [
+    if (not no-lib) and [override?] [
         if pos [
             pos/2: mod ; replace delayed module
         ] else [

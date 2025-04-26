@@ -110,7 +110,11 @@ dump-to-newline: adapt 'dump [
         ; Mutate VARARGS! into a BLOCK!, with passed-in value at the head
         ;
         value: reduce [:value]
-        while [not (new-line? extra or [tail? extra] or [bar? extra/1])] [
+        while [not any [
+            new-line? extra
+            tail? extra
+            bar? extra/1
+        ]][
             append/only value extra/1
             if (match [block! group!] :extra/1) and [contains-newline :extra/1] [
                 break

@@ -72,7 +72,7 @@ decode: function [
         cod: select system/codecs type
         f: :cod/decode
         (data: f data)
-    ] or [
+    ] else [
         cause-error 'access 'no-codec type
     ]
     return data
@@ -95,7 +95,7 @@ encode: function [
         cod: select system/codecs type
         f: :cod/encode
         (data: f data)
-    ] or [
+    ] else [
         cause-error 'access 'no-codec type
     ]
     return data

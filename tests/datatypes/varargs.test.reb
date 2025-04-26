@@ -48,11 +48,11 @@
         okay
     )
 
-    (eval [deferred] = 0)
-    (eval [10 deferred] = 10)
-    (eval [10 20 deferred] = 20)
-    (eval [x: 30  y: 'x  1 2 x deferred] = 30)
-    (eval [multiply 3 9 deferred] = 27) ;-- seen as ((multiply 3 9) deferred)
+    (0 = eval [deferred])
+    (10 = eval [10 deferred])
+    (20 = eval [10 20 deferred])
+    (30 = eval [x: 30  y: 'x  1 2 x deferred])
+    (27 = eval [multiply 3 9 deferred]) ;-- seen as ((multiply 3 9) deferred)
 ][
     (
         normal: infix function [v [integer! <...>]] [
@@ -65,11 +65,11 @@
         okay
     )
 
-    (eval [normal] = 0)
-    (eval [10 normal] = 10)
-    (eval [10 20 normal] = 20)
-    (eval [x: 30  y: 'x  1 2 x normal] = 30)
-    (eval [multiply 3 9 normal] = 27) ;-- seen as (multiply 3 (9 tight))
+    (0 = eval [normal])
+    (10 = eval [10 normal])
+    (20 = eval [10 20 normal])
+    (30 = eval [x: 30  y: 'x  1 2 x normal])
+    (27 = eval [multiply 3 9 normal]) ;-- seen as (multiply 3 (9 tight))
 ][
     (
         soft: infix function ['v [any-value! <...>]] [
@@ -82,9 +82,9 @@
         okay
     )
 
-    (eval [soft] = [])
-    (eval [a soft] = [a])
-    (eval [(1 + 2) (3 + 4) soft] = [7])
+    ([] = eval [soft])
+    ([a] = eval [a soft])
+    ([7] = eval [(1 + 2) (3 + 4) soft])
 ][
     (
         hard: infix function [:v [any-element! <...>]] [
@@ -97,7 +97,7 @@
         okay
     )
 
-    (eval [hard] = [])
-    (eval [a hard] = [a])
-    (eval [(1 + 2) (3 + 4) hard] = [(3 + 4)])
+    ([] = eval [hard])
+    ([a] = eval [a hard])
+    ([(3 + 4)] = eval [(1 + 2) (3 + 4) hard])
 ]

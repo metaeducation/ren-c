@@ -50,7 +50,10 @@ cscape: function [
 
     return-type: type of last template
 
-    if (text! <> return-type) and [file! <> return-type] [
+    all [
+        text! <> return-type
+        file! <> return-type
+    ] then [
         fail ["CSCAPE requires TEXT! or FILE! as template:" mold last template]
     ]
 
@@ -313,7 +316,7 @@ make-emitter: function [
         ]
     ]
 
-    if (is-c or [is-js]) [
+    if any [is-c is-js] [
         e/emit [title stem by temporary {
             /**********************************************************************
             **

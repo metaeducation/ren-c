@@ -615,7 +615,7 @@ host-start: function [
     ; As long as there was no `--script` pased on the command line explicitly,
     ; the first item after the options is implicitly the script.
     ;
-    if not o/script and [not tail? argv] [
+    if (not o/script) and [not tail? argv] [
         o/script: local-to-file take argv
         when-done: default ['quit]
     ]

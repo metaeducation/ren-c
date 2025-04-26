@@ -917,7 +917,7 @@ fail: function [
         block! [make error! spaced reason]
     ]
 
-    if not error? :reason or [not pick reason 'where] [
+    if (not error? :reason) or [not pick reason 'where] [
         ;
         ; If no specific location specified, and error doesn't already have a
         ; location, make it appear to originate from the frame calling FAIL.

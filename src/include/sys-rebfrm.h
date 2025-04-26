@@ -412,6 +412,11 @@ struct Reb_Level_Source {
     // L->value for processing.  It's invalid if the frame is for a C va_list.
     //
     REBLEN index;
+
+    // This is set to true when an infix deferral has been requested.  If
+    // this is seen as true, that means it's the second visit.
+    //
+    bool deferring_infix;
 };
 
 
@@ -680,37 +685,6 @@ struct LevelStruct {
     Value* refine;
 
   union {
-    // `deferred`
-    //
-    // The deferred pointer is used to mark an argument cell which *might*
-    // need to do more infix processing in the frame--but only if it turns out
-    // to be the last argument being processed.  For instance, in both of
-    // these cases the AND finds itself gathering an argument to a function
-    // where there is an evaluated 10 on the left hand side:
-    //
-    //    x: 10
-    //
-    //    if block? x and ... [...]
-    //
-    //    if x and ... [...]
-    //
-    // In the former case, the evaluated 10 is fulfilling the one and only
-    // argument to BLOCK?.  The latter case has it fulfilling the *first* of
-    // two arguments to IF.
-    //
-    // The trick used is to not run the AND, go ahead and let the cell fill
-    // the frame either way, and set `deferred` in the frame above to point
-    // at the cell.  If the function finishes gathering arguments and deferred
-    // wasn't cleared by some other operation (like in the `if x` case), then
-    // that cell is re-dispatched with DO_FLAG_POST_SWITCH to give the
-    // impression that the AND had "tightly" taken the argument all along.
-    //
-    struct {
-        Value* arg;
-        const Cell* param;
-        Value* refine;
-    } defer;
-
     // References are used by path dispatch.
     //
     struct {

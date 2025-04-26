@@ -413,7 +413,7 @@ extract: func [
     ]
     if not index [pos: 1]
     out: make (type of series) len
-    if not default_EXTRACT and [any-string? out] [value: copy ""]
+    if (not default_EXTRACT) and [any-string? out] [value: copy ""]
     iterate-skip series width [
         val: pick series pos else [value]
         append/only out :val
@@ -617,7 +617,7 @@ split: function [
     ; In newer Ren-C, this is @[1 2 3] and not [1 2 3], avoiding ambiguity
     ; with BLOCK! meaning PARSE rule.
     ;
-    if block? dlm and [parse/match dlm [some integer!]] [
+    if (block? dlm) and [parse/match dlm [some integer!]] [
         return map-each len dlm [
             if len <= 0 [
                 series: skip series negate len
@@ -693,7 +693,7 @@ split: function [
                 reify ((did find series dlm) and [empty? find/last/tail series dlm])
             ]
             block! ['~null~]
-        ]) and [
+        ]) then [
             add-fill-val
         ]
     ]

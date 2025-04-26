@@ -216,6 +216,7 @@ static bool Subparse_Throws(
     L->source->array = Cell_Array(rules);
     L->source->index = VAL_INDEX(rules) + 1;
     L->source->pending = L->value + 1;
+    L->source->deferring_infix = false;
 
     L->flags = Endlike_Header(DO_FLAG_PARSE_FRAME); // terminates L->spare
 

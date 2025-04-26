@@ -392,6 +392,10 @@ no?: wordtester 'no 'yes
 
 logic!: make typeset! [blank! logic!]
 
+and: or: func [] [
+    fail/blame "AND/OR in preboot EXE are non-logic, weird precedence" 'return
+]
+
 
 ; === MAKE TRY A POOR-MAN'S DEFINITIONAL ERROR HANDLER ===
 
@@ -591,7 +595,10 @@ method: infix adapt 'method [set [spec body] modernize-action spec body]
 
 trim: adapt 'trim [ ; there's a bug in TRIM/AUTO in 8994d23
     if auto [
-        while [not tail? series and [series/1 = LF]] [
+        while [lib/all [  ; TRIM/ALL (!)
+            not tail? series
+            series/1 = LF
+        ]][
             take series
         ]
     ]

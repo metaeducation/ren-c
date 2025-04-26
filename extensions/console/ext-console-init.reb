@@ -118,9 +118,9 @@ console!: make object! [
         ; We don't want to use PRINT here because it would put the cursor on
         ; a new line.
         ;
-        write-stdout <- block? prompt and [
+        write-stdout either block? prompt [
             unspaced prompt
-        ] or [
+        ][
             form prompt
         ]
         write-stdout space

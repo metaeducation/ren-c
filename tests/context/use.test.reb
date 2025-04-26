@@ -51,5 +51,5 @@
 (
     o: binding of use [x] ['x]
     e: sys/util/rescue [append o 'self]
-    error? e and [e/id = 'locked-series]
+    (error? e) and [e/id = 'locked-series]
 )

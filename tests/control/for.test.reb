@@ -219,7 +219,7 @@
             either num > 1 [break] [okay]
         ]
     ]
-    error? e and [e/id = 'overflow]
+    (error? e) and [e/id = 'overflow]
 )]
 (
     e: sys/util/rescue [
@@ -229,7 +229,7 @@
             either num > 1 [break] [okay]
         ]
     ]
-    error? e and [e/id = 'overflow]
+    (error? e) and [e/id = 'overflow]
 )
 
 [#1994 (
@@ -241,7 +241,7 @@
             okay
         ]
     ]
-    error? e and [e/id = 'overflow]
+    (error? e) and [e/id = 'overflow]
 )]
 (
     e: sys/util/rescue [
@@ -252,7 +252,7 @@
             okay
         ]
     ]
-    error? e and [e/id = 'overflow]
+    (error? e) and [e/id = 'overflow]
 )
 
 [#1993

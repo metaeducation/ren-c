@@ -234,7 +234,10 @@ iterate native-list [
     if tail? next native-list [break]
     any [
         'native = native-list/2
-        path? native-list/2 and ['native = first native-list/2]
+        all [
+            path? native-list/2
+            'native = first native-list/2
+        ]
     ] then [
         assert [set-word? native-list/1]
         (emit-include-params-macro/ext e1

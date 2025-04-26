@@ -402,7 +402,7 @@ check-response: function [port] [
                 ]
             ] else [
                 res: check-data port
-                if not res and [state/state = 'ready] [
+                if (not res) and [state/state = 'ready] [
                     res: any [
                         awake make event! [type: 'done port: port]
                         awake make event! [type: 'ready port: port]
@@ -429,9 +429,9 @@ check-response: function [port] [
                     state/state: 'ready
                 ]
             ]
-            if not res and [state/state = 'ready] [
+            if (not res) and [state/state = 'ready] [
                 all [
-                    find [get head] spec/method or [all [
+                    find [get head] spec/method else [all [
                         info/response-parsed = 'see-other
                         spec/method: 'get
                     ]]

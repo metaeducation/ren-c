@@ -36,9 +36,9 @@ modulo: function [
 
     ; Compute the smallest remainder with the same sign as b
     r: remainder a b
-    if sign? r = negate sign? b [r: r + b]
+    if (sign? r) = negate sign? b [r: r + b]
     if not adjusted [return r]
-    if sign? a = negate sign? b [a: negate a]
+    if (sign? a) = negate sign? b [a: negate a]
     ; If r is "almost" b (i.e. negligible compared to b), the
     ; result will be 0. Otherwise the result will be r
     if any [

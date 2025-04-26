@@ -166,11 +166,6 @@ INLINE void Push_Level_Core(Level* L)
     //
     L->original = nullptr;
 
-    if (not (L->flags.bits & DO_FLAG_REEVALUATE_CELL))
-        Corrupt_Pointer_If_Debug(L->u.defer.arg);
-    Corrupt_Pointer_If_Debug(L->u.defer.param);
-    Corrupt_Pointer_If_Debug(L->u.defer.refine);
-
     Corrupt_Pointer_If_Debug(L->opt_label);
   #if DEBUG_FRAME_LABELS
     Corrupt_Pointer_If_Debug(L->label_utf8);
@@ -263,6 +258,7 @@ INLINE void Push_Level_At(
     L->source->array = array;
     L->source->index = index + 1;
     L->source->pending = L->value + 1;
+    L->source->deferring_infix = false;
 
     L->specifier = specifier;
 
@@ -834,7 +830,10 @@ INLINE REBIXO Eval_At_Core(
 
     L->source->vaptr = nullptr;
     L->source->array = array;
+    L->source->deferring_infix = false;
+
     L->gotten = nullptr; // SET_FRAME_VALUE() asserts this is nullptr
+
     if (opt_first) {
         SET_FRAME_VALUE(L, opt_first);
         L->source->index = index;
@@ -979,6 +978,7 @@ INLINE REBIXO Eval_Va_Core(
     L->source->array = nullptr;
     L->source->vaptr = vaptr;
     L->source->pending = END_NODE; // signal next fetch comes from va_list
+    L->source->deferring_infix = false;
 
     // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
     // but the previous L->value will be tested for NODE_FLAG_ROOT.

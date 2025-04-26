@@ -210,24 +210,11 @@ DECLARE_NATIVE(EVAL_INFIX)
     //
     Copy_Cell(OUT, ARG(LEFT));
 
-    // We're kind-of-abusing an internal mechanism, where it is checked that
-    // we are actually doing a deferment.  Try not to make that abuse break
-    // the assertions in Eval_Core.
-    //
-    // Note that while f may have a "prior" already, its prior will become
-    // this frame...so when it asserts about "L->prior->deferred" it means
-    // the frame of EVAL-INFIX that is invoking it.
-    //
-    assert(Is_Pointer_Corrupt_Debug(TOP_LEVEL->u.defer.arg));
-    TOP_LEVEL->u.defer.arg = m_cast(Value*, BLANK_VALUE); // !!! signal our hack
-
     Flags flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
     if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child)) {
         Drop_GC_Guard(temp);
         return BOUNCE_THROWN;
     }
-
-    Corrupt_Pointer_If_Debug(TOP_LEVEL->u.defer.arg);
 
     Drop_GC_Guard(temp);
     return OUT;
@@ -687,9 +674,7 @@ DECLARE_NATIVE(APPLIQUE)
 
     Push_Level_At_End(L, DO_FLAG_PROCESS_ACTION);
 
-    if (Bool_ARG(OPT))
-        L->u.defer.arg = nullptr; // needed if !(DO_FLAG_FULLY_SPECIALIZED)
-    else {
+    if (not Bool_ARG(OPT)) {
         //
         // If nulls are taken literally as null arguments, then no arguments
         // are gathered at the callsite, so the "ordering information"
@@ -709,7 +694,6 @@ DECLARE_NATIVE(APPLIQUE)
     LVL_BINDING(L) = VAL_BINDING(applicand);
 
     Begin_Action(L, opt_label, ORDINARY_ARG);
-    assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg)); // see Eval_Core_Throws()
 
     bool action_threw = Eval_Core_Throws(L);
 

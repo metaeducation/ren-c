@@ -498,7 +498,7 @@ INLINE void Push_Action(
     //
     L->special = ACT_SPECIALTY_HEAD(act);
 
-    L->u.defer.arg = nullptr;
+    L->source->deferring_infix = false;
 
     assert(Not_Node_Managed(L->varlist));
     assert(Not_Flex_Info(L->varlist, INACCESSIBLE));

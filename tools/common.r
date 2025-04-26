@@ -141,11 +141,14 @@ to-c-name: function [
     ]
 
     for-next s string [
-        (head? s) and [find charset [#"0" - #"9"] s/1] and [
+        all [
+            head? s
+            find charset [#"0" - #"9"] s/1
+        ] then [
             fail ["identifier" string "starts with digit in to-c-name"]
         ]
 
-        find c-chars s/1 or [
+        find c-chars s/1 else [
             fail ["Non-alphanumeric or hyphen in" string "in to-c-name"]
         ]
     ]

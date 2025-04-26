@@ -153,7 +153,7 @@
     ;
     did count-up i 2048 [
         derived: make o-big [var-1: 100000 + i]
-        if derived/meth-255 <> 132639 + i [
+        if 132639 + i <> derived/meth-255 [
             break
         ]
         okay
@@ -170,7 +170,7 @@
 [#2076 (
     o: make object! [x: 10]
     e: sys/util/rescue [append o [self: 1]]
-    error? e and [e/id = 'hidden]
+    (error? e) and [e/id = 'hidden]
 )]
 
 [#187 (

@@ -1446,6 +1446,7 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     L->source->array = nullptr;
     L->source->vaptr = vaptr;
     L->source->pending = END_NODE; // signal next fetch comes from va_list
+    L->source->deferring_infix = false;
 
     //
     // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()

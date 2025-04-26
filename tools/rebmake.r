@@ -287,7 +287,7 @@ application-class: make project-class [
     ldflags: null
 
     command: method [return: [text!]] [
-        cc: compiler or [default-compiler]
+        cc: any [compiler default-compiler]
         return cc/link
             output
             depends
@@ -310,7 +310,7 @@ dynamic-library-class: make project-class [
         <with>
         default-compiler
     ][
-        cc: compiler or [default-compiler]
+        cc: any [compiler default-compiler]
         return cc/link/dynamic
             output
             depends
@@ -491,7 +491,10 @@ cc: make compiler-class [
 
             output: file-to-local output
 
-            if (E or [ends-with? output target-platform/obj-suffix]) [
+            any [
+                E
+                ends-with? output target-platform/obj-suffix
+            ] then [
                 keep output
             ] else [
                 keep [output target-platform/obj-suffix]
@@ -716,7 +719,10 @@ cl: make compiler-class [
             output: file-to-local output
             keep unspaced [
                 either E ["/Fi"]["/Fo"]
-                if (E or [ends-with? output target-platform/obj-suffix]) [
+                any [
+                    E
+                    ends-with? output target-platform/obj-suffix
+                ] then [
                     output
                 ] else [
                     unspaced [output target-platform/obj-suffix]
@@ -920,7 +926,7 @@ object-file-class: make object! [
             target: output
             depends: append-of either depends [depends][[]] source
             commands: reduce [compile/I/D/F/O/g/(
-                maybe+ all [PIC or [parent/class = #dynamic-library] 'PIC]
+                maybe+ all [any [PIC parent/class = #dynamic-library] 'PIC]
             )
                 maybe parent/includes
                 maybe parent/definitions

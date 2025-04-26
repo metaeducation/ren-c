@@ -93,6 +93,8 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
 
     UPDATE_EXPRESSION_START(L); // !!! See LVL_INDEX() for caveats
 
+    L->source->deferring_infix = false;  // reset for new expression
+
     Set_Cell_Flag(L->out, OUT_MARKED_STALE);
     return false;
 }
@@ -435,7 +437,6 @@ bool Eval_Core_Throws(Level* const L)
         | DO_FLAG_REEVALUATE_CELL
     )){
         if (L->flags.bits & DO_FLAG_POST_SWITCH) {
-            assert(L->prior->u.defer.arg); // !!! EVAL-INFIX crudely preserves
             assert(NOT_END(L->out));
 
             L->flags.bits &= ~DO_FLAG_POST_SWITCH;
@@ -452,7 +453,6 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         current = L->u.reval.value;
-        Corrupt_Pointer_If_Debug(L->u.defer.arg); // same memory location
         current_gotten = nullptr;
         eval_type = Type_Of(current);
 
@@ -1143,54 +1143,6 @@ bool Eval_Core_Throws(Level* const L)
 
             assert(L->refine == ORDINARY_ARG or Is_Refinement(L->refine));
 
-    //=//// START BY HANDLING ANY DEFERRED INFIX PROCESSING //////////////=//
-
-            // `if 10 and (20) [...]` starts by filling IF's `condition` slot
-            // with 10, because AND has a "non-tight" (normal) left hand
-            // argument.  Were `if 10` a complete expression, that's allowed.
-            //
-            // But now we're consuming another argument at the callsite, e.g.
-            // the `branch`.  So by definition `if 10` wasn't finished.
-            //
-            // We kept a `L->defer` field that points at the previous filled
-            // slot.  So we can re-enter a sub-frame and give the IF's
-            // `condition` slot a second chance to run the infix processing it
-            // put off before, this time using the 10 as AND's left-hand arg.
-            //
-            if (L->u.defer.arg) {
-                Flags flags = DO_FLAG_FULFILLING_ARG;
-
-                DECLARE_SUBLEVEL (child, L);  // capture TOP_INDEX *now*
-
-                if (Is_Level_Gotten_Shoved(L)) {
-                    Erase_Cell(Level_Shove(child));
-                    Copy_Cell(Level_Shove(child), L->gotten);
-                    Set_Cell_Flag(Level_Shove(child), INFIX_IF_ACTION);
-                    L->gotten = Level_Shove(child);
-                }
-
-                if (Eval_Step_In_Subframe_Throws(
-                    L->u.defer.arg, // preload previous L->arg as left infix
-                    L,
-                    flags | DO_FLAG_POST_SWITCH,
-                    child
-                )){
-                    Copy_Cell(L->out, L->u.defer.arg);
-                    goto abort_action;
-                }
-
-                Finalize_Arg(
-                    L,
-                    L->u.defer.param,
-                    L->u.defer.arg,
-                    L->u.defer.refine
-                );
-
-                L->u.defer.arg = nullptr;
-                Corrupt_Pointer_If_Debug(L->u.defer.param);
-                Corrupt_Pointer_If_Debug(L->u.defer.refine);
-            }
-
     //=//// ERROR ON END MARKER ///////////////////////////////////////////=//
 
             if (IS_END(L->value)) {
@@ -1271,10 +1223,6 @@ bool Eval_Core_Throws(Level* const L)
                 or not (L->flags.bits & DO_FLAG_FULLY_SPECIALIZED) // ...this!
             );
 
-            assert(not Is_Pointer_Corrupt_Debug(L->u.defer.arg));
-            if (L->u.defer.arg)
-                continue; // don't do typechecking on this *yet*...
-
             Finalize_Arg(L, L->param, L->arg, L->refine);
 
           continue_arg_loop:;
@@ -1344,24 +1292,6 @@ bool Eval_Core_Throws(Level* const L)
 
         assert(IS_END(L->param)); // signals !Is_Action_Level_Fulfilling()
 
-        if (not In_Typecheck_Mode(L)) { // was fulfilling...
-            assert(not Is_Pointer_Corrupt_Debug(L->u.defer.arg));
-            if (L->u.defer.arg) {
-                //
-                // We deferred typechecking, but still need to do it...
-                //
-                Finalize_Arg(
-                    L,
-                    L->u.defer.param,
-                    L->u.defer.arg,
-                    L->u.defer.refine
-                );
-                Corrupt_Pointer_If_Debug(L->u.defer.param);
-                Corrupt_Pointer_If_Debug(L->u.defer.refine);
-            }
-            Corrupt_Pointer_If_Debug(L->u.defer.arg);
-        }
-
     //==////////////////////////////////////////////////////////////////==//
     //
     // ACTION! ARGUMENTS NOW GATHERED, DISPATCH PHASE
@@ -1379,7 +1309,6 @@ bool Eval_Core_Throws(Level* const L)
         );
 
         Expire_Out_Cell(L);
-        assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg));
 
         if (not Is_Level_Gotten_Shoved(L))
             L->gotten = nullptr; // arbitrary code changes fetched variables
@@ -1454,7 +1383,6 @@ bool Eval_Core_Throws(Level* const L)
           redo_checked:; // BOUNCE_REDO_CHECKED
 
             Expire_Out_Cell(L);
-            assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg));
 
             L->param = ACT_PARAMS_HEAD(Level_Phase(L));
             L->arg = Level_Args_Head(L);
@@ -1993,8 +1921,6 @@ bool Eval_Core_Throws(Level* const L)
 
   post_switch:;
 
-    assert(Is_Pointer_Corrupt_Debug(L->u.defer.arg));
-
 //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION /////////////=//
 
     // For long-pondered technical reasons, only WORD! is able to dispatch
@@ -2059,18 +1985,6 @@ bool Eval_Core_Throws(Level* const L)
 
     if (not L->gotten)
         L->gotten = Try_Get_Opt_Var(L->value, L->specifier);
-    else {
-        // !!! a particularly egregious hack in EVAL-INFIX lets us simulate
-        // infix for a function whose value is not infix.  This means the
-        // value in L->gotten isn't the fetched function, but the function
-        // plus CELL_FLAG_INFIX_IF_ACTION. Discern this hacky case by noting
-        // if L->u.defer.arg is precisely equal to BLANK_VALUE.
-        //
-        assert(
-            L->gotten == Try_Get_Opt_Var(L->value, L->specifier)
-            or (L->prior->u.defer.arg == BLANK_VALUE) // !!! hack
-        );
-    }
 
 //=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-INFIX /////////////=//
 
@@ -2149,25 +2063,10 @@ bool Eval_Core_Throws(Level* const L)
         goto finished;
     }
 
-    // !!! Once checked `not L->deferred` because it only deferred once:
-    //
-    //    "If we get there and there's a deferral, it doesn't matter if it
-    //     was this frame or the parent frame who deferred it...it's the
-    //     same infix function in the same spot, and it's only willing to
-    //     give up *one* of its chances to run."
-    //
-    // But it now defers indefinitely so long as it is fulfilling arguments,
-    // until it finds an <end>able one...which <- (identity) is.  Having
-    // endability control this may not be the best idea, but it keeps from
-    // introducing a new parameter convention or recognizing the specific
-    // function.  It's a rare enough property that one might imagine it to be
-    // unlikely such functions would want to run before deferred infix.
-    //
     if (
         Get_Cell_Flag(L->gotten, DEFER_INFIX_IF_ACTION)
         and (L->flags.bits & DO_FLAG_FULFILLING_ARG)
-        and not L->prior->u.defer.arg
-        and not Is_Param_Endable(L->prior->param)
+        and not L->source->deferring_infix
     ){
         assert(not (L->flags.bits & DO_FLAG_TO_END));
         assert(Is_Action_Level_Fulfilling(L->prior));
@@ -2176,9 +2075,7 @@ bool Eval_Core_Throws(Level* const L)
         //
         assert(L->out == L->prior->arg);
 
-        L->prior->u.defer.arg = L->prior->arg; // see comments in LevelStruct
-        L->prior->u.defer.param = L->prior->param;
-        L->prior->u.defer.refine = L->prior->refine;
+        L->source->deferring_infix = true;
 
         if (Is_Level_Gotten_Shoved(L)) {
             Erase_Cell(Level_Shove(L->prior));
@@ -2195,6 +2092,8 @@ bool Eval_Core_Throws(Level* const L)
         //
         goto finished;
     }
+
+    L->source->deferring_infix = false;
 
     // This is a case for an evaluative lookback argument we don't want to
     // defer, e.g. a #tight argument or a normal one which is not being
