@@ -199,7 +199,7 @@ for-each-typerange: func [
                     append types* to text! name*
                 ])]
                 text!
-                opt [[quasiform! | path!] text!]
+                opt [[quasiform! | chain!] text!]
                 group!
                 block!
                 (heart*: heart* + 1)

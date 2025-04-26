@@ -748,7 +748,7 @@ emcc: make gcc [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
         :dynamic
-        :debug [onoff?]
+        :debug
     ][
         ; custom link behavior could go here
 
@@ -988,7 +988,8 @@ strip-class: make object! [
         return reduce [spaced collect [
             keep any [(file-to-local:pass maybe .exec-file) "strip"]
             params: default [options]
-            switch type of params [  ; switch:type not in bootstrap
+            switch try type-of params [  ; switch:type not in bootstrap
+                null [noop]
                 block! [
                     for-each 'flag params [
                         keep filter-flag flag .id
@@ -997,6 +998,7 @@ strip-class: make object! [
                 text! [
                     keep params
                 ]
+                fail
             ]
             keep file-to-local target
         ]]

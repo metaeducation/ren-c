@@ -175,7 +175,7 @@ emit-proto: func [
 
 process: func [return: [~] file] [
     proto-parser.file: file
-    /proto-parser.emit-proto: emit-proto/
+    proto-parser.emit-proto: emit-proto/
     proto-parser/process as text! read file
 ]
 

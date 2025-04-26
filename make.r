@@ -190,7 +190,7 @@ if commands [user-config.target: null]  ; was `target: load commands`  Why? :-/
 
 ; To tame this file a bit, the cflags map is in a separate file.
 
-cflags-map: make map! []
+cflags-map: to map! []
 left: right: pos: ~
 
 parse3 load3 (join tools-dir %cflags-map.r) [some [
@@ -726,7 +726,7 @@ gen-obj: func [
     ; (e.g. third party files we don't want to edit to remove warnings from)
     ;
     for-each 'flag overrides [
-        let mapped: cflags-map.(flag)  ; if found, it's a block
+        let mapped: try cflags-map.(flag)  ; if found, it's a block
         case [
             mapped [
                 append flags spread mapped
@@ -826,7 +826,7 @@ for-each 'entry read extension-dir [
 
     append extension-names ext-name  ; collect names for HELP (used or not)
 
-    let mode: user-config.extensions.(ext-name)
+    let mode: try user-config.extensions.(ext-name)
     if not mode [
         append unmentioned-extensions ext-name
         continue
@@ -1169,7 +1169,7 @@ if commands [
 ; So it's best to just use the compiler as a linker, and if you have special
 ; switches you need do pass through for those switches through the front end.
 
-rebmake.default-compiler: select rebmake (any [
+rebmake.default-compiler: pick rebmake (any [
     user-config.compiler
     'cc
 ]) else [
@@ -1177,7 +1177,7 @@ rebmake.default-compiler: select rebmake (any [
 ]
 rebmake.default-compiler/check user-config.compiler-path
 
-rebmake.default-stripper: select rebmake (any [
+rebmake.default-stripper: pick rebmake (any [
     user-config.stripper
     'strip
 ]) else [

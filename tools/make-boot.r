@@ -540,7 +540,7 @@ for-each 'section [boot-constants boot-base boot-system-util boot-mezz] [
     for-each 'file first mezz-files [  ; doesn't use LOAD to strip
         let text: stripload:gather (
             join %../mezz/ file
-        ) if section = 'boot-system-util [$sys-toplevel]
+        ) either section = 'boot-system-util [$sys-toplevel] [null]
         append:line s text
     ]
     append:line s "'~end~"  ; sanity check [1]
@@ -607,7 +607,7 @@ e-ext-symids: make-emitter "Extension SymId Commitment Table" (
 )
 
 for-next 'pos sym-table [
-    while [tag? pos.1] [  ; remove placeholders, add defines
+    while [tag? try pos.1] [  ; remove placeholders, add defines
         let definition: as text! pos.1
         take pos
 

@@ -64,6 +64,7 @@ export extract-native-protos: func [
     c-source-file [file!]
     <local> proto name exported native-type
 ][
+    assert [not dir? c-source-file]
     return collect [
         parse3 read:string c-source-file [opt some [
             "//" newline
@@ -292,6 +293,7 @@ export /extract-generic-implementations: func [
     c-source-file [file!]
     <local> name proper-type name* type*
 ][
+    assert [not dir? c-source-file]
     return collect [
         parse3 read:string c-source-file [some [
             "IMPLEMENT_GENERIC" [
