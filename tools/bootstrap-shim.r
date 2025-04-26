@@ -270,7 +270,7 @@ load: ~<Use LOAD3 in Bootstrap (:HEADER returns BLOCK! with OBJECT!)>~
 ; Ren-C, but we can't say `iterate @block [...]` in bootstrap (no @).  Hence
 ; instead, INERT (which adds @ in new executables) is defined to add a #"."
 
-inert: func3 [word [word!]] [return to-issue word]
+inert: lambda3 [word [word!]] [to-issue word]
 
 quasiform!: word!  ; conflated, but can work in a very limited sense
 quasi?: func3 [v <local> spelling] [
@@ -300,8 +300,8 @@ unrun: ~<No UNRUN in bootstrap, but could be done w/make FRAME!>~
 
 has: in/  ; old IN behavior of word lookup achieved by HAS now
 overbind: in/  ; works in a limited sense
-bindable: func3 [what] [:what]
-inside: func3 [where value] [:value]  ; no-op in bootstrap
+bindable: lambda3 [what] [:what]
+inside: lambda3 [where value] [:value]  ; no-op in bootstrap
 wrap: identity/  ; no op in bootstrap
 
 in: ~<Use HAS or OVERBIND instead of IN in bootstrap>~
@@ -312,7 +312,7 @@ in: ~<Use HAS or OVERBIND instead of IN in bootstrap>~
 set '^break does [does [break/]]
 set '^continue does [does [continue/]]
 
-quote: func3 [x [any-value!]] [  ; see the more general UNEVAL
+quote: lambda3 [x [any-value!]] [  ; see the more general UNEVAL
     switch type of x [
         word! [to lit-word3! x]  ; to lit-word! not legal in new EXE
         path! [to lit-path3! x]  ; to lit-path! not legal in new EXE
@@ -323,7 +323,7 @@ quote: func3 [x [any-value!]] [  ; see the more general UNEVAL
     ]
 ]
 
-unquote: func3 [x [any-value!]] [  ; see the more general EVAL
+unquote: lambda3 [x [any-value!]] [  ; see the more general EVAL
     switch type of x [
         lit-word3! [to word! x]  ; to word! of quoted not legal in new EXE
         lit-path3! [to path! x]  ; to path! of quoted not legal in new EXE
@@ -363,22 +363,22 @@ get-path!: func3 [] [
     fail:blame "GET-PATH! can no longer exist, try GET-TUPLE?!" $return
 ]
 
-setify: func3 [plain [word! path!]] [
+setify: lambda3 [plain [word! path!]] [
     either word? plain [to-set-word plain] [to-set-path plain]
 ]
 
-unchain: func3 [chain [set-word3! set-path3!]] [
+unchain: lambda3 [chain [set-word3! set-path3!]] [
     either set-word? chain [to-word chain] [to-path chain]
 ]
 
-unpath: func3 [path [refinement3!]] [
+unpath: lambda3 [path [refinement3!]] [
     to-word path
 ]
 
-any-value?: func3 [x] [okay]  ; now inclusive of null
+any-value?: lambda3 [x] [okay]  ; now inclusive of null
 element?: any-value?/  ; used to exclude null
 
-typechecker: func3 [x [datatype! typeset! block!]] [
+typechecker: lambda3 [x [datatype! typeset! block!]] [
     if x [if block? x [make typeset! x] else [x]]
 ]
 
@@ -402,7 +402,7 @@ spread: func3 [
     return: [~void~ ~null~ block!]
     x [~null~ blank! block!]
 ][
-    case [
+    return case [
         null? :x [return null]
         blank? :x [return void]
         <else> [reduce [#splice! x]]
@@ -441,7 +441,7 @@ append: func3 [series value [any-value!] /line <local> only] [
             ]
         ]
     ]
-    append3:(maybe only):(maybe line) series :value
+    return append3:(maybe only):(maybe line) series :value
 ]
 
 insert: func3 [series value [any-value!] /line <local> only] [
@@ -463,7 +463,7 @@ insert: func3 [series value [any-value!] /line <local> only] [
             ]
         ]
     ]
-    insert3:(maybe only):(maybe line) series :value
+    return insert3:(maybe only):(maybe line) series :value
 ]
 
 change: func3 [series value [any-value!] /line <local> only] [
@@ -482,7 +482,7 @@ change: func3 [series value [any-value!] /line <local> only] [
             ]
         ]
     ]
-    change3:(maybe only):(maybe line) series :value
+    return change3:(maybe only):(maybe line) series :value
 ]
 
 replace: func3 [target pattern replacement] [
@@ -506,7 +506,7 @@ replace: func3 [target pattern replacement] [
             pattern: reduce [pattern]
         ]
     ]
-    replace3 target pattern replacement
+    return replace3 target pattern replacement
 ]
 
 join: func3 [
@@ -563,7 +563,7 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
 
     reeval lambda3 [keep [action!] <with> return] body keeper/
 
-    out
+    return out
 ]
 
 /collect: cascade [  ; Gives empty block instead of null if no keeps
@@ -888,10 +888,10 @@ apply: func3 [
         ]
     ]
 
-    eval f
+    return eval f
 ]
 
-//: infix func3 ['left [word! path!] right [block!]] [
+//: infix lambda3 ['left [word! path!] right [block!]] [
     apply get left right
 ]
 
@@ -919,7 +919,7 @@ noquote: func3 [x [~null~ any-value!]] [
         lit-word3! [return to word! x]
         lit-path3! [return to path! x]
     ]
-    x
+    return x
 ]
 
 resolve: func3 [x [any-word3! any-path3!]] [
@@ -937,7 +937,7 @@ resolve: func3 [x [any-word3! any-path3!]] [
 ;
 ; Another big change is that the parameters are reversed.
 ;
-bind: func3 [context element /copy3] [
+bind: lambda3 [context element /copy3] [
     either copy3 [
         bind3:copy element context
     ][
