@@ -200,9 +200,9 @@
 )
 
 ; / is no longer a length 0 PATH! in Ren-C
-(type of the / = word!)
+(word! = type of the /)
 
-(type of the foo/ = path!)  ; bootstrap compatibliity, we want this!
+(path! = type of the foo/)  ; bootstrap compatibliity, we want this!
 
 ; Terminal slash now means get action, works also with specialization and
 ; with chains!

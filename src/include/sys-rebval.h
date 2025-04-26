@@ -190,22 +190,17 @@
 // involved is an action.  One benefit is that testing for an infix action
 // can be done just by looking at this bit--since only actions have it set.
 //
-// !!! Note that in the bootstrap executable, there is only one kind of INFIX,
-// whereas the modern executable has 3 at time of writing (INFIX_TIGHT,
-// INFIX_DEFER, and INFIX_POSTPONE).  The strange behaviors such as evaluating
-// one expression to the left to enable things like THEN and ELSE actually
-// come from parameter conventions on the functions.  This concept that there
-// would be "tight" parameters that could apply to the right hand side was not
-// carried forward.  The bootstrap executable will likely stay using these
-// old ideas, however...until it is retired in favor of a modern executable.
-//
 #define CELL_FLAG_INFIX_IF_ACTION \
     FLAG_LEFT_BIT(21)
 
 
-//=//// CELL_FLAG_22 //////////////////////////////////////////////////////=//
+//=//// CELL_FLAG_DEFER_INFIX_IF_ACTION //////////////////////////////////=//
 //
-#define CELL_FLAG_22 \
+// If an action is marked as infix, this indicates that it should be a
+// deferred infix (e.g. how THEN and ELSE don't see a BLOCK! directly to
+// their left, but rather the result of the function operating on the block).
+//
+#define CELL_FLAG_DEFER_INFIX_IF_ACTION \
     FLAG_LEFT_BIT(22)
 
 

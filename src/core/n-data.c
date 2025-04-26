@@ -577,6 +577,7 @@ static void Set_Opt_Polymorphic_May_Fail(
 //
 //      return: [action!]
 //      action [action!]
+//      /defer "evaluate one expression on the left hand side"
 //      /off "turn the infix bit off instead of on"
 //  ]
 //
@@ -587,13 +588,21 @@ DECLARE_NATIVE(INFIX)
     INCLUDE_PARAMS_OF_INFIX;
 
     Value* v = ARG(ACTION);
-
     Copy_Cell(OUT, v);
-    if (Bool_ARG(OFF))
-        Clear_Cell_Flag(OUT, INFIX_IF_ACTION);
-    else
-        Set_Cell_Flag(OUT, INFIX_IF_ACTION);
 
+    if (Bool_ARG(OFF)) {
+        if (Bool_ARG(DEFER))
+            fail ("Cannot use /OFF with /DEFER");
+        Clear_Cell_Flag(OUT, INFIX_IF_ACTION);
+        Clear_Cell_Flag(OUT, DEFER_INFIX_IF_ACTION);
+        return OUT;
+    }
+
+    Set_Cell_Flag(OUT, INFIX_IF_ACTION);
+    if (Bool_ARG(DEFER))
+        Set_Cell_Flag(OUT, DEFER_INFIX_IF_ACTION);
+    else
+        Clear_Cell_Flag(OUT, DEFER_INFIX_IF_ACTION);
     return OUT;
 }
 

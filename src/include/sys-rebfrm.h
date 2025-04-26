@@ -199,15 +199,11 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 
 //=//// DO_FLAG_NO_LOOKAHEAD //////////////////////////////////////////////=//
 //
-// Infix functions may (depending on the #tight or non-tight parameter
-// acquisition modes) want to suppress further infix lookahead while getting
+// Infix functions traditionally suppress further infix lookahead while getting
 // a function argument.  This precedent was started in R3-Alpha, where with
 // `1 + 2 * 3` it didn't want infix `+` to "look ahead" past the 2 to see the
 // infix `*` when gathering its argument, that was saved until the `1 + 2`
 // finished its processing.
-//
-// See PARAMCLASS_TIGHT for more explanation on the parameter class which
-// adds this flag to its argument gathering call.
 //
 #define DO_FLAG_NO_LOOKAHEAD \
     FLAG_LEFT_BIT(17)
@@ -231,9 +227,13 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(19)
 
 
-//=//// DO_FLAG_20 ////////////////////////////////////////////////////////=//
+//=//// DO_FLAG_RUNNING_AS_INFIX //////////////////////////////////////////=//
 //
-#define DO_FLAG_20 \
+// This flag is held onto for the duration of running an infix function, so
+// that the evaluator knows not to eagerly consume more infix.  This is so
+// that (1 + 2 * 3) gives 9.
+//
+#define DO_FLAG_RUNNING_AS_INFIX \
     FLAG_LEFT_BIT(20)
 
 
@@ -696,10 +696,7 @@ struct LevelStruct {
     //
     // In the former case, the evaluated 10 is fulfilling the one and only
     // argument to BLOCK?.  The latter case has it fulfilling the *first* of
-    // two arguments to IF.  Since AND has PARAMCLASS_NORMAL for its left
-    // argument (as opposed to PARAMCLASS_TIGHT), it wishes to interpret the
-    // first case as `if (block? 10) and ... [...], but still let the second
-    // case work too.  Yet discerning these in advance is costly/complex.
+    // two arguments to IF.
     //
     // The trick used is to not run the AND, go ahead and let the cell fill
     // the frame either way, and set `deferred` in the frame above to point

@@ -55,7 +55,7 @@ r3-alpha-quote: func [
 +: -: *: and+: or+: xor+: null
 
 append lib [/]  ; `/:` is not legal in bootstrap, use painful workaround
-eval compose/deep [lib/(the /): infix tighten :divide]
+eval compose/deep [lib/(the /): infix :divide]
 
 for-each [math-op function-name] [
     +       add
@@ -80,7 +80,7 @@ for-each [math-op function-name] [
     ; Note: TIGHTEN currently changes all normal parameters to #tight, which
     ; which for the set operations creates an awkward looking /SKIP's SIZE.
     ;
-    set math-op infix (tighten get function-name)
+    set math-op infix get function-name
 ]
 
 

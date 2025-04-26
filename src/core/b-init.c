@@ -510,7 +510,7 @@ static void Shutdown_Action_Meta_Shim(void) {
 //
 //    some-name: native [...spec...]
 //
-// It is optional to put INFIX between the SET-WORD! and the spec.
+// It is optional to put INFIX or INFIX/DEFER between SET-WORD! and the spec.
 //
 // If more refinements are added, this will have to get more sophisticated.
 //
@@ -539,12 +539,25 @@ Value* Make_Native(
     ++*item;
 
     bool infix;
+    bool defer;
     if (Is_Word(*item) and Cell_Word_Id(*item) == SYM_INFIX) {
         infix = true;
+        defer = false;
         ++*item;
     }
-    else
+    else if (
+        Is_Path(*item)
+        and Cell_Word_Id(Cell_List_At(*item)) == SYM_INFIX
+        and Cell_Word_Id(Cell_List_At(*item) + 1) == SYM_DEFER
+    ){
+        infix = true;
+        defer = true;
+        ++*item;
+    }
+    else {
         infix = false;
+        defer = false;
+    }
 
     if (
         not Is_Word(*item)
@@ -591,6 +604,10 @@ Value* Make_Native(
     Init_Action_Unbound(var, act);
     if (infix)
         Set_Cell_Flag(var, INFIX_IF_ACTION);
+    if (defer) {
+        assert(infix);
+        Set_Cell_Flag(var, DEFER_INFIX_IF_ACTION);
+    }
 
     return var;
 }

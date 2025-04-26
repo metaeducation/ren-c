@@ -61,10 +61,8 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         return true;
     }
 
-    if (
-        (pclass == PARAMCLASS_NORMAL || pclass == PARAMCLASS_TIGHT)
-        && Is_Word(opt_look)
-    ){
+    if (pclass == PARAMCLASS_NORMAL and Is_Word(opt_look)) {
+        //
         // When a variadic argument is being TAKE-n, deferred left hand side
         // argument needs to be seen as end of variadic input.  Otherwise,
         // `summation 1 2 3 |> 100` acts as `summation 1 2 (3 |> 100)`.
@@ -81,10 +79,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 
         if (child_gotten and Type_Of(child_gotten) == TYPE_ACTION) {
             if (Get_Cell_Flag(child_gotten, INFIX_IF_ACTION)) {
-                if (
-                    pclass == PARAMCLASS_TIGHT
-                    or Get_Cell_Flag(child_gotten, ACTION_DEFERS_LOOKBACK)
-                ){
+                if (Get_Cell_Flag(child_gotten, DEFER_INFIX_IF_ACTION)) {
                     Init_For_Vararg_End(out, op);
                     return true;
                 }
@@ -184,8 +179,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         }
 
         switch (pclass) {
-        case PARAMCLASS_NORMAL:
-        case PARAMCLASS_TIGHT: {
+        case PARAMCLASS_NORMAL: {
             DECLARE_LEVEL (L_temp);
             Push_Level_At(
                 L_temp,
@@ -279,19 +273,6 @@ bool Do_Vararg_Op_Maybe_End_Throws(
                 SET_END(out),
                 L,
                 DO_FLAG_FULFILLING_ARG,
-                child
-            )){
-                return true;
-            }
-            L->gotten = nullptr; // cache must be forgotten...
-            break; }
-
-        case PARAMCLASS_TIGHT: {
-            DECLARE_LEVEL_CORE (child, L->source);
-            if (Eval_Step_In_Subframe_Throws(
-                SET_END(out),
-                L,
-                DO_FLAG_FULFILLING_ARG | DO_FLAG_NO_LOOKAHEAD,
                 child
             )){
                 return true;
@@ -589,10 +570,6 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
         switch ((pclass = Cell_Parameter_Class(param))) {
         case PARAMCLASS_NORMAL:
             kind = TYPE_WORD;
-            break;
-
-        case PARAMCLASS_TIGHT:
-            kind = TYPE_ISSUE;
             break;
 
         case PARAMCLASS_HARD_QUOTE:

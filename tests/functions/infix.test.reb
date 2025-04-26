@@ -11,7 +11,7 @@
     ]
 )
 (
-    foo: infix tighten :add
+    foo: infix :add
     all [
         infix? foo/
         1 foo 2 = 3
@@ -102,13 +102,13 @@
 ; SHOVE should be able to handle refinements and contexts.
 [
     (did obj: make object! [
-        magic: infix lambda [#a #b /minus] [
+        magic: infix lambda [a b /minus] [
             either minus [a - b] [a + b]
         ]
     ])
 
     (error? sys/util/rescue [1 obj/magic 2])
 
-    (3 = 1 >- obj/magic 2)
-    (-1 = 1 >- obj/magic/minus 2)
+    (1 >- obj/magic 2 = 3)
+    (1 >- obj/magic/minus 2 = -1)
 ]

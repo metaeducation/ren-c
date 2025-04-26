@@ -307,7 +307,7 @@ DECLARE_NATIVE(EITHER_TEST)
 
 
 //
-//  else: infix native [
+//  else: infix/defer native [
 //
 //  {If input is not null, return that value, otherwise evaluate the branch}
 //
@@ -334,7 +334,7 @@ DECLARE_NATIVE(ELSE)
 
 
 //
-//  then: infix native [
+//  then: infix/defer native [
 //
 //  {If input is null, return null, otherwise evaluate the branch}
 //
@@ -362,7 +362,7 @@ DECLARE_NATIVE(THEN)
 
 
 //
-//  also: infix native [
+//  also: infix/defer native [
 //
 //  {For non-null input, evaluate and discard branch (like a pass-thru THEN)}
 //

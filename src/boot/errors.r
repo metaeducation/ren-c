@@ -104,7 +104,6 @@ Script: [
 
     apply-too-many:     {Too many values in processed argument block of APPLY.}
 
-    invalid-tighten:    {TIGHTEN does not support SPECIALIZE/ADAPT/CHAIN}
     print-needs-eval:   {PRINT needs /EVAL to process non-literal blocks}
 
     hijack-blank:       {Hijacked function was captured but no body given yet}

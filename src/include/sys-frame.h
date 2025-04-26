@@ -387,6 +387,13 @@ INLINE void Begin_Action(
         or mode == END_NODE
     );
     L->refine = mode;
+
+    /*assert(not (L->flags.bits & DO_FLAG_RUNNING_AS_INFIX));*/  // how?
+
+    if (mode == LOOKBACK_ARG)
+        L->flags.bits |= DO_FLAG_RUNNING_AS_INFIX;
+    else
+        L->flags.bits &= ~DO_FLAG_RUNNING_AS_INFIX;
 }
 
 

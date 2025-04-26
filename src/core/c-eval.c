@@ -1069,10 +1069,6 @@ bool Eval_Core_Throws(Level* const L)
                     Copy_Cell(L->arg, L->out);
                     break;
 
-                  case PARAMCLASS_TIGHT:
-                    Copy_Cell(L->arg, L->out);
-                    break;
-
                   case PARAMCLASS_HARD_QUOTE:
                     // Is_Param_Skippable() accounted for in pre-lookback
 
@@ -1212,28 +1208,10 @@ bool Eval_Core_Throws(Level* const L)
 
               case PARAMCLASS_NORMAL: {
                 Flags flags = DO_FLAG_FULFILLING_ARG;
+                if (L->flags.bits & DO_FLAG_RUNNING_AS_INFIX)
+                    flags |= DO_FLAG_NO_LOOKAHEAD;
 
                 DECLARE_SUBLEVEL (child, L);  // capture TOP_INDEX *now*
-                SET_END(L->arg); // Finalize_Arg() sets to Endish_Nulled
-                if (Eval_Step_In_Subframe_Throws(L->arg, L, flags, child)) {
-                    Copy_Cell(L->out, L->arg);
-                    goto abort_action;
-                }
-                break; }
-
-              case PARAMCLASS_TIGHT: {
-                //
-                // PARAMCLASS_NORMAL does "normal" normal infix lookahead,
-                // e.g. `square 1 + 2` would pass 3 to single-arity `square`.
-                // But if the argument to square is declared #tight, it will
-                // act as `(square 1) + 2`, by not applying lookahead to see
-                // the `+` during the argument evaluation.
-                //
-                Flags flags =
-                    DO_FLAG_NO_LOOKAHEAD
-                    | DO_FLAG_FULFILLING_ARG;
-
-                DECLARE_SUBLEVEL (child, L);
                 SET_END(L->arg); // Finalize_Arg() sets to Endish_Nulled
                 if (Eval_Step_In_Subframe_Throws(L->arg, L, flags, child)) {
                     Copy_Cell(L->out, L->arg);
@@ -2159,10 +2137,8 @@ bool Eval_Core_Throws(Level* const L)
   post_switch_shove_gotten:; // assert(!CELL_FLAG_ACTION_QUOTES_FIRST_ARG) pre-goto
 
     if (L->flags.bits & DO_FLAG_NO_LOOKAHEAD) {
-        // Don't do infix lookahead if asked *not* to look.  See the
-        // PARAMCLASS_TIGHT parameter convention for the use of this, as
-        // well as it being set if DO_FLAG_TO_END wants to clear out the
-        // invisibles at this frame level before returning.
+        //
+        // Don't do infix lookahead if asked *not* to look.
         //
         if (Is_Level_Gotten_Shoved(L)) {
             Erase_Cell(Level_Shove(L->prior));
@@ -2188,7 +2164,7 @@ bool Eval_Core_Throws(Level* const L)
     // unlikely such functions would want to run before deferred infix.
     //
     if (
-        Get_Cell_Flag(L->gotten, ACTION_DEFERS_LOOKBACK)
+        Get_Cell_Flag(L->gotten, DEFER_INFIX_IF_ACTION)
         and (L->flags.bits & DO_FLAG_FULFILLING_ARG)
         and not L->prior->u.defer.arg
         and not Is_Param_Endable(L->prior->param)

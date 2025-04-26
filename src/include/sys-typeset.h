@@ -167,25 +167,7 @@ typedef enum {
     //
     PARAMCLASS_REFINEMENT = 0x03,
 
-    // `PARAMCLASS_TIGHT` makes infixed first arguments "lazy" and other
-    // arguments will use the DO_FLAG_NO_LOOKAHEAD.
-    //
-    // R3-Alpha's notion of infix OP!s changed the way parameters were
-    // gathered.  On the right hand side, the argument was evaluated in a
-    // special mode in which further infix processing was not done.  This
-    // meant that `1 + 2 * 3`, when fulfilling the 2 for the right side of +,
-    // would "blind" itself so that it would not chain forward and see the
-    // `* 3`.  This gave rise to a distinct behavior from `1 + multiply 2 3`.
-    // A similar kind of "tightness" would happen with the left hand side,
-    // where `add 1 2 * 3` would be aggressive and evaluate it as
-    // `add 1 (2 * 3)` and not `(add 1 2) * 3`.
-    //
-    // Ren-C decouples this property so that it may be applied to any
-    // parameter, and calls it "tight".  By default, however, expressions are
-    // completed as far as they can be on both the left and right hand side of
-    // infixed expressions.
-    //
-    PARAMCLASS_TIGHT = 0x04,
+    PARAMCLASS_UNUSED_0x04 = 0x04,
 
     // PARAMCLASS_RETURN acts like a pure local, but is pre-filled with a
     // ACTION! bound to the frame, that takes 0 or 1 arg and returns it.

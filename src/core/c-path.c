@@ -707,8 +707,8 @@ DECLARE_NATIVE(POKE)
 //
 //  {Temporary native in lieu of PD_Xxx() dispatch so `/` performs division}
 //
-//      #left [any-value!]
-//      #right [any-value!]
+//      left [any-value!]
+//      right [any-value!]
 //  ]
 //
 DECLARE_NATIVE(PATH_0)

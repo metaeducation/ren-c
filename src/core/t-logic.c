@@ -361,7 +361,7 @@ DECLARE_NATIVE(XOR_Q)
 
 
 //
-//  and: infix native [
+//  and: infix/defer native [
 //
 //  {Boolean AND, with short-circuit mode if right hand side is BLOCK!}
 //
@@ -395,7 +395,7 @@ DECLARE_NATIVE(AND)
 }
 
 
-//  or: infix native [
+//  or: infix/defer native [
 //
 //  {Boolean OR, with short-circuit mode if right hand side is BLOCK!}
 //
@@ -429,7 +429,7 @@ DECLARE_NATIVE(OR)
 
 
 //
-//  xor: infix native [
+//  xor: infix/defer native [
 //
 //  {Boolean XOR}
 //
@@ -467,7 +467,7 @@ DECLARE_NATIVE(XOR)
 
 
 //
-//  unless: infix native [
+//  unless: infix/defer native [
 //
 //  {Variant of non-short-circuit OR which favors the right-hand side result}
 //

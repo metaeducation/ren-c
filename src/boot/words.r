@@ -86,6 +86,7 @@ pick
 poke
 
 infix
+defer
 native
 self
 

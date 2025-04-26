@@ -52,10 +52,6 @@ Array* List_Func_Words(const Cell* func, bool pure_locals)
             kind = TYPE_WORD;
             break;
 
-        case PARAMCLASS_TIGHT:
-            kind = TYPE_ISSUE;
-            break;
-
         case PARAMCLASS_REFINEMENT:
             kind = TYPE_REFINEMENT;
             break;
@@ -430,16 +426,6 @@ Array* Make_Paramlist_Managed_May_Fail(
             // though definitional return should be using it for the return
             // type of the function.
             //
-            break;
-
-        case TYPE_ISSUE:
-            //
-            // !!! Because of their role in the preprocessor in Red, and a
-            // likely need for a similar behavior in Rebol, ISSUE! might not
-            // be the ideal choice to mark tight parameters.
-            //
-            assert(mode == SPEC_MODE_NORMAL);
-            Tweak_Parameter_Class(typeset, PARAMCLASS_TIGHT);
             break;
 
         default:
@@ -830,17 +816,6 @@ REBACT *Make_Action(
                 Set_Cell_Flag(rootparam, ACTION_DEFERS_LOOKBACK);
                 first_arg = false;
             }
-            break;
-
-        // Otherwise, at least one argument but not one that requires the
-        // deferring of lookback.
-
-        case PARAMCLASS_TIGHT:
-            //
-            // If first argument is tight, and not specialized, no flag needed
-            //
-            if (first_arg and not Is_Param_Hidden(param))
-                first_arg = false;
             break;
 
         case PARAMCLASS_HARD_QUOTE:

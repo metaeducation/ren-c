@@ -687,8 +687,8 @@ split: function [
         ; implied empty field after it, which we add here.
         ;
         (degrade switch type of dlm [
-            bitset! [reify (did find dlm maybe last series)]
-            char! [reify (dlm = last series)]
+            bitset! [reify did find dlm maybe last series]
+            char! [reify dlm = last series]
             text! [
                 reify ((did find series dlm) and [empty? find/last/tail series dlm])
             ]

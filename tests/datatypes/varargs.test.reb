@@ -38,6 +38,23 @@
 ; the TAKE is called, but theorized that's still more useful than erroring.
 [
     (
+        deferred: infix/defer function [v [integer! <...>]] [
+            sum: 0
+            while [not tail? v] [
+                sum: sum + take v
+            ]
+            return sum
+        ]
+        okay
+    )
+
+    (eval [deferred] = 0)
+    (eval [10 deferred] = 10)
+    (eval [10 20 deferred] = 20)
+    (eval [x: 30  y: 'x  1 2 x deferred] = 30)
+    (eval [multiply 3 9 deferred] = 27) ;-- seen as ((multiply 3 9) deferred)
+][
+    (
         normal: infix function [v [integer! <...>]] [
             sum: 0
             while [not tail? v] [
@@ -52,24 +69,7 @@
     (eval [10 normal] = 10)
     (eval [10 20 normal] = 20)
     (eval [x: 30  y: 'x  1 2 x normal] = 30)
-    (eval [multiply 3 9 normal] = 27) ;-- seen as ((multiply 3 9) normal)
-][
-    (
-        tight: infix function [#v [integer! <...>]] [
-            sum: 0
-            while [not tail? v] [
-                sum: sum + take v
-            ]
-            return sum
-        ]
-        okay
-    )
-
-    (eval [tight] = 0)
-    (eval [10 tight] = 10)
-    (eval [10 20 tight] = 20)
-    (eval [x: 30  y: 'x  1 2 x tight] = 30)
-    (eval [multiply 3 9 tight] = 27) ;-- seen as (multiply 3 (9 tight))
+    (eval [multiply 3 9 normal] = 27) ;-- seen as (multiply 3 (9 tight))
 ][
     (
         soft: infix function ['v [any-value! <...>]] [

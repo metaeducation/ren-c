@@ -27,7 +27,7 @@ emit-native-proto: function [
         parse2/match proto-parser/data [
             opt 'export
             set name: set-word!
-            opt 'infix
+            opt ['infix | 'infix/defer]
             ['native | and path! into ['native to end]]
             [
                 set spec: block!

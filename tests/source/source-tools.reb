@@ -208,7 +208,7 @@ rebsource: context [
                     parse2/match proto-parser/data [
                         opt 'export
                         set name: set-word! (name: to-word name)
-                        opt 'infix
+                        opt ['infix | 'infix/defer]
                         ['native | ahead path! into ['native to end]]
                         to end
                     ] then [

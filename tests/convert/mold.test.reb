@@ -47,35 +47,35 @@
     (did block: copy [a b c])
 
     (
-        mold block = {[a b c]}
+        {[a b c]} = mold block
     )(
         new-line block 'yes
-        mold block = {[^/    a b c]}
+        {[^/    a b c]} = mold block
     )(
         new-line tail block 'yes
-        mold block = {[^/    a b c^/]}
+        {[^/    a b c^/]} = mold block
     )(
-        mold tail block = {[^/]}
+        {[^/]} = mold tail block
     )
 ]
 
 (
     block: [
         a b c]
-    mold block = {[^/    a b c]}
+    {[^/    a b c]} = mold block
 )
 
 (
     block: [a b c
     ]
-    mold block = {[a b c^/]}
+    {[a b c^/]} = mold block
 )
 
 (
     block: [a b
         c
     ]
-    mold block = {[a b^/    c^/]}
+    {[a b^/    c^/]} = mold block
 )
 
 (
@@ -83,7 +83,7 @@
     new-line block 'yes
     new-line tail block 'yes
     append block [d e f]
-    mold block = {[^/    a b c^/    d e f]}
+    {[^/    a b c^/    d e f]} = mold block
 )
 
 (
@@ -91,13 +91,13 @@
     new-line block 'yes
     new-line tail block 'yes
     append/line block [d e f]
-    mold block = {[^/    a b c^/    d e f^/]}
+    {[^/    a b c^/    d e f^/]} = mold block
 )
 
 (
     block: copy []
     append/line block [d e f]
-    mold block = {[^/    d e f^/]}
+    {[^/    d e f^/]} = mold block
 )
 
 (
@@ -105,7 +105,7 @@
     new-line block 'yes
     new-line tail block 'yes
     append/line block [d e f]
-    mold block = {[^/    a b c^/    d e f^/]}
+    {[^/    a b c^/    d e f^/]} = mold block
 )
 
 [#145 (

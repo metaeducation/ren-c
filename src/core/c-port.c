@@ -367,6 +367,8 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
             continue;
 
         Copy_Cell(code, L->arg);
+        if (Is_Antiform(code) or not Any_Inert(code))
+            Meta_Quotify(cast(Value*, code));
         ++code;
     }
 
