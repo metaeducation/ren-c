@@ -904,27 +904,19 @@ static void Mark_Root_Stubs(void)
 
                 // This means someone did something like Make_Array() and then
                 // ran an evaluation before referencing it somewhere from the
-                // root set.
+                // root set.  The bootstrap executable has a hard time with
+                // this, so only a limited number of arrays are allowed.
 
-                // Only plain arrays are supported as unmanaged across
-                // evaluations, because VarList and REBACT and REBMAP are too
-                // complex...they must be managed before evaluations happen.
-                // Manage and use Push_GC_Guard and Drop_GC_Guard on them.
-                //
-                assert(
-                    Not_Array_Flag(s, IS_PARAMLIST)
-                    and Not_Array_Flag(s, IS_PAIRLIST)
-                );
+                if (s == DS_Array)
+                    continue;  // handled by Mark_Data_Stack()
 
-                // Note: Arrays which are using their LINK() or MISC() for
-                // other purposes than file and line will not be marked here!
-                //
-                if (Get_Array_Flag(s, HAS_FILE_LINE))
-                    LINK(s).file->leader.bits |= NODE_FLAG_MARKED;
+                if (s == BUF_COLLECT) {
+                    if (Array_Len(BUF_COLLECT) != 0)
+                        panic (BUF_COLLECT);
+                    continue;  // shouldn't recycle while collecting
+                }
 
-                Cell* item = Array_Head(cast(Array*, s));
-                for (; NOT_END(item); ++item)
-                    Queue_Mark_Value_Deep(item);
+                panic (s);
             }
 
             // At present, no handling for unmanaged STRING!, BINARY!, etc.
@@ -1405,11 +1397,7 @@ REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
     PG_Reb_Stats->Mark_Count = 0;
   #endif
 
-    // WARNING: This terminates an existing open block.  This could be a
-    // problem if code is building a new value at the tail, but has not yet
-    // updated the TAIL marker.
-    //
-    Term_Array_Len(BUF_COLLECT, Array_Len(BUF_COLLECT));
+    assert(Array_Len(BUF_COLLECT) == 0);
 
     // The TG_Reuse list consists of entries which could grow to arbitrary
     // length, and which aren't being tracked anywhere.  Cull them during GC
