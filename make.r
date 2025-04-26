@@ -446,7 +446,9 @@ switch user-config/debug [
         ; something that significantly affects runtime)
         ;
         append app-config/definitions ["DEBUG_STDIO_OK"]
-        append app-config/definitions ["DEBUG_PROBE_OK"]
+        append app-config/definitions ["DEBUG_HAS_PROBE"]
+        append app-config/definitions ["DEBUG_HAS_ALWAYS_MALLOC"]
+        append app-config/definitions ["DEBUG_HAS_RECYCLE_TORTURE"]
 
         ; A special CALLGRIND native is included which allows metrics
         ; gathering to be turned on and off.  Needs <valgrind/callgrind.h>

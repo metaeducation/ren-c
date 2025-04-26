@@ -335,6 +335,14 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
     #define DEBUG_HAS_PROBE  RUNTIME_CHECKS
 #endif
 
+#if !defined(DEBUG_HAS_ALWAYS_MALLOC)
+    #define DEBUG_HAS_ALWAYS_MALLOC  RUNTIME_CHECKS
+#endif
+
+#if !defined(DEBUG_HAS_RECYCLE_TORTURE)
+    #define DEBUG_HAS_RECYCLE_TORTURE  RUNTIME_CHECKS
+#endif
+
 #if !defined(DEBUG_MONITOR_STUB)
     #define DEBUG_MONITOR_STUB  RUNTIME_CHECKS
 #endif

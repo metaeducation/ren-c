@@ -80,7 +80,7 @@ PVAR REB_OPTS *Reb_Opts;
     PVAR bool PG_Probe_Failures; // helpful especially for boot errors & panics
 #endif
 
-#if RUNTIME_CHECKS
+#if DEBUG_HAS_ALWAYS_MALLOC
     PVAR bool PG_Always_Malloc;   // For memory-related troubleshooting
 #endif
 

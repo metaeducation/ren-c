@@ -583,7 +583,7 @@ INLINE Flex* Alloc_Flex_Stub(Flags flags) {
 
 
 INLINE REBLEN FIND_POOL(size_t size) {
-  #if RUNTIME_CHECKS
+  #if DEBUG_HAS_ALWAYS_MALLOC
     if (PG_Always_Malloc)
         return SYSTEM_POOL;
   #endif

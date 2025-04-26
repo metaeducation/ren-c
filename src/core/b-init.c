@@ -528,6 +528,7 @@ Value* Make_Native(
     Value* module
 ){
     assert(specifier == SPECIFIED); // currently a requirement
+    UNUSED(specifier);
 
     // Get the name the native will be started at with in Lib_Context
     //
@@ -1048,7 +1049,7 @@ void Startup_Task(void)
     // from the very beginning... before we can rebValue("recycle/torture")...
     // and before command-line processing.  Make it an environment option.
     //
-  #if RUNTIME_CHECKS
+  #if DEBUG_HAS_RECYCLE_TORTURE  // e.g. includes in callgrind debug build
     const char *env_recycle_torture = getenv("R3_RECYCLE_TORTURE");
     if (env_recycle_torture and atoi(env_recycle_torture) != 0)
         TG_Ballast = 0;
@@ -1229,7 +1230,7 @@ void Startup_Core(void)
     fail (Error_No_Value_Raw(BLANK_VALUE)); // same as panic (crash)
   #endif
 
-  #if RUNTIME_CHECKS
+  #if DEBUG_HAS_ALWAYS_MALLOC
     PG_Always_Malloc = false;
   #endif
 

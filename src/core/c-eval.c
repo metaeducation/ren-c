@@ -340,24 +340,20 @@ INLINE void Seek_First_Param(Level* L, REBACT *action) {
 #endif
 
 
+// The L->out slot must be initialized well enough for GC safety.
+//
+// END has an advantage because recycle/torture will catch cases of evaluating
+// into movable memory.  It's fuzzed with unreadable cells in the debug build
+// so natives don't assume it's END.
+//
+// !!! Should they be able to assume it's END?
+//
 INLINE void Expire_Out_Cell(Level* L) {
-  #if RUNTIME_CHECKS
-    //
-    // The L->out slot must be initialized well enough for GC safety.
-    //
-    // END has an advantage because recycle/torture will catch cases of
-    // evaluating into movable memory.  But if END is always set, natives
-    // might *assume* it.  Fuzz it with unreadable blanks.
-    //
-    // !!! Should natives be able to count on L->out being END?  This was
-    // at one time the case, but this code was in one instance.
-    //
     if (SPORADICALLY(2))
         Init_Unreadable(L->out);
     else
         SET_END(L->out);
     Set_Cell_Flag(L->out, OUT_MARKED_STALE);
-  #endif
 }
 
 

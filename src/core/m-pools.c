@@ -223,7 +223,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 //
 void Startup_Pools(REBINT scale)
 {
-  #if RUNTIME_CHECKS
+  #if DEBUG_HAS_ALWAYS_MALLOC
     const char *env_always_malloc = getenv("R3_ALWAYS_MALLOC");
     if (env_always_malloc and atoi(env_always_malloc) != 0)
         PG_Always_Malloc = true;
