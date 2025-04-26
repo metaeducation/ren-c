@@ -409,7 +409,7 @@
 
 [#539 (
     f: func [return: [~]] [
-        use [x] [return] ;-- https://github.com/metaeducation/ren-c/issues/755
+        use [x] [return ~ ] ; https://github.com/metaeducation/ren-c/issues/755
         return 42
     ]
     trash? f

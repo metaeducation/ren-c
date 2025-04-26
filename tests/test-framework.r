@@ -42,7 +42,7 @@ make object! compose [
         if not empty? exclude flags allowed-flags [
             skipped: me + 1
             log [space "skipped" newline]
-            return
+            return ~
         ]
 
         case [

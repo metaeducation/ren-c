@@ -7,14 +7,14 @@
     foo: :+
     all [
         infix? foo/
-        3 = 1 foo 2
+        1 foo 2 = 3
     ]
 )
 (
     foo: infix tighten :add
     all [
         infix? foo/
-        3 = 1 foo 2
+        1 foo 2 = 3
     ]
 )
 (

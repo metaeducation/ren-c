@@ -162,7 +162,7 @@ help: function [
                 upgrade - check for newer versions
                 usage - program cmd line options
         }
-        return
+        return ~
     ]
 
     ; HELP quotes, but someone might want to use an expression, e.g.
@@ -175,7 +175,7 @@ help: function [
     if match [group! get-word! get-path!] :topic [
         topic: reeval topic else [
             print "HELP requested on NULL"
-            return
+            return ~
         ]
     ]
 
@@ -210,10 +210,10 @@ help: function [
             sort types
             if not empty? types [
                 print ["Found these related words:" newline types]
-                return
+                return ~
             ]
             print ["No information on" topic]
-            return
+            return ~
         ]
 
         path! word! [
@@ -225,7 +225,7 @@ help: function [
                     print [topic "is unset (e.g. a trash ~ value)"]
                 ]
             ] then [
-                return
+                return ~
             ]
         ]
     ] else [
@@ -234,7 +234,7 @@ help: function [
         ] else [
             print [mold :topic "is" an mold type of :topic]
         ]
-        return
+        return ~
     ]
 
     ; Open the web page for it?
@@ -279,7 +279,7 @@ help: function [
         ] else [
             print [topic {is a datatype}]
         ]
-        return
+        return ~
     ]
 
     if not action? :value [
@@ -297,7 +297,7 @@ help: function [
                 ]
             ]
         ]
-        return
+        return ~
     ]
 
     ; The HELP mechanics for ACTION! are more complex in Ren-C due to the
@@ -456,7 +456,7 @@ source: function [
             name: arg
             f: get arg else [
                 print [name "is not set to a value"]
-                return
+                return ~
             ]
         ]
     ] else [
@@ -472,7 +472,7 @@ source: function [
             print [name "is" an mold type of :f "and not an ACTION!"]
         ]
     ] then [
-        return
+        return ~
     ]
 
     ;; ACTION!

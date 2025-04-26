@@ -191,7 +191,7 @@ DECLARE_NATIVE(UNWIND)
 //  {RETURN, giving a result to the caller}
 //
 //      value "If no argument is given, result will be a trash"
-//          [<end> any-value!]
+//          [any-value!]
 //  ]
 //
 DECLARE_NATIVE(RETURN)
@@ -240,9 +240,6 @@ DECLARE_NATIVE(RETURN)
     Value* typeset = ACT_PARAM(target_fun, ACT_NUM_PARAMS(target_fun));
     assert(Cell_Parameter_Class(typeset) == PARAMCLASS_RETURN);
     assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
-
-    if (Is_Endish_Nulled(v))
-        Init_Trash(v);  // `eval [return]` acts as `return trash`
 
     // Check type NOW instead of waiting and letting Eval_Core_Throws()
     // check it.  Reasoning is that the error can indicate the callsite,
@@ -771,7 +768,7 @@ DECLARE_NATIVE(TIGHTEN)
 // So `+: infix tighten :add` is a faster equivalent of:
 //
 //     +: infix func [#arg1 [any-value!] #arg2 [any-value!] [
-//         add :arg1 :arg2
+//         return add :arg1 :arg2
 //     ]
 //
 // But also, the parameter types and help notes are kept in sync.

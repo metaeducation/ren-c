@@ -140,7 +140,7 @@ me: infix func [
     :rest [any-element! <...>]
         {Code to run with var as left (first element should be infixed)}
 ][
-    set var eval-infix (get var) rest
+    return set var eval-infix (get var) rest
 ]
 
 my: infix func [
@@ -152,7 +152,7 @@ my: infix func [
     :rest [any-element! <...>]
         {Code to run with var as left (first element should be prefix)}
 ][
-    set var eval-infix/prefix (get var) rest
+    return set var eval-infix/prefix (get var) rest
 ]
 
 

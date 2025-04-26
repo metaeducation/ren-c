@@ -115,7 +115,7 @@ prin3-buggy: :lib/prin
 print: lib/print: func3 [value <local> pos] [
     if3 value = newline [  ; new: allow newline, to mean print newline only
         prin3-buggy newline
-        return
+        return ~
     ]
     value: lib/spaced value  ; uses bootstrap shim spaced (once available)
     while [okay] [
@@ -203,6 +203,8 @@ lib/read: read: enclose :lib-read function3 [f [frame!]] [
 ; r3-8994d23 lacks TRIPWIRE!, so in places where we would use a tripwire
 ; we have to use what it called "void".  It's meaner than tripwire in some
 ; sense, because you can't assign it via SET-WORD!
+
+noop: :lib/null
 
 junk: :lib/void  ; function that returns a very ornery value
 junk?: :lib/void?
@@ -365,7 +367,7 @@ either: adapt :either [
 ]
 
 wordtester: infix func3 ['name [set-word!] want [word!] dont [word!]] [
-    set name func3 [x] [
+    return set name func3 [x] [
         lib/case [
             :x = want [okay]
             :x = dont [null]
@@ -531,7 +533,7 @@ modernize-action: function3 [
                 spec/2 = [~]
             ] then [
                 spec: next spec
-                keep [return: <void>]
+                keep [return: [<opt>]]
                 continue
             ]
 

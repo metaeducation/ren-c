@@ -196,7 +196,7 @@ list-dir: function [
     ] then [
         print ["Not found:" :path]
         change-dir save-dir
-        return
+        return ~
     ]
 
     for-each file files [
