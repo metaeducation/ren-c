@@ -62,7 +62,7 @@
         (flag: okay, null) [fail "shouldn't get here"]  ; poor man's elide
         okay [fail "shouldn't get here"]
     ]
-    (not flag) and [result = 1020]
+    (not flag) and (result = 1020)
 )
 
 
@@ -92,7 +92,7 @@
         okay [s1: okay]
         okay [s2: okay]
     ]
-    s1 and [s2]
+    s1 and s2
 )]
 
 ; nested calls

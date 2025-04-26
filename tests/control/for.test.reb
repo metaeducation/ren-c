@@ -15,9 +15,9 @@
     num: 0
     for i 1 10 1 [
         num: num + 1
-        success: success and [i = num]
+        success: success and (i = num)
     ]
-    success and [10 = num]
+    success and (10 = num)
 )
 ; cycle return value
 ('foo = for i 1 1 1 ['foo])
@@ -219,7 +219,7 @@
             either num > 1 [break] [okay]
         ]
     ]
-    (error? e) and [e/id = 'overflow]
+    (error? e) and (e/id = 'overflow)
 )]
 (
     e: sys/util/rescue [
@@ -229,7 +229,7 @@
             either num > 1 [break] [okay]
         ]
     ]
-    (error? e) and [e/id = 'overflow]
+    (error? e) and (e/id = 'overflow)
 )
 
 [#1994 (
@@ -241,7 +241,7 @@
             okay
         ]
     ]
-    (error? e) and [e/id = 'overflow]
+    (error? e) and (e/id = 'overflow)
 )]
 (
     e: sys/util/rescue [
@@ -252,7 +252,7 @@
             okay
         ]
     ]
-    (error? e) and [e/id = 'overflow]
+    (error? e) and (e/id = 'overflow)
 )
 
 [#1993

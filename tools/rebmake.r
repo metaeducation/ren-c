@@ -692,7 +692,10 @@ cl: make compiler-class [
             if O [
                 case [
                     opt-level = okay [keep "/O2"]
-                    opt-level and [not zero? opt-level] [
+                    all [
+                        opt-level
+                        not zero? opt-level
+                    ][
                         keep ["/O" opt-level]
                     ]
                 ]

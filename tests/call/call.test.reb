@@ -39,7 +39,7 @@
 
 ;; extra large CALL/OUTPUT (500K+), test only run if can find git binary
 (
-    (not exists? %/usr/bin/git) or [
+    (not exists? %/usr/bin/git) or (
         data: copy {}
         call/output compose [
             %/usr/bin/git "log" (spaced [
@@ -52,8 +52,8 @@
                 "]'"
             ])
         ] data
-        (length of data > 500'000) and [
-            did find data "summary: {Initial commit}"
-        ]
-    ]
+        (length of data > 500'000) and (
+            find data "summary: {Initial commit}"
+        )
+    )
 )

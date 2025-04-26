@@ -259,7 +259,7 @@ ctx-zip: context [
         offset: num-entries: 0
         central-directory: copy #{}
 
-        if (not only) and [all [file? source | dir? source]] [
+        if (not only) and (file? source) and (dir? source) [
             root: source
             source: read source
         ] else [
@@ -274,9 +274,9 @@ ctx-zip: context [
                 name
             ] else [root/(name)]
 
-            no-modes: (url? root+name) or [dir? root+name]
+            no-modes: (url? root+name) or (dir? root+name)
 
-            if deep and [dir? name] [
+            if deep and (dir? name) [
                 name: dirize name
                 files: ensure block! read root+name
                 for-each file files [

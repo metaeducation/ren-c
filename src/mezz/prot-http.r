@@ -402,7 +402,7 @@ check-response: function [port] [
                 ]
             ] else [
                 res: check-data port
-                if (not res) and [state/state = 'ready] [
+                if (not res) and (state/state = 'ready) [
                     res: any [
                         awake make event! [type: 'done port: port]
                         awake make event! [type: 'ready port: port]
@@ -429,7 +429,7 @@ check-response: function [port] [
                     state/state: 'ready
                 ]
             ]
-            if (not res) and [state/state = 'ready] [
+            if (not res) and (state/state = 'ready) [
                 all [
                     find [get head] spec/method else [all [
                         info/response-parsed = 'see-other
@@ -695,7 +695,7 @@ sys/util/make-scheme [
             ] else [
                 sync-op port []
             ]
-            if lines or [string] [
+            if lines or string [
                 ; !!! When READ is called on an http PORT! (directly or
                 ; indirectly) it bounces its parameters to this routine.  To
                 ; avoid making an error this tolerates the refinements but the
@@ -770,7 +770,7 @@ sys/util/make-scheme [
         reflect: func [port [port!] property [word!]] [
             return switch property [
                 'open? [
-                    port/state and [open? port/state/connection]
+                    port/state and (open? port/state/connection)
                 ]
 
                 'length [

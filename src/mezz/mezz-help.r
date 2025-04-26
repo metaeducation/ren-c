@@ -238,7 +238,7 @@ help: function [
     ]
 
     ; Open the web page for it?
-    if doc and [match [action! datatype!] :value] [
+    if doc and (match [action! datatype!] :value) [
         item: form :topic
         if action? get :topic [
             ;
@@ -327,7 +327,7 @@ help: function [
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
     ; !!! Should refinement args be shown for infixed case??
     ;
-    if (infix? :value) and [not empty? args] [
+    if (infix? :value) and (not empty? args) [
         print unspaced [
             space4 spaced [args/1 (uppercase mold topic) next args]
         ]
@@ -399,7 +399,7 @@ help: function [
             )
 
             ;-- parameter name and type line
-            if type and [not refinement? param] [
+            if type and (not refinement? param) [
                 print unspaced [space4 param space "[" type "]"]
             ] else [
                 print unspaced [space4 param]
@@ -590,7 +590,7 @@ require-commit: function [
     ; can look at the date of the running Rebol and know that a build that is
     ; older than that won't work.
     ;
-    if (date: select c 'date) and [rebol/build < date] [
+    if (date: select c 'date) and (rebol/build < date) [
         fail [
             "This script needs a build newer or equal to" date
             "so run `upgrade`"
@@ -600,7 +600,7 @@ require-commit: function [
     ; If there's a specific ID then assume that if the current build does not
     ; have that ID then there *could* be a problem.
     ;
-    if (id: select c 'id) and [id <> commit] [
+    if (id: select c 'id) and (id <> commit) [
         print [
             "This script has only been tested again commit" id LF
 

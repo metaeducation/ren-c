@@ -471,7 +471,7 @@ ext-console-impl: function [
         ; care of that.
         ;
         assert [result = null]
-        if unset? 'system/console or [not system/console] [
+        if (unset? 'system/console) or (not system/console) [
             emit [start-console]
         ]
         return <prompt>
@@ -584,7 +584,7 @@ ext-console-impl: function [
                 print "** Hit Ctrl-C to break into the console in 5 seconds"
 
                 count-up n 25 [
-                    if remainder n 5 = 1 [
+                    if 1 = remainder n 5 [
                         write-stdout form (5 - to-integer (n / 5))
                     ] else [
                         write-stdout "."
@@ -707,7 +707,7 @@ ext-console-impl: function [
         ;
         ; Shortcuts like `q => [quit 0]`, `d => [dump]`
         ;
-        if (bound? code/1) and [set? code/1] [
+        if (bound? code/1) and (set? code/1) [
             ;
             ; Help confused user who might not know about the shortcut not
             ; panic by giving them a message.  Reduce noise for the casual

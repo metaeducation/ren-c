@@ -43,7 +43,7 @@
 
         set the result: eval f  ; can't access f/arg after the DO
 
-        if (not :arg) and [not null? :result] [
+        if (not :arg) and (not null? :result) [
             return ~  ; nothing if matched a falsey type
         ]
         return :result  ; return null if no match, else truthy result

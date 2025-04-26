@@ -59,7 +59,7 @@
         [specialize 'append/asdf []]
         [specialize the (specialize 'append/only [])/only []]
     ][
-        is-bad: me and ['bad-refine = (sys/util/rescue [eval code])/id]
+        is-bad: me and ('bad-refine = (sys/util/rescue [eval code])/id)
     ]
 
     is-bad

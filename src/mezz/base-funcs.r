@@ -226,7 +226,7 @@ dig-action-meta-fields: function [
     return: [object!]
     value [action!]
 ][
-    meta: meta-of :value or [
+    meta: meta-of :value else [
         return make system/standard/action-meta [
             description: null
             return-type: null
@@ -385,7 +385,7 @@ redescribe: function [
                         copy note
                     ]
                 ][
-                    if notes or [not equal? note {}] [
+                    if notes or (not equal? note {}) [
                         on-demand-notes
 
                         if not find notes as word! param [
@@ -409,7 +409,7 @@ redescribe: function [
     ; If you kill all the notes then they will be cleaned up.  The meta
     ; object will be left behind, however.
     ;
-    if notes and [every [param note] notes [unset? 'note or (null? note)]] [
+    if notes and (every [param note] notes [(unset? 'note) or (null? note)]) [
         meta/parameter-notes: null
     ]
 
@@ -917,7 +917,7 @@ fail: function [
         block! [make error! spaced reason]
     ]
 
-    if (not error? :reason) or [not pick reason 'where] [
+    if (not error? :reason) or (not pick reason 'where) [
         ;
         ; If no specific location specified, and error doesn't already have a
         ; location, make it appear to originate from the frame calling FAIL.

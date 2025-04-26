@@ -88,7 +88,7 @@
 
 [#1753 (
     c: last mold 1e16
-    (#"0" <= c) and [#"9" >= c]
+    (#"0" <= c) and (#"9" >= c)
 )]
 
 (1.1 = make decimal! 1.1)

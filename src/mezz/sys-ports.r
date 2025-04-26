@@ -240,7 +240,7 @@ init-schemes: func [
         ][
             waked: sport/data ; The wake list (pending awakes)
 
-            if only and [not block? ports] [
+            if only and (not block? ports) [
                 return blank ; short cut for a pause
             ]
 

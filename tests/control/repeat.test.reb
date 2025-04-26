@@ -4,9 +4,9 @@
     num: 0
     count-up i 10 [
         num: num + 1
-        success: success and [i = num]
+        success: success and (i = num)
     ]
-    success and [10 = num]
+    success and (10 = num)
 )
 ; cycle return value
 ('foo = count-up i 1 ['foo])

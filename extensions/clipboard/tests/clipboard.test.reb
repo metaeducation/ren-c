@@ -7,7 +7,7 @@
 (
     write clipboard:// ""
     c: to-text read clipboard://
-    (text? c) and [empty? c]
+    (text? c) and (empty? c)
 )
 
 ; ASCII string

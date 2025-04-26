@@ -96,7 +96,7 @@ contains-newline: function [return: [logic!] pos [block! group!]] [
     while [pos] [
         any [
             new-line? pos
-            (match [block! group!] :pos/1) and [contains-newline :pos/1]
+            (match [block! group!] :pos/1) and (contains-newline :pos/1)
         ] then [return okay]
 
         pos: next pos
@@ -116,7 +116,7 @@ dump-to-newline: adapt 'dump [
             bar? extra/1
         ]][
             append/only value extra/1
-            if (match [block! group!] :extra/1) and [contains-newline :extra/1] [
+            if (match [block! group!] :extra/1) and (contains-newline :extra/1) [
                 break
             ]
             take extra

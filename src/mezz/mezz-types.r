@@ -42,7 +42,7 @@ use [word] [
         ; overwrite any NATIVE! implementations.  (e.g. TO-INTEGER is a
         ; native with a refinement for interpreting as unsigned.)
 
-        if (word: in lib word) and [blank? get word] [
+        if (word: in lib word) and (blank? get word) [
             set word redescribe compose [
                 (spaced ["Converts to" form type "value."])
             ](

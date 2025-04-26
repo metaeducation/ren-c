@@ -20,7 +20,7 @@ clean-path: function [
     /dir "Add a trailing / if missing"
 ][
     file: case [
-        only or [not file? file] [
+        only or (not file? file) [
             copy file
         ]
 
@@ -42,7 +42,7 @@ clean-path: function [
         append what-dir file
     ]
 
-    if dir and [not dir? file] [append file #"/"]
+    if dir and (not dir? file) [append file #"/"]
 
     out: make type of file length of file ; same datatype
     count: 0 ; back dir counter
@@ -52,7 +52,7 @@ clean-path: function [
             "../" (count: me + 1)
             | "./"
             | #"/" (
-                if (not file? file) or [#"/" <> last out] [
+                if (not file? file) or (#"/" <> last out) [
                     append out #"/"
                 ]
             )
@@ -68,7 +68,7 @@ clean-path: function [
         ]]
     ]
 
-    if (#"/" = last out) and [#"/" <> last file] [
+    if (#"/" = last out) and (#"/" <> last file) [
         remove back tail of out
     ]
 
@@ -140,7 +140,7 @@ confirm: function [
 ][
     choices: default [["y" "yes"] ["n" "no"]]
 
-    if (block? choices) and [length of choices > 2] [
+    if (block? choices) and (length of choices > 2) [
         fail/blame [
             "maximum 2 arguments allowed for choices [true false]"
             "got:" mold choices
@@ -201,8 +201,8 @@ list-dir: function [
 
     for-each file files [
         any [
-            f and [dir? file]
-            d and [not dir? file]
+            f and (dir? file)
+            d and (not dir? file)
         ] then [
             continue
         ]
@@ -222,7 +222,7 @@ list-dir: function [
         ]
     ]
 
-    if (text? l) and [not empty? l] [print l]
+    if (text? l) and (not empty? l) [print l]
 
     change-dir save-dir
 ]

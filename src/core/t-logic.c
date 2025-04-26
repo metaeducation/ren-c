@@ -363,14 +363,13 @@ DECLARE_NATIVE(XOR_Q)
 //
 //  and: infix native [
 //
-//  {Boolean AND, with short-circuit mode if right hand side is BLOCK!}
+//  {Boolean short-circuit AND}
 //
-//      return: "Conditionally true or false value (not coerced to LOGIC!)"
+//      return: [logic!]
+//      left "Result of evaluation of left hand item"
 //          [any-value!]
-//      left "Expression which will always be evaluated"
-//          [any-value!]
-//      :right "If BLOCK!, evaluated only if TO LOGIC! of LEFT is true"
-//          [block! group!]
+//      :right "Evaluated only if left is not null"
+//          [group! word! path!]
 //  ]
 //
 DECLARE_NATIVE(AND)
@@ -380,31 +379,36 @@ DECLARE_NATIVE(AND)
     Value* left = ARG(LEFT);
     Value* right = ARG(RIGHT);
 
-    if (IS_FALSEY(left)) {
-        if (Is_Group(right)) { // no need to evaluate right if BLOCK!
-            if (Eval_List_At_Throws(OUT, right))
-                return BOUNCE_THROWN;
-        }
-        RETURN (left); // preserve falsey value
+    if (IS_FALSEY(left))
+        return LOGIC(false);
+
+    if (Is_Group(right)) {
+        if (Eval_List_At_Throws(OUT, right))
+            return BOUNCE_THROWN;
+    }
+    else {
+        assert(Is_Word(right) or Is_Path(right));
+
+        if (Eval_Value_Throws(OUT, right))
+            return BOUNCE_THROWN;
+
+        if (Is_Action(OUT))
+            fail ("AND requires a GROUP! on right to run actions");
     }
 
-    if (Eval_List_At_Throws(OUT, right))
-        return BOUNCE_THROWN;
-
-    return OUT; // preserve the exact truthy or falsey value
+    return LOGIC(IS_TRUTHY(OUT));
 }
 
 
 //  or: infix native [
 //
-//  {Boolean OR, with short-circuit mode if right hand side is BLOCK!}
+//  {Boolean short-circuit OR}
 //
-//      return: "Conditionally true or false value (not coerced to LOGIC!)"
+//      return: [logic!]
+//      left "Result of evaluation of left hand item"
 //          [any-value!]
-//      left "Expression which will always be evaluated"
-//          [any-value!]
-//      :right "If BLOCK!, evaluated only if TO LOGIC! of LEFT is false"
-//          [block! group!]
+//      :right "Evaluated only if left is null"
+//          [group! word! path!]
 //  ]
 DECLARE_NATIVE(OR)
 {
@@ -413,32 +417,37 @@ DECLARE_NATIVE(OR)
     Value* left = ARG(LEFT);
     Value* right = ARG(RIGHT);
 
-    if (IS_TRUTHY(left)) {
-        if (Is_Group(right)) { // no need to evaluate right if BLOCK!
-            if (Eval_List_At_Throws(OUT, right))
-                return BOUNCE_THROWN;
-        }
-        RETURN (left);
+    if (IS_TRUTHY(left))
+        return LOGIC(true);
+
+    if (Is_Group(right)) {
+        if (Eval_List_At_Throws(OUT, right))
+            return BOUNCE_THROWN;
+    }
+    else {
+        assert(Is_Word(right) or Is_Path(right));
+
+        if (Eval_Value_Throws(OUT, right))
+            return BOUNCE_THROWN;
+
+        if (Is_Action(OUT))
+            fail ("OR requires a GROUP! on right to run actions");
     }
 
-    if (Eval_List_At_Throws(OUT, right))
-        return BOUNCE_THROWN;
-
-    return OUT; // preserve the exact truthy or falsey value
+    return LOGIC(IS_TRUTHY(OUT));
 }
 
 
 //
 //  xor: infix native [
 //
-//  {Boolean XOR}
+//  {Boolean XOR (can't short-circuit)}
 //
-//      return: "Conditionally true value, or nullptr for failure case"
+//      return: [logic!]
+//      left "Result of evaluation of left hand item"
 //          [any-value!]
-//      left "Expression which will always be evaluated"
-//          [any-value!]
-//      :right "Expression that's also always evaluated (can't short circuit)"
-//          [group!]
+//      :right "Will always be evaluated"
+//          [group! word! path!]
 //  ]
 //
 DECLARE_NATIVE(XOR)
@@ -446,23 +455,26 @@ DECLARE_NATIVE(XOR)
     INCLUDE_PARAMS_OF_XOR;
 
     Value* left = ARG(LEFT);
+    Value* right = ARG(RIGHT);
 
-    if (Eval_List_At_Throws(OUT, ARG(RIGHT))) // always evaluated
-        return BOUNCE_THROWN;
+    if (Is_Group(right)) {
+        if (Eval_List_At_Throws(OUT, right))
+            return BOUNCE_THROWN;
+    }
+    else {
+        assert(Is_Word(right) or Is_Path(right));
 
-    Value* right = OUT;
+        if (Eval_Value_Throws(OUT, right))
+            return BOUNCE_THROWN;
 
-    if (IS_FALSEY(left)) {
-        if (IS_FALSEY(right))
-            return nullptr; // default to logic false if both false
-
-        return right;
+        if (Is_Action(OUT))
+            fail ("XOR requires a GROUP! on right to run actions");
     }
 
-    if (IS_TRUTHY(right))
-        return nullptr; // default to logic false if both true
+    if (IS_TRUTHY(left))
+        return LOGIC(IS_FALSEY(OUT));
 
-    RETURN (left);
+    return LOGIC(IS_TRUTHY(OUT));  // left is falsey, so return right
 }
 
 

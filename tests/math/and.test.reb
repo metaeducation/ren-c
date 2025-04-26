@@ -50,35 +50,35 @@
 ; If BLOCK! is used for the right clause, it is short circuit.  The first
 ; falsey value is returned on failure, and the last truthy value on success.
 ;
-(null and [null] = null)
-(null and [okay] = null)
-(okay and [null] = null)
-(okay and [okay] = okay)
+(null and null = null)
+(null and okay = null)
+(okay and null = null)
+(okay and okay = okay)
 (
     x: 1020
     all [
-        okay and [x: null] = null
+        okay and (x: null) = null
         x = null
     ]
 )
 (
     x: null
     all [
-        okay and [x: 304] = 304
+        okay and (x: 304) = okay
         x = 304
     ]
 )
 (
     x: 1020
     all [
-        <truthy> and [x: 304] = 304
+        <truthy> and (x: 304) = okay
         x = 304
     ]
 )
 (
     x: 1020
     all [
-        <truthy> and [x: null] = null
+        <truthy> and (x: null) = null
         x = null
     ]
 )
@@ -87,35 +87,28 @@
 ; If BLOCK! is used for the right clause, it is short circuit.  The first
 ; falsey value is returned on failure, and the last truthy value on success.
 ;
-(null or [null] = null)
-(null or [okay] = okay)
-(okay or [null] = okay)
-(okay or [okay] = okay)
+(null or null = null)
+(null or okay = okay)
+(okay or null = okay)
+(okay or okay = okay)
 (
     x: 1020
     all [
-        null or [x: null] = null
+        null or (x: null) = null
         x = null
     ]
 )
 (
     x: null
     all [
-        null or [x: 304] = 304
+        null or (x: 304) = okay
         x = 304
     ]
 )
 (
     x: 1020
     all [
-        null or [x: 304] = 304
-        x = 304
-    ]
-)
-(
-    x: 1020
-    all [
-        null or [x: okay] = okay
+        null or (x: okay) = okay
         x = okay
     ]
 )

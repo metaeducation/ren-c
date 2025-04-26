@@ -170,7 +170,7 @@
 [#2076 (
     o: make object! [x: 10]
     e: sys/util/rescue [append o [self: 1]]
-    (error? e) and [e/id = 'hidden]
+    (error? e) and (e/id = 'hidden)
 )]
 
 [#187 (

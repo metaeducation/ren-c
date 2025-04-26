@@ -450,7 +450,7 @@ host-start: function [
         option [text!] {Command-line option (switch) used}
     ][
         take argv
-        return first argv or [die [option {parameter missing}]]
+        return first argv else [die [option {parameter missing}]]
     ]
 
     ; As we process command line arguments, we build up an "instruction" block
@@ -540,7 +540,7 @@ host-start: function [
             )
         |
             "--resources" <end> (
-                o/resources: to-dir param-or-die "RESOURCES" or [
+                o/resources: to-dir param-or-die "RESOURCES" else [
                     die "RESOURCES directory not found"
                 ]
             )
@@ -615,7 +615,7 @@ host-start: function [
     ; As long as there was no `--script` pased on the command line explicitly,
     ; the first item after the options is implicitly the script.
     ;
-    if (not o/script) and [not tail? argv] [
+    if (not o/script) and (not tail? argv) [
         o/script: local-to-file take argv
         when-done: default ['quit]
     ]

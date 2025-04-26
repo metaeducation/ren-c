@@ -208,7 +208,7 @@ load: function [
     ; Note that IMPORT has its own loader, and does not use LOAD directly.
     ; /type with anything other than 'extension disables extension loading.
 
-    if header and [self/all] [
+    if header and self/all [
         fail "Cannot use /ALL and /HEADER refinements together"
     ]
 
@@ -373,7 +373,7 @@ load-module: function [
 
             ; If no further processing is needed, shortcut return
 
-            if (not version) and [delay or [module? :mod]] [
+            if (not version) and (delay or (module? :mod)) [
                 return reduce [source (reify match module! :mod)]
             ]
         ]
@@ -508,7 +508,7 @@ load-module: function [
         name: :hdr/name
     ]
 
-    if (not no-lib) and [not word? :name] [ ; requires name for full import
+    if (not no-lib) and (not word? :name) [ ; requires name for full import
         ; Unnamed module can't be imported to lib, so /no-lib here
         no-lib: okay  ; Still not /no-lib in IMPORT
 
@@ -570,12 +570,14 @@ load-module: function [
         mod: null  ; don't need/want the block reference now
     ]
 
-    if version and [ver > modver] [
+    if version and (ver > modver) [
         cause-error 'syntax 'needs reduce [reify name ver]
     ]
 
     ; If no further processing is needed, shortcut return
-    if (not override?) and [any [mod delay]] [return reduce [reify name mod]]
+    if (not override?) and (mod or delay) [
+        return reduce [reify name mod]
+    ]
 
     ; If /delay, save the intermediate form
     if delay [
@@ -607,7 +609,7 @@ load-module: function [
         ]
     ]
 
-    if (not no-lib) and [override?] [
+    if (not no-lib) and override? [
         if pos [
             pos/2: mod ; replace delayed module
         ] else [
