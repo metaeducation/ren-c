@@ -47,7 +47,7 @@ INLINE bool Eval_Array_At_Throws(
         array,
         index,
         specifier,
-        DO_FLAG_TO_END
+        EVAL_FLAG_TO_END
     );
 }
 
@@ -76,7 +76,7 @@ INLINE bool Do_Va_Throws(
         Init_Trash(out),
         opt_first,
         vaptr,
-        DO_FLAG_TO_END
+        EVAL_FLAG_TO_END
     );
 }
 
@@ -105,8 +105,8 @@ INLINE bool Apply_Only_Throws(
         SET_END(out), // start at END to detect error if no eval product
         applicand_eval, // opt_first
         &va, // va_end() handled by Eval_Va_Core on success, fail, throw, etc.
-        DO_FLAG_NO_LOOKAHEAD
-            | (fully ? DO_FLAG_NO_RESIDUE : 0)
+        EVAL_FLAG_NO_LOOKAHEAD
+            | (fully ? EVAL_FLAG_NO_RESIDUE : 0)
     );
 
     if (IS_END(out))

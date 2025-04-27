@@ -218,7 +218,7 @@ static bool Subparse_Throws(
     L->source->pending = L->value + 1;
     L->source->deferring_infix = false;
 
-    L->flags = Endlike_Header(DO_FLAG_PARSE_FRAME); // terminates L->spare
+    L->flags = Endlike_Header(EVAL_FLAG_PARSE_FRAME); // terminates L->spare
 
     Push_Level_Core(L); // checks for C stack overflow
     Reuse_Varlist_If_Available(L);

@@ -29,7 +29,7 @@
 // This file contains Eval_Core_Throws(), which is the central evaluator which
 // is behind DO.  It can execute single evaluation steps (e.g. EVALUATE/EVAL)
 // or it can run the array to the end of its content.  A flag controls that
-// behavior, and there are DO_FLAG_XXX for controlling other behaviors.
+// behavior, and there are EVAL_FLAG_XXX for controlling other behaviors.
 //
 // For comprehensive notes on the input parameters, output parameters, and
 // internal state variables...see %sys-rebfrm.h.
@@ -432,23 +432,23 @@ bool Eval_Core_Throws(Level* const L)
     // and testing them together as a group seems the fastest option.
     //
     if (L->flags.bits & (
-        DO_FLAG_POST_SWITCH
-        | DO_FLAG_PROCESS_ACTION
-        | DO_FLAG_REEVALUATE_CELL
+        EVAL_FLAG_POST_SWITCH
+        | EVAL_FLAG_PROCESS_ACTION
+        | EVAL_FLAG_REEVALUATE_CELL
     )){
-        if (L->flags.bits & DO_FLAG_POST_SWITCH) {
+        if (Get_Eval_Flag(L, POST_SWITCH)) {
             assert(NOT_END(L->out));
 
-            L->flags.bits &= ~DO_FLAG_POST_SWITCH;
+            Clear_Eval_Flag(L, POST_SWITCH);
             goto post_switch;
         }
 
-        if (L->flags.bits & DO_FLAG_PROCESS_ACTION) {
+        if (Get_Eval_Flag(L, PROCESS_ACTION)) {
             assert(L->refine == ORDINARY_ARG); // !!! should APPLY do infix?
 
             Set_Cell_Flag(L->out, OUT_MARKED_STALE);
 
-            L->flags.bits &= ~DO_FLAG_PROCESS_ACTION;
+            Clear_Eval_Flag(L, PROCESS_ACTION);
             goto process_action;
         }
 
@@ -456,7 +456,7 @@ bool Eval_Core_Throws(Level* const L)
         current_gotten = nullptr;
         eval_type = Type_Of(current);
 
-        L->flags.bits &= ~DO_FLAG_REEVALUATE_CELL;
+        Clear_Eval_Flag(L, REEVALUATE_CELL);
         goto reevaluate;
     }
 
@@ -710,7 +710,7 @@ bool Eval_Core_Throws(Level* const L)
         Corrupt_Pointer_If_Debug(current); // shouldn't be used below
         Corrupt_Pointer_If_Debug(current_gotten);
 
-        L->flags.bits &= ~DO_FLAG_DOING_PICKUPS;
+        Clear_Eval_Flag(L, DOING_PICKUPS);
 
       process_args_for_pickup_or_to_end:;
 
@@ -724,7 +724,7 @@ bool Eval_Core_Throws(Level* const L)
             // gotten, and only mark those values.
             //
             if (
-                not (L->flags.bits & DO_FLAG_DOING_PICKUPS)
+                Not_Eval_Flag(L, DOING_PICKUPS)
                 and L->special != L->arg
             ){
                 Erase_Cell(L->arg); // improve...
@@ -735,7 +735,7 @@ bool Eval_Core_Throws(Level* const L)
     //=//// A /REFINEMENT ARG /////////////////////////////////////////////=//
 
             // Refinements are checked first for a reason.  This is to
-            // short-circuit based on DO_FLAG_DOING_PICKUPS before redoing
+            // short-circuit based on EVAL_FLAG_DOING_PICKUPS before redoing
             // fulfillments on arguments that have already been handled.
             //
             // Pickups are needed because the "visitation order" of the
@@ -758,7 +758,7 @@ bool Eval_Core_Throws(Level* const L)
             // REFINEMENT! words (e.g. /B and /C above) on the data stack.
 
             if (pclass == PARAMCLASS_REFINEMENT) {
-                if (L->flags.bits & DO_FLAG_DOING_PICKUPS) {
+                if (Get_Eval_Flag(L, DOING_PICKUPS)) {
                     if (TOP_INDEX != L->stack_base)
                         goto next_pickup;
 
@@ -1096,9 +1096,9 @@ bool Eval_Core_Throws(Level* const L)
    //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) ////=//
 
               case PARAMCLASS_NORMAL: {
-                Flags flags = DO_FLAG_FULFILLING_ARG;
-                if (L->flags.bits & DO_FLAG_RUNNING_AS_INFIX)
-                    flags |= DO_FLAG_NO_LOOKAHEAD;
+                Flags flags = EVAL_FLAG_FULFILLING_ARG;
+                if (Get_Eval_Flag(L, RUNNING_AS_INFIX))
+                    flags |= EVAL_FLAG_NO_LOOKAHEAD;
 
                 DECLARE_SUBLEVEL (child, L);  // capture TOP_INDEX *now*
                 SET_END(L->arg); // Finalize_Arg() sets to Endish_Nulled
@@ -1220,7 +1220,7 @@ bool Eval_Core_Throws(Level* const L)
             assert(Cell_Parameter_Class(L->param - 1) == PARAMCLASS_REFINEMENT);
 
             DROP();
-            L->flags.bits |= DO_FLAG_DOING_PICKUPS;
+            Set_Eval_Flag(L, DOING_PICKUPS);
             goto process_args_for_pickup_or_to_end;
         }
 
@@ -1536,7 +1536,7 @@ bool Eval_Core_Throws(Level* const L)
             array,
             index,
             derived,
-            DO_FLAG_TO_END
+            EVAL_FLAG_TO_END
         );
         if (indexor == THROWN_FLAG)
             goto return_thrown;
@@ -1560,7 +1560,7 @@ bool Eval_Core_Throws(Level* const L)
             VAL_INDEX(current),
             Derive_Specifier(L->specifier, current),
             nullptr, // `setval`: null means don't treat as SET-PATH!
-            tail_blank ? DO_MASK_NONE : DO_FLAG_PUSH_PATH_REFINEMENTS
+            tail_blank ? DO_MASK_NONE : EVAL_FLAG_PUSH_PATH_REFINEMENTS
         )){
             goto return_thrown;
         }
@@ -1841,7 +1841,7 @@ bool Eval_Core_Throws(Level* const L)
     // and consider its job done.  It has to notice that the word `+` looks up
     // to an ACTION! that had its INFIX flag set, and keep going.
     //
-    // Next, there's a subtlety with DO_FLAG_NO_LOOKAHEAD which explains why
+    // Next, there's a subtlety with EVAL_FLAG_NO_LOOKAHEAD which explains why
     // processing of the 2 argument doesn't greedily continue to advance, but
     // waits for `1 + 2` to finish.  This is because the right hand argument
     // of math operations tend to be declared #tight.
@@ -1872,9 +1872,9 @@ bool Eval_Core_Throws(Level* const L)
     if (eval_type == TYPE_PATH) {
         if (
             Cell_Series_Len_At(L->value) != 0
-            or (L->flags.bits & DO_FLAG_NO_LOOKAHEAD)
+            or Get_Eval_Flag(L, NO_LOOKAHEAD)
         ){
-            if (not (L->flags.bits & DO_FLAG_TO_END))
+            if (Not_Eval_Flag(L, TO_END))
                 goto finished; // just 1 step of work, so stop evaluating
             goto do_next;
         }
@@ -1897,7 +1897,7 @@ bool Eval_Core_Throws(Level* const L)
     }
 
     if (eval_type != TYPE_WORD) {
-        if (not (L->flags.bits & DO_FLAG_TO_END))
+        if (Not_Eval_Flag(L, TO_END))
             goto finished; // only want 1 EVALUATE of work, so stop evaluating
 
         goto do_next;
@@ -1914,8 +1914,8 @@ bool Eval_Core_Throws(Level* const L)
 //=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-INFIX /////////////=//
 
     // These cases represent finding the start of a new expression, which
-    // continues the evaluator loop if DO_FLAG_TO_END, but will stop with
-    // `goto finished` if not (DO_FLAG_TO_END).
+    // continues the evaluator loop if EVAL_FLAG_TO_END, but will stop with
+    // `goto finished` if not (EVAL_FLAG_TO_END).
     //
     // Fall back on word-like "dispatch" even if L->gotten is null (unset or
     // unbound word).  It'll be an error, but that code path raises it for us.
@@ -1926,7 +1926,7 @@ bool Eval_Core_Throws(Level* const L)
     ){
       lookback_quote_too_late:; // run as if starting new expression
 
-        if (not (L->flags.bits & DO_FLAG_TO_END)) {
+        if (Not_Eval_Flag(L, TO_END)) {
             //
             // Since it's a new expression, EVALUATE doesn't want to run it
             // even if invisible, as it's not completely invisible (infixed)
@@ -1973,7 +1973,7 @@ bool Eval_Core_Throws(Level* const L)
         goto lookback_quote_too_late;
     }
 
-    if (L->flags.bits & DO_FLAG_NO_LOOKAHEAD) {
+    if (Get_Eval_Flag(L, NO_LOOKAHEAD)) {
         //
         // Don't do infix lookahead if asked *not* to look.
         //
@@ -1982,10 +1982,10 @@ bool Eval_Core_Throws(Level* const L)
 
     if (
         Get_Cell_Flag(L->gotten, DEFER_INFIX_IF_ACTION)
-        and (L->flags.bits & DO_FLAG_FULFILLING_ARG)
+        and Get_Eval_Flag(L, FULFILLING_ARG)
         and not L->source->deferring_infix
     ){
-        assert(not (L->flags.bits & DO_FLAG_TO_END));
+        assert(Not_Eval_Flag(L, TO_END));
         assert(Is_Action_Level_Fulfilling(L->prior));
 
         // Must be true if fulfilling an argument that is *not* a deferral
@@ -1995,7 +1995,7 @@ bool Eval_Core_Throws(Level* const L)
         L->source->deferring_infix = true;
 
         // Leave the infix operator pending in the frame, and it's up to the
-        // parent frame to decide whether to use DO_FLAG_POST_SWITCH to jump
+        // parent frame to decide whether to use EVAL_FLAG_POST_SWITCH to jump
         // back in and finish fulfilling this arg or not.  If it does resume
         // and we get to this check again, L->prior->deferred can't be null,
         // otherwise it would be an infinite loop.
@@ -2037,10 +2037,10 @@ bool Eval_Core_Throws(Level* const L)
     // the same bit)...but it doesn't need to, since it always starts END.
     //
     assert(not (
-        (L->flags.bits & DO_FLAG_FULFILLING_ARG)
-        & (L->flags.bits & DO_FLAG_PRESERVE_STALE)
+        Get_Eval_Flag(L, FULFILLING_ARG)
+        and Get_Eval_Flag(L, PRESERVE_STALE)
     ));
-    if (not (L->flags.bits & DO_FLAG_PRESERVE_STALE))
+    if (Not_Eval_Flag(L, PRESERVE_STALE))
         Clear_Cell_Flag(L->out, OUT_MARKED_STALE);
 
   #if RUNTIME_CHECKS

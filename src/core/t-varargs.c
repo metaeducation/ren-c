@@ -187,8 +187,8 @@ bool Do_Vararg_Op_Maybe_End_Throws(
                 VAL_INDEX(shared),
                 VAL_SPECIFIER(shared),
                 pclass == PARAMCLASS_NORMAL
-                    ? DO_FLAG_FULFILLING_ARG
-                    : DO_FLAG_FULFILLING_ARG | DO_FLAG_NO_LOOKAHEAD
+                    ? EVAL_FLAG_FULFILLING_ARG
+                    : EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_NO_LOOKAHEAD
             );
 
             // Note: Eval_Step_In_Subframe_Throws() is not needed here because
@@ -272,7 +272,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             if (Eval_Step_In_Subframe_Throws(
                 SET_END(out),
                 L,
-                DO_FLAG_FULFILLING_ARG,
+                EVAL_FLAG_FULFILLING_ARG,
                 child
             )){
                 return true;

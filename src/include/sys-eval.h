@@ -203,7 +203,7 @@ INLINE void Push_Level_Core(Level* L)
             NOOP; // already temp-locked
         else {
             Set_Flex_Info(L->source->array, HOLD);
-            L->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;
+            Set_Eval_Flag(L, TOOK_FRAME_HOLD);
         }
     }
 
@@ -227,7 +227,7 @@ INLINE void Push_Level_At_End(Level* L, Flags flags) {
 }
 
 INLINE void UPDATE_EXPRESSION_START(Level* L) {
-    L->expr_index = L->source->index; // this is garbage if DO_FLAG_VA_LIST
+    L->expr_index = L->source->index; // this is garbage if EVAL_FLAG_VA_LIST
 }
 
 INLINE void Reuse_Varlist_If_Available(Level* L) {
@@ -560,14 +560,14 @@ INLINE void Fetch_Next_In_Level(
 
         ++L->source->index; // for consistency in index termination state
 
-        if (L->flags.bits & DO_FLAG_TOOK_FRAME_HOLD) {
+        if (Get_Eval_Flag(L, TOOK_FRAME_HOLD)) {
             assert(Get_Flex_Info(L->source->array, HOLD));
             Clear_Flex_Info(L->source->array, HOLD);
 
             // !!! Future features may allow you to move on to another array.
             // If so, the "hold" bit would need to be reset like this.
             //
-            L->flags.bits &= ~DO_FLAG_TOOK_FRAME_HOLD;
+            Clear_Eval_Flag(L, TOOK_FRAME_HOLD);
         }
     }
     else {
@@ -608,7 +608,7 @@ INLINE void Abort_Level(Level* L) {
         goto pop;
 
     if (LVL_IS_VALIST(L)) {
-        assert(not (L->flags.bits & DO_FLAG_TOOK_FRAME_HOLD));
+        assert(Not_Eval_Flag(L, TOOK_FRAME_HOLD));
 
         // Aborting valist frames is done by just feeding all the values
         // through until the end.  This is assumed to do any work, such
@@ -633,7 +633,7 @@ INLINE void Abort_Level(Level* L) {
             Fetch_Next_In_Level(nullptr, L);
     }
     else {
-        if (L->flags.bits & DO_FLAG_TOOK_FRAME_HOLD) {
+        if (Get_Eval_Flag(L, TOOK_FRAME_HOLD)) {
             //
             // The frame was either never variadic, or it was but got spooled
             // into an array by Reify_Va_To_Array_In_Level()
@@ -682,7 +682,7 @@ INLINE void Drop_Level_Unbalanced(Level* L) {
 
 INLINE void Drop_Level(Level* L)
 {
-    if (L->flags.bits & DO_FLAG_TO_END)
+    if (Get_Eval_Flag(L, TO_END))
         assert(IS_END(L->value) or THROWN(L->out));
 
     assert(TOP_INDEX == L->stack_base);  // Drop_Level_Core() does not check
@@ -701,7 +701,7 @@ INLINE bool Eval_Step_Throws(
 ){
     assert(IS_END(out));
 
-    assert(not (L->flags.bits & (DO_FLAG_TO_END | DO_FLAG_NO_LOOKAHEAD)));
+    assert(not (L->flags.bits & (EVAL_FLAG_TO_END | EVAL_FLAG_NO_LOOKAHEAD)));
     uintptr_t prior_flags = L->flags.bits;
 
     L->out = out;
@@ -709,7 +709,7 @@ INLINE bool Eval_Step_Throws(
     bool threw = Eval_Core_Throws(L);  // should already be pushed
 
     // The & on the following line is purposeful.  See Init_Endlike_Header.
-    // DO_FLAG_NO_LOOKAHEAD may be set by an operation like ELIDE.
+    // EVAL_FLAG_NO_LOOKAHEAD may be set by an operation like ELIDE.
     //
     (&L->flags)->bits = prior_flags;
 
@@ -734,7 +734,7 @@ INLINE bool Eval_Step_Mid_Level_Throws(Level* L, Flags flags) {
 
     bool threw = Eval_Core_Throws(L); // should already be pushed
 
-    L->flags.bits = prior_flags; // e.g. restore DO_FLAG_TO_END
+    L->flags.bits = prior_flags; // e.g. restore EVAL_FLAG_TO_END
     return threw;
 }
 
@@ -800,7 +800,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
         IS_END(child->value)
         or LVL_IS_VALIST(child)
         or old_index != child->source->index
-        or (flags & DO_FLAG_REEVALUATE_CELL)
+        or (flags & EVAL_FLAG_REEVALUATE_CELL)
         or threw
     );
 
@@ -823,7 +823,7 @@ INLINE REBIXO Eval_At_Core(
     Array* array,
     REBLEN index,
     Specifier* specifier, // must match array, but also opt_first if relative
-    Flags flags // DO_FLAG_TO_END, etc.
+    Flags flags // EVAL_FLAG_TO_END, etc.
 ){
     DECLARE_LEVEL (L);
     L->flags = Endlike_Header(flags); // SET_FRAME_VALUE() *could* use
@@ -860,7 +860,7 @@ INLINE REBIXO Eval_At_Core(
         return THROWN_FLAG;
 
     assert(
-        not (flags & DO_FLAG_TO_END)
+        not (flags & EVAL_FLAG_TO_END)
         or L->source->index == Array_Len(array) + 1
     );
     return L->source->index;
@@ -937,7 +937,7 @@ INLINE void Reify_Va_To_Array_In_Level(
     // might have a hold on it...not worth the complexity.)
     //
     Set_Flex_Info(L->source->array, HOLD);
-    L->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;
+    Set_Eval_Flag(L, TOOK_FRAME_HOLD);
 
     if (truncated)
         SET_FRAME_VALUE(L, Array_At(L->source->array, 1)); // skip `--optimized--`
@@ -1007,14 +1007,14 @@ INLINE REBIXO Eval_Va_Core(
         return THROWN_FLAG;
 
     if (
-        (flags & DO_FLAG_TO_END) // not just an EVALUATE, but a full DO
+        (flags & EVAL_FLAG_TO_END) // not just an EVALUATE, but a full DO
         or Get_Cell_Flag(L->out, OUT_MARKED_STALE) // just ELIDEs and COMMENTs
     ){
         assert(IS_END(L->value));
         return END_FLAG;
     }
 
-    if ((flags & DO_FLAG_NO_RESIDUE) and NOT_END(L->value))
+    if ((flags & EVAL_FLAG_NO_RESIDUE) and NOT_END(L->value))
         fail (Error_Apply_Too_Many_Raw());
 
     return VA_LIST_FLAG; // frame may be at end, next call might just END_FLAG
@@ -1032,7 +1032,7 @@ INLINE bool Eval_Value_Core_Throws(
         EMPTY_ARRAY,
         0, // start index (it's an empty array, there's no added processing)
         specifier,
-        DO_FLAG_TO_END
+        EVAL_FLAG_TO_END
     );
 
     if (IS_END(out))

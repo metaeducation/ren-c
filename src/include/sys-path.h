@@ -113,7 +113,7 @@ INLINE void Get_Path_Core(
         VAL_INDEX(any_path),
         Derive_Specifier(specifier, any_path),
         nullptr,  // not requesting value to set means it's a get
-        DO_FLAG_NO_PATH_GROUPS
+        EVAL_FLAG_NO_PATH_GROUPS
     )){
         panic (out); // shouldn't be possible... no executions!
     }
@@ -152,7 +152,7 @@ INLINE void Set_Path_Core(
     //
     DECLARE_VALUE (out);
 
-    Flags flags = DO_FLAG_NO_PATH_GROUPS;
+    Flags flags = EVAL_FLAG_NO_PATH_GROUPS;
 
     if (Eval_Path_Throws_Core(
         out,

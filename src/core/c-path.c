@@ -97,7 +97,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         Move_Opt_Var_May_Fail(PVS_PICKER(pvs), pvs->value, pvs->specifier);
     }
     else if (Is_Group(pvs->value)) { // object/(expr) case:
-        if (pvs->flags.bits & DO_FLAG_NO_PATH_GROUPS)
+        if (Get_Eval_Flag(pvs, NO_PATH_GROUPS))
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
         Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
@@ -364,7 +364,7 @@ bool Eval_Path_Throws_Core(
     else if (Is_Group(pvs->value)) {
         pvs->u.ref.cell = nullptr; // nowhere to BOUNCE_IMMEDIATE write back to
 
-        if (pvs->flags.bits & DO_FLAG_NO_PATH_GROUPS)
+        if (Get_Eval_Flag(pvs, NO_PATH_GROUPS))
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
         Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
@@ -437,7 +437,7 @@ bool Eval_Path_Throws_Core(
 
         assert(Is_Action(pvs->out));
 
-        if (pvs->flags.bits & DO_FLAG_PUSH_PATH_REFINEMENTS) {
+        if (Get_Eval_Flag(pvs, PUSH_PATH_REFINEMENTS)) {
             //
             // The caller knows how to handle the refinements-pushed-to-stack
             // in-reverse-order protocol, and doesn't want to pay for making

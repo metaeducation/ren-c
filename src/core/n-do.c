@@ -56,7 +56,7 @@ DECLARE_NATIVE(REEVAL)
 {
     INCLUDE_PARAMS_OF_REEVAL;
 
-    // EVAL only *acts* variadic, but uses DO_FLAG_REEVALUATE_CELL
+    // EVAL only *acts* variadic, but uses EVAL_FLAG_REEVALUATE_CELL
     //
     UNUSED(ARG(EXPRESSIONS));
 
@@ -67,7 +67,7 @@ DECLARE_NATIVE(REEVAL)
     //
     child->u.reval.value = ARG(VALUE);
 
-    Flags flags = DO_FLAG_REEVALUATE_CELL;
+    Flags flags = EVAL_FLAG_REEVALUATE_CELL;
 
     Init_Trash(OUT);  // !!! R3C patch, better than error on `reeval :elide`
     Set_Cell_Flag(OUT, OUT_MARKED_STALE);
@@ -112,7 +112,7 @@ DECLARE_NATIVE(EVAL_INFIX)
 // But generalizing this mechanic is...non-obvious.  It needs to be done, but
 // this hacks up the specific case of "infix with left hand side and variadic
 // feed" by loading the given value into OUT and then re-entering the
-// evaluator via the DO_FLAG_POST_SWITCH mechanic (which was actuallly
+// evaluator via the EVAL_FLAG_POST_SWITCH mechanic (which was actuallly
 // designed for backtracking on infix normal deferment.)
 {
     INCLUDE_PARAMS_OF_EVAL_INFIX;
@@ -176,7 +176,7 @@ DECLARE_NATIVE(EVAL_INFIX)
     //
     Copy_Cell(OUT, ARG(LEFT));
 
-    Flags flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
+    Flags flags = EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_POST_SWITCH;
     if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child)) {
         Drop_GC_Guard(temp);
         return BOUNCE_THROWN;
@@ -230,7 +230,7 @@ DECLARE_NATIVE(DO)
             Cell_Array(source),
             VAL_INDEX(source),
             VAL_SPECIFIER(source),
-            DO_FLAG_TO_END
+            EVAL_FLAG_TO_END
         );
 
         if (indexor == THROWN_FLAG)
@@ -323,7 +323,7 @@ DECLARE_NATIVE(EVALUATE)
             Cell_Array(source),
             VAL_INDEX(source),
             VAL_SPECIFIER(source),
-            Bool_ARG(STEP3) ? DO_MASK_NONE : DO_FLAG_TO_END
+            Bool_ARG(STEP3) ? DO_MASK_NONE : EVAL_FLAG_TO_END
         );
 
         if (indexor == THROWN_FLAG)
@@ -389,7 +389,7 @@ DECLARE_NATIVE(EVALUATE)
         L->out = OUT;
         Push_Level_At_End(
             L,
-            DO_FLAG_PROCESS_ACTION
+            EVAL_FLAG_PROCESS_ACTION
         );
 
         assert(Varlist_Keys_Head(c) == ACT_PARAMS_HEAD(phase));
@@ -443,7 +443,7 @@ DECLARE_NATIVE(EVALUATE)
                 Cell_Array(position),
                 VAL_INDEX(position),
                 VAL_SPECIFIER(source),
-                Bool_ARG(STEP3) ? DO_MASK_NONE : DO_FLAG_TO_END
+                Bool_ARG(STEP3) ? DO_MASK_NONE : EVAL_FLAG_TO_END
             );
 
             if (indexor == THROWN_FLAG) {
@@ -637,7 +637,7 @@ DECLARE_NATIVE(APPLIQUE)
         RETURN (temp);
     }
 
-    Push_Level_At_End(L, DO_FLAG_PROCESS_ACTION);
+    Push_Level_At_End(L, EVAL_FLAG_PROCESS_ACTION);
 
     Drop_Data_Stack_To(lowest_stackindex);  // zero refinements on stack, now
 

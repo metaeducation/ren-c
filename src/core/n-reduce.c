@@ -335,7 +335,7 @@ bool Compose_To_Stack_Throws(
                 Cell_Array(match),
                 VAL_INDEX(match),
                 match_specifier,
-                DO_FLAG_TO_END
+                EVAL_FLAG_TO_END
             );
 
             if (indexor == THROWN_FLAG) {

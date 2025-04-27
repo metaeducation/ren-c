@@ -1508,7 +1508,7 @@ bool Get_If_Word_Or_Path_Throws(
             derived,
             nullptr,  // `setval`: null means don't treat as SET-PATH!
             push_refinements
-                ? DO_FLAG_PUSH_PATH_REFINEMENTS // pushed in reverse order
+                ? EVAL_FLAG_PUSH_PATH_REFINEMENTS // pushed in reverse order
                 : DO_MASK_NONE
         )){
             return true;

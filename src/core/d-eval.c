@@ -123,7 +123,7 @@ static void Eval_Core_Shared_Checks_Debug(Level* L) {
     assert(L == TOP_LEVEL);
     assert(TOP_INDEX == L->stack_base);
 
-    assert(not (L->flags.bits & DO_FLAG_FINAL_DEBUG));
+    assert(Not_Eval_Flag(L, FINAL_DEBUG));
 
     if (L->source->array) {
         assert(not Is_Pointer_Corrupt_Debug(L->source->array));
@@ -324,7 +324,7 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
         }
     }
 
-    if (L->flags.bits & DO_FLAG_TO_END)
+    if (Get_Eval_Flag(L, TO_END))
         assert(THROWN(L->out) or IS_END(L->value));
 
     // We'd like `eval [1 + comment "foo"]` to act identically to `eval [1 +]`
@@ -335,7 +335,7 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
     if (NOT_END(L->out))
         assert(Type_Of(L->out) <= TYPE_NULLED);
 
-    L->flags.bits |= DO_FLAG_FINAL_DEBUG;
+    Set_Eval_Flag(L, FINAL_DEBUG);
 }
 
 #endif

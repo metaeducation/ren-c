@@ -1173,7 +1173,7 @@ static void Mark_Level_Stack_Deep(void)
                 // If we're not doing "pickups" then the cell slots after
                 // this one have not been initialized, not even to trash.
                 //
-                if (not (L->flags.bits & DO_FLAG_DOING_PICKUPS))
+                if (Not_Eval_Flag(L, DOING_PICKUPS))
                     break;
 
                 // But since we *are* doing pickups, we must have initialized

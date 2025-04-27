@@ -76,14 +76,14 @@
 // Level->cell, as well as be distinguished from a Value*, a Flex*, or
 // a UTF8 string.
 //
-#define DO_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
-#define DO_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(NODE_FLAG_UNREADABLE)
+#define EVAL_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
+#define EVAL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(NODE_FLAG_UNREADABLE)
 
-STATIC_ASSERT(DO_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
-STATIC_ASSERT(DO_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
+STATIC_ASSERT(EVAL_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
+STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 
 
-//=//// DO_FLAG_TO_END ////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_TO_END //////////////////////////////////////////////////=//
 //
 // As exposed by the DO native and its /NEXT refinement, a call to the
 // evaluator can either run to the finish from a position in an array or just
@@ -96,11 +96,11 @@ STATIC_ASSERT(DO_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 // equivalent results.  There are nuances to preserve this invariant and
 // especially in light of interaction with lookahead.
 //
-#define DO_FLAG_TO_END \
+#define EVAL_FLAG_TO_END \
     FLAG_LEFT_BIT(2)
 
 
-//=//// DO_FLAG_PRESERVE_STALE ////////////////////////////////////////////=//
+//=//// EVAL_FLAG_PRESERVE_STALE //////////////////////////////////////////=//
 //
 // The evaluator tags the output value while running with OUT_FLAG_STALE
 // to keep track of whether it can be valid input for an infix operation.  So
@@ -122,51 +122,51 @@ STATIC_ASSERT(DO_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 // it will be "sticky" to output cells returned by dispatchers, and it would
 // be irritating for every evaluator call to clear it.)
 //
-#define DO_FLAG_PRESERVE_STALE \
+#define EVAL_FLAG_PRESERVE_STALE \
     FLAG_LEFT_BIT(3) // same as OUT_FLAG_STALE (e.g. NODE_FLAG_MARKED)
 
 
-//=//// DO_FLAG_4_IS_FALSE ////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_4_IS_FALSE //////////////////////////////////////////////=//
 //
 // The second do byte is TYPE_0 to indicate an END.  That helps reads know
 // there is an END for in-situ enumeration.  But as an added bit of safety,
 // we make sure the bit pattern in the level header also doesn't look like
 // a cell at all by having a 0 bit in the NODE_FLAG_CELL spot.
 //
-#define DO_FLAG_4_IS_FALSE \
+#define EVAL_FLAG_4_IS_FALSE \
     FLAG_LEFT_BIT(4)
 
-STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
+STATIC_ASSERT(EVAL_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 
 
-//=//// DO_FLAG_POST_SWITCH ///////////////////////////////////////////////=//
+//=//// EVAL_FLAG_POST_SWITCH /////////////////////////////////////////////=//
 //
 // This jump allows a deferred lookback to compensate for the lack of the
 // evaluator's ability to (easily) be psychic about when it is gathering the
 // last argument of a function.  It allows re-entery to argument gathering at
 // the point after the switch() statement, with a preloaded L->out.
 //
-#define DO_FLAG_POST_SWITCH \
+#define EVAL_FLAG_POST_SWITCH \
     FLAG_LEFT_BIT(5)
 
 
-//=//// DO_FLAG_FULFILLING_ARG ////////////////////////////////////////////=//
+//=//// EVAL_FLAG_FULFILLING_ARG //////////////////////////////////////////=//
 //
 // Deferred lookback operations need to know when they are dealing with an
 // argument fulfillment for a function, e.g. `summation 1 2 3 |> 100` should
 // be `(summation 1 2 3) |> 100` and not `summation 1 2 (3 |> 100)`.  This
 // also means that `add 1 <| 2` will act as an error.
 //
-#define DO_FLAG_FULFILLING_ARG \
+#define EVAL_FLAG_FULFILLING_ARG \
     FLAG_LEFT_BIT(6)
 
 
-//=//// DO_FLAG_REEVALUATE_CELL ///////////////////////////////////////////=//
+//=//// EVAL_FLAG_REEVALUATE_CELL /////////////////////////////////////////=//
 //
 // Function dispatchers have a special return value used by EVAL, which tells
 // it to use the frame's cell as the head of the next evaluation (before
 // what L->value would have ordinarily run.)  It used to have another mode
-// which was able to request the frame to change its DO_FLAG_EXPLICIT_EVALUATE
+// which was able to request the frame to change EVAL_FLAG_EXPLICIT_EVALUATE
 // state for the duration of the next evaluation...a feature that was used
 // by EVAL/ONLY.  The somewhat obscure feature was used to avoid needing to
 // make a new frame to do that, but raised several questions about semantics.
@@ -174,7 +174,7 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 // This allows EVAL/ONLY to be implemented by entering a new subframe with
 // new flags, and may have other purposes as well.
 //
-#define DO_FLAG_REEVALUATE_CELL \
+#define EVAL_FLAG_REEVALUATE_CELL \
      FLAG_LEFT_BIT(7)
 
 
@@ -186,18 +186,18 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 // flags, and may or may not be worth it for the feature.
 
 
-//=//// DO_FLAG_TOOK_FRAME_HOLD ///////////////////////////////////////////=//
+//=//// EVAL_FLAG_TOOK_FRAME_HOLD /////////////////////////////////////////=//
 //
 // While R3-Alpha permitted modifications of an array while it was being
 // executed, Ren-C does not.  It takes a temporary read-only "hold" if the
 // source is not already read only, and sets it back when Eval_Core is
 // finished (or on errors).  See FLEX_INFO_HOLD for more about this.
 //
-#define DO_FLAG_TOOK_FRAME_HOLD \
+#define EVAL_FLAG_TOOK_FRAME_HOLD \
     FLAG_LEFT_BIT(16)
 
 
-//=//// DO_FLAG_NO_LOOKAHEAD //////////////////////////////////////////////=//
+//=//// EVAL_FLAG_NO_LOOKAHEAD ////////////////////////////////////////////=//
 //
 // Infix functions traditionally suppress further infix lookahead while getting
 // a function argument.  This precedent was started in R3-Alpha, where with
@@ -205,56 +205,56 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 // infix `*` when gathering its argument, that was saved until the `1 + 2`
 // finished its processing.
 //
-#define DO_FLAG_NO_LOOKAHEAD \
+#define EVAL_FLAG_NO_LOOKAHEAD \
     FLAG_LEFT_BIT(17)
 
 
-//=//// DO_FLAG_PROCESS_ACTION ////////////////////////////////////////////=//
+//=//// EVAL_FLAG_PROCESS_ACTION //////////////////////////////////////////=//
 //
 // Used to indicate that the Eval_Core code is being jumped into directly to
 // process an ACTION!, in a varlist that has already been set up.
 //
-#define DO_FLAG_PROCESS_ACTION \
+#define EVAL_FLAG_PROCESS_ACTION \
     FLAG_LEFT_BIT(18)
 
 
-//=//// DO_FLAG_NO_PATH_GROUPS ////////////////////////////////////////////=//
+//=//// EVAL_FLAG_NO_PATH_GROUPS //////////////////////////////////////////=//
 //
 // This feature is used in PATH! evaluations to request no side effects.
 // It prevents GET of a PATH! from running GROUP!s.
 //
-#define DO_FLAG_NO_PATH_GROUPS \
+#define EVAL_FLAG_NO_PATH_GROUPS \
     FLAG_LEFT_BIT(19)
 
 
-//=//// DO_FLAG_RUNNING_AS_INFIX //////////////////////////////////////////=//
+//=//// EVAL_FLAG_RUNNING_AS_INFIX ////////////////////////////////////////=//
 //
 // This flag is held onto for the duration of running an infix function, so
 // that the evaluator knows not to eagerly consume more infix.  This is so
 // that (1 + 2 * 3) gives 9.
 //
-#define DO_FLAG_RUNNING_AS_INFIX \
+#define EVAL_FLAG_RUNNING_AS_INFIX \
     FLAG_LEFT_BIT(20)
 
 
-//=//// DO_FLAG_PARSE_FRAME ///////////////////////////////////////////////=//
+//=//// EVAL_FLAG_PARSE_FRAME /////////////////////////////////////////////=//
 //
 // This flag is set when a Level* is being used to hold the state of the
 // PARSE stack.  One application of knowing this is that PARSE wasn't really
 // written to use frames, and doesn't follow the same rules as the evaluator;
 // so the debugging checks have to be more lax;
 //
-#define DO_FLAG_PARSE_FRAME \
+#define EVAL_FLAG_PARSE_FRAME \
     FLAG_LEFT_BIT(21)
 
 
-//=//// DO_FLAG_22 ////////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_22 //////////////////////////////////////////////////////=//
 //
-#define DO_FLAG_22 \
+#define EVAL_FLAG_22 \
     FLAG_LEFT_BIT(22)
 
 
-//=//// DO_FLAG_PUSH_PATH_REFINEMENTS /////////////////////////////////////=//
+//=//// EVAL_FLAG_PUSH_PATH_REFINEMENTS ///////////////////////////////////=//
 //
 // It is technically possible to produce a new specialized ACTION! each
 // time you used a PATH!.  This is needed for `apdo: :append/dup/only` as a
@@ -266,23 +266,23 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 // in order via a path and values via a block of code can be done in one
 // step, vs needing to make an intermediate ACTION!.
 //
-#define DO_FLAG_PUSH_PATH_REFINEMENTS \
+#define EVAL_FLAG_PUSH_PATH_REFINEMENTS \
     FLAG_LEFT_BIT(23)
 
 
-//=//// DO_FLAG_24 ////////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_24 //////////////////////////////////////////////////////=//
 //
-#define DO_FLAG_24 \
+#define EVAL_FLAG_24 \
     FLAG_LEFT_BIT(24)
 
 
-//=//// DO_FLAG_25 ////////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_25 //////////////////////////////////////////////////////=//
 //
-#define DO_FLAG_25 \
+#define EVAL_FLAG_25 \
     FLAG_LEFT_BIT(25)
 
 
-//=//// DO_FLAG_NO_RESIDUE ////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_NO_RESIDUE //////////////////////////////////////////////=//
 //
 // Sometimes a single step evaluation is done in which it would be considered
 // an error if all of the arguments are not used.  This requests an error if
@@ -298,11 +298,11 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 // was variadic and would only allow one evaluation step after it, after
 // which it would need to reach either an END or another `||`.
 //
-#define DO_FLAG_NO_RESIDUE \
+#define EVAL_FLAG_NO_RESIDUE \
     FLAG_LEFT_BIT(26)
 
 
-//=//// DO_FLAG_DOING_PICKUPS /////////////////////////////////////////////=//
+//=//// EVAL_FLAG_DOING_PICKUPS ///////////////////////////////////////////=//
 //
 // If an ACTION! is invoked through a path and uses refinements in a different
 // order from how they appear in the frame's parameter definition, then the
@@ -311,31 +311,43 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 // important not only for Eval_Core_Throws() to know, but also the GC...since
 // it means it must protect *all* of the arguments--not just up thru L->param.
 //
-#define DO_FLAG_DOING_PICKUPS \
+#define EVAL_FLAG_DOING_PICKUPS \
     FLAG_LEFT_BIT(27)
 
 
 #if RUNTIME_CHECKS
 
-//=//// DO_FLAG_FINAL_DEBUG ///////////////////////////////////////////////=//
+//=//// EVAL_FLAG_FINAL_DEBUG /////////////////////////////////////////////=//
 //
 // It is assumed that each run through a frame will re-initialize the do
 // flags, and if a frame's memory winds up getting reused (e.g. by successive
-// calls in a reduce) that code is responsible for resetting the DO_FLAG_XXX
+// calls in a reduce) that code is responsible for resetting the EVAL_FLAG_XXX
 // each time.  To make sure this is the case, this is set on each exit from
 // Eval_Core_Throws(), and each entry checks to make sure it is not present.
 //
 
-#define DO_FLAG_FINAL_DEBUG \
+#define EVAL_FLAG_FINAL_DEBUG \
     FLAG_LEFT_BIT(28)
 
 #endif
 
 
 #if CPLUSPLUS_11
-    static_assert(28 < 32, "DO_FLAG_XXX too high");
+    static_assert(28 < 32, "EVAL_FLAG_XXX too high");
 #endif
 
+
+#define Get_Eval_Flag(L,name) \
+    (((L)->flags.bits & EVAL_FLAG_##name) != 0)
+
+#define Not_Eval_Flag(L,name) \
+    (((L)->flags.bits & EVAL_FLAG_##name) == 0)
+
+#define Set_Eval_Flag(L,name) \
+    m_cast(union HeaderUnion*, &(L)->flags)->bits |= EVAL_FLAG_##name
+
+#define Clear_Eval_Flag(L,name) \
+    m_cast(union HeaderUnion*, &(L)->flags)->bits &= ~EVAL_FLAG_##name
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -441,7 +453,7 @@ struct LevelStruct {
 
     // `flags`
     //
-    // These are DO_FLAG_XXX or'd together--see their documentation above.
+    // These are EVAL_FLAG_XXX or'd together--see their documentation above.
     // A HeaderUnion is used so that it can implicitly terminate `shove`,
     // which isn't necessarily that useful...but putting it after `cell`
     // would throw off the alignment for shove.

@@ -378,12 +378,12 @@ INLINE void Begin_Action(
     );
     L->refine = mode;
 
-    /*assert(not (L->flags.bits & DO_FLAG_RUNNING_AS_INFIX));*/  // how?
+    /*assert(Not_Eval_Flag(L, RUNNING_AS_INFIX));*/  // how?
 
     if (mode == LOOKBACK_ARG)
-        L->flags.bits |= DO_FLAG_RUNNING_AS_INFIX;
+        Set_Eval_Flag(L, RUNNING_AS_INFIX);
     else
-        L->flags.bits &= ~DO_FLAG_RUNNING_AS_INFIX;
+        Clear_Eval_Flag(L, RUNNING_AS_INFIX);
 }
 
 

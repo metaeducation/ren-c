@@ -1435,7 +1435,7 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     // the code the GC uses to reify va_lists in frames, which we presume does
     // all the ps and qs.  It's messy, but refactor if it turns out to work.
 
-    const Flags flags = DO_FLAG_TO_END;
+    const Flags flags = EVAL_FLAG_TO_END;
 
     // !!! The following code is derived from Eval_Va_Core()
 
@@ -1522,7 +1522,7 @@ void API_rebPromise_callback(intptr_t promise_id)
         arr,
         0, // index
         SPECIFIED,
-        DO_FLAG_TO_END // was reified w/explicit
+        EVAL_FLAG_TO_END // was reified w/explicit
     )){
         fail (Error_No_Catch_For_Throw(result)); // no need to release result
     }

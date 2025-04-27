@@ -306,7 +306,7 @@ void Sieve_Ports(Array* ports)
 //
 // R3-Alpha had a rather brittle implementation, that had no error checking
 // and repetition of logic in Eval_Core.  Ren-C more simply builds a PATH! of
-// the target function and refinements, passing args with DO_FLAG_EVAL_ONLY.
+// the target function and refinements, passing args with EVAL_FLAG_EVAL_ONLY.
 //
 // !!! This could be done more efficiently now by pushing the refinements to
 // the stack and using an APPLY-like technique.
@@ -393,7 +393,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
         code_arr,
         0, // index
         SPECIFIED, // reusing existing Value arguments, no relative cells
-        DO_FLAG_NO_RESIDUE // raise an error if all args not consumed
+        EVAL_FLAG_NO_RESIDUE // raise an error if all args not consumed
     );
 
     if (IS_END(L->out))
