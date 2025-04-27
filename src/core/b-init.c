@@ -840,7 +840,7 @@ static void Init_Root_Vars(void)
     Reset_Cell_Header(
         &PG_Bounce_Redo_Unchecked[0],
         TYPE_R_REDO,
-        CELL_FLAG_FALSEY // understood by Eval_Core_Throws() as "unchecked"
+        CELL_FLAG_BOUNCE_NOTE_UNCHECKED
     );
     Poison_Cell(&PG_Bounce_Redo_Unchecked[1]);
 

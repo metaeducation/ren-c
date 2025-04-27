@@ -59,11 +59,13 @@
 #define BOUNCE_INVISIBLE \
     cast(Value*, &PG_Bounce_Invisible)
 
+#define CELL_FLAG_BOUNCE_NOTE_UNCHECKED CELL_FLAG_NOTE
+
 // If Eval_Core gets back an TYPE_R_REDO from a dispatcher, it will re-execute
 // the L->phase in the frame.  This function may be changed by the dispatcher
 // from what was originally called.
 //
-// If CELL_FLAG_FALSEY is not set on the cell, then the types will be checked
+// If CELL_FLAG_NOTE is not set on the cell, then the types will be checked
 // again.  Note it is not safe to let arbitrary user code change values in a
 // frame from expected types, and then let those reach an underlying native
 // who thought the types had been checked.

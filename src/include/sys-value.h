@@ -539,13 +539,12 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     (Type_Of(v) == TYPE_NULLED)
 
 #define Init_Nulled(out) \
-    Reset_Cell_Header((out), TYPE_NULLED, CELL_FLAG_FALSEY)
+    Reset_Cell_Header((out), TYPE_NULLED, 0)
 
 #define CELL_FLAG_NULL_IS_ENDISH FLAG_TYPE_SPECIFIC_BIT(0)
 
 #define Init_Endish_Nulled(out) \
-    Reset_Cell_Header((out), TYPE_NULLED, \
-        CELL_FLAG_FALSEY | CELL_FLAG_NULL_IS_ENDISH)
+    Reset_Cell_Header((out), TYPE_NULLED, CELL_FLAG_NULL_IS_ENDISH)
 
 INLINE bool Is_Endish_Nulled(const Cell* v) {
     return Is_Nulled(v) and Get_Cell_Flag(v, NULL_IS_ENDISH);
@@ -690,12 +689,12 @@ INLINE bool Is_Cell_Unreadable(const Cell* c) {
     c_cast(const Value*, &PG_Okay_Value[0])
 
 #define Init_Okay(out) \
-    Reset_Cell_Header((out), TYPE_OKAY, 0)  // not CELL_FLAG_FALSEY
+    Reset_Cell_Header((out), TYPE_OKAY, 0)
 
 INLINE void FAIL_IF_ERROR(const Cell* c);
 
 INLINE bool IS_TRUTHY(const Cell* v) {
-    if (Get_Cell_Flag(v, FALSEY))
+    if (Is_Nulled(v))
         return false;
     if (Is_Void(v))
         fail (Error_Void_Conditional_Raw());

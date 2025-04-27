@@ -130,21 +130,9 @@
     FLAG_LEFT_BIT(17)
 
 
-//=//// CELL_FLAG_FALSEY //////////////////////////////////////////////////=//
+//=//// CELL_FLAG_18 //////////////////////////////////////////////////////=//
 //
-// This flag is used as a quick cache on NULL, BLANK! or LOGIC! false values.
-// These are the only three values that return true from the NOT native
-// (a.k.a. "conditionally false").  All other types return true from TO-LOGIC
-// or its synonym, "DID".
-//
-// (It's also placed on END cells and NOTHING cells, to speed up the Type_Of()
-// check for finding illegal types...by only checking falsey types.)
-//
-// Because of this cached bit, LOGIC! does not need to store any data in its
-// payload... its data of being true or false is already covered by this
-// header bit.
-//
-#define CELL_FLAG_FALSEY \
+#define CELL_FLAG_18 \
     FLAG_LEFT_BIT(18)
 
 

@@ -1310,8 +1310,8 @@ bool Eval_Core_Throws(Level* const L)
             // run the L->phase again.  The dispatcher may have changed the
             // value of what L->phase is, for instance.
 
-            if (Get_Cell_Flag(r, FALSEY)) // BOUNCE_REDO_UNCHECKED
-                goto redo_unchecked;
+            if (Get_Cell_Flag(r, BOUNCE_NOTE_UNCHECKED))
+                goto redo_unchecked;  // BOUNCE_REDO_UNCHECKED
 
             goto redo_checked;
 
