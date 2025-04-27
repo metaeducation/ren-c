@@ -188,8 +188,6 @@ for-each [alias] [
     load3:                      ; bootstrap uses LOAD3 not LOAD
     collect3:                   ; COLLECT's KEEP processes splices
     mold3:                      ; MOLD takes splices instead of MOLD/ONLY
-    and3:                       ; AND takes GROUP!s on right (not BLOCK!)
-    or3:                        ; OR takes GROUP!s on right (not BLOCK!)
     bind3:                      ; BIND's arguments reversed
     head3:                      ; use HEAD OF instead
     tail3:                      ; use TAIL OF instead
@@ -288,13 +286,6 @@ unquasi: func3 [v <local> spelling] [
     return as word! spelling
 ]
 
-
-; Used to be `false and [print "TRUE" false]` would avoid running the right
-; hand side, but a GROUP! would be run.  That was deemed ugly, so group
-; now short-circuits.
-;
-and: infix and3/ [assert [not block? right] right: as block! :right]
-or: infix or3/ [assert [not block? right] right: as block! :right]
 
 unrun: ~<No UNRUN in bootstrap, but could be done w/make FRAME!>~
 

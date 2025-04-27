@@ -502,12 +502,12 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
     Element* right = Element_ARG(RIGHT);
 
     if (Is_Inhibitor(left))
-        return Init_Logic(OUT, false);
+        return LOGIC(false);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    return Init_Logic(OUT, Is_Trigger(stable_SPARE));
+    return LOGIC(Is_Trigger(stable_SPARE));
 }
 
 
@@ -530,12 +530,12 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
     Element* right = Element_ARG(RIGHT);
 
     if (Is_Trigger(left))
-        return Init_Logic(OUT, true);
+        return LOGIC(true);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    return Init_Logic(OUT, Is_Trigger(stable_SPARE));
+    return LOGIC(Is_Trigger(stable_SPARE));
 }
 
 
@@ -561,9 +561,9 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
         return THROWN;
 
     if (Is_Inhibitor(left))
-        return Init_Logic(OUT, Is_Trigger(stable_SPARE));
+        return LOGIC(Is_Trigger(stable_SPARE));
 
-    return Init_Logic(OUT, Is_Inhibitor(stable_SPARE));
+    return LOGIC(Is_Inhibitor(stable_SPARE));
 }
 
 

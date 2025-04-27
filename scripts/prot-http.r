@@ -637,7 +637,7 @@ sys.util/make-scheme [
                 close port
             ]
 
-            if lines or (string) [
+            if lines or string [
                 ; !!! When READ is called on an http PORT! (directly or
                 ; indirectly) it bounces its parameters to this routine.  To
                 ; avoid making an error this tolerates the refinements but the

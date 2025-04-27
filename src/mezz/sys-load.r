@@ -484,8 +484,9 @@ bind construct [
             break
         ]
 
-        (file? source)
-        or (fail ["Could not find any" file "in SYSTEM.OPTIONS.MODULE-PATHS"])
+        (file? source) else [
+            fail ["Could not find any" file "in SYSTEM.OPTIONS.MODULE-PATHS"]
+        ]
     ]
 
     === GET DIRECTORY PORTION OF SOURCE PATH FOR NEW SYSTEM.SCRIPT.PATH  ===
