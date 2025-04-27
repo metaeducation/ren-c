@@ -1254,7 +1254,7 @@ bool Eval_Core_Throws(Level* const L)
         const Value* r; // initialization would be skipped by gotos
 
       {
-        REBNAT dispatcher = ACT_DISPATCHER(LVL_PHASE_OR_DUMMY(L));
+        Dispatcher* dispatcher = ACT_DISPATCHER(LVL_PHASE_OR_DUMMY(L));
         r = (*dispatcher)(L); // default just calls Level_Phase(L)
       }
 

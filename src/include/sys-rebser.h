@@ -834,7 +834,7 @@ union StubMiscUnion {
 
     // native dispatcher code, see Reb_Function's body_holder
     //
-    REBNAT dispatcher;
+    Dispatcher* dispatcher;
 
     // some HANDLE!s use this for GC finalization
     //

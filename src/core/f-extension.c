@@ -125,7 +125,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
 
     // See IDX_COLLATOR_MAX for collated block contents, which include init
     // and shutdown functions, as well as native specs and Rebol script
-    // source, plus the REBNAT functions for each native.
+    // source, plus the Dispatcher* functions for each native.
     //
     Array* details = Cell_Array(ARG(WHERE));
 
@@ -153,7 +153,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     );
 
     REBLEN num_natives = VAL_HANDLE_LEN(dispatchers_handle);
-    REBNAT *dispatchers = VAL_HANDLE_POINTER(REBNAT, dispatchers_handle);
+    Dispatcher* *dispatchers = VAL_HANDLE_POINTER(Dispatcher*, dispatchers_handle);
 
     size_t specs_size;
     Byte *specs_utf8 = Decompress_Alloc_Core(
@@ -315,7 +315,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
 Value* rebCollateExtension_internal(
     const Byte script_compressed[], REBLEN script_compressed_len,
     const Byte specs_compressed[], REBLEN specs_compressed_len,
-    REBNAT dispatchers[], REBLEN dispatchers_len
+    Dispatcher* dispatchers[], REBLEN dispatchers_len
 ) {
 
     Array* a = Make_Array(IDX_COLLATOR_MAX); // details

@@ -522,7 +522,7 @@ static void Shutdown_Action_Meta_Shim(void) {
 Value* Make_Native(
     Cell* *item, // the item will be advanced as necessary
     Specifier* specifier,
-    REBNAT dispatcher,
+    Dispatcher* dispatcher,
     Value* module
 ){
     assert(specifier == SPECIFIED); // currently a requirement

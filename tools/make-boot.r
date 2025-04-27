@@ -816,7 +816,7 @@ e-bootblock/emit {
     const REBLEN Num_Natives = NUM_NATIVES;
     Value Natives[NUM_NATIVES];
 
-    const REBNAT Native_C_Funcs[NUM_NATIVES] = {
+    Dispatcher* const Native_C_Funcs[NUM_NATIVES] = {
         $(Nats),
     };
 }
@@ -895,7 +895,7 @@ e-boot/emit {
      * Raw C function pointers for natives, take Level* and return Value*.
      */
     EXTERN_C const REBLEN Num_Natives;
-    EXTERN_C const REBNAT Native_C_Funcs[];
+    EXTERN_C Dispatcher* const Native_C_Funcs[];
 
     /*
      * A canon ACTION! Value of the native, accessible by native's index #

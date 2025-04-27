@@ -767,7 +767,7 @@ REBLEN Find_Param_Index(Array* paramlist, Symbol* symbol)
 //
 REBACT *Make_Action(
     Array* paramlist,
-    REBNAT dispatcher, // native C function called by Eval_Core
+    Dispatcher* dispatcher, // native C function called by Eval_Core
     REBACT *opt_underlying, // optional underlying function
     VarList* opt_exemplar, // if provided, should be consistent w/next level
     REBLEN details_capacity // desired capacity of the ACT_DETAILS() array
@@ -1110,7 +1110,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
 ) {
     assert(Is_Block(spec) and Is_Block(code));
 
-    REBNAT dispatcher;
+    Dispatcher* dispatcher;
     if (mkf_flags & MKF_RETURN)
         dispatcher = &Func_Dispatcher;
     else

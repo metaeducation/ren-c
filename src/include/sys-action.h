@@ -261,7 +261,7 @@ INLINE Array* VAL_ACT_DETAILS(const Cell* v) {
     return v->payload.action.details;
 }
 
-INLINE REBNAT VAL_ACT_DISPATCHER(const Cell* v) {
+INLINE Dispatcher* VAL_ACT_DISPATCHER(const Cell* v) {
     assert(Is_Action(v));
     return MISC(v->payload.action.details).dispatcher;
 }
