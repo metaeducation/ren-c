@@ -639,7 +639,7 @@ DECLARE_NATIVE(PICK)
 //          {(modified)}
 //      picker
 //          {Index offset, symbol, or other value to use as index}
-//      value [any-value!]
+//      value [any-value! trash!]
 //          {The new value}
 //  ]
 //

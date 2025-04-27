@@ -126,7 +126,7 @@ console!: make object! [
         write-stdout space
     ]
 
-    print-result: function [return: [~] v [any-value!]]  [
+    print-result: function [return: [~] v [any-value! trash!]]  [
 
         if trash? last-result: get/any 'v [
             ;

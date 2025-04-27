@@ -771,7 +771,7 @@ RebolValue* API_rebRescue(
     L->out = m_cast(Value*, END_NODE); // should not be written
 
     Symbol* opt_label = nullptr;
-    Push_Level_At_End(L, DO_MASK_NONE); // not FULLY_SPECIALIZED
+    Push_Level_At_End(L, DO_MASK_NONE);
 
     Reuse_Varlist_If_Available(L); // needed to attach API handles to
     Push_Action(L, PG_Dummy_Action, UNBOUND);

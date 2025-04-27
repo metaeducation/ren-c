@@ -296,8 +296,8 @@ Bounce Reflect_Core(Level* level_)
 //  {Returns specific details about a datatype.}
 //
 //      return: [any-value!]
-//      value "Accepts NULL so REFLECT () 'TYPE can be returned as NULL"
-//          [any-value!]
+//      value "Accepts TRASH! so REFLECT ~ 'TYPE can be returned as TRASH!"
+//          [any-value! trash!]
 //      property [word!]
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
@@ -320,8 +320,8 @@ DECLARE_NATIVE(REFLECT)
 //
 //      return: [any-value!]
 //      'property [word!]
-//      value "Accepts NULL so TYPE OF () can be returned as NULL"
-//          [any-value!]
+//      value "Accepts TRASH! so TYPE OF ~ can be returned as TRASH!"
+//          [any-value! trash!]
 //  ]
 //
 DECLARE_NATIVE(OF)

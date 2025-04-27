@@ -314,7 +314,7 @@ DECLARE_NATIVE(EITHER_TEST)
 //      return: "Input value if not null, or branch result (possibly null)"
 //          [any-value!]
 //      left "Run branch if this is null or void"
-//          [~null~ ~void~ any-value!]
+//          [any-value! trash!]
 //      branch [block! action!]
 //  ]
 //
@@ -341,7 +341,7 @@ DECLARE_NATIVE(ELSE)
 //      return: "null if input is null, or branch result (voided if null)"
 //          [any-value!]
 //      left "Run branch if this is not null or void"
-//          [~null~ ~void~ any-value!]
+//          [any-value! trash!]
 //      branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [block! action!]
 //  ]
@@ -369,7 +369,7 @@ DECLARE_NATIVE(THEN)
 //      return: "The same value as input, regardless of if branch runs"
 //          [any-value!]
 //      left "Run branch if this is not null or void"
-//          [any-value!]
+//          [any-value! trash!]
 //      branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [block! action!]
 //  ]

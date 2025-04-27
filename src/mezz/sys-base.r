@@ -95,7 +95,7 @@ do*: function [
     original-script: null
 
     finalizer: lambda [
-        value [any-value!]
+        value [any-value! trash!]
         /quit
         <with> return
     ][

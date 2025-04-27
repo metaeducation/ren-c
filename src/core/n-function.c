@@ -191,7 +191,7 @@ DECLARE_NATIVE(UNWIND)
 //  {RETURN, giving a result to the caller}
 //
 //      value "If no argument is given, result will be a trash"
-//          [any-value!]
+//          [any-value! trash!]
 //  ]
 //
 DECLARE_NATIVE(RETURN)

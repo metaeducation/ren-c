@@ -276,15 +276,9 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(24)
 
 
-//=//// DO_FLAG_FULLY_SPECIALIZED /////////////////////////////////////////=//
+//=//// DO_FLAG_25 ////////////////////////////////////////////////////////=//
 //
-// When a null is seen in L->special, the question is whether that is an
-// intentional "null specialization" or if it means the argument should be
-// gathered normally (if applicable), as it would in a typical invocation.
-// If the frame is considered fully specialized (as with DO F) then there
-// will be no further argument gathered at the callsite, nulls are as-is.
-//
-#define DO_FLAG_FULLY_SPECIALIZED \
+#define DO_FLAG_25 \
     FLAG_LEFT_BIT(25)
 
 

@@ -389,7 +389,7 @@ DECLARE_NATIVE(EVALUATE)
         L->out = OUT;
         Push_Level_At_End(
             L,
-            DO_FLAG_FULLY_SPECIALIZED | DO_FLAG_PROCESS_ACTION
+            DO_FLAG_PROCESS_ACTION
         );
 
         assert(Varlist_Keys_Head(c) == ACT_PARAMS_HEAD(phase));
@@ -541,7 +541,6 @@ DECLARE_NATIVE(EVALUATE)
 //          [action! word! path!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
-//      /opt "Treat nulls as unspecialized <<experimental!>>"
 //  ]
 //
 DECLARE_NATIVE(APPLIQUE)
@@ -640,16 +639,7 @@ DECLARE_NATIVE(APPLIQUE)
 
     Push_Level_At_End(L, DO_FLAG_PROCESS_ACTION);
 
-    if (not Bool_ARG(OPT)) {
-        //
-        // If nulls are taken literally as null arguments, then no arguments
-        // are gathered at the callsite, so the "ordering information"
-        // on the stack isn't needed.  Eval_Core_Throws() will just treat a
-        // slot with an INTEGER! for a refinement as if it were "true".
-        //
-        L->flags.bits |= DO_FLAG_FULLY_SPECIALIZED;
-        Drop_Data_Stack_To(lowest_stackindex);  // zero refinements on stack, now
-    }
+    Drop_Data_Stack_To(lowest_stackindex);  // zero refinements on stack, now
 
     L->varlist = Varlist_Array(stolen);
     L->rootvar = Varlist_Archetype(stolen);

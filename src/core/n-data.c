@@ -617,7 +617,7 @@ DECLARE_NATIVE(INFIX)
 //          {Will be the values set to, or void if any set values are void}
 //      target [<maybe> any-word! any-path! block!]
 //          {Word or path, or block of words and paths}
-//      value [any-value!]
+//      value [any-value! trash!]
 //          "Value or block of values"
 //      /single "If target and value are blocks, set each to the same value"
 //      /some "blank values (or values past end of block) are not set."

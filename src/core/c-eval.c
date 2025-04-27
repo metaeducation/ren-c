@@ -931,11 +931,10 @@ bool Eval_Core_Throws(Level* const L)
 
             // !!! This is currently a hack for APPLY.  It doesn't do a type
             // checking pass after filling the frame, but it still wants to
-            // treat all values (nulls included) as fully specialized.
+            // treat all values (trash included) as fully specialized.
             //
             if (
                 L->arg == L->special // !!! should this ever allow gathering?
-                /* L->flags.bits & DO_FLAG_FULLY_SPECIALIZED */
             ){
                 Finalize_Current_Arg(L);
                 goto continue_arg_loop; // looping to verify args/refines
@@ -947,9 +946,6 @@ bool Eval_Core_Throws(Level* const L)
             // further processing or checking.  null will always be fine.
             //
             if (L->refine == ARG_TO_UNUSED_REFINEMENT) {
-                //
-                // Overwrite if !(DO_FLAG_FULLY_SPECIALIZED) faster than check
-                //
                 Init_Nulled(L->arg);
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
@@ -1161,7 +1157,6 @@ bool Eval_Core_Throws(Level* const L)
             assert(pclass != PARAMCLASS_LOCAL);
             assert(
                 not In_Typecheck_Mode(L) // already handled, unless...
-                or not (L->flags.bits & DO_FLAG_FULLY_SPECIALIZED) // ...this!
             );
 
             Finalize_Arg(L, L->param, L->arg, L->refine);

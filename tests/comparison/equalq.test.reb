@@ -513,22 +513,14 @@
         ]
 )]
 
-; NOTHING is legal to test with equality (as is UNSET! in R3-Alpha/Red)
+; TRASH is illegal to test with equality (as is UNSET! in Rebol2)
 [
-    (equal? ~ ~)
-    (not-equal? ~ blank)
-    (not-equal? blank ~)
-    (equal? (equal? blank ~) (equal? ~ blank))
-    (not (~ = blank))
-    (~ <> blank)
-    (not (blank = ~))
-    (blank != ~)
-    (~ = ~)
-    (not (~ != ~))
-    (equal? (blank = ~) (~ = blank))
+    ('expect-arg = (sys.util/rescue [equal? ~ ~]).id)
+    ('expect-arg = (sys.util/rescue [not-equal? ~ blank]).id)
+    ('expect-arg = (sys.util/rescue [~ <> blank]).id)
 ]
 
-; NULL is legal to test with equality (as is UNSET! in R3-Alpha/Red)
+; NULL is legal to test with equality (as is NONE! in R3-Alpha/Red)
 [
     (equal? null null)
     (not-equal? null blank)

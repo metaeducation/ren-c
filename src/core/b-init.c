@@ -441,7 +441,6 @@ static void Init_Action_Spec_Tags(void)
     Root_Here_Tag = Make_Locked_Tag("here");
     Root_With_Tag = Make_Locked_Tag("with");
     Root_Ellipsis_Tag = Make_Locked_Tag("...");
-    Root_Any_Tag = Make_Locked_Tag("any");
     Root_End_Tag = Make_Locked_Tag("end");
     Root_Maybe_Tag = Make_Locked_Tag("maybe");
     Root_Local_Tag = Make_Locked_Tag("local");
@@ -453,7 +452,6 @@ static void Shutdown_Action_Spec_Tags(void)
     rebRelease(Root_Here_Tag);
     rebRelease(Root_With_Tag);
     rebRelease(Root_Ellipsis_Tag);
-    rebRelease(Root_Any_Tag);
     rebRelease(Root_End_Tag);
     rebRelease(Root_Maybe_Tag);
     rebRelease(Root_Local_Tag);

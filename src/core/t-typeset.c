@@ -152,7 +152,11 @@ bool Update_Typeset_Bits_Core(
     Cell* typeset,
     const Cell* head,
     Specifier* specifier
-) {
+){
+    bool clear_trash_flag = true;
+    if (Key_Symbol(typeset) and (Key_Id(typeset) == SYM_RETURN))
+        clear_trash_flag = false;
+
     assert(Is_Typeset(typeset));
     Cell_Typeset_Bits(typeset) = 0;
 
@@ -163,6 +167,7 @@ bool Update_Typeset_Bits_Core(
         if (Is_Word(maybe_word)) {
             if (Cell_Word_Id(maybe_word) == SYM_TILDE_1) {  // ~
                 Set_Typeset_Flag(typeset, TYPE_TRASH);
+                clear_trash_flag = false;
                 continue;
             }
             if (Cell_Word_Id(maybe_word) == SYM__TNULL_T) {  // ~null~
@@ -201,6 +206,8 @@ bool Update_Typeset_Bits_Core(
         else if (Is_Datatype(item)) {
             assert(CELL_DATATYPE_TYPE(item) != TYPE_0);
             Set_Typeset_Flag(typeset, CELL_DATATYPE_TYPE(item));
+            if (CELL_DATATYPE_TYPE(item) == TYPE_TRASH)
+                clear_trash_flag = false;
         }
         else if (Is_Typeset(item)) {
             Cell_Typeset_Bits(typeset) |= Cell_Typeset_Bits(item);
@@ -208,6 +215,14 @@ bool Update_Typeset_Bits_Core(
         else
             fail (Error_Invalid_Core(maybe_word, specifier));
     }
+
+    // If you say ANY-VALUE! on a non-RETURN: then most arguments don't get
+    // TRASH! even though it's a "member" of ANY-VALUE! (e.g. something a
+    // variable can hold, even though you can't put it in blocks).  You have
+    // to explicitly say TRASH! to get it.
+    //
+    if (clear_trash_flag)
+        Clear_Typeset_Flag(typeset, TYPE_TRASH);
 
     return true;
 }

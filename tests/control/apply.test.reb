@@ -110,7 +110,7 @@
 
 (
     trash? redbol-apply lambda [
-        x [any-value!]
+        x [any-value! trash!]
     ][
         get/any 'x
     ][
@@ -119,7 +119,7 @@
 )
 (
     trash? redbol-apply lambda [
-        'x [any-value!]
+        'x [any-value! trash!]
     ][
         get/any 'x
     ][
@@ -129,7 +129,7 @@
 (
     trash? redbol-apply func [
         return: [any-value!]
-        x [any-value!]
+        x [any-value! trash!]
     ][
         return get/any 'x
     ][
@@ -139,7 +139,7 @@
 (
     trash? redbol-apply func [
         return: [any-value!]
-        'x [any-value!]
+        'x [any-value! trash!]
     ][
         return get/any 'x
     ][
@@ -147,7 +147,7 @@
     ]
 )
 (
-    error? redbol-apply func ['x [any-value!]] [
+    error? redbol-apply func ['x [any-value! trash!]] [
         return get 'x
     ][
         make error! ""

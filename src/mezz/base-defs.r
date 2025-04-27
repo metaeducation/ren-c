@@ -36,7 +36,7 @@ probe: func [
 
     return: "Same as the input value"
         [any-value!]
-    value [any-value!]
+    value [any-value! trash!]
 ][
     case [
         trash? :value [write-stdout "~  ; anti"]
@@ -74,7 +74,7 @@ elide: func [
 
     return: [~void~]
         {The evaluator will skip over the result (not seen, not even void)}
-    discarded [any-value!]
+    discarded [any-value! trash!]
         {Evaluated value to be ignored.}
 ][
     return void

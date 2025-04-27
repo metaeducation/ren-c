@@ -82,7 +82,7 @@
         okay
     )
 
-    (takes-2-logics ~ = ~ null)
+    (takes-2-logics ~void~ = ~void~ null)
 
     ('expect-arg = (sys/util/rescue [takes-2-logics okay infix-voider okay null])/id)
 ]

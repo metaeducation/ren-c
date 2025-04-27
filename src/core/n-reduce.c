@@ -111,7 +111,7 @@ Value* Meta_Unquotify(Value* v)
 //
 //      return: {~null~ if null, or `(the ...)` where ... is passed-in cell}
 //          [word! group!]
-//      value [any-value!]
+//      value [any-value! trash!]
 //   ]
 //
 DECLARE_NATIVE(META)
