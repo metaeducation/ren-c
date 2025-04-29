@@ -393,7 +393,7 @@ redescribe: function [
                         ]
 
                         actual: first find words of :value param
-                        if not strict-equal? param actual [
+                        if not equal? param actual [
                             fail [param {doesn't match word type of} actual]
                         ]
 

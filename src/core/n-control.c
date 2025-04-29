@@ -1056,7 +1056,7 @@ DECLARE_NATIVE(CATCH)
                 Copy_Cell(temp2, OUT);
 
                 // Return the THROW/NAME's arg if the names match
-                // !!! 0 means equal?, but strict-equal? might be better
+                // !!! 0 means equal?, but equal? might be better
                 //
                 if (Compare_Modify_Values(temp1, temp2, 0))
                     goto was_caught;
@@ -1067,7 +1067,7 @@ DECLARE_NATIVE(CATCH)
             Copy_Cell(temp2, OUT);
 
             // Return the THROW/NAME's arg if the names match
-            // !!! 0 means equal?, but strict-equal? might be better
+            // !!! 0 means equal?, but equal? might be better
             //
             if (Compare_Modify_Values(temp1, temp2, 0))
                 goto was_caught;

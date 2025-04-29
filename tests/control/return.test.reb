@@ -19,11 +19,11 @@
     error? f1
 )
 [#1515 ; the "result" of return should not be assignable
-    (a: 1 reeval func [] [a: return 2] :a =? 1)
+    (a: 1 reeval func [] [a: return 2] a = 1)
 ]
-(a: 1 reeval func [] [set 'a return 2] :a =? 1)
+(a: 1 reeval func [] [set 'a return 2] a = 1)
 [#1509 ; the "result" of return should not be passable to functions
-    (a: 1 reeval func [] [a: error? return 2] :a =? 1)
+    (a: 1 reeval func [] [a: error? return 2] a = 1)
 ]
 [#1535
     (reeval func [] [words of return blank] okay)
@@ -33,4 +33,4 @@
     (reeval func [] [spec-of return blank] okay)
 ]
 ; return should not be caught by try
-(a: 1 reeval func [] [a: error? sys/util/rescue [return 2]] :a =? 1)
+(a: 1 reeval func [] [a: error? sys/util/rescue [return 2]] a = 1)

@@ -14,8 +14,8 @@
 
 ; triggered errors should not be assignable
 ;
-(a: 1 error? sys/util/rescue [a: 1 / 0] :a =? 1)
-(a: 1 error? sys/util/rescue [set 'a 1 / 0] :a =? 1)
+(a: 1 error? sys/util/rescue [a: 1 / 0] a = 1)
+(a: 1 error? sys/util/rescue [set 'a 1 / 0] a = 1)
 
 [#2190
     (127 = catch/quit [sys/util/rescue [catch/quit [1 / 0]] quit 127])

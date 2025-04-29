@@ -63,7 +63,7 @@ ends-with?: func [
 ][
     return did any [
         empty? suffix
-        suffix = (skip tail-of s negate length of suffix)
+        suffix ?= (skip tail-of s negate length of suffix)
     ]
 ]
 

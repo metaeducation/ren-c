@@ -2,7 +2,7 @@
 
 ; refinement order
 [#83
-    (strict-equal? trim/all/with "a" "a" trim/with/all "a" "a")
+    (equal? trim/all/with "a" "a" trim/with/all "a" "a")
 ]
 
 [#1948

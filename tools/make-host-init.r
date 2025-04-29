@@ -115,7 +115,7 @@ file-base: make object! load <file-base.r>
 host-protocols: make block! 2
 for-each file file-base/prot-files [
     m: load/all join %../mezz/ file
-    assert ['REBOL = m/1]
+    assert ['Rebol = m/1]
     spec: ensure block! m/2
     contents: skip m 2
     append host-protocols compose/only [(spec) (contents)]

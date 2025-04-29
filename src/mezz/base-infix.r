@@ -87,7 +87,7 @@ for-each [math-op function-name] [
 
 ; Make top-level words for things not added by %b-init.c
 ;
-=: !=: =?: ~
+=: !=: ?=: ?!=: ~
 
 ; <= looks a lot like a left arrow.  In the interest of "new thought", core
 ; defines the operation in terms of =<
@@ -97,16 +97,16 @@ lesser-or-equal?: :equal-or-lesser?
 for-each [comparison-op function-name] compose [
     =       equal?
     <>      not-equal?
+    !=      not-equal? ;-- !!! http://www.rebol.net/r3blogs/0017.html
+
     <       lesser?
     (r3-alpha-quote "=<") equal-or-lesser?
     >       greater?
     >=      greater-or-equal?
-
     <=      lesser-or-equal? ;-- !!! https://forum.rebol.info/t/349/11
 
-    !=      not-equal? ;-- !!! http://www.rebol.net/r3blogs/0017.html
-
-    =?      same?
+    ?=      lax-equal?
+    ?!=     lax-not-equal?
 ][
     ; !!! See discussion about the future of comparison operators:
     ; https://forum.rebol.info/t/349

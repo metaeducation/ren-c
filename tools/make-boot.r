@@ -262,7 +262,7 @@ compare-hooks: collect [
         either t/class = '* [
             keep cscape [t {CT_Unhooked /* $<T/Class> */}]
         ][
-            proper: Propercase-Of T/Class
+            proper: propercase-of T/Class
             keep cscape [proper t {CT_$<Proper> /* $<T/Class> */}]
         ]
     ]

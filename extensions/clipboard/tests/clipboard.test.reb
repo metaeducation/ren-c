@@ -14,20 +14,20 @@
 (
     write clipboard:// c: "This is a test."
     d: to-text read clipboard://
-    strict-equal? c d
+    equal? c d
 )
 
 ; Separate open step
 (
     p: open clipboard://
     write p c: "Clipboard port test"
-    strict-equal? c to-text read p
+    equal? c to-text read p
 )
 
 ; Unicode string
 (
     write clipboard:// c: "Příliš žluťoučký kůň úpěl ďábelské ódy."
-    strict-equal? to-text read clipboard:// c
+    equal? to-text read clipboard:// c
 )
 
 ; WRITE returns a PORT! in R3
