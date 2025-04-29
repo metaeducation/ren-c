@@ -13,7 +13,7 @@
 (100% = to percent! 1)
 (10% = to percent! 0.1)
 (error? sys/util/rescue [to percent! "t"])
-(0 = to decimal! 0%)
+(0 ?= to decimal! 0%)
 (0.1 = to decimal! 10%)
 (1.0 = to decimal! 100%)
 (0% = load mold 0.0%)

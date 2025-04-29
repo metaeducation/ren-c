@@ -774,9 +774,7 @@ DECLARE_NATIVE(CHOOSE)
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
-//      ; !!! /STRICT may have a different name
-//      ; https://forum.rebol.info/t/349
-//      /strict "Use STRICT-EQUAL? when comparing cases instead of EQUAL?"
+//      /relax "Use LAX-EQUAL? when comparing cases instead of EQUAL?"
 //      ; !!! Is /QUOTE truly needed?
 //      /quote "Do not evaluate comparison values"
 //      ; !!! Needed in spec for ADAPT to override in shim
@@ -800,6 +798,12 @@ DECLARE_NATIVE(SWITCH)
     Push_Level(L, ARG(CASES));
 
     Value* value = ARG(VALUE);
+    if (Is_Void(value))
+        return nullptr;
+
+    bool strict = not Bool_ARG(RELAX);
+
+    FAIL_IF_ERROR(value);
 
     Init_Nulled(OUT); // used for "fallout"
 
@@ -860,7 +864,7 @@ DECLARE_NATIVE(SWITCH)
         // !!! A branch composed into the switch cases block may want to see
         // the un-mutated condition value.
 
-        if (!Compare_Modify_Values(value, OUT, Bool_ARG(STRICT) ? 1 : 0))
+        if (not Compare_Modify_Values(value, OUT, strict))
             continue;
 
         // Skip ahead to try and find a block, to treat as code for the match
@@ -1056,7 +1060,7 @@ DECLARE_NATIVE(CATCH)
                 Copy_Cell(temp2, OUT);
 
                 // Return the THROW/NAME's arg if the names match
-                // !!! 0 means equal?, but strict-equal? might be better
+                // !!! 0 means equal?, but equal? might be better
                 //
                 if (Compare_Modify_Values(temp1, temp2, 0))
                     goto was_caught;
@@ -1067,7 +1071,7 @@ DECLARE_NATIVE(CATCH)
             Copy_Cell(temp2, OUT);
 
             // Return the THROW/NAME's arg if the names match
-            // !!! 0 means equal?, but strict-equal? might be better
+            // !!! 0 means equal?, but equal? might be better
             //
             if (Compare_Modify_Values(temp1, temp2, 0))
                 goto was_caught;

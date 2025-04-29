@@ -71,7 +71,7 @@ EXTERN_C REBOL_HOST_LIB Host_Lib_Init;
 
 
 //
-// rebEnterApi_Internal: API
+// rebEnterApi_internal: API
 //
 // This stub is added automatically to the calling wrappers.
 //

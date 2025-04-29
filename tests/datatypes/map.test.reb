@@ -1,5 +1,5 @@
 ; datatypes/map.r
-; map! =? hash! in R2/Forward, R2 2.7.7+
+
 (empty? make map! [])
 (empty? make map! 4)
 ; The length of a map is the number of key/value pairs it holds.

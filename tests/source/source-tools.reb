@@ -217,7 +217,7 @@ rebsource: context [
                         ; `DECLARE_NATIVE(SOME_NAME_Q)` to be correctly lined up
                         ; as the "to-c-name" of the Rebol set-word
                         ;
-                        if proto-parser/proto-arg-1 <> to-c-name name [
+                        if proto-parser/proto-arg-1 <> uppercase to-c-name name [
                             line: text-line-of proto-parser/parse-position
                             emit <id-mismatch> [
                                 (mold proto-parser/data/1) (file) (reify line)

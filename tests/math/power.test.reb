@@ -5,10 +5,10 @@
 ;
 ; https://rosettacode.org/wiki/Zero_to_the_zero_power
 ;
-(1.0 = power 0 0)
+(1.0 ?= power 0 0)
 
-(1 = power 1 1000)
-(1 = power 1000 0)
-(4 = power 2 2)
-(0.5 = power 2 -1)
-(0.1 = power 10 -1)
+(1 ?= power 1 1000)
+(1 ?= power 1000 0)
+(4 ?= power 2 2)
+(0.5 ?= power 2 -1)
+(0.1 ?= power 10 -1)

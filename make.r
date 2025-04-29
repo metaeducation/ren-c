@@ -45,10 +45,10 @@ either commands: find args '| [
 
 for-each [name value] options [
     switch name [
-        'CONFIG 'LOAD 'DO [
+        'config 'load 'do [
             user-config: make user-config load to-file value
         ]
-        'EXTENSIONS [
+        'extensions [
             ; [+|-|*] [NAME {+|-|*|[modules]}]...
             use [ext-file user-ext][
                 user-ext: load value

@@ -13,7 +13,7 @@
 (datatype? error!)
 (datatype? event!)
 (datatype? file!)
-(datatype? get-path!)  ; get-path! =? path! in R2/Forward, R2 2.7.7+
+(datatype? get-path!)
 (datatype? get-word!)
 (datatype? handle!)
 (datatype? integer!)
@@ -21,7 +21,7 @@
 (datatype? lit-path!)
 (datatype? lit-word!)
 (typeset? logic!)
-(datatype? map!)  ; map! =? hash! in R2/Forward, R2 2.7.7+
+(datatype? map!)
 (datatype? module!)
 (datatype? money!)
 (datatype? blank!)
@@ -38,7 +38,7 @@
 (datatype? tag!)
 (datatype? time!)
 (datatype? tuple!)
-(datatype? typeset!)  ; typeset! =? block! in R2/Forward, R2 2.7.7+
+(datatype? typeset!)
 (datatype? url!)
 (datatype? word!)
 ; alternative literal representation

@@ -36,7 +36,7 @@ Rebol [
 ]
 
 
-Internal: [
+internal: [
     ; !!! Should there be a distinction made between different kinds of
     ; stack overflows?  (Call stack, Data stack?)
     ;
@@ -65,7 +65,7 @@ Internal: [
     invalid-exit:       {Frame does not exist on the stack to EXIT from}
 ]
 
-Syntax: [
+syntax: [
     scan-invalid:       [{invalid} :arg1 {--} :arg2]
     scan-missing:       [{missing} :arg1]
     scan-extra:         [{extra} :arg1]
@@ -79,7 +79,7 @@ Syntax: [
     needs:              [{this script needs} :arg1 :arg2 {or better to run correctly}]
 ]
 
-Script: [
+script: [
     no-value:           [:arg1 {has no value (~ antiform) See: GET/ANY}]
     fetched-tripwire:   [:arg1 {is a tripwire!:} :arg2]
     need-non-end:       [{end was reached while trying to set} :arg1]
@@ -204,7 +204,7 @@ Script: [
     void-conditional:   [{Void antiforms (~void~) not conditionally true/false}]
 ]
 
-Math: [
+math: [
     zero-divide:        {attempt to divide by zero}
     overflow:           {math or number overflow}
     positive:           {positive number required}
@@ -214,7 +214,7 @@ Math: [
     out-of-range:       [{value out of range:} :arg1]
 ]
 
-Access: [
+access: [
     protected-word:     [{variable} :arg1 {locked by PROTECT (see UNPROTECT)}]
 
     series-protected:   {series read-only due to PROTECT (see UNPROTECT)}

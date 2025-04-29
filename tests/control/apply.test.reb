@@ -153,30 +153,30 @@
         make error! ""
     ]
 )
-(use [x] [x: 1 strict-equal? 1 redbol-apply lambda ['x] [:x] [:x]])
-(use [x] [x: 1 strict-equal? 1 redbol-apply lambda ['x] [:x] [:x]])
+(use [x] [x: 1 equal? 1 redbol-apply lambda ['x] [:x] [:x]])
+(use [x] [x: 1 equal? 1 redbol-apply lambda ['x] [:x] [:x]])
 (
     use [x] [
         x: 1
-        strict-equal? first [:x] redbol-apply/only lambda [:x] [:x] [:x]
+        equal? first [:x] redbol-apply/only lambda [:x] [:x] [:x]
     ]
 )
 (
     use [x] [
         x: null
-        strict-equal? first [:x] redbol-apply/only func ['x [any-value!]] [
+        equal? first [:x] redbol-apply/only func ['x [any-value!]] [
             return get 'x
         ] [:x]
     ]
 )
-(use [x] [x: 1 strict-equal? 1 redbol-apply lambda [:x] [:x] [x]])
-(use [x] [x: 1 strict-equal? 'x redbol-apply lambda [:x] [:x] ['x]])
-(use [x] [x: 1 strict-equal? 'x redbol-apply/only lambda [:x] [:x] [x]])
-(use [x] [x: 1 strict-equal? 'x redbol-apply/only func [:x] [return :x] [x]])
+(use [x] [x: 1 equal? 1 redbol-apply lambda [:x] [:x] [x]])
+(use [x] [x: 1 equal? 'x redbol-apply lambda [:x] [:x] ['x]])
+(use [x] [x: 1 equal? 'x redbol-apply/only lambda [:x] [:x] [x]])
+(use [x] [x: 1 equal? 'x redbol-apply/only func [:x] [return :x] [x]])
 (
     use [x] [
         x: null
-        strict-equal? 'x redbol-apply/only func ['x [any-value!]] [
+        equal? 'x redbol-apply/only func ['x [any-value!]] [
             return get 'x
         ] [x]
     ]

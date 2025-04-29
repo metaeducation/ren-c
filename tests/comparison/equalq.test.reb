@@ -1,119 +1,119 @@
 ; functions/comparison/equalq.r
 ; reflexivity test for native
-(equal? :abs :abs)
-(not equal? :abs :add)
-(equal? :all :all)
-(not equal? :all :any)
+(lax-equal? :abs :abs)
+(not lax-equal? :abs :add)
+(lax-equal? :all :all)
+(not lax-equal? :all :any)
 ; reflexivity test for infix
-(equal? :+ :+)
-(not equal? :+ :-)
+(lax-equal? :+ :+)
+(not lax-equal? :+ :-)
 ; reflexivity test for action!
-(equal? a-value: func [] [] :a-value)
+(lax-equal? a-value: func [] [] :a-value)
 ; No structural equivalence for action!
-(not equal? func [] [] func [] [])
-(equal? a-value: #{00} a-value)
+(not lax-equal? func [] [] func [] [])
+(lax-equal? a-value: #{00} a-value)
 ; binary!
 ; Same contents
-(equal? #{00} #{00})
+(lax-equal? #{00} #{00})
 ; Different contents
-(not equal? #{00} #{01})
+(not lax-equal? #{00} #{01})
 ; Offset + similar contents at reference
-(equal? #{00} #[binary! [#{0000} 2]])
+(lax-equal? #{00} #[binary! [#{0000} 2]])
 ; Offset + similar contents at reference
-(equal? #{00} #[binary! [#{0100} 2]])
-(equal? equal? #{00} #[binary! [#{0100} 2]] equal? #[binary! [#{0100} 2]] #{00})
+(lax-equal? #{00} #[binary! [#{0100} 2]])
+(lax-equal? lax-equal? #{00} #[binary! [#{0100} 2]] lax-equal? #[binary! [#{0100} 2]] #{00})
 ; No binary! padding
-(not equal? #{00} #{0000})
-(equal? equal? #{00} #{0000} equal? #{0000} #{00})
+(not lax-equal? #{00} #{0000})
+(lax-equal? lax-equal? #{00} #{0000} lax-equal? #{0000} #{00})
 ; Empty binary! not blank
-(not equal? #{} blank)
-(equal? equal? #{} blank equal? blank #{})
+(not lax-equal? #{} blank)
+(lax-equal? lax-equal? #{} blank lax-equal? blank #{})
 ; case sensitivity
 [#1459
-    (not-equal? #{0141} #{0161})
+    (lax-not-equal? #{0141} #{0161})
 ]
 ; email! vs. text!
 ; RAMBO #3518
 (
     a-value: to email! ""
-    equal? a-value to text! a-value
+    lax-equal? a-value to text! a-value
 )
 ; email! vs. text! symmetry
 (
     a-value: to email! ""
-    equal? equal? to text! a-value a-value equal? a-value to text! a-value
+    lax-equal? lax-equal? to text! a-value a-value lax-equal? a-value to text! a-value
 )
 ; file! vs. text!
 ; RAMBO #3518
 (
     a-value: %""
-    equal? a-value to text! a-value
+    lax-equal? a-value to text! a-value
 )
 ; file! vs. text! symmetry
 (
     a-value: %""
-    equal? equal? a-value to text! a-value equal? to text! a-value a-value
+    lax-equal? lax-equal? a-value to text! a-value lax-equal? to text! a-value a-value
 )
 
 ; No implicit to binary! from integer!
-(not equal? #{00} to integer! #{00})
-(equal? equal? #{00} to integer! #{00} equal? to integer! #{00} #{00})
+(not lax-equal? #{00} to integer! #{00})
+(lax-equal? lax-equal? #{00} to integer! #{00} lax-equal? to integer! #{00} #{00})
 ; issue! vs. text!
 ; RAMBO #3518
-(not-equal? a-value: #a to text! a-value)
+(lax-not-equal? a-value: #a to text! a-value)
 (
     a-value: #a
-    equal? equal? a-value to text! a-value equal? to text! a-value a-value
+    lax-equal? lax-equal? a-value to text! a-value lax-equal? to text! a-value a-value
 )
 ; No implicit to binary! from text!
-(not equal? a-value: "" to binary! a-value)
+(not lax-equal? a-value: "" to binary! a-value)
 (
     a-value: ""
-    equal? equal? a-value to binary! a-value equal? to binary! a-value a-value
+    lax-equal? lax-equal? a-value to binary! a-value lax-equal? to binary! a-value a-value
 )
 ; tag! vs. text!
 ; RAMBO #3518
-(equal? a-value: to tag! "" to text! a-value)
+(lax-equal? a-value: to tag! "" to text! a-value)
 (
     a-value: to tag! ""
-    equal? equal? a-value to text! a-value equal? to text! a-value a-value
+    lax-equal? lax-equal? a-value to text! a-value lax-equal? to text! a-value a-value
 )
-(equal? 0.0.0 0.0.0)
-(not equal? 0.0.1 0.0.0)
+(lax-equal? 0.0.0 0.0.0)
+(not lax-equal? 0.0.1 0.0.0)
 ; tuple! right-pads with 0
-(equal? 1.0.0 1.0.0.0.0.0.0)
+(lax-equal? 1.0.0 1.0.0.0.0.0.0)
 ; tuple! right-pads with 0
-(equal? 1.0.0.0.0.0.0 1.0.0)
+(lax-equal? 1.0.0.0.0.0.0 1.0.0)
 ; No implicit to binary! from tuple!
 (
     a-value: 0.0.0.0
-    not equal? to binary! a-value a-value
+    not lax-equal? to binary! a-value a-value
 )
 (
     a-value: 0.0.0.0
-    equal? equal? to binary! a-value a-value equal? a-value to binary! a-value
+    lax-equal? lax-equal? to binary! a-value a-value lax-equal? a-value to binary! a-value
 )
-(equal? #[bitset! #{00}] #[bitset! #{00}])
+(lax-equal? #[bitset! #{00}] #[bitset! #{00}])
 ; bitset! with no bits set does not equal empty bitset
 ; This is because of the COMPLEMENT problem: bug#1085.
-(not equal? #[bitset! #{}] #[bitset! #{00}])
+(not lax-equal? #[bitset! #{}] #[bitset! #{00}])
 ; No implicit to binary! from bitset!
-(not equal? #{00} #[bitset! #{00}])
-(equal? equal? #[bitset! #{00}] #{00} equal? #{00} #[bitset! #{00}])
-(equal? [] [])
-(equal? a-value: [] a-value)
+(not lax-equal? #{00} #[bitset! #{00}])
+(lax-equal? lax-equal? #[bitset! #{00}] #{00} lax-equal? #{00} #[bitset! #{00}])
+(lax-equal? [] [])
+(lax-equal? a-value: [] a-value)
 ; Reflexivity for past-tail blocks
 ; Error in R2.
 (
     a-value: tail of [1]
     clear head of a-value
-    equal? a-value a-value
+    lax-equal? a-value a-value
 )
 ; Reflexivity for cyclic blocks
 (
     a-value: copy []
     insert/only a-value a-value
-    equal? a-value a-value
+    lax-equal? a-value a-value
 )
 ; Comparison of cyclic blocks
 ; NOTE: The stackoverflow will likely trigger in valgrind an error such as:
@@ -124,336 +124,336 @@
     insert/only a-value a-value
     b-value: copy []
     insert/only b-value b-value
-    error? sys/util/rescue [equal? a-value b-value]
+    error? sys/util/rescue [lax-equal? a-value b-value]
     okay
 )]
-(not equal? [] blank)
-(equal? equal? [] blank equal? blank [])
+(not lax-equal? [] blank)
+(lax-equal? lax-equal? [] blank lax-equal? blank [])
 ; block! vs. group!
-(not equal? [] first [()])
+(not lax-equal? [] first [()])
 ; block! vs. group! symmetry
-(equal? equal? [] first [()] equal? first [()] [])
+(lax-equal? lax-equal? [] first [()] lax-equal? first [()] [])
 ; block! vs. path!
-(not equal? [a b] 'a/b)
+(not lax-equal? [a b] 'a/b)
 ; block! vs. path! symmetry
 (
     a-value: 'a/b
     b-value: [a b]
-    equal? equal? :a-value :b-value equal? :b-value :a-value
+    lax-equal? lax-equal? :a-value :b-value lax-equal? :b-value :a-value
 )
 ; block! vs. lit-path!
-(not equal? [a b] first ['a/b])
+(not lax-equal? [a b] first ['a/b])
 ; block! vs. lit-path! symmetry
 (
     a-value: first ['a/b]
     b-value: [a b]
-    equal? equal? :a-value :b-value equal? :b-value :a-value
+    lax-equal? lax-equal? :a-value :b-value lax-equal? :b-value :a-value
 )
 ; block! vs. set-path!
-(not equal? [a b] first [a/b:])
+(not lax-equal? [a b] first [a/b:])
 ; block! vs. set-path! symmetry
 (
     a-value: first [a/b:]
     b-value: [a b]
-    equal? equal? :a-value :b-value equal? :b-value :a-value
+    lax-equal? lax-equal? :a-value :b-value lax-equal? :b-value :a-value
 )
 ; block! vs. get-path!
-(not equal? [a b] first [:a/b])
+(not lax-equal? [a b] first [:a/b])
 ; block! vs. get-path! symmetry
 (
     a-value: first [:a/b]
     b-value: [a b]
-    equal? equal? :a-value :b-value equal? :b-value :a-value
+    lax-equal? lax-equal? :a-value :b-value lax-equal? :b-value :a-value
 )
-(equal? decimal! decimal!)
-(not equal? decimal! integer!)
-(equal? equal? decimal! integer! equal? integer! decimal!)
+(lax-equal? decimal! decimal!)
+(not lax-equal? decimal! integer!)
+(lax-equal? lax-equal? decimal! integer! lax-equal? integer! decimal!)
 ; datatype! vs. typeset!
-(not equal? any-number! integer!)
+(not lax-equal? any-number! integer!)
 ; datatype! vs. typeset! symmetry
-(equal? equal? any-number! integer! equal? integer! any-number!)
+(lax-equal? lax-equal? any-number! integer! lax-equal? integer! any-number!)
 ; datatype! vs. typeset!
-(not equal? integer! make typeset! [integer!])
+(not lax-equal? integer! make typeset! [integer!])
 ; datatype! vs. typeset!
-(not equal? integer! to typeset! [integer!])
+(not lax-equal? integer! to typeset! [integer!])
 ; datatype! vs. typeset!
 ; Supported by R2/Forward.
-(not equal? integer! to-typeset [integer!])
+(not lax-equal? integer! to-typeset [integer!])
 ; typeset! (or pseudo-type in R2)
-(equal? any-number! any-number!)
+(lax-equal? any-number! any-number!)
 ; typeset! (or pseudo-type in R2)
-(not equal? any-number! any-series!)
-(equal? make typeset! [integer!] make typeset! [integer!])
-(equal? to typeset! [integer!] to typeset! [integer!])
+(not lax-equal? any-number! any-series!)
+(lax-equal? make typeset! [integer!] make typeset! [integer!])
+(lax-equal? to typeset! [integer!] to typeset! [integer!])
 ; Supported by R2/Forward.
-(equal? to-typeset [integer!] to-typeset [integer!])
-(equal? -1 -1)
-(equal? 0 0)
-(equal? 1 1)
-(equal? 0.0 0.0)
-(equal? 0.0 -0.0)
-(equal? 1.0 1.0)
-(equal? -1.0 -1.0)
+(lax-equal? to-typeset [integer!] to-typeset [integer!])
+(lax-equal? -1 -1)
+(lax-equal? 0 0)
+(lax-equal? 1 1)
+(lax-equal? 0.0 0.0)
+(lax-equal? 0.0 -0.0)
+(lax-equal? 1.0 1.0)
+(lax-equal? -1.0 -1.0)
 <64bit>
-(equal? -9223372036854775808 -9223372036854775808)
+(lax-equal? -9223372036854775808 -9223372036854775808)
 <64bit>
-(equal? -9223372036854775807 -9223372036854775807)
+(lax-equal? -9223372036854775807 -9223372036854775807)
 <64bit>
-(equal? 9223372036854775807 9223372036854775807)
+(lax-equal? 9223372036854775807 9223372036854775807)
 <64bit>
-(not equal? -9223372036854775808 -9223372036854775807)
+(not lax-equal? -9223372036854775808 -9223372036854775807)
 <64bit>
-(not equal? -9223372036854775808 -1)
+(not lax-equal? -9223372036854775808 -1)
 <64bit>
-(not equal? -9223372036854775808 0)
+(not lax-equal? -9223372036854775808 0)
 <64bit>
-(not equal? -9223372036854775808 1)
+(not lax-equal? -9223372036854775808 1)
 <64bit>
-(not equal? -9223372036854775808 9223372036854775806)
+(not lax-equal? -9223372036854775808 9223372036854775806)
 <64bit>
-(not equal? -9223372036854775807 -9223372036854775808)
+(not lax-equal? -9223372036854775807 -9223372036854775808)
 <64bit>
-(not equal? -9223372036854775807 -1)
+(not lax-equal? -9223372036854775807 -1)
 <64bit>
-(not equal? -9223372036854775807 0)
+(not lax-equal? -9223372036854775807 0)
 <64bit>
-(not equal? -9223372036854775807 1)
+(not lax-equal? -9223372036854775807 1)
 <64bit>
-(not equal? -9223372036854775807 9223372036854775806)
+(not lax-equal? -9223372036854775807 9223372036854775806)
 <64bit>
-(not equal? -9223372036854775807 9223372036854775807)
+(not lax-equal? -9223372036854775807 9223372036854775807)
 <64bit>
-(not equal? -1 -9223372036854775808)
+(not lax-equal? -1 -9223372036854775808)
 <64bit>
-(not equal? -1 -9223372036854775807)
-(not equal? -1 0)
-(not equal? -1 1)
+(not lax-equal? -1 -9223372036854775807)
+(not lax-equal? -1 0)
+(not lax-equal? -1 1)
 <64bit>
-(not equal? -1 9223372036854775806)
+(not lax-equal? -1 9223372036854775806)
 <64bit>
-(not equal? -1 9223372036854775807)
+(not lax-equal? -1 9223372036854775807)
 <64bit>
-(not equal? 0 -9223372036854775808)
+(not lax-equal? 0 -9223372036854775808)
 <64bit>
-(not equal? 0 -9223372036854775807)
-(not equal? 0 -1)
-(not equal? 0 1)
+(not lax-equal? 0 -9223372036854775807)
+(not lax-equal? 0 -1)
+(not lax-equal? 0 1)
 <64bit>
-(not equal? 0 9223372036854775806)
+(not lax-equal? 0 9223372036854775806)
 <64bit>
-(not equal? 0 9223372036854775807)
+(not lax-equal? 0 9223372036854775807)
 <64bit>
-(not equal? 1 -9223372036854775808)
+(not lax-equal? 1 -9223372036854775808)
 <64bit>
-(not equal? 1 -9223372036854775807)
-(not equal? 1 -1)
-(not equal? 1 0)
+(not lax-equal? 1 -9223372036854775807)
+(not lax-equal? 1 -1)
+(not lax-equal? 1 0)
 <64bit>
-(not equal? 1 9223372036854775806)
+(not lax-equal? 1 9223372036854775806)
 <64bit>
-(not equal? 1 9223372036854775807)
+(not lax-equal? 1 9223372036854775807)
 <64bit>
-(not equal? 9223372036854775806 -9223372036854775808)
+(not lax-equal? 9223372036854775806 -9223372036854775808)
 <64bit>
-(not equal? 9223372036854775806 -9223372036854775807)
+(not lax-equal? 9223372036854775806 -9223372036854775807)
 <64bit>
-(not equal? 9223372036854775806 -1)
+(not lax-equal? 9223372036854775806 -1)
 <64bit>
-(not equal? 9223372036854775806 0)
+(not lax-equal? 9223372036854775806 0)
 <64bit>
-(not equal? 9223372036854775806 1)
+(not lax-equal? 9223372036854775806 1)
 <64bit>
-(not equal? 9223372036854775806 9223372036854775807)
+(not lax-equal? 9223372036854775806 9223372036854775807)
 <64bit>
-(not equal? 9223372036854775807 -9223372036854775808)
+(not lax-equal? 9223372036854775807 -9223372036854775808)
 <64bit>
-(not equal? 9223372036854775807 -9223372036854775807)
+(not lax-equal? 9223372036854775807 -9223372036854775807)
 <64bit>
-(not equal? 9223372036854775807 -1)
+(not lax-equal? 9223372036854775807 -1)
 <64bit>
-(not equal? 9223372036854775807 0)
+(not lax-equal? 9223372036854775807 0)
 <64bit>
-(not equal? 9223372036854775807 1)
+(not lax-equal? 9223372036854775807 1)
 <64bit>
-(not equal? 9223372036854775807 9223372036854775806)
+(not lax-equal? 9223372036854775807 9223372036854775806)
 ; decimal! approximate equality
-(equal? 0.3 0.1 + 0.1 + 0.1)
+(lax-equal? 0.3 0.1 + 0.1 + 0.1)
 ; decimal! approximate equality symmetry
-(equal? equal? 0.3 0.1 + 0.1 + 0.1 equal? 0.1 + 0.1 + 0.1 0.3)
-(equal? 0.15 - 0.05 0.1)
-(equal? equal? 0.15 - 0.05 0.1 equal? 0.1 0.15 - 0.05)
-(equal? -0.5 cosine 120)
-(equal? equal? -0.5 cosine 120 equal? cosine 120 -0.5)
-(equal? 0.5 * square-root 2.0 sine 45)
-(equal? equal? 0.5 * square-root 2.0 sine 45 equal? sine 45 0.5 * square-root 2.0)
-(equal? 0.5 sine 30)
-(equal? equal? 0.5 sine 30 equal? sine 30 0.5)
-(equal? 0.5 cosine 60)
-(equal? equal? 0.5 cosine 60 equal? cosine 60 0.5)
-(equal? 0.5 * square-root 3.0 sine 60)
-(equal? equal? 0.5 * square-root 3.0 sine 60 equal? sine 60 0.5 * square-root 3.0)
-(equal? 0.5 * square-root 3.0 cosine 30)
-(equal? equal? 0.5 * square-root 3.0 cosine 30 equal? cosine 30 0.5 * square-root 3.0)
-(equal? square-root 3.0 tangent 60)
-(equal? equal? square-root 3.0 tangent 60 equal? tangent 60 square-root 3.0)
-(equal? (square-root 3.0) / 3.0 tangent 30)
-(equal? equal? (square-root 3.0) / 3.0 tangent 30 equal? tangent 30 (square-root 3.0) / 3.0)
-(equal? 1.0 tangent 45)
-(equal? equal? 1.0 tangent 45 equal? tangent 45 1.0)
+(lax-equal? lax-equal? 0.3 0.1 + 0.1 + 0.1 lax-equal? 0.1 + 0.1 + 0.1 0.3)
+(lax-equal? 0.15 - 0.05 0.1)
+(lax-equal? lax-equal? 0.15 - 0.05 0.1 lax-equal? 0.1 0.15 - 0.05)
+(lax-equal? -0.5 cosine 120)
+(lax-equal? lax-equal? -0.5 cosine 120 lax-equal? cosine 120 -0.5)
+(lax-equal? 0.5 * square-root 2.0 sine 45)
+(lax-equal? lax-equal? 0.5 * square-root 2.0 sine 45 lax-equal? sine 45 0.5 * square-root 2.0)
+(lax-equal? 0.5 sine 30)
+(lax-equal? lax-equal? 0.5 sine 30 lax-equal? sine 30 0.5)
+(lax-equal? 0.5 cosine 60)
+(lax-equal? lax-equal? 0.5 cosine 60 lax-equal? cosine 60 0.5)
+(lax-equal? 0.5 * square-root 3.0 sine 60)
+(lax-equal? lax-equal? 0.5 * square-root 3.0 sine 60 lax-equal? sine 60 0.5 * square-root 3.0)
+(lax-equal? 0.5 * square-root 3.0 cosine 30)
+(lax-equal? lax-equal? 0.5 * square-root 3.0 cosine 30 lax-equal? cosine 30 0.5 * square-root 3.0)
+(lax-equal? square-root 3.0 tangent 60)
+(lax-equal? lax-equal? square-root 3.0 tangent 60 lax-equal? tangent 60 square-root 3.0)
+(lax-equal? (square-root 3.0) / 3.0 tangent 30)
+(lax-equal? lax-equal? (square-root 3.0) / 3.0 tangent 30 lax-equal? tangent 30 (square-root 3.0) / 3.0)
+(lax-equal? 1.0 tangent 45)
+(lax-equal? lax-equal? 1.0 tangent 45 lax-equal? tangent 45 1.0)
 (
     num: square-root 2.0
-    equal? 2.0 num * num
+    lax-equal? 2.0 num * num
 )
 (
     num: square-root 2.0
-    equal? equal? 2.0 num * num equal? num * num 2.0
+    lax-equal? lax-equal? 2.0 num * num lax-equal? num * num 2.0
 )
 (
     num: square-root 3.0
-    equal? 3.0 num * num
+    lax-equal? 3.0 num * num
 )
 (
     num: square-root 3.0
-    equal? equal? 3.0 num * num equal? num * num 3.0
+    lax-equal? lax-equal? 3.0 num * num lax-equal? num * num 3.0
 )
 ; integer! vs. decimal!
-(equal? 0 0.0)
+(lax-equal? 0 0.0)
 ; integer! vs. percent!
-(equal? 0 0%)
+(lax-equal? 0 0%)
 
 ; decimal! vs. percent!
-(equal? 0.0 0%)
+(lax-equal? 0.0 0%)
 
 ; integer! vs. decimal! symmetry
-(equal? equal? 1 1.0 equal? 1.0 1)
+(lax-equal? lax-equal? 1 1.0 lax-equal? 1.0 1)
 
 ; integer! vs. percent! symmetry
-(equal? equal? 1 100% equal? 100% 1)
+(lax-equal? lax-equal? 1 100% lax-equal? 100% 1)
 
 ; decimal! vs. percent! symmetry
-(equal? equal? 1.0 100% equal? 100% 1.0)
+(lax-equal? lax-equal? 1.0 100% lax-equal? 100% 1.0)
 
 ; percent! approximate equality
-(equal? 10% + 10% + 10% 30%)
+(lax-equal? 10% + 10% + 10% 30%)
 ; percent! approximate equality symmetry
-(equal? equal? 10% + 10% + 10% 30% equal? 30% 10% + 10% + 10%)
-(equal? 2-Jul-2009 2-Jul-2009)
+(lax-equal? lax-equal? 10% + 10% + 10% 30% lax-equal? 30% 10% + 10% + 10%)
+(lax-equal? 2-Jul-2009 2-Jul-2009)
 ; date! doesn't ignore time portion
-(not equal? 2-Jul-2009 2-Jul-2009/22:20)
-(equal? equal? 2-Jul-2009 2-Jul-2009/22:20 equal? 2-Jul-2009/22:20 2-Jul-2009)
+(not lax-equal? 2-Jul-2009 2-Jul-2009/22:20)
+(lax-equal? lax-equal? 2-Jul-2009 2-Jul-2009/22:20 lax-equal? 2-Jul-2009/22:20 2-Jul-2009)
 
 ; R3-Alpha considered date! missing time and zone = 00:00:00+00:00.  But
 ; in Ren-C, dates without a time are semantically distinct from a date with
 ; a time at midnight.
 ;
-(not equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00)
+(not lax-equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00)
 
-(equal? equal? 2-Jul-2009 2-Jul-2009/00:00 equal? 2-Jul-2009/00:00 2-Jul-2009)
+(lax-equal? lax-equal? 2-Jul-2009 2-Jul-2009/00:00 lax-equal? 2-Jul-2009/00:00 2-Jul-2009)
 ; Timezone math in date!
-(equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00)
-(equal? 00:00 00:00)
+(lax-equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00)
+(lax-equal? 00:00 00:00)
 ; time! missing components are 0
-(equal? 0:0 00:00:00.0000000000)
-(equal? equal? 0:0 00:00:00.0000000000 equal? 00:00:00.0000000000 0:0)
+(lax-equal? 0:0 00:00:00.0000000000)
+(lax-equal? lax-equal? 0:0 00:00:00.0000000000 lax-equal? 00:00:00.0000000000 0:0)
 ; time! vs. integer!
 [#1103
-    (not equal? 0:00 0)
+    (not lax-equal? 0:00 0)
 ]
 ; integer! vs. time!
 [#1103
-    (not equal? 0 00:00)
+    (not lax-equal? 0 00:00)
 ]
-(equal? #"a" #"a")
+(lax-equal? #"a" #"a")
 ; char! vs. integer!
 ; No implicit to char! from integer! in R3.
-(not equal? #"a" 97)
+(not lax-equal? #"a" 97)
 ; char! vs. integer! symmetry
-(equal? equal? #"a" 97 equal? 97 #"a")
+(lax-equal? lax-equal? #"a" 97 lax-equal? 97 #"a")
 ; char! vs. decimal!
 ; No implicit to char! from decimal! in R3.
-(not equal? #"a" 97.0)
+(not lax-equal? #"a" 97.0)
 ; char! vs. decimal! symmetry
-(equal? equal? #"a" 97.0 equal? 97.0 #"a")
+(lax-equal? lax-equal? #"a" 97.0 lax-equal? 97.0 #"a")
 ; char! case
-(equal? #"a" #"A")
+(lax-equal? #"a" #"A")
 ; text! case
-(equal? "a" "A")
+(lax-equal? "a" "A")
 ; issue! case
-(equal? #a #A)
+(lax-equal? #a #A)
 ; tag! case
-(equal? <a a="a"> <A A="A">)
+(lax-equal? <a a="a"> <A A="A">)
 ; url! case
-(equal? http://a.com httP://A.coM)
+(lax-equal? http://a.com httP://A.coM)
 ; email! case
-(equal? a@a.com A@A.Com)
-(equal? 'a 'a)
-(equal? 'a 'A)
-(equal? equal? 'a 'A equal? 'A 'a)
+(lax-equal? a@a.com A@A.Com)
+(lax-equal? 'a 'a)
+(lax-equal? 'a 'A)
+(lax-equal? lax-equal? 'a 'A lax-equal? 'A 'a)
 ; word binding
-(equal? 'a use [a] ['a])
+(lax-equal? 'a use [a] ['a])
 ; word binding symmetry
-(equal? equal? 'a use [a] ['a] equal? use [a] ['a] 'a)
+(lax-equal? lax-equal? 'a use [a] ['a] lax-equal? use [a] ['a] 'a)
 ; word! vs. get-word!
-(equal? 'a first [:a])
+(lax-equal? 'a first [:a])
 ; word! vs. get-word! symmetry
-(equal? equal? 'a first [:a] equal? first [:a] 'a)
+(lax-equal? lax-equal? 'a first [:a] lax-equal? first [:a] 'a)
 ; {word! vs. lit-word!
-(equal? 'a first ['a])
+(lax-equal? 'a first ['a])
 ; word! vs. lit-word! symmetry
-(equal? equal? 'a first ['a] equal? first ['a] 'a)
+(lax-equal? lax-equal? 'a first ['a] lax-equal? first ['a] 'a)
 ; word! vs. refinement!
-(equal? 'a /a)
+(lax-equal? 'a /a)
 ; word! vs. refinement! symmetry
-(equal? equal? 'a /a equal? /a 'a)
+(lax-equal? lax-equal? 'a /a lax-equal? /a 'a)
 ; word! vs. set-word!
-(equal? 'a first [a:])
+(lax-equal? 'a first [a:])
 ; word! vs. set-word! symmetry
-(equal? equal? 'a first [a:] equal? first [a:] 'a)
+(lax-equal? lax-equal? 'a first [a:] lax-equal? first [a:] 'a)
 ; get-word! reflexivity
-(equal? first [:a] first [:a])
+(lax-equal? first [:a] first [:a])
 ; get-word! vs. lit-word!
-(equal? first [:a] first ['a])
+(lax-equal? first [:a] first ['a])
 ; get-word! vs. lit-word! symmetry
-(equal? equal? first [:a] first ['a] equal? first ['a] first [:a])
+(lax-equal? lax-equal? first [:a] first ['a] lax-equal? first ['a] first [:a])
 ; get-word! vs. refinement!
-(equal? first [:a] /a)
+(lax-equal? first [:a] /a)
 ; get-word! vs. refinement! symmetry
-(equal? equal? first [:a] /a equal? /a first [:a])
+(lax-equal? lax-equal? first [:a] /a lax-equal? /a first [:a])
 ; get-word! vs. set-word!
-(equal? first [:a] first [a:])
+(lax-equal? first [:a] first [a:])
 ; get-word! vs. set-word! symmetry
-(equal? equal? first [:a] first [a:] equal? first [a:] first [:a])
+(lax-equal? lax-equal? first [:a] first [a:] lax-equal? first [a:] first [:a])
 ; lit-word! reflexivity
-(equal? first ['a] first ['a])
+(lax-equal? first ['a] first ['a])
 ; lit-word! vs. refinement!
-(equal? first ['a] /a)
+(lax-equal? first ['a] /a)
 ; lit-word! vs. refinement! symmetry
-(equal? equal? first ['a] /a equal? /a first ['a])
+(lax-equal? lax-equal? first ['a] /a lax-equal? /a first ['a])
 ; lit-word! vs. set-word!
-(equal? first ['a] first [a:])
+(lax-equal? first ['a] first [a:])
 ; lit-word! vs. set-word! symmetry
-(equal? equal? first ['a] first [a:] equal? first [a:] first ['a])
+(lax-equal? lax-equal? first ['a] first [a:] lax-equal? first [a:] first ['a])
 ; refinement! reflexivity
-(equal? /a /a)
+(lax-equal? /a /a)
 ; refinement! vs. set-word!
-(equal? /a first [a:])
+(lax-equal? /a first [a:])
 ; refinement! vs. set-word! symmetry
-(equal? equal? /a first [a:] equal? first [a:] /a)
+(lax-equal? lax-equal? /a first [a:] lax-equal? first [a:] /a)
 ; set-word! reflexivity
-(equal? first [a:] first [a:])
-(equal? okay okay)
-(equal? null null)
-(not equal? okay null)
-(not equal? null okay)
+(lax-equal? first [a:] first [a:])
+(lax-equal? okay okay)
+(lax-equal? null null)
+(not lax-equal? okay null)
+(not lax-equal? null okay)
 ; object! reflexivity
-(equal? a-value: make object! [a: 1] a-value)
+(lax-equal? a-value: make object! [a: 1] a-value)
 ; object! simple structural equivalence
-(equal? make object! [a: 1] make object! [a: 1])
+(lax-equal? make object! [a: 1] make object! [a: 1])
 ; object! different values
-(not equal? make object! [a: 1] make object! [a: 2])
+(not lax-equal? make object! [a: 1] make object! [a: 2])
 ; object! different words
-(not equal? make object! [a: 1] make object! [b: 1])
-(not equal? make object! [a: 1] make object! [])
+(not lax-equal? make object! [a: 1] make object! [b: 1])
+(not lax-equal? make object! [a: 1] make object! [])
 
 ; object! complex structural equivalence
 ; Slight differences.
@@ -472,7 +472,7 @@
         f: ["a" #a http://a a@a.com <a>]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    equal? a-value b-value
+    lax-equal? a-value b-value
 )(
     a-value: construct/only [] [
         a: 1 b: 1.0 c: $1 d: 1%
@@ -486,8 +486,8 @@
         f: ["a" #a http://a a@a.com <a>]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    test: :equal?
-    equal?
+    test: :lax-equal?
+    lax-equal?
         test a-value b-value
         not null? for-each [w v] a-value [
             if not test :v select b-value w [break]
@@ -505,8 +505,8 @@
         f: [#a <A> http://A a@A.com "A"]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]
-    test: :equal?
-    equal?
+    test: :lax-equal?
+    lax-equal?
         test a-value b-value
         not null? for-each [w v] a-value [
             if not test :v select b-value w [break]
@@ -515,24 +515,24 @@
 
 ; TRASH is illegal to test with equality (as is UNSET! in Rebol2)
 [
-    ('expect-arg = (sys.util/rescue [equal? ~ ~]).id)
-    ('expect-arg = (sys.util/rescue [not-equal? ~ blank]).id)
+    ('expect-arg = (sys.util/rescue [lax-equal? ~ ~]).id)
+    ('expect-arg = (sys.util/rescue [lax-not-equal? ~ blank]).id)
     ('expect-arg = (sys.util/rescue [~ <> blank]).id)
 ]
 
 ; NULL is legal to test with equality (as is NONE! in R3-Alpha/Red)
 [
-    (equal? null null)
-    (not-equal? null blank)
-    (not-equal? blank null)
-    (equal? (equal? blank null) (equal? null blank))
+    (lax-equal? null null)
+    (lax-not-equal? null blank)
+    (lax-not-equal? blank null)
+    (lax-equal? (lax-equal? blank null) (lax-equal? null blank))
     (not (null = blank))
     (null <> blank)
     (not (blank = null))
     (blank != null)
     (null = null)
     (not (null != null))
-    (equal? (blank = null) (null = blank))
+    (lax-equal? (blank = null) (null = blank))
 ]
 
 
@@ -541,23 +541,23 @@
 (
     a-value: blank
     set 'a-value (sys/util/rescue [1 / 0])
-    equal? a-value a-value
+    lax-equal? a-value a-value
 )
 ; error! structural equivalence
 ; Evaluates (sys/util/rescue [1 / 0]) to get error! value.
-(equal? (sys/util/rescue [1 / 0]) (sys/util/rescue [1 / 0]))
+(lax-equal? (sys/util/rescue [1 / 0]) (sys/util/rescue [1 / 0]))
 ; error! structural equivalence
-(equal? (make error! "hello") (make error! "hello"))
+(lax-equal? (make error! "hello") (make error! "hello"))
 ; error! difference in code
-(not equal? (sys/util/rescue [1 / 0]) (make error! "hello"))
+(not lax-equal? (sys/util/rescue [1 / 0]) (make error! "hello"))
 ; error! difference in data
-(not equal? (make error! "hello") (make error! "there"))
+(not lax-equal? (make error! "hello") (make error! "there"))
 ; error! basic comparison
-(not equal? (sys/util/rescue [1 / 0]) blank)
+(not lax-equal? (sys/util/rescue [1 / 0]) blank)
 ; error! basic comparison
-(not equal? blank (sys/util/rescue [1 / 0]))
+(not lax-equal? blank (sys/util/rescue [1 / 0]))
 ; error! basic comparison symmetry
-(equal? equal? (sys/util/rescue [1 / 0]) blank equal? blank (sys/util/rescue [1 / 0]))
+(lax-equal? lax-equal? (sys/util/rescue [1 / 0]) blank lax-equal? blank (sys/util/rescue [1 / 0]))
 ; error! basic comparison with = op
 (not ((sys/util/rescue [1 / 0]) = blank))
 ; error! basic comparison with != op
@@ -567,15 +567,15 @@
 ; error! basic comparison with != op
 (blank != (sys/util/rescue [1 / 0]))
 ; error! symmetry with = op
-(equal? not ((sys/util/rescue [1 / 0]) = blank) not (blank = (sys/util/rescue [1 / 0])))
+(lax-equal? not ((sys/util/rescue [1 / 0]) = blank) not (blank = (sys/util/rescue [1 / 0])))
 ; error! symmetry with != op
-(equal? (sys/util/rescue [1 / 0]) != blank blank != (sys/util/rescue [1 / 0]))
+(lax-equal? (sys/util/rescue [1 / 0]) != blank blank != (sys/util/rescue [1 / 0]))
 ; port! reflexivity
 ; Error in R2 (could be fixed).
-(equal? p: make port! http:// p)
+(lax-equal? p: make port! http:// p)
 ; No structural equivalence for port!
 ; Error in R2 (could be fixed).
-(not equal? make port! http:// make port! http://)
+(not lax-equal? make port! http:// make port! http://)
 [#859 (
     a: copy the ()
     insert/only a a

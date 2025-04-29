@@ -546,12 +546,52 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 }
 
 
-//  EQUAL? < EQUIV? < STRICT-EQUAL? < SAME?
+//
+//  lax-equal?: native [
+//
+//  {TRUE if the values are approximately equal}
+//
+//      return: [logic!]
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+DECLARE_NATIVE(LAX_EQUAL_Q)
+{
+    INCLUDE_PARAMS_OF_LAX_EQUAL_Q;
+
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 0))
+        return LOGIC(true);
+
+    return LOGIC(false);
+}
+
+
+//
+//  lax-not-equal?: native [
+//
+//  {TRUE if the values are not approximately equal}
+//
+//      return: [logic!]
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+DECLARE_NATIVE(LAX_NOT_EQUAL_Q)
+{
+    INCLUDE_PARAMS_OF_LAX_NOT_EQUAL_Q;
+
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 0))
+        return LOGIC(false);
+
+    return LOGIC(true);
+}
+
 
 //
 //  equal?: native [
 //
-//  {TRUE if the values are equal}
+//  {TRUE if the values are strictly equal}
 //
 //      return: [logic!]
 //      value1 [any-value!]
@@ -562,7 +602,7 @@ DECLARE_NATIVE(EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 0))
+    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 1))
         return LOGIC(true);
 
     return LOGIC(false);
@@ -572,7 +612,7 @@ DECLARE_NATIVE(EQUAL_Q)
 //
 //  not-equal?: native [
 //
-//  {TRUE if the values are not equal}
+//  {TRUE if the values are not strictly equal}
 //
 //      return: [logic!]
 //      value1 [any-value!]
@@ -582,48 +622,6 @@ DECLARE_NATIVE(EQUAL_Q)
 DECLARE_NATIVE(NOT_EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_NOT_EQUAL_Q;
-
-    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 0))
-        return LOGIC(false);
-
-    return LOGIC(true);
-}
-
-
-//
-//  strict-equal?: native [
-//
-//  {TRUE if the values are strictly equal}
-//
-//      return: [logic!]
-//      value1 [any-value!]
-//      value2 [any-value!]
-//  ]
-//
-DECLARE_NATIVE(STRICT_EQUAL_Q)
-{
-    INCLUDE_PARAMS_OF_STRICT_EQUAL_Q;
-
-    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 1))
-        return LOGIC(true);
-
-    return LOGIC(false);
-}
-
-
-//
-//  strict-not-equal?: native [
-//
-//  {TRUE if the values are not strictly equal}
-//
-//      return: [logic!]
-//      value1 [any-value!]
-//      value2 [any-value!]
-//  ]
-//
-DECLARE_NATIVE(STRICT_NOT_EQUAL_Q)
-{
-    INCLUDE_PARAMS_OF_STRICT_NOT_EQUAL_Q;
 
     if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 1))
         return LOGIC(false);
@@ -709,7 +707,7 @@ DECLARE_NATIVE(SAME_Q)
 
     if (Is_Decimal(value1) || Is_Percent(value1)) {
         //
-        // The tolerance on strict-equal? for decimals is apparently not
+        // The tolerance on equal? for decimals is apparently not
         // a requirement of exactly the same bits.
         //
         if (

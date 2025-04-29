@@ -6,8 +6,8 @@
 ; alternative formats
 (25-Sep-2006 = 25-Sep-2006)
 (25-Sep-2006 = 25-9-2006)
-(25-Sep-2006 = make date! "25/Sep/2006")
-(25-Sep-2006 = to date! "25-Sep-2006")
+(25-Sep-2006 ?= make date! "25/Sep/2006")
+(25-Sep-2006 ?= to date! "25-Sep-2006")
 ("25-Sep-2006" = mold 25-Sep-2006)
 
 ; minimum

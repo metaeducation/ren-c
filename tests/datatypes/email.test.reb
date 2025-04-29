@@ -4,5 +4,5 @@
 (email! = type of me@here.com)
 ; "minimum"
 (email? #[email! ""])
-(strict-equal? #[email! ""] make email! 0)
-(strict-equal? #[email! ""] to email! "")
+(equal? #[email! ""] make email! 0)
+(equal? #[email! ""] to email! "")
