@@ -1,9 +1,9 @@
 //
-//  File: %call-windows.c
-//  Summary: "Implemention of CALL native for Windows"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %call-windows.c
+//  summary: "Implemention of CALL native for Windows"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

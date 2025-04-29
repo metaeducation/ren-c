@@ -1,9 +1,9 @@
 //
-//  File: %c-reframer.c
-//  Summary: "Function that can transform arbitrary callsite functions"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-reframer.c
+//  summary: "Function that can transform arbitrary callsite functions"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

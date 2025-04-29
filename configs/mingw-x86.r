@@ -1,5 +1,5 @@
-REBOL [
-    File: %mingw-x86.r
+Rebol [
+    file: %mingw-x86.r
 ]
 
 os-id: 0.3.1

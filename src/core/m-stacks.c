@@ -1,9 +1,9 @@
 //
-//  File: %m-stack.c
-//  Summary: "data and function call stack implementation"
-//  Section: memory
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %m-stack.c
+//  summary: "data and function call stack implementation"
+//  section: memory
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,17 +1,17 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Create C .inc file with const data of r3.exe startup code"
-    File: %prep-main.reb
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Create C .inc file with const data of r3.exe startup code"
+    file: %prep-main.reb
+    rights: --{
         Copyright 2012-2021 Ren-C Open Source Contributors
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Purpose: --{
+    purpose: --{
         This compresses together several pieces of Rebol code (with comments
         stripped out), and then turns it into a static C constant byte array.
         It is decompressed by the code in %main.c, which then executes it.

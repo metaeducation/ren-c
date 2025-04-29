@@ -1,9 +1,9 @@
 //
-//  File: %c-reorder.c
-//  Summary: "Function Generator for Reordering Parameters"
-//  Section: datatypes
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-reorder.c
+//  summary: "Function Generator for Reordering Parameters"
+//  section: datatypes
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

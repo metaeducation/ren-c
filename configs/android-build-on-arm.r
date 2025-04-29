@@ -1,6 +1,6 @@
-REBOL [
-    File: %android-arm-native.r
-    Inherits: %android-common.r
+Rebol [
+    file: %android-arm-native.r
+    inherits: %android-common.r
 ]
 
 compiler: 'gcc

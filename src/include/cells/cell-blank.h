@@ -1,8 +1,8 @@
 //
-//  File: %cell-blank.h
-//  Summary: "BLANK! inert placeholder type"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-blank.h
+//  summary: "BLANK! inert placeholder type"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

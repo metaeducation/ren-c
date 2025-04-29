@@ -1,6 +1,6 @@
-REBOL [
-    Name: UUID
-    Notes: "See %extensions/README.md for the format and fields of this file"
+Rebol [
+    name: UUID
+    notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
 use-librebol: 'yes  ; can't use %sys-core.h with MacOS UUID APIs, conflicts

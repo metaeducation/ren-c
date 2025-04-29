@@ -1,8 +1,8 @@
 //
-//  File: %sys-intrinsic.h
-//  Summary: "Helpers related to processing intrinsic arguments"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-intrinsic.h
+//  summary: "Helpers related to processing intrinsic arguments"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,8 +1,8 @@
 //
-//  File: %c-enhanced.h
-//  Summary: "Tools for C with enhanced features if built as C++11 or higher"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-enhanced.h
+//  summary: "Tools for C with enhanced features if built as C++11 or higher"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

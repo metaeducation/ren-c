@@ -1,8 +1,8 @@
 //
-//  File: %struct-source.h
-//  Summary: "Definitions for the Source Array subclass"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %struct-source.h
+//  summary: "Definitions for the Source Array subclass"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

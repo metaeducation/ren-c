@@ -1,5 +1,5 @@
-REBOL [
-    File: %android-common.r
+Rebol [
+    file: %android-common.r
 ]
 
 os-id: 0.13.2

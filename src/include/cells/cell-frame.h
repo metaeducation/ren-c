@@ -1,8 +1,8 @@
 //
-//  File: %cell-frame.h
-//  Summary: "Definitions for FRAME! Cells (Antiform of FRAME! is action)"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-frame.h
+//  summary: "Definitions for FRAME! Cells (Antiform of FRAME! is action)"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

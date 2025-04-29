@@ -1,9 +1,9 @@
 //
-//  File: %reb-process.h
-//  Summary: "Header file for 'Process-oriented' extension module"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %reb-process.h
+//  summary: "Header file for 'Process-oriented' extension module"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

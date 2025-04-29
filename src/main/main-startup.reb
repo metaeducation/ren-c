@@ -1,19 +1,19 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Command line processing and startup code called by %main.c"
-    File: %main-startup.r
-    Type: module
-    Name: Ren-C-Startup
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Command line processing and startup code called by %main.c"
+    file: %main-startup.r
+    type: module
+    name: Ren-C-Startup
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Description: --{
+    description: --{
         This is the Rebol code called by %main.c that handles things like
         loading boot extensions, doing command-line processing, and getting
         things otherwise set up for running the console.
@@ -124,7 +124,7 @@ usage: func [
     print trim:auto copy --{
     Command line usage:
 
-        REBOL [options] [script] [arguments]
+        Rebol [options] [script] [arguments]
 
     Standard options:
 

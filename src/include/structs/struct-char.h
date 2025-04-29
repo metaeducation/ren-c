@@ -1,8 +1,8 @@
 //
-//  File: %struct-char.h
-//  Summary: "Utf8 structure definitions preceding %tmp-internals.h"
-//  Project: "Ren-C Interpreter and Run-time"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %struct-char.h
+//  summary: "Utf8 structure definitions preceding %tmp-internals.h"
+//  project: "Ren-C Interpreter and Run-time"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

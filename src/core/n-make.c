@@ -1,9 +1,9 @@
 //
-//  File: %n-make.c
-//  Summary: "Creation-oriented natives (MAKE, TO, COPY)"
-//  Section: natives
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-make.c
+//  summary: "Creation-oriented natives (MAKE, TO, COPY)"
+//  section: natives
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,8 +1,8 @@
 //
-//  File: %c-eval.c
-//  Summary: "Evaluator Executor for Stepping Array Thru to the End"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-eval.c
+//  summary: "Evaluator Executor for Stepping Array Thru to the End"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

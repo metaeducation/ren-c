@@ -1,8 +1,8 @@
 //
-//  File: %bsd-qsort_r.h
-//  Summary: "Definition for bundled qsort_r() obeying BSD conventions"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %bsd-qsort_r.h
+//  summary: "Definition for bundled qsort_r() obeying BSD conventions"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -23,7 +23,7 @@
 // Rebol includes the FreeBSD implementation, and hacks it to define the
 // function as `bsd_qsort_r()`, so that it won't conflict with any standard
 // library names.  This means the qsort_r() code for BSD is actually built
-// into the executable, to avoid misunderstandings. 
+// into the executable, to avoid misunderstandings.
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //

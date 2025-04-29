@@ -1,8 +1,8 @@
 //
-//  File: %cell-time.h
-//  Summary: "Definitions for the TIME! and DATE! Cells"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-time.h
+//  summary: "Definitions for the TIME! and DATE! Cells"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

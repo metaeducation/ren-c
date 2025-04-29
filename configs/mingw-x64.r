@@ -1,5 +1,5 @@
-REBOL [
-    File: %mingw-x64.r
+Rebol [
+    file: %mingw-x64.r
 ]
 
 os-id: 0.3.40

@@ -1,13 +1,13 @@
 Rebol [
-    Title: "Test parsing"
-    File: %test-parsing.r
-    Type: module
-    Name: Test-Parsing
-    Copyright: [
+    title: "Test parsing"
+    file: %test-parsing.r
+    type: module
+    name: Test-Parsing
+    copyright: [
         2014 "Ladislav Mecir and Saphirion AG"
         2014/2021 "Ren-C Open Source Contributors"
     ]
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
         You may obtain a copy of the License at

@@ -1,8 +1,8 @@
 //
-//  File: %enum-types.h
-//  Summary: -{Safe wrapper for distinguishing "Heart" and "Type" if C++}-
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %enum-types.h
+//  summary: -{Safe wrapper for distinguishing "Heart" and "Type" if C++}-
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,9 +1,9 @@
-REBOL [
-    Title: "Environment Extension"
-    Name: Environment
-    Type: Module
-    Version: 1.0.0
-    License: "LGPL 3.0"
+Rebol [
+    title: "Environment Extension"
+    name: Environment
+    type: module
+    version: 1.0.0
+    license: "LGPL 3.0"
 ]
 
 ; !!! Review: idea was that these would be put in the SYSTEM context, so you

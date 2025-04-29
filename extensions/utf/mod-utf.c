@@ -1,9 +1,9 @@
 //
-//  File: %mod-utf.c
-//  Summary: "UTF-16 and UTF-32 Extension"
-//  Section: extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-utf.c
+//  summary: "UTF-16 and UTF-32 Extension"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

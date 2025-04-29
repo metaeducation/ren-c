@@ -1,8 +1,8 @@
 //
-//  File: %sys-stub.h
-//  Summary: "Stub Definitions AFTER %tmp-internals.h}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-stub.h
+//  summary: "Stub Definitions AFTER %tmp-internals.h}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

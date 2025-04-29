@@ -1,9 +1,9 @@
 //
-//  File: %t-binary.c
-//  Summary: "BLOB! datatype"
-//  Section: datatypes
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %t-binary.c
+//  summary: "BLOB! datatype"
+//  section: datatypes
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

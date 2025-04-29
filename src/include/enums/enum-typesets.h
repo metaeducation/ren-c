@@ -1,8 +1,8 @@
 //
-//  File: %enum-typesets.h
-//  Summary: "Optimized built in typesets and order-dependent type macros"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %enum-typesets.h
+//  summary: "Optimized built in typesets and order-dependent type macros"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

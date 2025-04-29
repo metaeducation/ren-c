@@ -1,6 +1,6 @@
-REBOL [
-    Name: Stdio
-    Notes: "See %extensions/README.md for the format and fields of this file"
+Rebol [
+    name: Stdio
+    notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
 includes: []

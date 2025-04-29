@@ -1,18 +1,18 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Target build platforms"
-    Type: module
-    Name: Target-Platforms
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Target build platforms"
+    type: module
+    name: Target-Platforms
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Purpose: --{
+    purpose: --{
         These are target platform definitions used to build Rebol with a
         various compilers and libraries.  A longstanding historical numbering
         scheme of `0.X.Y` is currently used.  X is a kind of generic indicator
@@ -33,7 +33,7 @@ REBOL [
         If you have a comment to make about a build, add it in the form of a
         memo item that is a no-op, so the table is brief as possible.
     }--
-    Notes: --{
+    notes: --{
       * A binary release archive for Rebol 1.2 and 2.5 is at:
 
           http://rebol.com/release-archive.html

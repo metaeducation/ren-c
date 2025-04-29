@@ -1,8 +1,8 @@
 //
-//  File: %sys-globals.h
-//  Summary: "Program and Thread Globals"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-globals.h
+//  summary: "Program and Thread Globals"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

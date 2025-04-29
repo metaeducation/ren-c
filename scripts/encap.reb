@@ -1,17 +1,17 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Host Script and Resource Embedding Services ('encapping')"
-    Type: module
-    Name: Encap
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Host Script and Resource Embedding Services ('encapping')"
+    type: module
+    name: Encap
+    rights: --{
         Copyright 2017 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Description: --{
+    description: --{
         Encapping grafts data into an already-compiled executable, to add
         resources to it "after the fact".  Note that there are different
         executable formats used on different operating systems, each with a

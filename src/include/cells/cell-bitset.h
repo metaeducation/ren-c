@@ -1,8 +1,8 @@
 //
-//  File: %cell-bitset.h
-//  Summary: "BITSET! Datatype Header"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-bitset.h
+//  summary: "BITSET! Datatype Header"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

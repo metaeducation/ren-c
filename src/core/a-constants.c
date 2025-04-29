@@ -1,9 +1,9 @@
 //
-//  File: %a-constants.c
-//  Summary: "Special global constants, scanned to make %tmp-constants.h"
-//  Section: environment
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %a-constants.c
+//  summary: "Special global constants, scanned to make %tmp-constants.h"
+//  section: environment
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

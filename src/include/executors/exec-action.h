@@ -1,8 +1,8 @@
 //
-//  File: %exec-action.h
-//  Summary: "Flags and Level State for Action_Executor()"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %exec-action.h
+//  summary: "Flags and Level State for Action_Executor()"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

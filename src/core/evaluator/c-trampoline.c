@@ -1,8 +1,8 @@
 //
-//  File: %c-trampoline.c
-//  Summary: "Central Interpreter Loop for 'Stackless' Evaluation"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-trampoline.c
+//  summary: "Central Interpreter Loop for 'Stackless' Evaluation"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

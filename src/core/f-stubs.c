@@ -1,9 +1,9 @@
 //
-//  File: %f-stubs.c
-//  Summary: "miscellaneous little functions"
-//  Section: functional
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %f-stubs.c
+//  summary: "miscellaneous little functions"
+//  section: functional
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

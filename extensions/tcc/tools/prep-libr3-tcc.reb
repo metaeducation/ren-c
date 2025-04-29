@@ -1,18 +1,20 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Pre-Build Step for API entry points exported via tcc_add_symbol()"
-    File: %prep-libr3-tcc.reb
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Pre-Build Step for API entry points exported via tcc_add_symbol()"
+    file: %prep-libr3-tcc.reb
 
-    Rights: --{
+    rights: --{
         Copyright 2017 Atronix Engineering
         Copyright 2017-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Description: --{
+
+    description: --{
         The TCC extension compiles user natives into memory directly.  These
         natives are linked against some libs that are on disk (the extension
         is packaged with some of these libraries that it extracts and puts

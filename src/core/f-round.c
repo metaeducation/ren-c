@@ -1,9 +1,9 @@
 //
-//  File: %f-round.c
-//  Summary: "special rounding math functions"
-//  Section: functional
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %f-round.c
+//  summary: "special rounding math functions"
+//  section: functional
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

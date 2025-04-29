@@ -56,9 +56,9 @@
 ([[1]] = load "[1]")
 ([1 2 3] = load "1 2 3")
 ([1 2 3] = load:type "1 2 3" null)
-([1 2 3] = load "rebol [] 1 2 3")
+([1 2 3] = load "Rebol [] 1 2 3")
 (
-    [d header]: load "rebol [] 1 2 3" 'header
+    [d header]: load "Rebol [] 1 2 3" 'header
     all [
         object? header
         [1 2 3] = d
@@ -67,11 +67,11 @@
 
 ; This was a test from the %sys-load.r which trips up the loading mechanic
 ; (at time of writing).  LOAD thinks that the entirety of the script is the
-; "rebol [] 1 2 3", and skips the equality comparison etc. so it gets
+; "Rebol [] 1 2 3", and skips the equality comparison etc. so it gets
 ; loaded as [1 2 3], which then evaluates to 3.  The test framework then
 ; considers that "not a logic".
 ;
-; ([1 2 3] = load "rebol [] 1 2 3")
+; ([1 2 3] = load "Rebol [] 1 2 3")
 
 ; File variations:
 (equal? read %./ load %./)

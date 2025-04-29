@@ -1,9 +1,9 @@
 //
-//  File: %c-augment.c
-//  Summary: "Function generator for expanding the frame of an ACTION!"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-augment.c
+//  summary: "Function generator for expanding the frame of an ACTION!"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

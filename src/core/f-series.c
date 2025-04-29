@@ -1,9 +1,9 @@
 //
-//  File: %f-series.c
-//  Summary: "common series handling functions"
-//  Section: functional
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %f-series.c
+//  summary: "common series handling functions"
+//  section: functional
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

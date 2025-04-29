@@ -99,7 +99,7 @@
 [
     (10 = (void): 10)
     (
-        import module [Type: module] [export ten: export (void): 10]
+        import module [type: module] [export ten: export (void): 10]
         ten = 10
     )
 ]

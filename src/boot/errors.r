@@ -1,16 +1,16 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Standard Error IDs and Display Templates"
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Standard Error IDs and Display Templates"
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Purpose: --{
+    purpose: --{
         This specifies error categories and IDs that are given SYM_XXX
         constants and can be evoked using those numbers by C code.
 
@@ -36,7 +36,7 @@ REBOL [
 ]
 
 
-Internal: [
+internal: [
     ; !!! Should there be a distinction made between different kinds of
     ; stack overflows?  (Call stack, Data stack?)
     ;
@@ -59,7 +59,7 @@ Internal: [
     invalid-exit:       "Frame does not exist on the stack to EXIT from"
 ]
 
-Syntax: [
+syntax: [
     scan-invalid:       ["invalid" :arg1 "--" :arg2]
     scan-missing:       ["missing" :arg1]
     scan-extra:         ["extra" :arg1]
@@ -73,7 +73,7 @@ Syntax: [
     needs:              ["this script needs" :arg1 :arg2 "or better to run correctly"]
 ]
 
-Script: [
+script: [
     no-value:           "No value in antiform BLOCK! pack: ~[]~ (NIHIL)"
     bad-null:           [:arg1 "cannot be null"]
     type-of-null:       "TYPE OF NULL illegal (use TRY TYPE OF NULL if meant)"
@@ -255,7 +255,7 @@ Script: [
     native-unloaded:    ["Native has been unloaded:" :arg1]
 ]
 
-Math: [
+math: [
     zero-divide:        "attempt to divide by zero"
     overflow:           "math or number overflow"
     positive:           "positive number required"
@@ -265,7 +265,7 @@ Math: [
     out-of-range:       ["value out of range:" :arg1]
 ]
 
-Access: [
+access: [
     protected-word:     ["variable" :arg1 "locked by PROTECT (see UNPROTECT)"]
 
     const-value:        ["CONST or iterative value (see MUTABLE):" :arg1]

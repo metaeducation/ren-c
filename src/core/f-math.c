@@ -1,9 +1,9 @@
 //
-//  File: %f-math.c
-//  Summary: "basic math conversions"
-//  Section: functional
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %f-math.c
+//  summary: "basic math conversions"
+//  section: functional
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

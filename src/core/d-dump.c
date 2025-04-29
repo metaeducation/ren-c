@@ -1,9 +1,9 @@
 //
-//  File: %d-dump.c
-//  Summary: "various debug output functions"
-//  Section: debug
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %d-dump.c
+//  summary: "various debug output functions"
+//  section: debug
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,8 +1,8 @@
 //
-//  File: %n-reduce.h
-//  Summary: "REDUCE and COMPOSE natives and associated service routines"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-reduce.h
+//  summary: "REDUCE and COMPOSE natives and associated service routines"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,13 +1,13 @@
 Rebol [
-    Title: "Test Framework"
-    File: %test-framework.r
-    Type: module
-    Name: Test-Framework
-    Copyright: [
+    title: "Test Framework"
+    file: %test-framework.r
+    type: module
+    name: Test-Framework
+    copyright: [
         2014 "Ladislav Mecir and Saphirion AG"
         2014/2021 "Ren-C Open Source Contributors"
     ]
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
         You may obtain a copy of the License at

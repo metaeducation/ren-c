@@ -1,17 +1,17 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Generate native specifications"
-    File: %make-natives.r
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Generate native specifications"
+    file: %make-natives.r
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Description: --{
+    description: --{
         "Natives" are Rebol functions whose implementations are C code (as
         opposed to blocks of user code, such as that made with FUNC).
 
@@ -156,8 +156,8 @@ insert natives spread collect [
 
 === "MOLD AS TEXT TO BE EMBEDDED IN THE EXECUTABLE AND SCANNED AT BOOT" ===
 
-append output-buffer ---{REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
+append output-buffer ---{Rebol [
+    System: "Rebol [R3] Language Interpreter and Run-time Environment"
     Title: "Native specs"
     Rights: --{
         Copyright 2012 REBOL Technologies

@@ -1,9 +1,9 @@
-REBOL [
-    Title: "Locale Extension"
-    Name: Locale
-    Type: Module
-    Version: 1.0.0
-    License: "Apache 2.0"
+Rebol [
+    title: "Locale Extension"
+    name: Locale
+    type: module
+    version: 1.0.0
+    license: "Apache 2.0"
 ]
 
 if 'Windows <> first system.platform [

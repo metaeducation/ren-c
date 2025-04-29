@@ -1,9 +1,9 @@
 Rebol [
-    Title: "Compatibility IMPORT/EXPORT for Bootstrap"
-    File: %import-shim.r
-    Type: script  ; R3-Alpha module system broken, see notes
+    title: "Compatibility IMPORT/EXPORT for Bootstrap"
+    file: %import-shim.r
+    type: script  ; R3-Alpha module system broken, see notes
 
-    Description: --{
+    description: --{
         This shim redefines IMPORT and EXPORT for the bootstrap executable:
 
         * It handles a basic simulation of the IMPORT and EXPORT commands
@@ -12,7 +12,8 @@ Rebol [
 
         * It is also able to preprocess the source, if necessary.
     }--
-    Usage: --{
+
+    usage: --{
         To affect how code is loaded, the import shim has to be hooked in
         before your script is running (so you can't `do %import-shim.r`).
 
@@ -25,9 +26,10 @@ Rebol [
 
             r3 make.r [OPTIONS]
     }--
-    Notes: --{
+
+    notes: --{
       * !!! R3-Alpha Module System Was Completely Broken !!!, so we manually
-        overwrite the definitions in lib instead of using Exports:  Not even
+        overwrite the definitions in lib instead of using exports:  Not even
         that worked in pre-R3C builds, so it forced an update of the bootstrap
         executable to R3C when we started using the `--import` option.
     }--
@@ -49,7 +51,7 @@ if verbose [
 ; when something like APPEND or FUNC are using old rules.  LIB3/APPEND and
 ; LIB3/FUNC are good ways of seeing that.
 ;
-append lib [lib3: _]  ; see header notes: `Exports` broken
+append lib [lib3: _]  ; see header notes: `exports` broken
 lib.lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
 
 
@@ -195,7 +197,7 @@ do: lib3/enclose lib3.do/ lib3/func [
         ; in case you plan to overwrite something like IF but are using the
         ; old definition.
         ;
-        replace3 f.source "Type: module" ""
+        replace3 f.source "type: module" ""
 
         ; Wrap the whole thing in an object if needed
         ;
@@ -218,7 +220,7 @@ do: lib3/enclose lib3.do/ lib3/func [
 already-imported: to map! []  ; avoid importing things twice
 
 
-; see header notes: `Exports` broken
+; see header notes: `exports` broken
 import: infix lib3/func [
     "%import-shim.r variant of IMPORT which acts like DO and loads only once"
 
@@ -285,7 +287,7 @@ import: infix lib3/func [
 
 === "LOAD WRAPPING" ===
 
-; see header notes: `Exports` broken
+; see header notes: `exports` broken
 load: adapt lib3.load/ [  ; source [file! url! text! blob! block!]
     if all [  ; ALL THEN does not seem to work in bootstrap EXE
         file? source

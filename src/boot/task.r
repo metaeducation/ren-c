@@ -1,15 +1,15 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Task context"
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Task context"
+    rights: --{
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Purpose: --{
+    purpose: --{
         Globals used for each task. Prevents GC of these values.
         See also the Root Vars (program-wide globals)
     }--

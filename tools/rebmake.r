@@ -1,19 +1,21 @@
-REBOL [
-    File: %rebmake.r
-    Title: "Rebol-Based C/C++ Makefile and Project File Generator"
+Rebol [
+    file: %rebmake.r
+    title: "Rebol-Based C/C++ Makefile and Project File Generator"
 
-    Type: module
-    Name: Rebmake
+    type: module
+    name: Rebmake
 
-    Rights: --{
+    rights: --{
         Copyright 2017 Atronix Engineering
-        Copyright 2017-2018 Ren-C Open Source Contributors
+        Copyright 2017-2025 Ren-C Open Source Contributors
     }--
-    License: --{
+
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Description: --{
+
+    description: --{
         R3-Alpha's bootstrap process depended on the GNU Make Tool, with a
         makefile generated from minor adjustments to a boilerplate copy of
         the makefile text.  As needs grew, a second build process arose
@@ -29,7 +31,8 @@ REBOL [
         projects.  In practice, it is tailored to the specific needs and
         settings of the Rebol project.
     }--
-    Warning: --{
+
+    warning: --{
         This code is not representative of modern practices, because it has
         to run in a very old bootstrap executable.  It is also very much a
         hodgepodge just to keep things running.  It's the absolute wrong place

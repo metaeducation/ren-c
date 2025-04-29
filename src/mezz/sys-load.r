@@ -1,17 +1,17 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "REBOL 3 Boot Sys: Load, Import, Modules"
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "REBOL 3 Boot Sys: Load, Import, Modules"
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Context: sys
-    Note: --{
+    context: sys
+    notes: --{
         The boot binding of this module is SYS then LIB deep.
         Any non-local words not found in those contexts WILL BE
         UNBOUND and will error out at runtime!
@@ -66,7 +66,7 @@ transcode-header: func [
         return raise e
     ]
 
-    hdr: all [key = 'REBOL, block? hdr, hdr]
+    hdr: all [key = 'Rebol, block? hdr, hdr]
     return pack [hdr rest line]  ; !!! hdr can be null but not ELSE-reactive
 ]
 
@@ -124,7 +124,7 @@ bind construct [
     ; of the *end* of the transcoding so far, (to sync line numbering across
     ; multiple transcodes)
 
-    === TRY TO MATCH PATTERN OF "REBOL [...]" ===
+    === TRY TO MATCH PATTERN OF "Rebol [...]" ===
 
     let [hdr rest 'line]: transcode-header:file data file except e -> [
         return raise e  ; TRANSCODE choked, wasn't valid at all
@@ -132,7 +132,7 @@ bind construct [
 
     if not hdr [
         ;
-        ; TRANSCODE didn't detect REBOL [...], but it didn't see anything it
+        ; TRANSCODE didn't detect Rebol [...], but it didn't see anything it
         ; thought was invalid Rebol tokens either.
         ;
         if required [
@@ -172,7 +172,7 @@ bind construct [
     ]
 
     let binary
-    if <always> [  ; was `if key = 'REBOL`, how was that ever not true?
+    if <always> [  ; was `if key = 'Rebol`, how was that ever not true?
         ;
         ; !!! R3-Alpha apparently used a very bad heuristic of attempting to
         ; decompress garbage (likely asking for a very big memory allocation
@@ -624,7 +624,7 @@ bind construct [
 
 
 export*: func [
-    "Add words to module's (Exports: []) list"
+    "Add words to module's (exports: []) list"
 
     return: "Evaluated expression if used with SET-WORD!"
         [any-value?]
@@ -637,7 +637,7 @@ export*: func [
         hdr exports val word types items
 ][
     hdr: adjunct-of where
-    exports: ensure block! select hdr 'Exports
+    exports: ensure block! select hdr 'exports
 
     if group? what [
         ensure block! what: eval what

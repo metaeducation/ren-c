@@ -629,7 +629,7 @@ let load_rebol_scripts = function(defer) {
                 //
                 // Note that if we ran as rebElide(text), then:
                 //
-                //     `Rebol [Type: Module ...] <your code>`
+                //     `Rebol [type: module ...] <your code>`
                 //
                 // ...would just evaluate Rebol and throw it away, and evaluate
                 // the spec block to itself and throw that away.  `Rebol` is
@@ -639,7 +639,7 @@ let load_rebol_scripts = function(defer) {
                 //     https://forum.rebol.info/t/1430
                 //
                 // So we need to at least DO such strings to get the special
-                // processing.  But if we do that, then any `Exports:` from the
+                // processing.  But if we do that, then any `exports:` from the
                 // module will not be imported.
                 //
                 // Hence IMPORT is used here.  This is all in flux as the

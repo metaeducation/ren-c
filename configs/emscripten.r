@@ -1,7 +1,7 @@
-REBOL [
-    File: %emscripten.r
+Rebol [
+    file: %emscripten.r
 
-    Description: --{
+    description: --{
         Emscripten is the name for a tool suite that makes it easier to build
         C/C++ programs that will run in JavaScript/WebAssembly environments.
 
@@ -18,7 +18,7 @@ REBOL [
         to smoothly integrate JavaScript and Ren-C.
     }--
 
-    Notes: --{
+    notes: --{
       * EMCC Command-Line Options List
         https://emscripten.org/docs/tools_reference/emcc.html
 

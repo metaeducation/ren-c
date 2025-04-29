@@ -1,8 +1,8 @@
 //
-//  File: %cell-sequence.h
-//  Summary: "Common Definitions for Immutable Interstitially-Delimited Lists"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-sequence.h
+//  summary: "Common Definitions for Immutable Interstitially-Delimited Lists"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

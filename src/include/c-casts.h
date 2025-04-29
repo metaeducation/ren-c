@@ -1,7 +1,7 @@
 //
-//  File: %c-casts.h
-//  Summary: "Cast macros with added features when built as C++11 or higher"
-//  Homepage: http://blog.hostilefork.com/c-casts-for-the-masses/
+//  file: %c-casts.h
+//  summary: "Cast macros with added features when built as C++11 or higher"
+//  homepage: http://blog.hostilefork.com/c-casts-for-the-masses/
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //

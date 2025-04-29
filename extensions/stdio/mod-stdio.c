@@ -1,9 +1,9 @@
 //
-//  File: %mod-stdio.c
-//  Summary: "Standard Input And Output Ports"
-//  Section: ports
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-stdio.c
+//  summary: "Standard Input And Output Ports"
+//  section: ports
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

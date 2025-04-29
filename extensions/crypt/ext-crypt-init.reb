@@ -1,9 +1,9 @@
-REBOL [
-    Title: "Crypt Extension"
-    Name: Crypt
-    Type: Module
-    Version: 1.0.0
-    License: "Apache 2.0"
+Rebol [
+    title: "Crypt Extension"
+    name: Crypt
+    type: module
+    version: 1.0.0
+    license: "Apache 2.0"
 ]
 
 export rsa-make-key: func [

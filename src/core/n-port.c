@@ -1,9 +1,9 @@
 //
-//  File: %n-port.c
-//  Summary: "Native functions for PORT!s"
-//  Section: natives
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-port.c
+//  summary: "Native functions for PORT!s"
+//  section: natives
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,9 +1,9 @@
 //
-//  File: %n-strings.c
-//  Summary: "native functions for strings"
-//  Section: natives
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-strings.c
+//  summary: "native functions for strings"
+//  section: natives
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

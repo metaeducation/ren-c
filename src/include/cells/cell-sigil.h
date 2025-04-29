@@ -1,8 +1,8 @@
 //
-//  File: %cell-sigil.h
-//  Summary: "SIGIL! Decorator Type"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-sigil.h
+//  summary: "SIGIL! Decorator Type"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

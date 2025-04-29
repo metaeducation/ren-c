@@ -1,9 +1,9 @@
 //
-//  File: %m-pools.c
-//  Summary: "memory allocation pool management"
-//  Section: memory
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %m-pools.c
+//  summary: "memory allocation pool management"
+//  section: memory
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

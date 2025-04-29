@@ -1,8 +1,8 @@
 //
-//  File: %stub-api.h
-//  Summary: "Definitions for allocating Value* API handles"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stub-api.h
+//  summary: "Definitions for allocating Value* API handles"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,5 +1,5 @@
-REBOL [
-    File: %vs2019-x86.r
+Rebol [
+    file: %vs2019-x86.r
 ]
 
 os-id: 0.3.1

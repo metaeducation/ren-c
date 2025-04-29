@@ -1,5 +1,5 @@
-REBOL [
-    File: %llvm-bc.r
+Rebol [
+    file: %llvm-bc.r
 ]
 
 compiler: 'clang

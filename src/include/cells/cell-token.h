@@ -1,8 +1,8 @@
 //
-//  File: %cell-token.h
-//  Summary: "Definitions for an Immutable Sequence of 0 to N Codepoints"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-token.h
+//  summary: "Definitions for an Immutable Sequence of 0 to N Codepoints"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

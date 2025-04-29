@@ -1,8 +1,8 @@
 //
-//  File: %struct-cell.h
-//  Summary: "Cell structure definitions preceding %tmp-internals.h"
-//  Project: "Ren-C Interpreter and Run-time"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %struct-cell.h
+//  summary: "Cell structure definitions preceding %tmp-internals.h"
+//  project: "Ren-C Interpreter and Run-time"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

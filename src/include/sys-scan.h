@@ -1,8 +1,8 @@
 //
-//  File: %sys-scan.h
-//  Summary: "Lexical Scanner Definitions"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-scan.h
+//  summary: "Lexical Scanner Definitions"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

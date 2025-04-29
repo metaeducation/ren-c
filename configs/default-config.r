@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 os-id: null
 
 ; possible values (words):

@@ -1,8 +1,8 @@
 //
-//  File: %sys-level.h
-//  Summary: "Accessors and Argument Pushers/Poppers for Trampoline Levels"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-level.h
+//  summary: "Accessors and Argument Pushers/Poppers for Trampoline Levels"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

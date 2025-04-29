@@ -1,16 +1,16 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Generic function interface definitions"
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Generic function interface definitions"
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Description: --{
+    description: --{
         The sense of the term "generic" used here is that of a function which
         has no default implementation--rather each data type supplies its own
         implementation.  The code that runs is based on the argument types:
@@ -26,7 +26,7 @@ REBOL [
         the list here (to either more generics, or to user-defined datatypes)
         was not fleshed out, and needs to get attention at some point.
     }--
-    Notes: --{
+    notes: --{
         Historical Rebol called generics "ACTION!"--a term that has been
         retaken for the "one function datatype":
 

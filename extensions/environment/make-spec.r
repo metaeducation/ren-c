@@ -1,8 +1,8 @@
-REBOL [
-    Name: Environment
-    Notes: "See %extensions/README.md for the format and fields of this file"
+Rebol [
+    name: Environment
+    notes: "See %extensions/README.md for the format and fields of this file"
 
-    Extended-Types: [environment!]
+    extended-types: [environment!]
 ]
 
 use-librebol: 'no  ; currently extending datatypes/generics needs %sys-core.h

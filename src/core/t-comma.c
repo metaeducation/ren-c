@@ -1,9 +1,9 @@
 //
-//  File: %t-comma.c
-//  Summary: "Comma Datatype"
-//  Section: datatypes
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %t-comma.c
+//  summary: "Comma Datatype"
+//  section: datatypes
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

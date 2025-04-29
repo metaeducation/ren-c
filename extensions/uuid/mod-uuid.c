@@ -1,9 +1,9 @@
 //
-//  File: %mod-uuid.c
-//  Summary: "Native Functions manipulating UUID"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-uuid.c
+//  summary: "Native Functions manipulating UUID"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

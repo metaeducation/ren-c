@@ -1,9 +1,9 @@
 //
-//  File: %n-control.c
-//  Summary: "native functions for control flow"
-//  Section: natives
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-control.c
+//  summary: "native functions for control flow"
+//  section: natives
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

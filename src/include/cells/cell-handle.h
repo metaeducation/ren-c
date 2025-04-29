@@ -1,8 +1,8 @@
 //
-//  File: %cell-handle.h
-//  Summary: "Definitions for GC-able and non-GC-able Handles"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-handle.h
+//  summary: "Definitions for GC-able and non-GC-able Handles"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

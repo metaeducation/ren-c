@@ -1,6 +1,6 @@
-REBOL [
-    Name: Network
-    Notes: "See %extensions/README.md for the format and fields of this file"
+Rebol [
+    name: Network
+    notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
 use-librebol: 'no

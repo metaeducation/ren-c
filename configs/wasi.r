@@ -1,7 +1,7 @@
-REBOL [
-    File: %wasi.r
+Rebol [
+    file: %wasi.r
 
-    Description: --{
+    description: --{
         The WebAssembly System Interface bridges Wasm code with the host (such
         as Linux, Windows, or Mac) to offer features like filesystem access
         through system calls.  It can also run in a web browser, making it
@@ -12,7 +12,7 @@ REBOL [
           https://webassembly.org/roadmap/
     }--
 
-    Usage: --{
+    usage: --{
         Building a webassembly project with Clang can target Wasi by targeting
         the wasm32 instruction set, and using a cross-compiling --sysroot that
         is pointed to the libc-wasi sysroot:
@@ -24,7 +24,7 @@ REBOL [
           https://github.com/WebAssembly/wasi-sdk/releases
     }--
 
-    Notes: --{
+    notes: --{
       * The feature roadmap of Wasi has been moving along in coverage, but it
         is not sufficient to supply the needed threading and network primitives
         required by libuv (which Ren-C's Filesystem and Networking extensions

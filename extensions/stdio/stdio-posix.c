@@ -1,8 +1,8 @@
 //
-//  File: %stdio-posix.c
-//  Summary: "Device: Standard I/O for Posix"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stdio-posix.c
+//  summary: "Device: Standard I/O for Posix"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

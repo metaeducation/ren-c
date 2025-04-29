@@ -1,15 +1,15 @@
-REBOL [
-    Title: "Pre-Build Step for JavaScript Files Passed to EMCC"
-    File: %prep-libr3-js.reb  ; used by MAKE-EMITTER
+Rebol [
+    title: "Pre-Build Step for JavaScript Files Passed to EMCC"
+    file: %prep-libr3-js.reb  ; used by MAKE-EMITTER
 
-    Version: 0.1.0
-    Date: 15-Sep-2020
+    version: 0.1.0
+    date: 15-Sep-2020
 
-    Rights: "Copyright (C) 2018-2020 hostilefork.com"
+    rights: "Copyright (C) 2018-2020 hostilefork.com"
 
-    License: "LGPL 3.0"
+    license: "LGPL 3.0"
 
-    Description: --{
+    description: --{
         The WASM files produced by Emscripten produce JavaScript functions
         that expect their arguments to be in terms of the SharedArrayBuffer
         HEAP32 that the C code can see.  For common JavaScript types, the

@@ -1,9 +1,9 @@
 //
-//  File: %c-oneshot.c
-//  Summary: "Generates function that will run code N times, then return null"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-oneshot.c
+//  summary: "Generates function that will run code N times, then return null"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

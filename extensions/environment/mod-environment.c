@@ -1,9 +1,9 @@
 //
-//  File: %mod-environment.c
-//  Summary: "Functionality for Setting and Getting Environment Variables"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-environment.c
+//  summary: "Functionality for Setting and Getting Environment Variables"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

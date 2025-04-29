@@ -1,22 +1,22 @@
-REBOL [
-    System: "Ren-C Core Extraction of the Rebol System"
-    Title: "Common Parsers for Tools"
-    Type: module
-    Name: Common-Parsers
-    Rights: --{
+Rebol [
+    system: "Ren-C Core Extraction of the Rebol System"
+    title: "Common Parsers for Tools"
+    type: module
+    name: Common-Parsers
+    rights: --{
         Rebol is Copyright 1997-2015 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
 
         Ren-C is Copyright 2015-2018 MetaEducation
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Author: "@codebybrett"
-    Version: 2.100.0
-    Needs: 2.100.100
-    Purpose: --{
+    author: "@codebybrett"
+    version: 2.100.0
+    needs: 2.100.100
+    purpose: --{
         These are some common routines used by the utilities
         that build and test the system.
     }--

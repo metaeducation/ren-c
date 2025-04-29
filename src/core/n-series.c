@@ -1,9 +1,9 @@
 //
-//  File: %n-series.c
-//  Summary: "native functions for series"
-//  Section: natives
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-series.c
+//  summary: "native functions for series"
+//  section: natives
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

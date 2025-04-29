@@ -1,6 +1,6 @@
-REBOL [
-    File: %android-cross-compiled.r
-    Inherits: %android-common.r
+Rebol [
+    file: %android-cross-compiled.r
+    inherits: %android-common.r
 ]
 
 compiler: 'gcc

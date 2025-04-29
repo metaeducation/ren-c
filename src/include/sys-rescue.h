@@ -1,8 +1,8 @@
 //
-//  File: %sys-rescue.h
-//  Summary: "Abstraction of setjmp/longjmp and C++ throw/catch"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-rescue.h
+//  summary: "Abstraction of setjmp/longjmp and C++ throw/catch"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

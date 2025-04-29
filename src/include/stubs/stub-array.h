@@ -1,8 +1,8 @@
 //
-//  File: %stub-array.h
-//  Summary: "Definitions for the Array Flex subclass"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stub-array.h
+//  summary: "Definitions for the Array Flex subclass"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

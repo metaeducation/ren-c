@@ -1,9 +1,9 @@
 //
-//  File: %mod-filesystem.c
-//  Summary: "POSIX/Windows File and Directory Access"
-//  Section: ports
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-filesystem.c
+//  summary: "POSIX/Windows File and Directory Access"
+//  section: ports
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

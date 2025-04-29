@@ -1,9 +1,9 @@
 //
-//  File: %c-typechecker.c
-//  Summary: "Function generator for an optimized typechecker"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-typechecker.c
+//  summary: "Function generator for an optimized typechecker"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

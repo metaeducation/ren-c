@@ -1,16 +1,16 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "REBOL 3 Mezzanine: Legacy compatibility"
-    Homepage: https://trello.com/b/l385BE7a/porting-guide
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "REBOL 3 Mezzanine: Legacy compatibility"
+    homepage: https://trello.com/b/l385BE7a/porting-guide
+    rights: --{
         Copyright 2012-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Description: --{
+    description: --{
         These are a few compatibility scraps left over from extracting the
         R3-Alpha emulation layer into %redbol.reb.
     }--
@@ -22,7 +22,7 @@ loop: ~<Short word LOOP is reserved for a generalized looping dialect:
         https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878>~
 
 
-REBOL: ~<The REBOL [] header of a script must be interpreted by LOAD (and
+REBOL: ~<The Rebol [] header of a script must be interpreted by LOAD (and
        functions like DO).  It cannot be executed directly.>~
 
 input: ~<Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):

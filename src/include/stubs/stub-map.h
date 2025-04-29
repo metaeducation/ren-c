@@ -1,8 +1,8 @@
 //
-//  File: %stub-map.h
-//  Summary: "Definitions for Map PairList and HashList"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stub-map.h
+//  summary: "Definitions for Map PairList and HashList"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

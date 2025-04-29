@@ -1,6 +1,6 @@
-REBOL [
-    Name: Clipboard
-    Notes: "See %extensions/README.md for the format and fields of this file"
+Rebol [
+    name: Clipboard
+    notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
 sources: %mod-clipboard.c

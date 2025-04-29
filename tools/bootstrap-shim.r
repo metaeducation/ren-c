@@ -1,19 +1,19 @@
-REBOL [
-    Title: "Shim to bring old executables up to date to use for bootstrapping"
-    Type: module
-    Name: Bootstrap-Shim
-    Rights: --{
+Rebol [
+    title: "Shim to bring old executables up to date to use for bootstrapping"
+    type: module
+    name: Bootstrap-Shim
+    rights: --{
         Rebol 3 Language Interpreter and Run-time Environment
         "Ren-C" branch @ https://github.com/metaeducation/ren-c
 
         Copyright 2012-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Purpose: --{
+    purpose: --{
         Ren-C "officially" supports two executables for doing the pre-build
         process, which generates needed header files and other artifacts.
 
@@ -32,7 +32,7 @@ REBOL [
         since it was created.  This is facilitated by Ren-C's compositional
         operations, like ADAPT, CHAIN, SPECIALIZE, and ENCLOSE.
     }--
-    Notes: --{
+    notes: --{
       * When running under the bootstrap EXE, this shim does not use EXPORT
         via the %import-shim.r method--it modifies the user context directly.
         Under the new EXE (which has a real IMPORT) it has to do EXPORT for

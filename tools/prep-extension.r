@@ -1,18 +1,18 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Generate extention native header files"
-    File: %prep-extension.r  ; EMIT-HEADER uses to indicate emitting script
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Generate extention native header files"
+    file: %prep-extension.r  ; EMIT-HEADER uses to indicate emitting script
+    rights: --{
         Copyright 2017 Atronix Engineering
         Copyright 2017-2025 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Needs: 2.100.100
-    Description: --{
+    needs: 2.100.100
+    description: --{
         This script is used to preprocess C source files containing code for
         extension DLLs, designed to load new native code into the interpreter.
 
@@ -20,7 +20,7 @@ REBOL [
         the EXE itself.  Hence, features like scanning the C comments for
         native specifications is reused.
     }--
-    Notes: --{
+    notes: --{
      A. The build process distinguishes between an extension that wants to use
         just "rebol.h" vs. all of "sys-core.h".  See `use-librebol`
 
@@ -62,7 +62,7 @@ ext-src-dir: to file! args.DIRECTORY
 
 sources: ensure block! transcode:one args.SOURCES
 
-use-librebol: switch args.USE_LIBREBOL [
+use-librebol: switch args.USE_LIBRebol [
     "no" ['no]
     "yes" ['yes]
     fail "%prep-extension.r needs USE_LIBREBOL as yes or no"
@@ -526,8 +526,8 @@ e1/write-emitted
 ; script is blended together and looks like:
 ;
 ;    Rebol [
-;        Title: "This header is whatever was in the %ext-xxx-init.reb"
-;        Type: module
+;        title: "This header is whatever was in the %ext-xxx-init.reb"
+;        type: module
 ;        ...
 ;    ]
 ;

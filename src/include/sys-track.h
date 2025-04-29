@@ -1,8 +1,8 @@
 //
-//  File: %sys-track.h
-//  Summary: "*VERY USEFUL* Debug Tracking Capabilities for Cell Payloads"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-track.h
+//  summary: "*VERY USEFUL* Debug Tracking Capabilities for Cell Payloads"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

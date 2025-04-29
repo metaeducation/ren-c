@@ -1,8 +1,8 @@
 //
-//  File: %c-state.c
-//  Summary: "Memoization of Status of Global Interpreter State"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-state.c
+//  summary: "Memoization of Status of Global Interpreter State"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

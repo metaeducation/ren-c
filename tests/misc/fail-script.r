@@ -1,6 +1,6 @@
 Rebol [
-   Title: "FAIL with an error"
-   Description: --{
+   title: "FAIL with an error"
+   description: --{
        Used by GitHub Actions to make sure FAIL gives a nonzero exit code.
    }--
 ]

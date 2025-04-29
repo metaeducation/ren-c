@@ -1,17 +1,17 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Make files related to the external API (for %rebol.h)"
-    File: %make-librebol.r
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Make files related to the external API (for %rebol.h)"
+    file: %make-librebol.r
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Needs: 2.100.100
+    needs: 2.100.100
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r

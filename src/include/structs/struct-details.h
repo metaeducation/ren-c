@@ -1,9 +1,9 @@
 //
-//  File: %struct-details.h
-//  Summary: "Dispatcher Details definitions preceding %tmp-internals.h"
-//  Section: core
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %struct-details.h
+//  summary: "Dispatcher Details definitions preceding %tmp-internals.h"
+//  section: core
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

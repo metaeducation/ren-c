@@ -1,8 +1,8 @@
 //
-//  File: %d-stats.c
-//  Summary: "Statistics gathering for performance analysis"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %d-stats.c
+//  summary: "Statistics gathering for performance analysis"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

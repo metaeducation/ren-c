@@ -1,6 +1,6 @@
-REBOL [
-    Title: "TCC Output of Files on Disk Test"
-    Description: --{
+Rebol [
+    title: "TCC Output of Files on Disk Test"
+    description: --{
         The initial integration of TCC only allowed for in-memory compilation
         of a string of C test as the implementation of a function that Rebol
         could call.  It was later extended to allow the creation of OBJ and

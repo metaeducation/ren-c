@@ -1,8 +1,8 @@
 //
-//  File: %struct-bounce.h
-//  Summary: "Return value from native functions"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %struct-bounce.h
+//  summary: "Return value from native functions"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,11 +1,11 @@
 Rebol [
-    Title: "UPARSE: Usermode Implementation of Evolved PARSE Dialect"
-    License: "LGPL 3.0"
+    title: "UPARSE: Usermode Implementation of Evolved PARSE Dialect"
+    license: "LGPL 3.0"
 
-    Type: module
-    Name: Usermode-PARSE
+    type: module
+    name: Usermode-PARSE
 
-    Exports: [
+    exports: [
         combinator
         parse
         default-combinators
@@ -13,7 +13,7 @@ Rebol [
         using  ; TBD: will become new meaning of USE
     ]
 
-    Description: --{
+    description: --{
         Rebol's PARSE is a tool for performing RegEx-style tasks using an
         English-like dialect.  It permits breaking down complex expressions
         into named subrules, and has a very freeform model for escaping into
@@ -53,7 +53,7 @@ Rebol [
         goal is to facilitate even more ambitious features.
     }--
 
-    Notes: --{
+    notes: --{
         * This implementation will be *extremely* slow for the foreseeable
           future.  But since it is built on usermode facilities, any
           optimizations that are applied to it will bring systemic benefits.
@@ -1680,7 +1680,7 @@ default-combinators: to map! reduce [
     ][
         switch value [
           ~null~ [
-            fail make error! [type: 'Script, id: 'need-non-null]
+            fail make error! [type: 'script, id: 'need-non-null]
           ]
           ~void~ [
             return void  ; does not vanish
@@ -2871,7 +2871,7 @@ parsify: func [
     case [
         word? r [  ; non-"keyword" WORD! (didn't look up literally)
             if null? value: get r [
-                fail make error! [type: 'Script, id: 'need-non-null]
+                fail make error! [type: 'script, id: 'need-non-null]
             ]
 
             if comb: match frame! :value [  ; variable held a combinator [4]

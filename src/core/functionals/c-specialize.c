@@ -1,9 +1,9 @@
 //
-//  File: %c-specialize.c
-//  Summary: "Routines for Creating Function Variations with Fixed Parameters"
-//  Section: datatypes
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-specialize.c
+//  summary: "Routines for Creating Function Variations with Fixed Parameters"
+//  section: datatypes
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

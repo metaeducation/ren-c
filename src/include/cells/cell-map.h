@@ -1,8 +1,8 @@
 //
-//  File: %cell-map.h
-//  Summary: "Definitions for MAP! Cells"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-map.h
+//  summary: "Definitions for MAP! Cells"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,9 +1,9 @@
 //
-//  File: %c-enclose.c
-//  Summary: "Mechanism for making a function that wraps another's execution"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-enclose.c
+//  summary: "Mechanism for making a function that wraps another's execution"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

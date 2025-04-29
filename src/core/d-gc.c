@@ -1,9 +1,9 @@
 //
-//  File: %d-gc.c
-//  Summary: "Debug-Build Checks for the Garbage Collector"
-//  Section: debug
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %d-gc.c
+//  summary: "Debug-Build Checks for the Garbage Collector"
+//  section: debug
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

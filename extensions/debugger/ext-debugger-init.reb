@@ -1,13 +1,13 @@
-REBOL [
-    Title: "Debugger Extension"
-    Name: Debugger
+Rebol [
+    title: "Debugger Extension"
+    name: Debugger
 
-    Type: Module
+    type: module
 
-    Version: 1.0.0
-    License: "Apache 2.0"
+    version: 1.0.0
+    license: "Apache 2.0"
 
-    Description: --{
+    description: --{
         The goal of the debugger in Ren-C is to be mostly usermode code, and
         to rely on leveraging exposure of the FRAME! datatype.  One of the
         concepts involved in that is that things like mappings of integers

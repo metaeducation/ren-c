@@ -1,9 +1,9 @@
 //
-//  File: %n-get.c
-//  Summary: "Native functions to GET (Paths, Chains, Tuples, Words...)"
-//  Section: natives
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-get.c
+//  summary: "Native functions to GET (Paths, Chains, Tuples, Words...)"
+//  section: natives
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

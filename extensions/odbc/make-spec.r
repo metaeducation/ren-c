@@ -1,6 +1,6 @@
-REBOL [
-    Name: ODBC
-    Notes: "See %extensions/README.md for the format and fields of this file"
+Rebol [
+    name: ODBC
+    notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
 options: [

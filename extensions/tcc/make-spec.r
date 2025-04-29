@@ -1,7 +1,7 @@
-REBOL [
-    Title: "TCC Extension Rebmake Compiling/Linking Information"
-    Name: TCC
-    Notes: --{
+Rebol [
+    title: "TCC Extension Rebmake Compiling/Linking Information"
+    name: TCC
+    notes: --{
         See %extensions/README.md for the format and fields of this file"
 
      A. If you installed libtcc with `sudo apt-get libtcc-dev`, then the

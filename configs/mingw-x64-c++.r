@@ -1,7 +1,7 @@
-REBOL [
-    File: %mingw-x64-c++r
+Rebol [
+    file: %mingw-x64-c++r
 
-    Inherit: %default-config.r
+    inherits: %default-config.r
 ]
 
 os-id: 0.3.40

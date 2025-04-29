@@ -1,8 +1,8 @@
 //
-//  File: %cell-parameter.h
-//  Summary: "Definitions for PARAMETER! Cells"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-parameter.h
+//  summary: "Definitions for PARAMETER! Cells"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

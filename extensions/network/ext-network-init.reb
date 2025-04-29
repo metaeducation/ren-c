@@ -1,9 +1,9 @@
-REBOL [
-    Title: "TCP/UDP Networking"
-    Name: Network
-    Type: Module
-    Version: 1.0.0
-    License: "Apache 2.0"
+Rebol [
+    title: "TCP/UDP Networking"
+    name: Network
+    type: module
+    version: 1.0.0
+    license: "Apache 2.0"
 ]
 
 ; The polymorphic WAIT function was once part of the "event" module.  But

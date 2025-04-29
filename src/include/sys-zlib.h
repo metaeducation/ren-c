@@ -1,6 +1,6 @@
 /*
  * Extraction of ZLIB compression and decompression routines
- * for REBOL [R3] Language Interpreter and Run-time Environment
+ * for Rebol [R3] Language Interpreter and Run-time Environment
  * This is a code-generated file.
  *
  * ZLIB Copyright notice:

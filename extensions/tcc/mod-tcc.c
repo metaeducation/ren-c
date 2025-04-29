@@ -1,9 +1,9 @@
 //
-//  File: %mod-tcc.c
-//  Summary: -{Implementation of "user natives" using an embedded C compiler}-
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-tcc.c
+//  summary: -{Implementation of "user natives" using an embedded C compiler}-
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,8 +1,8 @@
 //
-//  File: %stdio-windows.c
-//  Summary: "Device: Standard I/O for Win32"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stdio-windows.c
+//  summary: "Device: Standard I/O for Win32"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

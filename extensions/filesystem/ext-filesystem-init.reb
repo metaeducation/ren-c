@@ -1,9 +1,9 @@
-REBOL [
-    Title: "File and Directory Access"
-    Name: Filesystem
-    Type: Module
-    Version: 1.0.0
-    License: "Apache 2.0"
+Rebol [
+    title: "File and Directory Access"
+    name: Filesystem
+    type: module
+    version: 1.0.0
+    license: "Apache 2.0"
 ]
 
 sys.util/make-scheme [

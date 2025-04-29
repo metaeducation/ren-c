@@ -1,9 +1,9 @@
 //
-//  File: %f-modify.c
-//  Summary: "ANY-SERIES? modification (insert, append, change)"
-//  Section: functional
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %f-modify.c
+//  summary: "ANY-SERIES? modification (insert, append, change)"
+//  section: functional
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

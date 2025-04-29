@@ -1,9 +1,9 @@
 //
-//  File: %c-arrow.c
-//  Summary: "Lambda Variation That Doesn't Deep Copy Body, Can Unpack Args "
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-arrow.c
+//  summary: "Lambda Variation That Doesn't Deep Copy Body, Can Unpack Args "
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

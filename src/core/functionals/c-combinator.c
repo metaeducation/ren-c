@@ -1,9 +1,9 @@
 //
-//  File: %c-combinator.c
-//  Summary: "Makes Function Suitable for Use As a PARSE Keyword"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-combinator.c
+//  summary: "Makes Function Suitable for Use As a PARSE Keyword"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

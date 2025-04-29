@@ -1,9 +1,9 @@
 //
-//  File: %a-globals.c
-//  Summary: "global variables"
-//  Section: environment
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %a-globals.c
+//  summary: "global variables"
+//  section: environment
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

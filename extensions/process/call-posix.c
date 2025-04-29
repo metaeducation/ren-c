@@ -1,9 +1,9 @@
 //
-//  File: %call-posix.c
-//  Summary: "Implemention of CALL native for POSIX"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %call-posix.c
+//  summary: "Implemention of CALL native for POSIX"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

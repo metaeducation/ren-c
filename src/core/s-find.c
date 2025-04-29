@@ -1,9 +1,9 @@
 //
-//  File: %s-find.c
-//  Summary: "string search and comparison"
-//  Section: strings
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %s-find.c
+//  summary: "string search and comparison"
+//  section: strings
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

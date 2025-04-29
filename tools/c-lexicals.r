@@ -1,17 +1,17 @@
-REBOL [
-    Title: "C Programming Language Lexical Definitions"
-    Rights: --{
+Rebol [
+    title: "C Programming Language Lexical Definitions"
+    rights: --{
         Copyright 2015 Brett Handley
     }--
-    Type: module
-    Name: C-Lexicals
-    License: --{
+    type: module
+    name: C-Lexicals
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Author: "Brett Handley"
-    Purpose: "Parse C source text into preprocessing tokens"
-    Description: --{
+    author: "Brett Handley"
+    purpose: "Parse C source text into preprocessing tokens"
+    description: --{
         Based upon N1570 Committee Draft - April 12, 2011 ISO/IEC 9899:201x
 
         Trigraphs are not implemented.

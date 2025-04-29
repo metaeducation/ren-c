@@ -1,18 +1,18 @@
-REBOL [
-    Title: "REBOL 3 TLS Client 1.0 - 1.2 Protocol Scheme"
-    Type: module
-    Name: TLS-Protocol
-    Version: 0.7.0
-    Rights: --{
+Rebol [
+    title: "REBOL 3 TLS Client 1.0 - 1.2 Protocol Scheme"
+    type: module
+    name: TLS-Protocol
+    version: 0.7.0
+    rights: --{
         Copyright 2012 Richard "Cyphre" Smolak (TLS 1.0)
         Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Description: --{
+    description: --{
         This is an implementation of a TLS client layer, which can be used in
         lieu of a plain TCP scheme for providing network connectivity.  e.g.
         the HTTPS scheme is the same code as the HTTP scheme, only using this
@@ -45,7 +45,7 @@ REBOL [
         However, it does serve as a starting point for anyone interested in
         hacking on a better answer in usermode Rebol.
     }--
-    Notes: --{
+    notes: --{
         At time of writing (Sept 2018), TLS 1.0 and TLS 1.1 are in the process
         of formal deprecation by the IETF.  In the meantime, the payment card
         industry (PCI) set a deadline of 30-Jun-2018 for sites to deprecate
@@ -246,8 +246,8 @@ make-tls-error: lambda [
 ][
     if block? message [message: unspaced message]
     make error! [
-        type: 'Access
-        id: 'Protocol
+        type: 'access
+        id: 'protocol
         arg1: message
     ]
 ]

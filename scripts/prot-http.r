@@ -1,19 +1,19 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "REBOL 3 HTTP protocol scheme"
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "REBOL 3 HTTP protocol scheme"
+    rights: --{
         Copyright 2012 Gabriele Santilli, Richard Smolak, and REBOL Technologies
         Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Type: module
-    Name: HTTP-Protocol
-    File: %prot-http.r
-    Description: --{
+    type: module
+    name: HTTP-Protocol
+    file: %prot-http.r
+    description: --{
         This file defines a "Port Scheme" for reading and writing data via
         the HTTP protocol.  The protocol is built on top of a Generic
         "connection" which can be plain TCP or be layered with the transport
@@ -63,8 +63,8 @@ make-http-error: lambda [
     message [text! block!]
 ][
     make error! compose [
-        type: 'Access
-        id: 'Protocol
+        type: 'access
+        id: 'protocol
         arg1: (unspaced message)  ; ERROR! has a `message` field, must COMPOSE
     ]
 ]
@@ -344,8 +344,8 @@ check-response: func [
                     ]
                 ] else [
                     return raise make error! [
-                        type: 'Access
-                        id: 'Protocol
+                        type: 'access
+                        id: 'protocol
                         arg1: "Redirect requires manual intervention"
                         arg2: info
                     ]
@@ -436,8 +436,8 @@ do-redirect: func [
         ; http, so it all needs a redesign if this is to be useful.
         ;
         return raise make error! [
-            type: 'Access
-            id: 'Protocol
+            type: 'access
+            id: 'protocol
             arg1: "Redirect to other host - requires custom handling"
             arg2: headers
             arg3: as url! unspaced [

@@ -1,8 +1,8 @@
 //
-//  File: %stub-string.h
-//  Summary: "Definitions for String (and the Symbol subclass of String)"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stub-string.h
+//  summary: "Definitions for String (and the Symbol subclass of String)"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

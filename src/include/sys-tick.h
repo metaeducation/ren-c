@@ -1,8 +1,8 @@
 //
-//  File: %sys-tick.h
-//  Summary: "Definitions pertaining to the tick count"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-tick.h
+//  summary: "Definitions pertaining to the tick count"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

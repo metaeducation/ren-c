@@ -1,6 +1,6 @@
-REBOL [
-    Name: JavaScript
-    Notes: "See %extensions/README.md for the format and fields of this file"
+Rebol [
+    name: JavaScript
+    notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
 sources: [

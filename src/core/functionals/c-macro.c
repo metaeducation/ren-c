@@ -1,9 +1,9 @@
 //
-//  File: %c-macro.c
-//  Summary: "ACTION! that splices a block of code into the execution stream"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-macro.c
+//  summary: "ACTION! that splices a block of code into the execution stream"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

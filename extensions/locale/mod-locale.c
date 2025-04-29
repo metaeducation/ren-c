@@ -1,9 +1,9 @@
 //
-//  File: %mod-locale.c
-//  Summary: "Native Functions for spawning and controlling processes"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-locale.c
+//  summary: "Native Functions for spawning and controlling processes"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

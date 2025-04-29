@@ -1,8 +1,8 @@
 //
-//  File: %stub-symbol.h
-//  Summary: "Definitions for Symbols and Symbol IDs"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stub-symbol.h
+//  summary: "Definitions for Symbols and Symbol IDs"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

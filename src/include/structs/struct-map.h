@@ -1,8 +1,8 @@
 //
-//  File: %struct-map.h
-//  Summary: "Map structure definitions preceding %tmp-internals.h"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %struct-map.h
+//  summary: "Map structure definitions preceding %tmp-internals.h"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

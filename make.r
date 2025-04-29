@@ -1,17 +1,17 @@
-REBOL [
-    Title: "Top-Level Script for building Rebol"
-    File: %make.r
-    Rights: --{
+Rebol [
+    title: "Top-Level Script for building Rebol"
+    file: %make.r
+    rights: --{
         Rebol 3 Language Interpreter and Run-time Environment
         "Ren-C" branch @ https://github.com/metaeducation/ren-c
 
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    Description: --{
+    description: --{
         See notes on building in README.md
     }--
-    Warning: --{
+    warning: --{
         This code is not representative of modern practices, because it has
         to run in a very old bootstrap executable.  It is also very much a
         hodgepodge just to keep things running.  It's the absolute wrong place

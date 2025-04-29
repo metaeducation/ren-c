@@ -1,17 +1,17 @@
-REBOL [
-    Title: "ODBC Open Database Connectivity Scheme"
+Rebol [
+    title: "ODBC Open Database Connectivity Scheme"
 
-    Name: ODBC
-    Type: Module
+    name: ODBC
+    type: module
 
-    Version: 0.6.0
+    version: 0.6.0
 
-    Rights: [
+    rights: [
         "Copyright (C) 2010-2011 Christian Ensel" (MIT License)
         "Copyright (C) 2017-2019 Ren-C Open Source Contributors" (Apache)
     ]
 
-    License: "Apache 2.0"
+    license: "Apache 2.0"
 ]
 
 ; These are the native coded support routines that are needed to be built from

@@ -82,8 +82,8 @@
 (
     var: <outer>
 
-    m1: module [Exports: [var]] [var: <1>]
-    m2: module [Exports: [fetch]] compose [
+    m1: module [exports: [var]] [var: <1>]
+    m2: module [exports: [fetch]] compose [
         var: <2>
         import (<m2compose> m1)
         fetch: does [var]
@@ -97,7 +97,7 @@
 ; Overwrite a lib definition but make a helper that runs code in lib
 (
     eval-before: :eval
-    import m: module [Exports: [test]] [
+    import m: module [exports: [test]] [
         throw: ~  ; needs to be provided, no archetypal throw
         eval: func [source] [throw <override>]
 

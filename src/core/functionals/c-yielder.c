@@ -1,9 +1,9 @@
 //
-//  File: %c-yielder.c
-//  Summary: "Routines for Creating Coroutine Functions via Stackless Methods"
-//  Section: datatypes
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-yielder.c
+//  summary: "Routines for Creating Coroutine Functions via Stackless Methods"
+//  section: datatypes
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

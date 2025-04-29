@@ -1,9 +1,9 @@
 //
-//  File: %n-function.c
-//  Summary: "Generator for an ACTION! whose body is a block of user code"
-//  Section: natives
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-function.c
+//  summary: "Generator for an ACTION! whose body is a block of user code"
+//  section: natives
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

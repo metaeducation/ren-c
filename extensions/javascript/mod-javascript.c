@@ -1,9 +1,9 @@
 //
-//  File: %mod-javascript.c
-//  Summary: "Support for calling Javascript from Rebol in Emscripten build"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-javascript.c
+//  summary: "Support for calling Javascript from Rebol in Emscripten build"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

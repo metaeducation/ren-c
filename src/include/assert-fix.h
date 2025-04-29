@@ -1,8 +1,8 @@
 //
-//  File: %assert-fix.h
-//  Summary: "An alternative to what you get from #include <assert.h>"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %assert-fix.h
+//  summary: "An alternative to what you get from #include <assert.h>"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

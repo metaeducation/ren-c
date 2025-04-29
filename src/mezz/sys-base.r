@@ -1,16 +1,16 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "REBOL 3 Boot Sys: Top Context Functions"
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "REBOL 3 Boot Sys: Top Context Functions"
+    rights: --{
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Context: sys
-    Note: --{
+    context: sys
+    notes: --{
         Follows the BASE lib init that provides a basic set of functions
         to be able to evaluate this code.
 
@@ -101,10 +101,10 @@ make-quit: lambda [
 ;    it probably means the module was not successfully made and you should
 ;    be getting a raised error.  This needs to be rethought.
 ;
-; 2. !!! Should non-Modules be prohibited from having Exports?  Or just
-;    `Type: Script` be prohibited?  It could be the most flexible answer is
-;    that IMPORT works on anything that has a list of Exports, which would let
-;    people design new kinds like `Type: 'SuperModule`, but such ideas have not
+; 2. !!! Should non-Modules be prohibited from having exports?  Or just
+;    `type: script` be prohibited?  It could be the most flexible answer is
+;    that IMPORT works on anything that has a list of exports, which would let
+;    people design new kinds like `type: supermodule`, but such ideas have not
 ;    been mapped out.
 ;
 ; 3. We add importing and exporting as specializations of lower-level IMPORT*
@@ -162,10 +162,10 @@ module: func [
         ]
 
         all [
-            spec.type = 'Module
-            not has spec 'Exports
-        ] then [  ; default to having Exports block if it's a module [2]
-            extend spec [Exports: make block! 10]
+            spec.type = 'module
+            not has spec 'exports
+        ] then [  ; default to having exports block if it's a module [2]
+            extend spec [exports: make block! 10]
         ]
 
         set-adjunct mod spec
@@ -179,7 +179,7 @@ module: func [
     ]
 
     set extend mod 'export (
-        if spec and (spec.type = 'Module) [  ; only modules export
+        if spec and (spec.type = 'module) [  ; only modules export
             specialize sys.util.export*/ [  ; specialize low-level [3]
                 where: mod
             ]

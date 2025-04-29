@@ -1,15 +1,15 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Make sys-zlib.h and u-zlib.c"
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Make sys-zlib.h and u-zlib.c"
+    rights: --{
         Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Purpose: --{
+    purpose: --{
         In order to limit build dependencies, Rebol makes a snapshot of a
         subset of certain libraries to include in the source distribution.
         This script will extract just the parts of ZLIB that Rebol needs
@@ -22,7 +22,7 @@ REBOL [
         updating this script accordingly.  It was last tested on 1.2.11
         (released 15-Jan-2017)
     }--
-    Note: --{
+    notes: --{
         "This runs relative to ../tools directory."
 
         !!! TBD: The `register` keyword has been deprecated.  If zlib doesn't
@@ -105,7 +105,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
     reduce [--{
         /*
          * Extraction of ZLIB compression and decompression routines
-         * for REBOL [R3] Language Interpreter and Run-time Environment
+         * for Rebol [R3] Language Interpreter and Run-time Environment
          * This is a code-generated file.
          *
          * ZLIB Copyright notice:

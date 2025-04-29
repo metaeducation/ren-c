@@ -1,8 +1,8 @@
 //
-//  File: %c-signal.c
-//  Summary: "Evaluator Interrupt Signal Handling"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-signal.c
+//  summary: "Evaluator Interrupt Signal Handling"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

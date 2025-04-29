@@ -1,8 +1,8 @@
 //
-//  File: %sys-trampoline.h
-//  Summary: "Trampoline Flags And Other Header Definitions"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-trampoline.h
+//  summary: "Trampoline Flags And Other Header Definitions"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

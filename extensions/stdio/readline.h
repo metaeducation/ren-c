@@ -1,8 +1,8 @@
 //
-//  File: %readline.h
-//  Summary: "Shared Definitions for Windows/POSIX Console Line Reading"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %readline.h
+//  summary: "Shared Definitions for Windows/POSIX Console Line Reading"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

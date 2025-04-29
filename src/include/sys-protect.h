@@ -1,8 +1,8 @@
 //
-//  File: %sys-protect.h
-//  Summary: "System Const and Protection Functions"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-protect.h
+//  summary: "System Const and Protection Functions"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

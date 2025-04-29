@@ -1,17 +1,18 @@
-REBOL [
-    Title: "UTF-16/etc. Codecs"
+Rebol [
+    title: "UTF-16/etc. Codecs"
 
-    Name: UTF
-    Type: Module
+    name: UTF
+    type: module
 
-    Options: []
+    options: []
 
-    Rights: --{
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2017 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--

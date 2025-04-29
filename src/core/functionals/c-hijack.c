@@ -1,9 +1,9 @@
 //
-//  File: %c-hijack.c
-//  Summary: "Method for intercepting one function invocation with another"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-hijack.c
+//  summary: "Method for intercepting one function invocation with another"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

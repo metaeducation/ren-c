@@ -1,15 +1,15 @@
 Rebol [
-    Title: "Tools Built On Top of Usermode PARSE"
-    License: "LGPL 3.0"
+    title: "Tools Built On Top of Usermode PARSE"
+    license: "LGPL 3.0"
 
-    Type: module
-    Name: Usermode-PARSE-Extras
+    type: module
+    name: Usermode-PARSE-Extras
 
-    Exports: [
+    exports: [
         destructure
     ]
 
-    Description: --{
+    description: --{
         These routines are sensitive to UPARSE and should not be used in
         the bootstrap process at this time.
     }--

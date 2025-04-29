@@ -1,8 +1,8 @@
 //
-//  File: %sys-continuation.h
-//  Summary: "Continuation and Delegation Helpers"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-continuation.h
+//  summary: "Continuation and Delegation Helpers"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

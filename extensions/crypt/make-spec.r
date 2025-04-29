@@ -1,6 +1,6 @@
-REBOL [
-    Name: Crypt
-    Notes: "See %extensions/README.md for the format and fields of this file"
+Rebol [
+    name: Crypt
+    notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
 loadable: 'no  ; TLS depends on this, so it has to be builtin

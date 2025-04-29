@@ -1,25 +1,25 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Calculate type and typeset constants"
-    File: %make-types.r  ; used by EMIT-HEADER to indicate emitting script
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Calculate type and typeset constants"
+    file: %make-types.r  ; used by EMIT-HEADER to indicate emitting script
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2025 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Version: 2.100.0
-    Needs: 2.100.100
-    Purpose: --{
+    version: 2.100.0
+    needs: 2.100.100
+    purpose: --{
        The %types.r table defines many of the properties of Rebol's
        datatypes in a declarative way.  It is parsed and used to make
        tables used by %make-boot.r, as well as C source files that are
        included by the build.
     }--
-    Notes: --{
+    notes: --{
         This file has evolved over time and could be simplified drastically
         if some time and effort were put into it... it's very repetitive.
     }--

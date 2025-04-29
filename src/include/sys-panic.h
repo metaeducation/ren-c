@@ -1,8 +1,8 @@
 //
-//  File: %sys-panic.h
-//  Summary: "Force System Exit with Diagnostic Info"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-panic.h
+//  summary: "Force System Exit with Diagnostic Info"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

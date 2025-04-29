@@ -1,17 +1,17 @@
-REBOL [
-    Title: "Text Lines"
-    Version: 1.0.0
-    Type: module
-    Name: Text-Lines
-    Rights: --{
+Rebol [
+    title: "Text Lines"
+    version: 1.0.0
+    type: module
+    name: Text-Lines
+    rights: --{
         Copyright 2015 Brett Handley
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Author: "Brett Handley"
-    Purpose: "Functions operating on lines of text"
+    author: "Brett Handley"
+    purpose: "Functions operating on lines of text"
 ]
 
 import <bootstrap-shim.r>

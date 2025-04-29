@@ -1,8 +1,8 @@
 //
-//  File: %cell-decimal.h
-//  Summary: "DECIMAL! and PERCENT! Datatype Header"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-decimal.h
+//  summary: "DECIMAL! and PERCENT! Datatype Header"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

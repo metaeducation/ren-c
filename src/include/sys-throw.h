@@ -1,8 +1,8 @@
 //
-//  File: %sys-throw.h
-//  Summary: "Simulated datatype for throws, in lieu of TYPE_THROWN"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-throw.h
+//  summary: "Simulated datatype for throws, in lieu of TYPE_THROWN"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

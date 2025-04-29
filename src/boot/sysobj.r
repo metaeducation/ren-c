@@ -1,19 +1,19 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "System object"
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "System object"
+    rights: --{
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Purpose: --{
+    purpose: --{
         Defines the system object. This is a special block that is evaluted
         such that its words do not get put into the current context.
     }--
-    Note: "Remove older/unused fields before beta release"
+    notes: "Remove older/unused fields before beta release"
 ]
 
 ; Next five fields are updated during build:
@@ -243,18 +243,18 @@ standard: make object! [  ; can't CONSTRUCT, dependency of MAKE on prior fields
     ; are effectively absent for the semantics of *this* object.
     ;
     header: construct [
-        Title: "Untitled"
-        File: null
-        Name: null
-        Type: 'script  ; !!! Is this a good default?
-        Version: null
-        Date: null
-        Author: null
-        Options: null
-        Description: null
+        title: "Untitled"
+        file: null
+        name: null
+        type: 'script  ; !!! Is this a good default?
+        version: null
+        date: null
+        author: null
+        options: null
+        description: null
 
-        ; !!! `Compress:`, `Exports:`, and `Contents:` were commented out.
-        ; Exports perhaps because they only applied to modules, and would be
+        ; !!! `compress:`, `exports:`, and `contents:` were commented out.
+        ; exports perhaps because they only applied to modules, and would be
         ; misleading on a plain script.  The other perhaps because they were
         ; not processed by C code so (1) did not apply.  `Needs:` has been
         ; removed while focusing on the IMPORT dialect design.  `Checksum:`

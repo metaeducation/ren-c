@@ -1,8 +1,8 @@
 //
-//  File: %stub-context.h
-//  Summary: "Context definitions AFTER including %tmp-internals.h"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stub-context.h
+//  summary: "Context definitions AFTER including %tmp-internals.h"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

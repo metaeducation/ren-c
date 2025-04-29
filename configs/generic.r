@@ -1,4 +1,4 @@
-REBOL [
+Rebol [
     File: %generic.r
 ]
 

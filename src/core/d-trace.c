@@ -1,8 +1,8 @@
 //
-//  File: %d-trace.c
-//  Summary: "Tracing Debug Routines"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %d-trace.c
+//  summary: "Tracing Debug Routines"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

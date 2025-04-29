@@ -1,8 +1,8 @@
 //
-//  File: %sys-debug-casts.hpp
-//  Summary: "Instrumented operators for casting Node subclasses"
-//  Project: "Ren-C Interpreter and Run-time"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-debug-casts.hpp
+//  summary: "Instrumented operators for casting Node subclasses"
+//  project: "Ren-C Interpreter and Run-time"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

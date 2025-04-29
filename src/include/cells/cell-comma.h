@@ -1,8 +1,8 @@
 //
-//  File: %cell-comma.h
-//  Summary: "COMMA! Datatype Header"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-comma.h
+//  summary: "COMMA! Datatype Header"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

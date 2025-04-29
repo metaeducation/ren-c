@@ -1,9 +1,9 @@
 //
-//  File: %b-init.c
-//  Summary: "initialization functions"
-//  Section: bootstrap
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %b-init.c
+//  summary: "initialization functions"
+//  section: bootstrap
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -924,8 +924,8 @@ void Startup_Core(void)
         // and then import the results to lib.
         //
         "set-adjunct sys.util make object! [",
-            "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
-            "Exports: [do module load decode encode encoding-of]",
+            "name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
+            "exports: [do module load decode encode encoding-of]",
         "]",
         "sys.util/import*", g_lib_module, g_sys_util_module
     );

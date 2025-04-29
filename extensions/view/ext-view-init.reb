@@ -1,9 +1,9 @@
-REBOL [
-    Title: "View Extension"
-    Name: View
-    Type: Module
-    Version: 1.0.0
-    License: "Apache 2.0"
+Rebol [
+    title: "View Extension"
+    name: View
+    type: module
+    version: 1.0.0
+    license: "Apache 2.0"
 ]
 
 ; Move the default filters to usermode code, instead of a hardcoded C literal

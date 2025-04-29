@@ -1,9 +1,9 @@
 //
-//  File: %mod-odbc.c
-//  Summary: "Interface from REBOL3 to ODBC"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-odbc.c
+//  summary: "Interface from REBOL3 to ODBC"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

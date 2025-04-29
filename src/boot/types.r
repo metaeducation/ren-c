@@ -1,16 +1,16 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Rebol datatypes and their related attributes"
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Rebol datatypes and their related attributes"
+    rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2025 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }--
-    License: --{
+    license: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }--
-    Purpose: --{
+    purpose: --{
         This table is used to make C defines and intialization tables.
 
             name            "description"
@@ -25,7 +25,7 @@ REBOL [
         node flags  - indication of if cell payload slot 1 or 2 hold nodes
         constraints - sparse type constraints this type will answer true to
     }--
-    Notes: --{
+    notes: --{
       * Code should avoid dependence on exact values of the heart bytes.
         Any relative ordering dependencies not captured in this type table
         should be captured as macros/functions in %enum-typesets.h

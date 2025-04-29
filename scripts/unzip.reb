@@ -1,20 +1,20 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Zip and Unzip Services"
-    Type: module
-    Name: Zip
-    Rights: --{
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Zip and Unzip Services"
+    type: module
+    name: Zip
+    rights: --{
         Copyright 2009-2021 Ren-C Open Source Contributors
         Copyright 2009 Vincent Ecuyer
         REBOL is a trademark of REBOL Technologies
 
         See README.md and CREDITS.md for more information.
     }--
-    License: --{
+    license: --{
         Original code from %rebzip.r from www.rebol.org
         Public Domain License
     }--
-    Usage: --{
+    usage: --{
         == archiving: zip ==
 
         you can zip a single file:
@@ -49,7 +49,7 @@ REBOL [
 
             my-block == [%file-1.txt #{...} %file-2.exe #{...}]
     }--
-    Notes: --{
+    notes: --{
         * Only DEFLATE and STORE methods are supported.
 
         * The Linux `zipinfo` utility with the `-v` switch for verbose output

@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 
 inp: %iso3166.txt
 count: read inp

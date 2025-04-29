@@ -1,9 +1,9 @@
 //
-//  File: %n-bitwise.c
-//  Summary: "Native functions for bitwise math"
-//  Section: natives
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-bitwise.c
+//  summary: "Native functions for bitwise math"
+//  section: natives
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

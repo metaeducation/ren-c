@@ -1,8 +1,8 @@
 //
-//  File: %stub-use.h
-//  Summary: "Definitions for Virtual Use Patches"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stub-use.h
+//  summary: "Definitions for Virtual Use Patches"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

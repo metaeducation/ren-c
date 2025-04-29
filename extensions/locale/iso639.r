@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 
 init: %ext-locale-init.reb
 inp: %ISO-639-2_utf-8.txt

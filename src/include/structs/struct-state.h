@@ -1,8 +1,8 @@
 //
-//  File: %struct-state.h
-//  Summary: "State structure definitions preceding %tmp-internals.h"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %struct-state.h
+//  summary: "State structure definitions preceding %tmp-internals.h"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

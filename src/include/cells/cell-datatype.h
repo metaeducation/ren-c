@@ -1,8 +1,8 @@
 //
-//  File: %cell-datatype.h
-//  Summary: "DATATYPE! Datatype Header"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-datatype.h
+//  summary: "DATATYPE! Datatype Header"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

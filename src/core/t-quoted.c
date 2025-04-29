@@ -1,9 +1,9 @@
 //
-//  File: %t-quoted.c
-//  Summary: "QUOTED? datatype that acts as container for unquoted elements"
-//  Section: datatypes
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %t-quoted.c
+//  summary: "QUOTED? datatype that acts as container for unquoted elements"
+//  section: datatypes
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

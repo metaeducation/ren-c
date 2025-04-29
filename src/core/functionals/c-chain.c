@@ -1,9 +1,9 @@
 //
-//  File: %c-chain.c
-//  Summary: "Function generator for making a pipeline of post-processing"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-chain.c
+//  summary: "Function generator for making a pipeline of post-processing"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

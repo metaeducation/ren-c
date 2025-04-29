@@ -1,9 +1,9 @@
 //
-//  File: %n-data.c
-//  Summary: "native functions for data and context"
-//  Section: natives
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-data.c
+//  summary: "native functions for data and context"
+//  section: natives
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -943,7 +943,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 //
 // Historically this was offered for ANY-CONTEXT?.  But its only notable use
 // was as the mechanism by which the IMPORT command would transfer the
-// variables named by the `Exports:` block of a module to the module that was
+// variables named by the `exports:` block of a module to the module that was
 // doing the importing.  Some of the most convoluted code dealt with managing
 // the large growing indexes of modules as items were added.
 //

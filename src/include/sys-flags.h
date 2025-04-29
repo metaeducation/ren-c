@@ -1,8 +1,8 @@
 //
-//  File: %sys-flags.h
-//  Summary: "Byte-Order Sensitive Bit Flags And Masking"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-flags.h
+//  summary: "Byte-Order Sensitive Bit Flags And Masking"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

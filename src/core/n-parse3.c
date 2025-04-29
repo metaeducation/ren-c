@@ -1,9 +1,9 @@
 //
-//  File: %n-parse3.c
-//  Summary: "parse dialect interpreter"
-//  Section: utility
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-parse3.c
+//  summary: "parse dialect interpreter"
+//  section: utility
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

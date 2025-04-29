@@ -1,9 +1,9 @@
 //
-//  File: %fcntl-patch.c
-//  Summary: "Use GCC voodoo to undo GLIBC 2.28 `fcntl` redefine to `fcntl64`"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %fcntl-patch.c
+//  summary: "Use GCC voodoo to undo GLIBC 2.28 `fcntl` redefine to `fcntl64`"
+//  section: extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

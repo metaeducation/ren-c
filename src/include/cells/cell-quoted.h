@@ -1,8 +1,8 @@
 //
-//  File: %cell-quoted.h
-//  Summary: "Definitions for QUOTED! Cells"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %cell-quoted.h
+//  summary: "Definitions for QUOTED! Cells"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

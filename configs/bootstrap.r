@@ -1,5 +1,5 @@
-REBOL [
-    File: %bootstrap.r
+Rebol [
+    file: %bootstrap.r
 ]
 
 os-id: 0.4.40

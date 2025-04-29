@@ -1,6 +1,6 @@
-REBOL [
-    Name: Debugger
-    Notes: "See %extensions/README.md for the format and fields of this file"
+Rebol [
+    name: Debugger
+    notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
 ; !!! The debugger spawns nested console sessions, with some customization.

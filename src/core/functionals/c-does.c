@@ -1,9 +1,9 @@
 //
-//  File: %c-does.c
-//  Summary: "Expedient generator for 0-argument function specializations"
-//  Section: datatypes
-//  Project: "Ren-C Language Interpreter and Run-time Environment"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-does.c
+//  summary: "Expedient generator for 0-argument function specializations"
+//  section: datatypes
+//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

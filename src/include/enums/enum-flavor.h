@@ -1,8 +1,8 @@
 //
-//  File: %enum-flavor.h
-//  Summary: "Stub Subclass Type Enumeration"
-//  Project: "Ren-C Interpreter and Run-time"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %enum-flavor.h
+//  summary: "Stub Subclass Type Enumeration"
+//  project: "Ren-C Interpreter and Run-time"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

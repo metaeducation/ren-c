@@ -1,8 +1,8 @@
 //
-//  File: %stub-flex.h
-//  Summary: "Flex definitions AFTER %tmp-internals.h"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %stub-flex.h
+//  summary: "Flex definitions AFTER %tmp-internals.h"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
