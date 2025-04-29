@@ -11,7 +11,7 @@
         var: 1
     ]
     var: 2
-    1 == a-module/var
+    1 = a-module/var
 )
 
 ; import test
@@ -22,7 +22,7 @@
         var: 2
     ]
     import a-module
-    2 == var
+    2 = var
 )
 
 ; import test
@@ -34,7 +34,7 @@
         var: 2
     ]
     import a-module
-    1 == var
+    1 = var
 )
 
 ;-- Tests that were in %sys-load.r, these were originally using XLOAD, but

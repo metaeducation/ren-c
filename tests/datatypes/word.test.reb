@@ -5,7 +5,7 @@
 ; literal form
 (word? first [a])
 ; words are active; actions are word-active
-(1 == abs -1)
+(1 = abs -1)
 (
     a-value: #{}
     same? :a-value a-value
@@ -28,11 +28,11 @@
 )
 (
     a-value: 0.0
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: 1.0
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: me@here.com
@@ -49,23 +49,23 @@
 ; functions are word-active
 (
     a-value: does [1]
-    1 == a-value
+    1 = a-value
 )
 (
     a-value: first [:a]
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: #"^@"
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: 0
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: 1
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: null
@@ -74,22 +74,22 @@
 ; lit-paths aren't word-active
 (
     a-value: first ['a/b]
-    a-value == :a-value
+    a-value = :a-value
 )
 ; lit-words aren't word-active
 (
     a-value: first ['a]
-    a-value == :a-value
+    a-value = :a-value
 )
-(:okay == okay)
-(:null == null)
+(:okay = okay)
+(:null = null)
 (
     a-value: $1
-    :a-value == a-value
+    :a-value = a-value
 )
 ; natives are word-active
-(action! == type of :reduce)
-(:blank == blank)
+(action! = type of :reduce)
+(:blank = blank)
 ; library test?
 (
     a-value: make object! []
@@ -101,15 +101,15 @@
 )
 (
     a-value: get '+
-    (1 a-value 2) == 3
+    (1 a-value 2) = 3
 )
 (
     a-value: 0x0
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: 'a/b
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: make port! http://
@@ -117,16 +117,16 @@
 )
 (
     a-value: /a
-    :a-value == a-value
+    :a-value = a-value
 )
 ; routine test?
 (
     a-value: first [a/b:]
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: first [a:]
-    :a-value == a-value
+    :a-value = a-value
 )
 (
     a-value: ""
@@ -150,5 +150,5 @@
 )
 (
     a-value: 'a
-    :a-value == a-value
+    :a-value = a-value
 )

@@ -33,13 +33,13 @@
 )
 ; THROW stops the evaluation
 (
-    1 == catch [
+    1 = catch [
         either okay [throw 1 2] [2]
         2
     ]
 )
 (
-    1 == catch [
+    1 = catch [
         either null [2] [throw 1 2]
         2
     ]

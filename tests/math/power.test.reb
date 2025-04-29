@@ -5,7 +5,7 @@
 ;
 ; https://rosettacode.org/wiki/Zero_to_the_zero_power
 ;
-(1.0 == power 0 0)
+(1.0 = power 0 0)
 
 (1 = power 1 1000)
 (1 = power 1000 0)

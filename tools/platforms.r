@@ -499,8 +499,8 @@ use [
             any [word? build-label  not build-label]
             tuple? id
             id/1 = 0  id/2 = platform-number
-            (to-text os-name) == (lowercase to-text os-name)
-            (to-text os-base) == (lowercase to-text os-base)
+            (to-text os-name) = (lowercase to-text os-name)
+            (to-text os-base) = (lowercase to-text os-base)
             not find (to-text os-base) charset [#"-" #"_"]
             block? definitions
             block? cflags
@@ -547,7 +547,7 @@ use [
 
 
 config-system: function [
-    {Return build configuration information}
+    return: [object!] "Build configuration information"
     hint [~null~ text! tuple!]
         {Version ID (blank means guess)}
 ][

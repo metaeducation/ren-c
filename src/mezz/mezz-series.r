@@ -123,7 +123,7 @@ replace: function [
     ; had no access to source (?).  Correct answer is likely to fix FIND:
     ;
     ;    >> find "abcdef" <cde>
-    ;    >> == "cdef" ; should probably be null
+    ;    == "cdef" ; should probably be null
     ;
     ;    >> find "ab<cde>f" <cde>
     ;    == "cde>f" ; should be "<cde>f"

@@ -5,10 +5,10 @@
 (tag? #[tag! ""])
 (strict-equal? #[tag! ""] make tag! 0)
 (strict-equal? #[tag! ""] to tag! "")
-("<tag>" == mold <tag>)
+("<tag>" = mold <tag>)
 
 [#219
-    ("<ēee>" == mold <ēee>)
+    ("<ēee>" = mold <ēee>)
 ]
 
 ; Just make sure recursive molding doesn't hang...

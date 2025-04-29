@@ -20,8 +20,8 @@
     same? a-value all [a-value]
 )
 (1/Jan/0000 = all [1/Jan/0000])
-(0.0 == all [0.0])
-(1.0 == all [1.0])
+(0.0 = all [0.0])
+(1.0 = all [1.0])
 (
     a-value: me@here.com
     same? a-value all [a-value]
@@ -36,23 +36,23 @@
 )
 (
     a-value: first [:a]
-    :a-value == all [:a-value]
+    :a-value = all [:a-value]
 )
-(#"^@" == all [#"^@"])
-(0 == all [0])
-(1 == all [1])
-(#a == all [#a])
+(#"^@" = all [#"^@"])
+(0 = all [0])
+(1 = all [1])
+(#a = all [#a])
 (
     a-value: first ['a/b]
-    :a-value == all [:a-value]
+    :a-value = all [:a-value]
 )
 (
     a-value: first ['a]
-    :a-value == all [:a-value]
+    :a-value = all [:a-value]
 )
 (okay = all [okay])
 (null? all [null])
-($1 == all [$1])
+($1 = all [$1])
 (same? :append all [:append])
 (blank? all [_])
 (
@@ -64,23 +64,23 @@
     same? :a-value all [:a-value]
 )
 (same? get '+ all [get '+])
-(0x0 == all [0x0])
+(0x0 = all [0x0])
 (
     a-value: 'a/b
-    :a-value == all [:a-value]
+    :a-value = all [:a-value]
 )
 (
     a-value: make port! http://
     port? all [:a-value]
 )
-(/a == all [/a])
+(/a = all [/a])
 (
     a-value: first [a/b:]
-    :a-value == all [:a-value]
+    :a-value = all [:a-value]
 )
 (
     a-value: first [a:]
-    :a-value == all [:a-value]
+    :a-value = all [:a-value]
 )
 (
     a-value: ""
@@ -90,10 +90,10 @@
     a-value: make tag! ""
     same? :a-value all [:a-value]
 )
-(0:00 == all [0:00])
-(0.0.0 == all [0.0.0])
+(0:00 = all [0:00])
+(0.0.0 = all [0.0.0])
 (null? all [null])
-('a == all ['a])
+('a = all ['a])
 ; two values
 (:abs = all [okay :abs])
 (
@@ -113,8 +113,8 @@
     same? a-value all [okay a-value]
 )
 (1/Jan/0000 = all [okay 1/Jan/0000])
-(0.0 == all [okay 0.0])
-(1.0 == all [okay 1.0])
+(0.0 = all [okay 0.0])
+(1.0 = all [okay 1.0])
 (
     a-value: me@here.com
     same? a-value all [okay a-value]
@@ -131,19 +131,19 @@
     a-value: first [:a]
     same? :a-value all [okay :a-value]
 )
-(#"^@" == all [okay #"^@"])
-(0 == all [okay 0])
-(1 == all [okay 1])
-(#a == all [okay #a])
+(#"^@" = all [okay #"^@"])
+(0 = all [okay 0])
+(1 = all [okay 1])
+(#a = all [okay #a])
 (
     a-value: first ['a/b]
-    :a-value == all [okay :a-value]
+    :a-value = all [okay :a-value]
 )
 (
     a-value: first ['a]
-    :a-value == all [okay :a-value]
+    :a-value = all [okay :a-value]
 )
-($1 == all [okay $1])
+($1 = all [okay $1])
 (same? :append all [okay :append])
 (blank? all [okay _])
 (
@@ -155,23 +155,23 @@
     same? :a-value all [okay :a-value]
 )
 (same? get '+ all [okay get '+])
-(0x0 == all [okay 0x0])
+(0x0 = all [okay 0x0])
 (
     a-value: 'a/b
-    :a-value == all [okay :a-value]
+    :a-value = all [okay :a-value]
 )
 (
     a-value: make port! http://
     port? all [okay :a-value]
 )
-(/a == all [okay /a])
+(/a = all [okay /a])
 (
     a-value: first [a/b:]
-    :a-value == all [okay :a-value]
+    :a-value = all [okay :a-value]
 )
 (
     a-value: first [a:]
-    :a-value == all [okay :a-value]
+    :a-value = all [okay :a-value]
 )
 (
     a-value: ""
@@ -181,10 +181,10 @@
     a-value: make tag! ""
     same? :a-value all [okay :a-value]
 )
-(0:00 == all [okay 0:00])
-(0.0.0 == all [okay 0.0.0])
+(0:00 = all [okay 0:00])
+(0.0.0 = all [okay 0.0.0])
 (null? all [1020 null])
-('a == all [okay 'a])
+('a = all [okay 'a])
 (okay = all [:abs okay])
 (
     a-value: #{}

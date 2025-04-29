@@ -113,4 +113,4 @@
 (error? sys/util/rescue [multiply -1 -9223372036854775808])
 <64bit>
 (error? sys/util/rescue [multiply -9223372036854775808 -1])
-(0:0:1 == multiply 0:0:2 0.5)
+(0:0:1 = multiply 0:0:2 0.5)

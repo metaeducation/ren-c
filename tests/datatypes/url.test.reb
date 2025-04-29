@@ -17,7 +17,7 @@
     url2: load "http://a.b.c/d?e=f&"
     all [
         not equal? url1 url2
-        url1 == http://a.b.c/d?e=f%26
-        url2 == http://a.b.c/d?e=f&
+        url1 = http://a.b.c/d?e=f%26
+        url2 = http://a.b.c/d?e=f&
     ]
 )

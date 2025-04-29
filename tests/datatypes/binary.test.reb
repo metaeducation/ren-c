@@ -3,14 +3,14 @@
 (not binary? 1)
 (binary! = type of #{00})
 
-(#{00} == 2#{00000000})
-(#{000000} == 64#{AAAA})
-(#{} == make binary! 0)
+(#{00} = 2#{00000000})
+(#{000000} = 64#{AAAA})
+(#{} = make binary! 0)
 (error? sys/util/rescue [transcode {"^^(00)"}])
 ; minimum
 (binary? #{})
 ; alternative literal representation
-(#{} == #[binary! #{}])
+(#{} = #[binary! #{}])
 ; access symmetry
 (
     b: #{0b}
@@ -18,7 +18,7 @@
 )
 [#42 (
     b: #{0b}
-    b/1 == 11
+    b/1 = 11
 )]
 ; case sensitivity
 [#1459
@@ -28,5 +28,5 @@
 (
     a: make binary! 0
     insert a #"^(00)"
-    a == #{00}
+    a = #{00}
 )

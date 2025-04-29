@@ -199,7 +199,7 @@
     test: null
     error? sys/util/rescue [
         for i 1 2 [
-            either test [i == 2] [
+            either test [i = 2] [
                 test: okay
                 i: null
             ]

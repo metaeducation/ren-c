@@ -15,9 +15,9 @@
 (did find complement charset "a" #"b")
 (
     a: make bitset! #{0000000000000000000000000000000000000000000000000000000000000000}
-    a == complement complement a
+    a = complement complement a
 )
 (
     a: make bitset! #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}
-    a == complement complement a
+    a = complement complement a
 )

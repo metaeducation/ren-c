@@ -118,7 +118,7 @@ print: lib/print: func3 [value <local> pos] [
         return ~
     ]
     value: lib/spaced value  ; uses bootstrap shim spaced (once available)
-    while [okay] [
+    while [#[true]] [
         prin3-buggy copy/part value 256
         if3 tail? value: lib/skip value 256 [break]
     ]
@@ -126,21 +126,6 @@ print: lib/print: func3 [value <local> pos] [
 ]
 
 
-
-;; === "ENFIX => INFIX RENAMING" ===
-
-; Because Ren-C's "infix" functions really just took the first argument from
-; the left, they weren't necessarily arity-2.  So they were called "N-ary-fix"
-; or "N-FIX"... and functions were said to be "enfixed".  This really just
-; confused people, and it's easier to say that infix functions are only infix
-; for their first two arguments...and if they have any more than that they
-; will just take them normally.
-;
-; The bootstrap executable had a strange idea of doing infixedness through
-; SET/ENFIX, and then ENFIX was itself an enfixed function which did that
-; set on the word to its left.  :-/
-
-infix: enfix :enfix
 
 
 ; Use /BLAME instead of /WHERE in FAIL (eliminates an annoying inconsistency)
@@ -159,6 +144,32 @@ fail: func3 [
     ]
     fail-with-where/where reason location
 ]
+
+
+;; === "ENFIX => INFIX RENAMING" ===
+
+; Because Ren-C's "infix" functions really just took the first argument from
+; the left, they weren't necessarily arity-2.  So they were called "N-ary-fix"
+; or "N-FIX"... and functions were said to be "enfixed".  This really just
+; confused people, and it's easier to say that infix functions are only infix
+; for their first two arguments...and if they have any more than that they
+; will just take them normally.
+;
+; The bootstrap executable had a strange idea of doing infixedness through
+; SET/ENFIX, and then ENFIX was itself an enfixed function which did that
+; set on the word to its left.  :-/
+
+infix: enfix :enfix
+
+?=: enfix :equal?
+=: enfix :strict-equal?
+!=: enfix :strict-not-equal?
+lib/do compose [(to set-word! '<>) enfix :strict-not-equal?]
+
+==: !==: func3 [] [
+    fail/blame "Don't use == or !== anymore..." 'return
+]
+
 
 ; With definitional errors, we're moving away from the buggy practice of
 ; intercepting abrupt failures casually.  The RESCUE routine is put in

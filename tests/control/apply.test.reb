@@ -57,7 +57,7 @@
 [#44 (
     error? sys/util/rescue [redbol-apply 'append/only [copy [a b] 'c]]
 )]
-(1 == redbol-apply :subtract [2 1])
+(1 = redbol-apply :subtract [2 1])
 (1 = (redbol-apply :- [2 1]))
 (error? sys/util/rescue [redbol-apply lambda [a] [a] []])
 (error? sys/util/rescue [redbol-apply/only lambda [a] [a] []])
@@ -74,38 +74,38 @@
 (/a = redbol-apply/only lambda [/a] [a] [okay])
 ; the word 'false
 (/a = redbol-apply/only lambda [/a] [a] [null])
-(null == redbol-apply/only lambda [/a] [a] [])
+(null = redbol-apply/only lambda [/a] [a] [])
 (use [a] [a: okay /a = redbol-apply lambda [/a] [a] [a]])
-(use [a] [a: null null == redbol-apply lambda [/a] [a] [a]])
+(use [a] [a: null null = redbol-apply lambda [/a] [a] [a]])
 (use [a] [a: null /a = redbol-apply lambda [/a] [a] ['a]])
 (use [a] [a: null /a = redbol-apply lambda [/a] [a] [/a]])
 (use [a] [a: null /a = redbol-apply/only lambda [/a] [a] [a]])
-(group! == redbol-apply/only (specialize 'of [property: 'type]) [()])
-([1] == head of redbol-apply :insert [copy [] [1] null null null])
-([1] == head of redbol-apply :insert [copy [] [1] null null null])
-([[1]] == head of redbol-apply :insert [copy [] [1] null null okay])
-(action! == redbol-apply (specialize 'of [property: 'type]) [:print])
-(get-word! == redbol-apply/only (specialize 'of [property: 'type]) [:print])
+(group! = redbol-apply/only (specialize 'of [property: 'type]) [()])
+([1] = head of redbol-apply :insert [copy [] [1] null null null])
+([1] = head of redbol-apply :insert [copy [] [1] null null null])
+([[1]] = head of redbol-apply :insert [copy [] [1] null null okay])
+(action! = redbol-apply (specialize 'of [property: 'type]) [:print])
+(get-word! = redbol-apply/only (specialize 'of [property: 'type]) [:print])
 
 ;-- #1760 --
 
 (
-    1 == reeval func [] [redbol-apply does [] [return 1] return 2]
+    1 = reeval func [] [redbol-apply does [] [return 1] return 2]
 )
 (
-    1 == reeval func [] [redbol-apply lambda [a] [a] [return 1] return 2]
+    1 = reeval func [] [redbol-apply lambda [a] [a] [return 1] return 2]
 )
 (
-    1 == reeval func [] [redbol-apply does [] [return 1]]
+    1 = reeval func [] [redbol-apply does [] [return 1]]
 )
 (
-    1 == reeval func [] [redbol-apply lambda [a] [a] [return 1]]
+    1 = reeval func [] [redbol-apply lambda [a] [a] [return 1]]
 )
 (
-    1 == reeval func [] [redbol-apply lambda [a b] [a] [return 1 return 2]]
+    1 = reeval func [] [redbol-apply lambda [a b] [a] [return 1 return 2]]
 )
 (
-    1 == reeval func [] [redbol-apply lambda [a b] [a] [2 return 1]]
+    1 = reeval func [] [redbol-apply lambda [a b] [a] [2 return 1]]
 )
 
 (
@@ -184,11 +184,11 @@
 
 ; MAKE FRAME! :RETURN should preserve binding in the FUNCTION OF the frame
 ;
-(1 == reeval func [] [redbol-apply :return [1] 2])
+(1 = reeval func [] [redbol-apply :return [1] 2])
 
 ; !!! This shows a weak spot: how would REDBOL-APPLY/ONLY work on antiforms?
 ; It could degrade them, which would be an argument for not using quasars much.
 ;
-('~null~ == redbol-apply/only lambda [/a] [a] [~null~])
+('~null~ = redbol-apply/only lambda [/a] [a] [~null~])
 
-(group! == redbol-apply/only :type-of [()])
+(group! = redbol-apply/only :type-of [()])

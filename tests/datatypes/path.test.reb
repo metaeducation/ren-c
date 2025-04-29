@@ -1,6 +1,6 @@
 ; datatypes/path.r
 (path? 'a/b)
-('a/b == first [a/b])
+('a/b = first [a/b])
 (not path? 1)
 (path! = type of 'a/b)
 ; the minimum
@@ -12,7 +12,7 @@
 (
     all [
         path? a: load "#[path! [[a b c] 2]]"
-        2 == index? a
+        2 = index? a
     ]
 )
 ("a/b" = mold 'a/b)
@@ -23,35 +23,35 @@
 )
 (
     blk: reduce [:abs 2]
-    2 == blk/(:abs)
+    2 = blk/(:abs)
 )
 (
     blk: [#{} 2]
-    2 == blk/#{}
+    2 = blk/#{}
 )
 (
     blk: reduce [charset "a" 3]
-    3 == eval reduce [as path! reduce ['blk charset "a"]]
+    3 = eval reduce [as path! reduce ['blk charset "a"]]
 )
 (
     blk: [[] 3]
-    3 == blk/#[block! [[] 1]]
+    3 = blk/#[block! [[] 1]]
 )
 (
     blk: [_ 3]
-    3 == eval [blk/(_)]
+    3 = eval [blk/(_)]
 )
 (
     blk: [blank 3]
-    3 == eval [blk/blank]
+    3 = eval [blk/blank]
 )
 (
     a-value: 1-Jan-0000
-    0 == a-value/1
+    0 = a-value/1
 )
 (
     a-value: me@here.com
-    #"m" == a-value/1
+    #"m" = a-value/1
 )
 (
     a-value: make error! ""
@@ -59,11 +59,11 @@
 )
 (
     a-value: first ['a/b]
-    'a == a-value/1
+    'a = a-value/1
 )
 (
     a-value: make object! [a: 1]
-    1 == a-value/a
+    1 = a-value/a
 )
 (
     a-value: 2x3
@@ -71,11 +71,11 @@
 )
 (
     a-value: first [(2)]
-    2 == a-value/1
+    2 = a-value/1
 )
 (
     a-value: 'a/b
-    'a == a-value/1
+    'a = a-value/1
 )
 (
     a-value: make port! http://
@@ -83,23 +83,23 @@
 )
 (
     a-value: first [a/b:]
-    'a == a-value/1
+    'a = a-value/1
 )
 (
     a-value: "12"
-    #"1" == a-value/1
+    #"1" = a-value/1
 )
 (
     a-value: <tag>
-    #"t" == a-value/1
+    #"t" = a-value/1
 )
 (
     a-value: 2:03
-    2 == a-value/1
+    2 = a-value/1
 )
 (
     a-value: 1.2.3
-    1 == a-value/1
+    1 = a-value/1
 )
 
 ; Ren-C changed INTEGER! path picking to act as PICK, only ANY-STRING! and
@@ -112,21 +112,21 @@
 ; calling functions through paths: function in object
 (
     obj: make object! [fun: lambda [] [1]]
-    1 == obj/fun
+    1 = obj/fun
 )
 (
     obj: make object! [fun: lambda [/ref val] [val]]
-    1 == obj/fun/ref 1
+    1 = obj/fun/ref 1
 )
 ; calling functions through paths: function in block, positional
 (
     blk: reduce [lambda [] [10]  lambda [] [20]]
-    10 == blk/1
+    10 = blk/1
 )
 ; calling functions through paths: function in block, "named"
 (
     blk: reduce ['foo lambda [] [10]  'bar lambda [] [20]]
-    20 == blk/bar
+    20 = blk/bar
 )
 [#26 (
     b: [b 1]

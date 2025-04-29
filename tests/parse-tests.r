@@ -88,7 +88,7 @@
 [#682 (
     t: ~
     parse/match "<tag>text</tag>" [thru "<tag>" t: across to "</tag>"]
-    t == "text"
+    t = "text"
 )]
 
 ; THRU advances the input position correctly.
@@ -98,7 +98,7 @@
     parse/match "a." [
         opt some [thru "a" (i: i + 1 j: if i > 1 [[<end> one]]) j]
     ]
-    i == 1
+    i = 1
 )
 
 [#1959
@@ -129,20 +129,20 @@
 
 [#1280 (
     parse/match "" [(i: 0) repeat 3 [["a" |] (i: i + 1)]]
-    i == 3
+    i = 3
 )]
 
 ; Infinite loop in modern Ren-C (no progress requirement without FURTHER)
 ;[#1268 (
 ;    i: 0
 ;    parse/match "a" [opt some [(i: i + 1)]]
-;    i == 1
+;    i = 1
 ;)]
 
 [#1268 (
     i: 0
     parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[bypass]]) j]]
-    i == 2
+    i = 2
 )]
 
 ; THEN rule
@@ -244,7 +244,7 @@
 (
     i: 1
     parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[<end> one]]) j]]
-    i == 2
+    i = 2
 )
 
 

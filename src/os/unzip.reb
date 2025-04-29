@@ -47,7 +47,7 @@ Rebol [
         or a block:
             unzip my-block %my-zip-file.zip
 
-            my-block == [%file-1.txt #{...} %file-2.exe #{...}]
+            my-block = [%file-1.txt #{...} %file-2.exe #{...}]
     }
 ]
 

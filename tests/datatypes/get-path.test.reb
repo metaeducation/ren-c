@@ -9,6 +9,6 @@
 (
     all [
         get-path? a: load "#[get-path! [[a b c] 2]]"
-        2 == index? a
+        2 = index? a
     ]
 )

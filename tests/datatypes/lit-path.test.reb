@@ -9,7 +9,7 @@
 (
     all [
         lit-path? a: load "#[lit-path! [[a b c] 2]]"
-        2 == index? a
+        2 = index? a
     ]
 )
 ; lit-paths are active

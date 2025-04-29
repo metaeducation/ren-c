@@ -35,10 +35,10 @@
     success
 )
 ; decimal! test
-([1 2 3] == collect [count-up i 3.0 [keep i]])
-([1 2 3] == collect [count-up i 3.1 [keep i]])
-([1 2 3] == collect [count-up i 3.5 [keep i]])
-([1 2 3] == collect [count-up i 3.9 [keep i]])
+([1 2 3] = collect [count-up i 3.0 [keep i]])
+([1 2 3] = collect [count-up i 3.1 [keep i]])
+([1 2 3] = collect [count-up i 3.5 [keep i]])
+([1 2 3] = collect [count-up i 3.9 [keep i]])
 ; text! test
 (
     out: copy ""
@@ -89,7 +89,7 @@
     test: null
     error? sys/util/rescue [
         count-up i 2 [
-            either test [i == 2] [
+            either test [i = 2] [
                 test: okay
                 i: null
             ]

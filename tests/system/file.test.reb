@@ -1,25 +1,25 @@
 ; system/file.r
 
-(#{C3A4C3B6C3BC} == read %fixtures/umlauts-utf8.txt)
-("äöü" == read/string %fixtures/umlauts-utf8.txt)
-(["äöü"] == read/lines %fixtures/umlauts-utf8.txt)
+(#{C3A4C3B6C3BC} = read %fixtures/umlauts-utf8.txt)
+("äöü" = read/string %fixtures/umlauts-utf8.txt)
+(["äöü"] = read/lines %fixtures/umlauts-utf8.txt)
 
 ; UTF-8 With Byte-Order Mark, not transparent in READ, #2280
 
-(#{EFBBBFC3A4C3B6C3BC} == read %fixtures/umlauts-utf8bom.txt)
-("^(FEFF)äöü" == read/string %fixtures/umlauts-utf8bom.txt)
-(["^(FEFF)äöü"] == read/lines %fixtures/umlauts-utf8bom.txt)
+(#{EFBBBFC3A4C3B6C3BC} = read %fixtures/umlauts-utf8bom.txt)
+("^(FEFF)äöü" = read/string %fixtures/umlauts-utf8bom.txt)
+(["^(FEFF)äöü"] = read/lines %fixtures/umlauts-utf8bom.txt)
 
 ; Byte order mark only transparent via LOAD with text codecs supporting it
 
-(#{FFFEE400F600FC00} == read %fixtures/umlauts-utf16le.txt)
+(#{FFFEE400F600FC00} = read %fixtures/umlauts-utf16le.txt)
 
-(#{FEFF00E400F600FC} == read %fixtures/umlauts-utf16be.txt)
+(#{FEFF00E400F600FC} = read %fixtures/umlauts-utf16be.txt)
 
 ; No codec support started yet for UTF-32
 
-(#{FFFE0000E4000000F6000000FC000000} == read %fixtures/umlauts-utf32le.txt)
-(#{0000FEFF000000E4000000F6000000FC} == read %fixtures/umlauts-utf32be.txt)
+(#{FFFE0000E4000000F6000000FC000000} = read %fixtures/umlauts-utf32le.txt)
+(#{0000FEFF000000E4000000F6000000FC} = read %fixtures/umlauts-utf32be.txt)
 
 (block? read %./)
 (block? read %fixtures/)

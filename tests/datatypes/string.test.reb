@@ -5,8 +5,8 @@
 ; minimum
 (text? "")
 ; alternative literal form
-("" == #[text! ""])
-("" == make text! 0)
+("" = #[text! ""])
+("" = make text! 0)
 
 ; Nulls not legal in strings in modern executables
 (error? sys.util/rescue [transcode {"^^(null)"}])
@@ -158,5 +158,5 @@
     a: <0>
     b: make tag! 0
     insert b first a
-    a == b
+    a = b
 )]

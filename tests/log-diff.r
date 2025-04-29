@@ -55,10 +55,10 @@ make-diff: function [
                     blank? old-test
                     all [
                         strict-not-equal? old-test new-test
-                        old-test == second sort/case reduce [new-test old-test]
+                        old-test = second sort/case reduce [new-test old-test]
                     ]
                     all [
-                        old-test == new-test
+                        old-test = new-test
                         old-result = 'skipped
                     ]
                 ]
@@ -90,10 +90,10 @@ make-diff: function [
                     blank? new-test
                     all [
                         strict-not-equal? new-test old-test
-                        new-test == second sort/case reduce [old-test new-test]
+                        new-test = second sort/case reduce [old-test new-test]
                     ]
                     all [
-                        new-test == old-test
+                        new-test = old-test
                         new-result = 'skipped
                     ]
                 ]
@@ -136,18 +136,18 @@ make-diff: function [
             old-test
             any [
                 blank? new-test
-                old-test == first sort/case reduce [old-test new-test]
+                old-test = first sort/case reduce [old-test new-test]
             ]
         ]
         next-new-log: all [
             new-test
             any [
                 blank? old-test
-                new-test == first sort/case reduce [new-test old-test]
+                new-test = first sort/case reduce [new-test old-test]
             ]
         ]
         if next-old-log [
-            if old-test == pick old-log-contents 1 [
+            if old-test = pick old-log-contents 1 [
                 print old-test
                 fail {duplicate test in old-log}
             ]
@@ -155,7 +155,7 @@ make-diff: function [
             old-log-contents: skip old-log-contents 2
         ]
         if next-new-log [
-            if new-test == pick new-log-contents 1 [
+            if new-test = pick new-log-contents 1 [
                 print new-test
                 fail {duplicate test in new-log}
             ]

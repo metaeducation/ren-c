@@ -94,9 +94,9 @@
 ; conversion to integer
 (1 = to integer! $1)
 <64bit>
-(-9223372036854775808 == to integer! $-9223372036854775808.99)
+(-9223372036854775808 = to integer! $-9223372036854775808.99)
 <64bit>
-(9223372036854775807 == to integer! $9223372036854775807.99)
+(9223372036854775807 = to integer! $9223372036854775807.99)
 
 ; conversion to decimal
 (1.0 = to decimal! $1)
@@ -160,7 +160,7 @@
 )
 
 (
-    $0.0 == (
+    $0.0 = (
         $0.000'000'000'000'001 - round/even/to $0.000'000'000'000'001'1 1e-15
     )
 )
@@ -234,66 +234,66 @@
 (odd? $999999999999999)
 (odd? $-999999999999999)
 
-($101 == round $100.5)
+($101 = round $100.5)
 ($-101 = round $-100.5)
 ; REBOL2 rounds to $100.5 beyond this
-($100 == round $100.4999999999998)
+($100 = round $100.4999999999998)
 ; REBOL2 rounds to $100.5 beyond this
-($-100 == round $-100.4999999999998)
+($-100 = round $-100.4999999999998)
 ; REBOL2 rounds to $1000.5 beyond this
-($1000 == round $1000.499999999999)
+($1000 = round $1000.499999999999)
 ; REBOL2 rounds to $1000.5 beyond this
-($-1000 == round $-1000.499999999999)
+($-1000 = round $-1000.499999999999)
 
 (zero? $100.2 - round/to 100.15 $0.1)
-($100.2 == round/to $100.15 $0.1)
-($100 == round/to $100.15 $2)
+($100.2 = round/to $100.15 $0.1)
+($100 = round/to $100.15 $2)
 
-($100 == round/even $100.25)
-($-100 == round/even $-100.25)
+($100 = round/even $100.25)
+($-100 = round/even $-100.25)
 
-(0.0 == (1e-15 - round/even/to 1.1e-15 1e-15))
+(0.0 = (1e-15 - round/even/to 1.1e-15 1e-15))
 
 [#1470
-    (2.6 == round/even/to $2.55 0.1)
+    (2.6 = round/even/to $2.55 0.1)
 ]
 [#1470
-    ($2.6 == round/even/to 2.55 $0.1)
+    ($2.6 = round/even/to 2.55 $0.1)
 ]
 [#1116
-    ($1.15 == round/even/to 1.15 $0.01)
+    ($1.15 = round/even/to 1.15 $0.01)
 ]
-(1.15 == round/even/to $1.15 0.01)
-($-2.6 == round/even/to $-2.55 $0.1)
-($0.0 == ($0.000'000'000'000'001 - round/even/to $0.000'000'000'000'001'1 $1e-15))
+(1.15 = round/even/to $1.15 0.01)
+($-2.6 = round/even/to $-2.55 $0.1)
+($0.0 = ($0.000'000'000'000'001 - round/even/to $0.000'000'000'000'001'1 $1e-15))
 (not negative? ($1e-31) - abs $26e-17 - round/even/to $0.000'000'000'000'000'255 $1e-17)
-($2.6 == round/even/to $2.55 $0.1)
+($2.6 = round/even/to $2.55 $0.1)
 (not negative? $1e-31 - abs -$26e-17 - round/even/to $-0.000'000'000'000'000'255 $1e-17)
-($1 == round/even/to $1.23456789 $1)
-($1.2 == round/even/to $1.23456789 $0.1)
-($1.23 == round/even/to $1.23456789 $0.01)
-($1.235 == round/even/to $1.23456789 $0.001)
-($1.2346 == round/even/to $1.23456789 $0.0001)
-($1.23457 == round/even/to $1.23456789 $0.00001)
-($1.234568 == round/even/to $1.23456789 $0.000001)
-($1.2345679 == round/even/to $1.23456789 $0.0000001)
-($1.23456789 == round/even/to $1.23456789 $0.00000001)
+($1 = round/even/to $1.23456789 $1)
+($1.2 = round/even/to $1.23456789 $0.1)
+($1.23 = round/even/to $1.23456789 $0.01)
+($1.235 = round/even/to $1.23456789 $0.001)
+($1.2346 = round/even/to $1.23456789 $0.0001)
+($1.23457 = round/even/to $1.23456789 $0.00001)
+($1.234568 = round/even/to $1.23456789 $0.000001)
+($1.2345679 = round/even/to $1.23456789 $0.0000001)
+($1.23456789 = round/even/to $1.23456789 $0.00000001)
 
-($100 == round/half-ceiling $100)
-($101 == round/half-ceiling $100.5)
-($101 == round/half-ceiling $100.5000000001)
-($-100 == round/half-ceiling $-100)
-($-100 == round/half-ceiling $-100.5)
+($100 = round/half-ceiling $100)
+($101 = round/half-ceiling $100.5)
+($101 = round/half-ceiling $100.5000000001)
+($-100 = round/half-ceiling $-100)
+($-100 = round/half-ceiling $-100.5)
 [#1471
-    ($-101 == round/half-ceiling $-100.5000000001)
+    ($-101 = round/half-ceiling $-100.5000000001)
 ]
 
-($100 == round/half-down $100)
-($100 == round/half-down $100.5)
-($101 == round/half-down $100.5000000001)
-($-100 == round/half-down $-100)
-($-100 == round/half-down $-100.5)
-($-101 == round/half-down $-100.5000000001)
+($100 = round/half-down $100)
+($100 = round/half-down $100.5)
+($101 = round/half-down $100.5000000001)
+($-100 = round/half-down $-100)
+($-100 = round/half-down $-100.5)
+($-101 = round/half-down $-100.5000000001)
 
 (0 = sign-of $0)
 (1 = sign-of $0.000000000000001)

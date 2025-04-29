@@ -48,7 +48,7 @@
     g: :f
     o: make object! [a: 2 g: :f]
     p: make o [a: 3]
-    1 == p/g
+    1 = p/g
 )]
 ; object cloning
 [#2045 (
@@ -57,18 +57,18 @@
     c: b
     o: make object! [a: 2 c: b]
     p: make o [a: 3]
-    1 == eval p/c
+    1 = eval p/c
 )]
 ; appending to objects
 [#1979 (
     o: make object! []
     append o [b: 1 b: 2]
-    1 == length of words of o
+    1 = length of words of o
 )]
 (
     o: make object! [b: 0]
     append o [b: 1 b: 2]
-    1 == length of words of o
+    1 = length of words of o
 )
 (
     o: make object! []

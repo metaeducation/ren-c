@@ -350,7 +350,7 @@ rebs: collect [
         ensure word! t/name
         ensure word! t/class
 
-        assert [sym-n == n] ;-- SYM_XXX should equal TYPE_XXX value
+        assert [sym-n = n] ;-- SYM_XXX should equal TYPE_XXX value
         add-sym to-word unspaced [t/name "!"]
         keep cscape [n t {TYPE_${T/NAME} = $<n>}]
         n: n + 1
