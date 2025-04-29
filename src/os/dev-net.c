@@ -1,8 +1,8 @@
 //
-//  File: %dev-net.c
-//  Summary: "Device: TCP/IP network access"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %dev-net.c
+//  summary: "Device: TCP/IP network access"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

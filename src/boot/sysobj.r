@@ -1,19 +1,19 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "System object"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "System object"
+    rights: {
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Purpose: {
+    purpose: {
         Defines the system object. This is a special block that is evaluted
         such that its words do not get put into the current context.
     }
-    Note: "Remove older/unused fields before beta release"
+    notes: "Remove older/unused fields before beta release"
 ]
 
 ; Next five fields are updated during build:

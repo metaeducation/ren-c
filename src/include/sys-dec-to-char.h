@@ -1,8 +1,8 @@
 //
-//  File: %sys-dec-to-char.h
-//  Summary: "Decimal conversion wrapper"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-dec-to-char.h
+//  summary: "Decimal conversion wrapper"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

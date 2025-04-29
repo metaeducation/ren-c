@@ -1,8 +1,8 @@
 //
-//  File: %dev-event.c
-//  Summary: "Device: Event handler for Posix"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %dev-event.c
+//  summary: "Device: Event handler for Posix"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

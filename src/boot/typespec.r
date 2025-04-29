@@ -1,15 +1,15 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Datatype help spec"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Datatype help spec"
+    rights: {
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Purpose: {
+    purpose: {
         Provides useful information about datatypes.
         Can be expanded to include info like min-max ranges.
     }

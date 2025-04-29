@@ -1,17 +1,17 @@
-REBOL [
-    Title: "Shim to bring old executables up to date to use for bootstrapping"
-    Rights: {
+Rebol [
+    title: "Shim to bring old executables up to date to use for bootstrapping"
+    rights: {
         Rebol 3 Language Interpreter and Run-time Environment
         "Ren-C" branch @ https://github.com/metaeducation/ren-c
 
         Copyright 2012-2018 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Purpose: {
+    purpose: {
         Ren-C "officially" supports two executables for doing a bootstrap
         build.  One is a frozen "stable" version (`8994d23`) which was
         committed circa Dec-2018:
@@ -28,7 +28,7 @@ REBOL [
         since it was created.  This is facilitated by Ren-C's compositional
         operations, like ADAPT, CHAIN, SPECIALIZE, and ENCLOSE.
     }
-    Usage: {
+    usage: {
         1. This should be called like:
 
           (change-dir do join copy system/script/path %bootstrap-shim.r)
@@ -43,7 +43,7 @@ REBOL [
         JOIN...and this one has to run before the shim makes those versions
         of JOIN do copying.
     }
-    Notes: {
+    notes: {
      A. Some routines in r3-8994d23 treat //NULL as opt out (e.g. APPEND,
         COMPOSE) while others treat BLANK! like an opt out (e.g. FIND,
         TO-WORD).  These have been consolidated to take NOTHING to opt out in

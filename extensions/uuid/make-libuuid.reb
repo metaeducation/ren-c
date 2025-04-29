@@ -1,8 +1,8 @@
-REBOL [
-    Title: {Extract}
-    File: %make-libuuid.reb
+Rebol [
+    title: {Extract}
+    file: %make-libuuid.reb
 
-    Description: {
+    description: {
         The Linux Kernel organization has something called `util-linux`, which
         is a standard package implementing various functionality:
 

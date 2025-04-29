@@ -1,8 +1,8 @@
 //
-//  File: %host-main.c
-//  Summary: "Host environment main entry point"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %host-main.c
+//  summary: "Host environment main entry point"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

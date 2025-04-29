@@ -1,8 +1,8 @@
 //
-//  File: %sys-mold.h
-//  Summary: "Rebol Value to Text Conversions ('MOLD'ing and 'FORM'ing)"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-mold.h
+//  summary: "Rebol Value to Text Conversions ('MOLD'ing and 'FORM'ing)"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

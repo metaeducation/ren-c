@@ -1,4 +1,8 @@
-REBOL [title: "A tiny static HTTP server" author: 'abolka date: 2009-11-04]
+Rebol [
+    title: "A tiny static HTTP server"
+    author: abolka
+    date: 2009-11-04
+]
 
 code-map: make map! [200 "OK" 400 "Forbidden" 404 "Not Found"]
 mime-map: make map! [

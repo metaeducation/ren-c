@@ -1,16 +1,16 @@
 Rebol [
-    Title: "Core tests run with crash recovery"
-    File: %run-tests.r
-    Copyright: [2012 "Saphirion AG"]
-    License: {
+    title: "Core tests run with crash recovery"
+    file: %run-tests.r
+    copyright: [2012 "Saphirion AG"]
+    license: {
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
 
         http://www.apache.org/licenses/LICENSE-2.0
     }
-    Author: "Ladislav Mecir"
-    Purpose: "Core tests"
+    author: "Ladislav Mecir"
+    purpose: "Core tests"
 ]
 
 do %test-framework.r

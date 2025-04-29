@@ -1,17 +1,17 @@
-REBOL [
-    System: "Ren-C Core Extraction of the Rebol System"
-    Title: "Common Routines for Tools"
-    Rights: {
+Rebol [
+    system: "Ren-C Core Extraction of the Rebol System"
+    title: "Common Routines for Tools"
+    rights: {
         Copyright 2012-2017 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Version: 2.100.0
-    Needs: 2.100.100
-    Purpose: {
+    version: 2.100.0
+    needs: 2.100.100
+    purpose: {
         These are some common routines used by the utilities
         that build the system, which are found in %src/tools/
     }

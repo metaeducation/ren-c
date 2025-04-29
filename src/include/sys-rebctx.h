@@ -1,8 +1,8 @@
 //
-//  File: %sys-rebctx.h
-//  Summary: {context! defs BEFORE %tmp-internals.h (see: %sys-context.h)}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-rebctx.h
+//  summary:{context! defs BEFORE %tmp-internals.h (see: %sys-context.h)}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

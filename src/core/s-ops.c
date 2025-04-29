@@ -1,9 +1,9 @@
 //
-//  File: %s-ops.c
-//  Summary: "string handling utilities"
-//  Section: strings
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %s-ops.c
+//  summary: "string handling utilities"
+//  section: strings
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

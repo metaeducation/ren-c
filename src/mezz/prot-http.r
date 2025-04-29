@@ -1,24 +1,24 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "REBOL 3 HTTP protocol scheme"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "REBOL 3 HTTP protocol scheme"
+    rights: {
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Name: http
-    Type: module
-    File: %prot-http.r
-    Version: 0.1.48
-    Purpose: {
+    name: HTTP
+    type: module
+    file: %prot-http.r
+    version: 0.1.48
+    purpose: {
         This program defines the HTTP protocol scheme for REBOL 3.
     }
-    Author: ["Gabriele Santilli" "Richard Smolak"]
-    Date: 26-Nov-2012
-    History: [
+    author: ["Gabriele Santilli" "Richard Smolak"]
+    date: 26-Nov-2012
+    history: [
         8-Oct-2015 {Modified by @GrahamChiu to return an error object with
         the info object when manual redirect required}
     ]
@@ -181,16 +181,16 @@ make-http-error: func [
     return case [
         inf [
             make error! [
-                type: 'Access
-                id: 'Protocol
+                type: 'access
+                id: 'protocol
                 arg1: msg
                 arg2: obj
             ]
         ]
         otherhost [
             make error! [
-                type: 'Access
-                id: 'Protocol
+                type: 'access
+                id: 'protocol
                 arg1: msg
                 arg2: headers
                 arg3: new-url
@@ -198,8 +198,8 @@ make-http-error: func [
         ]
     ] else [
         make error! [
-            type: 'Access
-            id: 'Protocol
+            type: 'access
+            id: 'protocol
             arg1: msg
         ]
     ]
@@ -685,7 +685,7 @@ sys/util/make-scheme [
         ][
             foo: if action? :port/awake [
                 if not open? port [
-                    cause-error 'Access 'not-open port/spec/ref
+                    cause-error 'access 'not-open port/spec/ref
                 ]
                 if port/state/state <> 'ready [
                     fail make-http-error "Port not ready"
@@ -724,7 +724,7 @@ sys/util/make-scheme [
             ]
             if action? :port/awake [
                 if not open? port [
-                    cause-error 'Access 'not-open port/spec/ref
+                    cause-error 'access 'not-open port/spec/ref
                 ]
                 if port/state/state <> 'ready [
                     fail make-http-error "Port not ready"

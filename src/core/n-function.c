@@ -1,9 +1,9 @@
 //
-//  File: %n-function.c
-//  Summary: "Natives for creating and interacting with ACTION!s"
-//  Section: natives
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %n-function.c
+//  summary: "Natives for creating and interacting with ACTION!s"
+//  section: natives
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

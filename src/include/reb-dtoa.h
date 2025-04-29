@@ -1,8 +1,8 @@
 //
-//  File: %reb-dtoa.h
-//  Summary: "Settings for the f-dtoa.c file"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %reb-dtoa.h
+//  summary: "Settings for the f-dtoa.c file"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

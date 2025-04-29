@@ -1,9 +1,9 @@
 //
-//  File: %a-lib.c
-//  Summary: "Lightweight Export API (RebolValue as opaque type)"
-//  Section: environment
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %a-lib.c
+//  summary: "Lightweight Export API (RebolValue as opaque type)"
+//  section: environment
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

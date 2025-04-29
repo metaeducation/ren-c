@@ -1,8 +1,8 @@
 //
-//  File: %host-lib.c
-//  Summary: {OS API function library called by REBOL interpreter}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %host-lib.c
+//  summary:{OS API function library called by REBOL interpreter}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

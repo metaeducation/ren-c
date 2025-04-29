@@ -1,8 +1,8 @@
 //
-//  File: %dev-signal.c
-//  Summary: "Device: Signal access on Linux"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %dev-signal.c
+//  summary: "Device: Signal access on Linux"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

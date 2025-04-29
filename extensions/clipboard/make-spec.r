@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 
 name: 'Clipboard
 source: %clipboard/mod-clipboard.c

@@ -1,8 +1,8 @@
 //
-//  File: %sys-do.h
-//  Summary: {DO-until-end (of block or variadic feed) evaluation API}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-do.h
+//  summary:{DO-until-end (of block or variadic feed) evaluation API}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

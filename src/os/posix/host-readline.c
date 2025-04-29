@@ -1,8 +1,8 @@
 //
-//  File: %host-readline.c
-//  Summary: "Simple readline() line input handler"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %host-readline.c
+//  summary: "Simple readline() line input handler"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

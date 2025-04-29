@@ -1,8 +1,8 @@
 //
-//  File: %sys-frame.h
-//  Summary: {Accessors and Argument Pushers/Poppers for Function Call Frames}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-frame.h
+//  summary:{Accessors and Argument Pushers/Poppers for Function Call Frames}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

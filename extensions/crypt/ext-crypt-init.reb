@@ -1,10 +1,10 @@
-REBOL [
-    Title: "Crypt Extension"
-    Name: Crypt
-    Type: Module
-    Options: [isolate]
-    Version: 1.0.0
-    License: {Apache 2.0}
+Rebol [
+    title: "Crypt Extension"
+    name: Crypt
+    type: module
+    options: [isolate]
+    version: 1.0.0
+    license: {Apache 2.0}
 ]
 
 ; !!! This should also call SHUTDOWN-CRYPTO at some point (module finalizer?)

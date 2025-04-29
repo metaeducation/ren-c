@@ -1,8 +1,8 @@
 //
-//  File: %sys-indexor.h
-//  Summary: {Definitions for "INDEX-OR-a-flag", and C++ supplementary checks}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-indexor.h
+//  summary:{Definitions for "INDEX-OR-a-flag", and C++ supplementary checks}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

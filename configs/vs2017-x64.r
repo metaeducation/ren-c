@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 
 os-id: 0.3.40
 target: 'nmake

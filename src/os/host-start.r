@@ -1,15 +1,15 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Command line processing and startup code called by %host-main.c"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Command line processing and startup code called by %host-main.c"
+    rights: {
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Description: {
+    description: {
         Codebases using the Rebol interpreter can vary widely, and might not
         have command line arguments or user interface at all.
 
@@ -128,7 +128,7 @@ usage: function [
     print trim/auto copy {
     Command line usage:
 
-        REBOL [options] [script] [arguments]
+        Rebol [options] [script] [arguments]
 
     Standard options:
 

@@ -1,17 +1,17 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Generate auto headers"
-    File: %natives-emitters.r
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Generate auto headers"
+    file: %natives-emitters.r
+    rights: {
         Copyright 2017 Atronix Engineering
         Copyright 2017 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Needs: 2.100.100
+    needs: 2.100.100
 ]
 
 emit-native-proto: function [

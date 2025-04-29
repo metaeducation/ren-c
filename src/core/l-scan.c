@@ -1,9 +1,9 @@
 //
-//  File: %l-scan.c
-//  Summary: "lexical analyzer for source to binary translation"
-//  Section: lexical
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %l-scan.c
+//  summary: "lexical analyzer for source to binary translation"
+//  section: lexical
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

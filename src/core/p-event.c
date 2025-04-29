@@ -1,9 +1,9 @@
 //
-//  File: %p-event.c
-//  Summary: "event port interface"
-//  Section: ports
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %p-event.c
+//  summary: "event port interface"
+//  section: ports
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

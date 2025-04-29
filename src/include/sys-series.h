@@ -1,8 +1,8 @@
 //
-//  File: %sys-series.h
-//  Summary: {any-series! defs AFTER %tmp-internals.h (see: %sys-rebser.h)}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-series.h
+//  summary:{any-series! defs AFTER %tmp-internals.h (see: %sys-rebser.h)}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

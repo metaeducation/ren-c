@@ -1,8 +1,8 @@
 //
-//  File: %host-exec-path.c
-//  Summary: "Executable Path"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %host-exec-path.c
+//  summary: "Executable Path"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

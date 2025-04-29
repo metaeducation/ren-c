@@ -1,8 +1,8 @@
 //
-//  File: %c-enhanced.h
-//  Summary: "General C definitions and constants"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-enhanced.h
+//  summary: "General C definitions and constants"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

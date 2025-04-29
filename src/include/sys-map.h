@@ -1,8 +1,8 @@
 //
-//  File: %sys-map.h
-//  Summary: {Definitions for REBMAP}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-map.h
+//  summary:{Definitions for REBMAP}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

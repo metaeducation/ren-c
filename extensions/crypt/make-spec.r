@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 
 name: 'Crypt
 source: %crypt/mod-crypt.c

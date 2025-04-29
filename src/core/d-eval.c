@@ -1,9 +1,9 @@
 //
-//  File: %d-eval.c
-//  Summary: "Debug-Build Checks for the Evaluator"
-//  Section: debug
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %d-eval.c
+//  summary: "Debug-Build Checks for the Evaluator"
+//  section: debug
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

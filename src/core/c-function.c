@@ -1,9 +1,9 @@
 //
-//  File: %c-function.c
-//  Summary: "support for functions, actions, and routines"
-//  Section: core
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-function.c
+//  summary: "support for functions, actions, and routines"
+//  section: core
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

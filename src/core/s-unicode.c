@@ -17,11 +17,11 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  Project: Rebol 3 Interpreter and Run-time (Ren-C branch)
-//  Homepage: https://github.com/metaeducation/ren-c/
-//  File: %s-unicode.c
-//  Summary: unicode support functions
-//  Section: strings
+//  project: Rebol 3 Interpreter and Run-time (Ren-C branch)
+//  homepage: https://github.com/metaeducation/ren-c/
+//  file: %s-unicode.c
+//  summary:unicode support functions
+//  section: strings
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

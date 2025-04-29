@@ -1,20 +1,20 @@
-REBOL [
-    Title: "Console Extension (Rebol's Read-Eval-Print-Loop, ie. REPL)"
+Rebol [
+    title: "Console Extension (Rebol's Read-Eval-Print-Loop, ie. REPL)"
 
-    Name: console
-    Type: Module
+    name: Console
+    type: module
 
-    Options: [isolate] ;-- !!! said [extension delay], what for?
+    options: [isolate] ;-- !!! said [extension delay], what for?
 
-    Rights: {
+    rights: {
         Copyright 2016-2018 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Description: {
+    description: {
         This is a rich, skinnable console for Rebol--where basically all the
         implementation is itself userspace Rebol code.  Documentation for the
         skinning hooks exist here:

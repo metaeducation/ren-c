@@ -1,8 +1,8 @@
 //
-//  File: %sys-core.h
-//  Summary: "Single Complete Include File for Using the Internal Api"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-core.h
+//  summary: "Single Complete Include File for Using the Internal Api"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

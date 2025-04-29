@@ -1,8 +1,8 @@
 //
-//  File: %sys-rebnod.h
-//  Summary: {Definitions for the Rebol_Header-having "superclass" structure}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-rebnod.h
+//  summary:{Definitions for the Rebol_Header-having "superclass" structure}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

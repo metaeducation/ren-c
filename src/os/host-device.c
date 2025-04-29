@@ -1,8 +1,8 @@
 //
-//  File: %host-device.c
-//  Summary: "Device management and command dispatch"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %host-device.c
+//  summary: "Device management and command dispatch"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

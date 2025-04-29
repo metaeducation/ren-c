@@ -1,8 +1,8 @@
 //
-//  File: %sys-stack.h
-//  Summary: {Definitions for "Data Stack", "Chunk Stack" and the C stack}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-stack.h
+//  summary:{Definitions for "Data Stack", "Chunk Stack" and the C stack}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

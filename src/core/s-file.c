@@ -1,9 +1,9 @@
 //
-//  File: %s-file.c
-//  Summary: "file and path string handling"
-//  Section: strings
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %s-file.c
+//  summary: "file and path string handling"
+//  section: strings
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

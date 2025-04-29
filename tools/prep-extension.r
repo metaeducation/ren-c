@@ -1,18 +1,18 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Generate extention native header files"
-    File: %prep-extension.r  ;-- EMIT-HEADER uses to indicate emitting script
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Generate extention native header files"
+    file: %prep-extension.r  ;-- EMIT-HEADER uses to indicate emitting script
+    rights: {
         Copyright 2017 Atronix Engineering
         Copyright 2017-2018 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Needs: 2.100.100
-    Description: {
+    needs: 2.100.100
+    description: {
         This script is used to preprocess C source files containing code for
         extension DLLs, designed to load new native code into the interpreter.
 
@@ -20,7 +20,7 @@ REBOL [
         the EXE itself.  Hence, features like scanning the C comments for
         native specifications is reused.
     }
-    Notes: {
+    notes: {
         Currently the build process does not distinguish between an extension
         that wants to use just "rebol.h" and one that depends on "sys-core.h"
         Hence it includes things like ARG() and Bool_ARG() macros, which access
@@ -171,7 +171,7 @@ for-each native native-defs [
         ; Now the "script" *is* the module definition, edited by the user.
         ; It would be technically possible to inject header information into
         ; that definition as part of the build process, to add to its already
-        ; existing "Exports: []" section.
+        ; existing "exports: []" section.
         ;
         ; But for the moment, the system uses "internal magic" to get the
         ; native specs paired up with their corresponding CFUNC pointers thatis
@@ -186,9 +186,9 @@ for-each native native-defs [
             append export-list to word! native/name
             ...
             compose/only [
-                Module [
-                    Name: ...
-                    Exports: (export-list)
+                module [
+                    name: ...
+                    exports: (export-list)
                 ]
             ]
         ]

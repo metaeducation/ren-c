@@ -1,15 +1,15 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Common Code for Emitting Text Files"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Common Code for Emitting Text Files"
+    rights: {
         Copyright 2016-2018 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Purpose: {
+    purpose: {
         While emitting text files isn't exactly rocket science, it can help
         to have a few sanity checks on the process.
 
@@ -320,7 +320,7 @@ make-emitter: function [
         e/emit [title stem by temporary {
             /**********************************************************************
             **
-            **  REBOL [R3] Language Interpreter and Run-time Environment
+            **  Rebol [R3] Language Interpreter and Run-time Environment
             **  Copyright 2012 REBOL Technologies
             **  Copyright 2012-2018 Rebol Open Source Contributors
             **  REBOL is a trademark of REBOL Technologies
@@ -328,35 +328,35 @@ make-emitter: function [
             **
             ************************************************************************
             **
-            **  Title: $<Mold Title>
-            **  Build: A$<Boot-Version/3>
-            **  File: $<Mold Stem>
-            **  Author: $<Mold By>
-            **  License: {
+            **  title: $<Mold Title>
+            **  build: A$<Boot-Version/3>
+            **  file: $<Mold Stem>
+            **  author: $<Mold By>
+            **  license: {
             **      Licensed under the Apache License, Version 2.0.
             **      See: http://www.apache.org/licenses/LICENSE-2.0
             **  }
-            **  Note: "AUTO-GENERATED FILE - Do not modify."
+            **  notes: "AUTO-GENERATED FILE - Do not modify."
             **
             ***********************************************************************/
         }]
     ]
     else [
         e/emit [title stem temporary {
-            REBOL [
-                System: "REBOL [R3] Language Interpreter and Run-time Environment"
-                Title: (title)
-                File: (stem)
-                Rights: {
+            Rebol [
+                system: "Rebol [R3] Language Interpreter and Run-time Environment"
+                title: (title)
+                file: (stem)
+                rights: {
                     Copyright 2012 REBOL Technologies
                     Copyright 2012-2018 Rebol Open Source Contributors
                     REBOL is a trademark of REBOL Technologies
                 }
-                License: {
+                license: {
                     Licensed under the Apache License, Version 2.0.
                     See: http://www.apache.org/licenses/LICENSE-2.0
                 }
-                Note: "AUTO-GENERATED FILE - Do not modify."
+                notes: "AUTO-GENERATED FILE - Do not modify."
             ]
         }]
     ]

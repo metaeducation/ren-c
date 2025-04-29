@@ -1,14 +1,14 @@
-REBOL [
-    Title: "Read-deep"
-    Rights: {
+Rebol [
+    title: "Read-deep"
+    rights: {
         Copyright 2018 Brett Handley
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Author: "Brett Handley"
-    Purpose: "Recursive READ strategies."
+    author: "Brett Handley"
+    purpose: "Recursive READ strategies."
 ]
 
 ;; read-deep-seq aims to be as simple as possible. I.e. relative paths

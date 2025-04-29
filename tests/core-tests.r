@@ -1,12 +1,12 @@
 ; Rebol []
 ; *****************************************************************************
-; Title: Rebol core tests
-; Copyright:
+; title: Rebol core tests
+; copyright:
 ;     2012 REBOL Technologies
 ;     2013 Saphirion AG
-; Author:
+; author:
 ;     Carl Sassenrath, Ladislav Mecir, Andreas Bolka, Brian Hawley, John K
-; License:
+; license:
 ;     Licensed under the Apache License, Version 2.0 (the "License");
 ;     you may not use this file except in compliance with the License.
 ;     You may obtain a copy of the License at

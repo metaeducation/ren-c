@@ -1,15 +1,15 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Canonical words"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Canonical words"
+    rights: {
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Purpose: {
+    purpose: {
         These words are used internally by Rebol, and are canonized with small
         integer SYM_XXX constants.  These constants can then be quickly used
         in switch() statements.

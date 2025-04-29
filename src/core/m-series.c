@@ -1,9 +1,9 @@
 //
-//  File: %m-series.c
-//  Summary: "implements REBOL's series concept"
-//  Section: memory
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %m-series.c
+//  summary: "implements REBOL's series concept"
+//  section: memory
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,8 +1,8 @@
 //
-//  File: %dev-dns.c
-//  Summary: "Device: DNS access"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %dev-dns.c
+//  summary: "Device: DNS access"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

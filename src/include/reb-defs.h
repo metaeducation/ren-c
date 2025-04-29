@@ -1,8 +1,8 @@
 //
-//  File: %reb-defs.h
-//  Summary: "Miscellaneous structures and definitions"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %reb-defs.h
+//  summary: "Miscellaneous structures and definitions"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

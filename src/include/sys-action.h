@@ -1,8 +1,8 @@
 //
-//  File: %sys-action.h
-//  Summary: {action! defs AFTER %tmp-internals.h (see: %sys-rebact.h)}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-action.h
+//  summary:{action! defs AFTER %tmp-internals.h (see: %sys-rebact.h)}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

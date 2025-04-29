@@ -1,9 +1,9 @@
 //
-//  File: %u-compress.c
-//  Summary: "interface to zlib compression"
-//  Section: utility
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %u-compress.c
+//  summary: "interface to zlib compression"
+//  section: utility
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

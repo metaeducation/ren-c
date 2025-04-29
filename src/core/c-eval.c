@@ -1,8 +1,8 @@
 //
-//  File: %c-eval.c
-//  Summary: "Central Interpreter Evaluator"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-eval.c
+//  summary: "Central Interpreter Evaluator"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

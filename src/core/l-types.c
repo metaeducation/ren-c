@@ -1,9 +1,9 @@
 //
-//  File: %l-types.c
-//  Summary: "special lexical type converters"
-//  Section: lexical
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %l-types.c
+//  summary: "special lexical type converters"
+//  section: lexical
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

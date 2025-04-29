@@ -1,10 +1,10 @@
-REBOL [
-    Title: "Process Extension"
-    Name: Process
-    Type: Module
-    Options: [isolate]
-    Version: 1.0.0
-    License: {Apache 2.0}
+Rebol [
+    title: "Process Extension"
+    name: Process
+    type: module
+    options: [isolate]
+    version: 1.0.0
+    license: {Apache 2.0}
 ]
 
 export call*: adapt 'call-internal* [

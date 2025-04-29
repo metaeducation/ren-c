@@ -1,6 +1,6 @@
 ; REPLACE tests, initial set from:
 ;
-; File: %replace-test.red
+; file: %replace-test.red
 ; Author: "Nenad Rakocevic & Peter W A Wood & Toomas Vooglaid"
 ; Rights: "Copyright (C) 2011-2015 Red Foundation. All rights reserved."
 ; License: "BSD-3 - https://github.com/red/red/blob/master/BSD-3-License.txt"

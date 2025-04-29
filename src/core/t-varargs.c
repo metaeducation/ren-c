@@ -1,8 +1,8 @@
 //
-//  File: %t-varargs.h
-//  Summary: "Variadic Argument Type and Services"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %t-varargs.h
+//  summary: "Variadic Argument Type and Services"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

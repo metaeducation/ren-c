@@ -1,8 +1,8 @@
 //
-//  File: %sys-path.h
-//  Summary: "Definition of Structures for Path Processing"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-path.h
+//  summary: "Definition of Structures for Path Processing"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

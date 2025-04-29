@@ -1,8 +1,8 @@
 //
-//  File: %sys-string.h
-//  Summary: {Definitions for Symbol (e.g. WORD!) and Ucs2Unit (e.g. STRING!)}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-string.h
+//  summary:{Definitions for Symbol (e.g. WORD!) and Ucs2Unit (e.g. STRING!)}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

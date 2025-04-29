@@ -1,15 +1,15 @@
-REBOL [
-    Title: "Text Lines"
-    Version: 1.0.0
-    Rights: {
+Rebol [
+    title: "Text Lines"
+    version: 1.0.0
+    rights: {
         Copyright 2015 Brett Handley
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Author: "Brett Handley"
-    Purpose: {Functions operating on lines of text.}
+    author: "Brett Handley"
+    purpose: {Functions operating on lines of text.}
 ]
 
 decode-lines: function [

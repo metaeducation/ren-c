@@ -1,15 +1,15 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "REBOL 3 Boot Base: Function Constructors"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "REBOL 3 Boot Base: Function Constructors"
+    rights: {
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Note: {
+    notes: {
         This code is evaluated just after actions, natives, sysobj, and other lower
         levels definitions. This file intializes a minimal working environment
         that is used for the rest of the boot.
@@ -742,16 +742,13 @@ module: func [
     ; To try and standardize the variance, Ren-C does not accept LIT-WORD!
     ; in these slots.
     ;
-    ; !!! Although this is a goal, it creates some friction.  Backing off of
-    ; it temporarily.
-    ;
     if lit-word? spec/name [
         spec/name: as word! spec/name
-        ;fail ["Ren-C module Name:" (spec/name) "must be WORD!, not LIT-WORD!"]
+        fail ["Ren-C module name:" (spec/name) "must be WORD!, not LIT-WORD!"]
     ]
     if lit-word? spec/type [
         spec/type: as word! spec/type
-        ;fail ["Ren-C module Type:" (spec/type) "must be WORD!, not LIT-WORD!"]
+        fail ["Ren-C module type:" (spec/type) "must be WORD!, not LIT-WORD!"]
     ]
 
     ; Validate the important fields of header:

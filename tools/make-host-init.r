@@ -1,20 +1,20 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Make REBOL host initialization code"
-    File: %make-host-init.r
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Make REBOL host initialization code"
+    file: %make-host-init.r
+    rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2017 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Package: "REBOL 3 Host Kit"
-    Version: 1.1.1
-    Needs: 2.100.100
-    Purpose: {
+    package: "REBOL 3 Host Kit"
+    version: 1.1.1
+    needs: 2.100.100
+    purpose: {
         Build a single init-file from a collection of scripts.
         This is used during the REBOL host startup sequence.
     }

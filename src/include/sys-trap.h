@@ -1,8 +1,8 @@
 //
-//  File: %sys-trap.h
-//  Summary: "CPU and Interpreter State Snapshot/Restore"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-trap.h
+//  summary: "CPU and Interpreter State Snapshot/Restore"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

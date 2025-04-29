@@ -1,8 +1,8 @@
 //
-//  File: %sys-pair.h
-//  Summary: {Definitions for Pairing Series and the Pair Datatype}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-pair.h
+//  summary:{Definitions for Pairing Series and the Pair Datatype}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

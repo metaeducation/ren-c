@@ -1,9 +1,9 @@
 //
-//  File: %b-init.c
-//  Summary: "initialization functions"
-//  Section: bootstrap
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %b-init.c
+//  summary: "initialization functions"
+//  section: bootstrap
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

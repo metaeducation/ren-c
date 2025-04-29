@@ -1,18 +1,18 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Zip and Unzip Services"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Zip and Unzip Services"
+    rights: {
         Copyright 2009 Vincent Ecuyer
         Copyright 2009-2020 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
 
         See README.md and CREDITS.md for more information.
     }
-    License: {
+    license: {
         Original code from %rebzip.r from www.rebol.org
         Public Domain License
     }
-    Notes: {
+    notes: {
         Only DEFLATE and STORE methods are supported.
 
         == archiving: zip ==

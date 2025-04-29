@@ -1,9 +1,9 @@
 //
-//  File: %m-gc.c
-//  Summary: "main memory garbage collection"
-//  Section: memory
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %m-gc.c
+//  summary: "main memory garbage collection"
+//  section: memory
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

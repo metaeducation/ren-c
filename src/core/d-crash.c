@@ -1,9 +1,9 @@
 //
-//  File: %d-crash.c
-//  Summary: "low level crash output"
-//  Section: debug
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %d-crash.c
+//  summary: "low level crash output"
+//  section: debug
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,9 +1,9 @@
 //
-//  File: %c-word.c
-//  Summary: "symbol table and word related functions"
-//  Section: core
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-word.c
+//  summary: "symbol table and word related functions"
+//  section: core
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

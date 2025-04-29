@@ -1,14 +1,14 @@
-REBOL [
-    Title: "Rebol 'Lint'-style Checking Tool for source code invariants"
-    Rights: {
+Rebol [
+    title: "Rebol 'Lint'-style Checking Tool for source code invariants"
+    rights: {
         Copyright 2015 Brett Handley
         Copyright 2015-2018 Rebol Open Source Contributors
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Purpose: {
+    purpose: {
         This tool arose from wanting to use Rebol for a pre-commit hook:
 
         https://codeinthehole.com/tips/tips-for-using-a-git-pre-commit-hook/

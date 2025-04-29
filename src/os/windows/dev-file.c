@@ -1,8 +1,8 @@
 //
-//  File: %dev-file.c
-//  Summary: "Device: File access for Win32"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %dev-file.c
+//  summary: "Device: File access for Win32"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

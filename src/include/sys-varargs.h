@@ -1,8 +1,8 @@
 //
-//  File: %sys-varargs.h
-//  Summary: {Definitions for Variadic Value Type}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-varargs.h
+//  summary:{Definitions for Variadic Value Type}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

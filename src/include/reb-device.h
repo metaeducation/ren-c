@@ -1,8 +1,8 @@
 //
-//  File: %reb-device.h
-//  Summary: "External REBOL Devices (OS Independent)"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %reb-device.h
+//  summary: "External REBOL Devices (OS Independent)"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

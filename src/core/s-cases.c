@@ -1,9 +1,9 @@
 //
-//  File: %s-cases.c
-//  Summary: "unicode string case handling"
-//  Section: strings
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %s-cases.c
+//  summary: "unicode string case handling"
+//  section: strings
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

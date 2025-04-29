@@ -1,16 +1,16 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Infix operator symbol definitions"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Infix operator symbol definitions"
+    rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2017 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Purpose: {
+    purpose: {
         In R3-Alpha, an "OP!" function would gather its left argument greedily
         without waiting for further evaluation, and its right argument would
         stop processing if it hit another "OP!".  This meant that a sequence

@@ -1,8 +1,8 @@
 //
-//  File: %sys-word.h
-//  Summary: {Definitions for the ANY-WORD! Datatypes}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-word.h
+//  summary:{Definitions for the ANY-WORD! Datatypes}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

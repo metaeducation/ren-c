@@ -1,8 +1,8 @@
 //
-//  File: %sys-int-funcs.h
-//  Summary: "Integer Datatype Functions"
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-int-funcs.h
+//  summary: "Integer Datatype Functions"
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

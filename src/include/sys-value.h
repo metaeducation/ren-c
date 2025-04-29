@@ -1,8 +1,8 @@
 //
-//  File: %sys-value.h
-//  Summary: {any-value! defs AFTER %tmp-internals.h (see: %sys-rebval.h)}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-value.h
+//  summary:{any-value! defs AFTER %tmp-internals.h (see: %sys-rebval.h)}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

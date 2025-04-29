@@ -1,9 +1,9 @@
 //
-//  File: %mod-clipboard.c
-//  Summary: "Clipboard Interface"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-clipboard.c
+//  summary: "Clipboard Interface"
+//  section: Extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

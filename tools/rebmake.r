@@ -1,6 +1,6 @@
-REBOL [
-    File: %rebmake.r
-    Title: {Rebol-Based C/C++ Makefile and Project File Generator}
+Rebol [
+    file: %rebmake.r
+    title: {Rebol-Based C/C++ Makefile and Project File Generator}
 
     ; !!! Making %rebmake.r a module means it gets its own copy of lib, which
     ; creates difficulties for the bootstrap shim technique.  Changing the
@@ -8,17 +8,17 @@ REBOL [
     ; work) could break the mezzanine.  For the time being, just use DO to
     ; run it in user, as with other pieces of bootstrap.
     ;
-    ;-- Type: 'module --
+    ;-- type: module --
 
-    Rights: {
+    rights: {
         Copyright 2017 Atronix Engineering
         Copyright 2017-2018 Rebol Open Source Developers
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Description: {
+    description: {
         R3-Alpha's bootstrap process depended on the GNU Make Tool, with a
         makefile generated from minor adjustments to a boilerplate copy of
         the makefile text.  As needs grew, a second build process arose

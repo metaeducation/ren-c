@@ -1,8 +1,8 @@
 //
-//  File: %sys-binary.h
-//  Summary: {Definitions for binary series}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-binary.h
+//  summary:{Definitions for binary series}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

@@ -1,8 +1,8 @@
 //
-//  File: %sys-typeset.h
-//  Summary: {Definitions for Typeset Values}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-typeset.h
+//  summary:{Definitions for Typeset Values}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

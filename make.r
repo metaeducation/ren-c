@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 
 ; **SENSITIVE MAGIC LINE OF VOODOO** - see "Usage" in %bootstrap-shim.r
 (change-dir do join copy system/script/path %tools/bootstrap-shim.r)

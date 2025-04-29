@@ -1,9 +1,9 @@
 //
-//  File: %c-port.c
-//  Summary: "support for I/O ports"
-//  Section: core
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %c-port.c
+//  summary: "support for I/O ports"
+//  section: core
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

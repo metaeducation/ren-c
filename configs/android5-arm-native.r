@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 
 os-id: 0.13.2
 

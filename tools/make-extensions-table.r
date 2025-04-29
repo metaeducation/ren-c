@@ -1,18 +1,18 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Generate extention native header files"
-    File: %make-extensions-table.r  ;-- EMIT-HEADER uses this filename
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Generate extention native header files"
+    file: %make-extensions-table.r  ;-- EMIT-HEADER uses this filename
+    rights: {
         Copyright 2017 Atronix Engineering
         Copyright 2017-2018 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Needs: 2.100.100
-    Description: {
+    needs: 2.100.100
+    description: {
         Extensions are written in such a way that based on influencing some
         #define macros in %sys-ext.h, they can target being standalone DLLs,
         or as part of a Rebol EXE, or as part of Rebol built as a library.

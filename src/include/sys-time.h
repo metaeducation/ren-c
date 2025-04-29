@@ -1,8 +1,8 @@
 //
-//  File: %sys-time.h
-//  Summary: {Definitions for the TIME! and DATE! Datatypes}
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %sys-time.h
+//  summary:{Definitions for the TIME! and DATE! Datatypes}
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

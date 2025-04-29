@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 
 name: 'Console
 source: %console/mod-console.c

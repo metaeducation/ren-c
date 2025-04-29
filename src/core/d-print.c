@@ -1,9 +1,9 @@
 //
-//  File: %d-print.c
-//  Summary: "low-level console print interface"
-//  Section: debug
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %d-print.c
+//  summary: "low-level console print interface"
+//  section: debug
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

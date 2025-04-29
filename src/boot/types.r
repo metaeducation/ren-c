@@ -1,16 +1,16 @@
-REBOL [
-    System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Rebol datatypes and their related attributes"
-    Rights: {
+Rebol [
+    system: "Rebol [R3] Language Interpreter and Run-time Environment"
+    title: "Rebol datatypes and their related attributes"
+    rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2018 Rebol Open Source Developers
         REBOL is a trademark of REBOL Technologies
     }
-    License: {
+    license: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Purpose: {
+    purpose: {
         This table is used to make C defines and intialization tables.
 
         name        - name of datatype (generates words)
@@ -22,7 +22,7 @@ REBOL [
         Note that if there is `somename` in the class column, that means you
         will find the ACTION! dispatch for that type in `REBTYPE(Somename)`.
     }
-    Macros: {
+    macros: {
         /*
         ** ORDER-DEPENDENT TYPE MACROS, e.g. ANY_BLOCK_KIND() or IS_BINDABLE()
         **

@@ -1,4 +1,4 @@
-REBOL []
+Rebol []
 
 name: 'UUID
 source: %uuid/mod-uuid.c

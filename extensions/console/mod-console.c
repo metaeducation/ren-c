@@ -1,9 +1,9 @@
 //
-//  File: %mod-console.c
-//  Summary: "Read/Eval/Print Loop (REPL) Skinnable Console for Rebol"
-//  Section: Extension
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-console.c
+//  summary: "Read/Eval/Print Loop (REPL) Skinnable Console for Rebol"
+//  section: Extension
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
