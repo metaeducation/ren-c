@@ -740,15 +740,13 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
     const TypesetByte* optimized_tail
         = optimized + sizeof(spec->misc.at_least_4);
 
-    if (Is_Stable(atom)) {
-        Option(Type) type = Type_Of(Stable_Unchecked(atom));
-        for (; optimized != optimized_tail; ++optimized) {
-            if (*optimized == 0)
-                break;  // premature end of list
+    Option(Type) type = Type_Of(atom);  // Option/extension can be ANY-ELEMENT?
+    for (; optimized != optimized_tail; ++optimized) {
+        if (*optimized == 0)
+            break;  // premature end of list
 
-            if (Builtin_Typeset_Check(*optimized, type))
-                goto return_true;  // ELEMENT?/FUNDAMENTAL? test TYPE_0 types
-        }
+        if (Builtin_Typeset_Check(*optimized, type))
+            goto return_true;  // ELEMENT?/FUNDAMENTAL? test TYPE_0 types
     }
 
     if (Get_Parameter_Flag(param, INCOMPLETE_OPTIMIZATION)) {
