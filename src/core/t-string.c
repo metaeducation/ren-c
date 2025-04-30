@@ -949,7 +949,7 @@ void Mold_Text_Series_At(
     );
 
     *dp++ = '-';
-    *dp++ = '{';
+    *dp++ = '[';
 
     REBLEN n;
     for (n = index; n < String_Len(str); n++) {
@@ -957,8 +957,8 @@ void Mold_Text_Series_At(
         up = Ucs2_Next(&c, up);
 
         switch (c) {
-        case '{':
-        case '}':
+        case '[':
+        case ']':
             if (sf.malign) {
                 *dp++ = '^';
                 *dp++ = c;
@@ -976,7 +976,7 @@ void Mold_Text_Series_At(
         }
     }
 
-    *dp++ = '}';
+    *dp++ = ']';
     *dp++ = '-';
     *dp = '\0';
 
