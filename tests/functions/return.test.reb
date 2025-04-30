@@ -63,8 +63,8 @@
     run func [return: [~]] [a: return ~]
     a = 1
 )]
-(a: 1 reeval reify func [return: [~]] [set $a return ~] :a =? 1)
-(a: 1 reeval reify func [return: [~]] [set:any $a return ~] :a =? 1)
+(a: 1 reeval reify func [return: [~]] [set $a return ~] a = 1)
+(a: 1 reeval reify func [return: [~]] [set:any $a return ~] a = 1)
 [#1509 (  ; the "result" of a return should not be passable to functions
     a: 1
     run func [return: [~]] [a: error? return ~]

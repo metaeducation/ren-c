@@ -45,9 +45,10 @@ Rebol [
             unzip %my-new-dir %my-zip-file.zip
 
         or a block:
-            unzip my-block %my-zip-file.zip
+            >> unzip my-block %my-zip-file.zip
 
-            my-block == [%file-1.txt #{...} %file-2.exe #{...}]
+            >> my-block
+            == [%file-1.txt #{...} %file-2.exe #{...}]
     }--
     notes: --{
         * Only DEFLATE and STORE methods are supported.

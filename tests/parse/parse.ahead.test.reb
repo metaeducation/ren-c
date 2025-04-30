@@ -5,14 +5,14 @@
 
 [
     ~???~ !! (parse [] [ahead])
-    ('a == parse [a] [ahead 'a 'a])
-    (1 == parse [1] [ahead [block! | integer!] one])
+    ('a = parse [a] [ahead 'a 'a])
+    (1 = parse [1] [ahead [block! | integer!] one])
 ]
 
 [
     ~???~ !! (parse "" [ahead])
-    (#a == parse "a" [ahead #a #a])
-    (#1 == parse "1" [ahead [#a | #1] one])
+    (#a = parse "a" [ahead #a #a])
+    (#1 = parse "1" [ahead [#a | #1] one])
 ]
 
 [#1238

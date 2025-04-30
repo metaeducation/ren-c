@@ -19,11 +19,11 @@
            "b" (<delay> append later <B>)
            "c" (append earlier <C>)
            "d" (<delay> append later <D>)
-           (assert [earlier == [<A> <C>]])
-           (assert [later == []])
+           (assert [earlier = [<A> <C>]])
+           (assert [later = []])
         ]
-        earlier == [<A> <C>]
-        later == [<B> <D>]
+        earlier = [<A> <C>]
+        later = [<B> <D>]
     ]
 )
 
@@ -37,12 +37,12 @@
            "b" (<delay> append later <B>)
            "c" (append earlier <C>)
            "d" (<delay> append later <D>)
-           (assert [earlier == [<A> <C>]])
-           (assert [later == []])
+           (assert [earlier = [<A> <C>]])
+           (assert [later = []])
            "e"
         ]
-        earlier == [<A> <C>]
-        later == []
+        earlier = [<A> <C>]
+        later = []
     ]
 )
 
@@ -57,14 +57,14 @@
                "b" (<delay> append later <B>)
                "c" (append earlier <C>)
                "d" (<delay> append later <D>)
-               (assert [earlier == [<A> <C>]])
-               (assert [later == []])
+               (assert [earlier = [<A> <C>]])
+               (assert [later = []])
            ]
-           (assert [earlier == [<A> <C>]])
-           (assert [later == [<B> <D>]])
+           (assert [earlier = [<A> <C>]])
+           (assert [later = [<B> <D>]])
            "e"
         ]
-        earlier == [<A> <C>]
-        later == [<B> <D>]
+        earlier = [<A> <C>]
+        later = [<B> <D>]
     ]
 )

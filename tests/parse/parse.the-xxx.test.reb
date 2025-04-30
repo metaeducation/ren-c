@@ -49,9 +49,9 @@
 
 (
     [a b c 1 2 3]
-    == append [a b c] parse [1 2 3] [block! | spread across some integer!]
+    = append [a b c] parse [1 2 3] [block! | spread across some integer!]
 )
 (
     [a b c [1 2 3]]
-    == append [a b c] parse [[1 2 3]] [block! | spread across some integer!]
+    = append [a b c] parse [[1 2 3]] [block! | spread across some integer!]
 )

@@ -27,7 +27,7 @@
 [
     (
         x: ~
-        "6" == parse "246" [some [
+        "6" = parse "246" [some [
             x: across one elide when (even? transcode:one x)
         ]]
     )

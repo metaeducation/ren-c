@@ -104,8 +104,8 @@
 )
 (same? blank! eval reduce [blank!])
 (1/Jan/0000 = eval [1/Jan/0000])
-(0.0 == eval [0.0])
-(1.0 == eval [1.0])
+(0.0 = eval [0.0])
+(1.0 = eval [1.0])
 (
     a-value: me@here.com
     same? a-value eval reduce [a-value]
@@ -121,23 +121,23 @@
 )
 (
     a-value: first [:a-value]
-    :a-value == eval reduce [:a-value]
+    :a-value = eval reduce [:a-value]
 )
-(NUL == eval [NUL])
+(NUL = eval [NUL])
 
-(0 == eval [0])
-(1 == eval [1])
-(#a == eval [#a])
+(0 = eval [0])
+(1 = eval [1])
+(#a = eval [#a])
 (
     a-value: first ['a/b]
-    :a-value == eval [:a-value]
+    :a-value = eval [:a-value]
 )
 (
     a-value: first ['a]
-    :a-value == eval [:a-value]
+    :a-value = eval [:a-value]
 )
-('true == eval ['true])
-('false == eval ['false])
+('true = eval ['true])
+('false = eval ['false])
 
 (same? :append eval [:append])
 (null? eval [~null~])
@@ -150,23 +150,23 @@
     same? :a-value eval [:a-value]
 )
 (same? +/ eval [+/])
-(0x0 == eval [0x0])
+(0x0 = eval [0x0])
 (
     a-value: 'a/b
-    :a-value == eval [:a-value]
+    :a-value = eval [:a-value]
 )
 (
     a-value: make port! http://
     port? eval reduce [:a-value]
 )
-('/a == eval ['/a])
+('/a = eval ['/a])
 (
     a-value: first [a.b:]
-    :a-value == eval [:a-value]
+    :a-value = eval [:a-value]
 )
 (
     a-value: first [a:]
-    :a-value == eval [:a-value]
+    :a-value = eval [:a-value]
 )
 (
     a-value: ""
@@ -176,10 +176,10 @@
     a-value: to tag! ""
     same? a-value eval reduce [a-value]
 )
-(0:00 == eval [0:00])
-(0.0.0 == eval [0.0.0])
+(0:00 = eval [0:00])
+(0.0.0 = eval [0.0.0])
 (^void = ^ eval [()])
-('a == eval ['a])
+('a = eval ['a])
 
 ; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,
 ; and can only be caught with SYS.UTIL/RESCUE.  Should it be?  Or should a
@@ -189,7 +189,7 @@
 
 (
     a-value: first [(2)]
-    2 == eval as block! :a-value
+    2 = eval as block! :a-value
 )
 (
     a-value: "Rebol [] 1"
@@ -295,7 +295,7 @@
 ; recursive behaviour
 (1 = eval [eval [1]])
 (1 = do "Rebol [] quit:value eval [1]")
-(1 == 1)
+(1 = 1)
 (3 = reeval unrun :reeval unrun :add 1 2)
 ; infinite recursion for block
 (

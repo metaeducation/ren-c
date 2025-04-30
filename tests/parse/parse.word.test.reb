@@ -20,28 +20,28 @@
         wrba: ['b | 'a]
         ok
     )
-    ('a == parse [a] [wa])
+    ('a = parse [a] [wa])
     ~parse-mismatch~ !! (parse [a] [wb])
-    ('b == parse [a b] [wa wb])
-    (#b == parse [a #b] [wa wcb])
-    ('a == parse [a] [wra])
-    ('b == parse [a b] [wra 'b])
-    ('b == parse [a b] ['a wrb])
-    ('b == parse [a b] [wra wrb])
-    ("hello" == parse ["hello"] [wh])
-    (#a == parse [#a] [wcb | wca])
+    ('b = parse [a b] [wa wb])
+    (#b = parse [a #b] [wa wcb])
+    ('a = parse [a] [wra])
+    ('b = parse [a b] [wra 'b])
+    ('b = parse [a b] ['a wrb])
+    ('b = parse [a b] [wra wrb])
+    ("hello" = parse ["hello"] [wh])
+    (#a = parse [#a] [wcb | wca])
     ~parse-incomplete~ !! (parse [a b] [wb | wa])
-    (#a == parse [#a] [[wcb | wca]])
+    (#a = parse [#a] [[wcb | wca]])
     ~parse-incomplete~ !! (parse [a b] [wrba])
-    ('b == parse [a b] [wrab wrba])
-    (123 == parse [a 123] [wa integer!])
+    ('b = parse [a b] [wrab wrba])
+    (123 = parse [a 123] [wa integer!])
     ~parse-mismatch~ !! (parse [a 123] [wa char?/])
-    (123 == parse [a 123] [wra [integer!]])
+    (123 = parse [a 123] [wra [integer!]])
     ~parse-mismatch~ !! (parse [a 123] [wa [char?/]])
     (
         res: ~
         all [
-            1 == parse [a] [wa (res: 1)]
+            1 = parse [a] [wa (res: 1)]
             res = 1
         ]
     )
@@ -56,7 +56,7 @@
         res: ~
         wres: [(res: 1)]
         all [
-            1 == parse [] [wres]
+            1 = parse [] [wres]
             res = 1
         ]
     )
@@ -64,7 +64,7 @@
         res: ~
         wres: ['a (res: 1)]
         all [
-            1 == parse [a] [wres]
+            1 = parse [a] [wres]
             res = 1
         ]
     )
@@ -80,7 +80,7 @@
         res: ~
         wres: [char?/ (res: 2) | integer! (res: 3)]
         all [
-            3 == parse [a 123] [wa (res: 1) wres]
+            3 = parse [a 123] [wa (res: 1) wres]
             res = 3
         ]
     )
@@ -108,23 +108,23 @@
         wrba: [#b | #a]
         ok
     )
-    (#a == parse "a" [wa])
+    (#a = parse "a" [wa])
     ~parse-mismatch~ !! (parse "a" [wb])
-    (#b == parse "ab" [wa wb])
-    (#a == parse "a" [wra])
-    (#b == parse "ab" [wra #b])
-    (#b == parse "ab" [#a wrb])
-    (#b == parse "ab" [wra wrb])
-    ("hello" == parse "hello" [wh])
-    (#a == parse "a" [wcb | wca])
+    (#b = parse "ab" [wa wb])
+    (#a = parse "a" [wra])
+    (#b = parse "ab" [wra #b])
+    (#b = parse "ab" [#a wrb])
+    (#b = parse "ab" [wra wrb])
+    ("hello" = parse "hello" [wh])
+    (#a = parse "a" [wcb | wca])
     ~parse-incomplete~ !! (parse "ab" [wb | wa])
-    (#a == parse "a" [[wcb | wca]])
+    (#a = parse "a" [[wcb | wca]])
     ~parse-incomplete~ !! (parse "ab" [wrba])
-    (#b == parse "ab" [wrab wrba])
+    (#b = parse "ab" [wrab wrba])
     (
         res: ~
         all [
-            1 == parse "a" [wa (res: 1)]
+            1 = parse "a" [wa (res: 1)]
             res = 1
         ]
     )
@@ -139,7 +139,7 @@
         res: ~
         wres: [(res: 1)]
         all [
-            1 == parse "" [wres]
+            1 = parse "" [wres]
             res = 1
         ]
     )
@@ -147,7 +147,7 @@
         res: ~
         wres: [#a (res: 1)]
         all [
-            1 == parse "a" [wres]
+            1 = parse "a" [wres]
             res = 1
         ]
     )
@@ -175,23 +175,23 @@
         wrba: [#{0B} | #{0A}]
         ok
     )
-    (#{0A} == parse #{0A} [wa])
+    (#{0A} = parse #{0A} [wa])
     ~parse-mismatch~ !! (parse #{0A} [wb])
-    (#{0B} == parse #{0A0B} [wa wb])
-    (#{0A} == parse #{0A} [wra])
-    (#{0B} == parse #{0A0B} [wra #{0B}])
-    (#{0B} == parse #{0A0B} [#{0A} wrb])
-    (#{0B} == parse #{0A0B} [wra wrb])
-    (#{88031100} == parse #{88031100} [wh])
-    (#{0A} == parse #{0A} [wcb | wca])
+    (#{0B} = parse #{0A0B} [wa wb])
+    (#{0A} = parse #{0A} [wra])
+    (#{0B} = parse #{0A0B} [wra #{0B}])
+    (#{0B} = parse #{0A0B} [#{0A} wrb])
+    (#{0B} = parse #{0A0B} [wra wrb])
+    (#{88031100} = parse #{88031100} [wh])
+    (#{0A} = parse #{0A} [wcb | wca])
     ~parse-incomplete~ !! (parse #{0A0B} [wb | wa])
-    (#{0A} == parse #{0A} [[wcb | wca]])
+    (#{0A} = parse #{0A} [[wcb | wca]])
     ~parse-incomplete~ !! (parse #{0A0B} [wrba])
-    (#{0B} == parse #{0A0B} [wrab wrba])
+    (#{0B} = parse #{0A0B} [wrab wrba])
     (
         res: ~
         all [
-            1 == parse #{0A} [wa (res: 1)]
+            1 = parse #{0A} [wa (res: 1)]
             res = 1
         ]
     )
@@ -206,7 +206,7 @@
         res: ~
         wres: [(res: 1)]
         all [
-            1 == parse #{} [wres]
+            1 = parse #{} [wres]
             res = 1
         ]
     )
@@ -214,7 +214,7 @@
         res: ~
         wres: [#{0A} (res: 1)]
         all [
-            1 == parse #{0A} [wres]
+            1 = parse #{0A} [wres]
             res = 1
         ]
     )

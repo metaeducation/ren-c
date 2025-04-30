@@ -3,12 +3,12 @@
 ; !!! The design of these dialects is under construction at time of writing
 ; writing, but they are to replace most BLOB! <=> INTEGER! conversions
 
-(0 == decode [BE +/-] #{00})
-(1 == decode [BE +/-] #{01})
+(0 = decode [BE +/-] #{00})
+(1 = decode [BE +/-] #{01})
 <32bit>
-(-1 == decode [BE +/-] #{ffffffff})
+(-1 = decode [BE +/-] #{ffffffff})
 <64bit>
-(-1 == decode [BE +/-] #{ffffffffffffffff})
+(-1 = decode [BE +/-] #{ffffffffffffffff})
 <64bit>
 
 (#{00000020} = encode [BE + 4] 32)

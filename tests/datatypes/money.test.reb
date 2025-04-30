@@ -40,17 +40,17 @@
 
 (
     f: does [$1]
-    $1 == f
+    $1 = f
 )
 
 (if $1 [okay])
 
-($1 == any [$1])
-($1 == any [null $1])
-($1 == any [$1 null])
+($1 = any [$1])
+($1 = any [null $1])
+($1 = any [$1 null])
 
-($1 == all [$1])
-($1 == all [okay $1])
+($1 = all [$1])
+($1 = all [okay $1])
 (okay = all [$1 okay])
 
 ; moldable maximum for R2

@@ -44,11 +44,11 @@
 )
 (
     f: does [0.0]
-    0.0 == f
+    0.0 = f
 )
 (
     f: does [1.0]
-    1.0 == f
+    1.0 = f
 )
 (
     a-value: me@here.com
@@ -72,33 +72,33 @@
 (
     a-value: first [:a]
     f: does [a-value]
-    (same? a-value f) and (a-value == f)
+    (same? a-value f) and (a-value = f)
 )
 (
     f: does [#"^M"]
-    #"^M" == f
+    #"^M" = f
 )
 (
     f: does [0]
-    0 == f
+    0 = f
 )
 (
     f: does [1]
-    1 == f
+    1 = f
 )
 (
     f: does [#a]
-    #a == f
+    #a = f
 )
 (
     a-value: first ['a/b]
     f: does [:a-value]
-    :a-value == f
+    :a-value = f
 )
 (
     a-value: first ['a]
     f: does [:a-value]
-    :a-value == f
+    :a-value = f
 )
 (
     f: does ['true]
@@ -110,7 +110,7 @@
 )
 (
     f: does [$1]
-    $1 == f
+    $1 = f
 )
 (
     f: does [:append]
@@ -136,12 +136,12 @@
 )
 (
     f: does [0x0]
-    0x0 == f
+    0x0 = f
 )
 (
     a-value: 'a/b
     f: does [:a-value]
-    :a-value == f
+    :a-value = f
 )
 (
     a-value: make port! http://
@@ -150,17 +150,17 @@
 )
 (
     f: does ['/a]
-    '/a == f
+    '/a = f
 )
 (
     a-value: first [a.b:]
     f: does [:a-value]
-    :a-value == f
+    :a-value = f
 )
 (
     a-value: first [a:]
     f: does [:a-value]
-    :a-value == all [:a-value]
+    :a-value = all [:a-value]
 )
 (
     a-value: ""
@@ -174,11 +174,11 @@
 )
 (
     f: does [0:00]
-    0:00 == f
+    0:00 = f
 )
 (
     f: does [0.0.0]
-    0.0.0 == f
+    0.0.0 = f
 )
 (
     f: does [()]
@@ -186,7 +186,7 @@
 )
 (
     f: does ['a]
-    'a == f
+    'a = f
 )
 ; two-function return tests
 (
@@ -265,15 +265,15 @@
         ok
     )
 
-    (10 == hard 10)
-    ('a == hard a)
-    (the 'a == hard 'a)
-    (the :a == hard :a)
-    (the a: == hard a:)
-    (the (10 + 20) == hard (10 + 20))
+    (10 = hard 10)
+    ('a = hard a)
+    (the 'a = hard 'a)
+    (the :a = hard :a)
+    (the a: = hard a:)
+    (the (10 + 20) = hard (10 + 20))
     (
         o: context [f: 10]
-        the :o.f == hard :o.f
+        the :o.f = hard :o.f
     )
 ]
 
@@ -343,7 +343,7 @@
 [#19
     ~bad-parameter~ !! (
         f: func [:r [integer!]] [return x]
-        2 == f:r:r 1 2  ; Review: could be a syntax for variadic refinements?
+        2 = f:r:r 1 2  ; Review: could be a syntax for variadic refinements?
     )
 ]
 
@@ -437,7 +437,7 @@
 ; :LOCAL is an ordinary refinement in Ren-C
 (
     a-value: func [:local [integer!]] [return local]
-    1 == a-value:local 1
+    1 = a-value:local 1
 )
 
 [#539 https://github.com/metaeducation/ren-c/issues/755 (

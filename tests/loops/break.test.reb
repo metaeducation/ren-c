@@ -40,7 +40,7 @@
     foo: func [x y] [] a: 1 repeat 2 [
         a: a + 1 foo (break) continue a: a + 10
     ]
-    :a =? 2
+    a = 2
 )
 
 ; check that BREAK is not evaluated (but CONTINUE is):
@@ -49,7 +49,8 @@
 (
     foo: func [x y] [] a: 1 repeat 2 [
         a: a + 1 foo (continue) break a: a + 10
-    ] :a =? 3
+    ]
+    a = 3
 )
 
 [#1535 #1535
@@ -64,4 +65,4 @@
 ]
 
 ; the "result" of break should not be caught by try
-(a: 1 repeat 1 [a: error? trap [break]] :a =? 1)
+(a: 1 repeat 1 [a: error? trap [break]] a = 1)

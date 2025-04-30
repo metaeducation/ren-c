@@ -180,7 +180,7 @@ specialized?: func [
     frame [frame!]
 ][
     return eval frame except e -> [
-        if e.id == 'need-non-null [return void]
+        if e.id = 'need-non-null [return void]
         fail e
     ]
 ]

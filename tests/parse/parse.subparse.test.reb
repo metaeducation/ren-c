@@ -13,19 +13,19 @@
     ;
     (void? parse [[]] [subparse any-series?/ []])
 
-    ('a == parse [[a]] [subparse any-series?/ ['a]])
-    ('c == parse [b [a] c] ['b subparse any-series?/ ['a] 'c])
-    (#a == parse ["a"] [subparse any-series?/ [#a]])
-    ('c == parse [b "a" c] ['b subparse any-series?/ ["a"] 'c])
-    (#a == parse [["a"]] [subparse block! [subparse any-series?/ [#a]]])
+    ('a = parse [[a]] [subparse any-series?/ ['a]])
+    ('c = parse [b [a] c] ['b subparse any-series?/ ['a] 'c])
+    (#a = parse ["a"] [subparse any-series?/ [#a]])
+    ('c = parse [b "a" c] ['b subparse any-series?/ ["a"] 'c])
+    (#a = parse [["a"]] [subparse block! [subparse any-series?/ [#a]]])
 
     ~parse-mismatch~ !! (parse [[a]] [subparse any-series?/ ['a 'b]])
     ~parse-mismatch~ !! (parse [[a]] [subparse any-series?/ [some 'b]])
 
-    ([a] == parse [[a]] [subparse any-series?/ ['a 'b] | block!])
+    ([a] = parse [[a]] [subparse any-series?/ ['a 'b] | block!])
 ]
 
-("a" == parse ["aa"] [subparse text! ["a" "a"]])
+("a" = parse ["aa"] [subparse text! ["a" "a"]])
 
 ; One key feature of UPARSE is that rule chaining is done in such a way that
 ; it delegates the recognition to the parse engine, meaning that rules do not
@@ -39,7 +39,7 @@
 (
     all [
         let x
-        "aaa" == parse ["aaa"] [subparse text! [x: across some "a"]]
+        "aaa" = parse ["aaa"] [subparse text! [x: across some "a"]]
         x = "aaa"
     ]
 )
@@ -47,7 +47,7 @@
 (
     all [
         let x
-        "aaa" == parse ["aaa"] [subparse one [x: across some "a"]]
+        "aaa" = parse ["aaa"] [subparse one [x: across some "a"]]
         x = "aaa"
     ]
 )
@@ -55,7 +55,7 @@
 (
     all [
         let x
-        "aaa" == parse "((aaa)))" [
+        "aaa" = parse "((aaa)))" [
             subparse [between some "(" some ")"] [x: across some "a"]
         ]
         x = "aaa"
@@ -65,7 +65,7 @@
 (
     all [
         let [x content]
-        [some some some] == parse [| | some some some | | |] [
+        [some some some] = parse [| | some some some | | |] [
             content: between some '| some '|
             subparse (content) [x: collect [some keep ['some]]]
         ]
@@ -74,7 +74,7 @@
 )
 
 [(
-    "a" == parse "baaabccc" [
+    "a" = parse "baaabccc" [
         subparse [between "b" "b"] [some "a" <end>] to <end>
     ]
 )
@@ -90,11 +90,11 @@
 )
 
 (
-    "c" == parse "baaabccc" [
+    "c" = parse "baaabccc" [
         subparse [between "b" "b"] ["a" to <end>], "c", to <end>
     ]
 )(
-    "a" == parse "aaabccc" [subparse [across to "b"] [some "a"], to <end>]
+    "a" = parse "aaabccc" [subparse [across to "b"] [some "a"], to <end>]
 )]
 
 
@@ -139,7 +139,7 @@
     (
         s: ~
         "test" = parse [a "test"] [
-            'a s: text! (assert [#t == parse s [repeat 4 one]])
+            'a s: text! (assert [#t = parse s [repeat 4 one]])
         ]
     )
 ]

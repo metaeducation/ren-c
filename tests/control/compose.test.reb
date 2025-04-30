@@ -137,12 +137,12 @@
 ; level off a group, protecting groups from composition is better done with
 ; labeled compose...saving it for quoting composed material.
 
-([3 '3 ''3] == compose [(1 + 2) '(1 + 2) ''(1 + 2)])
+([3 '3 ''3] = compose [(1 + 2) '(1 + 2) ''(1 + 2)])
 ~???~ !! (compose ['(if null [<cant-vanish-with-quote>])])
 
 ; Quoting should be preserved by deep composition
 
-([a ''[b 3 c] d] == compose:deep [a ''[b (1 + 2) c] d])
+([a ''[b 3 c] d] = compose:deep [a ''[b (1 + 2) c] d])
 
 
 ; COMPOSE no longer tries to convert set-forms

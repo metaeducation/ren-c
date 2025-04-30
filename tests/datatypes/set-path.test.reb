@@ -12,7 +12,7 @@
 (
     a: make object! [b: null]
     a.b: 5
-    5 == a.b
+    5 = a.b
 )
 [#1 (
     o: make object! [a: 0x0]
@@ -24,8 +24,8 @@
     a: 1x2
     a.x: (a: [x 4] 3)
     any [
-        a == 3x2
-        a == [x 3]
+        a = 3x2
+        a = [x 3]
     ]
 )
 [#64 (

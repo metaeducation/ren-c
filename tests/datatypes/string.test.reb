@@ -5,8 +5,8 @@
 ; minimum
 (text? "")
 ; alternative literal form
-("" == to text! "")
-("" == make text! 0)
+("" = to text! "")
+("" = make text! 0)
 
 ; !!! The test system uses TRANSCODE to get past strings with illegal content.
 ; That runs into trouble when trying to literally depict strings which should
@@ -164,7 +164,7 @@
     a: <0>
     b: make tag! 0
     insert b first a
-    a == b
+    a = b
 )]
 
 

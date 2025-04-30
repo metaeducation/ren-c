@@ -71,8 +71,8 @@
             fail "foo should not run, it's prefix and runs on *next* step"
         ]
         all wrap [
-            1020 == [pos {#}]: evaluate:step [1020 foo 304]
-            pos == [foo 304]
+            1020 = [pos {#}]: evaluate:step [1020 foo 304]
+            pos = [foo 304]
         ]
     )(
         i-foo: infix func [
@@ -81,7 +81,7 @@
             return <i-foo>
         ]
         all wrap [
-            <i-foo> == [pos {#}]: evaluate:step [1020 i-foo 304]
+            <i-foo> = [pos {#}]: evaluate:step [1020 i-foo 304]
             pos = [304]
         ]
     )
@@ -97,7 +97,7 @@
         all wrap [
             [pos var]: evaluate:step [1020 bar 304]
             pos = [bar 304]
-            var == 1020
+            var = 1020
             action? bar/
             bar
             null? bar
@@ -113,7 +113,7 @@
         all wrap [
             [pos var]: evaluate:step [1020 i-bar 304]
             pos = [304]
-            var == 1020
+            var = 1020
             null? i-bar
         ]
     )

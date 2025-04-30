@@ -13,7 +13,7 @@
 ;
 
 [https://github.com/red/red/issues/4101
-    ('a/b == parse [a/b] ['a/b])
+    ('a/b = parse [a/b] ['a/b])
 
     ~???~ !! (
         parse [a/b] [a/b]

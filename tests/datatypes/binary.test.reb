@@ -2,9 +2,9 @@
 (blob? #{00})
 (not blob? 1)
 (blob! = type of #{00})
-(#{00} == 2#{00000000})
-(#{000000} == 64#{AAAA})
-(#{} == make blob! 0)
+(#{00} = 2#{00000000})
+(#{000000} = 64#{AAAA})
+(#{} = make blob! 0)
 ; minimum
 (blob? #{})
 ; alternative literal representation
@@ -15,7 +15,7 @@
 )
 [#42 (
     b: #{0b}
-    b.1 == 11
+    b.1 = 11
 )]
 ; case sensitivity
 [#1459
@@ -25,7 +25,7 @@
 (
     a: make blob! 0
     insert a make-char 0
-    a == #{00}
+    a = #{00}
 )
 
 ~bad-pick~ !! (pick #{00} 'x)

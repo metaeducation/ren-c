@@ -7,11 +7,11 @@
 (strict-equal? first [()] first compose [(make group! 1)])
 (strict-equal? first [()] make group! 0)
 (strict-equal? first [()] to group! [])
-("()" == mold first [()])
+("()" = mold first [()])
 ; parens are active
 (
     a-value: first [(1)]
-    1 == eval reduce [:a-value]
+    1 = eval reduce [:a-value]
 )
 ; finite recursion
 (

@@ -7,19 +7,19 @@
 [(
     x: ~
     all [
-        "hello" == parse [1 "hello"] [x: [tag! | integer!] text!]
+        "hello" = parse [1 "hello"] [x: [tag! | integer!] text!]
         x = 1  ; not [1]
     ]
 )(
     x: ~
     all [
-        "hello" == parse [1 "hello"] [x: [tag! integer! | integer! text!]]
+        "hello" = parse [1 "hello"] [x: [tag! integer! | integer! text!]]
         x = "hello"
     ]
 )(
     x: ~
     all [
-        null == parse [] [x: [opt integer!]]
+        null = parse [] [x: [opt integer!]]
         x = null
     ]
 )(
@@ -31,14 +31,14 @@
 )(
     x: ~
     all [
-        null == parse [] [x: opt [integer!]]
+        null = parse [] [x: opt [integer!]]
         x = null
     ]
 )
 
 (
     all [
-        [1 2 3] == parse [1 2 3] [x: collect [some keep integer!]]
+        [1 2 3] = parse [1 2 3] [x: collect [some keep integer!]]
         x = [1 2 3]
     ]
 )]
@@ -50,7 +50,7 @@
     t: "t"
     i: "i"
     all [
-        <foo> == parse [<foo>] [i: integer! | t: tag!]
+        <foo> = parse [<foo>] [i: integer! | t: tag!]
         i = "i"  ; undisturbed
         t = <foo>
     ]
@@ -58,7 +58,7 @@
     t: "t"
     i: "i"
     all [
-        <foo> == parse [<foo>] [i: opt integer!, t: tag!]
+        <foo> = parse [<foo>] [i: opt integer!, t: tag!]
         i = null
         t = <foo>
     ]

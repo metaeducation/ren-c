@@ -17,7 +17,7 @@
     (
         res: ~
         all [
-            'a == parse [a] [res: word!]
+            'a = parse [a] [res: word!]
             res = 'a
         ]
     )
@@ -25,7 +25,7 @@
         res: ~
         res2: ~
         all [
-            'a == parse [a] [res: res2: 'a]
+            'a = parse [a] [res: res2: 'a]
             res = 'a
             res2 = 'a
         ]
@@ -36,23 +36,23 @@
 (
     all [
         let [t i]
-        1020 == parse "***-{A String}- 1020" [some "*", t: text!, i: integer!]
+        1020 = parse "***-{A String}- 1020" [some "*", t: text!, i: integer!]
         t = -{A String}-
         i = 1020
     ]
 )
 
 [
-    (123 == parse [a 123] ['a integer!])
+    (123 = parse [a 123] ['a integer!])
     ~parse-mismatch~ !! (parse [a 123] ['a char?/])
 
-    (123 == parse [a 123] [['a] [integer!]])
+    (123 = parse [a 123] [['a] [integer!]])
     ~parse-mismatch~ !! (parse [a 123] ['a [char?/]])
 
-    (123 == parse [123] [any-number?/])
+    (123 = parse [123] [any-number?/])
     ~parse-mismatch~ !! (parse [123] [any-string?/])
 
-    (123 == parse [123] [[any-number?/]])
+    (123 = parse [123] [[any-number?/]])
     ~parse-mismatch~ !! (parse [123] [[any-string?/]])
 ]
 
@@ -60,7 +60,7 @@
     (
         res: ~
         all [
-            3 == parse [a 123] [
+            3 = parse [a 123] [
                 'a (res: 1) [char?/ (res: 2) | integer! (res: 3)]
             ]
             res = 3
@@ -100,11 +100,11 @@
         let x
         bin = parse as blob! -{https://example.org"}- [
             x: across url!
-            (assert [-{https://example.org"}- == as text! to url! x])
+            (assert [-{https://example.org"}- = as text! to url! x])
         ]
     )
-    (-{"}- == parse as blob! -{a@b.com"}- [
-        let x: across email! (assert [a@b.com == to email! to text! x])
+    (-{"}- = parse as blob! -{a@b.com"}- [
+        let x: across email! (assert [a@b.com = to email! to text! x])
         -{"}-
     ])
 ]
@@ -119,22 +119,22 @@
 
 ; QUOTED! needs to be recognized
 [
-    ((the 'x) == parse ['x] [quoted!])
-    ((the '[]) == parse ['''_ ''() '[]] [repeat 3 quoted!])
+    ((the 'x) = parse ['x] [quoted!])
+    ((the '[]) = parse ['''_ ''() '[]] [repeat 3 quoted!])
 ]
 
 [https://github.com/red/red/issues/4863
-    ('word == parse to-blob "word" [word!])
-    ('word == parse to-blob "   word" [word!])
+    ('word = parse to-blob "word" [word!])
+    ('word = parse to-blob "   word" [word!])
 
-    (123 == parse to-blob "123" [integer!])
+    (123 = parse to-blob "123" [integer!])
     ~parse-mismatch~ !! (parse to-blob "123.456" [integer!])
-    (123 == parse to-blob "    123" [integer!])
+    (123 = parse to-blob "    123" [integer!])
 
-    ([hello 123 world] == parse to-blob "hello 123 world" [
+    ([hello 123 world] = parse to-blob "hello 123 world" [
         collect [keep word!, keep integer!, keep word!]
     ])
-    ([hello 123 world] == parse to-blob "hello 123 world" [
+    ([hello 123 world] = parse to-blob "hello 123 world" [
         collect [keep word!, space, keep integer!, space, keep word!]
     ])
 ]

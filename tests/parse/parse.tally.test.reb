@@ -17,4 +17,4 @@
     inner = "stuff"
 ])
 
-(3 == parse "abbcccabb" [tally ["a" repeat 2 "b" | repeat 3 "c"]])
+(3 = parse "abbcccabb" [tally ["a" repeat 2 "b" | repeat 3 "c"]])

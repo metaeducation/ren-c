@@ -39,7 +39,7 @@
     ("!!cad!!" = replace "abracadabra" ["ra" | "ab"] does ["!"])
     (
         s: ~
-        "AbrACAdAbrA" == replace "abracadabra" [s: ["a" | "c"]] does [
+        "AbrACAdAbrA" = replace "abracadabra" [s: ["a" | "c"]] does [
             uppercase s.1
         ]
     )

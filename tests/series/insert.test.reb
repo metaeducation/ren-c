@@ -2,73 +2,73 @@
 (
     a: make block! 0
     insert a 0
-    a == [0]
+    a = [0]
 )
 (
     a: [0]
     b: make block! 0
     insert b first a
-    a == b
+    a = b
 )
 (
     a: [0]
     b: make block! 0
     insert b a
-    [[0]] == b
+    [[0]] = b
 )
 ; paren
 (
     a: make group! 0
     insert a 0
-    a == first [(0)]
+    a = first [(0)]
 )
 (
     a: first [(0)]
     b: make group! 0
     insert b a
-    b == '((0))
+    b = '((0))
 )
 (
     a: first [(0)]
     b: make group! 0
     insert b ^a
-    b == '('(0))
+    b = '('(0))
 )
 ; text
 (
     a: make text! 0
     insert a #"0"
-    a == "0"
+    a = "0"
 )
 (
     a: "0"
     b: make text! 0
     insert b first a
-    a == b
+    a = b
 )
 (
     a: "0"
     b: make text! 0
     insert b a
-    a == b
+    a = b
 )
 ; file
 (
     a: make file! 0
     insert a #"0"
-    a == %"0"
+    a = %"0"
 )
 (
     a: %"0"
     b: make file! 0
     insert b first a
-    a == b
+    a = b
 )
 (
     a: %"0"
     b: make file! 0
     insert b a
-    a == b
+    a = b
 )
 
 ~???~ !! (make email! 0)
@@ -78,44 +78,44 @@
 (
     a: make tag! 0
     insert a #"0"
-    a == <0>
+    a = <0>
 )
 [#855 (
     a: #{00}
     b: make blob! 0
     insert b first a
-    a == b
+    a = b
 )]
 (
     a: #{00}
     b: make blob! 0
     insert b a
-    a == b
+    a = b
 )
 ; insert:part
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
     insert:part a spread b 1
-    a == [5]
+    a = [5]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
     insert:part a spread b 5
-    a == [5 6 7 8 9]
+    a = [5 6 7 8 9]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
     insert:part a spread b 6
-    a == [5 6 7 8 9]
+    a = [5 6 7 8 9]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
     insert:part a spread b 2147483647
-    a == [5 6 7 8 9]
+    a = [5 6 7 8 9]
 )
 (
     a: make block! 0
@@ -137,25 +137,25 @@
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
     insert:part a spread b -1
-    a == []
+    a = []
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
     insert:part a spread b -4
-    a == []
+    a = []
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
     insert:part a spread b -5
-    a == []
+    a = []
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
     insert:part a spread b -2147483648
-    a == []
+    a = []
 )
 
 
@@ -169,22 +169,22 @@
 (
     a: make block! 0
     insert:dup a 0 2
-    a == [0 0]
+    a = [0 0]
 )
 (
     a: make block! 0
     insert:dup a 0 0
-    a == []
+    a = []
 )
 (
     a: make block! 0
     insert:dup a 0 -1
-    a == []
+    a = []
 )
 (
     a: make block! 0
     insert:dup a 0 -2147483648
-    a == []
+    a = []
 )
 (
     a: make block! 0

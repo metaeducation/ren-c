@@ -545,8 +545,8 @@ use [
                 id.1 = 0
                 id.2 = number
             ]
-            (to-text os-name) == (lowercase to-text os-name)
-            (to-text os-base) == (lowercase to-text os-base)
+            (to-text os-name) = (lowercase to-text os-name)
+            (to-text os-base) = (lowercase to-text os-base)
             not find (to-text os-base) charset [#"-" #"_"]
             block? definitions
             block? cflags

@@ -120,7 +120,7 @@
 )]
 
 ; alternative form
-(1.1 == 1,1)
+(1.1 = 1,1)
 (1.1 = to decimal! "1.1")
 
 ~bad-make-arg~ !! (

@@ -11,16 +11,16 @@
 
 (
     pos: ~
-    "b" == parse "aaabbb" [
+    "b" = parse "aaabbb" [
         "a" pos: <here> repeat 2 "a" seek (pos) repeat 2 "a" repeat 3 "b"
     ]
 )
-("b" == parse "aaabbb" ["a" repeat 2 "a" seek (2) repeat 2 "a" repeat 3 "b"])
+("b" = parse "aaabbb" ["a" repeat 2 "a" seek (2) repeat 2 "a" repeat 3 "b"])
 
 (
     all [
         let [x y z]
-        "bbcc" == parse "aabbcc" [
+        "bbcc" = parse "aabbcc" [
             some "a", x: <here>, some "b", y: <here>
             seek (x), z: across to <end>
         ]
@@ -40,12 +40,12 @@
 ; SEEK INTEGER! (replaces TO/THRU integer!
 ;
 [#1965
-    ("cd" == parse "abcd" [seek (3) "cd"])
-    ("d" == parse "abcd" [seek (3) <next> "d"])
-    (#d == parse "abcd" [seek (4) one])
-    ("" == parse "abcd" [seek (5)])
-    ("abcd" == parse "abcd" ["ab" seek (1) "abcd"])
-    ("bcd" == parse "abcd" ["ab" seek (1) <next> "bcd"])
+    ("cd" = parse "abcd" [seek (3) "cd"])
+    ("d" = parse "abcd" [seek (3) <next> "d"])
+    (#d = parse "abcd" [seek (4) one])
+    ("" = parse "abcd" [seek (5)])
+    ("abcd" = parse "abcd" ["ab" seek (1) "abcd"])
+    ("bcd" = parse "abcd" ["ab" seek (1) <next> "bcd"])
 ]
 
 ; !!! What to do about out-of-range seeks?  It was tolerated historically but

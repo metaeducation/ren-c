@@ -14,9 +14,9 @@
 
 ; triggered errors should not be assignable
 ;
-(a: 1 error? trap [a: 1 / 0] :a =? 1)
-(a: 1 error? trap [set $a 1 / 0] :a =? 1)
-(a: 1 error? trap [set:any $a 1 / 0] :a =? 1)
+(a: 1 error? trap [a: 1 / 0] a = 1)
+(a: 1 error? trap [set $a 1 / 0] a = 1)
+(a: 1 error? trap [set:any $a 1 / 0] a = 1)
 
 [#2190
     ~zero-divide~ !! (

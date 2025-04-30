@@ -5,9 +5,9 @@
 <32bit>
 (error? trap [negate -2147483648])
 ; decimal
-(0.0 == negate 0.0)
-(-1.0 == negate 1.0)
-(1.0 == negate -1.0)
+(0.0 = negate 0.0)
+(-1.0 = negate 1.0)
+(1.0 = negate -1.0)
 (1.7976931348623157e308 = negate -1.7976931348623157e308)
 (-1.7976931348623157e308 = negate 1.7976931348623157e308)
 (4.94065645841247E-324 = negate -4.94065645841247E-324)
@@ -25,9 +25,9 @@
 ; bitset
 (
     a: make bitset! #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}
-    a == complement complement a
+    a = complement complement a
 )
 (
     a: make bitset! #{0000000000000000000000000000000000000000000000000000000000000000}
-    a == complement complement a
+    a = complement complement a
 )

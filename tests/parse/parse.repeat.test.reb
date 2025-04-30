@@ -47,18 +47,18 @@
 (
     var: 3
     rule: "a"
-    "a" == parse "aaa" [repeat (var) rule]  ; clearer than [var rule]
+    "a" = parse "aaa" [repeat (var) rule]  ; clearer than [var rule]
 )
 
 (
     var: 3
     rule: "a"
-    "a" == parse "aaaaaa" [repeat 2 repeat (var) rule]
+    "a" = parse "aaaaaa" [repeat 2 repeat (var) rule]
 )
 
 (
     rule: ~
-    "b" == parse ["b" 3 "b" "b" "b"] [rule: one, repeat integer! rule]
+    "b" = parse ["b" 3 "b" "b" "b"] [rule: one, repeat integer! rule]
 )
 
 ; Plain loops that never actually run their body give back a match that is
@@ -83,8 +83,8 @@
 ]
 
 [
-    ("a" == parse "a" [repeat 1 "a"])
-    ("a" == parse "aa" [repeat 2 "a"])
+    ("a" = parse "a" [repeat 1 "a"])
+    ("a" = parse "aa" [repeat 2 "a"])
 ]
 
 ; Conventional ranges
@@ -92,30 +92,30 @@
     ~parse-mismatch~ !! (parse "a" [repeat ([2 3]) "a"])
     ~parse-incomplete~ !! (parse "aaaa" [repeat ([2 3]) "a"])
 
-    ("a" == parse "aa" [repeat ([2 3]) "a"])
-    ("a" == parse "aaa" [repeat ([2 3]) "a"])
+    ("a" = parse "aa" [repeat ([2 3]) "a"])
+    ("a" = parse "aaa" [repeat ([2 3]) "a"])
 ]
 
 ; Opt out completely
 [
-    ("a" == parse "aaaaaaa" [repeat (_) "b", opt some "a"])
-    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", opt some "a"])
-    ("a" == parse "aa" [repeat (_) "b", opt some "a"])
+    ("a" = parse "aaaaaaa" [repeat (_) "b", opt some "a"])
+    ("a" = parse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", opt some "a"])
+    ("a" = parse "aa" [repeat (_) "b", opt some "a"])
     (null = parse "" [repeat (_) "b", opt some "a"])
 ]
 
 ; Opt out completely, block form
 [
-    ("a" == parse "aaaaaaa" [repeat ([_ _]) "b", opt some "a"])
-    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", opt some "a"])
-    ("a" == parse "aa" [repeat ([_ _]) "b", opt some "a"])
+    ("a" = parse "aaaaaaa" [repeat ([_ _]) "b", opt some "a"])
+    ("a" = parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", opt some "a"])
+    ("a" = parse "aa" [repeat ([_ _]) "b", opt some "a"])
     (null = parse "" [repeat ([_ _]) "b", opt some "a"])
 ]
 
 ; Minimum but no maximum
 [
-    ("a" == parse "aaaaaaa" [repeat ([3 #]) "a"])
-    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 #]) "a"])
+    ("a" = parse "aaaaaaa" [repeat ([3 #]) "a"])
+    ("a" = parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 #]) "a"])
 
     ~parse-mismatch~ !! (parse "aa" [repeat ([3 #]) "a"])
     ~parse-mismatch~ !! (parse "" [repeat ([3 #]) "a"])
@@ -123,7 +123,7 @@
 
 ; Opt out of maximum (e.g. min max equivalence)
 [
-    ("a" == parse "aaa" [repeat ([3 _]) "a"])
+    ("a" = parse "aaa" [repeat ([3 _]) "a"])
 
     ~parse-incomplete~ !! (parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 _]) "a"])
 
@@ -133,17 +133,17 @@
 
 ; No minimum or maximum (MAYBE SOME equivalent), just using #
 [
-    ("a" == parse "aaaaaaa" [repeat (#) "a"])
-    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
-    ("a" == parse "aa" [repeat (#) "a"])
+    ("a" = parse "aaaaaaa" [repeat (#) "a"])
+    ("a" = parse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
+    ("a" = parse "aa" [repeat (#) "a"])
     (void? parse "" [repeat (#) "a"])
 ]
 
 ; No minimum or maximum (MAYBE SOME equivalent), block form
 [
-    ("a" == parse "aaaaaaa" [repeat ([_ #]) "a"])
-    ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])
-    ("a" == parse "aa" [repeat ([_ #]) "a"])
+    ("a" = parse "aaaaaaa" [repeat ([_ #]) "a"])
+    ("a" = parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])
+    ("a" = parse "aa" [repeat ([_ #]) "a"])
     (void? parse "" [repeat ([_ #]) "a"])
 ]
 
@@ -152,21 +152,21 @@
     ~parse-incomplete~ !! (parse [a a] [repeat 1 'a])
     ~parse-incomplete~ !! (parse [a a] [repeat 1 repeat 1 'a])
 
-    ('a == parse [a a] [repeat 2 ['a]])
-    ('a == parse [a a] [repeat 2 'a])
+    ('a = parse [a a] [repeat 2 ['a]])
+    ('a = parse [a a] [repeat 2 'a])
 
     ~parse-mismatch~ !! (parse [a a] [repeat 3 ['a]])
     ~parse-mismatch~ !! (parse [a a] [repeat 3 'a])
 ]
 
 [
-    ('b == parse [a a b b] [repeat 2 'a repeat 2 'b])
+    ('b = parse [a a b b] [repeat 2 'a repeat 2 'b])
     ~parse-mismatch~ !! (parse [a a b b] [repeat 2 'a repeat 3 'b])
 ]
 
 [https://github.com/red/red/issues/564
     ~parse-incomplete~ !! (parse [a] [repeat 0 one])
-    ('a == parse [a] [repeat 0 one 'a])
+    ('a = parse [a] [repeat 0 one 'a])
     (
         z: ~
         all [
@@ -178,7 +178,7 @@
 
 [https://github.com/red/red/issues/564
     ~parse-incomplete~ !! (parse "a" [repeat 0 one])
-    (#a == parse "a" [repeat 0 one #a])
+    (#a = parse "a" [repeat 0 one #a])
     (
         z: ~
         all [
@@ -201,5 +201,5 @@
 [#1280 (
     i: ~
     parse "" [(i: 0) repeat 3 [["a" |] (i: i + 1)]]
-    i == 3
+    i = 3
 )]

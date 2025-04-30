@@ -76,5 +76,5 @@
 )
 [#81 (
     blk: [1]
-    1 == iterate @blk [blk.1]
+    1 = iterate @blk [blk.1]
 )]

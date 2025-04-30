@@ -106,21 +106,21 @@
     (
         a: ~
         all [
-            [] == parse [] [a: collect []]
+            [] = parse [] [a: collect []]
             a = []
         ]
     )
     (
         a: ~
         all [
-            [] == parse "" [a: collect []]
+            [] = parse "" [a: collect []]
             a = []
         ]
     )
     (
         a: ~
         all [
-            [] == parse #{} [a: collect []]
+            [] = parse #{} [a: collect []]
             a = []
         ]
     )
@@ -128,21 +128,21 @@
     (
         a: ~
         all [
-            [1] == parse [1] [a: collect [keep one]]
+            [1] = parse [1] [a: collect [keep one]]
             a = [1]
         ]
     )
     (
         a: ~
         all [
-            [#1] == parse "1" [a: collect [keep one]]
+            [#1] = parse "1" [a: collect [keep one]]
             a = [#1]
         ]
     )
     (
         a: ~
         all [
-            [1] == parse #{01} [a: collect [keep one]]
+            [1] = parse #{01} [a: collect [keep one]]
             a = [1]
         ]
     )
@@ -186,7 +186,7 @@
 [(
     x: ~
     all [
-        [1 2] == parse [1 2] [x: collect [
+        [1 2] = parse [1 2] [x: collect [
             keep integer! keep tag! | keep integer! keep integer!
         ]]
         x = [1 2]
@@ -194,7 +194,7 @@
 )(
     x: ~
     all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
-        ["(" ")"] == parse "(abc)" [x: collect between keep "(" keep ")"]
+        ["(" ")"] = parse "(abc)" [x: collect between keep "(" keep ")"]
         x = ["(" ")"]
     ]
 )(
@@ -206,7 +206,7 @@
 )(
     x: ~
     all [
-        [#a <kept> #a <kept> #a <kept>] == parse "aaa" [x: collect [some [
+        [#a <kept> #a <kept> #a <kept>] = parse "aaa" [x: collect [some [
             keep (if null [<not kept>])
             keep one
             keep (if ok [<kept>])
@@ -256,22 +256,22 @@
 [
     (all [
         let x
-        [3] == parse [1 2 3] [x: collect [keep some integer!]]
+        [3] = parse [1 2 3] [x: collect [keep some integer!]]
         x = [3]
     ])
     (all [
         let x
-        [1 2 3] == parse [1 2 3] [x: collect [some keep integer!]]
+        [1 2 3] = parse [1 2 3] [x: collect [some keep integer!]]
         x = [1 2 3]
     ])
     (all [
         let x
-        [3] == parse [1 2 3] [x: collect [keep [some integer!]]]
+        [3] = parse [1 2 3] [x: collect [keep [some integer!]]]
         x = [3]
     ])
     (all [
         let x
-        [1 2 3] == parse [1 2 3] [x: collect [some [keep integer!]]]
+        [1 2 3] = parse [1 2 3] [x: collect [some [keep integer!]]]
         x = [1 2 3]
     ])
 ]
@@ -324,7 +324,7 @@
 [
     (all [
         let [a b]
-        [1 4] == parse [1 2 3 4] [
+        [1 4] = parse [1 2 3 4] [
             a: collect [
                 keep integer!
                 b: collect [keep spread across repeat 2 integer!]
@@ -367,7 +367,7 @@
     ])
     (all [
         let x
-        [[a b c]] == parse [1 2 3] [x: collect [keep ([a b c]) to <end>]]
+        [[a b c]] = parse [1 2 3] [x: collect [keep ([a b c]) to <end>]]
         x = [[a b c]]
     ])
 ]
@@ -377,7 +377,7 @@ https://github.com/metaeducation/ren-c/issues/935
 [
     (all [
         let x
-        ["aaa" "b"] == parse "aaabbb" [
+        ["aaa" "b"] = parse "aaabbb" [
             x: collect [keep across some "a" keep some "b"]
         ]
         x = ["aaa" "b"]
@@ -385,13 +385,13 @@ https://github.com/metaeducation/ren-c/issues/935
 
     (all [
         let x
-        ["aaa"] == parse "aaabbb" [x: collect [keep across to "b"] to <end>]
+        ["aaa"] = parse "aaabbb" [x: collect [keep across to "b"] to <end>]
         x = ["aaa"]
     ])
 
     (all [
         let [outer inner]
-        ["b"] == parse "aaabbb" [
+        ["b"] = parse "aaabbb" [
             outer: collect [
                 some [inner: collect keep across some "a" | keep some "b"]
             ]
@@ -417,7 +417,7 @@ https://github.com/metaeducation/ren-c/issues/935
     (
         list: ~
         all [
-            [3 4 8] == parse [a 3 4 t "test" 8] [
+            [3 4 8] = parse [a 3 4 t "test" 8] [
                 list: collect [some [keep integer! | <next>]]
             ]
             list = [3 4 8]
@@ -574,7 +574,7 @@ https://github.com/metaeducation/ren-c/issues/939
     (
         c: ~
         parse str b: [c: collect rule (insert out spread c)]
-        out == res
+        out = res
     )
 
     (take:last append str "¿", ok)
@@ -582,11 +582,11 @@ https://github.com/metaeducation/ren-c/issues/939
     (
         c: ~
         parse str b: [c: collect rule (insert out spread c)]
-        out == res
+        out = res
     )
     (
         c: ~
         parse str b: [c: collect rule (append out spread c)]
-        out == res
+        out = res
     )
 ]

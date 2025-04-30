@@ -260,18 +260,18 @@
 ;
 ;    (
 ;        g: generator [yield (get-obj elide yield <foo>).(yield 'sub).f]
-;        [<foo> sub 20 _ _] == reduce [g g g try g try g]
+;        [<foo> sub 20 _ _] = reduce [g g g try g try g]
 ;    )
 ;
 ;    (
 ;        g: generator [yield (get-obj elide yield <foo>).(yield 'sub).f/]
-;        (compose [<foo> sub (twenty/) _ _]) == reduce [g g g try g try g]
+;        (compose [<foo> sub (twenty/) _ _]) = reduce [g g g try g try g]
 ;    )
 ;
 ;    (
 ;        g: generator [yield (get-obj elide yield <foo>).(yield 'sub).x: 1 + 2]
 ;        all [
-;            [<foo> sub 3 _ _] == reduce [g g g try g try g]
+;            [<foo> sub 3 _ _] = reduce [g g g try g try g]
 ;            obj.sub.x = 3
 ;        ]
 ;    )

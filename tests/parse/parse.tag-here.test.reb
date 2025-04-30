@@ -19,13 +19,13 @@
 [(
     all [
         let pos
-        "b" == parse "aaabbb" [some "a", pos: <here>, some "b"]
+        "b" = parse "aaabbb" [some "a", pos: <here>, some "b"]
         pos = "bbb"
     ]
 )(
     all [
         let [left n x]
-        "stuff" == parse "<<<stuff>>>" [
+        "stuff" = parse "<<<stuff>>>" [
             left: across some "<"
             (n: length of left)
             x: between <here> repeat (n) ">"
@@ -41,18 +41,18 @@
 ])
 (all wrap [
     pos: ~
-    [y] == res: parse ser: [x y] [one, pos: <here>, elide one]
+    [y] = res: parse ser: [x y] [one, pos: <here>, elide one]
     pos = next ser
 ])
 (all wrap [
     pos: ~
-    [] == res: parse ser: [x y] [one, one, pos: <here>]
+    [] = res: parse ser: [x y] [one, one, pos: <here>]
     pos = tail of ser
 ])
 [#2130 (
     all wrap [
         pos: val: ~
-        'x == res: parse ser: [x] [pos: <here>, val: word!]
+        'x = res: parse ser: [x] [pos: <here>, val: word!]
         val = 'x
         pos = ser
     ]
@@ -83,7 +83,7 @@
     a-value: first [()]
     b-value: ~
     all [
-        '() == parse a-value [b-value: <here>]
+        '() = parse a-value [b-value: <here>]
         same? a-value b-value
     ]
 )
@@ -93,35 +93,35 @@
     (
         p: ~
         all [
-            "" == parse "" [p: <here>]
+            "" = parse "" [p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         all [
-            "" == parse "" [[[p: <here>]]]
+            "" = parse "" [[[p: <here>]]]
             tail? p
         ]
     )
     (
         p: ~
         all [
-            #a == parse "a" [p: <here> #a]
+            #a = parse "a" [p: <here> #a]
             p = "a"
         ]
     )
     (
         p: ~
         all [
-            "" == parse "a" [#a p: <here>]
+            "" = parse "a" [#a p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         all [
-            "" == parse "a" [#a [p: <here>]]
+            "" = parse "a" [#a [p: <here>]]
             tail? p
         ]
     )
@@ -135,14 +135,14 @@
     (
         p: ~
         all [
-            #b == parse "ab" [#a [p: <here>] [#b | #c]]
+            #b = parse "ab" [#a [p: <here>] [#b | #c]]
             p = "b"
         ]
     )
     (
         p: ~
         all [
-            "b" == parse "aaabb" [
+            "b" = parse "aaabb" [
                 repeat 3 #a p: <here> repeat 2 #b seek (p) [repeat 2 "b"]
             ]
             p = "bb"
@@ -155,35 +155,35 @@
     (
         p: ~
         all [
-            [] == parse [] [p: <here>]
+            [] = parse [] [p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         all [
-            [] == parse [] [[[p: <here>]]]
+            [] = parse [] [[[p: <here>]]]
             tail? p
         ]
     )
     (
         p: ~
         all [
-            'a == parse [a] [p: <here> 'a]
+            'a = parse [a] [p: <here> 'a]
             p = [a]
         ]
     )
     (
         p: ~
         all [
-            [] == parse [a] ['a p: <here>]
+            [] = parse [a] ['a p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         all [
-            [] == parse [a] ['a [p: <here>]]
+            [] = parse [a] ['a [p: <here>]]
             tail? p
         ]
     )
@@ -197,14 +197,14 @@
     (
         p: ~
         all [
-            'b == parse [a b] ['a [p: <here>] ['b | 'c]]
+            'b = parse [a b] ['a [p: <here>] ['b | 'c]]
             p = [b]
         ]
     )
     (
         p: ~
         all [
-            'b == parse [a a a b b] [
+            'b = parse [a a a b b] [
                 repeat 3 'a p: <here> repeat 2 'b seek (p) [repeat 2 'b]
             ]
             p = [b b]
@@ -217,35 +217,35 @@
     (
         p: ~
         all [
-            #{} == parse #{} [p: <here>]
+            #{} = parse #{} [p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         all [
-            #{} == parse #{} [[[p: <here>]]]
+            #{} = parse #{} [[[p: <here>]]]
             tail? p
         ]
     )
     (
         p: ~
         all [
-            #{0A} == parse #{0A} [p: <here> #{0A}]
+            #{0A} = parse #{0A} [p: <here> #{0A}]
             p = #{0A}
         ]
     )
     (
         p: ~
         all [
-            #{} == parse #{0A} [#{0A} p: <here>]
+            #{} = parse #{0A} [#{0A} p: <here>]
             tail? p
         ]
     )
     (
         p: ~
         all [
-            #{} == parse #{0A} [#{0A} [p: <here>]]
+            #{} = parse #{0A} [#{0A} [p: <here>]]
             tail? p
         ]
     )
@@ -259,14 +259,14 @@
     (
         p: ~
         all [
-            #{0B} == parse #{0A0B} [#{0A} [p: <here>] [#{0B} | #"^L"]]
+            #{0B} = parse #{0A0B} [#{0A} [p: <here>] [#{0B} | #"^L"]]
             p = #{0B}
         ]
     )
     (
         p: ~
         all [
-            #{0B} == parse #{0A0A0A0B0B} [
+            #{0B} = parse #{0A0A0A0B0B} [
                 repeat 3 #{0A}
                 p: <here>
                 repeat 2 #{0B}

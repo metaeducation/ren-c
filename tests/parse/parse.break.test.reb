@@ -18,7 +18,7 @@
     ~parse-mismatch~ !! (parse "aaa" [some ["a" [break]] "aaa"])
     ~parse-mismatch~ !! (parse "aaa" [some ["a" [["a" | break]]] "aaa"])
 
-    ("aaa" == parse "aaa" [opt some ["a" break] "aaa"])
-    ("aaa" == parse "aaa" [opt some ["a" [break]] "aaa"])
-    ("aaa" == parse "aaa" [opt some ["a" [["a" break]]] "aaa"])
+    ("aaa" = parse "aaa" [opt some ["a" break] "aaa"])
+    ("aaa" = parse "aaa" [opt some ["a" [break]] "aaa"])
+    ("aaa" = parse "aaa" [opt some ["a" [["a" break]]] "aaa"])
 ]

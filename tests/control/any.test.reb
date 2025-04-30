@@ -47,8 +47,8 @@
     same? a-value any [a-value]
 )
 (1/Jan/0000 = any [1/Jan/0000])
-(0.0 == any [0.0])
-(1.0 == any [1.0])
+(0.0 = any [0.0])
+(1.0 = any [1.0])
 (
     a-value: me@here.com
     same? a-value any [a-value]
@@ -64,20 +64,20 @@
 )
 (
     a-value: first [:a]
-    a-value == any [a-value]
+    a-value = any [a-value]
 )
-(NUL == any [NUL])
+(NUL = any [NUL])
 
-(0 == any [0])
-(1 == any [1])
-(#a == any [#a])
+(0 = any [0])
+(1 = any [1])
+(#a = any [#a])
 (
     a-value: first ['a/b]
-    :a-value == any [:a-value]
+    :a-value = any [:a-value]
 )
 (
     a-value: first ['a]
-    :a-value == any [:a-value]
+    :a-value = any [:a-value]
 )
 (okay = any [okay])
 (null? any [null])
@@ -96,24 +96,24 @@
     same? :a-value any [:a-value]
 )
 (same? +/ any [+/])
-(0x0 == any [0x0])
+(0x0 = any [0x0])
 (
     a-value: 'a/b
-    :a-value == any [:a-value]
+    :a-value = any [:a-value]
 )
 (
     a-value: make port! http://
     port? any [:a-value]
 )
-('/a == any ['/a])
+('/a = any ['/a])
 ; routine test?
 (
     a-value: first [a.b:]
-    :a-value == any [:a-value]
+    :a-value = any [:a-value]
 )
 (
     a-value: first [a:]
-    :a-value == any [:a-value]
+    :a-value = any [:a-value]
 )
 (
     a-value: ""
@@ -123,10 +123,10 @@
     a-value: to tag! ""
     same? a-value any [a-value]
 )
-(0:00 == any [0:00])
-(0.0.0 == any [0.0.0])
+(0:00 = any [0:00])
+(0.0.0 = any [0.0.0])
 (null? any [null])
-('a == any ['a])
+('a = any ['a])
 ; two values
 ((unrun :abs) = any [null unrun :abs])
 (
@@ -146,8 +146,8 @@
     same? a-value any [null a-value]
 )
 (1/Jan/0000 = any [null 1/Jan/0000])
-(0.0 == any [null 0.0])
-(1.0 == any [null 1.0])
+(0.0 = any [null 0.0])
+(1.0 = any [null 1.0])
 (
     a-value: me@here.com
     same? a-value any [null a-value]
@@ -163,20 +163,20 @@
 )
 (
     a-value: first [:a]
-    a-value == any [null a-value]
+    a-value = any [null a-value]
 )
-(NUL == any [null NUL])
+(NUL = any [null NUL])
 
-(0 == any [null 0])
-(1 == any [null 1])
-(#a == any [null #a])
+(0 = any [null 0])
+(1 = any [null 1])
+(#a = any [null #a])
 (
     a-value: first ['a/b]
-    :a-value == any [null :a-value]
+    :a-value = any [null :a-value]
 )
 (
     a-value: first ['a]
-    :a-value == any [null :a-value]
+    :a-value = any [null :a-value]
 )
 (okay = any [null okay])
 (null? any [null null])
@@ -194,23 +194,23 @@
     same? :a-value any [null :a-value]
 )
 (same? +/ any [null +/])
-(0x0 == any [null 0x0])
+(0x0 = any [null 0x0])
 (
     a-value: 'a/b
-    :a-value == any [null :a-value]
+    :a-value = any [null :a-value]
 )
 (
     a-value: make port! http://
     port? any [null :a-value]
 )
-('/a == any [null '/a])
+('/a = any [null '/a])
 (
     a-value: first [a.b:]
-    :a-value == any [null :a-value]
+    :a-value = any [null :a-value]
 )
 (
     a-value: first [a:]
-    :a-value == any [null :a-value]
+    :a-value = any [null :a-value]
 )
 (
     a-value: ""
@@ -220,10 +220,10 @@
     a-value: to tag! ""
     same? a-value any [null a-value]
 )
-(0:00 == any [null 0:00])
-(0.0.0 == any [null 0.0.0])
+(0:00 = any [null 0:00])
+(0.0.0 = any [null 0.0.0])
 (null? any [null null])
-('a == any [null 'a])
+('a = any [null 'a])
 (:abs = any [:abs null])
 (
     a-value: #{}
@@ -242,8 +242,8 @@
     same? a-value any [a-value null]
 )
 (1/Jan/0000 = any [1/Jan/0000 null])
-(0.0 == any [0.0 null])
-(1.0 == any [1.0 null])
+(0.0 = any [0.0 null])
+(1.0 = any [1.0 null])
 (
     a-value: me@here.com
     same? a-value any [a-value null]
@@ -259,20 +259,20 @@
 )
 (
     a-value: first [:a]
-    :a-value == any [:a-value null]
+    :a-value = any [:a-value null]
 )
-(NUL == any [NUL null])
+(NUL = any [NUL null])
 
-(0 == any [0 null])
-(1 == any [1 null])
-(#a == any [#a null])
+(0 = any [0 null])
+(1 = any [1 null])
+(#a = any [#a null])
 (
     a-value: first ['a/b]
-    :a-value == any [:a-value null]
+    :a-value = any [:a-value null]
 )
 (
     a-value: first ['a]
-    :a-value == any [:a-value null]
+    :a-value = any [:a-value null]
 )
 (okay = any [okay null])
 
@@ -289,23 +289,23 @@
     same? :a-value any [:a-value null]
 )
 (same? +/ any [+/ null])
-(0x0 == any [0x0 null])
+(0x0 = any [0x0 null])
 (
     a-value: 'a/b
-    :a-value == any [:a-value null]
+    :a-value = any [:a-value null]
 )
 (
     a-value: make port! http://
     port? any [:a-value null]
 )
-('/a == any ['/a null])
+('/a = any ['/a null])
 (
     a-value: first [a.b:]
-    :a-value == any [:a-value null]
+    :a-value = any [:a-value null]
 )
 (
     a-value: first [a:]
-    :a-value == any [:a-value null]
+    :a-value = any [:a-value null]
 )
 (
     a-value: ""
@@ -315,10 +315,10 @@
     a-value: to tag! ""
     same? a-value any [a-value null]
 )
-(0:00 == any [0:00 null])
-(0.0.0 == any [0.0.0 null])
+(0:00 = any [0:00 null])
+(0.0.0 = any [0.0.0 null])
 (null? any [null null])
-('a == any ['a null])
+('a = any ['a null])
 ; evaluation stops after encountering something else than null or NULL
 (
     success: okay

@@ -134,7 +134,7 @@
 ("[^/    a b]" = mold new-line [a b] 'yes)
 
 [https://github.com/metaeducation/ren-c/issues/1033 (
-    "[^/    1^/    2^/]" == mold new-line:all [1 2] 'yes
+    "[^/    1^/    2^/]" = mold new-line:all [1 2] 'yes
 )]
 
 [https://github.com/metaeducation/rebol-httpd/issues/10 (

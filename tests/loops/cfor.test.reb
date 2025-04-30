@@ -205,7 +205,7 @@
 ~expect-arg~ !! (
     test: 'false
     cfor 'i 1 2 [
-        either true? test [i == 2] [
+        either true? test [i = 2] [
             test: 'true
             i: 'false
         ]

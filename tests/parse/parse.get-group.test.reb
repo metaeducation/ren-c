@@ -36,11 +36,11 @@
     )
 ]
 
-("aaa" == parse "aaa" [:(if null ["bbb"]) "aaa"])
-("aaa" == parse "bbbaaa" [:(if ok ["bbb"]) "aaa"])
+("aaa" = parse "aaa" [:(if null ["bbb"]) "aaa"])
+("aaa" = parse "bbbaaa" [:(if ok ["bbb"]) "aaa"])
 
-("b" == parse "aaabbb" [:([some "a"]) :([some "b"])])
-("b" == parse "aaabbb" [:([some "a"]) :(if null [some "c"]) :([some "b"])])
+("b" = parse "aaabbb" [:([some "a"]) :([some "b"])])
+("b" = parse "aaabbb" [:([some "a"]) :(if null [some "c"]) :([some "b"])])
 
 ; !!! Partial rule splicing doesn't work with GET-GROUP! being a combinator
 ; under the constraints of the current design...this would mean it would be
@@ -50,12 +50,12 @@
 ; much more compelling.
 ;
 [(comment [
-    ("a" == parse "aaa" [:('some) "a"])
+    ("a" = parse "aaa" [:('some) "a"])
     ~parse-mismatch~ !! (parse "aaa" [:(1 + 1) "a"])
-    ("a" == parse "aaa" [:(1 + 2) "a"])
+    ("a" = parse "aaa" [:(1 + 2) "a"])
     (
         count: 0
-        "a" == parse ["a" "aa" "aaa"] [
+        "a" = parse ["a" "aa" "aaa"] [
             some [subparse text! [:(count: count + 1) "a"]]
         ]
     )
@@ -70,7 +70,7 @@
 [
     (
         x: ~
-        6 == parse [2 4 6] [some [x: integer! elide when (even? x)]]
+        6 = parse [2 4 6] [some [x: integer! elide when (even? x)]]
     )
     ~parse-mismatch~ !! (
         x: ~

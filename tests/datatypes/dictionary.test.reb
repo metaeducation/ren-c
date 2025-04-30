@@ -12,14 +12,14 @@
 (empty? to map! [])
 (empty? make map! 4)
 ; The length of a map is the number of key/value pairs it holds.
-(2 == length of to map! [a 1 b 2])  ; 4 in R2, R2/Forward
-(m: to map! [a 1 b 2] 1 == m.a)
-(m: to map! [a 1 b 2] 2 == m.b)
+(2 = length of to map! [a 1 b 2])  ; 4 in R2, R2/Forward
+(m: to map! [a 1 b 2] 1 = m.a)
+(m: to map! [a 1 b 2] 2 = m.b)
 (
     m: to map! [a 1 b 2]
     null? m.c
 )
-(m: to map! [a 1 b 2] m.c: 3 3 == m.c)
+(m: to map! [a 1 b 2] m.c: 3 3 = m.c)
 
 ; Maps contain key/value pairs and must be created from blocks of even length.
 ;

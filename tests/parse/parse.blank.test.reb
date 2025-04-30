@@ -26,13 +26,13 @@
 
 ~parse-mismatch~ !! (parse [x] ['x blank])
 ('_ = parse [x _] ['x _])
-('x == parse [x] [opt blank 'x <end>])
+('x = parse [x] [opt blank 'x <end>])
 
 ~parse-mismatch~ !! (parse [] [blank blank blank])
 
 ~parse-mismatch~ !! (parse [x <y> "z"] ['_ '_ '_])
-(_ == parse [_ _ _] ['_ '_ '_])
-(_ == parse [_ _ _] [_ _ _])
+(_ = parse [_ _ _] ['_ '_ '_])
+(_ = parse [_ _ _] [_ _ _])
 
 [
     ~parse-mismatch~ !! (parse "" [_])

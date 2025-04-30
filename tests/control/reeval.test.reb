@@ -10,7 +10,7 @@
 ;
 ; https://forum.rebol.info/t/meet-the-reevaluate-reeval-native/311
 [
-    (1 == reeval :abs -1)
+    (1 = reeval :abs -1)
 ]
 
 ; REEVAL can handle other variadic cases
@@ -28,33 +28,33 @@
     a-value: blank!
     same? a-value reeval a-value
 )
-(1/Jan/0000 == reeval 1/Jan/0000)
-(0.0 == reeval 0.0)
-(1.0 == reeval 1.0)
+(1/Jan/0000 = reeval 1/Jan/0000)
+(0.0 = reeval 0.0)
+(1.0 = reeval 1.0)
 (
     a-value: me@here.com
     same? a-value reeval a-value
 )
 (
     a-value: does [5]
-    5 == reeval :a-value
+    5 = reeval :a-value
 )
 (
     a: 12
     a-value: first [:a]
-    :a == reeval :a-value
+    :a = reeval :a-value
 )
 
-(0 == reeval 0)
-(1 == reeval 1)
-(#a == reeval #a)
+(0 = reeval 0)
+(1 = reeval 1)
+(#a = reeval #a)
 
 [#2101 #1434 (
     a-value: first ['a/b]
     all [
         lit-path? a-value
         path? reeval :a-value
-        (as path! unquote :a-value) == (reeval :a-value)
+        (as path! unquote :a-value) = (reeval :a-value)
     ]
 )]
 
@@ -63,7 +63,7 @@
     all [
         lit-word? a-value
         word? reeval :a-value
-        (to-word unquote :a-value) == (reeval :a-value)
+        (to-word unquote :a-value) = (reeval :a-value)
     ]
 )
 
@@ -78,7 +78,7 @@
 (
     a-value: 'a.b
     a: make object! [b: 1]
-    1 == reeval :a-value
+    1 = reeval :a-value
 )
 (
     a-value: make port! http://
@@ -93,10 +93,10 @@
     a-value: to tag! ""
     same? a-value reeval a-value
 )
-(0:00 == reeval 0:00)
-(0.0.0 == reeval 0.0.0)
+(0:00 = reeval 0:00)
+(0.0.0 = reeval 0.0.0)
 (
     a-value: 'b-value
     b-value: 1
-    1 == reeval :a-value
+    1 = reeval :a-value
 )

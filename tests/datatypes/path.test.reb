@@ -1,6 +1,6 @@
 ; datatypes/path.r
 (path? 'a/b)
-('a/b == first [a/b])
+('a/b = first [a/b])
 (not path? 1)
 (path! = type of 'a/b)
 ; the minimum
@@ -12,7 +12,7 @@
 ;(
 ;    all [
 ;        path? a: transcode:one "[a b c]/2"
-;        2 == index of a
+;        2 = index of a
 ;    ]
 ;)
 
@@ -24,7 +24,7 @@
 )
 (
     blk: reduce [^abs 2]
-    2 == blk.(^abs)
+    2 = blk.(^abs)
 )
 ~bad-sequence-item~ !! (
     blk: reduce [charset "a" 3]
@@ -32,27 +32,27 @@
 )
 (
     blk: [[] 3]
-    3 == blk.([])
+    3 = blk.([])
 )
 (
     blk: [_ 3]
-    3 == eval [blk.('_)]
+    3 = eval [blk.('_)]
 )
 (
     blk: [blank 3]
-    3 == eval [blk.blank]
+    3 = eval [blk.blank]
 )
 (
     a-value: 1/Jan/0000
     all [
-        1 == a-value.1
-        'Jan == a-value.2
-        0 == a-value.3
+        1 = a-value.1
+        'Jan = a-value.2
+        0 = a-value.3
     ]
 )
 (
     a-value: me@here.com
-    #"m" == a-value.1
+    #"m" = a-value.1
 )
 (
     a-value: make error! ""
@@ -60,11 +60,11 @@
 )
 (
     a-value: first ['a/b]
-    'a == (noquote a-value).1
+    'a = (noquote a-value).1
 )
 (
     a-value: make object! [a: 1]
-    1 == a-value.a
+    1 = a-value.a
 )
 (
     a-value: 2x3
@@ -72,11 +72,11 @@
 )
 (
     a-value: first [(2)]
-    2 == a-value.1
+    2 = a-value.1
 )
 (
     a-value: 'a/b
-    'a == a-value.1
+    'a = a-value.1
 )
 (
     a-value: make port! http://
@@ -84,23 +84,23 @@
 )
 (
     a-value: first [a.b:]
-    'a.b == a-value.1
+    'a.b = a-value.1
 )
 (
     a-value: "12"
-    #"1" == a-value.1
+    #"1" = a-value.1
 )
 (
     a-value: <tag>
-    #"t" == a-value.1
+    #"t" = a-value.1
 )
 (
     a-value: 2:03
-    2 == a-value.1
+    2 = a-value.1
 )
 (
     a-value: 1.2.3
-    1 == a-value.1
+    1 = a-value.1
 )
 
 ; Ren-C changed INTEGER! path picking to act as PICK, only ANY-STRING? and
@@ -113,11 +113,11 @@
 ; calling functions through paths: function in object
 (
     obj: make object! [fun: func [] [return 1]]
-    1 == obj/fun
+    1 = obj/fun
 )
 (
     obj: make object! [fun: func [:ref [integer!]] [return ref]]
-    1 == obj/fun:ref 1
+    1 = obj/fun:ref 1
 )
 
 ; calling functions through paths: function in block, positional

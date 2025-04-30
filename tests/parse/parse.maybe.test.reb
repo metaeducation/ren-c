@@ -34,7 +34,7 @@
 ; assignment...demonstrate meta
 
 ; (all [
-;     "b" == parse "bbb" [
+;     "b" = parse "bbb" [
 ;         (x: 10, y: 20)
 ;         y: x: ^[maybe some "a"]  ; !!! maybe retention concept TBD
 ;         some "b"
@@ -44,7 +44,7 @@
 ; ])
 ;
 ; (all [
-;     "b" == parse "aaabbb" [
+;     "b" = parse "aaabbb" [
 ;         (x: 10, y: 20)
 ;         y: x: ^[maybe some "a"]  ; matched, so non-void...changes x
 ;         some "b"
@@ -54,7 +54,7 @@
 ; ])
 ;
 ; (all [
-;     "b" == parse "bbb" [
+;     "b" = parse "bbb" [
 ;         (x: 10, y: 20)
 ;         y: x: maybe (~)  ; antiform ~ is nothing, unset variable
 ;         some "b"

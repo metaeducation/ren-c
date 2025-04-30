@@ -132,10 +132,10 @@
 )
 
 (the '[a b c] = quote [a b c])
-(the '(a b c) == quote the (a b c))
-(not (the '[A B C] == quote [a b c]))
-('''[a b c] !== '''''[a b c])
-('''[a b c] == '''[a b c])
+(the '(a b c) = quote the (a b c))
+(not (the '[A B C] = quote [a b c]))
+('''[a b c] != '''''[a b c])
+('''[a b c] = '''[a b c])
 ('''[a b c] <> '''''[a b c])
 
 ; No quote levels is legal for QUOTE to add also, if /DEPTH is 0
@@ -157,13 +157,13 @@
 ; REQUOTE is a reframing action that removes quoting levels and then puts
 ; them back on to the result.
 
-((the ''''3) == requote add the ''''1 2)
+((the ''''3) = requote add the ''''1 2)
 
-((the '''[b c d]) == requote find ''''[a b c d] spread [b])
+((the '''[b c d]) = requote find ''''[a b c d] spread [b])
 
-(null == requote find ''''[a b c d] spread [q])  ; nulls exempt
+(null = requote find ''''[a b c d] spread [q])  ; nulls exempt
 
-((the '(1 2 3 <four>)) == requote append ''(1 2 3) <four>)
+((the '(1 2 3 <four>)) = requote append ''(1 2 3) <four>)
 
 ((the '''a/b/c/d/e/f) = requote join the '''a/b/c '/d/e/f)
 
@@ -174,7 +174,7 @@
 
 ; COPY should be implemented for all types, QUOTED! included.
 ;
-((the '''[a b c]) == copy the '''[a b c])
+((the '''[a b c]) = copy the '''[a b c])
 
 
 ; All escaped values are truthy, regardless of what it is they are escaping

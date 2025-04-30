@@ -40,7 +40,7 @@
 ~invalid-type~ !! (
     test: 'false
     count-up 'i 2 [
-        either true? test [i == 2] [
+        either true? test [i = 2] [
             test: 'true
             i: 'false
         ]

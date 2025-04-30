@@ -207,7 +207,7 @@
             continue
         ]
 
-        if (iter.1 == '!!) [
+        if (iter.1 = '!!) [
             fail ["Unexpected success on" @text "->" (mold spread items)]
         ]
 

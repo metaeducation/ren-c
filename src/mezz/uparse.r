@@ -1287,7 +1287,7 @@ default-combinators: to map! reduce [
         case [
             any-list? input [
                 remainder: next input
-                if value == input.1 [
+                if value = input.1 [
                     if negated [
                         return raise "ISSUE! matched, but combinator negated"
                     ]

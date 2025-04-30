@@ -5,13 +5,13 @@
 (
     x: ~
     all [
-        "a" == parse "aaa" [x: opt some "b", some "a"]
+        "a" = parse "aaa" [x: opt some "b", some "a"]
         x = null
     ]
 )(
     x: ~
     all [
-        "a" == parse "aaa" [x: opt some "a"]
+        "a" = parse "aaa" [x: opt some "a"]
         x = "a"
     ]
 )
@@ -27,7 +27,7 @@
 )(
     n: 0
     all [
-        1 == parse "abc" [
+        1 = parse "abc" [
             some further [to <end> (n: n + 1)]
         ]
         n = 2
@@ -42,19 +42,19 @@
     (
         x: ~
         all [
-            "a" == parse "a" [x: "a"]
+            "a" = parse "a" [x: "a"]
             "a" = x
         ]
     )(
         x: null
         all [
-            "a" == parse "aaa" [x: some "a"]
+            "a" = parse "aaa" [x: some "a"]
             "a" = x  ; SOME doesn't want to be "expensive" on average
         ]
     )(
         x: null
         all [
-            "a" == parse "aaa" [x: [some "a" | some "b"]]
+            "a" = parse "aaa" [x: [some "a" | some "b"]]
             "a" = x  ; demonstrates use of the result (which alternate taken)
         ]
     )
@@ -64,7 +64,7 @@
     (
         res: ~
         all [
-            'c == parse [b a a a c] [<next> res: some 'a 'c]
+            'c = parse [b a a a c] [<next> res: some 'a 'c]
             res = 'a
         ]
     )
@@ -72,40 +72,40 @@
         res: ~
         wa: ['a]
         all [
-            'c == parse [b a a a c] [<next> res: some wa 'c]
+            'c = parse [b a a a c] [<next> res: some wa 'c]
             res = 'a
         ]
     )
 ]
 
 [
-    ('a == parse [a a] [some ['a]])
+    ('a = parse [a a] [some ['a]])
 
     ~parse-mismatch~ !! (parse [a a] [some ['a] 'b])
 
-    ('a == parse [a a b a b b b a] [some [one]])
-    ('a == parse [a a b a b b b a] [some ['a | 'b]])
+    ('a = parse [a a b a b b b a] [some [one]])
+    ('a = parse [a a b a b b b a] [some ['a | 'b]])
 
     ~parse-incomplete~ !! (parse [a a b a b b b a] [some ['a | 'c]])
 
-    ('b == parse [a a b b] [some 'a some 'b])
+    ('b = parse [a a b b] [some 'a some 'b])
 
     ~parse-mismatch~ !! (parse [a a b b] [some 'a some 'c])
 
-    ('c == parse [b a a a c] [<next> some ['a] 'c])
+    ('c = parse [b a a a c] [<next> some ['a] 'c])
 ]
 
 [
-    (#a == parse "aa" [some [#a]])
+    (#a = parse "aa" [some [#a]])
 
     ~parse-mismatch~ !! (parse "aa" [some [#a] #b])
 
-    (#a == parse "aababbba" [some [one]])
-    ("a" == parse "aababbba" [some ["a" | "b"]])
+    (#a = parse "aababbba" [some [one]])
+    ("a" = parse "aababbba" [some ["a" | "b"]])
 
     ~parse-incomplete~ !! (parse "aababbba" [some ["a" | #c]])
 
-    ("b" == parse "aabb" [some #a some "b"])
+    ("b" = parse "aabb" [some #a some "b"])
 
     ~parse-mismatch~ !! (parse "aabb" [some "a" some #c])
 ]
@@ -115,7 +115,7 @@
     (void? parse [1] [some further [to [<end>]]])
 ]
 
-(#c == parse "baaac" [one some [#a] #c])
+(#c = parse "baaac" [one some [#a] #c])
 
 
 ; OPT SOME or MAYBE SOME tests (which used to be WHILE)
@@ -123,7 +123,7 @@
 (
     x: ~
     all [
-        "a" == parse "aaa" [x: opt some "b", opt some "a"]
+        "a" = parse "aaa" [x: opt some "b", opt some "a"]
         null? x
     ]
 )
@@ -131,18 +131,18 @@
 [
     (null = parse [] [opt some 'a])
     (null = parse [] [opt some 'b])
-    ('a == parse [a] [opt some 'a])
+    ('a = parse [a] [opt some 'a])
 
     ~parse-incomplete~ !! (parse [a] [opt some 'b])
 
-    ('a == parse [a] [opt some 'b one])
-    ('b == parse [a b a b] [opt some ['b | 'a]])
+    ('a = parse [a] [opt some 'b one])
+    ('b = parse [a b a b] [opt some ['b | 'a]])
 ]
 
 [(
     x: ~
     all [
-        "a" == parse "aaa" [x: opt some "a"]
+        "a" = parse "aaa" [x: opt some "a"]
         x = "a"
     ]
 )]
@@ -164,7 +164,7 @@
         )
         j
     ]]
-    i == 2
+    i = 2
 )
 
 [#1268 (
@@ -177,7 +177,7 @@
     j: ~
     all [
         raised? parse "a" [opt some [(i: i + 1, j: if i = 2 '[bypass]) j]]
-        i == 2
+        i = 2
     ]
 )]
 
@@ -185,10 +185,10 @@
 [
     (null = parse "" [opt some #a])
     (null = parse "" [opt some #b])
-    (#a == parse "a" [opt some #a])
+    (#a = parse "a" [opt some #a])
     ~parse-incomplete~ !! (parse "a" [opt some #b])
-    (#a == parse "a" [opt some #b one])
-    (#b == parse "abab" [opt some [#b | #a]])
+    (#a = parse "a" [opt some #b one])
+    (#b = parse "abab" [opt some [#b | #a]])
 ]
 
 ; WHILE tests from %parse-test.red, rethought as OPT SOME
@@ -197,7 +197,7 @@
         x: blank
         ok
     )
-    (#{06} == parse #{020406} [
+    (#{06} = parse #{020406} [
         opt some [x: across one elide when (even? first x)]
     ])
 
@@ -210,19 +210,19 @@
 
     (null = parse #{} [opt some #{0A}])
     (null = parse #{} [opt some #{0B}])
-    (#{0A} == parse #{0A} [opt some #{0A}])
+    (#{0A} = parse #{0A} [opt some #{0A}])
 
     ~parse-incomplete~ !! (parse #{0A} [opt some #{0B}])
 
-    (10 == parse #{0A} [opt some #{0B} one])
-    (#{0B} == parse #{0A0B0A0B} [opt some [#{0B} | #{0A}]])
+    (10 = parse #{0A} [opt some #{0B} one])
+    (#{0B} = parse #{0A0B0A0B} [opt some [#{0B} | #{0A}]])
 
     ~parse-mismatch~ !! (parse #{0A} [opt some #{0A} #{0A}])
 
-    (1 == parse #{01} [ahead [#{0A} | #"^A"] one])
+    (1 = parse #{01} [ahead [#{0A} | #"^A"] one])
 ]
 
 [
-    ('a == parse [a a] [opt some 'a])
-    (null == parse [a a] [opt some 'a, opt some 'b])
+    ('a = parse [a a] [opt some 'a])
+    (null = parse [a a] [opt some 'a, opt some 'b])
 ]

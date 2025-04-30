@@ -6,7 +6,7 @@
 (
     all [
         let g
-        '* == parse [* * * 1 <foo> * * *] [
+        '* = parse [* * * 1 <foo> * * *] [
             some '*
             g: gather [
                 emit i: integer! emit t: text! | emit i: integer! emit t: tag!

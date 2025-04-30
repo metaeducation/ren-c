@@ -34,17 +34,17 @@
 ]
 
 [#1246
-    ("1" == parse "1" [not not "1"])
-    ("1" == parse "1" [not ahead [not ahead "1"] "1"])
+    ("1" = parse "1" [not not "1"])
+    ("1" = parse "1" [not ahead [not ahead "1"] "1"])
 
     ~parse-mismatch~ !! (parse "" [not ahead repeat 0 "a"])
     ~parse-mismatch~ !! (parse "" [not ahead [repeat 0 "a"]])
 ]
 
 [#1240
-    ('~<not>~ == meta parse "" [not ahead "a"])
-    ('~<not>~ == meta parse "" [not ahead <next>])
-    ('~<not>~ == meta parse "" [not ahead bypass])
+    ('~<not>~ = meta parse "" [not ahead "a"])
+    ('~<not>~ = meta parse "" [not ahead <next>])
+    ('~<not>~ = meta parse "" [not ahead bypass])
 ]
 
 [
@@ -52,13 +52,13 @@
     ~parse-mismatch~ !! (parse [a] [not ahead <next>])
     ~parse-mismatch~ !! (parse [a] [not ahead one one])
 
-    ('a == parse [a] [not 'b])
-    ('a == parse [a] [not ahead ['b] 'a])
+    ('a = parse [a] [not 'b])
+    ('a = parse [a] [not ahead ['b] 'a])
     (
         wb: ['b]
-        'a == parse [a] [not ahead wb 'a]
+        'a = parse [a] [not ahead wb 'a]
     )
-    (~<not>~ == parse [a a] [not ahead [some 'b] to <end>])
+    (~<not>~ = parse [a a] [not ahead [some 'b] to <end>])
 
     ~parse-mismatch~ !! (parse [a a] [not ahead ['a 'a] to <end>])
 ]
@@ -68,13 +68,13 @@
     ~parse-mismatch~ !! (parse "a" [not ahead one])
     ~parse-mismatch~ !! (parse "a" [not ahead <next> <next>])
 
-    (#a == parse "a" [not #b])
-    (#a == parse "a" [not ahead [#b] #a])
+    (#a = parse "a" [not #b])
+    (#a = parse "a" [not ahead [#b] #a])
     (
         wb: [#b]
-        #a == parse "a" [not ahead wb #a]
+        #a = parse "a" [not ahead wb #a]
     )
-    (~<not>~ == parse "aa" [not ahead [some #b] to <end>])
+    (~<not>~ = parse "aa" [not ahead [some #b] to <end>])
 
     ~parse-mismatch~ !! (parse "aa" [not ahead [#a #a] to <end>])
 ]
@@ -84,13 +84,13 @@
     ~parse-mismatch~ !! (parse #{0A} [not ahead one])
     ~parse-mismatch~ !! (parse #{0A} [not ahead <next> one])
 
-    (#{0A} == parse #{0A} [not ahead #{0B} #{0A}])
-    (#{0A} == parse #{0A} [not ahead [#{0B}] #{0A}])
+    (#{0A} = parse #{0A} [not ahead #{0B} #{0A}])
+    (#{0A} = parse #{0A} [not ahead [#{0B}] #{0A}])
     (
         wb: [#b]
-        #{0A} == parse #{0A} [not ahead wb #{0A}]
+        #{0A} = parse #{0A} [not ahead wb #{0A}]
     )
-    (~<not>~ == parse #{0A0A} [not ahead [some #{0B}] to <end>])
+    (~<not>~ = parse #{0A0A} [not ahead [some #{0B}] to <end>])
 
     ~parse-mismatch~ !! (parse #{0A0A} [not ahead [#{0A} #{0A}] to <end>])
 ]

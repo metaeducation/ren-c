@@ -116,8 +116,10 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 ; !!! See discussion about the future of comparison operators:
 ; https://forum.rebol.info/t/349
 
-=: infix equal?/
-<>: infix not-equal?/
+=: infix strict-equal?/
+<>: infix strict-not-equal?/
+!=: infix strict-not-equal?/  ; http://www.rebol.net/r3blogs/0017.html
+
 <: infix lesser?/
 >: infix greater?/
 
@@ -138,11 +140,7 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 =>: infix equal-or-greater?/
 <=: infix lesser-or-equal?/
 
-!=: infix not-equal?/  ; http://www.rebol.net/r3blogs/0017.html
-==: infix strict-equal?/  ; !!! https://forum.rebol.info/t/349
-!==: infix strict-not-equal?/  ; !!! bad pairing, most would think !=
-
-=?: infix same?/
+?=: infix equal?/
 
 
 ; Common "Invisibles"

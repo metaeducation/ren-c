@@ -55,7 +55,7 @@
 
 [
     https://github.com/metaeducation/ren-c/issues/1003
-    ("%C2%80" == enhex to-text #{C280})
+    ("%C2%80" = enhex to-text #{C280})
 ]
 
 ; For what must be encoded, see https://stackoverflow.com/a/7109208/
@@ -65,7 +65,7 @@
         "-._~:/?#[]@!$&'()*+,;="
     ]
     all [
-        no-encode == enhex no-encode
-        no-encode == dehex no-encode
+        no-encode = enhex no-encode
+        no-encode = dehex no-encode
     ]
 )

@@ -61,10 +61,10 @@
 [#2324 (
     str: "1.1.1"
     all [
-        "1.1.1" == find:part str "1." 2
+        "1.1.1" = find:part str "1." 2
         (elide str: skip str 2)
-        "1.1" == find str "1."
-        "1.1" == find:part str "1." 2
+        "1.1" = find str "1."
+        "1.1" = find:part str "1." 2
     ]
 )]
 

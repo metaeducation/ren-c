@@ -43,14 +43,14 @@
     (
         res: 0
         all [
-            'a == parse [a] [res: wa]
+            'a = parse [a] [res: wa]
             res = 'a
         ]
     )
     (
         res: 0
         all [
-            'a == parse [a a] [res: repeat 2 wa]
+            'a = parse [a a] [res: repeat 2 wa]
             res = 'a
         ]
     )
@@ -61,8 +61,8 @@
     ~parse-incomplete~ !! (parse [a b] ['b | 'a])
     ~parse-incomplete~ !! (parse [a b] [['b | 'a]])
 
-    (#a == parse [#a] [[#b | #a]])
-    ('b == parse [a b] [['a | 'b] ['b | 'a]])
+    (#a = parse [#a] [[#b | #a]])
+    ('b = parse [a b] [['a | 'b] ['b | 'a]])
 ]
 
 
@@ -84,7 +84,7 @@
     (
         x: ~
         all [
-            null == parse [1] [x: [integer! opt text!]]
+            null = parse [1] [x: [integer! opt text!]]
             x = null
         ]
     )
@@ -92,7 +92,7 @@
     (
         x: ~
         all [
-            null == parse [1] [integer! x: [(null)]]
+            null = parse [1] [integer! x: [(null)]]
             x = null
         ]
     )
@@ -139,7 +139,7 @@
     (
         res: ~
         all [
-            'b == parse [a a b] [<next> res: ['a | 'b] one]
+            'b = parse [a a b] [<next> res: ['a | 'b] one]
             res = 'a
         ]
     )

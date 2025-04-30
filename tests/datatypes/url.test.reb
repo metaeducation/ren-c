@@ -17,8 +17,8 @@
     url2: transcode:one "http://a.b.c/d?e=f&"
     all [
         not equal? url1 url2
-        url1 == http://a.b.c/d?e=f%26
-        url2 == http://a.b.c/d?e=f&
+        url1 = http://a.b.c/d?e=f%26
+        url2 = http://a.b.c/d?e=f&
     ]
 )
 
@@ -36,35 +36,35 @@
 [#2380 (
     url: decode-url http://example.com/get?q=ščř#kovtička
     all [
-        url.scheme == 'http  ; Note: DECODE-URL returns BLOCK! with 'http
-        url.user == null
-        ^url.pass == '~<no user>~
-        url.host == "example.com"
-        url.port-id == null
-        url.path == "/get?q=ščř"
-        url.tag == "kovtička"
+        url.scheme = 'http  ; Note: DECODE-URL returns BLOCK! with 'http
+        url.user = null
+        ^url.pass = '~<no user>~
+        url.host = "example.com"
+        url.port-id = null
+        url.path = "/get?q=ščř"
+        url.tag = "kovtička"
     ]
 )(
     url: decode-url http://švéd:břéťa@example.com:8080/get?q=ščř#kovtička
     all [
-        url.scheme == 'http
-        url.user == "švéd"
-        url.pass == "břéťa"
-        url.host == "example.com"
-        url.port-id == 8080
-        url.path == "/get?q=ščř"
-        url.tag == "kovtička"
+        url.scheme = 'http
+        url.user = "švéd"
+        url.pass = "břéťa"
+        url.host = "example.com"
+        url.port-id = 8080
+        url.path = "/get?q=ščř"
+        url.tag = "kovtička"
     ]
 )(
     url: decode-url http://host?query
     all [
-        url.scheme == 'http
-        url.user == null
-        ^url.pass == '~<no user>~
-        url.host == "host"
-        url.port-id == null
-        url.path == "?query"
-        url.tag == null
+        url.scheme = 'http
+        url.user = null
+        ^url.pass = '~<no user>~
+        url.host = "host"
+        url.port-id = null
+        url.path = "?query"
+        url.tag = null
     ]
 )]
 
@@ -78,26 +78,26 @@
 [(
     url: decode-url http://10.20.30.40:8000/this/is/an/ip?address
     all [
-        url.scheme == 'http
-        url.user == null
-        ^url.pass == '~<no user>~
+        url.scheme = 'http
+        url.user = null
+        ^url.pass = '~<no user>~
         tuple? url.host
-        url.host == 10.20.30.40
-        url.port-id == 8000
-        url.path == "/this/is/an/ip?address"
-        url.tag == null
+        url.host = 10.20.30.40
+        url.port-id = 8000
+        url.path = "/this/is/an/ip?address"
+        url.tag = null
     ]
 )(
     url: decode-url http://10.20.30.40a:8000/this/is/a?hostname
     all [
-        url.scheme == 'http
-        url.user == null
-        ^url.pass == '~<no user>~
+        url.scheme = 'http
+        url.user = null
+        ^url.pass = '~<no user>~
         text? url.host
-        url.host == "10.20.30.40a"
-        url.port-id == 8000
-        url.path == "/this/is/a?hostname"
-        url.tag == null
+        url.host = "10.20.30.40a"
+        url.port-id = 8000
+        url.path = "/this/is/a?hostname"
+        url.tag = null
     ]
 )]
 

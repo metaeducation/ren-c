@@ -46,7 +46,7 @@
 [#213 (
     d: 28-Mar-2019/17:25:40-4:00
     d: d.date
-    (d + 1) == 29-Mar-2019
+    (d + 1) = 29-Mar-2019
 )]
 
 [https://github.com/red/red/issues/3881 (
@@ -244,9 +244,9 @@
     date2.zone: default [0]
 
     all [
-        date1 == 3-Feb-2021/16:09:02.786-5:00
+        date1 = 3-Feb-2021/16:09:02.786-5:00
 
-        date2 == 4-Feb-2021/0:00+0:00
+        date2 = 4-Feb-2021/0:00+0:00
 
         equal-or-lesser? date1 date2
     ]

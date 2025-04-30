@@ -7,9 +7,9 @@
 (block? [])
 
 ; alternative literal representation
-([] == make block! 0)
-([] == make block! "")
-("[]" == mold [])
+([] = make block! 0)
+([] = make block! "")
+("[]" = mold [])
 
 (
     data: [a 10 b 20]

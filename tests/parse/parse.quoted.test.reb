@@ -11,37 +11,37 @@
         pos = [[a b]]
     ]
 )
-([a b] == parse [... [a b]] [thru '[a b]])
-(1 == parse [1 1 1] [some '1])
+([a b] = parse [... [a b]] [thru '[a b]])
+(1 = parse [1 1 1] [some '1])
 
 ; !!! Review: how do we SUBPARSE a QUOTED! series?
 ;
 ;   pos: parse-thru [''[1 + 2]] [subparse quoted! [copy x to <end>]]
-;   [] == pos
-;   x == [1 + 2]
+;   [] = pos
+;   x = [1 + 2]
 ;
 
 [
-    ('a == parse [a] ['a])
+    ('a = parse [a] ['a])
     ~parse-mismatch~ !! (parse [a] ['b])
 
-    ('b == parse [a b] ['a 'b])
-    ('a == parse [a] [['a]])
-    ('b == parse [a b] [['a] 'b])
-    ('b == parse [a b] ['a ['b]])
-    ('b == parse [a b] [['a] ['b]])
+    ('b = parse [a b] ['a 'b])
+    ('a = parse [a] [['a]])
+    ('b = parse [a b] [['a] 'b])
+    ('b = parse [a b] ['a ['b]])
+    ('b = parse [a b] [['a] ['b]])
 
     (
         res: ~
         all [
-            1 == parse [] [(res: 1)]
+            1 = parse [] [(res: 1)]
             res = 1
         ]
     )
     (
         res: ~
         all [
-            1 == parse [a] ['a (res: 1)]
+            1 = parse [a] ['a (res: 1)]
             res = 1
         ]
     )
@@ -55,14 +55,14 @@
     (
         res: ~
         all [
-            1 == parse [] [[(res: 1)]]
+            1 = parse [] [[(res: 1)]]
             res = 1
         ]
     )
     (
         res: ~
         all [
-            1 == parse [a] [['a (res: 1)]]
+            1 = parse [a] [['a (res: 1)]]
             res = 1
         ]
     )
@@ -99,7 +99,7 @@
 [#682 (  ; like the old way...
     t: ~
     parse "<tag>text</tag>" [thru '<tag> t: across to '</tag> to <end>]
-    t == "text"
+    t = "text"
 )(
     "text" = parse "<tag>text</tag>" [between '<tag> '</tag>]  ; ah, parse!
 )]
@@ -108,14 +108,14 @@
     (
         res: ~
         all [
-            'a == parse [a] [res: 'a]
+            'a = parse [a] [res: 'a]
             res = 'a
         ]
     )
     (
         res: ~
         all [
-            'a == parse [a a] [res: repeat 2 'a]
+            'a = parse [a a] [res: repeat 2 'a]
             res = 'a
         ]
     )
@@ -129,14 +129,14 @@
     (
         res: ~
         all [
-            'a == parse [a] [res: ['a]]
+            'a = parse [a] [res: ['a]]
             res = 'a
         ]
     )
     (
         res: 0
         all [
-            'b == parse [a a b] [one res: 'a one]
+            'b = parse [a a b] [one res: 'a one]
             res = 'a
         ]
     )

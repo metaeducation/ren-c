@@ -101,10 +101,10 @@
 
 ; If body never runs it's void, which acts invisibly in ANY/ALL
 [
-    (7 == any [repeat 0 [1 + 2], 3 + 4])
-    (<vote> == any [
+    (7 = any [repeat 0 [1 + 2], 3 + 4])
+    (<vote> = any [
         repeat 1 [<vote>]
         repeat 0 [<abstain>]
     ])
-    (7 == any [repeat 10 [break] then [<vote>], 3 + 4])
+    (7 = any [repeat 10 [break] then [<vote>], 3 + 4])
 ]

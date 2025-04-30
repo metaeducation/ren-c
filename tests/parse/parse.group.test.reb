@@ -10,14 +10,14 @@
     x: ~
     three: 3
     all [
-        3 == parse "" [x: (three)]
+        3 = parse "" [x: (three)]
         x = 3
     ]
 )
 (
     x: ~
     all [
-        3 == parse "" [x: (1 + 2)]
+        3 = parse "" [x: (1 + 2)]
         x = 3
     ]
 )

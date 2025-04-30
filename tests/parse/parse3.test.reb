@@ -255,7 +255,7 @@
 [#682 (
     t: null
     parse3 "<tag>text</tag>" [thru '<tag> t: across to '</tag> '</tag>]
-    t == "text"
+    t = "text"
 )]
 
 ; THRU advances the input position correctly.
@@ -266,7 +266,7 @@
     parse3 "a" [
         some [thru "a" (i: i + 1, j: if i > 1 [<end> one]) j]
     ]
-    i == 1
+    i = 1
 )
 
 [#1959
@@ -315,7 +315,7 @@
 [#1280 (
     i: ~
     parse3 "" [(i: 0) repeat 3 [["a" |] (i: i + 1)]]
-    i == 3
+    i = 3
 )]
 [#1268 (
     i: 0
@@ -327,7 +327,7 @@
     i: 0
     j: ~
     parse3 "a" [some [opt "a" (i: i + 1, j: if i = 2 [[bypass]]) j]]
-    i == 2
+    i = 2
 )]
 
 ; NOT rule
@@ -440,7 +440,7 @@
         raised? parse3 "a" [
             some [opt "a" (i: i + 1 j: if i = 2 [[<end> one]]) j]
         ]
-        i == 2
+        i = 2
     ]
 )
 
@@ -519,8 +519,8 @@
     x: ~
     pos: parse3 [''[1 + 2]] [into [x: across to <end>], accept <here>]
     all [
-        [] == pos
-        x == [1 + 2]
+        [] = pos
+        x = [1 + 2]
     ]
 )
 

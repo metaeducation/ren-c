@@ -13,7 +13,7 @@
         block: [a]
         'a = parse block ['a <end>]
     )
-    ('a == parse [a] [one <end>])
+    ('a = parse [a] [one <end>])
     (void? parse [] [<end>])
 
     ~parse-mismatch~ !! (parse [a b] ['a <end>])
@@ -22,7 +22,7 @@
     (
         be6: ~
         all [
-            1 == parse [] [<end> (be6: 1)]
+            1 = parse [] [<end> (be6: 1)]
             be6 = 1
         ]
     )
@@ -32,9 +32,9 @@
 [
     (
         text: "a"
-        #a == parse text [#a <end>]
+        #a = parse text [#a <end>]
     )
-    (#a == parse "a" [one <end>])
+    (#a = parse "a" [one <end>])
     (void? parse "" [<end>])
 
     ~parse-mismatch~ !! (parse "ab" [#a <end>])
@@ -43,7 +43,7 @@
     (
         be6: ~
         all [
-            1 == parse "" [<end> (be6: 1)]
+            1 = parse "" [<end> (be6: 1)]
             be6 = 1
         ]
     )
@@ -53,9 +53,9 @@
 [
     (
         binary: #{0A}
-        #{0A} == parse #{0A} [#{0A} <end>]
+        #{0A} = parse #{0A} [#{0A} <end>]
     )
-    (10 == parse #{0A} [one <end>])
+    (10 = parse #{0A} [one <end>])
     (void? parse #{} [<end>])
 
     ~parse-mismatch~ !! (parse #{0A0B} [#{0A} <end>])
@@ -64,7 +64,7 @@
     (
         be6: ~
         all [
-            1 == parse #{} [<end> (be6: 1)]
+            1 = parse #{} [<end> (be6: 1)]
             be6 = 1
         ]
     )

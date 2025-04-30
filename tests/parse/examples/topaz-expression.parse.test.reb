@@ -127,18 +127,18 @@
 
 (
     [subtract power b 2 multiply 4 multiply a c]
-    == parse-expression [b ** 2 - 4 * a * c]
+    = parse-expression [b ** 2 - 4 * a * c]
 )
 (
     [divide 1 factorial k]
-    == parse-expression [1 / k !]
+    = parse-expression [1 / k !]
 )
 (
     [multiply a negate b]
-    == parse-expression [a * - b]
+    = parse-expression [a * - b]
 )
 (
     [power e divide i multiply h subtract multiply p x multiply E t]
-    == parse-expression [e ** (i / h * (p * x - E * t))]
+    = parse-expression [e ** (i / h * (p * x - E * t))]
 )
 ]
