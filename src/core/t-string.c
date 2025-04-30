@@ -543,7 +543,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
         brace_in = brace_out = 0;
 
     Append_Codepoint(buf, '-');
-    Append_Codepoint(buf, '{');
+    Append_Codepoint(buf, '[');
 
     REBLEN n;
     for (n = index; n < String_Len(s); n++) {
@@ -551,8 +551,8 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
         up = Utf8_Next(&c, up);
 
         switch (c) {
-          case '{':
-          case '}':
+          case '[':
+          case ']':
             if (malign)
                 Append_Codepoint(buf, '^');
             Append_Codepoint(buf, c);
@@ -568,7 +568,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
         }
     }
 
-    Append_Codepoint(buf, '}');
+    Append_Codepoint(buf, ']');
     Append_Codepoint(buf, '-');
 
     USED(escape);

@@ -579,8 +579,6 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 }
 
 
-#define CELL_FLAG_STACK_NOTE_BRACED CELL_FLAG_NOTE
-
 // For compatibility to copy code to and from the bootstrap EXE, this code
 // uses Mold_Buffer(mo) to abstract the difference from `mo->utf8flex`.
 // (Calling the bootstrap exe's mold buffer a "string" would be potentially
@@ -612,25 +610,71 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
     ScanState* S,  // used for errors
     StackIndex base  // accrue nest counts on stack
 ){
+    Byte left = *bp;
+    Byte right;
+    switch (left) {
+      case '{':
+        right = '}';
+        break;
+
+      case '"':
+        right = '"';
+        break;
+
+      case '[':
+        right = ']';
+        break;
+
+      case '<':
+        right = '>';
+        break;
+
+      default:
+        right = '\0';  // satisfy compiler warning
+        assert(false);
+    }
+
     const Byte* cp = bp;
 
     Init_Integer(PUSH(), dashes);  // so nest code is uniform
-
-    if (*cp == '{')
-        Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
-    else
-        assert(*cp == '"');
 
     ++cp;
 
     while (true) {  // keep going until nesting levels all closed
         Codepoint c = *cp;
 
+        if (c == right) {  // potentially closes last nest level
+            ++cp;
+            Count count = 0;
+            while (*cp == '-') {
+                ++count;
+                ++cp;
+            }
+            if (count > VAL_INT32(TOP))
+                return Error_User("Nested -- level closure too long");
+            if (count == VAL_INT32(TOP)) {
+                DROP();
+                if (TOP_INDEX == base)
+                    goto finished;  // end overall scan, don't add codepoints
+            }
+
+            Append_Codepoint(Mold_Buffer(mo), right);
+
+            for (; count != 0; --count)
+                Append_Codepoint(Mold_Buffer(mo), '-');
+            continue;  // codepoints were appended already
+        }
+
+        if (c == left and dashes == 0 and left == '{') {  // {a {b} c}
+            Init_Integer(PUSH(), 0);
+            Append_Codepoint(Mold_Buffer(mo), left);
+            ++cp;
+            continue;
+        }
+
         switch (c) {
           case '\0': {
-            if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
-                return Error_Missing(S, '}');
-            return Error_Missing(S, '"'); }
+            return Error_Missing(S, right); }
 
           case '^':
             if (not (cp = maybe Try_Scan_UTF8_Char_Escapable(&c, cp)))
@@ -638,17 +682,7 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
             --cp;  // unlike Back_Scan_XXX, no compensation for ++cp later
             break;
 
-          case '{': {  // brace with no leading dashes, nests if {a {b} c}
-            if (
-                Get_Cell_Flag(TOP, STACK_NOTE_BRACED)
-                and 0 == VAL_INT32(TOP)  // > 0, e.g. -[a {b c]- won't nest
-            ){
-                Init_Integer(PUSH(), 0);
-                Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
-            }
-            break; }
-
-          case '-': {  // look for nesting levels -[a --[b]-- c]- is one string
+          case '-': {  // look for nesting levels -{a --{b}-- c}- is one string
             Count count = 1;
             Append_Codepoint(Mold_Buffer(mo), '-');
             ++cp;
@@ -658,58 +692,15 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
                 ++cp;
             }
             if (
-                *cp == '{'
-                and Get_Cell_Flag(TOP, STACK_NOTE_BRACED)
+                *cp == left
+                and VAL_INT32(TOP) != 0  // don't want "--" to nest a scan!
                 and count >= VAL_INT32(TOP)
             ){
                 Init_Integer(PUSH(), count);
-                Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
-                Append_Codepoint(Mold_Buffer(mo), '{');
+                Append_Codepoint(Mold_Buffer(mo), left);
                 ++cp;
             }
-            /* else if (  // don't want "--" to start nested --" scan, rethink
-                *cp == '"'
-                and Not_Cell_Flag(TOP, STACK_NOTE_BRACED)
-                and count >= VAL_INT32(TOP)
-            ){
-                Init_Integer(PUSH(), count);
-                Append_Codepoint(Mold_Buffer(mo), '"');
-            } */
             continue; }  // already appended all relevant codepoints
-
-          case '"':
-            if (Not_Cell_Flag(TOP, STACK_NOTE_BRACED))
-                goto handle_closer;
-            break;
-
-          case '}':
-            if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
-                goto handle_closer;
-            break;
-
-          handle_closer: {
-            ++cp;
-            Count count = 0;
-            while (*cp == '-') {
-                ++count;
-                ++cp;
-            }
-            if (count > VAL_INT32(TOP))
-                return Error_User("Nested ]-- level closure too long");
-            if (count == VAL_INT32(TOP)) {
-                DROP();
-                if (TOP_INDEX == base)
-                    goto finished;  // end overall scan, don't add codepoints
-            }
-
-            if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
-                Append_Codepoint(Mold_Buffer(mo), '}');
-            else
-                Append_Codepoint(Mold_Buffer(mo), '"');
-
-            for (; count != 0; --count)
-                Append_Codepoint(Mold_Buffer(mo), '-');
-            continue; }  // codepoints were appended already
 
           case CR: {
             enum Reb_Strmode strmode = STRMODE_NO_CR;  // avoid CR [1]
@@ -726,7 +717,7 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
 
           case LF:
           linefeed:
-            if (Not_Cell_Flag(TOP, STACK_NOTE_BRACED))
+            if (left == '"' and dashes == 0)
                 return Error_User("Plain quoted strings not multi-line");
             ++S->transcode->line;
             break;
@@ -1342,7 +1333,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         const Byte* dp = cp;
         for (++dp; *dp == '-'; ++dp)
             ++dashes;
-        if (*dp == '{' or *dp == '"') {
+        if (*dp == '[' or *dp == '"') {
             Option(Error*) error = Trap_Scan_String_Push_Mold(
                 &cp, mo, dp, dashes, S
             );
@@ -1504,8 +1495,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (S->begin[0] == '"')
                 return Error_Missing(S, '"');
 
-            if (S->begin[0] == '{')
-                return Error_Missing(S, '}');
+            if (S->begin[0] == '[')
+                return Error_Missing(S, ']');
 
             panic ("Invalid string start delimiter");
 
