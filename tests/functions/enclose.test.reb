@@ -76,7 +76,7 @@
     110 = wrapped 10
 )
 
-~series-data-freed~ !! (
+~expired-frame~ !! (
     /wrapped: enclose (
         func [in] [return pack [~, in + 1]]
     ) f -> [

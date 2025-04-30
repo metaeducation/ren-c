@@ -110,8 +110,8 @@
     ; carries semantic intent of a "there's an answer and it is null"
 
     ([1 2 3 4] = collect [
+        let result': ~
         assert [
-            let result': ~
             '~[~null~]~ = result': ^ for-both 'x [1 2] [3 4] [
                 keep x
                 null
@@ -121,8 +121,8 @@
     ])
 
     ([1 2 3 4] = collect [
+        let result: ~
         assert [
-            let result: ~
             null = result: for-both 'x [1 2] [3 4] [
                 keep x
                 null
