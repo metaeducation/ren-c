@@ -1,18 +1,18 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "System object"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         Defines the system object. This is a special block that is evaluted
         such that its words do not get put into the current context.
-    }--
+    ]--
     notes: "Remove older/unused fields before beta release"
 ]
 
@@ -24,7 +24,7 @@ commit: null
 
 product: null  ; assigned by startup of the host ('core, 'view, 'ren-garden...)
 
-license: --{Copyright 2012 REBOL Technologies
+license: --[Copyright 2012 REBOL Technologies
 Copyright 2012-2024 Ren-C Open Source Contributors
 REBOL is a trademark of REBOL Technologies
 
@@ -32,7 +32,7 @@ Licensed under the Lesser GPL, Version 3.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 https://www.gnu.org/licenses/lgpl-3.0.html
-}--
+]--
 
 catalog: construct [
     ;

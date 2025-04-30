@@ -72,9 +72,9 @@ Option(ErrorValue*) Trap_Get_Environment_Variable(
             DWORD dwerr = GetLastError();
             if (dwerr == 0) {  // in case this ever happens, give more info
                 e = rebValue("make error! spaced [",
-                    "-{Mystery bug getting environment var}- @", key,
-                    "-{with length reported as}-", rebI(val_len_plus_one - 1),
-                    "-{but returned length from fetching is}-", rebI(val_len),
+                    "-[Mystery bug getting environment var]- @", key,
+                    "-[with length reported as]-", rebI(val_len_plus_one - 1),
+                    "-[but returned length from fetching is]-", rebI(val_len),
                 "]");
             }
             else

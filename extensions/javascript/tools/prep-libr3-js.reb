@@ -9,7 +9,7 @@ Rebol [
 
     license: "LGPL 3.0"
 
-    description: --{
+    description: --[
         The WASM files produced by Emscripten produce JavaScript functions
         that expect their arguments to be in terms of the SharedArrayBuffer
         HEAP32 that the C code can see.  For common JavaScript types, the
@@ -22,7 +22,7 @@ Rebol [
         engineered form of `va_list` (which is beyond the C standard, and each
         compiler could implement it differently).  But now it does it with
         an ordinary packed array of C pointers.
-    }--
+    ]--
 ]
 
 ; Note: There are no `import` statements here because this is run by EVAL LOAD
@@ -67,7 +67,7 @@ e-cwrap: make-emitter "JavaScript C Wrapper functions" (
 ; !!! There may be few enough routines involved that the better answer is to
 ; dodge `cwrap`/`ccall` altogether and just by-hand wrap the routines.
 ;
-e-cwrap/emit ---{
+e-cwrap/emit ---[
 
   // Returns the C function with a specified identifier (for C++, you need to do manual name mangling)
     function getCFunc(ident) {
@@ -206,12 +206,12 @@ e-cwrap/emit ---{
         return ccall_tolerant(ident, returnType, argTypes, arguments, opts);
       }
     }
-}---
+]---
 
 
 === "GENERATE C WRAPPER FUNCTIONS" ===
 
-e-cwrap/emit ---{
+e-cwrap/emit ---[
     /* The C API uses names like rebValue().  This is because calls from the
      * core do not go through a struct, but inline directly...also some of
      * the helpers are macros.  However, Node.js does not permit libraries
@@ -248,7 +248,7 @@ e-cwrap/emit ---{
             reb.m = self  /* module exports are at global scope on worker? */
         }
      }
-}---
+]---
 
 
 ; 1. While type construction in JavaScript is done with capital type names
@@ -433,14 +433,14 @@ for-each-api [
     ]
 
     if not is-variadic [
-        e-cwrap/emit cscape [:api --{
+        e-cwrap/emit cscape [:api --[
             reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
                 'API_$<Name>',
                 $<Js-Return-Type>, [
                     $(Maybe Js-Param-Types),
                 ]
             )
-        }--]
+        ]--]
         continue
     ]
 
@@ -456,7 +456,7 @@ for-each-api [
         ; It can be useful for debugging to see the API entry points;
         ; using console.error() adds a stack trace to it.
         ;
-        unspaced [--{console.error("Entering }-- name --{");^/}--]
+        unspaced [--[console.error("Entering ]-- name --[");^/]--]
     ] else [
         null
     ]
@@ -465,7 +465,7 @@ for-each-api [
         ; Similar to debugging on entry, it can be useful on exit to see
         ; when APIs return...code comes *before* the return statement.
         ;
-        unspaced [--{console.error("Exiting }-- name --{");^/}--]
+        unspaced [--[console.error("Exiting ]-- name --[");^/]--]
     ] else [
         null
     ]
@@ -475,11 +475,11 @@ for-each-api [
             ;
             ; If `char *` is returned, it was rebAlloc'd and needs to be freed
             ; if it is to be converted into a JavaScript string
-            --{
+            --[
                 var js_str = UTF8ToString(a)
                 reb.Free(a)
                 return js_str
-            }--
+            ]--
         ]
         <promise> [
             ;
@@ -487,20 +487,20 @@ for-each-api [
             ; for the [resolve, reject] pair.  It will run the code that
             ; will call the rebResolveNative() later...after a setTimeout, so
             ; it is sure that this table entry has been entered.
-            --{
+            --[
                 return new Promise(function(resolve, reject) {
                     reb.RegisterId_internal(a, [resolve, reject])
                 })
-            }--
+            ]--
         ]
     ] else [
         ; !!! Doing return and argument transformation needs more work!
         ; See suggestions: https://forum.rebol.info/t/817
 
-        --{return a}--
+        --[return a]--
     ])
 
-    e-cwrap/emit cscape [:api --{
+    e-cwrap/emit cscape [:api --[
         reb.$<No-Reb-Name> = function() {
             $<Maybe Prologue>
             let argc = arguments.length
@@ -542,10 +542,10 @@ for-each-api [
             $<Maybe Epilogue>
             $<Code-For-Returning>
         }
-    }--]
+    ]--]
 ]
 
-e-cwrap/emit ---{
+e-cwrap/emit ---[
     /*
      * JavaScript lacks the idea of "virtual fields" which you can mention in
      * methods in a base class, but then shadow in a derived class such that
@@ -912,14 +912,14 @@ e-cwrap/emit ---{
             return reb.Trash()
         }
     }
-}---
+]---
 
 if null [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
-    e-cwrap/emit --{
+    e-cwrap/emit --[
         reb.GetSilentTrace_internal = function() {
             return UTF8ToString(reb.m._API_rebGetSilentTrace_internal())
         }
-    }--
+    ]--
 ]
 
 e-cwrap/write-emitted
@@ -943,19 +943,19 @@ json-collect: func [
     results: collect compose [
         /keep: adapt keep/ [  ; Emscripten prefixes functions w/underscore
             if text? value [
-                value: unspaced [-{"_}- value -{"}-]  ; bootstrap semantics
+                value: unspaced [-["_]- value -["]-]  ; bootstrap semantics
             ]
             else [
-                value: quote unspaced [-{"_}- unquote value -{"}-]  ; ^META
+                value: quote unspaced [-["_]- unquote value -["]-]  ; ^META
             ]
         ]
         (spread body)
     ]
-    return cscape [results --{
+    return cscape [results --[
         [
             $(Results),
         ]
-    }--]
+    ]--]
 ]
 
 write (join prep-dir %include/libr3.exports.json) json-collect [
@@ -993,7 +993,7 @@ write (join prep-dir %include/libr3.exports.json) json-collect [
 write (join prep-dir %include/asyncify-blacklist.json) delimit newline collect [
     keep "["
     for-next 'names load3 %../asyncify-blacklist.r [
-        keep unspaced [_ _ _ _ -{"}- names.1 -{"}- if not last? names [","]]
+        keep unspaced [_ _ _ _ -["]- names.1 -["]- if not last? names [","]]
     ]
     keep "]"
 ]
@@ -1017,7 +1017,7 @@ e-node-preload: make-emitter "Emterpreter Preload for Node.js" (
     join prep-dir %include/node-preload.js
 )
 
-e-node-preload/emit ---{
+e-node-preload/emit ---[
     var R3Module = {};
     console.log("Yes we're getting a chance to preload...")
     console.log(__dirname + '/libr3.bytecode')
@@ -1030,6 +1030,6 @@ e-node-preload/emit ---{
         fs.readFileSync(__dirname + '/libr3.bytecode').buffer
 
     console.log(R3Module.emterpreterFile)
-}---
+]---
 
 e-node-preload/write-emitted

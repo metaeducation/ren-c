@@ -53,7 +53,7 @@
 // What gets passed to the driver will look like:
 //
 //     [
-//        -{INSERT INTO fps (title, fname, surname) VALUES (?, ?, ?)}-
+//        -[INSERT INTO fps (title, fname, surname) VALUES (?, ?, ?)]-
 //        "Title" "Inits" "Name"
 //     ]
 //
@@ -248,17 +248,17 @@ Value* Error_ODBC_Core(
     switch (rc) {
       case SQL_INVALID_HANDLE:
         return rebValue(
-            "make error! -{Internal ODBC extension error (invalid handle)}-"
+            "make error! -[Internal ODBC extension error (invalid handle)]-"
         );
 
       case SQL_ERROR:
         return rebValue(
-            "make error! -{Internal ODBC extension error (bad diag record #)}-"
+            "make error! -[Internal ODBC extension error (bad diag record #)]-"
         );
 
       case SQL_NO_DATA:
         return rebValue(
-            "make error! -{No ODBC diagnostic information available}-"
+            "make error! -[No ODBC diagnostic information available]-"
         );
 
       default:
@@ -266,7 +266,7 @@ Value* Error_ODBC_Core(
     }
 
     assert(!"SQLGetDiagRecW returned undocumented SQLRESULT value");
-    return rebValue("make error! -{Undocumented SQLRESULT SQLGetDiagRecW()}-");
+    return rebValue("make error! -[Undocumented SQLRESULT SQLGetDiagRecW()]-");
 }
 
 #if RUNTIME_CHECKS  // report file and line info with mystery errors
@@ -379,7 +379,7 @@ DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)
             "'utf-16 [", rebI(CHAR_COL_UTF16), "]",
             "'latin-1 [", rebI(CHAR_COL_LATIN1), "]",
         "] else [",
-            "fail --{ENCODING must be UTF-8, UCS-2, UTF-16, or LATIN-1}--"
+            "fail --[ENCODING must be UTF-8, UCS-2, UTF-16, or LATIN-1]--"
         "]"
     ));
 
@@ -490,7 +490,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
     //
     Connection* conn = rebTryAlloc(Connection);
     if (conn == nullptr)
-        return "fail -{Could not allocate Connection tracking object}-";
+        return "fail -[Could not allocate Connection tracking object]-";
     rebUnmanageMemory(conn);
 
     conn->hdbc = hdbc;
@@ -585,7 +585,7 @@ SQLRETURN ODBC_BindParameter(
                 "'true [", rebI(SQL_C_BIT), "]",
                 "'false [", rebI(SQL_C_BIT), "]",
             "] else [",
-                "fail -{Legal WORD!-parameters: [null true false]}-",
+                "fail -[Legal WORD!-parameters: [null true false]]-",
             "]",
         "]",
 
@@ -634,7 +634,7 @@ SQLRETURN ODBC_BindParameter(
 
         "blob! [", rebI(SQL_C_BINARY), "]",
 
-        "fail -{Non-SQL-mappable type used in parameter binding}-",
+        "fail -[Non-SQL-mappable type used in parameter binding]-",
     "]");
 
     SQLSMALLINT sql_type;
@@ -766,7 +766,7 @@ SQLRETURN ODBC_BindParameter(
                 "append make blob! length of", v,
                     "map-each 'ch", v, "["
                         "if 255 < to integer! ch ["
-                            "fail -{Codepoint too high for Latin1}-"
+                            "fail -[Codepoint too high for Latin1]-"
                          "]"
                          "to integer! ch"
                     "]"
@@ -778,7 +778,7 @@ SQLRETURN ODBC_BindParameter(
 
           default:
             assert(!"Invalid CHAR_COL_XXX enumeration");
-            rebJumps ("fail -{Invalid CHAR_COL_XXX enumeration}-");
+            rebJumps ("fail -[Invalid CHAR_COL_XXX enumeration]-");
         }
 
         sql_type = SQL_VARCHAR;
@@ -824,7 +824,7 @@ SQLRETURN ODBC_BindParameter(
         break; }
 
       default:
-        rebJumps ("panic -{Unhandled SQL type in switch() statement}-");
+        rebJumps ("panic -[Unhandled SQL type in switch() statement]-");
     }
 
     SQLRETURN rc = SQLBindParameter(
@@ -854,13 +854,13 @@ SQLRETURN Get_ODBC_Catalog(
             "'columns [2]",
             "'types [3]",
         "] else [",
-            "fail -{Catalog must be TABLES, COLUMNS, or TYPES}-",
+            "fail -[Catalog must be TABLES, COLUMNS, or TYPES]-",
         "]"
     );
 
     rebElide(
         "if 5 < length of", block, "[",
-            "fail -{Catalog block should not have more than 4 patterns}-",
+            "fail -[Catalog block should not have more than 4 patterns]-",
         "]"
     );
 
@@ -905,7 +905,7 @@ SQLRETURN Get_ODBC_Catalog(
 
       default:
         assert(false);
-        rebJumps ("fail -{Invalid GET_CATALOG_XXX value}-");
+        rebJumps ("fail -[Invalid GET_CATALOG_XXX value]-");
     }
 
   blockscope {
@@ -1052,17 +1052,17 @@ void Describe_ODBC_Results(
             Value* type_name_rebval = rebTextWide(type_name);
             col->sql_type = rebUnboxInteger(
                 "switch", type_name_rebval, "[",
-                    "-{VARCHAR}- [", rebI(SQL_VARCHAR), "]",  // make fastest
+                    "-[VARCHAR]- [", rebI(SQL_VARCHAR), "]",  // make fastest
 
-                    "-{BINARY}- [", rebI(SQL_BINARY), "]",
-                    "-{VARBINARY}- [", rebI(SQL_VARBINARY), "]",
-                    "-{CHAR}- [", rebI(SQL_CHAR), "]",
-                    "-{NCHAR}- [", rebI(SQL_WCHAR), "]",
-                    "-{NVARCHAR}- [", rebI(SQL_WVARCHAR), "]",
-                    "-{DECIMAL}- [", rebI(SQL_DECIMAL), "]",
+                    "-[BINARY]- [", rebI(SQL_BINARY), "]",
+                    "-[VARBINARY]- [", rebI(SQL_VARBINARY), "]",
+                    "-[CHAR]- [", rebI(SQL_CHAR), "]",
+                    "-[NCHAR]- [", rebI(SQL_WCHAR), "]",
+                    "-[NVARCHAR]- [", rebI(SQL_WVARCHAR), "]",
+                    "-[DECIMAL]- [", rebI(SQL_DECIMAL), "]",
                 "] else [",
                     "fail [",
-                        "-{SQL_VARCHAR reported by ODBC for unknown type:}-",
+                        "-[SQL_VARCHAR reported by ODBC for unknown type:]-",
                         type_name_rebval,
                     "]",
                 "]"
@@ -1196,7 +1196,7 @@ void Describe_ODBC_Results(
             break;
 
           default:  // used to allocate character buffer based on column size
-            rebJumps ("fail -{Unknown column SQL_XXX type}-");
+            rebJumps ("fail -[Unknown column SQL_XXX type]-");
         }
 
         if (col->buffer_size == 0)
@@ -1204,7 +1204,7 @@ void Describe_ODBC_Results(
         else {
             col->buffer = rebTryAllocN(char, col->buffer_size);
             if (col->buffer == nullptr)
-                rebJumps ("fail -{Couldn't allocate column buffer!}-");
+                rebJumps ("fail -[Couldn't allocate column buffer!]-");
             rebUnmanageMemory(col->buffer);
         }
     }
@@ -1248,7 +1248,7 @@ DECLARE_NATIVE(INSERT_ODBC)
             "text! ['false]",
         "] else [",
             "fail [",
-                "-{SQL dialect must start with WORD! or TEXT! value:}- @sql"
+                "-[SQL dialect must start with WORD! or TEXT! value:]- @sql"
             "]",
         "]"
     );
@@ -1464,7 +1464,7 @@ Value* ODBC_Column_To_Rebol_Value(
         // remarks on the fail() below.
         //
         if (len != 1)
-            rebJumps("fail -{BIT(n) fields are only supported for n = 1}-");
+            rebJumps("fail -[BIT(n) fields are only supported for n = 1]-");
 
         if (*cast(unsigned char*, col->buffer))
             return rebValue("'true");  // can't append antiform to block :-(
@@ -1491,7 +1491,7 @@ Value* ODBC_Column_To_Rebol_Value(
 
       case SQL_C_UBIGINT:  // unsigned: 0..2[64] - 1
         if (*cast(SQLUBIGINT*, col->buffer) > INT64_MAX)
-            rebJumps ("fail -{INTEGER! can't hold all unsigned 64-bit ints}-");
+            rebJumps ("fail -[INTEGER! can't hold all unsigned 64-bit ints]-");
 
         return rebInteger64(*cast(SQLUBIGINT*, col->buffer));
 
@@ -1610,7 +1610,7 @@ Value* ODBC_Column_To_Rebol_Value(
     // Note: This happens with BIT(2) and the MySQL ODBC driver, which
     // reports a sql_type of -2 for some reason.
     //
-    rebJumps("fail -{Unsupported SQL_XXX type returned from query}-");
+    rebJumps("fail -[Unsupported SQL_XXX type returned from query]-");
 }
 
 
@@ -1637,7 +1637,7 @@ DECLARE_NATIVE(COPY_ODBC)
     Column* columns = list->columns;
 
     if (hstmt == SQL_NULL_HANDLE or not columns)
-        return "fail -{Invalid statement object!}-";
+        return "fail -[Invalid statement object!]-";
 
     SQLRETURN rc;
 
@@ -1727,7 +1727,7 @@ DECLARE_NATIVE(COPY_ODBC)
             );
 
             if (col->buffer == nullptr and len == SQL_NO_TOTAL)
-                return "fail -{ODBC gave SQL_NO_TOTAL for var-size field}-";
+                return "fail -[ODBC gave SQL_NO_TOTAL for var-size field]-";
 
             Option(SQLPOINTER) allocated;
 

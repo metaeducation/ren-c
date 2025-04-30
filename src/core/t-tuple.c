@@ -618,7 +618,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Sequence)
     return rebDelegate(
         "join type of", seq1, "map-each 'i", seq1, "[",
             arg2, "* match integer! i else [",
-                "fail -{Can't multiply sequence unless all integers}-"
+                "fail -[Can't multiply sequence unless all integers]-"
             "]",
         "]"
     );

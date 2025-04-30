@@ -1,19 +1,19 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "REBOL 3 Boot Base: Series Functions"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    notes: --{
+    ]--
+    notes: --[
         This code is evaluated just after actions, natives, sysobj, and othe
         lower-level definitions. This file intializes a minimal working
         environment that is used for the rest of the boot.
-    }--
+    ]--
 ]
 
 run lambda [@terms [tag! set-run-word? <variadic>]] [
@@ -210,7 +210,7 @@ trim: func [
     let e
     if auto [
         parse3 series [
-            ; Don't count empty lines, (e.g. trim:auto -{^/^/^/    asdf}-)
+            ; Don't count empty lines, (e.g. trim:auto -[^/^/^/    asdf]-)
             opt remove some LF
 
             (indent: 0)

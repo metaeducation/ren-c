@@ -1,7 +1,7 @@
 Rebol [
     title: "TCC Extension Rebmake Compiling/Linking Information"
     name: TCC
-    notes: --{
+    notes: --[
         See %extensions/README.md for the format and fields of this file"
 
      A. If you installed libtcc with `sudo apt-get libtcc-dev`, then the
@@ -16,7 +16,7 @@ Rebol [
         *and* it has %libtcc.h in it.  Then it's *probably* a directory TCC
         was cloned and built in--not just where the helper library libtcc1.a
         was installed.
-    }--
+    ]--
 ]
 
 requires: 'Filesystem  ; uses LOCAL-TO-FILE
@@ -56,13 +56,13 @@ libtcc-lib-dir: any [
 
 cflags: compose [
     (if libtcc-include-dir [
-        unspaced ["-I" -{"}- file-to-local libtcc-include-dir -{"}-]
+        unspaced ["-I" -["]- file-to-local libtcc-include-dir -["]-]
     ])
 ]
 
 ldflags: compose [
     (if libtcc-lib-dir [
-        unspaced [{-L} -{"}- file-to-local libtcc-lib-dir -{"}-]
+        unspaced [{-L} -["]- file-to-local libtcc-lib-dir -["]-]
     ])
 ]
 

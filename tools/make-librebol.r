@@ -2,15 +2,15 @@ Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Make files related to the external API (for %rebol.h)"
     file: %make-librebol.r
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     needs: 2.100.100
 ]
 
@@ -251,7 +251,7 @@ for-each-api [
 
     let return-keyword: if return-type != "void" ["return "] else [null]
 
-    append variadic-api-c-helpers cscape [:api --{
+    append variadic-api-c-helpers cscape [:api --[
         $<Maybe Attributes>
         static inline $<Return-Type> $<Name>_helper(  /* C version */
             RebolContext* binding,
@@ -268,9 +268,9 @@ for-each-api [
             );
             $<Maybe Epilogue>
         }
-    }--]
+    ]--]
 
-    append variadic-api-c++-helpers cscape [:api --{
+    append variadic-api-c++-helpers cscape [:api --[
         template <typename... Ts>
         $<Maybe Attributes>
         inline $<Return-Type> $<Name>_helper(  /* C++ version */
@@ -288,7 +288,7 @@ for-each-api [
             );
             $<Maybe Epilogue>
         }
-    }--]
+    ]--]
 ]
 
 variadic-api-binding-capturing-macros: map-each-api [
@@ -297,13 +297,13 @@ variadic-api-binding-capturing-macros: map-each-api [
             to-text var
         ]
 
-        cscape [:api --{
+        cscape [:api --[
             #define $<Name>($<Fixed-Params,>...) \
                 $<Name>_helper( \
                     LIBREBOL_BINDING_NAME(),  /* captured from callsite! */ \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
-        }--]
+        ]--]
     ]
 ]
 
@@ -313,13 +313,13 @@ variadic-api-explicit-binding-macros: map-each-api [
             to-text var
         ]
 
-        cscape [:api --{
+        cscape [:api --[
             #define $<Name>Core(binding, $<Fixed-Params,>...) \
                 $<Name>_helper( \
                     binding, \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
-        }--]
+        ]--]
     ]
 ]
 
@@ -365,7 +365,7 @@ e-lib: make-emitter "Rebol External Library Interface" (
     join prep-dir %include/rebol.h
 )
 
-e-lib/emit [ver --{
+e-lib/emit [ver --[
     /*
      * API #DEFINE OPTIONS (note: this should be in file header!)
      *
@@ -684,7 +684,7 @@ e-lib/emit [ver --{
      * If you do so, the UTF-8 string will be treated as code which is run
      * after the native C function is off the stack--but while the native
      * is still in effect.  This allows doing things like `return "halt"`
-     * or `return "fail -{...}-"` which would cause problems by trying to
+     * or `return "fail -[...]-"` which would cause problems by trying to
      * cross C stack levels otherwise.
      *
      * (Richer behavior with splicing of values that does the same thing is
@@ -749,12 +749,12 @@ e-lib/emit [ver --{
      *     void Subroutine(void) {
      *         rebElide(
      *             "assert [action? print/]",
-     *             "print -{Subroutine() has original ASSERT and PRINT!}-"
+     *             "print -[Subroutine() has original ASSERT and PRINT!]-"
      *         );
      *     }
      *
      *     const char* Sum_Plus_1000_Spec = "[ \
-     *         -{Demonstration native that shadows ASSERT and PRINT}-" \
+     *         -[Demonstration native that shadows ASSERT and PRINT]-" \
      *         assert [integer!]" \
      *         print [integer!]" \
      *     ]";
@@ -774,7 +774,7 @@ e-lib/emit [ver --{
      *
      *         rebElide(
      *             "let sum-plus-1000: @", action,
-     *             "print [-{Sum Plus 1000 is:}- sum-plus-1000 5 15]"
+     *             "print [-[Sum Plus 1000 is:]- sum-plus-1000 5 15]"
      *         )
      *
      *         rebRelease(action);
@@ -799,12 +799,12 @@ e-lib/emit [ver --{
      * With C++ you can use raw strings and lambdas:
      *
      *     Value* action = rebFunction(R"(
-     *         -{Another way to do functions}-
+     *         -[Another way to do functions]-
      *         return: [~]
      *         message [text!]
      *     ])",
      *     [](Context* binding) {
-     *         rebElide("print [-{The message is:}-", message, "]");
+     *         rebElide("print [-[The message is:]-", message, "]");
      *         return "~";  // note that returning strings runs delegated code!
      *     });
      */
@@ -1319,7 +1319,7 @@ e-lib/emit [ver --{
 
 
     #endif  /* REBOL_H_1020_0304 */
-}--]
+]--]
 
 e-lib/write-emitted
 
@@ -1339,13 +1339,13 @@ table-init-items: map-each-api [
     unspaced ["&" "API_" name]
 ]
 
-e-table/emit [table-init-items --{
+e-table/emit [table-init-items --[
     #include "rebol.h"
 
     RebolApiTable g_librebol = {
         $(Table-Init-Items),
     };
-}--]
+]--]
 
 e-table/write-emitted
 

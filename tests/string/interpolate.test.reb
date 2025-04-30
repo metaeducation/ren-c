@@ -25,7 +25,7 @@
 
 ; Have to back out and start over if pattern not fully matched
 [
-    (compose2 @(([])) --{((backing (([reverse "tuo"]))}--)
+    (compose2 @(([])) --[((backing (([reverse "tuo"]))]--)
 ]
 
 (

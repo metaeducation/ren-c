@@ -89,13 +89,13 @@ Option(ErrorValue*) Trap_Update_Environment_Variable(
       #ifdef unsetenv  // use unsetenv() if available [1]
         if (unsetenv(key_utf8) == -1)
             e = rebValue(
-                "make error! -{unsetenv() can't unset environment variable}-"
+                "make error! -[unsetenv() can't unset environment variable]-"
             );
       #else
         int res = putenv(key_utf8);  // GNU-specific: putenv("NAME") unsets [2]
         if (res == -1)
             e = rebValue(
-                "make error! -{putenv() can't unset environment variable}-"
+                "make error! -[putenv() can't unset environment variable]-"
             );
       #endif
     }
@@ -105,7 +105,7 @@ Option(ErrorValue*) Trap_Update_Environment_Variable(
         int res = setenv(key_utf8, val_utf8, 1);  // the 1 means "overwrite"
         if (res == -1)
             e = rebValue(
-                "make error! -{setenv() can't set environment variable}-"
+                "make error! -[setenv() can't set environment variable]-"
             );
 
         rebFree(val_utf8);
@@ -119,7 +119,7 @@ Option(ErrorValue*) Trap_Update_Environment_Variable(
         if (putenv(duplicate) == -1) {  // !!! putenv() holds onto string! [1]
             free(duplicate);
             e = rebValue(
-                "make error! -{putenv() couldn't set environment variable}-"
+                "make error! -[putenv() couldn't set environment variable]-"
             );
         }
 

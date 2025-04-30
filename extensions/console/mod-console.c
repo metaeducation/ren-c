@@ -237,7 +237,7 @@ DECLARE_NATIVE(CONSOLE)
     switch (rebUnboxInteger("case [",
         "unset? $state [0]",  // initial entry
         "state = 'running-request [1]",
-        "fail -{Invalid CONSOLE state}-",
+        "fail -[Invalid CONSOLE state]-",
     "]")){
       case 0:
         goto initial_entry;

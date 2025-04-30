@@ -113,14 +113,14 @@
     (
         a: b: ~
         all [
-            (the '-{ B}-) = [{^b} ^a]: transcode:next "A B"
+            (the '-[ B]-) = [{^b} ^a]: transcode:next "A B"
             a = the 'A
-            b = the '-{ B}-
+            b = the '-[ B]-
         ]
     )(
         a: b: ~
         all [
-            (the '-{ B}-) = [{^} ^a]: transcode:next "A B"
+            (the '-[ B]-) = [{^} ^a]: transcode:next "A B"
             a = the 'A
             unset? $b
         ]

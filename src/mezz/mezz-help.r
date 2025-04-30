@@ -1,14 +1,14 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "REBOL 3 Mezzanine: Help"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
 ]
 
 
@@ -82,7 +82,7 @@ description-of: func [
 print-general-help: func [
     return: [~]
 ][
-    print trim:auto copy --{
+    print trim:auto copy --[
         You are in a Rebol terminal.  QUIT or Ctrl-C should let you exit.
 
         Here are some basic commands:
@@ -109,7 +109,7 @@ print-general-help: func [
             why - explain more about last error (via web)
 
         Try HELP HELP for assistance on use of the help facility.
-    }--
+    ]--
     return ~
 ]
 
@@ -264,7 +264,7 @@ help-value: func [
 
 
 help: func [
-    --{HELP is a dialected function.  If you want non-dialected help on any
+    --[HELP is a dialected function.  If you want non-dialected help on any
     particular value, then pass that value in a GROUP! to get some very
     literal information back:
 
@@ -307,7 +307,7 @@ help: func [
     To see all words of a specific datatype:
 
         help object!
-        help datatype!}--
+        help datatype!]--
 
     return: [~]
     @topic "WORD! to explain, or other HELP target (if no args, general help)"

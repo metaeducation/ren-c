@@ -1,18 +1,18 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Source File Database"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2017 Rebol Open Source Contributos
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         Lists of files used for creating makefiles.
-    }--
+    ]--
 ]
 
 ; !!! Originally this table had files in it as TUPLE!, e.g. `a-constants.c`

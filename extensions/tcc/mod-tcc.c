@@ -1,6 +1,6 @@
 //
 //  file: %mod-tcc.c
-//  summary: -{Implementation of "user natives" using an embedded C compiler}-
+//  summary: -[Implementation of "user natives" using an embedded C compiler]-
 //  section: extension
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
@@ -67,10 +67,10 @@
         UNUSED(str);
 
         rebJumps ("fail ["
-            "-{You're using OPTIONS in your COMPILE configuration.  But this}-"
-            "-{tcc extension was built with an older libtcc that was assumed}-"
-            "-{to not have tcc_set_options() (it lacked TCC_RELOCATE_AUTO).}-"
-            "-{You'll need to rebuild the tcc extension with a newer lib.}-"
+            "-[You're using OPTIONS in your COMPILE configuration.  But this]-"
+            "-[tcc extension was built with an older libtcc that was assumed]-"
+            "-[to not have tcc_set_options() (it lacked TCC_RELOCATE_AUTO).]-"
+            "-[You'll need to rebuild the tcc extension with a newer lib.]-"
         "]");
     }
 #endif
@@ -117,14 +117,14 @@ static void Error_Reporting_Hook(
     // warnings, we filter out this one.
     //
     if (rebDid(
-        "find", message, "-{warning: function might return no value}-"
+        "find", message, "-[warning: function might return no value]-"
     )){
         rebRelease(message);
         return;
     }
 
     rebJumps ("fail [",
-        "-{TCC errors/warnings, '-w' to stop warnings:}-", rebR(message),
+        "-[TCC errors/warnings, '-w' to stop warnings:]-", rebR(message),
     "]");
 }
 
@@ -150,7 +150,7 @@ static void Process_Text_Helper_Core(
 
     if (status < 0)  // !!! When is this called vs. Error_Reporting_Hook?
         rebJumps ("fail [",
-            "-{TCC}-", rebT(label), "-{rejected:}-", text,
+            "-[TCC]-", rebT(label), "-[rejected:]-", text,
         "]");
 }
 static void Process_Text_Helper(
@@ -208,7 +208,7 @@ static void Add_API_Symbol_Helper(
 
     if (tcc_add_symbol(state, symbol, void_ptr) < 0)
         rebJumps ("fail [",
-            "-{tcc_add_symbol() failed for}-", rebT(symbol),
+            "-[tcc_add_symbol() failed for]-", rebT(symbol),
         "]");
 }
 
@@ -359,7 +359,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
 
         intptr_t heapaddr = i_cast(intptr_t, details);
         Value* linkname = rebValue(
-            "unspaced [-{N_}- as text! to-hex", rebI(heapaddr), "]"
+            "unspaced [-[N_]- as text! to-hex", rebI(heapaddr), "]"
         );
 
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_LINKNAME), linkname);
@@ -467,7 +467,7 @@ DECLARE_NATIVE(COMPILE_P)
 
     if (tcc_set_output_type(state, output_type) < 0)
         return rebDelegate("fail [",
-            "-{TCC failed to set output to}- pick", config, "'output-type",
+            "-[TCC failed to set output to]- pick", config, "'output-type",
         "]");
 
 
@@ -586,7 +586,7 @@ DECLARE_NATIVE(COMPILE_P)
             ) < 0
         ){
             return rebDelegate("fail [",
-                "-{TCC failed to compile the code}-", compilables,
+                "-[TCC failed to compile the code]-", compilables,
             "]");
         }
 
@@ -681,7 +681,7 @@ DECLARE_NATIVE(COMPILE_P)
 
         if (not sym)
             return rebDelegate("fail [",
-                "-{TCC failed to find symbol:}-", linkname,
+                "-[TCC failed to find symbol:]-", linkname,
             "]");
 
         // Circumvent ISO C++ forbidding cast between function/data pointers

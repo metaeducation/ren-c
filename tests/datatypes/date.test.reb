@@ -255,5 +255,5 @@
 ; There's an issue with how dates are processed that requires copying them
 ; in order to mold them.  This caused troubles with quotes at one point.
 (
-    -{'12-Dec-2012}- = mold quote 12-Dec-2012
+    -['12-Dec-2012]- = mold quote 12-Dec-2012
 )

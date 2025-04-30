@@ -3,18 +3,18 @@ Rebol [
     title: "Pre-Build Step for API entry points exported via tcc_add_symbol()"
     file: %prep-libr3-tcc.reb
 
-    rights: --{
+    rights: --[
         Copyright 2017 Atronix Engineering
         Copyright 2017-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
+    ]--
 
-    license: --{
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
 
-    description: --{
+    description: --[
         The TCC extension compiles user natives into memory directly.  These
         natives are linked against some libs that are on disk (the extension
         is packaged with some of these libraries that it extracts and puts
@@ -27,7 +27,7 @@ Rebol [
         in non-TCC builds in order to avoid having this extra complexity in
         the build process...although that is kind of presumptive that the
         libRebol mechanics won't change (but maybe an okay assumption to make)
-    }--
+    ]--
 ]
 
 ; Note: There are no `import` statements here because this is run via EVAL LOAD
@@ -41,13 +41,13 @@ e: make-emitter "libRebol exports for tcc_add_symbol()" (
 )
 
 for-each-api [
-    e/emit [name --{
+    e/emit [name --[
         Add_API_Symbol_Helper(
             state,
             "API_$<Name>",
             cast(CFunction*, &API_$<Name>)
         );
-    }--]
+    ]--]
 ]
 
 e/write-emitted

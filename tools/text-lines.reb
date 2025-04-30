@@ -3,13 +3,13 @@ Rebol [
     version: 1.0.0
     type: module
     name: Text-Lines
-    rights: --{
+    rights: --[
         Copyright 2015 Brett Handley
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     author: "Brett Handley"
     purpose: "Functions operating on lines of text"
 ]
@@ -20,7 +20,7 @@ decode-lines: func [
     "Decode text encoded using a line prefix e.g. comments (modifies)"
     text [~null~ text! error!]  ; raised? in modern exe, not ERROR!
     line-prefix [text! block!] "matched using parse, usually ** or // -"
-    indent [text! block!] -{Matched using parse, usually "  "}-
+    indent [text! block!] -[Matched using parse, usually "  "]-
 ] [
     let pattern: compose [(line-prefix)]
     if not empty? indent [append pattern compose [opt (indent)]]

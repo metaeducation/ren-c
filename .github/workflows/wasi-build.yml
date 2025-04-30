@@ -179,7 +179,7 @@ jobs:
   # requested.  Otherwise it is done for size, and the real "optimization" is
   # done with a post-processing step (with WasmEdge's `wasmedgec`)
   #
-  # See README: -{Braces}- For %make.r String Parameters
+  # See README: -[Dashed Strings]- For %make.r String Parameters
 
     - name: Generate Makefile for Emscripten-Based Build
       run: |

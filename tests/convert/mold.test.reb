@@ -49,35 +49,35 @@
     (did block: copy [a b c])
 
     (
-        -{[a b c]}- = mold block
+        -[[a b c]]- = mold block
     )(
         new-line block 'yes
-        -{[^/    a b c]}- = mold block
+        -[[^/    a b c]]- = mold block
     )(
         new-line (tail of block) 'yes
-        -{[^/    a b c^/]}- = mold block
+        -[[^/    a b c^/]]- = mold block
     )(
-        -{[^/]}- = mold tail-of block
+        -[[^/]]- = mold tail-of block
     )
 ]
 
 (
     block: [
         a b c]
-    -{[^/    a b c]}- = mold block
+    -[[^/    a b c]]- = mold block
 )
 
 (
     block: [a b c
     ]
-    -{[a b c^/]}- = mold block
+    -[[a b c^/]]- = mold block
 )
 
 (
     block: [a b
         c
     ]
-    -{[a b^/    c^/]}- = mold block
+    -[[a b^/    c^/]]- = mold block
 )
 
 (
@@ -85,7 +85,7 @@
     new-line block 'yes
     new-line (tail of block) 'yes
     append block spread [d e f]
-    -{[^/    a b c^/    d e f]}- = mold block
+    -[[^/    a b c^/    d e f]]- = mold block
 )
 
 (
@@ -93,13 +93,13 @@
     new-line block 'yes
     new-line (tail of block) 'yes
     append:line block spread [d e f]
-    -{[^/    a b c^/    d e f^/]}- = mold block
+    -[[^/    a b c^/    d e f^/]]- = mold block
 )
 
 (
     block: copy []
     append:line block spread [d e f]
-    -{[^/    d e f^/]}- = mold block
+    -[[^/    d e f^/]]- = mold block
 )
 
 (
@@ -107,7 +107,7 @@
     new-line block 'yes
     new-line (tail of block) 'yes
     append:line block spread [d e f]
-    -{[^/    a b c^/    d e f^/]}- = mold block
+    -[[^/    a b c^/    d e f^/]]- = mold block
 )
 
 [#145 (
@@ -157,18 +157,18 @@
 
 
 [#2405
-    (-{"ab}- = mold:limit "abcdefg" 3)
+    (-["ab]- = mold:limit "abcdefg" 3)
     (
         [str trunc]: mold:limit "abcdefg" 3
         all [
-            str = -{"ab}-
+            str = -["ab]-
             trunc = 3
         ]
     )
     (
         [str trunc]: mold:limit "abcdefg" 300
         all [
-            str = -{"abcdefg"}-
+            str = -["abcdefg"]-
             trunc = null
         ]
     )

@@ -7,13 +7,13 @@ Rebol [
         2014 "Ladislav Mecir and Saphirion AG"
         2014/2021 "Ren-C Open Source Contributors"
     ]
-    license: --{
+    license: --[
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
 
         http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
 ]
 
 import %test-parsing.r
@@ -65,7 +65,7 @@ run-single-test: func [
         (all [not result.id, expected-id = '???]) or (result.id = expected-id)
     ] then [
         successes: me + 1
-        log reduce [_ -{"correct failure:"}- _ @(quasi expected-id) newline]
+        log reduce [_ -["correct failure:"]- _ @(quasi expected-id) newline]
         return ~
     ]
 
@@ -89,7 +89,7 @@ run-single-test: func [
 
         result = '~okay~ [
             successes: me + 1
-            log reduce [_ -{"succeeded"}- newline]
+            log reduce [_ -["succeeded"]- newline]
             return ~
         ]
 
@@ -111,7 +111,7 @@ run-single-test: func [
         ]
     ] then message -> [
         test-failures: me + 1
-        log reduce [space -{"failed, }- message -{"}- newline]
+        log reduce [space -["failed, ]- message -["]- newline]
     ]
 ]
 
@@ -124,7 +124,7 @@ run-test-cluster: func [
 ][
     if not empty? exclude flags allowed-flags [
         skipped: me + 1
-        log [space -{"skipped"}- newline]
+        log [space -["skipped"]- newline]
         return ~
     ]
 
@@ -323,7 +323,7 @@ export do-recover: func [
                         |
                     ; dialect failure?
                     some whitespace
-                    -{"}- thru -{"}-
+                    -["]- thru -["]-
                     (dialect-failures: dialect-failures + 1)
                         |
                     last-vector: across ["(" test-source-rule ")"]
@@ -332,10 +332,10 @@ export do-recover: func [
                         <end> (
                             ; crash found
                             crashes: crashes + 1
-                            log [-{ "crashed"^/}-]
+                            log [-[ "crashed"^/]-]
                         )
                             |
-                        -{"}- value: across to -{"}- one
+                        -["]- value: across to -["]- one
                         ; test result found
                         (
                             parse3 value [

@@ -24,19 +24,19 @@
 
 
 INLINE Bounce Delegate_Fail_Permission_Denied(void) {
-    return "fail -{The process does not have enough permission}-";
+    return "fail -[The process does not have enough permission]-";
 }
 
 INLINE Bounce Delegate_Fail_No_Process(const Value* arg) {
     return rebDelegate(
-        "fail [-{The target process (group) does not exist:}-", arg, "]"
+        "fail [-[The target process (group) does not exist:]-", arg, "]"
     );
 }
 
 #if TO_WINDOWS
     INLINE Bounce Delegate_Fail_Terminate_Failed(DWORD err) {  // GetLastError()
         return rebDelegate(
-            "fail [-{Terminate failed with error number:}-", rebI(err), "]"
+            "fail [-[Terminate failed with error number:]-", rebI(err), "]"
         );
     }
 #endif
@@ -62,7 +62,7 @@ INLINE char Get_Char_For_Stream_Mode(const RebolValue* mode) {
         "switch @", mode, "[",
             "'inherit [#i]",
             "'none [#n]",
-            "fail -{WORD! for Stream Mode must be INHERIT or NONE}-",
+            "fail -[WORD! for Stream Mode must be INHERIT or NONE]-",
         "]"
     );
 }

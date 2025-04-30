@@ -82,18 +82,18 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         }
 
         if (not OpenClipboard(nullptr))
-            return "fail -{OpenClipboard() fail while reading}-";
+            return "fail -[OpenClipboard() fail while reading]-";
 
         HANDLE h = GetClipboardData(CF_UNICODETEXT);
         if (h == nullptr) {
             CloseClipboard();
-            return "fail -{GetClipboardData() format mismatch}-";
+            return "fail -[GetClipboardData() format mismatch]-";
         }
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
         if (wide == nullptr) {
             CloseClipboard();
-            return "fail -{Couldn't GlobalLock() UCS2 clipboard data}-";
+            return "fail -[Couldn't GlobalLock() UCS2 clipboard data]-";
         }
 
         Value* str = rebTextWide(wide);
@@ -126,10 +126,10 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
             len = VAL_INT32(ARG(PART));
 
         if (not OpenClipboard(nullptr))
-            return "fail -{OpenClipboard() fail on clipboard write}-";
+            return "fail -[OpenClipboard() fail on clipboard write]-";
 
         if (not EmptyClipboard()) // !!! is this superfluous?
-            return "fail -{EmptyClipboard() fail on clipboard write}-";
+            return "fail -[EmptyClipboard() fail on clipboard write]-";
 
         // Clipboard wants a Windows memory handle with UCS2 data.  Allocate a
         // sufficienctly sized handle, decode Rebol STRING! into it, transfer
@@ -139,11 +139,11 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
 
         HANDLE h = GlobalAlloc(GHND, sizeof(WCHAR) * (num_wchars + 1));
         if (h == nullptr)  // per documentation, not INVALID_HANDLE_VALUE
-            return "fail -{GlobalAlloc() fail on clipboard write}-";
+            return "fail -[GlobalAlloc() fail on clipboard write]-";
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
         if (wide == nullptr)
-            return "fail -{GlobalLock() fail on clipboard write}-";
+            return "fail -[GlobalLock() fail on clipboard write]-";
 
         // Extract text as UTF-16
         //
@@ -158,7 +158,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         CloseClipboard();
 
         if (h_check == nullptr)
-            return "fail -{SetClipboardData() failed}-";
+            return "fail -[SetClipboardData() failed]-";
 
         assert(h_check == h);
 

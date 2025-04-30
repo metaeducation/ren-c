@@ -1,6 +1,6 @@
 //
 //  file: %sys-node.h
-//  summary: -{Convenience routines for the Node "superclass" structure}-
+//  summary: -[Convenience routines for the Node "superclass" structure]-
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //

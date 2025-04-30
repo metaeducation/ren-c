@@ -81,22 +81,22 @@
 
 [
     (
-        bincat: to-blob -{C😺T}-
+        bincat: to-blob -[C😺T]-
         bincat = #{43F09F98BA54}
     )
 
-    ("C😺T" = parse bincat [-{C😺T}-])
+    ("C😺T" = parse bincat [-[C😺T]-])
 
-    ("c😺t" = parse bincat [-{c😺t}-])
+    ("c😺t" = parse bincat [-[c😺t]-])
 
-    ~parse-mismatch~ !! (parse:case bincat [-{c😺t}- <end>])
+    ~parse-mismatch~ !! (parse:case bincat [-[c😺t]- <end>])
 ]
 
 (
-    test: to-blob -{The C😺T Test}-
+    test: to-blob -[The C😺T Test]-
     all [
         let x: ~
-        #{43F09F98BA54} = parse test [to -{c😺t}- x: across to space to <end>]
+        #{43F09F98BA54} = parse test [to -[c😺t]- x: across to space to <end>]
         x = #{43F09F98BA54}
         "C😺T" = to-text x
     ]

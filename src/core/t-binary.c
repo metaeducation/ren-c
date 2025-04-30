@@ -1070,12 +1070,12 @@ DECLARE_NATIVE(ENCODE_INTEGER)
     bool no_sign = rebUnboxBoolean(
         "switch first", options, "[",
             "'+ ['true] '+/- ['false]",
-            "fail -{First ENCODE-INTEGER option must be + or +/-}-",
+            "fail -[First ENCODE-INTEGER option must be + or +/-]-",
         "]"
     );
     REBINT num_bytes = rebUnboxInteger(
         "(match integer! second", options, ") else [",
-            "fail -{Second ENCODE-INTEGER option must be an integer}-",
+            "fail -[Second ENCODE-INTEGER option must be an integer]-",
         "]"
     );
     if (num_bytes <= 0)
@@ -1122,7 +1122,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
     }
     if (i != 0)
         return rebDelegate(
-            "fail [", ARG(NUM), "-{exceeds}-", rebI(num_bytes), "-{bytes}-]"
+            "fail [", ARG(NUM), "-[exceeds]-", rebI(num_bytes), "-[bytes]-]"
         );
 
     // The process of byte production of a positive number shouldn't give us
@@ -1131,8 +1131,8 @@ DECLARE_NATIVE(ENCODE_INTEGER)
     if (not no_sign and not negative and *(bp - delta) >= 0x80)
         return rebDelegate(
             "fail [",
-                ARG(NUM), "-{aliases a negative value with signed}-",
-                "-{encoding of only}-", rebI(num_bytes), "-{bytes}-",
+                ARG(NUM), "-[aliases a negative value with signed]-",
+                "-[encoding of only]-", rebI(num_bytes), "-[bytes]-",
             "]"
         );
 
@@ -1175,7 +1175,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
     bool no_sign = rebUnboxBoolean(  // signed is C keyword
         "switch first", options, "[",
             "'+ ['true] '+/- ['false]",
-            "fail -{First DECODE-INTEGER option must be + or +/-}-",
+            "fail -[First DECODE-INTEGER option must be + or +/-]-",
         "]"
     );
     REBLEN num_bytes;
@@ -1184,7 +1184,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
     else {
         num_bytes = rebUnboxInteger(
             "(match integer! second", options, ") else [",
-                "fail -{Second DECODE-INTEGER option must be an integer}-",
+                "fail -[Second DECODE-INTEGER option must be an integer]-",
             "]"
         );
         if (bin_size != num_bytes)

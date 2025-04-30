@@ -2,16 +2,16 @@ Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Create C .inc file with const data of r3.exe startup code"
     file: %prep-main.reb
-    rights: --{
+    rights: --[
         Copyright 2012-2021 Ren-C Open Source Contributors
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         This compresses together several pieces of Rebol code (with comments
         stripped out), and then turns it into a static C constant byte array.
         It is decompressed by the code in %main.c, which then executes it.
@@ -20,7 +20,7 @@ Rebol [
         the core library.  Notably, it makes very light use of the bootstrap
         Rebol's LOAD function.  Hence code can use arbitrarily modern syntax
         even with an older Rebol being used for the build.
-    }--
+    ]--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r
@@ -104,7 +104,7 @@ e: make-emitter "r3 console executable embedded Rebol code bundle" (
 
 compressed: gzip buf
 
-e/emit [compressed --{
+e/emit [compressed --[
     /*
      * Gzip compression of host initialization code
      * Originally $<length of buf> bytes
@@ -114,6 +114,6 @@ e/emit [compressed --{
     const unsigned char Main_Startup_Code[MAIN_STARTUP_SIZE] = {
     $<Binary-To-C:Indent Compressed 4>
     };
-}--]
+]--]
 
 e/write-emitted

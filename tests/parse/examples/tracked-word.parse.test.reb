@@ -87,19 +87,19 @@
     meta-rule: [some bar-rule]
     ok
 )(
-    (trackparse "fff" [foo-rule]) = trim:auto -{
+    (trackparse "fff" [foo-rule]) = trim:auto -[
         foo-rule [
         ] => "fff"
-    }-
+    ]-
 )(
-    (trackparse "bbbfff" [bar-rule]) = trim:auto -{
+    (trackparse "bbbfff" [bar-rule]) = trim:auto -[
         bar-rule [
             foo-rule [
             ] => "fff"
         ] => "bbbfff"
-    }-
+    ]-
 )(
-    (trackparse "bbbfffbbbfff" [repeat 2 bar-rule]) = trim:auto -{
+    (trackparse "bbbfffbbbfff" [repeat 2 bar-rule]) = trim:auto -[
         bar-rule [
             foo-rule [
             ] => "fff"
@@ -108,9 +108,9 @@
             foo-rule [
             ] => "fff"
         ] => "bbbfff"
-    }-
+    ]-
 )(
-    (trackparse "bbbfffbbbfff" [meta-rule]) = trim:auto -{
+    (trackparse "bbbfffbbbfff" [meta-rule]) = trim:auto -[
         meta-rule [
             bar-rule [
                 foo-rule [
@@ -121,14 +121,14 @@
                 ] => "fff"
             ] => "bbbfff"
         ] => "bbbfffbbbfff"
-    }-
+    ]-
 )(
     ; This one is the first "impressive" one, it knows not to consider the
     ; first foo-rule an "ultimate match" because its alternate was not
     ; fulfilled!
     ;
-    (trackparse "fffyyy" [foo-rule some "x" | foo-rule some "y"]) = trim:auto -{
+    (trackparse "fffyyy" [foo-rule some "x" | foo-rule some "y"]) = trim:auto -[
         foo-rule [
         ] => "fff"
-    }-
+    ]-
 )]

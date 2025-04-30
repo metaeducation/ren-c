@@ -3,20 +3,20 @@ Rebol [
     title: "Common Routines for Tools"
     type: module
     name: Prep-Common
-    rights: --{
+    rights: --[
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     version: 2.100.0
     needs: 2.100.100
-    purpose: --{
+    purpose: --[
         These are some common routines used by the utilities
         that build the system, which are found in %src/tools/
-    }--
+    ]--
 ]
 
 import <bootstrap-shim.r>
@@ -212,7 +212,7 @@ export binary-to-c: func [
         let hexed: enbase:base (copy:part data 8) 16
         data: skip data 8
         for-each [digit1 digit2] hexed [
-            append out unspaced [-{0x}- digit1 digit2 -{,}- space]
+            append out unspaced [-[0x]- digit1 digit2 -[,]- space]
         ]
 
         take:last out  ; drop the last space
@@ -403,13 +403,13 @@ export stripload: func [
             |
             "^^}"  ; (actually `^}`) escaped brace, never count
             |
-            -{^^"}-  ; (actually `^"`) escaped quote, never count
+            -[^^"]-  ; (actually `^"`) escaped quote, never count
             |
-            "-{" (if <Q> != try last pushed [append pushed <B>])
+            "-[" (if <Q> != try last pushed [append pushed <B>])
             |
-            "}-" (if <B> = try last pushed [take:last pushed])
+            "]-" (if <B> = try last pushed [take:last pushed])
             |
-            -{"}- (
+            -["]- (
                 case [
                     <Q> = try last pushed [take:last pushed]
                     empty? pushed [append pushed <Q>]
@@ -461,7 +461,7 @@ export stripload: func [
                     not find str ";"
                     not find str "{"
                     not find str "}"
-                    not find str -{"}-
+                    not find str -["]-
                     any [
                         not find str "/"
                         parse3:match str [some "/"]

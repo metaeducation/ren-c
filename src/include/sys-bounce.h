@@ -28,8 +28,8 @@
 // * We don't want to use UTF-8 signals like `return "C"` for BOUNCE_CONTINUE.
 //   That would miss out on the opportunity to make these equivalent:
 //
-//       return "fail -{Error}-"
-//       return rebDelegate("fail -{Error}-")
+//       return "fail -[Error]-"
+//       return rebDelegate("fail -[Error]-")
 //
 // * Using a Cell would put us in contention with discerning between legitmate
 //   Cells and these signals.

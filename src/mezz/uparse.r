@@ -13,7 +13,7 @@ Rebol [
         using  ; TBD: will become new meaning of USE
     ]
 
-    description: --{
+    description: --[
         Rebol's PARSE is a tool for performing RegEx-style tasks using an
         English-like dialect.  It permits breaking down complex expressions
         into named subrules, and has a very freeform model for escaping into
@@ -51,16 +51,16 @@ Rebol [
         to easily create overrides or variations of the dialect.  (For
         instance, a version that is compatible with older Rebols.)  But the
         goal is to facilitate even more ambitious features.
-    }--
+    ]--
 
-    notes: --{
+    notes: --[
         * This implementation will be *extremely* slow for the foreseeable
           future.  But since it is built on usermode facilities, any
           optimizations that are applied to it will bring systemic benefits.
           Ultimately the goal is to merge this architecture in with the
           "messier" C code...hopefully preserving enough of the hackability
           while leveraging low-level optimizations where possible.
-    }--
+    ]--
 ]
 
 
@@ -1108,7 +1108,7 @@ default-combinators: to map! reduce [
     ;     import parse [1 "hi"] [
     ;         return gather [emit x: integer!, emit y: text!]
     ;     ]
-    ;     print [x "is one and" y "is -{hi}-"]
+    ;     print [x "is one and" y "is -[hi]-"]
     ;
     ; The idea is interesting enough that it suggests being able to EMIT with
     ; no GATHER in effect, and then have the RETURN GATHER semantic.
@@ -1861,8 +1861,8 @@ default-combinators: to map! reduce [
     ; but since Ren-C uses UTF-8 Everywhere it makes it practical to merge in
     ; transcoding:
     ;
-    ;     >> parse "-{Neat!}- 1020" [t: text! i: integer!]
-    ;     == "-{Neat!}- 1020"
+    ;     >> parse "-[Neat!]- 1020" [t: text! i: integer!]
+    ;     == "-[Neat!]- 1020"
     ;
     ;     >> t
     ;     == "Neat!"

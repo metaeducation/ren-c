@@ -1,6 +1,6 @@
 Rebol [
     title: "Comparing User Native vs. Rebol Fibonacci Number Calculation"
-    description: --{
+    description: --[
         @ShixinZeng created this as an initial test to compare the performance
         of a user native implementation of Fibonacci numbers, to an algorithm
         written in the exact same style using Rebol.
@@ -9,13 +9,13 @@ Rebol [
         it is run by an interpreter.  But a line of C generally translates
         into only a few instructions.  At time of writing, the TCC version is
         about 50x faster than an -O2 release build running the Rebol version.
-    }--
+    ]--
 ]
 
 c-fib: make-native [
     "nth Fibonacci Number"
     n [integer!]
-] --{
+] --[
     int n = rebUnboxInteger(rebArgR("n"));  // optimization over just "n"
 
     if (n < 0) { return rebInteger(-1); }
@@ -30,7 +30,7 @@ c-fib: make-native [
         --n;
     }
     return rebInteger(i1);
-}--
+]--
 
 rebol-fib: func [
     n [integer!]
@@ -78,7 +78,7 @@ opts: [
     ; therefore add these quotes in for #defines, since the shell will
     ; strip out any backslashes provided.
     ;
-    options --{-DSTDIO_INCLUDE=\"stdio.h\"}--
+    options --[-DSTDIO_INCLUDE=\"stdio.h\"]--
 ]
 
 compile/inspect/settings compilables opts  ; print out for verbose info

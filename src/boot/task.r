@@ -1,18 +1,18 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Task context"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         Globals used for each task. Prevents GC of these values.
         See also the Root Vars (program-wide globals)
-    }--
+    ]--
 ]
 
 ballast         ; current memory ballast (used for GC)

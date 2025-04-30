@@ -1,15 +1,15 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Make sys-zlib.h and u-zlib.c"
-    rights: --{
+    rights: --[
         Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         In order to limit build dependencies, Rebol makes a snapshot of a
         subset of certain libraries to include in the source distribution.
         This script will extract just the parts of ZLIB that Rebol needs
@@ -21,8 +21,8 @@ Rebol [
         Any significant reorganization of the ZLIB codebase would require
         updating this script accordingly.  It was last tested on 1.2.11
         (released 15-Jan-2017)
-    }--
-    notes: --{
+    ]--
+    notes: --[
         "This runs relative to ../tools directory."
 
         !!! TBD: The `register` keyword has been deprecated.  If zlib doesn't
@@ -31,7 +31,7 @@ Rebol [
         rid of them (note `register` is used in comments too):
 
         https://stackoverflow.com/a/30809775
-    }--
+    ]--
 ]
 
 c-lexical: import %c-lexicals.r
@@ -60,14 +60,14 @@ disable-user-includes: func [
     <local> name line-iter line pos
 ]
 bind construct [
-    open-include: charset -{"<}-
-    close-include: charset -{">}-
+    open-include: charset -["<]-
+    close-include: charset -[">]-
 ][
     let include-rule: compose [
         (if stdio [
             [open-include name: across "stdio.h" close-include |]
         ])
-        -{"}- name: across to -{"}-
+        -["]- name: across to -["]-
     ]
 
     for-next 'line-iter lines [
@@ -82,7 +82,7 @@ bind construct [
             ] else [
                 insert line unspaced ["//" space]
                 append line unspaced [
-                    space -{/* REBOL: see make-zlib.r */}-
+                    space -[/* REBOL: see make-zlib.r */]-
                 ]
             ]
         ]
@@ -102,7 +102,7 @@ bind construct [
 ;
 
 make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
-    reduce [--{
+    reduce [--[
         /*
          * Extraction of ZLIB compression and decompression routines
          * for Rebol [R3] Language Interpreter and Run-time Environment
@@ -135,14 +135,14 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
          * Licensed under the Apache License, Version 2.0
          *
          * **********************************************************************
-         *}--
-        unspaced [-{ * Title: }- title]
-        -{ * Build: A0}-
-        unspaced [-{ * Date:  }- now:date]
-        unspaced [-{ * File:  }- filename]
-        -{ *}-
-        -{ * AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)}-
-        -{ */}-
+         *]--
+        unspaced [-[ * Title: ]- title]
+        -[ * Build: A0]-
+        unspaced [-[ * Date:  ]- now:date]
+        unspaced [-[ * File:  ]- filename]
+        -[ *]-
+        -[ * AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)]-
+        -[ */]-
     ]
 ]
 
@@ -340,7 +340,7 @@ for-each 'h-file [
 
 disable-user-includes header-lines
 
-insert header-lines --{
+insert header-lines --[
 
     // Ren-C
     #define NO_DUMMY_DECL 1
@@ -348,7 +348,7 @@ insert header-lines --{
     #define ZLIB_CONST
     // **********************************************************************
 
-}--
+]--
 
 insert header-lines spread make-warning-lines file-include {ZLIB aggregated header}
 
@@ -368,10 +368,10 @@ append source-lines spread read:lines (join path-zlib %crc32.c)
 ; Macros DO1 and DO8 are defined differently in crc32.c, and if you don't
 ; #undef them you'll get a redefinition warning.
 ;
-append source-lines --{
+append source-lines --[
     #undef DO1  /* REBOL: see make-zlib.r */
     #undef DO8  /* REBOL: see make-zlib.r */
-}--
+]--
 
 for-each 'c-file [
     %adler32.c
@@ -398,12 +398,12 @@ disable-user-includes:stdio:inline source-lines copy [
     %crc32.h
 ]
 
-insert source-lines --{
+insert source-lines --[
 
     #include "sys-zlib.h"  /* REBOL: see make-zlib.r */
     #define local static
 
-}--
+]--
 
 insert source-lines spread make-warning-lines file-source {ZLIB aggregated source}
 

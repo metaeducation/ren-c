@@ -1,17 +1,17 @@
 Rebol [
     title: "C Programming Language Lexical Definitions"
-    rights: --{
+    rights: --[
         Copyright 2015 Brett Handley
-    }--
+    ]--
     type: module
     name: C-Lexicals
-    license: --{
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     author: "Brett Handley"
     purpose: "Parse C source text into preprocessing tokens"
-    description: --{
+    description: --[
         Based upon N1570 Committee Draft - April 12, 2011 ISO/IEC 9899:201x
 
         Trigraphs are not implemented.
@@ -19,7 +19,7 @@ Rebol [
         Do not put any actions (e.g. executable GROUP!s in the PARSE rules)
         in this file.  To use these rules, copy them, call them from your
         own rules or use rule injection to dynamically add emit actions.
-    }--
+    ]--
 ]
 
 grammar: [
@@ -65,7 +65,7 @@ grammar: [
     ;
     ; -- A.1.4 Universal character names
 
-    universal-character-name: [-{\U}- 2 hex-quad | -{\u}- hex-quad]
+    universal-character-name: [-[\U]- 2 hex-quad | -[\u]- hex-quad]
     hex-quad: [4 hexadecimal-digit]
 
     ;
@@ -73,9 +73,9 @@ grammar: [
 
     character-constant: [
         #"'" some c-char #"'"
-        | -{L'}- some c-char #"'"
-        | -{u'}- some c-char #"'"
-        | -{U'}- some c-char #"'"
+        | -[L']- some c-char #"'"
+        | -[u']- some c-char #"'"
+        | -[U']- some c-char #"'"
     ]
 
     escape-sequence: [
@@ -86,12 +86,12 @@ grammar: [
     ]
 
     simple-escape-sequence: [
-        -{\'}- | -{\"}- | -{\?}- | -{\\}-
-        | -{\a}- | -{\b}- | -{\f}- | -{\n}- | -{\r}- | -{\t}- | -{\v}-
+        -[\']- | -[\"]- | -[\?]- | -[\\]-
+        | -[\a]- | -[\b]- | -[\f]- | -[\n]- | -[\r]- | -[\t]- | -[\v]-
     ]
 
     hexadecimal-escape-sequence: [
-        -{\x}- hexadecimal-digit opt some hexadecimal-digit
+        -[\x]- hexadecimal-digit opt some hexadecimal-digit
     ]
 
     ; !!! This had the rule `[1 3 octal-digit]`, but this style of range is
@@ -108,27 +108,27 @@ grammar: [
     string-literal: [
         opt encoding-prefix #"^"" opt some s-char #"^""
     ]
-    encoding-prefix: [-{u8}- | -{L}- | -{u}- | -{U}-]
+    encoding-prefix: [-[u8]- | -[L]- | -[u]- | -[U]-]
     s-char: [s-char-cs | escape-sequence]
 
     ;
     ; -- A.1.7 Punctuators
 
     punctuator: [
-        -{->}- | -{++}- | -{--}- | -{<<}- | -{>>}-
-        | -{<=}- | -{>=}- | -{==}- | -{!=}-
-        | -{&&}- | -{||}- | -{...}-
-        | -{*=}- | -{/=}- | -{%=}- | -{+=}- | -{<<=}- | -{>>=}-
-        | -{&=}- | -{^^=}- | -{|=}- | -{##}-
-        | -{<:}- | -{:>}- | -{<%}- | -{%>}-
-        | -{%:%:}- | -{%:}-
+        -[->]- | -[++]- | -[--]- | -[<<]- | -[>>]-
+        | -[<=]- | -[>=]- | -[==]- | -[!=]-
+        | -[&&]- | -[||]- | -[...]-
+        | -[*=]- | -[/=]- | -[%=]- | -[+=]- | -[<<=]- | -[>>=]-
+        | -[&=]- | -[^^=]- | -[|=]- | -[##]-
+        | -[<:]- | -[:>]- | -[<%]- | -[%>]-
+        | -[%:%:]- | -[%:]-
         | p-char
     ]
 
     ;
     ; -- A.1.8 Header names
 
-    header-name: [-{<}- some h-char -{>}- | -{"}- some q-char -{"}-]
+    header-name: [-[<]- some h-char -[>]- | -["]- some q-char -["]-]
 
     ;
     ; -- A.1.9 Preprocessing numbers
@@ -157,30 +157,30 @@ grammar: [
 charsets: context [
 
     ; Header name
-    h-char: complement charset -{^/<}-
-    q-char: complement charset -{^/"}-
+    h-char: complement charset -[^/<]-
+    q-char: complement charset -[^/"]-
 
     ; Identifier
     nondigit: charset [#"_" #"a" - #"z" #"A" - #"Z"]
-    digit: charset -{0123456789}-
-    octal-digit: charset -{01234567}-
+    digit: charset -[0123456789]-
+    octal-digit: charset -[01234567]-
     id-char: union nondigit digit
     hexadecimal-digit: charset [#"0" - #"9" #"a" - #"f" #"A" - #"F"]
 
     ; pp-number
-    sign: charset -{+-}-
+    sign: charset -[+-]-
 
     ; character-constant
-    c-char: complement charset -{'\^/}-
+    c-char: complement charset -['\^/]-
 
     ; string-literal
-    s-char-cs: complement charset -{"\^/}-
+    s-char-cs: complement charset -["\^/]-
 
     ; punctuator
     p-char: charset "[](){}.&*+-~!/%<>^^|?:;=,#"
 
     ; whitespace
-    ws-char: charset -{ ^-^M^/^K^L}-
+    ws-char: charset -[ ^-^M^/^K^L]-
     not-wsp: complement ws-char
 ]
 

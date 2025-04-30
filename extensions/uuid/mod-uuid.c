@@ -80,7 +80,7 @@ DECLARE_NATIVE(GENERATE)
       /* case RPC_S_LOCAL_ONLY: */  // in UuidCreate() docs, but not defined?
       case RPC_S_UUID_NO_ADDRESS:
       default:
-        return "fail -{UuidCreate() could not make a unique address}-";
+        return "fail -[UuidCreate() could not make a unique address]-";
     }
 
     bp[0] = cast(char*, &uuid.Data1)[3];
@@ -139,7 +139,7 @@ DECLARE_NATIVE(GENERATE)
 
   #else
 
-    return "fail -{UUID is not implemented}-";
+    return "fail -[UUID is not implemented]-";
 
   #endif
 }

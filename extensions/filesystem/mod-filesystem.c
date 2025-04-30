@@ -475,7 +475,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
     Value* path = ARG(PATH);
     if (Is_File(path)) {
         if (not Bool_ARG(PASS))
-            return "fail -{LOCAL-TO-FILE needs :PASS to passthru FILE!}-";
+            return "fail -[LOCAL-TO-FILE needs :PASS to passthru FILE!]-";
 
         return Init_File(OUT, Copy_String_At(path));  // many callers modify
     }
@@ -508,7 +508,7 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
     Value* path = ARG(PATH);
     if (Is_Text(path)) {
         if (not Bool_ARG(PASS))
-            return "-{FILE-TO-LOCAL needs :PASS to passthru STRING!}-";
+            return "-[FILE-TO-LOCAL needs :PASS to passthru STRING!]-";
 
         return Init_Text(OUT, Copy_String_At(path));  // callers modify
     }

@@ -2,15 +2,15 @@ Rebol [
     title: "Rebol 'Lint'-style Checking Tool for source code invariants"
     type: module
     name: Source-Tools
-    rights: --{
+    rights: --[
         Copyright 2015 Brett Handley
         Copyright 2015-2021 Ren-C Open Source Contributors
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         This tool arose from wanting to use Rebol for a pre-commit hook:
 
         https://codeinthehole.com/tips/tips-for-using-a-git-pre-commit-hook/
@@ -32,7 +32,7 @@ Rebol [
 
         It is a baseline for implementing more experiments, and by using
         Rebol code for the checks it also exercises more code paths.
-    }--
+    ]--
 ]
 
 ; Root folder of the repository.
@@ -316,8 +316,8 @@ export analyse: context [
         let bol: null  ; beginning of line
         let line: null
 
-        let stop-char: charset -{ ^-^M^/}-
-        let ws-char: charset -{ ^-}-
+        let stop-char: charset -[ ^-^M^/]-
+        let ws-char: charset -[ ^-]-
         let wsp: [some ws-char]
 
         let eol: [line-ending | alt-ending (append inconsistent-eol line)]

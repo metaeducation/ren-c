@@ -130,7 +130,7 @@ bind construct [
             any-number? ret.1
         ] else [
             fail compose (
-                -{Cannot be REDUCED to a number (mold ret) : (mold res)}-
+                -[Cannot be REDUCED to a number (mold ret) : (mold res)]-
             )
         ]
         return ret.1

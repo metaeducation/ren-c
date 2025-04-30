@@ -3,15 +3,15 @@ Rebol [
     title: "Common Code for Emitting Text Files"
     type: module
     name: Common-Emitter
-    rights: --{
+    rights: --[
         Copyright 2016-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         While emitting text files isn't exactly rocket science, it can help
         to have a few sanity checks on the process.
 
@@ -31,7 +31,7 @@ Rebol [
         * Being able to use the information of the file and title being
           generated to provide notifications of what work is currently in
           progress to make errors easier to locate.
-    }--
+    ]--
 ]
 
 import <bootstrap-shim.r>
@@ -320,7 +320,7 @@ export make-emitter: func [
     ]
 
     print cscape [title file
-        --{Generating "$<Title>" ($<Mold File>)}--
+        --[Generating "$<Title>" ($<Mold File>)]--
     ]
 
     let stem
@@ -402,7 +402,7 @@ export make-emitter: func [
     ]
 
     any [is-c is-js] then [
-        e/emit [title boot-version stem by --{
+        e/emit [title boot-version stem by --[
             /**********************************************************************
             **
             **  Rebol [R3] Language Interpreter and Run-time Environment
@@ -417,33 +417,33 @@ export make-emitter: func [
             **  build: A$<Boot-Version.3>
             **  file: $<Mold Stem>
             **  author: $<Mold By>
-            **  license: --{
+            **  license: --[
             **      Licensed under the Apache License, Version 2.0.
             **      See: http://www.apache.org/licenses/LICENSE-2.0
-            **  }--
+            **  ]--
             **  notes: "!!! AUTO-GENERATED FILE !!!"
             **
             ***********************************************************************/
-        }--]
+        ]--]
     ]
     else [
-        e/emit [title stem --{
+        e/emit [title stem --[
             Rebol [
                 system: "Rebol [R3] Language Interpreter and Run-time Environment"
                 title: $<mold title>
                 file: $<mold stem>
-                rights: --{
+                rights: --[
                     Copyright 2012 REBOL Technologies
                     Copyright 2012-2025 Ren-C Open Source Contributors
                     REBOL is a trademark of REBOL Technologies
-                }--
-                license: --{
+                ]--
+                license: --[
                     Licensed under the Apache License, Version 2.0.
                     See: http://www.apache.org/licenses/LICENSE-2.0
-                }--
+                ]--
                 notes: "!!! AUTO-GENERATED FILE !!!"
             ]
-        }--]
+        ]--]
     ]
     return e
 ]

@@ -2,25 +2,25 @@ Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Generate extention native header files"
     file: %prep-extension.r  ; EMIT-HEADER uses to indicate emitting script
-    rights: --{
+    rights: --[
         Copyright 2017 Atronix Engineering
         Copyright 2017-2025 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     needs: 2.100.100
-    description: --{
+    description: --[
         This script is used to preprocess C source files containing code for
         extension DLLs, designed to load new native code into the interpreter.
 
         Such code is very similar to that of the code which is built into
         the EXE itself.  Hence, features like scanning the C comments for
         native specifications is reused.
-    }--
-    notes: --{
+    ]--
+    notes: --[
      A. The build process distinguishes between an extension that wants to use
         just "rebol.h" vs. all of "sys-core.h".  See `use-librebol`
 
@@ -35,7 +35,7 @@ Rebol [
         not clear what kind of actionable information should be put there.
         But perhaps things like what EXT_SYM_XXX are used would be better to
         define there in the source files that use them?
-    }--
+    ]--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r
@@ -199,7 +199,7 @@ e1: make-emitter "Module C Header File Preface" (
 )
 
 if yes? use-librebol [
-    e1/emit [--{
+    e1/emit [--[
         /* extension configuration says [use-librebol: 'yes] */
 
         #undef LIBREBOL_BINDING_NAME  /* defaulted by rebol.h */
@@ -222,9 +222,9 @@ if yes? use-librebol [
             RebolBounce N_${MOD}_##name(RebolContext* level_)
 
         #define NATIVE_CFUNC(name)  N_${MOD}_##name
-    }--]
+    ]--]
 ] else [
-    e1/emit [--{
+    e1/emit [--[
         /* extension configuration says [use-librebol: 'no] */
 
         #undef LIBREBOL_BINDING_NAME  /* defaulted by sys-core.h */
@@ -278,10 +278,10 @@ if yes? use-librebol [
          */
         #define EXTENDED_GENERICS() \
             g_generics_${MOD}
-    }--]
+    ]--]
 ]
 
-e1/emit [--{
+e1/emit [--[
     /*
      * This global definition is shadowed by the local definitions that
      * are picked up by APIs like `rebValue()`, to know how to look up
@@ -303,12 +303,12 @@ e1/emit [--{
      * one native is in the file, this works.
      */
     #define LIBREBOL_BINDING_USED() (void)LIBREBOL_BINDING_NAME()
-}--]
+]--]
 
 
-e1/emit [--{
+e1/emit [--[
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
-}--]
+]--]
 
 
 === "FORWARD DECLARE EXT_SYM_XXX CONSTANTS AND VARIABLES" ===
@@ -337,19 +337,19 @@ for-each 'symbol maybe try ext-header.extended-words [
 
     let ext-sym: cscape [symbol "EXT_SYM_${SYMBOL}"]
 
-    append symbol-forward-decls cscape [symbol id --{
+    append symbol-forward-decls cscape [symbol id --[
         #define $<EXT-SYM>  EXT_SYM_$<id>
         extern RebolValue* g_symbol_holder_${SYMBOL};
-    }--]
+    ]--]
 
     append symbol-globals cscape [symbol
-        --{RebolValue* g_symbol_holder_${SYMBOL} = nullptr;}--
+        --[RebolValue* g_symbol_holder_${SYMBOL} = nullptr;]--
     ]
     append startup-hooks cscape [symbol
-        --{g_symbol_holder_${SYMBOL} = Register_Symbol("$<symbol>", $<EXT-SYM>);}--
+        --[g_symbol_holder_${SYMBOL} = Register_Symbol("$<symbol>", $<EXT-SYM>);]--
     ]
     insert shutdown-hooks cscape [symbol
-        --{Unregister_Symbol(g_symbol_holder_${SYMBOL}, $<EXT-SYM>);}--
+        --[Unregister_Symbol(g_symbol_holder_${SYMBOL}, $<EXT-SYM>);]--
     ]
 ]
 
@@ -358,7 +358,7 @@ if not empty? symbol-forward-decls [
         fail ["Extended-Words in %make-spec.r can't be used with USE-LIBREBOL"]
     ]
 
-    e1/emit [--{
+    e1/emit [--[
         /*
          * #defines for Extended-Symbols: [...] in %make-spec.r header
          *
@@ -374,20 +374,20 @@ if not empty? symbol-forward-decls [
         #define EXT_CANON(name)  Cell_Word_Symbol(g_symbol_holder_##name)
 
         $[Symbol-Forward-Decls]
-    }--]
+    ]--]
 ]
 
 
 === "IF NOT USING LIBREBOL, DEFINE INCLUDE_PARAMS_OF_XXX MACROS" ===
 
-e1/emit [--{
+e1/emit [--[
     /*
      * INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), Bool_ARG(), ARG()
      *
      * Note these are not technically required if the extension uses
      * librebol.
      */
-}--]
+]--]
 
 if yes? use-librebol [
     for-each 'info natives [
@@ -403,10 +403,10 @@ if yes? use-librebol [
         ; We trickily shadow the global `librebol_binding` with a version
         ; extracted from the passed-in level.
         ;
-        e1/emit [info proto-name --{
+        e1/emit [info proto-name --[
             #define INCLUDE_PARAMS_OF_${PROTO-NAME} \
                 LIBREBOL_BINDING_NAME() = level_;
-        }--]
+        ]--]
     ]
 ]
 else [
@@ -429,12 +429,12 @@ cfunc-forward-decls: collect [
     ]
 ]
 
-e1/emit [cfunc-forward-decls --{
+e1/emit [cfunc-forward-decls --[
     /*
      * Forward-declare DECLARE_NATIVE()-based function prototypes
      */
     $[Cfunc-Forward-Decls];
-}--]
+]--]
 
 
 === "FORWARD DECLARE EXTENSION TYPES" ===
@@ -452,7 +452,7 @@ for-each 'symbol maybe try ext-header.extended-types [
     ]
     let is_xxx: propercase join "is_" stem
 
-    append type-forward-decls cscape [is_xxx --{
+    append type-forward-decls cscape [is_xxx --[
         extern RebolValue* DATATYPE_HOLDER(${Is_Xxx});
 
         #define EXTRA_HEART_$<STEM> \
@@ -467,29 +467,29 @@ for-each 'symbol maybe try ext-header.extended-types [
             );
             return Cell_Extra_Heart(cell) == ext_heart;
         }
-    }--]
+    ]--]
 
-    append type-globals cscape [is_xxx --{
+    append type-globals cscape [is_xxx --[
         RebolValue* DATATYPE_HOLDER(${Is_Xxx}) = nullptr;
-    }--]
+    ]--]
 
-    append startup-hooks cscape [is_xxx symbol --{
+    append startup-hooks cscape [is_xxx symbol --[
         DATATYPE_HOLDER(${Is_Xxx}) = Register_Datatype("$<symbol>");
-    }--]
+    ]--]
 
-    insert shutdown-hooks cscape [is_xxx --{
+    insert shutdown-hooks cscape [is_xxx --[
         Unregister_Datatype(DATATYPE_HOLDER(${Is_Xxx}));
-    }--]
+    ]--]
 ]
 
 if not empty? type-forward-decls [
-    e1/emit [--{
+    e1/emit [--[
         /*
          * Forward definitions generated for Extended-Types: [...]
          */
 
         $[Type-Forward-Decls]
-    }--]
+    ]--]
 ]
 
 
@@ -502,19 +502,19 @@ if not empty? type-forward-decls [
 if no? use-librebol [
     for-each 'info generics [
         e1/emit [info
-            -{IMPLEMENT_GENERIC(${INFO.NAME}, ${Info.Proper-Type});}-
+            -[IMPLEMENT_GENERIC(${INFO.NAME}, ${Info.Proper-Type});]-
         ]
     ]
 
     for-each 'info generics [
-        e1/emit [info --{
+        e1/emit [info --[
             extern ExtraGenericInfo GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type});
-        }--]
+        ]--]
     ]
 
-    e1/emit [--{
+    e1/emit [--[
         extern const ExtraGenericTable (EXTENDED_GENERICS())[];  /* name macro! */
-    }--]
+    ]--]
 ]
 
 e1/write-emitted
@@ -568,15 +568,15 @@ e: make-emitter "Extension Initialization Script Code" (
 === "GENERATE MODULE'S TMP-XXX-INIT.C FILE" ===
 
 if yes? use-librebol [
-    e/emit [--{
+    e/emit [--[
         #include <assert.h>
         #include "rebol.h"
-    }--]
+    ]--]
 ] else [
-    e/emit [--{#include "sys-core.h"}--]
+    e/emit [--[#include "sys-core.h"]--]
 ]
 
-e/emit [--{
+e/emit [--[
     #include "tmp-mod-$<mod>.h" /* for DECLARE_NATIVE() forward decls */
 
     /*
@@ -595,46 +595,46 @@ e/emit [--{
      * call things like rebValue() etc.
      */
     RebolContext* LIBREBOL_BINDING_NAME();
-}--]
+]--]
 
 if not empty? symbol-globals [
-    e/emit [--{
+    e/emit [--[
         /*
          * Globals with storage for Extended-Symbols: from %make-spec.r
          */
 
         $[Symbol-Globals]
-    }--]
+    ]--]
 ]
 
 if not empty? type-globals [
-    e/emit [--{
+    e/emit [--[
         /*
          * Type globals to hold the result from Register_Datatype().
          */
 
         $[Type-Globals]
-    }--]
+    ]--]
 ]
 
 if not empty? generics [
 
-    e/emit [--{
+    e/emit [--[
         /*
         * These are the static globals that are used as the linked list entries
         * when the extension registers its generics.  No dynamic allocations are
         * needed--the pointers in the globals are simply updated.
         */
-    }--]
+    ]--]
 
     for-each 'info generics [
-        e/emit [info --{
+        e/emit [info --[
             ExtraGenericInfo GENERIC_ENTRY(${INFO.NAME}, ${Info.Proper-Type}) = {
                 nullptr,  /* will replace via *ExtraGenericTable.datatype_ptr */
                 GENERIC_CFUNC(${INFO.NAME}, ${Info.Proper-Type}),
                 nullptr  /* used as pointer for next in linked list */
             };
-        }--]
+        ]--]
     ]
 
     let table-items: collect [
@@ -653,13 +653,13 @@ if not empty? generics [
                 "{ $<Table>, $<Ext_Info>, $<Datatype_Ptr> }"
             ]
         ]
-        keep --{{ nullptr, nullptr, nullptr }}--
+        keep --[{ nullptr, nullptr, nullptr }]--
     ]
 
     ; Micro-optimization could avoid making this if no IMPLEMENT_GENERIC()s.
     ; But the code has fewer branches and edge cases if we always make it.
     ;
-    e/emit [--{
+    e/emit [--[
         /*
         * This table is passed to Register_Generics() and Unregister_Generics().
         * It maps from the generic tables to the entry that is added and removed
@@ -669,7 +669,7 @@ if not empty? generics [
         const ExtraGenericTable (EXTENDED_GENERICS())[] = {  /* name macro! */
             $[Table-Items],
         };
-    }--]
+    ]--]
 
     append startup-hooks "Register_Generics(EXTENDED_GENERICS());"
     insert shutdown-hooks "Unregister_Generics(EXTENDED_GENERICS());"
@@ -683,7 +683,7 @@ if empty? shutdown-hooks [
     append shutdown-hooks "/* no shutdown-hooks */"
 ]
 
-e/emit [--{
+e/emit [--[
     /*
      * Based on various features that %prep-extension.r wants to build in
      * automatically, it needs to run some C code on startup and shutdown
@@ -703,7 +703,7 @@ e/emit [--{
         $[Shutdown-Hooks]
         return rebTrash();
     }
-}--]
+]--]
 
 num-natives: me + 2  ; account for two added natives
 
@@ -714,7 +714,7 @@ cfunc-names: collect [  ; must be in the order that NATIVE is called!
     ]
 ]
 
-e/emit [--{
+e/emit [--[
     /*
      * Pointers to function dispatchers for natives (in same order as the
      * order of native specs after being loaded).  Cast is used so that if
@@ -742,7 +742,7 @@ e/emit [--{
         (void (*)(void))NATIVE_CFUNC(UNREGISTER_EXTENSION_P),  /* last [2] */
         (void (*)(void))$(Cfunc-Names),  /* cast to ick [1] */
     };
-}--]
+]--]
 
 
 === "EMIT COMPRESSED STARTUP SCRIPT CODE AS C BYTE ARRAY" ===
@@ -753,7 +753,7 @@ header: ~
 initscript-body: stripload:header (join ext-src-dir script-name) $header
 ensure text! header  ; stripload gives back textual header
 
-script-uncompressed: cscape [--{
+script-uncompressed: cscape [--[
     Rebol [
         $<Header>
     ]
@@ -775,7 +775,7 @@ script-uncompressed: cscape [--{
     $<if has-startup* ["startup*  ; extension-author-provided startup code"]>
 
     $<Initscript-Body>
-}--]
+]--]
 
 write (join ext-prep-subdir %script-uncompressed.r) script-uncompressed
 
@@ -783,7 +783,7 @@ script-compressed: gzip script-uncompressed
 script-num-codepoints: length of script-uncompressed
 script-len: length of script-compressed
 
-e/emit [--{
+e/emit [--[
     /*
      * Gzip compression of $<Script-Name>
      * Originally $<length of script-uncompressed> bytes
@@ -791,12 +791,12 @@ e/emit [--{
     static const unsigned char script_compressed[$<script-len>] = {
     $<Binary-To-C:Indent Script-Compressed 4>
     };
-}--]
+]--]
 
 
 === "EMIT COLLATED STRUCTURE DESCRIBING EXTENSION" ===
 
-e/emit [--{
+e/emit [--[
     /*
      * Hook called by the core to gather all the details of the extension up
      * so the system can process it.  This hook doesn't decompress any of the
@@ -834,7 +834,7 @@ e/emit [--{
             $<num-natives>  /* number of NATIVE invocations in script */
         );
     }
-}--]
+]--]
 
 e/write-emitted
 

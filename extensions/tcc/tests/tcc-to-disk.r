@@ -1,6 +1,6 @@
 Rebol [
     title: "TCC Output of Files on Disk Test"
-    description: --{
+    description: --[
         The initial integration of TCC only allowed for in-memory compilation
         of a string of C test as the implementation of a function that Rebol
         could call.  It was later extended to allow the creation of OBJ and
@@ -13,10 +13,10 @@ Rebol [
         It builds a dialected block which it passes to the usermode COMPILE
         front end, which translates that block into an object suitable for
         the lower-level COMPILE* command written in C that speaks to libtcc.
-    }--
+    ]--
 ]
 
-write %hello-tcc.c trim:auto --{
+write %hello-tcc.c trim:auto --[
     /*
      * hello-tcc.c
      * Simple test of compiling a file from disk w/TCC extension
@@ -28,7 +28,7 @@ write %hello-tcc.c trim:auto --{
         printf("Hello, TCC Disk File World!\n");
         return 0;
     }
-}--
+]--
 
 /c99-logged: enclose c99/ function [f [frame!]] [
     ; f.runtime: "..."  ; set this to override CONFIG_TCCDIR

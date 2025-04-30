@@ -2,15 +2,15 @@ Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Generate auto headers"
     file: %make-headers.r
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2017 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     needs: 2.100.100
 ]
 
@@ -102,9 +102,9 @@ emit-proto: func [
 
     append prototypes proto
 
-    e-funcs/emit [proto proto-parser.file --{
+    e-funcs/emit [proto proto-parser.file --[
         RL_API $<Proto>; /* $<proto-parser.file> */
-    }--]
+    ]--]
 ]
 
 process-conditional: func [
@@ -113,9 +113,9 @@ process-conditional: func [
     dir-position
     emitter [object!]
 ][
-    emitter/emit [proto-parser.file dir-position text-line-of directive --{
+    emitter/emit [proto-parser.file dir-position text-line-of directive --[
         $<Directive> /* $<proto-parser.file> #$<text-line-of dir-position> */
-    }--]
+    ]--]
 
     ; Minimise conditionals for the reader - unnecessary for compilation.
     ;
@@ -142,7 +142,7 @@ emit-directive: func [return: [~] directive] [
 ; more solid mechanism.
 
 
-e-funcs/emit [--{
+e-funcs/emit [--[
     /*
      * Once there was a rule that C++ builds would not be different in function
      * from a C build.  This way, an extension DLL could be compiled to run
@@ -158,9 +158,9 @@ e-funcs/emit [--{
     #if 0
     extern "C" {
     #endif
-}--]
+]--]
 
-e-funcs/emit [--{
+e-funcs/emit [--[
     /*
      * These are the functions that are scanned for in the %.c files by
      * %make-headers.r, and then their prototypes placed here.  This means it
@@ -168,7 +168,7 @@ e-funcs/emit [--{
      * functions living in different sources.  (`static` functions are skipped
      * by the scan.)
      */
-}--]
+]--]
 
 for-each 'item file-base.core [
     ;
@@ -201,11 +201,11 @@ for-each 'item file-base.core [
 ]
 
 
-e-funcs/emit --{
+e-funcs/emit --[
     #if 0
     }  /* end of `extern "C" {` */
     #endif
-}--
+]--
 
 e-funcs/write-emitted
 
@@ -286,13 +286,13 @@ e-strings: make-emitter "REBOL Constants with Global Linkage" (
     join output-dir %include/tmp-constants.h
 )
 
-e-strings/emit [--{
+e-strings/emit [--[
     /*
      * This file comes from scraping %a-constants.c for any `const XXX =` or
      * `#define` definitions, and it is included in %sys-core.h in order to
      * to conveniently make the global data available in other source files.
      */
-}--]
+]--]
 
 for-each 'line read:lines %a-constants.c [
     let constd
@@ -301,10 +301,10 @@ for-each 'line read:lines %a-constants.c [
             e-strings/emit line
             e-strings/emit newline
         ]
-        parse3:match line [constd: across to -{ =}- to <end>] [
-            e-strings/emit [constd --{
+        parse3:match line [constd: across to -[ =]- to <end>] [
+            e-strings/emit [constd --[
                 extern $<Constd>;
-            }--]
+            ]--]
         ]
     ]
 ]

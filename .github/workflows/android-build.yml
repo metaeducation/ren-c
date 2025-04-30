@@ -250,7 +250,7 @@ jobs:
 
   #====# BUILD STEPS #========================================================#
 
-    # See README: -{Braces}- For %make.r String Parameters
+    # See README: -[Dashed Strings]- For %make.r String Parameters
     #
     - name: Generate Makefile for Cross-Compiling to ARM
       run: |
@@ -263,7 +263,7 @@ jobs:
             standard=$STANDARD \
             os_id=$OS_ID \
             debug=$DEBUG \
-            git_commit="-{$GIT_COMMIT}-" \
+            git_commit="-[$GIT_COMMIT]-" \
             rigorous=no \
             static=no \
             extensions="$EXTENSIONS"

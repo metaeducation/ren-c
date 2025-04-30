@@ -4,12 +4,12 @@
 
 [
     (
-        html: --{
+        html: --[
 ^-^-^-<html>
 ^-^-^-^-<head><title>Test</title></head>
 ^-^-^-^-<body><div><u>Hello</u> <b>World</b></div></body>
 ^-^-^-</html>
-^-^-}--
+^-^-]--
         ok
     )
 

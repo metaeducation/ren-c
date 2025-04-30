@@ -2,17 +2,17 @@ Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Generate table of ExtensionCollators for all built-in extensions"
     file: %make-extensions-table.r  ; EMIT-HEADER uses this filename
-    rights: --{
+    rights: --[
         Copyright 2017 Atronix Engineering
         Copyright 2017-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     needs: 2.100.100
-    description: --{
+    description: --[
         Extensions are written in such a way that based on influencing some
         #define macros in %sys-ext.h, they can target being standalone DLLs,
         or as part of a Rebol EXE, or as part of Rebol built as a library.
@@ -34,7 +34,7 @@ Rebol [
         rebBuiltinExtensions() API to whatever client (C, JavaScript, etc.)
         that may want to start them up selectively...which must be at some
         point *after* rebStartup().
-    }--
+    ]--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r
@@ -57,7 +57,7 @@ e: make-emitter "Built-in Extensions" (
     join output-dir %core/tmp-builtin-extension-table.c
 )
 
-e/emit [extensions --{
+e/emit [extensions --[
     #include "sys-core.h"  /* ExtensionCollator type, Value*, etc. */
     #include "sys-ext.h"   /* DECLARE_EXTENSION_COLLATOR(), etc. */
 
@@ -88,6 +88,6 @@ e/emit [extensions --{
     #ifdef __cplusplus
         }  /* end extern "C" */
     #endif
-}--]
+]--]
 
 e/write-emitted

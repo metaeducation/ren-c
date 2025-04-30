@@ -4,15 +4,15 @@ Rebol [
     file: %native-emitters.r
     type: module
     name: Native-Emitters
-    rights: --{
+    rights: --[
         Copyright 2017 Atronix Engineering
         Copyright 2017 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     needs: 2.100.100
 ]
 
@@ -87,7 +87,7 @@ export extract-native-protos: func [
             ]
             (
                 replace proto unspaced [newline "//"] newline
-                replace proto "//  " -{}-
+                replace proto "//  " -[]-
 
                 keep make native-info! compose [
                     proto: (proto)
@@ -133,7 +133,7 @@ export emit-include-params-macro: func [
     ]
     let spec: copy find proto "["  ; make copy (we'll corrupt it)
 
-    replace spec "^^" -{}-
+    replace spec "^^" -[]-
 
     ; We used stripload to get the function specs, so it has @output form
     ; parameters.  The bootstrap executable thinks that's an illegal email.
@@ -142,7 +142,7 @@ export emit-include-params-macro: func [
     ; !!! Review replacing with / when specs are changed, so /(...) and /xxx
     ; will both work.
     ;
-    replace spec "@" -{}-
+    replace spec "@" -[]-
 
     spec: transcode:one spec
 
@@ -245,11 +245,11 @@ export emit-include-params-macro: func [
     ;
     let varlist-hold: if is-intrinsic [
         [
-            -{if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC))}-
-            -{    Set_Flex_Info(level_->varlist, HOLD);}-
+            -[if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC))]-
+            -[    Set_Flex_Info(level_->varlist, HOLD);]-
         ]
     ] else [
-        [-{Set_Flex_Info(level_->varlist, HOLD);}-]
+        [-[Set_Flex_Info(level_->varlist, HOLD);]-]
     ]
 
     if empty? items [  ; vaporization currently not allowed
@@ -257,11 +257,11 @@ export emit-include-params-macro: func [
     ]
 
     let prefix: all [extension unspaced [extension "_"]]
-    e/emit [prefix native-name items varlist-hold --{
+    e/emit [prefix native-name items varlist-hold --[
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Varlist-Hold] \
             $(Items); \
-    }--]
+    ]--]
 ]
 
 

@@ -590,29 +590,29 @@
 
 [
     (
-        bincat: to-blob -{C😺T}-
+        bincat: to-blob -[C😺T]-
         bincat = #{43F09F98BA54}
     )
 
     (
-        parse3 bincat [-{C😺T}-]
+        parse3 bincat [-[C😺T]-]
         ok
     )
 
     (
-        parse3 bincat [-{c😺t}-]
+        parse3 bincat [-[c😺t]-]
         ok
     )
 
     ~parse3-incomplete~ !! (
-        parse3:case bincat [-{c😺t}-]
+        parse3:case bincat [-[c😺t]-]
     )
 ]
 
 (
-    test: to-blob -{The C😺T Test}-
+    test: to-blob -[The C😺T Test]-
     x: ~
-    parse3 test [to -{c😺t}- x: across to space to <end>]
+    parse3 test [to -[c😺t]- x: across to space to <end>]
     all [
         x = #{43F09F98BA54}
         "C😺T" = to-text x

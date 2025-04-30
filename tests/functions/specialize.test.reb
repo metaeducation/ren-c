@@ -45,7 +45,7 @@
     f: make frame! unrun append-10/
     f.series: copy [a b c]
 
-    comment -{COPY before EVAL allows reuse of F, only the copy is "stolen"}-
+    comment -[COPY before EVAL allows reuse of F, only the copy is "stolen"]-
     eval copy f
     [a b c 10 10] = eval f
 )

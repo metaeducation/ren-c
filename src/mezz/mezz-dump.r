@@ -1,15 +1,15 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "REBOL 3 Mezzanine: Dump"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
 ]
 
 dump: func [

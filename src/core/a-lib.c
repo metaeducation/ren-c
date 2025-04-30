@@ -43,9 +43,9 @@
 //
 //     RebolValue* result = rebValue(
 //         "if not", item1, "[\n",
-//             item2, "| print -{Close brace separate from content}-\n",
+//             item2, "| print -[Close brace separate from content]-\n",
 //         "] else [\n",
-//             item3, "| print -{Close brace with content}-]\n"
+//             item3, "| print -[Close brace with content]-]\n"
 //     );
 //
 // (Note: C can't count how many arguments a variadic takes, so this is done
@@ -296,8 +296,8 @@ void API_rebFreeMaybe(void *ptr)
     if (Is_Node_A_Cell(b) or not (NODE_BYTE(b) & NODE_BYTEMASK_0x02_ROOT)) {
         rebJumps(
             "panic [",
-                "-{rebFree() mismatched with allocator!}-"
-                "-{Did you mean to use free() instead of rebFree()?}-",
+                "-[rebFree() mismatched with allocator!]-"
+                "-[Did you mean to use free() instead of rebFree()?]-",
             "]"
         );
     }
@@ -3146,14 +3146,14 @@ bool Api_Function_Details_Querier(
 // This version of rebFunction() has its arguments "flipped" (in the Haskell
 // sense of "flip")...it takes the CFunction first, then the spec:
 //
-//    Value* a = rebFunction("[-{I'm a Spec}- arg [text!]", &F_Impl);
+//    Value* a = rebFunction("[-[I'm a Spec]- arg [text!]", &F_Impl);
 //
-//    Value* b = rebFlipFunction(&F_Impl, "[-{I'm A Spec}- arg [text!]]");
+//    Value* b = rebFlipFunction(&F_Impl, "[-[I'm A Spec]- arg [text!]]");
 //
 // The reason for the existence of the flipped form is that it is variadic,
 // so you can make the spec from composed values:
 //
-//    Value* description = rebValue("-{I'm A Spec}-");
+//    Value* description = rebValue("-[I'm A Spec]-");
 //
 //    Value* c = rebFlipFunction(&F_Impl, "[", description, "arg [text!]]");
 //

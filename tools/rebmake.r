@@ -5,17 +5,17 @@ Rebol [
     type: module
     name: Rebmake
 
-    rights: --{
+    rights: --[
         Copyright 2017 Atronix Engineering
         Copyright 2017-2025 Ren-C Open Source Contributors
-    }--
+    ]--
 
-    license: --{
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
 
-    description: --{
+    description: --[
         R3-Alpha's bootstrap process depended on the GNU Make Tool, with a
         makefile generated from minor adjustments to a boilerplate copy of
         the makefile text.  As needs grew, a second build process arose
@@ -30,14 +30,14 @@ Rebol [
         In theory this code is abstracted such that it could be used by other
         projects.  In practice, it is tailored to the specific needs and
         settings of the Rebol project.
-    }--
+    ]--
 
-    warning: --{
+    warning: --[
         This code is not representative of modern practices, because it has
         to run in a very old bootstrap executable.  It is also very much a
         hodgepodge just to keep things running.  It's the absolute wrong place
         to be looking for exemplary Ren-C code.
-    }--
+    ]--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r
@@ -423,7 +423,7 @@ compiler-class: make object! [
     check: method [
         "Check if the compiler is available"
         return: [~]
-        exec -{Executable path (can be text!, e.g. "r3 --do c99 --")}-
+        exec -[Executable path (can be text!, e.g. "r3 --do c99 --")]-
             [~null~ file! text!]
     ][
         fail ~<archetype check invoked>~
@@ -557,7 +557,7 @@ cc: make compiler-class [
                     ; This is a stopgap workaround that ultimately would
                     ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
                     ;
-                    flg: replace copy flg -{"}- -{\"}-
+                    flg: replace copy flg -["]- -[\"]-
 
                     ; Note: bootstrap executable hangs on:
                     ;
@@ -820,7 +820,7 @@ cl: make compiler-class [
                     ; This is a stopgap workaround that ultimately would
                     ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
                     ;
-                    flg: replace copy flg -{"}- -{\"}-
+                    flg: replace copy flg -["]- -[\"]-
 
                     ; Note: bootstrap executable hangs on:
                     ;

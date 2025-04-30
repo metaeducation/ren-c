@@ -261,7 +261,7 @@ static Bounce Delegate_Kill_Process(pid_t pid, int signal)
     switch (errno) {
       case EINVAL:
         return rebDelegate(
-            "fail [-{Invalid signal number:}-", rebI(signal), "]"
+            "fail [-[Invalid signal number:]-", rebI(signal), "]"
         );
 
       case EPERM:

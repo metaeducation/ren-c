@@ -1,6 +1,6 @@
 Rebol [
     title: "Test C Code Using Librebol Instead of Stdio.h"
-    description: --{
+    description: --[
         In order to call C functions like printf(), you must have headers and
         libraries installed on your ARM platform.  This is difficult to do
         without something like BusyBox that establishes a sandbox environment
@@ -20,13 +20,13 @@ Rebol [
         You would call into the interpreter:
 
             int value = 10;
-            rebElide("print [-{The value is}-", rebI(value), "]");
+            rebElide("print [-[The value is]-", rebI(value), "]");
 
         The API provides memory alloction through rebAlloc() and rebFree(), so
         the code you write isn't necessarily completely trivial.  But to be
         realistic, you are probably going to need functions like memcpy() and
         other standard functions.  So this is just a proof of concept.
-    }--
+    ]--
 ]
 
 
@@ -42,7 +42,7 @@ call-librebol: make-native [
     n [integer!]
 ]{
     int n = rebUnboxInteger("n");
-    rebElide("print [-{Hello, libRebol World:}-", rebI(n), "]");
+    rebElide("print [-[Hello, libRebol World:]-", rebI(n), "]");
     return rebInteger(n + 20);
 }
 

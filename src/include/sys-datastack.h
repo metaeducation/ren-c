@@ -1,6 +1,6 @@
 //
 //  file: %sys-datastack.h
-//  summary: -{Definitions for the "Data Stack"}-
+//  summary: -[Definitions for the "Data Stack"]-
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //

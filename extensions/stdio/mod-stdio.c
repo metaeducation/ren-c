@@ -125,7 +125,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
 static Value* Make_Escape_Error(const char* name) {
     return rebValue("make error! [",
         "id: 'escape",
-        "message: spaced [", rebT(name), "-{cancelled by user (e.g. ESCAPE)}-]"
+        "message: spaced [", rebT(name), "-[cancelled by user (e.g. ESCAPE)]-]"
     "]");
 }
 
@@ -133,7 +133,7 @@ static Value* Make_Escape_Error(const char* name) {
 static Value* Make_Non_Halt_Error(const char* name) {
     return rebValue("make error! [",
         "id: 'escape",
-        "message: spaced [", rebT(name), "-{interrupted by non-HALT signal}-]"
+        "message: spaced [", rebT(name), "-[interrupted by non-HALT signal]-]"
     "]");
 }
 
@@ -252,7 +252,7 @@ DECLARE_NATIVE(READ_LINE)
     bool hide = Bool_ARG(HIDE);
 
     if (hide)  // https://github.com/rebol/rebol-issues/issues/476
-        return "fail -{READ-LINE:HIDE not yet implemented:}-";
+        return "fail -[READ-LINE:HIDE not yet implemented:]-";
 
     Value* line;
 
@@ -297,7 +297,7 @@ DECLARE_NATIVE(READ_LINE)
             }
             if (raw)
                 break;  // caller should tell by no newline
-            return "fail -{READ-LINE without :RAW hit EOF with no newline}-";
+            return "fail -[READ-LINE without :RAW hit EOF with no newline]-";
         }
 
         Codepoint c;
@@ -317,7 +317,7 @@ DECLARE_NATIVE(READ_LINE)
                     );
                 }
                 if (eof)
-                    return "fail -{Incomplete stdin UTF-8 sequence at EOF}-";
+                    return "fail -[Incomplete stdin UTF-8 sequence at EOF]-";
                 ++size;
                 --trail;
             }
@@ -414,17 +414,17 @@ DECLARE_NATIVE(READ_CHAR)
         Value* e = Try_Get_One_Console_Event(Term_IO, buffered, timeout_msec);
 
         if (e == nullptr)  // can smart terminal ever "disconnect" (?)
-            return "fail -{Unexpected EOF reached with Smart Terminal API}-";
+            return "fail -[Unexpected EOF reached with Smart Terminal API]-";
 
         if (rebUnboxLogic("quasi?", rebQ(e))) {
             if (rebUnboxLogic(rebQ(e), "= '~halt~"))  // Ctrl-C instead of key
                 return "halt";
 
             if (rebUnboxLogic(rebQ(e), "= '~timeout~"))
-                return "raise -{Timeout in READ-CHAR}-";
+                return "raise -[Timeout in READ-CHAR]-";
 
             // Note: no other signals at time of writing
-            return "fail -{Unknown QUASI? from Try_Get_One_Console_Event()}-";
+            return "fail -[Unknown QUASI? from Try_Get_One_Console_Event()]-";
         }
 
         if (rebUnboxLogic("char? @", e))
@@ -454,7 +454,7 @@ DECLARE_NATIVE(READ_CHAR)
             goto retry;
         }
 
-        return "fail -{Unexpected type from Try_Get_One_Console_Event()}-";
+        return "fail -[Unexpected type from Try_Get_One_Console_Event()]-";
     }
     else  // we have a smart console but aren't using it (redirected to file?)
         goto read_from_stdin;
@@ -490,7 +490,7 @@ DECLARE_NATIVE(READ_CHAR)
                 return rebDelegate("fail", Make_Non_Halt_Error("READ-CHAR"));
             }
             if (eof)
-                return "fail -{Incomplete UTF-8 sequence from stdin at EOF}-";
+                return "fail -[Incomplete UTF-8 sequence from stdin at EOF]-";
 
             ++size;
             --trail;

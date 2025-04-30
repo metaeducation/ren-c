@@ -36,21 +36,21 @@
 ; Issue with empty quotes are NUL (zero codepoint, illegal in strings).
 ;
 (" " = as text! #)
-(-{#""}- = mold as issue! "")
-(-{#}- = mold #)
+(-[#""]- = mold as issue! "")
+(-[#]- = mold #)
 
 ; Intent is to merge ISSUE! and CHAR! into cell-packable UTF-8 immutable
 ; and atomic type.  This means a wide range of visible characters are allowed
 ; in the ISSUE! for convenience as a CHAR! representation.
 (
     for-each 'x [  ; TEXT! values are tested as *invalid* issues
-        -{#~}- #`
+        -[#~]- #`
         #1 #2 #3 #4 #5 #6 #7 #8 #9 #1 #0 #- #=
-        #! #@ ## #$ #% -{#^^}- #& #* -{#(}- -{#)}- #_ #+  ; caret for escaping
+        #! #@ ## #$ #% -[#^^]- #& #* -[#(]- -[#)]- #_ #+  ; caret for escaping
         "#{" "#}" #|  ; #{xx} will become "ISSUE!" when BLOB! is &{xx}
-        -{#[}- -{#]}- #\
+        -[#[]- -[#]]- #\
         #; #'  ; as with URL!, semicolons are allowed in the token
-        #":" -{#"}-  ; quotes for ISSUE! with internal spaces (braces in future)
+        #":" -[#"]-  ; quotes for ISSUE! with internal spaces (braces in future)
         #"," #"." #"/"  ; COMMA! is a delimiter, so `#,` is like `(#)`
         #< #> #?
     ][

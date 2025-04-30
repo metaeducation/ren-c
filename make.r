@@ -134,7 +134,7 @@ for-each [name value] options [
             change-dir saved-dir
         ]
         'EXTENSIONS [
-            ; [+|-|*] [NAME --{+|-|*|[modules]}--]...
+            ; [+|-|*] [NAME --[+|-|*|[modules]]--]...
             use [ext-file user-ext][
                 user-ext: load3 value
                 if not block? user-ext [
@@ -1005,7 +1005,7 @@ indent: func [
 
 help-spec: [
   === USAGE ===
-  --{
+  --[
     > PATH/TO/r3-make PATH/TO/make.r [CONFIG | OPTION | TARGET ...]
 
     NOTE 1: By default current dir is the build directory.
@@ -1019,15 +1019,15 @@ help-spec: [
 
     MORE HELP (via { -h | -help | --help }):
         { $<delimit " | " help-topics> }
-  }--
+  ]--
 
   === TARGETS ===
-  --{
+  --[
     $<indent form target-names>
-  }--
+  ]--
 
   === CONFIGS ===
-  --{
+  --[
     { config: | load: | do: } PATH/TO/CONFIG-FILE
 
     FILES IN %make/configs/ SUBFOLDER:
@@ -1036,10 +1036,10 @@ help-spec: [
         load3 (join repo-dir %configs/)
         [to-text x]
     >
-  }--
+  ]--
 
   === OPTIONS ===
-  --{
+  --[
     CURRENT VALUES:
 
     $<indent mold user-config>
@@ -1049,10 +1049,10 @@ help-spec: [
       Names are case-insensitive
       `_` instead of '-' is ok
       NAME=VALUE (OS_ID=0.4.3) is the same as NAME: VALUE (os-id: 0.4.3)
-  }--
+  ]--
 
   === OS-ID ===
-  --{
+  --[
     CURRENT OS:
 
     $<indent mold configure-platform user-config.os-id>
@@ -1062,10 +1062,10 @@ help-spec: [
     $<indent delimit newline collect [for-each-platform 'p [
         keep spaced [format 8 p.id p.os-name]
     ]]>
-  }--
+  ]--
 
   === EXTENSIONS ===
-  --{
+  --[
     [FLAG] [ NAME {FLAG|[MODULES]} ... ]
 
     FLAG:
@@ -1086,7 +1086,7 @@ help-spec: [
 
     CURRENT VALUE:
     $<indent mold user-config.extensions>
-  }--
+  ]--
 ]
 
 topic: spec: ~  ; no LET in PARSE3
@@ -1909,7 +1909,7 @@ prep: make rebmake.entry-class [
                 "$(REBOL)" join tools-dir %prep-extension.r
                 unspaced ["MODULE=" ext.name]
                 unspaced ["DIRECTORY=" ext.directory]
-                unspaced [-{SOURCES="}- molded-sources -{"}-]  ; BLOCK of FILE
+                unspaced [-[SOURCES="]- molded-sources -["]-]  ; BLOCK of FILE
                 unspaced ["OS_ID=" mold platform-config.id]
                 unspaced ["USE_LIBREBOL=" ext.use-librebol]
             ]

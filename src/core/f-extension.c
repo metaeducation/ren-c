@@ -147,7 +147,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
         Value* library = rebValue("make library!", ARG(WHERE));
 
         Value* collated_block = rebValue(
-            "run-library-collator", library, "-{RX_Collate}-"
+            "run-library-collator", library, "-[RX_Collate]-"
         );
 
         if (not collated_block or not Is_Block(collated_block)) {

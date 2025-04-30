@@ -13,7 +13,7 @@ use-librebol: 'yes
 ; and all the comments, with changes annotated.
 ;
 definitions: [
-    --{MBEDTLS_CONFIG_FILE="mbedtls-rebol-config.h"}--
+    --[MBEDTLS_CONFIG_FILE="mbedtls-rebol-config.h"]--
 ]
 
 includes: [

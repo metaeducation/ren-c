@@ -167,7 +167,7 @@ DECLARE_NATIVE(DNS_ACTOR)
 
     switch (Symbol_Id(verb)) {
       case SYM_OPEN_Q:
-        return "fail -{DNS 'ports' don't support OPEN?, only READ}-";
+        return "fail -[DNS 'ports' don't support OPEN?, only READ]-";
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
@@ -207,7 +207,7 @@ DECLARE_NATIVE(DNS_ACTOR)
             //
           reverse_lookup:
             if (Cell_Sequence_Len(host) != 4)
-                return "fail -{Reverse DNS lookup requires length 4 TUPLE!}-";
+                return "fail -[Reverse DNS lookup requires length 4 TUPLE!]-";
 
             // 93.184.216.34 => example.com
             char buf[MAX_TUPLE];
@@ -251,13 +251,13 @@ DECLARE_NATIVE(DNS_ACTOR)
             return Init_Nulled(OUT);  // "expected" failures, signal w/null
 
           case NO_RECOVERY:
-            return "fail -{A nonrecoverable name server error occurred}-";
+            return "fail -[A nonrecoverable name server error occurred]-";
 
           case TRY_AGAIN:
-            return "fail -{Temporary error on authoritative name server}-";
+            return "fail -[Temporary error on authoritative name server]-";
 
           default:
-            return "fail -{Unknown host error}-";
+            return "fail -[Unknown host error]-";
         } }
 
       case SYM_OPEN: {
@@ -279,7 +279,7 @@ DECLARE_NATIVE(DNS_ACTOR)
 
       open_or_close_fail:
       case SYM_CLOSE:
-        return "fail -{DNS 'ports' don't OPEN/CLOSE, only READ}-";
+        return "fail -[DNS 'ports' don't OPEN/CLOSE, only READ]-";
 
       default:
         break;

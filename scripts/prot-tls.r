@@ -3,16 +3,16 @@ Rebol [
     type: module
     name: TLS-Protocol
     version: 0.7.0
-    rights: --{
+    rights: --[
         Copyright 2012 Richard "Cyphre" Smolak (TLS 1.0)
         Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    description: --{
+    ]--
+    description: --[
         This is an implementation of a TLS client layer, which can be used in
         lieu of a plain TCP scheme for providing network connectivity.  e.g.
         the HTTPS scheme is the same code as the HTTP scheme, only using this
@@ -44,8 +44,8 @@ Rebol [
         environment is nearly a full time job for someone in and of itself.)
         However, it does serve as a starting point for anyone interested in
         hacking on a better answer in usermode Rebol.
-    }--
-    notes: --{
+    ]--
+    notes: --[
         At time of writing (Sept 2018), TLS 1.0 and TLS 1.1 are in the process
         of formal deprecation by the IETF.  In the meantime, the payment card
         industry (PCI) set a deadline of 30-Jun-2018 for sites to deprecate
@@ -63,8 +63,8 @@ Rebol [
 
         https://tools.ietf.org/html/rfc6176
         https://tools.ietf.org/html/rfc7568
-    }--
-    Todo: --{
+    ]--
+    Todo: --[
         * cached sessions
         * automagic cert data lookup
         * add more cipher suites
@@ -74,7 +74,7 @@ Rebol [
         * incorporate native BigNum INTEGER! math when available to do more
           modular usermode protocols that can be pulled on demand (vs. needing
           ever more native C crypto code baked in)
-    }--
+    ]--
 ]
 
 
@@ -525,22 +525,22 @@ client-hello: func [
         to-2bin length of cs-data   ; cipher suites length
         cs-data                     ; cipher suites list
 
-        comment -{
+        comment -[
             "Secure clients will advertise that they do not support
             compression (by passing "null" as the only algorithm) to avoid
             the CRIME attack": https://en.wikipedia.org/wiki/CRIME
-        }-
+        ]-
         #{01}                       ; compression method length
         #{00}                       ; no compression
 
-        comment -{
+        comment -[
             "The presence of extensions can be detected by determining whether
             there are bytes following the compression_methods at the end of
             the ClientHello.  Note that this method of detecting optional data
             differs from the normal TLS method of having a variable-length
             field, but it is used for compatibility with TLS before extensions
             were defined."
-        }-
+        ]-
       ExtensionsLength:
         #{00 00}                    ; filled in later
       Extensions:

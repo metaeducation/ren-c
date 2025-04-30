@@ -2,18 +2,18 @@ Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "REBOL 3 Mezzanine: Legacy compatibility"
     homepage: https://trello.com/b/l385BE7a/porting-guide
-    rights: --{
+    rights: --[
         Copyright 2012-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    description: --{
+    ]--
+    description: --[
         These are a few compatibility scraps left over from extracting the
         R3-Alpha emulation layer into %redbol.reb.
-    }--
+    ]--
 ]
 
 binary!: blob!
@@ -36,7 +36,7 @@ remold: ~<REMOLD is just (adapt mold/ [value: reduce :value]), but is not
 
 rejoin: ~<REJOIN is replaced in textual sceanarios by UNSPACED, but in more
         general cases by JOIN, which accepts datatypes as a first parameter,
-        e.g. (join blob! [-{ABC}- 1 + 2 3 + 4])
+        e.g. (join blob! [-[ABC]- 1 + 2 3 + 4])
         https://forum.rebol.info/t/248>~
 
 

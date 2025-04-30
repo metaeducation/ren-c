@@ -2,27 +2,27 @@ Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Calculate type and typeset constants"
     file: %make-types.r  ; used by EMIT-HEADER to indicate emitting script
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2025 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     version: 2.100.0
     needs: 2.100.100
-    purpose: --{
+    purpose: --[
        The %types.r table defines many of the properties of Rebol's
        datatypes in a declarative way.  It is parsed and used to make
        tables used by %make-boot.r, as well as C source files that are
        included by the build.
-    }--
-    notes: --{
+    ]--
+    notes: --[
         This file has evolved over time and could be simplified drastically
         if some time and effort were put into it... it's very repetitive.
-    }--
+    ]--
 ]
 
 
@@ -219,13 +219,13 @@ e-types: make-emitter "Datatype Definitions" (
     join prep-dir %include/tmp-typesets.h
 )
 
-e-types/emit [--{
+e-types/emit [--[
     /* Tables generated from %types.r for builtin typesets */
     extern TypesetFlags const g_typesets[];  // up to 255 allowed
     extern uint_fast32_t const g_sparse_memberships[MAX_TYPE_BYTE_ELEMENT + 1];
-}--]
+]--]
 
-e-types/emit [--{
+e-types/emit [--[
     /*
      * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
      *
@@ -252,21 +252,21 @@ e-types/emit [--{
 
     #define CELL_HEART_QUOTE_MASK \
         (FLAG_HEART_BYTE_255 | FLAG_QUOTE_BYTE(255))
-}--]
+]--]
 
 for-each-datatype 't [
     if t.cellmask [
-        e-types/emit [t --{
+        e-types/emit [t --[
             #define CELL_MASK_${T.NAME} \
                 (FLAG_HEART(${T.NAME}) | $<MOLD T.CELLMASK>)
-        }--]
+        ]--]
     ]
 
-    e-types/emit [propercase-of t --{
+    e-types/emit [propercase-of t --[
         #define Is_${propercase-of T.name}(cell)  /* $<T.HEART> */ \
             ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
               == (FLAG_HEART(${T.NAME}) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
-    }--]
+    ]--]
 ]
 
 sparse-typesets: copy []
@@ -274,13 +274,13 @@ sparse-typesets: copy []
 for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
     let proper-name: propercase-of tr.name
 
-    e-types/emit [tr --{
+    e-types/emit [tr --[
         INLINE bool Any_${Proper-Name}_Type(Option(Type) t)
           { return u_cast(Byte, maybe t) >= $<TR.START> and u_cast(Byte, maybe t) <= $<TR.END>; }
 
         #define Any_${Proper-Name}(v) \
             Any_${Proper-Name}_Type(Type_Of(v))
-    }--]
+    ]--]
 ]
 
 for-each-datatype 't [
@@ -306,19 +306,19 @@ for-each-datatype 't [
 ; Non-range typesets are handled by checking a flag in a static array which
 ; for each kind has a bitset of typeset flags for each set the kind is in.
 
-e-types/emit -{
+e-types/emit -[
     /* Furthest left bit is used to convey when a typeset table entry is based
      * on a range of heart bytes as opposed to being a typeset bit.
      */
     #define TYPESET_FLAG_0_RANGE  FLAG_LEFT_BIT(0)
-}-
+]-
 
 shift-by: 1  ; start at 1, since FLAG_LEFT_BIT(0) indicates a ranged typeset
 
 for-each [ts-name types] sparse-typesets [
-    e-types/emit cscape [ts-name --{
+    e-types/emit cscape [ts-name --[
         #define TYPESET_FLAG_${TS-NAME}  FLAG_LEFT_BIT($<shift-by>)
-    }--]
+    ]--]
     shift-by: me + 1
 
     if shift-by > 32 [
@@ -332,14 +332,14 @@ for-each [ts-name types] sparse-typesets [
 e-types/emit newline
 
 for-each [ts-name types] sparse-typesets [
-    e-types/emit [propercase-of ts-name --{
+    e-types/emit [propercase-of ts-name --[
         INLINE bool Any_${propercase-of Ts-Name}_Type(Option(Type) t) {
             return did (g_sparse_memberships[u_cast(Byte, maybe t)] & TYPESET_FLAG_${TS-NAME});
         }
 
         #define Any_${propercase-of Ts-Name}(v) \
             Any_${propercase-of Ts-Name}_Type(Type_Of(v))
-    }--]
+    ]--]
 ]
 
 for-each-datatype 't [
@@ -352,7 +352,7 @@ for-each-datatype 't [
     ; Note: Ensure_Readable() not defined yet at this point, so defined as
     ; a macro vs. an inline function.  Revisit.
     ;
-    e-types/emit [t proper-name --{
+    e-types/emit [t proper-name --[
         INLINE bool Is_$<Proper-Name>_Core(Need(const $<Need>*) v) {
             return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE_255))
                 == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART($<T.NAME>)));
@@ -367,7 +367,7 @@ for-each-datatype 't [
 
         #define Is_Quasi_$<Propercase-Of T.Name>(v) \
             Is_Meta_Of_$<Proper-Name>(v)  /* alternative */
-    }--]
+    ]--]
 ]
 
 e-types/write-emitted
@@ -391,10 +391,10 @@ for-each-datatype 't [
         ]
     ]
     if empty? flagits [
-        append memberships cscape [t -{/* $<t.name> - $<t.heart> */  0}-]
+        append memberships cscape [t -[/* $<t.name> - $<t.heart> */  0]-]
     ] else [
         append memberships cscape [flagits t
-            --{/* $<t.name> - $<t.heart> */  ($<Delimit " | " Flagits>)}--
+            --[/* $<t.name> - $<t.heart> */  ($<Delimit " | " Flagits>)]--
         ]
     ]
 ]
@@ -405,9 +405,9 @@ for-each-datatype 't [
 e-typesets: make-emitter "Built-in Typesets (Ranged and Sparse)" (
     join prep-dir %core/tmp-typesets.c
 )
-e-typesets/emit [--{
+e-typesets/emit [--[
     #include "sys-core.h"
-}--]
+]--]
 
 e-typeset-bytes: make-emitter "Typeset Byte Mapping" (
     join prep-dir %boot/tmp-typeset-bytes.r
@@ -433,41 +433,41 @@ max-heart: ~
 
 for-each-datatype 't [  ; fundamentals
     append fundamentals cscape [t
-        --{ENUM_TYPE_${T.NAME} = $<index>}--
+        --[ENUM_TYPE_${T.NAME} = $<index>]--
     ]
 
     append pseudotype-hearts cscape [t
-        --{ENUM_PSEUDO_${T.NAME} = $<index>}--
+        --[ENUM_PSEUDO_${T.NAME} = $<index>]--
     ]
 
     append types cscape [t
-        --{TYPE_${T.NAME} = $<index>}--
+        --[TYPE_${T.NAME} = $<index>]--
     ]
-    max-heart: cscape [t --{TYPE_${T.NAME}}--]  ; overwritten until max found
+    max-heart: cscape [t --[TYPE_${T.NAME}]--]  ; overwritten until max found
 
     append typedefines cscape [t
-        --{#define TYPE_${T.NAME}  HEART_ENUM(${T.NAME})}--
+        --[#define TYPE_${T.NAME}  HEART_ENUM(${T.NAME})]--
     ]
 
     append singlehearts cscape [t
-        --{SINGLEHEART_TAIL_BLANK_${T.NAME} = $<index * 256>}--
+        --[SINGLEHEART_TAIL_BLANK_${T.NAME} = $<index * 256>]--
     ]
     append singlehearts cscape [t
-        --{SINGLEHEART_HEAD_BLANK_${T.NAME} = $<(index * 256) + 1>}--
+        --[SINGLEHEART_HEAD_BLANK_${T.NAME} = $<(index * 256) + 1>]--
     ]
 
-    e-typeset-bytes/emit [t -{
+    e-typeset-bytes/emit [t -[
         $<t.name> $<index>
-    }-]
+    ]-]
 
-    e-typespecs/emit [t -{
+    e-typespecs/emit [t -[
         $<t.name> $<mold t.description>
-    }-]
+    ]-]
 
-    append typeset-flags cscape [t --{
+    append typeset-flags cscape [t --[
         /* $<index> - $<t.name> */
         TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
-    }--]
+    ]--]
 
     index: me + 1
 ]
@@ -475,28 +475,28 @@ for-each-datatype 't [  ; fundamentals
 
 ; Emit the pseudotype for QUASIFORM!
 (
-    append memberships cscape [--{/* quasiform - $<index> */  (TYPESET_FLAG_BRANCH)}--]
+    append memberships cscape [-[/* quasiform - $<index> */  (TYPESET_FLAG_BRANCH)]-]
 
-    append pseudotypes cscape [--{ENUM_TYPE_QUASIFORM = $<index>}--]
+    append pseudotypes cscape [--[ENUM_TYPE_QUASIFORM = $<index>]--]
 
-    append types cscape [--{TYPE_QUASIFORM = $<index>}--]
+    append types cscape [--[TYPE_QUASIFORM = $<index>]--]
 
     append typedefines cscape [
-        --{#define TYPE_QUASIFORM  TYPE_ENUM(QUASIFORM)}--
+        --[#define TYPE_QUASIFORM  TYPE_ENUM(QUASIFORM)]--
     ]
 
-    e-typeset-bytes/emit [-{
+    e-typeset-bytes/emit [-[
         quasiform $<index>
-    }-]
+    ]-]
 
-    e-typespecs/emit [-{
+    e-typespecs/emit [-[
         quasiform "value which evaluates to an antiform"
-    }-]
+    ]-]
 
-    append typeset-flags cscape [--{
+    append typeset-flags cscape [--[
         /* $<index> - quasiform */
         TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
-    }--]
+    ]--]
 
     index: me + 1
 )
@@ -504,29 +504,29 @@ for-each-datatype 't [  ; fundamentals
 ; Emit the pseudotype for QUOTED!
 (
     append memberships cscape [
-        --{/* quoted - $<index> */  (TYPESET_FLAG_BRANCH)}--
+        --[/* quoted - $<index> */  (TYPESET_FLAG_BRANCH)]--
     ]
 
-    append pseudotypes cscape [--{ENUM_TYPE_QUOTED = $<index>}--]
+    append pseudotypes cscape [--[ENUM_TYPE_QUOTED = $<index>]--]
 
-    append types cscape [--{TYPE_QUOTED = $<index>}--]
+    append types cscape [--[TYPE_QUOTED = $<index>]--]
 
     append typedefines cscape [
-        --{#define TYPE_QUOTED  TYPE_ENUM(QUOTED)}--
+        --[#define TYPE_QUOTED  TYPE_ENUM(QUOTED)]--
     ]
 
-    e-typeset-bytes/emit [-{
+    e-typeset-bytes/emit [-[
         quoted $<index>
-    }-]
+    ]-]
 
-    e-typespecs/emit [-{
+    e-typespecs/emit [-[
         quoted "container for arbitrary levels of quoting"
-    }-]
+    ]-]
 
-    append typeset-flags cscape [--{
+    append typeset-flags cscape [--[
         /* $<index> - quoted */
         TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
-    }--]
+    ]--]
 
     index: me + 1
 )
@@ -538,55 +538,55 @@ max-type: ~
 for-each-datatype 't [  ; now generate bytes for antiforms
     if t.antiname [
         append pseudotypes cscape [t
-            --{ENUM_TYPE_${T.ANTINAME} = $<index>}--
+            --[ENUM_TYPE_${T.ANTINAME} = $<index>]--
         ]
 
         append types cscape [t
-            --{TYPE_${T.ANTINAME} = $<index>}--
+            --[TYPE_${T.ANTINAME} = $<index>]--
         ]
         max-type: cscape [t
-            --{TYPE_${T.ANTINAME}}--  ; overwritten until max found
+            --[TYPE_${T.ANTINAME}]--  ; overwritten until max found
         ]
 
         append typedefines cscape [t
-            --{#define TYPE_${T.ANTINAME}  TYPE_ENUM(${T.ANTINAME})}--
+            --[#define TYPE_${T.ANTINAME}  TYPE_ENUM(${T.ANTINAME})]--
         ]
 
-        e-typeset-bytes/emit [t -{
+        e-typeset-bytes/emit [t -[
             ${t.antiname} $<index>
-        }-]
+        ]-]
 
-        e-typespecs/emit [t -{
+        e-typespecs/emit [t -[
             $<t.antiname> $<mold t.antidescription>
-        }-]
+        ]-]
 
-        append typeset-flags cscape [t --{
+        append typeset-flags cscape [t --[
             /* $<index> - ${t.antiname} */
             TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
-        }--]
+        ]--]
     ] else [
-        append pseudotypes cscape [t --{ENUM_TYPE_$<index> = $<index>}--]
+        append pseudotypes cscape [t --[ENUM_TYPE_$<index> = $<index>]--]
 
         append typedefines cscape [t
-            --{/* no #define for TYPE_$<index> */}--
+            --[/* no #define for TYPE_$<index> */]--
         ]
 
-        append types cscape [t --{TYPE_$<index> = $<index>}--]
-        max-type: cscape [t --{TYPE_$<index>}--]
+        append types cscape [t --[TYPE_$<index> = $<index>]--]
+        max-type: cscape [t --[TYPE_$<index>]--]
 
         ; don't need a #define for these
 
-        e-typeset-bytes/emit [t -{
+        e-typeset-bytes/emit [t -[
             ~ $<index>
-        }-]
+        ]-]
 
-        e-typespecs/emit [t -{
+        e-typespecs/emit [t -[
             ~ ~
-        }-]
+        ]-]
 
-        append typeset-flags cscape [t --{
+        append typeset-flags cscape [t --[
             /* $<index> - <unused> */  0
-        }--]
+        ]--]
     ]
     index: me + 1
 ]
@@ -594,38 +594,38 @@ for-each-datatype 't [  ; now generate bytes for antiforms
 
 ; antiform range check (core uses Is_Antiform() which just checks heart byte)
 (
-    e-typeset-bytes/emit [no-tildes -{
+    e-typeset-bytes/emit [no-tildes -[
         any-antiform $<index>
-    }-]
+    ]-]
 
-    append typeset-flags cscape [t --{
+    append typeset-flags cscape [t --[
         /* $<index> - any-antiform */
         TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<first-antiform-index>) | FLAG_FOURTH_BYTE($<index - 1>)
-    }--]
+    ]--]
     index: me + 1
 )
 
 for-each-typerange 'tr [  ; range, typeset is a start and end
-    e-typeset-bytes/emit [tr -{
+    e-typeset-bytes/emit [tr -[
         any-$<tr.name> $<index>
-    }-]
+    ]-]
 
-    append typeset-flags cscape [tr --{
+    append typeset-flags cscape [tr --[
         /* $<index> - any-$<tr.name> */
         TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<TR.START>) | FLAG_FOURTH_BYTE($<TR.END>)
-    }--]
+    ]--]
     index: index + 1
 ]
 
 for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
-    e-typeset-bytes/emit [ts-name -{
+    e-typeset-bytes/emit [ts-name -[
         any-$<ts-name> $<index>
-    }-]
+    ]-]
 
-    append typeset-flags cscape [ts-name --{
+    append typeset-flags cscape [ts-name --[
         /* $<index> - any-$<ts-name> */
         TYPESET_FLAG_${TS-NAME}
-    }--]
+    ]--]
     index: index + 1
 ]
 
@@ -633,14 +633,14 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 ; Add ANY-FUNDAMENTAL? to go right up to the max heart byte (don't include
 ; quoted or quasi).  Include TYPE_0 for ExtraHeart types.
 (
-    e-typeset-bytes/emit [ts-name -{
+    e-typeset-bytes/emit [ts-name -[
         any-fundamental $<index>
-    }-]
+    ]-]
 
-    append typeset-flags cscape [tr --{
+    append typeset-flags cscape [tr --[
         /* $<index> - any-fundamental */
         TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_HEART_BYTE)
-    }--]
+    ]--]
     index: index + 1
 )
 
@@ -648,19 +648,19 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 ; Add ANY-ELEMENT? to the absolute end of the list, so it hooks last.  Include
 ; TYPE_QUOTED and TYPE_QUASI, and TYPE_0 for ExtraHeart extension types.
 (
-    e-typeset-bytes/emit [ts-name -{
+    e-typeset-bytes/emit [ts-name -[
         any-element $<index>
-    }-]
+    ]-]
 
-    append typeset-flags cscape [tr --{
+    append typeset-flags cscape [tr --[
         /* $<index> - any-element */
         TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPE_ELEMENT)
-    }--]
+    ]--]
     index: index + 1
 )
 
 
-e-typesets/emit [--{
+e-typesets/emit [--[
     /*
      * Builtin "typesets" use either ranges or sparse bits to answer whether
      * a type matches a typeset.  If the top bit TYPESET_FLAG_0_RANGE is not
@@ -684,7 +684,7 @@ e-typesets/emit [--{
         /* 0 - <ExtraHeart> */  0,
         $(Memberships),
     };
-}--]
+]--]
 
 e-typesets/write-emitted
 
@@ -699,7 +699,7 @@ e-hearts: make-emitter "Cell Hearts Enum" (
     join prep-dir %include/tmp-hearts.h
 )
 
-e-hearts/emit [rebs --{
+e-hearts/emit [rebs --[
     /*
      * INTERNAL CELL HEART ENUM, e.g. TYPE_BLOCK or TYPE_TAG
      *
@@ -817,6 +817,6 @@ e-hearts/emit [rebs --{
 
         $(Singlehearts),
     } SingleHeart;
-}--]
+]--]
 
 e-hearts/write-emitted

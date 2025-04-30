@@ -1,14 +1,14 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "REBOL 3 Mezzanine: File Related"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
 ]
 
 decode-url: sys.util.decode-url/
@@ -207,7 +207,7 @@ ask: func [
                 opt prompt: text!
                 opt let word: *in* word! (type: ensure datatype! get word)
             ] except [
-                fail -{ASK currently only supports ["Prompt:" datatype!]}-
+                fail -[ASK currently only supports ["Prompt:" datatype!]]-
             ]
         ]
         fail ~<unreachable>~

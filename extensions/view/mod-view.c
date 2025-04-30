@@ -144,7 +144,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
         //
         rebElide(
             "for-each 'item filter [",
-                "if find item tab [fail -{TAB chars not legal in filters}-]",
+                "if find item tab [fail -[TAB chars not legal in filters]-]",
             "]"
         );
         filter_utf16 = rebSpellWide("delimit:tail tab filter");
@@ -250,11 +250,11 @@ DECLARE_NATIVE(REQUEST_FILE_P)
         }
         else if (cderr == FNERR_BUFFERTOOSMALL) // ofn.nMaxFile too small
             error = rebValue(
-                "make error! -{dialog buffer too small for selection}-"
+                "make error! -[dialog buffer too small for selection]-"
             );
         else
             error = rebValue(
-                "make error! -{common dialog failure CDERR_XXX}-"
+                "make error! -[common dialog failure CDERR_XXX]-"
             );
     }
     else {
@@ -316,7 +316,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
     //
     int argc = 0;
     if (not gtk_init_check(&argc, nullptr))
-        return "fail -{gtk_init_check() failed}-";
+        return "fail -[gtk_init_check() failed]-";
 
     // Note: FILTER not implemented in GTK for Atronix R3
 
@@ -370,7 +370,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
 
             if (folder == nullptr)
                 error = rebValue(
-                    "make error! -{folder can't be represented locally}-"
+                    "make error! -[folder can't be represented locally]-"
                 );
             else {
                 GSList *list = gtk_file_chooser_get_filenames(chooser);
@@ -417,7 +417,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
     UNUSED(multi);
 
     error = rebValue(
-        "make error! -{REQUEST-FILE only on GTK and Windows at this time}-"
+        "make error! -[REQUEST-FILE only on GTK and Windows at this time]-"
     );
   #endif
 
@@ -518,7 +518,7 @@ DECLARE_NATIVE(REQUEST_DIR_P)
         // Already initialized on this thread
     }
     else
-        return rebDelegate("fail -{Failure during CoInitializeEx()-}");
+        return rebDelegate("fail -[Failure during CoInitializeEx()-}");
 
     BROWSEINFO bi;
     bi.hwndOwner = nullptr;
@@ -558,7 +558,7 @@ DECLARE_NATIVE(REQUEST_DIR_P)
     if (pFolder == nullptr)
         assert(result == nullptr);
     else if (not SHGetPathFromIDList(pFolder, folder))
-        error = rebValue("make error! -{SHGetPathFromIDList failed}-");
+        error = rebValue("make error! -[SHGetPathFromIDList failed]-");
     else {
         result = rebValue("as file!", rebT(folder));
     }
@@ -567,7 +567,7 @@ DECLARE_NATIVE(REQUEST_DIR_P)
     rebFreeMaybe(path_utf16);
   #else
     error = rebValue(
-        "make error -{Temporary implementation of REQ-DIR only on Windows}-"
+        "make error -[Temporary implementation of REQ-DIR only on Windows]-"
     );
   #endif
 

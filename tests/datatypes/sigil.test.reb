@@ -54,8 +54,8 @@
     let roundtrip: cascade [unspaced/ transcode:one/]
 
     for-each-sigil 'sig [
-        assert [(quote sig) = roundtrip [-{'}- mold sig]]
-        assert [(quote sig) = roundtrip [_ -{'}- mold sig]]
+        assert [(quote sig) = roundtrip [-[']- mold sig]]
+        assert [(quote sig) = roundtrip [_ -[']- mold sig]]
         assert [sig = second roundtrip ["[" "<t>" _ mold sig "]"]]
         assert [sig = second roundtrip ["[" "<t>" _ mold sig _ "]"]]
         assert [sig = first roundtrip ["[" mold sig _ "<t>" "]"]]

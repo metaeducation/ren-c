@@ -169,7 +169,7 @@ jobs:
   # here at time of writing, and would be ignored even if it could be due to
   # that ldflags config hardcoding).
   #
-  # See README: -{Braces}- For %make.r String Parameters
+  # See README: -[Dashed Strings]- For %make.r String Parameters
   #
   # NOTE ON BUILDING WITH C++: We choose to build with C++ here instead of as
   # C, in order to use Emscripten's `-fwasm-exceptions` for native webassembly

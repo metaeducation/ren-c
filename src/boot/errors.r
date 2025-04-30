@@ -1,16 +1,16 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Standard Error IDs and Display Templates"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         This specifies error categories and IDs that are given SYM_XXX
         constants and can be evoked using those numbers by C code.
 
@@ -32,7 +32,7 @@ Rebol [
         ecology of identity of new errors (possibly via URL uniqueness).
 
         !!! TBD: way of cleaning up errors not referenced from the code.
-    }--
+    ]--
 ]
 
 

@@ -3,18 +3,18 @@ Rebol [
     title: "Zip and Unzip Services"
     type: module
     name: Zip
-    rights: --{
+    rights: --[
         Copyright 2009-2021 Ren-C Open Source Contributors
         Copyright 2009 Vincent Ecuyer
         REBOL is a trademark of REBOL Technologies
 
         See README.md and CREDITS.md for more information.
-    }--
-    license: --{
+    ]--
+    license: --[
         Original code from %rebzip.r from www.rebol.org
         Public Domain License
-    }--
-    usage: --{
+    ]--
+    usage: --[
         == archiving: zip ==
 
         you can zip a single file:
@@ -49,13 +49,13 @@ Rebol [
 
             >> my-block
             == [%file-1.txt #{...} %file-2.exe #{...}]
-    }--
-    notes: --{
+    ]--
+    notes: --[
         * Only DEFLATE and STORE methods are supported.
 
         * The Linux `zipinfo` utility with the `-v` switch for verbose output
           is a VERY useful tool when hacking on code involving zip files!
-    }--
+    ]--
 ]
 
 local-file-sig: #{504B0304}

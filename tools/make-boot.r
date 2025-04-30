@@ -2,22 +2,22 @@ Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Make primary boot files"
     file: %make-boot.r  ; used by EMIT-HEADER to indicate emitting script
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     version: 2.100.0
     needs: 2.100.100
-    purpose: --{
+    purpose: --[
         A lot of the REBOL system is built by REBOL, and this program
         does most of the serious work. It generates most of the C include
         files required to compile REBOL.
-    }--
+    ]--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r
@@ -71,7 +71,7 @@ version: join tuple! [
     version.1 version.2 version.3 platform-config.id.2 platform-config.id.3
 ]
 
-e-version/emit [version --{
+e-version/emit [version --[
     /*
      * VERSION INFORMATION
      *
@@ -85,7 +85,7 @@ e-version/emit [version --{
     #define REBOL_UPD $<version.3>
     #define REBOL_SYS $<version.4>
     #define REBOL_VAR $<version.5>
-}--]
+]--]
 
 e-version/write-emitted
 
@@ -353,12 +353,12 @@ make-obj-defs: func [
         ]
     ]
 
-    e/emit [prefix items n --{
+    e/emit [prefix items n --[
         enum ${PREFIX}_object {
             $(Items),
         };
         #define MAX_${PREFIX}  $<n - 1>
-    }--]
+    ]--]
 
     if depth > 1 [
         for-each 'field words-of obj [
@@ -396,23 +396,23 @@ e-errfuncs: make-emitter "Error structure and functions" (
 fields: collect [
     for-each 'word words-of ob.standard.error [
         either word = 'near [
-            keep --{/* near & far are old C keywords */ Value nearest}--
+            keep --[/* near & far are old C keywords */ Value nearest]--
         ][
             keep cscape [word "Value ${word}"]
         ]
     ]
 ]
 
-e-errfuncs/emit [fields --{
+e-errfuncs/emit [fields --[
     /*
      * STANDARD ERROR STRUCTURE
      */
     typedef struct REBOL_Error_Vars {
         $[Fields];
     } ERROR_VARS;
-}--]
+]--]
 
-e-errfuncs/emit [--{
+e-errfuncs/emit [--[
     /*
      * The variadic Make_Error_Managed() function must be passed the exact
      * number of fully resolved Value* that the error spec specifies.  This is
@@ -423,7 +423,7 @@ e-errfuncs/emit [--{
      * They shouldn't add overhead in release builds, but help catch mistakes
      * at compile time.
      */
-}--]
+]--]
 
 add-sym:placeholder <MIN_SYM_ERRORS>
 
@@ -495,7 +495,7 @@ for-each [sw-cat list] boot-errors [
             ]
         ]
 
-        e-errfuncs/emit [message cat id f-name params args --{
+        e-errfuncs/emit [message cat id f-name params args --[
             /* $<Mold Message> */
             INLINE Error* Error_${F-Name}_Raw(
                 $(Params),
@@ -505,7 +505,7 @@ for-each [sw-cat list] boot-errors [
                     $(Args),
                 );
             }
-        }--]
+        ]--]
     ]
 ]
 
@@ -623,7 +623,7 @@ for-next 'pos sym-table [
         ]
 
         append placeholder-define-items cscape [
-            -{#define $<DEFINITION>  $<symid + delta>}-
+            -[#define $<DEFINITION>  $<symid + delta>]-
         ]
     ]
 
@@ -656,17 +656,17 @@ for-next 'pos sym-table [
         ; makes #defines for them on an extension-by-extension basis)
         ;
         append sym-enum-items cscape [symid name
-            --{/* $<Name> */  EXT_SYM_$<symid> = $<symid>}--
+            --[/* $<Name> */  EXT_SYM_$<symid> = $<symid>]--
         ]
         e-ext-symids/emit [symid name
-            --{$<name> $<symid>}--
+            --[$<name> $<symid>]--
         ]
         take pos  ; remove so it's not put in the builtin compressed strings
         pos: back pos  ; so for-next gets us back to this position
     ]
     else [
         append sym-enum-items cscape [symid name
-            --{/* $<Name> */  SYM_${FORM NAME} = $<symid>}--
+            --[/* $<Name> */  SYM_${FORM NAME} = $<symid>]--
         ]
     ]
 
@@ -679,7 +679,7 @@ e-symids: make-emitter "Symbol ID (SymId) Enumeration Type and Values" (
     join prep-dir %include/tmp-symid.h
 )
 
-e-symids/emit [syms-cscape --{
+e-symids/emit [syms-cscape --[
     /*
      * CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
      *
@@ -744,7 +744,7 @@ e-symids/emit [syms-cscape --{
      */
     #define NUM_BUILTIN_TYPES \
         (1 + MAX_SYM_BUILTIN_TYPES - MIN_SYM_BUILTIN_TYPES)
-}--]
+]--]
 
 print [symid "words + natives + errors"]
 
@@ -766,9 +766,9 @@ e-bootblock: make-emitter "Natives and Bootstrap" (
     join prep-dir %core/tmp-boot-block.c
 )
 
-e-bootblock/emit [--{
+e-bootblock/emit [--[
     #include "sys-core.h"
-}--]
+]--]
 
 sections: [
     :boot-natives
@@ -797,7 +797,7 @@ symbol-strings: join blob! collect [
 
 compressed: gzip symbol-strings
 
-e-bootblock/emit [compressed --{
+e-bootblock/emit [compressed --[
     /*
      * Gzip compression of symbol strings
      * Originally $<length of symbol-strings> bytes
@@ -810,11 +810,11 @@ e-bootblock/emit [compressed --{
     const Byte Symbol_Strings_Compressed[$<length of compressed>] = {
     $<Binary-To-C:Indent Compressed 4>
     };
-}--]
+]--]
 
 print [length of nats "natives"]
 
-e-bootblock/emit [nats --{
+e-bootblock/emit [nats --[
     #define NUM_NATIVES $<length of nats>
 
     /*
@@ -828,7 +828,7 @@ e-bootblock/emit [nats --{
      * NUM_NATIVES macro not visible outside this file, export as variable
      */
     const REBLEN g_num_core_natives = NUM_NATIVES;
-}--]
+]--]
 
 
 ; Build typespecs block (in same order as datatypes table)
@@ -861,7 +861,7 @@ data: as blob! boot-molded
 
 compressed: gzip data
 
-e-bootblock/emit [compressed --{
+e-bootblock/emit [compressed --[
     /*
      * Gzip compression of boot block
      * Originally $<length of data> bytes
@@ -874,7 +874,7 @@ e-bootblock/emit [compressed --{
     const Byte Boot_Block_Compressed[$<length of compressed>] = {
         $<Binary-To-C:Indent Compressed 4>
     };
-}--]
+]--]
 
 e-bootblock/write-emitted
 
@@ -894,7 +894,7 @@ fields: collect [
     ]
 ]
 
-e-boot/emit [fields --{
+e-boot/emit [fields --[
     /*
      * Symbols in SYM_XXX order, separated by newline characters, compressed.
      */
@@ -923,6 +923,6 @@ e-boot/emit [fields --{
     typedef struct REBOL_Boot_Block {
         $[Fields];
     } BOOT_BLK;
-}--]
+]--]
 
 e-boot/write-emitted

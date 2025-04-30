@@ -106,7 +106,7 @@ parse-command-to-argv*: func [
     command [text!]
 ][
     let quoted-shell-item-rule: [  ; Note: OPT because "" is legal as an arg
-        opt some [-{\"}- | not -{"}- one]  ; escaped quotes and nonquotes
+        opt some [-[\"]- | not -["]- one]  ; escaped quotes and nonquotes
     ]
     let unquoted-shell-item-rule: [some [not space one]]
 
@@ -115,7 +115,7 @@ parse-command-to-argv*: func [
             opt some [
                 opt some space
                 [
-                    -{"}- keep quoted-shell-item-rule -{"}-
+                    -["]- keep quoted-shell-item-rule -["]-
                     | keep unquoted-shell-item-rule
                 ]
             ]
@@ -128,7 +128,7 @@ parse-command-to-argv*: func [
             "the command line is valid then help fix PARSE-COMMAND-TO-ARGV*"
         ]
     ]
-    for-each 'item result [replace item -{\"}- -{"}-]
+    for-each 'item result [replace item -[\"]- -["]-]
     return result
 ]
 
@@ -142,12 +142,12 @@ argv-block-to-command*: func [
     return spaced map-each 'arg argv [
         any [
             find arg space
-            find arg -{"}-
+            find arg -["]-
         ] then [  ; have to put it in quotes, but also escape any quotes
             arg: copy arg
-            replace arg -{"}- -{\"}-
-            insert arg -{"}-
-            append arg -{"}-
+            replace arg -["]- -[\"]-
+            insert arg -["]-
+            append arg -["]-
         ]
         arg
     ]

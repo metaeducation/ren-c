@@ -1,7 +1,7 @@
 Rebol [
     file: %emscripten.r
 
-    description: --{
+    description: --[
         Emscripten is the name for a tool suite that makes it easier to build
         C/C++ programs that will run in JavaScript/WebAssembly environments.
 
@@ -16,9 +16,9 @@ Rebol [
         implement the "JavaScript extension", which adds the JS-NATIVE and
         JS-EVAL functions to the Ren-C runtime in order to make it possible
         to smoothly integrate JavaScript and Ren-C.
-    }--
+    ]--
 
-    notes: --{
+    notes: --[
       * EMCC Command-Line Options List
         https://emscripten.org/docs/tools_reference/emcc.html
 
@@ -37,7 +37,7 @@ Rebol [
         Emscripten, so that functions like reb.Value(...) are available to
         JavaScript in the build.  See %prep-libr3-js.reb for that somewhat
         intricate glue.
-    }--
+    ]--
 ]
 
 host: #web  ; #web, or #node (not recently tested)
@@ -198,13 +198,13 @@ ldflags: compose [
         #web [
             if yes? use-pthreads [
                 ; https://github.com/emscripten-core/emscripten/issues/8102
-                --{-s ENVIRONMENT='web,worker'}--
+                --[-s ENVIRONMENT='web,worker']--
             ] else [
-                --{-s ENVIRONMENT='web'}--
+                --[-s ENVIRONMENT='web']--
             ]
         ]
         #node [
-            --{-s ENVIRONMENT='node'}--
+            --[-s ENVIRONMENT='node']--
         ]
         fail "Javascript HOST must be [#web #node] in %emscripten.r"
     ])
@@ -233,7 +233,7 @@ ldflags: compose [
     ; https://emscripten.org/docs/getting_started/FAQ.html#can-i-use-multiple-emscripten-compiled-programs-on-one-web-page
     ;
     "-s MODULARIZE=1"
-    --{-s 'EXPORT_NAME="r3_module_promiser"'}--
+    --[-s 'EXPORT_NAME="r3_module_promiser"']--
 
     (if yes? debug-javascript-extension [
         "-s ASSERTIONS=1"
@@ -335,7 +335,7 @@ ldflags: compose [
     ; is kept as it is to show what flexibilities in wrapping there are in
     ; case future questions come up.
     ;
-    ; --{-s "DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=['ccall', 'cwrap']"}--
+    ; --[-s "DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=['ccall', 'cwrap']"]--
 
     ; SAFE_HEAP=1 once didn't work with WASM; does now, but may not be useful:
     ; https://github.com/kripken/emscripten/issues/4474

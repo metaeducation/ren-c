@@ -66,7 +66,7 @@
         ""
         "shuffle me, I'm a string"
         "shuffle me, I'm a string2"
-       -{Let's shuffle C😺T and Σὲ γνωρίζω ἀπὸ τὴν}-  ; slow implementation [1]
+       -[Let's shuffle C😺T and Σὲ γνωρίζω ἀπὸ τὴν]-  ; slow implementation [1]
         (<*> make tag! 0)  ; should support -<>- or --<>-- etc. as empty tag
         <tags can be shuffled>
         <tags can be shuffled2>
@@ -130,7 +130,7 @@
         ""
         "pick me, I'm a string"
         "pick me, I'm a string2"
-       -{Let's pick C😺T and Σὲ γνωρίζω ἀπὸ τὴν}-  ; slow implementation [1]
+       -[Let's pick C😺T and Σὲ γνωρίζω ἀπὸ τὴν]-  ; slow implementation [1]
         (<*> make tag! 0)  ; should support -<>- or --<>-- etc. as empty tag
         <tags can be picked>
         []

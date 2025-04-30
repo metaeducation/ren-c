@@ -4,17 +4,17 @@ Rebol [
     name: Console
     type: module
 
-    rights: --{
+    rights: --[
         Copyright 2016-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
+    ]--
 
-    license: --{
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
 
-    description: --{
+    description: --[
         This is a rich, skinnable console for Rebol--where basically all the
         implementation is itself userspace Rebol code.  Documentation for the
         skinning hooks exist here:
@@ -38,7 +38,7 @@ Rebol [
         time on Windows and Linux (vs. using APIs that read entire lines at
         once), so it could theoretically offer more flexibility such as tab
         completion--but hooks to expose that haven't been developed.
-    }--
+    ]--
 ]
 
 
@@ -81,10 +81,10 @@ export console!: make object! [
     error: "**"  ; errors FORM themselves, so this is not used yet
     info: "(i)"  ; was `to-text #{e29398}` for "(i)" symbol, caused problems
     greeting:
---{Welcome to Rebol.  For more information please type in the commands below:
+--[Welcome to Rebol.  For more information please type in the commands below:
 
   HELP    - For starting information
-  ABOUT   - Information about your Rebol}--
+  ABOUT   - Information about your Rebol]--
 
     print-greeting: method [
         "Adds live elements to static greeting content (build #, version)"

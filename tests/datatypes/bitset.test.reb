@@ -4,7 +4,7 @@
 (bitset! = type of make bitset! "a")
 
 ; TS crash
-(bitset? charset ensure block! transcode -{#"^(A0)"}-)
+(bitset? charset ensure block! transcode -[#"^(A0)"]-)
 
 (" aa" = find "aa aa" make bitset! [1 - 32])
 ("a  " = find "  a  " make bitset! [not 1 - 32])

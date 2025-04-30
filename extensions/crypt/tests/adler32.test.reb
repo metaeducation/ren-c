@@ -19,7 +19,7 @@
 ; Test :PART, which should skip codepoint counts in strings and byte
 ; counts in BLOB!.  Cat emoji is 4 codepoints.
 [
-    (text: -{high🐱codepoint}-
+    (text: -[high🐱codepoint]-
     bin: as blob! text
     bin = #{68696768F09F90B1636F6465706F696E74})
 

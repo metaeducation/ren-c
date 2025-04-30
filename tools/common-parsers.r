@@ -3,23 +3,23 @@ Rebol [
     title: "Common Parsers for Tools"
     type: module
     name: Common-Parsers
-    rights: --{
+    rights: --[
         Rebol is Copyright 1997-2015 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
 
         Ren-C is Copyright 2015-2018 MetaEducation
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     author: "@codebybrett"
     version: 2.100.0
     needs: 2.100.100
-    purpose: --{
+    purpose: --[
         These are some common routines used by the utilities
         that build and test the system.
-    }--
+    ]--
 ]
 
 import <bootstrap-shim.r>
@@ -33,7 +33,7 @@ load-until-double-newline: func [
     text [text!]
     <local> position  ; no LET in parse3 :-/
 ][
-    let wsp: compose [some (charset -{ ^-}-)]
+    let wsp: compose [some (charset -[ ^-]-)]
 
     let dummy  ; :NEXT3 requires arg
     let rebol-value: parsing-at 'x [
@@ -177,8 +177,8 @@ export proto-parser: context [
 
         is-fileheader: parsing-at 'position [
             all [  ; note: not LOGIC!, a series
-                lines: try decode-lines lines -{//}- -{ }-
-                parse3:match lines [data: across to -{=///}- to <end>]
+                lines: try decode-lines lines -[//]- -[ ]-
+                parse3:match lines [data: across to -[=///]- to <end>]
                 data: load-until-double-newline trim:auto data
                 all [
                     data.1
@@ -198,7 +198,7 @@ export proto-parser: context [
         ;
         is-intro: parsing-at 'position [
             all [
-                lines: try decode-lines lines -{//}- -{ }-
+                lines: try decode-lines lines -[//]- -[ ]-
                 data: load-until-double-newline lines
 
                 any [

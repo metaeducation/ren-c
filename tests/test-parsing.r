@@ -7,13 +7,13 @@ Rebol [
         2014 "Ladislav Mecir and Saphirion AG"
         2014/2021 "Ren-C Open Source Contributors"
     ]
-    license: --{
+    license: --[
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
 
         http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
 ]
 
 export whitespace: charset [#"^A" - #" " "^(7F)^(A0)"]
@@ -36,7 +36,7 @@ export test-source-rule: [
     opt some [
         let position: <here>
 
-        ["{" | -{"}-] :(  ; handle string using TRANSCODE, see note
+        ["{" | -["]-] :(  ; handle string using TRANSCODE, see note
             trap [
                 [position #]: transcode:next position
             ] then [
@@ -46,7 +46,7 @@ export test-source-rule: [
             ]
         )
             |
-        ["{" | -{"}-] seek position
+        ["{" | -["]-] seek position
         break
             |
         "[" test-source-rule "]"  ; plain BLOCK! in code for a test
@@ -181,7 +181,7 @@ export collect-tests: func [
             'dialect
             spaced [
                 newline
-                -{"failed, line/col:}- (line of pos) -{"}-  ; no column, parsed
+                -["failed, line/col:]- (line of pos) -["]-  ; no column, parsed
                 newline
             ]
         ]
@@ -216,7 +216,7 @@ export collect-logs: func [
                     |
                 ; dialect failure?
                 some whitespace
-                -{"}- thru -{"}-
+                -["]- thru -["]-
                     |
                 last-vector: across ["(" test-source-rule ")"]
                 opt some whitespace
@@ -226,7 +226,7 @@ export collect-logs: func [
                         fail "log incomplete!"
                     )
                         |
-                    -{"}- copy value to -{"}- one
+                    -["]- copy value to -["]- one
                     ; test result found
                     (
                         parse3 value [

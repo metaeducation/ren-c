@@ -2,15 +2,15 @@ Rebol [
     system: "Ren-C Language Interpreter and Run-time Environment"
     title: "Extension words that have IDs, but strings aren't in core EXE"
     file: %ext-words.r
-    rights: --{
+    rights: --[
         Copyright 2025 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         The idea behind this file is that there may be some words which are
         not used by the core, but that extensions use...and would benefit
         from being able to recognize by an integer symbol ID.
@@ -27,8 +27,8 @@ Rebol [
 
         Hence the extension can use compile-time constants that they define
         for EXT_SYM_XXX words which are not built in.
-    }--
-    notes: --{
+    ]--
+    notes: --[
         * Any words in this file that are committed to must keep those IDs.
           So if the core extends to need that word it must use the same
           registration process that extensions would.  Hence the commitment
@@ -42,7 +42,7 @@ Rebol [
         * As with %symbols.r and %lib-words.r, ISSUE! in this file marks a
           word that logically belongs as part of a set but has been defined
           previously for other purposes, so it won't be defined again.
-    }--
+    ]--
 ]
 
 [=== image ===]

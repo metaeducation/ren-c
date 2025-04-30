@@ -4,16 +4,16 @@ Rebol [
     file: %main-startup.r
     type: module
     name: Ren-C-Startup
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    description: --{
+    ]--
+    description: --[
         This is the Rebol code called by %main.c that handles things like
         loading boot extensions, doing command-line processing, and getting
         things otherwise set up for running the console.
@@ -23,7 +23,7 @@ Rebol [
         not be running any user code directly.  Instead it should return a
         request of code to be handed to the console extension to be provoked
         with (see the :PROVOKE refinement of CONSOLE for more information).
-    }--
+    ]--
 ]
 
 boot-print: redescribe [
@@ -121,7 +121,7 @@ usage: func [
 ;       --version tuple  Script must be this version or greater
 ;       Perhaps add --reqired version-tuple for above TBD
 
-    print trim:auto copy --{
+    print trim:auto copy --[
     Command line usage:
 
         Rebol [options] [script] [arguments]
@@ -159,7 +159,7 @@ usage: func [
 
         REBOL
         REBOL -q --about --suppress "%rebol.reb %user.reb"
-    }--
+    ]--
 ]
 
 license: func [
@@ -527,7 +527,7 @@ bind construct [
     |
         "--do" [param: text! | (param-missing "DO")] (
             ;
-            ; A string of code to run, e.g. `r3 --do "print -{Hello}-"`
+            ; A string of code to run, e.g. `r3 --do "print -[Hello]-"`
             ;
             o.quiet: 'yes  ; don't print banner, just run code string
             quit-when-done: default ['yes]

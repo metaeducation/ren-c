@@ -6,7 +6,7 @@ Rebol [
     version: 1.0.0
     license: "Apache 2.0"
 
-    description: --{
+    description: --[
         The COMPILE usermode function is the front-end to the actual COMPILE*
         native, which interfaces directly with the libtcc API.  The front
         end's job is basically to do all the work that *can* be done in Rebol,
@@ -35,7 +35,7 @@ Rebol [
         a generic "make" service for an embedded TCC.  It could do multiple
         compilation and linking units, allow you to use include files via
         URL!, etc.  For now, it is primarily in service to user natives.
-    }--
+    ]--
 ]
 
 
@@ -44,7 +44,7 @@ compile: func [
 
     return: [~]
     compilables "Functions from MAKE-NATIVE, TEXT! strings of code, ..."
-    :settings [block!] --{
+    :settings [block!] --[
         The block supports the following dialect:
             options [block! text!]
             include-path [block! file! text!]
@@ -55,7 +55,7 @@ compile: func [
             output-type ['memory 'exe 'dll 'obj 'preprocess]
             output-file [file! text!]
             debug [word!]  ; !!! currently unimplemented
-    }--
+    ]--
     :files "COMPILABLES represents a list of disk files (TEXT! paths)"
     :inspect "Return the C source code as text, but don't compile it"
     :nostdlib "Do not include <stdlib.h> automatically with librebol"
@@ -335,7 +335,7 @@ compile: func [
     ]
 
     if use-librebol [
-        insert compilables trim:auto mutable --{
+        insert compilables trim:auto mutable --[
             /* TCC's override of <stddef.h> defines int64_t in a way that
              * might not be compatible with glibc's <stdint.h> (which at time
              * of writing defines it as a `__int64_t`.)  You might get:
@@ -354,7 +354,7 @@ compile: func [
             #include "rebol.h"
 
             RebolContext* librebol_binding = 0;  /* review... */
-        }--
+        ]--
 
         ; The nostdlib feature is specific to a bare-bones demo environment
         ; with only the r3 executable and the TCC-specific encap files.  The
@@ -408,7 +408,7 @@ compile: func [
             fail [
                 "LIBREBOL_INCLUDE_DIR currently must be set either as an"
                 "environment variable or as LIBREBOL-PATH in /OPTIONS so"
-                -{that the TCC extension knows where to find "rebol.h"}-
+                -[that the TCC extension knows where to find "rebol.h"]-
                 "(e.g. in %make/prep/include)"
             ]
         ]
@@ -490,14 +490,14 @@ c99: func [
         let option-with-arg-rule: [
             opt space option: across to [space | <end>] (
                 ;
-                ; If you do something like `option --{-DSTDIO_H="stdio.h"}--,
+                ; If you do something like `option --[-DSTDIO_H="stdio.h"]--,
                 ; TCC seems to process it like `-DSTDIO_H=stdio.h` which won't
                 ; work with `#include STDIO_H`.  But if the command line had
                 ; said `-DSTDIO_H=\"stdio.h\"` we would be receiving it
                 ; after the shell processed it, so those quotes would be
                 ; unescaped here.  Add the escaping back in for TCC.
                 ;
-                replace option -{"}- -{\"}-
+                replace option -["]- -[\"]-
 
                 keep spread compose [options (option)]
             )

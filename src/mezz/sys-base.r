@@ -1,23 +1,23 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "REBOL 3 Boot Sys: Top Context Functions"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
+    ]--
     context: sys
-    notes: --{
+    notes: --[
         Follows the BASE lib init that provides a basic set of functions
         to be able to evaluate this code.
 
         The boot binding of this module is SYS then LIB deep.
         Any non-local words not found in those contexts WILL BE
         UNBOUND and will error out at runtime!
-    }--
+    ]--
 ]
 
 

@@ -167,11 +167,11 @@ sqlform: func [
         ; legal SQL but it's a bad pun to have that be a QUOTED? WORD! named
         ; {T'}.  The only answers we have are to either use full on string
         ; interpolation and escape Rebol variables into it (not yet available)
-        ; or to make it so a string in SQL is double-stringed, e.g. -{"foo"}-.
+        ; or to make it so a string in SQL is double-stringed, e.g. -["foo"]-.
         ;
         ; We *could* make it so that this is done via some special operator,
-        ; like ^(-{'T'}-) to say "I want this to be spliced in the statement.
-        ; Then "foo" and -{foo}- could be treated as SQL strings.  Review.
+        ; like ^(-['T']-) to say "I want this to be spliced in the statement.
+        ; Then "foo" and -[foo]- could be treated as SQL strings.  Review.
         ;
         text! [value]
 

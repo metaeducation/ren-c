@@ -92,7 +92,7 @@ Value* Read_Line(STD_TERM *t)
 
         if (e == nullptr) {
             rebJumps(
-                "fail -{nullptr interruption of terminal not done yet}-"
+                "fail -[nullptr interruption of terminal not done yet]-"
             );
         }
 
@@ -255,7 +255,7 @@ Value* Read_Line(STD_TERM *t)
 
               default:
                 rebJumps(
-                    "fail -{Invalid key press returned from console}-"
+                    "fail -[Invalid key press returned from console]-"
                 );
             }
         }

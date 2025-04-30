@@ -641,14 +641,14 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
           case '{': {  // brace with no leading dashes, nests if {a {b} c}
             if (
                 Get_Cell_Flag(TOP, STACK_NOTE_BRACED)
-                and 0 == VAL_INT32(TOP)  // > 0, e.g. -{a {b c}- won't nest
+                and 0 == VAL_INT32(TOP)  // > 0, e.g. -[a {b c]- won't nest
             ){
                 Init_Integer(PUSH(), 0);
                 Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
             }
             break; }
 
-          case '-': {  // look for nesting levels -{a --{b}-- c}- is one string
+          case '-': {  // look for nesting levels -[a --[b]-- c]- is one string
             Count count = 1;
             Append_Codepoint(Mold_Buffer(mo), '-');
             ++cp;
@@ -695,7 +695,7 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
                 ++cp;
             }
             if (count > VAL_INT32(TOP))
-                return Error_User("Nested }-- level closure too long");
+                return Error_User("Nested ]-- level closure too long");
             if (count == VAL_INT32(TOP)) {
                 DROP();
                 if (TOP_INDEX == base)
@@ -1337,7 +1337,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
     const Byte* cp = S->begin;
 
-    if (*cp == '-') {  // first priority: -{...}- --{...}--
+    if (*cp == '-') {  // first priority: -[...]- --[...]--
         Count dashes = 1;
         const Byte* dp = cp;
         for (++dp; *dp == '-'; ++dp)
@@ -2984,7 +2984,7 @@ Bounce Scanner_Executor(Level* const L) {
                 Pop_Source_From_Stack(stackindex_path_head - 1)
             );
             Push_Lifeguard(items);
-            Value* email = rebValue("as email! delimit -{.}-", items);
+            Value* email = rebValue("as email! delimit -[.]-", items);
             Drop_Lifeguard(items);
             Copy_Cell(temp, email);
             rebRelease(email);

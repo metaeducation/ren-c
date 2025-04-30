@@ -1,20 +1,20 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "REBOL 3 Boot Base: Function Constructors"
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    notes: --{
+    ]--
+    notes: --[
         This code is evaluated just after actions, natives, sysobj, and other
         lower-level definitions.  It intializes a minimal working environment
         that is used for the rest of the boot.
-    }--
+    ]--
 ]
 
 assert: func [

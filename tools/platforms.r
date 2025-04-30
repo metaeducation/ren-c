@@ -3,16 +3,16 @@ Rebol [
     title: "Target build platforms"
     type: module
     name: Target-Platforms
-    rights: --{
+    rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         These are target platform definitions used to build Rebol with a
         various compilers and libraries.  A longstanding historical numbering
         scheme of `0.X.Y` is currently used.  X is a kind of generic indicator
@@ -32,8 +32,8 @@ Rebol [
 
         If you have a comment to make about a build, add it in the form of a
         memo item that is a no-op, so the table is brief as possible.
-    }--
-    notes: --{
+    ]--
+    notes: --[
       * A binary release archive for Rebol 1.2 and 2.5 is at:
 
           http://rebol.com/release-archive.html
@@ -56,7 +56,7 @@ Rebol [
         additionally some platforms were just too old to be deemed relevant.
         However, there's probably no serious barrier to building the current
         sources on most older machines--if someone were interested.
-    }--
+    ]--
 ]
 
 import <bootstrap-shim.r>

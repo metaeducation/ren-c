@@ -2,19 +2,19 @@ Rebol [
     file: %cflags-map.r
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Abstract C Compiler Flag Mappings"
-    rights: --{
+    rights: --[
         Copyright 2012-2025 Rebol Open Source Contributos
         REBOL is a trademark of REBOL Technologies
-    }--
-    license: --{
+    ]--
+    license: --[
         Licensed under the Lesser GPL, Version 3.0
         See: https://www.gnu.org/licenses/lgpl-3.0.html
-    }--
-    purpose: --{
+    ]--
+    purpose: --[
         This file defines TAG!s that you can use in the cflags specifications
         for the build, which abstract different literal flag text based on
         which compiler you are using.
-    }--
+    ]--
 ]
 
 <no-uninitialized> => [

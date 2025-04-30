@@ -7,7 +7,7 @@ Rebol [
     version: 1.0.0
     license: "Apache 2.0"
 
-    description: --{
+    description: --[
         The goal of the debugger in Ren-C is to be mostly usermode code, and
         to rely on leveraging exposure of the FRAME! datatype.  One of the
         concepts involved in that is that things like mappings of integers
@@ -20,7 +20,7 @@ Rebol [
         the hoops one must jump through to implement a single-threaded
         debugger vs. a threaded/interprocess-focused implementation (e.g.
         via a debug://` PORT!)
-    }--
+    ]--
 ]
 
 
@@ -38,8 +38,8 @@ Rebol [
 
 debug-console-skin: make console! [
     greeting:
---{!! Entering *EXPERIMENTAL* Debug Console that only barely works for a demo.
-Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
+--[!! Entering *EXPERIMENTAL* Debug Console that only barely works for a demo.
+Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.]--
 
     base-frame: null
     focus-frame: null
