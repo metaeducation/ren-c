@@ -4,9 +4,9 @@
 ; minimum
 (group! = type of first [()])
 ; alternative literal form
-(strict-equal? first [()] first compose [(make group! 1)])
-(strict-equal? first [()] make group! 0)
-(strict-equal? first [()] to group! [])
+(equal? first [()] first compose [(make group! 1)])
+(equal? first [()] make group! 0)
+(equal? first [()] to group! [])
 ("()" = mold first [()])
 ; parens are active
 (

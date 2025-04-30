@@ -2,19 +2,19 @@
 ([1 2 3] = sort [1 3 2])
 ([3 2 1] = sort:reverse [1 3 2])
 [#1152 ; SORT not stable (order not preserved)
-    (strict-equal? ["A" "a"] sort ["A" "a"])
+    (equal? ["A" "a"] sort ["A" "a"])
 ]
 [#1152 ; SORT not stable (order not preserved)
-    (strict-equal? ["A" "a"] sort:reverse ["A" "a"])
+    (equal? ["A" "a"] sort:reverse ["A" "a"])
 ]
 [#1152 ; SORT not stable (order not preserved)
-    (strict-equal? ["a" "A"] sort ["a" "A"])
+    (equal? ["a" "A"] sort ["a" "A"])
 ]
 [#1152 ; SORT not stable (order not preserved)
-    (strict-equal? ["A" "a"] sort:case ["a" "A"])
+    (equal? ["A" "a"] sort:case ["a" "A"])
 ]
 [#1152 ; SORT not stable (order not preserved)
-    (strict-equal? ["A" "a"] sort:case ["A" "a"])
+    (equal? ["A" "a"] sort:case ["A" "a"])
 ]
 [#1152 ; SORT not stable (order not preserved)
     (

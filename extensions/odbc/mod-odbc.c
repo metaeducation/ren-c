@@ -1266,7 +1266,7 @@ DECLARE_NATIVE(INSERT_ODBC)
         // then prepare a new statement.
         //
         use_cache = rebUnboxLogic(
-            "strict-equal? (first sql) ensure [~null~ text!] statement.string"
+            "equal? (first sql) ensure [~null~ text!] statement.string"
         );
 
         SQLLEN sql_index = 1;

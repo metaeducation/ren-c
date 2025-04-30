@@ -68,7 +68,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Blank)
 
     UNUSED(ARG(VALUE1));
     UNUSED(ARG(VALUE2));
-    UNUSED(ARG(STRICT));
+    UNUSED(Bool_ARG(RELAX));
 
     return LOGIC(true);  // all blanks are equal
 }
@@ -226,7 +226,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Handle)
 
     Element* a = Element_ARG(VALUE1);
     Element* b = Element_ARG(VALUE2);
-    UNUSED(ARG(STRICT));
+    UNUSED(Bool_ARG(RELAX));
 
     if (Cell_Has_Node1(a) != Cell_Has_Node1(b))
         return LOGIC(false);  // one is shared but other is not

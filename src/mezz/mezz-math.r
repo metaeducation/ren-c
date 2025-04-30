@@ -43,9 +43,9 @@ modulo: func [
     ; If r is "almost" b (i.e. negligible compared to b), the
     ; result will be 0. Otherwise the result will be r
     any [
-        a + r = a, b + r = b  ; 'almost zero'
+        a + r ?= a, b + r ?= b  ; 'almost zero'
         all [  ; 'almost b'
-            (a + r) = (a + b)
+            (a + r) ?= (a + b)
             positive? (r + r) - b
         ]
     ] then [

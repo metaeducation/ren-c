@@ -467,9 +467,11 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
+    bool relax = not strict;
+
     Copy_Cell(Erase_Cell(ARG(VALUE1)), s);
     Copy_Cell(Erase_Cell(ARG(VALUE2)), t);
-    Init_Logic(Erase_Cell(ARG(STRICT)), strict);
+    Init_Logic(Erase_Cell(ARG(RELAX)), relax);
 
     DECLARE_ATOM (out);
 

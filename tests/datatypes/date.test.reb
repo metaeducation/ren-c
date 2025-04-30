@@ -111,17 +111,15 @@
     (null = date-100.zone)
     (null = date-100.time)
 
-    ; !!! In Brett's original tests the EQUAL? test would allow comparisons
+    ; !!! In Brett's original tests the LAX-EQUAL? test would allow comparisons
     ; to be made for equality between things with time zones and without, and
     ; say they were not equal.  This might be as misleading as doing a
     ; comparison for greater or less than...if the date component is the same
     ; but one has a time of 00:00 in the 00:00 time zone, then the intent
-    ; might have been for them to be equal.  In either case, the comparison
-    ; machinery can't tell if you're doing a test for equality or otherwise
-    ; because it is only returning -1, 0, or 1 at this time.
+    ; might have been for them to be equal.
     ;
-    (equal? date-110 date-100)
-    (equal? date-111 date-100)
+    (lax-equal? date-110 date-100)
+    (lax-equal? date-111 date-100)
 
     ;
     ; Math

@@ -71,6 +71,7 @@ REBINT CT_Comma(const Cell* a, const Cell* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Comma)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
+    bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Comma(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
+    return LOGIC(CT_Comma(ARG(VALUE1), ARG(VALUE2), strict) == 0);
 }

@@ -236,7 +236,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Sequence)
 
     Element* a = Element_ARG(VALUE1);
     Element* b = Element_ARG(VALUE2);
-    bool strict = Bool_ARG(STRICT);
+    bool strict = not Bool_ARG(RELAX);
 
     Length a_len = Cell_Sequence_Len(a);
     Length b_len = Cell_Sequence_Len(b);

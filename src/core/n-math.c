@@ -899,7 +899,7 @@ DECLARE_NATIVE(DEFAULTABLE_Q)
 //      return: [logic?]
 //      value1 [something?]
 //      value2 [something?]
-//      :strict "Use strict comparison rules"
+//      :relax "Use less strict comparison rules (e.g. caseless comparison)"
 //  ]
 //
 DECLARE_NATIVE(EQUAL_Q)
@@ -908,7 +908,7 @@ DECLARE_NATIVE(EQUAL_Q)
 
     Value* v1 = ARG(VALUE1);
     Value* v2 = ARG(VALUE2);
-    bool strict = Bool_ARG(STRICT);
+    bool relax = Bool_ARG(RELAX);
 
     if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
         return nullptr;
@@ -917,7 +917,7 @@ DECLARE_NATIVE(EQUAL_Q)
     QUOTE_BYTE(v2) = NOQUOTE_1;
 
     if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
-        if (strict)
+        if (not relax)
             return nullptr;
 
         if (Is_Integer(v1) and Is_Decimal(v2))
@@ -1054,7 +1054,7 @@ DECLARE_NATIVE(SAME_Q)
     Meta_Quotify(v1);  // may be null or other antiform :-/
     Meta_Quotify(v2);
 
-    return rebDelegate("strict-equal?", v1, v2);
+    return rebDelegate("equal?", v1, v2);
 }
 
 
@@ -1079,7 +1079,7 @@ DECLARE_NATIVE(GREATER_Q)
     Quotify(v2);
 
     return rebDelegate(
-        "not any [equal?:strict", v1, v2, "lesser?", v1, v2, "]"
+        "not any [equal?", v1, v2, "lesser?", v1, v2, "]"
     );
 }
 
@@ -1105,7 +1105,7 @@ DECLARE_NATIVE(EQUAL_OR_LESSER_Q)
     Quotify(v2);
 
     return rebDelegate(
-        "any [equal?:strict", v1, v2, "lesser?", v1, v2, "]"
+        "any [equal?", v1, v2, "lesser?", v1, v2, "]"
     );
 }
 
@@ -1131,7 +1131,7 @@ DECLARE_NATIVE(GREATER_OR_EQUAL_Q)
     Quotify(v2);
 
     return rebDelegate(
-        "any [equal?:strict", v1, v2, "not lesser?", v1, v2, "]"
+        "any [equal?", v1, v2, "not lesser?", v1, v2, "]"
     );
 }
 

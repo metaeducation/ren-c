@@ -101,8 +101,9 @@ REBINT CT_Date(const Cell* a_in, const Cell* b_in, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Date)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
+    bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Date(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
+    return LOGIC(CT_Date(ARG(VALUE1), ARG(VALUE2), strict) == 0);
 }
 
 

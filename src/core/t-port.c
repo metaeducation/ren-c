@@ -57,8 +57,9 @@ DECLARE_NATIVE(OPEN_Q)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Port)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
+    bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Port(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
+    return LOGIC(CT_Port(ARG(VALUE1), ARG(VALUE2), strict) == 0);
 }
 
 

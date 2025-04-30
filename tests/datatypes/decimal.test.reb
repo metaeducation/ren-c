@@ -58,11 +58,11 @@
 ])
 
 ; #1134 "decimal tolerance"
-(not strict-equal? // [
+(not equal? // [
     decode 'IEEE-754 #{3FD3333333333333}
     decode 'IEEE-754 #{3FD3333333333334}
 ])
-(not strict-equal? // [
+(not equal? // [
     decode 'IEEE-754 #{3FB9999999999999}
     decode 'IEEE-754 #{3FB999999999999A}
 ])

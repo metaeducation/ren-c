@@ -3,8 +3,8 @@
 (tag! = type of <tag>)
 
 (tag? to tag! "")
-(strict-equal? to tag! "" make tag! 0)
-(strict-equal? to tag! "" to tag! "")
+(equal? to tag! "" make tag! 0)
+(equal? to tag! "" to tag! "")
 ("<tag>" = mold <tag>)
 
 [#219

@@ -527,8 +527,9 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Varargs)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
+    bool strict = Bool_ARG(RELAX);
 
-    return LOGIC(CT_Varargs(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
+    return LOGIC(CT_Varargs(ARG(VALUE1), ARG(VALUE2), strict) == 0);
 }
 
 

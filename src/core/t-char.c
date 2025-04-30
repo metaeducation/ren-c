@@ -229,8 +229,9 @@ REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
+    bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Utf8(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
+    return LOGIC(CT_Utf8(ARG(VALUE1), ARG(VALUE2), strict) == 0);
 }
 
 

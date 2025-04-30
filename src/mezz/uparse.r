@@ -1233,7 +1233,7 @@ default-combinators: to map! reduce [
     ][
         case [
             any-list? input [
-                neq?: either state.case [:strict-not-equal?] [:not-equal?]
+                neq?: either state.case [:not-equal?] [:lax-not-equal?]
                 if neq? try input.1 value [
                     return raise "Value at parse position does not match TEXT!"
                 ]
@@ -1628,7 +1628,7 @@ default-combinators: to map! reduce [
         ]
 
         if any-list? input [
-            neq?: either state.case [:strict-not-equal?] [:not-equal?]
+            neq?: either state.case [:not-equal?] [:lax-not-equal?]
             remainder: next input
             if neq? input.1 unquote value [
                 if negated [
@@ -1709,7 +1709,7 @@ default-combinators: to map! reduce [
             fail "Splice combinators only match ANY-LIST? input"
         ]
 
-        neq?: either state.case [:strict-not-equal?] [:not-equal?]
+        neq?: either state.case [:not-equal?] [:lax-not-equal?]
         for-each 'item unquasi value [
             if neq? remainder.1 item [
                 return raise [

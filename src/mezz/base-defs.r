@@ -107,8 +107,8 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 ; Equality variants (note: bootstrap needs to REDESCRIBE)
 
 /not-equal?: cascade [equal?/ not/] ; should optimize for intrinsics
-/strict-equal?: equal?:strict/
-/strict-not-equal?: cascade [strict-equal?/ not/]
+/lax-equal?: equal?:relax/
+/lax-not-equal?: cascade [lax-equal?/ not/]
 
 
 ; COMPARISON OPERATORS
@@ -116,9 +116,9 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 ; !!! See discussion about the future of comparison operators:
 ; https://forum.rebol.info/t/349
 
-=: infix strict-equal?/
-<>: infix strict-not-equal?/
-!=: infix strict-not-equal?/  ; http://www.rebol.net/r3blogs/0017.html
+=: infix equal?/
+<>: infix not-equal?/
+!=: infix not-equal?/  ; http://www.rebol.net/r3blogs/0017.html
 
 <: infix lesser?/
 >: infix greater?/
@@ -140,8 +140,8 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 =>: infix equal-or-greater?/
 <=: infix lesser-or-equal?/
 
-?=: infix equal?/
-
+?=: infix lax-equal?/
+?!=: infix lax-not-equal?/
 
 ; Common "Invisibles"
 

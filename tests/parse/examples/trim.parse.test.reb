@@ -184,7 +184,7 @@ ok)
 
     ; refinement order
     #83
-    (strict-equal?
+    (equal?
         utrim:all:with "a" "a"
         utrim:with:all "a" "a"
     )

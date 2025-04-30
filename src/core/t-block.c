@@ -34,7 +34,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 
     Element* a = Element_ARG(VALUE1);
     Element* b = Element_ARG(VALUE2);
-    bool strict = Bool_ARG(STRICT);
+    bool strict = not Bool_ARG(RELAX);
 
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);

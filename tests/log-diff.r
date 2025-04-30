@@ -55,7 +55,7 @@ make-diff: func [
                 any [
                     blank? old-test
                     all [
-                        strict-not-equal? old-test new-test
+                        old-test != new-test
                         old-test = second sort:case reduce [new-test old-test]
                     ]
                     all [
@@ -90,7 +90,7 @@ make-diff: func [
                 any [
                     blank? new-test
                     all [
-                        strict-not-equal? new-test old-test
+                        new-test != old-test
                         new-test = second sort:case reduce [old-test new-test]
                     ]
                     all [
@@ -105,7 +105,7 @@ make-diff: func [
             ]
             any [
                 old-result = new-result
-                strict-not-equal? old-test new-test
+                old-test != new-test
             ] [unchanged: unchanged + 1]
             ; having one test with different results
             (
