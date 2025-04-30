@@ -897,13 +897,18 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         }
 
         if (Is_Action(les->data)) {
-            Value* generated = rebValue(rebRUN(les->data));
-            if (generated) {
+            Value* generated = rebMeta(rebRUN(les->data));
+            if (not (
+                Is_Meta_Of_Raised(generated)
+                and Is_Error_Done_Signal(generated)
+            )) {
+                Meta_Unquotify_Decayed(generated);
                 if (var)
                     Copy_Cell(var, generated);
                 rebRelease(generated);
             }
             else {
+                rebRelease(generated);
                 les->more_data = false;  // any remaining vars must be unset
                 if (pseudo_var == Varlist_Slots_Head(vars_ctx)) {
                     //
@@ -1649,8 +1654,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [blank! word! the-word! block!]
 //      data "The series to traverse"
-//          [<maybe> blank! any-series? any-sequence? any-context?
-//           action!]
+//          [<maybe> blank! any-series? any-sequence? any-context?]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //      <local> iterator
@@ -1709,14 +1713,8 @@ DECLARE_NATIVE(MAP)
 {
     INCLUDE_PARAMS_OF_MAP;
 
-    bool invoke_frame = false;
-    if (Is_Action(ARG(DATA))) {
-        invoke_frame = true;
-        QUOTE_BYTE(ARG(DATA)) = NOQUOTE_1;
-    }
-
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
-    Element* data = Element_ARG(DATA);  // action invokes, frame enumerates
+    Value* data = ARG(DATA);  // action invokes, frame enumerates
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
     Value* iterator = LOCAL(ITERATOR);  // reuse to hold Loop_Each_State
@@ -1751,14 +1749,14 @@ DECLARE_NATIVE(MAP)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    if (invoke_frame) {
+    if (Is_Action(data)) {
         // treat as a generator
     }
     else if (
         not Is_Quoted(data)
-        or Quotes_Of(data) != 1
+        or Quotes_Of(Known_Element(data)) != 1
         or not (
-            Any_Series(Unquotify(data))
+            Any_Series(Unquotify(Known_Element(data)))  // <= UNQUOTIFY here!
             or Any_Path(data)  // has been unquoted
             or Any_Context(data)
             or Any_Sequence(data)
