@@ -172,8 +172,7 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
     return (
         HEART_BYTE(a) == TYPE_BLOCK  // Is_Pack()
         or HEART_BYTE(a) == TYPE_ERROR  // Is_Raised()
-        or HEART_BYTE(a) == TYPE_COMMA  // Is_Barrier()
-        or HEART_BYTE(a) == TYPE_OBJECT  // Is_Lazy()
+        or HEART_BYTE(a) == TYPE_COMMA  // Is_Ghost()
     );
 }
 
@@ -186,8 +185,7 @@ INLINE bool Is_Stable_Antiform_Heart(Option(Heart) heart) {
     return (
         heart != TYPE_BLOCK  // Is_Pack()
         and heart != TYPE_ERROR  // Is_Raised()
-        and heart != TYPE_COMMA  // Is_Barrier()
-        and heart != TYPE_OBJECT  // Is_Lazy()
+        and heart != TYPE_COMMA  // Is_Ghost()
     );
 }
 
@@ -198,8 +196,7 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
     return (
         HEART_BYTE(a) != TYPE_BLOCK  // Is_Pack()
         and HEART_BYTE(a) != TYPE_ERROR  // Is_Raised()
-        and HEART_BYTE(a) != TYPE_COMMA  // Is_Barrier()
-        and HEART_BYTE(a) != TYPE_OBJECT  // Is_Lazy()
+        and HEART_BYTE(a) != TYPE_COMMA  // Is_Ghost()
     );
 }
 

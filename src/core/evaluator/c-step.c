@@ -1504,22 +1504,6 @@ Bounce Stepper_Executor(Level* L)
       //    overwrite of the returned OUT for the whole evaluation will happen
       //    *after* the original OUT was captured into any desired variable.
 
-        if (Is_Lazy(OUT)) {
-            //
-            // A Lazy Object has a methodization moment here to turn itself
-            // into multiple values--potentially a pack.  Ultimately we'd
-            // want to be stackless about the reification, but for now make
-            // it easy.
-            //
-            if (Pushed_Decaying_Level(OUT, OUT, LEVEL_MASK_NONE)) {
-                if (Trampoline_With_Top_As_Root_Throws())
-                    return FAIL(Error_No_Catch_For_Throw(TOP_LEVEL));
-                Drop_Level(TOP_LEVEL);
-            }
-            if (Is_Lazy(OUT))  // Lazy -> Lazy not allowed, Lazy -> Pack is ok
-                return FAIL("Lazy Object Reified to Lazy Object: Not Allowed");
-        }
-
         const Source* pack_array;  // needs GC guarding when OUT overwritten
         const Element* pack_meta_at;  // pack block items are ^META'd
         const Element* pack_meta_tail;

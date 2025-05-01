@@ -456,42 +456,6 @@ DECLARE_NATIVE(SPREAD)
 }
 
 
-//
-//  lazy: native [
-//
-//  "Make objects lazy"
-//
-//      return: "Antiform of OBJECT! or unquoted value (pass null and void)"
-//          [~null~ ~void~ element? lazy?]
-//      object "Will do MAKE OBJECT! on BLOCK!"
-//          [~null~ ~void~ quoted! object! block!]
-//  ]
-//
-DECLARE_NATIVE(LAZY)
-{
-    INCLUDE_PARAMS_OF_LAZY;
-
-    Value* v = ARG(OBJECT);
-    if (Is_Void(v))
-        return VOID;
-    if (Is_Nulled(v))
-        return nullptr;
-
-    if (Is_Quoted(v))
-        return Unquotify(Copy_Cell(OUT, cast(Element*, v)));
-
-    if (Is_Block(v)) {
-        if (rebRunThrows(cast(Value*, OUT), CANON(MAKE), CANON(OBJECT_X), v))
-            return THROWN;
-    }
-    else
-        Copy_Cell(OUT, v);
-
-    assert(Is_Object(OUT));
-    return Destabilize_Unbound_Fundamental(OUT);
-}
-
-
 // 1. In REDUCE, :PREDICATE functions are offered things like nihil and void
 //    if they can accept them (which META can).  But COMMA! antiforms that
 //    result from evaluating commas are -not- offered to any predicates.  This
@@ -589,27 +553,6 @@ DECLARE_NATIVE(PACK_P)
     if (Pack_Native_Core_Throws(OUT, block, LIB(META_P)))  // raise ok [1]
         return THROWN;
     return OUT;
-}
-
-
-//
-//  lazy?: native:intrinsic [
-//
-//  "Tells you if argument is a lazy value (antiform object)"
-//
-//      return: [logic?]
-//      ^atom
-//  ]
-//
-DECLARE_NATIVE(LAZY_Q)
-{
-    INCLUDE_PARAMS_OF_LAZY_Q;
-
-    Option(Heart) heart;
-    QuoteByte quote_byte;
-    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
-
-    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_OBJECT);
 }
 
 

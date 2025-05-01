@@ -59,15 +59,6 @@ probe: func [
 
 compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 
-; Pre-decaying specializations for THEN?, ELSE?, THEN, ELSE, ALSO
-;
-; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
-;
-/then?*: then?:decay/
-/else?*: else?:decay/
-/*then: then:decay/
-/*also: also:decay/
-/*else: else:decay/
 /branched?: then?/  ; alias, maybe more catchy?
 
 

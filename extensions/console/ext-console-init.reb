@@ -132,19 +132,6 @@ export console!: make object! [
             return ~
         ]
 
-        === DECAY IF A "LAZY" VALUE ===
-
-        if lazy? unmeta v [
-            v: unquasi v
-            if has v 'decay [
-                print ["; decay of lazy object with" mold words of v]
-                v: ^ eval v.decay
-            ] else [
-                print ["; no decay in lazy object with" mold words of v]
-                v: quasi v
-            ]
-        ]
-
         === UNPACK FIRST VALUE IN "PACKS" ===
 
         ; Block antiforms represent multiple returns.  Only the first output

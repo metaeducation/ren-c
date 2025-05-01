@@ -161,7 +161,6 @@ varargs     "evaluator position for variable numbers of arguments"
 <ANY-CONTEXT?>
 
     object      "context of names with values"
-    ~lazy~:U    "unstable antiform object for lazy evaluation (WIP)"
                 (node1 node2)
                 [any-inert?]
 

@@ -151,15 +151,6 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
     if (Not_Antiform(v))
         return u_cast(Value*, u_cast(Atom*, v));
 
-    if (Is_Lazy(v)) {  // should this iterate?
-        if (not Pushed_Decaying_Level(v, v, LEVEL_MASK_NONE))
-            return u_cast(Value*, u_cast(Atom*, v));  // cheap reification
-        if (Trampoline_With_Top_As_Root_Throws())
-            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
-        Drop_Level(TOP_LEVEL);
-        assert(not Is_Lazy(v));
-    }
-
     if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
         const Element* pack_meta_tail;
         const Element* pack_meta_at = Cell_List_At(&pack_meta_tail, v);
@@ -167,7 +158,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
             fail (Error_No_Value_Raw());  // treat as void?
         Derelativize(v, pack_meta_at, Cell_List_Binding(v));
         Meta_Unquotify_Undecayed(v);
-        if (Is_Pack(v) or Is_Lazy(v))
+        if (Is_Pack(v))
             fail (Error_Bad_Antiform(v));  // need more granular unpacking [2]
         if (Is_Raised(v))
             fail (Cell_Error(v));
@@ -209,8 +200,6 @@ INLINE bool Is_Pack_Undecayable(Atom* pack)
     if (Is_Meta_Of_Raised(at))
         return true;
     if (Is_Meta_Of_Pack(at))
-        return true;
-    if (Is_Meta_Of_Lazy(at))
         return true;
     return false;
 }

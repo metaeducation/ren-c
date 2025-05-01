@@ -87,21 +87,6 @@
     (catch [~[~null~]~ also x -> [throw (x = null)]])
     (catch [~[~null~]~ also ^x -> [throw (x = the ~[~null~]~)]])
     (catch ['~null~ also ^x -> [throw (x = the '~null~)]])
-
-    ~???~ !! (~[]~ *else x -> [1020])
-    ~???~ !! (~[]~ *else ^x -> [1020])
-
-    (null *else ^x -> [^null = x])
-]
-
-; Variant forms react to heavy null as if they were null.  This can be
-; useful in chaining scenarios.
-;
-; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
-[
-    (~null~ *then [fail "shouldn't run"] else [okay])
-    (~null~ *also [fail "shouldn't run"] *else [okay])
-    (~null~ *else [okay])
 ]
 
 [

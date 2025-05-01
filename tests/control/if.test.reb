@@ -126,37 +126,3 @@
 )(
     1020 = if ok '1020
 )
-
-; THE-XXX! Branching
-;
-; !!! At one point this allowed cases of @word, @pa/th, and @tu.p.le as a
-; shorthand for `if xxx [:word]` etc.
-;
-;    j: 304
-;    304 = if ok @j
-;
-;    o: make object! [b: 1020]
-;    1020 = if ok @o/b
-;
-; Might be good for code golf?  (Even better would be to wedge in tailored
-; support for plain WORD! etc.)
-[(
-    x: ~
-    all [
-        <else> = if ok [x: <branch>, null] *else [<else>]
-        x = <branch>
-    ]
-)
-
-; Feature being considered: @(...) groups do not run unconditionally to make
-; branch arguments, but only if the branch is taken.
-;(
-;    var: <something>
-;    all [
-;        void? if null @(var: <something-else> [null])
-;        var = <something>
-;        null? if ok @(var: <something-else> [null])
-;        var = <something-else>
-;    ]
-;)
-]
