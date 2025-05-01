@@ -23,67 +23,57 @@
 ; DATATYPE!s and type checking work...)
 [
 (
-    get-params: func [f [frame!]] [
-        return map-each [key param] f [
-            assert [parameter? param]
-            reduce [key (reify param.spec) (reify param.text)]
+    describe: lambda [f [<unrun> frame!]] [
+        collect [
+            let m: adjunct-of f
+            keep reify all [m, m.description]
+
+            let keep-param: lambda [k [word! 'return:] p [parameter!]] [
+                keep reduce [k (reify p.spec) (reify p.text)]
+            ]
+            keep-param 'return: (return of f)
+            for-each [key param] f [
+                keep-param key param
+            ]
         ]
     ]
     ok
 )
 (
-    all wrap [  ; try with no RETURN:
-        f: meta:lite func ["description" a "a" b "b"] []
-        m: adjunct-of f
-        m.description = "description"
-        null = return of f
-        (get-params f) = [
-            [a ~null~ "a"]
-            [b ~null~ "b"]
-        ]
+    (describe func [
+        "has no return" a "a" b "b"
+    ] []) = [
+        "has no return"
+        [return: ~null~ ~null~]
+        [a ~null~ "a"]
+        [b ~null~ "b"]
     ]
 )(
-    all wrap [  ; try RETURN: with no type
-        f: meta:lite func ["description" return: "returns" a "a" b "b"] []
-        m: adjunct-of f
-        m.description = "description"
-        r: return of f
-        r.spec = null
-        r.text = "returns"
-        (get-params f) = [
-            [a ~null~ "a"]
-            [b ~null~ "b"]
-        ]
+    (describe func [
+        "has return with no type" return: "returns" a "a" b "b"
+    ] []) = [
+        "has return with no type"
+        [return: ~null~ "returns"]
+        [a ~null~ "a"]
+        [b ~null~ "b"]
     ]
 )(
-    all wrap [  ; try RETURN: with type
-        f: meta:lite func [
-            "description" return: [integer!] "returns" a "a" b "b"
-        ][
-        ]
-        m: adjunct-of f
-        m.description = "description"
-        r: return of f
-        r.spec = [integer!]
-        r.text = "returns"
-        (get-params f) = [
-            [a ~null~ "a"]
-            [b ~null~ "b"]
-        ]
+    (describe func [
+        "has return with type" return: [integer!] "returns" a "a" b "b"
+    ] []) = [
+        "has return with type"
+        [return: [integer!] "returns"]
+        [a ~null~ "a"]
+        [b ~null~ "b"]
     ]
 )(
-    all wrap [  ; try without description
-        f: meta:lite func [return: [integer!] "returns" a "a" :b "b"] []
-        if m: adjunct-of f [
-            m.description = null
-        ]
-        r: return of f
-        r.spec = [integer!]
-        r.text = "returns"
-        (get-params f) = [
-            [a ~null~ "a"]
-            [b ~null~ "b"]
-        ]
+    (describe func [  ; try it without a description
+        return: [integer!] "returns" a "a" :b "b"
+    ] []) = [
+        ~null~
+        [return: [integer!] "returns"]
+        [a ~null~ "a"]
+        [b ~null~ "b"]
     ]
 )]
 

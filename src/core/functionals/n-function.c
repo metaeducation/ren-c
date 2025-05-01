@@ -264,7 +264,7 @@ bool Func_Details_Querier(
 
     switch (property) {
 
-  //=////RETURN ///////////////////////////////////////////////////////////=//
+  //=//// RETURN //////////////////////////////////////////////////////////=//
 
       case SYM_RETURN_OF: {
         Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);

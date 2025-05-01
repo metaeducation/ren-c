@@ -162,8 +162,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     // the level it receives.
     //
     // **STEP IN** if you want to debug the next evaluation...!
-
     Bounce bounce = ((( L->executor )))((( L )));
+
 
   //=//// PROCESS SIGNALS (RECYCLE, HALT, ETC.) ///////////////////////////=//
 

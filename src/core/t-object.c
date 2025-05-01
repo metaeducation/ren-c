@@ -1355,14 +1355,19 @@ DECLARE_NATIVE(PARAMETERS_OF)
 //
 //  return-of: native [
 //
-//  "Get the return parameter specification (if any) of a frame"
+//  "Get the return parameter specification of a frame"
 //
-//      return: "Raised error if no return available (use TRY to get NULL)"
-//          [~null~ parameter!]
+//      return: "May be unconstrained (spec: ~null~) or divergent (spec: [])"
+//          [parameter!]  ; always returns parameter!, not null [1]
 //      frame [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(RETURN_OF)
+//
+// 1. At one point things like LAMBDA would give null back.  But this led to
+//    more combinatorics callers had to handle, so fabricating an unconstrained
+//    parameter with no description text is better.  (Review simplifying
+//    access to the spec via something like (return.spec of xxx/)
 {
     INCLUDE_PARAMS_OF_RETURN_OF;
 
@@ -1372,7 +1377,7 @@ DECLARE_NATIVE(RETURN_OF)
     Details* details = Phase_Details(phase);
     DetailsQuerier* querier = Details_Querier(details);
     if (not (*querier)(OUT, details, SYM_RETURN_OF))
-        return RAISE("Frame Details does not offer RETURN, use TRY for NULL");
+        return FAIL("Frame Details does not offer RETURN (shouldn't happen)");
 
     return OUT;
 }

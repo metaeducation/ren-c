@@ -108,7 +108,10 @@ bool Lambda_Details_Querier(
 
     switch (property) {
       case SYM_RETURN_OF:
-        Init_Nulled(out);  // unconstrained parameter, instead?
+        Init_Unconstrained_Parameter(
+            out,
+            FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+        );
         return true;
 
       case SYM_BODY_OF: {
