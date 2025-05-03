@@ -808,8 +808,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(SERIES));
 
-        Value* arg = ARG(VALUE);
-        assert(not Is_Nulled(arg));  // not an ~null~ parameter
+        Option(const Value*) arg = Optional_ARG(VALUE);
 
         REBLEN len; // length of target
         if (Symbol_Id(verb) == SYM_CHANGE)
@@ -820,7 +819,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         // Note that while inserting or appending NULL is a no-op, CHANGE with
         // a :PART can actually erase data.
         //
-        if (Is_Void(arg) and len == 0) {
+        if (not arg and len == 0) {
             if (id == SYM_APPEND) // append always returns head
                 VAL_INDEX_RAW(v) = 0;
             return COPY(v);  // don't fail on read only if would be a no-op
@@ -841,16 +840,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         // However it will not try to FORM blocks or other arrays; it only
         // accepts antiform blocks to imply "append each item individually".
         //
-        if (Is_Void(arg)) {
+        if (not arg) {
             // not necessarily a no-op (e.g. CHANGE can erase)
         }
-        else if (Is_Splice(arg)) {
-            QUOTE_BYTE(arg) = NOQUOTE_1;
+        else if (Is_Splice(unwrap arg)) {
+            // tolerated
         }
-        else if (Any_List(arg))
-            return FAIL(ARG(VALUE));  // no `append "abc" [d e]` w/o SPREAD
+        else if (Any_List(unwrap arg))
+            return FAIL(PARAM(VALUE));  // no `append "abc" [d e]` w/o SPREAD
         else
-            assert(not Is_Antiform(arg));
+            assert(not Is_Antiform(unwrap arg));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
             v,

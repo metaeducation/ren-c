@@ -358,8 +358,7 @@ typedef struct rebol_time_fields {
 
 enum act_modify_mask {
     AM_PART = 1 << 0,
-    AM_SPLICE = 1 << 1,
-    AM_LINE = 1 << 2
+    AM_LINE = 1 << 1
 };
 
 enum act_find_mask {

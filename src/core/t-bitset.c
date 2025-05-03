@@ -274,7 +274,7 @@ void Set_Bit(Binary* bset, REBLEN n, bool set)
 //
 // Set/clear bits indicated by strings and chars and ranges.
 //
-bool Set_Bits(Binary* bset, const Value* val, bool set)
+bool Set_Bits(Binary* bset, const Element* val, bool set)
 {
     if (Is_Integer(val)) {
         REBLEN n = Int32s(val, 0);
@@ -583,12 +583,18 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
       case SYM_INSERT: {
-        Value* arg = ARG_N(2);
-        if (Is_Void(arg))
-            return COPY(v);  // don't fail on read only if it would be a no-op
+        INCLUDE_PARAMS_OF_APPEND;
+        USED(PARAM(SERIES));  // covered by `v`
 
-        if (Is_Antiform(arg))
-            return FAIL(arg);
+        Option(const Value*) opt_arg = Optional_ARG(VALUE);
+        if (not opt_arg)
+            return COPY(v);  // don't fail on read only if it would be a no-op
+        if (Is_Antiform(unwrap opt_arg))
+            return FAIL(PARAM(VALUE));
+        const Element* arg = c_cast(Element*, unwrap opt_arg);
+
+        if (Bool_ARG(PART) or Bool_ARG(DUP) or Bool_ARG(LINE))
+            return FAIL(Error_Bad_Refines_Raw());
 
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
@@ -611,7 +617,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         if (not Bool_ARG(PART))
             return FAIL(Error_Missing_Arg_Raw());
 
-        if (not Set_Bits(bset, ARG(PART), false))
+        if (not Set_Bits(bset, Element_ARG(PART), false))
             return FAIL(PARAM(PART));
 
         return COPY(v); }

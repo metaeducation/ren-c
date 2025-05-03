@@ -2256,7 +2256,10 @@ DECLARE_NATIVE(SUBPARSE)
 
                 if (Stub_Holds_Cells(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
-                    mod_flags |= AM_SPLICE;  // bootstrap r3 has no SPREAD
+                    if (Any_List(evaluated)) {  // bootstrap r3 has no SPREAD
+                        QUOTE_BYTE(evaluated) = QUASIFORM_2_COERCE_ONLY;
+                        HEART_BYTE(evaluated) = TYPE_GROUP;
+                    }
 
                     // Note: We could check for mutability at the start
                     // of the operation -but- by checking right at the

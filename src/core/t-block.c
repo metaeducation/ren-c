@@ -604,10 +604,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PARAM(SERIES));
+        USED(PARAM(SERIES));
 
-        Value* arg = ARG(VALUE);
-        assert(not Is_Nulled(arg));  // not ~null~ in typecheck
+        Option(const Value*) arg = Optional_ARG(VALUE);
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
@@ -618,7 +617,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         // Note that while inserting or appending VOID is a no-op, CHANGE with
         // a :PART can actually erase data.
         //
-        if (Is_Void(arg) and len == 0) {
+        if (not arg and len == 0) {
             if (id == SYM_APPEND)  // append always returns head
                 VAL_INDEX_RAW(list) = 0;
             return COPY(list);  // don't fail on read only if would be a no-op
@@ -630,16 +629,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         Flags flags = 0;
 
         Copy_Cell(OUT, list);
-
-        if (Is_Void(arg)) {
-            // not necessarily a no-op (e.g. CHANGE can erase)
-        }
-        else if (Is_Splice(arg)) {
-            flags |= AM_SPLICE;
-            QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
-        }
-        else
-            assert(not Is_Antiform(arg));
 
         if (Bool_ARG(PART))
             flags |= AM_PART;

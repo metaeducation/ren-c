@@ -33,6 +33,7 @@ trash
 null
 okay
 blank
+hole
 NUL
 
 atom?

@@ -616,25 +616,25 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(SERIES));
 
-        Value* value = ARG(VALUE);
-        if (Is_Void(value))
+        if (Is_Meta_Of_Nihil(ARG(VALUE)))
             return COPY(map);  // don't fail on read only if it would be a no-op
 
-        if (not Is_Splice(value))
+        if (not Is_Meta_Of_Splice(ARG(VALUE)))
             return FAIL(
                 "Appending to MAP! only accepts a splice block of key/value"
             );
 
-        QUOTE_BYTE(value) = NOQUOTE_1;
+        QUOTE_BYTE(ARG(VALUE)) = NOQUOTE_1;
+        Element* arg = Element_ARG(VALUE);
 
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
         if (Bool_ARG(LINE) or Bool_ARG(DUP))
             return FAIL(Error_Bad_Refines_Raw());
 
-        REBLEN len = Part_Len_May_Modify_Index(value, ARG(PART));
+        REBLEN len = Part_Len_May_Modify_Index(arg, ARG(PART));
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, value);  // w/modified index
+        const Element* at = Cell_List_At(&tail, arg);  // w/modified index
 
         Append_Map(m, at, tail, len);
 

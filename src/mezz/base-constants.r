@@ -43,6 +43,7 @@ lf: LF:    newline
 nul: NUL:  #{00}  ; ^(NULL) no longer legal internal to strings
 
 blank: _
+hole: ~()~
 quasar: '~
 trash: ~  ; can get meta as ^TRASH, but not TRASH...use NOOP function instead
 

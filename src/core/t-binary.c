@@ -311,8 +311,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
         UNUSED(PARAM(SERIES));  // covered by `v`
 
-        Value* arg = ARG(VALUE);
-        assert(not Is_Nulled(arg));  // not an ~null~ parameter
+        Option(const Value*) arg = Optional_ARG(VALUE);
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
@@ -323,7 +322,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         // Note that while inserting or appending VOID is a no-op, CHANGE with
         // a :PART can actually erase data.
         //
-        if (Is_Void(arg) and len == 0) {
+        if (not arg and len == 0) {
             if (id == SYM_APPEND) // append always returns head
                 VAL_INDEX_RAW(v) = 0;
             return COPY(v);  // don't fail on read only if would be a no-op
@@ -347,21 +346,19 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         // quoted that should give molding semantics, so quoted blocks include
         // their brackets.  Review.
         //
-        if (Is_Void(arg)) {
+        if (not arg) {
             // not necessarily a no-op (e.g. CHANGE can erase)
         }
-        else if (Is_Splice(arg)) {
-            QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
+        else if (Is_Splice(unwrap arg)) {
+            // tolerate splices
         }
-        else if (Any_List(arg) or Any_Sequence(arg))
-            return FAIL(ARG(VALUE));
         else
-            assert(not Is_Antiform(arg));
+            return FAIL(PARAM(VALUE));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,
             unwrap id,
-            ARG(VALUE),
+            arg,
             flags,
             len,
             Bool_ARG(DUP) ? Int32(ARG(DUP)) : 1

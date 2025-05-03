@@ -34,8 +34,8 @@ REBLEN Modify_Array(
     Source* dst_arr,  // target
     REBLEN dst_idx,  // position
     SymId op,  // INSERT, APPEND, CHANGE
-    const Value* src_val,  // source
-    REBLEN flags,  // AM_SPLICE, AM_PART, AM_LINE
+    Option(const Value*) opt_src,  // source
+    REBLEN flags,  // AM_PART, AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
     REBINT dups  // dup count of how many times to insert the src content
 ){
@@ -45,11 +45,11 @@ REBLEN Modify_Array(
 
     const Element* src_rel;
 
-    if (op == SYM_CHANGE and Is_Void(src_val)) {
-        flags |= AM_SPLICE;
-        src_val = EMPTY_BLOCK;  // CHANGE to void acts same as with empty block
+    const Value* src_val;
+    if (op == SYM_CHANGE and not opt_src) {
+        src_val = LIB(HOLE);  // CHANGE to void acts same as with empty splice
     }
-    else if (Is_Void(src_val) or dups <= 0) {
+    else if (not opt_src or dups <= 0) {
         //
         // If they are effectively asking for "no action" then all we have
         // to do is return the natural index result for the operation.
@@ -57,6 +57,8 @@ REBLEN Modify_Array(
         //
         return (op == SYM_APPEND) ? 0 : dst_idx;
     }
+    else
+        src_val = unwrap opt_src;
 
     if (op == SYM_APPEND or dst_idx > tail_idx)
         dst_idx = tail_idx;
@@ -74,9 +76,7 @@ REBLEN Modify_Array(
     REBLEN ilen;
 
     // Check :PART, compute LEN:
-    if (flags & AM_SPLICE) {
-        assert(Any_List(src_val));
-
+    if (Is_Splice(src_val)) {
         REBLEN len_at = Cell_Series_Len_At(src_val);
         ilen = len_at;
 
@@ -235,7 +235,7 @@ static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
 REBLEN Modify_String_Or_Binary(
     Value* dst,  // ANY-STRING? or BLOB! value to modify
     SymId op,  // SYM_APPEND @ tail, SYM_INSERT or SYM_CHANGE @ index
-    const Value* src,  // argument with content to inject
+    Option(const Value*) opt_src,  // argument with content to inject
     Flags flags,  // AM_PART, AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
     REBINT dups  // dup count of how many times to insert the src content
@@ -271,16 +271,18 @@ REBLEN Modify_String_Or_Binary(
         dst_len_old = String_Len(cast(String*, dst_flex));
     }
 
-    if (Is_Void(src)) {  // no-op, unless CHANGE, where it means delete
+    const Value* src;
+    if (not opt_src) {  // void is no-op, unless CHANGE, where it means delete
         if (op == SYM_APPEND)
             return 0;  // APPEND returns index at head
         else if (op == SYM_INSERT)
             return dst_idx;  // INSERT returns index at insertion tail
 
         assert(op == SYM_CHANGE);
-        flags |= AM_SPLICE;
         src = EMPTY_TEXT;  // give same behavior as CHANGE to empty string
     }
+    else
+        src = unwrap opt_src;
 
     // For INSERT:PART and APPEND:PART
     //
@@ -457,7 +459,7 @@ REBLEN Modify_String_Or_Binary(
 
         goto binary_limit_accounted_for;
     }
-    else if (Is_Group(src)) {
+    else if (Is_Splice(src)) {
         //
         // !!! For APPEND and INSERT, the :PART should apply to *block* units,
         // and not character units from the generated string.
@@ -470,7 +472,10 @@ REBLEN Modify_String_Or_Binary(
             // buffer now that they are both byte-oriented...though there may
             // be some advantage to the mold buffer being UTF-8 only.
             //
-            Join_Binary_In_Byte_Buf(src, -1);
+            DECLARE_ELEMENT (group);
+            Copy_Meta_Cell(group, src);
+            QUOTE_BYTE(group) = NOQUOTE_1;
+            Join_Binary_In_Byte_Buf(group, -1);
             src_ptr = Binary_Head(BYTE_BUF);  // cleared each time
             src_len_raw = src_size_raw = Binary_Len(BYTE_BUF);
         }
