@@ -120,10 +120,8 @@ PVAR Element* Root_Quasi_Null;  // ~null~ quasiform
 PVAR Source* PG_Empty_Array; // optimization of Cell_Array(g_empty_block)
 PVAR VarList* g_empty_varlist;
 PVAR Source* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
-PVAR Source* PG_1_Quasi_Void_Array;  // used by heavy voids ~[~void~]~
 
 PVAR Value* Root_Meta_Heavy_Null;  // keeps PG_1_Quasi_Null_Array alive
-PVAR Value* Root_Meta_Heavy_Void;  // keeps PG_1_Quasi_Void_Array alive
 
 PVAR Element* Root_Feed_Null_Substitute;  // flagged with FEED_NOTE_META
 

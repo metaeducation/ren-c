@@ -643,8 +643,8 @@ DECLARE_NATIVE(GETIFY)
 //
 // Turn a value into its META-XXX! equivalent, if possible.
 //
-Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
-    if (Is_Void(out))
+Element* Metafy(Element* out) {  // called on stack values; can't call eval
+    if (Is_Blank(out))
         return Init_Sigil(out, SIGIL_META);
 
     Option(Heart) heart = Heart_Of(out);
@@ -676,14 +676,14 @@ Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
 //  "If possible, convert a value to a META-XXX! representation"
 //
 //      return: [any-meta-value? sigil!]
-//      value [~void~ element?]  ; void makes @ as a SIGIL!
+//      value [<maybe> element?]  ; blank! makes @ as a SIGIL!
 //  ]
 //
 DECLARE_NATIVE(METAFY)
 {
     INCLUDE_PARAMS_OF_METAFY;
 
-    return COPY(Metafy(ARG(VALUE)));
+    return COPY(Metafy(Element_ARG(VALUE)));
 }
 
 
@@ -692,8 +692,8 @@ DECLARE_NATIVE(METAFY)
 //
 // Turn a value into its THE-XXX! equivalent, if possible.
 //
-Value* Theify(Value* out) {  // called on stack values; can't call evaluator
-    if (Is_Void(out))
+Element* Theify(Element* out) {  // called on stack values; can't call evaluator
+    if (Is_Blank(out))
         return Init_Sigil(out, SIGIL_THE);
 
     Option(Heart) heart = Heart_Of(out);
@@ -724,7 +724,7 @@ Value* Theify(Value* out) {  // called on stack values; can't call evaluator
 //
 //  "If possible, convert a value to a THE-XXX! representation"
 //
-//      return: [~null~ any-the-value?]
+//      return: [~null~ any-the-value? sigil!]
 //      value [<maybe> element?]
 //  ]
 //
@@ -736,7 +736,7 @@ DECLARE_NATIVE(INERT)
 {
     INCLUDE_PARAMS_OF_INERT;
 
-    return COPY(Theify(ARG(VALUE)));
+    return COPY(Theify(Element_ARG(VALUE)));
 }
 
 

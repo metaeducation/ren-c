@@ -326,7 +326,7 @@ Bounce Stepper_Executor(Level* L)
 
     /* assert(Not_Level_At_End(L)); */  // edge case with rebValue("") [1]
     if (Is_Level_At_End(L)) {
-        Init_Void(OUT);
+        Init_Nihil(OUT);
         STATE = cast(StepperState, TYPE_BLANK);  // can't leave as STATE_0
         goto finished;
     }
@@ -839,7 +839,7 @@ Bounce Stepper_Executor(Level* L)
                 L_binding,
                 LEVEL_MASK_NONE
             );
-            Init_Void(Evaluator_Primed_Cell(sub));
+            Init_Nihil(Evaluator_Primed_Cell(sub));
             Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
             STATE = ST_STEPPER_SET_GROUP;
@@ -1183,7 +1183,7 @@ Bounce Stepper_Executor(Level* L)
         assert(
             (STATE == ST_STEPPER_SET_WORD and Is_Word(CURRENT))
             or (STATE == ST_STEPPER_SET_TUPLE and Is_Tuple(CURRENT))
-            or (STATE == ST_STEPPER_SET_VOID and Is_Meta_Of_Void(CURRENT))
+            or (STATE == ST_STEPPER_SET_VOID and Is_Meta_Of_Nihil(CURRENT))
         );
 
         Level* right = Maybe_Rightward_Continuation_Needed(L);
@@ -1240,9 +1240,9 @@ Bounce Stepper_Executor(Level* L)
 
         assert(L_current_gotten == nullptr);
 
-        if (Is_Void(SPARE)) {
+        if (Is_Nihil(SPARE)) {
             STATE = ST_STEPPER_SET_VOID;
-            Init_Meta_Of_Void(CURRENT);  // can't put voids in feed position
+            Init_Meta_Of_Nihil(CURRENT);  // can't put voids in feed position
             goto handle_generic_set;
         }
         else switch (Type_Of(SPARE)) {
@@ -1444,13 +1444,19 @@ Bounce Stepper_Executor(Level* L)
                     Drop_Data_Stack_To(STACK_BASE);
                     goto return_thrown;
                 }
-                Decay_If_Unstable(SPARE);
-                if (heart == TYPE_THE_GROUP)
-                    Theify(stable_SPARE);  // transfer @ decoration to product
-                else if (heart == TYPE_META_GROUP)
-                    Metafy(stable_SPARE);  // transfer ^ decoration to product
-                else if (heart == TYPE_GROUP and Is_Void(SPARE))
+                if (Is_Void(SPARE) and heart == TYPE_GROUP) {
                     Init_Quasar(SPARE);  // [(void)]: ... pass thru
+                }
+                else {
+                    Decay_If_Unstable(SPARE);
+                    if (Is_Antiform(SPARE))
+                        return FAIL(Error_Bad_Antiform(SPARE));
+
+                    if (heart == TYPE_THE_GROUP)
+                        Theify(Known_Element(SPARE));  // transfer @ decoration
+                    else if (heart == TYPE_META_GROUP)
+                        Metafy(Known_Element(SPARE));  // transfer ^ decoration
+                }
 
                 heart = Heart_Of(SPARE);
                 Copy_Cell(PUSH(), stable_SPARE);

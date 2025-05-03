@@ -225,6 +225,8 @@ for-each [alias] [
 
 function3: ~<FUNCTION slated for synonym of FUNC, so no FUNCTION3>~
 
+?: maybe/
+
 
 === "BINARY! => BLOB!" ===
 
@@ -586,7 +588,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
                 void? :product [
                     change3:part pos void 1
                 ]
-                trash? :product [  ; e.g. compose [(if okay [null])]
+                trash? :product [  ; e.g. compose [(print "HI")]
                     fail:blame "trash compose found" $return
                 ]
             ] else [

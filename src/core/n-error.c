@@ -41,7 +41,7 @@ DECLARE_NATIVE(TRY)
 
     Element* meta = Element_ARG(ATOM);
 
-    if (Is_Meta_Of_Void(meta) or Is_Meta_Of_Null(meta))
+    if (Is_Meta_Of_Nihil(meta) or Is_Meta_Of_Null(meta))
         return Init_Nulled(OUT);
 
     if (Is_Meta_Of_Raised(meta))
@@ -168,7 +168,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 
   initial_entry: {  /////////////////////////////////////////////////////////
 
-    Init_Void(OUT);  // default if all evaluations produce void
+    Init_Nihil(OUT);  // default if all evaluations produce void
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step

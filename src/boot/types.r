@@ -194,7 +194,7 @@ varargs     "evaluator position for variable numbers of arguments"
 <ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     word        "evaluates a variable or action"
-    ~keyword~   "special constant values (e.g. ~null~, ~void~)"
+    ~keyword~   "special constant values (e.g. ~null~, ~okay~)"
                 (node1)
                 [any-utf8? any-plain-value? any-sequencable?]
 

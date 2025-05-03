@@ -294,11 +294,11 @@ compile: func [
             ]
             insert config.library-path spread compose [
                 (unspaced ["/usr/" lddir])
-                (if triplet [unspaced ["/usr/" lddir "/" triplet]])
+                (? if triplet [unspaced ["/usr/" lddir "/" triplet]])
                 (unspaced ["/" lddir])
-                (if triplet [unspaced ["/" lddir "/" triplet]])
+                (? if triplet [unspaced ["/" lddir "/" triplet]])
                 (unspaced ["/usr/local/" lddir])
-                (if triplet [unspaced ["/usr/local/" lddir "/" triplet]])
+                (? if triplet [unspaced ["/usr/local/" lddir "/" triplet]])
             ]
         ]
     ]
@@ -669,7 +669,7 @@ bootstrap: func [
     let status: lib/call [
         (system.options.boot) make.r
             "config=configs/bootstrap.r"
-            (if options [spread system.options.args])
+            (? if options [spread system.options.args])
     ]
     if status != 0 [
         fail ["BOOTSTRAP command failed with exit status:" status]

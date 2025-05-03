@@ -558,19 +558,6 @@ uintptr_t API_rebTick(void)
 
 
 //
-//  rebVoid: API
-//
-RebolValue* API_rebVoid(void)
-{
-    ENTER_API;
-
-    Value* v = Alloc_Value();  // just has NODE_FLAG_ROOT, counts as "fresh"
-    Init_Void(v);
-    return v;
-}
-
-
-//
 //  rebTrash: API
 //
 RebolValue* API_rebTrash(void)
@@ -1118,7 +1105,7 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
     Level* L = Make_Level(&Evaluator_Executor, feed, flags);
-    Init_Void(Evaluator_Primed_Cell(L));
+    Init_Nihil(Evaluator_Primed_Cell(L));
 
     if (interruptible)
         L->flags.bits &= (~ LEVEL_FLAG_UNINTERRUPTIBLE);
@@ -1339,7 +1326,7 @@ void API_rebPushContinuation_internal(
         Tweak_Cell_Binding(block, g_lib_context);  // [3]
 
     Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
-    Init_Void(Evaluator_Primed_Cell(L));
+    Init_Nihil(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
 }
 

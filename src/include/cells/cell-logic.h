@@ -243,16 +243,19 @@ INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
 //    out of aggregate logic operations, an isolated operation like IF cannot
 //    consider void to be either true or false.
 //
-// 2. Because a branch evaluation can produce NULL or VOID, we would not be
-//    able from the outside to discern a taken branch from a non-taken one
-//    in order to implement constructs like ELSE and THEN.  For this reason,
-//    branching constructs "box" NULLs and VOIDs into antiform blocks, to
-//    make them a multi-return parameter "pack".  Because these decay back
-//    to plain VOID and NULL in most contexts, this will give the right
-//    behavior most of the time...while being distinct enough that ELSE and
-//    THEN can react to them as signals the branch was taken.
+// 2. Because a branch evaluation can produce NULL, we would not be able from
+//    the outside to discern a taken branch from a non-taken one in order to
+//    implement constructs like ELSE and THEN:
 //
-
+//        >> if ok [null] else [print "If passthru null, we get this :-("]
+//        If passthru null, we get this :-(  ; <-- BAD!
+//
+//    For this reason, branching constructs "box" NULLs to antiform blocks,
+//    as a parameter "pack".  Since these decay back to plain NULL in *most*
+//    contexts, this gives the right behavior *most* of the time...while being
+//    distinct enough that ELSE and THEN can react to them as signals the
+//    branch was taken.
+//
 INLINE bool Is_Trigger(const Value* v) {
     Assert_Cell_Readable(v);
 
@@ -301,11 +304,7 @@ INLINE Atom* Packify_If_Inhibitor(Atom* v) {
 
 INLINE Bounce Native_Branched_Result(Level* level_, Atom* v) {
     assert(v == level_->out);  // would not be zero cost if we supported copy
-    if (Is_Stable(v)) {
-        if (Is_Void(v))
-            Init_Heavy_Void(v);  // box up for THEN reactivity [2]
-        else if (Is_Nulled(v))
-            Init_Heavy_Null(v);  // box up for THEN reactivity [2]
-    }
+    if (Is_Nulled(v))
+        Init_Heavy_Null(v);  // box up for THEN reactivity [2]
     return level_->out;
 }

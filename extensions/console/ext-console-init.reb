@@ -167,9 +167,10 @@ export console!: make object! [
         ; all results...but the default should look somewhat streamlined.)
         ;
         ; Whatever doesn't display will be a "lie" in some sense.  The two
-        ; competing lies are VOID (a.k.a. the ~void~ WORD! antiform) and
-        ; TRASH (a.k.a. the antiform of blank, contents of an unset
-        ; variable).  The decision has flipped many times, but trash wins.
+        ; competing lies are VOID (a.k.a. empty block antiform, result of
+        ; things like `eval []`) and TRASH (a.k.a. the antiform of blank,
+        ; contents of an unset variable).  The decision has flipped many times,
+        ; but trash wins.
         ;
         ; https://forum.rebol.info/t/console-treatment-of-void-vs-trash/2045
 
@@ -358,7 +359,7 @@ bind construct [
 
     loud-print "Starting console..."
     loud-print newline
-    let proto-skin: match object! maybe skin else [make console! []]
+    let proto-skin: (match object! maybe skin) else [make console! []]
     let skin-error: null
 
     all [

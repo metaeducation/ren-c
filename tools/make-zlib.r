@@ -64,7 +64,7 @@ bind construct [
     close-include: charset -[">]-
 ][
     let include-rule: compose [
-        (if stdio [
+        (? if stdio [
             [open-include name: across "stdio.h" close-include |]
         ])
         -["]- name: across to -["]-

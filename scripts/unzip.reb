@@ -527,7 +527,7 @@ unzip: func [
 
             ; !!! TBD: Improve handling of flags.
             ;
-            (if not zero? flags.1 and+ 1 [
+            (? if not zero? flags.1 and+ 1 [
                 fail "Encryption not supported by unzip.reb (yet)"
             ])
 

@@ -156,7 +156,7 @@ INLINE bool Eval_Any_List_At_Core_Throws(
         context,
         flags
     );
-    Init_Void(Evaluator_Primed_Cell(L));
+    Init_Nihil(Evaluator_Primed_Cell(L));
 
     return Trampoline_Throws(out, L);
 }

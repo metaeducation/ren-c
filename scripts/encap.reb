@@ -273,7 +273,7 @@ elf-format: context [
         parse3 skip executable e_phoff [
             repeat (e_phnum) [
                 (mode: 'read) let pos: <here>, program-header-rule
-                (if p_offset >= offset [p_offset: p_offset + delta])
+                (? if p_offset >= offset [p_offset: p_offset + delta])
                 (mode: 'write) seek pos, program-header-rule
             ]
             to <end>
@@ -287,7 +287,7 @@ elf-format: context [
         parse3 skip executable e_shoff [
             repeat (e_shnum) [
                 (mode: 'read) let pos: <here>, section-header-rule
-                (if sh_offset >= offset [sh_offset: sh_offset + delta])
+                (? if sh_offset >= offset [sh_offset: sh_offset + delta])
                 (mode: 'write) seek pos, section-header-rule
             ]
             to <end>

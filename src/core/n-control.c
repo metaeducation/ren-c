@@ -149,7 +149,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
         LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
             & (~ LEVEL_FLAG_BRANCH)  // take off branch flag [2]
     );
-    Init_Void(Evaluator_Primed_Cell(sub));
+    Init_Nihil(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(branch, sub);  // branch GC-protected during evaluation
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
@@ -186,16 +186,16 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //
 //  "When CONDITION is not NULL, execute branch"
 //
-//      return: "void if branch not run, otherwise branch result (see HEAVY)"
+//      return: "null if branch not run, otherwise branch result (see HEAVY)"
 //          [any-atom?]
-//      condition [any-value?]  ; non-void-value? possible, but slower
+//      condition [any-value?]
 //      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(IF)
 //
-// 1. ~null~ antiforms are branch inhibitors, while ~void~ antiforms will
+// 1. ~null~ antiforms are branch inhibitors, while trash antiforms will
 //    trigger an abrupt failure.  (Voids opt out of "voting" in aggregate
 //    conditional testing, so a single isolated test can't have an answer.)
 //
@@ -211,7 +211,7 @@ DECLARE_NATIVE(IF)
     Value* branch = ARG(BRANCH);
 
     if (Is_Inhibitor(condition))  // [1]
-        return VOID;
+        return nullptr;
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // no callback [2]
 }
@@ -223,7 +223,7 @@ DECLARE_NATIVE(IF)
 //  "Choose a branch to execute, based on whether CONDITION is NULL"
 //
 //      return: [any-atom?]
-//      condition [any-value?]  ; non-void-value? possible, but slower
+//      condition [any-value?]
 //      @(okay-branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
 //      @(null-branch)
@@ -259,7 +259,7 @@ DECLARE_NATIVE(THEN_Q)
     INCLUDE_PARAMS_OF_THEN_Q;
 
     Element* meta = Element_ARG(ATOM);
-    return LOGIC(not Is_Meta_Of_Void(meta) and not Is_Meta_Of_Null(meta));
+    return LOGIC(not Is_Meta_Of_Null(meta));
 }
 
 
@@ -278,7 +278,7 @@ DECLARE_NATIVE(ELSE_Q)
     INCLUDE_PARAMS_OF_ELSE_Q;
 
     Element* meta = Element_ARG(ATOM);
-    return LOGIC(Is_Meta_Of_Void(meta) or Is_Meta_Of_Null(meta));
+    return LOGIC(Is_Meta_Of_Null(meta));
 }
 
 
@@ -292,7 +292,7 @@ DECLARE_NATIVE(ELSE_Q)
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> ~void~ any-branch?]
+//          [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(THEN)
@@ -301,9 +301,6 @@ DECLARE_NATIVE(THEN)
 
     Element* meta = Element_ARG(ATOM);
     Value* branch = ARG(BRANCH);
-
-    if (Is_Meta_Of_Void(meta))
-        return VOID;
 
     if (Is_Meta_Of_Null(meta))
         return nullptr;
@@ -334,7 +331,7 @@ DECLARE_NATIVE(ELSE)
     Element* meta = Element_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
-    if (not Is_Meta_Of_Void(meta) and not Is_Meta_Of_Null(meta))
+    if (not Is_Meta_Of_Null(meta))
         return UNMETA(meta);
 
     Copy_Cell(SPARE, meta);
@@ -354,7 +351,7 @@ DECLARE_NATIVE(ELSE)
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> ~void~ any-branch?]
+//          [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(ALSO)
@@ -380,9 +377,6 @@ DECLARE_NATIVE(ALSO)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
-
-    if (Is_Meta_Of_Void(meta))
-        return VOID;
 
     if (Is_Meta_Of_Null(meta))
         return nullptr;
@@ -460,7 +454,7 @@ DECLARE_NATIVE(ALL)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Cell_Series_Len_At(block) == 0)
-        return VOID;
+        return NIHIL;
 
     assert(Not_Level_Flag(LEVEL, ALL_VOIDS));
     Set_Level_Flag(LEVEL, ALL_VOIDS);
@@ -547,7 +541,7 @@ DECLARE_NATIVE(ALL)
     Drop_Level(SUBLEVEL);
 
     if (Get_Level_Flag(LEVEL, ALL_VOIDS))
-        return VOID;
+        return NIHIL;
 
     return BRANCHED(OUT);
 }}
@@ -598,7 +592,7 @@ DECLARE_NATIVE(ANY)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Cell_Series_Len_At(block) == 0)
-        return VOID;
+        return NIHIL;
 
     assert(Not_Level_Flag(LEVEL, ALL_VOIDS));
     Set_Level_Flag(LEVEL, ALL_VOIDS);
@@ -682,7 +676,7 @@ DECLARE_NATIVE(ANY)
     Drop_Level(SUBLEVEL);
 
     if (Get_Level_Flag(LEVEL, ALL_VOIDS))
-        return VOID;
+        return NIHIL;
 
     return nullptr;  // reached end of input and found nothing to return
 }}
@@ -830,7 +824,7 @@ DECLARE_NATIVE(CASE)
         Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
     );
-    Init_Void(Evaluator_Primed_Cell(sub));
+    Init_Nihil(Evaluator_Primed_Cell(sub));
 
     STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
@@ -1315,26 +1309,4 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
         SCRATCH, cast(ParamList*, unwrap coupling), ANONYMOUS, NONMETHOD
     );
     return Init_Thrown_With_Label(LEVEL, atom, label);
-}
-
-
-//
-//  Debranch_Output: C
-//
-// When a branch runs, it specifically wants to remove signals that are used
-// by THEN and ELSE.  This means NULL and VOID can't stay as those states:
-//
-//     >> if ok [null] else [print "Otherwise you'd get this :-("]
-//     Otherwise you'd get this :-(  ; <-- BAD!
-//
-// See notes about "Heavy Null" and "Heavy Void" for how the variations carry
-// some behaviors of the types, while not being technically void or null.
-//
-void Debranch_Output(Atom* out) {
-    if (Not_Stable(out)) {
-    }
-    else if (Is_Void(out))
-        Init_Heavy_Void(out);
-    else if (Is_Nulled(out))
-        Init_Heavy_Null(out);
 }

@@ -362,15 +362,6 @@ static void Init_Root_Vars(void)
     Force_Value_Frozen_Deep(Root_Meta_Heavy_Null);
   }
 
-  blockscope {  // keep array alive via stable API handle (META PACK, not PACK)
-    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
-    Init_Quasi_Void(Stub_Cell(a));
-    Freeze_Source_Deep(a);
-    ensure(nullptr, PG_1_Quasi_Void_Array) = a;
-    ensure(nullptr, Root_Meta_Heavy_Void) = Init_Meta_Pack(Alloc_Value(), a);
-    Force_Value_Frozen_Deep(Root_Meta_Heavy_Void);
-  }
-
     ensure(nullptr, Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
     Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_NOTE_META);
     Protect_Cell(Root_Feed_Null_Substitute);
@@ -426,8 +417,6 @@ static void Shutdown_Root_Vars(void)
     g_empty_varlist = nullptr;
     rebReleaseAndNull(&Root_Meta_Heavy_Null);
     PG_1_Quasi_Null_Array = nullptr;
-    rebReleaseAndNull(&Root_Meta_Heavy_Void);
-    PG_1_Quasi_Void_Array = nullptr;
     rebReleaseAndNull(&Root_Feed_Null_Substitute);
     rebReleaseAndNull(&g_empty_blob);
     rebReleaseAndNull(&Root_Quasi_Null);

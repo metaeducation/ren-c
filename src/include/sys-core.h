@@ -631,7 +631,7 @@ enum {
 
 
 #include "cells/cell-word.h"  // needs to know about QUOTED! for binding
-#include "cells/cell-void.h"  // uses pack array for Init_Heavy_Void()
+#include "cells/cell-void.h"
 #include "cells/cell-nulled.h"  // ~null~ is an antiform word
 #include "cells/cell-logic.h"  // TRUE, FALSE, YES, NO, ON, OFF are words
 

@@ -54,12 +54,12 @@
     (^void = meta light heavy void)
 ]
 
-; Conditionals return VOID on failure, and ~[~null~]~ antiform on a branch that
+; Conditionals return NULL on failure, and ~[~null~]~ antiform on a branch that
 ; executes and evaluates to either NULL or ~[~null~]~ antiform.
 [
     ('~[~null~]~ = ^ if ok [null])
     ('~[~null~]~ = ^ if ok [heavy null])
-    ('~[~void~]~ = ^ if ok [])
+    ('~void~ = ^ if ok [])
 
     ~illegal-keyword~ !! (if ok [~asdf~])  ; not all keywords legal
     (''~asdf~ = ^ if ok ['~asdf~])  ; but okay as quasiforms

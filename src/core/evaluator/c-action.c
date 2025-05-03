@@ -153,6 +153,8 @@ Bounce Action_Executor(Level* L)
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Trash_Due_To_End(ARG);
                 }
+                else if (Is_Nihil(ARG))
+                    Init_Void(ARG);
                 else
                     Decay_If_Unstable(ARG);
             }

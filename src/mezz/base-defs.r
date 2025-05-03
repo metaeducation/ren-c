@@ -31,7 +31,7 @@ func: function/  ; historical and heavily-used abbreviation
 
 lib: system.contexts.lib  ; alias for faster access
 
-?: maybe/  ; commonly used in Ren-C, more deserving of ? than HELP !!!
+?: maybe-light/  ; commonly used in Ren-C, more deserving of ? than HELP !!!
 
 eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 

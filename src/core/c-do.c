@@ -172,8 +172,6 @@ bool Pushed_Continuation(
         Meta_Unquotify_Undecayed(out);
         if (Is_Nulled(out) and (flags & LEVEL_FLAG_BRANCH))
             Init_Heavy_Null(out);
-        else if (Is_Void(out) and (flags & LEVEL_FLAG_BRANCH))
-            Init_Heavy_Void(out);
         goto just_use_out;
 
       case TYPE_META_BLOCK:
@@ -181,7 +179,7 @@ bool Pushed_Continuation(
         Level* L = Make_Level_At_Core(
             &Evaluator_Executor, c_cast(Element*, branch), binding, flags
         );
-        Init_Void(Evaluator_Primed_Cell(L));
+        Init_Nihil(Evaluator_Primed_Cell(L));
         if (Cell_Heart_Unchecked(branch) == TYPE_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
             Set_Level_Flag(L, RAISED_RESULT_OK);

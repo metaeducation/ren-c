@@ -146,7 +146,7 @@ bool Combinator_Details_Querier(
 //     compose [
 //         ; Get the text description if given
 //
-//         (if text? spec.1 [spec.1, elide spec: my next])
+//         (? if text? spec.1 [spec.1, elide spec: my next])
 //
 //         ; Get the RETURN: definition if there is one, otherwise add one
 //         ; so that we are sure that we know the position/order of the

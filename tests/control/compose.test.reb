@@ -138,7 +138,7 @@
 ; labeled compose...saving it for quoting composed material.
 
 ([3 '3 ''3] = compose [(1 + 2) '(1 + 2) ''(1 + 2)])
-~???~ !! (compose ['(if null [<cant-vanish-with-quote>])])
+~???~ !! (compose ['(? if null [<cant-vanish-with-quote>])])
 
 ; Quoting should be preserved by deep composition
 
@@ -205,7 +205,7 @@
 ; antiforms besides splices are not legal in compose, but you can reify them
 [
     ([<a> ~null~ <b>] = compose // [
-        [<a> (if ok [null]) <b>]
+        [<a> (if ok [void]) <b>]
         :predicate cascade [eval/ reify/]
     ])
     ([<a>] = compose [<a> (~()~)])

@@ -184,10 +184,10 @@ DECLARE_NATIVE(TEST_LIBREBOL)
   blockscope {  // !!! Note: FEED_FLAG_NEEDS_SYNC needs review
     Set_Cell_Flag(Init_Integer(PUSH(), 9), NEWLINE_BEFORE);
 
-    Value* noop = rebValue("");
-    assert(Is_Void(noop));
+    Value* noop = rebMeta("");
+    assert(Is_Meta_Of_Nihil(noop));
     rebRelease(noop);
-    Init_Meta_Of_Void(PUSH());
+    Init_Meta_Of_Nihil(PUSH());
   }
 
     return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));

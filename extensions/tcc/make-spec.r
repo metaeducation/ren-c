@@ -31,13 +31,13 @@ config-tccdir-with-libtcc-h: all [  ; do some guesswork, see [A] above
     ;
     let config-tccdir: local-to-file maybe (get-env "CONFIG_TCCDIR")
 
-    elide (if #"/" <> last config-tccdir [
+    elide if #"/" <> last config-tccdir [
         print "NOTE: CONFIG_TCCDIR environment variable doesn't end in '/'"
         print "That's *usually* bad, but since TCC documentation tends to"
         print "suggest you write it that way, this extension allows it."
         print unspaced ["CONFIG_TCCDIR=" config-tccdir]
         append config-tccdir "/"  ; normalize to the standard DIR? rule
-    ])
+    ]
 
     exists? (join config-tccdir %libtcc.h)
     <- config-tccdir
@@ -55,13 +55,13 @@ libtcc-lib-dir: any [
 
 
 cflags: compose [
-    (if libtcc-include-dir [
+    (? if libtcc-include-dir [
         unspaced ["-I" -["]- file-to-local libtcc-include-dir -["]-]
     ])
 ]
 
 ldflags: compose [
-    (if libtcc-lib-dir [
+    (? if libtcc-lib-dir [
         unspaced [{-L} -["]- file-to-local libtcc-lib-dir -["]-]
     ])
 ]
@@ -81,5 +81,5 @@ libraries: compose [  ; Note: dependent libraries first, dependencies after.
     ;
     ; https://stackoverflow.com/a/38672664/
     ;
-    (if not find [Windows Android] platform-config.os-base [%pthread])
+    (? if not find [Windows Android] platform-config.os-base [%pthread])
 ]

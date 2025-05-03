@@ -343,7 +343,7 @@ DECLARE_NATIVE(REDUCE_EACH)
         return THROWN;
 
     if (Is_Cell_Erased(OUT))  // body never ran
-        return VOID;
+        return NIHIL;
 
     if (breaking)
         return nullptr;  // BREAK encountered
@@ -707,15 +707,7 @@ Bounce Composer_Executor(Level* const L)
     QuoteByte list_quote_byte = QUOTE_BYTE(At_Level(L));
     Heart list_heart = Heart_Of_Builtin(At_Level(L));
 
-    Decay_If_Unstable(OUT);
-
-    if (Is_Splice(OUT))
-        goto push_out_spliced;
-
-    if (Is_Nulled(OUT))
-        return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
-
-    if (Is_Void(OUT)) {
+    if (Is_Nihil(OUT)) {
         if (Any_Plain_Type(list_heart) and list_quote_byte == NOQUOTE_1) {
             L->u.compose.changed = true;
             goto handle_next_item;  // compose [(void)] => []
@@ -729,15 +721,24 @@ Bounce Composer_Executor(Level* const L)
             "COMPOSE of quoted VOIDs as quoted apostrophe SIGIL! disabled"
         );
     }
-    else if (Is_Antiform(OUT))
+    else
+        Decay_If_Unstable(OUT);
+
+    if (Is_Splice(OUT))
+        goto push_out_spliced;
+
+    if (Is_Nulled(OUT))
+        return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
+
+    if (Is_Antiform(OUT))
         return RAISE(Error_Bad_Antiform(OUT));
     else
         Copy_Cell(PUSH(), cast(Element*, OUT));
 
     if (Any_Meta_Type(list_heart))
-        Metafy(TOP);
+        Metafy(TOP_ELEMENT);
     else if (Any_The_Type(list_heart))
-        Theify(TOP);
+        Theify(TOP_ELEMENT);
     else
         assert(Any_Plain_Type(list_heart));
 

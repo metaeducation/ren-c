@@ -214,7 +214,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             }
         }
         else if (Get_Level_Flag(L, BRANCH)) {
-            Debranch_Output(L->out);  // heavy voids/nulls
+            Packify_If_Inhibitor(L->out);  // heavy nulls
         }
 
         if (Get_Level_Flag(L, ROOT_LEVEL)) {

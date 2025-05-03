@@ -36,18 +36,8 @@
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-// 1. On a "void" continue, it may seem tempting to drop out the last result:
-//
-//        for-each 'x [1 2 3] [if x = 3 [continue] x]  => 2  ; would be bad
-//
-//    But our goal is that a loop which never runs its body be distinguishable
-//    from one that has CONTINUE'd each body.  Unless those are allowed to be
-//    indistinguishable, loop compositions don't work.  So instead:
-//
-//        for-each 'x [1 2 3] [if x != 3 [x]]  =>  ~[~void~]~ antiform
-//
 bool Try_Catch_Break_Or_Continue(
-    Sink(Value) out,
+    Sink(Atom) out,
     Level* loop_level,
     bool* breaking
 ){
@@ -74,7 +64,8 @@ bool Try_Catch_Break_Or_Continue(
         and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
-        Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
+        if (not Is_Nihil(out))  // nihil signals no argument to CONTINUE
+            Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
         *breaking = false;
         return true;
     }
@@ -134,14 +125,17 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 // stack.  It uses the value of its own native function as the name of the
 // throw, like `throw/name value :continue`.
 //
-// 1. Continue with no argument acts like CONTINUE:WITH VOID.  This makes
-//    sense in cases like MAP-EACH (plain CONTINUE should not add a value).
+// 1. How CONTINUE with no argument acts is up to the loop construct to
+//    interpret.  e.g. MAP-EACH, it acts like CONTINUE:WITH ~()~.  We throw
+//    the non-valued NIHIL state to allow for the custom interpretation.
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
-    Value* with = ARG(WITH);
+    Atom* with = SCRATCH;
     if (not Bool_ARG(WITH))
-        Init_Void(with);  // See: https://forum.rebol.info/t/1965/3 [1]
+        Init_Nihil(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
+    else
+        Copy_Cell(SCRATCH, ARG(WITH));
 
     Level* continue_level = LEVEL;  // Level of this CONTINUE call
 
@@ -237,7 +231,7 @@ static Bounce Loop_Series_Common(
     //
     const bool counting_up = (s < end); // equal checked above
     if ((counting_up and bump <= 0) or (not counting_up and bump >= 0))
-        return VOID;  // avoid infinite loops
+        return NIHIL;  // avoid infinite loops
 
     while (
         counting_up
@@ -271,7 +265,7 @@ static Bounce Loop_Series_Common(
     }
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return NIHIL;
 
     return BRANCHED(OUT);
 }
@@ -399,7 +393,7 @@ static Bounce Loop_Number_Common(
     //
     const bool counting_up = (s < e); // equal checked above
     if ((counting_up and b <= 0) or (not counting_up and b >= 0))
-        return VOID;  // avoid inf. loop, means never ran
+        return NIHIL;  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Eval_Branch_Throws(OUT, body)) {
@@ -418,7 +412,7 @@ static Bounce Loop_Number_Common(
     }
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return NIHIL;
 
     return BRANCHED(OUT);
 }
@@ -532,14 +526,14 @@ DECLARE_NATIVE(FOR_SKIP)
     Element* body = Element_ARG(BODY);
 
     if (Is_Blank(series))
-        return VOID;
+        return NIHIL;
 
     REBINT skip = Int32(ARG(SKIP));
     if (skip == 0) {
         //
         // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
         //
-        return VOID;
+        return NIHIL;
     }
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
@@ -610,7 +604,7 @@ DECLARE_NATIVE(FOR_SKIP)
     }
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return NIHIL;
 
     return BRANCHED(OUT);
 }
@@ -630,9 +624,11 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_STOP;
 
-    Value* with = ARG(WITH);
+    Sink(Atom) with = SCRATCH;
     if (not Bool_ARG(WITH))
-        Init_Void(with);  // See: https://forum.rebol.info/t/1965/3
+        Init_Nihil(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
+    else
+        Copy_Cell(SCRATCH, ARG(WITH));
 
     Level* stop_level = LEVEL;  // Level of this STOP call
 
@@ -753,9 +749,6 @@ DECLARE_NATIVE(CYCLE)
         and Cell_Frame_Coupling(label) == Level_Varlist(LEVEL)
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
-
-        if (Is_Void(OUT))  // STOP with no arg, void usually reserved [2]
-            return Init_Heavy_Void(OUT);
 
         if (Is_Nulled(OUT))
             return Init_Heavy_Null(OUT);  // NULL usually for BREAK [2]
@@ -1126,7 +1119,7 @@ DECLARE_NATIVE(FOR_EACH)
     //    iterator state.
 
     if (Is_Blank(data))  // same response as to empty series
-        return VOID;
+        return NIHIL;
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
@@ -1174,7 +1167,7 @@ DECLARE_NATIVE(FOR_EACH)
         return nullptr;
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return NIHIL;
 
     return BRANCHED(OUT);
 }}
@@ -1229,7 +1222,7 @@ DECLARE_NATIVE(EVERY)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Blank(data))  // same response as to empty series
-        return VOID;
+        return NIHIL;
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
@@ -1278,11 +1271,10 @@ DECLARE_NATIVE(EVERY)
     }
 
     if (
-        Is_Void(SPARE)
-        or Is_Heavy_Void(SPARE)
-        or (Is_Meta_Block(body) and Is_Meta_Of_Void(SPARE))
+        Is_Elision(SPARE)
+        or (Is_Meta_Block(body) and Is_Meta_Of_Elision(SPARE))
     ){
-        Init_Heavy_Void(OUT);  // forget OUT for loop composition [1]
+        Init_Nihil(OUT);  // forget OUT for loop composition [1]
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
@@ -1303,7 +1295,7 @@ DECLARE_NATIVE(EVERY)
         return THROWN;
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return NIHIL;
 
     return OUT;
 }}
@@ -1794,7 +1786,7 @@ DECLARE_NATIVE(MAP)
     //
     // e.g. void is allowed for skipping map elements:
     //
-    //        map-each 'x [1 2 3] [if even? x [x * 10]] => [20]
+    //        map-each 'x [1 2 3] [maybe if even? x [x * 10]] => [20]
 
     if (THROWING) {
         bool breaking;
@@ -1806,6 +1798,9 @@ DECLARE_NATIVE(MAP)
             goto finalize_map;
         }
     }
+
+    if (Is_Nihil(SPARE))
+        goto next_iteration;  // okay to skip
 
     Decay_If_Unstable(SPARE);
 
@@ -1897,12 +1892,12 @@ DECLARE_NATIVE(REPEAT)
 
     if (Is_Logic(count)) {
         if (Cell_Logic(count) == false)
-            return VOID;  // treat false as "don't run"
+            return NIHIL;  // treat false as "don't run"
 
         Init_True(index);
     }
     else if (VAL_INT64(count) <= 0)
-        return VOID;  // negative means "don't run" (vs. error)
+        return NIHIL;  // negative means "don't run" (vs. error)
     else {
         assert(Any_Number(count));
         Init_Integer(index, 1);
@@ -2003,7 +1998,7 @@ DECLARE_NATIVE(FOR)
 
     REBI64 n = VAL_INT64(value);
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return VOID;
+        return NIHIL;
 
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -2254,7 +2249,7 @@ DECLARE_NATIVE(WHILE)
     //    never runs.  BRANCHED() encloses these in single-element packs.
 
     if (Is_Cell_Erased(OUT))
-        return VOID;  // body never ran, so no result to return!
+        return NIHIL;  // body never ran, so no result to return!
 
     return BRANCHED(OUT);  // put void and null in packs [1]
 }}

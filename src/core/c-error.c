@@ -767,7 +767,6 @@ Error* Error_User(const char *utf8) {
 Error* Error_Need_Non_End(const Element* target) {
     assert(
         Is_Sigil(target)  // ^ needs things on the right
-        or Is_Meta_Of_Void(target)
         or Any_Word(target) or Any_Tuple(target)
     );
     return Error_Need_Non_End_Raw(target);

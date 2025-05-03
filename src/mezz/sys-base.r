@@ -61,7 +61,7 @@ make-quit: lambda [
 ][
     func compose:deep [
         ^result "If not :value, integer! exit code (non-zero is failure)"
-            [any-atom? (if console [<end>])]  ; endability has pitfalls [2]
+            [any-atom? (? if console [<end>])]  ; endability has pitfalls [2]
         :value "Return any value, non-raised are exit code 0"
     ][
         result: default [just '0]

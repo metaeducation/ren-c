@@ -1184,38 +1184,6 @@ DECLARE_NATIVE(ANY_VALUE_Q)
 
 
 //
-//  non-void-value?: native:intrinsic [
-//
-//  "If the argument (taken as meta) non void, and storable in a variable"
-//
-//      return: [logic?]
-//      ^atom
-//  ]
-//
-DECLARE_NATIVE(NON_VOID_VALUE_Q)
-//
-// Being able to specify that a function does not accept voids on its type
-// checking is fundamentally different from taking ANY-VALUE? and then failing
-// if a void is received.  Functions like REDUCE test for if predicates will
-// accept voids, and only pass them if they do.  So a function like REIFY
-// needs to use NON-VOID-VALUE? in its type spec to work with REDUCE.
-{
-    INCLUDE_PARAMS_OF_NON_VOID_VALUE_Q;
-
-    DECLARE_ELEMENT (meta);
-    Get_Meta_Atom_Intrinsic(meta, LEVEL);
-
-     if (not Is_Quasiform(meta))
-        return OKAY;
-
-    if (Is_Meta_Of_Void(meta))
-        return nullptr;
-
-    return LOGIC(Is_Stable_Antiform_Heart(Heart_Of(meta)));
-}
-
-
-//
 //  any-atom?: native:intrinsic [
 //
 //  "Accepts absolutely any argument state (unstable antiforms included)"
@@ -1446,19 +1414,17 @@ DECLARE_NATIVE(SPACE_Q)
 //
 //  heavy: native [
 //
-//  "Make the heavy form of NULL or VOID (passes through all other values)"
+//  "Make the heavy form of NULL (passes through all other values)"
 //
 //      return: [any-value? pack!]
 //      ^atom [any-value? pack!]
 //  ]
 //
-DECLARE_NATIVE(HEAVY) {
+DECLARE_NATIVE(HEAVY)
+{
     INCLUDE_PARAMS_OF_HEAVY;
 
     Element* meta = Element_ARG(ATOM);
-
-    if (Is_Meta_Of_Void(meta))
-        return Init_Heavy_Void(OUT);
 
     if (Is_Meta_Of_Null(meta))
         return Init_Heavy_Null(OUT);
@@ -1470,13 +1436,14 @@ DECLARE_NATIVE(HEAVY) {
 //
 //  light: native [
 //
-//  "Make the light form of NULL or VOID (passes through all other values)"
+//  "Make the light form of NULL (passes through all other values)"
 //
 //      return: [any-value? pack!]
 //      ^atom [any-value? pack!]
 //  ]
 //
-DECLARE_NATIVE(LIGHT) {
+DECLARE_NATIVE(LIGHT)
+{
     INCLUDE_PARAMS_OF_LIGHT;
 
     Element* meta = Element_ARG(ATOM);
@@ -1489,9 +1456,6 @@ DECLARE_NATIVE(LIGHT) {
 
     if (len != 1)
         return UNMETA(meta);
-
-    if (Is_Meta_Of_Void(first))
-        return VOID;
 
     if (Is_Meta_Of_Null(first))
         return nullptr;

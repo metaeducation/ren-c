@@ -485,10 +485,10 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             )){
                 return Error_No_Catch_For_Throw(TOP_LEVEL);
             }
-            item = Decay_If_Unstable(cast(Atom*, spare));
-
-            if (Is_Void(item))
+            if (Is_Nihil(cast(Atom*, spare)))
                 continue;  // just skip it (voids are ignored, NULLs error)
+
+            item = Decay_If_Unstable(cast(Atom*, spare));
 
             if (Is_Antiform(item))
                 return Error_Bad_Antiform(item);
@@ -806,10 +806,10 @@ DECLARE_NATIVE(GET)
         if (Eval_Any_List_At_Throws(SPARE, source, SPECIFIED))
             return FAIL(Error_No_Catch_For_Throw(LEVEL));
 
-        Decay_If_Unstable(SPARE);
-
-        if (Is_Void(SPARE))
+        if (Is_Nihil(SPARE))
             return nullptr;  // !!! Is this a good idea, or should it error?
+
+        Decay_If_Unstable(SPARE);
 
         if (not (
             Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE))
@@ -1155,10 +1155,10 @@ void Set_Var_May_Fail(
 //
 //      return: "Same value as input (pass through if target is void)"
 //          [any-value?]
-//      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [~void~ any-word? any-tuple? any-group?
+//      ^target "Word or tuple, or calculated sequence steps (from GET)"
+//          [~[]~ any-word? any-tuple? any-group?
 //          any-get-value? any-set-value? the-block!]
-//      ^value [raised! any-value?]  ; tunnels failure
+//      ^value [raised! any-value?]  ; in future, should take PACK! [2]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //  ]
@@ -1182,19 +1182,20 @@ DECLARE_NATIVE(SET)
 {
     INCLUDE_PARAMS_OF_SET;
 
-    Value* setval = ARG(VALUE);
+    Element* meta_setval = Element_ARG(VALUE);
+    Element* meta_target = Element_ARG(TARGET);
 
-    if (Is_Meta_Of_Raised(setval))
-        return UNMETA(cast(Element*, setval));  // passthru raised errors [1]
+    if (Is_Meta_Of_Nihil(meta_target))
+        return UNMETA(meta_setval);   // same for SET as [10 = (void): 10]
 
-    Meta_Unquotify_Decayed(setval);  // in future, no decay for SET BLOCK! [2]
+    if (Is_Meta_Of_Raised(meta_setval))
+        return UNMETA(meta_setval);  // passthru raised errors [1]
 
-    if (Is_Void(ARG(TARGET)))
-        return COPY(setval);   // same behavior for SET as [10 = (void): 10]
-
-    Element* target = Element_ARG(TARGET);
+    Element* target = Unquotify(meta_target);
     if (Any_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
         Unchain(target);
+
+    Value* setval = Meta_Unquotify_Known_Stable(ARG(VALUE));  // !!! pack [2]
 
     Value* steps;
     if (Bool_ARG(GROUPS))
@@ -1214,10 +1215,10 @@ DECLARE_NATIVE(SET)
         if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
             return FAIL(Error_No_Catch_For_Throw(LEVEL));
 
-        Decay_If_Unstable(SPARE);
-
-        if (Is_Void(SPARE))
+        if (Is_Nihil(SPARE))
             return COPY(setval);
+
+        Decay_If_Unstable(SPARE);
 
         if (not (
             Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE)

@@ -124,7 +124,7 @@ bind construct [
 
     let action: func compose [
         ; Get the text description if given
-        (if text? spec.1 [spec.1, elide spec: my next])
+        (? if text? spec.1 [spec.1, elide spec: my next])
 
         ; Enforce a RETURN: definition.  RETURN: [...] is allowed w/no text
         (
@@ -166,7 +166,7 @@ bind construct [
         ; we receive in will automatically bubble up their pending contents in
         ; order of being called.
 
-        (spread if yes? autopipe '[
+        (? spread if yes? autopipe '[
             let f: binding of $return
 
             pending: _
@@ -1491,7 +1491,7 @@ default-combinators: to map! reduce [
     ;    makes it impossible to synthesize void from a GET-GROUP!, and it
     ;    might be useful to do so, e.g.
     ;
-    ;        parse [a b c] [append/ (data) :(if flag '[across some word!])]
+    ;        parse [a b c] [append/ (data) :(? if flag '[across some word!])]
     ;
     ;    So instead, you can use ~okay~ to ask the GET-GROUP! to vaporize.
     ;
@@ -1535,7 +1535,7 @@ default-combinators: to map! reduce [
             return ~,~  ; invisible
         ]
 
-        if r = ^void [  ; like [:(if 1 = 0 [...])]
+        if r = ^void [  ; like [:(? if 1 = 0 [...])]
             return void  ; couldn't produce void at all if vaporized [3]
         ]
 

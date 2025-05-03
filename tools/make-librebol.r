@@ -197,9 +197,9 @@ extern-prototypes: map-each-api [
 
 lib-struct-fields: map-each-api [
     let cfunc-params: delimit ", " compose [
-        (if is-variadic ["RebolContext* binding"])
+        (? if is-variadic ["RebolContext* binding"])
         (spread map-each [type var] paramlist [spaced [type var]])
-        (if is-variadic [
+        (? if is-variadic [
             spread ["const void* p" "void* vaptr"]
         ])
     ]

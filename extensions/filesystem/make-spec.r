@@ -401,7 +401,7 @@ append uv-depends spread map-each 'tuple [  ; WORD! in bootstrap
 depends: compose [
     (spread uv-depends)
 
-    (if "1" = get-env "USE_BACKDATED_GLIBC" [
+    (? if "1" = get-env "USE_BACKDATED_GLIBC" [
         spread [
             [%fcntl-patch.c]
         ]
@@ -409,7 +409,7 @@ depends: compose [
 ]
 
 ldflags: compose [
-    (if "1" = get-env "USE_BACKDATED_GLIBC" [
+    (? if "1" = get-env "USE_BACKDATED_GLIBC" [
         "-Wl,--wrap=fcntl64 -Wl,--wrap=log -Wl,--wrap=pow"
     ])
 ]

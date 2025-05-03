@@ -249,6 +249,15 @@ INLINE bool Is_Nihil(Need(const Atom*) v) {
     return tail == at;
 }
 
+INLINE Element* Init_Meta_Of_Nihil_Untracked(Sink(Element) out) {
+    Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, EMPTY_ARRAY, 0, SPECIFIED);
+    QUOTE_BYTE(out) = QUASIFORM_2_COERCE_ONLY;
+    return out;
+}
+
+#define Init_Meta_Of_Nihil(out) \
+    TRACK(Init_Meta_Of_Nihil_Untracked((out)))
+
 INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;

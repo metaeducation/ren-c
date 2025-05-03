@@ -20,25 +20,11 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// VOID is the result of branching constructs that don't take a branch.  It
-// is the antiform of the WORD! "void":
+// "Stable void" (the antiform of the word void) is being rethought.
 //
-//     >> if null [<d>]
-//     == ~void~  ; anti
-//
-//     >> if ok [<d>]
-//     == <d>
-//
-// Many operations that try to add voids will be no-ops instead of errors:
-//
-//     >> append [a b c] if null [<d>]
-//     == [a b c]
-//
-// Other operations will use the "void-in, null out" convention to permit
-// opting out:
-//
-//     >> to word! if null ["abc"]
-//     == ~null~  ; anti
+// NIHIL will become true unstable void.  Right now stable void is the state
+// created to bridge nihil to stable parameters.  The new plan is that frames
+// will always speak in terms of meta-values.
 //
 
 INLINE bool Is_Void(Need(const Value*) v) {
@@ -57,64 +43,3 @@ INLINE bool Is_Void(Need(const Value*) v) {
 
 #define Init_Void(out) \
     TRACK(Init_Void_Untracked(out))
-
-#define Init_Quasi_Void(out) \
-    Init_Quasi_Word((out), CANON(VOID))
-
-INLINE bool Is_Quasi_Void(const Cell* v) {
-    if (not Is_Quasiform(v))
-        return false;
-    if (HEART_BYTE(v) != TYPE_WORD)
-        return false;
-    return Cell_Word_Id(v) == SYM_VOID;
-}
-
-#define Init_Meta_Of_Void(out) \
-    Init_Quasi_Void(out)
-
-#define Is_Meta_Of_Void(v) \
-    Is_Quasi_Void(v)
-
-
-//=//// "HEAVY VOIDS" (BLOCK! Antiform Pack with ~void~ in it) ////////////=//
-//
-// This is a way of making it so that branches which evaluate to void can
-// carry the void intent, while being in a parameter pack--which is not
-// considered a candidate for running ELSE branches:
-//
-//     >> if null [<a>]
-//     == ~void~  ; anti (will trigger ELSE)
-//
-//     >> if ok [if null [<unused>]]
-//     == ~[~void~]~  ; anti (will trigger THEN, not ELSE)
-//
-// Heavy voids will decay when passed as normal parameters to functions that
-// do not specifically take pack isotopes:
-//
-//     >> append [a b c] if null [<a>]
-//     == [a b c]
-//
-//     >> append [a b c] if ok [if null [<unused>]]
-//     == [a b c]
-//
-// ("Heavy Nulls" are an analogous concept for ~null~.)
-//
-
-#define Init_Heavy_Void(out) \
-    Init_Pack((out), PG_1_Quasi_Void_Array)
-
-INLINE bool Is_Heavy_Void(const Atom* v) {
-    if (not Is_Pack(v))
-        return false;
-    const Element* tail;
-    const Element* at = Cell_List_At(&tail, v);
-    return (tail == at + 1) and Is_Meta_Of_Void(at);
-}
-
-INLINE bool Is_Meta_Of_Heavy_Void(const Atom* v) {
-    if (not Is_Meta_Of_Pack(v))
-        return false;
-    const Element* tail;
-    const Element* at = Cell_List_At(&tail, v);
-    return (tail == at + 1) and Is_Meta_Of_Void(at);
-}

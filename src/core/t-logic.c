@@ -570,13 +570,13 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 //
 //  unless: infix native [
 //
-//  "Give left hand side when right hand side is not null or void"
+//  "Give left hand side when right hand side is not pure null"
 //
 //      return: [any-value?]
 //      left "Expression which will always be evaluated"
 //          [any-value?]
 //      ^right "Expression that's also always evaluated (can't short circuit)"
-//          [pack! any-value?]  ; not literal GROUP! as with XOR
+//          [any-atom?]  ; not literal GROUP! as with XOR
 //  ]
 //
 DECLARE_NATIVE(UNLESS)
@@ -590,7 +590,10 @@ DECLARE_NATIVE(UNLESS)
     Value* left = ARG(LEFT);
     Element* meta_right = Element_ARG(RIGHT);
 
-    if (Is_Meta_Of_Void(meta_right) or Is_Meta_Of_Null(meta_right))
+    if (Is_Meta_Of_Ghost(meta_right))
+        return FAIL("UNLESS can't be used with GHOST! antiform");
+
+    if (Is_Meta_Of_Null(meta_right))
         return COPY(left);
 
     return UNMETA(meta_right);  // preserve packs

@@ -446,7 +446,7 @@ DECLARE_NATIVE(SPREAD)
     if (Is_Blank(v))
         return Init_Void(OUT);  // empty array makes problems for GLOM [3]
 
-    if (Is_Void(v) or Is_Quasi_Void(v))  // quasi ok [2]
+    if (Is_Void(v))
         return Init_Void(OUT);  // pass through [1]
 
     if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]
@@ -628,41 +628,82 @@ DECLARE_NATIVE(UNRUN)
 }
 
 
+// We want MAYBE and ? to be intrinsics, so the strictness is not controlled
+// with a refinement.  Share the code.
+//
+static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
+    DECLARE_ELEMENT (meta);
+    Get_Meta_Atom_Intrinsic(meta, LEVEL);
+
+    if (Is_Meta_Of_Null(meta))  // light null
+        return NIHIL;
+
+    if (Is_Meta_Of_Raised(meta))  // raised errors (e.g. fold in a TRY)
+        return NIHIL;
+
+    if (Is_Meta_Of_Ghost(meta))
+        return FAIL("Cannot MAYBE a GHOST!");
+
+    bool was_pack = Is_Meta_Of_Pack(meta);
+
+    Copy_Cell(OUT, meta);
+    Meta_Unquotify_Decayed(stable_OUT);
+
+    if (Is_Nulled(OUT)) {
+        if (light and was_pack)
+            return FAIL(
+                "MAYBE:LIGHT (a.k.a. ?) won't void a PACK! with a NULL in it"
+            );
+        return NIHIL;  // not strict
+    }
+
+    return OUT;  // passthru everything else (raised errors?)
+}
+
+
 //
 //  maybe: native:intrinsic [
 //
-//  "If argument is null, make it void (also pass through voids)"
+//  "If argument is null or raised error make it void, else passthru"
 //
-//      return: "Void if input value was null"
-//      value
+//      return: "Void if input value was null or a raised error"
+//      ^atom "Decayed if pack"
+//      :light "If true, then nulls in packs will panic instead of void"
 //  ]
 //
 DECLARE_NATIVE(MAYBE)
-//
-// 1. !!! Should MAYBE of a parameter pack be willing to twist that parameter
-//    pack, e.g. with a NULL in the first slot--into one with a void in the
-//    first slot?  Currently this does not, meaning you can't say
-//
-//        [a b]: maybe multi-return
-//
-//    ...and leave the `b` element left untouched.  Review.
-//
-// 2. !!! Should MAYBE of a raised error pass through the raised error?
 {
     INCLUDE_PARAMS_OF_MAYBE;
 
-    DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    bool light;
+    if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))
+        light = false;  // default in intrinsic dispatch to not light
+    else
+        light = Bool_ARG(LIGHT);  // slower dispatch with frame + refinement
 
-    if (Is_Void(v))
-        return Init_Void(OUT);  // passthru
+    return Maybe_Intrinsic_Core(LEVEL, light);
+}
 
-    if (Is_Nulled(v))
-        return Init_Void(OUT);  // main purpose of function: NULL => VOID
 
-    return COPY(v);  // passthru
+//
+//  maybe-light: native:intrinsic [
+//
+//  "If argument is light null or raised error make it void, else passthru"
+//
+//      return: "Void if input value was light null or a raised error"
+//      ^atom "Decayed if pack, but packed nulls will panic instead of void"
+//  ]
+//
+DECLARE_NATIVE(MAYBE_LIGHT)
+//
+// This is functionally equivalent to MAYBE:LIGHT, but much faster to run
+// because it's dispatched intrinsically.  (Plain MAYBE with no refinements
+// is also dispatched intrinsically, but adding the refinement slows it down
+// with CHAIN! calculations and requires building a FRAME!)
+{
+    INCLUDE_PARAMS_OF_MAYBE_LIGHT;
+    bool light = true;
+    return Maybe_Intrinsic_Core(LEVEL, light);
 }
 
 

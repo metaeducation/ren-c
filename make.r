@@ -340,7 +340,7 @@ gen-obj: func [
                 ; when building as pre-C++11 where it was introduced, unless
                 ; you disable that warning.
                 ;
-                (if user-config.standard = 'c++98 [<gcc:-Wno-c++0x-compat>])
+                (? if user-config.standard = 'c++98 [<gcc:-Wno-c++0x-compat>])
 
                 ; Note: The C and C++ standards do not dictate if `char` is
                 ; signed or unsigned.  If you think environments all settled
@@ -399,7 +399,7 @@ gen-obj: func [
                 ; way to turn this complaint off.  So don't use pedantic
                 ; warnings unless you're at c99 or higher, or C++.
                 ;
-                (if not find [c gnu89] standard [<gcc:--pedantic>])
+                (? if not find [c gnu89] standard [<gcc:--pedantic>])
 
                 <gcc:-Wextra>
 
@@ -752,7 +752,7 @@ gen-obj: func [
         cflags: either empty? flags [_] [flags]
         definitions: D
         includes: I
-        (if yes? prefer-O2 [spread [optimization: #prefer-O2-optimization]])
+        (? if yes? prefer-O2 [spread [optimization: #prefer-O2-optimization]])
     ]
 ]
 
@@ -1326,8 +1326,8 @@ append app-config.ldflags spread switch user-config.static [
     'yes [
         compose [
             <gcc:-static-libgcc>
-            (if yes? cfg-cplusplus [<gcc:-static-libstdc++>])
-            (if on? cfg-sanitize [<gcc:-static-libasan>])
+            (? if yes? cfg-cplusplus [<gcc:-static-libstdc++>])
+            (? if on? cfg-sanitize [<gcc:-static-libasan>])
         ]
     ]
 
@@ -1743,7 +1743,7 @@ for-each 'ext extensions [
         ext-objlib
         :I app-config.includes
         :D compose [
-            (if ext.mode = <dynamic> ["LIBREBOL_USES_API_TABLE=1"])
+            (? if ext.mode = <dynamic> ["LIBREBOL_USES_API_TABLE=1"])
             (spread app-config.definitions)
         ]
         :c app-config.cflags

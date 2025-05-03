@@ -204,7 +204,7 @@ do: lib3/enclose lib3.do/ lib3/func [
         replace3:one f.source unspaced [newline "]"] unspaced lib3/compose [
             newline
             "]" newline
-            (if yes? wrap-module ["make object! ["]) newline
+            (lib3/if yes? wrap-module ["make object! ["]) newline
         ]
         if yes? wrap-module [
             lib3/append f.source newline

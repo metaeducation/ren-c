@@ -331,9 +331,9 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
             return nullptr;  // need pure null for THEN/ELSE to work right
 
         if (Bool_ARG(UNDECAYED))
-            Init_Nihil(OUT);  // undecayed allows vanishing
+            Init_Ghost(OUT);  // undecayed allows vanishing
         else
-            Init_Void(OUT);  // `eval []` is ~void~
+            Init_Nihil(OUT);  // `eval []` is ~[]~ antiform
 
         return OUT;
     }
@@ -413,8 +413,6 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
         Erase_Cell(position); // convention for shared data at endpoint
 
-        if (Is_Void(OUT))
-            return VOID;
         return OUT;
     }
 
@@ -423,12 +421,12 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         panic (source); // Frame is the only other type
 
     if (Is_Level_At_End(L))
-        return VOID;
+        return NIHIL;
 
     Level* sub = Make_Level(  // need to do evaluation in a sublevel [3]
         &Evaluator_Executor, L->feed, LEVEL_MASK_NONE
     );
-    Init_Void(Evaluator_Primed_Cell(sub));
+    Init_Nihil(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 
@@ -460,8 +458,8 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 } result_in_out: {  //////////////////////////////////////////////////////////
 
     if (not Bool_ARG(UNDECAYED)) {
-        if (Is_Elision(OUT))
-            Init_Void(OUT);
+        if (Is_Comma(OUT))
+            Init_Nihil(OUT);
     }
 
     if (Bool_ARG(STEP)) {
@@ -557,7 +555,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
     if (not Bool_ARG(UNDECAYED)) {
         if (Is_Elision(OUT))
-            Init_Void(OUT);
+            Init_Nihil(OUT);
     }
 
     return OUT;

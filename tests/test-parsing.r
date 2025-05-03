@@ -127,7 +127,7 @@ export collect-tests: func [
                 ; Treat a top level group (...) as if you wrote [(...)].
                 ; Put it in a block, along with its optional expected error ID.
                 ;
-                keep:line reduce [(maybe expected) (if expected '!!) group]
+                keep:line reduce [(maybe expected) (? if expected '!!) group]
             )]
             |
             ; A BLOCK! groups together several tests that rely on common
