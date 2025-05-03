@@ -126,25 +126,30 @@ INLINE bool Apply_Only_Throws(
 INLINE bool Do_Branch_Core_Throws(
     Value* out,
     const Value* branch,
-    const Value* condition // can be END or nullptr--can't be a NULLED cell!
+    Value* condition // can be END or nullptr--can't be a NULLED cell!
 ){
     assert(branch != out and condition != out);
 
     if (Is_Block(branch))
         return Eval_List_At_Throws(out, branch);
 
+    if (condition and NOT_END(condition))
+        Meta_Quotify(condition);
     assert(Is_Action(branch));
-    return Apply_Only_Throws(
+    bool threw = Apply_Only_Throws(
         out,
         false, // !fully, e.g. arity-0 functions can ignore condition
         branch,
-        condition, // may be an END marker, if not Do_Branch_With() case
+        condition,
         rebEND // ...but if condition wasn't an END marker, we need one
     );
+    if (condition and NOT_END(condition))
+        Meta_Unquotify(condition);
+    return threw;
 }
 
 #define Do_Branch_With_Throws(out,branch,condition) \
     Do_Branch_Core_Throws((out), (branch), (condition))
 
 #define Do_Branch_Throws(out,branch) \
-    Do_Branch_Core_Throws((out), (branch), END_NODE)
+    Do_Branch_Core_Throws((out), (branch), m_cast(Value*, END_NODE))

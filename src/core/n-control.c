@@ -326,7 +326,7 @@ DECLARE_NATIVE(ELSE)
     if (not Is_Nulled(left) and not Is_Void(left))
         RETURN (left);
 
-    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), NULLED_CELL))
+    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
 
     return OUT;  // don't trashify, allows chaining: `else [...] then [...]`
