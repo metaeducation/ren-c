@@ -12,7 +12,7 @@ REBOL [
 ]
 
 pi: 3.14159265358979323846
-
+tau: 6.28318530717958647693
 
 ; Shorthands for radian forms of trig functions, first introduced by Red.
 ; http://www.red-lang.org/2014/08/043-floating-point-support.html
