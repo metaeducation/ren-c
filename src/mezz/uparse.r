@@ -475,7 +475,7 @@ default-combinators: to map! reduce [
             ; if it fails we disregard the result
             ;
             [^result' input]: body-parser input except [
-                result': '~[]~
+                result': '~,~
                 continue
             ]
         ]
@@ -822,7 +822,7 @@ default-combinators: to map! reduce [
 
     <end> combinator [
         "Only match if the input is at the end"
-        return: [~[]~]
+        return: [ghost!]
         :negated
     ][
         remainder: input  ; never advances
@@ -830,10 +830,10 @@ default-combinators: to map! reduce [
             if negated [
                 return raise "PARSE position at <end> (but parser negated)"
             ]
-            return ~[]~
+            return ~,~
         ]
         if negated [
-            return ~[]~
+            return ~,~
         ]
         return raise "PARSE position not at <end>"
     ]
@@ -1423,7 +1423,7 @@ default-combinators: to map! reduce [
 
     (meta group!) combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
-            [any-value? pack!]
+            [any-atom?]
         :pending [blank! block!]
         value [any-list?]  ; allow any array to use this "EVAL combinator"
     ][
@@ -1431,7 +1431,7 @@ default-combinators: to map! reduce [
 
         if tail? value [
             pending: _
-            return ~[]~
+            return ~,~
         ]
 
         if <delay> = first value [
@@ -1439,7 +1439,7 @@ default-combinators: to map! reduce [
                 fail "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
             pending: reduce [next value]  ; GROUP! signals delayed groups
-            return ~[]~  ; act invisible
+            return ~,~  ; act invisible
         ]
 
         pending: _
@@ -1530,9 +1530,9 @@ default-combinators: to map! reduce [
 
         any [
             r = ^okay  ; like [:(1 = 1)]
-            r = '~[]~  ; like [:(comment "hi")]
+            r = '~,~  ; like [:(comment "hi")]
         ] then [
-            return ~[]~  ; invisible
+            return ~,~  ; invisible
         ]
 
         if r = ^void [  ; like [:(if 1 = 0 [...])]
@@ -1686,7 +1686,7 @@ default-combinators: to map! reduce [
             return void  ; does not vanish
           ]
           ~okay~ [
-            return ~[]~  ; let okay just act as a "guard", no influence
+            return ~,~  ; let okay just act as a "guard", no influence
           ]
         ]
         fail ["Unknown keyword" mold ^value]
@@ -2144,16 +2144,16 @@ default-combinators: to map! reduce [
 
     'elide combinator [
         "Transform a result-bearing combinator into one that has no result"
-        return: [~[]~]
+        return: [ghost!]
         parser [action!]
     ][
         [^ remainder]: parser input except e -> [return raise e]
-        return ~[]~
+        return ~,~
     ]
 
     'comment combinator [
         "Comment out an arbitrary amount of PARSE material"
-        return: [~[]~]
+        return: [ghost!]
         'ignored [block! text! tag! issue!]
     ][
         ; !!! This presents a dilemma, should it be quoting out a rule, or
@@ -2174,12 +2174,12 @@ default-combinators: to map! reduce [
         ; most useful, and the closest parallel to the plain COMMENT action.
         ;
         remainder: input
-        return ~[]~
+        return ~,~
     ]
 
     'skip combinator [
         "Skip an integral number of items"
-        return: [~[]~]
+        return: [ghost!]
         parser [action!]
         <local> result
     ][
@@ -2187,7 +2187,7 @@ default-combinators: to map! reduce [
 
         if blank? :result [
             remainder: input
-            return ~[]~
+            return ~,~
         ]
         if not integer? :result [
             fail "SKIP expects INTEGER! amount to skip"
@@ -2195,7 +2195,7 @@ default-combinators: to map! reduce [
         remainder: skip input result else [
             return raise "Attempt to SKIP past end of parse input"
         ]
-        return ~[]~
+        return ~,~
     ]
 
     'one combinator [  ; historically used "SKIP" for this
@@ -2456,7 +2456,7 @@ default-combinators: to map! reduce [
 
         pending: _  ; can become GLOM'd into a BLOCK!
 
-        result': '~[]~  ; default result is invisible
+        result': '~,~  ; default result is invisible
 
         old-env: state.env
         /return: adapt return/ [state.env: old-env]
@@ -2558,12 +2558,12 @@ default-combinators: to map! reduce [
                     print mold:limit rules 200
                     fail "Combinator did not set pending"
                 ]
-                if temp <> '~[]~ [
+                if temp <> '~,~ [
                     result': temp  ; overwrite if was visible
                 ]
                 pending: glom pending spread subpending
             ] else [
-                result': '~[]~  ; reset, e.g. `[bypass |]`
+                result': '~,~  ; reset, e.g. `[bypass |]`
 
                 free pending  ; proactively release memory
                 pending: _
@@ -3101,7 +3101,7 @@ parse*: func [
 
     ; While combinators can vaporize, don't allow PARSE itself to vaporize
     ;
-    if synthesized' = '~[]~ [
+    if synthesized' = '~,~ [
         synthesized': ^void
     ]
 

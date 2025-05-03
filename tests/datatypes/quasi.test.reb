@@ -49,8 +49,8 @@
 (
     x: 10
     all [
-        '~[]~ = x: ^ eval:undecayed []
-        nihil? unmeta x
+        '~,~ = x: ^ eval:undecayed []
+        ghost? unmeta x
     ]
 )
 (

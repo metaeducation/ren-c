@@ -449,10 +449,10 @@
 )]
 
 (
-    foo: lambda [^arg [~null~ pack! <end> ~void~ integer!]] [arg]
+    foo: lambda [^arg [~null~ ghost! <end> ~void~ integer!]] [arg]
     all [
         (the '1020) = (foo 1020)
-        '~[]~ = (foo comment "HI")
+        '~,~ = (foo comment "HI")
         ^null = (foo any [1 > 2, 3 > 4])
         null? (foo)
     ]

@@ -126,7 +126,7 @@ DECLARE_NATIVE(REDUCE)
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
 
-    if (Is_Barrier(SPARE))  // void and nihil offered to predicate, not commas
+    if (Is_Ghost(SPARE))  // void offered to predicate, not commas
         goto next_reduce_step;
 
     if (
@@ -294,10 +294,10 @@ DECLARE_NATIVE(REDUCE_EACH)
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
 
     if (
-        Is_Barrier(SPARE)
+        Is_Ghost(SPARE)
         or (
             Get_Level_Flag(SUBLEVEL, META_RESULT)
-            and Is_Meta_Of_Barrier(SPARE)
+            and Is_Meta_Of_Ghost(SPARE)
         )
     ){
         Init_Nihil(OUT);

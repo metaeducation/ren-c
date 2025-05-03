@@ -10,7 +10,7 @@
     (^null = detector null)
     ('~[~null~]~ = detector if ok [null])
 
-    ('~[]~ = detector (comment "hi"))
+    ('~,~ = detector (comment "hi"))
     (null = detector)
 
     (did left-detector: infix detector/)

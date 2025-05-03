@@ -175,7 +175,7 @@ DECLARE_NATIVE(META)
 //
 //  meta*: native:intrinsic [
 //
-//  "META operator that works on any value (errors, packs, barriers, etc.)"
+//  "META operator that works on any value (errors, packs, ghosts, etc.)"
 //
 //      return: [quoted! quasiform!]
 //      ^atom
@@ -381,7 +381,7 @@ DECLARE_NATIVE(UNMETA)
 //
 //  unmeta*: native [
 //
-//  "Variant of UNMETA that can synthesize any atom (raised, pack, barrier...)"
+//  "Variant of UNMETA that can synthesize any atom (raised, pack, ghost...)"
 //
 //      return: [any-atom?]
 //      metaform [quoted! quasiform?]

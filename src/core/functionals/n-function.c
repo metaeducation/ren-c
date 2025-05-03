@@ -52,7 +52,7 @@
 //   possible using CLOSURE which made a costly deep copy of the function's
 //   body on every invocation.  Ren-C's method does not require a copy.)
 //
-// * Invisible functions (return: [~[]~]) that vanish completely,
+// * Invisible functions (return: [~,~]) return ghost! and vanish completely,
 //   leaving whatever result was in the evaluation previous to the function
 //   call as-is.
 //

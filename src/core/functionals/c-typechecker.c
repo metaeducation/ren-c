@@ -772,7 +772,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
         if (Is_Pack(atom) and Is_Pack_Undecayable(atom))
             goto return_false;  // nihil or unstable isotope in first slot
 
-        if (Is_Barrier(atom))
+        if (Is_Ghost(atom))
             goto return_false;  // comma antiforms
 
         if (Is_Antiform(atom) and Is_Antiform_Unstable(atom)) {

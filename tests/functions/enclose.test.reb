@@ -30,7 +30,7 @@
     ]
     outer: enclose inner/ func [f] [
         assert [1020 = eval-free f]
-        return ~[]~
+        return ~,~
     ]
     all [
         304 = (304 outer)
@@ -39,28 +39,28 @@
     ]
 )(
     var: #before
-    inner: func [return: [~[]~]] [
+    inner: func [return: [ghost!]] [
         var: 1020
-        return ~[]~
+        return ~,~
     ]
     outer: enclose inner/ func [return: [quoted! quasiform!] f] [
         return ^(eval-free:undecayed f)  ; don't unquote it here
     ]
     all [
-        '~[]~ = outer
+        '~,~ = outer
         var = 1020
     ]
 )(
     var: #before
-    inner: func [return: [~[]~]] [
+    inner: func [return: [~,~]] [
         var: 1020
-        return ~[]~
+        return ~,~
     ]
-    /outer: enclose inner/ func [return: [~[]~ any-value?] f] [
+    /outer: enclose inner/ func [return: [ghost! any-value?] f] [
         return eval-free:undecayed f  ; now try unquoting
     ]
     all [
-        '~[]~ = ^(outer)
+        '~,~ = ^(outer)
         var = 1020
     ]
 )]

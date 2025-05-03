@@ -528,7 +528,7 @@ Bounce Stepper_Executor(Level* L)
     //
 
       case TYPE_COMMA:
-        Init_Barrier(OUT);
+        Init_Ghost(OUT);
         goto skip_lookahead;  // skip lookahead, see notes there
 
 
@@ -1194,7 +1194,7 @@ Bounce Stepper_Executor(Level* L)
 
     } generic_set_rightside_in_out: {  ///////////////////////////////////////
 
-        if (Is_Barrier(OUT))  // even `(void):,` needs to error
+        if (Is_Ghost(OUT))  // even `(void):,` needs to error
             return FAIL(Error_Need_Non_End(CURRENT));
 
         if (STATE == ST_STEPPER_SET_VOID) {
@@ -1508,7 +1508,7 @@ Bounce Stepper_Executor(Level* L)
         const Element* pack_meta_at;  // pack block items are ^META'd
         const Element* pack_meta_tail;
 
-        if (Is_Barrier(OUT))  // !!! Hack, want ([:foo]: eval) to always work
+        if (Is_Ghost(OUT))  // !!! Hack, want ([:foo]: eval) to always work
             Init_Nihil(OUT);
 
         if (Is_Pack(OUT)) {  // antiform block
@@ -1834,10 +1834,10 @@ Bounce Stepper_Executor(Level* L)
     // 1. With COMMA!, we skip the lookahead step, which means (then [...])
     //    will have the same failure mode as (1 + 2, then [...]).  In order
     //    to make this the same behavior anything else that evaluates to
-    //    a barrier (COMMA! antiform) we make this hinge on producing a
-    //    barrier--not on being a source level comma.  Note it's different
+    //    a ghost (COMMA! antiform) we make this hinge on producing a
+    //    ghost--not on being a source level comma.  Note it's different
     //    from what would happen with (nihil then [...]) which shows a nuance
-    //    between barriers and nihils.
+    //    between ghosts and nihils.
     //
     // 2. If something was run with the expectation it should take the next
     //    arg from the output cell, and an evaluation cycle ran that wasn't
@@ -1848,9 +1848,9 @@ Bounce Stepper_Executor(Level* L)
 
   lookahead:
 
-    if (Is_Barrier(OUT)) {
+    if (Is_Ghost(OUT)) {
       skip_lookahead:
-        assert(Is_Barrier(OUT));  // only jump in for barriers [1]
+        assert(Is_Ghost(OUT));  // only jump in for ghost barriers [1]
         goto finished;
     }
 

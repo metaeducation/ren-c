@@ -20,7 +20,7 @@ Rebol [
 assert: func [
     "Ensure conditions are branch triggers if hooked by debugging"
 
-    return: [~[]~]
+    return: [ghost!]
     conditions "Block of conditions to evaluate and test for logical truth"
         [block!]
     :handler "Optional code to run if the assertion fails, receives condition"
@@ -29,7 +29,7 @@ assert: func [
     ; ASSERT has no default implementation, but can be HIJACKed by a debug
     ; mode with a custom validation or output routine.
     ;
-    return ~[]~
+    return ~,~
 ]
 
 steal: lambda [
@@ -67,14 +67,14 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
 ===: func [
-    return: [~[]~]
+    return: [ghost!]
     'remarks [element? <variadic>]
     :visibility [onoff?]
 ]
 bind construct [
     logging: 'off
 ][
-    if visibility [logging: visibility, return ~[]~]
+    if visibility [logging: visibility, return ~,~]
 
     if on? logging [
         print form collect [
@@ -84,7 +84,7 @@ bind construct [
     ] else [
         until [equal? '=== take remarks]
     ]
-    return ~[]~
+    return ~,~
 ]
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
@@ -516,19 +516,19 @@ count-up: func [
 eval-all: func [
     "Evaluate any number of expressions and discard them"
 
-    return: [~[]~]
+    return: [ghost!]
     expressions "Any number of expressions on the right"
         [any-value? <variadic>]
 ][
     eval expressions
-    return ~[]~
+    return ~,~
 ]
 
 
 ; These constructs used to be infix to complete their left hand side.  Yet
 ; that form of completion was only one expression's worth, when they wanted
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
-; `return: [~[]~]`) permit a more flexible version of the mechanic.
+; `return: [ghost!]`) permit a more flexible version of the mechanic.
 
 <|: infix:postpone eval-all/
 

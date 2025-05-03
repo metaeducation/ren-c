@@ -33,10 +33,10 @@
 //
 // Commas are effectively invisible, but they accomplish this not by
 // producing Nihil (an empty PACK! antiform) but rather by making an antiform
-// COMMA! which is called a "barrier".  It's treated like nihil in interstitial
-// positions and vaporizes, but has the special property of appearing like
-// an <end>...as well as stopping lookahead.  For code that doesn't care
-// about the subtlety, nihil and barrier are both considered "elisions".
+// COMMA! which is called a "ghost".  It vaporizes in interstitial positions,
+// but has the special property of appearing like an <end>...as well as
+// stopping lookahead.  For code that doesn't care about the subtlety, nihil
+// and ghost are both considered "elisions".
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
@@ -63,16 +63,16 @@ INLINE Element* Init_Comma(Init(Element) out) {
     return out;
 }
 
-INLINE Atom* Init_Barrier(Init(Atom) out) {
+INLINE Atom* Init_Ghost(Init(Atom) out) {
     Init_Comma(out);
     QUOTE_BYTE(out) = ANTIFORM_0_COERCE_ONLY;
     return out;
 }
 
 INLINE bool Is_Elision(Need(Atom*) v) {
-    return Is_Barrier(v) or Is_Nihil(v);
+    return Is_Ghost(v) or Is_Nihil(v);
 }
 
 INLINE bool Is_Meta_Of_Elision(Cell* v) {
-    return Is_Meta_Of_Barrier(v) or Is_Meta_Of_Nihil(v);
+    return Is_Meta_Of_Ghost(v) or Is_Meta_Of_Nihil(v);
 }

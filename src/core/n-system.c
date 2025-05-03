@@ -282,7 +282,7 @@ DECLARE_NATIVE(C_DEBUG_TICK)
 //
 //  "Break at next evaluation point (only use when running under C debugger)"
 //
-//      return: [~[]~] "Invisible"
+//      return: [~,~] "Invisible"
 //  ]
 //
 DECLARE_NATIVE(C_DEBUG_BREAK)
@@ -304,12 +304,12 @@ DECLARE_NATIVE(C_DEBUG_BREAK)
   #if (INCLUDE_C_DEBUG_BREAK_NATIVE)
     #if TRAMPOLINE_COUNTS_TICKS
         g_break_at_tick = g_tick + 1;  // queue break for next step [1]
-        return Init_Nihil(OUT);
+        return Init_Ghost(OUT);
      #else
       #if RUNTIME_CHECKS
         debug_break();  // break right here, now [2]
       #endif
-        return Init_Nihil(OUT);
+        return Init_Ghost(OUT);
       #endif
   #else
       return FAIL(Error_Checked_Build_Only_Raw());

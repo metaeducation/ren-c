@@ -7,11 +7,11 @@
 (nihil? comment "a")
 (nihil? (comment "a"))
 
-('~[]~ = (meta comment "a"))
-((quote '~[]~) = ^(^ comment "a"))
+('~,~ = (meta comment "a"))
+((quote '~,~) = ^(^ comment "a"))
 
-('~[]~ = meta eval:undecayed [comment "a"])
-((quote '~[]~) = ^(^ eval:undecayed [comment "a"]))
+('~,~ = meta eval:undecayed [comment "a"])
+((quote '~,~) = ^(^ eval:undecayed [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be infix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -51,10 +51,10 @@
     1 = eval [1 elide "a"]
 )
 (
-    '~[]~ = ^ eval:undecayed [elide "a"]
+    '~,~ = ^ eval:undecayed [elide "a"]
 )
-(nihil? elide "a")
-('~[]~ = ^ elide "a")
+(ghost? elide "a")
+('~,~ = ^ elide "a")
 
 
 ~no-value~ !! (
@@ -366,15 +366,15 @@
 ; "Opportunistic Invisibility" means that functions can treat invisibility as
 ; a return type, decided on after they've already started running.
 [
-    (vanish-if-odd: func [return: [~[]~ integer!] x] [
+    (vanish-if-odd: func [return: [ghost! integer!] x] [
         if even? x [return x]
-        return ~[]~
+        return ~,~
     ] ok)
 
     (2 = (<test> vanish-if-odd 2))
     (<test> = (<test> vanish-if-odd 1))
 
-    (vanish-if-even: func [return: [~[]~ integer!] y] [
+    (vanish-if-even: func [return: [ghost! integer!] y] [
         return unmeta ^(vanish-if-odd y + 1)
     ] ok)
 
@@ -387,16 +387,16 @@
 ; by default if not.
 [
     (
-        no-spec: func [x] [return ~[]~]
+        no-spec: func [x] [return ~,~]
         <test> = (<test> no-spec 10)
     )
     ~bad-return-type~ !! (
-        int-spec: func [return: [integer!] x] [return ~[]~]
+        int-spec: func [return: [integer!] x] [return ~,~]
         int-spec 10
     )
     (
-        invis-spec: func [return: [~[]~ integer!] x] [
-            return ~[]~
+        invis-spec: func [return: [~,~ integer!] x] [
+            return ~,~
         ]
         <test> = (<test> invis-spec 10)
     )
@@ -407,16 +407,6 @@
 ~no-value~ !! (
     1 + 2 (comment "stale") + 3
 )
-
-; Functions that took nihil as normal parameters once received them as unset.
-; It's not clear that this is an interesting feature, especially in light of
-; COMMA!'s new mechanic getting its barrier-ness from returning nihil.
-;
-;    foo: lambda [x [~[]~ integer!]] [if unset? $x [<unset>] else [x]]
-;    all [
-;        <unset> = foo comment "hi"
-;        1020 = foo 1000 + 20
-;    ]
 
 (
     num-runs: 0

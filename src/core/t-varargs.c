@@ -33,7 +33,7 @@ INLINE void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_Logic(out, true);
     else
-        Init_Barrier(out);
+        Init_Ghost(out);
 }
 
 
@@ -197,7 +197,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 return true;
             }
 
-            if (Is_Feed_At_End(L_temp->feed) or Is_Barrier(out))
+            if (Is_Feed_At_End(L_temp->feed) or Is_Ghost(out))
                 Poison_Cell(shared);
             else {
                 // The indexor is "prefetched", so though the temp level would
@@ -333,7 +333,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         return false;
     }
 
-    if (param and not Is_Barrier(out)) {
+    if (param and not Is_Ghost(out)) {
         if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
             TOP_LEVEL, param, out, false
         )){
@@ -425,7 +425,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
         )){
             return THROWN;
         }
-        if (Is_Barrier(OUT))
+        if (Is_Ghost(OUT))
             return RAISE(Error_Nothing_To_Take_Raw());
         return OUT;
     }
@@ -447,7 +447,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
         )){
             return THROWN;
         }
-        if (Is_Barrier(OUT))
+        if (Is_Ghost(OUT))
             break;
         Move_Cell(PUSH(), Decay_If_Unstable(OUT));
     }
@@ -477,7 +477,7 @@ IMPLEMENT_GENERIC(PICK, Varargs)
         assert(false); // VARARG_OP_FIRST can't throw
         return THROWN;
     }
-    if (Is_Barrier(OUT))
+    if (Is_Ghost(OUT))
         Init_Nulled(OUT);
 
     return OUT; }

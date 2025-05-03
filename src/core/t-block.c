@@ -219,7 +219,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
                 return BOUNCE_THROWN;
             }
 
-            if (Is_Barrier(OUT))
+            if (Is_Ghost(OUT))
                 break;
 
             Move_Cell(PUSH(), Decay_If_Unstable(OUT));

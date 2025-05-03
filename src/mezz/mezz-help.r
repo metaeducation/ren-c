@@ -221,7 +221,7 @@ help-value: func [
             group! ["splice"]
             frame! ["action"]
             block! ["pack"]
-            comma! ["barrier"]
+            comma! ["ghost"]
             error! ["raised"]
             object! ["lazy"]
 

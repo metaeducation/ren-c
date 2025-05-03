@@ -177,7 +177,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         return u_cast(Value*, u_cast(Atom*, v));
     }
 
-    if (Is_Barrier(v))
+    if (Is_Ghost(v))
         fail (Error_No_Value_Raw());  // distinct error from nihil?
 
     if (Is_Raised(v))

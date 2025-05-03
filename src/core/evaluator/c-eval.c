@@ -28,9 +28,9 @@
 //
 // The 1 + 2 evaluated to 3.  If we merely called the Stepper_Executor()
 // again on the same output cell, the comment would evaluate to an antiform
-// empty pack (e.g. a NIHIL, ~[]~ antiform).  That would overwrite the 3.
-// So the Evaluator_Executor() has a holding cell for the last result that it
-// does not overwrite when invisible content comes along as the next value.
+// comma (e.g. a GHOST, ~,~ antiform).  That would overwrite the 3.  So the
+// Evaluator_Executor() has a holding cell for the last result that it does
+// not overwrite when invisible content comes along as the next value.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -169,7 +169,7 @@ Bounce Evaluator_Executor(Level* const L)
     //    That's a bad enough outcome that the feature of being able to put
     //    invisible material after the raised error has to be sacrificed.
 
-    if (Is_Elision(OUT))  {  // was something like an ELIDE, COMMENT, COMMA!
+    if (Is_Ghost(OUT))  {  // was something like an ELIDE, COMMENT, COMMA!
         if (Not_Feed_At_End(L->feed))
             goto new_step;  // leave previous result as-is in PRIMED
 

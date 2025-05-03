@@ -89,10 +89,10 @@
     (
         bar: func [
             "Invisible normal arity-0 function should run on next eval"
-            return: [~[]~]
+            return: [ghost!]
         ][
             bar: null
-            return ~[]~
+            return ~,~
         ]
         all wrap [
             [pos var]: evaluate:step [1020 bar 304]

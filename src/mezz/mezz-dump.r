@@ -16,7 +16,7 @@ dump: func [
     "Show the name of a value or expressions with the value (See Also: --)"
 
     return: "Doesn't return anything, not even void (so like a COMMENT)"
-        [~[]~]
+        [ghost!]
     @(value) [any-value?]
     @extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
         [element? <variadic>]
@@ -98,7 +98,7 @@ bind construct [
     ] else [
         dump-one value
     ]
-    return ~[]~
+    return ~,~
 ]
 
 contains-newline: func [return: [logic?] pos [block! group!]] [
@@ -164,7 +164,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
         ; have a way to be called--in spirit they are like infix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
-        d: func [return: [~[]~] :on :off] bind construct [
+        d: func [return: [ghost!] :on :off] bind construct [
             /d': (
                 let /d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
@@ -175,7 +175,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
                 off [d' #off]
                 #else [d' (value)]
             ]
-            return ~[]~
+            return ~,~
         ]
     ]
     return set name d/
@@ -269,7 +269,7 @@ summarize-obj: func [
 **: func [
     "Comment until end of line, or end of current list"
 
-    return: [~[]~]
+    return: [ghost!]
     'args [element? <variadic>]
 ][
     let value
@@ -280,8 +280,8 @@ summarize-obj: func [
         all [
             any-list? value
             contains-newline value
-            return ~[]~
+            return ~,~
         ]
     ]
-    return ~[]~
+    return ~,~
 ]

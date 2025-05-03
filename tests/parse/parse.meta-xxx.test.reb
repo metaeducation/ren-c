@@ -5,13 +5,13 @@
 [
     (all  [
         let synthesized
-        '~[]~ = parse "" [synthesized: ^[]]
-        '~[]~ = synthesized
+        '~,~ = parse "" [synthesized: ^[]]
+        '~,~ = synthesized
     ])
     (all  [
         let synthesized
-        '~[]~ = parse "" [synthesized: ^[comment "hi"]]
-        '~[]~ = synthesized
+        '~,~ = parse "" [synthesized: ^[comment "hi"]]
+        '~,~ = synthesized
     ])
     (all  [
         let synthesized

@@ -139,33 +139,32 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 comment: func [
     "Ignores the argument value, but does no evaluation (see also ELIDE)"
 
-    return: "Evaluator will skip over the result (not seen)"
-        [~[]~]
+    return: [ghost!]
     @discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
         [any-list? any-utf8? blob! any-scalar?]
 ][
-    return ~[]~
+    return ~,~
 ]
 
 elide: func [
     "Argument is evaluative, but discarded (see also COMMENT)"
 
     return: "The evaluator will skip over the result (not seen)"
-        [~[]~]
+        [ghost!]
     ^discarded "Evaluated value to be ignored"
         [any-atom?]  ; e.g. (elide elide "x") is legal
 ][
-    return ~[]~
+    return ~,~
 ]
 
 elide-if-void: func [
     "Argument is evaluative, but discarded if void"
 
-    return: [any-value? pack!]
+    return: [any-value? ghost!]
     ^value' "Evaluated value to be ignored"
-        [any-value? pack!]  ; pack! is passed through
+        [any-value? ghost!]  ; ghost! is passed through
 ][
-    if value' = ^void [return ~[]~]
+    if value' = ^void [return ~,~]
     return unmeta value'
 ]
 
@@ -177,11 +176,11 @@ elide-if-void: func [
 |||: func [
     "Inertly consumes all subsequent data, evaluating to previous result"
 
-    return: [~[]~]
+    return: [ghost!]
     'omit [element? <variadic>]
 ][
     until [null? try take omit]
-    return ~[]~
+    return ~,~
 ]
 
 

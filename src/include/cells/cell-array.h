@@ -228,10 +228,11 @@ INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
 
 //=//// "NIHIL" (empty BLOCK! Antiform Pack, ~[]~) ////////////////////////=//
 //
-// This unstable antiform is used in situations that want to convey a full
-// absence of values (e.g. ELIDE).  It can't be used in assignments, and if
-// the evaluator encounters one in an interstitial context it will be
-// vaporized.  It is sensibly represented as a parameter pack of length 0.
+// This unstable antiform can't be used in conventional assignments.  The
+// assignments that do allow it will actually remove keys from a mapping
+// entirely, because it has no variable representation.
+//
+// It is sensibly represented as a parameter pack of length 0.
 //
 
 #define Init_Nihil_Untracked(out) \

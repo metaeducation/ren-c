@@ -2,24 +2,19 @@
 
 (meta-group! = type of '^(a b c))
 
-; nihils don't vanish in ordinary EVAL operations (just special constructs which
-; choose to interpret them as vanishing).  But they are invalid as parameters
-; to things like EQUAL?, so meta operations (or functions taking meta args)
-; are the only way to test for and process them.
-;
-; Actual vanishing stuff via nihil (empty packs) can only be observed via
-; meta operations.
+; Vanishing stuff via ghosts (empty packs) can only be observed via meta
+; operations.  You cannot pass a ghost antiform to `=`
 [
-    ('~[]~ = ^())
-    ('~[]~ = ^(comment "hi"))
+    ('~,~ = ^())
+    ('~,~ = ^(comment "hi"))
     (^void = ^(void))
 
     (^void = ^(maybe void))
     (^void = ^ (maybe void))
     ~no-value~ !! (maybe comment "hi")
 
-    ('~[]~ = ^ ())
-    ('~[]~ = ^ (comment "hi"))
+    ('~,~ = ^ ())
+    ('~,~ = ^ (comment "hi"))
     (^void = ^ (void))
 ]
 

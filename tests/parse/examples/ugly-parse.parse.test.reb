@@ -30,9 +30,9 @@
 
         any [
             r = ^okay  ; like [:(1 = 1)]
-            r = '~[]~  ; like [:(comment "hi")]
+            r = '~,~  ; like [:(comment "hi")]
         ] then [
-            return ~[]~  ; invisible
+            return ~,~  ; invisible
         ]
 
         if r = ^void [  ; like [:(if 1 = 0 [...])]
@@ -56,12 +56,12 @@
     ; because we want to suppress the triggering of the generated rule
     ;
     ugly-combinators.discard: combinator [
-        return: "Don't return anything" [~[]~]
+        return: "Don't return anything" [ghost!]
         @group [group!]
     ][
         eval group
         remainder: input
-        return ~[]~
+        return ~,~
     ]
 
     /ugly-parse: specialize parse/ [combinators: ugly-combinators]

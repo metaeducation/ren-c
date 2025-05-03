@@ -1,17 +1,17 @@
 ; functions/control/do.r
 
 [
-    (nihil? eval:undecayed [])
-    ('~[]~ = ^(eval:undecayed []))
+    (ghost? eval:undecayed [])
+    ('~,~ = ^(eval:undecayed []))
 
-    (nihil? (eval:undecayed []))
+    (ghost? (eval:undecayed []))
     (3 = (1 + 2 eval:undecayed []))
     (3 = (1 + 2 unmeta ^ eval:undecayed []))
 
     (''30 = ^ (10 + 20 eval:undecayed []))
     (^void = ^ (10 + 20 eval [void]))
     (''30 = ^ (10 + 20 eval:undecayed [comment "hi"]))
-    (''30 = ^ (10 + 20 eval:undecayed make frame! func [] [return ~[]~]))
+    (''30 = ^ (10 + 20 eval:undecayed make frame! func [] [return ~,~]))
 
     (else? eval [null])
     ('~[~null~]~ = ^ eval:undecayed [if okay [null]])
@@ -20,33 +20,33 @@
 
     (all [
         let x: ~
-        '~[]~ = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
-        x = '~[]~
+        '~,~ = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
+        x = '~,~
     ])
 
     (all [
         let x: ~
-        '~[]~ = (x: ^(comment "HI") ^ eval:undecayed [comment "HI"])
-        '~[]~ = x
+        '~,~ = (x: ^(comment "HI") ^ eval:undecayed [comment "HI"])
+        '~,~ = x
     ])
 
-    ('~[]~ = (10 + 20 ^(eval:undecayed [])))
-    ('~[]~ = (10 + 20 ^(eval:undecayed [comment "hi"])))
+    ('~,~ = (10 + 20 ^(eval:undecayed [])))
+    ('~,~ = (10 + 20 ^(eval:undecayed [comment "hi"])))
     (^void = (10 + 20 ^(eval:undecayed make frame! lambda [] [void])))
     (^null = ^(eval [null]))
     ('~[~null~]~ = ^(eval:undecayed [if okay [null]]))
 
     (30 = (10 + 20 eval:undecayed []))
     (30 = (10 + 20 eval:undecayed [comment "hi"]))
-    (30 = (10 + 20 eval:undecayed make frame! func [] [return ~[]~]))
+    (30 = (10 + 20 eval:undecayed make frame! func [] [return ~,~]))
     (^null = ^(eval:undecayed [null]))
     ('~[~null~]~ = ^ eval:undecayed [heavy null])
     ('~[~null~]~ = ^ eval:undecayed [if okay [null]])
 
     ; Try standalone ^ operator so long as we're at it.
-    ('~[]~ = ^ eval:undecayed [])
-    ('~[]~ = ^ eval:undecayed [comment "hi"])
-    ('~[]~ = ^ eval:undecayed make frame! func [] [return ~[]~])
+    ('~,~ = ^ eval:undecayed [])
+    ('~,~ = ^ eval:undecayed [comment "hi"])
+    ('~,~ = ^ eval:undecayed make frame! func [] [return ~,~])
     (^void = ^ eval:undecayed [void])
 
     (^null = ^ eval:undecayed [null])
@@ -65,7 +65,7 @@
 
 [
     (''3 = ^ (1 + 2 eval:undecayed [comment "HI"]))
-    ('~[]~ = ^ eval:undecayed [comment "HI"])
+    ('~,~ = ^ eval:undecayed [comment "HI"])
 
     (3 = (1 + 2 eval:undecayed [comment "HI"]))
     (nihil? eval:undecayed [comment "HI"])

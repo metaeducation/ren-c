@@ -1257,7 +1257,7 @@ DECLARE_NATIVE(NIHIL_Q)
 
 
 //
-//  barrier?: native:intrinsic [
+//  ghost?: native:intrinsic [
 //
 //  "Tells you if argument is a comma antiform (unstable)"
 //
@@ -1265,9 +1265,9 @@ DECLARE_NATIVE(NIHIL_Q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(BARRIER_Q)
+DECLARE_NATIVE(GHOST_Q)
 {
-    INCLUDE_PARAMS_OF_BARRIER_Q;
+    INCLUDE_PARAMS_OF_GHOST_Q;
 
     Option(Heart) heart;
     QuoteByte quote_byte;
@@ -1280,7 +1280,7 @@ DECLARE_NATIVE(BARRIER_Q)
 //
 //  elision?: native:intrinsic [
 //
-//  "If argument is either nihil or a barrier (empty pack or antiform comma)"
+//  "If argument is either nihil or a ghost (empty pack or antiform comma)"
 //
 //      return: [logic?]
 //      ^atom

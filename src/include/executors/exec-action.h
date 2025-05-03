@@ -259,7 +259,7 @@ enum {
     ST_ACTION_INITIAL_ENTRY_INFIX,
     ST_ACTION_FULFILLING_INFIX_FROM_OUT,
 
-    // While some special-purpose functions intentionally receive barrier, most
+    // While some special-purpose functions intentionally receive ghost, most
     // don't want to...so we can treat it as an expression barrier--whether
     // it's produced by a COMMA! evaluating, or otherwise.
     //
@@ -268,9 +268,9 @@ enum {
     //    (foo,)  ; sees an end
     //    (foo anti ',)  ; also sees an end
     //
-    //    bar: func [^y [barrier! integer!]] [...]
+    //    bar: func [^y [ghost! integer!]] [...]
     //
-    //    (bar,)  ; sees an barrier antiform ~,~
+    //    (bar,)  ; sees a ghost antiform ~,~ as barrier
     //    (bar anti ',)  ; same
     //
     ST_ACTION_BARRIER_HIT,

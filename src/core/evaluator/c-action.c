@@ -149,7 +149,7 @@ Bounce Action_Executor(Level* L)
 
           case ST_ACTION_FULFILLING_ARGS:
             if (Cell_Parameter_Class(PARAM) != PARAMCLASS_META) {
-                if (Is_Barrier(ARG)) {
+                if (Is_Ghost(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Trash_Due_To_End(ARG);
                 }

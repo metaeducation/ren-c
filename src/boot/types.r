@@ -379,8 +379,8 @@ varargs     "evaluator position for variable numbers of arguments"
 ; It's an implementation detail which would require inventing another datatype
 ; that was FEED-specific.  Better ideas welcome.
 
-comma         "separator between full evaluations (otherwise invisible)"
-~barrier~:U   "elision state that is discarded by the evaluator"
+comma         "separator between full evaluations"
+~ghost~:U     "elision state that is discarded by the evaluator"
               (CELL_MASK_NO_NODES)
               [any-unit?]  ; NOT inert
 

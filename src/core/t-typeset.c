@@ -182,8 +182,12 @@ void Set_Parameter_Spec(
                 continue;
             }
             if (not Is_Stable_Antiform_Heart(Heart_Of(item))) {
-                if (Heart_Of(item) != TYPE_BLOCK)  // typecheck packs ok
+                if (
+                    Heart_Of(item) != TYPE_BLOCK  // typecheck packs ok
+                    and Heart_Of(item) != TYPE_COMMA  // allow ~,~ ghosts too
+                ){
                     fail (item);
+                }
             }
 
             if (Heart_Of(item) != TYPE_WORD) {
