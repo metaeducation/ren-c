@@ -40,7 +40,7 @@
 
 (
     block: [a b]
-    ^(spread [a b]) = ^ parse [a b a b] [repeat 2 @(spread block)]
+    (meta spread [a b]) = meta parse [a b a b] [repeat 2 @(spread block)]
 )
 (
     block: [a b]

@@ -13,7 +13,7 @@ switch2: func [
     <local> more found result' condition branch
 ][
     found: 'no
-    result': ^void
+    ^result': void
     more: 'yes
 
     return parse cases [cycle [
@@ -23,7 +23,7 @@ switch2: func [
             condition: *in* between <here> any [
                 ['| (more: 'yes)]
                 ['=> (more: 'no)]
-                [<end> accept (unmeta result')]
+                [<end> accept (^result')]
             ]
 
             any [

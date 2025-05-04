@@ -6,7 +6,7 @@
 ; a kind of "non-vote", as a void.
 [
     (void? all [])
-    (^void = ^ all [])
+    ((meta void) = ^ all [])
 
     ~bad-void~ !! (if all [] [<safety>])
 
@@ -186,7 +186,7 @@
     a-value: first ['a]
     :a-value = all [okay :a-value]
 )
-(same? ^append all [okay ^append])
+(same? append/ all [okay append/])
 
 (null? all [okay ~null~])
 (_ = all [okay _])
@@ -404,4 +404,4 @@
     ('okay = all @[null okay])  ; just the word, and words are truthy
 ]
 
-(^(spread [d e]) = ^(all [1 < 2, 3 < 4, spread [d e]]))
+((spread [d e]) = all [1 < 2, 3 < 4, spread [d e]])

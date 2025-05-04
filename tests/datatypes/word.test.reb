@@ -150,7 +150,7 @@
 )
 (
     a-value: ~<bad>~
-    ^a-value = '~<bad>~
+    (meta get:any $a-value) = '~<bad>~
 )
 (
     a-value: 'a

@@ -41,7 +41,7 @@
         e.message = "handled"
     )
     (
-        e: unquasi ^(1 + 2 raise "handled")
+        e: unquasi meta (1 + 2 raise "handled")
         e.message = "handled"
     )
     (
@@ -52,7 +52,7 @@
     )
     (
         e: sys.util/rescue [
-            unquasi ^(raise "unhandled" 1 + 2)
+            unquasi meta (raise "unhandled" 1 + 2)
         ]
         e.message = "unhandled"
     )

@@ -44,15 +44,14 @@ probe: func [
 ][
     ; Remember this is early in the boot, so many things not defined.
 
-    write-stdout case [
-        value' = ^void ["; void"]
-        quasi? value' [unspaced [mold value' space space "; anti"]]
+    write-stdout if antiform? ^value' [
+        unspaced [mold value' space space "; anti"]
     ] else [
-        mold unmeta value'
+        mold ^value'
     ]
     write-stdout newline
 
-    return unmeta value'
+    return ^value'
 ]
 
 /??: probe/  ; shorthand for debug sessions, not to be committed
@@ -162,10 +161,10 @@ elide-if-void: func [
 
     return: [any-value? ghost!]
     ^value' "Evaluated value to be ignored"
-        [any-value? ghost!]  ; ghost! is passed through
+        [any-value? ~[]~ ghost!]  ; ghost! is passed through
 ][
-    if value' = ^void [return ~,~]
-    return unmeta value'
+    if void? ^value' [return ~,~]
+    return ^value'
 ]
 
 ; COMMA! is the new expression barrier.  But `||` is included as a way to

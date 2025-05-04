@@ -85,7 +85,7 @@ run-single-test: func [
         '~[]~ = result [
             "test returned empty pack ~[]~ antiform"  ; UNMETA fails
         ]
-        (elide if pack? unmeta result [result: first unquasi result])
+        (elide if pack? ^result [result: first unquasi result])
 
         result = '~okay~ [
             successes: me + 1

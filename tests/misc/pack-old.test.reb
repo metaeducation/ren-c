@@ -45,10 +45,10 @@
         reduce:predicate block :meta
     ]
 
-    let result': ^void
+    let result': meta void
     for-each [val'] block [
-        if result' = ^void [
-            result': either blank? vars.1 [^void] [val']
+        if void? ^result' [
+            result': either blank? vars.1 [meta void] [val']
         ]
         if tail? vars [
             fail "Too many values for vars in PACK (use <...> if on purpose)"
@@ -76,7 +76,7 @@
             if not blank? var [unset inside vars var]
         ]
     ]
-    return unmeta any [result' ^void]
+    return unmeta any [result' (meta void)]
 ], ok)
 
 (
@@ -132,7 +132,7 @@
     b: 20
     c: 30
     [a b c]: pack-old [null 99]
-    all [null? a, b = 99, ^c = '~]
+    all [null? a, b = 99, unset? $c]
 )
 
 (
@@ -140,5 +140,5 @@
     b: 20
     c: 30
     [a b c]: pack-old [~null~ 99]
-    all [null? a, b = 99, ^c = '~]
+    all [null? a, b = 99, unset? $c]
 )]

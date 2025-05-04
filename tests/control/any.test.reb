@@ -414,4 +414,4 @@
     ('null = any @[null])  ; just the word, and words are truthy
 ]
 
-(^append = ^(any [1 > 2, :append, 3 > 4]))
+(append/ = any [1 > 2, append/, 3 > 4])

@@ -193,9 +193,7 @@ bind construct [
                                 return raise e
                             ]
                         pending: glom pending spread subpending
-                        return pack [
-                            unmeta result', remainder, subpending
-                        ]
+                        return pack [^result' remainder subpending]
                     ]
                 ]
             ]
@@ -361,7 +359,7 @@ default-combinators: to map! reduce [
             remainder: input  ; succeed on parser fail but don't advance input
             return null
         ]
-        return unmeta result'  ; return successful parser result
+        return ^result'  ; return successful parser result
     ]
 
     'spread combinator [
@@ -411,7 +409,7 @@ default-combinators: to map! reduce [
             return raise "FURTHER rule matched, but did not advance the input"
         ]
         remainder: pos
-        return unmeta result'
+        return ^result'
     ]
 
     === LOOPING CONSTRUCT KEYWORDS ===
@@ -446,7 +444,7 @@ default-combinators: to map! reduce [
             [^result' input]: parser input except [
                 take:last state.loops
                 remainder: input
-                return unmeta result'
+                return ^result'
             ]
         ]
         fail ~<unreachable>~
@@ -462,20 +460,20 @@ default-combinators: to map! reduce [
     ][
         append state.loops binding of $return
 
-        result': ^void
+        ^result': void
 
         cycle [
             [^ input]: condition-parser input except [
                 take:last state.loops
                 remainder: input
-                return unmeta result'
+                return ^result'
             ]
 
             ; We don't worry about the body parser's success or failure, but
             ; if it fails we disregard the result
             ;
             [^result' input]: body-parser input except [
-                result': '~,~
+                ^result': void
                 continue
             ]
         ]
@@ -491,11 +489,11 @@ default-combinators: to map! reduce [
     ][
         append state.loops binding of $return
 
-        result': ^void
+        ^result': void
 
         cycle [
             [^result' input]: parser input except [
-                result': ^trash
+                ^result': ~
                 continue
             ]
         ]
@@ -542,7 +540,7 @@ default-combinators: to map! reduce [
         parser [<end> action!]
         <local> f result'
     ][
-        result': ^trash  ; default `[stop]` returns nothing
+        ^result': ~  ; default `[stop]` returns nothing
         if :parser [  ; parser argument is optional
             [^result' input]: parser input except e -> [
                 return raise e
@@ -554,7 +552,7 @@ default-combinators: to map! reduce [
         ]
 
         f.remainder: input
-        f/return unmeta result'
+        f/return ^result'
     ]
 
    === ACCEPT KEYWORD ===
@@ -586,7 +584,7 @@ default-combinators: to map! reduce [
         ; we can't leave it as unset).  Review.
         ;
         pending: _
-        state/return pack [(unmeta value') pending]
+        state/return pack [^value' pending]
     ]
 
     === INDEX and MEASUREMENT COMBINATORS ===
@@ -673,7 +671,7 @@ default-combinators: to map! reduce [
 
         ; CHANGE returns tail, use as new remainder
         ;
-        remainder: change:part input (unmeta replacement') remainder
+        remainder: change:part ^replacement' remainder
         return ~<change>~
     ]
 
@@ -700,7 +698,7 @@ default-combinators: to map! reduce [
             return raise e
         ]
 
-        remainder: insert input (unmeta insertion')
+        remainder: insert input ^insertion'
         return ~<insert>~
     ]
 
@@ -722,7 +720,7 @@ default-combinators: to map! reduce [
                 continue
             ]
             remainder: input  ; TO means do not include match range
-            return unmeta result'
+            return ^result'
         ]
         fail ~<unreachable>~
     ]
@@ -742,7 +740,7 @@ default-combinators: to map! reduce [
                 input: next input
                 continue
             ]
-            return unmeta result'
+            return ^result'
         ]
         fail ~<unreachable>~
     ]
@@ -954,15 +952,15 @@ default-combinators: to map! reduce [
             return raise e
         ]
 
-        if ^void = subseries [
+        if nihil? ^subseries [
             fail "Cannot SUPBARSE into a void"
         ]
 
-        if quasi? subseries [
+        if antiform? ^subseries [
             fail "Cannot SUBPARSE an antiform synthesized result"
         ]
 
-        subseries: my unquote
+        subseries: ^subseries
 
         case [
             any-series? subseries []
@@ -982,7 +980,7 @@ default-combinators: to map! reduce [
         if match [
             return subseries
         ]
-        return unmeta result'
+        return ^result'
     ]
 
     === COLLECT AND KEEP ===
@@ -1034,15 +1032,11 @@ default-combinators: to map! reduce [
         [^result' remainder pending]: parser input except e -> [
             return raise e
         ]
-        if pack? unmeta result' [  ; KEEP picks first pack item
-            result': (try first unquasi result') else [  ; empty pack, ~[]~
-                fail "Can't KEEP NIHIL"
-            ]
-        ]
-        if void? unmeta result' [
+        if void? ^result' [
             pending: _
-            return void
+            return null
         ]
+        ^result': decay ^result'
 
         ; Since COLLECT is considered the most common `pending` client, we
         ; reserve QUOTED! items for collected things.
@@ -1053,21 +1047,18 @@ default-combinators: to map! reduce [
         ; used instead--though copies of blocks would be needed either way.
         ;
         case [
-            quoted? result' [  ; unmeta'd result asked to be kept literally
+            element? ^result' [
                 pending: glom pending result'  ; retain meta quote as signal
             ]
-            splice? unmeta result' [
+            splice? ^result' [
                 for-each 'item unquasi result' [
-                    ;
-                    ; We quote to signal that this pending item targets COLLECT.
-                    ;
-                    pending: glom pending quote item
+                    pending: glom pending quote item  ; quoteds target COLLECT
                 ]
             ]
             fail "Incorrect KEEP (not value or SPREAD)"
         ]
 
-        return unmeta result'
+        return ^result'
     ]
 
     === ACCUMULATE ===
@@ -1175,7 +1166,7 @@ default-combinators: to map! reduce [
         ; This lets us emit antiforms, since the MAKE OBJECT! evaluates.
         ;
         pending: glom pending reduce [target result']
-        return unmeta result'
+        return ^result'
     ]
 
     === SET-WORD! and SET-TUPLE! COMBINATOR ===
@@ -1201,7 +1192,7 @@ default-combinators: to map! reduce [
 
         [^result' remainder]: parser input except e -> [return raise e]
 
-        return set var unmeta result'
+        return set var ^result'
     ]
 
     'set combinator [
@@ -1387,9 +1378,9 @@ default-combinators: to map! reduce [
         [^result' remainder]: parser input except e -> [
             return raise e
         ]
-        state.env: add-let-binding state.env (unchain vars) unmeta result'
+        state.env: add-let-binding state.env (unchain vars) ^result'
 
-        return unmeta result'
+        return ^result'
     ]
 
     === IN COMBINATOR ===
@@ -1407,7 +1398,7 @@ default-combinators: to map! reduce [
             return raise e
         ]
 
-        return inside state.input unmeta result'
+        return inside state.input ^result'
     ]
 
     === GROUP! AND PHASE COMBINATOR ===
@@ -1463,7 +1454,7 @@ default-combinators: to map! reduce [
             if group? item [eval item, okay]
         ]
 
-        return unmeta result'
+        return ^result'
     ]
 
     === GET-GROUP! COMBINATOR ===
@@ -1519,9 +1510,9 @@ default-combinators: to map! reduce [
         value [get-group?]
         <local> r comb
     ][
-        r: meta eval:undecayed value.2 except e -> [fail e]  ; can't raise [1]
+        ^r: eval:undecayed value.2 except e -> [fail e]  ; can't raise [1]
 
-        if r = ^null [  ; like [:(1 = 0)]
+        if null? ^r [  ; like [:(1 = 0)]
             return raise "GET-GROUP! evaluated to NULL"  ; means no match [2]
         ]
 
@@ -1529,17 +1520,17 @@ default-combinators: to map! reduce [
         remainder: input
 
         any [
-            r = ^okay  ; like [:(1 = 1)]
-            r = '~,~  ; like [:(comment "hi")]
+            okay? ^r  ; like [:(1 = 1)]
+            ghost? ^r  ; like [:(comment "hi")]
         ] then [
             return ~,~  ; invisible
         ]
 
-        if r = ^void [  ; like [:(? if 1 = 0 [...])]
+        if void? ^r [  ; like [:(? if 1 = 0 [...])]
             return void  ; couldn't produce void at all if vaporized [3]
         ]
 
-        r: unmeta r  ; only needed as ^META to check for NIHIL
+        r: ^r  ; only needed as ^META to check for NIHIL
 
         if word? r [
             r: :[r]  ; enable 0-arity combinators [4]
@@ -1668,7 +1659,7 @@ default-combinators: to map! reduce [
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
         comb: (state.combinators).(meta quoted!)
-        return [{~} remainder pending]: run comb state input ^value
+        return [{~} remainder pending]: run comb state input (meta value)
     ]
 
     === ANTIFORM COMBINATORS ===
@@ -1689,7 +1680,7 @@ default-combinators: to map! reduce [
             return ~,~  ; let okay just act as a "guard", no influence
           ]
         ]
-        fail ["Unknown keyword" mold ^value]
+        fail ["Unknown keyword" mold meta value]
     ]
 
     (meta splice!) combinator [
@@ -1710,7 +1701,7 @@ default-combinators: to map! reduce [
         ]
 
         neq?: either state.case [:not-equal?] [:lax-not-equal?]
-        for-each 'item unquasi value [
+        for-each 'item unquasi meta value [
             if neq? remainder.1 item [
                 return raise [
                     "Value at input position didn't match splice element"
@@ -1718,7 +1709,7 @@ default-combinators: to map! reduce [
             ]
             remainder: next remainder
         ]
-        return unmeta value  ; matched splice is result
+        return value  ; matched splice is result
     ]
 
     === BLANK! COMBINATOR ===
@@ -1791,11 +1782,11 @@ default-combinators: to map! reduce [
     ][
         [^times' input]: times-parser input except e -> [return raise e]
 
-        if times' = ^void [  ; VOID-in-NULL-out
+        if void? ^times' [  ; VOID-in-NULL-out
             remainder: input
             return null
         ]
-        switch:type unmeta times' [
+        switch:type ^times' [
             blank! [  ; should blank be tolerated if void is?
                 remainder: input
                 return void  ; `[repeat (_) rule]` is a no-op
@@ -1830,7 +1821,7 @@ default-combinators: to map! reduce [
 
         append state.loops binding of $return
 
-        result': ^void  ; `repeat (0) one` => void intent
+        ^result': void  ; `repeat (0) one` => void intent
 
         count-up 'i max [  ; will count infinitely if max is #
             ;
@@ -1846,13 +1837,13 @@ default-combinators: to map! reduce [
                     return raise "REPEAT did not reach minimum repetitions"
                 ]
                 remainder: input
-                return unmeta result'
+                return ^result'
             ]
         ]
 
         take:last state.loops
         remainder: input
-        return unmeta result'
+        return ^result'
     ]
 
     === TYPE-XXX! COMBINATORS ===
@@ -2025,14 +2016,14 @@ default-combinators: to map! reduce [
             return raise e
         ]
 
-        comb: runs state.combinators.(meta type of decay unmeta result')
+        comb: runs state.combinators.(meta type of decay ^result')
         [^result' remainder subpending]: comb state remainder result'
             except e -> [
                 return raise e
             ]
 
         pending: glom pending spread subpending
-        return unmeta result'
+        return ^result'
     ]
 
     (meta the-block!) combinator compose [  ; match literal block redundant [4]
@@ -2048,14 +2039,14 @@ default-combinators: to map! reduce [
         ]
 
         ensure [quoted! quasiform!] result' ; quasi means antiform [2]
-        comb: runs (state.combinators).(meta type of decay unmeta result')
+        comb: runs (state.combinators).(meta type of decay ^result')
         [^result' remainder subpending]: comb state remainder result'
             except e -> [
                 return raise e
             ]
 
         pending: glom pending spread subpending
-        return unmeta result'
+        return ^result'
     ]
 
     === META-XXX! COMBINATORS ===
@@ -2417,7 +2408,7 @@ default-combinators: to map! reduce [
             ;
             let [parser 'block]: parsify state block
             [^result' remainder pending]: parser input except [continue]
-            return unmeta result'
+            return ^result'
         ]
 
         return raise "All of the parsers in ANY block failed"
@@ -2502,7 +2493,7 @@ default-combinators: to map! reduce [
                 ; successful alternate means the whole block is done.
                 ;
                 remainder: pos
-                return unmeta result'
+                return ^result'
             ]
 
             ; If you hit an inline sequencing operator here then it's the last
@@ -2521,7 +2512,7 @@ default-combinators: to map! reduce [
                 rules: next rules
                 if tail? rules [  ; if at end, act like [elide to <end>]
                     remainder: tail of pos
-                    return unmeta result'
+                    return ^result'
                 ]
                 sublimit: find:part rules [...] limit
 
@@ -2549,7 +2540,7 @@ default-combinators: to map! reduce [
             f.input: pos
 
             if not error? temp: entrap f [
-                [^temp pos subpending]: unmeta temp
+                [^temp pos subpending]: ^temp
                 if unset? $pos [
                     print mold:limit rules 200
                     fail "Combinator did not set remainder"
@@ -2603,7 +2594,7 @@ default-combinators: to map! reduce [
         ]
 
         remainder: pos
-        return unmeta result'
+        return ^result'
     ])
 
     === FAIL COMBINATOR ===
@@ -3101,11 +3092,11 @@ parse*: func [
 
     ; While combinators can vaporize, don't allow PARSE itself to vaporize
     ;
-    if synthesized' = '~,~ [
-        synthesized': ^void
+    if ghost? ^synthesized' [
+        ^synthesized': void
     ]
 
-    return pack [(unmeta synthesized') pending]
+    return pack [^synthesized' pending]
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
@@ -3118,7 +3109,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
         if not empty? pending [
             fail "PARSE completed, but pending list was not empty"
         ]
-        return unmeta synthesized'
+        return ^synthesized'
     ]
 )
 
@@ -3176,14 +3167,14 @@ parse-trace-hook: func [
         print ["RULE:" mold spread copy:part f.rule-start f.rule-end]
     ]
 
-    let result': ^ eval:undecayed f except e -> [
+    let result': meta eval:undecayed f except e -> [
         print ["RESULT': FAIL"]
         return raise e
     ]
 
-    print ["RESULT':" (mold result' else ["NULL"])]
+    print ["RESULT':" @result']
 
-    return unmeta result'
+    return ^result'
 ]
 
 parse-trace: specialize parse/ [hook: parse-trace-hook/]
@@ -3203,7 +3194,7 @@ parse-furthest-hook: func [
         set var remainder
     ]
 
-    return unmeta result'
+    return ^result'
 ]
 
 /parse-furthest: adapt augment parse/ [

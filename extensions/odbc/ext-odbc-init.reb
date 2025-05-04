@@ -206,7 +206,7 @@ sqlform: func [
 
         meta-group! [
             let product': ^ eval as block! value
-            if void? unmeta product' [
+            if void? ^product' [
                 ""
             ] else [
                 as text! unquote product'

@@ -284,9 +284,7 @@ Bounce Stepper_Executor(Level* L)
       case ST_STEPPER_SET_GROUP:
         goto set_group_result_in_spare;
 
-      case ST_STEPPER_SET_WORD:
-      case ST_STEPPER_SET_TUPLE:
-      case ST_STEPPER_SET_VOID:
+      case ST_STEPPER_GENERIC_SET:
         goto generic_set_rightside_in_out;
 
       case ST_STEPPER_SET_BLOCK:
@@ -817,12 +815,12 @@ Bounce Stepper_Executor(Level* L)
                 SPARE, CURRENT, L_binding
             );
             Unchain(Copy_Cell(CURRENT, cast(Element*, SPARE)));
-            STATE = ST_STEPPER_SET_WORD;
+            assert(Is_Word(CURRENT));
             goto handle_generic_set;
 
           case TRAILING_BLANK_AND(TUPLE):  // a.b.c: is a set tuple
             Unchain(CURRENT);
-            STATE = ST_STEPPER_SET_TUPLE;
+            assert(Is_Tuple(CURRENT));
             goto handle_generic_set;
 
           case TRAILING_BLANK_AND(BLOCK):  // [a b]: multi-return assign
@@ -841,7 +839,6 @@ Bounce Stepper_Executor(Level* L)
             );
             Init_Nihil(Evaluator_Primed_Cell(sub));
             Push_Level_Erase_Out_If_State_0(SPARE, sub);
-
             STATE = ST_STEPPER_SET_GROUP;
             return CONTINUE_SUBLEVEL(sub); }
 
@@ -928,8 +925,11 @@ Bounce Stepper_Executor(Level* L)
         if (error)
             return FAIL(unwrap error);
 
-        if (STATE == cast(StepperState, TYPE_META_WORD))
-            Meta_Quotify(OUT);
+        if (STATE == cast(StepperState, TYPE_META_WORD)) {
+            if (not Is_Quoted(OUT) and not Is_Quasiform(OUT))
+                return FAIL("META-WORD! only works on quoted/quasiform");
+            Meta_Unquotify_Undecayed(OUT);
+        }
 
         goto lookahead; }
 
@@ -1095,13 +1095,11 @@ Bounce Stepper_Executor(Level* L)
               case TRAILING_BLANK_AND(WORD):  // /abc: is set actions only
                 Unchain(CURRENT);
                 Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
-                STATE = ST_STEPPER_SET_WORD;
                 goto handle_generic_set;
 
               case TRAILING_BLANK_AND(TUPLE):  // /a.b.c: is set actions only
                 Unchain(CURRENT);
                 Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
-                STATE = ST_STEPPER_SET_TUPLE;
                 goto handle_generic_set;
 
               default:
@@ -1181,10 +1179,9 @@ Bounce Stepper_Executor(Level* L)
 
     handle_generic_set: { ////////////////////////////////////////////////////
         assert(
-            (STATE == ST_STEPPER_SET_WORD and Is_Word(CURRENT))
-            or (STATE == ST_STEPPER_SET_TUPLE and Is_Tuple(CURRENT))
-            or (STATE == ST_STEPPER_SET_VOID and Is_Meta_Of_Nihil(CURRENT))
+            Is_Word(CURRENT) or Is_Tuple(CURRENT) or Is_Meta_Of_Nihil(CURRENT)
         );
+        STATE = ST_STEPPER_GENERIC_SET;
 
         Level* right = Maybe_Rightward_Continuation_Needed(L);
         if (not right)
@@ -1194,45 +1191,45 @@ Bounce Stepper_Executor(Level* L)
 
     } generic_set_rightside_in_out: {  ///////////////////////////////////////
 
-        if (Is_Ghost(OUT))  // even `(void):,` needs to error
+        if (Is_Ghost(OUT)) {  // even `(void):,` needs to error
             return FAIL(Error_Need_Non_End(CURRENT));
-
-        if (STATE == ST_STEPPER_SET_VOID) {
-            // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
         }
         else if (Is_Raised(OUT)) {
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
+            goto lookahead;
         }
-        else {
-            Option(Value*) setval;
-            if (Is_Nihil(OUT))
-                setval = nullptr;
-            else
-                setval = Decay_If_Unstable(OUT);  // !!! packs should passthru
 
-            if (Is_Action(OUT)) {  // !!! Review: When to update labels?
-                if (STATE == ST_STEPPER_SET_WORD)
-                    Update_Frame_Cell_Label(OUT, Cell_Word_Symbol(CURRENT));
-            }
-            else {  // assignments of /foo: or /obj.field: require action
-                if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION))
-                    return FAIL(
-                        "/word: and /obj.field: assignments require Action"
-                    );
-            }
+        if (Is_Meta_Of_Nihil(CURRENT))  // e.g. `(void): ...`
+            goto lookahead;
 
-            if (Set_Var_Core_Throws(  // cheaper on fail vs. Set_Var_May_Fail()
-                SPARE,
-                GROUPS_OK,
-                CURRENT,
-                L_binding,
-                setval
-            )){
-                goto return_thrown;
-            }
+        Option(Value*) setval;
+        if (Is_Nihil(OUT))
+            setval = nullptr;
+        else
+            setval = Decay_If_Unstable(OUT);  // !!! packs should passthru
 
-            L_next_gotten = nullptr;  // cache can tamper with lookahead [1]
+        if (Is_Action(OUT)) {  // !!! Review: When to update labels?
+            if (Is_Word(CURRENT))
+                Update_Frame_Cell_Label(OUT, Cell_Word_Symbol(CURRENT));
         }
+        else {  // assignments of /foo: or /obj.field: require action
+            if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION))
+                return FAIL(
+                    "/word: and /obj.field: assignments require Action"
+                );
+        }
+
+        if (Set_Var_Core_Throws(  // cheaper on fail vs. Set_Var_May_Fail()
+            SPARE,
+            GROUPS_OK,
+            CURRENT,
+            L_binding,
+            setval
+        )){
+            goto return_thrown;
+        }
+
+        L_next_gotten = nullptr;  // cache can tamper with lookahead [1]
 
         goto lookahead; }
 
@@ -1241,7 +1238,6 @@ Bounce Stepper_Executor(Level* L)
         assert(L_current_gotten == nullptr);
 
         if (Is_Nihil(SPARE)) {
-            STATE = ST_STEPPER_SET_VOID;
             Init_Meta_Of_Nihil(CURRENT);  // can't put voids in feed position
             goto handle_generic_set;
         }
@@ -1253,12 +1249,10 @@ Bounce Stepper_Executor(Level* L)
 
           case TYPE_WORD :
             Copy_Cell(CURRENT, cast(Element*, SPARE));
-            STATE = ST_STEPPER_SET_WORD;
             goto handle_generic_set;
 
           case TYPE_TUPLE :
             Copy_Cell(CURRENT, cast(Element*, SPARE));
-            STATE = ST_STEPPER_SET_TUPLE;
             goto handle_generic_set;
 
           default:
@@ -1304,8 +1298,11 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;  // e.g. EXCEPT might want to see raised error
         }
 
-        if (STATE == cast(StepperState, TYPE_META_TUPLE))
-            Meta_Quotify(OUT);
+        if (STATE == cast(StepperState, TYPE_META_TUPLE)) {
+            if (not Is_Quoted(OUT) and not Is_Quasiform(OUT))
+                return FAIL("META-TUPLE! only works on quoted/quasiform");
+            Meta_Unquotify_Undecayed(OUT);
+        }
 
         goto lookahead; }
 

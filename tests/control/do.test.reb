@@ -2,21 +2,21 @@
 
 [
     (ghost? eval:undecayed [])
-    ('~,~ = ^(eval:undecayed []))
+    ('~,~ = meta eval:undecayed [])
 
     (ghost? (eval:undecayed []))
     (3 = (1 + 2 eval:undecayed []))
     (3 = (1 + 2 unmeta ^ eval:undecayed []))
 
     (''30 = ^ (10 + 20 eval:undecayed []))
-    (^void = ^ (10 + 20 eval [void]))
+    ((meta void) = ^ (10 + 20 eval [void]))
     (''30 = ^ (10 + 20 eval:undecayed [comment "hi"]))
     (''30 = ^ (10 + 20 eval:undecayed make frame! func [] [return ~,~]))
 
     (else? eval [null])
     ('~[~null~]~ = ^ eval:undecayed [if okay [null]])
-    (^void = ^ eval:undecayed [if null [<a>]])
-    (^void = ^ eval:undecayed [10 + 20 if null [<a>]])
+    ((meta void) = ^ eval:undecayed [if null [<a>]])
+    ((meta void) = ^ eval:undecayed [10 + 20 if null [<a>]])
 
     (all [
         let x: ~
@@ -26,20 +26,20 @@
 
     (all [
         let x: ~
-        '~,~ = (x: ^(comment "HI") ^ eval:undecayed [comment "HI"])
+        '~,~ = (x: (meta comment "HI") meta eval:undecayed [comment "HI"])
         '~,~ = x
     ])
 
-    ('~,~ = (10 + 20 ^(eval:undecayed [])))
-    ('~,~ = (10 + 20 ^(eval:undecayed [comment "hi"])))
-    (^void = (10 + 20 ^(eval:undecayed make frame! lambda [] [void])))
-    (^null = ^(eval [null]))
-    ('~[~null~]~ = ^(eval:undecayed [if okay [null]]))
+    ('~,~ = (10 + 20 meta (eval:undecayed [])))
+    ('~,~ = (10 + 20 meta (eval:undecayed [comment "hi"])))
+    ((meta void) = (10 + 20 meta (eval:undecayed make frame! lambda [] [void])))
+    (null = ^(meta eval [null]))
+    ('~[~null~]~ = meta (eval:undecayed [if okay [null]]))
 
     (30 = (10 + 20 eval:undecayed []))
     (30 = (10 + 20 eval:undecayed [comment "hi"]))
     (30 = (10 + 20 eval:undecayed make frame! func [] [return ~,~]))
-    (^null = ^(eval:undecayed [null]))
+    (null = ^(meta eval:undecayed [null]))
     ('~[~null~]~ = ^ eval:undecayed [heavy null])
     ('~[~null~]~ = ^ eval:undecayed [if okay [null]])
 
@@ -47,15 +47,15 @@
     ('~,~ = ^ eval:undecayed [])
     ('~,~ = ^ eval:undecayed [comment "hi"])
     ('~,~ = ^ eval:undecayed make frame! func [] [return ~,~])
-    (^void = ^ eval:undecayed [void])
+    ((meta void) = ^ eval:undecayed [void])
 
-    (^null = ^ eval:undecayed [null])
-    (^null = ^(eval:undecayed [null]))
-    (^null = ^ (eval:undecayed [null]))
-    (^null = meta eval:undecayed [null])
+    ((meta null) = ^ eval:undecayed [null])
+    (null = ^(meta eval:undecayed [null]))
+    ((meta null) = ^ (eval:undecayed [null]))
+    ((meta null) = meta eval:undecayed [null])
 
     ('~[~null~]~ = ^ eval:undecayed [heavy null])
-    ('~[~null~]~ = ^(eval:undecayed [heavy null]))
+    ('~[~null~]~ = meta (eval:undecayed [heavy null]))
     ('~[~null~]~ = ^ (eval:undecayed [heavy null]))
     ('~[~null~]~ = meta eval:undecayed [heavy null])
 
@@ -178,7 +178,7 @@
 )
 (0:00 = eval [0:00])
 (0.0.0 = eval [0.0.0])
-(^void = ^ eval [()])
+((meta void) = ^ eval [()])
 ('a = eval ['a])
 
 ; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,

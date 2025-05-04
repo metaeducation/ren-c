@@ -7,7 +7,7 @@
 
 ('~[~null~]~ = ^ if ok [null])
 
-(^null = ^ null)
+((meta null) = ^ null)
 
 ; The comment "Hi" does not vanish and result in a meta of 3...only one step
 ; is taken in evaluating arguments to functions.  You must put invisibles in

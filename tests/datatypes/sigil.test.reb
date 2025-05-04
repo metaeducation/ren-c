@@ -92,7 +92,7 @@
 ; ^ is META
 
     ((@ '3) = ^ 1 + 2)
-    (^null = ^ null)
+    ((meta null) = ^ null)
 
     ~need-non-end~ !! (^)
 

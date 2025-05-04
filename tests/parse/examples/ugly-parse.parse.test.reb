@@ -19,9 +19,9 @@
         value [group?]
         <local> r comb
     ][
-        r: meta eval:undecayed value except e -> [fail e]  ; can't raise
+        ^r: eval:undecayed value except e -> [fail e]  ; can't raise
 
-        if r = ^null [  ; like [:(1 = 0)]
+        if null? ^r [  ; like [:(1 = 0)]
             return raise "GET-GROUP! evaluated to NULL"  ; means no match
         ]
 
@@ -29,17 +29,17 @@
         remainder: input
 
         any [
-            r = ^okay  ; like [:(1 = 1)]
-            r = '~,~  ; like [:(comment "hi")]
+            ^r = okay  ; like [:(1 = 1)]
+            ghost? ^r  ; like [:(comment "hi")]
         ] then [
             return ~,~  ; invisible
         ]
 
-        if r = ^void [  ; like [:(if 1 = 0 [...])]
+        if void? ^r [  ; like [:(if 1 = 0 [...])]
             return void  ; couldn't produce void at all if vaporized
         ]
 
-        r: unmeta r  ; only needed as ^META to check for NIHIL
+        r: ^r  ; only needed as ^META to check for NIHIL
 
         if word? r [
             r: :[r]  ; enable 0-arity combinators

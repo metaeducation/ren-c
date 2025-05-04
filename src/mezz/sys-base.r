@@ -67,21 +67,21 @@ make-quit: lambda [
         result: default [just '0]
         if value [  ; not an exit status integer
             if not console [
-                quit* unmeta result  ; may be raised error
+                quit* ^result  ; may be raised error
             ]
             quit* any [
-                if unraised? unmeta result [0]  ; non-raised is shell success
+                if unraised? ^result [0]  ; non-raised is shell success
                 try (unquasi result).exit-code  ; null if no exit-code field
                 1  ; generic quit signal for all non-exit-code-bearing errors
             ]
         ]
-        let exit-code: unmeta result
-        if not integer? exit-code [
+        if not integer? ^result [
             fail // [
                 "QUIT without :VALUE accepts INTEGER! exit status only"
                 :blame $result
             ]
         ]
+        let exit-code: ^result
         quit* any [
             if console [exit-code]  ; console gives code to shell, not to DO
             if exit-code = 0 [~]  ; suppresses display when given back to DO
@@ -157,7 +157,7 @@ module: func [
             spec.options [~null~ block!]
         ][
             if not (match:meta inside [] types get inside [] var) [
-                fail ["Module" var "must be in" mold types "- not" ^(get var)]
+                fail ["Module" var "must be" mold types "not" @(reify get var)]
             ]
         ]
 

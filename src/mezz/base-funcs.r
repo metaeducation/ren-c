@@ -326,7 +326,7 @@ specialized?: func [
 ](
     enclose match/ func [f] [
         eval f then [return null]
-        if f.meta [return ^f.value]
+        if f.meta [return meta :f.value]
         return :f.value
     ]
 )
@@ -480,13 +480,11 @@ count-up: func [
         result': ^ cfor (var) start end 1 body except e -> [
             return raise e
         ]
-        if result' = ^null [return null]  ; a BREAK was encountered
-        if result' = ^void [
-            assert [start = end]  ; should only happen if body never runs
-            return ^void
+        if null? ^result' [
+            return null  ; a BREAK was encountered
         ]
         if limit <> # [  ; Note: :WITH not ^META, decays PACK! etc
-            stop:with heavy unmeta result'  ; the limit was actually reached
+            stop:with heavy ^result'  ; the limit was actually reached
         ]
         ; otherwise keep going...
         end: end + 100

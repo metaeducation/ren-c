@@ -299,12 +299,6 @@ wrap: identity/  ; no op in bootstrap
 
 in: ~<Use HAS or OVERBIND instead of IN in bootstrap>~
 
-; Tricky way of getting simple non-definitional break extraction that looks
-; like getting a definitional break.
-;
-set '^break does [does [break/]]
-set '^continue does [does [continue/]]
-
 quote: lambda3 [x [any-value!]] [  ; see the more general UNEVAL
     switch type of x [
         word! [to lit-word3! x]  ; to lit-word! not legal in new EXE

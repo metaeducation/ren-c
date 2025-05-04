@@ -42,7 +42,7 @@
 (
     for-each 'w words of lib [
         dump w
-        if quasi? ^(get:any w) [continue]
+        if quasi? (meta get:any w) [continue]
         if action? get w
             (compose:deep [assert [trash? source (w)]])
     ]

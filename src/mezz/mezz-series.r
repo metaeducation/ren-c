@@ -101,17 +101,17 @@ replace: func [
     return: [any-series?]
     target "Series to replace within (modified)"
         [any-series?]
-    pattern "Value to be replaced (converted if necessary)"
-        [~void~ element? splice! action!]
-    replacement "Value to replace with (called each time if action)"
-        [~void~ element? splice! action!]
+    ^pattern "Value to be replaced (converted if necessary)"
+        [~[]~ element? splice!]
+    ^replacement "Value to replace with (called each time if action)"
+        [~[]~ element? splice! action!]
 
     :one "Replace one (or zero) occurrences"
     :case "Case-sensitive replacement"  ; !!! Note this aliases CASE native!
 
     <local> value' pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
 ][
-    if void? get $pattern [return target]
+    if void? ^pattern [return target]  ; could fall thru, but optimize...
 
     let case_REPLACE: case
     case: lib.case/
@@ -120,10 +120,10 @@ replace: func [
 
     while [[pos :tail]: find // [
         pos
-        get $pattern
+        ^pattern
         :case case_REPLACE
     ]][
-        if action? get $replacement [
+        if action? ^replacement [
             ;
             ; If arity-0 action, pos and tail discarded
             ; If arity-1 action, pos will be argument to replacement
@@ -132,12 +132,12 @@ replace: func [
             ; They are passed as const so that the replacing function answers
             ; merely by providing the replacement.
             ;
-            value': ^ apply:relax replacement/ [const pos, const tail]
+            ^value': apply:relax ^replacement [const pos, const tail]
         ] else [
-            value': ^ replacement  ; inert value, might be null
+            ^value': ^replacement  ; might be void
         ]
 
-        pos: change:part pos (unmeta value') tail
+        pos: change:part pos ^value' tail
 
         if one [break]
     ]
@@ -493,9 +493,9 @@ split: func [
     return: [~null~ block!]
     series "The series to split"
         [<maybe> any-series?]
-    dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
+    ^dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
         [
-            ~void~  ; just return input
+            ~[]~  ; just return input
             block!  ; parse rule
             the-block!  ; list of integers for piece lengths
             integer!  ; length of pieces (or number of pieces if /INTO)
@@ -507,16 +507,10 @@ split: func [
         ]
     :into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    if (void? dlm) or ('~void~ = dlm) [
+    if void? ^dlm [
         return reduce [series]
     ]
-
-    if quasi? dlm [
-        if not splice? unmeta dlm [
-            fail "SPLIT only allows QUASIFORM! of SPLICE?! or VOID"
-        ]
-        dlm: unmeta dlm
-    ]
+    dlm: unmeta dlm
 
     if splice? dlm [
         fail "SPLIT on SPLICE?! would need UPARSE, currently based on PARSE3"

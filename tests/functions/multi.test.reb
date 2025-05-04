@@ -213,8 +213,8 @@
         all wrap [
             [{^e} n]: pack* [1 / 0, 1 + 0]
             n = 1
-            raised? unmeta e
-            'zero-divide = (noquasi e).id
+            raised? ^e
+            'zero-divide = (unquasi e).id
         ]
     )
 ]
@@ -250,7 +250,7 @@
     (
         x: ~
         [:^x]: null
-        x = ^null
+        x = (meta null)
     )
     (
         x: ~

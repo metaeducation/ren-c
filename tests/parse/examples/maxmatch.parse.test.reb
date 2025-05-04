@@ -37,11 +37,11 @@
                 (index of remainder1) < (index of remainder2)
             ] then [
                 remainder: remainder2
-                return unmeta result2'
+                return ^result2'
             ]
         ]
         remainder: remainder1
-        return unmeta result1'
+        return ^result1'
     ]
     ok
 )
@@ -217,12 +217,12 @@
             ] then [
                 remainder: remainder2
                 pending: pending2
-                return unmeta result2'
+                return ^result2'
             ]
         ]
         remainder: remainder1
         pending: pending1
-        return unmeta result1'
+        return ^result1'
     ]
     ok
 )

@@ -212,39 +212,39 @@ help-value: func [
         name: uppercase form name
     ]
 
-    if quasiform? atom' [
-        let heart: heart of atom'
-        let antitype: switch heart [  ; !!! should come from %types.r
-            blank! ["trash"]
-            tag! ["tripwire"]
-            word! ["keyword"]
-            group! ["splice"]
-            frame! ["action"]
-            block! ["pack"]
-            comma! ["ghost"]
-            error! ["raised"]
-            object! ["lazy"]
+    case [  ; !!! should come from %types.r
+        trash? ^atom' ['trash!]
+        tag? ^atom' ['tripwire!]
+        keyword? ^atom' ['keyword!]
+        splice? ^atom' ['splice!]
+        action? ^atom' ['action]
+        pack? ^atom' ['pack!]
+        ghost? ^atom' ['ghost!]
+        raised? ^atom' ['raised!]
 
-            fail "Invalid Antiform Heart Found - Please Report"
+        antiform? ^atom' [
+            fail "Invalid Antiform Heart Found, Please Report:" @atom'
         ]
+    ] then antitype -> [
+        let heart: reify heart of atom'
         print [
-            (maybe name) "is" (an antitype) ["(antiform of" _ (mold heart) ")"]
+            (maybe name) "is" (an antitype) ["(antiform of" _ @(heart) ")"]
         ]
         if free? atom' [
             print "!!! contents no longer available, as it has been FREE'd !!!"
             return ~
         ]
-        if action? unmeta atom' [
-            help-action unmeta atom'
+        if action? ^atom' [
+            help-action ^atom'
             return ~
         ]
         let [molded truncated]: mold:limit atom' 2000  ; quasiform
-        print unspaced [molded (if truncated ["..."]) _ _ "; anti"]
+        print unspaced [molded (? if truncated ["..."]) _ _ "; anti"]
         return ~
     ]
 
     let value: unmeta atom'
-    atom': ~
+    atom': ~<antiform HELP already handled>~
 
     print [maybe name "is an element of type" to word! type of value]
     if free? value [

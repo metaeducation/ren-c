@@ -42,8 +42,8 @@
 (
     x: <overwritten>
     all [
-        ^void = ^ x: eval []
-        ^void = ^x
+        (meta void) = ^ x: eval []
+        void? ^(meta x)
     ]
 )
 (
@@ -63,10 +63,10 @@
 
     (void? foo)
 
-    (^void = ^ applique foo/ [])
+    ((meta void) = ^ applique foo/ [])
     (void? applique foo/ [])
 
-    (^void = ^ eval foo/)
+    ((meta void) = ^ eval foo/)
     (void? eval foo/)
 
     (void? eval foo/)
@@ -77,13 +77,13 @@
 
     (trash? foo)
 
-    (^trash = ^ applique foo/ [])
+    ((meta trash) = meta applique foo/ [])
     (trash? applique foo/ [])
 
-    (^trash = ^ eval foo/)
+    ((meta trash) = meta eval foo/)
     (trash? eval foo/)
 
-    (^trash = ^ eval foo/)
+    ((meta trash) = meta eval foo/)
 ]
 
 ; Explicit return of VOID
@@ -91,7 +91,7 @@
     (did foo: func [return: [any-value?]] [return void])
 
     (void? foo)
-    (^void = ^ foo)
+    ((meta void) = ^ foo)
 
     (void? (1 + 2 foo))
 ]
@@ -118,11 +118,11 @@
 
 [(
     foo: func [return: [~]] []
-    ^trash = ^ foo
+    (meta trash) = meta foo
 )(
     data: [a b c]
     f: func [return: [~]] [append data spread [1 2 3]]
-    ^trash = ^ f
+    (meta trash) = meta f
 )]
 
 ; locals are unset before they are assigned
@@ -213,7 +213,7 @@
 
 (
     a: ~okay~
-    ^a = '~okay~
+    (meta a) = '~okay~
 )
 (
     a: ~

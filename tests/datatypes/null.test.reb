@@ -40,18 +40,18 @@
 ; out of null and void and passes everything else through.  But it's what it
 ; was called, in line with the idea of "heavy isotopes".
 [
-    (^null = ^ null)
+    ((meta null) = ^ null)
     ('~[~null~]~ = ^ heavy null)
 
     (x: heavy 10, 10 = x)
-    (x: heavy null, ^null = ^ x)
-    (x: heavy null, ^null = ^ :x)
+    (x: heavy null, (meta null) = ^ x)
+    (x: heavy null, (meta null) = ^ :x)
 
     (304 = (null then [1020] else [304]))
     (1020 = (heavy null then [1020] else [304]))
 
-    (^null = meta light heavy null)
-    (^void = meta light heavy void)
+    ((meta null) = meta light heavy null)
+    ((meta void) = meta light heavy void)
 ]
 
 ; Conditionals return NULL on failure, and ~[~null~]~ antiform on a branch that
@@ -64,13 +64,13 @@
     ~illegal-keyword~ !! (if ok [~asdf~])  ; not all keywords legal
     (''~asdf~ = ^ if ok ['~asdf~])  ; but okay as quasiforms
 
-    (^void <> ^ ~()~)
-    (not ^void = first [~()~])
-    (not ^void = ^ 'void)
+    ((meta void) <> ^ ~()~)
+    (not (meta void) = first [~()~])
+    (not (meta void) = ^ 'void)
 
     ('~null~ = if ok ^[null])
     ('~[~null~]~ = if ok ^[heavy null])
-    (^void = if ok ^[])
+    ((meta void) = if ok ^[])
 
     ~illegal-keyword~ !! (if ok ^[~asdf~])
     (''~asdf~ = if ok ^['~asdf~])

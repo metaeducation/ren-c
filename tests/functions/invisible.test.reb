@@ -8,10 +8,10 @@
 (nihil? (comment "a"))
 
 ('~,~ = (meta comment "a"))
-((quote '~,~) = ^(^ comment "a"))
+((quote '~,~) = meta (meta comment "a"))
 
 ('~,~ = meta eval:undecayed [comment "a"])
-((quote '~,~) = ^(^ eval:undecayed [comment "a"]))
+((quote '~,~) = meta (meta eval:undecayed [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be infix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -319,8 +319,8 @@
     (<kept> obj.x:,)
 )
 
-('~[~void~]~ = ^ (if ok [] else [<else>]))
-('~[~void~]~ = ^(if ok [comment <true-branch>] else [<else>]))
+('~[]~ = meta (if ok [] else [<else>]))
+('~[]~ = meta (if ok [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <vaporize>])
 (1 = any [1 elide <vaporize>])
@@ -408,7 +408,7 @@
     )
 ]
 
-(^void = ^ void)
+((meta void) = ^ void)
 
 ~no-value~ !! (
     1 + 2 (comment "stale") + 3

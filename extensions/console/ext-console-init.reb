@@ -127,7 +127,7 @@ export console!: make object! [
         ; this nuance in the display...but for now we just form it, because
         ; it looks ugly to show the molded antiform object.
 
-        if raised? unmeta v [
+        if raised? ^v [
             print form unquasi v
             return ~
         ]
@@ -139,11 +139,14 @@ export console!: make object! [
         ; was in a pack.  This hints the user to do a ^META on the value to
         ; see the complete pack.
         ;
-        ; 0-length packs (~[]~ antiform, a.k.a. "nihil") are passed through to
-        ; the regular antiform molding.
+        ; 0-length packs (~[]~ antiform, a.k.a. "void") mold like antiforms.
 
-        if (pack? unmeta v) and (0 <> length of unquasi v) [
+        if pack? ^v [
             v: unquasi v
+            if 0 = length of v [  ; mold like a regular antiform, for now
+                print unspaced [result _ "~[]~" _ _ ";" _ "anti"]
+                return ~
+            ]
 
             for-each 'item v [
                 any [quoted? item, quasi? item] else [
@@ -174,7 +177,7 @@ export console!: make object! [
         ;
         ; https://forum.rebol.info/t/console-treatment-of-void-vs-trash/2045
 
-        if v = ^trash [
+        if trash? ^v [
             return ~
         ]
 

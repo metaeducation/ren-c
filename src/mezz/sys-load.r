@@ -425,7 +425,7 @@ bind construct [
         ; should maybe ban it as well (or at least make it inconvenient).  But
         ; do it for the moment since that is how it has worked in the past.
         ;
-        assert [pack? unmeta atom]
+        assert [pack? ^atom]
         if where [
             let mod: ensure module! unquote first unquasi atom
             let exports: select (maybe adjunct-of mod) 'exports
@@ -619,7 +619,7 @@ bind construct [
 
     importing-remotely: old-importing-remotely
 
-    return pack* [mod 'executed (unmeta product')]  ; PACK* for raised errors
+    return pack* [mod 'executed ^product']  ; PACK* for raised errors
 ]
 
 
@@ -647,10 +647,10 @@ export*: func [
         if set-group? what [
             what: ^ eval what
             case [
-                ^void = what [word: null]
-                word? unmeta what [word: unmeta what]
-                set-word? unmeta what [word: unchain unmeta what]
-                set-run-word? unmeta what [word: unchain unpath unmeta what]
+                nihil? ^what [word: null]
+                word? ^what [word: ^what]
+                set-word? ^what [word: unchain ^what]
+                set-run-word? ^what [word: unchain unpath ^what]
                 fail "EXPORT of SET-GROUP! must be VOID, WORD! or SET-WORD?"
             ]
         ] else [

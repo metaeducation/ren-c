@@ -67,14 +67,14 @@
     (void? parse "" [repeat 0 one])
 
     (void? parse "a" ["a" repeat (0) "b"])
-    (^void = parse "a" ["a" ^[repeat (0) "b"]])
+    (void? parse "a" ["a" ^[meta repeat (0) "b"]])
 
     ("a" = parse "a" ["a" /elide-if-void repeat 0 "b"])
     (
         x: ~
         all [
-            ^void = parse "a" ["a" x: ^[repeat 0 "b"]]
-            ^void = x
+            ??? = parse "a" ["a" x: ^[repeat 0 "b"]]
+            ??? = x
         ]
     )
 

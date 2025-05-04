@@ -51,7 +51,7 @@
     ]
 )
 
-(^void = ^ every 'x [] [fail ~<unreachable>~])
+((meta void) = ^ every 'x [] [fail ~<unreachable>~])
 
 
 ('~[~void~]~ = ^ every 'x [1 2 3 4] [maybe if odd? x [x]])

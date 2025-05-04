@@ -116,7 +116,7 @@
             m.throw: :throw
             m/eval [1 + 2]
         ]
-        ^eval = ^eval-before
+        eval/ = eval-before/
     ]
 )
 

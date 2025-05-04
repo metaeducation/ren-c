@@ -20,7 +20,7 @@ destructure: func [
     dialect [block!]
     :multi "Run multiple branches"
 ][
-    let result': ^void
+    let result': meta void
     let combinators: copy default-combinators
     parse dialect [while [not <end>] [
         let set-word: *in* set-word?/, let rule: *in* block! (
@@ -33,7 +33,7 @@ destructure: func [
                 branch
             ) also ^r' -> [
                 if not multi [
-                    return unmeta r'
+                    return ^r'
                 ]
                 result': r'
             ]
@@ -41,5 +41,5 @@ destructure: func [
         |
         fail "Invalid DESTRUCTURE dialect entry"
     ]]
-    return unmeta result'
+    return ^result'
 ]
