@@ -899,8 +899,8 @@ DECLARE_NATIVE(TYPECHECKER)
 //          [any-value?]
 //      test [block! datatype! parameter! action!]
 //      value "If not :META, NULL values illegal (null return is no match)"
-//          [any-value?]
-//      :meta "Return the ^^META result (allows checks on NULL and VOID)"
+//          [<maybe> any-value?]
+//      :meta "Return the ^^META result (allows checks on NULL)"
 //  ]
 //
 DECLARE_NATIVE(MATCH)
@@ -925,29 +925,17 @@ DECLARE_NATIVE(MATCH)
 {
     INCLUDE_PARAMS_OF_MATCH;
 
-    Value* v = ARG(VALUE);
     Value* test = ARG(TEST);
 
+    Copy_Cell(SPARE, ARG(VALUE));
+
     if (not Bool_ARG(META)) {
-        if (Is_Nulled(v))
-            return FAIL(Error_Need_Non_Null_Raw());  // [1]
-    }
-
-    if (Is_Nulled(test)) {
-        if (not Bool_ARG(META))
-            return FAIL(
-                "Can't give coherent answer for NULL matching without /META"
-            );
-
-        if (Is_Nulled(v))
-            return Init_Meta_Of_Null(OUT);
-
-        return Init_Nulled(OUT);
+        if (Is_Nulled(SPARE))
+            return RAISE(Error_Need_Non_Null_Raw());  // [1]
     }
 
     switch (Type_Of(test)) {
       case TYPE_ACTION:
-        Copy_Cell(SPARE, v);
         if (not Typecheck_Spare_With_Predicate_Uses_Scratch(
             LEVEL, test, Cell_Frame_Label(test)
         )){
@@ -959,7 +947,6 @@ DECLARE_NATIVE(MATCH)
       case TYPE_PARAMETER:
       case TYPE_BLOCK:
       case TYPE_DATATYPE:
-        Copy_Cell(SPARE, v);
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
             return nullptr;
         break;
@@ -971,10 +958,7 @@ DECLARE_NATIVE(MATCH)
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
-    if (Is_Void(v) and not Bool_ARG(META))  // not good for void-in-null-out
-        return FAIL("~void~ antiform needs MATCH:META if in set being tested");
-
-    Copy_Cell(OUT, v);
+    Copy_Cell(OUT, SPARE);
 
     if (Bool_ARG(META))
         Meta_Quotify(OUT);

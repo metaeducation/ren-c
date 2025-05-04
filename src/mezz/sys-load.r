@@ -676,7 +676,7 @@ export*: func [
         ; !!! notation for exporting antiforms?
         items: next items
 
-        (types: match block! maybe try items.1) then [
+        (types: match block! maybe items.1) then [
             (match types val) else [
                 fail [
                     "EXPORT expected" word "to be in" @types

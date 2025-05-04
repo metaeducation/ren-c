@@ -216,25 +216,26 @@ DECLARE_NATIVE(MACRO)
 //  "Inject a list of content into the execution stream, or single value"
 //
 //      return: [any-value?]
-//      code "If quoted single value, if void no insertion (e.g. invisible)"
-//          [~void~ block! quoted!]
+//      ^code "If quoted single value, if void no insertion (e.g. invisible)"
+//          [~[]~ block! quoted!]
 //  ]
 //
 DECLARE_NATIVE(INLINE)
 {
     INCLUDE_PARAMS_OF_INLINE;
 
-    Value* code = ARG(CODE);
-    if (Is_Void(code)) {
-        // do nothing, just return invisibly
-    }
-    else if (Is_Quoted(code)) {
+    Option(const Element*) opt_code = Optional_Element_ARG(CODE);
+    if (not opt_code)
+        return NIHIL;  // do nothing, just return invisibly
+    const Element* code = unwrap opt_code;
+
+    if (Is_Quoted(code)) {
         //
         // This could probably be done more efficiently, but for now just
         // turn it into a block.
         //
         Source* a = Alloc_Singular(FLEX_MASK_UNMANAGED_SOURCE);
-        Unquotify(Move_Cell(Stub_Cell(a), cast(Element*, code)));
+        Unquotify(Copy_Cell(Stub_Cell(a), code));
         Init_Block(code, a);
         Splice_Block_Into_Feed(level_->feed, ARG(CODE));
     }

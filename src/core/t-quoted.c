@@ -402,8 +402,8 @@ DECLARE_NATIVE(UNMETA_P)
 //  "Make block arguments splice"
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
-//          [~null~ ~void~ element? splice!]
-//      value [~null~ ~void~ blank! any-list? quasiform!]  ; see [1] [2] [3]
+//          [~null~ ~[]~ element? splice!]
+//      ^value [~null~ ~[]~ blank! any-list? quasiform!]  ; see [1] [2] [3]
 //  ]
 //
 DECLARE_NATIVE(SPREAD)
@@ -418,7 +418,7 @@ DECLARE_NATIVE(SPREAD)
 //
 // 2. Generally speaking, functions are not supposed to conflate quasiforms
 //    with their antiforms.  But it seems like being willing to DEGRADE a
-//    ~void~ or a ~null~ here instead of erroring helps more than it hurts.
+//    ~[]~ or a ~null~ here instead of erroring helps more than it hurts.
 //    Should it turn out to be bad for some reason, this might be dropped.
 //
 // 3. BLANK! is considered EMPTY? and hence legal to use with spread.  It
@@ -430,7 +430,10 @@ DECLARE_NATIVE(SPREAD)
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
-    Value* v = ARG(VALUE);
+    Option(const Value*) opt_v = Optional_ARG(VALUE);
+    if (not opt_v or Is_Meta_Of_Nihil(unwrap opt_v))  // quasi ok [2]
+        return NIHIL;  // pass through [1]
+    const Value* v = unwrap opt_v;
 
     if (Any_List(v)) {  // most common case
         Copy_Cell(OUT, v);
@@ -444,15 +447,12 @@ DECLARE_NATIVE(SPREAD)
     }
 
     if (Is_Blank(v))
-        return Init_Void(OUT);  // empty array makes problems for GLOM [3]
-
-    if (Is_Void(v))
-        return Init_Void(OUT);  // pass through [1]
+        return NIHIL;  // immutable empty array makes problems for GLOM [3]
 
     if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]
         return Init_Nulled(OUT);  // pass through [1]
 
-    return FAIL(v);
+    return FAIL(PARAM(VALUE));
 }
 
 

@@ -321,7 +321,7 @@ DECLARE_NATIVE(THEN)
 //          [any-atom?]
 //      ^atom "<deferred argument> Run branch if this is null"
 //          [any-atom?]
-//      @(branch) [<unrun> ~void~ any-branch?]
+//      @(branch) [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(ELSE)

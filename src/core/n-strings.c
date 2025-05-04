@@ -110,8 +110,8 @@ DECLARE_NATIVE(LATIN1_Q)
 //      return: "Null if no base element and no material in rest to join"
 //          [~null~ any-utf8? any-list? any-sequence? blob!]
 //      base [datatype! any-utf8? any-list? any-sequence? blob!]
-//      rest "Plain [...] blocks reduced, @[...] block items used as is"
-//          [~void~ block! the-block! any-utf8? blob! integer!]
+//      ^rest "Plain [...] blocks reduced, @[...] block items used as is"
+//          [~[]~ block! the-block! any-utf8? blob! integer!]
 //      :with [element? splice!]
 //      :head "Include delimiter at head of a non-NULL result"
 //      :tail "Include delimiter at tail of a non-NULL result"
@@ -137,9 +137,7 @@ DECLARE_NATIVE(JOIN)
     }
     bool joining_datatype = not base;  // compiler should optimize out
 
-    Option(Element*) rest = Is_Void(ARG(REST))
-        ? nullptr
-        : Element_ARG(REST);
+    Option(const Element*) rest = Optional_Element_ARG(REST);
 
     Value* original_index = LOCAL(ORIGINAL_INDEX);
 

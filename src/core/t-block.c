@@ -1343,25 +1343,25 @@ IMPLEMENT_GENERIC(SORT, Any_List)
 //  "If a value isn't already a BLOCK!, enclose it in a block, else return it"
 //
 //      return: [block!]
-//      value "VOID input will produce an empty block"
-//          [~void~ element?]
+//      ^value "VOID input will produce an empty block"
+//          [~[]~ element?]
 //  ]
 //
 DECLARE_NATIVE(BLOCKIFY)
 {
     INCLUDE_PARAMS_OF_BLOCKIFY;
 
-    Value* v = ARG(VALUE);
-    if (Is_Block(v))
-        return COPY(v);
+    Option(const Element*) v = Optional_Element_ARG(VALUE);
+    if (v and Is_Block(unwrap v))
+        return COPY(unwrap v);
 
     Source* a = Make_Source_Managed(1);
 
-    if (Is_Void(v)) {
+    if (not v) {
         // leave empty
     } else {
         Set_Flex_Len(a, 1);
-        Copy_Cell(Array_Head(a), cast(Element*, v));
+        Copy_Cell(Array_Head(a), unwrap v);
     }
     return Init_Block(OUT, Freeze_Source_Shallow(a));
 }
@@ -1373,25 +1373,25 @@ DECLARE_NATIVE(BLOCKIFY)
 //  "If a value isn't already a GROUP!, enclose it in a group, else return it"
 //
 //      return: [group!]
-//      value "VOID input will produce an empty group"
-//          [~void~ element?]
+//      ^value "VOID input will produce an empty group"
+//          [~[]~ element?]
 //  ]
 //
 DECLARE_NATIVE(GROUPIFY)
 {
     INCLUDE_PARAMS_OF_GROUPIFY;
 
-    Value* v = ARG(VALUE);
-    if (Is_Group(v))
-        return COPY(v);
+    Option(const Element*) v = Optional_Element_ARG(VALUE);
+    if (v and Is_Group(unwrap v))
+        return COPY(unwrap v);
 
     Source* a = Make_Source_Managed(1);
 
-    if (Is_Void(v)) {
+    if (not v) {
         // leave empty
     } else {
         Set_Flex_Len(a, 1);
-        Copy_Cell(Array_Head(a), cast(Element*, v));
+        Copy_Cell(Array_Head(a), unwrap v);
     }
     return Init_Group(OUT, Freeze_Source_Shallow(a));
 }
@@ -1405,8 +1405,8 @@ DECLARE_NATIVE(GROUPIFY)
 //      return: [any-list?]
 //      example "Example's binding (or lack of) will be used"
 //          [datatype! any-list?]
-//      content "Void input is treated the same as an empty splice"
-//          [~void~ element? splice!]
+//      ^content "Void input is treated the same as an empty splice"
+//          [~[]~ element? splice!]
 //  ]
 //
 DECLARE_NATIVE(ENVELOP)
@@ -1416,7 +1416,7 @@ DECLARE_NATIVE(ENVELOP)
     INCLUDE_PARAMS_OF_ENVELOP;
 
     Value* example = ARG(EXAMPLE);
-    Value* content = ARG(CONTENT);
+    Option(const Value*) content = Optional_ARG(CONTENT);
 
     Element* copy;
 
@@ -1431,8 +1431,10 @@ DECLARE_NATIVE(ENVELOP)
 
     Length len;
     if (
-        Is_Void(content)
-        or (Is_Splice(content) and (Cell_List_Len_At(&len, content), len == 0))
+        not content or (
+            Is_Splice(unwrap content)
+            and (Cell_List_Len_At(&len, unwrap content), len == 0)
+        )
     ){
         return copy;
     }
@@ -1442,7 +1444,7 @@ DECLARE_NATIVE(ENVELOP)
         const Element* tail;
         Element* at = Cell_List_At_Known_Mutable(&tail, temp);
         if (at == tail) {  // empty list, just append
-            rebElide(CANON(APPEND), rebQ(temp), rebQ(content));
+            rebElide(CANON(APPEND), rebQ(temp), rebQ(unwrap content));
             return copy;
         }
         if (Any_List(at)) {  // content should be inserted deeper
@@ -1450,7 +1452,7 @@ DECLARE_NATIVE(ENVELOP)
             continue;
         }
         VAL_INDEX_UNBOUNDED(temp) += 1;  // just skip first item
-        rebElide(CANON(INSERT), rebQ(temp), rebQ(content));
+        rebElide(CANON(INSERT), rebQ(temp), rebQ(unwrap content));
         VAL_INDEX_UNBOUNDED(temp) -= 1;  // put back if copy = temp for head
         return copy;
     }
@@ -1464,101 +1466,116 @@ DECLARE_NATIVE(ENVELOP)
 //
 //      return: [blank! block!]
 //      accumulator [blank! block!]
-//      result [~void~ element? splice!]
+//      ^value [~[]~ element? splice!]
 //  ]
 //
 DECLARE_NATIVE(GLOM)
 //
 // GLOM was designed to bubble up `pending` values (e.g. collected values) in
 // UPARSE, which are lists...but often they will be empty.  So creating lots of
-// empty blocks was undesirable.  So having the accumulators start at null
+// empty blocks was undesirable.  So having the accumulators start at blank
 // and be willing to start by taking over a bubbled up BLOCK! was desirable.
 //
 // https://forum.rebol.info/t/efficient-consuming-append-like-operator-glom/1647
+//
+// !!! This logic is repeated in APPEND etc.  It should be factored out.
+//
+// 1. If the accumulator or result are blocks, there's no guarantee they are
+//    at the head.  VAL_INDEX() might be nonzero.  GLOM could prohibit that or
+//    just take advantage of it if it's expedient (e.g. avoid a resize by
+//    moving the data within an array and returning a 0 index).
 {
     INCLUDE_PARAMS_OF_GLOM;
 
-    // NOTE: if the accumulator or result are blocks, there's no guarantee they
-    // are at the head.  VAL_INDEX() might be nonzero.  GLOM could prohibit
-    // that or just take advantage of it if it's expedient (e.g. avoid a
-    // resize by moving the data within an array and returning a 0 index).
+    Value* accumulator = ARG(ACCUMULATOR);  // may not be at head [1]
 
-    Value* accumulator = ARG(ACCUMULATOR);
-    Value* result = ARG(RESULT);
-
-    // !!! This logic is repeated in APPEND etc.  It should be factored out.
-    //
-    bool splice = false;
-
-    if (Is_Void(result))
+    Option(const Value*) opt_value = Optional_ARG(VALUE);
+    if (
+        not opt_value
+        or (
+            Is_Splice(unwrap opt_value)
+            and Cell_Series_Len_At(unwrap opt_value) == 0
+        )
+    ){
         return COPY(accumulator);
+    }
+    const Value* value = unwrap opt_value;  // may not be at head [1]
 
-    if (Is_Splice(result)) {
-        splice = true;
-        assert(HEART_BYTE(result) == TYPE_GROUP);
-        HEART_BYTE(result) = TYPE_BLOCK;  // interface is for blocks
-        QUOTE_BYTE(result) = NOQUOTE_1;
+    if (Is_Block(accumulator))
+        goto handle_block_accumulator;
+
+  handle_blank_accumulator: { ////////////////////////////////////////////////
+
+    assert(Is_Blank(accumulator));
+
+    if (Is_Splice(value)) {  // see note: index may be nonzero
+        Copy_Cell(OUT, value);
+        QUOTE_BYTE(OUT) = NOQUOTE_1;
+        HEART_BYTE(OUT) = TYPE_BLOCK;
+        return OUT;
     }
 
-    if (Is_Blank(accumulator)) {
-        if (splice)  // it was a non-quoted block initially
-            return COPY(result);  // see note: index may be nonzero
+    Source* a = Make_Source_Managed(1);
+    Set_Flex_Len(a, 1);
+    Copy_Cell(Array_Head(a), c_cast(Element*, value));
+    return Init_Block(OUT, a);
 
-        Source* a = Make_Source_Managed(1);
-        Set_Flex_Len(a, 1);
-        Copy_Cell(Array_Head(a), cast(Element*, result));  // not void / splice
-        return Init_Block(OUT, a);
-    }
+} handle_block_accumulator: { ////////////////////////////////////////////////
 
     assert(Is_Block(accumulator));
     Source* a = Cell_Array_Ensure_Mutable(accumulator);
 
-    if (not splice) {
-        //
-        // Here we are just appending one item.  We don't do anything special
-        // at this time, but we should be willing to return VAL_INDEX()=0 and
-        // reclaim any bias or space at the head vs. doing an expansion.  In
-        // practice all GLOM that exist for the moment will be working on
-        // series that are at their head, so this won't help.
-        //
-        Copy_Cell(Alloc_Tail_Array(a), cast(Element*, result));
-    }
-    else {
-        // We're appending multiple items from result.  But we want to avoid
-        // allocating new arrays if at all possible...and we are fluidly
-        // willing to promote the result array to be the accumulator if that
-        // is necessary.
-        //
-        // But in the interests of time, just expand the target array for now
-        // if necessary--work on other details later.
-        //
-        Array* r = Cell_Array_Ensure_Mutable(result);
-        Length a_len = Array_Len(a);
-        Length r_len = Array_Len(r);
-        Expand_Flex_Tail(a, r_len);  // can move memory, get `at` after
-        Element* dst = Array_At(a, a_len);  // old tail position
-        Element* src = Array_Head(r);
+    if (Is_Splice(value))
+        goto append_many_items;
 
-        REBLEN index;
-        for (index = 0; index < r_len; ++index, ++src, ++dst)
-            Copy_Cell(dst, src);
+  append_one_item: { /////////////////////////////////////////////////////////
 
-        assert(Array_Len(a) == a_len + r_len);  // Expand_Flex_Tail sets
+    // Here we are just appending one item.  We don't do anything special
+    // at this time, but we should be willing to return VAL_INDEX()=0 and
+    // reclaim any bias or space at the head vs. doing an expansion.  In
+    // practice all GLOM that exist for the moment will be working on
+    // series that are at their head, so this won't help.
 
-     #if DEBUG_POISON_FLEX_TAILS
-        Term_Flex_If_Necessary(a);
-     #endif
+    Copy_Cell(Alloc_Tail_Array(a), c_cast(Element*, value));
+    return COPY(accumulator);
 
-        // GLOM only works with mutable arrays, as part of its efficiency.  We
-        // show a hint of the optimizations to come by decaying the incoming
-        // result array (we might sporadically do it the other way just to
-        // establish that the optimizations could obliterate either).
-        //
-        Diminish_Stub(r);
-    }
+} append_many_items: { ///////////////////////////////////////////////////////
+
+    // We're appending multiple items from result.  But we want to avoid
+    // allocating new arrays if at all possible...and we are fluidly willing
+    // to promote the result array to be the accumulator if that is necessary.
+    //
+    // But in the interests of time, just expand the target array for now
+    // if necessary--work on other details later.
+
+    Array* r = Cell_Array_Ensure_Mutable(value);
+    Length a_len = Array_Len(a);
+    Length r_len = Array_Len(r);
+    Expand_Flex_Tail(a, r_len);  // can move memory, get `at` after
+    Element* dst = Array_At(a, a_len);  // old tail position
+    Element* src = Array_Head(r);
+
+    REBLEN index;
+    for (index = 0; index < r_len; ++index, ++src, ++dst)
+        Copy_Cell(dst, src);
+
+    assert(Array_Len(a) == a_len + r_len);  // Expand_Flex_Tail sets
+
+  #if DEBUG_POISON_FLEX_TAILS
+    Term_Flex_If_Necessary(a);
+  #endif
+
+  diminish_stub: { ////////////////////////////////////////////////////////////
+
+    // GLOM only works with mutable arrays, as part of its efficiency.  We
+    // show a hint of the optimizations to come by decaying the incoming
+    // result array (we might sporadically do it the other way just to
+    // establish that the optimizations could obliterate either).
+
+    Diminish_Stub(r);
 
     return COPY(accumulator);
-}
+}}}}
 
 
 #if RUNTIME_CHECKS

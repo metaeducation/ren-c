@@ -322,7 +322,7 @@ ext-symids: load3 (join what-dir %prep/boot/tmp-ext-symid.r)
 symbol-forward-decls: []
 symbol-globals: []
 
-for-each 'symbol maybe try ext-header.extended-words [
+for-each 'symbol maybe ext-header.extended-words [
     if not word? symbol [
         fail ["Extended-Words entries must be WORD!:" mold symbol]
     ]
@@ -442,7 +442,7 @@ e1/emit [cfunc-forward-decls --[
 type-forward-decls: []
 type-globals: []
 
-for-each 'symbol maybe try ext-header.extended-types [
+for-each 'symbol maybe ext-header.extended-types [
     if not word? symbol [
         fail ["Extended-Types entries must be WORD!:" mold symbol]
     ]

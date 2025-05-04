@@ -432,7 +432,7 @@ DECLARE_NATIVE(REFRAMER)
 //    specialize the argument with something that type checks.  It wants a
 //    FRAME!, so temporarily fill it with the exemplar frame itself.
 //
-//    !!! We could set CELL_FLAG_PARAM_NOTE_TYPEHCHECKED on the argument and
+//    !!! We could set CELL_FLAG_PARAM_NOTE_TYPECHECKED on the argument and
 //    have it be some other placeholder.  See also SPECIALIZE:RELAX:
 //
 //      https://forum.rebol.info/t/generalized-argument-removal/2297

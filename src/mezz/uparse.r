@@ -1919,7 +1919,7 @@ default-combinators: to map! reduce [
         return: "Element if it matches the match rule" [element?]
         value [frame!]
     ][
-        if run value maybe try input.1 [
+        if run value maybe input.1 [
             remainder: next input
             return input.1
         ]

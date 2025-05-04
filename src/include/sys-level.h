@@ -675,23 +675,44 @@ INLINE Level* Prep_Level_Core(
 INLINE Option(const Value*) Optional_Level_Arg(Level* L, REBLEN n)
 {
     Value* arg = Level_Arg(L, n);
+
+    if (Get_Cell_Flag(arg, PROTECTED)) {
+        if (Is_Node_Marked(arg)) {  // marked means "was nihil"
+            assert(Is_Quasi_Word_With_Id(arg, SYM_VOID));
+            return nullptr;
+        }
+        return arg;
+    }
+
+    assert(not Is_Node_Marked(arg));  // use mark for saying it was nihil
+
     Option(const Value*) result;
     if (Is_Meta_Of_Nihil(arg)) {
         Init_Quasi_Word(arg, CANON(VOID));  // fib, but helps FAIL(PARAM(...))
+        Set_Node_Marked_Bit(arg);
         result = nullptr;
     }
     else {
         Meta_Unquotify_Known_Stable(arg);
         result = arg;
     }
-  #if RUNTIME_CHECKS
     Set_Cell_Flag(arg, PROTECTED);  // helps stop double-unquotify
-  #endif
     return result;
 }
 
-#define Optional_ARG(name) \
-    Optional_Level_Arg(level_, param_##name##_)  // Note: can only be called ONCE!
+INLINE Option(const Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
+{
+    const Value* arg = maybe Optional_Level_Arg(L, n);
+    if (arg == nullptr)
+        return nullptr;
+    return Known_Element(arg);
+}
+
+#define Optional_ARG(name) /* Note: can only be called ONCE! */ \
+    Optional_Level_Arg(level_, param_##name##_)
+
+#define Optional_Element_ARG(name) /* Note: can only be called ONCE! */ \
+    Optional_Element_Level_Arg(level_, param_##name##_)
 
 #define LOCAL(name) \
     Level_Arg(level_, (param_##name##_))  // alias (enforce not argument?)

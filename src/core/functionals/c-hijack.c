@@ -272,8 +272,8 @@ bool Hijacker_Details_Querier(
 //          [action! ~]
 //      victim "Frame whose inherited instances are to be affected"
 //          [<unrun> frame!]
-//      hijacker "The frame to run in its place (void to leave TBD)"
-//          [<unrun> frame! ~void~]
+//      ^hijacker "The frame to run in its place (void to leave TBD)"
+//          [<unrun> frame! ~[]~]
 //  ]
 //
 DECLARE_NATIVE(HIJACK)
@@ -301,14 +301,14 @@ DECLARE_NATIVE(HIJACK)
 
     Phase* victim = Cell_Frame_Phase(ARG(VICTIM));
 
-    bool hijack_void = Is_Void(ARG(HIJACKER));
+    Option(const Element*) opt_hijacker = Optional_Element_ARG(HIJACKER);
 
     bool victim_unimplemented =
         Is_Stub_Details(victim) and
         Details_Dispatcher(cast(Details*, victim)) == &Unimplemented_Dispatcher;
 
-    if (not hijack_void) {
-        Phase* hijacker = Cell_Frame_Phase(ARG(HIJACKER));
+    if (opt_hijacker) {
+        Phase* hijacker = Cell_Frame_Phase(unwrap opt_hijacker);
         if (victim == hijacker)
             return FAIL("Cannot HIJACK function with itself");  // right?
     }
@@ -318,18 +318,16 @@ DECLARE_NATIVE(HIJACK)
     Details* proxy = Make_Dispatch_Details(
         NODE_FLAG_MANAGED,
         ARG(VICTIM),  // not changing the interface [1]
-        hijack_void
-            ? &Unimplemented_Dispatcher
-            : &Hijacker_Dispatcher,
-        hijack_void
-            ? 0  // no data used (stub is still dynamic)
-            : MAX_IDX_HIJACKER  // tried just archetype, it was messed up [2]
+        opt_hijacker
+            ? &Hijacker_Dispatcher
+            : &Unimplemented_Dispatcher,
+        opt_hijacker
+            ? MAX_IDX_HIJACKER  // tried just archetype, it was messed up [2]
+            : 0  // no data used (stub is still dynamic)
     );
 
-    if (not hijack_void) {
-        Element* hijacker = Element_ARG(HIJACKER);
-        Copy_Cell(Details_At(proxy, IDX_HIJACKER_FRAME), hijacker);
-    }
+    if (opt_hijacker)
+        Copy_Cell(Details_At(proxy, IDX_HIJACKER_FRAME), unwrap opt_hijacker);
 
     Tweak_Misc_Phase_Adjunct(proxy, adjunct);  // shared reference [3]
 
