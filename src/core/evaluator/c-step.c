@@ -1208,7 +1208,7 @@ Bounce Stepper_Executor(Level* L)
             GROUPS_OK,
             CURRENT,
             L_binding,
-            setval
+            OUT
         )){
             goto return_thrown;
         }
@@ -1538,10 +1538,11 @@ Bounce Stepper_Executor(Level* L)
 
             if (var_heart == TYPE_META_WORD) {
                 if (pack_meta_at == pack_meta_tail) {  // special detection
-                    Set_Var_May_Fail(var, SPECIFIED, LIB(NULL));
+                    Init_Nulled(SPARE);  // LIB(NULL) isn't mutable/atom
+                    Set_Var_May_Fail(var, SPECIFIED, SPARE);
                     goto circled_check;
                 }
-                Set_Var_May_Fail(var, SPECIFIED, stable_SPARE);  // is meta'd
+                Set_Var_May_Fail(var, SPECIFIED, SPARE);  // is meta'd
                 goto circled_check;
             }
 
@@ -1572,7 +1573,7 @@ Bounce Stepper_Executor(Level* L)
                     GROUPS_OK,
                     var,
                     SPECIFIED,
-                    stable_SPARE
+                    SPARE
                 )){
                     return FAIL(Error_No_Catch_For_Throw(L));
                 }

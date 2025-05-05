@@ -862,16 +862,25 @@ DECLARE_NATIVE(GET)
 // in the course of the assignment.
 //
 bool Set_Var_Core_Updater_Throws(
-    Sink(Value) out,  // temp GC-safe location, not used for output
+    Sink(Value) spare,  // temp GC-safe location, not used for output
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
     Context* context,
-    Option(const Value*) setval,  // e.g. L->out (in evaluator, right hand side)
+    Atom* poke,  // e.g. L->out (in evaluator, right hand side)
     const Value* updater
 ){
-    // Note: `steps_out` can be equal to `out` can be equal to `target`
+    possibly(spare == steps_out or var == steps_out);
+    assert(spare != poke and var != poke);
 
-    DECLARE_ATOM (temp);  // target might be same as out (e.g. spare)
+    Option(const Value*) setval;
+    if (Is_Nihil(poke))
+        setval = nullptr;
+    else if (Is_Raised(poke))  // for now, skip assign
+        return false;
+    else
+        setval = Decay_If_Unstable(poke);
+
+    DECLARE_ATOM (temp);
 
     Heart var_heart = Heart_Of_Builtin(var);
 
@@ -900,7 +909,7 @@ bool Set_Var_Core_Updater_Throws(
             QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
             Push_Lifeguard(temp);
             if (rebRunThrows(
-                out,  // <-- output cell
+                spare,  // <-- output cell
                 rebRUN(updater), "binding of", temp, temp,
                     CANON(EITHER), rebL(did setval), rebQ(unwrap setval), "~[]~"
             )){
@@ -1012,7 +1021,7 @@ bool Set_Var_Core_Updater_Throws(
   blockscope {
     OnStack(Element*) at = Data_Stack_At(Element, stackindex);
     if (Is_Quoted(at)) {
-        Unquotify(Copy_Cell(out, at));
+        Unquotify(Copy_Cell(spare, at));
     }
     else if (Is_Word(at)) {
         const Value* slot;
@@ -1021,10 +1030,10 @@ bool Set_Var_Core_Updater_Throws(
         );
         if (error)
             fail (unwrap error);
-        Copy_Cell(out, slot);
+        Copy_Cell(spare, slot);
     }
     else
-        fail (Copy_Cell(out, at));
+        fail (Copy_Cell(spare, at));
   }
 
     ++stackindex;
@@ -1032,11 +1041,11 @@ bool Set_Var_Core_Updater_Throws(
     // Keep PICK-ing until you come to the last step.
 
     while (stackindex != stackindex_top) {
-        Move_Cell(temp, out);
+        Move_Cell(temp, spare);
         Quotify(Known_Element(temp));
         const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
         if (rebRunThrows(
-            out,  // <-- output cell
+            spare,  // <-- output cell
             CANON(PICK), temp, ins
         )){
             Drop_Lifeguard(temp);
@@ -1048,13 +1057,13 @@ bool Set_Var_Core_Updater_Throws(
 
     // Now do a the final step, an update (often a poke)
 
-    Move_Cell(temp, out);
+    Move_Cell(temp, spare);
     QuoteByte quote_byte = QUOTE_BYTE(temp);
     QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
     const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
     assert(Is_Action(updater));
     if (rebRunThrows(
-        out,  // <-- output cell
+        spare,  // <-- output cell
         rebRUN(updater), temp, ins,
             CANON(EITHER), rebL(did setval), rebQ(unwrap setval), "~[]~"
     )){
@@ -1067,8 +1076,8 @@ bool Set_Var_Core_Updater_Throws(
 
     updater = LIB(POKE_P);
 
-    if (not Is_Nulled(out)) {
-        Move_Cell(writeback, out);
+    if (not Is_Nulled(spare)) {
+        Move_Cell(writeback, spare);
         QUOTE_BYTE(writeback) = quote_byte;
         setval = writeback;
 
@@ -1110,18 +1119,18 @@ bool Set_Var_Core_Updater_Throws(
 //  Set_Var_Core_Throws: C
 //
 bool Set_Var_Core_Throws(
-    Sink(Value) out,  // temp GC-safe location, not used for output
+    Sink(Value) spare,  // temp GC-safe location, not used for output
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
     Context* context,
-    Option(const Value*) setval  // e.g. L->out (in evaluator, right hand side)
+    Atom* poke  // e.g. L->out (in evaluator, right hand side)
 ){
     return Set_Var_Core_Updater_Throws(
-        out,
+        spare,
         steps_out,
         var,
         context,
-        setval,
+        poke,
         Mutable_Lib_Var(SYM_POKE_P)  // mutable means unset is okay
     );
 }
@@ -1136,12 +1145,12 @@ bool Set_Var_Core_Throws(
 void Set_Var_May_Fail(
     const Element* var,
     Context* context,
-    const Value* setval
+    Atom* poke
 ){
     Option(Value*) steps_out = nullptr;
 
     DECLARE_ATOM (dummy);
-    if (Set_Var_Core_Throws(dummy, steps_out, var, context, setval))
+    if (Set_Var_Core_Throws(dummy, steps_out, var, context, poke))
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 }
 
@@ -1151,32 +1160,22 @@ void Set_Var_May_Fail(
 //
 //  "Sets a word or path to specified value (see also: UNPACK)"
 //
-//      return: "Same value as input (pass through if target is void)"
+//      return: "Same value as input (error passthru even it skips the assign)"
 //          [any-value?]
 //      ^target "Word or tuple, or calculated sequence steps (from GET)"
 //          [~[]~ any-word? tuple! any-group?
-//          any-get-value? any-set-value? the-block!]
-//      ^value [raised! any-value?]  ; in future, should take PACK! [2]
+//          any-get-value? any-set-value? the-block!]  ; should take PACK! [1]
+//      ^value "Will be decayed if not assigned to metavariables"
+//          [any-atom?]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //  ]
 //
 DECLARE_NATIVE(SET)
 //
-// 1. We want parity between (set $x expression) and (x: expression).  It is
-//    very useful that you can write (e: trap [x: expression]) and in the case
-//    of a raised definitional error, have the assignment skipped and the
-//    error trapped.  Hence SET has to take its argument ^META and receive
-//    definitional errors to pass through
-//
-// 2. SET of a BLOCK! should probably expose the implementation of the
-//    multi-return mechanics used by SET-BLOCK!.  That would require some
-//    refactoring that isn't a priority at time of writing...but were it to
-//    be implemented, we would need to not decay packs like this.
-//
-// 3. Plain POKE can't throw (e.g. from a GROUP!) because it won't evaluate
-//    them.  However, we can get errors.  Confirm we only are raising errors
-//    unless steps_out were passed.
+// 1. SET of a BLOCK! should expose the implementation of the multi-return
+//    mechanics used by SET-BLOCK!.  That will take some refactoring... not
+//    an urgent priority, but it needs to be done.
 {
     INCLUDE_PARAMS_OF_SET;
 
@@ -1186,14 +1185,51 @@ DECLARE_NATIVE(SET)
     if (Is_Meta_Of_Nihil(meta_target))
         return UNMETA(meta_setval);   // same for SET as [10 = (void): 10]
 
-    if (Is_Meta_Of_Raised(meta_setval))
-        return UNMETA(meta_setval);  // passthru raised errors [1]
-
     Element* target = Unquotify(meta_target);
     if (Is_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
         Unchain(target);
 
-    Value* setval = Meta_Unquotify_Known_Stable(ARG(VALUE));  // !!! pack [2]
+    if (not Any_Group(target))  // !!! maybe SET-GROUP!, but GET-GROUP!?
+        goto call_generic_set_var;
+
+  process_group_target: { ////////////////////////////////////////////////////
+
+   // !!! At the moment, the generic Set_Var() mechanics aren't written to
+   // handle GROUP!s.  But it probably should, since it handles groups that
+   // are nested under TUPLE! and such.  Review.
+
+    if (not Bool_ARG(GROUPS))
+        return FAIL(Error_Bad_Get_Group_Raw(target));
+
+    if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
+        return FAIL(Error_No_Catch_For_Throw(LEVEL));
+
+    if (Is_Nihil(SPARE))
+        return UNMETA(meta_setval);
+
+    Decay_If_Unstable(SPARE);
+
+    if (not (
+        Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE)
+    )){
+        return FAIL(SPARE);
+    }
+
+    Copy_Cell(target, cast(Element*, SPARE));  // update ARG(TARGET)
+
+} call_generic_set_var: { ////////////////////////////////////////////////////
+
+    // 1. Plain POKE can't throw (e.g. from GROUP!) because it won't evaluate
+    //    them.  However, we can get errors.  Confirm we only are raising
+    //    errors unless steps_out were passed.
+    //
+    // 2. We want parity between (set $x expression) and (x: expression).  It's
+    //    very useful that you can write (e: trap [x: expression]) and in the
+    //    case of an error, have the assignment skipped and the error trapped.
+    //
+    //    Note that (set $ ^x raise "hi") will perform a meta-assignment of
+    //    the quasiform error to X, but will still pass through the error
+    //    antiform as the overall expression result.
 
     Value* steps;
     if (Bool_ARG(GROUPS))
@@ -1206,34 +1242,16 @@ DECLARE_NATIVE(SET)
         // (more general filtering available via accessors)
     }
 
-    if (Any_Group(target)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
-        if (not Bool_ARG(GROUPS))
-            return FAIL(Error_Bad_Get_Group_Raw(target));
+    Copy_Cell(OUT, meta_setval);
+    Meta_Unquotify_Undecayed(OUT);
 
-        if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
-            return FAIL(Error_No_Catch_For_Throw(LEVEL));
-
-        if (Is_Nihil(SPARE))
-            return COPY(setval);
-
-        Decay_If_Unstable(SPARE);
-
-        if (not (
-            Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE)
-        )){
-            fail (SPARE);
-        }
-
-        target = cast(Element*, SPARE);
-    }
-
-    if (Set_Var_Core_Throws(OUT, steps, target, SPECIFIED, setval)) {
-        assert(steps or Is_Throwing_Failure(LEVEL));  // [3]
+    if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, OUT)) {
+        assert(steps or Is_Throwing_Failure(LEVEL));  // throws must eval [1]
         return THROWN;
     }
 
-    return COPY(setval);
-}
+    return UNMETA(meta_setval);  // even if we don't assign, pass through [2]
+}}
 
 
 //

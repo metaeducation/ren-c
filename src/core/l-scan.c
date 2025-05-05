@@ -3415,7 +3415,7 @@ DECLARE_NATIVE(TRANSCODE)
     Drop_Level(SUBLEVEL);
 
     if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // wanted the line number updated
-        Element* line_int = Init_Integer(SCRATCH, transcode->line);
+        Atom* line_int = Init_Integer(SCRATCH, transcode->line);
         const Element* line_var = Element_ARG(LINE);
         if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, line_int))
             return THROWN;

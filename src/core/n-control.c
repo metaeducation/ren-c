@@ -1201,7 +1201,7 @@ DECLARE_NATIVE(DEFAULT)
 
 } branch_result_in_spare: {  /////////////////////////////////////////////////
 
-    if (Set_Var_Core_Throws(OUT, nullptr, steps, SPECIFIED, stable_SPARE)) {
+    if (Set_Var_Core_Throws(OUT, nullptr, steps, SPECIFIED, SPARE)) {
         assert(false);  // shouldn't be able to happen.
         return FAIL(Error_No_Catch_For_Throw(LEVEL));
     }
