@@ -370,10 +370,10 @@ DECLARE_NATIVE(PROTECT_P)
 //  "Protect a series or a variable from being modified"
 //
 //      return: [
-//          any-word? any-tuple? any-series? bitset! map! object! module!
+//          any-word? tuple! any-series? bitset! map! object! module!
 //      ]
 //      value [
-//          any-word? any-tuple? any-series? bitset! map! object! module!
+//          any-word? tuple! any-series? bitset! map! object! module!
 //      ]
 //      :deep "Protect all sub-series/objects as well"
 //      :words "Process list as words (and path words)"
@@ -386,7 +386,7 @@ DECLARE_NATIVE(PROTECT)
     INCLUDE_PARAMS_OF_PROTECT;
 
     Element* e = Element_ARG(VALUE);
-    if (Any_Word(e) or Any_Tuple(e)) {
+    if (Any_Word(e) or Is_Tuple(e)) {
         if (Bool_ARG(HIDE))
             Init_Word(SPARE, CANON(HIDE));
         else
@@ -449,7 +449,7 @@ DECLARE_NATIVE(UNPROTECT)
         fail ("Cannot un-hide an object field once hidden");
 
     Element* e = Element_ARG(VALUE);
-    if (Any_Word(e) or Any_Tuple(e)) {
+    if (Any_Word(e) or Is_Tuple(e)) {
         Init_Word(SPARE, CANON(UNPROTECT));
         if (Set_Var_Core_Updater_Throws(
             OUT,

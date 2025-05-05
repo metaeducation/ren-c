@@ -271,12 +271,12 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         bool refinement = false;  // paths with blanks at head are refinements
         bool local = false;
         bool is_returner = false;
-        if (heart == TYPE_CHAIN or heart == TYPE_META_CHAIN) {
+        if (heart == TYPE_CHAIN) {
             switch (Try_Get_Sequence_Singleheart(item)) {
               case LEADING_BLANK_AND(WORD): {
                 refinement = true;
                 symbol = Cell_Refinement_Symbol(item);
-                if (heart == TYPE_META_PATH) {
+                if (heart == TYPE_META_WORD) {
                     if (not quoted)
                         pclass = PARAMCLASS_META;
                 }

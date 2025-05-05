@@ -92,7 +92,7 @@ sys.util/rescue [
     export parse: ~<Use PARSE3 in Bootstrap Code, not PARSE>~
 
     export /split-path3: enclose (
-        augment split-path/ [:file [any-word? any-tuple?]]
+        augment split-path/ [:file [any-word? tuple!]]
     ) f -> [
         let results: meta:lite eval f  ; no [...]: in bootstrap load of file
         set maybe f.file unmeta results.2
@@ -204,7 +204,7 @@ for-each [alias] [
     any-word3!:                 ; use any-word?
     lit-word3!:                 ; use lit-word?
     lit-path3!:                 ; use lit-word?
-    any-path3!:                 ; use any-path?
+    any-path3!:                 ; use path?
 ][
     assert [set-word? alias]  ; SET-WORD!s for readability + findability [2]
 

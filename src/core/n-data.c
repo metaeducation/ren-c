@@ -33,11 +33,11 @@
 //
 //  "Binds words or words in lists to the specified context"
 //
-//      return: [frame! action! any-list? any-path? any-word? quoted!]
+//      return: [frame! action! any-list? any-sequence? any-word? quoted!]
 //      spec "Target context or a word whose binding should be the target"
 //          [block! the-word? any-context?]
 //      value "Value whose bound form is to be returned"
-//          [any-list? any-path? any-word? quoted!]
+//          [any-list? any-sequence? any-word? quoted!]
 //  ]
 //
 DECLARE_NATIVE(BIND)
@@ -858,7 +858,7 @@ DECLARE_NATIVE(BINDABLE)
 //  "Extract the inner variable target, e.g. (/a: -> a)"
 //
 //      return: [word! tuple!]
-//      source [any-word? any-tuple? any-chain? path!]
+//      source [any-word? tuple! chain! path!]
 //  ]
 //
 DECLARE_NATIVE(RESOLVE)
@@ -872,7 +872,7 @@ DECLARE_NATIVE(RESOLVE)
         return COPY(source);
     }
 
-    if (Any_Tuple(source)) {
+    if (Is_Tuple(source)) {
         HEART_BYTE(source) = TYPE_TUPLE;
         return COPY(source);
     }

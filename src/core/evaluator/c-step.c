@@ -980,7 +980,7 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;
         }
 
-        Option(Error*) error = Trap_Get_Any_Tuple(  // vacant will cause error
+        Option(Error*) error = Trap_Get_Tuple(  // vacant will cause error
             OUT,
             GROUPS_OK,
             CURRENT,
@@ -1261,16 +1261,11 @@ Bounce Stepper_Executor(Level* L)
     // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
     // the plain (unfriendly) forms.
 
-      handle_get_tuple:
-      case TYPE_META_TUPLE: {
+      handle_get_tuple: {
         assert(
             (STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(CURRENT))
-            or (
-                STATE == cast(StepperState, TYPE_META_TUPLE)
-                and Is_Meta_Tuple(CURRENT)
-            )
         );
-        Option(Error*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Tuple_Maybe_Vacant(
             OUT,
             GROUPS_OK,
             CURRENT,
@@ -1280,12 +1275,6 @@ Bounce Stepper_Executor(Level* L)
             Init_Error(OUT, unwrap error);
             Raisify(OUT);
             goto lookahead;  // e.g. EXCEPT might want to see raised error
-        }
-
-        if (STATE == cast(StepperState, TYPE_META_TUPLE)) {
-            if (not Is_Quoted(OUT) and not Is_Quasiform(OUT))
-                return FAIL("META-TUPLE! only works on quoted/quasiform");
-            Meta_Unquotify_Undecayed(OUT);
         }
 
         goto lookahead; }
@@ -1456,7 +1445,6 @@ Bounce Stepper_Executor(Level* L)
                 //
                 (heart == TYPE_SIGIL and Cell_Sigil(TOP) == SIGIL_META)
                 or heart == TYPE_META_WORD
-                or heart == TYPE_META_TUPLE
             ){
                 continue;
             }
@@ -1537,8 +1525,8 @@ Bounce Stepper_Executor(Level* L)
                     return FAIL("Not enough values for required multi-return");
 
                 // match typical input of meta which will be Meta_Unquotify'd
-                // (special handling in TYPE_META_WORD and TYPE_META_TUPLE
-                // below will actually use plain null to distinguish)
+                // (special handling in TYPE_META_WORD below will actually use
+                // plain null to distinguish)
                 //
                 Init_Meta_Of_Null(SPARE);
             }
@@ -1548,10 +1536,7 @@ Bounce Stepper_Executor(Level* L)
             if (var_heart == TYPE_SIGIL and Cell_Sigil(var) == SIGIL_META)
                 goto circled_check;  // leave as meta the way it came in
 
-            if (
-                var_heart == TYPE_META_WORD
-                or var_heart == TYPE_META_TUPLE
-            ){
+            if (var_heart == TYPE_META_WORD) {
                 if (pack_meta_at == pack_meta_tail) {  // special detection
                     Set_Var_May_Fail(var, SPECIFIED, LIB(NULL));
                     goto circled_check;
@@ -1579,7 +1564,7 @@ Bounce Stepper_Executor(Level* L)
 
             if (
                 var_heart == TYPE_WORD or var_heart == TYPE_TUPLE
-                or var_heart == TYPE_THE_WORD or var_heart == TYPE_THE_TUPLE
+                or var_heart == TYPE_THE_WORD
             ){
                 DECLARE_VALUE (dummy);
                 if (Set_Var_Core_Throws(
@@ -1692,9 +1677,6 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_THE_FENCE:
       case TYPE_THE_GROUP:
       case TYPE_THE_WORD:
-      case TYPE_THE_PATH:
-      case TYPE_THE_CHAIN:
-      case TYPE_THE_TUPLE:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         goto lookahead;
 
@@ -1723,9 +1705,6 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_VAR_FENCE:
       case TYPE_VAR_GROUP:
       case TYPE_VAR_WORD:
-      case TYPE_VAR_PATH:
-      case TYPE_VAR_TUPLE:
-      case TYPE_VAR_CHAIN:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         HEART_BYTE(OUT) = Plainify_Any_Var_Heart(u_cast(HeartEnum, STATE));
         goto lookahead;

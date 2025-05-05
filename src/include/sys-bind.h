@@ -107,14 +107,14 @@ INLINE Element* Derelativize_Untracked(
     else if (not Sequence_Has_Node(v)) {
         out->extra = v->extra;  // packed numeric sequence, 1.2.3 or similar
     }
-    else {  // any-path? or any-tuple?, may be wordlike or listlike
+    else {  // path or tuple, may be wordlike or listlike
         const Node* node1 = CELL_NODE1(v);
         if (Is_Node_A_Cell(node1))  // x.y pairing
             goto any_listlike;
         const Stub* stub1 = c_cast(Stub*, node1);
         if (FLAVOR_SYMBOL == Stub_Flavor(stub1)) {  // x. or /x, wordlike
             if (
-                Any_Tuple_Type(heart)
+                heart == TYPE_TUPLE
                 and Get_Cell_Flag(v, LEADING_BLANK)  // !!! HACK for .word form
             ){
                 context = Adjust_Context_For_Coupling(context);

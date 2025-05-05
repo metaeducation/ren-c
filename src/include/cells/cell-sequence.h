@@ -118,25 +118,21 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
     Option(Heart) h = Heart_Of(e);
 
     if (is_head) {
-        if (
-            Is_Quoted(e)  // note quasiforms legal, even at head [1]
-            or Sigil_For_Heart(h)
-        ){
+        if (Is_Quoted(e))  // note quasiforms legal, even at head [1]
             goto bad_sequence_item;
-        }
     }
 
-    if (Any_Path_Type(h))  // path can't put be put in path, tuple, or chain
+    if (h == TYPE_PATH)  // path can't put be put in path, tuple, or chain
         goto bad_sequence_item;
 
-    if (Any_Chain_Type(h)) {  // inserting a chain
-        if (Any_Path_Type(sequence_heart))
+    if (h == TYPE_CHAIN) {  // inserting a chain
+        if (sequence_heart == TYPE_PATH)
             return SUCCESS;  // chains can only be put in paths
         goto bad_sequence_item;
     }
 
-    if (Any_Tuple_Type(h)) {  // inserting a tuple
-        if (not Any_Tuple_Type(sequence_heart))
+    if (h == TYPE_TUPLE) {  // inserting a tuple
+        if (sequence_heart != TYPE_TUPLE)
             return SUCCESS;  // legal in non-tuple sequences (path, chain)
         goto bad_sequence_item;
     }
@@ -154,7 +150,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 
     if (h == TYPE_WORD) {
         const Symbol* symbol = Cell_Word_Symbol(e);
-        if (symbol == CANON(DOT_1) and not Any_Tuple_Type(sequence_heart))
+        if (symbol == CANON(DOT_1) and sequence_heart != TYPE_TUPLE)
             return SUCCESS;
         if (
             sequence_heart != TYPE_CHAIN  // !!! temporary for //: -- review
@@ -162,9 +158,9 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
         ){
             goto bad_sequence_item;  //  [<| |>] => <|/|>  ; tag
         }
-        if (Any_Path_Type(sequence_heart))
+        if (sequence_heart == TYPE_PATH)
             return SUCCESS;
-        if (Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_TUPLE))
+        if (Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_TUPLE))
             goto bad_sequence_item;  // e.g. contains a slash
     }
 
@@ -368,10 +364,10 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         (Is_Quasar(first) and Is_Quasar(second))  // ~/~ is a WORD!
         or (Is_Blank(first) and Is_Blank(second))  // plain / is a WORD!
     ){
-        if (Any_Path_Type(heart))
+        if (heart == TYPE_PATH)
             Init_Word(out, CANON(SLASH_1));
         else {
-            assert(Any_Tuple_Type(heart));
+            assert(heart == TYPE_TUPLE);
             Init_Word(out, CANON(DOT_1));
         }
         if (Is_Quasar(first))
@@ -396,7 +392,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         REBI64 i1 = VAL_INT64(first);
         REBI64 i2 = VAL_INT64(second);
 
-        if (Any_Tuple_Type(heart)) {  // conflates with decimal, e.g. 10.20
+        if (heart == TYPE_TUPLE) {  // conflates with decimal, e.g. 10.20
             REBI64 magnitude = 1;
             REBI64 r = i2;
             do {
@@ -409,7 +405,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             return SUCCESS;
         }
 
-        if (Any_Chain_Type(heart)) {  // conflates with time, e.g. 10:20
+        if (heart == TYPE_CHAIN) {  // conflates with time, e.g. 10:20
             REBI64 nano = ((i1 * 60 * 60) + (i2 * 60)) * SEC_SEC;
             Init_Time_Nanoseconds(out, nano);
             return SUCCESS;
@@ -1017,7 +1013,7 @@ INLINE const Symbol* Cell_Refinement_Symbol(const Cell* v) {
 // Degrade in place, simple singular chains like [a b]: -> [a b], or :a -> a
 //
 INLINE Element* Unchain(Element* out) {
-    assert(Any_Chain(out));
+    assert(Is_Chain(out));
     Option(Error*) error = Trap_Unsingleheart(out);
     assert(not error);
     UNUSED(error);
@@ -1028,7 +1024,7 @@ INLINE Element* Unchain(Element* out) {
 // Degrade in-place, simple singular paths like [a b]/ -> [a b], or /a -> a
 //
 INLINE Element* Unpath(Element* out) {
-    assert(Any_Path(out));
+    assert(Is_Path(out));
     Option(Error*) error = Trap_Unsingleheart(out);
     assert(not error);
     UNUSED(error);
@@ -1038,7 +1034,7 @@ INLINE Element* Unpath(Element* out) {
 // Degrade in-place, simple singular tuples like [a b]. -> [a b], or .a -> a
 //
 INLINE Element* Untuple(Element* out) {
-    assert(Any_Tuple(out));
+    assert(Is_Tuple(out));
     Option(Error*) error = Trap_Unsingleheart(out);
     assert(not error);
     UNUSED(error);

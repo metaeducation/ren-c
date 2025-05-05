@@ -750,20 +750,10 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return OUT;
     }
 
-    if (Any_Sequence_Type(to)) {  // to the-tuple! "a.b.c" -> @a.b.c
-        Heart plain;
-        if (Any_Tuple_Type(to))
-            plain = TYPE_TUPLE;
-        else if (Any_Chain_Type(to))
-            plain = TYPE_CHAIN;
-        else {
-            assert(Any_Path_Type(to));
-            plain = TYPE_PATH;
-        }
-        Option(Error*) error = Trap_Transcode_One(OUT, plain, v);
+    if (Any_Sequence_Type(to)) {  // to tuple! "a.b.c" -> a.b.c
+        Option(Error*) error = Trap_Transcode_One(OUT, to, v);
         if (error)
             return RAISE(unwrap error);
-        HEART_BYTE(OUT) = to;
         return OUT;
     }
 

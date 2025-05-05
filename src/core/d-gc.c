@@ -337,21 +337,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case TYPE_TUPLE:
-      case TYPE_THE_TUPLE:
-      case TYPE_META_TUPLE:
-      case TYPE_VAR_TUPLE:
-        goto any_sequence;
-
       case TYPE_CHAIN:
-      case TYPE_THE_CHAIN:
-      case TYPE_META_CHAIN:
-      case TYPE_VAR_CHAIN:
-        goto any_sequence;
-
       case TYPE_PATH:
-      case TYPE_THE_PATH:
-      case TYPE_META_PATH:
-      case TYPE_VAR_PATH:
         goto any_sequence;
 
       any_sequence: {

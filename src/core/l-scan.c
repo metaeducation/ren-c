@@ -2351,6 +2351,13 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_WORD:
         assert(len != 0);
         Init_Word(PUSH(), Intern_UTF8_Managed(S->begin, len));
+        if (S->sigil_pending) {
+            HEART_BYTE(TOP) = Sigilize_Any_Plain_Heart(
+                unwrap S->sigil_pending,
+                TYPE_WORD
+            );
+            S->sigil_pending = SIGIL_0;
+        }
         break;
 
       case TOKEN_ISSUE: {

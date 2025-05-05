@@ -321,12 +321,12 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
         }
 
         if (utf8[i] == ':') {
-            Set_Flavor_Flag(SYMBOL, b, ILLEGAL_IN_ANY_CHAIN);
+            Set_Flavor_Flag(SYMBOL, b, ILLEGAL_IN_CHAIN);
             continue;
         }
 
         if (utf8[i] == '.') {
-            Set_Flavor_Flag(SYMBOL, b, ILLEGAL_IN_ANY_TUPLE);
+            Set_Flavor_Flag(SYMBOL, b, ILLEGAL_IN_TUPLE);
             continue;
         }
     }

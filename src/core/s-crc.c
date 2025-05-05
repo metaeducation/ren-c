@@ -203,18 +203,8 @@ uint32_t Hash_Value(const Cell* cell)
         break; }
 
       case TYPE_CHAIN:
-      case TYPE_THE_CHAIN:
-      case TYPE_META_CHAIN:
-      case TYPE_VAR_CHAIN:
-        //
       case TYPE_TUPLE:
-      case TYPE_THE_TUPLE:
-      case TYPE_VAR_TUPLE:
-        //
-      case TYPE_PATH:
-      case TYPE_THE_PATH:
-      case TYPE_META_PATH:
-      case TYPE_VAR_PATH: {
+      case TYPE_PATH: {
         if (not Sequence_Has_Node(cell)) {
             hash = Hash_Bytes(
                 cell->payload.at_least_8 + 1,

@@ -59,7 +59,7 @@
         switch:type vars.1 [
             blank! []  ; no assignment
             word! tuple! [set inside vars vars.1 unmeta val']
-            meta-word! meta-tuple! [set inside vars vars.1 val']
+            meta-word! [set inside vars vars.1 val']
         ]
         vars: my next
     ]

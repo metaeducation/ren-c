@@ -758,12 +758,11 @@ IMPLEMENT_GENERIC(TO, Any_List)
             return RAISE("Can't TO ANY-SEQUENCE? on list with length > 1");
 
         if (
-            (Is_Path(item) and Any_Path_Type(to))
-            or (Is_Chain(item) and Any_Chain_Type(to))
-            or (Is_Tuple(item) and Any_Tuple_Type(to))
+            (Is_Path(item) and to == TYPE_PATH)
+            or (Is_Chain(item) and to == TYPE_CHAIN)
+            or (Is_Tuple(item) and to == TYPE_TUPLE)
         ){
             Copy_Cell(OUT, item);
-            HEART_BYTE(OUT) = to;
             return OUT;
         }
 

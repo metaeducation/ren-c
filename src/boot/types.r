@@ -215,65 +215,17 @@ varargs     "evaluator position for variable numbers of arguments"
 
 <ANY-SEQUENCE?>
 
-  <ANY-TUPLE?>  ; (order matters, see Sigilize_Any_Plain_Heart())
-
     tuple       "member selection with inert bias"
                 (:node1)
                 [any-scalar? any-plain-value?]
-
-    meta-tuple  "tuple that quotes product or turns quasiforms to antiforms"
-                (:node1)
-                [any-meta-value?]
-
-    the-tuple   "evaluates to the bound version of the tuple as a tuple!"
-                (:node1)
-                [any-scalar? any-the-value?]
-
-    var-tuple   "evaluates to the bound version of the tuple as a the-tuple!"
-                (:node1)
-                [any-scalar? any-var-value?]
-
-  </ANY-TUPLE?>
-
-  <ANY-CHAIN?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     chain       "refinement and function call dialect"
                 (:node1)
                 [any-scalar? any-plain-value?]
 
-    meta-chain  "chain that quotes product or turns quasiforms to antiforms"
-                (:node1)
-                [any-meta-value?]
-
-    the-chain   "evaluates to the bound version of the chain as a the-chain!"
-                (:node1)
-                [any-the-value?]
-
-    var-chain   "evaluates to the bound version of the chain as a chain!"
-                (:node1)
-                [any-var-value?]
-
-  </ANY-CHAIN?>
-
-  <ANY-PATH?>  ; (order matters, see Sigilize_Any_Plain_Heart())
-
     path        "member or refinement selection with execution bias"
                 (:node1)
                 [any-plain-value?]
-
-    meta-path   "path that quotes product or turns quasiforms to antiforms"
-                (:node1)
-                [any-meta-value?]
-
-    the-path    "evaluates to the bound version of the path as a the-path!"
-                (:node1)
-                [any-the-value?]
-
-    var-path    "evaluates to the bound version of the path as a path!"
-                (:node1)
-                [any-var-value?]
-
-  </ANY-PATH?>
 
 </ANY-SEQUENCE?>
 

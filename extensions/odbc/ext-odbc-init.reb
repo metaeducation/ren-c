@@ -187,7 +187,7 @@ sqlform: func [
             ]
         ]
 
-        the-word! the-tuple! the-path! [  ; !!! Should THE-PATH be allowed?
+        the-word! [
             append parameters get:groups value
             "?"
         ]
@@ -197,7 +197,7 @@ sqlform: func [
             "?"
         ]
 
-        meta-word! meta-tuple! meta-path! [
+        meta-word! [
             any [
                 try as text! get:groups value
                 ""

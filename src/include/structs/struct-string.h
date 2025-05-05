@@ -59,21 +59,21 @@
     STUB_SUBCLASS_FLAG_25
 
 
-//=//// SYMBOL_FLAG_ILLEGAL_IN_ANY_CHAIN //////////////////////////////////=//
+//=//// SYMBOL_FLAG_ILLEGAL_IN_CHAIN //////////////////////////////////////=//
 //
 // This basically just means the symbol has a colon in it...other prohibitions
 // are covered by ILLEGAL_IN_ANY_SEQUENCE.
 //
-#define SYMBOL_FLAG_ILLEGAL_IN_ANY_CHAIN \
+#define SYMBOL_FLAG_ILLEGAL_IN_CHAIN \
     STUB_SUBCLASS_FLAG_26
 
 
-//=//// SYMBOL_FLAG_ILLEGAL_IN_ANY_TUPLE ///////////////////////////////////=//
+//=//// SYMBOL_FLAG_ILLEGAL_IN_TUPLE //////////////////////////////////////=//
 //
 // This basically just means the symbol has a dot in it...other prohibitions
 // are covered by ILLEGAL_IN_ANY_SEQUENCE.
 //
-#define SYMBOL_FLAG_ILLEGAL_IN_ANY_TUPLE \
+#define SYMBOL_FLAG_ILLEGAL_IN_TUPLE \
     STUB_SUBCLASS_FLAG_27
 
 

@@ -1749,7 +1749,7 @@ DECLARE_NATIVE(MAP)
         or Quotes_Of(Known_Element(data)) != 1
         or not (
             Any_Series(Unquotify(Known_Element(data)))  // <= UNQUOTIFY here!
-            or Any_Path(data)  // has been unquoted
+            or Is_Path(data)  // has been unquoted
             or Any_Context(data)
             or Any_Sequence(data)
         )

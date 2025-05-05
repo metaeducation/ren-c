@@ -65,7 +65,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 
 // This is the core implementation of Trap_Get_Any_Word(), that allows being
 // called on "wordlike" sequences (like `.a` or `a/`).  But it should really
-// only be called by things like Trap_Get_Any_Tuple(), because there are no
+// only be called by things like Trap_Get_Tuple(), because there are no
 // special adjustments for sequences like `.a`
 //
 static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
@@ -107,19 +107,19 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
 
 
 //
-//  Trap_Get_Any_Tuple_Maybe_Vacant: C
+//  Trap_Get_Tuple_Maybe_Vacant: C
 //
 // 1. Using a leading dot in a tuple is a cue to look up variables in the
 //    object from which a function was dispatched, so `var` and `.var` can
 //    look up differently inside a function's body.
 //
-Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
+Option(Error*) Trap_Get_Tuple_Maybe_Vacant(
     Sink(Value) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
     Context* context
 ){
-    assert(Any_Tuple(tuple));
+    assert(Is_Tuple(tuple));
 
     if (not Sequence_Has_Node(tuple))  // byte compressed
         return Error_User("Cannot GET a numeric tuple");
@@ -151,8 +151,9 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
         if (error)
             return error;
         if (steps_out and steps_out != GROUPS_OK) {
-            Derelativize(unwrap steps_out, tuple, context);
-            HEART_BYTE(unwrap steps_out) = TYPE_THE_TUPLE;  // TYPE_THE_WORD ?
+            Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+            Derelativize(Stub_Cell(a), tuple, context);
+            Init_Any_List(unwrap steps_out, TYPE_THE_BLOCK, a);
         }
         if (dot_at_head and Is_Action(out)) {  // need the coupling
             if (Cell_Frame_Coupling(out) == UNCOUPLED) {
@@ -234,17 +235,17 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
 
 
 //
-//  Trap_Get_Any_Tuple: C
+//  Trap_Get_Tuple: C
 //
 // Convenience wrapper for getting tuples that errors on nothing and tripwires.
 //
-Option(Error*) Trap_Get_Any_Tuple(
+Option(Error*) Trap_Get_Tuple(
     Sink(Value) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
     Context* context
 ){
-    Option(Error*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Tuple_Maybe_Vacant(
         out, steps_out, tuple, context
     );
     if (error)
@@ -292,10 +293,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         return SUCCESS;
     }
 
-    if (
-        Any_Chain(var)
-        or Any_Path(var)  // META-PATH! is not META'd, all act the same
-    ){
+    if (Is_Chain(var) or Is_Path(var)) {
         StackIndex base = TOP_INDEX;
 
         DECLARE_ATOM (safe);
@@ -336,8 +334,8 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         return SUCCESS;
     }
 
-    if (Any_Tuple(var))
-        return Trap_Get_Any_Tuple_Maybe_Vacant(
+    if (Is_Tuple(var))
+        return Trap_Get_Tuple_Maybe_Vacant(
             out, steps_out, var, context
         );
 
@@ -442,7 +440,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
     }
     else if (Is_Tuple(head)) {  // .member-function:refinement is legal
         DECLARE_VALUE (steps);
-        Option(Error*) error = Trap_Get_Any_Tuple(  // vacant is error
+        Option(Error*) error = Trap_Get_Tuple(  // vacant is error
             out, steps, head, derived
         );
         if (error)
@@ -567,7 +565,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
     }
     else if (Is_Tuple(at)) {
         DECLARE_VALUE (steps);
-        Option(Error*) error = Trap_Get_Any_Tuple(  // vacant is error
+        Option(Error*) error = Trap_Get_Tuple(  // vacant is error
             out, steps, at, derived
         );
         if (error)
@@ -771,7 +769,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
 //
 //      return: [any-value? ~[[word! tuple! the-block!] any-value?]~]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
-//          [<maybe> any-word? any-sequence? any-group? any-chain? the-block!]
+//          [<maybe> any-word? any-sequence? any-group? the-block!]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //      :steps "Provide invariant way to get this variable again"
@@ -783,7 +781,7 @@ DECLARE_NATIVE(GET)
 
     Element* source = Element_ARG(SOURCE);
 
-    if (Any_Chain(source)) {  // GET-WORD, SET-WORD, SET-GROUP, etc.
+    if (Is_Chain(source)) {  // GET-WORD, SET-WORD, SET-GROUP, etc.
         if (Try_Get_Sequence_Singleheart(source))
             Unchain(source);  // want to GET or SET normally
     }
@@ -942,7 +940,7 @@ bool Set_Var_Core_Updater_Throws(
         else switch (Stub_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
             if (Get_Cell_Flag(var, LEADING_BLANK)) {  // `/a` or `.a`
-                if (Any_Tuple_Type(var_heart))
+                if (var_heart == TYPE_TUPLE)
                     context = Adjust_Context_For_Coupling(context);
                 goto set_target;
             }
@@ -1156,7 +1154,7 @@ void Set_Var_May_Fail(
 //      return: "Same value as input (pass through if target is void)"
 //          [any-value?]
 //      ^target "Word or tuple, or calculated sequence steps (from GET)"
-//          [~[]~ any-word? any-tuple? any-group?
+//          [~[]~ any-word? tuple! any-group?
 //          any-get-value? any-set-value? the-block!]
 //      ^value [raised! any-value?]  ; in future, should take PACK! [2]
 //      :any "Do not error on unset words"
@@ -1192,7 +1190,7 @@ DECLARE_NATIVE(SET)
         return UNMETA(meta_setval);  // passthru raised errors [1]
 
     Element* target = Unquotify(meta_target);
-    if (Any_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
+    if (Is_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
         Unchain(target);
 
     Value* setval = Meta_Unquotify_Known_Stable(ARG(VALUE));  // !!! pack [2]

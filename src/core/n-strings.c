@@ -363,7 +363,7 @@ DECLARE_NATIVE(JOIN)
     if (Any_The_Value(item)) {  // fetch and mold
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
-        if (Is_The_Word(item) or Is_The_Tuple(item)) {
+        if (Is_The_Word(item)) {
             Get_Var_May_Fail(SPARE, item, Level_Binding(sub));
             Fetch_Next_In_Feed(sub->feed);
             goto mold_step_result_in_spare;

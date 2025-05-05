@@ -1992,18 +1992,6 @@ default-combinators: to map! reduce [
         return [{~} remainder pending]: run comb state input lookup'
     ]
 
-    ; THE-PATH! has no meaning at this time [3]
-
-    (meta the-tuple!) combinator compose [
-        return: [any-atom?]
-        :pending [blank! block!]
-        value [the-tuple!]
-        <local> comb lookup'
-    ][
-        comb: (state.combinators).(meta type of get value)
-        return [{~} remainder pending]: run comb state input lookup'
-    ]
-
     (meta the-group!) combinator compose [
         return: [any-atom?]
         :pending [blank! block!]
@@ -2079,28 +2067,6 @@ default-combinators: to map! reduce [
     ][
         value: as word! value
         comb: runs state.combinators.(meta word!)
-        return [{^} remainder pending]: comb state input value  ; leave meta
-    ]
-
-    (meta meta-tuple!) combinator [  ; !!! reuse word combinator?
-        return: "Meta quoted" [~null~ quasiform! quoted!]
-        :pending [blank! block!]
-        value [meta-tuple!]
-        <local> comb
-    ][
-        value: as tuple! value
-        comb: runs state.combinators.(meta tuple!)
-        return [{^} remainder pending]: comb state input value  ; leave meta
-    ]
-
-    (meta meta-path!) combinator [
-        return: "Meta quoted" [~null~ quasiform! quoted!]
-        :pending [blank! block!]
-        value [meta-path!]
-        <local> comb
-    ][
-        value: as path! value
-        comb: runs state.combinators.(meta path!)
         return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 

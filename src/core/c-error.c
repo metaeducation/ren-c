@@ -767,7 +767,7 @@ Error* Error_User(const char *utf8) {
 Error* Error_Need_Non_End(const Element* target) {
     assert(
         Is_Sigil(target)  // ^ needs things on the right
-        or Any_Word(target) or Any_Tuple(target)
+        or Any_Word(target) or Is_Tuple(target)
     );
     return Error_Need_Non_End_Raw(target);
 }
@@ -1453,7 +1453,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Error)
             //
             Append_Any_Utf8(mo->string, nearest);
         }
-        else if (Any_List(nearest) or Any_Path(nearest))
+        else if (Any_List(nearest) or Is_Path(nearest))
             Mold_Element_Limit(mo, cast(Element*, nearest), 60);
         else
             Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);

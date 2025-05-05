@@ -651,12 +651,6 @@ Element* Metafy(Element* out) {  // called on stack values; can't call eval
     if (Any_Word_Type(heart)) {
         HEART_BYTE(out) = TYPE_META_WORD;
     }
-    else if (Any_Path_Type(heart)) {
-        HEART_BYTE(out) = TYPE_META_PATH;
-    }
-    else if (Any_Tuple_Type(heart)) {
-        HEART_BYTE(out) = TYPE_META_TUPLE;
-    }
     else if (Any_Block_Type(heart)) {
         HEART_BYTE(out) = TYPE_META_BLOCK;
     }
@@ -699,12 +693,6 @@ Element* Theify(Element* out) {  // called on stack values; can't call evaluator
     Option(Heart) heart = Heart_Of(out);
     if (Any_Word_Type(heart)) {
         HEART_BYTE(out) = TYPE_THE_WORD;
-    }
-    else if (Any_Path_Type(heart)) {
-        HEART_BYTE(out) = TYPE_THE_PATH;
-    }
-    else if (Any_Tuple_Type(heart)) {
-        HEART_BYTE(out) = TYPE_THE_TUPLE;
     }
     else if (Any_Block_Type(heart)) {
         HEART_BYTE(out) = TYPE_THE_BLOCK;
@@ -749,12 +737,6 @@ Element* Plainify(Element* e) {
     Option(Heart) heart = Heart_Of(e);
     if (Any_Word_Type(heart)) {
         HEART_BYTE(e) = TYPE_WORD;
-    }
-    else if (Any_Path_Type(heart)) {
-        HEART_BYTE(e) = TYPE_PATH;
-    }
-    else if (Any_Tuple_Type(heart)) {
-        HEART_BYTE(e) = TYPE_TUPLE;
     }
     else if (Any_Block_Type(heart)) {
         HEART_BYTE(e) = TYPE_BLOCK;

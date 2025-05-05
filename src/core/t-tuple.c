@@ -267,7 +267,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_Sequence_Type(to))  // e.g. `to the-chain! 'a.b.c` [1]
+    if (Any_Sequence_Type(to))  // e.g. `to chain! 'a.b.c` [1]
         return GENERIC_CFUNC(AS, Any_Sequence)(LEVEL);  // immutable, same code
 
     if (Any_List_Type(to)) {  // !!! Should list have isomorphic binding?
@@ -327,14 +327,14 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
             if (not Any_Sequence(temp))
                 continue;
 
-            assert(not Any_Path(temp));  // impossible!
-            if (Any_Chain(temp) and (as == TYPE_TUPLE or as == TYPE_CHAIN))
+            assert(not Is_Path(temp));  // impossible!
+            if (Is_Chain(temp) and (as == TYPE_TUPLE or as == TYPE_CHAIN))
                 return Error_User(
                     "Can't AS alias CHAIN!-containing sequence"
                     "as TUPLE! or CHAIN!"
                 );
 
-            if (Any_Tuple(temp) and as == TYPE_TUPLE)
+            if (Is_Tuple(temp) and as == TYPE_TUPLE)
                 return Error_User(
                     "Can't AS alias TUPLE!-containing sequence as TUPLE!"
                 );
@@ -646,12 +646,12 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
     Heart heart = Heart_Of_Builtin_Fundamental(c);
 
     char interstitial;
-    if (Any_Tuple_Type(heart))
+    if (heart == TYPE_TUPLE)
         interstitial = '.';
-    else if (Any_Chain_Type(heart))
+    else if (heart == TYPE_CHAIN)
         interstitial = ':';
     else {
-        assert(Any_Path_Type(heart));
+        assert(heart == TYPE_PATH);
         interstitial = '/';
     }
 
@@ -679,11 +679,11 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
                 const Symbol* s = Cell_Word_Symbol(element);
                 if (Get_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE))
                     assert(
-                        Any_Chain_Type(heart)
+                        heart == TYPE_CHAIN
                         and Cell_Sequence_Len(c) == 2
                     );
-                if (Any_Tuple_Type(heart))
-                    assert(Not_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_ANY_TUPLE));
+                if (heart == TYPE_TUPLE)
+                    assert(Not_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_TUPLE));
                 UNUSED(s);
             }
 

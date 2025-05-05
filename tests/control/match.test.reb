@@ -42,8 +42,8 @@
     (10 = match integer! 10)
     (null = match integer! <tag>)
 
-    (null = match any-tuple?/ 'a.b:)
-    ('a.b: = match any-chain?/ 'a.b:)
+    (null = match tuple! 'a.b:)
+    ('a.b: = match chain! 'a.b:)
     ('a.b: = match any-sequence?/ 'a.b:)
     (null = match any-list?/ 'a.b:)
 ]

@@ -330,7 +330,6 @@ echo: func [
     write-stdout form map-each 'item line [
         switch:type item [
             the-word!
-            the-tuple!
             the-group! [
                 get:groups inside line item
             ]
