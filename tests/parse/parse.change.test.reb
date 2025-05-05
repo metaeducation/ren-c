@@ -177,8 +177,4 @@
         parse s: ">" [change '> ("greater")]  ; > is WORD!
         s = "greater"
     )
-    (
-        parse s: "&" [change '& ("ampersand")]  ; & is SIGIL!
-        s = "ampersand"
-    )
 ]

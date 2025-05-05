@@ -4,14 +4,13 @@
 ; in the evaluator and dialects:
 ;
 ;     SIGIL_META = 1     // ^
-;     SIGIL_WILD = 2     // &
-;     SIGIL_THE = 3      // @
-;     SIGIL_VAR = 4      // $
+;     SIGIL_THE = 2      // @
+;     SIGIL_VAR = 3      // $
 
 [ ; Establish FOR-EACH test to simplify further testing
 (
     for-each-sigil: specialize for-each/ [
-        data: [^ & @ $ &]
+        data: [^ @ $]
     ]
     ok
 )
@@ -19,7 +18,6 @@
 ; MOLD sigil (once verified, can take for granted in subsequent tests)
 
     ("^^" = mold '^)  ; caret is escape in Rebol strings
-    ("&" = mold '&)
     ("@" = mold '@)
     ("$" = mold '$)
 
@@ -74,7 +72,6 @@
     for-each [sigil items] [
         ~null~  [  word    tu.p.le    pa/th    [bl o ck]    (gr o up)  ]
         ^       [ ^word   ^tu.p.le   ^pa/th   ^[bl o ck]   ^(gr o up)  ]
-        &       [ &word   &tu.p.le   &pa/th   &[bl o ck]   &(gr o up)  ]
         @       [ @word   @tu.p.le   @pa/th   @[bl o ck]   @(gr o up)  ]
         $       [ $word   $tu.p.le   $pa/th   $[bl o ck]   $(gr o up)  ]
     ][

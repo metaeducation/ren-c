@@ -317,19 +317,16 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_BLOCK:
       case TYPE_THE_BLOCK:
       case TYPE_META_BLOCK:
-      case TYPE_WILD_BLOCK:
       case TYPE_VAR_BLOCK:
         //
       case TYPE_FENCE:
       case TYPE_THE_FENCE:
       case TYPE_META_FENCE:
-      case TYPE_WILD_FENCE:
       case TYPE_VAR_FENCE:
         //
       case TYPE_GROUP:
       case TYPE_THE_GROUP:
       case TYPE_META_GROUP:
-      case TYPE_WILD_GROUP:
       case TYPE_VAR_GROUP: {
         if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
@@ -342,21 +339,18 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_TUPLE:
       case TYPE_THE_TUPLE:
       case TYPE_META_TUPLE:
-      case TYPE_WILD_TUPLE:
       case TYPE_VAR_TUPLE:
         goto any_sequence;
 
       case TYPE_CHAIN:
       case TYPE_THE_CHAIN:
       case TYPE_META_CHAIN:
-      case TYPE_WILD_CHAIN:
       case TYPE_VAR_CHAIN:
         goto any_sequence;
 
       case TYPE_PATH:
       case TYPE_THE_PATH:
       case TYPE_META_PATH:
-      case TYPE_WILD_PATH:
       case TYPE_VAR_PATH:
         goto any_sequence;
 
@@ -371,7 +365,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_WORD:
       case TYPE_THE_WORD:
       case TYPE_META_WORD:
-      case TYPE_WILD_WORD:
       case TYPE_VAR_WORD: {
         assert(Cell_Has_Node1(v));
 

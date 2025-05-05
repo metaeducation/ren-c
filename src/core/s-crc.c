@@ -205,18 +205,15 @@ uint32_t Hash_Value(const Cell* cell)
       case TYPE_CHAIN:
       case TYPE_THE_CHAIN:
       case TYPE_META_CHAIN:
-      case TYPE_WILD_CHAIN:
       case TYPE_VAR_CHAIN:
         //
       case TYPE_TUPLE:
       case TYPE_THE_TUPLE:
-      case TYPE_WILD_TUPLE:
       case TYPE_VAR_TUPLE:
         //
       case TYPE_PATH:
       case TYPE_THE_PATH:
       case TYPE_META_PATH:
-      case TYPE_WILD_PATH:
       case TYPE_VAR_PATH: {
         if (not Sequence_Has_Node(cell)) {
             hash = Hash_Bytes(
@@ -248,19 +245,16 @@ uint32_t Hash_Value(const Cell* cell)
       case TYPE_BLOCK:
       case TYPE_THE_BLOCK:
       case TYPE_META_BLOCK:
-      case TYPE_WILD_BLOCK:
       case TYPE_VAR_BLOCK:
         //
       case TYPE_FENCE:
       case TYPE_THE_FENCE:
       case TYPE_META_FENCE:
-      case TYPE_WILD_FENCE:
       case TYPE_VAR_FENCE:
         //
       case TYPE_GROUP:
       case TYPE_THE_GROUP:
       case TYPE_META_GROUP:
-      case TYPE_WILD_GROUP:
       case TYPE_VAR_GROUP:
         //
         //
@@ -292,7 +286,6 @@ uint32_t Hash_Value(const Cell* cell)
       case TYPE_WORD:
       case TYPE_THE_WORD:
       case TYPE_META_WORD:
-      case TYPE_WILD_WORD:
       case TYPE_VAR_WORD: {
         //
         // Note that the canon symbol may change for a group of word synonyms

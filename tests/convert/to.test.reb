@@ -1,7 +1,7 @@
 ; functions/convert/to.r
 
 
-; Fundamental datatypes are now `percent!: &percent` and give word with no
+; Fundamental datatypes are now `percent!: ~{percent~}` and give word with no
 ; decoration after conversion.
 ;
 ('percent! = to word! percent!)

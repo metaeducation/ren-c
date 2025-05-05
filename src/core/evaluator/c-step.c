@@ -580,8 +580,6 @@ Bounce Stepper_Executor(Level* L)
     //
     // ^ acts like META
     //
-    // & acts like TYPE OF
-    //
     // @ acts like THE (literal, but bound):
     //
     //     >> abc: 10
@@ -591,17 +589,6 @@ Bounce Stepper_Executor(Level* L)
     //
     //     >> get word
     //     == 10
-    //
-    // ' acts like JUST (literal, no added binding)
-    //
-    //      >> abc: 10
-    //
-    //      >> word: ' abc
-    //
-    //      >> get word
-    //      ** Script Error: abc word is not bound to a context
-    //
-    // ~~ has no use at time of writing.
     //
     // 2. There's a twist, that @ can actually handle antiforms if they are
     //    coming in via an API feed.  This is a convenience so you can write:
@@ -652,9 +639,6 @@ Bounce Stepper_Executor(Level* L)
                 goto sigil_rightside_in_out;
 
             return CONTINUE_SUBLEVEL(right); }
-
-          case SIGIL_WILD:  // &
-            return FAIL("No behavior defined for & sigil yet");
 
           default:
             assert(false);
@@ -1789,15 +1773,6 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_DATE:
         //
       case TYPE_PARAMETER:
-        //
-      case TYPE_WILD_BLOCK:
-      case TYPE_WILD_FENCE:
-      case TYPE_WILD_GROUP:
-      case TYPE_WILD_WORD:
-      case TYPE_WILD_PATH:
-      case TYPE_WILD_CHAIN:
-      case TYPE_WILD_TUPLE:
-        //
       case TYPE_HANDLE:
 
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);

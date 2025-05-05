@@ -94,9 +94,6 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
 // you want them (sometimes you want `value`, sometimes you don't)
 //
 
-#define Any_Get_Type    Any_Get_Value_Type
-#define Any_Set_Type    Any_Set_Value_Type
-#define Any_Wild_Type   Any_Wild_Value_Type
 #define Any_Meta_Type   Any_Meta_Value_Type
 #define Any_The_Type    Any_The_Value_Type
 #define Any_Plain_Type  Any_Plain_Value_Type
@@ -113,22 +110,17 @@ INLINE Heart Sigilize_Any_Plain_Heart(Sigil sigil, Heart h) {
 
 INLINE Heart Plainify_Any_Meta_Heart(Heart h) {
     assert(Any_Meta_Type(h));
-    return cast(HeartEnum, u_cast(Byte, h) - 1);
-}
-
-INLINE Heart Plainify_Any_Wild_Heart(Heart h) {
-    assert(Any_Meta_Type(h));
-    return cast(HeartEnum, u_cast(Byte, h) - 2);
+    return cast(HeartEnum, u_cast(Byte, h) - u_cast(int, SIGIL_META));
 }
 
 INLINE Heart Plainify_Any_The_Heart(Heart h) {
     assert(Any_The_Type(h));
-    return cast(HeartEnum, u_cast(Byte, h) - 3);
+    return cast(HeartEnum, u_cast(Byte, h) - u_cast(int, SIGIL_THE));
 }
 
 INLINE Heart Plainify_Any_Var_Heart(Heart h) {
     assert(Any_Var_Type(h));
-    return cast(HeartEnum, u_cast(Byte, h) - 4);
+    return cast(HeartEnum, u_cast(Byte, h) - u_cast(int, SIGIL_VAR));
 }
 
 

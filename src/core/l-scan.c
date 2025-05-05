@@ -1350,10 +1350,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         S->end = cp + 1;
         return LOCATED(TOKEN_AT);
     }
-    else if (*cp == '&') {
-        S->end = cp + 1;
-        return LOCATED(TOKEN_AMPERSAND);
-    }
     else if (
         *cp == '$'
         and Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER
@@ -2339,10 +2335,6 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_AT:
         assert(*S->begin == '@' and len == 1);
-        goto token_prefixable_sigil;
-
-      case TOKEN_AMPERSAND:
-        assert(*S->begin == '&' and len == 1);
         goto token_prefixable_sigil;
 
       case TOKEN_DOLLAR:

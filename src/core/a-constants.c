@@ -81,7 +81,6 @@ const char * const g_month_names[12] = {
 const char * const g_token_names[] = {
     "!token-0!",
     "caret",
-    "ampersand",
     "at",
     "dollar",
     "newline",

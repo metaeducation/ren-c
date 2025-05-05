@@ -807,10 +807,6 @@
         parse3 s: ">" [change '> ("greater")]  ; > is WORD!
         s = "greater"
     )
-    (
-        parse3 s: "&" [change '& ("ampersand")]  ; & is SIGIL!
-        s = "ampersand"
-    )
 ]
 
 [#1244

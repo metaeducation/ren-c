@@ -202,10 +202,6 @@ varargs     "evaluator position for variable numbers of arguments"
                 (node1)
                 [any-utf8? any-meta-value? any-sequencable?]
 
-    wild-word   "inert form of word"
-                (node1)
-                [any-utf8? any-wild-value? any-sequencable?]
-
     the-word    "evaluates to the bound version of the word as a word!"
                 (node1)
                 [any-utf8? any-the-value? any-sequencable?]
@@ -229,10 +225,6 @@ varargs     "evaluator position for variable numbers of arguments"
                 (:node1)
                 [any-meta-value?]
 
-    wild-tuple  "inert form of tuple"
-                (:node1)
-                [any-scalar? any-wild-value?]
-
     the-tuple   "evaluates to the bound version of the tuple as a tuple!"
                 (:node1)
                 [any-scalar? any-the-value?]
@@ -253,10 +245,6 @@ varargs     "evaluator position for variable numbers of arguments"
                 (:node1)
                 [any-meta-value?]
 
-    wild-chain  "inert form of chain"
-                (:node1)
-                [any-wild-value?]
-
     the-chain   "evaluates to the bound version of the chain as a the-chain!"
                 (:node1)
                 [any-the-value?]
@@ -276,10 +264,6 @@ varargs     "evaluator position for variable numbers of arguments"
     meta-path   "path that quotes product or turns quasiforms to antiforms"
                 (:node1)
                 [any-meta-value?]
-
-    wild-path   "inert form of path"
-                (:node1)
-                [any-wild-value?]
 
     the-path    "evaluates to the bound version of the path as a the-path!"
                 (:node1)
@@ -307,10 +291,6 @@ varargs     "evaluator position for variable numbers of arguments"
                 (node1)
                 [any-series? any-branch? any-meta-value? any-sequencable?]
 
-    wild-block  "inert form of block"
-                (node1)
-                [any-series? any-branch? any-wild-value? any-sequencable?]
-
     the-block   "evaluates to the bound version of the block as a the-block!"
                 (node1)
                 [any-series? any-branch? any-the-value? any-sequencable?]
@@ -333,10 +313,6 @@ varargs     "evaluator position for variable numbers of arguments"
                 (node1)
                 [any-series? any-branch? any-meta-value? any-sequencable?]
 
-    wild-fence  "inert form of fence"
-                (node1)
-                [any-series? any-branch? any-wild-value? any-sequencable?]
-
     the-fence   "evaluates to the bound version of the fence as a the-fence!"
                 (node1)
                 [any-series? any-branch? any-the-value? any-sequencable?]
@@ -358,10 +334,6 @@ varargs     "evaluator position for variable numbers of arguments"
     meta-group  "group that quotes product or turns antiforms to quasiforms"
                 (node1)
                 [any-series? any-meta-value? any-sequencable?]
-
-    wild-group  "inert form of group"
-                (node1)
-                [any-series? any-wild-value? any-sequencable?]
 
     the-group   "evaluates to the bound version of the group as a the-group!"
                 (node1)

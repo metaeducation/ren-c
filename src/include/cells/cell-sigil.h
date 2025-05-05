@@ -19,7 +19,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// At one time, things like $ and ^ and : were "special" WORD!s.  These words
+// At one time, things like $ and ^ and @ were "special" WORD!s.  These words
 // caused problems since they could not be turned into forms with sigils,
 // without a complex escaping mechanism.  Once the 64 total datatypes limit
 // was lifted, it became feasible to give them the type SIGIL!
@@ -28,7 +28,6 @@
 INLINE char Char_For_Sigil(Sigil sigil) {
     switch (sigil) {
       case SIGIL_META:  return '^';
-      case SIGIL_WILD:  return '&';
       case SIGIL_THE:   return '@';
       case SIGIL_VAR:   return '$';
       default:
@@ -54,8 +53,6 @@ INLINE Sigil Cell_Sigil(const Cell* cell) {
 INLINE Option(Sigil) Sigil_For_Heart(Option(Heart) heart) {
     if (Any_Meta_Type(heart))
         return SIGIL_META;
-    if (Any_Wild_Type(heart))
-        return SIGIL_WILD;
     if (Any_The_Type(heart))
         return SIGIL_THE;
     if (Any_Var_Type(heart))
