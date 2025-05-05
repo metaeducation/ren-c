@@ -369,7 +369,7 @@ Bounce Stepper_Executor(Level* L)
     Option(InfixMode) infix_mode;
     Phase* infixed;
 
-    switch (HEART_BYTE(L_next)) {  // words and chains on right may look back
+    switch (Heart_Of(L_next)) {  // words and chains on right may look back
       case TYPE_WORD: {
         L_next_gotten = Lookup_Word(
             L_next,
@@ -503,7 +503,7 @@ Bounce Stepper_Executor(Level* L)
             STATE = cast(StepperState, TYPE_QUOTED);  // can't leave STATE_0
         }
     }
-    else switch ((STATE = HEART_BYTE(CURRENT))) {  // states include type [2]
+    else switch ((STATE = cast(Byte, Heart_Of(CURRENT)))) {  // superset [2]
 
     //=//// COMMA! ////////////////////////////////////////////////////////=//
     //

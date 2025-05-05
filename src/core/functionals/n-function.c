@@ -121,7 +121,7 @@ Bounce Func_Dispatcher(Level* const L)
         if (Is_Nulled(OUT))
             goto redo_with_current_frame_values;
 
-        assert(HEART_BYTE(OUT) == TYPE_FRAME);
+        assert(Heart_Of(OUT) == TYPE_FRAME);
         goto reuse_level_to_run_frame_in_out;
     }
 
@@ -551,7 +551,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     Atom* atom  // coercion needs mutability
 ){
     assert(  // to be in specialized slot, RETURN can't be a plain PARAMETER!
-        HEART_BYTE(param) == TYPE_PARAMETER
+        Heart_Of(param) == TYPE_PARAMETER
         and (
             QUOTE_BYTE(param) == NOQUOTE_1
             or QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3

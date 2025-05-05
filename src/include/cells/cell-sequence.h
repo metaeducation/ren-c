@@ -226,7 +226,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
         Option(Heart) mirror = Mirror_Of(a);
         Option(Heart) h = Heart_Of(e);
         if (not mirror or ((unwrap mirror) == (unwrap h))) {
-            MIRROR_BYTE(a) = HEART_BYTE(e);  // remember what kind it is
+            MIRROR_BYTE(a) = Heart_Of(e);  // remember what kind it is
             HEART_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;
             return SUCCESS;
@@ -890,7 +890,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
             *(unwrap bound) = IS_WORD_BOUND(e);
         return Cell_Word_Symbol(e);
     }
-    if (HEART_BYTE(e) != TYPE_PATH)
+    if (Heart_Of(e) != TYPE_PATH)
         return nullptr;
     if (LEADING_BLANK_AND(CHAIN) != Try_Get_Sequence_Singleheart(e))
         return nullptr;  // e is not /?:?:? style path
@@ -981,7 +981,7 @@ INLINE bool Any_Set_Value(const Value* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
         QUOTE_BYTE(v) == NOQUOTE_1
-        and HEART_BYTE(v) == TYPE_CHAIN
+        and Heart_Of(v) == TYPE_CHAIN
         and (single = Try_Get_Sequence_Singleheart(v))
         and Singleheart_Has_Trailing_Blank(unwrap single)
     );
@@ -991,7 +991,7 @@ INLINE bool Any_Get_Value(const Value* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
         QUOTE_BYTE(v) == NOQUOTE_1
-        and HEART_BYTE(v) == TYPE_CHAIN
+        and Heart_Of(v) == TYPE_CHAIN
         and (single = Try_Get_Sequence_Singleheart(v))
         and Singleheart_Has_Leading_Blank(unwrap single)
     );

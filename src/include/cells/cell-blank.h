@@ -98,7 +98,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     TRACK(Init_Quasar_Untracked(out))
 
 INLINE bool Is_Quasar(Need(const Element*) v)
-  { return HEART_BYTE(v) == TYPE_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }
+  { return Heart_Of(v) == TYPE_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }
 
 
 //=//// '~' ANTIFORM (a.k.a. TRASH) ///////////////////////////////////////=//

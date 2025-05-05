@@ -52,7 +52,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 {
     Assert_Cell_Readable(v);  // then we use unchecked() on v below
 
-    Option(Heart) heart = Cell_Heart_Unchecked(v);
+    Option(Heart) heart = Unchecked_Heart_Of(v);
 
     while (Is_Bindable_Heart(heart)) {  // for `break` convenience
         Context* binding = Cell_Binding(v);

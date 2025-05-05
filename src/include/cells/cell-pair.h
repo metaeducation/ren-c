@@ -52,9 +52,9 @@
 
 INLINE bool Pairlike_Cell(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
-    if (Cell_Heart_Unchecked(v) == TYPE_PAIR)
+    if (Unchecked_Heart_Of(v) == TYPE_PAIR)
         return true;
-    if (not Any_Sequence_Type(Cell_Heart_Unchecked(v)))
+    if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))
         return false;
     if (not Sequence_Has_Node(v))  // compressed bytes
         return false;

@@ -85,7 +85,7 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
         return SUCCESS;
     }
 
-    assert(HEART_BYTE(lookup) == TYPE_FRAME);  // alias accessors as WORD! ?
+    assert(Heart_Of(lookup) == TYPE_FRAME);  // alias accessors as WORD! ?
     assert(QUOTE_BYTE(lookup) == ANTIFORM_0);
 
     DECLARE_ELEMENT (accessor);

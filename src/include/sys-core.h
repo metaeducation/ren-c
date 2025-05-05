@@ -227,9 +227,9 @@ typedef RebolHandleCleaner HandleCleaner;
 
 #include "mem-pools.h"
 
+#include "structs/struct-cell.h"
 #include "enums/enum-types.h"  // defines Heart and Type (safe wrappers if C++)
 
-#include "structs/struct-cell.h"
 #include "structs/struct-value.h"
 
 #include "structs/struct-stub.h"  // Stub definition, embeds Cell

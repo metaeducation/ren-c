@@ -70,12 +70,12 @@ INLINE void Tweak_Handle_Cleaner(
 
 
 INLINE bool Is_Handle_Cfunc(const Cell* v) {
-    assert(Cell_Heart_Unchecked(v) == TYPE_HANDLE);
+    assert(Unchecked_Heart_Of(v) == TYPE_HANDLE);
     return CELL_HANDLE_LENGTH_U(v) == 0;
 }
 
 INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* c) {
-    assert(Cell_Heart_Unchecked(c) == TYPE_HANDLE);
+    assert(Unchecked_Heart_Of(c) == TYPE_HANDLE);
     if (not Cell_Has_Node1(c))
         return m_cast(Cell*, c);  // changing instance won't be seen by copies
     return Stub_Cell(Extract_Cell_Handle_Stub(c));  // has shared node
@@ -83,7 +83,7 @@ INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* c) {
 
 #if CPLUSPLUS_11
     INLINE const Cell* Extract_Cell_Handle_Canon(const Cell* c) {
-        assert(Cell_Heart_Unchecked(c) == TYPE_HANDLE);
+        assert(Unchecked_Heart_Of(c) == TYPE_HANDLE);
         if (not Cell_Has_Node1(c))
             return c;  // changing handle instance won't be seen by copies
         return Stub_Cell(Extract_Cell_Handle_Stub(c));  // has shared node
@@ -120,7 +120,7 @@ INLINE CFunction* Cell_Handle_Cfunc(const Cell* v) {
 }
 
 INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Cell* v) {
-    assert(Cell_Heart_Unchecked(v) == TYPE_HANDLE);
+    assert(Unchecked_Heart_Of(v) == TYPE_HANDLE);
     if (not Cell_Has_Node1(v))
         return nullptr;
     Stub* stub = Extract_Cell_Handle_Stub(v);

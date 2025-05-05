@@ -127,7 +127,7 @@ ATTRIBUTE_NO_RETURN void Panic_Cell_Debug(const Cell* c) {
     Option(Heart) heart = Heart_Of(c);
     Option(SymId) id = heart ? Symbol_Id_From_Type(unwrap heart) : SYM_0;
     const char *name = id ? String_UTF8(Canon_Symbol(unwrap id)) : "custom-0";
-    Printf_Stderr("cell_heart=%d\n", u_cast(int, HEART_BYTE(c)));
+    Printf_Stderr("cell_heart_byte=%d\n", u_cast(int, HEART_BYTE(c)));
     Printf_Stderr("cell heart name=%s\n", name);
     Printf_Stderr("quote_byte=%d\n", u_cast(int, QUOTE_BYTE(c)));
 
@@ -281,7 +281,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       case DETECTED_AS_END: {
       #if DEBUG_FANCY_PANIC
         const Cell* c = c_cast(Cell*, p);
-        if (HEART_BYTE(c) == TYPE_ERROR) {
+        if (Heart_Of(c) == TYPE_ERROR) {
             Printf_Stderr("...panic on an ERROR! Cell, trying to PROBE...");
             PROBE(c);
         }

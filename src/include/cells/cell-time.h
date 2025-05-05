@@ -129,12 +129,12 @@ INLINE bool Does_Date_Have_Zone(const Cell* c)
 //=////////////////////////////////////////////////////////////////////////=//
 
 INLINE REBI64 VAL_NANO(const Cell* c) {
-    assert(HEART_BYTE(c) == TYPE_TIME or Does_Date_Have_Time(c));
+    assert(Heart_Of(c) == TYPE_TIME or Does_Date_Have_Time(c));
     return c->payload.nanoseconds;
 }
 
 INLINE void Tweak_Cell_Nanoseconds(Cell* c, REBI64 nano) {
-    assert(HEART_BYTE(c) == TYPE_TIME or Heart_Of(c) == TYPE_DATE);
+    assert(Heart_Of(c) == TYPE_TIME or Heart_Of(c) == TYPE_DATE);
     possibly(nano == NO_DATE_TIME);
     c->payload.nanoseconds = nano;
 }

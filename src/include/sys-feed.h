@@ -128,7 +128,7 @@ INLINE void Tweak_Link_Feedstub_Splice(
     Misc_Feedstub_Pending(&(feed)->singular)
 
 #define FEED_IS_VARIADIC(feed) \
-    (TYPE_COMMA == HEART_BYTE(Feed_Data(feed)))
+    (TYPE_COMMA == Heart_Of(Feed_Data(feed)))
 
 #define FEED_VAPTR_POINTER(feed)    Feed_Data(feed)->payload.comma.vaptr
 #define FEED_PACKED(feed)           Feed_Data(feed)->payload.comma.packed

@@ -410,9 +410,6 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 //    special situations.
 //
 
-#define HEART_BYTE_RAW(cell) \
-    SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
-
 #if (! DEBUG_HOOK_HEART_BYTE)
     #define HEART_BYTE(cell) \
         HEART_BYTE_RAW(cell)
@@ -464,26 +461,28 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
         HeartHolder{cell}
 #endif
 
-#define Cell_Heart_Unchecked(c) \
-    u_cast(Option(Heart), u_cast(HeartEnum, HEART_BYTE_RAW(c)))
+#define Unchecked_Heart_Of(c) \
+    u_cast(Option(Heart), u_cast(HeartEnum, HEART_BYTE_RAW(c) % MOD_HEART_64))
 
 #define Heart_Of(c) \
-    Cell_Heart_Unchecked(Ensure_Readable(c))
+    Unchecked_Heart_Of(Ensure_Readable(c))
 
 INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
     assert(QUOTE_BYTE(c) == NOQUOTE_1);
-    return Cell_Heart_Unchecked(c);
+    return Heart_Of(c);
 }
 
 INLINE Heart Heart_Of_Builtin(const Cell* c) {
-    assert(HEART_BYTE(c) != TYPE_0);
-    return u_cast(HeartEnum, HEART_BYTE_RAW(c));
+    Option(Heart) heart = Heart_Of(c);
+    assert(heart != TYPE_0);
+    return maybe heart;  // faster than unwrap, we already checked for 0
 }
 
 INLINE Heart Heart_Of_Builtin_Fundamental(const Cell* c) {
     assert(QUOTE_BYTE(c) == NOQUOTE_1);
-    assert(HEART_BYTE(c) != TYPE_0);
-    return u_cast(HeartEnum, HEART_BYTE_RAW(c));
+    Option(Heart) heart = Heart_Of(c);
+    assert(heart != TYPE_0);
+    return maybe heart;  // faster than unwrap, we already checked for 0
 }
 
 #define Heart_Of_Is_0(cell) \
@@ -505,10 +504,12 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
     switch (QUOTE_BYTE(atom)) {
       case ANTIFORM_0_COERCE_ONLY:  // use this constant rarely!
-        return u_cast(TypeEnum, HEART_BYTE(atom) + MAX_TYPE_BYTE_ELEMENT);
+        return u_cast(TypeEnum,
+            (HEART_BYTE(atom) % MOD_HEART_64) + MAX_TYPE_BYTE_ELEMENT
+        );
 
       case NOQUOTE_1:  // heart might be TYPE_0 to be extension type
-        return u_cast(HeartEnum, HEART_BYTE(atom));
+        return u_cast(HeartEnum, (HEART_BYTE(atom) % MOD_HEART_64));
 
       case QUASIFORM_2_COERCE_ONLY:  // use this constant rarely!
         return TYPE_QUASIFORM;
@@ -674,7 +675,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     #define Ensure_Cell_Has_Node2(c)        (c)
 #else
     INLINE Cell* Ensure_Cell_Has_Extra_Node(const_if_c Cell* c)
-      { assert(Is_Extra_Mark_Heart(HEART_BYTE(c))); return c; }
+      { assert(Is_Extra_Mark_Heart(Heart_Of(c))); return c; }
 
     INLINE Cell* Ensure_Cell_Has_Node1(const_if_c Cell* c)
       { assert(Not_Cell_Flag(c, DONT_MARK_NODE1)); return c; }
@@ -684,7 +685,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 
   #if CPLUSPLUS_11
     INLINE const Cell* Ensure_Cell_Has_Extra_Node(const Cell* c)
-      { assert(Is_Extra_Mark_Heart(HEART_BYTE(c))); return c; }
+      { assert(Is_Extra_Mark_Heart(Heart_Of(c))); return c; }
 
     INLINE const Cell* Ensure_Cell_Has_Node1(const Cell* c)
       { assert(Not_Cell_Flag(c, DONT_MARK_NODE1)); return c; }

@@ -59,17 +59,17 @@
 #define CELL_VARARGS_PHASE_NODE(c)          CELL_NODE2(c)
 
 INLINE Phase* Extract_Cell_Varargs_Phase(const Cell* c) {
-    assert(HEART_BYTE(c) == TYPE_VARARGS);
+    assert(Heart_Of(c) == TYPE_VARARGS);
     return cast(Phase*, CELL_VARARGS_PHASE_NODE(c));
 }
 
 INLINE void Tweak_Cell_Varargs_Phase(Cell* c, Phase* phase) {
-    assert(HEART_BYTE(c) == TYPE_VARARGS);
+    assert(Heart_Of(c) == TYPE_VARARGS);
     CELL_VARARGS_PHASE_NODE(c) = phase;
 }
 
 INLINE Array* Cell_Varargs_Origin(const Cell* c) {
-    assert(HEART_BYTE(c) == TYPE_VARARGS);
+    assert(Heart_Of(c) == TYPE_VARARGS);
     return cast(Array*, CELL_VARARGS_ORIGIN(c));
 }
 
@@ -77,7 +77,7 @@ INLINE void Tweak_Cell_Varargs_Origin(
     Cell* c,
     Stub* source  // either a feed, or a frame varlist
 ){
-    assert(HEART_BYTE(c) == TYPE_VARARGS);
+    assert(Heart_Of(c) == TYPE_VARARGS);
     CELL_VARARGS_ORIGIN(c) = source;
 }
 

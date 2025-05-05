@@ -67,7 +67,7 @@
 INLINE bool Is_Nulled(Need(const Value*) v) {
     Assert_Cell_Readable(v);
     return QUOTE_BYTE(v) == ANTIFORM_0
-        and HEART_BYTE(v) == TYPE_WORD
+        and Heart_Of(v) == TYPE_WORD
         and Cell_Word_Id(v) == SYM_NULL;
 }
 
@@ -84,7 +84,7 @@ INLINE bool Is_Nulled(Need(const Value*) v) {
 INLINE bool Is_Quasi_Null(const Cell* v) {
     if (not Is_Quasiform(v))
         return false;
-    if (HEART_BYTE(v) != TYPE_WORD)
+    if (Heart_Of(v) != TYPE_WORD)
         return false;
     return Cell_Word_Id(v) == SYM_NULL;
 }

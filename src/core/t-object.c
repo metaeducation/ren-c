@@ -286,7 +286,7 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
     assert(Any_Context_Type(b_heart));
 
     if (a_heart != b_heart)  // e.g. ERROR! won't equal OBJECT!
-        return HEART_BYTE(a) > HEART_BYTE(b) ? 1 : 0;
+        return u_cast(Byte, a_heart) > u_cast(Byte, b_heart) ? 1 : 0;
 
     Node* n1 = CELL_NODE1(a);
     Node* n2 = CELL_NODE1(b);

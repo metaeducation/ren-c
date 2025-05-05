@@ -160,7 +160,7 @@ DECLARE_NATIVE(META)
         Bool_ARG(LITE)  // META:LITE handles quasiforms specially
         and Is_Quasiform(meta)
     ){
-        if (HEART_BYTE(meta) == TYPE_WORD) {  // keywords pass thru
+        if (Heart_Of(meta) == TYPE_WORD) {  // keywords pass thru
             QUOTE_BYTE(meta) = ANTIFORM_0_COERCE_ONLY;  // ^META validated [1]
             return COPY(meta);
         }

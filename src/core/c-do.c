@@ -180,7 +180,7 @@ bool Pushed_Continuation(
             &Evaluator_Executor, c_cast(Element*, branch), binding, flags
         );
         Init_Nihil(Evaluator_Primed_Cell(L));
-        if (Cell_Heart_Unchecked(branch) == TYPE_META_BLOCK) {
+        if (Unchecked_Heart_Of(branch) == TYPE_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
             Set_Level_Flag(L, RAISED_RESULT_OK);
         }

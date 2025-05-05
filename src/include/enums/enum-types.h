@@ -115,7 +115,7 @@
         Heart (HeartEnum heart) : h (u_cast(HeartEnum, heart)) {}
         explicit Heart (Byte byte) : h (u_cast(HeartEnum, byte)) {}
         explicit Heart (SymId id) {
-            assert(id <= MAX_HEART_BYTE);
+            assert(id <= u_cast(Byte, MAX_HEART));
             h = u_cast(HeartEnum, id);
         }
 

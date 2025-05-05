@@ -57,7 +57,7 @@ INLINE Element* Derelativize_Untracked(
     Copy_Cell_Header(out, v);
     out->payload = v->payload;
 
-    Option(Heart) heart = Cell_Heart_Unchecked(v);
+    Option(Heart) heart = Unchecked_Heart_Of(v);
 
     if (
         not context  // should bindings always be left as-is in this case?

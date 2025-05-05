@@ -9,9 +9,9 @@
 
 INLINE bool Listlike_Cell(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
-    if (Any_List_Type(Cell_Heart_Unchecked(v)))
+    if (Any_List_Type(Unchecked_Heart_Of(v)))
         return true;
-    if (not Any_Sequence_Type(Cell_Heart_Unchecked(v)))
+    if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))
         return false;
     if (not Cell_Has_Node1(v))
         return false;

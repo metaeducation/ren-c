@@ -170,9 +170,9 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
     // Assume Is_Antiform() checked Ensure_Readable()
     assert(QUOTE_BYTE(a) == ANTIFORM_0);
     return (
-        HEART_BYTE(a) == TYPE_BLOCK  // Is_Pack()
-        or HEART_BYTE(a) == TYPE_ERROR  // Is_Raised()
-        or HEART_BYTE(a) == TYPE_COMMA  // Is_Ghost()
+        Heart_Of(a) == TYPE_BLOCK  // Is_Pack()
+        or Heart_Of(a) == TYPE_ERROR  // Is_Raised()
+        or Heart_Of(a) == TYPE_COMMA  // Is_Ghost()
     );
 }
 
@@ -194,9 +194,9 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
     if (QUOTE_BYTE(a) != ANTIFORM_0)
         return true;
     return (
-        HEART_BYTE(a) != TYPE_BLOCK  // Is_Pack()
-        and HEART_BYTE(a) != TYPE_ERROR  // Is_Raised()
-        and HEART_BYTE(a) != TYPE_COMMA  // Is_Ghost()
+        Heart_Of(a) != TYPE_BLOCK  // Is_Pack()
+        and Heart_Of(a) != TYPE_ERROR  // Is_Raised()
+        and Heart_Of(a) != TYPE_COMMA  // Is_Ghost()
     );
 }
 

@@ -395,7 +395,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             if (Is_Cell_Readable(param)) {
                 assert(
                     QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
-                    and HEART_BYTE(param) == TYPE_PARAMETER
+                    and Heart_Of(param) == TYPE_PARAMETER
                 );
                 if (SYM_RETURN == unwrap returner)
                     return Error_User("Duplicate RETURN: in function spec");
@@ -688,7 +688,7 @@ void Pop_Unpopped_Return(Sink(Element) out, StackIndex base)
 {
     assert(TOP_INDEX == base + 2);
     assert(
-        HEART_BYTE(TOP) == TYPE_PARAMETER
+        Heart_Of(TOP) == TYPE_PARAMETER
         and QUOTE_BYTE(TOP) == ONEQUOTE_NONQUASI_3
     );
     QUOTE_BYTE(TOP) = NOQUOTE_1;
@@ -745,7 +745,7 @@ Details* Make_Dispatch_Details(
     );
     Set_Flex_Len(a, (maybe details_max) + 1);
 
-    assert(HEART_BYTE(exemplar) == TYPE_FRAME);
+    assert(Heart_Of(exemplar) == TYPE_FRAME);
     assert(
         QUOTE_BYTE(exemplar) == NOQUOTE_1
         or QUOTE_BYTE(exemplar) == ANTIFORM_0  // allow action antiform

@@ -979,7 +979,7 @@ INLINE void Inject_Definitional_Returner(
     Value* cell = Level_Arg(L, 1);  // should start out specialized
     assert(
         QUOTE_BYTE(cell) == ONEQUOTE_NONQUASI_3
-        and HEART_BYTE(cell) == TYPE_PARAMETER
+        and Heart_Of(cell) == TYPE_PARAMETER
     );
     Init_Action(
         cell,

@@ -30,7 +30,7 @@
 INLINE bool Is_Void(Need(const Value*) v) {
     Assert_Cell_Readable(v);
     return QUOTE_BYTE(v) == ANTIFORM_0
-        and HEART_BYTE(v) == TYPE_WORD
+        and Heart_Of(v) == TYPE_WORD
         and Cell_Word_Id(v) == SYM_VOID;
 }
 

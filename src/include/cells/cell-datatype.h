@@ -167,14 +167,14 @@ INLINE Option(Heart) Cell_Datatype_Heart(const Atom* v) {
         return TYPE_0;
 
     Byte type_byte = cast(Byte, Type_From_Symbol_Id(unwrap id));
-    assert(type_byte <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
+    assert(type_byte <= u_cast(Byte, MAX_HEART));  // not QUOTED/QUASI/ANTI
     return u_cast(HeartEnum, type_byte);
 }
 
 INLINE Heart Cell_Datatype_Builtin_Heart(const Atom* v) {
     Option(SymId) id = Cell_Datatype_Id(v);
     Byte type_byte = cast(Byte, Type_From_Symbol_Id(unwrap id));
-    assert(type_byte <= MAX_HEART_BYTE);  // not QUOTED/QUASI/ANTI
+    assert(type_byte <= u_cast(Byte, MAX_HEART));  // not QUOTED/QUASI/ANTI
     return u_cast(HeartEnum, type_byte);
 }
 

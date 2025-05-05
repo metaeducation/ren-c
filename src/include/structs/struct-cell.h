@@ -152,11 +152,16 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //=//// BITS 8-15: CELL LAYOUT TYPE BYTE ("HEART") ////////////////////////=//
 //
 // The "heart" is the fundamental datatype of a cell, dictating its payload
-// layout and interpretation.
+// layout and interpretation.  It's 64 fundamental types taking up 6 bits,
+// and then an extra 2 bits ("crumb") that can be used on a per-heart basis
+// to encode special states.
 //
 // Most of the time code wants to check the Type_Of() of a cell and not it's
 // HEART, because that treats quoted cells differently.  If you only check
 // the heart, then (''''x) will equal (x) because both hearts are WORD!.
+
+#define HEART_BYTE_RAW(cell) \
+    SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
 
 #define FLAG_HEART_BYTE(heart) \
     FLAG_SECOND_BYTE(cast(Byte, ensure(HeartEnum, (heart))))
@@ -164,7 +169,10 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define FLAG_HEART(name) \
     FLAG_SECOND_BYTE(u_cast(Byte, u_cast(HeartEnum, TYPE_##name)))
 
-#define FLAG_HEART_BYTE_255  FLAG_SECOND_BYTE(255)  // for masking only
+#define MOD_HEART_64  64  /* 64 fundamental types, 2 bit crumb in byte */
+#define FLAG_HEART_BYTE_63  FLAG_SECOND_BYTE(MOD_HEART_64 - 1)
+
+#define FLAG_HEART_BYTE_255  FLAG_SECOND_BYTE(63)  // for masking only
 
 
 //=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//

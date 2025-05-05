@@ -40,13 +40,13 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
     //
     INLINE REBIDX VAL_INDEX_UNBOUNDED(const Cell* c) {
-        assert(Any_Series_Type(Cell_Heart_Unchecked(c)));
+        assert(Any_Series_Type(Unchecked_Heart_Of(c)));
         assert(Cell_Has_Node1(c));
         return VAL_INDEX_RAW(c);
     }
     INLINE REBIDX & VAL_INDEX_UNBOUNDED(Cell* c) {
         Assert_Cell_Writable(c);
-        assert(Any_Series_Type(Cell_Heart_Unchecked(c)));
+        assert(Any_Series_Type(Unchecked_Heart_Of(c)));
         assert(Cell_Has_Node1(c));
         return VAL_INDEX_RAW(c);  // returns a C++ reference
     }

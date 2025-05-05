@@ -65,7 +65,7 @@
 #define CELL_PARAMETER_STRING(c)  CELL_NODE2(c)
 
 INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
-    assert(HEART_BYTE(c) == TYPE_PARAMETER);
+    assert(Heart_Of(c) == TYPE_PARAMETER);
 
     const Node* node = CELL_PARAMETER_SPEC(c);
     if (node != nullptr and Not_Node_Readable(node))
@@ -79,12 +79,12 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     #define PARAMETER_FLAGS(p)  (p)->extra.flags
 #else
     INLINE const uintptr_t& PARAMETER_FLAGS(const Cell* p) {
-        assert(Cell_Heart_Unchecked(p) == TYPE_PARAMETER);
+        assert(Unchecked_Heart_Of(p) == TYPE_PARAMETER);
         return p->extra.flags;
     }
 
     INLINE uintptr_t& PARAMETER_FLAGS(Cell* p) {
-        assert(Cell_Heart_Unchecked(p) == TYPE_PARAMETER);
+        assert(Unchecked_Heart_Of(p) == TYPE_PARAMETER);
         return p->extra.flags;
     }
 #endif
@@ -292,18 +292,18 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
 
 INLINE ParamClass Cell_Parameter_Class(const Cell* param) {
-    assert(HEART_BYTE(param) == TYPE_PARAMETER);
+    assert(Heart_Of(param) == TYPE_PARAMETER);
     ParamClass pclass = u_cast(ParamClass, PARAMCLASS_BYTE(param));
     return pclass;
 }
 
 INLINE Option(const String*) Cell_Parameter_String(const Cell* param) {
-    assert(HEART_BYTE(param) == TYPE_PARAMETER);
+    assert(Heart_Of(param) == TYPE_PARAMETER);
     return cast(const String*, CELL_PARAMETER_STRING(param));
 }
 
 INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
-    assert(HEART_BYTE(param) == TYPE_PARAMETER);
+    assert(Heart_Of(param) == TYPE_PARAMETER);
     CELL_PARAMETER_STRING(param) = m_cast(String*, maybe string);
 }
 
@@ -356,7 +356,7 @@ INLINE void Mark_Typechecked(const Value* v) {
 }
 
 INLINE bool Is_Parameter_Final_Type(const Param* p) {
-    assert(HEART_BYTE(p) == TYPE_PARAMETER);
+    assert(Heart_Of(p) == TYPE_PARAMETER);
     return Get_Parameter_Flag(p, FINAL_TYPECHECK);
 }
 

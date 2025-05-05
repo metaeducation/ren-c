@@ -72,7 +72,7 @@ INLINE bool Is_Bindable_Heart(Option(Heart) h)
 #undef Any_Bindable  // use Is_Bindable(), faster than a range check [1]
 
 #define Is_Bindable(v) \
-    Is_Bindable_Heart(Cell_Heart_Unchecked(v))  // readable checked elsewhere
+    Is_Bindable_Heart(Unchecked_Heart_Of(v))  // readable checked elsewhere
 
 INLINE bool Bindable_Heart_Is_Any_Word(Heart heart) {
     assert(heart >= TYPE_WORD);  // inlined Is_Bindable_Heart()

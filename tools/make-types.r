@@ -251,7 +251,7 @@ e-types/emit [--[
      */
 
     #define CELL_HEART_QUOTE_MASK \
-        (FLAG_HEART_BYTE_255 | FLAG_QUOTE_BYTE(255))
+        (FLAG_HEART_BYTE_63 | FLAG_QUOTE_BYTE(255))
 ]--]
 
 for-each-datatype 't [
@@ -354,7 +354,7 @@ for-each-datatype 't [
     ;
     e-types/emit [t proper-name --[
         INLINE bool Is_$<Proper-Name>_Core(Need(const $<Need>*) v) {
-            return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE_255))
+            return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE_63))
                 == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART($<T.NAME>)));
         }
 
@@ -362,7 +362,7 @@ for-each-datatype 't [
             Is_$<Proper-Name>_Core(Ensure_Readable(v))
 
         #define Is_Meta_Of_$<Proper-Name>(v) \
-            ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE_255)) \
+            ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE_63)) \
             == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART($<T.NAME>)))
 
         #define Is_Quasi_$<Propercase-Of T.Name>(v) \
@@ -639,7 +639,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-fundamental */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_HEART_BYTE)
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(u_cast(Byte, MAX_HEART))
     ]--]
     index: index + 1
 )
@@ -771,7 +771,7 @@ e-hearts/emit [rebs --[
     #endif
 
     #define MAX_HEART  $<MAX-HEART>
-    #define MAX_HEART_BYTE  u_cast(Byte, $<MAX-HEART>)
+    STATIC_ASSERT(u_cast(Byte, MAX_HEART) < 64);
 
     STATIC_ASSERT(u_cast(int, TYPE_QUASIFORM) == u_cast(int, MAX_HEART) + 1);
     STATIC_ASSERT(u_cast(int, TYPE_QUOTED) == u_cast(int, MAX_HEART) + 2);

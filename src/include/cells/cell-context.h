@@ -24,7 +24,7 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
     }
 
     while (not Is_Stub_Varlist(cast(Stub*, node))) {
-        assert(Cell_Heart_Unchecked(c) == TYPE_FRAME);
+        assert(Unchecked_Heart_Of(c) == TYPE_FRAME);
         assert(Is_Stub_Details(cast(Stub*, node)));
         c = Flex_Head_Dynamic(Cell, cast(Details*, CELL_FRAME_PHASE(c)));
         node = CELL_NODE1(c);  // ParamList or Details
@@ -33,12 +33,12 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
 }
 
 INLINE SeaOfVars* Cell_Module_Sea(const Cell* c) {
-    assert(HEART_BYTE(c) == TYPE_MODULE);
+    assert(Heart_Of(c) == TYPE_MODULE);
     return cast(SeaOfVars*, CELL_NODE1(c));
 }
 
 INLINE Context* Cell_Context(const Cell* c) {
-    if (HEART_BYTE(c) == TYPE_MODULE)
+    if (Heart_Of(c) == TYPE_MODULE)
         return Cell_Module_Sea(c);
     return Cell_Varlist(c);
 }

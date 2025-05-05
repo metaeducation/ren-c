@@ -696,7 +696,7 @@ DECLARE_NATIVE(QUASI_WORD_Q)
     if (b)
         return unwrap b;
 
-    return LOGIC(Is_Quasiform(e) and HEART_BYTE(e) == TYPE_WORD);
+    return LOGIC(Is_Quasiform(e) and Heart_Of(e) == TYPE_WORD);
 }
 
 
@@ -741,7 +741,7 @@ DECLARE_NATIVE(LIT_WORD_Q)
         return unwrap b;
 
     return LOGIC(
-        QUOTE_BYTE(e) == ONEQUOTE_NONQUASI_3 and HEART_BYTE(e) == TYPE_WORD
+        QUOTE_BYTE(e) == ONEQUOTE_NONQUASI_3 and Heart_Of(e) == TYPE_WORD
     );
 }
 

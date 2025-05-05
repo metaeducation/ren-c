@@ -696,9 +696,9 @@ DECLARE_NATIVE(LET)
         }
 
         Init_Any_Word_Bound(where, TYPE_WORD, symbol, bindings, INDEX_PATCHED);
-        if (HEART_BYTE(vars) != TYPE_WORD) {  // more complex than we'd like [1]
+        if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
             Setify(where);
-            if (HEART_BYTE(vars) == TYPE_PATH) {
+            if (Heart_Of(vars) == TYPE_PATH) {
                 Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
                     where, TYPE_PATH, CELL_FLAG_LEADING_BLANK
                 );
@@ -706,7 +706,7 @@ DECLARE_NATIVE(LET)
                 UNUSED(error);
             }
             else
-                assert(HEART_BYTE(vars) == TYPE_CHAIN);
+                assert(Heart_Of(vars) == TYPE_CHAIN);
         }
 
         Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
@@ -984,7 +984,7 @@ void Clonify_And_Bind_Relative(
 ){
     assert(flags & NODE_FLAG_MANAGED);
 
-    Option(Heart) heart = Cell_Heart_Unchecked(v);
+    Option(Heart) heart = Unchecked_Heart_Of(v);
 
     if (
         relative
@@ -1394,7 +1394,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
 //
 void Assert_Cell_Binding_Valid_Core(const Cell* cell)
 {
-    Option(Heart) heart = Cell_Heart_Unchecked(cell);
+    Option(Heart) heart = Unchecked_Heart_Of(cell);
     assert(Is_Bindable_Heart(heart));
 
     Context* binding = u_cast(Context*, cell->extra.node);

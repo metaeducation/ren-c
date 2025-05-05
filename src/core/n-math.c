@@ -180,7 +180,7 @@ DECLARE_NATIVE(MULTIPLY)
 
     if (
         not Heart_Of_Is_0(e1)  // left is not an extension type
-        and HEART_BYTE(e1) < HEART_BYTE(e2)  // simpler type is on left [1]
+        and cast(Byte, Heart_Of(e1)) < cast(Byte, Heart_Of(e2))  // [1]
     ){
         Move_Cell(stable_SPARE, e2);
         Move_Cell(e2, e1);  // ...so move simpler type to be on the right
