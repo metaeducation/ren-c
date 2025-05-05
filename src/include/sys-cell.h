@@ -493,6 +493,33 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 }
 
 
+//=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
+//
+// The HEART_BYTE() is structured so that the top two bits of the byte are
+// "type specific".  This 2-bit state (called a "crumb") holds the one of four
+// possible infix states for actions--for example.
+//
+// THEY ARE THE LAST TWO BITS ON PURPOSE.  If they needed to be shifted, the
+// fact that there's no unit smaller than a byte means static analyzers
+// will warn you about overflow if any shifting is involved, e.g.:
+//
+//     (((crumb << 6)) << 24)  <-- generates uintptr_t overflow warning
+//
+
+#define Get_Cell_Crumb(c) \
+    (HEART_BYTE_RAW(c) >> HEART_CRUMB_SHIFT)
+
+#define FLAG_CELL_CRUMB(crumb) \
+    FLAG_HEART_BYTE_RAW((crumb) << HEART_CRUMB_SHIFT)
+
+#define CELL_MASK_CRUMB  FLAG_CELL_CRUMB(3)  // 0b11 << HEART_CRUMB_SHIFT
+
+INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
+    c->header.bits &= ~(CELL_MASK_CRUMB);
+    c->header.bits |= FLAG_CELL_CRUMB(crumb);
+}
+
+
 //=//// VALUE TYPE (always TYPE_XXX <= MAX_TYPE) ////////////////////////////=//
 //
 // When asking about a value's "type", you want to see something like a
@@ -559,40 +586,6 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
 #define Clear_Cell_Flag(c,name) \
     m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
         &= ~CELL_FLAG_##name
-
-
-//=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
-//
-// The cell flags are structured so that the top two bits of the byte are
-// "type specific", so that you can just take the last 2 bits.  This 2-bit
-// state (called a "crumb") holds the one of four possible infix states for
-// actions--for example.
-//
-// THEY ARE THE LAST TWO BITS ON PURPOSE.  If they needed to be shifted, the
-// fact that there's no unit smaller than a byte means static analyzers
-// will warn you about overflow if any shifting is involved, e.g.:
-//
-//     (((crumb << 6)) << 24)  <-- generates uintptr_t overflow warning
-//
-
-STATIC_ASSERT(
-    CELL_FLAG_TYPE_SPECIFIC_A == FLAG_LEFT_BIT(30)
-    and CELL_FLAG_TYPE_SPECIFIC_B == FLAG_LEFT_BIT(31)
-);
-
-#define CELL_MASK_CRUMB \
-    (CELL_FLAG_TYPE_SPECIFIC_A | CELL_FLAG_TYPE_SPECIFIC_B)
-
-#define Get_Cell_Crumb(c) \
-    (FOURTH_BYTE(&(c)->header.bits) & 0x3)
-
-#define FLAG_CELL_CRUMB(crumb) \
-    FLAG_FOURTH_BYTE(crumb)
-
-INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
-    c->header.bits &= ~(CELL_MASK_CRUMB);
-    c->header.bits |= FLAG_CELL_CRUMB(crumb);
-}
 
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//

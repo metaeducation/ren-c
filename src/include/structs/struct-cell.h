@@ -163,8 +163,11 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define HEART_BYTE_RAW(cell) \
     SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
 
+#define FLAG_HEART_BYTE_RAW(byte) \
+    FLAG_SECOND_BYTE(byte)
+
 #define FLAG_HEART_BYTE(heart) \
-    FLAG_SECOND_BYTE(cast(Byte, ensure(HeartEnum, (heart))))
+    FLAG_HEART_BYTE_RAW(cast(Byte, ensure(HeartEnum, (heart))))
 
 #define FLAG_HEART(name) \
     FLAG_SECOND_BYTE(u_cast(Byte, u_cast(HeartEnum, TYPE_##name)))
@@ -173,6 +176,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define FLAG_HEART_BYTE_63  FLAG_SECOND_BYTE(MOD_HEART_64 - 1)
 
 #define FLAG_HEART_BYTE_255  FLAG_SECOND_BYTE(63)  // for masking only
+
+#define HEART_CRUMB_SHIFT 6
 
 
 //=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//

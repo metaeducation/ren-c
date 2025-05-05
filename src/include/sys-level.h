@@ -127,8 +127,6 @@ INLINE void Restart_Action_Level(Level* L) {
 #define LEVEL_MASK_CRUMB \
     (ACTION_EXECUTOR_FLAG_INFIX_A | ACTION_EXECUTOR_FLAG_INFIX_B)
 
-STATIC_ASSERT(LEVEL_MASK_CRUMB == CELL_MASK_CRUMB);
-
 #define Get_Level_Crumb(L) \
     (FOURTH_BYTE(&(L)->flags.bits))
 
