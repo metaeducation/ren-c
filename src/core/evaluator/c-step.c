@@ -351,7 +351,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
 
-    if (Is_Level_At_End(L)) {
+    if (Is_Feed_At_End(L->feed)) {
         assert(Is_Cell_Erased(OUT));
         Init_Endlike_Trash(OUT);
         STATE = cast(StepperState, TYPE_BLANK);  // can't leave as STATE_0
@@ -387,7 +387,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    reevaluation.  L_binding's conditionality should be reviewed for
     //    relevance in the modern binding model.
 
-    if (Is_Level_At_End(L))
+    if (Is_Feed_At_End(L->feed) or Is_Comma(L_next))
         goto give_up_backward_quote_priority;
 
     assert(not L_next_gotten);  // Fetch_Next_In_Feed() cleared it

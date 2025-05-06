@@ -271,6 +271,14 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 //    "FAIL X" more clearly communicates a failure than "EVAL X".  But EVAL of
 //    an ERROR! would have to raise an error anyway, so it might as well use
 //    the one it is given.
+//
+// 3. It might seem that since EVAL [] is VOID, that EVAL:STEP [] should make
+//    a VOID.  But in practice, there's a dummy step at the end of every
+//    enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three steps, where
+//    the third step is over [].  If we were to say that "step" produced
+//    anything, it would be GHOST...because that step does not contribute to
+//    the output (the result is 30).  But we want to distinguish the case of
+//    a step that produced a GHOST from hitting the end, via nullptr.
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
@@ -304,6 +312,10 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         return FAIL(Cell_Error(source)); }  // would fail anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:
+        if (Is_Endlike_Trash(OUT)) {
+            Drop_Level(SUBLEVEL);
+            return nullptr;  // no result, not even GHOST [3]
+        }
         goto single_step_meta_in_out;
 
       case ST_EVALUATE_RUNNING_TO_END:
@@ -314,42 +326,24 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
   initial_entry_list: {  /////////////////////////////////////////////////////
 
-    // 1. It might seem that since EVAL [] is VOID, that EVAL:STEP [] should
-    //    produce a VOID.  But in practice, there's a dummy step at the end
-    //    of every enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three
-    //    steps, where the third step is [].  If we were to say that "step"
-    //    produced anything, it would be NIHIL...because that step does not
-    //    contribute to the output (the result is 30).  But we actually don't
-    //    produce anything--because we don't return a pack of values when
-    //    nothing is synthesized, we just return NULL.
-    //
-    // 2. We want EVALUATE to treat all ANY-LIST? the same.  (e.g. a ^[1 + 2]
-    //    just does the same thing as [1 + 2] and gives 3, not '3)
-
-    if (Cell_Series_Len_At(source) == 0) {
-        if (Bool_ARG(STEP))  // `eval:step []` doesn't "count" [1]
-            return nullptr;  // need pure null for THEN/ELSE to work right
-
-        if (Bool_ARG(UNDECAYED))
-            Init_Ghost(OUT);  // undecayed allows vanishing
-        else
-            Init_Nihil(OUT);  // `eval []` is ~[]~ antiform
-
-        return OUT;
-    }
+    // 1. !!! Right now all EVALUATE calls treat ANY-LIST? the same.  (e.g.
+    //    ^[1 + 2] just does the same thing as [1 + 2] and gives 3, not '3
+    //    or any other variation.  Should lists vary their behavior?  It
+    //    has been considered to make GROUP!s be ghostable and BLOCK!s not
+    //    so that it's guided by the type, but that's likely not useful.
 
     Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
 
     Level* sub = Make_Level_At(
         Bool_ARG(STEP) ? &Meta_Stepper_Executor : &Evaluator_Executor,
-        source,  // all lists treated the same [2]
+        source,  // all lists treated the same [1]
         flags
     );
     if (not Bool_ARG(STEP))
         Init_Nihil(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    if (not Bool_ARG(STEP)) {  // plain evaluation to end, maybe invisible
+    if (not Bool_ARG(STEP)) {  // plain evaluation to end, maybe void
         if (Bool_ARG(UNDECAYED))
             return DELEGATE_SUBLEVEL(sub);
 
@@ -460,7 +454,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 } result_in_out: {  //////////////////////////////////////////////////////////
 
     if (not Bool_ARG(UNDECAYED)) {
-        if (Is_Comma(OUT))
+        if (Is_Ghost(OUT))
             Init_Nihil(OUT);
     }
 

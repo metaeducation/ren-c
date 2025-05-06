@@ -335,6 +335,21 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 #define Is_Level_At_End(L)          Is_Feed_At_End((L)->feed)
 #define Not_Level_At_End(L)         Not_Feed_At_End((L)->feed)
 
+// When evaluative contexts ask "Is_Level_At_End()" and see [], they might
+// think that is the end of the level.  But [, , ,] would be an end of the
+// level after an evaluation step with no result (e.g. Is_Endlike_Trash()
+// coming back from Meta_Stepper_Executor()).  So you don't want to get
+// lulled into a false sense of security that [] is the only way a level ends.
+//
+// Additionally, if you skip a call into the stepper because you see [] then
+// in the general case you're not providing visibility of a step into a list
+// that is concretely *there*, albeit empty.  The person debugging may want
+// to know about it.  So this test will return false in debug mode, and
+// in RUNTIME_CHECKS mode it will sporadically return false as well.
+//
+#define Try_Is_Level_At_End_Optimization(L) \
+    (In_Debug_Mode(32) ? false : Is_Feed_At_End((L)->feed))
+
 INLINE VarList* Varlist_Of_Level_Maybe_Unmanaged(Level* L) {
     assert(not Is_Level_Fulfilling(L));
     return cast(VarList*, L->varlist);

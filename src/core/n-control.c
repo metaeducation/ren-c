@@ -518,7 +518,7 @@ DECLARE_NATIVE(ALL)
 
     Move_Atom(OUT, SPARE);  // leaves SPARE as fresh...good for next step
 
-    if (Is_Level_At_End(SUBLEVEL))
+    if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
@@ -656,7 +656,7 @@ DECLARE_NATIVE(ANY)
     if (Is_Trigger(condition))
         goto return_out;
 
-    if (Is_Level_At_End(SUBLEVEL))
+    if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);

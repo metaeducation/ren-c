@@ -60,6 +60,8 @@ DECLARE_NATIVE(REDUCE)
         goto initial_entry_non_list;  // semantics in question [1]
 
       case ST_REDUCE_EVAL_STEP:
+        if (Is_Endlike_Trash(SPARE))
+            goto finished;
         goto reduce_step_meta_in_spare;
 
       case ST_REDUCE_RUNNING_PREDICATE:
@@ -103,18 +105,20 @@ DECLARE_NATIVE(REDUCE)
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
 
-    // 2. We want the output newline status to mirror newlines of the start
+    // 1. We want the output newline status to mirror newlines of the start
     //    of the eval positions.  But when the evaluation callback happens,
     //    we won't have the starting value anymore.  Cache the newline flag on
     //    the ARG(VALUE) cell, as newline flags on ARG()s are available.
 
-    if (Is_Feed_At_End(SUBLEVEL->feed))
+    if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
         goto finished;
 
-    if (Get_Cell_Flag(At_Feed(SUBLEVEL->feed), NEWLINE_BEFORE))
-        Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag [2]
-    else
-        Clear_Cell_Flag(v, NEWLINE_BEFORE);
+    if (not Is_Feed_At_End(SUBLEVEL->feed)) {
+        if (Get_Cell_Flag(At_Feed(SUBLEVEL->feed), NEWLINE_BEFORE))
+            Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag [1]
+        else
+            Clear_Cell_Flag(v, NEWLINE_BEFORE);
+    }
 
     SUBLEVEL->executor = &Meta_Stepper_Executor;
     STATE = ST_REDUCE_EVAL_STEP;

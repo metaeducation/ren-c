@@ -90,3 +90,47 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 
 #define Clear_Trampoline_Flag(name) \
     g_ts.signal_flags &= (~ TRAMPOLINE_FLAG_##name)
+
+
+//=//// FAKE DEBUGGING MODE FLAG //////////////////////////////////////////=//
+//
+// While development of an interactive debugger has been out of reach for a
+// long time, the system is being continually designed with the idea of
+// supporting it.
+//
+// One of the key premises of being able to implement a stepwise debugger is
+// that instead of being trapped in tight optimization loops, there is a
+// continuous ability to "bounce" out to the trampoline...yielding a locus
+// of control where a debugger can be put.  A good example of this is that
+// evaluating an block like [1 + 2, 3 + 4] shouldn't stay nested in a single
+// C stack level where it churns forward to the next expression without
+// giving up control--however tempting it might be to style the code to
+// optimize in a tight loop.
+//
+// As an attempt to have our cake and eat it too, the idea is that certain
+// code is sensitive to whether a debug mode is engaged or not.  If it is not
+// then it can pursue more aggressive optimizations and skip over yields.
+// But if the mode is enabled, then even situations like (eval []) must yield
+// to show that an empty block is there and getting stepped over...vs. just
+// pretending it isn't there.
+//
+// Due to this debugger not existing yet, one thing we can do is to make a
+// test in the RUNTIME_CHECKS build that will sporadically answer "yes, we are
+// in a debugger mode".  This is done by using a deterministic modulus of
+// the trampoline's tick count...which approximates random behavior while
+// still giving reproducible code paths between runs.  This way the code paths
+// that would be used by the debugger can be exercised, and by choosing a
+// relatively sparse modulus, the performance impact is not too bad.
+//
+// Something to note is that if a decision is made based on being in the
+// debug mode, enough memory of that decision has to be kept in order to be
+// coherent...since the next time you ask if it's in debug mode the answer
+// may be different.  (This is likely to be true of a real debug mode too,
+// that might be switched on and off at arbitrary moments of runtime, so it's
+// probably a good exercise.)
+//
+// Each call to In_Debug_Mode() can give its own modulus, so that if an
+// operation is particularly costly a larger modulus can be used.
+
+#define In_Debug_Mode(n)  SPORADICALLY(n)
+#define In_Optimized_Mode(n)  (not SPORADICALLY(n))
