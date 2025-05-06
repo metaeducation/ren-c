@@ -1048,6 +1048,32 @@ RebolValue* API_rebArg(
 //=////////////////////////////////////////////////////////////////////////=//
 
 
+#define RUN_VA_MASK_NONE  0
+
+
+//=//// RUN_VA_FLAG_META_RESULT ///////////////////////////////////////////=//
+//
+// Originally the trampoline offered meta results as a service.  The new idea
+// is that the stepper evaluator uses the meta protocol all the time (and
+// will return non-meta trash if it's at the evaluation end, as a special
+// signal).  For simplification the trampoline thus will not offer the meta
+// results, but we simulate the flag here for the APIs.
+//
+#define RUN_VA_FLAG_META_RESULT  FLAG_LEFT_BIT(0)
+
+
+//=//// RUN_VA_FLAG_INTERRUPTIBLE /////////////////////////////////////////=//
+//
+// Interruptibility means that TRAMPOLINE_FLAG_HALT will be heeded when the
+// flag has been set.  If not, it will leave the flag set and continue
+// processing.  Most code using the API doesn't want to react to the signal...
+// because it would cause an exception/longjmp() and the C API call would not
+// return.  So only a few functions that are specifically designed to give
+// back errors react, e.g. rebEntrapInterruptible()
+//
+#define RUN_VA_FLAG_INTERRUPTIBLE  FLAG_LEFT_BIT(1)
+
+
 //
 //  Run_Va_Throws: C
 //
@@ -1076,23 +1102,20 @@ RebolValue* API_rebArg(
 //    because rebValue() is actually a macro that throws in a rebEND to get
 //    `rebValue_inline(rebEND)`.
 //
-// 4. Interruptibility means that TRAMPOLINE_FLAG_HALT will be heeded when the
-//    flag has been set.  If not, it will leave the flag set and continue
-//    processing.  Most code using the API doesn't want to react to the
-//    signal...because it would cause an exception/longjmp() and the C API
-//    call would not return.  So only a few functions that are specifically
-//    designed to give back errors react, e.g. rebEntrapInterruptible()
+// 4. API clients don't necessarily include <stdarg.h> so the possibly-null
+//    va_list* is passed to the API as a void* to avoid requiring the header.
+//    Note that if vaptr is not null, then if p is null it actually means
+//    that it intends to represent a nulled cell as the first va_list item.
 //
-static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
+static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
+    Sink(Value) out,
+    Flags run_flags,  // RUN_VA_FLAG_INTERRUPTIBLE, etc.
     RebolContext* binding,
-    Atom* out,
-    bool interruptible,  // whether a HALT can cause a longjmp/throw
-    Flags flags,
     const void* p,  // null vaptr means void* array [2] else first param [3]
-    void* vaptr
+    Option(void*) vaptr  // guides interpretation of p [4]
 ){
     Feed* feed = Make_Variadic_Feed(
-        p, cast(va_list*, vaptr),
+        p, cast(va_list*, maybe vaptr),
         FEED_MASK_DEFAULT
     );
 
@@ -1104,71 +1127,62 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
     assert(Is_Node_Managed(binding));
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
-    Level* L = Make_Level(&Evaluator_Executor, feed, flags);
+    Level* L = Make_Level(&Evaluator_Executor, feed, LEVEL_MASK_NONE);
     Init_Nihil(Evaluator_Primed_Cell(L));
 
-    if (interruptible)
+    if (run_flags & RUN_VA_FLAG_INTERRUPTIBLE)
         L->flags.bits &= (~ LEVEL_FLAG_UNINTERRUPTIBLE);
     else
         L->flags.bits |= LEVEL_FLAG_UNINTERRUPTIBLE;
 
-    Push_Level_Dont_Inherit_Interruptibility(out, L);
+    Push_Level_Dont_Inherit_Interruptibility(u_cast(Atom*, out), L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Level(L);
 
-    if (not threw and (flags & LEVEL_FLAG_META_RESULT))
-        assert(QUOTE_BYTE(out) >= QUASIFORM_2);
+    if (threw)
+        return Error_No_Catch_For_Throw(TOP_LEVEL);
 
-    return threw;
+    if (run_flags & RUN_VA_FLAG_META_RESULT)
+        Meta_Quotify(cast(Atom*, out));
+    else
+        Decay_If_Unstable(cast(Atom*, out));  // should Trap(), not fail
+
+    return SUCCESS;
 }
 
 
-// This version of the variadic run does not do isotope decay, because that
-// errors on empty parameter packs ("nihil"), e.g. ~[]~ antiforms.  It would be
-// deceptive to have that unpack and conflate as any other state (including
-// void and null, which have specific meanings).  So it simply won't.
+// !!! As much as possible, we try to avoid crossing C code stacks with
+// exception-like behavior.  But if it has to happen, it should use the model
+// of the language (e.g. C++ or JavaScript if needed).  This implies that the
+// throwing/longjmp-ing should happen in "rebol.h" or its equivalent, not
+// from inside the API implementations... so all the APIs that run code should
+// be formulated e.g. as:
 //
-// An API like rebValue() or rebUnboxLogic() thus won't handle ~[]~, and you
-// need to use rebMeta() to get the parameter pack and understand its nature,
-// or use rebElide() and say it doesn't matter.  (or just find a way in the
-// executed code passed to not have it evaluate to nihil)
+//     Value* error = rebTrapUnboxLogic(&result, ...);
 //
-INLINE void Run_Va_Undecayed_May_Fail_Calls_Va_End(
-    RebolContext* binding,
-    Sink(Atom) out,
-    const void* p,  // first pointer (may be END, nullptr means NULLED)
-    void* vaptr  // va_end() handled by feed for all cases (throws, fails)
-){
-    bool interruptible = false;
-    if (Run_Va_Throws(
-        binding,
-        out,
-        interruptible,
-        LEVEL_MASK_NONE,
-        p, vaptr
-    )){
-        // !!! Being able to THROW across C stacks is necessary in the general
-        // case (consider implementing QUIT or HALT).  Probably need to be
-        // converted to a kind of error, and then re-converted into a THROW
-        // to bubble up through Rebol stacks?  Development on this is ongoing.
-        //
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
-    }
-}
-
-// This is the decaying form.  Decaying is done for convenience in the basic
-// APIs just as if you'd tried to do a SET-WORD!...so you don't have to worry
-// about multi-return packs etc.
+// Then, rebUnboxLogic() can be a macro that does the right thing for the
+// language in terms of raising the right kind of exception (or terminating
+// the process, etc.)
 //
-INLINE void Run_Va_Decay_May_Fail_Calls_Va_End(
-    RebolContext* binding,
+// For the moment, this is not done... and we just use the internal exception
+// model to cross client stacks.  This is not necessarily the right choice for
+// API clients.
+//
+static void Run_Valist_And_Call_Va_End_May_Fail(
     Sink(Value) out,
-    const void* p,  // first pointer (may be END, nullptr means NULLED)
-    void* vaptr  // va_end() handled by feed for all cases (throws, fails)
+    Flags run_flags,
+    RebolContext* binding,
+    const void* p,
+    void* vaptr
 ){
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding, cast(Atom*, out), p, vaptr);
-
-    Decay_If_Unstable(cast(Atom*, out));
+    Option(Error*) e = Trap_Run_Valist_And_Call_Va_End(
+        out,
+        run_flags,
+        binding,
+        p, vaptr
+    );
+    if (e)
+        fail (unwrap e);
 }
 
 
@@ -1246,16 +1260,18 @@ RebolValue* API_rebValue(
 ){
     ENTER_API;
 
-    Value* result = Alloc_Value_Core(CELL_MASK_ERASED_0);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
-    if (Is_Nulled(result)) {
-        Free_Value(result);
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (Is_Nulled(v)) {
+        Free_Value(v);
         return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
     }
 
-    Set_Node_Root_Bit(result);
-    return result;  // caller must rebRelease()
+    Set_Node_Root_Bit(v);
+    return v;  // caller must rebRelease()
 }
 
 
@@ -1347,16 +1363,10 @@ RebolValue* API_rebMeta(
     ENTER_API;
 
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
-    bool interruptible = false;
-    if (Run_Va_Throws(
-        binding,
-        v,
-        interruptible,
-        LEVEL_FLAG_META_RESULT,
-        p, vaptr
-    )){
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // panic?
-    }
+
+    Flags flags = RUN_VA_FLAG_META_RESULT;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
     assert(not Is_Nulled(v));  // meta operations cannot produce NULL
 
     Set_Node_Root_Bit(v);
@@ -1378,16 +1388,9 @@ RebolValue* API_rebEntrap(
     ENTER_API;
 
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
-    bool interruptible = false;
-    if (Run_Va_Throws(
-        binding,
-        v,
-        interruptible,
-        LEVEL_FLAG_META_RESULT,
-        p, vaptr
-    )){
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // panic?
-    }
+
+    Flags flags = RUN_VA_FLAG_META_RESULT;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     assert(not Is_Nulled(v));  // meta operations cannot produce NULL
 
@@ -1416,17 +1419,16 @@ RebolValue* API_rebRescue(
     ENTER_API;
 
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
-    bool interruptible = false;
-    if (Run_Va_Throws(
-        binding,
-        cast(Atom*, v),
-        interruptible,
-        LEVEL_MASK_NONE,
-        p, vaptr
-    )){
-        Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Option(Error*) e = Trap_Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    );
+
+    if (e) {
+        Init_Error(v, unwrap e);
         Set_Node_Root_Bit(v);
-        Corrupt_If_Debug(*value);  // !!! corrupt in release builds?
+        Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
     }
     assert(not Is_Raised(cast(Atom*, v)));  // no LEVEL_FLAG_RAISED_RESULT_OK
@@ -1452,17 +1454,16 @@ RebolValue* API_rebRescueInterruptible(
     ENTER_API;
 
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
-    bool interruptible = true;
-    if (Run_Va_Throws(
-        binding,
-        cast(Atom*, v),
-        interruptible,
-        LEVEL_MASK_NONE,
-        p, vaptr
-    )){
-        Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
+
+    Flags flags = RUN_VA_FLAG_INTERRUPTIBLE;
+    Option(Error*) e = Trap_Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    );
+
+    if (e) {
+        Init_Error(v, unwrap e);
         Set_Node_Root_Bit(v);
-        Corrupt_If_Debug(*value);  // !!! corrupt in release builds?
+        Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
     }
     assert(not Is_Raised(cast(Atom*, v)));  // no LEVEL_FLAG_RAISED_RESULT_OK
@@ -1490,12 +1491,15 @@ RebolValue* API_rebQuote(
 ){
     ENTER_API;
 
-    Value* result = Alloc_Value();
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
-    if (Is_Antiform(result))
+    Value* v = Alloc_Value();
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (Is_Antiform(v))
         fail ("rebQuote() called on expression that returned an antiform");
 
-    return Quotify(cast(Element*, result));
+    return Quotify(cast(Element*, v));
 }
 
 
@@ -1514,8 +1518,10 @@ void API_rebElide(
 ){
     ENTER_API;
 
-    DECLARE_ATOM (discarded);
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding, discarded, p, vaptr);
+    DECLARE_VALUE (discarded);
+
+    Flags flags = RUN_VA_FLAG_META_RESULT;  // discarding, allow nihil
+    Run_Valist_And_Call_Va_End_May_Fail(discarded, flags, binding, p, vaptr);
 }
 
 
@@ -1557,7 +1563,9 @@ void API_rebJumps(
     ENTER_API;
 
     DECLARE_VALUE (dummy);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, dummy, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(dummy, flags, binding, p, vaptr);
 
     // Note: If we just `fail()` here, then while MSVC compiles %a-lib.c at
     // higher optimization levels it can conclude that API_rebJumps() never
@@ -1592,7 +1600,9 @@ bool API_rebDid(
     ENTER_API;
 
     DECLARE_VALUE (condition);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, condition, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(condition, flags, binding, p, vaptr);
 
     return Is_Trigger(condition);  // will fail() on (most) antiforms
 }
@@ -1611,7 +1621,9 @@ bool API_rebNot(
     ENTER_API;
 
     DECLARE_VALUE (condition);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, condition, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(condition, flags, binding, p, vaptr);
 
     return Is_Inhibitor(condition);  // will fail() on (most) antiforms
 }
@@ -1629,7 +1641,9 @@ bool API_rebDidnt(
     ENTER_API;
 
     DECLARE_VALUE (condition);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, condition, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(condition, flags, binding, p, vaptr);
 
     return Is_Inhibitor(condition);  // will fail() on (most) antiforms
 }
@@ -1652,18 +1666,20 @@ intptr_t API_rebUnbox(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    DECLARE_VALUE (v);
 
-    if (Is_Logic(result)) {
-        return Cell_Logic(result) ? 1 : 0;
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (Is_Logic(v)) {
+        return Cell_Logic(v) ? 1 : 0;
     }
-    else switch (Type_Of(result)) {
+    else switch (Type_Of(v)) {
       case TYPE_INTEGER:
-        return VAL_INT64(result);
+        return VAL_INT64(v);
 
       case TYPE_ISSUE:
-        return Cell_Codepoint(result);
+        return Cell_Codepoint(v);
 
       default:
         fail ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");
@@ -1680,13 +1696,15 @@ bool API_rebUnboxLogic(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    DECLARE_VALUE (v);
 
-    if (not Is_Logic(result))
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (not Is_Logic(v))
         fail ("rebUnboxLogic() called on non-LOGIC!");
 
-    return Cell_Logic(result);
+    return Cell_Logic(v);
 }
 
 
@@ -1699,13 +1717,15 @@ bool API_rebUnboxBoolean(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    DECLARE_VALUE (v);
 
-    if (not Is_Boolean(result))
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (not Is_Boolean(v))
         fail ("rebUnboxBoolean() called on non-[true false]!");
 
-    return Cell_True(result);
+    return Cell_True(v);
 }
 
 
@@ -1718,13 +1738,15 @@ bool API_rebUnboxYesNo(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    DECLARE_VALUE (v);
 
-    if (not Is_YesNo(result))
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (not Is_YesNo(v))
         fail ("rebUnboxYesNo() called on non-[yes no]!");
 
-    return Cell_Yes(result);
+    return Cell_Yes(v);
 }
 
 
@@ -1737,13 +1759,15 @@ bool API_rebUnboxOnOff(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    DECLARE_VALUE (v);
 
-    if (not Is_OnOff(result))
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (not Is_OnOff(v))
         fail ("rebUnboxOnOff() called on non-[on off]!");
 
-    return Cell_On(result);
+    return Cell_On(v);
 }
 
 
@@ -1758,13 +1782,15 @@ int32_t API_rebUnboxInteger(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    DECLARE_VALUE (v);
 
-    if (not Is_Integer(result))
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (not Is_Integer(v))
         fail ("rebUnboxInteger() called on non-INTEGER!");
 
-    REBI64 i = VAL_INT64(result);
+    REBI64 i = VAL_INT64(v);
     if (i < INT32_MIN or i > INT32_MAX)
         fail ("rebUnboxInteger() called on INTEGER! out of range!");
 
@@ -1781,13 +1807,15 @@ int64_t API_rebUnboxInteger64(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    DECLARE_VALUE (v);
 
-    if (not Is_Integer(result))
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (not Is_Integer(v))
         fail ("rebUnboxInteger() called on non-INTEGER!");
 
-    return VAL_INT64(result);
+    return VAL_INT64(v);
 }
 
 
@@ -1800,14 +1828,16 @@ double API_rebUnboxDecimal(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    DECLARE_VALUE (v);
 
-    if (Is_Decimal(result))
-        return VAL_DECIMAL(result);
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
-    if (Is_Integer(result))
-        return cast(double, VAL_INT64(result));
+    if (Is_Decimal(v))
+        return VAL_DECIMAL(v);
+
+    if (Is_Integer(v))
+        return cast(double, VAL_INT64(v));
 
     fail ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
 }
@@ -1822,13 +1852,15 @@ uint32_t API_rebUnboxChar(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    DECLARE_VALUE (v);
 
-    if (not IS_CHAR(result))
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
+
+    if (not IS_CHAR(v))
         fail ("rebUnboxChar() called on non-CHAR");
 
-    return Cell_Codepoint(result);
+    return Cell_Codepoint(v);
 }
 
 
@@ -1843,7 +1875,9 @@ void* API_rebUnboxHandleCData(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     if (Type_Of(v) != TYPE_HANDLE)
         fail ("rebUnboxHandleCData() called on non-HANDLE!");
@@ -1866,7 +1900,9 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     if (Type_Of(v) != TYPE_HANDLE)
         fail ("rebUnboxHandleCleaner() called on non-HANDLE!");
@@ -1920,7 +1956,9 @@ size_t API_rebSpellInto(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     return Spell_Into(buf, buf_size, v);
 }
@@ -1942,7 +1980,9 @@ char* API_rebSpellMaybe(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     if (Is_Nulled(v))
         return nullptr;
@@ -2045,7 +2085,9 @@ unsigned int API_rebSpellIntoWide(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     return Spell_Into_Wide(buf, buf_chars, v);
 }
@@ -2064,7 +2106,9 @@ REBWCHAR* API_rebSpellWideMaybe(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     if (Is_Nulled(v))
         return nullptr;
@@ -2186,7 +2230,9 @@ size_t API_rebBytesInto(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     return Bytes_Into(buf, buf_size, v);
 }
@@ -2207,7 +2253,9 @@ unsigned char* API_rebBytesMaybe(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     if (Is_Nulled(v)) {
         *size_out = 0;
@@ -2261,7 +2309,9 @@ const unsigned char* API_rebLockBytes(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     if (not Any_Fundamental(v) or not Any_Bytes_Type(Heart_Of(v)))
         fail ("rebLockBytes() only works with types with byte storage");
@@ -2295,7 +2345,9 @@ unsigned char* API_rebLockMutableBytes(
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
+
+    Flags flags = RUN_VA_MASK_NONE;
+    Run_Valist_And_Call_Va_End_May_Fail(v, flags, binding, p, vaptr);
 
     if (not Any_Fundamental(v) or not Any_Bytes_Type(Heart_Of(v)))
         fail ("rebLockBytes() only works with types with byte storage");
