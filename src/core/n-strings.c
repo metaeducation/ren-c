@@ -407,7 +407,7 @@ DECLARE_NATIVE(JOIN)
     //    also enables clever constructs like CURTAIL.
     //
 
-    if (Is_Elision(SPARE))  // spaced [elide print "hi"], etc
+    if (Is_Ghost_Or_Void(SPARE))  // spaced [elide print "hi"], etc
         goto next_mold_step;  // vaporize
 
     Decay_If_Unstable(SPARE);  // spaced [match [logic?] false ...]
@@ -467,7 +467,7 @@ DECLARE_NATIVE(JOIN)
 
     Meta_Unquotify_Undecayed(SPARE);
 
-    if (Is_Elision(SPARE))
+    if (Is_Ghost_Or_Void(SPARE))
         goto next_stack_step;  // vaporize
 
     Decay_If_Unstable(SPARE);

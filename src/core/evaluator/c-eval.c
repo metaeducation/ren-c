@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2022-2024 Ren-C Open Source Contributors
+// Copyright 2022-2025 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -48,6 +48,12 @@
 //   able to use a cell in the Level structure for its holding of the last
 //   result, and can actually just pass through to the Meta_Stepper_Executor().
 //
+// * !!! A debugger that was giving insights into the steps would show the
+//   steps being meta-values, and giving a "trash" to indicate the end of
+//   the stepping.  As a UI concern for the debugger, this might be a little
+//   bit confusing for people to wonder why the steps are always ^META.
+//   The debugger might want to customize the display based on the executor
+//   to give a more
 
 #include "sys-core.h"
 
@@ -83,17 +89,17 @@ Bounce Evaluator_Executor(Level* const L)
 
       default:
       #if RUNTIME_CHECKS
-        if (L != TOP_LEVEL) {
+        if (L != TOP_LEVEL) {  // we're using the trampoline and pushed level
             assert(STATE == ST_EVALUATOR_STEPPING);
-            goto step_meta_in_out;
+            goto step_done_with_meta_or_end_in_out;
         }
       #endif
-        goto call_stepper_executor;  // callback on behalf of stepper
+        goto call_stepper_executor_directly;  // callback on behalf of stepper
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 2. As mentioned in the notes at the top of this file, the main reason
+    // 1. As mentioned in the notes at the top of this file, the main reason
     //    Evaluator_Executor() is separate from Meta_Stepper_Executor() is
     //    to facilitate a general debugging loop hooked into the Trampoline
     //    that can see results generated at the granularity of a step.
@@ -104,12 +110,7 @@ Bounce Evaluator_Executor(Level* const L)
     //    debugger were turned on, it sporadically spawns levels in the
     //    RUNTIME_CHECKS builds.
 
-    if (Is_Feed_At_End(L->feed)) {
-        Copy_Cell(OUT, PRIMED);
-        return OUT;
-    }
-
-    if (SPORADICALLY(64)) {  // 1 out of 64 times, use sublevel if debug [2]
+    if (SPORADICALLY(64)) {  // 1 out of 64 times, use sublevel if debug [1]
         Level* sub = Make_Level(
             &Meta_Stepper_Executor,
             L->feed,
@@ -121,34 +122,44 @@ Bounce Evaluator_Executor(Level* const L)
         return CONTINUE_SUBLEVEL(sub);  // executors *must* catch
     }
 
-    goto call_stepper_executor;
+    goto call_stepper_executor_directly;
 
 } new_step: {  ///////////////////////////////////////////////////////////////
 
+    // 1. If we're not looking to see a debug step that goes over [] so we
+    //    know the empty block is there, then we can skip empty blocks.
+    //    In any case, we still sporadically test the code path if we don't
+    //    do this probably-superfluous optimization.
+
   #if RUNTIME_CHECKS
-    if (L != TOP_LEVEL) {  // detect if a sublevel was used [2]
+    if (L != TOP_LEVEL) {  // detect if a sublevel was used
         Reset_Evaluator_Erase_Out(SUBLEVEL);
         return BOUNCE_CONTINUE;
     }
   #endif
 
-    Reset_Evaluator_Erase_Out(L);
-    goto call_stepper_executor;
+    if (not SPORADICALLY(32)) {
+        if (Is_Feed_At_End(L->feed))  // harmless if not debugging...? [1]
+            goto finished;
+    }
 
-} call_stepper_executor: {  ////////////////////////////////////////////////
+    Reset_Evaluator_Erase_Out(L);
+    goto call_stepper_executor_directly;
+
+} call_stepper_executor_directly: {  /////////////////////////////////////////
 
     assert(L == TOP_LEVEL);  // only do this when there's no sublevel
 
     Bounce bounce = Meta_Stepper_Executor(L);
 
-    if (bounce == OUT)
-        goto step_meta_in_out;
+    if (bounce == OUT)  // completed step, possibly finished
+        goto step_done_with_meta_or_end_in_out;
 
-    return bounce;
+    return bounce;  // requesting a continuation on behalf of the stepper
 
-} step_meta_in_out: {  ///////////////////////////////////////////////////////
+} step_done_with_meta_or_end_in_out: {  //////////////////////////////////////
 
-    // 3. An idea was tried once where the error was not raised until a step
+    // 1. An idea was tried once where the error was not raised until a step
     //    was shown to be non-invisible.  This would allow invisible
     //    evaluations to come after an error and still fall out:
     //
@@ -170,24 +181,21 @@ Bounce Evaluator_Executor(Level* const L)
     //    That's a bad enough outcome that the feature of being able to put
     //    invisible material after the raised error has to be sacrificed.
 
-    if (Is_Meta_Of_Ghost(OUT))  {  // something like an ELIDE or COMMENT
-        if (Not_Feed_At_End(L->feed))
-            goto new_step;  // leave previous result as-is in PRIMED
-
-        Move_Atom(OUT, PRIMED);  // finished, so extract result from PRIMED
+    if (Is_Endlike_Trash(OUT))  // the "official" way to reach the end
         goto finished;
-    }
 
-    if (Is_Feed_At_End(L->feed)) {
-        Meta_Unquotify_Undecayed(OUT);  // to recap: stepper is meta protocol
-        goto finished;  // OUT is not invisible, so it's the final result
-    }
-
-    if (Is_Meta_Of_Raised(OUT))   // raise synchronous error if not at end [3]
-        return FAIL(Cell_Error(OUT));
+    if (Is_Meta_Of_Ghost(OUT))  // something like an ELIDE or COMMENT
+        goto new_step;  // leave previous result as-is in PRIMED
 
     Move_Atom(PRIMED, OUT);  // make current result the preserved one
     Meta_Unquotify_Undecayed(PRIMED);
+
+    if (Is_Raised(PRIMED)) {  // raise synchronous error if not at end [1]
+        if (not Is_Feed_At_End(L->feed))
+            return FAIL(Cell_Error(PRIMED));  // (raise "foo",) still errors
+        goto finished;
+    }
+
     goto new_step;
 
 } finished: {  ///////////////////////////////////////////////////////////////
@@ -197,5 +205,6 @@ Bounce Evaluator_Executor(Level* const L)
         Drop_Level(SUBLEVEL);
   #endif
 
+    Copy_Cell(OUT, PRIMED);
     return OUT;
 }}

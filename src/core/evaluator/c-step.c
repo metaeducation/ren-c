@@ -222,11 +222,13 @@ Bounce Inert_Meta_Stepper_Executor(Level* L)
     };
 
     assert(STATE == ST_INERT_STEPPER_INITIAL_ENTRY);
-    assert(not Is_Feed_At_End(L->feed));
+    STATE = ST_INERT_STEPPER_FINISHED;  // can't leave as STATE_0
+
+    if (Is_Feed_At_End(L->feed))
+        return Init_Endlike_Trash(OUT);
 
     Derelativize(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
     Fetch_Next_In_Feed(L->feed);
-    STATE = ST_INERT_STEPPER_FINISHED;
     return Meta_Quotify(OUT);
 }
 
@@ -349,12 +351,11 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
 
-    /* assert(Not_Level_At_End(L)); */  // edge case with rebValue("") [1]
     if (Is_Level_At_End(L)) {
         assert(Is_Cell_Erased(OUT));
-        Init_Meta_Of_Nihil(OUT);
+        Init_Endlike_Trash(OUT);
         STATE = cast(StepperState, TYPE_BLANK);  // can't leave as STATE_0
-        goto finished;
+        goto finished_dont_meta_out;
     }
 
     L_current_gotten = L_next_gotten;  // Lookback clears it
@@ -2035,6 +2036,10 @@ Bounce Meta_Stepper_Executor(Level* L)
 
   finished:
 
+    Meta_Quotify(OUT);  // see top of file notes about why it's Meta_Stepper()
+
+  finished_dont_meta_out:  // called if at end, and it's trash
+
     // Want to keep this flag between an operation and an ensuing infix in
     // the same level, so can't clear in Drop_Action(), e.g. due to:
     //
@@ -2051,7 +2056,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     STATE = ST_STEPPER_FINISHED_DEBUG;  // must reset to STATE_0 if reused
   #endif
 
-    return Meta_Quotify(OUT);  // it's a Meta_Meta_Stepper_Executor(), after all!
+    return OUT;
 
   return_thrown:
 

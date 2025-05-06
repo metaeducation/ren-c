@@ -69,10 +69,10 @@ INLINE Atom* Init_Ghost(Init(Atom) out) {
     return out;
 }
 
-INLINE bool Is_Elision(Need(Atom*) v) {
+INLINE bool Is_Ghost_Or_Void(Need(Atom*) v) {
     return Is_Ghost(v) or Is_Nihil(v);
 }
 
-INLINE bool Is_Meta_Of_Elision(const Cell* v) {
+INLINE bool Is_Meta_Of_Ghost_Or_Void(const Cell* v) {
     return Is_Meta_Of_Ghost(v) or Is_Meta_Of_Nihil(v);
 }

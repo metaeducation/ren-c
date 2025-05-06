@@ -147,6 +147,12 @@ INLINE Value* Init_Trash_Untracked(Init(Value) out) {
 
 #define Init_Meta_Of_Trash(out)  Init_Quasar(out)
 
+#define Is_Endlike_Trash(cell) \
+    Is_Trash(cell)
+
+#define Init_Endlike_Trash(out) \
+    Init_Trash(out)
+
 
 //=//// <end> SIGNALING WITH TRASH (~ antiform) ///////////////////////////=//
 //

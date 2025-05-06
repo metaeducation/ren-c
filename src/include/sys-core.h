@@ -627,7 +627,7 @@ enum {
 #include "cells/cell-series.h"
 #include "cells/cell-array.h"
 
-#include "cells/cell-comma.h"  // Is_Elision() references nihil block antiform
+#include "cells/cell-comma.h"  // Is_Ghost_Or_Void() references nihil block antiform
 
 
 #include "cells/cell-word.h"  // needs to know about QUOTED! for binding

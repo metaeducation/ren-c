@@ -156,7 +156,7 @@ DECLARE_NATIVE(REDUCE)
     //    underneath it pushes a value to the data stack, that level must be
     //    informed the stack element is "not for it" before the next call.
 
-    if (Is_Elision(SPARE))
+    if (Is_Ghost_Or_Void(SPARE))
         goto next_reduce_step;  // void results are skipped by reduce
 
     Decay_If_Unstable(SPARE);

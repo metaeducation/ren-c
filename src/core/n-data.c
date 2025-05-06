@@ -1245,21 +1245,21 @@ DECLARE_NATIVE(GHOST_Q)
 
 
 //
-//  elision?: native:intrinsic [
+//  ghost-or-void?: native:intrinsic [
 //
-//  "If argument is either nihil or a ghost (empty pack or antiform comma)"
+//  "If argument is a ghost (antiform comma) or void (empty antiform block)"
 //
 //      return: [logic?]
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(ELISION_Q)
+DECLARE_NATIVE(GHOST_OR_VOID_Q)
 {
-    INCLUDE_PARAMS_OF_ELISION_Q;
+    INCLUDE_PARAMS_OF_GHOST_OR_VOID_Q;
 
     const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
-    return LOGIC(Is_Meta_Of_Elision(meta));
+    return LOGIC(Is_Meta_Of_Ghost_Or_Void(meta));
 }
 
 

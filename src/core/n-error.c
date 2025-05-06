@@ -221,7 +221,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
         return BRANCHED(OUT);
     }
 
-    if (not Is_Elision(SPARE))
+    if (not Is_Ghost_Or_Void(SPARE))
         Move_Atom(OUT, SPARE);
 
     if (Is_Level_At_End(SUBLEVEL))

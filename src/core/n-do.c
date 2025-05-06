@@ -556,7 +556,7 @@ DECLARE_NATIVE(EVAL_FREE)
     Diminish_Stub(Cell_Frame_Phase(frame));  // the "FREE" of EVAL-FREE
 
     if (not Bool_ARG(UNDECAYED)) {
-        if (Is_Elision(OUT))
+        if (Is_Ghost_Or_Void(OUT))
             Init_Nihil(OUT);
     }
 

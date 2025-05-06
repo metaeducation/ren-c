@@ -393,7 +393,7 @@ DECLARE_NATIVE(ALSO)
 }}
 
 
-#define LEVEL_FLAG_ALL_VOIDS  LEVEL_FLAG_MISCELLANEOUS
+#define LEVEL_FLAG_SAW_NON_VOID_OR_NON_GHOST  LEVEL_FLAG_MISCELLANEOUS
 
 
 //
@@ -410,33 +410,13 @@ DECLARE_NATIVE(ALSO)
 //  ]
 //
 DECLARE_NATIVE(ALL)
-//
-// 1. Historically there has been controversy over what should be done about
-//    (all []) and (any []).  Languages that have variadic short-circuiting
-//    AND + OR operations typically empty AND-ing is truthy while empty OR-ing
-//    is falsey.
-//
-//    There are some reasonable intuitive arguments for that--*if* those are
-//    your only two choices.  Because Ren-C has the option of voids, it's
-//    better to signal to the caller that nothing happened.  For an example
-//    of how useful it is, see the loop wrapper FOR-BOTH.  Other behaviors
-//    can be forced with (all [... null]) or (any [... okay])
-//
-// 2. The predicate-running condition gets pushed over the "keepalive" stepper,
-//    but we don't want the stepper to take a step before coming back to us.
-//    Temporarily patch out the Meta_Stepper_Executor() so we get control back
-//    without that intermediate step.
-//
-// 3. The only way a falsey evaluation should make it to the end is if a
-//    predicate let it pass.  Don't want that to trip up `if all` so make it
-//    heavy...but this way `(all:predicate [null] not?/) then [<runs>]`
 {
     INCLUDE_PARAMS_OF_ALL;
 
     Element* block = Element_ARG(BLOCK);
     Value* predicate = ARG(PREDICATE);
 
-    Value* condition;  // will be found in OUT or scratch
+    Value* condition;  // will be found in OUT or SCRATCH
 
     enum {
         ST_ALL_INITIAL_ENTRY = STATE_0,
@@ -445,21 +425,22 @@ DECLARE_NATIVE(ALL)
     };
 
     switch (STATE) {
-      case ST_ALL_INITIAL_ENTRY: goto initial_entry;
-      case ST_ALL_EVAL_STEP: goto eval_step_meta_in_spare;
-      case ST_ALL_PREDICATE: goto predicate_result_in_scratch;
+      case ST_ALL_INITIAL_ENTRY:
+        assert(Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST));
+        goto initial_entry;
+
+      case ST_ALL_EVAL_STEP:
+        if (Is_Endlike_Trash(SPARE))
+            goto reached_end;
+        goto eval_step_meta_in_spare;
+
+      case ST_ALL_PREDICATE:
+        goto predicate_result_in_scratch;
+
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
-
-    if (Cell_Series_Len_At(block) == 0)
-        return NIHIL;
-
-    assert(Not_Level_Flag(LEVEL, ALL_VOIDS));
-    Set_Level_Flag(LEVEL, ALL_VOIDS);
-
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     Executor* executor;
     if (Is_The_Block(block))
@@ -469,6 +450,7 @@ DECLARE_NATIVE(ALL)
         executor = &Meta_Stepper_Executor;
     }
 
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
     Level* sub = Make_Level_At(executor, block, flags);
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
@@ -477,40 +459,45 @@ DECLARE_NATIVE(ALL)
 
 } eval_step_meta_in_spare: {  ////////////////////////////////////////////////
 
-    Meta_Unquotify_Undecayed(SPARE);
-
-    if (Is_Elision(SPARE)) {  // (comment "hi") or ,
-      handle_elision:
-        if (Is_Level_At_End(SUBLEVEL))
-            goto reached_end;
-
+    if (Is_Meta_Of_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue
         assert(STATE == ST_ALL_EVAL_STEP);
         Reset_Evaluator_Erase_Out(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
+    Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
+
+    Meta_Unquotify_Undecayed(SPARE);
     Decay_If_Unstable(SPARE);
-    if (Is_Void(SPARE))  // (if null [<a>])
-        goto handle_elision;
 
-    Clear_Level_Flag(LEVEL, ALL_VOIDS);
+    if (not Is_Nulled(predicate))
+        goto run_predicate_on_eval_product;
 
-    if (not Is_Nulled(predicate)) {
-        SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [2]
-
-        STATE = ST_ALL_PREDICATE;
-        return CONTINUE(SCRATCH, predicate, SPARE);
-    }
-
-    condition = stable_SPARE;  // without predicate, `condition` is same as evaluation
+    condition = stable_SPARE;  // w/o predicate, `condition` is eval result
     goto process_condition;
 
+} run_predicate_on_eval_product: {  //////////////////////////////////////////
+
+    // 1. The predicate-running is pushed over the "keepalive" stepper, but we
+    //    don't want the stepper to take a step before coming back to us.
+    //    Temporarily patch out the Meta_Stepper_Executor() so we get control
+    //    back without that intermediate step.
+
+    SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [1]
+
+    STATE = ST_ALL_PREDICATE;
+    return CONTINUE(SCRATCH, predicate, SPARE);
+
 } predicate_result_in_scratch: {  ////////////////////////////////////////////
+
+    // 1. The only way a falsey evaluation should make it to the end is if a
+    //    predicate let it pass.  Don't want that to trip up `if all` so make
+    //    it heavy...but this way `(all:predicate [null] not?/) then [<runs>]`
 
     if (Is_Void(SCRATCH))  // !!! Should void predicate results signal opt-out?
         return FAIL(Error_Bad_Void());
 
-    Packify_If_Inhibitor(SPARE);  // predicates can approve inhibitors [3]
+    Packify_If_Inhibitor(SPARE);  // predicates can approve null [1]
 
     SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling [2]
     STATE = ST_ALL_EVAL_STEP;
@@ -540,10 +527,20 @@ DECLARE_NATIVE(ALL)
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
+    // 1. Historically there has been controversy over what should be done
+    //    about (all []) and (any []).  Languages with variadic short-circuit
+    //    AND + OR operations typically say empty AND-ing is truthy, while
+    //    empty OR-ing is falsey.
+    //
+    //    There are reasonable intuitive arguments for that--*if* those are
+    //    your only two choices.  Because Ren-C has the option of VOID, it's
+    //    better to signal to the caller that nothing happened.  Other choices
+    //    can be forced with e.g. (all [... null]) or (any [... okay])
+
     Drop_Level(SUBLEVEL);
 
-    if (Get_Level_Flag(LEVEL, ALL_VOIDS))
-        return NIHIL;
+    if (Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST))
+        return NIHIL;  // return void if all evaluations vaporized [1]
 
     return BRANCHED(OUT);
 }}
@@ -563,13 +560,6 @@ DECLARE_NATIVE(ALL)
 //  ]
 //
 DECLARE_NATIVE(ANY)
-//
-// 1. Don't let ANY return something falsey, but using heavy form means that
-//    it can work with DID/THEN
-//
-// 2. See ALL[2]
-//
-// 3. See ALL[3]
 {
     INCLUDE_PARAMS_OF_ANY;
 
@@ -585,19 +575,22 @@ DECLARE_NATIVE(ANY)
     };
 
     switch (STATE) {
-      case ST_ANY_INITIAL_ENTRY: goto initial_entry;
-      case ST_ANY_EVAL_STEP: goto eval_step_meta_in_out;
-      case ST_ANY_PREDICATE: goto predicate_result_in_spare;
+      case ST_ANY_INITIAL_ENTRY:
+        assert(Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST));
+        goto initial_entry;
+
+      case ST_ANY_EVAL_STEP:
+        if (Is_Endlike_Trash(OUT))
+            goto reached_end;
+        goto eval_step_meta_in_out;
+
+      case ST_ANY_PREDICATE:
+        goto predicate_result_in_spare;
+
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
-
-    if (Cell_Series_Len_At(block) == 0)
-        return NIHIL;
-
-    assert(Not_Level_Flag(LEVEL, ALL_VOIDS));
-    Set_Level_Flag(LEVEL, ALL_VOIDS);
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -617,42 +610,42 @@ DECLARE_NATIVE(ANY)
 
 } eval_step_meta_in_out: {  //////////////////////////////////////////////////
 
-    Meta_Unquotify_Undecayed(OUT);
-
-    if (Is_Elision(OUT)) {  // (comment "hi")
-      handle_elision:
-        if (Is_Level_At_End(SUBLEVEL))
-            goto reached_end;
-
+    if (Is_Meta_Of_Ghost_Or_Void(OUT)) {  // no vote...ignore and continue
         assert(STATE == ST_ANY_EVAL_STEP);
         Reset_Evaluator_Erase_Out(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
+    Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
+
+    Meta_Unquotify_Undecayed(OUT);
     Decay_If_Unstable(OUT);
-    if (Is_Void(OUT))
-        goto handle_elision;  // (if null [<a>])
 
-    Clear_Level_Flag(LEVEL, ALL_VOIDS);
-
-    if (not Is_Nulled(predicate)) {
-        SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [2]
-
-        STATE = ST_ANY_PREDICATE;
-        return CONTINUE(SPARE, predicate, OUT);
-    }
+    if (not Is_Nulled(predicate))
+        goto run_predicate_on_eval_product;
 
     condition = stable_OUT;
     goto process_condition;
 
+} run_predicate_on_eval_product: {  //////////////////////////////////////////
+
+    // 1. See ALL's run_predicate_on_eval_product [1]
+
+    SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [1]
+
+    STATE = ST_ANY_PREDICATE;
+    return CONTINUE(SPARE, predicate, OUT);
+
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
+    // 1. See ALL's predicate_result_in_scratch [1]
+
+    if (Is_Void(SPARE))
         return FAIL(Error_Bad_Void());
 
-    Packify_If_Inhibitor(OUT);  // predicates can approve inhibitors [3]
+    Packify_If_Inhibitor(OUT);  // predicates can approve null [1]
 
-    SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling [2]
+    SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling
     STATE = ST_ANY_EVAL_STEP;
 
     condition = stable_SPARE;
@@ -677,12 +670,14 @@ DECLARE_NATIVE(ANY)
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
+    // 1. see ALL's reached_end [1]
+
     Drop_Level(SUBLEVEL);
 
-    if (Get_Level_Flag(LEVEL, ALL_VOIDS))
-        return NIHIL;
+    if (Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST))
+        return NIHIL;  // [1]
 
-    return nullptr;  // reached end of input and found nothing to return
+    return nullptr;  // non-vanishing expressions, but none of them passed
 }}
 
 
@@ -771,7 +766,7 @@ DECLARE_NATIVE(CASE)
 
     Meta_Unquotify_Undecayed(SPARE);
 
-    if (Is_Elision(SPARE))  // skip nihils, e.g. ELIDE
+    if (Is_Ghost_Or_Void(SPARE))  // skip nihils, e.g. ELIDE
         goto handle_next_clause;
 
     Decay_If_Unstable(SPARE);
@@ -1038,7 +1033,7 @@ DECLARE_NATIVE(SWITCH)
 
     Meta_Unquotify_Undecayed(right);
 
-    if (Is_Elision(right))  // skip comments or ELIDEs
+    if (Is_Ghost_Or_Void(right))  // skip comments or ELIDEs
         goto next_switch_step;
 
     if (Is_Level_At_End(SUBLEVEL))
