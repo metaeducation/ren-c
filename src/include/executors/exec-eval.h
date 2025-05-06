@@ -1,6 +1,6 @@
 //
 //  file: %exec-eval.h
-//  summary: "Flags and State for Evaluator_Executor() and Stepper_Executor()"
+//  summary: "Flags and State for Evaluator_Executor() and Meta_Stepper_Executor()"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -22,7 +22,7 @@
 // union of the Level.
 //
 
-#define EXECUTOR_EVAL &Stepper_Executor  // shorthand in Xxx_Executor_Flag()
+#define EXECUTOR_EVAL &Meta_Stepper_Executor  // shorthand in Xxx_Executor_Flag()
 
 
 //=//// EVAL_EXECUTOR_FLAG_24 /////////////////////////////////////////////=//

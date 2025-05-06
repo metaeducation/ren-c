@@ -169,6 +169,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         if (Trampoline_With_Top_As_Root_Throws())  // run the group
             return Error_No_Catch_For_Throw(L);
 
+        Meta_Unquotify_Undecayed(eval);  // Stepper is meta protocol
         Decay_If_Unstable(eval);
 
         if (must_be_action and not Is_Action(eval))
@@ -469,7 +470,9 @@ Option(Error*) Trap_Push_Keys_And_Params(
     Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
 ){
     Level* L = Make_Level_At(
-        &Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+        &Meta_Stepper_Executor,
+        spec,
+        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
     Option(Error*) e = Trap_Push_Keys_And_Params_Core(
         adjunct, L, flags, returner

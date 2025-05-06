@@ -185,9 +185,9 @@ DECLARE_NATIVE(META_P)
 {
     INCLUDE_PARAMS_OF_META_P;
 
-    Get_Meta_Atom_Intrinsic(OUT, LEVEL);
+    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
-    return OUT;  // argument was ^META, so no need to Meta_Quotify()
+    return Copy_Cell(OUT, meta);  // argument was ^META by convention
 }
 
 
@@ -632,8 +632,7 @@ DECLARE_NATIVE(UNRUN)
 // with a refinement.  Share the code.
 //
 static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
-    DECLARE_ELEMENT (meta);
-    Get_Meta_Atom_Intrinsic(meta, LEVEL);
+    const Element* meta = Get_Meta_Atom_Intrinsic(level_);
 
     if (Is_Meta_Of_Null(meta))  // light null
         return NIHIL;

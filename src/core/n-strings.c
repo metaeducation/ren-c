@@ -184,17 +184,18 @@ DECLARE_NATIVE(JOIN)
 
       case ST_JOIN_MOLD_STEPPING:
         assert(Not_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
+        Meta_Unquotify_Undecayed(SPARE);
         goto mold_step_result_in_spare;
 
       case ST_JOIN_STACK_STEPPING:
-        goto stack_step_result_in_spare;
+        goto stack_step_meta_in_spare;
 
       case ST_JOIN_EVALUATING_THE_GROUP:
         if (Is_The_Block(unwrap rest))
-            SUBLEVEL->executor = &Inert_Stepper_Executor;
+            SUBLEVEL->executor = &Inert_Meta_Stepper_Executor;
         else {
             assert(Is_Block(unwrap rest));
-            SUBLEVEL->executor = &Stepper_Executor;
+            SUBLEVEL->executor = &Meta_Stepper_Executor;
         }
         assert(Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
         goto mold_step_result_in_spare;
@@ -236,10 +237,10 @@ DECLARE_NATIVE(JOIN)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
     if (Is_Block(unwrap rest)) {
-        sub = Make_Level_At(&Stepper_Executor, unwrap rest, flags);
+        sub = Make_Level_At(&Meta_Stepper_Executor, unwrap rest, flags);
     }
     else if (Is_The_Block(unwrap rest))
-        sub = Make_Level_At(&Inert_Stepper_Executor, unwrap rest, flags);
+        sub = Make_Level_At(&Inert_Meta_Stepper_Executor, unwrap rest, flags);
     else {
         Feed* feed = Prep_Array_Feed(  // leverage feed mechanics [1]
             Alloc_Feed(),
@@ -250,7 +251,7 @@ DECLARE_NATIVE(JOIN)
             FEED_MASK_DEFAULT | ((unwrap rest)->header.bits & FEED_FLAG_CONST)
         );
 
-        sub = Make_Level(&Inert_Stepper_Executor, feed, flags);
+        sub = Make_Level(&Inert_Meta_Stepper_Executor, feed, flags);
     }
 
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
@@ -462,7 +463,9 @@ DECLARE_NATIVE(JOIN)
 
     return CONTINUE_SUBLEVEL(sub);
 
-} stack_step_result_in_spare: { //////////////////////////////////////////////
+} stack_step_meta_in_spare: { ////////////////////////////////////////////////
+
+    Meta_Unquotify_Undecayed(SPARE);
 
     if (Is_Elision(SPARE))
         goto next_stack_step;  // vaporize

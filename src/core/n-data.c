@@ -473,7 +473,7 @@ DECLARE_NATIVE(RUN_WORD_Q)
         return unwrap b;
 
     if (not Is_Path(e))
-        return nullptr;
+        return LOGIC(false);
 
     Option(SingleHeart) single = Try_Get_Sequence_Singleheart(e);
     return LOGIC(single == LEADING_BLANK_AND(WORD));
@@ -1217,10 +1217,9 @@ DECLARE_NATIVE(NIHIL_Q)
 {
     INCLUDE_PARAMS_OF_NIHIL_Q;
 
-    DECLARE_ELEMENT (temp);
-    Get_Meta_Atom_Intrinsic(temp, LEVEL);
+    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
-    return LOGIC(Is_Meta_Of_Nihil(temp));
+    return LOGIC(Is_Meta_Of_Nihil(meta));
 }
 
 
@@ -1258,8 +1257,7 @@ DECLARE_NATIVE(ELISION_Q)
 {
     INCLUDE_PARAMS_OF_ELISION_Q;
 
-    DECLARE_ELEMENT (meta);
-    Get_Meta_Atom_Intrinsic(meta, LEVEL);
+    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
     return LOGIC(Is_Meta_Of_Elision(meta));
 }

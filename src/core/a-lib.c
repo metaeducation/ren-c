@@ -1225,7 +1225,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     assert(Is_Node_Managed(binding));
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
-    Level* L = Make_Level(&Stepper_Executor, feed, flags);
+    Level* L = Make_Level(&Meta_Stepper_Executor, feed, flags);
     Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
@@ -1241,10 +1241,14 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
 
-    if (Is_Raised(cast(Atom*, out)) and (flags & LEVEL_FLAG_RAISED_RESULT_OK))
+    if (
+        Is_Meta_Of_Raised(out) and (flags & LEVEL_FLAG_RAISED_RESULT_OK)
+    ){
+        Meta_Unquotify_Undecayed(cast(Atom*, out));
         return false;  // !!! Lying about the result being a RebolValue !
+    }
 
-    Decay_If_Unstable(cast(Atom*, out));
+    Decay_If_Unstable(Meta_Unquotify_Undecayed(cast(Atom*, out)));
     return false;
 }
 

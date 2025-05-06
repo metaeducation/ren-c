@@ -317,6 +317,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
       #if DEBUG_CELL_READ_WRITE
         assert(Not_Cell_Flag(SPARE, PROTECTED));
+        Meta_Quotify(SPARE);
         Set_Cell_Flag(SPARE, PROTECTED);
       #endif
 
@@ -327,6 +328,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
       #if DEBUG_CELL_READ_WRITE
         Clear_Cell_Flag(SPARE, PROTECTED);
+        Meta_Unquotify_Undecayed(SPARE);
       #endif
 
         if (bounce == nullptr or bounce == BOUNCE_BAD_INTRINSIC_ARG)

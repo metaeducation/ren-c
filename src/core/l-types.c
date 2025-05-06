@@ -267,6 +267,23 @@ DECLARE_NATIVE(OF)
 {
     INCLUDE_PARAMS_OF_OF;
 
+    enum {
+        ST_OF_INITIAL_ENTRY = STATE_0,
+        ST_OF_REEVALUATING
+    };
+
+    switch (STATE) {
+      case ST_OF_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_OF_REEVALUATING:  // stepper gives a meta-result
+        return Meta_Unquotify_Undecayed(OUT);
+
+      default: assert(false);
+    }
+
+  initial_entry: { /////////////////////////////////////////////////////////
+
     Element* prop = Element_ARG(PROPERTY);
     assert(Is_Word(prop));
     const Symbol* sym = Cell_Word_Symbol(prop);
@@ -352,14 +369,16 @@ DECLARE_NATIVE(OF)
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
         | LEVEL_FLAG_RAISED_RESULT_OK;
 
-    Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
+    Level* sub = Make_Level(&Meta_Stepper_Executor, level_->feed, flags);
     Copy_Meta_Cell(Evaluator_Level_Current(sub), fetched);
     QUOTE_BYTE(Evaluator_Level_Current(sub)) = NOQUOTE_1;  // plain FRAME!
     sub->u.eval.current_gotten = nullptr;
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
-    return DELEGATE_SUBLEVEL(sub);  // !!! could/should we replace this level?
-}}
+
+    STATE = ST_OF_REEVALUATING;
+    return CONTINUE_SUBLEVEL(sub);  // !!! could/should we replace this level?
+}}}
 
 
 //

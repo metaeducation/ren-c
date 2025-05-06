@@ -68,7 +68,7 @@ INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
 //
 //      DECLARE_ATOM (result);  // stack-declared Cell
 //      Level* L = Make_Level_At(
-//          &Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+//          &Meta_Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
 //      );
 //      Push_Level_Erase_Out_If_State_0(result, L);
 //      fail ("This throws a level to the trampoline where result is dead");
@@ -81,7 +81,7 @@ INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
 // that is not called by Evaluator_Executor() does not use.
 //
 INLINE Sink(Atom) Level_Lifetime_Atom(Level* L) {
-    assert(L->executor == &Stepper_Executor);
+    assert(L->executor == &Meta_Stepper_Executor);
     Force_Erase_Cell_Untracked(&L->u.eval.primed);
     return cast(Atom*, &L->u.eval.primed);
 }
@@ -91,14 +91,14 @@ INLINE Sink(Atom) Level_Lifetime_Atom(Level* L) {
 // may skip items and never actually call the executor.
 //
 // Note: At one time the trampoline looked for STATE_0 and automatically
-// freshened the cell, and the Stepper_Executor() automatically zeroed its
+// freshened the cell, and the Meta_Stepper_Executor() automatically zeroed its
 // state on exit.  But that added a branch on every trampoline bounce to
 // check the Level's state, and led to erasing cells redundantly.
 //
 INLINE void Reset_Evaluator_Erase_Out(Level* L) {
     assert(
-        L->executor == &Stepper_Executor
-        or L->executor == &Inert_Stepper_Executor
+        L->executor == &Meta_Stepper_Executor
+        or L->executor == &Inert_Meta_Stepper_Executor
         or L->executor == &Evaluator_Executor
     );
     LEVEL_STATE_BYTE(L) = STATE_0;
@@ -127,8 +127,8 @@ INLINE bool Eval_Step_Throws(Atom* out, Level* L) {
     assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
 
     assert(
-        L->executor == &Stepper_Executor
-        or L->executor == &Inert_Stepper_Executor
+        L->executor == &Meta_Stepper_Executor
+        or L->executor == &Inert_Meta_Stepper_Executor
     );
 
     L->out = out;
@@ -189,9 +189,12 @@ INLINE bool Eval_Element_Core_Throws(
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     );
 
-    Level* L = Make_Level(&Stepper_Executor, feed, flags);
+    Level* L = Make_Level(&Meta_Stepper_Executor, feed, flags);
 
-    return Trampoline_Throws(out, L);
+    bool threw = Trampoline_Throws(out, L);
+    if (not threw)
+        Meta_Unquotify_Undecayed(out);
+    return threw;
 }
 
 #define Eval_Value_Throws(out,value,context) \

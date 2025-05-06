@@ -199,10 +199,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         assert(Is_Cell_Readable(L->out));
 
-        if (Get_Level_Flag(L, META_RESULT)) {
-            Meta_Quotify(L->out);
-        }
-        else if (Is_Raised(L->out)) {
+        if (Is_Raised(L->out)) {
             if (Not_Level_Flag(L, RAISED_RESULT_OK)) {
                 //
                 // treat any failure as if it could have been thrown from
@@ -503,7 +500,7 @@ void Startup_Trampoline(void)
     assert(BOTTOM_LEVEL == nullptr);
 
     Level* L = Make_End_Level(  // ensure L->prior [1]
-        &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
+        &Meta_Stepper_Executor,  // executor is irrelevant (permit nullptr?)
         LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
     );
     Push_Level_Dont_Inherit_Interruptibility(&g_erased_cell, L);  // API [3]

@@ -82,7 +82,7 @@ DECLARE_NATIVE(ENRESCUE)
 
     switch (STATE) {
       case ST_ENRESCUE_INITIAL_ENTRY: goto initial_entry;
-      case ST_ENRESCUE_EVALUATING: goto evaluation_finished;
+      case ST_ENRESCUE_EVALUATING: goto eval_result_in_out;
       default: assert(false);
     }
 
@@ -99,7 +99,7 @@ DECLARE_NATIVE(ENRESCUE)
     Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
-        LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK
+        LEVEL_FLAG_RAISED_RESULT_OK
     );
     Init_Nihil(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
 
@@ -109,13 +109,14 @@ DECLARE_NATIVE(ENRESCUE)
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // fail not caught by default
     return CONTINUE_SUBLEVEL(L);
 
-} evaluation_finished: {  ////////////////////////////////////////////////////
+} eval_result_in_out: {  /////////////////////////////////////////////////////
 
     if (not THROWING) {  // successful result
-        if (Is_Meta_Of_Raised(OUT))  // was definitional error, got META'd
+        if (Is_Raised(OUT)) {
             QUOTE_BYTE(OUT) = NOQUOTE_1;  // turn it into normal error
-
-        return OUT;  // META'd by LEVEL_FLAG_META_RESULT
+            return OUT;
+        }
+        return Meta_Quotify(OUT);
     }
 
     if (not Is_Throwing_Failure(LEVEL)) {  // non-ERROR! throws
@@ -157,12 +158,21 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 
     enum {
         ST_ENTRAP_INITIAL_ENTRY = STATE_0,
-        ST_ENTRAP_EVALUATING
+        ST_ENTRAP_EVAL_STEPPING,
+        ST_ENTRAP_RUNNING_FRAME
     };
 
     switch (STATE) {
-      case ST_ENTRAP_INITIAL_ENTRY: goto initial_entry;
-      case ST_ENTRAP_EVALUATING: goto eval_step_result_in_out;
+      case ST_ENTRAP_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_ENTRAP_EVAL_STEPPING:
+        Meta_Unquotify_Undecayed(SPARE);
+        goto eval_step_result_in_spare;
+
+      case ST_ENTRAP_RUNNING_FRAME:
+        goto eval_step_result_in_spare;
+
       default: assert(false);
     }
 
@@ -177,30 +187,32 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
     Level* sub;
     if (Is_Block(code)) {
         sub = Make_Level_At(
-            &Stepper_Executor,
+            &Meta_Stepper_Executor,
             code,  // TYPE_BLOCK or TYPE_GROUP
             flags
         );
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
-    }
-    else {
-        bool pushed = Pushed_Continuation(
-            SPARE,
-            flags,
-            SPECIFIED,
-            code,
-            nullptr
-        );
-        assert(pushed);
-        UNUSED(pushed);
-        sub = TOP_LEVEL;
+        STATE = ST_ENTRAP_EVAL_STEPPING;
+        unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // raiseds
+        return CONTINUE_SUBLEVEL(sub);
     }
 
-    STATE = ST_ENTRAP_EVALUATING;
-    /*Enable_Dispatcher_Catching_Of_Throws(LEVEL);*/  // don't need for raised
+    bool pushed = Pushed_Continuation(
+        SPARE,
+        flags,
+        SPECIFIED,
+        code,
+        nullptr
+    );
+    assert(pushed);
+    UNUSED(pushed);
+    sub = TOP_LEVEL;
+
+    STATE = ST_ENTRAP_RUNNING_FRAME;
+    unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // raiseds
     return CONTINUE_SUBLEVEL(sub);
 
-} eval_step_result_in_out: {  ////////////////////////////////////////////////
+} eval_step_result_in_spare: {  //////////////////////////////////////////////
 
     if (Is_Raised(SPARE)) {
         Drop_Level(SUBLEVEL);

@@ -100,14 +100,9 @@ STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(6)
 
 
-//=//// LEVEL_FLAG_META_RESULT ////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_7 //////////////////////////////////////////////////////=//
 //
-// When this is applied, the Trampoline is asked to return an evaluator result
-// in its ^META form.  Doing so saves on needing separate callback entry
-// points for things like meta-vs-non-meta arguments, and is a useful
-// general facility.
-//
-#define LEVEL_FLAG_META_RESULT \
+#define LEVEL_FLAG_7 \
     FLAG_LEFT_BIT(7)
 
 
@@ -140,13 +135,9 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
 
 //=//// LEVEL_FLAG_RAISED_RESULT_OK ///////////////////////////////////////=//
 //
-// The special ANTIFORM_0 quotelevel will trip up code that isn't expecting
-// it, so most levels do not want to receive these "antiform forms of error!"
-// This flag can be used with LEVEL_FLAG_META_RESULT or without it, to say
-// that the caller is planning on dealing with the special case.
-//
-// Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
-// could be exploited for some optimization.
+// The special ANTIFORM_0 error will trip up code that isn't expecting it, so
+// most levels do not want to receive these "antiform forms of error!" when
+// they request evaluation.
 //
 #define LEVEL_FLAG_RAISED_RESULT_OK \
     FLAG_LEFT_BIT(16)
@@ -163,7 +154,7 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
 // Intrinsics can be run without creating levels for them, if they do not
 // use refinements, and if you're not using a debug mode which mandates that
 // levels always be created.  In this case there is no Level* to pass to the
-// native, so a parent level is passed (which may be a Stepper_Executor(),
+// native, so a parent level is passed (which may be a Meta_Stepper_Executor(),
 // for instance, instead of an Action_Executor())
 //
 // The parent's OUT can be used, but the macro for getting the argument will

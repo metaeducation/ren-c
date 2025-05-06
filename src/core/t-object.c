@@ -1756,7 +1756,7 @@ DECLARE_NATIVE(CONSTRUCT)
         goto continue_processing_spec;
 
       case ST_CONSTRUCT_EVAL_SET_STEP:
-        goto eval_set_step_result_in_spare;
+        goto eval_set_step_meta_in_spare;
 
       default: assert(false);
     }
@@ -1787,10 +1787,10 @@ DECLARE_NATIVE(CONSTRUCT)
 
     Executor* executor;
     if (Is_The_Block(spec))
-        executor = &Inert_Stepper_Executor;
+        executor = &Inert_Meta_Stepper_Executor;
     else {
         assert(Is_Block(spec));
-        executor = &Stepper_Executor;
+        executor = &Meta_Stepper_Executor;
     }
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
@@ -1848,7 +1848,10 @@ DECLARE_NATIVE(CONSTRUCT)
     STATE = ST_CONSTRUCT_EVAL_SET_STEP;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} eval_set_step_result_in_spare: {  //////////////////////////////////////////
+} eval_set_step_meta_in_spare: {  ////////////////////////////////////////////
+
+    Meta_Unquotify_Undecayed(SPARE);
+    Decay_If_Unstable(SPARE);
 
     VarList* varlist = Cell_Varlist(OUT);
 

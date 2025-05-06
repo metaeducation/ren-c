@@ -18,15 +18,16 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The Evaluator_Executor() simply calls Stepper_Executor() consecutively, and
-// if the output is invisible (e.g. the result of a COMMENT, ELIDE, or a
-// COMMA!) then it does not overwrite the previous output.  This is to
-// facilitate features like this:
+// The Evaluator_Executor() simply calls Meta_Stepper_Executor() consecutively,
+// and if the output is invisible (e.g. the result of a COMMENT, ELIDE, etc.)
+// it won't overwrite the previous output.
+//
+// This facilitate features like:
 //
 //    >> eval [1 + 2 comment "hi"]
 //    == 3
 //
-// The 1 + 2 evaluated to 3.  If we merely called the Stepper_Executor()
+// The 1 + 2 evaluated to 3.  If we merely called the Meta_Stepper_Executor()
 // again on the same output cell, the comment would evaluate to an antiform
 // comma (e.g. a GHOST, ~,~ antiform).  That would overwrite the 3.  So the
 // Evaluator_Executor() has a holding cell for the last result that it does
@@ -35,17 +36,17 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * The reason this isn't done with something like a DO_TO_END flag that
-//   controls a mode of the Stepper_Executor() is so that the stepper can
+//   controls a mode of the Meta_Stepper_Executor() is so that the stepper can
 //   have its own Level* in a debugger.  If it didn't have its own level,
 //   then in order to keep alive it could not return a result to the
-//   trampoline until it had reached the end.  Thus, a generalized debugger
+//   Trampoline until it had reached the end.  Thus, a generalized debugger
 //   watching for finalized outputs would only see one final output--instead
 //   of watching one be synthesized for each step.
 //
 // * ...BUT a performance trick in Evaluator_Executor() is that if you're NOT
 //   debugging, it can actually avoid making its own Level* structure.  It's
 //   able to use a cell in the Level structure for its holding of the last
-//   result, and can actually just pass through to the Stepper_Executor().
+//   result, and can actually just pass through to the Meta_Stepper_Executor().
 //
 
 #include "sys-core.h"
@@ -60,7 +61,7 @@
 // 1. *Before* a level is created for Evaluator_Executor(), the creator should
 //    set the "primed" value for what they want as a result if there
 //    are no non-invisible evaluations.  Right now the only two things
-//    requested are nihil and void, so we can test for those.
+//    requested are nihil and ghost, so we can test for those.
 //
 Bounce Evaluator_Executor(Level* const L)
 {
@@ -77,14 +78,14 @@ Bounce Evaluator_Executor(Level* const L)
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
         assert(Not_Level_Flag(L, TRAMPOLINE_KEEPALIVE));
-        assert(Is_Nihil(PRIMED) or Is_Void(PRIMED));  // primed [1]
+        assert(Is_Nihil(PRIMED) or Is_Ghost(PRIMED));  // primed [1]
         goto initial_entry;
 
       default:
       #if RUNTIME_CHECKS
         if (L != TOP_LEVEL) {
             assert(STATE == ST_EVALUATOR_STEPPING);
-            goto step_result_in_out;
+            goto step_meta_in_out;
         }
       #endif
         goto call_stepper_executor;  // callback on behalf of stepper
@@ -93,7 +94,7 @@ Bounce Evaluator_Executor(Level* const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     // 2. As mentioned in the notes at the top of this file, the main reason
-    //    for Evaluator_Executor() to be separate from Stepper_Executor() is
+    //    Evaluator_Executor() is separate from Meta_Stepper_Executor() is
     //    to facilitate a general debugging loop hooked into the Trampoline
     //    that can see results generated at the granularity of a step.
     //
@@ -110,7 +111,7 @@ Bounce Evaluator_Executor(Level* const L)
 
     if (SPORADICALLY(64)) {  // 1 out of 64 times, use sublevel if debug [2]
         Level* sub = Make_Level(
-            &Stepper_Executor,
+            &Meta_Stepper_Executor,
             L->feed,
             LEVEL_FLAG_RAISED_RESULT_OK
                 | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
@@ -138,14 +139,14 @@ Bounce Evaluator_Executor(Level* const L)
 
     assert(L == TOP_LEVEL);  // only do this when there's no sublevel
 
-    Bounce bounce = Stepper_Executor(L);
+    Bounce bounce = Meta_Stepper_Executor(L);
 
     if (bounce == OUT)
-        goto step_result_in_out;
+        goto step_meta_in_out;
 
     return bounce;
 
-} step_result_in_out: {  /////////////////////////////////////////////////////
+} step_meta_in_out: {  ///////////////////////////////////////////////////////
 
     // 3. An idea was tried once where the error was not raised until a step
     //    was shown to be non-invisible.  This would allow invisible
@@ -169,7 +170,7 @@ Bounce Evaluator_Executor(Level* const L)
     //    That's a bad enough outcome that the feature of being able to put
     //    invisible material after the raised error has to be sacrificed.
 
-    if (Is_Ghost(OUT))  {  // was something like an ELIDE, COMMENT, COMMA!
+    if (Is_Meta_Of_Ghost(OUT))  {  // something like an ELIDE or COMMENT
         if (Not_Feed_At_End(L->feed))
             goto new_step;  // leave previous result as-is in PRIMED
 
@@ -177,13 +178,16 @@ Bounce Evaluator_Executor(Level* const L)
         goto finished;
     }
 
-    if (Is_Feed_At_End(L->feed))
+    if (Is_Feed_At_End(L->feed)) {
+        Meta_Unquotify_Undecayed(OUT);  // to recap: stepper is meta protocol
         goto finished;  // OUT is not invisible, so it's the final result
+    }
 
-    if (Is_Raised(OUT))   // raise errors synchronously if not at end [3]
+    if (Is_Meta_Of_Raised(OUT))   // raise synchronous error if not at end [3]
         return FAIL(Cell_Error(OUT));
 
     Move_Atom(PRIMED, OUT);  // make current result the preserved one
+    Meta_Unquotify_Undecayed(PRIMED);
     goto new_step;
 
 } finished: {  ///////////////////////////////////////////////////////////////

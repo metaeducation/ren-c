@@ -463,7 +463,9 @@ void RunPromise(void)
     Init_Block(code, a);
     Tweak_Cell_Binding(code, cast(Context*, info->binding));
 
-    Level* L = Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL);
+    Level* L = Make_Level_At(
+        &Meta_Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL
+    );
 
     Push_Level_Dont_Inherit_Interruptibility(  // you can HALT inside a promise
         cast(Atom*, Alloc_Value_Core(CELL_MASK_ERASED_0)),  // don't set root

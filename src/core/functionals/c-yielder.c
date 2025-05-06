@@ -93,8 +93,7 @@ DECLARE_NATIVE(DONE) {
 DECLARE_NATIVE(DONE_Q) {
     INCLUDE_PARAMS_OF_DONE_Q;
 
-    DECLARE_ELEMENT (meta);
-    Get_Meta_Atom_Intrinsic(meta, LEVEL);
+    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
     if (not Is_Meta_Of_Raised(meta))
         return nullptr;

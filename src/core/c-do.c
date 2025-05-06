@@ -181,8 +181,7 @@ bool Pushed_Continuation(
         );
         Init_Nihil(Evaluator_Primed_Cell(L));
         if (Unchecked_Heart_Of(branch) == TYPE_META_BLOCK) {
-            Set_Level_Flag(L, META_RESULT);
-            Set_Level_Flag(L, RAISED_RESULT_OK);
+            assert(!"META-BLOCK! branches are being rethought");
         }
 
         Push_Level_Erase_Out_If_State_0(out, L);

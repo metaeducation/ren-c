@@ -100,6 +100,24 @@ Bounce Macro_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
+    enum {
+        ST_MACRO_INITIAL_ENTRY = STATE_0,
+        ST_MACRO_REEVALUATING
+    };
+
+    switch (STATE) {
+      case ST_MACRO_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_MACRO_REEVALUATING:  // stepper uses meta protocol
+        return Meta_Unquotify_Undecayed(OUT);
+
+      default:
+        assert(false);
+    }
+
+  initial_entry: { ///////////////////////////////////////////////////////////
+
     Details* details = Ensure_Level_Details(L);
     Element* body = cast(Element*, Details_At(details, IDX_DETAILS_1));
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
@@ -144,11 +162,13 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Splice_Block_Into_Feed(L->feed, stable_OUT);
 
-    Level* sub = Make_Level(&Stepper_Executor, L->feed, LEVEL_MASK_NONE);
+    Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, LEVEL_MASK_NONE);
     Erase_Cell(OUT);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
-    return DELEGATE_SUBLEVEL(sub);
-}
+
+    STATE = ST_MACRO_REEVALUATING;
+    return CONTINUE_SUBLEVEL(sub);
+}}
 
 
 //
@@ -224,6 +244,24 @@ DECLARE_NATIVE(INLINE)
 {
     INCLUDE_PARAMS_OF_INLINE;
 
+    enum {
+        ST_INLINE_INITIAL_ENTRY = STATE_0,
+        ST_INLINE_REEVALUATING
+    };
+
+    switch (STATE) {
+      case ST_INLINE_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_INLINE_REEVALUATING:  // stepper uses meta protocol
+        return Meta_Unquotify_Undecayed(OUT);
+
+      default:
+        assert(false);
+    }
+
+  initial_entry: { ///////////////////////////////////////////////////////////
+
     Option(const Element*) opt_code = Optional_Element_ARG(CODE);
     if (not opt_code)
         return NIHIL;  // do nothing, just return invisibly
@@ -244,7 +282,9 @@ DECLARE_NATIVE(INLINE)
         Splice_Block_Into_Feed(level_->feed, ARG(CODE));
     }
 
-    Level* sub = Make_Level(&Stepper_Executor, level_->feed, LEVEL_MASK_NONE);
+    Level* sub = Make_Level(&Meta_Stepper_Executor, level_->feed, LEVEL_MASK_NONE);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
-    return DELEGATE_SUBLEVEL(sub);
-}
+
+    STATE = ST_INLINE_REEVALUATING;
+    return CONTINUE_SUBLEVEL(sub);
+}}

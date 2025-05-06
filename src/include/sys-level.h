@@ -57,7 +57,7 @@
     INLINE Level* ensure_executor(Executor *executor, Level* L) {
         if (L->executor != executor) {
             if (
-                executor == &Stepper_Executor
+                executor == &Meta_Stepper_Executor
                 and L->executor == &Evaluator_Executor
             ){
                 // See Evaluator_Executor(), this is allowed
@@ -183,7 +183,7 @@ INLINE REBLEN Level_Array_Index(Level* L) {
 }
 
 INLINE REBLEN Level_Expression_Index(Level* L) {  // !!! Not called?
-    assert(L->executor == &Stepper_Executor);
+    assert(L->executor == &Meta_Stepper_Executor);
     assert(not Level_Is_Variadic(L));
     return L->u.eval.expr_index - 1;
 }
@@ -226,7 +226,7 @@ INLINE Option(LineNumber) Line_Number_Of_Level(Level* L) {
     u_cast(Atom*, &(L->scratch))
 
 INLINE Element* Evaluator_Level_Current(Level* L) {
-    assert(L->executor == &Stepper_Executor);
+    assert(L->executor == &Meta_Stepper_Executor);
     return u_cast(Element*, &(L->scratch));
 }
 
@@ -458,7 +458,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //
 // 2. The commitment of an Intrinsic is that if it runs without a Level, then
 //    it won't perform evaluations or use continuations.  Those mechanics are
-//    not available when being called directly from the Stepper_Executor.
+//    not available when being called directly from the Meta_Stepper_Executor.
 //
 // 3. Levels are pushed to reuse for several sequential operations like ANY,
 //    ALL, CASE, REDUCE.  It is allowed to change the output cell for each
@@ -517,7 +517,7 @@ INLINE void Push_Level_Erase_Out_If_State_0(  // inherits uninterruptibility [4]
 
 INLINE void Update_Expression_Start(Level* L) {
     assert(
-        L->executor == &Stepper_Executor
+        L->executor == &Meta_Stepper_Executor
         or L->executor == &Evaluator_Executor
     );
     if (not Level_Is_Variadic(L))
@@ -567,7 +567,7 @@ INLINE Level* Prep_Level_Core(
     Feed* feed,
     Flags flags
 ){
-   if (L == nullptr)  // e.g. a failed allocation
+    if (L == nullptr)  // e.g. a failed allocation
        fail (Error_No_Memory(sizeof(Level)));
 
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;

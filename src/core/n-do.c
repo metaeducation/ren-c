@@ -58,14 +58,14 @@ DECLARE_NATIVE(REEVAL)
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
-    Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
+    Level* sub = Make_Level(&Meta_Stepper_Executor, level_->feed, flags);
     Copy_Cell(Evaluator_Level_Current(sub), v);  // evaluator's CURRENT
     sub->u.eval.current_gotten = nullptr;
 
     if (Trampoline_Throws(OUT, sub))  // review: rewrite stackless
         return THROWN;
 
-    return OUT;
+    return Meta_Unquotify_Undecayed(OUT);
 }
 
 
@@ -304,7 +304,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         return FAIL(Cell_Error(source)); }  // would fail anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:
-        goto single_step_result_in_out;
+        goto single_step_meta_in_out;
 
       case ST_EVALUATE_RUNNING_TO_END:
         goto result_in_out;
@@ -341,7 +341,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
 
     Level* sub = Make_Level_At(
-        Bool_ARG(STEP) ? &Stepper_Executor : &Evaluator_Executor,
+        Bool_ARG(STEP) ? &Meta_Stepper_Executor : &Evaluator_Executor,
         source,  // all lists treated the same [2]
         flags
     );
@@ -430,7 +430,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 
-} single_step_result_in_out: {  //////////////////////////////////////////////
+} single_step_meta_in_out: {  ////////////////////////////////////////////////
 
     // 1. There may have been a LET statement in the code.  If there was, we
     //    have to incorporate the binding it added into the reported state
@@ -443,6 +443,8 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    Right now we can politely ask "don't do that".  But better would
     //    probably be to make EVALUATE return something with more limited
     //    privileges... more like a FRAME!/VARARGS!.
+
+    Meta_Unquotify_Undecayed(OUT);  // undecayed allows vanishing
 
     assert(Bool_ARG(STEP));
 
@@ -688,7 +690,7 @@ DECLARE_NATIVE(APPLY)
       case ST_APPLY_LABELED_EVAL_STEP:
         if (THROWING)
             goto finalize_apply;
-        goto labeled_step_result_in_spare;
+        goto labeled_step_meta_in_spare;
 
       case ST_APPLY_UNLABELED_EVAL_STEP:
         if (THROWING)
@@ -697,7 +699,7 @@ DECLARE_NATIVE(APPLY)
             assert(Bool_ARG(RELAX));
             goto handle_next_item;
         }
-        goto unlabeled_step_result_in_spare;
+        goto unlabeled_step_meta_in_spare;
 
       default : assert(false);
     }
@@ -731,7 +733,7 @@ DECLARE_NATIVE(APPLY)
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
     Level* L = Make_Level_At(
-        &Stepper_Executor,
+        &Meta_Stepper_Executor,
         args,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -829,33 +831,36 @@ DECLARE_NATIVE(APPLY)
 
     assert(not Is_Pointer_Corrupt_Debug(param));  // nullptr means toss result
 
-    if (param and Cell_Parameter_Class(param) == PARAMCLASS_META)
-        Set_Level_Flag(SUBLEVEL, META_RESULT);  // get decayed result otherwise
-    else
-        Clear_Level_Flag(SUBLEVEL, META_RESULT);
-
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} labeled_step_result_in_spare: {  ///////////////////////////////////////////
+} labeled_step_meta_in_spare: {  /////////////////////////////////////////////
 
     REBLEN index = VAL_UINT32(ARG(INDEX));
 
     var = Varlist_Slot(Cell_Varlist(frame), index);
     param = Phase_Param(Cell_Frame_Phase(op), index);
 
-    goto copy_spare_to_var_in_frame;
+    goto copy_meta_spare_to_var_in_frame;
 
-} unlabeled_step_result_in_spare: {  /////////////////////////////////////////
+} unlabeled_step_meta_in_spare: {  ///////////////////////////////////////////
 
     EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
     var = e->var;
     param = e->param;
 
-    goto copy_spare_to_var_in_frame;
+    goto copy_meta_spare_to_var_in_frame;
 
-} copy_spare_to_var_in_frame: {  /////////////////////////////////////////////
+} copy_meta_spare_to_var_in_frame: {  ////////////////////////////////////////
+
+    if (/* param and */ Cell_Parameter_Class(param) == PARAMCLASS_META) {
+        // do not decay
+    }
+    else {
+        Meta_Unquotify_Undecayed(SPARE);
+        Decay_If_Unstable(SPARE);
+    }
 
     // !!! Low-level frame mechanics require that no-argument refinements be
     // either ~okay~ or ~null~ antiforms.  As a higher-level utility, APPLY

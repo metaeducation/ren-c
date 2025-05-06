@@ -611,11 +611,12 @@ DECLARE_NATIVE(LET)
     };
 
     switch (STATE) {
-      case ST_LET_INITIAL_ENTRY :
+      case ST_LET_INITIAL_ENTRY:
         Init_Block(bindings_holder, EMPTY_ARRAY);
         goto initial_entry;
 
-      case ST_LET_EVAL_STEP :
+      case ST_LET_EVAL_STEP:
+        Meta_Unquotify_Undecayed(OUT);
         goto integrate_eval_bindings;
 
       default : assert (false);
@@ -828,7 +829,7 @@ DECLARE_NATIVE(LET)
         | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
         | (L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
 
-    Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags);
+    Level* sub = Make_Level(&Meta_Stepper_Executor, LEVEL->feed, flags);
     Copy_Cell(Evaluator_Level_Current(sub), cast(Element*, SPARE));
     sub->u.eval.current_gotten = nullptr;
 

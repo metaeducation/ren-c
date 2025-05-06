@@ -94,7 +94,7 @@
 // can complete and run the evaluated-to branch.
 //
 // So the group branch executor is pushed with the feed of the GROUP! to run.
-// It gives this feed to an Stepper_Executor(), and then delegates to the
+// It gives this feed to an Meta_Stepper_Executor(), and then delegates to the
 // branch returned as a result.
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -424,7 +424,7 @@ DECLARE_NATIVE(ALL)
 //
 // 2. The predicate-running condition gets pushed over the "keepalive" stepper,
 //    but we don't want the stepper to take a step before coming back to us.
-//    Temporarily patch out the Stepper_Executor() so we get control back
+//    Temporarily patch out the Meta_Stepper_Executor() so we get control back
 //    without that intermediate step.
 //
 // 3. The only way a falsey evaluation should make it to the end is if a
@@ -446,7 +446,7 @@ DECLARE_NATIVE(ALL)
 
     switch (STATE) {
       case ST_ALL_INITIAL_ENTRY: goto initial_entry;
-      case ST_ALL_EVAL_STEP: goto eval_step_result_in_spare;
+      case ST_ALL_EVAL_STEP: goto eval_step_meta_in_spare;
       case ST_ALL_PREDICATE: goto predicate_result_in_scratch;
       default: assert(false);
     }
@@ -463,10 +463,10 @@ DECLARE_NATIVE(ALL)
 
     Executor* executor;
     if (Is_The_Block(block))
-        executor = &Inert_Stepper_Executor;
+        executor = &Inert_Meta_Stepper_Executor;
     else {
         assert(Is_Block(block));
-        executor = &Stepper_Executor;
+        executor = &Meta_Stepper_Executor;
     }
 
     Level* sub = Make_Level_At(executor, block, flags);
@@ -475,7 +475,9 @@ DECLARE_NATIVE(ALL)
     STATE = ST_ALL_EVAL_STEP;
     return CONTINUE_SUBLEVEL(sub);
 
-} eval_step_result_in_spare: {  //////////////////////////////////////////////
+} eval_step_meta_in_spare: {  ////////////////////////////////////////////////
+
+    Meta_Unquotify_Undecayed(SPARE);
 
     if (Is_Elision(SPARE)) {  // (comment "hi") or ,
       handle_elision:
@@ -510,7 +512,7 @@ DECLARE_NATIVE(ALL)
 
     Packify_If_Inhibitor(SPARE);  // predicates can approve inhibitors [3]
 
-    SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
+    SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling [2]
     STATE = ST_ALL_EVAL_STEP;
 
     condition = Decay_If_Unstable(SCRATCH);
@@ -584,7 +586,7 @@ DECLARE_NATIVE(ANY)
 
     switch (STATE) {
       case ST_ANY_INITIAL_ENTRY: goto initial_entry;
-      case ST_ANY_EVAL_STEP: goto eval_step_result_in_out;
+      case ST_ANY_EVAL_STEP: goto eval_step_meta_in_out;
       case ST_ANY_PREDICATE: goto predicate_result_in_spare;
       default: assert(false);
     }
@@ -601,10 +603,10 @@ DECLARE_NATIVE(ANY)
 
     Executor* executor;
     if (Is_The_Block(block))
-        executor = &Inert_Stepper_Executor;
+        executor = &Inert_Meta_Stepper_Executor;
     else {
         assert(Is_Block(block));
-        executor = &Stepper_Executor;
+        executor = &Meta_Stepper_Executor;
     }
 
     Level* sub = Make_Level_At(executor, block, flags);
@@ -613,7 +615,9 @@ DECLARE_NATIVE(ANY)
     STATE = ST_ANY_EVAL_STEP;
     return CONTINUE_SUBLEVEL(sub);
 
-} eval_step_result_in_out: {  ////////////////////////////////////////////////
+} eval_step_meta_in_out: {  //////////////////////////////////////////////////
+
+    Meta_Unquotify_Undecayed(OUT);
 
     if (Is_Elision(OUT)) {  // (comment "hi")
       handle_elision:
@@ -648,7 +652,7 @@ DECLARE_NATIVE(ANY)
 
     Packify_If_Inhibitor(OUT);  // predicates can approve inhibitors [3]
 
-    SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
+    SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling [2]
     STATE = ST_ANY_EVAL_STEP;
 
     condition = stable_SPARE;
@@ -714,20 +718,20 @@ DECLARE_NATIVE(CASE)
     };
 
     switch (STATE) {
-      case ST_CASE_INITIAL_ENTRY :
+      case ST_CASE_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_CASE_CONDITION_EVAL_STEP :
-        goto condition_result_in_spare;
+      case ST_CASE_CONDITION_EVAL_STEP:
+        goto condition_meta_in_spare;
 
-      case ST_CASE_RUNNING_PREDICATE :
+      case ST_CASE_RUNNING_PREDICATE:
         goto predicate_result_in_spare;
 
-      case ST_CASE_EVALUATING_GROUP_BRANCH :
+      case ST_CASE_EVALUATING_GROUP_BRANCH:
         Decay_If_Unstable(branch);
         goto handle_processed_branch;
 
-      case ST_CASE_RUNNING_BRANCH :
+      case ST_CASE_RUNNING_BRANCH:
         goto branch_result_in_out;
 
       default: assert(false);
@@ -736,7 +740,7 @@ DECLARE_NATIVE(CASE)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Level* L = Make_Level_At(
-        &Stepper_Executor,
+        &Meta_Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -758,12 +762,14 @@ DECLARE_NATIVE(CASE)
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
-    SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
+    SUBLEVEL->executor = &Meta_Stepper_Executor;  // undo &Just_Use_Out_Executor
     Reset_Evaluator_Erase_Out(SUBLEVEL);
 
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate [1]
 
-} condition_result_in_spare: {  //////////////////////////////////////////////
+} condition_meta_in_spare: {  ////////////////////////////////////////////////
+
+    Meta_Unquotify_Undecayed(SPARE);
 
     if (Is_Elision(SPARE))  // skip nihils, e.g. ELIDE
         goto handle_next_clause;
@@ -937,7 +943,7 @@ DECLARE_NATIVE(SWITCH)
         goto initial_entry;
 
       case ST_SWITCH_EVALUATING_RIGHT:
-        goto right_result_in_spare;
+        goto right_meta_in_spare;
 
       case ST_SWITCH_RUNNING_BRANCH:
         if (not Bool_ARG(ALL)) {
@@ -969,7 +975,7 @@ DECLARE_NATIVE(SWITCH)
     }
 
     Level* sub = Make_Level_At(
-        &Stepper_Executor,
+        &Meta_Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -1004,11 +1010,11 @@ DECLARE_NATIVE(SWITCH)
     }
 
     STATE = ST_SWITCH_EVALUATING_RIGHT;
-    SUBLEVEL->executor = &Stepper_Executor;
+    SUBLEVEL->executor = &Meta_Stepper_Executor;
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call [1]
 
-} right_result_in_spare: {  //////////////////////////////////////////////////
+} right_meta_in_spare: {  ////////////////////////////////////////////////////
 
     // 1. At one point the value was allowed to corrupt during comparison, due
     //    to the idea equality was transitive.  So if it changes 0.01 to 1% in
@@ -1029,6 +1035,8 @@ DECLARE_NATIVE(SWITCH)
     //    So the FUNC's const body evaluation led to SWITCH's argument block
     //    being evaluated as const.  But we have to proxy that const flag
     //    over to the block.
+
+    Meta_Unquotify_Undecayed(right);
 
     if (Is_Elision(right))  // skip comments or ELIDEs
         goto next_switch_step;

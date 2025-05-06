@@ -32,7 +32,7 @@
 //   accidentally carry over from one step to another, so that there will be
 //   a crash instead of a casual reuse.
 //
-// * Evaluator_Exit_Checks_Debug() runs only if Stepper_Executor() makes
+// * Evaluator_Exit_Checks_Debug() runs only if Meta_Stepper_Executor() makes
 //   it to the end without a fail() longjmping out from under it.  It also
 //   checks to make sure the state has balanced, and that the return result is
 //   consistent with the state being returned.
@@ -59,7 +59,7 @@ void Dump_Level_Location(Level* L)
     DECLARE_ATOM (dump);
 
     if (
-        L->executor == &Stepper_Executor  // looks ahead by one
+        L->executor == &Meta_Stepper_Executor  // looks ahead by one
         and LEVEL_STATE_BYTE(L) != ST_STEPPER_INITIAL_ENTRY  // L->u corrupt
     ){
         printf("Dump_Level_Location() current\n");
@@ -309,13 +309,12 @@ void Evaluator_Exit_Checks_Debug(Level* L) {
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );
 
-        // These are provided as options to Stepper_Executor, and should not
-        // change over the course of the evaluation (could check this?)  But in
-        // any case they are okay if they are set.
+        // These options to Meta_Stepper_Executor() should not change over the
+        // course of the evaluation (could check this?)  But in any case they
+        // are okay if they are set.
         //
         filtered &= ~ (
             LEVEL_FLAG_BRANCH
-            | LEVEL_FLAG_META_RESULT
             | LEVEL_FLAG_RAISED_RESULT_OK
             | LEVEL_FLAG_UNINTERRUPTIBLE
             | EVAL_EXECUTOR_FLAG_FULFILLING_ARG

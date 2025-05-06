@@ -149,14 +149,16 @@ Bounce Action_Executor(Level* L)
 
           case ST_ACTION_FULFILLING_ARGS:
             if (Cell_Parameter_Class(PARAM) != PARAMCLASS_META) {
-                if (Is_Ghost(ARG)) {
+                if (Is_Meta_Of_Ghost(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Trash_Due_To_End(ARG);
                 }
-                else if (Is_Nihil(ARG))
+                else if (Is_Meta_Of_Nihil(ARG))
                     Init_Void(ARG);
-                else
+                else {
+                    Meta_Unquotify_Undecayed(ARG);
                     Decay_If_Unstable(ARG);
+                }
             }
             goto continue_fulfilling;
 
@@ -502,11 +504,8 @@ Bounce Action_Executor(Level* L)
             }
 
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
-            if (pclass == PARAMCLASS_META) {
-                flags |= LEVEL_FLAG_META_RESULT;
-            }
 
-            Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
+            Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, flags);
             Push_Level_Erase_Out_If_State_0(ARG, sub);
 
             return CONTINUE_SUBLEVEL(sub); }
@@ -585,7 +584,7 @@ Bounce Action_Executor(Level* L)
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
-                Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
+                Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, flags);
                 Push_Level_Erase_Out_If_State_0(ARG, sub);  // not state 0
                 return CONTINUE_SUBLEVEL(sub);
             }

@@ -47,8 +47,8 @@
 //=//// HELPERS TO PROCESS UNPROCESSED ARGUMENTS //////////////////////////=//
 //
 // ** WHEN RUN AS AN INTRINSIC, THE ARG IN THE SPARE CELL CONTAINS A FULLY NON
-// TYPECHECKED, NON-META, NON-DECAYED, NON-NOOP-IF-VOID ATOM...AND THE NATIVE
-// IS RESPONSIBLE FOR ALL ARGUMENT PROCESSING.**
+// TYPECHECKED META REPRESENTATION, AND THE NATIVE IS RESPONSIBLE FOR ALL
+// ARGUMENT PROCESSING (INCLUDING <maybe>/NOOP_IF_VOID).**
 //
 // Not only that, but the special case of typechecking intrinsics (that
 // return LOGIC?) is that they can't write to L->out...because if you were
@@ -64,90 +64,91 @@
 // already committed to the intrinsic that's running.  It would undermine
 // the whole point of intrinsics to typecheck their argument.
 //
-// It might seem that since the intrinsic has to do all the work of writing
-// a type check for the first argument, that the case where dispatch is
-// being done with a frame should use that same fast check code.  But this
-// would create bad invariants...like making varlists with unstable antiforms
-// in them, and the frame may be created for tweaking by other routines
-// before running the native (if it ever runs it).  So we can't have a
-// corrupted frame, so better to branch on LEVEL_FLAG_DISPATCHING_INTRINSIC
-// and assume the first argument is checked if that's not set.
+// !!! Since the intrinsic has to do all the work of writing a type check for
+// the first argument, the case where dispatch is being done with a frame
+// should use that same fast check code.  This will be viable once all the
 //
 // These helpers are used to perform the argument processing.
 //
+
+
+// Intrinsics always receive their arguments as a meta representation.  Many
+// are not allowed to modify the SPARE cell.  This requirement of not
+// modifying is important for instance in type checking... the typechecks
+// have to be applied multiple times to the same value.
+//
+INLINE const Element* Level_Intrinsic_Arg_Meta(Level* L) {
+    assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));
+    return Known_Element(Level_Spare(L));
+}
 
 
 // If the intrinsic just wants to look at the heart byte and quote byte of
 // an unconstrained ^META parameter, that can be done without making
 // another Cell at the callsite.
 //
+// 1. Typechecker intrinsics aren't allowed to modify SPARE, because it is
+//    used multiple times in the same type check.
+//
 INLINE void Get_Heart_And_Quote_Of_Atom_Intrinsic(
     Sink(Option(Heart)) heart,
     Sink(QuoteByte) quote_byte,
     Level* L
 ){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Value* arg = Level_Arg(L, 1);  // already checked
-        *heart = Heart_Of(arg);
-        assert(QUOTE_BYTE(arg) >= QUASIFORM_2);
-        *quote_byte = QUOTE_BYTE(arg) - Quote_Shift(1);  // calculate "unmeta"
-        return;
-    }
+    const Element* meta;
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
+        meta = Known_Element(Level_Arg(L, 1));  // already checked
+    else
+        meta = Level_Intrinsic_Arg_Meta(L);
 
-    Atom* arg = Level_Spare(L);  // typecheckers can't modify SPARE (!)
-    *heart = Heart_Of(arg);
-    *quote_byte = QUOTE_BYTE(arg);  // not meta, as-is
+    *heart = Heart_Of(meta);
+    assert(QUOTE_BYTE(meta) >= QUASIFORM_2);
+    *quote_byte = QUOTE_BYTE(meta) - Quote_Shift(1);
     return;
 }
 
-// 1. While nullptr typically is handled as a dispatcher result meaning
+
+// 1. The <maybe> parameter convention has to be handled by the intrinsic,
+//    so we test for void here.
+//
+// 2. While nullptr typically is handled as a dispatcher result meaning
 //    Init_Nulled(OUT), the caller checks the return result of this routine
 //    and considers nullptr to mean that the Element was successfully
 //    extracted.  So if we actually want to return a null cell, we use
 //    `return Init_Nulled(OUT)` here.
 //
-// 2. The <maybe> parameter convention has to be handled by the intrinsic,
-//    so we test for void here.
-//
 INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
-    Sink(Element) e,
-    Level* L
+    Sink(Element) out,
+    Level* L  // writing OUT and SPARE is allowed in this helper
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Copy_Cell(e, u_cast(Element*, Level_Arg(L, 1)));
-        return nullptr;  // already checked
+        Copy_Cell(out, Known_Element(Level_Arg(L, 1)));  // already checked
+        return nullptr;
     }
 
-    Atom* arg = Level_Spare(L);
+    const Element* meta = Level_Intrinsic_Arg_Meta(L);
 
-    if (Is_Raised(arg))
+    if (Is_Meta_Of_Nihil(meta))  // do PARAMETER_FLAG_NOOP_IF_VOID [1]
+        return Init_Nulled(L->out);  // !!! overwrites out, illegal [2]
+
+    if (Is_Quasiform(meta))  // antiform including
         return BOUNCE_BAD_INTRINSIC_ARG;
 
-    Copy_Cell(u_cast(Atom*, e), arg);
-    Decay_If_Unstable(u_cast(Atom*, e));  // not necessarily Element, yet...
+    Copy_Cell(out, meta);
+    Unquotify(out);
 
-    if (QUOTE_BYTE(e) != ANTIFORM_0)  // it's an Element if this is true
-        return nullptr;  // means "no bounce" in this case [1]
-
-    if (Is_Void(u_cast(Value*, arg)))  // do PARAMETER_FLAG_NOOP_IF_VOID [2]
-        return Init_Nulled(L->out);  // can't return nullptr [1]
-
-    return BOUNCE_BAD_INTRINSIC_ARG;
+    return nullptr;
 }
 
-INLINE void Get_Meta_Atom_Intrinsic(  // can't modify arg of intrinsic!
-    Sink(Element) meta,
-    Level* L
-){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Value* arg = Level_Arg(L, 1);  // already checked, already meta
-        assert(QUOTE_BYTE(arg) >= QUASIFORM_2);
-        Copy_Cell(meta, cast(Element*, arg));
-        return;
-    }
+INLINE const Element* Get_Meta_Atom_Intrinsic(Level* L) {
+    const Element* meta;
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
+        meta = Known_Element(Level_Arg(L, 1));  // already checked, and meta
+    else
+        meta = Level_Intrinsic_Arg_Meta(L);  // intrinsic arg always meta
 
-    Copy_Meta_Cell(meta, Level_Spare(L));  // typecheckers can't modify SPARE
-    return;
+    assert(QUOTE_BYTE(meta) >= QUASIFORM_2);
+    return meta;
 }
 
 INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
@@ -159,33 +160,36 @@ INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
         return nullptr;
     }
 
-    Atom* arg = Level_Spare(L);  // typecheckers can't modify SPARE
+    const Element* meta = Level_Intrinsic_Arg_Meta(L);
 
-    if (Is_Raised(arg))
-        return BOUNCE_BAD_INTRINSIC_ARG;
+    if (Is_Meta_Of_Raised(meta))
+        return Native_Fail_Result(L, Cell_Error(meta));
 
-    Copy_Cell(u_cast(Atom*, v), arg);
+    Copy_Cell(v, meta);
+    Meta_Unquotify_Undecayed(u_cast(Atom*, v));
     Decay_If_Unstable(u_cast(Atom*, v));
     return nullptr;
 }
 
 INLINE Option(Bounce) Trap_Bounce_Meta_Decay_Value_Intrinsic(
-    Sink(Element) meta,
+    Sink(Element) out,
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Copy_Cell(meta, u_cast(Element*, Level_Arg(L, 1)));  // already checked
+        Element* meta = Known_Element(Level_Arg(L, 1));  // already checked
+        Copy_Cell(out, meta);
         return nullptr;
     }
 
-    Atom* arg = Level_Spare(L);  // typecheckers can't modify SPARE
+    const Element* meta = Level_Intrinsic_Arg_Meta(L);
 
-    if (Is_Raised(arg))
-        return Native_Fail_Result(L, Cell_Error(arg));
+    if (Is_Meta_Of_Raised(meta))
+        return Native_Fail_Result(L, Cell_Error(meta));
 
-    Copy_Cell(u_cast(Atom*, meta), arg);
-    Decay_If_Unstable(u_cast(Atom*, meta));
-    Meta_Quotify(meta);
+    Copy_Cell(out, meta);
+    Meta_Unquotify_Undecayed(u_cast(Atom*, out));
+    Decay_If_Unstable(u_cast(Atom*, out));
+    Meta_Quotify(out);
 
     return nullptr;
 }

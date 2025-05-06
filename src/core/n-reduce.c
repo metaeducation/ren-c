@@ -60,7 +60,7 @@ DECLARE_NATIVE(REDUCE)
         goto initial_entry_non_list;  // semantics in question [1]
 
       case ST_REDUCE_EVAL_STEP:
-        goto reduce_step_result_in_spare;
+        goto reduce_step_meta_in_spare;
 
       case ST_REDUCE_RUNNING_PREDICATE:
         goto process_out;
@@ -80,7 +80,7 @@ DECLARE_NATIVE(REDUCE)
         return COPY(v);  // save time if it's something like a TEXT!
 
     Level* sub = Make_End_Level(
-        &Stepper_Executor,
+        &Meta_Stepper_Executor,
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
     );
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -93,10 +93,10 @@ DECLARE_NATIVE(REDUCE)
 } initial_entry_list: {  /////////////////////////////////////////////////////
 
     Level* sub = Make_Level_At(
-        &Stepper_Executor,
+        &Meta_Stepper_Executor,
         v,  // TYPE_BLOCK or TYPE_GROUP
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-            | LEVEL_FLAG_RAISED_RESULT_OK  // predicates (like META) may handle
+            | LEVEL_FLAG_RAISED_RESULT_OK  // predicates like META may handle
     );
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
     goto next_reduce_step;
@@ -116,12 +116,14 @@ DECLARE_NATIVE(REDUCE)
     else
         Clear_Cell_Flag(v, NEWLINE_BEFORE);
 
-    SUBLEVEL->executor = &Stepper_Executor;
+    SUBLEVEL->executor = &Meta_Stepper_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} reduce_step_result_in_spare: {  ////////////////////////////////////////////
+} reduce_step_meta_in_spare: { ///////////////////////////////////////////////
+
+    Meta_Unquotify_Undecayed(SPARE);  // unquote the result of evaluation
 
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
@@ -247,7 +249,7 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     switch (STATE) {
       case ST_REDUCE_EACH_INITIAL_ENTRY : goto initial_entry;
-      case ST_REDUCE_EACH_REDUCING_STEP : goto reduce_step_output_in_spare;
+      case ST_REDUCE_EACH_REDUCING_STEP : goto reduce_step_meta_in_spare;
       case ST_REDUCE_EACH_RUNNING_BODY : goto body_result_in_out;
       default : assert(false);
     }
@@ -256,8 +258,10 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (Is_Meta_Word(vars))  // Note: gets converted to object in next step
-        flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK;
+    if (Is_Meta_Word(vars)) {  // Note: gets converted to object in next step
+        flags |= LEVEL_FLAG_RAISED_RESULT_OK;
+        assert(!"need to review REDUCE-EACH with meta word");
+    }
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
@@ -270,10 +274,10 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Executor* executor;
     if (Is_The_Block(block))
-        executor = &Inert_Stepper_Executor;
+        executor = &Inert_Meta_Stepper_Executor;
     else {
         assert(Is_Block(block));
-        executor = &Stepper_Executor;
+        executor = &Meta_Stepper_Executor;
     }
 
     Level* sub = Make_Level_At(executor, block, flags);
@@ -285,29 +289,22 @@ DECLARE_NATIVE(REDUCE_EACH)
     if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;
 
-    SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
+    SUBLEVEL->executor = &Meta_Stepper_Executor;  // undo &Just_Use_Out_Executor
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} reduce_step_output_in_spare: {  ////////////////////////////////////////////
+} reduce_step_meta_in_spare: {  //////////////////////////////////////////////
 
-    if (
-        Is_Ghost(SPARE)
-        or (
-            Get_Level_Flag(SUBLEVEL, META_RESULT)
-            and Is_Meta_Of_Ghost(SPARE)
-        )
-    ){
+    Meta_Unquotify_Undecayed(SPARE);  // unquote the result of evaluation
+
+    if (Is_Ghost(SPARE)) {
         Init_Nihil(OUT);
         goto reduce_next;  // always cull antiform commas (barriers)
     }
 
-    if (
-        Not_Level_Flag(SUBLEVEL, META_RESULT)
-        and (Is_Void(SPARE) or Is_Nihil(SPARE))
-    ){
+    if (Is_Nihil(SPARE)) {
         Init_Nihil(OUT);
         goto reduce_next;  // cull voids and nihils if not ^META
     }

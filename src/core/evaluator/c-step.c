@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,25 +20,43 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This file contains code for the `Stepper_Executor()`.  It is responsible
+// This file contains code for the `Meta_Stepper_Executor()`.  It's responsible
 // for the typical interpretation of BLOCK! or GROUP!, in terms of giving
 // sequences like `x: 1 + 2` a meaning for how SET-WORD! or INTEGER! behaves.
 //
-// By design the evaluator is not recursive at the C level--it is "stackless".
-// At points where a sub-expression must be evaluated in a new level, it will
-// heap-allocate that level and then do a C `return` of BOUNCE_CONTINUE.
-// Processing then goes through the "Trampoline" (see %c-trampoline.c), which
-// later re-enters the suspended level's executor with the result.  Setting
-// the level's STATE byte prior to suspension is a common way of letting a
-// level know where to pick up from when it left off.
+// It returns its results "Meta", e.g. stepping across [1 + 2] returns '3.
+// The reason for this choice is that there needs to be a way to return
+// a signal indicating that there was no evaluative product.  That's because
+// it's necessary for functions like EVAL:STEP to be able to know when there
+// is no result to return.
 //
-// When it encounters something that needs to be handled as a function
-// application, it defers to %c-action.c for the Action_Executor().  The
-// action gets its own level.
+// Consider:
+//
+//    eval:step [1 + 2, void]
+//       => new position [, void]
+//       => synthesized result is 3
+//
+//    eval:step [, void]
+//       => new position []
+//       => synthesized result is unstable ~[]~ antiform
+//
+//    eval:step []
+//       => null (no position, no synthesized result)
+//
+// By the same token:
+//
+//    eval:step [, , ,]
+//       => null (no position, no synthesized result)
+//
+// To provide the fundamental information that EVAL:STEP needs, there has to
+// be a way to return something to indicate "no synthesized result" that is
+// completely out of band of all possible expression evaluation results.
+// This can be done by having expression results be ^META (quasiform and
+// quoted) and reserving e.g. the "trash" antiform state to signal no result.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Stepper_Executor() is LONG.  That's largely on purpose.  Breaking it
+// * Meta_Stepper_Executor() is LONG.  That's largely on purpose.  Breaking it
 //   into functions would add overhead (in the RUNTIME_CHECKS build, if not
 //   also NO_RUNTIME_CHECKS builds) and prevent interesting optimizations.
 //
@@ -47,12 +65,24 @@
 //
 // * See %d-eval.c for more detailed assertions of the preconditions,
 //   postconditions, and state...which are broken out to help keep this file
-//   a more manageable length.
+//   a (slightly) more manageable length.
 //
 // * The evaluator only moves forward, and operates on a strict window of
 //   visibility of two elements at a time (current position and "lookback").
 //   See `Feed` for the code that provides this abstraction over Ren-C
 //   arrays as well as C va_list.
+//
+// * By design the evaluator isn't recursive at the C level--it's "stackless".
+//   At points where a sub-expression must be evaluated in a new level, it will
+//   heap-allocate that level and then do a C `return` of BOUNCE_CONTINUE.
+//   Processing then goes through the "Trampoline" (see %c-trampoline.c), which
+//   later re-enters the suspended level's executor with the result.  Setting
+//   the level's STATE byte prior to suspension is a common way of letting a
+//   level know where to pick up from when it left off.
+//
+// * When it encounters something that needs to be handled as a function
+//   application, it defers to %c-action.c for the Action_Executor().  The
+//   action gets its own level.
 //
 
 #include "sys-core.h"
@@ -79,7 +109,7 @@
 // would be when a SET-WORD! evaluates its right hand side, causing the feed
 // to advance an arbitrary amount.
 //
-// So the Stepper_Executor() has its own state (in `u.eval`) to track the
+// So the Meta_Stepper_Executor() has its own state (in `u.eval`) to track the
 // "current" position, and maintains the optional cache of what the fetched
 // value of that is.  These macros help make the code less ambiguous.
 //
@@ -157,7 +187,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
         | LEVEL_FLAG_RAISED_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
     Level* sub = Make_Level(
-        &Stepper_Executor,
+        &Meta_Stepper_Executor,
         L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
     );
@@ -168,7 +198,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 
 
 //
-//  Inert_Stepper_Executor: C
+//  Inert_Meta_Stepper_Executor: C
 //
 // This simplifies implementation of operators that can run in an "inert" mode:
 //
@@ -184,7 +214,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 // handles all the things like locking the array from modification during the
 // iteration, etc.
 //
-Bounce Inert_Stepper_Executor(Level* L)
+Bounce Inert_Meta_Stepper_Executor(Level* L)
 {
     enum {
         ST_INERT_STEPPER_INITIAL_ENTRY = STATE_0,
@@ -197,12 +227,12 @@ Bounce Inert_Stepper_Executor(Level* L)
     Derelativize(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
     Fetch_Next_In_Feed(L->feed);
     STATE = ST_INERT_STEPPER_FINISHED;
-    return OUT;
+    return Meta_Quotify(OUT);
 }
 
 
 //
-//  Stepper_Executor: C
+//  Meta_Stepper_Executor: C
 //
 // Expression execution can be thought of as having four distinct states:
 //
@@ -213,7 +243,7 @@ Bounce Inert_Stepper_Executor(Level* L)
 //
 // It is possible to preload states and start an evaluator at any of these.
 //
-Bounce Stepper_Executor(Level* L)
+Bounce Meta_Stepper_Executor(Level* L)
 {
     if (THROWING)
         return THROWN;  // no state to clean up
@@ -246,12 +276,12 @@ Bounce Stepper_Executor(Level* L)
         goto look_ahead_for_left_literal_infix; }
 
     #if (! DEBUG_DISABLE_INTRINSICS)
-      intrinsic_arg_in_spare:
+      intrinsic_meta_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
         Details* details = Ensure_Cell_Frame_Details(CURRENT);
         Dispatcher* dispatcher = Details_Dispatcher(details);
 
-        possibly(Is_Antiform_Unstable(SPARE));  // intrinsic typechecks/decays
+        assert(Is_Quoted(SPARE) or Is_Quasiform(SPARE));
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);  // level_ is not its Level
         Bounce bounce = Apply_Cfunc(dispatcher, L);
@@ -275,7 +305,7 @@ Bounce Stepper_Executor(Level* L)
       #endif
 
       case TYPE_SIGIL:
-        goto sigil_rightside_in_out;
+        goto sigil_rightside_meta_in_out;
 
       case TYPE_GROUP:
       case TYPE_META_GROUP:
@@ -285,13 +315,10 @@ Bounce Stepper_Executor(Level* L)
         goto set_group_result_in_spare;
 
       case ST_STEPPER_GENERIC_SET:
-        goto generic_set_rightside_in_out;
+        goto generic_set_rightside_meta_in_out;
 
       case ST_STEPPER_SET_BLOCK:
-        if (Is_Raised(OUT))  // don't assign variables [1]
-            goto set_block_drop_stack_and_continue;
-
-        goto set_block_rightside_result_in_out;
+        goto set_block_rightside_meta_in_out;
 
       case TYPE_FRAME:
         goto lookahead;
@@ -324,7 +351,8 @@ Bounce Stepper_Executor(Level* L)
 
     /* assert(Not_Level_At_End(L)); */  // edge case with rebValue("") [1]
     if (Is_Level_At_End(L)) {
-        Init_Nihil(OUT);
+        assert(Is_Cell_Erased(OUT));
+        Init_Meta_Of_Nihil(OUT);
         STATE = cast(StepperState, TYPE_BLANK);  // can't leave as STATE_0
         goto finished;
     }
@@ -481,7 +509,7 @@ Bounce Stepper_Executor(Level* L)
     //    level.  Binding is left as-is in both cases, and not influenced by
     //    the current binding of the evaluator (antiforms are always unbound).
     //
-    // 2. The Stepper_Executor()'s state bytes are a superset of the Type_Of()
+    // 2. The Meta_Stepper_Executor()'s state bytes are a superset of the Type_Of()
     //    of processed values.  See the ST_STEPPER_XXX enumeration.
 
     assert(Is_Cell_Erased(OUT));
@@ -507,27 +535,17 @@ Bounce Stepper_Executor(Level* L)
 
     //=//// COMMA! ////////////////////////////////////////////////////////=//
     //
-    // A comma is a lightweight looking expression barrier, which evaluates
-    // to antiform comma.  It acts much like a vaporizing COMMENT or ELIDE,
-    // but has the distinction of appearing like an <end> to most evaluative
-    // parameters.  We can debate the wisdom of the exceptions:
-    //
-    //    >> the,
-    //    == ,
-    //
-    //    >> meta,
-    //    == ~,~
-    //
-    // At one point the evaluator tried to maintain a BARRIER_HIT state to
-    // give extra protection, but this was deemed to confuse the mechanics
-    // more than it actually helped.
+    // A comma is a lightweight looking expression barrier.  Though it acts
+    // something like COMMENT or ELIDE, it does not evaluate to a "ghost"
+    // state.  It just errors on evaluations that aren't interstitial, or
+    // gets skipped over otherwise.
     //
     //   https://forum.rebol.info/t/1387/6
-    //
 
       case TYPE_COMMA:
-        Init_Ghost(OUT);
-        goto skip_lookahead;  // skip lookahead, see notes there
+        if (Get_Eval_Executor_Flag(L, FULFILLING_ARG))
+            return FAIL(Error_Expression_Barrier_Raw());
+        goto start_new_expression;
 
 
     //=//// FRAME! ////////////////////////////////////////////////////////=//
@@ -636,7 +654,7 @@ Bounce Stepper_Executor(Level* L)
           case SIGIL_VAR: {  // $
             Level* right = Maybe_Rightward_Continuation_Needed(L);
             if (not right)
-                goto sigil_rightside_in_out;
+                goto sigil_rightside_meta_in_out;
 
             return CONTINUE_SUBLEVEL(right); }
 
@@ -645,13 +663,16 @@ Bounce Stepper_Executor(Level* L)
         }
         goto lookahead; }
 
-      sigil_rightside_in_out: {
+      sigil_rightside_meta_in_out: {
+
+        assert(Is_Quoted(OUT) or Is_Quasiform(OUT));
+
         switch (Cell_Sigil(CURRENT)) {
           case SIGIL_META:  // ^
-            Meta_Quotify(OUT);
-            break;
+            break;  // it's already meta
 
           case SIGIL_VAR:  // $
+            Meta_Unquotify_Undecayed(OUT);
             if (Is_Antiform(OUT))
                 return FAIL("$ operator cannot bind antiforms");
             Derelativize(SPARE, cast(Element*, OUT), Level_Binding(L));
@@ -746,28 +767,30 @@ Bounce Stepper_Executor(Level* L)
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
             switch (Cell_Parameter_Class(param)) {
-                case PARAMCLASS_NORMAL:
+              case PARAMCLASS_NORMAL:
                 break;
 
-                case PARAMCLASS_META:
+              case PARAMCLASS_META:
                 flags |= LEVEL_FLAG_RAISED_RESULT_OK;
                 break;
 
-                case PARAMCLASS_JUST:
+              case PARAMCLASS_JUST:
                 Just_Next_In_Feed(SPARE, L->feed);
-                goto intrinsic_arg_in_spare;
+                Meta_Quotify(SPARE);
+                goto intrinsic_meta_arg_in_spare;
 
-                case PARAMCLASS_THE:
+              case PARAMCLASS_THE:
                 The_Next_In_Feed(SPARE, L->feed);
-                goto intrinsic_arg_in_spare;
+                Meta_Quotify(SPARE);
+                goto intrinsic_meta_arg_in_spare;
 
-                default:
+              default:
                 return FAIL("Unsupported Intrinsic parameter convention");
             }
 
             Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
 
-            Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
+            Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, flags);
             Push_Level_Erase_Out_If_State_0(SPARE, sub);
             STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
             return CONTINUE_SUBLEVEL(sub);
@@ -938,9 +961,6 @@ Bounce Stepper_Executor(Level* L)
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // [2]
-
-        if (STATE == cast(StepperState, TYPE_META_GROUP))
-            flags |= LEVEL_FLAG_META_RESULT;
 
         Level* sub = Make_Level_At_Inherit_Const(
             &Evaluator_Executor,
@@ -1169,11 +1189,13 @@ Bounce Stepper_Executor(Level* L)
 
         Level* right = Maybe_Rightward_Continuation_Needed(L);
         if (not right)
-            goto generic_set_rightside_in_out;
+            goto generic_set_rightside_meta_in_out;
 
         return CONTINUE_SUBLEVEL(right);
 
-    } generic_set_rightside_in_out: {  ///////////////////////////////////////
+    } generic_set_rightside_meta_in_out: {  //////////////////////////////////
+
+        Meta_Unquotify_Undecayed(OUT);
 
         if (Is_Ghost(OUT)) {  // even `(void):,` needs to error
             return FAIL(Error_Need_Non_End(CURRENT));
@@ -1462,17 +1484,24 @@ Bounce Stepper_Executor(Level* L)
 
         Level* sub = Maybe_Rightward_Continuation_Needed(L);
         if (not sub)
-            goto set_block_rightside_result_in_out;
+            goto set_block_rightside_meta_in_out;
 
         return CONTINUE_SUBLEVEL(sub);
 
-    } set_block_rightside_result_in_out: {  //////////////////////////////////
+    } set_block_rightside_meta_in_out: {  ////////////////////////////////////
 
       // 1. On definitional errors we don't assign variables, yet we pass the
       //    raised error through.  That permits code like this to work:
       //
       //        trap [[a b]: transcode "1&aa"]
-      //
+
+        Meta_Unquotify_Undecayed(OUT);
+
+        if (Is_Raised(OUT))  // don't assign variables [1]
+            goto set_block_drop_stack_and_continue;
+
+   } set_block_result_not_raised: {  /////////////////////////////////////////
+
       // 2. We enumerate from left to right in the SET-BLOCK!, with the "main"
       //    being the first assigned to any variables.  This has the benefit
       //    that if any of the multi-returns were marked as "circled" then the
@@ -1789,14 +1818,6 @@ Bounce Stepper_Executor(Level* L)
     //
     // So this post-switch step is where all of it happens, and it's tricky!
     //
-    // 1. With COMMA!, we skip the lookahead step, which means (then [...])
-    //    will have the same failure mode as (1 + 2, then [...]).  In order
-    //    to make this the same behavior anything else that evaluates to
-    //    a ghost (COMMA! antiform) we make this hinge on producing a
-    //    ghost--not on being a source level comma.  Note it's different
-    //    from what would happen with (nihil then [...]) which shows a nuance
-    //    between ghosts and nihils.
-    //
     // 2. If something was run with the expectation it should take the next
     //    arg from the output cell, and an evaluation cycle ran that wasn't
     //    an ACTION! (or that was an arity-0 action), that's not what was
@@ -1805,12 +1826,6 @@ Bounce Stepper_Executor(Level* L)
     //    instead retriggers and lets x run.
 
   lookahead:
-
-    if (Is_Ghost(OUT)) {
-      skip_lookahead:
-        assert(Is_Ghost(OUT));  // only jump in for ghost barriers [1]
-        goto finished;
-    }
 
     if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
         return FAIL(Error_Literal_Left_Path_Raw());
@@ -2036,7 +2051,7 @@ Bounce Stepper_Executor(Level* L)
     STATE = ST_STEPPER_FINISHED_DEBUG;  // must reset to STATE_0 if reused
   #endif
 
-    return OUT;  // trampoline checks that OUT is not unreadable/erased
+    return Meta_Quotify(OUT);  // it's a Meta_Meta_Stepper_Executor(), after all!
 
   return_thrown:
 
