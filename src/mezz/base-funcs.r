@@ -401,7 +401,7 @@ trap: func [
 /reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
-    specialize reduce/ [predicate: maybe/]
+    specialize reduce/ [predicate: opt/]
 )
 
 /for-next: redescribe [
@@ -658,7 +658,7 @@ raise: func [
     ; !!! PATH! doesn't do BINDING OF, and in the general case it couldn't
     ; tell you where it resolved to without evaluating, just do WORD! for now.
     ;
-    let frame: match frame! maybe binding of maybe match word! maybe blame
+    let frame: match frame! opt binding of opt match word! opt blame
 
     if not pick error 'where [
         ;

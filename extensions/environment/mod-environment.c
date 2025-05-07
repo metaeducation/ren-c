@@ -103,7 +103,7 @@ IMPLEMENT_GENERIC(PICK, Is_Environment)
     if (error)
         return rebDelegate("fail", unwrap error);
 
-    if (not value)  // raise error if not present, must TRY or MAYBE
+    if (not value)  // raise error if not present, must TRY or OPT
         return RAISE(Error_Bad_Pick_Raw(picker));
 
     if (

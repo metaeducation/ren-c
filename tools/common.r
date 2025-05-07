@@ -208,7 +208,7 @@ export binary-to-c: func [
         repeat indent [append out space]  ; no APPEND:DUP in bootstrap
     ]
 
-    while [not empty? maybe data] [
+    while [not empty? opt data] [
         let hexed: enbase:base (copy:part data 8) 16
         data: skip data 8
         for-each [digit1 digit2] hexed [
@@ -216,7 +216,7 @@ export binary-to-c: func [
         ]
 
         take:last out  ; drop the last space
-        if empty? maybe data [
+        if empty? opt data [
             take:last out  ; lose that last comma
         ]
         append out newline  ; newline after each group, and at end

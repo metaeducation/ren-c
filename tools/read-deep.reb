@@ -58,7 +58,7 @@ export read-deep: func [
     let queue: blockify root
 
     while [not tail? queue] [
-        append result maybe taker queue  ; possibly null
+        append result opt taker queue  ; possibly null
     ]
 
     if not full [

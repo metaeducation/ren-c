@@ -475,7 +475,7 @@
 )
 
 ; LOGIC! BEHAVIOR
-; A logic OKAY acts as a no-op, while a NULL is illegal (use MAYBE to get VOID)
+; A logic OKAY acts as a no-op, while a NULL is illegal (use OPT to get VOID)
 
 (
     parse3 "ab" ["a" okay "b"]
@@ -492,7 +492,7 @@
     parse3 "ab" ["a" :(1 = 2) "b"]
 )
 (
-    parse3 "ab" ["a" :(maybe 1 = 2) "b"]
+    parse3 "ab" ["a" :(opt 1 = 2) "b"]
     ok
 )
 

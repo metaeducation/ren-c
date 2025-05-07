@@ -1254,7 +1254,7 @@ DECLARE_NATIVE(EVERY)
     //
     //        every 'x [1 2 3 4] [if even? x [x]]  =>  4
     //
-    //        every 'x [1 2 3 4] [maybe if odd? x [x]]  =>  ~ antiform
+    //        every 'x [1 2 3 4] [opt if odd? x [x]]  =>  ~ antiform
     //
     //    It returns trash on skipped bodies, as loop composition breaks
     //    down if we try to keep old values, or return void.
@@ -1796,7 +1796,7 @@ DECLARE_NATIVE(MAP)
     //
     // e.g. void is allowed for skipping map elements:
     //
-    //        map-each 'x [1 2 3] [maybe if even? x [x * 10]] => [20]
+    //        map-each 'x [1 2 3] [opt if even? x [x * 10]] => [20]
 
     if (THROWING) {
         bool breaking;

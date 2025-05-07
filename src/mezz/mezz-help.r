@@ -18,7 +18,7 @@ spec-of: func [
     return: [block!]
     action [<unrun> frame!]
 ][
-    let adjunct: match object! maybe adjunct-of action
+    let adjunct: match object! opt adjunct-of action
 
     return collect [
         if adjunct [
@@ -69,7 +69,7 @@ description-of: func [
         ]
         frame! [
             if let adjunct: adjunct-of :v [
-                copy maybe adjunct.description
+                copy opt adjunct.description
             ] else [null]
         ]
         object! [mold words of v]
@@ -155,12 +155,12 @@ help-action: func [
     print newline
 
     print "DESCRIPTION:"
-    print [_ _ _ _ (any [select maybe adjunct 'description, "(undocumented)"])]
+    print [_ _ _ _ (any [select opt adjunct 'description, "(undocumented)"])]
 
     let print-args: [list :indent-words] -> [
         for-each 'key list [
             let param: select frame key
-            print [_ _ _ _ @(decorate-parameter param key) @(maybe param.spec)]
+            print [_ _ _ _ @(decorate-parameter param key) @(opt param.spec)]
             if param.text [
                 print [_ _ _ _ _ _ _ _ param.text]
             ]
@@ -228,7 +228,7 @@ help-value: func [
     ] then antitype -> [
         let heart: reify heart of atom'
         print [
-            (maybe name) "is" (an antitype) ["(antiform of" _ @(heart) ")"]
+            (opt name) "is" (an antitype) ["(antiform of" _ @(heart) ")"]
         ]
         if free? atom' [
             print "!!! contents no longer available, as it has been FREE'd !!!"
@@ -246,7 +246,7 @@ help-value: func [
     let value: unmeta atom'
     atom': ~<antiform HELP already handled>~
 
-    print [maybe name "is an element of type" to word! type of value]
+    print [opt name "is an element of type" to word! type of value]
     if free? value [
         print "!!! contents no longer available, as it has been FREE'd !!!"
         return ~
@@ -458,7 +458,7 @@ source: func [
         ]
         not frame? (unrun f) [
             print [
-                name "is" an any [mold maybe type of f, "NULL"]
+                name "is" an any [mold opt type of f, "NULL"]
                 "and not a FRAME!"
             ]
         ]
@@ -509,7 +509,7 @@ what: func [
     let size: 0
 
     ; copy to get around error: "temporary hold for iteration"
-    let ctx: (copy maybe select system.modules maybe name) else [lib]
+    let ctx: (copy opt select system.modules opt name) else [lib]
 
     for-each [word val] ctx [
         ; word val

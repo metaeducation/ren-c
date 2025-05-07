@@ -151,7 +151,7 @@ bind construct [
         return raise "bad-header"
     ]
 
-    if find maybe hdr.options 'content [
+    if find opt hdr.options 'content [
         append hdr spread compose [content (data)]  ; as of start of header
     ]
 
@@ -182,7 +182,7 @@ bind construct [
         ; This feature needs redesign if it's to be kept, but switching it
         ; to use RESCUE with the bad idea for now.
         ;
-        if find maybe hdr.options 'compress [
+        if find opt hdr.options 'compress [
             any [
                 not error? sys.util/rescue [
                     ; Raw bits.  whitespace *could* be tolerated; if
@@ -210,7 +210,7 @@ bind construct [
         data: transcode data  ; decode embedded script
         rest: skip data 2  ; !!! what is this skipping ("hdr.length" ??)
 
-        if find maybe hdr.options 'compress [  ; script encoded only
+        if find opt hdr.options 'compress [  ; script encoded only
             rest: (gunzip first rest) except e -> [
                 return raise e
             ]
@@ -428,8 +428,8 @@ bind construct [
         assert [pack? ^atom]
         if where [
             let mod: ensure module! unquote first unquasi atom
-            let exports: select (maybe adjunct-of mod) 'exports
-            proxy-exports where mod (maybe exports)
+            let exports: select (opt adjunct-of mod) 'exports
+            proxy-exports where mod (opt exports)
         ]
     ]
 
@@ -456,7 +456,7 @@ bind construct [
 
     ; If URL is decorated source (syntax highlighting, etc.) get raw form.
     ;
-    (adjust-url-for-raw maybe match url! :source) then adjusted -> [
+    (adjust-url-for-raw opt match url! :source) then adjusted -> [
         source: adjusted  ; !!! https://forum.rebol.info/t/1582/6
     ]
 
@@ -526,8 +526,8 @@ bind construct [
         fail ["IMPORT and DO require a header on:" (any [file, "<source>"])]
     ]
 
-    let name: select maybe hdr 'name
-    (select:skip system.modules maybe name 2) then cached -> [
+    let name: select opt hdr 'name
+    (select:skip system.modules opt name 2) then cached -> [
         return pack [cached 'cached]
     ]
 
@@ -546,7 +546,7 @@ bind construct [
     let original-script: system.script
 
     system.script: make system.standard.script compose [
-        title: select maybe hdr 'title
+        title: select opt hdr 'title
         header: hdr
         parent: original-script
         path: dir
@@ -676,7 +676,7 @@ export*: func [
         ; !!! notation for exporting antiforms?
         items: next items
 
-        (types: match block! maybe items.1) then [
+        (types: match block! opt items.1) then [
             (match types val) else [
                 fail [
                     "EXPORT expected" word "to be in" @types

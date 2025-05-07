@@ -667,7 +667,7 @@ gen-obj: func [
 
     ; Now add the flags for the project overall.
     ;
-    append flags maybe spread F
+    append flags opt spread F
 
     ; Ren-C uses labels stylistically to denote sections of code which may
     ; or may not be jumped to.  This is purposeful, and deemed to be more
@@ -747,7 +747,7 @@ gen-obj: func [
     ; to build the requested object file.
     ;
     return make rebmake.object-file-class compose [
-        source: to file! unspaced [maybe dir, file]
+        source: to file! unspaced [opt dir, file]
         output: to-obj-path file
         cflags: either empty? flags [_] [flags]
         definitions: D
@@ -893,7 +893,7 @@ for-each 'entry read extension-dir [
 
     ; Blockify libraries
     ;
-    ext.libraries: blockify maybe ext.libraries
+    ext.libraries: blockify opt ext.libraries
 
     if (ext.mode = <dynamic>) and (not ext.loadable) [
         fail ["Extension" name "is not dynamically loadable"]
@@ -1381,11 +1381,11 @@ append app-config.definitions spread reduce [
 
 ; Add user settings (can be null)
 ;
-append app-config.definitions maybe spread user-config.definitions
-append app-config.includes maybe spread user-config.includes
-append app-config.cflags maybe spread user-config.cflags
-append app-config.libraries maybe spread user-config.libraries
-append app-config.ldflags maybe spread user-config.ldflags
+append app-config.definitions opt spread user-config.definitions
+append app-config.includes opt spread user-config.includes
+append app-config.cflags opt spread user-config.cflags
+append app-config.libraries opt spread user-config.libraries
+append app-config.ldflags opt spread user-config.ldflags
 
 libr3-core: make rebmake.object-library-class [
     name: 'libr3-core
@@ -1606,7 +1606,7 @@ calculate-sequence: func [
         for-each 'b extensions [
             if b.name = req [
                 seq: seq + any [
-                    match integer! maybe b.sequence
+                    match integer! opt b.sequence
                     calculate-sequence b
                 ]
                 break
@@ -1658,7 +1658,7 @@ for-each 'ext extensions [
         name: ext.name
 
         depends: map-each 's (
-            append copy ext.sources maybe spread ext.depends
+            append copy ext.sources opt spread ext.depends
         )[
             let dep: case [
                 block? s [
@@ -1695,7 +1695,7 @@ for-each 'ext extensions [
         ]
 
         includes: collect [
-            for-each 'inc maybe ext.includes [
+            for-each 'inc opt ext.includes [
                 ensure file! inc
                 if inc.1 = #"/" [  ; absolute path
                     keep inc
@@ -1752,7 +1752,7 @@ for-each 'ext extensions [
     ]
 
     if ext.mode = <builtin> [
-        append builtin-ext-objlibs maybe ext-objlib
+        append builtin-ext-objlibs opt ext-objlib
 
         ; While you can have varied compiler switches in effect for individual
         ; C files to make OBJs, you only get one set of linker settings to make
@@ -1763,9 +1763,9 @@ for-each 'ext extensions [
         ; ldflag, but this then has to be platform specific.  But generally you
         ; already need platform-specific code to know where to look.
         ;
-        append app-config.libraries maybe spread ext-objlib.libraries
-        append app-config.ldflags maybe spread ext.ldflags
-        append app-config.searches maybe spread ext.searches
+        append app-config.libraries opt spread ext-objlib.libraries
+        append app-config.ldflags opt spread ext.ldflags
+        append app-config.searches opt spread ext.searches
     ]
     else [
         append dynamic-ext-objlibs ext-objlib
@@ -1782,21 +1782,21 @@ for-each 'ext extensions [
                 ; (app) all dynamic extensions depend on r3, but app not ready
                 ; so the dependency is added at a later phase below
                 ;
-                (maybe spread app-config.libraries)
-                (maybe spread ext-objlib.libraries)
+                (opt spread app-config.libraries)
+                (opt spread ext-objlib.libraries)
             ]
             post-build-commands: all [
                 off? cfg-symbols
                 reduce [
                     make rebmake.cmd-strip-class [
-                        file: join output maybe rebmake.target-platform.dll-suffix
+                        file: join output opt rebmake.target-platform.dll-suffix
                     ]
                 ]
             ]
 
             ldflags: compose [
-                (maybe spread ext.ldflags)
-                (maybe spread app-config.ldflags)
+                (opt spread ext.ldflags)
+                (opt spread app-config.ldflags)
 
                 ; GCC has this but Clang does not, and currently Clang is
                 ; being called through a gcc alias.  Review.
@@ -1965,7 +1965,7 @@ app: make rebmake.application-class [
     ][
         reduce [
             make rebmake.cmd-strip-class [
-                file: join output maybe rebmake.target-platform.exe-suffix
+                file: join output opt rebmake.target-platform.exe-suffix
             ]
         ]
     ]
@@ -2046,11 +2046,11 @@ check: make rebmake.entry-class [
 
     commands: collect [
         keep make rebmake.cmd-strip-class [
-            file: join app.output maybe rebmake.target-platform.exe-suffix
+            file: join app.output opt rebmake.target-platform.exe-suffix
         ]
         for-each 's dynamic-libs [
             keep make rebmake.cmd-strip-class [
-                file: join s.output maybe rebmake.target-platform.dll-suffix
+                file: join s.output opt rebmake.target-platform.dll-suffix
             ]
         ]
     ]

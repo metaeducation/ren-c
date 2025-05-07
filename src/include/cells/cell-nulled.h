@@ -34,13 +34,13 @@
 //    >> append [a b] find [c d] 'e
 //    ** Error: Cannot put ~null~ antiforms in blocks
 //
-// If a no-op is desired in this situation, MAYBE can be used to convert the
+// If a no-op is desired in this situation, OPT can be used to convert the
 // null to a void, with ? as a shorthand:
 //
-//    >> maybe find [c d] 'e
+//    >> opt find [c d] 'e
 //    == ~[]~  ; anti
 //
-//    >> append [a b] maybe find [c d] 'e
+//    >> append [a b] opt find [c d] 'e
 //    == [a b]
 //
 //    >> append [a b] ? find [c d] 'e

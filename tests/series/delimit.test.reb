@@ -8,7 +8,7 @@
 ("1^/^/2" = delimit #"^/" ["1^/" "2"])
 
 ; Empty text is distinct from BLANK/null
-(" A" = delimit ":" [_ "A" maybe null])
+(" A" = delimit ":" [_ "A" opt null])
 (":A:" = delimit ":" ["" "A" ""])
 
 ; Blanks act as spaces in some dialected contexts when seen literally, but
@@ -16,8 +16,8 @@
 [
     ("a  c" = unspaced ["a" _ comment <b> _ "c"])
     ~???~ !! ("a  c" = spaced ["a" blank comment <b> blank "c"])
-    ("a c" = spaced ["a" maybe null comment <b> (null else '#) "c"])
-    ("a c" = unspaced ["a" maybe null comment <b> (null else '#) "c"])
+    ("a c" = spaced ["a" opt null comment <b> (null else '#) "c"])
+    ("a c" = unspaced ["a" opt null comment <b> (null else '#) "c"])
 ]
 
 ; ISSUE! is to be merged with CHAR! and does not space

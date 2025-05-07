@@ -9,9 +9,9 @@
     ('~,~ = meta (comment "hi"))
     (void? ^(meta void))
 
-    (void? ^(meta maybe void))
-    ((meta void) = ^ (maybe void))
-    ~no-value~ !! (maybe comment "hi")
+    (void? ^(meta opt void))
+    ((meta void) = ^ (opt void))
+    ~no-value~ !! (opt comment "hi")
 
     ('~,~ = ^ ())
     ('~,~ = ^ (comment "hi"))

@@ -37,8 +37,8 @@
 
 ; Voided expressions work in GET-GROUP! substitutions
 
-(void? parse [a b] ['a 'b :(maybe if null [[some 'c]])])
-('c = parse [a b c c c] ['a 'b :(maybe if ok [[some 'c]])])
+(void? parse [a b] ['a 'b :(opt if null [[some 'c]])])
+('c = parse [a b c c c] ['a 'b :(opt if ok [[some 'c]])])
 
 ; Liberal policy of letting voids skip ahead is convenient to use void as a
 ; state equivalent to no-op...if you are willing to deal with the possible
@@ -59,16 +59,16 @@
 
 ; A null combinator does not make sense, and a combinator which would quote
 ; a WORD! to fetch it from the rules and void it would probably cause more
-; confusion than anything.  Using a GET-GROUP! and calling the MAYBE function
+; confusion than anything.  Using a GET-GROUP! and calling the OPT function
 ; through the normal evaluator avoids the convolutedness.
 
 (
     c-rule: null
-    void = parse [a b] ['a 'b :(maybe c-rule)]
+    void = parse [a b] ['a 'b :(opt c-rule)]
 )
 (
     c-rule: [some 'c]
-    'c = parse [a b c c c] ['a 'b :(maybe c-rule)]
+    'c = parse [a b c c c] ['a 'b :(opt c-rule)]
 )
 
 ; Rules that may have a behavior -or- don't advance and always succeed are
@@ -80,9 +80,9 @@
     suffix: ")"
 
     ")" = parse "aaa)))" [
-        opt some further :(maybe prefix)
+        opt some further :(opt prefix)
         some "a"
-        opt some further :(maybe suffix)
+        opt some further :(opt suffix)
      ]
 )
 

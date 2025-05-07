@@ -144,7 +144,7 @@ script: [
 
     hijack-blank:       "Hijacked function was captured but no body given yet"
 
-    need-non-null:      "non-NULL value required (see MAYBE, TRY, REIFY)"
+    need-non-null:      "non-NULL value required (see OPT, TRY, REIFY)"
 
     evaluative-quote:   "Can't quote non-literal from an evaluative source"
 

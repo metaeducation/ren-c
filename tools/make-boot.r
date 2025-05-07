@@ -316,7 +316,7 @@ at-value: func [field] [return next find boot-sysobj setify field]
 
 boot-sysobj: load3 %sysobj.r
 change (at-value 'version) version
-change (at-value 'commit) maybe git-commit  ; no-op if no git-commit
+change (at-value 'commit) opt git-commit  ; no-op if no git-commit
 change (at-value 'build) now:utc
 change (at-value 'product) (quote to word! "core")  ; want it to be quoted
 

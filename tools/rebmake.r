@@ -531,7 +531,7 @@ cc: make compiler-class [
     ][
         return spaced collect [
             keep any [
-                file-to-local:pass maybe .exec-file
+                file-to-local:pass opt .exec-file
                 as text! .name  ; the "gcc" may get overridden as "g++"
             ]
 
@@ -591,7 +591,7 @@ cc: make compiler-class [
             ]
             if F [
                 for-each 'flg F [
-                    keep maybe filter-flag flg .id
+                    keep opt filter-flag flg .id
                 ]
             ]
 
@@ -645,16 +645,16 @@ cc: make compiler-class [
                 keep unspaced [output suffix]
             ]
 
-            for-each 'search (maybe map-files-to-local maybe searches) [
+            for-each 'search (opt map-files-to-local opt searches) [
                 keep unspaced ["-L" search]
             ]
 
             for-each 'flg ldflags [
-                keep maybe filter-flag flg .id
+                keep opt filter-flag flg .id
             ]
 
             for-each 'dep depends [
-                keep maybe .accept dep
+                keep opt .accept dep
             ]
         ]
     ]
@@ -794,7 +794,7 @@ cl: make compiler-class [
         :E "only preprocessing"
     ][
         return spaced collect [
-            keep any [(file-to-local:pass maybe .exec-file) "cl"]
+            keep any [(file-to-local:pass opt .exec-file) "cl"]
             keep "/nologo"  ; don't show startup banner (must be lowercase)
             keep either E ["/P"]["/c"]
 
@@ -854,7 +854,7 @@ cl: make compiler-class [
             ]
             if F [
                 for-each 'flg F [
-                    keep maybe filter-flag flg .id
+                    keep opt filter-flag flg .id
                 ]
             ]
 
@@ -909,7 +909,7 @@ cl: make compiler-class [
             ]
 
             for-each 'dep depends [
-                keep maybe .accept dep
+                keep opt .accept dep
             ]
 
             ; /link must precede linker-specific options
@@ -924,12 +924,12 @@ cl: make compiler-class [
             ;
             if debug [keep "/DEBUG"]
 
-            for-each 'search (maybe map-files-to-local maybe searches) [
+            for-each 'search (opt map-files-to-local opt searches) [
                 keep unspaced ["/libpath:" search]
             ]
 
             for-each 'flg ldflags [
-                keep maybe filter-flag flg .id
+                keep opt filter-flag flg .id
             ]
         ]
     ]
@@ -992,7 +992,7 @@ strip-class: make object! [
         params [~null~ blank! block! any-string?]
     ][
         return reduce [spaced collect [
-            keep any [(file-to-local:pass maybe .exec-file) "strip"]
+            keep any [(file-to-local:pass opt .exec-file) "strip"]
             params: default [options]
             switch try type-of params [  ; switch:type not in bootstrap
                 null [noop]
@@ -1065,9 +1065,9 @@ object-file-class: make object! [
             .output
             .source
 
-            :I compose [(maybe spread .includes) (maybe spread I)]
-            :D compose [(maybe spread .definitions) (maybe spread D)]
-            :F compose [(maybe spread F) (maybe spread .cflags)]
+            :I compose [(opt spread .includes) (opt spread I)]
+            :D compose [(opt spread .definitions) (opt spread D)]
+            :F compose [(opt spread F) (opt spread .cflags)]
                                                 ; ^-- reverses priority, why?
 
             ; "current setting overwrites :refinement"
@@ -1099,11 +1099,11 @@ object-file-class: make object! [
             target: .output
             depends: append (copy any [.depends []]) .source
             commands: reduce [.compile // [
-                :I maybe parent.includes
-                :D maybe parent.definitions
-                :F maybe parent.cflags
-                :O maybe parent.optimization
-                :g maybe parent.debug
+                :I opt parent.includes
+                :D opt parent.definitions
+                :F opt parent.cflags
+                :O opt parent.optimization
+                :g opt parent.debug
                 :PIC any [PIC, parent.class = #dynamic-library]
             ]]
         ]
@@ -1243,7 +1243,7 @@ generator-class: make object! [
         flip-flag solution 'no
 
         if find words-of solution 'depends [
-            for-each 'dep (maybe solution.depends) [
+            for-each 'dep (opt solution.depends) [
                 if dep.class = #variable [
                     append vars spread reduce [
                         dep.name
@@ -1399,7 +1399,7 @@ makefile: make generator-class [
                         ]
                         fail ["Unknown entry.target type" entry.target]
                     ]
-                    for-each 'w (maybe entry.depends) [
+                    for-each 'w (opt entry.depends) [
                         switch select (match object! w else [[]]) 'class [
                             #variable [
                                 keep unspaced ["$(" w.name ")"]
@@ -1476,7 +1476,7 @@ makefile: make generator-class [
                                 if ddep.class <> #object-library [ddep]
                             ]
                         )
-                        commands: append reduce [dep/command] maybe (
+                        commands: append reduce [dep/command] opt (
                             spread dep.post-build-commands
                         )
                     ]

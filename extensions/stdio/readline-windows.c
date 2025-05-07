@@ -1059,7 +1059,7 @@ void Term_Insert(STD_TERM *t, const Value* v) {
         WRITE_UTF8(encoded, encoded_size);
         rebFree(encoded);
 
-        Value* v_last_line = rebValue("next maybe find-last", v, "newline");
+        Value* v_last_line = rebValue("next opt find-last", v, "newline");
 
         // If there were any newlines, then whatever is in the current line
         // buffer will no longer be there.

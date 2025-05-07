@@ -53,7 +53,7 @@
                     line: null
                     part: null
                 ][
-                    value: maybe unspaced :value
+                    value: opt unspaced :value
                 ]
                 eval overbind $keep (body)
             ]

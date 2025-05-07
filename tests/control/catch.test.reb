@@ -145,10 +145,10 @@
     (<uncaught> = catch [null] else [<uncaught>])
     (<uncaught> = catch [null] then [fail] else [<uncaught>])
 
-    (void? maybe catch [throw void])
+    (void? opt catch [throw void])
     (<caught> = catch [throw void] then [<caught>])
-    (void? maybe catch [void])
-    (void? maybe catch [void] then [fail])
+    (void? opt catch [void])
+    (void? opt catch [void] then [fail])
     (<uncaught> = catch [void] else [<uncaught>])
     (<uncaught> = catch [void] then [fail] else [<uncaught>])
 ]

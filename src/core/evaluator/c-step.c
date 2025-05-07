@@ -612,11 +612,11 @@ Bounce Meta_Stepper_Executor(Level* L)
     // 2. There's a twist, that @ can actually handle antiforms if they are
     //    coming in via an API feed.  This is a convenience so you can write:
     //
-    //        rebElide("append block maybe @", value_might_be_null);
+    //        rebElide("append block opt @", value_might_be_null);
     //
     //     ...instead of:
     //
-    //        rebElide("append block maybe", rebQ(value_might_be_null));
+    //        rebElide("append block opt", rebQ(value_might_be_null));
     //
     //    If you consider the API to be equivalent to TRANSCODE-ing the
     //    given material into a BLOCK! and then EVAL-ing it, then this is

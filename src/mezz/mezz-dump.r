@@ -206,7 +206,7 @@ summarize-obj: func [
         val
     ]
 
-    let wild: to-logic find maybe (match text! maybe pattern) "*"
+    let wild: to-logic find opt (match text! opt pattern) "*"
 
     return collect [
         for-each [word val] obj [
@@ -245,7 +245,7 @@ summarize-obj: func [
             ]
 
             keep spaced [
-                "  " (form-pad word 15) (form-pad type 10) maybe desc
+                "  " (form-pad word 15) (form-pad type 10) opt desc
             ]
         ]
     ]

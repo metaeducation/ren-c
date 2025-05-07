@@ -22,9 +22,9 @@
 ]
 
 ; EMPTY? is not by default tolerant of null, but it's a common need, so you
-; can pass voids via MAYBE.
+; can pass voids via OPT.
 [
     ~expect-arg~ !! (empty? null)
 
-    (empty? maybe null)
+    (empty? opt null)
 ]

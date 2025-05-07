@@ -514,7 +514,7 @@ client-hello: func [
     repeat 28 [append ctx.client-random (random-between 0 255)]
 
     let cs-data: join blob! inert map-each 'item cipher-suites [
-        maybe match blob! item
+        opt match blob! item
     ]
 
     emit ctx [

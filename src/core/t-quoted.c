@@ -417,7 +417,7 @@ DECLARE_NATIVE(SPREAD)
 //
 // 1. The current thinking on SPREAD is that it acts as passthru for null and
 //    for void, and whatever you were going to pass the result of spread to
-//    is responsible for raising errors or MAYBE'ing it.  Seems to work out.
+//    is responsible for raising errors or OPT'ing it.  Seems to work out.
 //
 // 2. Generally speaking, functions are not supposed to conflate quasiforms
 //    with their antiforms.  But it seems like being willing to DEGRADE a
@@ -631,7 +631,7 @@ DECLARE_NATIVE(UNRUN)
 }
 
 
-// We want MAYBE and ? to be intrinsics, so the strictness is not controlled
+// We want OPT and ? to be intrinsics, so the strictness is not controlled
 // with a refinement.  Share the code.
 //
 static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
@@ -644,7 +644,7 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
         return VOID;
 
     if (Is_Meta_Of_Ghost(meta))
-        return FAIL("Cannot MAYBE a GHOST!");
+        return FAIL("Cannot OPT a GHOST!");
 
     bool was_pack = Is_Meta_Of_Pack(meta);
 
@@ -654,7 +654,7 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
     if (Is_Nulled(OUT)) {
         if (light and was_pack)
             return FAIL(
-                "MAYBE:LIGHT (a.k.a. ?) won't void a PACK! with a NULL in it"
+                "OPT:LIGHT (a.k.a. ?) won't void a PACK! with a NULL in it"
             );
         return VOID;  // not strict
     }
@@ -664,7 +664,7 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
 
 
 //
-//  maybe: native:intrinsic [
+//  optional: native:intrinsic [
 //
 //  "If argument is null or raised error make it void, else passthru"
 //
@@ -673,9 +673,9 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
 //      :light "If true, then nulls in packs will panic instead of void"
 //  ]
 //
-DECLARE_NATIVE(MAYBE)
+DECLARE_NATIVE(OPTIONAL)  // ususally used via its alias of OPT
 {
-    INCLUDE_PARAMS_OF_MAYBE;
+    INCLUDE_PARAMS_OF_OPTIONAL;
 
     bool light;
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))
@@ -688,7 +688,7 @@ DECLARE_NATIVE(MAYBE)
 
 
 //
-//  maybe-light: native:intrinsic [
+//  optional-light: native:intrinsic [
 //
 //  "If argument is light null or raised error make it void, else passthru"
 //
@@ -696,14 +696,15 @@ DECLARE_NATIVE(MAYBE)
 //      ^atom "Decayed if pack, but packed nulls will panic instead of void"
 //  ]
 //
-DECLARE_NATIVE(MAYBE_LIGHT)
+DECLARE_NATIVE(OPTIONAL_LIGHT)  // usually used via its alias of ?
 //
-// This is functionally equivalent to MAYBE:LIGHT, but much faster to run
-// because it's dispatched intrinsically.  (Plain MAYBE with no refinements
+// This is functionally equivalent to OPTIONAL:LIGHT, but much faster to run
+// because it's dispatched intrinsically.  (Plain OPT with no refinements
 // is also dispatched intrinsically, but adding the refinement slows it down
 // with CHAIN! calculations and requires building a FRAME!)
 {
-    INCLUDE_PARAMS_OF_MAYBE_LIGHT;
+    INCLUDE_PARAMS_OF_OPTIONAL_LIGHT;
+
     bool light = true;
     return Maybe_Intrinsic_Core(LEVEL, light);
 }

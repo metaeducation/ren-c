@@ -57,12 +57,12 @@
 ~need-non-null~ !! (
     reduce [null]
 )
-([] = reduce [maybe null])
+([] = reduce [opt null])
 
 ~need-non-null~ !! (
     reduce [~null~]
 )
-([] = reduce [maybe ~null~])
+([] = reduce [opt ~null~])
 
 
 ([] = reduce [void])
@@ -74,7 +74,7 @@
 ; in the case of a non-existent null, test that.
 [
     ([] = reduce [
-        maybe null
+        opt null
     ])
     ([ZOMG <!!!> 1020 #wow] = apply reduce/ [
         ['ZOMG null 1000 + 20 #wow]
@@ -92,15 +92,15 @@
 ] meta*/)
 
 ([-3 -300] = reduce:predicate [1 + 2 if null [10 + 20] 100 + 200] negate/)
-([3 300] = reduce:predicate [1 + 2 if null [10 + 20] 100 + 200] maybe/)
+([3 300] = reduce:predicate [1 + 2 if null [10 + 20] 100 + 200] opt/)
 
 ([3 ~null~ 300] = reduce:predicate [1 + 2 if ok [null] 100 + 200] reify/)
-([3 300] = reduce:predicate [1 + 2 if ok [null] 100 + 200] maybe/)
+([3 300] = reduce:predicate [1 + 2 if ok [null] 100 + 200] opt/)
 
 ([3 ~null~ 300] = reduce:predicate [1 + 2 null 100 + 200] reify/)
-([3 300] = reduce:predicate [1 + 2 null 100 + 200] maybe/)
+([3 300] = reduce:predicate [1 + 2 null 100 + 200] opt/)
 
-; REDUCE* is a specialization of REDUCE with MAYBE
+; REDUCE* is a specialization of REDUCE with OPT
 ;
 ([3 300] = reduce* [1 + 2 null 100 + 200])
 

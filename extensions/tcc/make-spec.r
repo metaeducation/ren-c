@@ -29,7 +29,7 @@ config-tccdir-with-libtcc-h: all [  ; do some guesswork, see [A] above
     ;
     ; CONFIG_TCCDIR will have backslashes on Windows, use LOCAL-TO-FILE on it.
     ;
-    let config-tccdir: local-to-file maybe (get-env "CONFIG_TCCDIR")
+    let config-tccdir: local-to-file opt (get-env "CONFIG_TCCDIR")
 
     elide if #"/" <> last config-tccdir [
         print "NOTE: CONFIG_TCCDIR environment variable doesn't end in '/'"
@@ -44,12 +44,12 @@ config-tccdir-with-libtcc-h: all [  ; do some guesswork, see [A] above
 ]
 
 libtcc-include-dir: any [
-    local-to-file maybe get-env "LIBTCC_INCLUDE_DIR"
+    local-to-file opt get-env "LIBTCC_INCLUDE_DIR"
     config-tccdir-with-libtcc-h
 ]
 
 libtcc-lib-dir: any [
-    local-to-file maybe get-env "LIBTCC_LIB_DIR"
+    local-to-file opt get-env "LIBTCC_LIB_DIR"
     config-tccdir-with-libtcc-h
 ]
 

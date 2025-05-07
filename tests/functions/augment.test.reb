@@ -38,7 +38,7 @@
         :default "Default case if no others are found"
             [block!]
     ]) lambda [f [frame!]] [
-        eval f else (maybe f.default)
+        eval f else (opt f.default)
     ]
     ok)
 

@@ -92,12 +92,12 @@ save: func [
         case [
             null? compress [
                 compress: all [
-                    find maybe (select header 'options) 'compress
+                    find opt (select header 'options) 'compress
                     'blob  ; I guess this is the default?  [1]
                 ]
             ]
             compress = 'none [
-                remove find maybe select header 'options 'compress
+                remove find opt select header 'options 'compress
             ]
             not block? select header 'options [
                 extend header [Options: '[compress]]
@@ -130,7 +130,7 @@ save: func [
     append data newline  ; MOLD does not append a newline
 
     case:all [
-        let tmp: find maybe header 'checksum: [  ; e.g. says "checksum: true"
+        let tmp: find opt header 'checksum: [  ; e.g. says "checksum: true"
             ; Checksum uncompressed data, if requested
             change next tmp (checksum-core 'crc32 data)
         ]

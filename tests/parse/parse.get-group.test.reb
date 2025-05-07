@@ -88,7 +88,7 @@
         res: ~
         f563: lambda [t [text!]] [did try parse t [opt some r]]
 
-        r: [#+, :(res: f563 "-", assert [not res], maybe res)]
+        r: [#+, :(res: f563 "-", assert [not res], opt res)]
 
         all [
             not f563 "-"

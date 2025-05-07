@@ -49,7 +49,7 @@ exists?: func [
         return info?:only target
     ]
 
-    return select maybe query target 'type
+    return select opt query target 'type
 ]
 
 ; !!! size-of used to be defined here, but it's a generic and so it has to
@@ -189,8 +189,8 @@ file-type?: func [
     file [file! url!]
 ][
     return all [
-        let pos: find system.options.file-types maybe suffix-of file
-        first maybe find pos word?/
+        let pos: find system.options.file-types opt suffix-of file
+        first opt find pos word?/
     ]
 ]
 

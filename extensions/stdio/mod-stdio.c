@@ -167,7 +167,7 @@ DECLARE_NATIVE(READ_STDIN)
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
         return rebDelegate("catch [",
-            "throw as blob! maybe (",
+            "throw as blob! opt (",
                 "read-line stdin except e -> [throw raise e]",
             ")",
         "]");

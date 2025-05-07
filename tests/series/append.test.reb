@@ -169,7 +169,7 @@
     ('~[]~ = ^ if ok [])
     (null? if null [<a>])
     ([a b c] = append [a b c] if ok [])
-    ([a b c] = append [a b c] maybe if null [<a>])
+    ([a b c] = append [a b c] opt if null [<a>])
 ]
 
 ; BLANK! acts like an empty block when passed to SPREAD

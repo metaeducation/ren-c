@@ -139,7 +139,7 @@ bind construct [
             ]
             ghostable: did any [find types 'ghost!, find types '~,~]
             spread compose:deep [
-                return: (maybe description)
+                return: (opt description)
                     [~[(types) any-series? [blank! block!]]~]
             ]
         )
@@ -1917,7 +1917,7 @@ default-combinators: to map! reduce [
         return: "Element if it matches the match rule" [element?]
         value [frame!]
     ][
-        if run value maybe input.1 [
+        if run value opt input.1 [
             remainder: next input
             return input.1
         ]

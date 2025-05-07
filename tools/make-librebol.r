@@ -258,7 +258,7 @@ for-each-api [
     let return-keyword: if return-type != "void" ["return "] else [null]
 
     append variadic-api-c-helpers cscape [:api --[
-        $<Maybe Attributes>
+        $<Opt Attributes>
         static inline $<Return-Type> $<Name>_helper(  /* C version */
             RebolContext* binding,
             $<Helper-Params, >
@@ -267,18 +267,18 @@ for-each-api [
             va_list va;
             va_start(va, p);  /* $<Name>() calls va_end() */
 
-            $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
+            $<opt return-keyword >LIBREBOL_PREFIX($<Name>)(
                 binding,
                 $<Proxied-Args, >
                 p, &va  /* non-null vaptr means p is first item */
             );
-            $<Maybe Epilogue>
+            $<Opt Epilogue>
         }
     ]--]
 
     append variadic-api-c++-helpers cscape [:api --[
         template <typename... Ts>
-        $<Maybe Attributes>
+        $<Opt Attributes>
         inline $<Return-Type> $<Name>_helper(  /* C++ version */
             RebolContext* binding,
             $<Helper-Params, >
@@ -287,12 +287,12 @@ for-each-api [
             const void* p[sizeof...(args)];  /* includes rebEND */
             rebVariadicPacker_internal(0, p, args...);
 
-            $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
+            $<opt return-keyword >LIBREBOL_PREFIX($<Name>)(
                 binding,
                 $<Proxied-Args, >
                 p, nullptr  /* null vaptr means p is array of items */
             );
-            $<Maybe Epilogue>
+            $<Opt Epilogue>
         }
     ]--]
 ]

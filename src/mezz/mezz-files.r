@@ -87,7 +87,7 @@ clean-path: func [
                 ]
             ]
 
-            target: to file! unspaced [maybe current, path]  ; !!! why MAYBE?
+            target: to file! unspaced [opt current, path]  ; !!! why OPT?
         ]
     ]
 

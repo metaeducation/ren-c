@@ -258,7 +258,7 @@ export emit-include-params-macro: func [
 
     let prefix: all [extension unspaced [extension "_"]]
     e/emit [prefix native-name items varlist-hold --[
-        #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
+        #define ${OPT PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Varlist-Hold] \
             $(Items); \
     ]--]

@@ -163,7 +163,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
     //            :default "Default case if no others are found"
     //            [block!]
     //        ]) lambda [f [frame!]] [
-    //            eval f else (maybe f.default)
+    //            eval f else (opt f.default)
     //        ]
 
     assert(Is_Level_At_End(L));
@@ -787,7 +787,7 @@ DECLARE_NATIVE(CASE)
     //    (e.g. ELIDE), but voids are not skipped.
     //
     //        >> condition: null
-    //        >> case [maybe if condition [<a>] [print "Whoops?"] [<hmm>]]
+    //        >> case [opt if condition [<a>] [print "Whoops?"] [<hmm>]]
     //        Whoops?
     //        == <hmm>
 

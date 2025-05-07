@@ -95,7 +95,7 @@ sys.util/rescue [
         augment split-path/ [:file [any-word? tuple!]]
     ) f -> [
         let results: meta:lite eval f  ; no [...]: in bootstrap load of file
-        set maybe f.file unmeta results.2
+        set opt f.file unmeta results.2
         unmeta results.1
     ]
     export split-path: ~<Use SPLIT-PATH3 in Bootstrap (no multi-return)>~
@@ -225,7 +225,7 @@ for-each [alias] [
 
 function3: ~<FUNCTION slated for synonym of FUNC, so no FUNCTION3>~
 
-?: maybe/
+?: opt: optional: maybe/
 
 
 === "BINARY! => BLOB!" ===
@@ -643,13 +643,13 @@ modernize-typespec: func3 [
     types [block!]
 ][
     types: copy types
-    for-each [old new] [
+    for-each [current bootstrap] [
         any-value?      [~null~ any-value!]
         any-string?     any-string!
         element?        any-value!
         action?         action!
         logic?          logic!
-        <maybe>         <opt-out>
+        <opt-out>       <maybe>
         <variadic>      <...>
         boolean?        word!
         onoff?          word!
@@ -664,7 +664,7 @@ modernize-typespec: func3 [
         set-tuple?      set-path3!
         get-tuple?      get-path3!
     ][
-        replace3 types old new  ; splices blocks
+        replace3 types current bootstrap  ; splices blocks
     ]
     return types
 ]

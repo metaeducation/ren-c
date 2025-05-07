@@ -2176,7 +2176,7 @@ DECLARE_NATIVE(SUBPARSE)
                     //
                     // !!! Right now, a rule like `set x group!` will leave x
                     // alone if you don't match.  (This is the same as
-                    // `maybe set x group!`).  Instead of being a synonym, the
+                    // `opt set x group!`).  Instead of being a synonym, the
                     // behavior of unsetting x has been considered, and to
                     // require saying `opt set x group!` to get the no-op.
                     // But `opt x: group!` will set x to null on no match.

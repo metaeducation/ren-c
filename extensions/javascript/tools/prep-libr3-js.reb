@@ -437,7 +437,7 @@ for-each-api [
             reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
                 'API_$<Name>',
                 $<Js-Return-Type>, [
-                    $(Maybe Js-Param-Types),
+                    $(Opt Js-Param-Types),
                 ]
             )
         ]--]
@@ -502,7 +502,7 @@ for-each-api [
 
     e-cwrap/emit cscape [:api --[
         reb.$<No-Reb-Name> = function() {
-            $<Maybe Prologue>
+            $<Opt Prologue>
             let argc = arguments.length
             let stack = stackSave()
             let packed = stackAlloc(4 * (argc + 1))
@@ -539,7 +539,7 @@ for-each-api [
 
             stackRestore(stack)
 
-            $<Maybe Epilogue>
+            $<Opt Epilogue>
             $<Code-For-Returning>
         }
     ]--]

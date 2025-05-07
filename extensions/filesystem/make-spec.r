@@ -372,7 +372,7 @@ uv-depends: map-each 'item uv-sources [  ; WORD! in bootstrap
     ] else [
         join %libuv/src/unix/ file
     ]
-    compose [(file) #no-c++ (spread uv-nowarn) (maybe spread flags)]
+    compose [(file) #no-c++ (spread uv-nowarn) (opt spread flags)]
 ]
 
 append uv-depends spread map-each 'tuple [  ; WORD! in bootstrap

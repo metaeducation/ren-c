@@ -118,7 +118,7 @@
 (#c = parse "baaac" [one some [#a] #c])
 
 
-; OPT SOME or MAYBE SOME tests (which used to be WHILE)
+; OPT SOME tests (which used to be WHILE)
 
 (
     x: ~

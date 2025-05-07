@@ -130,7 +130,7 @@
             var: word!, other: try group! (
                 append statics setify var
                 append statics any [
-                    bindable maybe other  ; !!! ignore binding on group
+                    bindable opt other  ; !!! ignore binding on group
                     '~
                 ]
             )

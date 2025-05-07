@@ -22,6 +22,6 @@ launch: func [
 ][
     if file? script [script: file-to-local clean-path script]
     let command: reduce [file-to-local system.options.boot script]
-    append command maybe spread args
+    append command opt spread args
     return call* // [command :wait wait]
 ]

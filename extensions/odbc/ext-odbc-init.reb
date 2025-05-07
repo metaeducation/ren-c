@@ -113,14 +113,14 @@ sys.util/make-scheme [
             port [port!]
         ][
             let statement: port.locals
-            if get maybe has statement 'hstmt [
+            if get opt has statement 'hstmt [
                 remove find (head of statement.database.statements) port
                 close-statement statement
                 return port
             ]
 
             let connection: port.locals
-            if get maybe has connection 'hdbc [
+            if get opt has connection 'hdbc [
                 for-each 'stmt-port connection.statements [close stmt-port]
                 clear connection.statements
                 close-connection connection

@@ -46,4 +46,4 @@
     out = [1 2 3]
 )
 
-(trash? for-each 'x [1 2 3] [maybe if x != 3 [x]])
+(trash? for-each 'x [1 2 3] [opt if x != 3 [x]])

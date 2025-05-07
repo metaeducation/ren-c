@@ -260,7 +260,7 @@ latest-of: func [
     ; with files being overwritten (at least not typically).
 
     let filename: to file! unspaced [
-        "r3-" commit (maybe suffix) (maybe extension)
+        "r3-" commit (opt suffix) (opt extension)
     ]
     let url: to url! unspaced [
         cloudroot os "/" filename  ; cached cloudfront is okay for the binary

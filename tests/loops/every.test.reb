@@ -55,5 +55,5 @@
 
 ('~null~ = meta every 'x [1 2 3 4] [if odd? x [x]])
 
-(trash? every 'x [1 2 3 4] [maybe if odd? x [x]])
+(trash? every 'x [1 2 3 4] [opt if odd? x [x]])
 ('~ = meta every 'x [1 2 3 4] [comment "heavy"])

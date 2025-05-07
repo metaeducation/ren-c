@@ -31,7 +31,8 @@ func: function/  ; historical and heavily-used abbreviation
 
 lib: system.contexts.lib  ; alias for faster access
 
-?: maybe-light/  ; commonly used in Ren-C, more deserving of ? than HELP !!!
+opt: optional/  ; turns nulls into voids
+?: optional-light/  ; commonly used in Ren-C, more deserving of ? than HELP !!!
 
 eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 
@@ -278,7 +279,7 @@ print: func [
         ]
     ]
 
-    write-stdout (maybe spaced line) then [
+    write-stdout (opt spaced line) then [
         write-stdout newline
     ] else [
         return null

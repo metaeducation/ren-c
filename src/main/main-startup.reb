@@ -394,7 +394,7 @@ bind construct [
             return null
         ]
 
-        return to-dir maybe any [
+        return to-dir opt any [
             get-env 'HOME
             all [
                 let homedrive: get-env 'HOMEDRIVE
@@ -701,7 +701,7 @@ bind construct [
     ;
     all [
         o.bin
-        not find maybe o.suppress %rebol.reb
+        not find opt o.suppress %rebol.reb
         elide (loud-print ["Checking for rebol.reb file in" o.bin])
         exists? join o.bin %rebol.reb
     ] then [
@@ -719,7 +719,7 @@ bind construct [
     ;
     all [
         o.resources
-        not find maybe o.suppress %user.reb
+        not find opt o.suppress %user.reb
         elide (loud-print ["Checking for user.reb file in" o.resources])
         exists? join o.resources %user.reb
     ] then [

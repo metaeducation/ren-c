@@ -345,7 +345,7 @@ extract: func [
     index: default [1]
     let out: make (type of series) len
     iterate-skip @series width [
-        append out maybe (try pick series index)
+        append out opt (try pick series index)
     ]
     return out
 ]
@@ -612,7 +612,7 @@ split: func [
         ; implied empty field after it, which we add here.
         ;
         switch:type dlm [
-            bitset! [boolean select dlm maybe last series]
+            bitset! [boolean select dlm opt last series]
             char?/ [boolean dlm = last series]
             text! [
                 boolean (find series dlm) and (

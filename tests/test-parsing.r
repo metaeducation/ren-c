@@ -127,7 +127,7 @@ export collect-tests: func [
                 ; Treat a top level group (...) as if you wrote [(...)].
                 ; Put it in a block, along with its optional expected error ID.
                 ;
-                keep:line reduce [(maybe expected) (? if expected '!!) group]
+                keep:line reduce [(opt expected) (? if expected '!!) group]
             )]
             |
             ; A BLOCK! groups together several tests that rely on common
@@ -164,7 +164,7 @@ export collect-tests: func [
             ; %core-tests.r is the only one that accepts subfiles.
             ;
             [let referenced-file: file! (
-                change-dir maybe split-path file
+                change-dir opt split-path file
                 collect-tests:into referenced-file into
                 change-dir current-dir
             )]

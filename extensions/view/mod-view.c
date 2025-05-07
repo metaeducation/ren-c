@@ -180,7 +180,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
     ofn.nMaxFileTitle = 0;  // ...but we want the full path
 
     WCHAR *initial_dir_utf16;
-    if (rebNot("empty? maybe initial")) {
+    if (rebNot("empty? opt initial")) {
         WCHAR* initial_utf16 = rebSpellWide("file-to-local:full initial");
         size_t initial_len = wcslen(initial_utf16);
 

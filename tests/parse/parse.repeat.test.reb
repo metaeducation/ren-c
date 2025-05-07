@@ -16,10 +16,10 @@
 ; However, REPEAT adds much more flexibility.  It can opt-out with void:
 ;
 ;    >> num: null
-;    >> parse "aaa" [repeat (maybe num) "b", some "a"]
+;    >> parse "aaa" [repeat (opt num) "b", some "a"]
 ;    == "a"
 ;
-; It can also "opt all the way in" and become a synonym for MAYBE SOME with #
+; It can also "opt all the way in" and become a synonym for OPT SOME with #
 ;
 ;    >> num: #
 ;    >> parse "aaaaaaaaaa" [repeat (num) "a"]
@@ -131,7 +131,7 @@
     ~parse-mismatch~ !! (parse "" [repeat ([3 _]) "a"])
 ]
 
-; No minimum or maximum (MAYBE SOME equivalent), just using #
+; No minimum or maximum (OPT SOME equivalent), just using #
 [
     ("a" = parse "aaaaaaa" [repeat (#) "a"])
     ("a" = parse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
@@ -139,7 +139,7 @@
     (void? parse "" [repeat (#) "a"])
 ]
 
-; No minimum or maximum (MAYBE SOME equivalent), block form
+; No minimum or maximum (OPT SOME equivalent), block form
 [
     ("a" = parse "aaaaaaa" [repeat ([_ #]) "a"])
     ("a" = parse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])

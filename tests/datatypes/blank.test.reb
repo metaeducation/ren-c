@@ -7,11 +7,11 @@
 
 (blank = '_)
 
-(null = make blank! maybe null)
+(null = make blank! opt null)
 (error? trap [make blank! [a b c]])
 
-(null? to blank! maybe null)  ; TO's universal protocol for void 2nd argument
-(null? to maybe null 1)  ; TO's universal protocol for blank 1st argument
+(null? to blank! opt null)  ; TO's universal protocol for void 2nd argument
+(null? to opt null 1)  ; TO's universal protocol for blank 1st argument
 
 ~bad-cast~ !! (to blank! 1)  ; no other types allow "conversion" to blank
 

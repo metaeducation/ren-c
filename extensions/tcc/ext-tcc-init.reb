@@ -159,7 +159,7 @@ compile: func [
     ; which is a standard setting.
 
     config.runtime-path: default [any [
-        local-to-file maybe get-env "CONFIG_TCCDIR"  ; (backslashes on windows)
+        local-to-file opt get-env "CONFIG_TCCDIR"  ; (backslashes on windows)
 
         ; !!! Guessing is probably a good idea in the long term, but in the
         ; short term it just creates unpredictability.  Avoid for now.

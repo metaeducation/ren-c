@@ -372,12 +372,12 @@ bind construct [
 
     loud-print "Starting console..."
     loud-print newline
-    let proto-skin: (match object! maybe skin) else [make console! []]
+    let proto-skin: (match object! opt skin) else [make console! []]
     let skin-error: null
 
     all [
         skin-file
-        not find maybe o.suppress skin-file
+        not find opt o.suppress skin-file
         o.resources
         exists? skin-file: join o.resources skin-file
     ] then [
@@ -825,7 +825,7 @@ console*: func [
 
     === HANDLE CODE THAT HAS BEEN SUCCESSFULLY LOADED ===
 
-    if let shortcut: select system.console.shortcuts maybe code.1 [
+    if let shortcut: select system.console.shortcuts opt code.1 [
         ;
         ; Shortcuts like `q => [quit 0]`, `d => [dump]`
         ;

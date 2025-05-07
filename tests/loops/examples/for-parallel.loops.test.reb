@@ -16,8 +16,8 @@
 
         [vars context]: wrap:set compose vars
         body: overbind context body
-        return while [(not empty? maybe blk1) or (not empty? maybe blk2)] [
-            (vars): pack [(try first maybe blk1) (try first maybe blk2)]
+        return while [(not empty? opt blk1) or (not empty? opt blk2)] [
+            (vars): pack [(try first opt blk1) (try first opt blk2)]
 
             repeat 1 body else [  ; !!! REVIEW: invent ONCE for REPEAT 1
                 return null  ; if pure NULL it was a BREAK
@@ -26,18 +26,18 @@
             ; They either did a CONTINUE the REPEAT caught, or the body reached
             ; the end.  ELIDE the increment, so body evaluation is result.
             ;
-            elide blk1: next maybe blk1
-            elide blk2: next maybe blk2
+            elide blk1: next opt blk1
+            elide blk2: next opt blk2
         ]
     ], ok)
 
     (void = for-parallel [x y] [] [] [fail])
-    ([1 2] = collect [for-parallel [x y] [] [1 2] [keep maybe x, keep y]])
-    ([a b] = collect [for-parallel [x y] [a b] [] [keep x, keep maybe y]])
+    ([1 2] = collect [for-parallel [x y] [] [1 2] [keep opt x, keep y]])
+    ([a b] = collect [for-parallel [x y] [a b] [] [keep x, keep opt y]])
 
     (void = for-parallel [x y] void void [fail])
-    ([1 2] = collect [for-parallel [x y] void [1 2] [keep maybe x, keep y]])
-    ([a b] = collect [for-parallel [x y] [a b] void [keep x, keep maybe y]])
+    ([1 2] = collect [for-parallel [x y] void [1 2] [keep opt x, keep y]])
+    ([a b] = collect [for-parallel [x y] [a b] void [keep x, keep opt y]])
 
     ((meta null) = meta for-parallel [x y] [a b] [1 2] [if x = 'b [break]])
     ('~[~null~]~ = meta for-parallel [x y] [a b] [1 2] [null])

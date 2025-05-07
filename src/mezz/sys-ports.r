@@ -84,7 +84,7 @@ make-port*: func [
     let scheme  ; Get the scheme definition
     all [
         word? name
-        scheme: get maybe has system.schemes name
+        scheme: get opt has system.schemes name
     ] else [
         cause-error 'access 'no-scheme name
     ]
@@ -113,7 +113,7 @@ make-port*: func [
     port.scheme: scheme
 
     ; Defaults:
-    port.actor: get maybe has scheme 'actor  ; avoid evaluation
+    port.actor: get opt has scheme 'actor  ; avoid evaluation
     port.spec.ref: default [spec]
     port.spec.title: default [scheme.title]
     port: make port! ensure object! port  ; !!! kludge for the moment

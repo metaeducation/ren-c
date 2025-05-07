@@ -91,7 +91,7 @@
                 append buffer data
             ]
             if all [true? eof, empty? buffer] [return null]
-            (maybe spread if not binary '[to text!]) take:part buffer pos
+            (opt spread if not binary '[to text!]) take:part buffer pos
         ]
     ]
 
