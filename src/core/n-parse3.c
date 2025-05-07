@@ -182,9 +182,10 @@ enum parse_flags {
     PF_CHANGE = 1 << 11,
     PF_LOOPING = 1 << 12,
     PF_FURTHER = 1 << 13,  // must advance parse input to count as a match
-    PF_OPTIONAL = 1 << 14,  // want NULL (not no-op) if no matches
+    PF_OPTIONAL = 1 << 14,  // want VOID (not no-op) if no matches
+    PF_TRY = 1 << 15,  // want NULL (not no-op) if no matches
 
-    PF_ONE_RULE = 1 << 15,  // signal to only run one step of the parse
+    PF_ONE_RULE = 1 << 16,  // signal to only run one step of the parse
 
     PF_MAX = PF_ONE_RULE
 };
@@ -1458,6 +1459,12 @@ DECLARE_NATIVE(SUBPARSE)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
+              case SYM_TRY:
+                P_FLAGS |= PF_TRY;
+                mincount = 0;
+                FETCH_NEXT_RULE(L);
+                goto pre_rule;
+
               case SYM_REPEAT:
                 //
                 // !!! OPT REPEAT (N) RULE can't work because OPT is done by
@@ -1683,9 +1690,6 @@ DECLARE_NATIVE(SUBPARSE)
                     " -- it's being reclaimed for a new construct"
                     " https://forum.rebol.info/t/1540/12"
                 );
-
-              case SYM_TRY:
-                fail ("Please use OPT or OPTIONAL instead of TRY in PARSE");
 
               case SYM_COPY:
                 fail ("COPY not supported in PARSE3 (use SET-WORD!+ACROSS)");
@@ -2174,19 +2178,21 @@ DECLARE_NATIVE(SUBPARSE)
                     // alone if you don't match.  (This is the same as
                     // `maybe set x group!`).  Instead of being a synonym, the
                     // behavior of unsetting x has been considered, and to
-                    // require saying `maybe set x group!` to get the no-op.
+                    // require saying `opt set x group!` to get the no-op.
                     // But `opt x: group!` will set x to null on no match.
                     //
-                    // Note: It should be `x: opt group!` but R3-Alpha parse
+                    // Note: It should be `x: try group!` but R3-Alpha parse
                     // is hard to get composability on such things.
                     //
-                    if (P_FLAGS & PF_OPTIONAL)  // don't just leave alone
+                    if (P_FLAGS & PF_TRY)  // don't just leave alone
                         Init_Nulled(
                             Sink_Word_May_Fail(
                                 set_or_copy_word,
                                 P_RULE_BINDING
                             )
                         );
+                    else if (P_FLAGS & PF_OPTIONAL)
+                        fail ("Cannot assign OPT VOID to variable in PARSE3");
                 }
                 else if (Stub_Holds_Cells(P_INPUT)) {
                     assert(count == 1);  // check for > 1 would have errored

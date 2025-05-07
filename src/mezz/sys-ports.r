@@ -143,7 +143,7 @@ make-port*: func [
         ; optional user [:pass] @
         [
             emit user: across some user-char
-            emit pass: opt [":", across to "@"]
+            emit pass: try [":", across to "@"]
             "@"
             |
             emit user: (null)
@@ -177,12 +177,12 @@ make-port*: func [
                 ;
                 ahead [":" | <end>] (null)
             ]
-            emit port-id: opt [":", /to (integer!) across digits]
+            emit port-id: try [":", /to (integer!) across digits]
         ]
 
-        emit path: opt [across some path-char]  ; optional path
+        emit path: try [across some path-char]  ; optional path
 
-        emit tag: opt ["#", across to <end>]  ; optional bookmark ("tag")
+        emit tag: try ["#", across to <end>]  ; optional bookmark ("tag")
 
         emit ref: /as (url!) <input>  ; alway save original URL for reference
     ]

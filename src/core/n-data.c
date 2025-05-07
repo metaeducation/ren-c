@@ -1271,22 +1271,22 @@ DECLARE_NATIVE(TRASH)
 
 
 //
-//  something?: native:intrinsic [
+//  not-trash?: native:intrinsic [
 //
-//  "Tells you if the argument is not antiform blank (e.g. not nothing)"
+//  "Tells you if the argument is not antiform blank or antiform tag"
 //
 //      return: [logic?]
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(SOMETHING_Q)
+DECLARE_NATIVE(NOT_TRASH_Q)
 //
 // See notes on TRASH?  This is useful because comparisons in particular do
 // not allow you to compare against TRASH.
 //
 //   https://forum.rebol.info/t/2068
 {
-    INCLUDE_PARAMS_OF_SOMETHING_Q;
+    INCLUDE_PARAMS_OF_NOT_TRASH_Q;
 
     DECLARE_ELEMENT (meta);
     Option(Bounce) bounce = Trap_Bounce_Meta_Decay_Value_Intrinsic(

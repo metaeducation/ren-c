@@ -82,6 +82,7 @@ sigil
     some
     opt
     optional
+    try
     repeat
     further  ; https://forum.rebol.info/t/1593
     let
@@ -104,7 +105,6 @@ sigil
     and  ; replaced by AHEAD
     while  ; new meaning in UPARSE, use OPT SOME for old meaning
     any  ; new meaning in UPARSE, use OPT SOME FURTHER for old meaning
-    try  ; short-lived idea to replace OPTIONAL or OPT
     copy  ; use `x: across rule` for this intent
     set  ; deprecated in PARSE3 (should it be supported?)
     limit  ; was never implemented

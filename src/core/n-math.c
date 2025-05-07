@@ -897,8 +897,8 @@ DECLARE_NATIVE(DEFAULTABLE_Q)
 //  "TRUE if the values are equal"
 //
 //      return: [logic?]
-//      value1 [something?]
-//      value2 [something?]
+//      ^value1 [any-value? ~[]~]
+//      ^value2 [any-value? ~[]~]
 //      :relax "Use less strict comparison rules (e.g. caseless comparison)"
 //  ]
 //
@@ -910,10 +910,20 @@ DECLARE_NATIVE(EQUAL_Q)
     Value* v2 = ARG(VALUE2);
     bool relax = Bool_ARG(RELAX);
 
+    if (Is_Meta_Of_Trash(v1) or Is_Meta_Of_Tripwire(v1)) {
+        QUOTE_BYTE(v1) = ANTIFORM_0_COERCE_ONLY;
+        return FAIL(PARAM(VALUE1));
+    }
+
+    if (Is_Meta_Of_Trash(v2) or Is_Meta_Of_Tripwire(v2)) {
+        QUOTE_BYTE(v2) = ANTIFORM_0_COERCE_ONLY;
+        return FAIL(PARAM(VALUE2));
+    }
+
     if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
         return nullptr;
 
-    QUOTE_BYTE(v1) = NOQUOTE_1;
+    QUOTE_BYTE(v1) = NOQUOTE_1;  // should work for VOID equality, too
     QUOTE_BYTE(v2) = NOQUOTE_1;
 
     if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
@@ -997,8 +1007,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Element)
 //  "TRUE if the values are identical"
 //
 //      return: [logic?]
-//      value1 [something?]  ; !!! antiforms okay? e.g. "same splice"?
-//      value2 [something?]
+//      ^value1 [any-value? ~[]~]  ; !!! antiforms okay? e.g. "same splice"?
+//      ^value2 [any-value? ~[]~]
 //  ]
 //
 DECLARE_NATIVE(SAME_Q)
@@ -1014,8 +1024,14 @@ DECLARE_NATIVE(SAME_Q)
     Value* v1 = ARG(VALUE1);
     Value* v2 = ARG(VALUE2);
 
-    if (Type_Of(v1) != Type_Of(v2))
-        return Init_Logic(OUT, false);  // not "same" value if not same type
+    if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
+        return Init_Logic(OUT, false);  // not "same" value if not same quote
+
+    if (HEART_BYTE(v1) != HEART_BYTE(v2))
+        return Init_Logic(OUT, false);  // not "same" value if not same heart
+
+    QUOTE_BYTE(v1) = NOQUOTE_1;  // trick works for VOID equality, too
+    QUOTE_BYTE(v2) = NOQUOTE_1;
 
     if (Is_Bitset(v1))  // same if binaries are same
         return Init_Logic(OUT, VAL_BITSET(v1) == VAL_BITSET(v2));
@@ -1054,7 +1070,7 @@ DECLARE_NATIVE(SAME_Q)
     Meta_Quotify(v1);  // may be null or other antiform :-/
     Meta_Quotify(v2);
 
-    return rebDelegate("equal?", v1, v2);
+    return rebDelegate(CANON(EQUAL_Q), v1, v2);
 }
 
 

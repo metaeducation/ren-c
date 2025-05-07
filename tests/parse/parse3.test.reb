@@ -767,7 +767,7 @@
 ; A SET of zero elements gives NULL, a SET of > 1 elements is an error
 [(
     x: <before>
-    parse3 [1] [x: opt text! integer!]
+    parse3 [1] [x: try text! integer!]
     x = null
 )(
     x: <before>

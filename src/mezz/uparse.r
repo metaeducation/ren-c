@@ -334,7 +334,7 @@ default-combinators: to map! reduce [
 
     === BASIC KEYWORDS ===
 
-    'optional combinator [
+    'try combinator [
         "If parser fails, succeed and return NULL; don't advance input"
         return: "PARSER's result if it succeeds, otherwise NULL"
             [any-value? pack!]
@@ -344,6 +344,20 @@ default-combinators: to map! reduce [
         [^result' remainder]: parser input except e -> [
             remainder: input  ; succeed on parser fail but don't advance input
             return null
+        ]
+        return ^result'  ; return successful parser result
+    ]
+
+    'optional combinator [
+        "If parser fails, succeed and return VOID; don't advance input"
+        return: "PARSER's result if it succeeds, otherwise VOID"
+            [any-value? pack!]
+        parser [action!]
+        <local> result'
+    ][
+        [^result' remainder]: parser input except e -> [
+            remainder: input  ; succeed on parser fail but don't advance input
+            return void
         ]
         return ^result'  ; return successful parser result
     ]

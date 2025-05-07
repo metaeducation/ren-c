@@ -5,13 +5,13 @@
 (
     x: ~
     all [
-        "a" = parse "aaa" [x: opt some "b", some "a"]
+        "a" = parse "aaa" [x: try some "b", some "a"]
         x = null
     ]
 )(
     x: ~
     all [
-        "a" = parse "aaa" [x: opt some "a"]
+        "a" = parse "aaa" [x: try some "a"]
         x = "a"
     ]
 )
@@ -123,14 +123,14 @@
 (
     x: ~
     all [
-        "a" = parse "aaa" [x: opt some "b", opt some "a"]
+        "a" = parse "aaa" [x: try some "b", opt some "a"]
         null? x
     ]
 )
 
 [
-    (null = parse [] [opt some 'a])
-    (null = parse [] [opt some 'b])
+    (void = parse [] [opt some 'a])
+    (void = parse [] [opt some 'b])
     ('a = parse [a] [opt some 'a])
 
     ~parse-incomplete~ !! (parse [a] [opt some 'b])
@@ -142,15 +142,15 @@
 [(
     x: ~
     all [
-        "a" = parse "aaa" [x: opt some "a"]
+        "a" = parse "aaa" [x: try some "a"]
         x = "a"
     ]
 )]
 
 [
-    (null = parse "a" ["a" opt some "b"])
-    (null = parse "a" ["a" [opt "b"]])
-    ('~null~ = parse "a" ["a" ^[opt some "b"]])
+    (void = parse "a" ["a" opt some "b"])
+    (void = parse "a" ["a" [opt "b"]])
+    ('~[]~ = parse "a" ["a" ^[opt some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
@@ -183,8 +183,8 @@
 
 
 [
-    (null = parse "" [opt some #a])
-    (null = parse "" [opt some #b])
+    (void = parse "" [opt some #a])
+    (void = parse "" [opt some #b])
     (#a = parse "a" [opt some #a])
     ~parse-incomplete~ !! (parse "a" [opt some #b])
     (#a = parse "a" [opt some #b one])
@@ -208,8 +208,8 @@
         parse #{0105} [some [x: across one elide when (even? first x)]]
     )
 
-    (null = parse #{} [opt some #{0A}])
-    (null = parse #{} [opt some #{0B}])
+    (void = parse #{} [opt some #{0A}])
+    (void = parse #{} [opt some #{0B}])
     (#{0A} = parse #{0A} [opt some #{0A}])
 
     ~parse-incomplete~ !! (parse #{0A} [opt some #{0B}])
@@ -224,5 +224,5 @@
 
 [
     ('a = parse [a a] [opt some 'a])
-    (null = parse [a a] [opt some 'a, opt some 'b])
+    (void = parse [a a] [opt some 'a, opt some 'b])
 ]

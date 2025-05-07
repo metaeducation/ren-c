@@ -19,7 +19,7 @@
 )(
     x: ~
     all [
-        null = parse [] [x: [opt integer!]]
+        null = parse [] [x: [try integer!]]
         x = null
     ]
 )(
@@ -31,7 +31,7 @@
 )(
     x: ~
     all [
-        null = parse [] [x: opt [integer!]]
+        null = parse [] [x: try [integer!]]
         x = null
     ]
 )
@@ -58,7 +58,7 @@
     t: "t"
     i: "i"
     all [
-        <foo> = parse [<foo>] [i: opt integer!, t: tag!]
+        <foo> = parse [<foo>] [i: try integer!, t: tag!]
         i = null
         t = <foo>
     ]

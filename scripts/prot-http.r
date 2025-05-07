@@ -180,7 +180,7 @@ parse-write-dialect: func [
         spec.method: [word! | ('post)]
         opt [spec.path: [file! | url!]]
         spec.headers: [block! | ([])]
-        spec.content: opt [any-string?/ | blob!]
+        spec.content: try [any-string?/ | blob!]
         <end>
     ]
 ]

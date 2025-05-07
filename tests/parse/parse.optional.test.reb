@@ -5,8 +5,8 @@
 ; parse rules from the current position.
 
 [
-    (null = parse [] [optional blank])
-    (null = parse [] [optional 'a])
+    (void = parse [] [optional blank])
+    (void = parse [] [optional 'a])
     ('a = parse [a] [opt 'a])
     ('a = parse [a] [opt 'b 'a])
     ('a = parse [a] [opt ['a]])
@@ -19,8 +19,8 @@
 ]
 
 [
-    (null = parse "" [optional blank])
-    (null = parse "" [optional #a])
+    (void = parse "" [optional blank])
+    (void = parse "" [optional #a])
     (#a = parse "a" [opt #a])
     (#a = parse "a" [opt #b #a])
     (#a = parse "a" [opt [#a]])
@@ -33,8 +33,8 @@
 ]
 
 [
-    (null = parse #{} [optional blank])
-    (null = parse #{} [optional #{0A}])
+    (void = parse #{} [optional blank])
+    (void = parse #{} [optional #{0A}])
     (#{0A} = parse #{0A} [opt #{0A}])
     (#{0A} = parse #{0A} [opt #{0B} #{0A}])
     (#{0A} = parse #{0A} [opt [#{0A}]])

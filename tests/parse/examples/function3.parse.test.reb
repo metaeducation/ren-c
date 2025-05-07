@@ -84,7 +84,7 @@
         bypass  ; failing here means rolling over to next rule
     |
         '<local> (append new-spec <local>)
-        opt some [var: word! other: opt group! (
+        opt some [var: word! other: try group! (
             append new-spec var
             if other [
                 defaulters: default [inside body copy '[]]
@@ -127,7 +127,7 @@
             ]
         )
         opt some [
-            var: word!, other: opt group! (
+            var: word!, other: try group! (
                 append statics setify var
                 append statics any [
                     bindable maybe other  ; !!! ignore binding on group

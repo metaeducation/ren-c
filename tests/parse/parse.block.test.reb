@@ -79,12 +79,12 @@
 ]
 
 
-; A BLOCK! rule is allowed to return NULL, distinct from failure
+; A BLOCK! rule is allowed to return VOID and NULL, distinct from failure
 [
     (
         x: ~
         all [
-            null = parse [1] [x: [integer! opt text!]]
+            void = parse [1] [x: [integer! opt text!]]
             x = null
         ]
     )
