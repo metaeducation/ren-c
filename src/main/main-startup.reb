@@ -371,7 +371,7 @@ bind construct [
 
         return: "Null if not found"
             [~null~ file!]
-        dir [<maybe> text!]
+        dir [<opt-out> text!]
     ][
         return all [
             not empty? dir

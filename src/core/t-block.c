@@ -1160,7 +1160,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_List)
 //      return: "Raised error if no file available (use TRY to get NULL)"
 //          [~null~ file! url!]
 //      element "Typically only ANY-LIST? know their file"
-//          [<maybe> element?]
+//          [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(FILE_OF)
@@ -1187,7 +1187,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough: raise error
 //      return: "Raised error if no line available (use TRY to get NULL)"
 //          [~null~ integer!]
 //      element "Typically only ANY-LIST? know their file"
-//          [<maybe> element?]
+//          [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(LINE_OF)

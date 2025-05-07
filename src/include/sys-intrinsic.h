@@ -48,7 +48,7 @@
 //
 // ** WHEN RUN AS AN INTRINSIC, THE ARG IN THE SPARE CELL CONTAINS A FULLY NON
 // TYPECHECKED META REPRESENTATION, AND THE NATIVE IS RESPONSIBLE FOR ALL
-// ARGUMENT PROCESSING (INCLUDING <maybe>/NOOP_IF_VOID).**
+// ARGUMENT PROCESSING (INCLUDING <opt-out>/NOOP_IF_VOID).**
 //
 // Not only that, but the special case of typechecking intrinsics (that
 // return LOGIC?) is that they can't write to L->out...because if you were
@@ -108,7 +108,7 @@ INLINE void Get_Heart_And_Quote_Of_Atom_Intrinsic(
 }
 
 
-// 1. The <maybe> parameter convention has to be handled by the intrinsic,
+// 1. The <opt-out> parameter convention has to be handled by the intrinsic,
 //    so we test for void here.
 //
 // 2. While nullptr typically is handled as a dispatcher result meaning

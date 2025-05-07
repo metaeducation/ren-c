@@ -255,7 +255,7 @@ static void Init_Action_Spec_Tags(void)
     ensure(nullptr, Root_With_Tag) = Make_Locked_Tag("with");
     ensure(nullptr, Root_Variadic_Tag) = Make_Locked_Tag("variadic");
     ensure(nullptr, Root_End_Tag) = Make_Locked_Tag("end");
-    ensure(nullptr, Root_Maybe_Tag) = Make_Locked_Tag("maybe");
+    ensure(nullptr, Root_Opt_Out_Tag) = Make_Locked_Tag("opt-out");
     ensure(nullptr, Root_Local_Tag) = Make_Locked_Tag("local");
     ensure(nullptr, Root_Const_Tag) = Make_Locked_Tag("const");
     ensure(nullptr, Root_Unrun_Tag) = Make_Locked_Tag("unrun");
@@ -268,7 +268,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&Root_With_Tag);
     rebReleaseAndNull(&Root_Variadic_Tag);
     rebReleaseAndNull(&Root_End_Tag);
-    rebReleaseAndNull(&Root_Maybe_Tag);
+    rebReleaseAndNull(&Root_Opt_Out_Tag);
     rebReleaseAndNull(&Root_Local_Tag);
     rebReleaseAndNull(&Root_Const_Tag);
     rebReleaseAndNull(&Root_Unrun_Tag);
@@ -752,7 +752,7 @@ void Startup_Core(void)
     // basic words need to be defined.  For instance: You can't run %sysobj.r
     // unless `true` and `false` have been added to the g_lib_context--they'd be
     // undefined.  And while analyzing the function specs during the
-    // definition of natives, things like the <maybe> tag are needed as a
+    // definition of natives, things like the <opt-out> tag are needed as a
     // basis for comparison to see if a usage matches that.
     //
     // Startup_Type_Predicates() uses symbols, data stack, and adds words

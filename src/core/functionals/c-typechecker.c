@@ -898,7 +898,7 @@ DECLARE_NATIVE(TYPECHECKER)
 //          [any-value?]
 //      test [block! datatype! parameter! action!]
 //      value "If not :META, NULL values illegal (null return is no match)"
-//          [<maybe> any-value?]
+//          [<opt-out> any-value?]
 //      :meta "Return the ^^META result (allows checks on NULL)"
 //  ]
 //

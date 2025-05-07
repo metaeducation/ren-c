@@ -26,7 +26,7 @@ export get-env: func [
     return: "String the variable was set to, or null if not set"
         [~null~ text!]
     variable "Name of variable to get (case-insensitive in Windows)"
-        [<maybe> text! word!]
+        [<opt-out> text! word!]
 ][
     return try environment.(variable)  ; GET-ENV returned null if not there
 ]
@@ -37,7 +37,7 @@ export set-env: func [
     return: "Returns same value passed in, or null if variable was unset"
         [~null~ text!]
     variable "Variable to set (case-insensitive in Windows)"
-        [<maybe> text! word!]
+        [<opt-out> text! word!]
     value "Value to set the variable to, or null to unset it"
         [~null~ text!]
 ][

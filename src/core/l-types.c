@@ -57,7 +57,7 @@ DECLARE_NATIVE(TYPE_OF)
 //
 //      return: [~null~ datatype!]
 //      element "Antiforms not accepted, use (heart of meta value) if needed"
-//          [<maybe> element?]
+//          [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(HEART_OF)
@@ -80,7 +80,7 @@ DECLARE_NATIVE(HEART_OF)
 //  "Return how many quote levels are on a value (quasiforms have 0 quotes)"
 //
 //      return: [~null~ integer!]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(QUOTES_OF)
@@ -97,7 +97,7 @@ DECLARE_NATIVE(QUOTES_OF)
 //  "Get the SIGIL! on a value, e.g. $WORD has the $ sigil, WORD has none"
 //
 //      return: [~null~ sigil!]
-//      element [<maybe> fundamental?]
+//      element [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(SIGIL_OF)
@@ -119,7 +119,7 @@ DECLARE_NATIVE(SIGIL_OF)
 //  "Get the length (in series units, e.g. codepoints) of series or other type"
 //
 //      return: [~null~ integer!]
-//      element [<maybe> fundamental?]  ; not quoted or quasi [1]
+//      element [<opt-out> fundamental?]  ; not quoted or quasi [1]
 //  ]
 //
 DECLARE_NATIVE(LENGTH_OF)
@@ -142,7 +142,7 @@ DECLARE_NATIVE(LENGTH_OF)
 //  "Get the size (in bytes, e.g. UTF-encoded bytes) of series or other type"
 //
 //      return: [~null~ integer!]
-//      element [<maybe> fundamental?]
+//      element [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(SIZE_OF)
@@ -172,7 +172,7 @@ DECLARE_NATIVE(SIZE_OF)
 //  "Get the index of a series type"
 //
 //      return: [~null~ integer!]
-//      element [<maybe> fundamental?]
+//      element [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(INDEX_OF)
@@ -192,7 +192,7 @@ DECLARE_NATIVE(INDEX_OF)
 //  "Get the offset of a series type or port (zero-based?)"
 //
 //      return: [~null~ integer!]
-//      element [<maybe> fundamental?]
+//      element [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(OFFSET_OF)
@@ -209,7 +209,7 @@ DECLARE_NATIVE(OFFSET_OF)
 //  "Get the memory address of a type's data (low-level, beware!)"
 //
 //      return: [~null~ integer!]
-//      element [<maybe> <unrun> fundamental?]
+//      element [<opt-out> <unrun> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(ADDRESS_OF)

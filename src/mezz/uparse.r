@@ -2962,7 +2962,7 @@ parse*: func [
     return: "Synthesized value from last match rule, and any pending values"
         [~[[any-value? pack!] [blank! block!]]~ raised!]
     input "Input data"
-        [<maybe> any-series? url! any-sequence?]
+        [<opt-out> any-series? url! any-sequence?]
     rules "Block of parse rules"
         [block!]
     :combinators "List of keyword and datatype handlers used for this parse"
@@ -3183,7 +3183,7 @@ parse-furthest-hook: func [
 ;
 using: func [
     return: [~]  ; should it return a value?  (e.g. the object?)
-    obj [<maybe> object!]
+    obj [<opt-out> object!]
 ][
     add-use-object (binding of $obj) obj
 ]

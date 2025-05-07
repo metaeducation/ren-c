@@ -57,7 +57,7 @@ description-of: func [
     "One-line summary of a value's purpose"
 
     return: [~null~ text!]
-    v [<maybe> any-value?]
+    v [<opt-out> any-value?]
 ][
     if action? :v [
         v: unrun v

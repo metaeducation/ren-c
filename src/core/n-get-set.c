@@ -769,7 +769,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
 //
 //      return: [any-value? ~[[word! tuple! the-block!] any-value?]~]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
-//          [<maybe> any-word? any-sequence? any-group? the-block!]
+//          [<opt-out> any-word? any-sequence? any-group? the-block!]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //      :steps "Provide invariant way to get this variable again"

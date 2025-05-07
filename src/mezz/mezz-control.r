@@ -15,7 +15,7 @@ launch: func [
     "Runs a script as a separate process; return immediately"
 
     script "The name of the script"
-        [<maybe> file! text!]
+        [<opt-out> file! text!]
     :args "Arguments to the script"
         [text! block!]
     :wait "Wait for the process to terminate"

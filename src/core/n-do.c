@@ -247,7 +247,7 @@ DECLARE_NATIVE(SHOVE)
 //      return: "Evaluation product, or ~[position product]~ pack if :STEP"
 //          [any-atom?]  ; :STEP changes primary return product [1]
 //      source [
-//          <maybe>  ; useful for `evaluate maybe ...` scenarios
+//          <opt-out>  ; useful for `evaluate maybe ...` scenarios
 //          any-list? get-group? set-group? get-block? set-block?  ; code
 //          <unrun> frame!  ; invoke the frame (no arguments, see RUN)
 //          error!  ; raise the error

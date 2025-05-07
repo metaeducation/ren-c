@@ -107,9 +107,9 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 //
 //      return: "Picked value, or null if picker can't fulfill the request"
 //          [any-value?]
-//      location [<maybe> <unrun> fundamental?]  ; can't pick from quoted/quasi
+//      location [<opt-out> <unrun> fundamental?]  ; can't pick from quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
-//          [<maybe> element? logic?]
+//          [<opt-out> element? logic?]
 //  ]
 //
 DECLARE_NATIVE(PICK)
@@ -150,9 +150,9 @@ DECLARE_NATIVE(PICK)
 //      return: "Input value, or raised error propagated (no assignment)"
 //          [any-value? raised!]
 //      location "(modified)"
-//          [<maybe> fundamental?]  ; can't poke a quoted/quasi
+//          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
-//          [<maybe> element?]
+//          [<opt-out> element?]
 //      ^value [any-value? raised! void?]
 //      <local> store
 //  ]
@@ -194,9 +194,9 @@ DECLARE_NATIVE(POKE)
 //      return: "Updated location state"  ; not the input value, see [1]
 //          [~null~ any-value?]
 //      location "(modified)"
-//          [<maybe> fundamental?]  ; can't poke a quoted/quasi
+//          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
-//          [<maybe> element?]
+//          [<opt-out> element?]
 //      ^value [any-value? void?]
 //  ]
 //

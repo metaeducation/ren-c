@@ -187,7 +187,7 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
 //=//// PARAMETER_FLAG_NOOP_IF_VOID ///////////////////////////////////////=//
 //
-// If a parameter is marked with the `<maybe>` annotation, then that means
+// If a parameter is marked with the `<opt-out>` annotation, then that means
 // if that argument is void in a function invocation, the dispatcher for the
 // function won't be run at all--and ~null~ will be returned by the call.
 //
@@ -196,7 +196,7 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 // usermode functions benefit more since `if void? arg [return null]` needs
 // several frames and lookups to run.
 //
-// In both the native and usermode cases, the <maybe> annotation helps convey
+// In both the native and usermode cases, the <opt-out> annotation helps convey
 // the contract of "void-in-null-out" more clearly than just being willing to
 // take a void and able to return null--which doesn't connect the two states.
 //

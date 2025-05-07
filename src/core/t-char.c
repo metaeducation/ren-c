@@ -1053,7 +1053,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
 //  "Get the singular codepoint that an ISSUE! or BINARY! correspond to"
 //
 //      return: [~null~ integer!]
-//      element [<maybe> fundamental?]
+//      element [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(CODEPOINT_OF)

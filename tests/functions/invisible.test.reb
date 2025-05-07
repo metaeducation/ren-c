@@ -417,7 +417,7 @@
 (
     num-runs: 0
 
-    add-period: func [x [<maybe> text!]] [
+    add-period: func [x [<opt-out> text!]] [
         num-runs: me + 1
         return append x "."
     ]

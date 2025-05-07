@@ -259,7 +259,7 @@ print: func [
     return: "Returns null if line outputs nothing, e.g. print [void]"
         [~ ~null~]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
-        [<maybe> char? text! block! any-the-value?]
+        [<opt-out> char? text! block! any-the-value?]
 ][
     if char? line [
         if line <> newline [

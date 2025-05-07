@@ -35,7 +35,7 @@
 //      return: "New list or value"
 //          [element?]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
-//          [<maybe> element?]
+//          [<opt-out> element?]
 //      :predicate "Applied after evaluation, default is IDENTITY"
 //          [<unrun> frame!]
 //  ]
@@ -850,7 +850,7 @@ Bounce Composer_Executor(Level* const L)
 //      pattern "Use ANY-THE-LIST-TYPE? (e.g. @{{}}) to use pattern's binding"
 //          [any-list?]
 //      template "The template to fill in (no-op if WORD!)"
-//          [<maybe> any-list? any-sequence? any-word? any-utf8?]
+//          [<opt-out> any-list? any-sequence? any-word? any-utf8?]
 //      :deep "Compose deeply into nested lists and sequences"
 //      :conflate "Let illegal sequence compositions produce lookalike WORD!s"
 //      :predicate "Function to run on composed slots"

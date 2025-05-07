@@ -95,7 +95,7 @@
 
 //=//// ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY ///////////////////////////////=//
 //
-// This is used by <maybe> to indicate that once the frame is fulfilled, the
+// This is used by <opt-out> to indicate that once the frame is fulfilled, the
 // only thing that should be done is typechecking...don't run the action.
 //
 #define ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY \

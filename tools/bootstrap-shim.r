@@ -649,6 +649,7 @@ modernize-typespec: func3 [
         element?        any-value!
         action?         action!
         logic?          logic!
+        <maybe>         <opt-out>
         <variadic>      <...>
         boolean?        word!
         onoff?          word!
@@ -669,7 +670,7 @@ modernize-typespec: func3 [
 ]
 
 modernize-action: func3 [
-    "Account for <maybe> annotation, refinements as own arguments"
+    "Account for <opt-out> annotation, refinements as own arguments"
     return: [block!]
     spec [block!]
     body [block!]

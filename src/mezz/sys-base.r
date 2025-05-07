@@ -259,7 +259,7 @@ do: func [
         [any-value? raised!]
     source "Files interpreted based on extension, dialects based on 'kind'"
         [
-            <maybe>  ; opts out of the DO, returns null
+            <opt-out>  ; opts out of the DO, returns null
             text!  ; source code with header
             blob!  ; treated as UTF-8, same interpretation as text
             url!  ; load code from URL via protocol

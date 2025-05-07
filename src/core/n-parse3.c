@@ -2351,9 +2351,9 @@ DECLARE_NATIVE(SUBPARSE)
 //          [any-value?]
 //
 //      input "Input series to parse"
-//          [<maybe> any-series? any-sequence? any-utf8?]
+//          [<opt-out> any-series? any-sequence? any-utf8?]
 //      rules "Rules to parse by"
-//          [<maybe> block!]
+//          [<opt-out> block!]
 //      :case "Uses case-sensitive comparison"
 //      :match "Return PARSE input instead of synthesized result"
 //      :relax "Don't require reaching the tail of the input for success"

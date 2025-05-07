@@ -32,7 +32,7 @@
 //
 //      return: [~null~ element?]
 //      value "Argument to change access to (can be locked or not)"
-//          [<maybe> element?]  ; !!! affect INTEGER! when it's a bignum?
+//          [<opt-out> element?]  ; !!! affect INTEGER! when it's a bignum?
 //  ]
 //
 DECLARE_NATIVE(CONST) {
@@ -73,7 +73,7 @@ DECLARE_NATIVE(CONST_Q) {
 //      return: "Same as input -- no errors are given if locked or immediate"
 //          [~null~ element?]
 //      value "Argument to change access to (if such access can be granted)"
-//          [<maybe> element?]  ; !!! affect INTEGER! when it's a bignum?
+//          [<opt-out> element?]  ; !!! affect INTEGER! when it's a bignum?
 //  ]
 //
 DECLARE_NATIVE(MUTABLE)

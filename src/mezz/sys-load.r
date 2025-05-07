@@ -235,7 +235,7 @@ load: func [
     return: "BLOCK! if Rebol code (or codec value) plus optional header"
         [~null~ ~[element? [~null~ object!]]~]
     source "Source of the information being loaded"
-        [<maybe> file! url! tag! the-word! text! blob!]
+        [<opt-out> file! url! tag! the-word! text! blob!]
     :type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
@@ -326,7 +326,7 @@ load: func [
 
 adjust-url-for-raw: func [
     return: [~null~ url!]
-    url [<maybe> url!]
+    url [<opt-out> url!]
 ][
     let text: to text! url  ; URL! is immutable, must copy to mutate in parse
 

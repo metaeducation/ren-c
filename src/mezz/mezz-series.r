@@ -55,7 +55,7 @@ array: func [
     return: "Generated block or null if blank input"
         [block!]
     size "Size or block of sizes for each dimension"
-        [<maybe> integer! block!]
+        [<opt-out> integer! block!]
     :initial "Initial value (will be called each time if action)"
         [element? action!]
     <local> rest block
@@ -384,7 +384,7 @@ collect*: func [
     return: "Result block, or null if no KEEPs (prevent nulls with KEEP [])"
         [~null~ block!]
     body "Block to evaluate"
-        [<maybe> block!]
+        [<opt-out> block!]
 ][
     let out: null
     let /keep: specialize (  ; SPECIALIZE to hide series argument
@@ -492,7 +492,7 @@ split: func [
 
     return: [~null~ block!]
     series "The series to split"
-        [<maybe> any-series?]
+        [<opt-out> any-series?]
     ^dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
         [
             ~[]~  ; just return input

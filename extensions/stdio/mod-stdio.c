@@ -70,7 +70,7 @@ DECLARE_NATIVE(STARTUP_P)
 //  "Write text or raw BLOB! to stdout (for control codes / CGI)"  ; [1]
 //
 //      return: [~]
-//      value [<maybe> text! char? blob!]
+//      value [<opt-out> text! char? blob!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //

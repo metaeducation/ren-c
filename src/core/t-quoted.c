@@ -511,7 +511,7 @@ INLINE bool Pack_Native_Core_Throws(
 //      return: "Antiform of BLOCK!"
 //          [pack!]
 //      block "Reduce if plain BLOCK!, not if THE-BLOCK!"
-//          [<maybe> the-block! block!]
+//          [<opt-out> the-block! block!]
 //  ]
 //
 DECLARE_NATIVE(PACK)
@@ -539,7 +539,7 @@ DECLARE_NATIVE(PACK)
 //      return: "Antiform of BLOCK!"
 //          [pack!]
 //      block "Reduce if plain BLOCK!, not if THE-BLOCK!"
-//          [<maybe> the-block! block!]
+//          [<opt-out> the-block! block!]
 //  ]
 //
 DECLARE_NATIVE(PACK_P)
@@ -618,7 +618,7 @@ DECLARE_NATIVE(RUNS)
 //  "Give back a frame! for action! input"
 //
 //      return: [frame!]
-//      action [<maybe> frame! action!]
+//      action [<opt-out> frame! action!]
 //  ]
 //
 DECLARE_NATIVE(UNRUN)
@@ -715,7 +715,7 @@ DECLARE_NATIVE(MAYBE_LIGHT)
 //  "Removes all levels of quoting from a (potentially) quoted element"
 //
 //      return: [fundamental?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(NOQUOTE)

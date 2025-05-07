@@ -757,7 +757,7 @@ Bounce Action_Executor(Level* L)
         }
 
         if (Is_Hole(ARG)) {
-            if (Get_Parameter_Flag(param, NOOP_IF_VOID)) {  // <maybe> param
+            if (Get_Parameter_Flag(param, NOOP_IF_VOID)) {  // <opt-out> param
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
                 Mark_Typechecked(Init_Nulled(OUT));
                 continue;
@@ -837,7 +837,7 @@ Bounce Action_Executor(Level* L)
 
     assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
 
-    if (Get_Action_Executor_Flag(L, TYPECHECK_ONLY)) {  // <maybe>
+    if (Get_Action_Executor_Flag(L, TYPECHECK_ONLY)) {  // <opt-out>
         assert(Is_Nulled(OUT));
         goto skip_output_check;
     }
@@ -946,7 +946,7 @@ Bounce Action_Executor(Level* L)
 
 } skip_output_check: {  //////////////////////////////////////////////////////
 
-  // This is where things get jumped to if you pass a <maybe> argument a
+  // This is where things get jumped to if you pass a <opt-out> argument a
   // VOID and it wants to jump past all the processing and return, or if
   // a level just wants argument fulfillment and no execution.
   //

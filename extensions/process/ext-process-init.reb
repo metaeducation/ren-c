@@ -162,7 +162,7 @@ browse: func [
     "Open web browser to a URL or local file."
 
     return: [~]
-    location [<maybe> url! file!]
+    location [<opt-out> url! file!]
 ][
     print "Opening web browser..."
 

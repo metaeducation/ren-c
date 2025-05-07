@@ -541,7 +541,7 @@ Option(Error*) Trap_Wrap_Extend_Core(
 //
 //      return: [~]
 //      context [any-context?]
-//      list [<maybe> any-list?]
+//      list [<opt-out> any-list?]
 //  ]
 //
 DECLARE_NATIVE(WRAP_P)
@@ -578,7 +578,7 @@ DECLARE_NATIVE(WRAP_P)
 //
 //      return: "List with added binding, and context created for variables"
 //          [~[any-list? object!]~]
-//      list [<maybe> any-list?]
+//      list [<opt-out> any-list?]
 //      :deep "Look for assigning constructs deeply"
 //      :set "Use semantics for WRAP of a SET-BLOCK for list argument"
 //  ]

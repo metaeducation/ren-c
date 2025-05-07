@@ -121,7 +121,7 @@ void Shutdown_Typesets(void)
 //
 // 2. TAG! parameter modifiers can't be abstracted.  So you can't say:
 //
-//        modifier: either condition [<end>] [<maybe>]
+//        modifier: either condition [<end>] [<opt-out>]
 //        foo: func [arg [modifier integer!]] [...]
 //
 // 3. Everything non-TAG! can be abstracted via WORD!.  This can lead to some
@@ -229,7 +229,7 @@ void Set_Parameter_Spec(
                 Init_Quasi_Word(dest, CANON(NULL));  // !!!
                 *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
-            else if (0 == CT_Utf8(item, Root_Maybe_Tag, strict)) {
+            else if (0 == CT_Utf8(item, Root_Opt_Out_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_NOOP_IF_VOID;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
                 Init_Quasi_Word(dest, CANON(VOID));  // !!!

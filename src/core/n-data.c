@@ -126,7 +126,7 @@ DECLARE_NATIVE(BIND)
 //  "Get the binding of a value (binding is a loooong work in progress...)"
 //
 //      return: [~null~ any-context? 'let]
-//      element [<maybe> fundamental?]
+//      element [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(BINDING_OF)
@@ -144,7 +144,7 @@ DECLARE_NATIVE(BINDING_OF)
 //
 //      return: [~null~ any-value?]
 //      where [any-context? any-list? any-sequence?]
-//      element [<maybe> element?]  ; QUOTED? support?
+//      element [<opt-out> element?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(INSIDE)
@@ -176,7 +176,7 @@ DECLARE_NATIVE(INSIDE)
 //
 //      return: [~null~ any-value?]
 //      definitions [word! any-context?]
-//      value [<maybe> any-list?]  ; QUOTED? support?
+//      value [<opt-out> any-list?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(OVERBIND)
@@ -209,7 +209,7 @@ DECLARE_NATIVE(OVERBIND)
 //
 //      return: [~null~ any-word?]
 //      context [any-context?]
-//      value [<maybe> any-word?]  ; QUOTED? support?
+//      value [<opt-out> any-word?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(HAS)
@@ -248,7 +248,7 @@ DECLARE_NATIVE(HAS)
 //      return: [~null~ any-word? any-list?]
 //      context "If integer, then removes that number of virtual bindings"
 //          [integer! any-context?]
-//      value [<const> <maybe> any-word? any-list?]  ; QUOTED? support?
+//      value [<const> <opt-out> any-word? any-list?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(WITHOUT)
@@ -394,7 +394,7 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
 //  "Test if an argument is a chain with a leading blank"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(REFINEMENT_Q)
@@ -416,7 +416,7 @@ DECLARE_NATIVE(REFINEMENT_Q)
 //  "Test if an argument is a chain with a word and trailing blank"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(SET_WORD_Q)
@@ -438,7 +438,7 @@ DECLARE_NATIVE(SET_WORD_Q)
 //  "Test if argument is a path like /WORD: (for setting action variables)"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(SET_RUN_WORD_Q)
@@ -460,7 +460,7 @@ DECLARE_NATIVE(SET_RUN_WORD_Q)
 //  "Test if argument is a path like /WORD"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(RUN_WORD_Q)
@@ -486,7 +486,7 @@ DECLARE_NATIVE(RUN_WORD_Q)
 //  "Test if an argument is a chain with a leading blank and a word"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(GET_WORD_Q)
@@ -508,7 +508,7 @@ DECLARE_NATIVE(GET_WORD_Q)
 //  "Test if an argument is a chain with a tuple and trailing blank"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(SET_TUPLE_Q)
@@ -530,7 +530,7 @@ DECLARE_NATIVE(SET_TUPLE_Q)
 //  "Test if an argument is a chain with a leading blank and a tuple"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(GET_TUPLE_Q)
@@ -552,7 +552,7 @@ DECLARE_NATIVE(GET_TUPLE_Q)
 //  "Test if an argument is a chain with a group and trailing blank"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(SET_GROUP_Q)
@@ -574,7 +574,7 @@ DECLARE_NATIVE(SET_GROUP_Q)
 //  "Test if an argument is a chain with a leading blank and a group"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(GET_GROUP_Q)
@@ -596,7 +596,7 @@ DECLARE_NATIVE(GET_GROUP_Q)
 //  "Test if an argument is a chain with a block and trailing blank"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(SET_BLOCK_Q)
@@ -618,7 +618,7 @@ DECLARE_NATIVE(SET_BLOCK_Q)
 //  "Test if an argument is a chain with a leading blank and a block"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(GET_BLOCK_Q)
@@ -640,7 +640,7 @@ DECLARE_NATIVE(GET_BLOCK_Q)
 //  "Test if an argument is a 2-element chain with a trailing blank"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(ANY_SET_VALUE_Q)
@@ -684,7 +684,7 @@ DECLARE_NATIVE(ANY_GET_VALUE_Q)
 //  "Test if an argument is an QUASI form of word"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(QUASI_WORD_Q)
@@ -706,7 +706,7 @@ DECLARE_NATIVE(QUASI_WORD_Q)
 //  "Test if an argument is an issue with one codepoint (or #{00} NUL blob)"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(CHAR_Q)
@@ -728,7 +728,7 @@ DECLARE_NATIVE(CHAR_Q)
 //  "Test if an argument is quoted word"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(LIT_WORD_Q)
@@ -752,7 +752,7 @@ DECLARE_NATIVE(LIT_WORD_Q)
 //  "Test if an argument is a quoted path"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(LIT_PATH_Q)
@@ -925,10 +925,10 @@ DECLARE_NATIVE(RESOLVE)
 //
 //      return: "Same as the target module"
 //          [module!]
-//      where [<maybe> module!] "(modified)"
-//      source [<maybe> module!]
+//      where [<opt-out> module!] "(modified)"
+//      source [<opt-out> module!]
 //      exports "Which words to export from the source"
-//          [<maybe> block!]
+//          [<opt-out> block!]
 //  ]
 //
 DECLARE_NATIVE(PROXY_EXPORTS)
@@ -1072,7 +1072,7 @@ DECLARE_NATIVE(IDENTITY) // sample uses: https://stackoverflow.com/q/3136338
 //  "Releases the underlying data of a value so it can no longer be accessed"
 //
 //      return: [~]
-//      memory [<maybe> blank! any-series? any-context? handle!]
+//      memory [<opt-out> blank! any-series? any-context? handle!]
 //  ]
 //
 DECLARE_NATIVE(FREE)
@@ -1102,7 +1102,7 @@ DECLARE_NATIVE(FREE)
 //
 //      return: "Returns false if value wouldn't be FREEable (e.g. LOGIC!)"
 //          [logic?]
-//      value [<maybe> any-value?]
+//      value [<opt-out> any-value?]
 //  ]
 //
 DECLARE_NATIVE(FREE_Q)
@@ -1305,7 +1305,7 @@ DECLARE_NATIVE(NOT_TRASH_Q)
 //  "Tells you if argument is a quasiform blank (~)"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(QUASAR_Q)
@@ -1327,7 +1327,7 @@ DECLARE_NATIVE(QUASAR_Q)
 //  "Tells you if argument is a space character (#)"
 //
 //      return: [logic?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(SPACE_Q)
@@ -1462,7 +1462,7 @@ DECLARE_NATIVE(REIFY)
 //  "Make quasiforms into their plain forms, pass through all other elements"
 //
 //      return: [element?]
-//      element [<maybe> element?]
+//      element [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(NOQUASI)
