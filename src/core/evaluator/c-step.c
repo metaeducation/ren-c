@@ -969,7 +969,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             L_binding,
             flags
         );
-        Init_Void(Evaluator_Primed_Cell(sub));
+        Init_Ghost(Evaluator_Primed_Cell(sub));
         Push_Level_Erase_Out_If_State_0(OUT, sub);
 
         return CONTINUE_SUBLEVEL(sub); }

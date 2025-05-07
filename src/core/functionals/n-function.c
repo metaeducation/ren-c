@@ -570,19 +570,29 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     if (Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true))
         return true;
 
-    if (Is_Void(atom)) {  // RETURN VOID
-        //
-        // !!! Treating a return of VOID as a return of TRASH helps some
-        // scenarios, for instance piping UPARSE combinators which do not
-        // want to propagate pure invisibility.  The idea should be reviewed
-        // to see if VOID makes more sense...but start with a more "ornery"
-        // value to see how it shapes up.
-        //
-        Init_Trash(atom);
-    }
+    if (not Is_Ghost(atom))
+        return false;
 
-    return Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true);
-}
+  try_coerce_ghost_to_void: { ////////////////////////////////////////////////
+
+    // Motivated by constructs in PARSE, we make it easier for functions that
+    // don't want to be invisible to give VOID intent instead of GHOST!.
+    //
+    //   https://rebol.metaeducation.com/t/leaky-ghosts/2437
+    //
+    // This doesn't actually work for PARSE itself, because it is returning
+    // a PACK!, and we don't do coercions of elements in pack.  e.g. if the
+    // type checks against ~[pack! integer!]~ and you have ~[~,~ '10]~ as
+    // your pack, this coercion doesn't touch that in-pack value.
+
+    Init_Void(atom);
+
+    if (Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true))
+        return true;
+
+    Init_Ghost(atom);
+    return false;
+}}
 
 
 //

@@ -121,6 +121,7 @@ bind construct [
     ]
 ][
     let autopipe: ~
+    let ghostable: ~  ; need to UNGHOST return result if no GHOST! return
 
     let action: func compose [
         ; Get the text description if given
@@ -136,6 +137,7 @@ bind construct [
                 pack [ensure text! spec.2, ensure block! spec.3]
                 elide spec: my skip 3
             ]
+            ghostable: did any [find types 'ghost!, find types '~,~]
             spread compose:deep [
                 return: (maybe description)
                     [~[(types) any-series? [blank! block!]]~]
@@ -199,9 +201,11 @@ bind construct [
             ]
         ])
 
-        return: lambda [^atom] compose2:deep '{} [  ; already composing $()
+        return: lambda [^atom] compose2:deep '{} [  ; already composing w/()
             {unrun return/} pack [
-                unmeta atom except e -> [{unrun return/} raise e]
+                {? if not ghostable ['unghost]} (^atom except e -> [
+                    {unrun return/} raise e
+                ])
                 remainder
                 pending
             ]
@@ -239,15 +243,7 @@ combinator?: func [
     frame [<unrun> frame!]
     <local> keys
 ][
-    keys: words of frame  ; test if it's a combinator
-    ;
-    ; could also check RETURNS OF for `pending` and `state`, but might exclude
-    ; wrapped combinators which return packs directly.
-    ;
-    return all [
-        did find keys 'input
-        did find keys 'state
-    ]
+    return did all [has frame 'input, has frame 'state]
 ]
 
 negatable-parser?: func [
@@ -337,16 +333,6 @@ default-combinators: to map! reduce [
     ]
 
     === BASIC KEYWORDS ===
-
-    'try combinator [
-        "If parser fails, succeed and return NULL; don't advance input"
-        return: "PARSER's result if it succeeds, otherwise NULL"
-            [any-value? pack!]
-        parser [action!]
-        <local> result'
-    ][
-        fail "TRY combinator changed back to OPTIONAL (or abbreviate as OPT)"
-    ]
 
     'optional combinator [
         "If parser fails, succeed and return NULL; don't advance input"
@@ -3063,13 +3049,10 @@ parse*: func [
         ]
     ]
 
-    ; While combinators can vaporize, don't allow PARSE itself to vaporize
-    ;
-    if ghost? ^synthesized' [
-        synthesized': meta void
+    return pack [
+        unghost ^synthesized'  ; combinators can vaporize, but PARSE shouldn't
+        pending
     ]
-
-    return pack [^synthesized' pending]
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
