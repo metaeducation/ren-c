@@ -136,7 +136,7 @@ INLINE Value* Mutable_Lib_Var(SymId id) {
 INLINE const Value* Lib_Var(SymId id) {
     assert(id <= MAX_SYM_LIB_PREMADE);
     Value* slot = cast(Value*, Stub_Cell(&g_lib_patches[id]));
-    assert(not Is_Trash(slot) or id == SYM_TRASH);
+    assert(not Is_Trash(slot));
     return slot;
 }
 

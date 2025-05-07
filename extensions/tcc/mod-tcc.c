@@ -101,11 +101,11 @@ static void Error_Reporting_Hook(
     const char *msg_utf8
 ){
     // When `tcc_set_error_func()` is called, you can pass it a value that
-    // it will pass back.  We pass EMPTY_BLOCK to test it (and explain it).
+    // it will pass back.  We pass g_empty_block to test it (and explain it).
     // Note that since the compilation can be delayed after MAKE-NATIVE exits,
     // pointers to local variables should not be used here.
     //
-    assert(cast(Value*, opaque) == EMPTY_BLOCK);
+    assert(cast(Value*, opaque) == g_empty_block);
     UNUSED(opaque);
 
     Value* message = rebText(msg_utf8);
@@ -421,7 +421,7 @@ DECLARE_NATIVE(COMPILE_P)
     );
     Push_Lifeguard(handle);
 
-    void* opaque = cast(void*, EMPTY_BLOCK); // can parameterize the error...
+    void* opaque = cast(void*, g_empty_block); // can parameterize the error...
     tcc_set_error_func(state, opaque, &Error_Reporting_Hook);
 
 
@@ -704,7 +704,7 @@ DECLARE_NATIVE(COMPILE_P)
         );
         Element* block = Init_Block(
             Details_At(details_api, IDX_API_ACTION_BINDING_BLOCK),
-            EMPTY_ARRAY
+            g_empty_array
         );
         Tweak_Cell_Binding(block, g_user_context);  // !!! MAKE-NATIVE capture?
 

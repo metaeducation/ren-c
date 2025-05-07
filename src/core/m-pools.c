@@ -1271,8 +1271,8 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer("") == DETECTED_AS_UTF8);
     assert(Detect_Rebol_Pointer("asdf") == DETECTED_AS_UTF8);
 
-    assert(Detect_Rebol_Pointer(PG_Empty_Array) == DETECTED_AS_STUB);
-    assert(Detect_Rebol_Pointer(Root_Quasi_Null) == DETECTED_AS_CELL);
+    assert(Detect_Rebol_Pointer(g_empty_array) == DETECTED_AS_STUB);
+    assert(Detect_Rebol_Pointer(g_quasi_null) == DETECTED_AS_CELL);
 
     DECLARE_ELEMENT (unreadable);
     Init_Unreadable(unreadable);

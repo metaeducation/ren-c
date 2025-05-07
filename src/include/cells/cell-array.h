@@ -1,11 +1,5 @@
 // %cell-array.h
 
-#define EMPTY_BLOCK \
-    g_empty_block
-
-#define EMPTY_ARRAY \
-    PG_Empty_Array // Note: initialized from Cell_Array(g_empty_block)
-
 
 INLINE bool Listlike_Cell(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
@@ -271,4 +265,4 @@ INLINE bool Is_Hole(const Cell* v) {
 }
 
 #define Init_Hole(out) \
-    TRACK(Init_Splice_Untracked((out), EMPTY_ARRAY))
+    TRACK(Init_Splice_Untracked((out), g_empty_array))

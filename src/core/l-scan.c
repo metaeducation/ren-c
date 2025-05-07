@@ -3349,7 +3349,7 @@ DECLARE_NATIVE(TRANSCODE)
     //
     // Note: Could reuse global TG_End_Feed if context was null.
 
-    Feed* feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
+    Feed* feed = Make_Array_Feed_Core(g_empty_array, 0, SPECIFIED);
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline

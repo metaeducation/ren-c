@@ -484,7 +484,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
             Init_Any_List_At(Feed_Data(feed), TYPE_BLOCK, a, 1);
         }
         else
-            Init_Any_List_At(Feed_Data(feed), TYPE_BLOCK, EMPTY_ARRAY, 0);
+            Init_Any_List_At(Feed_Data(feed), TYPE_BLOCK, g_empty_array, 0);
 
         feed->p = &PG_Feed_At_End;
     }

@@ -245,7 +245,7 @@ DECLARE_NATIVE(JOIN)
         Feed* feed = Prep_Array_Feed(  // leverage feed mechanics [1]
             Alloc_Feed(),
             unwrap rest,  // first--in this case, the only value in the feed...
-            EMPTY_ARRAY,  // ...because we're using the empty array after that
+            g_empty_array,  // ...because we're using the empty array after that
             0,  // ...at index 0
             SPECIFIED,  // !!! context shouldn't matter
             FEED_MASK_DEFAULT | ((unwrap rest)->header.bits & FEED_FLAG_CONST)

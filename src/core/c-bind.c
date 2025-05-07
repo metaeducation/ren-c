@@ -612,7 +612,7 @@ DECLARE_NATIVE(LET)
 
     switch (STATE) {
       case ST_LET_INITIAL_ENTRY:
-        Init_Block(bindings_holder, EMPTY_ARRAY);
+        Init_Block(bindings_holder, g_empty_array);
         goto initial_entry;
 
       case ST_LET_EVAL_STEP:

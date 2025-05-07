@@ -190,12 +190,6 @@ INLINE Element* Init_Any_String_At(
 #define Init_Tag(v,s)       Init_Any_String((v), TYPE_TAG, (s))
 
 
-//=//// GLOBAL STRING CONSTANTS //////////////////////////////////////////=//
-
-#define EMPTY_TEXT \
-    g_empty_text
-
-
 INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
     DECLARE_ELEMENT (temp);
     Option(Error*) e = Trap_Alias_Any_Utf8_As(temp, any_utf8, TYPE_TEXT);

@@ -116,12 +116,13 @@ PVAR Element* g_empty_text; // read-only ""
 PVAR Element* g_empty_blob; // read-only #{}
 PVAR Element* g_empty_block; // read-only []
 PVAR Element* g_empty_object;
-PVAR Element* Root_Quasi_Null;  // ~null~ quasiform
-PVAR Source* PG_Empty_Array; // optimization of Cell_Array(g_empty_block)
+PVAR Element* g_quasi_null;  // ~null~ quasiform
+PVAR Value* g_trash;  // ~ antiform (LIB(TRASH) is a function)
+PVAR Source* g_empty_array; // optimization of Cell_Array(g_empty_block)
 PVAR VarList* g_empty_varlist;
-PVAR Source* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
+PVAR Source* g_1_quasi_null_array;  // used by heavy nulls ~[~null~]~
 
-PVAR Value* Root_Meta_Heavy_Null;  // keeps PG_1_Quasi_Null_Array alive
+PVAR Value* g_meta_heavy_null;  // keeps g_1_quasi_null_array alive
 
 PVAR Element* Root_Feed_Null_Substitute;  // flagged with FEED_NOTE_META
 

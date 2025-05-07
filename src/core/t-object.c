@@ -445,7 +445,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
         arg,  // being used here as input (e.g. the ACTION!)
         lowest_stackindex,  // will weave in any refinements pushed
         nullptr,  // no binder needed, not running any code
-        LIB(TRASH)  // use COPY UNRUN FRAME! for parameters vs. nothing
+        g_trash  // use COPY UNRUN FRAME! for parameters vs. nothing
     );
 
     ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(arg));
@@ -548,8 +548,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         VarList* context = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
             TYPE_OBJECT,
-            Array_Head(EMPTY_ARRAY),  // scan for toplevel set-words (empty)
-            Array_Tail(EMPTY_ARRAY),
+            Array_Head(g_empty_array),  // scan for toplevel set-words (empty)
+            Array_Tail(g_empty_array),
             nullptr  // no parent
         );
 

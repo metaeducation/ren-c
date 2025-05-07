@@ -320,7 +320,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
             Move_Cell(action, out);
             Deactivate_If_Action(action);
 
-            Option(Element*) def = nullptr;  // !!! EMPTY_BLOCK doesn't work?
+            Option(Element*) def = nullptr;  // !!! g_empty_block doesn't work?
             bool threw = Specialize_Action_Throws(  // costly, try to avoid [1]
                 out, action, def, base
             );

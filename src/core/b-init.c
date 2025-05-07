@@ -311,12 +311,12 @@ static void Init_Root_Vars(void)
     Init_Bounce_Wild(g_bounce_okay, C_OKAY);
     Init_Bounce_Wild(g_bounce_bad_intrinsic_arg, C_BAD_INTRINSIC_ARG);
 
-    PG_Empty_Array = Make_Source_Managed(0);
-    Freeze_Source_Deep(PG_Empty_Array);
+    g_empty_array = Make_Source_Managed(0);
+    Freeze_Source_Deep(g_empty_array);
 
     ensure(nullptr, g_empty_block) = Init_Block(
         Alloc_Value(),
-        PG_Empty_Array  // holds empty array alive
+        g_empty_array  // holds empty array alive
     );
     Force_Value_Frozen_Deep(g_empty_block);
 
@@ -357,9 +357,9 @@ static void Init_Root_Vars(void)
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
     Init_Quasi_Null(Stub_Cell(a));
     Freeze_Source_Deep(a);
-    ensure(nullptr, PG_1_Quasi_Null_Array) = a;
-    ensure(nullptr, Root_Meta_Heavy_Null) = Init_Meta_Pack(Alloc_Value(), a);
-    Force_Value_Frozen_Deep(Root_Meta_Heavy_Null);
+    ensure(nullptr, g_1_quasi_null_array) = a;
+    ensure(nullptr, g_meta_heavy_null) = Init_Meta_Pack(Alloc_Value(), a);
+    Force_Value_Frozen_Deep(g_meta_heavy_null);
   }
 
     ensure(nullptr, Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
@@ -384,8 +384,11 @@ static void Init_Root_Vars(void)
     ensure(nullptr, g_empty_blob) = Init_Blob(Alloc_Value(), bzero);
     Force_Value_Frozen_Deep(g_empty_blob);
 
-    ensure(nullptr, Root_Quasi_Null) = Init_Quasi_Null(Alloc_Value());
-    Protect_Cell(Root_Quasi_Null);
+    ensure(nullptr, g_quasi_null) = Init_Quasi_Null(Alloc_Value());
+    Protect_Cell(g_quasi_null);
+
+    ensure(nullptr, g_trash) = Init_Trash(Alloc_Value());
+    Protect_Cell(g_trash);
 
     ensure(nullptr, g_dispatcher_table) = Make_Flex(
         FLAG_FLAVOR(DISPATCHERTABLE) | STUB_FLAG_DYNAMIC,
@@ -412,14 +415,15 @@ static void Shutdown_Root_Vars(void)
 
     rebReleaseAndNull(&g_empty_text);
     rebReleaseAndNull(&g_empty_block);
-    PG_Empty_Array = nullptr;
+    g_empty_array = nullptr;
     rebReleaseAndNull(&g_empty_object);
     g_empty_varlist = nullptr;
-    rebReleaseAndNull(&Root_Meta_Heavy_Null);
-    PG_1_Quasi_Null_Array = nullptr;
+    rebReleaseAndNull(&g_meta_heavy_null);
+    g_1_quasi_null_array = nullptr;
     rebReleaseAndNull(&Root_Feed_Null_Substitute);
     rebReleaseAndNull(&g_empty_blob);
-    rebReleaseAndNull(&Root_Quasi_Null);
+    rebReleaseAndNull(&g_quasi_null);
+    rebReleaseAndNull(&g_trash);
 }
 
 
@@ -797,7 +801,7 @@ void Startup_Core(void)
     PG_Boot_Phase = BOOT_ERRORS;
 
   #if defined(TEST_MID_BOOT_PANIC)
-    panic (EMPTY_ARRAY); // panics should be able to give some details by now
+    panic (g_empty_array); // panics should be able to give some details by now
   #elif defined(TEST_MID_BOOT_FAIL)
     fail ("mid boot fail"); // CHECKED->assert, RELEASE->panic
   #endif

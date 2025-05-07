@@ -28,7 +28,7 @@
 //
 
 #define Init_Void_Untracked(out) \
-    Init_Pack_Untracked((out), EMPTY_ARRAY)
+    Init_Pack_Untracked((out), g_empty_array)
 
 #define Init_Void(out) \
     TRACK(Init_Void_Untracked(out))
@@ -42,7 +42,7 @@ INLINE bool Is_Void(Need(const Atom*) v) {
 }
 
 INLINE Element* Init_Meta_Of_Void_Untracked(Sink(Element) out) {
-    Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, EMPTY_ARRAY, 0, SPECIFIED);
+    Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, g_empty_array, 0, SPECIFIED);
     QUOTE_BYTE(out) = QUASIFORM_2_COERCE_ONLY;
     return out;
 }

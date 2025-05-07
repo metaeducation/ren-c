@@ -117,7 +117,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 //
 // Requesting steps will supress that, but sometimes you don't actually need
 // the steps (as the evaluator doesn't when doing SET-TUPLE!).  Rather than
-// passing a separate flag, the LIB(TRASH) pointer is used (mutable, but it
+// passing a separate flag, the g_trash pointer is used (mutable, but it
 // has the protected bit set to avoid accidents)
 //
-#define GROUPS_OK  m_cast(Value*, LIB(TRASH))
+#define GROUPS_OK  m_cast(Value*, g_trash)

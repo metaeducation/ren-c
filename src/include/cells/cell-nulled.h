@@ -117,10 +117,10 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 //
 
 #define Init_Heavy_Null_Untracked(out) \
-    Init_Pack_Untracked((out), PG_1_Quasi_Null_Array)
+    Init_Pack_Untracked((out), g_1_quasi_null_array)
 
 #define Init_Heavy_Null(out) \
-    Init_Pack((out), PG_1_Quasi_Null_Array)
+    Init_Pack((out), g_1_quasi_null_array)
 
 INLINE bool Is_Heavy_Null(const Cell* v) {
     if (not Is_Pack(v))

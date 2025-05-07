@@ -279,7 +279,7 @@ REBLEN Modify_String_Or_Binary(
             return dst_idx;  // INSERT returns index at insertion tail
 
         assert(op == SYM_CHANGE);
-        src = EMPTY_TEXT;  // give same behavior as CHANGE to empty string
+        src = g_empty_text;  // give same behavior as CHANGE to empty string
     }
     else
         src = unwrap opt_src;

@@ -96,7 +96,7 @@ INLINE Element* Init_Varargs_Untyped_Infix(
 ){
     Stub* feed;
     if (not left)
-        feed = EMPTY_ARRAY;
+        feed = g_empty_array;
     else {
         Source* singular = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
         Copy_Cell(Stub_Cell(singular), unwrap left);

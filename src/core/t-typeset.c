@@ -359,7 +359,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
     if (param_array)
         Init_Block(temp, unwrap param_array);
     else
-        Init_Block(temp, EMPTY_ARRAY);
+        Init_Block(temp, g_empty_array);
     Decorate_According_To_Parameter(temp, v);
 
     Push_Lifeguard(temp);

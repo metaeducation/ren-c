@@ -822,7 +822,7 @@ void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
             les->u.eser.len = Cell_Series_Len_Head(data);  // has HOLD, won't change
         }
         else if (Is_Module(data)) {
-            les->flex = EMPTY_ARRAY;  // !!! workaround, not a Flex
+            les->flex = g_empty_array;  // !!! workaround, not a Flex
             Init_Evars(&les->u.evars, data);
         }
         else if (Any_Context(data)) {

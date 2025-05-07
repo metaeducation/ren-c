@@ -50,7 +50,7 @@ null: ~null~
 ok: okay: ~okay~
 ok?: okay?/
 
-trash: ~  ; LIB(TRASH) expects value not function...use NOOP function instead
+noop: trash/  ; lack of a hyphen has wide precedent, e.g. jQuery.noop
 
 void: lambda [] [~[]~]
 

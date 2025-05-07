@@ -1079,7 +1079,7 @@ Error* Error_Arg_Type(
     if (param_array)
         Init_Block(spec, unwrap param_array);
     else
-        Init_Block(spec, EMPTY_ARRAY);
+        Init_Block(spec, g_empty_array);
 
     return Error_Expect_Arg_Raw(
         label,

@@ -197,7 +197,7 @@ DECLARE_NATIVE(RESUME)
 
     Value* expr = ARG(EXPRESSION);
     if (Is_Nulled(expr))  // e.g. <end> (actually null not legal)
-        Init_Any_List(expr, TYPE_META_GROUP, EMPTY_ARRAY);
+        Init_Any_List(expr, TYPE_META_GROUP, g_empty_array);
     else {
         assert(Is_Block(expr));
         HEART_BYTE(expr) = TYPE_META_GROUP;

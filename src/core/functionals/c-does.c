@@ -81,7 +81,7 @@ DECLARE_NATIVE(DOES)
     Value* source = ARG(SOURCE);
 
     if (Is_Block(source))
-        return rebValue(CANON(LAMBDA), EMPTY_BLOCK, source);
+        return rebValue(CANON(LAMBDA), g_empty_block, source);
 
     assert(!"DOES with types other than BLOCK! not currently active");  // [1]
 

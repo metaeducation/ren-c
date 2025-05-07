@@ -2477,7 +2477,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
     ENTER_API;
 
     if (p == nullptr)
-        return c_cast(RebolNodeInternal*, Root_Quasi_Null);
+        return c_cast(RebolNodeInternal*, g_quasi_null);
 
     const Stub* stub;
 
@@ -2492,7 +2492,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
         const Value* at = cast(const Value*, p);
         if (Is_Nulled(at)) {
             assert(not Is_Api_Value(at));  // only internals use nulled cells
-            return c_cast(RebolNodeInternal*, Root_Quasi_Null);
+            return c_cast(RebolNodeInternal*, g_quasi_null);
         }
 
         Value* v = Copy_Cell(Alloc_Value(), at);
@@ -3224,7 +3224,7 @@ RebolValue* API_rebFunctionFlipped(
     DECLARE_ELEMENT (spec);
 
     if (Is_Feed_At_End(feed)) {  // act like `func [] [...]`
-        Init_Block(spec, EMPTY_ARRAY);
+        Init_Block(spec, g_empty_array);
     }
     else {
         Copy_Cell(spec, At_Feed(feed));
@@ -3267,7 +3267,7 @@ RebolValue* API_rebFunctionFlipped(
         cast(CFunction*, cfunc)
     );
     Value* holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
-    Init_Block(holder, EMPTY_ARRAY);  // only care about binding GC safety
+    Init_Block(holder, g_empty_array);  // only care about binding GC safety
     Tweak_Cell_Binding(holder, Cell_Binding(spec));
 
     assert(Misc_Phase_Adjunct(details) == nullptr);

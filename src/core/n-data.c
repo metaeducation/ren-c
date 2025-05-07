@@ -1255,25 +1255,16 @@ DECLARE_NATIVE(TRASH_Q)
 
 
 //
-//  noop: native [  ; native:intrinsic currently needs at least 1 argument
+//  trash: native [  ; native:intrinsic currently needs at least 1 argument
 //
-//  "Has no effect, besides returning antiform BLANK! (aka TRASH)"
+//  "Returns antiform BLANK! (aka TRASH)"
 //
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(NOOP)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
-//
-// This function is preferred to having a function called TRASH, due to the
-// potential confusion of people not realizing that (get $trash) would be
-// a function, and not the antiform blank state.  It's also the case that
-// the code uses LIB(TRASH) to get a canon trash value.
-//
-// (The rule is bent with VOID and GHOST being functions, those are unstable
-// antiforms though and so LIB(VOID) and LIB(GHOST) couldn't return the
-// unstable atom states, as they wouldn't be storable in lib variables.)
+DECLARE_NATIVE(TRASH)
 {
-    INCLUDE_PARAMS_OF_NOOP;
+    INCLUDE_PARAMS_OF_TRASH;
 
     return Init_Trash(OUT);
 }
