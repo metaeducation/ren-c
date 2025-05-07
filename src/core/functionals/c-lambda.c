@@ -24,8 +24,8 @@
 // happens to be in the evaluation cell when it's done.
 //
 // This means that RETURN can be a parameter or <local> of the lambda.  But
-// more often, it the meaning of RETURN will be whatever was in effect
-// when the lambda was defined:
+// more often, the meaning of RETURN will be whatever was in effect when the
+// lambda was defined:
 //
 //      outer: func [x] [
 //          let inner: lambda [y] [
@@ -38,7 +38,7 @@
 //
 // * The aspirational goal of the design of definitional returns was that you
 //   could build FUNCTION from LAMBDA and get identical semantics, by having
-//   a local variable called RETURN that was initialized with nother LAMBDA
+//   a local variable called RETURN that was initialized with another LAMBDA
 //   (that did not itself try to define a RETURN, thus avoiding an infinite
 //   regress).  This would be a way to avoid having RETURN be a keyword in the
 //   language, and instead be a feature some generators offered...with
@@ -67,7 +67,29 @@ enum {
 //
 //  Lambda_Dispatcher: C
 //
-// This runs very much like function dispatch, but there's no RETURN to catch.
+// This runs very much like function dispatch, but there's no RETURN.  So
+// the result of the call will just be whatever the body evaluates to.
+// (Note that FUNCTION's result is forced to TRASH! if no RETURN is called
+// before the end of the body block is reached.)
+//
+// 1. We prime the result with GHOST!, because lambdas are willing to vanish
+//    if their bodies fully vaporize with no non-ghost values seen:
+//
+//        test1: lambda [] []
+//        test2: lambda [] [comment "no body"]
+//
+//        >> 1 + 2 test1
+//        == 3
+//
+//        >> 1 + 2 test2
+//        == 3
+//
+//    But if anything is seen--even a void--then the lambda won't vanish:
+//
+//        test3: lambda [] [void comment "only the comment vaporizes"]
+//
+//        >> 1 + 2 test3
+//        == ~[]~  ; anti
 //
 Bounce Lambda_Dispatcher(Level* const L)
 {
@@ -86,12 +108,16 @@ Bounce Lambda_Dispatcher(Level* const L)
     Element* block_rebound = Copy_Cell(SPARE, block);
     Tweak_Cell_Binding(SPARE, L->varlist);
 
-    return DELEGATE_CORE(
-        OUT,
-        LEVEL_MASK_NONE,
-        SPECIFIED,
-        block_rebound
+    Flags flags = (LEVEL->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
+
+    Level* sub = Make_Level_At_Core(
+        &Evaluator_Executor, block_rebound, SPECIFIED, flags
     );
+    Init_Ghost(Evaluator_Primed_Cell(sub));  // lambdas willing to vanish [1]
+
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
+
+    return BOUNCE_DELEGATE;
 }
 
 
