@@ -114,6 +114,9 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 //
 // ("Heavy Voids" are an analogous concept for VOID.)
 
+#define Init_Heavy_Null_Untracked(out) \
+    Init_Pack_Untracked((out), PG_1_Quasi_Null_Array)
+
 #define Init_Heavy_Null(out) \
     Init_Pack((out), PG_1_Quasi_Null_Array)
 

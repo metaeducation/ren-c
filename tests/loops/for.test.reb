@@ -48,7 +48,7 @@
 (
     success: 'true
     all [
-        '~[~void~]~ = ^ for 'i each [1] [continue, success: 'false]
+        trash? for 'i each [1] [continue, success: 'false]
         true? success
     ]
 )

@@ -308,3 +308,42 @@ INLINE Bounce Native_Branched_Result(Level* level_, Atom* v) {
         Init_Heavy_Null(v);  // box up for THEN reactivity [2]
     return level_->out;
 }
+
+// It's necessary to be able to tell from the outside of a loop whether it
+// had a BREAK or not, e.g.
+//
+//   flag: 'true
+//   while [true? flag] [flag: 'false, null]
+//
+// We don't want that to evaluate to NULL--because NULL is reserved for a
+// break signal.  So we make a ~[~null~]~ "heavy null" antiform PACK!.
+//
+// Also, returning VOID is reserved for if-and-only-if the loop never ran.
+// That's crucial for implementing loop compositions that give correct result
+// values.  For instance, we want these loops to have parity:
+//
+//     >> for-both 'x [1 2 3 4] [] [x * 10]
+//     == 40
+//
+//     >> for-each 'x [1 2 3 4] [x * 10]
+//     == 40
+//
+// If FOR-BOTH is implemented in terms of two FOR-EACH loops, then we want to
+// know the second FOR-EACH loop never produced a result (without having to
+// look at the input and hinge on the semantics of the loop).  But if VOID
+// is this signal, we have to worry about:
+//
+//     >> for-both 'x [1 2] [3 4] [if x = 4 [void]]
+//     == 20  ; if second FOR-EACH gave VOID, and we assumed "never ran"
+//
+// So instead, TRASH is produced for VOID if the body ever ran.  This can be
+// worked around with meta-result protocols if it's truly needed.
+//
+INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
+    assert(atom == level_->out);  // wouldn't be zero cost if we supported copy
+    if (Is_Nulled(atom))
+        Init_Heavy_Null_Untracked(atom);  // distinguish from null for BREAK
+    else if (Is_Void(atom))
+        Init_Trash_Untracked(atom);  // distinguish from loop that never ran
+    return level_->out;
+}

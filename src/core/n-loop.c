@@ -267,7 +267,7 @@ static Bounce Loop_Series_Common(
     if (Is_Cell_Erased(OUT))
         return NIHIL;
 
-    return BRANCHED(OUT);
+    return LOOPED(OUT);
 }
 
 
@@ -301,7 +301,7 @@ static Bounce Loop_Integer_Common(
             if (breaking)
                 return nullptr;
         }
-        return BRANCHED(OUT);
+        return LOOPED(OUT);
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -329,7 +329,7 @@ static Bounce Loop_Integer_Common(
             return FAIL(Error_Overflow_Raw());
     }
 
-    return BRANCHED(OUT);
+    return LOOPED(OUT);
 }
 
 
@@ -386,7 +386,7 @@ static Bounce Loop_Number_Common(
             if (breaking)
                 return nullptr;
         }
-        return BRANCHED(OUT);
+        return LOOPED(OUT);
     }
 
     // As per #1993, see notes in Loop_Integer_Common()
@@ -414,7 +414,7 @@ static Bounce Loop_Number_Common(
     if (Is_Cell_Erased(OUT))
         return NIHIL;
 
-    return BRANCHED(OUT);
+    return LOOPED(OUT);
 }
 
 
@@ -606,7 +606,7 @@ DECLARE_NATIVE(FOR_SKIP)
     if (Is_Cell_Erased(OUT))
         return NIHIL;
 
-    return BRANCHED(OUT);
+    return LOOPED(OUT);
 }
 
 
@@ -624,7 +624,7 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_STOP;
 
-    Sink(Atom) with = SCRATCH;
+    Atom* with = SCRATCH;
     if (not Bool_ARG(WITH))
         Init_Nihil(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
     else
@@ -1169,7 +1169,7 @@ DECLARE_NATIVE(FOR_EACH)
     if (Is_Cell_Erased(OUT))
         return NIHIL;
 
-    return BRANCHED(OUT);
+    return LOOPED(OUT);
 }}
 
 
@@ -1924,7 +1924,7 @@ DECLARE_NATIVE(REPEAT)
     }
 
     if (VAL_INT64(count) == VAL_INT64(index))  // reached the desired count
-        return BRANCHED(OUT);
+        return LOOPED(OUT);
 
     mutable_VAL_INT64(index) += 1;
 
@@ -2029,7 +2029,7 @@ DECLARE_NATIVE(FOR)
         return FAIL(Error_Invalid_Type_Raw(Datatype_Of(var)));
 
     if (VAL_INT64(var) == VAL_INT64(value))
-        return BRANCHED(OUT);
+        return LOOPED(OUT);
 
     if (Add_I64_Overflows(&mutable_VAL_INT64(var), VAL_INT64(var), 1))
         return FAIL(Error_Overflow_Raw());
@@ -2133,7 +2133,7 @@ DECLARE_NATIVE(UNTIL)
 
     if (not Is_Void(condition)) {  // skip voids [2]
         if (Is_Trigger(Stable_Unchecked(condition)))
-            return BRANCHED(OUT);  // truthy result, return value!
+            return LOOPED(OUT);
     }
 
     STATE = ST_UNTIL_EVALUATING_BODY;
@@ -2236,17 +2236,8 @@ DECLARE_NATIVE(WHILE)
 
 } return_out: {  /////////////////////////////////////////////////////////////
 
-    // 1. If someone writes:
-    //
-    //        flag: 'true
-    //        while [true? flag] [flag: 'false, null]
-    //
-    //    We don't want that to evaluate to NULL--because NULL is reserved for
-    //    signaling BREAK.  And VOID results are reserved for when the body
-    //    never runs.  BRANCHED() encloses these in single-element packs.
-
     if (Is_Cell_Erased(OUT))
         return NIHIL;  // body never ran, so no result to return!
 
-    return BRANCHED(OUT);  // put void and null in packs [1]
+    return LOOPED(OUT);  // VOID => TRASH, NULL => HEAVY NULL
 }}

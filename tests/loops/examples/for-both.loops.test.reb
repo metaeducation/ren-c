@@ -58,15 +58,15 @@
     ; (the result "drops out" the bottom of lambdas, and there is no RETURN
     ; definition in effect).
     ;
-    ; ^-- Note that this uses META:LITE and not META (a.k.a. `^`)  The reason
-    ; is that it wants to leave voids and nulls as-is, to serve as the signal
-    ; for breaking or opting out of contributing to the final loop result:
+    ; ^-- Note that this uses META:LITE.  The reason is that it wants to leave
+    ; voids and nulls as-is, to serve as the signal for breaking or opting out
+    ; of contributing to the final loop result:
     ;
     ;     >> meta void
-    ;     == ~void~
+    ;     == ~[]~
     ;
     ;     >> meta:lite void
-    ;     == ~void~  ; anti
+    ;     == ~[]~  ; anti
     ;
 
 
@@ -149,7 +149,7 @@
     )
 
     ; Handles antiforms (^META operations make quasiforms, these are truthy, so
-    ; the only falsey possibility is the BREAK
+    ; the only falsey possibility is the BREAK)
 
     ([1 2 3 4] = collect [
         assert [
@@ -163,14 +163,15 @@
     ; FOR-BOTH provides a proof of why this is the case:
     ;
     ;     >> for-each 'x [1 2] [if x = 2 [continue]]
-    ;     == ~[~void~]~  ; anti
+    ;     == ~  ; anti
     ;
     ; Plain void is reserved for "loop didn't run", and we do not want
     ; a loop that consists of just CONTINUE to lie and say the body of the
-    ; loop didn't run.  It forces our hand to put a void in a pack--to still
-    ; convey a void intent, but not truly be a void for ELSE/THEN purposes.
+    ; loop didn't run.  It forces our hand to return something else to
+    ; convey a void intent.  "Heavy voids" would be undecayable (~[~[]~]~)
+    ; so we fall back on trash for this edge case.
 
-    ('~[~void~]~ = ^ for-both 'x [1 2] [3 4] [if x > 2 [continue] x * 10])
+    (trash? for-both 'x [1 2] [3 4] [if x > 2 [continue] x * 10])
 
-    ('~[~void~]~ = ^ for-both 'x [1 2] [3 4] [comment "Maintain invariant!"])
+    (trash? for-both 'x [1 2] [3 4] [comment "Maintain invariant!"])
 ]

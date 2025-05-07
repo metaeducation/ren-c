@@ -903,6 +903,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define UNMETA(v)   Native_Unmeta_Result(level_, (v))
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
+    #define LOOPED(v)   Native_Looped_Result(level_, (v))
 
     // Note: For efficiency, intrinsic typecheckers must return BOUNCE_OKAY
     // or nullptr.  This means that trying to make LOGIC(b) "more efficient"

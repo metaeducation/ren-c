@@ -11,7 +11,7 @@
 [#1760 ; unwind functions should stop evaluation
     (null? repeat 1 [reduce [break]])
 ]
-('~[~void~]~ = ^ repeat 1 [reduce [continue]])
+(trash? repeat 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
 
 ; There used to be a multi-return situation where the name of a throw was
