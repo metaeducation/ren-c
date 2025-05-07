@@ -35,14 +35,17 @@
 //    ** Error: Cannot put ~null~ antiforms in blocks
 //
 // If a no-op is desired in this situation, MAYBE can be used to convert the
-// null to a void:
+// null to a void, with ? as a shorthand:
 //
 //    >> maybe find [c d] 'e
-//    == ~void~  ; anti
+//    == ~[]~  ; anti
 //
 //    >> append [a b] maybe find [c d] 'e
 //    == [a b]
 //
+//    >> append [a b] ? find [c d] 'e
+//    == [a b]
+
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * In the libRebol API, a nulled RebolValue* actually uses C's concept of
@@ -99,7 +102,7 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 //=//// "HEAVY NULLS" (BLOCK! Antiform Pack with `~null~` in it) //////////=//
 //
 // An "pack" of ~[~null~]~ antiform is used for the concept of a "heavy null".
-// This is something that will act like "pure" NULL in almost all contexts,
+// This is something that will act like "light null" in almost all contexts,
 // except that things like THEN will consider it to have been the product of
 // a "taken branch".
 //
@@ -112,7 +115,6 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 //     >> if ok [null] else [print "This won't run"]
 //     == ~[~null~]~  ; anti
 //
-// ("Heavy Voids" are an analogous concept for VOID.)
 
 #define Init_Heavy_Null_Untracked(out) \
     Init_Pack_Untracked((out), PG_1_Quasi_Null_Array)

@@ -74,7 +74,7 @@ syntax: [
 ]
 
 script: [
-    no-value:           "No value in antiform BLOCK! pack: ~[]~ (NIHIL)"
+    no-value:           "No value in antiform BLOCK! pack: ~[]~ (VOID)"
     bad-null:           [:arg1 "cannot be null"]
     type-of-null:       "TYPE OF NULL illegal (use TRY TYPE OF NULL if meant)"
     bad-word-get:       [:arg1 "is" :arg2 "antiform (see ^^(...) and GET:ANY)"]

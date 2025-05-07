@@ -532,15 +532,12 @@ export stripload: func [
 export to-block-of-file-blocks: func [
     return: "Will be a top-level COPY of the block, or new block"
         [block!]
-    x [~void~ file! block!]
+    x [~null~ file! block!]  ; no ~[]~ or ^META parameters in bootsrap
 ][
     if file? x [
         return reduce [blockify x]  ; case A
     ]
-    any [
-        void? x
-        x = []
-    ] then [
+    any [null? x, x = []] then [
         return copy []
     ]
     if file? x.1 [

@@ -845,7 +845,7 @@ Bounce Meta_Stepper_Executor(Level* L)
                 L_binding,
                 LEVEL_MASK_NONE
             );
-            Init_Nihil(Evaluator_Primed_Cell(sub));
+            Init_Void(Evaluator_Primed_Cell(sub));
             Push_Level_Erase_Out_If_State_0(SPARE, sub);
             STATE = ST_STEPPER_SET_GROUP;
             return CONTINUE_SUBLEVEL(sub); }
@@ -969,7 +969,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             L_binding,
             flags
         );
-        Init_Nihil(Evaluator_Primed_Cell(sub));
+        Init_Void(Evaluator_Primed_Cell(sub));
         Push_Level_Erase_Out_If_State_0(OUT, sub);
 
         return CONTINUE_SUBLEVEL(sub); }
@@ -1184,7 +1184,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     handle_generic_set: { ////////////////////////////////////////////////////
         assert(
-            Is_Word(CURRENT) or Is_Tuple(CURRENT) or Is_Meta_Of_Nihil(CURRENT)
+            Is_Word(CURRENT) or Is_Tuple(CURRENT) or Is_Meta_Of_Void(CURRENT)
         );
         STATE = ST_STEPPER_GENERIC_SET;
 
@@ -1206,11 +1206,11 @@ Bounce Meta_Stepper_Executor(Level* L)
             goto lookahead;
         }
 
-        if (Is_Meta_Of_Nihil(CURRENT))  // e.g. `(void): ...`
+        if (Is_Meta_Of_Void(CURRENT))  // e.g. `(void): ...`
             goto lookahead;
 
         Option(Value*) setval;
-        if (Is_Nihil(OUT))
+        if (Is_Void(OUT))
             setval = nullptr;
         else
             setval = Decay_If_Unstable(OUT);  // !!! packs should passthru
@@ -1244,8 +1244,8 @@ Bounce Meta_Stepper_Executor(Level* L)
 
         assert(L_current_gotten == nullptr);
 
-        if (Is_Nihil(SPARE)) {
-            Init_Meta_Of_Nihil(CURRENT);  // can't put voids in feed position
+        if (Is_Void(SPARE)) {
+            Init_Meta_Of_Void(CURRENT);  // can't put voids in feed position
             goto handle_generic_set;
         }
         else switch (Type_Of(SPARE)) {
@@ -1339,7 +1339,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     // main return value).
 
       // 1. Empty SET-BLOCK! are not supported, although it could be argued
-      //    that an empty set-block could receive a NIHIL (~[]~) pack.
+      //    that an empty set-block could receive a VOID (~[]~) pack.
       //
       // 2. We pre-process the SET-BLOCK! first and collect the variables to
       //    write on the stack.  (It makes more sense for any GROUP!s in the
@@ -1514,7 +1514,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         const Element* pack_meta_tail;
 
         if (Is_Ghost(OUT))  // !!! Hack, want ([:foo]: eval) to always work
-            Init_Nihil(OUT);
+            Init_Void(OUT);
 
         if (Is_Pack(OUT)) {  // antiform block
             pack_meta_at = Cell_List_At(&pack_meta_tail, OUT);

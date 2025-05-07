@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2019-2024 Ren-C Open Source Contributors
+// Copyright 2019-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,11 +21,17 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // This file was created in order to have a place to put tests of libRebol.
-// A better way to do this would be to include C compilation in the test
-// suite against libr3.a, and drive those tests accordingly.  But this would
-// involve setting up separate compilation and running those programs with
-// CALL.  So this is an expedient way to do it just within a native that is
-// built only in certain checked builds.
+// It's a paltry number of tests for the API!
+//
+// What needs to be done instead is to include C compilation in the test
+// suite against libr3.a, and drive those tests accordingly.  It should be
+// many files with many tests each (like at least one file per API function).
+// This would involve setting up separate compilation and running those
+// programs with CALL.
+//
+// But until someone makes time to rig that up, this is better than nothing.
+// Generally speaking the real testing the API gets right now is that it's
+// used extensively in the codebase--both in the core and in extensions.
 //
 
 #include "sys-core.h"
@@ -70,7 +76,9 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
 
     Value* v = Meta_Unquotify_Known_Stable(ARG(VALUE));
-    UNUSED(v);
+    USED(v);
+
+  start: { ///////////////////////////////////////////////////////////////////
 
   #if (! INCLUDE_TEST_LIBREBOL_NATIVE)
     return Init_Text(  // text! vs. failing to distinguish from test failure
@@ -85,14 +93,15 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     // call, because API calls can move the stack.  This doesn't always make
     // an assert since argument order can vary across compilers.
 
-  blockscope {
+} simple_add_test: { /////////////////////////////////////////////////////////
+
     Set_Cell_Flag(Init_Integer(PUSH(), 1), NEWLINE_BEFORE);
     int i = rebUnboxInteger("1 +", rebI(2));
 
     Init_Boolean(PUSH(), i == 3);  // ^-- see NOTICE
-  }
 
-  blockscope {
+} api_transient_test: { //////////////////////////////////////////////////////
+
     Set_Cell_Flag(Init_Integer(PUSH(), 2), NEWLINE_BEFORE);
     intptr_t getter = rebUnboxInteger64("api-transient -[Hello]-");
     Recycle();  // transient should survive a recycle
@@ -100,9 +109,9 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     bool equal = rebUnboxLogic("-[Hello]- = @", getter_node);
 
     Init_Boolean(PUSH(), equal);  // ^-- see NOTICE
-  }
 
-  blockscope {
+} macro_test: { //////////////////////////////////////////////////////////////
+
     Set_Cell_Flag(Init_Integer(PUSH(), 3), NEWLINE_BEFORE);
     Value* macro = rebValue("macro [x] [[append x first]]");
     Value* mtest1 = rebValue(rebRUN(macro), "[1 2 3]", "[d e f]");
@@ -117,16 +126,16 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     rebRelease(mtest2);
 
     rebRelease(macro);
-  }
 
-  blockscope {
+} null_splicing_test: { //////////////////////////////////////////////////////
+
     Set_Cell_Flag(Init_Integer(PUSH(), 5), NEWLINE_BEFORE);
     bool is_null = rebUnboxLogic("null? @", nullptr);
 
     Init_Boolean(PUSH(), is_null);
-  }
 
-  blockscope {
+} define_function_test: { ////////////////////////////////////////////////////
+
     Set_Cell_Flag(Init_Integer(PUSH(), 6), NEWLINE_BEFORE);
     Value* action = rebFunction(
         Sum_Plus_1000_Spec,
@@ -140,9 +149,9 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 
     rebRelease(action);
     Init_Integer(PUSH(), sum);
-  }
 
-  blockscope {
+} define_cpp_function_test: { ////////////////////////////////////////////////
+
   #if NO_CPLUSPLUS_11
     Set_Cell_Flag(Init_Integer(PUSH(), 7), NEWLINE_BEFORE);
     Init_Integer(PUSH(), 1020);  // fake success result
@@ -179,20 +188,22 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 
     rebRelease(action);
   #endif
-  }
 
-  blockscope {  // !!! Note: FEED_FLAG_NEEDS_SYNC needs review
+} empty_variadic_test: { /////////////////////////////////////////////////////
+
     Set_Cell_Flag(Init_Integer(PUSH(), 9), NEWLINE_BEFORE);
 
     Value* noop = rebMeta("");
-    assert(Is_Meta_Of_Nihil(noop));
+    assert(Is_Meta_Of_Void(noop));
     rebRelease(noop);
-    Init_Meta_Of_Nihil(PUSH());
-  }
+    Init_Meta_Of_Void(PUSH());
+
+} finish: { //////////////////////////////////////////////////////////////////
 
     return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));
+
   #endif
-}
+}}
 
 
 //

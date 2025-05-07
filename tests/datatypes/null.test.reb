@@ -59,7 +59,7 @@
 [
     ('~[~null~]~ = ^ if ok [null])
     ('~[~null~]~ = ^ if ok [heavy null])
-    ('~void~ = ^ if ok [])
+    ('~[]~ = ^ if ok [])
 
     ~illegal-keyword~ !! (if ok [~asdf~])  ; not all keywords legal
     (''~asdf~ = ^ if ok ['~asdf~])  ; but okay as quasiforms

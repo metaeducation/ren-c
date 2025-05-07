@@ -199,10 +199,7 @@ void Set_Parameter_Spec(
               case SYM_NULL:
                 *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
                 break;
-              case SYM_VOID:
-                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
-                break;
-              default:
+              default:  // !!! optimize ~okay~, or not worth it?
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             }
             continue;
@@ -299,8 +296,8 @@ void Set_Parameter_Spec(
                     *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
                 else if (dispatcher == NATIVE_CFUNC(ANY_ATOM_Q))
                     *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
-                else if (dispatcher == NATIVE_CFUNC(NIHIL_Q))
-                    *flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
+                else if (dispatcher == NATIVE_CFUNC(VOID_Q))
+                    *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
                 else if (dispatcher == &Typechecker_Dispatcher) {
                     if (optimized == optimized_tail) {
                         *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;

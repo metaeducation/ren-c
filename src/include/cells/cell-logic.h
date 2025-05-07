@@ -136,7 +136,7 @@ INLINE bool Cell_Logic(Need(const Value*) v) {
 //      == ~null~  ; anti
 //
 //      >> if true? flag [print "IF TRUE? on FALSE skips branch"]
-//      == ~void~  ; anti
+//      == ~null~  ; anti
 //
 //      >> false? flag
 //      == ~okay~  ; anti
@@ -239,9 +239,20 @@ INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
 //
 // At time of writing, ~null~ antiforms are the only branch inhibitors.
 //
-// 1. ~void~ antiforms are neither triggering nor inhibiting: since voids opt
+// 1. VOID antiforms are neither triggering nor inhibiting: since voids opt
 //    out of aggregate logic operations, an isolated operation like IF cannot
-//    consider void to be either true or false.
+//    consider void to be either true or false.  Type checking helps enforce
+//    this rule, since unstable values cannot be passed as a condition to
+//    the test functions.
+//
+//    It would be possible to say that VOIDs were true, and that would
+//    produce some potentially interesting use cases like (any [expr, void])
+//    being able to evaluate to void if expr1 was falsey or opted out.  Yet
+//    semantically, we want to think of the truthiness of a PACK! as being
+//    directly tied to its first element...and voids have no element there
+//    to be tested, and should not decay to assign a normal variable.  So it's
+//    not particularly coherent to try and argue voids are true or false,
+//    and creates ambiguity to gain a relatively unimportant feature.
 //
 // 2. Because a branch evaluation can produce NULL, we would not be able from
 //    the outside to discern a taken branch from a non-taken one in order to
@@ -256,41 +267,21 @@ INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
 //    distinct enough that ELSE and THEN can react to them as signals the
 //    branch was taken.
 //
-INLINE bool Is_Trigger(const Value* v) {
+INLINE bool Is_Trigger(const Value* v) {  // stable only, can't test void [1]
     Assert_Cell_Readable(v);
 
-    if (QUOTE_BYTE(v) == ANTIFORM_0) {
-        if (Heart_Of(v) != TYPE_WORD)
-            return true;  // !!! are all non-word antiforms truthy?
-        Option(SymId) id = Cell_Word_Id(v);
-        if (id == SYM_NULL)
-            return false;
-        if (id == SYM_OKAY)
-            return true;
-        if (id == SYM_VOID)
-            fail (Error_Bad_Void());  // void is not trigger or inhibitor [1]
-        fail (Error_Bad_Antiform(v));  // !!! special error?
-    }
+    if (QUOTE_BYTE(v) != ANTIFORM_0)
+        return true;  // all non-antiforms (including quasi/quoted) are truthy
 
-  #if DEBUG_CHECK_POSSIBLE_BOOLEAN_MISUSE
-    if (Is_Word(v)) {
-        Option(SymId) id = Cell_Word_Id(v);
-        if (id == SYM_TRUE)
-            fail ("Warning: TRUE used as branch trigger");
-        if (id == SYM_FALSE)
-            fail ("Warning: FALSE used as branch trigger");
-        if (id == SYM_YES)
-            fail ("Warning: YES used as branch trigger");
-        if (id == SYM_NO)
-            fail ("Warning: NO used as branch trigger");
-        if (id == SYM_ON)
-            fail ("Warning: ON used as branch trigger");
-        if (id == SYM_OFF)
-            fail ("Warning: OFF used as branch trigger");
-    }
-  #endif
+    if (Heart_Of(v) != TYPE_WORD)
+        return true;  // !!! all stable non-word antiforms are truthy
 
-    return true;  // all non-antiform values are truthy
+    Option(SymId) id = Cell_Word_Id(v);
+    if (id == SYM_NULL)
+        return false;
+    if (id == SYM_OKAY)
+        return true;
+    fail (Error_Bad_Antiform(v));  // !!! special error?
 }
 
 #define Is_Inhibitor(v) \

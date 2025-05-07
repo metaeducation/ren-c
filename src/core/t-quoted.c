@@ -126,72 +126,6 @@ DECLARE_NATIVE(QUOTE)
 
 
 //
-//  meta: native [
-//
-//  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
-//
-//      return: "Keywords and plain forms if :LITE, plain ERROR! ok if :EXCEPT"
-//          [quoted! quasiform! keyword! element? error!]
-//      ^atom [any-atom?]
-//      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
-//      :except "If argument is antiform ERROR!, give back as plain ERROR!"
-//  ]
-//
-DECLARE_NATIVE(META)
-//
-// 1. Most code has to go through Coerce_To_Antiform()...even code that has
-//    a quasiform in its hand (as not all quasiforms can be antiforms).  But
-//    ^META parameters are guaranteed to be things that were validated as
-//    antiforms.
-{
-    INCLUDE_PARAMS_OF_META;
-
-    Value* meta = ARG(ATOM); // arg already ^META, no need to Meta_Quotify()
-
-    if (Is_Meta_Of_Raised(meta)) {
-        if (not Bool_ARG(EXCEPT))
-            return FAIL(Cell_Error(ARG(ATOM)));
-
-        QUOTE_BYTE(meta) = NOQUOTE_1;
-        return COPY(meta);  // no longer meta, just a plain ERROR!
-    }
-
-    if (
-        Bool_ARG(LITE)  // META:LITE handles quasiforms specially
-        and Is_Quasiform(meta)
-    ){
-        if (Heart_Of(meta) == TYPE_WORD) {  // keywords pass thru
-            QUOTE_BYTE(meta) = ANTIFORM_0_COERCE_ONLY;  // ^META validated [1]
-            return COPY(meta);
-        }
-        QUOTE_BYTE(meta) = NOQUOTE_1;  // META:LITE gives plain for the rest.
-        return COPY(meta);
-    }
-
-    return COPY(meta);
-}
-
-
-//
-//  meta*: native:intrinsic [
-//
-//  "META operator that works on any value (errors, packs, ghosts, etc.)"
-//
-//      return: [quoted! quasiform!]
-//      ^atom
-//  ]
-//
-DECLARE_NATIVE(META_P)
-{
-    INCLUDE_PARAMS_OF_META_P;
-
-    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
-
-    return Copy_Cell(OUT, meta);  // argument was ^META by convention
-}
-
-
-//
 //  unquote: native [
 //
 //  "Remove quoting levels from the evaluated argument"
@@ -278,6 +212,137 @@ DECLARE_NATIVE(UNQUASI)
 
 
 //
+//  meta: native [
+//
+//  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
+//
+//      return: "Keywords and plain forms if :LITE, plain ERROR! ok if :EXCEPT"
+//          [quoted! quasiform! keyword! element? error!]
+//      ^atom [any-atom?]
+//      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
+//      :except "If argument is antiform ERROR!, give back as plain ERROR!"
+//  ]
+//
+DECLARE_NATIVE(META)
+//
+// 1. Most code has to go through Coerce_To_Antiform()...even code that has
+//    a quasiform in its hand (as not all quasiforms can be antiforms).  But
+//    ^META parameters are guaranteed to be things that were validated as
+//    antiforms.
+{
+    INCLUDE_PARAMS_OF_META;
+
+    Value* meta = ARG(ATOM); // arg already ^META, no need to Meta_Quotify()
+
+    if (Is_Meta_Of_Raised(meta)) {
+        if (not Bool_ARG(EXCEPT))
+            return FAIL(Cell_Error(ARG(ATOM)));
+
+        QUOTE_BYTE(meta) = NOQUOTE_1;
+        return COPY(meta);  // no longer meta, just a plain ERROR!
+    }
+
+    if (
+        Bool_ARG(LITE)  // META:LITE handles quasiforms specially
+        and Is_Quasiform(meta)
+    ){
+        if (Is_Meta_Of_Null(meta) or Is_Meta_Of_Void(meta)) {
+            QUOTE_BYTE(meta) = ANTIFORM_0_COERCE_ONLY;  // ^META validated [1]
+            return COPY(meta);
+        }
+        QUOTE_BYTE(meta) = NOQUOTE_1;  // META:LITE gives plain for the rest.
+        return COPY(meta);
+    }
+
+    return COPY(meta);
+}
+
+
+//
+//  meta*: native:intrinsic [
+//
+//  "META operator that works on any value (errors, packs, ghosts, etc.)"
+//
+//      return: [quoted! quasiform!]
+//      ^atom
+//  ]
+//
+DECLARE_NATIVE(META_P)
+{
+    INCLUDE_PARAMS_OF_META_P;
+
+    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
+
+    return Copy_Cell(OUT, meta);  // argument was ^META by convention
+}
+
+
+//
+//  unmeta: native [
+//
+//  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
+//
+//      return: [any-atom?]
+//      ^value "Can be plain or antiform like NULL or VOID if :LITE"
+//          [~null~ ~[]~ element? quoted! quasiform!]
+//      :lite "Pass thru NULL and VOID antiforms as-is"
+//  ]
+//
+DECLARE_NATIVE(UNMETA)
+{
+    INCLUDE_PARAMS_OF_UNMETA;
+
+    Element* meta_meta = Element_ARG(VALUE);
+
+    if (Is_Quasiform(meta_meta)) {  // e.g. value is antiform
+        assert(Is_Meta_Of_Void(meta_meta) or Is_Meta_Of_Null(meta_meta));
+        if (not Bool_ARG(LITE))
+            return FAIL("UNMETA only accepts NULL or VOID if :LITE");
+        return UNMETA(meta_meta);
+    }
+
+    Element* meta = Unquotify(meta_meta);
+
+    if (QUOTE_BYTE(meta) == NOQUOTE_1) {
+        if (not Bool_ARG(LITE))
+            return FAIL("UNMETA only takes non quoted/quasi things if :LITE");
+        Copy_Cell(OUT, meta);
+
+        Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
+        if (e)
+            return FAIL(unwrap e);
+
+        return OUT;
+    }
+
+    if (QUOTE_BYTE(meta) == QUASIFORM_2 and Bool_ARG(LITE))
+        return FAIL(
+            "UNMETA:LITE does not accept quasiforms (plain forms are meta)"
+        );
+
+    return UNMETA(meta);  // quoted or quasi
+}
+
+
+//
+//  unmeta*: native [
+//
+//  "Variant of UNMETA that can synthesize any atom (raised, pack, ghost...)"
+//
+//      return: [any-atom?]
+//      metaform [quoted! quasiform?]
+//  ]
+//
+DECLARE_NATIVE(UNMETA_P)
+{
+    INCLUDE_PARAMS_OF_UNMETA_P;
+
+    Copy_Cell(OUT, ARG(METAFORM));
+    return Meta_Unquotify_Undecayed(OUT);
+}
+
+
+//
 //  antiform?: native:intrinsic [
 //
 //  "Tells you whether argument is a stable or unstable antiform"
@@ -335,68 +400,6 @@ DECLARE_NATIVE(ANTI)
 
 
 //
-//  unmeta: native [
-//
-//  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
-//
-//      return: [any-atom?]
-//      value "Can be plain or antiform like ~null~ or ~void~ if :LITE"
-//          [keyword! element? quoted! quasiform!]
-//      :lite "Pass thru ~null~ and ~void~ antiforms as-is"
-//  ]
-//
-DECLARE_NATIVE(UNMETA)
-{
-    INCLUDE_PARAMS_OF_UNMETA;
-
-    Value* meta = ARG(VALUE);
-
-    if (QUOTE_BYTE(meta) == ANTIFORM_0) {
-        if (not Bool_ARG(LITE) or not Is_Keyword(meta))
-            return FAIL("UNMETA only keyword antiforms (e.g. ~null~) if :LITE");
-        return COPY(meta);
-    }
-
-    if (QUOTE_BYTE(meta) == NOQUOTE_1) {
-        if (not Bool_ARG(LITE))
-            return FAIL("UNMETA only takes non quoted/quasi things if :LITE");
-        Copy_Cell(OUT, meta);
-
-        Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
-        if (e)
-            return FAIL(unwrap e);
-
-        return OUT;
-    }
-
-    if (QUOTE_BYTE(meta) == QUASIFORM_2 and Bool_ARG(LITE))
-        return FAIL(
-            "UNMETA:LITE does not accept quasiforms (plain forms are meta)"
-        );
-
-    return UNMETA(cast(Element*, meta));  // quoted or quasi
-}
-
-
-//
-//  unmeta*: native [
-//
-//  "Variant of UNMETA that can synthesize any atom (raised, pack, ghost...)"
-//
-//      return: [any-atom?]
-//      metaform [quoted! quasiform?]
-//  ]
-//
-DECLARE_NATIVE(UNMETA_P)
-{
-    INCLUDE_PARAMS_OF_UNMETA_P;
-
-    Copy_Cell(OUT, ARG(METAFORM));
-    return Meta_Unquotify_Undecayed(OUT);
-}
-
-
-//
 //  spread: native [
 //
 //  "Make block arguments splice"
@@ -431,8 +434,8 @@ DECLARE_NATIVE(SPREAD)
     INCLUDE_PARAMS_OF_SPREAD;
 
     Option(const Value*) opt_v = Optional_ARG(VALUE);
-    if (not opt_v or Is_Meta_Of_Nihil(unwrap opt_v))  // quasi ok [2]
-        return NIHIL;  // pass through [1]
+    if (not opt_v or Is_Meta_Of_Void(unwrap opt_v))  // quasi ok [2]
+        return VOID;  // pass through [1]
     const Value* v = unwrap opt_v;
 
     if (Any_List(v)) {  // most common case
@@ -447,7 +450,7 @@ DECLARE_NATIVE(SPREAD)
     }
 
     if (Is_Blank(v))
-        return NIHIL;  // immutable empty array makes problems for GLOM [3]
+        return VOID;  // immutable empty array makes problems for GLOM [3]
 
     if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]
         return Init_Nulled(OUT);  // pass through [1]
@@ -635,10 +638,10 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
     const Element* meta = Get_Meta_Atom_Intrinsic(level_);
 
     if (Is_Meta_Of_Null(meta))  // light null
-        return NIHIL;
+        return VOID;
 
     if (Is_Meta_Of_Raised(meta))  // raised errors (e.g. fold in a TRY)
-        return NIHIL;
+        return VOID;
 
     if (Is_Meta_Of_Ghost(meta))
         return FAIL("Cannot MAYBE a GHOST!");
@@ -653,7 +656,7 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
             return FAIL(
                 "MAYBE:LIGHT (a.k.a. ?) won't void a PACK! with a NULL in it"
             );
-        return NIHIL;  // not strict
+        return VOID;  // not strict
     }
 
     return OUT;  // passthru everything else (raised errors?)

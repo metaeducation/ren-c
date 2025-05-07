@@ -64,7 +64,7 @@ bool Try_Catch_Break_Or_Continue(
         and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
-        if (not Is_Nihil(out))  // nihil signals no argument to CONTINUE
+        if (not Is_Void(out))  // nihil signals no argument to CONTINUE
             Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
         *breaking = false;
         return true;
@@ -127,13 +127,13 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 //
 // 1. How CONTINUE with no argument acts is up to the loop construct to
 //    interpret.  e.g. MAP-EACH, it acts like CONTINUE:WITH ~()~.  We throw
-//    the non-valued NIHIL state to allow for the custom interpretation.
+//    the non-valued VOID state to allow for the custom interpretation.
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
     Atom* with = SCRATCH;
     if (not Bool_ARG(WITH))
-        Init_Nihil(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
+        Init_Void(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
     else
         Copy_Cell(SCRATCH, ARG(WITH));
 
@@ -231,7 +231,7 @@ static Bounce Loop_Series_Common(
     //
     const bool counting_up = (s < end); // equal checked above
     if ((counting_up and bump <= 0) or (not counting_up and bump >= 0))
-        return NIHIL;  // avoid infinite loops
+        return VOID;  // avoid infinite loops
 
     while (
         counting_up
@@ -265,7 +265,7 @@ static Bounce Loop_Series_Common(
     }
 
     if (Is_Cell_Erased(OUT))
-        return NIHIL;
+        return VOID;
 
     return LOOPED(OUT);
 }
@@ -393,7 +393,7 @@ static Bounce Loop_Number_Common(
     //
     const bool counting_up = (s < e); // equal checked above
     if ((counting_up and b <= 0) or (not counting_up and b >= 0))
-        return NIHIL;  // avoid inf. loop, means never ran
+        return VOID;  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Eval_Branch_Throws(OUT, body)) {
@@ -412,7 +412,7 @@ static Bounce Loop_Number_Common(
     }
 
     if (Is_Cell_Erased(OUT))
-        return NIHIL;
+        return VOID;
 
     return LOOPED(OUT);
 }
@@ -526,14 +526,14 @@ DECLARE_NATIVE(FOR_SKIP)
     Element* body = Element_ARG(BODY);
 
     if (Is_Blank(series))
-        return NIHIL;
+        return VOID;
 
     REBINT skip = Int32(ARG(SKIP));
     if (skip == 0) {
         //
         // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
         //
-        return NIHIL;
+        return VOID;
     }
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
@@ -604,7 +604,7 @@ DECLARE_NATIVE(FOR_SKIP)
     }
 
     if (Is_Cell_Erased(OUT))
-        return NIHIL;
+        return VOID;
 
     return LOOPED(OUT);
 }
@@ -626,7 +626,7 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 
     Atom* with = SCRATCH;
     if (not Bool_ARG(WITH))
-        Init_Nihil(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
+        Init_Void(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
     else
         Copy_Cell(SCRATCH, ARG(WITH));
 
@@ -1119,7 +1119,7 @@ DECLARE_NATIVE(FOR_EACH)
     //    iterator state.
 
     if (Is_Blank(data))  // same response as to empty series
-        return NIHIL;
+        return VOID;
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
@@ -1167,7 +1167,7 @@ DECLARE_NATIVE(FOR_EACH)
         return nullptr;
 
     if (Is_Cell_Erased(OUT))
-        return NIHIL;
+        return VOID;
 
     return LOOPED(OUT);
 }}
@@ -1222,7 +1222,7 @@ DECLARE_NATIVE(EVERY)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Blank(data))  // same response as to empty series
-        return NIHIL;
+        return VOID;
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
@@ -1254,10 +1254,10 @@ DECLARE_NATIVE(EVERY)
     //
     //        every 'x [1 2 3 4] [if even? x [x]]  =>  4
     //
-    //        every 'x [1 2 3 4] [if odd? x [x]]  => ~[~void~]~ antiform
+    //        every 'x [1 2 3 4] [maybe if odd? x [x]]  =>  ~ antiform
     //
-    //    It returns heavy void on skipped bodies, as loop composition breaks
-    //    down if we try to keep old values.
+    //    It returns trash on skipped bodies, as loop composition breaks
+    //    down if we try to keep old values, or return void.
 
     if (THROWING) {
         bool breaking;
@@ -1271,7 +1271,7 @@ DECLARE_NATIVE(EVERY)
     }
 
     if (Is_Ghost_Or_Void(SPARE)) {
-        Init_Nihil(OUT);  // forget OUT for loop composition [1]
+        Init_Trash(OUT);  // forget OUT for loop composition [1]
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
@@ -1292,7 +1292,7 @@ DECLARE_NATIVE(EVERY)
         return THROWN;
 
     if (Is_Cell_Erased(OUT))
-        return NIHIL;
+        return VOID;
 
     return OUT;
 }}
@@ -1337,7 +1337,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
   process_non_blank: { ////////////////////////////////////////////////////=//
 
-    // 1. Updating arrays in place may not be better than pushingvalues to
+    // 1. Updating arrays in place may not be better than pushing values to
     //    the data stack and creating a precisely-sized output Flex to swap as
     //    underlying memory for the array.  (Imagine a large array with many
     //    removals, and the ensuing wasted space being left behind).  We use
@@ -1346,17 +1346,6 @@ DECLARE_NATIVE(REMOVE_EACH)
     // 2. For blobs and strings, we push new data as the loop runs.  Then at
     //    the end of the enumeration, the identity of the incoming series is
     //    kept but new underlying data is poked into it, old data is freed.
-    //
-    // 3. When a BREAK happens there is no change applied to the series.  It's
-    //    conceivable that might not be what people want--and that if they did
-    //    want that, they would likely use a MAP-EACH or something to generate
-    //    a new series.  But NULL is reserved for when loops break, so there
-    //    would not be a way to get the removal count in this case.  Hence it
-    //    is semantically easiest to say BREAK goes along with "no effect".
-    //
-    // 4. The only signals allowed are ~okay~, ~null~ and ~void~.  This seems
-    //    more coherent, and likely would catch more errors than allowing any
-    //    Is_Trigger() value to mean "remove".
 
     Flex* flex = Cell_Flex_Ensure_Mutable(data);  // check even if empty
 
@@ -1423,26 +1412,47 @@ DECLARE_NATIVE(REMOVE_EACH)
             ++index;
         }
 
+    invoke_loop_body: {  /////////////////////////////////////////////////////
+
+    // 1. When a BREAK happens there is no change applied to the series.  It's
+    //    conceivable that might not be what people want--and that if they did
+    //    want that, they would likely use a MAP-EACH or something to generate
+    //    a new series.  But NULL is reserved for when loops break, so there
+    //    would not be a way to get the removal count in this case.  Hence it
+    //    is semantically easiest to say BREAK goes along with "no effect".
+
         if (Eval_Any_List_At_Throws(OUT, body, SPECIFIED)) {
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking)) {
                 threw = true;
                 goto finalize_remove_each;
             }
 
-            if (breaking) {  // break semantics are no-op [3]
+            if (breaking) {  // break semantics are no-op [1]
                 assert(start < len);
                 goto finalize_remove_each;
             }
         }
 
+  } process_body_result: {  //////////////////////////////////////////////////
+
+    // The only signals allowed are OKAY, NULL, and VOID.  This likely catches
+    // more errors than allowing any Is_Trigger() value to mean "remove" (so
+    // use DID MATCH or NOT MATCH instead of just MATCH, for example).
+    //
+    // 1. The reason VOID is tolerated is because CONTINUE with no argument
+    //    acts as if the body returned VOID.  This is a general behavioral
+    //    rule for loops, and it's most useful if that doesn't remove.
+
         bool keep;
+
+        if (Is_Void(OUT)) {
+            keep = true;  // treat same as logic false (e.g. don't remove) [1]
+            goto handle_keep_or_no_keep;
+        }
 
         Decay_If_Unstable(OUT);
 
-        if (Is_Void(OUT)) {
-            keep = true;  // treat same as logic false (e.g. don't remove)
-        }
-        else if (Is_Okay(OUT)) {  // pure logic required [4]
+        if (Is_Okay(OUT)) {  // pure logic required [1]
             keep = false;  // okay is remove
         }
         else if (Is_Nulled(OUT)) {  // don't remove
@@ -1453,11 +1463,13 @@ DECLARE_NATIVE(REMOVE_EACH)
             threw = true;
             Init_Error(
                 SPARE,
-                Error_User("Use [~null~ ~okay~ ~void~] with REMOVE-EACH")
+                Error_User("Use [NULL OKAY VOID] with REMOVE-EACH")
             );
             Init_Thrown_With_Label(LEVEL, LIB(NULL), stable_SPARE);
             goto finalize_remove_each;
         }
+
+      handle_keep_or_no_keep: ////////////////////////////////////////////////
 
         if (Any_List(data)) {
             if (keep) {
@@ -1501,13 +1513,14 @@ DECLARE_NATIVE(REMOVE_EACH)
             Init_Heavy_Null(OUT);  // reserve pure NULL for BREAK
     }
 
-    assert(start == len);  // normal completion (otherwise a `goto` happened)
-
-  finalize_remove_each: {  ///////////////////////////////////////////////////
+} finalize_remove_each: {  ///////////////////////////////////////////////////
 
     // 7. We are reusing the mold buffer for BLOB!, but *not putting UTF-8
     //    data* into it.  Revisit if this inhibits cool UTF-8 based tricks
     //    the mold buffer might do otherwise.
+
+    if (not threw and not breaking)
+        assert(start == len);  // normal completion
 
     assert(Get_Flex_Info(flex, HOLD));
     Clear_Flex_Info(flex, HOLD);
@@ -1796,13 +1809,10 @@ DECLARE_NATIVE(MAP)
         }
     }
 
-    if (Is_Nihil(SPARE))
+    if (Is_Void(SPARE))
         goto next_iteration;  // okay to skip
 
     Decay_If_Unstable(SPARE);
-
-    if (Is_Void(SPARE))
-        goto next_iteration;  // okay to skip
 
     if (Is_Splice(SPARE)) {
         Quasify_Antiform(SPARE);
@@ -1889,12 +1899,12 @@ DECLARE_NATIVE(REPEAT)
 
     if (Is_Logic(count)) {
         if (Cell_Logic(count) == false)
-            return NIHIL;  // treat false as "don't run"
+            return VOID;  // treat false as "don't run"
 
         Init_True(index);
     }
     else if (VAL_INT64(count) <= 0)
-        return NIHIL;  // negative means "don't run" (vs. error)
+        return VOID;  // negative means "don't run" (vs. error)
     else {
         assert(Any_Number(count));
         Init_Integer(index, 1);
@@ -1995,7 +2005,7 @@ DECLARE_NATIVE(FOR)
 
     REBI64 n = VAL_INT64(value);
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return NIHIL;
+        return VOID;
 
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -2118,20 +2128,20 @@ DECLARE_NATIVE(UNTIL)
 
 } test_condition: {  /////////////////////////////////////////////////////////
 
-    // 1. Today we don't test undecayed values for truthiness or falseyness.
-    //    Hence UNTIL cannot return something like a pack...it must be META'd
-    //    and the result UNMETA'd.  That would mean all pack quasiforms would
-    //    be considered truthy.
-    //
-    // 2. Due to body_result_in_out:[1], we want CONTINUE (or CONTINUE VOID)
+    // 1. Due to body_result_in_out:[1], we want CONTINUE (or CONTINUE VOID)
     //    to keep the loop running.  For parity between what continue does
     //    with an argument and what the loop does if the body evaluates to
     //    that argument, it suggests tolerating a void body result as intent
     //    to continue the loop also.
+    //
+    // 2. Today we don't test undecayed values for truthiness or falseyness.
+    //    Hence UNTIL cannot return something like a pack...it must be META'd
+    //    and the result UNMETA'd.  That would mean all pack quasiforms would
+    //    be considered truthy.
 
-    Decay_If_Unstable(condition);  // must decay for truth test [1]
+    if (not Is_Void(condition)) {  // skip voids [1]
+        Decay_If_Unstable(condition);  // must decay for truth test [2]
 
-    if (not Is_Void(condition)) {  // skip voids [2]
         if (Is_Trigger(Stable_Unchecked(condition)))
             return LOOPED(OUT);
     }
@@ -2237,7 +2247,7 @@ DECLARE_NATIVE(WHILE)
 } return_out: {  /////////////////////////////////////////////////////////////
 
     if (Is_Cell_Erased(OUT))
-        return NIHIL;  // body never ran, so no result to return!
+        return VOID;  // body never ran, so no result to return!
 
     return LOOPED(OUT);  // VOID => TRASH, NULL => HEAVY NULL
 }}

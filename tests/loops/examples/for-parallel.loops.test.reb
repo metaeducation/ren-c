@@ -6,18 +6,21 @@
     (for-parallel: func [
         return: [any-atom?]
         vars [block!]
-        blk1 [~void~ any-list?]
-        blk2 [~void~ any-list?]
+        ^blk1 [~[]~ any-list?]
+        ^blk2 [~[]~ any-list?]
         body [block!]
         <local> context
     ][
+        blk1: any [^blk1 null]  ; turn voids to null or unmeta
+        blk2: any [^blk2 null]  ; "
+
         [vars context]: wrap:set compose vars
         body: overbind context body
         return while [(not empty? maybe blk1) or (not empty? maybe blk2)] [
             (vars): pack [(try first maybe blk1) (try first maybe blk2)]
 
-            repeat 1 body else [  ; if pure NULL it was a BREAK
-                return null
+            repeat 1 body else [  ; !!! REVIEW: invent ONCE for REPEAT 1
+                return null  ; if pure NULL it was a BREAK
             ]
 
             ; They either did a CONTINUE the REPEAT caught, or the body reached

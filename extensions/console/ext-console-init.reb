@@ -148,6 +148,16 @@ export console!: make object! [
                 return ~
             ]
 
+            any [  ; cannot decay packs automatically with unstable antiforms
+                void? unmeta v.1
+                ghost? unmeta v.1
+                raised? unmeta v.1
+            ] then [
+                print "; undecayable pack"
+                print unspaced [result _ mold quasi v _ _ ";" _ "anti"]
+                return ~
+            ]
+
             for-each 'item v [
                 any [quoted? item, quasi? item] else [
                     print "!!! MALFORMED PARAMETER PACK, NOT QUOTED/QUASI !!!"
@@ -183,7 +193,7 @@ export console!: make object! [
 
         === ANTIFORMS (^META v parameter means they are quasiforms) ===
 
-        if quasi? v [
+        if antiform? ^v [
             ;
             ; Antiforms don't technically have "a representation", but the
             ; historical console behavior is to add a comment annotation.

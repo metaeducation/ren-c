@@ -189,7 +189,7 @@
 ; Propagates nihil signals, but sets variables to null
 [
     (all wrap [
-        nihil? [:x]: comment "hi"
+        void? [:x]: comment "hi"
         null? x
     ])
 ]

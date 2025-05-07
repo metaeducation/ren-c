@@ -39,7 +39,7 @@
             return void  ; couldn't produce void at all if vaporized
         ]
 
-        r: ^r  ; only needed as ^META to check for NIHIL
+        r: ^r  ; only needed as ^META to check for VOID
 
         if word? r [
             r: :[r]  ; enable 0-arity combinators

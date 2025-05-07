@@ -741,8 +741,11 @@ DECLARE_NATIVE(LET)
                 if (Is_Void(OUT)) {
                     Init_Blank(OUT);
                 }
-                else if (Is_Antiform(OUT))
-                    return FAIL(Error_Bad_Antiform(OUT));
+                else {
+                    Decay_If_Unstable(OUT);
+                    if (Is_Antiform(OUT))
+                        return FAIL(Error_Bad_Antiform(OUT));
+                }
 
                 temp = cast(Element*, OUT);
                 temp_binding = SPECIFIED;
@@ -854,9 +857,6 @@ DECLARE_NATIVE(LET)
 
     Context* bindings = Cell_List_Binding(bindings_holder);
     Tweak_Cell_Binding(Feed_Data(L->feed), bindings);
-
-    if (Is_Pack(OUT))
-        Decay_If_Unstable(OUT);
 
     return OUT;
 }}

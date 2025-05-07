@@ -128,7 +128,7 @@ INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
 
     const Element* meta = Level_Intrinsic_Arg_Meta(L);
 
-    if (Is_Meta_Of_Nihil(meta))  // do PARAMETER_FLAG_NOOP_IF_VOID [1]
+    if (Is_Meta_Of_Void(meta))  // do PARAMETER_FLAG_NOOP_IF_VOID [1]
         return Init_Nulled(L->out);  // !!! overwrites out, illegal [2]
 
     if (Is_Quasiform(meta))  // antiform including

@@ -93,7 +93,7 @@ Bounce Evaluator_Executor(Level* const L)
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
         assert(Not_Level_Flag(L, TRAMPOLINE_KEEPALIVE));
-        assert(Is_Nihil(PRIMED) or Is_Ghost(PRIMED));  // primed [1]
+        assert(Is_Void(PRIMED) or Is_Ghost(PRIMED));  // primed [1]
         goto initial_entry;
 
       default:

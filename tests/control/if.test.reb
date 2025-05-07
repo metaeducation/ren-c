@@ -12,7 +12,7 @@
 (1 = if ok [1])
 
 ((meta void) = ^ if null [])
-('~[~void~]~ = ^ if ok [])
+('~[]~ = ^ if ok [])
 
 (error? if ok [trap [1 / 0]])
 ; RETURN stops the evaluation
@@ -82,7 +82,7 @@
 
 ; recursive behaviour
 
-('~[~void~]~ = ^ if ok [if null [1]])
+('~[]~ = meta if ok [if null [1]])
 (void? if ok [2 if null [1]])
 (1 = if ok [if ok [1]])
 

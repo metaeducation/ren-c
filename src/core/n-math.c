@@ -860,7 +860,7 @@ DECLARE_NATIVE(DEFAULTABLE_Q)
 
     Value* v = ARG(VALUE);  // meta
     Meta_Unquotify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
-    return Init_Logic(OUT, Any_Vacancy(v) or Is_Void(v) or Is_Nulled(v));
+    return Init_Logic(OUT, Any_Vacancy(v) or Is_Nulled(v));
 }
 
 

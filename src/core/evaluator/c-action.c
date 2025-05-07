@@ -153,8 +153,12 @@ Bounce Action_Executor(Level* L)
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Trash_Due_To_End(ARG);
                 }
-                else if (Is_Meta_Of_Nihil(ARG))
-                    Init_Void(ARG);
+                else if (
+                    Is_Meta_Of_Void(ARG)
+                    and Get_Parameter_Flag(PARAM, NOOP_IF_VOID)
+                ){
+                    Init_Hole(ARG);  // !!! Temporary hack
+                }
                 else {
                     Meta_Unquotify_Undecayed(ARG);
                     Decay_If_Unstable(ARG);
@@ -752,7 +756,7 @@ Bounce Action_Executor(Level* L)
             return FAIL(Error_Unspecified_Arg(L));
         }
 
-        if (Is_Void(ARG)) {
+        if (Is_Hole(ARG)) {
             if (Get_Parameter_Flag(param, NOOP_IF_VOID)) {  // <maybe> param
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
                 Mark_Typechecked(Init_Nulled(OUT));

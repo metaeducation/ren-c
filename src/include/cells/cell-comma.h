@@ -1,12 +1,12 @@
 //
 //  file: %cell-comma.h
-//  summary: "COMMA! Datatype Header"
+//  summary: "COMMA! Datatype and Vanishing GHOST! Antiform of ~,~"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2020 Ren-C Open Source Contributors
+// Copyright 2020-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -31,12 +31,17 @@
 //
 // It has the property that it renders "glued" to the element to the left.
 //
-// Commas are effectively invisible, but they accomplish this not by
-// producing Nihil (an empty PACK! antiform) but rather by making an antiform
-// COMMA! which is called a "ghost".  It vaporizes in interstitial positions,
-// but has the special property of appearing like an <end>...as well as
-// stopping lookahead.  For code that doesn't care about the subtlety, nihil
-// and ghost are both considered "elisions".
+// Commas are recognized specially by the evaluator, and are skipped over
+// entirely without producing any evaluative product.
+//
+//     >> eval:step [1 + 2, 10 + 20]
+//     == [, 10 + 20]  ; new position, but produced 3 as product
+//
+//     >> eval:step [, 10 + 20]
+//     == []  ; leading commas are ignored in an eval step
+//
+//     >> eval:step []
+//     == ~null~  ; anti (signals end reached, and no evaluative product)
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
@@ -44,14 +49,6 @@
 //   as an "explicit evaluation terminator":
 //
 //     http://www.rebol.net/r3blogs/0086.html
-//
-// * An original implementation of expression barriers used the heavier `|`
-//   character.  However that was considered non-negotiable as "alternate" in
-//   PARSE, where expression barriers would also be needed.  Also, it was a
-//   fairly big interruption visually...so comma was preferred.  It is still
-//   possible to get the same effect of an expression barrier with any user
-//   function, so `|` could be used for this in normal evaluation if it
-//   evaluated to a COMMA! antiform (for instance).
 //
 
 INLINE Element* Init_Comma(Init(Element) out) {
@@ -63,16 +60,19 @@ INLINE Element* Init_Comma(Init(Element) out) {
     return out;
 }
 
+
+//=//// GHOST! (COMMA! ANTIFORM) //////////////////////////////////////////=//
+//
+// The unstable ~,~ antiform is used to signal vanishing intent, e.g. it is
+// the return result of things like COMMENT and ELIDE.
+//
+// See Evaluator_Executor() for how stepping over a block retains the last
+// value at each step, so that if a step produces a GHOST! the previous
+// evaluation can be preserved.
+//
+
 INLINE Atom* Init_Ghost(Init(Atom) out) {
     Init_Comma(out);
     QUOTE_BYTE(out) = ANTIFORM_0_COERCE_ONLY;
     return out;
-}
-
-INLINE bool Is_Ghost_Or_Void(Need(Atom*) v) {
-    return Is_Ghost(v) or Is_Nihil(v);
-}
-
-INLINE bool Is_Meta_Of_Ghost_Or_Void(const Cell* v) {
-    return Is_Meta_Of_Ghost(v) or Is_Meta_Of_Nihil(v);
 }

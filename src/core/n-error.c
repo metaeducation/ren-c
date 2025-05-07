@@ -41,7 +41,7 @@ DECLARE_NATIVE(TRY)
 
     Element* meta = Element_ARG(ATOM);
 
-    if (Is_Meta_Of_Nihil(meta) or Is_Meta_Of_Null(meta))
+    if (Is_Meta_Of_Void(meta) or Is_Meta_Of_Null(meta))
         return Init_Nulled(OUT);
 
     if (Is_Meta_Of_Raised(meta))
@@ -101,7 +101,7 @@ DECLARE_NATIVE(ENRESCUE)
         code,
         LEVEL_FLAG_RAISED_RESULT_OK
     );
-    Init_Nihil(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
+    Init_Void(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
@@ -178,7 +178,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 
   initial_entry: {  /////////////////////////////////////////////////////////
 
-    Init_Nihil(OUT);  // default if all evaluations produce void
+    Init_Void(OUT);  // default if all evaluations produce void
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
@@ -258,8 +258,8 @@ DECLARE_NATIVE(EXCEPT)
 //
 //        let result': ^ eval f except e -> [...]
 //
-//    If you intend this to work with arbitrary code and store a meta-NIHIL
-//    in non-erroring cases, then EXCEPT must tolerate the NIHIL, since the
+//    If you intend this to work with arbitrary code and store a meta-VOID
+//    in non-erroring cases, then EXCEPT must tolerate the VOID, since the
 //    infix defer rules mean this acts as ^ (eval f except e -> [...]).  If
 //    you couldn't do that, this gets laborious to where you have to write
 //    something like:

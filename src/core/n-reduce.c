@@ -132,19 +132,13 @@ DECLARE_NATIVE(REDUCE)
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
 
-    if (Is_Ghost(SPARE))  // void offered to predicate, not commas
-        goto next_reduce_step;
-
-    if (
-        (Is_Stable(SPARE) and Is_Void(SPARE))  // !!! Review stability issue
-        or Is_Nihil(SPARE)
-    ){
+    if (Is_Ghost_Or_Void(SPARE)) {  // vaporize unless accepted by predicate
         const Param* param = First_Unspecialized_Param(
             nullptr,
             Cell_Frame_Phase(predicate)
         );
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
-            goto next_reduce_step;
+            goto next_reduce_step;  // not accepted, so skip it
     }
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;
@@ -164,9 +158,6 @@ DECLARE_NATIVE(REDUCE)
         goto next_reduce_step;  // void results are skipped by reduce
 
     Decay_If_Unstable(SPARE);
-
-    if (Is_Void(SPARE))
-        goto next_reduce_step;
 
     if (Is_Nulled(SPARE))
         return RAISE(Error_Need_Non_Null_Raw());  // enables e.g. CURTAIL
@@ -304,12 +295,12 @@ DECLARE_NATIVE(REDUCE_EACH)
     Meta_Unquotify_Undecayed(SPARE);  // unquote the result of evaluation
 
     if (Is_Ghost(SPARE)) {
-        Init_Nihil(OUT);
+        Init_Void(OUT);
         goto reduce_next;  // always cull antiform commas (barriers)
     }
 
-    if (Is_Nihil(SPARE)) {
-        Init_Nihil(OUT);
+    if (Is_Void(SPARE)) {
+        Init_Void(OUT);
         goto reduce_next;  // cull voids and nihils if not ^META
     }
 
@@ -344,7 +335,7 @@ DECLARE_NATIVE(REDUCE_EACH)
         return THROWN;
 
     if (Is_Cell_Erased(OUT))  // body never ran
-        return NIHIL;
+        return VOID;
 
     if (breaking)
         return nullptr;  // BREAK encountered
@@ -708,7 +699,7 @@ Bounce Composer_Executor(Level* const L)
     QuoteByte list_quote_byte = QUOTE_BYTE(At_Level(L));
     Heart list_heart = Heart_Of_Builtin(At_Level(L));
 
-    if (Is_Nihil(OUT)) {
+    if (Is_Void(OUT)) {
         if (Any_Plain_Type(list_heart) and list_quote_byte == NOQUOTE_1) {
             L->u.compose.changed = true;
             goto handle_next_item;  // compose [(void)] => []
@@ -1207,7 +1198,11 @@ DECLARE_NATIVE(COMPOSE2)
         return OUT;
     }
 
-    Value* result = Decay_If_Unstable(OUT);
+    const Value* result;
+    if (Is_Void(OUT))
+        result = LIB(HOLE);
+    else
+        result = Decay_If_Unstable(OUT);
 
     StackIndex triples = VAL_INT32(SCRATCH);
     assert(Is_Block(Data_Stack_At(Element, triples + 1)));  // evaluated code
@@ -1253,7 +1248,7 @@ DECLARE_NATIVE(COMPOSE2)
         if (Is_Nulled(eval))
             return RAISE(Error_Need_Non_Null_Raw());
 
-        if (Is_Void(eval))
+        if (Is_Hole(eval))  // VOID translated to empty splice for data stack
             continue;
 
         if (QUOTE_BYTE(eval) != NOQUOTE_1)

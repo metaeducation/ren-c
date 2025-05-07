@@ -102,7 +102,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 // that instead of being trapped in tight optimization loops, there is a
 // continuous ability to "bounce" out to the trampoline...yielding a locus
 // of control where a debugger can be put.  A good example of this is that
-// evaluating an block like [1 + 2, 3 + 4] shouldn't stay nested in a single
+// evaluating a block like [1 + 2, 3 + 4] shouldn't stay nested in a single
 // C stack level where it churns forward to the next expression without
 // giving up control--however tempting it might be to style the code to
 // optimize in a tight loop.

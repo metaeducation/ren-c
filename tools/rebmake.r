@@ -64,12 +64,12 @@ map-files-to-local: func [
 ends-with?: func [
     return: [logic?]
     s [any-string?]
-    suffix [~void~ any-string?]
+    suffix [~null~ any-string?]  ; no ~[]~ and ^META params in bootstrap
 ][
     return to-logic any [  ; TO-LOGIC for bootstrap (xxx? returns #[true])
-        void? suffix
+        null? suffix
         empty? suffix
-        suffix = (skip tail of s negate length of suffix)
+        suffix ?= (skip tail of s negate length of suffix)  ; ?= lax compare
     ]
 ]
 
@@ -599,7 +599,10 @@ cc: make compiler-class [
 
             output: file-to-local output
 
-            any [E, ends-with? output target-platform.obj-suffix] then [
+            any [
+                E
+                ends-with? output (<maybe-null> target-platform.obj-suffix)
+            ] then [
                 keep output
             ] else [
                 keep [output target-platform.obj-suffix]
@@ -636,7 +639,7 @@ cc: make compiler-class [
             keep "-o"
 
             output: file-to-local output
-            either ends-with? output maybe suffix [
+            either ends-with? output (<maybe-null> suffix) [
                 keep output
             ][
                 keep unspaced [output suffix]
@@ -860,7 +863,7 @@ cl: make compiler-class [
                 either E ["/Fi"]["/Fo"]
                 any [
                     E
-                    ends-with? output target-platform.obj-suffix
+                    ends-with? output (<maybe-null> target-platform.obj-suffix)
                 ] then [
                     output
                 ] else [
@@ -898,7 +901,7 @@ cl: make compiler-class [
             ;
             output: file-to-local output
             keep unspaced [
-                "/Fe" either ends-with? output maybe suffix [
+                "/Fe" either ends-with? output (<maybe-null> suffix) [
                     output
                 ][
                     unspaced [output suffix]
@@ -1306,7 +1309,7 @@ generator-class: make object! [
                 basename: project.output
                 project.output: join basename suffix
             ]
-            ends-with? project.output maybe suffix [
+            ends-with? project.output (<maybe-null> suffix) [
                 basename: either suffix [
                     copy:part project.output
                         (length of project.output) - (length of suffix)

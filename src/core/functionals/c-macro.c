@@ -154,11 +154,11 @@ Bounce Macro_Dispatcher(Level* const L)
             return THROWN;  // we didn't catch the throw
     }
 
-    if (Is_Nihil(OUT))
+    if (Is_Void(OUT))
         return OUT;
 
     if (not Is_Block(OUT))
-        return FAIL("MACRO must return NIHIL or BLOCK! for the moment");
+        return FAIL("MACRO must return VOID or BLOCK! for the moment");
 
     Splice_Block_Into_Feed(L->feed, stable_OUT);
 
@@ -264,7 +264,7 @@ DECLARE_NATIVE(INLINE)
 
     Option(const Element*) opt_code = Optional_Element_ARG(CODE);
     if (not opt_code)
-        return NIHIL;  // do nothing, just return invisibly
+        return VOID;  // do nothing, just return invisibly
     const Element* code = unwrap opt_code;
 
     if (Is_Quoted(code)) {

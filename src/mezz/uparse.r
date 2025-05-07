@@ -314,16 +314,16 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> result
     ][
-        [result remainder]: parser input except e -> [
+        [^result remainder]: parser input except e -> [
             return raise e  ; non-matching parser means WHEN did not match
         ]
-        if void? :result [
-            fail "WHEN combinator received ~void~ antiform result"
+        if void? ^result [
+            fail "WHEN combinator received VOID antiform result"
         ]
-        if null? :result [
+        if null? ^result [
             return raise "WHEN combinator received ~null~ antiform result"
         ]
-        return :result  ; can say e.g. [x: when (next var)] if you like
+        return ^result  ; can say e.g. [x: when (next var)] if you like
     ]
 
     === BYPASS COMBINATOR ===
@@ -365,7 +365,7 @@ default-combinators: to map! reduce [
     'spread combinator [
         "Return antiform group for list arguments"
         return: "Splice antiform if input is list"
-            [~null~ ~void~ element? splice!]
+            [~null~ ~[]~ element? splice!]
         parser [action!]
         <local> result'
     ][
@@ -755,23 +755,17 @@ default-combinators: to map! reduce [
             return raise e
         ]
         case [
-            '~void~ = where [
+            void? ^where [
                 remainder: input
             ]
-            quasi? where [
-                fail "Cannot SEEK to antiform"
+            integer? ^where [
+                remainder: at (head of input) ^where
             ]
-
-            (elide where: my unquote)
-
-            integer? where [
-                remainder: at (head of input) where
-            ]
-            any-series? :where [
-                if not same? (head of input) (head of where) [
+            any-series? ^where [
+                if not same? (head of input) (head of ^where) [
                     fail "Series SEEK in UPARSE must be in the same series"
                 ]
-                remainder: where
+                remainder: ^where
             ]
             fail "SEEK requires INTEGER!, series position, or VOID"
         ]
@@ -952,7 +946,7 @@ default-combinators: to map! reduce [
             return raise e
         ]
 
-        if nihil? ^subseries [
+        if void? ^subseries [
             fail "Cannot SUPBARSE into a void"
         ]
 
@@ -1439,7 +1433,7 @@ default-combinators: to map! reduce [
 
     'phase combinator [
         return: "Result of the parser evaluation"
-            [any-value? pack!]
+            [any-value? pack! ghost!]
         :pending [blank! block!]
         parser [action!]
         <local> result'
@@ -1530,7 +1524,7 @@ default-combinators: to map! reduce [
             return void  ; couldn't produce void at all if vaporized [3]
         ]
 
-        r: ^r  ; only needed as ^META to check for NIHIL
+        r: ^r  ; only needed as ^META to check for VOID
 
         if word? r [
             r: :[r]  ; enable 0-arity combinators [4]
@@ -1664,17 +1658,30 @@ default-combinators: to map! reduce [
 
     === ANTIFORM COMBINATORS ===
 
+    ; !!! It's not clear how ~[...]~ should act generally, but one idea would
+    ; be that it be a shorthand for PACK:
+    ;
+    ; https://rebol.metaeducation.com/t/dialecting-quasiforms-in-parse/2379
+    ;
+    ; Whether it evaluates the contents or does as-is, ~[]~ would still mean
+    ; "synthesize a void" either way.  We introduce it here to bridge
+    ; compatibility with old tests that matched stable void keywords.
+    ;
+    '~[]~ combinator [
+        return: [~[]~]
+    ][
+        remainder: input
+        return void
+    ]
+
     (meta keyword!) combinator [
-        return: []
+        return: [ghost!]
         value [keyword!]
         <local> comb neq?
     ][
         switch value [
           ~null~ [
             fail make error! [type: 'script, id: 'need-non-null]
-          ]
-          ~void~ [
-            return void  ; does not vanish
           ]
           ~okay~ [
             return ~,~  ; let okay just act as a "guard", no influence
@@ -2399,7 +2406,7 @@ default-combinators: to map! reduce [
 
     (meta block!) (block-combinator: combinator [
         return: "Last result value"
-            [any-value? pack!]
+            [any-value? pack! ghost!]
         :pending [blank! block!]
         value [block!]
         :limit "Limit of how far to consider (used by ... recursion)"
@@ -3059,7 +3066,7 @@ parse*: func [
     ; While combinators can vaporize, don't allow PARSE itself to vaporize
     ;
     if ghost? ^synthesized' [
-        ^synthesized': void
+        synthesized': meta void
     ]
 
     return pack [^synthesized' pending]

@@ -1128,7 +1128,7 @@ static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
     Level* L = Make_Level(&Evaluator_Executor, feed, LEVEL_MASK_NONE);
-    Init_Nihil(Evaluator_Primed_Cell(L));
+    Init_Void(Evaluator_Primed_Cell(L));
 
     if (run_flags & RUN_VA_FLAG_INTERRUPTIBLE)
         L->flags.bits &= (~ LEVEL_FLAG_UNINTERRUPTIBLE);
@@ -1346,7 +1346,7 @@ void API_rebPushContinuation_internal(
         Tweak_Cell_Binding(block, g_lib_context);  // [3]
 
     Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
-    Init_Nihil(Evaluator_Primed_Cell(L));
+    Init_Void(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
 }
 

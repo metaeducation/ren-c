@@ -23,7 +23,7 @@
         'a = parse [a a a] [:(1 = 0) | some 'a]
     )
     (
-        ; OKAY synthesizes NIHIL and continues matching
+        ; OKAY synthesizes VOID and continues matching
         'a = parse [a a a] ['a :(1 = 1) elide some 'a]
     )
     (
@@ -31,7 +31,7 @@
         void = parse [a a a] ['a :(void) elide some 'a]
     )
     (
-        ; NIHIL synthesizes NIHIL and continues matching
+        ; VOID synthesizes VOID and continues matching
         'a = parse [a a a] ['a :(comment "hi") elide some 'a]
     )
 ]

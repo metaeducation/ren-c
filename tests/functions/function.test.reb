@@ -449,12 +449,12 @@
 )]
 
 (
-    foo: lambda [^arg [~null~ ghost! <end> ~void~ integer!]] [arg]
+    foo: lambda [^arg [~null~ ghost! <end> ~[]~ integer!]] [:arg]
     all [
         (the '1020) = (foo 1020)
         '~,~ = (foo comment "HI")
         (meta null) = (foo any [1 > 2, 3 > 4])
-        null? (foo)
+        trash? (foo)
     ]
 )
 

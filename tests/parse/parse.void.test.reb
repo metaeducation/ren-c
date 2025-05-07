@@ -6,39 +6,39 @@
 
 ; meta voids are just skipped, and skipped if hit in a variable
 
-('b = parse [a b] ['a ~void~ 'b])
+('b = parse [a b] ['a ~[]~ 'b])
 (
-    var: void
-    'b = parse [a b] ['a var 'b]
+    ^var: void
+    'b = parse [a b] ['a ^var 'b]
 )
 
 ; Voids synthesize void
 
-(void = parse [a b] ['a 'b ~void~])
+(void? parse [a b] ['a 'b ~[]~])
 (
-    var: void
-    void = parse [a b] ['a 'b var]
+    ^var: void
+    void? parse [a b] ['a 'b ^var]
 )
 (
     test: ~
     all [
-        'b = parse [a b] ['a test: [~void~] 'b]
-        void = test
+        'b = parse [a b] ['a ^test: [~[]~] 'b]
+        void? ^test
     ]
 )
 (
     test: ~
-    var: void
+    ^var: void
     all [
-       'b = parse [a b] ['a test: ^[var] 'b]
-        '~void~ = test
+       'b = parse [a b] ['a ^test: [^var] 'b]
+        void? ^test
     ]
 )
 
 ; Voided expressions work in GET-GROUP! substitutions
 
-(void = parse [a b] ['a 'b :(if null [[some 'c]])])
-('c = parse [a b c c c] ['a 'b :(if ok [[some 'c]])])
+(void? parse [a b] ['a 'b :(maybe if null [[some 'c]])])
+('c = parse [a b c c c] ['a 'b :(maybe if ok [[some 'c]])])
 
 ; Liberal policy of letting voids skip ahead is convenient to use void as a
 ; state equivalent to no-op...if you are willing to deal with the possible

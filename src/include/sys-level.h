@@ -700,7 +700,7 @@ INLINE Option(const Value*) Optional_Level_Arg(Level* L, REBLEN n)
     assert(not Is_Node_Marked(arg));  // use mark for saying it was nihil
 
     Option(const Value*) result;
-    if (Is_Meta_Of_Nihil(arg)) {
+    if (Is_Meta_Of_Void(arg)) {
         Init_Quasi_Word(arg, CANON(VOID));  // fib, but helps FAIL(PARAM(...))
         Set_Node_Marked_Bit(arg);
         result = nullptr;
@@ -753,14 +753,14 @@ INLINE Bounce Native_Thrown_Result(Level* L) {
     return BOUNCE_THROWN;
 }
 
-INLINE Bounce Native_Nihil_Result_Untracked(
+INLINE Bounce Native_Void_Result_Untracked(
     Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
 ){
     assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Nihil_Untracked(level_->out);
+    return Init_Void_Untracked(level_->out);
 }
 
 INLINE Bounce Native_Unmeta_Result(Level* level_, const Element* v) {
@@ -897,7 +897,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
 
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
-    #define NIHIL       Native_Nihil_Result_Untracked(TRACK(OUT), level_)
+    #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
     #define TRASH       Native_Trash_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))

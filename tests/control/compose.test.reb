@@ -11,7 +11,7 @@
 ; Preserve one element rule vs. tolerate vaporization.
 ;
 ([~null~ *] = compose [(reify null) * (maybe null)])
-([~void~ *] = compose [(meta void) * (void)])
+([~[]~ *] = compose [(meta void) * (void)])
 
 ; Voids vaporize regardless of form.
 
@@ -208,8 +208,8 @@
         [<a> (if ok [void]) <b>]
         :predicate cascade [eval/ reify/]
     ])
-    ([<a>] = compose [<a> (~()~)])
-    ([<a>] = compose [<a> (~void~)])  ; exception made for pure void
+    ([<a>] = compose [<a> (~()~)])  ; "HOLE"
+    ([<a>] = compose [<a> (~[]~)])  ; "VOID"
 ]
 
 [

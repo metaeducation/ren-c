@@ -667,7 +667,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
         assert(not Is_Trash(atom));  // antiform blank must be ^META as argument
 
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
-        assert(not Is_Stable(atom) or not Is_Void(atom));  // should bypass
+        assert(not Is_Void(atom));  // should have bypassed this check
 
     if (Get_Parameter_Flag(param, CONST))
         Set_Cell_Flag(atom, CONST);  // mutability override? [2]
@@ -708,9 +708,6 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
             goto return_true;
 
         if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
-            goto return_true;
-
-        if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(atom))
             goto return_true;
 
         if (

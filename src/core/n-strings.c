@@ -412,9 +412,6 @@ DECLARE_NATIVE(JOIN)
 
     Decay_If_Unstable(SPARE);  // spaced [match [logic?] false ...]
 
-    if (Is_Void(SPARE))  // spaced [maybe null], spaced [if null [<a>]], etc
-        goto next_mold_step;  // vaporize
-
     if (Is_Nulled(SPARE))  // catches bugs in practice [3]
         return RAISE(Error_Need_Non_Null_Raw());
 
@@ -471,9 +468,6 @@ DECLARE_NATIVE(JOIN)
         goto next_stack_step;  // vaporize
 
     Decay_If_Unstable(SPARE);
-
-    if (Is_Void(SPARE))
-        goto next_stack_step;  // vaporize
 
     if (Is_Nulled(SPARE))  // catches bugs in practice [3]
         return RAISE(Error_Need_Non_Null_Raw());

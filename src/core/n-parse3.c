@@ -409,11 +409,6 @@ static const Element* Get_Parse_Value(
     else
         return rule;
 
-    if (Is_Void(sink)) {  // void means ignore
-        Init_Quasi_Word(sink, CANON(VOID));
-        return cast(Element*, sink);
-    }
-
     if (Is_Quasiform(sink)) {
         fail ("RULE should not look up to quasiforms");
     }
@@ -483,13 +478,14 @@ bool Process_Group_For_Parse_Throws(
     if (Is_Group(group)) {
         Erase_Cell(out);
     }
+    else if (Is_Void(atom_out)) {
+        Init_Quasi_Word(atom_out, CANON(VOID));
+    }
     else {
         Decay_If_Unstable(atom_out);
 
         if (Is_Antiform(atom_out)) {
-            if (Is_Void(atom_out))
-                Init_Quasi_Word(atom_out, CANON(VOID));
-            else if (Is_Logic(atom_out))
+            if (Is_Logic(atom_out))
                 Meta_Quotify(atom_out);
             else
                 fail (Error_Bad_Antiform(atom_out));
@@ -534,7 +530,7 @@ static REBIXO Parse_One_Rule(
         if (Process_Group_For_Parse_Throws(SPARE, level_, rule))
             return THROWN_FLAG;
 
-        if (not inject or Is_Void(SPARE)) {  // !!! Should this be legal?
+        if (not inject or Is_Quasi_Word_With_Id(stable_SPARE, SYM_VOID)) {
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
             return pos;
         }
@@ -799,7 +795,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (Process_Group_For_Parse_Throws(cell, level_, blk))
                     return THROWN_FLAG;
 
-                if (not inject or Is_Void(cell))
+                if (not inject or Is_Quasi_Word_With_Id(cell, SYM_VOID))
                     continue;
 
                 rule = Ensure_Element(cell);

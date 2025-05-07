@@ -1182,7 +1182,7 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
     Option(const Value*) poke = Optional_ARG(VALUE);
     if (not poke)
         return FAIL(
-            "Can't remove fields from ANY-CONTEXT! by setting to NIHIL"
+            "Can't remove fields from ANY-CONTEXT! by setting to VOID"
         );
 
     Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);

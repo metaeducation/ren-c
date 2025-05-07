@@ -386,7 +386,7 @@ typechecker: lambda3 [x [datatype! typeset! block!]] [
 ; These few shims have worked well enough.
 
 spread: func3 [
-    return: [~void~ ~null~ block!]
+    return: [~void~ ~null~ block!]  ; !!! bootstrap has stable ~void~
     x [~null~ blank! block!]
 ][
     return case [
@@ -767,7 +767,7 @@ modernize-action: func3 [
                     keep3:only spec.1
                 ]
 
-                if spec.1 = [nihil?] [
+                if spec.1 = [void?] [
                     keep3:only []  ; old cue for invisibility
                     spec: my next
                     continue
@@ -884,7 +884,7 @@ apply: func3 [
 
 ; For commentary purposes, e.g. old-append: runs lib.append
 ;
-runs: func3 [action [~void~ action!]] [
+runs: func3 [action [~void~ action!]] [  ; !! bootstrap has stable void
     if void? action [return null]
     return action
 ]

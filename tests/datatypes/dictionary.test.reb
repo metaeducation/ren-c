@@ -157,7 +157,7 @@
     )
 ]
 
-; Nihil can be used to remove keys from maps
+; Void can be used to remove keys from maps
 (
     m: to map! [key <initial>]
     all [

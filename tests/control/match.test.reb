@@ -29,7 +29,7 @@
 
     (null = match [integer!] void)
     ~???~ !! (match [void?] void)
-    ('~void~ = match:meta [void?] void)
+    (null = match:meta [void?] void)  ; acts as void-in-null-out ATM.
 
     ('_ = match blank! blank)
     ('true = match [boolean?] 'true)

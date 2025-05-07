@@ -4,8 +4,8 @@
 
 (1 = eval [comment "a" 1])
 (1 = eval [1 comment "a"])
-(nihil? comment "a")
-(nihil? (comment "a"))
+(void? comment "a")
+(void? (comment "a"))
 
 ('~,~ = (meta comment "a"))
 ((quote '~,~) = meta (meta comment "a"))
@@ -132,7 +132,7 @@
 ]
 
 (
-    nihil? eval:undecayed [|||]
+    void? eval:undecayed [|||]
 )
 (
     3 = eval [1 + 2 ||| 10 + 20, 100 + 200]

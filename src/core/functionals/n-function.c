@@ -564,15 +564,15 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(atom))
         return true;  // common case, make fast
 
-    if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(atom))
+    if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
         return true;  // kind of common... necessary?
 
     if (Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true))
         return true;
 
-    if (Is_Nihil(atom)) {  // RETURN NIHIL
+    if (Is_Void(atom)) {  // RETURN VOID
         //
-        // !!! Treating a return of NIHIL as a return of TRASH helps some
+        // !!! Treating a return of VOID as a return of TRASH helps some
         // scenarios, for instance piping UPARSE combinators which do not
         // want to propagate pure invisibility.  The idea should be reviewed
         // to see if VOID makes more sense...but start with a more "ornery"

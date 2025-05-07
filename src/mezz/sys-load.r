@@ -647,7 +647,7 @@ export*: func [
         if set-group? what [
             what: ^ eval what
             case [
-                nihil? ^what [word: null]
+                void? ^what [word: null]
                 word? ^what [word: ^what]
                 set-word? ^what [word: unchain ^what]
                 set-run-word? ^what [word: unchain unpath ^what]

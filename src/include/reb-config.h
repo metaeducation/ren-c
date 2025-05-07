@@ -506,13 +506,6 @@ Special internal defines used by RT, not Host-Kit developers:
     STATIC_ASSERT(CPLUSPLUS_11);
 #endif
 
-// The idea that you can say (enabled: 'false) and then later write something
-// like (if enabled [...]) and have it run the branch is just an outcome of
-// the flexible logic design.  This helped catch violators at one point, but
-// it is now turned off.
-//
-#define DEBUG_CHECK_POSSIBLE_BOOLEAN_MISUSE  0
-
 
 // See notes on ALIGN_SIZE regarding why we check this, and when it does and
 // does not apply (some platforms need this invariant for `double` to work).

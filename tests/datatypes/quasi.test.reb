@@ -202,7 +202,7 @@
         ]
     )
     (all [
-        nihil? ()  ; empty groups make nihil
+        void? ()  ; empty groups make nihil
         3 = (1 + 2 ())
     ])
     ~no-value~ !! (

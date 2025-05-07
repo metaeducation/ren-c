@@ -240,7 +240,7 @@
 [
     (void? for-each 'x [] [fail])
     (void? for-each 'x _ [fail])
-    (null? for-each 'x ~void~ [fail])
+    (null? for-each 'x void [fail])
 
     ~expect-arg~ !! (for-each 'x '~ [fail])
     ~unspecified-arg~ !! (for-each 'x ~ [fail])

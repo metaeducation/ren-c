@@ -128,7 +128,7 @@ bool Pushed_Continuation(
     if (Is_Action(branch))  // antiform frames are legal
         goto handle_action;
 
-    if (Is_Void(branch)) {
+    if (false) {  // !!! checked for VOID, but that's unstable antiform now
         if (with) {
             Copy_Cell(out, unwrap with);
             goto just_use_out;
@@ -179,7 +179,7 @@ bool Pushed_Continuation(
         Level* L = Make_Level_At_Core(
             &Evaluator_Executor, c_cast(Element*, branch), binding, flags
         );
-        Init_Nihil(Evaluator_Primed_Cell(L));
+        Init_Void(Evaluator_Primed_Cell(L));
         if (Unchecked_Heart_Of(branch) == TYPE_META_BLOCK) {
             assert(!"META-BLOCK! branches are being rethought");
         }

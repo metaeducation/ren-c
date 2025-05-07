@@ -616,7 +616,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(SERIES));
 
-        if (Is_Meta_Of_Nihil(ARG(VALUE)))
+        if (Is_Meta_Of_Void(ARG(VALUE)))
             return COPY(map);  // don't fail on read only if it would be a no-op
 
         if (not Is_Meta_Of_Splice(ARG(VALUE)))

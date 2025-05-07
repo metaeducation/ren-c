@@ -34,7 +34,7 @@
     ]
     all [
         304 = (304 outer)
-        nihil? outer
+        void? outer
         var = 1020
     ]
 )(

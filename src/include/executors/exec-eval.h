@@ -123,7 +123,7 @@ typedef struct {
     // It was once accomplished with a BOUNCE_INVISIBILE that didn't actually
     // overwrite the previous output, but set a flag on the cell that could
     // be un-set to recover the value.  But this approach predated the
-    // semantics of empty antiform blocks (NIHIL), and could no longer work.
+    // semantics of empty antiform blocks (VOID), and could no longer work.
     //
     // So unfortunately, the evaluator really does need to save the prior
     // value when doing multiple steps.  If not performing multiple steps,

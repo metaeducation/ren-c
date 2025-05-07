@@ -18,15 +18,13 @@
 ]
 
 [
-    ('b = parse [a b] ['a ~void~ 'b])
-    ('b = parse [a b] ['a void 'b])  ; one of the allowed cases for WORD!
+    ('b = parse [a b] ['a ~[]~ 'b])
     ('b = parse [a b] ['a @void 'b])
     ('b = parse [a b] ['a @lib.void 'b])
     ('b = parse [a b] ['a @(void) 'b])
     ('b = parse [a b] ['a @[(void)] 'b])
 
-    (void = parse [a b] ['a 'b ~void~])
-    (void = parse [a b] ['a 'b void])
+    (void = parse [a b] ['a 'b ~[]~])
     (void = parse [a b] ['a 'b @void])
     (void = parse [a b] ['a 'b @lib.void])
     (void = parse [a b] ['a 'b @(void)])

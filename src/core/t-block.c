@@ -534,9 +534,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
         Value* pattern = ARG(PATTERN);
 
-        if (Is_Void(pattern))
-            return nullptr;  // VOID in, NULL out
-
         if (Is_Datatype(pattern))
             Init_Typechecker(pattern, pattern);  // out = in is okay
 

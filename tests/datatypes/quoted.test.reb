@@ -122,8 +122,12 @@
 )
 
 
-(void? ~void~)
-(void? eval [~void~])
+(void? ~[]~)
+(void? void)
+(void? eval [])
+(void? eval [~[]~])
+(void? eval [, ~[]~,])
+(void? eval [1 + 2, void])
 
 (
     [1 (2 + 3) [4 + 5] a/+/b c.+.d: :e.+.f]

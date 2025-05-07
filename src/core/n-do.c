@@ -253,7 +253,7 @@ DECLARE_NATIVE(SHOVE)
 //          error!  ; raise the error
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
-//      :undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
+//      :undecayed "Don't convert VOID or COMMA! antiforms to VOID"
 //      :step "Do one step of evaluation (return null position if at tail)"
 //  ]
 //
@@ -340,7 +340,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         flags
     );
     if (not Bool_ARG(STEP))
-        Init_Nihil(Evaluator_Primed_Cell(sub));
+        Init_Void(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     if (not Bool_ARG(STEP)) {  // plain evaluation to end, maybe void
@@ -415,12 +415,12 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         panic (source); // Frame is the only other type
 
     if (Is_Level_At_End(L))
-        return NIHIL;
+        return VOID;
 
     Level* sub = Make_Level(  // need to do evaluation in a sublevel [3]
         &Evaluator_Executor, L->feed, LEVEL_MASK_NONE
     );
-    Init_Nihil(Evaluator_Primed_Cell(sub));
+    Init_Void(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 
@@ -455,7 +455,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
     if (not Bool_ARG(UNDECAYED)) {
         if (Is_Ghost(OUT))
-            Init_Nihil(OUT);
+            Init_Void(OUT);
     }
 
     if (Bool_ARG(STEP)) {
@@ -478,7 +478,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 //
 //      return: [any-atom?]
 //      frame [frame!]
-//      :undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
+//      :undecayed "Don't convert VOID or COMMA! antiforms to VOID"
 //  ]
 //
 DECLARE_NATIVE(EVAL_FREE)
@@ -551,7 +551,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
     if (not Bool_ARG(UNDECAYED)) {
         if (Is_Ghost_Or_Void(OUT))
-            Init_Nihil(OUT);
+            Init_Void(OUT);
     }
 
     return OUT;

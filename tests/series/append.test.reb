@@ -114,14 +114,14 @@
 
 ; New rule: quoteds append as-is, like everything else
 [
-    ([a b c '[d e]] = append [a b c] ^[d e])
+    ([a b c '[d e]] = append [a b c] quote [d e])
 
-    ([a b c '[3 d e]] = append [a b c] ^ compose [(1 + 2) d e])
+    ([a b c '[3 d e]] = append [a b c] meta compose [(1 + 2) d e])
 
-    ([a b c ~void~] = append [a b c] meta void)
+    ([a b c ~[]~] = append [a b c] meta void)
 
     (
-        [a b c ~null~] = append [a b c] ^(null)
+        [a b c ~null~] = append [a b c] meta null
     )
 ]
 
@@ -154,7 +154,7 @@
     ([a b c '@] = append [a b c] ^ '@)
 ]
 
-([a b c ~void~] = append [a b c] the ~void~)
+([a b c ~void~] = append [a b c] the ~void~)  ; no antiform of ~void~
 
 ; Added support for :PART on ISSUE!
 ;
@@ -165,14 +165,11 @@
     (null = append void "abc")
 ]
 
-; The behavior of conditionals returning ~()~ antiforms on empty branches
-; leads to a useful interaction with blocks, while retaining the reactivity
-; of a true branch product with THEN, and false giving void runs ELSE.
 [
-    ('~[~void~]~ = ^ if ok [])
-    (void? if null [<a>])
+    ('~[]~ = ^ if ok [])
+    (null? if null [<a>])
     ([a b c] = append [a b c] if ok [])
-    ([a b c] = append [a b c] if null [<a>])
+    ([a b c] = append [a b c] maybe if null [<a>])
 ]
 
 ; BLANK! acts like an empty block when passed to SPREAD
@@ -186,7 +183,10 @@
     (
         [a b] = append [a b] spread second [c _]
     )
-    (
-        [a b] = append [a b] spread second [c ~void~]
-    )
+]
+
+; Quasiform VOID is being tried out as accepted by spread as a convenience,
+; as opposed to erroring
+[
+    ([a b] = append [a b] spread second [c ~[]~])
 ]

@@ -1,12 +1,12 @@
 //
 //  file: %cell-void.h
-//  summary: "Non-Array-Element antiform state used for opting out"
+//  summary: "Unstable Antiform State of ~[]~ Used For Opting Out"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,26 +20,48 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// "Stable void" (the antiform of the word void) is being rethought.
+// This unstable antiform can't be used in conventional assignments.  The
+// assignments that do allow it will actually remove keys from a mapping
+// entirely, because it has no variable representation.
 //
-// NIHIL will become true unstable void.  Right now stable void is the state
-// created to bridge nihil to stable parameters.  The new plan is that frames
-// will always speak in terms of meta-values.
+// It is sensibly represented as a PACK! of length 0.
 //
-
-INLINE bool Is_Void(Need(const Value*) v) {
-    Assert_Cell_Readable(v);
-    return QUOTE_BYTE(v) == ANTIFORM_0
-        and Heart_Of(v) == TYPE_WORD
-        and Cell_Word_Id(v) == SYM_VOID;
-}
 
 #define Init_Void_Untracked(out) \
-    Init_Any_Word_Untracked( \
-        (out), \
-        TYPE_WORD, \
-        ANTIFORM_0_COERCE_ONLY,  /* VOID is valid keyword symbol */ \
-        CANON(VOID))
+    Init_Pack_Untracked((out), EMPTY_ARRAY)
 
 #define Init_Void(out) \
     TRACK(Init_Void_Untracked(out))
+
+INLINE bool Is_Void(Need(const Atom*) v) {
+    if (not Is_Pack(v))
+        return false;
+    const Element* tail;
+    const Element* at = Cell_List_At(&tail, v);
+    return tail == at;
+}
+
+INLINE Element* Init_Meta_Of_Void_Untracked(Sink(Element) out) {
+    Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, EMPTY_ARRAY, 0, SPECIFIED);
+    QUOTE_BYTE(out) = QUASIFORM_2_COERCE_ONLY;
+    return out;
+}
+
+#define Init_Meta_Of_Void(out) \
+    TRACK(Init_Meta_Of_Void_Untracked((out)))
+
+INLINE bool Is_Meta_Of_Void(const Cell* v) {
+    if (not Is_Meta_Of_Pack(v))
+        return false;
+    const Element* tail;
+    const Element* at = Cell_List_At(&tail, v);
+    return tail == at;
+}
+
+INLINE bool Is_Ghost_Or_Void(Need(Atom*) v) {
+    return Is_Ghost(v) or Is_Void(v);
+}
+
+INLINE bool Is_Meta_Of_Ghost_Or_Void(const Cell* v) {
+    return Is_Meta_Of_Ghost(v) or Is_Meta_Of_Void(v);
+}

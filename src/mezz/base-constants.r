@@ -45,13 +45,15 @@ nul: NUL:  #{00}  ; ^(NULL) no longer legal internal to strings
 blank: _
 hole: ~()~
 quasar: '~
-trash: ~  ; can get meta as ^TRASH, but not TRASH...use NOOP function instead
 
 null: ~null~
 ok: okay: ~okay~
 ok?: okay?/
 
-void: ~void~
+trash: ~  ; LIB(TRASH) expects value not function...use NOOP function instead
+
+void: lambda [] [~[]~]
+ghost: function [] [return ~,~]
 
 ; These should be aliases for things like system.ports.input and such, but
 ; for now just to make the syntax of things look better we define them.

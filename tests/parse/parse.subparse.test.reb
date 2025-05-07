@@ -8,8 +8,8 @@
     ; !!! To limit the scope of potential vaporization, only a few combinators
     ; pass it through.  The block combinator does, so `[elide "a"]` acts the
     ; same as `elide "a"`.  But SUBPARSE currently does not, and leverages
-    ; the default behavior that functions which do not support NIHIL returns
-    ; will react by producing a VOID when passed a NIHIL.
+    ; the default behavior that functions which do not support VOID returns
+    ; will react by producing a VOID when passed a VOID.
     ;
     (void? parse [[]] [subparse any-series?/ []])
 

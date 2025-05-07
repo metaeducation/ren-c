@@ -212,11 +212,11 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     FLAG_LEFT_BIT(14)
 
 
-//=//// PARAMETER_FLAG_NIHIL_DEFINITELY_OK ////////////////////////////////=//
+//=//// PARAMETER_FLAG_VOID_DEFINITELY_OK /////////////////////////////////=//
 //
 // See notes on NULL_DEFINITELY_OK
 //
-#define PARAMETER_FLAG_NIHIL_DEFINITELY_OK \
+#define PARAMETER_FLAG_VOID_DEFINITELY_OK \
     FLAG_LEFT_BIT(15)
 
 
@@ -263,12 +263,9 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     FLAG_LEFT_BIT(19)
 
 
-//=//// PARAMETER_FLAG_VOID_DEFINITELY_OK /////////////////////////////////=//
+//=//// PARAMETER_FLAG_20 /////////////////////////////////////////////////=//
 //
-// This may or may not be a great use of a bit in the flags, but we haven't
-// run out of flags yet.  When we do, rethink the optimizations.
-//
-#define PARAMETER_FLAG_VOID_DEFINITELY_OK \
+#define PARAMETER_FLAG_20 \
     FLAG_LEFT_BIT(20)
 
 

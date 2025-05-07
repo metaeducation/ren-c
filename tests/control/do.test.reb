@@ -68,7 +68,7 @@
     ('~,~ = ^ eval:undecayed [comment "HI"])
 
     (3 = (1 + 2 eval:undecayed [comment "HI"]))
-    (nihil? eval:undecayed [comment "HI"])
+    (void? eval:undecayed [comment "HI"])
 
     (
         y: <overwritten>

@@ -1102,7 +1102,7 @@ DECLARE_NATIVE(FREE)
 //
 //      return: "Returns false if value wouldn't be FREEable (e.g. LOGIC!)"
 //          [logic?]
-//      value [any-value?]
+//      value [<maybe> any-value?]
 //  ]
 //
 DECLARE_NATIVE(FREE_Q)
@@ -1119,20 +1119,20 @@ DECLARE_NATIVE(FREE_Q)
 
     Value* v = ARG(VALUE);
 
-    if (Is_Void(v) or Is_Nulled(v))
-        return nullptr;
+    if (Is_Nulled(v))
+        return LOGIC(false);
 
     if (not Cell_Has_Node1(v))  // freeable values have Flex in payload node1
-        return nullptr;
+        return LOGIC(false);
 
     Node* n = CELL_NODE1(v);
     if (n == nullptr or Is_Node_A_Cell(n))
-        return nullptr;  // no decayed pairing form at this time [1]
+        return LOGIC(false);  // no decayed pairing form at this time [1]
 
     if (Is_Stub_Diminished(cast(Stub*, n)))
-        return Init_Okay(OUT);  // decayed is as "free" as outstanding refs get
+        return LOGIC(true);  // decayed is as "free" as outstanding refs get
 
-    return nullptr;
+    return LOGIC(false);
 }
 
 
@@ -1205,7 +1205,7 @@ DECLARE_NATIVE(ANY_ATOM_Q)
 
 
 //
-//  nihil?: native:intrinsic [
+//  void?: native:intrinsic [
 //
 //  "Tells you if argument is an ~[]~ antiform, e.g. an empty pack"
 //
@@ -1213,13 +1213,13 @@ DECLARE_NATIVE(ANY_ATOM_Q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(NIHIL_Q)
+DECLARE_NATIVE(VOID_Q)
 {
-    INCLUDE_PARAMS_OF_NIHIL_Q;
+    INCLUDE_PARAMS_OF_VOID_Q;
 
     const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
-    return LOGIC(Is_Meta_Of_Nihil(meta));
+    return LOGIC(Is_Meta_Of_Void(meta));
 }
 
 
@@ -1260,28 +1260,6 @@ DECLARE_NATIVE(GHOST_OR_VOID_Q)
     const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
     return LOGIC(Is_Meta_Of_Ghost_Or_Void(meta));
-}
-
-
-//
-//  void?: native:intrinsic [
-//
-//  "Tells you if argument is void"
-//
-//      return: [logic?]
-//      value
-//  ]
-//
-DECLARE_NATIVE(VOID_Q)
-{
-    INCLUDE_PARAMS_OF_VOID_Q;
-
-    DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
-    if (bounce)
-        return unwrap bounce;
-
-    return LOGIC(Is_Void(v));
 }
 
 
@@ -1328,7 +1306,12 @@ DECLARE_NATIVE(NOOP)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
 //
 // This function is preferred to having a function called TRASH, due to the
 // potential confusion of people not realizing that (get $trash) would be
-// a function, and not the antiform blank state.
+// a function, and not the antiform blank state.  It's also the case that
+// the code uses LIB(TRASH) to get a canon trash value.
+//
+// (The rule is bent with VOID and GHOST being functions, those are unstable
+// antiforms though and so LIB(VOID) and LIB(GHOST) couldn't return the
+// unstable atom states, as they wouldn't be storable in lib variables.)
 {
     INCLUDE_PARAMS_OF_NOOP;
 

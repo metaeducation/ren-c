@@ -73,7 +73,6 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
                 assert(not Is_Api_Value(elem));  // API uses nullptr [3]
                 break;
 
-              case SYM_VOID:
               case SYM_OKAY:
               case SYM_NAN:
                 break;
@@ -178,7 +177,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
     }
 
     if (Is_Ghost(v))
-        fail (Error_No_Value_Raw());  // distinct error from nihil?
+        fail (Error_No_Value_Raw());  // distinct error from void?
 
     if (Is_Raised(v))
         fail (Cell_Error(v));
@@ -194,12 +193,14 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
 INLINE bool Is_Pack_Undecayable(Atom* pack)
 {
     assert(Is_Pack(pack));
-    if (Is_Nihil(pack))
+    if (Is_Void(pack))
         return true;
     const Element* at = Cell_List_At(nullptr, pack);
     if (Is_Meta_Of_Raised(at))
         return true;
     if (Is_Meta_Of_Pack(at))
+        return true;
+    if (Is_Meta_Of_Ghost(at))
         return true;
     return false;
 }

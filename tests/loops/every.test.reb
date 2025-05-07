@@ -42,7 +42,7 @@
 (
     sum: 0
     all [
-        '~[~void~]~ = ^ every 'x [1 2 7] [
+        trash? every 'x [1 2 7] [
             sum: me + x
             if x = 7 [continue]  ; Doesn't force NULL return, drops the 2
             x
@@ -53,10 +53,7 @@
 
 ((meta void) = ^ every 'x [] [fail ~<unreachable>~])
 
+('~null~ = meta every 'x [1 2 3 4] [if odd? x [x]])
 
-('~[~void~]~ = ^ every 'x [1 2 3 4] [maybe if odd? x [x]])
-(
-    '~[~void~]~ = ^ every 'x [1 2 3 4] [if odd? x [x]]
-)
-
-('~[~void~]~ = ^ every 'x [1 2 3 4] [comment "heavy"])
+(trash? every 'x [1 2 3 4] [maybe if odd? x [x]])
+('~ = meta every 'x [1 2 3 4] [comment "heavy"])

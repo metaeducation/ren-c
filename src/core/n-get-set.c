@@ -483,7 +483,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             )){
                 return Error_No_Catch_For_Throw(TOP_LEVEL);
             }
-            if (Is_Nihil(cast(Atom*, spare)))
+            if (Is_Void(cast(Atom*, spare)))
                 continue;  // just skip it (voids are ignored, NULLs error)
 
             item = Decay_If_Unstable(cast(Atom*, spare));
@@ -804,7 +804,7 @@ DECLARE_NATIVE(GET)
         if (Eval_Any_List_At_Throws(SPARE, source, SPECIFIED))
             return FAIL(Error_No_Catch_For_Throw(LEVEL));
 
-        if (Is_Nihil(SPARE))
+        if (Is_Void(SPARE))
             return nullptr;  // !!! Is this a good idea, or should it error?
 
         Decay_If_Unstable(SPARE);
@@ -873,7 +873,7 @@ bool Set_Var_Core_Updater_Throws(
     assert(spare != poke and var != poke);
 
     Option(const Value*) setval;
-    if (Is_Nihil(poke))
+    if (Is_Void(poke))
         setval = nullptr;
     else if (Is_Raised(poke))  // for now, skip assign
         return false;
@@ -894,7 +894,7 @@ bool Set_Var_Core_Updater_Throws(
             // review that case.)
             //
             if (not setval)
-                fail ("Can't poke a plain WORD! with NIHIL at this time");
+                fail ("Can't poke a plain WORD! with VOID at this time");
             Copy_Cell(
                 Sink_Word_May_Fail(var, context),
                 unwrap setval
@@ -1091,7 +1091,7 @@ bool Set_Var_Core_Updater_Throws(
             fail ("Can't POKE back immediate value unless it's to a WORD!");
 
         if (not setval)
-            fail ("Can't writeback POKE immediate with NIHIL at this time");
+            fail ("Can't writeback POKE immediate with VOID at this time");
 
         Copy_Cell(
             Sink_Word_May_Fail(
@@ -1182,7 +1182,7 @@ DECLARE_NATIVE(SET)
     Element* meta_setval = Element_ARG(VALUE);
     Element* meta_target = Element_ARG(TARGET);
 
-    if (Is_Meta_Of_Nihil(meta_target))
+    if (Is_Meta_Of_Void(meta_target))
         return UNMETA(meta_setval);   // same for SET as [10 = (void): 10]
 
     Element* target = Unquotify(meta_target);
@@ -1204,7 +1204,7 @@ DECLARE_NATIVE(SET)
     if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
         return FAIL(Error_No_Catch_For_Throw(LEVEL));
 
-    if (Is_Nihil(SPARE))
+    if (Is_Void(SPARE))
         return UNMETA(meta_setval);
 
     Decay_If_Unstable(SPARE);

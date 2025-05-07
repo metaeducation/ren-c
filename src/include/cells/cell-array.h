@@ -226,47 +226,6 @@ INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
         (out), TYPE_BLOCK, (a), 0, SPECIFIED)))
 
 
-//=//// "NIHIL" (empty BLOCK! Antiform Pack, ~[]~) ////////////////////////=//
-//
-// This unstable antiform can't be used in conventional assignments.  The
-// assignments that do allow it will actually remove keys from a mapping
-// entirely, because it has no variable representation.
-//
-// It is sensibly represented as a parameter pack of length 0.
-//
-
-#define Init_Nihil_Untracked(out) \
-    Init_Pack_Untracked((out), EMPTY_ARRAY)
-
-#define Init_Nihil(out) \
-    TRACK(Init_Nihil_Untracked(out))
-
-INLINE bool Is_Nihil(Need(const Atom*) v) {
-    if (not Is_Pack(v))
-        return false;
-    const Element* tail;
-    const Element* at = Cell_List_At(&tail, v);
-    return tail == at;
-}
-
-INLINE Element* Init_Meta_Of_Nihil_Untracked(Sink(Element) out) {
-    Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, EMPTY_ARRAY, 0, SPECIFIED);
-    QUOTE_BYTE(out) = QUASIFORM_2_COERCE_ONLY;
-    return out;
-}
-
-#define Init_Meta_Of_Nihil(out) \
-    TRACK(Init_Meta_Of_Nihil_Untracked((out)))
-
-INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
-    if (not Is_Meta_Of_Pack(v))
-        return false;
-    const Element* tail;
-    const Element* at = Cell_List_At(&tail, v);
-    return tail == at;
-}
-
-
 //=//// "SPLICES" (GROUP! Antiforms) //////////////////////////////////////=//
 //
 // Group antiforms are understood by routines like APPEND or INSERT or CHANGE
@@ -302,3 +261,14 @@ INLINE Value* Init_Splice_Untracked(Init(Value) out, Source* a) {
 
 #define Init_Splice(out,a) \
     TRACK(Init_Splice_Untracked((out), (a)))
+
+INLINE bool Is_Hole(const Cell* v) {
+    if (not Is_Splice(v))
+        return false;
+    const Element* tail;
+    const Element* at = Cell_List_At(&tail, v);
+    return tail == at;
+}
+
+#define Init_Hole(out) \
+    TRACK(Init_Splice_Untracked((out), EMPTY_ARRAY))

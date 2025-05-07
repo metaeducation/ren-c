@@ -95,7 +95,7 @@ INLINE Element* Init_Varargs_Untyped_Infix(
     Option(const Value*) left
 ){
     Stub* feed;
-    if (not left or Is_Void(unwrap left))
+    if (not left)
         feed = EMPTY_ARRAY;
     else {
         Source* singular = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);

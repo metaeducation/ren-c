@@ -97,10 +97,6 @@ run-single-test: func [
             "test returned null"
         ]
 
-        result = '~void~ [
-            "test returned void"
-        ]
-
         quasi? result [
             "test returned antiform:" (mold:limit result 40)
         ]

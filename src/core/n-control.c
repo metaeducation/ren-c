@@ -149,7 +149,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
         LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
             & (~ LEVEL_FLAG_BRANCH)  // take off branch flag [2]
     );
-    Init_Nihil(Evaluator_Primed_Cell(sub));
+    Init_Void(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(branch, sub);  // branch GC-protected during evaluation
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
@@ -168,13 +168,13 @@ Bounce The_Group_Branch_Executor(Level* const L)
 
     assert(Is_Level_At_End(L));
 
+    if (Is_Void(branch))  // void branches giving their input is useful  [1]
+        return Copy_Cell(OUT, with);
+
     Decay_If_Unstable(branch);
 
     if (Is_The_Group(branch))
         return FAIL(Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
-
-    if (Is_Void(branch))  // void branches giving their input is useful  [1]
-        return Copy_Cell(OUT, with);
 
     STATE = ST_GROUP_BRANCH_RUNNING_BRANCH;
     return CONTINUE(OUT, cast(Value*, branch), with);
@@ -494,10 +494,10 @@ DECLARE_NATIVE(ALL)
     //    predicate let it pass.  Don't want that to trip up `if all` so make
     //    it heavy...but this way `(all:predicate [null] not?/) then [<runs>]`
 
-    if (Is_Void(SCRATCH))  // !!! Should void predicate results signal opt-out?
+    if (Is_Void(SCRATCH))  // !!! should void predicate results opt-out?
         return FAIL(Error_Bad_Void());
 
-    Packify_If_Inhibitor(SPARE);  // predicates can approve null [1]
+    Packify_If_Inhibitor(SCRATCH);  // predicates can approve null [1]
 
     SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling [2]
     STATE = ST_ALL_EVAL_STEP;
@@ -540,7 +540,7 @@ DECLARE_NATIVE(ALL)
     Drop_Level(SUBLEVEL);
 
     if (Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST))
-        return NIHIL;  // return void if all evaluations vaporized [1]
+        return VOID;  // return void if all evaluations vaporized [1]
 
     return BRANCHED(OUT);
 }}
@@ -648,7 +648,7 @@ DECLARE_NATIVE(ANY)
     SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling
     STATE = ST_ANY_EVAL_STEP;
 
-    condition = stable_SPARE;
+    condition = Decay_If_Unstable(SPARE);
     goto process_condition;
 
 } process_condition: {  //////////////////////////////////////////////////////
@@ -675,7 +675,7 @@ DECLARE_NATIVE(ANY)
     Drop_Level(SUBLEVEL);
 
     if (Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST))
-        return NIHIL;  // [1]
+        return VOID;  // [1]
 
     return nullptr;  // non-vanishing expressions, but none of them passed
 }}
@@ -783,11 +783,11 @@ DECLARE_NATIVE(CASE)
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
-    // 1. Expressions between branches are allowed to vaporize via NIHIL
-    //    (e.g. ELIDE), but voids are not skipped...it would create problems:
+    // 1. Expressions between branches are allowed to vaporize via GHOST
+    //    (e.g. ELIDE), but voids are not skipped.
     //
-    //        >> condition: false
-    //        >> case [if condition [<a>] [print "Whoops?"] [<hmm>]]
+    //        >> condition: null
+    //        >> case [maybe if condition [<a>] [print "Whoops?"] [<hmm>]]
     //        Whoops?
     //        == <hmm>
 
@@ -825,7 +825,7 @@ DECLARE_NATIVE(CASE)
         Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
     );
-    Init_Nihil(Evaluator_Primed_Cell(sub));
+    Init_Void(Evaluator_Primed_Cell(sub));
 
     STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
@@ -1188,7 +1188,7 @@ DECLARE_NATIVE(DEFAULT)
         return CONTINUE(SPARE, predicate, OUT);
     }
 
-    if (not (Any_Vacancy(OUT) or Is_Nulled(OUT) or Is_Void(OUT)))
+    if (not (Any_Vacancy(OUT) or Is_Nulled(OUT)))
         return OUT;  // consider it a "value" [2]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
