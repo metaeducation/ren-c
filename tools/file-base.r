@@ -159,6 +159,7 @@ core: [
     %n-do.c
     %n-error.c
     %n-get-set.c
+    %n-ghost.c
     %n-io.c
     %n-loop.c
     %n-make.c

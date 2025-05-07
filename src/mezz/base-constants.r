@@ -53,7 +53,6 @@ ok?: okay?/
 trash: ~  ; LIB(TRASH) expects value not function...use NOOP function instead
 
 void: lambda [] [~[]~]
-ghost: function [] [return ~,~]
 
 ; These should be aliases for things like system.ports.input and such, but
 ; for now just to make the syntax of things look better we define them.

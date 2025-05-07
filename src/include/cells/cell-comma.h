@@ -51,7 +51,7 @@
 //     http://www.rebol.net/r3blogs/0086.html
 //
 
-INLINE Element* Init_Comma(Init(Element) out) {
+INLINE Element* Init_Comma_Untracked(Init(Element) out) {
     Reset_Cell_Header_Noquote(out, CELL_MASK_COMMA);
     Tweak_Cell_Binding(out, UNBOUND);  // Is_Bindable() due to niche feed use
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
@@ -59,6 +59,9 @@ INLINE Element* Init_Comma(Init(Element) out) {
 
     return out;
 }
+
+#define Init_Comma(out) \
+    TRACK(Init_Comma_Untracked(out))
 
 
 //=//// GHOST! (COMMA! ANTIFORM) //////////////////////////////////////////=//
@@ -71,8 +74,11 @@ INLINE Element* Init_Comma(Init(Element) out) {
 // evaluation can be preserved.
 //
 
-INLINE Atom* Init_Ghost(Init(Atom) out) {
-    Init_Comma(out);
+INLINE Atom* Init_Ghost_Untracked(Init(Atom) out) {
+    Init_Comma_Untracked(out);
     QUOTE_BYTE(out) = ANTIFORM_0_COERCE_ONLY;
     return out;
 }
+
+#define Init_Ghost(out) \
+    TRACK(Init_Ghost_Untracked(out))

@@ -1224,46 +1224,6 @@ DECLARE_NATIVE(VOID_Q)
 
 
 //
-//  ghost?: native:intrinsic [
-//
-//  "Tells you if argument is a comma antiform (unstable)"
-//
-//      return: [logic?]
-//      ^atom
-//  ]
-//
-DECLARE_NATIVE(GHOST_Q)
-{
-    INCLUDE_PARAMS_OF_GHOST_Q;
-
-    Option(Heart) heart;
-    QuoteByte quote_byte;
-    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
-
-    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_COMMA);
-}
-
-
-//
-//  ghost-or-void?: native:intrinsic [
-//
-//  "If argument is a ghost (antiform comma) or void (empty antiform block)"
-//
-//      return: [logic?]
-//      ^atom
-//  ]
-//
-DECLARE_NATIVE(GHOST_OR_VOID_Q)
-{
-    INCLUDE_PARAMS_OF_GHOST_OR_VOID_Q;
-
-    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
-
-    return LOGIC(Is_Meta_Of_Ghost_Or_Void(meta));
-}
-
-
-//
 //  trash?: native:intrinsic [
 //
 //  "Is argument antiform blank (the state used to indicate an unset variable)"

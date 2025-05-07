@@ -133,28 +133,6 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 ?=: infix lax-equal?/
 ?!=: infix lax-not-equal?/
 
-; Common "Invisibles"
-
-comment: func [
-    "Ignores the argument value, but does no evaluation (see also ELIDE)"
-
-    return: [ghost!]
-    @discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
-        [any-list? any-utf8? blob! any-scalar?]
-][
-    return ~,~
-]
-
-elide: func [
-    "Argument is evaluative, but discarded (see also COMMENT)"
-
-    return: "The evaluator will skip over the result (not seen)"
-        [ghost!]
-    ^discarded "Evaluated value to be ignored"
-        [any-atom?]  ; e.g. (elide elide "x") is legal
-][
-    return ~,~
-]
 
 elide-if-void: func [
     "Argument is evaluative, but discarded if void"

@@ -763,6 +763,16 @@ INLINE Bounce Native_Void_Result_Untracked(
     return Init_Void_Untracked(level_->out);
 }
 
+INLINE Bounce Native_Ghost_Result_Untracked(
+    Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
+    Level* level_
+){
+    assert(out == level_->out);
+    UNUSED(out);
+    assert(not THROWING);
+    return Init_Ghost_Untracked(level_->out);
+}
+
 INLINE Bounce Native_Unmeta_Result(Level* level_, const Element* v) {
     assert(not THROWING);
     Copy_Cell(level_->out, v);
@@ -898,6 +908,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
     #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
+    #define GHOST       Native_Ghost_Result_Untracked(TRACK(OUT), level_)
     #define TRASH       Native_Trash_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
