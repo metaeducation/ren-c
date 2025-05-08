@@ -93,7 +93,7 @@ DECLARE_NATIVE(MOLD)
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
 //
 //      return: [~null~ trash!]
-//      value [<maybe> text! char! binary!]
+//      value [<opt-out> text! char! binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
@@ -606,7 +606,7 @@ DECLARE_NATIVE(WAKE_UP)
 //
 //      return: [~null~ file!]
 //          {The returned value should be a valid natural FILE! literal}
-//      path [<maybe> text! file!]
+//      path [<opt-out> text! file!]
 //          {Path to convert (by default, only TEXT! for type safety)}
 //      /pass
 //          {Convert TEXT!, but pass thru FILE!, assuming it's canonized}
@@ -647,7 +647,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 //
 //      return: [~null~ text!]
 //          {A TEXT! like "\foo\bar" is not a "natural" FILE! %\foo\bar}
-//      path [<maybe> file! text!]
+//      path [<opt-out> file! text!]
 //          {Path to convert (by default, only FILE! for type safety)}
 //      /pass
 //          {Convert FILE!s, but pass thru TEXT!, assuming it's local}
@@ -741,7 +741,7 @@ DECLARE_NATIVE(WHAT_DIR)
 //
 //  {Changes the current path (where scripts with relative paths will be run).}
 //
-//      path [<maybe> file! url!]
+//      path [<opt-out> file! url!]
 //  ]
 //
 DECLARE_NATIVE(CHANGE_DIR)

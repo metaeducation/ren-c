@@ -59,7 +59,7 @@ map-files-to-local: function [
 ends-with?: func [
     return: [~null~ logic!]
     s [any-string!]
-    suffix [<maybe> any-string!]
+    suffix [<opt-out> any-string!]
 ][
     return did any [
         empty? suffix

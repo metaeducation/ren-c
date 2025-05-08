@@ -38,7 +38,7 @@ last?: single?: func [
 extend: func [
     "Extend object with words or a block of code"
     return: [~null~ word! object!]
-    context [<maybe> word! object!]
+    context [<opt-out> word! object!]
     def "Note: if BLOCK!, can't have null evaluations"
         [word! block!]
 ][
@@ -596,7 +596,7 @@ split: function [
 
     return: [block!]
     series "The series to split"
-        [<maybe> any-series!]
+        [<opt-out> any-series!]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
         [~void~ block! integer! char! bitset! text!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"

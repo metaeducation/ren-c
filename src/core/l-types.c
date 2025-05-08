@@ -83,9 +83,9 @@ Bounce MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //      return: [any-value!]
 //          {Constructed value, or NULL if BLANK! input}
-//      type [<maybe> datatype! event! any-context!]
+//      type [<opt-out> datatype! event! any-context!]
 //          {The datatype -or- an examplar value of the type to construct}
-//      def [<maybe> any-element!]
+//      def [<opt-out> any-element!]
 //          {Definition or size of the new value (binding may be modified)}
 //  ]
 //
@@ -194,8 +194,8 @@ Bounce TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //      return: "VALUE converted to TYPE, null if type or value are blank"
 //          [any-value!]
-//      type [<maybe> datatype!]
-//      value [<maybe> any-element!]
+//      type [<opt-out> datatype!]
+//      value [<opt-out> any-element!]
 //  ]
 //
 DECLARE_NATIVE(TO)

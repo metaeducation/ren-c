@@ -91,7 +91,7 @@ browse: function [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
     return: [~]
-    location [<maybe> url! file!]
+    location [<opt-out> url! file!]
 ][
     print "Browse needs redefining"
 ]

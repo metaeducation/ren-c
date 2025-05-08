@@ -296,7 +296,7 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
     Typeset_Check((v), TYPE_TS_UNBINDABLE)
 
 // Parameters can be marked such that if they are blank, the action will not
-// be run at all.  This is done via the `<maybe>` annotation, which indicates
+// be run at all.  This is done via the `<opt-out>` annotation, which indicates
 // "handle blanks specially" (in contrast to BLANK!, which just means a
 // parameter can be passed in as a blank, and the function runs normally)
 //

@@ -882,9 +882,9 @@ DECLARE_NATIVE(FOR)
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word! refinement! issue! blank!]
 //      series "The series to iterate over"
-//          [<maybe> blank! any-series!]
+//          [<opt-out> blank! any-series!]
 //      skip "Number of positions to skip each time"
-//          [<maybe> integer!]
+//          [<opt-out> integer!]
 //      body "Code to evaluate each time"
 //          [block! action!]
 //  ]
@@ -1058,7 +1058,7 @@ DECLARE_NATIVE(CYCLE)
 //          {Last body result, or null if BREAK}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time, no new var if LIT-WORD!"
-//      data [<maybe> blank! any-series! any-context! map! datatype! action!]
+//      data [<opt-out> blank! any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [block! action!]
 //          "Block to evaluate each time"
@@ -1079,7 +1079,7 @@ DECLARE_NATIVE(FOR_EACH)
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<maybe> blank! any-series! any-context! map! datatype! action!]
+//      data [<opt-out> blank! any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [block! action!]
 //          "Block to evaluate each time"
@@ -1376,7 +1376,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
 //          {Number of removed series items, or null if BREAK}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<maybe> blank! any-series!]
+//      data [<opt-out> blank! any-series!]
 //          "The series to traverse (modified)" ; should BLANK! opt-out?
 //      body [block! action!]
 //          "Block to evaluate (return TRUE to remove)"
@@ -1499,7 +1499,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //          {Collected block (BREAK/WITH can add a final result to block)}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<maybe> blank! any-series! action!]
+//      data [<opt-out> blank! any-series! action!]
 //          "The series to traverse"
 //      body [block!]
 //          "Block to evaluate each time"
@@ -1518,7 +1518,7 @@ DECLARE_NATIVE(MAP_EACH)
 //
 //      return: [any-value!]
 //          {Last body result, or null if BREAK}
-//      count [<maybe> any-number! logic!]
+//      count [<opt-out> any-number! logic!]
 //          "Repetitions (true loops infinitely, false doesn't run)"
 //      body [block! action!]
 //          "Block to evaluate or action to run."
@@ -1576,7 +1576,7 @@ DECLARE_NATIVE(REPEAT)
 //          {Last body result or BREAK value}
 //      'word [word! lit-word! refinement!]
 //          "Word to set each time"
-//      value [<maybe> any-number! any-series!]
+//      value [<opt-out> any-number! any-series!]
 //          "Maximum number or series to traverse"
 //      body [block!]
 //          "Block to evaluate each time"
