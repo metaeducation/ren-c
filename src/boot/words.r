@@ -198,7 +198,8 @@ across
 some
 any
 repeat
-opt
+opt  ; skips var assignments if rule doesn't match (new EXE synthesizes VOID)
+try  ; sets vars to null if rule doesn't match
 not
 and
 ahead

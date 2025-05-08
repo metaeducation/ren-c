@@ -126,7 +126,7 @@ function: func [
         bypass  ; rolling over to next alternate
     |
         the <local>
-        opt some [var: word! (other: null) opt other: group! (
+        opt some [var: word! other: try group! (
             append new-spec as set-word! var
             append exclusions var
             if other [
@@ -168,10 +168,10 @@ function: func [
             ]
         )
         opt some [
-            var: word! (other: null) opt other: group! (
+            var: word! other: try group! (
                 append exclusions var
                 append statics compose [
-                    (as set-word! var) ((other))
+                    (as set-word! var) (other)
                 ]
             )
         ]

@@ -132,8 +132,9 @@ enum parse_flags {
     PF_INSERT = 1 << 13,
     PF_CHANGE = 1 << 14,
     PF_WHILE = 1 << 15,
+    PF_TRY = 1 << 16,
 
-    PF_REDBOL = 1 << 16  // use Rebol2/Red-style rules
+    PF_REDBOL = 1 << 17  // use Rebol2/Red-style rules
 };
 
 // Note: clang complains if `cast(int, ...)` used here, though gcc doesn't
@@ -1300,6 +1301,12 @@ DECLARE_NATIVE(SUBPARSE)
                         FETCH_NEXT_RULE(L);
                         continue;
 
+                    case SYM_TRY:
+                        P_FLAGS |= PF_TRY;
+                        mincount = 0;
+                        FETCH_NEXT_RULE(L);
+                        continue;
+
                     case SYM_COPY:
                         if (not (P_FLAGS & PF_REDBOL))
                             fail ("Use ACROSS instead of COPY unless /REDBOL");
@@ -2070,31 +2077,32 @@ DECLARE_NATIVE(SUBPARSE)
                     );
                 }
                 else if (P_FLAGS & PF_SET) {
-                    if (Is_Flex_Array(P_INPUT)) {
-                        if (count != 0)
-                            Derelativize(
+                    if (count == 0) {
+                        if (P_FLAGS & PF_TRY)
+                            Init_Nulled(
                                 Sink_Var_May_Fail(
                                     set_or_copy_word, P_RULE_SPECIFIER
-                                ),
-                                Array_At(cast_Array(P_INPUT), begin),
-                                P_INPUT_SPECIFIER
+                                )
                             );
-                        else
-                            NOOP; // !!! leave as-is on 0 count?
+                    }
+                    else if (Is_Flex_Array(P_INPUT)) {
+                        Derelativize(
+                            Sink_Var_May_Fail(
+                                set_or_copy_word, P_RULE_SPECIFIER
+                            ),
+                            Array_At(cast_Array(P_INPUT), begin),
+                            P_INPUT_SPECIFIER
+                        );
                     }
                     else {
-                        if (count != 0) {
-                            Value* var = Sink_Var_May_Fail(
-                                set_or_copy_word, P_RULE_SPECIFIER
-                            );
-                            Ucs2Unit ch = GET_ANY_CHAR(P_INPUT, begin);
-                            if (P_TYPE == TYPE_BINARY)
-                                Init_Integer(var, ch);
-                            else
-                                Init_Char(var, ch);
-                        }
+                        Value* var = Sink_Var_May_Fail(
+                            set_or_copy_word, P_RULE_SPECIFIER
+                        );
+                        Ucs2Unit ch = GET_ANY_CHAR(P_INPUT, begin);
+                        if (P_TYPE == TYPE_BINARY)
+                            Init_Integer(var, ch);
                         else
-                            NOOP; // !!! leave as-is on 0 count?
+                            Init_Char(var, ch);
                     }
                 }
 
