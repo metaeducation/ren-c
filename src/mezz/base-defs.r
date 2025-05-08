@@ -100,7 +100,7 @@ bound?: cascade [
     :element?
 ]
 
-unspaced: specialize 'delimit [delimiter: void]
+unspaced: specialize 'delimit [delimiter: null]
 unspaced-text: cascade [
     :unspaced
     specialize 'else [branch: [copy ""]]

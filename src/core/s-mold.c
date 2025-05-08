@@ -580,8 +580,7 @@ bool Form_Reduce_Throws(
     const Value* delimiter
 ){
     assert(
-        Is_Nulled(delimiter) or Is_Void(delimiter)
-        or Is_Char(delimiter) or Is_Text(delimiter)
+        Is_Nulled(delimiter) or Is_Char(delimiter) or Is_Text(delimiter)
     );
 
     DECLARE_MOLDER (mo);
@@ -621,7 +620,7 @@ bool Form_Reduce_Throws(
             Append_Codepoint(mo->utf8flex, VAL_CHAR(out));
             pending = false;
         }
-        else if (Is_Nulled(delimiter) or Is_Void(delimiter))
+        else if (Is_Nulled(delimiter))
             Form_Value(mo, out);
         else {
             if (pending)

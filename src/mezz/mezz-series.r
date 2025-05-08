@@ -99,7 +99,7 @@ replace: function [
         [any-series!]
     pattern "Value to be replaced (converted if necessary)"
         [~void~ any-element!]
-    replacement "Value to replace with (called each time if a function)"
+    replacement "Value to replace with (functions not called in this EXE)"
         [~void~ any-element!]
 
     ; !!! Note these refinments alias ALL, CASE, TAIL natives!
@@ -150,18 +150,7 @@ replace: function [
     ]
 
     while [pos: find/(if case_REPLACE [/case]) target :pattern] [
-        either action? :replacement [
-            ;
-            ; If arity-0 action, value gets replacement and pos discarded
-            ; If arity-1 action, pos will be argument to replacement
-            ; If arity > 1, end of block will cause an error
-            ;
-            value: replacement pos
-        ][
-            value: :replacement ;-- inert value, might be null
-        ]
-
-        target: change/part pos :value len
+        target: change/part pos :replacement len
 
         if one [break]
     ]
@@ -203,8 +192,8 @@ reword: function [
 
     out: make (type of source) length of source
 
-    prefix: void
-    suffix: void
+    prefix: []
+    suffix: []
     switch type of :delimiters [
         null [prefix: "$"]
         block! [
@@ -230,10 +219,10 @@ reword: function [
     if match [integer! word!] suffix [suffix: to-text suffix]
 
     if blank? prefix [
-        prefix: void
+        prefix: []
     ]
     if blank? suffix [
-        suffix: void
+        suffix: []
     ]
 
     ; MAKE MAP! will create a map with no duplicates from the input if it
@@ -518,16 +507,16 @@ collect-lines: adapt 'collect [  ; https://forum.rebol.info/t/945/1
 ]
 
 collect-text: cascade [  ; https://forum.rebol.info/t/945/2
-     adapt 'collect [
-         body: compose [
+    adapt 'collect [
+        body: compose [
              keep: adapt specialize 'keep [
-                 line: null  only: null  part: null
-             ][
-                 value: maybe unspaced maybe :value
-             ]
-             ((as group! body))
-         ]
-     ]
+                line: null  only: null  part: null
+            ][
+                value: (unspaced maybe :value) else [[]]  ; can't assign void
+            ]
+            ((as group! body))
+        ]
+    ]
     :maybe
     :spaced
     specialize 'else [branch: [copy ""]]

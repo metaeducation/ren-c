@@ -1463,6 +1463,9 @@ bool Eval_Core_Throws(Level* const L)
                 goto return_thrown;
         }
 
+        if (Is_Void(L->out))  // try to model after mainline EXE
+            fail ("Can't assign ~void~ state via SET-WORD!");
+
         Copy_Cell(Sink_Var_May_Fail(current, L->specifier), L->out);
         break; }
 
@@ -1653,6 +1656,9 @@ bool Eval_Core_Throws(Level* const L)
             if (Eval_Step_Mid_Level_Throws(L, flags)) // light reuse of `L`
                 goto return_thrown;
         }
+
+        if (Is_Void(L->out))  // try to model after mainline EXE
+            fail ("Can't assign ~void~ state via SET-PATH!");
 
         if (Eval_Path_Throws_Core(
             Level_Spare(L), // output if thrown, used as scratch space otherwise

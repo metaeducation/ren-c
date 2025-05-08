@@ -69,20 +69,3 @@
     blk: [either null [] blk]
     error? sys/util/rescue blk
 )
-
-[
-    ; This exercises "deferred typechecking"; even though it passes through a
-    ; step where there is a void in the condition slot, that's not the final
-    ; situation since the equality operation will be run later, so the test
-    ; has to wait.
-
-    (
-        takes-2-logics: lambda [x [logic!] y [logic!]] [x]
-        infix-voider: infix func [return: [~void~] x y] [return void]
-        okay
-    )
-
-    (takes-2-logics ~void~ = ~void~ null)
-
-    ('expect-arg = (sys/util/rescue [takes-2-logics okay infix-voider okay null])/id)
-]

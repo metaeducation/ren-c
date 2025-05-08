@@ -526,9 +526,9 @@ iterate-skip: redescribe [
             :result
         ]
 
-        result: eval f
+        result: meta eval f
         set word saved
-        return :result
+        return unmeta result
     ][
         series: <overwritten>
     ]

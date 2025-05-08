@@ -721,6 +721,22 @@ DECLARE_NATIVE(MAYBE)
 
 
 //
+//  void: native [
+//
+//  {Generate transient void state}
+//
+//      return: [~void~]
+//  ]
+//
+DECLARE_NATIVE(VOID)
+{
+    INCLUDE_PARAMS_OF_VOID;
+
+    return Init_Void(OUT);
+}
+
+
+//
 //  in: native [
 //
 //  "Returns the word or block bound into the given context."

@@ -145,7 +145,7 @@ do*: function [
             ;
             ;     do "append {abc} {de}"
             ;
-            set the result: eval code ;-- !!! pass args implicitly?
+            set the result': meta eval code ;-- !!! pass args implicitly?
         ] then :finalizer/quit
     ] else [
         ; Make the new script object
@@ -165,17 +165,17 @@ do*: function [
         ; Eval the block or make the module, returned
         either is-module [ ; Import the module and set the var
             catch/quit [
-                result: import module hdr code
+                result': meta import module hdr code
             ] then :finalizer/quit
         ][
             intern code   ; Bind the user script
             catch/quit [
-                set the result: eval code
+                set the result': meta eval code
             ] then :finalizer/quit
         ]
     ]
 
-    return finalizer get* 'result
+    return finalizer unmeta result'
 ]
 
 export: func [
