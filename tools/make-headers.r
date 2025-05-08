@@ -170,17 +170,22 @@ e-funcs/emit [--[
      */
 ]--]
 
-for-each 'item file-base.core [
-    ;
-    ; Items can be blocks if there's special flags for the file (
-    ; <no-make-header> marks it to be skipped by this script)
-    ;
+
+; Items can be blocks if there's special flags for the file (<no-make-header>
+; marks it to be skipped by this script)
+;
+handle-item: func [
+    "Handle a single item in %file-base.r"
+    return: [~]
+    item [path! tuple! block!]  ; bootstrap EXE loads [foo.c] as [foo/c]
+    dir [~null~ file!]
+][
     if block? item [
         all [
             2 <= length of item
             <no-make-header> = item.2
         ] then [
-            continue  ; skip this file
+            return ~  ; skip this file
         ]
 
         file: to file! first item
@@ -195,10 +200,22 @@ for-each 'item file-base.core [
     ]
 
     proto-parser.emit-proto: emit-proto/
-    proto-parser.file: file
+    proto-parser.file: to file! unspaced [opt subdir, file]
     proto-parser.emit-directive: emit-directive/
-    proto-parser/process (as text! read file)
+    proto-parser/process (as text! read proto-parser.file)
 ]
+
+item: null
+subdir: null
+parse3 file-base.core [some [
+    ahead [path! '->] subdir: path! '-> ahead block! into [  ; descend
+        (subdir: to file! subdir)
+        some [item: one (handle-item item subdir)]
+        (subdir: null)
+    ]
+    |
+    item: one (handle-item item null)
+]]
 
 
 e-funcs/emit --[
@@ -294,7 +311,7 @@ e-strings/emit [--[
      */
 ]--]
 
-for-each 'line read:lines %a-constants.c [
+for-each 'line read:lines %api/a-constants.c [
     let constd
     case [
         parse3:match line ["#define" to <end>] [

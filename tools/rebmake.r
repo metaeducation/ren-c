@@ -940,7 +940,7 @@ cl: make compiler-class [
     ][
         return degrade switch dep.class [
             #object-file [
-                file-to-local to-file dep.output
+                file-to-local to file! dep.output
             ]
             #dynamic-extension [
                 comment [import file]  ; static property is ignored
@@ -961,7 +961,7 @@ cl: make compiler-class [
             ]
             #object-library [
                 spaced map-each 'ddep dep.depends [
-                    file-to-local to-file ddep.output
+                    file-to-local to file! ddep.output
                 ]
             ]
             #application [
@@ -1583,7 +1583,7 @@ export execution: make generator-class [
                 if all [
                     not word? target.target
                     ; so you can use words for "phony" targets
-                    exists? to-file target.target
+                    exists? to file! target.target
                 ][
                     ; TODO: Check timestamp to see if it needs to be updated
                     return ~

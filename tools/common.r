@@ -354,7 +354,7 @@ export relative-to-path: func [
     iterate (inert $base) [base.1: %..]
     append base spread target
 
-    base: to-file delimit "/" base
+    base: to file! delimit "/" base
     assert [dir? base]
     return base
 ]

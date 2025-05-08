@@ -101,7 +101,7 @@ for-each [name value] options [
             ; A config file can inherit from other configurations with the
             ; `Inherits: %some-config.r` header option.
             ;
-            let config: to-file value
+            let config: to file! value
 
             let saved-dir: what-dir
 
@@ -228,8 +228,8 @@ gen-obj: func [
     return: "Rebmake specification object for OBJ"
         [object!]
     spec "single file representation, or spec block with file as first item"
-        [file! text! word! path! tuple! block!]
-    :dir "directory" [any-string?]
+        [file! word! path! tuple! block!]
+    dir "directory" [~null~ file!]  ; bootstrap lacks ~[]~ or ^META args
     :D "definitions" [block!]
     :I "includes" [block!]
     :F "cflags" [block!]
@@ -247,13 +247,13 @@ gen-obj: func [
 
     if not match [file! path! tuple! word!] file [
         fail [
-            "Unexpected argument passed to GEN-OBJ:" mold s, newline
+            "Unexpected argument passed to GEN-OBJ:" mold spec, newline
             "Should be FILE!/PATH!/TUPLE!: %file.c, path/tuple.c, etc." newline
             "or BLOCK! spec like: [%foo.c <msc:/Wd1020> <gcc:-Wno-whammies>]"
         ]
     ]
 
-    file: to file! file
+    file: to file! file  ; bootstrap exe loads (file.c) as (file/c)
 
     let prefer-O2: 'no  ; overrides -Os to give -O2, e.g. for %c-eval.c
     let standard: user-config.standard  ; may have a per-file override
@@ -1399,11 +1399,22 @@ libr3-core: make rebmake.object-library-class [
 
     optimization: app-config.optimization
     debug: app-config.debug
-    depends: map-each 'w file-base.core [
-        gen-obj:dir w (join src-dir %core/)
-    ]
+    depends: collect [
+        let core-dir: join src-dir %core/
+        let subdir: null
+        let item: null
+        parse3 file-base.core [some [
+            ahead [path! '->] subdir: path! '-> ahead block! into [
+                (subdir: join core-dir to file! subdir)
+                some [item: one (keep gen-obj item subdir)]
+                (subdir: null)
+            ]
+            |
+            item: one (keep gen-obj item core-dir)
+        ]
+    ]]
     append depends spread map-each 'w file-base.generated [
-        gen-obj:dir w "prep/core/"
+        gen-obj w %prep/core/
     ]
 ]
 
@@ -1419,9 +1430,9 @@ main: make libr3-core [
 
     depends: reduce [
         either user-config.main [
-            gen-obj user-config.main
+            gen-obj user-config.main (<no-directory> null)
         ][
-            gen-obj:dir file-base.main (join src-dir %main/)
+            gen-obj file-base.main (join src-dir %main/)
         ]
     ]
 ]
@@ -1487,33 +1498,14 @@ for-each [category entries] file-base [
     if find [generated made] category [
         continue  ; these categories are taken care of elsewhere
     ]
-    switch type of entries [
-        file!  ; can't use `foo.r` in bootstrap, scans as foo/r for hack
-        word!  ; if bootstrap
-        tuple! [  ; if generic-tuple enabled
-            assert [entries = %main.c]  ; !!! anomaly, ignore it for now
-        ]
-        block! [
-            for-each 'entry entries [
-                if block? entry [entry: first entry]
-                switch type of entry [
-                    file!
-                    word!  ; if bootstrap executable
-                    tuple! [  ; if generic-tuple enabled
-                        ; assume taken care of
-                    ]
-                    path! [
-                        let dir: split-path3 to file! entry
-                        if not find folders dir [
-                            append folders join %objs/ dir
-                        ]
-                    ]
-                    fail
-                ]
-            ]
-        ]
-        fail
-    ]
+    let dir
+    parse3 entries [opt some [
+        ahead [path! '->] dir: path! '-> block! (
+            append folders join %objs/ to file! dir
+        )
+        |
+        one
+    ]]
 ]
 
 print newline
@@ -1662,7 +1654,7 @@ for-each 'ext extensions [
         )[
             let dep: case [
                 block? s [
-                    gen-obj:dir s (ext.directory)
+                    gen-obj s (ext.directory)
                 ]
                 all [
                     object? s
@@ -1722,7 +1714,7 @@ for-each 'ext extensions [
     ]
     append ext-objlib.depends gen-obj // [
         ext-init-source
-        :dir ext-prep-dir
+        ext-prep-dir
         :I ext.includes
         :D ext.definitions
         :F ext.cflags

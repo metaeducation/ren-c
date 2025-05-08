@@ -300,7 +300,7 @@ export cscape: func [
 ]
 
 
-export boot-version: transcode:one read %../src/boot/version.r
+export boot-version: transcode:one read %../src/specs/version.r
 
 export make-emitter: func [
     "Create a buffered output text file emitter"

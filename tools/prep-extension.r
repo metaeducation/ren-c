@@ -317,7 +317,7 @@ e1/emit [--[
 ; sometimes build it using the core.  We validate the Extended-Words: in
 ; the header either way, but only output them if use-librebol enabled.
 
-ext-symids: load3 (join what-dir %prep/boot/tmp-ext-symid.r)
+ext-symids: load3 (join what-dir %prep/specs/tmp-ext-symid.r)
 
 symbol-forward-decls: []
 symbol-globals: []
@@ -331,7 +331,7 @@ for-each 'symbol opt ext-header.extended-words [
     if not id [
         fail [
             "Extended-Words: [" mold symbol "]"
-                "must appear in" (join repo-dir %boot/ext-words.r)
+                "must appear in" (join repo-dir %specs/ext-words.r)
         ]
     ]
 
@@ -368,7 +368,7 @@ if not empty? symbol-forward-decls [
          * extension can use uint16_t ID values to recognize the symbols in
          * switch() statements.
          *
-         * See %boot/ext-words.r in core, and the Register_Symbol() function.
+         * See %specs/ext-words.r in core, and the Register_Symbol() function.
          */
 
         #define EXT_CANON(name)  Cell_Word_Symbol(g_symbol_holder_##name)

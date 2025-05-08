@@ -37,7 +37,7 @@ import <bootstrap-shim.r>
 import <common.r>
 import <common-emitter.r>
 
-change-dir join repo-dir %src/boot/
+change-dir join repo-dir %src/specs/
 
 
 === "SETUP PATHS AND MAKE DIRECTORIES (IF NEEDED)" ===
@@ -45,7 +45,7 @@ change-dir join repo-dir %src/boot/
 prep-dir: join system.options.path %prep/
 
 mkdir:deep join prep-dir %include/
-mkdir:deep join prep-dir %boot/
+mkdir:deep join prep-dir %specs/
 mkdir:deep join prep-dir %core/
 
 
@@ -410,11 +410,11 @@ e-typesets/emit [--[
 ]--]
 
 e-typeset-bytes: make-emitter "Typeset Byte Mapping" (
-    join prep-dir %boot/tmp-typeset-bytes.r
+    join prep-dir %specs/tmp-typeset-bytes.r
 )
 
 e-typespecs: make-emitter "Type Help Descriptions" (
-    join prep-dir %boot/tmp-typespecs.r
+    join prep-dir %specs/tmp-typespecs.r
 )
 
 fundamentals: make block! 128  ; "TYPE_XXX = (num)" for all HEART_BYTE

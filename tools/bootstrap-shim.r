@@ -987,7 +987,7 @@ decode: func3 [codec bin [blob!]] [
     fail ["Very limited DECODE abilities in bootstrap, no:" mold codec]
 ]
 
-blockify: func [x] [
+blockify: func3 [x] [
     if null? x [
         fail:blame "BLOCKIFY can't take ~null~ antiform" $x
     ]

@@ -30,7 +30,7 @@
 //
 // Create library words for each type, (e.g. make INTEGER! correspond to
 // the integer datatype value).  Returns an array of words for the added
-// datatypes to use in SYSTEM/CATALOG/DATATYPES.  See %boot/types.r
+// datatypes to use in SYSTEM/CATALOG/DATATYPES.  See %specs/types.r
 //
 // 1. Things like INTEGER! are defined to be ~{integer!}~ antiforms.
 //

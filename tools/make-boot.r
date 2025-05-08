@@ -33,7 +33,7 @@ import <common-emitter.r>
 
 import <platforms.r>
 
-change-dir join repo-dir %src/boot/
+change-dir join repo-dir %src/specs/
 
 args: parse-args system.script.args  ; either from command line or DO:ARGS
 platform-config: configure-platform args.OS_ID
@@ -185,7 +185,7 @@ add-sym: func [
 ; We use this table to make symbols, e.g. SYM_BLANK or SYM_BLANK_X for `blank!`
 ; or SYM_BLANK_Q for `blank?`
 
-name-to-typeset-byte: load3 (join prep-dir %boot/tmp-typeset-bytes.r)
+name-to-typeset-byte: load3 (join prep-dir %specs/tmp-typeset-bytes.r)
 
 
 === "SYMBOLS FOR BUILTIN TYPESETS" ===
@@ -242,7 +242,7 @@ add-sym:placeholder <MIN_SYM_NATIVE>
 native-names: copy []
 
 boot-natives: stripload:gather (
-    join prep-dir %boot/tmp-natives.r
+    join prep-dir %specs/tmp-natives.r
 ) $native-names
 
 insert boot-natives "["
@@ -603,7 +603,7 @@ placeholder-define-items: copy []
 emitting-extension-syms: null
 
 e-ext-symids: make-emitter "Extension SymId Commitment Table" (
-    join prep-dir %boot/tmp-ext-symid.r
+    join prep-dir %specs/tmp-ext-symid.r
 )
 
 for-next 'pos sym-table [
@@ -833,7 +833,7 @@ e-bootblock/emit [nats --[
 
 ; Build typespecs block (in same order as datatypes table)
 
-types-to-typespec: load3 join prep-dir %boot/tmp-typespecs.r
+types-to-typespec: load3 join prep-dir %specs/tmp-typespecs.r
 
 boot-typespecs: collect [
     for-each [type typespec] types-to-typespec [
@@ -856,7 +856,7 @@ for-each 'sec sections [
 ]
 append:line boot-molded "]"
 
-write-if-changed (join prep-dir %boot/tmp-boot-block.r) boot-molded
+write-if-changed (join prep-dir %specs/tmp-boot-block.r) boot-molded
 data: as blob! boot-molded
 
 compressed: gzip data

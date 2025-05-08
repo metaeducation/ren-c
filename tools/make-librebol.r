@@ -35,7 +35,7 @@ prep-dir: join what-dir %prep/
 mkdir:deep join prep-dir %include/
 mkdir:deep join prep-dir %core/
 
-ver: transcode:one read join repo-dir %src/boot/version.r
+ver: transcode:one read join repo-dir %src/specs/version.r
 
 
 === "PROCESS %a-lib.h TO PRODUCE DESCRIPTION OBJECTS FOR EACH API" ===
@@ -187,7 +187,7 @@ process: func [return: [~] file] [
 
 src-dir: join repo-dir %src/core/
 
-process (join src-dir %a-lib.c)
+process (join src-dir %api/a-lib.c)
 
 
 === "GENERATE LISTS USED TO BUILD REBOL.H" ===

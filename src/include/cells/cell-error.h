@@ -21,13 +21,13 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Errors are a subtype of ANY-CONTEXT? which follow a standard layout.
-// That layout is in %boot/sysobj.r as standard/error.
+// That layout is in %specs/sysobj.r as standard/error.
 //
 // Historically errors could have a maximum of 3 arguments, with the fixed
 // names of `arg1`, `arg2`, and `arg3`.  They would also have a numeric code
 // which would be used to look up a a formatting block, which would contain
 // a block for a message with spots showing where the args were to be inserted
-// into a message.  These message templates can be found in %boot/errors.r
+// into a message.  These message templates can be found in %specs/errors.r
 //
 // Ren-C is exploring the customization of user errors to be able to provide
 // arbitrary named arguments and message templates to use them.  It is

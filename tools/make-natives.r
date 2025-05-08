@@ -75,7 +75,7 @@ print "------ Generate tmp-natives.r"
 
 src-dir: join repo-dir %src/
 output-dir: join system.options.path %prep/
-mkdir:deep join output-dir %boot/
+mkdir:deep join output-dir %specs/
 
 natives: copy []
 generics: copy []
@@ -193,7 +193,7 @@ append output-buffer unspaced [
     newline
 ]
 
-write-if-changed (join output-dir %boot/tmp-natives.r) output-buffer
+write-if-changed (join output-dir %specs/tmp-natives.r) output-buffer
 
 print [(length of natives) "natives"]
 print newline
@@ -258,7 +258,7 @@ e-forward/write-emitted
 ; The generic registry uses this, sorting the more specific values used in
 ; IMPLEMENT_GENERIC() first in the table for each generic.
 
-name-to-typeset-byte: load3 (join output-dir %boot/tmp-typeset-bytes.r)
+name-to-typeset-byte: load3 (join output-dir %specs/tmp-typeset-bytes.r)
 
 
 === "SORT GATHERED GENERICS IN TYPESET-BYTE ORDER" ===
