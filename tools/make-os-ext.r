@@ -33,8 +33,8 @@ change-dir %src/os/
 
 args: parse-args system/options/args
 config: config-system degrade ((get 'args/OS_ID) else [reify null])
-output-dir: system/options/path/prep
-mkdir/deep output-dir/include
+output-dir: join system/options/path %prep/
+mkdir/deep join output-dir %include/
 
 file-base: make object! load <file-base.r>
 
@@ -165,7 +165,7 @@ for-each file files [
     ][process file]
 ]
 
-e-lib: make-emitter "Host Access Library" output-dir/include/host-lib.h
+e-lib: make-emitter "Host Access Library" (join output-dir %include/host-lib.h)
 
 e-lib/emit {
     #define HOST_LIB_VER $<lib-version>
@@ -234,7 +234,8 @@ e-lib/emit {
 e-lib/write-emitted
 
 e-table: (
-    make-emitter "Host Table Definition" output-dir/include/host-table.inc
+    make-emitter "Host Table Definition"
+        (join output-dir %include/host-table.inc)
 )
 
 e-table/emit {

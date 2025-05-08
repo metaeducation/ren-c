@@ -651,12 +651,12 @@ host-start: function [
     all [
         not find maybe o/suppress %rebol.reb
         elide (loud-print ["Checking for rebol.reb file in" o/bin])
-        exists? o/bin/rebol.reb
+        exists? join o/bin %rebol.reb
     ] then [
         sys/util/rescue [
-            do o/bin/rebol.reb
-            append o/loaded o/bin/rebol.reb
-            loud-print ["Finished evaluating script:" o/bin/rebol.reb]
+            do join o/bin %rebol.reb
+            append o/loaded join o/bin %rebol.reb
+            loud-print ["Finished evaluating script:" join o/bin %rebol.reb]
         ] then arrow e [
             die/error "Error found in rebol.reb script" e
         ]

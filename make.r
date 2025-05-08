@@ -281,7 +281,7 @@ available-extensions: copy []
 
 ; Discover extensions:
 use [extension-dir entry][
-    extension-dir: repo-dir/extensions/%
+    extension-dir: join repo-dir %extensions/
     for-each entry read extension-dir [
         ;print ["entry:" mold entry]
         all [
@@ -398,7 +398,7 @@ app-config: make object! [
     debug: 'off
     optimization: 2
     definitions: copy []
-    includes: reduce [src-dir/include %prep/include]
+    includes: reduce [(join src-dir %include/) %prep/include]
     searches: make block! 8
 ]
 
@@ -906,9 +906,7 @@ libr3-core: make rebmake/object-library-class [
     ]
 ]
 
-os-file-block: get bind
-    (to word! append-of "os-" system-config/os-base)
-    file-base
+os-file-block: pick file-base to word! unspaced ["os-" system-config/os-base]
 
 remove-each plus os-file-block [plus = '+] ;remove the '+ sign, we don't care here
 remove-each plus file-base/os [plus = '+] ;remove the '+ sign, we don't care here
@@ -921,7 +919,7 @@ libr3-os: make libr3-core [
     cflags: copy app-config/cflags ; generator may modify
 
     depends: map-each s append copy file-base/os os-file-block [
-        gen-obj/dir s src-dir/os/%
+        gen-obj/dir to file! s join src-dir %os/
     ]
 ]
 
@@ -1199,7 +1197,7 @@ vars: reduce [
     ]
     make rebmake/var-class [
         name: {T}
-        value: src-dir/tools
+        value: join src-dir %tools/
     ]
     make rebmake/var-class [
         name: {GIT_COMMIT}
@@ -1211,18 +1209,18 @@ prep: make rebmake/entry-class [
     target: 'prep ; phony target
 
     commands: collect-lines [
-        keep [{$(REBOL)} tools-dir/make-natives.r]
-        keep [{$(REBOL)} tools-dir/make-headers.r]
-        keep [{$(REBOL)} tools-dir/make-boot.r
+        keep [{$(REBOL)} join tools-dir %make-natives.r]
+        keep [{$(REBOL)} join tools-dir %make-headers.r]
+        keep [{$(REBOL)} join tools-dir %make-boot.r
             unspaced [{OS_ID=} system-config/id]
             {GIT_COMMIT=$(GIT_COMMIT)}
         ]
-        keep [{$(REBOL)} tools-dir/make-host-init.r]
-        keep [{$(REBOL)} tools-dir/make-os-ext.r]
-        keep [{$(REBOL)} tools-dir/make-librebol.r]
+        keep [{$(REBOL)} join tools-dir %make-host-init.r]
+        keep [{$(REBOL)} join tools-dir %make-os-ext.r]
+        keep [{$(REBOL)} join tools-dir %make-librebol.r]
 
         for-each ext builtin-extensions [
-            keep [{$(REBOL)} tools-dir/prep-extension.r
+            keep [{$(REBOL)} join tools-dir %prep-extension.r
                 unspaced [{MODULE=} ext/name]
                 unspaced [{SRC=extensions/} switch type of ext/source [
                     file! [ext/source]
@@ -1233,7 +1231,7 @@ prep: make rebmake/entry-class [
             ]
         ]
 
-        keep [{$(REBOL)} tools-dir/make-extensions-table.r
+        keep [{$(REBOL)} join tools-dir %make-extensions-table.r
             unspaced [
                 {EXTENSIONS=} delimit ":" map-each ext builtin-extensions [
                     to text! ext/name
@@ -1288,8 +1286,8 @@ for-each file os-file-block [
     ; For better or worse, original R3-Alpha didn't use FILE! in %file-base.r
     ; for filenames.  Note that `+` markers should be removed by this point.
     ;
-    file: join %objs/ (ensure [word! path!] file)
-    path: split-path (ensure file! file)
+    file: join %objs/ to file! (ensure [word! path!] file)
+    path: split-path file
     find folders path else [append folders path]
 ]
 add-new-obj-folders ext-objs folders

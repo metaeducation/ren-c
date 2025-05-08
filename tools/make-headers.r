@@ -25,20 +25,20 @@ do <native-emitters.r>  ; for emit-include-params-macro
 file-base: make object! load <file-base.r>
 
 tools-dir: system/options/current-path
-output-dir: system/options/path/prep
-mkdir/deep output-dir/include
+output-dir: join system/options/path %prep/
+mkdir/deep join output-dir %include/
 
-mkdir/deep output-dir/include
-mkdir/deep output-dir/core
+mkdir/deep join output-dir %include/
+mkdir/deep join output-dir %core/
 
 change-dir repo-dir
 change-dir %src/core/
 
 print "------ Building headers"
 
-e-funcs: make-emitter "Internal API" output-dir/include/tmp-internals.h
+e-funcs: make-emitter "Internal API" join output-dir %include/tmp-internals.h
 
-e-syms: make-emitter "Function Symbols" output-dir/core/tmp-symbols.c
+e-syms: make-emitter "Function Symbols" join output-dir %core/tmp-symbols.c
 
 prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
@@ -186,7 +186,7 @@ e-syms/emit {
 ;-- more solid mechanism.
 
 
-boot-natives: load output-dir/boot/tmp-natives.r
+native-list: load join output-dir %boot/tmp-natives.r
 
 e-funcs/emit [{
     /*
@@ -212,7 +212,7 @@ e-funcs/emit [{
      */
 }]
 
-for-each val boot-natives [
+for-each val native-list [
     if set-word? val [
         e-funcs/emit [val {
             DECLARE_NATIVE(${TO WORD! VAL});
@@ -344,9 +344,9 @@ e-syms/write-emitted
 
 e-params: (make-emitter
     "PARAM() and REFINE() Automatic Macros"
-    output-dir/include/tmp-paramlists.h)
+    join output-dir %include/tmp-paramlists.h)
 
-generic-list: load output-dir/boot/tmp-generics.r
+generic-list: load join output-dir %boot/tmp-generics.r
 
 ; Search file for definition.  Will be `generic-name: generic [paramlist]`
 ;
@@ -359,7 +359,6 @@ iterate generic-list [
     ]
 ]
 
-native-list: load output-dir/boot/tmp-natives.r
 parse2/match native-list [
     some [
         opt 'export
@@ -381,7 +380,8 @@ e-params/write-emitted
 ;-------------------------------------------------------------------------
 
 e-strings: (make-emitter
-    "REBOL Constants with Global Linkage" output-dir/include/tmp-constants.h)
+    "REBOL Constants with Global Linkage"
+        join output-dir %include/tmp-constants.h)
 
 e-strings/emit {
     /*
