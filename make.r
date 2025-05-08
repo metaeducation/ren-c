@@ -245,10 +245,11 @@ gen-obj: func [
             main [s]
             default [join src-dir s]
         ]
-        output: to-obj-path to text! ;\
+        output: to-obj-path to file! eval [  ; can't use (), we're in COMPOSE
             either main [
-                join %main/ (last ensure path! s)
+                join %main/ last ensure path! s
             ] [s]
+        ]
         cflags: degrade either empty? flags [reify null] [flags]
         definitions: (get 'definitions else [reify null])
         includes: (get 'includes else [reify null])
@@ -288,7 +289,7 @@ use [extension-dir entry][
             find read rejoin [extension-dir entry] %make-spec.r
         ] then [
             append available-extensions make extension-class load rejoin [
-                extension-dir entry/make-spec.r
+                extension-dir entry %make-spec.r
             ]
         ]
     ]
@@ -898,10 +899,10 @@ libr3-core: make rebmake/object-library-class [
     optimization: app-config/optimization
     debug: app-config/debug
     depends: map-each w file-base/core [
-        gen-obj/dir w src-dir/core/%
+        gen-obj/dir w (join src-dir %core/)
     ]
     append depends map-each w file-base/generated [
-        gen-obj/dir w "prep/core/"
+        gen-obj/dir w %prep/core/
     ]
 ]
 
@@ -930,7 +931,7 @@ main: make libr3-os [
     depends: reduce [
         either user-config/main
         [gen-obj/main user-config/main]
-        [gen-obj/dir file-base/main src-dir/os/%]
+        [gen-obj/dir file-base/main join src-dir %os/]
     ]
 ]
 
@@ -1041,7 +1042,7 @@ process-module: func [
         depends: map-each s (append reduce [mod/source] maybe mod/depends) [
             case [
                 match [file! block!] s [
-                    gen-obj/dir s repo-dir/extensions/%
+                    gen-obj/dir s join repo-dir %extensions/
                 ]
                 all [
                     object? s
