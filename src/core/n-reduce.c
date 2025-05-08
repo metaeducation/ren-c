@@ -49,7 +49,7 @@ static Value* Init_Lib_Word(Cell* out, SymId id) {
 Value* Meta_Quotify(Value* v)
 {
     if (Is_Void(v))
-        return Init_Lib_Word(v, SYM__TVOID_T);
+        return Init_Lib_Word(v, SYM_VOID);
 
     if (Is_Okay(v))
         return Init_Lib_Word(v, SYM__TOKAY_T);
@@ -76,7 +76,7 @@ Value* Meta_Unquotify(Value* v)
 {
     if (Is_Word(v)) {
         switch (Cell_Word_Id(v)) {
-        case SYM__TVOID_T:
+        case SYM_VOID:
             return Init_Void(v);
         case SYM__TOKAY_T:
             return Init_Okay(v);

@@ -53,7 +53,6 @@ abs: :absolute
 
 blank: _
 bar: '|
-~void~: void
 ~null~: null
 ~okay~: okay
 

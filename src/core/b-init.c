@@ -304,10 +304,6 @@ static void Startup_Antiforms(void)
     Value* null_value = Append_Context(Lib_Context, nullptr, CANON(NULL));
     Init_Nulled(null_value);
     assert(IS_FALSEY(null_value) and Is_Nulled(null_value));
-
-    Value* void_value = Append_Context(Lib_Context, nullptr, CANON(VOID));
-    Init_Void(void_value);
-    assert(Is_Void(void_value));
 }
 
 

@@ -102,7 +102,7 @@ static struct {
 //
 //      return: "Null if blank input or block's contents are all null"
 //          [~null~ text!]
-//      delimiter [~void~ char! text!]
+//      delimiter [~null~ char! text!]
 //      line "Will be copied if already a text value"
 //          [<maybe> text! block!]
 //      /tail "Include delimiter at tail of result (if non-NULL)"

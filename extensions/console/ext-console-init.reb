@@ -77,7 +77,7 @@ console!: make object! [
     repl: okay  ; used to identify this as a console! object (quack!)
     is-loaded: null  ; if okay then this is a loaded (external) skin
     was-updated: null  ; if okay then console! object found in loaded skin
-    last-result: ~  ; last evaluated result (sent by HOST-CONSOLE)
+    last-result': ~  ; meta of last evaluated result (sent by HOST-CONSOLE)
 
     ;; APPEARANCE (can be overridden)
 
@@ -126,9 +126,15 @@ console!: make object! [
         write-stdout space
     ]
 
-    print-result: function [return: [~] v [any-value! trash!]]  [
+    print-result: function [return: [~] v [trash! any-value!]]  [
+        last-result': meta :v
 
-        if trash? last-result: get/any 'v [
+        if (void? :v) [  ; nothingness (e.g. result of eval [])
+            print [result "~void~  ; anti"]
+            return ~
+        ]
+
+        if trash? :v [
             ;
             ; There are no antiforms in the R3C branch, but we can lie and
             ; make this legacy bootstrapping branch at least look a bit like
@@ -138,10 +144,6 @@ console!: make object! [
         ]
 
         case [
-            void? :v [  ; nothingness (e.g. result of eval [] or if null [...])
-                print [result "~void~  ; anti"]
-            ]
-
             null? :v [
                 ; As with nothing, we can be forward-looking and lie about the
                 ; representation of null, as a WORD! antiform.
@@ -615,12 +617,12 @@ ext-console-impl: function [
         return <prompt>
     ]
 
-    result: unmeta result
-
     if group? prior [ ;-- plain execution of user code
-        emit [system/console/print-result ((<*> meta get/any 'result))]
+        emit [system/console/print-result (<*> result)]  ; result is meta here
         return <prompt>
     ]
+
+    result: unmeta result  ; can't be VOID, or this will error...
 
     ; If PRIOR is BLOCK!, this is a continuation the console sent to itself.
     ; RESULT can be:
