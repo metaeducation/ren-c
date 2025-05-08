@@ -71,10 +71,12 @@
     ([a/b/] = transcode "a.b/")
 ]
 
-; Turning tuples into paths
+; Turning tuples into paths.  No exceptions to the rules for filename-looking
+; things, since that breaks the uniformity (ghi.txt still ghi/txt) so you
+; can't compensate easily.
 [
     ([abc/def] = transcode "abc.def")
-    ([abc/def/ghi.txt] = transcode "abc/def/ghi.txt")
+    ([abc/def/ghi.txt] = transcode "abc/def/ghi/txt")
 ]
 
 ; Leading slash indicates path desired

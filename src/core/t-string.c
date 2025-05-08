@@ -458,6 +458,28 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
 //
 Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
 {
+    if (kind == TYPE_FILE and Is_Path(arg)) {
+        REBLEN len = Cell_Series_Len_At(arg);
+        Cell* tail = Cell_List_At_Head(arg, len - 1);
+
+        String* s = Copy_Form_Value(arg, 0);
+        if (Is_Blank(tail)) {
+            // leave (some/dir/) as %some-dir/
+        }
+        else {
+            Ucs2Unit* cp = String_Tail(s);
+            while (true) {
+                assert(cp != String_Head(s));
+                --cp;
+                if (*cp == '/') {
+                    *cp = '.';
+                    break;
+                }
+            }
+        }
+        return Init_File(out, s);
+    }
+
     Flex* flex;
     if (kind == TYPE_BINARY)
         flex = make_binary(arg, false);

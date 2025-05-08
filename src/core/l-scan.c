@@ -2558,18 +2558,6 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         if (*ss->at != '/' and *ss->at != '.' and *ss->at != ':')
             goto done;
 
-        // For bootstrap we want `abc.def.ghi` to scan as `abc/def/ghi`
-        // But we want `abc/def/ghi.txt` to have a WORD! in the last
-        // position containing a dot, for how bootstrap uses PATH! in
-        // order to represent files.
-        //
-        // The best way to go about this is to have a separate scan
-        // mode for `.` that shifts into `/` if a slash is seen, and
-        // only the `.` mode will do the conversions.
-        //
-        if (S->mode == '.' and *ss->at == '/')
-            S->mode = '/';
-
         ++ss->at;  // skip next /
 
         if (
@@ -2595,8 +2583,17 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
     ){
         // We're noticing a path was actually starting with the token
         // that just got pushed, so it should be a part of that path.
+        //
+        // For bootstrap we want `abc.def.ghi` to scan as `abc/def/ghi`
+        //
+        // 1. A trick that tried to scan `abc/def/ghi.txt` to have a WORD! in
+        //    the last position did more harm than good, because `ghi.txt`
+        //    still scanned as `ghi/txt`.  So you couldn't compensate by just
+        //    translating the last item to an extension for TO FILE!.  Rather
+        //    than delete the code which does the accommodation, we just say
+        //    all interstitial scans use what was the '.' mode.
 
-        Byte mode = *ss->at == ':' ? '/' : *ss->at;
+        Byte mode = '.';  // if we use mode = '/', then a/b.c => a/b.c [1]
         ++ss->at;
 
         LineNumber captured_line = ss->line;
