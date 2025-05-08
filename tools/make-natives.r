@@ -189,7 +189,7 @@ for-each 'info natives [
 
 append output-buffer unspaced [
     newline
-    "'~end~  ; C code checks for this eval product" newline
+    "~okay~  ; C code checks for this eval product" newline
     newline
 ]
 

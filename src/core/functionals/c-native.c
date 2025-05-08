@@ -478,7 +478,7 @@ Bounce Run_Generic_Dispatch(
 
 
 //
-//  Init_Action_Adjunct_Shim: C
+//  Startup_Action_Adjunct_Shim: C
 //
 // Trap_Make_Paramlist_Managed() needs the object archetype ACTION-ADJUNCT
 // from %sysobj.r, to have the keylist to use in generating the info used
@@ -489,7 +489,7 @@ Bounce Run_Generic_Dispatch(
 // ACTION-ADJUNCT.  After %sysobj.r is loaded, an assert checks to make sure
 // that this manual construction actually matches the definition in the file.
 //
-static void Init_Action_Adjunct_Shim(void) {
+void Startup_Action_Adjunct_Shim(void) {
     SymId field_syms[1] = {
         SYM_DESCRIPTION
     };
@@ -502,7 +502,10 @@ static void Init_Action_Adjunct_Shim(void) {
     Force_Value_Frozen_Deep(Root_Action_Adjunct);
 }
 
-static void Shutdown_Action_Adjunct_Shim(void) {
+//
+//  Shutdown_Action_Adjunct_Shim: C
+//
+void Shutdown_Action_Adjunct_Shim(void) {
     rebRelease(Root_Action_Adjunct);
 }
 
@@ -510,7 +513,16 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 //
 //  Startup_Natives: C
 //
-// Returns an array of words bound to natives for SYSTEM.CATALOG.NATIVES
+// This is a special bootstrapping step that makes the native functions.  The
+// native for NATIVE itself can clearly not be made by means of calling itself
+// e.g. (native: native ["A function that creates natives" ...]), so of course
+// that has to be manually constructed.
+//
+// But further than that, we also don't want to use the evaluator to do the
+// assignments.  Because (poke: native ["A function that pokes" ...]) would
+// have trouble since POKE is used to implement SET-WORD assignments in the
+// general case.  Hence we write into the library slots directly just to
+// get the ball rolling.
 //
 // 1. See Startup_Lib() for how all the declarations in LIB for the natives
 //    are made in a pre-pass (no need to walk and look for set-words etc.)
@@ -522,17 +534,24 @@ void Startup_Natives(const Element* boot_natives)
     assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
     assert(Cell_Binding(boot_natives) == UNBOUND);
 
-    // Must be called before first use of Trap_Make_Paramlist_Managed()
-    //
-    Init_Action_Adjunct_Shim();
+    DECLARE_ATOM (meta_step);
+    Level* L = Make_Level_At_Core(
+        &Meta_Stepper_Executor, boot_natives, lib, LEVEL_MASK_NONE
+    );
+    Push_Level_Erase_Out_If_State_0(meta_step, L);
 
-    const Element* tail;
-    Element* at = Cell_List_At_Known_Mutable(&tail, boot_natives);
+  setup_native_dispatcher_enumeration: { /////////////////////////////////////
 
-    // !!! We could avoid this by making NATIVE a specialization of a NATIVE*
-    // function which carries those arguments, which would be cleaner.  The
-    // C function could be passed as a HANDLE!.
+    // When we call NATIVE it doesn't take any parameter to say what the
+    // Dispatcher* is.  It's assumed there is some global state, which it
+    // advances and gets the next Dispatcher* from that global state.
     //
+    // This isn't particularly elegant, but something is going to be weird
+    // about it one way or another. Fabricating a HANDLE! to pass to NATIVE as
+    // a second parameter would be a possibility, but that comes with its own
+    // set of problems...like how to inject that HANDLE! into the stream
+    // of evaluation when all we have are (foo: native [...]) statements.
+
     assert(g_native_cfunc_pos == nullptr);
     g_native_cfunc_pos = cast(CFunction* const*, g_core_native_dispatchers);
     assert(g_currently_loading_module == nullptr);
@@ -540,21 +559,20 @@ void Startup_Natives(const Element* boot_natives)
 
     g_current_uses_librebol = false;  // raw natives don't use librebol
 
-    // Due to the bootstrapping of `native: native [...]`, we can't actually
-    // create NATIVE itself that way.  So the prep process should have moved
-    // it to be the first native in the list, and we make it manually.
-    //
+} make_native_for_native_itself: { ///////////////////////////////////////////
+
+    assert(Is_Set_Word(At_Level(L)));
     assert(
-        Symbol_Id(unwrap Try_Get_Settable_Word_Symbol(nullptr, at))
+        Symbol_Id(unwrap Try_Get_Settable_Word_Symbol(nullptr, At_Level(L)))
         == SYM_NATIVE
     );
-    ++at;
-    assert(Is_Word(at) and Cell_Word_Id(at) == SYM_NATIVE);
-    ++at;
-    assert(Is_Block(at));
+    Fetch_Next_In_Feed(L->feed);
+    assert(Is_Word(At_Level(L)) and Cell_Word_Id(At_Level(L)) == SYM_NATIVE);
+    Fetch_Next_In_Feed(L->feed);
+    assert(Is_Block(At_Level(L)));
     DECLARE_ELEMENT (spec);
-    Derelativize(spec, at, lib);
-    ++at;
+    Derelativize(spec, At_Level(L), lib);
+    Fetch_Next_In_Feed(L->feed);;
 
     Details* the_native_details;
     Option(Error*) e = Trap_Make_Native_Dispatch_Details(
@@ -577,14 +595,47 @@ void Startup_Natives(const Element* boot_natives)
 
     assert(Cell_Frame_Phase(LIB(NATIVE)) == the_native_details);
 
-    DECLARE_ELEMENT (skipped);
-    Init_Any_List_At(skipped, TYPE_BLOCK, Cell_Array(boot_natives), 3);
+} make_next_native: { ////////////////////////////////////////////////////////
 
-    DECLARE_ATOM (discarded);
-    if (Eval_Any_List_At_Throws(discarded, skipped, lib))
+    // For the rest of the natives, we can actually use the evaluator to
+    // execute the NATIVE invocation.  This defers to refinement processing
+    // of chains to handle things like NATIVE:COMBINATOR and NATIVE:INTRINSIC.
+    // It also means natives could take more arguments if they wanted to,
+    // without having to write special code to handle it.
+    //
+    // 1. See notes at top of function for why we don't use the evaluator to
+    //    do the SET-WORD! assignments.
+
+    Reset_Evaluator_Erase_Out(L);
+
+    assert(Is_Set_Word(At_Level(L)));
+    const Symbol* symbol = unwrap Try_Get_Settable_Word_Symbol(
+        nullptr,
+        At_Level(L)
+    );
+    Sink(Value) slot = Sink_Lib_Var(unwrap Symbol_Id(symbol));
+
+    possibly(  // could be more complex (INFIX NATIVE, NATIVE:COMBINATOR...)
+        Is_Word(At_Level(L)) and Cell_Word_Id(At_Level(L)) == SYM_NATIVE
+    );
+
+    if (Eval_Step_Throws(meta_step, L))  // write directly to var [1]
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-    if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(discarded), SYM_END))
-        panic (discarded);
+
+    Copy_Cell(slot, Known_Element(meta_step));
+    Meta_Unquotify_Known_Stable(slot);
+    assert(Is_Action(slot));
+
+    if (not Is_Quasi_Word(At_Level(L)))
+        goto make_next_native;
+
+    assert(Cell_Word_Id(At_Level(L)) == SYM_OKAY);
+    Fetch_Next_In_Feed(L->feed);
+    assert(Is_Feed_At_End(L->feed));
+
+} finished: { ////////////////////////////////////////////////////////////////
+
+    Drop_Level(L);
 
     assert(
         g_native_cfunc_pos
@@ -611,7 +662,7 @@ void Startup_Natives(const Element* boot_natives)
     Count num_find_args = Phase_Num_Params(Cell_Frame_Phase(LIB(FIND)));
     assert(num_find_args == Phase_Num_Params(Cell_Frame_Phase(LIB(SELECT))));
   #endif
-}
+}}
 
 
 //
@@ -624,5 +675,4 @@ void Startup_Natives(const Element* boot_natives)
 // for startups after the first, unless we manually null them out.
 //
 void Shutdown_Natives(void) {
-    Shutdown_Action_Adjunct_Shim();
 }
