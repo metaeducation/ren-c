@@ -434,12 +434,14 @@ load-module: function [
             parse/match source [
                 opt some [
                     tmp: <here>
-                    name: opt set-word!
+                    name: try set-word!
                     mod: [
                         word! | module! | file! | url! | text! | binary!
                     ]
-                    ver: opt tuple! (
-                        append data reduce [mod ver if name [to word! name]]
+                    ver: try tuple! (
+                        append data reduce [
+                            mod reify ver if name [to word! name]
+                        ]
                     )
                 ]
             ] else [
@@ -452,7 +454,7 @@ load-module: function [
                     version: version
                     set the ver: :ver
                     as: okay
-                    set the name: opt name
+                    name: name
                     no-share: no-share
                     no-lib: no-lib
                     import: import

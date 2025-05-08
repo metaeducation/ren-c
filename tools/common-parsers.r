@@ -128,7 +128,7 @@ proto-parser: context [
     grammar: context bind [
 
         rule: [
-            parse-position: opt fileheader
+            opt parse-position: fileheader
             opt some [parse-position: segment]
         ]
 

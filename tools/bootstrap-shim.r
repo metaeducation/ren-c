@@ -666,10 +666,10 @@ split-path: func3 [
     <local> pos dir
 ][
     if null? :location [return null]
-    pos: null
+    pos: null  ; no TRY in preboot parse
     parse2 location [
         [#"/" | 1 2 #"." opt #"/"] end (dir: dirize location) |
-        pos: opt some [thru #"/" [end | pos:]] (
+        opt pos: some [thru #"/" [end | pos:]] (
             all [
                 empty? dir: copy/part location at head of location index of pos
                 dir: %./

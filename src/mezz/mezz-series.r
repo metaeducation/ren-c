@@ -199,7 +199,7 @@ reword: function [
         block! [
             parse/match delimiters [
                 prefix: delimiter-types
-                suffix: opt delimiter-types
+                opt suffix: delimiter-types
             ] else [
                 fail ["Invalid /ESCAPE delimiter block" delimiters]
             ]
