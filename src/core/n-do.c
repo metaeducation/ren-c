@@ -194,7 +194,7 @@ DECLARE_NATIVE(EVAL_INFIX)
 //
 //      return: [any-value!]
 //      source [
-//          <maybe> ;-- useful for `do maybe ...` scenarios when no match
+//          <opt-out> ;-- useful for `do maybe ...` scenarios when no match
 //          text! ;-- source code in text form
 //          binary! ;-- treated as UTF-8
 //          url! ;-- load code from URL via protocol
@@ -292,7 +292,7 @@ DECLARE_NATIVE(DO)
 //      return: "Evaluation product, or ~[position product]~ pack if /STEP3"
 //          [any-value!]  ; /STEP3 changes primary return product [1]
 //      source [
-//          <maybe>  ; useful for `evaluate maybe ...` scenarios
+//          <opt-out>  ; useful for `evaluate maybe ...` scenarios
 //          any-list!  ; code
 //          frame!  ; invoke the frame (no arguments, see RUN)
 //          error!  ; raise the error

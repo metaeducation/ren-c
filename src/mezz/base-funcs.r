@@ -252,7 +252,7 @@ dig-action-meta-fields: function [
 
     inherit-frame: function [
         return: [frame!]
-        parent [<maybe> frame!]
+        parent [<opt-out> frame!]
     ][
         child: make frame! :value
         for-each param child [

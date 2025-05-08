@@ -2250,9 +2250,9 @@ DECLARE_NATIVE(SUBPARSE)
 //      return: "Input series if /MATCH, otherwise synthesized result"  ; [1]
 //          [any-value!]
 //      input "Input series to parse"
-//          [<maybe> any-series!]
+//          [<opt-out> any-series!]
 //      rules "Rules to parse by"
-//          [<maybe> block!]
+//          [<opt-out> block!]
 //      /case "Uses case-sensitive comparison"
 //      /match "Return PARSE input instead of synthesized result"
 //      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"

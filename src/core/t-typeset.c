@@ -192,7 +192,7 @@ bool Update_Typeset_Bits_Core(
             else if (0 == Compare_String_Vals(item, Root_End_Tag, true)) {
                 Set_Typeset_Flag(typeset, TYPE_TS_ENDABLE);
             }
-            else if (0 == Compare_String_Vals(item, Root_Maybe_Tag, true)) {
+            else if (0 == Compare_String_Vals(item, Root_Opt_Out_Tag, true)) {
                 Set_Typeset_Flag(typeset, TYPE_TS_NOOP_IF_VOID);
             }
             else if (0 == Compare_String_Vals(item, Root_Skip_Tag, true)) {

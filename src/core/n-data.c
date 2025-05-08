@@ -473,7 +473,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
 //  {Gets the value of a word or path, or block of words/paths.}
 //
 //      return: [any-value!]
-//      source [<maybe> any-word! any-path! block!]
+//      source [<opt-out> any-word! any-path! block!]
 //          {Word or path to get, or block of words or paths}
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on trash)"
 //  ]
@@ -517,7 +517,7 @@ DECLARE_NATIVE(GET)
 //
 //      return: [any-value!]
 //      source "Word or path to get"
-//          [<maybe> <dequote> any-word! any-path!]
+//          [<opt-out> <dequote> any-word! any-path!]
 //  ]
 //
 DECLARE_NATIVE(GET_P)
@@ -615,7 +615,7 @@ DECLARE_NATIVE(INFIX)
 //
 //      return: [any-value!]
 //          {Will be the values set to, or void if any set values are void}
-//      target [<maybe> any-word! any-path! block!]
+//      target [<opt-out> any-word! any-path! block!]
 //          {Word or path, or block of words and paths}
 //      value [any-value! trash!]
 //          "Value or block of values"
@@ -961,7 +961,7 @@ DECLARE_NATIVE(FREE_Q)
 //
 //      return: [~null~ any-series! any-word!]
 //      type [datatype!]
-//      value [<maybe> any-series! any-word!]
+//      value [<opt-out> any-series! any-word!]
 //  ]
 //
 DECLARE_NATIVE(AS)

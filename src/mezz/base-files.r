@@ -209,7 +209,7 @@ file-type?: function [
 split-path: func [
     "Splits and returns dir component, variable for filename optionally set"
     return: [~null~ file!]
-    location [<maybe> file! url! text!]
+    location [<opt-out> file! url! text!]
     /file  ; no multi-return, simulate it
         farg [any-word! any-path!]
     <local> pos dir

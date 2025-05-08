@@ -425,7 +425,7 @@ Bounce PD_Context(
 //  {Get a reference to the "meta" context associated with a value.}
 //
 //      return: [~null~ any-context!]
-//      value [<maybe> action! any-context!]
+//      value [<opt-out> action! any-context!]
 //  ]
 //
 DECLARE_NATIVE(META_OF)
