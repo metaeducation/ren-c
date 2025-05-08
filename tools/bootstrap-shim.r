@@ -569,7 +569,21 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
             continue
         ]
 
-        product: eval pos.1
+        product: meta eval pos.1  ; can't SET-WORD! of VOID in bootstrap
+        if void? unmeta product [
+            change3:part pos void 1
+            continue
+        ]
+        product: unmeta product
+        if okay? :product [  ; e.g. compose [(print "HI")]
+            fail:blame "~okay~ antiform compose found" $return
+        ]
+        if null? :product [  ; e.g. compose [(print "HI")]
+            fail:blame "~null~ antiform compose found" $return
+        ]
+        if trash? :product [  ; e.g. compose [(print "HI")]
+            fail:blame "~ antiform compose found" $return
+        ]
         all [
             block? :product
             #splice! = first product
@@ -578,17 +592,8 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
             ;
             pos: change3:part pos second product 1
         ] else [
-            case [
-                void? :product [
-                    change3:part pos void 1
-                ]
-                trash? :product [  ; e.g. compose [(print "HI")]
-                    fail:blame "trash compose found" $return
-                ]
-            ] else [
-                change3:only pos :product
-                pos: next pos
-            ]
+            change3:only pos :product
+            pos: next pos
         ]
     ]
     return result

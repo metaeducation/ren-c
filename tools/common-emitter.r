@@ -167,20 +167,24 @@ export cscape: func [
 
             code: cscape-inside template code
 
-            if null? let sub: eval code [  ; shim null, e.g. blank!
-                print mold template
-                print mold code
-                fail "Substitution can't be NULL (shim BLANK!)"
-            ]
+            let sub: meta eval code
 
             ; We want to recognize lines that had substitutions that all
             ; vanished, and remove them (distinctly from lines left empty
             ; on purpose in the template).  We need to put some kind of signal
             ; to get that behavior.
             ;
-            if void? :sub [
+            if void? unmeta sub [
                 keep void-marker  ; replaced in post phase
                 continue
+            ]
+
+            sub: unmeta sub
+
+            if null? :sub  [  ; shim null, e.g. blank!
+                print mold template
+                print mold code
+                fail "Substitution can't be NULL (shim BLANK!)"
             ]
 
             sub: switch mode [
