@@ -3,7 +3,7 @@
 
 (; Setup test.
     do %../tools/common.r
-    do tools-dir/text-lines.reb
+    do join tools-dir %text-lines.reb
     okay
 )
 

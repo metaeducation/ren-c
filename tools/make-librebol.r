@@ -24,8 +24,8 @@ do <common-emitter.r>
 print "--- Make Reb-Lib Headers ---"
 
 args: parse-args system/options/args
-output-dir: system/options/path/prep
-output-dir: output-dir/include
+output-dir: join system/options/path %prep/
+output-dir: join output-dir %include/
 mkdir/deep output-dir
 
 ver: load <../src/boot/version.r>
@@ -139,7 +139,7 @@ process: func [
 
 src-dir: clean-path append copy repo-dir %src/core/
 
-process src-dir/a-lib.c
+process join src-dir %a-lib.c
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -245,7 +245,7 @@ c99-or-c++11-macros: map-each-api [
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 e-lib: (make-emitter
-    "Rebol External Library Interface" output-dir/rebol.h)
+    "Rebol External Library Interface" (join output-dir %rebol.h))
 
 e-lib/emit {
     /*

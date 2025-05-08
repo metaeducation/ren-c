@@ -26,8 +26,8 @@ r3: system/version > 2.100.0
 
 src-dir: clean-path append repo-dir %src/
 
-output-dir: system/options/path/prep
-mkdir/deep output-dir/boot
+output-dir: join system/options/path %prep/
+mkdir/deep join output-dir %boot/
 
 verbose: null
 
@@ -41,7 +41,8 @@ process: func [
     the-file: file
     if verbose [probe [file]]
 
-    source-text: read join src-dir/core/% file
+    source-text: read join (join src-dir %core/) file
+
     if r3 [source-text: deline to-text source-text]
     proto-parser/emit-proto: :emit-native-proto
     proto-parser/process source-text
@@ -54,10 +55,9 @@ output-buffer: make text! 20000
 
 proto-count: 0
 
-files: sort read src-dir/core/%
+files: sort read join src-dir %core/
 
 remove-each file files [
-
     not all [
         %.c = suffix? file
         not find/match file "host-"
@@ -69,8 +69,9 @@ for-each file files [process file]
 
 append output-buffer unsorted-buffer
 
-write-if-changed output-dir/boot/tmp-natives.r output-buffer
+write-if-changed (join output-dir %boot/tmp-natives.r) output-buffer
 
+print ["WRITING:" join output-dir %boot/tmp-natives.r]
 print [proto-count "natives"]
 print " "
 
@@ -95,9 +96,9 @@ append output-buffer {Rebol [
 
 }
 
-boot-types: load src-dir/boot/types.r
+boot-types: load join src-dir %boot/types.r
 
-append output-buffer mold/only load src-dir/boot/generics.r
+append output-buffer mold/only load (join src-dir %boot/generics.r)
 
 append output-buffer unspaced [
     newline
@@ -105,4 +106,4 @@ append output-buffer unspaced [
     newline
 ]
 
-write-if-changed output-dir/boot/tmp-generics.r output-buffer
+write-if-changed (join output-dir %boot/tmp-generics.r) output-buffer

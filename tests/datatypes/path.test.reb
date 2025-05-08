@@ -141,11 +141,6 @@
     okay
 )
 
-[#71 (
-    a: "abcd"
-    "abcd/x" = a/x
-)]
-
 [#1820 ; Word USER can't be selected with path syntax
     (
     b: [user 1 _user 2]

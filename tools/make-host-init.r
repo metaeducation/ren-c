@@ -36,8 +36,8 @@ change-dir repo-dir
 change-dir %src/os/
 
 args: parse-args system/options/args
-output-dir: system/options/path/prep
-mkdir/deep output-dir/os
+output-dir: join system/options/path %prep/
+mkdir/deep join output-dir %os/
 
 print "--- Make Host Init Code ---"
 
@@ -123,4 +123,4 @@ for-each file file-base/prot-files [
 
 insert host-code compose/only [host-prot: (host-protocols)]
 
-write-c-file output-dir/os/tmp-host-start.inc host-code
+write-c-file join output-dir %os/tmp-host-start.inc host-code

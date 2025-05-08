@@ -53,10 +53,10 @@ if args/GIT_COMMIT = "unknown" [
 ;-- SETUP --------------------------------------------------------------
 
 ;dir: %../core/temp/  ; temporary definition
-output-dir: system/options/path/prep
-inc: output-dir/include
-core: output-dir/core
-boot: output-dir/boot
+output-dir: join system/options/path %prep/
+inc: join output-dir %include/
+core: join output-dir %core/
+boot: join output-dir %boot/
 mkdir/deep probe inc
 mkdir/deep probe boot
 mkdir/deep probe core
@@ -130,7 +130,7 @@ build: context [features: [help-strings]]
 ;
 ;----------------------------------------------------------------------------
 
-e-symbols: make-emitter "Symbol Numbers" inc/tmp-symbols.h
+e-symbols: make-emitter "Symbol Numbers" (join inc %tmp-symbols.h)
 
 syms: copy []
 sym-n: 1
@@ -168,7 +168,7 @@ add-sym: function [
 
 type-table: load %types.r
 
-e-dispatch: make-emitter "Dispatchers" core/tmp-dispatchers.c
+e-dispatch: make-emitter "Dispatchers" (join core %tmp-dispatchers.c)
 
 generic-hooks: collect [
     for-each-record t type-table [
@@ -342,7 +342,7 @@ e-dispatch/write-emitted
 ;
 ;----------------------------------------------------------------------------
 
-e-types: make-emitter "Datatype Definitions" inc/tmp-kinds.h
+e-types: make-emitter "Datatype Definitions" (join inc %tmp-kinds.h)
 
 n: 1
 rebs: collect [
@@ -493,7 +493,7 @@ e-types/write-emitted
 ;
 ;----------------------------------------------------------------------------
 
-e-version: make-emitter "Version Information" inc/tmp-version.h
+e-version: make-emitter "Version Information" (join inc %tmp-version.h)
 
 
 e-version/emit [{
@@ -531,7 +531,7 @@ for-each word-or-bar wordlist [  ; bootstrap | is BAR!, but WORD! in R3C
 
 first-generic-sym: sym-n
 
-boot-generics: load boot/tmp-generics.r
+boot-generics: load join boot %tmp-generics.r
 for-each item boot-generics [
     if set-word? :item [
         if first-generic-sym < any [
@@ -551,7 +551,7 @@ for-each item boot-generics [
 ;
 ;----------------------------------------------------------------------------
 
-e-sysobj: make-emitter "System Object" inc/tmp-sysobj.h
+e-sysobj: make-emitter "System Object" (join inc %tmp-sysobj.h)
 
 at-value: lambda ['field] [next find boot-sysobj to-set-word field]
 
@@ -636,7 +636,9 @@ e-sysobj/write-emitted
 
 ;-- Error Structure ----------------------------------------------------------
 
-e-errfuncs: make-emitter "Error structure and functions" inc/tmp-error-funcs.h
+e-errfuncs: (
+    make-emitter "Error structure and functions" (join inc %tmp-error-funcs.h)
+)
 
 fields: collect [
     keep {Cell self}
@@ -754,7 +756,7 @@ for-each section [boot-base boot-sys boot-mezz] [
     mezz-files: next mezz-files
 ]
 
-e-sysctx: make-emitter "Sys Context" inc/tmp-sysctx.h
+e-sysctx: make-emitter "Sys Context" (join inc %tmp-sysctx.h)
 
 ; We don't actually want to create the object in the R3-MAKE Rebol, because
 ; the constructs are intended to run in the Rebol being built.  But the list
@@ -795,9 +797,9 @@ e-sysctx/write-emitted
 ;
 ;----------------------------------------------------------------------------
 
-e-bootblock: make-emitter "Natives and Bootstrap" core/tmp-boot-block.c
+e-bootblock: make-emitter "Natives and Bootstrap" (join core %tmp-boot-block.c)
 
-boot-natives: load boot/tmp-natives.r
+boot-natives: load join boot %tmp-natives.r
 
 nats: collect [
     for-each val boot-natives [
@@ -834,7 +836,7 @@ for-each-record t type-table [
 
 ;-- Create main code section (compressed):
 
-write-if-changed boot/tmp-boot-block.r mold reduce sections
+write-if-changed join boot %tmp-boot-block.r mold reduce sections
 data: to-binary mold/flat reduce sections
 
 compressed: gzip data
@@ -862,7 +864,7 @@ e-bootblock/write-emitted
 ;
 ;----------------------------------------------------------------------------
 
-e-boot: make-emitter "Bootstrap Structure and Root Module" inc/tmp-boot.h
+e-boot: make-emitter "Bootstrap Structure and Root Module" join inc %tmp-boot.h
 
 nat-index: 0
 nids: collect [

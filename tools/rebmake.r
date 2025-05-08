@@ -1161,9 +1161,8 @@ generator-class: make object! [
             #object-file [
                 setup-output project
             ]
-            default [
-                noop
-            ]
+        ] else [
+            noop  ; !!! non-exhaustive list?
         ]
     ]
 ]
@@ -1215,7 +1214,7 @@ makefile: make generator-class [
                     ]
                     ensure [block! ~null~] entry/depends
                     for-each w maybe entry/depends [
-                        switch w/class [
+                        switch all [object? w w/class] [
                             #variable [
                                 keep ["$(" w/name ")"]
                             ]

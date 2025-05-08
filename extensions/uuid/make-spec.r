@@ -3,7 +3,7 @@ Rebol []
 name: 'UUID
 source: %uuid/mod-uuid.c
 includes: reduce [
-    repo-dir/extensions/uuid/libuuid
+    join repo-dir %extensions/uuid/libuuid/
     %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
 ]
 depends: switch system-config/os-base [
@@ -16,7 +16,7 @@ depends: switch system-config/os-base [
         ]
     ]
     'OSX [
-        repo-dir/extensions/uuid/uuid-mac.c
+        join repo-dir %extensions/uuid/uuid-mac.c
     ]
 ]
 

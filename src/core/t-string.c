@@ -636,16 +636,9 @@ Bounce PD_String(
             return pvs->out;
         }
 
-        if (
-            Is_Binary(pvs->out)
-            or not (Is_Word(picker) or Any_String(picker))
-        ){
-            return BOUNCE_UNHANDLED;
-        }
-
-        // !!! This is a historical and questionable feature, where path
-        // picking a string or word or otherwise out of a FILE! or URL! will
-        // generate a new FILE! or URL! with a slash in it.
+        // !!! Note: historical and questionable feature was killed that was
+        // here, where picking a string or word or otherwise out of a FILE!
+        // or URL! will generate a new FILE! or URL! with a slash in it.
         //
         //     >> x: %foo
         //     >> type of the x/bar
@@ -653,69 +646,8 @@ Bounce PD_String(
         //
         //     >> x/bar
         //     == %foo/bar ;-- a FILE!
-        //
-        // This can only be done with evaluations, since FILE! and URL! have
-        // slashes in their literal form:
-        //
-        //     >> type of the %foo/bar
-        //     == file!
-        //
-        // Because Ren-C unified picking and pathing, this somewhat odd
-        // feature is now part of PICKing a string from another string.
 
-        String* copy = cast(String*, Copy_Sequence_At_Position(pvs->out));
-
-        // This makes sure there's always a "/" at the end of the file before
-        // appending new material via a picker:
-        //
-        //     >> x: %foo
-        //     >> (x)/("bar")
-        //     == %foo/bar
-        //
-        REBLEN len = Flex_Len(copy);
-        if (len == 0)
-            Append_String_Ucs2Unit(copy, '/');
-        else {
-            Ucs2Unit ch_last = GET_ANY_CHAR(copy, len - 1);
-            if (ch_last != '/')
-                Append_String_Ucs2Unit(copy, '/');
-        }
-
-        DECLARE_MOLDER (mo);
-        Push_Mold(mo);
-
-        Form_Value(mo, picker);
-
-        // The `skip` logic here regarding slashes and backslashes apparently
-        // is for an exception to the rule of appending the molded content.
-        // It doesn't want two slashes in a row:
-        //
-        //     >> x/("/bar")
-        //     == %foo/bar
-        //
-        // !!! Review if this makes sense under a larger philosophy of string
-        // path composition.
-        //
-        Ucs2Unit ch_start = GET_ANY_CHAR(mo->utf8flex, mo->start);
-        REBLEN skip = (ch_start == '/' || ch_start == '\\') ? 1 : 0;
-
-        // !!! Would be nice if there was a better way of doing this that didn't
-        // involve reaching into mo.start and mo.series.
-        //
-        const bool crlf_to_lf = false;
-        Append_UTF8_May_Fail(
-            copy, // dst
-            cs_cast(Binary_At(mo->utf8flex, mo->start + skip)), // src
-            Flex_Len(mo->utf8flex) - mo->start - skip, // len
-            crlf_to_lf
-        );
-
-        Drop_Mold(mo);
-
-        // Note: pvs->out may point to pvs->store
-        //
-        Init_Any_Series(pvs->out, Type_Of(pvs->out), copy);
-        return pvs->out;
+        return BOUNCE_UNHANDLED;
     }
 
     // Otherwise, POKE-ing

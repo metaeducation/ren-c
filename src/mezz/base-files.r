@@ -142,7 +142,7 @@ make-dir: func [
     ; Create directories forward:
     created: copy []
     for-each dir dirs [
-        path: either empty? path [dir][path/(dir)]
+        path: either empty? path [dir] [join path dir]
         append path slash
         sys/util/rescue [make-dir path] then arrow e [
             for-each dir created [
