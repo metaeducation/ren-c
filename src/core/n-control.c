@@ -1128,8 +1128,6 @@ DECLARE_NATIVE(SWITCH)
 //          [set-group? set-word? set-tuple?]  ; to left of DEFAULT
 //      @(branch) "If target needs default, this is evaluated and stored there"
 //          [any-branch?]
-//      :predicate "Test for what's considered *not* needing to be defaulted"
-//          [<unrun> frame!]
 //      <local> steps
 //  ]
 //
@@ -1141,63 +1139,47 @@ DECLARE_NATIVE(DEFAULT)
 //    have an answer for this problem in the form of giving back a block of
 //    `steps` which can resolve the variable without doing more evaluations.
 //
-// 2. Antiforms of BLANK!, TAG!, and PARAMETER! are considered not set.
-//    NULL is considered not set, because DEFAULT is used in particular with
-//    unused refinement values...so it kind of has to be.  Not clear what
-//    should be done with VOID, but given that branches consider it empty
-//    the same as null it seems it might be good to include it as not set.
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
     Element* target = Element_ARG(TARGET);
     Value* branch = ARG(BRANCH);
-    Value* predicate = ARG(PREDICATE);
 
     Element* steps = cast(Element*, LOCAL(STEPS));  // hold resolved steps [1]
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,
         ST_DEFAULT_GETTING_TARGET,
-        ST_DEFAULT_RUNNING_PREDICATE,
         ST_DEFAULT_EVALUATING_BRANCH
     };
 
     switch (STATE) {
       case ST_DEFAULT_INITIAL_ENTRY: goto initial_entry;
       case ST_DEFAULT_GETTING_TARGET: assert(false); break;  // !!! TBD
-      case ST_DEFAULT_RUNNING_PREDICATE: goto predicate_result_in_spare;
       case ST_DEFAULT_EVALUATING_BRANCH: goto branch_result_in_spare;
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+  // 1. TRASH!, TRIPWIRE! and NULL are considered "defaultable".  VOID can't
+  //    be stored in variables directly, but it might be the case that
+  //    metavariables such as (^x: void, ^x: default [1020]) should be willing
+  //    to overwrite the void state.  Review.
+
     Unchain(target);
 
     Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
         OUT,
-        steps,  // use steps to avoid double-evaluation on GET + SET pair [1]
+        steps,  // use steps to avoid double-evaluation on GET + SET pair
         target,
         SPECIFIED
     );
     if (error)
         return FAIL(unwrap error);
 
-    if (not Is_Nulled(predicate)) {
-        STATE = ST_DEFAULT_RUNNING_PREDICATE;
-        return CONTINUE(SPARE, predicate, OUT);
-    }
-
     if (not (Any_Vacancy(OUT) or Is_Nulled(OUT)))
-        return OUT;  // consider it a "value" [2]
-
-    STATE = ST_DEFAULT_EVALUATING_BRANCH;
-    return CONTINUE(SPARE, branch, OUT);
-
-} predicate_result_in_spare: {  //////////////////////////////////////////////
-
-    if (Is_Trigger(stable_SPARE))  // e.g. if INTEGER? no default needed
-        return OUT;  // so return the value as-is
+        return OUT;  // consider it a "value" [1]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
     return CONTINUE(SPARE, branch, OUT);
@@ -1211,6 +1193,40 @@ DECLARE_NATIVE(DEFAULT)
 
     return COPY(SPARE);
 }}
+
+
+//
+//  maybe: infix native [
+//
+//  "If the right hand side is not NULL, overwrite the left hand side"
+//
+//      return: "Former value or branch result"
+//          [any-value?]
+//      @target "Word or tuple which might be set (or not)"
+//          [set-group? set-word? set-tuple?]  ; should do set-block!, etc [1]
+//      ^atom "Quantity used to overwrite the left if not null"
+//          [any-atom?]  ; to do set-block! etc. needs to take PACK!
+//  ]
+//
+DECLARE_NATIVE(MAYBE)
+//
+// 1. At time of writing this doesn't support BLOCK! or META-WORD! on the
+//    left hand side.  But it should be able to, so it takes the argument
+//    as a meta value of any atom.
+{
+    INCLUDE_PARAMS_OF_MAYBE;
+
+    Element* target = Element_ARG(TARGET);
+    Element* meta = Element_ARG(ATOM);
+
+    if (Is_Meta_Of_Raised(meta))
+        return UNMETA(meta);  // pass through but don't assign anything
+
+    if (Is_Meta_Of_Null(meta))
+        return rebDelegate("get:any @", target);
+
+    return rebDelegate("set @", target, meta);  // should decay if needed
+}
 
 
 //

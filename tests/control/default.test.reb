@@ -44,18 +44,6 @@
     ]
 )
 
-; Predicates allow the specification of an additional constraint, which if
-; not met, will also lead to defaulting.  (SHOVE temporarily needed for
-; running refined path, won't be with CHAIN!)
-(
-    x: "not an integer"
-    x: ->- default:predicate [10 + 20] integer?/
-    x = 30
-)(
-    x: 304
-    x: ->- default:predicate [10 + 20] integer?/
-    x = 304
-)
 
 ; Antiform `~` specifically means "unset variable".
 [(
@@ -63,7 +51,7 @@
     x: default [1020]
     x = 1020
 )(
-    x: second [~()~ ~]  ; quasiform of void
+    x: second [~()~ ~]  ; quasiform of trash
     x: default [1020]
     x = '~
 )(
