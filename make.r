@@ -208,7 +208,7 @@ parse3 load3 (join tools-dir %cflags-map.r) [some [
 
 === "MODULES AND EXTENSIONS" ===
 
-platform-config: configure-platform user-config.os-id
+platform-config: configure-platform opt user-config.os-id
 rebmake/set-target-platform platform-config.os-base
 
 to-obj-path: func [
@@ -1055,7 +1055,7 @@ help-spec: [
   --[
     CURRENT OS:
 
-    $<indent mold configure-platform user-config.os-id>
+    $<indent mold configure-platform opt user-config.os-id>
 
     AVAILABLE:
 
@@ -1175,7 +1175,7 @@ rebmake.default-compiler: pick rebmake (any [
 ]) else [
     fail ["Unknown compiler type in configuration:" mold user-config.compiler]
 ]
-rebmake.default-compiler/check user-config.compiler-path
+rebmake.default-compiler/check opt user-config.compiler-path
 
 rebmake.default-stripper: pick rebmake (any [
     user-config.stripper

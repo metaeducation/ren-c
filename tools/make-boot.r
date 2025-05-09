@@ -36,7 +36,7 @@ import <platforms.r>
 change-dir join repo-dir %src/specs/
 
 args: parse-args system.script.args  ; either from command line or DO:ARGS
-platform-config: configure-platform args.OS_ID
+platform-config: configure-platform opt args.OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 

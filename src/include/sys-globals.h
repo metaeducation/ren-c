@@ -104,7 +104,8 @@ PVAR Flex* g_dispatcher_table;
 PVAR Element* Root_With_Tag; // overrides locals gathering (can disable RETURN)
 PVAR Element* Root_Variadic_Tag; // marks variadic argument <variadic>
 PVAR Element* Root_End_Tag; // marks endable argument (NULL if at end of input)
-PVAR Element* Root_Opt_Out_Tag; // passing void won't run the action, return null
+PVAR Element* Root_Opt_Out_Tag; // passing void makes action a noop
+PVAR Element* Root_Undo_Opt_Tag; // passing void turns argument into a null
 PVAR Element* Root_Local_Tag; // marks beginning of a list of "pure locals"
 PVAR Element* Root_Const_Tag; // pass a CONST version of the input argument
 PVAR Element* Root_Void_Tag;  // tolerance for void returns or passing void args

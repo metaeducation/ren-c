@@ -153,11 +153,15 @@ Bounce Action_Executor(Level* L)
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Trash_Due_To_End(ARG);
                 }
-                else if (
-                    Is_Meta_Of_Void(ARG)
-                    and Get_Parameter_Flag(PARAM, NOOP_IF_VOID)
-                ){
-                    Init_Hole(ARG);  // !!! Temporary hack
+                else if (Is_Meta_Of_Void(ARG)) {
+                    if (Get_Parameter_Flag(PARAM, OPT_OUT))
+                        Init_Hole(ARG);  // !!! Temporary hack
+                    else if (Get_Parameter_Flag(PARAM, UNDO_OPT))
+                        Init_Nulled(ARG);
+                    else
+                        return FAIL(
+                            Error_No_Arg(Level_Label(L), Key_Symbol(KEY))
+                        );
                 }
                 else {
                     Meta_Unquotify_Undecayed(ARG);
@@ -757,11 +761,17 @@ Bounce Action_Executor(Level* L)
         }
 
         if (Is_Hole(ARG)) {
-            if (Get_Parameter_Flag(param, NOOP_IF_VOID)) {  // <opt-out> param
+            if (Get_Parameter_Flag(param, OPT_OUT)) {  // <opt-out> param
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
-                Mark_Typechecked(Init_Nulled(OUT));
+                Mark_Typechecked(stable_ARG);
+                Init_Nulled(OUT);
                 continue;
             }
+        }
+
+        if (Get_Parameter_Flag(param, UNDO_OPT) and Is_Nulled(ARG)) {
+            Mark_Typechecked(stable_ARG);  // null generally not in typeset
+            continue;
         }
 
         if (Get_Parameter_Flag(param, VARIADIC)) {  // can't check now [2]

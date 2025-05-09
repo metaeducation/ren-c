@@ -125,7 +125,7 @@ module: func [
     return: "Module and meta-result of running the body (may be raised)"  ; [1]
         [~[module! any-atom?]~]
     spec "The header block of the module (modified)"
-        [block! object!]
+        [<undo-opt> block! object!]
     body "The body of the module"
         [block!]
     :mixin "Bind body to this additional object before executing"
@@ -135,14 +135,12 @@ module: func [
     <local>
         mod product'  ; note: overwrites MODULO shorthand in this function
 ][
-    if void? spec [spec: null]  ; safer to use void on interface (blank?)
-
     mod: any [
         into
         make module! body  ; inherits binding from body, does not run it
     ]
 
-    if block? spec [  ; turn spec into an object if it was a block
+    if block? opt spec [  ; turn spec into an object if it was a block
         comment [
             unbind:deep spec  ; !!! preserve binding?
         ]

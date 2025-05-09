@@ -54,7 +54,7 @@ import <native-emitters.r>  ; scans C source for native specs, emits macros
 === "PROCESS COMMAND-LINE ARGUMENTS TO %prep-extension.r" ===
 
 args: parse-args system.script.args  ; either from command line or DO:ARGS
-platform-config: configure-platform args.OS_ID
+platform-config: configure-platform opt args.OS_ID
 
 mod: ensure text! args.MODULE  ; overwrites MOD as MODULO, but that's okay!
 

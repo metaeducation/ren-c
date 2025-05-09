@@ -185,22 +185,24 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     FLAG_LEFT_BIT(12)
 
 
-//=//// PARAMETER_FLAG_NOOP_IF_VOID ///////////////////////////////////////=//
+//=//// PARAMETER_FLAG_OPT_OUT ////////////////////////////////////////////=//
 //
 // If a parameter is marked with the `<opt-out>` annotation, then that means
 // if that argument is void in a function invocation, the dispatcher for the
 // function won't be run at all--and ~null~ will be returned by the call.
 //
-// The optimization this represents isn't significant for natives--as they
-// could efficiently test `Is_Void(arg)` and `return Init_Nulled(OUT)`.  But
-// usermode functions benefit more since `if void? arg [return null]` needs
-// several frames and lookups to run.
+// This helps avoid the need to take the argument as ^META just to do the
+// test for void, if this is the intent.  Beyond convenience, it doesn't speed
+// natives up all that much, as they could test `Is_Void(arg)` and then
+// `return Init_Nulled(OUT); Meta_Unquotify_Undecayed(arg);`...which would
+// be fairly fast.  But it speeds up usermode code much more, considering that
+// `if void? ^arg [return null]` needs several frames and lookups to run.
 //
-// In both the native and usermode cases, the <opt-out> annotation helps convey
-// the contract of "void-in-null-out" more clearly than just being willing to
-// take a void and able to return null--which doesn't connect the two states.
+// Plus the <opt-out> annotation helps convey the "void-in-null-out" contract
+// more clearly than just being willing to take void and able to return null,
+// which doesn't connect the two states.
 //
-#define PARAMETER_FLAG_NOOP_IF_VOID \
+#define PARAMETER_FLAG_OPT_OUT \
     FLAG_LEFT_BIT(13)
 
 
@@ -263,9 +265,16 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     FLAG_LEFT_BIT(19)
 
 
-//=//// PARAMETER_FLAG_20 /////////////////////////////////////////////////=//
+//=//// PARAMETER_FLAG_UNDO_OPT ///////////////////////////////////////////=//
 //
-#define PARAMETER_FLAG_20 \
+// This is set by the <undo-opt> parameter flag.  It helps avoid the need to
+// make a function take ^META parameters just in order to test if something is
+// a void, so long as there's no need to distinguish it from null.  See also
+// the <opt-out> parameter flag, which can be used if the only processing
+// for a void would be to return null as the overall function result with
+// no further side-effects.
+//
+#define PARAMETER_FLAG_UNDO_OPT \
     FLAG_LEFT_BIT(20)
 
 

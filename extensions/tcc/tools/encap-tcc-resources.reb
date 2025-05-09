@@ -53,7 +53,7 @@ import %../../tools/common.r
 args: parse-args system.script.args  ; either from command line or DO:ARGS
 
 import %../../tools/platforms.r
-platform-config: configure-platform args.OS_ID
+platform-config: configure-platform opt args.OS_ID
 
 ; !!! For the moment, this script only works with the in-source output
 ; directory.  It would have to be passed a directory by the caller otherwise.

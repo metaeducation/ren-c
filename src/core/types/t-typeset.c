@@ -226,13 +226,18 @@ void Set_Parameter_Spec(
             }
             else if (0 == CT_Utf8(item, Root_End_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_ENDABLE;
-                Init_Quasi_Word(dest, CANON(NULL));  // !!!
+                Init_Meta_Of_Null(dest);  // !!!
                 *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_Utf8(item, Root_Opt_Out_Tag, strict)) {
-                *flags |= PARAMETER_FLAG_NOOP_IF_VOID;
+                *flags |= PARAMETER_FLAG_OPT_OUT;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-                Init_Quasi_Word(dest, CANON(VOID));  // !!!
+                Init_Meta_Of_Void(dest);  // !!!
+            }
+            else if (0 == CT_Utf8(item, Root_Undo_Opt_Tag, strict)) {
+                *flags |= PARAMETER_FLAG_UNDO_OPT;
+                Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
+                Init_Meta_Of_Void(dest);  // !!!
             }
             else if (0 == CT_Utf8(item, Root_Const_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_CONST;

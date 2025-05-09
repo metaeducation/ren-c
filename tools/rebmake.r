@@ -202,7 +202,7 @@ posix: make platform-class [
         cmd [object!]
     ][
         if let tool: any [get $cmd.strip, get $default-stripper] [
-            let b: ensure block! tool/commands cmd.file cmd.options
+            let b: ensure block! tool/commands cmd.file opt cmd.options
             assert [1 = length of b]
             return b.1
         ]

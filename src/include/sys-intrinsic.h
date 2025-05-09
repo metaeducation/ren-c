@@ -48,7 +48,7 @@
 //
 // ** WHEN RUN AS AN INTRINSIC, THE ARG IN THE SPARE CELL CONTAINS A FULLY NON
 // TYPECHECKED META REPRESENTATION, AND THE NATIVE IS RESPONSIBLE FOR ALL
-// ARGUMENT PROCESSING (INCLUDING <opt-out>/NOOP_IF_VOID).**
+// ARGUMENT PROCESSING (INCLUDING <opt-out> or <undo-opt>).**
 //
 // Not only that, but the special case of typechecking intrinsics (that
 // return LOGIC?) is that they can't write to L->out...because if you were
@@ -128,7 +128,7 @@ INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
 
     const Element* meta = Level_Intrinsic_Arg_Meta(L);
 
-    if (Is_Meta_Of_Void(meta))  // do PARAMETER_FLAG_NOOP_IF_VOID [1]
+    if (Is_Meta_Of_Void(meta))  // do PARAMETER_FLAG_OPT_OUT [1]
         return Init_Nulled(L->out);  // !!! overwrites out, illegal [2]
 
     if (Is_Quasiform(meta))  // antiform including

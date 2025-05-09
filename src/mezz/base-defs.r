@@ -138,12 +138,12 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 elide-if-void: func [
     "Argument is evaluative, but discarded if void"
 
-    return: [any-value? ghost!]
-    ^value' "Evaluated value to be ignored"
-        [any-value? ~[]~ ghost!]  ; ghost! is passed through
+    return: [any-atom?]
+    ^atom "Evaluation product to be ignored"
+        [any-atom?]  ; ghost! is passed through
 ][
-    if void? ^value' [return ~,~]
-    return ^value'
+    if '~[]~ = atom [return ghost]
+    return ^atom
 ]
 
 ; COMMA! is the new expression barrier.  But `||` is included as a way to

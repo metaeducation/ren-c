@@ -101,8 +101,8 @@ replace: func [
     return: [any-series?]
     target "Series to replace within (modified)"
         [any-series?]
-    ^pattern "Value to be replaced (converted if necessary)"
-        [~[]~ element? splice!]
+    pattern "Value to be replaced (converted if necessary)"
+        [<undo-opt> element? splice!]
     ^replacement "Value to replace with (called each time if action)"
         [~[]~ element? splice! action!]
 
@@ -111,7 +111,7 @@ replace: func [
 
     <local> value' pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
 ][
-    if void? ^pattern [return target]  ; could fall thru, but optimize...
+    if not pattern [return target]  ; could fall thru, but optimize...
 
     let case_REPLACE: case
     case: lib.case/

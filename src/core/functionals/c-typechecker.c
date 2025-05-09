@@ -666,7 +666,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
     if (not is_return)
         assert(not Is_Trash(atom));  // antiform blank must be ^META as argument
 
-    if (Get_Parameter_Flag(param, NOOP_IF_VOID))
+    if (Get_Parameter_Flag(param, OPT_OUT))
         assert(not Is_Void(atom));  // should have bypassed this check
 
     if (Get_Parameter_Flag(param, CONST))
