@@ -91,7 +91,7 @@ DECLARE_NATIVE(ADD)
             return PANIC(Error_Codepoint_Negative_Raw());
         Option(Error*) error = Trap_Init_Char(OUT, i);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT;
     }
 
@@ -103,7 +103,7 @@ DECLARE_NATIVE(ADD)
             return PANIC(Error_Codepoint_Negative_Raw());
         Option(Error*) error = Trap_Init_Char(OUT, i);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT;
     }
 
@@ -136,7 +136,7 @@ DECLARE_NATIVE(SUBTRACT)
             return Init_Integer(OUT, 0);
         if (IS_CHAR(e2))
             return Init_Integer(OUT, cast(REBINT, 0) - Cell_Codepoint(e2));
-        return RAISE(Error_Codepoint_Negative_Raw());
+        return FAIL(Error_Codepoint_Negative_Raw());
     }
 
     if (Is_NUL(e2)) {  // localize NUL handling to SUBTRACT native [1]
@@ -297,7 +297,7 @@ DECLARE_NATIVE(ROUND)
         ++num_refinements;
 
     if (num_refinements > 1)
-        return RAISE("ROUND only accepts one of EVEN, DOWN, HALF-DOWN,"
+        return FAIL("ROUND only accepts one of EVEN, DOWN, HALF-DOWN,"
             " FLOOR, CEILING, or HALF-CEILING refinements");
 
     Element* elem = Element_ARG(VALUE);
@@ -408,7 +408,7 @@ DECLARE_NATIVE(RANDOM_BETWEEN)
     USED(Bool_ARG(SECURE));  // passed through via LEVEL
 
     if (Type_Of(min) != Type_Of(max))
-        return RAISE("RANDOM-BETWEEN requires MIN and MAX of same type");
+        return FAIL("RANDOM-BETWEEN requires MIN and MAX of same type");
 
     return Dispatch_Generic(RANDOM_BETWEEN, min, LEVEL);
 }
@@ -963,7 +963,7 @@ DECLARE_NATIVE(LESSER_Q)
     Value* v2 = ARG(VALUE2);
 
     if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
-        return RAISE("Differing quote levels are not comparable");
+        return FAIL("Differing quote levels are not comparable");
 
     QUOTE_BYTE(v1) = NOQUOTE_1;
     QUOTE_BYTE(v2) = NOQUOTE_1;
@@ -974,7 +974,7 @@ DECLARE_NATIVE(LESSER_Q)
         else if (Is_Decimal(v1) and Is_Integer(v2))
             Init_Decimal(v2, cast(REBDEC, VAL_INT64(v2)));
         else
-            return RAISE("Types are not comparable");
+            return FAIL("Types are not comparable");
     }
 
     return Dispatch_Generic(LESSER_Q, v1, LEVEL);
@@ -997,7 +997,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Element)
     UNUSED(ARG(VALUE1));
     UNUSED(ARG(VALUE2));
 
-    return RAISE("Types are not comparable");
+    return FAIL("Types are not comparable");
 }
 
 

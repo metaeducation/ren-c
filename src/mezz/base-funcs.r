@@ -471,7 +471,7 @@ count-up: func [
     ]
     return cycle [
         result': ^ cfor (var) start end 1 body except e -> [
-            return raise e
+            return fail e
         ]
         if null? ^result' [
             return null  ; a BREAK was encountered
@@ -565,13 +565,7 @@ cause-error: func [
 ]
 
 
-; Note that in addition to this definition of FAIL, there is an early-boot
-; definition which runs if a FAIL happens before this point, which crashes and
-; gives more debug information.
-;
-; Though HIJACK would have to be aware of it and preserve the rule.
-;
-raise: func [
+fail: func [
     "Interrupts execution by reporting an error (a TRAP can intercept it)"
 
     return: []
@@ -592,7 +586,7 @@ raise: func [
         reason: as text! unquasi ^reason  ; antiform tag! ~<unreachable>~
     ]
     all [error? reason, not blame] then [
-        return raise* reason  ; fast shortcut
+        return fail* reason  ; fast shortcut
     ]
 
     ; Ultimately we might like FAIL to use some clever error-creating dialect
@@ -670,14 +664,18 @@ raise: func [
     ; you typically can only trap/catch errors that come from a function you
     ; directly called.
     ;
-    return raise* ensure error! error
+    return fail* ensure error! error
 ]
 
-; Immediately panic on a raised error--do not allow ^META interception/etc.
+; Immediately panic on an error--do not allow ^META interception/etc.
+;
+; Note that in addition to this definition of PANIC, there is an early-boot
+; definition which runs if a PANIC happens before this point, which crashes
+; and gives more debug information.
 ;
 ; Note: we use CHAIN into NULL? as an arbitrary intrinsic which won't take
-; a raised error, because the CHAIN doesn't add a stack level that obscures
-; generation of the NEAR and WHERE fields.  If we tried to ENCLOSE and DO
+; an error, because the CHAIN doesn't add a stack level that obscures
+; generation of the NEAR and WHERE fields.  If we tried to ENCLOSE and EVAL
 ; the error it would add more overhead and confuse those matters.
 ;
-panic: cascade [raise/ null?/]
+panic: cascade [fail/ null?/]

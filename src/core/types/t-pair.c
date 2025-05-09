@@ -91,7 +91,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
     if (Is_Text(arg)) {  // "-1234567890x-1234567890"
         Option(Error*) error = Trap_Transcode_One(OUT, TYPE_PAIR, arg);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT;
     }
 
@@ -101,7 +101,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
     if (Is_Block(arg))
         return rebValue(CANON(TO), CANON(PAIR_X), CANON(REDUCE), arg);
 
-    return RAISE(Error_Bad_Make(TYPE_PAIR, arg));
+    return FAIL(Error_Bad_Make(TYPE_PAIR, arg));
 }
 
 

@@ -260,7 +260,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         REBINT n = Int32(arg);
         Option(Error*) error = Trap_Init_Char(OUT, n);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT; }
 
       case TYPE_BLOB: {
@@ -284,7 +284,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         else {
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &size);
             if (e)
-                return RAISE(unwrap e);  // must be valid UTF8
+                return FAIL(unwrap e);  // must be valid UTF8
 
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
@@ -294,7 +294,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         }
         Option(Error*) error = Trap_Init_Char(OUT, c);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT; }
 
       default:
@@ -303,7 +303,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
   bad_make:
 
-    return RAISE(Error_Bad_Make(heart, arg));
+    return FAIL(Error_Bad_Make(heart, arg));
 }
 
 
@@ -332,7 +332,7 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
     uint32_t c = VAL_UINT32(ARG(CODEPOINT));
     Option(Error*) error = Trap_Init_Char(OUT, c);
     if (error)
-        return RAISE(unwrap error);
+        return FAIL(unwrap error);
     return OUT;
 }
 
@@ -368,7 +368,7 @@ DECLARE_NATIVE(TO_CHAR)
         uint32_t c = VAL_UINT32(e);
         Option(Error*) error = Trap_Init_Char(OUT, c);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT;
     }
     if (IS_CHAR(e))
@@ -385,17 +385,17 @@ DECLARE_NATIVE(TO_CHAR)
     Codepoint c;
     const Byte* bp = at;
     if (size == 0)
-        return RAISE(Error_Not_One_Codepoint_Raw());
+        return FAIL(Error_Not_One_Codepoint_Raw());
     if (Is_Blob(e)) {
         Option(Error*) error = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
     } else {
         bp = Back_Scan_Utf8_Char_Unchecked(&c, bp);
     }
     ++bp;
     if (bp != at + size)
-        return RAISE(Error_Not_One_Codepoint_Raw());
+        return FAIL(Error_Not_One_Codepoint_Raw());
     return Init_Char_Unchecked(OUT, c);  // scan checked it
 }
 
@@ -627,11 +627,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     }
 
     if (chr < 0)
-        return RAISE(Error_Codepoint_Negative_Raw());
+        return FAIL(Error_Codepoint_Negative_Raw());
 
     Option(Error*) error = Trap_Init_Char(OUT, cast(Codepoint, chr));
     if (error)
-        return RAISE(unwrap error);
+        return FAIL(unwrap error);
     return OUT;
 }
 
@@ -714,7 +714,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
                 cast(const Byte*, utf8) + size
                 != Try_Scan_Email_To_Stack(utf8, size)
             ){
-                return RAISE(Error_Scan_Invalid_Raw(ARG(TYPE), v));
+                return FAIL(Error_Scan_Invalid_Raw(ARG(TYPE), v));
             }
             return Move_Drop_Top_Stack_Element(OUT);
         }
@@ -724,7 +724,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
                 cast(const Byte*, utf8) + size
                 != Try_Scan_URL_To_Stack(utf8, size)
             ){
-                return RAISE(Error_Scan_Invalid_Raw(ARG(TYPE), v));
+                return FAIL(Error_Scan_Invalid_Raw(ARG(TYPE), v));
             }
             return Move_Drop_Top_Stack_Element(OUT);
         }
@@ -732,7 +732,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         assert(to == TYPE_SIGIL);  // transcoding is slow--need to refactor
         Option(Error*) error = Trap_Transcode_One(OUT, TYPE_SIGIL, v);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT;
     }
 
@@ -746,14 +746,14 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
     ){
         Option(Error*) error = Trap_Transcode_One(OUT, to, v);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT;
     }
 
     if (Any_Sequence_Type(to)) {  // to tuple! "a.b.c" -> a.b.c
         Option(Error*) error = Trap_Transcode_One(OUT, to, v);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT;
     }
 
@@ -955,7 +955,7 @@ IMPLEMENT_GENERIC(PICK, Is_Issue)
 
     REBI64 n = VAL_INT64(picker);
     if (n <= 0)
-        return RAISE(Error_Bad_Pick_Raw(picker));
+        return FAIL(Error_Bad_Pick_Raw(picker));
 
     REBLEN len;
     Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, issue);
@@ -1075,7 +1075,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Issue)
         Stringlike_Has_Node(issue)
         or issue->extra.at_least_4[IDX_EXTRA_LEN] != 1
     ){
-        return RAISE(Error_Not_One_Codepoint_Raw());
+        return FAIL(Error_Not_One_Codepoint_Raw());
     }
     return Init_Integer(OUT, Cell_Codepoint(issue));
 }

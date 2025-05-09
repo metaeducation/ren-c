@@ -995,7 +995,7 @@ DECLARE_NATIVE(RSA_DECRYPT)
 //          [blob!]
 //      base "Public 'g', generator, less than modulus and usually prime"
 //          [blob!]
-//      :insecure "Don't raise errors if base/modulus choice becomes suspect"
+//      :insecure "Don't return errors if base/modulus choice becomes suspect"
 //  ]
 //
 DECLARE_NATIVE(DH_GENERATE_KEYPAIR)
@@ -1188,7 +1188,7 @@ DECLARE_NATIVE(DH_GENERATE_KEYPAIR)
     mbedtls_dhm_free(&ctx);  // should free any assigned bignum fields
 
     if (error)
-        return rebDelegate("panic", rebR(error));
+        return rebDelegate("fail", rebR(error));
 
     rebRelease(base);
     rebRelease(modulus);

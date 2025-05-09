@@ -413,7 +413,7 @@ DECLARE_NATIVE(JOIN)
     Decay_If_Unstable(SPARE);  // spaced [match [logic?] false ...]
 
     if (Is_Nulled(SPARE))  // catches bugs in practice [3]
-        return RAISE(Error_Need_Non_Null_Raw());
+        return FAIL(Error_Need_Non_Null_Raw());
 
     if (Is_Splice(SPARE)) {  // only allow splice for mold, for now
         const Element* tail;
@@ -431,7 +431,7 @@ DECLARE_NATIVE(JOIN)
         }
     }
     else if (Is_Antiform(SPARE))
-        return RAISE(Error_Bad_Antiform(SPARE));
+        return FAIL(Error_Bad_Antiform(SPARE));
 
     if (Is_Issue(SPARE)) {  // do not delimit (unified w/char) [5]
         if (delimiter)
@@ -470,7 +470,7 @@ DECLARE_NATIVE(JOIN)
     Decay_If_Unstable(SPARE);
 
     if (Is_Nulled(SPARE))  // catches bugs in practice [3]
-        return RAISE(Error_Need_Non_Null_Raw());
+        return FAIL(Error_Need_Non_Null_Raw());
 
     if (Is_Splice(SPARE)) {
         const Element* tail;
@@ -488,7 +488,7 @@ DECLARE_NATIVE(JOIN)
         goto next_stack_step;
     }
     else if (Is_Antiform(SPARE))
-        return RAISE(Error_Bad_Antiform(SPARE));
+        return FAIL(Error_Bad_Antiform(SPARE));
 
     Push_Join_Delimiter_If_Pending();
     Copy_Cell(PUSH(), stable_SPARE);
@@ -603,7 +603,7 @@ DECLARE_NATIVE(JOIN)
             cast(const Byte*, utf8) + size
             != Try_Scan_Email_To_Stack(utf8, size)
         ){
-            return RAISE("Invalid EMAIL!");
+            return FAIL("Invalid EMAIL!");
         }
         Move_Drop_Top_Stack_Element(OUT);
     }
@@ -612,7 +612,7 @@ DECLARE_NATIVE(JOIN)
             cast(const Byte*, utf8) + size
             != Try_Scan_URL_To_Stack(utf8, size)
         ){
-            return RAISE("Invalid URL!");
+            return FAIL("Invalid URL!");
         }
         Move_Drop_Top_Stack_Element(OUT);
     }
@@ -711,7 +711,7 @@ DECLARE_NATIVE(JOIN)
     if (Any_Sequence_Type(heart)) {
         Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
     }
     else {
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
@@ -924,7 +924,7 @@ DECLARE_NATIVE(DEHEX)
 
         do {
             if (scan_size > 4)
-                return RAISE("Percent sequence over 4 bytes long (bad UTF-8)");
+                return FAIL("Percent sequence over 4 bytes long (bad UTF-8)");
 
             Codepoint hex1;
             Codepoint hex2;
@@ -942,13 +942,13 @@ DECLARE_NATIVE(DEHEX)
                 or hex2 > UINT8_MAX
                 or not Try_Get_Lex_Hexdigit(&nibble2, cast(Byte, hex2))
             ){
-                return RAISE("2 hex digits must follow percent, e.g. %XX");
+                return FAIL("2 hex digits must follow percent, e.g. %XX");
             }
 
             Byte b = (nibble1 << 4) + nibble2;
 
             if (scan_size == 0 and Is_Continuation_Byte(b))
-                return RAISE("UTF-8 can't start with continuation byte");
+                return FAIL("UTF-8 can't start with continuation byte");
 
             if (scan_size > 0 and not Is_Continuation_Byte(b)) {  // next char
                 cp = Step_Back_Codepoint(cp);
@@ -975,11 +975,11 @@ DECLARE_NATIVE(DEHEX)
             &decoded, &next, &scan_size
         );
         if (e)
-            return RAISE(unwrap e);
+            return FAIL(unwrap e);
 
         --scan_size;  // see definition of Back_Scan for why it's off by one
         if (scan_size != 0)
-            return RAISE("Extra continuation characters in %XX of dehex");
+            return FAIL("Extra continuation characters in %XX of dehex");
 
         Append_Codepoint(mo->string, decoded);
     }

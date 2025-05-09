@@ -294,7 +294,7 @@ DECLARE_NATIVE(TERMINATE)
   #if TO_WINDOWS
 
     if (GetCurrentProcessId() == cast(DWORD, VAL_INT32(ARG(PID))))
-        return RAISE(
+        return FAIL(
           "QUIT or SYS.UTIL/EXIT terminate current process, not TERMINATE"
         );
 
@@ -341,7 +341,7 @@ DECLARE_NATIVE(TERMINATE)
 
   #else
 
-    return RAISE("terminate is not implemented for this platform");
+    return FAIL("terminate is not implemented for this platform");
 
   #endif
 }

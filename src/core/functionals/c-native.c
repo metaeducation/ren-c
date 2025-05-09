@@ -378,7 +378,7 @@ bool Try_Dispatch_Generic_Core(
                 Varlist_Len(ctx) < MAX_STD_PORT
                 or not Is_Object(Varlist_Slot(ctx, STD_PORT_SPEC))
             ){
-                *bounce = Native_Raised_Result(L, Error_Invalid_Port_Raw());
+                *bounce = Native_Fail_Result(L, Error_Invalid_Port_Raw());
             }  // "old check" for invalid port
         }
 

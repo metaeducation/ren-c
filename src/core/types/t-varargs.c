@@ -427,7 +427,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
             return THROWN;
         }
         if (Is_Ghost(OUT))
-            return RAISE(Error_Nothing_To_Take_Raw());
+            return FAIL(Error_Nothing_To_Take_Raw());
         return OUT;
     }
 

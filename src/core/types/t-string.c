@@ -319,7 +319,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
     if (Is_Integer(def))  // new string with given integer capacity [2]
         return Init_Any_String(OUT, heart, Make_String(Int32s(def, 0)));
 
-    return RAISE(Error_Bad_Make(heart, def));
+    return FAIL(Error_Bad_Make(heart, def));
 }
 
 
@@ -1070,7 +1070,7 @@ IMPLEMENT_GENERIC(PICK, Any_String)
 
     REBINT n;
     if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
-        return RAISE(Error_Bad_Pick_Raw(picker));
+        return FAIL(Error_Bad_Pick_Raw(picker));
 
     Codepoint c = Get_Char_At(Cell_String(any_string), n);
 
@@ -1149,7 +1149,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     if (VAL_INDEX(v) >= tail) {
         if (not Bool_ARG(PART))
-            return RAISE(Error_Nothing_To_Take_Raw());
+            return FAIL(Error_Nothing_To_Take_Raw());
         Heart heart = Heart_Of_Builtin_Fundamental(v);
         return Init_Any_String(OUT, heart, Make_String(0));
     }
@@ -1193,7 +1193,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
     REBLEN tail = Cell_Series_Len_Head(v);
 
     if (index >= tail)
-        return RAISE(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+        return FAIL(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
     index += Random_Int(Bool_ARG(SECURE)) % (tail - index);
 
@@ -1260,7 +1260,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)
     ){
         return Init_Integer(OUT, c);
     }
-    return RAISE(Error_Not_One_Codepoint_Raw());
+    return FAIL(Error_Not_One_Codepoint_Raw());
 }
 
 

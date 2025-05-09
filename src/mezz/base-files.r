@@ -143,7 +143,7 @@ make-dir: func [
             for-each 'dir created [
                 sys.util/rescue [delete dir]
             ]
-            return raise e
+            return fail e
         ]
         insert created path
     ]

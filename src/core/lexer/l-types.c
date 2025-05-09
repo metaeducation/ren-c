@@ -44,7 +44,7 @@ DECLARE_NATIVE(TYPE_OF)
     Value* v = ARG(VALUE);
 
     if (Is_Nulled(v))
-        return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
+        return FAIL(Error_Type_Of_Null_Raw());  // caller can TRY if meant
 
     return COPY(Datatype_Of(v));
 }
@@ -178,7 +178,7 @@ DECLARE_NATIVE(SIZE_OF)
 DECLARE_NATIVE(INDEX_OF)
 //
 // !!! Should there be a generalized error catch all for ANY-ELEMENT? which
-// says `return RAISE(Error_Type_Has_No_Index_Raw(Datatype_Of(elem)));`?  Review.
+// says `return FAIL(Error_Type_Has_No_Index_Raw(Datatype_Of(elem)));`?  Review.
 {
     INCLUDE_PARAMS_OF_INDEX_OF;
 
@@ -245,7 +245,7 @@ IMPLEMENT_GENERIC(ADDRESS_OF, Is_Frame)
     Details* details = cast(Details*, phase);
     DetailsQuerier* querier = Details_Querier(details);
     if (not (*querier)(OUT, details, SYM_ADDRESS_OF))
-        return RAISE(
+        return FAIL(
             "Frame Details does not offer ADDRESS-OF, use TRY for NULL"
         );
 

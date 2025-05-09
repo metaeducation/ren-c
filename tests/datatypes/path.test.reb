@@ -142,8 +142,8 @@
     1 = b.b
 )]
 
-; Paths are immutable, but shouldn't raise an error just on MUTABLE
-; (would be too annoying for generic code that mutates some things)
+; Paths are immutable, but shouldn't panic just on MUTABLE (would be too
+; annoying for generic code that mutates some things)
 (
     'a/a = mutable 'a/a
 )

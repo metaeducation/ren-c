@@ -4,7 +4,7 @@
 ; has no definition in the attached context or anything it inherits from.
 ; But being conservative about this is probably the best way to start moving
 ; toward something closer to a JavaScript "strict mode" type of operation.
-; An error is raised for now.
+; It panics for now.
 ;
 (all [
     let e: sys.util/rescue [set? $utternonsense]

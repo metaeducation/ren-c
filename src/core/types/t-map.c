@@ -711,14 +711,14 @@ IMPLEMENT_GENERIC(PICK, Is_Map)
     );
 
     if (not n)
-        return RAISE(Error_Bad_Pick_Raw(picker));
+        return FAIL(Error_Bad_Pick_Raw(picker));
 
     const Element* val = Array_At(
         MAP_PAIRLIST(VAL_MAP(map)),
         (((unwrap n) - 1) * 2) + 1
     );
     if (Is_Zombie(val))
-        return RAISE(Error_Bad_Pick_Raw(picker));
+        return FAIL(Error_Bad_Pick_Raw(picker));
 
     return Copy_Cell(OUT, val);
 }

@@ -789,7 +789,7 @@ INLINE Bounce Native_Trash_Result_Untracked(
     return Init_Trash(level_->out);
 }
 
-INLINE Bounce Native_Raised_Result(Level* L, Error* error) {
+INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
     assert(not Is_Throwing(L));
 
     while (TOP_LEVEL != L) {  // convenience
@@ -812,7 +812,7 @@ INLINE Bounce Native_Raised_Result(Level* L, Error* error) {
   #endif
 
     Init_Error(L->out, error);
-    return Raisify(L->out);
+    return Failify(L->out);
 }
 
 // Doing `return PANIC()` from a native does all the same automatic cleanup
@@ -923,8 +923,8 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define OKAY        BOUNCE_OKAY
     #define LOGIC(b)    ((b) == true ? BOUNCE_OKAY : nullptr)
 
-    #define RAISE(p) \
-        Native_Raised_Result(level_, Derive_Error_From_Pointer(p))
+    #define FAIL(p) \
+        Native_Fail_Result(level_, Derive_Error_From_Pointer(p))
 
     #define PANIC(p) \
         (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \

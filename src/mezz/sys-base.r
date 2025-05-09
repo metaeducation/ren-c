@@ -86,7 +86,7 @@ make-quit: lambda [
             if console [exit-code]  ; console gives code to shell, not to DO
             if exit-code = 0 [~]  ; suppresses display when given back to DO
         ] else [
-            raise make error! compose [  ; give definitional error back
+            fail make error! compose [  ; give definitional error back
                 message: [
                     "Script returned non-zero exit code:" exit-code
                 ]

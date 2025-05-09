@@ -713,7 +713,7 @@ e-symids/emit [syms-cscape --[
      * The file %words.r contains a list of spellings that are given ID
      * numbers recognized by the core.
      *
-     * Errors raised by the core are identified by the symbol number of their
+     * Errors used in the core are identified by the symbol number of their
      * ID (there are no fixed-integer values for these errors as R3-Alpha
      * tried to do with RE_XXX numbers, which fluctuated and were of dubious
      * benefit when symbol comparison is available).

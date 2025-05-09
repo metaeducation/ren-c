@@ -250,7 +250,7 @@ DECLARE_NATIVE(SHOVE)
 //          <opt-out>  ; useful for `evaluate opt ...` scenarios
 //          any-list? get-group? set-group? get-block? set-block?  ; code
 //          <unrun> frame!  ; invoke the frame (no arguments, see RUN)
-//          error!  ; raise the error
+//          error!  ; panic on the error
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
 //      :undecayed "Don't convert VOID or COMMA! antiforms to VOID"

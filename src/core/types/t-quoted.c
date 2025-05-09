@@ -187,7 +187,7 @@ DECLARE_NATIVE(QUASI)
 
     Option(Error*) e = Trap_Coerce_To_Quasiform(OUT);
     if (e)
-        return RAISE(unwrap e);  // RAISE so (try quasi ':foo:) gives null
+        return FAIL(unwrap e);  // RAISE so (try quasi ':foo:) gives null
 
     return OUT;
 }
@@ -544,8 +544,8 @@ DECLARE_NATIVE(PACK)
 //
 DECLARE_NATIVE(PACK_P)
 //
-// 1. Using the predicate META* means that raised errors will be tolerated
-//    by PACK*, whereas PACK does not.
+// 1. Using the predicate META* means that errors will be tolerated by PACK*,
+//    whereas PACK does not.
 //
 //        https://forum.rebol.info/t/2206
 {
@@ -553,7 +553,7 @@ DECLARE_NATIVE(PACK_P)
 
     Element* block = Element_ARG(BLOCK);
 
-    if (Pack_Native_Core_Throws(OUT, block, LIB(META_P)))  // raise ok [1]
+    if (Pack_Native_Core_Throws(OUT, block, LIB(META_P)))  // fail ok [1]
         return THROWN;
     return OUT;
 }

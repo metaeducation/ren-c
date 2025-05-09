@@ -119,12 +119,12 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
         }
 
       sequence_didnt_devolve_to_word:
-        return RAISE(
+        return FAIL(
             "Can't MAKE ANY-WORD? from sequence unless it wraps one WORD!"
         );
     }
 
-    return RAISE(Error_Bad_Make(heart, arg));
+    return FAIL(Error_Bad_Make(heart, arg));
 }
 
 

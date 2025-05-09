@@ -271,7 +271,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
     Length b_len = Cell_Sequence_Len(b);
 
     if (a_len != b_len)
-        return RAISE("Temporarily disallow compare unequal length sequences");
+        return FAIL("Temporarily disallow compare unequal length sequences");
 
     Sink(Element) a_item = SCRATCH;
     Sink(Element) b_item = SPARE;
@@ -289,7 +289,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
         if (Equal_Values(a_item, b_item, strict))
             continue;  // don't fret they couldn't compare with LESSER?
 
-        return RAISE("Couldn't compare values");  // fret
+        return FAIL("Couldn't compare values");  // fret
     }
 
     return LOGIC(true);

@@ -139,7 +139,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
     if (Any_Utf8_Type(type)) {
         Option(Error*) e = Trap_Transcode_One(OUT, TYPE_DECIMAL, arg);
         if (e)
-            return RAISE(unwrap e);
+            return FAIL(unwrap e);
         return OUT;
     }
     else switch (type) {
@@ -194,7 +194,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         const Element* item = Cell_List_Len_At(&len, arg);
 
         if (len != 2)
-            return RAISE(Error_Bad_Make(TYPE_DECIMAL, arg));
+            return FAIL(Error_Bad_Make(TYPE_DECIMAL, arg));
 
         REBDEC d;
         if (Is_Integer(item))
@@ -202,7 +202,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         else if (Is_Decimal(item) || Is_Percent(item))
             d = VAL_DECIMAL(item);
         else
-            return RAISE(Error_Bad_Value(item));
+            return FAIL(Error_Bad_Value(item));
 
         ++item;
 
@@ -212,13 +212,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         else if (Is_Decimal(item) || Is_Percent(item))
             exp = VAL_DECIMAL(item);
         else
-            return RAISE(Error_Bad_Value(item));
+            return FAIL(Error_Bad_Value(item));
 
         while (exp >= 1) {
             --exp;
             d *= 10.0;
             if (!FINITE(d))
-                return RAISE(Error_Overflow_Raw());
+                return FAIL(Error_Overflow_Raw());
         }
 
         while (exp <= -1) {
@@ -231,7 +231,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         break;
     }
 
-    return RAISE(Error_Bad_Make(TYPE_DECIMAL, arg));
+    return FAIL(Error_Bad_Make(TYPE_DECIMAL, arg));
 }
 
 
@@ -528,7 +528,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
 
     if (Any_Utf8_Type(to)) {
         if (to == TYPE_MONEY)
-            return RAISE(  // (to money! 10.20) acts as (to money! 10.2) [1]
+            return FAIL(  // (to money! 10.20) acts as (to money! 10.2) [1]
                 "TO MONEY! of DECIMAL! can't conserve precision"
             );
 

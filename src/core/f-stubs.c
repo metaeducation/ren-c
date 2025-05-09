@@ -784,7 +784,7 @@ DECLARE_NATIVE(UNCHAIN)
 
     Option(Error*) error = Trap_Unsingleheart(e);
     if (error)
-        return RAISE(unwrap error);
+        return FAIL(unwrap error);
 
     return COPY(e);
 }
@@ -807,7 +807,7 @@ DECLARE_NATIVE(UNPATH)
 
     Option(Error*) error = Trap_Unsingleheart(e);
     if (error)
-        return RAISE(unwrap error);
+        return FAIL(unwrap error);
 
     return COPY(e);
 }
@@ -830,7 +830,7 @@ DECLARE_NATIVE(UNTUPLE)
 
     Option(Error*) error = Trap_Unsingleheart(e);
     if (error)
-        return RAISE(unwrap error);
+        return FAIL(unwrap error);
 
     return COPY(e);
 }

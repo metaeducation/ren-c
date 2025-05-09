@@ -392,21 +392,21 @@ DECLARE_NATIVE(CRASH)
 
 
 //
-//  raise*: native [
+//  fail*: native [
 //
-//  "Version of RAISE of definitional error that only takes ERROR!"
+//  "Version of FAIL of definitional error that only takes ERROR!"
 //
 //      return: [raised!]
 //      reason [error!]
 //  ]
 //
-DECLARE_NATIVE(RAISE_P)
+DECLARE_NATIVE(FAIL_P)
 {
-    INCLUDE_PARAMS_OF_RAISE_P;
+    INCLUDE_PARAMS_OF_FAIL_P;
 
     Value* v = ARG(REASON);
 
-    return Raisify(COPY(v));
+    return Failify(COPY(v));
 }
 
 

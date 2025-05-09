@@ -501,7 +501,7 @@ IMPLEMENT_GENERIC(PICK, Is_Parameter)
         break;
     }
 
-    return RAISE(Error_Bad_Pick_Raw(picker));
+    return FAIL(Error_Bad_Pick_Raw(picker));
 }
 
 

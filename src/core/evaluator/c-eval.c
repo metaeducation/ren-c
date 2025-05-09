@@ -146,16 +146,16 @@ Bounce Evaluator_Executor(Level* const L)
 
 } step_done_with_meta_or_end_in_out: {  //////////////////////////////////////
 
-    // 1. An idea was tried once where the error was not raised until a step
+    // 1. An idea was tried once where the error wasn't panicked until a step
     //    was shown to be non-invisible.  This would allow invisible
     //    evaluations to come after an error and still fall out:
     //
-    //        >> raised? (raise "some error" comment "invisible")
+    //        >> raised? (fail "some error" comment "invisible")
     //        == ~true~  ; anti
     //
     //    However, this means you have to wait until you know if the next
-    //    evaluation is invisible to raise the error.  This means things don't
-    //    stop running soon enough:
+    //    evaluation is invisible to panic.  This means things don't stop
+    //    running soon enough:
     //
     //        >> data: []
     //
@@ -166,7 +166,7 @@ Bounce Evaluator_Executor(Level* const L)
     //        == [a]
     //
     //    That's a bad enough outcome that the feature of being able to put
-    //    invisible material after the raised error has to be sacrificed.
+    //    invisible material after the error has to be sacrificed.
 
     if (Is_Endlike_Trash(OUT))  // the "official" way to detect reaching end
         goto finished;

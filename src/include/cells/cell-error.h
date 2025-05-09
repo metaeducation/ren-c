@@ -56,7 +56,7 @@ INLINE void Force_Location_Of_Error(Error* error, Level* where) {
 // pipeline doesn't ask to ^META it.  While it's in the ^META state it can
 // also be passed around normally until it's UNMETA'd back to a failure again.
 
-INLINE Atom* Raisify(Need(Atom*) atom) {
+INLINE Atom* Failify(Need(Atom*) atom) {
     assert(Is_Error(atom) and QUOTE_BYTE(atom) == NOQUOTE_1);
     Force_Location_Of_Error(Cell_Error(atom), TOP_LEVEL);  // ideally a noop
     return Destabilize_Unbound_Fundamental(atom);

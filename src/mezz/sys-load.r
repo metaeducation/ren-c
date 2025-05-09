@@ -53,7 +53,7 @@ transcode-header: func [
         :file file
         :line $line
     ] except e -> [
-        return raise e
+        return fail e
     ]
     if not rest [
         return pack [null null null]  ; !!! rethink interface, impure null
@@ -63,7 +63,7 @@ transcode-header: func [
         :file file
         :line $line
     ] except e -> [
-        return raise e
+        return fail e
     ]
 
     hdr: all [key = 'Rebol, block? hdr, hdr]
@@ -127,7 +127,7 @@ bind construct [
     === TRY TO MATCH PATTERN OF "Rebol [...]" ===
 
     let [hdr rest 'line]: transcode-header:file data file except e -> [
-        return raise e  ; TRANSCODE choked, wasn't valid at all
+        return fail e  ; TRANSCODE choked, wasn't valid at all
     ]
 
     if not hdr [
@@ -136,7 +136,7 @@ bind construct [
         ; thought was invalid Rebol tokens either.
         ;
         if required [
-            return raise "no-header"
+            return fail "no-header"
         ]
         body: data
         final: tail of data
@@ -144,11 +144,11 @@ bind construct [
     ]
 
     hdr: construct:with (inert hdr) system.standard.header except [
-        return raise "bad-header"
+        return fail "bad-header"
     ]
 
     if not match:meta [~null~ block!] hdr.options [
-        return raise "bad-header"
+        return fail "bad-header"
     ]
 
     if find opt hdr.options 'content [
@@ -197,7 +197,7 @@ bind construct [
                 ]
             ]
             else [
-                return raise "bad-compress"
+                return fail "bad-compress"
             ]
         ]
     ] else [
@@ -208,7 +208,7 @@ bind construct [
 
         if find opt hdr.options 'compress [  ; script encoded only
             rest: (gunzip first rest) except e -> [
-                return raise e
+                return fail e
             ]
         ]
     ]
@@ -281,7 +281,7 @@ load: func [
 
     ensure [text! blob!] data
 
-    [header data line]: load-header:file data file except e -> [return raise e]
+    [header data line]: load-header:file data file except e -> [return fail e]
 
     if word? header [cause-error 'syntax header source]
 
@@ -293,7 +293,7 @@ load: func [
     if not block? data [
         assert [match [blob! text!] data]  ; UTF-8
         data: (transcode:file:line data file $line) except e -> [
-            return raise e
+            return fail e
         ]
     ]
 

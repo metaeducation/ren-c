@@ -90,7 +90,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
     REBLEN b_index = VAL_INDEX(b);
 
     if (a_array == b_array)
-        return RAISE("Temporarily disallow compare unequal length lists");
+        return FAIL("Temporarily disallow compare unequal length lists");
 
     const Element* a_tail = Array_Tail(a_array);
     const Element* b_tail = Array_Tail(b_array);
@@ -111,7 +111,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
         if (Equal_Values(a_item, b_item, strict))
             continue;  // don't fret they couldn't compare with LESSER?
 
-        return RAISE("Couldn't compare values");  // fret
+        return FAIL("Couldn't compare values");  // fret
     }
 
     assert(b_item == b_tail);  // they were the same length
@@ -204,7 +204,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
 
             Init_Nulled(SPARE);
             if (Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
-                return RAISE(Error_Null_Vararg_List_Raw());
+                return FAIL(Error_Null_Vararg_List_Raw());
         }
 
         StackIndex base = TOP_INDEX;
@@ -228,7 +228,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
         return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
     }
 
-    return RAISE(Error_Bad_Make(heart, arg));
+    return FAIL(Error_Bad_Make(heart, arg));
 }
 
 
@@ -752,7 +752,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         Length len;
         const Element* item = Cell_List_Len_At(&len, list);
         if (Cell_Series_Len_At(list) != 1)
-            return RAISE("Can't TO ANY-SEQUENCE? on list with length > 1");
+            return FAIL("Can't TO ANY-SEQUENCE? on list with length > 1");
 
         if (
             (Is_Path(item) and to == TYPE_PATH)
@@ -763,16 +763,16 @@ IMPLEMENT_GENERIC(TO, Any_List)
             return OUT;
         }
 
-        return RAISE("TO ANY-SEQUENCE? needs list with a sequence in it");
+        return FAIL("TO ANY-SEQUENCE? needs list with a sequence in it");
     }
 
     if (Any_Word_Type(to)) {  // to word! '{a} -> a, see [3]
         Length len;
         const Element* item = Cell_List_Len_At(&len, list);
         if (Cell_Series_Len_At(list) != 1)
-            return RAISE("Can't TO ANY-WORD? on list with length > 1");
+            return FAIL("Can't TO ANY-WORD? on list with length > 1");
         if (not Is_Word(item))
-            return RAISE("TO ANY-WORD? needs list with one word in it");
+            return FAIL("TO ANY-WORD? needs list with one word in it");
         Copy_Cell(OUT, item);
         HEART_BYTE(OUT) = to;
         return OUT;
@@ -804,14 +804,14 @@ IMPLEMENT_GENERIC(TO, Any_List)
         Length len;
         const Element* at = Cell_List_Len_At(&len, list);
         if (len != 1 or not Is_Integer(at))
-            return RAISE("TO INTEGER! works on 1-element integer lists");
+            return FAIL("TO INTEGER! works on 1-element integer lists");
         return COPY(at);
     }
 
     if (to == TYPE_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
         Length len = Cell_Series_Len_At(list);
         if (len % 2 != 0)
-            return RAISE("TO MAP! of list must have even number of items");
+            return FAIL("TO MAP! of list must have even number of items");
 
         const Element* tail;
         const Element* at = Cell_List_At(&tail, list);
@@ -953,7 +953,7 @@ IMPLEMENT_GENERIC(PICK, Any_List)
 
     REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
     if (n < 0 or n >= Cell_Series_Len_Head(list))
-        return RAISE(Error_Bad_Pick_Raw(picker));
+        return FAIL(Error_Bad_Pick_Raw(picker));
 
     const Element* at = Array_At(Cell_Array(list), n);
 
@@ -1019,7 +1019,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
 
     if (index >= Cell_Series_Len_Head(list)) {
         if (not Bool_ARG(PART))
-            return RAISE(Error_Nothing_To_Take_Raw());
+            return FAIL(Error_Nothing_To_Take_Raw());
 
         return Init_Any_List(OUT, heart, Make_Source_Managed(0));
     }
@@ -1126,7 +1126,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 
     REBLEN index = VAL_INDEX(list);
     if (index >= Cell_Series_Len_Head(list))
-        return RAISE(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+        return FAIL(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
     Element* spare = Init_Integer(
         SPARE,
@@ -1173,9 +1173,9 @@ DECLARE_NATIVE(FILE_OF)
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
 }
 
-IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough: raise error
+IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough returns error
 {
-    return RAISE("No file available for element");
+    return FAIL("No file available for element");
 }
 
 
@@ -1200,9 +1200,9 @@ DECLARE_NATIVE(LINE_OF)
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
 }
 
-IMPLEMENT_GENERIC(LINE_OF, Any_Element)  // generic fallthrough: raise error
+IMPLEMENT_GENERIC(LINE_OF, Any_Element)  // generic fallthrough returns error
 {
-    return RAISE("No line available for element");
+    return FAIL("No line available for element");
 }
 
 
@@ -1215,7 +1215,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_List)
 
     Option(const String*) file = Link_Filename(s);
     if (not file)
-        return RAISE("No file available for list");
+        return FAIL("No file available for list");
     return Init_File(OUT, unwrap file);  // !!! or URL! (track with bit...)
 }
 
@@ -1228,7 +1228,7 @@ IMPLEMENT_GENERIC(LINE_OF, Any_List)
     const Source* s = Cell_Array(list);
 
     if (MISC_SOURCE_LINE(s) == 0)
-        return RAISE("No line available for list");
+        return FAIL("No line available for list");
     return Init_Integer(OUT, MISC_SOURCE_LINE(s));
 }
 

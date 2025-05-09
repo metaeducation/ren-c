@@ -192,7 +192,7 @@ bind construct [
                     ][
                         [^result' remainder subpending]:
                             eval-free:undecayed f2 except e -> [
-                                return raise e
+                                return fail e
                             ]
                         pending: glom pending spread subpending
                         return pack [^result' remainder subpending]
@@ -204,7 +204,7 @@ bind construct [
         return: lambda [^atom] compose2:deep '{} [  ; already composing w/()
             {unrun return/} pack [
                 {? if not ghostable ['unghost]} (^atom except e -> [
-                    {unrun return/} raise e
+                    {unrun return/} fail e
                 ])
                 remainder
                 pending
@@ -212,7 +212,7 @@ bind construct [
         ]
 
         ; ** Currently parsers unify RETURN where a failure is done with
-        ; a `return raise`.  Should this instead be ACCEPT and REJECT, as
+        ; a `return fail`.  Should this instead be ACCEPT and REJECT, as
         ; local functions to the combinator, so that you can ACCEPT a failure
         ; from something like a GROUP! (and remove need for RAISE with the
         ; return?)  Or RETURN ACCEPT and RETURN REJECT to make it clearer,
@@ -291,14 +291,14 @@ default-combinators: to map! reduce [
     ][
         if negated [  ; NOT NOT, e.g. call parser without negating it
             return [{~} remainder]: parser input except e -> [
-                return raise e
+                return fail e
             ]
         ]
         if not negatable-parser? parser/ [
             panic "NOT called on non-negatable combinator"
         ]
         return [{~} remainder]: parser:negated input except e -> [
-            return raise e
+            return fail e
         ]
     ]
 
@@ -311,13 +311,13 @@ default-combinators: to map! reduce [
         <local> result
     ][
         [^result remainder]: parser input except e -> [
-            return raise e  ; non-matching parser means WHEN did not match
+            return fail e  ; non-matching parser means WHEN did not match
         ]
         if void? ^result [
             panic "WHEN combinator received VOID antiform result"
         ]
         if null? ^result [
-            return raise "WHEN combinator received ~null~ antiform result"
+            return fail "WHEN combinator received ~null~ antiform result"
         ]
         return ^result  ; can say e.g. [x: when (next var)] if you like
     ]
@@ -329,7 +329,7 @@ default-combinators: to map! reduce [
         return: []
         ; :negated  <- could this be negated to not bypass?
     ][
-        return raise "BYPASS to next alternate rule requested"
+        return fail "BYPASS to next alternate rule requested"
     ]
 
     === BASIC KEYWORDS ===
@@ -370,7 +370,7 @@ default-combinators: to map! reduce [
         <local> result'
     ][
         [^result' remainder]: parser input except e -> [
-            return raise e
+            return fail e
         ]
         if (not quoted? result') or (not any-list? result': unquote result') [
             panic "SPREAD only accepts ANY-LIST? and QUOTED!"
@@ -390,7 +390,7 @@ default-combinators: to map! reduce [
             parser input except e -> [
                 return ~<not>~
             ]
-            return raise "Negated parser passed to AHEAD succeded"
+            return fail "Negated parser passed to AHEAD succeded"
         ]
         return parser input  ; don't care about what parser's remainder is
     ]
@@ -403,10 +403,10 @@ default-combinators: to map! reduce [
         <local> result' pos
     ][
         [^result' pos]: parser input except e -> [
-            return raise e  ; the parse rule did not match
+            return fail e  ; the parse rule did not match
         ]
         if (index of pos) <= (index of input) [
-            return raise "FURTHER rule matched, but did not advance the input"
+            return fail "FURTHER rule matched, but did not advance the input"
         ]
         remainder: pos
         return ^result'
@@ -438,7 +438,7 @@ default-combinators: to map! reduce [
 
         [^result' input]: parser input except e -> [
             take:last state.loops
-            return raise e
+            return fail e
         ]
         cycle [  ; if first try succeeds, we'll succeed overall--keep looping
             [^result' input]: parser input except [
@@ -531,7 +531,7 @@ default-combinators: to map! reduce [
         ]
 
         f.remainder: input
-        f/return raise "BREAK encountered"
+        f/return fail "BREAK encountered"
     ]
 
     'stop combinator [
@@ -543,7 +543,7 @@ default-combinators: to map! reduce [
         ^result': ~  ; default `[stop]` returns nothing
         if :parser [  ; parser argument is optional
             [^result' input]: parser input except e -> [
-                return raise e
+                return fail e
             ]
         ]
 
@@ -575,7 +575,7 @@ default-combinators: to map! reduce [
         <local> value'
     ][
         [^value' #]: parser input except e -> [
-            return raise e
+            return fail e
         ]
 
         ; !!! STATE is filled in as the frame of the top-level UPARSE call.  If
@@ -626,7 +626,7 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> start end
     ][
-        [^ remainder]: parser input except e -> [return raise e]
+        [^ remainder]: parser input except e -> [return fail e]
 
         end: index of remainder
         start: index of input
@@ -662,11 +662,11 @@ default-combinators: to map! reduce [
         <local> replacement'
     ][
         [^ remainder]: parser input except e -> [  ; first find end position
-            return raise e
+            return fail e
         ]
 
         [^replacement' #]: replacer input except e -> [
-            return raise e
+            return fail e
         ]
 
         ; CHANGE returns tail, use as new remainder
@@ -681,7 +681,7 @@ default-combinators: to map! reduce [
         parser [action!]
     ][
         [^ remainder]: parser input except e -> [  ; first find end position
-            return raise e
+            return fail e
         ]
 
         remainder: remove:part input remainder
@@ -695,7 +695,7 @@ default-combinators: to map! reduce [
         <local> insertion'
     ][
         [^insertion' #]: parser input except e -> [  ; remainder ignored
-            return raise e
+            return fail e
         ]
 
         remainder: insert input ^insertion'
@@ -714,7 +714,7 @@ default-combinators: to map! reduce [
         cycle [
             [^result' #]: parser input except [
                 if tail? input [  ; could be `to <end>`, so check tail *after*
-                    return raise "TO did not find desired pattern"
+                    return fail "TO did not find desired pattern"
                 ]
                 input: next input
                 continue
@@ -735,7 +735,7 @@ default-combinators: to map! reduce [
         cycle [
             [^result' remainder]: parser input except [
                 if tail? input [  ; could be `thru <end>`, check TAIL? *after*
-                    return raise "THRU did not find desired pattern"
+                    return fail "THRU did not find desired pattern"
                 ]
                 input: next input
                 continue
@@ -752,7 +752,7 @@ default-combinators: to map! reduce [
         <local> where
     ][
         [^where remainder]: parser input except e -> [
-            return raise e
+            return fail e
         ]
         case [
             void? ^where [
@@ -780,14 +780,14 @@ default-combinators: to map! reduce [
         <local> start limit
     ][
         [^ start]: (parser-left input) except e -> [
-            return raise e
+            return fail e
         ]
 
         limit: start
         cycle [
             [^ remainder]: (parser-right limit) except e -> [
                 if tail? limit [  ; remainder of null
-                    return raise e
+                    return fail e
                 ]
                 limit: next limit
                 continue  ; don't try to assign the `[^ remainder]:`
@@ -820,14 +820,14 @@ default-combinators: to map! reduce [
         remainder: input  ; never advances
         if tail? input [
             if negated [
-                return raise "PARSE position at <end> (but parser negated)"
+                return fail "PARSE position at <end> (but parser negated)"
             ]
             return ~,~
         ]
         if negated [
             return ~,~
         ]
-        return raise "PARSE position not at <end>"
+        return fail "PARSE position not at <end>"
     ]
 
     <input> combinator [
@@ -863,7 +863,7 @@ default-combinators: to map! reduce [
         parser [action!]
     ][
         [^ remainder]: parser input except e -> [
-            return raise e
+            return fail e
         ]
         if any-list? input [
             return as block! copy:part input remainder
@@ -943,7 +943,7 @@ default-combinators: to map! reduce [
             ; !!! Review: should we allow non-value-bearing parsers that just
             ; set limits on the input?
             ;
-            return raise e
+            return fail e
         ]
 
         if void? ^subseries [
@@ -959,17 +959,17 @@ default-combinators: to map! reduce [
         case [
             any-series? subseries []
             any-sequence? subseries [subseries: as block! subseries]
-            return raise "Need SERIES! or SEQUENCE! input for use with SUBPARSE"
+            return fail "Need SERIES! or SEQUENCE! input for use with SUBPARSE"
         ]
 
         ; If the entirety of the item at the list is matched by the
         ; supplied parser rule, then we advance past the item.
         ;
         [^result' subremainder]: subparser subseries except e -> [
-            return raise e
+            return fail e
         ]
         if (not relax) and (not tail? subremainder) [
-            return raise "SUBPARSE succeeded, but didn't complete subseries"
+            return fail "SUBPARSE succeeded, but didn't complete subseries"
         ]
         if match [
             return subseries
@@ -995,7 +995,7 @@ default-combinators: to map! reduce [
         <local> collected
     ][
         [^ remainder pending]: parser input except e -> [
-            return raise e
+            return fail e
         ]
 
         ; PENDING can be NULL or a block full of items that may or may
@@ -1024,7 +1024,7 @@ default-combinators: to map! reduce [
         <local> result'
     ][
         [^result' remainder pending]: parser input except e -> [
-            return raise e
+            return fail e
         ]
         if void? ^result' [
             pending: _
@@ -1106,7 +1106,7 @@ default-combinators: to map! reduce [
         <local> obj
     ][
         [^ remainder pending]: parser input except e -> [
-            return raise e
+            return fail e
         ]
 
         ; Currently we assume that all the BLOCK! items in the pending are
@@ -1153,7 +1153,7 @@ default-combinators: to map! reduce [
         ]
 
         [^result' remainder pending]: parser input except e -> [
-            return raise e
+            return fail e
         ]
 
         ; The value is quoted or quasi because of ^ on ^(parser input).
@@ -1184,7 +1184,7 @@ default-combinators: to map! reduce [
             var: eval var
         ]
 
-        [^result' remainder]: parser input except e -> [return raise e]
+        [^result' remainder]: parser input except e -> [return fail e]
 
         return set var ^result'
     ]
@@ -1220,7 +1220,7 @@ default-combinators: to map! reduce [
             any-list? input [
                 neq?: either state.case [:not-equal?] [:lax-not-equal?]
                 if neq? try input.1 value [
-                    return raise "Value at parse position does not match TEXT!"
+                    return fail "Value at parse position does not match TEXT!"
                 ]
                 remainder: next input
                 return input.1
@@ -1235,7 +1235,7 @@ default-combinators: to map! reduce [
                     :match ok
                     :case state.case
                 ] else [
-                    return raise "String at parse position does not match TEXT!"
+                    return fail "String at parse position does not match TEXT!"
                 ]
             ]
             <default> [
@@ -1245,7 +1245,7 @@ default-combinators: to map! reduce [
                     :match ok
                     :case state.case
                 ] else [
-                    return raise "Binary at parse position does not match TEXT!"
+                    return fail "Binary at parse position does not match TEXT!"
                 ]
             ]
         ]
@@ -1267,21 +1267,21 @@ default-combinators: to map! reduce [
         :negated
     ][
         if tail? input [
-            return raise "ISSUE! cannot match at end of input"
+            return fail "ISSUE! cannot match at end of input"
         ]
         case [
             any-list? input [
                 remainder: next input
                 if value = input.1 [
                     if negated [
-                        return raise "ISSUE! matched, but combinator negated"
+                        return fail "ISSUE! matched, but combinator negated"
                     ]
                     return input.1
                 ]
                 if negated [
                     return input.1
                 ]
-                return raise "Value at parse position does not match ISSUE!"
+                return fail "Value at parse position does not match ISSUE!"
             ]
             any-string? input [
                 if negated [
@@ -1289,13 +1289,13 @@ default-combinators: to map! reduce [
                         panic "NOT ISSUE! with strings is only for single char"
                     ]
                     if input.1 = value [
-                        return raise "Negated ISSUE! char matched at string"
+                        return fail "Negated ISSUE! char matched at string"
                     ]
                     remainder: next input
                     return input.1
                 ]
                 [# remainder]: find:match:case input value else [
-                    return raise [
+                    return fail [
                         "String at parse position does not match ISSUE!"
                     ]
                 ]
@@ -1308,13 +1308,13 @@ default-combinators: to map! reduce [
                         panic "NOT ISSUE! with blobs is only for single byte"
                     ]
                     if input.1 = codepoint of value [
-                        return raise "Negated ISSUE! char matched at blob"
+                        return fail "Negated ISSUE! char matched at blob"
                     ]
                     remainder: next input
                     return make-char input.1
                 ]
                 [# remainder]: find:match:case input value else [
-                    return raise [
+                    return fail [
                         "Binary at parse position does not match ISSUE!"
                     ]
                 ]
@@ -1341,12 +1341,12 @@ default-combinators: to map! reduce [
                     remainder: next input
                     return input.1
                 ]
-                return raise "Value at parse position does not match BLOB!"
+                return fail "Value at parse position does not match BLOB!"
             ]
             <default> [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
                 [# remainder]: find:match input value else [
-                    return raise [
+                    return fail [
                         "Content at parse position does not match BLOB!"
                     ]
                 ]
@@ -1370,7 +1370,7 @@ default-combinators: to map! reduce [
         <local> result'
     ][
         [^result' remainder]: parser input except e -> [
-            return raise e
+            return fail e
         ]
         state.env: add-let-binding state.env (unchain vars) ^result'
 
@@ -1389,7 +1389,7 @@ default-combinators: to map! reduce [
         <local> result'
     ][
         [^result' remainder]: parser input except e -> [
-            return raise e
+            return fail e
         ]
 
         return inside state.input ^result'
@@ -1439,7 +1439,7 @@ default-combinators: to map! reduce [
         <local> result'
     ][
         [^result' remainder pending]: parser input except e -> [
-            return raise e
+            return fail e
         ]
 
         ; Run GROUP!s in order, removing them as one goes
@@ -1504,10 +1504,10 @@ default-combinators: to map! reduce [
         value [get-group?]
         <local> r comb
     ][
-        ^r: eval:undecayed value.2 except e -> [panic e]  ; can't raise [1]
+        ^r: eval:undecayed value.2 except e -> [panic e]  ; can't fail [1]
 
         if null? ^r [  ; like [:(1 = 0)]
-            return raise "GET-GROUP! evaluated to NULL"  ; means no match [2]
+            return fail "GET-GROUP! evaluated to NULL"  ; means no match [2]
         ]
 
         pending: _
@@ -1566,7 +1566,7 @@ default-combinators: to map! reduce [
         value [bitset!]
     ][
         if tail? input [
-            return raise "BITSET! cannot match at end of input"
+            return fail "BITSET! cannot match at end of input"
         ]
         case [
             any-list? input [
@@ -1589,7 +1589,7 @@ default-combinators: to map! reduce [
                 ]
             ]
         ]
-        return raise "BITSET! did not match at parse position"
+        return fail "BITSET! did not match at parse position"
     ]
 
     === QUOTED! COMBINATOR ===
@@ -1609,7 +1609,7 @@ default-combinators: to map! reduce [
         <local> comb neq?
     ][
         if tail? input [
-            return raise "QUOTED! cannot match at end of input"
+            return fail "QUOTED! cannot match at end of input"
         ]
 
         if any-list? input [
@@ -1619,12 +1619,12 @@ default-combinators: to map! reduce [
                 if negated [
                     return input.1
                 ]
-                return raise [
+                return fail [
                     "Value at parse position wasn't unquote of QUOTED! item"
                 ]
             ]
             if negated [
-                return raise "Negated QUOTED! parser matched item"
+                return fail "Negated QUOTED! parser matched item"
             ]
             return unquote value
         ]
@@ -1636,7 +1636,7 @@ default-combinators: to map! reduce [
         ensure [any-string? blob!] input
 
         [# remainder]: find:match input value else [
-            return raise "Molded form of QUOTED! item didn't match"
+            return fail "Molded form of QUOTED! item didn't match"
         ]
         return unquote value
     ]
@@ -1700,7 +1700,7 @@ default-combinators: to map! reduce [
         remainder: input
 
         if tail? input [
-            return raise "SPLICE! cannot match at end of input"
+            return fail "SPLICE! cannot match at end of input"
         ]
 
         if not any-list? input [
@@ -1710,7 +1710,7 @@ default-combinators: to map! reduce [
         neq?: either state.case [:not-equal?] [:lax-not-equal?]
         for-each 'item unquasi meta value [
             if neq? remainder.1 item [
-                return raise [
+                return fail [
                     "Value at input position didn't match splice element"
                 ]
             ]
@@ -1738,26 +1738,26 @@ default-combinators: to map! reduce [
         value [blank!]
     ][
         if tail? input [
-            return raise "BLANK! cannot match at end of input"
+            return fail "BLANK! cannot match at end of input"
         ]
         remainder: next input  ; if we consume an item, we'll consume just one
         if any-list? input [
             if blank? input.1 [
                 return blank
             ]
-            return raise "BLANK! rule found next input in list was not a blank"
+            return fail "BLANK! rule found next input in list was not a blank"
         ]
         if any-string? input [
             if space = input.1 [
                 return space
             ]
-            return raise "BLANK! rule found next input in list was not space"
+            return fail "BLANK! rule found next input in list was not space"
         ]
         assert [blob? input]
         if 32 = input.1 [  ; codepoint of space, crucially single byte for test
             return space  ; acts like if you'd written space in the rule
         ]
-        return raise "BLANK! rule found next input in binary was not ASCII 32"
+        return fail "BLANK! rule found next input in binary was not ASCII 32"
     ]
 
     === INTEGER! COMBINATOR ===
@@ -1787,7 +1787,7 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> times' min max result'
     ][
-        [^times' input]: times-parser input except e -> [return raise e]
+        [^times' input]: times-parser input except e -> [return fail e]
 
         if void? ^times' [  ; VOID-in-NULL-out
             remainder: input
@@ -1841,7 +1841,7 @@ default-combinators: to map! reduce [
             [^result' input]: parser input except [
                 take:last state.loops
                 if i <= min [  ; `<=` not `<` as this iteration failed!
-                    return raise "REPEAT did not reach minimum repetitions"
+                    return fail "REPEAT did not reach minimum repetitions"
                 ]
                 remainder: input
                 return ^result'
@@ -1877,7 +1877,7 @@ default-combinators: to map! reduce [
         <local> item error
     ][
         if tail? input [
-            return raise "TYPE-BLOCK! cannot match at end of input"
+            return fail "TYPE-BLOCK! cannot match at end of input"
         ]
         either any-list? input [
             if value <> type of input.1 [
@@ -1885,10 +1885,10 @@ default-combinators: to map! reduce [
                     remainder: next input
                     return input.1
                 ]
-                return raise "Value at parse position did not match TYPE-BLOCK!"
+                return fail "Value at parse position did not match TYPE-BLOCK!"
             ]
             if negated [
-                return raise "Value at parse position matched TYPE-BLOCK!"
+                return fail "Value at parse position matched TYPE-BLOCK!"
             ]
             remainder: next input
             return input.1
@@ -1896,7 +1896,7 @@ default-combinators: to map! reduce [
             if negated [
                 panic "TYPE-BLOCK! only supported negated for array input"
             ]
-            [remainder item]: transcode:next input except e -> [return raise e]
+            [remainder item]: transcode:next input except e -> [return fail e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
             ; shortcut this.  Since it doesn't, we might waste time and memory
@@ -1905,7 +1905,7 @@ default-combinators: to map! reduce [
             ; has some type sniffing in their fast lexer, review relevance.
             ;
             if value != type of item [
-                return raise "Could not TRANSCODE the datatype from input"
+                return fail "Could not TRANSCODE the datatype from input"
             ]
             return item
         ]
@@ -1922,7 +1922,7 @@ default-combinators: to map! reduce [
             return input.1
         ]
 
-        return raise "MATCH didn't match type of current input position item"
+        return fail "MATCH didn't match type of current input position item"
     ]
 
     === JUST COMBINATOR ===
@@ -2008,13 +2008,13 @@ default-combinators: to map! reduce [
         value: as group! value  ; remove @ decoration
         comb: runs (state.combinators).(meta group!)
         [^result' remainder pending]: comb state input value except e -> [
-            return raise e
+            return fail e
         ]
 
         comb: runs state.combinators.(meta type of decay ^result')
         [^result' remainder subpending]: comb state remainder result'
             except e -> [
-                return raise e
+                return fail e
             ]
 
         pending: glom pending spread subpending
@@ -2030,14 +2030,14 @@ default-combinators: to map! reduce [
         value: as block! value  ; remove @ decoration
         comb: runs (state.combinators).(meta block!)
         [^result' remainder pending]: comb state input value except e -> [
-            return raise e
+            return fail e
         ]
 
         ensure [quoted! quasiform!] result' ; quasi means antiform [2]
         comb: runs (state.combinators).(meta type of decay ^result')
         [^result' remainder subpending]: comb state remainder result'
             except e -> [
-                return raise e
+                return fail e
             ]
 
         pending: glom pending spread subpending
@@ -2111,7 +2111,7 @@ default-combinators: to map! reduce [
         return: [ghost!]
         parser [action!]
     ][
-        [^ remainder]: parser input except e -> [return raise e]
+        [^ remainder]: parser input except e -> [return fail e]
         return ~,~
     ]
 
@@ -2147,7 +2147,7 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> result
     ][
-        [result #]: parser input except e -> [return raise e]
+        [result #]: parser input except e -> [return fail e]
 
         if blank? :result [
             remainder: input
@@ -2157,7 +2157,7 @@ default-combinators: to map! reduce [
             panic "SKIP expects INTEGER! amount to skip"
         ]
         remainder: skip input result else [
-            return raise "Attempt to SKIP past end of parse input"
+            return fail "Attempt to SKIP past end of parse input"
         ]
         return ~,~
     ]
@@ -2168,7 +2168,7 @@ default-combinators: to map! reduce [
             [element?]
     ][
         if tail? input [
-            return raise "PARSE position at tail, ONE has no item to match"
+            return fail "PARSE position at tail, ONE has no item to match"
         ]
         remainder: next input
         return input.1
@@ -2180,7 +2180,7 @@ default-combinators: to map! reduce [
             [element?]
     ][
         if tail? input [
-            return raise "PARSE position at tail, <NEXT> can't advance position"
+            return fail "PARSE position at tail, <NEXT> can't advance position"
         ]
         remainder: next input
         return remainder
@@ -2231,13 +2231,13 @@ default-combinators: to map! reduce [
                     f.(key): [{^} input subpending]: (
                         run parsers.1 input
                     ) except e -> [
-                        return raise e
+                        return fail e
                     ]
                 ] else [
                     f.(key): [{#} input subpending]: (
                         run parsers.1 input
                     ) except e -> [
-                        return raise e
+                        return fail e
                     ]
                 ]
                 pending: glom pending spread subpending
@@ -2384,7 +2384,7 @@ default-combinators: to map! reduce [
             return ^result'
         ]
 
-        return raise "All of the parsers in ANY block failed"
+        return fail "All of the parsers in ANY block failed"
     ]
 
     === BLOCK! COMBINATOR ===
@@ -2553,7 +2553,7 @@ default-combinators: to map! reduce [
                 ] else [
                     if (not thru) or (tail? input) [
                         remainder: null
-                        return raise* make error! [
+                        return fail* make error! [
                             id: 'parse-mismatch
                             message:
                               "PARSE BLOCK! combinator did not match input"
@@ -3045,7 +3045,7 @@ parse*: func [
         [^synthesized' remainder pending]: eval:undecayed f except e -> [
             assert [empty? state.loops]
             pending: _  ; didn't get assigned due to error
-            return raise e  ; wrappers catch
+            return fail e  ; wrappers catch
         ]
     ] then e -> [
         print "!!! HARD FAIL DURING PARSE !!!"
@@ -3056,7 +3056,7 @@ parse*: func [
     assert [empty? state.loops]
 
     if (not tail? remainder) and (not relax) [
-        return raise make error! [
+        return fail make error! [
             id: 'parse-incomplete
             message:
               "PARSE partially matched the input, but didn't reach the tail"
@@ -3074,7 +3074,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
 ] ]
     enclose parse*/ func [f] [
         let [^synthesized' pending]: eval-free:undecayed f except e -> [
-            return raise e
+            return fail e
         ]
         if not empty? pending [
             panic "PARSE completed, but pending list was not empty"
@@ -3139,7 +3139,7 @@ parse-trace-hook: func [
 
     let result': meta eval:undecayed f except e -> [
         print ["RESULT': FAIL"]
-        return raise e
+        return fail e
     ]
 
     print ["RESULT':" @result']
@@ -3156,7 +3156,7 @@ parse-furthest-hook: func [
     var [word! tuple!]
 ][
     let result': ^ eval:undecayed f except e -> [
-        return raise e
+        return fail e
     ]
 
     let remainder: unquote second unquasi result'

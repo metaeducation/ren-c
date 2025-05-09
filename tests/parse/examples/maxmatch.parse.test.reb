@@ -29,7 +29,7 @@
         error2: trap [[^result2' remainder2]: parser2 input]
         if error2 [  ; parser2 didn't succeed
             if error1 [
-                return raise error1  ; neither succeeded
+                return fail error1  ; neither succeeded
             ]
         ] else [  ; parser2 succeeded
             any [
@@ -208,7 +208,7 @@
         error2: trap [[^result2' remainder2 pending2]: parser2 input]
         if error2 [  ; parser2 didn't succeed
             if error1 [
-                return raise error1  ; neither succeeded
+                return fail error1  ; neither succeeded
             ]
         ] else [  ; parser2 succeeded
             any [

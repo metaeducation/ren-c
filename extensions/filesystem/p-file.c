@@ -313,7 +313,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         }
 
         if (result and Is_Error(result))
-            return RAISE(result);
+            return FAIL(result);
 
         assert(result == nullptr or Is_Blob(result));
         return result; }
@@ -546,7 +546,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (file->id == FILEHANDLE_NONE) {
             //
             // !!! R3-Alpha let you CLOSE an already CLOSE'd PORT!, is that
-            // a good idea or should it raise an error?
+            // a good idea or should it return an error?
         }
         else {
             Value* error = Close_File(port);
@@ -690,7 +690,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             // range unless you use :UNBOUNDED, no similar solution exists
             // for ports since they all share the index.
             //
-            return RAISE(
+            return FAIL(
                 Error_Out_Of_Range(rebValue(rebI(offset + file->offset)))
             );
         }

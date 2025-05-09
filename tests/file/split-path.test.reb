@@ -47,7 +47,7 @@
         %../                            [%../ _]
 
         ; Ren-C disallows filenames of . or .. so if they are to be used as
-        ; a directory they must have terminal slash.  SPLIT-PATH raises an
+        ; a directory they must have terminal slash.  SPLIT-PATH returns an
         ; error on these cases if you don't use the :RELAX refinement, but
         ; we use it here in case the client wants to handle it.
         ;

@@ -271,7 +271,7 @@ Value* Lookup_Socket_Synchronously(
 
 
 // This libuv callback is triggered when a Request_Connect_Socket()
-// connection has been made...or an error is raised.
+// connection has been made...or a panic happens.
 //
 // The callback will only be invoked when the libuv event loop is being run.
 //
@@ -842,14 +842,14 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
         int r = uv_read_start(sock->stream, on_read_alloc, on_read);
         if (r < 0)
-            return RAISE(rebError_UV(r));  // e.g. "broken pipe" ?
+            return FAIL(rebError_UV(r));  // e.g. "broken pipe" ?
 
         do {
             uv_run(uv_default_loop(), UV_RUN_ONCE);
         } while (rebreq->result == nullptr);
 
         if (not Is_Blank(rebreq->result))
-            return RAISE(rebreq->result);  // e.g. "broken pipe" ?
+            return FAIL(rebreq->result);  // e.g. "broken pipe" ?
         rebRelease(rebreq->result);
 
         rebFree(rebreq);
@@ -911,14 +911,14 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         buf.len = Cell_Series_Len_At(rebreq->binary);
         int r = uv_write(&rebreq->req, sock->stream, &buf, 1, on_write_finished);
         if (r < 0)
-            return RAISE(rebError_UV(r));  // e.g. "broken pipe" ?
+            return FAIL(rebError_UV(r));  // e.g. "broken pipe" ?
 
         do {
             uv_run(uv_default_loop(), UV_RUN_ONCE);
         } while (rebreq->result == nullptr);
 
         if (not Is_Blank(rebreq->result))
-            return RAISE(rebreq->result);  // e.g. "broken pipe" ?
+            return FAIL(rebreq->result);  // e.g. "broken pipe" ?
         rebRelease(rebreq->result);
 
         rebFree(rebreq);

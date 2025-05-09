@@ -6,11 +6,11 @@
 ;
 ; !!! Initially this was a feature provided as an optional return value
 ; from the parse.  However, that was foiled by the idea that a parse which
-; does not complete now returns a raised definitional error...which keeps
-; it from returning a pack of values.  It also interferes with the idea that
-; the rules themselves would synthesize a multi-return value.  The hack of
-; a parse variant PARSE-FURTHEST which takes a variable to write the furthest
-; point to is used as a placeholder for a better solution.
+; does not complete now returns an error...which keeps it from returning a
+; pack of values.  It also interferes with the idea that the rules themselves
+; would synthesize a multi-return value.  The hack of a parse variant
+; PARSE-FURTHEST which takes a variable to write the furthest point to is used
+; as a placeholder for a better solution.
 ;
 ; https://forum.rebol.info/t/semantics-of-uparses-furthest/1868/2
 

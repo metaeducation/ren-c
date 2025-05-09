@@ -295,7 +295,7 @@
     (
         x: <x>
         all [
-            quasi? e: ^ let x: raise 'test
+            quasi? e: ^ let x: fail 'test
             error? e: unquasi e
             e.id = 'test
             unset? $x  ; the LET is still in effect
@@ -306,7 +306,7 @@
         a: <a>
         b: <b>
         all [
-            quasi? e: ^ let ['a b]: raise 'test
+            quasi? e: ^ let ['a b]: fail 'test
             error? e: unquasi e
             e.id = 'test
             a = <a>  ; exempted from let
@@ -319,7 +319,7 @@
         x: <x>
         all [
             e: sys.util/rescue [
-                let x: raise 'test
+                let x: fail 'test
             ]
             error? e
             e.id = 'test

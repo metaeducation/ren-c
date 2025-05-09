@@ -104,7 +104,7 @@
         rest = " def"
     ]
 )(
-    raised? [#]: raise "a"
+    raised? [#]: panic "a"
 )]
 
 ; The META-XXX! types can be used to ask for variables to be raised to a meta

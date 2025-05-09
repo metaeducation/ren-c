@@ -46,7 +46,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
     if (Is_Text(arg)) {
         Option(Error*) error = Trap_Transcode_One(OUT, heart, arg);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         return OUT;
     }
 
@@ -83,7 +83,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         return OUT;
     }
 
-    return RAISE(Error_Bad_Make(TYPE_TUPLE, arg));
+    return FAIL(Error_Bad_Make(TYPE_TUPLE, arg));
 }
 
 
@@ -504,7 +504,7 @@ IMPLEMENT_GENERIC(PICK, Any_Sequence)
         return PANIC(picker);
 
     if (n < 0 or n >= Cell_Sequence_Len(seq))
-        return RAISE(Error_Bad_Pick_Raw(picker));
+        return FAIL(Error_Bad_Pick_Raw(picker));
 
     Copy_Sequence_At(OUT, seq, n);
     return OUT;

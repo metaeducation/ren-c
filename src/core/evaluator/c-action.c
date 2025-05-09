@@ -945,7 +945,7 @@ Bounce Action_Executor(Level* L)
 } check_output: {  ///////////////////////////////////////////////////////////
 
   // Here we know the function finished and nothing threw past it or had an
-  // abrupt panic().  (It may have done a `return RAISE(...)`, however.)
+  // abrupt panic().  (It may have done a `return FAIL(...)`, however.)
 
   #if RUNTIME_CHECKS
     Do_After_Action_Checks_Debug(L);

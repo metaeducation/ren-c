@@ -3,14 +3,14 @@
 ; Like CATCH from some other languages, as an infix operation in the
 ; spirit of THEN/ELSE which reacts to failures.  (THEN and ELSE do not,
 ; passing any failures along, which will raise an alarm if not
-; consumed by some ^META receiving site.
+; consumed by some ^META receiving site.)
 ;
-; Note: "raised" is the antiform of ERROR!.  Can't be stored in variables.
+; Note: errors are unstable antiforms and cn't be stored in variables.
 
 (
    x: ~
    all [
-       #X = raise "hello" then [x: #T] else [x: #E] except e -> [x: e, #X]
+       #X = fail "hello" then [x: #T] else [x: #E] except e -> [x: e, #X]
        error? x
    ]
 )

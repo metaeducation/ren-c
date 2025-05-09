@@ -1007,9 +1007,9 @@ Bounce Meta_Stepper_Executor(Level* L)
             CURRENT,
             L_binding
         );
-        if (error) {  // tuples never run actions, won't conflate to raise it
+        if (error) {  // tuples never run actions, erroring won't conflate
             Init_Error(OUT, unwrap error);
-            Raisify(OUT);
+            Failify(OUT);
             goto lookahead;  // e.g. EXCEPT might want error
         }
 
@@ -1296,7 +1296,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         );
         if (error) {
             Init_Error(OUT, unwrap error);
-            Raisify(OUT);
+            Failify(OUT);
             goto lookahead;  // e.g. EXCEPT might want to see raised error
         }
 

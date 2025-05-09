@@ -141,7 +141,7 @@ INLINE Element* Derelativize_Untracked(
 // handlers for MOLD, where it's assumed the quoting levels were rendered by
 // the MOLD routine itself...and so accessors for picking apart the payload
 // don't require the cell to not be quoted.  However some of those agnostic
-// routines want to do things like raise errors, and when they do they need
+// routines want to do things like return errors, and when they do they need
 // to strip the quotes off (typically).
 //
 INLINE Element* Copy_Dequoted_Cell(Sink(Element) out, const Cell* in) {

@@ -29,7 +29,7 @@
 //
 //  Derive_Error_From_Pointer_Core: C
 //
-// This is the polymorphic code behind panic(), FAIL(), and RAISE():
+// This is the polymorphic code behind panic(), FAIL(), and FAIL():
 //
 //    panic ("UTF-8 string");  // delivers error with that text
 //    panic (api_value);       // ensure it's an ERROR!, release and use as-is
@@ -41,7 +41,7 @@
 //    is an error, or if it is "some value" that is just a bad value.  Since
 //    internal code that would use this function does not deal often in
 //    API values, it's believed that assuming they are errors when passed
-//    to `panic()` or `FAIL()` or `RAISE()` is the best policy.
+//    to `panic()` or `FAIL()` or `FAIL()` is the best policy.
 //
 // 2. We check to see if the Cell is in the paramlist of the current running
 //    native.  (We could theoretically do this with ARG(), or have a nuance of
@@ -194,9 +194,8 @@ Error* Panic_Abruptly_Helper(Error* error)
     }
   #endif
 
-    // If we raise the error we'll lose the stack, and if it's an early
-    // error we always want to see it (do not use RESCUE on purpose in
-    // Startup_Core()...)
+    // If we panic we'll lose the stack, and if it's an early panic we always
+    // want to see it (do not use RESCUE on purpose in Startup_Core()...)
     //
     if (PG_Boot_Phase < BOOT_DONE)
         crash (error);
@@ -207,7 +206,7 @@ Error* Panic_Abruptly_Helper(Error* error)
     if (g_ts.jump_list == nullptr)
         crash (error);
 
-    // If a throw was being processed up the stack when the error was raised,
+    // If a throw was being processed up the stack when the panic happened,
     // then it had the thrown argument set.
     //
     Erase_Cell(&g_ts.thrown_arg);
@@ -466,7 +465,7 @@ IMPLEMENT_GENERIC(MAKE, Error)
         Init_Text(&vars->message, Copy_String_At(arg));
     }
     else
-        return RAISE(arg);
+        return FAIL(arg);
 
     // Validate the error contents, and reconcile message template and ID
     // information with any data in the object.  Do this for the IS_STRING
@@ -504,7 +503,7 @@ IMPLEMENT_GENERIC(MAKE, Error)
                 assert(Is_Text(unwrap message) or Is_Block(unwrap message));
 
                 if (not Is_Nulled(&vars->message))
-                    return RAISE(Error_Invalid_Error_Raw(arg));
+                    return FAIL(Error_Invalid_Error_Raw(arg));
 
                 Copy_Cell(&vars->message, unwrap message);
             }
@@ -521,7 +520,7 @@ IMPLEMENT_GENERIC(MAKE, Error)
                 //
                 //     make error! [type: 'script id: 'set-self]
 
-                return RAISE(
+                return FAIL(
                     Error_Invalid_Error_Raw(Varlist_Archetype(error))
                 );
             }

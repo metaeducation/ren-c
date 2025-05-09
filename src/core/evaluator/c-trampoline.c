@@ -41,8 +41,8 @@
 //
 // 2. The instigating call to the Trampoline cannot be unwound across, as it
 //    represents a "stackful" invocation of the evaluator.  Functions like
-//    YIELD must know the passed-in level is uncrossable, so that it can raise
-//    an error if you try to unwind across a top-level Trampoline call.
+//    YIELD must know the passed-in level is uncrossable, so that it can do
+//    a panic if you try to unwind across a top-level Trampoline call.
 //
 //    !!! Instead of returning just `bool`, the Trampoline could theoretically
 //    offer the option of returning a level stack to the caller that it could
@@ -559,7 +559,7 @@ void Shutdown_Trampoline(void)
 //
 // 1. On normal completion with a return result, we do not allow API handles
 //    attached to a level to leak--you are expected to release everything.
-//    But return PANIC() or return RAISE() cases are exempt.
+//    But return PANIC() or return FAIL() cases are exempt.
 //
 //    !!! This may be reviewed in light of wanting to make API programming
 //    easier, especially for JavaScript.

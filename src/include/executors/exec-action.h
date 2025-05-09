@@ -72,7 +72,7 @@
 // (which sounds interesting but crazy, considering that's not what people
 // would want here, but maybe sometimes they would).
 //
-// The best answer for right now is just to raise an error.
+// The best answer for right now is just to return an error.
 //
 #define ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX \
     0  // !!! DISABLED FOR NOW, BUT CALLSITES CAN STILL REFERENCE

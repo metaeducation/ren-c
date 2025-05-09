@@ -2147,7 +2147,7 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
 //    transcode state would be when it made the discovery it was unmatched).
 //
 
-INLINE Bounce Scanner_Raise_Helper(
+INLINE Bounce Scanner_Fail_Helper(
     TranscodeState* transcode,
     Level* level_,
     Error* error
@@ -2157,12 +2157,12 @@ INLINE Bounce Scanner_Raise_Helper(
         Update_Error_Near_For_Line(
             error, transcode, transcode->line, transcode->line_head
         );
-    return Native_Raised_Result(level_, error);
+    return Native_Fail_Result(level_, error);
 }
 
-#undef RAISE
-#define RAISE(p) \
-    Scanner_Raise_Helper(transcode, level_, Derive_Error_From_Pointer(p))
+#undef FAIL
+#define FAIL(p) \
+    Scanner_Fail_Helper(transcode, level_, Derive_Error_From_Pointer(p))
 
 
 INLINE Bounce Scanner_Panic_Helper(
@@ -2251,7 +2251,7 @@ Bounce Scanner_Executor(Level* const L) {
     assert(mo->string == nullptr);  // pushed mold should have been handled
     Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
     if (error)
-        return RAISE(unwrap error);
+        return FAIL(unwrap error);
   }
 
     if (token == TOKEN_END) {  // reached '\0'
@@ -2261,11 +2261,11 @@ Bounce Scanner_Executor(Level* const L) {
         // hit first, there was never a proper closing.
         //
         if (Is_List_Scan(L))
-            return RAISE(Error_Missing(S, STATE));
+            return FAIL(Error_Missing(S, STATE));
 
         Option(Error*) error = Trap_Flush_Pending_Sigils(S);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
 
         goto done;
     }
@@ -2280,7 +2280,7 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_NEWLINE: {
         Option(Error*) error = Trap_Flush_Pending_Sigils(S);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
 
         Set_Scan_Executor_Flag(L, NEWLINE_PENDING);
         transcode->line_head = transcode->at;
@@ -2307,7 +2307,7 @@ Bounce Scanner_Executor(Level* const L) {
             if (S->quasi_pending or S->sigil_pending) {  // ['$, 10] => '$ , 10
                 Option(Error*) error = Trap_Flush_Pending_Sigils(S);
                 if (error)
-                    return RAISE(unwrap error);
+                    return FAIL(unwrap error);
             }
             else if (S->num_quotes_pending) {
                 // fall through normally, want [', 10] => ', 10
@@ -2343,7 +2343,7 @@ Bounce Scanner_Executor(Level* const L) {
 
       token_prefixable_sigil:
         if (S->sigil_pending)
-            return RAISE(Error_Syntax(S, token));  // no "GET-GET-WORD!"
+            return FAIL(Error_Syntax(S, token));  // no "GET-GET-WORD!"
 
         S->sigil_pending = Sigil_From_Token(token);
         goto loop_if_next_token_modifiable;
@@ -2379,7 +2379,7 @@ Bounce Scanner_Executor(Level* const L) {
         assert(*S->begin == '\'');  // should be `len` sequential apostrophes
 
         if (S->sigil_pending)  // can't do @'foo: or :'foo or ~'foo~
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
 
         S->num_quotes_pending = len;  // apply quoting to next token
         goto loop_if_next_token_modifiable; }
@@ -2388,7 +2388,7 @@ Bounce Scanner_Executor(Level* const L) {
         assert(*S->begin == '~' and len == 1);
 
         if (S->quasi_pending or S->sigil_pending)  // no @~foo:~ or ~~foo~~
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
 
         S->quasi_pending = true;  // apply to next token
         goto loop_if_next_token_modifiable; }
@@ -2411,7 +2411,7 @@ Bounce Scanner_Executor(Level* const L) {
             goto loop;
         Option(Error*) error = Trap_Flush_Pending_Sigils(S);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         break; }
 
       case TOKEN_FENCE_BEGIN:
@@ -2495,7 +2495,7 @@ Bounce Scanner_Executor(Level* const L) {
       handle_list_end_delimiter: {
         Option(Error*) error = Trap_Flush_Pending_Sigils(S);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
 
         Byte end_delimiter = *S->begin;
         if (Scan_Mode_Matches(L, end_delimiter))
@@ -2508,9 +2508,9 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
         if (Is_List_Scan(L))  // expected ']' before ')' or vice-versa
-            return RAISE(Error_Mismatch(STATE, end_delimiter));
+            return FAIL(Error_Mismatch(STATE, end_delimiter));
 
-        return RAISE(Error_Extra(end_delimiter)); }
+        return FAIL(Error_Extra(end_delimiter)); }
 
       case TOKEN_INTEGER: {
         //
@@ -2558,7 +2558,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
         //
         if (S->end != Try_Scan_Integer_To_Stack(S->begin, len))
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
 
         break; }
 
@@ -2567,10 +2567,10 @@ Bounce Scanner_Executor(Level* const L) {
       scan_decimal:
         if (Is_Lex_Interstitial(*S->end)) {
             ++S->end;  // include / in error
-            return RAISE(Error_Syntax(S, token));  // No `1.2/abc`
+            return FAIL(Error_Syntax(S, token));  // No `1.2/abc`
         }
         if (S->end != Try_Scan_Decimal_To_Stack(S->begin, len, false))
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
 
         if (S->begin[len - 1] == '%')
             HEART_BYTE(TOP) = TYPE_PERCENT;
@@ -2579,15 +2579,15 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_MONEY:
         if (Is_Lex_Interstitial(*S->end)) {  // Do not allow $1/$2
             ++S->end;  // include / in error message
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
         }
         if (S->end != Try_Scan_Money_To_Stack(S->begin, len))
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
         break;
 
       case TOKEN_TIME:
         if (S->end != Try_Scan_Time_To_Stack(S->begin, len))
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
         break;
 
       case TOKEN_DATE: {
@@ -2602,7 +2602,7 @@ Bounce Scanner_Executor(Level* const L) {
             S->end = ep;
         }
         if (S->end != Try_Scan_Date_To_Stack(S->begin, len))
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
         transcode->at = S->end;  // consume extended token
         break; }
 
@@ -2623,12 +2623,12 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_BINARY:
         if (S->end != Try_Scan_Binary_To_Stack(S->begin, len))
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
         break;
 
       case TOKEN_PAIR:
         if (S->end != Try_Scan_Pair_To_Stack(S->begin, len))
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
         break;
 
       case TOKEN_FILE: {
@@ -2638,12 +2638,12 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_EMAIL:
         if (S->end != Try_Scan_Email_To_Stack(S->begin, len))
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
         break;
 
       case TOKEN_URL:
         if (S->end != Try_Scan_URL_To_Stack(S->begin, len))
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
         break;
 
       case TOKEN_TAG: {
@@ -2661,7 +2661,7 @@ Bounce Scanner_Executor(Level* const L) {
         );
 
         if (S->end - 1 != S->begin + 1 + size)
-            return RAISE(Error_Syntax(S, token));
+            return FAIL(Error_Syntax(S, token));
 
         Init_Any_String(PUSH(), TYPE_TAG, s);
         break; }
@@ -2708,11 +2708,11 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (S->quasi_pending) {
         if (*transcode->at != '~')
-            return RAISE(Error_Syntax(S, TOKEN_TILDE));
+            return FAIL(Error_Syntax(S, TOKEN_TILDE));
 
         Option(Error*) e = Trap_Coerce_To_Quasiform(TOP_ELEMENT);
         if (e)
-            return RAISE(unwrap e);
+            return FAIL(unwrap e);
 
         ++transcode->at;  // must compensate the `transcode->at = S->end`
         S->quasi_pending = false;
@@ -2736,7 +2736,7 @@ Bounce Scanner_Executor(Level* const L) {
                 S, TOP_ELEMENT
             );
             if (error)
-                return RAISE(unwrap error);
+                return FAIL(unwrap error);
 
             ++transcode->at;  // consume the matching interstitial delimiter
 
@@ -2777,11 +2777,11 @@ Bounce Scanner_Executor(Level* const L) {
                 S, TOP_ELEMENT
             );
             if (error)
-                return RAISE(unwrap error);
+                return FAIL(unwrap error);
             goto done;
         }
 
-        return RAISE("Malformed sequence scan...something like a.b()");
+        return FAIL("Malformed sequence scan...something like a.b()");
     }
     else if (Is_Lex_Interstitial(*transcode->at)) {  // a new path/chain/tuple
         //
@@ -2804,7 +2804,7 @@ Bounce Scanner_Executor(Level* const L) {
         S, TOP_ELEMENT
     );
     if (error)
-        return RAISE(unwrap error);
+        return FAIL(unwrap error);
 
     if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
         Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
@@ -2931,7 +2931,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (threw)  // automatically drops failing stack before throwing
             return PANIC(Error_No_Catch_For_Throw(L));
 
-        if (Is_Raised(OUT)) {  // no auto-drop without `return RAISE()`
+        if (Is_Raised(OUT)) {  // no auto-drop without `return FAIL()`
             Drop_Data_Stack_To(STACK_BASE);
             return OUT;
         }
@@ -2956,7 +2956,7 @@ Bounce Scanner_Executor(Level* const L) {
         for (; stackindex != stackindex_path_head - 1; --stackindex) {
             if (Is_Email(Data_Stack_At(Element, stackindex))) {
                 if (any_email)
-                    return RAISE(Error_Syntax(S, TOKEN_TUPLE));
+                    return FAIL(Error_Syntax(S, TOKEN_TUPLE));
                 any_email = true;
             }
         }
@@ -2989,7 +2989,7 @@ Bounce Scanner_Executor(Level* const L) {
         stackindex_path_head - 1
     );
     if (error)
-        return RAISE(unwrap error);
+        return FAIL(unwrap error);
   }
 
     assert(
@@ -3036,7 +3036,7 @@ Bounce Scanner_Executor(Level* const L) {
     if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
         DECLARE_ELEMENT (temp);
         Init_Block(temp, array);
-        return RAISE(Error_Malconstruct_Raw(temp));
+        return FAIL(Error_Malconstruct_Raw(temp));
     }
 
     if (Array_Len(array) == 1) {
@@ -3045,7 +3045,7 @@ Bounce Scanner_Executor(Level* const L) {
         //
         DECLARE_ELEMENT (temp);
         Init_Block(temp, array);
-        return RAISE(Error_Malconstruct_Raw(temp));
+        return FAIL(Error_Malconstruct_Raw(temp));
     }
     else if (Array_Len(array) == 2) {  // #[xxx! [...]], #[xxx! yyy!], etc.
         //
@@ -3062,7 +3062,7 @@ Bounce Scanner_Executor(Level* const L) {
     else {
         DECLARE_ELEMENT (temp);
         Init_Block(temp, array);
-        return RAISE(Error_Malconstruct_Raw(temp));
+        return FAIL(Error_Malconstruct_Raw(temp));
     }
 
     goto lookahead_for_sequencing_character;
@@ -3084,9 +3084,9 @@ Bounce Scanner_Executor(Level* const L) {
 
 //=//// UNDEFINE THE AUGMENTED SCANNER RAISE AND FAIL /////////////////////=//
 
-#undef RAISE
-#define RAISE(p) \
-    Native_Raised_Result(level_, Derive_Error_From_Pointer(p))
+#undef FAIL
+#define FAIL(p) \
+    Native_Fail_Result(level_, Derive_Error_From_Pointer(p))
 
 #undef PANIC
 #define PANIC(p) \
@@ -3098,8 +3098,8 @@ Bounce Scanner_Executor(Level* const L) {
 //  Scan_UTF8_Managed: C
 //
 // This is a "stackful" call that takes a buffer of UTF-8 and will try to
-// scan it into an array, or raise an "abrupt" error (that won't be catchable
-// by things like ATTEMPT or EXCEPT, only RESCUE).
+// scan it into an array, or panics (won't be catchable by things like ATTEMPT
+// or EXCEPT, only RESCUE).
 //
 // 1. This routine doesn't offer parameterization for variadic "splicing" of
 //    already-loaded values mixed with the textual code as it's being
@@ -3274,7 +3274,7 @@ DECLARE_NATIVE(TRANSCODE)
                     OUT,
                     Error_User("TRANSCODE:ONE scanned more than one element")
                 );
-                Raisify(OUT);
+                Failify(OUT);
             }
         }
         Drop_Level(SUBLEVEL);
@@ -3382,12 +3382,12 @@ DECLARE_NATIVE(TRANSCODE)
 
     if (Is_Raised(OUT)) {
         Drop_Level(SUBLEVEL);
-        return OUT;  // the raised error
+        return OUT;
     }
 
     if (Bool_ARG(ONE)) {  // want *exactly* one element
         if (TOP_INDEX == STACK_BASE)
-            return RAISE("Transcode was empty (or all comments)");
+            return FAIL("Transcode was empty (or all comments)");
         assert(TOP_INDEX == STACK_BASE + 1);
         STATE = ST_TRANSCODE_ENSURE_NO_MORE;
         return CONTINUE_SUBLEVEL(SUBLEVEL);

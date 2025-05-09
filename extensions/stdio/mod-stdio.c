@@ -143,7 +143,7 @@ static Value* Make_Non_Halt_Error(const char* name) {
 //
 //  "Read binary data from standard input"
 //
-//      return: "Null if no more input is available, raises error on escape"
+//      return: "Null if no more input is available, returns error on escape"
 //          [~null~ blob! raised!]
 //      size "Maximum size of input to read"
 //          [integer!]
@@ -168,7 +168,7 @@ DECLARE_NATIVE(READ_STDIN)
     if (Term_IO) {
         return rebDelegate("catch [",
             "throw as blob! opt (",
-                "read-line stdin except e -> [throw raise e]",
+                "read-line stdin except e -> [throw fail e]",
             ")",
         "]");
     }
@@ -266,7 +266,7 @@ DECLARE_NATIVE(READ_LINE)
         if (rebUnboxLogic(rebQ(line), "= '~escape~")) { // distinct from eof [2]
             rebRelease(line);
             return rebDelegate(  // return definitional error
-                "raise", rebR(Make_Escape_Error("READ-LINE"))
+                "fail", rebR(Make_Escape_Error("READ-LINE"))
             );
         }
         goto got_line;
@@ -421,7 +421,7 @@ DECLARE_NATIVE(READ_CHAR)
                 return "halt";
 
             if (rebUnboxLogic(rebQ(e), "= '~timeout~"))
-                return "raise -[Timeout in READ-CHAR]-";
+                return "fail -[Timeout in READ-CHAR]-";
 
             // Note: no other signals at time of writing
             return "panic -[Unknown QUASI? from Try_Get_One_Console_Event()]-";
@@ -438,7 +438,7 @@ DECLARE_NATIVE(READ_CHAR)
                 Term_Abandon_Pending_Events(Term_IO);
                 rebRelease(e);
                 return rebDelegate(
-                    "raise", rebR(Make_Escape_Error("READ-CHAR"))
+                    "fail", rebR(Make_Escape_Error("READ-CHAR"))
                 );
             }
 

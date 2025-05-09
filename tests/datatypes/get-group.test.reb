@@ -33,26 +33,26 @@
     ] ok)
 ]
 
-; Groups can pass on raised errors that happens as their last slot.  Otherwise
-; you need to use SYS.UTIL/RESCUE... it's not a definitional error.
+; Groups can pass on errors that happen in their last slot.  Otherwise they
+; panic on errors, and you need to use SYS.UTIL/RESCUE.
 [
     (
-        e: unquasi ^ (1 + 2 raise "handled")
+        e: unquasi ^ (1 + 2 fail "handled")
         e.message = "handled"
     )
     (
-        e: unquasi meta (1 + 2 raise "handled")
+        e: unquasi meta (1 + 2 fail "handled")
         e.message = "handled"
     )
     (
         e: sys.util/rescue [
-            (raise "unhandled" 1 + 2)
+            (fail "unhandled" 1 + 2)
         ]
         e.message = "unhandled"
     )
     (
         e: sys.util/rescue [
-            unquasi meta (raise "unhandled" 1 + 2)
+            unquasi meta (fail "unhandled" 1 + 2)
         ]
         e.message = "unhandled"
     )

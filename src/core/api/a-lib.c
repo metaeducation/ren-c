@@ -1037,7 +1037,7 @@ RebolValue* API_rebArg(
 // for each invocation of the trampoline.  This means that abrupt panic
 // protection comes "for free" with every API call that invokes a new
 // trampoline...and it's just a matter of deciding what to do at the
-// interface level if the result is an unhandled raised error.
+// interface level if the result is an error.
 //
 // It's a largely uncharted territory at this time...so the hope is that
 // your code "just works".  The JavaScript ReplPad runs the console extension
@@ -2005,7 +2005,7 @@ char* API_rebSpellMaybe(
 //
 //  rebSpell: API
 //
-// Raises error on NULL input
+// Panics on NULL input
 //
 char* API_rebSpell(
     RebolContext* binding,
@@ -2133,7 +2133,7 @@ REBWCHAR* API_rebSpellWideMaybe(
 //
 //  rebSpellWide: API
 //
-// Raises error on NULL
+// Panics on NULL input
 //
 REBWCHAR* API_rebSpellWide(
     RebolContext* binding,
@@ -2280,7 +2280,7 @@ unsigned char* API_rebBytesMaybe(
 //
 //  rebBytes: API
 //
-// Raises error on NULL
+// Panics on NULL input
 //
 unsigned char* API_rebBytes(
     RebolContext* binding,

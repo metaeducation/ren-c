@@ -103,14 +103,14 @@ IMPLEMENT_GENERIC(PICK, Is_Environment)
     if (error)
         return rebDelegate("panic", unwrap error);
 
-    if (not value)  // raise error if not present, must TRY or OPT
-        return RAISE(Error_Bad_Pick_Raw(picker));
+    if (not value)  // return error if not present, must TRY or OPT
+        return FAIL(Error_Bad_Pick_Raw(picker));
 
     if (
         Environment_Conflates_Empty_Strings_As_Absent(env)
         and Cell_Series_Len_At(unwrap value) == 0
     ){
-        return RAISE(Error_Bad_Pick_Raw(picker));
+        return FAIL(Error_Bad_Pick_Raw(picker));
     }
 
     return maybe value;

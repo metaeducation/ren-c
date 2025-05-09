@@ -190,7 +190,7 @@ IMPLEMENT_GENERIC(PICK, Is_Blank)
     INCLUDE_PARAMS_OF_PICK;
     UNUSED(ARG(LOCATION));
 
-    return RAISE(Error_Bad_Pick_Raw(ARG(PICKER)));  // act as out of range [1]
+    return FAIL(Error_Bad_Pick_Raw(ARG(PICKER)));  // act as out of range [1]
 }
 
 

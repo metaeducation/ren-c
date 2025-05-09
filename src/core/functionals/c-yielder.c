@@ -77,7 +77,7 @@ DECLARE_NATIVE(DONE) {
     INCLUDE_PARAMS_OF_DONE;
 
     Copy_Cell(OUT, g_error_done_enumerating);
-    return Raisify(OUT);
+    return Failify(OUT);
 }
 
 
@@ -435,7 +435,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Blank(original_frame));
 
     Copy_Cell(OUT, g_error_done_enumerating);
-    return Raisify(OUT);
+    return Failify(OUT);
 
 } invoke_yielder_that_abruptly_panicked: {  //////////////////////////////////
 

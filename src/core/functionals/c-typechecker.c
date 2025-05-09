@@ -80,7 +80,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
     else {
         bool check_datatype = Cell_Logic(Level_Arg(L, 2));
         if (check_datatype and not Is_Datatype(v))
-            return RAISE("Datatype check on non-datatype (use TRY for NULL)");
+            return FAIL("Datatype check on non-datatype (use TRY for NULL)");
 
         if (check_datatype)
             type = Cell_Datatype_Type(v);
@@ -930,7 +930,7 @@ DECLARE_NATIVE(MATCH)
 
     if (not Bool_ARG(META)) {
         if (Is_Nulled(SPARE))
-            return RAISE(Error_Need_Non_Null_Raw());  // [1]
+            return FAIL(Error_Need_Non_Null_Raw());  // [1]
     }
 
     switch (Type_Of(test)) {

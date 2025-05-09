@@ -19,10 +19,10 @@
         value [group?]
         <local> r comb
     ][
-        ^r: eval:undecayed value except e -> [panic e]  ; can't raise
+        ^r: eval:undecayed value except e -> [panic e]  ; can't return fail
 
         if null? ^r [  ; like [:(1 = 0)]
-            return raise "GET-GROUP! evaluated to NULL"  ; means no match
+            return fail "GET-GROUP! evaluated to NULL"  ; means no match
         ]
 
         pending: _

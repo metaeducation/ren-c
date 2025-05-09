@@ -633,8 +633,8 @@ let load_rebol_scripts = function(defer) {
                 //
                 // ...would just evaluate Rebol and throw it away, and evaluate
                 // the spec block to itself and throw that away.  `Rebol` is
-                // defined as a function that raises an error for this reason,
-                // but other concepts are on the table:
+                // defined as a function that panics for this reason, but other
+                // concepts are on the table:
                 //
                 //     https://forum.rebol.info/t/1430
                 //

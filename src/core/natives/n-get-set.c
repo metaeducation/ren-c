@@ -822,11 +822,11 @@ DECLARE_NATIVE(GET)
         OUT, steps, source, SPECIFIED
     );
     if (error)
-        return RAISE(unwrap error);
+        return FAIL(unwrap error);
 
     if (not Bool_ARG(ANY))
         if (Any_Vacancy(stable_OUT))
-            return RAISE(Error_Bad_Word_Get(source, stable_OUT));
+            return FAIL(Error_Bad_Word_Get(source, stable_OUT));
 
     if (steps and steps != GROUPS_OK) {
         Source* pack = Make_Source_Managed(2);
@@ -1227,7 +1227,7 @@ DECLARE_NATIVE(SET)
     //    very useful that you can write (e: trap [x: expression]) and in the
     //    case of an error, have the assignment skipped and the error trapped.
     //
-    //    Note that (set $ ^x raise "hi") will perform a meta-assignment of
+    //    Note that (set $ ^x fail "hi") will perform a meta-assignment of
     //    the quasiform error to X, but will still pass through the error
     //    antiform as the overall expression result.
 
@@ -1302,7 +1302,7 @@ DECLARE_NATIVE(DOT_1)
 
     Context* coupling = Adjust_Context_For_Coupling(Level_Binding(LEVEL));
     if (not coupling)
-        return RAISE("No current coupling in effect");
+        return FAIL("No current coupling in effect");
 
     return Init_Object(OUT, cast(VarList*, coupling));
 }

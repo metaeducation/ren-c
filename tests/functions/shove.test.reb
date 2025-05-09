@@ -22,8 +22,8 @@
 
     ([[whatever] 1020] = (value ->- left-normal 1020))
     ([[whatever] 304] = (value ->- right-normal 304))
-    ~x~ !! (first ((raise 'x) ->- left-normal 1020))
-    ~x~ !! (first ((raise 'x) ->- right-normal 304))
+    ~x~ !! (first ((panic 'x) ->- left-normal 1020))
+    ~x~ !! (first ((panic 'x) ->- right-normal 304))
 ]
 
 ; ^META parameter
@@ -38,8 +38,8 @@
 
     ([~null~ 1020] = (null ->- left-meta 1020))
     ([~null~ 304] = (null ->- right-meta 304))
-    (error? noquasi first ((raise 'x) ->- left-meta 1020))
-    (error? noquasi first ((raise 'x) ->- right-meta 304))
+    (error? noquasi first ((panic 'x) ->- left-meta 1020))
+    (error? noquasi first ((panic 'x) ->- right-meta 304))
 ]
 
 ; @LITERAL bound parameter
@@ -61,12 +61,12 @@
         null = get first block
     ])
     (all wrap [
-        [(raise 'x) 1020] = block: ((raise 'x) ->- left-lit-bound 1020)
-        :raise = get inside block.1 block.1.1
+        [(panic 'x) 1020] = block: ((panic 'x) ->- left-lit-bound 1020)
+        :panic = get inside block.1 block.1.1
     ])
     (all wrap [
-        [(raise 'x) 304] = block: ((raise 'x) ->- right-lit-bound 304)
-        :raise = get inside block.1 block.1.1
+        [(panic 'x) 304] = block: ((panic 'x) ->- right-lit-bound 304)
+        :panic = get inside block.1 block.1.1
     ])
 ]
 
@@ -90,11 +90,11 @@
         null = binding of first block
     ])
     (all wrap [
-        [(raise 'x) 1020] = block: ((raise 'x) ->- left-lit-as-is 1020)
+        [(panic 'x) 1020] = block: ((panic 'x) ->- left-lit-as-is 1020)
         null = binding of inside block.1 block.1.1
     ])
     (all wrap [
-        [(raise 'x) 304] = block: ((raise 'x) ->- right-lit-as-is 304)
+        [(panic 'x) 304] = block: ((panic 'x) ->- right-lit-as-is 304)
         null = binding of inside block.1 block.1.1
     ])
 ]
@@ -130,10 +130,10 @@
         null = binding of first block
     ])
     ~x~ !! (all wrap [
-        block: ((raise 'x) ->- left-soft-as-is 1020)
+        block: ((panic 'x) ->- left-soft-as-is 1020)
     ])
     ~x~ !! (all wrap [
-        block: ((raise 'x) ->- right-soft-as-is 304)
+        block: ((panic 'x) ->- right-soft-as-is 304)
     ])
 ]
 

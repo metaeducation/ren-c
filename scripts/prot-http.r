@@ -142,7 +142,7 @@ do-request: func [
 
     read port.state.connection  ; read some data from the TCP port
     until [
-        check-response port except e -> [return raise e]  ; see if it was enough
+        check-response port except e -> [return fail e]  ; see if it was enough
         ; if not it asks for more
         (port.state.mode = <ready>) or (port.state.mode = <close>)
     ]
@@ -340,10 +340,10 @@ check-response: func [
                     in headers 'Location
                 ] also [
                     do-redirect port headers.location headers except e -> [
-                        return raise e
+                        return fail e
                     ]
                 ] else [
-                    return raise make error! [
+                    return fail make error! [
                         type: 'access
                         id: 'protocol
                         arg1: "Redirect requires manual intervention"
@@ -363,27 +363,27 @@ check-response: func [
             ]
         ]
         'unauthorized [
-            return raise make-http-error "Authentication not supported yet"
+            return fail make-http-error "Authentication not supported yet"
         ]
         'client-error
         'server-error [
-            return raise make-http-error ["Server error: " line]
+            return fail make-http-error ["Server error: " line]
         ]
         'not-modified [
             state.mode: <ready>
         ]
         'use-proxy [
-            return raise make-http-error "Proxies not supported yet"
+            return fail make-http-error "Proxies not supported yet"
         ]
         'proxy-auth [
-            return raise (make-http-error
+            return fail (make-http-error
                 "Authentication and proxies not supported yet")
         ]
         'no-content [
             state.mode: <ready>
         ]
         'version-not-supported [
-            return raise make-http-error "HTTP response version not supported"
+            return fail make-http-error "HTTP response version not supported"
         ]
     ]
 ]
@@ -435,7 +435,7 @@ do-redirect: func [
         ; answer--and redirects were never reasonably articulated in R3-Alpha
         ; http, so it all needs a redesign if this is to be useful.
         ;
-        return raise make error! [
+        return fail make error! [
             type: 'access
             id: 'protocol
             arg1: "Redirect to other host - requires custom handling"
@@ -460,7 +460,7 @@ do-redirect: func [
     ; information, and clear out the port data.  (Redirects weren't part of
     ; the original scheme code, and were grafted on afterwards.)
     ;
-    let data: do-request port except e -> [return raise e]
+    let data: do-request port except e -> [return fail e]
     assert [null? port.data]
     port.data: data
 ]
@@ -630,7 +630,7 @@ sys.util/make-scheme [
                 need-close: 'yes
             ]
 
-            data: do-request port except e -> [return raise e]
+            data: do-request port except e -> [return fail e]
             assert [find [<ready> <close>] port.state.mode]
 
             if yes? need-close [
@@ -679,7 +679,7 @@ sys.util/make-scheme [
             ]
 
             parse-write-dialect port value
-            data: do-request port except e -> [return raise e]
+            data: do-request port except e -> [return fail e]
             assert [find [<ready> <close>] port.state.mode]
 
             if yes? need-close [

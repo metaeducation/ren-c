@@ -254,8 +254,8 @@ collect3: adapt lib3.collect/ [
 === "BACKWARDS-LEANING BOOTSTRAP FUNCTIONS (SHIM ERRORS)" ===
 
 ; At the top of the file, modern executables are dialed back on features which
-; can't be emulated by older executables.  Here we raise errors in the old
-; executable on any undecorated functions that have no emulation equivalent.
+; can't be emulated by older executables.  Here we panic in the old executable
+; on any undecorated functions that have no emulation equivalent.
 
 parse: ~<Use PARSE3 in bootstrap code, not PARSE (UPARSE too slow, for now)>~
 

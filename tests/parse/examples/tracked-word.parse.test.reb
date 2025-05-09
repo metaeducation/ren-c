@@ -39,7 +39,7 @@
         indent: me + 1
         [^result' remainder subpending]: eval f except e -> [
             indent: me - 1
-            return raise e
+            return fail e
         ]
         indent: me - 1
 

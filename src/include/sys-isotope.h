@@ -186,9 +186,9 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
 }
 
 
-// Packs with unstable isotopes in their first cell are not able to be decayed.
+// Packs with unstable antiforms in their first cell aren't able to be decayed.
 // Type checking has to be aware of this, and know that such packs shouldn't
-// raise errors.
+// return errors.
 //
 INLINE bool Is_Pack_Undecayable(Atom* pack)
 {

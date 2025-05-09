@@ -12,7 +12,7 @@
             [any-value?]
     ][
         return [remainder {#}]: evaluate:step input else [
-            raise "PARSE-EVALUATE attempted at series tail"
+            fail "PARSE-EVALUATE attempted at series tail"
         ]
     ]
     ok)

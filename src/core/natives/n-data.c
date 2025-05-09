@@ -1406,13 +1406,6 @@ DECLARE_NATIVE(LIGHT)
 //  ]
 //
 DECLARE_NATIVE(DECAY)
-//
-// 1. We take the argument as a plain (non-^META) parameter in order to make
-//    the decay process happen in the parameter fulfillment, because an idea
-//    with intrinsics is that they do not raise errors.  If we called
-//    Meta_Unquotify_Decayed() in the body of this intrinsic, that would
-//    break the contract in the case of an error.  So we let the parameter
-//    fulfillment cause the problem.
 {
     INCLUDE_PARAMS_OF_DECAY;
 
@@ -1421,7 +1414,7 @@ DECLARE_NATIVE(DECAY)
         return unwrap bounce;
 
     Assert_Cell_Stable(OUT);  // Value* should always be stable
-    return OUT;  // pre-decayed by non-^META argument [1]
+    return OUT;  // pre-decay by non-^META argument if not running as intrinsic
 }
 
 

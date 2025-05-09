@@ -35,7 +35,7 @@ decode-lines: func [
         thru newline
     ]
     parse3:match text [opt some line-rule] else [
-        return raise [
+        return fail [
             "Expected line" (reify text-line-of text pos)
             "to begin with" (mold line-prefix)
             "and end with newline."

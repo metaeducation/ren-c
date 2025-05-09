@@ -160,7 +160,7 @@ DECLARE_NATIVE(REDUCE)
     Decay_If_Unstable(SPARE);
 
     if (Is_Nulled(SPARE))
-        return RAISE(Error_Need_Non_Null_Raw());  // enables e.g. CURTAIL
+        return FAIL(Error_Need_Non_Null_Raw());  // enables e.g. CURTAIL
 
     if (Is_Splice(SPARE)) {
         const Element* tail;
@@ -176,7 +176,7 @@ DECLARE_NATIVE(REDUCE)
         }
     }
     else if (Is_Antiform(SPARE))
-        return RAISE(Error_Bad_Antiform(SPARE));
+        return FAIL(Error_Bad_Antiform(SPARE));
     else {
         Move_Cell(PUSH(), cast(Element*, SPARE));  // not void, not antiform
         SUBLEVEL->baseline.stack_base += 1;  // [3]
@@ -466,7 +466,7 @@ static void Push_Composer_Level(
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
     );
-    Push_Level_Erase_Out_If_State_0(out, sub);  // sublevel may raise definitional failure
+    Push_Level_Erase_Out_If_State_0(out, sub);  // sublevel may fail
 
     sub->u.compose.main_level = main_level;   // pass options [2]
     sub->u.compose.changed = false;
@@ -720,10 +720,10 @@ Bounce Composer_Executor(Level* const L)
         goto push_out_spliced;
 
     if (Is_Nulled(OUT))
-        return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
+        return FAIL(Error_Need_Non_Null_Raw());  // [(null)] => error!
 
     if (Is_Antiform(OUT))
-        return RAISE(Error_Bad_Antiform(OUT));
+        return FAIL(Error_Bad_Antiform(OUT));
     else
         Copy_Cell(PUSH(), cast(Element*, OUT));
 
@@ -759,7 +759,7 @@ Bounce Composer_Executor(Level* const L)
     // compose [(spread [a b]) merges] => [a b merges]... [3]
 
     if (list_quote_byte != NOQUOTE_1 or not Any_Plain_Type(list_heart))
-        return RAISE("Currently can only splice plain unquoted ANY-LIST?s");
+        return FAIL("Currently can only splice plain unquoted ANY-LIST?s");
 
     assert(Is_Splice(OUT));  // GROUP! at "quoting level -1" means splice
 
@@ -1246,7 +1246,7 @@ DECLARE_NATIVE(COMPOSE2)
         at_offset = end_offset;
 
         if (Is_Nulled(eval))
-            return RAISE(Error_Need_Non_Null_Raw());
+            return FAIL(Error_Need_Non_Null_Raw());
 
         if (Is_Hole(eval))  // VOID translated to empty splice for data stack
             continue;

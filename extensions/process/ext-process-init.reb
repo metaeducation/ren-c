@@ -66,11 +66,11 @@ Rebol [
 ; ahead and keeps the asynchronous behavior in a lower level and chooses to
 ; /WAIT by default.
 ;
-; BUT... also, this wrapper raises a (definitional!) error by default on
+; BUT... also, this wrapper returns a (definitional!) error by default on
 ; non-zero exit codes.  Use the :RELAX option to get it to return an integer.
 ; Nice default!
 ;
-; 1. Since CALL without :RELAX will raise a definitional error on non-zero
+; 1. Since CALL without :RELAX will return a definitional error on non-zero
 ;    exit codes, you don't have to worry about checking the result...but also
 ;    you won't get any information by checking the result.  Comparisons with
 ;    nothing are disallowed to help draw attention to misunderstandings of
@@ -93,7 +93,7 @@ Rebol [
     if result = 0 [
         return ~  ;  avoid `if 1 = call:shell "dir" [...]`, see [1]
     ]
-    return raise make error! compose [
+    return fail make error! compose [
         message: ["Process returned non-zero exit code:" exit-code]
         exit-code: (result)
     ]

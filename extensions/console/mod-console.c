@@ -290,7 +290,7 @@ DECLARE_NATIVE(CONSOLE)
     //    with rebContinue()
     //
     // 2. If the CONSOLE* function has any of its own implementation that
-    //    could raise an error (or act as an uncaught throw) it *should* be
+    //    could panic (or act as an uncaught throw) then that code should be
     //    returned as a BLOCK!.  This way the "console skin" can be reset to
     //    the default.  If CONSOLE* itself panics (e.g. a typo in the
     //    implementation) there's probably not much use in trying again...but

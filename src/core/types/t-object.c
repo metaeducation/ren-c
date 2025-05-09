@@ -437,7 +437,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
 
     if (not Is_Frame(arg))
-        return RAISE(Error_Bad_Make(TYPE_FRAME, arg));
+        return FAIL(Error_Bad_Make(TYPE_FRAME, arg));
 
     Option(VarList*) coupling = Cell_Frame_Coupling(arg);
 
@@ -465,7 +465,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
     Element* arg = Element_ARG(DEF);
 
     if (not Any_List(arg))
-        return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
+        return FAIL("Currently only (MAKE MODULE! LIST) is allowed");
 
     SeaOfVars* sea = Alloc_Sea_Core(NODE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(sea, Cell_Binding(arg));
@@ -510,7 +510,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             return Init_Context_Cell(OUT, TYPE_OBJECT, derived);
         }
 
-        return RAISE(Error_Bad_Make(TYPE_OBJECT, arg));
+        return FAIL(Error_Bad_Make(TYPE_OBJECT, arg));
     }
 
     assert(Cell_Datatype_Builtin_Heart(type) == TYPE_OBJECT);
@@ -562,7 +562,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         return Init_Object(OUT, c);
     }
 
-    return RAISE(Error_Bad_Make(TYPE_OBJECT, arg));
+    return FAIL(Error_Bad_Make(TYPE_OBJECT, arg));
 }
 
 
@@ -1153,7 +1153,7 @@ IMPLEMENT_GENERIC(PICK, Any_Context)
 
     const Value* var = TRY_VAL_CONTEXT_VAR(context, symbol);
     if (not var)
-        return RAISE(Error_Bad_Pick_Raw(picker));
+        return FAIL(Error_Bad_Pick_Raw(picker));
 
     Copy_Cell(OUT, var);
 
@@ -1408,7 +1408,7 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
     Details* details = Phase_Details(phase);
     DetailsQuerier* querier = Details_Querier(details);
     if (not (*querier)(OUT, details, SYM_BODY_OF))
-        return RAISE("Frame Details does not offer BODY, use TRY for NULL");
+        return FAIL("Frame Details does not offer BODY, use TRY for NULL");
 
     return OUT;
 }
@@ -1541,7 +1541,7 @@ IMPLEMENT_GENERIC(FILE_OF, Is_Frame)
             return Init_File(OUT, unwrap file);
     }
 
-    return RAISE("File not available for frame");
+    return FAIL("File not available for frame");
 }
 
 
@@ -1565,7 +1565,7 @@ IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
             return Init_Integer(OUT, unwrap line);
     }
 
-    return RAISE("Line not available for frame");
+    return FAIL("Line not available for frame");
 }
 
 

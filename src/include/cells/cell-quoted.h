@@ -214,7 +214,7 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
 //
 // An array element can't be an antiform.  Use Known_Element() when you are
 // sure you have an element and only want it checked in the debug build, and
-// Ensure_Element() when you are not sure and want to raise an error.
+// Ensure_Element() when you are not sure and want to panic if not.
 //
 
 #if NO_RUNTIME_CHECKS

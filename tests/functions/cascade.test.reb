@@ -14,8 +14,8 @@
 )
 
 (
-    metaraise: cascade [raise/ meta:except/]
-    e: metaraise 'test
+    metafail: cascade [fail/ meta:except/]
+    e: metafail 'test
     all [
         error? e
         e.id = 'test
