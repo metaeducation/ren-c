@@ -770,7 +770,7 @@ DECLARE_NATIVE(CHOOSE)
 //      return: "Last case evaluation, or null if no cases matched"
 //          [any-value!]
 //      value "Target value"
-//          [any-value!]
+//          [any-equatable!]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
@@ -800,6 +800,10 @@ DECLARE_NATIVE(SWITCH)
     Push_Level(L, ARG(CASES));
 
     Value* value = ARG(VALUE);
+    if (Is_Void(value))
+        return nullptr;
+
+    FAIL_IF_ERROR(value);
 
     Init_Nulled(OUT); // used for "fallout"
 

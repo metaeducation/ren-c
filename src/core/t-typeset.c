@@ -52,6 +52,7 @@ const struct {
 } Typesets[] = {
     {SYM_ANY_ATOM_X, TS_ATOM},
     {SYM_ANY_VALUE_X, TS_VALUE},
+    {SYM_ANY_EQUATABLE_X, TS_VALUE},
     {SYM_ANY_ELEMENT_X, TS_ELEMENT},
     {SYM_LOGIC_X, TS_LOGIC},
     {SYM_ANY_WORD_X, TS_WORD},
@@ -231,10 +232,10 @@ bool Update_Typeset_Bits_Core(
     // variable can hold, even though you can't put it in blocks).  You have
     // to explicitly say TRASH! to get it.
     //
-    // We override this if VOID is taken (e.g. ANY-ATOM!)
+    // We override this if using the TS_ATOM typeset
     //
     if (clear_trash_flag)
-        if (not (Cell_Typeset_Bits(typeset) & FLAGIT_KIND(TYPE_VOID)))
+        if (TS_ATOM != (Cell_Typeset_Bits(typeset) & TS_ATOM))
             Clear_Typeset_Flag(typeset, TYPE_TRASH);
 
     // If you use <opt-out> or <undo-opt> then null is not legal as an input

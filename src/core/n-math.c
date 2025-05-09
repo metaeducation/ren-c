@@ -469,6 +469,9 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
     enum Reb_Kind ta = Type_Of(a);
     enum Reb_Kind tb = Type_Of(b);
 
+    if (ta == TYPE_TRASH or tb == TYPE_TRASH)  // should not call w/trash!
+        fail ("Cannot compare TRASH (~ antiform) with equality/inequality");
+
     if (ta == TYPE_VOID) {
         if (tb == TYPE_VOID)
             return 1;
@@ -477,8 +480,6 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
     else if (tb == TYPE_VOID)
         return -2;
 
-    if (ta == TYPE_TRASH or tb == TYPE_TRASH)
-        fail ("Cannot compare TRASH (~ antifrom) with equality/inequality");
 
     if (ta != tb) {
         if (strictness == 1) return 0;
@@ -566,15 +567,21 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 //  {TRUE if the values are approximately equal}
 //
 //      return: [logic!]
-//      value1 [any-atom!]
-//      value2 [any-atom!]
+//      value1 [any-equatable!]
+//      value2 [any-equatable!]
 //  ]
 //
 DECLARE_NATIVE(LAX_EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_LAX_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 0))
+    Value* v1 = ARG(VALUE1);
+    Value* v2 = ARG(VALUE2);
+
+    FAIL_IF_ERROR(v1);
+    FAIL_IF_ERROR(v2);
+
+    if (Compare_Modify_Values(v1, v2, 0))
         return LOGIC(true);
 
     return LOGIC(false);
@@ -587,15 +594,21 @@ DECLARE_NATIVE(LAX_EQUAL_Q)
 //  {TRUE if the values are not approximately equal}
 //
 //      return: [logic!]
-//      value1 [any-atom!]
-//      value2 [any-atom!]
+//      value1 [any-equatable!]
+//      value2 [any-equatable!]
 //  ]
 //
 DECLARE_NATIVE(LAX_NOT_EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_LAX_NOT_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 0))
+    Value* v1 = ARG(VALUE1);
+    Value* v2 = ARG(VALUE2);
+
+    FAIL_IF_ERROR(v1);
+    FAIL_IF_ERROR(v2);
+
+    if (Compare_Modify_Values(v1, v2, 0))
         return LOGIC(false);
 
     return LOGIC(true);
@@ -608,15 +621,21 @@ DECLARE_NATIVE(LAX_NOT_EQUAL_Q)
 //  {TRUE if the values are strictly equal}
 //
 //      return: [logic!]
-//      value1 [any-atom!]
-//      value2 [any-atom!]
+//      value1 [any-equatable!]
+//      value2 [any-equatable!]
 //  ]
 //
 DECLARE_NATIVE(EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 1))
+    Value* v1 = ARG(VALUE1);
+    Value* v2 = ARG(VALUE2);
+
+    FAIL_IF_ERROR(v1);
+    FAIL_IF_ERROR(v2);
+
+    if (Compare_Modify_Values(v1, v2, 1))
         return LOGIC(true);
 
     return LOGIC(false);
@@ -629,15 +648,21 @@ DECLARE_NATIVE(EQUAL_Q)
 //  {TRUE if the values are not strictly equal}
 //
 //      return: [logic!]
-//      value1 [any-atom!]
-//      value2 [any-atom!]
+//      value1 [any-equatable!]
+//      value2 [any-equatable!]
 //  ]
 //
 DECLARE_NATIVE(NOT_EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_NOT_EQUAL_Q;
 
-    if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), 1))
+    Value* v1 = ARG(VALUE1);
+    Value* v2 = ARG(VALUE2);
+
+    FAIL_IF_ERROR(v1);
+    FAIL_IF_ERROR(v2);
+
+    if (Compare_Modify_Values(v1, v2, 1))
         return LOGIC(false);
 
     return LOGIC(true);
@@ -664,69 +689,69 @@ DECLARE_NATIVE(SAME_Q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    Value* value1 = ARG(VALUE1);
-    Value* value2 = ARG(VALUE2);
+    Value* v1 = ARG(VALUE1);
+    Value* v2 = ARG(VALUE2);
 
-    if (Type_Of(value1) != Type_Of(value2))
+    if (Type_Of(v1) != Type_Of(v2))
         return LOGIC(false); // can't be "same" value if not same type
 
-    if (Is_Bitset(value1)) {
+    if (Is_Bitset(v1)) {
         //
         // BITSET! only has a series, no index.
         //
-        if (Cell_Flex(value1) != Cell_Flex(value2))
+        if (Cell_Flex(v1) != Cell_Flex(v2))
             return LOGIC(false);
         return LOGIC(true);
     }
 
-    if (Any_Series(value1)) {
+    if (Any_Series(v1)) {
         //
         // ANY-SERIES! can only be the same if pointers and indices match.
         //
-        if (Cell_Flex(value1) != Cell_Flex(value2))
+        if (Cell_Flex(v1) != Cell_Flex(v2))
             return LOGIC(false);
-        if (VAL_INDEX(value1) != VAL_INDEX(value2))
+        if (VAL_INDEX(v1) != VAL_INDEX(v2))
             return LOGIC(false);
         return LOGIC(true);
     }
 
-    if (Any_Context(value1)) {
+    if (Any_Context(v1)) {
         //
         // ANY-CONTEXT! are the same if the varlists match.
         //
-        if (Cell_Varlist(value1) != Cell_Varlist(value2))
+        if (Cell_Varlist(v1) != Cell_Varlist(v2))
             return LOGIC(false);
         return LOGIC(true);
     }
 
-    if (Is_Map(value1)) {
+    if (Is_Map(v1)) {
         //
         // MAP! will be the same if the map pointer matches.
         //
-        if (VAL_MAP(value1) != VAL_MAP(value2))
+        if (VAL_MAP(v1) != VAL_MAP(v2))
             return LOGIC(false);
         return LOGIC(true);
     }
 
-    if (Any_Word(value1)) {
+    if (Any_Word(v1)) {
         //
         // ANY-WORD! must match in binding as well as be otherwise equal.
         //
-        if (Cell_Word_Symbol(value1) != Cell_Word_Symbol(value2))
+        if (Cell_Word_Symbol(v1) != Cell_Word_Symbol(v2))
             return LOGIC(false);
-        if (VAL_BINDING(value1) != VAL_BINDING(value2))
+        if (VAL_BINDING(v1) != VAL_BINDING(v2))
             return LOGIC(false);
         return LOGIC(true);
     }
 
-    if (Is_Decimal(value1) || Is_Percent(value1)) {
+    if (Is_Decimal(v1) or Is_Percent(v1)) {
         //
         // The tolerance on equal? for decimals is apparently not
         // a requirement of exactly the same bits.
         //
         if (
             memcmp(
-                &VAL_DECIMAL(value1), &VAL_DECIMAL(value2), sizeof(REBDEC)
+                &VAL_DECIMAL(v1), &VAL_DECIMAL(v2), sizeof(REBDEC)
             ) == 0
         ){
             return LOGIC(true);
@@ -737,7 +762,7 @@ DECLARE_NATIVE(SAME_Q)
 
     // For other types, just fall through to strict equality comparison
     //
-    if (Compare_Modify_Values(value1, value2, 1))
+    if (Compare_Modify_Values(v1, v2, 1))
         return LOGIC(true);
 
     return LOGIC(false);

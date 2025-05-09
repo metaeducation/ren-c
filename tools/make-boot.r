@@ -466,6 +466,19 @@ e-types/emit {
         (TS_ATOM - FLAGIT_KIND(TYPE_VOID))
 
     /*
+     * TS_ATOM minus TRASH
+     *
+     * (you can compare things to VOID, e.g. (xxx = while [...] [...])
+     * and have it not die just because the while never ran a loop iteration.)
+     *
+     * Note tripwires are elements in the bootstrap shim, else we'd need
+     * quasi-tripwires to represent them.  Mainline EXE does not let you do
+     * comparisons on tripwires, because they're true antiforms.
+     */
+    #define TS_EQUATABLE \
+        (TS_ATOM - FLAGIT_KIND(TYPE_TRASH))
+
+    /*
      * TS_VALUE minus NULL, VOID, and TRASH
      */
     #define TS_ELEMENT \
