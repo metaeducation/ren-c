@@ -277,7 +277,7 @@
         block: [1 + 2 1 / 0 10 + 20]
         [3 ~zero-divide~ 30] = collect [
             while [[block :^result']: eval:step block] [
-                if raised? unmeta result' [
+                if error? unmeta result' [
                     keep quasi (unquasi result').id
                 ] else [
                     keep unmeta result'

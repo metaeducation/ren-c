@@ -58,7 +58,7 @@
 ; (null? catch/name [trap [1 / 0]] 'catch)
 ; (null? catch/name [1] 'catch)
 ; ('~()~ = catch/name [throw/name ('~()~) 'catch] 'catch)
-; (raised? catch/name [throw/name (1 / 0) 'catch] 'catch)
+; (error? catch/name [throw/name (1 / 0) 'catch] 'catch)
 ; (1 = catch/name [throw/name 1 'catch] 'catch)
 ; (
 ;     num: 1

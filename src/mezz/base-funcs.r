@@ -383,7 +383,7 @@ specialized?: func [
 attempt: specialize repeat/ [count: 1]
 
 trap: func [
-    "If evaluation raises an error, return it, otherwise NULL"
+    "If evaluation returns an antiform error, return as warning, else NULL"
 
     return: [~null~ warning!]
     code [block!]

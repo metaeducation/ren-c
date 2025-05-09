@@ -91,7 +91,7 @@ script: [
 
     ; NOTE: Preallocated error for enumeration
     ;
-    done-enumerating:   "Enumeration is complete, no more values to YIELD"
+    done:               "Enumeration exhausted"
 
     yielder-panicked:   "Can't run a Yielder that has abruptly panicked"
     yielder-reentered:  "Can't re-entrantly call a Yielder not in YIELD state"

@@ -104,7 +104,7 @@
         rest = " def"
     ]
 )(
-    raised? [#]: panic "a"
+    error? [#]: panic "a"
 )]
 
 ; The META-XXX! types can be used to ask for variables to be raised to a meta
@@ -194,7 +194,7 @@
     ])
 ]
 
-; Raised errors are not supported by the default PACK.
+; Errors are not supported in the default PACK.
 [
     ~zero-divide~ !! (
         pack [1 / 0]
@@ -213,7 +213,7 @@
         all wrap [
             [{^e} n]: pack* [1 / 0, 1 + 0]
             n = 1
-            raised? ^e
+            error? ^e
             'zero-divide = (unquasi e).id
         ]
     )

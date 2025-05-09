@@ -819,7 +819,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
 
             Flags flags = (
                  FLAG_STATE_BYTE(Scanner_State_For_Terminal(terminal))
-              /* | LEVEL_FLAG_RAISED_RESULT_OK */  // definitional errors?
+              /* | LEVEL_FLAG_ERROR_RESULT_OK */  // definitional errors?
             );
 
             Level* scan = Make_Scan_Level(&transcode, TG_End_Feed, flags);
@@ -2437,7 +2437,7 @@ Bounce Scanner_Executor(Level* const L) {
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-                | LEVEL_FLAG_RAISED_RESULT_OK
+                | LEVEL_FLAG_ERROR_RESULT_OK
                 | FLAG_STATE_BYTE(mode)
         );
         Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -2672,7 +2672,7 @@ Bounce Scanner_Executor(Level* const L) {
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-                | LEVEL_FLAG_RAISED_RESULT_OK
+                | LEVEL_FLAG_ERROR_RESULT_OK
                 | FLAG_STATE_BYTE(ST_SCANNER_BLOCK_MODE)
         );
 
@@ -2685,7 +2685,7 @@ Bounce Scanner_Executor(Level* const L) {
             return PANIC(Error_No_Catch_For_Throw(L));
         }
 
-        if (Is_Raised(OUT)) {
+        if (Is_Error(OUT)) {
             Drop_Level(sub);
             return OUT;
         }
@@ -2819,7 +2819,7 @@ Bounce Scanner_Executor(Level* const L) {
 
 } child_array_scanned: {  ////////////////////////////////////////////////////
 
-    if (Is_Raised(OUT)) {
+    if (Is_Error(OUT)) {
         Drop_Level(SUBLEVEL);
         return OUT;
     }
@@ -2918,7 +2918,7 @@ Bounce Scanner_Executor(Level* const L) {
         Level* sub = Make_Scan_Level(
             transcode,
             L->feed,
-            LEVEL_FLAG_RAISED_RESULT_OK
+            LEVEL_FLAG_ERROR_RESULT_OK
                 | FLAG_STATE_BYTE(sub_mode)
                 | SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN
         );
@@ -2931,7 +2931,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (threw)  // automatically drops failing stack before throwing
             return PANIC(Error_No_Catch_For_Throw(L));
 
-        if (Is_Raised(OUT)) {  // no auto-drop without `return FAIL()`
+        if (Is_Error(OUT)) {  // no auto-drop without `return FAIL()`
             Drop_Data_Stack_To(STACK_BASE);
             return OUT;
         }
@@ -3264,7 +3264,7 @@ DECLARE_NATIVE(TRANSCODE)
         goto scan_to_stack_maybe_failed;
 
       case ST_TRANSCODE_ENSURE_NO_MORE:
-        if (not Is_Raised(OUT)) {  // !!! return this error, or new one?
+        if (not Is_Error(OUT)) {  // !!! return this error, or new one?
             if (TOP_INDEX == STACK_BASE + 1)  // didn't scan anything else
                 Move_Drop_Top_Stack_Element(OUT);
             else {  // scanned another item, we only wanted one!
@@ -3353,7 +3353,7 @@ DECLARE_NATIVE(TRANSCODE)
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
-        | LEVEL_FLAG_RAISED_RESULT_OK  // want to pass on definitional error
+        | LEVEL_FLAG_ERROR_RESULT_OK  // want to pass on definitional error
         | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
 
     if (Bool_ARG(NEXT) or Bool_ARG(ONE))
@@ -3380,7 +3380,7 @@ DECLARE_NATIVE(TRANSCODE)
     //
     // Return a block of the results, so [1] and [[1]] in those cases.
 
-    if (Is_Raised(OUT)) {
+    if (Is_Error(OUT)) {
         Drop_Level(SUBLEVEL);
         return OUT;
     }

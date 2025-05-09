@@ -133,13 +133,13 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
 #undef LEVEL_FLAG_15
 
 
-//=//// LEVEL_FLAG_RAISED_RESULT_OK ///////////////////////////////////////=//
+//=//// LEVEL_FLAG_ERROR_RESULT_OK ////////////////////////////////////////=//
 //
 // The special ANTIFORM_0 error will trip up code that isn't expecting it, so
 // most levels do not want to receive these "antiform forms of warning!" when
 // they request evaluation.
 //
-#define LEVEL_FLAG_RAISED_RESULT_OK \
+#define LEVEL_FLAG_ERROR_RESULT_OK \
     FLAG_LEFT_BIT(16)
 
 

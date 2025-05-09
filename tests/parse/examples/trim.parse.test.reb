@@ -64,7 +64,7 @@ utrim: func [
         ]
 
         any-string? series [
-            ; These are errors raised by the C version of utrim in R3-Alpha.
+            ; These are errors in the C version of utrim in R3-Alpha.
             ; One could question why :WITH implies :ALL
             ;
             if any [

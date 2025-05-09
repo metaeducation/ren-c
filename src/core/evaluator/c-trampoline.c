@@ -199,8 +199,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         assert(Is_Cell_Readable(L->out));
 
-        if (Is_Raised(L->out)) {
-            if (Not_Level_Flag(L, RAISED_RESULT_OK)) {
+        if (Is_Error(L->out)) {
+            if (Not_Level_Flag(L, ERROR_RESULT_OK)) {
                 //
                 // treat any failure as if it could have been thrown from
                 // anywhere, so it is bubbled up as a throw.
@@ -363,10 +363,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
 } ON_ABRUPT_PANIC (error) {  /////////////////////////////////////////////////
 
-    // A panic() can happen at any moment--even due to something like a
-    // memory allocation requested by an executor itself.  These are called
-    // "abrupt panics", and they cannot be TRAP'd or TRY'd in the same way
-    // a raised error can be.
+    // A panic() can happen at any moment--even due to something like a memory
+    // allocation requested by an executor itself.  These are "abrupt panics",
+    // and they cannot be TRAP'd or TRY'd in the same way an ERROR! can be.
     //
     // 1. We don't really know *what* panicked...all levels get a chance to
     //    clean up the state.

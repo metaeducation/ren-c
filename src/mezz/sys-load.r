@@ -40,7 +40,7 @@ transcode-header: func [
     "Try to match a data blob! as being a script, fail if not"
 
     return: "Null, or the ~[header rest line]~"
-        [~[[~null~ block!] [~null~ blob!] [~null~ integer!]]~ raised!]
+        [~[[~null~ block!] [~null~ blob!] [~null~ integer!]]~ error!]
 
     data [blob!]
     :file [file! url!]
@@ -615,7 +615,7 @@ bind construct [
 
     importing-remotely: old-importing-remotely
 
-    return pack* [mod 'executed ^product']  ; PACK* for raised errors
+    return pack* [mod 'executed ^product']  ; PACK* tolerates errors
 ]
 
 

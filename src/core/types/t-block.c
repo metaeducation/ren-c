@@ -72,7 +72,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 //     == ~okay~  ; anti
 //
 //     >> ["b" 1] < [2 "a"]
-//     ** Error: Can't compare  ; raised error, not panic
+//     ** Error: Can't compare  ; returns antiform error, doesn't panic
 //
 //     >> try ["b" 1] < [2 "a"]
 //     == ~null~  ; anti
@@ -1157,8 +1157,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_List)
 //
 //  "Get the file (or URL) that a value was loaded from, if possible"
 //
-//      return: "Raised error if no file available (use TRY to get NULL)"
-//          [~null~ file! url!]
+//      return: [file! url! error!]
 //      element "Typically only ANY-LIST? know their file"
 //          [<opt-out> element?]
 //  ]
@@ -1184,8 +1183,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough returns error
 //
 //  "Get the line number that a value was loaded from, if possible"
 //
-//      return: "Raised error if no line available (use TRY to get NULL)"
-//          [~null~ integer!]
+//      return: [integer! error!]
 //      element "Typically only ANY-LIST? know their file"
 //          [<opt-out> element?]
 //  ]

@@ -892,7 +892,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         if (Is_Action(les->data)) {
             Value* generated = rebMeta(rebRUN(les->data));
             if (not (
-                Is_Meta_Of_Raised(generated)
+                Is_Meta_Of_Error(generated)
                 and Is_Error_Done_Signal(generated)
             )) {
                 Meta_Unquotify_Decayed(generated);
@@ -2211,14 +2211,14 @@ DECLARE_NATIVE(WHILE)
     STATE = ST_WHILE_EVALUATING_CONDITION;
     return CONTINUE_CORE(
         SPARE,
-        LEVEL_FLAG_RAISED_RESULT_OK,  // want to catch DONE error
+        LEVEL_FLAG_ERROR_RESULT_OK,  // want to catch DONE error
         SPECIFIED,
         condition
     );
 
 } condition_eval_in_spare: {  ////////////////////////////////////////////////
 
-    if (Is_Raised(SPARE) and Is_Error_Done_Signal(SPARE))
+    if (Is_Error(SPARE) and Is_Error_Done_Signal(SPARE))
         goto return_out;
 
     Decay_If_Unstable(SPARE);

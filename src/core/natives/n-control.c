@@ -1219,7 +1219,7 @@ DECLARE_NATIVE(MAYBE)
     Element* target = Element_ARG(TARGET);
     Element* meta = Element_ARG(ATOM);
 
-    if (Is_Meta_Of_Raised(meta))
+    if (Is_Meta_Of_Error(meta))
         return UNMETA(meta);  // pass through but don't assign anything
 
     if (Is_Meta_Of_Null(meta))

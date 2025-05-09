@@ -1434,10 +1434,10 @@ DECLARE_NATIVE(REIFY)
 // than (reify/noquasi ...)
 //
 // !!! We don't handle unstable isotopes here, so REIFY of a pack will just
-// be a reification of the first value in the pack.  And REIFY of an raised
-// error will error.  We could have REIFY/EXCEPT and REIFY/PACK, if they
-// seem to be important...but let's see if we can get away without them and
-// have this be an intrinsic.
+// be a reification of the first value in the pack.  And REIFY of an error
+// will panic.  We could have REIFY:EXCEPT and REIFY:PACK, if they seem to be
+// important...but let's see if we can get away without them and have this be
+// an intrinsic.
 {
     INCLUDE_PARAMS_OF_REIFY;
 

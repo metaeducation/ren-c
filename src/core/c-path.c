@@ -147,13 +147,13 @@ DECLARE_NATIVE(PICK)
 //
 //  "Perform a path poking operation, same as `(location).(picker): :value`"
 //
-//      return: "Input value, or raised error propagated (no assignment)"
-//          [any-value? raised!]
+//      return: "Input value, or propagated error (no assignment on errors)"
+//          [any-value? error!]
 //      location "(modified)"
 //          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> element?]
-//      ^value [any-value? raised! void?]
+//      ^value [any-value? error! void?]
 //      <local> store
 //  ]
 //
@@ -169,7 +169,7 @@ DECLARE_NATIVE(POKE)
     USED(ARG(PICKER));  // passed to handler via LEVEL
     Element* meta_value = Element_ARG(VALUE);
 
-    if (Is_Meta_Of_Raised(meta_value)) {
+    if (Is_Meta_Of_Error(meta_value)) {
         Copy_Cell(OUT, meta_value);
         return Meta_Unquotify_Undecayed(OUT);
     }

@@ -51,11 +51,11 @@ INLINE void Force_Location_Of_Error(Error* error, Level* where) {
 }
 
 
-// An antiform ERROR! represents a thrown state.  This failure state can't be
-// stored in variables and will raise an alarm if something in a processing
-// pipeline doesn't ask to ^META it.  While it's in the ^META state it can
-// also be passed around normally until it's UNMETA'd back to a failure again.
-
+// An antiform ERROR! is a failure state.  It can't be stored in variables and
+// will be elevated to a panic if something in a processing pipeline doesn't
+// ask to ^META it.  While it's in the ^META state it can also be passed around
+// normally until it's UNMETA'd back to a failure again.
+//
 INLINE Atom* Failify(Need(Atom*) atom) {
     assert(Is_Warning(atom) and QUOTE_BYTE(atom) == NOQUOTE_1);
     Force_Location_Of_Error(Cell_Error(atom), TOP_LEVEL);  // ideally a noop

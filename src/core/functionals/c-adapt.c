@@ -115,7 +115,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
         OUT,  // note: result is discarded
-        LEVEL_MASK_NONE,  // plain result (error if raised)
+        LEVEL_MASK_NONE,  // plain result (warning if it was an error)
         SPECIFIED,
         stable_SPARE
     );

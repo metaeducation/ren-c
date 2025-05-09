@@ -81,7 +81,7 @@
 (warning? make warning! [type: 'script id: 'parse3-command])
 (warning? make warning! [type: 'script id: 'parse3-series])
 (warning? make warning! [type: 'script id: 'bad-utf8])
-(warning? make warning! [type: 'script id: 'done-enumerating])
+(warning? make warning! [type: 'script id: 'exhausted])
 
 (warning? make warning! [type: 'math id: 'zero-divide])
 (warning? make warning! [type: 'math id: 'overflow])

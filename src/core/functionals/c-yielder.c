@@ -36,9 +36,9 @@
 //
 void Startup_Yielder_Errors(void)
 {
-    ensure(nullptr, g_error_done_enumerating) = Init_Warning(
+    ensure(nullptr, g_error_done) = Init_Warning(
         Alloc_Value(),
-        Error_Done_Enumerating_Raw()
+        Error_Done_Raw()
     );
 }
 
@@ -48,7 +48,7 @@ void Startup_Yielder_Errors(void)
 //
 void Shutdown_Yielder_Errors(void)
 {
-    rebReleaseAndNull(&g_error_done_enumerating);
+    rebReleaseAndNull(&g_error_done);
 }
 
 
@@ -61,22 +61,23 @@ bool Is_Error_Done_Signal(const Cell* c) {
     ERROR_VARS *vars = ERR_VARS(Cell_Error(c));
     if (not Is_Word(&vars->id))
         return false;
-    return Cell_Word_Id(&vars->id) == SYM_DONE_ENUMERATING;
+    return Cell_Word_Id(&vars->id) == SYM_DONE;
 }
 
 
 //
 //  done: native [
 //
-//  "Give back a raised error with the id DONE-ENUMERATING (pass to YIELD)"
+//  "Give back an error with (id = 'done), used frequently with YIELD"
 //
-//      return: [raised!]
+//      return: [error!]
 //  ]
 //
-DECLARE_NATIVE(DONE) {
+DECLARE_NATIVE(DONE)
+{
     INCLUDE_PARAMS_OF_DONE;
 
-    Copy_Cell(OUT, g_error_done_enumerating);
+    Copy_Cell(OUT, g_error_done);
     return Failify(OUT);
 }
 
@@ -84,18 +85,19 @@ DECLARE_NATIVE(DONE) {
 //
 //  done?: native:intrinsic [
 //
-//  "Detect whether argument is the DONE-ENUMERATING raised error"
+//  "Detect whether argument is an error with (id = 'done)"
 //
 //      return: [logic?]
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(DONE_Q) {
+DECLARE_NATIVE(DONE_Q)
+{
     INCLUDE_PARAMS_OF_DONE_Q;
 
     const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
-    if (not Is_Meta_Of_Raised(meta))
+    if (not Is_Meta_Of_Error(meta))
         return nullptr;
 
     return LOGIC(Is_Error_Done_Signal(meta));
@@ -254,18 +256,18 @@ Bounce Yielder_Dispatcher(Level* const L)
     // gets bounced to, and it's what bubbles the value in OUT.
 
     if (Not_Cell_Readable(plug)) {  // no plug, must be YIELD of a RAISED...
-        assert(Is_Meta_Of_Raised(meta_yielded));
+        assert(Is_Meta_Of_Error(meta_yielded));
 
         if (Is_Error_Done_Signal(meta_yielded)) {
-            // don't promote to panic, just consider it finished
+            // don't elevate to a panic, just consider it finished
         }
-        else {  // all other raised errors promoted to panic
+        else {  // all other error antiforms elevated to panics
             Init_Thrown_Panic(L, Cell_Error(meta_yielded));
         }
         goto body_finished_or_threw;
     }
 
-    assert(not Is_Meta_Of_Raised(meta_yielded));
+    assert(not Is_Meta_Of_Error(meta_yielded));
     assert(Is_Handle(plug));
 
     Copy_Cell(OUT, meta_yielded);  // keep meta_yielded around for resume
@@ -409,7 +411,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         and Cell_Frame_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
-        if (not Is_Meta_Of_Raised(OUT)) {  // THROW:FINAL value
+        if (not Is_Meta_Of_Error(OUT)) {  // THROW:FINAL value
             Init_Blank(original_frame);
             return Meta_Unquotify_Undecayed(OUT);  // done, this is last value
         }
@@ -427,14 +429,13 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 } invoke_completed_yielder: {  ///////////////////////////////////////////////
 
-    // Our signal of completion is the DONE-ENUMERATING definitional error.
-    // Using a definitional error pushes it out of band from all other
-    // return states, because any other raised error passed to YIELD is
-    // handled as an abrupt panic.
+    // Our signal of completion is the EXHAUSTED definitional error.  Using a
+    // error antiform pushes it out of band from all other return states,
+    // because other error antiforms passed to YIELD are elevated to a panic.
 
     assert(Is_Blank(original_frame));
 
-    Copy_Cell(OUT, g_error_done_enumerating);
+    Copy_Cell(OUT, g_error_done);
     return Failify(OUT);
 
 } invoke_yielder_that_abruptly_panicked: {  //////////////////////////////////
@@ -561,7 +562,7 @@ DECLARE_NATIVE(GENERATOR)  // could also be made in LIB with SPECIALIZE
 //
 //      return: "Same atom given as input is returned when YIELD resumes"
 //          [any-atom?]
-//      ^atom "Atom to yield, or the 'done' raised error to signal completion"
+//      ^atom "Atom to yield, or the DONE error antiform to signal completion"
 //          [any-atom?]
 //      :final "Yield, but also signal the yielder or generator is done"
 //  ]
@@ -631,10 +632,10 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     // If we are doing a YIELD with no intent to resume, then we can just use
     // a conventional BOUNCE_THROWN mechanic, which destroys the stack levels
     // as it climbs up the trampoline.  So that works for either YIELD:FINAL
-    // of one value, YIELD DONE, or YIELD of any other raised error which the
-    // yielder will promote to an abrupt panic.
+    // of one value, YIELD DONE, or YIELD of any other error antiform which the
+    // yielder will elevate to an abrupt panic.
 
-    if (Is_Meta_Of_Raised(meta) or Bool_ARG(FINAL)) {  // not resumable, throw
+    if (Is_Meta_Of_Error(meta) or Bool_ARG(FINAL)) {  // not resumable, throw
         Init_Action(
             SPARE,  // use as label for throw
             Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),

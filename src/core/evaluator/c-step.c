@@ -149,7 +149,7 @@ STATIC_ASSERT(
 
 #define Make_Action_Sublevel(parent) \
     Make_Level(&Action_Executor, (parent)->feed, \
-        LEVEL_FLAG_RAISED_RESULT_OK \
+        LEVEL_FLAG_ERROR_RESULT_OK \
         | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH))
 
 
@@ -184,7 +184,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 
     Flags flags =  // v-- if L was fulfilling, we are
         (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | LEVEL_FLAG_RAISED_RESULT_OK;  // trap [e: transcode "1&aa"] works
+        | LEVEL_FLAG_ERROR_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
     Level* sub = Make_Level(
         &Meta_Stepper_Executor,
@@ -292,7 +292,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         else if (bounce == BOUNCE_OKAY)
             Init_Okay(OUT);
         else if (bounce == L->out) {
-            if (Is_Raised(OUT))
+            if (Is_Error(OUT))
                 return PANIC(Cell_Error(OUT));
         }
         else if (bounce == BOUNCE_BAD_INTRINSIC_ARG)
@@ -772,7 +772,7 @@ Bounce Meta_Stepper_Executor(Level* L)
                 break;
 
               case PARAMCLASS_META:
-                flags |= LEVEL_FLAG_RAISED_RESULT_OK;
+                flags |= LEVEL_FLAG_ERROR_RESULT_OK;
                 break;
 
               case PARAMCLASS_JUST:
@@ -961,7 +961,7 @@ Bounce Meta_Stepper_Executor(Level* L)
       case TYPE_META_GROUP: {
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // [2]
+        Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;  // [2]
 
         Level* sub = Make_Level_At_Inherit_Const(
             &Evaluator_Executor,
@@ -1201,7 +1201,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         if (Is_Ghost(OUT)) {  // even `(void):,` needs to error
             return PANIC(Error_Need_Non_End(CURRENT));
         }
-        else if (Is_Raised(OUT)) {
+        else if (Is_Error(OUT)) {
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
             goto lookahead;
         }
@@ -1297,7 +1297,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         if (error) {
             Init_Warning(OUT, unwrap error);
             Failify(OUT);
-            goto lookahead;  // e.g. EXCEPT might want to see raised error
+            goto lookahead;  // e.g. EXCEPT might want to see error
         }
 
         goto lookahead; }
@@ -1491,17 +1491,17 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     } set_block_rightside_meta_in_out: {  ////////////////////////////////////
 
-      // 1. On definitional errors we don't assign variables, yet we pass the
-      //    raised error through.  That permits code like this to work:
+      // 1. On errors we don't assign variables, yet pass the error through.
+      //    That permits code like this to work:
       //
       //        trap [[a b]: transcode "1&aa"]
 
         Meta_Unquotify_Undecayed(OUT);
 
-        if (Is_Raised(OUT))  // don't assign variables [1]
+        if (Is_Error(OUT))  // don't assign variables [1]
             goto set_block_drop_stack_and_continue;
 
-   } set_block_result_not_raised: {  /////////////////////////////////////////
+   } set_block_result_not_error: {  /////////////////////////////////////////
 
       // 2. We enumerate from left to right in the SET-BLOCK!, with the "main"
       //    being the first assigned to any variables.  This has the benefit
@@ -1583,7 +1583,7 @@ Bounce Meta_Stepper_Executor(Level* L)
                 goto circled_check;
             }
 
-            if (Is_Raised(SPARE))  // don't pass thru raised errors if not @
+            if (Is_Error(SPARE))  // don't pass thru errors if not @
                 return PANIC(Cell_Error(SPARE));
 
             Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
@@ -1871,7 +1871,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     // These cases represent finding the start of a new expression.
     //
     // Fall back on word-like "dispatch" even if ->gotten is null (unset or
-    // unbound word).  It'll be an error, but that code path raises it for us.
+    // unbound word).  It'll be an error, but that code path handles it.
 
  { Option(InfixMode) infix_mode;
 

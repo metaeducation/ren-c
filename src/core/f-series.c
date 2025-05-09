@@ -519,7 +519,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
 
     Level* const L = Make_End_Level(
         &Action_Executor,
-        FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | LEVEL_FLAG_RAISED_RESULT_OK
+        FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | LEVEL_FLAG_ERROR_RESULT_OK
     );
     const Value* action = LIB(LESSER_Q);
     Push_Action(L, action);
@@ -537,7 +537,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     if (threw)
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    if (Is_Raised(out))
+    if (Is_Error(out))
         return false;
 
     *lesser = Cell_Logic(out);

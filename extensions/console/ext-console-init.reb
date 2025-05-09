@@ -122,12 +122,12 @@ export console!: make object! [
 
         === FORM ERROR IF RAISED ===
 
-        ; The console knows the difference between a raised error returned as
+        ; The console knows the difference between an error returned as
         ; a result, and a panic.  It's worth thinking about how to present
         ; this nuance in the display...but for now we just form it, because
         ; it looks ugly to show the molded antiform object.
 
-        if raised? ^v [
+        if error? ^v [
             print form unquasi v
             return ~
         ]
@@ -151,7 +151,7 @@ export console!: make object! [
             any [  ; cannot decay packs automatically with unstable antiforms
                 void? unmeta v.1
                 ghost? unmeta v.1
-                raised? unmeta v.1
+                error? unmeta v.1
             ] then [
                 print "; undecayable pack"
                 print unspaced [result _ mold quasi v _ _ ";" _ "anti"]

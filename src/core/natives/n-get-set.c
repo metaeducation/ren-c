@@ -732,7 +732,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
             out,  // <-- output cell
             EVAL_EXECUTOR_FLAG_NO_RESIDUE
                 | LEVEL_FLAG_UNINTERRUPTIBLE
-                | LEVEL_FLAG_RAISED_RESULT_OK,
+                | LEVEL_FLAG_ERROR_RESULT_OK,
             CANON(PICK), temp, ins
         )){
             Drop_Data_Stack_To(base);
@@ -740,7 +740,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
             return Error_No_Catch_For_Throw(TOP_LEVEL);
         }
 
-        if (Is_Raised(cast(Atom*, out))) {
+        if (Is_Error(cast(Atom*, out))) {
             Error* error = Cell_Error(out);  // extract error
             bool last_step = (stackindex == TOP_INDEX);
 
@@ -875,7 +875,7 @@ bool Set_Var_Core_Updater_Throws(
     Option(const Value*) setval;
     if (Is_Void(poke))
         setval = nullptr;
-    else if (Is_Raised(poke))  // for now, skip assign
+    else if (Is_Error(poke))  // for now, skip assign
         return false;
     else
         setval = Decay_If_Unstable(poke);

@@ -32,7 +32,7 @@
     earlier: copy []
     later: copy []
     all [
-        raised? parse "abcd" [
+        error? parse "abcd" [
            "a" (append earlier <A>)
            "b" (<delay> append later <B>)
            "c" (append earlier <C>)
@@ -51,7 +51,7 @@
     earlier: copy []
     later: copy []
     all [
-        raised? parse "abcd" [
+        error? parse "abcd" [
            phase [
                "a" (append earlier <A>)
                "b" (<delay> append later <B>)

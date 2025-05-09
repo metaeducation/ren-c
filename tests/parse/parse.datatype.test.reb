@@ -69,7 +69,7 @@
     (
         res: ~
         all [
-            raised? parse [a 123] [
+            error? parse [a 123] [
                 'a (res: 1) [char?/ (res: 2) | text! (res: 3)]
             ]
             res = 1

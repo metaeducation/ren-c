@@ -134,7 +134,7 @@ INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd
 //
-// 1. We fall through in case result is pack or raised (should this iterate?)
+// 1. We fall through in case result is pack or error (should this iterate?)
 //
 // 2. If the first element in a pack is a pack, we could decay that.  Maybe
 //    we should, but my general feeling is that you should probably have to
@@ -142,7 +142,7 @@ INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
 //    create confusion to decay things automatically.  Experience may dictate
 //    that decaying automatically here is better, wait and see.
 //
-// 3. If there's a raised error in the non-primary slot of a pack, we don't
+// 3. If there's an antiform error in the non-primary slot of a pack, we don't
 //    want to just silently discard it.  The best way to make sure no packs
 //    are hiding errors is to recursively decay.
 //
@@ -159,7 +159,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         Meta_Unquotify_Undecayed(v);
         if (Is_Pack(v))
             panic (Error_Bad_Antiform(v));  // need more granular unpacking [2]
-        if (Is_Raised(v))
+        if (Is_Error(v))
             panic (Cell_Error(v));
         assert(Not_Antiform(v) or Is_Antiform_Stable(v));
 
@@ -170,7 +170,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
                 continue;
             DECLARE_ATOM (temp);
             Copy_Cell(temp, pack_meta_at);
-            Decay_If_Unstable(temp);  // don't drop raised errors on floor [3]
+            Decay_If_Unstable(temp);  // don't drop errors on floor [3]
         }
 
         return u_cast(Value*, u_cast(Atom*, v));
@@ -179,7 +179,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
     if (Is_Ghost(v))
         panic (Error_No_Value_Raw());  // distinct error from void?
 
-    if (Is_Raised(v))
+    if (Is_Error(v))
         panic (Cell_Error(v));
 
     return u_cast(Value*, u_cast(Atom*, v));
@@ -196,7 +196,7 @@ INLINE bool Is_Pack_Undecayable(Atom* pack)
     if (Is_Void(pack))
         return true;
     const Element* at = Cell_List_At(nullptr, pack);
-    if (Is_Meta_Of_Raised(at))
+    if (Is_Meta_Of_Error(at))
         return true;
     if (Is_Meta_Of_Pack(at))
         return true;

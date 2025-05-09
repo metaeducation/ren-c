@@ -188,7 +188,7 @@ DECLARE_NATIVE(SHOVE)
     switch (Cell_Parameter_Class(param)) {
       case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative infix [1]
       case PARAMCLASS_META: {
-        Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // will decay if normal
+        Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;  // will decay if normal
         if (Eval_Element_Core_Throws(OUT, flags, left, Level_Binding(L)))
             return THROWN;
         if (pclass == PARAMCLASS_NORMAL)
@@ -332,7 +332,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    has been considered to make GROUP!s be ghostable and BLOCK!s not
     //    so that it's guided by the type, but that's likely not useful.
 
-    Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
+    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;
 
     Level* sub = Make_Level_At(
         Bool_ARG(STEP) ? &Meta_Stepper_Executor : &Evaluator_Executor,
@@ -373,7 +373,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Option(const Atom*) with = nullptr;
     Push_Frame_Continuation(
         OUT,
-        LEVEL_FLAG_RAISED_RESULT_OK,
+        LEVEL_FLAG_ERROR_RESULT_OK,
         source,
         with
     );
@@ -462,7 +462,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
         Copy_Meta_Cell(Array_At(pack, 0), source);  // pack wants META values
-        Move_Meta_Atom(Array_At(pack, 1), OUT);  // may be raised
+        Move_Meta_Atom(Array_At(pack, 1), OUT);  // may be ERROR!
 
         Init_Pack(OUT, pack);
     }
@@ -514,7 +514,7 @@ DECLARE_NATIVE(EVAL_FREE)
     Level* L = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-            | LEVEL_FLAG_RAISED_RESULT_OK
+            | LEVEL_FLAG_ERROR_RESULT_OK
     );
 
     L->varlist = Varlist_Array(varlist);
@@ -945,7 +945,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 //
 #define Make_Action_Sublevel(parent) \
     Make_Level(&Action_Executor, (parent)->feed, \
-        LEVEL_FLAG_RAISED_RESULT_OK \
+        LEVEL_FLAG_ERROR_RESULT_OK \
         | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH))
 
 

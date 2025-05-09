@@ -187,13 +187,13 @@
 [#1244
     (all [
         let [a v]
-        raised? parse a: "12" [remove v: across one]
+        error? parse a: "12" [remove v: across one]
         a = "2"
         v = "1"
     ])
     (all [
         let [a v]
-        raised? parse a: "12" [remove [v: across one]]
+        error? parse a: "12" [remove [v: across one]]
         a = "2"
         v = "1"
     ])

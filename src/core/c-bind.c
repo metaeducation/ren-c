@@ -277,7 +277,7 @@ Let* Make_Let_Variable(
 //
 // This function is used by Derelativize(), and so it shouldn't have any
 // failure mode while it's running...even if the context is inaccessible or
-// the word is unbound.  Errors should be raised by callers if applicable.
+// the word is unbound.  Errors should be panicked by callers if applicable.
 //
 // 1. We want to continue the next_context loop from inside sub-loops, which
 //    means we need a `goto` and not a `continue`.  But putting the goto at
@@ -830,7 +830,7 @@ DECLARE_NATIVE(LET)
     Flags flags =
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
         | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | (L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
+        | (L->flags.bits & LEVEL_FLAG_ERROR_RESULT_OK);
 
     Level* sub = Make_Level(&Meta_Stepper_Executor, LEVEL->feed, flags);
     Copy_Cell(Evaluator_Level_Current(sub), cast(Element*, SPARE));

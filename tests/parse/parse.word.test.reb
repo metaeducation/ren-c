@@ -48,7 +48,7 @@
     (
         res: '~before~
         all [
-            raised? parse [a] [wb (res: 1)]
+            error? parse [a] [wb (res: 1)]
             res = '~before~
         ]
     )
@@ -72,7 +72,7 @@
         res: '~before~
         wres: ['b (res: 1)]
         all [
-            raised? parse [a] [wres]
+            error? parse [a] [wres]
             res = '~before~
         ]
     )
@@ -88,7 +88,7 @@
         res: ~
         wres: [char?/ (res: 2) | text! (res: 3)]
         all [
-            raised? parse [a 123] [wa (res: 1) wres]
+            error? parse [a 123] [wa (res: 1) wres]
             res = 1
         ]
     )
@@ -131,7 +131,7 @@
     (
         res: '~before~
         all [
-            raised? parse "a" [wb (res: 1)]
+            error? parse "a" [wb (res: 1)]
             res = '~before~
         ]
     )
@@ -155,7 +155,7 @@
         res: '~before~
         wres: [#b (res: 1)]
         all [
-            raised? parse "a" [wres]
+            error? parse "a" [wres]
             res = '~before~
         ]
     )
@@ -198,7 +198,7 @@
     (
         res: '~before~
         all [
-            raised? parse #{0A} [wb (res: 1)]
+            error? parse #{0A} [wb (res: 1)]
             res = '~before~
         ]
     )
@@ -222,7 +222,7 @@
         res: '~before~
         wres: [#{0B} (res: 1)]
         all [
-            raised? parse #{0A} [wres]
+            error? parse #{0A} [wres]
             res = '~before~
         ]
     )

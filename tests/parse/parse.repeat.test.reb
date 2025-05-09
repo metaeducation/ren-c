@@ -170,7 +170,7 @@
     (
         z: ~
         all [
-            raised? parse [a] [z: across repeat 0 one]
+            error? parse [a] [z: across repeat 0 one]
             z = []
         ]
     )
@@ -182,7 +182,7 @@
     (
         z: ~
         all [
-            raised? parse "a" [z: across repeat 0 one]
+            error? parse "a" [z: across repeat 0 one]
             z = ""
         ]
     )

@@ -139,7 +139,7 @@
         (pick a group)
     ][
         if empty? series [
-            assert [raised? random-pick series]
+            assert [error? random-pick series]
             assert [null = try random-pick series]
             continue
         ]

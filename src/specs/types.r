@@ -169,7 +169,7 @@ varargs     "evaluator position for variable numbers of arguments"
                 [any-inert?]
 
     warning     "context with id, arguments, and stack origin"
-    ~raised~:U  "trappable error cooperatively returned from a function call"
+    ~error~:U   "error state that is promoted to a panic if not handled"
                 (node1 node2)
                 [any-inert?]
 

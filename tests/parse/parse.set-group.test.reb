@@ -16,7 +16,7 @@
     m: <unchanged>
     word: 'm
     all [
-        raised? parse [1020] [(sum: 1 + 2, word): text!]
+        error? parse [1020] [(sum: 1 + 2, word): text!]
         word = 'm
         sum = 3
         m = <unchanged>

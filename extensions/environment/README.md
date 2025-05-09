@@ -15,13 +15,12 @@ Supporting PICK and POKE means TUPLE! access comes for free:
     >> env.PWD
     == "/usr/lib/"
 
-Attempting to PICK a variable that's not there raises an error:
+Attempting to PICK a variable that's not there will error:
 
     >> env.SOME_NONEXISTENT_THING
     ** Script Error: cannot pick SOME_NONEXISTENT_THING
 
-But as it's a raised error, you can say that's okay using TRY:
+But as it's an error, you can say that's okay using TRY:
 
     >> try env.SOME_NONEXISTENT_THING
     == ~null~  ; anti
-

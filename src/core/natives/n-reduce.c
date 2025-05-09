@@ -98,7 +98,7 @@ DECLARE_NATIVE(REDUCE)
         &Meta_Stepper_Executor,
         v,  // TYPE_BLOCK or TYPE_GROUP
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-            | LEVEL_FLAG_RAISED_RESULT_OK  // predicates like META may handle
+            | LEVEL_FLAG_ERROR_RESULT_OK  // predicates like META may handle
     );
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
     goto next_reduce_step;
@@ -254,7 +254,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (Is_Meta_Word(vars)) {  // Note: gets converted to object in next step
-        flags |= LEVEL_FLAG_RAISED_RESULT_OK;
+        flags |= LEVEL_FLAG_ERROR_RESULT_OK;
         assert(!"need to review REDUCE-EACH with meta word");
     }
 
@@ -464,7 +464,7 @@ static void Push_Composer_Level(
             Is_Cell_Erased(adjusted) ? list_or_seq : adjusted
         ),
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
-            | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
+            | LEVEL_FLAG_ERROR_RESULT_OK  // bubbles up definitional errors
     );
     Push_Level_Erase_Out_If_State_0(out, sub);  // sublevel may fail
 
@@ -783,7 +783,7 @@ Bounce Composer_Executor(Level* const L)
 
     // The compose stack of the nested compose is relative to *its* baseline.
 
-    if (Is_Raised(OUT)) {
+    if (Is_Error(OUT)) {
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);
         Drop_Level(SUBLEVEL);
         return OUT;
@@ -926,7 +926,7 @@ DECLARE_NATIVE(COMPOSE2)
 
 } list_compose_finished: {  //////////////////////////////////////////////////
 
-    if (not Is_Raised(OUT)) {  // sublevel was killed
+    if (not Is_Error(OUT)) {  // sublevel was killed
         assert(Is_Quasar(OUT));
         Option(Error*) e = Trap_Finalize_Composer_Level(
             OUT, SUBLEVEL, input, Bool_ARG(CONFLATE)
@@ -1063,7 +1063,7 @@ DECLARE_NATIVE(COMPOSE2)
             );
 
             Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-                /*| LEVEL_FLAG_RAISED_RESULT_OK*/  // definitional errors?
+                /*| LEVEL_FLAG_ERROR_RESULT_OK*/  // definitional errors?
                 | FLAG_STATE_BYTE(Scanner_State_For_Terminal(terminal));
 
             if (stack_index != TOP_INDEX - 1)
@@ -1186,14 +1186,14 @@ DECLARE_NATIVE(COMPOSE2)
     STATE = ST_COMPOSE2_STRING_EVAL;
     return CONTINUE_CORE(
         OUT,
-        LEVEL_FLAG_RAISED_RESULT_OK,  // we will bubble out raised errors
+        LEVEL_FLAG_ERROR_RESULT_OK,  // we will bubble out error antiforms
         SPECIFIED,
         Copy_Cell(SPARE, code)  // pass non-stack code
     );
 
 } string_eval_in_out: { //////////////////////////////////////////////////////
 
-    if (Is_Raised(OUT)) {
+    if (Is_Error(OUT)) {
         Drop_Data_Stack_To(STACK_BASE);
         return OUT;
     }

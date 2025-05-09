@@ -141,7 +141,7 @@ PVAR Value* g_error_codepoint_too_high;
 PVAR Value* g_error_no_utf8_surrogates;
 PVAR Value* g_error_illegal_zero_byte;
 
-PVAR Value* g_error_done_enumerating;
+PVAR Value* g_error_done;
 
 PVAR Cell g_erased_cell;  // target of bottommost level, always erased cell
 

@@ -176,7 +176,7 @@
     i: 0
     j: ~
     all [
-        raised? parse "a" [opt some [(i: i + 1, j: if i = 2 '[bypass]) j]]
+        error? parse "a" [opt some [(i: i + 1, j: if i = 2 '[bypass]) j]]
         i = 2
     ]
 )]

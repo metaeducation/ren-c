@@ -188,7 +188,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Level* level_ = TOP_LEVEL;  // sublevel stole the varlist
     assert(level_->prior == L);
 
-    if (Is_Raised(OUT)) {
+    if (Is_Error(OUT)) {
         Drop_Level(level_);
         return OUT;
     }
@@ -236,7 +236,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     if (THROWING)
         return BOUNCE_THROWN;
 
-    if (Is_Raised(reverse))
+    if (Is_Error(reverse))
         return PANIC(Cell_Error(reverse));
 
     Decay_If_Unstable(reverse);  // should packs from TO be legal?

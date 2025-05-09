@@ -1242,7 +1242,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
         panic (Error_Apply_Too_Many_Raw());
 
     if (
-        Is_Meta_Of_Raised(out) and (flags & LEVEL_FLAG_RAISED_RESULT_OK)
+        Is_Meta_Of_Error(out) and (flags & LEVEL_FLAG_ERROR_RESULT_OK)
     ){
         Meta_Unquotify_Undecayed(cast(Atom*, out));
         return false;  // !!! Lying about the result being a RebolValue !
@@ -1398,7 +1398,7 @@ RebolValue* API_rebEntrap(
 
     assert(not Is_Nulled(v));  // meta operations cannot produce NULL
 
-    if (Is_Meta_Of_Raised(v))
+    if (Is_Meta_Of_Error(v))
         QUOTE_BYTE(v) = NOQUOTE_1;  // plain error
     else
         assert(QUOTE_BYTE(v) > NOQUOTE_1);
@@ -1435,7 +1435,7 @@ RebolValue* API_rebRescue(
         Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
     }
-    assert(not Is_Raised(cast(Atom*, v)));  // no LEVEL_FLAG_RAISED_RESULT_OK
+    assert(not Is_Error(cast(Atom*, v)));  // no LEVEL_FLAG_ERROR_RESULT_OK
     Decay_If_Unstable(cast(Atom*, v));
     Set_Node_Root_Bit(v);
     *value = v;
@@ -1470,7 +1470,7 @@ RebolValue* API_rebRescueInterruptible(
         Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
     }
-    assert(not Is_Raised(cast(Atom*, v)));  // no LEVEL_FLAG_RAISED_RESULT_OK
+    assert(not Is_Error(cast(Atom*, v)));  // no LEVEL_FLAG_ERROR_RESULT_OK
     Decay_If_Unstable(cast(Atom*, v));
     Set_Node_Root_Bit(v);
     *value = v;
@@ -1552,7 +1552,7 @@ void API_rebElide(
 // inform the compiler that the routine is not expected to return.  Use it
 // with things like `rebJumps("panic", ...)` or `rebJumps("throw", ...)`.  If
 // by some chance the code passed to it does not jump and finishes normally,
-// then an error will be raised.
+// then it will panic.
 //
 // !!! The name is not ideal, but other possibilites aren't great:
 //
@@ -3334,7 +3334,7 @@ static void Panic_If_Top_Level_Not_Continuable() {
 //
 // rebDelegate() can be used to work around the inability of Value* to store
 // unstable isotopes.  So if a native based on the librebol API wants to
-// return something like a raised error or a pack, it must use rebDelegate().
+// return something like an error or a pack, it must use rebDelegate().
 //
 // It's also the right way to perform an abrupt failure, by doing a call
 // to `rebDelegate("panic" ...)`.  Otherwise, exceptions or longjmp() have
@@ -3353,7 +3353,7 @@ RebolBounce API_rebDelegate(
     API_rebPushContinuation_internal(
         binding,
         cast(Value*, TOP_LEVEL->out),
-        LEVEL_FLAG_RAISED_RESULT_OK,  // definitional error if raised
+        LEVEL_FLAG_ERROR_RESULT_OK,
         p, vaptr
     );
     return BOUNCE_DELEGATE;

@@ -220,7 +220,7 @@ help-value: func [
         action? ^atom' ['action]
         pack? ^atom' ['pack!]
         ghost? ^atom' ['ghost!]
-        raised? ^atom' ['raised!]
+        error? ^atom' ['error!]
 
         antiform? ^atom' [
             panic "Invalid Antiform Heart Found, Please Report:" @atom'

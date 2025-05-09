@@ -22,9 +22,9 @@
 //
 // This file implements a RESCUE_SCOPE abstraction of C++'s `try/catch`
 // which can also be compiled as plain C using setjmp/longjmp().  It's for
-// trapping "abrupt errors", that trigger from the `panic` pseudo-"keyword"
+// trapping "abrupt panics", that trigger from the `panic` pseudo-"keyword"
 // in C code.  These happen at arbitrary moments and are not willing (or able)
-// to go through a normal `return` chain to pipe a raised ERROR! up the stack.
+// to go through a normal `return` chain to pipe an ERROR! up the stack.
 //
 // The abstraction is done with macros, and looks similar to try/catch:
 //
@@ -46,10 +46,10 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * In Rebol terminology, abrupt errors triggered by PANIC are mechanically
-//   distinct from a THROW.  Rebol THROW is a cooperative concept, which
-//   does *not* use exceptions or longjmp().  Instead a native implementation
-//   must go all the way to the `return` statement to say `return THROWN;`.
+// * In Rebol terminology, abrupt panics triggered by panic() are mechanically
+//   distinct from cooperative panics, e.g. `return PANIC()`...which does
+//   *not* use exceptions or longjmp().  Instead a native implementation
+//   must go all the way to the `return` statement to say `return PANIC()`.
 //
 // * To help Rebol clean up after itself for some kinds of "dangling" state,
 //   it will automatically free manually memory managed Flexes made with

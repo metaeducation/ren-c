@@ -63,7 +63,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     assert(L->executor == &Action_Executor);
 
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
-    flags |= L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK;
+    flags |= L->flags.bits & LEVEL_FLAG_ERROR_RESULT_OK;
 
     Level* sub = Make_Level(&Action_Executor, L->feed, flags);
     Push_Level_Erase_Out_If_State_0(out, sub);
@@ -182,8 +182,8 @@ Bounce Cascader_Executor(Level* const L)
     //    but it might be bugs waiting to happen, trying it this way for now.
 
     Level* sub = SUBLEVEL;
-    if (Get_Level_Flag(L, RAISED_RESULT_OK))
-        assert(Get_Level_Flag(sub, RAISED_RESULT_OK));
+    if (Get_Level_Flag(L, ERROR_RESULT_OK))
+        assert(Get_Level_Flag(sub, ERROR_RESULT_OK));
 
     if (sub->varlist and Not_Node_Managed(sub->varlist))
         GC_Kill_Flex(sub->varlist);

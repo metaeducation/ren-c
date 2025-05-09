@@ -1388,8 +1388,7 @@ DECLARE_NATIVE(RETURN_OF)
 //
 //  "Get a loose representation of a function's implementation"
 //
-//      return: "Raised error if no body available (use TRY to get NULL)"
-//          [block! raised!]
+//      return: [block! error!]
 //      frame [<unrun> frame!]
 //  ]
 //

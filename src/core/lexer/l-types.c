@@ -32,9 +32,9 @@
 //
 //  "Give back the type of a value (all quoted values return QUOTED!)"
 //
-//      return: [datatype! word!]
-//      value "TYPE-OF null will return a raised error, use TRY if meant"
-//          [any-value?]
+//      return: "TYPE-OF null returns an error, use TRY if meant"
+//          [datatype! error!]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(TYPE_OF)
@@ -367,7 +367,7 @@ DECLARE_NATIVE(OF)
         return PANIC("OF looked up to a value that wasn't an ACTION!");
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
-        | LEVEL_FLAG_RAISED_RESULT_OK;
+        | LEVEL_FLAG_ERROR_RESULT_OK;
 
     Level* sub = Make_Level(&Meta_Stepper_Executor, level_->feed, flags);
     Copy_Meta_Cell(Evaluator_Level_Current(sub), fetched);

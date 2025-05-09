@@ -48,7 +48,7 @@
     (
         res: '~before~
         all [
-            raised? parse [a] ['b (res: 1)]
+            error? parse [a] ['b (res: 1)]
             res = '~before~
         ]
     )
@@ -69,7 +69,7 @@
     (
         res: '~before~
         all [
-            raised? parse [a] [['b (res: 1)]]
+            error? parse [a] [['b (res: 1)]]
             res = '~before~
         ]
     )
@@ -122,7 +122,7 @@
     (
         res: '~before~
         all [
-            raised? parse [a a] [res: repeat 3 'a]
+            error? parse [a a] [res: repeat 3 'a]
             res = '~before~
         ]
     )

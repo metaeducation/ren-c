@@ -146,7 +146,7 @@
     (
         res: '~before~
         all [
-            raised? parse [a] [res: ['c | 'b]]
+            error? parse [a] [res: ['c | 'b]]
             res = '~before~
         ]
     )

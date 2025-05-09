@@ -25,7 +25,7 @@
 )(
     x: <before>
     all [
-        raised? parse [] [x: [integer!]]
+        error? parse [] [x: [integer!]]
         x = <before>
     ]
 )(

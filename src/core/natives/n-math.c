@@ -419,8 +419,8 @@ DECLARE_NATIVE(RANDOM_BETWEEN)
 //
 //  "Picks an arbitrary member out of a collection (see also SHUFFLE, RANDOM)"
 //
-//      return: "Raised error if empty, use TRY RANDOM-PICK to get ~null~"
-//          [raised! element?]
+//      return: "Error if collection empty (use TRY RANDOM-PICK to get NULL)"
+//          [element? error!]
 //      collection [fundamental?]
 //      :secure "Old refinement from R3-Alpha: Review"
 //  ]
@@ -981,7 +981,7 @@ DECLARE_NATIVE(LESSER_Q)
 }
 
 
-// We want LESSER? to always give a soft failure through a raised error, so
+// We want LESSER? to always give a soft failure through an error antiform, so
 // that we can fall back on EQUAL?.  e.g.
 //
 //    >> [1 _ "a"] < [2 _ "b"]
@@ -1016,7 +1016,7 @@ DECLARE_NATIVE(SAME_Q)
 // !!! It's not clear that SAME? should be answering for types like INTEGER!
 // or other immediates with the same answer as EQUAL?.  It might should be
 // that SAME? only works on things that are references, like series and
-// objects, and gives you a raised error that you can TRY on to then fall
+// objects, and gives you an error antiform that you can TRY on to then fall
 // back on equality if that is meaningful to your situation.
 {
     INCLUDE_PARAMS_OF_SAME_Q;

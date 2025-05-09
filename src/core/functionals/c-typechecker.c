@@ -339,7 +339,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         if (bounce == BOUNCE_PANIC)
             panic (Error_No_Catch_For_Throw(TOP_LEVEL));
         assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
-        if (Is_Raised(L->out))
+        if (Is_Error(L->out))
             panic (Cell_Error(L->out));
         panic (Error_No_Logic_Typecheck(label));
     }
@@ -765,7 +765,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
             goto typecheck_again;
         }
 
-        if (Is_Raised(atom))
+        if (Is_Error(atom))
             goto return_false;
 
         if (Is_Pack(atom) and Is_Pack_Undecayable(atom))

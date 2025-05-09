@@ -108,7 +108,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     Element* block_rebound = Copy_Cell(SPARE, block);
     Tweak_Cell_Binding(SPARE, L->varlist);
 
-    Flags flags = (LEVEL->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
+    Flags flags = (LEVEL->flags.bits & LEVEL_FLAG_ERROR_RESULT_OK);
 
     Level* sub = Make_Level_At_Core(
         &Evaluator_Executor, block_rebound, SPECIFIED, flags

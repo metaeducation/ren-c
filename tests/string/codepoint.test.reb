@@ -18,14 +18,14 @@
         bincopy: insert bincopy #{AA}
         assert [cp = codepoint of bincopy]  ; non-head ok
         append bincopy #{BB}
-        assert [raised? codepoint of bincopy]  ; tail data bad
+        assert [error? codepoint of bincopy]  ; tail data bad
 
         txtcopy: to text! c
         assert [cp = codepoint of txtcopy]
         txtcopy: insert txtcopy "A"
         assert [cp = codepoint of txtcopy]  ; non-head ok
         append txtcopy "B"
-        assert [raised? codepoint of txtcopy]  ; tail data bad
+        assert [error? codepoint of txtcopy]  ; tail data bad
     ]
     ok
 )

@@ -44,7 +44,7 @@ DECLARE_NATIVE(TRY)
     if (Is_Meta_Of_Void(meta) or Is_Meta_Of_Null(meta))
         return Init_Nulled(OUT);
 
-    if (Is_Meta_Of_Raised(meta))
+    if (Is_Meta_Of_Error(meta))
         return nullptr;
 
     return UNMETA(meta);  // !!! also tolerates other antiforms, should it?
@@ -56,7 +56,7 @@ DECLARE_NATIVE(TRY)
 //
 //  "Sandbox code to intercept failures at ANY depth (including typos)"
 //
-//      return: "ERROR! if raised, else ^META of the result"
+//      return: "WARNING! if result is ERROR!, else ^META of the result"
 //          [warning! quoted! quasiform! blank!]
 //      code "Code to sandbox and monitor"
 //          [<unrun> frame! any-list?]
@@ -99,7 +99,7 @@ DECLARE_NATIVE(ENRESCUE)
     Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
-        LEVEL_FLAG_RAISED_RESULT_OK
+        LEVEL_FLAG_ERROR_RESULT_OK
     );
     Init_Void(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
 
@@ -112,7 +112,7 @@ DECLARE_NATIVE(ENRESCUE)
 } eval_result_in_out: {  /////////////////////////////////////////////////////
 
     if (not THROWING) {  // successful result
-        if (Is_Raised(OUT)) {
+        if (Is_Error(OUT)) {
             QUOTE_BYTE(OUT) = NOQUOTE_1;  // turn it into normal error
             return OUT;
         }
@@ -137,9 +137,9 @@ DECLARE_NATIVE(ENRESCUE)
 //
 //  entrap: native [
 //
-//  "Tries to EVAL a block, trapping raised errors"
+//  "Tries to EVAL a block, trapping error antiforms"
 //
-//      return: "ERROR! if raised, else the ^META of the result"
+//      return: "WARNING! if antiform error, else the ^META of the result"
 //          [warning! quasiform! quoted! blank!]
 //      code "Code to execute and monitor"
 //          [block! frame!]
@@ -148,7 +148,7 @@ DECLARE_NATIVE(ENRESCUE)
 DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 //
 // Unlike SYS.UTIL/RESCUE, the ENTRAP function only reacts to errors from the
-// functions it directly calls via LEVEL_FLAG_RAISED_RESULT_OK.  Hence it
+// functions it directly calls via LEVEL_FLAG_ERROR_RESULT_OK.  Hence it
 // does not intercept thrown "failures", making it much safer to react to the
 // errors one gets back from it.
 {
@@ -178,11 +178,13 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 
   initial_entry: {  /////////////////////////////////////////////////////////
 
+  // 1. We aren't catching throws or panics, only cooperative ERROR! results.
+
     Init_Void(OUT);  // default if all evaluations produce void
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-        | LEVEL_FLAG_RAISED_RESULT_OK;  // we're trapping it
+        | LEVEL_FLAG_ERROR_RESULT_OK;  // we're trapping it
 
     Level* sub;
     if (Is_Block(code)) {
@@ -193,7 +195,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
         );
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
         STATE = ST_ENTRAP_EVAL_STEPPING;
-        unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // raiseds
+        unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
         return CONTINUE_SUBLEVEL(sub);
     }
 
@@ -209,12 +211,12 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
     sub = TOP_LEVEL;
 
     STATE = ST_ENTRAP_RUNNING_FRAME;
-    unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // raiseds
+    unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
     return CONTINUE_SUBLEVEL(sub);
 
 } eval_step_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Raised(SPARE)) {
+    if (Is_Error(SPARE)) {
         Drop_Level(SUBLEVEL);
         Move_Atom(OUT, SPARE);
         QUOTE_BYTE(OUT) = NOQUOTE_1;  // change antiform error to plain
@@ -257,8 +259,8 @@ DECLARE_NATIVE(EXCEPT)
     Element* meta_atom = Element_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
-    if (not Is_Meta_Of_Raised(meta_atom))
-        return UNMETA(meta_atom);  // pass thru anything not a raised error
+    if (not Is_Meta_Of_Error(meta_atom))
+        return UNMETA(meta_atom);  // pass thru any non-errors
 
     return DELEGATE_BRANCH(
         OUT,
@@ -269,7 +271,7 @@ DECLARE_NATIVE(EXCEPT)
 
 
 //
-//  raised?: native:intrinsic [
+//  error?: native:intrinsic [
 //
 //  "Tells you if argument is an ERROR! antiform, doesn't panic if it is"
 //
@@ -277,48 +279,15 @@ DECLARE_NATIVE(EXCEPT)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(RAISED_Q)
+DECLARE_NATIVE(ERROR_Q)
 {
-    INCLUDE_PARAMS_OF_RAISED_Q;
+    INCLUDE_PARAMS_OF_ERROR_Q;
 
     Option(Heart) heart;
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_WARNING);
-}
-
-
-//
-//  unraised?: native:intrinsic [
-//
-//  "Tells you if argument is not an ERROR! antiform, doesn't panic if it is"
-//
-//      return: [logic?]
-//      ^atom
-//  ]
-//
-DECLARE_NATIVE(UNRAISED_Q)
-//
-// !!! What this should be called is still under debate.  It may be that it
-// should be called SUCCESS?, e.g.
-//
-//      if success? parse "bb" [some "a"] [print "Succeeded!"]
-//
-// Note the same number of characters comes from:
-//
-//      if not trap parse "bb" [some "a"] [print "Succeeded!"]
-//
-// SUCCESS? seems good but it's also pretty vague, while UNRAISED? is laser
-// focused for what the test is actually doing.
-{
-    INCLUDE_PARAMS_OF_UNRAISED_Q;
-
-    Option(Heart) heart;
-    QuoteByte quote_byte;
-    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
-
-    return LOGIC(not (quote_byte == ANTIFORM_0 and heart == TYPE_WARNING));
 }
 
 

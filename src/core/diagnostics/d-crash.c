@@ -396,7 +396,7 @@ DECLARE_NATIVE(CRASH)
 //
 //  "Version of FAIL of definitional error that only takes ERROR!"
 //
-//      return: [raised!]
+//      return: [error!]
 //      reason [warning!]
 //  ]
 //

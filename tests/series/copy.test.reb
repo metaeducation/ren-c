@@ -21,7 +21,7 @@
 ([] = copy:part [] 0)
 ([] = copy:part [] 1)
 ([] = copy:part [] 2147483647)
-(unraised? copy blank)
+(blank = copy blank)
 
 ;[#877
 ;    ~stack-overflow~ !! (

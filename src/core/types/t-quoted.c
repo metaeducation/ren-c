@@ -160,7 +160,7 @@ DECLARE_NATIVE(UNQUOTE)
 //  "Constructs a quasi form of the evaluated argument (if legal)"
 //
 //      return: "Raises an error if type cannot make the quasiform"
-//          [quasiform! raised!]
+//          [quasiform! error!]
 //      element "Any non-QUOTED! value for which quasiforms are legal"
 //          [fundamental? quasiform!]
 //      :pass "If input is already a quasiform, then pass it trhough"
@@ -234,7 +234,7 @@ DECLARE_NATIVE(META)
 
     Value* meta = ARG(ATOM); // arg already ^META, no need to Meta_Quotify()
 
-    if (Is_Meta_Of_Raised(meta)) {
+    if (Is_Meta_Of_Error(meta)) {
         if (not Bool_ARG(EXCEPT))
             return PANIC(Cell_Error(ARG(ATOM)));
 
@@ -327,7 +327,7 @@ DECLARE_NATIVE(UNMETA)
 //
 //  unmeta*: native [
 //
-//  "Variant of UNMETA that can synthesize any atom (raised, pack, ghost...)"
+//  "Variant of UNMETA that can synthesize any atom (error, pack, ghost...)"
 //
 //      return: [any-atom?]
 //      metaform [quoted! quasiform?]
@@ -506,7 +506,7 @@ INLINE bool Pack_Native_Core_Throws(
 //
 //  pack: native [
 //
-//  "Create a pack of arguments from a list, no raised errors (or see PACK*)"
+//  "Create a pack of arguments from a list, no errors (see PACK*)"
 //
 //      return: "Antiform of BLOCK!"
 //          [pack!]
@@ -516,7 +516,7 @@ INLINE bool Pack_Native_Core_Throws(
 //
 DECLARE_NATIVE(PACK)
 //
-// 1. Using the predicate META means that raised errors aren't tolerated in
+// 1. Using the predicate META means that error antiforms aren't tolerated in
 //    the main pack routine.  You have to use PACK*, which uses META* instead.
 //
 //        https://forum.rebol.info/t/2206
@@ -525,7 +525,7 @@ DECLARE_NATIVE(PACK)
 
     Element* block = Element_ARG(BLOCK);
 
-    if (Pack_Native_Core_Throws(OUT, block, LIB(META)))  // no raised [1]
+    if (Pack_Native_Core_Throws(OUT, block, LIB(META)))  // no errors [1]
         return THROWN;
     return OUT;
 }
@@ -534,7 +534,7 @@ DECLARE_NATIVE(PACK)
 //
 //  pack*: native [
 //
-//  "Create a pack of arguments from a list, raised errors okay (or see PACK)"
+//  "Create a pack of arguments from a list, error antiforms okay"
 //
 //      return: "Antiform of BLOCK!"
 //          [pack!]
@@ -640,7 +640,7 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
     if (Is_Meta_Of_Null(meta))  // light null
         return VOID;
 
-    if (Is_Meta_Of_Raised(meta))  // raised errors (e.g. fold in a TRY)
+    if (Is_Meta_Of_Error(meta))  // Voids errors (e.g. OPT folds in a TRY)
         return VOID;
 
     if (Is_Meta_Of_Ghost(meta))
@@ -659,16 +659,16 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
         return VOID;  // not strict
     }
 
-    return OUT;  // passthru everything else (raised errors?)
+    return OUT;  // passthru everything else
 }
 
 
 //
 //  optional: native:intrinsic [
 //
-//  "If argument is null or raised error make it void, else passthru"
+//  "If argument is null or error antiform make it void, else passthru"
 //
-//      return: "Void if input value was null or a raised error"
+//      return: [any-atom?]
 //      ^atom "Decayed if pack"
 //      :light "If true, then nulls in packs will panic instead of void"
 //  ]
@@ -690,9 +690,9 @@ DECLARE_NATIVE(OPTIONAL)  // ususally used via its alias of OPT
 //
 //  optional-light: native:intrinsic [
 //
-//  "If argument is light null or raised error make it void, else passthru"
+//  "If argument is light null or error antiform make it void, else passthru"
 //
-//      return: "Void if input value was light null or a raised error"
+//      return: [any-atom?]
 //      ^atom "Decayed if pack, but packed nulls will panic instead of void"
 //  ]
 //

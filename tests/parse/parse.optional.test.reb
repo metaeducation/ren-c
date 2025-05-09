@@ -48,6 +48,6 @@
 
 [https://gitter.im/red/bugs?at=638e27b34cb5585f9666500d (
     x: ~
-    raised? parse [1] [optional (x: 'true)]
+    error? parse [1] [optional (x: 'true)]
     x = 'true
 )]

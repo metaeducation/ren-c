@@ -143,7 +143,7 @@
 ; in that there are no "pure invisibles".  So saying that it's an <end> is
 ; questionable.  Review when there's enough time in priorities to think on it.
 ;
-;     (unraised? trap [reeval (lambda [x [<end>]] []) ||| 1 2 3])
+;     (not error? trap [reeval (lambda [x [<end>]] []) ||| 1 2 3])
 ;     (warning? trap [reeval (lambda [x [~null~]] []) ||| 1 2 3])
 
 (

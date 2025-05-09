@@ -398,7 +398,7 @@ DECLARE_NATIVE(OPT_COMBINATOR)
 
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 
-    if (not Is_Raised(OUT))  // parser succeeded...
+    if (not Is_Error(OUT))  // parser succeeded...
         return OUT;  // so return its result
 
     Copy_Cell(remainder, input);  // convey no progress made

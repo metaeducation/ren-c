@@ -238,7 +238,7 @@ bind construct [
     let keyword-match: null  ; variable that gets set by rule
     let any-keyword-suffix-rule: inside [] collect [
         for-each [keyword value] values [
-            if raised? parse :[keyword] keyword-types [
+            if error? parse :[keyword] keyword-types [
                 panic ["Invalid keyword type:" keyword]
             ]
 

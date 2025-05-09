@@ -2749,7 +2749,7 @@ comment [combinatorize: func [
 ;
 ;  * The parser takes an INPUT series at a given position as an argument
 ;  * If it matches, it will give back a synthesized value and a remainder
-;  * If it doesn't match, it will return a raised error
+;  * If it doesn't match, it will return an error
 ;
 ; Parsify searches for elements in the combinator map, and it will coordinate
 ; the connections between those combinators.  However, since combinators are
@@ -2960,7 +2960,7 @@ parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
     return: "Synthesized value from last match rule, and any pending values"
-        [~[[any-value? pack!] [blank! block!]]~ raised!]
+        [~[[any-value? pack!] [blank! block!]]~ error!]
     input "Input data"
         [<opt-out> any-series? url! any-sequence?]
     rules "Block of parse rules"
@@ -3114,7 +3114,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
             ]
             rules: compose [(rules) accept <here>]
         ]
-        try/  ; want to return NULL instead of raised error on mismatch
+        try/  ; want to return NULL instead of error antiform on mismatch
     ]
 )
 

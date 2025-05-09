@@ -162,7 +162,7 @@ INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
 
     const Element* meta = Level_Intrinsic_Arg_Meta(L);
 
-    if (Is_Meta_Of_Raised(meta))
+    if (Is_Meta_Of_Error(meta))
         return Native_Panic_Result(L, Cell_Error(meta));
 
     Copy_Cell(v, meta);
@@ -183,7 +183,7 @@ INLINE Option(Bounce) Trap_Bounce_Meta_Decay_Value_Intrinsic(
 
     const Element* meta = Level_Intrinsic_Arg_Meta(L);
 
-    if (Is_Meta_Of_Raised(meta))
+    if (Is_Meta_Of_Error(meta))
         return Native_Panic_Result(L, Cell_Error(meta));
 
     Copy_Cell(out, meta);

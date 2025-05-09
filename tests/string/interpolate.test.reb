@@ -46,7 +46,7 @@
     url = https://forum.rebol.info/t/2114
 )
 
-; Raised errors bubble out
+; Errors bubble out
 [
     ~nothing-to-take~ !! (
         let block: [a]

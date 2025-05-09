@@ -12,7 +12,7 @@
 
 (
     x: 304
-    raised? x: maybe fail "propagate"
+    error? x: maybe fail "propagate"
 )
 
 (

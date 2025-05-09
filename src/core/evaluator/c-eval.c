@@ -110,7 +110,7 @@ Bounce Evaluator_Executor(Level* const L)
         Level* sub = Make_Level(  // need sublevel to hook steps, see [A]
             &Meta_Stepper_Executor,
             L->feed,
-            LEVEL_FLAG_RAISED_RESULT_OK
+            LEVEL_FLAG_ERROR_RESULT_OK
                 | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );
         Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -150,7 +150,7 @@ Bounce Evaluator_Executor(Level* const L)
     //    was shown to be non-invisible.  This would allow invisible
     //    evaluations to come after an error and still fall out:
     //
-    //        >> raised? (fail "some error" comment "invisible")
+    //        >> error? (fail "some error" comment "invisible")
     //        == ~true~  ; anti
     //
     //    However, this means you have to wait until you know if the next
@@ -177,8 +177,8 @@ Bounce Evaluator_Executor(Level* const L)
     Move_Atom(PRIMED, OUT);  // make current result the preserved one
     Meta_Unquotify_Undecayed(PRIMED);
 
-    if (Is_Raised(PRIMED)) {  // raise synchronous error if not at end [1]
-        dont(Try_Is_Level_At_End_Optimization(L));  // (raise x,) must error
+    if (Is_Error(PRIMED)) {  // panic if error seen before last step [1]
+        dont(Try_Is_Level_At_End_Optimization(L));  // (fail x,) must error
         if (not Is_Feed_At_End(L->feed))
             return PANIC(Cell_Error(PRIMED));
         goto finished;

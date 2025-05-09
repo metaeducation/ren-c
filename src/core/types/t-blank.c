@@ -183,7 +183,7 @@ IMPLEMENT_GENERIC(AS, Is_Blank)
 
 
 // The concept is that wherever it can, blank responds the same way that an
-// empty list would.  So, we give a raised error you can TRY to disarm.
+// empty list would.  So, we give an error you can TRY to disarm.
 //
 IMPLEMENT_GENERIC(PICK, Is_Blank)
 {

@@ -558,7 +558,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
         )
     );
 
-    if (Is_Raised(atom))
+    if (Is_Error(atom))
         return true;  // For now, all functions return definitional errors
 
     if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(atom))

@@ -90,7 +90,7 @@
 [
     ([abc def] = [#]: transcode "abc def")
     ('abc = [# {#}]: transcode:next "abc def")
-    (raised? [# {#}]: transcode:next "3o4")
+    (error? [# {#}]: transcode:next "3o4")
     ('scan-invalid = pick trap [[# #]: transcode:next "3o4"] 'id)
 ]
 

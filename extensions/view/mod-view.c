@@ -120,7 +120,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
 
     Value* results = rebValue("copy []");  // collected in block and returned
 
-    Value* error = nullptr;  // error saved to raise after buffers freed
+    Value* error = nullptr;  // error saved to report after buffers freed
 
     bool saving = rebDid("save");
     bool multi = rebDid("multi");

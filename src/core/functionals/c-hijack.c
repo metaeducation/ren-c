@@ -147,8 +147,8 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     Shutdown_Evars(&e);
 
     Flags flags = LEVEL_MASK_NONE;
-    if (Get_Level_Flag(L1, RAISED_RESULT_OK))
-        flags |= LEVEL_FLAG_RAISED_RESULT_OK;  // inherit failure tolerance
+    if (Get_Level_Flag(L1, ERROR_RESULT_OK))
+        flags |= LEVEL_FLAG_ERROR_RESULT_OK;  // inherit failure tolerance
 
     DECLARE_ELEMENT (block);
     Init_Block(block, normals);

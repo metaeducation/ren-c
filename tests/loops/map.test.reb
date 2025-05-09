@@ -25,11 +25,11 @@
     [5 11] = map [_ a b] each [1 2 3 4 5 6] [a + b]
 )]
 
-; ACTION!s are called repeatedly util raised "done enumerating" is returned
-; (DONE raises this error)
+; ACTION!s are called repeatedly util an "enumeration exhausted" error returned
+; (DONE synthesizes this error antiform)
 (
     make-one-thru-five: func [
-        return: [raised! integer!]
+        return: [error! integer!]
     ] bind construct [count: 0] [
         if count = 5 [return done]
         return count: count + 1
@@ -39,7 +39,7 @@
     ]
 )(
     make-one-thru-five: func [
-        return: [raised! integer!]
+        return: [error! integer!]
     ] bind construct [count: 0] [
         if count = 5 [return done]
         return count: count + 1

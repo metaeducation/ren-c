@@ -117,7 +117,7 @@
                     | #"]" :(f x)
                 ]
             ]
-            return unraised? parse s [opt some r <end>]
+            return not error? parse s [opt some r <end>]
         ]
 
         f "420,]]"

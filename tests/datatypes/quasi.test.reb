@@ -163,7 +163,7 @@
     (trash? do "Rebol [] quit 0")
     (do "Rebol [] quit 1" except e -> [e.exit-code = 1])
     (quasi? do "Rebol [] quit:value ^^ fail -[some error]-")  ; ^^ escapes ^
-    (raised? do "Rebol [] quit:value fail* make warning! -[some error]-")
+    (error? do "Rebol [] quit:value fail* make warning! -[some error]-")
 ]
 
 ; Antiforms make it easier to write generic routines that handle QUASI-WORD?
