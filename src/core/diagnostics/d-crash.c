@@ -33,14 +33,14 @@
     #include <unistd.h>  // STDERR_FILENO
 #endif
 
-// Recursive panic() can generate a very large spew of output until the stack
-// overflows.  Stop reentrant panics (though it would be good to find the
+// Recursive crash() can generate a very large spew of output until the stack
+// overflows.  Stop reentrant crashes (though it would be good to find the
 // cases that do this and make them give more useful output.)
 //
-static bool already_panicking = false;
+static bool g_already_crashing = false;
 
 
-#if DEBUG_FANCY_PANIC
+#if DEBUG_FANCY_CRASH
 
 // Because dereferencing pointers in sensitive situations can crash, we don't
 // want output buffered...make sure we see as much as we can before a crash.
@@ -52,7 +52,7 @@ static bool already_panicking = false;
 
 
 //
-//  Panic_Stub_Debug: C
+//  Crash_With_Stub_Debug: C
 //
 // The goal of this routine is to progressively reveal as much diagnostic
 // information about a Stub as possible.  Since the routine will ultimately
@@ -60,7 +60,7 @@ static bool already_panicking = false;
 // risky in an unstable state...though it is ideal if it can run to the end
 // so it can trigger Address Sanitizer or Valgrind's internal stack dump.
 //
-ATTRIBUTE_NO_RETURN void Panic_Stub_Debug(const Stub* s)
+ATTRIBUTE_NO_RETURN void Crash_With_Stub_Debug(const Stub* s)
 {
     fflush(stdout);
     fflush(stderr);
@@ -101,17 +101,17 @@ ATTRIBUTE_NO_RETURN void Panic_Stub_Debug(const Stub* s)
 
 
 //
-//  Panic_Cell_Debug: C
+//  Crash_With_Cell_Debug: C
 //
 // This is a debug-only "error generator", which will hunt through all the
-// Stub allocations and panic on the Stub or Array that contains the value (if
-// it can find it).  This will allow those using Address Sanitizer or
+// Stub allocations and crash on the Pairing or Array that contains the value
+// (if it can find it).  This will allow those using Address Sanitizer or
 // Valgrind to know a bit more about where the value came from.
 //
 // Additionally, it can dump out where the initialization happened if that
 // information was stored.  See DEBUG_TRACK_EXTEND_CELLS.
 //
-ATTRIBUTE_NO_RETURN void Panic_Cell_Debug(const Cell* c) {
+ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
   #if DEBUG_TRACK_EXTEND_CELLS
     Printf_Stderr("Cell init");
 
@@ -141,12 +141,12 @@ ATTRIBUTE_NO_RETURN void Panic_Cell_Debug(const Cell* c) {
     if (not containing) {
         Printf_Stderr("No containing Stub or Pairing (global variable?)\n");
         if (Cell_Has_Node1(c) and Is_Node_A_Stub(CELL_NODE1(c))) {
-            Printf_Stderr("Panicking node1 in case it helps\n");
-            Panic_Stub_Debug(c_cast(Stub*, CELL_NODE1(c)));
+            Printf_Stderr("Crashing on node1 in case it helps\n");
+            Crash_With_Stub_Debug(c_cast(Stub*, CELL_NODE1(c)));
         }
         if (Cell_Has_Node2(c) and Is_Node_A_Stub(CELL_NODE2(c))) {
-            Printf_Stderr("No node1, panicking node2 in case it helps\n");
-            Panic_Stub_Debug(c_cast(Stub*, CELL_NODE2(c)));
+            Printf_Stderr("No node1, crashing on node2 in case it helps\n");
+            Crash_With_Stub_Debug(c_cast(Stub*, CELL_NODE2(c)));
         }
         Printf_Stderr("No node1 or node2 for further info, aborting\n");
         abort();
@@ -160,19 +160,19 @@ ATTRIBUTE_NO_RETURN void Panic_Cell_Debug(const Cell* c) {
 
     if (Is_Node_A_Stub(containing)) {
         Printf_Stderr("Panicking the Stub containing the Cell...\n");
-        Panic_Stub_Debug(cast(Stub*, containing));
+        Crash_With_Stub_Debug(cast(Stub*, containing));
     }
 
     Printf_Stderr("Cell is (probably) first element of a Pairing\n");
-    Printf_Stderr("Trying to panic its paired cell...\n");
-    Panic_Cell_Debug(c + 1);
+    Printf_Stderr("Trying to crash on its paired cell...\n");
+    Crash_With_Cell_Debug(c + 1);
 }
 
-#endif  // DEBUG_FANCY_PANIC
+#endif  // DEBUG_FANCY_CRASH
 
 
 //
-//  Panic_Core: C
+//  Crash_Core: C
 //
 // Abnormal termination of Rebol.  The checked build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
@@ -181,14 +181,14 @@ ATTRIBUTE_NO_RETURN void Panic_Cell_Debug(const Cell* c) {
 // it lives in.  If the pointer is a simple UTF-8 string pointer, then that
 // is delivered as a message.
 //
-// This can be triggered via the macros panic() and panic_at(), which are
+// This can be triggered via the macros crash() and crash_at(), which are
 // unsalvageable situations in the core code.  It can also be triggered by
 // the PANIC native, and since it can be hijacked that offers hookability for
 // "recoverable" forms of PANIC.
 //
 // coverity[+kill]
 //
-ATTRIBUTE_NO_RETURN void Panic_Core(
+ATTRIBUTE_NO_RETURN void Crash_Core(
     const void *p,  // Flex*, Value*, or UTF-8 char*
     Tick tick,
     const char *file, // UTF8
@@ -196,7 +196,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 ){
     g_gc.disabled = true;  // crashing is a legitimate reason to disable the GC
 
-  #if DEBUG_FANCY_PANIC
+  #if DEBUG_FANCY_CRASH
     Printf_Stderr("C Source File %s, Line %d, Pointer %p\n", file, line, p);
     Printf_Stderr("At evaluator tick: %lu\n", cast(unsigned long, tick));
 
@@ -208,15 +208,15 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     UNUSED(line);
   #endif
 
-    if (already_panicking) {
-      #if DEBUG_FANCY_PANIC
+    if (g_already_crashing) {
+      #if DEBUG_FANCY_CRASH
         Printf_Stderr("!!! RECURSIVE PANIC, EXITING BEFORE IT GOES NUTS !!!\n");
       #endif
         abort();
     }
-    already_panicking = true;
+    g_already_crashing = true;
 
-    // Delivering a panic should not rely on printf()/etc. in release build.
+    // Delivering a crash should not rely on printf()/etc. in release build.
 
     char buf[PANIC_BUF_SIZE + 1];
     buf[0] = '\0';
@@ -241,7 +241,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     fflush(stdout);
   #endif
 
-    strncat(buf, g_panic_directions, PANIC_BUF_SIZE - 0);
+    strncat(buf, g_crash_directions, PANIC_BUF_SIZE - 0);
     strncat(buf, "\n", PANIC_BUF_SIZE - strsize(buf));
 
     if (not p) {
@@ -261,7 +261,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break;
 
       case DETECTED_AS_STUB: {  // non-FREE stub
-      #if DEBUG_FANCY_PANIC
+      #if DEBUG_FANCY_CRASH
         const Stub* s = c_cast(Stub*, p);
         Printf_Stderr("Stub detected...\n");
         if (Stub_Flavor(s) == FLAVOR_VARLIST) {
@@ -271,7 +271,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
                 PROBE(s);  // this may crash recursively if it's corrupt
             }
         }
-        Panic_Stub_Debug(s);
+        Crash_With_Stub_Debug(s);
       #else
         strncat(buf, "non-free Stub", PANIC_BUF_SIZE - strsize(buf));
       #endif
@@ -279,13 +279,13 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
       case DETECTED_AS_CELL:
       case DETECTED_AS_END: {
-      #if DEBUG_FANCY_PANIC
+      #if DEBUG_FANCY_CRASH
         const Cell* c = c_cast(Cell*, p);
         if (Heart_Of(c) == TYPE_ERROR) {
-            Printf_Stderr("...panic on an ERROR! Cell, trying to PROBE...");
+            Printf_Stderr("...crash() on an ERROR! Cell, trying to PROBE...");
             PROBE(c);
         }
-        Panic_Cell_Debug(c);
+        Crash_With_Cell_Debug(c);
       #else
         strncat(buf, "value", PANIC_BUF_SIZE - strsize(buf));
       #endif
@@ -297,8 +297,8 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
             "Panic was passed a likely freed PoolUnit",
             PANIC_BUF_SIZE - strsize(buf)
         );
-      #if DEBUG_FANCY_PANIC
-        Panic_Stub_Debug(u_cast(const Stub*, p));
+      #if DEBUG_FANCY_CRASH
+        Crash_With_Stub_Debug(u_cast(const Stub*, p));
       #endif
         break;
 
@@ -311,26 +311,26 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break;
     }
 
-  #if DEBUG_FANCY_PANIC
-    Printf_Stderr("%s\n", g_panic_title);
+  #if DEBUG_FANCY_CRASH
+    Printf_Stderr("%s\n", g_crash_title);
     Printf_Stderr("%s\n", buf);
   #else
-    // How to report panic conditions in builds with no printf() linked?
-    UNUSED(g_panic_title);
+    // How to report crash conditions in builds with no printf() linked?
+    UNUSED(g_crash_title);
     UNUSED(buf);
   #endif
 
   #if RUNTIME_CHECKS
     //
     // Note: Emscripten actually gives a more informative stack trace in
-    // its checked build through plain exit().  It has DEBUG_FANCY_PANIC but
+    // its checked build through plain exit().  It has DEBUG_FANCY_CRASH but
     // also defines NDEBUG to turn off RUNTIME_CHECKS.
     //
     debug_break();  // try to hook up to a C debugger - see %debug_break.h
   #endif
 
-  #if DEBUG_FANCY_PANIC
-    Printf_Stderr("debug_break() didn't terminate in panic()\n");
+  #if DEBUG_FANCY_CRASH
+    Printf_Stderr("debug_break() didn't terminate in crash()\n");
   #endif
 
     abort();
@@ -338,21 +338,25 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
 
 //
-//  panic: native [
+//  crash: native [
 //
-//  "Terminate abnormally with a message, optionally diagnosing a value cell"
+//  "Terminate abnormally.  By design, do not allow any more user code to run."
 //
 //      return: []
-//      reason "Cause of the panic"
-//          [any-value?]
-//      :value "Interpret reason as a value cell to debug dump, vs. a message"
+//      @info "If you want to implicate a value, use (crash @value)"
+//          [<end> element?]
 //  ]
 //
-DECLARE_NATIVE(PANIC)
+DECLARE_NATIVE(CRASH)
+//
+// We don't want to run any code that could potentially fail and derail the
+// crashing intent.  So this should only inertly interpret whatever is passed.
+// This could be a block specifying a table of variables to dump and extra
+// information, but it's much simpler than that at the moment.
 {
-    INCLUDE_PARAMS_OF_PANIC;
+    INCLUDE_PARAMS_OF_CRASH;
 
-    Value* v = ARG(REASON);  // remove quote level from @reason
+    Value* info = ARG(INFO);
 
   #if TRAMPOLINE_COUNTS_TICKS
     Tick tick = level_->tick;  // use Level's tick instead of g_tick
@@ -360,32 +364,28 @@ DECLARE_NATIVE(PANIC)
     Tick tick = 0;
   #endif
 
-    // panic() on the string value itself will report information about the
-    // string cell...but panic() on UTF-8 character data assumes you mean to
-    // report the contained message.  PANIC:VALUE for the latter intent.
-
     const void *p;
 
-    if (Bool_ARG(VALUE)) {  // interpret reason as value to diagnose
-        p = v;
+    if (Is_The_Word(info)) {  // interpret reason as value to diagnose
+        Value* fetched = rebValue(CANON(GET), rebQ(info));
+        Copy_Cell(info, fetched);
+        rebRelease(fetched);
+        p = info;
     }
     else {  // interpret reason as a message
-      if (Is_Keyword(v)) {
-            p = String_UTF8(Cell_Word_Symbol(v));
+        if (Is_Text(info)) {
+            p = Cell_Utf8_At(info);
         }
-        else if (Is_Text(v)) {
-            p = Cell_Utf8_At(v);
-        }
-        else if (Is_Error(v)) {
-            p = Cell_Varlist(v);
+        else if (Is_Error(info)) {
+            p = Cell_Varlist(info);
         }
         else {
-            assert(!"Called PANIC without :VALUE on non-TEXT!, non-ERROR!");
-            p = v;
+            assert(!"Called CRASH on non-TEXT!, non-ERROR!, non THE-WORD!");
+            p = info;
         }
     }
 
-    Panic_Core(
+    Crash_Core(
         p, tick, File_UTF8_Of_Level(level_), maybe Line_Number_Of_Level(level_)
     );
 }
@@ -436,18 +436,18 @@ DECLARE_NATIVE(FAIL)
     rebElide(CANON(WRITE_STDOUT), CANON(DELIMIT), CANON(SPACE), reason);
   #endif
 
-    panic (reason);
+    crash (reason);
 }
 
 
 #if DEBUG_CELL_READ_WRITE
 
 //
-//  Panic_Cell_Unreadable: C
+//  Crash_On_Unreadable_Cell: C
 //
 // Only called when Assert_Cell_Readable() fails, no reason to inline it.
 //
-void Panic_Cell_Unreadable(const Cell* c) {
+void Crash_On_Unreadable_Cell(const Cell* c) {
     if (not Is_Node(c))
         printf("Non-node passed to cell read routine\n");
     else if (not Is_Node_A_Cell(c))
@@ -456,16 +456,16 @@ void Panic_Cell_Unreadable(const Cell* c) {
         assert(Not_Node_Readable(c));
         printf("Assert_Cell_Readable() on NODE_FLAG_UNREADABLE cell\n");
     }
-    panic (c);
+    crash (c);
 }
 
 
 //
-//  Panic_Cell_Unwritable: C
+//  Crash_On_Unwritable_Cell: C
 //
 // Only called when Assert_Cell_Writable() fails, no reason to inline it.
 //
-void Panic_Cell_Unwritable(const Cell* c) {
+void Crash_On_Unwritable_Cell(const Cell* c) {
     if (not Is_Node(c))
         printf("Non-node passed to cell write routine\n");
     else if (not Is_Node_A_Cell(c))
@@ -474,7 +474,7 @@ void Panic_Cell_Unwritable(const Cell* c) {
         assert(Get_Cell_Flag(c, PROTECTED));
         printf("Protected cell passed to writing routine\n");
     }
-    panic (c);
+    crash (c);
 }
 
 #endif
@@ -493,7 +493,7 @@ void Panic_Cell_Unaligned(Cell* c) {
         c_cast(void*, (c)),
         cast(int, ALIGN_SIZE)
     );
-    panic (c);
+    crash (c);
 }
 
 #endif

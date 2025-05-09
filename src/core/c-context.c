@@ -1035,11 +1035,11 @@ void Assert_Varlist_Core(VarList* varlist)
     Array* a = Varlist_Array(varlist);
 
     if ((a->leader.bits & FLEX_MASK_VARLIST) != FLEX_MASK_VARLIST)
-        panic (varlist);
+        crash (varlist);
 
     Value* rootvar = Rootvar_Of_Varlist(varlist);
     if (not Any_Context(rootvar) or Cell_Varlist(rootvar) != varlist)
-        panic (rootvar);
+        crash (rootvar);
 
     KeyList* keylist = Bonus_Keylist(varlist);
 
@@ -1047,10 +1047,10 @@ void Assert_Varlist_Core(VarList* varlist)
     Length array_len = Array_Len(a);
 
     if (array_len < 1)
-        panic (varlist);
+        crash (varlist);
 
     if (keys_len + 1 != array_len)
-        panic (varlist);
+        crash (varlist);
 
     const Key* key = Varlist_Keys_Head(varlist);
     Value* var = Varlist_Slots_Head(varlist);
@@ -1058,12 +1058,12 @@ void Assert_Varlist_Core(VarList* varlist)
     Length n;
     for (n = 1; n < array_len; n++, var++, key++) {
         if (Stub_Flavor(*key) != FLAVOR_SYMBOL)
-            panic (*key);
+            crash (*key);
 
       #if DEBUG_POISON_FLEX_TAILS
         if (Is_Cell_Poisoned(var)) {
             printf("** Early var end at index: %d\n", cast(int, n));
-            panic (varlist);
+            crash (varlist);
         }
       #endif
     }
@@ -1071,7 +1071,7 @@ void Assert_Varlist_Core(VarList* varlist)
   #if DEBUG_POISON_FLEX_TAILS
     if (not Is_Cell_Poisoned(var)) {
         printf("** Missing var end at index: %d\n", cast(int, n));
-        panic (var);
+        crash (var);
     }
   #endif
 }

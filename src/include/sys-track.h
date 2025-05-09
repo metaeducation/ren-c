@@ -22,7 +22,7 @@
 // size...and carry the file, line, and tick where they were initialized.
 //
 // The information should be viewable in the C/C++ debug inspector when
-// looking at the cell in a watchlist.  It is also reported by panic().
+// looking at the cell in a watchlist.  It is also reported by crash().
 //
 
 

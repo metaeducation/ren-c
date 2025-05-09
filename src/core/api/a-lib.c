@@ -113,14 +113,14 @@ INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
 #define ENTER_API_RECYCLING_OK \
     do { \
         if (not g_api_initialized) \
-            panic ("rebStartup() not called before API call"); \
+            crash ("rebStartup() not called before API call"); \
     } while (0)
 
 #define ENTER_API \
     do { \
         ENTER_API_RECYCLING_OK; \
         if (g_gc.recycling) \
-            panic ("Can't call libRebol API from HANDLE!'s RebolHandleCleaner()"); \
+            crash ("Can't call libRebol API from HANDLE!'s RebolHandleCleaner()"); \
     } while (0)
 
 
@@ -295,7 +295,7 @@ void API_rebFreeMaybe(void *ptr)
 
     if (Is_Node_A_Cell(b) or not (NODE_BYTE(b) & NODE_BYTEMASK_0x02_ROOT)) {
         rebJumps(
-            "panic [",
+            "crash [",
                 "-[rebFree() mismatched with allocator!]-"
                 "-[Did you mean to use free() instead of rebFree()?]-",
             "]"
@@ -430,7 +430,7 @@ void* API_rebUnmanageMemory(void* ptr)
     //
     Binary* b = *pb;
     assert(Is_Node_Root_Bit_Set(b));
-    Manage_Flex(b);  // panics if already unmanaged... should it tolerate?
+    Manage_Flex(b);  // crashes if already unmanaged... should it tolerate?
 
     Poison_Memory_If_Sanitize(pb, sizeof(Binary*));  // catch underruns
 
@@ -2727,7 +2727,7 @@ void API_rebRelease(const RebolValue* v)
         return;  // less rigorous, but makes life easier for C programmers
 
     if (not Is_Api_Value(v))
-        panic ("Attempt to rebRelease() a non-API handle");
+        crash ("Attempt to rebRelease() a non-API handle");
 
     Free_Value(m_cast(Value*, v));
 }

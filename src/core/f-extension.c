@@ -241,7 +241,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     // !!! Note: This does not get cleaned up in case of an error.
     //
     if (g_native_cfunc_pos != cfuncs + num_natives)
-        panic ("NATIVE calls did not line up with stored C function count");
+        crash ("NATIVE calls did not line up with stored C function count");
     g_native_cfunc_pos = nullptr;
 
     assert(g_currently_loading_module == sea);

@@ -59,9 +59,9 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
       case DETECTED_AS_STUB: {
         Flex* f = m_cast(Flex*, c_cast(Flex* , p));  // don't mutate
         if (not Is_Stub_Varlist(f))
-            panic (f);  // only kind of Flex allowed are contexts of ERROR!
+            crash (f);  // only kind of Flex allowed are contexts of ERROR!
         if (CTX_TYPE(cast(VarList*, f)) != TYPE_ERROR)
-            panic (f);
+            crash (f);
         return cast(Error*, f); }
 
       case DETECTED_AS_CELL: {
@@ -99,7 +99,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
       default:
         break;
     }
-    panic (p);
+    crash (p);
 }
 
 
@@ -184,7 +184,7 @@ Error* Fail_Abruptly_Helper(Error* error)
         }
         else if (probing) {
             printf("PROBE(Recursing): recursing for unknown reason\n");
-            panic (error);
+            crash (error);
         }
         else {
             probing = true;
@@ -199,13 +199,13 @@ Error* Fail_Abruptly_Helper(Error* error)
     // Startup_Core()...)
     //
     if (PG_Boot_Phase < BOOT_DONE)
-        panic (error);
+        crash (error);
 
     // There should be a RESCUE_SCOPE of some kind in effect if a `fail` can
     // ever be run.
     //
     if (g_ts.jump_list == nullptr)
-        panic (error);
+        crash (error);
 
     // If a throw was being processed up the stack when the error was raised,
     // then it had the thrown argument set.
@@ -566,7 +566,7 @@ IMPLEMENT_GENERIC(MAKE, Error)
 // It knows how many arguments the error particular error ID requires based
 // on the templates defined in %errors.r.
 //
-// This routine should either succeed and return to the caller, or panic()
+// This routine should either succeed and return to the caller, or crash()
 // and crash if there is a problem (such as running out of memory, or that
 // %errors.r has not been loaded).  Hence the caller can assume it will
 // regain control to properly call va_end with no longjmp to skip it.
@@ -587,7 +587,7 @@ Error* Make_Error_Managed_Vaptr(
 
         DECLARE_ELEMENT (id_value);
         Init_Integer(id_value, cast(int, id));
-        panic (id_value);
+        crash (id_value);
     }
 
     VarList* root_varlist = Cell_Varlist(Get_System(SYS_STANDARD, STD_ERROR));

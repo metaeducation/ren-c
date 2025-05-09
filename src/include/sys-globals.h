@@ -53,7 +53,7 @@ PVAR Codepoint *Upper_Cases;
 PVAR Codepoint *Lower_Cases;
 
 #if DEBUG_HAS_PROBE
-    PVAR bool PG_Probe_Failures; // helpful especially for boot errors & panics
+    PVAR bool PG_Probe_Failures;  // helpful especially for boot crashes
 #endif
 
 #ifdef INCLUDE_CALLGRIND_NATIVE

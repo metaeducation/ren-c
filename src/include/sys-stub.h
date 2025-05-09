@@ -173,7 +173,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 //=//// STUB FLAVOR-SPECIFIC FLAGS ////////////////////////////////////////=//
 //
 // In the checked build, ensure_flavor() checks if a Stub matches the expected
-// FLAVOR_XXX, and panics if it does not.  This is used by the subclass
+// FLAVOR_XXX, and asserts if it does not.  This is used by the subclass
 // testing macros as a check that you are testing the flag for the
 // Flavor that you expect.
 //

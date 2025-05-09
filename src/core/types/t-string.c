@@ -718,7 +718,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
         break;
 
       default:
-        panic (v);
+        crash (v);
     }
 
     return TRASH;

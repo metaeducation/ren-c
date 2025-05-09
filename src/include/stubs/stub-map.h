@@ -83,7 +83,7 @@ INLINE Count Hashlist_Num_Slots(HashList* hashlist) {
     Count used = Flex_Used(cast(Flex*, hashlist));  // subvert C++ deletion
   #if DEBUG_STATIC_ANALYZING
     if (used < 7)  // g_primes[0]
-        panic ("Hashlist must have a minimal prime number of entries");
+        crash ("Hashlist must have a minimal prime number of entries");
   #else
     assert(used >= 7);  // g_primes[0]
   #endif

@@ -103,7 +103,7 @@
                 NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
             )) != (NODE_FLAG_NODE | NODE_FLAG_CELL) \
         ){ \
-            Panic_Cell_Unreadable(c); \
+            Crash_On_Unreadable_Cell(c); \
         } \
     } while (0)
 
@@ -114,7 +114,7 @@
                 NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_PROTECTED \
             )) != (NODE_FLAG_NODE | NODE_FLAG_CELL) \
         ){ \
-            Panic_Cell_Unwritable(c);  /* despite write, passed const [2] */ \
+            Crash_On_Unwritable_Cell(c);  /* despite write, passed const [2] */ \
         } \
     } while (0)
 

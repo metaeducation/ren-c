@@ -835,7 +835,7 @@ void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
             les->u.eser.len = Flex_Used(les->flex);  // immutable--has HOLD
         }
         else
-            panic ("Illegal type passed to Loop_Each()");
+            crash ("Illegal type passed to Loop_Each()");
 
         // HOLD so length can't change
 
@@ -1037,7 +1037,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             continue;
         }
 
-        panic (les->data);
+        crash (les->data);
     }
 
     return true;

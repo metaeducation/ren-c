@@ -555,16 +555,16 @@ void Startup_Builtin_Symbols(
     rebFree(bytes);
 
     if (0 != strcmp("blank!", String_UTF8(CANON(BLANK_X))))
-        panic (CANON(BLANK_X));
+        crash (CANON(BLANK_X));
 
     if (0 != strcmp("true", String_UTF8(CANON(TRUE))))
-        panic (CANON(TRUE));
+        crash (CANON(TRUE));
 
     if (0 != strcmp("open", String_UTF8(CANON(OPEN))))
-        panic (CANON(OPEN));
+        crash (CANON(OPEN));
 
     if (0 != strcmp("parse-reject", String_UTF8(CANON(PARSE_REJECT))))
-        panic (CANON(PARSE_REJECT));
+        crash (CANON(PARSE_REJECT));
 }
 
 
@@ -658,7 +658,7 @@ void Shutdown_Interning(void)
         // !!! There needs to be a more user-friendly output for this,
         // and to detect if it really was an API problem or something else
         // that needs to be paid attention to in the core.  Right now the
-        // two scenarios are conflated into this one panic.
+        // two scenarios are conflated into this one crash.
         //
         printf(
             "!!! %d leaked canons found in shutdown\n",
@@ -672,7 +672,7 @@ void Shutdown_Interning(void)
         for (slot = 0; slot < Flex_Used(g_symbols.by_hash); ++slot) {
             Symbol* symbol = *Flex_At(Symbol*, g_symbols.by_hash, slot);
             if (symbol and symbol != DELETED_SYMBOL)
-                panic (symbol);
+                crash (symbol);
         }
     }
   #endif

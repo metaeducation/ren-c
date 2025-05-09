@@ -79,7 +79,7 @@
 // Optimized builds could use nullptr instead.
 //
 Bounce Just_Use_Out_Executor(Level* L)
-  { panic (L->out); }
+  { crash (L->out); }
 
 
 //
@@ -360,7 +360,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     }
 
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
-    panic (bounce);
+    crash (bounce);
 
 } ON_ABRUPT_FAILURE (error) {  ///////////////////////////////////////////////
 
@@ -410,7 +410,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 
     Bounce r = Trampoline_From_Top_Maybe_Root();
 
-  #if DEBUG_FANCY_PANIC
+  #if DEBUG_FANCY_CRASH
     const char* name = "<<UNKNOWN>>";
     if (
         (r != BOUNCE_THROWN) and (r != root->out) and (

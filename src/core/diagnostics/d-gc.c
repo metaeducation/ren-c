@@ -32,7 +32,7 @@
 
 #include "sys-core.h"
 
-#undef fail  /* cannot fail in this file, use assert() and panic() instead */
+#undef fail  /* cannot fail in this file, use assert() and crash() instead */
 
 #if RUNTIME_CHECKS
 
@@ -76,10 +76,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             (keylist->leader.bits & FLEX_MASK_KEYLIST)
             != FLEX_MASK_KEYLIST
         ){
-            panic (binding);
+            crash (binding);
         }
         if (Not_Node_Managed(keylist))
-            panic (keylist);
+            crash (keylist);
         break;
     }
 
@@ -380,7 +380,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       default:
-        panic (v);
+        crash (v);
     }
 }
 

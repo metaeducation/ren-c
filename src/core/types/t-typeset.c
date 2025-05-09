@@ -490,7 +490,7 @@ IMPLEMENT_GENERIC(PICK, Is_Parameter)
 
           default: assert(false);
         }
-        panic (nullptr);
+        crash (nullptr);
 
       case SYM_ESCAPABLE:
         return Init_Logic(OUT, Cell_Parameter_Class(param) == PARAMCLASS_SOFT);

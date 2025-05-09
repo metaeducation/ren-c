@@ -180,7 +180,7 @@ static bool Try_Init_Startupinfo_Sink(
         break; }
 
       default:
-        panic (arg);  // CALL's type checking should have screened the types
+        crash (arg);  // CALL's type checking should have screened the types
     }
 
     assert(*hsink != INVALID_HANDLE_VALUE);
@@ -401,7 +401,7 @@ Bounce Call_Core(Level* level_) {
         break; }
 
       default:
-        panic (ARG(INPUT));
+        crash (ARG(INPUT));
     }
 
     //=//// OUTPUT SINK SETUP /////////////////////////////////////////////=//

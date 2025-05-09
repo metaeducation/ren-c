@@ -412,7 +412,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
     Level* L;
     if (not Is_Level_Style_Varargs_May_Fail(&L, source))
-        panic (source); // Frame is the only other type
+        crash (source); // Frame is the only other type
 
     if (Is_Level_At_End(L))
         return VOID;

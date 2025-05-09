@@ -169,7 +169,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Vacant(
         break;
 
       default:
-        panic (tuple);
+        crash (tuple);
     }
 
   //=//// PUSH PROCESSED TUPLE ELEMENTS TO STACK //////////////////////////=//
@@ -546,7 +546,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         break;
 
       default :
-        panic (path);
+        crash (path);
     }
 
     const Element* tail;
@@ -965,7 +965,7 @@ bool Set_Var_Core_Updater_Throws(
             break;  // fall through
 
           default:
-            panic (var);
+            crash (var);
         }
 
         const Element* tail;

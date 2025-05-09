@@ -1422,7 +1422,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
       case LEX_CLASS_DELIMIT:
         switch (Get_Lex_Delimit(*cp)) {
           case LEX_DELIMIT_SPACE:
-            panic ("Prescan_Token did not skip whitespace");
+            crash ("Prescan_Token did not skip whitespace");
 
           case LEX_DELIMIT_RETURN:
           delimit_return: {
@@ -1494,7 +1494,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (S->begin[0] == '[')
                 return Error_Missing(S, ']');
 
-            panic ("Invalid string start delimiter");
+            crash ("Invalid string start delimiter");
 
           case LEX_DELIMIT_SLASH:  // a /RUN-style PATH! or /// WORD!
             goto handle_delimit_interstitial;
@@ -1561,7 +1561,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             return LOCATED(TOKEN_TILDE);
 
           default:
-            panic ("Invalid LEX_DELIMIT class");
+            crash ("Invalid LEX_DELIMIT class");
         }
 
       case LEX_CLASS_SPECIAL:
@@ -1594,7 +1594,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         switch (Get_Lex_Special(*cp)) {
           case LEX_SPECIAL_AT:  // the case where @ is actually at the head
             assert(false);  // already taken care of
-            panic ("@ dead end");
+            crash ("@ dead end");
 
           case LEX_SPECIAL_PERCENT:  // %filename
             ++cp;
@@ -1873,10 +1873,10 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         return Error_Syntax(S, TOKEN_INTEGER);
 
       default:
-        break;  // panic after switch, so no cases fall through accidentally
+        break;  // crash() after switch, so no cases fall through accidentally
     }
 
-    panic ("Invalid LEX class");
+    crash ("Invalid LEX class");
 
   prescan_word: { /////////////////////////////////////////////////////////////
 
@@ -2429,7 +2429,7 @@ Bounce Scanner_Executor(Level* const L) {
             mode = ST_SCANNER_BLOCK_MODE;
             break;
           default:
-            panic (L);
+            crash (L);
         }
 
         Level* sub = Make_Scan_Level(
@@ -2694,7 +2694,7 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_END:  // handled way above, before the switch()
       default:
-        panic ("Invalid TOKEN in Scanner.");
+        crash ("Invalid TOKEN in Scanner.");
     }
 
 } lookahead_for_sequencing_character: {  /////////////////////////////////////
@@ -2836,7 +2836,7 @@ Bounce Scanner_Executor(Level* const L) {
         heart = TYPE_GROUP;
         break;
       default:
-        panic (L);
+        crash (L);
     }
 
     Level* sub = SUBLEVEL;
@@ -2893,7 +2893,7 @@ Bounce Scanner_Executor(Level* const L) {
         break;
 
       default:
-        panic (nullptr);
+        crash (nullptr);
     }
 
     ++transcode->at;

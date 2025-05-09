@@ -65,7 +65,7 @@ use-pthreads: 'no
 debug-javascript-extension: 'yes
 
 ; Ren-C has build options for supporting C++ exceptions or the use of setjmp()
-; and longjmp() (or just to panic, and not handle them at all).  This affects
+; and longjmp() (or just to crash, and not handle them at all).  This affects
 ; how "abrupt" failures that arise in native code is treated--e.g. the calls
 ; to the `fail()` "pseudo-keyword".
 ;
@@ -155,7 +155,7 @@ cflags: compose [
         "-DDEBUG_JAVASCRIPT_EXTENSION=1"
 
         "-DDEBUG_HAS_PROBE=1"
-        "-DDEBUG_FANCY_PANIC=1"
+        "-DDEBUG_FANCY_CRASH=1"
         "-DTRAMPOLINE_COUNTS_TICKS=1"
         "-DDEBUG_PRINTF_FAIL_LOCATIONS=1"
 

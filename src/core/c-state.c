@@ -429,7 +429,7 @@ void Assert_State_Balanced_Debug(
             "PUSH()x%d without DROP()\n",
             cast(int, TOP_INDEX - s->stack_base)
         );
-        panic_at (nullptr, file, line);
+        crash_at (nullptr, file, line);
     }
 
     if (s->guarded_len != Flex_Used(g_gc.guarded)) {
@@ -442,7 +442,7 @@ void Assert_State_Balanced_Debug(
             g_gc.guarded,
             Flex_Used(g_gc.guarded) - 1
         );
-        panic_at (guarded, file, line);
+        crash_at (guarded, file, line);
     }
 
     // !!! Note that this inherits a test that uses g_gc.manuals->content.xxx
@@ -454,12 +454,12 @@ void Assert_State_Balanced_Debug(
     //
     if (s->manuals_len > Flex_Used(g_gc.manuals)) {
         //
-        // Note: Should this ever actually happen, panic() on the Flex won't
+        // Note: Should this ever actually happen, crash() on the Flex won't
         // do any real good in helping debug it.  You'll probably need
         // additional checks in Manage_Flex() and Free_Unmanaged_Flex()
         // that check against the caller's manuals_len.
         //
-        panic_at ("manual Flex freed outside checkpoint", file, line);
+        crash_at ("manual Flex freed outside checkpoint", file, line);
     }
     else if (s->manuals_len < Flex_Used(g_gc.manuals)) {
         printf(
@@ -471,7 +471,7 @@ void Assert_State_Balanced_Debug(
             g_gc.manuals,
             Flex_Used(g_gc.manuals) - 1
         ));
-        panic_at (manual, file, line);
+        crash_at (manual, file, line);
     }
 
     assert(s->mold_buf_len == String_Len(g_mold.buffer));

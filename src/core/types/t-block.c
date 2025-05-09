@@ -507,7 +507,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
     else if (Any_Fence_Type(heart))
         sep = "{}";
     else
-        panic (v);
+        crash (v);
 
     Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 
@@ -1584,7 +1584,7 @@ void Assert_Array_Core(const Array* a)
     Assert_Flex_Basics_Core(a);  // not marked free, etc.
 
     if (not Stub_Holds_Cells(a))
-        panic (a);
+        crash (a);
 
     const Cell* item = Array_Head(a);
     Offset n;
@@ -1602,7 +1602,7 @@ void Assert_Array_Core(const Array* a)
         Assert_Cell_Readable(item);
         if (cast(Byte, Heart_Of(item)) > cast(Byte, MAX_HEART)) {
             printf("Invalid Heart_Of() at index %d\n", cast(int, n));
-            panic (a);
+            crash (a);
         }
     }
 
@@ -1612,7 +1612,7 @@ void Assert_Array_Core(const Array* a)
       #if DEBUG_POISON_FLEX_TAILS
         assert(rest > 0 and rest > n);
         if (Not_Flex_Flag(a, FIXED_SIZE) and not Is_Cell_Poisoned(item))
-            panic (item);
+            crash (item);
         ++item;
         rest = rest - 1;
       #endif
@@ -1625,13 +1625,13 @@ void Assert_Array_Core(const Array* a)
             if (Get_Flex_Flag(a, FIXED_SIZE)) {
                 if (not unwritable) {
                     printf("Writable cell found in fixed-size array rest\n");
-                    panic (a);
+                    crash (a);
                 }
             }
             else {
                 if (unwritable) {
                     printf("Unwritable cell found in array rest capacity\n");
-                    panic (a);
+                    crash (a);
                 }
             }
         }

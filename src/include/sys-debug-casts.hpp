@@ -146,7 +146,7 @@ struct cast_helper<V*,const Node*> {  // [2]
             return nullptr;
 
         if (not (*reinterpret_cast<const Byte*>(p) & NODE_BYTEMASK_0x80_NODE))
-            panic (p);
+            crash (p);
 
         return reinterpret_cast<const Node*>(p);
     }
@@ -199,7 +199,7 @@ struct cast_helper<V*,const Stub*> {  // [2]
         )) != (
             NODE_FLAG_NODE
         )){
-            panic (p);
+            crash (p);
         }
 
         return reinterpret_cast<const Stub*>(p);
@@ -255,7 +255,7 @@ struct cast_helper<V*,const Flex*> {  // [2]
         )) != (
             NODE_FLAG_NODE
         )){
-            panic (p);
+            crash (p);
         }
 
         return reinterpret_cast<const Flex*>(p);
@@ -311,7 +311,7 @@ struct cast_helper<V*,const Binary*> {  // [2]
         )) != (
             NODE_FLAG_NODE  // NODE_FLAG_UNREADABLE is diminished Stub
         )){
-            panic (p);
+            crash (p);
         }
 
         // assert Flex width here (trouble with Flex_Wide() from within
@@ -349,7 +349,7 @@ struct cast_helper<V*,const String*> {  // [2]
 
         Byte taste = TASTE_BYTE(stub);
         if (taste != FLAVOR_NONSYMBOL and taste != FLAVOR_SYMBOL)
-            panic (p);
+            crash (p);
 
         if ((stub->leader.bits & (
             FLEX_MASK_SYMBOL_STRING_COMMON
@@ -359,7 +359,7 @@ struct cast_helper<V*,const String*> {  // [2]
             FLEX_MASK_SYMBOL_STRING_COMMON
         ){
             assert(stub->leader.bits & STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY);
-            panic (p);
+            crash (p);
         }
 
         return reinterpret_cast<const String*>(p);
@@ -398,7 +398,7 @@ struct cast_helper<V*,const Symbol*> {  // [2]
         )) !=
             FLEX_MASK_SYMBOL
         ){
-            panic (p);
+            crash (p);
         }
 
         return reinterpret_cast<const Symbol*>(p);
@@ -459,7 +459,7 @@ struct cast_helper<V*,const Array*> {  // [2]
         )) != (
             NODE_FLAG_NODE
         )){
-            panic (p);
+            crash (p);
         }
 
         return reinterpret_cast<const Array*>(p);
@@ -502,7 +502,7 @@ struct cast_helper<V*,VarList*> {  // [2]
         )) !=
             FLEX_MASK_LEVEL_VARLIST
         ){
-            panic (p);
+            crash (p);
         }
 
         return reinterpret_cast<VarList*>(p);
@@ -554,7 +554,7 @@ struct cast_helper<V*,Phase*> {  // [2]
             )) !=
                 FLEX_MASK_DETAILS
             ){
-                panic (p);
+                crash (p);
             }
         }
         else {
@@ -566,7 +566,7 @@ struct cast_helper<V*,Phase*> {  // [2]
             )) !=
                 FLEX_MASK_LEVEL_VARLIST  // maybe no MISC_NODE_NEEDS_MARK
             ){
-                panic (p);
+                crash (p);
             }
         }
 
@@ -615,7 +615,7 @@ struct cast_helper<V*,Level*> {  // [2]
         )) != (
             NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL
         )){
-            panic (p);
+            crash (p);
         }
 
         return reinterpret_cast<Level*>(p);

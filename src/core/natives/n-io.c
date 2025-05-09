@@ -300,7 +300,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
             item = Cell_List_At(&tail, shared);
         }
         else
-            panic ("Bad VARARGS!");
+            crash ("Bad VARARGS!");
     }
     else {
         assert(Is_Group(pos) or Is_Block(pos));
@@ -337,7 +337,7 @@ REBLEN Milliseconds_From_Value(const Value* v) {
         break;
 
     default:
-        panic (NULL); // avoid uninitialized msec warning
+        crash (NULL); // avoid uninitialized msec warning
     }
 
     if (msec < 0)

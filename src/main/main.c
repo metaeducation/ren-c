@@ -272,7 +272,7 @@ int main(int argc, char *argv_ansi[])
     rebRelease(main_startup);
 
     if (rebUnboxLogic("error?", enrescued))  // error in MAIN-STARTUP itself
-        rebJumps("panic", enrescued);  // terminates
+        rebJumps("crash", enrescued);  // terminates
 
     Value* code = rebValue("unmeta @", enrescued);  // non-errors are ^META
     rebRelease(enrescued);

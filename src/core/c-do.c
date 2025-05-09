@@ -112,7 +112,7 @@ void Push_Frame_Continuation(
 //
 // 3. Things like CASE currently ask for a branch-based continuation on types
 //    they haven't checked, but encounter via evaluation.  Hence we FAIL here
-//    instead of panic()...but that suggests this should be narrowed to the
+//    instead of crash()...but that suggests this should be narrowed to the
 //    kinds of types branching permits.
 //
 bool Pushed_Continuation(

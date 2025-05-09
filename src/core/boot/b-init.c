@@ -90,10 +90,10 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 
   #if UNUSUAL_CELL_SIZE  // e.g. if DEBUG_TRACK_EXTEND_CELLS
     if (cell_size % ALIGN_SIZE != 0)
-        panic ("size of cell does not evenly divide by ALIGN_SIZE");
+        crash ("size of cell does not evenly divide by ALIGN_SIZE");
   #else
     if (cell_size != sizeof(void*) * 4)
-        panic ("size of cell is not sizeof(void*) * 4");
+        crash ("size of cell is not sizeof(void*) * 4");
 
     Size stub_size = sizeof(Cell) * 2;
 
@@ -109,7 +109,7 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 
     Size offset = offsetof(Stub, info);  // variable avoids warning
     if (offset - offsetof(Stub, content) != sizeof(Cell))
-        panic ("bad structure alignment for internal array termination");
+        crash ("bad structure alignment for internal array termination");
 
    //=//// CHECK BYTE-ORDERING SENSITIVE FLAGS [4] ////////////////////////=//
 
@@ -123,7 +123,7 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
       #if RUNTIME_CHECKS
         printf("m = %u, d = %u, y = %u\n", m, d, y);
       #endif
-        panic ("Bad composed integer assignment for byte-ordering macro.");
+        crash ("Bad composed integer assignment for byte-ordering macro.");
     }
 }
 
@@ -479,9 +479,9 @@ static void Init_System_Object(
     //
     DECLARE_ATOM (result);
     if (Eval_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
-        panic (result);
+        crash (result);
     if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(result), SYM_END))
-        panic (result);
+        crash (result);
 
     // Startup_Action_Adjunct_Shim() made Root_Action_Adjunct as bootstrap hack
     // since it needed to make function adjunct information for natives before
@@ -528,9 +528,9 @@ static void Init_System_Object(
 //
 // Initialize the interpreter core.
 //
-// !!! This will either succeed or "panic".  Panic currently triggers an exit
-// to the OS.  The code is not currently written to be able to cleanly shut
-// down from a partial initialization.  (It should be.)
+// !!! This will either succeed or crash(), triggering an exit to the OS.
+// The code is not currently written to be able to cleanly shut down from a
+// partial initialization.  (It should be.)
 //
 // The phases of initialization are tracked by PG_Boot_Phase.  Some system
 // functions are unavailable at certain phases.
@@ -550,10 +550,10 @@ void Startup_Core(void)
 
     assert(PG_Boot_Phase == BOOT_START_0);
 
-  #if defined(TEST_EARLY_BOOT_PANIC)
-    panic ("early panic test"); // should crash
+  #if defined(TEST_EARLY_BOOT_CRASH)
+    crash ("early crash test"); // should crash
   #elif defined(TEST_EARLY_BOOT_FAIL)
-    fail ("early fail test"); // same as panic (crash)
+    fail ("early fail test"); // same as crash (crash)
   #endif
 
   #if DEBUG_HAS_PROBE
@@ -805,9 +805,9 @@ void Startup_Core(void)
     PG_Boot_Phase = BOOT_ERRORS;
 
   #if defined(TEST_MID_BOOT_PANIC)
-    panic (g_empty_array); // panics should be able to give some details by now
+    crash (g_empty_array); // crashes should be able to give details by now
   #elif defined(TEST_MID_BOOT_FAIL)
-    fail ("mid boot fail"); // CHECKED->assert, RELEASE->panic
+    fail ("mid boot fail"); // if RUNTIME_CHECKS assert, else crash
   #endif
 
     // Pre-make the stack overflow error (so it doesn't need to be made

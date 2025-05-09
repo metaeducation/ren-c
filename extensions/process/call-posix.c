@@ -184,7 +184,7 @@ Bounce Call_Core(Level* level_) {
         break; }
 
       default:
-        panic (ARG(INPUT));  // typechecking should not have allowed it
+        crash (ARG(INPUT));  // typechecking should not have allowed it
     }
 
     bool flag_wait = Bool_ARG(WAIT) or (
@@ -419,7 +419,7 @@ Bounce Call_Core(Level* level_) {
             close(fd);
         }
         else
-            panic(ARG(INPUT));
+            crash (ARG(INPUT));
 
         if (not Bool_ARG(OUTPUT)) {
           inherit_stdout_from_parent:

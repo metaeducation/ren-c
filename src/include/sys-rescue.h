@@ -329,7 +329,7 @@ struct JumpStruct {
 
     #define fail(p) do { \
         Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-        panic (Fail_Abruptly_Helper(Derive_Error_From_Pointer(p))); \
+        crash (Fail_Abruptly_Helper(Derive_Error_From_Pointer(p))); \
     } while (0)
 
 #elif FAIL_USES_TRY_CATCH

@@ -104,7 +104,7 @@
 
         block: skip block 1  ; Note: NEXT not defined yet
     ])[
-        frame: unrun get $panic:value  ; overwritten, best to be something mean
+        frame: unrun panic/  ; overwritten, but best to be something mean
     ]
 
     ; pf demonstrates a concept of a variadic operator that lets you express a

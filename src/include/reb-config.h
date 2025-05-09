@@ -456,8 +456,8 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_HAS_PROBE  RUNTIME_CHECKS
 #endif
 
-#if !defined(DEBUG_FANCY_PANIC)
-    #define DEBUG_FANCY_PANIC  RUNTIME_CHECKS
+#if !defined(DEBUG_FANCY_CRASH)
+    #define DEBUG_FANCY_CRASH  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_MONITOR_FLEX)
@@ -540,7 +540,7 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 //    * FAIL_USES_LONGJMP to use C's setjmp()/longjmp()
 //    * FAIL_USES_TRY_CATCH to use C++'s try {...} catch {...}
-//    * FAIL_JUST_ABORTS will panic() and terminate the program
+//    * FAIL_JUST_ABORTS will crash() and terminate the program
 //
 // It's considered desirable to support both a C and C++ approach.  Plain C
 // compilation (e.g. with TCC) runs on many legacy/embedded platforms.  But
@@ -646,7 +646,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 // Natives can be decorated with a RETURN: annotation, but this is not
 // checked in the release build.  It's assumed they will only return the
-// correct types.  This switch is used to panic() if they're wrong.
+// correct types.  This switch is used to crash() if they're wrong.
 //
 #if !defined(CHECK_RAW_NATIVE_RETURNS)
     #define CHECK_RAW_NATIVE_RETURNS  RUNTIME_CHECKS
@@ -778,7 +778,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 // Both Valgrind and Address Sanitizer can provide the call stack at the moment
 // of allocation when a freed pointer is used.  Touch_Stub() uses a bogus
-// allocation to help mark Stub origins that can later be used by `panic()`.
+// allocation to help mark Stub origins that can later be used by `crash()`.
 // But the feature is a waste if you're not using such tools.
 //
 // If you plan to use Valgrind with this, you'll have to set it explicitly...

@@ -331,7 +331,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // but it's important in several APIs to emphasize a value gives
         // phase information, while archetypes do not.
         //
-        panic (feed->p);
+        crash (feed->p);
     }
 
     return cast(const Element*, feed->p);
@@ -402,7 +402,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         break; }
 
       default:
-        panic (feed->p);
+        crash (feed->p);
     }
 
     assert(Is_Feed_At_End(feed) or Ensure_Readable(c_cast(Cell*, feed->p)));

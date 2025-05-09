@@ -48,12 +48,12 @@
 
 #include "tmp-constants.h" // need the extern definitions
 
-// A panic() indicates a serious malfunction, and should not make use of
+// A crash() indicates a serious malfunction, and should not make use of
 // Rebol-structured error message delivery in the release build.
 
-const char g_panic_title[] = "PANIC! (Internal Error)";
+const char g_crash_title[] = "CRASH! (Internal Error)";
 
-const char g_panic_directions[] = {
+const char g_crash_directions[] = {
     "If you need to file a bug in the issue tracker, please give thorough\n"
     "details on how to reproduce the problem:\n"
     "\n"

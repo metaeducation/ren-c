@@ -448,7 +448,7 @@ typedef union {
     UintptrUnion misc;
 
   #if DEBUG_STUB_ORIGINS
-    Byte* guard;  // intentionally alloc'd and freed for use by panic()
+    Byte* guard;  // intentionally alloc'd and freed for use by crash()
     uintptr_t tick;  // also maintains sizeof(Stub) % sizeof(REBI64) == 0
   #endif
 };
@@ -457,7 +457,7 @@ typedef union {
 //=//// DON'T PUT ANY CODE (OR MACROS THAT MAY NEED CODE) IN THIS FILE! ///=//
 //
 // The %tmp-internals.h file has not been included, and hence none of the
-// prototypes (even for things like Panic_Core()) are available.
+// prototypes (even for things like Crash_Core()) are available.
 //
 // Even if a macro seems like it doesn't need code right at this moment, you
 // might want to put some instrumentation into it, and that becomes a pain of

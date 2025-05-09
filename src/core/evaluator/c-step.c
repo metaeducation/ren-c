@@ -1792,7 +1792,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     //=//// GARBAGE (pseudotypes or otherwise //////////////////////////////=//
 
       default:
-        panic (CURRENT);
+        crash (CURRENT);
     }
 
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//

@@ -322,7 +322,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         }
     }
     else
-        panic ("Malformed VARARG cell");
+        crash ("Malformed VARARG cell");
 
   type_check_and_return:;
 
@@ -581,7 +581,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
             break;
 
           default:
-            panic (NULL);
+            crash (NULL);
         };
         Mold_Element(mo, param_word);
     }

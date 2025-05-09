@@ -324,7 +324,7 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
                 w,
                 cast(int, Flex_Wide(f))
             );
-        panic (f);
+        crash (f);
     }
   #endif
 

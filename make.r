@@ -1276,7 +1276,7 @@ switch user-config.debug [
             ; even things like DEBUG_LEVEL_LABELS adds a tiny bit!)
             ;
             "DEBUG_HAS_PROBE=1"
-            "DEBUG_FANCY_PANIC=1"
+            "DEBUG_FANCY_CRASH=1"
             "DEBUG_USE_UNION_PUNS=1"
             "INCLUDE_C_DEBUG_BREAK_NATIVE=1"
 

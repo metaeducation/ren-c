@@ -1959,7 +1959,7 @@ DECLARE_NATIVE(SHUTDOWN_P)
 // We have to "neutralize" all the HANDLE! objects that we have allocated when
 // the extension unloads.  Because if we don't, the final garbage collect pass
 // will try to call the cleanup functions during core shutdown, which is too
-// late--the API itself is shutdown (so functions like rebRelease would panic)
+// late--the API itself is shutdown (so functions like rebRelease would crash)
 //
 // There's really not a way in a garbage collected system such as this to shut
 // down in "phases", e.g. where all the "user" objects are GC'd so we can trust

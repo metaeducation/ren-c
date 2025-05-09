@@ -314,7 +314,7 @@ DECLARE_NATIVE(CONSOLE)
 
     if (error) {  // failure happened in CONSOLE* code itself [2]
         if (rebUnboxLogic("no? can-recover"))
-            return rebDelegate("panic @", rebR(error));
+            return rebDelegate("crash @", rebR(error));
 
         rebElide(
             "code: [#host-console-error]",

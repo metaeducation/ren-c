@@ -427,8 +427,8 @@ INLINE void Free_Level_Internal(Level* L) {
     Node* n = L->alloc_value_list;
     while (n != L) {
         Stub* stub = cast(Stub*, n);
-        printf("API handle was allocated but not freed, panic'ing leak\n");
-        panic (stub);
+        printf("API handle was allocated but not freed, crashing on leak\n");
+        crash (stub);
     }
     Corrupt_Pointer_If_Debug(L->alloc_value_list);
   #endif

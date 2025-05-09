@@ -242,7 +242,7 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
             cast(void*, pool),
             cast(void*, pool->first)
         );
-        panic (unit);
+        crash (unit);
     }
   #endif
 

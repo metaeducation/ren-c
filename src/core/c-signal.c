@@ -126,7 +126,7 @@ bool Do_Signals_Throws(Level* L)
         // Early in the booting process, it's not possible to handle Ctrl-C.
         //
         if (g_ts.jump_list == nullptr)
-            panic ("Ctrl-C or other HALT signal with no rescue to process it");
+            crash ("Ctrl-C or other HALT signal with no rescue to process it");
 
         Clear_Trampoline_Flag(HALT);
         g_ts.signal_mask = saved_sigmask;
@@ -138,7 +138,7 @@ bool Do_Signals_Throws(Level* L)
     if (filtered_sigs & TRAMPOLINE_FLAG_DEBUG_BREAK) {
         //
         // Similar to the Ctrl-C halting, the "breakpoint" interrupt request
-        // can't be processed early on.  The throw mechanics should panic
+        // can't be processed early on.  The throw mechanics should crash
         // all right, but it might make more sense to wait.
         //
         Clear_Trampoline_Flag(DEBUG_BREAK);

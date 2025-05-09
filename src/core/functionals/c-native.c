@@ -582,7 +582,7 @@ void Startup_Natives(const Element* boot_natives)
         cast(Dispatcher*, *g_native_cfunc_pos)
     );
     if (e)
-        panic (unwrap e);
+        crash (unwrap e);
 
     ++g_native_cfunc_pos;
 
@@ -620,7 +620,7 @@ void Startup_Natives(const Element* boot_natives)
     );
 
     if (Eval_Step_Throws(meta_step, L))  // write directly to var [1]
-        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+        crash (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     Copy_Cell(slot, Known_Element(meta_step));
     Meta_Unquotify_Known_Stable(slot);
@@ -650,10 +650,10 @@ void Startup_Natives(const Element* boot_natives)
 
   #if RUNTIME_CHECKS  // ensure a couple of functions can be looked up by ID
     if (not Is_Action(LIB(FOR_EACH)))
-        panic (LIB(FOR_EACH));
+        crash (LIB(FOR_EACH));
 
     if (not Is_Action(LIB(PARSE_REJECT)))
-        panic (LIB(PARSE_REJECT));
+        crash (LIB(PARSE_REJECT));
 
     Count num_append_args = Phase_Num_Params(Cell_Frame_Phase(LIB(APPEND)));
     assert(num_append_args == Phase_Num_Params(Cell_Frame_Phase(LIB(INSERT))));

@@ -487,10 +487,10 @@ typedef struct {
     #endif
 #endif
 
-#include "sys-globals.h"  // includes things like g_tick, used by panic()
+#include "sys-globals.h"  // includes things like g_tick, used by crash()
 
 
-#include "sys-panic.h"  // "blue screen of death"-style termination
+#include "sys-crash.h"  // "blue screen of death"-style termination
 
 #include "sys-mold.h"
 

@@ -203,7 +203,7 @@ static void Queue_Mark_Node_Deep(Node** npp) {  // ** for canonizing
   #if RUNTIME_CHECKS
     if (Not_Node_Managed(*npp)) {
         printf("Link to non-MANAGED item reached by GC\n");
-        panic (*npp);
+        crash (*npp);
     }
   #endif
 
@@ -396,10 +396,10 @@ static void Propagate_All_GC_Marks(void)
 
             if (QUOTE_BYTE(v) == ANTIFORM_0) {
                 if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
-                    panic (v);  // antiforms not legal in many array types
+                    crash (v);  // antiforms not legal in many array types
 
                 if (Is_Antiform_Unstable(cast(Atom*, v)))  // always illegal
-                    panic (v);
+                    crash (v);
             }
           #endif
 
@@ -538,7 +538,7 @@ void Run_All_Handle_Cleaners(void) {
 //
 // For root Stubs, this checks to see if their lifetime was dependent on a
 // FRAME!, and if that frame is no longer on the stack.  If so, it (currently)
-// will panic if that frame did not end due to a fail().  This could be
+// will crash if that frame did not end due to a fail().  This could be
 // relaxed to automatically free those Nodes as a normal GC.
 //
 // !!! This implementation walks over *all* the Stubs.  It wouldn't have to
@@ -1177,7 +1177,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
 
     if (sweeplist != NULL) {
     #if NO_RUNTIME_CHECKS
-        panic (sweeplist);
+        crash (sweeplist);
     #else
         sweep_count = Fill_Sweeplist(sweeplist);
     #endif
@@ -1314,7 +1314,7 @@ void Push_Lifeguard(const void* p)  // NODE_FLAG_NODE may not be set [1]
 
         Node* containing = Try_Find_Containing_Node_Debug(v);
         if (containing)  // cell shouldn't live in array or pairing [2]
-            panic (containing);
+            crash (containing);
       #endif
     }
     else {  // It's a Stub
@@ -1448,7 +1448,7 @@ void Shutdown_GC(void)
     if (Flex_Used(g_gc.manuals) != 0) {
         printf("g_gc.manuals not empty at shutdown!\n");
         Flex** leaked = Flex_Head(Flex*, g_gc.manuals);
-        panic (*leaked);
+        crash (*leaked);
     }
   #endif
     GC_Kill_Flex(g_gc.manuals);

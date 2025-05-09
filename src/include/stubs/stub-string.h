@@ -215,7 +215,7 @@ INLINE Length String_Len(const String* s) {
     if (not Is_String_Symbol(s)) {
       #if DEBUG_UTF8_EVERYWHERE
         if (MISC_STRING_NUM_CODEPOINTS(s) > Flex_Used(s))  // 0xDECAFBAD counts
-            panic(s);
+            crash (s);
       #endif
         return MISC_STRING_NUM_CODEPOINTS(s);  // cache for non-ANY-WORD?
     }
@@ -242,7 +242,7 @@ INLINE REBLEN String_Index_At(
     if (Is_Stub_Non_Symbol(s)) {  // length is cached for non-ANY-WORD?
       #if DEBUG_UTF8_EVERYWHERE
         if (MISC_STRING_NUM_CODEPOINTS(s) > Flex_Used(s))  // also 0xDECAFBAD
-            panic (s);
+            crash (s);
       #endif
 
         // We have length and bookmarks.  We should build String_At() based on

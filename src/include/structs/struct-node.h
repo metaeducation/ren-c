@@ -29,15 +29,15 @@
 // subject to "strict aliasing" requirements.
 //
 // On a semi-superficial level, this permits a kind of dynamic polymorphism,
-// such as that used by panic():
+// such as that used by crash():
 //
 //     Cell* cell = ...;
-//     panic (cell);  // can tell this is a Cell
+//     crash (cell);  // can tell this is a Cell
 //
 //     Stub* stub = ...;
-//     panic (stub)  // can tell this is a Stub (Flex, String, Array, Binary)
+//     crash (stub)  // can tell this is a Stub (Flex, String, Array, Binary)
 //
-//     panic ("Ḧéllŏ");  // can tell this is UTF-8 data (not Stub or Cell)
+//     crash ("Ḧéllŏ");  // can tell this is UTF-8 data (not Stub or Cell)
 //
 // An even more compelling case is the usage through the API, so variadic
 // combinations of strings and values can be intermixed, as in:

@@ -853,7 +853,7 @@ DetailsQuerier* Details_Querier(Details *details) {
         if (d_and_q->dispatcher == dispatcher)
             return d_and_q->querier;
     }
-    panic ("Non-native Dispatcher used without calling Register_Dispatcher()");
+    crash ("Non-native Dispatcher used without calling Register_Dispatcher()");
 }
 
 

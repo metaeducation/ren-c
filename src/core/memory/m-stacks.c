@@ -191,7 +191,7 @@ Array* Pop_Stack_Values_Core(Flags flags, StackIndex base) {
         if (Is_Antiform(src)) {  // only ok in some arrays
             Assert_Cell_Stable(src);
             if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
-                panic ("Unexpected antiform found on data stack");
+                crash ("Unexpected antiform found on data stack");
         }
 
         Move_Cell_Untracked(dest, src, CELL_MASK_ALL);

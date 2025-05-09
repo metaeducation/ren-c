@@ -40,7 +40,7 @@ INLINE void Untrack_Manual_Flex(const Flex* f)
                 <= cast(Flex**, g_gc.manuals->content.dynamic.data)
             ){
                 printf("Flex not in list of last manually added Flexes\n");
-                panic (f);
+                crash (f);
             }
           #endif
         }
@@ -71,7 +71,7 @@ INLINE void Force_Flex_Managed(const Flex* f) {
 #else
     INLINE void Assert_Flex_Managed(const Flex* f) {
         if (Not_Node_Managed(f))
-            panic (f);
+            crash (f);
     }
 #endif
 
@@ -111,7 +111,7 @@ INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Node)
   #else
     if (p != *Flex_Last(const void*, g_gc.guarded)) {
         printf("Drop_Lifeguard() pointer that wasn't last Push_Lifeguard()\n");
-        panic (p);
+        crash (p);
     }
   #endif
 

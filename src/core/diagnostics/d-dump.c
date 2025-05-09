@@ -27,7 +27,7 @@
 // more heavily checked build...so these routines were not used.
 //
 // They're being brought up to date to be included in the checked build only
-// version of panic().  That should keep them in working shape.
+// version of crash().  That should keep them in working shape.
 //
 // Note: These routines use `printf()`, that's only linked #if RUNTIME_CHECKS.
 // Higher-level Rebol formatting should ultimately be using BLOCK! dialects,
@@ -40,7 +40,7 @@
 
 #include "sys-core.h"
 
-#if DEBUG_FANCY_PANIC  // !!! separate switch, DEBUG_HAS_DUMP?
+#if DEBUG_FANCY_CRASH  // !!! separate switch, DEBUG_HAS_DUMP?
 
 #ifdef _MSC_VER
 #define snprintf _snprintf

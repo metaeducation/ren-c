@@ -28,7 +28,7 @@
 #include <mbedtls/include/mbedtls/platform.h>  // path changed
 #include <stdarg.h>
 
-#include "rebol.h"  // added for panic()
+#include "rebol.h"  // added for crash()
 typedef RebolValue Value;
 
 static void unsigned_dec_print(char **s, size_t n, size_t *chars_printed,

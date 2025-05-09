@@ -297,20 +297,6 @@ bind construct [
         ]
     ]
 
-    ; The internal panic() and panic_at() calls in C code cannot be hooked.
-    ; However, if you use the PANIC native in usermode, that *can* be hijacked.
-    ; This prints a message to distinguish the source of the panic, which is
-    ; useful to know that is what happened (and it demonstrates the ability
-    ; to hook it, just to remind us that we can).
-    ;
-    let panic-old: hijack panic/ ~[]~
-    hijack panic/ adapt panic-old/ [
-        print "PANIC ACTION! is being triggered from a usermode call"
-        print mold reason
-        ;
-        ; ...adaptation falls through to our copy of the original PANIC
-    ]
-
     system.product: 'core
 
     ; !!! If we don't load the extensions early, then we won't get the GET-ENV
@@ -510,7 +496,7 @@ bind construct [
         ["--" | <end>]
         accept <here>  ; rest of command line arguments (or none)
     |
-        [ahead text! | (panic "ARGV element not TEXT!")]  ; argv.N must be text
+        [ahead text! | (crash "ARGV element not TEXT!")]  ; argv.N must be text
 
         "--about" (
             o.about: 'yes  ; show full banner (ABOUT) on startup

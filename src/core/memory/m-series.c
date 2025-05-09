@@ -429,7 +429,7 @@ void Clear_Flex(Flex* f)
 Byte* Reset_Buffer(Flex* buf, REBLEN len)
 {
     if (buf == NULL)
-        panic ("buffer not yet allocated");
+        crash ("buffer not yet allocated");
 
     Set_Flex_Len(buf, 0);
     Unbias_Flex(buf, true);
@@ -451,7 +451,7 @@ void Assert_Flex_Term_Core(const Flex* f)
         if (Get_Stub_Flag(f, DYNAMIC)) {
             const Cell* tail = Array_Tail(x_cast(Array*, f));
             if (not Is_Cell_Poisoned(tail))
-                panic (tail);
+                crash (tail);
         }
       #endif
     }
@@ -459,12 +459,12 @@ void Assert_Flex_Term_Core(const Flex* f)
         const Byte* tail = Binary_Tail(c_cast(Binary*, f));
         if (Is_Stub_String(f)) {
             if (*tail != '\0')
-                panic (f);
+                crash (f);
         }
         else {
           #if DEBUG_POISON_FLEX_TAILS
             if (*tail != BINARY_BAD_UTF8_TAIL_BYTE && *tail != '\0')
-                panic (f);
+                crash (f);
           #endif
         }
     }
@@ -477,7 +477,7 @@ void Assert_Flex_Term_Core(const Flex* f)
 void Assert_Flex_Basics_Core(const Flex* f)
 {
     if (Not_Node_Readable(f))
-        panic (f);
+        crash (f);
 
     assert(TASTE_BYTE(f) != FLAVOR_0);
     assert(TASTE_BYTE(f) <= MAX_FLAVOR);

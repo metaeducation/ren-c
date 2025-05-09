@@ -286,7 +286,7 @@ void  Startup_Pools(REBINT scale)
 
       #if CHECK_MEMORY_ALIGNMENT
         if (Mem_Pool_Spec[n].wide % sizeof(REBI64) != 0)
-            panic ("memory pool width is not 64-bit aligned");
+            crash ("memory pool width is not 64-bit aligned");
       #endif
 
         g_mem.pools[n].wide = Mem_Pool_Spec[n].wide;
@@ -325,7 +325,7 @@ void  Startup_Pools(REBINT scale)
 
     g_mem.prior_expand = Try_Alloc_Memory_N(Flex*, MAX_EXPAND_LIST);
     if (not g_mem.prior_expand)
-        panic (nullptr);
+        crash (nullptr);
     memset(g_mem.prior_expand, 0, sizeof(Flex*) * MAX_EXPAND_LIST);
     g_mem.prior_expand[0] = (Flex*)1;
 }
@@ -371,8 +371,8 @@ void Shutdown_Pools(void)
         }
     }
     if (leaked) {
-        printf("%d leaked Flexes...panic()ing one\n", cast(int, num_leaks));
-        panic (leaked);
+        printf("%d leaked Flexes...crash()ing one\n", cast(int, num_leaks));
+        crash (leaked);
     }
   }
   #endif
@@ -485,7 +485,7 @@ bool Try_Fill_Pool(Pool* pool)
 }
 
 
-#if DEBUG_FANCY_PANIC
+#if DEBUG_FANCY_CRASH
 
 //
 //  Try_Find_Containing_Node_Debug: C
@@ -645,7 +645,7 @@ void Free_Pairing(Cell* paired) {
   #if DEBUG_STUB_ORIGINS && TRAMPOLINE_COUNTS_TICKS
     //
     // This wasn't actually a Series, but poke the tick where the node was
-    // freed into the memory spot so panic finds it.
+    // freed into the memory spot so crash() finds it.
     //
     x_cast(Stub*, paired)->tick = g_tick;
   #endif
@@ -1200,7 +1200,7 @@ void GC_Kill_Stub(Stub* s)
   #if RUNTIME_CHECKS
     if (NODE_BYTE(s) == FREE_POOLUNIT_BYTE) {
         printf("Killing already deallocated stub.\n");
-        panic (s);
+        crash (s);
     }
   #endif
 
@@ -1239,12 +1239,12 @@ void Free_Unmanaged_Flex(Flex* f)
   #if RUNTIME_CHECKS
     if (NODE_BYTE(f) == FREE_POOLUNIT_BYTE or Not_Node_Readable(f)) {
         printf("Called Free_Unmanaged_Flex() on decayed or freed Flex\n");
-        panic (f);  // erroring here helps not conflate with tracking problems
+        crash (f);  // erroring here helps not conflate with tracking problems
     }
 
     if (Is_Node_Managed(f)) {
         printf("Trying to Free_Unmanaged_Flex() on a GC-managed Flex\n");
-        panic (f);
+        crash (f);
     }
   #endif
 
@@ -1318,14 +1318,14 @@ REBLEN Check_Memory_Debug(void)
                 continue;  // data lives in the Flex Stub itself
 
             if (Flex_Rest(f) == 0)
-                panic (f);  // zero size allocations not legal
+                crash (f);  // zero size allocations not legal
 
             PoolId pool_id = Pool_Id_For_Size(Flex_Total(f));
             if (pool_id >= STUB_POOL)
                 continue;  // size doesn't match a known pool
 
             if (g_mem.pools[pool_id].wide < Flex_Total(f))
-                panic (f);
+                crash (f);
         }
     }
 
@@ -1350,7 +1350,7 @@ REBLEN Check_Memory_Debug(void)
                 ){
                     if (found) {
                         printf("unit belongs to more than one segment\n");
-                        panic (unit);
+                        crash (unit);
                     }
 
                     found = true;
@@ -1359,12 +1359,12 @@ REBLEN Check_Memory_Debug(void)
 
             if (not found) {
                 printf("unit does not belong to one of the pool's segments\n");
-                panic (unit);
+                crash (unit);
             }
         }
 
         if (g_mem.pools[pool_id].free != pool_free_nodes)
-            panic ("actual free unit count does not agree with pool header");
+            crash ("actual free unit count does not agree with pool header");
 
         total_free_nodes += pool_free_nodes;
     }

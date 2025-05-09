@@ -226,7 +226,7 @@ uint32_t Hash_Value(const Cell* cell)
             goto hash_any_list;
 
           default:
-            panic (nullptr);
+            crash (nullptr);
         }
         break; }
 
@@ -339,7 +339,7 @@ uint32_t Hash_Value(const Cell* cell)
         fail (Error_Invalid_Type(TYPE_HANDLE));
 
       default:
-        panic (nullptr); // List should be comprehensive
+        crash (nullptr); // List should be comprehensive
     }
 
     return hash ^ crc32_table[u_cast(Byte, heart)];
