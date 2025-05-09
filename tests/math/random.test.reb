@@ -48,7 +48,7 @@
         let a: random 10000
         randomize seed
         if a != random 10000 [
-            fail ["Nondeterministic seed:" to word! type of seed]
+            panic ["Nondeterministic seed:" to word! type of seed]
         ]
     ]
     okay
@@ -80,11 +80,11 @@
         randomize mold series
         let shuffled: shuffle-of series  ; SHUFFLE-OF makes a copy
         if (length of shuffled) != (length of series) [
-            fail ["Shuffle produced wrong length:" mold series mold shuffled]
+            panic ["Shuffle produced wrong length:" mold series mold shuffled]
         ]
         let diff: difference shuffled series
         if not empty? diff [
-            fail ["Difference with shuffle:" mold difference]
+            panic ["Difference with shuffle:" mold difference]
         ]
         randomize mold series
         shuffle series  ; should be same shuffle with same RANDOMIZE seed
@@ -96,18 +96,18 @@
 
         shuffled: shuffle next next copy series  ; mutates, and not at head
         if (2 + length of shuffled) != (length of series) [
-            fail ["Wrong length non-head shuffle:" mold series mold shuffled]
+            panic ["Wrong length non-head shuffle:" mold series mold shuffled]
         ]
         all [
             (head of shuffled).1 = series.1
             (head of shuffled).2 = series.2
         ] else [
-            fail ["Shuffle did not preserve head:" mold series mold shuffled]
+            panic ["Shuffle did not preserve head:" mold series mold shuffled]
         ]
 
         let diff: difference (head of shuffled) series
         if not empty? diff [
-            fail ["Difference with non-head shuffle:" mold difference]
+            panic ["Difference with non-head shuffle:" mold difference]
         ]
     ]
     okay
@@ -146,7 +146,7 @@
         repeat 50 [
             let item: random-pick series
             if not find series item [
-                fail ["PICK-RANDOM item not in series" mold series mold item]
+                panic ["PICK-RANDOM item not in series" mold series mold item]
             ]
         ]
     ]
@@ -166,15 +166,15 @@
     ][
         let shuffled: shuffle of immutable
         if (type of immutable) != (type of shuffled) [
-            fail ["Shuffle made different length" mold immutable mold shuffled]
+            panic ["Shuffle made different length" mold immutable mold shuffled]
         ]
         if (length of immutable) != (length of shuffled) [
-            fail ["Shuffle made different length" mold immutable mold shuffled]
+            panic ["Shuffle made different length" mold immutable mold shuffled]
         ]
         let canon1: as (either any-utf8? immutable [text!] [block!]) immutable
         let canon2: as (either any-utf8? shuffled [text!] [block!]) shuffled
         if not empty? difference canon1 canon2 [
-            fail ["Canon contents differ:" mold canon1 mold canon2]
+            panic ["Canon contents differ:" mold canon1 mold canon2]
         ]
     ]
     ok

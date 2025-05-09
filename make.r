@@ -138,7 +138,7 @@ for-each [name value] options [
             use [ext-file user-ext][
                 user-ext: load3 value
                 if not block? user-ext [
-                    fail [
+                    panic [
                         "Selected extensions must be a block, not"
                         (type of user-ext)
                     ]
@@ -202,7 +202,7 @@ parse3 load3 (join tools-dir %cflags-map.r) [some [
     |
     <end> accept (okay)
     |
-    (fail ["Malformed %cflags-map.r, near:" mold:limit pos 200])
+    (panic ["Malformed %cflags-map.r, near:" mold:limit pos 200])
 ]]
 
 
@@ -246,7 +246,7 @@ gen-obj: func [
     ]
 
     if not match [file! path! tuple! word!] file [
-        fail [
+        panic [
             "Unexpected argument passed to GEN-OBJ:" mold spec, newline
             "Should be FILE!/PATH!/TUPLE!: %file.c, path/tuple.c, etc." newline
             "or BLOCK! spec like: [%foo.c <msc:/Wd1020> <gcc:-Wno-whammies>]"
@@ -362,7 +362,7 @@ gen-obj: func [
             ]
         ]
 
-        fail [
+        panic [
             "STANDARD should be one of"
             "[c gnu89 gnu99 c99 c11 c++ c++11 c++14 c++17 c++latest]"
             "not" (user-config.standard)
@@ -662,7 +662,7 @@ gen-obj: func [
             []  ; empty for SPREAD
         ]
 
-        fail ["RIGOROUS [yes no] not" (rigorous)]
+        panic ["RIGOROUS [yes no] not" (rigorous)]
     ]
 
     ; Now add the flags for the project overall.
@@ -821,7 +821,7 @@ for-each 'entry read extension-dir [
 
     let ext-name: try hdr.name
     if (not ext-name) or (not word? ext-name) [
-        fail [mold make-spec-file "needs WORD! extension Name: in header"]
+        panic [mold make-spec-file "needs WORD! extension Name: in header"]
     ]
 
     append extension-names ext-name  ; collect names for HELP (used or not)
@@ -841,7 +841,7 @@ for-each 'entry read extension-dir [
         ]
         '+ [mode: <builtin>]  ; clearer below
         '* [mode: <dynamic>]
-        fail ["Mode for extension" ext-name "must be [- + *]"]
+        panic ["Mode for extension" ext-name "must be [- + *]"]
     ]
 
     ; !!! The specs use `repo-dir` and some other variables.
@@ -878,7 +878,7 @@ for-each 'entry read extension-dir [
                 word! block! opt text! config: group!
             ]
         ] else [
-            fail ["Could not parse extension build spec" mold spec]
+            panic ["Could not parse extension build spec" mold spec]
         ]
 
         if config [
@@ -896,7 +896,7 @@ for-each 'entry read extension-dir [
     ext.libraries: blockify opt ext.libraries
 
     if (ext.mode = <dynamic>) and (not ext.loadable) [
-        fail ["Extension" name "is not dynamically loadable"]
+        panic ["Extension" name "is not dynamically loadable"]
     ]
 
     append extensions ext
@@ -905,7 +905,7 @@ for-each 'entry read extension-dir [
 for-each [name val] user-config.extensions [  ; all found ones were removed
     print ["!!! Unrecognized extension name in config:" name]
 ] then [
-    fail "Unrecognized extensions, aborting"
+    panic "Unrecognized extensions, aborting"
 ]
 
 extension-names: map-each 'x extension-names [
@@ -1173,7 +1173,7 @@ rebmake.default-compiler: pick rebmake (any [
     user-config.compiler
     'cc
 ]) else [
-    fail ["Unknown compiler type in configuration:" mold user-config.compiler]
+    panic ["Unknown compiler type in configuration:" mold user-config.compiler]
 ]
 rebmake.default-compiler/check opt user-config.compiler-path
 
@@ -1181,7 +1181,7 @@ rebmake.default-stripper: pick rebmake (any [
     user-config.stripper
     'strip
 ]) else [
-    fail ["Unknown stripper type in configuration:" mold user-config.stripper]
+    panic ["Unknown stripper type in configuration:" mold user-config.stripper]
 ]
 rebmake.default-stripper/check user-config.stripper-path
 
@@ -1286,7 +1286,7 @@ switch user-config.debug [
         ]
     ]
 
-    fail ["unrecognized debug setting:" user-config.debug]
+    panic ["unrecognized debug setting:" user-config.debug]
 ]
 
 switch user-config.optimize [
@@ -1294,7 +1294,7 @@ switch user-config.optimize [
         app-config.optimization: user-config.optimize
     ]
 ] else [
-    fail ["Optimization setting unknown:" user-config.optimize]
+    panic ["Optimization setting unknown:" user-config.optimize]
 ]
 
 cfg-cplusplus: 'no  ; gets set to true if linked as c++ overall
@@ -1315,7 +1315,7 @@ append app-config.definitions spread switch user-config.pre-vista [
         []  ; empty for spread
     ]
 
-    fail ["PRE-VISTA [yes no] not" (user-config.pre-vista)]
+    panic ["PRE-VISTA [yes no] not" (user-config.pre-vista)]
 ]
 
 
@@ -1331,7 +1331,7 @@ append app-config.ldflags spread switch user-config.static [
         ]
     ]
 
-    fail ["STATIC must be [yes no] not" (user-config.static)]
+    panic ["STATIC must be [yes no] not" (user-config.static)]
 ]
 
 
@@ -1481,7 +1481,7 @@ add-new-obj-folders: func [
                 lib: lib.depends
             ]
             (elide dump lib)
-            fail ["unexpected class"]
+            panic ["unexpected class"]
         ]
 
         for-each 'obj lib [
@@ -1589,7 +1589,7 @@ calculate-sequence: func [
     ext
 ][
     if integer? ext.sequence [return ext.sequence]
-    if yes? ext.visited [fail ["circular dependency on" ext]]
+    if yes? ext.visited [panic ["circular dependency on" ext]]
     if null? ext.requires [ext.sequence: 0 return ext.sequence]
     ext.visited: 'yes
     let seq: 0
@@ -1604,7 +1604,7 @@ calculate-sequence: func [
                 break
             ]
         ] then [  ; didn't BREAK, so no match found
-            fail ["unrecoginized dependency" req "for" ext.name]
+            panic ["unrecoginized dependency" req "for" ext.name]
         ]
     ]
     return ext.sequence: seq + 1
@@ -1639,7 +1639,7 @@ for-each 'ext extensions [
         null [continue]  ; not in use, don't add it to the build process
         <builtin> [noop]
         <dynamic> [noop]
-        fail
+        panic
     ]
 
     let ext-prep-dir: cscape [ext
@@ -1666,7 +1666,7 @@ for-each 'ext extensions [
                 ]
             ] else [
                 dump s
-                fail [type of s "can't be a dependency of a module"]
+                panic [type of s "can't be a dependency of a module"]
             ]
         ]
 
@@ -1682,7 +1682,7 @@ for-each 'ext extensions [
                 )[
                     lib
                 ]
-                fail ["unrecognized library" lib "in extension" ext]
+                panic ["unrecognized library" lib "in extension" ext]
             ]
         ]
 
@@ -1843,7 +1843,7 @@ vars: reduce [
                 rebmake.target-platform.exe-suffix
             ]
         ] else [
-            fail "^/^/!! Cannot find a valid REBOL_TOOL !!^/"
+            panic "^/^/!! Cannot find a valid REBOL_TOOL !!^/"
         ]
 
         ; Originally this didn't transform to a local file path (e.g. with
@@ -2074,7 +2074,7 @@ target: user-config.target
 if not block? target [target: reduce [target]]
 for-each 't target [
     switch t targets else [
-        fail [
+        panic [
             newline
             newline
             "UNSUPPORTED TARGET" user-config.target newline

@@ -29,7 +29,7 @@
 //
 //  try: native [
 //
-//  "Suppress failure from raised errors or VOID, by returning NULL"
+//  "Suppress escalation to PANIC from ERROR!s, by returning NULL"
 //
 //      return: [any-value?]
 //      ^atom [any-atom?]  ; e.g. TRY on a pack returns the pack
@@ -119,7 +119,7 @@ DECLARE_NATIVE(ENRESCUE)
         return Meta_Quotify(OUT);
     }
 
-    if (not Is_Throwing_Failure(LEVEL)) {  // non-ERROR! throws
+    if (not Is_Throwing_Panic(LEVEL)) {  // non-ERROR! throws
         if (Bool_ARG(RELAX))
             return BOUNCE_THROWN;  // e.g. RETURN, THROW
         return Init_Error(OUT, Error_No_Catch_For_Throw(LEVEL));
@@ -251,21 +251,6 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 //  ]
 //
 DECLARE_NATIVE(EXCEPT)
-//
-// 1. Although THEN and ELSE will not operate on invisible input, it is legal
-//    to trap a definitional error coming from a function that evaluates to
-//    nihil.  Consider this case:
-//
-//        let result': ^ eval f except e -> [...]
-//
-//    If you intend this to work with arbitrary code and store a meta-VOID
-//    in non-erroring cases, then EXCEPT must tolerate the VOID, since the
-//    infix defer rules mean this acts as ^ (eval f except e -> [...]).  If
-//    you couldn't do that, this gets laborious to where you have to write
-//    something like:
-//
-//        let result': ^ eval f
-//        if failure? unmeta result' [let e: unquasi reify unmeta result ...]
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
@@ -286,7 +271,7 @@ DECLARE_NATIVE(EXCEPT)
 //
 //  raised?: native:intrinsic [
 //
-//  "Tells you if argument is an ERROR! antiform, doesn't fail if it is"
+//  "Tells you if argument is an ERROR! antiform, doesn't panic if it is"
 //
 //      return: [logic?]
 //      ^atom
@@ -307,7 +292,7 @@ DECLARE_NATIVE(RAISED_Q)
 //
 //  unraised?: native:intrinsic [
 //
-//  "Tells you if argument is not an ERROR! antiform, doesn't fail if it is"
+//  "Tells you if argument is not an ERROR! antiform, doesn't panic if it is"
 //
 //      return: [logic?]
 //      ^atom
@@ -360,7 +345,7 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
             not IS_WORD_BOUND(location)
             or CTX_TYPE(context = VAL_WORD_CONTEXT(location)) != TYPE_FRAME
         ){
-            return FAIL("SET-LOCATION-OF-ERROR requires FRAME!-bound WORD!");
+            return PANIC("SET-LOCATION-OF-ERROR requires FRAME!-bound WORD!");
         }
         varlist = cast(VarList*, context);
     }
@@ -369,7 +354,7 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
         varlist = Cell_Varlist(location);
     }
 
-    Level* where = Level_Of_Varlist_May_Fail(varlist);
+    Level* where = Level_Of_Varlist_May_Panic(varlist);
 
     Error* error = Cell_Error(ARG(ERROR));
     Set_Location_Of_Error(error, where);

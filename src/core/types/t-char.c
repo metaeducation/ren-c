@@ -255,7 +255,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
     switch(Type_Of(arg)) {
       case TYPE_INTEGER: {
         if (heart != TYPE_ISSUE)
-            fail ("Only ISSUE! can MAKE a UTF-8 immutable type with INTEGER!");
+            panic ("Only ISSUE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
         Option(Error*) error = Trap_Init_Char(OUT, n);
@@ -265,7 +265,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
       case TYPE_BLOB: {
         if (heart != TYPE_ISSUE)
-            fail ("Only ISSUE! can MAKE a UTF-8 immutable type with BLOB!");
+            panic ("Only ISSUE! can MAKE a UTF-8 immutable type with BLOB!");
 
         Size size;
         const Byte* bp = Cell_Blob_Size_At(&size, arg);
@@ -431,7 +431,7 @@ static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
         return cast(REBINT, VAL_DECIMAL(arg));
 
       default:
-        fail (Error_Math_Args(TYPE_ISSUE, verb));
+        panic (Error_Math_Args(TYPE_ISSUE, verb));
     }
 }
 
@@ -461,7 +461,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
 
     if (form) {
         if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)
-            fail (Error_Illegal_Zero_Byte_Raw());  // don't form #, only mold
+            panic (Error_Illegal_Zero_Byte_Raw());  // don't form #, only mold
 
         Append_Any_Utf8_Limit(mo->string, v, UNLIMITED);
         return TRASH;
@@ -546,7 +546,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     // implementation, and will not work if the ISSUE! length is > 1.
     //
     if (not IS_CHAR(issue))
-        return FAIL("Math operations only usable on single-character ISSUE!");
+        return PANIC("Math operations only usable on single-character ISSUE!");
 
     // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
@@ -581,14 +581,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
       case SYM_DIVIDE:
         arg = Math_Arg_For_Char(ARG_N(2), verb);
         if (arg == 0)
-            return FAIL(Error_Zero_Divide_Raw());
+            return PANIC(Error_Zero_Divide_Raw());
         chr /= arg;
         break;
 
       case SYM_REMAINDER:
         arg = Math_Arg_For_Char(ARG_N(2), verb);
         if (arg == 0)
-            return FAIL(Error_Zero_Divide_Raw());
+            return PANIC(Error_Zero_Divide_Raw());
         chr %= arg;
         break;
 
@@ -937,7 +937,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
 
     Option(Error*) e = Trap_Alias_Any_Utf8_As(OUT, any_utf8, as);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }
@@ -951,7 +951,7 @@ IMPLEMENT_GENERIC(PICK, Is_Issue)
     const Element* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
-        return FAIL(PARAM(PICKER));
+        return PANIC(PARAM(PICKER));
 
     REBI64 n = VAL_INT64(picker);
     if (n <= 0)
@@ -1009,7 +1009,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Issue)
     Element* issue = Element_ARG(MAX);
 
     if (not IS_CHAR(issue))
-        return FAIL("RANDOM only for single-character ISSUE!");
+        return PANIC("RANDOM only for single-character ISSUE!");
 
     Codepoint c = Cell_Codepoint(issue);
     if (c == 0)
@@ -1036,7 +1036,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
     Value* part = ARG(PART);
 
     if (Bool_ARG(SECURE))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
 
@@ -1127,12 +1127,12 @@ DECLARE_NATIVE(TRAILING_BYTES_FOR_UTF8)
 
     REBINT byte = VAL_INT32(ARG(FIRST_BYTE));
     if (byte < 0 or byte > 255)
-        return FAIL(Error_Out_Of_Range(ARG(FIRST_BYTE)));
+        return PANIC(Error_Out_Of_Range(ARG(FIRST_BYTE)));
 
     uint_fast8_t trail = g_trailing_bytes_for_utf8[cast(Byte, byte)];
     if (trail > 3 and not Bool_ARG(EXTENDED)) {
         assert(trail == 4 or trail == 5);
-        return FAIL(
+        return PANIC(
             "Use :EXTENDED with TRAILING-BYTES-FOR-UTF-8 for 4 or 5 bytes"
         );
     }

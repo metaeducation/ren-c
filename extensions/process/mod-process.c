@@ -144,7 +144,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
             &key
         ) != ERROR_SUCCESS
     ){
-        fail ("Could not open registry key for http\\shell\\open\\command");
+        panic ("Could not open registry key for http\\shell\\open\\command");
     }
 
     DWORD num_bytes = 0; // pass NULL and use 0 for initial length, to query
@@ -159,7 +159,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
         or num_bytes % 2 != 0 // byte count should be even for unicode
     ){
         RegCloseKey(key);
-        return FAIL(
+        return PANIC(
             "Could not read registry key for http\\shell\\open\\command"
         );
     }
@@ -174,7 +174,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
     RegCloseKey(key);
 
     if (flag != ERROR_SUCCESS)
-        return FAIL(
+        return PANIC(
             "Could not read registry key for http\\shell\\open\\command"
         );
 
@@ -261,17 +261,17 @@ static Bounce Delegate_Kill_Process(pid_t pid, int signal)
     switch (errno) {
       case EINVAL:
         return rebDelegate(
-            "fail [-[Invalid signal number:]-", rebI(signal), "]"
+            "panic [-[Invalid signal number:]-", rebI(signal), "]"
         );
 
       case EPERM:
-        return Delegate_Fail_Permission_Denied();
+        return Delegate_Panic_Permission_Denied();
 
       case ESRCH:
-        return Delegate_Fail_No_Process(rebInteger(pid));  // releases integer
+        return Delegate_Panic_No_Process(rebInteger(pid));  // releases integer
 
       default:
-        return rebDelegate("fail", rebError_OS(errno));
+        return rebDelegate("panic", rebError_OS(errno));
     }
 }
 #endif
@@ -304,13 +304,13 @@ DECLARE_NATIVE(TERMINATE)
         err = GetLastError();
         switch (err) {
           case ERROR_ACCESS_DENIED:
-            return Delegate_Fail_Permission_Denied();
+            return Delegate_Panic_Permission_Denied();
 
           case ERROR_INVALID_PARAMETER:
-            return Delegate_Fail_No_Process(ARG(PID));
+            return Delegate_Panic_No_Process(ARG(PID));
 
           default:
-            return Delegate_Fail_Terminate_Failed(err);
+            return Delegate_Panic_Terminate_Failed(err);
         }
     }
 
@@ -323,16 +323,16 @@ DECLARE_NATIVE(TERMINATE)
     CloseHandle(ph);
     switch (err) {
       case ERROR_INVALID_HANDLE:
-        return Delegate_Fail_No_Process(ARG(PID));
+        return Delegate_Panic_No_Process(ARG(PID));
 
       default:
-        return Delegate_Fail_Terminate_Failed(err);
+        return Delegate_Panic_Terminate_Failed(err);
     }
 
   #elif TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
 
     if (getpid() == VAL_INT32(ARG(PID))) {  // signal not reliable for this
-        return FAIL(
+        return PANIC(
             "QUIT or SYS.UTIL/EXIT to terminate current process, instead"
         );
     }

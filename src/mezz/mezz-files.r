@@ -39,10 +39,10 @@ clean-path: func [
 ][
     if tag? path [  ; path relative to currently running script [1]
         if #"/" = first path [
-            fail ["TAG! import from SYSTEM.SCRIPT.PATH not relative:" path]
+            panic ["TAG! import from SYSTEM.SCRIPT.PATH not relative:" path]
         ]
         if #"%" = first path [
-            fail ["Likely mistake, % in TAG!-style import path:" path]
+            panic ["Likely mistake, % in TAG!-style import path:" path]
         ]
         else [
             path: join system.script.path (as text! path)
@@ -53,7 +53,7 @@ clean-path: func [
         path: switch as tag! path  ; !!! list actually used tags, should change
             (load system.locale.library.utilities)
         else [
-            fail ["Module" path "not in system.locale.library.utilities"]
+            panic ["Module" path "not in system.locale.library.utilities"]
         ]
     ]
 
@@ -191,7 +191,7 @@ ask: func [
     ; !!! What about /MULTILINE ?
 ][
     if hide [
-        fail [
+        panic [
             "ASK/HIDE not yet implemented:"
             https://github.com/rebol/rebol-issues/issues/476
         ]
@@ -207,10 +207,10 @@ ask: func [
                 opt prompt: text!
                 opt let word: *in* word! (type: ensure datatype! get word)
             ] except [
-                fail -[ASK currently only supports ["Prompt:" datatype!]]-
+                panic -[ASK currently only supports ["Prompt:" datatype!]]-
             ]
         ]
-        fail ~<unreachable>~
+        panic ~<unreachable>~
     ]
 
     if type = issue! [
@@ -266,7 +266,7 @@ confirm: func [
         block? with
         length of with > 2
 
-        fail:blame [
+        panic:blame [
             "maximum 2 arguments allowed for with [true false]"
             "got:" mold with
         ] $with
@@ -304,7 +304,7 @@ list-dir: func [
     let save-dir: what-dir
 
     if not file? save-dir [
-        fail ["No directory listing protocol registered for" save-dir]
+        panic ["No directory listing protocol registered for" save-dir]
     ]
 
     switch:type :path [
@@ -448,6 +448,6 @@ set-net: func [
 
     bl [block!]
 ][
-    if 6 <> length of bl [fail "Needs all 6 parameters for set-net"]
+    if 6 <> length of bl [panic "Needs all 6 parameters for set-net"]
     set (words of system.user.identity) bl
 ]

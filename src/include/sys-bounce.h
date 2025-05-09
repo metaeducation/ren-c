@@ -28,8 +28,8 @@
 // * We don't want to use UTF-8 signals like `return "C"` for BOUNCE_CONTINUE.
 //   That would miss out on the opportunity to make these equivalent:
 //
-//       return "fail -[Error]-"
-//       return rebDelegate("fail -[Error]-")
+//       return "panic -[Error]-"
+//       return rebDelegate("panic -[Error]-")
 //
 // * Using a Cell would put us in contention with discerning between legitmate
 //   Cells and these signals.
@@ -148,8 +148,8 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 
 // This signals that the evaluator is in a "thrown state".
 //
-#define C_FAIL  'F'
-#define BOUNCE_FAIL  cast(Bounce, &g_bounce_fail)
+#define C_PANIC  'P'
+#define BOUNCE_PANIC  cast(Bounce, &g_bounce_panic)
 
 
 // In order to be fast, intrinsics fold their typechecking into their native

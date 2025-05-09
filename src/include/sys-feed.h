@@ -145,7 +145,7 @@ INLINE const Element* At_Feed(Feed* feed) {
         DECLARE_VALUE (temp);
         Copy_Cell(temp, elem);
         Meta_Unquotify_Known_Stable(temp);
-        fail (Error_Bad_Antiform(temp));
+        panic (Error_Bad_Antiform(temp));
     }
     return elem;
 }
@@ -199,7 +199,7 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
     assert(FEED_IS_VARIADIC(feed));
     assert(Feed_Pending(feed) == nullptr);
 
-    assert(Is_Feed_At_End(feed));  // must spool, regardless of throw/fail!
+    assert(Is_Feed_At_End(feed));  // must spool, regardless of throw/panic!
 
     if (FEED_VAPTR(feed))
         va_end(*(unwrap FEED_VAPTR(feed)));  // *ALL* valist get here [1]
@@ -248,11 +248,11 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
 
 // As we feed forward, we're supposed to be freeing this--it is not managed
 // -and- it's not manuals tracked, it is only held alive by the va_list()'s
-// plan to visit it.  A fail() here won't auto free it *because it is this
+// plan to visit it.  A panic() here won't auto free it *because it is this
 // traversal code which is supposed to free*.
 //
-// !!! Actually, THIS CODE CAN'T FAIL.  :-/  It is part of the implementation
-// of fail's cleanup itself.
+// !!! Actually, THIS CODE CAN'T PANIC.  :-/  It is part of the implementation
+// of panic's cleanup itself.
 //
 INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
     Feed* feed
@@ -341,7 +341,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
 // Ordinary Rebol internals deal with Value* that are resident in arrays.
 // But a va_list can contain UTF-8 string components or special instructions
 //
-INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
+INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Panic(Feed* feed)
 {
     assert(FEED_IS_VARIADIC(feed));
     assert(Feed_Pending(feed) == nullptr);
@@ -421,9 +421,9 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
 
 // This is higher-level, and should be called by non-internal feed mechanics.
 //
-INLINE void Sync_Feed_At_Cell_Or_End_May_Fail(Feed* feed) {
+INLINE void Sync_Feed_At_Cell_Or_End_May_Panic(Feed* feed) {
     if (Get_Feed_Flag(feed, NEEDS_SYNC)) {
-        Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
+        Force_Variadic_Feed_At_Cell_Or_End_May_Panic(feed);
         Clear_Feed_Flag(feed, NEEDS_SYNC);
     }
     assert(Is_Feed_At_End(feed) or Ensure_Readable(c_cast(Cell*, feed->p)));
@@ -479,7 +479,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
             //
             feed->p = *FEED_PACKED(feed)++;
         }
-        Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
+        Force_Variadic_Feed_At_Cell_Or_End_May_Panic(feed);
     }
     else {
         if (FEED_INDEX(feed) != Array_Len(Feed_Array(feed))) {
@@ -583,7 +583,7 @@ INLINE void Free_Feed(Feed* feed) {
     // any faster...they're usually reified into an array anyway, so
     // the level processing the array will take the other branch.
 
-    Sync_Feed_At_Cell_Or_End_May_Fail(feed);  // may not be sync'd yet
+    Sync_Feed_At_Cell_Or_End_May_Panic(feed);  // may not be sync'd yet
     while (Not_Feed_At_End(feed))
         Fetch_Next_In_Feed(feed);
 
@@ -742,8 +742,8 @@ INLINE Feed* Prep_Variadic_Feed(
         feed->p = p;
     }
 
-    // Note: We DON'T call Force_Variadic_Feed_At_Cell_Or_End_May_Fail() here.
-    // Because we do not want Prep_Variadic_Feed() to fail, as it could have
+    // Note: We DON'T call Force_Variadic_Feed_At_Cell_Or_End_May_Panic() here.
+    // Because we do not want Prep_Variadic_Feed() to panic, as it could have
     // no error trapping in effect...because it happens when levels are being
     // set up and haven't been pushed to the trampoline yet.
     //

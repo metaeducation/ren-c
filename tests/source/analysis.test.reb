@@ -25,9 +25,9 @@
     (not find source-analysis <id-mismatch>)
     (not find source-analysis <inconsistent-eol>)
 
-    ; Currently failing. Uncomment, to work on cleaning this up.
+    ; Currently panicking. Uncomment, to work on cleaning this up.
     ; (not find source-analysis [<line-exceeds> 127])
 
-    ; Currently failing. Uncomment, to work on cleaning this up.
+    ; Currently panicking. Uncomment, to work on cleaning this up.
     ; (not find source-analysis <malloc>)
 ]

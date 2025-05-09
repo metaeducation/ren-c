@@ -1,37 +1,37 @@
-; fail.test.reb
+; panic.test.reb
 ;
-; The FAIL function in Ren-C is a usermode function that attempts to give
+; The PANIC function in Ren-C is a usermode function that attempts to give
 ; a richer experience than the `DO MAKE ERROR!` behavior in R3-Alpha.
 ;
-; Because DO of an ERROR! would have to raise an error if it did not have
+; Because EVAL of an ERROR! would have to raise an error if it did not have
 ; another behavior, this is still the mechanism for triggering errors.
-; (used by FAIL in its implementation)
+; (used by PANIC in its implementation)
 
 
-; FAIL may be used on its own.  If it didn't consider this a legitimate
+; PANIC may be used on its own.  If it didn't consider this a legitimate
 ; way of raising errors, it would have to raise an error anyway.
 ; This is convenient for throwaway code.
 [
-    ~unknown-error~ !! (fail)
-    ~unknown-error~ !! (case [null [x] null [y] fail])
+    ~unknown-error~ !! (panic)
+    ~unknown-error~ !! (case [null [x] null [y] panic])
 ]
 
 
-; A simple FAIL with a string message will be a generic error ID
+; A simple PANIC with a string message has no error ID
 ;
-(e: sys.util/rescue [fail "hello"], (e.id = null) and (e.message = "hello"))
+(e: sys.util/rescue [panic "hello"], (e.id = null) and (e.message = "hello"))
 
 
-; Failing instead with a quasi-WORD? will make the error have that ID
+; PANIC instead with a WORD! will make the error have that ID
 ;
-(e: sys.util/rescue [fail 'some-error-id], e.id = 'some-error-id)
+(e: sys.util/rescue [panic 'some-error-id], e.id = 'some-error-id)
 
 
-; FAIL can be given a :BLAME parameter.  This gives a more informative message,
+; PANIC can be given a :BLAME parameter.  It gives a more informative message,
 ; even when no text is provided.
 [
     (
-        foo: func [x] [fail @x]
+        foo: func [x] [panic @x]
 
         e: sys.util/rescue [foo 10]
         all [
@@ -42,7 +42,7 @@
             [foo 10] = copy:part e.near 2  ; implicates callsite
         ]
     )(
-        foo: func [x] [fail:blame "error reason" $x]
+        foo: func [x] [panic:blame "error reason" $x]
 
         e: sys.util/rescue [foo 10]
         all [
@@ -58,7 +58,7 @@
     (raised? [{#}]: raise "hi")
 ]
 
-; A ^META'd failure still does a lookahead step for infix, and if that step
+; A ^META'd raised! still does a lookahead step for infix, and if that step
 ; does not need to lookahead it should respect the meta'd status and not
 ; raise an error.
 [
@@ -71,7 +71,7 @@
     )
 ]
 
-; Non-^META cases should be able to get away with fail + except if it doesn't
+; Non-^META cases should be able to get away with raise + except if it doesn't
 ; actually try to do the assignment.
 [
     (null? until [x: raise "hi" except [break]])

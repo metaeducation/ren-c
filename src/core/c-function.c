@@ -238,12 +238,12 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
         if (Is_Block(item)) {
             if (mode != SPEC_MODE_PUSHED)  // must come after parameter [1]
-                fail (Error_Bad_Func_Def_Raw(item));
+                panic (Error_Bad_Func_Def_Raw(item));
 
             OnStack(Value*) param = TOP;
 
             if (Cell_Parameter_Spec(param))  // `func [x [integer!] [blank!]]`
-                fail (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
+                panic (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
 
             Context* derived = Derive_Binding(Level_Binding(L), item);
             Set_Parameter_Spec(param, item, derived);
@@ -520,7 +520,7 @@ Option(Error*) Trap_Pop_Paramlist(
     Set_Flex_Len(paramlist, num_params + 1);
 
     // We want to check for duplicates and a Binder can be used for that
-    // purpose--but fail() isn't allowed while binders are in effect.
+    // purpose--but panic() isn't allowed while binders are in effect.
     //
     // (This is why we wait until the parameter list gathering process
     // is over to do the duplicate checks--it can fail.)

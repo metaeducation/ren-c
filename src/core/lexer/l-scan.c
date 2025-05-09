@@ -418,7 +418,7 @@ static void Update_Error_Near_For_Line(
     Append_Ascii(mo->string, "(line ");
     Append_Int(mo->string, line);  // (maybe) different from line below
     Append_Ascii(mo->string, ") ");
-    Append_UTF8_May_Fail(mo->string, cs_cast(bp), size, STRMODE_NO_CR);
+    Append_UTF8_May_Panic(mo->string, cs_cast(bp), size, STRMODE_NO_CR);
 
     ERROR_VARS *vars = ERR_VARS(error);
     Init_Text(&vars->nearest, Pop_Molded_String(mo));
@@ -733,7 +733,7 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
         ++cp;
 
         if (c == '\0')  // e.g. ^(00) or ^@
-            fail (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
+            panic (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
 
         Append_Codepoint(Mold_Buffer(mo), c);
     }
@@ -1203,7 +1203,7 @@ static LexFlags Prescan_Fingerprint(ScanState* S)
 //     "brown fox]" => TOKEN_WORD
 //      B    E
 //
-//     $10AE.20 sent => fail()
+//     $10AE.20 sent => panic()
 //     B       E
 //
 //     {line1\nline2}  => TOKEN_STRING (content in mold buffer)
@@ -2165,7 +2165,7 @@ INLINE Bounce Scanner_Raise_Helper(
     Scanner_Raise_Helper(transcode, level_, Derive_Error_From_Pointer(p))
 
 
-INLINE Bounce Scanner_Fail_Helper(
+INLINE Bounce Scanner_Panic_Helper(
     TranscodeState* transcode,
     Level* level_,
     Error* error
@@ -2178,9 +2178,9 @@ INLINE Bounce Scanner_Fail_Helper(
     return Native_Fail_Result(level_, error);
 }
 
-#undef FAIL
-#define FAIL(p) \
-    Scanner_Fail_Helper(transcode, level_, Derive_Error_From_Pointer(p))
+#undef PANIC
+#define PANIC(p) \
+    Scanner_Panic_Helper(transcode, level_, Derive_Error_From_Pointer(p))
 
 
 //
@@ -2299,7 +2299,7 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (*S->end == '~') {
             if (not S->quasi_pending)
-                return FAIL("Comma only followed by ~ for ~,~ quasiform");
+                return PANIC("Comma only followed by ~ for ~,~ quasiform");
             Quasify_Isotopic_Fundamental(Init_Comma(PUSH()));
             S->sigil_pending = SIGIL_0;
         }
@@ -2653,7 +2653,7 @@ Bounce Scanner_Executor(Level* const L) {
         );
 
         Size size = len - 2;  // !!! doesn't know where tag actually ends (?)
-        String* s = Append_UTF8_May_Fail(
+        String* s = Append_UTF8_May_Panic(
             nullptr,
             cs_cast(S->begin + 1),
             size,
@@ -2682,7 +2682,7 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (threw) {
             Drop_Level(sub);  // should not have accured stack if threw
-            return FAIL(Error_No_Catch_For_Throw(L));
+            return PANIC(Error_No_Catch_For_Throw(L));
         }
 
         if (Is_Raised(OUT)) {
@@ -2843,7 +2843,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (Get_Scan_Executor_Flag(L, SAVE_LEVEL_DONT_POP_ARRAY)) {  // see flag
         if (*transcode->at != STATE)
-            return FAIL("Delimiters malformed in interpolation");
+            return PANIC("Delimiters malformed in interpolation");
         ++transcode->at;
 
         assert(sub->prior == L);  // sanity check
@@ -2929,7 +2929,7 @@ Bounce Scanner_Executor(Level* const L) {
         Drop_Level_Unbalanced(sub);  // allow stack accrual
 
         if (threw)  // automatically drops failing stack before throwing
-            return FAIL(Error_No_Catch_For_Throw(L));
+            return PANIC(Error_No_Catch_For_Throw(L));
 
         if (Is_Raised(OUT)) {  // no auto-drop without `return RAISE()`
             Drop_Data_Stack_To(STACK_BASE);
@@ -3057,7 +3057,7 @@ Bounce Scanner_Executor(Level* const L) {
         //
         // Hence this doesn't really work in any general sense.
 
-        return FAIL("#[xxx! [...]] construction syntax no longer supported");
+        return PANIC("#[xxx! [...]] construction syntax no longer supported");
     }
     else {
         DECLARE_ELEMENT (temp);
@@ -3088,10 +3088,10 @@ Bounce Scanner_Executor(Level* const L) {
 #define RAISE(p) \
     Native_Raised_Result(level_, Derive_Error_From_Pointer(p))
 
-#undef FAIL
-#define FAIL(p) \
-    (Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-            Native_Fail_Result(level_, Derive_Error_From_Pointer(p)))
+#undef PANIC
+#define PANIC(p) \
+    (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+        Native_Panic_Result(level_, Derive_Error_From_Pointer(p)))
 
 
 //
@@ -3125,7 +3125,7 @@ Source* Scan_UTF8_Managed(
         FEED_MASK_DEFAULT
     );
     Add_Feed_Reference(feed);
-    Sync_Feed_At_Cell_Or_End_May_Fail(feed);
+    Sync_Feed_At_Cell_Or_End_May_Panic(feed);
 
     StackIndex base = TOP_INDEX;
     while (Not_Feed_At_End(feed)) {
@@ -3322,7 +3322,7 @@ DECLARE_NATIVE(TRANSCODE)
 
     Value* line_number = stable_SCRATCH;  // use as scratch space
     if (Any_Word(ARG(LINE)))
-        Get_Var_May_Fail(
+        Get_Var_May_Panic(
             line_number,
             Element_ARG(LINE),
             SPECIFIED
@@ -3337,10 +3337,10 @@ DECLARE_NATIVE(TRANSCODE)
     else if (Is_Integer(line_number)) {
         start_line = VAL_INT32(line_number);
         if (start_line <= 0)
-            return FAIL(PARAM(LINE));  // definitional?
+            return PANIC(PARAM(LINE));  // definitional?
     }
     else
-        return FAIL(":LINE must be INTEGER! or an ANY-WORD? integer variable");
+        return PANIC(":LINE must be INTEGER! or an ANY-WORD? integer variable");
 
     // Because we're building a frame, we can't make a {bp, END} packed array
     // and start up a variadic feed...because the stack variable would go
@@ -3562,7 +3562,7 @@ Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
     DECLARE_ATOM (temp);
     Push_Level_Erase_Out_If_State_0(temp, L);
     if (Trampoline_With_Top_As_Root_Throws())
-        fail (Error_No_Catch_For_Throw(L));
+        panic (Error_No_Catch_For_Throw(L));
 
     if (TOP_INDEX == L->baseline.stack_base) {
         Drop_Level(L);

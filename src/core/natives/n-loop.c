@@ -94,9 +94,9 @@ DECLARE_NATIVE(DEFINITIONAL_BREAK)
 
     Option(VarList*) coupling = Level_Coupling(break_level);
     if (not coupling)
-        return FAIL(Error_Archetype_Invoked_Raw());
+        return PANIC(Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
+    Level* loop_level = Level_Of_Varlist_May_Panic(unwrap coupling);
 
     Element* label = Init_Frame(
         SPARE,
@@ -141,9 +141,9 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 
     Option(VarList*) coupling = Level_Coupling(continue_level);
     if (not coupling)
-        return FAIL(Error_Archetype_Invoked_Raw());
+        return PANIC(Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
+    Level* loop_level = Level_Of_Varlist_May_Panic(unwrap coupling);
 
     Element* label = Init_Frame(
         SPARE,
@@ -251,7 +251,7 @@ static Bounce Loop_Series_Common(
             Type_Of(var) != Type_Of(start)
             or Cell_Flex(var) != Cell_Flex(start)
         ){
-            return FAIL("Can only change series index, not series to iterate");
+            return PANIC("Can only change series index, not series to iterate");
         }
 
         // Note that since the array is not locked with FLEX_INFO_HOLD, it
@@ -323,10 +323,10 @@ static Bounce Loop_Integer_Common(
         }
 
         if (not Is_Integer(var))
-            return FAIL(Error_Invalid_Type_Raw(Datatype_Of(var)));
+            return PANIC(Error_Invalid_Type_Raw(Datatype_Of(var)));
 
         if (Add_I64_Overflows(state, *state, bump))
-            return FAIL(Error_Overflow_Raw());
+            return PANIC(Error_Overflow_Raw());
     }
 
     return LOOPED(OUT);
@@ -350,7 +350,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(start) or Is_Percent(start))
         s = VAL_DECIMAL(start);
     else
-        return FAIL(start);
+        return PANIC(start);
 
     REBDEC e;
     if (Is_Integer(end))
@@ -358,7 +358,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(end) or Is_Percent(end))
         e = VAL_DECIMAL(end);
     else
-        return FAIL(end);
+        return PANIC(end);
 
     REBDEC b;
     if (Is_Integer(bump))
@@ -366,7 +366,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(bump) or Is_Percent(bump))
         b = VAL_DECIMAL(bump);
     else
-        return FAIL(bump);
+        return PANIC(bump);
 
     // As in Loop_Integer_Common(), the state is actually in a cell; so each
     // loop iteration it must be checked to ensure it's still a decimal...
@@ -406,7 +406,7 @@ static Bounce Loop_Number_Common(
         }
 
         if (not Is_Decimal(var))
-            return FAIL(Error_Invalid_Type_Raw(Datatype_Of(var)));
+            return PANIC(Error_Invalid_Type_Raw(Datatype_Of(var)));
 
         *state += b;
     }
@@ -591,9 +591,9 @@ DECLARE_NATIVE(FOR_SKIP)
         var = Real_Var_From_Pseudo(pseudo_var);
 
         if (Is_Nulled(var))
-            return FAIL(PARAM(WORD));
+            return PANIC(PARAM(WORD));
         if (not Any_Series(var))
-            return FAIL(var);
+            return PANIC(var);
 
         // Increment via skip, which may go before 0 or after the tail of
         // the series.
@@ -634,9 +634,9 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 
     Option(VarList*) coupling = Level_Coupling(stop_level);
     if (not coupling)
-        return FAIL(Error_Archetype_Invoked_Raw());
+        return PANIC(Error_Archetype_Invoked_Raw());
 
-    Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
+    Level* loop_level = Level_Of_Varlist_May_Panic(unwrap coupling);
 
     Element* label = Init_Frame(
         SPARE,
@@ -968,7 +968,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 Copy_Cell(var, les->u.evars.var);
             }
             else
-                fail ("Loop enumeration of contexts must be 1 or 2 vars");
+                panic ("Loop enumeration of contexts must be 1 or 2 vars");
 
             les->more_data = Try_Advance_Evars(&les->u.evars);
             continue;
@@ -1012,7 +1012,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 Copy_Cell(var, val);
             }
             else
-                fail ("Loop enumeration of contexts must be 1 or 2 vars");
+                panic ("Loop enumeration of contexts must be 1 or 2 vars");
 
             continue;
         }
@@ -1103,7 +1103,7 @@ DECLARE_NATIVE(FOR_EACH)
         goto initial_entry;
 
       case ST_FOR_EACH_INITIALIZED_ITERATOR:
-        assert(Is_Throwing_Failure(LEVEL));  // this dispatcher fail()'d
+        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
         goto finalize_for_each;
 
       case ST_FOR_EACH_RUNNING_BODY:
@@ -1114,7 +1114,7 @@ DECLARE_NATIVE(FOR_EACH)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. If there is an abrupt failure, e.g. a `fail()` that could happen
+    // 1. If there is an abrupt panic, e.g. a `panic()` that could happen
     //    even in the code of this dispatcher, we need to clean up the
     //    iterator state.
 
@@ -1210,7 +1210,7 @@ DECLARE_NATIVE(EVERY)
         goto initial_entry;
 
       case ST_EVERY_INITIALIZED_ITERATOR:
-        assert(Is_Throwing_Failure(LEVEL));  // this dispatcher fail()'d
+        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
         goto finalize_every;
 
       case ST_EVERY_RUNNING_BODY:
@@ -1576,7 +1576,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
         Binary* b = cast(Binary*, flex);
 
-        // If there was a THROW, or fail() we need the remaining data
+        // If there was a THROW, or panic() we need the remaining data
         //
         REBLEN orig_len = Cell_Series_Len_Head(data);
         assert(start <= orig_len);
@@ -1603,7 +1603,7 @@ DECLARE_NATIVE(REMOVE_EACH)
             goto done_finalizing;
         }
 
-        // If there was a THROW, or fail() we need the remaining data
+        // If there was a THROW, or panic() we need the remaining data
         //
         REBLEN orig_len = Cell_Series_Len_Head(data);
         assert(start <= orig_len);
@@ -1732,7 +1732,7 @@ DECLARE_NATIVE(MAP)
         goto initial_entry;
 
       case ST_MAP_INITIALIZED_ITERATOR:
-        assert(Is_Throwing_Failure(LEVEL));  // this dispatcher fail()'d
+        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
         goto finalize_map;
 
       case ST_MAP_RUNNING_BODY:
@@ -1764,7 +1764,7 @@ DECLARE_NATIVE(MAP)
             or Any_Sequence(data)
         )
     ){
-        return FAIL(
+        return PANIC(
             "MAP only supports one-level QUOTED? series/path/context ATM"
         );
     }
@@ -1822,11 +1822,11 @@ DECLARE_NATIVE(MAP)
             Derelativize(PUSH(), v, Cell_List_Binding(SPARE));
     }
     else if (Is_Antiform(SPARE)) {
-        Init_Thrown_Failure(LEVEL, Error_Bad_Antiform(SPARE));
+        Init_Thrown_Panic(LEVEL, Error_Bad_Antiform(SPARE));
         goto finalize_map;
     }
     else if (Is_Nulled(SPARE)) {
-        return FAIL(Error_Need_Non_Null_Raw());
+        return PANIC(Error_Need_Non_Null_Raw());
     }
     else
         Copy_Cell(PUSH(), stable_SPARE);  // non nulls added to result
@@ -1987,7 +1987,7 @@ DECLARE_NATIVE(FOR)
         Unquotify(value);
 
         if (not (Any_Series(value) or Any_Sequence(value)))
-            return FAIL(PARAM(VALUE));
+            return PANIC(PARAM(VALUE));
 
         // Delegate to FOR-EACH (note: in the future this will be the other
         // way around, with FOR-EACH delegating to FOR).
@@ -2036,13 +2036,13 @@ DECLARE_NATIVE(FOR)
     Value* var = Varlist_Slot(Cell_Varlist(vars), 1);  // not movable, see #2274
 
     if (not Is_Integer(var))
-        return FAIL(Error_Invalid_Type_Raw(Datatype_Of(var)));
+        return PANIC(Error_Invalid_Type_Raw(Datatype_Of(var)));
 
     if (VAL_INT64(var) == VAL_INT64(value))
         return LOOPED(OUT);
 
     if (Add_I64_Overflows(&mutable_VAL_INT64(var), VAL_INT64(var), 1))
-        return FAIL(Error_Overflow_Raw());
+        return PANIC(Error_Overflow_Raw());
 
     assert(STATE == ST_FOR_RUNNING_BODY);
     assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));

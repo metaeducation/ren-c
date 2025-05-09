@@ -139,7 +139,7 @@ static void Protect_Var(const Value* var, Flags flags)
         if (flags & PROT_SET)
             Set_Cell_Flag(var, VAR_MARKED_HIDDEN);
         else
-            fail ("Un-hiding is not supported");
+            panic ("Un-hiding is not supported");
     }
 }
 
@@ -246,7 +246,7 @@ static void Protect_Word_Value(Value* word, Flags flags)
             &slot, cast(Element*, word), SPECIFIED
         );
         if (error)
-            fail (unwrap error);
+            panic (unwrap error);
 
         Protect_Var(slot, flags);
         if (flags & PROT_DEEP) {
@@ -255,7 +255,7 @@ static void Protect_Word_Value(Value* word, Flags flags)
         }
     }
     else if (Any_Sequence(word)) {
-        fail ("Sequences no longer handled in Protect_Unprotect");
+        panic ("Sequences no longer handled in Protect_Unprotect");
     }
 }
 
@@ -313,10 +313,10 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                         &var, item, Cell_List_Binding(value)
                     );
                     if (error)
-                        fail (unwrap error);
+                        panic (unwrap error);
                 }
                 else if (Is_Path(value)) {
-                    fail ("PATH! handling no longer in Protect_Unprotect");
+                    panic ("PATH! handling no longer in Protect_Unprotect");
                 }
                 else {
                     Copy_Cell(safe, value);
@@ -332,7 +332,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     }
 
     if (flags & PROT_HIDE)
-        fail (Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     Protect_Value(value, flags);
 
@@ -446,7 +446,7 @@ DECLARE_NATIVE(UNPROTECT)
     UNUSED(PARAM(VALUES));
 
     if (Bool_ARG(HIDE))
-        fail ("Cannot un-hide an object field once hidden");
+        panic ("Cannot un-hide an object field once hidden");
 
     Element* e = Element_ARG(VALUE);
     if (Any_Word(e) or Is_Tuple(e)) {
@@ -563,7 +563,7 @@ void Force_Value_Frozen_Core(
             /*}*/
         }
         else
-            fail ("What does a shallow freeze of a context mean?");
+            panic ("What does a shallow freeze of a context mean?");
     }
     else if (Any_Series_Type(heart)) {
         UNUSED(deep);
@@ -579,7 +579,7 @@ void Force_Value_Frozen_Core(
         // No freezing needed
     }
     else
-        fail (Error_Invalid_Type(heart));  // not yet implemented
+        panic (Error_Invalid_Type(heart));  // not yet implemented
 }
 
 

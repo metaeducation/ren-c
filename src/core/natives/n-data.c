@@ -55,18 +55,18 @@ DECLARE_NATIVE(BIND)
         const Element* at = Cell_List_At(&tail, spec);
 
         if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
-            return FAIL(Error_Invalid_Arg(level_, PARAM(VALUE)));
+            return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         for (; at != tail; ++at) {
             if (not Is_The_Word(at))
-                return FAIL("BLOCK! binds all @word for the moment");
+                return PANIC("BLOCK! binds all @word for the moment");
 
             Use* use = Alloc_Use_Inherits(Cell_Binding(v));
             Derelativize(Stub_Cell(use), at, Cell_Binding(spec));
             HEART_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
             if (not IS_WORD_BOUND(Stub_Cell(use)))
-                return FAIL(Error_Not_Bound_Raw(Stub_Cell(use)));
+                return PANIC(Error_Not_Bound_Raw(Stub_Cell(use)));
 
             Tweak_Cell_Binding(v, use);
         }
@@ -85,10 +85,10 @@ DECLARE_NATIVE(BIND)
     else {
         assert(Is_The_Word(spec));
         if (not IS_WORD_BOUND(spec))
-            return FAIL(Error_Not_Bound_Raw(spec));
+            return PANIC(Error_Not_Bound_Raw(spec));
 
         if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
-            return FAIL(Error_Invalid_Arg(level_, PARAM(VALUE)));
+            return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         Use* use = Alloc_Use_Inherits(Cell_Binding(v));
         Copy_Cell(Stub_Cell(use), spec);
@@ -106,11 +106,11 @@ DECLARE_NATIVE(BIND)
         if (Try_Bind_Word(context, v))
             return COPY(v);
 
-        return FAIL(Error_Not_In_Context_Raw(v));
+        return PANIC(Error_Not_In_Context_Raw(v));
     }
 
     if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
-        return FAIL(Error_Invalid_Arg(level_, PARAM(VALUE)));
+        return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
     Use* use = Alloc_Use_Inherits(Cell_Binding(v));
     Copy_Cell(Stub_Cell(use), context);
@@ -188,7 +188,7 @@ DECLARE_NATIVE(OVERBIND)
 
     if (Is_Word(defs)) {
         if (IS_WORD_UNBOUND(defs))
-            return FAIL(Error_Not_Bound_Raw(defs));
+            return PANIC(Error_Not_Bound_Raw(defs));
     }
     else
         assert(Any_Context(defs));
@@ -880,7 +880,7 @@ DECLARE_NATIVE(RESOLVE)
     if (Is_Path(source)) {  // !!! For now: (resolve '/a:) -> a
         SingleHeart single;
         if (not (single = maybe Try_Get_Sequence_Singleheart(source)))
-            return FAIL(source);
+            return PANIC(source);
 
         if (
             single == LEADING_BLANK_AND(WORD)  // /a
@@ -898,7 +898,7 @@ DECLARE_NATIVE(RESOLVE)
             // fall through to chain decoding.
         }
         else
-            return FAIL(source);
+            return PANIC(source);
     }
 
     SingleHeart single = maybe Try_Get_Sequence_Singleheart(source);
@@ -914,7 +914,7 @@ DECLARE_NATIVE(RESOLVE)
         return COPY(Unchain(source));
     }
 
-    return FAIL(source);
+    return PANIC(source);
 }
 
 
@@ -965,7 +965,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
     const Element* v = Cell_List_At(&tail, ARG(EXPORTS));
     for (; v != tail; ++v) {
         if (not Is_Word(v))
-            return FAIL(ARG(EXPORTS));
+            return PANIC(ARG(EXPORTS));
 
         const Symbol* symbol = Cell_Word_Symbol(v);
 
@@ -973,7 +973,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 
         const Value* src = Sea_Var(source, symbol, strict);
         if (src == nullptr)
-            return FAIL(v);  // fail if unset value, also?
+            return PANIC(v);  // panic if unset value, also?
 
         Value* dest = Sea_Var(where, symbol, strict);
         if (dest != nullptr) {
@@ -1029,12 +1029,12 @@ DECLARE_NATIVE(INFIX)
 
     if (Bool_ARG(OFF)) {
         if (Bool_ARG(DEFER) or Bool_ARG(POSTPONE))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
         Tweak_Cell_Frame_Infix_Mode(OUT, PREFIX_0);
     }
     else if (Bool_ARG(DEFER)) {  // not OFF, already checked
         if (Bool_ARG(POSTPONE))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
         Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_DEFER);
     }
     else if (Bool_ARG(POSTPONE)) {  // not OFF or DEFER, we checked
@@ -1084,10 +1084,10 @@ DECLARE_NATIVE(FREE)
         return TRASH;
 
     if (Any_Context(v) or Is_Handle(v))
-        return FAIL("FREE only implemented for ANY-SERIES? at the moment");
+        return PANIC("FREE only implemented for ANY-SERIES? at the moment");
 
     if (Not_Node_Readable(CELL_NODE1(v)))
-        return FAIL("Cannot FREE already freed series");
+        return PANIC("Cannot FREE already freed series");
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
     Diminish_Stub(f);
@@ -1500,7 +1500,7 @@ DECLARE_NATIVE(DEGRADE)
 
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }

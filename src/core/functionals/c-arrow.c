@@ -204,11 +204,11 @@ DECLARE_NATIVE(ARROW)
         }
         else if (Is_Quoted(item)) {
             if (Quotes_Of(item) != 1)
-                return FAIL(item);
+                return PANIC(item);
             if (Heart_Of(item) == TYPE_WORD)
                 pclass = PARAMCLASS_JUST;
             else
-                return FAIL(item);
+                return PANIC(item);
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_The_Word(item)) {
@@ -222,13 +222,13 @@ DECLARE_NATIVE(ARROW)
             param_flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
         }
         else if (Is_Set_Word(item) and Cell_Word_Id(item) == SYM_RETURN) {
-            return FAIL(
+            return PANIC(
                 "ARROW (->) does not offer RETURN facilities, use FUNCTION"
             );
         }
         else {
             if (not Is_Block(spec))
-                return FAIL("Invalid ARROW specification");
+                return PANIC("Invalid ARROW specification");
 
             optimizable = false;
             Drop_Data_Stack_To(STACK_BASE);
@@ -254,7 +254,7 @@ DECLARE_NATIVE(ARROW)
             SYM_0  // no returner
         );
         if (e)
-            return FAIL(unwrap e);
+            return PANIC(unwrap e);
     }
 
   //=//// POP THE PARAMLIST AND MAKE THE DETAILS PHASE ////////////////////=//
@@ -267,7 +267,7 @@ DECLARE_NATIVE(ARROW)
         &paramlist, STACK_BASE, prior, prior_coupling
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     Details* details = Make_Dispatch_Details(
         NODE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,

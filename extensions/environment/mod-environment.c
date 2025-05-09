@@ -96,12 +96,12 @@ IMPLEMENT_GENERIC(PICK, Is_Environment)
     Element* picker = Element_ARG(PICKER);
 
     if (not Is_Word(picker) and not Is_Text(picker))
-        return FAIL("ENVIRONMENT! picker must be WORD! or TEXT!");
+        return PANIC("ENVIRONMENT! picker must be WORD! or TEXT!");
 
     Option(Value*) value;
     Option(ErrorValue*) error = Trap_Get_Environment_Variable(&value, picker);
     if (error)
-        return rebDelegate("fail", unwrap error);
+        return rebDelegate("panic", unwrap error);
 
     if (not value)  // raise error if not present, must TRY or OPT
         return RAISE(Error_Bad_Pick_Raw(picker));
@@ -138,7 +138,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
     Element* picker = Element_ARG(PICKER);
 
     if (not Is_Word(picker) and not Is_Text(picker))
-        return FAIL("ENVIRONMENT! picker must be WORD! or TEXT!");
+        return PANIC("ENVIRONMENT! picker must be WORD! or TEXT!");
 
     Option(const Value*) poke = Optional_ARG(VALUE);
 
@@ -146,14 +146,14 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
         // remove from environment (was a nihil)
     }
     else if (not Is_Text(unwrap poke)) {
-        return FAIL("ENVIRONMENT! can only be poked with TRASH! or TEXT!");
+        return PANIC("ENVIRONMENT! can only be poked with TRASH! or TEXT!");
     }
     else {
         if (
             Environment_Conflates_Empty_Strings_As_Absent(env)
             and Cell_Series_Len_At(unwrap poke) == 0
         ){
-            return FAIL(
+            return PANIC(
                 "ENVIRONMENT! not configured to accept empty strings"  // [1]
             );
         }
@@ -161,7 +161,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
 
     Option(ErrorValue*) error = Trap_Update_Environment_Variable(picker, poke);
     if (error)
-        return rebDelegate("fail", unwrap error);
+        return rebDelegate("panic", unwrap error);
 
     return nullptr;  // no writeback
 }
@@ -182,7 +182,7 @@ DECLARE_NATIVE(LIST_ENV)
     Value* map;
     Option(ErrorValue*) error = Trap_List_Environment(&map);
     if (error)
-        return rebDelegate("fail", unwrap error);
+        return rebDelegate("panic", unwrap error);
 
     return map;
 }

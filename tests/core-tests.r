@@ -386,8 +386,8 @@
 %../extensions/crypt/tests/sha256.test.reb
 
 %misc/assert.test.reb
-%misc/fail.test.reb
 %misc/pack-old.test.reb
+%misc/panic.test.reb
 %misc/help.test.reb  ; Do this last, as it has a lot of output
 
 

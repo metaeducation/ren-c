@@ -538,17 +538,17 @@ Special internal defines used by RT, not Host-Kit developers:
 
 // When it comes to exception-handling mechanisms, we have 3 choices:
 //
-//    * FAIL_USES_LONGJMP to use C's setjmp()/longjmp()
-//    * FAIL_USES_TRY_CATCH to use C++'s try {...} catch {...}
-//    * FAIL_JUST_ABORTS will crash() and terminate the program
+//    * PANIC_USES_LONGJMP to use C's setjmp()/longjmp()
+//    * PANIC_USES_TRY_CATCH to use C++'s try {...} catch {...}
+//    * PANIC_JUST_ABORTS will crash() and terminate the program
 //
 // It's considered desirable to support both a C and C++ approach.  Plain C
 // compilation (e.g. with TCC) runs on many legacy/embedded platforms.  But
 // structured exception handling has support on other systems like WasmEdge
 // that cannot handle setjmp()/longjmp().
 //
-// To abstract this, Ren-C uses a keyword-like-macro called `fail()` that
-// hides the differences.  See RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE for a
+// To abstract this, Ren-C uses a keyword-like-macro called `panic()` that
+// hides the differences.  See RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC for a
 // breakdown of how this is pulled off.
 //
 // 1. setjmp()/longjmp() are essentially "goto on steroids", and on a
@@ -557,59 +557,59 @@ Special internal defines used by RT, not Host-Kit developers:
 //    traditional platforms, a runtime that enforces a de-facto structured
 //    model may find it difficult-if-not-impossible to emulate them.
 //
-#if !defined(FAIL_USES_LONGJMP) \
-        && !defined(FAIL_USES_TRY_CATCH) \
-        && !defined(FAIL_JUST_ABORTS)
+#if !defined(PANIC_USES_LONGJMP) \
+        && !defined(PANIC_USES_TRY_CATCH) \
+        && !defined(PANIC_JUST_ABORTS)
 
-    #define FAIL_USES_LONGJMP 1  // often simplest, not always: [1]
-    #define FAIL_USES_TRY_CATCH 0
-    #define FAIL_JUST_ABORTS 0
+    #define PANIC_USES_LONGJMP 1  // often simplest, not always: [1]
+    #define PANIC_USES_TRY_CATCH 0
+    #define PANIC_JUST_ABORTS 0
 
-#elif defined(FAIL_USES_LONGJMP)
+#elif defined(PANIC_USES_LONGJMP)
 
-    STATIC_ASSERT(FAIL_USES_LONGJMP == 1);
-    #if defined(FAIL_USES_TRY_CATCH)
-        STATIC_ASSERT(FAIL_USES_TRY_CATCH == 0);
+    STATIC_ASSERT(PANIC_USES_LONGJMP == 1);
+    #if defined(PANIC_USES_TRY_CATCH)
+        STATIC_ASSERT(PANIC_USES_TRY_CATCH == 0);
     #else
-        #define FAIL_USES_TRY_CATCH 0
+        #define PANIC_USES_TRY_CATCH 0
     #endif
-    #if defined(FAIL_JUST_ABORTS)
-        STATIC_ASSERT(FAIL_JUST_ABORTS == 0);
+    #if defined(PANIC_JUST_ABORTS)
+        STATIC_ASSERT(PANIC_JUST_ABORTS == 0);
     #else
-        #define FAIL_JUST_ABORTS 0
+        #define PANIC_JUST_ABORTS 0
     #endif
 
-#elif defined(FAIL_USES_TRY_CATCH)
+#elif defined(PANIC_USES_TRY_CATCH)
 
   #if !defined(__cplusplus)
-    #error "FAIL_USES_TRY_CATCH requires compiling Ren-C with C++"
+    #error "PANIC_USES_TRY_CATCH requires compiling Ren-C with C++"
     #include <stophere>  // https://stackoverflow.com/a/45661130
   #endif
 
-    STATIC_ASSERT(FAIL_USES_TRY_CATCH == 1);
-    #if defined(FAIL_USES_LONGJMP)
-        STATIC_ASSERT(FAIL_USES_LONGJMP == 0)
+    STATIC_ASSERT(PANIC_USES_TRY_CATCH == 1);
+    #if defined(PANIC_USES_LONGJMP)
+        STATIC_ASSERT(PANIC_USES_LONGJMP == 0)
     #else
-        #define FAIL_USES_LONGJMP 0
+        #define PANIC_USES_LONGJMP 0
     #endif
-    #if defined(FAIL_JUST_ABORTS)
-        STATIC_ASSERT(FAIL_JUST_ABORTS == 0);
+    #if defined(PANIC_JUST_ABORTS)
+        STATIC_ASSERT(PANIC_JUST_ABORTS == 0);
     #else
-        #define FAIL_JUST_ABORTS 0
+        #define PANIC_JUST_ABORTS 0
     #endif
 
 #else
 
-    STATIC_ASSERT(FAIL_JUST_ABORTS == 1);
-    #if defined(FAIL_USES_LONGJMP)
-        STATIC_ASSERT(FAIL_USES_LONGJMP == 0)
+    STATIC_ASSERT(PANIC_JUST_ABORTS == 1);
+    #if defined(PANIC_USES_LONGJMP)
+        STATIC_ASSERT(PANIC_USES_LONGJMP == 0)
     #else
-        #define FAIL_USES_LONGJMP 0
+        #define PANIC_USES_LONGJMP 0
     #endif
-    #if defined(FAIL_USES_TRY_CATCH)
-        STATIC_ASSERT(FAIL_USES_TRY_CATCH == 0);
+    #if defined(PANIC_USES_TRY_CATCH)
+        STATIC_ASSERT(PANIC_USES_TRY_CATCH == 0);
     #else
-        #define FAIL_USES_TRY_CATCH 0
+        #define PANIC_USES_TRY_CATCH 0
     #endif
 
 #endif
@@ -940,14 +940,14 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-// It can be very difficult in release builds to know where a fail came
+// It can be very difficult in release builds to know where a panic came
 // from.  This arises in pathological cases where an error only occurs in
 // release builds, or if making a full checked build bloats the code too much.
 // (e.g. the JavaScript asyncify version).  A small but helpful debug
-// switch does a printf of the __FILE__ and __LINE__ of fail() callsites.
+// switch does a printf of the __FILE__ and __LINE__ of panic() callsites.
 //
-#if !defined(DEBUG_PRINTF_FAIL_LOCATIONS)
-    #define DEBUG_PRINTF_FAIL_LOCATIONS 0
+#if !defined(DEBUG_PRINTF_PANIC_LOCATIONS)
+    #define DEBUG_PRINTF_PANIC_LOCATIONS 0
 #endif
 
 #if !defined(DEBUG_VIRTUAL_BINDING)

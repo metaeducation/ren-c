@@ -242,7 +242,7 @@ Bounce Call_Core(Level* level_) {
             shcmd = rebSpell("argv-block-to-command*", command);
         }
         else
-            return FAIL(PARAM(COMMAND));
+            return PANIC(PARAM(COMMAND));
 
         // Getting the environment variable via a usermode call helps paper
         // over weird getenv() quirks, but also gives a pointer we can free in
@@ -291,7 +291,7 @@ Bounce Call_Core(Level* level_) {
             rebRelease(parsed);
         }
         else if (not Is_Block(command))
-            return FAIL(PARAM(COMMAND));
+            return PANIC(PARAM(COMMAND));
 
         const Value* block = ARG(COMMAND);
         argc = Cell_Series_Len_At(block);
@@ -302,7 +302,7 @@ Bounce Call_Core(Level* level_) {
         int i;
         for (i = 0; i < argc; ++param, ++i) {
             if (not Is_Text(param))  // usermode layer ensures FILE! converted
-                return FAIL(PARAM(COMMAND));
+                return PANIC(PARAM(COMMAND));
             argv[i] = rebSpell(param);
         }
         argv[argc] = nullptr;
@@ -534,7 +534,7 @@ Bounce Call_Core(Level* level_) {
             //
             assert(false);
         }
-        exit(EXIT_FAILURE);  // get here only when exec fails
+        exit (EXIT_FAILURE);  // get here only when exec fails
     }
     else {
 
@@ -575,7 +575,7 @@ Bounce Call_Core(Level* level_) {
 
             outbuf_capacity = BUF_SIZE_CHUNK;
 
-            outbuf = rebAllocN(char, outbuf_capacity);  // freed if fail()
+            outbuf = rebAllocN(char, outbuf_capacity);  // freed if panic()
             outbuf_used = 0;
 
             pfds[nfds].fd = stdout_pipe[R];
@@ -866,7 +866,7 @@ Bounce Call_Core(Level* level_) {
         //
         assert(false);
         rebFreeMaybe(infobuf);
-        return "fail -[Child process is stopped]-";
+        return "panic -[Child process is stopped]-";
     }
     else {
         non_errno_ret = -2048;  // !!! randomly picked
@@ -908,14 +908,14 @@ Bounce Call_Core(Level* level_) {
 
     if (non_errno_ret > 0) {
         return rebDelegate(
-            "fail [",
+            "panic [",
                 "-[Child process was terminated by signal:]-",
                 rebI(non_errno_ret),
             "]"
         );
     }
     else if (non_errno_ret < 0)
-        return "fail -[Unknown error happened in CALL]-";
+        return "panic -[Unknown error happened in CALL]-";
 
     // Call may not succeed if r != 0, but we still have to run cleanup
     // before reporting any error...
@@ -957,7 +957,7 @@ Bounce Call_Core(Level* level_) {
     rebFreeMaybe(inbuf);
 
     if (ret != 0)
-        rebFail_OS (ret);
+        rebPanic_OS (ret);
 
     if (Bool_ARG(INFO)) {
         VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);

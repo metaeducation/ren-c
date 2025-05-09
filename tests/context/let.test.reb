@@ -280,7 +280,7 @@
     )
 ]
 
-; There was a bug seen if a failure happened in mid-multi-return, with
+; There was a bug seen if a panic happened in mid-multi-return, with
 ; torture recycling on.
 (
     recycle:torture

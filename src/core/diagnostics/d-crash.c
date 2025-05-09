@@ -349,7 +349,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
 //
 DECLARE_NATIVE(CRASH)
 //
-// We don't want to run any code that could potentially fail and derail the
+// We don't want to run any code that could potentially panic and derail the
 // crashing intent.  So this should only inertly interpret whatever is passed.
 // This could be a block specifying a table of variables to dump and extra
 // information, but it's much simpler than that at the moment.
@@ -411,18 +411,18 @@ DECLARE_NATIVE(RAISE_P)
 
 
 //
-//  fail: native [
+//  panic: native [
 //
-//  "Early-boot version of FAIL (overridden by more complex usermode version)"
+//  "Early-boot version of PANIC (overridden by more complex usermode version)"
 //
 //      return: []
 //      reason [any-value?]  ; permissive to avoid callsite error
 //      :blame [word!]
 //  ]
 //
-DECLARE_NATIVE(FAIL)
+DECLARE_NATIVE(PANIC)
 {
-    INCLUDE_PARAMS_OF_FAIL;
+    INCLUDE_PARAMS_OF_PANIC;
 
     Value* reason = ARG(REASON);
     Value* blame = ARG(BLAME);
@@ -430,7 +430,7 @@ DECLARE_NATIVE(FAIL)
   #if NO_RUNTIME_CHECKS
     UNUSED(blame);
   #else
-    printf("!!! Early-Boot FAIL, e.g. fail: native [], not fail: func []\n");
+    printf("!!! Early-Boot PANIC, e.g. panic: native [], not panic: func []\n");
     PROBE(blame);
 
     rebElide(CANON(WRITE_STDOUT), CANON(DELIMIT), CANON(SPACE), reason);

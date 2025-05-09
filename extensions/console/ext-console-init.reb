@@ -24,7 +24,7 @@ Rebol [
         The HOST-CONSOLE Rebol function is invoked in a loop by a small C
         main function (see %main/main.c).  HOST-CONSOLE does not itself run
         arbitrary user code with DO.  That would be risky, because it actually
-        is not allowed to fail or be canceled with Ctrl-C.  Instead, it just
+        is not allowed to panic or be canceled with Ctrl-C.  Instead, it just
         gathers input...and produces a block which is returned to C to
         actually execute.
 
@@ -123,7 +123,7 @@ export console!: make object! [
         === FORM ERROR IF RAISED ===
 
         ; The console knows the difference between a raised error returned as
-        ; a result, and a failure.  It's worth thinking about how to present
+        ; a result, and a panic.  It's worth thinking about how to present
         ; this nuance in the display...but for now we just form it, because
         ; it looks ugly to show the molded antiform object.
 
@@ -510,7 +510,7 @@ console*: func [
                     compose2:deep inside item '@(<*>) item
                 )
             ]
-            fail
+            panic
         ]
     ]
 
@@ -532,16 +532,16 @@ console*: func [
             ]
             <halt> [
                 emit [halt]
-                emit [fail "^^-- Shouldn't get here, due to HALT"]
+                emit [panic "^^-- Shouldn't get here, due to HALT"]
             ]
             <die> [
                 emit [quit 1]  ; bash exit code for any generic error
-                emit [fail "^^-- Shouldn't get here, due to QUIT"]
+                emit [panic "^^-- Shouldn't get here, due to QUIT"]
             ]
             <bad> [
                 emit #no-unskin-if-error
                 emit [print mold '(<*> prior)]
-                emit [fail ["Bad REPL continuation:" (<*> result)]]
+                emit [panic ["Bad REPL continuation:" (<*> result)]]
             ]
         ] then [
             return-to-c instruction
@@ -567,7 +567,7 @@ console*: func [
                 state
             ]
         ] else [
-            emit [fail ["Bad console instruction:" (<*> mold state)]]
+            emit [panic ["Bad console instruction:" (<*> mold state)]]
         ]
     ]
 

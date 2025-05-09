@@ -227,7 +227,7 @@ reb.m = {
         //
         if (config.tracing_on) {
             mod.ENV['R3_TRACE_JAVASCRIPT'] = '1'
-            mod.ENV['R3_PROBE_FAILURES'] = '1'  // !!! Separate config flag?
+            mod.ENV['R3_PROBE_PANICS'] = '1'  // !!! Separate config flag?
         }
     }]
 }

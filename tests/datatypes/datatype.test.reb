@@ -13,7 +13,7 @@
         time! tuple! parameter! url! word!
     ][
         if not datatype? get inside [] typename [
-            fail [typename "is not a datatype!"]
+            panic [typename "is not a datatype!"]
         ]
     ]
     ok

@@ -2,7 +2,7 @@
 ;
 ; RETURN was removed from PARSE3 but was re-added to UPARSE under the new
 ; name of ACCEPT.  This helps avoid conflation with a function's RETURN, as
-; well as suggest the ability of an ACCEPT rule to fail (vs. the seeming
+; well as suggest the ability of an ACCEPT rule to panic (vs. the seeming
 ; inevitability of RETURN).
 ;
 ; !!! Should there be a corresponding REJECT?  Would it be arity-0?
@@ -20,7 +20,7 @@
                 emit x: collect some ["a", keep (<a>)]
                 emit y: collect some ["b", keep (<b>)]
             ]
-            (fail "unreachable")
+            (panic "unreachable")
         ]
         result.x = [<a> <a> <a>]
         result.y = [<b> <b> <b>]

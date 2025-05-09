@@ -63,7 +63,7 @@
 ]
 
 
-; Custom handler, can request to ~ignore~ the assert, otherwise fails as usual
+; Custom handler, can request to ~ignore~ the assert, otherwise panics as usual
 [
     (
         [[1 = 2] [2 = 3]] = collect [

@@ -522,7 +522,7 @@ export for-each-platform: func [
             )
         ]
     ]] else [
-        fail "Couldn't parse %platforms.r table"
+        panic "Couldn't parse %platforms.r table"
     ]
 ]
 
@@ -572,7 +572,7 @@ use [
                 words-of context
             if not empty? unknown-flags [
                 print mold unknown-flags
-                fail ["Unknown" word "used in %platforms.r specification"]
+                panic ["Unknown" word "used in %platforms.r specification"]
             ]
             used-flags: union used-flags any [build-flags, []]
         ]
@@ -587,7 +587,7 @@ use [
 
     if not empty? unused-flags [
         print mold unused-flags
-        fail "Unused flags in %platforms.r specifications"
+        panic "Unused flags in %platforms.r specifications"
     ]
 ]
 
@@ -604,11 +604,11 @@ export configure-platform: func [
     let version: switch type of hint [  ; no switch:type in bootstrap
         text! [transcode:one hint]
         tuple! [hint]
-        fail
+        panic
     ]
 
     if not tuple? version [
-        fail ["Expected OS_ID tuple like 0.3.1, not:" version]
+        panic ["Expected OS_ID tuple like 0.3.1, not:" version]
     ]
 
     let result: null
@@ -619,7 +619,7 @@ export configure-platform: func [
     ]
 
     if not result [
-        fail [
+        panic [
             "No table entry for" version "found in %platforms.r"
         ]
     ]

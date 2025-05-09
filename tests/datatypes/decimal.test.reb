@@ -38,10 +38,10 @@
         #{0010000000000000} 2.2250738585072014e-308
     ][
         if bin != encode 'IEEE-754 num [
-            fail ["IEEE-754 encoding of" num "was not" @bin]
+            panic ["IEEE-754 encoding of" num "was not" @bin]
         ]
         if num != decode 'IEEE-754 bin [
-            fail ["IEEE-754 decoding of" @bin "was not" num]
+            panic ["IEEE-754 decoding of" @bin "was not" num]
         ]
     ]
     ok

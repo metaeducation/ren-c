@@ -538,7 +538,7 @@ void Run_All_Handle_Cleaners(void) {
 //
 // For root Stubs, this checks to see if their lifetime was dependent on a
 // FRAME!, and if that frame is no longer on the stack.  If so, it (currently)
-// will crash if that frame did not end due to a fail().  This could be
+// will crash if that frame did not end due to a panic().  This could be
 // relaxed to automatically free those Nodes as a normal GC.
 //
 // !!! This implementation walks over *all* the Stubs.  It wouldn't have to
@@ -1349,7 +1349,7 @@ void Startup_GC(void)
   #endif
 
     // Manually allocated Flex that GC is not responsible for (unless a
-    // fail() occurs). Holds Flex pointers.  Must happen before any unmanaged
+    // panic() occurs). Holds Flex pointers.  Must happen before any unmanaged
     // allocations!
     //
     // As a trick to keep this Flex from trying to track itself, say it's

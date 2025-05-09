@@ -18,7 +18,7 @@
     (
         for-each [data hash] pairs [
             if hash != checksum 'sha256 data [
-                fail ["bad sha256 for" mold data]
+                panic ["bad sha256 for" mold data]
             ]
         ]
         ok
@@ -29,7 +29,7 @@
         for-each [data hash] pairs [
             let longer: join either blob? data [#{57911240}] ["MetÆ"] data
             if hash != checksum 'sha256 skip longer 4 [
-                fail ["bad sha256 for skip 4 of" mold longer]
+                panic ["bad sha256 for skip 4 of" mold longer]
             ]
         ]
         ok
@@ -82,7 +82,7 @@
         a: hmac-sha256 data key
         b: checksum:key 'sha256 data key
         if a != b [
-            fail ["Mismatched HMAC-SHA256 for" mold data "with" mold key]
+            panic ["Mismatched HMAC-SHA256 for" mold data "with" mold key]
         ]
     ])
     ok

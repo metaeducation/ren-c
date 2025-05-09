@@ -55,7 +55,7 @@
             their-shared: dh-compute-secret theirs mine.public-key
 
             if my-shared != their-shared [
-                fail [
+                panic [
                     "Key exchange for"
                     mold base mold modulus
                     "did not arrive at the same shared secret"

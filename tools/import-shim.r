@@ -37,7 +37,7 @@ Rebol [
 
 
 if find (words of import/) 'into [  ; non-bootstrap Ren-C
-    fail "%import-shim.r is only for use with old Ren-C EXEs"
+    panic "%import-shim.r is only for use with old Ren-C EXEs"
 ]
 
 verbose: null  ; happens before verbose in %common.r
@@ -75,12 +75,12 @@ export: lib3/func [
     items: take args
     if group? :items [items: eval args]
     if not block? :items [
-        fail "EXPORT must be of form `export x: ...` or `export [...]`"
+        panic "EXPORT must be of form `export x: ...` or `export [...]`"
     ]
 
     for-each 'word :items [
         if not word? :word [  ; no type checking in shim via BLOCK!s
-            fail "EXPORT only exports block of words in bootstrap shim"
+            panic "EXPORT only exports block of words in bootstrap shim"
         ]
         lib3/append system.contexts.user reduce [  ; splices blocks by default
             word get word
@@ -133,7 +133,7 @@ rewrite-source-for-bootstrap-exe: lib3/func [
     ]
 
     lib3/parse:match source rule else [
-        fail "REWRITE-SOURCE-FOR-BOOTSTRAP-EXE did not work"
+        panic "REWRITE-SOURCE-FOR-BOOTSTRAP-EXE did not work"
     ]
     return source
 ]
@@ -241,7 +241,7 @@ import: infix lib3/func [
     <with> wrap-module already-imported
 ][
     if into [
-        fail ":INTO not actually available, just makes IMPORT look modern"
+        panic ":INTO not actually available, just makes IMPORT look modern"
     ]
 
     f: as file! f

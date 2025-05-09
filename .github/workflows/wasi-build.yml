@@ -325,6 +325,6 @@ jobs:
         wasmedge --dir x:. r3.wasm --do \
           "print {Begin}, basic-write %x/test.txt {Test}, print {End}"
         wasmedge --dir x:. r3.wasm  --do \
-          "either {Test} = as text! basic-read %x/test.txt [print {Yay}] [fail]"
+          "either {Test} = as text! basic-read %x/test.txt [print {Yay}] [panic]"
         r3 --do \
-          "if {Test} = as text! read %test.txt [print {Verified}] else [fail]"
+          "if {Test} = as text! read %test.txt [print {Verified}] else [panic]"

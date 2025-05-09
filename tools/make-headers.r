@@ -68,7 +68,7 @@ emit-proto: func [
         set-word? header.1
     ] else [
         print mold proto-parser.data
-        fail [
+        panic [
             proto
             newline
             "Prototype has bad Rebol function header block in comment"
@@ -93,11 +93,11 @@ emit-proto: func [
         ; if natives took refinements (as they once took NATIVE:BODY)
 
         print mold header
-        fail "%make-headers.r only understands C functions"
+        panic "%make-headers.r only understands C functions"
     ]
 
     if find prototypes proto [
-        fail ["Duplicate prototype:" proto-parser.file ":" proto]
+        panic ["Duplicate prototype:" proto-parser.file ":" proto]
     ]
 
     append prototypes proto

@@ -238,7 +238,7 @@ INLINE heapaddr_t Frame_Id_For_Level(Level* L) {
 
 INLINE Level* Level_From_Frame_Id(heapaddr_t id) {
     VarList* varlist = cast(VarList*, Pointer_From_Heapaddr(id));
-    return Level_Of_Varlist_May_Fail(varlist);  // should still be valid...
+    return Level_Of_Varlist_May_Panic(varlist);  // should still be valid...
 }
 
 INLINE Value* Value_From_Value_Id(heapaddr_t id) {
@@ -502,12 +502,12 @@ void RunPromise(void)
         if (rebUnboxLogic("error? @", metaresult)) {
             //
             // Note this could be an uncaught throw error, or a specific
-            // fail() error.
+            // panic() error.
             //
             info->state = PROMISE_STATE_REJECTED;
             TRACE("RunPromise() => promise is rejecting due to error");
           #if DEBUG_HAS_PROBE
-            if (PG_Probe_Failures)
+            if (g_probe_panics)
                 PROBE(metaresult);
           #endif
             Free_Value(metaresult);  // !!! report the error?
@@ -610,13 +610,13 @@ EXTERN_C void API_rebResolveNative_internal(
     Bounce bounce = Bounce_From_Bounce_Id(bounce_id);
 
     if (bounce == BOUNCE_DELEGATE)
-        fail ("reb.Delegate() not yet supported in JavaScript Natives");
+        panic ("reb.Delegate() not yet supported in JavaScript Natives");
 
     if (bounce == BOUNCE_CONTINUE)
-        fail ("reb.Continue() not yet supported in JavaScript Natives");
+        panic ("reb.Continue() not yet supported in JavaScript Natives");
 
     if (not Is_Bounce_An_Atom(bounce))
-        fail ("non-Value Bounce returned from JavaScript Native");
+        panic ("non-Value Bounce returned from JavaScript Native");
 
     Value* result = cast(Value*, Atom_From_Bounce(bounce));
     Assert_Cell_Stable(result);
@@ -738,12 +738,12 @@ Bounce JavaScript_Dispatcher(Level* const L)
         goto initial_entry;
 
       case ST_JS_NATIVE_RUNNING :
-        return FAIL(
+        return PANIC(
             "JavaScript_Dispatcher reentry while running, shouldn't happen"
         );
 
       case ST_JS_NATIVE_SUSPENDED :
-        return FAIL(
+        return PANIC(
             "JavaScript_Dispatcher when suspended, needed resolve/reject"
         );
 
@@ -764,11 +764,11 @@ Bounce JavaScript_Dispatcher(Level* const L)
     struct Reb_Promise_Info *info = PG_Promises;
     if (is_awaiter) {
         if (info == nullptr)
-            return FAIL(
+            return PANIC(
                 "JavaScript :AWAITER can only be called from rebPromise()"
             );
         if (info->state != PROMISE_STATE_RUNNING)
-            return FAIL(
+            return PANIC(
                 "Cannot call JavaScript :AWAITER during another await"
             );
     }
@@ -821,7 +821,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     if (STATE == ST_JS_NATIVE_REJECTED)
         goto handle_rejected;
 
-    return FAIL("Unknown frame STATE value after reb.RunNative_internal()");
+    return PANIC("Unknown frame STATE value after reb.RunNative_internal()");
 
 } handle_resolved: {  ////////////////////////////////////////////////////////
 
@@ -832,7 +832,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     );
 
     if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
-        return FAIL(Error_Bad_Return_Type(L, OUT));
+        return PANIC(Error_Bad_Return_Type(L, OUT));
 
     return OUT;
 
@@ -859,10 +859,10 @@ Bounce JavaScript_Dispatcher(Level* const L)
         return Init_Thrown_With_Label(LEVEL, LIB(NULL), LIB(HALT));
     }
 
-    TRACE("Calling fail() with error context");
+    TRACE("Calling panic() with error context");
 
     Error* e = Cell_Error(OUT);
-    return FAIL(e);
+    return PANIC(e);
 }}
 
 
@@ -923,7 +923,7 @@ DECLARE_NATIVE(JS_NATIVE)
         SYM_RETURN  // want return
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     Details* details = Make_Dispatch_Details(
         NODE_FLAG_MANAGED
@@ -1052,10 +1052,10 @@ DECLARE_NATIVE(JS_NATIVE)
     Value* errval = cast(Value*, Pointer_From_Heapaddr(error_addr));
     if (errval) {
         Error* e = Cell_Error(errval);
-        rebRelease(errval);  // !!! failing, so not actually needed (?)
+        unnecessary(rebRelease(errval));  // panic releases
 
-        TRACE("JS-NATIVE had malformed JS, calling fail() w/error context");
-        return FAIL(e);
+        TRACE("JS-NATIVE had malformed JS, calling panic() w/error context");
+        return PANIC(e);
     }
 
     Drop_Mold(mo);
@@ -1174,7 +1174,7 @@ DECLARE_NATIVE(JS_EVAL_P)
     Value* errval = Value_From_Value_Id(addr);
     Error* e = Cell_Error(errval);
     rebRelease(errval);
-    return FAIL(e);
+    return PANIC(e);
 }}
 
 
@@ -1226,10 +1226,10 @@ DECLARE_NATIVE(JS_TRACE)
     INCLUDE_PARAMS_OF_JS_TRACE;
 
   #if DEBUG_JAVASCRIPT_EXTENSION
-    PG_Probe_Failures = PG_JS_Trace = Cell_Logic(ARG(ENABLE));
+    g_probe_panics = PG_JS_Trace = Cell_Logic(ARG(ENABLE));
     return TRASH;
   #else
-    return FAIL(
+    return PANIC(
         "JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r"
     );
   #endif

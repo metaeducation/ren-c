@@ -40,7 +40,7 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * Intrinsics can only return Bounce values of: nullptr, BOUNCE_OKAY,
-//   BOUNCE_FAIL, and the Level's out pointer.
+//   BOUNCE_PANIC, and the Level's out pointer.
 
 
 
@@ -163,7 +163,7 @@ INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
     const Element* meta = Level_Intrinsic_Arg_Meta(L);
 
     if (Is_Meta_Of_Raised(meta))
-        return Native_Fail_Result(L, Cell_Error(meta));
+        return Native_Panic_Result(L, Cell_Error(meta));
 
     Copy_Cell(v, meta);
     Meta_Unquotify_Undecayed(u_cast(Atom*, v));
@@ -184,7 +184,7 @@ INLINE Option(Bounce) Trap_Bounce_Meta_Decay_Value_Intrinsic(
     const Element* meta = Level_Intrinsic_Arg_Meta(L);
 
     if (Is_Meta_Of_Raised(meta))
-        return Native_Fail_Result(L, Cell_Error(meta));
+        return Native_Panic_Result(L, Cell_Error(meta));
 
     Copy_Cell(out, meta);
     Meta_Unquotify_Undecayed(u_cast(Atom*, out));

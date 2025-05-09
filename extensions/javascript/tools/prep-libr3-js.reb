@@ -412,19 +412,19 @@ for-each-api [
 
     let no-reb-name: null
     parse3:match name ["reb" no-reb-name: across to <end>] else [
-        fail ["API name must start with `reb`" name]
+        panic ["API name must start with `reb`" name]
     ]
 
     let js-return-type: any [
         if find name "Promise" [<promise>]
         to-js-type return-type
-        fail ["No JavaScript return mapping for type" return-type]
+        panic ["No JavaScript return mapping for type" return-type]
     ]
 
     let js-param-types: collect* [  ; CSCAPE won't auto-delimit [], use COLLECT*
         for-each [type var] paramlist [
             keep to-js-type type else [
-                fail [
+                panic [
                     "No JavaScript argument mapping for type" type
                     "used by" name "with paramlist" mold paramlist
                 ]

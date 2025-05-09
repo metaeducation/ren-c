@@ -68,7 +68,7 @@ Flex* Make_Set_Operation_Flex(
 
         if (Any_List(val1)) {
             if (!Any_List(val2))
-                fail (Error_Unexpected_Type(type1, Datatype_Of(val2)));
+                panic (Error_Unexpected_Type(type1, Datatype_Of(val2)));
 
             // As long as they're both arrays, we're willing to do:
             //
@@ -85,13 +85,13 @@ Flex* Make_Set_Operation_Flex(
             //      <abcde>
 
             if (not Any_String((val2)))
-                fail (Error_Unexpected_Type(type1, Datatype_Of(val2)));
+                panic (Error_Unexpected_Type(type1, Datatype_Of(val2)));
         }
         else {
             // Binaries only operate with other binaries
             assert(Is_Blob(val1));
             if (not Is_Blob(val2))
-                fail (Error_Unexpected_Type(type1, Datatype_Of(val2)));
+                panic (Error_Unexpected_Type(type1, Datatype_Of(val2)));
         }
     }
 
@@ -168,7 +168,7 @@ Flex* Make_Set_Operation_Flex(
                 // shaky to deal with, so an error is reported if it does
                 // not work out evenly to the skip size.
                 //
-                fail (Error_Block_Skip_Wrong_Raw());
+                panic (Error_Block_Skip_Wrong_Raw());
             }
 
             if (flags & SOP_FLAG_CHECK)

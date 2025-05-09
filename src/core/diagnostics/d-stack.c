@@ -189,7 +189,7 @@ DECLARE_NATIVE(RUNNING_Q)
 
     VarList* frame_ctx = Cell_Varlist(ARG(FRAME));
 
-    Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
+    Level* L = Level_Of_Varlist_May_Panic(frame_ctx);
 
     if (Is_Level_Fulfilling(L))
         return Init_Logic(OUT, false);
@@ -213,7 +213,7 @@ DECLARE_NATIVE(PENDING_Q)
 
     VarList* frame_ctx = Cell_Varlist(ARG(FRAME));
 
-    Level* L = Level_Of_Varlist_May_Fail(frame_ctx);
+    Level* L = Level_Of_Varlist_May_Panic(frame_ctx);
 
     if (Is_Level_Fulfilling(L))
         return Init_Logic(OUT, true);

@@ -174,7 +174,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
     Decay_If_Unstable(branch);
 
     if (Is_The_Group(branch))
-        return FAIL(Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
+        return PANIC(Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
 
     STATE = ST_GROUP_BRANCH_RUNNING_BRANCH;
     return CONTINUE(OUT, cast(Value*, branch), with);
@@ -196,7 +196,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 DECLARE_NATIVE(IF)
 //
 // 1. ~null~ antiforms are branch inhibitors, while trash antiforms will
-//    trigger an abrupt failure.  (Voids opt out of "voting" in aggregate
+//    trigger an abrupt panic.  (Voids opt out of "voting" in aggregate
 //    conditional testing, so a single isolated test can't have an answer.)
 //
 // 2. Evaluations must be performed through continuations, so IF can't be on
@@ -495,7 +495,7 @@ DECLARE_NATIVE(ALL)
     //    it heavy...but this way `(all:predicate [null] not?/) then [<runs>]`
 
     if (Is_Void(SCRATCH))  // !!! should void predicate results opt-out?
-        return FAIL(Error_Bad_Void());
+        return PANIC(Error_Bad_Void());
 
     Packify_If_Inhibitor(SCRATCH);  // predicates can approve null [1]
 
@@ -641,7 +641,7 @@ DECLARE_NATIVE(ANY)
     // 1. See ALL's predicate_result_in_scratch [1]
 
     if (Is_Void(SPARE))
-        return FAIL(Error_Bad_Void());
+        return PANIC(Error_Bad_Void());
 
     Packify_If_Inhibitor(OUT);  // predicates can approve null [1]
 
@@ -792,13 +792,13 @@ DECLARE_NATIVE(CASE)
     //        == <hmm>
 
     if (Is_Void(SPARE))  // error on void predicate results (not same as [1])
-        return FAIL(Error_Bad_Void());
+        return PANIC(Error_Bad_Void());
 
     goto processed_result_in_spare;
 
 } processed_result_in_spare: {  //////////////////////////////////////////////
 
-    // 1. We want this to fail:
+    // 1. We want this to panic:
     //
     //       >> foo: func [] [return case [okay ["a"]]]
     //
@@ -845,7 +845,7 @@ DECLARE_NATIVE(CASE)
 
     if (not matched) {
         if (not Any_Branch(branch))  // like IF [1]
-            return FAIL(Error_Bad_Value_Raw(cast(Value*, branch)));  // stable
+            return PANIC(Error_Bad_Value_Raw(cast(Value*, branch)));  // stable
 
         goto handle_next_clause;
     }
@@ -962,7 +962,7 @@ DECLARE_NATIVE(SWITCH)
     assert(Is_Cell_Erased(OUT));  // if no writes to out performed, we act void
 
     if (Bool_ARG(TYPE) and Bool_ARG(PREDICATE))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     if (not Bool_ARG(TYPE) and not Bool_ARG(PREDICATE)) {
         Copy_Cell(predicate, LIB(EQUAL_Q));  // no more builtin comparison [1]
@@ -1020,7 +1020,7 @@ DECLARE_NATIVE(SWITCH)
     //    HOWEVER this mutated the branch fallout, and quote removals were
     //    distorting comparisons.  So it copies into a scratch location.
     //
-    // 2. We want this to fail:
+    // 2. We want this to panic:
     //
     //       >> foo: func [] [return switch 1 + 2 [3 ["a"]]]
     //
@@ -1043,7 +1043,7 @@ DECLARE_NATIVE(SWITCH)
         Decay_If_Unstable(right);
 
         if (not Is_Datatype(right) and not Is_Action(right))
-            return FAIL("switch:type conditions must be DATATYPE! or ACTION!");
+            return PANIC("switch:type conditions must be DATATYPE! or ACTION!");
 
         Copy_Cell(Level_Spare(SUBLEVEL), left);
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(  // *sublevel*'s SPARE!
@@ -1176,7 +1176,7 @@ DECLARE_NATIVE(DEFAULT)
         SPECIFIED
     );
     if (error)
-        return FAIL(unwrap error);
+        return PANIC(unwrap error);
 
     if (not (Any_Vacancy(OUT) or Is_Nulled(OUT)))
         return OUT;  // consider it a "value" [1]
@@ -1188,7 +1188,7 @@ DECLARE_NATIVE(DEFAULT)
 
     if (Set_Var_Core_Throws(OUT, nullptr, steps, SPECIFIED, SPARE)) {
         assert(false);  // shouldn't be able to happen.
-        return FAIL(Error_No_Catch_For_Throw(LEVEL));
+        return PANIC(Error_No_Catch_For_Throw(LEVEL));
     }
 
     return COPY(SPARE);
@@ -1322,7 +1322,7 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
 
     Option(VarList*) coupling = Level_Coupling(throw_level);
     if (not coupling)
-        return FAIL(Error_Archetype_Invoked_Raw());
+        return PANIC(Error_Archetype_Invoked_Raw());
 
     Element* label = Init_Frame(
         SCRATCH, cast(ParamList*, unwrap coupling), ANONYMOUS, NONMETHOD

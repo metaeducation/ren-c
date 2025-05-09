@@ -74,7 +74,7 @@
     result: case [
         1 < 2 [1020]
         elide (flag: okay)
-        fail "shouldn't get here"
+        panic "shouldn't get here"
     ]
     (not flag) and (result = 1020)
 )(
@@ -82,7 +82,7 @@
     result: case [
         1 < 2 [1020]
         elide flag: okay
-        fail "shouldn't get here"
+        panic "shouldn't get here"
     ]
     (not flag) and (result = 1020)
 )(
@@ -90,7 +90,7 @@
     result: case [
         1 < 2 [1020]
         (elide flag: okay)
-        fail "shouldn't get here"
+        panic "shouldn't get here"
     ]
     (not flag) and (result = 1020)
 )]

@@ -7,15 +7,15 @@
 )
 
 
-; Errors that cross a yielder will always fail thereafter
+; Panics that cross a yielder will always panic thereafter
 (
-    g: generator [yield 1 fail "Bad!" yield 2]
+    g: generator [yield 1 panic "Bad!" yield 2]
 
     all [
         g = 1
         error? sys.util/rescue [g]
-        (sys.util/rescue [g]).id = 'yielder-failed
-        (sys.util/rescue [g]).id = 'yielder-failed
+        (sys.util/rescue [g]).id = 'yielder-panicked
+        (sys.util/rescue [g]).id = 'yielder-panicked
     ]
 )
 

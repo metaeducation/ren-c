@@ -66,8 +66,8 @@ debug-javascript-extension: 'yes
 
 ; Ren-C has build options for supporting C++ exceptions or the use of setjmp()
 ; and longjmp() (or just to crash, and not handle them at all).  This affects
-; how "abrupt" failures that arise in native code is treated--e.g. the calls
-; to the `fail()` "pseudo-keyword".
+; how "abrupt" panics that arise in native code is treated--e.g. the calls
+; to the `panic()` "pseudo-keyword".
 ;
 ; WebAssembly does not have native support for setjmp() and longjmp(), but
 ; Emscripten offers some hacks that implement it.  There is a webassembly
@@ -80,7 +80,7 @@ debug-javascript-extension: 'yes
 ;
 ; options are: [#uses-try-catch #uses-longjmp #just-aborts]
 ;
-abrupt-failure-model: #uses-try-catch  ; works in Firefox and Chrome
+abrupt-panic-model: #uses-try-catch  ; works in Firefox and Chrome
 
 ; Want to make libr3.js, not an executable.  This is so that plain `make`
 ; knows we want that (vs needing to say `make libr3.js`)
@@ -132,23 +132,23 @@ extensions: to map! compose [
 
 
 cflags: compose [
-    (spread switch abrupt-failure-model [
+    (spread switch abrupt-panic-model [
         #uses-try-catch [[
-            "-DFAIL_USES_TRY_CATCH=1"
+            "-DPANIC_USES_TRY_CATCH=1"
             "-fwasm-exceptions"  ; needed in cflags *and* ldflags
 
             ; Note: -fwasm-exceptions is faster than -fexceptions, but newer
             ; https://emscripten.org/docs/porting/exceptions.html#webassembly-exception-handling-proposal
         ]]
         #uses-longjmp [[
-            "-DFAIL_USES_LONGJMP=1"
+            "-DPANIC_USES_LONGJMP=1"
             "-s DISABLE_EXCEPTION_CATCHING=1"
         ]]
         #just-aborts [[
-            "-DFAIL_JUST_ABORTS=1"
+            "-DPANIC_JUST_ABORTS=1"
             "-s DISABLE_EXCEPTION_CATCHING=1"
         ]]
-        fail
+        panic
     ])
 
     (? if yes? debug-javascript-extension [spread [
@@ -157,7 +157,7 @@ cflags: compose [
         "-DDEBUG_HAS_PROBE=1"
         "-DDEBUG_FANCY_CRASH=1"
         "-DTRAMPOLINE_COUNTS_TICKS=1"
-        "-DDEBUG_PRINTF_FAIL_LOCATIONS=1"
+        "-DDEBUG_PRINTF_PANIC_LOCATIONS=1"
 
         "-DDEBUG_COLLECT_STATS=1"  ; !!! maybe temporary, has cost but good info
     ]])
@@ -173,7 +173,7 @@ ldflags: compose [
     ;
     "-s WASM=1"
 
-    (spread switch abrupt-failure-model [
+    (spread switch abrupt-panic-model [
         #uses-try-catch [[
             "-fwasm-exceptions"  ; needed in cflags *and* ldflags
         ]]
@@ -183,7 +183,7 @@ ldflags: compose [
         #just-aborts [[
             "-s DISABLE_EXCEPTION_CATCHING=1"
         ]]
-        fail
+        panic
     ])
 
     (unspaced ["-O" optimize])
@@ -206,7 +206,7 @@ ldflags: compose [
         #node [
             --[-s ENVIRONMENT='node']--
         ]
-        fail "Javascript HOST must be [#web #node] in %emscripten.r"
+        panic "Javascript HOST must be [#web #node] in %emscripten.r"
     ])
 
     (? if host = #node [

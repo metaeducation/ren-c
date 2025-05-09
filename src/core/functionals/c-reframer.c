@@ -156,12 +156,12 @@ bool Init_Invokable_From_Feed_Throws(
         return false;
 
     if (Any_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
-        fail ("Actions made with REFRAMER cannot work with GROUP!s");
+        panic ("Actions made with REFRAMER cannot work with GROUP!s");
 
     StackIndex base = TOP_INDEX;
 
     if (Is_Word(v) or Is_Tuple(v) or Is_Path(v) or Is_Chain(v))
-        Get_Var_May_Fail(out, v, Feed_Binding(feed));  // !!! throws?
+        Get_Var_May_Panic(out, v, Feed_Binding(feed));  // !!! throws?
     else
         Derelativize(out, v, Feed_Binding(feed));
 
@@ -380,7 +380,7 @@ Details* Alloc_Action_From_Exemplar(
         if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
             TOP_LEVEL, param, arg, false
         )){
-            fail (Error_Arg_Type(label, key, param, arg));
+            panic (Error_Arg_Type(label, key, param, arg));
         }
     }
 
@@ -449,7 +449,7 @@ DECLARE_NATIVE(REFRAMER)
 
     if (TOP_INDEX != STACK_BASE) {
         Destruct_Binder(binder);
-        return FAIL("REFRAMER can't use partial specializions ATM");
+        return PANIC("REFRAMER can't use partial specializions ATM");
     }
 
     const Key* key;
@@ -460,7 +460,7 @@ DECLARE_NATIVE(REFRAMER)
         param_index = maybe Try_Get_Binder_Index(binder, symbol);
         if (param_index == 0) {
             Destruct_Binder(binder);
-            return FAIL(Error_No_Arg(label, symbol));
+            return PANIC(Error_No_Arg(label, symbol));
         }
         key = Varlist_Key(exemplar, param_index);
         param = cast(Param*, Varlist_Slot(exemplar, param_index));

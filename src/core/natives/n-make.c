@@ -116,7 +116,7 @@ DECLARE_NATIVE(COPY)
 
     if (not dispatcher) {  // trivial copy, is it good to do so? [1]
         if (Bool_ARG(PART))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         UNUSED(Bool_ARG(DEEP));  // historically we ignore it
 
@@ -196,14 +196,14 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Decay_If_Unstable(OUT);  // should packs from TO be legal?
 
     if (Heart_Of_Fundamental(OUT) != to_or_as)
-        return FAIL("Forward TO/AS transform produced wrong type");
+        return PANIC("Forward TO/AS transform produced wrong type");
 
     if (
         Get_Level_Flag(L, CHECKING_TO)
         and (Any_List(OUT) or Any_String(OUT) or Is_Blob(OUT))
     ){
         if (Is_Flex_Read_Only(Cell_Flex(OUT)))
-            fail ("TO transform of LIST/STRING/BLOB made immutable series");
+            panic ("TO transform of LIST/STRING/BLOB made immutable series");
     }
 
     // Reset TO_P sublevel to do reverse transformation
@@ -237,13 +237,13 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
         return BOUNCE_THROWN;
 
     if (Is_Raised(reverse))
-        return FAIL(Cell_Error(reverse));
+        return PANIC(Cell_Error(reverse));
 
     Decay_If_Unstable(reverse);  // should packs from TO be legal?
 
     if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
         if (Type_Of(cast(Value*, reverse)) != Type_Of(input))
-            return FAIL("Reverse TO/AS of MAP! didn't produce original type");
+            return PANIC("Reverse TO/AS of MAP! didn't produce original type");
         return OUT;
     }
 
@@ -254,14 +254,14 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Drop_Lifeguard(reverse);
 
     if (not equal_reversal)
-        return FAIL("Reverse TO/AS transform didn't produce original result");
+        return PANIC("Reverse TO/AS transform didn't produce original result");
 
     if (to_or_as == from and Get_Level_Flag(L, CHECKING_TO)) {
         bool equal_copy = rebUnboxLogic(
             CANON(EQUAL_Q), rebQ(input), CANON(COPY), rebQ(input)
         );
         if (not equal_copy)
-            return FAIL("Reverse TO/AS transform not same as COPY");
+            return PANIC("Reverse TO/AS transform not same as COPY");
     }
 
     return OUT;
@@ -311,15 +311,15 @@ DECLARE_NATIVE(TO)
 
     Option(Type) to = Cell_Datatype_Type(ARG(TYPE));
     if (not to)
-        return FAIL("TO doesn't work with extension types");
+        return PANIC("TO doesn't work with extension types");
     if (unwrap to > MAX_HEART)
-        return FAIL("TO can't produce quoted/quasiform/antiform");
+        return PANIC("TO can't produce quoted/quasiform/antiform");
 
     if (Is_Datatype(ARG(ELEMENT))) {  // do same coercions as WORD!
         Value* datatype = ARG(ELEMENT);
         Option(Type) type = Cell_Datatype_Type(datatype);
         if (not type)
-            return FAIL("TO doesn't work with extension types");
+            return PANIC("TO doesn't work with extension types");
 
         SymId id = Symbol_Id_From_Type(unwrap type);
         Init_Word(ARG(ELEMENT), Canon_Symbol(id));
@@ -363,9 +363,9 @@ DECLARE_NATIVE(AS)
     Element* e = Element_ARG(ELEMENT);
     Option(Type) as = Cell_Datatype_Type(ARG(TYPE));
     if (not as)
-        return FAIL("TO doesn't work with extension types");
+        return PANIC("TO doesn't work with extension types");
     if ((unwrap as) > MAX_HEART)
-        return FAIL("AS can't alias to quoted/quasiform/antiform");
+        return PANIC("AS can't alias to quoted/quasiform/antiform");
 
   #if NO_RUNTIME_CHECKS
 

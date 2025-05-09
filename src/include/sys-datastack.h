@@ -38,7 +38,7 @@
 // "balance" the stack back to where it was when it was called!  There is
 // a check in the main evaluator loop that the stack has been balanced to
 // wherever it started by the time a function call ends.  It's not necessary
-// necessary to balance the stack in the case of calling a `fail`--because
+// necessary to balance the stack in the case of calling a `panic`--because
 // it is restored to where it was by the mechanics of RESCUE_SCOPE.
 //
 // To speed pushes and pops to the stack while also making sure that each
@@ -74,9 +74,9 @@
 // try to run any evaluations.
 //
 // NOTE: Due to the interactions of longjmp() with crossing C++ destructors,
-// using this debug setting is technically undefined behavior if a fail()
+// using this debug setting is technically undefined behavior if a panic()
 // occurs while a stack value is outstanding.  However, we just assume the
-// destructor is not called in this case...and the fail mechanism sets the
+// destructor is not called in this case...and the panic mechanism sets the
 // outstanding count to zero.
 //
 #if ! DEBUG_EXTANT_STACK_POINTERS
@@ -256,7 +256,7 @@ INLINE OnStack(Value*) PUSH(void) {
     ++g_ds.index;
     ++g_ds.movable_top;
     if (g_ds.movable_top == g_ds.movable_tail)
-        Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS);
+        Expand_Data_Stack_May_Panic(STACK_EXPAND_BASIS);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     assert(Is_Cell_Poisoned(g_ds.movable_top));
@@ -316,5 +316,5 @@ INLINE Element* Move_Drop_Top_Stack_Element(Init(Element) out) {
 // Since stack overflows are memory-related errors, don't try to do any
 // error allocations...just use an already made error.
 //
-#define Fail_Stack_Overflow() \
-    fail (Cell_Error(g_error_stack_overflow));
+#define Panic_Stack_Overflow() \
+    panic (Cell_Error(g_error_stack_overflow));

@@ -110,7 +110,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
             return RAISE(Error_User("Trap_Transcode_One() gave unwanted type"));
         }
 
-        return FAIL(Error_Bad_Make(TYPE_INTEGER, arg));
+        return PANIC(Error_Bad_Make(TYPE_INTEGER, arg));
     }
 
     if (Is_Time(arg))  // !!! (make integer! 1:00) -> 3600 :-( [3]
@@ -118,12 +118,12 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 
     if (Is_Decimal(arg) or Is_Percent(arg)) {  // !!! prefer ROUND
         if (VAL_DECIMAL(arg) < MIN_D64 or VAL_DECIMAL(arg) >= MAX_D64)
-            return FAIL(Error_Overflow_Raw());
+            return PANIC(Error_Overflow_Raw());
 
         return Init_Integer(OUT, cast(REBI64, VAL_DECIMAL(arg)));;
     }
 
-    return FAIL(Error_Bad_Make(TYPE_INTEGER, arg));
+    return PANIC(Error_Bad_Make(TYPE_INTEGER, arg));
 }
 
 
@@ -139,17 +139,17 @@ void Hex_String_To_Integer(Value* out, const Element* value)  // !!! UNUSED
 
     if (utf8_size > MAX_HEX_LEN) {
         // Lacks BLOB!'s accommodation of leading 00s or FFs
-        fail (Error_Out_Of_Range_Raw(value));
+        panic (Error_Out_Of_Range_Raw(value));
     }
 
     if (not Try_Scan_Hex_Integer(out, bp, utf8_size, utf8_size))
-        fail (Error_Bad_Make(TYPE_INTEGER, value));
+        panic (Error_Bad_Make(TYPE_INTEGER, value));
 
     // !!! Unlike binary, always assumes unsigned (should it?).  Yet still
     // might run afoul of 64-bit range limit.
     //
     if (VAL_INT64(out) < 0)
-        fail (Error_Out_Of_Range_Raw(value));
+        panic (Error_Out_Of_Range_Raw(value));
 }
 
 
@@ -236,7 +236,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             default:
                 break;
             }
-            return FAIL(Error_Math_Args(TYPE_INTEGER, verb));
+            return PANIC(Error_Math_Args(TYPE_INTEGER, verb));
         }
     }
     else
@@ -381,7 +381,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Integer)
     REBI64 max = VAL_INT64(Element_ARG(MAX));
 
     if (max == 0)
-        return FAIL(PARAM(MAX));  // range is 1 to max, inclusive
+        return PANIC(PARAM(MAX));  // range is 1 to max, inclusive
 
     return Init_Integer(OUT, Random_Range(max, Bool_ARG(SECURE)));
 }
@@ -395,7 +395,7 @@ IMPLEMENT_GENERIC(RANDOM_BETWEEN, Is_Integer)
     REBI64 max = VAL_INT64(Element_ARG(MAX));
 
     if (max < min)
-        return FAIL(PARAM(MAX));  // 0 to 0 is okay, but disallow 1 to 0
+        return PANIC(PARAM(MAX));  // 0 to 0 is okay, but disallow 1 to 0
 
     REBI64 rand = Random_Range(1 + max - min, Bool_ARG(SECURE));  // 1-based
 
@@ -408,7 +408,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Integer)
     INCLUDE_PARAMS_OF_MULTIPLY;
 
     if (not Is_Integer(ARG(VALUE2)))
-        return FAIL(PARAM(VALUE2));
+        return PANIC(PARAM(VALUE2));
 
     REBI64 num1 = VAL_INT64(ARG(VALUE1));
     REBI64 num2 = VAL_INT64(ARG(VALUE2));
@@ -450,7 +450,7 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
     }
 
     if (Is_Time(ARG(TO)))
-        return FAIL(PARAM(TO));
+        return PANIC(PARAM(TO));
 
     return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to)));
 }

@@ -93,7 +93,7 @@ sys.util/make-scheme [
             port [port!]
             index "Index to pick from (only supports 1, for FIRST)"
         ][
-            fail "This is now ODBC-STATEMENT-OF"
+            panic "This is now ODBC-STATEMENT-OF"
         ]
 
         update: func [return: [port!] port [port!]] [
@@ -214,7 +214,7 @@ sqlform: func [
         ]
     ]
     else [
-        fail ["Invalid type for ODBC-EXECUTE dialect:" mold:limit :value 60]
+        panic ["Invalid type for ODBC-EXECUTE dialect:" mold:limit :value 60]
     ]
 ]
 

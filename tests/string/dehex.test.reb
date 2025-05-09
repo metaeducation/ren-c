@@ -38,11 +38,11 @@
         (
             let de: dehex encoded
             if de != decoded [
-                fail ["Decode of" @encoded "gave" @de "expected" @decoded]
+                panic ["Decode of" @encoded "gave" @de "expected" @decoded]
             ]
             let en: enhex decoded
             if en != re-encoded [
-                fail ["Encode of" @decoded "gave" @en "expected" @re-encoded]
+                panic ["Encode of" @decoded "gave" @en "expected" @re-encoded]
             ]
         )
     ]]

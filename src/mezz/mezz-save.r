@@ -20,7 +20,7 @@ Rebol [
 ](
     adapt write/ [
         if not text? data [
-            fail ["WRITE-ENLINED only works on TEXT! data"]
+            panic ["WRITE-ENLINED only works on TEXT! data"]
         ]
         data: as blob! enline copy data
     ]
@@ -123,7 +123,7 @@ save: func [
     compress: default ['none]
 
     if not block? value [
-        fail "Rebol code passed to SAVE must be BLOCK! (LOAD only gives block)"
+        panic "Rebol code passed to SAVE must be BLOCK! (LOAD only gives block)"
     ]
     let data: mold spread value
 

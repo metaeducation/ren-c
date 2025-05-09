@@ -83,11 +83,11 @@ static const int window_bits_zlib_raw = -(MAX_WBITS);
 // See rebRepossess() for how rebAlloc()'d pointers can be used this way.
 //
 // We go ahead and use the rebAllocBytes() for zlib's internal state allocation
-// too, so that any fail() calls (e.g. out-of-memory during a rebRealloc())
+// too, so that any panic() calls (e.g. out-of-memory during a rebRealloc())
 // will automatically free that state.  Thus inflateEnd() and deflateEnd()
 // only need to be called if there is no failure.
 //
-// As a side-benefit, fail() can be used freely for other errors during the
+// As a side-benefit, panic() can be used freely for other errors during the
 // inflate or deflate.
 //
 static void* zalloc(void *opaque, unsigned nr, unsigned size)
@@ -106,12 +106,12 @@ static void zfree(void *opaque, void *addr)
 // Zlib gives back string error messages.  We use them or fall back on the
 // integer code if there is no message.
 //
-// 1. rebAlloc() fails vs. returning nullptr, so as long as zalloc() is used
+// 1. rebAlloc() panics vs. returning nullptr, so as long as zalloc() is used
 //    then Z_MEM_ERROR should never happen.
 //
 static Error* Error_Compression(const z_stream *strm, int ret)
 {
-    assert(ret != Z_MEM_ERROR);  // memory errors should have fail()'d [1]
+    assert(ret != Z_MEM_ERROR);  // memory errors should have panic()'d [1]
 
     DECLARE_ELEMENT (arg);
     if (strm->msg)
@@ -144,7 +144,7 @@ Byte* Compress_Alloc_Core(
     Option(SymId) envelope  // SYM_ZLIB, or SYM_GZIP
 ){
     z_stream strm;
-    strm.zalloc = &zalloc;  // fail() will clean up, see zalloc() definition
+    strm.zalloc = &zalloc;  // panic() will clean up, see zalloc() definition
     strm.zfree = &zfree;
     strm.opaque = nullptr;  // passed to zalloc/zfree, not needed currently
 
@@ -174,7 +174,7 @@ Byte* Compress_Alloc_Core(
         Z_DEFAULT_STRATEGY
     );
     if (ret_init != Z_OK)
-        fail (Error_Compression(&strm, ret_init));
+        panic (Error_Compression(&strm, ret_init));
 
     // http://stackoverflow.com/a/4938401
     //
@@ -189,7 +189,7 @@ Byte* Compress_Alloc_Core(
 
     int ret_deflate = deflate(&strm, Z_FINISH);
     if (ret_deflate != Z_STREAM_END)
-        fail (Error_Compression(&strm, ret_deflate));
+        panic (Error_Compression(&strm, ret_deflate));
 
     assert(strm.total_out == buf_size - strm.avail_out);
     if (size_out)
@@ -261,7 +261,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
     Option(SymId) envelope  // SYM_0, SYM_ZLIB, SYM_GZIP, or SYM_DETECT
 ){
     z_stream strm;
-    strm.zalloc = &zalloc;  // fail() will clean up, see zalloc() definition
+    strm.zalloc = &zalloc;  // panic() will clean up, see zalloc() definition
     strm.zfree = &zfree;
     strm.opaque = nullptr;  // passed to zalloc/zfree, not needed currently
     strm.total_out = 0;
@@ -292,7 +292,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
 
     int ret_init = inflateInit2(&strm, window_bits);
     if (ret_init != Z_OK)
-        fail (Error_Compression(&strm, ret_init));
+        panic (Error_Compression(&strm, ret_init));
 
     uLong buf_size;  // easiest to speak in zlib uLong vs. signed `Size`
     if (
@@ -301,7 +301,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
     ){
         const Size gzip_min_overhead = 18;  // at *least* 18 bytes
         if (size_in < gzip_min_overhead)
-            fail ("GZIP compressed size less than minimum for gzip format");
+            panic ("GZIP compressed size less than minimum for gzip format");
 
         buf_size = Bytes_To_U32_BE(  // size is last 4 bytes [2]
             c_cast(Byte*, input) + size_in - sizeof(uint32_t)
@@ -328,7 +328,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
             break;  // Finished. (and buffer was big enough)
 
         if (ret_inflate != Z_OK)
-            fail (Error_Compression(&strm, ret_inflate));
+            panic (Error_Compression(&strm, ret_inflate));
 
         // Note: `strm.avail_out` isn't necessarily 0 here, first observed
         // with `inflate #{AAAAAAAAAAAAAAAAAAAA}` (which is bad, but still)
@@ -338,7 +338,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
         if (max >= 0 and Cast_Signed(buf_size) >= max) {
             DECLARE_ELEMENT (temp);
             Init_Integer(temp, max);
-            fail (Error_Size_Limit_Raw(temp));
+            panic (Error_Size_Limit_Raw(temp));
         }
 
         // Use remaining input amount to guess how much more decompressed
@@ -531,7 +531,7 @@ DECLARE_NATIVE(INFLATE)
     if (Bool_ARG(MAX)) {
         max = Int32s(ARG(MAX), 1);
         if (max < 0)
-            return FAIL(PARAM(MAX));
+            return PANIC(PARAM(MAX));
     }
     else
         max = -1;

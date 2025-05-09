@@ -27,7 +27,7 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // A. The natives follow a pattern of extracting fields up front, so that if
-//    they fail we don't have to RESCUE it to clean up an initialized
+//    they PANIC we don't have to RESCUE it to clean up an initialized
 //    dhm_context.  (We could put the context in a HANDLE! with a cleanup
 //    function and let the system take care of the cleanup in the event of a
 //    problem, but it seems better to extract first.)
@@ -38,7 +38,7 @@
 //
 // C. When mbedTLS structures are initialized they do allocations, and all
 //    code paths have to free that.  By contrast, allocations done through
-//    librebol will be automatically freed on failure paths--so they only
+//    librebol will be automatically freed on panic paths--so they only
 //    need to be freed on the case of successful return.
 
 
@@ -157,7 +157,7 @@ int get_random(void *p_rng, unsigned char* output, size_t output_len)
         return 0;  // success
   #endif
 
-  rebJumps ("fail -[Random number generation did not succeed]-");
+  rebJumps ("panic -[Random number generation did not succeed]-");
 }
 
 
@@ -305,7 +305,7 @@ DECLARE_NATIVE(CHECKSUM)
     else
         error = rebValue("make error! [-[Unknown CHECKSUM method:]- method]");
 
-    goto return_result_or_fail;
+    goto return_result_or_panic;
 
   found_tls_info: { //////////////////////////////////////////////////////////
 
@@ -338,14 +338,14 @@ DECLARE_NATIVE(CHECKSUM)
 
     result = rebRepossess(output, md_size);
 
-  cleanup: //////////////////////////////////////////////////////////////////
+  cleanup: ///////////////////////////////////////////////////////////////////
 
     mbedtls_md_free(&ctx);
 
-} return_result_or_fail: { ///////////////////////////////////////////////////
+} return_result_or_panic: { //////////////////////////////////////////////////
 
     if (error)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     rebFree(method_utf8);
     rebUnlockBytes(data);
@@ -402,7 +402,7 @@ static Value* rebBinaryFromMpi(const mbedtls_mpi* X)
     int result = mbedtls_mpi_write_binary(X, buf, size);
 
     if (result != 0)
-        rebJumps ("fail -[Fatal MPI decode error]-");  // only from bugs (?)
+        rebJumps ("panic -[Fatal MPI decode error]-");  // only from bugs (?)
 
     return rebRepossess(buf, size);
 }
@@ -432,7 +432,7 @@ void Get_Padding_And_Hash_From_Spec(
             "pkcs1-v15", rebI(MBEDTLS_RSA_PKCS_V15),
             "pkcs1-v21", rebI(MBEDTLS_RSA_PKCS_V21),
         "]",
-        "select padding-list first", padding_spec, "else [fail [",
+        "select padding-list first", padding_spec, "else [panic [",
             "-[First element of padding spec must be one of]- @padding-list",
         "]]"
     );
@@ -444,7 +444,7 @@ void Get_Padding_And_Hash_From_Spec(
         //
         if (*padding == MBEDTLS_RSA_PKCS_V21)
             rebJumps (
-                "fail -[pkcs1-v21 padding scheme needs hash to be specified]-"
+                "panic -[pkcs1-v21 padding scheme needs hash to be specified]-"
             );
 
         *hash = MBEDTLS_MD_NONE;
@@ -461,13 +461,13 @@ void Get_Padding_And_Hash_From_Spec(
             "#sha512", rebI(MBEDTLS_MD_SHA512),
             "#ripemd160", rebI(MBEDTLS_MD_RIPEMD160),
         "]",
-        "select hash-list second", padding_spec, "else [fail [",
+        "select hash-list second", padding_spec, "else [panic [",
             "-[Second element of padding spec must be one of]- @hash-list",
         "]]"
     ));
 
     rebElide("if 2 != length of", padding_spec, "[",
-        "fail -[Padding spec must be pad method plus optional hash]-"
+        "panic -[Padding spec must be pad method plus optional hash]-"
     "]");
 }
 
@@ -500,9 +500,9 @@ DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
 
     bool insecure = rebDid("insecure");
     if (not insecure and num_key_bits < 1024)
-        return "fail -[RSA key must be >= 1024 bits unless :INSECURE]-";
+        return "panic -[RSA key must be >= 1024 bits unless :INSECURE]-";
     if (num_key_bits > MBEDTLS_MPI_MAX_BITS)
-        return "fail -[RSA key bits exceeds MBEDTLS_MPI_MAX_BITS]-";
+        return "panic -[RSA key bits exceeds MBEDTLS_MPI_MAX_BITS]-";
 
     Value* error = nullptr;
     Value* public_key = nullptr;
@@ -618,7 +618,7 @@ DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
     mbedtls_rsa_free(&ctx);
 
     if (error)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     return rebDelegate("pack [", rebR(public_key), rebR(private_key), "]");
 }}}
@@ -642,7 +642,7 @@ DECLARE_NATIVE(RSA_ENCRYPT)
 
     Value* padding_spec = rebValue(
         "match block! public-key.padding else [",
-            "fail -[RSA key objects must specify at least padding: [raw]]-",
+            "panic -[RSA key objects must specify at least padding: [raw]]-",
         "]"
     );
 
@@ -657,7 +657,7 @@ DECLARE_NATIVE(RSA_ENCRYPT)
     Value* e = rebValue("ensure [~null~ blob!] public-key.e");
 
     if (not n or not e)
-        return "fail -[RSA requires N and E components of key object]-";
+        return "panic -[RSA requires N and E components of key object]-";
 
     Value* error = nullptr;
     Value* result = nullptr;
@@ -747,7 +747,7 @@ DECLARE_NATIVE(RSA_ENCRYPT)
     mbedtls_rsa_free(&ctx);
 
     if (error)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     rebRelease(n);
     rebRelease(e);
@@ -777,7 +777,7 @@ DECLARE_NATIVE(RSA_DECRYPT)
 
     Value* padding_spec = rebValue(
         "match block! private-key.padding else [",
-            "fail -[RSA key objects need at least padding: [raw]]-"
+            "panic -[RSA key objects need at least padding: [raw]]-"
         "]"
     );
 
@@ -803,14 +803,14 @@ DECLARE_NATIVE(RSA_DECRYPT)
     }
     else if (not p and not q) {
         if (not n or not e or not d)
-            return "fail -[N, E, and D needed to decrypt if P and Q missing]-";
+            return "panic -[N, E, and D needed to decrypt if P and Q missing]-";
     }
     else if (not d and not n) {
         if (not e or not p or not q)
-            return "fail -[E, P, and Q needed to decrypt if D or N missing]-";
+            return "panic -[E, P, and Q needed to decrypt if D or N missing]-";
     }
     else
-        return "fail -[Missing field combination in private key not allowed]-";
+        return "panic -[Missing field combination in private key not allowed]-";
 
     Value* dp = rebValue("match blob! private-key.dp");
     Value* dq = rebValue("match blob! private-key.dq");
@@ -825,7 +825,7 @@ DECLARE_NATIVE(RSA_DECRYPT)
         chinese_remainder_speedup = true;
     }
     else
-        return "fail -[All of DP, DQ, and QINV must be given, or none]-";
+        return "panic -[All of DP, DQ, and QINV must be given, or none]-";
 
     Value* error = nullptr;
     Value* result = nullptr;
@@ -965,7 +965,7 @@ DECLARE_NATIVE(RSA_DECRYPT)
     mbedtls_rsa_free(&ctx);
 
     if (error)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     rebRelease(dp);
     rebRelease(dq);
@@ -1188,7 +1188,7 @@ DECLARE_NATIVE(DH_GENERATE_KEYPAIR)
     mbedtls_dhm_free(&ctx);  // should free any assigned bignum fields
 
     if (error)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     rebRelease(base);
     rebRelease(modulus);
@@ -1331,7 +1331,7 @@ DECLARE_NATIVE(DH_COMPUTE_SECRET)
     mbedtls_dhm_free(&ctx);
 
     if (error)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     return result;
 }}}
@@ -1370,7 +1370,7 @@ DECLARE_NATIVE(AES_KEY)
 
     int key_bitlen = key_size * 8;
     if (key_bitlen != 128 and key_bitlen != 192 and key_bitlen != 256) {
-        return rebDelegate("fail [",
+        return rebDelegate("panic [",
             "-[AES bits must be [128 192 256], not]-", rebI(key_bitlen),
         "]");
     }
@@ -1431,7 +1431,7 @@ DECLARE_NATIVE(AES_KEY)
 
     if (error) {
         mbedtls_cipher_free(ctx);
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
     }
 
     rebUnlockBytes(key_bytes);
@@ -1461,7 +1461,7 @@ DECLARE_NATIVE(AES_STREAM)
     INCLUDE_PARAMS_OF_AES_STREAM;
 
     if (rebExtractHandleCleaner("ctx") != Aes_Ctx_Handle_Cleaner)
-        return "fail [-[Not a AES context HANDLE!:]- @ctx]";
+        return "panic [-[Not a AES context HANDLE!:]- @ctx]";
 
     size_t ilen;
     const Byte* input = rebLockBytes(&ilen, "data");
@@ -1514,7 +1514,7 @@ DECLARE_NATIVE(AES_STREAM)
 } cleanup: { /////////////////////////////////////////////////////////////////
 
     if (error)
-        return rebDelegate("fail", error);
+        return rebDelegate("panic", error);
 
     rebUnlockBytes(input);
 
@@ -1544,7 +1544,7 @@ static const struct mbedtls_ecp_curve_info* Ecp_Curve_Info_From_Name(
     if (info)
         return info;
 
-    rebJumps ("fail [-[Unknown ECC curve specified:]-", rebT(name), "]");
+    rebJumps ("panic [-[Unknown ECC curve specified:]-", rebT(name), "]");
 }
 
 
@@ -1634,7 +1634,7 @@ DECLARE_NATIVE(ECC_GENERATE_KEYPAIR)
     mbedtls_ecdh_free(&ctx);
 
     if (error)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     return result;
 }}}
@@ -1672,7 +1672,7 @@ DECLARE_NATIVE(ECDH_SHARED_SECRET)
             "append (copy public-key.x) public-key.y"
         "]",
         "if", rebI(num_bytes * 2), "!= length of bin [",
-            "fail [-[Public BLOB! must be]-", rebI(num_bytes * 2),
+            "panic [-[Public BLOB! must be]-", rebI(num_bytes * 2),
                 "-[bytes total for]- group]",
         "]",
         "bin"
@@ -1747,7 +1747,7 @@ DECLARE_NATIVE(ECDH_SHARED_SECRET)
     mbedtls_ecdh_free(&ctx);
 
     if (error)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     rebRelease(private_key);
     rebFree(public_bytes);
@@ -1800,10 +1800,10 @@ DECLARE_NATIVE(STARTUP_P)
 
   #endif
 
-    // !!! Should we fail here, or wait to fail until the system tries to
+    // !!! Should we panic here, or wait to panic until the system tries to
     // generate random data and cannot?
     //
-    return "fail -[Crypto STARTUP* can't init random number generator]-";
+    return "panic -[Crypto STARTUP* can't init random number generator]-";
 }
 
 

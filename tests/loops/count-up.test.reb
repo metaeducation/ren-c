@@ -77,7 +77,7 @@
 ; where # means "count effectively forever"...though it can really only
 ; count up to maxint in the current implementation.
 [
-    (null = count-up 'i void [fail "should not run"])
+    (null = count-up 'i void [panic "should not run"])
     (<infinite> = catch [count-up 'i # [if i = 500 [throw <infinite>]]])
 ]
 

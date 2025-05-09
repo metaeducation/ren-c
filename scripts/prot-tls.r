@@ -427,7 +427,7 @@ make-state-updater: func [
 
         let legal
         all [old, not find (legal: select transitions old) new] then [
-            fail ["Invalid write state transition, expected one of:" mold legal]
+            panic ["Invalid write state transition, expected one of:" mold legal]
         ]
 
         ctx.mode: new
@@ -474,16 +474,16 @@ client-hello: func [
         ]
         block? version [
             parse version [decimal! decimal!] except [
-                fail "BLOCK! /VERSION must be two DECIMAL! (min ver, max ver)"
+                panic "BLOCK! /VERSION must be two DECIMAL! (min ver, max ver)"
             ]
             pack version
         ]
     ]
     let min-ver-bytes: select version-to-bytes ctx.min-version else [
-        fail ["Unsupported minimum TLS version" ctx.min-version]
+        panic ["Unsupported minimum TLS version" ctx.min-version]
     ]
     let max-ver-bytes: select version-to-bytes ctx.max-version else [
-        fail ["Unsupported maximum TLS version" ctx.max-version]
+        panic ["Unsupported maximum TLS version" ctx.max-version]
     ]
 
     clear ctx.handshake-messages
@@ -937,7 +937,7 @@ encrypt-data: func [
             ]
         ]
     ] else [
-        fail ["Unsupported TLS crypt-method:" ctx.crypt-method]
+        panic ["Unsupported TLS crypt-method:" ctx.crypt-method]
     ]
 
     ; TLS versions 1.1 and above include the client-iv in plaintext.
@@ -971,7 +971,7 @@ decrypt-data: func [
             ]
         ]
     ] else [
-        fail ["Unsupported TLS crypt-method:" ctx.crypt-method]
+        panic ["Unsupported TLS crypt-method:" ctx.crypt-method]
     ]
 
     return data
@@ -992,7 +992,7 @@ bind construct [
 ][
     return make object! [
         type: select protocol-types data.1 else [
-            fail ["unknown/invalid protocol type:" data.1]
+            panic ["unknown/invalid protocol type:" data.1]
         ]
         version: select bytes-to-version copy:part at data 2 2
         size: decode [BE +] copy:part at data 4 2
@@ -1017,7 +1017,7 @@ bind construct [
     let result: copy:part data n
     let actual: length of result  ; :PART accepts truncated data
     if n != actual  [
-        fail ["Expected" n "bytes for" as word! left "but received" actual]
+        panic ["Expected" n "bytes for" as word! left "but received" actual]
     ]
     set var skip data n  ; update variable to point past what was taken
     return set left result  ; must manually assign if SET-WORD! overridden
@@ -1109,7 +1109,7 @@ bind construct [
         if proto.type = #alert [
             if proto.messages.1 > 1 [
                 ; fatal alert level
-                fail [select alert-descriptions data.2 else ["unknown"]]
+                panic [select alert-descriptions data.2 else ["unknown"]]
             ]
         ]
         update-read-state ctx proto.type
@@ -1153,7 +1153,7 @@ bind construct [
                         let server-version: grab bin 2
                         server-version: select bytes-to-version server-version
                         if server-version < ctx.min-version [
-                            fail [
+                            panic [
                                 "Requested minimum TLS version" ctx.min-version
                                 "with maximum TLS version" ctx.max-version
                                 "but server gave back" server-version
@@ -1180,7 +1180,7 @@ bind construct [
                                     compression-method:
                                         grab bin compression-method-length
                                 ]
-                                fail ["TLS compression disabled (CRIME)"]
+                                panic ["TLS compression disabled (CRIME)"]
                             ]
 
                             ; !!! After this point is responses based on the
@@ -1219,7 +1219,7 @@ bind construct [
                         ]
 
                         ctx.suite: select cipher-suites msg-obj.suite-id else [
-                            fail [
+                            panic [
                                 "This TLS scheme doesn't support ciphersuite:"
                                 (mold suite)
                             ]
@@ -1269,7 +1269,7 @@ bind construct [
                                 ; just for signing the key exchange data
                             ]
                         ] else [
-                            fail "Unsupported TLS key-method"
+                            panic "Unsupported TLS key-method"
                         ]
                         msg-obj
                     ]
@@ -1319,7 +1319,7 @@ bind construct [
 
                                     curve-info: grab bin 3
                                     if curve-info <> #{03 00 17} [
-                                        fail [
+                                        panic [
                                             "ECDHE only works for secp256r1"
                                         ]
                                     ]
@@ -1351,7 +1351,7 @@ bind construct [
                                         5 <sha384>
                                         6 <sha512>
                                     ] hash-algorithm else [
-                                        fail "Unknown hash algorithm"
+                                        panic "Unknown hash algorithm"
                                     ]
 
                                     ; https://crypto.stackexchange.com/a/26355
@@ -1363,7 +1363,7 @@ bind construct [
                                         2 #dsa
                                         3 #ecsda
                                     ] signature-algorithm else [
-                                        fail "Unkown signature algorithm"
+                                        panic "Unkown signature algorithm"
                                     ]
                                     signature-length: grab-int bin 2
                                     signature: grab bin signature-length
@@ -1386,7 +1386,7 @@ bind construct [
                                 msg-obj
                             ]
 
-                            fail "Server-key-exchange message sent illegally."
+                            panic "Server-key-exchange message sent illegally."
                         ]
                     ]
 
@@ -1429,7 +1429,7 @@ bind construct [
                                 output-length: 12
                             ]
                         )[
-                            fail "Bad 'finished' MAC"
+                            panic "Bad 'finished' MAC"
                         ]
 
                         debug "FINISHED MAC verify: OK"
@@ -1456,7 +1456,7 @@ bind construct [
                     ] ctx.server-mac-key
 
                     if mac <> mac-check [
-                        fail "Bad handshake record MAC"
+                        panic "Bad handshake record MAC"
                     ]
 
                     4 + ctx.hash-size
@@ -1491,7 +1491,7 @@ bind construct [
             ] ctx.server-mac-key
 
             if mac <> mac-check [
-                fail "Bad application record MAC"
+                panic "Bad application record MAC"
             ]
         ]
     ]
@@ -1510,7 +1510,7 @@ parse-response: func [
     let messages: parse-messages ctx proto
 
     if empty? messages [
-        fail "unknown/invalid protocol message"
+        panic "unknown/invalid protocol message"
     ]
 
     proto.messages: messages
@@ -1521,7 +1521,7 @@ parse-response: func [
     ]
 
     if not tail? skip msg proto.size + 5 [
-        fail "invalid length of response fragment"
+        panic "invalid length of response fragment"
     ]
 
     return proto
@@ -1850,7 +1850,7 @@ sys.util/make-scheme [
             if port.state [return port]
 
             if not port.spec.host [
-                fail make-tls-error "Missing host address"
+                panic make-tls-error "Missing host address"
             ]
 
             ; This creates the `ctx:` object mentioned throughout the code
@@ -1866,7 +1866,7 @@ sys.util/make-scheme [
                 version: null
                 ver-bytes: accessor does [
                     select version-to-bytes version else [
-                        fail ["version has no byte sequence:" version]
+                        panic ["version has no byte sequence:" version]
                     ]
                 ]
 
@@ -2035,7 +2035,7 @@ sys.util/make-scheme [
                         ]
                     ]
                 ] else [
-                    fail ["Unknown TLS crypt-method" port.state.crypt-method]
+                    panic ["Unknown TLS crypt-method" port.state.crypt-method]
                 ]
             ]
 

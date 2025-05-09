@@ -68,7 +68,7 @@
     |
         other: group! (
             if not var [
-                fail [
+                panic [
                     ; <where> spec
                     ; <near> other
                     "Default value not paired with argument:" (mold other)
@@ -140,7 +140,7 @@
         <end> accept (~)
     |
         other: <here> (
-            fail [
+            panic [
                 ; <where> spec
                 ; <near> other
                 "Invalid spec item:" @(other.1)

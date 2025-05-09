@@ -29,23 +29,23 @@
 //
 //  Derive_Error_From_Pointer_Core: C
 //
-// This is the polymorphic code behind fail(), FAIL(), and RAISE():
+// This is the polymorphic code behind panic(), FAIL(), and RAISE():
 //
-//    fail ("UTF-8 string");  // delivers error with that text
-//    fail (api_value);       // ensure it's an ERROR!, release and use as-is
-//    fail (error_context);   // use the Error* as-is
-//    fail (PARAM(NAME));     // impliciate parameter as having a bad value
-//    fail (other_cell);      // just report as a generic "bad value"
+//    panic ("UTF-8 string");  // delivers error with that text
+//    panic (api_value);       // ensure it's an ERROR!, release and use as-is
+//    panic (error_context);   // use the Error* as-is
+//    panic (PARAM(NAME));     // impliciate parameter as having a bad value
+//    panic (other_cell);      // just report as a generic "bad value"
 //
 // 1. We would face an ambiguity in taking API handles, as to whether that
 //    is an error, or if it is "some value" that is just a bad value.  Since
 //    internal code that would use this function does not deal often in
 //    API values, it's believed that assuming they are errors when passed
-//    to `fail()` or `FAIL()` or `RAISE()` is the best policy.
+//    to `panic()` or `FAIL()` or `RAISE()` is the best policy.
 //
 // 2. We check to see if the Cell is in the paramlist of the current running
 //    native.  (We could theoretically do this with ARG(), or have a nuance of
-//    behavior with ARG()...or even for the Key*...but failing on the PARAM()
+//    behavior with ARG()...or even for the Key*...but panicking on the PARAM()
 //    feels like the best way to "blame" that argument.)
 //
 Error* Derive_Error_From_Pointer_Core(const void* p) {
@@ -77,7 +77,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
                 error = Cell_Error(v);
             }
             else {
-                assert(!"fail() given API handle that is not an ERROR!");
+                assert(!"panic() given API handle that is not an ERROR!");
                 error = Error_Bad_Value(v);
             }
             rebRelease(m_cast(Value*, v));  // released even if we didn't
@@ -104,12 +104,12 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 
 
 //
-//  Fail_Abruptly_Helper: C
+//  Panic_Abruptly_Helper: C
 //
-// Trigger failure of an error by longjmp'ing to enclosing RESCUE_SCOPE.  Note
-// that these failures interrupt code mid-stream, so if a Rebol function is
+// Trigger panic of an error by crossing stacks to enclosing RESCUE_SCOPE.
+// Note these panics interrupt code mid-stream, so if a Rebol function is
 // running it will not make it to the point of returning the result value.
-// This distinguishes the "fail" mechanic from the "throw" mechanic, which has
+// This distinguishes the "panic" mechanic from the "throw" mechanic, which has
 // to bubble up a thrown value through OUT (used to implement BREAK,
 // CONTINUE, RETURN, LEAVE, HALT...)
 //
@@ -129,21 +129,21 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 // or to identify systemically with some kind of "error code".  However,
 // it's a realistic quick-and-dirty way of delivering a more meaningful
 // error than just using a RE_MISC error code, and can be found just as easily
-// to clean up later with a textual search for `fail ("`
+// to clean up later with a textual search for `panic ("`
 //
-Error* Fail_Abruptly_Helper(Error* error)
+Error* Panic_Abruptly_Helper(Error* error)
 {
     Assert_Varlist(error);
     assert(CTX_TYPE(error) == TYPE_ERROR);
 
-    // You can't abruptly fail during the handling of abrupt failure.
+    // You can't abruptly panic during the handling of an abrupt panic.
     //
-    assert(not (Is_Throwing(TOP_LEVEL) and Is_Throwing_Failure(TOP_LEVEL)));
+    assert(not (Is_Throwing(TOP_LEVEL) and Is_Throwing_Panic(TOP_LEVEL)));
 
     // The topmost level must be the one issuing the error.  If a level was
     // pushed with LEVEL_FLAG_TRAMPOLINE_KEEPALIVE that finished executing
     // but remained pushed, it must be dropped before the level that pushes
-    // it issues a failure.
+    // it issues a panic.
     //
     assert(TOP_LEVEL->executor != nullptr);
 
@@ -175,7 +175,7 @@ Error* Fail_Abruptly_Helper(Error* error)
     }
 
   #if DEBUG_HAS_PROBE
-    if (PG_Probe_Failures) {  // see R3_PROBE_FAILURES environment variable
+    if (g_probe_panics) {  // see R3_PROBE_PANICS environment variable
         static bool probing = false;
 
         if (error == cast(void*, Cell_Varlist(g_error_stack_overflow))) {
@@ -201,7 +201,7 @@ Error* Fail_Abruptly_Helper(Error* error)
     if (PG_Boot_Phase < BOOT_DONE)
         crash (error);
 
-    // There should be a RESCUE_SCOPE of some kind in effect if a `fail` can
+    // There should be a RESCUE_SCOPE of some kind in effect if a `panic` can
     // ever be run.
     //
     if (g_ts.jump_list == nullptr)
@@ -293,13 +293,13 @@ const Value* Find_Error_For_Sym(SymId id)
 //
 // (We could have RUNTIME_CHECKS builds capture the C __FILE__ and __LINE__
 // of origin as fields in the variable.  But rather than implement that idea,
-// the cheaper DEBUG_PRINTF_FAIL_LOCATIONS was added, which works well enough
+// the cheaper DEBUG_PRINTF_PANIC_LOCATIONS was added, which works well enough
 // if you're not running under a C debugger.)
 //
 // 1. Intrinsic natives are very limited in what they are allowed to do (when
 //    they are executing as an intrinsic, e.g. they have only one argument
-//    that lives in their parent Level's SPARE).  But FAIL is one of the
-//    things they should be able to do, and we need to know what's failing...
+//    that lives in their parent Level's SPARE).  But PANIC is one of the
+//    things they should be able to do, and we need to know what's panicking,
 //    so we can't implicate the parent.
 //
 // 2. The WHERE is a backtrace of a block of words, starting from the top of
@@ -549,7 +549,7 @@ IMPLEMENT_GENERIC(MAKE, Error)
                 or Is_Nulled(&vars->message)
             )
         )){
-            return FAIL(Error_Invalid_Error_Raw(Varlist_Archetype(error)));
+            return PANIC(Error_Invalid_Error_Raw(Varlist_Archetype(error)));
         }
     }
 
@@ -579,7 +579,7 @@ Error* Make_Error_Managed_Vaptr(
     if (PG_Boot_Phase < BOOT_ERRORS) { // no STD_ERROR or template table yet
       #if RUNTIME_CHECKS
         printf(
-            "fail() before errors initialized, cat_id = %d, id = %d\n",
+            "panic() before errors initialized, cat_id = %d, id = %d\n",
             cast(int, cat_id),
             cast(int, id)
         );
@@ -676,7 +676,7 @@ Error* Make_Error_Managed_Vaptr(
 
               default:
                 assert(false);
-                fail ("Bad pointer passed to Make_Error_Managed()");
+                panic ("Bad pointer passed to Make_Error_Managed()");
             }
         }
     }
@@ -701,9 +701,9 @@ Error* Make_Error_Managed_Vaptr(
 //  Make_Error_Managed: C
 //
 // This variadic function takes a number of Value* arguments appropriate for
-// the error category and ID passed.  It is commonly used with fail():
+// the error category and ID passed.  It is commonly used with panic():
 //
-//     fail (Make_Error_Managed(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
+//     panic (Make_Error_Managed(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
 //
 // Note that in C, variadic functions don't know how many arguments they were
 // passed.  Make_Error_Managed_Vaptr() knows how many arguments are in an
@@ -716,7 +716,7 @@ Error* Make_Error_Managed_Vaptr(
 // fixed number of arguments specific to each error...and the wrappers can
 // also do additional argument processing:
 //
-//     fail (Error_Something(arg1, thing_processed_to_make_arg2));
+//     panic (Error_Something(arg1, thing_processed_to_make_arg2));
 //
 Error* Make_Error_Managed(
     int cat_id,
@@ -786,7 +786,7 @@ Error* Error_Bad_Word_Get(
     assert(Any_Vacancy(vacancy));
 
     DECLARE_ELEMENT (reified);
-    Copy_Meta_Cell(reified, vacancy);  // avoid failures in error message [1]
+    Copy_Meta_Cell(reified, vacancy);  // avoid panics in error message [1]
 
     return Error_Bad_Word_Get_Raw(target, reified);
 }
@@ -943,8 +943,8 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 // commentary or context.  It becomes a catch all for "unexpected input" when
 // a more specific error would often be more useful.
 //
-// The behavior of `fail (some_value)` generates this error, as it can be
-// distinguished from `fail (some_context)` meaning that the context iss for
+// The behavior of `panic (some_value)` generates this error, as it can be
+// distinguished from `panic (some_context)` meaning that the context iss for
 // an actual intended error.
 //
 Error* Error_Bad_Value(const Value* value)
@@ -975,7 +975,7 @@ Error* Error_No_Catch_For_Throw(Level* level_)
     DECLARE_ATOM (arg);
     CATCH_THROWN(arg, level_);
 
-    if (Is_Error(label)) {  // what would have been fail()
+    if (Is_Error(label)) {  // what would have been panic()
         assert(Is_Nulled(arg));
         return Cell_Error(label);
     }
@@ -1227,16 +1227,16 @@ Error* Error_Unhandled(Level* level_) {
 VarList* Startup_Errors(const Element* boot_errors)
 {
   #if DEBUG_HAS_PROBE
-    const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
-    if (env_probe_failures != NULL and atoi(env_probe_failures) != 0) {
+    const char *env_probe_panics = getenv("R3_PROBE_PANICS");
+    if (env_probe_panics != NULL and atoi(env_probe_panics) != 0) {
         printf(
             "**\n"
-            "** R3_PROBE_FAILURES is nonzero in environment variable!\n"
+            "** R3_PROBE_PANICS is nonzero in environment variable!\n"
             "** Rather noisy, but helps for debugging the boot process...\n"
             "**\n"
         );
         fflush(stdout);
-        PG_Probe_Failures = true;
+        g_probe_panics = true;
     }
   #endif
 

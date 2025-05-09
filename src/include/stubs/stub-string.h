@@ -461,18 +461,18 @@ INLINE REBLEN Num_Codepoints_For_Bytes(
 //=//// REBSTR CREATION HELPERS ///////////////////////////////////////////=//
 //
 // Note that most clients should be using the rebStringXXX() APIs for this
-// and generate Value*.  Note also that these routines may fail() if the
+// and generate Value*.  Note also that these routines may panic() if the
 // data they are given is not UTF-8.
 
 #define Make_String(encoded_capacity) \
     Make_String_Core(FLEX_MASK_STRING, (encoded_capacity))
 
 INLINE String* Make_String_UTF8(const char *utf8) {
-    return Append_UTF8_May_Fail(nullptr, utf8, strsize(utf8), STRMODE_NO_CR);
+    return Append_UTF8_May_Panic(nullptr, utf8, strsize(utf8), STRMODE_NO_CR);
 }
 
 INLINE String* Make_Sized_String_UTF8(const char *utf8, size_t size) {
-    return Append_UTF8_May_Fail(nullptr, utf8, size, STRMODE_NO_CR);
+    return Append_UTF8_May_Panic(nullptr, utf8, size, STRMODE_NO_CR);
 }
 
 
@@ -540,13 +540,13 @@ INLINE Error* Error_Illegal_Cr(const Byte* at, const Byte* start)
 // This routine is formulated in a way to try and share it in order to not
 // repeat code for implementing Reb_Strmode many places.  See notes there.
 //
-INLINE bool Should_Skip_Ascii_Byte_May_Fail(
+INLINE bool Should_Skip_Ascii_Byte_May_Panic(
     const Byte* bp,
     enum Reb_Strmode strmode,
     const Byte* start  // need for knowing how far back for error context
 ){
     if (*bp == '\0')
-        fail (Error_Illegal_Zero_Byte_Raw());  // never allow #{00} in strings
+        panic (Error_Illegal_Zero_Byte_Raw());  // never allow #{00} in strings
 
     if (*bp == CR) {
         switch (strmode) {
@@ -560,7 +560,7 @@ INLINE bool Should_Skip_Ascii_Byte_May_Fail(
 
           case STRMODE_NO_CR:
           strmode_no_cr:
-            fail (Error_Illegal_Cr(bp, start));
+            panic (Error_Illegal_Cr(bp, start));
 
           case STRMODE_LF_TO_CRLF:
             assert(!"STRMODE_LF_TO_CRLF handled by exporting routines only");
@@ -572,7 +572,7 @@ INLINE bool Should_Skip_Ascii_Byte_May_Fail(
 }
 
 #define Validate_Ascii_Byte(bp,strmode,start) \
-    (Should_Skip_Ascii_Byte_May_Fail((bp), (strmode), (start)), NOOP)
+    (Should_Skip_Ascii_Byte_May_Panic((bp), (strmode), (start)), NOOP)
 
 #define Append_Any_Utf8(dest,string) \
     Append_Any_Utf8_Limit((dest), (string), UNLIMITED)

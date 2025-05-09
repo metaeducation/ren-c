@@ -35,11 +35,11 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * When an abrupt failure occurs, it is intercepted by the trampoline and
+// * When an abrupt panic occurs, it is intercepted by the trampoline and
 //   converted into a throw state with an ERROR! as the label.  This state
 //   is bubbled up the stack much like a throw, however it cannot be
 //   intercepted by CATCH or definitional-error handlers like TRY.  Only
-//   special routines like SYS.UTIL/RESCUE can catch abrupt failures, as
+//   special routines like SYS.UTIL/RESCUE can catch abrupt panics, as
 //   what they mean is too nebulous for arbitrary stacks to assume they
 //   know how to handle them.
 //
@@ -69,7 +69,7 @@ INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
     return &g_ts.thrown_label;
 }
 
-#define Is_Throwing_Failure(level_) \
+#define Is_Throwing_Panic(level_) \
     Is_Error(VAL_THROWN_LABEL(level_))  // non-definitional errors [1]
 
 INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
@@ -98,7 +98,7 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
 
 // When failures are put in the throw state, they are the label--not the value.
 //
-INLINE Bounce Init_Thrown_Failure(Level* L, Error* error) {
+INLINE Bounce Init_Thrown_Panic(Level* L, Error* error) {
     UNUSED(L);
     return Init_Thrown_With_Label(
         TOP_LEVEL, LIB(NULL), Varlist_Archetype(error)  // error is the "label"

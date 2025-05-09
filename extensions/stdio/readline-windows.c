@@ -173,7 +173,7 @@ static void WRITE_UTF8(const unsigned char *utf8, size_t size)
             0
         );
         if (not ok)
-            rebFail_OS (GetLastError());
+            rebPanic_OS (GetLastError());
         UNUSED(total_wide_chars);
     }
     free(wchar_buf);
@@ -420,7 +420,7 @@ static bool Read_Input_Records_Interrupted(STD_TERM *t)
         READ_BUF_LEN - 1,  // size of read buffer
         &num_events
     )){
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
     }
     assert(num_events != 0);  // Should be blocking (see PeekConsoleInput)
 
@@ -458,7 +458,7 @@ static bool Read_Input_Records_Interrupted(STD_TERM *t)
 void Write_Char(uint32_t c, int n)
 {
     if (c > 0xFFFF)
-        rebJumps ("fail -[Not yet supporting codepoints >0xFFFF on Windows]-");
+        rebJumps ("panic -[Not yet supporting codepoints >0xFFFF on Windows]-");
 
     WCHAR c_wide = c;
 
@@ -472,7 +472,7 @@ void Write_Char(uint32_t c, int n)
             0
         );
         if (not ok)
-            rebFail_OS (GetLastError());
+            rebPanic_OS (GetLastError());
         UNUSED(total_wide_chars);
     }
 }
@@ -632,7 +632,7 @@ void Move_Cursor(STD_TERM *t, int count)
 Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
 {
     if (timeout_msec != 0)
-        rebJumps ("fail -[TIMEOUT not implemented in Windows Stdio]-");
+        rebJumps ("panic -[TIMEOUT not implemented in Windows Stdio]-");
 
     Value* e = nullptr;  // *unbuffered* event to return
     Value* e_buffered = nullptr;  // buffered event
@@ -935,7 +935,7 @@ void Term_Abandon_Pending_Events(STD_TERM *t)
         // Ask if there's at least one event still pending
         //
         if (not PeekConsoleInput(Stdin_Handle, t->buf, 1, &num_events))
-            rebFail_OS (GetLastError());
+            rebPanic_OS (GetLastError());
 
         if (num_events == 0)
             break;  // if no events at all, don't do a blocking read
@@ -948,7 +948,7 @@ void Term_Abandon_Pending_Events(STD_TERM *t)
             READ_BUF_LEN - 1,  // size of read buffer
             &num_events
         )){
-            rebFail_OS (GetLastError());
+            rebPanic_OS (GetLastError());
         }
         assert(num_events != 0);  // Should be blocking (see PeekConsoleInput)
     }

@@ -85,10 +85,10 @@ DECLARE_NATIVE(ADD)
 
     if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
         if (not Is_Integer(e2))
-            return FAIL("Can only add INTEGER! to NUL #{00} state");
+            return PANIC("Can only add INTEGER! to NUL #{00} state");
         REBINT i = VAL_INT32(e2);
         if (i < 0)
-            return FAIL(Error_Codepoint_Negative_Raw());
+            return PANIC(Error_Codepoint_Negative_Raw());
         Option(Error*) error = Trap_Init_Char(OUT, i);
         if (error)
             return RAISE(unwrap error);
@@ -97,10 +97,10 @@ DECLARE_NATIVE(ADD)
 
     if (Is_NUL(e2)) {  // localize NUL handling to SUBTRACT native [1]
         if (not Is_Integer(e1))
-            return FAIL("Can only add INTEGER! to NUL #{00} state");
+            return PANIC("Can only add INTEGER! to NUL #{00} state");
         REBINT i = VAL_INT32(e1);
         if (i < 0)
-            return FAIL(Error_Codepoint_Negative_Raw());
+            return PANIC(Error_Codepoint_Negative_Raw());
         Option(Error*) error = Trap_Init_Char(OUT, i);
         if (error)
             return RAISE(unwrap error);
@@ -142,7 +142,7 @@ DECLARE_NATIVE(SUBTRACT)
     if (Is_NUL(e2)) {  // localize NUL handling to SUBTRACT native [1]
         if (IS_CHAR(e1))
             return Init_Integer(OUT, Cell_Codepoint(e1));
-        return FAIL("Only CHAR? can have NUL? #{00} state subtracted");
+        return PANIC("Only CHAR? can have NUL? #{00} state subtracted");
     }
 
     return Run_Generic_Dispatch(e1, LEVEL, CANON(SUBTRACT));
@@ -639,7 +639,7 @@ DECLARE_NATIVE(TANGENT)
 
     REBDEC dval = Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     return Init_Decimal(OUT, tan(dval));
 }
@@ -663,7 +663,7 @@ DECLARE_NATIVE(ARCCOSINE)
         OUT, ARG(COSINE), Bool_ARG(RADIANS), SYM_COSINE
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
     return OUT;
 }
 
@@ -684,7 +684,7 @@ DECLARE_NATIVE(ARCSINE)
 
     Option(Error*) e = Trap_Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SYM_SINE);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
     return OUT;
 }
 
@@ -707,7 +707,7 @@ DECLARE_NATIVE(ARCTANGENT)
         OUT, ARG(TANGENT), Bool_ARG(RADIANS), SYM_TANGENT
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
     return OUT;
 }
 
@@ -749,7 +749,7 @@ DECLARE_NATIVE(LOG_10)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
-        fail (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, log10(dval));
 }
@@ -770,7 +770,7 @@ DECLARE_NATIVE(LOG_2)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
-        fail (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, log(dval) / LOG2);
 }
@@ -791,7 +791,7 @@ DECLARE_NATIVE(LOG_E)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
-        fail (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, log(dval));
 }
@@ -812,7 +812,7 @@ DECLARE_NATIVE(SQUARE_ROOT)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval < 0)
-        fail (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, sqrt(dval));
 }
@@ -912,12 +912,12 @@ DECLARE_NATIVE(EQUAL_Q)
 
     if (Is_Meta_Of_Trash(v1) or Is_Meta_Of_Tripwire(v1)) {
         QUOTE_BYTE(v1) = ANTIFORM_0_COERCE_ONLY;
-        return FAIL(PARAM(VALUE1));
+        return PANIC(PARAM(VALUE1));
     }
 
     if (Is_Meta_Of_Trash(v2) or Is_Meta_Of_Tripwire(v2)) {
         QUOTE_BYTE(v2) = ANTIFORM_0_COERCE_ONLY;
-        return FAIL(PARAM(VALUE2));
+        return PANIC(PARAM(VALUE2));
     }
 
     if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))

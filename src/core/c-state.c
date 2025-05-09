@@ -58,7 +58,7 @@ void Snap_State(struct Reb_State *s)
 //
 //  Rollback_Globals_To_State: C
 //
-// This routine is used by things like Drop_Level() when a fail occurs, to
+// This routine is used by things like Drop_Level() when a panic occurs, to
 // automatically restore the state of globals to how they were at the time
 // the passed-in state was Snap_State()'d.
 //
@@ -91,7 +91,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
     // Because reporting errors in the actual Push_Mold process leads to
     // recursion, this debug flag helps make it clearer what happens if
     // that does happen...and can land on the right comment.  If there's
-    // a fail of some kind, the flag for the warning needs to be cleared.
+    // a panic of some kind, the flag for the warning needs to be cleared.
     //
     g_mold.currently_pushing = false;
   #endif
@@ -198,7 +198,7 @@ void Unplug_Stack(
             // avoid confusion on this case by asserting for now.
             //
             assert(!"Can't yield across non-continuation-level");
-            fail ("Cannot yield across level that's not a continuation");
+            panic ("Cannot yield across level that's not a continuation");
         }
 
         assert(temp->out != base->out);  // can't guarantee restoration!
@@ -211,7 +211,7 @@ void Unplug_Stack(
         // base level, with that level as if it were 0.  When the level
         // gets plugged in again, we'll add the new base's stackindex back in.
         //
-        // !!! This may confuse a fail() if it expects to climb the stack and
+        // !!! This may confuse a panic() if it expects to climb the stack and
         // see all the L->baseline.stack_base be sane.  But as far as interim
         // state is concerned, there's no good number to put here...leaving it
         // as it was would be wrong too.  This might suggest an EVAL_FLAG for
@@ -242,7 +242,7 @@ void Unplug_Stack(
         temp = temp->prior;
 
         if (temp == TOP_LEVEL)  // "alive", but couldn't find in the stack walk
-            fail ("Cannot yield to a generator that is suspended");
+            panic ("Cannot yield to a generator that is suspended");
 
         assert(LEVEL_STATE_BYTE(temp) != 0);  // must be a continuation
     }

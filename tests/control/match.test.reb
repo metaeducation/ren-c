@@ -48,7 +48,7 @@
     (null = match any-list?/ 'a.b:)
 ]
 
-; ENSURE is a version of MATCH that fails vs. returning NULL on no match
+; ENSURE is a version of MATCH that panics vs. returning NULL on no match
 [
     ~???~ !! (ensure frame! 10)
     (10 = ensure integer! 10)

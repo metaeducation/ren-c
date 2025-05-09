@@ -70,7 +70,7 @@ DECLARE_NATIVE(HEART_OF)
     if (heart)
         return COPY(Datatype_From_Type(unwrap heart));
 
-    return FAIL("HEART OF not supported for extension types...yet!");
+    return PANIC("HEART OF not supported for extension types...yet!");
 }
 
 
@@ -240,7 +240,7 @@ IMPLEMENT_GENERIC(ADDRESS_OF, Is_Frame)
 
     Phase* phase = Cell_Frame_Phase(frame);
     if (not Is_Stub_Details(phase))
-        return FAIL("Phase isn't details, can't get ADDRESS-OF");
+        return PANIC("Phase isn't details, can't get ADDRESS-OF");
 
     Details* details = cast(Details*, phase);
     DetailsQuerier* querier = Details_Querier(details);
@@ -361,10 +361,10 @@ DECLARE_NATIVE(OF)
         Feed_Binding(LEVEL->feed)
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     if (not Is_Action(fetched))
-        return FAIL("OF looked up to a value that wasn't an ACTION!");
+        return PANIC("OF looked up to a value that wasn't an ACTION!");
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
         | LEVEL_FLAG_RAISED_RESULT_OK;
@@ -520,7 +520,7 @@ Option(const Byte*) Try_Scan_Decimal_To_Stack(
     char *se;
     double d = strtod(s_cast(buf), &se);
     if (fabs(d) == HUGE_VAL)  // !!! TBD: need check for NaN, and INF
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     Init_Decimal(PUSH(), d);
     return cp;
@@ -1040,7 +1040,7 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
         break;  // found ://
     }
 
-    String* s = Append_UTF8_May_Fail(
+    String* s = Append_UTF8_May_Panic(
         nullptr,
         cs_cast(cp),
         len,

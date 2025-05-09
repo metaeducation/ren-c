@@ -129,7 +129,7 @@ export emit-include-params-macro: func [
         ]
         accept (okay)
     ] else [
-        fail "Could not extract native name in emit-include-params-macro"
+        panic "Could not extract native name in emit-include-params-macro"
     ]
     let spec: copy find proto "["  ; make copy (we'll corrupt it)
 
@@ -204,7 +204,7 @@ export emit-include-params-macro: func [
             paramlist: next paramlist
         ]
         if (the return:) <> paramlist.1 [
-            fail [native-name "does not have a RETURN: specification"]
+            panic [native-name "does not have a RETURN: specification"]
         ]
         paramlist: next paramlist
 
@@ -304,7 +304,7 @@ export /extract-generic-implementations: func [
                     proper-type: propercase copy type*
 
                     if (name <> name*) or (proper-type <> type*) [
-                        fail [
+                        panic [
                             "Bad casing, should be"
                             "IMPLEMENT_GENERIC(" name "," proper-type ")"
                             "and not"
@@ -332,7 +332,7 @@ export /extract-generic-implementations: func [
                         file: (c-source-file)
                     ]
                 )
-                | (fail ["Malformed generic in" c-source-file])
+                | (panic ["Malformed generic in" c-source-file])
             ]
             | thru newline
         ]]

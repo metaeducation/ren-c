@@ -30,7 +30,7 @@ const z_crc_t *crc32_table; // pointer to the zlib CRC32 table
 
 
 //
-//  Hash_Scan_UTF8_Caseless_May_Fail: C
+//  Hash_Scan_UTF8_Caseless_May_Panic: C
 //
 // Return a case-insensitive hash value for UTF-8 data that has not previously
 // been validated, with the size in bytes.
@@ -38,7 +38,7 @@ const z_crc_t *crc32_table; // pointer to the zlib CRC32 table
 // See also: Hash_UTF8_Caseless(), which works with already validated UTF-8
 // bytes and takes a length in codepoints instead of a byte size.
 //
-uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const Byte* utf8, Size size)
+uint32_t Hash_Scan_UTF8_Caseless_May_Panic(const Byte* utf8, Size size)
 {
     uint32_t crc = 0x00000000;
 
@@ -48,7 +48,7 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const Byte* utf8, Size size)
         if (c >= 0x80) {
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &utf8, &size);
             if (e)
-                fail (unwrap e);
+                panic (unwrap e);
         }
 
         c = LO_CASE(c);
@@ -73,7 +73,7 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const Byte* utf8, Size size)
 // Return a 32-bit case insensitive hash value for known valid UTF-8 data.
 // Length is in characters, not bytes.
 //
-// See also: Hash_Scan_UTF8_Caseless_May_Fail(), which takes unverified
+// See also: Hash_Scan_UTF8_Caseless_May_Panic(), which takes unverified
 // UTF8 and a byte count instead.
 //
 // NOTE: This takes LENGTH, not number of bytes, because it goes codepoint by
@@ -119,7 +119,7 @@ uint32_t Hash_Value(const Cell* cell)
 
     switch (heart) {
       case HEART_ENUM(0):
-          fail ("Cannot hash 0-custom datatype");
+          panic ("Cannot hash 0-custom datatype");
 
       case TYPE_BLANK:
       case TYPE_COMMA:
@@ -269,7 +269,7 @@ uint32_t Hash_Value(const Cell* cell)
         //
         // !!! Why not?
         //
-        fail (Error_Invalid_Type(TYPE_PARAMETER));
+        panic (Error_Invalid_Type(TYPE_PARAMETER));
 
       hash_any_word:
         //
@@ -336,7 +336,7 @@ uint32_t Hash_Value(const Cell* cell)
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //
-        fail (Error_Invalid_Type(TYPE_HANDLE));
+        panic (Error_Invalid_Type(TYPE_HANDLE));
 
       default:
         crash (nullptr); // List should be comprehensive
@@ -359,7 +359,7 @@ uint32_t Hash_Value(const Cell* cell)
 //
 HashList* Make_Hashlist(REBLEN len)
 {
-    REBLEN n = Get_Hash_Prime_May_Fail(len * 2);  // best when 2X # of keys
+    REBLEN n = Get_Hash_Prime_May_Panic(len * 2);  // best when 2X # of keys
     Flex* f = Make_Flex(FLAG_FLAVOR(HASHLIST), Flex, n + 1);
     Clear_Flex(f);
     Set_Flex_Len(f, n);
@@ -423,7 +423,7 @@ HashList* Hash_Block(const Value* block, REBLEN skip, bool cased)
                     // than not, this will catch bugs in callers vs. be
                     // a roadblock to them.
                     //
-                    fail (Error_Block_Skip_Wrong_Raw());
+                    panic (Error_Block_Skip_Wrong_Raw());
                 }
 
                 return hashlist;

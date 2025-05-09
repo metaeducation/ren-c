@@ -65,7 +65,7 @@ sources: ensure block! transcode:one args.SOURCES
 use-librebol: switch args.USE_LIBRebol [
     "no" ['no]
     "yes" ['yes]
-    fail "%prep-extension.r needs USE_LIBREBOL as yes or no"
+    panic "%prep-extension.r needs USE_LIBREBOL as yes or no"
 ]
 
 print newline
@@ -104,7 +104,7 @@ ext-header: first load3:header (join ext-src-dir %make-spec.r)
 ; Something like this should probably be automatic.  More thinking is needed
 ; on contextualizing errors better.
 
-fail: adapt lib.fail/ [
+panic: adapt lib.panic/ [
     print "** FAILURE WHILE PROCESSING:" join ext-src-dir %make-spec.r
 ]
 
@@ -155,7 +155,7 @@ for-each 'info natives [
             ; STARTUP* is supposed to be called once and only once, by the
             ; internal extension code.
             ;
-            fail "Do not EXPORT the STARTUP* function for an extension!"
+            panic "Do not EXPORT the STARTUP* function for an extension!"
         ]
         has-startup*: okay
     ]
@@ -165,7 +165,7 @@ for-each 'info natives [
             ; SHUTDOWN* is supposed to be called once and only once, by the
             ; internal extension code.
             ;
-            fail "Do not EXPORT the SHUTDOWN* function for an extension!"
+            panic "Do not EXPORT the SHUTDOWN* function for an extension!"
         ]
         has-shutdown*: okay
     ]
@@ -324,12 +324,12 @@ symbol-globals: []
 
 for-each 'symbol opt ext-header.extended-words [
     if not word? symbol [
-        fail ["Extended-Words entries must be WORD!:" mold symbol]
+        panic ["Extended-Words entries must be WORD!:" mold symbol]
     ]
 
     let id: select ext-symids symbol
     if not id [
-        fail [
+        panic [
             "Extended-Words: [" mold symbol "]"
                 "must appear in" (join repo-dir %specs/ext-words.r)
         ]
@@ -355,7 +355,7 @@ for-each 'symbol opt ext-header.extended-words [
 
 if not empty? symbol-forward-decls [
     if yes? use-librebol [
-        fail ["Extended-Words in %make-spec.r can't be used with USE-LIBREBOL"]
+        panic ["Extended-Words in %make-spec.r can't be used with USE-LIBREBOL"]
     ]
 
     e1/emit [--[
@@ -444,11 +444,11 @@ type-globals: []
 
 for-each 'symbol opt ext-header.extended-types [
     if not word? symbol [
-        fail ["Extended-Types entries must be WORD!:" mold symbol]
+        panic ["Extended-Types entries must be WORD!:" mold symbol]
     ]
     let stem: to text! symbol
     if #"!" <> take:last stem [
-        fail ["Extended-Types entries must end in '!':" mold symbol]
+        panic ["Extended-Types entries must end in '!':" mold symbol]
     ]
     let is_xxx: propercase join "is_" stem
 

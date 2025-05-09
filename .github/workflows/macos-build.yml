@@ -351,5 +351,5 @@ jobs:
         parse (as text! url) [thru r3-url-lastpart] then [
             print ["LATEST-OF Matched:" url]
         ] else [
-            fail ["!!! LATEST-OF Gave Mismatched URL:" url]
+            panic ["!!! LATEST-OF Gave Mismatched URL:" url]
         ]

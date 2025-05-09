@@ -68,7 +68,7 @@
 
     (
         foo: func [] [
-            fail "foo should not run, it's prefix and runs on *next* step"
+            panic "foo should not run, it's prefix and runs on *next* step"
         ]
         all wrap [
             1020 = [pos {#}]: evaluate:step [1020 foo 304]

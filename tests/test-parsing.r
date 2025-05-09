@@ -117,7 +117,7 @@ export collect-tests: func [
             ;
             [let expected  ; PARSE3 can't assign BLOCK! rule
               [
-                expected: quasiform! ['!! | (fail "!! must follow ~error-id~")]
+                expected: quasiform! ['!! | (panic "!! must follow ~error-id~")]
                 |
                 (expected: null)
               ]
@@ -197,7 +197,7 @@ export collect-logs: func [
     log-file [file!]
 ][
     let log-contents: read log-file except [
-        fail ["Unable to read " mold log-file]
+        panic ["Unable to read " mold log-file]
     ]
 
     let guard
@@ -223,7 +223,7 @@ export collect-logs: func [
                 [
                     <end> (
                         ; crash found
-                        fail "log incomplete!"
+                        panic "log incomplete!"
                     )
                         |
                     -["]- copy value to -["]- one
@@ -238,7 +238,7 @@ export collect-logs: func [
                                 |
                             "skipped" (value: 'skipped)
                                 |
-                            (fail "invalid test result")
+                            (panic "invalid test result")
                         ]
                         append collected-logs spread reduce [
                             last-vector
@@ -249,7 +249,7 @@ export collect-logs: func [
                     |
                 "system.version:" to <end> (guard: 'true)
                     |
-                (fail "collect-logs - log file parsing problem")
+                (panic "collect-logs - log file parsing problem")
             ]
             position: <here>, when (true? guard), break  ; Break on error
                 |

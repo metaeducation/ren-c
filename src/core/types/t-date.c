@@ -249,10 +249,10 @@ REBLEN Julian_Date(const Cell* date)
 REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
 {
     if (Does_Date_Have_Time(a_in) != Does_Date_Have_Time(b_in))
-        fail (Error_Invalid_Compare_Raw(a_in, b_in));
+        panic (Error_Invalid_Compare_Raw(a_in, b_in));
 
     if (Does_Date_Have_Zone(a_in) != Does_Date_Have_Zone(b_in))
-        fail (Error_Invalid_Compare_Raw(a_in, b_in));
+        panic (Error_Invalid_Compare_Raw(a_in, b_in));
 
     DECLARE_VALUE (a);
     DECLARE_VALUE (b);
@@ -397,7 +397,7 @@ static Element* Init_Normalized_Date(
     }
 
     if (year < 0 or year > MAX_YEAR)
-        fail (Error_Type_Limit_Raw(Datatype_From_Type(TYPE_DATE)));
+        panic (Error_Type_Limit_Raw(Datatype_From_Type(TYPE_DATE)));
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_DATE);
     CELL_DATE_YMDZ(out).year = year;
@@ -525,7 +525,7 @@ Value* Time_Between_Dates(
     //     == 3-Jul-2021/0:00+0:00
     //
     if (not Does_Date_Have_Time(d1) or not Does_Date_Have_Time(d2))
-        fail (Error_Invalid_Compare_Raw(d1, d2));
+        panic (Error_Invalid_Compare_Raw(d1, d2));
 
     REBI64 t1 = VAL_NANO(d1);
     REBI64 t2 = VAL_NANO(d2);
@@ -535,7 +535,7 @@ Value* Time_Between_Dates(
     // Note: abs() takes `int`, but there is a labs(), and C99 has llabs()
     //
     if (cast(unsigned, abs(cast(int, diff))) > (((1U << 31) - 1) / SECS_IN_DAY))
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
 
     return Init_Time_Nanoseconds(
@@ -669,7 +669,7 @@ static REBINT Int_From_Date_Arg(const Value* poke) {
     if (Is_Blank(poke))
         return 0;
 
-    fail (poke);
+    panic (poke);
 }
 
 
@@ -701,11 +701,11 @@ void Pick_Or_Poke_Date(
         case 11: sym = SYM_MINUTE; break;
         case 12: sym = SYM_SECOND; break;
         default:
-            fail (picker);
+            panic (picker);
         }
     }
     else
-        fail (picker);
+        panic (picker);
 
     // When a date has a time zone on it, then this can distort the integer
     // value of the month/day/year that is seen in rendering from what is
@@ -779,7 +779,7 @@ void Pick_Or_Poke_Date(
 
           case SYM_UTC: {
             if (not Does_Date_Have_Time(v) or not Does_Date_Have_Zone(v))
-                fail ("DATE! must have /TIME and /ZONE components to get UTC");
+                panic ("DATE! must have /TIME and /ZONE components to get UTC");
 
             // We really just want the original un-adjusted stored time but
             // with the time zone component set to 0:00
@@ -847,7 +847,7 @@ void Pick_Or_Poke_Date(
           case SYM_MONTH:
             month = Int_From_Date_Arg(poke);
             if (month < 1 or month > 12)
-                fail (Error_Out_Of_Range(poke));
+                panic (Error_Out_Of_Range(poke));
             break;
 
           case SYM_DAY:
@@ -856,7 +856,7 @@ void Pick_Or_Poke_Date(
                 day < 1
                 or day > Month_Length(VAL_MONTH(v), VAL_YEAR(v))
             ){
-                fail (Error_Out_Of_Range(poke));
+                panic (Error_Out_Of_Range(poke));
             }
             break;
 
@@ -872,7 +872,7 @@ void Pick_Or_Poke_Date(
             else if (Is_Decimal(poke))
                 nano = DEC_TO_SECS(VAL_DECIMAL(poke));
             else
-                fail (poke);
+                panic (poke);
 
             Tweak_Cell_Nanoseconds(v, nano);
 
@@ -881,7 +881,7 @@ void Pick_Or_Poke_Date(
                 nano != NO_DATE_TIME
                 and (nano < 0 or nano >= SECS_TO_NANO(24 * 60 * 60))
             ){
-                fail (Error_Out_Of_Range(poke));
+                panic (Error_Out_Of_Range(poke));
             }
             break;
 
@@ -904,18 +904,18 @@ void Pick_Or_Poke_Date(
                 else
                     zone = Int_From_Date_Arg(poke) * (60 / ZONE_MINS);
                 if (zone > MAX_ZONE or zone < -MAX_ZONE)
-                    fail (Error_Out_Of_Range(poke));
+                    panic (Error_Out_Of_Range(poke));
             }
             break;
 
           case SYM_JULIAN:
           case SYM_WEEKDAY:
           case SYM_UTC:
-            fail (picker);
+            panic (picker);
 
           case SYM_DATE: {
             if (not Is_Date(poke))
-                fail (poke);
+                panic (poke);
 
             // We want to adjust the date being poked, so the year/month/day
             // that the user sees is the one reflected.  Safest is to work in
@@ -973,7 +973,7 @@ void Pick_Or_Poke_Date(
             goto check_nanoseconds; }
 
           default:
-            fail (picker);
+            panic (picker);
         }
 
         // R3-Alpha went through a shady process of "normalization" if you
@@ -1115,7 +1115,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Date)
 
     Option(const Value*) opt_poke = Optional_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     Pick_Or_Poke_Date(nullptr, date, picker, poke);
@@ -1194,13 +1194,13 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Date)
     Value* val2 = ARG(VALUE2);
 
     if (Bool_ARG(CASE))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     if (Bool_ARG(SKIP))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     if (not Is_Date(val2))
-        return FAIL(
+        return PANIC(
             Error_Unexpected_Type(TYPE_DATE, Datatype_Of(val2))
         );
 

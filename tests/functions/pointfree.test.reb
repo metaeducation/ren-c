@@ -73,12 +73,12 @@
                     block: skip block 1  ; avoided NEXT when mezzanine
                 ]
 
-                fail ~<unexpected parameter class>~
+                panic ~<unexpected parameter class>~
             ]
         ]
 
         if not tail? block [
-            fail:blame [
+            panic:blame [
                 "Unused argument data at end of POINTFREE block"
             ] $block
         ]
@@ -99,7 +99,7 @@
                 unrun get:any inside block block.1
             ]
         ]) else [
-            fail "POINTFREE requires FRAME! argument at head of block"
+            panic "POINTFREE requires FRAME! argument at head of block"
         ]
 
         block: skip block 1  ; Note: NEXT not defined yet

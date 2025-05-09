@@ -44,14 +44,14 @@ Rebol [
 os-id: default [0.16.4]
 
 wasi-clang: to file! (get-env 'WASI_CLANG else [
-    fail [
+    panic [
         "WASI_CLANG not set, should be to clang executable installed e.g. from"
         https://github.com/WebAssembly/wasi-sdk/releases
     ]
 ])
 
 wasi-sysroot: to file! (get-env 'WASI_SYSROOT else [
-    fail [
+    panic [
         "WASI_SYSROOT not set, should be to path installed e.g. from"
         https://github.com/WebAssembly/wasi-sdk/releases
     ]
@@ -133,13 +133,13 @@ cflags: compose [
     ;
     "-D_WASI_EMULATED_SIGNAL"
 
-    "-DFAIL_JUST_ABORTS=1"  ; no exceptions or setjmp()/longjmp()
+    "-DPANIC_JUST_ABORTS=1"  ; no exceptions or setjmp()/longjmp()
 
     (? if yes? debug-wasi-extension [spread [
         "-DDEBUG_HAS_PROBE=1"
         "-DDEBUG_FANCY_CRASH=1"
         "-DTRAMPOLINE_COUNTS_TICKS=1"
-        "-DDEBUG_PRINTF_FAIL_LOCATIONS=1"
+        "-DDEBUG_PRINTF_PANIC_LOCATIONS=1"
 
         "-DDEBUG_COLLECT_STATS=1"  ; !!! maybe temporary, has cost but good info
     ]])

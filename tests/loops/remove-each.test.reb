@@ -69,7 +69,7 @@
     block: copy [1 2 3 4]
     sys.util/rescue [
         remove-each 'i block [
-            if i = 3 [fail "midstream failure"]
+            if i = 3 [panic "midstream panic"]
             okay
         ]
     ]
@@ -114,7 +114,7 @@
     string: copy "1234"
     sys.util/rescue [
         remove-each 'i string [
-            if i = #"3" [fail "midstream failure"]
+            if i = #"3" [panic "midstream panic"]
             okay
         ]
     ]
@@ -165,7 +165,7 @@
     binary: copy #{01020304}
     sys.util/rescue [
         remove-each 'i binary [
-            if i = 3 [fail "midstream failure"]
+            if i = 3 [panic "midstream panic"]
             okay
         ]
     ]

@@ -462,7 +462,7 @@ String* Copy_Mold_Or_Form_Cell_Ignore_Quotes(
 // Like the data stack, a single contiguous String Flex is used for the mold
 // buffer.  So if a mold needs to happen during another mold, it is pushed
 // into a stack and must balance (with either a Pop() or Drop() of the nested
-// string).  The fail() mechanics will automatically balance the stack.
+// string).  The panic() mechanics will automatically balance the stack.
 //
 void Push_Mold(Molder* mo)
 {

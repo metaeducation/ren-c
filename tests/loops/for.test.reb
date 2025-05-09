@@ -189,7 +189,7 @@
     all [
         let e: sys.util/rescue [
             for 'item each block [
-                append block <failure>
+                append block <panic>
             ]
         ]
         e.id = 'locked-series
@@ -228,7 +228,7 @@
 
 (5 = for-each 'x [1 2 3] [5 assert [x < 10]])
 
-; Abrupt failure (needs more comprehensive tests, but this is an example of
+; Abrupt panic (needs more comprehensive tests, but this is an example of
 ; where the enumeration state is held by the FOR-EACH frame, and the error
 ; on trying to use 3 variables to enumerate an object originates from the
 ; C stack when FOR-EACH's dispatcher is on the stack.
@@ -238,10 +238,10 @@
 
 ; BLANK! acts same as empty block, void opts out and generates BREAK signal
 [
-    (void? for-each 'x [] [fail])
-    (void? for-each 'x _ [fail])
-    (null? for-each 'x void [fail])
+    (void? for-each 'x [] [panic])
+    (void? for-each 'x _ [panic])
+    (null? for-each 'x void [panic])
 
-    ~expect-arg~ !! (for-each 'x '~ [fail])
-    ~unspecified-arg~ !! (for-each 'x ~ [fail])
+    ~expect-arg~ !! (for-each 'x '~ [panic])
+    ~unspecified-arg~ !! (for-each 'x ~ [panic])
 ]

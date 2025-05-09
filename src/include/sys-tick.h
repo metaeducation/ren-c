@@ -38,7 +38,7 @@
 // Touch_Stub() and Touch_Cell().
 //
 // The evaluator `tick` should be visible in the C debugger watchlist as a
-// local variable on each evaluator stack level.  So if a fail() happens at a
+// local variable on each evaluator stack level.  So if a panic() happens at a
 // deterministic moment in a run, capture the number from the level of interest
 // and recompile for a breakpoint at that tick.
 //

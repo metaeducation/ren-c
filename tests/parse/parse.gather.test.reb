@@ -26,7 +26,7 @@
             emit y: collect some ["b", keep (<b>)]
         ]
     ] else [
-       fail "Parse failure"
+       panic "Parse failure"
     ]
     all [
         result.x = [<a> <a> <a>]
@@ -60,7 +60,7 @@
                 emit extension: across [thru <end>]
             ]
         ] else [
-            fail "Not a file with an extension"
+            panic "Not a file with an extension"
         ]
         assert [base = "demo"]
         assert [extension = "txt"]

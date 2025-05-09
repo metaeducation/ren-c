@@ -187,19 +187,23 @@ Source* Expanded_Combinator_Spec(const Value* original)
 
     if (Is_Text(item)) {
         Derelativize(PUSH(), item, binding);  // {combinator description}
-        if (item == tail) fail("too few combinator args");
+        if (item == tail)
+            panic ("too few combinator args");
         ++item;
     }
     Derelativize(PUSH(), item, binding);  // return:
-    if (item == tail) fail("too few combinator args");
+    if (item == tail)
+        panic ("too few combinator args");
     ++item;
     if (Is_Text(item)) {
         Derelativize(PUSH(), item, binding);  // "return description"
-        if (item == tail) fail("too few combinator args");
+        if (item == tail)
+            panic("too few combinator args");
     }
     ++item;
     Derelativize(PUSH(), item, binding);  // [return type block]
-    if (item == tail) fail("too few combinator args");
+    if (item == tail)
+        panic ("too few combinator args");
     ++item;
 
     const Byte utf8[] =
@@ -210,7 +214,7 @@ Source* Expanded_Combinator_Spec(const Value* original)
 
     Feed* feed = Make_Variadic_Feed(packed, nullptr, FEED_MASK_DEFAULT);
     Add_Feed_Reference(feed);
-    Sync_Feed_At_Cell_Or_End_May_Fail(feed);
+    Sync_Feed_At_Cell_Or_End_May_Panic(feed);
 
     while (Not_Feed_At_End(feed)) {
         Derelativize(PUSH(), At_Feed(feed), Feed_Binding(feed));
@@ -262,7 +266,7 @@ DECLARE_NATIVE(COMBINATOR)
         SYM_RETURN  // want RETURN:
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     Details* details = Make_Dispatch_Details(
         NODE_FLAG_MANAGED,
@@ -328,7 +332,7 @@ void Push_Parser_Sublevel(
         Key_Id(remainder_key) != SYM_REMAINDER
         or Key_Id(input_key) != SYM_INPUT
     ){
-        fail ("Push_Parser_Sublevel() only works on unadulterated combinators");
+        panic ("Push_Parser_Sublevel() only works on unadulterated combinators");
     }
 
     Copy_Cell(Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_REMAINDER), remainder);
@@ -684,7 +688,7 @@ static bool Combinator_Param_Hook(
             or (Is_Comma(item) or Is_Bar(item) or Is_Bar_Bar(item))
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
-                fail ("Too few parameters for combinator");  // !!! Error_No_Arg
+                panic ("Too few parameters for combinator");  // !!! Error_No_Arg
             Init_Nulled(var);
         }
         else {
@@ -709,7 +713,7 @@ static bool Combinator_Param_Hook(
             or (Is_Comma(item) or Is_Bar(item) or Is_Bar_Bar(item))
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
-                fail ("Too few parameters for combinator");  // !!! Error_No_Arg
+                panic ("Too few parameters for combinator");  // !!! Error_No_Arg
             Init_Nulled(var);
         }
         else {
@@ -724,14 +728,14 @@ static bool Combinator_Param_Hook(
             Value* parser = rebValue(
                 "[#", temp, "]: parsify", rebQ(ARG(STATE)), ARG(RULES)
             );
-            Get_Var_May_Fail(ARG(RULES), temp, SPECIFIED);
+            Get_Var_May_Panic(ARG(RULES), temp, SPECIFIED);
             Copy_Cell(var, parser);
             rebRelease(parser);
         }
         break; }
 
       default:
-        fail ("COMBINATOR parameters must be normal or quoted at this time");
+        panic ("COMBINATOR parameters must be normal or quoted at this time");
     }
 
     return true;  // want to see all parameters
@@ -791,7 +795,7 @@ DECLARE_NATIVE(COMBINATORIZE)
     // mechanisms for refinements on combinators.
     //
     if (Bool_ARG(PATH))
-        fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
+        panic ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
     ParamList* paramlist = Make_Varlist_For_Action(
         ARG(COMBINATOR),

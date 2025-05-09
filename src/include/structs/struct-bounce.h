@@ -50,7 +50,7 @@ typedef Byte WildTwo[2];
 //
 //    The importance of compile-time checking Bounce in the core is high,
 //    because it's very easy to say `return Error_Xxx()` instead of writing
-//    `return RAISE(Error_Xxx())` or `return FAIL(Error_Xxx())`.
+//    `return RAISE(Error_Xxx())` or `return PANIC(Error_Xxx())`.
 //
 // 2. Ren-C is conservative about accepting arbitrary cells for two reasons.
 //    One is that it's easy to slip and return a local address of a cell

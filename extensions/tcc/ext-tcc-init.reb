@@ -61,7 +61,7 @@ compile: func [
     :nostdlib "Do not include <stdlib.h> automatically with librebol"
 ][
     if 0 = length of compilables [
-        fail ["COMPILABLES must have at least one element"]
+        panic ["COMPILABLES must have at least one element"]
     ]
 
     ; !!! `settings` BLOCK! is preprocessed into a `config` OBJECT! for
@@ -95,11 +95,11 @@ compile: func [
     while [not tail? b] [
         let key: b.1
         let var: get inside config (match word! key else [
-            fail ["COMPILE:SETTINGS parameter" key "is not supported"]
+            panic ["COMPILE:SETTINGS parameter" key "is not supported"]
         ])
         b: next b
         if tail? b [
-            fail ["Missing argument to" key "in COMPILE"]
+            panic ["Missing argument to" key "in COMPILE"]
         ]
 
         let arg: b.1
@@ -110,7 +110,7 @@ compile: func [
                 switch:type item [
                     text! []
                     file! [item: file-to-local:full item]
-                    fail ["Invalid item type for" key "-" type of item]
+                    panic ["Invalid item type for" key "-" type of item]
                 ]
 
                 ; If the var is supposed to be paths, should we check them
@@ -120,12 +120,12 @@ compile: func [
                 append var item
             ]
         ] else [  ; single settings
-            if var [fail [key "multiply specified"]]
+            if var [panic [key "multiply specified"]]
 
             switch key [
                 'output-type [
                     if not word? arg [
-                        fail [key "must be WORD!"]
+                        panic [key "must be WORD!"]
                     ]
                     config.output-type: arg
                 ]
@@ -133,10 +133,10 @@ compile: func [
                     config.(key): switch:type arg [
                         file! [arg]
                         text! [local-to-file arg]
-                        fail [key "must be TEXT! or FILE!"]
+                        panic [key "must be TEXT! or FILE!"]
                     ]
                 ]
-                fail  ; unreachable
+                panic  ; unreachable
             ]
         ]
     ]
@@ -145,7 +145,7 @@ compile: func [
 
     if config.output-type <> 'memory [
         if not config.output-file [
-            fail "If OUTPUT-TYPE is not MEMORY then OUTPUT-FILE must be set"
+            panic "If OUTPUT-TYPE is not MEMORY then OUTPUT-FILE must be set"
         ]
         config.output-file: my file-to-local:full
     ]
@@ -169,7 +169,7 @@ compile: func [
     ]]
 
     if not config.runtime-path [
-        fail [
+        panic [
             "CONFIG_TCCDIR must be set in the environment or RUNTIME-PATH"
             "must be provided in the :SETTINGS"
         ]
@@ -185,7 +185,7 @@ compile: func [
     ]
 
     if not exists? compose %(config.runtime-path)/include/ [
-        fail [
+        panic [
             "Runtime path" config.runtime-path "does not have an %include/"
             "directory.  It should have files like %stddef.h and %stdarg.h"
             "because TCC has its own definition of macros like va_arg(), that"
@@ -330,7 +330,7 @@ compile: func [
             file! [  ; Just an example idea... reading disk files?
                 as text! read item
             ]
-            fail ["COMPILABLES currently must be TEXT!/FRAME!/FILE!"]
+            panic ["COMPILABLES currently must be TEXT!/FRAME!/FILE!"]
         ]
     ]
 
@@ -405,7 +405,7 @@ compile: func [
         ; We are going to test for %rebol.h in the path, so need a FILE!
         ;
         if not config.librebol-path [
-            fail [
+            panic [
                 "LIBREBOL_INCLUDE_DIR currently must be set either as an"
                 "environment variable or as LIBREBOL-PATH in /OPTIONS so"
                 -[that the TCC extension knows where to find "rebol.h"]-
@@ -415,18 +415,18 @@ compile: func [
         switch:type config.librebol-path [
             text! [config.librebol-path: my local-to-file]
             file! []
-            fail ["Invalid LIBREBOL_INCLUDE_DIR:" config.librebol-path]
+            panic ["Invalid LIBREBOL_INCLUDE_DIR:" config.librebol-path]
         ]
 
         if not dir? config.librebol-path [
-            fail [
+            panic [
                 "LIBREBOL_INCLUDE_DIR or LIBREBOL-PATH" config.librebol-path
                 "should end in a slash to follow the DIR? protocol"
             ]
         ]
 
         if not exists? compose %(config.librebol-path)/rebol.h [
-            fail [
+            panic [
                 "Looked for %rebol.h in" config.librebol-path "and did not"
                 "find it.  Check your definition of LIBREBOL_INCLUDE_DIR"
             ]
@@ -578,7 +578,7 @@ c99: func [
         ]
 
         parse:case command [some [rule [some space | <end>]]] except [
-            fail [
+            panic [
                 elide trunc: ~
                 "Could not parse C99 command line at:"
                 append [# trunc]: (mold:limit last-pos 40) if trunc ["..."]
@@ -604,7 +604,7 @@ c99: func [
             'OBJ [
                 if infile != <multi> [
                     parse copy infile [thru change [".c" <end>] (".o")] except [
-                        fail "Input file must end in `.c` for use with -c"
+                        panic "Input file must end in `.c` for use with -c"
                     ]
                 ]
             ]
@@ -672,7 +672,7 @@ bootstrap: func [
             (? if options [spread system.options.args])
     ]
     if status != 0 [
-        fail ["BOOTSTRAP command failed with exit status:" status]
+        panic ["BOOTSTRAP command failed with exit status:" status]
     ]
 ]
 

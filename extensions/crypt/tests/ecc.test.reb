@@ -8,7 +8,7 @@
             a-secret: ecdh-shared-secret group a.private-key b.public-key
             b-secret: ecdh-shared-secret group b.private-key a.public-key
             if a-secret <> b-secret [
-                fail ["secrets did not match for" group]
+                panic ["secrets did not match for" group]
             ]
         ])
     ]

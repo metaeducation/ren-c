@@ -639,10 +639,10 @@ DECLARE_NATIVE(LET)
         Value* result = Decay_If_Unstable(SPARE);
 
         if (Is_Quoted(result))  // should (let 'x: <whatever>) be legal? [3]
-            return FAIL("QUOTED? escapes not supported at top level of LET");
+            return PANIC("QUOTED? escapes not supported at top level of LET");
 
         if (Is_Antiform(result))
-            return FAIL(Error_Bad_Antiform(result));
+            return PANIC(Error_Bad_Antiform(result));
 
         if (
             Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, result))
@@ -655,7 +655,7 @@ DECLARE_NATIVE(LET)
                 Setify(cast(Element*, SPARE));  //  let ('word): -> let word:
         }
         else
-            return FAIL("LET GROUP! limited to WORD! and BLOCK!");  // [4]
+            return PANIC("LET GROUP! limited to WORD! and BLOCK!");  // [4]
 
         vars = cast(Element*, result);
     }
@@ -744,7 +744,7 @@ DECLARE_NATIVE(LET)
                 else {
                     Decay_If_Unstable(OUT);
                     if (Is_Antiform(OUT))
-                        return FAIL(Error_Bad_Antiform(OUT));
+                        return PANIC(Error_Bad_Antiform(OUT));
                 }
 
                 temp = cast(Element*, OUT);
@@ -773,7 +773,7 @@ DECLARE_NATIVE(LET)
                 break; }
 
               default:
-                return FAIL(temp);  // default to passthru [6]
+                return PANIC(temp);  // default to passthru [6]
             }
         }
 
@@ -893,7 +893,7 @@ DECLARE_NATIVE(ADD_LET_BINDING)
     Value* v = Meta_Unquotify_Known_Stable(ARG(VALUE));  // can be nothing [1]
 
     if (Is_Frame(env)) {
-        Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(env));
+        Level* L = Level_Of_Varlist_May_Panic(Cell_Varlist(env));
         parent = Level_Binding(L);
         if (parent)
             Set_Node_Managed_Bit(parent);
@@ -907,7 +907,7 @@ DECLARE_NATIVE(ADD_LET_BINDING)
     Move_Cell(Stub_Cell(let), v);
 
     if (Is_Frame(env)) {
-        Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(env));
+        Level* L = Level_Of_Varlist_May_Panic(Cell_Varlist(env));
         Tweak_Cell_Binding(Feed_Data(L->feed), let);
     }
     else {
@@ -933,7 +933,7 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
 
     Element* object = Element_ARG(OBJECT);
 
-    Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(ARG(FRAME)));
+    Level* L = Level_Of_Varlist_May_Panic(Cell_Varlist(ARG(FRAME)));
     Context* L_binding = Level_Binding(L);
 
     if (L_binding)
@@ -1181,16 +1181,16 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     if (Is_Group(spec)) {
         DECLARE_ATOM (temp);
         if (Eval_Any_List_At_Throws(temp, spec, SPECIFIED))
-            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+            panic (Error_No_Catch_For_Throw(TOP_LEVEL));
         Decay_If_Unstable(temp);
         if (Is_Antiform(temp))
-            fail (Error_Bad_Antiform(temp));
+            panic (Error_Bad_Antiform(temp));
         Move_Cell(spec, cast(Element*, temp));
     }
 
     REBLEN num_vars = Is_Block(spec) ? Cell_Series_Len_At(spec) : 1;
     if (num_vars == 0)
-        fail (spec);  // !!! should fail() take unstable?
+        panic (spec);  // !!! should panic() take unstable?
 
     const Element* tail;
     const Element* item;
@@ -1212,12 +1212,12 @@ VarList* Virtual_Bind_Deep_To_New_Context(
                 rebinding = true;
             else if (not Is_The_Word(check)) {
                 //
-                // Better to fail here, because if we wait until we're in
+                // Better to panic here, because if we wait until we're in
                 // the middle of building the context, the managed portion
                 // (keylist) would be incomplete and tripped on by the GC if
                 // we didn't do some kind of workaround.
                 //
-                fail (Error_Bad_Value(check));
+                panic (Error_Bad_Value(check));
             }
         }
     }
@@ -1234,9 +1234,9 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     VarList* c = Alloc_Varlist(TYPE_OBJECT, num_vars);
 
     // We want to check for duplicates and a Binder can be used for that
-    // purpose--but note that a fail() cannot happen while binders are
+    // purpose--but note that a panic() cannot happen while binders are
     // in effect UNLESS the BUF_COLLECT contains information to undo it!
-    // There's no BUF_COLLECT here, so don't fail while binder in effect.
+    // There's no BUF_COLLECT here, so don't panic while binder in effect.
     //
     DECLARE_BINDER (binder);
     Construct_Binder(binder);  // only used if `rebinding`
@@ -1251,7 +1251,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
         if (Is_Blank(item)) {
             if (dummy_sym == SYM_DUMMY9)
-                fail ("Current limitation: only up to 9 foreign/blank keys");
+                panic ("Current limitation: only up to 9 foreign/blank keys");
 
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
@@ -1294,7 +1294,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             // hide it from the context and binding.
             //
             if (dummy_sym == SYM_DUMMY9)
-                fail ("Current limitation: only up to 9 foreign/blank keys");
+                panic ("Current limitation: only up to 9 foreign/blank keys");
 
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
@@ -1336,7 +1336,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
     if (error) {
         Free_Unmanaged_Flex(c);
-        fail (unwrap error);
+        panic (unwrap error);
     }
 
     Manage_Flex(c);  // must be managed to use in binding
@@ -1384,7 +1384,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     // variables is locked at fixed size.)
     //
     assert(Is_The_Word(pseudo_var));
-    return Lookup_Mutable_Word_May_Fail(cast(Element*, pseudo_var), SPECIFIED);
+    return Lookup_Mutable_Word_May_Panic(cast(Element*, pseudo_var), SPECIFIED);
 }
 
 

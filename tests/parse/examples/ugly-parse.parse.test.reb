@@ -19,7 +19,7 @@
         value [group?]
         <local> r comb
     ][
-        ^r: eval:undecayed value except e -> [fail e]  ; can't raise
+        ^r: eval:undecayed value except e -> [panic e]  ; can't raise
 
         if null? ^r [  ; like [:(1 = 0)]
             return raise "GET-GROUP! evaluated to NULL"  ; means no match
@@ -46,7 +46,7 @@
         ]
 
         if not comb: select state.combinators type of r [
-            fail ["Unhandled type in GROUP! combinator:" to word! type of r]
+            panic ["Unhandled type in GROUP! combinator:" to word! type of r]
         ]
 
         return [{~} remainder pending]: run comb state input r

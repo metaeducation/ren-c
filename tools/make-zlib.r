@@ -89,7 +89,7 @@ bind construct [
     ]
 
     if inline and (not empty? inline) [
-        fail [
+        panic [
             "Not all headers inlined by make-zlib:" (mold headers) LF
             "If we inline a header, should happen once and only once for each"
         ]
@@ -213,7 +213,7 @@ fix-kr: func [
                             append param-block spread reduce [name _]
                         )
                     ]
-                    <end> | (fail)
+                    <end> | (panic)
                 ]
 
                 ; a param spec could be in the form of:
@@ -301,7 +301,7 @@ fix-kr: func [
             seek check-point
             | one
         ]
-        <end> | (fail)
+        <end> | (panic)
     ]
 
     return source

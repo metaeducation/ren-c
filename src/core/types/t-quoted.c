@@ -118,7 +118,7 @@ DECLARE_NATIVE(QUOTE)
     REBINT depth = Bool_ARG(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1;
 
     if (depth < 0)
-        return FAIL(PARAM(DEPTH));
+        return PANIC(PARAM(DEPTH));
 
     Quotify_Depth(e, depth);
     return COPY(e);
@@ -145,10 +145,10 @@ DECLARE_NATIVE(UNQUOTE)
     Count depth = (Bool_ARG(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1);
 
     if (depth < 0)
-        return FAIL(PARAM(DEPTH));
+        return PANIC(PARAM(DEPTH));
 
     if (depth > Quotes_Of(v))
-        return FAIL("Value not quoted enough for unquote depth requested");
+        return PANIC("Value not quoted enough for unquote depth requested");
 
     return Unquotify_Depth(Copy_Cell(OUT, v), depth);
 }
@@ -180,7 +180,7 @@ DECLARE_NATIVE(QUASI)
     if (Is_Quasiform(elem)) {
         if (Bool_ARG(PASS))
             return COPY(elem);
-        return FAIL("Use QUASI:PASS if QUASI argument is already a quasiform");
+        return PANIC("Use QUASI:PASS if QUASI argument is already a quasiform");
     }
 
     Copy_Cell(OUT, elem);
@@ -236,7 +236,7 @@ DECLARE_NATIVE(META)
 
     if (Is_Meta_Of_Raised(meta)) {
         if (not Bool_ARG(EXCEPT))
-            return FAIL(Cell_Error(ARG(ATOM)));
+            return PANIC(Cell_Error(ARG(ATOM)));
 
         QUOTE_BYTE(meta) = NOQUOTE_1;
         return COPY(meta);  // no longer meta, just a plain ERROR!
@@ -297,7 +297,7 @@ DECLARE_NATIVE(UNMETA)
     if (Is_Quasiform(meta_meta)) {  // e.g. value is antiform
         assert(Is_Meta_Of_Void(meta_meta) or Is_Meta_Of_Null(meta_meta));
         if (not Bool_ARG(LITE))
-            return FAIL("UNMETA only accepts NULL or VOID if :LITE");
+            return PANIC("UNMETA only accepts NULL or VOID if :LITE");
         return UNMETA(meta_meta);
     }
 
@@ -305,18 +305,18 @@ DECLARE_NATIVE(UNMETA)
 
     if (QUOTE_BYTE(meta) == NOQUOTE_1) {
         if (not Bool_ARG(LITE))
-            return FAIL("UNMETA only takes non quoted/quasi things if :LITE");
+            return PANIC("UNMETA only takes non quoted/quasi things if :LITE");
         Copy_Cell(OUT, meta);
 
         Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
         if (e)
-            return FAIL(unwrap e);
+            return PANIC(unwrap e);
 
         return OUT;
     }
 
     if (QUOTE_BYTE(meta) == QUASIFORM_2 and Bool_ARG(LITE))
-        return FAIL(
+        return PANIC(
             "UNMETA:LITE does not accept quasiforms (plain forms are meta)"
         );
 
@@ -385,15 +385,15 @@ DECLARE_NATIVE(ANTI)
     Element* elem = Element_ARG(ELEMENT);
 
     if (Is_Quoted(elem))
-        return FAIL("QUOTED! values have no antiform");
+        return PANIC("QUOTED! values have no antiform");
 
     if (Is_Quasiform(elem))  // Review: Allow this?
-        return FAIL("QUASIFORM! values can be made into antiforms with UNMETA");
+        return PANIC("QUASIFORM! values can be made into antiforms with UNMETA");
 
     Copy_Cell(OUT, elem);
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }
@@ -455,7 +455,7 @@ DECLARE_NATIVE(SPREAD)
     if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]
         return Init_Nulled(OUT);  // pass through [1]
 
-    return FAIL(PARAM(VALUE));
+    return PANIC(PARAM(VALUE));
 }
 
 
@@ -606,7 +606,7 @@ DECLARE_NATIVE(RUNS)
 
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);  // same code as anti [2]
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }
@@ -644,7 +644,7 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
         return VOID;
 
     if (Is_Meta_Of_Ghost(meta))
-        return FAIL("Cannot OPT a GHOST!");
+        return PANIC("Cannot OPT a GHOST!");
 
     bool was_pack = Is_Meta_Of_Pack(meta);
 
@@ -653,7 +653,7 @@ static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
 
     if (Is_Nulled(OUT)) {
         if (light and was_pack)
-            return FAIL(
+            return PANIC(
                 "OPT:LIGHT (a.k.a. ?) won't void a PACK! with a NULL in it"
             );
         return VOID;  // not strict

@@ -114,8 +114,8 @@ typedef RebolHandleCleaner HandleCleaner;
     //
     // We allow you to do PROBE(some_integer) as well as PROBE(some_rebval)
     // etc. in C++11 - and the stringification comes from the << operator.
-    // We must do C++ includes before defining the fail() macro, otherwise
-    // the use of fail() methods in C++ won't be able to compile.
+    // We must do C++ includes before defining the panic() macro, otherwise
+    // the use of panic() methods in C++ won't be able to compile.
     //
     #include <sstream>
 #endif
@@ -148,7 +148,7 @@ typedef RebolHandleCleaner HandleCleaner;
 // Current focus on avoiding dependencies on printf() are at the object and
 // linker level, where in general it's more direct to examine bloat.
 //
-#if RUNTIME_CHECKS || DEBUG_PRINTF_FAIL_LOCATIONS || DEBUG_HAS_PROBE
+#if RUNTIME_CHECKS || DEBUG_PRINTF_PANIC_LOCATIONS || DEBUG_HAS_PROBE
     //
     // Debug builds may use printf() and such liberally (helps to debug the
     // Ren-C I/O system itself!)
@@ -550,7 +550,7 @@ enum {
 
 #include "sys-tick.h"
 
-#include "sys-rescue.h" // includes RESCUE_SCOPE, fail()
+#include "sys-rescue.h" // includes RESCUE_SCOPE, panic()
 
 #include "sys-node.h"
 

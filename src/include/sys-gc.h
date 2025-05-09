@@ -6,7 +6,7 @@
 // If NODE_FLAG_MANAGED is not explicitly passed to Make_Flex(), a
 // Flex will be manually memory-managed by default.  Hence you don't need
 // to worry about the Flex being freed out from under you while building it.
-// Manual Flexes are tracked, and automatically freed in the case of a fail().
+// Manual Flexes are tracked, and automatically freed in the case of a panic().
 //
 // All manual Flexes *must* either be freed with Free_Unmanaged_Flex() or
 // delegated to the GC with Manage_Flex() before the Level ends.  Once a

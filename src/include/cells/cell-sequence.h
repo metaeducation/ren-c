@@ -710,7 +710,7 @@ INLINE Byte Cell_Sequence_Byte_At(const Cell* sequence, REBLEN n) {
     DECLARE_ATOM (at);
     Copy_Sequence_At(at, sequence, n);
     if (not Is_Integer(at))
-        fail ("Cell_Sequence_Byte_At() used on non-byte ANY-SEQUENCE?");
+        panic ("Cell_Sequence_Byte_At() used on non-byte ANY-SEQUENCE?");
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
@@ -785,7 +785,7 @@ INLINE void Get_Tuple_Bytes(
 ){
     assert(Heart_Of(tuple) == TYPE_TUPLE);
     if (not Try_Get_Sequence_Bytes(buf, tuple, buf_size))
-        fail ("non-INTEGER! found used with Get_Tuple_Bytes()");
+        panic ("non-INTEGER! found used with Get_Tuple_Bytes()");
 }
 
 #define MAX_TUPLE \
@@ -998,7 +998,7 @@ INLINE Element* Refinify(Element* e) {
         e, TYPE_CHAIN, CELL_FLAG_LEADING_BLANK
     );
     if (error)
-        fail (unwrap error);
+        panic (unwrap error);
     return e;
 }
 

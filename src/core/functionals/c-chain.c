@@ -289,7 +289,7 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
         if (not Is_Frame(check)) {
             DECLARE_ATOM (specific);
             Derelativize(specific, check, Cell_List_Binding(pipeline));
-            return FAIL(specific);
+            return PANIC(specific);
         }
     }
 

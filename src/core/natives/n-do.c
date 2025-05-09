@@ -102,8 +102,8 @@ DECLARE_NATIVE(SHOVE)
     INCLUDE_PARAMS_OF_SHOVE;
 
     Level* L;
-    if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(RIGHT)))
-        return FAIL("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
+    if (not Is_Level_Style_Varargs_May_Panic(&L, ARG(RIGHT)))
+        return PANIC("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
     Element* left = Element_ARG(LEFT);
 
@@ -128,7 +128,7 @@ DECLARE_NATIVE(SHOVE)
         Is_Word(right) or Is_Tuple(right)
         or Is_Path(right) or Is_Chain(right)
     ){
-        Get_Var_May_Fail(
+        Get_Var_May_Panic(
             OUT,  // can't eval directly into arg slot
             At_Level(L),
             Level_Binding(L)
@@ -153,7 +153,7 @@ DECLARE_NATIVE(SHOVE)
         infix_mode = Cell_Frame_Infix_Mode(shovee);
     }
     else {
-        return FAIL(  // used to allow shoving into set-words, but... [1]
+        return PANIC(  // used to allow shoving into set-words, but... [1]
             "SHOVE's immediate right must be FRAME! at this time"
         );
     }
@@ -266,11 +266,11 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 //
 //      https://forum.rebol.info/t/re-imagining-eval-next/767
 //
-// 2. FAIL is the preferred operation for triggering errors, as it has a
-//    natural behavior for blocks passed to construct readable messages and
-//    "FAIL X" more clearly communicates a failure than "EVAL X".  But EVAL of
-//    an ERROR! would have to raise an error anyway, so it might as well use
-//    the one it is given.
+// 2. PANIC is the preferred operation for raising divergent errors, as it has
+//    a natural behavior for blocks passed to construct readable messages and
+//    (PANIC X) more clearly communicates a panic than (EVAL X).  But EVAL of
+//    an ERROR! would have to panic anyway, so it might as well use the one
+//    it is given.
 //
 // 3. It might seem that since EVAL [] is VOID, that EVAL:STEP [] should make
 //    a VOID.  But in practice, there's a dummy step at the end of every
@@ -309,7 +309,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
             goto initial_entry_varargs;
 
         assert(Is_Error(source));
-        return FAIL(Cell_Error(source)); }  // would fail anyway [2]
+        return PANIC(Cell_Error(source)); }  // would panic anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:
         if (Is_Endlike_Trash(OUT)) {
@@ -365,10 +365,10 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    evolve that EVAL:STEP on a BLOCK! actually produces a FRAME!...
 
     if (Bool_ARG(STEP))  // !!! may be legal (or mandatory) in the future [1]
-        return FAIL(":STEP not implemented for FRAME! in EVALUATE");
+        return PANIC(":STEP not implemented for FRAME! in EVALUATE");
 
     if (Not_Node_Readable(CELL_FRAME_PHASE(source)))
-        return FAIL(Error_Series_Data_Freed_Raw());
+        return PANIC(Error_Series_Data_Freed_Raw());
 
     Option(const Atom*) with = nullptr;
     Push_Frame_Continuation(
@@ -396,7 +396,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    to disrupt its state.  Use a sublevel.
 
     if (Bool_ARG(STEP))
-        return FAIL(":STEP not implemented for VARARGS! in EVALUATE");
+        return PANIC(":STEP not implemented for VARARGS! in EVALUATE");
 
     Element* position;
     if (Is_Block_Style_Varargs(&position, source)) {  // must consume [1]
@@ -411,7 +411,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     }
 
     Level* L;
-    if (not Is_Level_Style_Varargs_May_Fail(&L, source))
+    if (not Is_Level_Style_Varargs_May_Panic(&L, source))
         crash (source); // Frame is the only other type
 
     if (Is_Level_At_End(L))
@@ -501,15 +501,15 @@ DECLARE_NATIVE(EVAL_FREE)
   initial_entry: { ///////////////////////////////////////////////////////////
 
     if (Not_Node_Readable(CELL_FRAME_PHASE(frame)))
-        return FAIL(Error_Series_Data_Freed_Raw());
+        return PANIC(Error_Series_Data_Freed_Raw());
 
     if (Is_Stub_Details(Cell_Frame_Phase(frame)))
-        fail ("Can't currently EVAL-FREE a Details-based Stub");
+        panic ("Can't currently EVAL-FREE a Details-based Stub");
 
     VarList* varlist = Cell_Varlist(frame);
 
     if (Level_Of_Varlist_If_Running(varlist))
-        fail ("Use REDO to restart a running FRAME! (not EVAL-FREE)");
+        panic ("Use REDO to restart a running FRAME! (not EVAL-FREE)");
 
     Level* L = Make_End_Level(
         &Action_Executor,
@@ -678,7 +678,7 @@ DECLARE_NATIVE(APPLY)
         goto initial_entry;
 
       case ST_APPLY_INITIALIZED_ITERATOR:
-        assert(Is_Throwing_Failure(LEVEL));  // this dispatcher fail()'d
+        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
         goto finalize_apply;
 
       case ST_APPLY_LABELED_EVAL_STEP:
@@ -771,13 +771,13 @@ DECLARE_NATIVE(APPLY)
 
         Option(Index) index = Find_Symbol_In_Context(frame, symbol, false);
         if (not index)
-            return FAIL(Error_Bad_Parameter_Raw(at));
+            return PANIC(Error_Bad_Parameter_Raw(at));
 
         var = Varlist_Slot(Cell_Varlist(frame), unwrap index);
         param = Phase_Param(Cell_Frame_Phase(op), unwrap index);
 
         if (not Is_Parameter(var))
-            return FAIL(Error_Bad_Parameter_Raw(at));
+            return PANIC(Error_Bad_Parameter_Raw(at));
 
         Sink(Value) lookback = SCRATCH;  // for error
         Copy_Cell(lookback, At_Level(L));
@@ -785,10 +785,10 @@ DECLARE_NATIVE(APPLY)
         at = Try_At_Level(L);
 
         if (at == nullptr or Is_Comma(at))
-            return FAIL(Error_Need_Non_End_Raw(lookback));
+            return PANIC(Error_Need_Non_End_Raw(lookback));
 
         if (Is_Get_Word(at))  // catch e.g. :DUP :LINE [1]
-            return FAIL(Error_Need_Non_End_Raw(lookback));
+            return PANIC(Error_Need_Non_End_Raw(lookback));
 
         Init_Integer(ARG(INDEX), unwrap index);
     }
@@ -804,7 +804,7 @@ DECLARE_NATIVE(APPLY)
         while (true) {
             if (not Try_Advance_Evars(e)) {
                 if (not Bool_ARG(RELAX))
-                    return FAIL(Error_Apply_Too_Many_Raw());
+                    return PANIC(Error_Apply_Too_Many_Raw());
 
                 Shutdown_Evars(e);
                 Free_Memory(EVARS, e);
@@ -867,7 +867,7 @@ DECLARE_NATIVE(APPLY)
 
 } finalize_apply: {  /////////////////////////////////////////////////////////
 
-    // 1. We don't want to get any further notifications of abrupt failures
+    // 1. We don't want to get any further notifications of abrupt panics
     //    that happen after we have delegated to the function.  But should
     //    DELEGATE itself rule that out automatically?  It asserts for now.
 
@@ -909,9 +909,9 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 //
 // 2. After every state past the beginning STATE_0, we want to tunnel through
 //    to APPLY for whatever it would do with the continuations.  However, we
-//    know that it has its own handler for abrupt failures.  Use a special
+//    know that it has its own handler for abrupt panics.  Use a special
 //    state byte accessor to convey that we know that, and aren't reading the
-//    byte and proceeding obliviously about the abrupt failure.
+//    byte and proceeding obliviously about the abrupt panic.
 {
     INCLUDE_PARAMS_OF_APPLY;  // needs to be frame-compatible [1]
 
@@ -924,10 +924,10 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
         SPARE, GROUPS_OK, operation, SPECIFIED
     );
     if (error)
-        return FAIL(unwrap error);
+        return PANIC(unwrap error);
 
     if (not Is_Action(SPARE) and not Is_Frame(SPARE))
-        return FAIL(SPARE);
+        return PANIC(SPARE);
     Deactivate_If_Action(SPARE);  // APPLY has <unrun> on ARG(OPERATION)
 
     Copy_Cell(ARG(OPERATION), stable_SPARE);

@@ -159,7 +159,7 @@ Bounce Action_Executor(Level* L)
                     else if (Get_Parameter_Flag(PARAM, UNDO_OPT))
                         Init_Nulled(ARG);
                     else
-                        return FAIL(
+                        return PANIC(
                             Error_No_Arg(Level_Label(L), Key_Symbol(KEY))
                         );
                 }
@@ -355,7 +355,7 @@ Bounce Action_Executor(Level* L)
 
             if (Is_Cell_Erased(OUT)) {  // "nothing" to left, but [1]
                 if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
-                    return FAIL(Error_Literal_Left_Path_Raw());  // [2]
+                    return PANIC(Error_Literal_Left_Path_Raw());  // [2]
 
                 if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // empty is ok [3]
                     Init_Varargs_Untyped_Infix(ARG, nullptr);
@@ -363,7 +363,7 @@ Bounce Action_Executor(Level* L)
                 }
 
                 if (Not_Parameter_Flag(PARAM, ENDABLE))
-                    return FAIL(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
+                    return PANIC(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
 
                 Init_Nulled(ARG);
                 goto continue_fulfilling;
@@ -491,7 +491,7 @@ Bounce Action_Executor(Level* L)
         //     1 arity-3-op (2 + 3) <unambiguous>
         //
         if (Get_Feed_Flag(L->feed, DEFERRING_INFIX))
-            return FAIL(Error_Ambiguous_Infix_Raw());
+            return PANIC(Error_Ambiguous_Infix_Raw());
 
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
@@ -653,7 +653,7 @@ Bounce Action_Executor(Level* L)
         if (not Cell_Binding(TOP)) {  // duplicate or junk, loop didn't index
             Refinify_Pushed_Refinement(TOP_ELEMENT);
             Copy_Cell(SPARE, TOP);  // FAIL() uses the data stack
-            return FAIL(Error_Bad_Parameter_Raw(stable_SPARE));
+            return PANIC(Error_Bad_Parameter_Raw(stable_SPARE));
         }
 
         // Level_Args_Head offsets are 0-based, while index is 1-based.
@@ -757,7 +757,7 @@ Bounce Action_Executor(Level* L)
         if (Is_Trash(stable_ARG)) {  // other trash are unspecified/"end"
             if (Get_Parameter_Flag(param, ENDABLE))  // !!! "optional?"
                 continue;
-            return FAIL(Error_Unspecified_Arg(L));
+            return PANIC(Error_Unspecified_Arg(L));
         }
 
         if (Is_Hole(ARG)) {
@@ -776,7 +776,7 @@ Bounce Action_Executor(Level* L)
 
         if (Get_Parameter_Flag(param, VARIADIC)) {  // can't check now [2]
             if (not Is_Varargs(ARG))  // argument itself is always VARARGS!
-                return FAIL(Error_Not_Varargs(L, KEY, param, stable_ARG));
+                return PANIC(Error_Not_Varargs(L, KEY, param, stable_ARG));
 
             Tweak_Cell_Varargs_Phase(ARG, phase);
 
@@ -791,7 +791,7 @@ Bounce Action_Executor(Level* L)
         }
 
         if (not Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, ARG, false))
-            return FAIL(Error_Phase_Arg_Type(L, KEY, param, stable_ARG));
+            return PANIC(Error_Phase_Arg_Type(L, KEY, param, stable_ARG));
 
         Mark_Typechecked(stable_ARG);
     }
@@ -840,7 +840,7 @@ Bounce Action_Executor(Level* L)
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {  // can happen [2]
         if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))  // see notes
-            return FAIL(Error_Literal_Left_Path_Raw());
+            return PANIC(Error_Literal_Left_Path_Raw());
 
         assert(Is_Level_Infix(L));
     }
@@ -905,9 +905,9 @@ Bounce Action_Executor(Level* L)
       case C_THROWN:
         goto handle_thrown;
 
-      case C_FAIL:
+      case C_PANIC:
         if (Get_Action_Executor_Flag(L, DISPATCHER_CATCHES))
-            goto dispatch_phase;  // can run same cleanup code as for fail()
+            goto dispatch_phase;  // can run same cleanup code as for panic()
         goto handle_thrown;
 
       case C_REDO_UNCHECKED:
@@ -926,7 +926,7 @@ Bounce Action_Executor(Level* L)
 
       case C_BAD_INTRINSIC_ARG:
         assert(Not_Action_Executor_Flag(L, DISPATCHER_CATCHES));
-        b = Native_Fail_Result(L, Error_Bad_Intrinsic_Arg_1(L));
+        b = Native_Panic_Result(L, Error_Bad_Intrinsic_Arg_1(L));
         goto handle_thrown;
 
       default:
@@ -945,7 +945,7 @@ Bounce Action_Executor(Level* L)
 } check_output: {  ///////////////////////////////////////////////////////////
 
   // Here we know the function finished and nothing threw past it or had an
-  // abrupt fail().  (It may have done a `return RAISE(...)`, however.)
+  // abrupt panic().  (It may have done a `return RAISE(...)`, however.)
 
   #if RUNTIME_CHECKS
     Do_After_Action_Checks_Debug(L);
@@ -960,9 +960,9 @@ Bounce Action_Executor(Level* L)
   // VOID and it wants to jump past all the processing and return, or if
   // a level just wants argument fulfillment and no execution.
   //
-  // NOTE: Anything that calls fail() must do so before Drop_Action()!
+  // NOTE: Anything that calls panic() must do so before Drop_Action()!
   //
-  // 1. !!! This used to assert rather than fail, but it turns out this can
+  // 1. !!! This used to assert rather than panic, but it turns out this can
   //    actually happen:
   //
   //      >> /left-soft: infix func ['x [word!]] [return x]
@@ -981,11 +981,11 @@ Bounce Action_Executor(Level* L)
   //      o.f left-the  ; want error suggesting -> here, need flag for that
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)  // [1]
-        return FAIL("Left lookback toward thing that took no args");
+        return PANIC("Left lookback toward thing that took no args");
 
     Clear_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);  // [2]
 
-    Drop_Action(L);  // must fail before Drop_Action()
+    Drop_Action(L);  // must panic before Drop_Action()
 
     return OUT;  // not thrown
 
@@ -1041,7 +1041,7 @@ void Push_Action(Level* L, const Cell* frame) {
     )){
         Set_Stub_Unreadable(s);
         GC_Kill_Stub(s);  // ^-- needs non-null data unless free
-        fail (Error_No_Memory(
+        panic (Error_No_Memory(
             sizeof(Cell) * (num_args + 1 + ONE_IF_POISON_TAILS))
         );
     }

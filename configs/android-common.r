@@ -19,7 +19,7 @@ os-id: 0.13.2
 ; https://developer.android.com/ndk/downloads/revision_history
 ;
 ndk-root: local-to-file try get-env "ANDROID_NDK_ROOT" else [
-    fail "Must set ANDROID_NDK_ROOT environment variable to build for Android"
+    panic "Must set ANDROID_NDK_ROOT environment variable to build for Android"
 ]
 (
     if #"/" <> last ndk-root [
@@ -50,7 +50,7 @@ ndk-version: make object! [major: minor: patch: null]
             patch: across to [<end> | newline] (patch: to integer! patch)
             to <end>
         ] else [
-            fail "Can't parse source.properties in ANDROID_NDK_ROOT directory"
+            panic "Can't parse source.properties in ANDROID_NDK_ROOT directory"
         ]
         print ["NDK VERSION DETECTED:" unspaced [major "." minor "." patch]]
         ndk-version/major: major
@@ -75,7 +75,7 @@ detect-ndk-host: func [
         2 ['darwin-x86_64]  ; Mac
         3 ['windows-x86_64]  ; Windows  !!! 32bit is just `windows`, ignore atm
         4 ['linux-x86_64]  ; Linux
-        fail ["Unsupported Cross-Compilation Host:" system.version]
+        panic ["Unsupported Cross-Compilation Host:" system.version]
     ]
 ]
 
@@ -139,7 +139,7 @@ tool-for-host: func [
     ]
 
     if not exists? path [
-        fail ["TOOL-FOR-HOST could not find:" mold path]
+        panic ["TOOL-FOR-HOST could not find:" mold path]
     ]
 
     ; It turns out that clang is dispatching to GNU's `ld` version of the

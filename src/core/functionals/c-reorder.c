@@ -150,7 +150,7 @@ DECLARE_NATIVE(REORDER)
     }
   }
 
-    // IMPORTANT: Binders use global state and code is not allowed to fail()
+    // IMPORTANT: Binders use global state and code is not allowed to panic()
     // without cleaning the binder up first, balancing it all out to zeros.
     // Errors must be stored and reported after the cleanup.
     //
@@ -246,8 +246,8 @@ DECLARE_NATIVE(REORDER)
 
     Destruct_Binder(binder);
 
-    if (error)  // *now* it's safe to fail...
-        return FAIL(unwrap error);
+    if (error)  // *now* it's safe to panic...
+        return PANIC(unwrap error);
 
     Details* details = Make_Dispatch_Details(
         NODE_FLAG_MANAGED,

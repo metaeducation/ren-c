@@ -105,7 +105,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         else if (pclass == PARAMCLASS_THE)
             Derelativize(out, look, binding);
         else
-            fail (Error_Varargs_No_Look_Raw()); // hard quote only
+            panic (Error_Varargs_No_Look_Raw()); // hard quote only
 
         return true; // only a lookahead, no need to advance
     }
@@ -125,7 +125,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 // Whether the parameter is quoted or evaluated is determined by the typeset
 // information of the `param`.  The typeset in the param is also used to
 // check the result, and if an error is delivered it will use the name of
-// the parameter symbol in the fail() message.
+// the parameter symbol in the panic() message.
 //
 // If op is VARARG_OP_TAIL_Q, then it will return LIB(BLANK) or LIB(NULL),
 // and this case cannot return a thrown value.
@@ -179,7 +179,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
         switch (pclass) {
         case PARAMCLASS_META:
-            fail ("Variadic literal parameters not yet implemented");
+            panic ("Variadic literal parameters not yet implemented");
 
         case PARAMCLASS_NORMAL: {
             Level* L_temp = Make_Level_At(
@@ -244,7 +244,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break;
 
         default:
-            fail ("Invalid variadic parameter class");
+            panic ("Invalid variadic parameter class");
         }
 
         if (
@@ -254,7 +254,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Poison_Cell(shared);  // signal end to all varargs sharing value
         }
     }
-    else if (Is_Level_Style_Varargs_May_Fail(&L, vararg)) {
+    else if (Is_Level_Style_Varargs_May_Panic(&L, vararg)) {
         //
         // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
@@ -318,7 +318,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break;
 
         default:
-            fail ("Invalid variadic parameter class");
+            panic ("Invalid variadic parameter class");
         }
     }
     else
@@ -345,9 +345,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             // vararg.  Revisit the question of how to give better errors.
             //
             if (not vararg_level)
-                fail (out);
+                panic (out);
 
-            fail (Error_Phase_Arg_Type(
+            panic (Error_Phase_Arg_Type(
                 unwrap vararg_level, key, param, cast(const Value*, out))
             );
         }
@@ -396,7 +396,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 
     // !!! Permit FRAME! ?
 
-    return FAIL(Error_Bad_Make(TYPE_VARARGS, arg));
+    return PANIC(Error_Bad_Make(TYPE_VARARGS, arg));
 }
 
 
@@ -414,9 +414,9 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
     Element* varargs = cast(Element*, ARG(SERIES));
 
     if (Bool_ARG(DEEP))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
     if (Bool_ARG(LAST))
-        return FAIL(Error_Varargs_Take_Last_Raw());
+        return PANIC(Error_Varargs_Take_Last_Raw());
 
     if (not Bool_ARG(PART)) {
         if (Do_Vararg_Op_Maybe_End_Throws(
@@ -434,7 +434,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
     assert(TOP_INDEX == STACK_BASE);
 
     if (not Is_Integer(ARG(PART)))
-        return FAIL(PARAM(PART));
+        return PANIC(PARAM(PART));
 
     REBINT limit = VAL_INT32(ARG(PART));
     if (limit < 0)
@@ -465,10 +465,10 @@ IMPLEMENT_GENERIC(PICK, Varargs)
     const Element* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
-        return FAIL(picker);
+        return PANIC(picker);
 
     if (VAL_INT32(picker) != 1)
-        return FAIL(Error_Varargs_No_Look_Raw());
+        return PANIC(Error_Varargs_No_Look_Raw());
 
     if (Do_Vararg_Op_Maybe_End_Throws(
         OUT,

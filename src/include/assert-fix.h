@@ -91,14 +91,14 @@
       #define assert(expr) \
           ((expr) \
               ? __ASSERT_VOID_CAST (0) \
-              : __assert_fail (#expr, __FILE__, __LINE__, __ASSERT_FUNCTION))
+              : __assert_panic (#expr, __FILE__, __LINE__, __ASSERT_FUNCTION))
     #else
       #define assert(expr) \
           ({ \
             if (expr) \
               ; /* empty */ \
             else \
-              __assert_fail (#expr, __FILE__, __LINE__, __ASSERT_FUNCTION); \
+              __assert_panic (#expr, __FILE__, __LINE__, __ASSERT_FUNCTION); \
           })
       #endif
   #endif

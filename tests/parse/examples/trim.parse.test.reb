@@ -33,7 +33,7 @@ utrim: func [
     ;
     if any-context? series [
         if any [head tail auto lines all_TRIM with] [
-            fail 'core/bad-refines
+            panic 'core/bad-refines
         ]
         trimmed: make (type of series) collect [
             for-each [key val] series [
@@ -54,7 +54,7 @@ utrim: func [
                 ; Note: :WITH might be able to work, e.g. if it were a MAP!
                 ; or BLOCK! of values to remove.
                 ;
-                fail 'core/bad-refines
+                panic 'core/bad-refines
             ]
             rule: blank!
 
@@ -77,7 +77,7 @@ utrim: func [
                     any [auto head tail lines]
                 ]
             ][
-                fail 'core/bad-refines
+                panic 'core/bad-refines
             ]
 
             rule: case [
@@ -92,7 +92,7 @@ utrim: func [
 
         blob? series [
             if any [auto lines] [
-                fail "Invalid refinements for utrim of BLOB!"
+                panic "Invalid refinements for utrim of BLOB!"
             ]
 
             rule: case [
@@ -107,7 +107,7 @@ utrim: func [
             ]
         ]
     ] else [
-        fail "Unsupported type passed to utrim"
+        panic "Unsupported type passed to utrim"
     ]
 
     ; :ALL just removes all whitespace entirely.  No subtlety needed.

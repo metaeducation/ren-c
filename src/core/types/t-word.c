@@ -226,7 +226,7 @@ IMPLEMENT_GENERIC(AS, Any_Word)
         Cell_Datatype_Builtin_Heart(ARG(TYPE))
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }

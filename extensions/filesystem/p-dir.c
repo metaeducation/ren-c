@@ -93,16 +93,16 @@ DECLARE_NATIVE(DIR_ACTOR)
 
         Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
         if (not Is_Object(spec))
-            return FAIL(Error_Invalid_Spec_Raw(spec));
+            return PANIC(Error_Invalid_Spec_Raw(spec));
 
         Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
         if (path == nullptr)
-            return FAIL(Error_Invalid_Spec_Raw(spec));
+            return PANIC(Error_Invalid_Spec_Raw(spec));
 
         if (Is_Url(path))
             path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
         else if (not Is_File(path))
-            return FAIL(Error_Invalid_Spec_Raw(path));
+            return PANIC(Error_Invalid_Spec_Raw(path));
 
         // !!! In R3-Alpha, there were manipulations on the name representing
         // the directory, for instance by adding "*" onto the end so that
@@ -162,7 +162,7 @@ DECLARE_NATIVE(DIR_ACTOR)
         UNUSED(PARAM(SOURCE));
 
         if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(STRING) or Bool_ARG(LINES))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         assert(TOP_INDEX == STACK_BASE);
         while (true) {
@@ -174,7 +174,7 @@ DECLARE_NATIVE(DIR_ACTOR)
             // find the file specified" message that doesn't say the name)
             //
             if (Is_Error(result))
-                return FAIL(Error_Cannot_Open_Raw(dir->path, result));
+                return PANIC(Error_Cannot_Open_Raw(dir->path, result));
 
             assert(Is_File(result));
             Copy_Cell(PUSH(), result);
@@ -188,12 +188,12 @@ DECLARE_NATIVE(DIR_ACTOR)
 
       case SYM_CREATE: {
         if (Is_Block(state))
-            return FAIL(Error_Already_Open_Raw(dir->path));
+            return PANIC(Error_Already_Open_Raw(dir->path));
 
         Value* error = Create_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            return FAIL(Error_No_Create_Raw(dir->path));  // higher level error
+            return PANIC(Error_No_Create_Raw(dir->path));  // higher level error
         }
 
         return COPY(port); }
@@ -207,7 +207,7 @@ DECLARE_NATIVE(DIR_ACTOR)
         Value* error = Rename_File_Or_Directory(port, ARG(TO));
         if (error) {
             rebRelease(error);  // !!! throws away details
-            return FAIL(Error_No_Rename_Raw(dir->path));  // higher level error
+            return PANIC(Error_No_Rename_Raw(dir->path));  // higher level error
         }
 
         Copy_Cell(dir->path, ARG(TO));  // !!! this mutates the spec, bad?
@@ -220,7 +220,7 @@ DECLARE_NATIVE(DIR_ACTOR)
         Value* error = Delete_File_Or_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            return FAIL(Error_No_Delete_Raw(dir->path));  // higher level error
+            return PANIC(Error_No_Delete_Raw(dir->path));  // higher level error
         }
         return COPY(port); }
 
@@ -241,13 +241,13 @@ DECLARE_NATIVE(DIR_ACTOR)
         UNUSED(PARAM(SPEC));
 
         if (Bool_ARG(READ) or Bool_ARG(WRITE))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         if (Bool_ARG(NEW)) {
             Value* error = Create_Directory(port);
             if (error) {
                 rebRelease(error);  // !!! throws away details
-                return FAIL(Error_No_Create_Raw(dir->path));  // hi-level error
+                return PANIC(Error_No_Create_Raw(dir->path));  // hi-level error
             }
         }
 

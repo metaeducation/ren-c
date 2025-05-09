@@ -161,13 +161,13 @@ STATIC_ASSERT(
 // "sub-executor") wants to be told about the thrown state.
 //
 // This would be for something like a WHILE loop wanting to catch a BREAK,
-// or something like FOR-EACH wanting to get notified if a fail() happens
-// so it can clean up its iteration state.  (These failures could be emitted
-// from the dispatcher itself, so it could `return FAIL()` and then the
+// or something like FOR-EACH wanting to get notified if a panic() happens
+// so it can clean up its iteration state.  (These panic could be emitted
+// from the dispatcher itself, so it could `return PANIC()` and then the
 // trampoline turns right around and calls the dispatcher that just returned
 // with the thrown state.  This helps make it so you only have to write one
 // bit of cleanup code that works for both longjmp()/C++-throw based failures
-// as well as `return FAIL()` cases.
+// as well as `return PANIC()` cases.
 //
 #define ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES \
     LEVEL_FLAG_29

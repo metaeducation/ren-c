@@ -69,7 +69,7 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
     const Node* node = CELL_PARAMETER_SPEC(c);
     if (node != nullptr and Not_Node_Readable(node))
-        fail (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     return c_cast(Source*, node);
 }

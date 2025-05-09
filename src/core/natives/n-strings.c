@@ -128,7 +128,7 @@ DECLARE_NATIVE(JOIN)
         base = nullptr;
         Option(Heart) datatype_heart = Cell_Datatype_Heart(ARG(BASE));
         if (not datatype_heart)
-            return FAIL(PARAM(BASE));
+            return PANIC(PARAM(BASE));
         heart = unwrap datatype_heart;
     }
     else {
@@ -169,7 +169,7 @@ DECLARE_NATIVE(JOIN)
                     not Is_Block(unwrap rest) and not Is_The_Block(unwrap rest)
                 )
             ){
-                return FAIL("JOIN of list or sequence must join with BLOCK!");
+                return PANIC("JOIN of list or sequence must join with BLOCK!");
             }
         }
 
@@ -365,7 +365,7 @@ DECLARE_NATIVE(JOIN)
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
         if (Is_The_Word(item)) {
-            Get_Var_May_Fail(SPARE, item, Level_Binding(sub));
+            Get_Var_May_Panic(SPARE, item, Level_Binding(sub));
             Fetch_Next_In_Feed(sub->feed);
             goto mold_step_result_in_spare;
         }
@@ -381,7 +381,7 @@ DECLARE_NATIVE(JOIN)
             return CONTINUE(SPARE, cast(Element*, SCRATCH));
         }
 
-        return FAIL(item);
+        return PANIC(item);
     }
 
     if (Is_Quoted(item)) {  // just mold it
@@ -565,16 +565,16 @@ DECLARE_NATIVE(JOIN)
         assert(not Is_Antiform(v));  // non-molded splices push items
 
         if (Any_List(v))  // guessing a behavior is bad [4]
-            return FAIL("JOIN requires @var to mold lists");
+            return PANIC("JOIN requires @var to mold lists");
 
         if (Any_Sequence(v))  // can have lists in them, dicey [4]
-            return FAIL("JOIN requires @var to mold sequences");
+            return PANIC("JOIN requires @var to mold sequences");
 
         if (Is_Metaform(cast(Element*, v)) or Sigil_Of(cast(Element*, v)))
-            return FAIL("JOIN requires @var for elements with sigils");
+            return PANIC("JOIN requires @var for elements with sigils");
 
         if (Is_Blank(v))
-            return FAIL("JOIN only treats source-level BLANK! as space");
+            return PANIC("JOIN only treats source-level BLANK! as space");
 
         Form_Element(mo, cast(Element*, v));
     }
@@ -617,7 +617,7 @@ DECLARE_NATIVE(JOIN)
         Move_Drop_Top_Stack_Element(OUT);
     }
     else
-        return FAIL(PARAM(BASE));
+        return PANIC(PARAM(BASE));
 
     if (mo->string)
         Drop_Mold(mo);
@@ -655,11 +655,11 @@ DECLARE_NATIVE(JOIN)
         }
         else switch (Type_Of(at)) {
           case TYPE_BLANK:
-            return FAIL("JOIN only treats source-level BLANK! as space");
+            return PANIC("JOIN only treats source-level BLANK! as space");
 
           case TYPE_INTEGER:
             Expand_Flex_Tail(buf, 1);
-            *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can fail()
+            *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can panic()
             break;
 
           case TYPE_BLOB: {
@@ -684,7 +684,7 @@ DECLARE_NATIVE(JOIN)
             break; }
 
           default:
-            return FAIL(Error_Bad_Value(at));
+            return PANIC(Error_Bad_Value(at));
         }
 
         used = Flex_Used(buf);
@@ -751,7 +751,7 @@ DECLARE_NATIVE(DEBASE)
 
     Binary* decoded = maybe Decode_Enbased_Utf8_As_Binary(&bp, size, base, 0);
     if (not decoded)
-        return FAIL(Error_Invalid_Data_Raw(ARG(VALUE)));
+        return PANIC(Error_Invalid_Data_Raw(ARG(VALUE)));
 
     return Init_Blob(OUT, decoded);
 }
@@ -800,7 +800,7 @@ DECLARE_NATIVE(ENBASE)
         break;
 
       default:
-        return FAIL(PARAM(BASE));
+        return PANIC(PARAM(BASE));
     }
 
     return Init_Text(OUT, Pop_Molded_String(mo));
@@ -902,7 +902,7 @@ DECLARE_NATIVE(DEHEX)
     INCLUDE_PARAMS_OF_DEHEX;
 
     if (Bool_ARG(BLOB))
-        return FAIL("DEHEX:BLOB not yet implemented, but will permit %00");
+        return PANIC("DEHEX:BLOB not yet implemented, but will permit %00");
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -1042,13 +1042,13 @@ DECLARE_NATIVE(DELINE)
         ++n;
         if (c == LF) {
             if (seen_a_cr_lf)
-                return FAIL(Error_Mixed_Cr_Lf_Found_Raw());
+                return PANIC(Error_Mixed_Cr_Lf_Found_Raw());
             seen_a_lone_lf = true;
         }
 
         if (c == CR) {
             if (seen_a_lone_lf)
-                return FAIL(Error_Mixed_Cr_Lf_Found_Raw());
+                return PANIC(Error_Mixed_Cr_Lf_Found_Raw());
 
             dest = Write_Codepoint(dest, LF);
             src = Utf8_Next(&c, src);
@@ -1058,7 +1058,7 @@ DECLARE_NATIVE(DELINE)
                 seen_a_cr_lf = true;
                 continue;
             }
-            return FAIL(  // DELINE requires any CR to be followed by an LF
+            return PANIC(  // DELINE requires any CR to be followed by an LF
                 Error_Illegal_Cr(Step_Back_Codepoint(src), String_Head(s))
             );
         }
@@ -1114,7 +1114,7 @@ DECLARE_NATIVE(ENLINE)
         if (c == LF and (not relax or c_prev != CR))
             ++delta;
         if (c == CR and not relax)  // !!! Note: `relax` fixed at false, ATM
-            return FAIL(
+            return PANIC(
                 Error_Illegal_Cr(Step_Back_Codepoint(cp), String_Head(s))
             );
         c_prev = c;
@@ -1385,14 +1385,14 @@ DECLARE_NATIVE(TO_HEX)
             Form_Hex2(mo, 0);
     }
     else
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
 
     // !!! Issue should be able to use string from mold buffer directly when
     // UTF-8 Everywhere unification of ANY-WORD? and ANY-STRING? is done.
     //
     assert(len == String_Size(mo->string) - mo->base.size);
     if (not Try_Scan_Issue_To_Stack(Binary_At(mo->string, mo->base.size), len))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
 
     Move_Drop_Top_Stack_Element(OUT);
     Drop_Mold(mo);

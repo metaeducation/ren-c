@@ -144,7 +144,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
         //
         rebElide(
             "for-each 'item filter [",
-                "if find item tab [fail -[TAB chars not legal in filters]-]",
+                "if find item tab [panic -[TAB chars not legal in filters]-]",
             "]"
         );
         filter_utf16 = rebSpellWide("delimit:tail tab filter");
@@ -316,7 +316,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
     //
     int argc = 0;
     if (not gtk_init_check(&argc, nullptr))
-        return "fail -[gtk_init_check() failed]-";
+        return "panic -[gtk_init_check() failed]-";
 
     // Note: FILTER not implemented in GTK for Atronix R3
 
@@ -425,7 +425,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
     // be freed before the failure.
     //
     if (error)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     if (rebUnboxLogic("empty?", results)) {
         rebRelease(results);
@@ -518,7 +518,7 @@ DECLARE_NATIVE(REQUEST_DIR_P)
         // Already initialized on this thread
     }
     else
-        return rebDelegate("fail -[Failure during CoInitializeEx()-}");
+        return rebDelegate("panic -[Failure during CoInitializeEx()-}");
 
     BROWSEINFO bi;
     bi.hwndOwner = nullptr;
@@ -572,7 +572,7 @@ DECLARE_NATIVE(REQUEST_DIR_P)
   #endif
 
     if (error != nullptr)
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("panic", rebR(error));
 
     return result;
 }

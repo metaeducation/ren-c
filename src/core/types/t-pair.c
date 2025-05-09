@@ -161,15 +161,15 @@ REBINT Index_From_Picker_For_Pair(
         else if (Cell_Word_Id(picker) == SYM_Y)
             n = 2;
         else
-            fail (picker);
+            panic (picker);
     }
     else if (Is_Integer(picker)) {
         n = Int32(picker);
         if (n != 1 and n != 2)
-            fail (picker);
+            panic (picker);
     }
     else
-        fail (picker);
+        panic (picker);
 
     return n;
 }
@@ -313,11 +313,11 @@ IMPLEMENT_GENERIC(POKE_P, Is_Pair)
 
     Option(const Value*) opt_poke = Optional_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     if (not Is_Integer(poke))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
 
     Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
     Copy_Cell(which, poke);
@@ -331,7 +331,7 @@ IMPLEMENT_GENERIC(REVERSE, Is_Pair)
     INCLUDE_PARAMS_OF_REVERSE;
 
     if (Bool_ARG(PART))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     const Element* pair = Element_ARG(SERIES);
 
@@ -350,7 +350,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Pair)
     Value* v2 = ARG(VALUE2);
 
     if (not Is_Integer(v2))
-        return FAIL(PARAM(VALUE2));
+        return PANIC(PARAM(VALUE2));
 
     return rebDelegate(CANON(MAKE), CANON(PAIR_X), "[",
         CANON(MULTIPLY), v2, cast(Value*, Cell_Pair_First(pair1)),  // !!! [1]

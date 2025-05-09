@@ -46,7 +46,7 @@ if args.GIT_COMMIT = "unknown" [
 ] else [
     git-commit: args.GIT_COMMIT
     if (length of git-commit) != (length of first-rebol-commit) [
-        fail [
+        panic [
             "GIT_COMMIT should be a full hash, e.g." first-rebol-commit newline
             "Invalid hash was:" git-commit
         ]
@@ -111,13 +111,13 @@ add-sym: func [
     if placeholder [
         case [
             tag! [if find item "-" [
-                fail [
+                panic [
                     "Use _ not - in placeholders so it's easier to search"
                     "for references matching the generated C macros"
                 ]
             ]]
             block! [noop]
-            fail "ADD-SYM:PLACHOLDER must be TAG! or BLOCK!"
+            panic "ADD-SYM:PLACHOLDER must be TAG! or BLOCK!"
         ]
         append sym-table item
         return null
@@ -129,14 +129,14 @@ add-sym: func [
             to text! item  ; force word to text
         ]
     ] else [
-        fail ["ADD-SYM without :PLACEHOLDER requires WORD! or TEXT!"]
+        panic ["ADD-SYM without :PLACEHOLDER requires WORD! or TEXT!"]
     ]
 
     let pos: find sym-table name
     if pos: find sym-table name [
         if relax [return pos]
         probe sym-table
-        fail ["Duplicate symbol string specified:" name]
+        panic ["Duplicate symbol string specified:" name]
     ]
 
     ; The OF native interprets things like LENGTH OF by looking up LENGTH-OF
@@ -156,7 +156,7 @@ add-sym: func [
     ] then [
         if pos: find sym-table base [
             if find pos <MAX_SYM_LIB_PREMADE> [
-                fail ["Reorder would disrupt symbol ordering for:" name]
+                panic ["Reorder would disrupt symbol ordering for:" name]
             ]
             insert (next pos) name  ; put it after existing entry
             return null
@@ -217,7 +217,7 @@ for-each 'term load3 %lib-words.r [
         issue? term [
             term: as word! term
             if not add-sym:relax term [  ; returns POS if already present
-                fail ["Expected symbol for" term "from [native type]"]
+                panic ["Expected symbol for" term "from [native type]"]
             ]
         ]
         tag? term [  ; want to mark things like where parse keywords are
@@ -253,7 +253,7 @@ for-each 'name native-names [
         continue
     ]
     if not find pos <MIN_SYM_NATIVE> [
-        fail ["Native name collision found:" name]
+        panic ["Native name collision found:" name]
     ]
 ]
 
@@ -298,10 +298,10 @@ for-each 'item load3 %symbols.r [
         word! [add-sym item]
         issue! [
             if not find sym-table as text! item [
-                fail ["Expected symbol for" item "from [native type]"]
+                panic ["Expected symbol for" item "from [native type]"]
             ]
         ]
-        fail ["bad %symbols.r item:" mold item]
+        panic ["bad %symbols.r item:" mold item]
     ]
 ]
 
@@ -438,7 +438,7 @@ for-each [sw-cat list] boot-errors [
 
     for-each [sw-id t-message] list [
         if not set-word? sw-id [
-            fail ["%errors.r parse error, not SET-WORD!" mold sw-id]
+            panic ["%errors.r parse error, not SET-WORD!" mold sw-id]
         ]
         let id: resolve sw-id
         let message: t-message
@@ -448,7 +448,7 @@ for-each [sw-cat list] boot-errors [
         let pos: add-sym:relax id
         if pos [
             if not find pos <MIN_SYM_ERRORS> [
-                fail ["Duplicate error ID found:" id]
+                panic ["Duplicate error ID found:" id]
             ]
         ]
 
@@ -581,10 +581,10 @@ for-each 'item load3 %ext-words.r [
         ]
         issue! [
             if not find sym-table as text! item [
-                fail ["Expected symbol for" item "from [native type]"]
+                panic ["Expected symbol for" item "from [native type]"]
             ]
         ]
-        fail ["bad %symbols.r item:" mold item]
+        panic ["bad %symbols.r item:" mold item]
     ]
 ]
 
@@ -644,7 +644,7 @@ for-next 'pos sym-table [
     ]
 
     if not text? pos.1 [
-        fail ["Unknown item in sym-table table:" pos.1]
+        panic ["Unknown item in sym-table table:" pos.1]
     ]
 
     let name: pos.1

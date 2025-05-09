@@ -36,15 +36,15 @@ verify: func [
                     ]
                 ]
 
-                ; If the handler doesn't itself fail--and does not return
-                ; ~<ignore>~, then we go ahead and fail.  This lets you
+                ; If the handler doesn't itself panic--and does not return
+                ; ~<ignore>~, then we go ahead and panic.  This lets you
                 ; write simple handlers that just print you a message...like
                 ; some context for the assert.
                 ;
                 reaction != '~<ignore>~
             ]
         ] then [
-            fail:blame make error! [
+            panic:blame make error! [
                 type: 'script
                 id: 'assertion-failure
                 arg1: compose [

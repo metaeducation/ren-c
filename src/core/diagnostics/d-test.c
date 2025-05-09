@@ -238,6 +238,6 @@ DECLARE_NATIVE(FUZZ)
     return TRASH;
   #else
     UNUSED(ARG(FACTOR));
-    return FAIL("FUZZ is only availble in RUNTIME_CHECKS builds");
+    return PANIC("FUZZ is only availble in RUNTIME_CHECKS builds");
   #endif
 }

@@ -167,7 +167,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
 
   #if (! DEBUG_HAS_PROBE)
     UNUSED(v);
-    return FAIL("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
+    return PANIC("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
   #else
     if (Is_Text(v)) {
         printf("WRITE-STDOUT: %s\n", String_UTF8(Cell_String(v)));
@@ -271,7 +271,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
     if (Is_Varargs(pos)) {
         Level* L;
         Element* shared;
-        if (Is_Level_Style_Varargs_May_Fail(&L, pos)) {
+        if (Is_Level_Style_Varargs_May_Panic(&L, pos)) {
             if (Level_Is_Variadic(L)) {
                 //
                 // C va_args input to frame, as from the API, but not in the
@@ -341,7 +341,7 @@ REBLEN Milliseconds_From_Value(const Value* v) {
     }
 
     if (msec < 0)
-        fail (Error_Out_Of_Range(v));
+        panic (Error_Out_Of_Range(v));
 
     return msec;
 }
@@ -376,12 +376,12 @@ DECLARE_NATIVE(BASIC_READ)
 
   #if (! TO_WASI)
     UNUSED(ARG(FILE));
-    return FAIL("BASIC-READ is a simple demo used in WASI only");
+    return PANIC("BASIC-READ is a simple demo used in WASI only");
   #else
     const String* filename = Cell_String(ARG(FILE));
     FILE* f = fopen(String_UTF8(filename), "rb");
     if (f == nullptr)
-        return FAIL(rebError_OS(errno));
+        return PANIC(rebError_OS(errno));
     fseek(f, 0, SEEK_END);
     Size size = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -415,12 +415,12 @@ DECLARE_NATIVE(BASIC_WRITE)
   #if (! TO_WASI)
     UNUSED(ARG(FILE));
     UNUSED(ARG(DATA));
-    return FAIL("BASIC-WRITE is a simple demo used in WASI only");
+    return PANIC("BASIC-WRITE is a simple demo used in WASI only");
   #else
     const String* filename = Cell_String(ARG(FILE));
     FILE* f = fopen(String_UTF8(filename), "wb");
     if (f == nullptr)
-        return FAIL(rebError_OS(errno));
+        return PANIC(rebError_OS(errno));
 
     Size size;
     const Byte* data = Cell_Bytes_At(&size, ARG(DATA));

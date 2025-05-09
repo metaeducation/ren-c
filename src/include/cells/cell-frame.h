@@ -78,7 +78,7 @@ INLINE Phase* Cell_Frame_Phase(const Cell* c) {
 
     Node* node = CELL_FRAME_PHASE(c);  // const irrelevant
     if (Not_Node_Readable(node))
-        fail (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     Flex* f = cast(Flex*, node);
     assert(Is_Stub_Details(f) or Is_Stub_Varlist(f));

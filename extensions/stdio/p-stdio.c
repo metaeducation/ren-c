@@ -92,7 +92,7 @@ Value* Read_Line(STD_TERM *t)
 
         if (e == nullptr) {
             rebJumps(
-                "fail -[nullptr interruption of terminal not done yet]-"
+                "panic -[nullptr interruption of terminal not done yet]-"
             );
         }
 
@@ -255,7 +255,7 @@ Value* Read_Line(STD_TERM *t)
 
               default:
                 rebJumps(
-                    "fail -[Invalid key press returned from console]-"
+                    "panic -[Invalid key press returned from console]-"
                 );
             }
         }
@@ -318,10 +318,10 @@ DECLARE_NATIVE(STDIO_ACTOR)
         UNUSED(PARAM(SOURCE));
 
         if (Bool_ARG(PART))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         if (Bool_ARG(SEEK))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher

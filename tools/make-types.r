@@ -84,7 +84,7 @@ for-each-datatype: func [
             (unstable*: 'no)
             |
             ; unstable is conveyed by ~antiform~:U (path in bootstrap)
-            ahead chain! into [antiname*: quasiform!, ['U | (fail "need U!")]],
+            ahead chain! into [antiname*: quasiform!, ['U | (panic "need U!")]],
             antidescription*: text!
             (unstable*: 'yes)
             |
@@ -105,7 +105,7 @@ for-each-datatype: func [
                     (cellmask*: the (CELL_FLAG_DONT_MARK_NODE1))
             ]
             | pos: <here> (
-                fail ["Bad node1/node2 spec for" name* "in %types.r"]
+                panic ["Bad node1/node2 spec for" name* "in %types.r"]
             )
         ]
         [typesets*: block!]
@@ -130,7 +130,7 @@ for-each-datatype: func [
         )
         (heart*: heart* + 1)
     ]] else [
-        fail "Couldn't fully parse %types.r"
+        panic "Couldn't fully parse %types.r"
     ]
 ]
 
@@ -173,7 +173,7 @@ for-each-typerange: func [
                     to "?"  ; once dropped -VALUE from e.g. ANY-META-VALUE?
                     remove "?"
                 ] else [
-                    fail "Bad type category name"
+                    panic "Bad type category name"
                 ]
 
                 if starting [
@@ -205,7 +205,7 @@ for-each-typerange: func [
                 (heart*: heart* + 1)
             ]]
         ]] else [
-            fail "Couldn't fully parse %types.r"
+            panic "Couldn't fully parse %types.r"
         ]
         assert [empty? stack]
         break  ; doesn't return last value (bootstrap)
@@ -322,7 +322,7 @@ for-each [ts-name types] sparse-typesets [
     shift-by: me + 1
 
     if shift-by > 32 [
-        fail [
+        panic [
             "Current design only allows for 31 sparse typesets." newline
             "64-bit integers would need to be used for more."
         ]

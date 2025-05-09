@@ -48,7 +48,7 @@
             continue
         ]
 
-        fail ["NOT did not return ~null~ antiform for:" mold item]
+        panic ["NOT did not return ~null~ antiform for:" mold item]
     ]
     ok
 )

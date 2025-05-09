@@ -66,10 +66,10 @@ array: func [
             ;
             ; Might be reasonable to say `array:initial [] <x>` is `<x>` ?
             ;
-            fail "Empty ARRAY dimensions (file issue if you want a meaning)"
+            panic "Empty ARRAY dimensions (file issue if you want a meaning)"
         ]
         if not integer? size: size.1 [
-            fail:blame [
+            panic:blame [
                 "Expect INTEGER! size in BLOCK!, not" type of size
             ] $size
         ]
@@ -190,7 +190,7 @@ bind construct [
                 prefix: delimiter-types
                 [<end> | suffix: delimiter-types]
             ] except [
-                fail ["Invalid /ESCAPE delimiter block" escape]
+                panic ["Invalid /ESCAPE delimiter block" escape]
             ]
         ]
     ] else [
@@ -223,7 +223,7 @@ bind construct [
     ; [
     ;     "keyword1" suffix (keyword-match: 'keyword1)
     ;     | "keyword2" suffix (keyword-match: 'keyword2)
-    ;     | fail
+    ;     | panic
     ; ]
     ;
     ; Note that the enclosing rule has to account for `prefix`, but `suffix`
@@ -239,7 +239,7 @@ bind construct [
     let any-keyword-suffix-rule: inside [] collect [
         for-each [keyword value] values [
             if raised? parse :[keyword] keyword-types [
-                fail ["Invalid keyword type:" keyword]
+                panic ["Invalid keyword type:" keyword]
             ]
 
             keep spread compose2:deep '(<*>) [
@@ -513,13 +513,13 @@ split: func [
     dlm: unmeta dlm
 
     if splice? dlm [
-        fail "SPLIT on SPLICE?! would need UPARSE, currently based on PARSE3"
+        panic "SPLIT on SPLICE?! would need UPARSE, currently based on PARSE3"
     ]
 
     if the-block? dlm [
         return map-each 'len dlm [
             if not integer? len [
-                fail ["THE-BLOCK! in SPLIT must be all integers:" mold len]
+                panic ["THE-BLOCK! in SPLIT must be all integers:" mold len]
             ]
             if len <= 0 [
                 series: skip series negate len
@@ -533,7 +533,7 @@ split: func [
     let result: collect [parse3 series case [
         integer? dlm [
             size: dlm  ; alias for readability in integer case
-            if size < 1 [fail "Bad SPLIT size given:" size]
+            if size < 1 [panic "Bad SPLIT size given:" size]
 
             if into [
                 let count: size - 1

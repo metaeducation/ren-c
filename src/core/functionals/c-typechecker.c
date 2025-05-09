@@ -49,7 +49,7 @@
 //
 DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
 {
-    return FAIL("TYPECHECKER-ARCHETYPE called (internal use only)");
+    return PANIC("TYPECHECKER-ARCHETYPE called (internal use only)");
 }
 
 
@@ -171,7 +171,7 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
         SYM_0  // return type for all typecheckers is the same [3]
     );
     if (e)
-        fail (unwrap e);  // should never happen
+        panic (unwrap e);  // should never happen
     assert(adjunct == nullptr);
 
     Details* details = Make_Dispatch_Details(
@@ -336,12 +336,12 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         if (bounce == BOUNCE_OKAY)
             goto test_succeeded;
 
-        if (bounce == BOUNCE_FAIL)
-            fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        if (bounce == BOUNCE_PANIC)
+            panic (Error_No_Catch_For_Throw(TOP_LEVEL));
         assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
         if (Is_Raised(L->out))
-            fail (Cell_Error(L->out));
-        fail (Error_No_Logic_Typecheck(label));
+            panic (Cell_Error(L->out));
+        panic (Error_No_Logic_Typecheck(label));
     }
   #endif
 
@@ -373,7 +373,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     arg = First_Unspecialized_Arg(&param, sub);
     if (not arg)
-        fail (Error_No_Arg_Typecheck(label));  // must take argument
+        panic (Error_No_Arg_Typecheck(label));  // must take argument
 
     Copy_Cell(arg, v);  // do not decay [4]
 
@@ -389,12 +389,12 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     }
 
     if (Trampoline_With_Top_As_Root_Throws())
-        fail (Error_No_Catch_For_Throw(sub));
+        panic (Error_No_Catch_For_Throw(sub));
 
     Drop_Level(sub);
 
     if (not Is_Logic(SCRATCH))  // sub wasn't limited to intrinsics
-        fail (Error_No_Logic_Typecheck(label));
+        panic (Error_No_Logic_Typecheck(label));
 
     if (Cell_Logic(SCRATCH))
         goto test_succeeded;
@@ -493,7 +493,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
       default:
         assert(false);
-        fail ("Bad test passed to Typecheck_Value");
+        panic ("Bad test passed to Typecheck_Value");
     }
 
     for (; item != tail; ++item) {
@@ -563,7 +563,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             label = Cell_Word_Symbol(item);
             Option(Error*) error = Trap_Lookup_Word(&test, item, derived);
             if (error)
-                fail (unwrap error);
+                panic (unwrap error);
         }
         else
             test = item;
@@ -579,7 +579,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
           case TYPE_QUOTED:
           case TYPE_QUASIFORM: {
-            fail ("QUOTED? and QUASI? not supported in TYPE-XXX!"); }
+            panic ("QUOTED? and QUASI? not supported in TYPE-XXX!"); }
 
           case TYPE_PARAMETER: {
             if (Typecheck_Atom_In_Spare_Uses_Scratch(
@@ -603,7 +603,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
           default:
             break;
         }
-        fail ("Invalid element in TYPE-GROUP!");
+        panic ("Invalid element in TYPE-GROUP!");
 
       test_succeeded:
         if (not match_all) {
@@ -819,7 +819,7 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
     if (Is_Datatype(datatype_or_block)) {
         Option(Type) t = Cell_Datatype_Type(datatype_or_block);
         if (not t)
-            fail ("TYPECHECKER does not support extension types yet");
+            panic ("TYPECHECKER does not support extension types yet");
 
         Byte type_byte = u_cast(Byte, unwrap t);
         SymId16 id16 = u_cast(SymId16, type_byte) + MIN_SYM_TYPESETS - 1;
@@ -853,7 +853,7 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
     Drop_Lifeguard(def);
 
     if (threw)
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     return out;
 }
@@ -952,7 +952,7 @@ DECLARE_NATIVE(MATCH)
 
       default:
         assert(false);  // all test types should be accounted for in switch
-        return FAIL(PARAM(TEST));
+        return PANIC(PARAM(TEST));
     }
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//

@@ -306,10 +306,10 @@ INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {
     (Level_Of_Varlist_If_Running(varlist) != nullptr)
 
 
-INLINE Level* Level_Of_Varlist_May_Fail(VarList* c) {
+INLINE Level* Level_Of_Varlist_May_Panic(VarList* c) {
     Level* L = Level_Of_Varlist_If_Running(c);
     if (not L)
-        fail (Error_Frame_Not_On_Stack_Raw());
+        panic (Error_Frame_Not_On_Stack_Raw());
     return L;
 }
 

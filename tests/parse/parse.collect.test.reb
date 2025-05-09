@@ -466,7 +466,7 @@ https://github.com/metaeducation/ren-c/issues/935
 ;     red>> test
 ;     == ""
 ;
-; But in Ren-C, <end> is invisible.  So KEEP fails with no argument.
+; But in Ren-C, <end> is invisible.  So KEEP panics with no argument.
 ;
 [https://github.com/red/red/issues/2561
     ~???~ !! (parse "" [collect [keep to <end>]])

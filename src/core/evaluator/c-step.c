@@ -178,7 +178,7 @@ STATIC_ASSERT(
 INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 {
     if (Is_Feed_At_End(L->feed))  // `eval [x:]`, `eval [o.x:]`, etc. illegal
-        fail (Error_Need_Non_End(CURRENT));
+        panic (Error_Need_Non_End(CURRENT));
 
     Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements [2]
 
@@ -293,12 +293,12 @@ Bounce Meta_Stepper_Executor(Level* L)
             Init_Okay(OUT);
         else if (bounce == L->out) {
             if (Is_Raised(OUT))
-                return FAIL(Cell_Error(OUT));
+                return PANIC(Cell_Error(OUT));
         }
         else if (bounce == BOUNCE_BAD_INTRINSIC_ARG)
-            return Native_Fail_Result(L, Error_Bad_Intrinsic_Arg_1(L));
+            return Native_Panic_Result(L, Error_Bad_Intrinsic_Arg_1(L));
         else {
-            assert(bounce == BOUNCE_FAIL);  // no BOUNCE_CONTINUE, API handles
+            assert(bounce == BOUNCE_PANIC);  // no BOUNCE_CONTINUE, API handles
             return bounce;
         }
 
@@ -347,7 +347,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    of concerns so for now just return void...but ultimately this
     //    should be fixed.
 
-    Sync_Feed_At_Cell_Or_End_May_Fail(L->feed);
+    Sync_Feed_At_Cell_Or_End_May_Panic(L->feed);
 
     Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
 
@@ -523,7 +523,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         if (QUOTE_BYTE(CURRENT) == QUASIFORM_2) {
             Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
             if (e)
-                return FAIL(unwrap e);
+                return PANIC(unwrap e);
 
             STATE = cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
         }
@@ -545,7 +545,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
       case TYPE_COMMA:
         if (Get_Eval_Executor_Flag(L, FULFILLING_ARG))
-            return FAIL(Error_Expression_Barrier_Raw());
+            return PANIC(Error_Expression_Barrier_Raw());
         goto start_new_expression;
 
 
@@ -563,7 +563,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
       case TYPE_FRAME: {
         if (Cell_Frame_Lens(CURRENT))  // running frame if lensed
-            return FAIL("Use REDO to restart a running FRAME! (can't EVAL)");
+            return PANIC("Use REDO to restart a running FRAME! (can't EVAL)");
 
         Level* sub = Make_Action_Sublevel(L);
         Push_Action(sub, CURRENT);
@@ -637,7 +637,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         switch (sigil) {
           case SIGIL_THE: {
             if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
-                return FAIL(Error_Need_Non_End(CURRENT));
+                return PANIC(Error_Need_Non_End(CURRENT));
 
             assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
             const Element* elem = c_cast(Element*, L->feed->p);
@@ -675,7 +675,7 @@ Bounce Meta_Stepper_Executor(Level* L)
           case SIGIL_VAR:  // $
             Meta_Unquotify_Undecayed(OUT);
             if (Is_Antiform(OUT))
-                return FAIL("$ operator cannot bind antiforms");
+                return PANIC("$ operator cannot bind antiforms");
             Derelativize(SPARE, cast(Element*, OUT), Level_Binding(L));
             Copy_Cell(OUT, SPARE);  // !!! inefficient
             break;
@@ -688,7 +688,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     //=//// WORD! //////////////////////////////////////////////////////////=//
     //
-    // A plain word tries to fetch its value through its binding.  It fails
+    // A plain word tries to fetch its value through its binding.  It panics
     // if the word is unbound (or if the binding is to a variable which is
     // set, but to the antiform of blank e.g. TRASH).  Should the word
     // look up to an antiform FRAME!, then that "Action" will be invoked.
@@ -710,7 +710,7 @@ Bounce Meta_Stepper_Executor(Level* L)
       case TYPE_WORD: {
         Option(Error*) error = Trap_Get_Any_Word(OUT, CURRENT, L_binding);
         if (error)
-            return FAIL(unwrap error);  // don't conflate with function result
+            return PANIC(unwrap error);  // don't conflate with function result
 
         if (Is_Action(OUT))
             goto run_action_in_out;
@@ -718,11 +718,11 @@ Bounce Meta_Stepper_Executor(Level* L)
         if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD)) {
             if (Is_Frame(OUT))
                 goto run_action_in_out;
-            return FAIL("Leading slash means execute FRAME! or ACTION! only");
+            return PANIC("Leading slash means execute FRAME! or ACTION! only");
         }
 
         if (Any_Vacancy(stable_OUT))  // checked second
-            return FAIL(Error_Bad_Word_Get(CURRENT, OUT));
+            return PANIC(Error_Bad_Word_Get(CURRENT, OUT));
 
         goto lookahead; }
 
@@ -786,7 +786,7 @@ Bounce Meta_Stepper_Executor(Level* L)
                 goto intrinsic_meta_arg_in_spare;
 
               default:
-                return FAIL("Unsupported Intrinsic parameter convention");
+                return PANIC("Unsupported Intrinsic parameter convention");
             }
 
             Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
@@ -873,10 +873,10 @@ Bounce Meta_Stepper_Executor(Level* L)
 
           case LEADING_BLANK_AND(GROUP):
             Unchain(CURRENT);
-            return FAIL("GET-GROUP! has no evaluator meaning at this time");
+            return PANIC("GET-GROUP! has no evaluator meaning at this time");
 
           default:  // it's just something like :1 or <tag>:
-            return FAIL("No current evaluation for things like :1 or <tag>:");
+            return PANIC("No current evaluation for things like :1 or <tag>:");
         }
 
         Option(Error*) error = Trap_Get_Chain_Push_Refinements(
@@ -886,13 +886,13 @@ Bounce Meta_Stepper_Executor(Level* L)
             L_binding
         );
         if (error)  // lookup failed, a GROUP! in path threw, etc.
-            return FAIL(unwrap error);  // don't definitional error for now
+            return PANIC(unwrap error);  // don't definitional error for now
 
         assert(Is_Action(OUT));
 
         if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated
             Drop_Data_Stack_To(STACK_BASE);
-            return FAIL("Use `->-` to shove left infix operands into CHAIN!s");
+            return PANIC("Use `->-` to shove left infix operands into CHAIN!s");
         }
         goto handle_action_in_out_with_refinements_pushed; }
 
@@ -931,11 +931,11 @@ Bounce Meta_Stepper_Executor(Level* L)
             L_binding
         );
         if (error)
-            return FAIL(unwrap error);
+            return PANIC(unwrap error);
 
         if (STATE == cast(StepperState, TYPE_META_WORD)) {
             if (not Is_Quoted(OUT) and not Is_Quasiform(OUT))
-                return FAIL("META-WORD! only works on quoted/quasiform");
+                return PANIC("META-WORD! only works on quoted/quasiform");
             Meta_Unquotify_Undecayed(OUT);
         }
 
@@ -1017,7 +1017,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             if (blank_at_head)
                 goto run_action_in_out;
 
-            return FAIL(Error_Action_Tuple_Raw(CURRENT));
+            return PANIC(Error_Action_Tuple_Raw(CURRENT));
         }
 
         goto lookahead; }
@@ -1108,7 +1108,7 @@ Bounce Meta_Stepper_Executor(Level* L)
                 goto handle_generic_set;
 
               default:
-                return FAIL("/a:b:c will guarantee a function call, in time");
+                return PANIC("/a:b:c will guarantee a function call, in time");
             }
             break; }
 
@@ -1127,8 +1127,8 @@ Bounce Meta_Stepper_Executor(Level* L)
         );
         if (error) {  // lookup failed, a GROUP! in path threw, etc.
             if (not slash_at_tail)
-                return FAIL(unwrap error);  // RAISE error would conflate [3]
-            return FAIL(unwrap error);  // don't RAISE error for now [4]
+                return PANIC(unwrap error);  // RAISE error would conflate [3]
+            return PANIC(unwrap error);  // don't RAISE error for now [4]
         }
 
         assert(Is_Action(OUT));
@@ -1146,7 +1146,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
         if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated [6]
             Drop_Data_Stack_To(STACK_BASE);
-            return FAIL("Use `->-` to shove left infix operands into PATH!s");
+            return PANIC("Use `->-` to shove left infix operands into PATH!s");
         }
 
         UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as error?
@@ -1199,7 +1199,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         Meta_Unquotify_Undecayed(OUT);
 
         if (Is_Ghost(OUT)) {  // even `(void):,` needs to error
-            return FAIL(Error_Need_Non_End(CURRENT));
+            return PANIC(Error_Need_Non_End(CURRENT));
         }
         else if (Is_Raised(OUT)) {
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
@@ -1221,12 +1221,12 @@ Bounce Meta_Stepper_Executor(Level* L)
         }
         else {  // assignments of /foo: or /obj.field: require action
             if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION))
-                return FAIL(
+                return PANIC(
                     "/word: and /obj.field: assignments require Action"
                 );
         }
 
-        if (Set_Var_Core_Throws(  // cheaper on fail vs. Set_Var_May_Fail()
+        if (Set_Var_Core_Throws(  // cheaper on panic vs. Set_Var_May_Panic()
             SPARE,
             GROUPS_OK,
             CURRENT,
@@ -1263,7 +1263,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             goto handle_generic_set;
 
           default:
-            return FAIL("Unknown type for use in SET-GROUP!");
+            return PANIC("Unknown type for use in SET-GROUP!");
         }
         goto lookahead; }
 
@@ -1368,7 +1368,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(CURRENT));
 
         if (Cell_Series_Len_At(CURRENT) == 0)  // not supported [1]
-            return FAIL("SET-BLOCK! must not be empty for now.");
+            return PANIC("SET-BLOCK! must not be empty for now.");
 
         const Element* tail;
         const Element* check = Cell_List_At(&tail, CURRENT);
@@ -1380,7 +1380,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
         for (; check != tail; ++check) {  // push variables first [2]
             if (Is_Quoted(check))
-                return FAIL("QUOTED? not currently permitted in SET-BLOCK!s");
+                return PANIC("QUOTED? not currently permitted in SET-BLOCK!s");
 
             Option(Heart) heart = Heart_Of(check);
 
@@ -1388,7 +1388,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
             if (heart == TYPE_FENCE) {  // [x {y}]: ... fence means eval to that
                 if (circled)
-                    return FAIL("Can only {Circle} one multi-return result");
+                    return PANIC("Can only {Circle} one multi-return result");
                 Length len_at = Cell_Series_Len_At(check);
                 if (len_at == 1) {
                     Derelativize(
@@ -1398,7 +1398,7 @@ Bounce Meta_Stepper_Executor(Level* L)
                     );
                 }
                 else  // !!! should {} be a synonym for {#} or {~} ?
-                    return FAIL("{Circle} only one element in multi-return");
+                    return PANIC("{Circle} only one element in multi-return");
 
                 circle_this = true;
                 heart = Heart_Of(CURRENT);
@@ -1416,7 +1416,7 @@ Bounce Meta_Stepper_Executor(Level* L)
                     not (single = Try_Get_Sequence_Singleheart(CURRENT))
                     or not Singleheart_Has_Leading_Blank(unwrap single)
                 ){
-                    return FAIL(
+                    return PANIC(
                         "Only leading blank CHAIN! in SET BLOCK! dialect"
                     );
                 }
@@ -1443,7 +1443,7 @@ Bounce Meta_Stepper_Executor(Level* L)
                 else {
                     Decay_If_Unstable(SPARE);
                     if (Is_Antiform(SPARE))
-                        return FAIL(Error_Bad_Antiform(SPARE));
+                        return PANIC(Error_Bad_Antiform(SPARE));
 
                     if (heart == TYPE_THE_GROUP)
                         Theify(Known_Element(SPARE));  // transfer @ decoration
@@ -1478,7 +1478,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             if (Is_Space(TOP) or Is_Quasar(TOP))  // nameless decay vs. no decay
                 continue;
 
-            return FAIL("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or ~/#");
+            return PANIC("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or ~/#");
         }
 
         level_->u.eval.stackindex_circled = circled;  // remember it
@@ -1552,7 +1552,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
             if (pack_meta_at == pack_meta_tail) {
                 if (not is_optional)
-                    return FAIL("Not enough values for required multi-return");
+                    return PANIC("Not enough values for required multi-return");
 
                 // match typical input of meta which will be Meta_Unquotify'd
                 // (special handling in TYPE_META_WORD below will actually use
@@ -1569,10 +1569,10 @@ Bounce Meta_Stepper_Executor(Level* L)
             if (var_heart == TYPE_META_WORD) {
                 if (pack_meta_at == pack_meta_tail) {  // special detection
                     Init_Nulled(SPARE);  // LIB(NULL) isn't mutable/atom
-                    Set_Var_May_Fail(var, SPECIFIED, SPARE);
+                    Set_Var_May_Panic(var, SPECIFIED, SPARE);
                     goto circled_check;
                 }
-                Set_Var_May_Fail(var, SPECIFIED, SPARE);  // is meta'd
+                Set_Var_May_Panic(var, SPECIFIED, SPARE);  // is meta'd
                 goto circled_check;
             }
 
@@ -1584,7 +1584,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             }
 
             if (Is_Raised(SPARE))  // don't pass thru raised errors if not @
-                return FAIL(Cell_Error(SPARE));
+                return PANIC(Cell_Error(SPARE));
 
             Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 
@@ -1605,7 +1605,7 @@ Bounce Meta_Stepper_Executor(Level* L)
                     SPECIFIED,
                     SPARE
                 )){
-                    return FAIL(Error_No_Catch_For_Throw(L));
+                    return PANIC(Error_No_Catch_For_Throw(L));
                 }
             }
             else
@@ -1663,13 +1663,13 @@ Bounce Meta_Stepper_Executor(Level* L)
     // it will work yet.
 
       case TYPE_FENCE:
-        return FAIL("Precise behavior of FENCE! not known yet");
+        return PANIC("Precise behavior of FENCE! not known yet");
 
 
     //=//// META-FENCE! ///////////////////////////////////////////////////=//
 
       case TYPE_META_FENCE:
-        return FAIL("Don't know what META-FENCE! is going to do yet");
+        return PANIC("Don't know what META-FENCE! is going to do yet");
 
 
     //=//// THE-XXX! //////////////////////////////////////////////////////=//
@@ -1829,7 +1829,7 @@ Bounce Meta_Stepper_Executor(Level* L)
   lookahead:
 
     if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
-        return FAIL(Error_Literal_Left_Path_Raw());
+        return PANIC(Error_Literal_Left_Path_Raw());
 
 
   //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION ///////////=//
@@ -1912,7 +1912,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         //
         assert(Not_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH));
         if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
-            return FAIL(Error_Literal_Left_Path_Raw());
+            return PANIC(Error_Literal_Left_Path_Raw());
 
         const Param* first = First_Unspecialized_Param(nullptr, infixed);
         if (Cell_Parameter_Class(first) == PARAMCLASS_SOFT) {
@@ -1976,7 +1976,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             // running a deferred operation in the same step is not an option.
             // The expression to the left must be in a GROUP!.
             //
-            return FAIL(Error_Ambiguous_Infix_Raw());
+            return PANIC(Error_Ambiguous_Infix_Raw());
         }
 
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);

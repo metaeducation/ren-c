@@ -284,7 +284,7 @@ INLINE Length Flex_Dynamic_Used(const Flex* f) {
 //=//// FLEX DATA ACCESSORS ///////////////////////////////////////////////=//
 //
 // 1. Callers like Cell_String() or Cell_Array() are expected to test for
-//    NODE_FLAG_UNREADABLE and fail before ever calling these routines.
+//    NODE_FLAG_UNREADABLE and panic before ever calling these routines.
 //
 // 2. Because these inline functions are called so often, Flex_Data_At()
 //    duplicates the code in Flex_Data() rather than call it.  Be sure
@@ -573,7 +573,7 @@ INLINE Flex* Make_Flex_Into(
 
     size_t wide = Wide_For_Flavor(flavor);
     if (cast(REBU64, capacity) * wide > INT32_MAX)
-        fail (Error_No_Memory(cast(REBU64, capacity) * wide));
+        panic (Error_No_Memory(cast(REBU64, capacity) * wide));
 
     Flex* s = cast(Flex*, Prep_Stub(flags, preallocated));
 
@@ -588,7 +588,7 @@ INLINE Flex* Make_Flex_Into(
             Set_Stub_Unreadable(s);
             GC_Kill_Stub(s);
 
-            fail (Error_No_Memory(capacity * wide));
+            panic (Error_No_Memory(capacity * wide));
         }
 
       #if DEBUG_COLLECT_STATS

@@ -343,7 +343,7 @@ DECLARE_NATIVE(TO_TEXT)
         return Init_Any_String(
             OUT,
             TYPE_TEXT,
-            Append_UTF8_May_Fail(
+            Append_UTF8_May_Panic(
                 nullptr,
                 cs_cast(at),
                 size,
@@ -728,7 +728,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 //
 //  Try_Get_Series_Index_From_Picker: C
 //
-// Will fail if the picker is outright invalid, but return false if it should
+// Will panic if the picker is outright invalid, but return false if it should
 // be NULL on the last step of a PICK.
 //
 bool Try_Get_Series_Index_From_Picker(
@@ -737,7 +737,7 @@ bool Try_Get_Series_Index_From_Picker(
     const Element* picker
 ){
     if (not (Is_Integer(picker) or Is_Decimal(picker)))  // !!! why DECIMAL! ?
-        fail (Error_Bad_Pick_Raw(picker));
+        panic (Error_Bad_Pick_Raw(picker));
 
     REBINT n = Int32(picker);
     if (n == 0)
@@ -822,7 +822,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         if (not arg and len == 0) {
             if (id == SYM_APPEND) // append always returns head
                 VAL_INDEX_RAW(v) = 0;
-            return COPY(v);  // don't fail on read only if would be a no-op
+            return COPY(v);  // don't panic on read only if would be a no-op
         }
 
         Flags flags = 0;
@@ -847,7 +847,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             // tolerated
         }
         else if (Any_List(unwrap arg))
-            return FAIL(PARAM(VALUE));  // no `append "abc" [d e]` w/o SPREAD
+            return PANIC(PARAM(VALUE));  // no `append "abc" [d e]` w/o SPREAD
         else
             assert(not Is_Antiform(unwrap arg));
 
@@ -866,7 +866,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
         if (Is_Antiform(ARG(PATTERN)))
-            return FAIL(PARAM(PATTERN));
+            return PANIC(PARAM(PATTERN));
 
         UNUSED(PARAM(SERIES));
 
@@ -881,7 +881,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         if (Bool_ARG(SKIP)) {
             skip = VAL_INT32(ARG(SKIP));
             if (skip == 0)
-                return FAIL(PARAM(SKIP));
+                return PANIC(PARAM(SKIP));
         }
         else
             skip = 1;
@@ -951,7 +951,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Value* arg = ARG_N(2);
 
         if (Type_Of(v) != Type_Of(arg))
-            return FAIL(Error_Not_Same_Type_Raw());
+            return PANIC(Error_Not_Same_Type_Raw());
 
         String* v_str = Cell_String_Ensure_Mutable(v);
         String* arg_str = Cell_String_Ensure_Mutable(arg);
@@ -1037,7 +1037,7 @@ IMPLEMENT_GENERIC(AS, Any_String)
 
     Option(Error*) e = Trap_Any_String_As(OUT, any_string, as);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }
@@ -1087,11 +1087,11 @@ IMPLEMENT_GENERIC(POKE_P, Any_String)
     const Element* picker = Element_ARG(PICKER);
     REBINT n;
     if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
-        return FAIL(Error_Out_Of_Range(picker));
+        return PANIC(Error_Out_Of_Range(picker));
 
     Option(const Value*) opt_poke = Optional_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     Codepoint c;
@@ -1102,10 +1102,10 @@ IMPLEMENT_GENERIC(POKE_P, Any_String)
         c = Int32(poke);
     }
     else  // CHANGE is a better route for splicing/removal/etc.
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
 
     if (c == 0)
-        return FAIL(Error_Illegal_Zero_Byte_Raw());
+        return PANIC(Error_Illegal_Zero_Byte_Raw());
 
     String* s = Cell_String_Ensure_Mutable(any_string);
     Set_Char_At(s, n, c);
@@ -1122,7 +1122,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     Ensure_Mutable(v);
 
     if (Bool_ARG(DEEP))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     REBLEN len;
     if (Bool_ARG(PART)) {
@@ -1310,10 +1310,10 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     UNUSED(str);  // we use the Cell_Utf8_At() accessor, which is const
 
     if (Bool_ARG(ALL))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     if (Bool_ARG(COMPARE))
-        return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
+        return PANIC(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Copy_Cell(OUT, v);  // before index modification
     REBLEN limit = Part_Len_May_Modify_Index(v, ARG(PART));
@@ -1328,7 +1328,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     // that means every codepoint is one byte.
     //
     if (len != size)
-        return FAIL("Non-ASCII string sorting temporarily unavailable");
+        return PANIC("Non-ASCII string sorting temporarily unavailable");
 
     REBLEN skip;
     if (not Bool_ARG(SKIP))
@@ -1336,7 +1336,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     else {
         skip = Get_Num_From_Arg(ARG(SKIP));
         if (skip <= 0 or len % skip != 0 or skip > len)
-            return FAIL(PARAM(SKIP));
+            return PANIC(PARAM(SKIP));
     }
 
     // Use fast quicksort library function:
@@ -1379,7 +1379,7 @@ DECLARE_NATIVE(ENCODE_UTF_8) {
     Value* arg = ARG(ARG);
 
     if (Cell_Series_Len_At(ARG(OPTIONS)))
-        return FAIL("UTF-8 Encoder Options not Designed Yet");
+        return PANIC("UTF-8 Encoder Options not Designed Yet");
 
     Size utf8_size;
     Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
@@ -1413,7 +1413,7 @@ DECLARE_NATIVE(DECODE_UTF_8)
     Element* blob = Element_ARG(BLOB);
 
     if (Cell_Series_Len_At(ARG(OPTIONS)))
-        return FAIL("UTF-8 Decoder Options not Designed Yet");
+        return PANIC("UTF-8 Decoder Options not Designed Yet");
 
     Heart heart = TYPE_TEXT;  // should options let you specify? [1]
 
@@ -1422,7 +1422,7 @@ DECLARE_NATIVE(DECODE_UTF_8)
     return Init_Any_String(
         OUT,
         heart,
-        Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
+        Append_UTF8_May_Panic(nullptr, cs_cast(at), size, STRMODE_NO_CR)
     );
 }
 

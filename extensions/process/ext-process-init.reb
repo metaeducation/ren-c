@@ -29,7 +29,7 @@ Rebol [
         ]
         block! [
             if empty? command [  ; !!! should this be a no-op?
-                fail "Empty argv[] block passed to CALL"
+                panic "Empty argv[] block passed to CALL"
             ]
 
             ; We COMPOSE the command for convenience.  If you use WORD!s like
@@ -48,11 +48,11 @@ Rebol [
                     tuple! [to text! arg]
                     integer! [to text! arg]
 
-                    fail ["invalid item in argv[] block for CALL:" arg]
+                    panic ["invalid item in argv[] block for CALL:" arg]
                 ]
             ]
         ]
-        fail  ; unreachable (parameter was typechecked)
+        panic  ; unreachable (parameter was typechecked)
     ]
 ]
 
@@ -122,7 +122,7 @@ parse-command-to-argv*: func [
             opt some space
         ]
     ] except [
-        fail [
+        panic [
             "Could not parse command line into argv[] block." LF
             "Use CALL:SHELL to defer the shell to parse, or if you believe"
             "the command line is valid then help fix PARSE-COMMAND-TO-ARGV*"
@@ -181,7 +181,7 @@ browse: func [
         ]
         return ~
     ]
-    fail "Could not open web browser"
+    panic "Could not open web browser"
 ]
 
 export [browse call call*]

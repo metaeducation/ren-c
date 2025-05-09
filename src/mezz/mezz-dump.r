@@ -70,7 +70,7 @@ bind construct [
                 enablements.(prefix): item
             ]
 
-            fail:blame [
+            panic:blame [
                 "Item not TEXT!, INTEGER!, WORD!, TUPLE!, PATH!, GROUP!:" :item
             ] $value
         ]
@@ -229,12 +229,12 @@ summarize-obj: func [
 
                 text! [
                     if wild [
-                        fail "Wildcard DUMP-OBJ functionality not implemented"
+                        panic "Wildcard DUMP-OBJ functionality not implemented"
                     ]
                     if not find str pattern [continue]
                 ]
 
-                fail @pattern
+                panic @pattern
             ]
 
             let desc: description-of noantiform get:any $val

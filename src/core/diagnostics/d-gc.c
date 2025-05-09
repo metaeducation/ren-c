@@ -32,7 +32,7 @@
 
 #include "sys-core.h"
 
-#undef fail  /* cannot fail in this file, use assert() and crash() instead */
+#undef panic  /* cannot panic in this file, use assert() and crash() instead */
 
 #if RUNTIME_CHECKS
 

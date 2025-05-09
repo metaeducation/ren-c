@@ -258,7 +258,7 @@ export analyse: context [
                     ; ... ? (not a native)
                     ;
                     if not set-word? proto-parser.data.1 [
-                        fail ["UNRECOGNIZED PROTO:" mold proto-parser.data]
+                        panic ["UNRECOGNIZED PROTO:" mold proto-parser.data]
                     ]
                     any [
                         (proto-parser.proto-id =

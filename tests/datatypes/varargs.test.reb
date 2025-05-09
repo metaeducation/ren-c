@@ -141,7 +141,7 @@
         variadic2: func [return: [text!] v [any-value? <variadic>]] [
            log [<1> take v]
            log [<2> take v]
-           if not tail? v [fail "THEN SHOULD APPEAR AS IF IT IS VARARGS END"]
+           if not tail? v [panic "THEN SHOULD APPEAR AS IF IT IS VARARGS END"]
            return "returned"
        ]
        result: variadic2 "a" "b" then t -> [log [<t> t] "then"]

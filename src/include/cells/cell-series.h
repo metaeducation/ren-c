@@ -8,7 +8,7 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     );
     UNUSED(heart);
     if (Not_Node_Readable(CELL_SERIESLIKE_NODE(v)))
-        fail (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     return cast(Flex*, CELL_SERIESLIKE_NODE(v));
 }
@@ -67,7 +67,7 @@ INLINE REBLEN VAL_INDEX_STRINGLIKE_OK(const Cell* v) {
     assert(Cell_Has_Node1(v));
     REBIDX i = VAL_INDEX_RAW(v);
     if (i < 0 or i > Cell_Series_Len_Head(v))
-        fail (Error_Index_Out_Of_Range_Raw());
+        panic (Error_Index_Out_Of_Range_Raw());
     return i;
 }
 

@@ -263,7 +263,7 @@ INLINE void *Alloc_Pooled(PoolId pool_id) {
         return node;
 
     Pool* pool = &g_mem.pools[pool_id];
-    fail (Error_No_Memory(pool->wide * pool->num_units_per_segment));
+    panic (Error_No_Memory(pool->wide * pool->num_units_per_segment));
 }
 
 #define Alloc_Stub() ( \
@@ -314,7 +314,7 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
 
     if (out_of_memory) {
         //
-        // We don't want Free_Node to fail with an "out of memory" error, so
+        // We don't want Free_Node to panic with an "out of memory" error, so
         // just fall back to the release build behavior in this case.
         //
         unit->next_if_free = pool->first;

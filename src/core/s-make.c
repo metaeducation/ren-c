@@ -102,7 +102,7 @@ String* Append_Codepoint(String* dst, Codepoint c)
 {
     if (c == '\0') {
         assert(!"Zero byte being added to string.");  // caller should handle
-        fail (Error_Illegal_Zero_Byte_Raw());  // don't crash release build
+        panic (Error_Illegal_Zero_Byte_Raw());  // don't crash release build
     }
 
     assert(c <= MAX_UNI);
@@ -134,7 +134,7 @@ String* Append_Codepoint(String* dst, Codepoint c)
 String* Make_Codepoint_String(Codepoint c)
 {
     if (c == '\0')
-        fail (Error_Illegal_Zero_Byte_Raw());
+        panic (Error_Illegal_Zero_Byte_Raw());
 
     Size size = Encoded_Size_For_Codepoint(c);
     String* s = Make_String(size);
@@ -275,7 +275,7 @@ void Append_Int_Pad(String* dst, REBINT num, REBINT digs)
 
 
 //
-//  Append_UTF8_May_Fail: C
+//  Append_UTF8_May_Panic: C
 //
 // Append UTF-8 data to a String Flex (or create new one)
 //
@@ -290,7 +290,7 @@ void Append_Int_Pad(String* dst, REBINT num, REBINT digs)
 //   just how many bytes.  The higher level concept of "length" gets stored
 //   in String.misc.num_codepoints
 //
-String* Append_UTF8_May_Fail(
+String* Append_UTF8_May_Panic(
     String* dst,  // if nullptr, that means make a new string
     const char *utf8,
     Size size,
@@ -309,9 +309,9 @@ String* Append_UTF8_May_Fail(
         if (c >= 0x80) {
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &bytes_left);
             if (e)
-                fail (unwrap e);
+                panic (unwrap e);
         }
-        else if (Should_Skip_Ascii_Byte_May_Fail(
+        else if (Should_Skip_Ascii_Byte_May_Panic(
             bp,
             strmode,
             c_cast(Byte*, utf8)
@@ -386,11 +386,11 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             break;
 
           case TYPE_QUASIFORM:
-            fail (Error_Bad_Value(val));
+            panic (Error_Bad_Value(val));
 
           case TYPE_INTEGER:
             Expand_Flex_Tail(buf, 1);
-            *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can fail()
+            *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can panic()
             break;
 
           case TYPE_BLOB: {
@@ -415,7 +415,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             break; }
 
           default:
-            fail (Error_Bad_Value(val));
+            panic (Error_Bad_Value(val));
         }
 
         tail = Flex_Used(buf);

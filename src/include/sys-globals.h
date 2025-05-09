@@ -53,7 +53,7 @@ PVAR Codepoint *Upper_Cases;
 PVAR Codepoint *Lower_Cases;
 
 #if DEBUG_HAS_PROBE
-    PVAR bool PG_Probe_Failures;  // helpful especially for boot crashes
+    PVAR bool g_probe_panics;  // helpful especially for boot crashes
 #endif
 
 #ifdef INCLUDE_CALLGRIND_NATIVE
@@ -86,7 +86,7 @@ PVAR WildTwo g_bounce_redo_unchecked;
 PVAR WildTwo g_bounce_redo_checked;
 PVAR WildTwo g_bounce_downshifted;
 PVAR WildTwo g_bounce_thrown;
-PVAR WildTwo g_bounce_fail;
+PVAR WildTwo g_bounce_panic;
 PVAR WildTwo g_bounce_continuation;
 PVAR WildTwo g_bounce_delegation;
 PVAR WildTwo g_bounce_suspend;

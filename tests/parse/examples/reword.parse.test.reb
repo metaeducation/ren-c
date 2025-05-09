@@ -33,7 +33,7 @@ bind construct [
                 prefix: [_ (void) | any (delimiter-types)]
                 suffix: [_ (void) | any (delimiter-types)]
             ] else [
-                fail ["Invalid :ESCAPE delimiter block" escape]
+                panic ["Invalid :ESCAPE delimiter block" escape]
             ]
         ]
     ] else [
@@ -61,7 +61,7 @@ bind construct [
     let keyword-suffix-rules: collect [
         for-each [keyword value] values [
             if not match keyword-types keyword [
-                fail ["Invalid keyword type:" keyword]
+                panic ["Invalid keyword type:" keyword]
             ]
 
             keep:line compose [
@@ -106,7 +106,7 @@ bind construct [
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    parse-thru // [source rule :case case_REWORD] else [fail]  ; why fail?
+    parse-thru // [source rule :case case_REWORD] else [panic]  ; why panic?
     return out
 ]
 ok)

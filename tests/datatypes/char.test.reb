@@ -232,7 +232,7 @@
     count-up 'size 4 wrap [
         c: codepoints.(size)
         if size != length of as blob! c [
-            fail "test character doesn't match expected size"
+            panic "test character doesn't match expected size"
         ]
         count-up 'len 64 wrap [
             s: copy ""
@@ -250,10 +250,10 @@
                 ]
                 s.(i): c
                 if len != length of s [
-                    fail ["Length not" len "for" mold s]
+                    panic ["Length not" len "for" mold s]
                 ]
             ]
-            if not s = e [fail ["Mismatch:" mold s "=>" mold e]]
+            if not s = e [panic ["Mismatch:" mold s "=>" mold e]]
         ]
         ok
     ]

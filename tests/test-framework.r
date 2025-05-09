@@ -83,7 +83,7 @@ run-single-test: func [
         ]
 
         '~[]~ = result [
-            "test returned empty pack ~[]~ antiform"  ; UNMETA fails
+            "test returned empty pack ~[]~ antiform"  ; UNMETA panics
         ]
         (elide if pack? ^result [result: first unquasi result])
 
@@ -137,7 +137,7 @@ run-test-cluster: func [
     ;
     let isolate: module void inside lib '[
         print: lambda [x] [
-            fail:blame "Don't use PRINT in tests" $x
+            panic:blame "Don't use PRINT in tests" $x
         ]
     ]
 
@@ -165,13 +165,13 @@ run-test-cluster: func [
         opt [
             expected-id: quasiform! [(expected-id: unquasi expected-id)
                 '!! ahead group!
-                | (fail "~error-id~ must be followed by !! and a GROUP!")
+                | (panic "~error-id~ must be followed by !! and a GROUP!")
             ]
         ]
         let group: (~)
         [
             group: group!
-            | (fail "GROUP! expected in tests")
+            | (panic "GROUP! expected in tests")
         ]
         (
             wrap* isolate group  ; gather top-level declarations
@@ -224,7 +224,7 @@ process-tests: func [
                 let [# collected]: module void compose:deep [collect [
                     let /keep-test: adapt keep/ [
                         if not block? :value [
-                            fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"
+                            panic "KEEP-TEST takes BLOCK! (acts as GROUP!)"
                         ]
                         value: quote as group! value
                     ]
@@ -347,7 +347,7 @@ export do-recover: func [
                                 "skipped" <end>
                                 (skipped: me + 1)
                                     |
-                                (fail "invalid test result")
+                                (panic "invalid test result")
                             ]
                         )
                     ]
@@ -357,14 +357,14 @@ export do-recover: func [
                     (last-vector: null)
                 ]
                     |
-                (fail [
+                (panic [
                     "Log file parse problem, see"
                     mold:limit as text! position 240
                 ])
             ]
             <end>
         ] except [
-            fail "do-recover log file parsing problem"
+            panic "do-recover log file parsing problem"
         ]
         last-vector
         [# test-sources]: find-last test-sources last-vector

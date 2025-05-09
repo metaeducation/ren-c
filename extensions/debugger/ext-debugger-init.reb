@@ -125,13 +125,13 @@ backtrace*: func [
 
     if get-frame [
         any [limit brief] then [
-            fail "Can't use :LIMIT or :BRIEF unless getting a list of frames"
+            panic "Can't use :LIMIT or :BRIEF unless getting a list of frames"
         ]
 
         ; See notes on handling of breakpoint below for why 0 is accepted.
         ;
         if all [integer? level | level < 0] [
-            fail ["Invalid backtrace level" level]
+            panic ["Invalid backtrace level" level]
         ]
     ]
 
@@ -144,11 +144,11 @@ backtrace*: func [
         ]
         integer? limit [
             if limit < 0 [
-                fail ["Invalid limit of frames" frames]
+                panic ["Invalid limit of frames" frames]
             ]
             limit + 1  ; add one for ellipsis
         ]
-        fail
+        panic
     ]
 
     let row: 0  ; row we're on (incl. pending frames and maybe ellipsis)
@@ -342,11 +342,11 @@ debug: func [
         [~null~ integer! frame! block!]
 ][
     if not integer? :value [
-        fail "Since switching to usermode, for now DEBUG only takes INTEGER!"
+        panic "Since switching to usermode, for now DEBUG only takes INTEGER!"
     ]
 
     frame: backtrace* debug-console-skin.base-frame value else [
-        fail ["FRAME! does not exist for" value]
+        panic ["FRAME! does not exist for" value]
     ]
 
     debug-console-skin.focus-frame: frame

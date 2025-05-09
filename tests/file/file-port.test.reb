@@ -16,7 +16,7 @@
 [
     (delete-recurse: func [f [file!]] [
         if not exists? f [
-            fail [f "does not exist"]
+            panic [f "does not exist"]
         ]
         if not dir? f [
             delete f

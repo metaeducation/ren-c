@@ -391,7 +391,7 @@ INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
         binding = patch_context;
     }
     else if (Is_Stub_Let(binding))
-        fail ("LET variables have no context at this time");
+        panic ("LET variables have no context at this time");
 
     return binding;
 }
@@ -464,35 +464,35 @@ INLINE Option(const Value*) Lookup_Word(
 //    because one instance is.  This is not one of the flags included in the
 //    CELL_MASK_COPY, so it shouldn't be able to leak out of a cell.
 //
-INLINE Value* Lookup_Mutable_Word_May_Fail(
+INLINE Value* Lookup_Mutable_Word_May_Panic(
     const Element* any_word,
     Context* context
 ){
     REBLEN index;
     Stub* s = maybe Get_Word_Container(&index, any_word, context);
     if (not s)
-        fail (Error_Not_Bound_Raw(any_word));
+        panic (Error_Not_Bound_Raw(any_word));
 
     Value* var;
     if (Is_Stub_Let(s) or Is_Stub_Patch(s))
         var = Stub_Cell(s);
     else {
         VarList* c = cast(VarList*, s);
-        Fail_If_Read_Only_Flex(c);  // check lock bits [1]
+        Panic_If_Read_Only_Flex(c);  // check lock bits [1]
         var = Varlist_Slot(c, index);
     }
 
     if (Get_Cell_Flag(var, PROTECTED))  // protect is per-cell [2]
-        fail (Error_Protected_Word_Raw(Cell_Word_Symbol(any_word)));
+        panic (Error_Protected_Word_Raw(Cell_Word_Symbol(any_word)));
 
     return var;
 }
 
-INLINE Sink(Value) Sink_Word_May_Fail(
+INLINE Sink(Value) Sink_Word_May_Panic(
     const Element* any_word,
     Context* context
 ){
-    Value* var = Lookup_Mutable_Word_May_Fail(any_word, context);
+    Value* var = Lookup_Mutable_Word_May_Panic(any_word, context);
     return var;
 }
 

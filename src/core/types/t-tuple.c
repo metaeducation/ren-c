@@ -60,14 +60,14 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         const Byte* ap = String_Head(spelling);
         Size size = String_Size(spelling);  // UTF-8 len
         if (size & 1)
-            return FAIL(arg);  // must have even # of chars
+            return PANIC(arg);  // must have even # of chars
         size /= 2;
         if (size > MAX_TUPLE)
-            return FAIL(arg);  // valid even for UTF-8
+            return PANIC(arg);  // valid even for UTF-8
         for (alen = 0; alen < size; alen++) {
             Byte decoded;
             if (not (ap = maybe Try_Scan_Hex2(&decoded, ap)))
-                return FAIL(arg);
+                return PANIC(arg);
             *vp++ = decoded;
         }
         Init_Tuple_Bytes(OUT, buf, size);
@@ -123,7 +123,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
     Byte buf[MAX_TUPLE];
 
     if (len > MAX_TUPLE or not Try_Get_Sequence_Bytes(buf, sequence, len))
-        return FAIL("Legacy TUPLE! math: only short all-integer sequences");
+        return PANIC("Legacy TUPLE! math: only short all-integer sequences");
 
     Byte* vp = buf;
 
@@ -160,7 +160,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
             alen > MAX_TUPLE
             or not Try_Get_Sequence_Bytes(abuf, arg, alen)
         ){
-            return FAIL("Legacy TUPLE! math: only short all-integer sequences");
+            return PANIC("Legacy TUPLE! math: only short all-integer sequences");
         }
 
         // Historical behavior: 1.1.1 + 2.2.2.2 => 3.3.3.2
@@ -174,7 +174,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         ap = abuf;
     }
     else
-        return FAIL(Error_Math_Args(TYPE_TUPLE, verb));
+        return PANIC(Error_Math_Args(TYPE_TUPLE, verb));
 
     REBLEN temp = len;
     for (; temp > 0; --temp, ++vp) {
@@ -190,7 +190,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
           case SYM_DIVIDE:
             if (Is_Decimal(arg) || Is_Percent(arg)) {
                 if (dec == 0.0)
-                    return FAIL(Error_Zero_Divide_Raw());
+                    return PANIC(Error_Zero_Divide_Raw());
 
                 // !!! After moving all the ROUND service routines to
                 // talk directly to ROUND frames, cases like this that
@@ -210,14 +210,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
             }
             else {
                 if (a == 0)
-                    return FAIL(Error_Zero_Divide_Raw());
+                    return PANIC(Error_Zero_Divide_Raw());
                 v /= a;
             }
             break;
 
           case SYM_REMAINDER:
             if (a == 0)
-                return FAIL(Error_Zero_Divide_Raw());
+                return PANIC(Error_Zero_Divide_Raw());
             v %= a;
             break;
 
@@ -431,7 +431,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
 
     Option(Error*) e = Trap_Alias_Any_Sequence_As(OUT, seq, as);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }
@@ -456,7 +456,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
 
     if (not deep or Wordlike_Cell(seq)) {  // wordlike is /A or :B etc
         if (part)
-            return FAIL(part);
+            return PANIC(part);
         return COPY(seq);
     }
 
@@ -501,7 +501,7 @@ IMPLEMENT_GENERIC(PICK, Any_Sequence)
         n = Int32(picker) - 1;
     }
     else
-        return FAIL(picker);
+        return PANIC(picker);
 
     if (n < 0 or n >= Cell_Sequence_Len(seq))
         return RAISE(Error_Bad_Pick_Raw(picker));
@@ -583,7 +583,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
     Value* part = ARG(PART);
 
     if (Bool_ARG(SECURE) or Bool_ARG(PART))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
@@ -613,12 +613,12 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Sequence)
 
     Value* arg2 = ARG(VALUE2);
     if (not Is_Integer(arg2))
-        return FAIL(PARAM(VALUE2));  // formerly supported decimal/percent
+        return PANIC(PARAM(VALUE2));  // formerly supported decimal/percent
 
     return rebDelegate(
         "join type of", seq1, "map-each 'i", seq1, "[",
             arg2, "* match integer! i else [",
-                "fail -[Can't multiply sequence unless all integers]-"
+                "panic -[Can't multiply sequence unless all integers]-"
             "]",
         "]"
     );

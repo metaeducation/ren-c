@@ -223,7 +223,7 @@ help-value: func [
         raised? ^atom' ['raised!]
 
         antiform? ^atom' [
-            fail "Invalid Antiform Heart Found, Please Report:" @atom'
+            panic "Invalid Antiform Heart Found, Please Report:" @atom'
         ]
     ] then antitype -> [
         let heart: reify heart of atom'
@@ -321,7 +321,7 @@ help: func [
 
     if web [
         if not word? topic [
-            fail "HELP:WEB only works on WORD! at this time"
+            panic "HELP:WEB only works on WORD! at this time"
         ]
 
         let string: to text! topic
@@ -567,7 +567,7 @@ require-commit: func [
         let date: select c 'date
         system.build < date
 
-        fail [
+        panic [
             "This script needs a build newer or equal to" date
             "so run `upgrade`"
         ]

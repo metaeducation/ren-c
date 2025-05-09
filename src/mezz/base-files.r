@@ -218,7 +218,7 @@ split-path: func [  ; /FILE used in bootstrap vs. multi-return
         all [
             not relax
             find [%. %..] filename
-            fail ". and .. are invalid filenames"
+            panic ". and .. are invalid filenames"
         ]
     ]
     return pack [directory filename]

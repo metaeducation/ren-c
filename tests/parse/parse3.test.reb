@@ -63,7 +63,7 @@
         parse3 (append copy "" make-char n - 1) [
             c: any-char <end>
         ]
-        if c != make-char n - 1 [fail "Char didn't match"]
+        if c != make-char n - 1 [panic "Char didn't match"]
     ]
     ok
 )]
@@ -662,7 +662,7 @@
             remove one
             insert ("-")
         ]]
-        if sub != copy:part t n [fail "Incorrect Replacement"]
+        if sub != copy:part t n [panic "Incorrect Replacement"]
     ]
     ok
 )]

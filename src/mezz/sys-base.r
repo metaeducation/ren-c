@@ -76,7 +76,7 @@ make-quit: lambda [
             ]
         ]
         if not integer? ^result [
-            fail // [
+            panic // [
                 "QUIT without :VALUE accepts INTEGER! exit status only"
                 :blame $result
             ]
@@ -155,7 +155,7 @@ module: func [
             spec.options [~null~ block!]
         ][
             if not (match:meta inside [] types get inside [] var) [
-                fail ["Module" var "must be" mold types "not" @(reify get var)]
+                panic ["Module" var "must be" mold types "not" @(reify get var)]
             ]
         ]
 
@@ -205,7 +205,7 @@ module: func [
     ]
 
     mod.quit: func [atom] [
-        fail // [
+        panic // [
             "Module finished init, no QUIT (do you want SYS.UTIL/EXIT?)"
             :blame $atom
         ]
@@ -227,7 +227,7 @@ module: func [
 ; IMPORT* command.  This includes:
 ;
 ; * Changing the working directory to match the file path (or URL "path") of a
-;   script, and restoring the prior path on completion of failure
+;   script, and restoring the prior path on completion of panic
 ;
 ; * Isolating the executed code into a MODULE! so that it doesn't leak into
 ;   the caller's context.

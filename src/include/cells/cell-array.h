@@ -21,7 +21,7 @@ INLINE const Source* Cell_Array(const Cell* c) {
     const Node* series = CELL_SERIESLIKE_NODE(c);
     assert(Is_Node_A_Stub(series));  // not a pairing arraylike!
     if (Not_Node_Readable(series))
-        fail (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     return c_cast(Source*, series);
 }
@@ -37,7 +37,7 @@ INLINE const Source* Cell_Array(const Cell* c) {
 // of the word AT with a missing index is a hint that the index is coming
 // from the VAL_INDEX() of the value itself.
 //
-// IMPORTANT: This routine will trigger a failure if the array index is out
+// IMPORTANT: This routine will trigger a panic if the array index is out
 // of bounds of the data.  If a function can deal with such out of bounds
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
@@ -57,7 +57,7 @@ INLINE const Element* Cell_List_Len_At(
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's a series
     Length len = Array_Len(arr);
     if (i < 0 or i > len)
-        fail (Error_Index_Out_Of_Range_Raw());
+        panic (Error_Index_Out_Of_Range_Raw());
     if (len_at_out)  // inlining should remove this if() for Cell_List_At()
         *(unwrap len_at_out) = len - i;
     return Array_At(arr, i);
@@ -79,7 +79,7 @@ INLINE const Element* Cell_List_At(
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's arraylike
     Length len = Array_Len(arr);
     if (i < 0 or i > len)
-        fail (Error_Index_Out_Of_Range_Raw());
+        panic (Error_Index_Out_Of_Range_Raw());
     const Element* at = Array_At(arr, i);
     if (tail_out)  // inlining should remove this if() for no tail
         *(unwrap tail_out) = at + (len - i);

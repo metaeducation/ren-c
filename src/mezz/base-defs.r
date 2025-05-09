@@ -177,7 +177,7 @@ each: quote/
     <local> p num-quotes result
 ][
     if not p: first words of f [
-        fail ["REQUOTE must have an argument to process"]
+        panic ["REQUOTE must have an argument to process"]
     ]
 
     num-quotes: quotes of f.(p)
@@ -234,7 +234,7 @@ an: lambda [
     "Prepends the correct 'a' or 'an' to a string, based on leading character"
     value <local> s
 ][
-    if null? value [fail @value]
+    if null? value [panic @value]
     head of insert (s: form value) either (find "aeiou" s.1) ["an "] ["a "]
 ]
 
@@ -264,7 +264,7 @@ print: func [
 ][
     if char? line [
         if line <> newline [
-            fail "PRINT only allows CHAR! of newline (see WRITE-STDOUT)"
+            panic "PRINT only allows CHAR! of newline (see WRITE-STDOUT)"
         ]
         write-stdout line
         return ~

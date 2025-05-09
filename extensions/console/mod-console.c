@@ -237,7 +237,7 @@ DECLARE_NATIVE(CONSOLE)
     switch (rebUnboxInteger("case [",
         "unset? $state [0]",  // initial entry
         "state = 'running-request [1]",
-        "fail -[Invalid CONSOLE state]-",
+        "panic -[Invalid CONSOLE state]-",
     "]")){
       case 0:
         goto initial_entry;
@@ -292,7 +292,7 @@ DECLARE_NATIVE(CONSOLE)
     // 2. If the CONSOLE* function has any of its own implementation that
     //    could raise an error (or act as an uncaught throw) it *should* be
     //    returned as a BLOCK!.  This way the "console skin" can be reset to
-    //    the default.  If CONSOLE* itself fails (e.g. a typo in the
+    //    the default.  If CONSOLE* itself panics (e.g. a typo in the
     //    implementation) there's probably not much use in trying again...but
     //    give it a chance rather than just crash.  Pass it back something
     //    that looks like an instruction it might have generated (a BLOCK!)
@@ -312,7 +312,7 @@ DECLARE_NATIVE(CONSOLE)
             "skin"
     );
 
-    if (error) {  // failure happened in CONSOLE* code itself [2]
+    if (error) {  // panic happened in CONSOLE* code itself [2]
         if (rebUnboxLogic("no? can-recover"))
             return rebDelegate("crash @", rebR(error));
 
@@ -348,7 +348,7 @@ DECLARE_NATIVE(CONSOLE)
     //        metaresult: ^(print "hi")
     //
     //    That might be a nice idea, but as it turns out there's no mechanism
-    //    for rescuing abrupt failures in the API...and I'm not entirely sure
+    //    for rescuing abrupt panics in the API...and I'm not entirely sure
     //    what a good version of that would wind up looking like.  Internal
     //    natives use DISPATCHER_CATCHES but it is very easy to screw it up or
     //    overlook it, and we don't have a way to tunnel that value into a

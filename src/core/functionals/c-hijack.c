@@ -175,7 +175,7 @@ Bounce Unimplemented_Dispatcher(Level* const L) {
     assert(Get_Stub_Flag(details, DYNAMIC));  // but all details are dynamic
     UNUSED(details);
 
-    return FAIL("FRAME! hasn't been associated with code, or HIJACK'd VOID");
+    return PANIC("FRAME! hasn't been associated with code, or HIJACK'd VOID");
 }
 
 
@@ -310,7 +310,7 @@ DECLARE_NATIVE(HIJACK)
     if (opt_hijacker) {
         Phase* hijacker = Cell_Frame_Phase(unwrap opt_hijacker);
         if (victim == hijacker)
-            return FAIL("Cannot HIJACK function with itself");  // right?
+            return PANIC("Cannot HIJACK function with itself");  // right?
     }
 
     Option(VarList*) adjunct = Misc_Phase_Adjunct(victim);

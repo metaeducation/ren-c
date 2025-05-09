@@ -79,7 +79,7 @@
             if blank? item [continue]
             assert [any [quoted? item, quasi? item, bindable? item]]
             if (degrade sigil) <> sigil of item [
-                fail [mold item]
+                panic [mold item]
             ]
         ]
     ]

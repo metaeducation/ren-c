@@ -15,7 +15,7 @@
         for-each 'x reduce [init condition iteration] [
             if not block? x [continue]
             let w: collect-words:deep:set x
-            if not empty? intersect w [count result] [ fail [
+            if not empty? intersect w [count result] [ panic [
                 "count: and result: set-words aren't allowed in" mold x
             ]]
             append words w

@@ -29,7 +29,7 @@
         mode: #save
         return pack [parse input [collect [
             some [
-                mode: ['<K> (#keep) | '<S> (#save) | tag! (fail "BAD MODE")]
+                mode: ['<K> (#keep) | '<S> (#save) | tag! (panic "BAD MODE")]
                 |
                 [',]  ; skip over commas
                 |

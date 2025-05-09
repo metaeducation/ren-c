@@ -63,7 +63,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         UNUSED(ARG(SOURCE));  // implied by `port`
 
         if (Bool_ARG(PART) or Bool_ARG(SEEK))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         UNUSED(Bool_ARG(STRING));  // handled in dispatcher
         UNUSED(Bool_ARG(LINES));  // handled in dispatcher
@@ -76,24 +76,24 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
             //
             DWORD last_error = GetLastError();
             if (last_error != NO_ERROR)
-                rebFail_OS (last_error);
+                rebPanic_OS (last_error);
 
             return "~";
         }
 
         if (not OpenClipboard(nullptr))
-            return "fail -[OpenClipboard() fail while reading]-";
+            return "panic -[OpenClipboard() fail while reading]-";
 
         HANDLE h = GetClipboardData(CF_UNICODETEXT);
         if (h == nullptr) {
             CloseClipboard();
-            return "fail -[GetClipboardData() format mismatch]-";
+            return "panic -[GetClipboardData() format mismatch]-";
         }
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
         if (wide == nullptr) {
             CloseClipboard();
-            return "fail -[Couldn't GlobalLock() UCS2 clipboard data]-";
+            return "panic -[Couldn't GlobalLock() UCS2 clipboard data]-";
         }
 
         Value* str = rebTextWide(wide);
@@ -108,7 +108,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         UNUSED(ARG(DESTINATION));  // implied by `port`
 
         if (Bool_ARG(APPEND) or Bool_ARG(LINES))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         Value* data = ARG(DATA);
 
@@ -117,7 +117,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         // the length only made sense if it was a string.  Review.
         //
         if (rebNot("text?", data))
-            return FAIL(Error_Invalid_Port_Arg_Raw(data));
+            return PANIC(Error_Invalid_Port_Arg_Raw(data));
 
         // Handle :PART refinement:
         //
@@ -126,10 +126,10 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
             len = VAL_INT32(ARG(PART));
 
         if (not OpenClipboard(nullptr))
-            return "fail -[OpenClipboard() fail on clipboard write]-";
+            return "panic -[OpenClipboard() fail on clipboard write]-";
 
         if (not EmptyClipboard()) // !!! is this superfluous?
-            return "fail -[EmptyClipboard() fail on clipboard write]-";
+            return "panic -[EmptyClipboard() fail on clipboard write]-";
 
         // Clipboard wants a Windows memory handle with UCS2 data.  Allocate a
         // sufficienctly sized handle, decode Rebol STRING! into it, transfer
@@ -139,11 +139,11 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
 
         HANDLE h = GlobalAlloc(GHND, sizeof(WCHAR) * (num_wchars + 1));
         if (h == nullptr)  // per documentation, not INVALID_HANDLE_VALUE
-            return "fail -[GlobalAlloc() fail on clipboard write]-";
+            return "panic -[GlobalAlloc() fail on clipboard write]-";
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
         if (wide == nullptr)
-            return "fail -[GlobalLock() fail on clipboard write]-";
+            return "panic -[GlobalLock() fail on clipboard write]-";
 
         // Extract text as UTF-16
         //
@@ -158,7 +158,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         CloseClipboard();
 
         if (h_check == nullptr)
-            return "fail -[SetClipboardData() failed]-";
+            return "panic -[SetClipboardData() failed]-";
 
         assert(h_check == h);
 
@@ -169,7 +169,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         UNUSED(PARAM(SPEC));
 
         if (Bool_ARG(NEW) or Bool_ARG(READ) or Bool_ARG(WRITE))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         // !!! Currently just ignore (it didn't do anything)
 

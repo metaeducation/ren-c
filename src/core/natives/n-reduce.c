@@ -375,7 +375,7 @@ bool Try_Match_For_Compose(
 
     while (Cell_Series_Len_At(pattern) != 0) {
         if (Cell_Series_Len_At(pattern) != 1)
-            fail ("COMPOSE patterns only nested length 1 or 0 right now");
+            panic ("COMPOSE patterns only nested length 1 or 0 right now");
 
         if (Cell_Series_Len_At(match) == 0)
             return false;  // no nested list or item to match
@@ -391,7 +391,7 @@ bool Try_Match_For_Compose(
             continue;
         }
         if (not (Is_Tag(pattern_1) or Is_File(pattern_1)))
-            fail ("COMPOSE non-list patterns just TAG! and FILE! atm");
+            panic ("COMPOSE non-list patterns just TAG! and FILE! atm");
 
         if (Type_Of(match_1) != Type_Of(pattern_1))
             return false;
@@ -709,7 +709,7 @@ Bounce Composer_Executor(Level* const L)
         // quotedness of the apostrophe SIGIL! (e.g. that would be '' which
         // is a single-quoted apostrophe).  Probably not meaningful??
         //
-        return FAIL(
+        return PANIC(
             "COMPOSE of quoted VOIDs as quoted apostrophe SIGIL! disabled"
         );
     }
@@ -738,7 +738,7 @@ Bounce Composer_Executor(Level* const L)
         Quotify_Depth(TOP_ELEMENT, list_quote_byte / 2);  // adds to existing
     else {
         if (QUOTE_BYTE(TOP) != NOQUOTE_1)
-            return FAIL(
+            return PANIC(
                 "COMPOSE cannot quasify items not at quote level 0"
             );
         QUOTE_BYTE(TOP) = list_quote_byte;
@@ -811,7 +811,7 @@ Bounce Composer_Executor(Level* const L)
     Drop_Level(SUBLEVEL);
 
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     if (Is_Nulled(OUT)) {
         // compose:deep [a (void)/(void) b] => path makes null, vaporize it
@@ -886,7 +886,7 @@ DECLARE_NATIVE(COMPOSE2)
 
         if (Any_The_Value(pattern)) {  // @() means use pattern's binding
             if (Cell_Binding(pattern) == nullptr)
-                return FAIL("@... patterns must have bindings");
+                return PANIC("@... patterns must have bindings");
             Heart pattern_heart = Heart_Of_Builtin_Fundamental(pattern);
             HEART_BYTE(pattern) = Plainify_Any_The_Heart(pattern_heart);
         }
@@ -894,7 +894,7 @@ DECLARE_NATIVE(COMPOSE2)
             Tweak_Cell_Binding(pattern, Level_Binding(level_));
         }
         else
-            return FAIL("COMPOSE2 takes plain and @... list patterns only");
+            return PANIC("COMPOSE2 takes plain and @... list patterns only");
 
         if (Any_Word(input))
             return COPY(input);  // makes it easier to `set compose target`
@@ -932,7 +932,7 @@ DECLARE_NATIVE(COMPOSE2)
             OUT, SUBLEVEL, input, Bool_ARG(CONFLATE)
         );
         if (e)
-            return FAIL(unwrap e);
+            return PANIC(unwrap e);
     }
 
     Drop_Level(SUBLEVEL);
@@ -1010,9 +1010,9 @@ DECLARE_NATIVE(COMPOSE2)
             Copy_Cell(PUSH(), pattern_at);  // step into pattern
 
             if (not Any_List(TOP))
-                return FAIL("COMPOSE2 pattern must be composed of lists");
+                return PANIC("COMPOSE2 pattern must be composed of lists");
             if (Cell_Series_Len_At(TOP) > 1)
-                return FAIL("COMPOSE2 pattern layers must be length 1 or 0");
+                return PANIC("COMPOSE2 pattern layers must be length 1 or 0");
 
             begin_delimiter = Begin_Delimit_For_List(
                 Heart_Of_Builtin_Fundamental(TOP)
@@ -1236,7 +1236,7 @@ DECLARE_NATIVE(COMPOSE2)
         Value* eval = Data_Stack_At(Value, triples + 1);
         Offset end_offset = VAL_INT32(Data_Stack_At(Element, triples + 2));
 
-        Append_UTF8_May_Fail(
+        Append_UTF8_May_Panic(
             mo->string,
             cast(const char*, head) + at_offset,
             start_offset - at_offset,
@@ -1252,7 +1252,7 @@ DECLARE_NATIVE(COMPOSE2)
             continue;
 
         if (QUOTE_BYTE(eval) != NOQUOTE_1)
-            return FAIL("For the moment, COMPOSE string only does NOQUOTE_1");
+            return PANIC("For the moment, COMPOSE string only does NOQUOTE_1");
 
         if (Is_File(eval) and Is_File(input)) {  // "File calculus" [1]
             const Byte* at = c_cast(Byte*, head) + at_offset;
@@ -1264,7 +1264,7 @@ DECLARE_NATIVE(COMPOSE2)
 
             if (eval_slash_tail) {
                 if (not slash_after_splice)
-                    return FAIL(
+                    return PANIC(
                         "FILE! spliced into FILE! must end in slash"
                         " if splice slot is followed by slash"
                     );
@@ -1272,7 +1272,7 @@ DECLARE_NATIVE(COMPOSE2)
             }
             else {
                 if (slash_after_splice)
-                    return FAIL(
+                    return PANIC(
                         "FILE! spliced into FILE! can't end in slash"
                         " unless splice slot followed by slash"
                     );
@@ -1281,7 +1281,7 @@ DECLARE_NATIVE(COMPOSE2)
 
         Form_Element(mo, cast(Element*, eval));
     }
-    Append_UTF8_May_Fail(
+    Append_UTF8_May_Panic(
         mo->string,
         cast(const char*, head) + at_offset,
         size - at_offset,

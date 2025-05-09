@@ -159,7 +159,7 @@ export proto-parser: context [
                         newline
                         http://stackoverflow.com/q/693788/c-void-arguments
                     ]
-                    fail "C++ no-arg prototype used instead of C style"
+                    panic "C++ no-arg prototype used instead of C style"
                 ]
 
                 ; Call the EMIT-PROTO hook that the client provided.  They
@@ -229,9 +229,9 @@ export proto-parser: context [
             | "Init(" opt [identifier "(" thru ")"] thru ")"
             | "Option(Init(" opt [identifier "(" thru ")"] thru "))"
             | "(*)" | "(const*)"
-            | "(const *)" (fail "use (const*) not (const *)")
+            | "(const *)" (panic "use (const*) not (const *)")
             | "(const Cell*)"
-            | "(const Cell* )" (fail "use (const Cell*) not (const Cell* )")
+            | "(const Cell* )" (panic "use (const Cell*) not (const Cell* )")
         ]
 
         proto: ~

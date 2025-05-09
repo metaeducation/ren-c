@@ -31,11 +31,11 @@
         ]
     ], ok)
 
-    (void = for-parallel [x y] [] [] [fail])
+    (void = for-parallel [x y] [] [] [panic])
     ([1 2] = collect [for-parallel [x y] [] [1 2] [keep opt x, keep y]])
     ([a b] = collect [for-parallel [x y] [a b] [] [keep x, keep opt y]])
 
-    (void = for-parallel [x y] void void [fail])
+    (void = for-parallel [x y] void void [panic])
     ([1 2] = collect [for-parallel [x y] void [1 2] [keep opt x, keep y]])
     ([a b] = collect [for-parallel [x y] [a b] void [keep x, keep opt y]])
 

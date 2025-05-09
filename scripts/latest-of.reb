@@ -195,7 +195,7 @@ latest-of: func [
             ; "iPad"
             ; "iPod"
 
-            fail [
+            panic [
                 "Browser-detected platform" mold os "unavailable in CI builds."
                 "Please pass a supported OS_ID explicitly to LATEST-OF"
             ]
@@ -217,17 +217,17 @@ latest-of: func [
         join tuple! [0 system.version.4 system.version.5]
     ]
     if 3 <> length of os [
-        fail ["OS specification must be 3 digit tuple:" os]
+        panic ["OS specification must be 3 digit tuple:" os]
     ]
     if 0 <> first os [  ; so far, all start with 0
-        fail ["First digit of OS specification tuple must be 0:" os]
+        panic ["First digit of OS specification tuple must be 0:" os]
     ]
 
     let extension: if (find [0.3.1 0.3.40] os) [".exe"] else [null]
     let suffix: switch variant [
         'release [null]
         'checked ["debug"]  ; !!! GitHub action needs updating to change
-        fail @variant
+        panic @variant
     ]
 
     === 'DEFAULT COMMIT TO THE LAST GREEN-LIT HASH ===

@@ -71,7 +71,7 @@
 
 #if !(TO_WINDOWS)
 //
-//  Get_Local_Ip_Via_Google_DNS_May_Fail: C
+//  Get_Local_Ip_Via_Google_DNS_May_Panic: C
 //
 // Passing null to gethostbyname() works on Windows, but does not seem to fly
 // on Linux.  Using method described as "most elegant" from this article:
@@ -85,7 +85,7 @@
 // * Needed to close the socket on the success path
 // * Called gethostname() for no obvious reason
 //
-static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value) out)
+static void Get_Local_Ip_Via_Google_DNS_May_Panic(Sink(Value) out)
 {
     const char* target_name = "8.8.8.8";  // Google's DNS server IP
     const char* target_port = "53";  // DNS port
@@ -102,12 +102,12 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value) out)
     int ret = getaddrinfo(target_name, target_port, &hints, &info);
     if (ret != 0) {
         error = gai_strerror(ret);
-        goto cleanup_and_fail_if_error;
+        goto cleanup_and_panic_if_error;
     }
 
     if (info->ai_family == AF_INET6) {
         error = "dns:// doesn't support IPv6 yet";
-        goto cleanup_and_fail_if_error;
+        goto cleanup_and_panic_if_error;
     }
 
   create_socket: { ///////////////////////////////////////////////////////////
@@ -115,14 +115,14 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value) out)
     sock = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
     if (sock <= 0) {
         error = "Socket creation error to 8.8.8.8 for dns://";
-        goto cleanup_and_fail_if_error;
+        goto cleanup_and_panic_if_error;
     }
 
 } connect_to_server: { ///////////////////////////////////////////////////////
 
     if (connect(sock, info->ai_addr, info->ai_addrlen) < 0) {
         error = "Connection error to 8.8.8.8 for dns://";
-        goto cleanup_and_fail_if_error;
+        goto cleanup_and_panic_if_error;
     }
 
 } get_local_socket_info: { ///////////////////////////////////////////////////
@@ -131,19 +131,19 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value) out)
     socklen_t addr_len = sizeof(local_addr);
     if (getsockname(sock, cast(struct sockaddr*, &local_addr), &addr_len) < 0) {
         error = "getsockname() error for local socket to 8.8.8.8 for dns://";
-        goto cleanup_and_fail_if_error;
+        goto cleanup_and_panic_if_error;
     }
 
     Init_Tuple_Bytes(out, cast(Byte*, &local_addr.sin_addr.s_addr), 4);
 
-} cleanup_and_fail_if_error: { ///////////////////////////////////////////////
+} cleanup_and_panic_if_error: { //////////////////////////////////////////////
 
     if (sock > 0)
         close(sock);
     if (info)
         freeaddrinfo(info);
     if (error)
-        fail (error);
+        panic (error);
 }}
 #endif
 
@@ -167,14 +167,14 @@ DECLARE_NATIVE(DNS_ACTOR)
 
     switch (Symbol_Id(verb)) {
       case SYM_OPEN_Q:
-        return "fail -[DNS 'ports' don't support OPEN?, only READ]-";
+        return "panic -[DNS 'ports' don't support OPEN?, only READ]-";
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
         UNUSED(PARAM(SOURCE));  // covered by `port`
 
         if (Bool_ARG(PART) or Bool_ARG(SEEK))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher
@@ -195,7 +195,7 @@ DECLARE_NATIVE(DNS_ACTOR)
             if (he != nullptr)
                 return Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4);
           #else
-            Get_Local_Ip_Via_Google_DNS_May_Fail(OUT);
+            Get_Local_Ip_Via_Google_DNS_May_Panic(OUT);
             return OUT;
           #endif
         }
@@ -207,7 +207,7 @@ DECLARE_NATIVE(DNS_ACTOR)
             //
           reverse_lookup:
             if (Cell_Sequence_Len(host) != 4)
-                return "fail -[Reverse DNS lookup requires length 4 TUPLE!]-";
+                return "panic -[Reverse DNS lookup requires length 4 TUPLE!]-";
 
             // 93.184.216.34 => example.com
             char buf[MAX_TUPLE];
@@ -243,7 +243,7 @@ DECLARE_NATIVE(DNS_ACTOR)
             // ...else fall through to error handling...
         }
         else
-            return FAIL(Error_On_Port(SYM_INVALID_SPEC, port, -10));
+            return PANIC(Error_On_Port(SYM_INVALID_SPEC, port, -10));
 
         switch (h_errno) {
           case HOST_NOT_FOUND:  // The specified host is unknown
@@ -251,13 +251,13 @@ DECLARE_NATIVE(DNS_ACTOR)
             return Init_Nulled(OUT);  // "expected" failures, signal w/null
 
           case NO_RECOVERY:
-            return "fail -[A nonrecoverable name server error occurred]-";
+            return "panic -[A nonrecoverable name server error occurred]-";
 
           case TRY_AGAIN:
-            return "fail -[Temporary error on authoritative name server]-";
+            return "panic -[Temporary error on authoritative name server]-";
 
           default:
-            return "fail -[Unknown host error]-";
+            return "panic -[Unknown host error]-";
         } }
 
       case SYM_OPEN: {
@@ -266,7 +266,7 @@ DECLARE_NATIVE(DNS_ACTOR)
         UNUSED(PARAM(SPEC));
 
         if (Bool_ARG(NEW) or Bool_ARG(READ) or Bool_ARG(WRITE))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         // !!! All the information the DNS needs is at the moment in the
         // port spec, so there's nothing that has to be done in the OPEN.
@@ -275,11 +275,11 @@ DECLARE_NATIVE(DNS_ACTOR)
         //
         // So for the moment we error if you try to open a DNS port.
 
-        goto open_or_close_fail; }
+        goto open_or_close_panic; }
 
-      open_or_close_fail:
+      open_or_close_panic:
       case SYM_CLOSE:
-        return "fail -[DNS 'ports' don't OPEN/CLOSE, only READ]-";
+        return "panic -[DNS 'ports' don't OPEN/CLOSE, only READ]-";
 
       default:
         break;

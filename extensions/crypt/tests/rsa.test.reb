@@ -29,7 +29,7 @@
     (repeat 10 (wrap [
         cryptcheck: rsa-encrypt plaintext private
         if cryptcheck <> encrypted [
-            fail [
+            panic [
                 "Different encrypt:" mold cryptcheck "vs" mold encrypted
             ]
         ]
@@ -115,13 +115,13 @@
             repeat 10 (wrap [
                 encrypted: rsa-encrypt plaintext public
                 if find encrypted-list encrypted [
-                    fail [
+                    panic [
                         "Duplicate encrypt:" mold encrypted
                     ]
                 ]
                 decrypted: rsa-decrypt encrypted private
                 if decrypted <> plaintext [
-                    fail [
+                    panic [
                         "Decrypt expected:" mold plaintext "got" mold decrypted
                     ]
                 ]

@@ -51,7 +51,7 @@
 ;
 ;    count: 0
 ;    [1] = collect [
-;        (if count != 1 [fail] :keep): (count: count + 1)
+;        (if count != 1 [panic] :keep): (count: count + 1)
 ;    ]
 ;
 

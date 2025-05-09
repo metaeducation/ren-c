@@ -105,7 +105,7 @@ DECLARE_NATIVE(ENCODE_IEEE_754) {
     Value* arg = ARG(ARG);
 
     if (Cell_Series_Len_At(ARG(OPTIONS)))
-        return FAIL("IEEE-754 single precision not currently supported");
+        return PANIC("IEEE-754 single precision not currently supported");
 
     assert(sizeof(REBDEC) == 8);
 
@@ -148,7 +148,7 @@ DECLARE_NATIVE(DECODE_IEEE_754) {
     Element* blob = Element_ARG(BLOB);
 
     if (Cell_Series_Len_At(ARG(OPTIONS)))
-        return FAIL("IEEE-754 single precision not currently supported");
+        return PANIC("IEEE-754 single precision not currently supported");
 
     Size size;
     const Byte* at = Cell_Blob_Size_At(&size, blob);
@@ -198,7 +198,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
             Term_Binary_Len(b, len);
             return Init_Blob(OUT, b);
         }
-        return FAIL(
+        return PANIC(
             "TUPLE! did not consist entirely of INTEGER! values 0-255"
         ); }
 
@@ -325,7 +325,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         if (not arg and len == 0) {
             if (id == SYM_APPEND) // append always returns head
                 VAL_INDEX_RAW(v) = 0;
-            return COPY(v);  // don't fail on read only if would be a no-op
+            return COPY(v);  // don't panic on read only if would be a no-op
         }
 
         Flags flags = 0;
@@ -353,7 +353,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             // tolerate splices
         }
         else
-            return FAIL(PARAM(VALUE));
+            return PANIC(PARAM(VALUE));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,
@@ -372,7 +372,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         UNUSED(PARAM(SERIES));  // covered by `v`
 
         if (Is_Antiform(ARG(PATTERN)))
-            return FAIL(ARG(PATTERN));
+            return PANIC(ARG(PATTERN));
 
         const Element* pattern = Element_ARG(PATTERN);
 
@@ -445,7 +445,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_BITWISE_AND_NOT: {
         Value* arg = ARG_N(2);
         if (not Is_Blob(arg))
-            return FAIL(Error_Not_Related_Raw(verb, Datatype_Of(arg)));
+            return PANIC(Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
         Size t0;
         const Byte* p0 = Cell_Blob_Size_At(&t0, v);
@@ -516,7 +516,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         Value* arg = ARG_N(2);
 
         if (Type_Of(v) != Type_Of(arg))
-            return FAIL(Error_Not_Same_Type_Raw());
+            return PANIC(Error_Not_Same_Type_Raw());
 
         Byte* v_at = Cell_Blob_At_Ensure_Mutable(v);
         Byte* arg_at = Cell_Blob_At_Ensure_Mutable(arg);
@@ -558,7 +558,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
         return Init_Any_String(
             OUT,
             to,
-            Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
+            Append_UTF8_May_Panic(nullptr, cs_cast(at), size, STRMODE_NO_CR)
         );
     }
 
@@ -647,7 +647,7 @@ Option(Error*) Trap_Alias_Blob_As(
                         &c, &bp, &bytes_left
                     );
                     if (e)
-                        fail (unwrap e);
+                        panic (unwrap e);
                 }
 
                 ++num_codepoints;
@@ -712,7 +712,7 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
 
     Option(Error*) e = Trap_Alias_Blob_As(OUT, blob, as);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }
@@ -755,11 +755,11 @@ IMPLEMENT_GENERIC(POKE_P, Is_Blob)
     const Element* picker = Element_ARG(PICKER);
     REBINT n;
     if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
-        return FAIL(Error_Out_Of_Range(picker));
+        return PANIC(Error_Out_Of_Range(picker));
 
     Option(const Value*) opt_poke = Optional_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     REBINT i;
@@ -773,11 +773,11 @@ IMPLEMENT_GENERIC(POKE_P, Is_Blob)
         // !!! See notes in the IMPLEMENT_GENERIC(POKE_P, Any_String)
         // about alternate cases for the POKE'd value.
         //
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
     }
 
     if (i > 0xff)
-        return FAIL(Error_Out_Of_Range(poke));
+        return PANIC(Error_Out_Of_Range(poke));
 
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
     Binary_Head(bin)[n] = cast(Byte, i);
@@ -794,7 +794,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
     if (Bool_ARG(DEEP))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     REBINT len;
     if (Bool_ARG(PART)) {
@@ -995,14 +995,14 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
     Element* blob = Element_ARG(SERIES);
 
     if (Bool_ARG(ALL))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     if (Bool_ARG(CASE)) {
         // Ignored...all BLOB! sorts are case-sensitive.
     }
 
     if (Bool_ARG(COMPARE))
-        return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
+        return PANIC(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Flags flags = 0;
 
@@ -1020,7 +1020,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
     else {
         skip = Get_Num_From_Arg(ARG(SKIP));
         if (skip <= 0 or (len % skip != 0) or skip > len)
-            return FAIL(PARAM(SKIP));
+            return PANIC(PARAM(SKIP));
     }
 
     Size size = 1;
@@ -1063,21 +1063,21 @@ DECLARE_NATIVE(ENCODE_INTEGER)
 
     Value* options = ARG(OPTIONS);
     if (Cell_Series_Len_At(options) != 2)
-        return FAIL("ENCODE-INTEER needs length 2 options for now");
+        return PANIC("ENCODE-INTEER needs length 2 options for now");
 
     bool no_sign = rebUnboxBoolean(
         "switch first", options, "[",
             "'+ ['true] '+/- ['false]",
-            "fail -[First ENCODE-INTEGER option must be + or +/-]-",
+            "panic -[First ENCODE-INTEGER option must be + or +/-]-",
         "]"
     );
     REBINT num_bytes = rebUnboxInteger(
         "(match integer! second", options, ") else [",
-            "fail -[Second ENCODE-INTEGER option must be an integer]-",
+            "panic -[Second ENCODE-INTEGER option must be an integer]-",
         "]"
     );
     if (num_bytes <= 0)
-        return FAIL("Size for ENCODE-INTEGER encoding must be at least 1");
+        return PANIC("Size for ENCODE-INTEGER encoding must be at least 1");
 
     // !!! Implementation is somewhat inefficient, but trying to not violate
     // the C standard and write code that is general (and may help generalize
@@ -1093,7 +1093,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
 
     REBI64 i = VAL_INT64(ARG(NUM));
     if (no_sign and i < 0)
-        return FAIL("Unsigned ENCODE-INTEGER received signed input value");
+        return PANIC("Unsigned ENCODE-INTEGER received signed input value");
 
     // Negative numbers are encoded with two's complement: process we use here
     // is simple: take the absolute value, inverting each byte, add one.
@@ -1120,7 +1120,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
     }
     if (i != 0)
         return rebDelegate(
-            "fail [", ARG(NUM), "-[exceeds]-", rebI(num_bytes), "-[bytes]-]"
+            "panic [", ARG(NUM), "-[exceeds]-", rebI(num_bytes), "-[bytes]-]"
         );
 
     // The process of byte production of a positive number shouldn't give us
@@ -1128,7 +1128,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
     //
     if (not no_sign and not negative and *(bp - delta) >= 0x80)
         return rebDelegate(
-            "fail [",
+            "panic [",
                 ARG(NUM), "-[aliases a negative value with signed]-",
                 "-[encoding of only]-", rebI(num_bytes), "-[bytes]-",
             "]"
@@ -1169,11 +1169,11 @@ DECLARE_NATIVE(DECODE_INTEGER)
 
     REBLEN arity = Cell_Series_Len_At(options);
     if (arity != 1 and arity != 2)
-        fail("DECODE-INTEGER requires length 1 or 2 options for now");
+        return "panic -[DECODE-INTEGER needs length 1 or 2 options for now]-";
     bool no_sign = rebUnboxBoolean(  // signed is C keyword
         "switch first", options, "[",
             "'+ ['true] '+/- ['false]",
-            "fail -[First DECODE-INTEGER option must be + or +/-]-",
+            "panic -[First DECODE-INTEGER option must be + or +/-]-",
         "]"
     );
     REBLEN num_bytes;
@@ -1182,17 +1182,17 @@ DECLARE_NATIVE(DECODE_INTEGER)
     else {
         num_bytes = rebUnboxInteger(
             "(match integer! second", options, ") else [",
-                "fail -[Second DECODE-INTEGER option must be an integer]-",
+                "panic -[Second DECODE-INTEGER option must be an integer]-",
             "]"
         );
         if (bin_size != num_bytes)
-            return FAIL("Input length mistmatches DECODE-INTEGER size option");
+            return PANIC("Input length mistmatches DECODE-INTEGER size option");
     }
     if (num_bytes <= 0) {
         //
         // !!! Should #{} empty binary be 0 or error?  (Historically, 0.)
         //
-        fail("Size for DEBIN decoding must be at least 1");
+        return "panic -[Size for DEBIN decoding must be at least 1]-";
     }
 
     // !!! Implementation is somewhat inefficient, but trying to not violate
@@ -1246,7 +1246,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
     // leading 0x00 or 0xFF stripped away
     //
     if (n > 8)
-        return FAIL(Error_Out_Of_Range(ARG(BINARY)));
+        return PANIC(Error_Out_Of_Range(ARG(BINARY)));
 
     REBI64 i = 0;
 
@@ -1267,7 +1267,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
     }
 
     if (no_sign and i < 0)  // may become signed via shift due to 63-bit limit
-        return FAIL(Error_Out_Of_Range(ARG(BINARY)));
+        return PANIC(Error_Out_Of_Range(ARG(BINARY)));
 
     return Init_Integer(OUT, i);
 }

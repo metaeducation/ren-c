@@ -46,7 +46,7 @@ export to-c-name: func [
     scope: default [#global]
 
     all [text? value, empty? value] then [
-        fail/where ["TO-C-NAME received empty input"] 'value
+        panic:where ["TO-C-NAME received empty input"] 'value
     ]
 
     let c-chars: charset [
@@ -141,7 +141,7 @@ export to-c-name: func [
     ]
 
     if empty? string [
-        fail [
+        panic [
             "empty identifier produced by to-c-name for"
             (mold value) "of type" (to word! type of value)
         ]
@@ -153,11 +153,11 @@ export to-c-name: func [
             head? s
             pick charset [#"0" - #"9"] s.1
         ] then [
-            fail ["identifier" string "starts with digit in to-c-name"]
+            panic ["identifier" string "starts with digit in to-c-name"]
         ]
 
         pick c-chars s.1 else [
-            fail ["Non-alphanumeric or hyphen in" string "in to-c-name"]
+            panic ["Non-alphanumeric or hyphen in" string "in to-c-name"]
         ]
     ]
 
@@ -167,19 +167,19 @@ export to-c-name: func [
         string.1 != #"_" [<ok>]
 
         scope = #global [
-            fail ["global C ids starting with _ are reserved:" string]
+            panic ["global C ids starting with _ are reserved:" string]
         ]
 
         scope = #local [
             find charset [#"A" - #"Z"] string.2 then [
-                fail [
+                panic [
                     "local C ids starting with _ and uppercase are reserved:"
                         string
                 ]
             ]
         ]
 
-        fail "/SCOPE must be #global or #local"
+        panic "/SCOPE must be #global or #local"
     ]
 
     return string
@@ -255,7 +255,7 @@ export parse-args: func [
                 name: to word! copy:part value (length of value) - 1
                 args: next args
                 if empty? args [
-                    fail ["Missing value after" value]
+                    panic ["Missing value after" value]
                 ]
                 value: args.1
             ]
@@ -480,20 +480,20 @@ export stripload: func [
 
     if header [
         if not let hdr: copy:part (next find text "[") (find text "^/]") [
-            fail ["Couldn't locate header in STRIPLOAD of" file]
+            panic ["Couldn't locate header in STRIPLOAD of" file]
         ]
         parse3:match hdr rule else [
-            fail ["STRIPLOAD failed to munge header of" file]
+            panic ["STRIPLOAD failed to munge header of" file]
         ]
         set header hdr
     ]
 
     parse3:match contents rule else [
-        fail ["STRIPLOAD failed to munge contents of" file]
+        panic ["STRIPLOAD failed to munge contents of" file]
     ]
 
     if not empty? pushed [
-        fail ["String delimiter stack imbalance while parsing" file]
+        panic ["String delimiter stack imbalance while parsing" file]
     ]
 
     return contents
@@ -550,7 +550,7 @@ export to-block-of-file-blocks: func [
         ; fallthrough
     ]
     if find x tag! [  ; light check for mistakes
-        fail [
+        panic [
             "FILE!/BLOCK! list can't contain TAG!s if multiple files:"
             mold:limit x 200
         ]

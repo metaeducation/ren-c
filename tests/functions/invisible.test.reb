@@ -22,25 +22,25 @@
 
 ~no-value~ !! (
     [pos val]: evaluate:step [
-        1 + comment "a" comment "b" 2 * 3 fail "too far"
+        1 + comment "a" comment "b" 2 * 3 panic "too far"
     ]
 )
 (
     [pos val]: evaluate:step [
-        1 comment "a" + comment "b" 2 * 3 fail "too far"
+        1 comment "a" + comment "b" 2 * 3 panic "too far"
     ]
     all [
         val = 1
-        pos = [comment "a" + comment "b" 2 * 3 fail "too far"]
+        pos = [comment "a" + comment "b" 2 * 3 panic "too far"]
     ]
 )
 (
     [pos val]: evaluate:step [
-        1 comment "a" comment "b" + 2 * 3 fail "too far"
+        1 comment "a" comment "b" + 2 * 3 panic "too far"
     ]
     all [
         val = 1
-        pos = [comment "a" comment "b" + 2 * 3 fail "too far"]
+        pos = [comment "a" comment "b" + 2 * 3 panic "too far"]
     ]
 )
 
@@ -58,21 +58,21 @@
 
 
 ~no-value~ !! (
-    evaluate evaluate [1 elide "a" + elide "b" 2 * 3 fail "too far"]
+    evaluate evaluate [1 elide "a" + elide "b" 2 * 3 panic "too far"]
 )
 (
-    code: [1 elide "a" elide "b" + 2 * 3 fail "too far"]
+    code: [1 elide "a" elide "b" + 2 * 3 panic "too far"]
     pos: evaluate:step code
     pos: evaluate:step pos
-    pos = [elide "b" + 2 * 3 fail "too far"]
+    pos = [elide "b" + 2 * 3 panic "too far"]
 )
 (
     [pos val]: evaluate:step [
-        1 + 2 * 3 elide "a" elide "b" fail "too far"
+        1 + 2 * 3 elide "a" elide "b" panic "too far"
     ]
     all [
         val = 9
-        pos = [elide "a" elide "b" fail "too far"]
+        pos = [elide "a" elide "b" panic "too far"]
     ]
 )
 
@@ -120,7 +120,7 @@
             tail? right,
             '|1| = look: take lookahead  ; hack...recognize selfs
         ] else [
-            fail:blame [
+            panic:blame [
                 "|1| expected single expression, found residual of" :look
             ] $right
         ]

@@ -178,7 +178,7 @@
     count-up 'i 2048 wrap [
         derived: make o-big [var-1: 100000 + i]
         if 132639 + i <> derived/meth-255 [
-            fail "Unexpected Sum"
+            panic "Unexpected Sum"
         ]
     ]
     ok

@@ -186,7 +186,7 @@ void Set_Parameter_Spec(
                     Heart_Of(item) != TYPE_BLOCK  // typecheck packs ok
                     and Heart_Of(item) != TYPE_COMMA  // allow ~,~ ghosts too
                 ){
-                    fail (item);
+                    panic (item);
                 }
             }
 
@@ -251,7 +251,7 @@ void Set_Parameter_Spec(
                 Init_Quasi_Word(dest, CANON(UNRUN));
             }
             else {
-                fail (item);
+                panic (item);
             }
             continue;
         }
@@ -260,7 +260,7 @@ void Set_Parameter_Spec(
         if (Heart_Of(item) == TYPE_WORD) {  // allow abstraction [3]
             lookup = maybe Lookup_Word(item, spec_binding);
             if (not lookup)  // not even bound to anything
-                fail (item);
+                panic (item);
             if (Is_Trash(lookup)) {  // bound but not set
                 //
                 // !!! This happens on things like LOGIC?, because they are
@@ -327,7 +327,7 @@ void Set_Parameter_Spec(
             // By pre-checking we can avoid needing to double check in the
             // actual type-checking phase.
 
-            fail (item);
+            panic (item);
         }
     }
 
@@ -455,7 +455,7 @@ IMPLEMENT_GENERIC(PICK, Is_Parameter)
     const Element* picker = Element_ARG(PICKER);
 
     if (not Is_Word(picker))
-        return FAIL(picker);
+        return PANIC(picker);
 
     switch (Cell_Word_Id(picker)) {
       case SYM_TEXT: {
@@ -513,17 +513,17 @@ IMPLEMENT_GENERIC(POKE_P, Is_Parameter)
 
     const Element* picker = Element_ARG(PICKER);
     if (not Is_Word(picker))
-        return FAIL(picker);
+        return PANIC(picker);
 
     Option(const Value*) opt_poke = Optional_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     switch (Cell_Word_Id(picker)) {
       case SYM_TEXT: {
         if (not Is_Text(poke))
-            return FAIL(poke);
+            return PANIC(poke);
         String* string = Copy_String_At(poke);
         Manage_Flex(string);
         Freeze_Flex(string);
@@ -534,4 +534,4 @@ IMPLEMENT_GENERIC(POKE_P, Is_Parameter)
         break;
     }
 
-    return FAIL(Error_Bad_Pick_Raw(picker)); }
+    return PANIC(Error_Bad_Pick_Raw(picker)); }

@@ -86,23 +86,23 @@ INLINE bool Is_Flex_Read_Only(const Flex* f) {  // may be temporary
 // priority ordering.
 //
 
-INLINE void Fail_If_Read_Only_Flex(const Flex* f) {
+INLINE void Panic_If_Read_Only_Flex(const Flex* f) {
     if (not Is_Flex_Read_Only(f))
         return;
 
     if (Get_Flex_Info(f, AUTO_LOCKED))
-        fail (Error_Series_Auto_Frozen_Raw());
+        panic (Error_Series_Auto_Frozen_Raw());
 
     if (Get_Flex_Info(f, HOLD))
-        fail (Error_Series_Held_Raw());
+        panic (Error_Series_Held_Raw());
 
     if (Get_Flex_Info(f, FROZEN_SHALLOW))
-        fail (Error_Series_Frozen_Raw());
+        panic (Error_Series_Frozen_Raw());
 
     assert(Not_Flex_Info(f, FROZEN_DEEP));  // implies FROZEN_SHALLOW
 
     assert(Get_Flex_Info(f, PROTECTED));
-    fail (Error_Series_Protected_Raw());
+    panic (Error_Series_Protected_Raw());
 }
 
 
@@ -165,10 +165,10 @@ INLINE const Value* Ensure_Mutable(const Value* v) {
     assert(Cell_Has_Node1(v));
     const Flex* f = c_cast(Flex*, CELL_NODE1(v));  // varlist, etc.
 
-    Fail_If_Read_Only_Flex(f);
+    Panic_If_Read_Only_Flex(f);
 
     if (Not_Cell_Flag(v, CONST))
         return v;
 
-    fail (Error_Const_Value_Raw(v));
+    panic (Error_Const_Value_Raw(v));
 }

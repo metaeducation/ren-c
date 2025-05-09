@@ -247,7 +247,7 @@ bind construct [
                     compose2:deep inside item '@(<*>) item
                 )
             ]
-            fail ~<unreachable>~
+            panic ~<unreachable>~
         ]
     ]
 
@@ -263,11 +263,11 @@ bind construct [
         switch state [
             <die> [
                 emit [quit 1]  ; must leave unbound to get console's QUIT [1]
-                emit [fail ~<unreachable>~]
+                emit [panic ~<unreachable>~]
             ]
             <quit> [
                 emit [quit 0]  ; must leave unbound to get console's QUIT [1]
-                emit [fail ~<unreachable>~]
+                emit [panic ~<unreachable>~]
             ]
             <start-console> [
                 ; Done actually via #start-console, but we return something
@@ -293,7 +293,7 @@ bind construct [
                 state
             ]
         ] else [
-            emit [fail ["Bad console instruction:" (<*> mold state)]]
+            emit [panic ["Bad console instruction:" (<*> mold state)]]
         ]
     ]
 
@@ -324,7 +324,7 @@ bind construct [
         switch:type system.options.boot: get-current-exec [
             file! []  ; found it
             null?/ []  ; also okay (not foolproof!)
-            fail "GET-CURRENT-EXEC returned unexpected datatype"
+            panic "GET-CURRENT-EXEC returned unexpected datatype"
         ]
     ] else [
         system.options.boot: null
@@ -333,7 +333,7 @@ bind construct [
     === HELPER FUNCTIONS ===
 
     let die: lambda [
-        "A graceful way to "FAIL" during startup"
+        "A graceful way to PANIC during startup"
 
         reason "Error message"
             [text! block!]
@@ -460,9 +460,9 @@ bind construct [
     ; which is going to be passed back.  This way you can have multiple
     ; --do "..." or script arguments, and they will be run in a sequence.
     ;
-    ; The instruction block is run in a sandbox which prevents cancellation
-    ; or failure from crashing the interpreter.  (MAIN-STARTUP is not allowed
-    ; to cancel or fail.  See notes in %src/main/README.md)
+    ; The instruction block is run in a sandbox which prevents halting or
+    ; panicking from crashing the interpreter.  (MAIN-STARTUP is not allowed
+    ; to HALT or PANIC.  See notes in %src/main/README.md)
     ;
     ; The directives at the start of the instruction dictate that Ctrl-C
     ; during the startup instruction will exit with code 130, and any errors

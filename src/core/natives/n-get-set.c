@@ -51,7 +51,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 
         Level* level = Level_Of_Varlist_If_Running(frame_varlist);
         if (not level)
-            fail (".field access only in running functions");  // nullptr?
+            panic (".field access only in running functions");  // nullptr?
         VarList* coupling = maybe Level_Coupling(level);
         if (not coupling)
             continue;  // skip NULL couplings (default for FUNC, DOES, etc.)
@@ -363,7 +363,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         return SUCCESS;
     }
 
-    fail (var);
+    panic (var);
 }
 
 
@@ -392,13 +392,13 @@ Option(Error*) Trap_Get_Var(
 
 
 //
-//  Get_Var_May_Fail: C
+//  Get_Var_May_Panic: C
 //
 // Simplest interface.  Gets a variable, doesn't process groups, and will
-// fail if the variable is vacant (holding nothing or a tripwire).  Use the
+// panic if the variable is vacant (holding nothing or a tripwire).  Use the
 // appropriate Trap_Get_XXXX() interface if this is too simplistic.
 //
-Value* Get_Var_May_Fail(
+Value* Get_Var_May_Panic(
     Sink(Value) out,  // variables never store unstable Atom* values
     const Element* var,
     Context* context
@@ -409,7 +409,7 @@ Value* Get_Var_May_Fail(
         out, steps_out, var, context
     );
     if (error)
-        fail (unwrap error);
+        panic (unwrap error);
 
     assert(not Any_Vacancy(out));  // shouldn't have returned it
     return out;
@@ -444,15 +444,15 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             out, steps, head, derived
         );
         if (error)
-            fail (unwrap error);  // must be abrupt
+            panic (unwrap error);  // must be abrupt
     }
     else if (Is_Word(head)) {
         Option(Error*) error = Trap_Get_Any_Word(out, head, derived);
         if (error)
-            fail (unwrap error);  // must be abrupt
+            panic (unwrap error);  // must be abrupt
     }
     else
-        fail (head);  // what else could it have been?
+        panic (head);  // what else could it have been?
 
     ++head;
 
@@ -496,7 +496,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             Init_Pushed_Refinement(PUSH(), Cell_Word_Symbol(item));
         }
         else
-            fail (item);
+            panic (item);
     }
 
     return SUCCESS;
@@ -517,7 +517,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 ){
     if (not Sequence_Has_Node(path)) {  // byte compressed
         Copy_Cell(out, path);
-        goto ensure_out_is_action;  // will fail, it's not an action
+        goto ensure_out_is_action;  // will panic, it's not an action
 
       ensure_out_is_action: { ////////////////////////////////////////////////
 
@@ -527,7 +527,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
             Actionify(out);
             return SUCCESS;
         }
-        fail ("PATH! must retrieve an action or frame");
+        panic ("PATH! must retrieve an action or frame");
     }}
 
     const Node* node1 = CELL_NODE1(path);
@@ -569,16 +569,16 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
             out, steps, at, derived
         );
         if (error)
-            fail (unwrap error);  // must be abrupt
+            panic (unwrap error);  // must be abrupt
     }
     else if (Is_Word(at)) {
         Option(Error*) error = Trap_Get_Any_Word(out, at, derived);
         if (error)
-            fail (unwrap error);  // must be abrupt
+            panic (unwrap error);  // must be abrupt
     }
     else if (Is_Chain(at)) {
         if ((at + 1 != tail) and not Is_Blank(at + 1))
-            fail ("CHAIN! can only be last item in a path right now");
+            panic ("CHAIN! can only be last item in a path right now");
         Option(Error*) error = Trap_Get_Chain_Push_Refinements(
             out,
             safe,
@@ -590,7 +590,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         return SUCCESS;
     }
     else
-        fail (at);  // what else could it have been?
+        panic (at);  // what else could it have been?
 
     ++at;
 
@@ -598,7 +598,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         goto ensure_out_is_action;
 
     if (at + 1 != tail and not Is_Blank(at + 1))
-        fail ("PATH! can only be two items max at this time");
+        panic ("PATH! can only be two items max at this time");
 
     // When we see `lib/append` for instance, we want to pick APPEND out of
     // LIB and make sure it is an action.
@@ -631,7 +631,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         Copy_Cell(out, Decay_If_Unstable(temp));
     }
     else
-        fail (path);
+        panic (path);
 
     goto ensure_out_is_action;
 }
@@ -712,11 +712,11 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
             &slot, cast(Element*, at), SPECIFIED
         );
         if (error)
-            fail (unwrap error);
+            panic (unwrap error);
         Copy_Cell(out, slot);
     }
     else
-        fail (Copy_Cell(out, at));
+        panic (Copy_Cell(out, at));
   }
 
     ++stackindex;
@@ -748,7 +748,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
             Drop_Lifeguard(temp);
             if (last_step)
                 return error;  // last step, interceptible error
-            fail (error);  // intermediate step, must abrupt fail
+            panic (error);  // intermediate step, must abrupt panic
         }
 
         if (Is_Antiform(cast(Atom*, out)))
@@ -796,13 +796,13 @@ DECLARE_NATIVE(GET)
 
     if (Any_Group(source)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
         if (not Bool_ARG(GROUPS))
-            return FAIL(Error_Bad_Get_Group_Raw(source));
+            return PANIC(Error_Bad_Get_Group_Raw(source));
 
         if (steps != GROUPS_OK)
-            return FAIL("GET on GROUP! with steps doesn't have answer ATM");
+            return PANIC("GET on GROUP! with steps doesn't have answer ATM");
 
         if (Eval_Any_List_At_Throws(SPARE, source, SPECIFIED))
-            return FAIL(Error_No_Catch_For_Throw(LEVEL));
+            return PANIC(Error_No_Catch_For_Throw(LEVEL));
 
         if (Is_Void(SPARE))
             return nullptr;  // !!! Is this a good idea, or should it error?
@@ -812,7 +812,7 @@ DECLARE_NATIVE(GET)
         if (not (
             Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE))
         ){
-            return FAIL(SPARE);
+            return PANIC(SPARE);
         }
 
         source = cast(Element*, SPARE);
@@ -894,9 +894,9 @@ bool Set_Var_Core_Updater_Throws(
             // review that case.)
             //
             if (not setval)
-                fail ("Can't poke a plain WORD! with VOID at this time");
+                panic ("Can't poke a plain WORD! with VOID at this time");
             Copy_Cell(
-                Sink_Word_May_Fail(var, context),
+                Sink_Word_May_Panic(var, context),
                 unwrap setval
             );
         }
@@ -914,7 +914,7 @@ bool Set_Var_Core_Updater_Throws(
                     CANON(EITHER), rebL(did setval), rebQ(unwrap setval), "~[]~"
             )){
                 Drop_Lifeguard(temp);
-                fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+                panic (Error_No_Catch_For_Throw(TOP_LEVEL));
             }
             Drop_Lifeguard(temp);
         }
@@ -940,7 +940,7 @@ bool Set_Var_Core_Updater_Throws(
 
     if (Any_Sequence_Type(var_heart)) {
         if (not Sequence_Has_Node(var))  // compressed byte form
-            fail (var);
+            panic (var);
 
         const Node* node1 = CELL_NODE1(var);
         if (Is_Node_A_Cell(node1)) {  // pair optimization
@@ -975,7 +975,7 @@ bool Set_Var_Core_Updater_Throws(
         for (at = head; at != tail; ++at) {
             if (Is_Group(at)) {
                 if (not steps_out)
-                    fail (Error_Bad_Get_Group_Raw(var));
+                    panic (Error_Bad_Get_Group_Raw(var));
 
                 if (Eval_Any_List_At_Throws(temp, at, at_binding)) {
                     Drop_Data_Stack_To(base);
@@ -983,7 +983,7 @@ bool Set_Var_Core_Updater_Throws(
                 }
                 Decay_If_Unstable(temp);
                 if (Is_Antiform(temp))
-                    fail (Error_Bad_Antiform(temp));
+                    panic (Error_Bad_Antiform(temp));
 
                 Move_Cell(PUSH(), cast(Element*, temp));
                 if (at == head)
@@ -1002,7 +1002,7 @@ bool Set_Var_Core_Updater_Throws(
             Derelativize(PUSH(), at, at_binding);
     }
     else
-        fail (var);
+        panic (var);
 
     assert(Is_Action(updater));  // we will use rebM() on it
 
@@ -1029,11 +1029,11 @@ bool Set_Var_Core_Updater_Throws(
             &slot, cast(Element*, at), SPECIFIED
         );
         if (error)
-            fail (unwrap error);
+            panic (unwrap error);
         Copy_Cell(spare, slot);
     }
     else
-        fail (Copy_Cell(spare, at));
+        panic (Copy_Cell(spare, at));
   }
 
     ++stackindex;
@@ -1050,7 +1050,7 @@ bool Set_Var_Core_Updater_Throws(
         )){
             Drop_Lifeguard(temp);
             Drop_Lifeguard(writeback);
-            fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let PICKs throw
+            panic (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let PICKs throw
         }
         ++stackindex;
     }
@@ -1069,7 +1069,7 @@ bool Set_Var_Core_Updater_Throws(
     )){
         Drop_Lifeguard(temp);
         Drop_Lifeguard(writeback);
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let POKEs throw
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let POKEs throw
     }
 
     // Subsequent updates become pokes, regardless of initial updater function
@@ -1088,13 +1088,13 @@ bool Set_Var_Core_Updater_Throws(
 
         // can't use POKE, need to use SET
         if (not Is_Word(Data_Stack_At(Element, base + 1)))
-            fail ("Can't POKE back immediate value unless it's to a WORD!");
+            panic ("Can't POKE back immediate value unless it's to a WORD!");
 
         if (not setval)
-            fail ("Can't writeback POKE immediate with VOID at this time");
+            panic ("Can't writeback POKE immediate with VOID at this time");
 
         Copy_Cell(
-            Sink_Word_May_Fail(
+            Sink_Word_May_Panic(
                 Data_Stack_At(Element, base + 1),
                 SPECIFIED
             ),
@@ -1137,12 +1137,12 @@ bool Set_Var_Core_Throws(
 
 
 //
-//  Set_Var_May_Fail: C
+//  Set_Var_May_Panic: C
 //
 // Simpler function, where GROUP! is not ok...and there's no interest in
 // preserving the "steps" to reuse in multiple assignments.
 //
-void Set_Var_May_Fail(
+void Set_Var_May_Panic(
     const Element* var,
     Context* context,
     Atom* poke
@@ -1151,7 +1151,7 @@ void Set_Var_May_Fail(
 
     DECLARE_ATOM (dummy);
     if (Set_Var_Core_Throws(dummy, steps_out, var, context, poke))
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 }
 
 
@@ -1199,10 +1199,10 @@ DECLARE_NATIVE(SET)
    // are nested under TUPLE! and such.  Review.
 
     if (not Bool_ARG(GROUPS))
-        return FAIL(Error_Bad_Get_Group_Raw(target));
+        return PANIC(Error_Bad_Get_Group_Raw(target));
 
     if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
-        return FAIL(Error_No_Catch_For_Throw(LEVEL));
+        return PANIC(Error_No_Catch_For_Throw(LEVEL));
 
     if (Is_Void(SPARE))
         return UNMETA(meta_setval);
@@ -1212,7 +1212,7 @@ DECLARE_NATIVE(SET)
     if (not (
         Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE)
     )){
-        return FAIL(SPARE);
+        return PANIC(SPARE);
     }
 
     Copy_Cell(target, cast(Element*, SPARE));  // update ARG(TARGET)
@@ -1246,7 +1246,7 @@ DECLARE_NATIVE(SET)
     Meta_Unquotify_Undecayed(OUT);
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, OUT)) {
-        assert(steps or Is_Throwing_Failure(LEVEL));  // throws must eval [1]
+        assert(steps or Is_Throwing_Panic(LEVEL));  // throws must eval [1]
         return THROWN;
     }
 
@@ -1277,7 +1277,7 @@ DECLARE_NATIVE(SET_ACCESSOR)
     Element* word = Element_ARG(VAR);
     Value* action = ARG(ACTION);
 
-    Value* var = Lookup_Mutable_Word_May_Fail(word, SPECIFIED);
+    Value* var = Lookup_Mutable_Word_May_Panic(word, SPECIFIED);
     Copy_Cell(var, action);
     Set_Cell_Flag(var, VAR_IS_ACCESSOR);
 

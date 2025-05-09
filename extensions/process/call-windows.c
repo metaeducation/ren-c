@@ -105,7 +105,7 @@ static bool Try_Init_Startupinfo_Sink(
             }
             *hsink = *hwrite;*/
 
-           fail ("Unimplemented branch for INHERIT in Startupinfo_Sink()");
+           panic ("Unimplemented branch for INHERIT in Startupinfo_Sink()");
         }
         else {
             // Not documented, but this is how to make a /dev/null on Windows
@@ -270,7 +270,7 @@ Bounce Call_Core(Level* level_) {
         goto text_command;
     }
     else
-        fail (PARAM(COMMAND));
+        panic (PARAM(COMMAND));
 
     REBU64 pid = 1020;  // avoid uninitialized warning, garbage value
     DWORD exit_code = 304;  // ...same...
@@ -729,7 +729,7 @@ Bounce Call_Core(Level* level_) {
     rebFreeMaybe(inbuf);
 
     if (ret != 0)
-        rebFail_OS (ret);
+        rebPanic_OS (ret);
 
     if (Bool_ARG(INFO)) {
         VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);

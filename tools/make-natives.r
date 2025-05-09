@@ -147,7 +147,7 @@ while [not tail? pos] [
 insert natives spread collect [
     for-each 'l leaders [
         if not leader-protos.(l) [
-            fail ["Did not find" l "to put at head of natives list"]
+            panic ["Did not find" l "to put at head of natives list"]
         ]
         keep leader-protos.(l)
     ]
@@ -177,7 +177,7 @@ append output-buffer ---[Rebol [
 
 for-each 'info natives [
     if yes? info.exported [
-        fail "EXPORT is implied on %tmp-natives.r"
+        panic "EXPORT is implied on %tmp-natives.r"
     ]
     append output-buffer spaced [
         newline newline
@@ -273,7 +273,7 @@ sort:compare generics func [a b] [
         bad: b
     ]
     if bad [
-        fail [
+        panic [
             "Unknown builtin typeset (did you forget `any_`?)?" newline
             "IMPLEMENT_GENERIC(" bad.name bad.type ") in" bad.file
         ]
@@ -338,7 +338,7 @@ for-each 'n-info natives [
             assert [byte]  ; sort phase should have complained if not found
 
             if byte = last-byte [  ; sorted, so only have to check last byte
-                fail [
+                panic [
                     "Multiple IMPLEMENT_GENERIC(" g-info.name g-info.type ")"
                 ]
             ]
@@ -367,7 +367,7 @@ for-each 'n-info natives [
 
 for-each 'info generics [
     if info.found <> 'yes [
-        fail [
+        panic [
             "Did not find generic to implement:" info.name newline
             "Definition is in file:" info.file
         ]

@@ -72,7 +72,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 //     == ~okay~  ; anti
 //
 //     >> ["b" 1] < [2 "a"]
-//     ** Error: Can't compare  ; raised error, not failure
+//     ** Error: Can't compare  ; raised error, not panic
 //
 //     >> try ["b" 1] < [2 "a"]
 //     == ~null~  ; anti
@@ -193,7 +193,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
         }
         else {
             VarList* context = cast(VarList*, Cell_Varargs_Origin(arg));
-            Level* param_level = Level_Of_Varlist_May_Fail(context);
+            Level* param_level = Level_Of_Varlist_May_Panic(context);
 
             Phase* phase = Level_Phase(param_level);
             Param* param;
@@ -315,7 +315,7 @@ REBINT Find_In_Array(
     }
 
     if (Is_Antiform(pattern))
-        fail ("Only Antiforms Supported by FIND are ACTION and SPLICE");
+        panic ("Only Antiforms Supported by FIND are ACTION and SPLICE");
 
     if (Is_Nulled(pattern)) {  // never match [1]
         *len = 0;
@@ -551,7 +551,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (Bool_ARG(SKIP)) {
             skip = VAL_INT32(ARG(SKIP));
             if (skip == 0)
-                return FAIL(PARAM(SKIP));
+                return PANIC(PARAM(SKIP));
         }
         else
             skip = 1;
@@ -617,7 +617,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (not arg and len == 0) {
             if (id == SYM_APPEND)  // append always returns head
                 VAL_INDEX_RAW(list) = 0;
-            return COPY(list);  // don't fail on read only if would be a no-op
+            return COPY(list);  // don't panic on read only if would be a no-op
         }
 
         Source* arr = Cell_Array_Ensure_Mutable(list);
@@ -664,7 +664,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
         Value* arg = ARG(SERIES2);
         if (not Any_List(arg))
-            return FAIL(PARAM(SERIES2));
+            return PANIC(PARAM(SERIES2));
 
         REBLEN index = VAL_INDEX(list);
 
@@ -832,7 +832,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         ){
             return Init_Pair(OUT, VAL_INT64(item), VAL_INT64(item + 1));
         }
-        return FAIL("TO PAIR! only works on lists with two integers");
+        return PANIC("TO PAIR! only works on lists with two integers");
     }
 
     if (to == TYPE_BLANK)
@@ -904,7 +904,7 @@ IMPLEMENT_GENERIC(AS, Any_List)
 
     Option(Error*) e = Trap_Alias_Any_List_As(OUT, list, as);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }
@@ -971,7 +971,7 @@ IMPLEMENT_GENERIC(POKE_P, Any_List)
 
     Option(const Value*) opt_poke = Optional_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     // !!! If we are jumping here from getting updated bits, then
@@ -981,7 +981,7 @@ IMPLEMENT_GENERIC(POKE_P, Any_List)
     //
     REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
     if (n < 0 or n >= Cell_Series_Len_Head(list))
-        return FAIL(Error_Out_Of_Range(picker));
+        return PANIC(Error_Out_Of_Range(picker));
 
     Array* mut_arr = Cell_Array_Ensure_Mutable(list);
     Element* at = Array_At(mut_arr, n);
@@ -996,7 +996,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
     INCLUDE_PARAMS_OF_TAKE;
 
     if (Bool_ARG(DEEP))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     Element* list = Element_ARG(SERIES);
     Heart heart = Heart_Of_Builtin_Fundamental(list);  // TAKE gives same heart
@@ -1260,11 +1260,11 @@ static int Qsort_Values_Callback(void *state, const void *p1, const void *p2)
             info->reverse ? rebQ(v1) : rebQ(v2),
             info->reverse ? rebQ(v2) : rebQ(v1)
     )){
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
     if (not Is_Logic(result))
-        fail ("SORT predicate must return logic (NULL or OKAY antiform)");
+        panic ("SORT predicate must return logic (NULL or OKAY antiform)");
 
     if (Cell_Logic(result))  // comparator has LESSER? semantics
         return 1;  // returning 1 means lesser, it seems (?)
@@ -1297,7 +1297,7 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     else if (Is_Integer(cmp)) {
         info.comparator = nullptr;
         info.offset = Int32(cmp) - 1;
-        fail ("INTEGER! support (e.g. column select) not working in sort");
+        panic ("INTEGER! support (e.g. column select) not working in sort");
     }
     else {
         assert(Is_Nulled(cmp));
@@ -1319,7 +1319,7 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     else {
         skip = Get_Num_From_Arg(ARG(SKIP));
         if (skip <= 0 or len % skip != 0 or skip > len)
-            return FAIL(Error_Out_Of_Range(ARG(SKIP)));
+            return PANIC(Error_Out_Of_Range(ARG(SKIP)));
     }
 
     bsd_qsort_r(
@@ -1418,7 +1418,7 @@ DECLARE_NATIVE(ENVELOP)
 
     if (Is_Datatype(example)) {
         if (not Any_List_Type(Cell_Datatype_Type(example)))
-            return FAIL("If ENVELOP example is datatype, must be a list type");
+            return PANIC("If ENVELOP example is datatype, must be a list type");
 
         copy = Known_Element(rebValue(CANON(MAKE), ARG(EXAMPLE), rebI(1)));
     }

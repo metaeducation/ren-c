@@ -39,7 +39,7 @@ destructure: func [
             ]
         )
         |
-        fail "Invalid DESTRUCTURE dialect entry"
+        panic "Invalid DESTRUCTURE dialect entry"
     ]]
     return ^result'
 ]

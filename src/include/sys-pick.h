@@ -44,7 +44,7 @@
 // alternative action if no handler is registered... e.g. REVERSE-OF will
 // fall back on COPY and REVERSE.)
 //
-// 1. return FAIL() can't be used in %sys-core.h because not everything that
+// 1. return PANIC() can't be used in %sys-core.h because not everything that
 //    includes %sys-core.h defines the helper macros.  We want this to be
 //    fast and get inlined, so expand the macro manually.
 //
@@ -68,7 +68,7 @@ INLINE Bounce Dispatch_Generic_Core(
     DECLARE_ELEMENT (name);
     Init_Word(name, Canon_Symbol(symid));
 
-    return Native_Fail_Result(  // can't use FAIL() macro in %sys-core.h [1]
+    return Native_Panic_Result(  // can't use FAIL() macro in %sys-core.h [1]
         level_, Derive_Error_From_Pointer(
             Error_Cannot_Use_Raw(name, datatype)
         )
@@ -98,7 +98,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 ){
     Option(Heart) heart = Cell_Datatype_Builtin_Heart(datatype);
     if (not heart)
-        fail ("Generic dispatch not supported for extension types yet");
+        panic ("Generic dispatch not supported for extension types yet");
 
     return Get_Builtin_Generic_Dispatcher(table, unwrap heart);
 }

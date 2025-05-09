@@ -93,7 +93,7 @@ script: [
     ;
     done-enumerating:   "Enumeration is complete, no more values to YIELD"
 
-    yielder-failed:     "Can't run a Yielder that has abruptly failed"
+    yielder-panicked:   "Can't run a Yielder that has abruptly panicked"
     yielder-reentered:  "Can't re-entrantly call a Yielder not in YIELD state"
 
     ; NOTE: Preallocated errors for quick UTF-8 failing
@@ -148,7 +148,7 @@ script: [
 
     evaluative-quote:   "Can't quote non-literal from an evaluative source"
 
-    limited-fail-input: "FAIL requires complex expressions to be in a GROUP!"
+    nontrivial-panic:   "PANIC requires complex expressions to be in a GROUP!"
 
     ; BAD-VALUE is the laziest error with an argument.  BAD-ARGUMENT now
     ; tells you what the parameter of the argument was for.

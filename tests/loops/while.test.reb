@@ -89,9 +89,9 @@
         n: n + 1
         if n = 0 [
             while [continue] [
-                fail "inner LOOP body should not run"
+                panic "inner LOOP body should not run"
             ]
-            fail "code after inner LOOP should not run"
+            panic "code after inner LOOP should not run"
         ]
         sum: sum + 1
     ]
@@ -134,7 +134,7 @@
         while [okay] [
             ~()~
             if true? flag [flag: 'false, continue]
-            if null [fail]
+            if null [panic]
             throw <complete>
         ]
     ]
@@ -159,6 +159,6 @@
         implemented-with-loops [
             if counter < 10 [break]
         ]
-        fail "Should not reach!"
+        panic "Should not reach!"
     ]
 )

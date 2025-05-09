@@ -420,7 +420,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
     // While a level is executing, any Alloc_Value() calls are linked into
     // a doubly-linked list.  This keeps them alive, and makes it quick for
-    // them to be released.  In the case of an abrupt fail() call, they will
+    // them to be released.  In the case of an abrupt panic() call, they will
     // be automatically freed.
     //
     // In order to make a handle able to find the level whose linked list it

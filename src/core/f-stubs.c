@@ -38,18 +38,18 @@ REBINT Get_Num_From_Arg(const Value* val)
 
     if (Is_Integer(val)) {
         if (VAL_INT64(val) > INT32_MAX or VAL_INT64(val) < INT32_MIN)
-            fail (Error_Out_Of_Range(val));
+            panic (Error_Out_Of_Range(val));
         n = VAL_INT32(val);
     }
     else if (Is_Decimal(val) or Is_Percent(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
-            fail (Error_Out_Of_Range(val));
+            panic (Error_Out_Of_Range(val));
         n = cast(REBINT, VAL_DECIMAL(val));
     }
     else if (Is_Logic(val))
         n = (Cell_Logic(val) ? 1 : 2);
     else
-        fail (val);
+        panic (val);
 
     return n;
 }
@@ -64,7 +64,7 @@ REBINT Float_Int16(REBD32 f)
         DECLARE_ELEMENT (temp);
         Init_Decimal(temp, f);
 
-        fail (Error_Out_Of_Range(temp));
+        panic (Error_Out_Of_Range(temp));
     }
     return cast(REBINT, f);
 }
@@ -90,7 +90,7 @@ REBINT Int32(const Value* val)
     return VAL_INT32(val);
 
 out_of_range:
-    fail (Error_Out_Of_Range(val));
+    panic (Error_Out_Of_Range(val));
 }
 
 
@@ -132,7 +132,7 @@ REBINT Int32s(const Value* val, REBINT sign)
     }
 
 out_of_range:
-    fail (Error_Out_Of_Range(val));
+    panic (Error_Out_Of_Range(val));
 }
 
 
@@ -146,7 +146,7 @@ REBI64 Int64(const Value* val)
     if (Is_Decimal(val) or Is_Percent(val))
         return cast(REBI64, VAL_DECIMAL(val));
 
-    fail (val);
+    panic (val);
 }
 
 
@@ -160,7 +160,7 @@ REBDEC Dec64(const Value* val)
     if (Is_Integer(val))
         return cast(REBDEC, VAL_INT64(val));
 
-    fail (val);
+    panic (val);
 }
 
 
@@ -178,7 +178,7 @@ REBI64 Int64s(const Value* val, REBINT sign)
     REBI64 n;
     if (Is_Decimal(val)) {
         if (VAL_DECIMAL(val) > INT64_MAX or VAL_DECIMAL(val) < INT64_MIN)
-            fail (Error_Out_Of_Range(val));
+            panic (Error_Out_Of_Range(val));
 
         n = cast(REBI64, VAL_DECIMAL(val));
     }
@@ -194,7 +194,7 @@ REBI64 Int64s(const Value* val, REBINT sign)
         return n;
     }
 
-    fail (Error_Out_Of_Range(val));
+    panic (Error_Out_Of_Range(val));
 }
 
 
@@ -406,7 +406,7 @@ REBLEN Part_Len_May_Modify_Index(
             or Type_Of(series) != Type_Of(part)  // !!! allow AS aliases?
             or Cell_Flex(series) != Cell_Flex(part)
         ){
-            fail (Error_Invalid_Part_Raw(part));
+            panic (Error_Invalid_Part_Raw(part));
         }
 
         len = VAL_INDEX(part) - iseries;
@@ -421,7 +421,7 @@ REBLEN Part_Len_May_Modify_Index(
     }
     else {
         if (Is_Issue(part))
-            fail (Error_Invalid_Part_Raw(part));
+            panic (Error_Invalid_Part_Raw(part));
 
         len = -len;
         if (len > cast(REBI64, iseries))
@@ -435,7 +435,7 @@ REBLEN Part_Len_May_Modify_Index(
         // to do `len = -len` couldn't make a positive 32-bit version of that
         // negative value.  For now, use REBI64 to do the calculation.
         //
-        fail ("Length out of range for :PART refinement");
+        panic ("Length out of range for :PART refinement");
     }
 
     assert(len >= 0);
@@ -484,7 +484,7 @@ REBLEN Part_Limit_Append_Insert(const Value* part) {
         return i;
     }
 
-    fail ("APPEND and INSERT only take :PART limit as INTEGER!");
+    panic ("APPEND and INSERT only take :PART limit as INTEGER!");
 }
 
 
@@ -496,7 +496,7 @@ int64_t Add_Max(Option(Heart) heart, int64_t n, int64_t m, int64_t maxi)
     int64_t r = n + m;
     if (r < -maxi or r > maxi) {
         if (heart)
-            fail (Error_Type_Limit_Raw(Datatype_From_Type(unwrap heart)));
+            panic (Error_Type_Limit_Raw(Datatype_From_Type(unwrap heart)));
         r = r > 0 ? maxi : -maxi;
     }
     return r;
@@ -510,7 +510,7 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n * m;
     if (r < -maxi or r > maxi)
-        fail (Error_Type_Limit_Raw(Datatype_From_Type(heart)));
+        panic (Error_Type_Limit_Raw(Datatype_From_Type(heart)));
     return cast(int, r); // !!! (?) review this cast
 }
 
@@ -527,7 +527,7 @@ Element* Setify(Element* out) {  // called on stack values; can't call eval
         out, TYPE_CHAIN, CELL_MASK_ERASED_0
     );
     if (error)
-        fail (unwrap error);
+        panic (unwrap error);
     return out;
 }
 
@@ -614,7 +614,7 @@ Element* Getify(Element* out) {  // called on stack values; can't call eval
         out, TYPE_CHAIN, CELL_FLAG_LEADING_BLANK
     );
     if (error)
-        fail (unwrap error);
+        panic (unwrap error);
     return out;
 }
 
@@ -658,7 +658,7 @@ Element* Metafy(Element* out) {  // called on stack values; can't call eval
         HEART_BYTE(out) = TYPE_META_GROUP;
     }
     else
-        fail ("Cannot METAFY");
+        panic ("Cannot METAFY");
 
     return out;
 }
@@ -701,7 +701,7 @@ Element* Theify(Element* out) {  // called on stack values; can't call evaluator
         HEART_BYTE(out) = TYPE_THE_GROUP;
     }
     else
-        fail ("Cannot THEIFY");
+        panic ("Cannot THEIFY");
 
     return out;
 }

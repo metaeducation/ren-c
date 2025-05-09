@@ -20,7 +20,7 @@ INLINE const Byte* Cell_Blob_Size_At(
     REBIDX i = VAL_INDEX_RAW(v);
     Size size = Binary_Len(b);
     if (i < 0 or i > size)
-        fail (Error_Index_Out_Of_Range_Raw());
+        panic (Error_Index_Out_Of_Range_Raw());
     if (size_at)
         *(unwrap size_at) = size - i;
     return Binary_At(b, i);

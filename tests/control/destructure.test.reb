@@ -13,7 +13,7 @@
 ])
 
 (<Case Two> = destructure [a b] [
-    [word!] => [fail "Shouldn't call"]
+    [word!] => [panic "Shouldn't call"]
     [word! word!] => [<Case Two>]
 ])
 

@@ -49,7 +49,7 @@
 // modification during the course of the PARSE, as code is in Ren-C.)
 //
 // This leverages common services like reporting the start of the last
-// "expression" that caused an error.  So merely calling `fail()` will use
+// "expression" that caused an error.  So merely calling `panic()` will use
 // the call stack to properly indicate the start of the parse rule that caused
 // a problem.  But most importantly, debuggers can break in and see the
 // state at every step in the parse rule recursions.
@@ -402,23 +402,23 @@ static const Element* Get_Parse_Value(
         if (VAL_CMD(rule))  // includes Is_Bar()...also a "command"
             return rule;
 
-        Get_Var_May_Fail(sink, rule, context);
+        Get_Var_May_Panic(sink, rule, context);
     }
     else if (Is_Tuple(rule) or Is_Path(rule)) {
-        Get_Var_May_Fail(sink, rule, context);
+        Get_Var_May_Panic(sink, rule, context);
     }
     else
         return rule;
 
     if (Is_Quasiform(sink)) {
-        fail ("RULE should not look up to quasiforms");
+        panic ("RULE should not look up to quasiforms");
     }
     else if (Is_Antiform(sink)) {
         if (Is_Nulled(sink))
-            fail (Error_Bad_Null(rule));
+            panic (Error_Bad_Null(rule));
 
         if (Any_Vacancy(sink))
-            fail (Error_Bad_Word_Get(rule, sink));
+            panic (Error_Bad_Word_Get(rule, sink));
 
         if (Is_Logic(sink) or Is_Splice(sink))
             Quasify_Antiform(sink);
@@ -430,12 +430,12 @@ static const Element* Get_Parse_Value(
             QUOTE_BYTE(sink) = NOQUOTE_1;
         }
         else {
-            fail (Error_Bad_Antiform(sink));
+            panic (Error_Bad_Antiform(sink));
         }
     }
     else {
         if (Is_Integer(sink))
-            fail ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
+            panic ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
     }
 
     return cast(Element*, sink);
@@ -489,7 +489,7 @@ bool Process_Group_For_Parse_Throws(
             if (Is_Logic(atom_out))
                 Meta_Quotify(atom_out);
             else
-                fail (Error_Bad_Antiform(atom_out));
+                panic (Error_Bad_Antiform(atom_out));
         }
     }
 
@@ -539,7 +539,7 @@ static REBIXO Parse_One_Rule(
             if (Is_Logic(SPARE))
                 Meta_Quotify(SPARE);
             else
-                fail (Error_Bad_Antiform(SPARE));
+                panic (Error_Bad_Antiform(SPARE));
         }
         // was a GET-GROUP! :(...), use result as rule
         rule = cast(Element*, SPARE);
@@ -580,11 +580,11 @@ static REBIXO Parse_One_Rule(
         ){
             return pos;  // just skip ahead
         }
-        fail ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
+        panic ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
     }
     else switch (Type_Of(rule)) {  // handle w/same behavior for all P_INPUT
       case TYPE_INTEGER:
-        fail ("Non-rule-count INTEGER! in PARSE must be literal, use QUOTE");
+        panic ("Non-rule-count INTEGER! in PARSE must be literal, use QUOTE");
 
       case TYPE_BLOCK: {
         //
@@ -638,7 +638,7 @@ static REBIXO Parse_One_Rule(
         }
         else switch (Heart_Of_Fundamental(rule)) {
           case TYPE_THE_WORD: {
-            Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
+            Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
             rule = Ensure_Element(SPARE);
             break; }  // all through to direct match
 
@@ -667,7 +667,7 @@ static REBIXO Parse_One_Rule(
             break;  // all interpreted literally
 
           default:
-            fail ("Unknown value type for match in ANY-ARRAY!");
+            panic ("Unknown value type for match in ANY-ARRAY!");
         }
 
         // !!! R3-Alpha said "Match with some other value"... is this a good
@@ -682,9 +682,9 @@ static REBIXO Parse_One_Rule(
         assert(Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB);
 
         if (Is_The_Word(rule)) {
-            Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
+            Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
             if (Is_Antiform(SPARE))
-                fail (Error_Bad_Antiform(SPARE));
+                panic (Error_Bad_Antiform(SPARE));
             rule = cast(Element*, SPARE);
         }
 
@@ -745,7 +745,7 @@ static REBIXO Parse_One_Rule(
             return END_FLAG; }
 
           default:
-            fail (Error_Parse3_Rule());
+            panic (Error_Parse3_Rule());
         }
     }
 }
@@ -786,7 +786,7 @@ static REBIXO To_Thru_Block_Rule(
         const Element* blk = Array_Head(Cell_Array(rule_block));
         for (; blk != blk_tail; blk++) {
             if (Is_Bar(blk))
-                fail (Error_Parse3_Rule());  // !!! Shouldn't `TO [|]` succeed?
+                panic (Error_Parse3_Rule());  // !!! Shouldn't `TO [|]` succeed?
 
             const Element* rule;
             if (not (Is_Group(blk) or Is_Get_Group(blk)))
@@ -807,21 +807,21 @@ static REBIXO To_Thru_Block_Rule(
 
                 if (cmd) {
                     if (cmd == SYM_END)
-                        fail ("Use <end> instead of END in PARSE3");
+                        panic ("Use <end> instead of END in PARSE3");
 
                     if (cmd == SYM_QUOTE)
-                        fail ("Use THE instead of QUOTE in PARSE3");
+                        panic ("Use THE instead of QUOTE in PARSE3");
 
                     if (cmd == SYM_THE) {
                         rule = ++blk;  // next rule is the literal value
                         if (rule == blk_tail)
-                            fail (Error_Parse3_Rule());
+                            panic (Error_Parse3_Rule());
                     }
                     else
-                        fail (Error_Parse3_Rule());
+                        panic (Error_Parse3_Rule());
                 }
                 else {
-                    Get_Var_May_Fail(cell, rule, P_RULE_BINDING);
+                    Get_Var_May_Panic(cell, rule, P_RULE_BINDING);
                     rule = cast(Element*, cell);
                 }
             }
@@ -836,7 +836,7 @@ static REBIXO To_Thru_Block_Rule(
                     // ignore for now
                 }
                 else
-                    fail ("TAG! combinator must be <here> or <end> ATM");
+                    panic ("TAG! combinator must be <here> or <end> ATM");
             }
             else if (Is_Tuple(rule) or Is_Path(rule))
                 rule = Get_Parse_Value(cell, rule, P_RULE_BINDING);
@@ -847,7 +847,7 @@ static REBIXO To_Thru_Block_Rule(
             // Try to match it:
             if (Any_List_Type(P_HEART) or Any_Sequence_Type(P_HEART)) {
                 if (Any_List(rule))
-                    fail (Error_Parse3_Rule());
+                    panic (Error_Parse3_Rule());
 
                 REBIXO ixo = Parse_One_Rule(level_, VAL_INDEX(iter), rule);
                 if (ixo == THROWN_FLAG)
@@ -879,7 +879,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (IS_CHAR(rule)) {
                     if (Cell_Codepoint(rule) > 0xff)
-                        fail (Error_Parse3_Rule());
+                        panic (Error_Parse3_Rule());
 
                     if (ch1 == Cell_Codepoint(rule)) {
                         if (is_thru)
@@ -911,7 +911,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (Is_Integer(rule)) {
                     if (VAL_INT64(rule) > 0xff)
-                        fail (Error_Parse3_Rule());
+                        panic (Error_Parse3_Rule());
 
                     if (ch1 == VAL_INT32(rule)) {
                         if (is_thru)
@@ -920,7 +920,7 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else
-                    fail (Error_Parse3_Rule());
+                    panic (Error_Parse3_Rule());
             }
             else {
                 assert(Any_String_Type(P_HEART));
@@ -990,7 +990,7 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else
-                    fail (Error_Parse3_Rule());
+                    panic (Error_Parse3_Rule());
             }
 
           next_alternate_rule:  // alternates are BAR! separated `[a | b | c]`
@@ -1029,14 +1029,14 @@ static REBIXO To_Thru_Non_Block_Rule(
             return P_POS;  // no-op
         }
         if (not Is_Meta_Of_Datatype(rule))
-            fail ("PARSE3 supports ~void~, ~okay~, and datatype antiforms");
+            panic ("PARSE3 supports ~void~, ~okay~, and datatype antiforms");
     }
 
     Option(Type) t = Type_Of(rule);
     assert(t != TYPE_BLOCK);
 
     if (t == TYPE_WORD and Cell_Word_Id(rule) == SYM_END)
-        fail ("Use <end> instead of END in PARSE3");
+        panic ("Use <end> instead of END in PARSE3");
 
     if (t == TYPE_TAG) {
         bool strict = true;
@@ -1044,10 +1044,10 @@ static REBIXO To_Thru_Non_Block_Rule(
             return P_INPUT_LEN;
         }
         else if (0 == CT_Utf8(rule, Root_Here_Tag, strict)) {
-            fail ("TO/THRU <here> isn't supported in PARSE3");
+            panic ("TO/THRU <here> isn't supported in PARSE3");
         }
         else
-            fail ("TAG! combinator must be <here> or <end> ATM");
+            panic ("TAG! combinator must be <here> or <end> ATM");
     }
 
     if (Stub_Holds_Cells(P_INPUT)) {
@@ -1063,7 +1063,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             Unquotify(Derelativize(temp, rule, P_RULE_BINDING));
         }
         else if (Is_The_Word(rule)) {
-            Get_Var_May_Fail(temp, rule, P_RULE_BINDING);
+            Get_Var_May_Panic(temp, rule, P_RULE_BINDING);
         }
         else if (Is_Meta_Of_Datatype(rule)) {
             DECLARE_ELEMENT (rule_value);
@@ -1097,7 +1097,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     }
     else {
         if (Is_The_Word(rule)) {
-            Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
+            Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
             rule = Ensure_Element(SPARE);
         }
     }
@@ -1143,7 +1143,7 @@ static void Handle_Mark_Rule(
 
     Option(Type) t = Type_Of(rule);
     if (t == TYPE_WORD or Is_Set_Word(rule)) {
-        Copy_Cell(Sink_Word_May_Fail(rule, context), ARG(POSITION));
+        Copy_Cell(Sink_Word_May_Panic(rule, context), ARG(POSITION));
     }
     else if (
         t == TYPE_PATH or t == TYPE_TUPLE or Is_Set_Tuple(rule)
@@ -1157,12 +1157,12 @@ static void Handle_Mark_Rule(
             cast(Value*, temp),  // <-- output cell
             CANON(SET), OUT, ARG(POSITION)
         )){
-            fail (Error_No_Catch_For_Throw(LEVEL));
+            panic (Error_No_Catch_For_Throw(LEVEL));
         }
         Erase_Cell(OUT);
     }
     else
-        fail (Error_Parse3_Variable(level_));
+        panic (Error_Parse3_Variable(level_));
 
     Dequotify(Element_ARG(POSITION));  // go back to 0 quote level
 }
@@ -1177,9 +1177,9 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 
     Option(Type) t = Type_Of(rule);
     if (t == TYPE_WORD or t == TYPE_TUPLE) {
-        Get_Var_May_Fail(SPARE, rule, context);
+        Get_Var_May_Panic(SPARE, rule, context);
         if (Is_Antiform(SPARE))
-            fail (Error_Bad_Antiform(SPARE));
+            panic (Error_Bad_Antiform(SPARE));
         rule = cast(Element*, SPARE);
         t = Type_Of(rule);
     }
@@ -1188,16 +1188,16 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
     if (t == TYPE_INTEGER) {
         index = VAL_INT32(rule);
         if (index < 1)
-            fail ("Cannot SEEK a negative integer position");
+            panic ("Cannot SEEK a negative integer position");
         --index;  // Rebol is 1-based, C is 0 based...
     }
     else if (Any_Series_Type(t)) {
         if (Cell_Flex(rule) != P_INPUT)
-            fail ("Switching PARSE series is not allowed");
+            panic ("Switching PARSE series is not allowed");
         index = VAL_INDEX(rule);
     }
     else  // #1263
-        fail (Error_Parse3_Series_Raw(rule));
+        panic (Error_Parse3_Series_Raw(rule));
 
     if (index > P_INPUT_LEN)
         P_POS = P_INPUT_LEN;
@@ -1249,7 +1249,7 @@ DECLARE_NATIVE(SUBPARSE)
 // does not seem that all callers of Subparse's predecessor were prepared for
 // the semantics of switching the series.
 //
-// * A `fail()`, in which case the function won't return--it will longjmp
+// * A `panic()`, in which case the function won't return--it will longjmp
 // up to the most recently pushed handler.  This can happen due to an invalid
 // rule pattern, or if there's an error in code that is run in parentheses.
 //
@@ -1368,7 +1368,7 @@ DECLARE_NATIVE(SUBPARSE)
 
     if (Is_Comma(rule)) {
         if (mincount != 1 or maxcount != 1 or (P_FLAGS & PF_STATE_MASK))
-            fail (Error_Expression_Barrier_Raw());
+            panic (Error_Expression_Barrier_Raw());
         FETCH_NEXT_RULE(L);
         goto pre_rule;
     }
@@ -1434,7 +1434,7 @@ DECLARE_NATIVE(SUBPARSE)
                 //
                 // Command but not WORD! (COPY:, :THRU)
                 //
-                fail (Error_Parse3_Command(L));
+                panic (Error_Parse3_Command(L));
             }
 
             assert(cmd >= MIN_SYM_PARSE3 and cmd <= MAX_SYM_PARSE3);
@@ -1475,7 +1475,7 @@ DECLARE_NATIVE(SUBPARSE)
                 //
 
                 if (mincount != 1 or maxcount != 1)
-                    fail (
+                    panic (
                         "Old PARSE REPEAT does not mix with ranges or OPT"
                         " so put a block around the REPEAT or use UPARSE!"
                     );
@@ -1500,14 +1500,14 @@ DECLARE_NATIVE(SUBPARSE)
                             and Is_Integer(Cell_List_Item_At(OUT) + 1)
                         )
                     ){
-                        fail ("REPEAT takes INTEGER! or length 2 BLOCK! range");
+                        panic ("REPEAT takes INTEGER! or length 2 BLOCK! range");
                     }
 
                     mincount = Int32s(Cell_List_Item_At(OUT), 0);
                     maxcount = Int32s(Cell_List_Item_At(OUT) + 1, 0);
 
                     if (maxcount < mincount)
-                        fail ("REPEAT range can't have lower max than minimum");
+                        panic ("REPEAT range can't have lower max than minimum");
                 }
 
                 Erase_Cell(OUT);
@@ -1524,10 +1524,10 @@ DECLARE_NATIVE(SUBPARSE)
                 FETCH_NEXT_RULE(L);
 
                 if (not (Is_Word(P_RULE) or Is_Set_Word(P_RULE)))
-                    fail (Error_Parse3_Variable(L));
+                    panic (Error_Parse3_Variable(L));
 
                 if (VAL_CMD(P_RULE))  // set set [...]
-                    fail (Error_Parse3_Command(L));
+                    panic (Error_Parse3_Command(L));
 
                 // We need to add a new binding before we derelativize w.r.t.
                 // the in-effect binding.
@@ -1565,7 +1565,7 @@ DECLARE_NATIVE(SUBPARSE)
                         strict
                     )
                 )){
-                    fail ("NOT must be NOT AHEAD or NOT <end> in PARSE3");
+                    panic ("NOT must be NOT AHEAD or NOT <end> in PARSE3");
                 }
                 goto pre_rule; }
 
@@ -1592,10 +1592,10 @@ DECLARE_NATIVE(SUBPARSE)
               case SYM_WHEN: {
                 FETCH_NEXT_RULE(L);
                 if (P_AT_END)
-                    fail (Error_Parse3_End());
+                    panic (Error_Parse3_End());
 
                 if (not Is_Group(P_RULE))
-                    fail (Error_Parse3_Rule());
+                    panic (Error_Parse3_Rule());
 
                 DECLARE_ATOM (condition);
                 if (Eval_Any_List_At_Throws(  // note: might GC
@@ -1626,14 +1626,14 @@ DECLARE_NATIVE(SUBPARSE)
                     if (rebUnboxLogic(P_RULE, "= <here>"))
                         Copy_Cell(thrown_arg, ARG(POSITION));
                     else
-                        fail ("PARSE3 ACCEPT TAG! only works with <here>");
+                        panic ("PARSE3 ACCEPT TAG! only works with <here>");
                 }
                 else if (Is_Group(P_RULE)) {
                     if (Eval_Value_Throws(thrown_arg, P_RULE, P_RULE_BINDING))
                         goto return_thrown;
                 }
                 else
-                    fail ("PARSE3 ACCEPT only works with GROUP! and <here>");
+                    panic ("PARSE3 ACCEPT only works with GROUP! and <here>");
 
                 Init_Thrown_With_Label(LEVEL, thrown_arg, LIB(PARSE_ACCEPT));
                 goto return_thrown; }
@@ -1675,33 +1675,33 @@ DECLARE_NATIVE(SUBPARSE)
                 goto pre_rule; }
 
               case SYM_AND_1:  // see TO-C-NAME
-                fail ("Please replace PARSE3's AND with AHEAD");
+                panic ("Please replace PARSE3's AND with AHEAD");
 
               case SYM_WHILE:
-                fail (
+                panic (
                     "Please replace PARSE3's WHILE with OPT SOME -or-"
                     " OPT FURTHER SOME--it's being reclaimed as arity-2."
                     " https://forum.rebol.info/t/1540/12"
                 );
 
               case SYM_ANY:
-                fail (
+                panic (
                     "Please replace PARSE3's ANY with OPT SOME"
                     " -- it's being reclaimed for a new construct"
                     " https://forum.rebol.info/t/1540/12"
                 );
 
               case SYM_COPY:
-                fail ("COPY not supported in PARSE3 (use SET-WORD!+ACROSS)");
+                panic ("COPY not supported in PARSE3 (use SET-WORD!+ACROSS)");
 
               case SYM_SET:
-                fail ("SET not supported in PARSE3 (use SET-WORD!)");
+                panic ("SET not supported in PARSE3 (use SET-WORD!)");
 
               case SYM_LIMIT:
-                fail ("LIMIT not implemented");
+                panic ("LIMIT not implemented");
 
               case SYM_RETURN:
-                fail ("RETURN keyword switched to ACCEPT in PARSE3/UPARSE");
+                panic ("RETURN keyword switched to ACCEPT in PARSE3/UPARSE");
 
               default:  // the list above should be exhaustive
                 assert(false);
@@ -1732,7 +1732,7 @@ DECLARE_NATIVE(SUBPARSE)
                 goto handle_set;
             }
             else if (Is_Get_Word(rule)) {
-                fail ("GET-WORD! in modern PARSE is reserved (use SEEK)");
+                panic ("GET-WORD! in modern PARSE is reserved (use SEEK)");
             }
             else {
                 assert(Is_Word(rule));  // word - some other variable
@@ -1744,7 +1744,7 @@ DECLARE_NATIVE(SUBPARSE)
         }
     }
     else if (Is_Tuple(rule)) {
-        Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
+        Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
         if (Is_Datatype(SPARE)) {
             Init_Typechecker(P_SAVE, stable_SPARE);
             QUOTE_BYTE(SPARE) = NOQUOTE_1;
@@ -1754,7 +1754,7 @@ DECLARE_NATIVE(SUBPARSE)
             rule = cast(Element*, Copy_Cell(P_SAVE, stable_SPARE));
     }
     else if (Is_Path(rule)) {
-        Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
+        Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
         assert(Is_Action(SPARE));
         QUOTE_BYTE(SPARE) = NOQUOTE_1;
         rule = cast(Element*, Copy_Cell(P_SAVE, stable_SPARE));
@@ -1777,7 +1777,7 @@ DECLARE_NATIVE(SUBPARSE)
             if (0 == CT_Utf8(P_RULE, Root_Here_Tag, strict))
                 FETCH_NEXT_RULE(L);
             else
-                fail ("SET-WORD! works with <HERE> tag in PARSE3");
+                panic ("SET-WORD! works with <HERE> tag in PARSE3");
 
             Handle_Mark_Rule(L, set_or_copy_word, P_RULE_BINDING);
             goto pre_rule;
@@ -1788,7 +1788,7 @@ DECLARE_NATIVE(SUBPARSE)
     }
 
     if (Is_Bar(rule))
-        fail ("BAR! must be source level (else PARSE can't skip it)");
+        panic ("BAR! must be source level (else PARSE can't skip it)");
 
     if (Is_Quasiform(rule)) {
         if (
@@ -1798,14 +1798,14 @@ DECLARE_NATIVE(SUBPARSE)
             FETCH_NEXT_RULE(L);
             goto pre_rule;
         }
-        fail ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
+        panic ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
     }
     else switch (Type_Of(rule)) {
       case TYPE_GROUP:
         goto process_group;  // GROUP! can make WORD! that fetches GROUP!
 
       case TYPE_INTEGER:  // Specify repeat count
-        fail (
+        panic (
             "[1 2 rule] now illegal https://forum.rebol.info/t/1578/6"
             " (use REPEAT)"
         );
@@ -1821,7 +1821,7 @@ DECLARE_NATIVE(SUBPARSE)
             begin = P_POS;
             goto handle_end;
         }
-        fail ("Only TAG! combinators PARSE3 supports are <here> and <end>"); }
+        panic ("Only TAG! combinators PARSE3 supports are <here> and <end>"); }
 
       default:;
         // Fall through to next section
@@ -1858,7 +1858,7 @@ DECLARE_NATIVE(SUBPARSE)
 
             switch (cmd) {
               case SYM_SKIP:
-                fail ("Use ONE instead of SKIP in PARSE3");
+                panic ("Use ONE instead of SKIP in PARSE3");
 
               case SYM_ONE:
                 i = (P_POS < P_INPUT_LEN)
@@ -1869,7 +1869,7 @@ DECLARE_NATIVE(SUBPARSE)
               case SYM_TO:
               case SYM_THRU: {
                 if (P_AT_END)
-                    fail (Error_Parse3_End());
+                    panic (Error_Parse3_End());
 
                 if (!subrule) {  // capture only on iteration #1
                     subrule = Get_Parse_Value(
@@ -1888,10 +1888,10 @@ DECLARE_NATIVE(SUBPARSE)
 
               case SYM_THE: {
                 if (not Stub_Holds_Cells(P_INPUT))
-                    fail (Error_Parse3_Rule());  // see #2253
+                    panic (Error_Parse3_Rule());  // see #2253
 
                 if (P_AT_END)
-                    fail (Error_Parse3_End());
+                    panic (Error_Parse3_End());
 
                 if (not subrule) {  // capture only on iteration #1
                     subrule = Copy_Cell(LOCAL(LOOKBACK), P_RULE);
@@ -1914,7 +1914,7 @@ DECLARE_NATIVE(SUBPARSE)
 
               case SYM_INTO: {
                 if (P_AT_END)
-                    fail (Error_Parse3_End());
+                    panic (Error_Parse3_End());
 
                 if (!subrule) {
                     subrule = Get_Parse_Value(
@@ -1924,13 +1924,13 @@ DECLARE_NATIVE(SUBPARSE)
                 }
 
                 if (not Is_Block(subrule))
-                    fail (Error_Parse3_Rule());
+                    panic (Error_Parse3_Rule());
 
                 // parse ["aa"] [into ["a" "a"]] ; is legal
                 // parse "aa" [into ["a" "a"]] ; is not...already "into"
                 //
                 if (not Stub_Holds_Cells(P_INPUT))
-                    fail (Error_Parse3_Rule());
+                    panic (Error_Parse3_Rule());
 
                 const Element* input_tail = Array_Tail(P_INPUT_ARRAY);
                 const Element* into = Array_At(P_INPUT_ARRAY, P_POS);
@@ -1985,13 +1985,13 @@ DECLARE_NATIVE(SUBPARSE)
                 break; }
 
               case SYM_QUOTE:
-                fail ("Use THE instead of QUOTE in PARSE3 for literal match");
+                panic ("Use THE instead of QUOTE in PARSE3 for literal match");
 
               case SYM_END:
-                fail ("Use <end> instead of END in PARSE3");
+                panic ("Use <end> instead of END in PARSE3");
 
               default:
-                fail (Error_Parse3_Rule());
+                panic (Error_Parse3_Rule());
             }
         }
         else if (Is_Block(rule)) {  // word fetched block, or inline block
@@ -2121,7 +2121,7 @@ DECLARE_NATIVE(SUBPARSE)
             count = (begin > P_POS) ? 0 : P_POS - begin;
 
             if (P_FLAGS & PF_ACROSS) {
-                Value* sink = Sink_Word_May_Fail(
+                Value* sink = Sink_Word_May_Panic(
                     set_or_copy_word,
                     P_RULE_BINDING
                 );
@@ -2170,7 +2170,7 @@ DECLARE_NATIVE(SUBPARSE)
             }
             else if (P_FLAGS & PF_SET) {
                 if (count > 1)
-                    fail (Error_Parse3_Multi_Set_Raw());
+                    panic (Error_Parse3_Multi_Set_Raw());
 
                 if (count == 0) {
                     //
@@ -2186,26 +2186,26 @@ DECLARE_NATIVE(SUBPARSE)
                     //
                     if (P_FLAGS & PF_TRY)  // don't just leave alone
                         Init_Nulled(
-                            Sink_Word_May_Fail(
+                            Sink_Word_May_Panic(
                                 set_or_copy_word,
                                 P_RULE_BINDING
                             )
                         );
                     else if (P_FLAGS & PF_OPTIONAL)
-                        fail ("Cannot assign OPT VOID to variable in PARSE3");
+                        panic ("Cannot assign OPT VOID to variable in PARSE3");
                 }
                 else if (Stub_Holds_Cells(P_INPUT)) {
                     assert(count == 1);  // check for > 1 would have errored
 
                     Copy_Cell(
-                        Sink_Word_May_Fail(set_or_copy_word, P_RULE_BINDING),
+                        Sink_Word_May_Panic(set_or_copy_word, P_RULE_BINDING),
                         Array_At(P_INPUT_ARRAY, begin)
                     );
                 }
                 else {
                     assert(count == 1);  // check for > 1 would have errored
 
-                    Value* var = Sink_Word_May_Fail(
+                    Value* var = Sink_Word_May_Panic(
                         set_or_copy_word, P_RULE_BINDING
                     );
 
@@ -2229,14 +2229,14 @@ DECLARE_NATIVE(SUBPARSE)
             if (P_FLAGS & (PF_INSERT | PF_CHANGE)) {
                 count = (P_FLAGS & PF_INSERT) ? 0 : count;
                 if (P_AT_END)
-                    fail (Error_Parse3_End());
+                    panic (Error_Parse3_End());
 
                 // new value...comment said "CHECK FOR QUOTE!!"
                 rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_BINDING);
                 FETCH_NEXT_RULE(L);
 
                 if (not Is_Group(rule))
-                    fail ("Splicing (...) only in PARSE3's CHANGE or INSERT");
+                    panic ("Splicing (...) only in PARSE3's CHANGE or INSERT");
 
                 DECLARE_VALUE (evaluated);
                 Context* derived = Derive_Binding(

@@ -276,7 +276,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
     switch (Type_Of(arg)) {
       case TYPE_INTEGER:  // interpret as seconds
         if (VAL_INT64(arg) < -MAX_SECONDS or VAL_INT64(arg) > MAX_SECONDS)
-            return FAIL(Error_Out_Of_Range(arg));
+            return PANIC(Error_Out_Of_Range(arg));
 
         return Init_Time_Nanoseconds(OUT, VAL_INT64(arg) * SEC_SEC);
 
@@ -285,7 +285,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
             VAL_DECIMAL(arg) < cast(REBDEC, -MAX_SECONDS)
             or VAL_DECIMAL(arg) > cast(REBDEC, MAX_SECONDS)
         ){
-            return FAIL(Error_Out_Of_Range(arg));
+            return PANIC(Error_Out_Of_Range(arg));
         }
         return Init_Time_Nanoseconds(OUT, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
@@ -386,13 +386,13 @@ void Pick_Time(Sink(Value) out, const Cell* value, const Element* picker)
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
         default:
-            fail (picker);
+            panic (picker);
         }
     }
     else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
-        fail (picker);
+        panic (picker);
 
     REB_TIMEF tf;
     Split_Time(VAL_NANO(value), &tf); // loses sign
@@ -431,13 +431,13 @@ void Poke_Time_Immediate(
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
         default:
-            fail (picker);
+            panic (picker);
         }
     }
     else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
-        fail (picker);
+        panic (picker);
 
     REB_TIMEF tf;
     Split_Time(VAL_NANO(time), &tf); // loses sign
@@ -448,7 +448,7 @@ void Poke_Time_Immediate(
     else if (Is_Blank(poke))
         n = 0;
     else
-        fail (poke);
+        panic (poke);
 
     switch(i) {
     case 0:
@@ -461,7 +461,7 @@ void Poke_Time_Immediate(
         if (Is_Decimal(poke)) {
             REBDEC f = VAL_DECIMAL(poke);
             if (f < 0.0)
-                fail (Error_Out_Of_Range(poke));
+                panic (Error_Out_Of_Range(poke));
 
             tf.s = f;
             tf.n = (f - tf.s) * SEC_SEC;
@@ -473,7 +473,7 @@ void Poke_Time_Immediate(
         break;
 
     default:
-        fail (picker);
+        panic (picker);
     }
 
     Tweak_Cell_Nanoseconds(time, Join_Time(&tf, false));
@@ -511,7 +511,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 
               case SYM_DIVIDE:
                 if (secs2 == 0)
-                    return FAIL(Error_Zero_Divide_Raw());
+                    return PANIC(Error_Zero_Divide_Raw());
                 return Init_Decimal(
                     OUT,
                     cast(REBDEC, secs) / cast(REBDEC, secs2)
@@ -519,12 +519,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 
               case SYM_REMAINDER:
                 if (secs2 == 0)
-                    return FAIL(Error_Zero_Divide_Raw());
+                    return PANIC(Error_Zero_Divide_Raw());
                 secs %= secs2;
                 return Init_Time_Nanoseconds(OUT, secs);
 
               default:
-                return FAIL(Error_Math_Args(TYPE_TIME, verb));
+                return PANIC(Error_Math_Args(TYPE_TIME, verb));
             }
         }
         else if (heart == TYPE_INTEGER) {     // handle TIME - INTEGER cases
@@ -541,19 +541,19 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 
               case SYM_DIVIDE:
                 if (num == 0)
-                    return FAIL(Error_Zero_Divide_Raw());
+                    return PANIC(Error_Zero_Divide_Raw());
                 secs /= num;
                 Init_Integer(OUT, secs);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_REMAINDER:
                 if (num == 0)
-                    return FAIL(Error_Zero_Divide_Raw());
+                    return PANIC(Error_Zero_Divide_Raw());
                 secs %= num;
                 return Init_Time_Nanoseconds(OUT, secs);
 
               default:
-                return FAIL(Error_Math_Args(TYPE_TIME, verb));
+                return PANIC(Error_Math_Args(TYPE_TIME, verb));
             }
         }
         else if (heart == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
@@ -580,7 +580,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 
               case SYM_DIVIDE:
                 if (dec == 0.0)
-                    return FAIL(Error_Zero_Divide_Raw());
+                    return PANIC(Error_Zero_Divide_Raw());
                 secs = cast(int64_t, secs / dec);
                 return Init_Time_Nanoseconds(OUT, secs);
 
@@ -590,7 +590,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                goto decTime; */
 
               default:
-                return FAIL(Error_Math_Args(TYPE_TIME, verb));
+                return PANIC(Error_Math_Args(TYPE_TIME, verb));
             }
         }
         else if (heart == TYPE_DATE and id == SYM_ADD) {
@@ -604,7 +604,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
             Move_Cell(ARG_N(2), stable_SPARE);
             return GENERIC_CFUNC(OLDGENERIC, Is_Date)(level_);
         }
-        return FAIL(Error_Math_Args(TYPE_TIME, verb));
+        return PANIC(Error_Math_Args(TYPE_TIME, verb));
     }
     else {
         // unary actions
@@ -653,7 +653,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Time)
 
     Option(const Value*) opt_poke = Optional_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     Poke_Time_Immediate(time, picker, poke);
@@ -695,14 +695,14 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Time)
     if (Is_Integer(v2)) {
         secs *= VAL_INT64(v2);
         if (secs < -(MAX_TIME) or secs > MAX_TIME)
-            return FAIL(
+            return PANIC(
                 Error_Type_Limit_Raw(Datatype_From_Type(TYPE_TIME))
             );
     }
     else if (Is_Decimal(v2))
         secs = cast(int64_t, secs * VAL_DECIMAL(v2));
     else
-        return FAIL(PARAM(VALUE2));
+        return PANIC(PARAM(VALUE2));
 
     return Init_Time_Nanoseconds(OUT, secs);
 }
@@ -743,5 +743,5 @@ IMPLEMENT_GENERIC(ROUND, Is_Time)
         return COPY(to);
     }
 
-    return FAIL(PARAM(TO));
+    return PANIC(PARAM(TO));
 }

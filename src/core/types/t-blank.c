@@ -176,7 +176,7 @@ IMPLEMENT_GENERIC(AS, Is_Blank)
 
     Option(Error*) e = Trap_Alias_Blank_As(OUT, as);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return OUT;
 }

@@ -97,15 +97,15 @@ Option(uint32_t) Try_Get_Hash_Prime(uint32_t minimum)
 
 
 //
-//  Get_Hash_Prime_May_Fail: C
+//  Get_Hash_Prime_May_Panic: C
 //
-uint32_t Get_Hash_Prime_May_Fail(uint32_t minimum)
+uint32_t Get_Hash_Prime_May_Panic(uint32_t minimum)
 {
     Option(uint32_t) prime = Try_Get_Hash_Prime(minimum);
     if (not prime) {  // larger than hash prime table
         DECLARE_ELEMENT (temp);
         Init_Integer(temp, minimum);
-        fail (Error_Size_Limit_Raw(temp));
+        panic (Error_Size_Limit_Raw(temp));
     }
     return unwrap prime;
 }
@@ -147,7 +147,7 @@ static void Expand_Word_Table(void)
         g_symbols.by_hash
     );
 
-    Length num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
+    Length num_slots = Get_Hash_Prime_May_Panic(old_num_slots + 1);
     assert(Flex_Wide(g_symbols.by_hash) == sizeof(Symbol*));
 
     Flex* table = Make_Flex(
@@ -238,7 +238,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     Length skip;  // how many slots to skip when occupied candidates found
     Offset slot = First_Hash_Candidate_Slot(
         &skip,
-        Hash_Scan_UTF8_Caseless_May_Fail(utf8, utf8_size),
+        Hash_Scan_UTF8_Caseless_May_Panic(utf8, utf8_size),
         num_slots
     );
 
@@ -302,7 +302,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
             Clear_Flavor_Flag(SYMBOL, b, ALL_ASCII);
 
         if (utf8[i] == 0xC2 and utf8[i + 1] == 0xA0)
-            fail ("Non-breaking space illegal in WORD!");
+            panic ("Non-breaking space illegal in WORD!");
 
         assert(
             utf8[i] != '$'
@@ -482,7 +482,7 @@ void Startup_Interning(void)
     g_symbols.num_deleteds = 0;
   #endif
 
-    Length n = Get_Hash_Prime_May_Fail(
+    Length n = Get_Hash_Prime_May_Panic(
         WORD_TABLE_SIZE * 4  // * 4 reduces rehashing
     );
 
@@ -591,7 +591,7 @@ RebolValue* Register_Symbol(const char* utf8, SymId16 id16)
     Option(SymId) id = Symbol_Id(symbol);
     if (id) {
         if (not (id16 == u_cast(SymId16, id)))
-            fail ("Extensions using conflicting Register_Symbol() IDs");
+            panic ("Extensions using conflicting Register_Symbol() IDs");
     }
 
     const Symbol* synonym = symbol;

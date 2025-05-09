@@ -92,7 +92,7 @@ prin: func [
 
 /find: adapt (augment find/ [:reverse :last]) [
     if reverse or last [
-        fail:blame [
+        panic:blame [
             ":REVERSE and :LAST on FIND have been deprecated.  Use FIND-LAST"
             "or FIND-REVERSE specializations: https://forum.rebol.info/t/1126"
         ] $reverse

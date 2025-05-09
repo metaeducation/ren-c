@@ -724,7 +724,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 
     assert(index <= Flex_Used(f));
     if (delta & 0x80000000)
-        fail (Error_Index_Out_Of_Range_Raw()); // 2GB max
+        panic (Error_Index_Out_Of_Range_Raw()); // 2GB max
 
     if (delta == 0)
         return;
@@ -809,7 +809,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
 
     if (Get_Flex_Flag(f, FIXED_SIZE))
-        fail (Error_Locked_Series_Raw());
+        panic (Error_Locked_Series_Raw());
 
   #if RUNTIME_CHECKS
     if (g_mem.watch_expand) {
@@ -870,7 +870,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
     Set_Stub_Flag(f, DYNAMIC);
     Set_Flex_Flag(f, POWER_OF_2);
     if (not Try_Flex_Data_Alloc(f, used_old + delta + x))
-        fail (Error_No_Memory((used_old + delta + x) * wide));
+        panic (Error_No_Memory((used_old + delta + x) * wide));
 
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))
@@ -974,7 +974,7 @@ DECLARE_NATIVE(SWAP_CONTENTS)
     INCLUDE_PARAMS_OF_SWAP_CONTENTS;
 
     if (Any_List(ARG(SERIES1)) != Any_List(ARG(SERIES2)))
-        return FAIL("Can only SWAP-CONTENTS of arrays with other arrays");
+        return PANIC("Can only SWAP-CONTENTS of arrays with other arrays");
 
     // !!! This is a conservative check, as some binaries could be swapped
     // with ANY-STRING?.  However, that would require checking that the
@@ -983,7 +983,7 @@ DECLARE_NATIVE(SWAP_CONTENTS)
     // annoying to write.
     //
     if (Is_Blob(ARG(SERIES1)) != Is_Blob(ARG(SERIES2)))
-        return FAIL("Can only SWAP-CONTENTS of binaries with other binaries");
+        return PANIC("Can only SWAP-CONTENTS of binaries with other binaries");
 
     Flex* f1 = Cell_Flex_Ensure_Mutable(ARG(SERIES1));
     Flex* f2 = Cell_Flex_Ensure_Mutable(ARG(SERIES2));
@@ -1046,7 +1046,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
         // Put Flex back how it was (there may be extant references)
         f->content.dynamic.data = cast(char*, data_old);
 
-        fail (Error_No_Memory((units + 1) * wide));
+        panic (Error_No_Memory((units + 1) * wide));
     }
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))

@@ -49,7 +49,7 @@ Rebol [
 
 
 if not find (words of import/) 'into [
-    fail "%import-shim.r must be loaded before %bootstrap-shim.r"
+    panic "%import-shim.r must be loaded before %bootstrap-shim.r"
 ]
 
 
@@ -154,6 +154,10 @@ sys.util/rescue [
 ; to nothing.  To avoid this, we simply put all the emulation code in a group.
 
 (  ; closed at end of file
+
+
+panic: fail/
+fail: ~<FAIL being changed to definitional (e.g. what was RAISE)>~
 
 
 === "SHORT NAMES FOR LIB3/XXX, CATCH USES OF SHIMMED FUNCTIONS BEFORE SHIM" ===
@@ -302,7 +306,7 @@ quote: lambda3 [x [any-value!]] [  ; see the more general UNEVAL
         word! [to lit-word3! x]  ; to lit-word! not legal in new EXE
         path! [to lit-path3! x]  ; to lit-path! not legal in new EXE
 
-        fail:blame [
+        panic:blame [
             "Bootstrap QUOTE only works on WORD!, PATH!:" mold x
         ] $x
     ]
@@ -313,7 +317,7 @@ unquote: lambda3 [x [any-value!]] [  ; see the more general EVAL
         lit-word3! [to word! x]  ; to word! of quoted not legal in new EXE
         lit-path3! [to path! x]  ; to path! of quoted not legal in new EXE
 
-        fail:blame [
+        panic:blame [
             "Bootstrap UNQUOTE only works on LIT-WORD?, LIT-PATH?:" mold x
         ] $x
     ]
@@ -336,16 +340,16 @@ refinement?: get-word?/
 chain!: path!  ; works in some places (a:b scans as a PATH! in bootstrap EXE)
 
 set-word!: func3 [] [
-    fail:blame "SET-WORD! is now a CHAIN!, try SET-WORD?!" $return
+    panic:blame "SET-WORD! is now a CHAIN!, try SET-WORD?!" $return
 ]
 get-word!: func3 [] [
-    fail:blame "GET-WORD! is now a CHAIN!, try GET-WORD?!" $return
+    panic:blame "GET-WORD! is now a CHAIN!, try GET-WORD?!" $return
 ]
 set-path!: func3 [] [
-    fail:blame "SET-PATH! can no longer exist, try SET-TUPLE?!" $return
+    panic:blame "SET-PATH! can no longer exist, try SET-TUPLE?!" $return
 ]
 get-path!: func3 [] [
-    fail:blame "GET-PATH! can no longer exist, try GET-TUPLE?!" $return
+    panic:blame "GET-PATH! can no longer exist, try GET-TUPLE?!" $return
 ]
 
 setify: lambda3 [plain [word! path!]] [
@@ -403,7 +407,7 @@ append: func3 [series value [<undo-opt> any-element!] /line <local> only] [
             block? value
             #splice! = (first value)
         ] else [
-            fail:blame "Bootstrap shim for OBJECT! only APPENDs SPLICEs" $return
+            panic:blame "Bootstrap shim for OBJECT! only APPENDs SPLICEs" $return
         ]
         return append3 series second value
     ]
@@ -442,7 +446,7 @@ change: func3 [series value [<undo-opt> any-element!] /line <local> only] [
     if (block? value) and (#splice! = first value) [
         value: second value
         if not any-list? series [
-            fail ["CHANGE to SPLICE not currently in shim"]
+            panic ["CHANGE to SPLICE not currently in shim"]
         ]
         only: null
     ]
@@ -477,7 +481,7 @@ join: func3 [
 ][
     if block? value [
         if #splice! = (first value) [
-            fail:blame "SPLICE no longer supported in JOIN" $return
+            panic:blame "SPLICE no longer supported in JOIN" $return
         ]
     ]
 
@@ -490,7 +494,7 @@ join: func3 [
             assert [block? value]
             return to base reduce value
         ]
-        fail ["JOIN of DATATYPE! only [BLOB! TUPLE! PATH!] in bootstrap"]
+        panic ["JOIN of DATATYPE! only [BLOB! TUPLE! PATH!] in bootstrap"]
     ]
     if void? :value [
         return copy base
@@ -535,7 +539,7 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
 
 compose: func3 [block [block!] /deep <local> result pos product count] [
     if deep [
-        fail:blame "COMPOSE bootstrap shim doesn't recurse, yet" $block
+        panic:blame "COMPOSE bootstrap shim doesn't recurse, yet" $block
     ]
     pos: result: copy block
     while [not tail? pos] [
@@ -551,13 +555,13 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
         ]
         product: unmeta product
         if okay? :product [  ; e.g. compose [(print "HI")]
-            fail:blame "~okay~ antiform compose found" $return
+            panic:blame "~okay~ antiform compose found" $return
         ]
         if null? :product [  ; e.g. compose [(print "HI")]
-            fail:blame "~null~ antiform compose found" $return
+            panic:blame "~null~ antiform compose found" $return
         ]
         if trash? :product [  ; e.g. compose [(print "HI")]
-            fail:blame "~ antiform compose found" $return
+            panic:blame "~ antiform compose found" $return
         ]
         all [
             block? :product
@@ -672,7 +676,7 @@ modernize-action: func3 [
             ]
 
             if refinement3? spec.1 [  ; old /REFINEMENT
-                fail:blame ["Old refinement in spec:" mold spec] $spec
+                panic:blame ["Old refinement in spec:" mold spec] $spec
             ]
 
             if refinement? spec.1 [  ; new :REFINEMENT
@@ -735,7 +739,7 @@ modernize-action: func3 [
                 ]
 
                 if last-refine-word [
-                    fail:blame [
+                    panic:blame [
                         "Refinements now *are* the arguments:" mold head spec
                     ] $spec
                 ]
@@ -826,7 +830,7 @@ apply: func3 [
     ;
     while [refinement? :args.1] [  ; new refinements are GET-WORD! in boot
         pos: find params to refinement3! args.1 else [
-            fail ["Unknown refinement" args.1]
+            panic ["Unknown refinement" args.1]
         ]
         args: evaluate:step3 (next args) 'result
         any [
@@ -846,7 +850,7 @@ apply: func3 [
                 ][
                     f.(to word! pos.1): okay
                 ]
-                fail [
+                panic [
                     "No-Arg Refinements in Bootstrap must be OKAY or NULL:"
                         mold pos.1 "=" mold :result
                 ]
@@ -958,19 +962,19 @@ encode: func3 [codec arg [text! integer!]] [
         assert [text? arg]
         return to blob! arg
     ]
-    fail ["Very limited ENCODE abilities in bootstrap, no:" mold codec]
+    panic ["Very limited ENCODE abilities in bootstrap, no:" mold codec]
 ]
 
 decode: func3 [codec bin [blob!]] [
     if codec = 'UTF-8 [
         return to text! bin
     ]
-    fail ["Very limited DECODE abilities in bootstrap, no:" mold codec]
+    panic ["Very limited DECODE abilities in bootstrap, no:" mold codec]
 ]
 
 blockify: func3 [x] [
     if null? x [
-        fail:blame "BLOCKIFY can't take ~null~ antiform" $x
+        panic:blame "BLOCKIFY can't take ~null~ antiform" $x
     ]
     if void? x [
         return copy []

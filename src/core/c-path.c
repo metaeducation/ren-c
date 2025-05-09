@@ -179,7 +179,7 @@ DECLARE_NATIVE(POKE)
     Bounce bounce = Dispatch_Generic(POKE_P, location, LEVEL);
 
     if (bounce != nullptr)
-        return FAIL("Cannot write-back to location in POKE");
+        return PANIC("Cannot write-back to location in POKE");
 
     Copy_Cell(OUT, ARG(STORE));
     return Meta_Unquotify_Known_Stable(OUT);
@@ -316,7 +316,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
     REBLEN n;
     for (n = 0; n < len; ++n) {
         if (not Is_Integer(Copy_Sequence_At(SPARE, sequence, n)))
-            return FAIL("Can only zeroify sequences of integers at this time");
+            return PANIC("Can only zeroify sequences of integers at this time");
         Init_Integer(PUSH(), 0);
     }
     Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);

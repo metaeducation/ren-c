@@ -22,17 +22,17 @@
 //
 // This file implements a RESCUE_SCOPE abstraction of C++'s `try/catch`
 // which can also be compiled as plain C using setjmp/longjmp().  It's for
-// trapping "abrupt errors", that trigger from the `fail` pseudo-"keyword"
+// trapping "abrupt errors", that trigger from the `panic` pseudo-"keyword"
 // in C code.  These happen at arbitrary moments and are not willing (or able)
 // to go through a normal `return` chain to pipe a raised ERROR! up the stack.
 //
 // The abstraction is done with macros, and looks similar to try/catch:
 //
-//     RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {
+//     RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC {
 //        //
-//        // code that may trigger a fail() ...
+//        // code that may trigger a panic() ...
 //        //
-//     } ON_ABRUPT_FAILURE (error) {
+//     } ON_ABRUPT_PANIC (error) {
 //        //
 //        // code that handles the error in `error`
 //        //
@@ -46,8 +46,8 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * In Rebol terminology, abrupt errors triggered by "fail" are mechanically
-//   distinct from a "throw".  Rebol THROW is a cooperative concept, which
+// * In Rebol terminology, abrupt errors triggered by PANIC are mechanically
+//   distinct from a THROW.  Rebol THROW is a cooperative concept, which
 //   does *not* use exceptions or longjmp().  Instead a native implementation
 //   must go all the way to the `return` statement to say `return THROWN;`.
 //
@@ -65,7 +65,7 @@
 //   combination...but there may be some issues.
 //
 
-#if FAIL_USES_LONGJMP
+#if PANIC_USES_LONGJMP
     #include <setjmp.h>
 #endif
 
@@ -86,7 +86,7 @@
 //    value up to the `catch`, so this isn't needed in that case.)
 //
 struct JumpStruct {
-  #if FAIL_USES_LONGJMP
+  #if PANIC_USES_LONGJMP
     #if HAS_POSIX_SIGNAL
         sigjmp_buf cpu_state;  // jmp_buf as first field of struct [1]
     #else
@@ -113,7 +113,7 @@ struct JumpStruct {
 // of execution where setjmp() returns 0 and it will fall through to the
 // code afterward.  When the longjmp() happens, the CPU will be teleported
 // back to the setjmp(), where we have it return a 1...and goto the label
-// for the `abrupt_failure`.
+// for the `on_abrupt_panic`.
 //
 // On the line after the label, it takes the named variable you want to
 // declare and assigns it the error pointer that had been assigned in the
@@ -124,7 +124,7 @@ struct JumpStruct {
 // With the setjmp() version of the macros, it's incidental that what follows
 // the RESCUE_SCOPE is a C scope {...}.  But it's critical to the TRY/CATCH
 // version...because the last thing in the macro is a hanging `try` keyword.
-// Similarly, what follows the ON_ABRUPT_FAILURE() need not be a scope in the
+// Similarly, what follows the ON_ABRUPT_PANIC() need not be a scope in the
 // setjmp() version, but must be a block for the hanging `catch(...)`.
 //
 // Because of that scope requirement, the only way to slip a named error
@@ -177,10 +177,10 @@ struct JumpStruct {
 //    By having the non-longjmp() versions do the same work, we help ensure
 //    that the longjmp() build stays working by detecting imbalances.
 //
-#if FAIL_USES_LONGJMP
+#if PANIC_USES_LONGJMP
 
-    STATIC_ASSERT(FAIL_USES_TRY_CATCH == 0);
-    STATIC_ASSERT(FAIL_JUST_ABORTS == 0);
+    STATIC_ASSERT(PANIC_USES_TRY_CATCH == 0);
+    STATIC_ASSERT(PANIC_JUST_ABORTS == 0);
 
     #if defined(__MINGW64__) && (__GNUC__ < 5)  // [1]
         #define SET_JUMP(s)     __builtin_setjmp(s)
@@ -193,7 +193,7 @@ struct JumpStruct {
         #define LONG_JUMP(s,v)  longjmp((s), (v))
     #endif
 
-    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE \
+    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC \
         NOOP; /* stops warning when case previous statement was label */ \
         Jump jump;  /* one setjmp() per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
@@ -207,7 +207,7 @@ struct JumpStruct {
         assert(jump.error == nullptr); \
         g_ts.jump_list = jump.last_jump
 
-    #define ON_ABRUPT_FAILURE(name) \
+    #define ON_ABRUPT_PANIC(name) \
       longjmp_happened: \
         NOOP; /* must be statement after label */ \
         Error* name; /* can't initialize here, or goto couldn't cross it */ \
@@ -215,11 +215,11 @@ struct JumpStruct {
         jump.error = nullptr; \
         /* fall through to subsequent block */
 
-#elif FAIL_USES_TRY_CATCH
+#elif PANIC_USES_TRY_CATCH
 
-    STATIC_ASSERT(FAIL_JUST_ABORTS == 0);
+    STATIC_ASSERT(PANIC_JUST_ABORTS == 0);
 
-    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE \
+    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC \
         ; /* in case previous tatement was label */ \
         Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
@@ -229,45 +229,45 @@ struct JumpStruct {
     #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
         g_ts.jump_list = jump.last_jump
 
-    #define ON_ABRUPT_FAILURE(name) \
+    #define ON_ABRUPT_PANIC(name) \
         catch (Error* name) /* picks up subsequent {...} block */
 
 #else
 
-    STATIC_ASSERT(FAIL_JUST_ABORTS);
+    STATIC_ASSERT(PANIC_JUST_ABORTS);
 
-    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE \
+    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC \
         ; /* in case previous tatement was label */ \
         Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
         g_ts.jump_list = &jump; \
         if (false) \
-            goto abrupt_failure;  /* avoids unreachable code warning */
+            goto on_abrupt_panic;  /* avoids unreachable code warning */
 
     #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
         g_ts.jump_list = jump.last_jump
 
-    #define ON_ABRUPT_FAILURE(name) \
-      abrupt_failure: /* impossible jump here to avoid unreachable warning */ \
-        assert(!"ON_ABRUPT_FAILURE() reached w/FAIL_JUST_ABORTS=1"); \
+    #define ON_ABRUPT_PANIC(name) \
+      on_abrupt_panic: /* impossible jump here to avoid unreachable warning */ \
+        assert(!"ON_ABRUPT_PANIC() reached w/PANIC_JUST_ABORTS=1"); \
         Error* name; \
-        name = Error_User("FAIL_JUST_ABORTS=1, should not reach!");
+        name = Error_User("PANIC_JUST_ABORTS=1, should not reach!");
 
 #endif
 
 
-//=//// *NON-COOPERATIVE* ABRUPT fail() MECHANISM /////////////////////////=//
+//=//// *NON-COOPERATIVE* ABRUPT panic() MECHANISM /////////////////////////=//
 //
 // "Abrupt Failures" come in "cooperative" and "uncooperative" forms.  The
-// cooperative form happens when a native's C code does `return FAIL(...)`,
+// cooperative form happens when a native's C code does `return PANIC(...)`,
 // and should be used when possible, as it is more efficient and also will
 // work on platforms that don't have exception handling or longjmp().
 //
-// But the uncooperative form of `fail (...)` can be called at any moment,
+// But the uncooperative form of `panic (...)` can be called at any moment,
 // and is what the RESCUE_SCOPE() abstraction is designed to catch:
 //
 //     if (Foo_Type(foo) == BAD_FOO) {
-//         fail (Error_Bad_Foo_Operation(...));
+//         panic (Error_Bad_Foo_Operation(...));
 //
 //         /* this line will never be reached, because it longjmp'd or
 //            C++ throw'd up the stack where execution continues */
@@ -277,28 +277,28 @@ struct JumpStruct {
 // defined in %errors.r.  These definitions contain a formatted message
 // template, showing how the arguments will be displayed in FORMing.
 //
-// NOTE: It's desired that there be a space in `fail (...)` to make it look
+// NOTE: It's desired that there be a space in `panic (...)` to make it look
 // more "keyword-like" and draw attention to the fact it is a `noreturn` call.
 //
-// 1. The C build wants a polymorphic fail() that can take error contexts,
+// 1. The C build wants a polymorphic panic() that can take error contexts,
 //    UTF-8 strings, cell pointers...etc.  To do so requires accepting a
 //    `const void*` which has no checking at compile-time.  The C++ build can
-//    do better, and limit the input types that fail() will accept.
+//    do better, and limit the input types that panic() will accept.
 //
 //   (This could be used by a strict build that wanted to get rid of all the
-//    hard-coded string fail()s, by triggering a compiler error on them.)
+//    hard-coded string panic()s, by triggering a compiler error on them.)
 //
 
-#if DEBUG_PRINTF_FAIL_LOCATIONS
-    #define Fail_Prelude_File_Line_Tick(...) \
-        printf("fail() FILE %s LINE %d TICK %" PRIu64 "\n", __VA_ARGS__)
+#if DEBUG_PRINTF_PANIC_LOCATIONS
+    #define Panic_Prelude_File_Line_Tick(...) \
+        printf("panic() FILE %s LINE %d TICK %" PRIu64 "\n", __VA_ARGS__)
 #else
-    #define Fail_Prelude_File_Line_Tick(...) \
+    #define Panic_Prelude_File_Line_Tick(...) \
         NOOP
 #endif
 
 
-#if CPLUSPLUS_11  // add type checking of fail() argument in C++ build [1]
+#if CPLUSPLUS_11  // add type checking of panic() argument in C++ build [1]
     template <class T>
     INLINE Error* Derive_Error_From_Pointer(T* p) {
         static_assert(
@@ -325,22 +325,22 @@ struct JumpStruct {
 #endif
 
 
-#if FAIL_JUST_ABORTS
+#if PANIC_JUST_ABORTS
 
-    #define fail(p) do { \
-        Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-        crash (Fail_Abruptly_Helper(Derive_Error_From_Pointer(p))); \
+    #define panic(p) do { \
+        Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+        crash (Panic_Abruptly_Helper(Derive_Error_From_Pointer(p))); \
     } while (0)
 
-#elif FAIL_USES_TRY_CATCH
+#elif PANIC_USES_TRY_CATCH
 
-    #define fail(p) do { \
-        Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-        throw Fail_Abruptly_Helper(Derive_Error_From_Pointer(p)); \
+    #define panic(p) do { \
+        Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+        throw Panic_Abruptly_Helper(Derive_Error_From_Pointer(p)); \
     } while (0)
 
 #else
-    STATIC_ASSERT(FAIL_USES_LONGJMP);
+    STATIC_ASSERT(PANIC_USES_LONGJMP);
 
     // "If the function that called setjmp has exited (whether by return or
     //  by a different longjmp higher up the stack), the behavior is undefined.
@@ -348,9 +348,9 @@ struct JumpStruct {
     //
     //  http://en.cppreference.com/w/c/program/longjmp
 
-    #define fail(p) do { \
-        Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-        g_ts.jump_list->error = Fail_Abruptly_Helper( \
+    #define panic(p) do { \
+        Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+        g_ts.jump_list->error = Panic_Abruptly_Helper( \
             Derive_Error_From_Pointer(p)  /* longjmp() arg too small */ \
         ); \
         LONG_JUMP(g_ts.jump_list->cpu_state, 1);  /* 1 is setjmp() return */ \

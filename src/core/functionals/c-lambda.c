@@ -182,7 +182,7 @@ DECLARE_NATIVE(LAMBDA)
         MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }

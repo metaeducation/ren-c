@@ -37,7 +37,7 @@ Rebol [
 
 
 transcode-header: func [
-    "Try to match a data blob! as being a script, definitional fail if not"
+    "Try to match a data blob! as being a script, fail if not"
 
     return: "Null, or the ~[header rest line]~"
         [~[[~null~ block!] [~null~ blob!] [~null~ integer!]]~ raised!]
@@ -176,11 +176,7 @@ bind construct [
         ;
         ; !!! R3-Alpha apparently used a very bad heuristic of attempting to
         ; decompress garbage (likely asking for a very big memory allocation
-        ; and failing), and trapped it to see if it failed.  It did those
-        ; traps with ATTEMPT.  ATTEMPT no longer glosses over such things.
-        ;
-        ; This feature needs redesign if it's to be kept, but switching it
-        ; to use RESCUE with the bad idea for now.
+        ; and panicking), and rescued it to see if it panicked.
         ;
         if find opt hdr.options 'compress [
             any [
@@ -271,7 +267,7 @@ load: func [
     ]
 
     if type = 'extension [
-        fail "Use LOAD-EXTENSION to load extensions (at least for now)"
+        panic "Use LOAD-EXTENSION to load extensions (at least for now)"
     ]
 
     if not find [unbound rebol] type [
@@ -280,7 +276,7 @@ load: func [
             return pack [(decode type data) header]
         ]
 
-        fail ["No" type "LOADer found for" type of source]
+        panic ["No" type "LOADer found for" type of source]
     ]
 
     ensure [text! blob!] data
@@ -446,7 +442,7 @@ bind construct [
             return pack [source 'registered]
         ]
         if mod != source [
-            fail ["Conflict: more than one module instance named" name]
+            panic ["Conflict: more than one module instance named" name]
         ]
         return pack [source 'cached]
     ]
@@ -485,7 +481,7 @@ bind construct [
         ]
 
         (file? source) else [
-            fail ["Could not find any" file "in SYSTEM.OPTIONS.MODULE-PATHS"]
+            panic ["Could not find any" file "in SYSTEM.OPTIONS.MODULE-PATHS"]
         ]
     ]
 
@@ -523,7 +519,7 @@ bind construct [
 
     let [hdr code line]: load-header:file data file
     if not hdr [
-        fail ["IMPORT and DO require a header on:" (any [file, "<source>"])]
+        panic ["IMPORT and DO require a header on:" (any [file, "<source>"])]
     ]
 
     let name: select opt hdr 'name
@@ -651,7 +647,7 @@ export*: func [
                 word? ^what [word: ^what]
                 set-word? ^what [word: unchain ^what]
                 set-run-word? ^what [word: unchain unpath ^what]
-                fail "EXPORT of SET-GROUP! must be VOID, WORD! or SET-WORD?"
+                panic "EXPORT of SET-GROUP! must be VOID, WORD! or SET-WORD?"
             ]
         ] else [
             word: resolve what
@@ -671,14 +667,14 @@ export*: func [
 
     while [not tail? items] [
         val: get:any inside items word: match word! items.1 else [
-            fail ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
+            panic ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
         ]
         ; !!! notation for exporting antiforms?
         items: next items
 
         (types: match block! opt items.1) then [
             (match types val) else [
-                fail [
+                panic [
                     "EXPORT expected" word "to be in" @types
                     "but it was" (to word! type of val) else ["null"]
                 ]

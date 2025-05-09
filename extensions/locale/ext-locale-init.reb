@@ -481,7 +481,7 @@ if 'Windows <> first system.platform [
                 return select iso-3166 opt territory
             ]
         ]
-        fail ["Invalid locale type:" type]
+        panic ["Invalid locale type:" type]
     ]
 ]
 

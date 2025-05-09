@@ -111,10 +111,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   // after a longjmp() occurs, so obviously it needs to be re-setjmp'd.
   //
   // So either way, we can only jump to `bounce_on_trampoline` if no abrupt
-  // fail() has occurred.  Else jump to `bounce_on_trampoline_with_rescue`
+  // panic() has occurred.  Else jump to `bounce_on_trampoline_with_rescue`
   // to put the rescue back into effect.
 
-  RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////
+  RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC {  ////////////////////////////////////
 
     Level* L = TOP_LEVEL;  // Current level changes, and isn't always top...
 
@@ -205,7 +205,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 // treat any failure as if it could have been thrown from
                 // anywhere, so it is bubbled up as a throw.
                 //
-                Init_Thrown_Failure(TOP_LEVEL, Cell_Error(L->out));
+                Init_Thrown_Panic(TOP_LEVEL, Cell_Error(L->out));
                 L = TOP_LEVEL;
                 goto bounce_on_trampoline;
             }
@@ -331,29 +331,28 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         goto bounce_on_trampoline;  // executor will see the throw
     }
 
-  //=//// HANDLE `return FAIL()` CASE /////////////////////////////////////=//
+  //=//// HANDLE `return PANIC()` CASE /////////////////////////////////////=//
 
-    // When you do `return FAIL(...)` in an executor or dispatcher, that is
-    // a "cooperative abrupt failure".  These should be preferred to the
-    // calling `fail (...)` (which is based on longjmp() or C++ exceptions).
-    // In addition to being more efficient, the `return FAIL(...)` mechanics
-    // work on platforms without longjmp() or C++ exceptions.  Otherwise, all
-    // they can do in response to a fail() is crash.
+    // When you do `return PANIC(...)` in an executor or dispatcher, that is
+    // a "cooperative panic".  These are preferred to calling `panic (...)`
+    // (which is based on longjmp() or C++ exceptions).  In addition to being
+    // more efficient, the `return PANIC(...)` mechanics work on platforms
+    // without longjmp() or C++ exceptions.  Otherwise, all they can do in
+    // response to a panic() is crash.
     //
-    // Cooperative abrupt failures offer themselves back to the executor
-    // that was running when they were raised.  This means they get a chance
-    // to do cleanup (just as they have for the longjmp() and C++ exception
-    // cases).
+    // Cooperative panics offer themselves back to the executor that was
+    // running when they were raised.  This means they get a chance to do
+    // cleanup (just as they have for the longjmp() and C++ exception cases).
     //
     // 1. STATE_BYTE() won't allow reads if you are DISPATCHING_INTRINSIC,
     //    since the intrinsic does not own the state byte.  But the flag has
-    //    to be set for (return FAIL(...)) in order to blame the right call
-    //    (e.g. Native_Fail_Result() is DISPATCHING_INTRINSIC-aware).  It
+    //    to be set for (return PANIC(...)) in order to blame the right call
+    //    (e.g. Native_Panic_Result() is DISPATCHING_INTRINSIC-aware).  It
     //    would be a burden for the Executor to have to clear the flag between
     //    generating the error blame and returning, so just clear flag here.
 
-    if (bounce == BOUNCE_FAIL) {
-        assert(Is_Throwing_Failure(TOP_LEVEL));
+    if (bounce == BOUNCE_PANIC) {
+        assert(Is_Throwing_Panic(TOP_LEVEL));
         Clear_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);  // convenience [1]
         L = TOP_LEVEL;
         goto bounce_on_trampoline;
@@ -362,19 +361,19 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     crash (bounce);
 
-} ON_ABRUPT_FAILURE (error) {  ///////////////////////////////////////////////
+} ON_ABRUPT_PANIC (error) {  /////////////////////////////////////////////////
 
-    // A fail() can happen at any moment--even due to something like a failed
+    // A panic() can happen at any moment--even due to something like a
     // memory allocation requested by an executor itself.  These are called
-    // "abrupt failures", and they cannot be TRAP'd or TRY'd in the same way
+    // "abrupt panics", and they cannot be TRAP'd or TRY'd in the same way
     // a raised error can be.
     //
-    // 1. We don't really know *what* failed...all levels get a chance to
+    // 1. We don't really know *what* panicked...all levels get a chance to
     //    clean up the state.
     //
     //    (Example: When something like ALL is "between steps", the level it
     //    pushed to process its block will be above it on the stack.  If the
-    //    ALL decides to call fail(), the non-running stack level can be
+    //    ALL decides to call panic(), the non-running stack level can be
     //    "TOP_LEVEL" above the ALL's level whose executor was pushed.)
 
     Level* L = TOP_LEVEL;  // may not be same as L whose executor() called [1]
@@ -382,13 +381,13 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     Assert_Varlist(error);
     assert(CTX_TYPE(error) == TYPE_ERROR);
 
-    Init_Thrown_Failure(L, error);
+    Init_Thrown_Panic(L, error);
 
-    possibly(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // fail in intrinsic
+    possibly(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // panic in intrinsic
     Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
 
     CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;  // no way around it with longjmp :-(
-    goto bounce_on_trampoline_with_rescue;  // abrupt failure "used up" rescue
+    goto bounce_on_trampoline_with_rescue;  // abrupt panic "used up" rescue
 }}
 
 
@@ -424,7 +423,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     ){
         printf("Trampoline_With_Top_As_Root_Throws() got BOUNCE_%s\n", name);
         Dump_Stack(root);
-        fail ("Cannot interpret Trampoline result");
+        panic ("Cannot interpret Trampoline result");
     }
   #endif
 
@@ -560,7 +559,7 @@ void Shutdown_Trampoline(void)
 //
 // 1. On normal completion with a return result, we do not allow API handles
 //    attached to a level to leak--you are expected to release everything.
-//    But return FAIL() or return RAISE() cases are exempt.
+//    But return PANIC() or return RAISE() cases are exempt.
 //
 //    !!! This may be reviewed in light of wanting to make API programming
 //    easier, especially for JavaScript.

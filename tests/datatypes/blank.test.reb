@@ -27,7 +27,7 @@
     ([] = map-each 'x _ [1020])
     (void? for-next 'x _ [1020])
     (all wrap [
-        _ = [result count]: remove-each 'x _ [fail "this never gets called"]
+        _ = [result count]: remove-each 'x _ [panic "this never gets called"]
         result = _
         count = 0
     ])

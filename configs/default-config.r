@@ -31,7 +31,7 @@ extensions: to map! [
     View +
 ]
 
-rebol-tool: null  ; fallback value if system.options.boot fails
+rebol-tool: null  ; fallback value if system.options.boot unavailable
 
 compiler: null  ; e.g. g++ clang etc. default to cc if not set
 compiler-path: null  ; will use compiler name as default if not overridden

@@ -139,14 +139,14 @@ void Write_IO(const Value* data, REBLEN len)
                 long total = write(STDOUT_FILENO, digits, 2);
                 if (total < 0) {
                     ok = false;
-                    break;  // need to restore text attributes before fail()
+                    break;  // need to restore text attributes before panic()
                 }
                 assert(total == 2);
                 UNUSED(total);
             }
 
             if (not ok)
-                rebFail_OS(errno);
+                rebPanic_OS(errno);
         }
     }
     else
@@ -168,7 +168,7 @@ void Write_IO(const Value* data, REBLEN len)
         long total = write(STDOUT_FILENO, bp, size);
 
         if (total < 0)
-            rebFail_OS(errno);
+            rebPanic_OS(errno);
 
         assert(total == size);
     }
@@ -194,7 +194,7 @@ size_t Read_IO(Byte* buffer, size_t size)
     //
     long total = read(STDIN_FILENO, buffer, size);
     if (total < 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     return total;
 }

@@ -93,7 +93,7 @@ trim: func [
     ;
     if any-context? series [
         if any [head tail auto lines all_TRIM with] [
-            fail 'core/bad-refines
+            panic 'core/bad-refines
         ]
         trimmed: make (type of series) collect [
             for-each [key val] series [
@@ -114,7 +114,7 @@ trim: func [
                 ; Note: :WITH might be able to work, e.g. if it were a MAP!
                 ; or BLOCK! of values to remove.
                 ;
-                fail 'core/bad-refines
+                panic 'core/bad-refines
             ]
             rule: blank!
 
@@ -137,7 +137,7 @@ trim: func [
                     any [auto head tail lines]
                 ]
             ][
-                fail 'core/bad-refines
+                panic 'core/bad-refines
             ]
 
             rule: case [
@@ -152,7 +152,7 @@ trim: func [
 
         blob? series [
             if any [auto lines] [
-                fail 'core/bad-refines
+                panic 'core/bad-refines
             ]
 
             rule: case [
@@ -167,7 +167,7 @@ trim: func [
             ]
         ]
     ] else [
-        fail "Unsupported type passed to TRIM"
+        panic "Unsupported type passed to TRIM"
     ]
 
     ; /ALL just removes all whitespace entirely.  No subtlety needed.

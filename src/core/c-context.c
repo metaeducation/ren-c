@@ -560,7 +560,7 @@ DECLARE_NATIVE(WRAP_P)
 
     Option(Error*) e = Trap_Wrap_Extend_Core(context, list, flags);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     /*
         Tweak_Cell_Binding(list, use);  // what should do what here?
@@ -646,10 +646,10 @@ DECLARE_NATIVE(COLLECT_WORDS)
 
   //=//// GENERATE DUMMY BINDINGS FOR THE IGNORED SYMBOLS /////////////////=//
 
-    // 1. We do not want to fail() during the bind at this point in time (the
+    // 1. We do not want to panic() during the bind at this point in time (the
     //    system doesn't know how to clean up, and the only cleanup it does
     //    assumes you were collecting for a keylist...it doesn't have access to
-    //    the "ignore" bindings.)  Do a pre-pass to fail first, if there are
+    //    the "ignore" bindings.)  Do a pre-pass to panic first, if there are
     //    any non-words in a block the user passed in.
     //
     // 2. The way words get ignored in the collecting process is to give them
@@ -663,12 +663,12 @@ DECLARE_NATIVE(COLLECT_WORDS)
 
     Value* ignore = ARG(IGNORE);
 
-    if (Is_Block(ignore)) {  // avoid fail in mid-collect [1]
+    if (Is_Block(ignore)) {  // avoid panic in mid-collect [1]
         const Element* check_tail;
         const Element* check = Cell_List_At(&check_tail, ignore);
         for (; check != check_tail; ++check) {
             if (not Any_Word_Type(Heart_Of(check)))
-                return FAIL(Error_Bad_Value(check));
+                return PANIC(Error_Bad_Value(check));
         }
     }
 
@@ -707,7 +707,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
 
     Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, block_at, block_tail);
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     StackIndex base = TOP_INDEX;  // could be more efficient to calc/add
 
@@ -757,7 +757,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, head, tail);
     if (e)
-        fail (unwrap e);
+        panic (unwrap e);
 
     Length len = cl->next_index - 1;  // is next index, so subtract 1
 
@@ -900,7 +900,7 @@ Source* Context_To_Array(const Cell* context, REBINT mode)
             // This whole idea needs review.
             //
             if (Is_Antiform(e.var))
-                fail (Error_Anti_Object_Block_Raw());
+                panic (Error_Anti_Object_Block_Raw());
 
             Copy_Cell(PUSH(), e.var);
         }
@@ -997,7 +997,7 @@ Value* Obj_Value(Value* value, Index index)
     VarList* context = Cell_Varlist(value);
 
     if (index > Varlist_Len(context))
-        fail ("Could not pick index out of object");  // !!! Review [1]
+        panic ("Could not pick index out of object");  // !!! Review [1]
 
     return Varlist_Slot(context, index);
 }

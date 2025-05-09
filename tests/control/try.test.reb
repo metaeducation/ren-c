@@ -41,7 +41,7 @@
     )
 ]
 #rescue (
-    sys.util/rescue [fail make error! ""] then [okay]
+    sys.util/rescue [panic make error! ""] then [okay]
 )
 #trap (
     trap [1 / 0] then (:error?)

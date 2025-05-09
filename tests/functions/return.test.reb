@@ -130,7 +130,7 @@
             return <success>  ; impossible for this case
         ]
         n: n - 1
-        i: #some-junk  ; type check should fail on redo
+        i: #some-junk  ; type check should panic on redo
         return:run <redo>
     ]
 
@@ -150,7 +150,7 @@
 
     /outer: adapt inner/ [
         if n = 0 [
-            fail "inner phase should have been run by redo"
+            panic "inner phase should have been run by redo"
         ]
         ; fall through to inner, using same frame
     ]

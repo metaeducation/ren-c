@@ -278,7 +278,7 @@ elf-format: context [
             ]
             to <end>
         ] except [
-            fail "Error updating offsets in program headers"
+            panic "Error updating offsets in program headers"
         ]
 
         assert [e_shoff >= offset]  ; section headers are after any changes
@@ -292,7 +292,7 @@ elf-format: context [
             ]
             to <end>
         ] except [
-            fail "Error updating offsets in section headers"
+            panic "Error updating offsets in section headers"
         ]
     ]
 
@@ -319,7 +319,7 @@ elf-format: context [
                 ]
             ]
         ] else [
-            fail "Section header table in ELF binary is corrupt"
+            panic "Section header table in ELF binary is corrupt"
         ]
 
         ; The string names of the sections are themselves stored in a section,
@@ -330,7 +330,7 @@ elf-format: context [
         parse3 skip executable string-header-offset [
             (mode: 'read) section-header-rule to <end>
         ] except [
-            fail "Error finding string section in ELF binary"
+            panic "Error finding string section in ELF binary"
         ]
 
         let string-section-offset: sh_offset
@@ -420,7 +420,7 @@ elf-format: context [
                 (mode: 'write) seek pos, section-header-rule
                 to <end>
             ] except [
-                fail "Error updating string table size in string header"
+                panic "Error updating string table size in string header"
             ]
 
             ; MAKE NEW SECTION TO BE THE LAST SECTION
@@ -446,7 +446,7 @@ elf-format: context [
                 (mode: 'write) section-header-rule
                 to <end>
             ] except [
-                fail "Error creating new section for the embedded data"
+                panic "Error creating new section for the embedded data"
             ]
 
             ; Append new header to the very end of the section headers.  This
@@ -488,7 +488,7 @@ elf-format: context [
         parse3 executable [
             (mode: 'write) header-rule to <end>
         ] except [
-            fail "Error updating the ELF header"
+            panic "Error updating the ELF header"
         ]
     ]
 
@@ -511,7 +511,7 @@ elf-format: context [
         parse3 skip section-headers-data (e_shstrndx * e_shentsize) [
             (mode: 'read) section-header-rule to <end>
         ] except [
-            fail "Error finding string section in ELF binary"
+            panic "Error finding string section in ELF binary"
         ]
 
         let string-section-data: read:seek:part file sh_offset sh_size
@@ -826,7 +826,7 @@ pe-format: context [
             return null  ; soft failure (just wasn't an EXE, no "MZ")
         ]
         if err [  ; hard failure (was an EXE, but something wrong with it)
-            fail ["err:" err, "at:" copy:part fail-at 16]
+            panic ["err:" err, "at:" copy:part fail-at 16]
         ]
         return okay
     ]
@@ -876,7 +876,7 @@ pe-format: context [
         ;
         for-each 'sec sections [
             if (as blob! section-name) = trim:with sec.name #{00} [
-                fail [
+                panic [
                     "There is already a section named" section-name |
                     mold sec
                 ]
@@ -905,7 +905,7 @@ pe-format: context [
             - (index of end-of-section-header)
         )
         if gap < size-of-section-header [
-            fail "Not enough room for a new section header"
+            panic "Not enough room for a new section header"
         ]
 
         ; Increment the "number of sections"
@@ -989,7 +989,7 @@ pe-format: context [
                 append exe-data section-data
             ]
         ] else [
-            fail "Last section has been truncated"
+            panic "Last section has been truncated"
         ]
 
         return head of exe-data

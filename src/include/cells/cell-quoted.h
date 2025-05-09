@@ -89,7 +89,7 @@ INLINE Element* Quotify_Depth(Element* elem, Count depth) {
         return elem;
 
     if (Quotes_Of(elem) + depth >  MAX_QUOTE_DEPTH)
-        fail ("Quoting Depth of 126 Exceeded");
+        panic ("Quoting Depth of 126 Exceeded");
 
     QUOTE_BYTE(elem) += Quote_Shift(depth);
     return elem;
@@ -105,7 +105,7 @@ INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
         return elem;
 
     if (depth > Quotes_Of(elem))
-        fail ("Attempt to set quoting level of value to less than 0");
+        panic ("Attempt to set quoting level of value to less than 0");
 
     QUOTE_BYTE(elem) -= Quote_Shift(depth);
     return elem;
@@ -229,7 +229,7 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
 
 INLINE Element* Ensure_Element(const_if_c Atom* cell) {
     if (QUOTE_BYTE(cell) == ANTIFORM_0)
-        fail (Error_Bad_Antiform(cell));
+        panic (Error_Bad_Antiform(cell));
     return u_cast(Element*, cell);
 }
 
@@ -331,7 +331,7 @@ INLINE Atom* Meta_Unquotify_Undecayed(Need(Atom*) atom) {
     if (QUOTE_BYTE(atom) == QUASIFORM_2) {
         Option(Error*) e = Trap_Coerce_To_Antiform(atom);
         if (e)
-            fail (unwrap e);  // !!! shouldn't abruptly fail :-(
+            panic (unwrap e);  // !!! shouldn't abruptly panic :-(
 
         return atom;
     }

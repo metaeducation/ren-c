@@ -71,7 +71,7 @@ INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
 //          &Meta_Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
 //      );
 //      Push_Level_Erase_Out_If_State_0(result, L);
-//      fail ("This throws a level to the trampoline where result is dead");
+//      panic ("This throws a level to the trampoline where result is dead");
 //
 // Simply put, when the Trampoline gets control after a longjmp() or throw, the
 // Level's L->out pointer will be corrupt...the stack-declared result is gone.

@@ -416,8 +416,8 @@ INLINE void Set_Action_Level_Label(Level* L, Option(const Symbol*) label) {
 //    evolving, but it's generally the case that Drop_Action() at the end
 //    of the Action_Executor() will do it.  There's an exception when the
 //    ACTION_EXECUTOR_FLAG_FULFILL_ONLY flag is used at the moment, where
-//    not nulling it out is how it gets returned.  Also, abrupt failures
-//    throw to the trampoline so that Drop_Action() has to be run by
+//    not nulling it out is how it gets returned.  Also, abrupt panics
+//    jump up to the trampoline so that Drop_Action() has to be run by
 //    the trampoline when it drops the levels automatically.
 //
 INLINE void Free_Level_Internal(Level* L) {
@@ -435,7 +435,7 @@ INLINE void Free_Level_Internal(Level* L) {
 
     Release_Feed(L->feed);  // frees if refcount goes to 0
 
-    if (L->varlist) {  // !!! Can be not null if abrupt failure [1]
+    if (L->varlist) {  // !!! Can be not null if abrupt panic [1]
         assert(Misc_Runlevel(L->varlist) == nullptr);  // Drop_Action() nulls
         if (Not_Node_Managed(L->varlist))
             GC_Kill_Flex(L->varlist);
@@ -583,7 +583,7 @@ INLINE Level* Prep_Level_Core(
     Flags flags
 ){
     if (L == nullptr)  // e.g. a failed allocation
-       fail (Error_No_Memory(sizeof(Level)));
+       panic (Error_No_Memory(sizeof(Level)));
 
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 
@@ -815,12 +815,12 @@ INLINE Bounce Native_Raised_Result(Level* L, Error* error) {
     return Raisify(L->out);
 }
 
-// Doing `return FAIL()` from a native does all the same automatic cleanup
-// as if you triggered an abrupt failure, but doesn't go through the longjmp()
+// Doing `return PANIC()` from a native does all the same automatic cleanup
+// as if you triggered an abrupt panic, but doesn't go through the longjmp()
 // or C++ throw machinery.  This means it works even on systems that use
-// FAIL_JUST_ABORTS.  It should be preferred wherever possible.
+// PANIC_JUST_ABORTS.  It should be preferred wherever possible.
 //
-INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
+INLINE Bounce Native_Panic_Result(Level* L, Error* error) {
     assert(not Is_Throwing(L));
 
     while (TOP_LEVEL != L) {  // convenience
@@ -842,8 +842,8 @@ INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
     g_ds.num_refs_extant = save_extant;
   #endif
 
-    Init_Thrown_Failure(L, error);
-    return BOUNCE_FAIL;  // means we can be renotified
+    Init_Thrown_Panic(L, error);
+    return BOUNCE_PANIC;  // means we can be renotified
 }
 
 
@@ -926,9 +926,9 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define RAISE(p) \
         Native_Raised_Result(level_, Derive_Error_From_Pointer(p))
 
-    #define FAIL(p) \
-        (Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-            Native_Fail_Result(level_, Derive_Error_From_Pointer(p)))
+    #define PANIC(p) \
+        (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+            Native_Panic_Result(level_, Derive_Error_From_Pointer(p)))
 
     // `return UNHANDLED;` is a shorthand for something that's written often
     // enough in IMPLEMENT_GENERIC() handlers that it seems worthwhile.
@@ -939,7 +939,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
     // dispatch mechanism understands, and slipstream verb into the generic
     // somehow?)
     //
-    #define UNHANDLED   FAIL(Error_Unhandled(level_))
+    #define UNHANDLED   PANIC(Error_Unhandled(level_))
 
     #define BASELINE   (&level_->baseline)
     #define STACK_BASE (level_->baseline.stack_base)

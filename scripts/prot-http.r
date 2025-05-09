@@ -53,7 +53,7 @@ idate-to-date: lambda [
         time: between <here> space
         zone: ["GMT" (copy "+0") | between <here> <end>]
     ] except [
-        fail ["Invalid idate:" idate]
+        panic ["Invalid idate:" idate]
     ]
     make date! unspaced [day "-" month "-" year "/" time zone]
 ]
@@ -280,7 +280,7 @@ check-response: func [
                 "5" ('server-error)
             ]
         ]] except [
-            fail "HTTP Version Not Supported"
+            panic "HTTP Version Not Supported"
         ]
     ]
 
@@ -416,12 +416,12 @@ do-redirect: func [
         switch new-uri.scheme [
             'https [443]
             'http [80]
-            fail ["Unknown scheme:" new-uri.scheme]
+            panic ["Unknown scheme:" new-uri.scheme]
         ]
     ]
 
     if not find [http https] new-uri.scheme [  ; !!! scheme is quoted
-        fail make-http-error
+        panic make-http-error
             "Redirect to a protocol different from HTTP or HTTPS not supported"
     ]
 
@@ -623,7 +623,7 @@ sys.util/make-scheme [
                     cause-error 'Access 'not-open port.spec.ref
                 ]
                 if port.state.mode <> <ready> [
-                    fail make-http-error "Port not ready"
+                    panic make-http-error "Port not ready"
                 ]
             ] else [
                 open port
@@ -671,7 +671,7 @@ sys.util/make-scheme [
                     cause-error 'Access 'not-open port.spec.ref
                 ]
                 if port.state.mode <> <ready> [
-                    fail make-http-error "Port not ready"
+                    panic make-http-error "Port not ready"
                 ]
             ] else [
                 open port
@@ -695,7 +695,7 @@ sys.util/make-scheme [
         ][
             if port.state [return port]
             if not port.spec.host [
-                fail make-http-error "Missing host address"
+                panic make-http-error "Missing host address"
             ]
             port.state: make object! [
                 mode: ~<inited>~  ; original confusingly called this "state"
@@ -737,14 +737,14 @@ sys.util/make-scheme [
                     ; closing in okay when ready
                 ]
                 <doing-request> <reading-headers> [
-                    fail make-http-error "Server closed connection"
+                    panic make-http-error "Server closed connection"
                 ]
                 <reading-data> [
                     any [
                         integer? state.info.headers.content-length
                         state.info.headers.transfer-encoding = "chunked"
                     ] then [
-                        fail make-http-error "Server closed connection"
+                        panic make-http-error "Server closed connection"
                     ]
                     state.mode: <close>
                 ]

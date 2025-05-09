@@ -689,7 +689,7 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 //
 // * Class Hierarchy: Atom as base, Value derived, Element derived
 //   (upside-down for compile-time error preferences--we want passing an
-//   Atom to a routine that expects only Element to fail)
+//   Atom to a routine that expects only Element to not compile)
 //
 // * Primary Goal: Prevent passing Atoms/Values to Element-only routines,
 //   or Atoms to Value-only routines.

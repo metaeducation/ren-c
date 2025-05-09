@@ -100,7 +100,7 @@ emit-proto: func [
         set-word? header.1
     ] else [
         print mold header
-        fail [
+        panic [
             proto
             newline
             "Prototype has bad Rebol function header block in comment"
@@ -109,7 +109,7 @@ emit-proto: func [
 
     if header.2 != 'API [return ~]
     if not set-word? header.1 [
-        fail ["API declaration should be a SET-WORD!, not" (header.1)]
+        panic ["API declaration should be a SET-WORD!, not" (header.1)]
     ]
 
     paramlist: collect [
@@ -132,12 +132,12 @@ emit-proto: func [
                 )
             ]]
         ] else [
-            fail ["Couldn't extract API schema from prototype:" proto]
+            panic ["Couldn't extract API schema from prototype:" proto]
         ]
     ]
 
     if (setify to word! name) != header.1 [  ; e.g. `//  rebValue: API`
-        fail [
+        panic [
             "Name in comment header (" header.1 ") isn't C function name"
             "minus API_ prefix to match" (name)
         ]
@@ -162,7 +162,7 @@ emit-proto: func [
             "const void*" 'p
             "void*" 'vaptr
         ] else [
-            fail [name "has unsupported variadic paramlist:" mold paramlist]
+            panic [name "has unsupported variadic paramlist:" mold paramlist]
         ]
     ]
 
@@ -690,7 +690,7 @@ e-lib/emit [ver --[
      * If you do so, the UTF-8 string will be treated as code which is run
      * after the native C function is off the stack--but while the native
      * is still in effect.  This allows doing things like `return "halt"`
-     * or `return "fail -[...]-"` which would cause problems by trying to
+     * or `return "panic -[...]-"` which would cause problems by trying to
      * cross C stack levels otherwise.
      *
      * (Richer behavior with splicing of values that does the same thing is
@@ -1265,7 +1265,7 @@ e-lib/emit [ver --[
      *  1. Memory can be retaken to act as a BLOB! series without another
      *     allocation, via rebRepossess().
      *
-     *  2. Memory is freed automatically in the case of a failure in the
+     *  2. Memory is freed automatically in the case of a panic in the
      *     frame where the rebAlloc() occured.  This is especially useful
      *     when mixing C code involving allocations with rebValue(), etc.
      *
@@ -1273,7 +1273,7 @@ e-lib/emit [ver --[
      *     system is using, for the purposes of triggering GC.
      *
      *  4. Out-of-memory errors on allocation automatically trigger
-     *     failure vs. needing special handling by returning NULL (which may
+     *     panics vs. needing special handling by returning NULL (which may
      *     or may not be desirable, depending on what you're doing)
      *
      * Additionally, the rebAlloc(T) and rebAllocN(T, num) macros automatically
@@ -1282,7 +1282,7 @@ e-lib/emit [ver --[
      * By default, the returned memory must either be rebRepossess()'d or
      * rebFree()'d before its frame ends.  To get around this limitation,
      * you can call rebUnmanageMemory() on the pointer...but it will then no
-     * longer be cleaned up automatically in case of a fail().
+     * longer be cleaned up automatically in case of a panic().
      */
 
     #define rebAlloc(T) \
@@ -1320,8 +1320,8 @@ e-lib/emit [ver --[
      * which may be good (?)
      */
 
-    #define rebFail_OS(errnum) \
-        rebJumpsCore(nullptr, "fail", rebR(rebError_OS(errnum)));
+    #define rebPanic_OS(errnum) \
+        rebJumpsCore(nullptr, "panic", rebR(rebError_OS(errnum)));
 
 
     #endif  /* REBOL_H_1020_0304 */

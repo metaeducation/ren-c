@@ -12,7 +12,7 @@
             remove one
             insert ("-")
         ]]
-        if sub != copy:part t n [fail "Incorrect Replacement"]
+        if sub != copy:part t n [panic "Incorrect Replacement"]
     ]
     ok
 )]

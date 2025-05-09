@@ -19,8 +19,8 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
     Node* node = CELL_NODE1(c);  // ParamList or Details
     if (Not_Node_Readable(node)) {
         if (heart == TYPE_FRAME)
-            fail (Error_Expired_Frame_Raw());  // !!! different error?
-        fail (Error_Series_Data_Freed_Raw());
+            panic (Error_Expired_Frame_Raw());  // !!! different error?
+        panic (Error_Series_Data_Freed_Raw());
     }
 
     while (not Is_Stub_Varlist(cast(Stub*, node))) {
@@ -104,7 +104,7 @@ INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
             var = Varlist_Slot(Cell_Varlist(context), unwrap index);
     }
     if (var and writable and Get_Cell_Flag(var, PROTECTED))
-        fail (Error_Protected_Key(symbol));
+        panic (Error_Protected_Key(symbol));
     return var;
 }
 

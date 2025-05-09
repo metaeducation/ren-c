@@ -147,10 +147,10 @@ INLINE SymId Symbol_Id_From_Type(Type type) {
 INLINE Option(SymId) Cell_Datatype_Id(const Atom* v) {
     assert(Type_Of(v) == TYPE_DATATYPE);
     if (Cell_Series_Len_At(v) != 1)
-        fail ("Type blocks only allowed one element for now");
+        panic ("Type blocks only allowed one element for now");
     const Element* item = Cell_List_At(nullptr, v);
     if (not Is_Word(item))
-        fail ("Type blocks only allowed WORD! items for now");
+        panic ("Type blocks only allowed WORD! items for now");
     return Cell_Word_Id(item);
 }
 

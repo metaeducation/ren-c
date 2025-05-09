@@ -31,7 +31,7 @@ INLINE const Map* VAL_MAP(const Cell* c) {
 
     Node* node = CELL_MAP_PAIRLIST(c);
     if (Not_Node_Readable(node))
-        fail (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     return cast(Map*, node);  // identity is the PairList
 }

@@ -153,7 +153,7 @@ zip-entry: func [
         #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...
         #{0A00}  ; minimum spec version for decoder (#{0A00}=1.0)
         #{0000}  ; flags
-        switch method ['store [#{0000}] 'deflate [#{0800}] fail]
+        switch method ['store [#{0000}] 'deflate [#{0800}] panic]
         to-msdos-time date.time
         to-msdos-date date.date
         crc  ; crc-32
@@ -175,7 +175,7 @@ zip-entry: func [
         local-file-sig
         #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
         #{0000}  ; flags
-        switch method ['store [#{0000}] 'deflate [#{0800}] fail]
+        switch method ['store [#{0000}] 'deflate [#{0800}] panic]
         to-msdos-time date.time
         to-msdos-date date.date
         crc  ; crc-32
@@ -238,7 +238,7 @@ zip: func [
     source: to block! source
     iterate @source [
         let name: match [file! url!] source.1 else [
-            fail [
+            panic [
                 "ZIP dialect expected FILE! or URL!, not"
                     to word! type of source.1
             ]
@@ -354,7 +354,7 @@ unzip: func [
     ;
     let central-end-pos: find-reverse (tail of source) end-of-central-sig
     if not central-end-pos [
-        fail "Could not find end of central directory signature"
+        panic "Could not find end of central directory signature"
     ]
     let num-central-entries
     let total-central-directory-size
@@ -379,9 +379,9 @@ unzip: func [
         ;
         skip (archive-comment-len)
 
-        [<end> | (fail "Extra information at end of ZIP file")]
+        [<end> | (panic "Extra information at end of ZIP file")]
     ] except [
-        fail "Malformed end of central directory record"
+        panic "Malformed end of central directory record"
     ]
 
     ; This rule extracts the information out of the central directory and
@@ -409,7 +409,7 @@ unzip: func [
     let name
     let temp
     let central-directory-entry-rule: [
-        [central-file-sig | (fail "CENTRAL-FILE-SIG mismatch")]
+        [central-file-sig | (panic "CENTRAL-FILE-SIG mismatch")]
 
         version-created-by: across skip 2  ; version that made this file
         version-needed: across skip 2  ; version needed to extract
@@ -444,7 +444,7 @@ unzip: func [
     ;
     let x
     let check-local-directory-entry-rule: [
-        [local-file-sig | (fail "LOCAL-FILE-SIG mismatch")]
+        [local-file-sig | (panic "LOCAL-FILE-SIG mismatch")]
 
         x: across skip 2, (assert [x = version-needed])
         x: across skip 2, (assert [x = flags])
@@ -528,7 +528,7 @@ unzip: func [
             ; !!! TBD: Improve handling of flags.
             ;
             (? if not zero? flags.1 and+ 1 [
-                fail "Encryption not supported by unzip.reb (yet)"
+                panic "Encryption not supported by unzip.reb (yet)"
             ])
 
             ; We're now right past the local directory entry, where the
@@ -617,7 +617,7 @@ unzip: func [
 
         [
             ahead end-of-central-sig  ; after entries should be end sig
-            | (fail "Bad central directory termination")  ; else fail
+            | (panic "Bad central directory termination")  ; else panic
         ]
 
         ; We shouldn't just be at *an* end-of-central signature, we should
@@ -627,7 +627,7 @@ unzip: func [
 
         accept (~)  ; allow parse to succeed even though not at end
     ] except [
-        fail "Malformed Zip Archive"
+        panic "Malformed Zip Archive"
     ]
 
     if block? where [return where]

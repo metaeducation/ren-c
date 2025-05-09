@@ -139,12 +139,12 @@
     ; for UNMETA:LITE to be willing to take VOID and return it as-is instead
     ; of raising an error, and that plays to our advantage here.
 
-    (void? for-both 'x [] [] [fail "Body Never Runs"])
+    (void? for-both 'x [] [] [panic "Body Never Runs"])
 
     (
         <something> = eval [
             <something>
-            elide-if-void for-both 'x [] [] [fail "Body Never Runs"]
+            elide-if-void for-both 'x [] [] [panic "Body Never Runs"]
         ]
     )
 

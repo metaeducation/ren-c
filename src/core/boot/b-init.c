@@ -303,7 +303,7 @@ static void Init_Root_Vars(void)
     // to the GC's root set.
 
     Init_Bounce_Wild(g_bounce_thrown, C_THROWN);
-    Init_Bounce_Wild(g_bounce_fail, C_FAIL);
+    Init_Bounce_Wild(g_bounce_panic, C_PANIC);
     Init_Bounce_Wild(g_bounce_redo_unchecked, C_REDO_UNCHECKED);
     Init_Bounce_Wild(g_bounce_redo_checked, C_REDO_CHECKED);
     Init_Bounce_Wild(g_bounce_downshifted, C_DOWNSHIFTED);
@@ -405,7 +405,7 @@ static void Shutdown_Root_Vars(void)
     g_dispatcher_table = nullptr;
 
     Erase_Bounce_Wild(g_bounce_thrown);
-    Erase_Bounce_Wild(g_bounce_fail);
+    Erase_Bounce_Wild(g_bounce_panic);
     Erase_Bounce_Wild(g_bounce_redo_unchecked);
     Erase_Bounce_Wild(g_bounce_redo_checked);
     Erase_Bounce_Wild(g_bounce_downshifted);
@@ -551,13 +551,13 @@ void Startup_Core(void)
     assert(PG_Boot_Phase == BOOT_START_0);
 
   #if defined(TEST_EARLY_BOOT_CRASH)
-    crash ("early crash test"); // should crash
-  #elif defined(TEST_EARLY_BOOT_FAIL)
-    fail ("early fail test"); // same as crash (crash)
+    crash ("early crash test");  // should crash
+  #elif defined(TEST_EARLY_BOOT_PANIC)
+    panic ("early panic test");  // same as crash (crash)
   #endif
 
   #if DEBUG_HAS_PROBE
-    PG_Probe_Failures = false;
+    g_probe_panics = false;
   #endif
 
     Check_Basics();
@@ -805,9 +805,9 @@ void Startup_Core(void)
     PG_Boot_Phase = BOOT_ERRORS;
 
   #if defined(TEST_MID_BOOT_PANIC)
-    crash (g_empty_array); // crashes should be able to give details by now
-  #elif defined(TEST_MID_BOOT_FAIL)
-    fail ("mid boot fail"); // if RUNTIME_CHECKS assert, else crash
+    crash (g_empty_array);  // crashes should be able to give details by now
+  #elif defined(TEST_MID_BOOT_PANIC)
+    panic ("mid boot panic");  // if RUNTIME_CHECKS assert, else crash
   #endif
 
     // Pre-make the stack overflow error (so it doesn't need to be made
@@ -858,7 +858,7 @@ void Startup_Core(void)
     // perhaps only errors running "mezz" should be tolerated.  But the
     // console may-or-may-not run.
     //
-    // For now, assume any failure in code running doing boot is fatal.
+    // For now, assume any panic in code running doing boot is fatal.
     //
     // (Handling of Ctrl-C is an issue...if halt cannot be handled cleanly,
     // it should be set up so that the user isn't even *able* to request a
@@ -913,7 +913,7 @@ void Startup_Core(void)
         "wrap*", g_sys_util_module, rebQ(&boot->system_util),
         "if not equal? '~end~",
           "evaluate inside", g_sys_util_module, rebQ(&boot->system_util),
-            "[fail -[sys.util]-]",
+            "[panic -[sys.util]-]",
 
         // SYS contains the implementation of the module machinery itself, so
         // we don't have MODULE or EXPORT available.  Do the exports manually,

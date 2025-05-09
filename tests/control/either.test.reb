@@ -116,10 +116,10 @@
 ; THE-XXX! Branching (TBD)
 ;(
 ;    j: 304
-;    304 = either okay @j [fail "Shouldn't run"]
+;    304 = either okay @j [panic "Shouldn't run"]
 ;)(
 ;    o: make object! [b: 1020]
-;    1020 = either okay @o/b [fail "Shouldn't run"]
+;    1020 = either okay @o/b [panic "Shouldn't run"]
 ;)(
 ;    var: <something>
 ;    all [

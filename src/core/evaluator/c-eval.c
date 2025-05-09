@@ -180,7 +180,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Raised(PRIMED)) {  // raise synchronous error if not at end [1]
         dont(Try_Is_Level_At_End_Optimization(L));  // (raise x,) must error
         if (not Is_Feed_At_End(L->feed))
-            return FAIL(Cell_Error(PRIMED));
+            return PANIC(Cell_Error(PRIMED));
         goto finished;
     }
 

@@ -68,8 +68,8 @@ DECLARE_NATIVE(LOCALE)
             "territory", rebI(LOCALE_SENGCOUNTRY),
             "territory*", rebI(LOCALE_SCOUNTRY),
         "] category else [",
-            "fail [-[Invalid locale category:]- category]",
-        "]"  // !!! review using fail with ID-based errors
+            "panic [-[Invalid locale category:]- category]",
+        "]"  // !!! review using panic with ID-based errors
     );
 
     // !!! MS docs say: "For interoperability reasons, the application should
@@ -91,7 +91,7 @@ DECLARE_NATIVE(LOCALE)
 
     return text;
   #else
-    return "fail -[LOCALE not implemented natively for non-Windows]-";  // [1]
+    return "panic -[LOCALE not implemented natively for non-Windows]-";  // [1]
   #endif
 }
 
@@ -167,7 +167,7 @@ DECLARE_NATIVE(SETLOCALE)
     rebRelease(map);
 
     if (cat == -1)
-        return rebDelegate("fail [-[Invalid locale category:]- category]");
+        return rebDelegate("panic [-[Invalid locale category:]- category]");
 
     char* value_utf8 = rebSpell("value");
     const char *result = setlocale(cat, value_utf8);

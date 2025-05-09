@@ -88,7 +88,7 @@ filter-flag: func [
         header: across to ":"
         ":" option: across to <end>
     ] else [
-        fail ["Tag must be <prefix:flag> ->" (flag)]
+        panic ["Tag must be <prefix:flag> ->" (flag)]
     ]
 
     return all [
@@ -134,7 +134,7 @@ pkg-config: func [  ; !!! Note: Does not appear to be used
             dlm: null
             opt: "--libs-only-other"
         ]
-        fail ["Unsupported pkg-config word:" var]
+        panic ["Unsupported pkg-config word:" var]
     ]
 
     let x: run-command spaced [pkg lib]
@@ -426,7 +426,7 @@ compiler-class: make object! [
         exec -[Executable path (can be text!, e.g. "r3 --do c99 --")]-
             [~null~ file! text!]
     ][
-        fail ~<archetype check invoked>~
+        panic ~<archetype check invoked>~
     ]
 
     compile: method [
@@ -437,7 +437,7 @@ compiler-class: make object! [
         definitions [text! tag! block!]
         cflags [text! tag! block!]
     ][
-        fail ~<archetype compile invoked>~
+        panic ~<archetype compile invoked>~
     ]
 
     link: method [
@@ -447,7 +447,7 @@ compiler-class: make object! [
         searches [~null~ block!]
         ldflags [~null~ block! any-string?]
     ][
-        fail ~<archetype link invoked>~
+        panic ~<archetype link invoked>~
     ]
 ]
 
@@ -577,7 +577,7 @@ cc: make compiler-class [
                         keep unspaced ["-O" O]
                     ]
 
-                    fail ["unrecognized optimization level:" O]
+                    panic ["unrecognized optimization level:" O]
                 ]
             ]
             if not null? g [
@@ -586,7 +586,7 @@ cc: make compiler-class [
                     off? g []
                     integer? g [keep unspaced ["-g" g]]  ; not triggered?
 
-                    fail ["unrecognized debug option:" g]
+                    panic ["unrecognized debug option:" g]
                 ]
             ]
             if F [
@@ -702,7 +702,7 @@ cc: make compiler-class [
                 '~null~
             ]
             (elide dump dep)
-            fail "unrecognized dependency"
+            panic "unrecognized dependency"
         ]
     ]
 ]
@@ -849,7 +849,7 @@ cl: make compiler-class [
                         keep "/Od /Zi"
                     ]
 
-                    fail ["unrecognized debug option:" g]
+                    panic ["unrecognized debug option:" g]
                 ]
             ]
             if F [
@@ -974,7 +974,7 @@ cl: make compiler-class [
                 '~null~
             ]
             (elide dump dep)
-            fail "unrecognized dependency"
+            panic "unrecognized dependency"
         ]
     ]
 ]
@@ -1004,7 +1004,7 @@ strip-class: make object! [
                 text! [
                     keep params
                 ]
-                fail
+                panic
             ]
             keep file-to-local target
         ]]
@@ -1182,7 +1182,7 @@ generator-class: make object! [
                 ]
             ]
 
-            fail ["Unknown cmd class:" cmd.class]
+            panic ["Unknown cmd class:" cmd.class]
         ]
     ]
 
@@ -1227,7 +1227,7 @@ generator-class: make object! [
                     | one
                 ]
             ] else [
-                fail ["failed to do var substitution:" cmd]
+                panic ["failed to do var substitution:" cmd]
             ]
         ]
         return cmd
@@ -1298,7 +1298,7 @@ generator-class: make object! [
                         project.output: to text! project.name
                     ]
 
-                    fail ["Unexpected project class:" (project.class)]
+                    panic ["Unexpected project class:" (project.class)]
                 ]
 
                 let output-ext: find-last project.output #"."
@@ -1397,7 +1397,7 @@ makefile: make generator-class [
                         file? entry.target [
                             keep unspaced [file-to-local entry.target ":"]
                         ]
-                        fail ["Unknown entry.target type" entry.target]
+                        panic ["Unknown entry.target type" entry.target]
                     ]
                     for-each 'w (opt entry.depends) [
                         switch select (match object! w else [[]]) 'class [
@@ -1436,7 +1436,7 @@ makefile: make generator-class [
                 ]
             ]
 
-            fail ["Unrecognized entry class:" entry.class]
+            panic ["Unrecognized entry class:" entry.class]
         ] keep ""]  ; final keeps just adds extra newline
 
         ; !!! Adding an extra newline here unconditionally means variables
@@ -1509,7 +1509,7 @@ makefile: make generator-class [
                     ; nothing to do
                 ]
                 (elide dump dep)
-                fail ["unrecognized project type:" dep.class]
+                panic ["unrecognized project type:" dep.class]
             ]
         ]
     ]
@@ -1601,7 +1601,7 @@ export execution: make generator-class [
                 ]
             ]
             (elide dump target)
-            fail "Unrecognized target class"
+            panic "Unrecognized target class"
         ]
     ]
 
@@ -1668,7 +1668,7 @@ export execution: make generator-class [
                 ]
             ]
             (elide dump project)
-            fail ["unrecognized project type:" project.class]
+            panic ["unrecognized project type:" project.class]
         ]
     ]
 ]

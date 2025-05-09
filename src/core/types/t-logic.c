@@ -474,10 +474,10 @@ INLINE bool Do_Logic_Right_Side_Throws(
 
     assert(Is_Word(right) or Is_Tuple(right));
 
-    Get_Var_May_Fail(out, right, SPECIFIED);
+    Get_Var_May_Panic(out, right, SPECIFIED);
 
     if (Is_Action(out))
-        fail ("words/tuples can't be action as right hand of OR, AND, XOR");
+        panic ("words/tuples can't be action as right hand of OR, AND, XOR");
 
     return false;
 }
@@ -591,7 +591,7 @@ DECLARE_NATIVE(UNLESS)
     Element* meta_right = Element_ARG(RIGHT);
 
     if (Is_Meta_Of_Ghost(meta_right))
-        return FAIL("UNLESS can't be used with GHOST! antiform");
+        return PANIC("UNLESS can't be used with GHOST! antiform");
 
     if (Is_Meta_Of_Null(meta_right))
         return COPY(left);

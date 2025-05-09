@@ -62,7 +62,7 @@ parse3 init-code [
     ] iso-639-table-count
     to <end>
 ] except [
-    fail "Failed to update iso-639-table"
+    panic "Failed to update iso-639-table"
 ]
 
 write init init-code

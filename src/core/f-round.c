@@ -45,7 +45,7 @@ REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
 
     if (Bool_ARG(TO)) {
         if (scale == 0.0)
-            fail (Error_Zero_Divide_Raw());
+            panic (Error_Zero_Divide_Raw());
         scale = fabs(scale);
     } else
         scale = 1.0;
@@ -97,7 +97,7 @@ REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
         if (fabs(dec = dec * scale) != HUGE_VAL)
             return dec;
         else
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
     }
     return ldexp(dec / scale, e);
 }
@@ -114,7 +114,7 @@ REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
     else if ((m = n + s) <= cast(REBU64, 1) << 63) \
         num = -cast(REBI64, m); \
     else \
-        fail (Error_Overflow_Raw()); \
+        panic (Error_Overflow_Raw()); \
 }
 
 #define Int_Ceil { \
@@ -123,7 +123,7 @@ REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
     else if ((m = n + s) < cast(REBU64, 1) << 63) \
         num = m; \
     else \
-        fail (Error_Overflow_Raw()); \
+        panic (Error_Overflow_Raw()); \
 }
 
 #define Int_Away { \
@@ -131,7 +131,7 @@ REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
         if (num < 0 && m == cast(REBU64, 1) << 63) \
             num = m; \
         else \
-            fail (Error_Overflow_Raw()); \
+            panic (Error_Overflow_Raw()); \
     else \
         num = (num > 0) ? cast(REBI64, m) : -cast(REBI64, m); \
 }
@@ -153,7 +153,7 @@ REBI64 Round_Int(REBI64 num, Level* level_, REBI64 scale)
 
     if (Bool_ARG(TO)) {
         if (scale == 0)
-            fail (Error_Zero_Divide_Raw());
+            panic (Error_Zero_Divide_Raw());
         sc = Int_Abs(scale);
     }
     else sc = 1;

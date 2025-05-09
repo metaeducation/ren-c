@@ -129,7 +129,7 @@ INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 // 2. We link the API handle into a doubly linked list maintained by the
 //    topmost level at the time the allocation happens.  This level will
 //    be responsible for marking the node live, freeing the node in case
-//    of a fail() that interrupts the level, and reporting any leaks.
+//    of a panic() that interrupts the level, and reporting any leaks.
 //
 // 3. Giving the cell itself NODE_FLAG_ROOT lets a Value* be discerned as
 //    either a "public" API handle or not.  We don't want evaluation targets

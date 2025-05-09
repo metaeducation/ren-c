@@ -86,7 +86,7 @@ all [
         null
     ]
 ] else [
-    fail [
+    panic [
         "TCC Extension requires CONFIG_TCCDIR environment variable to be"
         "set.  This is semi-standardized, as it's where compiled TCC"
         "programs look for the runtime (see `tcc_set_lib_dir()`).  If the"

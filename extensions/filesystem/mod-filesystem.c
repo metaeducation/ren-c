@@ -140,7 +140,7 @@ String* To_REBOL_Path(const Value* string, Flags flags)
             // Handle the vol:dir/file format:
             //
             if (saw_colon or saw_slash)
-                fail ("no prior : or / allowed for vol:dir/file format");
+                panic ("no prior : or / allowed for vol:dir/file format");
 
             if (not lead_slash) {
                 //
@@ -475,7 +475,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
     Value* path = ARG(PATH);
     if (Is_File(path)) {
         if (not Bool_ARG(PASS))
-            return "fail -[LOCAL-TO-FILE needs :PASS to passthru FILE!]-";
+            return "panic -[LOCAL-TO-FILE needs :PASS to passthru FILE!]-";
 
         return Init_File(OUT, Copy_String_At(path));  // many callers modify
     }
@@ -558,7 +558,7 @@ DECLARE_NATIVE(WHAT_DIR)
         // Lousy error, but ATM the user can directly edit system.options.
         // They shouldn't be able to (or if they can, it should be validated)
         //
-        return FAIL(current_path);
+        return PANIC(current_path);
     }
 
     return rebValue(CANON(TRY), CANON(COPY), current_path);  // caller mutates
@@ -594,7 +594,7 @@ DECLARE_NATIVE(CHANGE_DIR)
         bool success = Set_Current_Dir_Value(arg);
 
         if (not success)
-            return FAIL(PARAM(PATH));
+            return PANIC(PARAM(PATH));
     }
 
     Copy_Cell(current_path, arg);

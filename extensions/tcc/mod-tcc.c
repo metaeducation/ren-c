@@ -66,7 +66,7 @@
         UNUSED(s);
         UNUSED(str);
 
-        rebJumps ("fail ["
+        rebJumps ("panic ["
             "-[You're using OPTIONS in your COMPILE configuration.  But this]-"
             "-[tcc extension was built with an older libtcc that was assumed]-"
             "-[to not have tcc_set_options() (it lacked TCC_RELOCATE_AUTO).]-"
@@ -123,7 +123,7 @@ static void Error_Reporting_Hook(
         return;
     }
 
-    rebJumps ("fail [",
+    rebJumps ("panic [",
         "-[TCC errors/warnings, '-w' to stop warnings:]-", rebR(message),
     "]");
 }
@@ -149,7 +149,7 @@ static void Process_Text_Helper_Core(
     rebFree(utf8);
 
     if (status < 0)  // !!! When is this called vs. Error_Reporting_Hook?
-        rebJumps ("fail [",
+        rebJumps ("panic [",
             "-[TCC]-", rebT(label), "-[rejected:]-", text,
         "]");
 }
@@ -207,7 +207,7 @@ static void Add_API_Symbol_Helper(
     memcpy(&void_ptr, &cfunc_ptr, sizeof(cfunc_ptr));
 
     if (tcc_add_symbol(state, symbol, void_ptr) < 0)
-        rebJumps ("fail [",
+        rebJumps ("panic [",
             "-[tcc_add_symbol() failed for]-", rebT(symbol),
         "]");
 }
@@ -317,7 +317,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
         SYM_RETURN  // want return
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     Details* details = Make_Dispatch_Details(
         NODE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
@@ -403,10 +403,10 @@ DECLARE_NATIVE(COMPILE_P)
     //
     TCCState *state = tcc_new();
     if (not state)
-        return FAIL("TCC failed to create a TCC context");
+        return PANIC("TCC failed to create a TCC context");
 
     // We go ahead and put the state into a managed HANDLE!, so that the GC
-    // can clean up the memory in the case of a fail().
+    // can clean up the memory in the case of a panic().
     //
     // !!! It seems that getting an "invalid object file" error (e.g. by
     // using a Windows libtcc1.a on Linux) causes a leak.  It may be an error
@@ -466,7 +466,7 @@ DECLARE_NATIVE(COMPILE_P)
     );
 
     if (tcc_set_output_type(state, output_type) < 0)
-        return rebDelegate("fail [",
+        return rebDelegate("panic [",
             "-[TCC failed to set output to]- pick", config, "'output-type",
         "]");
 
@@ -482,7 +482,7 @@ DECLARE_NATIVE(COMPILE_P)
         const Element* item = Cell_List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (not Is_Text(item))
-                return FAIL(
+                return PANIC(
                     "If COMPILE*/FILES, compilables must be TEXT! paths"
                 );
 
@@ -520,7 +520,7 @@ DECLARE_NATIVE(COMPILE_P)
                         != &Pending_Native_Dispatcher
                     )
                 ){
-                    fail ("Only user natives can be in COMPILABLES list");
+                    panic ("Only user natives can be in COMPILABLES list");
                 }
 
                 // Remember this function, because we're going to need to come
@@ -562,7 +562,7 @@ DECLARE_NATIVE(COMPILE_P)
             else {
                 // COMPILE should've vetted the list to only TEXT! and ACTION!
                 //
-                return FAIL(
+                return PANIC(
                     "COMPILE input list must contain TEXT! and ACTION!s"
                 );
             }
@@ -585,7 +585,7 @@ DECLARE_NATIVE(COMPILE_P)
                 cs_cast(Binary_At(mo->string, mo->base.size))
             ) < 0
         ){
-            return rebDelegate("fail [",
+            return rebDelegate("panic [",
                 "-[TCC failed to compile the code]-", compilables,
             "]");
         }
@@ -651,7 +651,7 @@ DECLARE_NATIVE(COMPILE_P)
 
     if (output_type == TCC_OUTPUT_MEMORY) {
         if (tcc_relocate_auto(state) < 0)
-            return FAIL("TCC failed to relocate the code");
+            return PANIC("TCC failed to relocate the code");
     }
     else {
         assert(TOP_INDEX == STACK_BASE);  // no user natives if outputting file
@@ -661,7 +661,7 @@ DECLARE_NATIVE(COMPILE_P)
         );
 
         if (tcc_output_file(state, output_file_utf8) < 0)
-            return FAIL("TCC failed to output the file");
+            return PANIC("TCC failed to output the file");
 
         rebFree(output_file_utf8);
     }
@@ -680,7 +680,7 @@ DECLARE_NATIVE(COMPILE_P)
         rebFree(name_utf8);
 
         if (not sym)
-            return rebDelegate("fail [",
+            return rebDelegate("panic [",
                 "-[TCC failed to find symbol:]-", linkname,
             "]");
 

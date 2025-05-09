@@ -63,7 +63,7 @@ export cscape: func [
     let return-type: type of last template
 
     if (text! <> return-type) and (file! <> return-type) [
-        fail ["CSCAPE requires TEXT! or FILE! as template:" mold last template]
+        panic ["CSCAPE requires TEXT! or FILE! as template:" mold last template]
     ]
 
     let string: trim:auto to text! last template
@@ -184,7 +184,7 @@ export cscape: func [
             if null? :sub  [  ; shim null, e.g. blank!
                 print mold template
                 print mold code
-                fail "Substitution can't be NULL (shim BLANK!)"
+                panic "Substitution can't be NULL (shim BLANK!)"
             ]
 
             sub: switch mode [
@@ -205,7 +205,7 @@ export cscape: func [
                                 unspaced sub
                             ]
                             either prefix [void-marker] [null]
-                            fail [
+                            panic [
                                 "No vaporizing blocks in CSCAPE $<>" newline
                                 mold:limit template 200
                             ]
@@ -216,13 +216,13 @@ export cscape: func [
                 ]
                 #delimit [
                     delimit (unspaced [opt :suffix newline]) sub else [
-                        fail [
+                        panic [
                             "No vaporizing blocks in CSCAPE $() or $[]" newline
                             mold:limit template 200
                         ]
                     ]
                 ]
-                fail ["Invalid CSCAPE mode:" mode]
+                panic ["Invalid CSCAPE mode:" mode]
             ]
 
             assert [not null? :sub]
@@ -317,7 +317,7 @@ export make-emitter: func [
     :temporary "DO-NOT-EDIT warning (automatic if file begins with 'tmp-')"
 ][
     if not let by: system.script.header.file [
-        fail [
+        panic [
             "File: should be set in the generating scripts header section"
             "so that generated files have a comment on what made them"
         ]
@@ -374,7 +374,7 @@ export make-emitter: func [
                     append .buf-emit cscape template
                     append .buf-emit newline
                 ]
-                fail
+                panic
             ]
         ]
 
@@ -384,12 +384,12 @@ export make-emitter: func [
         ][
             if newline != last .buf-emit [
                 probe skip (tail of .buf-emit) -100
-                fail "WRITE-EMITTED needs NEWLINE as last character in buffer"
+                panic "WRITE-EMITTED needs NEWLINE as last character in buffer"
             ]
 
             if let tab-pos: find .buf-emit tab [
                 probe skip tab-pos -100
-                fail "tab character passed to emit"
+                panic "tab character passed to emit"
             ]
 
             if tabbed [

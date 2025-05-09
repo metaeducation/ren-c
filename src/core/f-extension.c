@@ -152,7 +152,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
 
         if (not collated_block or not Is_Block(collated_block)) {
             rebElide("close", library);
-            return FAIL(Error_Bad_Extension_Raw(ARG(WHERE)));
+            return PANIC(Error_Bad_Extension_Raw(ARG(WHERE)));
         }
 
         collated = Cell_Array_Ensure_Mutable(collated_block);
@@ -276,7 +276,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
 static Bounce Unloaded_Dispatcher(Level* level_)
 {
     Details* details = Ensure_Level_Details(level_);
-    return FAIL(Error_Native_Unloaded_Raw(Phase_Archetype(details)));
+    return PANIC(Error_Native_Unloaded_Raw(Phase_Archetype(details)));
 }
 
 
@@ -316,7 +316,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
     // some other optimization.  Review.
     //
     if (not pos)
-        return FAIL("Could not find extension in loaded extensions list");
+        return PANIC("Could not find extension in loaded extensions list");
     rebElide(CANON(TAKE), rebR(pos));
 
     // There is a murky issue about how to disconnect DECLARE_NATIVE()s from
@@ -337,10 +337,10 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
     // Note: The mechanical act of unloading a DLL involved these calls.
     /*
         if (not IS_LIBRARY(lib))
-            return FAIL(PARAM(EXT));
+            return PANIC(PARAM(EXT));
 
         if (Is_Library_Closed(Cell_Library(lib)))
-            return FAIL(Error_Bad_Library_Raw());
+            return PANIC(Error_Bad_Library_Raw());
 
         OS_CLOSE_LIBRARY(Cell_Library_FD(lib));
     */

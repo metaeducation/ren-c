@@ -19,7 +19,7 @@
 [
     ; === SPECIAL ANTIFORM MEANINGS ===
     (
-        ; NULL means no match (does not cause abrupt failure)
+        ; NULL means no match (does not cause panic)
         'a = parse [a a a] [:(1 = 0) | some 'a]
     )
     (

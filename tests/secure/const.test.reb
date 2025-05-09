@@ -105,8 +105,8 @@
     data: ~
     repeat 1 [data: copy [a [b [c]]]]
     append data <success>
-    e2: sys.util/rescue [append data.2 <failure>]
-    e22: sys.util/rescue [append data.2.2 <failure>]
+    e2: sys.util/rescue [append data.2 <panic>]
+    e22: sys.util/rescue [append data.2.2 <panic>]
     all [
         data = [a [b [c]] <success>]
         e2.id = 'const-value

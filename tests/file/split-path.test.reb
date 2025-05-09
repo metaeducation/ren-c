@@ -83,7 +83,7 @@
     for-each [test result] split-path-tests wrap [
         [dir file]: split-path:relax test
         if result <> actual: reduce [any [dir _], any [file _]] [
-            fail [mold test 'expected mold result "but got" mold actual]
+            panic [mold test 'expected mold result "but got" mold actual]
         ]
         res: if file and dir [
             join dir file
@@ -91,7 +91,7 @@
             any [file, dir, %""]
         ]
         if test <> res [
-            fail ["Split did not JOIN equivalently:" mold test mold res]
+            panic ["Split did not JOIN equivalently:" mold test mold res]
         ]
     ]
     ok

@@ -269,10 +269,10 @@
             print mold type of get:any $item
             print mold e1
             print mold e2
-            fail "no error parity"
+            panic "no error parity"
         ]
         if equal1 != equal2 [
-            fail "no comparison parity"
+            panic "no comparison parity"
         ]
     ]
     close port

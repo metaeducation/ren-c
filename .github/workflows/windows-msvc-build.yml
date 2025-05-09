@@ -293,7 +293,7 @@ jobs:
         "$R3BUILT" make.r --help all
 
 
-    # Besides just testing success cases, it's important to make sure failures
+    # Besides just testing success cases, it's important to make sure panics
     # actually report bad exit codes, or a lot of the GitHub Actions intended
     # for testing will be useless.
     #
@@ -301,23 +301,23 @@ jobs:
     # will terminate the step.  Use `set +e` to disable this mode...as trying
     # to capture the exit code without raising an error is a nuisance.
 
-    - name: FAIL Test (from code on command line)
+    - name: PANIC Test (from code on command line)
       run: |
         set +e  # so nonzero exit codes won't immediately terminate step
-        "$R3BUILT" --do "fail {Error Message}"
+        "$R3BUILT" --do "panic --[Error Message]--"
         if [ $? -eq 1 ]; then
-          echo "FAIL Properly Gave Exit Status 1"
+          echo "PANIC Properly Gave Exit Status 1"
         else
           echo "Expected Exit Status 1, But Got $?"
           exit 1
         fi
 
-    - name: FAIL Test (from running a script)
+    - name: PANIC Test (from running a script)
       run: |
         set +e  # so nonzero exit codes won't immediately terminate step
-        "$R3BUILT" tests/misc/fail-script.r
+        "$R3BUILT" tests/misc/panic-script.r
         if [ $? -eq 1 ]; then
-          echo "FAIL Properly Gave Exit Status 1"
+          echo "PANIC Properly Gave Exit Status 1"
         else
           echo "Expected Exit Status 1, But Got $?"
           exit 1
@@ -440,6 +440,6 @@ jobs:
 
         url: latest-of/variant os-id variation
         parse (as text! url) [thru r3-url-lastpart] except [
-            fail ["!!! LATEST-OF Gave Mismatched URL:" url]
+            panic ["!!! LATEST-OF Gave Mismatched URL:" url]
         ]
         print ["LATEST-OF Matched:" url]

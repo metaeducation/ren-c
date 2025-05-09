@@ -63,7 +63,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
 
     if (not Any_Isotopic_Type(heart)) {
         QUOTE_BYTE(elem) = NOQUOTE_1;
-        fail (Error_Non_Isotopic_Type_Raw(elem));
+        panic (Error_Non_Isotopic_Type_Raw(elem));
     }
 
     if (Is_Bindable_Heart(heart)) {  // strip off any binding [2]
@@ -154,13 +154,13 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         const Element* pack_meta_tail;
         const Element* pack_meta_at = Cell_List_At(&pack_meta_tail, v);
         if (pack_meta_at == pack_meta_tail)
-            fail (Error_No_Value_Raw());  // treat as void?
+            panic (Error_No_Value_Raw());  // treat as void?
         Derelativize(v, pack_meta_at, Cell_List_Binding(v));
         Meta_Unquotify_Undecayed(v);
         if (Is_Pack(v))
-            fail (Error_Bad_Antiform(v));  // need more granular unpacking [2]
+            panic (Error_Bad_Antiform(v));  // need more granular unpacking [2]
         if (Is_Raised(v))
-            fail (Cell_Error(v));
+            panic (Cell_Error(v));
         assert(Not_Antiform(v) or Is_Antiform_Stable(v));
 
         while (++pack_meta_at != pack_meta_tail) {
@@ -177,10 +177,10 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
     }
 
     if (Is_Ghost(v))
-        fail (Error_No_Value_Raw());  // distinct error from void?
+        panic (Error_No_Value_Raw());  // distinct error from void?
 
     if (Is_Raised(v))
-        fail (Cell_Error(v));
+        panic (Cell_Error(v));
 
     return u_cast(Value*, u_cast(Atom*, v));
 }

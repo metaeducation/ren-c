@@ -115,7 +115,7 @@
 
 [
     (
-        x: parse "aaa" [some "a" (null)] except [fail "Shouldn't be reached"]
+        x: parse "aaa" [some "a" (null)] except [panic "Shouldn't be reached"]
         x = null
     )
     (

@@ -57,7 +57,7 @@ void Startup_Data_Stack(Length capacity)
     //    Having nothing at [0] means that StackIndex can be unsigned (no need
     //    for -1 to mean empty, because 0 means that).
 
-    Expand_Data_Stack_May_Fail(capacity);  // leverage expansion logic
+    Expand_Data_Stack_May_Panic(capacity);  // leverage expansion logic
 
     DROP();  // drop the hypothetical thing that triggered the expand
 
@@ -106,7 +106,7 @@ void Shutdown_Feeds(void) {
 
 
 //
-//  Expand_Data_Stack_May_Fail: C
+//  Expand_Data_Stack_May_Panic: C
 //
 // The data stack is expanded when the pushed pointer matches the known tail
 // of the allocated space.
@@ -121,7 +121,7 @@ void Shutdown_Feeds(void) {
 //    `movable_tail` to call into an expand.  So if we're not going to grant
 //    the expansion, we have to decrement the pointer prior to failing.
 //
-void Expand_Data_Stack_May_Fail(REBLEN amount)
+void Expand_Data_Stack_May_Panic(REBLEN amount)
 {
     REBLEN len_old = Array_Len(g_ds.array);
 
@@ -135,7 +135,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     if (Flex_Rest(g_ds.array) + amount >= STACK_LIMIT) {  // catch overflow
         --g_ds.index;  // have to correct for pre-increment [1]
         --g_ds.movable_top;
-        Fail_Stack_Overflow(); // !!! Should this be a "data stack" message?
+        Panic_Stack_Overflow(); // !!! Should this be a "data stack" message?
     }
 
     Extend_Flex_If_Necessary(g_ds.array, amount);

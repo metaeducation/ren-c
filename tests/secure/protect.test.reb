@@ -35,7 +35,7 @@
                         ; print ["Original:" mold original]
                         ; print ["Value:" mold value]
                         ; print ["Code:" print mold code]
-                        fail e
+                        panic e
                     ]
                 ]
             ])

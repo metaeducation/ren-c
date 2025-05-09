@@ -351,7 +351,7 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
         Shutdown_Evars(&e1);
         Shutdown_Evars(&e2);
 
-        fail ("Illegal comparison");
+        panic ("Illegal comparison");
     }
 
   finished:
@@ -401,7 +401,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     if (Is_Varargs(arg)) {
         Level* L_varargs;
         Feed* feed;
-        if (Is_Level_Style_Varargs_May_Fail(&L_varargs, arg)) {
+        if (Is_Level_Style_Varargs_May_Panic(&L_varargs, arg)) {
             assert(Is_Action_Level(L_varargs));
             feed = L_varargs->feed;
         }
@@ -409,7 +409,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
             Element* shared;
             if (not Is_Block_Style_Varargs(&shared, arg)) {
                 assert(false);  // shouldn't happen
-                return FAIL("Expected BLOCK!-style varargs");
+                return PANIC("Expected BLOCK!-style varargs");
             }
 
             feed = Prep_At_Feed(
@@ -621,7 +621,7 @@ DECLARE_NATIVE(SET_ADJUNCT)
     Option(VarList*) ctx;
     if (Any_Context(adjunct)) {
         if (Is_Frame(adjunct))
-            return FAIL("SET-ADJUNCT can't store bindings, FRAME! disallowed");
+            return PANIC("SET-ADJUNCT can't store bindings, FRAME! disallowed");
 
         ctx = Cell_Varlist(adjunct);
     }
@@ -831,7 +831,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Append_Ascii(mo->string, ": ");
 
             if (Is_Antiform(e.var)) {
-                fail (Error_Bad_Antiform(e.var));  // can't FORM antiforms
+                panic (Error_Bad_Antiform(e.var));  // can't FORM antiforms
             }
             else
                 Mold_Element(mo, cast(Element*, e.var));
@@ -909,7 +909,7 @@ const Symbol* Symbol_From_Picker(const Element* context, const Element* picker)
     UNUSED(context);  // Might the picker be context-sensitive?
 
     if (not Is_Word(picker))
-        fail (picker);
+        panic (picker);
 
     return Cell_Word_Symbol(picker);
 }
@@ -978,10 +978,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         Value* var = m_cast(Value*, TRY_VAL_CONTEXT_VAR(context, symbol));
         if (not var)
-            return FAIL(Error_Bad_Pick_Raw(picker));
+            return PANIC(Error_Bad_Pick_Raw(picker));
 
         if (not Is_Word(setval))
-            return FAIL("PROTECT* currently takes just WORD!");
+            return PANIC("PROTECT* currently takes just WORD!");
 
         switch (Cell_Word_Id(setval)) {
           case SYM_PROTECT:
@@ -997,13 +997,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
             break;
 
           default:
-            return FAIL(var);
+            return PANIC(var);
         }
 
         return nullptr; }  // caller's VarList* is not stale, no update needed
 
       case SYM_APPEND:
-        fail ("APPEND on OBJECT!, MODULE!, etc. replaced with EXTEND");
+        panic ("APPEND on OBJECT!, MODULE!, etc. replaced with EXTEND");
 
       case SYM_EXTEND: {
         INCLUDE_PARAMS_OF_EXTEND;
@@ -1037,7 +1037,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         Option(Error*) e = Trap_Wrap_Extend_Core(c, def, flags);
         if (e)
-            return FAIL(unwrap e);
+            return PANIC(unwrap e);
 
         Use* use = Alloc_Use_Inherits_Core(
             USE_FLAG_SET_WORDS_ONLY,
@@ -1058,11 +1058,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         UNUSED(ARG(SERIES));  // extracted as `c`
 
         if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         Value* pattern = ARG(VALUE);
         if (Is_Antiform(pattern))
-            return FAIL(pattern);
+            return PANIC(pattern);
 
         if (not Is_Word(pattern))
             return nullptr;
@@ -1076,7 +1076,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
             return nullptr;
 
         if (Is_Stub_Sea(c))
-            return FAIL("SeaOfVars SELECT not implemented yet");
+            return PANIC("SeaOfVars SELECT not implemented yet");
 
         return COPY(Varlist_Slot(cast(VarList*, c), unwrap index)); }
 
@@ -1105,7 +1105,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 
     if (to == TYPE_PORT) {
         if (heart != TYPE_OBJECT)
-            return FAIL(
+            return PANIC(
                 "Only TO convert OBJECT! -> PORT! (weird internal code)"
             );
 
@@ -1134,7 +1134,7 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
     const Element* context = Element_ARG(VALUE);
 
     if (Bool_ARG(PART))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     bool deep = Bool_ARG(DEEP);
     return Copy_Any_Context(OUT, context, deep);
@@ -1181,13 +1181,13 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
 
     Option(const Value*) poke = Optional_ARG(VALUE);
     if (not poke)
-        return FAIL(
+        return PANIC(
             "Can't remove fields from ANY-CONTEXT! by setting to VOID"
         );
 
     Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
     if (not var)
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PANIC(Error_Bad_Pick_Raw(picker));
 
     assert(Not_Cell_Flag(var, PROTECTED));
     Copy_Cell(var, unwrap poke);
@@ -1207,7 +1207,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
     possibly(Is_Port(context));
 
     if (Is_Stub_Sea(c))
-        return FAIL("SeaOfVars length counting code not done yet");
+        return PANIC("SeaOfVars length counting code not done yet");
     return Init_Integer(OUT, Varlist_Len(cast(VarList*, c)));
 }
 
@@ -1241,7 +1241,7 @@ IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
 //
 //  values-of: native:generic [
 //
-//  "Get the values of a context or map (may fail if context has antiforms)"
+//  "Get the values of a context or map (may panic if context has antiforms)"
 //
 //      return: [~null~ block!]
 //      element [<opt-out> fundamental?]
@@ -1290,7 +1290,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Context)
     Context* c = Cell_Context(context);
 
     if (Is_Stub_Sea(c))
-        return FAIL("SeaOfVars TAIL? not implemented");
+        return PANIC("SeaOfVars TAIL? not implemented");
     return Init_Logic(OUT, Varlist_Len(cast(VarList*, c)) == 0);
 }
 
@@ -1305,10 +1305,10 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
     const Element* frame = Element_ARG(VALUE);
 
     if (Bool_ARG(DEEP))
-        return FAIL("COPY/DEEP on FRAME! not implemented");
+        return PANIC("COPY/DEEP on FRAME! not implemented");
 
     if (Bool_ARG(PART))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     ParamList* copy = Make_Varlist_For_Action(
         frame,
@@ -1377,7 +1377,7 @@ DECLARE_NATIVE(RETURN_OF)
     Details* details = Phase_Details(phase);
     DetailsQuerier* querier = Details_Querier(details);
     if (not (*querier)(OUT, details, SYM_RETURN_OF))
-        return FAIL("Frame Details does not offer RETURN (shouldn't happen)");
+        return PANIC("Frame Details does not offer RETURN (shouldn't happen)");
 
     return OUT;
 }
@@ -1469,9 +1469,9 @@ DECLARE_NATIVE(LABEL_OF)
 
     Phase* phase = Cell_Frame_Phase(frame);
     if (Is_Stub_Details(phase))
-        return FAIL("Phase not details error... should this return NULL?");
+        return PANIC("Phase not details error... should this return NULL?");
 
-    Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
+    Level* L = Level_Of_Varlist_May_Panic(cast(ParamList*, phase));
 
     label = Try_Get_Action_Level_Label(L);
     if (label)
@@ -1515,7 +1515,7 @@ static void File_Line_Frame_Heuristic(
         }
 
         *source = nullptr;
-        *level = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
+        *level = Level_Of_Varlist_May_Panic(cast(ParamList*, phase));
     }
 }
 
@@ -1586,9 +1586,9 @@ DECLARE_NATIVE(NEAR_OF)
     Phase* phase = Cell_Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))
-        return FAIL("Phase is details, can't get NEAR-OF");
+        return PANIC("Phase is details, can't get NEAR-OF");
 
-    Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
+    Level* L = Level_Of_Varlist_May_Panic(cast(ParamList*, phase));
     return Init_Near_For_Level(OUT, L);
 }
 
@@ -1610,9 +1610,9 @@ DECLARE_NATIVE(PARENT_OF)
     Phase* phase = Cell_Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))
-        return FAIL("Phase is details, can't get PARENT-OF");
+        return PANIC("Phase is details, can't get PARENT-OF");
 
-    Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
+    Level* L = Level_Of_Varlist_May_Panic(cast(ParamList*, phase));
     Level* parent = L;
 
     while ((parent = parent->prior) != BOTTOM_LEVEL) {
@@ -1830,11 +1830,11 @@ DECLARE_NATIVE(CONSTRUCT)
         Fetch_Next_In_Feed(SUBLEVEL->feed);
 
         if (Is_Level_At_End(SUBLEVEL))
-            return FAIL("Unexpected end after SET-WORD! in CONTEXT");
+            return PANIC("Unexpected end after SET-WORD! in CONTEXT");
 
         at = At_Level(SUBLEVEL);
         if (Is_Comma(at))
-            return FAIL("Unexpected COMMA! after SET-WORD! in CONTEXT");
+            return PANIC("Unexpected COMMA! after SET-WORD! in CONTEXT");
 
     } while ((symbol = Try_Get_Settable_Word_Symbol(nullptr, at)));
 

@@ -273,7 +273,7 @@
 //     int foo(int x) {
 //         if (x < 1020)
 //             return x + 304;
-//         fail ("x is too big"); // compiler may warn about no return value
+//         panic ("x is too big"); // compiler may warn about no return value
 //     }
 //
 // One way of annotating to say this is okay is on the caller, with DEAD_END:
@@ -281,7 +281,7 @@
 //     int foo(int x) {
 //         if (x < 1020)
 //             return x + 304;
-//         fail ("x is too big");
+//         panic ("x is too big");
 //         DEAD_END; // our warning-suppression macro for applicable compilers
 //     }
 //
@@ -290,7 +290,7 @@
 // in the first place.
 //
 // Another macro we define is ATTRIBUTE_NO_RETURN.  This can be put on the
-// declaration site of a function like `fail()` itself, so the callsites don't
+// declaration site of a function like `panic()` itself, so the callsites don't
 // need to be changed.  As with DEAD_END it degrades into a no-op in compilers
 // that don't support it.
 //

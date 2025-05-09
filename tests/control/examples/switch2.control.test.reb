@@ -60,7 +60,7 @@ switch2: func [
         branch: [
             *in* block!
             |
-            (fail "Code must be BLOCK! in SWITCH2 (for now)")
+            (panic "Code must be BLOCK! in SWITCH2 (for now)")
         ]
         opt some ',  ; skip commas between branch and next condition
 

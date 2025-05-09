@@ -184,11 +184,11 @@
             items: transcode text
         ] then error -> [
             if iter.1 <> '!! [
-                fail ["Unexpected failure on" @text "->" @error.id]
+                panic ["Unexpected failure on" @text "->" @error.id]
             ]
             iter: my next
             if iter.1 <> quasi error.id [
-                fail ["Error mismatch" @text "->" @error.id "and not" @iter.1]
+                panic ["Error mismatch" @text "->" @error.id "and not" @iter.1]
             ]
             iter: my next
             any [
@@ -198,7 +198,7 @@
                 continue
             ]
             if error.arg1 <> iter.1 [
-                fail [
+                panic [
                     "Error argument mismatch on" @text "->" @error.arg1
                         "and not" @iter.1
                     ]
@@ -208,7 +208,7 @@
         ]
 
         if (iter.1 = '!!) [
-            fail ["Unexpected success on" @text "->" (mold spread items)]
+            panic ["Unexpected success on" @text "->" (mold spread items)]
         ]
 
         assert [iter.1 = '->]
@@ -218,7 +218,7 @@
 
         let !!failure!!: does [
             print [mold text "=>" mold items "vs." mold compares]
-            fail ["Transformation mismatch for" text]
+            panic ["Transformation mismatch for" text]
         ]
 
         let start: 'yes
@@ -229,7 +229,7 @@
                 no? start
                 any [tail? iter, new-line? iter]
             ] then [
-                fail ["Transcode produced unexpected results for:" text]
+                panic ["Transcode produced unexpected results for:" text]
             ]
 
             start: 'no

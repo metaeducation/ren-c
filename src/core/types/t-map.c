@@ -61,7 +61,7 @@ REBINT CT_Map(const Cell* a, const Cell* b, bool strict)
     UNUSED(a);
     UNUSED(b);
     UNUSED(strict);
-    fail ("https://github.com/rebol/rebol-issues/issues/2340");
+    panic ("https://github.com/rebol/rebol-issues/issues/2340");
 }
 
 
@@ -156,7 +156,7 @@ REBINT Find_Key_Hashed(
               found_synonym:;
 
                 if (synonym_slot != -1) // another equivalent already matched
-                    fail (Error_Conflicting_Key_Raw(key));
+                    panic (Error_Conflicting_Key_Raw(key));
                 synonym_slot = slot; // save and continue checking
             }
         }
@@ -242,7 +242,7 @@ void Expand_Hashlist(HashList* hashlist)
 {
     assert(Stub_Flavor(hashlist) == FLAVOR_HASHLIST);
 
-    REBINT prime = Get_Hash_Prime_May_Fail(Hashlist_Num_Slots(hashlist) + 1);
+    REBINT prime = Get_Hash_Prime_May_Panic(Hashlist_Num_Slots(hashlist) + 1);
     Remake_Flex(
         hashlist,
         prime + 1,
@@ -358,7 +358,7 @@ void Append_Map(
             //
             // Keys with no value not allowed, e.g. `to map! [1 "foo" 2]`
             //
-            fail (Error_Index_Out_Of_Range_Raw());
+            panic (Error_Index_Out_Of_Range_Raw());
         }
 
         bool strict = true;
@@ -391,7 +391,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     if (Any_Number(arg))
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
 
-    return FAIL(Error_Bad_Make(TYPE_MAP, arg));
+    return PANIC(Error_Bad_Make(TYPE_MAP, arg));
 }
 
 
@@ -481,7 +481,7 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 {
     // Doesn't use Num_Map_Entries_Used() because it only considers words.
     //
-    // !!! Should this fail() if any of the keys aren't words?  It seems
+    // !!! Should this panic() if any of the keys aren't words?  It seems
     // a bit haphazard to have `make object! to map! [x 10 <y> 20]` and
     // just throw out the <y> 20 case...
 
@@ -583,12 +583,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         if (Is_Antiform(ARG(VALUE)))
-            return FAIL(ARG(VALUE));
+            return PANIC(ARG(VALUE));
 
         UNUSED(PARAM(SERIES));  // covered by `v`
 
         if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         const Map* m = VAL_MAP(map);
 
@@ -617,10 +617,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         UNUSED(PARAM(SERIES));
 
         if (Is_Meta_Of_Void(ARG(VALUE)))
-            return COPY(map);  // don't fail on read only if it would be a no-op
+            return COPY(map);  // don't panic on read only if it would be no-op
 
         if (not Is_Meta_Of_Splice(ARG(VALUE)))
-            return FAIL(
+            return PANIC(
                 "Appending to MAP! only accepts a splice block of key/value"
             );
 
@@ -630,7 +630,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
         if (Bool_ARG(LINE) or Bool_ARG(DUP))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         REBLEN len = Part_Len_May_Modify_Index(arg, ARG(PART));
         const Element* tail;
@@ -689,7 +689,7 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
     const Element* map = Element_ARG(VALUE);
 
     if (Bool_ARG(PART))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     return Init_Map(OUT, Copy_Map(VAL_MAP(map), Bool_ARG(DEEP)));
 }
@@ -741,7 +741,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Map) {
 
     Option(const Value*) poke = Optional_ARG(VALUE);
     if (poke and Is_Antiform(unwrap poke))
-        return FAIL(Error_Bad_Antiform(ARG(VALUE)));
+        return PANIC(Error_Bad_Antiform(ARG(VALUE)));
 
     Update_Map_Entry(
         VAL_MAP_Ensure_Mutable(map),  // modified

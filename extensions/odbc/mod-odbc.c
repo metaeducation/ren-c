@@ -379,7 +379,7 @@ DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)
             "'utf-16 [", rebI(CHAR_COL_UTF16), "]",
             "'latin-1 [", rebI(CHAR_COL_LATIN1), "]",
         "] else [",
-            "fail --[ENCODING must be UTF-8, UCS-2, UTF-16, or LATIN-1]--"
+            "panic --[ENCODING must be UTF-8, UCS-2, UTF-16, or LATIN-1]--"
         "]"
     ));
 
@@ -424,7 +424,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
     if (henv == SQL_NULL_HANDLE) {
         rc = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);
         if (not SQL_SUCCEEDED(rc))
-            return rebDelegate("fail", Error_ODBC_Env(SQL_NULL_HENV));
+            return rebDelegate("panic", Error_ODBC_Env(SQL_NULL_HENV));
 
         rc = SQLSetEnvAttr(
             henv,
@@ -436,7 +436,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
             Value* error = Error_ODBC_Env(henv);
             SQLFreeHandle(SQL_HANDLE_ENV, henv);
             henv = SQL_NULL_HANDLE;
-            return rebDelegate("fail", error);
+            return rebDelegate("panic", error);
         }
     }
 
@@ -447,7 +447,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
     if (not SQL_SUCCEEDED(rc)) {
         Value* error = Error_ODBC_Env(henv);
         SQLFreeHandle(SQL_HANDLE_ENV, henv);
-        return rebDelegate("fail", error);
+        return rebDelegate("panic", error);
     }
 
     rc = SQLSetConnectAttr(
@@ -459,7 +459,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
     if (not SQL_SUCCEEDED(rc)) {
         Value* error = Error_ODBC_Dbc(hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-        return rebDelegate("fail", error);
+        return rebDelegate("panic", error);
     }
 
     // Connect to the Driver
@@ -482,7 +482,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
     if (not SQL_SUCCEEDED(rc)) {
         Value* error = Error_ODBC_Dbc(hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-        return rebDelegate("fail", error);
+        return rebDelegate("panic", error);
     }
 
     // Extension SHUTDOWN* might happen with HDBC handles outstanding, so we
@@ -490,7 +490,7 @@ DECLARE_NATIVE(OPEN_CONNECTION)
     //
     Connection* conn = rebTryAlloc(Connection);
     if (conn == nullptr)
-        return "fail -[Could not allocate Connection tracking object]-";
+        return "panic -[Could not allocate Connection tracking object]-";
     rebUnmanageMemory(conn);
 
     conn->hdbc = hdbc;
@@ -535,7 +535,7 @@ DECLARE_NATIVE(OPEN_STATEMENT)
     SQLHSTMT hstmt;
     rc = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
     if (not SQL_SUCCEEDED(rc))
-        return rebDelegate("fail", Error_ODBC_Dbc(hdbc));
+        return rebDelegate("panic", Error_ODBC_Dbc(hdbc));
 
     Value* hstmt_value = rebHandle(hstmt, sizeof(hstmt), nullptr);
 
@@ -585,7 +585,7 @@ SQLRETURN ODBC_BindParameter(
                 "'true [", rebI(SQL_C_BIT), "]",
                 "'false [", rebI(SQL_C_BIT), "]",
             "] else [",
-                "fail -[Legal WORD!-parameters: [null true false]]-",
+                "panic -[Legal WORD!-parameters: [null true false]]-",
             "]",
         "]",
 
@@ -634,7 +634,7 @@ SQLRETURN ODBC_BindParameter(
 
         "blob! [", rebI(SQL_C_BINARY), "]",
 
-        "fail -[Non-SQL-mappable type used in parameter binding]-",
+        "panic -[Non-SQL-mappable type used in parameter binding]-",
     "]");
 
     SQLSMALLINT sql_type;
@@ -766,7 +766,7 @@ SQLRETURN ODBC_BindParameter(
                 "append make blob! length of", v,
                     "map-each 'ch", v, "["
                         "if 255 < to integer! ch ["
-                            "fail -[Codepoint too high for Latin1]-"
+                            "panic -[Codepoint too high for Latin1]-"
                          "]"
                          "to integer! ch"
                     "]"
@@ -778,7 +778,7 @@ SQLRETURN ODBC_BindParameter(
 
           default:
             assert(!"Invalid CHAR_COL_XXX enumeration");
-            rebJumps ("fail -[Invalid CHAR_COL_XXX enumeration]-");
+            rebJumps ("panic -[Invalid CHAR_COL_XXX enumeration]-");
         }
 
         sql_type = SQL_VARCHAR;
@@ -854,13 +854,13 @@ SQLRETURN Get_ODBC_Catalog(
             "'columns [2]",
             "'types [3]",
         "] else [",
-            "fail -[Catalog must be TABLES, COLUMNS, or TYPES]-",
+            "panic -[Catalog must be TABLES, COLUMNS, or TYPES]-",
         "]"
     );
 
     rebElide(
         "if 5 < length of", block, "[",
-            "fail -[Catalog block should not have more than 4 patterns]-",
+            "panic -[Catalog block should not have more than 4 patterns]-",
         "]"
     );
 
@@ -905,7 +905,7 @@ SQLRETURN Get_ODBC_Catalog(
 
       default:
         assert(false);
-        rebJumps ("fail -[Invalid GET_CATALOG_XXX value]-");
+        rebJumps ("panic -[Invalid GET_CATALOG_XXX value]-");
     }
 
   blockscope {
@@ -915,7 +915,7 @@ SQLRETURN Get_ODBC_Catalog(
   }
 
     if (not SQL_SUCCEEDED(rc))
-        rebJumps("fail", Error_ODBC_Stmt(hstmt));
+        rebJumps("panic", Error_ODBC_Stmt(hstmt));
 
     return rc;
 }
@@ -983,7 +983,7 @@ void Describe_ODBC_Results(
             &col->nullable
         );
         if (not SQL_SUCCEEDED(rc))
-            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+            rebJumps ("panic", Error_ODBC_Stmt(hstmt));
 
         col->title = rebLengthedTextWide(title, title_length);
         rebUnmanage(col->title);
@@ -1004,7 +1004,7 @@ void Describe_ODBC_Results(
             &numeric_attribute  // only parameter needed for SQL_DESC_UNSIGNED
         );
         if (not SQL_SUCCEEDED(rc))
-            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+            rebJumps ("panic", Error_ODBC_Stmt(hstmt));
 
         if (numeric_attribute == SQL_TRUE)
             col->is_unsigned = true;
@@ -1061,7 +1061,7 @@ void Describe_ODBC_Results(
                     "-[NVARCHAR]- [", rebI(SQL_WVARCHAR), "]",
                     "-[DECIMAL]- [", rebI(SQL_DECIMAL), "]",
                 "] else [",
-                    "fail [",
+                    "panic [",
                         "-[SQL_VARCHAR reported by ODBC for unknown type:]-",
                         type_name_rebval,
                     "]",
@@ -1196,7 +1196,7 @@ void Describe_ODBC_Results(
             break;
 
           default:  // used to allocate character buffer based on column size
-            rebJumps ("fail -[Unknown column SQL_XXX type]-");
+            rebJumps ("panic -[Unknown column SQL_XXX type]-");
         }
 
         if (col->buffer_size == 0)
@@ -1204,7 +1204,7 @@ void Describe_ODBC_Results(
         else {
             col->buffer = rebTryAllocN(char, col->buffer_size);
             if (col->buffer == nullptr)
-                rebJumps ("fail -[Couldn't allocate column buffer!]-");
+                rebJumps ("panic -[Couldn't allocate column buffer!]-");
             rebUnmanageMemory(col->buffer);
         }
     }
@@ -1247,7 +1247,7 @@ DECLARE_NATIVE(INSERT_ODBC)
             "lit-word?/ ['true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! ['false]",
         "] else [",
-            "fail [",
+            "panic [",
                 "-[SQL dialect must start with WORD! or TEXT! value:]- @sql"
             "]",
         "]"
@@ -1280,7 +1280,7 @@ DECLARE_NATIVE(INSERT_ODBC)
                 SQL_NTS  // Null-Terminated String
             );
             if (not SQL_SUCCEEDED(rc))
-                return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+                return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
             rebFree(sql_string);
 
@@ -1316,7 +1316,7 @@ DECLARE_NATIVE(INSERT_ODBC)
                 );
                 rebRelease(value);
                 if (not SQL_SUCCEEDED(rc))
-                    return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+                    return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
             }
         }
 
@@ -1344,23 +1344,23 @@ DECLARE_NATIVE(INSERT_ODBC)
 
           case SQL_NEED_DATA:
             assert(!"SQL_NEED_DATA seen...only happens w/data @ execution");
-            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
           case SQL_STILL_EXECUTING:
             assert(!"SQL_STILL_EXECUTING seen...only w/async calls");
-            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
           case SQL_ERROR:
-            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
           case SQL_INVALID_HANDLE:
             assert(!"SQL_INVALID_HANDLE seen...should never happen");
-            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
         #if ODBCVER >= 0x0380
           case SQL_PARAM_DATA_AVAILABLE:
             assert(!"SQL_PARAM_DATA_AVAILABLE seen...only in ODBC 3.8");
-            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
         #endif
         }
     }
@@ -1373,13 +1373,13 @@ DECLARE_NATIVE(INSERT_ODBC)
     SQLSMALLINT num_columns;
     rc = SQLNumResultCols(hstmt, &num_columns);
     if (not SQL_SUCCEEDED(rc))
-        return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+        return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
     if (num_columns == 0) {
         SQLLEN num_rows;
         rc = SQLRowCount(hstmt, &num_rows);
         if (not SQL_SUCCEEDED(rc))
-            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
         return rebInteger(num_rows);
     }
@@ -1461,10 +1461,10 @@ Value* ODBC_Column_To_Rebol_Value(
         //
         // Note: MySQL ODBC returns -2 for sql_type when a field is BIT(n)
         // where n != 1, as opposed to SQL_BIT and column_size of n.  See
-        // remarks on the fail() below.
+        // remarks on the panic() below.
         //
         if (len != 1)
-            rebJumps("fail -[BIT(n) fields are only supported for n = 1]-");
+            rebJumps("panic -[BIT(n) fields are only supported for n = 1]-");
 
         if (*cast(unsigned char*, col->buffer))
             return rebValue("'true");  // can't append antiform to block :-(
@@ -1491,7 +1491,7 @@ Value* ODBC_Column_To_Rebol_Value(
 
       case SQL_C_UBIGINT:  // unsigned: 0..2[64] - 1
         if (*cast(SQLUBIGINT*, col->buffer) > INT64_MAX)
-            rebJumps ("fail -[INTEGER! can't hold all unsigned 64-bit ints]-");
+            rebJumps ("panic -[INTEGER! can't hold all unsigned 64-bit ints]-");
 
         return rebInteger64(*cast(SQLUBIGINT*, col->buffer));
 
@@ -1610,7 +1610,7 @@ Value* ODBC_Column_To_Rebol_Value(
     // Note: This happens with BIT(2) and the MySQL ODBC driver, which
     // reports a sql_type of -2 for some reason.
     //
-    rebJumps("fail -[Unsupported SQL_XXX type returned from query]-");
+    rebJumps("panic -[Unsupported SQL_XXX type returned from query]-");
 }
 
 
@@ -1637,14 +1637,14 @@ DECLARE_NATIVE(COPY_ODBC)
     Column* columns = list->columns;
 
     if (hstmt == SQL_NULL_HANDLE or not columns)
-        return "fail -[Invalid statement object!]-";
+        return "panic -[Invalid statement object!]-";
 
     SQLRETURN rc;
 
     SQLSMALLINT num_columns;
     rc = SQLNumResultCols(hstmt, &num_columns);
     if (not SQL_SUCCEEDED(rc))
-        return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+        return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
     // compares-0 based row against num_rows, so -1 is chosen to never match
     // and hence mean "as many rows as available"
@@ -1704,7 +1704,7 @@ DECLARE_NATIVE(COPY_ODBC)
           case SQL_STILL_EXECUTING:
           case SQL_ERROR:
           default:  // No other return codes were listed
-            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
         }
 
         Value* record = rebValue("make block!", rebI(num_columns));
@@ -1727,7 +1727,7 @@ DECLARE_NATIVE(COPY_ODBC)
             );
 
             if (col->buffer == nullptr and len == SQL_NO_TOTAL)
-                return "fail -[ODBC gave SQL_NO_TOTAL for var-size field]-";
+                return "panic -[ODBC gave SQL_NO_TOTAL for var-size field]-";
 
             Option(SQLPOINTER) allocated;
 
@@ -1759,7 +1759,7 @@ DECLARE_NATIVE(COPY_ODBC)
                     &len_check
                 );
                 if (rc != SQL_SUCCESS)
-                    return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+                    return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
                 assert(len_check == len);
                 break;
@@ -1772,7 +1772,7 @@ DECLARE_NATIVE(COPY_ODBC)
               case SQL_STILL_EXECUTING:
               case SQL_INVALID_HANDLE:
               default:  // No other return codes were listed
-                return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
+                return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
             }
 
             Value* temp = ODBC_Column_To_Rebol_Value(col, allocated, len);
@@ -1824,7 +1824,7 @@ DECLARE_NATIVE(UPDATE_ODBC)
     );
 
     if (not SQL_SUCCEEDED(rc))
-        return rebDelegate("fail", Error_ODBC_Dbc(hdbc));
+        return rebDelegate("panic", Error_ODBC_Dbc(hdbc));
 
     bool commit = rebUnboxLogic("commit");
     rc = SQLSetConnectAttr(
@@ -1838,7 +1838,7 @@ DECLARE_NATIVE(UPDATE_ODBC)
     );
 
     if (not SQL_SUCCEEDED(rc))
-        return rebDelegate("fail", Error_ODBC_Dbc(hdbc));
+        return rebDelegate("panic", Error_ODBC_Dbc(hdbc));
 
     return rebTrash();
 }

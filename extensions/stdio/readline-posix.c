@@ -317,7 +317,7 @@ static bool Read_Bytes_Interruptible(
         else if (ret == -1) {
             if (errno == EINTR)
                 goto handle_interruption;
-            rebFail_OS (errno);
+            rebPanic_OS (errno);
         }
         else {
             // stdin has data, read it
@@ -333,7 +333,7 @@ static bool Read_Bytes_Interruptible(
         if (errno == EINTR)
             goto handle_interruption;
 
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
     }
 
     t->buf[len] = '\0';
@@ -757,7 +757,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
         switch (first) {
           case 'H':   // !!! "home" (in what standard??)
           #if RUNTIME_CHECKS
-            rebJumps("fail -[ESC H: please report your system info]-");
+            rebJumps("panic -[ESC H: please report your system info]-");
           #else
             e = xrebWord("home");
           #endif
@@ -765,7 +765,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
 
           case 'F':  // !!! "end" (in what standard??)
           #if RUNTIME_CHECKS
-            rebJumps("fail -[ESC F: please report your system info]-");
+            rebJumps("panic -[ESC F: please report your system info]-");
           #else
             e = xrebWord("end");
           #endif
@@ -797,7 +797,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
             // involved at that level.  Using sigaction() on SIGINT and
             // causing EINTR is how we would like to be triggering HALT.
             //
-            rebJumps("fail -[Unexpected literal Ctrl-C in console]-");
+            rebJumps("panic -[Unexpected literal Ctrl-C in console]-");
         }
         else switch (first) {
           case DEL:  // delete (C0)

@@ -197,7 +197,7 @@ Bounce Yielder_Dispatcher(Level* const L)
             goto invoke_completed_yielder;
 
         assert(Is_Quasar(original_frame));
-        goto invoke_yielder_that_abruptly_failed; }
+        goto invoke_yielder_that_abruptly_panicked; }
 
       case ST_YIELDER_RUNNING_BODY: {
         if (Is_Cell_Readable(meta_yielded))  // YIELD is suspending us
@@ -221,7 +221,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     //    overwrite the last call.  Stow that original VarList in Details.
     //
     // 2. We can't fire-and-forget to run the yielder body, because we have
-    //    to clean up the Details array on completion or a throw/failure.
+    //    to clean up the Details array on completion or a throw/panic.
     //    That cleanup isn't just to free things up for the GC, but also to
     //    make sure future attempts to invoke the yielder see information in
     //    the Details array telling them it has finished.
@@ -257,10 +257,10 @@ Bounce Yielder_Dispatcher(Level* const L)
         assert(Is_Meta_Of_Raised(meta_yielded));
 
         if (Is_Error_Done_Signal(meta_yielded)) {
-            // don't promote to failure, just consider it finished
+            // don't promote to panic, just consider it finished
         }
-        else {  // all other raised errors promoted to failure
-            Init_Thrown_Failure(L, Cell_Error(meta_yielded));
+        else {  // all other raised errors promoted to panic
+            Init_Thrown_Panic(L, Cell_Error(meta_yielded));
         }
         goto body_finished_or_threw;
     }
@@ -280,7 +280,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     //     >> g: generator [g]  ; not legal!
 
     if (Not_Cell_Readable(plug))
-        return FAIL(Error_Yielder_Reentered_Raw());
+        return PANIC(Error_Yielder_Reentered_Raw());
 
   //=//// RECLAIM ORIGINAL YIELDER'S VARLIST IDENTITY /////////////////////=//
 
@@ -371,7 +371,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     //    back to make another call.  But should it be considered a
     //    successful completion?  A THROW of this nature in a normal
     //    function running its body would be all right, so we go by that
-    //    and say that cooperative (non-abrupt-fail) throws are valid
+    //    and say that cooperative (non-abrupt-panic) throws are valid
     //    ways to signal the yielder is finished.
     //
     // 2. There are some big picture issues about the garbage collection of
@@ -397,7 +397,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         goto invoke_completed_yielder;
     }
 
-    if (Is_Throwing_Failure(L)) {  // abrupt fail inside yielder
+    if (Is_Throwing_Panic(L)) {  // abrupt panic inside yielder
         Init_Quasar(original_frame);
         return THROWN;
     }
@@ -418,7 +418,7 @@ Bounce Yielder_Dispatcher(Level* const L)
             goto invoke_completed_yielder;
         }
         Init_Quasar(original_frame);
-        Init_Thrown_Failure(L, Cell_Error(OUT));
+        Init_Thrown_Panic(L, Cell_Error(OUT));
         return THROWN;
     }
 
@@ -430,28 +430,28 @@ Bounce Yielder_Dispatcher(Level* const L)
     // Our signal of completion is the DONE-ENUMERATING definitional error.
     // Using a definitional error pushes it out of band from all other
     // return states, because any other raised error passed to YIELD is
-    // handled as an abrupt failure.
+    // handled as an abrupt panic.
 
     assert(Is_Blank(original_frame));
 
     Copy_Cell(OUT, g_error_done_enumerating);
     return Raisify(OUT);
 
-} invoke_yielder_that_abruptly_failed: {  ////////////////////////////////////
+} invoke_yielder_that_abruptly_panicked: {  //////////////////////////////////
 
-    // A yielder that has abruptly failed currently does not store the error
-    // that caused it to fail.  It conceivably could do so, and then every
+    // A yielder that has abruptly panicked currently does not store the error
+    // that caused it to panic.  It conceivably could do so, and then every
     // subsequent call could keep returning that error...but that might
     // be misleading, suggesting that the error had happened again (when it
     // may represent something that would no longer be an error if the same
     // operation were tried).  Also, holding the error would prevent it from
     // garbage collecting.  So we instead just report a generic error about
-    // a previous failure...which is probably better than conflating it
+    // a previous panic...which is probably better than conflating it
     // with saying that the yielder is done.
 
     assert(Is_Quasar(original_frame));
 
-    return FAIL(Error_Yielder_Failed_Raw());
+    return PANIC(Error_Yielder_Panicked_Raw());
 }}
 
 
@@ -521,7 +521,7 @@ DECLARE_NATIVE(YIELDER)
         MAX_IDX_YIELDER  // details array capacity
     );
     if (e)
-        return FAIL(unwrap e);
+        return PANIC(unwrap e);
 
     assert(Is_Block(Details_At(details, IDX_YIELDER_BODY)));
     Init_Unreadable(Details_At(details, IDX_YIELDER_ORIGINAL_FRAME));
@@ -608,14 +608,14 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
 
     VarList* yielder_context = maybe Level_Coupling(yield_level);
     if (not yielder_context)
-        return FAIL("Must have yielder to jump to");
+        return PANIC("Must have yielder to jump to");
 
-    Level* yielder_level = Level_Of_Varlist_May_Fail(yielder_context);
+    Level* yielder_level = Level_Of_Varlist_May_Panic(yielder_context);
     if (not yielder_level)
-        return FAIL("Cannot yield to generator that completed or errored");
+        return PANIC("Cannot yield to generator that completed or errored");
 
     if (LEVEL_STATE_BYTE(yielder_level) != ST_YIELDER_RUNNING_BODY)
-        return FAIL("YIELD called when body of bound yielder is not running");
+        return PANIC("YIELD called when body of bound yielder is not running");
 
     Details* yielder_details = Ensure_Level_Details(yielder_level);
     assert(Details_Dispatcher(yielder_details) == &Yielder_Dispatcher);
@@ -632,7 +632,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     // a conventional BOUNCE_THROWN mechanic, which destroys the stack levels
     // as it climbs up the trampoline.  So that works for either YIELD:FINAL
     // of one value, YIELD DONE, or YIELD of any other raised error which the
-    // yielder will promote to an abrupt failure.
+    // yielder will promote to an abrupt panic.
 
     if (Is_Meta_Of_Raised(meta) or Bool_ARG(FINAL)) {  // not resumable, throw
         Init_Action(

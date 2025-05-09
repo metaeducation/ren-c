@@ -78,10 +78,10 @@
 
 ; BLANK! acts same as empty block, void opts out and generates BREAK signal
 [
-    ([] = map-each 'x [] [fail])
-    ([] = map-each 'x _ [fail])
-    (null? map-each 'x void [fail])
+    ([] = map-each 'x [] [panic])
+    ([] = map-each 'x _ [panic])
+    (null? map-each 'x void [panic])
 
-    ~expect-arg~ !! (map-each 'x '~ [fail])
-    ~unspecified-arg~ !! (map-each 'x ~ [fail])
+    ~expect-arg~ !! (map-each 'x '~ [panic])
+    ~unspecified-arg~ !! (map-each 'x ~ [panic])
 ]

@@ -307,7 +307,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
     }
 
     if (not Is_Block(val))
-        fail (Error_Invalid_Type_Raw(Datatype_Of(val)));
+        panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
 
     const Element* tail;
     const Element* item = Cell_List_At(&tail, val);
@@ -335,13 +335,13 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
                 if (IS_CHAR(item)) {
                     Codepoint c2 = Cell_Codepoint(item);
                     if (c2 < c)
-                        fail (Error_Index_Out_Of_Range_Raw());
+                        panic (Error_Index_Out_Of_Range_Raw());
                     do {
                         Set_Bit(bset, c, set);
                     } while (c++ < c2);  // post-increment test BEFORE overflow
                 }
                 else
-                    fail (Error_Bad_Value(item));
+                    panic (Error_Bad_Value(item));
             }
             else
                 Set_Bit(bset, c, set);
@@ -368,12 +368,12 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
                 if (Is_Integer(item)) {
                     n = Int32s(item, 0);
                     if (n < c)
-                        fail (Error_Index_Out_Of_Range_Raw());
+                        panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= n; c++)
                         Set_Bit(bset, c, set);
                 }
                 else
-                    fail (Error_Bad_Value(item));
+                    panic (Error_Bad_Value(item));
             }
             else
                 Set_Bit(bset, n, set);
@@ -453,7 +453,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     }
 
     if (!Any_List(val))
-        fail (Error_Invalid_Type_Raw(Datatype_Of(val)));
+        panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
 
     // Loop through block of bit specs
 
@@ -477,13 +477,13 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                 if (IS_CHAR(item)) {
                     Codepoint c2 = Cell_Codepoint(item);
                     if (c2 < c)
-                        fail (Error_Index_Out_Of_Range_Raw());
+                        panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= c2; c++)
                         if (Check_Bit(bset, c, uncased))
                             return true;
                 }
                 else
-                    fail (Error_Bad_Value(item));
+                    panic (Error_Bad_Value(item));
             }
             else
                 if (Check_Bit(bset, c, uncased))
@@ -503,13 +503,13 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                 if (Is_Integer(item)) {
                     n = Int32s(item, 0);
                     if (n < c)
-                        fail (Error_Index_Out_Of_Range_Raw());
+                        panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= n; c++)
                         if (Check_Bit(bset, c, uncased))
                             return true;
                 }
                 else
-                    fail (Error_Bad_Value(item));
+                    panic (Error_Bad_Value(item));
             }
             else
                 if (Check_Bit(bset, n, uncased))
@@ -528,7 +528,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
             break;
 
         default:
-            fail (Error_Invalid_Type_Raw(Datatype_Of(item)));
+            panic (Error_Invalid_Type_Raw(Datatype_Of(item)));
         }
     }
     return false;
@@ -570,12 +570,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         if (Is_Antiform(ARG(VALUE)))
-            return FAIL(ARG(VALUE));
+            return PANIC(ARG(VALUE));
 
         UNUSED(PARAM(SERIES));  // covered by `v`
 
         if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), Bool_ARG(CASE)))
             return nullptr;
@@ -588,13 +588,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
         Option(const Value*) opt_arg = Optional_ARG(VALUE);
         if (not opt_arg)
-            return COPY(v);  // don't fail on read only if it would be a no-op
+            return COPY(v);  // don't panic on read only if it would be a no-op
         if (Is_Antiform(unwrap opt_arg))
-            return FAIL(PARAM(VALUE));
+            return PANIC(PARAM(VALUE));
         const Element* arg = c_cast(Element*, unwrap opt_arg);
 
         if (Bool_ARG(PART) or Bool_ARG(DUP) or Bool_ARG(LINE))
-            return FAIL(Error_Bad_Refines_Raw());
+            return PANIC(Error_Bad_Refines_Raw());
 
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
@@ -605,7 +605,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
             diff = true;
 
         if (not Set_Bits(bset, arg, diff))
-            return FAIL(arg);
+            return PANIC(arg);
         return COPY(v); }
 
       case SYM_REMOVE: {
@@ -615,10 +615,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
         if (not Bool_ARG(PART))
-            return FAIL(Error_Missing_Arg_Raw());
+            return PANIC(Error_Missing_Arg_Raw());
 
         if (not Set_Bits(bset, Element_ARG(PART), false))
-            return FAIL(PARAM(PART));
+            return PANIC(PARAM(PART));
 
         return COPY(v); }
 
@@ -657,7 +657,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Bitset) {
 
     Option(const Value*) opt_poke = Optional_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return FAIL(PARAM(VALUE));
+        return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     Binary* bits = cast(Binary*, VAL_BITSET_Ensure_Mutable(bset));
@@ -666,7 +666,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Bitset) {
         picker,
         BITS_NOT(bits) ? Is_Inhibitor(poke) : Is_Trigger(poke)
     )){
-        return FAIL(PARAM(PICKER));
+        return PANIC(PARAM(PICKER));
     }
     return nullptr;
 }
@@ -680,7 +680,7 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
     Binary* bits = VAL_BITSET(bset);
 
     if (Bool_ARG(PART) or Bool_ARG(DEEP))
-        return FAIL(Error_Bad_Refines_Raw());
+        return PANIC(Error_Bad_Refines_Raw());
 
     Binary* copy = cast(Binary*, Copy_Flex_Core(NODE_FLAG_MANAGED, bits));
     INIT_BITS_NOT(copy, BITS_NOT(bits));

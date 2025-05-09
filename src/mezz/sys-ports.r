@@ -78,7 +78,7 @@ make-port*: func [
             spec: port.spec
         ]
 
-        fail
+        panic
     ]
 
     let scheme  ; Get the scheme definition
@@ -202,7 +202,7 @@ make-port*: func [
         url [url! text!]
     ][
         return parse as text! url [gather rules] except [
-            fail ["Could not decode URL to an object:" url]
+            panic ["Could not decode URL to an object:" url]
         ]
     ]
 ]
@@ -246,7 +246,7 @@ make-scheme: func [
     ]
 
     match [object! action!] :scheme.actor else [
-        fail [
+        panic [
             "Scheme actor" scheme.name "can't be" to word! type of scheme.actor
         ]
     ]

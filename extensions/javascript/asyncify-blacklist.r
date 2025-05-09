@@ -28,7 +28,7 @@
 "Startup_Core"
 "Shutdown_Core"
 
-; It seems that failing is believed to potentially cause a yield, this should
+; It seems that panicking is believed to potentially cause a yield, this should
 ; be looked into.
 ;
-"Fail_Core"
+"Panic_Core"

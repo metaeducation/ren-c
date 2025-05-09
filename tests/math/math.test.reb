@@ -129,7 +129,7 @@ bind construct [
             1 = length of ret
             any-number? ret.1
         ] else [
-            fail compose (
+            panic compose (
                 -[Cannot be REDUCED to a number (mold ret) : (mold res)]-
             )
         ]

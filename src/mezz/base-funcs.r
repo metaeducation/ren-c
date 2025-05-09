@@ -175,13 +175,13 @@ specialized?: func [
 
 
 /curtail: reframer func [
-    "Voids an expression if it raises any NEED-NON-NULL failures"
+    "Voids an expression if it returns any NEED-NON-NULL errors"
     return: [any-value?]
     frame [frame!]
 ][
     return eval frame except e -> [
         if e.id = 'need-non-null [return void]
-        fail e
+        panic e
     ]
 ]
 
@@ -248,7 +248,7 @@ specialized?: func [
         [<end> any-value? <variadic>]
 ][
     if not get:any $condition [
-        fail:blame make error! [
+        panic:blame make error! [
             type: 'script
             id: 'assertion-failure
             arg1: [~null~ so]
@@ -264,7 +264,7 @@ specialized?: func [
 ](
     lambda [left [any-value?] right [any-value?]] [
         if :left != :right [
-            fail:blame make error! [
+            panic:blame make error! [
                 type: 'script
                 id: 'assertion-failure
                 arg1: compose [(:left) is (:right)]
@@ -308,7 +308,7 @@ specialized?: func [
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
-            fail [
+            panic [
                 "ENSURE failed with argument of type"
                     (mold reify try type of :f.value) else ["VOID"]
             ]
@@ -332,7 +332,7 @@ specialized?: func [
 )
 
 /prohibit: redescribe [
-    "Pass through value if it *doesn't* match test, else fail"
+    "Pass through value if it *doesn't* match test, else panic"
 ](
     enclose match:meta/ lambda [f] [
         eval f then [
@@ -340,7 +340,7 @@ specialized?: func [
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
-            fail [
+            panic [
                 "PROHIBIT failed with argument of type"
                     (mold reify try type of :f.value) else ["NULL"]
             ]
@@ -370,7 +370,7 @@ specialized?: func [
 ](
     adapt find-reverse/ [
         if not any-series? series [
-            fail:blame "Can only use FIND-LAST on ANY-SERIES?" $series
+            panic:blame "Can only use FIND-LAST on ANY-SERIES?" $series
         ]
 
         series: tail of series  ; can't use plain TAIL due to /TAIL refinement
@@ -422,7 +422,7 @@ trap: func [
             let result
             trap [result: eval f] then e -> [
                 set word f.series
-                fail e
+                panic e
             ]
             set word f.series
             :result
@@ -464,7 +464,7 @@ count-up: func [
 
     start: 1
     end: if issue? limit [
-        if limit <> # [fail]
+        if limit <> # [panic]
         100  ; not forever...don't use max int to help test "pseudoforever"
     ] else [
         limit
@@ -555,7 +555,7 @@ cause-error: func [
 ][
     args: blockify args  ; make sure it's a block
 
-    fail make error! [
+    panic make error! [
         type: err-type
         id: err-id
         arg1: try first args
@@ -598,14 +598,14 @@ raise: func [
     ; Ultimately we might like FAIL to use some clever error-creating dialect
     ; when passed a block, maybe something like:
     ;
-    ;     fail [<invalid-key> "The key" key-name: key "is invalid"]
+    ;     panic [<invalid-key> "The key" key-name: key "is invalid"]
     ;
     ; That could provide an error ID, the format message, and the values to
     ; plug into the slots to make the message...which could be extracted from
     ; the error if captured (e.g. error.id and `error.key-name`.  Another
     ; option would be something like:
     ;
-    ;     fail:with ["The key" :key-name "is invalid"] [key-name: key]
+    ;     panic:with ["The key" :key-name "is invalid"] [key-name: key]
 
     let error: switch:type :reason [
         error! [reason]
@@ -673,11 +673,11 @@ raise: func [
     return raise* ensure error! error
 ]
 
-; Immediately fail on a raised error--do not allow ^META interception/etc.
+; Immediately panic on a raised error--do not allow ^META interception/etc.
 ;
 ; Note: we use CHAIN into NULL? as an arbitrary intrinsic which won't take
 ; a raised error, because the CHAIN doesn't add a stack level that obscures
 ; generation of the NEAR and WHERE fields.  If we tried to ENCLOSE and DO
 ; the error it would add more overhead and confuse those matters.
 ;
-fail: cascade [raise/ null?/]
+panic: cascade [raise/ null?/]

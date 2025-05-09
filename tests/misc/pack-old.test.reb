@@ -51,7 +51,7 @@
             result': either blank? vars.1 [meta void] [val']
         ]
         if tail? vars [
-            fail "Too many values for vars in PACK (use <...> if on purpose)"
+            panic "Too many values for vars in PACK (use <...> if on purpose)"
         ]
         if vars.1 = <...> [
             continue  ; ignore all other values (but must reduce all)
@@ -65,7 +65,7 @@
     ]
     if <...> = try vars.1 [
         if not last? vars [
-            fail "<...> must appear only at the tail of PACK variable list"
+            panic "<...> must appear only at the tail of PACK variable list"
         ]
     ] else [
         ; We do not error on too few values (such as `[a b c]: [1 2]`) but

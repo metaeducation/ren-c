@@ -295,7 +295,7 @@ default-combinators: to map! reduce [
             ]
         ]
         if not negatable-parser? parser/ [
-            fail "NOT called on non-negatable combinator"
+            panic "NOT called on non-negatable combinator"
         ]
         return [{~} remainder]: parser:negated input except e -> [
             return raise e
@@ -314,7 +314,7 @@ default-combinators: to map! reduce [
             return raise e  ; non-matching parser means WHEN did not match
         ]
         if void? ^result [
-            fail "WHEN combinator received VOID antiform result"
+            panic "WHEN combinator received VOID antiform result"
         ]
         if null? ^result [
             return raise "WHEN combinator received ~null~ antiform result"
@@ -373,7 +373,7 @@ default-combinators: to map! reduce [
             return raise e
         ]
         if (not quoted? result') or (not any-list? result': unquote result') [
-            fail "SPREAD only accepts ANY-LIST? and QUOTED!"
+            panic "SPREAD only accepts ANY-LIST? and QUOTED!"
         ]
         return spread result'  ; was unquoted above
     ]
@@ -447,7 +447,7 @@ default-combinators: to map! reduce [
                 return ^result'
             ]
         ]
-        fail ~<unreachable>~
+        panic ~<unreachable>~
     ]
 
     'while combinator [
@@ -477,7 +477,7 @@ default-combinators: to map! reduce [
                 continue
             ]
         ]
-        fail ~<unreachable>~
+        panic ~<unreachable>~
     ]
 
     'cycle combinator [
@@ -497,7 +497,7 @@ default-combinators: to map! reduce [
                 continue
             ]
         ]
-        fail ~<unreachable>~
+        panic ~<unreachable>~
     ]
 
     'tally combinator [
@@ -518,7 +518,7 @@ default-combinators: to map! reduce [
             ]
             count: count + 1
         ]
-        fail ~<unreachable>~
+        panic ~<unreachable>~
     ]
 
     'break combinator [
@@ -527,7 +527,7 @@ default-combinators: to map! reduce [
         <local> f
     ][
         f: take:last state.loops except [
-            fail "No PARSE iteration to BREAK"
+            panic "No PARSE iteration to BREAK"
         ]
 
         f.remainder: input
@@ -548,7 +548,7 @@ default-combinators: to map! reduce [
         ]
 
         f: take:last state.loops except [
-            fail "No PARSE iteration to STOP"
+            panic "No PARSE iteration to STOP"
         ]
 
         f.remainder: input
@@ -635,7 +635,7 @@ default-combinators: to map! reduce [
         ; issues.  We currently fail if the index is before.
         ;
         if start > end [
-            fail "Can't MEASURE region where rules did a SEEK before the INPUT"
+            panic "Can't MEASURE region where rules did a SEEK before the INPUT"
         ]
 
         return end - start
@@ -722,7 +722,7 @@ default-combinators: to map! reduce [
             remainder: input  ; TO means do not include match range
             return ^result'
         ]
-        fail ~<unreachable>~
+        panic ~<unreachable>~
     ]
 
     'thru combinator [
@@ -742,7 +742,7 @@ default-combinators: to map! reduce [
             ]
             return ^result'
         ]
-        fail ~<unreachable>~
+        panic ~<unreachable>~
     ]
 
     'seek combinator [
@@ -763,11 +763,11 @@ default-combinators: to map! reduce [
             ]
             any-series? ^where [
                 if not same? (head of input) (head of ^where) [
-                    fail "Series SEEK in UPARSE must be in the same series"
+                    panic "Series SEEK in UPARSE must be in the same series"
                 ]
                 remainder: ^where
             ]
-            fail "SEEK requires INTEGER!, series position, or VOID"
+            panic "SEEK requires INTEGER!, series position, or VOID"
         ]
         return remainder
     ]
@@ -794,7 +794,7 @@ default-combinators: to map! reduce [
             ]
             return copy:part start limit
         ]
-        fail ~<unreachable>~
+        panic ~<unreachable>~
     ]
 
     === TAG! SUB-DISPATCHING COMBINATOR ===
@@ -878,7 +878,7 @@ default-combinators: to map! reduce [
         "Disabled combinator, included to help guide to use ACROSS"
         return: []
     ][
-        fail [
+        panic [
             "Transitionally (maybe permanently?) the COPY function in UPARSE"
             "is done with ACROSS:" https://forum.rebol.info/t/1595
         ]
@@ -947,11 +947,11 @@ default-combinators: to map! reduce [
         ]
 
         if void? ^subseries [
-            fail "Cannot SUPBARSE into a void"
+            panic "Cannot SUPBARSE into a void"
         ]
 
         if antiform? ^subseries [
-            fail "Cannot SUBPARSE an antiform synthesized result"
+            panic "Cannot SUBPARSE an antiform synthesized result"
         ]
 
         subseries: ^subseries
@@ -1049,7 +1049,7 @@ default-combinators: to map! reduce [
                     pending: glom pending quote item  ; quoteds target COLLECT
                 ]
             ]
-            fail "Incorrect KEEP (not value or SPREAD)"
+            panic "Incorrect KEEP (not value or SPREAD)"
         ]
 
         return ^result'
@@ -1135,7 +1135,7 @@ default-combinators: to map! reduce [
             if not match [
                 any-word? set-word? get-word?
             ] (target: eval target) [
-                fail [
+                panic [
                     "GROUP! from EMIT (...): must produce an ANY-WORD?, not"
                     @target
                 ]
@@ -1145,7 +1145,7 @@ default-combinators: to map! reduce [
             ; Revisit if that rule changes and this becomes unnecessary.
             ;
             if binding of target: resolve target [
-                fail ["EMIT can't use bound words for object keys:" target]
+                panic ["EMIT can't use bound words for object keys:" target]
             ]
             target: setify target
         ] else [
@@ -1193,7 +1193,7 @@ default-combinators: to map! reduce [
         "Disabled combinator, included to help guide to use SET-WORD!"
         return: []
     ][
-        fail [
+        panic [
             "The SET keyword in UPARSE is done with SET-WORD!, and if SET does"
             "come back it would be done differently:"
             https://forum.rebol.info/t/1139
@@ -1286,7 +1286,7 @@ default-combinators: to map! reduce [
             any-string? input [
                 if negated [
                     if (not char? value) [
-                        fail "NOT ISSUE! with strings is only for single char"
+                        panic "NOT ISSUE! with strings is only for single char"
                     ]
                     if input.1 = value [
                         return raise "Negated ISSUE! char matched at string"
@@ -1305,7 +1305,7 @@ default-combinators: to map! reduce [
                 assert [blob? input]
                 if negated [
                     if (not char? value) or (255 < codepoint of value) [
-                        fail "NOT ISSUE! with blobs is only for single byte"
+                        panic "NOT ISSUE! with blobs is only for single byte"
                     ]
                     if input.1 = codepoint of value [
                         return raise "Negated ISSUE! char matched at blob"
@@ -1421,7 +1421,7 @@ default-combinators: to map! reduce [
 
         if <delay> = first value [
             if 1 = length of value [
-                fail "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
+                panic "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
             pending: reduce [next value]  ; GROUP! signals delayed groups
             return ~,~  ; act invisible
@@ -1462,7 +1462,7 @@ default-combinators: to map! reduce [
     ; 1. Raising errors out of combinators has a specific meaning of the
     ;    combinator not matching.  We do not want to bubble out a definitional
     ;    error indicating a problem inside the evaluation in a way that would
-    ;    conflate it with the combinator simply not matching.  Must fail.
+    ;    conflate it with the combinator simply not matching.  Must panic.
     ;
     ; 2. NULL was originally prohibited, in the spirit of safety (kind of like
     ;    not casually vaporizing nulls when used in COMPOSE groups).  But
@@ -1504,7 +1504,7 @@ default-combinators: to map! reduce [
         value [get-group?]
         <local> r comb
     ][
-        ^r: eval:undecayed value.2 except e -> [fail e]  ; can't raise [1]
+        ^r: eval:undecayed value.2 except e -> [panic e]  ; can't raise [1]
 
         if null? ^r [  ; like [:(1 = 0)]
             return raise "GET-GROUP! evaluated to NULL"  ; means no match [2]
@@ -1531,7 +1531,7 @@ default-combinators: to map! reduce [
         ]
 
         if not comb: select state.combinators (meta type of r) [
-            fail [
+            panic [
                 "Unhandled type in GET-GROUP! combinator:" to word! type of r
             ]
         ]
@@ -1630,7 +1630,7 @@ default-combinators: to map! reduce [
         ]
 
         if negated [  ; !!! allow single-char or single-byte negations?
-            fail "QUOTED! combinator can only be negated for List input"
+            panic "QUOTED! combinator can only be negated for List input"
         ]
 
         ensure [any-string? blob!] input
@@ -1681,13 +1681,13 @@ default-combinators: to map! reduce [
     ][
         switch value [
           ~null~ [
-            fail make error! [type: 'script, id: 'need-non-null]
+            panic make error! [type: 'script, id: 'need-non-null]
           ]
           ~okay~ [
             return ~,~  ; let okay just act as a "guard", no influence
           ]
         ]
-        fail ["Unknown keyword" mold meta value]
+        panic ["Unknown keyword" mold meta value]
     ]
 
     (meta splice!) combinator [
@@ -1704,7 +1704,7 @@ default-combinators: to map! reduce [
         ]
 
         if not any-list? input [
-            fail "Splice combinators only match ANY-LIST? input"
+            panic "Splice combinators only match ANY-LIST? input"
         ]
 
         neq?: either state.case [:not-equal?] [:lax-not-equal?]
@@ -1800,7 +1800,7 @@ default-combinators: to map! reduce [
             ]
             issue! [
                 if times' <> meta # [
-                    fail ["REPEAT takes ISSUE! of # to act like TRY SOME"]
+                    panic ["REPEAT takes ISSUE! of # to act like TRY SOME"]
                 ]
                 min: 0, max: #
             ]
@@ -1819,11 +1819,11 @@ default-combinators: to map! reduce [
                 ]
             ]
         ] else [
-            fail "REPEAT combinator requires INTEGER! or [INTEGER! INTEGER!]"
+            panic "REPEAT combinator requires INTEGER! or [INTEGER! INTEGER!]"
         ]
 
         all [max <> #, max < min] then [
-            fail "Can't make MAX less than MIN in range for REPEAT combinator"
+            panic "Can't make MAX less than MIN in range for REPEAT combinator"
         ]
 
         append state.loops binding of $return
@@ -1894,7 +1894,7 @@ default-combinators: to map! reduce [
             return input.1
         ][
             if negated [
-                fail "TYPE-BLOCK! only supported negated for array input"
+                panic "TYPE-BLOCK! only supported negated for array input"
             ]
             [remainder item]: transcode:next input except e -> [return raise e]
 
@@ -2154,7 +2154,7 @@ default-combinators: to map! reduce [
             return ~,~
         ]
         if not integer? :result [
-            fail "SKIP expects INTEGER! amount to skip"
+            panic "SKIP expects INTEGER! amount to skip"
         ]
         remainder: skip input result else [
             return raise "Attempt to SKIP past end of parse input"
@@ -2308,21 +2308,21 @@ default-combinators: to map! reduce [
             ]
 
             okay?/ [
-                fail "WORD! fetches cannot be ~okay~ in UPARSE (see WHEN)"
+                panic "WORD! fetches cannot be ~okay~ in UPARSE (see WHEN)"
             ]
 
             null?/ [
-                fail "WORD! fetches cannot be ~null~ in UPARSE (see WHEN)"
+                panic "WORD! fetches cannot be ~null~ in UPARSE (see WHEN)"
             ]
 
-            fail [
+            panic [
                 "WORD! can't look up to active combinator, unless BLOCK!."
                 "If literal match is meant, use" unspaced ["@" value]
             ]
         ]
 
         if not comb: select state.combinators (meta type of r) [
-            fail ["Unhandled type in WORD! combinator:" to word! type of r]
+            panic ["Unhandled type in WORD! combinator:" to word! type of r]
         ]
 
         ; !!! We don't need to call COMBINATORIZE because we can't handle
@@ -2362,12 +2362,12 @@ default-combinators: to map! reduce [
         switch:type :arg [
             group! [
                 if not block? block: eval arg [
-                    fail ["The ANY combinator requires a BLOCK! of alternates"]
+                    panic ["The ANY combinator requires a BLOCK! of alternates"]
                 ]
             ]
             block! [block: arg]
         ] else [
-            fail [
+            panic [
                 "The ANY combinator in UPARSE is not an iterating construct."
                 "Use TRY SOME, TRY SOME FURTHER, etc. depending on purpose:"
                 https://forum.rebol.info/t/1572
@@ -2516,11 +2516,11 @@ default-combinators: to map! reduce [
                 [^temp pos subpending]: ^temp
                 if unset? $pos [
                     print mold:limit rules 200
-                    fail "Combinator did not set remainder"
+                    panic "Combinator did not set remainder"
                 ]
                 if unset? $subpending [
                     print mold:limit rules 200
-                    fail "Combinator did not set pending"
+                    panic "Combinator did not set pending"
                 ]
                 if temp <> '~,~ [
                     result': temp  ; overwrite if was visible
@@ -2570,20 +2570,20 @@ default-combinators: to map! reduce [
         return ^result'
     ])
 
-    === FAIL COMBINATOR ===
+    === PANIC COMBINATOR ===
 
-    ; Gracefully handling failure has two places that you might want to
+    ; Gracefully handling panics has two places that you might want to
     ; provide assistance in implicating...one is the parse rules, and the other
     ; is the parse input.
     ;
-    ; The FAIL combinator is--perhaps obviously (?)--not for pointing out
+    ; The PANIC combinator is--perhaps obviously (?)--not for pointing out
     ; syntax errors in the rules.  Because it's a rule.  So by default it will
     ; complain about the location where you are in the input.
     ;
     ; It lets you take an @[...] block, because a plain [...] block would be
     ; processed as a rule.  For the moment it quotes it for convenience.
 
-    'fail combinator [
+    'panic combinator [
         return: []
         'reason [the-block!]
         <local> e
@@ -2595,7 +2595,7 @@ default-combinators: to map! reduce [
         ]
         set-location-of-error e binding of $reason
         e.near: mold:limit input 80
-        fail e
+        panic e
     ]
 ]
 
@@ -2698,7 +2698,7 @@ comment [combinatorize: func [
                 ]
                 then [
                     if not param.endable [
-                        fail "Too few parameters for combinator"
+                        panic "Too few parameters for combinator"
                     ]
                     set key null
                 ]
@@ -2725,7 +2725,7 @@ comment [combinatorize: func [
                 ]
                 then [
                     if not param.endable [
-                        fail "Too few parameters for combinator"
+                        panic "Too few parameters for combinator"
                     ]
                     set key null
                 ]
@@ -2816,7 +2816,7 @@ parsify: func [
     r: rules.1
 
     if comma? r [  ; block combinator consumes the legal commas [1]
-        fail "COMMA! can only be run between PARSE steps, not during them"
+        panic "COMMA! can only be run between PARSE steps, not during them"
     ]
     rules: my next
 
@@ -2835,7 +2835,7 @@ parsify: func [
     case [
         word? r [  ; non-"keyword" WORD! (didn't look up literally)
             if null? value: get r [
-                fail make error! [type: 'script, id: 'need-non-null]
+                panic make error! [type: 'script, id: 'need-non-null]
             ]
 
             if comb: match frame! :value [  ; variable held a combinator [4]
@@ -2844,7 +2844,7 @@ parsify: func [
                 ]
 
                 let name: uppercase to text! r
-                fail [
+                panic [
                     name "is not a COMBINATOR ACTION!"
                     "For non-combinator actions in PARSE, use"
                         unspaced [name "/"]
@@ -2856,10 +2856,10 @@ parsify: func [
 
         (path? r) and (blank? first r) [  ; "action combinator" [5]
             if not frame? let gotten: unrun get:any r [
-                fail "In UPARSE PATH starting in / must be action or frame"
+                panic "In UPARSE PATH starting in / must be action or frame"
             ]
             if not comb: select state.combinators (meta frame!) [
-                fail "No frame! combinator, can't use PATH starting with /"
+                panic "No frame! combinator, can't use PATH starting with /"
             ]
 
             comb: unrun adapt (augment comb inside [] collect [
@@ -2917,7 +2917,7 @@ parsify: func [
         ]]
         try state.combinators.(meta type of r)  ; datatypes dispatch meta
     ] [
-        fail ["Unhandled type in PARSIFY:" to word! type of r "-" mold r]
+        panic ["Unhandled type in PARSIFY:" to word! type of r "-" mold r]
     ]
 
     return combinatorize:value comb rules state r
@@ -3050,7 +3050,7 @@ parse*: func [
     ] then e -> [
         print "!!! HARD FAIL DURING PARSE !!!"
         print mold:limit state.rules 200
-        fail e
+        panic e
     ]
 
     assert [empty? state.loops]
@@ -3077,7 +3077,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
             return raise e
         ]
         if not empty? pending [
-            fail "PARSE completed, but pending list was not empty"
+            panic "PARSE completed, but pending list was not empty"
         ]
         return ^synthesized'
     ]
@@ -3107,7 +3107,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
                 combinators.<here> != default-combinators.<here>
                 combinators.accept != default-combinators.accept
             ]) [
-                fail [
+                panic [
                     "Custom combinators redefining ACCEPT or <here> may"
                     "break PARSE-THRU.  Review if this comes up."
                 ]

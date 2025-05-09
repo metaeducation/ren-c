@@ -60,7 +60,7 @@ parse3 init-code [
     ] iso-3166-table-count
     to <end>
 ] except [
-    fail "Failed to update iso-3166-table"
+    panic "Failed to update iso-3166-table"
 ]
 
 write init init-code

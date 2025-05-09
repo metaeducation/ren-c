@@ -63,7 +63,7 @@
                 let id: (match error! trap [load x]).id
                 assert [find [scan-invalid scan-extra scan-missing] id]
             ]
-            fail "wrong type"
+            panic "wrong type"
         ]
     ]
     ok
