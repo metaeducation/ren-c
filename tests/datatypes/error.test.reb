@@ -156,6 +156,5 @@
         e2/id = 'zero-divide
         [divide 1 0] = copy/part e1/near 3
         [divide 2 0] = copy/part e2/near 3
-        e1 <> e2
     ]
 )

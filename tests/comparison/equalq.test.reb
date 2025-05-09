@@ -536,40 +536,6 @@
 ]
 
 
-; error! reflexivity
-; Evaluates (sys/util/rescue [1 / 0]) to get error! value.
-(
-    a-value: blank
-    set 'a-value (sys/util/rescue [1 / 0])
-    lax-equal? a-value a-value
-)
-; error! structural equivalence
-; Evaluates (sys/util/rescue [1 / 0]) to get error! value.
-(lax-equal? (sys/util/rescue [1 / 0]) (sys/util/rescue [1 / 0]))
-; error! structural equivalence
-(lax-equal? (make error! "hello") (make error! "hello"))
-; error! difference in code
-(not lax-equal? (sys/util/rescue [1 / 0]) (make error! "hello"))
-; error! difference in data
-(not lax-equal? (make error! "hello") (make error! "there"))
-; error! basic comparison
-(not lax-equal? (sys/util/rescue [1 / 0]) blank)
-; error! basic comparison
-(not lax-equal? blank (sys/util/rescue [1 / 0]))
-; error! basic comparison symmetry
-(lax-equal? lax-equal? (sys/util/rescue [1 / 0]) blank lax-equal? blank (sys/util/rescue [1 / 0]))
-; error! basic comparison with = op
-(not ((sys/util/rescue [1 / 0]) = blank))
-; error! basic comparison with != op
-((sys/util/rescue [1 / 0]) != blank)
-; error! basic comparison with = op
-(not (blank = (sys/util/rescue [1 / 0])))
-; error! basic comparison with != op
-(blank != (sys/util/rescue [1 / 0]))
-; error! symmetry with = op
-(lax-equal? not ((sys/util/rescue [1 / 0]) = blank) not (blank = (sys/util/rescue [1 / 0])))
-; error! symmetry with != op
-(lax-equal? (sys/util/rescue [1 / 0]) != blank blank != (sys/util/rescue [1 / 0]))
 ; port! reflexivity
 ; Error in R2 (could be fixed).
 (lax-equal? p: make port! http:// p)

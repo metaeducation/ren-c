@@ -770,7 +770,7 @@ DECLARE_NATIVE(CHOOSE)
 //      return: "Last case evaluation, or null if no cases matched"
 //          [any-value!]
 //      value "Target value"
-//          [any-value!]
+//          [any-equatable!]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
