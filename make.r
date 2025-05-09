@@ -888,8 +888,8 @@ for-each 'entry read extension-dir [
 
     ; Normalize format to [[%file1.c] [%file2.c <options>] [%file3.c]]
     ;
-    ext.sources: to-block-of-file-blocks (<maybe-null> ext.sources)
-    ext.depends: to-block-of-file-blocks (<maybe-null> ext.depends)
+    ext.sources: to-block-of-file-blocks opt ext.sources
+    ext.depends: to-block-of-file-blocks opt ext.depends
 
     ; Blockify libraries
     ;

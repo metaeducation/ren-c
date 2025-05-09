@@ -225,8 +225,6 @@ for-each [alias] [
 
 function3: ~<FUNCTION slated for synonym of FUNC, so no FUNCTION3>~
 
-?: opt: optional: maybe/
-
 
 === "BINARY! => BLOB!" ===
 
@@ -396,7 +394,7 @@ spread: func3 [
     ]
 ]
 
-append: func3 [series value [any-value!] /line <local> only] [
+append: func3 [series value [<undo-opt> any-element!] /line <local> only] [
     any [
         object? series
         map? series
@@ -411,89 +409,66 @@ append: func3 [series value [any-value!] /line <local> only] [
     ]
 
     only: 'only
-    case [
-        logic? :value [
-            fail:blame "APPEND LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." $value
-        ]
-        block? :value [
-            if #splice! = (first value) [
-                value: second value
-                if not any-list? series [  ; itemwise appends for strings/etc.
-                    for-each 'item value [
-                        append series item
-                    ]
-                    return series
-                ]
-                only: null
+    if (block? value) and (#splice! = first value) [
+        value: second value
+        if not any-list? series [  ; itemwise appends for strings/etc.
+            for-each 'item value [
+                append series item
             ]
+            return series
         ]
+        only: null
     ]
-    return append3:(maybe only):(maybe line) series :value
+    return append3:(opt only):(opt line) series opt value
 ]
 
-insert: func3 [series value [any-value!] /line <local> only] [
+insert: func3 [series value [<undo-opt> any-element!] /line <local> only] [
     only: 'only
-    case [
-        logic? :value [
-            fail:blame "INSERT LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." $value
-        ]
-        block? :value [
-            if #splice! = (first value) [
-                value: second value
-                if not any-list? series [  ; itemwise appends for strings/etc.
-                    for-each 'item value [
-                        series: insert series item
-                    ]
-                    return series
-                ]
-                only: null
+    if (block? value) and (#splice! = first value) [
+        value: second value
+        if not any-list? series [  ; itemwise appends for strings/etc.
+            for-each 'item value [
+                series: insert series item
             ]
+            return series
         ]
+        only: null
     ]
-    return insert3:(maybe only):(maybe line) series :value
+    return insert3:(opt only):(opt line) series opt value
 ]
 
-change: func3 [series value [any-value!] /line <local> only] [
+change: func3 [series value [<undo-opt> any-element!] /line <local> only] [
     only: 'only
-    case [
-        logic? :value [
-            fail:blame "CHANGE LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." $value
+    if (block? value) and (#splice! = first value) [
+        value: second value
+        if not any-list? series [
+            fail ["CHANGE to SPLICE not currently in shim"]
         ]
-        block? :value [
-            if #splice! = (first value) [
-                value: second value
-                if not any-list? series [
-                    fail ["CHANGE to SPLICE not currently in shim"]
-                ]
-                only: null
-            ]
-        ]
+        only: null
     ]
-    return change3:(maybe only):(maybe line) series :value
+    return change3:(opt only):(opt line) series opt value
 ]
 
-replace: func3 [target pattern replacement] [
-    any [
-        logic? :target, logic? :pattern
-        action? :target, action? :replacement
-    ][
-        fail:blame "ACTION? and LOGIC? illegal in REPLACE" $target
-    ]
-    if block? pattern [
-        if #splice! = (first pattern) [
-            pattern: second pattern
-        ] else [
+replace: func3 [
+    target [<opt-out> any-series!]
+    pattern [<undo-opt> any-element!]
+    replacement [<undo-opt> any-element!]
+][
+    if (block? pattern) and (#splice! = first pattern) [
+        pattern: second pattern
+    ] else [
+        if pattern [
             pattern: reduce [pattern]
         ]
     ]
-    if block? replacement [
-        if #splice! = (first replacement) [
-            pattern: second replacement
-        ] else [
+    if (block? replacement) and (#splice! = first replacement) [
+        pattern: second replacement
+    ] else [
+        if pattern [
             pattern: reduce [pattern]
         ]
     ]
-    return replace3 target pattern replacement
+    return replace3 target (opt pattern) (opt replacement)
 ]
 
 join: func3 [
@@ -654,7 +629,8 @@ modernize-typespec: func3 [
         element?        any-value!
         action?         action!
         logic?          logic!
-        <opt-out>       <maybe>
+        <opt-out>       <opt-out>   ; !!! works in both now !
+        <undo-opt>      <undo-opt>  ; !!! works in both now !
         <variadic>      <...>
         boolean?        word!
         onoff?          word!
@@ -675,7 +651,7 @@ modernize-typespec: func3 [
 ]
 
 modernize-action: func3 [
-    "Account for <opt-out> annotation, refinements as own arguments"
+    "Account for refinements as own arguments (and type spec updates)"
     return: [block!]
     spec [block!]
     body [block!]
@@ -1004,6 +980,23 @@ blockify: func3 [x] [
     ]
     return reduce [x]
 ]
+
+=== "QUICK TESTS TO MAKE SURE THINGS ARE WORKING" ===
+
+assert [[a b c d e] = append [a b c] spread [d e]]
+assert [[a b c [d e]] = append [a b c] [d e]]
+assert [[a b c] = append [a b c] void]
+assert [null = append void [d e]]
+
+assert [[d e a b c] = head of insert [a b c] spread [d e]]
+assert [[[d e] a b c] = head of insert [a b c] [d e]]
+assert [[a b c] = head of insert [a b c] void]
+assert [null = insert void [d e]]
+
+assert [[d e c] = head of change [a b c] spread [d e]]
+assert [[[d e] b c] = head of change [a b c] [d e]]
+assert [[a b c] = head of change [a b c] void]
+assert [null = change void [d e]]
 
 === "END ENCLOSURE THAT AVOIDED OVERWRITING TOP-LEVEL DECLS" ===
 

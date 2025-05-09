@@ -64,7 +64,7 @@ map-files-to-local: func [
 ends-with?: func [
     return: [logic?]
     s [any-string?]
-    suffix [~null~ any-string?]  ; no ~[]~ and ^META params in bootstrap
+    suffix [<undo-opt> any-string?]
 ][
     return to-logic any [  ; TO-LOGIC for bootstrap (xxx? returns #[true])
         null? suffix
@@ -601,7 +601,7 @@ cc: make compiler-class [
 
             any [
                 E
-                ends-with? output (<maybe-null> target-platform.obj-suffix)
+                ends-with? output opt target-platform.obj-suffix
             ] then [
                 keep output
             ] else [
@@ -639,7 +639,7 @@ cc: make compiler-class [
             keep "-o"
 
             output: file-to-local output
-            either ends-with? output (<maybe-null> suffix) [
+            either ends-with? output opt suffix [
                 keep output
             ][
                 keep unspaced [output suffix]
@@ -863,7 +863,7 @@ cl: make compiler-class [
                 either E ["/Fi"]["/Fo"]
                 any [
                     E
-                    ends-with? output (<maybe-null> target-platform.obj-suffix)
+                    ends-with? output opt target-platform.obj-suffix
                 ] then [
                     output
                 ] else [
@@ -901,7 +901,7 @@ cl: make compiler-class [
             ;
             output: file-to-local output
             keep unspaced [
-                "/Fe" either ends-with? output (<maybe-null> suffix) [
+                "/Fe" either ends-with? output opt suffix [
                     output
                 ][
                     unspaced [output suffix]
@@ -1309,7 +1309,7 @@ generator-class: make object! [
                 basename: project.output
                 project.output: join basename suffix
             ]
-            ends-with? project.output (<maybe-null> suffix) [
+            ends-with? project.output opt suffix [
                 basename: either suffix [
                     copy:part project.output
                         (length of project.output) - (length of suffix)
