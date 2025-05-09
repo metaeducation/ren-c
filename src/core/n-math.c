@@ -466,8 +466,19 @@ REBINT CT_Unhooked(const Cell* a, const Cell* b, REBINT mode)
 //
 REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 {
-    REBLEN ta = Type_Of(a);
-    REBLEN tb = Type_Of(b);
+    enum Reb_Kind ta = Type_Of(a);
+    enum Reb_Kind tb = Type_Of(b);
+
+    if (ta == TYPE_VOID) {
+        if (tb == TYPE_VOID)
+            return 1;
+        return -1;
+    }
+    else if (tb == TYPE_VOID)
+        return -2;
+
+    if (ta == TYPE_TRASH or tb == TYPE_TRASH)
+        fail ("Cannot compare TRASH (~ antifrom) with equality/inequality");
 
     if (ta != tb) {
         if (strictness == 1) return 0;
@@ -522,6 +533,9 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
         case TYPE_TAG:
             if (Any_String(b)) goto compare;
             break;
+
+          default:
+            break;
         }
 
         if (strictness == 0) return 0;
@@ -552,8 +566,8 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 //  {TRUE if the values are approximately equal}
 //
 //      return: [logic!]
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-atom!]
+//      value2 [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(LAX_EQUAL_Q)
@@ -573,8 +587,8 @@ DECLARE_NATIVE(LAX_EQUAL_Q)
 //  {TRUE if the values are not approximately equal}
 //
 //      return: [logic!]
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-atom!]
+//      value2 [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(LAX_NOT_EQUAL_Q)
@@ -594,8 +608,8 @@ DECLARE_NATIVE(LAX_NOT_EQUAL_Q)
 //  {TRUE if the values are strictly equal}
 //
 //      return: [logic!]
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-atom!]
+//      value2 [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(EQUAL_Q)
@@ -615,8 +629,8 @@ DECLARE_NATIVE(EQUAL_Q)
 //  {TRUE if the values are not strictly equal}
 //
 //      return: [logic!]
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-atom!]
+//      value2 [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(NOT_EQUAL_Q)
@@ -636,8 +650,8 @@ DECLARE_NATIVE(NOT_EQUAL_Q)
 //  {TRUE if the values are identical}
 //
 //      return: [logic!]
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-atom!]
+//      value2 [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(SAME_Q)

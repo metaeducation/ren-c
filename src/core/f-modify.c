@@ -45,7 +45,7 @@ REBLEN Modify_Array(
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){
-    assert(not Is_Nulled(src_val));
+    assert(not Is_Void(src_val));
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
@@ -54,7 +54,7 @@ REBLEN Modify_Array(
     const Cell* src_rel;
     Specifier* specifier;
 
-    if (Is_Void(src_val) and op == SYM_CHANGE) {
+    if (Is_Nulled(src_val) and op == SYM_CHANGE) {
         //
         // Tweak requests to CHANGE to a null to be a deletion; basically
         // what happens with an empty block.
@@ -63,7 +63,7 @@ REBLEN Modify_Array(
         src_val = EMPTY_BLOCK;
     }
 
-    if (Is_Void(src_val) or dups <= 0) {
+    if (Is_Nulled(src_val) or dups <= 0) {
         // If they are effectively asking for "no action" then all we have
         // to do is return the natural index result for the operation.
         // (APPEND will return 0, insert the tail of the insertion...so index)
@@ -223,7 +223,7 @@ REBLEN Modify_Binary(
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){
-    assert(not Is_Nulled(src_val));
+    assert(not Is_Void(src_val));
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
@@ -238,7 +238,7 @@ REBLEN Modify_Binary(
     else
         limit = -1;
 
-    if (Is_Void(src_val) and op == SYM_CHANGE) {
+    if (Is_Nulled(src_val) and op == SYM_CHANGE) {
         //
         // Tweak requests to CHANGE to a null to be a deletion; basically
         // what happens with an empty binary.
@@ -247,7 +247,7 @@ REBLEN Modify_Binary(
         src_val = EMPTY_BINARY;
     }
 
-    if (Is_Void(src_val) || limit == 0 || dups < 0)
+    if (Is_Nulled(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
     REBLEN tail = Flex_Len(dst_ser);
@@ -382,7 +382,7 @@ REBLEN Modify_String(
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){
-    assert(not Is_Nulled(src_val));
+    assert(not Is_Void(src_val));
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
@@ -397,7 +397,7 @@ REBLEN Modify_String(
     else
         limit = -1;
 
-    if (Is_Void(src_val) and op == SYM_CHANGE) {
+    if (Is_Nulled(src_val) and op == SYM_CHANGE) {
         //
         // Tweak requests to CHANGE to a null to be a deletion; basically
         // what happens with an empty string.
@@ -406,7 +406,7 @@ REBLEN Modify_String(
         src_val = EMPTY_TEXT;
     }
 
-    if (Is_Void(src_val) || limit == 0 || dups < 0)
+    if (Is_Nulled(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
     REBLEN tail = Flex_Len(dst_ser);

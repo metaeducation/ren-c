@@ -83,6 +83,7 @@ bool Catching_Break_Or_Continue(Value* val, bool *broke)
 //
 //  {Exit the current iteration of a loop and stop iterating further}
 //
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(BREAK)
@@ -104,6 +105,7 @@ DECLARE_NATIVE(BREAK)
 //
 //  "Throws control back to top of loop for next iteration."
 //
+//      return: []
 //      /with "Act as if loop body finished with this value"
 //      value [any-element!]
 //  ]
@@ -799,7 +801,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
 //
 //  {Evaluate a block over a range of values. (See also: REPEAT)}
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //      'word [word! lit-word! refinement!]
 //          "Variable to hold current value"
 //      start [any-series! any-number!]
@@ -878,7 +880,7 @@ DECLARE_NATIVE(FOR)
 //  "Evaluates a block for periodic values in a series"
 //
 //      return: "Last body result, or null if BREAK"
-//          [~null~ ~void~ any-value!]
+//          [any-atom!]
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word! refinement! issue! blank!]
 //      series "The series to iterate over"
@@ -974,6 +976,7 @@ DECLARE_NATIVE(FOR_SKIP)
 //
 //  {End the current iteration of CYCLE and return a value (nulls allowed)}
 //
+//      return: []
 //      value "If no argument is provided, assume trash"
 //          [~null~ <end> any-value!]
 //  ]
@@ -1012,7 +1015,7 @@ DECLARE_NATIVE(STOP)
 //
 //  "Evaluates a block endlessly, until a BREAK or a STOP is hit"
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //          {Null if BREAK, or non-null value passed to STOP}
 //      body [block! action!]
 //          "Block or action to evaluate each time"
@@ -1054,7 +1057,7 @@ DECLARE_NATIVE(CYCLE)
 //
 //  "Evaluates a block for each value(s) in a series."
 //
-//      return: [~null~ ~void~ any-value!]
+//      return: [any-atom!]
 //          {Last body result, or null if BREAK}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time, no new var if LIT-WORD!"
@@ -1075,7 +1078,7 @@ DECLARE_NATIVE(FOR_EACH)
 //
 //  {Iterate and return false if any previous body evaluations were false}
 //
-//      return: [~null~ ~void~ any-value!]
+//      return: [any-atom!]
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
@@ -1495,7 +1498,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //
 //  {Evaluate a block for each value(s) in a series and collect as a block.}
 //
-//      return: [~null~ ~void~ block!]
+//      return: [~null~ block!]
 //          {Collected block (BREAK/WITH can add a final result to block)}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
@@ -1516,7 +1519,7 @@ DECLARE_NATIVE(MAP_EACH)
 //
 //  "Evaluates a block a specified number of times."
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //          {Last body result, or null if BREAK}
 //      count [<opt-out> any-number! logic!]
 //          "Repetitions (true loops infinitely, false doesn't run)"
@@ -1572,7 +1575,7 @@ DECLARE_NATIVE(REPEAT)
 //
 //  {Evaluates a block over a series.}
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //          {Last body result or BREAK value}
 //      'word [word! lit-word! refinement!]
 //          "Word to set each time"
@@ -1649,7 +1652,7 @@ DECLARE_NATIVE(UNTIL)
 //
 //  {While a condition is conditionally true, evaluates the body.}
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //          "Last body result, or null if BREAK"
 //      condition [block! action!]
 //      body [block! action!]

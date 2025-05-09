@@ -16,9 +16,8 @@ Rebol [
     }
 ]
 
-|  ; SYM_BAR_1 (was BAR! datatype for a while, but turned back to WORD!)
-
-any-value! ;-- signal typesets start (SYM_ANY_VALUE_X hardcoded reference)
+any-atom!  ;-- signal typesets start (SYM_ANY_ATOM_X hardcoded reference)
+any-value!
 any-element!
 logic!
 any-word!
@@ -34,6 +33,8 @@ any-list! ;-- replacement for ANY-BLOCK! that doesn't conflate with BLOCK!
 ; Signal that every earlier numbered symbol is for a typeset or datatype...
 
 datatypes
+
+|  ; SYM_BAR_1 (was BAR! datatype for a while, but turned back to WORD!)
 
 ; ...note that the words for types are created programmatically before
 ; this list is applied, so you only see typesets in this file.

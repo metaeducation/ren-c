@@ -199,7 +199,7 @@ skip: generic [
     {Returns the series forward or backward from the current position.}
     return: [~null~ blank! any-series! port!]
         {Input skipped by the given offset, clipped to head/tail if not /ONLY}
-    series [blank! any-series! port!]
+    series [<opt-out> blank! any-series! port!]
     offset [any-number! logic! pair!]
     /only
         {Don't clip to the boundaries of the series (return blank if beyond)}
@@ -209,7 +209,7 @@ at: generic [
     {Returns the series at the specified index.}
     return: [~null~ blank! any-series! port!]
         {Input at the given index, clipped to head/tail if not /ONLY}
-    series [blank! any-series! port!]
+    series [<opt-out> blank! any-series! port!]
     index [any-number! logic! pair!]
     /only
         {Don't clip to the boundaries of the series (return blank if beyond)}
@@ -223,7 +223,7 @@ find: generic [
     return: {position found, else null (NOTHING if non-positional)}
         [~null~ any-series! logic!]
     series [<opt-out> blank! any-series! any-context! map! bitset! typeset!]
-    value [any-value!]
+    value [<opt-out> any-value!]
     /part {Limits the search to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Treats a series value as only a single value}
@@ -240,7 +240,7 @@ select: generic [
     {Searches for a value; returns the value that follows, else null.}
     return: [any-value!]
     series [<opt-out> blank! any-series! any-context! map!]
-    value [any-value!]
+    value [<opt-out> any-value!]
     /part {Limits the search to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Treats a series value as only a single value}
@@ -303,8 +303,8 @@ insert: generic [
     {Inserts element(s); for series, returns just past the insert.}
     return: {Just past the insert (~null~ needed for COLLECT/KEEP, see notes)}
         [any-value!]
-    series [any-series! port! map! object! bitset! port!] {At position (modified)}
-    value [~void~ any-element!] {The value to insert}
+    series [<opt-out> any-series! port! map! object! bitset! port!] {At position (modified)}
+    value [<undo-opt> any-element!] {The value to insert}
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only insert a block as a single value (not the contents of the block)}
@@ -318,9 +318,9 @@ insert: generic [
 ;
 append: generic [
     {Inserts element(s) at tail; for series, returns head.}
-    series [any-series! port! map! object! module! bitset!]
+    series [<opt-out> any-series! port! map! object! module! bitset!]
         {Any position (modified)}
-    value [~void~ any-element!] {The value to insert}
+    value [<undo-opt> any-element!] {The value to insert}
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only insert a block as a single value (not the contents of the block)}
@@ -334,8 +334,8 @@ append: generic [
 ;
 change: generic [
     {Replaces element(s); returns just past the change.}
-    series [any-series! port!]{At position (modified)}
-    value [~void~ any-element!] {The new value}
+    series [<opt-out> any-series! port!]{At position (modified)}
+    value [<undo-opt> any-element!] {The new value}
     /part {Limits the amount to change to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only change a block as a single value (not the contents of the block)}
@@ -346,7 +346,7 @@ change: generic [
 
 remove: generic [
     {Removes element(s); returns same position.}
-    series [any-series! map! port! bitset!] {At position (modified)}
+    series [<opt-out> any-series! map! port! bitset!] {At position (modified)}
     /part {Removes multiple elements or to a given position}
     limit [any-number! any-series! pair! char!]
     /map {Remove key from map}
@@ -355,7 +355,7 @@ remove: generic [
 
 clear: generic [
     {Removes elements from current position to tail; returns at new tail.}
-    series [any-series! port! map! bitset!] {At position (modified)}
+    series [<opt-out> any-series! port! map! bitset!] {At position (modified)}
 ]
 
 swap: generic [
@@ -366,14 +366,14 @@ swap: generic [
 
 reverse: generic [
     {Reverses the order of elements; returns at same position.}
-    series [any-series! tuple! pair!] {At position (modified)}
+    series [<opt-out> any-series! tuple! pair!] {At position (modified)}
     /part {Limits to a given length or position}
     limit [any-number! any-series!]
 ]
 
 sort: generic [
     {Sorts a series; default sort order is ascending.}
-    series [any-series!] {At position (modified)}
+    series [<opt-out> any-series!] {At position (modified)}
     /case {Case sensitive sort}
     /skip {Treat the series as records of fixed size}
     size [integer!] {Size of each record}

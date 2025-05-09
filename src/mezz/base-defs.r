@@ -35,8 +35,8 @@ probe: func [
     {Debug print a molded value and returns that same value.}
 
     return: "Same as the input value"
-        [any-value!]
-    value [any-value! trash!]
+        [any-atom!]
+    value [any-atom!]
 ][
     case [
         trash? :value [write-stdout "~  ; anti"]
@@ -161,10 +161,10 @@ open?: specialize 'reflect [property: 'open?]
 empty?: func [
     {TRUE if empty or BLANK!, or if series is at or beyond its tail.}
     return: [logic!]
-    series [any-series! object! port! bitset! map! blank! ~void~]
+    series [<undo-opt> any-series! object! port! bitset! map! blank!]
 ][
     return any [
-        void? series
+        not series
         blank? series
         tail? series
     ]
@@ -280,7 +280,7 @@ print: func [
 ;
 ===: func [
     ; note: <...> is now a TUPLE!, and : used to be "hard quote" (vs ')
-    return: [~void~]
+    return: [<undo-opt>]
     label [text!]
     'terminal [word!]
 ][

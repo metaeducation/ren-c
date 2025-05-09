@@ -46,7 +46,7 @@ lib/enrescue: ~<See SYS.UTIL/ENRESCUE and https://forum.rebol.info/t/1871>~
 ;
 do*: function [
     {SYS: Called by system for DO on datatypes that require special handling.}
-    return: [any-value!]
+    return: [any-atom!]
     source [file! url! text! binary! tag!]
         {Files, urls and modules evaluate as scripts, other strings don't.}
     arg [any-value!]
@@ -95,7 +95,7 @@ do*: function [
     original-script: null
 
     finalizer: lambda [
-        value [any-value! trash!]
+        value' [any-element!]
         /quit
         <with> return
     ][
@@ -106,11 +106,15 @@ do*: function [
 
         if original-script [system/script: original-script]
 
-        if quit_FINALIZER and only [
-            quit/value get* 'value  ; "rethrow" the QUIT if DO/ONLY
+        if quit_FINALIZER [
+            if only [
+                quit/value value'  ; "rethrow" the QUIT if DO/ONLY
+            ] else [
+                value': meta value'  ; wasn't meta
+            ]
         ]
 
-        return get* 'value  ; returns from DO*, because it's a lambda
+        return unmeta value'  ; returns from DO*, because it's a lambda
     ]
 
     ; Load the code (do this before CHANGE-DIR so if there's an error in the
@@ -145,7 +149,7 @@ do*: function [
             ;
             ;     do "append {abc} {de}"
             ;
-            set the result': meta eval code ;-- !!! pass args implicitly?
+            result': meta eval code ;-- !!! pass args implicitly?
         ] then :finalizer/quit
     ] else [
         ; Make the new script object
@@ -170,12 +174,12 @@ do*: function [
         ][
             intern code   ; Bind the user script
             catch/quit [
-                set the result': meta eval code
+                result': meta eval code
             ] then :finalizer/quit
         ]
     ]
 
-    return finalizer unmeta result'
+    return finalizer result'
 ]
 
 export: func [

@@ -657,7 +657,7 @@ reify: func [
 ]
 
 degrade: func [
-    return: [any-value!]
+    return: [~void~ any-value!]
     value [any-value!]
 ][
     case [

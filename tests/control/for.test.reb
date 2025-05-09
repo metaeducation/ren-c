@@ -163,8 +163,8 @@
 )
 [#1993 (
     equal?
-        type of for i -1 -2 0 [break]
-        type of for i 2 1 0 [break]
+        try type of for i -1 -2 0 [break]
+        try type of for i 2 1 0 [break]
 )]
 ; skip before head test
 ([] = for i b: tail of [1] head of b -2 [i])
@@ -256,6 +256,6 @@
 )
 
 [#1993
-    (equal? (type of for i 1 2 0 [break]) (type of for i 2 1 0 [break]))
+    (equal? (try type of for i 1 2 0 [break]) (try type of for i 2 1 0 [break]))
 ]
-(equal? (type of for i -1 -2 0 [break]) (type of for i -2 -1 0 [break]))
+(equal? (try type of for i -1 -2 0 [break]) (try type of for i -2 -1 0 [break]))

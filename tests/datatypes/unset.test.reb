@@ -1,9 +1,9 @@
 ; datatypes/unset.r
 (null? null)
-(null? type of null)
+(null? try type of null)
 (not null? 1)
 
-(void! = type of (eval []))
+(null = type of (eval []))
 (not trash? 1)
 
 [

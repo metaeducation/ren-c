@@ -50,6 +50,7 @@ const struct {
     SymId sym;
     REBU64 bits;
 } Typesets[] = {
+    {SYM_ANY_ATOM_X, TS_ATOM},
     {SYM_ANY_VALUE_X, TS_VALUE},
     {SYM_ANY_ELEMENT_X, TS_ELEMENT},
     {SYM_LOGIC_X, TS_LOGIC},
@@ -157,6 +158,8 @@ bool Update_Typeset_Bits_Core(
     if (Key_Symbol(typeset) and (Key_Id(typeset) == SYM_RETURN))
         clear_trash_flag = false;
 
+    bool dont_take_null_as_input = false;
+
     assert(Is_Typeset(typeset));
     Cell_Typeset_Bits(typeset) = 0;
 
@@ -193,7 +196,14 @@ bool Update_Typeset_Bits_Core(
                 Set_Typeset_Flag(typeset, TYPE_TS_ENDABLE);
             }
             else if (0 == Compare_String_Vals(item, Root_Opt_Out_Tag, true)) {
+                dont_take_null_as_input = true;
+                Set_Typeset_Flag(typeset, TYPE_VOID);  // accepts, but noops
                 Set_Typeset_Flag(typeset, TYPE_TS_NOOP_IF_VOID);
+            }
+            else if (0 == Compare_String_Vals(item, Root_Undo_Opt_Tag, true)) {
+                dont_take_null_as_input = true;
+                Set_Typeset_Flag(typeset, TYPE_VOID);  // accepts, but nulls
+                Set_Typeset_Flag(typeset, TYPE_TS_NULL_IF_VOID);
             }
             else if (0 == Compare_String_Vals(item, Root_Skip_Tag, true)) {
                 if (Cell_Parameter_Class(typeset) != PARAMCLASS_HARD_QUOTE)
@@ -221,8 +231,19 @@ bool Update_Typeset_Bits_Core(
     // variable can hold, even though you can't put it in blocks).  You have
     // to explicitly say TRASH! to get it.
     //
+    // We override this if VOID is taken (e.g. ANY-ATOM!)
+    //
     if (clear_trash_flag)
-        Clear_Typeset_Flag(typeset, TYPE_TRASH);
+        if (not (Cell_Typeset_Bits(typeset) & FLAGIT_KIND(TYPE_VOID)))
+            Clear_Typeset_Flag(typeset, TYPE_TRASH);
+
+    // If you use <opt-out> or <undo-opt> then null is not legal as an input
+    // even if you say ANY-VALUE! in the types.  But do note that <undo-opt>
+    // will turn the cell into a null for the function run, despite not
+    // typechecking null on the interface.
+    //
+    if (dont_take_null_as_input)
+        Clear_Typeset_Flag(typeset, TYPE_NULLED);
 
     return true;
 }

@@ -190,8 +190,8 @@ DECLARE_NATIVE(UNWIND)
 //
 //  {RETURN, giving a result to the caller}
 //
-//      value "If no argument is given, result will be a trash"
-//          [any-value! trash!]
+//      return: []
+//      value [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(RETURN)
@@ -290,7 +290,7 @@ DECLARE_NATIVE(TYPECHECKER)
 
     Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
-        TS_VALUE,  // Allow null (e.g. ~null~), returns false
+        TS_ATOM,  // Allow void, e.g. void? void
         CANON(VALUE)
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);

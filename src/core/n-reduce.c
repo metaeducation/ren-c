@@ -44,21 +44,24 @@ static Value* Init_Lib_Word(Cell* out, SymId id) {
 //
 //  Meta_Quotify: C
 //
-// Very dodgy implementation of the "meta" functionality.
+// Poor man's implementation of the "meta" functionality.
+//
+// Note that the "quasi-words" don't look up to anything, and are simply
+// special cases in the evaluator handling of TYPE_WORD.
 //
 Value* Meta_Quotify(Value* v)
 {
     if (Is_Void(v))
-        return Init_Lib_Word(v, SYM_VOID);
+        return Init_Word(v, CANON(_TVOID_T));
 
     if (Is_Okay(v))
-        return Init_Lib_Word(v, SYM__TOKAY_T);
+        return Init_Word(v, CANON(_TOKAY_T));
 
     if (Is_Nulled(v))
-        return Init_Lib_Word(v, SYM__TNULL_T);
+        return Init_Word(v, CANON(_TNULL_T));
 
     if (Is_Trash(v))
-        return Init_Lib_Word(v, SYM_TILDE_1);
+        return Init_Word(v, CANON(TILDE_1));
 
     Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
     Set_Flex_Len(a, 2);
@@ -76,7 +79,7 @@ Value* Meta_Unquotify(Value* v)
 {
     if (Is_Word(v)) {
         switch (Cell_Word_Id(v)) {
-        case SYM_VOID:
+        case SYM__TVOID_T:
             return Init_Void(v);
         case SYM__TOKAY_T:
             return Init_Okay(v);
@@ -111,7 +114,7 @@ Value* Meta_Unquotify(Value* v)
 //
 //      return: {~null~ if null, or `(the ...)` where ... is passed-in cell}
 //          [word! group!]
-//      value [any-value! trash!]
+//      value [any-atom!]
 //   ]
 //
 DECLARE_NATIVE(META)
@@ -136,7 +139,7 @@ DECLARE_NATIVE(META)
 //
 //  "Narrower form of evaluation that only evaluates META products"
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //      value [word! group!]
 //   ]
 //

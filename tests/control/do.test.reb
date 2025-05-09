@@ -151,7 +151,7 @@
 (okay = reeval meta okay)
 (null = reeval meta null)
 ($1 = reeval $1)
-(null? reeval (specialize 'of [property: 'type]) null)
+(null? try reeval (specialize 'of [property: 'type]) null)
 (null? eval void)
 (
     a-value: make object! []

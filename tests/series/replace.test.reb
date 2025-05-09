@@ -47,8 +47,6 @@
 
 ("axbAab" = replace/case/one "aAbAab" "A" "x")
 ("axbxab" = replace/case "aAbAab" "A" "x")
-("axbAab" = replace/case/one "aAbAab" ["A"] does ["x"])
-("axbxab" = replace/case "aAbAab" ["A"] does ["x"])
 (%file.txt = replace/case/one %file.TXT.txt %.TXT "")
 (%file.txt = replace/case %file.TXT.txt.TXT %.TXT "")
 (<tag xyXx> = replace/case/one <tag xXXx> "X" "y")

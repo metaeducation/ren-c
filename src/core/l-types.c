@@ -252,6 +252,9 @@ Bounce Reflect_Core(Level* level_)
 
     enum Reb_Kind kind = Type_Of(ARG(VALUE));
 
+    if (kind == TYPE_VOID)
+        return nullptr;  // all reflect questions give
+
     Option(SymId) id = Cell_Word_Id(ARG(PROPERTY));
 
     if (not id) {
@@ -264,17 +267,15 @@ Bounce Reflect_Core(Level* level_)
         fail (Error_Cannot_Reflect(kind, ARG(PROPERTY)));
     }
 
-    switch (id) {
-    case SYM_TYPE:
+    if (id == SYM_TYPE) {
         if (kind == TYPE_NULLED)
-            return nullptr; // `() = type of ()`, `null = type of ()`
+            return Init_Error(OUT, Error_Need_Non_Null_Raw());  // use TRY
 
-        return Init_Datatype(OUT, kind);;
-
-    default:
-        // !!! Are there any other universal reflectors?
-        break;
+        return Init_Datatype(OUT, kind);
     }
+
+    if (kind == TYPE_NULLED)
+        fail (Error_Need_Non_Null_Raw());
 
     // !!! The reflector for TYPE is universal and so it is allowed on nulls,
     // but in general actions should not allow null first arguments...there's
@@ -321,7 +322,7 @@ DECLARE_NATIVE(REFLECT)
 //      return: [any-value!]
 //      'property [word!]
 //      value "Accepts TRASH! so TYPE OF ~ can be returned as TRASH!"
-//          [any-value! trash!]
+//          [void! any-value! trash!]
 //  ]
 //
 DECLARE_NATIVE(OF)

@@ -260,7 +260,6 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // a VARARGS! type are different things.  (A function may accept a
 // variadic number of VARARGS! values, for instance.)
 //
-#define TYPE_TS_VARIADIC TYPE_MAX_PLUS_ONE
 #define Is_Param_Variadic(v) \
     Typeset_Check((v), TYPE_TS_VARIADIC)
 
@@ -269,13 +268,11 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // that a variadic doesn't have, which is to make decisions about rejecting
 // a parameter *before* the function body runs.
 //
-#define TYPE_TS_SKIPPABLE TYPE_MAX_PLUS_TWO
 #define Is_Param_Skippable(v) \
     Typeset_Check((v), TYPE_TS_SKIPPABLE)
 
 // Can't be reflected (set with PROTECT/HIDE) or local in spec as `foo:`
 //
-#define TYPE_TS_HIDDEN TYPE_MAX_PLUS_THREE
 #define Is_Param_Hidden(v) \
     Typeset_Check((v), TYPE_TS_HIDDEN)
 
@@ -291,7 +288,6 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // solution to separate the property of bindability from visibility, as
 // the SELF solution shakes out--so that SELF may be hidden but bind.
 //
-#define TYPE_TS_UNBINDABLE TYPE_MAX_PLUS_FOUR
 #define Is_Param_Unbindable(v) \
     Typeset_Check((v), TYPE_TS_UNBINDABLE)
 
@@ -300,8 +296,12 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // "handle blanks specially" (in contrast to BLANK!, which just means a
 // parameter can be passed in as a blank, and the function runs normally)
 //
-#define TYPE_TS_NOOP_IF_VOID \
-    TYPE_MAX_PLUS_FIVE
+#define Is_Param_Noop_If_Void(v) \
+    Typeset_Check((v), TYPE_TS_NOOP_IF_VOID)
+
+#define Is_Param_Null_If_Void(v) \
+    Typeset_Check((v), TYPE_TS_NULL_IF_VOID)
+
 
 
 //=//// PARAMETER SYMBOL //////////////////////////////////////////////////=//
