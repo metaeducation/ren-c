@@ -178,7 +178,7 @@ cscape: function [
             ; If the substitution started at a certain column, make any line
             ; breaks continue at the same column.
             ;
-            indent: unspaced collect [keep newline  keep maybe prefix]
+            indent: unspaced collect [keep newline  keep opt prefix]
             replace sub newline indent
 
             keep sub

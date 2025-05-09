@@ -86,7 +86,7 @@ array: func [
             repeat size [block: insert/only block value] ; Called every time
         ]
     ] else [
-        insert/dup/only (maybe get 'value) size
+        insert/dup/only (opt get 'value) size
     ]
     return head of block
 ]
@@ -150,7 +150,7 @@ replace: function [
     ]
 
     while [pos: find/(if case_REPLACE [/case]) target :pattern] [
-        target: change/part pos maybe :replacement len
+        target: change/part pos opt :replacement len
 
         if one [break]
     ]
@@ -501,7 +501,7 @@ collect-lines: adapt 'collect [  ; https://forum.rebol.info/t/945/1
     body: compose [
         keep: adapt specialize 'keep [
             line: okay  only: null  part: null
-        ] [value: maybe spaced maybe :value]
+        ] [value: (spaced opt :value) else [[]]]  ; can't assign void
         ((as group! body))
     ]
 ]
@@ -512,12 +512,12 @@ collect-text: cascade [  ; https://forum.rebol.info/t/945/2
              keep: adapt specialize 'keep [
                 line: null  only: null  part: null
             ][
-                value: (unspaced maybe :value) else [[]]  ; can't assign void
+                value: (unspaced opt :value) else [[]]  ; can't assign void
             ]
             ((as group! body))
         ]
     ]
-    :maybe
+    :opt
     :spaced
     specialize 'else [branch: [copy ""]]
 ]
@@ -678,7 +678,7 @@ split: function [
         ; implied empty field after it, which we add here.
         ;
         (degrade switch type of dlm [
-            bitset! [reify did find dlm maybe last series]
+            bitset! [reify did find dlm opt last series]
             char! [reify dlm = last series]
             text! [
                 reify (find series dlm) and (empty? find/last/tail series dlm)

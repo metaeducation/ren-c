@@ -29,11 +29,11 @@
             meta evaluate/step3 block the arg:
         ])
 
-        if refinement? first maybe params [
+        if refinement? first opt params [
             using-args: did set (in frame params/1) get/any 'arg
         ] else [
             if using-args [
-                set (in frame first maybe params) get/any 'arg
+                set (in frame first opt params) get/any 'arg
             ]
         ]
 

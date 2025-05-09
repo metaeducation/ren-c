@@ -20,46 +20,46 @@ spec-of: function [
 ][
     meta: match object! meta-of :action
 
-    specializee: match action! select maybe meta 'specializee
-    adaptee: match action! select maybe meta 'adaptee
+    specializee: match action! select opt meta 'specializee
+    adaptee: match action! select opt meta 'adaptee
     original-meta: match object! any [
-        meta-of maybe :specializee
-        meta-of maybe :adaptee
+        meta-of opt :specializee
+        meta-of opt :adaptee
     ]
 
     return collect [
-        keep/line maybe ensure [~null~ text!] any [
-            select maybe meta 'description
-            select maybe original-meta 'description
+        keep/line opt ensure [~null~ text!] any [
+            select opt meta 'description
+            select opt original-meta 'description
         ]
 
         return-type: ensure [~null~ block!] any [
-            select maybe meta 'return-type
-            select maybe original-meta 'return-type
+            select opt meta 'return-type
+            select opt original-meta 'return-type
         ]
         return-note: ensure [~null~ text!] any [
-            select maybe meta 'return-note
-            select maybe original-meta 'return-note
+            select opt meta 'return-note
+            select opt original-meta 'return-note
         ]
         if any [return-type return-note] [
             keep compose [
-                return: ((maybe return-type)) (maybe return-note)
+                return: ((opt return-type)) (opt return-note)
             ]
         ]
 
         types: ensure [~null~ frame!] any [
-            select maybe meta 'parameter-types
-            select maybe original-meta 'parameter-types
+            select opt meta 'parameter-types
+            select opt original-meta 'parameter-types
         ]
         notes: ensure [~null~ frame!] any [
-            select maybe meta 'parameter-notes
-            select maybe original-meta 'parameter-notes
+            select opt meta 'parameter-notes
+            select opt original-meta 'parameter-notes
         ]
 
         for-each param words of :action [
             keep compose [
-                (param) ((maybe select maybe types param))
-                    (maybe select maybe notes param)
+                (param) ((opt select opt types param))
+                    (opt select opt notes param)
             ]
         ]
     ]
@@ -75,7 +75,7 @@ title-of: function [
         action! [
             reify all [
                 meta: match object! meta-of :value
-                copy maybe match text! select maybe meta 'description
+                copy opt match text! select opt meta 'description
             ]
         ]
 
@@ -339,7 +339,7 @@ help: function [
 
     ; Dig deeply, but try to inherit the most specific meta fields available
     ;
-    fields: maybe dig-action-meta-fields :value
+    fields: dig-action-meta-fields :value
 
     ; For reporting what *kind* of action this is, don't dig at all--just
     ; look at the meta information of the action being asked about.  Note that
@@ -349,15 +349,15 @@ help: function [
     meta: meta-of :value
 
     original-name: (ensure [~null~ word!] any [
-        select maybe meta 'specializee-name
-        select maybe meta 'adaptee-name
+        select opt meta 'specializee-name
+        select opt meta 'adaptee-name
     ]) also arrow name [
         uppercase mold name
     ]
 
-    specializee: ensure [~null~ action!] select maybe meta 'specializee
-    adaptee: ensure [~null~ action!] select maybe meta 'adaptee
-    pipeline: ensure [~null~ block!] select maybe meta 'pipeline
+    specializee: ensure [~null~ action!] select opt meta 'specializee
+    adaptee: ensure [~null~ action!] select opt meta 'adaptee
+    pipeline: ensure [~null~ block!] select opt meta 'pipeline
 
     classification: case [
         :specializee [
@@ -392,10 +392,10 @@ help: function [
     print-args: function [list /indent-words] [
         for-each param list [
             type: ensure [~null~ block!] (
-                select maybe fields/parameter-types to-word param
+                select opt fields/parameter-types to-word param
             )
             note: ensure [~null~ text!] (
-                select maybe fields/parameter-notes to-word param
+                select opt fields/parameter-notes to-word param
             )
 
             ;-- parameter name and type line

@@ -150,7 +150,7 @@ load-header: function [
         ]
     ]
 
-    if find maybe hdr/options 'content [
+    if find opt hdr/options 'content [
         append hdr reduce ['content data]  ; as of start of header
     ]
 
@@ -283,7 +283,7 @@ load: function [
             data: to binary! data ;-- !!! inefficient, might be UTF8
         ]
         assert [binary? data]
-        data: transcode/file/line data (maybe file) (maybe line)
+        data: transcode/file/line data (opt file) (opt line)
     ]
 
     if header [
@@ -293,8 +293,8 @@ load: function [
     ;-- Bind code to user context:
     none [
         'unbound = ftype
-        'module = select maybe hdr 'type
-        find (maybe select maybe hdr 'options) 'unbound
+        'module = select opt hdr 'type
+        find (opt select opt hdr 'options) 'unbound
     ] then [
         data: intern data
     ]
@@ -487,7 +487,7 @@ load-module: function [
             import [
                 ; /import overrides 'delay option
             ]
-            not delay [delay: did find maybe hdr/options 'delay]
+            not delay [delay: did find opt hdr/options 'delay]
         ]
     ] else [
         ; !!! Some circumstances, e.g. `do <json>`, will wind up not passing
@@ -514,7 +514,7 @@ load-module: function [
         ; Unnamed module can't be imported to lib, so /no-lib here
         no-lib: okay  ; Still not /no-lib in IMPORT
 
-        if not find maybe hdr/options 'private [
+        if not find opt hdr/options 'private [
             hdr/options: append any [hdr/options make block! 1] 'private
         ]
     ]
@@ -590,7 +590,7 @@ load-module: function [
     if not mod [
         ; not prebuilt or delayed, make a module
 
-        if find maybe hdr/options 'isolate [no-share: okay] ; in case of delay
+        if find opt hdr/options 'isolate [no-share: okay] ; in case of delay
 
         if binary? code [code: make block! code]
 

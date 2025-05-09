@@ -16,6 +16,8 @@ Rebol [
     }
 ]
 
+?: opt: optional/
+
 assert: func [
     {Ensure conditions are conditionally true if hooked by debugging}
 
@@ -267,23 +269,23 @@ dig-action-meta-fields: function [
     return make system/standard/action-meta [
         description: ensure [~null~ text!] any [
             select meta 'description
-            copy maybe select maybe fields 'description
+            copy opt select opt fields 'description
         ]
         return-type: ensure [~null~ block!] any [
             select meta 'return-type
-            copy maybe select maybe fields 'return-type
+            copy opt select opt fields 'return-type
         ]
         return-note: ensure [~null~ text!] any [
             select meta 'return-note
-            copy maybe select maybe fields 'return-note
+            copy opt select opt fields 'return-note
         ]
         parameter-types: ensure [~null~ frame!] any [
             select meta 'parameter-types
-            inherit-frame maybe get maybe 'parameter-types
+            inherit-frame opt get opt 'parameter-types
         ]
         parameter-notes: ensure [~null~ frame!] any [
             select meta 'parameter-notes
-            inherit-frame maybe get maybe 'parameter-notes
+            inherit-frame opt get opt 'parameter-notes
         ]
     ]
 ]
