@@ -134,7 +134,7 @@ do*: function [
     ; because even with series not at their head, LOCK NEXT CODE will lock it.
     ;
     hdr: ensure [~null~ object!] degrade take code
-    is-module: 'module = select maybe hdr 'type
+    is-module: 'module = select opt hdr 'type
 
     if (text? source) and (not is-module) [
         ;
@@ -155,7 +155,7 @@ do*: function [
         ; Make the new script object
         original-script: system/script  ; and save old one
         system/script: make system/standard/script [
-            title: select maybe hdr 'title
+            title: select opt hdr 'title
             header: hdr
             parent: :original-script
             path: dir

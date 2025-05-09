@@ -79,7 +79,7 @@ read: lib/read: adapt 'lib/read [
 trap [  ; in even older bootstrap executable, this means SYS.UTIL/RESCUE
     func [i [<opt-out> integer!]] [...]
 ] else [
-    maybe+: :maybe  ; see [A]
+    opt+: :opt  ; see [A]
 
     parse2: :parse/redbol  ; no `pos: <here>`, etc.
 
@@ -274,8 +274,8 @@ blank3-to-null3: func3 [x [<opt> any-value!]] [  ; bootstrap OPT makes "voids"
     :x
 ]
 
-maybe: :blank3-to-null3
-maybe+: func3 [x [<opt> any-value!]] [  ; see [A]
+opt: :blank3-to-null3
+opt+: func3 [x [<opt> any-value!]] [  ; see [A]
     if3 null3? :x [fail "MAYBE+: X is BOOTSTRAP VOID (// NULL)"]
     return :x
 ]
@@ -442,7 +442,7 @@ degrade: func3 [value [any-value!]] [
     return :value
 ]
 
-opt: func3 [] [fail/blame "Use DEGRADE instead of OPT for bootstrap" 'return]
+; note that OPT actually did the right thing! (blank3 => null3)
 
 
 ; New interpreters do not change the working directory when a script is

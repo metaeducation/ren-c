@@ -44,7 +44,7 @@ REBINT CT_Unit(const Cell* a, const Cell* b, REBINT mode)
 //  MAKE_Unit: C
 //
 // MAKE is disallowed, with the general rule that a blank in will give
-// a null out... for e.g. `make object! maybe select data spec else [...]`
+// a null out... for e.g. `make object! opt select data spec else [...]`
 //
 Bounce MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
     UNUSED(out);

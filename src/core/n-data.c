@@ -701,22 +701,22 @@ DECLARE_NATIVE(SET)
 
 
 //
-//  maybe: native [
+//  optional: native [
 //
 //  {Convert nulls to voids, pass through most other values}
 //
 //      return: [any-atom!]
-//      optional [any-atom!]
+//      atom [any-atom!]
 //  ]
 //
-DECLARE_NATIVE(MAYBE)
+DECLARE_NATIVE(OPTIONAL)
 {
-    INCLUDE_PARAMS_OF_MAYBE;
+    INCLUDE_PARAMS_OF_OPTIONAL;
 
-    if (Is_Nulled(ARG(OPTIONAL)))
+    if (Is_Nulled(ARG(ATOM)))
         return Init_Void(OUT);
 
-    RETURN (ARG(OPTIONAL));
+    RETURN (ARG(ATOM));
 }
 
 

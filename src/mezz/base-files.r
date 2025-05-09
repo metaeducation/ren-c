@@ -201,8 +201,8 @@ file-type?: function [
     file [file! url!]
 ][
     return all [
-        pos: find system/options/file-types maybe suffix-of file
-        first maybe find pos word!
+        pos: find system/options/file-types opt suffix-of file
+        first opt find pos word!
     ]
 ]
 
@@ -226,7 +226,7 @@ split-path: func [
         )
         to <end>  ; !!! was plain <end>, but was unchecked and didn't reach it!
     ]
-    set (maybe farg) pos
+    set (opt farg) pos
     return dir
 ]
 

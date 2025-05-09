@@ -174,8 +174,8 @@ DECLARE_NATIVE(CHECKSUM)
     REBLEN len = Part_Len_May_Modify_Index(arg, ARG(LIMIT));
     UNUSED(Bool_ARG(PART)); // checked by if limit is nulled
 
-    Byte *data = VAL_RAW_DATA_AT(arg); // after Partial() in case of change
     REBLEN wide = Flex_Wide(Cell_Flex(arg));
+    Byte *data = VAL_RAW_DATA_AT(arg); // after Partial() in case of change
 
     SymId sym;
     if (Bool_ARG(METHOD)) {

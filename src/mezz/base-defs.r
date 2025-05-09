@@ -266,7 +266,7 @@ print: func [
         return write-stdout line
     ]
 
-    return ((write-stdout maybe spaced line) then [write-stdout newline])
+    return ((write-stdout opt spaced line) then [write-stdout newline])
 ]
 
 
