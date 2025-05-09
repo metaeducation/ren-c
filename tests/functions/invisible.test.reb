@@ -144,7 +144,7 @@
 ; questionable.  Review when there's enough time in priorities to think on it.
 ;
 ;     (unraised? trap [reeval (lambda [x [<end>]] []) ||| 1 2 3])
-;     (error? trap [reeval (lambda [x [~null~]] []) ||| 1 2 3])
+;     (warning? trap [reeval (lambda [x [~null~]] []) ||| 1 2 3])
 
 (
     [3 11] = reduce [1 + 2 elide 3 + 4 5 + 6]

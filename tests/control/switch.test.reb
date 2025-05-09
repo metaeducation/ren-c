@@ -17,7 +17,7 @@
 
 (
     cases: reduce [1 head of insert copy [] trap [1 / 0]]
-    error? switch 1 cases
+    warning? switch 1 cases
 )
 
 [#2242 (

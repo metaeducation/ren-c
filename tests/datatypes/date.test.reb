@@ -157,7 +157,7 @@
     ; interpretation it doesn't make sense why date-110 would not be willing
     ; to convert to UTC (?)
     ;
-    ; (error? [date-111.local.zone])
+    ; (warning? [date-111.local.zone])
 
     ; !!! This is proposed behavior for MAKE of one date from another, that
     ; has not been implemented.

@@ -57,7 +57,7 @@ DECLARE_NATIVE(TRY)
 //  "Sandbox code to intercept failures at ANY depth (including typos)"
 //
 //      return: "ERROR! if raised, else ^META of the result"
-//          [error! quoted! quasiform! blank!]
+//          [warning! quoted! quasiform! blank!]
 //      code "Code to sandbox and monitor"
 //          [<unrun> frame! any-list?]
 //      :relax "Allow non-erroring premature exits (THROW, RETURN, etc.)"
@@ -122,7 +122,7 @@ DECLARE_NATIVE(ENRESCUE)
     if (not Is_Throwing_Panic(LEVEL)) {  // non-ERROR! throws
         if (Bool_ARG(RELAX))
             return BOUNCE_THROWN;  // e.g. RETURN, THROW
-        return Init_Error(OUT, Error_No_Catch_For_Throw(LEVEL));
+        return Init_Warning(OUT, Error_No_Catch_For_Throw(LEVEL));
     }
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(LEVEL));
@@ -140,7 +140,7 @@ DECLARE_NATIVE(ENRESCUE)
 //  "Tries to EVAL a block, trapping raised errors"
 //
 //      return: "ERROR! if raised, else the ^META of the result"
-//          [error! quasiform! quoted! blank!]
+//          [warning! quasiform! quoted! blank!]
 //      code "Code to execute and monitor"
 //          [block! frame!]
 //  ]
@@ -285,7 +285,7 @@ DECLARE_NATIVE(RAISED_Q)
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_ERROR);
+    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_WARNING);
 }
 
 
@@ -318,7 +318,7 @@ DECLARE_NATIVE(UNRAISED_Q)
     QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(not (quote_byte == ANTIFORM_0 and heart == TYPE_ERROR));
+    return LOGIC(not (quote_byte == ANTIFORM_0 and heart == TYPE_WARNING));
 }
 
 
@@ -328,7 +328,7 @@ DECLARE_NATIVE(UNRAISED_Q)
 //  "Sets the WHERE, NEAR, FILE, and LINE fields of an error"
 //
 //      return: [~null~]
-//      error [error!]
+//      error [warning!]
 //      location [frame! any-word?]
 //  ]
 //

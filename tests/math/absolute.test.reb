@@ -28,5 +28,5 @@
 <64bit>
 [#833 (
     a: trap [abs decode [BE +/-] #{8000000000000000}]
-    any [error? a not negative? a]
+    any [warning? a not negative? a]
 )]

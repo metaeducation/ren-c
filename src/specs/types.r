@@ -168,7 +168,7 @@ varargs     "evaluator position for variable numbers of arguments"
                 (node1)
                 [any-inert?]
 
-    error       "error context with id, arguments, and stack origin"
+    warning     "context with id, arguments, and stack origin"
     ~raised~:U  "trappable error cooperatively returned from a function call"
                 (node1 node2)
                 [any-inert?]

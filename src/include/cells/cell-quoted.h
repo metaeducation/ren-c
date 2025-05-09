@@ -171,7 +171,7 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
     assert(QUOTE_BYTE(a) == ANTIFORM_0);
     return (
         Heart_Of(a) == TYPE_BLOCK  // Is_Pack()
-        or Heart_Of(a) == TYPE_ERROR  // Is_Raised()
+        or Heart_Of(a) == TYPE_WARNING  // Is_Raised()
         or Heart_Of(a) == TYPE_COMMA  // Is_Ghost()
     );
 }
@@ -184,7 +184,7 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
 INLINE bool Is_Stable_Antiform_Heart(Option(Heart) heart) {
     return (
         heart != TYPE_BLOCK  // Is_Pack()
-        and heart != TYPE_ERROR  // Is_Raised()
+        and heart != TYPE_WARNING  // Is_Raised()
         and heart != TYPE_COMMA  // Is_Ghost()
     );
 }
@@ -195,7 +195,7 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
         return true;
     return (
         Heart_Of(a) != TYPE_BLOCK  // Is_Pack()
-        and Heart_Of(a) != TYPE_ERROR  // Is_Raised()
+        and Heart_Of(a) != TYPE_WARNING  // Is_Raised()
         and Heart_Of(a) != TYPE_COMMA  // Is_Ghost()
     );
 }

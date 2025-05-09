@@ -41,8 +41,8 @@
 #define VAL_ERR_VARS(v) \
     ERR_VARS(Cell_Varlist(v))
 
-#define Init_Error(v,c) \
-    Init_Context_Cell((v), TYPE_ERROR, (c))
+#define Init_Warning(v,c) \
+    Init_Context_Cell((v), TYPE_WARNING, (c))
 
 INLINE void Force_Location_Of_Error(Error* error, Level* where) {
     ERROR_VARS *vars = ERR_VARS(error);
@@ -57,7 +57,7 @@ INLINE void Force_Location_Of_Error(Error* error, Level* where) {
 // also be passed around normally until it's UNMETA'd back to a failure again.
 
 INLINE Atom* Failify(Need(Atom*) atom) {
-    assert(Is_Error(atom) and QUOTE_BYTE(atom) == NOQUOTE_1);
+    assert(Is_Warning(atom) and QUOTE_BYTE(atom) == NOQUOTE_1);
     Force_Location_Of_Error(Cell_Error(atom), TOP_LEVEL);  // ideally a noop
     return Destabilize_Unbound_Fundamental(atom);
 }

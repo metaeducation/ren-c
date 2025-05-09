@@ -217,7 +217,7 @@ DECLARE_NATIVE(UNQUASI)
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
 //      return: "Keywords and plain forms if :LITE, plain ERROR! ok if :EXCEPT"
-//          [quoted! quasiform! keyword! element? error!]
+//          [quoted! quasiform! keyword! element? warning!]
 //      ^atom [any-atom?]
 //      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
 //      :except "If argument is antiform ERROR!, give back as plain ERROR!"

@@ -57,7 +57,7 @@
 )
 (
     f: does [trap [1 / 0]]
-    error? f
+    warning? f
 )
 (
     a-value: %""
@@ -211,7 +211,7 @@
 )
 
 ~zero-divide~ !! (
-    error? trap [
+    warning? trap [
         let f: does [1 / 0 2]  ; "error out" of a function
         f
         2
@@ -251,7 +251,7 @@
 (
     f: lambda [x] [
         either x = 1 [
-            error? trap [f 2]
+            warning? trap [f 2]
             x = 1
         ] [1 / 0]
     ]
@@ -349,7 +349,7 @@
 
 [#27
     ~not-bound~ !! (
-        error? trap [(kind of) 1]
+        warning? trap [(kind of) 1]
     )
 ]
 

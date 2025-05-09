@@ -508,17 +508,17 @@ static void Init_System_Object(
     );
 
     // The "standard error" template was created as an OBJECT!, because the
-    // `make error!` functionality is not ready when %sysobj.r runs.  Fix
+    // `make warning!` functionality is not ready when %sysobj.r runs.  Fix
     // up its archetype so that it is an actual ERROR!.
     //
   blockscope {
     Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
     VarList* c = Cell_Varlist(std_error);
-    HEART_BYTE(std_error) = TYPE_ERROR;
+    HEART_BYTE(std_error) = TYPE_WARNING;
 
     Value* rootvar = Rootvar_Of_Varlist(c);
     assert(Get_Cell_Flag(rootvar, PROTECTED));
-    HEART_BYTE(rootvar) = TYPE_ERROR;
+    HEART_BYTE(rootvar) = TYPE_WARNING;
   }
 }
 

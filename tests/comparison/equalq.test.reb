@@ -510,39 +510,39 @@
 ]
 
 
-; error! reflexivity
-; Evaluates (trap [1 / 0]) to get error! value.
+; warning! reflexivity
+; Evaluates (trap [1 / 0]) to get warning! value.
 (
     a-value: blank
     set $a-value (trap [1 / 0])
     lax-equal? a-value a-value
 )
-; error! structural equivalence
-; Evaluates (trap [1 / 0]) to get error! value.
+; warning! structural equivalence
+; Evaluates (trap [1 / 0]) to get warning! value.
 (lax-equal? (trap [1 / 0]) (trap [1 / 0]))
-; error! structural equivalence
-(lax-equal? (make error! "hello") (make error! "hello"))
-; error! difference in code
-(not lax-equal? (trap [1 / 0]) (make error! "hello"))
-; error! difference in data
-(not lax-equal? (make error! "hello") (make error! "there"))
-; error! basic comparison
+; warning! structural equivalence
+(lax-equal? (make warning! "hello") (make warning! "hello"))
+; warning! difference in code
+(not lax-equal? (trap [1 / 0]) (make warning! "hello"))
+; warning! difference in data
+(not lax-equal? (make warning! "hello") (make warning! "there"))
+; warning! basic comparison
 (not lax-equal? (trap [1 / 0]) blank)
-; error! basic comparison
+; warning! basic comparison
 (not lax-equal? blank (trap [1 / 0]))
-; error! basic comparison symmetry
+; warning! basic comparison symmetry
 (lax-equal? lax-equal? (trap [1 / 0]) blank lax-equal? blank (trap [1 / 0]))
-; error! basic comparison with = op
+; warning! basic comparison with = op
 (not ((trap [1 / 0]) = blank))
-; error! basic comparison with != op
+; warning! basic comparison with != op
 ((trap [1 / 0]) != blank)
-; error! basic comparison with = op
+; warning! basic comparison with = op
 (not (blank = (trap [1 / 0])))
-; error! basic comparison with != op
+; warning! basic comparison with != op
 (blank != (trap [1 / 0]))
-; error! symmetry with = op
+; warning! symmetry with = op
 (lax-equal? not ((trap [1 / 0]) = blank) not (blank = (trap [1 / 0])))
-; error! symmetry with != op
+; warning! symmetry with != op
 (lax-equal? (trap [1 / 0]) != blank blank != (trap [1 / 0]))
 ; port! reflexivity
 ; Error in R2 (could be fixed).

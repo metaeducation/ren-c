@@ -44,7 +44,7 @@ verify: func [
                 reaction != '~<ignore>~
             ]
         ] then [
-            panic:blame make error! [
+            panic:blame make warning! [
                 type: 'script
                 id: 'assertion-failure
                 arg1: compose [

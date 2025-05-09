@@ -248,7 +248,7 @@ specialized?: func [
         [<end> any-value? <variadic>]
 ][
     if not get:any $condition [
-        panic:blame make error! [
+        panic:blame make warning! [
             type: 'script
             id: 'assertion-failure
             arg1: [~null~ so]
@@ -264,7 +264,7 @@ specialized?: func [
 ](
     lambda [left [any-value?] right [any-value?]] [
         if :left != :right [
-            panic:blame make error! [
+            panic:blame make warning! [
                 type: 'script
                 id: 'assertion-failure
                 arg1: compose [(:left) is (:right)]
@@ -385,10 +385,10 @@ attempt: specialize repeat/ [count: 1]
 trap: func [
     "If evaluation raises an error, return it, otherwise NULL"
 
-    return: [~null~ error!]
+    return: [~null~ warning!]
     code [block!]
 ][
-    return match error! entrap code
+    return match warning! entrap code
 ]
 
 /reduce*: redescribe [
@@ -555,7 +555,7 @@ cause-error: func [
 ][
     args: blockify args  ; make sure it's a block
 
-    panic make error! [
+    panic make warning! [
         type: err-type
         id: err-id
         arg1: try first args
@@ -572,7 +572,7 @@ fail: func [
     reason "ERROR! value, ID, URL, message text, or failure spec"
         [
             <end>  ; non-specific failure
-            error!  ; already constructed error
+            warning!  ; already constructed error
             the-word!  ; invalid-arg error with variable name/value
             text!  ; textual error message
             tripwire!  ; same as text (but more attention grabbing at callsite)
@@ -585,7 +585,7 @@ fail: func [
     if tripwire? get:any $reason [
         reason: as text! unquasi ^reason  ; antiform tag! ~<unreachable>~
     ]
-    all [error? reason, not blame] then [
+    all [warning? reason, not blame] then [
         return fail* reason  ; fast shortcut
     ]
 
@@ -602,19 +602,19 @@ fail: func [
     ;     panic:with ["The key" :key-name "is invalid"] [key-name: key]
 
     let error: switch:type :reason [
-        error! [reason]
+        warning! [reason]
         the-word! [
             blame: default [to word! reason]
-            make error! [
+            make warning! [
                 id: 'invalid-arg
                 arg1: label of binding of reason
                 arg2: to word! reason
                 arg3: get reason
             ]
         ]
-        text! [make error! reason]
+        text! [make warning! reason]
         word! [
-            make error! [  ; no Type, so no message
+            make warning! [  ; no Type, so no message
                 id: reason
             ]
         ]
@@ -623,20 +623,20 @@ fail: func [
                 2 = length of reason
                 'core = first reason
             ]
-            make error! [  ; will look up message in core error table
+            make warning! [  ; will look up message in core error table
                 type: 'script
                 id: last reason
             ]
         ]
-        url! [make error! to text! reason]  ; should use URL! as ID
+        url! [make warning! to text! reason]  ; should use URL! as ID
         block! [
-            make error! (spaced reason else '[
+            make warning! (spaced reason else '[
                 type: 'script
                 id: 'unknown-error
             ])
         ]
     ] else [
-        null? reason so make error! [
+        null? reason so make warning! [
             type: 'script
             id: 'unknown-error
         ]
@@ -664,7 +664,7 @@ fail: func [
     ; you typically can only trap/catch errors that come from a function you
     ; directly called.
     ;
-    return fail* ensure error! error
+    return fail* ensure warning! error
 ]
 
 ; Immediately panic on an error--do not allow ^META interception/etc.

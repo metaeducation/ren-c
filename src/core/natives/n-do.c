@@ -250,7 +250,7 @@ DECLARE_NATIVE(SHOVE)
 //          <opt-out>  ; useful for `evaluate opt ...` scenarios
 //          any-list? get-group? set-group? get-block? set-block?  ; code
 //          <unrun> frame!  ; invoke the frame (no arguments, see RUN)
-//          error!  ; panic on the error
+//          warning!  ; panic on the error
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
 //      :undecayed "Don't convert VOID or COMMA! antiforms to VOID"
@@ -308,7 +308,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         if (Is_Varargs(source))
             goto initial_entry_varargs;
 
-        assert(Is_Error(source));
+        assert(Is_Warning(source));
         return PANIC(Cell_Error(source)); }  // would panic anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:

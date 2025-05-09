@@ -30,5 +30,5 @@
 ;
 ;[#2378 (
 ;    some-file: %foo/baz/
-;    error? trap [some-file/bar/]
+;    warning? trap [some-file/bar/]
 ;)]

@@ -70,7 +70,7 @@ INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
 }
 
 #define Is_Throwing_Panic(level_) \
-    Is_Error(VAL_THROWN_LABEL(level_))  // non-definitional errors [1]
+    Is_Warning(VAL_THROWN_LABEL(level_))  // non-definitional errors [1]
 
 INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* L,

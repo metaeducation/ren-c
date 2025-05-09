@@ -300,7 +300,7 @@ uint32_t Hash_Value(const Cell* cell)
         break;
 
       hash_object:
-      case TYPE_ERROR:
+      case TYPE_WARNING:
       case TYPE_PORT:
       case TYPE_OBJECT:
         //

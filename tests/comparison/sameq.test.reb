@@ -342,7 +342,7 @@
 (
     p: make port! http://
     any [
-        error? trap [same? p p]
+        warning? trap [same? p p]
         same? p p
     ]
 )

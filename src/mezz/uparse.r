@@ -1681,7 +1681,7 @@ default-combinators: to map! reduce [
     ][
         switch value [
           ~null~ [
-            panic make error! [type: 'script, id: 'need-non-null]
+            panic make warning! [type: 'script, id: 'need-non-null]
           ]
           ~okay~ [
             return ~,~  ; let okay just act as a "guard", no influence
@@ -2512,7 +2512,7 @@ default-combinators: to map! reduce [
 
             f.input: pos
 
-            if not error? temp: entrap f [
+            if not warning? temp: entrap f [
                 [^temp pos subpending]: ^temp
                 if unset? $pos [
                     print mold:limit rules 200
@@ -2553,7 +2553,7 @@ default-combinators: to map! reduce [
                 ] else [
                     if (not thru) or (tail? input) [
                         remainder: null
-                        return fail* make error! [
+                        return fail* make warning! [
                             id: 'parse-mismatch
                             message:
                               "PARSE BLOCK! combinator did not match input"
@@ -2588,7 +2588,7 @@ default-combinators: to map! reduce [
         'reason [the-block!]
         <local> e
     ][
-        e: make error! [
+        e: make warning! [
             type: 'User
             id: 'parse
             message: to text! reason
@@ -2835,7 +2835,7 @@ parsify: func [
     case [
         word? r [  ; non-"keyword" WORD! (didn't look up literally)
             if null? value: get r [
-                panic make error! [type: 'script, id: 'need-non-null]
+                panic make warning! [type: 'script, id: 'need-non-null]
             ]
 
             if comb: match frame! :value [  ; variable held a combinator [4]
@@ -3056,7 +3056,7 @@ parse*: func [
     assert [empty? state.loops]
 
     if (not tail? remainder) and (not relax) [
-        return fail make error! [
+        return fail make warning! [
             id: 'parse-incomplete
             message:
               "PARSE partially matched the input, but didn't reach the tail"

@@ -127,7 +127,7 @@ sys.util/make-scheme [
                 return port
             ]
 
-            return port  ; !!! should this error?
+            return port  ; !!! should this warning?
         ]
 
         insert: func [

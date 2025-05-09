@@ -805,7 +805,7 @@ DECLARE_NATIVE(GET)
             return PANIC(Error_No_Catch_For_Throw(LEVEL));
 
         if (Is_Void(SPARE))
-            return nullptr;  // !!! Is this a good idea, or should it error?
+            return nullptr;  // !!! Is this a good idea, or should it warning?
 
         Decay_If_Unstable(SPARE);
 

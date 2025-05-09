@@ -38,8 +38,8 @@
 
     ([~null~ 1020] = (null ->- left-meta 1020))
     ([~null~ 304] = (null ->- right-meta 304))
-    (error? noquasi first ((panic 'x) ->- left-meta 1020))
-    (error? noquasi first ((panic 'x) ->- right-meta 304))
+    (warning? noquasi first ((panic 'x) ->- left-meta 1020))
+    (warning? noquasi first ((panic 'x) ->- right-meta 304))
 ]
 
 ; @LITERAL bound parameter

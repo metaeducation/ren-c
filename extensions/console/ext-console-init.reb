@@ -226,7 +226,7 @@ export console!: make object! [
                 ; but if we didn't special case it here, the error would seem
                 ; to be in the console code itself.
                 ;
-                print-error make error! "Series data unavailable due to FREE"
+                print-error make warning! "Series data unavailable due to FREE"
             ]
 
             port? v [
@@ -254,7 +254,7 @@ export console!: make object! [
 
     print-warning: method [return: [~] s] [print [warning reduce s]]
 
-    print-error: method [return: [~] e [error!]] [
+    print-error: method [return: [~] e [warning!]] [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
@@ -461,7 +461,7 @@ console*: func [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [~null~ block! group!]
     result "^META result from PRIOR eval, non-quoted error, or exit code #"
-        [~null~ error! quoted! quasiform! integer!]
+        [~null~ warning! quoted! quasiform! integer!]
     resumable "Is the RESUME function allowed to exit this console"
         [yesno?]
     skin "Console skin to use if the console has to be launched"
@@ -617,7 +617,7 @@ console*: func [
     ; Note: Escape is handled during input gathering by a dedicated signal.
 
     all [
-        error? result
+        warning? result
         result.id = 'no-catch
         result.arg2 = unrun lib.halt/  ; throw's :NAME
     ] then [
@@ -657,13 +657,13 @@ console*: func [
 
     all [
         has lib 'resume
-        error? result
+        warning? result
         result.id = 'no-catch
         result.arg2 = unrun lib.resume/  ; throw's :NAME
     ] then [
         assert [match [meta-group! handle!] result.arg1]
         if no? resumable [
-            e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
+            e: make warning! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e.near: result.near
             e.where: result.where
             emit [system.console/print-error (<*> e)]
@@ -672,7 +672,7 @@ console*: func [
         return result.arg1
     ]
 
-    if error? result [  ; all other errors
+    if warning? result [  ; all other errors
         ;
         ; Errors can occur during MAIN-STARTUP, before the system.CONSOLE has
         ; a chance to be initialized (it may *never* be initialized if the
@@ -870,7 +870,7 @@ console*: func [
 export why: func [
     "Explain the last error in more detail."
     return: [~]
-    'err [<end> word! path! error!] "Optional error value"
+    'err [<end> word! path! warning!] "Optional error value"
 ][
     let err: default [system.state.last-error]
 
@@ -878,7 +878,7 @@ export why: func [
         err: get err
     ]
 
-    if error? err [
+    if warning? err [
         err: lowercase unspaced [err.type "-" err.id]
         let docroot: http://www.rebol.com/r3/docs/errors/
         browse join docroot [err ".html"]

@@ -281,7 +281,7 @@ INLINE bool Is_Trigger(const Value* v) {  // stable only, can't test void [1]
         return false;
     if (id == SYM_OKAY)
         return true;
-    panic (Error_Bad_Antiform(v));  // !!! special error?
+    panic (Error_Bad_Antiform(v));  // !!! special warning?
 }
 
 #define Is_Inhibitor(v) \

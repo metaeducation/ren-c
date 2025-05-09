@@ -1101,7 +1101,7 @@
  *       with regular fopen(), please make sure you make a seedfile with the
  *       proper name (defined in MBEDTLS_PLATFORM_STD_NV_SEED_FILE) and at
  *       least MBEDTLS_ENTROPY_BLOCK_SIZE bytes in size that can be read from
- *       and written to or you will get an entropy source error! The default
+ *       and written to or you will get an entropy source warning! The default
  *       implementation will only use the first MBEDTLS_ENTROPY_BLOCK_SIZE
  *       bytes from the file.
  *

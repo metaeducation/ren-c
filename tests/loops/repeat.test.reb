@@ -45,7 +45,7 @@
 (
     num: 0
     e: repeat 2 [num: num + 1 trap [1 / 0]]
-    all [error? e num = 2]
+    all [warning? e num = 2]
 )
 ; loop recursivity
 (

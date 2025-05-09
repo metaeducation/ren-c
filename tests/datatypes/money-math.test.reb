@@ -11,22 +11,22 @@
 (
     x: $999999999999999
     any [
-        error? trap [x: x + $1]
-        not error? trap [mold x]
+        warning? trap [x: x + $1]
+        not warning? trap [mold x]
     ]
 )
 (
     x: $-999999999999999
     any [
-        error? trap [x: x - $1]
-        not error? trap [mold x]
+        warning? trap [x: x - $1]
+        not warning? trap [mold x]
     ]
 )
 (
     x: ~
     any [
-        error? trap [x: $1234567890123456]
-        not error? trap [mold x]
+        warning? trap [x: $1234567890123456]
+        not warning? trap [mold x]
     ]
 )
 ($111 = make money! 111)
@@ -275,5 +275,3 @@
 
 (zero? modulo:adjusted $0.10 + $0.10 + $0.10 $0.30)
 (zero? modulo:adjusted $0.30 $0.10 + $0.10 + $0.10)
-
-

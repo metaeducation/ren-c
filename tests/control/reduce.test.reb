@@ -7,7 +7,7 @@
 )
 ([] = reduce [])
 ("1 + 1" = reduce "1 + 1")
-(error? first reduce [trap [1 / 0]])
+(warning? first reduce [trap [1 / 0]])
 [#1760 ; unwind functions should stop evaluation
     (null? repeat 1 [reduce [break]])
 ]

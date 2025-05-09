@@ -230,7 +230,7 @@ Value* Error_ODBC_Core(
       case SQL_SUCCESS:
       success:
         return rebValue(
-            "make error!", rebR(rebLengthedTextWide(message, message_len))
+            "make warning!", rebR(rebLengthedTextWide(message, message_len))
         );
     }
 
@@ -248,17 +248,17 @@ Value* Error_ODBC_Core(
     switch (rc) {
       case SQL_INVALID_HANDLE:
         return rebValue(
-            "make error! -[Internal ODBC extension error (invalid handle)]-"
+            "make warning! -[Internal ODBC extension error (invalid handle)]-"
         );
 
       case SQL_ERROR:
         return rebValue(
-            "make error! -[Internal ODBC extension error (bad diag record #)]-"
+            "make warning! -[Internal ODBC extension error (bad diag record #)]-"
         );
 
       case SQL_NO_DATA:
         return rebValue(
-            "make error! -[No ODBC diagnostic information available]-"
+            "make warning! -[No ODBC diagnostic information available]-"
         );
 
       default:
@@ -266,7 +266,7 @@ Value* Error_ODBC_Core(
     }
 
     assert(!"SQLGetDiagRecW returned undocumented SQLRESULT value");
-    return rebValue("make error! -[Undocumented SQLRESULT SQLGetDiagRecW()]-");
+    return rebValue("make warning! -[Undocumented SQLRESULT SQLGetDiagRecW()]-");
 }
 
 #if RUNTIME_CHECKS  // report file and line info with mystery errors

@@ -8,7 +8,7 @@
 (blank = '_)
 
 (null = make blank! opt null)
-(error? trap [make blank! [a b c]])
+(warning? trap [make blank! [a b c]])
 
 (null? to blank! opt null)  ; TO's universal protocol for void 2nd argument
 (null? to opt null 1)  ; TO's universal protocol for blank 1st argument

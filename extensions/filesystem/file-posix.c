@@ -78,7 +78,7 @@
 // but they're all new error numbers.  Do strings for now.
 //
 Value* rebError_UV(int err) {
-     return rebValue("make error!", rebT(uv_strerror(err)));
+     return rebValue("make warning!", rebT(uv_strerror(err)));
 }
 
 
@@ -265,7 +265,7 @@ Value* Open_File(const Value* port, int flags)
     FILEREQ *file = File_Of_Port(port);
 
     if (file->id != FILEHANDLE_NONE)
-        return rebValue("make error! {File is already open}");
+        return rebValue("make warning! {File is already open}");
 
     // "Posix file names should be compatible with REBOL file paths"
 
@@ -426,7 +426,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
     }
     else {
         if (not Is_Blob(value))
-            return rebValue("make error! {ISSUE!, TEXT!, BLOB! for WRITE}");
+            return rebValue("make warning! {ISSUE!, TEXT!, BLOB! for WRITE}");
 
         data = Cell_Blob_At(value);
         size = limit;
@@ -756,7 +756,7 @@ Value* Query_File_Or_Directory(const Value* port)
 
     bool is_dir = S_ISDIR(req.statbuf.st_mode);
     if (is_dir != file->is_dir)
-        return rebValue("make error! {Directory/File flag mismatch}");
+        return rebValue("make warning! {Directory/File flag mismatch}");
 
     // !!! R3-Alpha would do this "to be consistent on all systems".  But it
     // seems better to just make the size null, unless there is some info

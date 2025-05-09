@@ -60,7 +60,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         Flex* f = m_cast(Flex*, c_cast(Flex* , p));  // don't mutate
         if (not Is_Stub_Varlist(f))
             crash (f);  // only kind of Flex allowed are contexts of ERROR!
-        if (CTX_TYPE(cast(VarList*, f)) != TYPE_ERROR)
+        if (CTX_TYPE(cast(VarList*, f)) != TYPE_WARNING)
             crash (f);
         return cast(Error*, f); }
 
@@ -73,7 +73,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 
         if (Is_Node_Root_Bit_Set(v)) {  // API handles must be errors [1]
             Error* error;
-            if (Is_Error(v)) {
+            if (Is_Warning(v)) {
                 error = Cell_Error(v);
             }
             else {
@@ -134,7 +134,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 Error* Panic_Abruptly_Helper(Error* error)
 {
     Assert_Varlist(error);
-    assert(CTX_TYPE(error) == TYPE_ERROR);
+    assert(CTX_TYPE(error) == TYPE_WARNING);
 
     // You can't abruptly panic during the handling of an abrupt panic.
     //
@@ -404,11 +404,11 @@ void Set_Location_Of_Error(
 // existing landscape so that if it is to be changed then it can be seen
 // exactly what is changing.
 //
-IMPLEMENT_GENERIC(MAKE, Error)
+IMPLEMENT_GENERIC(MAKE, Is_Warning)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_ERROR);
+    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_WARNING);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -426,14 +426,14 @@ IMPLEMENT_GENERIC(MAKE, Error)
 
         error = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
-            TYPE_ERROR, // type
+            TYPE_WARNING, // type
             head, // values to scan for toplevel set-words
             tail,
             root_error // parent
         );
 
         Use* use = Alloc_Use_Inherits(Cell_List_Binding(arg));
-        Init_Error(Stub_Cell(use), error);
+        Init_Warning(Stub_Cell(use), error);
 
         Tweak_Cell_Binding(arg, use);  // arg is GC protected, so Use is too
         Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // protects Error in eval
@@ -518,7 +518,7 @@ IMPLEMENT_GENERIC(MAKE, Error)
                 // it expected the following to be an illegal error because
                 // the `script` category had no `set-self` error ID.
                 //
-                //     make error! [type: 'script id: 'set-self]
+                //     make warning! [type: 'script id: 'set-self]
 
                 return FAIL(
                     Error_Invalid_Error_Raw(Varlist_Archetype(error))
@@ -552,7 +552,7 @@ IMPLEMENT_GENERIC(MAKE, Error)
         }
     }
 
-    return Init_Error(OUT, error);
+    return Init_Warning(OUT, error);
 }
 
 
@@ -682,7 +682,7 @@ Error* Make_Error_Managed_Vaptr(
 
     assert(Varlist_Len(varlist) == Varlist_Len(root_varlist) + expected_args);
 
-    HEART_BYTE(Rootvar_Of_Varlist(varlist)) = TYPE_ERROR;
+    HEART_BYTE(Rootvar_Of_Varlist(varlist)) = TYPE_WARNING;
 
     // C struct mirroring fixed portion of error fields
     //
@@ -974,7 +974,7 @@ Error* Error_No_Catch_For_Throw(Level* level_)
     DECLARE_ATOM (arg);
     CATCH_THROWN(arg, level_);
 
-    if (Is_Error(label)) {  // what would have been panic()
+    if (Is_Warning(label)) {  // what would have been panic()
         assert(Is_Nulled(arg));
         return Cell_Error(label);
     }
@@ -1271,7 +1271,7 @@ VarList* Startup_Errors(const Element* boot_errors)
 //
 void Startup_Stackoverflow(void)
 {
-    ensure(nullptr, g_error_stack_overflow) = Init_Error(
+    ensure(nullptr, g_error_stack_overflow) = Init_Warning(
         Alloc_Value(),
         Error_Stack_Overflow_Raw()
     );
@@ -1279,7 +1279,7 @@ void Startup_Stackoverflow(void)
     DECLARE_ELEMENT (temp);
     Init_Integer(temp, 1020);  // !!! arbitrary [1]
 
-    ensure(nullptr, g_error_no_memory) = Init_Error(
+    ensure(nullptr, g_error_no_memory) = Init_Warning(
         Alloc_Value(),
         Error_No_Memory_Raw(temp)
     );
@@ -1309,27 +1309,27 @@ void Shutdown_Stackoverflow(void)
 //
 void Startup_Utf8_Errors(void)
 {
-    ensure(nullptr, g_error_utf8_too_short) = Init_Error(
+    ensure(nullptr, g_error_utf8_too_short) = Init_Warning(
         Alloc_Value(),
         Error_Utf8_Too_Short_Raw()
     );
-    ensure(nullptr, g_error_utf8_trail_bad_bit) = Init_Error(
+    ensure(nullptr, g_error_utf8_trail_bad_bit) = Init_Warning(
         Alloc_Value(),
         Error_Utf8_Trail_Bad_Bit_Raw()
     );
-    ensure(nullptr, g_error_overlong_utf8) = Init_Error(
+    ensure(nullptr, g_error_overlong_utf8) = Init_Warning(
         Alloc_Value(),
         Error_Overlong_Utf8_Raw()
     );
-    ensure(nullptr, g_error_codepoint_too_high) = Init_Error(
+    ensure(nullptr, g_error_codepoint_too_high) = Init_Warning(
         Alloc_Value(),
         Error_Codepoint_Too_High_Raw()
     );
-    ensure(nullptr, g_error_no_utf8_surrogates) = Init_Error(
+    ensure(nullptr, g_error_no_utf8_surrogates) = Init_Warning(
         Alloc_Value(),
         Error_No_Utf8_Surrogates_Raw()
     );
-    ensure(nullptr, g_error_illegal_zero_byte) = Init_Error(
+    ensure(nullptr, g_error_illegal_zero_byte) = Init_Warning(
         Alloc_Value(),
         Error_Illegal_Zero_Byte_Raw()
     );
@@ -1382,7 +1382,7 @@ static void Mold_Element_Limit(Molder* mo, Element* v, REBLEN limit)
 }
 
 
-IMPLEMENT_GENERIC(MOLDIFY, Error)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 

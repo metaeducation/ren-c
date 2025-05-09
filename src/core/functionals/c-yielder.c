@@ -36,7 +36,7 @@
 //
 void Startup_Yielder_Errors(void)
 {
-    ensure(nullptr, g_error_done_enumerating) = Init_Error(
+    ensure(nullptr, g_error_done_enumerating) = Init_Warning(
         Alloc_Value(),
         Error_Done_Enumerating_Raw()
     );
@@ -56,7 +56,7 @@ void Shutdown_Yielder_Errors(void)
 //  Is_Error_Done_Signal: C
 //
 bool Is_Error_Done_Signal(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_ERROR);
+    assert(Heart_Of(c) == TYPE_WARNING);
 
     ERROR_VARS *vars = ERR_VARS(Cell_Error(c));
     if (not Is_Word(&vars->id))

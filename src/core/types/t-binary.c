@@ -1190,7 +1190,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
     }
     if (num_bytes <= 0) {
         //
-        // !!! Should #{} empty binary be 0 or error?  (Historically, 0.)
+        // !!! Should #{} empty binary be 0 or warning?  (Historically, 0.)
         //
         return "panic -[Size for DEBIN decoding must be at least 1]-";
     }

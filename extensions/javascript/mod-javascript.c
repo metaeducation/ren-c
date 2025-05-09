@@ -485,7 +485,7 @@ void RunPromise(void)
     if (r == BOUNCE_THROWN) {
         assert(Is_Throwing(TOP_LEVEL));
         Error* error = Error_No_Catch_For_Throw(TOP_LEVEL);
-        metaresult = Init_Error(TOP_LEVEL->out, error);
+        metaresult = Init_Warning(TOP_LEVEL->out, error);
     }
     else
         metaresult = Meta_Quotify(TOP_LEVEL->out);
@@ -499,7 +499,7 @@ void RunPromise(void)
     TRACE("RunPromise() finished Running Array");
 
     if (info->state == PROMISE_STATE_RUNNING) {
-        if (rebUnboxLogic("error? @", metaresult)) {
+        if (rebUnboxLogic("warning? @", metaresult)) {
             //
             // Note this could be an uncaught throw error, or a specific
             // panic() error.
@@ -510,7 +510,7 @@ void RunPromise(void)
             if (g_probe_panics)
                 PROBE(metaresult);
           #endif
-            Free_Value(metaresult);  // !!! report the error?
+            Free_Value(metaresult);  // !!! report the warning?
         }
         else {
             info->state = PROMISE_STATE_RESOLVED;
@@ -663,7 +663,7 @@ EXTERN_C void API_rebRejectNative_internal(
         Init_Nulled(OUT);
     }
     else {
-        assert(Is_Error(error));
+        assert(Is_Warning(error));
         Copy_Cell(OUT, error);
         rebRelease(error);
     }
@@ -716,7 +716,7 @@ EXTERN_C void API_rebRejectNative_internal(
 //     first place!)
 //
 // 3. The GetNativeError_internal() code calls libRebol to build the error,
-//    via `reb.Value("make error!", ...)`.  But this means that if the
+//    via `reb.Value("make warning!", ...)`.  But this means that if the
 //    evaluator has had a halt signaled, that would be the code that would
 //    convert it to a throw.  For now, the halt signal is communicated
 //    uniquely back to us as 0.
@@ -1164,7 +1164,7 @@ DECLARE_NATIVE(JS_EVAL_P)
         );
     }
     Value* value = Value_From_Value_Id(addr);
-    if (not value or not Is_Error(value))
+    if (not value or not Is_Warning(value))
         return value;  // evaluator takes ownership of handle
 
     goto handle_error;

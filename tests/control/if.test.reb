@@ -14,7 +14,7 @@
 ((meta void) = ^ if null [])
 ('~[]~ = ^ if ok [])
 
-(error? if ok [trap [1 / 0]])
+(warning? if ok [trap [1 / 0]])
 ; RETURN stops the evaluation
 (
     f1: func [return: [integer!]] [
@@ -108,7 +108,7 @@
 ((meta void) = ^ if not okay [1])
 ('~[~null~]~ = ^ if no? 'no [null])
 
-(error? if off? 'off [trap [1 / 0]])
+(warning? if off? 'off [trap [1 / 0]])
 
 ; RETURN stops the evaluation
 (

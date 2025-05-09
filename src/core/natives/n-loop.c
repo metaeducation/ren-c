@@ -1461,7 +1461,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         }
         else {
             threw = true;
-            Init_Error(
+            Init_Warning(
                 SPARE,
                 Error_User("Use [NULL OKAY VOID] with REMOVE-EACH")
             );

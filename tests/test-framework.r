@@ -60,7 +60,7 @@ run-single-test: func [
     let result: sys.util/enrescue code
 
     all [
-        error? result
+        warning? result
         expected-id
         (all [not result.id, expected-id = '???]) or (result.id = expected-id)
     ] then [
@@ -70,7 +70,7 @@ run-single-test: func [
     ]
 
     case [
-        error? result [
+        warning? result [
             spaced ["error" any [
                 to text! opt result.id
                 mold result.message   ; errors with no ID may have BLOCK!

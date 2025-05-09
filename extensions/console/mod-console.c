@@ -303,7 +303,7 @@ DECLARE_NATIVE(CONSOLE)
   recover: ;  // Note: semicolon needed as next statement is declaration
 
     Value* code;
-    Value* error = rebRescue(  // Rescue catches buggy CONSOLE* [1]
+    Value* warning = rebRescue(  // Rescue catches buggy CONSOLE* [1]
         &code,
         "console*",  // action that takes 4 args, run it
             "code",  // group! or block! executed prior (or null)
@@ -312,13 +312,15 @@ DECLARE_NATIVE(CONSOLE)
             "skin"
     );
 
-    if (error) {  // panic happened in CONSOLE* code itself [2]
-        if (rebUnboxLogic("no? can-recover"))
-            return rebDelegate("crash @", rebR(error));
+    if (warning) {  // panic happened in CONSOLE* code itself [2]
+        if (rebUnboxLogic("no? can-recover")) {
+            unnecessary(rebQ(warning));  // CRASH takes arg literally
+            return rebDelegate("crash", rebR(warning));
+        }
 
         rebElide(
             "code: [#host-console-error]",
-            "metaresult:", error,
+            "metaresult:", warning,
             "can-recover: 'no"  // unrecoverable until user can request eval
         );
         goto recover;

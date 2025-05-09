@@ -255,7 +255,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       mark_object:
       case TYPE_OBJECT:
-      case TYPE_ERROR:
+      case TYPE_WARNING:
       case TYPE_PORT: {
         Node* node = CELL_CONTEXT_VARLIST(v);
         if (Not_Node_Accessible_Canon(node))

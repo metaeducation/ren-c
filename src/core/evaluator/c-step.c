@@ -1008,7 +1008,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             L_binding
         );
         if (error) {  // tuples never run actions, erroring won't conflate
-            Init_Error(OUT, unwrap error);
+            Init_Warning(OUT, unwrap error);
             Failify(OUT);
             goto lookahead;  // e.g. EXCEPT might want error
         }
@@ -1149,7 +1149,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             return PANIC("Use `->-` to shove left infix operands into PATH!s");
         }
 
-        UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as error?
+        UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as warning?
         goto handle_action_in_out_with_refinements_pushed; }
 
 
@@ -1295,7 +1295,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             L_binding
         );
         if (error) {
-            Init_Error(OUT, unwrap error);
+            Init_Warning(OUT, unwrap error);
             Failify(OUT);
             goto lookahead;  // e.g. EXCEPT might want to see raised error
         }
@@ -1760,7 +1760,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         //
       case TYPE_OBJECT:
       case TYPE_MODULE:
-      case TYPE_ERROR:
+      case TYPE_WARNING:
       case TYPE_PORT:
         goto inert;
 

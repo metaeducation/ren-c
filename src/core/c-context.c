@@ -990,7 +990,7 @@ Option(Value*) Select_Symbol_In_Context(
 //
 // 1. !!! All cases of this should be reviewed...mostly for getting an indexed
 //    field out of a port.  If the port doesn't have the index, should it
-//    always be an error?
+//    always be an warning?
 //
 Value* Obj_Value(Value* value, Index index)
 {

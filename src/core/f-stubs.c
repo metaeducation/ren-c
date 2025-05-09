@@ -480,7 +480,7 @@ REBLEN Part_Limit_Append_Insert(const Value* part) {
     if (Is_Integer(part)) {
         REBINT i = Int32(part);
         if (i < 0)  // Clip negative numbers to mean 0
-            return 0;  // !!! Would it be better to error?
+            return 0;  // !!! Would it be better to warning?
         return i;
     }
 

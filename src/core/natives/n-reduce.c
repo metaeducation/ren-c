@@ -720,7 +720,7 @@ Bounce Composer_Executor(Level* const L)
         goto push_out_spliced;
 
     if (Is_Nulled(OUT))
-        return FAIL(Error_Need_Non_Null_Raw());  // [(null)] => error!
+        return FAIL(Error_Need_Non_Null_Raw());  // [(null)] => warning!
 
     if (Is_Antiform(OUT))
         return FAIL(Error_Bad_Antiform(OUT));

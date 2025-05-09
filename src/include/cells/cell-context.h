@@ -19,7 +19,7 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
     Node* node = CELL_NODE1(c);  // ParamList or Details
     if (Not_Node_Readable(node)) {
         if (heart == TYPE_FRAME)
-            panic (Error_Expired_Frame_Raw());  // !!! different error?
+            panic (Error_Expired_Frame_Raw());  // !!! different warning?
         panic (Error_Series_Data_Freed_Raw());
     }
 
@@ -44,7 +44,7 @@ INLINE Context* Cell_Context(const Cell* c) {
 }
 
 INLINE Error* Cell_Error(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_ERROR);
+    assert(Heart_Of(c) == TYPE_WARNING);
     return cast(Error*, Cell_Varlist(c));
 }
 

@@ -266,7 +266,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
         Printf_Stderr("Stub detected...\n");
         if (Stub_Flavor(s) == FLAVOR_VARLIST) {
             Printf_Stderr("...and it's a varlist...\n");
-            if (CTX_TYPE(x_cast(VarList*, s)) == TYPE_ERROR) {
+            if (CTX_TYPE(x_cast(VarList*, s)) == TYPE_WARNING) {
                 Printf_Stderr("...and it's an Error, trying to PROBE...\n");
                 PROBE(s);  // this may crash recursively if it's corrupt
             }
@@ -281,7 +281,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
       case DETECTED_AS_END: {
       #if DEBUG_FANCY_CRASH
         const Cell* c = c_cast(Cell*, p);
-        if (Heart_Of(c) == TYPE_ERROR) {
+        if (Heart_Of(c) == TYPE_WARNING) {
             Printf_Stderr("...crash() on an ERROR! Cell, trying to PROBE...");
             PROBE(c);
         }
@@ -344,7 +344,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
 //
 //      return: []
 //      @info "If you want to implicate a value, use (crash @value)"
-//          [<end> element?]
+//          [<end> warning! text! the-word!]
 //  ]
 //
 DECLARE_NATIVE(CRASH)
@@ -376,11 +376,11 @@ DECLARE_NATIVE(CRASH)
         if (Is_Text(info)) {
             p = Cell_Utf8_At(info);
         }
-        else if (Is_Error(info)) {
+        else if (Is_Warning(info)) {
             p = Cell_Varlist(info);
         }
         else {
-            assert(!"Called CRASH on non-TEXT!, non-ERROR!, non THE-WORD!");
+            assert(!"Called CRASH on non-TEXT!, non-WARNING!, non THE-WORD!");
             p = info;
         }
     }
@@ -397,7 +397,7 @@ DECLARE_NATIVE(CRASH)
 //  "Version of FAIL of definitional error that only takes ERROR!"
 //
 //      return: [raised!]
-//      reason [error!]
+//      reason [warning!]
 //  ]
 //
 DECLARE_NATIVE(FAIL_P)

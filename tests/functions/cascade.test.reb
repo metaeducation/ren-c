@@ -17,7 +17,7 @@
     metafail: cascade [fail/ meta:except/]
     e: metafail 'test
     all [
-        error? e
+        warning? e
         e.id = 'test
     ]
 )
@@ -26,7 +26,7 @@
     metatranscode: cascade [transcode/ meta:except/]
     e: metatranscode "1&e"
     all [
-        error? e
+        warning? e
         e.id = 'scan-invalid
     ]
 )

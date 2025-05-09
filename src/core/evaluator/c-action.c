@@ -337,7 +337,7 @@ Bounce Action_Executor(Level* L)
     //    so the user can do 0 or 1 TAKEs of it.
     //
     //    !!! It be evaluated when they TAKE (it if it's an evaluative arg),
-    //    but not if they don't.  Should failing to TAKE be seen as an error?
+    //    but not if they don't.  Should failing to TAKE be seen as an warning?
     //    Failing to take first gives out-of-order evaluation.
     //
     // 5. The idea behind quoting not getting binding isn't that it *removes*

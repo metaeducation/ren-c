@@ -158,6 +158,7 @@ sys.util/rescue [
 
 panic: fail/
 fail: ~<FAIL being changed to definitional (e.g. what was RAISE)>~
+warning!: error!
 
 
 === "SHORT NAMES FOR LIB3/XXX, CATCH USES OF SHIMMED FUNCTIONS BEFORE SHIM" ===

@@ -8,7 +8,7 @@
 )
 (
     a: 1
-    error? trap [use 'a [a: 2]]
+    warning? trap [use 'a [a: 2]]
     a = 1
 )
 
@@ -32,7 +32,7 @@
 )
 ; "error out" of USE
 (
-    error? sys.util/rescue [
+    warning? sys.util/rescue [
         use [a] [1 / 0]
         2
     ]

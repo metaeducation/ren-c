@@ -60,7 +60,7 @@
                 assert [x = as issue! transcode:one mold x]
             ]
             text? x [
-                let id: (match error! trap [load x]).id
+                let id: (match warning! trap [load x]).id
                 assert [find [scan-invalid scan-extra scan-missing] id]
             ]
             panic "wrong type"

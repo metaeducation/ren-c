@@ -180,14 +180,14 @@ bind construct [
         ;
         if find opt hdr.options 'compress [
             any [
-                not error? sys.util/rescue [
+                not warning? sys.util/rescue [
                     ; Raw bits.  whitespace *could* be tolerated; if
                     ; you know the kind of compression and are looking
                     ; for its signature (gzip is 0x1f8b)
                     ;
                     rest: gunzip:part rest end
                 ]
-                not error? sys.util/rescue [  ; e.g. not error
+                not warning? sys.util/rescue [  ; e.g. not error
                     ; BLOB! literal ("'SCRIPT encoded").  Since it
                     ; uses transcode, leading whitespace and comments
                     ; are tolerated before the literal.

@@ -40,7 +40,7 @@
 //    So if a variable is set-but-empty, then it could return 0 in this second
 //    step.  (Who designs such an API?!  Why wouldn't it just consistently
 //    return length including the terminator regardless of whether the buffer
-//    is big enough or not, so 0 is always an error?!)
+//    is big enough or not, so 0 is always an warning?!)
 //
 //    Such variables can't be assigned with SET, as `set var=` will clear it.
 //    But other mechanisms can...including GitHub Actions when it sets up
@@ -71,7 +71,7 @@ Option(ErrorValue*) Trap_Get_Environment_Variable(
         if (val_len + 1 != val_len_plus_one) {  // "set-but-empty" :-( [1]
             DWORD dwerr = GetLastError();
             if (dwerr == 0) {  // in case this ever happens, give more info
-                e = rebValue("make error! spaced [",
+                e = rebValue("make warning! spaced [",
                     "-[Mystery bug getting environment var]- @", key,
                     "-[with length reported as]-", rebI(val_len_plus_one - 1),
                     "-[but returned length from fetching is]-", rebI(val_len),

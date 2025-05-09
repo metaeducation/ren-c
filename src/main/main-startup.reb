@@ -338,9 +338,9 @@ bind construct [
         reason "Error message"
             [text! block!]
         :error "Error object, shown if --verbose option used"
-            [error!]
+            [warning!]
     ][
-        print "Startup encountered an error!"
+        print "Startup encountered an warning!"
         print ["**" if block? reason [spaced reason] else [reason]]
         if error [
             print either yes? o.verbose [

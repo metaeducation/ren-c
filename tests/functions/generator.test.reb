@@ -13,7 +13,7 @@
 
     all [
         g = 1
-        error? sys.util/rescue [g]
+        warning? sys.util/rescue [g]
         (sys.util/rescue [g]).id = 'yielder-panicked
         (sys.util/rescue [g]).id = 'yielder-panicked
     ]

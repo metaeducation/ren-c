@@ -69,7 +69,7 @@
 (
     num: 0
     e: cfor 'i 1 2 1 [num: i trap [1 / 0]]
-    all [error? e num = 2]
+    all [warning? e num = 2]
 )
 
 [ ; infinite loop tests

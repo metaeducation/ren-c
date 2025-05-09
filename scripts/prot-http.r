@@ -62,7 +62,7 @@ make-http-error: lambda [
     "Make an error for the HTTP protocol"
     message [text! block!]
 ][
-    make error! compose [
+    make warning! compose [
         type: 'access
         id: 'protocol
         arg1: (unspaced message)  ; ERROR! has a `message` field, must COMPOSE
@@ -343,7 +343,7 @@ check-response: func [
                         return fail e
                     ]
                 ] else [
-                    return fail make error! [
+                    return fail make warning! [
                         type: 'access
                         id: 'protocol
                         arg1: "Redirect requires manual intervention"
@@ -435,7 +435,7 @@ do-redirect: func [
         ; answer--and redirects were never reasonably articulated in R3-Alpha
         ; http, so it all needs a redesign if this is to be useful.
         ;
-        return fail make error! [
+        return fail make warning! [
             type: 'access
             id: 'protocol
             arg1: "Redirect to other host - requires custom handling"

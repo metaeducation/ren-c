@@ -39,7 +39,7 @@
     same? :a-value a-value
 )
 (
-    error? a-value: trap [1 / 0]
+    warning? a-value: trap [1 / 0]
     same? :a-value a-value
 )
 (

@@ -13,8 +13,8 @@
 ('~[~null~]~ = ^ either okay [null] [1])
 ('~[~null~]~ = ^ either null [1] [null])
 
-(error? either okay [trap [1 / 0]] [])
-(error? either null [] [trap [1 / 0]])
+(warning? either okay [trap [1 / 0]] [])
+(warning? either null [] [trap [1 / 0]])
 
 ; RETURN stops the evaluation
 (

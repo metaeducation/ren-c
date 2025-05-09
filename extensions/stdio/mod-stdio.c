@@ -123,7 +123,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
 
 
 static Value* Make_Escape_Error(const char* name) {
-    return rebValue("make error! [",
+    return rebValue("make warning! [",
         "id: 'escape",
         "message: spaced [", rebT(name), "-[cancelled by user (e.g. ESCAPE)]-]"
     "]");
@@ -131,7 +131,7 @@ static Value* Make_Escape_Error(const char* name) {
 
 
 static Value* Make_Non_Halt_Error(const char* name) {
-    return rebValue("make error! [",
+    return rebValue("make warning! [",
         "id: 'escape",
         "message: spaced [", rebT(name), "-[interrupted by non-HALT signal]-]"
     "]");

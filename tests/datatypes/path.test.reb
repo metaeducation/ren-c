@@ -55,7 +55,7 @@
     #"m" = a-value.1
 )
 (
-    a-value: make error! ""
+    a-value: make warning! ""
     null? a-value.type
 )
 (

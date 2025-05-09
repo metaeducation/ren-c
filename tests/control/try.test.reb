@@ -20,7 +20,7 @@
 )
 #trap (
     success: 'true
-    error? trap [
+    warning? trap [
         1 / 0
         success: 'false
     ]
@@ -32,29 +32,29 @@
         1 / 0
         success: 'false
     ]
-    error? sys.util/rescue [f1]
+    warning? sys.util/rescue [f1]
     true? success
 )
 [#822
     #trap (
-        trap [make error! ""] then [<branch-not-run>] else [okay]
+        trap [make warning! ""] then [<branch-not-run>] else [okay]
     )
 ]
 #rescue (
-    sys.util/rescue [panic make error! ""] then [okay]
+    sys.util/rescue [panic make warning! ""] then [okay]
 )
 #trap (
-    trap [1 / 0] then (:error?)
+    trap [1 / 0] then (:warning?)
 )
 #trap (
-    trap [1 / 0] then e -> [error? e]
+    trap [1 / 0] then e -> [warning? e]
 )
 #trap (
     trap [] then (func [e] [return <handler-not-run>]) else [okay]
 )
 [#1514
     #trap (
-        error? sys.util/rescue [trap [1 / 0] then (:add)]
+        warning? sys.util/rescue [trap [1 / 0] then (:add)]
     )
 ]
 
@@ -84,7 +84,7 @@
 #entrap (
     f: make frame! lambda [] [fail 'test]
     all wrap [
-        error? e: entrap f
+        warning? e: entrap f
         e.id = 'test
     ]
 )
@@ -104,7 +104,7 @@
 #trap (
     e: trap [fail 'something]  ; trap before assign attempt
     all [
-        error? e
+        warning? e
         e.id = 'something
     ]
 )
@@ -113,7 +113,7 @@
     b: <b>
     e: trap [[a b]: fail 'something]  ; trap after assign attempt
     all [
-        error? e
+        warning? e
         e.id = 'something
         a = <a>
         b = <b>

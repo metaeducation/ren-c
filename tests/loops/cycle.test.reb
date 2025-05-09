@@ -41,7 +41,7 @@
         if num = 10 [e: trap [1 / 0] break]
         trap [1 / 0]
     ]
-    all [error? e, num = 10]
+    all [warning? e, num = 10]
 )
 
 ; Recursion check

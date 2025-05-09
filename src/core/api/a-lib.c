@@ -1430,7 +1430,7 @@ RebolValue* API_rebRescue(
     );
 
     if (e) {
-        Init_Error(v, unwrap e);
+        Init_Warning(v, unwrap e);
         Set_Node_Root_Bit(v);
         Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
@@ -1465,7 +1465,7 @@ RebolValue* API_rebRescueInterruptible(
     );
 
     if (e) {
-        Init_Error(v, unwrap e);
+        Init_Warning(v, unwrap e);
         Set_Node_Root_Bit(v);
         Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
@@ -2979,7 +2979,7 @@ Error* Error_OS(int errnum) {
 RebolValue* API_rebError_OS(int errnum)  // see also macro rebPanic_OS()
 {
     ENTER_API;
-    return Init_Error(Alloc_Value(), Error_OS(errnum));
+    return Init_Warning(Alloc_Value(), Error_OS(errnum));
 }
 
 

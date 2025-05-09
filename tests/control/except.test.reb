@@ -11,7 +11,7 @@
    x: ~
    all [
        #X = fail "hello" then [x: #T] else [x: #E] except e -> [x: e, #X]
-       error? x
+       warning? x
    ]
 )
 (

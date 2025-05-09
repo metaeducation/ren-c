@@ -93,7 +93,7 @@ Rebol [
     if result = 0 [
         return ~  ;  avoid `if 1 = call:shell "dir" [...]`, see [1]
     ]
-    return fail make error! compose [
+    return fail make warning! compose [
         message: ["Process returned non-zero exit code:" exit-code]
         exit-code: (result)
     ]

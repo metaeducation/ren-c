@@ -110,7 +110,7 @@
     a-value: me@here.com
     same? a-value eval reduce [a-value]
 )
-(error? eval [trap [1 / 0]])
+(warning? eval [trap [1 / 0]])
 (
     a-value: %""
     same? a-value eval reduce [a-value]
@@ -183,9 +183,9 @@
 
 ; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,
 ; and can only be caught with SYS.UTIL/RESCUE.  Should it be?  Or should a
-; EVAL of an ERROR! just make it into a definitional error?
+; EVAL of an ERROR! just make it into a definitional warning?
 ;
-~zero-divide~ !! (error? trap [eval trap [1 / 0] 1])
+~zero-divide~ !! (warning? trap [eval trap [1 / 0] 1])
 
 (
     a-value: first [(2)]
@@ -248,7 +248,7 @@
 (
     [pos value]: evaluate:step [trap [1 / 0]]
     all [
-        error? value
+        warning? value
         pos = []
     ]
 )
@@ -258,7 +258,7 @@
     (
         result': meta:except eval [1 + 2 1 / 0]
         all [
-            error? result'
+            warning? result'
             result'.id = 'zero-divide
         ]
     )
@@ -268,7 +268,7 @@
     (
         result': meta:except [pos {~}]: eval:step [1 / 0 1 + 2]
         all [
-            error? result'
+            warning? result'
             result'.id = 'zero-divide
             pos = [1 + 2]
         ]

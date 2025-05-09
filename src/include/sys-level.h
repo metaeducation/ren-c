@@ -811,7 +811,7 @@ INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
     g_ds.num_refs_extant = save_extant;
   #endif
 
-    Init_Error(L->out, error);
+    Init_Warning(L->out, error);
     return Failify(L->out);
 }
 

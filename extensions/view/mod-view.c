@@ -250,11 +250,11 @@ DECLARE_NATIVE(REQUEST_FILE_P)
         }
         else if (cderr == FNERR_BUFFERTOOSMALL) // ofn.nMaxFile too small
             error = rebValue(
-                "make error! -[dialog buffer too small for selection]-"
+                "make warning! -[dialog buffer too small for selection]-"
             );
         else
             error = rebValue(
-                "make error! -[common dialog failure CDERR_XXX]-"
+                "make warning! -[common dialog failure CDERR_XXX]-"
             );
     }
     else {
@@ -370,7 +370,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
 
             if (folder == nullptr)
                 error = rebValue(
-                    "make error! -[folder can't be represented locally]-"
+                    "make warning! -[folder can't be represented locally]-"
                 );
             else {
                 GSList *list = gtk_file_chooser_get_filenames(chooser);
@@ -417,7 +417,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
     UNUSED(multi);
 
     error = rebValue(
-        "make error! -[REQUEST-FILE only on GTK and Windows at this time]-"
+        "make warning! -[REQUEST-FILE only on GTK and Windows at this time]-"
     );
   #endif
 
@@ -558,7 +558,7 @@ DECLARE_NATIVE(REQUEST_DIR_P)
     if (pFolder == nullptr)
         assert(result == nullptr);
     else if (not SHGetPathFromIDList(pFolder, folder))
-        error = rebValue("make error! -[SHGetPathFromIDList failed]-");
+        error = rebValue("make warning! -[SHGetPathFromIDList failed]-");
     else {
         result = rebValue("as file!", rebT(folder));
     }

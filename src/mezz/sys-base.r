@@ -31,7 +31,7 @@ script-pre-load-hook: ~
 
 /enrescue: lib.enrescue/
 /rescue: enclose enrescue/ lambda [f] [
-    match error! eval-free f
+    match warning! eval-free f
 ]
 
 lib.enrescue: ~<See SYS.UTIL/ENRESCUE and https://forum.rebol.info/t/1871>~
@@ -86,7 +86,7 @@ make-quit: lambda [
             if console [exit-code]  ; console gives code to shell, not to DO
             if exit-code = 0 [~]  ; suppresses display when given back to DO
         ] else [
-            fail make error! compose [  ; give definitional error back
+            fail make warning! compose [  ; give definitional error back
                 message: [
                     "Script returned non-zero exit code:" exit-code
                 ]

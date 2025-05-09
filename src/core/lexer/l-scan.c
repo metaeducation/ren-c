@@ -833,7 +833,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
             if (threw) {
                 DECLARE_VALUE (label);
                 Copy_Cell(label, VAL_THROWN_LABEL(TOP_LEVEL));
-                assert(Is_Error(label));
+                assert(Is_Warning(label));
 
                 DECLARE_ATOM (arg);
                 CATCH_THROWN(arg, TOP_LEVEL);
@@ -3200,7 +3200,7 @@ Option(Error*) Trap_Transcode_One(
 ){
     assert(Any_Utf8(any_utf8));  // use rebQ(), as SIGIL!, WORD!, evaluative
     Value* trapped = rebEntrap("transcode:one as text!", rebQ(any_utf8));
-    if (Is_Error(trapped)) {
+    if (Is_Warning(trapped)) {
         Error* error = Cell_Error(trapped);
         rebRelease(trapped);
         return error;
@@ -3270,7 +3270,7 @@ DECLARE_NATIVE(TRANSCODE)
             else {  // scanned another item, we only wanted one!
                 assert(TOP_INDEX == STACK_BASE + 2);
                 Drop_Data_Stack_To(STACK_BASE);
-                Init_Error(
+                Init_Warning(
                     OUT,
                     Error_User("TRANSCODE:ONE scanned more than one element")
                 );
