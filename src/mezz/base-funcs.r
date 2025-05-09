@@ -377,17 +377,10 @@ specialized?: func [
     ]
 )
 
-attempt: func [
-    "Evaluate a block and returns result or NULL if an expression fails"
-
-    return: "Returns NULL on failure (-or- if last evaluative result is NULL)"
-        [any-value?]
-    code [block!]
-    <local> temp
-][
-    if error? temp: entrap code [return null]
-    return unmeta temp
-]
+; New-attempt, run body as a "loop of 1" with BREAK and CONTINUE, and able
+; to integrate with THEN and ELSE.
+;
+attempt: specialize repeat/ [count: 1]
 
 trap: func [
     "If evaluation raises an error, return it, otherwise NULL"

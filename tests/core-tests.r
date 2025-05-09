@@ -169,6 +169,7 @@
 %functions/unwind.test.reb
 %functions/yielder.test.reb
 
+%loops/attempt.test.reb
 %loops/break.test.reb
 %loops/cfor.test.reb
 %loops/continue.test.reb
