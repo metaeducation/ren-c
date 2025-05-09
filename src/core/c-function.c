@@ -355,7 +355,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         //
         Value* typeset = Init_Typeset(
             PUSH(),  // volatile if you PUSH() again
-            TS_VALUE,  // any value (includes trash, void, null, action)
+            TS_ATOM,  // any value (includes trash, void, null, action)
             Cell_Word_Symbol(item) // don't canonize, see #2258
         );
 
@@ -456,11 +456,11 @@ Array* Make_Paramlist_Managed_May_Fail(
     if (flags & MKF_RETURN) {
         if (return_stackindex == 0) {  // no explicit RETURN: pure local
             //
-            // While default arguments disallow ACTION!, NOTHING, and NULL...
-            // they are allowed to return anything.  Generally speaking, the
-            // checks are on the input side, not the output.
+            // While default arguments disallow VOID and TRASH...RETURN is
+            // allowed anything by default.  Generally speaking, the checks
+            // are on the input side, not the output.
             //
-            Init_Typeset(PUSH(), TS_VALUE, CANON(RETURN));
+            Init_Typeset(PUSH(), TS_ATOM, CANON(RETURN));
             Tweak_Parameter_Class(TOP, PARAMCLASS_RETURN);
             return_stackindex = TOP_INDEX;
 

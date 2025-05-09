@@ -784,7 +784,7 @@ Error* Make_Error_Managed_Vaptr(
                 if (Is_Nulled(arg))
                     Init_Word(value, CANON(_TNULL_T));
                 else if (Is_Void(arg))
-                    Init_Word(value, CANON(VOID));
+                    Init_Word(value, CANON(_TVOID_T));
                 else if (Is_Okay(arg))
                     Init_Word(value, CANON(_TOKAY_T));
                 else if (Is_Trash(arg))

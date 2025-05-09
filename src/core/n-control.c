@@ -57,7 +57,7 @@
 //  {When TO LOGIC! CONDITION is true, execute branch}
 //
 //      return: "null if branch not run, otherwise branch result"
-//          [any-value!]
+//          [any-atom!]
 //      condition [any-value!]
 //      branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [block! action!]
@@ -67,7 +67,7 @@ DECLARE_NATIVE(IF)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    if (IS_FALSEY(ARG(CONDITION))) // fails on void and trash
+    if (IS_FALSEY(ARG(CONDITION)))  // fails on void and trash
         return Init_Void(OUT);
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(CONDITION)))
@@ -83,7 +83,7 @@ DECLARE_NATIVE(IF)
 //  {When TO LOGIC! CONDITION is false, execute branch}
 //
 //      return: "null if branch not run, otherwise branch result"
-//          [any-value!]
+//          [any-atom!]
 //      condition [any-value!]
 //      branch [block! action!]
 //  ]
@@ -107,7 +107,7 @@ DECLARE_NATIVE(IF_NOT)
 //
 //  {Choose a branch to execute, based on TO-LOGIC of the CONDITION value}
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //          "Returns null if either branch returns null (unlike IF...ELSE)"
 //      condition [any-value!]
 //      true-branch "If arity-1 ACTION!, receives the evaluated condition"
@@ -277,7 +277,7 @@ bool Either_Test_Core_Throws(
 //  {If argument passes test, return it as-is, otherwise take the branch}
 //
 //      return: "Input argument if it matched, or branch result"
-//          [any-value!]
+//          [any-atom!]
 //      test "Typeset membership, LOGIC! to test for truth, filter function"
 //          [
 //              word! path! action! ;-- arity-1 filter function, opt named
@@ -312,9 +312,9 @@ DECLARE_NATIVE(EITHER_TEST)
 //  {If input is not null, return that value, otherwise evaluate the branch}
 //
 //      return: "Input value if not null, or branch result (possibly null)"
-//          [any-value!]
+//          [any-atom!]
 //      left "Run branch if this is null or void"
-//          [any-value! trash!]
+//          [any-atom!]
 //      branch [block! action!]
 //  ]
 //
@@ -339,9 +339,9 @@ DECLARE_NATIVE(ELSE)
 //  {If input is null, return null, otherwise evaluate the branch}
 //
 //      return: "null if input is null, or branch result (voided if null)"
-//          [any-value!]
+//          [any-atom!]
 //      left "Run branch if this is not null or void"
-//          [any-value! trash!]
+//          [any-atom!]
 //      branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [block! action!]
 //  ]
@@ -367,9 +367,9 @@ DECLARE_NATIVE(THEN)
 //  {For non-null input, evaluate and discard branch (like a pass-thru THEN)}
 //
 //      return: "The same value as input, regardless of if branch runs"
-//          [any-value!]
+//          [any-atom!]
 //      left "Run branch if this is not null or void"
-//          [any-value! trash!]
+//          [any-atom!]
 //      branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [block! action!]
 //  ]
@@ -471,7 +471,7 @@ DECLARE_NATIVE(NON)
 //  {Short-circuiting variant of AND, using a block of expressions as input}
 //
 //      return: "Product of last evaluation if all truthy, else null"
-//          [any-value!]
+//          [any-atom!]
 //      block "Block of expressions"
 //          [block!]
 //  ]
@@ -514,7 +514,7 @@ DECLARE_NATIVE(ALL)
 //  {Short-circuiting version of OR, using a block of expressions as input}
 //
 //      return: "First truthy evaluative result, or null if all falsey"
-//          [any-value!]
+//          [any-atom!]
 //      block "Block of expressions"
 //          [block!]
 //  ]
@@ -973,7 +973,7 @@ DECLARE_NATIVE(DEFAULT)
 //  {Catches a throw from a block and returns its value.}
 //
 //      return: "Thrown value, or BLOCK! with value and name (if /NAME, /ANY)"
-//          [any-value!]
+//          [any-atom!]
 //      block "Block to evaluate"
 //          [block!]
 //      /result "Optional evaluation result if not thrown"
@@ -1118,7 +1118,7 @@ DECLARE_NATIVE(CATCH)
 //  "Throws control back to a previous catch."
 //
 //      value "Value returned from catch"
-//          [any-value!]
+//          [any-atom!]
 //      /name "Throws to a named catch"
 //      name-value [word! action! object!]
 //  ]

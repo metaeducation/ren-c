@@ -226,7 +226,7 @@ dump-obj: function [
                 continue  ; !!! review
             ]
 
-            type: type of get* 'val
+            type: try type of get* 'val
 
             str: if lib/match [action! object!] :type [
                 spaced [word  mold spec-of :val  words of :val]

@@ -239,7 +239,7 @@ DECLARE_NATIVE(BIND)
 //
 //  {Defines words local to a block.}
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //      vars [block! word!]
 //          {Local word(s) to the block}
 //      body [block!]
@@ -705,8 +705,8 @@ DECLARE_NATIVE(SET)
 //
 //  {Convert nulls to voids, pass through most other values}
 //
-//      return: [any-value!]
-//      optional [any-value!]
+//      return: [any-atom!]
+//      optional [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(MAYBE)
@@ -1246,7 +1246,7 @@ DECLARE_NATIVE(NOOP)
 //  "Tells you if the argument is not a value"
 //
 //      return: [logic!]
-//      optional [any-value!]
+//      optional [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(NULL_Q)
@@ -1263,7 +1263,7 @@ DECLARE_NATIVE(NULL_Q)
 //  "Tells you if the argument is antiform okay"
 //
 //      return: [logic!]
-//      optional [any-value!]
+//      optional [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(OKAY_Q)
@@ -1280,7 +1280,7 @@ DECLARE_NATIVE(OKAY_Q)
 //  "Tells you if the argument is either the ~null~ or ~okay~ antiform"
 //
 //      return: [logic!]  ; Note: using LOGIC? to typecheck would be recursive
-//      value
+//      value [any-atom!]
 //  ]
 //
 DECLARE_NATIVE(LOGIC_Q)

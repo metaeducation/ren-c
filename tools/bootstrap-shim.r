@@ -574,7 +574,11 @@ modernize-action: function3 [
                         fail "No BLANK! in bootstrap (it's acting like null)"
                     ]
                     replace typespec '~null~ blank!
-                    replace typespec '~void~ <opt>
+                    if find typespec <undo-opt> [  ; need to turn to blank3
+                        append blankers compose/deep [
+                            if void? (as get-word w) [(as set-word! w) null]
+                        ]
+                    ]
                     if find typespec <opt-out> [
                         replace typespec <opt-out> <opt>
                         append blankers compose [
@@ -659,7 +663,7 @@ transcode: function3 [
 
 split-path: func3 [
     "Splits and returns directory component, variable for file optionally set"
-    return: [<opt> file!]
+    return: [blank! file!]
     location [<opt> file! url! text!]
     /file  ; no multi-return, simulate it
         farg [any-word! any-path!]

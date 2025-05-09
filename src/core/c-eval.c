@@ -250,10 +250,17 @@ INLINE void Finalize_Arg(
             fail (Error_Bad_Refine_Revoke(param, arg));
     }
 
-    if (Is_Void(arg) and Typeset_Check(param, TYPE_TS_NOOP_IF_VOID)) {
-        Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
-        LVL_PHASE_OR_DUMMY(L_state) = PG_Dummy_Action;
-        return;
+    if (Is_Void(arg)) {
+        if (Is_Param_Noop_If_Void(param)) {
+            Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
+            LVL_PHASE_OR_DUMMY(L_state) = PG_Dummy_Action;
+            return;
+        }
+        if (Is_Param_Null_If_Void(param)) {
+            Init_Nulled(arg);
+            Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
+            return;
+        }
     }
 
     if (not Is_Param_Variadic(param)) {
@@ -909,6 +916,10 @@ bool Eval_Core_Throws(Level* const L)
                 assert(
                     (L->refine != ORDINARY_ARG and Is_Nulled(L->special))
                     or Typeset_Check(L->param, Type_Of(L->special))
+                    or (
+                        Is_Nulled(L->special)
+                        and Is_Param_Null_If_Void(L->param)
+                    )
                 );
 
                 if (L->arg != L->special) {
@@ -1392,6 +1403,27 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_WORD:
+        switch (Cell_Word_Id(current)) {  // quasiform simulation
+          case SYM__TVOID_T:
+            Init_Void(L->out);
+            goto post_switch;
+
+          case SYM__TNULL_T:
+            Init_Nulled(L->out);
+            goto post_switch;
+
+          case SYM__TOKAY_T:
+            Init_Okay(L->out);
+            goto post_switch;
+
+          case SYM_TILDE_1:
+            Init_Trash(L->out);
+            goto post_switch;
+
+          default:
+            break;
+        }
+
         if (not current_gotten)
             current_gotten = Get_Opt_Var_May_Fail(current, L->specifier);
 

@@ -378,22 +378,30 @@ e-types/emit [{
         TYPE_0 = 0, /* reserved for internal purposes */
         TYPE_0_END = TYPE_0, /* ...most commonly array termination cells... */
         $[Rebs],
-        TYPE_MAX, /* one past valid types (includes "antiforms") */
+        TYPE_MAX,
 
-        TYPE_MAX_PLUS_ONE, /* used for internal markings and algorithms */
+        TYPE_MAX_PLUS_ONE,
+        TYPE_TS_VARIADIC = TYPE_MAX_PLUS_ONE,
         TYPE_R_THROWN = TYPE_MAX_PLUS_ONE,
 
-        TYPE_MAX_PLUS_TWO, /* used to indicate trash in the debug build */
+        TYPE_MAX_PLUS_TWO,
+        TYPE_TS_SKIPPABLE = TYPE_MAX_PLUS_TWO,
         TYPE_R_INVISIBLE = TYPE_MAX_PLUS_TWO,
 
-        TYPE_MAX_PLUS_THREE, /* used for experimental typeset flag */
+        TYPE_MAX_PLUS_THREE,
+        TYPE_TS_HIDDEN = TYPE_MAX_PLUS_THREE,
         TYPE_R_REDO = TYPE_MAX_PLUS_THREE,
 
-        TYPE_MAX_PLUS_FOUR, /* also used for experimental typeset flag */
+        TYPE_MAX_PLUS_FOUR,
+        TYPE_TS_UNBINDABLE = TYPE_MAX_PLUS_FOUR,
         TYPE_R_REFERENCE = TYPE_MAX_PLUS_FOUR,
 
         TYPE_MAX_PLUS_FIVE,
+        TYPE_TS_NOOP_IF_VOID = TYPE_MAX_PLUS_FIVE,
         TYPE_R_IMMEDIATE = TYPE_MAX_PLUS_FIVE,
+
+        TYPE_MAX_PLUS_SIX,
+        TYPE_TS_NULL_IF_VOID = TYPE_MAX_PLUS_SIX,
 
         TYPE_MAX_PLUS_MAX
   #if CPLUSPLUS_11
@@ -445,17 +453,24 @@ e-types/emit {
 
     /*
      * Subtract 1 to get mask for everything (including TYPE_0 for END)
-     * Subtract 1 again to take out TYPE_0 for END (signal for "endability")
+     * Subtract signal for end and  (signal for "endability")
+     * Includes TYPE_VOID.
+     */
+    #define TS_ATOM \
+        ((FLAGIT_KIND(TYPE_MAX) - 1) - FLAGIT_KIND(TYPE_0_END))
+
+    /*
+     * TS_ATOM minus VOID
      */
     #define TS_VALUE \
-        ((FLAGIT_KIND(TYPE_MAX) - 1) - 1)
+        (TS_ATOM - FLAGIT_KIND(TYPE_VOID))
 
     /*
      * TS_VALUE minus NULL, VOID, and TRASH
      */
     #define TS_ELEMENT \
-        (TS_VALUE - FLAGIT_KIND(TYPE_NULLED) - FLAGIT_KIND(TYPE_VOID) \
-            - FLAGIT_KIND(TYPE_TRASH) - FLAGIT_KIND(TYPE_OKAY))
+        (TS_VALUE - FLAGIT_KIND(TYPE_TRASH) - FLAGIT_KIND(TYPE_NULLED) \
+            - FLAGIT_KIND(TYPE_OKAY))
 
     #define TS_LOGIC \
         (FLAGIT_KIND(TYPE_NULLED) | FLAGIT_KIND(TYPE_OKAY))

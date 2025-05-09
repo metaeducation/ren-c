@@ -98,9 +98,9 @@ replace: function [
     target "Series to replace within (modified)"
         [any-series!]
     pattern "Value to be replaced (converted if necessary)"
-        [~void~ any-element!]
+        [<undo-opt> any-element!]
     replacement "Value to replace with (functions not called in this EXE)"
-        [~void~ any-element!]
+        [<undo-opt> any-element!]
 
     ; !!! Note these refinments alias ALL, CASE, TAIL natives!
     /one "Replace one occurrence"
@@ -109,7 +109,7 @@ replace: function [
 
     ; Consider adding an /any refinement to use find/any, once that works.
 ][
-    if void? :pattern [return target]
+    if not :pattern [return target]
 
     case_REPLACE: case
     case: :lib/case
@@ -150,7 +150,7 @@ replace: function [
     ]
 
     while [pos: find/(if case_REPLACE [/case]) target :pattern] [
-        target: change/part pos :replacement len
+        target: change/part pos maybe :replacement len
 
         if one [break]
     ]
@@ -194,7 +194,7 @@ reword: function [
 
     prefix: []
     suffix: []
-    switch type of :delimiters [
+    switch try type of :delimiters [
         null [prefix: "$"]
         block! [
             parse/match delimiters [
@@ -598,10 +598,10 @@ split: function [
     series "The series to split"
         [<opt-out> any-series!]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
-        [~void~ block! integer! char! bitset! text!]
+        [<undo-opt> block! integer! char! bitset! text!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    if void? dlm [  ; nothing to split by
+    if not dlm [  ; nothing to split by
         return reduce [series]
     ]
 

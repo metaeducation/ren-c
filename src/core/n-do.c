@@ -45,7 +45,7 @@
 //
 //  {Process received value *inline* as the evaluator loop would.}
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //      value [any-element!]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
 //      expressions [any-value! <...>]
@@ -192,7 +192,7 @@ DECLARE_NATIVE(EVAL_INFIX)
 //
 //  {Evaluates a block of source code (directly or fetched according to type)}
 //
-//      return: [any-value!]
+//      return: [any-atom!]
 //      source [
 //          <opt-out> ;-- useful for `do maybe ...` scenarios when no match
 //          text! ;-- source code in text form
@@ -290,7 +290,7 @@ DECLARE_NATIVE(DO)
 //  "Run a list through the evaluator iteratively, or take a single step"
 //
 //      return: "Evaluation product, or ~[position product]~ pack if /STEP3"
-//          [any-value!]  ; /STEP3 changes primary return product [1]
+//          [any-atom!]  ; /STEP3 changes primary return product [1]
 //      source [
 //          <opt-out>  ; useful for `evaluate maybe ...` scenarios
 //          any-list!  ; code
@@ -299,8 +299,7 @@ DECLARE_NATIVE(DO)
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
 //      /step3 "Take a step and store result in var"
-//      var [~void~ any-word!]
-//          "If not void, then a variable updated with new position"
+//      var [any-word!]
 //  ]
 //
 DECLARE_NATIVE(EVALUATE)
@@ -336,12 +335,12 @@ DECLARE_NATIVE(EVALUATE)
         }
 
         if (indexor == END_FLAG or IS_END(OUT)) {
-            if (not Is_Void(var))
+            if (not Is_Nulled(var))
                 Init_Nulled(Sink_Var_May_Fail(var, SPECIFIED));
             return nullptr; // no disruption of output result
         }
 
-        if (not Is_Void(var))
+        if (not Is_Nulled(var))
             Copy_Cell(Sink_Var_May_Fail(var, SPECIFIED), OUT);
 
         Copy_Cell(OUT, source);
@@ -465,12 +464,12 @@ DECLARE_NATIVE(EVALUATE)
 
             if (indexor == END_FLAG or IS_END(OUT)) {
                 SET_END(position);  // convention for shared data at end point
-                if (not Is_Void(var))
+                if (not Is_Nulled(var))
                     Init_Nulled(Sink_Var_May_Fail(var, SPECIFIED));
                 return nullptr;
             }
 
-            if (not Is_Void(var))
+            if (not Is_Nulled(var))
                 Copy_Cell(Sink_Var_May_Fail(var, SPECIFIED), OUT);
 
             RETURN (source);  // original VARARGS! will have updated position
@@ -504,12 +503,12 @@ DECLARE_NATIVE(EVALUATE)
         }
 
         if (IS_END(OUT)) {
-            if (not Is_Void(var))
+            if (not Is_Nulled(var))
                 Init_Nulled(Sink_Var_May_Fail(var, SPECIFIED));
             return nullptr;
         }
 
-        if (not Is_Void(var))
+        if (not Is_Nulled(var))
             Copy_Cell(Sink_Var_May_Fail(var, SPECIFIED), OUT);
 
         RETURN (source); } // original VARARGS! will have an updated position
