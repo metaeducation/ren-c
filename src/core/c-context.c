@@ -1389,27 +1389,27 @@ void Assert_Context_Core(VarList* c)
     Array* varlist = Varlist_Array(c);
 
     if (not (varlist->leader.bits & SERIES_MASK_CONTEXT))
-        panic (varlist);
+        crash (varlist);
 
     Array* keylist = Keylist_Of_Varlist(c);
     if (keylist == nullptr)
-        panic (c);
+        crash (c);
 
     Value* rootvar = Varlist_Archetype(c);
     if (not Any_Context(rootvar))
-        panic (rootvar);
+        crash (rootvar);
 
     REBLEN keys_len = Array_Len(keylist);
     REBLEN vars_len = Array_Len(varlist);
 
     if (keys_len < 1)
-        panic (keylist);
+        crash (keylist);
 
     if (keys_len != vars_len)
-        panic (c);
+        crash (c);
 
     if (rootvar->payload.any_context.varlist != varlist)
-        panic (rootvar);
+        crash (rootvar);
 
     if (Get_Flex_Info(c, INACCESSIBLE)) {
         //
@@ -1428,7 +1428,7 @@ void Assert_Context_Core(VarList* c)
         // for now--unreadable.
         //
         if (Is_Frame(rootvar))
-            panic (c);
+            crash (c);
     }
     else if (Is_Action(rootkey)) {
         //
@@ -1437,7 +1437,7 @@ void Assert_Context_Core(VarList* c)
         // ordinary object that was a copy of a FRAME! but not a FRAME!.
         //
         if (not Is_Frame(rootvar))
-            panic (rootvar);
+            crash (rootvar);
 
         // In a FRAME!, the keylist is for the underlying function.  So to
         // know what function the frame is actually for, one must look to
@@ -1447,7 +1447,7 @@ void Assert_Context_Core(VarList* c)
             ACT_UNDERLYING(rootvar->payload.any_context.phase)
             != VAL_ACTION(rootkey)
         ){
-            panic (rootvar);
+            crash (rootvar);
         }
 
         Option(Level*) L = Level_Of_Varlist_If_Running(c);
@@ -1460,12 +1460,12 @@ void Assert_Context_Core(VarList* c)
                 ACT_UNDERLYING(rootvar->payload.any_context.phase)
                 != VAL_ACTION(rootkey)
             ){
-                panic (rootvar);
+                crash (rootvar);
             }
         }
     }
     else
-        panic (rootkey);
+        crash (rootkey);
 
     Value* key = Varlist_Keys_Head(c);
     Value* var = Varlist_Slots_Head(c);
@@ -1474,26 +1474,26 @@ void Assert_Context_Core(VarList* c)
     for (n = 1; n < keys_len; n++, var++, key++) {
         if (IS_END(key)) {
             printf("** Early key end at index: %d\n", cast(int, n));
-            panic (c);
+            crash (c);
         }
 
         if (not Is_Typeset(key))
-            panic (key);
+            crash (key);
 
         if (IS_END(var)) {
             printf("** Early var end at index: %d\n", cast(int, n));
-            panic (c);
+            crash (c);
         }
     }
 
     if (NOT_END(key)) {
         printf("** Missing key end at index: %d\n", cast(int, n));
-        panic (key);
+        crash (key);
     }
 
     if (NOT_END(var)) {
         printf("** Missing var end at index: %d\n", cast(int, n));
-        panic (var);
+        crash (var);
     }
 }
 

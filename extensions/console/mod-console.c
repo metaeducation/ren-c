@@ -281,7 +281,7 @@ DECLARE_NATIVE(CONSOLE)
             if (no_recover) {
                 rebElide("print {** CONSOLE INTERNAL ERROR **}");
                 rebElide("print mold", trapped);
-                rebJumps("panic", trapped);
+                rebJumps("crash", trapped);
             }
 
             code = rebValue("[#host-console-error]");

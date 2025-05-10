@@ -182,7 +182,7 @@ INLINE void *Alloc_Pooled(REBLEN pool_id)
             cast(void*, pool),
             cast(void*, pool->first)
         );
-        panic (unit);
+        crash (unit);
     }
   #endif
 

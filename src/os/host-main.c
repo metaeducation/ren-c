@@ -271,7 +271,7 @@ int main(int argc, char *argv_ansi[])
     rebRelease(host_code);
 
     if (rebNot("lib/action?", rebQ(host_start)))
-        rebJumps("lib/PANIC-VALUE", rebQ(host_start));
+        rebJumps("crash {HOST-START isn't an ACTION! in main()");
 
     // While some people may think that argv[0] in C contains the path to
     // the running executable, this is not necessarily the case.  The actual
@@ -300,7 +300,7 @@ int main(int argc, char *argv_ansi[])
     );
 
     if (rebDid("lib/error?", rebQ(trapped)))  // error in HOST-START itself
-        rebJumps("lib/PANIC", trapped);
+        rebJumps("crash", trapped);
 
     Value* code = rebValue(trapped);  // enrescue metas output
     rebRelease(trapped); // don't need the outer block any more

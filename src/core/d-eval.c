@@ -297,7 +297,7 @@ void Do_After_Action_Checks_Debug(Level* L) {
         assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
         if (not Typeset_Check(typeset, Type_Of(L->out))) {
             printf("Native code violated return type contract!\n");
-            panic (Error_Bad_Return_Type(L, Type_Of(L->out)));
+            crash (Error_Bad_Return_Type(L, Type_Of(L->out)));
         }
     }
 }

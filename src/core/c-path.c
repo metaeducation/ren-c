@@ -141,7 +141,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
         case TYPE_R_THROWN:
-            panic ("Path dispatch isn't allowed to throw, only GROUP!s");
+            crash ("Path dispatch isn't allowed to throw, only GROUP!s");
 
         case TYPE_R_INVISIBLE: // dispatcher assigned target with opt_setval
             break; // nothing left to do, have to take the dispatcher's word
@@ -216,10 +216,10 @@ bool Next_Path_Throws(REBPVS *pvs)
             fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
 
         case TYPE_R_THROWN:
-            panic ("Path dispatch isn't allowed to throw, only GROUP!s");
+            crash ("Path dispatch isn't allowed to throw, only GROUP!s");
 
         case TYPE_R_INVISIBLE:
-            panic("SET-PATH! evaluation ran assignment before path end");
+            crash ("SET-PATH! evaluation ran assignment before path end");
 
         case TYPE_R_REFERENCE:
             Derelativize(
@@ -235,7 +235,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             break;
 
         default:
-            panic ("Bounce value not supported for path dispatch");
+            crash ("Bounce value not supported for path dispatch");
         }
     }
 
@@ -459,7 +459,7 @@ bool Eval_Path_Throws_Core(
                 nullptr,  // opt_def
                 base // first_refine_dsp
             )){
-                panic ("REFINE-only specializations should not THROW");
+                crash ("REFINE-only specializations should not THROW");
             }
 
             Copy_Cell(pvs->out, PVS_PICKER(pvs));

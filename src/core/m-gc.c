@@ -113,10 +113,10 @@ INLINE void Mark_Stub_Only(Stub* s)
 {
   #if RUNTIME_CHECKS
     if (Not_Node_Readable(s))
-        panic (s);
+        crash (s);
     if (Not_Node_Managed(s)) {
         printf("Link to non-MANAGED item reached by GC\n");
-        panic (s);
+        crash (s);
     }
     if (Get_Flex_Info(s, INACCESSIBLE))
         assert(not Is_Flex_Dynamic(s));
@@ -148,7 +148,7 @@ static void Queue_Mark_Array_Subclass_Deep(Array* a)
 {
   #if RUNTIME_CHECKS
     if (not Is_Flex_Array(a))
-        panic (a);
+        crash (a);
   #endif
 
     if (Is_Node_Marked(a))
@@ -550,7 +550,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         break;
 
     default:
-        panic (v);
+        crash (v);
     }
 
   #if RUNTIME_CHECKS
@@ -756,7 +756,7 @@ static void Propagate_All_GC_Marks(void)
                 and Not_Array_Flag(a, IS_VARLIST)
                 and Not_Array_Flag(a, ANTIFORMS_LEGAL)
             ){
-                panic(a);
+                crash (a);
             }
         #endif
         }
@@ -811,7 +811,7 @@ static void Reify_Any_C_Valist_Frames(void)
 //
 // For root nodes, this checks to see if their lifetime was dependent on a
 // FRAME!, and if that frame is no longer on the stack.  If so, it (currently)
-// will panic if that frame did not end due to a fail().  This could be
+// will crash if that frame did not end due to a fail().  This could be
 // relaxed to automatically free those nodes as a normal GC.
 //
 // !!! This implementation walks over *all* the nodes.  It wouldn't have to
@@ -862,7 +862,7 @@ static void Mark_Root_Stubs(void)
                       #if RUNTIME_CHECKS
                         printf("handle not rebReleased(), not legal ATM\n");
                       #endif
-                        panic (s);
+                        crash (s);
                     }
 
                     GC_Kill_Flex(s);
@@ -912,11 +912,11 @@ static void Mark_Root_Stubs(void)
 
                 if (s == BUF_COLLECT) {
                     if (Array_Len(BUF_COLLECT) != 0)
-                        panic (BUF_COLLECT);
+                        crash (BUF_COLLECT);
                     continue;  // shouldn't recycle while collecting
                 }
 
-                panic (s);
+                crash (s);
             }
 
             // At present, no handling for unmanaged STRING!, BINARY!, etc.
@@ -1437,7 +1437,7 @@ REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
 
     if (sweeplist != nullptr) {
     #if NO_RUNTIME_CHECKS
-        panic (sweeplist);
+        crash (sweeplist);
     #else
         count += Fill_Sweeplist(sweeplist);
     #endif
@@ -1554,7 +1554,7 @@ void Push_Guard_Node(const Node* node)
         //
         Node* containing = Try_Find_Containing_Node_Debug(value);
         if (containing)
-            panic (containing);
+            crash (containing);
       #endif
     }
     else {

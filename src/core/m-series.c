@@ -352,7 +352,7 @@ void Assert_Flex_Term_Core(Flex* s)
         //
         Cell* tail = Array_Tail(cast_Array(s));
         if (NOT_END(tail))
-            panic (tail);
+            crash (tail);
     }
     else {
         // If they are terminated, then non-Cell-bearing series must have
@@ -363,7 +363,7 @@ void Assert_Flex_Term_Core(Flex* s)
         REBLEN n;
         for (n = 0; n < wide; n++) {
             if (0 != Flex_Data(s)[(len * wide) + n])
-                panic (s);
+                crash (s);
         }
     }
 }
@@ -375,7 +375,7 @@ void Assert_Flex_Term_Core(Flex* s)
 void Assert_Flex_Core(Flex* s)
 {
     if (Not_Node_Readable(s))
-        panic (s);
+        crash (s);
 
     assert(
         Get_Flex_Info(s, 0_IS_TRUE) // @ NODE_FLAG_NODE
@@ -390,7 +390,7 @@ void Assert_Flex_Core(Flex* s)
 
 
 //
-//  Panic_Flex_Debug: C
+//  Crash_On_Flex_Debug: C
 //
 // The goal of this routine is to progressively reveal as much diagnostic
 // information about a series as possible.  Since the routine will ultimately
@@ -398,7 +398,7 @@ void Assert_Flex_Core(Flex* s)
 // risky in an unstable state...though it is ideal if it can run to the end
 // so it can trigger Address Sanitizer or Valgrind's internal stack dump.
 //
-ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
+ATTRIBUTE_NO_RETURN void Crash_On_Flex_Debug(Flex* s)
 {
     fflush(stdout);
     fflush(stderr);
@@ -423,14 +423,14 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
     fflush(stderr);
 
     if (*s->guard == 1020) // should make valgrind or asan alert
-        panic ("Flex guard didn't trigger ASAN/valgrind trap");
+        crash ("Flex guard didn't trigger ASAN/valgrind trap");
 
-    panic (
+    crash (
         "Flex guard didn't trigger ASAN/Valgrind trap\n" \
         "either not a Flex Stub, or you're not running ASAN/Valgrind\n"
     );
   #else
-    panic ("Executable not built with DEBUG_STUB_ORIGINS, no more info");
+    crash ("Executable not built with DEBUG_STUB_ORIGINS, no more info");
   #endif
 }
 

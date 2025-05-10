@@ -392,7 +392,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 
 // Natives can be decorated with a RETURN: annotation, but this is not
 // checked in the release build.  It's assumed they will only return the
-// correct types.  This switch is used to panic() if they're wrong.
+// correct types.  This switch is used to crash() if they're wrong.
 //
 // !!! This does not appear to be used any longer (?
 //
@@ -441,7 +441,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 
 // Both Valgrind and Address Sanitizer can provide the call stack at the moment
 // of allocation when a freed pointer is used.  Touch_Stub() uses a bogus
-// allocation to help mark Stub origins that can later be used by `panic()`.
+// allocation to help mark Stub origins that can later be used by `crash()`.
 // But the feature is a waste if you're not using such tools.
 //
 // If you plan to use Valgrind with this, you'll have to set it explicitly...

@@ -311,10 +311,10 @@ Value* Init_Any_Series_At_Core(
   #if RUNTIME_CHECKS
     if (Any_String(out)) {
         if (Flex_Wide(series) != 2)
-            panic(series);
+            crash (series);
     } else if (Is_Binary(out)) {
         if (Flex_Wide(series) != 1)
-            panic(series);
+            crash (series);
     }
   #endif
 

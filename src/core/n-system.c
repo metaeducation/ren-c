@@ -289,7 +289,7 @@ int ceil_log2(unsigned long long x) {
 //
 //      return: [~null~]
 //      tick [<opt-out> integer!]
-//          {Get from PANIC, Level.tick, Stub.tick, Cell.tick}
+//          {Get from CRASH, Level.tick, Stub.tick, Cell.tick}
 //      /relative
 //          {TICK parameter represents a count relative to the current tick}
 //      /compensate
@@ -305,13 +305,13 @@ DECLARE_NATIVE(C_DEBUG_BREAK_AT)
         //
         // Imagine two runs of Rebol console initialization.  In the first,
         // the tick count is 304 when C-DEBUG-BREAK/COMPENSATE is called,
-        // right after command line parsing.  Later on a panic() is hit and
+        // right after command line parsing.  Later on a crash() is hit and
         // reports tick count 1020 in the crash log.
         //
         // Wishing to pick apart the bug before it happens, the Rebol Core
         // Developer then re-runs the program with `--breakpoint=1020`, hoping
         // to break at that tick, to catch the downstream appearance of the
-        // tick in the panic().  But since command-line processing is in
+        // tick in the crash().  But since command-line processing is in
         // usermode, the addition of the parameter throws off the ticks!
         //
         // https://en.wikipedia.org/wiki/Observer_effect_(physics)

@@ -440,7 +440,7 @@ void MF_Fail(Molder* mo, const Cell* v, bool form)
         //
     #if NO_RUNTIME_CHECKS
         UNUSED(mo);
-        panic (v);
+        crash (v);
     #else
         printf("!!! Request to MOLD or FORM a TYPE_0 value !!!\n");
         Append_Unencoded(mo->utf8flex, "!!!TYPE_0!!!");
@@ -500,7 +500,7 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
 
     if (Is_Cell_Unreadable(v)) {
       #if NO_RUNTIME_CHECKS
-        panic (v);
+        crash (v);
       #else
         printf("!!! Request to MOLD or FORM an unreadable cell !!!\n");
         Append_Unencoded(s, "!!!unreadable!!!");
@@ -517,7 +517,7 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
         // TYPE_0 items)
         //
       #if NO_RUNTIME_CHECKS
-        panic (v);
+        crash (v);
       #else
         printf("!!! Request to MOLD or FORM an antiform !!!\n");
         if (Is_Nulled(v))

@@ -312,11 +312,11 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// PANIC (Force System Exit with Diagnostic Info)
+// CRASH (Force System Exit with Diagnostic Info)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Panics are the equivalent of the "blue screen of death" and should never
+// Crashes are the equivalent of the "blue screen of death" and should never
 // happen in normal operation.  Generally, it is assumed nothing under the
 // user's control could fix or work around the issue, hence the main goal is
 // to provide the most diagnostic information possible.
@@ -325,46 +325,46 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // (including Array*, VarList*, REBACT*...) is the most useful "smoking gun":
 //
 //     if (Type_Of(value) == TYPE_TRASH)
-//         panic (value);
+//         crash (value);
 //
 //     if (Array_Len(array) < 2)
-//         panic (array);
+//         crash (array);
 //
 // Both the debug and release builds will spit out diagnostics of the item,
 // along with the file and line number of the problem.  The diagnostics are
 // written in such a way that they give the "more likely to succeed" output
 // first, and then get more aggressive to the point of possibly crashing by
-// dereferencing corrupt memory which triggered the panic.  The debug build
+// dereferencing corrupt memory which triggered the crash.  The debug build
 // diagnostics will be more exhaustive, but the release build gives some info.
 //
-// The most useful argument to panic is going to be a problematic value or
+// The most useful argument to crash is going to be a problematic value or
 // series vs. a message (especially given that the file and line number are
 // included in the report).  But if no relevant smoking gun is available, a
-// UTF-8 string can also be passed to panic...and it will terminate with that
+// UTF-8 string can also be passed to crash...and it will terminate with that
 // as a message:
 //
 //     if (sizeof(foo) != 42) {
-//         panic ("invalid foo size");
+//         crash ("invalid foo size");
 //
 //         /* this line will never be reached, because it
 //            immediately exited the process with a message */
 //     }
 //
-// NOTE: It's desired that there be a space in `panic (...)` to make it look
+// NOTE: It's desired that there be a space in `crash (...)` to make it look
 // more "keyword-like" and draw attention to the fact it is a `noreturn` call.
 //
 #if NO_RUNTIME_CHECKS
-    #define panic(v) \
-        Panic_Core((v), TICK, nullptr, 0)
+    #define crash(v) \
+        Crash_Core((v), TICK, nullptr, 0)
 
-    #define panic_at(v,file,line) \
+    #define crash_at(v,file,line) \
         UNUSED(file); \
         UNUSED(line); \
-        panic(v)
+        crash(v)
 #else
-    #define panic(v) \
-        Panic_Core((v), TICK, __FILE__, __LINE__)
+    #define crash(v) \
+        Crash_Core((v), TICK, __FILE__, __LINE__)
 
-    #define panic_at(v,file,line) \
-        Panic_Core((v), TICK, (file), (line))
+    #define crash_at(v,file,line) \
+        Crash_Core((v), TICK, (file), (line))
 #endif

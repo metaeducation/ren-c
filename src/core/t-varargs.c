@@ -304,7 +304,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         }
     }
     else
-        panic ("Malformed VARARG cell");
+        crash ("Malformed VARARG cell");
 
   type_check_and_return:;
 
@@ -581,7 +581,7 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
             break;
 
         default:
-            panic (nullptr);
+            crash (nullptr);
         };
 
         DECLARE_VALUE (param_word);

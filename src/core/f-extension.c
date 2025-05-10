@@ -214,7 +214,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
 
         Cell* name = item;
         if (not Is_Set_Word(name))
-            panic (name);
+            crash (name);
 
         // We want to create the native from the spec and naming, and make
         // sure its details know that its a "member" of this module.  That
@@ -237,7 +237,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
         if (is_export) {
             Init_Word(PUSH(), Cell_Word_Symbol(name));
             if (0 == Try_Bind_Word(module_ctx, TOP))
-                panic ("Couldn't bind word just added -- problem");
+                crash ("Couldn't bind word just added -- problem");
         }
     }
 

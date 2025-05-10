@@ -1305,7 +1305,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     case LEX_CLASS_DELIMIT:
         switch (Get_Lex_Delimit(*cp)) {
         case LEX_DELIMIT_SPACE:
-            panic ("Prescan_Token did not skip whitespace");
+            crash ("Prescan_Token did not skip whitespace");
 
         delimit_return:;
         case LEX_DELIMIT_RETURN:
@@ -1375,7 +1375,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 return Error_Missing(S, '"');
             if (S->begin[0] == '{')
                 return Error_Missing(S, '}');
-            panic ("Invalid string start delimiter");
+            crash ("Invalid string start delimiter");
 
         case LEX_DELIMIT_RIGHT_BRACE:
             return Error_Extra('}');
@@ -1418,7 +1418,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
               default:
                 assert(false);
             }
-            panic (nullptr); }
+            crash (nullptr); }
 
 
         case LEX_DELIMIT_END:
@@ -1433,7 +1433,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             goto acquisition_loop;
 
         default:
-            panic ("Invalid LEX_DELIMIT class");
+            crash ("Invalid LEX_DELIMIT class");
         }
 
     case LEX_CLASS_SPECIAL:
@@ -1759,10 +1759,10 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         return Error_Syntax(S, TOKEN_INTEGER);
 
     default:
-        ; // put panic after switch, so no cases fall through
+        ; // put crash() after switch, so no cases fall through
     }
 
-    panic ("Invalid LEX class");
+    crash ("Invalid LEX class");
 
   scanword: { /////////////////////////////////////////////////////////////////
 
@@ -2500,7 +2500,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         goto loop;
 
       default:
-        panic ("Invalid TOKEN in Scanner.");
+        crash ("Invalid TOKEN in Scanner.");
     }
 
 } { //=//// FINISHED SWITCHING ON TOKEN ///////////////////////////////////=//

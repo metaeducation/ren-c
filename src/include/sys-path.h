@@ -115,7 +115,7 @@ INLINE void Get_Path_Core(
         nullptr,  // not requesting value to set means it's a get
         EVAL_FLAG_NO_PATH_GROUPS
     )){
-        panic (out); // shouldn't be possible... no executions!
+        crash (out); // shouldn't be possible... no executions!
     }
 }
 
@@ -163,6 +163,6 @@ INLINE void Set_Path_Core(
         setval,
         flags
     )){
-        panic (out); // shouldn't be possible, no executions!
+        crash (out); // shouldn't be possible, no executions!
     }
 }

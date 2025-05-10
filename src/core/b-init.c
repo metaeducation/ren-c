@@ -100,7 +100,7 @@ static void Assert_Basics(void)
     uint16_t y = SECOND_UINT16(&flags);
     if (m != 4 or d != 21 or y != 1975) {
         printf("m = %u, d = %u, y = %u\n", m, d, y);
-        panic ("Bad composed integer assignment for byte-ordering macro.");
+        crash ("Bad composed integer assignment for byte-ordering macro.");
     }
   #endif
 
@@ -121,10 +121,10 @@ static void Assert_Basics(void)
     size_t sizeof_cell = sizeof(Cell);
   #if UNUSUAL_CELL_SIZE
     if (sizeof_cell % ALIGN_SIZE != 0)
-        panic ("size of Cell does not evenly divide by ALIGN_SIZE");
+        crash ("size of Cell does not evenly divide by ALIGN_SIZE");
   #else
     if (sizeof_cell != sizeof(void*) * 4)
-        panic ("size of Cell is not sizeof(void*) * 4");
+        crash ("size of Cell is not sizeof(void*) * 4");
 
     #if DEBUG_STUB_ORIGINS
         assert(sizeof(Stub) == sizeof(Cell) * 2 + sizeof(void*) * 2);
@@ -144,7 +144,7 @@ static void Assert_Basics(void)
     if (
         offsetof_stub_info - offsetof(Stub, content) != sizeof(Cell)
     ){
-        panic ("bad structure alignment for internal array termination");
+        crash ("bad structure alignment for internal array termination");
     }
 
     // While TYPE_MAX indicates the maximum user-visible type, there are a
@@ -193,10 +193,10 @@ static void Startup_Base(Array* boot_base)
 
     DECLARE_VALUE (result);
     if (Eval_Array_At_Throws(result, boot_base, 0, SPECIFIED))
-        panic (result);
+        crash (result);
 
     if (not Is_Trash(result))
-        panic (result);
+        crash (result);
 }
 
 
@@ -228,10 +228,10 @@ static void Startup_Sys(Array* boot_sys) {
 
     DECLARE_VALUE (result);
     if (Eval_Array_At_Throws(result, boot_sys, 0, SPECIFIED))
-        panic (result);
+        crash (result);
 
     if (not Is_Trash(result))
-        panic (result);
+        crash (result);
 }
 
 
@@ -250,12 +250,12 @@ static void Startup_Sys(Array* boot_sys) {
 static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
 {
     if (Array_Len(boot_types) != TYPE_MAX - 1)
-        panic (boot_types); // Every TYPE_XXX but TYPE_0 should have a WORD!
+        crash (boot_types); // Every TYPE_XXX but TYPE_0 should have a WORD!
 
     Cell* word = Array_Head(boot_types);
 
     if (Cell_Word_Id(word) != SYM_ACTION_X)
-        panic (word); // First type should be ACTION!
+        crash (word); // First type should be ACTION!
 
     Array* catalog = Make_Array(TYPE_MAX - 1);
 
@@ -529,7 +529,7 @@ Value* Make_Native(
     // Get the name the native will be started at with in Lib_Context
     //
     if (not Is_Set_Word(*item))
-        panic (*item);
+        crash (*item);
 
     Value* name = KNOWN(*item);
     ++*item;
@@ -559,14 +559,14 @@ Value* Make_Native(
         not Is_Word(*item)
         or Cell_Word_Id(*item) != SYM_NATIVE
     ){
-        panic (*item);
+        crash (*item);
     }
     ++*item;
 
     Value* spec = KNOWN(*item);
     ++*item;
     if (not Is_Block(spec))
-        panic (spec);
+        crash (spec);
 
     // With the components extracted, generate the native and add it to
     // the Natives table.  The associated C function is provided by a
@@ -652,7 +652,7 @@ static Array* Startup_Natives(const Value* boot_natives)
 
     while (NOT_END(item)) {
         if (n >= Num_Natives)
-            panic (item);
+            crash (item);
 
         Value* name = KNOWN(item);
         assert(Is_Set_Word(name));
@@ -682,10 +682,10 @@ static Array* Startup_Natives(const Value* boot_natives)
     }
 
     if (n != Num_Natives)
-        panic ("Incorrect number of natives found during processing");
+        crash ("Incorrect number of natives found during processing");
 
     if (not generic_word)
-        panic ("GENERIC native not found during boot block processing");
+        crash ("GENERIC native not found during boot block processing");
 
     return catalog;
 }
@@ -718,15 +718,15 @@ static Array* Startup_Generics(const Value* boot_generics)
 
     DECLARE_VALUE (result);
     if (Eval_List_At_Throws(result, boot_generics))
-        panic (result);
+        crash (result);
 
     if (not Is_Blank(result))
-        panic (result);
+        crash (result);
 
     // Sanity check the symbol transformation
     //
     if (0 != strcmp("open", Symbol_Head(CANON(OPEN))))
-        panic (CANON(OPEN));
+        crash (CANON(OPEN));
 
     StackIndex base = TOP_INDEX;
 
@@ -941,9 +941,9 @@ static void Init_System_Object(
     //
     DECLARE_VALUE (result);
     if (Eval_List_At_Throws(result, boot_sysobj_spec))
-        panic (result);
+        crash (result);
     if (not Is_Blank(result))
-        panic (result);
+        crash (result);
 
     // Create a global value for it.  (This is why we are able to say `system`
     // and have it bound in lines like `sys: system/contexts/sys`)
@@ -1178,7 +1178,7 @@ static void Startup_Corrupt_Globals(void)
 //
 // Initialize the interpreter core.
 //
-// !!! This will either succeed or "panic".  Panic currently triggers an exit
+// !!! This will either succeed or crash().  Crash currently triggers an exit
 // to the OS.  The code is not currently written to be able to cleanly shut
 // down from a partial initialization.  (It should be.)
 //
@@ -1237,10 +1237,10 @@ void Startup_Core(void)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-  #if defined(TEST_EARLY_BOOT_PANIC)
-    panic ("early panic test"); // should crash
+  #if defined(TEST_EARLY_BOOT_CRASH)
+    crash ("early crash test"); // should crash
   #elif defined(TEST_EARLY_BOOT_FAIL)
-    fail (Error_No_Value_Raw(BLANK_VALUE)); // same as panic (crash)
+    fail (Error_No_Value_Raw(BLANK_VALUE)); // same as crash (crash)
   #endif
 
   #if DEBUG_HAS_ALWAYS_MALLOC
@@ -1445,10 +1445,10 @@ void Startup_Core(void)
 
     PG_Boot_Phase = BOOT_ERRORS;
 
-  #if defined(TEST_MID_BOOT_PANIC)
-    panic (EMPTY_ARRAY); // panics should be able to give some details by now
+  #if defined(TEST_MID_BOOT_CRASH)
+    crash (EMPTY_ARRAY); // crash() should be able to give some details by now
   #elif defined(TEST_MID_BOOT_FAIL)
-    fail (Error_No_Value_Raw(BLANK_VALUE)); // DEBUG->assert, RELEASE->panic
+    fail (Error_No_Value_Raw(BLANK_VALUE)); // DEBUG->assert, RELEASE->crash()
   #endif
 
     // Pre-make the stack overflow error (so it doesn't need to be made
@@ -1486,7 +1486,7 @@ void Startup_Core(void)
         // that the user isn't even *able* to request a halt at this boot
         // phase.
         //
-        panic (error);
+        crash (error);
     }
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
@@ -1533,7 +1533,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
     }
 
     if (not Is_Trash(result))
-        panic (result); // FINISH-INIT-CORE is a PROCEDURE, returns void
+        crash (result); // FINISH-INIT-CORE is a PROCEDURE, returns void
 
     return nullptr;
 }

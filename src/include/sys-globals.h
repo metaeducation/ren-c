@@ -77,7 +77,7 @@ PVAR REBI64 PG_Boot_Time;   // Counter when boot started
 PVAR REB_OPTS *Reb_Opts;
 
 #if DEBUG_HAS_PROBE
-    PVAR bool PG_Probe_Failures; // helpful especially for boot errors & panics
+    PVAR bool PG_Probe_Failures; // helpful especially for boot errors/crashes
 #endif
 
 #if DEBUG_HAS_ALWAYS_MALLOC

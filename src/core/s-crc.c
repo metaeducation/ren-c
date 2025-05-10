@@ -199,7 +199,7 @@ uint32_t Hash_Value(const Cell* v)
         // While antiforms might technically be hashed, they can't be keys
         // in maps.
         //
-        panic (nullptr);
+        crash (nullptr);
 
     case TYPE_BLANK:
         hash = 0;
@@ -355,10 +355,10 @@ uint32_t Hash_Value(const Cell* v)
         fail (Error_Invalid_Type(Type_Of(v)));
 
     default:
-        // The list above should be comprehensive.  panic in order to keep
+        // The list above should be comprehensive.  Crash in order to keep
         // there from being an uninitialized ret warning.
         //
-        panic (nullptr);
+        crash (nullptr);
     }
 
     return hash ^ crc32_table[Type_Of(v)];

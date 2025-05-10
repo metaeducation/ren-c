@@ -271,7 +271,7 @@ int OS_Create_Process(
         break;
 
     default:
-        panic (ARG(IN));
+        crash (ARG(IN));
     }
 
     UNUSED(Bool_ARG(OUTPUT)); // implicitly covered by void ARG(OUT)
@@ -332,7 +332,7 @@ int OS_Create_Process(
         break;
 
     default:
-        panic (ARG(OUT));
+        crash (ARG(OUT));
     }
 
     UNUSED(Bool_ARG(ERROR)); // implicitly covered by void ARG(ERR)
@@ -393,7 +393,7 @@ int OS_Create_Process(
         break;
 
     default:
-        panic (ARG(ERR));
+        crash (ARG(ERR));
     }
 
     if (Bool_ARG(SHELL)) {
@@ -1505,7 +1505,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
         break; }
 
     default:
-        panic(ARG(IN));
+        crash (ARG(IN));
     }
 
     UNUSED(Bool_ARG(OUTPUT));

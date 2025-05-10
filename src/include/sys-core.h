@@ -563,7 +563,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "tmp-error-funcs.h" // functions below are called
 
 
-#include "sys-trap.h" // includes PUSH_TRAP, fail(), and panic() macros
+#include "sys-trap.h" // includes PUSH_TRAP, fail(), and crash() macros
 
 #include "sys-node.h"
 

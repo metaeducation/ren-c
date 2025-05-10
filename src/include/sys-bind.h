@@ -419,7 +419,7 @@ INLINE VarList* Get_Var_Context(
       #if RUNTIME_CHECKS
         if (specifier == SPECIFIED) {
             printf("Get_Context_Core on relative value without specifier\n");
-            panic (any_word);
+            crash (any_word);
         }
       #endif
 
@@ -575,7 +575,7 @@ INLINE Value* Derelativize(
       #if RUNTIME_CHECKS
         if (not specifier) {
             printf("Relative item used with SPECIFIED\n");
-            panic (v);
+            crash (v);
         }
 
         // The underlying function is always what's stored in the binding,
@@ -594,8 +594,8 @@ INLINE Value* Derelativize(
         if (binding != ACT_UNDERLYING(VAL_ACTION(rootkey))) {
             printf("Function mismatch in specific binding, expected:\n");
             PROBE(ACT_ARCHETYPE(ACT(binding)));
-            printf("Panic on relative value\n");
-            panic (v);
+            printf("Crash on relative value\n");
+            crash (v);
         }
       #endif
 

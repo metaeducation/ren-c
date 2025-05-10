@@ -33,16 +33,16 @@
 // discerned from a valid UTF-8 string just by looking at the first byte.
 //
 // On a semi-superficial level, this permits a kind of dynamic polymorphism,
-// such as that used by panic():
+// such as that used by crash():
 //
 //     Value* value = ...;
-//     panic (value); // can tell this is a value
+//     crash (value); // can tell this is a value
 //
 //     Flex* series = ...;
-//     panic (series) // can tell this is a series
+//     crash (series) // can tell this is a series
 //
 //     const char *utf8 = ...;
-//     panic (utf8); // can tell this is UTF-8 data (not a series or value)
+//     crash (utf8); // can tell this is UTF-8 data (not a series or value)
 //
 // But a more compelling case is the usage through the API, so variadic
 // combinations of strings and values can be intermixed, as in:

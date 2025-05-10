@@ -282,23 +282,6 @@ host-start: function [
         ]
     ]
 
-    ; The core presumes no built-in I/O ability in the release build, hence
-    ; during boot PANIC and PANIC-VALUE can only do printf() in the debug
-    ; build.  While there's no way to hook the core panic() or panic_at()
-    ; calls, the rebPanic() API dispatches to PANIC and PANIC-VALUE.  Hook
-    ; them just to show we can...use I/O to print a message.
-    ;
-    hijack 'panic adapt (copy :panic) [
-        print "PANIC ACTION! called (explicitly or by rebPanic() API)"
-        ;
-        ; ...adaptation falls through to our copy of the original PANIC
-    ]
-    hijack 'panic-value adapt (copy :panic-value) [
-        print "PANIC-VALUE ACTION! called (explicitly or by rebPanic() API)"
-        ;
-        ; ...adaptation falls through to our copy of the original PANIC-VALUE
-    ]
-
     ; can only output do not assume they have any ability to write out
     ; information to the user, because the
 
@@ -592,7 +575,7 @@ host-start: function [
 
     ; Taking a command-line `--breakpoint NNN` parameter is helpful if a
     ; problem is reproducible, and you have a tick count in hand from a
-    ; panic(), Stub.tick, Level.tick, Cell.tick, etc.  But there's
+    ; crash(), Stub.tick, Level.tick, Cell.tick, etc.  But there's
     ; an entanglement issue, as any otherwise-deterministic tick from a prior
     ; run would be thrown off by the **ticks added by the userspace parameter
     ; processing of the command-line for `--breakpoint`**!  :-/

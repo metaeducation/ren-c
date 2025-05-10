@@ -1117,7 +1117,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         break;
 
     default:
-        panic (v);
+        crash (v);
     }
 }
 

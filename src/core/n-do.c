@@ -477,7 +477,7 @@ DECLARE_NATIVE(EVALUATE)
 
         Level* L;
         if (not Is_Level_Style_Varargs_May_Fail(&L, source))
-            panic (source); // Frame is the only other type
+            crash (source); // Frame is the only other type
 
         // By definition, we are in the middle of a function call in the frame
         // the varargs came from.  It's still on the stack, and we don't want
@@ -525,7 +525,7 @@ DECLARE_NATIVE(EVALUATE)
         fail (cast(Error*, Cell_Varlist(source)));
 
       default:
-        panic (source);
+        crash (source);
     }
 }
 

@@ -257,12 +257,12 @@ void Startup_Pools(REBINT scale)
         Mem_Pools[n].first = nullptr;
         Mem_Pools[n].last = nullptr;
 
-        // A panic is used instead of an assert, since the debug sizes and
+        // A crash is used instead of an assert, since the debug sizes and
         // release sizes may be different...and both must be checked.
         //
       #if DEBUG_MEMORY_ALIGNMENT || 1
         if (Mem_Pool_Spec[n].wide % sizeof(REBI64) != 0)
-            panic ("memory pool width is not 64-bit aligned");
+            crash ("memory pool width is not 64-bit aligned");
       #endif
 
         Mem_Pools[n].wide = Mem_Pool_Spec[n].wide;
@@ -330,7 +330,7 @@ void Shutdown_Pools(void)
 
             assert(Not_Node_Managed(series));
             printf("At least one leaked series at shutdown...\n");
-            panic (series);
+            crash (series);
         }
     }
   #endif
@@ -399,7 +399,7 @@ void Fill_Pool(REBPOL *pool)
 
     REBSEG *seg = cast(REBSEG *, ALLOC_N(char, mem_size));
     if (seg == nullptr) {
-        panic ("Out of memory error during Fill_Pool()");
+        crash ("Out of memory error during Fill_Pool()");
 
         // Rebol's safe handling of running out of memory was never really
         // articulated.  Yet it should be possible to run a fail()...at least
@@ -1143,7 +1143,7 @@ void GC_Kill_Flex(Flex* s)
   #if RUNTIME_CHECKS
     if (Not_Node_Readable(s)) {
         printf("Freeing already freed node.\n");
-        panic (s);
+        crash (s);
     }
   #endif
 
@@ -1195,7 +1195,7 @@ INLINE void Untrack_Manual_Flex(Flex* s)
                 <= cast(Flex**, GC_Manuals->content.dynamic.data)
             ){
                 printf("Series not in list of last manually added series\n");
-                panic(s);
+                crash (s);
             }
           #endif
             --current_ptr;
@@ -1219,12 +1219,12 @@ void Free_Unmanaged_Flex(Flex* s)
   #if RUNTIME_CHECKS
     if (Not_Node_Readable(s)) {
         printf("Trying to Free_Unmanaged_Flex() on already freed Flex\n");
-        panic (s); // erroring here helps not conflate with tracking problems
+        crash (s); // erroring here helps not conflate with tracking problems
     }
 
     if (Is_Flex_Managed(s)) {
         printf("Trying to Free_Unmanaged_Flex() on a GC-managed Flex\n");
-        panic (s);
+        crash (s);
     }
   #endif
 
@@ -1255,7 +1255,7 @@ void Manage_Flex(Flex* s)
   #if RUNTIME_CHECKS
     if (Is_Flex_Managed(s)) {
         printf("Attempt to manage already managed series\n");
-        panic (s);
+        crash (s);
     }
   #endif
 
@@ -1336,14 +1336,14 @@ REBLEN Check_Memory_Debug(void)
                 continue; // data lives in the series node itself
 
             if (Flex_Rest(s) == 0)
-                panic (s); // zero size allocations not legal
+                crash (s); // zero size allocations not legal
 
             REBLEN pool_num = FIND_POOL(Flex_Total(s));
             if (pool_num >= STUB_POOL)
                 continue; // size doesn't match a known pool
 
             if (Mem_Pools[pool_num].wide != Flex_Total(s))
-                panic (s);
+                crash (s);
         }
     }
 
@@ -1371,7 +1371,7 @@ REBLEN Check_Memory_Debug(void)
                 ){
                     if (found) {
                         printf("node belongs to more than one segment\n");
-                        panic (unit);
+                        crash (unit);
                     }
 
                     found = true;
@@ -1380,12 +1380,12 @@ REBLEN Check_Memory_Debug(void)
 
             if (not found) {
                 printf("node does not belong to one of the pool's segments\n");
-                panic (unit);
+                crash (unit);
             }
         }
 
         if (Mem_Pools[pool_num].free != pool_free_nodes)
-            panic ("actual free node count does not agree with pool header");
+            crash ("actual free node count does not agree with pool header");
 
         total_free_nodes += pool_free_nodes;
     }

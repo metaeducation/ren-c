@@ -559,10 +559,10 @@ void Startup_Symbols(Array* words)
     // Do some sanity checks.  !!! Fairly critical, is debug-only appropriate?
 
     if (0 != strcmp("blank!", Symbol_Head(CANON(BLANK_X))))
-        panic (CANON(BLANK_X));
+        crash (CANON(BLANK_X));
 
     if (0 != strcmp("null", Symbol_Head(CANON(NULL))))
-        panic (CANON(NULL));
+        crash (CANON(NULL));
 }
 
 
@@ -586,7 +586,7 @@ void Shutdown_Interning(void)
         // !!! There needs to be a more user-friendly output for this,
         // and to detect if it really was an API problem or something else
         // that needs to be paid attention to in the core.  Right now the
-        // two scenarios are conflated into this one panic.
+        // two scenarios are conflated into this one crash.
         //
         printf(
             "!!! %d leaked canons found in shutdown\n",
@@ -600,7 +600,7 @@ void Shutdown_Interning(void)
         for (slot = 0; slot < Flex_Len(PG_Canons_By_Hash); ++slot) {
             Symbol* canon = *Flex_At(Symbol*, PG_Canons_By_Hash, slot);
             if (canon and canon != DELETED_CANON)
-                panic (canon);
+                crash (canon);
         }
     }
   #endif

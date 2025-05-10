@@ -80,7 +80,7 @@ void Assert_State_Balanced_Debug(
             "PUSH()x%d without DROP()\n",
             cast(int, TOP_INDEX - s->stack_base)
         );
-        panic_at (nullptr, file, line);
+        crash_at (nullptr, file, line);
     }
 
     assert(s->level == TOP_LEVEL);
@@ -97,7 +97,7 @@ void Assert_State_Balanced_Debug(
             GC_Guarded,
             Flex_Len(GC_Guarded) - 1
         );
-        panic_at (guarded, file, line);
+        crash_at (guarded, file, line);
     }
 
     // !!! Note that this inherits a test that uses GC_Manuals->content.xxx
@@ -109,12 +109,12 @@ void Assert_State_Balanced_Debug(
     //
     if (s->manuals_len > Flex_Len(GC_Manuals)) {
         //
-        // Note: Should this ever actually happen, panic() on the series won't
+        // Note: Should this ever actually happen, crash() on the series won't
         // do any real good in helping debug it.  You'll probably need to
         // add additional checks in Manage_Flex and Free_Unmanaged_Flex
         // that check against the caller's manuals_len.
         //
-        panic_at ("manual series freed outside checkpoint", file, line);
+        crash_at ("manual series freed outside checkpoint", file, line);
     }
     else if (s->manuals_len < Flex_Len(GC_Manuals)) {
         printf(
@@ -126,7 +126,7 @@ void Assert_State_Balanced_Debug(
             GC_Manuals,
             Flex_Len(GC_Manuals) - 1
         ));
-        panic_at (manual, file, line);
+        crash_at (manual, file, line);
     }
 
     assert(s->mold_buf_len == Flex_Len(MOLD_BUF));
@@ -248,7 +248,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         }
         else if (probing) {
             printf("PROBE(Recursing): recursing for unknown reason\n");
-            panic (p);
+            crash (p);
         }
         else {
             probing = true;
@@ -266,12 +266,12 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     case DETECTED_AS_STUB: {
         Flex* s = m_cast(Flex*, cast(const Flex*, p)); // don't mutate
         if (Not_Array_Flag(s, IS_VARLIST))
-            panic (s);
+            crash (s);
         error = cast(Error*, s);
         break; }
 
     default:
-        panic (p); // suppress compiler error from non-smart compilers
+        crash (p); // suppress compiler error from non-smart compilers
     }
 
     ASSERT_CONTEXT(error);
@@ -282,13 +282,13 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // purpose in Startup_Core()...)
     //
     if (PG_Boot_Phase < BOOT_DONE)
-        panic (error);
+        crash (error);
 
     // There should be a PUSH_TRAP of some kind in effect if a `fail` can
     // ever be run.
     //
     if (Saved_State == nullptr)
-        panic (error);
+        crash (error);
 
     // The information for the Rebol call frames generally is held in stack
     // variables, so the data will go bad in the longjmp.  We have to free
@@ -654,7 +654,7 @@ bool Make_Error_Object_Throws(
 // It knows how many arguments the error particular error ID requires based
 // on the templates defined in %errors.r.
 //
-// This routine should either succeed and return to the caller, or panic()
+// This routine should either succeed and return to the caller, or crash()
 // and crash if there is a problem (such as running out of memory, or that
 // %errors.r has not been loaded).  Hence the caller can assume it will
 // regain control to properly call va_end with no longjmp to skip it.
@@ -675,7 +675,7 @@ Error* Make_Error_Managed_Vaptr(
 
         DECLARE_VALUE (id_value);
         Init_Integer(id_value, cast(int, id_sym));
-        panic (id_value);
+        crash (id_value);
     }
 
     VarList* root_error = Cell_Varlist(Get_System(SYS_STANDARD, STD_ERROR));

@@ -38,10 +38,10 @@
 #if RUNTIME_CHECKS
 
 //
-//  Panic_Value_Debug: C
+//  Crash_Value_Debug: C
 //
 // This is a debug-only "error generator", which will hunt through all the
-// series allocations and panic on the series that contains the value (if
+// series allocations and crash on the series that contains the value (if
 // it can find it).  This will allow those using Address Sanitizer or
 // Valgrind to know a bit more about where the value came from.
 //
@@ -50,7 +50,7 @@
 // stored.  (See DEBUG_TRACK_EXTEND_CELLS for more intense debugging scenarios,
 // which track all cell types, but at greater cost.)
 //
-ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
+ATTRIBUTE_NO_RETURN void Crash_On_Value_Debug(const Cell* v) {
     fflush(stdout);
     fflush(stderr);
 
@@ -84,17 +84,17 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     fflush(stdout);
 
     if (containing and Is_Node_A_Stub(containing)) {
-        printf("Containing series for value pointer found, panicking it:\n");
-        Panic_Flex_Debug(cast_Flex(containing));
+        printf("Containing Array for Cell found, crashing on it:\n");
+        Crash_On_Flex_Debug(cast_Flex(containing));
     }
 
     if (containing) {
-        printf("Containing pairing for value pointer found, panicking it:\n");
-        Panic_Value_Debug(VAL(containing));  // won't pass cast_Flex()
+        printf("Containing Pairing for Cell found, crashing on it:\n");
+        Crash_On_Value_Debug(VAL(containing));  // won't pass cast_Flex()
     }
 
-    printf("No containing series for value...panicking to make stack dump:\n");
-    Panic_Flex_Debug(EMPTY_ARRAY);
+    printf("No container for Cell found...crashing to make stack dump:\n");
+    crash (nullptr);
 }
 
 #endif  // RUNTIME_CHECKS
@@ -215,19 +215,19 @@ void* Probe_Core_Debug(
         }
         else if (s == PG_Canons_By_Hash) {
             printf("can't probe PG_Canons_By_Hash (TBD: add probing)\n");
-            panic (s);
+            crash (s);
         }
         else if (s == GC_Guarded) {
             printf("can't probe GC_Guarded (TBD: add probing)\n");
-            panic (s);
+            crash (s);
         }
         else
-            panic (s);
+            crash (s);
         break; }
 
     case DETECTED_AS_FREE:
         Probe_Print_Helper(p, "Freed Flex", file, line);
-        panic (p);
+        crash (p);
 
     case DETECTED_AS_CELL: {
         Probe_Print_Helper(p, "Value", file, line);

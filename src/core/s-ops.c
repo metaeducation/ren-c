@@ -158,7 +158,7 @@ Binary* Temp_UTF8_At_Managed(
 #if RUNTIME_CHECKS
     if (not Any_String(str)) {
         printf("Temp_UTF8_At_Managed() called on non-ANY-STRING!");
-        panic (str);
+        crash (str);
     }
 #endif
 

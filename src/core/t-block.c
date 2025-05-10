@@ -1128,19 +1128,19 @@ void Assert_Array_Core(Array* a)
     Assert_Flex_Core(a);
 
     if (not Is_Flex_Array(a))
-        panic (a);
+        crash (a);
 
     Cell* item = Array_Head(a);
     REBLEN i;
     for (i = 0; i < Array_Len(a); ++i, ++item) {
         if (IS_END(item)) {
             printf("Premature array end at index %d\n", cast(int, i));
-            panic (a);
+            crash (a);
         }
     }
 
     if (NOT_END(item))
-        panic (item);
+        crash (item);
 
     if (Is_Flex_Dynamic(a)) {
         REBLEN rest = Flex_Rest(a);
@@ -1152,14 +1152,14 @@ void Assert_Array_Core(Array* a)
               #if RUNTIME_CHECKS
                 if (not unwritable) {
                     printf("Writable cell found in fixed-size array rest\n");
-                    panic (a);
+                    crash (a);
                 }
               #endif
             }
             else {
                 if (unwritable) {
                     printf("Unwritable cell found in array rest capacity\n");
-                    panic (a);
+                    crash (a);
                 }
             }
         }
@@ -1168,7 +1168,7 @@ void Assert_Array_Core(Array* a)
         Cell* ultimate = Array_At(a, rest - 1);
         if (NOT_END(ultimate) or (ultimate->header.bits & NODE_FLAG_CELL)) {
             printf("Implicit termination/unwritable END missing from array\n");
-            panic (a);
+            crash (a);
         }
     }
 

@@ -33,7 +33,7 @@
 // more heavily checked debug build...so these routines were not used.
 //
 // They're being brought up to date to be included in the debug build only
-// version of panic().  That should keep them in working shape.
+// version of crash().  That should keep them in working shape.
 //
 // Note: These routines use `printf()`, which is only linked in DEBUG builds.
 // Higher-level Rebol formatting should ultimately be using BLOCK! dialects,

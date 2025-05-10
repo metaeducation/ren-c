@@ -574,7 +574,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                 break; }
 
               default:
-                panic ("Unsupported type");
+                crash ("Unsupported type");
             }
         }
 
@@ -713,7 +713,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
             }
         }
         else
-            panic ("Illegal type passed to Loop_Each()");
+            crash ("Illegal type passed to Loop_Each()");
 
         took_hold = Not_Flex_Info(les.data_ser, HOLD);
         if (took_hold)

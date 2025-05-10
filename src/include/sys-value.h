@@ -108,7 +108,7 @@
 // they are left as random data in that case.)
 //
 // View this information in the debugging watchlist under the `track` union
-// member of a value's payload.  It is also reported by panic().
+// member of a value's payload.  It is also reported by crash().
 //
 
 #if DEBUG_TRACK_EXTEND_CELLS
@@ -184,11 +184,11 @@
         //
         if (not (v->header.bits & NODE_FLAG_CELL)) {
             printf("Type_Of() called on non-cell\n");
-            panic (v);
+            crash (v);
         }
         if (v->header.bits & NODE_FLAG_UNREADABLE) {
             printf("Type_Of() called on cell marked UNREADABLE\n");
-            panic (v);
+            crash (v);
         }
 
         // Cell is good, so let the good cases pass through
@@ -202,11 +202,11 @@
         //
         if (VAL_TYPE_RAW(v) == TYPE_0_END) {
             printf("Type_Of() called on END marker\n");
-            panic (v);
+            crash (v);
         }
 
         printf("non-RAW Type_Of() called on pseudotype (or garbage)");
-        panic (v);
+        crash (v);
     }
 #endif
 
@@ -258,14 +258,14 @@
             STATIC_ASSERT_LVALUE(c);  /* evil macro, ensures used correctly */ \
             if (not ((c)->header.bits & NODE_FLAG_CELL)) { \
                 printf("Non-cell passed to cell writing routine\n"); \
-                panic (c); \
+                crash (c); \
             } \
             else if (not ((c)->header.bits & NODE_FLAG_NODE)) { \
                 printf("Non-node passed to cell writing routine\n"); \
-                panic (c); \
+                crash (c); \
             } else if ((c)->header.bits & CELL_FLAG_PROTECTED) { \
                 printf("Protected cell passed to writing routine\n"); \
-                panic (c); \
+                crash (c); \
             } \
         } while (0)
 #else
@@ -333,7 +333,7 @@ INLINE Value* Reset_Cell_Header_Untracked(
                 cast(const void*, (c)), \
                 cast(int, ALIGN_SIZE) \
             ); \
-            panic (c); \
+            crash (c); \
         } \
       } while (0)
 #else

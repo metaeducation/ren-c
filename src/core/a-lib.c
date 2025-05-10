@@ -82,7 +82,7 @@ EXTERN_C REBOL_HOST_LIB Host_Lib_Init;
 //
 void API_rebEnterApi_internal(void) {
     if (not Host_Lib)
-        panic ("rebStartup() not called before API call");
+        crash ("rebStartup() not called before API call");
 }
 
 
@@ -217,7 +217,7 @@ void API_rebFree(void *ptr)
     Binary* s = *ps;
     if (Is_Node_A_Cell(s)) {
         rebJumps(
-            "PANIC [",
+            "crash spaced [",
                 "{rebFree() mismatched with allocator!}"
                 "{Did you mean to use free() instead of rebFree()?}",
             "]"
@@ -339,7 +339,7 @@ void Shutdown_Api(void)
 // in the core, but be supplied by a "Timer Extension" which is considered to
 // be sandboxed and non-core enough that having platform-specific code in it
 // is not a problem.  Also, hooks can be supplied in the form of natives that
-// are later HIJACK'd by some hosts (see PANIC and FAIL), as a way of
+// are later HIJACK'd by some hosts (see CRASH and FAIL), as a way of
 // injecting richer platform-or-scenario-specific code into a more limited
 // default host operation.  It is expected that the OS_XXX functions will
 // eventually disappear completely.
@@ -347,15 +347,15 @@ void Shutdown_Api(void)
 void API_rebStartup(void)
 {
     if (Host_Lib)
-        panic ("rebStartup() called when it's already started");
+        crash ("rebStartup() called when it's already started");
 
     Host_Lib = &Host_Lib_Init;
 
     if (Host_Lib->size < HOST_LIB_SIZE)
-        panic ("Host-lib wrong size");
+        crash ("Host-lib wrong size");
 
     if (((HOST_LIB_VER << 16) + HOST_LIB_SUM) != Host_Lib->ver_sum)
-        panic ("Host-lib wrong version/checksum");
+        crash ("Host-lib wrong version/checksum");
 
     Startup_Core();
 }
@@ -1384,7 +1384,7 @@ void API_rebRelease(const RebolValue* v)
         return;  // less rigorous, but makes life easier for C programmers
 
     if (not Is_Api_Value(v))
-        panic ("Attempt to rebRelease() a non-API handle");
+        crash ("Attempt to rebRelease() a non-API handle");
 
     Free_Value(m_cast(Value*, v));
 }

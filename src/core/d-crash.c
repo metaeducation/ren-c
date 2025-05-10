@@ -32,8 +32,8 @@
 
 
 // Size of crash buffers
-#define PANIC_TITLE_BUF_SIZE 80
-#define PANIC_BUF_SIZE 512
+#define CRASH_TITLE_BUF_SIZE 80
+#define CRASH_MSG_BUF_SIZE 512
 
 #ifdef HAVE_EXECINFO_AVAILABLE
     #include <execinfo.h>
@@ -42,7 +42,7 @@
 
 
 //
-//  Panic_Core: C
+//  Crash_Core: C
 //
 // Abnormal termination of Rebol.  The debug build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
@@ -51,14 +51,13 @@
 // it lives in.  If the pointer is a simple UTF-8 string pointer, then that
 // is delivered as a message.
 //
-// This can be triggered via the macros panic() and panic_at(), which are
+// This can be triggered via the macros crash() and crash_at(), which are
 // unsalvageable situations in the core code.  It can also be triggered by
-// the PANIC and PANIC-VALUE natives.  (Since PANIC and PANIC-VALUE may be
-// hijacked, this offers hookability for "recoverable" forms of PANIC.)
+// the CRASH native.
 //
 // coverity[+kill]
 //
-ATTRIBUTE_NO_RETURN void Panic_Core(
+ATTRIBUTE_NO_RETURN void Crash_Core(
     const void *p, // Flex* (array, context, etc), Value*, or UTF-8 char*
     Tick tick,
     const char *file, // UTF8
@@ -95,8 +94,8 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     // support functions, the crash buf is assembled into a buffer for
     // raw output through the host.
     //
-    char title[PANIC_TITLE_BUF_SIZE + 1]; // account for null terminator
-    char buf[PANIC_BUF_SIZE + 1]; // "
+    char title[CRASH_TITLE_BUF_SIZE + 1]; // account for null terminator
+    char buf[CRASH_MSG_BUF_SIZE + 1]; // "
 
     title[0] = '\0';
     buf[0] = '\0';
@@ -126,18 +125,18 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     fflush(stdout);
   #endif
 
-    strncat(title, "PANIC()", PANIC_TITLE_BUF_SIZE - 0);
+    strncat(title, "CRASH()", CRASH_TITLE_BUF_SIZE - 0);
 
-    strncat(buf, Str_Panic_Directions, PANIC_BUF_SIZE - 0);
+    strncat(buf, g_crash_directions, CRASH_MSG_BUF_SIZE - 0);
 
-    strncat(buf, "\n", PANIC_BUF_SIZE - strlen(buf));
+    strncat(buf, "\n", CRASH_MSG_BUF_SIZE - strlen(buf));
 
     if (not p) {
 
         strncat(
             buf,
-            "Panic was passed C nullptr",
-            PANIC_BUF_SIZE - strlen(buf)
+            "Crash was passed C nullptr",
+            CRASH_MSG_BUF_SIZE - strlen(buf)
         );
 
     } else switch (Detect_Rebol_Pointer(p)) {
@@ -146,7 +145,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         strncat(
             buf,
             cast(const char*, p),
-            PANIC_BUF_SIZE - strlen(buf)
+            CRASH_MSG_BUF_SIZE - strlen(buf)
         );
         break;
 
@@ -157,7 +156,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
             //
             // It can sometimes be useful to probe here if the series is
             // valid, but if it's not valid then that could result in a
-            // recursive call to panic and a stack overflow.
+            // recursive call to crash() and a stack overflow.
             //
             PROBE(s);
         #endif
@@ -170,18 +169,18 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
                 PROBE(context);
             }
         }
-        Panic_Flex_Debug(cast(Flex*, s));
+        Crash_On_Flex_Debug(cast(Flex*, s));
       #else
         UNUSED(s);
-        strncat(buf, "valid series", PANIC_BUF_SIZE - strlen(buf));
+        strncat(buf, "valid series", CRASH_MSG_BUF_SIZE - strlen(buf));
       #endif
         break; }
 
     case DETECTED_AS_FREE:
       #if NO_RUNTIME_CHECKS
-        strncat(buf, "freed series", PANIC_BUF_SIZE - strlen(buf));
+        strncat(buf, "freed series", CRASH_MSG_BUF_SIZE - strlen(buf));
       #else
-        Panic_Flex_Debug(m_cast(Flex*, cast(const Flex*, p)));
+        Crash_On_Flex_Debug(m_cast(Flex*, cast(const Flex*, p)));
       #endif
         break;
 
@@ -190,13 +189,13 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         const Value* v = cast(const Value*, p);
       #if NO_RUNTIME_CHECKS
         UNUSED(v);
-        strncat(buf, "value", PANIC_BUF_SIZE - strlen(buf));
+        strncat(buf, "value", CRASH_MSG_BUF_SIZE - strlen(buf));
       #else
         if (NOT_END(v) and Is_Error(v)) {
-            printf("...panicking on an ERROR! value...");
+            printf("...crashing on an ERROR! value...");
             PROBE(v);
         }
-        Panic_Value_Debug(v);
+        Crash_On_Value_Debug(v);
       #endif
         break; }
     }
@@ -204,10 +203,10 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
   #if RUNTIME_CHECKS
     //
     // In a debug build, we'd like to try and cause a break so as not to lose
-    // the state of the panic, which would happen if we called out to the
+    // the state of the crash(), which would happen if we called out to the
     // host kit's exit routine...
     //
-    printf("%s\n", Str_Panic_Title);
+    printf("%s\n", g_crash_title);
     printf("%s\n", buf);
     fflush(stdout);
     debug_break(); // see %debug_break.h
@@ -221,29 +220,34 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
 
 //
-//  panic: native [
+//  crash: native [
 //
 //  "Cause abnormal termination of Rebol (dumps debug info in debug builds)"
 //
-//      reason [text! error!]
+//      reason [<end> text! error!]
 //          "Message to report (evaluation not counted in ticks)"
 //  ]
 //
-DECLARE_NATIVE(PANIC)
+DECLARE_NATIVE(CRASH)
 {
-    INCLUDE_PARAMS_OF_PANIC;
+    INCLUDE_PARAMS_OF_CRASH;
 
     Value* v = ARG(REASON);
     void *p;
 
-    // panic() on the string value itself would report information about the
-    // string cell...but panic() on UTF-8 character data assumes you mean to
-    // report the contained message.  PANIC-VALUE for the latter intent.
+    // crash() on the string value itself would report information about the
+    // string cell...but crash() on UTF-8 character data assumes you mean to
+    // report the contained message.
     //
-    if (Is_Text(v)) {
+    if (Is_Nulled(v)) {  // <end>
+        p = nullptr;
+    }
+    else if (Is_Text(v)) {
         Size offset;
         Size size;
-        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+        Binary* temp = Temp_UTF8_At_Managed(
+            &offset, &size, v, Cell_Series_Len_At(v)
+        );
 
         p = Binary_At(temp, offset); // UTF-8 data
     }
@@ -255,58 +259,21 @@ DECLARE_NATIVE(PANIC)
     // Note that by using the frame's tick instead of TG_Tick, we don't count
     // the evaluation of the value argument.  Hence the tick count shown in
     // the dump would be the one that would queue up right to the exact moment
-    // *before* the PANIC ACTION! was invoked.
+    // *before* the CRASH ACTION! was invoked.
 
     Option(String*) file = File_Of_Level(level_);
     const char* file_utf8;
     if (file) {
-        Binary* bin = Make_Utf8_From_String(unwrap file);  // leak ok, panic
+        Binary* bin = Make_Utf8_From_String(unwrap file);  // leak ok, crash()
         file_utf8 = cast(const char*, Binary_Head(bin));
     }
     else
       file_utf8 = "(anonymous)";
 
   #if DEBUG_COUNT_TICKS
-    Panic_Core(p, level_->tick, file_utf8, LVL_LINE(level_));
+    Crash_Core(p, level_->tick, file_utf8, LVL_LINE(level_));
   #else
     const Tick tick = 0;
-    Panic_Core(p, tick, file_utf8, LVL_LINE(level_));
-  #endif
-}
-
-
-//
-//  panic-value: native [
-//
-//  "Cause abnormal termination of Rebol, with diagnostics on a value cell"
-//
-//      value [any-value!]
-//          "Suspicious value to panic on (debug build shows diagnostics)"
-//  ]
-//
-DECLARE_NATIVE(PANIC_VALUE)
-{
-    INCLUDE_PARAMS_OF_PANIC_VALUE;
-
-    Option(String*) file = File_Of_Level(level_);
-    const char* file_utf8;
-    if (file) {
-        Binary* bin = Make_Utf8_From_String(unwrap file);  // leak ok, panic
-        file_utf8 = cast(const char*, Binary_Head(bin));
-    }
-    else
-       file_utf8 = "(anonymous)";
-
-  #ifdef DEBUG_TRACK_TICKS
-    //
-    // Use frame tick (if available) instead of TG_Tick, so tick count dumped
-    // is the exact moment before the PANIC-VALUE ACTION! was invoked.
-    //
-    Panic_Core(
-        ARG(VALUE), level_->tick, file_utf8, LVL_LINE(level_)
-    );
-  #else
-    const Tick tick = 0;
-    Panic_Core(ARG(VALUE), tick, file_utf8, LVL_LINE(level_));
+    Crash_Core(p, tick, file_utf8, LVL_LINE(level_));
   #endif
 }

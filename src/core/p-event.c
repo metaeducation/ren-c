@@ -84,7 +84,7 @@ Value* Append_Event(void)
     // Append to tail if room:
     if (Is_Flex_Full(Cell_Flex(state))) {
         if (VAL_LEN_HEAD(state) > EVENTS_LIMIT)
-            panic (state);
+            crash (state);
 
         Extend_Flex(Cell_Flex(state), EVENTS_CHUNK);
     }

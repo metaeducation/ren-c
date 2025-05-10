@@ -1854,13 +1854,13 @@ bool Eval_Core_Throws(Level* const L)
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
-// If garbage, panic on the value to generate more debug information about
+// If garbage, crash on the value to generate more debug information about
 // its origins (what series it lives in, where the cell was assigned...)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
       default:
-        panic (current);
+        crash (current);
     }
 
     //==////////////////////////////////////////////////////////////////==//

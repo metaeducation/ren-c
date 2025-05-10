@@ -123,7 +123,7 @@ INLINE void Push_Level_Core(Level* L)
         and Not_Flex_Flag(cast_Flex(containing), DONT_RELOCATE)
     ){
         printf("Request for ->out location in movable series memory\n");
-        panic (containing);
+        crash (containing);
     }
   #else
     assert(not IN_DATA_STACK_DEBUG(L->out));
@@ -448,7 +448,7 @@ INLINE void Set_Level_Detected_Fetch(
         break; }
 
       case DETECTED_AS_FREE:
-        panic (p);
+        crash (p);
 
       case DETECTED_AS_CELL: {
         const Value* cell = cast(const Value*, p);
@@ -1061,7 +1061,7 @@ INLINE void Handle_Api_Dispatcher_Result(Level* L, const Value* r) {
         printf("during ACTION!: %s\n", L->label_utf8);
       #endif
         printf("`return OUT;` or use `RETURN (non_api_cell);`\n");
-        panic(r);
+        crash (r);
     }
   #endif
 

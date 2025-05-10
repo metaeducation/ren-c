@@ -181,7 +181,7 @@ INLINE Byte *Flex_Data_At(Byte w, Flex* s, REBLEN i) {
             printf("Flex_Data_At() asked on freed series\n");
         else
             printf("Flex_Data_At() asked %d on width=%d\n", w, Flex_Wide(s));
-        panic (s);
+        crash (s);
     }
     // The Cell_Varlist(), Cell_Flex(), Cell_Array() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
@@ -319,7 +319,7 @@ INLINE void Force_Flex_Managed(Flex* s) {
 #else
     INLINE void Assert_Flex_Managed(Flex* s) {
         if (not Is_Flex_Managed(s))
-            panic (s);
+            crash (s);
     }
 #endif
 
@@ -459,7 +459,7 @@ INLINE void Fail_If_Read_Only_Flex(Flex* s) {
         int line
     ){
         if (n != *Series_Last(const Node*, GC_Guarded))
-            panic_at (n, file, line);
+            crash_at (n, file, line);
         GC_Guarded->content.dynamic.len--;
     }
 

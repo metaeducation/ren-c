@@ -310,7 +310,7 @@ void MF_Decimal(Molder* mo, const Cell* v, bool form)
         break; }
 
     default:
-        panic (v);
+        crash (v);
     }
 }
 

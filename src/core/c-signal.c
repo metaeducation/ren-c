@@ -119,7 +119,7 @@ bool Do_Signals_Throws(Value* out)
         // Early in the booting process, it's not possible to handle Ctrl-C.
         //
         if (Saved_State == nullptr)
-            panic ("Ctrl-C or other HALT signal with no trap to process it");
+            crash ("Ctrl-C or other HALT signal with no trap to process it");
 
         CLR_SIGNAL(SIG_HALT);
         Eval_Sigmask = saved_mask;
@@ -132,7 +132,7 @@ bool Do_Signals_Throws(Value* out)
     if (filtered_sigs & SIG_INTERRUPT) {
         //
         // Similar to the Ctrl-C halting, the "breakpoint" interrupt request
-        // can't be processed early on.  The throw mechanics should panic
+        // can't be processed early on.  The throw mechanics should crash
         // all right, but it might make more sense to wait.
         //
         CLR_SIGNAL(SIG_INTERRUPT);

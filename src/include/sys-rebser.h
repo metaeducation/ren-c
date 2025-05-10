@@ -904,7 +904,7 @@ struct StubStruct {
     union StubMiscUnion misc_private;
 
   #if DEBUG_STUB_ORIGINS
-    intptr_t *guard;  // alloc => immediate free, for use by Panic_Flex()
+    intptr_t *guard;  // alloc => immediate free, for use by Crash_On_Flex()
     uintptr_t tick;  // also maintains sizeof(Stub) % sizeof(REBI64) == 0
   #endif
 };
