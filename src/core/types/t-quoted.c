@@ -634,79 +634,76 @@ DECLARE_NATIVE(UNRUN)
 // We want OPT and ? to be intrinsics, so the strictness is not controlled
 // with a refinement.  Share the code.
 //
-static Bounce Maybe_Intrinsic_Core(Level* level_, bool light) {
+static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
     const Element* meta = Get_Meta_Atom_Intrinsic(level_);
 
-    if (Is_Meta_Of_Null(meta))  // light null
-        return VOID;
+    if (Is_Meta_Of_Error(meta))
+        return UNMETA(meta);  // will pass thru vetos, and other errors
 
-    if (Is_Meta_Of_Error(meta))  // Voids errors (e.g. OPT folds in a TRY)
-        return VOID;
+    if (Is_Meta_Of_Void(meta))
+        goto opt_out;  // void => void in OPT, or void => veto in OPT:VETO
 
     if (Is_Meta_Of_Ghost(meta))
-        return PANIC("Cannot OPT a GHOST!");
-
-    bool was_pack = Is_Meta_Of_Pack(meta);
+        return PANIC("Cannot OPT a GHOST!");  // !!! Should we opt out ghosts?
 
     Copy_Cell(OUT, meta);
     Meta_Unquotify_Decayed(stable_OUT);
 
-    if (Is_Nulled(OUT)) {
-        if (light and was_pack)
-            return PANIC(
-                "OPT:LIGHT (a.k.a. ?) won't void a PACK! with a NULL in it"
-            );
-        return VOID;  // not strict
-    }
+    if (Is_Nulled(OUT))
+        goto opt_out;
 
-    return OUT;  // passthru everything else
-}
+    return OUT;
+
+  opt_out: { /////////////////////////////////////////////////////////////////
+
+    return veto ? FAIL(Cell_Error(g_error_veto)) : VOID;
+}}
 
 
 //
 //  optional: native:intrinsic [
 //
-//  "If argument is null or error antiform make it void, else passthru"
+//  "If argument is null, make it VOID (or VETO), else passthru"
 //
 //      return: [any-atom?]
 //      ^atom "Decayed if pack"
-//      :light "If true, then nulls in packs will panic instead of void"
+//      :veto "If true, then return VETO instead of VOID"
 //  ]
 //
-DECLARE_NATIVE(OPTIONAL)  // ususally used via its alias of OPT
+DECLARE_NATIVE(OPTIONAL)  // ususally used via its aliases of OPT or ?
 {
     INCLUDE_PARAMS_OF_OPTIONAL;
 
-    bool light;
+    bool veto;
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))
-        light = false;  // default in intrinsic dispatch to not light
+        veto = false;  // default in intrinsic dispatch to not light
     else
-        light = Bool_ARG(LIGHT);  // slower dispatch with frame + refinement
+        veto = Bool_ARG(VETO);  // slower dispatch with frame + refinement
 
-    return Maybe_Intrinsic_Core(LEVEL, light);
+    return Optional_Intrinsic_Native_Core(LEVEL, veto);
 }
 
 
 //
-//  optional-light: native:intrinsic [
+//  optional-veto: native:intrinsic [
 //
-//  "If argument is light null or error antiform make it void, else passthru"
+//  "If argument is null or error antiform make it VETO, else passthru"
 //
 //      return: [any-atom?]
-//      ^atom "Decayed if pack, but packed nulls will panic instead of void"
+//      ^atom "Decayed if pack"
 //  ]
 //
-DECLARE_NATIVE(OPTIONAL_LIGHT)  // usually used via its alias of ?
+DECLARE_NATIVE(OPTIONAL_VETO)  // usually used via its alias of ?!
 //
-// This is functionally equivalent to OPTIONAL:LIGHT, but much faster to run
+// This is functionally equivalent to OPTIONAL:VETO, but much faster to run
 // because it's dispatched intrinsically.  (Plain OPT with no refinements
 // is also dispatched intrinsically, but adding the refinement slows it down
 // with CHAIN! calculations and requires building a FRAME!)
 {
-    INCLUDE_PARAMS_OF_OPTIONAL_LIGHT;
+    INCLUDE_PARAMS_OF_OPTIONAL_VETO;
 
-    bool light = true;
-    return Maybe_Intrinsic_Core(LEVEL, light);
+    bool veto = true;
+    return Optional_Intrinsic_Native_Core(LEVEL, veto);
 }
 
 

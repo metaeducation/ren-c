@@ -36,7 +36,7 @@
 ([3 2 1] = sort:compare [1 3 2] :>)
 
 [#1516 ; SORT:COMPARE ignores the typespec of its function argument
-    ~need-non-null~ !! (sort:compare reduce [1 2 _] :>)
+    ~bad-antiform~ !! (sort:compare reduce [1 2 _] :>)
 ]
 
 ; String sorting is temporarily only available for UTF-8 strings which are all

@@ -822,6 +822,7 @@ void Startup_Core(void)
     Startup_Utf8_Errors();
 
     Startup_Yielder_Errors();
+    Startup_Reduce_Errors();
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
@@ -1038,6 +1039,7 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Data_Stack();
 
+    Shutdown_Reduce_Errors();
     Shutdown_Yielder_Errors();
     Shutdown_Utf8_Errors();
     Shutdown_Stackoverflow();

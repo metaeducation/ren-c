@@ -9,12 +9,12 @@
 ; a variable, e.g. when that variable holds null, okay, void, or splice.
 
 [
-    ~need-non-null~ !! (parse [a b] ['a ~null~ 'b])
-    ~need-non-null~ !! (parse [a b] ['a null 'b])
-    ~need-non-null~ !! ('b = parse [a b] ['a @null 'b])
-    ~need-non-null~ !! ('b = parse [a b] ['a @lib.null 'b])
-    ~need-non-null~ !! ('b = parse [a b] ['a @(null) 'b])
-    ~need-non-null~ !! ('b = parse [a b] ['a @[(null)] 'b])
+    ~bad-antiform~ !! (parse [a b] ['a ~null~ 'b])
+    ~bad-antiform~ !! (parse [a b] ['a null 'b])
+    ~bad-antiform~ !! ('b = parse [a b] ['a @null 'b])
+    ~bad-antiform~ !! ('b = parse [a b] ['a @lib.null 'b])
+    ~bad-antiform~ !! ('b = parse [a b] ['a @(null) 'b])
+    ~bad-antiform~ !! ('b = parse [a b] ['a @[(null)] 'b])
 ]
 
 [

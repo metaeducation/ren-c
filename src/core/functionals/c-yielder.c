@@ -53,19 +53,6 @@ void Shutdown_Yielder_Errors(void)
 
 
 //
-//  Is_Error_Done_Signal: C
-//
-bool Is_Error_Done_Signal(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_WARNING);
-
-    ERROR_VARS *vars = ERR_VARS(Cell_Error(c));
-    if (not Is_Word(&vars->id))
-        return false;
-    return Cell_Word_Id(&vars->id) == SYM_DONE;
-}
-
-
-//
 //  done: native [
 //
 //  "Give back an error with (id = 'done), used frequently with YIELD"
@@ -100,7 +87,7 @@ DECLARE_NATIVE(DONE_Q)
     if (not Is_Meta_Of_Error(meta))
         return nullptr;
 
-    return LOGIC(Is_Error_Done_Signal(meta));
+    return LOGIC(Is_Error_Done_Signal(Cell_Error(meta)));
 }
 
 
@@ -258,7 +245,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     if (Not_Cell_Readable(plug)) {  // no plug, must be YIELD of a RAISED...
         assert(Is_Meta_Of_Error(meta_yielded));
 
-        if (Is_Error_Done_Signal(meta_yielded)) {
+        if (Is_Error_Done_Signal(Cell_Error(meta_yielded))) {
             // don't elevate to a panic, just consider it finished
         }
         else {  // all other error antiforms elevated to panics
@@ -415,7 +402,7 @@ Bounce Yielder_Dispatcher(Level* const L)
             Init_Blank(original_frame);
             return Meta_Unquotify_Undecayed(OUT);  // done, this is last value
         }
-        if (Is_Error_Done_Signal(OUT)) {
+        if (Is_Error_Done_Signal(Cell_Error(OUT))) {
             Init_Blank(original_frame);
             goto invoke_completed_yielder;
         }

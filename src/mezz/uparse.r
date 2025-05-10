@@ -1681,7 +1681,7 @@ default-combinators: to map! reduce [
     ][
         switch value [
           ~null~ [
-            panic make warning! [type: 'script, id: 'need-non-null]
+            panic make warning! [type: 'script, id: 'bad-antiform]
           ]
           ~okay~ [
             return ~,~  ; let okay just act as a "guard", no influence
@@ -2835,7 +2835,7 @@ parsify: func [
     case [
         word? r [  ; non-"keyword" WORD! (didn't look up literally)
             if null? value: get r [
-                panic make warning! [type: 'script, id: 'need-non-null]
+                panic make warning! [type: 'script, id: 'bad-antiform]
             ]
 
             if comb: match frame! :value [  ; variable held a combinator [4]

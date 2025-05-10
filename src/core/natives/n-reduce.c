@@ -28,12 +28,72 @@
 
 
 //
+//  Startup_Reduce_Errors: C
+//
+void Startup_Reduce_Errors(void)
+{
+    ensure(nullptr, g_error_veto) = Init_Warning(
+        Alloc_Value(),
+        Error_Veto_Raw()
+    );
+}
+
+
+//
+//  Shutdown_Reduce_Errors: C
+//
+void Shutdown_Reduce_Errors(void)
+{
+    rebReleaseAndNull(&g_error_veto);
+}
+
+
+//
+//  veto: native [
+//
+//  "Give back an error with (id = 'veto), used to cancel an operation"
+//
+//      return: [error!]
+//  ]
+//
+DECLARE_NATIVE(VETO)
+{
+    INCLUDE_PARAMS_OF_VETO;
+
+    Copy_Cell(OUT, g_error_veto);
+    return Failify(OUT);
+}
+
+
+//
+//  veto?: native:intrinsic [
+//
+//  "Detect whether argument is an error with (id = 'veto)"
+//
+//      return: [logic?]
+//      ^atom
+//  ]
+//
+DECLARE_NATIVE(VETO_Q)
+{
+    INCLUDE_PARAMS_OF_VETO_Q;
+
+    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
+
+    if (not Is_Meta_Of_Error(meta))
+        return nullptr;
+
+    return LOGIC(Is_Error_Veto_Signal(Cell_Error(meta)));
+}
+
+
+//
 //  reduce: native [
 //
 //  "Evaluates expressions, keeping each result (EVAL only gives last result)"
 //
-//      return: "New list or value"
-//          [element?]
+//      return: "New list or value (or null if VETO encountered)"
+//          [~null~ element?]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [<opt-out> element?]
 //      :predicate "Applied after evaluation, default is IDENTITY"
@@ -157,10 +217,10 @@ DECLARE_NATIVE(REDUCE)
     if (Is_Ghost_Or_Void(SPARE))
         goto next_reduce_step;  // void results are skipped by reduce
 
-    Decay_If_Unstable(SPARE);
+    if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
+        goto vetoed;
 
-    if (Is_Nulled(SPARE))
-        return FAIL(Error_Need_Non_Null_Raw());  // enables e.g. CURTAIL
+    Decay_If_Unstable(SPARE);
 
     if (Is_Splice(SPARE)) {
         const Element* tail;
@@ -198,6 +258,12 @@ DECLARE_NATIVE(REDUCE)
     Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(v), a);
     Tweak_Cell_Binding(OUT, Cell_Binding(v));
     return OUT;
+
+} vetoed: {  ///////////////////////////////////////////////////////////////
+
+    Drop_Data_Stack_To(STACK_BASE);
+    Drop_Level(SUBLEVEL);
+    return nullptr;
 }}
 
 
@@ -495,11 +561,18 @@ static void Push_Composer_Level(
 //        == [a ''~[3]~ b]
 //
 static Option(Error*) Trap_Finalize_Composer_Level(
-    Sink(Value) out,
+    Need(Value*) out,
     Level* L,
     const Element* composee,  // special handling if the output is a sequence
     bool conflate
 ){
+    if (Is_Nulled(out)) {  // a composed slot evaluated to VETO error antiform
+        Drop_Data_Stack_To(L->baseline.stack_base);
+        return SUCCESS;
+    }
+
+    assert(Is_Okay(out));  // finished normally
+
     possibly(Is_Quoted(composee) or Is_Quasiform(composee));
     Heart heart = Heart_Of_Builtin(composee);
 
@@ -554,40 +627,6 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 // At the end of the process, `L->u.compose.changed` will be false if the
 // composed series is identical to the input, true if there were compositions.
 //
-//////////////////////////////////////////////////////////////////////////////
-//
-// 1. label -> e.g. if <*>, only match `(<*> ...)`
-//    deep -> recurse into sub-blocks
-//    predicate -> function to run on each spliced slot
-//
-// 2. HEART byte is used as a GROUP! matches regardless of quoting, so:
-//
-//        >> compose [a ''(1 + 2) b]
-//        == [a ''3 b]
-//
-// 3. Splicing semantics match the rules for APPEND etc.
-//
-// 4. Only proxy newline flag from the template on *first* value spliced in,
-//    where it may have its own newline flag.  Not necessarily obvious; e.g.
-//    would you want the composed block below to all fit on one line?
-//
-//        >> block-of-things: [
-//               thing2  ; newline flag on thing1
-//               thing3
-//           ]
-//
-//        >> compose [thing1 (spread block-of-things)]  ; no newline flag
-//        == [thing1
-//               thing2  ; we proxy the flag, but is this what you wanted?
-//               thing3
-//           ]
-//
-// 5. At the end of the composer, we do not Drop_Data_Stack_To() and the level
-//    will still be alive for the caller.  This lets them have access to this
-//    level's BASELINE->stack_base, so it knows what all was pushed...and it
-//    also means the caller can decide if they want the accrued items or not
-//    depending on the `changed` field in the level.
-//
 Bounce Composer_Executor(Level* const L)
 {
     if (Is_Throwing(L))  // no state to cleanup (just data stack, auto-cleaned)
@@ -600,17 +639,17 @@ Bounce Composer_Executor(Level* const L)
     bool conflate;
     Value* predicate;
 
-{ //=//// EXTRACT ARGUMENTS FROM THE ORIGINAL COMPOSE CALL ////////////////=//
+  extract_arguments_from_original_compose_call: { ////////////////////////////
 
-    // We have levels for each "recursion" that processes the :DEEP blocks in
-    // the COMPOSE.  (These don't recurse as C functions, the levels are
+    // There's a Level for each "recursion" that processes the :DEEP blocks
+    // in a COMPOSE.  (These don't recurse as C functions, the levels are
     // stacklessly processed by the trampoline, see %c-trampoline.c)
     //
     // But each level wants to access the arguments to the COMPOSE that
     // kicked off the process.  A pointer to the Level of the main compose is
     // tucked into each Composer_Executor() level to use.
 
-    Level* level_ = main_level;  // level_ is L outside this scope
+    Level* level_ = main_level;  // level_ aliases L when outside this scope
 
     INCLUDE_PARAMS_OF_COMPOSE2;
 
@@ -622,7 +661,7 @@ Bounce Composer_Executor(Level* const L)
 
     assert(Is_Nulled(predicate) or Is_Frame(predicate));
 
-} //=//////////////////////////////////////////////////////////////////////=//
+} jump_to_label_for_state: { /////////////////////////////////////////////////
 
     USE_LEVEL_SHORTHANDS (L);  // defines level_ as L now that args extracted
 
@@ -634,17 +673,17 @@ Bounce Composer_Executor(Level* const L)
     };
 
     switch (STATE) {
-      case ST_COMPOSER_INITIAL_ENTRY :
+      case ST_COMPOSER_INITIAL_ENTRY:
         goto handle_current_item;
 
-      case ST_COMPOSER_EVAL_GROUP :
-      case ST_COMPOSER_RUNNING_PREDICATE :
-        goto process_out;
+      case ST_COMPOSER_EVAL_GROUP:
+      case ST_COMPOSER_RUNNING_PREDICATE:
+        goto process_slot_evaluation_result_in_out;
 
-      case ST_COMPOSER_RECURSING_DEEP :
+      case ST_COMPOSER_RECURSING_DEEP:
         goto composer_finished_recursion;
 
-      default : assert(false);
+      default: assert(false);
     }
 
   handle_next_item: {  ///////////////////////////////////////////////////////
@@ -654,8 +693,10 @@ Bounce Composer_Executor(Level* const L)
 
 } handle_current_item: {  ////////////////////////////////////////////////////
 
-    if (Is_Level_At_End(L))
-        goto finished;
+    if (Is_Level_At_End(L)) {
+        Init_Okay(OUT);
+        goto finished_out_is_null_if_veto;
+    }
 
     const Element* at = At_Level(L);
 
@@ -667,29 +708,30 @@ Bounce Composer_Executor(Level* const L)
     }
 
     if (not Try_Match_For_Compose(SPARE, at, pattern)) {
-        if (deep or Any_Sequence_Type(heart)) {  // sequences same level
-            // compose:deep [does [(1 + 2)] nested] => [does [3] nested]
-
+        if (deep or Any_Sequence_Type(heart)) {  // sequences "same level"
             Push_Composer_Level(OUT, main_level, at, L_binding);
             STATE = ST_COMPOSER_RECURSING_DEEP;
             return CONTINUE_SUBLEVEL(SUBLEVEL);
         }
 
-        // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
-        //
         Copy_Cell(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
 
     if (Is_Nulled(predicate)) {
         STATE = ST_COMPOSER_EVAL_GROUP;
-        return CONTINUE(OUT, cast(Element*, SPARE));
+        return CONTINUE_CORE(
+            OUT,
+            LEVEL_FLAG_ERROR_RESULT_OK,  // want to react to VETO
+            SPECIFIED,
+            cast(Element*, SPARE)
+        );
     }
 
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
     return CONTINUE(OUT, predicate, SPARE);
 
-} process_out: {  ///////////////////////////////////////////////////////////
+} process_slot_evaluation_result_in_out: {  //////////////////////////////////
 
     assert(
         STATE == ST_COMPOSER_EVAL_GROUP
@@ -704,28 +746,46 @@ Bounce Composer_Executor(Level* const L)
             L->u.compose.changed = true;
             goto handle_next_item;  // compose [(void)] => []
         }
-
-        // We can actually handle e.g. [''(void)] now as being some levels of
-        // quotedness of the apostrophe SIGIL! (e.g. that would be '' which
-        // is a single-quoted apostrophe).  Probably not meaningful??
-        //
         return PANIC(
-            "COMPOSE of quoted VOIDs as quoted apostrophe SIGIL! disabled"
+            "Can't quote/quasi-COMPOSE VOID, e.g. ''(void) or ~(void)~"
         );
     }
-    else
-        Decay_If_Unstable(OUT);
 
-    if (Is_Splice(OUT))
-        goto push_out_spliced;
+    if (Is_Error(OUT)) {
+        if (Is_Error_Veto_Signal(Cell_Error(OUT))) {
+            Init_Nulled(OUT);
+            goto finished_out_is_null_if_veto;  // compose [a (veto) b] => null
+        }
+        return OUT;
+    }
 
-    if (Is_Nulled(OUT))
-        return FAIL(Error_Need_Non_Null_Raw());  // [(null)] => warning!
+    Decay_If_Unstable(OUT);
 
-    if (Is_Antiform(OUT))
-        return FAIL(Error_Bad_Antiform(OUT));
-    else
-        Copy_Cell(PUSH(), cast(Element*, OUT));
+    if (Is_Antiform(OUT)) {
+        if (Is_Splice(OUT))
+            goto push_out_spliced;
+
+        return PANIC(Error_Bad_Antiform(OUT));
+    }
+
+  push_single_element_in_out: { //////////////////////////////////////////////
+
+    // 1. When composing a single element, we use the newline intent from the
+    //    GROUP! in the compose pattern...because there is no meaning to
+    //    the newline flag of an evaluative product:
+    //
+    //        >> block: [foo
+    //               bar]
+    //
+    //        >> compose [a (block.2) b]
+    //        == [a bar b]
+    //
+    //        >> compose [a
+    //               (block.2) b]
+    //        == [a
+    //               bar b]
+
+    Copy_Cell(PUSH(), cast(Element*, OUT));
 
     if (Any_Meta_Type(list_heart))
         Metafy(TOP_ELEMENT);
@@ -744,9 +804,7 @@ Bounce Composer_Executor(Level* const L)
         QUOTE_BYTE(TOP) = list_quote_byte;
     }
 
-    // Use newline intent from the GROUP! in the compose pattern
-    //
-    if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
+    if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))  // newline from group [1]
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     else
         Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -754,21 +812,49 @@ Bounce Composer_Executor(Level* const L)
     L->u.compose.changed = true;
     goto handle_next_item;
 
-  push_out_spliced:  /////////////////////////////////////////////////////////
+} push_out_spliced:  /////////////////////////////////////////////////////////
 
-    // compose [(spread [a b]) merges] => [a b merges]... [3]
+    // Splices are merged itemwise:
+    //
+    //    >> compose [(spread [a b]) merges]
+    //    == [a b merges]
+    //
+    // 1. There's not any technical reason why we couldn't allow you to
+    //    compose a quoted splice, applying the quote to each item:
+    //
+    //        >> compose [a '(spread [b 'c]) d]
+    //        == [a 'b ''c d]
+    //
+    //    But how often would that be useful, vs. it being a mistake?  Err on
+    //    the side of caution and don't allow it for now.
+    //
+    // 2. Only proxy newline flag from template on *first* value spliced in,
+    //    where it may have its own newline flag.  Not necessarily obvious,
+    //    e.g. would you want the composed block below to all fit on one line?
+    //
+    //        >> block-of-things: [
+    //               thing2  ; newline flag on thing1
+    //               thing3
+    //           ]
+    //
+    //        >> compose [thing1 (spread block-of-things)]  ; no newline flag
+    //        == [thing1
+    //               thing2  ; we proxy the flag, but is this what you wanted?
+    //               thing3
+    //           ]
 
-    if (list_quote_byte != NOQUOTE_1 or not Any_Plain_Type(list_heart))
-        return FAIL("Currently can only splice plain unquoted ANY-LIST?s");
+    assert(Is_Splice(OUT));
 
-    assert(Is_Splice(OUT));  // GROUP! at "quoting level -1" means splice
+    if (list_quote_byte != NOQUOTE_1 or not Any_Plain_Type(list_heart))  // [1]
+        return FAIL("Quoted COMPOSE slots are not distributed over splices");
 
     const Element* push_tail;
     const Element* push = Cell_List_At(&push_tail, OUT);
     if (push != push_tail) {
         Copy_Cell(PUSH(), push);
+
         if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
-            Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first [4]
+            Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // proxy on first item [2]
         else
             Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
 
@@ -781,23 +867,22 @@ Bounce Composer_Executor(Level* const L)
 
 } composer_finished_recursion: {  ////////////////////////////////////////////
 
-    // The compose stack of the nested compose is relative to *its* baseline.
+    // 1. Compose stack of the nested compose is relative to *its* baseline.
+    //
+    // 2. To save on memory usage, Rebol historically does not make copies of
+    //    arrays that don't have some substitution under them.  This may need
+    //    to be controlled by a refinement.
 
-    if (Is_Error(OUT)) {
-        Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);
+    if (Is_Nulled(OUT)) {  // VETO encountered
+        Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);  // [1]
         Drop_Level(SUBLEVEL);
         return OUT;
     }
 
-    assert(Is_Quasar(OUT));  // "return values" are data stack contents
+    assert(Is_Okay(OUT));  // "return values" are data stack contents
 
-    if (not SUBLEVEL->u.compose.changed) {
-        //
-        // To save on memory usage, Ren-C does not make copies of
-        // arrays that don't have some substitution under them.  This
-        // may be controlled by a switch if it turns out to be needed.
-        //
-        Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);
+    if (not SUBLEVEL->u.compose.changed) {  // optimize on no substitutions [2]
+        Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);  // [1]
         Drop_Level(SUBLEVEL);
 
         Copy_Cell(PUSH(), At_Level(L));
@@ -827,12 +912,20 @@ Bounce Composer_Executor(Level* const L)
     L->u.compose.changed = true;
     goto handle_next_item;
 
-} finished: {  ///////////////////////////////////////////////////////////////
+} finished_out_is_null_if_veto: {  ///////////////////////////////////////////
 
-    assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs [5]
+    // 1. At the end of the composer, we do not Drop_Data_Stack_To() and the
+    //    level will still be alive for the caller.  This lets them have
+    //    access to this level's BASELINE->stack_base, so it knows what all
+    //    was pushed...and also means the caller can decide if they want the
+    //    accrued items or not depending on the `changed` field in the level.
 
-    return Init_Quasar(OUT);  // signal finished, avoid leaking temp evaluations
-}}
+    assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs [1]
+
+    assert(Is_Logic(OUT));  // null if veto
+
+    return OUT;
+}}}
 
 
 //
@@ -906,7 +999,7 @@ DECLARE_NATIVE(COMPOSE2)
         goto list_initial_entry; }
 
       case ST_COMPOSE2_COMPOSING_LIST:
-        goto list_compose_finished;
+        goto list_compose_finished_out_is_null_if_vetoed;
 
       case ST_COMPOSE2_STRING_SCAN:
         goto string_scan_results_on_stack;
@@ -924,16 +1017,15 @@ DECLARE_NATIVE(COMPOSE2)
     STATE = ST_COMPOSE2_COMPOSING_LIST;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} list_compose_finished: {  //////////////////////////////////////////////////
+} list_compose_finished_out_is_null_if_vetoed: {  ////////////////////////////
 
-    if (not Is_Error(OUT)) {  // sublevel was killed
-        assert(Is_Quasar(OUT));
-        Option(Error*) e = Trap_Finalize_Composer_Level(
-            OUT, SUBLEVEL, input, Bool_ARG(CONFLATE)
-        );
-        if (e)
-            return PANIC(unwrap e);
-    }
+    assert(Is_Logic(OUT));
+
+    Option(Error*) e = Trap_Finalize_Composer_Level(
+        cast(Value*, OUT), SUBLEVEL, input, Bool_ARG(CONFLATE)
+    );
+    if (e)
+        return PANIC(unwrap e);
 
     Drop_Level(SUBLEVEL);
     return OUT;
@@ -967,7 +1059,7 @@ DECLARE_NATIVE(COMPOSE2)
     Utf8(const*) head = Cell_Utf8_At(input);
     Utf8(const*) at = cast(Utf8(const*), transcode->at);
 
-  //=//// PUSH PATTERN TERMINATORS TO DATA STACK //////////////////////////=//
+  push_pattern_terminators_to_data_stack: { //////////////////////////////////
 
     // 1. If we're matching @(([])) and we see "((some(([thing]))", then when
     //    we see the "s" that means we didn't see "(([".  So the scan has to
@@ -1048,7 +1140,7 @@ DECLARE_NATIVE(COMPOSE2)
     Count pattern_depth = TOP_INDEX - base;  // number of pattern levels pushed
     Utf8(const*) start = at - pattern_depth;  // start replacement at "([a])"
 
-  //=//// ALLOCATE OR PUSH LEVELS FOR EACH PATTERN END DELIMITER //////////=//
+  allocate_or_push_levels_for_each_pattern_end_delimiter: { //////////////////
 
     // We don't want to allocate or push a scanner level until we are sure
     // it's necessary.  (If no patterns are found, all we need to do is COPY
@@ -1106,7 +1198,7 @@ DECLARE_NATIVE(COMPOSE2)
     assert(STATE = ST_COMPOSE2_STRING_SCAN);
     return CONTINUE_SUBLEVEL(TOP_LEVEL);
 
-} string_scan_results_on_stack: { ////////////////////////////////////////////
+}}} string_scan_results_on_stack: { //////////////////////////////////////////
 
     // 1. While transcoding in a general case can't assume the data is valid
     //    UTF-8, we're scanning an already validated ANY-UTF8? value here.
@@ -1195,7 +1287,11 @@ DECLARE_NATIVE(COMPOSE2)
 
     if (Is_Error(OUT)) {
         Drop_Data_Stack_To(STACK_BASE);
-        return OUT;
+
+        if (Is_Error_Veto_Signal(Cell_Error(OUT)))
+            return nullptr;
+
+        return PANIC(Cell_Error(OUT));
     }
 
     const Value* result;
@@ -1244,9 +1340,6 @@ DECLARE_NATIVE(COMPOSE2)
         );
 
         at_offset = end_offset;
-
-        if (Is_Nulled(eval))
-            return FAIL(Error_Need_Non_Null_Raw());
 
         if (Is_Hole(eval))  // VOID translated to empty splice for data stack
             continue;

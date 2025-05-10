@@ -672,7 +672,7 @@ export*: func [
         ; !!! notation for exporting antiforms?
         items: next items
 
-        (types: match block! opt items.1) then [
+        (types: match block! ?? items.1) then [
             (match types val) else [
                 panic [
                     "EXPORT expected" word "to be in" @types

@@ -23,8 +23,8 @@
 
 
 [
-    ~need-non-null~ !! (match [~null~] null)
-    ~need-non-null~ !! (match [null?] null)
+    ~bad-antiform~ !! (match [~null~] null)
+    ~bad-antiform~ !! (match [null?] null)
     ('~null~ = match:meta [null?] null)
 
     (null = match [integer!] void)
@@ -62,7 +62,7 @@
     (null = non integer! 10)
     (append/ = non integer! append/)
 
-    ~need-non-null~ !! (non [~null~] null)
+    ~bad-antiform~ !! (non [~null~] null)
     ~???~ !! (non null?/ 10)
     (null = non:meta null null)
     ((the '10) = non:meta null 10)

@@ -24,5 +24,5 @@
     'abc = m 'abc
     null = m <abc>
     let e: sys.util/rescue [m null]
-    e.id = 'need-non-null
+    e.id = 'bad-antiform
 ])

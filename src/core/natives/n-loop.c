@@ -893,7 +893,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             Value* generated = rebMeta(rebRUN(les->data));
             if (not (
                 Is_Meta_Of_Error(generated)
-                and Is_Error_Done_Signal(generated)
+                and Is_Error_Done_Signal(Cell_Error(generated))
             )) {
                 Meta_Unquotify_Decayed(generated);
                 if (var)
@@ -1812,10 +1812,14 @@ DECLARE_NATIVE(MAP)
     if (Is_Void(SPARE))
         goto next_iteration;  // okay to skip
 
+    if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE))) {
+        Init_Nulled(OUT);
+        goto finalize_map;
+    }
+
     Decay_If_Unstable(SPARE);
 
     if (Is_Splice(SPARE)) {
-        Quasify_Antiform(SPARE);
         const Element* tail;
         const Element* v = Cell_List_At(&tail, SPARE);
         for (; v != tail; ++v)
@@ -1824,9 +1828,6 @@ DECLARE_NATIVE(MAP)
     else if (Is_Antiform(SPARE)) {
         Init_Thrown_Panic(LEVEL, Error_Bad_Antiform(SPARE));
         goto finalize_map;
-    }
-    else if (Is_Nulled(SPARE)) {
-        return PANIC(Error_Need_Non_Null_Raw());
     }
     else
         Copy_Cell(PUSH(), stable_SPARE);  // non nulls added to result
@@ -1844,8 +1845,8 @@ DECLARE_NATIVE(MAP)
     if (THROWING)
         return THROWN;  // automatically drops to baseline
 
-    if (Not_Cell_Erased(OUT)) {  // only modifies on break
-        assert(Is_Nulled(OUT));  // BREAK, so *must* return null
+    if (Not_Cell_Erased(OUT)) {  // only modifies on break or veto
+        assert(Is_Nulled(OUT));  // BREAK or VETO, so *must* return null
         Drop_Data_Stack_To(STACK_BASE);
         return nullptr;
     }
@@ -2218,7 +2219,7 @@ DECLARE_NATIVE(WHILE)
 
 } condition_eval_in_spare: {  ////////////////////////////////////////////////
 
-    if (Is_Error(SPARE) and Is_Error_Done_Signal(SPARE))
+    if (Is_Error(SPARE) and Is_Error_Done_Signal(Cell_Error(SPARE)))
         goto return_out;
 
     Decay_If_Unstable(SPARE);

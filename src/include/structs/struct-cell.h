@@ -343,7 +343,11 @@ typedef Byte QuoteByte;  // help document when Byte means a quoting byte
 // !!! Currently, ANY-PATH? rendering just ignores this bit.  Some way of
 // representing paths with newlines in them may be needed.
 //
-// !!! Note: Antiforms could use this for something else.
+// !!! Note: Antiforms could use this for something else.  So could the
+// products of evaluation that are resident in single cells (such as the
+// OUT or SPARE).  But being able to set this bit on those cells can be
+// useful as a way of preserving notes about the newline status of the
+// original cell--for instance.
 //
 #define CELL_FLAG_NEWLINE_BEFORE \
     FLAG_LEFT_BIT(29)

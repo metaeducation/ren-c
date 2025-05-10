@@ -47,29 +47,3 @@
 
     data = ["Aloha!" <middle> "Aloha!"]
 )
-
-; Test of using REFRAMER to make it possible to omit clauses when they have
-; NULL in them causing an error in REDUCE/COMPOSE type situations
-[
-    (
-        ver: 1.2.3
-        date: null
-
-        x: spaced [
-            curtail spaced ["Version:" @ver] curtail spaced ["Date:" date]
-        ]
-        x = "Version: 1.2.3"
-    )
-
-    ~need-non-null~ !! (
-        a: 1, b: null, c: 3
-        date: null
-        get-ver: func [] [join tuple! [a b c]]
-
-        spaced [
-            curtail spaced ["Version:" get-ver]
-            curtail spaced ["Date:" date]
-        ]
-    )
-    (void? curtail compose [benefit of no nulls! (find [a b c] 'd)])
-]

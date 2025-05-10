@@ -403,17 +403,13 @@ DECLARE_NATIVE(JOIN)
 
 } mold_step_result_in_spare: { ///////////////////////////////////////////////
 
-    // 3. Erroring on NULL has been found to catch real bugs in practice.  It
-    //    also enables clever constructs like CURTAIL.
-    //
-
     if (Is_Ghost_Or_Void(SPARE))  // spaced [elide print "hi"], etc
         goto next_mold_step;  // vaporize
 
-    Decay_If_Unstable(SPARE);  // spaced [match [logic?] false ...]
+    if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
+        goto vetoed;
 
-    if (Is_Nulled(SPARE))  // catches bugs in practice [3]
-        return FAIL(Error_Need_Non_Null_Raw());
+    Decay_If_Unstable(SPARE);  // spaced [match [logic?] false ...]
 
     if (Is_Splice(SPARE)) {  // only allow splice for mold, for now
         const Element* tail;
@@ -467,10 +463,10 @@ DECLARE_NATIVE(JOIN)
     if (Is_Ghost_Or_Void(SPARE))
         goto next_stack_step;  // vaporize
 
-    Decay_If_Unstable(SPARE);
+    if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
+        goto vetoed;
 
-    if (Is_Nulled(SPARE))  // catches bugs in practice [3]
-        return FAIL(Error_Need_Non_Null_Raw());
+    Decay_If_Unstable(SPARE);
 
     if (Is_Splice(SPARE)) {
         const Element* tail;
@@ -722,6 +718,13 @@ DECLARE_NATIVE(JOIN)
         Tweak_Cell_Binding(OUT, Cell_Binding(unwrap base));
 
     return OUT;
+
+} vetoed: { ////////////////////////////////////////////////////////////
+
+    Drop_Data_Stack_To(STACK_BASE);
+    Drop_Level(SUBLEVEL);
+
+    return nullptr;
 }}
 
 

@@ -76,7 +76,6 @@ syntax: [
 script: [
     no-value:           "No value in antiform BLOCK! pack: ~[]~ (VOID)"
     bad-null:           [:arg1 "cannot be null"]
-    type-of-null:       "TYPE OF NULL illegal (use TRY TYPE OF NULL if meant)"
     bad-word-get:       [:arg1 "is" :arg2 "antiform (see ^^(...) and GET:ANY)"]
     bad-antiform:       ["Invalid use of" :arg1 "antiform"]
     non-isotopic-type:  ["Quasiforms and antiforms not legal for value:" :arg1]
@@ -89,9 +88,10 @@ script: [
     collectable-bound:  ["Collectable" :arg1 "bound, use :PREBOUND if intended"]
     assertion-failure:  ["assertion failure:" :arg1]
 
-    ; NOTE: Preallocated error for enumeration
+    ; NOTE: Preallocated errors
     ;
     done:               "Enumeration exhausted"
+    veto:               "Cancel operation"
 
     yielder-panicked:   "Can't run a Yielder that has abruptly panicked"
     yielder-reentered:  "Can't re-entrantly call a Yielder not in YIELD state"
@@ -144,7 +144,7 @@ script: [
 
     hijack-blank:       "Hijacked function was captured but no body given yet"
 
-    need-non-null:      "non-NULL value required (see OPT, TRY, REIFY)"
+    type-of-null:       "TYPE OF NULL requested (use TRY if intentional)"
 
     evaluative-quote:   "Can't quote non-literal from an evaluative source"
 

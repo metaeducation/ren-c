@@ -23,10 +23,10 @@
 ~bad-antiform~ !! (
     compose [(~<bad>~) * <ok>]
 )
-~need-non-null~ !! (
+~bad-antiform~ !! (
     compose [(null) * <ok>]
 )
-~need-non-null~ !! (
+~bad-antiform~ !! (
     compose [(~null~) * <ok>]
 )
 ([~false~] = compose [('~false~)])
@@ -311,6 +311,5 @@
 ("abc" = compose2 @() "(if 1 > 2 ['x])abc(void)")
 
 (
-    e: trap [compose2 @() "(null)abc"]
-    e.id = 'need-non-null
+    null = compose2 @() "(veto)abc"
 )

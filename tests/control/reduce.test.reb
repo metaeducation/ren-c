@@ -54,12 +54,12 @@
 ]
 
 
-~need-non-null~ !! (
+~bad-antiform~ !! (
     reduce [null]
 )
 ([] = reduce [opt null])
 
-~need-non-null~ !! (
+~bad-antiform~ !! (
     reduce [~null~]
 )
 ([] = reduce [opt ~null~])

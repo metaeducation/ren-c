@@ -930,7 +930,7 @@ DECLARE_NATIVE(MATCH)
 
     if (not Bool_ARG(META)) {
         if (Is_Nulled(SPARE))
-            return FAIL(Error_Need_Non_Null_Raw());  // [1]
+            return FAIL(Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
     }
 
     switch (Type_Of(test)) {

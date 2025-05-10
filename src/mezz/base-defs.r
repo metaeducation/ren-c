@@ -31,8 +31,13 @@ func: function/  ; historical and heavily-used abbreviation
 
 lib: system.contexts.lib  ; alias for faster access
 
-opt: optional/  ; turns nulls into voids
-?: optional-light/  ; commonly used in Ren-C, more deserving of ? than HELP !!!
+; Note: OPTIONAL-VETO is an optimized intrinsic of the same functionality
+; as OPTIONAL:VETO
+;
+?: opt: optional/  ; NULL -> VOID
+??: cascade* reduce [unrun try/ unrun optional/]  ; NULL + ERROR! -> VOID
+?!: optional-veto/  ; NULL -> VETO
+??!: cascade* reduce [unrun try/ unrun optional-veto/]  ; NULL + ERROR! -> VETO
 
 eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 
@@ -54,8 +59,6 @@ probe: func [
 
     return ^value'
 ]
-
-/??: probe/  ; shorthand for debug sessions, not to be committed
 
 compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 

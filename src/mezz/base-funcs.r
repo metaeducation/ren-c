@@ -174,18 +174,6 @@ specialized?: func [
 ]
 
 
-/curtail: reframer func [
-    "Voids an expression if it returns any NEED-NON-NULL errors"
-    return: [any-value?]
-    frame [frame!]
-][
-    return eval frame except e -> [
-        if e.id = 'need-non-null [return void]
-        panic e
-    ]
-]
-
-
 ; ->- is the SHOVE operator.  It uses the item immediately to its left for
 ; the first argument to whatever operation is on its right hand side.  While
 ; most useful for calling infix functions from PATH! (which can't be done
