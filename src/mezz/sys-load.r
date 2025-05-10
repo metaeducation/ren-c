@@ -191,7 +191,7 @@ load: function [
     ;
     if tag? source [
         if not system/script/path [
-            fail ["Can't relatively load" source "- system/script/path not set"]
+            panic ["Can't relatively load" source "- system/script/path not set"]
         ]
         source: join system/script/path to text! source
     ]
@@ -209,7 +209,7 @@ load: function [
     ; /type with anything other than 'extension disables extension loading.
 
     if header and self/all [
-        fail "Cannot use /ALL and /HEADER refinements together"
+        panic "Cannot use /ALL and /HEADER refinements together"
     ]
 
     ;-- What type of file? Decode it too:
@@ -220,7 +220,7 @@ load: function [
 
         if ftype = 'extension [
             if not file? source [
-                fail ["Can only load extensions from FILE!, not" source]
+                panic ["Can only load extensions from FILE!, not" source]
             ]
             return ensure module! load-extension source ;-- DO embedded script
         ]
@@ -247,7 +247,7 @@ load: function [
         ftype: default ['rebol]
 
         if ftype = 'extension [
-            fail "Extensions can only be loaded from a FILE! (.DLL, .so)"
+            panic "Extensions can only be loaded from a FILE! (.DLL, .so)"
         ]
     ]
 
@@ -256,7 +256,7 @@ load: function [
             return decode ftype :data
         ]
 
-        fail ["No" ftype "LOADer found for" type of source]
+        panic ["No" ftype "LOADer found for" type of source]
     ]
 
     ensure [text! binary!] data
@@ -397,7 +397,7 @@ load-module: function [
                 ]
 
                 tmp = 'extension [
-                    fail "Use LOAD or LOAD-EXTENSION to load an extension"
+                    panic "Use LOAD or LOAD-EXTENSION to load an extension"
                 ]
             ] else [
                 cause-error 'access 'no-script source ; needs better error
@@ -650,7 +650,7 @@ import: function [
     ;
     if tag? module [
         if not system/script/path [
-            fail ["Can't relatively load" module "- system/script/path not set"]
+            panic ["Can't relatively load" module "- system/script/path not set"]
         ]
         module: join system/script/path to text! module
     ]

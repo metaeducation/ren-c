@@ -68,7 +68,7 @@ DECLARE_NATIVE(RESCUE)
     Value* error = rebRescue(cast(REBDNG*, &Rescue_Dangerous), level_);
     UNUSED(ARG(CODE));  // gets used by the above call, via the level_ pointer
 
-    if (not error)  // code didn't fail() or throw
+    if (not error)  // code didn't panic() or throw
         return nullptr;
 
     if (Is_Trash(error))  // signal used to indicate a throw
@@ -137,7 +137,7 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
     VarList* context;
     if (Is_Word(location)) {
         if (not IS_WORD_BOUND(location))
-            fail ("SET-LOCATION-OF-ERROR requires bound WORD!");
+            panic ("SET-LOCATION-OF-ERROR requires bound WORD!");
         context = VAL_WORD_CONTEXT(location);
     }
     else {
@@ -145,7 +145,7 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
         context = Cell_Varlist(location);
     }
 
-    Option(Level*) where = Level_Of_Varlist_May_Fail(context);
+    Option(Level*) where = Level_Of_Varlist_May_Panic(context);
 
     if (not where) {
         // should this error?

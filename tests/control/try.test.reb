@@ -23,7 +23,7 @@
 [#822
     (sys/util/rescue [make error! ""] then [<branch-not-run>] else [okay])
 ]
-(sys/util/rescue [fail make error! ""] then [okay])
+(sys/util/rescue [panic make error! ""] then [okay])
 (sys/util/rescue [1 / 0] then :error?)
 (sys/util/rescue [1 / 0] then lambda [e] [error? e])
 (sys/util/rescue [] then func [e] [<handler-not-run>] else [okay])

@@ -70,7 +70,7 @@ INLINE REBMAP *VAL_MAP(const Cell* v) {
 
     Flex* s = v->payload.any_series.series;
     if (Get_Flex_Info(s, INACCESSIBLE))
-        fail (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     return MAP(s);
 }

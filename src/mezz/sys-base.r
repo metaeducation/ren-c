@@ -64,7 +64,7 @@ do*: function [
     ;
     if tag? source [
         if not system/script/path [
-            fail ["Can't relatively load" source "- system/script/path not set"]
+            panic ["Can't relatively load" source "- system/script/path not set"]
         ]
         source: join system/script/path to text! source
     ]

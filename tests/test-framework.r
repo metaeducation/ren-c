@@ -202,7 +202,7 @@ make object! compose [
                                         "skipped"
                                         (skipped: me + 1)
                                             |
-                                        (fail "invalid test result")
+                                        (panic "invalid test result")
                                     ]
                                 )
                             ]
@@ -216,7 +216,7 @@ make object! compose [
                         seek position
                     ]
                 ] else [
-                    fail "do-recover log file parsing problem"
+                    panic "do-recover log file parsing problem"
                 ]
                 last-vector
                 test-sources: find/last/tail test-sources last-vector

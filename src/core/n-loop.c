@@ -194,7 +194,7 @@ static Bounce Loop_Series_Common(
             Type_Of(var) != Type_Of(start)
             or Cell_Flex(var) != Cell_Flex(start)
         ){
-            fail ("Can only change series index, not series to iterate");
+            panic ("Can only change series index, not series to iterate");
         }
 
         // Note that since the array is not locked with FLEX_INFO_HOLD, it
@@ -264,10 +264,10 @@ static Bounce Loop_Integer_Common(
         Trashify_Branched(out);  // null->BREAK, void->empty
 
         if (not Is_Integer(var))
-            fail (Error_Invalid_Type(Type_Of(var)));
+            panic (Error_Invalid_Type(Type_Of(var)));
 
         if (REB_I64_ADD_OF(*state, bump, state))
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
     }
 
     return out;
@@ -293,7 +293,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(start) or Is_Percent(start))
         s = VAL_DECIMAL(start);
     else
-        fail (Error_Invalid(start));
+        panic (Error_Invalid(start));
 
     REBDEC e;
     if (Is_Integer(end))
@@ -301,7 +301,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(end) or Is_Percent(end))
         e = VAL_DECIMAL(end);
     else
-        fail (Error_Invalid(end));
+        panic (Error_Invalid(end));
 
     REBDEC b;
     if (Is_Integer(bump))
@@ -309,7 +309,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(bump) or Is_Percent(bump))
         b = VAL_DECIMAL(bump);
     else
-        fail (Error_Invalid(bump));
+        panic (Error_Invalid(bump));
 
     // As in Loop_Integer_Common(), the state is actually in a cell; so each
     // loop iteration it must be checked to ensure it's still a decimal...
@@ -348,7 +348,7 @@ static Bounce Loop_Number_Common(
         Trashify_Branched(out);  // null->BREAK, void->empty
 
         if (not Is_Decimal(var))
-            fail (Error_Invalid_Type(Type_Of(var)));
+            panic (Error_Invalid_Type(Type_Of(var)));
 
         *state += b;
     }
@@ -377,7 +377,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     // variables is locked at fixed size.)
     //
     assert(Is_Issue(pseudo_var));
-    return Get_Mutable_Var_May_Fail(pseudo_var, SPECIFIED);
+    return Get_Mutable_Var_May_Panic(pseudo_var, SPECIFIED);
 }
 
 
@@ -495,7 +495,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                     Copy_Cell(var, val);
                 }
                 else
-                    fail ("Loop enumeration of contexts must be 1 or 2 vars");
+                    panic ("Loop enumeration of contexts must be 1 or 2 vars");
                 break; }
 
               case TYPE_MAP: {
@@ -531,7 +531,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                     Copy_Cell(var, val);
                 }
                 else
-                    fail ("Loop enumeration of contexts must be 1 or 2 vars");
+                    panic ("Loop enumeration of contexts must be 1 or 2 vars");
 
                 break; }
 
@@ -601,9 +601,9 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
 
           case LOOP_MAP_EACH:
             if (Is_Nulled(les->out))  // null body is error now
-                fail (Error_Need_Non_Null_Raw());
+                panic (Error_Need_Non_Null_Raw());
             if (Is_Okay(les->out))
-                fail ("~okay~ antiforms not legal as MAP-EACH body product");
+                panic ("~okay~ antiforms not legal as MAP-EACH body product");
             if (Is_Void(les->out))  // vanish result
                 Init_Trash(les->out);  // nulled is used to signal breaking only
             else
@@ -709,7 +709,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
                 break;
 
               default:
-                fail ("ACTION! is the only type with global enumeration");
+                panic ("ACTION! is the only type with global enumeration");
             }
         }
         else
@@ -727,7 +727,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
         }
     }
 
-    // If there is a fail() and we took a FLEX_INFO_HOLD, that hold needs
+    // If there is a panic() and we took a FLEX_INFO_HOLD, that hold needs
     // to be released.  For this reason, the code has to trap errors.
 
     bounce = rebRescue(cast(REBDNG*, &Loop_Each_Core), &les);
@@ -754,7 +754,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
         assert(Is_Error(bounce));
         if (mode == LOOP_MAP_EACH)
             Drop_Data_Stack_To(base);
-        rebJumps ("FAIL", rebR(bounce));
+        rebJumps ("panic", rebR(bounce));
     }
 
     // Otherwise, nullptr signals result in les.out (a.k.a. OUT)
@@ -960,9 +960,9 @@ DECLARE_NATIVE(FOR_SKIP)
         var = Real_Var_From_Pseudo(pseudo_var);
 
         if (Is_Nulled(var))
-            fail (Error_No_Value(ARG(WORD)));
+            panic (Error_No_Value(ARG(WORD)));
         if (not Any_Series(var))
-            fail (Error_Invalid(var));
+            panic (Error_Invalid(var));
 
         VAL_INDEX(var) += skip;
     }
@@ -1101,14 +1101,14 @@ DECLARE_NATIVE(EVERY)
 // applied all at once atomically.
 //
 // However, this means that there's state which must be finalized on every
-// possible exit path...be that BREAK, THROW, FAIL, or just ordinary finishing
+// possible exit path...be that BREAK, THROW, PANIC, or just ordinary finishing
 // of the loop.  That finalization is done by this routine, which will clean
 // up the state and remove any indicated items.  (It is assumed that all
 // forms of exit, including raising an error, would like to apply any
 // removals indicated thus far.)
 //
 // Because it's necessary to intercept, finalize, and then re-throw any
-// fail() exceptions, rebRescue() must be used with a state structure.
+// panic() exceptions, rebRescue() must be used with a state structure.
 //
 struct Remove_Each_State {
     Value* out;
@@ -1184,7 +1184,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
             return 0;
         }
 
-        // If there was a THROW, or fail() we need the remaining data
+        // If there was a THROW, or panic() we need the remaining data
         //
         REBLEN orig_len = VAL_LEN_HEAD(res->data);
         assert(res->start <= orig_len);
@@ -1218,7 +1218,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
             return 0;
         }
 
-        // If there was a BREAK, THROW, or fail() we need the remaining data
+        // If there was a BREAK, THROW, or panic() we need the remaining data
         //
         REBLEN orig_len = VAL_LEN_HEAD(res->data);
         assert(res->start <= orig_len);
@@ -1255,7 +1255,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
     // Set a bit saying we are iterating the series, which will disallow
     // mutations (including a nested REMOVE-EACH) until completion or failure.
     // This flag will be cleaned up by Finalize_Remove_Each(), which is run
-    // even if there is a fail().
+    // even if there is a panic().
     //
     Set_Flex_Info(res->series, HOLD);
 
@@ -1398,7 +1398,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     if (not (
         Any_List(res.data) or Any_String(res.data) or Is_Binary(res.data)
     )){
-        fail (Error_Invalid(res.data));
+        panic (Error_Invalid(res.data));
     }
 
     // Check the series for whether it is read only, in which case we should
@@ -1406,7 +1406,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     // even if the REMOVE-EACH turns out to be a no-op.
     //
     res.series = Cell_Flex(res.data);
-    Fail_If_Read_Only_Flex(res.series);
+    Panic_If_Read_Only_Flex(res.series);
 
     if (VAL_INDEX(res.data) >= Flex_Len(res.series)) {
         //
@@ -1473,7 +1473,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Bounce bounce = rebRescue(cast(REBDNG*, &Remove_Each_Core), &res);
 
-    // Currently, if a fail() happens during the iteration, any removals
+    // Currently, if a panic() happens during the iteration, any removals
     // which were indicated will be enacted before propagating failure.
     //
     REBLEN removals = Finalize_Remove_Each(&res);
@@ -1483,7 +1483,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     if (bounce) {
         assert(Is_Error(bounce));
-        rebJumps("fail", rebR(bounce));
+        rebJumps("panic", rebR(bounce));
     }
 
     if (res.broke)

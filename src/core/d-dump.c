@@ -308,7 +308,7 @@ DECLARE_NATIVE(DUMP)
 
 #if NO_RUNTIME_CHECKS
     UNUSED(ARG(VALUE));
-    fail (Error_Debug_Only_Raw());
+    panic (Error_Debug_Only_Raw());
 #else
     Value* v = ARG(VALUE);
 

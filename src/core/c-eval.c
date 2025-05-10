@@ -55,7 +55,7 @@
 #if DEBUG_COUNT_TICKS
     //
     // The evaluator `tick` should be visible in the C debugger watchlist as a
-    // local variable in Eval_Core_Throws() on each stack level.  So if fail()
+    // local variable in Eval_Core_Throws() on each stack level.  So if panic()
     // happens at a deterministic moment in a run, capture the number from
     // the level of interest and recompile with it here to get a breakpoint
     // at that tick.
@@ -85,7 +85,7 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
         //
         // Note that Do_Signals_Throws() may do a recycle step of the GC, or
         // it may spawn an entire interactive debugging session via
-        // breakpoint before it returns.  It may also FAIL and longjmp out.
+        // breakpoint before it returns.  It may also PANIC and longjmp out.
         //
         if (Do_Signals_Throws(L->out))
             return true;
@@ -196,7 +196,7 @@ INLINE void Finalize_Arg(
         // No different from `eval [1 +]`, where Eval_Core_Throws() gives END.
 
         if (not Is_Param_Endable(param))
-            fail (Error_No_Arg(L_state, param));
+            panic (Error_No_Arg(L_state, param));
 
         Init_Endish_Nulled(arg);
         Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
@@ -221,7 +221,7 @@ INLINE void Finalize_Arg(
             // didn't trigger revocation, or refine wouldn't be logic.
             //
             if (refine + 1 != arg)
-                fail (Error_Bad_Refine_Revoke(param, arg));
+                panic (Error_Bad_Refine_Revoke(param, arg));
 
             Init_Nulled(refine); // can't re-enable...
 
@@ -247,7 +247,7 @@ INLINE void Finalize_Arg(
         // in a revoked or unused state.
         //
         if (Is_Refine_Unused(refine))
-            fail (Error_Bad_Refine_Revoke(param, arg));
+            panic (Error_Bad_Refine_Revoke(param, arg));
     }
 
     if (Is_Void(arg)) {
@@ -269,16 +269,16 @@ INLINE void Finalize_Arg(
             return;
         }
 
-        FAIL_IF_ERROR(arg);  // simulate definitional error somewhat
+        PANIC_IF_ERROR(arg);  // simulate definitional error somewhat
 
-        fail (Error_Arg_Type(L_state, param, Type_Of(arg)));
+        panic (Error_Arg_Type(L_state, param, Type_Of(arg)));
     }
 
     // Varargs are odd, because the type checking doesn't actually check the
     // types inside the parameter--it always has to be a VARARGS!.
     //
     if (not Is_Varargs(arg))
-        fail (Error_Not_Varargs(L_state, param, Type_Of(arg)));
+        panic (Error_Not_Varargs(L_state, param, Type_Of(arg)));
 
     // While "checking" the variadic argument we actually re-stamp it with
     // this parameter and frame's signature.  It reuses whatever the original
@@ -336,7 +336,7 @@ INLINE void Seek_First_Param(Level* L, REBACT *action) {
             continue;
         return;
     }
-    fail ("Seek_First_Param() failed");
+    panic ("Seek_First_Param() failed");
 }
 
 
@@ -679,7 +679,7 @@ bool Eval_Core_Throws(Level* const L)
 
       case TYPE_ACTION: {
         if (Get_Cell_Flag(current, INFIX_IF_ACTION))
-            fail ("Bootstrap EXE only dispatches infix from WORD!");
+            panic ("Bootstrap EXE only dispatches infix from WORD!");
 
         Symbol* opt_label = nullptr; // not invoked through a word, "nameless"
 
@@ -999,7 +999,7 @@ bool Eval_Core_Throws(Level* const L)
                     }
 
                     if (not Is_Param_Endable(L->param))
-                        fail (Error_No_Arg(L, L->param));
+                        panic (Error_No_Arg(L, L->param));
 
                     Init_Endish_Nulled(L->arg);
                     Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
@@ -1095,7 +1095,7 @@ bool Eval_Core_Throws(Level* const L)
 
             if (IS_END(L->value)) {
                 if (not Is_Param_Endable(L->param))
-                    fail (Error_No_Arg(L, L->param));
+                    panic (Error_No_Arg(L, L->param));
 
                 Init_Endish_Nulled(L->arg);
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
@@ -1206,7 +1206,7 @@ bool Eval_Core_Throws(Level* const L)
 
             if (not IS_WORD_BOUND(TOP)) { // the loop didn't index it
                 CHANGE_VAL_TYPE_BITS(TOP, TYPE_REFINEMENT);
-                fail (Error_Bad_Refine_Raw(TOP)); // so duplicate or junk
+                panic (Error_Bad_Refine_Raw(TOP)); // so duplicate or junk
             }
 
             // Level_Args_Head() offsets are 0-based, while index is 1-based.
@@ -1349,7 +1349,7 @@ bool Eval_Core_Throws(Level* const L)
     //==////////////////////////////////////////////////////////////////==//
 
         // Here we know the function finished and nothing threw past it or
-        // FAIL / fail()'d.  It should still be in TYPE_ACTION evaluation
+        // PANIC / panic()'d.  It should still be in TYPE_ACTION evaluation
         // type, and overwritten the L->out with a non-thrown value.  If the
         // function composition is a CASCADE, the cascaded functions are still
         // pending on the stack to be run.
@@ -1425,7 +1425,7 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         if (not current_gotten)
-            current_gotten = Get_Opt_Var_May_Fail(current, L->specifier);
+            current_gotten = Get_Opt_Var_May_Panic(current, L->specifier);
 
         if (Is_Action(current_gotten)) { // before Is_Nulled() is common case
             Push_Action(
@@ -1449,10 +1449,10 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         if (Is_Trash(current_gotten))  // need `:x` if `x` is unset
-            fail (Error_No_Value_Core(current, L->specifier));
+            panic (Error_No_Value_Core(current, L->specifier));
 
         if (Is_Tripwire(current_gotten))
-            fail (Error_Fetched_Tripwire_Core(
+            panic (Error_Fetched_Tripwire_Core(
                 current, L->specifier, current_gotten
             ));
 
@@ -1479,7 +1479,7 @@ bool Eval_Core_Throws(Level* const L)
 
       case TYPE_SET_WORD: {
         if (IS_END(L->value)) // `eval [a:]` is illegal
-            fail (Error_Need_Non_End_Core(current, L->specifier));
+            panic (Error_Need_Non_End_Core(current, L->specifier));
 
         Flags flags = DO_MASK_NONE;
 
@@ -1496,9 +1496,9 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         if (Is_Void(L->out))  // try to model after mainline EXE
-            fail ("Can't assign ~void~ state via SET-WORD!");
+            panic ("Can't assign ~void~ state via SET-WORD!");
 
-        Copy_Cell(Sink_Var_May_Fail(current, L->specifier), L->out);
+        Copy_Cell(Sink_Var_May_Panic(current, L->specifier), L->out);
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1511,7 +1511,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_GET_WORD:
-        Move_Opt_Var_May_Fail(L->out, current, L->specifier);
+        Move_Opt_Var_May_Panic(L->out, current, L->specifier);
         break;
 
 //==/////////////////////////////////////////////////////////////////////==//
@@ -1601,17 +1601,17 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         if (Is_Trash(L->out))  // need GET/ANY if path is trash
-            fail (Error_No_Value_Core(current, L->specifier));
+            panic (Error_No_Value_Core(current, L->specifier));
 
         if (Is_Tripwire(L->out))
-            fail (Error_Fetched_Tripwire_Core(
+            panic (Error_Fetched_Tripwire_Core(
                 current, L->specifier, L->out
             ));
 
         if (tail_blank) {  // like/this/ means GET action
             if (not Is_Action(L->out)) {
                 Derelativize(Level_Spare(L), current, L->specifier);
-                fail (Error_Bad_Get_Action_Raw(Level_Spare(L)));
+                panic (Error_Bad_Get_Action_Raw(Level_Spare(L)));
             }
             break;
         }
@@ -1627,7 +1627,7 @@ bool Eval_Core_Throws(Level* const L)
             if (
                 Get_Cell_Flag(L->out, INFIX_IF_ACTION)
             ){
-                fail ("Use `>-` to shove left infix operands into PATH!s");
+                panic ("Use `>-` to shove left infix operands into PATH!s");
             }
 
             Push_Action(L, VAL_ACTION(L->out), VAL_BINDING(L->out));
@@ -1673,7 +1673,7 @@ bool Eval_Core_Throws(Level* const L)
 
       case TYPE_SET_PATH: {
         if (IS_END(L->value)) // `eval [a/b:]` is illegal
-            fail (Error_Need_Non_End_Core(current, L->specifier));
+            panic (Error_Need_Non_End_Core(current, L->specifier));
 
         Flags flags = DO_MASK_NONE;
 
@@ -1690,7 +1690,7 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         if (Is_Void(L->out))  // try to model after mainline EXE
-            fail ("Can't assign ~void~ state via SET-PATH!");
+            panic ("Can't assign ~void~ state via SET-PATH!");
 
         if (Eval_Path_Throws_Core(
             Level_Spare(L), // output if thrown, used as scratch space otherwise
@@ -1828,7 +1828,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_TRASH:
-        fail ("Trash cells cannot be evaluated");
+        panic ("Trash cells cannot be evaluated");
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
@@ -1847,10 +1847,10 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_NULLED:
-        fail (Error_Evaluate_Null_Raw());
+        panic (Error_Evaluate_Null_Raw());
 
       case TYPE_OKAY:
-        fail ("~okay~ antiforms can't be evaluated");
+        panic ("~okay~ antiforms can't be evaluated");
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
@@ -2082,7 +2082,7 @@ bool Eval_Core_Throws(Level* const L)
         Clear_Cell_Flag(L->out, OUT_MARKED_STALE);
 
   #if RUNTIME_CHECKS
-    Eval_Core_Exit_Checks_Debug(L); // will get called unless a fail() longjmps
+    Eval_Core_Exit_Checks_Debug(L); // will get called unless a panic() longjmps
   #endif
 
     return threw; // most callers should inspect for IS_END(L->value)

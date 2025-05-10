@@ -121,7 +121,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
         // codepoint out of a string pre-UTF8-everywhere makes a Ucs2Unit string.
         //
         if (VAL_CHAR(v) > 0x7f)
-            fail ("non-ASCII CHAR! output temporarily disabled.");
+            panic ("non-ASCII CHAR! output temporarily disabled.");
         Prin_OS_String(cast(Byte*, &VAL_CHAR(v)), 1, OPT_ENC_0);
     }
     else {
@@ -177,12 +177,12 @@ DECLARE_NATIVE(NEW_LINE)
     else if (Cell_Word_Id(ARG(MARK)) == SYM_NO)
         mark = false;
     else
-        fail (PARAM(MARK));
+        panic (PARAM(MARK));
 
     Value* pos = ARG(POSITION);
     Array* a = Cell_Array(pos);
 
-    Fail_If_Read_Only_Flex(a);
+    Panic_If_Read_Only_Flex(a);
 
     Copy_Cell(OUT, pos); // always returns the input position
 
@@ -245,7 +245,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
     if (Is_Varargs(pos)) {
         Level* L;
         Value* shared;
-        if (Is_Level_Style_Varargs_May_Fail(&L, pos)) {
+        if (Is_Level_Style_Varargs_May_Panic(&L, pos)) {
             if (not L->source->array) {
                 //
                 // C va_args input to frame, as from the API, but not in the
@@ -429,7 +429,7 @@ REBLEN Milliseconds_From_Value(const Cell* v) {
     }
 
     if (msec < 0)
-        fail (Error_Out_Of_Range(KNOWN(v)));
+        panic (Error_Out_Of_Range(KNOWN(v)));
 
     return cast(REBLEN, msec);
 }
@@ -505,7 +505,7 @@ DECLARE_NATIVE(WAIT)
             break;
 
         default:
-            fail (Error_Invalid_Core(val, SPECIFIED));
+            panic (Error_Invalid_Core(val, SPECIFIED));
         }
     }
 
@@ -561,7 +561,7 @@ DECLARE_NATIVE(WAKE_UP)
 {
     INCLUDE_PARAMS_OF_WAKE_UP;
 
-    FAIL_IF_BAD_PORT(ARG(PORT));
+    PANIC_IF_BAD_PORT(ARG(PORT));
 
     VarList* ctx = Cell_Varlist(ARG(PORT));
 
@@ -589,7 +589,7 @@ DECLARE_NATIVE(WAKE_UP)
         const bool fully = true; // error if not all arguments consumed
 
         if (Apply_Only_Throws(OUT, fully, awake, ARG(EVENT), rebEND))
-            fail (Error_No_Catch_For_Throw(OUT));
+            panic (Error_No_Catch_For_Throw(OUT));
 
         if (not (Is_Logic(OUT) and VAL_LOGIC(OUT)))
             woke_up = false;
@@ -621,7 +621,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
     Value* path = ARG(PATH);
     if (Is_File(path)) {
         if (not Bool_ARG(PASS))
-            fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
+            panic ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
 
         return Init_File(
             OUT,
@@ -666,7 +666,7 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
     Value* path = ARG(PATH);
     if (Is_Text(path)) {
         if (not Bool_ARG(PASS))
-            fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
+            panic ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
 
         return Init_Text(
             OUT,
@@ -720,7 +720,7 @@ DECLARE_NATIVE(WHAT_DIR)
         // Lousy error, but ATM the user can directly edit system/options.
         // They shouldn't be able to (or if they can, it should be validated)
         //
-        fail (Error_Invalid(current_path));
+        panic (Error_Invalid(current_path));
     }
 
     // Note the expectation is that WHAT-DIR will return a value that can be
@@ -764,7 +764,7 @@ DECLARE_NATIVE(CHANGE_DIR)
         bool success = OS_SET_CURRENT_DIR(arg);
 
         if (not success)
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
     }
 
     Copy_Cell(current_path, arg);

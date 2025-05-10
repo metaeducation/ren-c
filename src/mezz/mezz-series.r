@@ -201,7 +201,7 @@ reword: function [
                 prefix: delimiter-types
                 opt suffix: delimiter-types
             ] else [
-                fail ["Invalid /ESCAPE delimiter block" delimiters]
+                panic ["Invalid /ESCAPE delimiter block" delimiters]
             ]
         ]
     ] else [
@@ -250,7 +250,7 @@ reword: function [
     any-keyword-rule: collect [
         for-each [keyword value] values [
             if not match keyword-types keyword [
-                fail ["Invalid keyword type:" keyword]
+                panic ["Invalid keyword type:" keyword]
             ]
 
             keep reduce [
@@ -350,7 +350,7 @@ reword: function [
     ]
 
     parse/(if case_REWORD [/case]) source rule else [
-        fail "Unexpected error in REWORD's parse rule, should not happen."
+        panic "Unexpected error in REWORD's parse rule, should not happen."
     ]
 
     return out
@@ -621,7 +621,7 @@ split: function [
     result: collect [
         parse/match series <- if integer? dlm [
             size: dlm ;-- alias for readability in integer case
-            if size < 1 [fail "Bad SPLIT size given:" size]
+            if size < 1 [panic "Bad SPLIT size given:" size]
 
             if into [
                 count: size - 1

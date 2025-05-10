@@ -271,13 +271,13 @@ void Append_Int_Pad(Binary* dst, REBINT num, REBINT digs)
 
 
 //
-//  Append_UTF8_May_Fail: C
+//  Append_UTF8_May_Panic: C
 //
 // Append UTF-8 data to a series underlying an ANY-STRING!.
 //
 // `dst = nullptr` means make a new string.
 //
-String* Append_UTF8_May_Fail(
+String* Append_UTF8_May_Panic(
     String* dst,
     const char *utf8,
     size_t size,
@@ -310,7 +310,7 @@ String* Append_UTF8_May_Fail(
         if (ch >= 0x80) {
             src = Back_Scan_UTF8_Char(&ch, src, &bytes_left);
             if (src == nullptr)
-                fail (Error_Bad_Utf8_Raw());
+                panic (Error_Bad_Utf8_Raw());
 
             all_ascii = false;
         }
@@ -376,7 +376,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
         switch (Type_Of(val)) {
         case TYPE_INTEGER:
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
-                fail (Error_Out_Of_Range(KNOWN(val)));
+                panic (Error_Out_Of_Range(KNOWN(val)));
             Expand_Flex_Tail(series, 1);
             *Binary_At(series, tail) = (Byte)VAL_INT32(val);
             break;
@@ -415,7 +415,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
             break; }
 
         default:
-            fail (Error_Invalid_Core(val, VAL_SPECIFIER(blk)));
+            panic (Error_Invalid_Core(val, VAL_SPECIFIER(blk)));
         }
 
         tail = Flex_Len(series);

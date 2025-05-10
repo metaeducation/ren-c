@@ -401,19 +401,19 @@ INLINE bool Is_Flex_Read_Only(Flex* s) { // may be temporary...
 // but if only one error is to be reported then this is probably the right
 // priority ordering.
 //
-INLINE void Fail_If_Read_Only_Flex(Flex* s) {
+INLINE void Panic_If_Read_Only_Flex(Flex* s) {
     if (Is_Flex_Read_Only(s)) {
         if (Get_Flex_Info(s, AUTO_LOCKED))
-            fail (Error_Series_Auto_Locked_Raw());
+            panic (Error_Series_Auto_Locked_Raw());
 
         if (Get_Flex_Info(s, HOLD))
-            fail (Error_Series_Held_Raw());
+            panic (Error_Series_Held_Raw());
 
         if (Get_Flex_Info(s, FROZEN_DEEP))
-            fail (Error_Series_Frozen_Raw());
+            panic (Error_Series_Frozen_Raw());
 
         assert(Get_Flex_Info(s, PROTECTED));
-        fail (Error_Series_Protected_Raw());
+        panic (Error_Series_Protected_Raw());
     }
 }
 
@@ -478,7 +478,7 @@ INLINE Flex* Cell_Flex(const Cell* v) {
     assert(Any_Series(v) or Is_Map(v));  // !!! gcc 5.4 -O2 bug
     Flex* s = v->payload.any_series.series;
     if (Get_Flex_Info(s, INACCESSIBLE))
-        fail (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
     return s;
 }
 
@@ -698,7 +698,7 @@ INLINE Flex* Make_Flex_Core(
     assert(not (flags & ARRAY_FLAG_HAS_FILE_LINE));
 
     if (cast(REBU64, capacity) * wide > INT32_MAX)
-        fail (Error_No_Memory(cast(REBU64, capacity) * wide));
+        panic (Error_No_Memory(cast(REBU64, capacity) * wide));
 
     // Non-array series nodes do not need their info bits to conform to the
     // rules of Endlike_Header(), so plain assignment can be used with a
@@ -723,7 +723,7 @@ INLINE Flex* Make_Flex_Core(
 
         LEN_BYTE_OR_255(s) = 255; // alloc caller sets
         if (not Did_Flex_Data_Alloc(s, capacity))
-            fail (Error_No_Memory(capacity * wide));
+            panic (Error_No_Memory(capacity * wide));
 
       #if RUNTIME_CHECKS
         PG_Reb_Stats->Series_Memory += capacity * wide;

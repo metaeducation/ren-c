@@ -136,13 +136,13 @@ static void Append_To_Context(VarList* context, Value* arg)
     }
 
     if (not Is_Block(arg))
-        fail (Error_Invalid(arg));
+        panic (Error_Invalid(arg));
 
     // Process word/value argument block:
 
     Cell* item = Cell_List_At(arg);
 
-    // Can't actually fail() during a collect, so make sure any errors are
+    // Can't actually panic() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
     //
     Error* error = nullptr;
@@ -240,7 +240,7 @@ collect_end:
     Collect_End(&collector);
 
     if (error != nullptr)
-        fail (error);
+        panic (error);
 }
 
 
@@ -282,9 +282,9 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         }
 
         if (not Is_Action(out))
-            fail (Error_Bad_Make(kind, arg));
+            panic (Error_Bad_Make(kind, arg));
 
-        VarList* exemplar = Make_Managed_Context_For_Action_May_Fail(
+        VarList* exemplar = Make_Managed_Context_For_Action_May_Panic(
             out,  // being used here as input (e.g. the ACTION!)
             lowest_stackindex,  // will weave in the refinements pushed
             nullptr  // no binder needed, not running any code
@@ -356,7 +356,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Any_Context(out, kind, c);
     }
 
-    fail (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(kind, arg));
 }
 
 
@@ -370,7 +370,7 @@ Bounce TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         // arg is checked to be block or string
         //
         if (Make_Error_Object_Throws(out, arg))
-            fail (Error_No_Catch_For_Throw(out));
+            panic (Error_No_Catch_For_Throw(out));
 
         return out;
     }
@@ -383,7 +383,7 @@ Bounce TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Object(out, Cell_Varlist(arg));
     }
 
-    fail (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(kind, arg));
 }
 
 
@@ -407,10 +407,10 @@ Bounce PD_Context(
         return nullptr;
 
     if (opt_setval) {
-        FAIL_IF_READ_ONLY_CONTEXT(c);
+        PANIC_IF_READ_ONLY_CONTEXT(c);
 
         if (Get_Cell_Flag(Varlist_Slot(c, n), PROTECTED))
-            fail (Error_Protected_Word_Raw(picker));
+            panic (Error_Protected_Word_Raw(picker));
     }
 
     pvs->u.ref.cell = Varlist_Slot(c, n);
@@ -470,7 +470,7 @@ DECLARE_NATIVE(SET_META)
     VarList* meta;
     if (Any_Context(ARG(META))) {
         if (VAL_BINDING(ARG(META)) != UNBOUND)
-            fail ("SET-META can't store context bindings, must be unbound");
+            panic ("SET-META can't store context bindings, must be unbound");
 
         meta = Cell_Varlist(ARG(META));
     }
@@ -767,7 +767,7 @@ REBTYPE(Context)
         if (Type_Of(value) != TYPE_FRAME)
             break;
 
-        Level* L = Level_Of_Varlist_May_Fail(c);
+        Level* L = Level_Of_Varlist_May_Panic(c);
 
         switch (sym) {
           case SYM_FILE: {
@@ -817,18 +817,18 @@ REBTYPE(Context)
           default:
             break;
         }
-        fail (Error_Cannot_Reflect(Type_Of(value), arg)); }
+        panic (Error_Cannot_Reflect(Type_Of(value), arg)); }
 
 
       case SYM_APPEND:
-        FAIL_IF_ERROR(arg);
+        PANIC_IF_ERROR(arg);
 
         if (Is_Nulled(arg) or Is_Blank(arg))
-            RETURN (value); // don't fail on read only if it would be a no-op
+            RETURN (value); // don't panic on read only if it would be a no-op
 
-        FAIL_IF_READ_ONLY_CONTEXT(c);
+        PANIC_IF_READ_ONLY_CONTEXT(c);
         if (not Is_Object(value) and not Is_Module(value))
-            fail (Error_Illegal_Action(Type_Of(value), verb));
+            panic (Error_Illegal_Action(Type_Of(value), verb));
         Append_To_Context(c, arg);
         RETURN (value);
 
@@ -839,7 +839,7 @@ REBTYPE(Context)
 
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         REBU64 types;
@@ -878,7 +878,7 @@ REBTYPE(Context)
         break;
     }
 
-    fail (Error_Illegal_Action(Type_Of(value), verb));
+    panic (Error_Illegal_Action(Type_Of(value), verb));
 }
 
 
@@ -1000,5 +1000,5 @@ Bounce MAKE_With_Parent(
         return Init_Object(out, context);
     }
 
-    fail ("Unsupported MAKE arguments");
+    panic ("Unsupported MAKE arguments");
 }

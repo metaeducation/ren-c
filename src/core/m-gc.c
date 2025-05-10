@@ -811,7 +811,7 @@ static void Reify_Any_C_Valist_Frames(void)
 //
 // For root nodes, this checks to see if their lifetime was dependent on a
 // FRAME!, and if that frame is no longer on the stack.  If so, it (currently)
-// will crash if that frame did not end due to a fail().  This could be
+// will crash if that frame did not end due to a panic().  This could be
 // relaxed to automatically free those nodes as a normal GC.
 //
 // !!! This implementation walks over *all* the nodes.  It wouldn't have to
@@ -852,7 +852,7 @@ static void Mark_Root_Stubs(void)
                     Varlist_Array(LINK(s).owner)->info.bits
                     & FLEX_INFO_INACCESSIBLE
                 ){
-                    if (Not_Flex_Info(LINK(s).owner, FRAME_FAILED)) {
+                    if (Not_Flex_Info(LINK(s).owner, FRAME_PANICKED)) {
                         //
                         // Long term, it is likely that implicit managed-ness
                         // will allow users to leak API handles.  It will

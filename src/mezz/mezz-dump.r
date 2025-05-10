@@ -63,7 +63,7 @@ dump: function [
                 enablements/(sigil): item
             ]
 
-            fail/blame [
+            panic/blame [
                 "Item not TEXT!, INTEGER!, WORD!, PATH!, GROUP!:" :item
             ] 'value
         ]

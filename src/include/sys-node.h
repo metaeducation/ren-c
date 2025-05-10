@@ -310,7 +310,7 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
             return DETECTED_AS_FREE;
 
         if (b == NODE_BYTE_RESERVED)  // 0xF5
-            fail ("NODE_BYTE_RESERVED Encountered in Detect_Rebol_Pointer()");
+            panic ("NODE_BYTE_RESERVED Encountered in Detect_Rebol_Pointer()");
 
         return DETECTED_AS_STUB;
     }

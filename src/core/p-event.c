@@ -142,7 +142,7 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
     Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
     if (!Is_Object(spec))
-        fail (Error_Invalid_Spec_Raw(spec));
+        panic (Error_Invalid_Spec_Raw(spec));
 
     // Get or setup internal state data:
     //
@@ -174,12 +174,12 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
     // Normal block actions done on events:
     case SYM_POKE:
         if (!Is_Event(D_ARG(3)))
-            fail (Error_Invalid(D_ARG(3)));
+            panic (Error_Invalid(D_ARG(3)));
         goto act_blk;
     case SYM_INSERT:
     case SYM_APPEND:
         if (!Is_Event(arg))
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
         // falls through
     case SYM_PICK: {
     act_blk:;
@@ -215,16 +215,16 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
 
         UNUSED(PARAM(SPEC));
         if (Bool_ARG(NEW))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(READ))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(WRITE))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(SEEK))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(ALLOW)) {
             UNUSED(ARG(ACCESS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         if (req == nullptr) {  //!!!
@@ -237,7 +237,7 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
             }
             else {
                 if (rebDid("error?", rebQ(result)))
-                    rebJumps("fail", result);
+                    rebJumps("panic", result);
 
                 assert(false); // !!! can this happen?
                 rebRelease(result); // ignore result
@@ -262,7 +262,7 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_PORT, verb));
+    panic (Error_Illegal_Action(TYPE_PORT, verb));
 }
 
 

@@ -67,7 +67,7 @@ decode-key-value-text: function [
     meta: copy []
 
     parse2/match text data-fields else [
-        fail [
+        panic [
             {Expected key value format on line} (text-line-of position)
             {and lines must end with newline.}
         ]
@@ -190,7 +190,7 @@ proto-parser: context [
                         newline
                         http://stackoverflow.com/q/693788/c-void-arguments
                     ]
-                    fail "C++ no-arg prototype used instead of C style"
+                    panic "C++ no-arg prototype used instead of C style"
                 ]
 
                 ; Call the EMIT-PROTO hook that the client provided.  They
@@ -262,9 +262,9 @@ proto-parser: context [
             | "Sink(" opt [identifier "(" thru ")"] thru ")"
             | "Option(Sink(" opt [identifier "(" thru ")"] thru "))"
             | "(*)" | "(const*)"
-            | "(const *)" (fail "use (const*) not (const *)")
+            | "(const *)" (panic "use (const*) not (const *)")
             | "(const Cell*)"
-            | "(const Cell* )" (fail "use (const Cell*) not (const Cell* )")
+            | "(const Cell* )" (panic "use (const Cell*) not (const Cell* )")
         ]
 
         function-proto: [

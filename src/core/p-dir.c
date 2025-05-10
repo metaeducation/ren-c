@@ -32,13 +32,13 @@
 
 
 //
-//  Read_Dir_May_Fail: C
+//  Read_Dir_May_Panic: C
 //
 // Provide option to get file info too.
 // Provide option to prepend dir path.
 // Provide option to use wildcards.
 //
-static Array* Read_Dir_May_Fail(struct devreq_file *dir)
+static Array* Read_Dir_May_Panic(struct devreq_file *dir)
 {
     struct devreq_file file;
     CLEARS(&file);
@@ -137,16 +137,16 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
     VarList* ctx = Cell_Varlist(port);
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
     if (not Is_Object(spec))
-        fail (Error_Invalid_Spec_Raw(spec));
+        panic (Error_Invalid_Spec_Raw(spec));
 
     Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (path == nullptr)
-        fail (Error_Invalid_Spec_Raw(spec));
+        panic (Error_Invalid_Spec_Raw(spec));
 
     if (Is_Url(path))
         path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
     else if (not Is_File(path))
-        fail (Error_Invalid_Spec_Raw(path));
+        panic (Error_Invalid_Spec_Raw(path));
 
     Value* state = Varlist_Slot(ctx, STD_PORT_STATE); // BLOCK! means port open
 
@@ -187,18 +187,18 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(PARAM(SOURCE));
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(SEEK)) {
             UNUSED(ARG(INDEX));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher
 
         if (not Is_Block(state)) {     // !!! ignores /SKIP and /PART, for now
             Init_Dir_Path(&dir, path, POL_READ);
-            Init_Block(OUT, Read_Dir_May_Fail(&dir));
+            Init_Block(OUT, Read_Dir_May_Panic(&dir));
         }
         else {
             // !!! This copies the strings in the block, shallowly.  What is
@@ -220,7 +220,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 
     case SYM_CREATE: {
         if (Is_Block(state))
-            fail (Error_Already_Open_Raw(path));
+            panic (Error_Already_Open_Raw(path));
     create:
         Init_Dir_Path(&dir, path, POL_WRITE); // Sets RFM_DIR too
 
@@ -229,7 +229,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 
         if (rebDid("error?", rebQ(result))) {
             rebRelease(result); // !!! throws away details
-            fail (Error_No_Create_Raw(path)); // higher level error
+            panic (Error_No_Create_Raw(path)); // higher level error
         }
 
         rebRelease(result); // ignore result
@@ -243,7 +243,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         INCLUDE_PARAMS_OF_RENAME;
 
         if (Is_Block(state))
-            fail (Error_Already_Open_Raw(path));
+            panic (Error_Already_Open_Raw(path));
 
         Init_Dir_Path(&dir, path, POL_WRITE); // Sets RFM_DIR
 
@@ -255,7 +255,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 
         if (rebDid("error?", rebQ(result))) {
             rebRelease(result); // !!! throws away details
-            fail (Error_No_Rename_Raw(path)); // higher level error
+            panic (Error_No_Rename_Raw(path)); // higher level error
         }
 
         rebRelease(result); // ignore result
@@ -273,7 +273,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 
         if (rebDid("error?", rebQ(result))) {
             rebRelease(result); // !!! throws away details
-            fail (Error_No_Delete_Raw(path)); // higher level error
+            panic (Error_No_Delete_Raw(path)); // higher level error
         }
 
         rebRelease(result); // ignore result
@@ -284,25 +284,25 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 
         UNUSED(PARAM(SPEC));
         if (Bool_ARG(READ))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(WRITE))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(SEEK))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(ALLOW)) {
             UNUSED(ARG(ACCESS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         // !! If open fails, what if user does a READ w/o checking for error?
         if (Is_Block(state))
-            fail (Error_Already_Open_Raw(path));
+            panic (Error_Already_Open_Raw(path));
 
         if (Bool_ARG(NEW))
             goto create;
 
         Init_Dir_Path(&dir, path, POL_READ);
-        Init_Block(state, Read_Dir_May_Fail(&dir));
+        Init_Block(state, Read_Dir_May_Panic(&dir));
         RETURN (port); }
 
     case SYM_CLOSE:
@@ -330,7 +330,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_PORT, verb));
+    panic (Error_Illegal_Action(TYPE_PORT, verb));
 }
 
 

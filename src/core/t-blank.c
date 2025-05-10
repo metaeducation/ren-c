@@ -48,7 +48,7 @@ REBINT CT_Unit(const Cell* a, const Cell* b, REBINT mode)
 //
 Bounce MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
     UNUSED(out);
-    fail (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(kind, arg));
 }
 
 
@@ -59,7 +59,7 @@ Bounce MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 Bounce TO_Unit(Value* out, enum Reb_Kind kind, const Value* data) {
     UNUSED(out);
-    fail (Error_Bad_Make(kind, data));
+    panic (Error_Bad_Make(kind, data));
 }
 
 
@@ -138,7 +138,7 @@ REBTYPE(Unit)
         // allowed to opt out, e.g. index of void is null
     }
     else if (Is_Antiform(val)) {
-        fail (Error_Bad_Antiform(val));
+        panic (Error_Bad_Antiform(val));
     }
     else
         assert(Is_Blank(val));
@@ -188,7 +188,7 @@ REBTYPE(Unit)
         break;
     }
 
-    fail (Error_Illegal_Action(Type_Of(val), verb));
+    panic (Error_Illegal_Action(Type_Of(val), verb));
 }
 
 
@@ -203,7 +203,7 @@ REBINT CT_Handle(const Cell* a, const Cell* b, REBINT mode)
     UNUSED(b);
     UNUSED(mode);
 
-    fail ("Currently comparing HANDLE! types is not allowed.");
+    panic ("Currently comparing HANDLE! types is not allowed.");
 }
 
 
@@ -226,5 +226,5 @@ REBTYPE(Handle)
 {
     UNUSED(level_);
 
-    fail (Error_Illegal_Action(TYPE_HANDLE, verb));
+    panic (Error_Illegal_Action(TYPE_HANDLE, verb));
 }

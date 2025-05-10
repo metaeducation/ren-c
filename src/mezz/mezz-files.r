@@ -86,7 +86,7 @@ ask: function [
 ][
     if datatype? question [
         if question <> text! [
-            fail "ASK only supports ASK TEXT! in bootstrap build"
+            panic "ASK only supports ASK TEXT! in bootstrap build"
         ]
     ]
     else [
@@ -141,7 +141,7 @@ confirm: function [
     choices: default [["y" "yes"] ["n" "no"]]
 
     if (block? choices) and (length of choices > 2) [
-        fail/blame [
+        panic/blame [
             "maximum 2 arguments allowed for choices [true false]"
             "got:" mold choices
         ] 'choices
@@ -178,7 +178,7 @@ list-dir: function [
     save-dir: what-dir
 
     if not file? save-dir [
-        fail ["No directory listing protocol registered for" save-dir]
+        panic ["No directory listing protocol registered for" save-dir]
     ]
 
     switch type of :path [
@@ -323,6 +323,6 @@ set-net: function [
     return: [~]
     bl [block!]
 ][
-    if 6 <> length of bl [fail "Needs all 6 parameters for set-net"]
+    if 6 <> length of bl [panic "Needs all 6 parameters for set-net"]
     set (words of system/user/identity) bl
 ]

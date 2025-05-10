@@ -208,13 +208,13 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         }
         else {
             VarList* context = CTX(arg->extra.binding);
-            Level* param_level = Level_Of_Varlist_May_Fail(context);
+            Level* param_level = Level_Of_Varlist_May_Panic(context);
 
             Value* param = ACT_PARAMS_HEAD(Level_Phase(param_level))
                 + arg->payload.varargs.param_offset;
 
             if (Typeset_Check(param, TYPE_NULLED))
-                fail (Error_Null_Vararg_Array_Raw());
+                panic (Error_Null_Vararg_Array_Raw());
         }
 
         StackIndex base = TOP_INDEX;
@@ -254,7 +254,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
     }
 
   bad_make:;
-    fail (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(kind, arg));
 }
 
 
@@ -460,7 +460,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
         flags->reverse ? v2 : v1,
         rebEND
     )) {
-        fail (Error_No_Catch_For_Throw(result));
+        panic (Error_No_Catch_For_Throw(result));
     }
 
     REBINT tristate = -1;
@@ -539,7 +539,7 @@ static void Sort_List(
     if (not Is_Nulled(skipv)) {
         skip = Get_Num_From_Arg(skipv);
         if (skip <= 0 || len % skip != 0 || skip > len)
-            fail (Error_Out_Of_Range(skipv));
+            panic (Error_Out_Of_Range(skipv));
     }
     else
         skip = 1;
@@ -663,7 +663,7 @@ Bounce PD_List(
     }
 
     if (opt_setval)
-        Fail_If_Read_Only_Flex(Cell_Flex(pvs->out));
+        Panic_If_Read_Only_Flex(Cell_Flex(pvs->out));
 
     pvs->u.ref.cell = Cell_List_At_Head(pvs->out, n);
     pvs->u.ref.specifier = VAL_SPECIFIER(pvs->out);
@@ -777,9 +777,9 @@ REBTYPE(List)
 
         UNUSED(PARAM(SERIES));
         if (Bool_ARG(DEEP))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
-        Fail_If_Read_Only_Flex(arr);
+        Panic_If_Read_Only_Flex(arr);
 
         REBLEN len;
         if (Bool_ARG(PART)) {
@@ -872,7 +872,7 @@ REBTYPE(List)
         UNUSED(PARAM(SERIES));
         UNUSED(PARAM(VALUE));
 
-        FAIL_IF_ERROR(arg);
+        PANIC_IF_ERROR(arg);
 
         REBLEN len; // length of target
         if (Cell_Word_Id(verb) == SYM_CHANGE)
@@ -886,9 +886,9 @@ REBTYPE(List)
         if (Is_Nulled(arg) and len == 0) { // only nulls bypass write attempts
             if (sym == SYM_APPEND) // append always returns head
                 VAL_INDEX(list) = 0;
-            RETURN (list); // don't fail on read only if it would be a no-op
+            RETURN (list); // don't panic on read only if it would be a no-op
         }
-        Fail_If_Read_Only_Flex(arr);
+        Panic_If_Read_Only_Flex(arr);
 
         REBLEN index = VAL_INDEX(list);
 
@@ -917,7 +917,7 @@ REBTYPE(List)
         return OUT; }
 
       case SYM_CLEAR: {
-        Fail_If_Read_Only_Flex(arr);
+        Panic_If_Read_Only_Flex(arr);
         REBLEN index = VAL_INDEX(list);
         if (index < VAL_LEN_HEAD(list)) {
             if (index == 0) Reset_Array(arr);
@@ -968,10 +968,10 @@ REBTYPE(List)
 
     case SYM_SWAP: {
         if (not Any_List(arg))
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
 
-        Fail_If_Read_Only_Flex(arr);
-        Fail_If_Read_Only_Flex(Cell_Array(arg));
+        Panic_If_Read_Only_Flex(arr);
+        Panic_If_Read_Only_Flex(Cell_Array(arg));
 
         REBLEN index = VAL_INDEX(list);
 
@@ -993,7 +993,7 @@ REBTYPE(List)
     }
 
     case SYM_REVERSE: {
-        Fail_If_Read_Only_Flex(arr);
+        Panic_If_Read_Only_Flex(arr);
 
         REBLEN len = Part_Len_May_Modify_Index(list, D_ARG(3));
         if (len == 0)
@@ -1051,7 +1051,7 @@ REBTYPE(List)
         UNUSED(Bool_ARG(SKIP)); // checks size as void
         UNUSED(Bool_ARG(COMPARE)); // checks comparator as void
 
-        Fail_If_Read_Only_Flex(arr);
+        Panic_If_Read_Only_Flex(arr);
 
         Sort_List(
             list,
@@ -1073,7 +1073,7 @@ REBTYPE(List)
         REBLEN index = VAL_INDEX(list);
 
         if (Bool_ARG(SEED))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(ONLY)) { // pick an element out of the list
             if (index >= VAL_LEN_HEAD(list))

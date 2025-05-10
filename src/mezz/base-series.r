@@ -181,7 +181,7 @@ trim: function [
     ;
     if any-context? series [
         if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
-            fail "Invalid refinements for TRIM of ANY-CONTEXT!"
+            panic "Invalid refinements for TRIM of ANY-CONTEXT!"
         ]
         trimmed: make (type of series) collect [
             for-each [key val] series [
@@ -201,7 +201,7 @@ trim: function [
                 ; Note: /WITH might be able to work, e.g. if it were a MAP!
                 ; or BLOCK! of values to remove.
                 ;
-                fail "Invalid refinements for TRIM of ANY-ARRAY!"
+                panic "Invalid refinements for TRIM of ANY-ARRAY!"
             ]
             rule: blank!
 
@@ -224,7 +224,7 @@ trim: function [
                     any [auto head_TRIM tail_TRIM lines]
                 ]
             ][
-                fail "Invalid refinements for TRIM of STRING!"
+                panic "Invalid refinements for TRIM of STRING!"
             ]
 
             rule: case [
@@ -239,7 +239,7 @@ trim: function [
 
         binary? series [
             if any [auto lines] [
-                fail "Invalid refinements for TRIM of BINARY!"
+                panic "Invalid refinements for TRIM of BINARY!"
             ]
 
             rule: case [
@@ -254,7 +254,7 @@ trim: function [
             ]
         ]
     ] else [
-        fail "Unsupported type passed to TRIM"
+        panic "Unsupported type passed to TRIM"
     ]
 
     ; /ALL just removes all whitespace entirely.  No subtlety needed.

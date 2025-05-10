@@ -505,7 +505,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
                 if (cl->flags & COLLECT_NO_DUP) {
                     DECLARE_VALUE (duplicate);
                     Init_Word(duplicate, Cell_Word_Symbol(v));
-                    fail (Error_Dup_Vars_Raw(duplicate)); // cleans bindings
+                    panic (Error_Dup_Vars_Raw(duplicate)); // cleans bindings
                 }
                 continue; // tolerate duplicate
             }
@@ -656,15 +656,15 @@ Array* Collect_Unique_Words_Managed(
     Flags flags, // See COLLECT_XXX
     const Value* ignore // BLOCK!, ANY-CONTEXT!, or void for none
 ){
-    // We do not want to fail() during the bind at this point in time (the
+    // We do not want to panic() during the bind at this point in time (the
     // system doesn't know how to clean up, and the only cleanup it does
     // assumes you were collecting for a keylist...it doesn't have access to
-    // the "ignore" bindings.)  Do a pre-pass to fail first.
+    // the "ignore" bindings.)  Do a pre-pass to panic first.
 
     Cell* check = Cell_List_At(ignore);
     for (; NOT_END(check); ++check) {
         if (not Any_Word(check))
-            fail (Error_Invalid_Core(check, VAL_SPECIFIER(ignore)));
+            panic (Error_Invalid_Core(check, VAL_SPECIFIER(ignore)));
     }
 
     struct Reb_Collector collector;
@@ -933,15 +933,15 @@ VarList* Construct_Context_Managed(
     const Cell* value = head;
     for (; NOT_END(value); value += 2) {
         if (not Is_Set_Word(value))
-            fail (Error_Invalid_Type(Type_Of(value)));
+            panic (Error_Invalid_Type(Type_Of(value)));
 
         if (IS_END(value + 1))
-            fail ("Unexpected end in context spec block.");
+            panic ("Unexpected end in context spec block.");
 
         if (Is_Set_Word(value + 1))
-            fail (Error_Invalid_Type(Type_Of(value + 1))); // TBD: support
+            panic (Error_Invalid_Type(Type_Of(value + 1))); // TBD: support
 
-        Value* var = Sink_Var_May_Fail(value, specifier);
+        Value* var = Sink_Var_May_Panic(value, specifier);
         Derelativize(var, value + 1, specifier);
     }
 
@@ -992,7 +992,7 @@ Array* Context_To_Array(VarList* context, REBINT mode)
                 // since user arrays may not contain void.
                 //
                 if (Is_Nulled(var))
-                    fail (Error_Null_Object_Block_Raw());
+                    panic (Error_Null_Object_Block_Raw());
 
                 Copy_Cell(PUSH(), var);
             }
@@ -1018,7 +1018,7 @@ VarList* Merge_Contexts_Selfish_Managed(VarList* parent1, VarList* parent2)
 {
     if (parent2 != nullptr) {
         assert(CTX_TYPE(parent1) == CTX_TYPE(parent2));
-        fail ("Multiple inheritance of object support removed from Ren-C");
+        panic ("Multiple inheritance of object support removed from Ren-C");
     }
 
     // Merge parent1 and parent2 words.
@@ -1156,7 +1156,7 @@ void Resolve_Context(
     bool all,
     bool expand
 ) {
-    FAIL_IF_READ_ONLY_CONTEXT(target);
+    PANIC_IF_READ_ONLY_CONTEXT(target);
 
     REBLEN i;
     if (Is_Integer(only_words)) { // Must be: 0 < i <= tail

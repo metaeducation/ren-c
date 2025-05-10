@@ -104,7 +104,7 @@ INLINE Value* PUSH(void) {
     ++DS_Movable_Top;
 
     if (DS_Movable_Top == DS_Movable_Tail)
-        Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS);
+        Expand_Data_Stack_May_Panic(STACK_EXPAND_BASIS);
 
   #if RUNTIME_CHECKS
     assert(Is_Cell_Poisoned(DS_Movable_Top));
@@ -228,5 +228,5 @@ INLINE Value* PUSH(void) {
 // Since stack overflows are memory-related errors, don't try to do any
 // error allocations...just use an already made error.
 //
-#define Fail_Stack_Overflow() \
-    fail (cast(Error*, Cell_Varlist(Root_Stackoverflow_Error)));
+#define Panic_Stack_Overflow() \
+    panic (cast(Error*, Cell_Varlist(Root_Stackoverflow_Error)));

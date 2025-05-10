@@ -45,15 +45,15 @@
 
 
 //
-//  MAKE_Fail: C
+//  MAKE_Panic: C
 //
-Bounce MAKE_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Panic(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(kind);
     UNUSED(arg);
 
-    fail ("Datatype does not have a MAKE handler registered");
+    panic ("Datatype does not have a MAKE handler registered");
 }
 
 
@@ -72,7 +72,7 @@ Bounce MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
     const Value* type = Datatype_From_Kind(kind);
     UNUSED(type); // !!! put in error message?
 
-    fail ("Datatype is provided by an extension that's not currently loaded");
+    panic ("Datatype is provided by an extension that's not currently loaded");
 }
 
 
@@ -104,7 +104,7 @@ DECLARE_NATIVE(MAKE)
 
     if (Is_Event(type)) {  // an event instance, not EVENT! datatype
         if (not Is_Block(arg))
-            fail (Error_Bad_Make(TYPE_EVENT, arg));
+            panic (Error_Bad_Make(TYPE_EVENT, arg));
 
         Copy_Cell(OUT, type); // !!! very "shallow" clone of the event
         Set_Event_Vars(
@@ -148,27 +148,27 @@ DECLARE_NATIVE(MAKE)
 
     MAKE_HOOK hook = Make_Hooks[kind];
     if (hook == nullptr)
-        fail (Error_Bad_Make(kind, arg));
+        panic (Error_Bad_Make(kind, arg));
 
     Bounce bounce = hook(OUT, kind, arg);  // might throw, fail...
     if (bounce == BOUNCE_THROWN)
         return bounce;
     if (bounce == nullptr or Type_Of(bounce) != kind)
-        fail ("MAKE dispatcher did not return correct type");
+        panic ("MAKE dispatcher did not return correct type");
     return bounce;  // may be OUT or an API handle
 }
 
 
 //
-//  TO_Fail: C
+//  TO_Panic: C
 //
-Bounce TO_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Panic(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(kind);
     UNUSED(arg);
 
-    fail ("Cannot convert to datatype");
+    panic ("Cannot convert to datatype");
 }
 
 
@@ -183,7 +183,7 @@ Bounce TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
     const Value* type = Datatype_From_Kind(kind);
     UNUSED(type); // !!! put in error message?
 
-    fail ("Datatype does not have extension with a TO handler registered");
+    panic ("Datatype does not have extension with a TO handler registered");
 }
 
 
@@ -207,16 +207,16 @@ DECLARE_NATIVE(TO)
 
     TO_HOOK hook = To_Hooks[new_kind];
     if (not hook)
-        fail (Error_Invalid(v));
+        panic (Error_Invalid(v));
 
-    Bounce bounce = hook(OUT, new_kind, v);  // may fail();
+    Bounce bounce = hook(OUT, new_kind, v);  // may panic();
     if (bounce == BOUNCE_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
-        fail (Error_No_Catch_For_Throw(OUT));
+        panic (Error_No_Catch_For_Throw(OUT));
     }
     if (bounce == nullptr or Type_Of(bounce) != new_kind) {
         assert(!"TO conversion did not return intended type");
-        fail (Error_Invalid_Type(Type_Of(bounce)));
+        panic (Error_Invalid_Type(Type_Of(bounce)));
     }
     return bounce; // must be either OUT or an API handle
 }
@@ -234,7 +234,7 @@ REBTYPE(Unhooked)
     UNUSED(level_);
     UNUSED(verb);
 
-    fail ("Datatype does not have its REBTYPE() handler loaded by extension");
+    panic ("Datatype does not have its REBTYPE() handler loaded by extension");
 }
 
 
@@ -264,7 +264,7 @@ Bounce Reflect_Core(Level* level_)
         // operate on SYMs in a switch().  Longer term, a more extensible
         // idea will be necessary.
         //
-        fail (Error_Cannot_Reflect(kind, ARG(PROPERTY)));
+        panic (Error_Cannot_Reflect(kind, ARG(PROPERTY)));
     }
 
     if (id == SYM_TYPE) {
@@ -275,14 +275,14 @@ Bounce Reflect_Core(Level* level_)
     }
 
     if (kind == TYPE_NULLED)
-        fail (Error_Need_Non_Null_Raw());
+        panic (Error_Need_Non_Null_Raw());
 
     // !!! The reflector for TYPE is universal and so it is allowed on nulls,
     // but in general actions should not allow null first arguments...there's
     // no entry in the dispatcher table for them.
     //
     if (kind == TYPE_NULLED)
-        fail ("NULL isn't valid for REFLECT, except for TYPE OF ()");
+        panic ("NULL isn't valid for REFLECT, except for TYPE OF ()");
 
     GENERIC_HOOK hook = Generic_Hooks[kind];
     DECLARE_VALUE (verb);
@@ -610,7 +610,7 @@ const Byte *Scan_Decimal(
     // !!! TBD: need check for NaN, and INF
 
     if (fabs(VAL_DECIMAL(out)) == HUGE_VAL)
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     return cp;
 }
@@ -1263,7 +1263,7 @@ const Byte *Scan_Any(
     //
     bool crlf_to_lf = true;
 
-    Flex* s = Append_UTF8_May_Fail(nullptr, cs_cast(cp), num_bytes, crlf_to_lf);
+    Flex* s = Append_UTF8_May_Panic(nullptr, cs_cast(cp), num_bytes, crlf_to_lf);
     Init_Any_Series(out, type, s);
 
     return cp + num_bytes;

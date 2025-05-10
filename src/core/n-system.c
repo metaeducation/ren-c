@@ -76,7 +76,7 @@ DECLARE_NATIVE(QUIT)
         if (Is_Endish_Nulled(atom))
             Init_Integer(atom, 1);
         else if (not Is_Integer(atom))
-            fail ("QUIT must receive INTEGER! unless /VALUE used");
+            panic ("QUIT must receive INTEGER! unless /VALUE used");
     }
 
     Copy_Cell(OUT, NAT_VALUE(QUIT));
@@ -165,7 +165,7 @@ DECLARE_NATIVE(RECYCLE)
 
     if (Bool_ARG(VERBOSE)) {
       #if NO_RUNTIME_CHECKS
-        fail (Error_Debug_Only_Raw());
+        panic (Error_Debug_Only_Raw());
       #else
         Flex* sweeplist = Make_Flex(100, sizeof(Node*));
         count = Recycle_Core(false, sweeplist);
@@ -190,7 +190,7 @@ DECLARE_NATIVE(RECYCLE)
 
     if (Bool_ARG(WATCH)) {
       #if NO_RUNTIME_CHECKS
-        fail (Error_Debug_Only_Raw());
+        panic (Error_Debug_Only_Raw());
       #else
         // There might should be some kind of generic way to set these kinds
         // of flags individually, perhaps having them live in SYSTEM/...
@@ -227,7 +227,7 @@ DECLARE_NATIVE(CHECK)
 #if NO_RUNTIME_CHECKS
     UNUSED(ARG(VALUE));
 
-    fail (Error_Debug_Only_Raw());
+    panic (Error_Debug_Only_Raw());
 #else
     Value* value = ARG(VALUE);
 
@@ -348,7 +348,7 @@ DECLARE_NATIVE(C_DEBUG_BREAK_AT)
     UNUSED(ARG(RELATIVE));
     UNUSED(Bool_ARG(COMPENSATE));
 
-    fail (Error_Debug_Only_Raw());
+    panic (Error_Debug_Only_Raw());
   #endif
 }
 
@@ -378,7 +378,7 @@ DECLARE_NATIVE(C_DEBUG_BREAK)
 
     return Init_Void(OUT);;
   #else
-    fail (Error_Debug_Only_Raw());
+    panic (Error_Debug_Only_Raw());
   #endif
 }
 

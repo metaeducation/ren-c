@@ -245,7 +245,7 @@ Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 
     case TYPE_INTEGER: // interpret as seconds
         if (VAL_INT64(arg) < -MAX_SECONDS || VAL_INT64(arg) > MAX_SECONDS)
-            fail (Error_Out_Of_Range(arg));
+            panic (Error_Out_Of_Range(arg));
 
         return Init_Time_Nanoseconds(out, VAL_INT64(arg) * SEC_SEC);
 
@@ -254,7 +254,7 @@ Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
             VAL_DECIMAL(arg) < cast(REBDEC, -MAX_SECONDS)
             || VAL_DECIMAL(arg) > cast(REBDEC, MAX_SECONDS)
         ){
-            fail (Error_Out_Of_Range(arg));
+            panic (Error_Out_Of_Range(arg));
         }
         return Init_Time_Nanoseconds(out, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
@@ -328,7 +328,7 @@ Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
     }
 
   no_time:
-    fail (Error_Bad_Make(TYPE_TIME, arg));
+    panic (Error_Bad_Make(TYPE_TIME, arg));
 }
 
 
@@ -371,13 +371,13 @@ void Pick_Time(Value* out, const Value* value, const Value* picker)
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
         default:
-            fail (Error_Invalid(picker));
+            panic (Error_Invalid(picker));
         }
     }
     else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
-        fail (Error_Invalid(picker));
+        panic (Error_Invalid(picker));
 
     REB_TIMEF tf;
     Split_Time(VAL_NANO(value), &tf); // loses sign
@@ -416,13 +416,13 @@ void Poke_Time_Immediate(
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
         default:
-            fail (Error_Invalid(picker));
+            panic (Error_Invalid(picker));
         }
     }
     else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
-        fail (Error_Invalid(picker));
+        panic (Error_Invalid(picker));
 
     REB_TIMEF tf;
     Split_Time(VAL_NANO(value), &tf); // loses sign
@@ -433,7 +433,7 @@ void Poke_Time_Immediate(
     else if (Is_Blank(poke))
         n = 0;
     else
-        fail (Error_Invalid(poke));
+        panic (Error_Invalid(poke));
 
     switch(i) {
     case 0:
@@ -446,7 +446,7 @@ void Poke_Time_Immediate(
         if (Is_Decimal(poke)) {
             REBDEC f = VAL_DECIMAL(poke);
             if (f < 0.0)
-                fail (Error_Out_Of_Range(poke));
+                panic (Error_Out_Of_Range(poke));
 
             tf.s = cast(REBINT, f);
             tf.n = cast(REBINT, (f - tf.s) * SEC_SEC);
@@ -458,7 +458,7 @@ void Poke_Time_Immediate(
         break;
 
     default:
-        fail (Error_Invalid(picker));
+        panic (Error_Invalid(picker));
     }
 
     VAL_NANO(value) = Join_Time(&tf, false);
@@ -530,7 +530,7 @@ REBTYPE(Time)
 
             case SYM_DIVIDE:
                 if (secs2 == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
                 //secs /= secs2;
                 RESET_CELL(OUT, TYPE_DECIMAL);
                 VAL_DECIMAL(OUT) = cast(REBDEC, secs) / cast(REBDEC, secs2);
@@ -538,12 +538,12 @@ REBTYPE(Time)
 
             case SYM_REMAINDER:
                 if (secs2 == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
                 secs %= secs2;
                 goto setTime;
 
             default:
-                fail (Error_Math_Args(TYPE_TIME, verb));
+                panic (Error_Math_Args(TYPE_TIME, verb));
             }
         }
         else if (type == TYPE_INTEGER) {     // handle TIME - INTEGER cases
@@ -561,24 +561,24 @@ REBTYPE(Time)
             case SYM_MULTIPLY:
                 secs *= num;
                 if (secs < -MAX_TIME || secs > MAX_TIME)
-                    fail (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_TIME)));
+                    panic (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_TIME)));
                 goto setTime;
 
             case SYM_DIVIDE:
                 if (num == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
                 secs /= num;
                 Init_Integer(OUT, secs);
                 goto setTime;
 
             case SYM_REMAINDER:
                 if (num == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
                 secs %= num;
                 goto setTime;
 
             default:
-                fail (Error_Math_Args(TYPE_TIME, verb));
+                panic (Error_Math_Args(TYPE_TIME, verb));
             }
         }
         else if (type == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
@@ -609,7 +609,7 @@ REBTYPE(Time)
 
             case SYM_DIVIDE:
                 if (dec == 0.0)
-                    fail (Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
                 secs = cast(int64_t, cast(REBDEC, secs) / dec);
                 goto setTime;
 
@@ -618,7 +618,7 @@ REBTYPE(Time)
 //              goto decTime;
 
             default:
-                fail (Error_Math_Args(TYPE_TIME, verb));
+                panic (Error_Math_Args(TYPE_TIME, verb));
             }
         }
         else if (type == TYPE_DATE and sym == SYM_ADD) { // TIME + DATE case
@@ -628,7 +628,7 @@ REBTYPE(Time)
             Copy_Cell(D_ARG(2), D_ARG(3));
             return T_Date(level_, verb);
         }
-        fail (Error_Math_Args(TYPE_TIME, verb));
+        panic (Error_Math_Args(TYPE_TIME, verb));
     }
     else {
         // unary actions
@@ -686,7 +686,7 @@ REBTYPE(Time)
                     return OUT;
                 }
                 else
-                    fail (Error_Invalid(arg));
+                    panic (Error_Invalid(arg));
             }
             else {
                 secs = Round_Int(secs, flags | RF_TO, SEC_SEC);
@@ -699,7 +699,7 @@ REBTYPE(Time)
             UNUSED(PARAM(VALUE));
 
             if (Bool_ARG(ONLY))
-                fail (Error_Bad_Refines_Raw());
+                panic (Error_Bad_Refines_Raw());
 
             if (Bool_ARG(SEED)) {
                 Set_Random(secs);
@@ -712,7 +712,7 @@ REBTYPE(Time)
             break;
         }
     }
-    fail (Error_Illegal_Action(TYPE_TIME, verb));
+    panic (Error_Illegal_Action(TYPE_TIME, verb));
 
 fixTime:
 setTime:

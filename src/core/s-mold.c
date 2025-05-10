@@ -427,9 +427,9 @@ void Form_Array_At(
 
 
 //
-//  MF_Fail: C
+//  MF_Panic: C
 //
-void MF_Fail(Molder* mo, const Cell* v, bool form)
+void MF_Panic(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -448,7 +448,7 @@ void MF_Fail(Molder* mo, const Cell* v, bool form)
     #endif
     }
 
-    fail ("Cannot MOLD or FORM datatype.");
+    panic ("Cannot MOLD or FORM datatype.");
 }
 
 
@@ -463,7 +463,7 @@ void MF_Unhooked(Molder* mo, const Cell* v, bool form)
     const Value* type = Datatype_From_Kind(Type_Of(v));
     UNUSED(type); // !!! put in error message?
 
-    fail ("Datatype does not have extension with a MOLD handler registered");
+    panic ("Datatype does not have extension with a MOLD handler registered");
 }
 
 
@@ -481,7 +481,7 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
     Assert_Flex_Term(s);
 
     if (C_STACK_OVERFLOWING(&s))
-        Fail_Stack_Overflow();
+        Panic_Stack_Overflow();
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT)) {
         //
@@ -602,10 +602,10 @@ bool Form_Reduce_Throws(
         if (IS_END(out))
             break;  // e.g. `spaced [comment "hi"]`
 
-        FAIL_IF_ERROR(out);
+        PANIC_IF_ERROR(out);
 
         if (Is_Nulled(out))
-            fail (Error_Need_Non_Null_Raw());
+            panic (Error_Need_Non_Null_Raw());
 
         if (Is_Void(out))
             continue; // <opt-out> and <undo-opt> keep it open to return NULL

@@ -333,7 +333,7 @@ DECLARE_NATIVE(GENERIC)
     Flags flags = MKF_RETURN;  // historically only checked in debug builds
 
     REBACT *generic = Make_Action(
-        Make_Paramlist_Managed_May_Fail(spec, flags),
+        Make_Paramlist_Managed_May_Panic(spec, flags),
         &Generic_Dispatcher,
         nullptr, // no underlying action (use paramlist)
         nullptr, // no specialization exemplar (or inherited exemplar)
@@ -352,7 +352,7 @@ DECLARE_NATIVE(GENERIC)
     // assignment, it's good practice to evaluate the whole expression to
     // the result the SET-WORD! was set to, so `x: y: op z` makes `x = y`.
     //
-    Init_Action_Unbound(Sink_Var_May_Fail(ARG(VERB), SPECIFIED), generic);
+    Init_Action_Unbound(Sink_Var_May_Panic(ARG(VERB), SPECIFIED), generic);
 
     return Init_Action_Unbound(OUT, generic);
 }
@@ -460,7 +460,7 @@ static void Shutdown_Action_Spec_Tags(void)
 //
 //  Init_Action_Meta_Shim: C
 //
-// Make_Paramlist_Managed_May_Fail() needs the object archetype ACTION-META
+// Make_Paramlist_Managed_May_Panic() needs the object archetype ACTION-META
 // from %sysobj.r, to have the keylist to use in generating the info used
 // by HELP for the natives.  However, natives themselves are used in order
 // to run the object construction in %sysobj.r
@@ -575,7 +575,7 @@ Value* Make_Native(
     Flags flags = MKF_RETURN;  // historically only checked in debug builds
 
     REBACT *act = Make_Action(
-        Make_Paramlist_Managed_May_Fail(KNOWN(spec), flags),
+        Make_Paramlist_Managed_May_Panic(KNOWN(spec), flags),
         dispatcher, // "dispatcher" is unique to this "native"
         nullptr, // no underlying action (use paramlist)
         nullptr, // no specialization exemplar (or inherited exemplar)
@@ -630,7 +630,7 @@ Value* Make_Native(
 //
 static Array* Startup_Natives(const Value* boot_natives)
 {
-    // Must be called before first use of Make_Paramlist_Managed_May_Fail()
+    // Must be called before first use of Make_Paramlist_Managed_May_Panic()
     //
     Init_Action_Meta_Shim();
 
@@ -1239,8 +1239,8 @@ void Startup_Core(void)
 
   #if defined(TEST_EARLY_BOOT_CRASH)
     crash ("early crash test"); // should crash
-  #elif defined(TEST_EARLY_BOOT_FAIL)
-    fail (Error_No_Value_Raw(BLANK_VALUE)); // same as crash (crash)
+  #elif defined(TEST_EARLY_BOOT_PANIC)
+    panic (Error_No_Value_Raw(BLANK_VALUE)); // same as crash (crash)
   #endif
 
   #if DEBUG_HAS_ALWAYS_MALLOC
@@ -1248,7 +1248,7 @@ void Startup_Core(void)
   #endif
 
   #if DEBUG_HAS_PROBE
-    PG_Probe_Failures = false;
+    g_probe_panics = false;
   #endif
 
     // Globals
@@ -1447,8 +1447,8 @@ void Startup_Core(void)
 
   #if defined(TEST_MID_BOOT_CRASH)
     crash (EMPTY_ARRAY); // crash() should be able to give some details by now
-  #elif defined(TEST_MID_BOOT_FAIL)
-    fail (Error_No_Value_Raw(BLANK_VALUE)); // DEBUG->assert, RELEASE->crash()
+  #elif defined(TEST_MID_BOOT_PANIC)
+    panic (Error_No_Value_Raw(BLANK_VALUE)); // DEBUG->assert, RELEASE->crash()
   #endif
 
     // Pre-make the stack overflow error (so it doesn't need to be made
@@ -1529,7 +1529,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
         KNOWN(&boot->mezz), // boot-mezz argument
         rebEND  // requires rebEND
     )){
-        fail (Error_No_Catch_For_Throw(result));
+        panic (Error_No_Catch_For_Throw(result));
     }
 
     if (not Is_Trash(result))

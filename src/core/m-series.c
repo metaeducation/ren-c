@@ -184,7 +184,7 @@ void Remove_Flex(Flex* s, REBLEN index, REBINT len)
             // Add bias to head:
             unsigned int bias;
             if (REB_U32_ADD_OF(Flex_Bias(s), len, &bias))
-                fail (Error_Overflow_Raw());
+                panic (Error_Overflow_Raw());
 
             if (bias > 0xffff) { // 16-bit, simple Add_Flex_Bias could overflow
                 Byte *data = cast(Byte*, s->content.dynamic.data);

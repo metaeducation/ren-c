@@ -74,7 +74,7 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TUPLE);
         Erase_Cell(out);
         if (Scan_Tuple(out, bp, size) == nullptr)
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
         return out;
     }
 
@@ -114,16 +114,16 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         const Byte *ap = cb_cast(Symbol_Head(symbol));
         size_t size = Symbol_Size(symbol); // UTF-8 len
         if (size & 1)
-            fail (arg); // must have even # of chars
+            panic (arg); // must have even # of chars
         size /= 2;
         if (size > MAX_TUPLE)
-            fail (arg); // valid even for UTF-8
+            panic (arg); // valid even for UTF-8
         VAL_TUPLE_LEN(out) = size;
         for (alen = 0; alen < size; alen++) {
             const bool unicode = false;
             Ucs2Unit ch;
             if (!Scan_Hex2(&ch, ap, unicode))
-                fail (Error_Invalid(arg));
+                panic (Error_Invalid(arg));
             *vp++ = cast(Byte, ch);
             ap += 2;
         }
@@ -136,13 +136,13 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         for (alen = 0; alen < len; alen++) *vp++ = *ap++;
     }
     else
-        fail (Error_Invalid(arg));
+        panic (Error_Invalid(arg));
 
     for (; alen < MAX_TUPLE; alen++) *vp++ = 0;
     return out;
 
   bad_make:
-    fail (Error_Bad_Make(TYPE_TUPLE, arg));
+    panic (Error_Bad_Make(TYPE_TUPLE, arg));
 }
 
 
@@ -227,7 +227,7 @@ void Poke_Tuple_Immediate(
 
     REBINT n = Get_Num_From_Arg(picker);
     if (n <= 0 || n > cast(REBINT, MAX_TUPLE))
-        fail (Error_Out_Of_Range(picker));
+        panic (Error_Out_Of_Range(picker));
 
     REBINT i;
     if (Is_Integer(poke) || Is_Decimal(poke))
@@ -239,7 +239,7 @@ void Poke_Tuple_Immediate(
         return;
     }
     else
-        fail (Error_Invalid(poke));
+        panic (Error_Invalid(poke));
 
     if (i < 0)
         i = 0;
@@ -368,7 +368,7 @@ REBTYPE(Tuple)
             a = 646699; // unused but avoid maybe uninitialized warning
         }
         else
-            fail (Error_Math_Args(TYPE_TUPLE, verb));
+            panic (Error_Math_Args(TYPE_TUPLE, verb));
 
         for (;len > 0; len--, vp++) {
             REBINT v = *vp;
@@ -390,20 +390,20 @@ REBTYPE(Tuple)
             case SYM_DIVIDE:
                 if (Is_Decimal(arg) || Is_Percent(arg)) {
                     if (dec == 0.0)
-                        fail (Error_Zero_Divide_Raw());
+                        panic (Error_Zero_Divide_Raw());
 
                     v = cast(REBINT, Round_Dec(v / dec, 0, 1.0));
                 }
                 else {
                     if (a == 0)
-                        fail (Error_Zero_Divide_Raw());
+                        panic (Error_Zero_Divide_Raw());
                     v /= a;
                 }
                 break;
 
             case SYM_REMAINDER:
                 if (a == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
                 v %= a;
                 break;
 
@@ -420,7 +420,7 @@ REBTYPE(Tuple)
                 break;
 
             default:
-                fail (Error_Illegal_Action(TYPE_TUPLE, verb));
+                panic (Error_Illegal_Action(TYPE_TUPLE, verb));
             }
 
             if (v > 255)
@@ -444,10 +444,10 @@ REBTYPE(Tuple)
         UNUSED(PARAM(VALUE));
 
         if (Bool_ARG(ONLY))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(SEED))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         for (; len > 0; len--, vp++) {
             if (*vp)
                 *vp = cast(Byte, Random_Int(Bool_ARG(SECURE)) % (1 + *vp));
@@ -498,13 +498,13 @@ REBTYPE(Tuple)
         a = Get_Num_From_Arg(arg);
         if (a <= 0 || a > len) {
             if (action == A_PICK) return nullptr;
-            fail (Error_Out_Of_Range(arg));
+            panic (Error_Out_Of_Range(arg));
         }
         if (action == A_PICK)
             return Init_Integer(OUT, vp[a-1]);
         // Poke:
         if (not Is_Integer(D_ARG(3)))
-            fail (Error_Invalid(D_ARG(3)));
+            panic (Error_Invalid(D_ARG(3)));
         v = VAL_INT32(D_ARG(3));
         if (v < 0)
             v = 0;
@@ -518,5 +518,5 @@ REBTYPE(Tuple)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_TUPLE, verb));
+    panic (Error_Illegal_Action(TYPE_TUPLE, verb));
 }

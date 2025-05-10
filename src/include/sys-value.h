@@ -691,16 +691,16 @@ INLINE bool Is_Cell_Unreadable(const Cell* c) {
 #define Init_Okay(out) \
     Reset_Cell_Header((out), TYPE_OKAY, 0)
 
-INLINE void FAIL_IF_ERROR(const Cell* c);
+INLINE void PANIC_IF_ERROR(const Cell* c);
 
 INLINE bool IS_TRUTHY(const Cell* v) {
     if (Is_Nulled(v))
         return false;
     if (Is_Void(v))
-        fail (Error_Void_Conditional_Raw());
+        panic (Error_Void_Conditional_Raw());
     if (Is_Trash(v))
-        fail ("TRASH conditional not legal");
-    FAIL_IF_ERROR(v);  // approximate definitional errors...
+        panic ("TRASH conditional not legal");
+    PANIC_IF_ERROR(v);  // approximate definitional errors...
     return true;
 }
 
@@ -829,19 +829,19 @@ INLINE Value* Init_Integer_Untracked(Cell* out, REBI64 i64) {
 
 INLINE int32_t VAL_INT32(const Cell* v) {
     if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN)
-        fail (Error_Out_Of_Range(KNOWN(v)));
+        panic (Error_Out_Of_Range(KNOWN(v)));
     return cast(int32_t, VAL_INT64(v));
 }
 
 INLINE uint32_t VAL_UINT32(const Cell* v) {
     if (VAL_INT64(v) < 0 or VAL_INT64(v) > UINT32_MAX)
-        fail (Error_Out_Of_Range(KNOWN(v)));
+        panic (Error_Out_Of_Range(KNOWN(v)));
     return cast(uint32_t, VAL_INT64(v));
 }
 
 INLINE Byte VAL_UINT8(const Cell* v) {
     if (VAL_INT64(v) > 255 or VAL_INT64(v) < 0)
-        fail (Error_Out_Of_Range(KNOWN(v)));
+        panic (Error_Out_Of_Range(KNOWN(v)));
     return cast(Byte, VAL_INT32(v));
 }
 

@@ -122,7 +122,7 @@ void Set_Event_Vars(Value* evt, Cell* blk, Specifier* specifier)
         ++blk;
 
         if (not Is_Set_Word(var))
-            fail (Error_Invalid(var));
+            panic (Error_Invalid(var));
 
         if (IS_END(blk))
             Init_Blank(val);
@@ -132,7 +132,7 @@ void Set_Event_Vars(Value* evt, Cell* blk, Specifier* specifier)
         ++blk;
 
         if (!Set_Event_Var(evt, var, val))
-            fail (Error_Bad_Field_Set_Raw(var, Datatype_Of(val)));
+            panic (Error_Bad_Field_Set_Raw(var, Datatype_Of(val)));
     }
 }
 
@@ -182,7 +182,7 @@ Bounce MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
     UNUSED(kind);
 
     if (not Is_Block(arg))
-        fail (Error_Unexpected_Type(TYPE_EVENT, Type_Of(arg)));
+        panic (Error_Unexpected_Type(TYPE_EVENT, Type_Of(arg)));
 
     RESET_CELL(out, TYPE_EVENT);
     Set_Event_Vars(
@@ -203,7 +203,7 @@ Bounce TO_Event(Value* out, enum Reb_Kind kind, const Value* arg)
     UNUSED(kind);
 
     UNUSED(out);
-    fail (Error_Invalid(arg));
+    panic (Error_Invalid(arg));
 }
 
 
@@ -244,7 +244,7 @@ REBTYPE(Event)
 {
     UNUSED(level_);
 
-    fail (Error_Illegal_Action(TYPE_EVENT, verb));
+    panic (Error_Illegal_Action(TYPE_EVENT, verb));
 }
 
 

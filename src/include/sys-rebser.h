@@ -485,7 +485,7 @@ STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(25)
 
 
-//=//// FLEX_INFO_FRAME_FAILED ////////////////////////////////////////////=//
+//=//// FLEX_INFO_FRAME_PANICKED //////////////////////////////////////////=//
 //
 // In the specific case of a frame being freed due to a failure, this mark
 // is put on the context node.  What this allows is for the system to account
@@ -498,7 +498,7 @@ STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
 // of valgrind/address-sanitizer way of looking at a codebase vs. just taking
 // for granted that it will GC things.
 //
-#define FLEX_INFO_FRAME_FAILED \
+#define FLEX_INFO_FRAME_PANICKED \
     FLAG_LEFT_BIT(26)
 
 

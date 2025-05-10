@@ -164,7 +164,7 @@
 
 
 ; Series being enumerated are locked during the FOR-EACH, and this lock
-; has to be released on THROWs or FAILs.
+; has to be released on THROWs or PANICs.
 
 (
     block: copy [a b c]

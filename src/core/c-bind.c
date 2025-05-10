@@ -409,7 +409,7 @@ void Virtual_Bind_Deep_To_New_Context(
 
     REBLEN num_vars = Is_Block(spec) ? Cell_Series_Len_At(spec) : 1;
     if (num_vars == 0)
-        fail (Error_Invalid(spec));
+        panic (Error_Invalid(spec));
 
     const Cell* item;
     Specifier* specifier;
@@ -424,12 +424,12 @@ void Virtual_Bind_Deep_To_New_Context(
                 rebinding = true;
             else if (not Is_Issue(item)) {
                 //
-                // Better to fail here, because if we wait until we're in
+                // Better to panic here, because if we wait until we're in
                 // the middle of building the context, the managed portion
                 // (keylist) would be incomplete and tripped on by the GC if
                 // we didn't do some kind of workaround.
                 //
-                fail (Error_Invalid_Core(item, specifier));
+                panic (Error_Invalid_Core(item, specifier));
             }
         }
 
@@ -443,11 +443,11 @@ void Virtual_Bind_Deep_To_New_Context(
         else if (Is_Issue(item))
             rebinding = false;
         else
-            fail (Error_Invalid_Core(item, specifier));
+            panic (Error_Invalid_Core(item, specifier));
     }
 
     // If we need to copy the body, do that *first*, because copying can
-    // fail() (out of memory, or cyclical recursions, etc.) and that can't
+    // panic() (out of memory, or cyclical recursions, etc.) and that can't
     // happen while a binder is in effect unless we PUSH_TRAP to catch and
     // correct for it, which has associated cost.
     //
@@ -482,9 +482,9 @@ void Virtual_Bind_Deep_To_New_Context(
     VarList* c = *context_out; // for convenience...
 
     // We want to check for duplicates and a Binder can be used for that
-    // purpose--but note that a fail() cannot happen while binders are
+    // purpose--but note that a panic() cannot happen while binders are
     // in effect UNLESS the BUF_COLLECT contains information to undo it!
-    // There's no BUF_COLLECT here, so don't fail while binder in effect.
+    // There's no BUF_COLLECT here, so don't panic while binder in effect.
     //
     struct Reb_Binder binder;
     if (rebinding)
@@ -646,7 +646,7 @@ void Virtual_Bind_Deep_To_New_Context(
     if (duplicate) {
         DECLARE_VALUE (word);
         Init_Word(word, duplicate);
-        fail (Error_Dup_Vars_Raw(word));
+        panic (Error_Dup_Vars_Raw(word));
     }
 }
 

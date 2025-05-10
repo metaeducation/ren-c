@@ -482,7 +482,7 @@ for-each-system: function [
             )
         ]
     ]] else [
-        fail "Couldn't parse platforms.r table"
+        panic "Couldn't parse platforms.r table"
     ]
 ]
 
@@ -526,7 +526,7 @@ use [
                 words-of context
             if not empty? unknown-flags [
                 print mold unknown-flags
-                fail ["Unknown" word "used in %platforms.r specification"]
+                panic ["Unknown" word "used in %platforms.r specification"]
             ]
             used-flags: union used-flags any [build-flags []]
         ]
@@ -541,7 +541,7 @@ use [
 
     if not empty? unused-flags [
         print mold unused-flags
-        fail "Unused flags in %platforms.r specifications"
+        panic "Unused flags in %platforms.r specifications"
     ]
 ]
 
@@ -562,7 +562,7 @@ config-system: function [
     ]
 
     if not tuple? version [
-        fail ["Expected OS_ID tuple like 0.3.1, not:" version]
+        panic ["Expected OS_ID tuple like 0.3.1, not:" version]
     ]
 
     result: null
@@ -575,7 +575,7 @@ config-system: function [
     ]
 
     if not result [
-        fail [
+        panic [
             {No table entry for} version {found in platforms.r}
         ]
     ]

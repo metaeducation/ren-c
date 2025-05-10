@@ -214,7 +214,7 @@ DEVICE_CMD Write_IO(REBREQ *req)
                         0
                     );
                     if (not ok)
-                        rebFail_OS (GetLastError());
+                        rebPanic_OS (GetLastError());
                     UNUSED(total_bytes);
                 }
 
@@ -230,7 +230,7 @@ DEVICE_CMD Write_IO(REBREQ *req)
                         0
                     );
                     if (not ok)
-                        rebFail_OS (GetLastError());
+                        rebPanic_OS (GetLastError());
                     UNUSED(total_bytes);
                     ++end;
                 }
@@ -252,7 +252,7 @@ DEVICE_CMD Write_IO(REBREQ *req)
                 0
             );
             if (not ok)
-                rebFail_OS (GetLastError());
+                rebPanic_OS (GetLastError());
             UNUSED(total_bytes);
         }
     }
@@ -281,7 +281,7 @@ DEVICE_CMD Write_IO(REBREQ *req)
                     0
                 );
                 if (not ok)
-                    rebFail_OS (GetLastError());
+                    rebPanic_OS (GetLastError());
                 UNUSED(total_wide_chars);
             }
         }
@@ -329,7 +329,7 @@ DEVICE_CMD Write_IO(REBREQ *req)
             SetConsoleTextAttribute(Std_Out, csbi.wAttributes); // restore
 
             if (not ok)
-                rebFail_OS (GetLastError());
+                rebPanic_OS (GetLastError());
             UNUSED(total_wide_chars);
         }
     }
@@ -372,7 +372,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
         DWORD total;
         BOOL ok = ReadFile(Std_Inp, req->common.data, len, &total, 0);
         if (not ok)
-            rebFail_OS (GetLastError());
+            rebPanic_OS (GetLastError());
 
         req->actual = total;
         return DR_DONE;
@@ -442,7 +442,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
         pInputControl
     );
     if (not ok)
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
 
     // Ctrl-C and Ctrl-D will terminate input without the newline that is
     // expected by code calling INPUT.  If these forms of cancellation are
@@ -470,7 +470,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
         //
         // Give a zero length output.  If halting was enabled, further Rebol
         // code of INPUT should not run.  In the case that INPUT sees this
-        // signal and a halt does not happen, it will FAIL.  Only special
+        // signal and a halt does not happen, it will PANIC.  Only special
         // clients which can run with no cancellability (HOST-CONSOLE)
         // should trap it and figure out what to do with the non-ideal state.
         //
@@ -526,7 +526,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
     // not happen any other way.
     //
     if (encoded_len == 0)
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
 
     req->actual = encoded_len;
     return DR_DONE;

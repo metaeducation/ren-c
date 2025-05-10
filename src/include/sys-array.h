@@ -246,11 +246,11 @@ INLINE Array* Make_Array_Core(REBLEN capacity, Flags flags) {
         capacity += 1; // account for cell needed for terminator (END)
 
         if (cast(REBU64, capacity) * wide > INT32_MAX) // too big
-            fail (Error_No_Memory(cast(REBU64, capacity) * wide));
+            panic (Error_No_Memory(cast(REBU64, capacity) * wide));
 
         s->info = Endlike_Header(FLAG_LEN_BYTE_OR_255(255)); // dynamic
         if (not Did_Flex_Data_Alloc(s, capacity)) // expects LEN_BYTE=255
-            fail (Error_No_Memory(capacity * wide));
+            panic (Error_No_Memory(capacity * wide));
 
         Prep_Array(cast_Array(s), capacity);
         SET_END(Array_Head(cast_Array(s)));
@@ -481,7 +481,7 @@ INLINE Array* Cell_Array(const Cell* v) {
     assert(Any_List(v));
     Flex* s = v->payload.any_series.series;
     if (s->info.bits & FLEX_INFO_INACCESSIBLE)
-        fail (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
     return cast_Array(s);
 }
 
@@ -547,7 +547,7 @@ INLINE bool Splices_Into_Type_Without_Only(
     // an /ONLY option.
     //
     if (Is_Trash(arg))
-        fail ("Cannot put trash (~) into arrays");
+        panic ("Cannot put trash (~) into arrays");
 
     assert(Any_List_Kind(array_kind));
     return Is_Group(arg)

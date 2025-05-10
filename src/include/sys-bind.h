@@ -306,7 +306,7 @@ struct Reb_Collector {
 //
 // !!! The functioning of Decay_Flex() should be reviewed to see if it
 // actually needs to preserve the Varlist_Archetype().  It's not entirely clear
-// if the scenarios are meaningful--but Derelativize cannot fail(), and
+// if the scenarios are meaningful--but Derelativize cannot panic(), and
 // it would without this.  It might also put in some "fake" element that
 // would fail later, but given that the Level's captured binding can outlive
 // the frame that might lose important functionality.
@@ -339,14 +339,14 @@ INLINE Stub* SPC_BINDING(Specifier* specifier)
 // because one instance is.  This is not one of the flags included in the
 // CELL_MASK_COPIED, so it shouldn't be able to leak out of the varlist.
 //
-// The Get_Opt_Var_May_Fail() function takes the conservative default that
+// The Get_Opt_Var_May_Panic() function takes the conservative default that
 // only const access is needed.  A const pointer to a Value is given back
 // which may be inspected, but the contents not modified.  While a bound
 // variable that is not currently set will return a TYPE_NULLED value,
-// Get_Opt_Var_May_Fail() on an *unbound* word will raise an error.
+// Get_Opt_Var_May_Panic() on an *unbound* word will raise an error.
 //
-// Get_Mutable_Var_May_Fail() offers a parallel facility for getting a
-// non-const Value back.  It will fail if the variable is either unbound
+// Get_Mutable_Var_May_Panic() offers a parallel facility for getting a
+// non-const Value back.  It will panic if the variable is either unbound
 // -or- marked with OPT_TYPESET_LOCKED to protect against modification.
 //
 
@@ -394,7 +394,7 @@ INLINE VarList* Get_Var_Context(
             //
         }
         else {
-            Stub* f_binding = SPC_BINDING(specifier);  // can't fail()
+            Stub* f_binding = SPC_BINDING(specifier);  // can't panic()
             if (f_binding and Is_Overriding_Context(c, CTX(f_binding))) {
                 //
                 // The specifier binding overrides--because what's happening
@@ -440,20 +440,20 @@ INLINE VarList* Get_Var_Context(
         == Key_Canon(Varlist_Key(c, VAL_WORD_INDEX(any_word))));
   #endif
 
-    FAIL_IF_INACCESSIBLE_CTX(c); // usually Cell_Varlist() checks, need to here
+    PANIC_IF_INACCESSIBLE_CTX(c); // usually Cell_Varlist() checks, need to here
     return c;
 }
 
-INLINE const Value* Get_Opt_Var_May_Fail(
+INLINE const Value* Get_Opt_Var_May_Panic(
     const Cell* any_word,
     Specifier* specifier
 ){
     if (not VAL_BINDING(any_word))
-        fail (Error_Not_Bound_Raw(KNOWN(any_word)));
+        panic (Error_Not_Bound_Raw(KNOWN(any_word)));
 
     VarList* c = Get_Var_Context(any_word, specifier);
     if (Get_Flex_Info(c, INACCESSIBLE))
-        fail (Error_No_Relative_Core(any_word));
+        panic (Error_No_Relative_Core(any_word));
 
     return Varlist_Slot(c, VAL_WORD_INDEX(any_word));
 }
@@ -472,20 +472,20 @@ INLINE const Value* Try_Get_Opt_Var(
     return Varlist_Slot(c, VAL_WORD_INDEX(any_word));
 }
 
-INLINE void Move_Opt_Var_May_Fail(
+INLINE void Move_Opt_Var_May_Panic(
     Value* out,
     const Cell* any_word,
     Specifier* specifier
 ){
-    Copy_Cell(out, Get_Opt_Var_May_Fail(any_word, specifier));
+    Copy_Cell(out, Get_Opt_Var_May_Panic(any_word, specifier));
 }
 
-INLINE Value* Get_Mutable_Var_May_Fail(
+INLINE Value* Get_Mutable_Var_May_Panic(
     const Cell* any_word,
     Specifier* specifier
 ){
     if (not VAL_BINDING(any_word))
-        fail (Error_Not_Bound_Raw(KNOWN(any_word)));
+        panic (Error_Not_Bound_Raw(KNOWN(any_word)));
 
     VarList* context = Get_Var_Context(any_word, specifier);
 
@@ -496,7 +496,7 @@ INLINE Value* Get_Mutable_Var_May_Fail(
     //
     // Lock bits are all in SER->info and checked in the same instruction.
     //
-    FAIL_IF_READ_ONLY_CONTEXT(context);
+    PANIC_IF_READ_ONLY_CONTEXT(context);
 
     Value* var = Varlist_Slot(context, VAL_WORD_INDEX(any_word));
 
@@ -506,17 +506,17 @@ INLINE Value* Get_Mutable_Var_May_Fail(
     if (Get_Cell_Flag(var, PROTECTED)) {
         DECLARE_VALUE (unwritable);
         Init_Word(unwritable, Cell_Word_Symbol(any_word));
-        fail (Error_Protected_Word_Raw(unwritable));
+        panic (Error_Protected_Word_Raw(unwritable));
     }
 
     return var;
 }
 
-INLINE Value* Sink_Var_May_Fail(
+INLINE Value* Sink_Var_May_Panic(
     const Cell* any_word,
     Specifier* specifier
 ){
-    Value* var = Get_Mutable_Var_May_Fail(any_word, specifier);
+    Value* var = Get_Mutable_Var_May_Panic(any_word, specifier);
     Erase_Cell(var);
     return var;
 }
@@ -602,7 +602,7 @@ INLINE Value* Derelativize(
         INIT_BINDING_MAY_MANAGE(out, specifier);
     }
     else if (specifier and (binding->leader.bits & ARRAY_FLAG_IS_VARLIST)) {
-        Stub* f_binding = SPC_BINDING(specifier);  // can't fail(), see notes
+        Stub* f_binding = SPC_BINDING(specifier);  // can't panic(), see notes
 
         if (
             f_binding

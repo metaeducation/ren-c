@@ -402,12 +402,12 @@ void Fill_Pool(REBPOL *pool)
         crash ("Out of memory error during Fill_Pool()");
 
         // Rebol's safe handling of running out of memory was never really
-        // articulated.  Yet it should be possible to run a fail()...at least
+        // articulated.  Yet it should be possible to run a panic()...at least
         // of a certain type...without allocating more memory.  (This probably
         // suggests a need for pre-creation of the out of memory objects,
         // as is done with the stack overflow error)
         //
-        // fail (Error_No_Memory(mem_size));
+        // panic (Error_No_Memory(mem_size));
     }
 
     seg->size = mem_size;
@@ -541,7 +541,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 //
 // Because pairings are created in large numbers and left outstanding, they
 // are not put into any tracking lists by default.  This means that if there
-// is a fail(), they will leak--unless whichever API client that is using
+// is a panic(), they will leak--unless whichever API client that is using
 // them ensures they are cleaned up.  So in C++, this is done with exception
 // handling.
 //
@@ -699,7 +699,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
 {
     assert(index <= Flex_Len(s));
     if (delta & 0x80000000)
-        fail (Error_Past_End_Raw()); // 2GB max
+        panic (Error_Past_End_Raw()); // 2GB max
 
     if (delta == 0)
         return;
@@ -791,7 +791,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
 
     if (Get_Flex_Flag(s, FIXED_SIZE))
-        fail (Error_Locked_Series_Raw());
+        panic (Error_Locked_Series_Raw());
 
   #if RUNTIME_CHECKS
     if (Reb_Opts->watch_expand) {
@@ -858,7 +858,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
     LEN_BYTE_OR_255(s) = 255; // series alloc caller sets
     Set_Flex_Flag(s, POWER_OF_2);
     if (not Did_Flex_Data_Alloc(s, len_old + delta + x))
-        fail (Error_No_Memory((len_old + delta + x) * wide));
+        panic (Error_No_Memory((len_old + delta + x) * wide));
 
     assert(Is_Flex_Dynamic(s));
     if (Is_Flex_Array(s))
@@ -1011,7 +1011,7 @@ void Remake_Flex(Flex* s, REBLEN units, Byte wide, Flags flags)
     if (not Did_Flex_Data_Alloc(s, units + 1)) {
         // Put series back how it was (there may be extant references)
         s->content.dynamic.data = cast(char*, data_old);
-        fail (Error_No_Memory((units + 1) * wide));
+        panic (Error_No_Memory((units + 1) * wide));
     }
     assert(Is_Flex_Dynamic(s));
     if (Is_Flex_Array(s))

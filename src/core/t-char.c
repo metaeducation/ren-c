@@ -102,7 +102,7 @@ Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
     }
 
   bad_make:
-    fail (Error_Bad_Make(TYPE_CHAR, arg));
+    panic (Error_Bad_Make(TYPE_CHAR, arg));
 }
 
 
@@ -128,7 +128,7 @@ static REBINT Math_Arg_For_Char(Value* arg, Value* verb)
         return cast(REBINT, VAL_DECIMAL(arg));
 
     default:
-        fail (Error_Math_Args(TYPE_CHAR, verb));
+        panic (Error_Math_Args(TYPE_CHAR, verb));
     }
 }
 
@@ -209,14 +209,14 @@ REBTYPE(Char)
     case SYM_DIVIDE:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
         if (arg == 0)
-            fail (Error_Zero_Divide_Raw());
+            panic (Error_Zero_Divide_Raw());
         chr /= arg;
         break;
 
     case SYM_REMAINDER:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
         if (arg == 0)
-            fail (Error_Zero_Divide_Raw());
+            panic (Error_Zero_Divide_Raw());
         chr %= arg;
         break;
 
@@ -250,7 +250,7 @@ REBTYPE(Char)
 
         UNUSED(PARAM(VALUE));
         if (Bool_ARG(ONLY))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(SEED)) {
             Set_Random(chr);
@@ -261,11 +261,11 @@ REBTYPE(Char)
         break; }
 
     default:
-        fail (Error_Illegal_Action(TYPE_CHAR, verb));
+        panic (Error_Illegal_Action(TYPE_CHAR, verb));
     }
 
     if (chr < 0 || chr > 0xffff)  // see main branch build for UTF-8 Everywhere
-        fail (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_CHAR)));
+        panic (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_CHAR)));
 
     return Init_Char(OUT, cast(Ucs2Unit, chr));
 }

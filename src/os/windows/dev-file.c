@@ -153,7 +153,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 
         if (h == INVALID_HANDLE_VALUE) {
             Value* open_error = rebError_OS(GetLastError());
-            fail (Error_Cannot_Open_Raw(dir->path, open_error));
+            panic (Error_Cannot_Open_Raw(dir->path, open_error));
         }
 
         got_info = true;
@@ -174,7 +174,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
             dir_req->requestee.handle = nullptr;
 
             if (last_error_cache != ERROR_NO_MORE_FILES)
-                rebFail_OS (last_error_cache);
+                rebPanic_OS (last_error_cache);
 
             dir_req->flags |= RRF_DONE; // no more file_reqs
             return DR_DONE;
@@ -186,7 +186,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     if (not got_info) {
         assert(false); // see above for why this R3-Alpha code had a "hole"
         rebJumps(
-            "FAIL {%dev-clipboard: NOT(got_info), please report}"
+            "panic {%dev-clipboard: NOT(got_info), please report}"
         );
     }
 
@@ -265,7 +265,7 @@ DEVICE_CMD Open_File(REBREQ *req)
         attrib |= FILE_ATTRIBUTE_READONLY;
 
     if (access == 0)
-        rebJumps("FAIL {No access modes provided to Open_File()}");
+        rebJumps("panic {No access modes provided to Open_File()}");
 
     Value* wild = rebLogic(req->modes & RFM_DIR);
     WCHAR *path_wide = rebSpellW(
@@ -291,7 +291,7 @@ DEVICE_CMD Open_File(REBREQ *req)
 
     if (h == INVALID_HANDLE_VALUE) {
         Value* open_error = rebError_OS(GetLastError());
-        fail (Error_Cannot_Open_Raw(file->path, open_error));
+        panic (Error_Cannot_Open_Raw(file->path, open_error));
     }
 
     if (req->modes & RFM_SEEK) {
@@ -302,7 +302,7 @@ DEVICE_CMD Open_File(REBREQ *req)
         if (SetFilePointer(h, 0, 0, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
             DWORD last_error_cache = GetLastError();
             CloseHandle(h);
-            rebFail_OS (last_error_cache);
+            rebPanic_OS (last_error_cache);
         }
     }
 
@@ -353,7 +353,7 @@ DEVICE_CMD Read_File(REBREQ *req)
     if ((req->modes & (RFM_SEEK | RFM_RESEEK)) != 0) {
         req->modes &= ~RFM_RESEEK;
         if (not Seek_File_64(file))
-            rebFail_OS (GetLastError());
+            rebPanic_OS (GetLastError());
     }
 
     assert(sizeof(DWORD) == sizeof(req->actual));
@@ -365,7 +365,7 @@ DEVICE_CMD Read_File(REBREQ *req)
         cast(DWORD*, &req->actual),
         0
     )){
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
     }
 
     file->index += req->actual;
@@ -392,7 +392,7 @@ DEVICE_CMD Write_File(REBREQ *req)
     if ((req->modes & (RFM_SEEK | RFM_RESEEK | RFM_TRUNCATE)) != 0) {
         req->modes &= ~RFM_RESEEK;
         if (not Seek_File_64(file))
-            rebFail_OS (GetLastError());
+            rebPanic_OS (GetLastError());
         if (req->modes & RFM_TRUNCATE)
             SetEndOfFile(req->requestee.handle);
     }
@@ -408,7 +408,7 @@ DEVICE_CMD Write_File(REBREQ *req)
             );
 
             if (not ok)
-                rebFail_OS (GetLastError());
+                rebPanic_OS (GetLastError());
         }
     }
     else {
@@ -434,7 +434,7 @@ DEVICE_CMD Write_File(REBREQ *req)
                     0
                 );
                 if (not ok)
-                    rebFail_OS (GetLastError());
+                    rebPanic_OS (GetLastError());
                 req->actual += total_bytes;
             }
 
@@ -450,7 +450,7 @@ DEVICE_CMD Write_File(REBREQ *req)
                 0
             );
             if (not ok)
-                rebFail_OS (GetLastError());
+                rebPanic_OS (GetLastError());
             req->actual += total_bytes;
 
             ++end;
@@ -463,7 +463,7 @@ DEVICE_CMD Write_File(REBREQ *req)
     if (size_low == 0xffffffff) {
         DWORD last_error = GetLastError();
         if (last_error != NO_ERROR)
-            rebFail_OS (last_error);
+            rebPanic_OS (last_error);
 
         // ...else the file size really is 0xffffffff
     }
@@ -502,7 +502,7 @@ DEVICE_CMD Query_File(REBREQ *req)
     rebFree(path_wide);
 
     if (not success)
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
 
     if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         req->modes |= RFM_DIR;
@@ -538,7 +538,7 @@ DEVICE_CMD Create_File(REBREQ *req)
     rebFree(path_wide);
 
     if (not success)
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
 
     return DR_DONE;
 }
@@ -569,7 +569,7 @@ DEVICE_CMD Delete_File(REBREQ *req)
         success = DeleteFile(path_wide);
 
     if (not success)
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
 
     rebFree(path_wide);
 
@@ -602,7 +602,7 @@ DEVICE_CMD Rename_File(REBREQ *req)
     rebFree(from_wide);
 
     if (not success)
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
 
     return DR_DONE;
 }

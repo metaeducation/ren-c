@@ -72,12 +72,12 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(PARAM(SOURCE));
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         if (Bool_ARG(SEEK)) {
             UNUSED(ARG(INDEX));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
@@ -112,7 +112,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
                 sock->common.data = Cell_Blob_Head(arg);
         }
         else
-            fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));
+            panic (Error_On_Port(SYM_INVALID_SPEC, port, -10));
 
         OS_DO_DEVICE_SYNC(sock, RDC_READ);
 
@@ -121,12 +121,12 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
 
     case SYM_PICK: { // FIRST - return result
         if (not (sock->flags & RRF_OPEN))
-            fail (Error_On_Port(SYM_NOT_OPEN, port, -12));
+            panic (Error_On_Port(SYM_NOT_OPEN, port, -12));
 
      pick:
         len = Get_Num_From_Arg(arg); // Position
         if (len != 1)
-            fail (Error_Out_Of_Range(arg));
+            panic (Error_Out_Of_Range(arg));
 
         assert(sock->flags & RRF_DONE); // R3-Alpha async DNS removed
 
@@ -153,16 +153,16 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
 
         UNUSED(PARAM(SPEC));
         if (Bool_ARG(NEW))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(READ))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(WRITE))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(SEEK))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(ALLOW)) {
             UNUSED(ARG(ACCESS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         OS_DO_DEVICE_SYNC(sock, RDC_OPEN);
@@ -179,7 +179,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_PORT, verb));
+    panic (Error_Illegal_Action(TYPE_PORT, verb));
 }
 
 

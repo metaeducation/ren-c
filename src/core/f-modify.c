@@ -263,7 +263,7 @@ REBLEN Modify_Binary(
     if (Is_Integer(src_val)) {
         REBI64 i = VAL_INT64(src_val);
         if (i > 255 || i < 0)
-            fail ("Inserting out-of-range INTEGER! into BINARY!");
+            panic ("Inserting out-of-range INTEGER! into BINARY!");
 
         src_ser = Make_Binary(1);
         *Binary_Head(src_ser) = cast(Byte, i);
@@ -305,7 +305,7 @@ REBLEN Modify_Binary(
         needs_free = false;
     }
     else
-        fail (Error_Invalid(src_val));
+        panic (Error_Invalid(src_val));
 
     // Use either new src or the one that was passed:
     if (src_ser != nullptr) {

@@ -28,7 +28,7 @@
         bin: enbin settings value
         check: debin settings bin
         if value != check [
-            fail [value "didn't round trip ENBIN/DEBIN:" settings]
+            panic [value "didn't round trip ENBIN/DEBIN:" settings]
         ]
         comment [
             print [mold settings value "=>" mold bin "=>" value]

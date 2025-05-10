@@ -33,7 +33,7 @@
 // Eval_Core_Throws() is written so that a longjmp to a failure handler above
 // it can do cleanup safely even though intermediate stacks have vanished.
 // This is because Push_Level and Drop_Level maintain an independent global
-// list of the frames in effect, so that the Fail_Core() routine can unwind
+// list of the frames in effect, so that the Panic_Core() routine can unwind
 // all the associated storage and structures for each frame.
 //
 // Ren-C can not only run the evaluator across an Array-style series of
@@ -369,7 +369,7 @@ STATIC_ASSERT(EVAL_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 //      back a THROWN()--see notes in sys-value.h about what that means.
 //      If you don't know how to handle it, then at least do:
 //
-//              fail (Error_No_Catch_For_Throw(out));
+//              panic (Error_No_Catch_For_Throw(out));
 //
 //      If you *do* handle it, be aware it's a throw label with
 //      CELL_FLAG_THROW_SIGNAL set in its header, and shouldn't leak to the
@@ -384,7 +384,7 @@ STATIC_ASSERT(EVAL_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 // Errors are handled with a different mechanism using longjmp().  So if an
 // actual error happened during the DO then there wouldn't even *BE* a return
 // value...because the function call would never return!  See PUSH_TRAP()
-// and fail() for more information.
+// and panic() for more information.
 //
 
 

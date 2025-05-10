@@ -131,7 +131,7 @@ void Prin_OS_String(const Byte *utf8, Size size, Flags opts)
     Req_SIO->common.data = m_cast(Byte*, utf8); // !!! promises to not write
     while (size > 0) {
         if (Do_Signals_Throws(temp))
-            fail (Error_No_Catch_For_Throw(temp));
+            panic (Error_No_Catch_For_Throw(temp));
 
         assert(IS_END(temp));
 

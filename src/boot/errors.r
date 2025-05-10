@@ -114,7 +114,7 @@ script: [
 
     use-eval-for-eval:  {Use REEVAL or APPLY on actions of arity > 0, not DO}
 
-    limited-fail-input: {FAIL requires complex expressions to be in a GROUP!}
+    nontrivial-panic:   {PANIC requires complex expressions to be in a GROUP!}
 
     invalid-arg:        [{invalid argument:} :arg1]
     invalid-type:       [:arg1 {type is not allowed here}]

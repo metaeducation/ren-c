@@ -92,7 +92,7 @@ void API_rebEnterApi_internal(void) {
 // byte-sized Binary series as the backing store for the data.
 //
 // One benefit of using a series is that it offers more options for automatic
-// memory management (such as being freed in case of a fail(), vs. leaked as
+// memory management (such as being freed in case of a panic(), vs. leaked as
 // a malloc() would, or perhaps being GC'd when a particular FRAME! ends).
 //
 // It also has the benefit of helping interface with client code that has
@@ -106,7 +106,7 @@ void API_rebEnterApi_internal(void) {
 //
 //  rebMalloc: API
 //
-// * Unlike plain malloc(), this will fail() instead of return null if an
+// * Unlike plain malloc(), this will panic() instead of return null if an
 //   allocation cannot be fulfilled.
 //
 // * Like plain malloc(), if size is zero, the implementation just has to
@@ -263,7 +263,7 @@ RebolValue* API_rebRepossess(void *ptr, size_t size)
     assert(not Is_Flex_Managed(bin));
 
     if (size > Binary_Len(bin) - ALIGN_SIZE)
-        fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
+        panic ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
     assert(Get_Flex_Flag(bin, DONT_RELOCATE));
     Clear_Flex_Flag(bin, DONT_RELOCATE);
@@ -339,7 +339,7 @@ void Shutdown_Api(void)
 // in the core, but be supplied by a "Timer Extension" which is considered to
 // be sandboxed and non-core enough that having platform-specific code in it
 // is not a problem.  Also, hooks can be supplied in the form of natives that
-// are later HIJACK'd by some hosts (see CRASH and FAIL), as a way of
+// are later HIJACK'd by some hosts (see CRASH and PANIC), as a way of
 // injecting richer platform-or-scenario-specific code into a more limited
 // default host operation.  It is expected that the OS_XXX functions will
 // eventually disappear completely.
@@ -430,7 +430,7 @@ RebolValue* API_rebArg(const void *p, va_list *vaptr)
     const char *name = cast(const char*, p);
     const void *p2 = va_arg(*vaptr, const void*);
     if (Detect_Rebol_Pointer(p2) != DETECTED_AS_END)
-        fail ("rebArg() isn't actually variadic, it's arity-1");
+        panic ("rebArg() isn't actually variadic, it's arity-1");
 
     Symbol* symbol = Intern_UTF8_Managed(
         cb_cast(name),
@@ -444,7 +444,7 @@ RebolValue* API_rebArg(const void *p, va_list *vaptr)
             return Copy_Cell(Alloc_Value(), arg);
     }
 
-    fail ("Unknown rebArg(...) name.");
+    panic ("Unknown rebArg(...) name.");
 }
 
 
@@ -459,7 +459,7 @@ RebolValue* API_rebValue(const void *p, va_list *vaptr)
 {
     Value* result = Alloc_Value();
     if (Do_Va_Throws(result, p, vaptr)) // calls va_end()
-        fail (Error_No_Catch_For_Throw(result)); // no need to release result
+        panic (Error_No_Catch_For_Throw(result)); // no need to release result
 
     if (not Is_Nulled(result))
         return result;
@@ -479,7 +479,7 @@ void API_rebElide(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (elided);
     if (Do_Va_Throws(elided, p, vaptr)) // calls va_end()
-        fail (Error_No_Catch_For_Throw(elided));
+        panic (Error_No_Catch_For_Throw(elided));
 }
 
 
@@ -490,7 +490,7 @@ void API_rebElide(const void *p, va_list *vaptr)
 //
 // rebJumps() is like rebElide, but has the noreturn attribute.  This helps
 // inform the compiler that the routine is not expected to return.  Use it
-// with things like `rebJumps("fail", ...)` or `rebJumps("throw", ...)`.  If
+// with things like `rebJumps("panic", ...)` or `rebJumps("throw", ...)`.  If
 // by some chance the code passed to it does not jump and finishes normally,
 // then an error will be raised.
 //
@@ -510,10 +510,10 @@ void API_rebJumps(const void *p, va_list *vaptr)
         // converted to a kind of error, and then re-converted into a THROW
         // to bubble up through Rebol stacks?  Development on this is ongoing.
         //
-        fail (Error_No_Catch_For_Throw(elided));
+        panic (Error_No_Catch_For_Throw(elided));
     }
 
-    fail ("rebJumps() was used to run code, but it didn't FAIL/QUIT/THROW!");
+    panic ("rebJumps() was used to run code, but it didn't PANIC/QUIT/THROW!");
 }
 
 
@@ -529,7 +529,7 @@ void API_rebJumps(const void *p, va_list *vaptr)
 RebolValue* API_rebValueInline(const RebolValue* array)
 {
     if (not Is_Block(array) and not Is_Group(array))
-        fail ("rebValueInline() only supports BLOCK! and GROUP!");
+        panic ("rebValueInline() only supports BLOCK! and GROUP!");
 
     DECLARE_VALUE (group);
     Copy_Cell(group, array);
@@ -590,11 +590,11 @@ const void *API_rebQ(const RebolValue* v)
 const void *API_rebR(RebolValue* v)
 {
     if (not Is_Api_Value(v))
-        fail ("Cannot apply rebR() to non-API value");
+        panic ("Cannot apply rebR() to non-API value");
 
     Array* a = Singular_From_Cell(v);
     if (Get_Flex_Info(a, API_RELEASE))
-        fail ("Cannot apply rebR() more than once to the same API value");
+        panic ("Cannot apply rebR() more than once to the same API value");
 
     Set_Flex_Info(a, API_RELEASE);
     return v; // returned as const void* to discourage use outside variadics
@@ -650,7 +650,7 @@ RebolValue* API_rebLogic(bool logic)
 RebolValue* API_rebChar(uint32_t codepoint)
 {
     if (codepoint > MAX_UNI)
-        fail ("Codepoint out of range, see: https://forum.rebol.info/t/374");
+        panic ("Codepoint out of range, see: https://forum.rebol.info/t/374");
 
     return Init_Char(Alloc_Value(), codepoint);
 }
@@ -783,13 +783,13 @@ RebolValue* API_rebRescue(
     L->special = END_NODE;
 
     // The first time through the following code 'error' will be null, but...
-    // `fail` can longjmp here, so 'error' won't be null *if* that happens!
+    // `panic` can longjmp here, so 'error' won't be null *if* that happens!
     //
     if (error_ctx) {
         assert(L->varlist); // action must be running
         Array* stub = L->varlist; // will be stubbed, with info bits reset
         Drop_Action(L);
-        Set_Flex_Info(stub, FRAME_FAILED); // signal API leaks ok
+        Set_Flex_Info(stub, FRAME_PANICKED); // signal API leaks ok
         Abort_Level(L);
         return Init_Error(Alloc_Value(), error_ctx);
     }
@@ -855,7 +855,7 @@ RebolValue* API_rebRescueWith(
     PUSH_TRAP(&error_ctx, &state);
 
     // The first time through the following code 'error' will be null, but...
-    // `fail` can longjmp here, so 'error' won't be null *if* that happens!
+    // `panic` can longjmp here, so 'error' won't be null *if* that happens!
     //
     if (error_ctx) {
         Value* error = Init_Error(Alloc_Value(), error_ctx);
@@ -882,9 +882,9 @@ bool API_rebDid(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (condition);
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
-        fail (Error_No_Catch_For_Throw(condition));
+        panic (Error_No_Catch_For_Throw(condition));
 
-    return IS_TRUTHY(condition); // will fail() on voids
+    return IS_TRUTHY(condition); // will panic() on voids
 }
 
 
@@ -898,9 +898,9 @@ bool API_rebNot(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (condition);
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
-        fail (Error_No_Catch_For_Throw(condition));
+        panic (Error_No_Catch_For_Throw(condition));
 
-    return IS_FALSEY(condition); // will fail() on voids
+    return IS_FALSEY(condition); // will panic() on voids
 }
 
 
@@ -918,7 +918,7 @@ long API_rebUnbox(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
-        fail (Error_No_Catch_For_Throw(result));
+        panic (Error_No_Catch_For_Throw(result));
 
     switch (Type_Of(result)) {
       case TYPE_INTEGER:
@@ -934,7 +934,7 @@ long API_rebUnbox(const void *p, va_list *vaptr)
         return 1;
 
       default:
-        fail ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");
+        panic ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");
     }
 }
 
@@ -946,10 +946,10 @@ long API_rebUnboxInteger(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
-        fail (Error_No_Catch_For_Throw(result));
+        panic (Error_No_Catch_For_Throw(result));
 
     if (Type_Of(result) != TYPE_INTEGER)
-        fail ("rebUnboxInteger() called on non-INTEGER!");
+        panic ("rebUnboxInteger() called on non-INTEGER!");
 
     return VAL_INT64(result);
 }
@@ -962,7 +962,7 @@ double API_rebUnboxDecimal(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
-        fail (Error_No_Catch_For_Throw(result));
+        panic (Error_No_Catch_For_Throw(result));
 
     if (Type_Of(result) == TYPE_DECIMAL)
         return VAL_DECIMAL(result);
@@ -970,7 +970,7 @@ double API_rebUnboxDecimal(const void *p, va_list *vaptr)
     if (Type_Of(result) == TYPE_INTEGER)
         return cast(double, VAL_INT64(result));
 
-    fail ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
+    panic ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
 }
 
 
@@ -981,10 +981,10 @@ uint32_t API_rebUnboxChar(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
-        fail (Error_No_Catch_For_Throw(result));
+        panic (Error_No_Catch_For_Throw(result));
 
     if (Type_Of(result) != TYPE_CHAR)
-        fail ("rebUnboxChar() called on non-CHAR!");
+        panic ("rebUnboxChar() called on non-CHAR!");
 
     return VAL_CHAR(result);
 }
@@ -1058,7 +1058,7 @@ char *API_rebSpell(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (string);
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
-        fail (Error_No_Catch_For_Throw(string));
+        panic (Error_No_Catch_For_Throw(string));
 
     if (Is_Nulled(string))
         return nullptr;  // NULL is passed through, for opting out
@@ -1141,7 +1141,7 @@ REBWCHAR *API_rebSpellW(const void *p, va_list *vaptr)
 {
     DECLARE_VALUE (string);
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
-        fail (Error_No_Catch_For_Throw(string));
+        panic (Error_No_Catch_For_Throw(string));
 
     if (Is_Nulled(string))
         return nullptr;  // NULL is passed through, for opting out
@@ -1170,7 +1170,7 @@ size_t API_rebBytesInto(
     const RebolValue* blob
 ){
     if (not Is_Binary(blob))
-        fail ("rebBytesInto() only works on BINARY!");
+        panic ("rebBytesInto() only works on BINARY!");
 
     REBLEN size = Cell_Series_Len_At(blob);
 
@@ -1202,7 +1202,7 @@ unsigned char *API_rebBytes(
 ){
     DECLARE_VALUE (series);
     if (Do_Va_Throws(series, p, vaptr)) // calls va_end()
-        fail (Error_No_Catch_For_Throw(series));
+        panic (Error_No_Catch_For_Throw(series));
 
     if (Is_Nulled(series)) {
         *size_out = 0;
@@ -1223,7 +1223,7 @@ unsigned char *API_rebBytes(
         return result;
     }
 
-    fail ("rebBytes() only works with ANY-STRING!/ANY-WORD!/BINARY!");
+    panic ("rebBytes() only works with ANY-STRING!/ANY-WORD!/BINARY!");
 }
 
 
@@ -1243,7 +1243,7 @@ RebolValue* API_rebBinary(const void *bytes, size_t size)
 //
 //  rebSizedText: API
 //
-// If utf8 does not contain valid UTF-8 data, this may fail().
+// If utf8 does not contain valid UTF-8 data, this may panic().
 //
 RebolValue* API_rebSizedText(const char *utf8, size_t size)
 {
@@ -1324,7 +1324,7 @@ RebolValue* API_rebManage(RebolValue* v)
     assert(Is_Node_Root_Bit_Set(a));
 
     if (Is_Flex_Managed(a))
-        fail ("Attempt to rebManage() a handle that's already managed.");
+        panic ("Attempt to rebManage() a handle that's already managed.");
 
     Set_Node_Managed_Bit(a);
     assert(not LINK(a).owner);
@@ -1343,7 +1343,7 @@ void API_rebUnmanage(void *p)
 {
     Node* nod = p;
     if (Is_Node_A_Stub(nod))
-        fail ("rebUnmanage() not yet implemented for rebMalloc() data");
+        panic ("rebUnmanage() not yet implemented for rebMalloc() data");
 
     Value* v = cast(Value*, nod);
     assert(Is_Api_Value(v));
@@ -1352,7 +1352,7 @@ void API_rebUnmanage(void *p)
     assert(Is_Node_Root_Bit_Set(a));
 
     if (not Is_Flex_Managed(a))
-        fail ("Attempt to rebUnmanage() a handle with indefinite lifetime.");
+        panic ("Attempt to rebUnmanage() a handle with indefinite lifetime.");
 
     // It's not safe to convert the average Flex that might be referred to
     // from managed to unmanaged, because you don't know how many references
@@ -1416,7 +1416,7 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
   #if !defined(TO_JAVASCRIPT)
     UNUSED(p);
     UNUSED(vaptr);
-    fail ("rebPromise() is only available in JavaScript builds");
+    panic ("rebPromise() is only available in JavaScript builds");
   #else
     // If we're using a thread model to implement the pausing, then we would
     // have to start executing on that thread here.  The return value model
@@ -1499,7 +1499,7 @@ void API_rebPromise_callback(intptr_t promise_id)
 {
   #if !defined(TO_JAVASCRIPT)
     UNUSED(promise_id);
-    fail ("rebPromise() is only available in JavaScript builds");
+    panic ("rebPromise() is only available in JavaScript builds");
   #else
     Array* arr = cast(Array*, cast(void*, promise_id));
 
@@ -1524,7 +1524,7 @@ void API_rebPromise_callback(intptr_t promise_id)
         SPECIFIED,
         EVAL_FLAG_TO_END // was reified w/explicit
     )){
-        fail (Error_No_Catch_For_Throw(result)); // no need to release result
+        panic (Error_No_Catch_For_Throw(result)); // no need to release result
     }
 
     if (Is_Nulled(result)) {
@@ -1678,7 +1678,7 @@ void *API_rebDeflateDetectAlloc(
 // !!! Although it is very much the goal to get all OS-specific code out of
 // the core (including the API), this particular hook is extremely useful to
 // have available to all clients.  It might be done another way (e.g. by
-// having hosts HIJACK the FAIL native with an adaptation that processes
+// having hosts HIJACK the PANIC native with an adaptation that processes
 // integer arguments).  But for now, stick it in the API just to get the
 // wide availability.
 //

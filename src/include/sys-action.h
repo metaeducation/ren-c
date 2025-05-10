@@ -242,7 +242,7 @@ INLINE REBACT *VAL_ACTION(const Cell* v) {
     assert(Is_Action(v));
     Flex* s = v->payload.action.paramlist;
     if (Get_Flex_Info(s, INACCESSIBLE))
-        fail (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
     return ACT(s);
 }
 

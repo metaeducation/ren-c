@@ -34,12 +34,12 @@
 
 
 //
-//  PD_Fail: C
+//  PD_Panic: C
 //
 // In order to avoid having to pay for a check for nullptr in the path dispatch
 // table for types with no path dispatch, a failing handler is in the slot.
 //
-Bounce PD_Fail(
+Bounce PD_Panic(
     REBPVS *pvs,
     const Value* picker,
     const Value* opt_setval
@@ -70,7 +70,7 @@ Bounce PD_Unhooked(
     const Value* type = Datatype_From_Kind(Type_Of(pvs->out));
     UNUSED(type); // !!! put in error message?
 
-    fail ("Datatype is provided by an extension which is not loaded.");
+    panic ("Datatype is provided by an extension which is not loaded.");
 }
 
 
@@ -88,17 +88,17 @@ Bounce PD_Unhooked(
 bool Next_Path_Throws(REBPVS *pvs)
 {
     if (Is_Nulled(pvs->out))
-        fail (Error_No_Value_Core(pvs->value, pvs->specifier));
+        panic (Error_No_Value_Core(pvs->value, pvs->specifier));
 
     PATH_HOOK hook = Path_Hooks[Type_Of(pvs->out)];
-    assert(hook != nullptr);  // &PD_Fail is used instead of nullptr
+    assert(hook != nullptr);  // &PD_Panic is used instead of nullptr
 
     if (Is_Get_Word(pvs->value)) { // e.g. object/:field
-        Move_Opt_Var_May_Fail(PVS_PICKER(pvs), pvs->value, pvs->specifier);
+        Move_Opt_Var_May_Panic(PVS_PICKER(pvs), pvs->value, pvs->specifier);
     }
     else if (Is_Group(pvs->value)) { // object/(expr) case:
         if (Get_Eval_Flag(pvs, NO_PATH_GROUPS))
-            fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
+            panic ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
         Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
         if (Eval_Array_At_Throws(
@@ -120,7 +120,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     // to use in SELECT.
     //
     if (Is_Nulled(PVS_PICKER(pvs)))
-        fail (Error_No_Value_Core(pvs->value, pvs->specifier));
+        panic (Error_No_Value_Core(pvs->value, pvs->specifier));
 
     Fetch_Next_In_Level(nullptr, pvs); // may be at end
 
@@ -132,13 +132,13 @@ bool Next_Path_Throws(REBPVS *pvs)
         );
 
         if (bounce == nullptr)
-            fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
+            panic (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
         switch (VAL_TYPE_RAW(bounce)) {
 
         case TYPE_0_END: // unhandled
             assert(bounce == BOUNCE_UNHANDLED); // shouldn't be other ends
-            fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
+            panic (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
         case TYPE_R_THROWN:
             crash ("Path dispatch isn't allowed to throw, only GROUP!s");
@@ -167,7 +167,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             // we write the updated bits from pvs->out there.
 
             if (not pvs->u.ref.cell)
-                fail ("Can't update temporary immediate value via SET-PATH!");
+                panic ("Can't update temporary immediate value via SET-PATH!");
 
             Copy_Cell(pvs->u.ref.cell, pvs->out);
             break; }
@@ -178,7 +178,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             // to just be variations of BOUNCE_IMMEDIATE, but it's safer to break
             // that out as a separate class.
             //
-            fail ("Path evaluation produced temporary value, can't POKE it");
+            panic ("Path evaluation produced temporary value, can't POKE it");
         }
         Corrupt_Pointer_If_Debug(pvs->special);
     }
@@ -204,8 +204,8 @@ bool Next_Path_Throws(REBPVS *pvs)
         }
         else if (r == BOUNCE_UNHANDLED) {
             if (Is_Nulled(PVS_PICKER(pvs)))
-                fail ("NULL used in path picking but was not handled");
-            fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
+                panic ("NULL used in path picking but was not handled");
+            panic (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
         }
         else if (VAL_TYPE_RAW(r) <= TYPE_NULLED) {
             Handle_Api_Dispatcher_Result(pvs, r);
@@ -213,7 +213,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         else switch (VAL_TYPE_RAW(r)) {
 
         case TYPE_0_END:
-            fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
+            panic (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
 
         case TYPE_R_THROWN:
             crash ("Path dispatch isn't allowed to throw, only GROUP!s");
@@ -313,7 +313,7 @@ bool Eval_Path_Throws_Core(
     //
     if (Any_Inert(Array_At(array, index))) {
         if (opt_setval)
-            fail ("Can't perform SET_PATH! on path with inert head");
+            panic ("Can't perform SET_PATH! on path with inert head");
         Init_Any_List_At(out, TYPE_PATH, array, index);
         return false;
     }
@@ -350,7 +350,7 @@ bool Eval_Path_Throws_Core(
         // Remember the actual location of this variable, not just its value,
         // in case we need to do BOUNCE_IMMEDIATE writeback (e.g. month/day: 1)
         //
-        pvs->u.ref.cell = Get_Mutable_Var_May_Fail(pvs->value, pvs->specifier);
+        pvs->u.ref.cell = Get_Mutable_Var_May_Panic(pvs->value, pvs->specifier);
 
         Copy_Cell(pvs->out, KNOWN(pvs->u.ref.cell));
 
@@ -365,7 +365,7 @@ bool Eval_Path_Throws_Core(
         pvs->u.ref.cell = nullptr; // nowhere to BOUNCE_IMMEDIATE write back to
 
         if (Get_Eval_Flag(pvs, NO_PATH_GROUPS))
-            fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
+            panic ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
         Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
         if (Eval_Array_At_Throws(
@@ -384,7 +384,7 @@ bool Eval_Path_Throws_Core(
     }
 
     if (Is_Nulled(pvs->out))
-        fail (Error_No_Value_Core(pvs->value, pvs->specifier));
+        panic (Error_No_Value_Core(pvs->value, pvs->specifier));
 
     Fetch_Next_In_Level(nullptr, pvs);
 
@@ -392,7 +392,7 @@ bool Eval_Path_Throws_Core(
     if (Is_Blank(pvs->value) and IS_END(pvs->value + 1)) {
         //
         // Paths like `append/` will get the value and ensure it is an
-        // action.  so `x: 10 x/` should fail.  !!! Fail in callers or here?
+        // action.  so `x: 10 x/` should fail.  !!! panic in callers or here?
     }
     else {
         if (Next_Path_Throws(pvs))
@@ -493,7 +493,7 @@ bool Eval_Path_Throws_Core(
 void Get_Simple_Value_Into(Value* out, const Cell* val, Specifier* specifier)
 {
     if (Is_Word(val) or Is_Get_Word(val))
-        Move_Opt_Var_May_Fail(out, val, specifier);
+        Move_Opt_Var_May_Panic(out, val, specifier);
     else if (Is_Path(val) or Is_Get_Path(val))
         Get_Path_Core(out, val, specifier);
     else
@@ -522,7 +522,7 @@ VarList* Resolve_Path(const Value* path, REBLEN *index_out)
     if (IS_END(picker) or not Any_Word(picker))
         return nullptr;  // !!! only handles heads of paths that are ANY-WORD!
 
-    const Cell* var = Get_Opt_Var_May_Fail(picker, VAL_SPECIFIER(path));
+    const Cell* var = Get_Opt_Var_May_Panic(picker, VAL_SPECIFIER(path));
 
     ++picker;
     if (IS_END(picker))
@@ -597,7 +597,7 @@ DECLARE_NATIVE(PICK)
     pvs->special = nullptr;
 
     PATH_HOOK hook = Path_Hooks[Type_Of(location)];
-    assert(hook != nullptr); // &PD_Fail is used instead of null
+    assert(hook != nullptr); // &PD_Panic is used instead of null
 
     Bounce bounce = hook(pvs, PVS_PICKER(pvs), nullptr);
     if (not bounce)
@@ -606,7 +606,7 @@ DECLARE_NATIVE(PICK)
     switch (VAL_TYPE_RAW(bounce)) {
     case TYPE_0_END:
         assert(bounce == BOUNCE_UNHANDLED);
-        fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
+        panic (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
 
     case TYPE_R_INVISIBLE:
         assert(false); // only SETs should do this
@@ -678,13 +678,13 @@ DECLARE_NATIVE(POKE)
     pvs->special = ARG(VALUE);
 
     PATH_HOOK hook = Path_Hooks[Type_Of(location)];
-    assert(hook); // &PD_Fail is used instead of nullptr
+    assert(hook); // &PD_Panic is used instead of nullptr
 
     const Value* bounce = hook(pvs, PVS_PICKER(pvs), ARG(VALUE));
     switch (VAL_TYPE_RAW(bounce)) {
       case TYPE_0_END:
         assert(bounce == BOUNCE_UNHANDLED);
-        fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
+        panic (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
       case TYPE_R_INVISIBLE: // is saying it did the write already
         break;
@@ -695,7 +695,7 @@ DECLARE_NATIVE(POKE)
 
       default:
         assert(false); // shouldn't happen, complain in the debug build
-        fail (Error_Invalid(PVS_PICKER(pvs))); // raise error in release build
+        panic (Error_Invalid(PVS_PICKER(pvs))); // raise error in release build
     }
 
     RETURN (ARG(VALUE)); // return the value we got in

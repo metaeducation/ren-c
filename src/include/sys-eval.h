@@ -28,7 +28,7 @@
 //
 // The primary routine that performs DO and EVALUATE is Eval_Core_Throws().
 // It takes one parameter which holds the running state of the evaluator.
-// This state may be allocated on the C variable stack...and fail() is
+// This state may be allocated on the C variable stack...and panic() is
 // written such that a longjmp up to a failure handler above it can run
 // safely and clean up even though intermediate stacks have vanished.
 //
@@ -101,7 +101,7 @@ INLINE void Push_Level_Core(Level* L)
     // not on each Eval_Step_Throws() for `reduce [a | b | ... | z]`.
     //
     if (C_STACK_OVERFLOWING(&L))
-        Fail_Stack_Overflow();
+        Panic_Stack_Overflow();
 
     assert(SECOND_BYTE(&L->flags) == 0); // END signal
     assert(not (L->flags.bits & NODE_FLAG_CELL));
@@ -400,7 +400,7 @@ INLINE void Set_Level_Detected_Fetch(
         Shutdown_Interning_Binder(&binder, transcode.context);
 
         if (error)
-            fail (unwrap error);
+            panic (unwrap error);
 
         // !!! for now, assume scan went to the end; ultimately it would need
         // to pass the "source".
@@ -453,7 +453,7 @@ INLINE void Set_Level_Detected_Fetch(
       case DETECTED_AS_CELL: {
         const Value* cell = cast(const Value*, p);
           if (Is_Nulled(cell) and Is_Api_Value(cell))
-              fail ("NULL cell leaked to API");
+              panic ("NULL cell leaked to API");
 
         // If the cell is in an API holder with FLEX_INFO_API_RELEASE then
         // it will be released on the *next* call (see top of function)
@@ -470,7 +470,7 @@ INLINE void Set_Level_Detected_Fetch(
         L->value = END_NODE;
         Corrupt_Pointer_If_Debug(L->source->pending);
 
-        // The va_end() is taken care of here, or if there is a throw/fail it
+        // The va_end() is taken care of here, or if there is a throw/panic it
         // is taken care of by Abort_Level_Core()
         //
         va_end(*L->source->vaptr);
@@ -1015,7 +1015,7 @@ INLINE REBIXO Eval_Va_Core(
     }
 
     if ((flags & EVAL_FLAG_NO_RESIDUE) and NOT_END(L->value))
-        fail (Error_Apply_Too_Many_Raw());
+        panic (Error_Apply_Too_Many_Raw());
 
     return VA_LIST_FLAG; // frame may be at end, next call might just END_FLAG
 }
@@ -1036,7 +1036,7 @@ INLINE bool Eval_Value_Core_Throws(
     );
 
     if (IS_END(out))
-        fail ("Eval_Value_Core_Throws() empty or just COMMENTs/ELIDEs");
+        panic ("Eval_Value_Core_Throws() empty or just COMMENTs/ELIDEs");
 
     return indexor == THROWN_FLAG;
 }

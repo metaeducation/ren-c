@@ -200,15 +200,15 @@ Value* OS_Do_Device(REBREQ *req, int command)
     req->command = command;
 
     if (req->device >= RDI_MAX)
-        rebJumps("FAIL {Rebol Device Number Too Large}");
+        rebJumps("panic {Rebol Device Number Too Large}");
 
     REBDEV *dev = Devices[req->device];
     if (dev == nullptr)
-        rebJumps("FAIL {Rebol Device Not Found}");
+        rebJumps("panic {Rebol Device Not Found}");
 
     if (not (dev->flags & RDF_INIT)) {
         if (dev->flags & RDO_MUST_INIT)
-            rebJumps("FAIL {Rebol Device Uninitialized}");
+            rebJumps("panic {Rebol Device Uninitialized}");
 
         if (
             !dev->commands[RDC_INIT]
@@ -222,7 +222,7 @@ Value* OS_Do_Device(REBREQ *req, int command)
         req->command > dev->max_command
         || dev->commands[req->command] == nullptr
     ){
-        rebJumps("FAIL {Invalid Command for Rebol Device}");
+        rebJumps("panic {Invalid Command for Rebol Device}");
     }
 
     // !!! Currently the StdIO port is initialized before Rebol's startup
@@ -246,7 +246,7 @@ Value* OS_Do_Device(REBREQ *req, int command)
     // they were just plain made up (e.g. search for `req->error = -18` in the
     // R3-Alpha sources.)
     //
-    // The plan here is to use the fail() mechanic to let literate error
+    // The plan here is to use the panic() mechanic to let literate error
     // messages be produced.  However, there was code here that would react
     // to DR_ERROR in order to allow for cleanup in the case that a request
     // was flagged with RRF_ALLOC.  New lifetime management strategies that
@@ -299,7 +299,7 @@ void OS_Do_Device_Sync(REBREQ *req, int command)
     Value* result = OS_DO_DEVICE(req, command);
     assert(result != nullptr);  // should be synchronous
     if (rebDid("error?", rebQ(result)))
-        rebJumps("fail", result);
+        rebJumps("panic", result);
     rebRelease(result); // ignore result
 }
 

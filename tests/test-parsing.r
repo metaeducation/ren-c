@@ -71,7 +71,7 @@ make object! [
                 ; handle string using TRANSCODE
                 success-rule: trap [
                     if error? position: transcode/next3 position 'dummy [
-                        fail position
+                        panic position
                     ]
                 ] then [
                     [<end> one]
@@ -256,7 +256,7 @@ make object! [
         log-file [file!]
     ][
         sys/util/rescue [log-contents: read log-file] then [
-            fail ["Unable to read " mold log-file]
+            panic ["Unable to read " mold log-file]
         ]
 
         parse log-contents [
@@ -279,7 +279,7 @@ make object! [
                     [
                         <end> (
                             ; crash found
-                            fail "log incomplete!"
+                            panic "log incomplete!"
                         )
                             |
                         {"} value: across to {"} one
@@ -294,7 +294,7 @@ make object! [
                                     |
                                 "skipped" (value: 'skipped)
                                     |
-                                (fail "invalid test result")
+                                (panic "invalid test result")
                             ]
                             append collected-logs reduce [
                                 last-vector
@@ -305,7 +305,7 @@ make object! [
                         |
                     "system/version:" to <end> (guard: null)
                         |
-                    (fail "collect-logs - log file parsing problem")
+                    (panic "collect-logs - log file parsing problem")
                 ] position: <here> guard break ; Break when error detected.
                     |
                 seek position

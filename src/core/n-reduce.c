@@ -88,19 +88,19 @@ Value* Meta_Unquotify(Value* v)
         case SYM_TILDE_1:
             return Init_Trash(v);
         default:
-            fail ("Invalid WORD! passed to UNMETA");
+            panic ("Invalid WORD! passed to UNMETA");
         }
     }
 
     if (not Is_Group(v))
-        fail ("UMETA only works on GROUP! or WORD!");
+        panic ("UMETA only works on GROUP! or WORD!");
 
     if (
         Cell_Series_Len_At(v) != 2
         or not Is_Word(Cell_List_At(v))
         or Cell_Word_Id(Cell_List_At(v)) != SYM_THE
     ){
-        fail ("UNMETA only works on (the <whatever>) GROUP!s");
+        panic ("UNMETA only works on (the <whatever>) GROUP!s");
     }
 
     return Copy_Cell(v, cast(Value*, Cell_List_At(v) + 1));
@@ -183,13 +183,13 @@ bool Reduce_To_Stack_Throws(
             break;
         }
 
-        FAIL_IF_ERROR(out);
+        PANIC_IF_ERROR(out);
 
         if (Is_Void(out)) {
             // ignore
         }
         else if (Is_Antiform(out)) {
-            fail (Error_Bad_Antiform(out));
+            panic (Error_Bad_Antiform(out));
         }
         else {
             Copy_Cell(PUSH(), out);
@@ -347,7 +347,7 @@ bool Compose_To_Stack_Throws(
                 return true;
             }
 
-            FAIL_IF_ERROR(out);
+            PANIC_IF_ERROR(out);
 
             if (Is_Void(out)) {
                 //
@@ -355,7 +355,7 @@ bool Compose_To_Stack_Throws(
                 // compose [(elide "so do 'empty' composes")] => []
             }
             else if (Is_Antiform(out)) {
-                fail (Error_Bad_Antiform(out));
+                panic (Error_Bad_Antiform(out));
             }
             else if (splice and Is_Block(out)) {
                 //

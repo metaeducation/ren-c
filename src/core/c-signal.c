@@ -46,7 +46,7 @@
 // This means a top-level trap must always be in effect, even though no eval
 // is running.  This trap's job is to handle errors that happen *while
 // reporting another error*, with Ctrl-C triggering a HALT being the most
-// likely example if not running an evaluation (though any fail() could
+// likely example if not running an evaluation (though any panic() could
 // cause it)
 //
 
@@ -147,7 +147,7 @@ bool Do_Signals_Throws(Value* out)
         // with a keypress.  This needs to be thought out a bit more,
         // but may not involve much more than running `BREAKPOINT`.
         //
-        fail ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
+        panic ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
     }
 
     Eval_Sigmask = saved_mask;

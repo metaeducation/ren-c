@@ -43,7 +43,7 @@ if args/GIT_COMMIT = "unknown" [
 ] else [
     git-commit: args/GIT_COMMIT
     if (length of git-commit) != (length of first-rebol-commit) [
-        fail [
+        panic [
             "GIT_COMMIT should be a full hash, e.g." first-rebol-commit newline
             "Invalid hash was:" git-commit
         ]
@@ -110,7 +110,7 @@ args: any [
     ; This is the only piece that should be necessary if not dealing w/legacy
     system/options/args
 ] else [
-    fail "No platform specified."
+    panic "No platform specified."
 ]
 
 product: to-word any [get 'args/PRODUCT  "core"]
@@ -145,7 +145,7 @@ add-sym: function [
 ][
     if pos: find boot-words word [
         if exists [return index of pos]
-        fail ["Duplicate word specified" word]
+        panic ["Duplicate word specified" word]
     ]
 
     append syms cscape [sym-n word {/* $<Word> */ SYM_${WORD} = $<sym-n>}]
@@ -155,7 +155,7 @@ add-sym: function [
         append boot-words switch word [
             "|" ['|]
             "~" ['~]
-            fail "Only | and ~ are strings in words.r"
+            panic "Only | and ~ are strings in words.r"
         ]
     ] else [
         append boot-words word
@@ -188,7 +188,7 @@ generic-hooks: collect [
 path-hooks: collect [
     for-each-record t type-table [
         switch t/path [
-            '- [keep cscape [t {PD_Fail /* $<T/Name> */}]]
+            '- [keep cscape [t {PD_Panic /* $<T/Name> */}]]
             '+ [
                 proper: propercase-of t/class
                 keep cscape [proper t {PD_$<Proper> /* $<T/Name> */}]
@@ -208,14 +208,14 @@ path-hooks: collect [
 make-hooks: collect [
     for-each-record t type-table [
         switch t/make [
-            '- [keep cscape [t {/* $<T/Name> */ MAKE_Fail}]]
+            '- [keep cscape [t {/* $<T/Name> */ MAKE_Panic}]]
             '+ [
                 proper: propercase-of t/class
                 keep cscape [proper t {/* $<T/Name> */ MAKE_$<Proper>}]
             ]
             '* [keep cscape [t {/* $<T/Name> */ MAKE_Unhooked}]]
 
-            fail "MAKE in %types.r should be, -, +, or *"
+            panic "MAKE in %types.r should be, -, +, or *"
         ]
     ]
 ]
@@ -223,14 +223,14 @@ make-hooks: collect [
 to-hooks: collect [
     for-each-record t type-table [
         switch t/make [
-            '- [keep cscape [t {/* $<T/Name> */ TO_Fail}]]
+            '- [keep cscape [t {/* $<T/Name> */ TO_Panic}]]
             '+ [
                 proper: propercase-of T/Class
                 keep cscape [t {TO_$<Proper> /* $<T/Name> */}]
             ]
             '* [keep cscape [t {TO_Unhooked /* $T/Name> */}]]
 
-            fail "TO in %types.r should be -, +, or *"
+            panic "TO in %types.r should be -, +, or *"
         ]
     ]
 ]
@@ -238,7 +238,7 @@ to-hooks: collect [
 mold-hooks: collect [
     for-each-record t type-table [
         switch t/mold [
-            '- [keep cscape [t {/* $<T/Name> */ MF_Fail"}]]
+            '- [keep cscape [t {/* $<T/Name> */ MF_Panic"}]]
             '+ [
                 proper: propercase-of t/class
                 keep cscape [proper t {/* $<T/Name> */ MF_$<Proper>}]
@@ -566,7 +566,7 @@ for-each item boot-generics [
             add-sym/exists to-word item
             0
         ][
-            fail ["Duplicate generic found:" item]
+            panic ["Duplicate generic found:" item]
         ]
     ]
 ]
@@ -718,7 +718,7 @@ for-each [sw-cat list] boot-errors [
         ;-- Add a SYM_XXX constant for the error's ID word
 
         if first-error-sym < (add-sym/exists id else [0]) [
-            fail ["Duplicate error ID found:" id]
+            panic ["Duplicate error ID found:" id]
         ]
 
         arity: 0

@@ -47,7 +47,7 @@
         may not be better to have it be an error.
         }
         if not tail? block [
-            fail "Too many arguments passed in R3-ALPHA-APPLY block."
+            panic "Too many arguments passed in R3-ALPHA-APPLY block."
         ]
     ]
 

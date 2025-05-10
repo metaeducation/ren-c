@@ -172,7 +172,7 @@ static void Protect_Word_Value(Value* word, Flags flags)
             //
             Value* var = m_cast(
                 Value*,
-                Get_Opt_Var_May_Fail(word, SPECIFIED)
+                Get_Opt_Var_May_Panic(word, SPECIFIED)
             );
             Protect_Value(var, flags);
             Uncolor(var);
@@ -182,7 +182,7 @@ static void Protect_Word_Value(Value* word, Flags flags)
         REBLEN index;
         VarList* context = Resolve_Path(word, &index);
         if (index == 0)
-            fail ("Couldn't resolve PATH! in Protect_Word_Value");
+            panic ("Couldn't resolve PATH! in Protect_Word_Value");
 
         if (context != nullptr) {
             Protect_Key(context, index, flags);
@@ -245,7 +245,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     //
                     var = m_cast(
                         Value*,
-                        Get_Opt_Var_May_Fail(item, VAL_SPECIFIER(value))
+                        Get_Opt_Var_May_Panic(item, VAL_SPECIFIER(value))
                     );
                 }
                 else if (Is_Path(value)) {
@@ -266,7 +266,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     }
 
     if (flags & PROT_HIDE)
-        fail (Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     Protect_Value(value, flags);
 
@@ -343,7 +343,7 @@ DECLARE_NATIVE(UNPROTECT)
     UNUSED(PARAM(VALUES));
 
     if (Bool_ARG(HIDE))
-        fail ("Cannot un-hide an object field once hidden");
+        panic ("Cannot un-hide an object field once hidden");
 
     return Protect_Unprotect_Core(level_, PROT_WORD);
 }
@@ -421,7 +421,7 @@ void Force_Value_Frozen_Deep(const Cell* v, Flex* opt_locker) {
         if (opt_locker != nullptr)
             Set_Flex_Info(Cell_Flex(v), AUTO_LOCKED);
     } else
-        fail (Error_Invalid_Type(Type_Of(v))); // not yet implemented
+        panic (Error_Invalid_Type(Type_Of(v))); // not yet implemented
 }
 
 
@@ -492,7 +492,7 @@ DECLARE_NATIVE(LOCK)
             );
         }
         else
-            fail (Error_Invalid_Type(Type_Of(v))); // not yet implemented
+            panic (Error_Invalid_Type(Type_Of(v))); // not yet implemented
     }
 
     Flex* locker = nullptr;

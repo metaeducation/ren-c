@@ -444,7 +444,7 @@ INLINE void Push_Action(
     }
 
     if (not Did_Flex_Data_Alloc(s, num_args + 1 + 1)) // +rootvar, +end
-        fail ("Out of memory in Push_Action()");
+        panic ("Out of memory in Push_Action()");
 
     L->rootvar = cast(Value*, s->content.dynamic.data);
     TRACK(L->rootvar)->header.bits =
@@ -496,7 +496,7 @@ INLINE void Push_Action(
 
 
 INLINE void Drop_Action(Level* L) {
-    assert(Not_Flex_Info(L->varlist, FRAME_FAILED));
+    assert(Not_Flex_Info(L->varlist, FRAME_PANICKED));
 
     assert(
         not L->opt_label

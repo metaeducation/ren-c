@@ -62,7 +62,7 @@ void Startup_Data_Stack(REBLEN size)
     //
     DS_Index = 1;
     DS_Movable_Top = KNOWN(Array_At(DS_Array, DS_Index)); // can't push RELVALs
-    Expand_Data_Stack_May_Fail(size);
+    Expand_Data_Stack_May_Panic(size);
 
     // Now drop the hypothetical thing pushed that triggered the expand.
     //
@@ -119,7 +119,7 @@ void Startup_Level_Stack(void)
     L->source = &TG_Level_Source_End;
     Push_Level_At_End(L, DO_MASK_NONE);
 
-    // It's too early to be using Make_Paramlist_Managed_May_Fail()
+    // It's too early to be using Make_Paramlist_Managed_May_Panic()
     //
     Array* paramlist = Make_Array_Core(
         1,
@@ -258,7 +258,7 @@ VarList* Get_Context_From_Stack(void)
 
 
 //
-//  Expand_Data_Stack_May_Fail: C
+//  Expand_Data_Stack_May_Panic: C
 //
 // The data stack maintains an invariant that you may never push an END to it.
 // So each push looks to see if it's pushing to a cell that contains an END
@@ -269,7 +269,7 @@ VarList* Get_Context_From_Stack(void)
 // StackIndex and not by Value* across *any* operation which could do a push
 // or pop.  (Currently stable w.r.t. pop but there may be compaction.)
 //
-void Expand_Data_Stack_May_Fail(REBLEN amount)
+void Expand_Data_Stack_May_Panic(REBLEN amount)
 {
     REBLEN len_old = Array_Len(DS_Array);
 
@@ -290,7 +290,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
         // before the expansion, we have to decrement it if failing.
         //
         --DS_Index;
-        Fail_Stack_Overflow(); // !!! Should this be a "data stack" message?
+        Panic_Stack_Overflow(); // !!! Should this be a "data stack" message?
     }
 
     Extend_Flex(DS_Array, amount);
@@ -354,7 +354,7 @@ void Pop_Stack_Values_Into(Value* into, StackIndex base) {
     Value* values = KNOWN(Array_At(DS_Array, base + 1));
 
     assert(Any_List(into));
-    Fail_If_Read_Only_Flex(Cell_Array(into));
+    Panic_If_Read_Only_Flex(Cell_Array(into));
 
     VAL_INDEX(into) = Insert_Flex(
         Cell_Array(into),

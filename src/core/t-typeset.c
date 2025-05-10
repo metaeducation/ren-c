@@ -182,9 +182,9 @@ bool Update_Typeset_Bits_Core(
                 Set_Typeset_Flag(typeset, TYPE_VOID);
                 continue;
             }
-            item = Get_Opt_Var_May_Fail(maybe_word, specifier);
+            item = Get_Opt_Var_May_Panic(maybe_word, specifier);
             if (not item)
-                fail (Error_No_Value_Core(maybe_word, specifier));
+                panic (Error_No_Value_Core(maybe_word, specifier));
         }
         else
             item = maybe_word; // wasn't variable
@@ -208,7 +208,7 @@ bool Update_Typeset_Bits_Core(
             }
             else if (0 == Compare_String_Vals(item, Root_Skip_Tag, true)) {
                 if (Cell_Parameter_Class(typeset) != PARAMCLASS_HARD_QUOTE)
-                    fail ("Only hard-quoted parameters are <skip>-able");
+                    panic ("Only hard-quoted parameters are <skip>-able");
 
                 Set_Typeset_Flag(typeset, TYPE_TS_SKIPPABLE);
                 Set_Typeset_Flag(typeset, TYPE_TS_ENDABLE); // skip => null
@@ -224,7 +224,7 @@ bool Update_Typeset_Bits_Core(
             Cell_Typeset_Bits(typeset) |= Cell_Typeset_Bits(item);
         }
         else
-            fail (Error_Invalid_Core(maybe_word, specifier));
+            panic (Error_Invalid_Core(maybe_word, specifier));
     }
 
     // If you say ANY-VALUE! on a non-RETURN: then most arguments don't get
@@ -268,7 +268,7 @@ Bounce MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
     return out;
 
   bad_make:
-    fail (Error_Bad_Make(TYPE_TYPESET, arg));
+    panic (Error_Bad_Make(TYPE_TYPESET, arg));
 }
 
 
@@ -375,7 +375,7 @@ REBTYPE(Typeset)
 
     case SYM_FIND:
         if (not Is_Datatype(arg))
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
 
         if (Typeset_Check(val, CELL_DATATYPE_TYPE(arg)))
             return LOGIC(true);
@@ -389,7 +389,7 @@ REBTYPE(Typeset)
             Cell_Typeset_Bits(arg) = FLAGIT_KIND(Type_Of(arg));
         }
         else if (not Is_Typeset(arg))
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
 
         if (Cell_Word_Id(verb) == SYM_UNION)
             Cell_Typeset_Bits(val) |= Cell_Typeset_Bits(arg);
@@ -409,5 +409,5 @@ REBTYPE(Typeset)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_TYPESET, verb));
+    panic (Error_Illegal_Action(TYPE_TYPESET, verb));
 }

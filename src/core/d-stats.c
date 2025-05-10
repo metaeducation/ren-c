@@ -76,7 +76,7 @@ DECLARE_NATIVE(STATS)
     UNUSED(Bool_ARG(DUMP_SERIES));
     UNUSED(ARG(POOL_ID));
 
-    fail (Error_Debug_Only_Raw());
+    panic (Error_Debug_Only_Raw());
 #else
     if (Bool_ARG(PROFILE)) {
         Copy_Cell(OUT, Get_System(SYS_STANDARD, STD_STATS));
@@ -165,11 +165,11 @@ DECLARE_NATIVE(CALLGRIND)
         break;
 
     default:
-        fail ("Currently CALLGRIND only supports ON and OFF");
+        panic ("Currently CALLGRIND only supports ON and OFF");
     }
     return Init_Trash(OUT);
   #else
     UNUSED(ARG(INSTRUCTION));
-    fail ("This executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");
+    panic ("This executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");
   #endif
 }

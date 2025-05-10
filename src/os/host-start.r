@@ -238,7 +238,7 @@ host-start: function [
                 if not empty? instruction [append/line instruction [()]]
                 append/line instruction compose/deep <*> item
             ]
-            fail
+            panic
         ]
     ]
 
@@ -260,7 +260,7 @@ host-start: function [
             ]
             <die> [
                 emit [quit 1] ;-- catch-all bash code for general errors
-                emit [fail {^-- Shouldn't get here, due to QUIT}]
+                emit [panic {^-- Shouldn't get here, due to QUIT}]
             ]
         ] then [
             return-to-c instruction
@@ -278,7 +278,7 @@ host-start: function [
                 assert [empty? instruction]
                 state
             ]
-            fail ["Bad console instruction:" mold state]
+            panic ["Bad console instruction:" mold state]
         ]
     ]
 
@@ -319,7 +319,7 @@ host-start: function [
     ; helper functions
     ;
     die: lambda [
-        {A graceful way to "FAIL" during startup}
+        {A graceful way to "PANIC" during startup}
         reason [text! block!]
             {Error message}
         /error e [error!]
@@ -467,7 +467,7 @@ host-start: function [
                 ; it isn't treated as the name of a script to run!
                 ;
                 take argv
-            ) fail
+            ) veto
         |
             "--about" <end> (
                 o/about: okay   ;; show full banner (ABOUT) on startup

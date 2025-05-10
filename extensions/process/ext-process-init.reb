@@ -41,7 +41,7 @@ browse*: function [
             ;-- Just keep trying
         ]
     ]
-    fail "Could not open web browser"
+    panic "Could not open web browser"
 ]
 
 hijack 'browse :browse*

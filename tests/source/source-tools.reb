@@ -392,7 +392,7 @@ rebsource: context [
         source-files: function [
             {Retrieves a list of source files (relative paths).}
         ][
-            if not repo-dir [fail {Configuration of repo-dir required.}]
+            if not repo-dir [panic {Configuration of repo-dir required.}]
 
             files: read-deep/full/strategy source-paths :source-files-seq
 

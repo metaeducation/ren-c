@@ -59,11 +59,11 @@ Bounce MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 
     assert(not Is_Nulled(arg)); // would need to DEVOID it otherwise
     if (Apply_Only_Throws(out, fully, make_port_helper, arg, rebEND))
-        fail (Error_No_Catch_For_Throw(out));
+        panic (Error_No_Catch_For_Throw(out));
 
     // !!! Shouldn't this be testing for !Is_Port( ) ?
     if (Is_Blank(out))
-        fail (Error_Invalid_Spec_Raw(arg));
+        panic (Error_Invalid_Spec_Raw(arg));
 
     return out;
 }
@@ -78,7 +78,7 @@ Bounce TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
     UNUSED(kind);
 
     if (!Is_Object(arg))
-        fail (Error_Bad_Make(TYPE_PORT, arg));
+        panic (Error_Bad_Make(TYPE_PORT, arg));
 
     // !!! cannot convert TO a PORT! without copying the whole context...
     // which raises the question of why convert an object to a port,
@@ -121,21 +121,21 @@ Bounce Retrigger_Append_As_Write(Level* level_) {
         or Is_Text(ARG(VALUE))
         or Is_Block(ARG(VALUE)))
     ){
-        fail (Error_Invalid(ARG(VALUE)));
+        panic (Error_Invalid(ARG(VALUE)));
     }
 
     if (Bool_ARG(PART)) {
         UNUSED(ARG(LIMIT));
-        fail (Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
     }
     if (Bool_ARG(ONLY))
-        fail (Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
     if (Bool_ARG(DUP)) {
         UNUSED(ARG(COUNT));
-        fail (Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
     }
     if (Bool_ARG(LINE))
-        fail (Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     return rebValue("write/append", D_ARG(1), D_ARG(2));
 }
@@ -190,7 +190,7 @@ REBTYPE(Port)
     }
 
     if (not Is_Port(D_ARG(1)))
-        fail (Error_Illegal_Action(Type_Of(D_ARG(1)), verb));
+        panic (Error_Illegal_Action(Type_Of(D_ARG(1)), verb));
 
     Value* port = D_ARG(1);
 

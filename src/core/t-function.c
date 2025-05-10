@@ -72,7 +72,7 @@ Bounce MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
     UNUSED(kind);
     UNUSED(out);
 
-    fail (Error_Bad_Make(TYPE_ACTION, arg));
+    panic (Error_Bad_Make(TYPE_ACTION, arg));
 }
 
 
@@ -90,7 +90,7 @@ Bounce TO_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 
     UNUSED(out);
 
-    fail (Error_Invalid(arg));
+    panic (Error_Invalid(arg));
 }
 
 
@@ -141,11 +141,11 @@ REBTYPE(Action)
         UNUSED(PARAM(VALUE));
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(TYPES)) {
             UNUSED(ARG(KINDS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(DEEP)) {
             // !!! always "deep", allow it?
@@ -267,7 +267,7 @@ REBTYPE(Action)
             return Init_Integer(OUT, MISC(a).line); }
 
         default:
-            fail (Error_Cannot_Reflect(Type_Of(value), arg));
+            panic (Error_Cannot_Reflect(Type_Of(value), arg));
         }
         break; }
 
@@ -275,7 +275,7 @@ REBTYPE(Action)
         break;
     }
 
-    fail (Error_Illegal_Action(Type_Of(value), verb));
+    panic (Error_Illegal_Action(Type_Of(value), verb));
 }
 
 
@@ -317,7 +317,7 @@ Bounce PD_Action(
     // a word/refinement or or one of those that evaluated it, then error.
     //
     if (not Is_Word(picker) and not Is_Refinement(picker))
-        fail (Error_Bad_Refine_Raw(picker));
+        panic (Error_Bad_Refine_Raw(picker));
 
     Init_Issue(PUSH(), VAL_WORD_CANON(picker));  // canonize just once
 

@@ -57,14 +57,14 @@
 //
 //     catch [if 1 < 2 [sys/util/rescue [print ["Foo" (throw "Throwing")]]]]
 //
-//     sys/util/rescue [if 1 < 2 [catch [print ["Foo" (fail "Failing")]]]]
+//     sys/util/rescue [if 1 < 2 [catch [print ["Foo" (panic "Panicking")]]]]
 //
 // In the first case, the THROW is offered to each point up the chain as
 // a special sort of "return value" that only natives can examine.  The
 // `print` will get a chance, the `trap` will get a chance, the `if` will
 // get a chance...but only CATCH will take the opportunity.
 //
-// In the second case, the FAIL is implemented with longjmp().  So it
+// In the second case, the PANIC is implemented with longjmp().  So it
 // doesn't make a return value...it never reaches the return.  It offers an
 // ERROR! up the stack to native functions that have called PUSH_TRAP() in
 // advance--as a way of registering interest in intercepting failures.  For
@@ -150,10 +150,10 @@
 
 
 // PUSH_TRAP is a construct which is used to catch errors that have been
-// triggered by the Fail_Core() function.  This can be triggered by a usage
-// of the `fail` pseudo-"keyword" in C code, and in Rebol user code by the
-// DECLARE_NATIVE(FAIL).  To call the push, you need a `struct Reb_State` to be
-// passed which it will write into--which is a black box that clients
+// triggered by the Panic_Core() function.  This can be triggered by a usage
+// of the `panic` pseudo-"keyword" in C code, and in Rebol user code by the
+// DECLARE_NATIVE(PANIC).  To call the push, you need a `struct Reb_State` to
+// be passed which it will write into--which is a black box that clients
 // shouldn't inspect.
 //
 // The routine also takes a pointer-to-a-VarList-pointer which represents
@@ -241,13 +241,13 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 
 
 //
-// FAIL
+// PANIC
 //
-// The fail() macro implements a form of error which is "trappable" with the
+// The panic() macro implements a form of error which is "trappable" with the
 // macros above:
 //
 //     if (Foo_Type(foo) == BAD_FOO) {
-//         fail (Error_Bad_Foo_Operation(...));
+//         panic (Error_Bad_Foo_Operation(...));
 //
 //         /* this line will never be reached, because it
 //            longjmp'd up the stack where execution continues */
@@ -257,7 +257,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // defined in %errors.r.  These definitions contain a formatted message
 // template, showing how the arguments will be displayed in FORMing.
 //
-// NOTE: It's desired that there be a space in `fail (...)` to make it look
+// NOTE: It's desired that there be a space in `panic (...)` to make it look
 // more "keyword-like" and draw attention to the fact it is a `noreturn` call.
 //
 
@@ -268,36 +268,36 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
     // the files and line numbers for all the places that originate
     // errors...
     //
-    #define fail(error) \
-        Fail_Core(error)
+    #define panic(error) \
+        Panic_Core(error)
 #else
     #if CPLUSPLUS_11
         //
         // We can do a bit more checking in the C++ build, for instance to
-        // make sure you don't pass a Cell* into fail().  This could also
+        // make sure you don't pass a Cell* into panic().  This could also
         // be used by a strict build that wanted to get rid of all the hard
-        // coded string fail()s, by triggering a compiler error on them.
+        // coded string panic()s, by triggering a compiler error on them.
 
         template <class T>
-        INLINE ATTRIBUTE_NO_RETURN void Fail_Core_Cpp(T *p) {
+        INLINE ATTRIBUTE_NO_RETURN void Panic_Core_Cpp(T *p) {
             static_assert(
                 std::is_same<T, Error>::value
                 or std::is_same<T, const char>::value
                 or std::is_same<T, const Value>::value
                 or std::is_same<T, Value>::value,
-                "fail() works on: Error*, Value*, const char*"
+                "panic() works on: Error*, Value*, const char*"
             );
-            Fail_Core(p);
+            Panic_Core(p);
         }
 
-        #define fail(error) \
+        #define panic(error) \
             do { \
-                Fail_Core_Cpp(error); \
+                Panic_Core_Cpp(error); \
             } while (0)
     #else
-        #define fail(error) \
+        #define panic(error) \
             do { \
-                Fail_Core(error); \
+                Panic_Core(error); \
             } while (0)
     #endif
 #endif

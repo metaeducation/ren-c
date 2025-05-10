@@ -51,7 +51,7 @@ Flex* Make_Set_Operation_Flex(
 
         if (Any_List(val1)) {
             if (!Any_List(val2))
-                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
+                panic (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
             // As long as they're both arrays, we're willing to do:
             //
@@ -68,13 +68,13 @@ Flex* Make_Set_Operation_Flex(
             //      <abcde>
 
             if (not Any_String((val2)))
-                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
+                panic (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
         }
         else {
             // Binaries only operate with other binaries
             assert(Is_Binary(val1));
             if (not Is_Binary(val2))
-                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
+                panic (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
         }
     }
 
@@ -151,7 +151,7 @@ Flex* Make_Set_Operation_Flex(
                 // shaky to deal with, so an error is reported if it does
                 // not work out evenly to the skip size.
                 //
-                fail (Error_Block_Skip_Wrong_Raw());
+                panic (Error_Block_Skip_Wrong_Raw());
             }
 
             if (flags & SOP_FLAG_CHECK)
@@ -300,7 +300,7 @@ Flex* Make_Set_Operation_Flex(
                     // This would append non-valid UTF-8 to the mold buffer.
                     // There should probably be a byte buffer.
                     //
-                    fail ("Binary set operations temporarily unsupported.");
+                    panic ("Binary set operations temporarily unsupported.");
 
                     // Append_String(mo->utf8flex, flex, i, skip);
                 }
@@ -351,7 +351,7 @@ DECLARE_NATIVE(EXCLUDE)
 
     if (Is_Bitset(val1) || Is_Bitset(val2)) {
         if (Type_Of(val1) != Type_Of(val2))
-            fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
+            panic (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
         DECLARE_VALUE (verb); // initial code did something weird w/this
         Init_Word(verb, CANON(EXCLUDE));
@@ -360,7 +360,7 @@ DECLARE_NATIVE(EXCLUDE)
 
     if (Is_Typeset(val1) || Is_Typeset(val2)) {
         if (Type_Of(val1) != Type_Of(val2))
-            fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
+            panic (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
         Copy_Cell(OUT, val1);
         Cell_Typeset_Bits(OUT) &= ~Cell_Typeset_Bits(val2);

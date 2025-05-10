@@ -49,18 +49,18 @@ DEVICE_CMD Open_Signal(REBREQ *req)
 #ifdef CHECK_MASK_OVERLAP //doesn't work yet
     sigset_t mask;
     if (sigprocmask(SIG_BLOCK, nullptr, &mask) < 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     sigset_t overlap;
     if (sigandset(&overlap, &mask, &signal->mask) < 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     if (!sigisemptyset(&overlap))
-        rebFail_OS (EBUSY);
+        rebPanic_OS (EBUSY);
 #endif
 
     if (sigprocmask(SIG_BLOCK, &signal->mask, nullptr) < 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     req->flags |= RRF_OPEN;
 
@@ -80,7 +80,7 @@ DEVICE_CMD Close_Signal(REBREQ *req)
 {
     struct devreq_posix_signal *signal = DEVREQ_POSIX_SIGNAL(req);
     if (sigprocmask(SIG_UNBLOCK, &signal->mask, nullptr) < 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     req->flags &= ~RRF_OPEN;
     return DR_DONE;
@@ -107,7 +107,7 @@ DEVICE_CMD Read_Signal(REBREQ *req)
 
         if (result < 0) {
             if (errno != EAGAIN && i == 0)
-                rebFail_OS (errno);
+                rebPanic_OS (errno);
             break;
         }
     }

@@ -65,7 +65,7 @@ emit-proto: func [
         set-word? header/1
     ] else [
         print mold proto-parser/data
-        fail [
+        panic [
             proto
             newline
             "Prototype has bad Rebol function header block in comment"
@@ -89,11 +89,11 @@ emit-proto: func [
         ; checked for the word NATIVE it would also have to look for paths
         ; like NATIVE/BODY
 
-        fail "%make-headers.r only understands C functions"
+        panic "%make-headers.r only understands C functions"
     ]
 
     if find prototypes proto [
-        fail ["Duplicate prototype:" the-file ":" proto]
+        panic ["Duplicate prototype:" the-file ":" proto]
     ]
 
     append prototypes proto
@@ -372,7 +372,7 @@ parse2/match native-list [
         )
     ]
 ] else [
-    fail "Error processing native-list"
+    panic "Error processing native-list"
 ]
 
 e-params/write-emitted

@@ -80,11 +80,11 @@ static Bounce Clipboard_Actor(
         UNUSED(PARAM(SOURCE)); // already accounted for
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(SEEK)) {
             UNUSED(ARG(INDEX));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher
@@ -97,19 +97,19 @@ static Bounce Clipboard_Actor(
             //
             DWORD last_error = GetLastError();
             if (last_error != NO_ERROR)
-                rebFail_OS (last_error);
+                rebPanic_OS (last_error);
 
             return Init_Blank(OUT);
         }
 
         if (not OpenClipboard(nullptr))
-            rebJumps("FAIL {OpenClipboard() fail while reading}");
+            rebJumps("panic {OpenClipboard() fail while reading}");
 
         HANDLE h = GetClipboardData(CF_UNICODETEXT);
         if (h == nullptr) {
             CloseClipboard();
             rebJumps (
-                "FAIL",
+                "panic",
                 "{IsClipboardFormatAvailable()/GetClipboardData() mismatch}"
             );
         }
@@ -118,7 +118,7 @@ static Bounce Clipboard_Actor(
         if (wide == nullptr) {
             CloseClipboard();
             rebJumps(
-                "FAIL {Couldn't GlobalLock() UCS2 clipboard data}"
+                "panic {Couldn't GlobalLock() UCS2 clipboard data}"
             );
         }
 
@@ -153,23 +153,23 @@ static Bounce Clipboard_Actor(
 
         if (Bool_ARG(SEEK)) {
             UNUSED(ARG(INDEX));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(APPEND))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(ALLOW)) {
             UNUSED(ARG(ACCESS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(LINES))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         // !!! Traditionally the currency of READ and WRITE is binary data.
         // R3-Alpha had a behavior of ostensibly taking string or binary, but
         // the length only made sense if it was a string.  Review.
         //
         if (rebNot("text?", arg))
-            fail (Error_Invalid_Port_Arg_Raw(arg));
+            panic (Error_Invalid_Port_Arg_Raw(arg));
 
         // Handle /part refinement:
         //
@@ -179,12 +179,12 @@ static Bounce Clipboard_Actor(
 
         if (not OpenClipboard(nullptr))
             rebJumps(
-                "FAIL {OpenClipboard() fail on clipboard write}"
+                "panic {OpenClipboard() fail on clipboard write}"
             );
 
         if (not EmptyClipboard()) // !!! is this superfluous?
             rebJumps(
-                "FAIL {EmptyClipboard() fail on clipboard write}"
+                "panic {EmptyClipboard() fail on clipboard write}"
             );
 
         // Clipboard wants a Windows memory handle with UCS2 data.  Allocate a
@@ -193,11 +193,11 @@ static Bounce Clipboard_Actor(
 
         HANDLE h = GlobalAlloc(GHND, sizeof(WCHAR) * (len + 1));
         if (h == nullptr)  // per documentation, not INVALID_HANDLE_VALUE
-            rebJumps("FAIL {GlobalAlloc() fail on clipboard write}");
+            rebJumps("panic {GlobalAlloc() fail on clipboard write}");
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
         if (wide == nullptr)
-            rebJumps("FAIL {GlobalLock() fail on clipboard write}");
+            rebJumps("panic {GlobalLock() fail on clipboard write}");
 
         REBINT len_check = rebSpellIntoW(wide, len, arg); // UTF-16 extract
         assert(len <= len_check); // may only be writing /PART of the string
@@ -209,7 +209,7 @@ static Bounce Clipboard_Actor(
         CloseClipboard();
 
         if (h_check == nullptr)
-            rebJumps("FAIL {SetClipboardData() failed.}");
+            rebJumps("panic {SetClipboardData() failed.}");
 
         assert(h_check == h);
 
@@ -220,16 +220,16 @@ static Bounce Clipboard_Actor(
 
         UNUSED(PARAM(SPEC));
         if (Bool_ARG(NEW))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(READ))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(WRITE))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(SEEK))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(ALLOW)) {
             UNUSED(ARG(ACCESS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         // !!! Currently just ignore (it didn't do anything)
@@ -246,7 +246,7 @@ static Bounce Clipboard_Actor(
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_PORT, verb));
+    panic (Error_Illegal_Action(TYPE_PORT, verb));
 }
 
 

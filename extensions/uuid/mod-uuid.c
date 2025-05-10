@@ -104,7 +104,7 @@ DECLARE_NATIVE(GENERATE)
     Init_Blob(OUT, Copy_Bytes(uuid, sizeof(uuid)));
 
 #else
-    fail ("UUID is not implemented");
+    panic ("UUID is not implemented");
 #endif
 
     return OUT;

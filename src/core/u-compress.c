@@ -87,12 +87,12 @@ static const int window_bits_zlib_raw = -(MAX_WBITS);
 // See rebRepossess() for how rebMalloc()'d pointers can be used this way.
 //
 // We go ahead and use the rebMalloc() for zlib's internal state allocation
-// too, so that any fail() calls (e.g. out-of-memory during a rebRealloc())
+// too, so that any panic() calls (e.g. out-of-memory during a rebRealloc())
 // will automatically free that state.  Thus inflateEnd() and deflateEnd()
 // only need to be called if there is no failure.  There's no need to
 // rebRescue(), clean up, and rethrow the error.
 //
-// As a side-benefit, fail() can be used freely for other errors during the
+// As a side-benefit, panic() can be used freely for other errors during the
 // inflate or deflate.
 
 static void *zalloc(void *opaque, unsigned nr, unsigned size)
@@ -141,7 +141,7 @@ unsigned char *Compress_Alloc_Core(
     Symbol* envelope // NONE, ZLIB, or GZIP... null defaults GZIP
 ){
     z_stream strm;
-    strm.zalloc = &zalloc; // fail() cleans up automatically, see notes
+    strm.zalloc = &zalloc; // panic() cleans up automatically, see notes
     strm.zfree = &zfree;
     strm.opaque = nullptr; // passed to zalloc and zfree, not needed currently
 
@@ -182,7 +182,7 @@ unsigned char *Compress_Alloc_Core(
         Z_DEFAULT_STRATEGY
     );
     if (ret_init != Z_OK)
-        fail (Error_Compression(&strm, ret_init));
+        panic (Error_Compression(&strm, ret_init));
 
     // http://stackoverflow.com/a/4938401
     //
@@ -197,7 +197,7 @@ unsigned char *Compress_Alloc_Core(
 
     int ret_deflate = deflate(&strm, Z_FINISH);
     if (ret_deflate != Z_STREAM_END)
-        fail (Error_Compression(&strm, ret_deflate));
+        panic (Error_Compression(&strm, ret_deflate));
 
     assert(strm.total_out == buf_size - strm.avail_out);
     if (out_len)
@@ -241,7 +241,7 @@ unsigned char *Decompress_Alloc_Core(
     Symbol* envelope // NONE, ZLIB, GZIP, or DETECT... null defaults GZIP
 ){
     z_stream strm;
-    strm.zalloc = &zalloc; // fail() cleans up automatically, see notes
+    strm.zalloc = &zalloc; // panic() cleans up automatically, see notes
     strm.zfree = &zfree;
     strm.opaque = nullptr; // passed to zalloc and zfree, not needed currently
     strm.total_out = 0;
@@ -279,7 +279,7 @@ unsigned char *Decompress_Alloc_Core(
 
     int ret_init = inflateInit2(&strm, window_bits);
     if (ret_init != Z_OK)
-        fail (Error_Compression(&strm, ret_init));
+        panic (Error_Compression(&strm, ret_init));
 
     REBLEN buf_size;
     if (
@@ -289,7 +289,7 @@ unsigned char *Decompress_Alloc_Core(
     ){
         const Size gzip_min_overhead = 18; // at *least* 18 bytes
         if (len_in < gzip_min_overhead)
-            fail ("GZIP compressed size less than minimum for gzip format");
+            panic ("GZIP compressed size less than minimum for gzip format");
 
         // Size (modulo 2^32) is in the last 4 bytes, *if* it's trusted:
         //
@@ -345,7 +345,7 @@ unsigned char *Decompress_Alloc_Core(
             break; // Finished. (and buffer was big enough)
 
         if (ret_inflate != Z_OK)
-            fail (Error_Compression(&strm, ret_inflate));
+            panic (Error_Compression(&strm, ret_inflate));
 
         // Note: `strm.avail_out` isn't necessarily 0 here, first observed
         // with `inflate #{AAAAAAAAAAAAAAAAAAAA}` (which is bad, but still)
@@ -355,7 +355,7 @@ unsigned char *Decompress_Alloc_Core(
         if (max >= 0 and buf_size >= cast(REBLEN, max)) {
             DECLARE_VALUE (temp);
             Init_Integer(temp, max);
-            fail (Error_Size_Limit_Raw(temp));
+            panic (Error_Size_Limit_Raw(temp));
         }
 
         // Use remaining input amount to guess how much more decompressed

@@ -152,15 +152,15 @@ INLINE Option(Level*) Level_Of_Varlist_If_Running(VarList* c) {
     return L;
 }
 
-INLINE Level* Level_Of_Varlist_May_Fail(VarList* c) {
+INLINE Level* Level_Of_Varlist_May_Panic(VarList* c) {
     Option(Level*) L = Level_Of_Varlist_If_Running(c);
     if (not L)
-        fail (Error_Frame_Not_On_Stack_Raw());
+        panic (Error_Frame_Not_On_Stack_Raw());
     return unwrap L;
 }
 
 #define Varlist_Slots_Head(c) \
-    Flex_At(Value, Varlist_Array(c), 1)  // may fail() if inaccessible
+    Flex_At(Value, Varlist_Array(c), 1)  // may panic() if inaccessible
 
 INLINE Value* Varlist_Key(VarList* c, REBLEN n) {
     assert(Not_Flex_Info(c, INACCESSIBLE));
@@ -189,8 +189,8 @@ INLINE Option(SymId) CTX_KEY_SYM(VarList* c, REBLEN n) {
     return Symbol_Id(CTX_KEY_SPELLING(c, n)); // should be same as canon
 }
 
-#define FAIL_IF_READ_ONLY_CONTEXT(c) \
-    Fail_If_Read_Only_Flex(Varlist_Array(c))
+#define PANIC_IF_READ_ONLY_CONTEXT(c) \
+    Panic_If_Read_Only_Flex(Varlist_Array(c))
 
 INLINE void FREE_CONTEXT(VarList* c) {
     Free_Unmanaged_Flex(Keylist_Of_Varlist(c));
@@ -209,11 +209,11 @@ INLINE void FREE_CONTEXT(VarList* c) {
 // which permits the storage of associated KEYS and VARS.
 //
 
-INLINE void FAIL_IF_INACCESSIBLE_CTX(VarList* c) {
+INLINE void PANIC_IF_INACCESSIBLE_CTX(VarList* c) {
     if (Get_Flex_Info(c, INACCESSIBLE)) {
         if (CTX_TYPE(c) == TYPE_FRAME)
-            fail (Error_Do_Expired_Frame_Raw()); // !!! different error?
-        fail (Error_Series_Data_Freed_Raw());
+            panic (Error_Do_Expired_Frame_Raw()); // !!! different error?
+        panic (Error_Series_Data_Freed_Raw());
     }
 }
 
@@ -221,7 +221,7 @@ INLINE VarList* Cell_Varlist(const Cell* v) {
     assert(Any_Context(v));
     assert(not v->payload.any_context.phase or Type_Of(v) == TYPE_FRAME);
     VarList* c = CTX(v->payload.any_context.varlist);
-    FAIL_IF_INACCESSIBLE_CTX(c);
+    PANIC_IF_INACCESSIBLE_CTX(c);
     return c;
 }
 
@@ -229,9 +229,9 @@ INLINE VarList* Cell_Varlist(const Cell* v) {
 // a lot of places not tolerant of ERROR!.  This isn't a good answer for the
 // new executable, but it's serviceable enough.
 //
-INLINE void FAIL_IF_ERROR(const Cell* c) {
+INLINE void PANIC_IF_ERROR(const Cell* c) {
     if (Is_Error(c))
-        fail (cast(Error*, Cell_Varlist(c)));
+        panic (cast(Error*, Cell_Varlist(c)));
 }
 
 INLINE void INIT_Cell_Varlist(Value* v, VarList* c) {
@@ -356,8 +356,8 @@ INLINE bool Is_Context_Deeply_Frozen(VarList* c) {
 //
 // Ren-C is exploring the customization of user errors to be able to provide
 // arbitrary named arguments and message templates to use them.  It is
-// a work in progress, but refer to the FAIL native, the corresponding
-// `fail()` C macro inside the source, and the various routines in %c-error.c
+// a work in progress, but refer to the PANIC native, the corresponding
+// `panic()` C macro inside the source, and the various routines in %c-error.c
 //
 
 #define ERR_VARS(e) \
@@ -376,16 +376,16 @@ INLINE bool Is_Context_Deeply_Frozen(VarList* c) {
 // was some validation checking.  This factors out that check instead of
 // repeating the code.
 //
-INLINE void FAIL_IF_BAD_PORT(Value* port) {
+INLINE void PANIC_IF_BAD_PORT(Value* port) {
     if (not Any_Context(port))
-        fail (Error_Invalid_Port_Raw());
+        panic (Error_Invalid_Port_Raw());
 
     VarList* ctx = Cell_Varlist(port);
     if (
         Varlist_Len(ctx) < (STD_PORT_MAX - 1)
         or not Is_Object(Varlist_Slot(ctx, STD_PORT_SPEC))
     ){
-        fail (Error_Invalid_Port_Raw());
+        panic (Error_Invalid_Port_Raw());
     }
 }
 
@@ -440,7 +440,7 @@ INLINE VarList* Steal_Context_Vars(VarList* c, Node* keysource) {
     // singular "stub", holding only the Varlist_Archetype.  This is needed
     // for the ->binding to allow Derelativize(), see SPC_BINDING().
     //
-    // Note: previously this had to preserve FLEX_INFO_FRAME_FAILED, but now
+    // Note: previously this had to preserve FLEX_INFO_FRAME_PANICKED, but now
     // those marking failure are asked to do so manually to the stub
     // after this returns (hence they need to cache the varlist first).
     //

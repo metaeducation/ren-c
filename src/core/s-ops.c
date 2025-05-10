@@ -72,7 +72,7 @@ Byte *Analyze_String_For_Scan(
     REBLEN index = VAL_INDEX(any_string);
     REBLEN len = Cell_Series_Len_At(any_string);
     if (len == 0)
-        fail (Error_Past_End_Raw());
+        panic (Error_Past_End_Raw());
 
     Ucs2Unit c;
 
@@ -98,7 +98,7 @@ Byte *Analyze_String_For_Scan(
         // more pointed error... allow c >= 0x80 for now.
 
         if (num_chars > max_len)
-            fail (Error_Too_Long_Raw());
+            panic (Error_Too_Long_Raw());
 
         up = Ucs2_Next(&c, up);
         if (IS_SPACE(c)) {
@@ -112,11 +112,11 @@ Byte *Analyze_String_For_Scan(
     for (; len > 0; --len) {
         up = Ucs2_Next(&c, up);
         if (!IS_SPACE(c))
-            fail (Error_Invalid_Chars_Raw());
+            panic (Error_Invalid_Chars_Raw());
     }
 
     if (num_chars == 0)
-        fail (Error_Past_End_Raw());
+        panic (Error_Past_End_Raw());
 
     DECLARE_VALUE (reindexed);
     Copy_Cell(reindexed, any_string);
@@ -261,7 +261,7 @@ Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
         return series; }
 
     default:
-        fail (Error_Illegal_Action(TYPE_BINARY, verb));
+        panic (Error_Illegal_Action(TYPE_BINARY, verb));
     }
 
     // Copy the residual
@@ -353,7 +353,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
 
     // String series:
 
-    Fail_If_Read_Only_Flex(Cell_Flex(val));
+    Panic_If_Read_Only_Flex(Cell_Flex(val));
 
     REBLEN len = Part_Len_May_Modify_Index(val, part);
     REBLEN n = 0;

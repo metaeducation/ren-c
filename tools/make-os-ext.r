@@ -42,7 +42,7 @@ file-base: make object! load <file-base.r>
 if not (
     os-specific-objs: select file-base to word! unspaced ["os-" config/os-base]
 )[
-    fail [
+    panic [
         "make-os-ext.r requires os-specific obj list in file-base.r"
         "none was provided for" unspaced ["os-" config/os-base]
     ]

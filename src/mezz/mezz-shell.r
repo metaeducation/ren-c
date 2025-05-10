@@ -15,7 +15,7 @@ ls: ensure action! :list-dir
 pwd: ensure action! :what-dir
 
 rm: does [
-    fail "Use DELETE, not RM (Rebol REMOVE is different, shell dialect coming)"
+    panic "Use DELETE, not RM (Rebol REMOVE is different, shell dialect coming)"
 ]
 
 mkdir: ensure action! :make-dir

@@ -39,7 +39,7 @@
 //   casual reuse.
 //
 // * Eval_Core_Exit_Checks_Debug() runs if the Eval_Core_Throws() call makes
-//   it to the end without a fail() longjmping out from under it.  It also
+//   it to the end without a panic() longjmping out from under it.  It also
 //   checks to make sure the state has balanced, and that the return result is
 //   consistent with the state being returned.
 //

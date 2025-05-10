@@ -44,7 +44,7 @@ so: infix func [
         [any-value!]
 ][
     any [condition null] else [
-        fail/blame ["Postfix 'SO assertion' failed"] 'condition
+        panic/blame ["Postfix 'SO assertion' failed"] 'condition
     ]
 ]
 
@@ -112,7 +112,7 @@ function: func [
         other: <here>
         group! (
             if not var [
-                fail [
+                panic [
                     ; <where> spec
                     ; <near> other
                     "Default value not paired with argument:" (mold other/1)
@@ -183,7 +183,7 @@ function: func [
     |
         other: (
             print mold other/1
-            fail [
+            panic [
                 ; <where> spec
                 ; <near> other
                 "Invalid spec item:" (mold other/1)
@@ -313,18 +313,18 @@ redescribe: function [
         meta: default [set-meta :value copy system/standard/action-meta]
 
         if not find meta 'description [
-            fail [{archetype META-OF doesn't have DESCRIPTION slot} meta]
+            panic [{archetype META-OF doesn't have DESCRIPTION slot} meta]
         ]
 
         if notes: get 'meta/parameter-notes [
             if not frame? notes [
-                fail [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
+                panic [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
             ]
 
           ; Getting error on equality test from expired frame...review
           comment [
             if not equal? :value (action of notes) [
-                fail [{PARAMETER-NOTES in META-OF frame mismatch} notes]
+                panic [{PARAMETER-NOTES in META-OF frame mismatch} notes]
             ]
           ]
         ]
@@ -391,12 +391,12 @@ redescribe: function [
                         on-demand-notes
 
                         if not find notes as word! param [
-                            fail [param "not found in frame to describe"]
+                            panic [param "not found in frame to describe"]
                         ]
 
                         actual: first find words of :value param
                         if not equal? param actual [
-                            fail [param {doesn't match word type of} actual]
+                            panic [param {doesn't match word type of} actual]
                         ]
 
                         notes/(as word! param): if not equal? note {} [note]
@@ -405,7 +405,7 @@ redescribe: function [
             )]
         ]
     ] else [
-        fail [{REDESCRIBE specs should be STRING! and ANY-WORD! only:} spec]
+        panic [{REDESCRIBE specs should be STRING! and ANY-WORD! only:} spec]
     ]
 
     ; If you kill all the notes then they will be cleaned up.  The meta
@@ -463,17 +463,17 @@ skip*: redescribe [
 )
 
 ensure: redescribe [
-    {Pass through value if it matches test, otherwise trigger a FAIL}
+    {Pass through value if it matches test, otherwise trigger a PANIC}
 ](
     specialize 'either-test [
         branch: func [arg [any-value!]] [
             ;
-            ; !!! Can't use FAIL/BLAME until there is a good way to SPECIALIZE
+            ; !!! Can't use PANIC/BLAME until there is a good way to SPECIALIZE
             ; a conditional with a branch referring to invocation parameters:
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
-            fail [
+            panic [
                 "ENSURE failed with argument of type" any [
                     type of :arg
                     "null"
@@ -484,12 +484,12 @@ ensure: redescribe [
 )
 
 really: func [
-    {FAIL if value is null, otherwise pass it through}
+    {PANIC if value is null, otherwise pass it through}
 
     return: [any-value!]
     value [any-value!]
 ][
-    if null? :value [fail "REALLY requires non-NULL"]
+    if null? :value [panic "REALLY requires non-NULL"]
     return :value
 ]
 
@@ -522,7 +522,7 @@ iterate-skip: redescribe [
         comment [
             sys/util/rescue [set the result: eval f] then arrow e [
                 set word saved
-                fail e
+                panic e
             ]
             set word saved
             :result
@@ -583,7 +583,7 @@ arity-of: function [
     return: [integer!]
     value [any-word! any-path! action!]
 ][
-    if path? :value [fail "arity-of for paths is not yet implemented."]
+    if path? :value [panic "arity-of for paths is not yet implemented."]
 
     if not action? :value [
         value: get value
@@ -591,7 +591,7 @@ arity-of: function [
     ]
 
     if variadic? :value [
-        fail "arity-of cannot give reliable answer for variadic actions"
+        panic "arity-of cannot give reliable answer for variadic actions"
     ]
 
     ; !!! Should willingness to take endability cause a similar error?
@@ -681,7 +681,7 @@ method: infix func [
     <local> context
 ][
     context: binding of member else [
-        fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
+        panic [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
     return set member bind (function compose [(spec) <in> (context)] body) context
 ]
@@ -696,7 +696,7 @@ meth: infix func [
     <local> context
 ][
     context: binding of member else [
-        fail [target "must be bound to an ANY-CONTEXT! to use METH"]
+        panic [target "must be bound to an ANY-CONTEXT! to use METH"]
     ]
 
     ; !!! This is somewhat inefficient because <in> is currently implemented
@@ -746,11 +746,11 @@ module: func [
     ;
     if lit-word? spec/name [
         spec/name: as word! spec/name
-        fail ["Ren-C module name:" (spec/name) "must be WORD!, not LIT-WORD!"]
+        panic ["Ren-C module name:" (spec/name) "must be WORD!, not LIT-WORD!"]
     ]
     if lit-word? spec/type [
         spec/type: as word! spec/type
-        fail ["Ren-C module type:" (spec/type) "must be WORD!, not LIT-WORD!"]
+        panic ["Ren-C module type:" (spec/type) "must be WORD!, not LIT-WORD!"]
     ]
 
     ; Validate the important fields of header:
@@ -877,7 +877,7 @@ cause-error: func [
         ]
     ]
 
-    fail make error! [
+    panic make error! [
         type: err-type
         id: err-id
         arg1: first args
@@ -886,27 +886,27 @@ cause-error: func [
     ]
 ]
 
-fail: function [
+panic: function [
     {Interrupts execution by reporting an error (a TRAP can intercept it).}
 
     return: []
     reason "ERROR! value, message text, or failure spec"
         [<end> error! text! block!]
-    /blame "Specify an originating location other than the FAIL itself"
+    /blame "Specify an originating location other than the PANIC itself"
     location "Frame or parameter at which to indicate the error originated"
         [frame! any-word!]
 ][
-    ; Ultimately we might like FAIL to use some clever error-creating dialect
+    ; Ultimately we might like PANIC to use some clever error-creating dialect
     ; when passed a block, maybe something like:
     ;
-    ;     fail [<invalid-key> {The key} key-name: key {is invalid}]
+    ;     panic [<invalid-key> {The key} key-name: key {is invalid}]
     ;
     ; That could provide an error ID, the format message, and the values to
     ; plug into the slots to make the message...which could be extracted from
-    ; the error if captured (e.g. error/id and `error/key-name`.  Another
+    ; the error if captured (e.g. error/id and `error/key-name`).  Another
     ; option would be something like:
     ;
-    ;     fail/with [{The key} :key-name {is invalid}] [key-name: key]
+    ;     panic/with [{The key} :key-name {is invalid}] [key-name: key]
     ;
     error: switch type of :reason [
         error! [reason]
@@ -919,7 +919,7 @@ fail: function [
     if (not error? :reason) or (not pick reason 'where) [
         ;
         ; If no specific location specified, and error doesn't already have a
-        ; location, make it appear to originate from the frame calling FAIL.
+        ; location, make it appear to originate from the frame calling PANIC.
         ;
         location: default [binding of 'reason]
 

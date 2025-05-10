@@ -891,7 +891,7 @@ REBLEN Encode_UTF8_Char(Byte *dst, uint32_t c)
         len = 3;
     else if (c <= UNI_MAX_LEGAL_UTF32)
         len = 4;
-    else { // !!! Should this fail() instead of pick a replacement char?
+    else { // !!! Should this panic() instead of pick a replacement char?
         len = 3;
         c = UNI_REPLACEMENT_CHAR;
     }

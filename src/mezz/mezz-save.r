@@ -58,7 +58,7 @@ save: function [
             value: my next ;-- do not use TAKE (leave header in position)
         ]
         if word? header-data [
-            fail "INCLUDED is the only valid WORD! for SAVE HEADER-DATA"
+            panic "INCLUDED is the only valid WORD! for SAVE HEADER-DATA"
         ]
 
         ;; Make it an object if it's not already

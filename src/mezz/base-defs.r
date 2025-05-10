@@ -115,7 +115,7 @@ spaced-text: cascade [
 newlined: cascade [
     adapt specialize 'delimit [delimiter: newline] [
         if text? :line [
-            fail/blame "NEWLINED on TEXT! semantics being debated" 'line
+            panic/blame "NEWLINED on TEXT! semantics being debated" 'line
         ]
     ]
     func [t [~null~ text!]] [
@@ -261,7 +261,7 @@ print: func [
 ][
     if char? line [
         if not equal? line newline [
-            fail "PRINT only allows CHAR! of newline (see WRITE-STDOUT)"
+            panic "PRINT only allows CHAR! of newline (see WRITE-STDOUT)"
         ]
         return write-stdout line
     ]

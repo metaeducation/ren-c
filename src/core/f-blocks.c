@@ -151,7 +151,7 @@ void Clonify_Values_Len_Managed(
     REBU64 types
 ) {
     if (C_STACK_OVERFLOWING(&len))
-        Fail_Stack_Overflow();
+        Panic_Stack_Overflow();
 
     Cell* v = head;
 

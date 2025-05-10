@@ -39,7 +39,7 @@ idate-to-date: function [return: [date!] date [text!]] [
         space
         zone: across to <end>
     ] else [
-        fail ["Invalid idate:" date]
+        panic ["Invalid idate:" date]
     ]
     if zone = "GMT" [zone: copy "+0"]
     return to date! unspaced [day "-" month "-" year "/" time zone]
@@ -64,7 +64,7 @@ sync-op: function [port body] [
     ;
     while [not find [ready close] state/state] [
         if not port? wait [state/connection port/spec/timeout] [
-            fail make-http-error "Timeout"
+            panic make-http-error "Timeout"
         ]
         if state/state = 'reading-data [
             read state/connection
@@ -94,7 +94,7 @@ read-sync-awake: function [return: [logic!] event [event!]] [
         'error [
             error: event/port/state/error
             event/port/state/error: null
-            fail error
+            panic error
         ]
     ] else ['~null~])
 ]
@@ -529,7 +529,7 @@ do-redirect: func [
         switch new-uri/scheme [
             'https [append new-uri [port-id: 443]]
             'http [append new-uri [port-id: 80]]
-            fail ["Unknown scheme:" new-uri/scheme]
+            panic ["Unknown scheme:" new-uri/scheme]
         ]
     ]
     new-uri: construct/with/only new-uri port/scheme/spec
@@ -688,7 +688,7 @@ sys/util/make-scheme [
                     cause-error 'access 'not-open port/spec/ref
                 ]
                 if port/state/state <> 'ready [
-                    fail make-http-error "Port not ready"
+                    panic make-http-error "Port not ready"
                 ]
                 port/state/awake: :port/awake
                 do-request port
@@ -727,7 +727,7 @@ sys/util/make-scheme [
                     cause-error 'access 'not-open port/spec/ref
                 ]
                 if port/state/state <> 'ready [
-                    fail make-http-error "Port not ready"
+                    panic make-http-error "Port not ready"
                 ]
                 port/state/awake: :port/awake
                 parse-write-dialect port value
@@ -743,7 +743,7 @@ sys/util/make-scheme [
         ][
             if port/state [return port]
             if not port/spec/host [
-                fail make-http-error "Missing host address"
+                panic make-http-error "Missing host address"
             ]
             port/state: make object! [
                 state: 'inited

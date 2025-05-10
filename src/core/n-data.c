@@ -108,7 +108,7 @@ DECLARE_NATIVE(AS_PAIR)
         not (Is_Integer(x) or Is_Decimal(x))
         or not (Is_Integer(y) or Is_Decimal(y))
     ){
-        fail ("PAIR! must currently have INTEGER! or DECIMAL! x and y values");
+        panic ("PAIR! must currently have INTEGER! or DECIMAL! x and y values");
     }
 
     return Init_Pair(OUT, x, y);
@@ -168,9 +168,9 @@ DECLARE_NATIVE(BIND)
     else {
         assert(Any_Word(target));
         if (IS_WORD_UNBOUND(target))
-            fail (Error_Not_Bound_Raw(target));
+            panic (Error_Not_Bound_Raw(target));
 
-        fail ("Binding to WORD! only implemented via INSIDE at this time.");
+        panic ("Binding to WORD! only implemented via INSIDE at this time.");
     }
 
     if (Any_Word(v)) {
@@ -187,7 +187,7 @@ DECLARE_NATIVE(BIND)
             RETURN (v);
         }
 
-        fail (Error_Not_In_Context_Raw(v));
+        panic (Error_Not_In_Context_Raw(v));
     }
 
     // Binding an ACTION! to a context means it will obey derived binding
@@ -440,7 +440,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
 }
 
 
-INLINE void Get_Opt_Polymorphic_May_Fail(
+INLINE void Get_Opt_Polymorphic_May_Panic(
     Value* out,
     const Cell* v,
     Specifier* specifier,
@@ -450,7 +450,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
         Init_Nulled(out);  // may be turned to undefined after loop, or error
     }
     else if (Any_Word(v)) {
-        Move_Opt_Var_May_Fail(out, v, specifier);
+        Move_Opt_Var_May_Panic(out, v, specifier);
     }
     else if (Any_Path(v)) {
         //
@@ -460,10 +460,10 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
         Get_Path_Core(out, v, specifier);
     }
     else
-        fail (Error_Invalid_Core(v, specifier));
+        panic (Error_Invalid_Core(v, specifier));
 
     if (not any and Is_Trash(out))
-        fail (Error_No_Value_Core(v, specifier));
+        panic (Error_No_Value_Core(v, specifier));
 }
 
 
@@ -480,14 +480,14 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
 //
 DECLARE_NATIVE(GET)
 //
-// Note: `get [x y] [some-var :some-unset-var]` would fail without /TRY
+// Note: `get [x y] [some-var :some-unset-var]` would panic without TRY
 {
     INCLUDE_PARAMS_OF_GET;
 
     Value* source = ARG(SOURCE);
 
     if (not Is_Block(source)) {
-        Get_Opt_Polymorphic_May_Fail(OUT, source, SPECIFIED, Bool_ARG(ANY));
+        Get_Opt_Polymorphic_May_Panic(OUT, source, SPECIFIED, Bool_ARG(ANY));
         return OUT;
     }
 
@@ -496,7 +496,7 @@ DECLARE_NATIVE(GET)
     Cell* item = Cell_List_At(source);
 
     for (; NOT_END(item); ++item, ++dest) {
-        Get_Opt_Polymorphic_May_Fail(
+        Get_Opt_Polymorphic_May_Panic(
             dest,
             item,
             VAL_SPECIFIER(source),
@@ -528,7 +528,7 @@ DECLARE_NATIVE(GET_P)
 {
     INCLUDE_PARAMS_OF_GET_P;
 
-    Get_Opt_Polymorphic_May_Fail(
+    Get_Opt_Polymorphic_May_Panic(
         OUT,
         ARG(SOURCE),
         SPECIFIED,
@@ -540,16 +540,16 @@ DECLARE_NATIVE(GET_P)
 
 
 //
-//  Set_Opt_Polymorphic_May_Fail: C
+//  Set_Opt_Polymorphic_May_Panic: C
 //
-static void Set_Opt_Polymorphic_May_Fail(
+static void Set_Opt_Polymorphic_May_Panic(
     const Cell* target,
     Specifier* target_specifier,
     const Cell* value,
     Specifier* value_specifier
 ){
     if (Any_Word(target)) {
-        Value* var = Sink_Var_May_Fail(target, target_specifier);
+        Value* var = Sink_Var_May_Panic(target, target_specifier);
         Derelativize(var, value, value_specifier);
     }
     else if (Any_Path(target)) {
@@ -566,7 +566,7 @@ static void Set_Opt_Polymorphic_May_Fail(
         Set_Path_Core(target, target_specifier, specific);
     }
     else
-        fail (Error_Invalid_Core(target, target_specifier));
+        panic (Error_Invalid_Core(target, target_specifier));
 }
 
 
@@ -592,7 +592,7 @@ DECLARE_NATIVE(INFIX)
 
     if (Bool_ARG(OFF)) {
         if (Bool_ARG(DEFER))
-            fail ("Cannot use /OFF with /DEFER");
+            panic ("Cannot use /OFF with /DEFER");
         Clear_Cell_Flag(OUT, INFIX_IF_ACTION);
         Clear_Cell_Flag(OUT, DEFER_INFIX_IF_ACTION);
         return OUT;
@@ -656,7 +656,7 @@ DECLARE_NATIVE(SET)
     if (not Is_Block(target)) {
         assert(Any_Word(target) or Any_Path(target));
 
-        Set_Opt_Polymorphic_May_Fail(
+        Set_Opt_Polymorphic_May_Panic(
             target,
             SPECIFIED,
             Is_Blank(value) and Bool_ARG(SOME) ? NULLED_CELL : value,
@@ -686,7 +686,7 @@ DECLARE_NATIVE(SET)
                 continue; // /SOME means treat blanks as no-ops
         }
 
-        Set_Opt_Polymorphic_May_Fail(
+        Set_Opt_Polymorphic_May_Panic(
             item,
             VAL_SPECIFIER(target),
             IS_END(v) ? BLANK_VALUE : v, // R3-Alpha/Red blank after END
@@ -788,7 +788,7 @@ DECLARE_NATIVE(IN)
             return nullptr;
         }
 
-        fail (Error_Invalid(word));
+        panic (Error_Invalid(word));
     }
 
     VarList* context = Cell_Varlist(val);
@@ -912,12 +912,12 @@ DECLARE_NATIVE(FREE)
     Value* v = ARG(MEMORY);
 
     if (Any_Context(v) or Is_Handle(v))
-        fail ("FREE only implemented for ANY-SERIES! at the moment");
+        panic ("FREE only implemented for ANY-SERIES! at the moment");
 
     Flex* s = Cell_Flex(v);
     if (Get_Flex_Info(s, INACCESSIBLE))
-        fail ("Cannot FREE already freed series");
-    Fail_If_Read_Only_Flex(s);
+        panic ("Cannot FREE already freed series");
+    Panic_If_Read_Only_Flex(s);
 
     Decay_Flex(s);
     return Init_Trash(OUT);  // !!! Should it return freed, not-useful value?
@@ -1114,12 +1114,12 @@ DECLARE_NATIVE(AS)
             return Init_Blob(OUT, bin);
         }
 
-        fail (v); }
+        panic (v); }
 
     bad_cast:;
     default:
         // all applicable types should be handled above
-        fail (Error_Bad_Cast_Raw(v, ARG(TYPE)));
+        panic (Error_Bad_Cast_Raw(v, ARG(TYPE)));
     }
 
     Copy_Cell(OUT, v);
@@ -1155,7 +1155,7 @@ DECLARE_NATIVE(ALIASES_Q)
 INLINE bool Is_Set(const Value* location)
 {
     if (Any_Word(location))
-        return not Is_Trash(Get_Opt_Var_May_Fail(location, SPECIFIED));
+        return not Is_Trash(Get_Opt_Var_May_Panic(location, SPECIFIED));
 
     DECLARE_VALUE (temp); // result may be generated
     Get_Path_Core(temp, location, SPECIFIED);
@@ -1214,7 +1214,7 @@ DECLARE_NATIVE(THE)
     Value* v = ARG(VALUE);
 
     if (Bool_ARG(SOFT) and IS_QUOTABLY_SOFT(v))
-        fail ("QUOTE/SOFT not currently implemented, should clone EVAL");
+        panic ("QUOTE/SOFT not currently implemented, should clone EVAL");
 
     Copy_Cell(OUT, v);
     return OUT;

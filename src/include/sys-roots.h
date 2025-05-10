@@ -118,12 +118,12 @@ INLINE void Free_Instruction(Array* instruction) {
 }
 
 
-// If you're going to just fail() anyway, then loose API handles are safe to
+// If you're going to just panic() anyway, then loose API handles are safe to
 // GC.  It's mildly inefficient to do so compared to generating a local cell:
 //
 //      DECLARE_VALUE (specific);
 //      Derelativize(specific, cell, specifier);
-//      fail (Error_Something(specific));
+//      panic (Error_Something(specific));
 //
 // But assuming errors don't happen that often, it's cleaner to have one call.
 //

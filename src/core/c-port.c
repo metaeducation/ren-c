@@ -162,7 +162,7 @@ REBINT Awake_System(Array* ports, bool only)
         tmp,
         rebEND
     )) {
-        fail (Error_No_Catch_For_Throw(result));
+        panic (Error_No_Catch_For_Throw(result));
     }
 
     // Awake function returns 1 for end of WAIT:
@@ -214,7 +214,7 @@ bool Wait_Ports_Throws(
             // with a keypress.  This needs to be thought out a bit more,
             // but may not involve much more than running `BREAKPOINT`.
             //
-            fail ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
+            panic ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
         }
 
         REBINT ret;
@@ -233,11 +233,11 @@ bool Wait_Ports_Throws(
         }
         Value* pump = Get_System(SYS_PORTS, PORTS_PUMP);
         if (not Is_Block(pump))
-            fail ("system/ports/pump must be a block");
+            panic ("system/ports/pump must be a block");
 
         DECLARE_VALUE (result);
         if (Eval_List_At_Throws(result, pump))
-            fail (Error_No_Catch_For_Throw(result));
+            panic (Error_No_Catch_For_Throw(result));
 
         if (timeout != ALL_BITS) {
             // Figure out how long that (and OS_WAIT) took:
@@ -397,7 +397,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
     );
 
     if (IS_END(L->out))
-        fail ("Redo_Action_Throws() was either empty or all COMMENTs/ELIDEs");
+        panic ("Redo_Action_Throws() was either empty or all COMMENTs/ELIDEs");
 
     return indexor == THROWN_FLAG;
 }
@@ -414,7 +414,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
 //
 Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
 {
-    FAIL_IF_BAD_PORT(port);
+    PANIC_IF_BAD_PORT(port);
 
     VarList* ctx = Cell_Varlist(port);
     Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
@@ -432,7 +432,7 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
     }
 
     if (not Is_Object(actor))
-        fail (Error_Invalid_Actor_Raw());
+        panic (Error_Invalid_Actor_Raw());
 
     // Dispatch object function:
 
@@ -445,7 +445,7 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
 
     Value* action;
     if (n == 0 or not Is_Action(action = Cell_Varlist_VAR(actor, n)))
-        fail (Error_No_Port_Action_Raw(verb));
+        panic (Error_No_Port_Action_Raw(verb));
 
     if (Redo_Action_Throws(level_, VAL_ACTION(action)))
         return BOUNCE_THROWN;
@@ -473,7 +473,7 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
 
         if ((Bool_ARG(STRING) or Bool_ARG(LINES)) and not Is_Text(OUT)) {
             if (not Is_Binary(OUT))
-                fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
+                panic ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
             Flex* decoded = Make_Sized_String_UTF8(
                 cs_cast(Cell_Blob_At(OUT)),

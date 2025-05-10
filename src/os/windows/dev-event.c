@@ -113,7 +113,7 @@ DEVICE_CMD Init_Events(REBREQ *dr)
 
     ATOM atom = RegisterClassEx(&wc);
     if (atom == 0)
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
 
     Event_Handle = CreateWindowEx(
         0,
@@ -124,7 +124,7 @@ DEVICE_CMD Init_Events(REBREQ *dr)
         nullptr, App_Instance, nullptr
     );
     if (Event_Handle == nullptr)
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
   #else
     Event_Handle = nullptr;
   #endif

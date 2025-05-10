@@ -119,7 +119,7 @@ enum Reb_Spec_Mode {
 
 
 //
-//  Make_Paramlist_Managed_May_Fail: C
+//  Make_Paramlist_Managed_May_Panic: C
 //
 // Check function spec of the form:
 //
@@ -150,7 +150,7 @@ enum Reb_Spec_Mode {
 // You don't have to use it if you don't want to...and may overwrite the
 // variable.  But it won't be a void at the start.
 //
-Array* Make_Paramlist_Managed_May_Fail(
+Array* Make_Paramlist_Managed_May_Panic(
     const Value* spec,
     Flags flags
 ) {
@@ -231,14 +231,14 @@ Array* Make_Paramlist_Managed_May_Fail(
                 continue;
             }
             else
-                fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
+                panic (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
         }
 
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
         if (Is_Block(item)) {
             if (Is_Block(TOP)) // two blocks of types!
-                fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
+                panic (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
             // You currently can't say `<local> x [integer!]`, because they
             // are always void when the function runs.  You can't say
@@ -251,7 +251,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // than this generation of just a paramlist.  Consider for future.
             //
             if (mode != SPEC_MODE_NORMAL)
-                fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
+                panic (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
             // Save the block for parameter types.
             //
@@ -276,7 +276,7 @@ Array* Make_Paramlist_Managed_May_Fail(
                     //
                     // No parameters pushed, e.g. func [[integer!] {<-- bad}]
                     //
-                    fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
+                    panic (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
                 }
 
                 assert(Is_Typeset(TOP - 2));
@@ -284,7 +284,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
                 assert(Is_Block(TOP - 1));
                 if (Cell_Array(TOP - 1) != EMPTY_ARRAY)
-                    fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
+                    panic (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
                 Specifier* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
                 Init_Block(
@@ -313,7 +313,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             //
             if (refinement_seen) {
                 if (Typeset_Check(typeset, TYPE_NULLED))
-                    fail (Error_Refinement_Arg_Opt_Raw());
+                    panic (Error_Refinement_Arg_Opt_Raw());
             }
 
             has_types = true;
@@ -323,7 +323,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     //=//// ANY-WORD! PARAMETERS THEMSELVES (MAKE TYPESETS w/SYMBOL) //////=//
 
         if (not Any_Word(item))
-            fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
+            panic (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
         // !!! If you say [<with> x /foo y] the <with> terminates and a
         // refinement is started.  Same w/<local>.  Is this a good idea?
@@ -335,7 +335,7 @@ Array* Make_Paramlist_Managed_May_Fail(
                 mode = SPEC_MODE_NORMAL;
             }
             else if (not Is_Word(item) and not Is_Set_Word(item))
-                fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
+                panic (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
         }
 
         Symbol* canon = VAL_WORD_CANON(item);
@@ -365,12 +365,12 @@ Array* Make_Paramlist_Managed_May_Fail(
             if (return_stackindex != 0) {
                 DECLARE_VALUE (word);
                 Init_Word(word, canon);
-                fail (Error_Dup_Vars_Raw(word)); // most dup checks done later
+                panic (Error_Dup_Vars_Raw(word)); // most dup checks done later
             }
             if (Is_Set_Word(item))
                 return_stackindex = TOP_INDEX;  // RETURN: explicitly tolerated
             else if (flags & MKF_RETURN)
-                fail ("RETURN normal args in spec not allowed in FUNC(TION)");
+                panic ("RETURN normal args in spec not allowed in FUNC(TION)");
         }
 
         if (mode == SPEC_MODE_WITH and not Is_Set_Word(item)) {
@@ -429,7 +429,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             break;
 
         default:
-            fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
+            panic (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
         }
     }
 
@@ -507,9 +507,9 @@ Array* Make_Paramlist_Managed_May_Fail(
         Value* dest = canon + 1;
 
         // We want to check for duplicates and a Binder can be used for that
-        // purpose--but note that a fail() cannot happen while binders are
+        // purpose--but note that a panic() cannot happen while binders are
         // in effect UNLESS the BUF_COLLECT contains information to undo it!
-        // There's no BUF_COLLECT here, so don't fail while binder in effect.
+        // There's no BUF_COLLECT here, so don't panic while binder in effect.
         //
         // (This is why we wait until the parameter list gathering process
         // is over to do the duplicate checks--it can fail.)
@@ -535,7 +535,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
         if (definitional_return) {
             if (not (flags & MKF_RETURN))
-                fail ("LAMBDA does not have RETURN: in its spec");
+                panic ("LAMBDA does not have RETURN: in its spec");
 
             assert(flags & MKF_RETURN);
             Copy_Cell(dest, definitional_return);
@@ -559,7 +559,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         if (duplicate) {
             DECLARE_VALUE (word);
             Init_Word(word, duplicate);
-            fail (Error_Dup_Vars_Raw(word));
+            panic (Error_Dup_Vars_Raw(word));
         }
 
         Term_Array_Len(paramlist, num_slots);
@@ -824,7 +824,7 @@ REBACT *Make_Action(
             // Also, this is contentious with defaulting to ANY-VALUE!
             /*
             if (Typeset_Check(param, TYPE_NULLED))
-                fail ("Hard quoted function parameters cannot receive nulls");
+                panic ("Hard quoted function parameters cannot receive nulls");
             */
 
             goto quote_check;
@@ -1066,7 +1066,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 
 
 //
-//  Make_Interpreted_Action_May_Fail: C
+//  Make_Interpreted_Action_May_Panic: C
 //
 // This is the support routine behind both LAMBDA and FUNC.
 //
@@ -1103,7 +1103,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 // but must be explicit about what frame is being exited.  This can be used
 // by usermode generators that want to create something return-like.
 //
-REBACT *Make_Interpreted_Action_May_Fail(
+REBACT *Make_Interpreted_Action_May_Panic(
     const Value* spec,
     const Value* code,
     Flags mkf_flags // MKF_RETURN, etc.
@@ -1117,7 +1117,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         dispatcher = &Lambda_Dispatcher;
 
     REBACT *a = Make_Action(
-        Make_Paramlist_Managed_May_Fail(spec, mkf_flags),
+        Make_Paramlist_Managed_May_Panic(spec, mkf_flags),
         dispatcher,
         nullptr, // no underlying action (use paramlist)
         nullptr, // no specialization exemplar (or inherited exemplar)
@@ -1172,26 +1172,6 @@ REBACT *Make_Interpreted_Action_May_Fail(
   #endif
 
     return a;
-}
-
-
-//
-//  REBTYPE: C
-//
-// This handler is used to fail for a type which cannot handle actions.
-//
-// !!! Currently all types have a REBTYPE() handler for either themselves or
-// their class.  But having a handler that could be "swapped in" from a
-// default failing case is an idea that could be used as an interim step
-// to allow something like TYPE_GOB to fail by default, but have the failing
-// type handler swapped out by an extension.
-//
-REBTYPE(Fail)
-{
-    UNUSED(level_);
-    UNUSED(verb);
-
-    fail ("Datatype does not have a dispatcher registered.");
 }
 
 
@@ -1310,7 +1290,7 @@ Bounce Func_Dispatcher(Level* L)
     Init_Trash(L->out);  // didn't use definitional return, just fell through
 
     if (not Typeset_Check(typeset, Type_Of(L->out)))
-        fail (Error_Bad_Return_Type(L, Type_Of(L->out)));
+        panic (Error_Bad_Return_Type(L, Type_Of(L->out)));
 
     return L->out;
 }
@@ -1496,7 +1476,7 @@ bool Get_If_Word_Or_Path_Throws(
 ) {
     if (Is_Word(v)) {
         *opt_name_out = Cell_Word_Symbol(v);
-        Move_Opt_Var_May_Fail(out, v, specifier);
+        Move_Opt_Var_May_Panic(out, v, specifier);
     }
     else if (Is_Path(v)) {
         Specifier* derived = Derive_Specifier(specifier, v);

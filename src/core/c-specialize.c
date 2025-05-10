@@ -88,7 +88,7 @@ void Cleanup_Specialization_Binder(
 
 
 //
-//  Make_Managed_Context_For_Action_May_Fail: C
+//  Make_Managed_Context_For_Action_May_Panic: C
 //
 // This creates a FRAME! context with "Nulled" in all the unspecialized slots
 // that are available to be filled.  It looks on the stack to find any pushed
@@ -110,7 +110,7 @@ void Cleanup_Specialization_Binder(
 //     >> specialize :append [count: 5]
 //     ; this is also okay (automatically assumes dup as true)
 //
-VarList* Make_Managed_Context_For_Action_May_Fail(
+VarList* Make_Managed_Context_For_Action_May_Panic(
     const Value* action,   // need ->binding, so can't just be a REBACT*
     StackIndex lowest_stackindex, // caller can add refinement specializations
     struct Reb_Binder *opt_binder  // must call cleanup if passed non-null
@@ -247,7 +247,7 @@ VarList* Make_Managed_Context_For_Action_May_Fail(
             if (opt_binder)
                 Cleanup_Specialization_Binder(opt_binder, CTX(varlist));
 
-            fail (Error_Bad_Refine_Raw(bad));
+            panic (Error_Bad_Refine_Raw(bad));
         }
 
         DROP();
@@ -286,7 +286,7 @@ bool Specialize_Action_Throws(
     // in which case ONLY will be on the stack, and incorporated as a
     // "specialized out" value not visible to any code running in the body.
 
-    VarList* exemplar = Make_Managed_Context_For_Action_May_Fail(
+    VarList* exemplar = Make_Managed_Context_For_Action_May_Panic(
         specializee,
         lowest_stackindex,
         opt_def ? &binder : nullptr
@@ -409,10 +409,10 @@ bool Specialize_Action_Throws(
         // checked already... don't type check again (?)
         //
         if (Is_Param_Variadic(param))
-            fail ("Cannot currently SPECIALIZE variadic arguments.");
+            panic ("Cannot currently SPECIALIZE variadic arguments.");
 
         if (not Typeset_Check(param, Type_Of(arg)))
-            fail (Error_Invalid(arg)); // !!! merge w/Error_Invalid_Arg()
+            panic (Error_Invalid(arg)); // !!! merge w/Error_Invalid_Arg()
 
        Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
 
@@ -543,7 +543,7 @@ DECLARE_NATIVE(SPECIALIZE)
     // used, e.g. `specialize 'lib/append [...]`.
 
     if (not Is_Action(OUT))
-        fail (Error_Invalid(specializee));
+        panic (Error_Invalid(specializee));
     Copy_Cell(specializee, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     if (Specialize_Action_Throws(

@@ -24,7 +24,7 @@ Rebol [
         The HOST-CONSOLE Rebol function is invoked in a loop by a small C
         main function (see %host-main.c).  HOST-CONSOLE does not itself run
         arbitrary user code with DO.  That would be risky, because it actually
-        is not allowed to fail or be canceled with Ctrl-C.  Instead, it just
+        is not allowed to panic or be canceled with Ctrl-C.  Instead, it just
         gathers input...and produces a block which is returned to C to
         actually execute.
 
@@ -404,7 +404,7 @@ ext-console-impl: function [
                 if not empty? instruction [append/line instruction [()]]
                 append/line instruction compose/deep <*> item
             ]
-            fail
+            panic
         ]
     ]
 
@@ -427,16 +427,16 @@ ext-console-impl: function [
             ]
             <halt> [
                 emit [halt]
-                emit [fail {^-- Shouldn't get here, due to HALT}]
+                emit [panic {^-- Shouldn't get here, due to HALT}]
             ]
             <die> [
                 emit [quit 1] ;-- catch-all bash code for general errors
-                emit [fail {^-- Shouldn't get here, due to QUIT}]
+                emit [panic {^-- Shouldn't get here, due to QUIT}]
             ]
             <bad> [
                 emit #no-unskin-if-error
                 emit [print (<*> mold meta prior)]
-                emit [fail ["Bad REPL continuation:" ((<*> meta result))]]
+                emit [panic ["Bad REPL continuation:" ((<*> meta result))]]
             ]
         ] then [
             return-to-c instruction
@@ -459,7 +459,7 @@ ext-console-impl: function [
                 state
             ]
             default [
-                emit [fail [{Bad console instruction:} (<*> mold state)]]
+                emit [panic [{Bad console instruction:} (<*> mold state)]]
             ]
         ]
     ]

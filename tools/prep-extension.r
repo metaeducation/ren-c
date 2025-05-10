@@ -140,7 +140,7 @@ native-defs: collect [
     ]
 
     parse2/match native-list [opt some native-rule end] else [
-        fail [
+        panic [
             "Malformed native found in extension specs" mold native-list
         ]
     ]

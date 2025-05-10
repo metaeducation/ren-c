@@ -169,7 +169,7 @@ static int Get_File_Info(struct devreq_file *file)
     REBREQ *req = AS_REBREQ(file);
 
     if (stat_result != 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     if (S_ISDIR(info.st_mode)) {
         req->modes |= RFM_DIR;
@@ -247,7 +247,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
         if (h == nullptr) {
             rebFree(dir_utf8);
             Value* open_error = rebError_OS(errno);
-            fail (Error_Cannot_Open_Raw(dir->path, open_error));
+            panic (Error_Cannot_Open_Raw(dir->path, open_error));
         }
 
         dir_req->requestee.handle = h;
@@ -270,7 +270,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
             dir_req->requestee.handle = 0;
 
             if (errno_cache != 0)
-                rebFail_OS (errno_cache);
+                rebPanic_OS (errno_cache);
 
             dir_req->flags |= RRF_DONE; // no more files
             return DR_DONE;
@@ -389,7 +389,7 @@ DEVICE_CMD Open_File(REBREQ *req)
 
     if (h < 0) {
         Value* open_error = rebError_OS(errno);
-        fail (Error_Cannot_Open_Raw(file->path, open_error));
+        panic (Error_Cannot_Open_Raw(file->path, open_error));
     }
 
     // Confirm that a seek-mode file is actually seekable:
@@ -397,7 +397,7 @@ DEVICE_CMD Open_File(REBREQ *req)
         if (lseek(h, 0, SEEK_CUR) < 0) {
             int errno_cache = errno;
             close(h);
-            rebFail_OS (errno_cache);
+            rebPanic_OS (errno_cache);
         }
     }
 
@@ -447,7 +447,7 @@ DEVICE_CMD Read_File(REBREQ *req)
     if ((req->modes & (RFM_SEEK | RFM_RESEEK)) != 0) {
         req->modes &= ~RFM_RESEEK;
         if (not Seek_File_64(file))
-            rebFail_OS (errno);
+            rebPanic_OS (errno);
     }
 
     // printf("read %d len %d\n", req->requestee.id, req->length);
@@ -457,7 +457,7 @@ DEVICE_CMD Read_File(REBREQ *req)
     );
 
     if (bytes < 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     req->actual = bytes;
     file->index += req->actual;
@@ -484,11 +484,11 @@ DEVICE_CMD Write_File(REBREQ *req)
     if ((req->modes & (RFM_SEEK | RFM_RESEEK | RFM_TRUNCATE)) != 0) {
         req->modes &= ~RFM_RESEEK;
         if (not Seek_File_64(file))
-            rebFail_OS (errno);
+            rebPanic_OS (errno);
 
         if (req->modes & RFM_TRUNCATE)
             if (ftruncate(req->requestee.id, file->index) != 0)
-                rebFail_OS (errno);
+                rebPanic_OS (errno);
     }
 
     if (req->length == 0)
@@ -496,7 +496,7 @@ DEVICE_CMD Write_File(REBREQ *req)
 
     ssize_t bytes = write(req->requestee.id, req->common.data, req->length);
     if (bytes < 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     req->actual = bytes;
     return DR_DONE;
@@ -534,7 +534,7 @@ DEVICE_CMD Create_File(REBREQ *req)
     rebFree(path_utf8);
 
     if (mkdir_result != 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     return DR_DONE;
 }
@@ -566,7 +566,7 @@ DEVICE_CMD Delete_File(REBREQ *req)
     rebFree(path_utf8);
 
     if (removal_result != 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     return DR_DONE;
 }
@@ -597,7 +597,7 @@ DEVICE_CMD Rename_File(REBREQ *req)
     rebFree(from_utf8);
 
     if (rename_result != 0)
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
 
     return DR_DONE;
 }

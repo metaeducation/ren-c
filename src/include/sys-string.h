@@ -247,26 +247,26 @@ INLINE const Byte *Back_Scan_UTF8_Char(
     unsigned long ch; // "UTF32" is defined as unsigned long
     const Byte *bp_new = Back_Scan_UTF8_Char_Core(&ch, bp, size);
     if (bp_new and ch > 0xFFFF)
-        fail (Error_Codepoint_Too_High_Raw(rebInteger(ch)));
+        panic (Error_Codepoint_Too_High_Raw(rebInteger(ch)));
     *out = cast(Ucs2Unit, ch);
     return bp_new;
 }
 
 
 // Basic string initialization from UTF8.  (Most clients should be using the
-// rebStringXXX() APIs for this).  Note that these routines may fail() if the
+// rebStringXXX() APIs for this).  Note that these routines may panic() if the
 // data they are given is not UTF-8.
 
 INLINE String* Make_String_UTF8(const char *utf8)
 {
     const bool crlf_to_lf = false;
-    return Append_UTF8_May_Fail(nullptr, utf8, strsize(utf8), crlf_to_lf);
+    return Append_UTF8_May_Panic(nullptr, utf8, strsize(utf8), crlf_to_lf);
 }
 
 INLINE String* Make_Sized_String_UTF8(const char *utf8, size_t size)
 {
     const bool crlf_to_lf = false;
-    return Append_UTF8_May_Fail(nullptr, utf8, size, crlf_to_lf);
+    return Append_UTF8_May_Panic(nullptr, utf8, size, crlf_to_lf);
 }
 
 

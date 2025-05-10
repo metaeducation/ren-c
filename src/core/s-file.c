@@ -78,7 +78,7 @@ restart:;
             // Handle the vol:dir/file format:
             //
             if (saw_colon || saw_slash)
-                fail ("no prior : or / allowed for vol:dir/file format");
+                panic ("no prior : or / allowed for vol:dir/file format");
 
             if (not lead_slash) {
                 //

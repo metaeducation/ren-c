@@ -93,9 +93,9 @@
         n: n + 1
         if n = 0 [
             while [continue] [
-                fail "inner WHILE body should not run"
+                panic "inner WHILE body should not run"
             ]
-            fail "code after inner WHILE should not run"
+            panic "code after inner WHILE should not run"
         ]
         sum: sum + 1
     ]

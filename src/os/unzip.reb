@@ -177,7 +177,7 @@ ctx-zip: context [
                 local-file-sig
                 #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
                 #{0000}  ; flags
-                switch method ['store [#{0000}] 'deflate [#{0800}] fail]
+                switch method ['store [#{0000}] 'deflate [#{0800}] panic]
                 to-msdos-time date/time
                 to-msdos-date date/date
                 crc  ; crc-32

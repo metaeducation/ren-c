@@ -126,7 +126,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
     }
     if (Is_Decimal(value) || Is_Percent(value)) {
         if (VAL_DECIMAL(value) < MIN_D64 || VAL_DECIMAL(value) >= MAX_D64)
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
 
         Init_Integer(out, cast(REBI64, VAL_DECIMAL(value)));
         goto check_sign;
@@ -222,7 +222,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // leading 0x00 or 0xFF stripped away
         //
         if (n > 8)
-            fail (Error_Out_Of_Range_Raw(value));
+            panic (Error_Out_Of_Range_Raw(value));
 
         REBI64 i = 0;
 
@@ -244,7 +244,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
             //
             // bits may become signed via shift due to 63-bit limit
             //
-            fail (Error_Out_Of_Range_Raw(value));
+            panic (Error_Out_Of_Range_Raw(value));
         }
 
         Init_Integer(out, i);
@@ -264,18 +264,18 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
 
         if (size > MAX_HEX_LEN) {
             // Lacks BINARY!'s accommodation of leading 00s or FFs
-            fail (Error_Out_Of_Range_Raw(value));
+            panic (Error_Out_Of_Range_Raw(value));
         }
 
         Erase_Cell(out);
         if (!Scan_Hex(out, bp, size, size))
-            fail (Error_Bad_Make(TYPE_INTEGER, value));
+            panic (Error_Bad_Make(TYPE_INTEGER, value));
 
         // !!! Unlike binary, always assumes unsigned (should it?).  Yet still
         // might run afoul of 64-bit range limit.
         //
         if (VAL_INT64(out) < 0)
-            fail (Error_Out_Of_Range_Raw(value));
+            panic (Error_Out_Of_Range_Raw(value));
 
         return;
     }
@@ -298,14 +298,14 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
                     goto check_sign;
                 }
 
-                fail (Error_Overflow_Raw());
+                panic (Error_Overflow_Raw());
             }
         }
         Erase_Cell(out);
         if (Scan_Integer(out, bp, size))
             goto check_sign;
 
-        fail (Error_Bad_Make(TYPE_INTEGER, value));
+        panic (Error_Bad_Make(TYPE_INTEGER, value));
     }
     else if (Is_Logic(value)) {
         //
@@ -313,7 +313,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // "falsehood" condition, e.g. `if 0 [print "this prints"]`.  So to
         // say TO LOGIC! 0 is FALSE would be disingenuous.
         //
-        fail (Error_Bad_Make(TYPE_INTEGER, value));
+        panic (Error_Bad_Make(TYPE_INTEGER, value));
     }
     else if (Is_Char(value)) {
         Init_Integer(out, VAL_CHAR(value)); // always unsigned
@@ -324,11 +324,11 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         return;
     }
     else
-        fail (Error_Bad_Make(TYPE_INTEGER, value));
+        panic (Error_Bad_Make(TYPE_INTEGER, value));
 
 check_sign:
     if (no_sign && VAL_INT64(out) < 0)
-        fail (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 }
 
 
@@ -438,7 +438,7 @@ REBTYPE(Integer)
             default:
                 break;
             }
-            fail (Error_Math_Args(TYPE_INTEGER, verb));
+            panic (Error_Math_Args(TYPE_INTEGER, verb));
         }
     }
     else
@@ -453,26 +453,26 @@ REBTYPE(Integer)
     case SYM_ADD: {
         REBI64 anum;
         if (REB_I64_ADD_OF(num, arg, &anum))
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
     case SYM_SUBTRACT: {
         REBI64 anum;
         if (REB_I64_SUB_OF(num, arg, &anum))
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
     case SYM_MULTIPLY: {
         REBI64 p;
         if (REB_I64_MUL_OF(num, arg, &p))
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
         return Init_Integer(OUT, p); }
 
     case SYM_DIVIDE:
         if (arg == 0)
-            fail (Error_Zero_Divide_Raw());
+            panic (Error_Zero_Divide_Raw());
         if (num == INT64_MIN && arg == -1)
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
         if (num % arg == 0)
             return Init_Integer(OUT, num / arg);
         // Fall thru
@@ -483,7 +483,7 @@ REBTYPE(Integer)
 
     case SYM_REMAINDER:
         if (arg == 0)
-            fail (Error_Zero_Divide_Raw());
+            panic (Error_Zero_Divide_Raw());
         return Init_Integer(OUT, (arg != -1) ? (num % arg) : 0);
 
     case SYM_INTERSECT:
@@ -497,7 +497,7 @@ REBTYPE(Integer)
 
     case SYM_NEGATE:
         if (num == INT64_MIN)
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
         return Init_Integer(OUT, -num);
 
     case SYM_COMPLEMENT:
@@ -505,7 +505,7 @@ REBTYPE(Integer)
 
     case SYM_ABSOLUTE:
         if (num == INT64_MIN)
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
         return Init_Integer(OUT, num < 0 ? -num : num);
 
     case SYM_EVEN_Q:
@@ -542,7 +542,7 @@ REBTYPE(Integer)
                 return OUT;
             }
             if (Is_Time(val2))
-                fail (Error_Invalid(val2));
+                panic (Error_Invalid(val2));
             arg = VAL_INT64(val2);
         }
         else
@@ -556,7 +556,7 @@ REBTYPE(Integer)
         UNUSED(PARAM(VALUE));
 
         if (Bool_ARG(ONLY))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(SEED)) {
             Set_Random(num);
@@ -570,7 +570,7 @@ REBTYPE(Integer)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_INTEGER, verb));
+    panic (Error_Illegal_Action(TYPE_INTEGER, verb));
 }
 
 
@@ -598,26 +598,26 @@ DECLARE_NATIVE(ENBIN)
 
     Value* settings = rebValue("compose", ARG(SETTINGS));
     if (Cell_Series_Len_At(settings) != 3)
-        fail ("ENBIN requires array of length 3 for settings for now");
+        panic ("ENBIN requires array of length 3 for settings for now");
     bool little = rebDid(
         "degrade switch first", settings, "[",
             "'BE ['~null~] 'LE ['~okay~]",
-            "fail {First element of ENBIN settings must be BE or LE}",
+            "panic {First element of ENBIN settings must be BE or LE}",
         "]"
     );
     REBLEN index = VAL_INDEX(settings);
     bool no_sign = rebDid(
         "degrade switch second", settings, "[",
             "'+ ['~okay~] '+/- ['~null~]",
-            "fail {Second element of ENBIN settings must be + or +/-}",
+            "panic {Second element of ENBIN settings must be + or +/-}",
         "]"
     );
     Cell* third = Cell_List_At_Head(settings, index + 2);
     if (not Is_Integer(third))
-        fail ("Third element of ENBIN settings must be an integer}");
+        panic ("Third element of ENBIN settings must be an integer}");
     REBINT num_bytes = VAL_INT32(third);
     if (num_bytes <= 0)
-        fail ("Size for ENBIN encoding must be at least 1");
+        panic ("Size for ENBIN encoding must be at least 1");
     rebRelease(settings);
 
     // !!! Implementation is somewhat inefficient, but trying to not violate
@@ -634,7 +634,7 @@ DECLARE_NATIVE(ENBIN)
 
     REBI64 i = VAL_INT64(ARG(VALUE));
     if (no_sign and i < 0)
-        fail ("ENBIN request for unsigned but passed-in value is signed");
+        panic ("ENBIN request for unsigned but passed-in value is signed");
 
     // Negative numbers are encoded with two's complement: process we use here
     // is simple: take the absolute value, inverting each byte, add one.
@@ -661,7 +661,7 @@ DECLARE_NATIVE(ENBIN)
     }
     if (i != 0)
         rebJumps (
-            "fail [", ARG(VALUE), "{exceeds}", rebI(num_bytes), "{bytes}]"
+            "panic [", ARG(VALUE), "{exceeds}", rebI(num_bytes), "{bytes}]"
         );
 
     // The process of byte production of a positive number shouldn't give us
@@ -669,7 +669,7 @@ DECLARE_NATIVE(ENBIN)
     //
     if (not no_sign and not negative and *(bp - delta) >= 0x80)
         rebJumps (
-            "fail [",
+            "panic [",
                 ARG(VALUE), "{aliases a negative value with signed}",
                 "{encoding of only}", rebI(num_bytes), "{bytes}",
             "]"
@@ -704,18 +704,18 @@ DECLARE_NATIVE(DEBIN)
 
     Value* settings = rebValue("compose", ARG(SETTINGS));
     if (Cell_Series_Len_At(settings) != 2 and Cell_Series_Len_At(settings) != 3)
-        fail("DEBIN requires array of length 2 or 3 for settings for now");
+        panic ("DEBIN requires array of length 2 or 3 for settings for now");
     bool little = rebDid(
         "degrade switch first", settings, "[",
             "'BE ['~null~] 'LE ['~okay~]",
-            "fail {First element of DEBIN settings must be BE or LE}"
+            "panic {First element of DEBIN settings must be BE or LE}"
         "]"
     );
     REBLEN index = VAL_INDEX(settings);
     bool no_sign = rebDid(
         "degrade switch second", settings, "[",
             "'+ ['~okay~] '+/- ['~null~]",
-            "fail {Second element of DEBIN settings must be + or +/-}"
+            "panic {Second element of DEBIN settings must be + or +/-}"
         "]"
     );
     REBLEN num_bytes;
@@ -724,17 +724,17 @@ DECLARE_NATIVE(DEBIN)
         num_bytes = Cell_Series_Len_At(ARG(BINARY));
     else {
         if (not Is_Integer(third))
-            fail ("Third element of DEBIN settings must be an integer}");
+            panic ("Third element of DEBIN settings must be an integer}");
         num_bytes = VAL_INT32(third);
         if (Cell_Series_Len_At(ARG(BINARY)) != num_bytes)
-            fail ("Input binary is longer than number of bytes to DEBIN");
+            panic ("Input binary is longer than number of bytes to DEBIN");
     }
     if (num_bytes <= 0) {
         //
         // !!! Should #{} empty binary be 0 or error?  (Historically, 0, but
         // if we are going to do this then ENBIN should accept 0 and make #{})
         //
-        fail("Size for DEBIN decoding must be at least 1");
+        panic ("Size for DEBIN decoding must be at least 1");
     }
     rebRelease(settings);
 
@@ -789,7 +789,7 @@ DECLARE_NATIVE(DEBIN)
     // leading 0x00 or 0xFF stripped away
     //
     if (n > 8)
-        fail (Error_Out_Of_Range_Raw(ARG(BINARY)));
+        panic (Error_Out_Of_Range_Raw(ARG(BINARY)));
 
     REBI64 i = 0;
 
@@ -813,7 +813,7 @@ DECLARE_NATIVE(DEBIN)
         //
         // bits may become signed via shift due to 63-bit limit
         //
-        fail (Error_Out_Of_Range_Raw(ARG(BINARY)));
+        panic (Error_Out_Of_Range_Raw(ARG(BINARY)));
     }
 
     return Init_Integer(OUT, i);

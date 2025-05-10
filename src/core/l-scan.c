@@ -735,7 +735,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
         ++cp;
 
         if (c == '\0')  // e.g. ^(00) or ^@
-            fail (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
+            panic (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
 
         Append_Codepoint(Mold_Buffer(mo), c);
     }
@@ -1124,7 +1124,7 @@ static REBLEN Prescan_Token(ScanState* S)
 //     "brown fox]" => TOKEN_WORD
 //      B    E
 //
-//     $10AE.20 sent => fail()
+//     $10AE.20 sent => panic()
 //     B       E
 //
 //     {line1\nline2}  => TOKEN_STRING (content in MOLD_BUF)
@@ -1895,7 +1895,7 @@ void Init_Transcode_Vaptr(
 
     // !!! Splicing REBVALs into a scan as it goes creates complexities for
     // error messages based on line numbers.  Fortunately the splice of a
-    // Value* itself shouldn't cause a fail()-class error if there's no
+    // Value* itself shouldn't cause a panic()-class error if there's no
     // data corruption, so it should be able to pick up *a* line head before
     // any errors occur...it just might not give the whole picture when used
     // to offer an error message of what's happening with the spliced values.
@@ -2089,7 +2089,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
     DECLARE_MOLDER (mo);
 
     if (C_STACK_OVERFLOWING(&mo))
-        Fail_Stack_Overflow();
+        Panic_Stack_Overflow();
 
     const bool just_once = did (S->opts & SCAN_FLAG_NEXT);
     if (just_once)
@@ -2827,7 +2827,7 @@ Array* Scan_UTF8_Managed(
     StackIndex base = TOP_INDEX;
     Option(Error*) error = Scan_To_Stack(&scan);
     if (error)
-        fail (unwrap error);
+        panic (unwrap error);
 
     Array* a = Pop_Stack_Values_Core(
         base,
@@ -2928,17 +2928,17 @@ DECLARE_NATIVE(TRANSCODE)
     LineNumber start_line;
     if (Bool_ARG(LINE)) {
         Value* ival;
-        if (Is_Word(ARG(LINE_NUMBER)))  // get mutable, to fail early
-            ival = Get_Mutable_Var_May_Fail(ARG(LINE_NUMBER), SPECIFIED);
+        if (Is_Word(ARG(LINE_NUMBER)))  // get mutable, to panic early
+            ival = Get_Mutable_Var_May_Panic(ARG(LINE_NUMBER), SPECIFIED);
         else
             ival = ARG(LINE_NUMBER);
 
         if (not Is_Integer(ival))
-            fail (ARG(LINE_NUMBER));
+            panic (ARG(LINE_NUMBER));
 
         start_line = VAL_INT32(ival);
         if (start_line <= 0)
-            fail (Error_Invalid(ival));
+            panic (Error_Invalid(ival));
     }
     else
         start_line = 1;
@@ -2983,7 +2983,7 @@ DECLARE_NATIVE(TRANSCODE)
     }
 
     if (Is_Word(ARG(LINE_NUMBER))) {
-        Value* ivar = Get_Mutable_Var_May_Fail(ARG(LINE_NUMBER), SPECIFIED);
+        Value* ivar = Get_Mutable_Var_May_Panic(ARG(LINE_NUMBER), SPECIFIED);
         Init_Integer(ivar, transcode.line);
     }
     if (Bool_ARG(NEXT3) and TOP_INDEX != base) {
@@ -3008,7 +3008,7 @@ DECLARE_NATIVE(TRANSCODE)
         Free_Unmanaged_Flex(converted);  // release temporary binary created
 
     if (Bool_ARG(NEXT3)) {
-        Value* nvar = Get_Mutable_Var_May_Fail(ARG(NEXT_ARG), SPECIFIED);
+        Value* nvar = Get_Mutable_Var_May_Panic(ARG(NEXT_ARG), SPECIFIED);
 
         if (TOP_INDEX == base) {
             Init_Nulled(nvar);  // matches modern Ren-C optional unpack
@@ -3022,9 +3022,9 @@ DECLARE_NATIVE(TRANSCODE)
 
     if (Bool_ARG(ONE)) {
         if (TOP_INDEX == base)
-            fail ("TRANSCODE:ONE got zero values");
+            panic ("TRANSCODE:ONE got zero values");
         if (TOP_INDEX > base + 1)
-            fail ("TRANSCODE:ONE got more than one value");
+            panic ("TRANSCODE:ONE got more than one value");
         Copy_Cell(OUT, TOP);
         DROP();
         return OUT;
@@ -3069,7 +3069,7 @@ const Byte *Scan_Any_Word(
     Token token;
     Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, &scan);
     if (error)
-        fail (unwrap error);
+        panic (unwrap error);
 
     if (token != TOKEN_WORD)
         return nullptr;

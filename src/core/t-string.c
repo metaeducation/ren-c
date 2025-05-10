@@ -59,12 +59,12 @@ REBINT CT_String(const Cell* a, const Cell* b, REBINT mode)
 
     if (Is_Binary(a)) {
         if (not Is_Binary(b))
-            fail ("Can't compare binary to string, use AS STRING/BINARY!");
+            panic ("Can't compare binary to string, use AS STRING/BINARY!");
 
         num = Compare_Binary_Vals(a, b);
     }
     else if (Is_Binary(b))
-        fail ("Can't compare binary to string, use AS STRING!/BINARY!");
+        panic ("Can't compare binary to string, use AS STRING!/BINARY!");
     else
         num = Compare_String_Vals(a, b, mode != 1);
 
@@ -449,7 +449,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
     return Init_Any_Series_At(out, kind, flex, 0);
 
   bad_make:
-    fail (Error_Bad_Make(kind, def));
+    panic (Error_Bad_Make(kind, def));
 }
 
 
@@ -487,7 +487,7 @@ Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
         flex = MAKE_TO_String_Common(arg);
 
     if (flex == nullptr)
-        fail (Error_Invalid(arg));
+        panic (Error_Invalid(arg));
 
     return Init_Any_Series(out, kind, flex);
 }
@@ -558,7 +558,7 @@ static void Sort_String(
     // known to be ASCII range in the memory of interest, maybe common case.
 
     if (not Is_Nulled(compv))
-        fail (Error_Bad_Refine_Raw(compv)); // !!! didn't seem to be supported (?)
+        panic (Error_Bad_Refine_Raw(compv)); // !!! didn't seem to be supported (?)
 
     REBLEN skip = 1;
     REBLEN size = 1;
@@ -572,7 +572,7 @@ static void Sort_String(
     if (not Is_Nulled(skipv)) {
         skip = Get_Num_From_Arg(skipv);
         if (skip <= 0 || len % skip != 0 || skip > len)
-            fail (Error_Invalid(skipv));
+            panic (Error_Invalid(skipv));
     }
 
     // Use fast quicksort library function:
@@ -613,7 +613,7 @@ Bounce PD_String(
             || TYPE_I32_ADD_OF(index, len, &index)
             || index < 0 || index >= tail
         ){
-            fail (Error_Out_Of_Range(arg));
+            panic (Error_Out_Of_Range(arg));
         }
     */
 
@@ -652,19 +652,19 @@ Bounce PD_String(
 
     // Otherwise, POKE-ing
 
-    Fail_If_Read_Only_Flex(flex);
+    Panic_If_Read_Only_Flex(flex);
 
     if (not Is_Integer(picker))
         return BOUNCE_UNHANDLED;
 
     REBINT n = Int32(picker);
     if (n == 0)
-        fail (Error_Out_Of_Range(picker)); // Rebol2/Red convention for 0
+        panic (Error_Out_Of_Range(picker)); // Rebol2/Red convention for 0
     if (n < 0)
         ++n;
     n += VAL_INDEX(pvs->out) - 1;
     if (n < 0 or cast(REBLEN, n) >= Flex_Len(flex))
-        fail (Error_Out_Of_Range(picker));
+        panic (Error_Out_Of_Range(picker));
 
     REBINT c;
     if (Is_Char(opt_setval)) {
@@ -680,7 +680,7 @@ Bounce PD_String(
     else if (Is_Binary(opt_setval) or Any_String(opt_setval)) {
         REBLEN i = VAL_INDEX(opt_setval);
         if (i >= VAL_LEN_HEAD(opt_setval))
-            fail (Error_Invalid(opt_setval));
+            panic (Error_Invalid(opt_setval));
 
         c = GET_ANY_CHAR(Cell_Flex(opt_setval), i);
     }
@@ -689,7 +689,7 @@ Bounce PD_String(
 
     if (Is_Binary(pvs->out)) {
         if (c > 0xff)
-            fail (Error_Out_Of_Range(opt_setval));
+            panic (Error_Out_Of_Range(opt_setval));
 
         Binary_Head(cast(Binary*, flex))[n] = cast(Byte, c);
         return BOUNCE_INVISIBLE;
@@ -1159,7 +1159,7 @@ REBTYPE(String)
 
         UNUSED(Bool_ARG(ONLY)); // all strings appends are /ONLY...currently unused
 
-        FAIL_IF_ERROR(arg);
+        PANIC_IF_ERROR(arg);
 
         REBLEN len; // length of target
         if (Cell_Word_Id(verb) == SYM_CHANGE)
@@ -1173,9 +1173,9 @@ REBTYPE(String)
         if (Is_Nulled(arg) and len == 0) { // only nulls bypass write attempts
             if (sym == SYM_APPEND) // append always returns head
                 VAL_INDEX(v) = 0;
-            RETURN (v); // don't fail on read only if it would be a no-op
+            RETURN (v); // don't panic on read only if it would be a no-op
         }
-        Fail_If_Read_Only_Flex(Cell_Flex(v));
+        Panic_If_Read_Only_Flex(Cell_Flex(v));
 
         Flags flags = 0;
         if (Bool_ARG(PART))
@@ -1185,7 +1185,7 @@ REBTYPE(String)
 
         if (Is_Binary(v)) {
             if (Bool_ARG(LINE))
-                fail ("APPEND+INSERT+CHANGE cannot use /LINE with BINARY!");
+                panic ("APPEND+INSERT+CHANGE cannot use /LINE with BINARY!");
 
             VAL_INDEX(v) = Modify_Binary(
                 v,
@@ -1233,11 +1233,11 @@ REBTYPE(String)
             flags |= AM_FIND_CASE;
 
             if (!Is_Binary(arg) && !Is_Integer(arg) && !Is_Bitset(arg))
-                fail (Error_Not_Same_Type_Raw());
+                panic (Error_Not_Same_Type_Raw());
 
             if (Is_Integer(arg)) {
                 if (VAL_INT64(arg) < 0 || VAL_INT64(arg) > 255)
-                    fail (Error_Out_Of_Range(arg));
+                    panic (Error_Out_Of_Range(arg));
                 len = 1;
             }
             else
@@ -1302,12 +1302,12 @@ REBTYPE(String)
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        Fail_If_Read_Only_Flex(Cell_Flex(v));
+        Panic_If_Read_Only_Flex(Cell_Flex(v));
 
         UNUSED(PARAM(SERIES));
 
         if (Bool_ARG(DEEP))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         REBINT len;
         if (Bool_ARG(PART)) {
@@ -1359,7 +1359,7 @@ REBTYPE(String)
         return OUT; }
 
     case SYM_CLEAR: {
-        Fail_If_Read_Only_Flex(Cell_Flex(v));
+        Panic_If_Read_Only_Flex(Cell_Flex(v));
 
         if (index < tail) {
             if (index == 0)
@@ -1377,10 +1377,10 @@ REBTYPE(String)
         UNUSED(PARAM(VALUE));
 
         if (Bool_ARG(DEEP))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(TYPES)) {
             UNUSED(ARG(KINDS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         REBINT len = Part_Len_May_Modify_Index(v, ARG(LIMIT));
@@ -1399,7 +1399,7 @@ REBTYPE(String)
     case SYM_UNION:
     case SYM_DIFFERENCE: {
         if (not Is_Binary(arg))
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
 
         if (VAL_INDEX(v) > VAL_LEN_HEAD(v))
             VAL_INDEX(v) = VAL_LEN_HEAD(v);
@@ -1414,7 +1414,7 @@ REBTYPE(String)
 
     case SYM_COMPLEMENT: {
         if (not Is_Binary(v))
-            fail (Error_Invalid(v));
+            panic (Error_Invalid(v));
 
         return Init_Any_Series(OUT, Type_Of(v), Complement_Binary(v)); }
 
@@ -1443,17 +1443,17 @@ REBTYPE(String)
     case SYM_SUBTRACT:
     case SYM_ADD: {
         if (not Is_Binary(v))
-            fail (Error_Invalid(v));
+            panic (Error_Invalid(v));
 
-        Fail_If_Read_Only_Flex(Cell_Flex(v));
+        Panic_If_Read_Only_Flex(Cell_Flex(v));
 
         REBINT amount;
         if (Is_Integer(arg))
             amount = VAL_INT32(arg);
         else if (Is_Binary(arg))
-            fail (Error_Invalid(arg)); // should work
+            panic (Error_Invalid(arg)); // should work
         else
-            fail (Error_Invalid(arg)); // what about other types?
+            panic (Error_Invalid(arg)); // what about other types?
 
         if (Cell_Word_Id(verb) == SYM_SUBTRACT)
             amount = -amount;
@@ -1463,7 +1463,7 @@ REBTYPE(String)
             return OUT;
         }
         else if (Cell_Series_Len_At(v) == 0) // add/subtract to #{} otherwise
-            fail (Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
 
         while (amount != 0) {
             REBLEN wheel = VAL_LEN_HEAD(v) - 1;
@@ -1472,7 +1472,7 @@ REBTYPE(String)
                 if (amount > 0) {
                     if (*b == 255) {
                         if (wheel == VAL_INDEX(v))
-                            fail (Error_Overflow_Raw());
+                            panic (Error_Overflow_Raw());
 
                         *b = 0;
                         --wheel;
@@ -1485,7 +1485,7 @@ REBTYPE(String)
                 else {
                     if (*b == 0) {
                         if (wheel == VAL_INDEX(v))
-                            fail (Error_Overflow_Raw());
+                            panic (Error_Overflow_Raw());
 
                         *b = 255;
                         --wheel;
@@ -1502,19 +1502,19 @@ REBTYPE(String)
     //-- Special actions:
 
     case SYM_SWAP: {
-        Fail_If_Read_Only_Flex(Cell_Flex(v));
+        Panic_If_Read_Only_Flex(Cell_Flex(v));
 
         if (Type_Of(v) != Type_Of(arg))
-            fail (Error_Not_Same_Type_Raw());
+            panic (Error_Not_Same_Type_Raw());
 
-        Fail_If_Read_Only_Flex(Cell_Flex(arg));
+        Panic_If_Read_Only_Flex(Cell_Flex(arg));
 
         if (index < tail && VAL_INDEX(arg) < VAL_LEN_HEAD(arg))
             swap_chars(v, arg);
         RETURN (v); }
 
     case SYM_REVERSE: {
-        Fail_If_Read_Only_Flex(Cell_Flex(v));
+        Panic_If_Read_Only_Flex(Cell_Flex(v));
 
         REBINT len = Part_Len_May_Modify_Index(v, D_ARG(3));
         if (len > 0) {
@@ -1528,7 +1528,7 @@ REBTYPE(String)
     case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
 
-        Fail_If_Read_Only_Flex(Cell_Flex(v));
+        Panic_If_Read_Only_Flex(Cell_Flex(v));
 
         UNUSED(PARAM(SERIES));
         UNUSED(Bool_ARG(SKIP));
@@ -1536,10 +1536,10 @@ REBTYPE(String)
         UNUSED(Bool_ARG(PART));
 
         if (Bool_ARG(ALL)) // Not Supported
-            fail (Error_Bad_Refine_Raw(ARG(ALL)));
+            panic (Error_Bad_Refine_Raw(ARG(ALL)));
 
         if (Any_String(v))  // always true here
-            fail ("UTF-8 Everywhere: String sorting temporarily unavailable");
+            panic ("UTF-8 Everywhere: String sorting temporarily unavailable");
 
         Sort_String(
             v,
@@ -1556,7 +1556,7 @@ REBTYPE(String)
 
         UNUSED(PARAM(VALUE));
 
-        Fail_If_Read_Only_Flex(Cell_Flex(v));
+        Panic_If_Read_Only_Flex(Cell_Flex(v));
 
         if (Bool_ARG(SEED)) {
             //
@@ -1590,7 +1590,7 @@ REBTYPE(String)
         }
 
         if (Any_String(v))  // always true here
-            fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");
+            panic ("UTF-8 Everywhere: String shuffle temporarily unavailable");
 
         Shuffle_String(v, Bool_ARG(SECURE));
         RETURN (v); }
@@ -1602,7 +1602,7 @@ REBTYPE(String)
             return T_Port(level_, verb);
     }
 
-    fail (Error_Illegal_Action(Type_Of(v), verb));
+    panic (Error_Illegal_Action(Type_Of(v), verb));
 }
 
 

@@ -45,7 +45,7 @@ void Snap_State_Core(struct Reb_State *s)
     s->stack_base = TOP_INDEX;
 
     // There should not be a Collect_Keys in progress.  (We use a non-zero
-    // length of the collect buffer to tell if a later fail() happens in
+    // length of the collect buffer to tell if a later panic() happens in
     // the middle of a Collect_Keys.)
     //
     assert(Array_Len(BUF_COLLECT) == 0);
@@ -193,7 +193,7 @@ void Trapped_Helper(struct Reb_State *s)
     // Because reporting errors in the actual Push_Mold process leads to
     // recursion, this debug flag helps make it clearer what happens if
     // that does happen... and can land on the right comment.  But if there's
-    // a fail of some kind, the flag for the warning needs to be cleared.
+    // a panic of some kind, the flag for the warning needs to be cleared.
     //
     TG_Pushing_Mold = false;
   #endif
@@ -205,12 +205,12 @@ void Trapped_Helper(struct Reb_State *s)
 
 
 //
-//  Fail_Core: C
+//  Panic_Core: C
 //
 // Cause a "trap" of an error by longjmp'ing to the enclosing PUSH_TRAP.  Note
 // that these failures interrupt code mid-stream, so if a Rebol function is
 // running it will not make it to the point of returning the result value.
-// This distinguishes the "fail" mechanic from the "throw" mechanic, which has
+// This distinguishes the "panic" mechanic from the "throw" mechanic, which has
 // to bubble up a THROWN() value through OUT (used to implement BREAK,
 // CONTINUE, RETURN, LEAVE, HALT...)
 //
@@ -219,9 +219,9 @@ void Trapped_Helper(struct Reb_State *s)
 // it automatically.
 //
 // !!! Previously, detecting a value would use that value as the ubiquitous
-// (but vague) "Invalid Arg" error.  However, since this is called by fail(),
-// that is misleading as rebFail() takes ERROR! values, STRING!s, or BLOCK!s
-// so those cases were changed to `fail (Invalid_Arg(V))` instead.
+// (but vague) "Invalid Arg" error.  However, since this is called by panic(),
+// that is misleading as rebPanic() takes ERROR! values, STRING!s, or BLOCK!s
+// so those cases were changed to `panic (Invalid_Arg(V))` instead.
 //
 // Note: Over the long term, one does not want to hard-code error strings in
 // the executable.  That makes them more difficult to hook with translations,
@@ -230,16 +230,16 @@ void Trapped_Helper(struct Reb_State *s)
 // error than just using a RE_MISC error code, and can be found just as easily
 // to clean up later.
 //
-ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
+ATTRIBUTE_NO_RETURN void Panic_Core(const void *p)
 {
     Error* error;
 
   #if DEBUG_HAS_PROBE
     //
-    // This is set via an environment variable (e.g. R3_PROBE_FAILURES=1)
+    // This is set via an environment variable (e.g. R3_PROBE_PANICS=1)
     // Helpful for debugging boot, before command line parameters are parsed.
     //
-    if (PG_Probe_Failures) {
+    if (g_probe_panics) {
         static bool probing = false;
 
         if (p == cast(void*, Cell_Varlist(Root_Stackoverflow_Error))) {
@@ -284,7 +284,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     if (PG_Boot_Phase < BOOT_DONE)
         crash (error);
 
-    // There should be a PUSH_TRAP of some kind in effect if a `fail` can
+    // There should be a PUSH_TRAP of some kind in effect if a `panic` can
     // ever be run.
     //
     if (Saved_State == nullptr)
@@ -303,7 +303,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             assert(L->varlist); // action must be running
             Array* stub = L->varlist; // will be stubbed, info bits reset
             Drop_Action(L);
-            Set_Flex_Info(stub, FRAME_FAILED); // API leaks o.k.
+            Set_Flex_Info(stub, FRAME_PANICKED); // API leaks o.k.
         }
 
         Level* prior = L->prior;
@@ -398,7 +398,7 @@ const Value* Find_Error_For_Sym(SymId id_sym)
 // information may be captured as well.
 //
 // The information is derived from the current execution position and stack
-// depth of a running frame.  Also, if running from a C fail() call, the
+// depth of a running frame.  Also, if running from a C panic() call, the
 // file and line information can be captured in the debug build.
 //
 void Set_Location_Of_Error(
@@ -554,7 +554,7 @@ bool Make_Error_Object_Throws(
         Init_Text(&vars->message, Copy_Sequence_At_Position(arg));
     }
     else
-        fail (Error_Invalid(arg));
+        panic (Error_Invalid(arg));
 
     // Validate the error contents, and reconcile message template and ID
     // information with any data in the object.  Do this for the IS_STRING
@@ -590,7 +590,7 @@ bool Make_Error_Object_Throws(
                 assert(Is_Text(message) or Is_Block(message));
 
                 if (not Is_Nulled(&vars->message))
-                    fail (Error_Invalid_Error_Raw(arg));
+                    panic (Error_Invalid_Error_Raw(arg));
 
                 Copy_Cell(&vars->message, message);
             }
@@ -607,7 +607,7 @@ bool Make_Error_Object_Throws(
                 //
                 //     make error! [type: 'script id: 'set-self]
 
-                fail (Error_Invalid_Error_Raw(Varlist_Archetype(varlist)));
+                panic (Error_Invalid_Error_Raw(Varlist_Archetype(varlist)));
             }
         }
         else {
@@ -633,7 +633,7 @@ bool Make_Error_Object_Throws(
                 or Is_Nulled(&vars->message)
             )
         )){
-            fail (Error_Invalid_Error_Raw(Varlist_Archetype(varlist)));
+            panic (Error_Invalid_Error_Raw(Varlist_Archetype(varlist)));
         }
     }
 
@@ -667,7 +667,7 @@ Error* Make_Error_Managed_Vaptr(
     if (PG_Boot_Phase < BOOT_ERRORS) { // no STD_ERROR or template table yet
       #if RUNTIME_CHECKS
         printf(
-            "fail() before errors initialized, cat_sym = %d, id_sym = %d\n",
+            "panic() before errors initialized, cat_sym = %d, id_sym = %d\n",
             cast(int, cat_sym),
             cast(int, id_sym)
         );
@@ -824,9 +824,9 @@ Error* Make_Error_Managed_Vaptr(
 //  Make_Error_Managed: C
 //
 // This variadic function takes a number of Value* arguments appropriate for
-// the error category and ID passed.  It is commonly used with fail():
+// the error category and ID passed.  It is commonly used with panic():
 //
-//     fail (Error(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
+//     panic (Error(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
 //
 // Note that in C, variadic functions don't know how many arguments they were
 // passed.  Make_Error_Managed_Vaptr() knows how many arguments are in an
@@ -839,7 +839,7 @@ Error* Make_Error_Managed_Vaptr(
 // fixed number of arguments specific to each error...and the wrappers can
 // also do additional argument processing:
 //
-//     fail (Error_Something(arg1, thing_processed_to_make_arg2));
+//     panic (Error_Something(arg1, thing_processed_to_make_arg2));
 //
 Error* Make_Error_Managed(
     int cat_sym,
@@ -1014,10 +1014,10 @@ Error* Error_Not_Varargs(
 //
 // It is given a short function name as it is--unfortunately--used very often.
 //
-// Note: Historically the behavior of `fail (some_value)` would generate this
-// error, as it could be distinguished from `fail (some_context)` meaning that
+// Note: Historically the behavior of `panic (some_value)` would generate this
+// error, as it could be distinguished from `panic (some_context)` meaning that
 // the context was for an actual intended error.  However, this created a bad
-// incompatibility with rebFail(), where the non-exposure of raw context
+// incompatibility with rebPanic(), where the non-exposure of raw context
 // pointers meant passing Value* was literally failing on an error value.
 //
 Error* Error_Invalid(const Value* value)
@@ -1271,7 +1271,7 @@ Error* Error_Cannot_Reflect(enum Reb_Kind type, const Value* arg)
 //
 Error* Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
 {
-    FAIL_IF_BAD_PORT(port);
+    PANIC_IF_BAD_PORT(port);
 
     VarList* ctx = Cell_Varlist(port);
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
@@ -1295,16 +1295,16 @@ Error* Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
 VarList* Startup_Errors(const Value* boot_errors)
 {
   #if DEBUG_HAS_PROBE
-    const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
+    const char *env_probe_failures = getenv("R3_PROBE_PANICS");
     if (env_probe_failures != nullptr and atoi(env_probe_failures) != 0) {
         printf(
             "**\n"
-            "** R3_PROBE_FAILURES is nonzero in environment variable!\n"
+            "** R3_PROBE_PANICS is nonzero in environment variable!\n"
             "** Rather noisy, but helps for debugging the boot process...\n"
             "**\n"
         );
         fflush(stdout);
-        PG_Probe_Failures = true;
+        g_probe_panics = true;
     }
   #endif
 

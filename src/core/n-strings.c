@@ -181,7 +181,7 @@ DECLARE_NATIVE(CHECKSUM)
     if (Bool_ARG(METHOD)) {
         sym = maybe Cell_Word_Id(ARG(WORD));
         if (sym == SYM_0) // not in %words.r, no SYM_XXX constant
-            fail (Error_Invalid(ARG(WORD)));
+            panic (Error_Invalid(ARG(WORD)));
     }
     else
         sym = SYM_SHA1;
@@ -190,7 +190,7 @@ DECLARE_NATIVE(CHECKSUM)
     if (Bool_ARG(METHOD) || Bool_ARG(SECURE) || Bool_ARG(KEY)) {
         if (sym == SYM_CRC32) {
             if (Bool_ARG(SECURE) || Bool_ARG(KEY))
-                fail (Error_Bad_Refines_Raw());
+                panic (Error_Bad_Refines_Raw());
 
             // CRC32 is typically an unsigned 32-bit number and uses the full
             // range of values.  Yet Rebol chose to export this as a signed
@@ -203,7 +203,7 @@ DECLARE_NATIVE(CHECKSUM)
 
         if (sym == SYM_ADLER32) {
             if (Bool_ARG(SECURE) || Bool_ARG(KEY))
-                fail (Error_Bad_Refines_Raw());
+                panic (Error_Bad_Refines_Raw());
 
             // adler32() is a Saphirion addition since 64-bit INTEGER! was
             // available in Rebol3, and did not convert the unsigned result
@@ -283,7 +283,7 @@ DECLARE_NATIVE(CHECKSUM)
             return Init_Blob(OUT, digest);
         }
 
-        fail (Error_Invalid(ARG(WORD)));
+        panic (Error_Invalid(ARG(WORD)));
     }
     else if (Bool_ARG(TCP)) {
         REBINT ipc = Compute_IPC(data, len);
@@ -353,7 +353,7 @@ DECLARE_NATIVE(DEFLATE)
             break;
 
           default:
-            fail (Error_Invalid(ARG(FORMAT)));
+            panic (Error_Invalid(ARG(FORMAT)));
         }
     }
 
@@ -398,7 +398,7 @@ DECLARE_NATIVE(INFLATE)
     if (Bool_ARG(MAX)) {
         max = Int32s(ARG(BOUND), 1);
         if (max < 0)
-            fail (Error_Invalid(ARG(BOUND)));
+            panic (Error_Invalid(ARG(BOUND)));
     }
     else
         max = -1;
@@ -419,7 +419,7 @@ DECLARE_NATIVE(INFLATE)
             break;
 
           default:
-            fail (Error_Invalid(ARG(FORMAT)));
+            panic (Error_Invalid(ARG(FORMAT)));
         }
     }
 
@@ -468,7 +468,7 @@ DECLARE_NATIVE(DEBASE)
         base = 64;
 
     if (!Decode_Binary(OUT, Binary_At(temp, offset), size, base, 0))
-        fail (Error_Invalid_Data_Raw(ARG(VALUE)));
+        panic (Error_Invalid_Data_Raw(ARG(VALUE)));
 
     return OUT;
 }
@@ -529,7 +529,7 @@ DECLARE_NATIVE(ENBASE)
         break;
 
     default:
-        fail (Error_Invalid(ARG(BASE_VALUE)));
+        panic (Error_Invalid(ARG(BASE_VALUE)));
     }
 
     // !!! Enbasing code is common with how a BINARY! molds out.  That needed
@@ -755,7 +755,7 @@ DECLARE_NATIVE(DEHEX)
         }
         else {
             if (i + 2 >= len)
-               fail ("Percent decode has less than two codepoints after %");
+               panic ("Percent decode has less than two codepoints after %");
 
             Byte lex1 = g_lex_map[GET_ANY_CHAR(s, i + 1)];
             Byte lex2 = g_lex_map[GET_ANY_CHAR(s, i + 2)];
@@ -772,7 +772,7 @@ DECLARE_NATIVE(DEHEX)
                 lex1 < LEX_WORD or (d1 == 0 and lex1 < LEX_NUMBER)
                 or lex2 < LEX_WORD or (d2 == 0 and lex2 < LEX_NUMBER)
             ){
-                fail ("Percent must be followed by 2 hex digits, e.g. %XX");
+                panic ("Percent must be followed by 2 hex digits, e.g. %XX");
             }
 
             // !!! We might optimize here for ASCII codepoints, but would
@@ -782,7 +782,7 @@ DECLARE_NATIVE(DEHEX)
             Byte b = (d1 << 4) + d2;
 
             if (b == 0)
-                fail (Error_Illegal_Zero_Byte_Raw());
+                panic (Error_Illegal_Zero_Byte_Raw());
 
             scan[scan_size++] = b;
         }
@@ -808,7 +808,7 @@ DECLARE_NATIVE(DEHEX)
             else {
                 next = Back_Scan_UTF8_Char(&decoded, scan, &scan_size);
                 if (next == nullptr)
-                    fail ("Bad UTF-8 sequence in %XX of dehex");
+                    panic ("Bad UTF-8 sequence in %XX of dehex");
             }
             dp += Encode_UTF8_Char(dp, decoded);
             --scan_size; // one less (see why it's called "Back_Scan")
@@ -1193,7 +1193,7 @@ DECLARE_NATIVE(TO_HEX)
     if (Bool_ARG(SIZE)) {
         len = cast(REBINT, VAL_INT64(ARG(LEN)));
         if (len < 0)
-            fail (Error_Invalid(ARG(LEN)));
+            panic (Error_Invalid(ARG(LEN)));
     }
     else
         len = -1;
@@ -1220,11 +1220,11 @@ DECLARE_NATIVE(TO_HEX)
         *buf = 0;
     }
     else
-        fail (Error_Invalid(arg));
+        panic (Error_Invalid(arg));
 
     Erase_Cell(OUT);
     if (nullptr == Scan_Issue(OUT, &buffer[0], len))
-        fail (Error_Invalid(arg));
+        panic (Error_Invalid(arg));
 
     return OUT;
 }

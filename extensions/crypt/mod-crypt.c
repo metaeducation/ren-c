@@ -164,7 +164,7 @@ DECLARE_NATIVE(RC4)
         Value* data = ARG(DATA);
 
         if (VAL_HANDLE_CLEANER(ARG(CTX)) != cleanup_rc4_ctx)
-            rebJumps("fail [{Not a RC4 Context:}", ARG(CTX), "]");
+            rebJumps("panic [{Not a RC4 Context:}", ARG(CTX), "]");
 
         RC4_CTX *rc4_ctx = VAL_HANDLE_POINTER(RC4_CTX, ARG(CTX));
 
@@ -193,7 +193,7 @@ DECLARE_NATIVE(RC4)
         return Init_Handle_Managed(OUT, rc4_ctx, 0, &cleanup_rc4_ctx);
     }
 
-    rebJumps("fail {Refinement /key or /stream has to be present}");
+    rebJumps("panic {Refinement /key or /stream has to be present}");
 }
 
 
@@ -228,7 +228,7 @@ DECLARE_NATIVE(RSA)
         Value* d = rebValue("ensure binary! pick", obj, "'d");
 
         if (not d)
-            fail ("No d returned BLANK, can we assume error for cleanup?");
+            panic ("No d returned BLANK, can we assume error for cleanup?");
 
         Value* p = rebValue("ensure binary! pick", obj, "'p");
         Value* q = rebValue("ensure binary! pick", obj, "'q");
@@ -321,7 +321,7 @@ DECLARE_NATIVE(RSA)
 
             rebFree(crypted); // would free automatically due to failure...
             rebJumps(
-                "fail [{Failed to decrypt:}", ARG(DATA), "]"
+                "panic [{Failed to decrypt:}", ARG(DATA), "]"
             );
         }
 
@@ -342,7 +342,7 @@ DECLARE_NATIVE(RSA)
 
             rebFree(crypted); // would free automatically due to failure...
             rebJumps(
-                "fail [{Failed to encrypt:}", ARG(DATA), "]"
+                "panic [{Failed to encrypt:}", ARG(DATA), "]"
             );
         }
 
@@ -498,7 +498,7 @@ DECLARE_NATIVE(AES)
     if (Bool_ARG(STREAM)) {
         if (VAL_HANDLE_CLEANER(ARG(CTX)) != cleanup_aes_ctx)
             rebJumps(
-                "fail [{Not a AES context:}", ARG(CTX), "]"
+                "panic [{Not a AES context:}", ARG(CTX), "]"
             );
 
         AES_CTX *aes_ctx = VAL_HANDLE_POINTER(AES_CTX, ARG(CTX));
@@ -553,7 +553,7 @@ DECLARE_NATIVE(AES)
 
         if (Is_Binary(ARG(IV))) {
             if (Cell_Series_Len_At(ARG(IV)) < AES_IV_SIZE)
-                fail ("Length of initialization vector less than AES size");
+                panic ("Length of initialization vector less than AES size");
 
             memcpy(iv, Cell_Blob_At(ARG(IV)), AES_IV_SIZE);
         }
@@ -569,7 +569,7 @@ DECLARE_NATIVE(AES)
             DECLARE_VALUE (i);
             Init_Integer(i, len);
             rebJumps(
-                "fail [{AES key length has to be 16 or 32, not:}",
+                "panic [{AES key length has to be 16 or 32, not:}",
                     rebI(len), "]"
             );
         }
@@ -589,7 +589,7 @@ DECLARE_NATIVE(AES)
         return Init_Handle_Managed(OUT, aes_ctx, 0, &cleanup_aes_ctx);
     }
 
-    rebJumps("fail {Refinement /key or /stream has to be present}");
+    rebJumps("panic {Refinement /key or /stream has to be present}");
 }
 
 

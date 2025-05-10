@@ -69,7 +69,7 @@ static Error* Error_Conflicting_Key(const Cell* key, Specifier* specifier)
 #define FOUND_SYNONYM \
     do { \
         if (synonym_slot != -1) /* another symbol already matched */ \
-            fail (Error_Conflicting_Key(key, specifier)); \
+            panic (Error_Conflicting_Key(key, specifier)); \
         synonym_slot = slot; /* save and continue checking */ \
     } while (0)
 
@@ -271,7 +271,7 @@ void Expand_Hash(Flex* flex)
     if (pnum == 0) {
         DECLARE_VALUE (temp);
         Init_Integer(temp, Flex_Len(flex) + 1);
-        fail (Error_Size_Limit_Raw(temp));
+        panic (Error_Size_Limit_Raw(temp));
     }
 
     assert(not Is_Flex_Array(flex));
@@ -379,9 +379,9 @@ Bounce PD_Map(
 
     if (opt_setval != nullptr) {
         if (Is_Antiform(opt_setval) and not Is_Trash(opt_setval))
-            fail ("Can't set map entries to void or null");
+            panic ("Can't set map entries to void or null");
 
-        Fail_If_Read_Only_Flex(Cell_Flex(pvs->out));
+        Panic_If_Read_Only_Flex(Cell_Flex(pvs->out));
     }
 
     // Fetching and setting with path-based access is case-preserving for any
@@ -438,7 +438,7 @@ static void Append_Map(
             //
             // Keys with no value not allowed, e.g. `make map! [1 "foo" 2]`
             //
-            fail (Error_Past_End_Raw());
+            panic (Error_Past_End_Raw());
         }
 
         Find_Map_Entry(
@@ -546,7 +546,7 @@ Bounce TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Map(out, Copy_Map(VAL_MAP(arg), types));
     }
 
-    fail (Error_Invalid(arg));
+    panic (Error_Invalid(arg));
 }
 
 
@@ -589,7 +589,7 @@ VarList* Alloc_Context_From_Map(REBMAP *map)
 {
     // Doesn't use Length_Map because it only wants to consider words.
     //
-    // !!! Should this fail() if any of the keys aren't words?  It seems
+    // !!! Should this panic() if any of the keys aren't words?  It seems
     // a bit haphazard to have `make object! make map! [x 10 <y> 20]` and
     // just throw out the <y> 20 case...
 
@@ -725,7 +725,7 @@ REBTYPE(Map)
             break;
         }
 
-        fail (Error_Cannot_Reflect(TYPE_MAP, arg)); }
+        panic (Error_Cannot_Reflect(TYPE_MAP, arg)); }
 
     case SYM_FIND:
     case SYM_SELECT: {
@@ -736,22 +736,22 @@ REBTYPE(Map)
 
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(ONLY))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(SKIP)) {
             UNUSED(ARG(SIZE));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(LAST))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(REVERSE))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(TAIL))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(MATCH))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         REBINT n = Find_Map_Entry(
             map,
@@ -795,23 +795,23 @@ REBTYPE(Map)
     case SYM_APPEND: {
         INCLUDE_PARAMS_OF_INSERT;
 
-        FAIL_IF_ERROR(arg);
+        PANIC_IF_ERROR(arg);
 
         if (not Is_Block(arg))
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
 
-        Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));
+        Panic_If_Read_Only_Flex(MAP_PAIRLIST(map));
 
         UNUSED(PARAM(SERIES));
         UNUSED(PARAM(VALUE)); // handled as arg
 
         if (Bool_ARG(ONLY))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(LINE))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(DUP)) {
             UNUSED(ARG(COUNT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         REBLEN len = Part_Len_May_Modify_Index(arg, ARG(LIMIT));
@@ -830,16 +830,16 @@ REBTYPE(Map)
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
-        Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));
+        Panic_If_Read_Only_Flex(MAP_PAIRLIST(map));
 
         UNUSED(PARAM(SERIES));
 
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (not Bool_ARG(MAP))
-            fail (Error_Illegal_Action(TYPE_MAP, verb));
+            panic (Error_Illegal_Action(TYPE_MAP, verb));
 
         Copy_Cell(OUT, val);
         Find_Map_Entry(
@@ -853,7 +853,7 @@ REBTYPE(Map)
         UNUSED(PARAM(VALUE));
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         REBU64 types = 0; // which types to copy non-"shallowly"
@@ -871,7 +871,7 @@ REBTYPE(Map)
         return Init_Map(OUT, Copy_Map(map, types)); }
 
     case SYM_CLEAR:
-        Fail_If_Read_Only_Flex(MAP_PAIRLIST(map));
+        Panic_If_Read_Only_Flex(MAP_PAIRLIST(map));
 
         Reset_Array(MAP_PAIRLIST(map));
 
@@ -886,5 +886,5 @@ REBTYPE(Map)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_MAP, verb));
+    panic (Error_Illegal_Action(TYPE_MAP, verb));
 }

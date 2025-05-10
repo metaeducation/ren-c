@@ -84,7 +84,7 @@ trap [  ; in even older bootstrap executable, this means SYS.UTIL/RESCUE
     parse2: :parse/redbol  ; no `pos: <here>`, etc.
 
     parse: func [] [
-        fail/blame "Use PARSE2 in Bootstrap" 'return
+        panic/blame "Use PARSE2 in Bootstrap" 'return
     ]
 
     quit/value system/options/path  ; see [1]
@@ -128,11 +128,11 @@ print: lib/print: func3 [value <local> pos] [
 
 
 
-; Use /BLAME instead of /WHERE in FAIL (eliminates an annoying inconsistency)
+; Use /BLAME instead of /WHERE in PANIC (eliminates an annoying inconsistency)
 ;
-fail-with-where: :lib/fail
+panic-with-where: :lib/fail  ; old exe calls panics "fail"
 
-fail: func3 [
+panic: func3 [
     reason [<end> error! text! block!]
     /blame location [frame! any-word!]
 ][
@@ -140,9 +140,13 @@ fail: func3 [
         reason: "<end>"
     ]
     if3 not blame [
-        fail-with-where reason
+        panic-with-where reason
     ]
-    fail-with-where/where reason location
+    panic-with-where/where reason location
+]
+
+fail: func3 [] [
+    panic/blame "Use PANIC instead of FAIL for abrupt exceptions" 'return
 ]
 
 
@@ -167,7 +171,7 @@ infix: enfix :enfix
 lib/do compose [(to set-word! '<>) enfix :strict-not-equal?]
 
 ==: !==: func3 [] [
-    fail/blame "Don't use == or !== anymore..." 'return
+    panic/blame "Don't use == or !== anymore..." 'return
 ]
 
 
@@ -178,7 +182,7 @@ lib/do compose [(to set-word! '<>) enfix :strict-not-equal?]
 append sys 'util
 sys/util: make object! [rescue: 1]
 sys/util/rescue: :trap
-trap: func3 [] [fail/blame "USE RESCUE instead of TRAP for bootstrap" 'return]
+trap: func3 [] [panic/blame "USE RESCUE instead of TRAP for bootstrap" 'return]
 
 
 ; The bootstrap executable was picked without noticing it had an issue with
@@ -200,10 +204,10 @@ lib/read: read: enclose :lib-read function3 [f [frame!]] [
             ]
             to end
         ] then [
-            fail/blame ["READ could not find file" saved-source] 'f
+            panic/blame ["READ could not find file" saved-source] 'f
         ]
         print ["Some READ error besides FILE-NOT-FOUND:" saved-source]
-        fail e
+        panic e
     ]
     bin
 ]
@@ -240,7 +244,7 @@ null3: :lib/null
 
 ~: :null3  ; conflated
 trash?: func [] [
-    fail/blame "NOTHING? conflated with VOID? in bootstrap" 'return
+    panic/blame "NOTHING? conflated with VOID? in bootstrap" 'return
 ]
 
 void?: :null3?
@@ -248,7 +252,7 @@ void?: :null3?
 void: :null3
 
 void!: func3 [] [  ; MODERNIZE-ACTION should convert all these away
-    fail/blame "NOTHING! converted to <opt> in bootstrap-shim" 'return
+    panic/blame "NOTHING! converted to <opt> in bootstrap-shim" 'return
 ]
 
 
@@ -260,7 +264,7 @@ void!: func3 [] [  ; MODERNIZE-ACTION should convert all these away
 ; that has to be converted to take the shim VOID (e.g. null3)
 
 blank3?: :lib/blank?
-blank: blank?: func3 [] [fail/blame "No BLANK in bootstrap-shim" 'return]
+blank: blank?: func3 [] [panic/blame "No BLANK in bootstrap-shim" 'return]
 
 null: ~null~: _
 null?: :blank3?
@@ -276,7 +280,7 @@ blank3-to-null3: func3 [x [<opt> any-value!]] [  ; bootstrap OPT makes "voids"
 
 opt: :blank3-to-null3
 opt+: func3 [x [<opt> any-value!]] [  ; see [A]
-    if3 null3? :x [fail "MAYBE+: X is BOOTSTRAP VOID (// NULL)"]
+    if3 null3? :x [panic "MAYBE+: X is BOOTSTRAP VOID (// NULL)"]
     return :x
 ]
 
@@ -311,47 +315,47 @@ else: enfix enclose :lib/else func3 [f] [
 ]
 
 empty?: func3 [x [<opt> any-value!]] [  ; need to expand typespec for null3
-    if3 blank3? :x [fail "EMPTY?: series is bootstrap NULL (BLANK!)"]
+    if3 blank3? :x [panic "EMPTY?: series is bootstrap NULL (BLANK!)"]
     if3 null3? :x [return okay]
     return lib/empty? :x
 ]
 for-each: func ['var data [<opt> any-value!] body] [  ; need to take NULL3
-    if3 blank3? :data [fail "FOR-EACH: data is bootstrap NULL (BLANK!)"]
+    if3 blank3? :data [panic "FOR-EACH: data is bootstrap NULL (BLANK!)"]
     data: null3-to-blank3 :data
     lib/for-each (var) data body
 ]
 append: adapt :lib/append [
-    if3 blank3? :value [fail "APPEND: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :value [panic "APPEND: value is bootstrap NULL (BLANK!)"]
 ]
 insert: adapt :lib/insert [
-    if3 blank3? :value [fail "INSERT: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :value [panic "INSERT: value is bootstrap NULL (BLANK!)"]
 ]
 change: adapt :lib/change [
-    if3 blank3? :value [fail "CHANGE: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :value [panic "CHANGE: value is bootstrap NULL (BLANK!)"]
 ]
 join: adapt :lib/join-of [
-    if3 blank3? :value [fail "JOIN: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :value [panic "JOIN: value is bootstrap NULL (BLANK!)"]
 ]
 
 find: enclose :lib/find func3 [f] [  ; !!! interface won't take null
-    if3 blank3? :f/series [fail "FIND: series is bootstrap NULL (BLANK!)"]
+    if3 blank3? :f/series [panic "FIND: series is bootstrap NULL (BLANK!)"]
     ; do `any [arg []]` if you want to opt out of find
     return null3-to-blank3 lib/do f
 ]
 
 copy: enclose :lib/copy func3 [f] [
-    if3 blank3? :f/value [fail "COPY: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :f/value [panic "COPY: value is bootstrap NULL (BLANK!)"]
     return null3-to-blank3 lib/do f
 ]
 
 to-file: enclose :lib/to-file func3 [f] [
-    if3 blank3? :f/value [fail "TO-FILE: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :f/value [panic "TO-FILE: value is bootstrap NULL (BLANK!)"]
     return null3-to-blank3 lib/do f
 ]
 
 collect: adapt :lib/collect [
     body: compose [keep: enclose 'keep func [f] [
-        if3 blank3? f/value [fail "KEEP: value is bootstrap NULL (BLANK!)"]
+        if3 blank3? f/value [panic "KEEP: value is bootstrap NULL (BLANK!)"]
         f/value: blank3-to-null3 :f/value
         return null3-to-blank3 lib/do f
     ]]
@@ -364,7 +368,7 @@ if: enclose :if3 func [f] [
     lib/all [
         :condition
         lib/find [true false yes no on off] :f/condition
-        fail/blame "IF not supposed to take [true false yes no off]" 'return
+        panic/blame "IF not supposed to take [true false yes no off]" 'return
     ]
     junkify lib/do f
 ]
@@ -373,7 +377,7 @@ either: adapt :either [
     lib/all [
         :condition
         lib/find [true false yes no on off] :condition
-        fail/blame "EITHER not supposed to take [true false yes no off]" 'return
+        panic/blame "EITHER not supposed to take [true false yes no off]" 'return
     ]
 ]
 
@@ -383,7 +387,7 @@ wordtester: infix func3 ['name [set-word!] want [word!] dont [word!]] [
             :x = want [okay]
             :x = dont [null]
         ]
-        fail [to word! name "expects only" mold reduce [want dont]]
+        panic [to word! name "expects only" mold reduce [want dont]]
     ]
 ]
 
@@ -391,7 +395,7 @@ okay: ~okay~: true
 okay?: ok?: func [x] [x = lib/true]
 
 on: true: yes: off: false: no: func [] [
-    fail/blame "No ON TRUE YES OFF FALSE NO definitions any more" 'return
+    panic/blame "No ON TRUE YES OFF FALSE NO definitions any more" 'return
 ]
 
 true?: wordtester 'true 'false
@@ -404,7 +408,7 @@ no?: wordtester 'no 'yes
 logic!: make typeset! [blank! logic!]
 
 and: or: func [] [
-    fail/blame "AND/OR in preboot EXE are non-logic, weird precedence" 'return
+    panic/blame "AND/OR in preboot EXE are non-logic, weird precedence" 'return
 ]
 
 
@@ -509,13 +513,13 @@ parse2: func3 [input rules /case /match] [
     ]
     eval f else [
         probe rules
-        fail "Error: PARSE rules did not match (or did not reach end)"
+        panic "Error: PARSE rules did not match (or did not reach end)"
     ]
     return junk
 ]
 
 parse: func3 [] [
-    fail/blame "Use PARSE2 in Bootstrap" 'return
+    panic/blame "Use PARSE2 in Bootstrap" 'return
 ]
 
 ; The "real apply" hasn't really been designed, but it would be able to mix
@@ -528,7 +532,7 @@ applique: :apply
 unset 'apply
 
 the: :quote
-quote: func3 [] [fail/blame "Use THE instead of QUOTE for literalizing" 'return]
+quote: func3 [] [panic/blame "Use THE instead of QUOTE for literalizing" 'return]
 
 collect*: :collect
 collect: :collect-block
@@ -571,7 +575,7 @@ modernize-action: function3 [
                 if3 block? spec/1 [
                     typespec: copy spec/1
                     if find typespec 'blank! [
-                        fail "No BLANK! in bootstrap (it's acting like null)"
+                        panic "No BLANK! in bootstrap (it's acting like null)"
                     ]
                     replace typespec '~null~ blank!
                     if find typespec <undo-opt> [  ; need to turn to blank3
@@ -698,7 +702,7 @@ call: specialize :call [wait: /wait]
 
 ; Since we're shimming blank as null, that could break things if not careful.
 
-assert [junk? if okay [null] else [fail "This should not have run"]]
+assert [junk? if okay [null] else [panic "This should not have run"]]
 assert [1020 = (if null [null] else [1020])]
 
 quit/with system/options/path  ; see [1]

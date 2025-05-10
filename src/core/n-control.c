@@ -178,7 +178,7 @@ bool Either_Test_Core_Throws(
         Copy_Cell(test, out);
 
         if (not Is_Action(test))
-            fail ("EITHER-TEST only takes WORD! and PATH! for ACTION! vars");
+            panic ("EITHER-TEST only takes WORD! and PATH! for ACTION! vars");
         goto handle_action; }
 
       case TYPE_ACTION: {
@@ -212,7 +212,7 @@ bool Either_Test_Core_Throws(
             // !!! If the test is just [], what's that?  People aren't likely
             // to write it literally, but COMPOSE/etc. might make it.
             //
-            fail ("No tests found BLOCK! passed to EITHER-TEST.");
+            panic ("No tests found BLOCK! passed to EITHER-TEST.");
         }
 
         Specifier* specifier = VAL_SPECIFIER(test);
@@ -242,7 +242,7 @@ bool Either_Test_Core_Throws(
                     }
                     continue;
                 }
-                var = Get_Opt_Var_May_Fail(item, specifier);
+                var = Get_Opt_Var_May_Panic(item, specifier);
             }
 
             if (Is_Datatype(var)) {
@@ -258,7 +258,7 @@ bool Either_Test_Core_Throws(
                 }
             }
             else
-                fail (Error_Invalid_Type(Type_Of(var)));
+                panic (Error_Invalid_Type(Type_Of(var)));
         }
         Init_Logic(out, false);
         return false; }
@@ -267,7 +267,7 @@ bool Either_Test_Core_Throws(
         break;
     }
 
-    fail (Error_Invalid_Type(Type_Of(arg)));
+    panic (Error_Invalid_Type(Type_Of(arg)));
 }
 
 
@@ -451,14 +451,14 @@ DECLARE_NATIVE(NON)
 
     if (Is_Nulled(test)) {  // not a datatype, needs special case
         if (Is_Nulled(value))
-            fail ("NON expected value to not be NULL, but it was");
+            panic ("NON expected value to not be NULL, but it was");
     }
     else if (CELL_DATATYPE_TYPE(test) == TYPE_TRASH) {  // specialize common case
         if (Is_Trash(value))
-            fail ("NON expected value to not be trash, but it was");
+            panic ("NON expected value to not be trash, but it was");
     }
     else if (not Typeset_Check(value, CELL_DATATYPE_TYPE(test))) {
-        fail ("NON expected value to not match a type, but it did match");
+        panic ("NON expected value to not match a type, but it did match");
     }
 
     RETURN (value);
@@ -664,7 +664,7 @@ static Bounce Case_Choose_Core_May_Throw(
             // ** Script Error: if does not allow tag! for its branch argument
             //
             if (not Is_Block(cell) and not Is_Action(cell))
-                fail (Error_Invalid_Core(cell, L->specifier));
+                panic (Error_Invalid_Core(cell, L->specifier));
 
             continue;
         }
@@ -699,7 +699,7 @@ static Bounce Case_Choose_Core_May_Throw(
                     return BOUNCE_THROWN;
                 }
             } else
-                fail (Error_Invalid_Core(OUT, L->specifier));
+                panic (Error_Invalid_Core(OUT, L->specifier));
 
             Trashify_Branched(OUT);  // null is reserved for no branch taken
         }
@@ -787,7 +787,7 @@ DECLARE_NATIVE(SWITCH)
     INCLUDE_PARAMS_OF_SWITCH;
 
     if (Bool_ARG(DEFAULT))
-        fail (
+        panic (
             "SWITCH/DEFAULT is no longer supported by the core.  Use the"
             " DEFAULT [...] as the last clause, or ELSE/UNLESS/!!/etc. based"
             " on null result: https://forum.rebol.info/t/312"
@@ -803,7 +803,7 @@ DECLARE_NATIVE(SWITCH)
 
     bool strict = not Bool_ARG(RELAX);
 
-    FAIL_IF_ERROR(value);
+    PANIC_IF_ERROR(value);
 
     Init_Nulled(OUT); // used for "fallout"
 
@@ -829,7 +829,7 @@ DECLARE_NATIVE(SWITCH)
             //    ]
             //
         action_not_supported:
-            fail (
+            panic (
                 "ACTION! branches currently not supported in SWITCH --"
                 " none existed after having the feature for 2 years."
                 " Complain if you found a good use for it."
@@ -931,7 +931,7 @@ DECLARE_NATIVE(DEFAULT)
     if (Is_Nulled(target)) { // e.g. `case [... default [...]]`
         UNUSED(ARG(LOOK));
         if (NOT_END(level_->value)) // !!! shortcut using variadic for now
-            fail ("DEFAULT usage with no left hand side must be at <end>");
+            panic ("DEFAULT usage with no left hand side must be at <end>");
 
         if (Do_Branch_Throws(OUT, ARG(BRANCH)))
             return BOUNCE_THROWN;
@@ -940,10 +940,10 @@ DECLARE_NATIVE(DEFAULT)
     }
 
     if (Is_Set_Word(target))
-        Move_Opt_Var_May_Fail(OUT, target, SPECIFIED);
+        Move_Opt_Var_May_Panic(OUT, target, SPECIFIED);
     else {
         assert(Is_Set_Path(target));
-        Get_Path_Core(OUT, target, SPECIFIED); // will fail() on GROUP!s
+        Get_Path_Core(OUT, target, SPECIFIED); // will panic() on GROUP!s
     }
 
     if (
@@ -958,7 +958,7 @@ DECLARE_NATIVE(DEFAULT)
         return BOUNCE_THROWN;
 
     if (Is_Set_Word(target))
-        Copy_Cell(Sink_Var_May_Fail(target, SPECIFIED), OUT);
+        Copy_Cell(Sink_Var_May_Panic(target, SPECIFIED), OUT);
     else {
         assert(Is_Set_Path(target));
         Set_Path_Core(target, SPECIFIED, OUT);
@@ -1010,7 +1010,7 @@ DECLARE_NATIVE(CATCH)
     // /ANY would override /NAME, so point out the potential confusion
     //
     if (Bool_ARG(ANY) and Bool_ARG(NAME))
-        fail (Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     if (not Eval_List_At_Throws(OUT, ARG(BLOCK))) {
         if (Bool_ARG(RESULT))
@@ -1054,7 +1054,7 @@ DECLARE_NATIVE(CATCH)
                 // !!! Should we test a typeset for illegal name types?
                 //
                 if (Is_Block(candidate))
-                    fail (Error_Invalid(ARG(NAMES)));
+                    panic (Error_Invalid(ARG(NAMES)));
 
                 Derelativize(temp1, candidate, VAL_SPECIFIER(ARG(NAMES)));
                 Copy_Cell(temp2, OUT);

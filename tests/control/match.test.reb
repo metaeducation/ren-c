@@ -29,7 +29,7 @@
         f [frame!]
     ][
         arg: :f/arg else [
-            fail "MATCH cannot take null as input" ;-- EITHER-TEST allows it
+            panic "MATCH cannot take null as input" ;-- EITHER-TEST allows it
         ]
 
         ; Ideally we'd pass through all input results on a "match" and give

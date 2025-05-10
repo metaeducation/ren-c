@@ -142,13 +142,13 @@ void Append_OS_Str(Value* dest, const void *src, REBINT len)
 
 
 ATTRIBUTE_NO_RETURN
-INLINE void Fail_Permission_Denied(void) {
-    rebJumps("fail {The process does not have enough permission}");
+INLINE void Panic_Permission_Denied(void) {
+    rebJumps("panic {The process does not have enough permission}");
 }
 
 ATTRIBUTE_NO_RETURN
-INLINE void Fail_No_Process(const Value* arg) {
-    rebJumps("fail [{The target process (group) does not exist:}",
+INLINE void Panic_No_Process(const Value* arg) {
+    rebJumps("panic [{The target process (group) does not exist:}",
         arg, "]");
 }
 
@@ -156,9 +156,9 @@ INLINE void Fail_No_Process(const Value* arg) {
 #ifdef TO_WINDOWS
 
 ATTRIBUTE_NO_RETURN
-INLINE void Fail_Terminate_Failed(DWORD err) { // from GetLastError()
+INLINE void Panic_Terminate_Failed(DWORD err) { // from GetLastError()
     rebJumps(
-        "fail [{Terminate failed with error number:}", rebI(err), "]"
+        "panic [{Terminate failed with error number:}", rebI(err), "]"
     );
 }
 
@@ -190,7 +190,7 @@ int OS_Create_Process(
     UNUSED(Bool_ARG(CONSOLE)); // actually not paid attention to
 
     if (call == nullptr)
-        fail ("'argv[]'-style launching not implemented on Windows CALL");
+        panic ("'argv[]'-style launching not implemented on Windows CALL");
 
   #ifdef GET_IS_NT_FLAG // !!! Why was this here?
     bool is_NT;
@@ -1372,7 +1372,7 @@ cleanup:
         assert(false);
         if (info)
             free(info);
-        rebJumps("fail {Child process is stopped}");
+        rebJumps("panic {Child process is stopped}");
     }
     else {
         non_errno_ret = -2048; //randomly picked
@@ -1414,13 +1414,13 @@ stdin_pipe_err:
 
     if (non_errno_ret > 0) {
         rebJumps(
-            "fail [{Child process is terminated by signal:}",
+            "panic [{Child process is terminated by signal:}",
                 rebI(non_errno_ret),
             "]"
         );
     }
     else if (non_errno_ret < 0)
-        rebJumps("fail {Unknown error happened in CALL}");
+        rebJumps("panic {Unknown error happened in CALL}");
 
     return ret;
 }
@@ -1471,9 +1471,9 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
     // they are not read-only, before we try appending to them.
     //
     if (Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT)))
-        Fail_If_Read_Only_Flex(Cell_Flex(ARG(OUT)));
+        Panic_If_Read_Only_Flex(Cell_Flex(ARG(OUT)));
     if (Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR)))
-        Fail_If_Read_Only_Flex(Cell_Flex(ARG(ERR)));
+        Panic_If_Read_Only_Flex(Cell_Flex(ARG(ERR)));
 
     char *os_input;
     REBLEN input_len;
@@ -1558,7 +1558,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
         Value* block = ARG(COMMAND);
         argc = Cell_Series_Len_At(block);
         if (argc == 0)
-            fail (Error_Too_Short_Raw());
+            panic (Error_Too_Short_Raw());
 
         argv = rebAllocN(const OSCHR*, (argc + 1));
 
@@ -1576,7 +1576,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
               #endif
             }
             else
-                fail (Error_Invalid_Core(param, VAL_SPECIFIER(block)));
+                panic (Error_Invalid_Core(param, VAL_SPECIFIER(block)));
         }
         argv[argc] = nullptr;
     }
@@ -1597,7 +1597,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
         argv[1] = nullptr;
     }
     else
-        fail (Error_Invalid(ARG(COMMAND)));
+        panic (Error_Invalid(ARG(COMMAND)));
 
     REBU64 pid;
     int exit_code;
@@ -1690,7 +1690,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
     }
 
     if (r != 0)
-        rebFail_OS (r);
+        rebPanic_OS (r);
 
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
@@ -1704,7 +1704,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
             return Init_Integer(OUT, exit_code);
 
         rebJumps (
-            "fail ["
+            "panic ["
                 "{CALL without /RELAX got nonzero exit code:}",
                 rebI(exit_code),
             "]"
@@ -1746,7 +1746,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
             &key
         ) != ERROR_SUCCESS
     ){
-        fail ("Could not open registry key for http\\shell\\open\\command");
+        panic ("Could not open registry key for http\\shell\\open\\command");
     }
 
     DWORD num_bytes = 0; // pass nullptr and use 0 for initial length, to query
@@ -1761,7 +1761,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
         or num_bytes % 2 != 0 // byte count should be even for unicode
     ){
         RegCloseKey(key);
-        fail ("Could not read registry key for http\\shell\\open\\command");
+        panic ("Could not read registry key for http\\shell\\open\\command");
     }
 
     REBLEN len = num_bytes / 2;
@@ -1774,7 +1774,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
     RegCloseKey(key);
 
     if (flag != ERROR_SUCCESS)
-        fail ("Could not read registry key for http\\shell\\open\\command");
+        panic ("Could not read registry key for http\\shell\\open\\command");
 
     while (buffer[len - 1] == '\0') {
         //
@@ -1925,7 +1925,7 @@ DECLARE_NATIVE(GET_ENV)
     // without leaking temporary buffers.
     //
     if (error != nullptr)
-        fail (error);
+        panic (error);
 
     return OUT;
 }
@@ -1956,7 +1956,7 @@ DECLARE_NATIVE(SET_ENV)
     WCHAR *opt_val_wide = rebSpellW("ensure [~null~ text!]", rebQ(value));
 
     if (not SetEnvironmentVariable(key_wide, opt_val_wide)) // null unsets
-        fail ("environment variable couldn't be modified");
+        panic ("environment variable couldn't be modified");
 
     rebFree(opt_val_wide);
     rebFree(key_wide);
@@ -1966,7 +1966,7 @@ DECLARE_NATIVE(SET_ENV)
     if (Is_Nulled(value)) {
       #ifdef unsetenv
         if (unsetenv(key_utf8) == -1)
-            fail ("unsetenv() couldn't unset environment variable");
+            panic ("unsetenv() couldn't unset environment variable");
       #else
         // WARNING: KNOWN PORTABILITY ISSUE
         //
@@ -1979,7 +1979,7 @@ DECLARE_NATIVE(SET_ENV)
         // going to hope this case doesn't hold onto the string...
         //
         if (putenv(key_utf8) == -1) // !!! Why mutable?
-            fail ("putenv() couldn't unset environment variable");
+            panic ("putenv() couldn't unset environment variable");
       #endif
     }
     else {
@@ -1987,7 +1987,7 @@ DECLARE_NATIVE(SET_ENV)
         char *val_utf8 = rebSpell(rebQ(value));
 
         if (setenv(key_utf8, val_utf8, 1) == -1) // the 1 means "overwrite"
-            fail ("setenv() coudln't set environment variable");
+            panic ("setenv() coudln't set environment variable");
 
         rebFree(val_utf8);
       #else
@@ -2013,7 +2013,7 @@ DECLARE_NATIVE(SET_ENV)
         );
 
         if (putenv(key_equals_val_utf8) == -1) // !!! why mutable?  :-/
-            fail ("putenv() couldn't set environment variable");
+            panic ("putenv() couldn't set environment variable");
 
         /* rebFree(key_equals_val_utf8); */ // !!! Can't!  Crashes getenv()
         rebUnmanage(key_equals_val_utf8); // oh well, have to leak it

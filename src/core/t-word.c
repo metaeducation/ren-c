@@ -90,12 +90,12 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         if (kind == TYPE_ISSUE) {
             Erase_Cell(out);
             if (nullptr == Scan_Issue(out, bp, size))
-                fail (Error_Bad_Char_Raw(arg));
+                panic (Error_Bad_Char_Raw(arg));
         }
         else {
             Erase_Cell(out);
             if (nullptr == Scan_Any_Word(out, kind, bp, size))
-                fail (Error_Bad_Char_Raw(arg));
+                panic (Error_Bad_Char_Raw(arg));
         }
         return out;
     }
@@ -104,7 +104,7 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         REBLEN len = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg));
         Erase_Cell(out);
         if (nullptr == Scan_Any_Word(out, kind, &buf[0], len))
-            fail (Error_Bad_Char_Raw(arg));
+            panic (Error_Bad_Char_Raw(arg));
         return out;
     }
     else if (Is_Datatype(arg)) {
@@ -118,7 +118,7 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         );
     }
 
-    fail (Error_Unexpected_Type(TYPE_WORD, Type_Of(arg)));
+    panic (Error_Unexpected_Type(TYPE_WORD, Type_Of(arg)));
 }
 
 
@@ -259,7 +259,7 @@ REBTYPE(Word)
                 else {
                     Ucs2Unit uni;
                     if (not (bp = Back_Scan_UTF8_Char(&uni, bp, &size)))
-                        fail (Error_Bad_Utf8_Raw());
+                        panic (Error_Bad_Utf8_Raw());
                     ++len;
                }
             }
@@ -280,5 +280,5 @@ REBTYPE(Word)
         break;
     }
 
-    fail (Error_Illegal_Action(Type_Of(val), verb));
+    panic (Error_Illegal_Action(Type_Of(val), verb));
 }

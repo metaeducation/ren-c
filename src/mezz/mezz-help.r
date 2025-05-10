@@ -591,7 +591,7 @@ require-commit: function [
     ; older than that won't work.
     ;
     if (date: select c 'date) and (rebol/build < date) [
-        fail [
+        panic [
             "This script needs a build newer or equal to" date
             "so run `upgrade`"
         ]

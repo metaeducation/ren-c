@@ -80,7 +80,7 @@ filter-flag: function [
         copy header: to ":"
         ":" copy option: to end
     ] else [
-        fail ["Tag must be <prefix:flag> ->" (flag)]
+        panic ["Tag must be <prefix:flag> ->" (flag)]
     ]
 
     return all [
@@ -341,7 +341,7 @@ compiler-class: make object! [
         return: [~]
         exec [~null~ file! text!]
     ][
-        fail "archetype check"
+        panic "archetype check"
     ]
 
     compile: method [
@@ -352,7 +352,7 @@ compiler-class: make object! [
         definition [any-string!]
         cflags [any-string!]
     ][
-        fail "archetype compile"
+        panic "archetype compile"
     ]
 
     link: method [
@@ -363,14 +363,14 @@ compiler-class: make object! [
         ldflags [block! any-string! ~null~]
         /dynamic
     ][
-        fail "archetype link"
+        panic "archetype link"
     ]
 
     accept: method [
         return: [~null~ text!]
         dep [object!]
     ][
-        fail "archetype link"
+        panic "archetype link"
     ]
 ]
 
@@ -469,7 +469,7 @@ cc: make compiler-class [
                         keep ["-O" opt-level]
                     ]
 
-                    fail ["unrecognized optimization level:" opt-level]
+                    panic ["unrecognized optimization level:" opt-level]
                 ]
             ]
             if g [
@@ -478,7 +478,7 @@ cc: make compiler-class [
                     debug = okay [keep "-g -g3"]
                     integer? debug [keep ["-g" debug]]
 
-                    fail ["unrecognized debug option:" debug]
+                    panic ["unrecognized debug option:" debug]
                 ]
             ]
             if F [
@@ -598,7 +598,7 @@ cc: make compiler-class [
             ]
             default [
                 dump dep
-                fail "unrecognized dependency"
+                panic "unrecognized dependency"
             ]
         ]
     ]
@@ -710,7 +710,7 @@ cl: make compiler-class [
                         keep "/Od /Zi"
                     ]
 
-                    fail ["unrecognized debug option:" debug]
+                    panic ["unrecognized debug option:" debug]
                 ]
             ]
             if F [
@@ -834,7 +834,7 @@ cl: make compiler-class [
             ]
             default [
                 dump dep
-                fail "unrecognized dependency"
+                panic "unrecognized dependency"
             ]
         ]
     ]
@@ -999,7 +999,7 @@ generator-class: make object! [
                 applique any [:gen-cmd-strip :target-platform/gen-cmd-strip] compose [cmd: (cmd)]
             ]
 
-            fail ["Unknown cmd class:" cmd/class]
+            panic ["Unknown cmd class:" cmd/class]
         ]
     ]
 
@@ -1041,7 +1041,7 @@ generator-class: make object! [
                     | skip
                 ]
             ] else [
-                fail ["failed to do var substitution:" cmd]
+                panic ["failed to do var substitution:" cmd]
             ]
         ]
         return cmd
@@ -1113,7 +1113,7 @@ generator-class: make object! [
                         project/output: to text! project/name
                     ]
 
-                    fail ["Unexpected project class:" (project/class)]
+                    panic ["Unexpected project class:" (project/class)]
                 ]
                 if output-ext: find/last project/output #"." [
                     remove output-ext
@@ -1210,7 +1210,7 @@ makefile: make generator-class [
                         file? entry/target [
                             keep [file-to-local entry/target ":"]
                         ]
-                        fail ["Unknown entry/target type" entry/target]
+                        panic ["Unknown entry/target type" entry/target]
                     ]
                     ensure [block! ~null~] entry/depends
                     for-each w opt entry/depends [
@@ -1246,7 +1246,7 @@ makefile: make generator-class [
                 ]
             ]
 
-            fail ["Unrecognized entry class:" entry/class]
+            panic ["Unrecognized entry class:" entry/class]
         ] keep ""] ;-- final keep just adds an extra newline
 
         ;; !!! Adding an extra newline here unconditionally means variables
@@ -1326,7 +1326,7 @@ makefile: make generator-class [
                 ]
                 default [
                     dump dep
-                    fail ["unrecognized project type:" dep/class]
+                    panic ["unrecognized project type:" dep/class]
                 ]
             ]
         ]
@@ -1414,7 +1414,7 @@ Execution: make generator-class [
             ]
             default [
                 dump target
-                fail "Unrecognized target class"
+                panic "Unrecognized target class"
             ]
         ]
     ]
@@ -1483,7 +1483,7 @@ Execution: make generator-class [
             ]
             default [
                 dump project
-                fail ["unrecognized project type:" project/class]
+                panic ["unrecognized project type:" project/class]
             ]
         ]
     ]

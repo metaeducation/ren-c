@@ -97,7 +97,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 
     if (op == VARARG_OP_FIRST) {
         if (pclass != PARAMCLASS_HARD_QUOTE)
-            fail (Error_Varargs_No_Look_Raw()); // hard quote only
+            panic (Error_Varargs_No_Look_Raw()); // hard quote only
 
         Derelativize(out, opt_look, specifier);
 
@@ -119,7 +119,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 // Whether the parameter is quoted or evaluated is determined by the typeset
 // information of the `param`.  The typeset in the param is also used to
 // check the result, and if an error is delivered it will use the name of
-// the parameter symbol in the fail() message.
+// the parameter symbol in the panic() message.
 //
 // If op is VARARG_OP_TAIL_Q, then it will return ~okay~ or ~nulled~
 // and this case cannot return a thrown value.
@@ -234,13 +234,13 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             break;
 
         default:
-            fail ("Invalid variadic parameter class");
+            panic ("Invalid variadic parameter class");
         }
 
         if (NOT_END(shared) && VAL_INDEX(shared) >= VAL_LEN_HEAD(shared))
             SET_END(shared); // signal end to all varargs sharing value
     }
-    else if (Is_Level_Style_Varargs_May_Fail(&L, vararg)) {
+    else if (Is_Level_Style_Varargs_May_Panic(&L, vararg)) {
         //
         // "Ordinary" case... use the original frame implied by the VARARGS!
         // (so long as it is still live on the stack)
@@ -300,7 +300,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             break;
 
         default:
-            fail ("Invalid variadic parameter class");
+            panic ("Invalid variadic parameter class");
         }
     }
     else
@@ -325,9 +325,9 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         // vararg.  Revisit the question of how to give better errors.
         //
         if (opt_vararg_level == nullptr)
-            fail (Error_Invalid(out));
+            panic (Error_Invalid(out));
 
-        fail (Error_Arg_Type(opt_vararg_level, param, Type_Of(out)));
+        panic (Error_Arg_Type(opt_vararg_level, param, Type_Of(out)));
     }
 
     // Note: may be at end now, but reflect that at *next* call
@@ -372,7 +372,7 @@ Bounce MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 
     // !!! Permit FRAME! ?
 
-    fail (Error_Bad_Make(TYPE_VARARGS, arg));
+    panic (Error_Bad_Make(TYPE_VARARGS, arg));
 }
 
 
@@ -386,7 +386,7 @@ Bounce TO_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 
     UNUSED(out);
 
-    fail (Error_Invalid(arg));
+    panic (Error_Invalid(arg));
 }
 
 
@@ -403,10 +403,10 @@ Bounce PD_Varargs(
     UNUSED(opt_setval);
 
     if (not Is_Integer(picker))
-        fail (Error_Invalid(picker));
+        panic (Error_Invalid(picker));
 
     if (VAL_INT32(picker) != 1)
-        fail (Error_Varargs_No_Look_Raw());
+        panic (Error_Varargs_No_Look_Raw());
 
     DECLARE_VALUE (location);
     Copy_Cell(location, pvs->out);
@@ -469,9 +469,9 @@ REBTYPE(Varargs)
 
         UNUSED(PARAM(SERIES));
         if (Bool_ARG(DEEP))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(LAST))
-            fail (Error_Varargs_Take_Last_Raw());
+            panic (Error_Varargs_Take_Last_Raw());
 
         if (not Bool_ARG(PART)) {
             if (Do_Vararg_Op_Maybe_End_Throws(
@@ -495,7 +495,7 @@ REBTYPE(Varargs)
                 limit = 0;
         }
         else
-            fail (Error_Invalid(ARG(LIMIT)));
+            panic (Error_Invalid(ARG(LIMIT)));
 
         while (limit-- > 0) {
             if (Do_Vararg_Op_Maybe_End_Throws(
@@ -518,7 +518,7 @@ REBTYPE(Varargs)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_VARARGS, verb));
+    panic (Error_Illegal_Action(TYPE_VARARGS, verb));
 }
 
 

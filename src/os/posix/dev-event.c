@@ -85,7 +85,7 @@ DEVICE_CMD Query_Events(REBREQ *req)
         if (errno == EINTR)
             return DR_DONE;
 
-        rebFail_OS (errno);
+        rebPanic_OS (errno);
     }
 
     return DR_DONE;

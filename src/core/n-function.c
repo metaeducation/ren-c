@@ -52,7 +52,7 @@ DECLARE_NATIVE(FUNC)
 {
     INCLUDE_PARAMS_OF_FUNC;
 
-    REBACT *func = Make_Interpreted_Action_May_Fail(
+    REBACT *func = Make_Interpreted_Action_May_Panic(
         ARG(SPEC),
         ARG(BODY),
         MKF_RETURN
@@ -78,7 +78,7 @@ DECLARE_NATIVE(LAMBDA)
 {
     INCLUDE_PARAMS_OF_LAMBDA;
 
-    REBACT *func = Make_Interpreted_Action_May_Fail(
+    REBACT *func = Make_Interpreted_Action_May_Panic(
         ARG(SPEC),
         ARG(BODY),
         MKF_MASK_NONE
@@ -110,12 +110,12 @@ void Make_Thrown_Unwind_Value(
     else if (Is_Integer(level)) {
         REBLEN count = VAL_INT32(level);
         if (count <= 0)
-            fail (Error_Invalid_Exit_Raw());
+            panic (Error_Invalid_Exit_Raw());
 
         Level* L = base->prior;
         for (; true; L = L->prior) {
             if (L == BOTTOM_LEVEL)
-                fail (Error_Invalid_Exit_Raw());
+                panic (Error_Invalid_Exit_Raw());
 
             if (not Is_Action_Level(L))
                 continue; // only exit functions
@@ -136,7 +136,7 @@ void Make_Thrown_Unwind_Value(
         Level* L = base->prior;
         for (; true; L = L->prior) {
             if (L == BOTTOM_LEVEL)
-                fail (Error_Invalid_Exit_Raw());
+                panic (Error_Invalid_Exit_Raw());
 
             if (not Is_Action_Level(L))
                 continue; // only exit functions
@@ -208,10 +208,10 @@ DECLARE_NATIVE(RETURN)
     Level* target_level;
     Stub* L_binding = LVL_BINDING(L);
     if (not L_binding)
-        fail (Error_Return_Archetype_Raw()); // must have binding to jump to
+        panic (Error_Return_Archetype_Raw()); // must have binding to jump to
 
     assert(L_binding->leader.bits & ARRAY_FLAG_IS_VARLIST);
-    target_level = Level_Of_Varlist_May_Fail(CTX(L_binding));
+    target_level = Level_Of_Varlist_May_Panic(CTX(L_binding));
 
     // !!! We only have a Level* via the binding.  We don't have distinct
     // knowledge about exactly which "phase" the original RETURN was
@@ -252,7 +252,7 @@ DECLARE_NATIVE(RETURN)
     // itself...implicating the frame (in a way parallel to this native).
     //
     if (not Typeset_Check(typeset, Type_Of(v)))
-        fail (Error_Bad_Return_Type(target_level, Type_Of(v)));
+        panic (Error_Bad_Return_Type(target_level, Type_Of(v)));
 
     assert(L_binding->leader.bits & ARRAY_FLAG_IS_VARLIST);
 
@@ -354,7 +354,7 @@ DECLARE_NATIVE(CASCADE)
     Value* check = first;
     while (NOT_END(check)) {
         if (not Is_Action(check))
-            fail (Error_Invalid(check));
+            panic (Error_Invalid(check));
         ++check;
     }
 
@@ -429,7 +429,7 @@ DECLARE_NATIVE(ADAPT)
     }
 
     if (not Is_Action(OUT))
-        fail (Error_Invalid(adaptee));
+        panic (Error_Invalid(adaptee));
     Copy_Cell(adaptee, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     // The paramlist needs to be unique to designate this function, but
@@ -523,7 +523,7 @@ DECLARE_NATIVE(ENCLOSE)
     }
 
     if (not Is_Action(OUT))
-        fail (Error_Invalid(inner));
+        panic (Error_Invalid(inner));
     Copy_Cell(inner, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     Value* outer = ARG(OUTER);
@@ -539,7 +539,7 @@ DECLARE_NATIVE(ENCLOSE)
     }
 
     if (not Is_Action(OUT))
-        fail (Error_Invalid(outer));
+        panic (Error_Invalid(outer));
     Copy_Cell(outer, OUT); // Frees OUT, and GC safe (in ARG slot)
 
     // The paramlist needs to be unique to designate this function, but
@@ -638,7 +638,7 @@ DECLARE_NATIVE(HIJACK)
     }
 
     if (not Is_Action(OUT))
-        fail ("Victim of HIJACK must be an ACTION!");
+        panic ("Victim of HIJACK must be an ACTION!");
     Copy_Cell(ARG(VICTIM), OUT); // Frees up OUT
     REBACT *victim = VAL_ACTION(ARG(VICTIM)); // GC safe (in ARG slot)
 
@@ -654,7 +654,7 @@ DECLARE_NATIVE(HIJACK)
     }
 
     if (not Is_Action(OUT))
-        fail ("Hijacker in HIJACK must be an ACTION!");
+        panic ("Hijacker in HIJACK must be an ACTION!");
     Copy_Cell(ARG(HIJACKER), OUT); // Frees up OUT
     REBACT *hijacker = VAL_ACTION(ARG(HIJACKER)); // GC safe (in ARG slot)
 

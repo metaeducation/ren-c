@@ -118,17 +118,17 @@ DECLARE_NATIVE(EVAL_INFIX)
     INCLUDE_PARAMS_OF_EVAL_INFIX;
 
     Level* L;
-    if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(REST))) {
+    if (not Is_Level_Style_Varargs_May_Panic(&L, ARG(REST))) {
         //
         // It wouldn't be *that* hard to support block-style varargs, but as
         // this routine is a hack to implement ME, don't make it any longer
         // than it needs to be.
         //
-        fail ("EVAL-INFIX is not made to support MAKE VARARGS! [...] rest");
+        panic ("EVAL-INFIX is not made to support MAKE VARARGS! [...] rest");
     }
 
     if (IS_END(L->value)) // no PATH! yet...
-        fail ("ME and MY hit end of input");
+        panic ("ME and MY hit end of input");
 
     DECLARE_SUBLEVEL (child, L);  // saves TOP_INDEX before refinement push
 
@@ -146,7 +146,7 @@ DECLARE_NATIVE(EVAL_INFIX)
     }
 
     if (not Is_Action(temp))
-        fail ("ME and MY only work if right hand WORD! is an ACTION!");
+        panic ("ME and MY only work if right hand WORD! is an ACTION!");
 
     // Here we do something devious.  We subvert the system by setting
     // L->gotten to an infixed version of the function even if it is
@@ -267,20 +267,20 @@ DECLARE_NATIVE(DO)
 
     case TYPE_ERROR:
         //
-        // FAIL is the preferred operation for triggering errors, as it has
+        // PANIC is the preferred operation for triggering errors, as it has
         // a natural behavior for blocks passed to construct readable messages
-        // and "FAIL X" more clearly communicates a failure than "DO X"
+        // and "PANIC X" more clearly communicates an exception than "DO X"
         // does.  However DO of an ERROR! would have to raise an error
         // anyway, so it might as well raise the one it is given...and this
-        // allows the more complex logic of FAIL to be written in Rebol code.
+        // allows the more complex logic of PANIC to be written in Rebol code.
         //
-        fail (cast(Error*, Cell_Varlist(source)));
+        panic (cast(Error*, Cell_Varlist(source)));
 
     default:
         break;
     }
 
-    fail (Error_Use_Eval_For_Eval_Raw()); // https://trello.com/c/YMAb89dv
+    panic (Error_Use_Eval_For_Eval_Raw()); // https://trello.com/c/YMAb89dv
 }
 
 
@@ -336,12 +336,12 @@ DECLARE_NATIVE(EVALUATE)
 
         if (indexor == END_FLAG or IS_END(OUT)) {
             if (not Is_Nulled(var))
-                Init_Nulled(Sink_Var_May_Fail(var, SPECIFIED));
+                Init_Nulled(Sink_Var_May_Panic(var, SPECIFIED));
             return nullptr; // no disruption of output result
         }
 
         if (not Is_Nulled(var))
-            Copy_Cell(Sink_Var_May_Fail(var, SPECIFIED), OUT);
+            Copy_Cell(Sink_Var_May_Panic(var, SPECIFIED), OUT);
 
         Copy_Cell(OUT, source);
         VAL_INDEX(OUT) = cast(REBLEN, indexor) - 1; // was one past
@@ -350,7 +350,7 @@ DECLARE_NATIVE(EVALUATE)
 
       case TYPE_ACTION: {
         if (Bool_ARG(STEP3))
-            fail ("Can't use EVAL/STEP3 on actions");
+            panic ("Can't use EVAL/STEP3 on actions");
 
         // Ren-C will only run arity 0 functions from DO, otherwise REEVAL
         // must be used.  Look for the first non-local parameter to tell.
@@ -363,7 +363,7 @@ DECLARE_NATIVE(EVALUATE)
             ++param;
         }
         if (NOT_END(param))
-            fail (Error_Use_Eval_For_Eval_Raw());
+            panic (Error_Use_Eval_For_Eval_Raw());
 
         if (Eval_Value_Throws(OUT, source))
             return BOUNCE_THROWN;
@@ -371,13 +371,13 @@ DECLARE_NATIVE(EVALUATE)
 
       case TYPE_FRAME: {
         if (Bool_ARG(STEP3))
-            fail ("Can't use EVAL/STEP3 on frames");
+            panic ("Can't use EVAL/STEP3 on frames");
 
         VarList* c = Cell_Varlist(source); // checks for INACCESSIBLE
         REBACT *phase = VAL_PHASE(source);
 
         if (Level_Of_Varlist_If_Running(c))
-            fail ("Bootstrap executable cannot REDO already running FRAME!s");
+            panic ("Bootstrap executable cannot REDO already running FRAME!s");
 
         // To DO a FRAME! will "steal" its data.  If a user wishes to use a
         // frame multiple times, they must say DO COPY FRAME, so that the
@@ -465,18 +465,18 @@ DECLARE_NATIVE(EVALUATE)
             if (indexor == END_FLAG or IS_END(OUT)) {
                 SET_END(position);  // convention for shared data at end point
                 if (not Is_Nulled(var))
-                    Init_Nulled(Sink_Var_May_Fail(var, SPECIFIED));
+                    Init_Nulled(Sink_Var_May_Panic(var, SPECIFIED));
                 return nullptr;
             }
 
             if (not Is_Nulled(var))
-                Copy_Cell(Sink_Var_May_Fail(var, SPECIFIED), OUT);
+                Copy_Cell(Sink_Var_May_Panic(var, SPECIFIED), OUT);
 
             RETURN (source);  // original VARARGS! will have updated position
         }
 
         Level* L;
-        if (not Is_Level_Style_Varargs_May_Fail(&L, source))
+        if (not Is_Level_Style_Varargs_May_Panic(&L, source))
             crash (source); // Frame is the only other type
 
         // By definition, we are in the middle of a function call in the frame
@@ -504,25 +504,25 @@ DECLARE_NATIVE(EVALUATE)
 
         if (IS_END(OUT)) {
             if (not Is_Nulled(var))
-                Init_Nulled(Sink_Var_May_Fail(var, SPECIFIED));
+                Init_Nulled(Sink_Var_May_Panic(var, SPECIFIED));
             return nullptr;
         }
 
         if (not Is_Nulled(var))
-            Copy_Cell(Sink_Var_May_Fail(var, SPECIFIED), OUT);
+            Copy_Cell(Sink_Var_May_Panic(var, SPECIFIED), OUT);
 
         RETURN (source); } // original VARARGS! will have an updated position
 
       case TYPE_ERROR:
         //
-        // FAIL is the preferred operation for triggering errors, as it has
+        // PANIC is the preferred operation for triggering errors, as it has
         // a natural behavior for blocks passed to construct readable messages
-        // and "FAIL X" more clearly communicates a failure than "EVAL X"
+        // and "PANIC X" more clearly communicates an exception than "EVAL X"
         // does.  However EVAL of an ERROR! would have to raise an error
         // anyway, so it might as well raise the one it is given...and this
-        // allows the more complex logic of FAIL to be written in Rebol code.
+        // allows the more complex logic of PANIC to be written in Rebol code.
         //
-        fail (cast(Error*, Cell_Varlist(source)));
+        panic (cast(Error*, Cell_Varlist(source)));
 
       default:
         crash (source);
@@ -579,7 +579,7 @@ DECLARE_NATIVE(APPLIQUE)
     }
 
     if (not Is_Action(OUT))
-        fail (Error_Invalid(applicand));
+        panic (Error_Invalid(applicand));
     Copy_Cell(applicand, OUT);
 
     // Make a FRAME! for the ACTION!, weaving in the ordered refinements
@@ -590,7 +590,7 @@ DECLARE_NATIVE(APPLIQUE)
     //
     struct Reb_Binder binder;
 
-    VarList* exemplar = Make_Managed_Context_For_Action_May_Fail(
+    VarList* exemplar = Make_Managed_Context_For_Action_May_Panic(
         applicand,
         L->stack_base,  // lowest_stackindex of refinements to weave in
         &binder

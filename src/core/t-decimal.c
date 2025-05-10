@@ -178,7 +178,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
 
     case TYPE_BINARY:
         if (Cell_Series_Len_At(arg) < 8)
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
 
         Init_Decimal_Bits(out, Cell_Blob_At(arg)); // makes TYPE_DECIMAL
         RESET_CELL(out, kind); // override type if TYPE_PERCENT
@@ -193,7 +193,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
             else if (Is_Decimal(item) || Is_Percent(item))
                 d = VAL_DECIMAL(item);
             else
-                fail (Error_Invalid_Core(item, VAL_SPECIFIER(arg)));
+                panic (Error_Invalid_Core(item, VAL_SPECIFIER(arg)));
 
             ++item;
 
@@ -203,7 +203,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
             else if (Is_Decimal(item) || Is_Percent(item))
                 exp = VAL_DECIMAL(item);
             else
-                fail (Error_Invalid_Core(item, VAL_SPECIFIER(arg)));
+                panic (Error_Invalid_Core(item, VAL_SPECIFIER(arg)));
 
             while (exp >= 1) {
                 //
@@ -212,7 +212,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
                 --exp;
                 d *= 10.0;
                 if (!FINITE(d))
-                    fail (Error_Overflow_Raw());
+                    panic (Error_Overflow_Raw());
             }
 
             while (exp <= -1) {
@@ -221,7 +221,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
             }
         }
         else
-            fail (Error_Bad_Make(kind, arg));
+            panic (Error_Bad_Make(kind, arg));
     }
 
     if (kind == TYPE_PERCENT)
@@ -229,14 +229,14 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
 
 dont_divide_if_percent:
     if (!FINITE(d))
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     RESET_CELL(out, kind);
     VAL_DECIMAL(out) = d;
     return out;
 
 bad_make:
-    fail (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(kind, arg));
 }
 
 
@@ -401,7 +401,7 @@ REBTYPE(Decimal)
             case SYM_DIVIDE:
             case SYM_REMAINDER:
                 if (d2 == 0.0)
-                    fail (Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
                 if (sym == SYM_DIVIDE)
                     d1 /= d2;
                 else
@@ -425,10 +425,10 @@ REBTYPE(Decimal)
                 goto setDec;
 
             default:
-                fail (Error_Math_Args(Type_Of(val), verb));
+                panic (Error_Math_Args(Type_Of(val), verb));
             }
         }
-        fail (Error_Math_Args(Type_Of(val), verb));
+        panic (Error_Math_Args(Type_Of(val), verb));
     }
 
     type = Type_Of(val);
@@ -478,7 +478,7 @@ REBTYPE(Decimal)
         arg = ARG(SCALE);
         if (Bool_ARG(TO)) {
             if (Is_Time(arg))
-                fail (Error_Invalid(arg));
+                panic (Error_Invalid(arg));
 
             d1 = Round_Dec(d1, flags, Dec64(arg));
             if (Is_Integer(arg))
@@ -498,7 +498,7 @@ REBTYPE(Decimal)
 
         UNUSED(PARAM(VALUE));
         if (Bool_ARG(ONLY))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(SEED)) {
             REBDEC d = VAL_DECIMAL(val);
@@ -515,14 +515,14 @@ REBTYPE(Decimal)
         return Init_Integer(OUT, ~cast(REBINT, d1));
 
     default:
-        ; // put fail outside switch() to catch any leaks
+        ; // put panic outside switch() to catch any leaks
     }
 
-    fail (Error_Illegal_Action(Type_Of(val), verb));
+    panic (Error_Illegal_Action(Type_Of(val), verb));
 
 setDec:
     if (not FINITE(d1))
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     RESET_CELL(OUT, type);
     VAL_DECIMAL(OUT) = d1;

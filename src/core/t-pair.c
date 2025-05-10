@@ -96,7 +96,7 @@ Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
     return Init_Pair(out, KNOWN(x), KNOWN(y));
 
   bad_make:
-    fail (Error_Bad_Make(TYPE_PAIR, arg));
+    panic (Error_Bad_Make(TYPE_PAIR, arg));
 }
 
 
@@ -144,7 +144,7 @@ void Min_Max_Pair(Value* out, const Value* a, const Value* b, bool maxed)
     else if (Is_Integer(a))
         ax = ay = cast(REBDEC, VAL_INT64(a));
     else
-        fail (Error_Invalid(a));
+        panic (Error_Invalid(a));
 
     float bx;
     float by;
@@ -155,7 +155,7 @@ void Min_Max_Pair(Value* out, const Value* a, const Value* b, bool maxed)
     else if (Is_Integer(b))
         bx = by = cast(REBDEC, VAL_INT64(b));
     else
-        fail (Error_Invalid(b));
+        panic (Error_Invalid(b));
 
     if (maxed)
         Init_Pair_Dec(out, MAX(ax, bx), MAX(ay, by));
@@ -266,7 +266,7 @@ REBTYPE(Pair)
     }
 
     default:  // !!! Should we limit the actions?
-        break;  /* fail (Error_Illegal_Action(TYPE_PAIR, verb)); */
+        break;  /* panic (Error_Illegal_Action(TYPE_PAIR, verb)); */
     }
 
    // !!! The only way we can generically guarantee the ability to retrigger

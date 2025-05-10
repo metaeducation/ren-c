@@ -135,7 +135,7 @@ DEVICE_CMD Init_Net(REBREQ *dr)
     //
     WSADATA wsaData;
     if (WSAStartup(0x0101, &wsaData))
-        rebFail_OS (GET_ERROR);
+        rebPanic_OS (GET_ERROR);
 #endif
 
     dev->flags |= RDF_INIT;
@@ -197,14 +197,14 @@ DEVICE_CMD Open_Socket(REBREQ *sock)
     long result = cast(int, socket(AF_INET, type, protocol));
 
     if (result == -1)
-        rebFail_OS (GET_ERROR);
+        rebPanic_OS (GET_ERROR);
 
     sock->requestee.socket = result;
     sock->state |= RSM_OPEN;
 
     // Set socket to non-blocking async mode:
     if (!Set_Sock_Options(sock->requestee.socket))
-        rebFail_OS (GET_ERROR);
+        rebPanic_OS (GET_ERROR);
 
     if (DEVREQ_NET(sock)->local_port != 0) {
         //
@@ -252,7 +252,7 @@ DEVICE_CMD Close_Socket(REBREQ *req)
         }
 
         if (CLOSE_SOCKET(req->requestee.socket) != 0)
-            rebFail_OS (GET_ERROR);
+            rebPanic_OS (GET_ERROR);
     }
 
     return DR_DONE;
@@ -279,7 +279,7 @@ DEVICE_CMD Lookup_Socket(REBREQ *req)
 
     HOSTENT *host = gethostbyname(s_cast(req->common.data));
     if (host == nullptr)
-        rebFail_OS (GET_ERROR);
+        rebPanic_OS (GET_ERROR);
 
     memcpy(&sock->remote_ip, *host->h_addr_list, 4); //he->h_length);
     req->flags &= ~RRF_DONE;
@@ -366,7 +366,7 @@ DEVICE_CMD Connect_Socket(REBREQ *req)
 
     default:
         req->state &= ~RSM_ATTEMPT;
-        rebFail_OS (result);
+        rebPanic_OS (result);
     }
 
     req->state &= ~RSM_ATTEMPT;
@@ -409,7 +409,7 @@ DEVICE_CMD Transfer_Socket(REBREQ *req)
 {
     if (not (req->state & RSM_CONNECT) and not (req->modes & RST_UDP))
         rebJumps(
-            "FAIL {RSM_CONNECT must be true in Transfer_Socket() unless UDP}"
+            "panic {RSM_CONNECT must be true in Transfer_Socket() unless UDP}"
         );
 
     struct sockaddr_in remote_addr;
@@ -493,7 +493,7 @@ DEVICE_CMD Transfer_Socket(REBREQ *req)
     result = GET_ERROR;
 
     if (result != NE_WOULDBLOCK)
-        rebFail_OS (result);
+        rebPanic_OS (result);
 
     return DR_PEND; // still waiting
 }
@@ -529,14 +529,14 @@ DEVICE_CMD Listen_Socket(REBREQ *req)
         cast(char*, &len), sizeof(len)
     );
     if (result != 0)
-        rebFail_OS (GET_ERROR);
+        rebPanic_OS (GET_ERROR);
 
     // Bind the socket to our local address:
     result = bind(
         req->requestee.socket, cast(struct sockaddr *, &sa), sizeof(sa)
     );
     if (result != 0)
-        rebFail_OS (GET_ERROR);
+        rebPanic_OS (GET_ERROR);
 
     req->state |= RSM_BIND;
 
@@ -544,7 +544,7 @@ DEVICE_CMD Listen_Socket(REBREQ *req)
     if (not (req->modes & RST_UDP)) {
         result = listen(req->requestee.socket, SOMAXCONN);
         if (result != 0)
-            rebFail_OS (GET_ERROR);
+            rebPanic_OS (GET_ERROR);
         req->state |= RSM_LISTEN;
     }
 
@@ -579,7 +579,7 @@ DEVICE_CMD Modify_Socket(REBREQ *sock)
         UNUSED(ARG(PORT)); // implicit from sock, which caller extracted
 
         if (not (sock->modes & RST_UDP)) // !!! other checks?
-            rebJumps("FAIL {SET-UDP-MULTICAST used on non-UDP port}");
+            rebJumps("panic {SET-UDP-MULTICAST used on non-UDP port}");
 
         struct ip_mreq mreq;
         memcpy(&mreq.imr_multiaddr.s_addr, VAL_TUPLE(ARG(GROUP)), 4);
@@ -601,7 +601,7 @@ DEVICE_CMD Modify_Socket(REBREQ *sock)
         UNUSED(ARG(PORT)); // implicit from sock, which caller extracted
 
         if (not (sock->modes & RST_UDP)) // !!! other checks?
-            rebJumps("FAIL {SET-UDP-TTL used on non-UDP port}");
+            rebJumps("panic {SET-UDP-TTL used on non-UDP port}");
 
         int ttl = VAL_INT32(ARG(TTL));
         result = setsockopt(
@@ -615,11 +615,11 @@ DEVICE_CMD Modify_Socket(REBREQ *sock)
         break; }
 
     default:
-        rebJumps("FAIL {Unknown socket MODIFY operation}");
+        rebJumps("panic {Unknown socket MODIFY operation}");
     }
 
     if (result < 0)
-        rebFail_OS (result);
+        rebPanic_OS (result);
 
     return DR_DONE;
 }
@@ -671,11 +671,11 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
         if (errnum == NE_WOULDBLOCK)
             return DR_PEND;
 
-        rebFail_OS (errnum);
+        rebPanic_OS (errnum);
     }
 
     if (not Set_Sock_Options(fd))
-        rebFail_OS (GET_ERROR);
+        rebPanic_OS (GET_ERROR);
 
     // Create a new port using ACCEPT
 

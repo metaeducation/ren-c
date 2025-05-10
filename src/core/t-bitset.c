@@ -117,7 +117,7 @@ Bounce MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
     // path used 0x0FFFFFFF.  Assume A_MAKE was more likely right.
     //
     if (len < 0 || len > 0x0FFFFFFF)
-        fail (Error_Invalid(arg));
+        panic (Error_Invalid(arg));
 
     Binary* flex = Make_Bitset(len);
     Init_Bitset(out, flex);
@@ -279,7 +279,7 @@ void Set_Bit(Binary* bset, REBLEN n, bool set)
 //
 bool Set_Bits(Binary* bset, const Value* val, bool set)
 {
-    Fail_If_Read_Only_Flex(bset);
+    Panic_If_Read_Only_Flex(bset);
 
     if (Is_Char(val)) {
         Set_Bit(bset, VAL_CHAR(val), set);
@@ -317,7 +317,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     }
 
     if (!Any_List(val))
-        fail (Error_Invalid_Type(Type_Of(val)));
+        panic (Error_Invalid_Type(Type_Of(val)));
 
     Cell* item = Cell_List_At(val);
 
@@ -346,13 +346,13 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 if (Is_Char(item)) {
                     REBLEN n = VAL_CHAR(item);
                     if (n < c)
-                        fail (Error_Past_End_Raw());
+                        panic (Error_Past_End_Raw());
                     do {
                         Set_Bit(bset, c, set);
                     } while (c++ < n); // post-increment: test before overflow
                 }
                 else
-                    fail (Error_Invalid_Core(item, VAL_SPECIFIER(val)));
+                    panic (Error_Invalid_Core(item, VAL_SPECIFIER(val)));
             }
             else
                 Set_Bit(bset, c, set);
@@ -372,12 +372,12 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 if (Is_Integer(item)) {
                     n = Int32s(KNOWN(item), 0);
                     if (n < c)
-                        fail (Error_Past_End_Raw());
+                        panic (Error_Past_End_Raw());
                     for (; c <= n; c++)
                         Set_Bit(bset, c, set);
                 }
                 else
-                    fail (Error_Invalid_Core(item, VAL_SPECIFIER(val)));
+                    panic (Error_Invalid_Core(item, VAL_SPECIFIER(val)));
             }
             else
                 Set_Bit(bset, n, set);
@@ -455,7 +455,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
     }
 
     if (!Any_List(val))
-        fail (Error_Invalid_Type(Type_Of(val)));
+        panic (Error_Invalid_Type(Type_Of(val)));
 
     // Loop through block of bit specs
 
@@ -471,13 +471,13 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
                 if (Is_Char(item)) {
                     REBLEN n = VAL_CHAR(item);
                     if (n < c)
-                        fail (Error_Past_End_Raw());
+                        panic (Error_Past_End_Raw());
                     for (; c <= n; c++)
                         if (Check_Bit(bset, c, uncased))
                             return true;
                 }
                 else
-                    fail (Error_Invalid_Core(item, VAL_SPECIFIER(val)));
+                    panic (Error_Invalid_Core(item, VAL_SPECIFIER(val)));
             }
             else
                 if (Check_Bit(bset, c, uncased))
@@ -494,13 +494,13 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
                 if (Is_Integer(item)) {
                     n = Int32s(KNOWN(item), 0);
                     if (n < c)
-                        fail (Error_Past_End_Raw());
+                        panic (Error_Past_End_Raw());
                     for (; c <= n; c++)
                         if (Check_Bit(bset, c, uncased))
                             return true;
                 }
                 else
-                    fail (Error_Invalid_Core(item, VAL_SPECIFIER(val)));
+                    panic (Error_Invalid_Core(item, VAL_SPECIFIER(val)));
             }
             else
                 if (Check_Bit(bset, n, uncased))
@@ -519,7 +519,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
             break;
 
         default:
-            fail (Error_Invalid_Type(Type_Of(item)));
+            panic (Error_Invalid_Type(Type_Of(item)));
         }
     }
     return false;
@@ -620,22 +620,22 @@ REBTYPE(Bitset)
         UNUSED(PARAM(VALUE));
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(ONLY))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(SKIP)) {
             UNUSED(ARG(SIZE));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(LAST))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(REVERSE))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(TAIL))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(MATCH))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (not Check_Bits(Cell_Bitset(value), arg, Bool_ARG(CASE)))
             return LOGIC(false);
@@ -653,11 +653,11 @@ REBTYPE(Bitset)
 
     case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
     case SYM_INSERT: {
-        FAIL_IF_ERROR(arg);
+        PANIC_IF_ERROR(arg);
         if (Is_Nulled(arg) or Is_Blank(arg))
-            RETURN (value); // don't fail on read only if it would be a no-op
+            RETURN (value); // don't panic on read only if it would be a no-op
 
-        Fail_If_Read_Only_Flex(Cell_Bitset(value));
+        Panic_If_Read_Only_Flex(Cell_Bitset(value));
 
         bool diff;
         if (BITS_NOT(Cell_Bitset(value)))
@@ -666,7 +666,7 @@ REBTYPE(Bitset)
             diff = true;
 
         if (not Set_Bits(Cell_Bitset(value), arg, diff))
-            fail (Error_Invalid(arg));
+            panic (Error_Invalid(arg));
         goto return_bitset; }
 
     case SYM_REMOVE: {
@@ -675,14 +675,14 @@ REBTYPE(Bitset)
         UNUSED(PARAM(SERIES));
         if (Bool_ARG(MAP)) {
             UNUSED(ARG(KEY));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         if (not Bool_ARG(PART))
-            fail (Error_Missing_Arg_Raw());
+            panic (Error_Missing_Arg_Raw());
 
         if (not Set_Bits(Cell_Bitset(value), ARG(LIMIT), false))
-            fail (ARG(LIMIT));
+            panic (ARG(LIMIT));
 
         goto return_bitset; }
 
@@ -692,13 +692,13 @@ REBTYPE(Bitset)
         UNUSED(PARAM(VALUE));
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(DEEP))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(TYPES)) {
             UNUSED(ARG(KINDS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         Init_Any_Series_At(
@@ -711,7 +711,7 @@ REBTYPE(Bitset)
         return OUT; }
 
     case SYM_CLEAR:
-        Fail_If_Read_Only_Flex(Cell_Bitset(value));
+        Panic_If_Read_Only_Flex(Cell_Bitset(value));
         Clear_Flex(Cell_Bitset(value));
         goto return_bitset;
 
@@ -719,7 +719,7 @@ REBTYPE(Bitset)
     case SYM_UNION:
     case SYM_DIFFERENCE:
         if (!Is_Bitset(arg) && !Is_Binary(arg))
-            fail (Error_Math_Args(Type_Of(arg), verb));
+            panic (Error_Math_Args(Type_Of(arg), verb));
         flex = Xandor_Binary(verb, value, arg);
         Trim_Tail_Zeros(flex);
         return Init_Any_Series(OUT, Type_Of(value), flex);
@@ -728,7 +728,7 @@ REBTYPE(Bitset)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_BITSET, verb));
+    panic (Error_Illegal_Action(TYPE_BITSET, verb));
 
   return_bitset:;
 

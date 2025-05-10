@@ -128,7 +128,7 @@ static void Expand_Word_Table(void)
     if (num_slots == 0) { // larger than hash prime table
         DECLARE_VALUE (temp);
         Init_Integer(temp, old_num_slots + 1);
-        fail (Error_Size_Limit_Raw(temp));
+        panic (Error_Size_Limit_Raw(temp));
     }
 
     assert(Flex_Wide(PG_Canons_By_Hash) == sizeof(Symbol*));

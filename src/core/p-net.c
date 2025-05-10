@@ -119,7 +119,7 @@ static Bounce Transport_Actor(
                 break;
             }
 
-            fail (Error_On_Port(SYM_NOT_OPEN, port, -12)); }
+            panic (Error_On_Port(SYM_NOT_OPEN, port, -12)); }
 
         case SYM_OPEN: {
             Value* arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
@@ -136,7 +136,7 @@ static Bounce Transport_Actor(
             else if (Is_Integer(local_id))
                 DEVREQ_NET(sock)->local_port = VAL_INT32(local_id);
             else
-                fail ("local-id field of PORT! spec must be BLANK!/INTEGER!");
+                panic ("local-id field of PORT! spec must be BLANK!/INTEGER!");
 
             OS_DO_DEVICE_SYNC(sock, RDC_OPEN);
 
@@ -162,7 +162,7 @@ static Bounce Transport_Actor(
 
                 assert(l_result != nullptr);
                 if (rebDid("error?", rebQ(l_result)))
-                    rebJumps("fail", l_result);
+                    rebJumps("panic", l_result);
                 rebRelease(l_result); // ignore result
 
                 RETURN (port);
@@ -188,7 +188,7 @@ static Bounce Transport_Actor(
                 goto open_socket_actions;
             }
             else
-                fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));
+                panic (Error_On_Port(SYM_INVALID_SPEC, port, -10));
             break; }
 
         case SYM_CLOSE:
@@ -198,7 +198,7 @@ static Bounce Transport_Actor(
             break;
 
         default:
-            fail (Error_On_Port(SYM_NOT_OPEN, port, -12));
+            panic (Error_On_Port(SYM_NOT_OPEN, port, -12));
         }
     }
 
@@ -262,11 +262,11 @@ static Bounce Transport_Actor(
 
         if (Bool_ARG(PART)) {
             UNUSED(ARG(LIMIT));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(SEEK)) {
             UNUSED(ARG(INDEX));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher
@@ -277,7 +277,7 @@ static Bounce Transport_Actor(
             not (sock->modes & RST_UDP)
             and not (sock->state & RSM_CONNECT)
         ){
-            fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
+            panic (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
         }
 
         // Setup the read buffer (allocate a buffer if needed):
@@ -306,7 +306,7 @@ static Bounce Transport_Actor(
         }
         else {
             if (rebDid("error?", rebQ(result)))
-                rebJumps("fail", result);
+                rebJumps("panic", result);
 
             // a note said "recv CAN happen immediately"
             //
@@ -326,16 +326,16 @@ static Bounce Transport_Actor(
 
         if (Bool_ARG(SEEK)) {
             UNUSED(ARG(INDEX));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(APPEND))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(ALLOW)) {
             UNUSED(ARG(ACCESS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
         if (Bool_ARG(LINES))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         // Write the entire argument string to the network.
         // The lower level write code continues until done.
@@ -344,7 +344,7 @@ static Bounce Transport_Actor(
             not (sock->modes & RST_UDP)
             and not (sock->state & RSM_CONNECT)
         ){
-            fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
+            panic (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
         }
 
         // Determine length. Clip /PART to size of string if needed.
@@ -403,7 +403,7 @@ static Bounce Transport_Actor(
         }
         else {
             if (rebDid("error?", rebQ(result)))
-                rebJumps("fail", result);
+                rebJumps("panic", result);
 
             // Note here said "send CAN happen immediately"
             //
@@ -418,7 +418,7 @@ static Bounce Transport_Actor(
         UNUSED(PARAM(SERIES));
 
         if (not (sock->modes & RST_LISTEN) or (sock->modes & RST_UDP))
-            fail ("TAKE is only available on TCP LISTEN ports");
+            panic ("TAKE is only available on TCP LISTEN ports");
 
         UNUSED(Bool_ARG(PART)); // non-null limit accounts for
 
@@ -429,7 +429,7 @@ static Bounce Transport_Actor(
         ); }
 
     case SYM_PICK: {
-        fail (
+        panic (
             "Listening network PORT!s no longer support FIRST (or PICK) to"
             " extract the connection PORT! in an accept event.  It was"
             " actually TAKE-ing the port, since it couldn't be done again."
@@ -461,7 +461,7 @@ static Bounce Transport_Actor(
         }
         else {
             if (rebDid("error?", rebQ(result)))
-                rebJumps("libFAIL", result);
+                rebJumps("fail", result);
 
             // This can happen with UDP, which is connectionless so it
             // returns DR_DONE.
@@ -477,7 +477,7 @@ static Bounce Transport_Actor(
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_PORT, verb));
+    panic (Error_Illegal_Action(TYPE_PORT, verb));
 }
 
 

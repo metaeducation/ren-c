@@ -183,7 +183,7 @@ REBINT Hash_UTF8(const Byte *utf8, Size size)
 //
 // Return a case insensitive hash value for any value.
 //
-// Fails if datatype cannot be hashed.  Note that the specifier is not used
+// Panics if datatype cannot be hashed.  Note that the specifier is not used
 // in hashing, because it is not used in comparisons either.
 //
 uint32_t Hash_Value(const Cell* v)
@@ -288,7 +288,7 @@ uint32_t Hash_Value(const Cell* v)
         //
         // !!! Why not?
         //
-        fail (Error_Invalid_Type(Type_Of(v)));
+        panic (Error_Invalid_Type(Type_Of(v)));
 
     case TYPE_WORD:
     case TYPE_SET_WORD:
@@ -352,7 +352,7 @@ uint32_t Hash_Value(const Cell* v)
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //
-        fail (Error_Invalid_Type(Type_Of(v)));
+        panic (Error_Invalid_Type(Type_Of(v)));
 
     default:
         // The list above should be comprehensive.  Crash in order to keep
@@ -375,7 +375,7 @@ Flex* Make_Hash_Sequence(REBLEN len)
         DECLARE_VALUE (temp);
         Init_Integer(temp, len);
 
-        fail (Error_Size_Limit_Raw(temp));
+        panic (Error_Size_Limit_Raw(temp));
     }
 
     Flex* flex = Make_Flex(n + 1, sizeof(REBLEN));
@@ -463,7 +463,7 @@ Flex* Hash_Block(const Value* block, REBLEN skip, bool cased)
                     // than not, this will catch bugs in callers vs. be
                     // a roadblock to them.
                     //
-                    fail (Error_Block_Skip_Wrong_Raw());
+                    panic (Error_Block_Skip_Wrong_Raw());
                 }
 
                 return hashlist;

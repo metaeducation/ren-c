@@ -199,7 +199,7 @@ void *OS_Open_Library(const Value* path)
     rebFree(path_utf8);
 
     if (not dll)
-        rebFail_OS (GetLastError());
+        rebPanic_OS (GetLastError());
 
     return dll;
 }

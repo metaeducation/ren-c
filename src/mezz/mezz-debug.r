@@ -21,7 +21,7 @@ verify: function [
 ][
     while [pos: evaluate/step3 conditions 'result] [
         if not :result [
-            fail/blame [
+            panic/blame [
                 "Assertion condition returned null:"
                 copy/part conditions pos
             ] 'conditions

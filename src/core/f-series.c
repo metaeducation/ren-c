@@ -165,10 +165,10 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
         if (Bool_ARG(MAP)) {
             UNUSED(ARG(KEY));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
-        Fail_If_Read_Only_Flex(Cell_Flex(value));
+        Panic_If_Read_Only_Flex(Cell_Flex(value));
 
         REBINT len;
         if (Bool_ARG(PART))
@@ -262,7 +262,7 @@ REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
     Cell* t = Cell_List_At(tval);
 
     if (C_STACK_OVERFLOWING(&s))
-        Fail_Stack_Overflow();
+        Panic_Stack_Overflow();
 
     if (
         Cell_Flex(sval) == Cell_Flex(tval)

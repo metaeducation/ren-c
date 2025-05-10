@@ -214,7 +214,7 @@ make-scheme: function [
     ]
 
     match [object! handle!] :scheme/actor else [
-        fail ["Scheme actor" :scheme/name "can't be" type of :scheme/actor]
+        panic ["Scheme actor" :scheme/name "can't be" type of :scheme/actor]
     ]
 
     append system/schemes reduce [scheme/name scheme]

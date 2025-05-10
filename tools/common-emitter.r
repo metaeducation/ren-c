@@ -54,7 +54,7 @@ cscape: function [
         text! <> return-type
         file! <> return-type
     ] then [
-        fail ["CSCAPE requires TEXT! or FILE! as template:" mold last template]
+        panic ["CSCAPE requires TEXT! or FILE! as template:" mold last template]
     ]
 
     string: trim/auto to text! last template
@@ -143,7 +143,7 @@ cscape: function [
 
             sub: case [
                 null? :sub [
-                    fail [
+                    panic [
                         "Substitution was null (old BLANK! in bootstrap):"
                             mold expr
                     ]
@@ -165,7 +165,7 @@ cscape: function [
                 mode = #delimit [
                     reify delimit (unspaced [suffix newline]) sub
                 ]
-                fail ["Invalid CSCAPE mode:" mode]
+                panic ["Invalid CSCAPE mode:" mode]
             ]
 
             sub: any [degrade sub copy ""]
@@ -234,7 +234,7 @@ make-emitter: function [
     system ;-- The `System:` SET-WORD! below overrides the global for access
 ][
     if not by: system/script/header/file [
-        fail [
+        panic [
             "File: should be set in the generating scripts header section"
             "so that generated files have a comment on what made them"
         ]
@@ -293,12 +293,12 @@ make-emitter: function [
         ][
             if newline != last buf-emit [
                 probe skip (tail-of buf-emit) -100
-                fail "WRITE-EMITTED needs NEWLINE as last character in buffer"
+                panic "WRITE-EMITTED needs NEWLINE as last character in buffer"
             ]
 
             if tab-pos: find buf-emit tab [
                 probe skip tab-pos -100
-                fail "tab character passed to emit"
+                panic "tab character passed to emit"
             ]
 
             if tabbed [

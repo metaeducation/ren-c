@@ -27,7 +27,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Structure holding the information about the last point in the stack that
-// wanted to set up an opportunity to intercept a `fail (Error_XXX())`
+// wanted to set up an opportunity to intercept a `panic (Error_XXX())`
 //
 // For operations using this structure, see %sys-trap.h
 //

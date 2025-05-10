@@ -44,18 +44,18 @@ REBINT Get_Num_From_Arg(const Value* val)
 
     if (Is_Integer(val)) {
         if (VAL_INT64(val) > INT32_MAX or VAL_INT64(val) < INT32_MIN)
-            fail (Error_Out_Of_Range(val));
+            panic (Error_Out_Of_Range(val));
         n = VAL_INT32(val);
     }
     else if (Is_Decimal(val) or Is_Percent(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
-            fail (Error_Out_Of_Range(val));
+            panic (Error_Out_Of_Range(val));
         n = cast(REBINT, VAL_DECIMAL(val));
     }
     else if (Is_Logic(val))
         n = (VAL_LOGIC(val) ? 1 : 2);
     else
-        fail (Error_Invalid(val));
+        panic (Error_Invalid(val));
 
     return n;
 }
@@ -70,7 +70,7 @@ REBINT Float_Int16(REBD32 f)
         DECLARE_VALUE (temp);
         Init_Decimal(temp, f);
 
-        fail (Error_Out_Of_Range(temp));
+        panic (Error_Out_Of_Range(temp));
     }
     return cast(REBINT, f);
 }
@@ -96,7 +96,7 @@ REBINT Int32(const Cell* val)
     return VAL_INT32(val);
 
 out_of_range:
-    fail (Error_Out_Of_Range(KNOWN(val)));
+    panic (Error_Out_Of_Range(KNOWN(val)));
 }
 
 
@@ -138,7 +138,7 @@ REBINT Int32s(const Cell* val, REBINT sign)
     }
 
 out_of_range:
-    fail (Error_Out_Of_Range(KNOWN(val)));
+    panic (Error_Out_Of_Range(KNOWN(val)));
 }
 
 
@@ -152,7 +152,7 @@ REBI64 Int64(const Value* val)
     if (Is_Decimal(val) or Is_Percent(val))
         return cast(REBI64, VAL_DECIMAL(val));
 
-    fail (Error_Invalid(val));
+    panic (Error_Invalid(val));
 }
 
 
@@ -166,7 +166,7 @@ REBDEC Dec64(const Value* val)
     if (Is_Integer(val))
         return cast(REBDEC, VAL_INT64(val));
 
-    fail (Error_Invalid(val));
+    panic (Error_Invalid(val));
 }
 
 
@@ -187,7 +187,7 @@ REBI64 Int64s(const Value* val, REBINT sign)
             VAL_DECIMAL(val) > cast(REBDEC, INT64_MAX)
             or VAL_DECIMAL(val) < cast(REBDEC, INT64_MIN)
         ){
-            fail (Error_Out_Of_Range(val));
+            panic (Error_Out_Of_Range(val));
         }
         n = cast(REBI64, VAL_DECIMAL(val));
     }
@@ -203,7 +203,7 @@ REBI64 Int64s(const Value* val, REBINT sign)
         return n;
     }
 
-    fail (Error_Out_Of_Range(val));
+    panic (Error_Out_Of_Range(val));
 }
 
 
@@ -305,7 +305,7 @@ Value* Init_Any_Series_At_Core(
 
     if (Any_Path_Kind(type)) {
         if (Cell_Series_Len_At(out) < 2)
-            fail ("ANY-PATH! must have at least 2 elements");
+            panic ("ANY-PATH! must have at least 2 elements");
     }
 
   #if RUNTIME_CHECKS
@@ -435,7 +435,7 @@ static REBLEN Part_Len_Core(
             Type_Of(series) != Type_Of(limit) // !!! should AS be tolerated?
             or Cell_Flex(series) != Cell_Flex(limit)
         ){
-            fail (Error_Invalid_Part_Raw(limit));
+            panic (Error_Invalid_Part_Raw(limit));
         }
 
         len = cast(REBINT, VAL_INDEX(limit)) - cast(REBINT, VAL_INDEX(series));
@@ -461,7 +461,7 @@ static REBLEN Part_Len_Core(
         // do `len = -len` couldn't make a positive 32-bit version of that
         // negative value.  For now, use REBI64 to do the calculation.
         //
-        fail ("Length out of range for /PART refinement");
+        panic ("Length out of range for /PART refinement");
     }
 
     assert(len >= 0);
@@ -525,7 +525,7 @@ REBLEN Part_Len_Append_Insert_May_Modify_Index(
     if (Is_Integer(limit) or Is_Decimal(limit))
         return Part_Len_Core(value, limit);
 
-    fail ("Invalid /PART specified for non-series APPEND/INSERT argument");
+    panic ("Invalid /PART specified for non-series APPEND/INSERT argument");
 }
 
 
@@ -537,7 +537,7 @@ int64_t Add_Max(enum Reb_Kind kind_or_0, int64_t n, int64_t m, int64_t maxi)
     int64_t r = n + m;
     if (r < -maxi or r > maxi) {
         if (kind_or_0 != TYPE_0)
-            fail (Error_Type_Limit_Raw(Datatype_From_Kind(kind_or_0)));
+            panic (Error_Type_Limit_Raw(Datatype_From_Kind(kind_or_0)));
         r = r > 0 ? maxi : -maxi;
     }
     return r;
@@ -551,6 +551,6 @@ int64_t Mul_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n * m;
     if (r < -maxi or r > maxi)
-        fail (Error_Type_Limit_Raw(Datatype_From_Kind(type)));
+        panic (Error_Type_Limit_Raw(Datatype_From_Kind(type)));
     return cast(int, r); // !!! (?) review this cast
 }

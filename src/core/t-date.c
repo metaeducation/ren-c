@@ -323,7 +323,7 @@ static REBDAT Normalize_Date(REBINT day, REBINT month, REBINT year, REBINT tz)
     }
 
     if (year < 0 || year > MAX_YEAR)
-        fail (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_DATE)));
+        panic (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_DATE)));
 
     dr.date.year = year;
     dr.date.month = month+1;
@@ -387,7 +387,7 @@ void Subtract_Date(Value* d1, Value* d2, Value* result)
     // Note: abs() takes `int`, but there is a labs(), and C99 has llabs()
     //
     if (cast(REBLEN, abs(cast(int, diff))) > (((1U << 31) - 1) / SECS_IN_DAY))
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     REBI64 t1;
     if (Get_Cell_Flag(d1, DATE_HAS_TIME))
@@ -513,7 +513,7 @@ Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
 
                 tz = cast(REBINT, VAL_NANO(item) / (ZONE_MINS * MIN_SEC));
                 if (tz < -MAX_ZONE || tz > MAX_ZONE)
-                    fail (Error_Out_Of_Range(KNOWN(item)));
+                    panic (Error_Out_Of_Range(KNOWN(item)));
                 ++item;
             }
         }
@@ -533,7 +533,7 @@ Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     }
 
   bad_make:
-    fail (Error_Bad_Make(TYPE_DATE, arg));
+    panic (Error_Bad_Make(TYPE_DATE, arg));
 }
 
 
@@ -552,7 +552,7 @@ static REBINT Int_From_Date_Arg(const Value* opt_poke) {
     if (Is_Blank(opt_poke))
         return 0;
 
-    fail (Error_Invalid(opt_poke));
+    panic (Error_Invalid(opt_poke));
 }
 
 
@@ -584,11 +584,11 @@ void Pick_Or_Poke_Date(
         case 11: sym = SYM_MINUTE; break;
         case 12: sym = SYM_SECOND; break;
         default:
-            fail (Error_Invalid(picker));
+            panic (Error_Invalid(picker));
         }
     }
     else
-        fail (Error_Invalid(picker));
+        panic (Error_Invalid(picker));
 
     if (opt_poke == nullptr) {
         assert(opt_out != nullptr);
@@ -744,7 +744,7 @@ void Pick_Or_Poke_Date(
             else if (Is_Decimal(opt_poke))
                 secs = DEC_TO_SECS(VAL_DECIMAL(opt_poke));
             else
-                fail (Error_Invalid(opt_poke));
+                panic (Error_Invalid(opt_poke));
             break;
 
         case SYM_ZONE:
@@ -754,7 +754,7 @@ void Pick_Or_Poke_Date(
             }
 
             if (Not_Cell_Flag(v, DATE_HAS_TIME))
-                fail ("Can't set /ZONE in a DATE! with no time component");
+                panic ("Can't set /ZONE in a DATE! with no time component");
 
             Set_Cell_Flag(v, DATE_HAS_ZONE); // hence tz is applicable
             if (Is_Time(opt_poke))
@@ -763,17 +763,17 @@ void Pick_Or_Poke_Date(
                 tz = VAL_ZONE(opt_poke);
             else tz = Int_From_Date_Arg(opt_poke) * (60 / ZONE_MINS);
             if (tz > MAX_ZONE || tz < -MAX_ZONE)
-                fail (Error_Out_Of_Range(opt_poke));
+                panic (Error_Out_Of_Range(opt_poke));
             break;
 
         case SYM_JULIAN:
         case SYM_WEEKDAY:
         case SYM_UTC:
-            fail (Error_Invalid(picker));
+            panic (Error_Invalid(picker));
 
         case SYM_DATE:
             if (!Is_Date(opt_poke))
-                fail (Error_Invalid(opt_poke));
+                panic (Error_Invalid(opt_poke));
             VAL_DATE(v) = VAL_DATE(opt_poke);
 
             // If the poked date's time zone bitfield is not in effect, that
@@ -822,7 +822,7 @@ void Pick_Or_Poke_Date(
                 time.n = 0;
             }
             else {
-                //if (f < 0.0) fail (Error_Out_Of_Range(setval));
+                //if (f < 0.0) panic (Error_Out_Of_Range(setval));
                 time.s = cast(REBINT, VAL_DECIMAL(opt_poke));
                 time.n = cast(REBINT,
                     (VAL_DECIMAL(opt_poke) - time.s) * SEC_SEC);
@@ -831,7 +831,7 @@ void Pick_Or_Poke_Date(
             break; }
 
         default:
-            fail (Error_Invalid(picker));
+            panic (Error_Invalid(picker));
         }
 
         // !!! We've gone through and updated the date or time, but we could
@@ -961,7 +961,7 @@ REBTYPE(Date)
             UNUSED(PARAM(VALUE));
 
             if (Bool_ARG(ONLY))
-                fail (Error_Bad_Refines_Raw());
+                panic (Error_Bad_Refines_Raw());
 
             const bool secure = Bool_ARG(SECURE);
 
@@ -999,10 +999,10 @@ REBTYPE(Date)
             Value* val2 = ARG(VALUE2);
 
             if (Bool_ARG(CASE))
-                fail (Error_Bad_Refines_Raw());
+                panic (Error_Bad_Refines_Raw());
 
             if (Bool_ARG(SKIP))
-                fail (Error_Bad_Refines_Raw());
+                panic (Error_Bad_Refines_Raw());
             UNUSED(PARAM(SIZE));
 
             // !!! Plain SUBTRACT on dates has historically given INTEGER! of
@@ -1013,16 +1013,16 @@ REBTYPE(Date)
             // https://forum.rebol.info/t/486
             //
             if (not Is_Date(val2))
-                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
+                panic (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
             Subtract_Date(val1, val2, OUT);
             return OUT; }
 
         default:
-            fail (Error_Illegal_Action(TYPE_DATE, verb));
+            panic (Error_Illegal_Action(TYPE_DATE, verb));
         }
     }
-    fail (Error_Illegal_Action(TYPE_DATE, verb));
+    panic (Error_Illegal_Action(TYPE_DATE, verb));
 
 fixTime:
     Normalize_Time(&secs, &day);

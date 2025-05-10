@@ -65,7 +65,7 @@ emit-proto: func [return: [~] proto] [
         2 <= length of header
         set-word? header/1
     ] else [
-        fail [
+        panic [
             proto
             newline
             "Prototype has bad Rebol function header block in comment"
@@ -74,7 +74,7 @@ emit-proto: func [return: [~] proto] [
 
     if header/2 != 'API [return ~]
     if not set-word? header/1 [
-        fail ["API declaration should be a SET-WORD!, not" (header/1)]
+        panic ["API declaration should be a SET-WORD!, not" (header/1)]
     ]
 
     paramlist: collect [
@@ -103,12 +103,12 @@ emit-proto: func [return: [~] proto] [
                 )
             ]]
         ] else [
-            fail ["Couldn't extract API schema from prototype:" proto]
+            panic ["Couldn't extract API schema from prototype:" proto]
         ]
     ]
 
     if (to set-word! name) != header/1 [ ;-- e.g. `//  rebValue: API`
-        fail [
+        panic [
             "Name in comment header (" header/1 ") isn't C function name"
             "minus API_ prefix to match" (name)
         ]
@@ -544,8 +544,8 @@ e-lib/emit {
      * handles will auto-GC.
      */
 
-    #define rebFail_OS(errnum) \
-        rebJumps("fail", rebR(rebError_OS(errnum)));
+    #define rebPanic_OS(errnum) \
+        rebJumps("panic", rebR(rebError_OS(errnum)));
 
 
     #ifdef __cplusplus

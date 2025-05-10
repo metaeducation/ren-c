@@ -88,7 +88,7 @@ static void Arc_Trans(Value* out, const Value* value, bool radians, REBLEN kind)
 {
     REBDEC dval = AS_DECIMAL(value);
     if (kind != TANGENT and (dval < -1 || dval > 1))
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     if (kind == SINE) dval = asin(dval);
     else if (kind == COSINE) dval = acos(dval);
@@ -164,7 +164,7 @@ DECLARE_NATIVE(TANGENT)
 
     REBDEC dval = Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     return Init_Decimal(OUT, tan(dval));
 }
@@ -265,7 +265,7 @@ DECLARE_NATIVE(LOG_10)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
-        fail (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, log10(dval));
 }
@@ -285,7 +285,7 @@ DECLARE_NATIVE(LOG_2)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
-        fail (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, log(dval) / LOG2);
 }
@@ -305,7 +305,7 @@ DECLARE_NATIVE(LOG_E)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
-        fail (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, log(dval));
 }
@@ -325,7 +325,7 @@ DECLARE_NATIVE(SQUARE_ROOT)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval < 0)
-        fail (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, sqrt(dval));
 }
@@ -386,7 +386,7 @@ DECLARE_NATIVE(SHIFT)
             if (Bool_ARG(LOGICAL))
                 VAL_INT64(a) = 0;
             else if (VAL_INT64(a) != 0)
-                fail (Error_Overflow_Raw());
+                panic (Error_Overflow_Raw());
         }
         else {
             if (Bool_ARG(LOGICAL))
@@ -398,7 +398,7 @@ DECLARE_NATIVE(SHIFT)
                     : cast(REBU64, VAL_INT64(a));
                 if (c <= d) {
                     if ((c < d) || (VAL_INT64(a) >= 0))
-                        fail (Error_Overflow_Raw());
+                        panic (Error_Overflow_Raw());
 
                     VAL_INT64(a) = INT64_MIN;
                 }
@@ -419,15 +419,15 @@ DECLARE_NATIVE(SHIFT)
 #endif
 
 
-//  CT_Fail: C
+//  CT_Panic: C
 //
-REBINT CT_Fail(const Cell* a, const Cell* b, REBINT mode)
+REBINT CT_Panic(const Cell* a, const Cell* b, REBINT mode)
 {
     UNUSED(a);
     UNUSED(b);
     UNUSED(mode);
 
-    fail ("Cannot compare type");
+    panic ("Cannot compare type");
 }
 
 
@@ -439,7 +439,7 @@ REBINT CT_Unhooked(const Cell* a, const Cell* b, REBINT mode)
     UNUSED(b);
     UNUSED(mode);
 
-    fail ("Datatype does not have type comparison handler registered");
+    panic ("Datatype does not have type comparison handler registered");
 }
 
 
@@ -470,7 +470,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
     enum Reb_Kind tb = Type_Of(b);
 
     if (ta == TYPE_TRASH or tb == TYPE_TRASH)  // should not call w/trash!
-        fail ("Cannot compare TRASH (~ antiform) with equality/inequality");
+        panic ("Cannot compare TRASH (~ antiform) with equality/inequality");
 
     if (ta == TYPE_VOID) {
         if (tb == TYPE_VOID)
@@ -495,7 +495,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
                 goto compare;
             }
             else if (tb == TYPE_MONEY) {
-                fail ("Money-to-int comparison not implemented in bootstrap");
+                panic ("Money-to-int comparison not implemented in bootstrap");
             }
             break;
 
@@ -507,7 +507,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
                 goto compare;
             }
             else if (tb == TYPE_MONEY) {
-                fail ("Numeric money comparisons not implemented in bootstrap");
+                panic ("Numeric money comparisons not implemented in bootstrap");
             }
             else if (tb == TYPE_DECIMAL || tb == TYPE_PERCENT) // equivalent types
                 goto compare;
@@ -515,7 +515,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 
         case TYPE_MONEY:
             if (tb == TYPE_INTEGER or tb == TYPE_DECIMAL or tb == TYPE_PERCENT)
-                fail ("Numeric money comparisons not implemented in bootstrap");
+                panic ("Numeric money comparisons not implemented in bootstrap");
             break;
 
         case TYPE_WORD:
@@ -541,7 +541,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 
         if (strictness == 0) return 0;
 
-        fail (Error_Invalid_Compare_Raw(Datatype_Of(a), Datatype_Of(b)));
+        panic (Error_Invalid_Compare_Raw(Datatype_Of(a), Datatype_Of(b)));
     }
 
     if (ta == TYPE_NULLED)
@@ -556,7 +556,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 
     REBINT result = hook(a, b, strictness);
     if (result < 0)
-        fail (Error_Invalid_Compare_Raw(Datatype_Of(a), Datatype_Of(b)));
+        panic (Error_Invalid_Compare_Raw(Datatype_Of(a), Datatype_Of(b)));
     return result;
 }
 
@@ -578,8 +578,8 @@ DECLARE_NATIVE(LAX_EQUAL_Q)
     Value* v1 = ARG(VALUE1);
     Value* v2 = ARG(VALUE2);
 
-    FAIL_IF_ERROR(v1);
-    FAIL_IF_ERROR(v2);
+    PANIC_IF_ERROR(v1);
+    PANIC_IF_ERROR(v2);
 
     if (Compare_Modify_Values(v1, v2, 0))
         return LOGIC(true);
@@ -605,8 +605,8 @@ DECLARE_NATIVE(LAX_NOT_EQUAL_Q)
     Value* v1 = ARG(VALUE1);
     Value* v2 = ARG(VALUE2);
 
-    FAIL_IF_ERROR(v1);
-    FAIL_IF_ERROR(v2);
+    PANIC_IF_ERROR(v1);
+    PANIC_IF_ERROR(v2);
 
     if (Compare_Modify_Values(v1, v2, 0))
         return LOGIC(false);
@@ -632,8 +632,8 @@ DECLARE_NATIVE(EQUAL_Q)
     Value* v1 = ARG(VALUE1);
     Value* v2 = ARG(VALUE2);
 
-    FAIL_IF_ERROR(v1);
-    FAIL_IF_ERROR(v2);
+    PANIC_IF_ERROR(v1);
+    PANIC_IF_ERROR(v2);
 
     if (Compare_Modify_Values(v1, v2, 1))
         return LOGIC(true);
@@ -659,8 +659,8 @@ DECLARE_NATIVE(NOT_EQUAL_Q)
     Value* v1 = ARG(VALUE1);
     Value* v2 = ARG(VALUE2);
 
-    FAIL_IF_ERROR(v1);
-    FAIL_IF_ERROR(v2);
+    PANIC_IF_ERROR(v1);
+    PANIC_IF_ERROR(v2);
 
     if (Compare_Modify_Values(v1, v2, 1))
         return LOGIC(false);

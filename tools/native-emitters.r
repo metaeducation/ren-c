@@ -32,7 +32,7 @@ emit-native-proto: function [
             [
                 set spec: block!
             | (
-                fail [
+                panic [
                     "Native" (uppercase form to word! name)
                     "needs loadable specification block."
                     (mold the-file) (reify line)

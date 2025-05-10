@@ -56,7 +56,7 @@ static void Setup_File(struct devreq_file *file, Flags flags, Value* path)
     if (flags & AM_OPEN_NEW) {
         req->modes |= RFM_NEW;
         if (not (flags & AM_OPEN_WRITE))
-            fail (Error_Bad_File_Mode_Raw(path));
+            panic (Error_Bad_File_Mode_Raw(path));
     }
 
     file->path = path;
@@ -124,7 +124,7 @@ static void Open_File_Port(
 
     REBREQ *req = AS_REBREQ(file);
     if (req->flags & RRF_OPEN)
-        fail (Error_Already_Open_Raw(path));
+        panic (Error_Already_Open_Raw(path));
 
     OS_DO_DEVICE_SYNC(req, RDC_OPEN);
 
@@ -260,16 +260,16 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     VarList* ctx = Cell_Varlist(port);
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
     if (!Is_Object(spec))
-        fail (Error_Invalid_Spec_Raw(spec));
+        panic (Error_Invalid_Spec_Raw(spec));
 
     Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (path == nullptr)
-        fail (Error_Invalid_Spec_Raw(spec));
+        panic (Error_Invalid_Spec_Raw(spec));
 
     if (Is_Url(path))
         path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
     else if (!Is_File(path))
-        fail (Error_Invalid_Spec_Raw(path));
+        panic (Error_Invalid_Spec_Raw(path));
 
     REBREQ *req = Ensure_Port_State(port, RDI_FILE);
     struct devreq_file *file = DEVREQ_FILE(req);
@@ -361,7 +361,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             Cleanup_File(file);
 
             if (rebDid("error?", rebQ(result)))
-                rebJumps("fail", result);
+                rebJumps("panic", result);
 
             rebRelease(result); // ignore result
         }
@@ -383,7 +383,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
         if (Bool_ARG(ALLOW)) {
             UNUSED(ARG(ACCESS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         Value* data = ARG(DATA); // binary, string, or block
@@ -394,7 +394,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         bool opened;
         if (req->flags & RRF_OPEN) {
             if (not (req->modes & RFM_WRITE))
-                fail (Error_Read_Only_Raw(path));
+                panic (Error_Read_Only_Raw(path));
 
             opened = false; // already open
         }
@@ -432,7 +432,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             Cleanup_File(file);
 
             if (rebDid("error?", rebQ(result)))
-                rebJumps("fail", result);
+                rebJumps("panic", result);
 
             rebRelease(result);
         }
@@ -445,7 +445,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(PARAM(SPEC));
         if (Bool_ARG(ALLOW)) {
             UNUSED(ARG(ACCESS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         Flags flags = (
@@ -468,14 +468,14 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
         UNUSED(PARAM(VALUE));
         if (Bool_ARG(DEEP))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         if (Bool_ARG(TYPES)) {
             UNUSED(ARG(KINDS));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         if (not (req->flags & RRF_OPEN))
-            fail (Error_Not_Open_Raw(path)); // !!! wrong msg
+            panic (Error_Not_Open_Raw(path)); // !!! wrong msg
 
         REBLEN len = Set_Length(file, Bool_ARG(PART) ? VAL_INT64(ARG(LIMIT)) : -1);
         Flags flags = 0;
@@ -493,7 +493,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             Cleanup_File(file);
 
             if (rebDid("error?", rebQ(result)))
-                rebJumps("fail", result);
+                rebJumps("panic", result);
 
             rebRelease(result); // ignore error
         }
@@ -504,14 +504,14 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(PARAM(PORT));
 
         if (req->flags & RRF_OPEN)
-            fail (Error_No_Delete_Raw(path));
+            panic (Error_No_Delete_Raw(path));
         Setup_File(file, 0, path);
 
         Value* result = OS_DO_DEVICE(req, RDC_DELETE);
         assert(result != nullptr);  // should be synchronous
 
         if (rebDid("error?", rebQ(result)))
-            rebJumps("fail", result);
+            rebJumps("panic", result);
 
         rebRelease(result); // ignore result
         RETURN (port); }
@@ -520,7 +520,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         INCLUDE_PARAMS_OF_RENAME;
 
         if (req->flags & RRF_OPEN)
-            fail (Error_No_Rename_Raw(path));
+            panic (Error_No_Rename_Raw(path));
 
         Setup_File(file, 0, path);
 
@@ -529,7 +529,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         Value* result = OS_DO_DEVICE(req, RDC_RENAME);
         assert(result != nullptr);  // should be synchronous
         if (rebDid("error?", rebQ(result)))
-            rebJumps("fail", result);
+            rebJumps("panic", result);
         rebRelease(result); // ignore result
 
         RETURN (ARG(FROM)); }
@@ -541,13 +541,13 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             Value* cr_result = OS_DO_DEVICE(req, RDC_CREATE);
             assert(cr_result != nullptr);
             if (rebDid("error?", cr_result))
-                rebJumps("fail", cr_result);
+                rebJumps("panic", cr_result);
             rebRelease(cr_result);
 
             Value* cl_result = OS_DO_DEVICE(req, RDC_CLOSE);
             assert(cl_result != nullptr);
             if (rebDid("error?", cl_result))
-                rebJumps("fail", cl_result);
+                rebJumps("panic", cl_result);
             rebRelease(cl_result);
         }
 
@@ -561,7 +561,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(PARAM(TARGET));
         if (Bool_ARG(MODE)) {
             UNUSED(ARG(FIELD));
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         }
 
         if (not (req->flags & RRF_OPEN)) {
@@ -624,7 +624,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         break;
     }
 
-    fail (Error_Illegal_Action(TYPE_PORT, verb));
+    panic (Error_Illegal_Action(TYPE_PORT, verb));
 }
 
 

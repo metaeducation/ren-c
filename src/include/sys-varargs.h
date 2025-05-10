@@ -113,7 +113,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
 }
 
 
-INLINE bool Is_Level_Style_Varargs_May_Fail(
+INLINE bool Is_Level_Style_Varargs_May_Panic(
     Level** L_out,
     const Cell* vararg
 ){
@@ -122,7 +122,7 @@ INLINE bool Is_Level_Style_Varargs_May_Fail(
         return false;
 
     if (not L)
-        fail (Error_Frame_Not_On_Stack_Raw());
+        panic (Error_Frame_Not_On_Stack_Raw());
 
     *L_out = unwrap L;
     return true;

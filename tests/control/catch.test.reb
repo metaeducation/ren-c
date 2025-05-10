@@ -75,5 +75,5 @@
     okay
 )
 [#851
-    (error? sys/util/rescue [catch/quit [] fail make error! ""])
+    (error? sys/util/rescue [catch/quit [] panic make error! ""])
 ]

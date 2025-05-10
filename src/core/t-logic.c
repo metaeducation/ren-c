@@ -50,7 +50,7 @@ DECLARE_NATIVE(TRUE_Q)
         return Init_Logic(OUT, true);
     if (Cell_Word_Id(word) == SYM_FALSE)
         return Init_Logic(OUT, false);
-    fail ("TRUE? requires word to be TRUE or FALSE");
+    panic ("TRUE? requires word to be TRUE or FALSE");
 }
 
 
@@ -73,7 +73,7 @@ DECLARE_NATIVE(FALSE_Q)
         return Init_Logic(OUT, true);
     if (Cell_Word_Id(word) == SYM_TRUE)
         return Init_Logic(OUT, false);
-    fail ("FALSE? requires word to be TRUE or FALSE");
+    panic ("FALSE? requires word to be TRUE or FALSE");
 }
 
 
@@ -113,7 +113,7 @@ DECLARE_NATIVE(YES_Q)
         return Init_Logic(OUT, true);
     if (Cell_Word_Id(word) == SYM_NO)
         return Init_Logic(OUT, false);
-    fail ("YES? requires word to be YES or NO");
+    panic ("YES? requires word to be YES or NO");
 }
 
 
@@ -136,7 +136,7 @@ DECLARE_NATIVE(NO_Q)
         return Init_Logic(OUT, true);
     if (Cell_Word_Id(word) == SYM_YES)
         return Init_Logic(OUT, false);
-    fail ("NO? requires word to be YES or NO");
+    panic ("NO? requires word to be YES or NO");
 }
 
 
@@ -159,7 +159,7 @@ DECLARE_NATIVE(ON_Q)
         return Init_Logic(OUT, true);
     if (Cell_Word_Id(word) == SYM_OFF)
         return Init_Logic(OUT, false);
-    fail ("ON? requires word to be ON or OFF");
+    panic ("ON? requires word to be ON or OFF");
 }
 
 
@@ -182,7 +182,7 @@ DECLARE_NATIVE(OFF_Q)
         return Init_Logic(OUT, true);
     if (Cell_Word_Id(word) == SYM_ON)
         return Init_Logic(OUT, false);
-    fail ("OFF? requires word to be ON or OFF");
+    panic ("OFF? requires word to be ON or OFF");
 }
 
 
@@ -393,7 +393,7 @@ DECLARE_NATIVE(AND)
             return BOUNCE_THROWN;
 
         if (Is_Action(OUT))
-            fail ("AND requires a GROUP! on right to run actions");
+            panic ("AND requires a GROUP! on right to run actions");
     }
 
     return LOGIC(IS_TRUTHY(OUT));
@@ -431,7 +431,7 @@ DECLARE_NATIVE(OR)
             return BOUNCE_THROWN;
 
         if (Is_Action(OUT))
-            fail ("OR requires a GROUP! on right to run actions");
+            panic ("OR requires a GROUP! on right to run actions");
     }
 
     return LOGIC(IS_TRUTHY(OUT));
@@ -468,7 +468,7 @@ DECLARE_NATIVE(XOR)
             return BOUNCE_THROWN;
 
         if (Is_Action(OUT))
-            fail ("XOR requires a GROUP! on right to run actions");
+            panic ("XOR requires a GROUP! on right to run actions");
     }
 
     if (IS_TRUTHY(left))
@@ -514,7 +514,7 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
     if (Is_Blank(arg))
         return false;
 
-    fail (Error_Unexpected_Type(TYPE_BLANK, Type_Of(arg)));
+    panic (Error_Unexpected_Type(TYPE_BLANK, Type_Of(arg)));
 }
 
 
@@ -560,7 +560,7 @@ REBTYPE(Logic)
         UNUSED(PARAM(VALUE));
 
         if (Bool_ARG(ONLY))
-            fail (Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(SEED)) {
             // random/seed false restarts; true randomizes
@@ -572,6 +572,6 @@ REBTYPE(Logic)
         return LOGIC(false); }
 
     default:
-        fail (Error_Illegal_Action(TYPE_BLANK, verb));
+        panic (Error_Illegal_Action(TYPE_BLANK, verb));
     }
 }

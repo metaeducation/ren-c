@@ -178,7 +178,7 @@ void Enable_Ctrl_C(void)
 
 
 // Can't just use a TRAP when running user code, because it might legitimately
-// evaluate to an ERROR! value, as well as FAIL.  Uses rebRescue().
+// evaluate to an ERROR! value, as well as PANIC.  Uses rebRescue().
 
 static Value* Run_Sandboxed_Code(Value* group_or_block) {
     //

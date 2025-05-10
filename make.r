@@ -54,7 +54,7 @@ for-each [name value] options [
                 user-ext: load value
                 if word? user-ext [user-ext: reduce [user-ext]]
                 if not block? user-ext [
-                    fail [
+                    panic [
                         "Selected extensions must be a block, not"
                         (type of user-ext)
                     ]
@@ -376,7 +376,7 @@ set-exec-path: func [
 ][
     if path [
         if not file? path [
-            fail "Tool path has to be a file!"
+            panic "Tool path has to be a file!"
         ]
         tool/exec-file: path
     ]
@@ -386,7 +386,7 @@ user-config/compiler: default ['cc]
 probe user-config/compiler
 rebmake/default-compiler: rebmake/(user-config/compiler)
 
-rebmake/default-compiler: default [fail "Compiler is not set"]
+rebmake/default-compiler: default [panic "Compiler is not set"]
 
 rebmake/default-compiler/check user-config/compiler-path
 
@@ -462,7 +462,7 @@ switch user-config/debug [
         append app-config/definitions ["INCLUDE_CALLGRIND_NATIVE"]
     ]
 
-    fail ["unrecognized debug setting:" user-config/debug]
+    panic ["unrecognized debug setting:" user-config/debug]
 ]
 
 switch user-config/optimize [
@@ -544,7 +544,7 @@ append app-config/cflags switch user-config/standard [
         ]
     ]
 
-    fail [
+    panic [
         "STANDARD should be one of"
         "[c gnu89 gnu99 c99 c11 c++ c++11 c++14 c++17 c++latest]"
         "not" (user-config/standard)
@@ -567,7 +567,7 @@ append app-config/definitions switch user-config/pre-vista [
         []  ; spliced as empty block
     ]
 
-    fail ["PRE-VISTA [yes no] not" (user-config/pre-vista)]
+    panic ["PRE-VISTA [yes no] not" (user-config/pre-vista)]
 ]
 
 cfg-rigorous: null
@@ -801,7 +801,7 @@ append app-config/cflags switch user-config/rigorous [
         []  ; spliced as empty block
     ]
 
-    fail ["RIGOROUS [yes no] not" (user-config/rigorous)]
+    panic ["RIGOROUS [yes no] not" (user-config/rigorous)]
 ]
 
 append app-config/ldflags switch user-config/static [
@@ -816,7 +816,7 @@ append app-config/ldflags switch user-config/static [
         ]
     ]
 
-    fail ["STATIC must be yes or no, not" (user-config/static)]
+    panic ["STATIC must be yes or no, not" (user-config/static)]
 ]
 
 
@@ -957,11 +957,11 @@ for-each name user-config/extensions [
                 ]
             ]
             if not item [
-                fail [{Unrecognized extension name:} name]
+                panic [{Unrecognized extension name:} name]
             ]
         ]
 
-        fail ["Unrecognized extension action:" mold action]
+        panic ["Unrecognized extension action:" mold action]
     ]
 ]
 
@@ -1052,7 +1052,7 @@ process-module: func [
                 ]
                 default [
                     dump s
-                    fail [type of s "can't be a dependency of a module"]
+                    panic [type of s "can't be a dependency of a module"]
                 ]
             ]
         ]
@@ -1072,7 +1072,7 @@ process-module: func [
                         lib
                     ]
                     default [
-                        fail [
+                        panic [
                             "unrecognized module library" lib
                             "in module" mod
                         ]
@@ -1145,7 +1145,7 @@ calculate-sequence: function [
     <local> req b
 ][
     if integer? ext/sequence [return ext/sequence]
-    if ext/visited [fail ["circular dependency on" ext]]
+    if ext/visited [panic ["circular dependency on" ext]]
     if not ext/requires [ext/sequence: 0 return ext/sequence]
     ext/visited: okay
     seq: 0
@@ -1159,7 +1159,7 @@ calculate-sequence: function [
                 break
             ]
         ] then [ ;-- didn't BREAK, so no match found
-            fail ["unrecoginized dependency" req "for" ext/name]
+            panic ["unrecoginized dependency" req "for" ext/name]
         ]
     ]
     return ext/sequence: seq + 1
@@ -1182,7 +1182,7 @@ vars: reduce [
                 rebmake/target-platform/exe-suffix
             ]
         ] else [
-            fail "^/^/!! Cannot find a valid REBOL_TOOL !!^/"
+            panic "^/^/!! Cannot find a valid REBOL_TOOL !!^/"
         ]
 
         ; Originally this didn't transform to a local file path (e.g. with
@@ -1225,7 +1225,7 @@ prep: make rebmake/entry-class [
                 unspaced [{SRC=extensions/} switch type of ext/source [
                     file! [ext/source]
                     block! [first find ext/source file!]
-                    fail "ext/source must be BLOCK! or FILE!"
+                    panic "ext/source must be BLOCK! or FILE!"
                 ]]
                 unspaced [{OS_ID=} system-config/id]
             ]
@@ -1267,7 +1267,7 @@ add-new-obj-folders: function [
             ]
             default [
                 dump lib
-                fail ["unexpected class"]
+                panic ["unexpected class"]
             ]
         ]
 
@@ -1411,7 +1411,7 @@ target: user-config/target
 if not block? target [target: reduce [target]]
 iterate target [
     switch target/1 targets else [
-        fail [
+        panic [
             newline
             newline
             "UNSUPPORTED TARGET" user-config/target newline

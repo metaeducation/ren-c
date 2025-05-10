@@ -54,19 +54,19 @@ to-c-name: function [
     /scope "See C's rules: http://stackoverflow.com/questions/228783/"
     where "Either #global or #local (defaults global)"
         [issue!]
-    <local> fail
+    <local> panic
 ][
     if any [value = '|  value = "|"] [  ; BAR! in bootstrap, but WORD! in R3C
         return copy "bar_1"
     ]
 
-    fail: specialize :lib/fail [blame: okay location: 'value]
+    panic: specialize :lib/panic [blame: okay location: 'value]
 
     all [
         text? value
         empty? value
     ] then [
-        fail/blame ["TO-C-NAME received empty input"] 'value
+        panic ["TO-C-NAME received empty input"]
     ]
 
     c-chars: charset [
@@ -119,7 +119,7 @@ to-c-name: function [
                 all [
                     c = <bad>
                     find string c
-                    fail [
+                    panic [
                         reb space "is no longer legal internal to WORD!"
                         "in" value
                     ]
@@ -134,7 +134,7 @@ to-c-name: function [
     ]
 
     if empty? string [
-        fail [
+        panic [
             "empty identifier produced by to-c-name for"
             (mold value) "of type" (mold type of value)
         ]
@@ -145,11 +145,11 @@ to-c-name: function [
             head? s
             find charset [#"0" - #"9"] s/1
         ] then [
-            fail ["identifier" string "starts with digit in to-c-name"]
+            panic ["identifier" string "starts with digit in to-c-name"]
         ]
 
         find c-chars s/1 else [
-            fail ["Non-alphanumeric or hyphen in" string "in to-c-name"]
+            panic ["Non-alphanumeric or hyphen in" string "in to-c-name"]
         ]
     ]
 
@@ -159,16 +159,16 @@ to-c-name: function [
         string/1 != "_" [<ok>]
 
         where = 'global [
-            fail "global C ids starting with _ are reserved"
+            panic "global C ids starting with _ are reserved"
         ]
 
         where = 'local [
             find charset [#"A" - #"Z"] string/2 then [
-                fail "local C ids starting with _ and uppercase are reserved"
+                panic "local C ids starting with _ and uppercase are reserved"
             ]
         ]
 
-        fail "/SCOPE must be #global or #local"
+        panic "/SCOPE must be #global or #local"
     ]
 
     return string
@@ -226,12 +226,12 @@ for-each-record: function [
         [block!]
 ][
     if not block? first table [
-        fail {Table of records does not start with a header block}
+        panic {Table of records does not start with a header block}
     ]
 
     headings: map-each word first table [
         if not word? word [
-            fail [{Heading} word {is not a word}]
+            panic [{Heading} word {is not a word}]
         ]
         as set-word! word
     ]
@@ -240,7 +240,7 @@ for-each-record: function [
 
     return while [not tail? table] [
         if (length of headings) > (length of table) [
-            fail {Element count isn't even multiple of header count}
+            panic {Element count isn't even multiple of header count}
         ]
 
         spec: collect [
@@ -269,7 +269,7 @@ find-record-unique: function [
         {Value that the looked up key must be uniquely equal to}
 ][
     if not find first table key [
-        fail [key {not found in table headers:} (first table)]
+        panic [key {not found in table headers:} (first table)]
     ]
 
     result: null
@@ -277,7 +277,7 @@ find-record-unique: function [
         if value <> select rec key [continue]
 
         if result [
-            fail [{More than one table record matches} key {=} value]
+            panic [{More than one table record matches} key {=} value]
         ]
 
         ; Could break, but walk whole table to verify that it is well-formed.
@@ -306,7 +306,7 @@ parse-args: function [
                 name: to word! copy/part value (length of value) - 1
                 args: next args
                 if empty? args [
-                    fail ["Missing value after" value]
+                    panic ["Missing value after" value]
                 ]
                 value: args/1
             ]

@@ -153,7 +153,7 @@ REBI64 Random_Range(REBI64 r, bool secure)
 
     REBU64 s = (r < 0) ? -r : r;
     if (not secure and s > MM)
-        fail (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     REBU64 m; // rejection limit
     if (secure)

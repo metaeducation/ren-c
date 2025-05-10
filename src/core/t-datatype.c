@@ -54,7 +54,7 @@ Bounce MAKE_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
     }
 
   bad_make:;
-    fail (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(kind, arg));
 }
 
 
@@ -131,11 +131,11 @@ REBTYPE(Datatype)
             Init_Object(OUT, context);
         }
         else
-            fail (Error_Cannot_Reflect(Type_Of(value), arg));
+            panic (Error_Cannot_Reflect(Type_Of(value), arg));
         break;}
 
     default:
-        fail (Error_Illegal_Action(TYPE_DATATYPE, verb));
+        panic (Error_Illegal_Action(TYPE_DATATYPE, verb));
     }
 
     return OUT;
