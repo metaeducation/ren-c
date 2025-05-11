@@ -1659,11 +1659,19 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     //=//// FENCE! ////////////////////////////////////////////////////////=//
     //
-    // FENCE! is the newest part in the box, and it's not clear exactly how
-    // it will work yet.
+    // FENCE! is the guinea pig for a technique of calling a function defined
+    // in the local environment to do the handling.
 
-      case TYPE_FENCE:
-        return PANIC("Precise behavior of FENCE! not known yet");
+      case TYPE_FENCE: {
+        Quotify(Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed));
+        Init_Word(SPARE, CANON(FENCE_X_EVAL));
+        unnecessary(Quotify(Known_Element(SPARE)));  // want to run word
+        Value* temp = rebValue_helper(
+            Level_Binding(L), stable_SPARE, stable_OUT, rebEND
+        );
+        Copy_Cell(OUT, temp);
+        rebRelease(temp);
+        goto lookahead; }
 
 
     //=//// META-FENCE! ///////////////////////////////////////////////////=//

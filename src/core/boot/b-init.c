@@ -771,6 +771,8 @@ void Startup_Core(void)
 
     Startup_Natives(&boot->natives);
 
+    Startup_Evaluator();
+
   //=//// STARTUP CONSTANTS (like NULL, BLANK, etc.) //////////////////////=//
 
     // These may be used in the system object definition.  At one time code

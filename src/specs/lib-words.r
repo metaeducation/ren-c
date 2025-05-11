@@ -66,6 +66,15 @@ sigil
 :  ; SYM_COLON_1
 
 
+; === EXTENSIBLE EVALUATION ===
+;
+; Functions called by the evaluator to interpret types.  Can be redefined
+; off the cuff, e.g. local to a function, to change the behavior of fundamental
+; types within a scope.
+
+fence!-EVAL  ; e.g. a function that turns {x: 10, y: null} => OBJECT!
+
+
 ; === SEQUENTIAL PARSE3 SYMBOLS FOR SWITCH() ===
 ;
 ; An R3-Alpha optimization that we preserve (for now) is that the keywords

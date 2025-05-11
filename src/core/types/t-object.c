@@ -1718,7 +1718,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
 //
 //      return: [~null~ object!]
 //      spec "Object spec block, top-level SET-WORD!s will be object keys"
-//          [<opt-out> block! the-block!]
+//          [<opt-out> block! the-block! fence!]
 //      :with "Use a parent/prototype context"
 //          [object!]
 //  ]
@@ -1788,7 +1788,7 @@ DECLARE_NATIVE(CONSTRUCT)
     if (Is_The_Block(spec))
         executor = &Inert_Meta_Stepper_Executor;
     else {
-        assert(Is_Block(spec));
+        assert(Is_Block(spec) or Is_Fence(spec));
         executor = &Meta_Stepper_Executor;
     }
 

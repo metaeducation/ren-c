@@ -538,13 +538,14 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
 //       which moves the value here.  If the block wasn't made explicitly
 //       mutable (e.g. with MUTABLE) it takes the flag from the feed.
 //
-INLINE void Inertly_Derelativize_Inheriting_Const(
+INLINE Element* Inertly_Derelativize_Inheriting_Const(
     Sink(Element) out,
     const Element* e,
     Feed* feed
 ){
     Derelativize(out, e, Feed_Binding(feed));
     out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
+    return out;
 }
 
 INLINE void The_Next_In_Feed(Sink(Element) out, Feed* feed) {

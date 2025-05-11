@@ -30,6 +30,7 @@
 %datatypes/dictionary.test.reb
 %datatypes/email.test.reb
 %datatypes/error.test.reb
+%datatypes/fence.test.reb
 %datatypes/file.test.reb
 %datatypes/frame.test.reb
 %datatypes/get-block.test.reb

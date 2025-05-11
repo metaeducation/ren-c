@@ -194,3 +194,15 @@ Bounce Evaluator_Executor(Level* const L)
     Copy_Cell(OUT, PRIMED);
     return OUT;
 }}
+
+
+//
+//  Startup_Evaluator: C
+//
+// The evaluator allows you to override some aspects of its functionality,
+// such as what happens to evaluate FENCE!.  This is a novel new concept.
+//
+void Startup_Evaluator(void)
+{
+    Copy_Cell(Sink_Lib_Var(SYM_FENCE_X_EVAL), LIB(CONSTRUCT));
+}
