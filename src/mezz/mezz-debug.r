@@ -20,9 +20,13 @@ verify: function [
     <local> result
 ][
     while [pos: evaluate/step3 conditions 'result] [
-        if not :result [
+        any [
+            void? :result
+            trash? :result
+            not result
+        ] then [
             panic/blame [
-                "Assertion condition returned null:"
+                "Assertion condition returned" reify :result ":"
                 copy/part conditions pos
             ] 'conditions
         ]
