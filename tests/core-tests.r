@@ -181,10 +181,10 @@
 %loops/for-next.test.reb
 %loops/iterate.test.reb
 %loops/iterate-skip.test.reb
+%loops/insist.test.reb
 %loops/map.test.reb
 %loops/remove-each.test.reb
 %loops/repeat.test.reb
-%loops/until.test.reb
 %loops/while.test.reb
 %loops/examples/for-both.loops.test.reb
 %loops/examples/for-parallel.loops.test.reb

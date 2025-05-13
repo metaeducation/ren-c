@@ -1748,7 +1748,7 @@ perform-read: func [
 ][
     debug ["READ" open? port.state.connection]
     read port.state.connection  ; read some data from the TCP port
-    until [
+    insist [
         check-response port  ; see if it was enough, if not it asks for more
     ]
 ]

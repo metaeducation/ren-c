@@ -141,7 +141,7 @@ do-request: func [
     port.state.mode: <reading-headers>
 
     read port.state.connection  ; read some data from the TCP port
-    until [
+    insist [
         check-response port except e -> [return fail e]  ; see if it was enough
         ; if not it asks for more
         (port.state.mode = <ready>) or (port.state.mode = <close>)

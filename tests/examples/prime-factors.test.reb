@@ -7,7 +7,7 @@
         let m: 2
         let s: 1
         let a: copy []
-        until [
+        insist [
             either n mod m = 0 [
                 n: n / m
                 append a m

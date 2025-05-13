@@ -89,7 +89,7 @@
         foo: func [return: [~[integer! integer!]~] arg] [
             return pack [20 10]
         ]
-        null? until [[{~} #]: foo break]
+        null? insist [[{~} #]: foo break]
     )
 ]
 

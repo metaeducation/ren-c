@@ -79,10 +79,10 @@ bind construct [
     if on? logging [
         print form collect [
             keep [===]
-            until [equal? '=== keep take remarks]  ; prints tail `===`
+            insist [equal? '=== keep take remarks]  ; prints tail `===`
         ]
     ] else [
-        until [equal? '=== take remarks]
+        insist [equal? '=== take remarks]
     ]
     return ~,~
 ]

@@ -2052,37 +2052,35 @@ DECLARE_NATIVE(FOR)
 
 
 //
-//  until: native [
+//  insist: native [
 //
 //  "Evaluates the body until it produces a conditionally true value"
 //
 //      return: "Last body result, or null if a BREAK occurred"
 //          [any-value?]
 //      body [<const> block!]
-//      :predicate "Function to apply to body result"
-//          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(UNTIL)
+DECLARE_NATIVE(INSIST)
 {
-    INCLUDE_PARAMS_OF_UNTIL;
+    INCLUDE_PARAMS_OF_INSIST;
 
     Value* body = ARG(BODY);
-    Value* predicate = ARG(PREDICATE);
-
-    Atom* condition;  // can point to OUT or SPARE
 
     enum {
-        ST_UNTIL_INITIAL_ENTRY = STATE_0,
-        ST_UNTIL_EVALUATING_BODY,
-        ST_UNTIL_RUNNING_PREDICATE
+        ST_INSIST_INITIAL_ENTRY = STATE_0,
+        ST_INSIST_EVALUATING_BODY
     };
 
     switch (STATE) {
-      case ST_UNTIL_INITIAL_ENTRY : goto initial_entry;
-      case ST_UNTIL_EVALUATING_BODY : goto body_result_in_out;
-      case ST_UNTIL_RUNNING_PREDICATE : goto predicate_result_in_spare;
-      default: assert(false);
+      case ST_INSIST_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_INSIST_EVALUATING_BODY:
+        goto body_result_in_out;
+
+      default:
+        assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -2090,16 +2088,35 @@ DECLARE_NATIVE(UNTIL)
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    STATE = ST_UNTIL_EVALUATING_BODY;
-    Enable_Dispatcher_Catching_Of_Throws(LEVEL);
+    STATE = ST_INSIST_EVALUATING_BODY;
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for BREAK, CONTINUE, etc.
+
+} loop_again: { /////////////////////////////////////////////////////////////
+
+    assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
+    assert(STATE == ST_INSIST_EVALUATING_BODY);
     return CONTINUE(OUT, body);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
     // 1. When CONTINUE has an argument, it acts like the loop body evaluated
-    //    to that argument.  But UNTIL's condition and body are the same, so
-    //    CONTINUE:WITH OKAY will stop the UNTIL and return OKAY, while
+    //    to that argument.  But INSIST's condition and body are the same, so
+    //    CONTINUE:WITH OKAY will stop the INSIST and return OKAY, while
     //    CONTINUE:WITH 10 will stop and return 10, etc.
+    //
+    // 2. Due to body_result_in_out:[1], we want CONTINUE (or CONTINUE VOID)
+    //    to keep the loop running.  For parity between what continue does
+    //    with an argument and what the loop does if the body evaluates to
+    //    that argument, it suggests tolerating a void body result as intent
+    //    to continue the loop also.
+    //
+    // 3. Being willing to tolerate a GHOST is a little more questionable.
+    //    For now, don't allow it...though it may wind up being useful.
+    //
+    // 4. Today we don't test undecayed values for truthiness or falseyness.
+    //    Hence INSIST cannot return something like a pack...it must be META'd
+    //    and the result UNMETA'd.  That would mean all pack quasiforms would
+    //    be considered truthy.
 
     if (THROWING) {
         bool breaking;
@@ -2112,44 +2129,18 @@ DECLARE_NATIVE(UNTIL)
         // continue acts like body evaluated to its argument [1]
     }
 
-    if (Is_Nulled(predicate)) {
-        condition = OUT;  // default is just test truthiness of body product
-        goto test_condition;
-    }
+    if (Is_Void(OUT))
+        goto loop_again;  // skip voids [2]
 
-    STATE = ST_UNTIL_RUNNING_PREDICATE;
-    Disable_Dispatcher_Catching_Of_Throws(LEVEL);
-    return CONTINUE(SPARE, predicate, OUT);
+    if (Is_Ghost(OUT))
+        return PANIC("Body of INSIST must not return GHOST");  // tolerate? [3]
 
-} predicate_result_in_spare: {  //////////////////////////////////////////////
+    Decay_If_Unstable(OUT);  // decay for truth test [4]
 
-    Enable_Dispatcher_Catching_Of_Throws(LEVEL);
-    condition = SPARE;
-    goto test_condition;
+    if (Is_Trigger(stable_OUT))
+        return LOOPED(OUT);
 
-} test_condition: {  /////////////////////////////////////////////////////////
-
-    // 1. Due to body_result_in_out:[1], we want CONTINUE (or CONTINUE VOID)
-    //    to keep the loop running.  For parity between what continue does
-    //    with an argument and what the loop does if the body evaluates to
-    //    that argument, it suggests tolerating a void body result as intent
-    //    to continue the loop also.
-    //
-    // 2. Today we don't test undecayed values for truthiness or falseyness.
-    //    Hence UNTIL cannot return something like a pack...it must be META'd
-    //    and the result UNMETA'd.  That would mean all pack quasiforms would
-    //    be considered truthy.
-
-    if (not Is_Void(condition)) {  // skip voids [1]
-        Decay_If_Unstable(condition);  // must decay for truth test [2]
-
-        if (Is_Trigger(Stable_Unchecked(condition)))
-            return LOOPED(OUT);
-    }
-
-    STATE = ST_UNTIL_EVALUATING_BODY;
-    assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
-    return CONTINUE(OUT, body);  // not truthy, keep going
+    goto loop_again;  // not truthy, keep going
 }}
 
 

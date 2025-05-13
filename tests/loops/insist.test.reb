@@ -1,36 +1,36 @@
-; %loops/until.test.reb
+; %loops/insist.test.reb
 
 (
     num: 0
-    until [num: num + 1 num > 9]
+    insist [num: num + 1 num > 9]
     num = 10
 )
 ; Test body-block return values
-(1 = until [1])
+(1 = insist [1])
 ; Test break
-(null? until [break 'true])
+(null? insist [break 'true])
 ; Test continue
 (
     success: 'true
     cycling: 'yes
-    until [if yes? cycling [cycling: 'no, continue, success: 'false] okay]
+    insist [if yes? cycling [cycling: 'no, continue, success: 'false] okay]
     true? success
 )
 ; Test that return stops the loop
 (
-    f1: func [return: [integer!]] [until [return 1]]
+    f1: func [return: [integer!]] [insist [return 1]]
     1 = f1
 )
 ; Test that errors do not stop the loop
-(1 = until [trap [1 / 0] 1])
+(1 = insist [trap [1 / 0] 1])
 ; Recursion check
 (
     num1: 0
     num2: ~
     num3: 0
-    until [
+    insist [
         num2: 0
-        until [
+        insist [
             num3: num3 + 1
             1 < (num2: num2 + 1)
         ]
@@ -56,16 +56,16 @@
     ]
 )
 
-; UNTIL truth tests the results, which means unstable isotopes have to be
+; INSIST truth tests the results, which means unstable isotopes have to be
 ; decayed to run that test.
 [
-    (1 = until [pack [1 2]])
-    ('~['1 '2]~ = until [meta pack [1 2]])
+    (1 = insist [pack [1 2]])
+    ('~['1 '2]~ = insist [meta pack [1 2]])
 ]
 
 [
     (
-        'false = until [match [boolean?] 'false]
+        'false = insist [match [boolean?] 'false]
     )
 ]
 

@@ -173,7 +173,7 @@
         ; Skip `=== XXX ===` comment lines
         ;
         if iter.1 = '=== [
-            until [iter: my next, new-line? iter]
+            insist [iter: my next, new-line? iter]
         ]
 
         let text: ensure text! iter.1

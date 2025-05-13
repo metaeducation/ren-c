@@ -70,19 +70,19 @@
 ; Non-^META cases should be able to get away with fail + except if it doesn't
 ; actually try to do the assignment.
 [
-    (null? until [x: fail "hi" except [break]])
-    (null? until [[x]: fail "hi" except [break]])
+    (null? insist [x: fail "hi" except [break]])
+    (null? insist [[x]: fail "hi" except [break]])
     (
         x: ~
         all [
-            'true = until [x: fail "hi" except ['true]]
+            'true = insist [x: fail "hi" except ['true]]
             x = 'true
         ]
     )
     (
         x: ~
             all [
-            'true = until [[x]: fail "hi" except ['true]]
+            'true = insist [[x]: fail "hi" except ['true]]
             x = 'true
         ]
     )

@@ -268,7 +268,7 @@ export rewrite-if-directives: func [
     return: [~]
     position
 ][
-    until [
+    insist [
         let rewritten
         parse3:match position [
             (rewritten: 'no)

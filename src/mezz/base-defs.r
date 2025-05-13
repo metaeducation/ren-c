@@ -160,7 +160,7 @@ elide-if-void: func [
     return: [ghost!]
     'omit [element? <variadic>]
 ][
-    until [null? try take omit]
+    insist [null? try take omit]
     return ~,~
 ]
 
