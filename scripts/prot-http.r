@@ -495,7 +495,7 @@ read-body: func [
                 ;
                 let chunk-size
                 let mk1
-                while [not parse3:match conn.data [
+                until [parse3:match conn.data [
                     copy chunk-size: some hex-digits, thru crlfbin
                     mk1: <here>, to <end>
                 ]][
@@ -521,7 +521,7 @@ read-body: func [
                 ; Now we have the chunk size but may not have the chunk data.
                 ; Loop until enough data is gathered.
                 ;
-                while [not parse3:match mk1 [
+                until [parse3:match mk1 [
                     repeat (chunk-size) one, mk2: <here>, crlfbin, to <end>
                 ]][
                     read conn

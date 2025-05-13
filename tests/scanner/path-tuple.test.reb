@@ -168,7 +168,7 @@
 
 
     iter: tests
-    while [not tail? iter] [
+    until [tail? iter] [
         ;
         ; Skip `=== XXX ===` comment lines
         ;

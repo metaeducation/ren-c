@@ -127,7 +127,7 @@ for-each [name value] options [
                 assert ['Rebol = first temp]
                 config: select ensure block! second temp 'Inherits
             ]
-            while [not empty? config-stack] [
+            until [empty? config-stack] [
                 user-config: make user-config take:last config-stack
             ]
 

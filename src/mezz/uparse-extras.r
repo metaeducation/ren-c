@@ -22,7 +22,7 @@ destructure: func [
 ][
     let result': meta void
     let combinators: copy default-combinators
-    parse dialect [while [not <end>] [
+    parse dialect [until <end> [
         let set-word: *in* set-word?/, let rule: *in* block! (
             combinators.(unchain set-word): compose [(set-word) (rule)]
         )

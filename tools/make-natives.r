@@ -134,7 +134,7 @@ leaders: [
 leader-protos: to map! []
 
 pos: natives
-while [not tail? pos] [
+until [tail? pos] [
     assert [text? pos.1.name]  ; allows native names illegal in bootstrap
     let name: to word! pos.1.name  ; extract to avoid left-before-right eval
     if find leaders name [

@@ -1128,7 +1128,7 @@ bind construct [
         ]
 
         #handshake [
-            while [not tail? data] [
+            until [tail? data] [
                 let msg-type: try select message-types data.1  ; 1 byte
 
                 update-read-state ctx (
@@ -1200,7 +1200,7 @@ bind construct [
                             check-length: 0
 
                             curve-list: null
-                            while [not tail? bin] [
+                            until [tail? bin] [
                                 let extension-id: grab bin 2
                                 let extension-length: grab-int bin 2
                                 check-length: me + 2 + 2 + extension-length
@@ -1235,7 +1235,7 @@ bind construct [
                             length: len
                             certificate-list-length: grab-int bin 3
                             certificate-list: make block! 4
-                            while [not tail? bin] [
+                            until [tail? bin] [
                                 let certificate-length: grab-int bin 3
                                 let certificate: grab bin certificate-length
                                 append certificate-list certificate

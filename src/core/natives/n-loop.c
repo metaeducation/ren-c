@@ -2144,54 +2144,45 @@ DECLARE_NATIVE(INSIST)
 }}
 
 
-//
-//  while: native [
-//
-//  "So long as a condition is truthy, evaluate the body"
-//
-//      return: "VOID if body never run, NULL if BREAK, else last body result"
-//          [any-value?]
-//      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
-//      body [<unrun> <const> block! frame!]
-//  ]
-//
-DECLARE_NATIVE(WHILE)
-//
-// 1. It was considered if `while true [...]` should infinite loop, and then
-//    `while false [...]` never ran.  However, that could lead to accidents
-//    like `while x > 10 [...]` instead of `while [x > 10] [...]`.  It is
-//    safer to require a BLOCK! vs. falling back on such behaviors.
-//
-//    (It's now easy for people to make their own weird polymorphic loops.)
+static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 {
-    INCLUDE_PARAMS_OF_WHILE;
+    INCLUDE_PARAMS_OF_WHILE;  // must have same parameters as UNTIL
 
     Value* condition = ARG(CONDITION);
     Value* body = ARG(BODY);
 
     enum {
-        ST_WHILE_INITIAL_ENTRY = STATE_0,
-        ST_WHILE_EVALUATING_CONDITION,
-        ST_WHILE_EVALUATING_BODY
+        ST_WHILE_OR_UNTIL_INITIAL_ENTRY = STATE_0,
+        ST_WHILE_OR_UNTIL_EVALUATING_CONDITION,
+        ST_WHILE_OR_UNTIL_EVALUATING_BODY
     };
 
     switch (STATE) {
-      case ST_WHILE_INITIAL_ENTRY : goto initial_entry;
-      case ST_WHILE_EVALUATING_CONDITION : goto condition_eval_in_spare;
-      case ST_WHILE_EVALUATING_BODY : goto body_eval_in_out;
-      default: assert(false);
+      case ST_WHILE_OR_UNTIL_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_WHILE_OR_UNTIL_EVALUATING_CONDITION:
+        goto condition_eval_in_spare;
+
+      case ST_WHILE_OR_UNTIL_EVALUATING_BODY:
+        goto body_eval_in_out;
+
+      default:
+        assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. We could make it so CONTINUE in the condition of a WHILE skipped
-    //    the execution of the body of that loop, and run the condition again.
+    // 1. We *could* have CONTINUE in the *condition* as well as the body of a
+    //    WHILE/UNTIL skip the execution of the body of that loop, and run the
+    //    condition again.  :-/
+    //
     //    That *may* be interesting for some stylized usage that puts complex
     //    branching code in a condition.  But it adds some cost, and would
     //    override the default meaning of CONTINUE continuing some enclosing
     //    loop...which is free, and enables other strange stylized usages.
 
-    STATE = ST_WHILE_EVALUATING_CONDITION;  // have to set before catching
+    STATE = ST_WHILE_OR_UNTIL_EVALUATING_CONDITION;  // set before catching
 
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, LEVEL);  // no condition bind [1]
@@ -2200,7 +2191,7 @@ DECLARE_NATIVE(WHILE)
 
 } evaluate_condition: {  /////////////////////////////////////////////////////
 
-    STATE = ST_WHILE_EVALUATING_CONDITION;
+    STATE = ST_WHILE_OR_UNTIL_EVALUATING_CONDITION;
     return CONTINUE_CORE(
         SPARE,
         LEVEL_FLAG_ERROR_RESULT_OK,  // want to catch DONE error
@@ -2215,10 +2206,16 @@ DECLARE_NATIVE(WHILE)
 
     Decay_If_Unstable(SPARE);
 
-    if (Is_Inhibitor(stable_SPARE))  // falsey condition => last body result
-        goto return_out;
+    if (is_while) {
+        if (Is_Inhibitor(stable_SPARE))
+            goto return_out;  // falsey condition => last body result
+    }
+    else {
+        if (Is_Trigger(stable_SPARE))
+            goto return_out;  // truthy condition => last body result
+    }
 
-    STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT
+    STATE = ST_WHILE_OR_UNTIL_EVALUATING_BODY;  // body result => OUT
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
     return CONTINUE_BRANCH(OUT, body, SPARE);
 
@@ -2243,3 +2240,58 @@ DECLARE_NATIVE(WHILE)
 
     return LOOPED(OUT);  // VOID => TRASH, NULL => HEAVY NULL
 }}
+
+
+//
+//  while: native [
+//
+//  "So long as a condition is truthy, evaluate the body"
+//
+//      return: "VOID if body never run, NULL if BREAK, else last body result"
+//          [any-value?]
+//      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
+//      body [<unrun> <const> block! frame!]
+//  ]
+//
+DECLARE_NATIVE(WHILE)
+//
+// 1. It was considered if `while true [...]` should infinite loop, and then
+//    `while false [...]` never ran.  However, that could lead to accidents
+//    like `while x > 10 [...]` instead of `while [x > 10] [...]`.  It is
+//    safer to require a BLOCK! vs. falling back on such behaviors.
+//
+//    (It's now easy for people to make their own weird polymorphic loops.)
+{
+    INCLUDE_PARAMS_OF_WHILE;
+
+    USED(ARG(CONDITION));
+    USED(ARG(BODY));
+
+    bool is_while = true;
+    return While_Or_Until_Native_Core(LEVEL, is_while);
+}
+
+
+//
+//  until: native [
+//
+//  "So long as a condition is falsey, evaluate the body"
+//
+//      return: "VOID if body never run, NULL if BREAK, else last body result"
+//          [any-value?]
+//      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
+//      body [<unrun> <const> block! frame!]
+//  ]
+//
+DECLARE_NATIVE(UNTIL)
+//
+// 1. See WHILE:1
+{
+    INCLUDE_PARAMS_OF_UNTIL;
+
+    USED(ARG(CONDITION));
+    USED(ARG(BODY));
+
+    bool is_while = false;
+    return While_Or_Until_Native_Core(LEVEL, is_while);
+}

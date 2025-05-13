@@ -665,7 +665,7 @@ export*: func [
 
     items: what
 
-    while [not tail? items] [
+    until [tail? items] [
         val: get:any inside items word: match word! items.1 else [
             panic ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
         ]

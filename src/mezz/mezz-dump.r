@@ -85,7 +85,7 @@ bind construct [
         ]
 
         let b: match block! value [
-            while [not tail? b] [
+            until [tail? b] [
                 if swp: match [set-word? set-tuple?] :b.1 [  ; `dump [x: 1 + 2]`
                     [b result]: evaluate:step b
                     print [swp, result]

@@ -452,7 +452,7 @@ default-combinators: to map! reduce [
 
     'while combinator [
         "Run the body parser in a loop, for as long as condition matches"
-        return: "Result of last body parser (or void if body never matched)"
+        return: "Result of last body parser (or void if body never ran)"
             [any-value? pack!]
         condition-parser [action!]
         body-parser [action!]
@@ -476,6 +476,37 @@ default-combinators: to map! reduce [
                 result: meta void  ; should be (^result: void)
                 continue
             ]
+        ]
+        panic ~<unreachable>~
+    ]
+
+    'until combinator [
+        "Run the body parser in a loop, until the condition matches"
+        return: "Result of last body parser (or void if body never ran)"
+            [any-value? pack!]
+        condition-parser [action!]
+        body-parser [action!]
+        <local> ^result
+    ][
+        append state.loops binding of $return
+
+        result: meta void  ; should be (^result: void)
+
+        cycle [
+            [_ input]: condition-parser input except [
+                ;
+                ; We don't worry about the body parser's success or failure,
+                ; but if it fails we disregard the result
+                ;
+                [^result input]: body-parser input except [
+                    result: meta void  ; should be (^result: void)
+                    continue
+                ]
+                continue
+            ]
+            take:last state.loops
+            remainder: input
+            return ^result
         ]
         panic ~<unreachable>~
     ]
@@ -2343,7 +2374,7 @@ default-combinators: to map! reduce [
             panic ["The ANY combinator requires a BLOCK! of alternates"]
         ]
 
-        while [not tail? block] [
+        until [tail? block] [
             ;
             ; Turn next alternative into a parser ACTION!, and run it.
             ; We take the first parser that succeeds.
@@ -2396,7 +2427,7 @@ default-combinators: to map! reduce [
         /return: adapt return/ [state.env: old-env]
         state.env: rules  ; currently using blocks as surrogate for environment
 
-        while [not same? rules limit] [
+        until [same? rules limit] [
             if rules.1 = ', [  ; COMMA! is only legal between steps
                 rules: my next
                 continue

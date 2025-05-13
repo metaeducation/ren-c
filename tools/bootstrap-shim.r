@@ -540,7 +540,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
         panic:blame "COMPOSE bootstrap shim doesn't recurse, yet" $block
     ]
     pos: result: copy block
-    while [not tail? pos] [
+    until [tail? pos] [
         if not group? pos.1 [
             pos: next pos
             continue
@@ -665,7 +665,7 @@ modernize-action: func3 [
     proxiers: copy []
 
     new-spec: collect3 [  ; Note: offers KEEP/ONLY
-        while [not tail? spec] [
+        until [tail? spec] [
             if tag? spec.1 [
                 last-refine-word: null
                 keep3:only spec.1

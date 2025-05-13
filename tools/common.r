@@ -208,7 +208,7 @@ export binary-to-c: func [
         repeat indent [append out space]  ; no APPEND:DUP in bootstrap
     ]
 
-    while [not empty? opt data] [
+    until [empty? opt data] [
         let hexed: enbase:base (copy:part data 8) 16
         data: skip data 8
         for-each [digit1 digit2] hexed [

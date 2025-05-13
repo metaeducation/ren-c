@@ -1,7 +1,7 @@
 (
     foo: lambda [x [integer! <variadic>]] [
         let sum: 0
-        while [not tail? x] [
+        until [tail? x] [
             sum: sum + take x
         ]
         sum
@@ -43,7 +43,7 @@
     (
         normal: infix func [return: [integer!] v [integer! <variadic>]] [
             let sum: 0
-            while [not tail? v] [
+            until [tail? v] [
                 sum: sum + take v
             ]
             return sum + 1
@@ -60,7 +60,7 @@
     (
         defers: infix:defer func [return: [integer!] v [integer! <variadic>]] [
             let sum: 0
-            while [not tail? v] [
+            until [tail? v] [
                 sum: sum + take v
             ]
             return sum + 1
@@ -77,7 +77,7 @@
     (
         soft: infix func [@(v) [any-value? <variadic>]] [
             return collect [
-                while [not tail? v] [
+                until [tail? v] [
                     keep take v
                 ]
             ]
@@ -95,7 +95,7 @@
     (
         hard: infix func ['v [any-value? <variadic>]] [
             return collect [
-                while [not tail? v] [
+                until [tail? v] [
                     keep take v
                 ]
             ]

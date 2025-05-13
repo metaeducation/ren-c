@@ -92,7 +92,7 @@ compile: func [
     ]
 
     let b: settings
-    while [not tail? b] [
+    until [tail? b] [
         let key: b.1
         let var: get inside config (match word! key else [
             panic ["COMPILE:SETTINGS parameter" key "is not supported"]

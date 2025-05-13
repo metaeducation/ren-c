@@ -96,7 +96,7 @@ for-each-line: func [
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
-    while [not tail? text] [
+    until [tail? text] [
         let eol: any [find text newline, tail of text]
 
         set var compose [

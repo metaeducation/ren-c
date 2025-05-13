@@ -1,18 +1,18 @@
 ; breaker.parse.test.reb
 
 [
-    (did breaker: func [return: [block!] text [text!]] [
+    (breaker: func [return: [block!] text [text!]] [
         let capturing
         let inner
-        return parse text [collect while [not <end>] [
-            (capturing: 'no)
-            opt keep between <here> ["$(" (capturing: 'yes) | <end>]
-            :(if yes? capturing '[
+        return parse text [collect until <end> [
+            (capturing: null)
+            opt keep between <here> ["$(" (capturing: okay) | <end>]
+            inline (? if capturing $[
                 inner: between <here> ")"
                 keep (as word! inner)
             ])
         ]]
-    ])
+    ], ok)
 
     (["abc" def "ghi"] = breaker "abc$(def)ghi")
     ([] = breaker "")
