@@ -1647,6 +1647,42 @@ DECLARE_NATIVE(INSIST)
 }
 
 
+static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
+{
+    INCLUDE_PARAMS_OF_WHILE;  // must be same params as UNTIL
+
+    Init_Void(OUT);  // result if body never runs
+
+    do {
+        if (Do_Branch_Throws(SPARE, ARG(CONDITION))) {
+            Copy_Cell(OUT, SPARE);
+            return BOUNCE_THROWN; // don't see BREAK/CONTINUE in the *condition*
+        }
+
+        if (is_while) {
+            if (IS_FALSEY(SPARE))
+                return OUT; // while got its falsehood, return last body result
+        }
+        else {
+            if (IS_TRUTHY(SPARE))
+                return OUT; // until got its truth, return last body result
+        }
+
+        if (Do_Branch_With_Throws(OUT, ARG(BODY), SPARE)) {
+            bool broke;
+            if (not Catching_Break_Or_Continue(OUT, &broke))
+                return BOUNCE_THROWN;
+
+            if (broke)
+                return Init_Nulled(OUT);
+        }
+        Trashify_Branched(OUT);  // null->BREAK, blank->empty
+    } while (true);
+
+    DEAD_END;
+}
+
+
 //
 //  while: native [
 //
@@ -1660,39 +1696,24 @@ DECLARE_NATIVE(INSIST)
 //
 DECLARE_NATIVE(WHILE)
 {
-    INCLUDE_PARAMS_OF_WHILE;
+    bool is_while = true;
+    return While_Or_Until_Native_Core(level_, is_while);
+}
 
-    DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame output cells
-    SET_END(cell);
-    Push_GC_Guard(cell);
 
-    Init_Void(OUT);  // result if body never runs
-
-    do {
-        if (Do_Branch_Throws(cell, ARG(CONDITION))) {
-            Copy_Cell(OUT, cell);
-            Drop_GC_Guard(cell);
-            return BOUNCE_THROWN; // don't see BREAK/CONTINUE in the *condition*
-        }
-
-        if (IS_FALSEY(cell)) {
-            Drop_GC_Guard(cell);
-            return OUT; // trigger didn't match, return last body result
-        }
-
-        if (Do_Branch_With_Throws(OUT, ARG(BODY), cell)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke)) {
-                Drop_GC_Guard(cell);
-                return BOUNCE_THROWN;
-            }
-            if (broke) {
-                Drop_GC_Guard(cell);
-                return Init_Nulled(OUT);
-            }
-        }
-        Trashify_Branched(OUT);  // null->BREAK, blank->empty
-    } while (true);
-
-    DEAD_END;
+//
+//  until: native [
+//
+//  {Until a condition is conditionally true, evaluates the body.}
+//
+//      return: [any-atom!]
+//          "Last body result, or null if BREAK"
+//      condition [block! action!]
+//      body [block! action!]
+//  ]
+//
+DECLARE_NATIVE(UNTIL)
+{
+    bool is_while = false;
+    return While_Or_Until_Native_Core(level_, is_while);
 }
