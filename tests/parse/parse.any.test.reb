@@ -14,3 +14,12 @@
 ~parse-incomplete~ !! (parse "abc" [some any ["a" "b"]])
 
 (3 = parse ["foo" <baz> 3] [some any [tag! integer! text!]])
+
+; LITERAL MATCHING
+
+('c = parse [a b c b b a c] [some any @[a b c]])
+
+(
+    options: [a b c]
+    'c = parse [a b c b b a c] [some any (inert options)]
+)

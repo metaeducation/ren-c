@@ -2307,19 +2307,36 @@ default-combinators: to map! reduce [
             [any-value? pack!]
         :pending [blank! block!]
         @arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
-            [element?]  ; lie and take any element to report better error
+            [the-word! the-block! group? block?]
         <local> ^result block
     ][
-        block: switch:type :arg [
-            word! [get arg]
-            group! [eval arg]
-            block! [arg]
-        ] else [
-            panic [
-                "The ANY combinator in UPARSE is not an iterating construct."
-                "Use TRY SOME, TRY SOME FURTHER, etc. depending on purpose:"
-                https://forum.rebol.info/t/1572
+        block: switch:type arg [
+            the-word! [get arg]  ; similar to default (@var fetch literally)
+            group! [eval arg]  ; similar to default (synthesize eval)
+            block! [arg]  ; almost certainly want to override default behavior
+            the-block! [arg]  ; !!! override default behavior, good?  :-/
+            panic
+        ]
+
+        if the-block? block [
+            pending: _  ; not running any rules, won't add to pending
+            if tail? block [
+                remainder: input
+                return void  ; empty literal blocks match at any location
             ]
+            if not tail? input [
+                for-each 'item block [
+                    if input.1 = any [
+                        ? if any-string? input [to issue! item]
+                        ? if blob? input [to blob! item]
+                        item
+                    ][
+                        remainder: next input
+                        return item  ; (parse "a" [any @[a]] -> a) ... not #a
+                    ]
+                ]
+            ]
+            return fail "None of the items in ANY literal block matched"
         ]
 
         if not block? block [
