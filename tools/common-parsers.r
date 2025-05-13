@@ -297,7 +297,7 @@ rewrite-if-directives: function [
     return: [~]
     position
 ][
-    until [
+    insist [
         parse2 position [
             (rewritten: null)
             some [

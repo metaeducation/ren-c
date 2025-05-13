@@ -104,6 +104,7 @@
 %control/forskip.test.reb
 %control/halt.test.reb
 %control/if.test.reb
+%control/insist.test.reb
 %control/leave.test.reb
 %control/loop.test.reb
 %control/map-each.test.reb
@@ -116,7 +117,6 @@
 %control/throw.test.reb
 %control/try.test.reb
 %control/unless.test.reb
-%control/until.test.reb
 %control/wait.test.reb
 %control/while.test.reb
 %control/quit.test.reb

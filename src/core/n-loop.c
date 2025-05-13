@@ -1612,7 +1612,7 @@ DECLARE_NATIVE(FOR_NEXT)
 
 
 //
-//  until: native [
+//  insist: native [
 //
 //  "Evaluates the body until it evaluates to a conditionally true value"
 //
@@ -1621,9 +1621,9 @@ DECLARE_NATIVE(FOR_NEXT)
 //      body [block! action!]
 //  ]
 //
-DECLARE_NATIVE(UNTIL)
+DECLARE_NATIVE(INSIST)
 {
-    INCLUDE_PARAMS_OF_UNTIL;
+    INCLUDE_PARAMS_OF_INSIST;
 
     do {
 
