@@ -75,7 +75,7 @@ export parsing-at: func [
             instruction: either position: (code-group) [
                 [seek position]
             ][
-                [bypass]
+                [veto]
             ]
         ]
 

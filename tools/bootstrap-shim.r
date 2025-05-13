@@ -155,9 +155,6 @@ sys.util/rescue [
 
 (  ; closed at end of file
 
-
-panic: fail/
-fail: ~<FAIL being changed to definitional (e.g. what was RAISE)>~
 warning!: error!
 
 

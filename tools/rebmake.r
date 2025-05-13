@@ -286,25 +286,25 @@ set-target-platform: func [
     platform
 ][
     switch platform [
-        'posix [
+        'Posix [
             target-platform: posix
         ]
-        'linux [
+        'Linux [
             target-platform: linux
         ]
-        'haiku [
+        'Haiku [
             target-platform: haiku
         ]
-        'android [
+        'Android [
             target-platform: android
         ]
-        'windows [
+        'Windows [
             target-platform: windows
         ]
-        'osx [
+        'MacOS [
             target-platform: osx
         ]
-        'emscripten [
+        'Emscripten [
             target-platform: emscripten
         ]
     ] else [
@@ -1554,7 +1554,7 @@ export execution: make generator-class [
         'Windows [windows]
         'Linux [linux]
         'Haiku [haiku]
-        'OSX [osx]
+        'MacOS [osx]
         'Android [android]
     ] else [
         print [

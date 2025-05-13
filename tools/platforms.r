@@ -85,26 +85,26 @@ platforms: [
     0.2.3 _ "mac-misc"
         ; was: "Macintosh, FAT PPC, 68K"
 
-    0.2.4 osx-ppc/osx "osx-ppc"
+    0.2.4 osx-ppc/MacOS "osx-ppc"
         #SGD #BEN #LLC <NCM> /HID /DYN %M
         ; originally targeted OS X 10.2
 
-    0.2.5 osx-x86/osx "osx-x86"
+    0.2.5 osx-x86/MacOS "osx-x86"
         #SGD #LEN #LLC #NSER <NCM> <NPS> <ARC> /HID /ARC /DYN %M
 
-    0.2.40 osx-x64/osx _
+    0.2.40 osx-x64/MacOS _
         #SGD #LEN #LLC #NSER <NCM> <NPS> /HID /DYN %M
 
     Windows: 3
     ;-------------------------------------------------------------------------
-    0.3.1 windows-x86/windows "win32-x86"
+    0.3.1 windows-x86/Windows "win32-x86"
         #SGD #LEN #UNI #W32 #NSEC <WLOSS> /CON /S4M %M
         ; was: "Microsoft Windows XP/NT/2K/9X iX86"
 
     0.3.2 _ "dec-alpha"
         ; was: "Windows Alpha NT DEC Alpha"
 
-    0.3.40 windows-x64/windows "win32-x64"
+    0.3.40 windows-x64/Windows "win32-x64"
         #SGD #LEN #UNI #W32 #LLP64 #NSEC <WLOSS> /CON /S4M %M
 
     Linux: 4
@@ -112,13 +112,13 @@ platforms: [
     0.4.1 _ "libc5-x86"
         ; was: "Linux Libc5 iX86 1.2.1.4.1 view-pro041.tar.gz"
 
-    0.4.2 linux-x86/linux "libc6-2-3-x86"  ; gliblc-2.3
+    0.4.2 linux-x86/Linux "libc6-2-3-x86"  ; gliblc-2.3
         #SGD #LEN #LLC #NSER <M32> <NSP> <UFS> /M32 %M %DL
 
-    0.4.3 linux-x86/linux "libc6-2-5-x86"  ; gliblc-2.5
+    0.4.3 linux-x86/Linux "libc6-2-5-x86"  ; gliblc-2.5
         #SGD #LEN #LLC <M32> <UFS> /M32 %M %DL
 
-    0.4.4 linux-x86/linux "libc6-2-11-x86"  ; glibc-2.11
+    0.4.4 linux-x86/Linux "libc6-2-11-x86"  ; glibc-2.11
         #SGD #LEN #LLC #PIP2 <M32> <HID> /M32 /HID /DYN %M %DL
 
     0.4.5 _ _
@@ -136,34 +136,34 @@ platforms: [
     0.4.9 _ _
         ; was: "Linux Cobalt Qube MIPS"
 
-    0.4.10 linux-ppc/linux "libc6-ppc"
+    0.4.10 linux-ppc/Linux "libc6-ppc"
         #SGD #BEN #LLC #PIP2 <HID> /HID /DYN %M %DL
 
-    0.4.11 linux-ppc64/linux "libc6-ppc64"
+    0.4.11 linux-ppc64/Linux "libc6-ppc64"
         #SGD #BEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
-    0.4.20 linux-arm/linux "libc6-arm"
+    0.4.20 linux-arm/Linux "libc6-arm"
         #SGD #LEN #LLC #PIP2 <HID> /HID /DYN %M %DL
 
-    0.4.21 linux-arm/linux _  ; for modern Android builds, see Android section
+    0.4.21 linux-arm/Linux _  ; for modern Android builds, see Android section
         #SGD #LEN #LLC #PIP2 <HID> <PIE> /HID /DYN %M %DL
 
-    0.4.22 linux-aarch64/linux "libc6-aarch64"
+    0.4.22 linux-aarch64/Linux "libc6-aarch64"
         #SGD #LEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
-    0.4.30 linux-mips/linux "libc6-mips"
+    0.4.30 linux-mips/Linux "libc6-mips"
         #SGD #LEN #LLC #PIP2 <HID> /HID /DYN %M %DL
 
-    0.4.31 linux-mips32be/linux "libc6-mips32be"
+    0.4.31 linux-mips32be/Linux "libc6-mips32be"
         #SGD #BEN #LLC #PIP2 <HID> /HID /DYN %M %DL
 
-    0.4.40 linux-x64/linux "libc-x64"
+    0.4.40 linux-x64/Linux "libc-x64"
         #SGD #LEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
-    0.4.60 linux-axp/linux "dec-alpha"
+    0.4.60 linux-axp/Linux "dec-alpha"
         #SGD #LEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
-    0.4.61 linux-ia64/linux "libc-ia64"
+    0.4.61 linux-ia64/Linux "libc-ia64"
         #SGD #LEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     Haiku: 5
@@ -174,10 +174,10 @@ platforms: [
     0.5.2 _ _
         ; was: "BeOS R5 iX86"
 
-    0.5.4 haiku/haiku "x86-32"
+    0.5.4 haiku/Haiku "x86-32"
         #SGD #LEN #LLC %NWK
 
-    0.5.40 haiku-x64/haiku "x64"
+    0.5.40 haiku-x64/Haiku "x64"
         #SGD #LEN #LLC #LLP64 <DCE> /DCE %NWK
 
     BSDi: 6
@@ -190,10 +190,10 @@ platforms: [
     0.7.1 _ "x86"
         ; was: "Free BSD iX86"
 
-    0.7.2 freebsd-x86/posix "elf-x86"
+    0.7.2 freebsd-x86/Posix "elf-x86"
         #SGD #LEN #LLC %M
 
-    0.7.40 freebsd-x64/posix _
+    0.7.40 freebsd-x64/Posix _
         #SGD #LEN #LLC #LP64 %M
 
     NetBSD: 8
@@ -224,13 +224,13 @@ platforms: [
     0.9.3 _ "m68k"
         ; was: "OpenBSD 68K"
 
-    0.9.4 openbsd-x86/posix "elf-x86"
+    0.9.4 openbsd-x86/Posix "elf-x86"
         #SGD #LEN #LLC %M
 
     0.9.5 _ "sparc"
         ; was: "OpenBSD Sparc"
 
-    0.9.40 openbsd-x64/posix "elf-x64"
+    0.9.40 openbsd-x64/Posix "elf-x64"
         #SGD #LEN #LLC #LP64 %M
 
     Sun: 10
@@ -253,18 +253,18 @@ platforms: [
 
     Android: 13
     ;-------------------------------------------------------------------------
-    0.13.1 android-arm/android "arm"
+    0.13.1 android-arm/Android "arm"
         #SGD #LEN #LLC <HID> <PIC> /HID /DYN %M %DL %LOG
 
-    0.13.2 android5-arm/android _
+    0.13.2 android5-arm/Android _
         #SGD #LEN #LLC <HID> <PIC> /HID /PIE /DYN %M %DL %LOG
 
     Syllable: 14
     ;-------------------------------------------------------------------------
-    0.14.1 syllable-dtp/posix _
+    0.14.1 syllable-dtp/Posix _
         #SGD #LEN #LLC <HID> /HID /DYN %M %DL
 
-    0.14.2 syllable-svr/linux _
+    0.14.2 syllable-svr/Linux _
         #SGD #LEN #LLC <M32> <HID> /HID /DYN %M %DL
 
     WindowsCE: 15
@@ -283,16 +283,16 @@ platforms: [
 
     Emscripten: 16
     ;-------------------------------------------------------------------------
-    0.16.1 web/emscripten "emscripten"
+    0.16.1 web/Emscripten "emscripten"
         #LEN
 
-    0.16.2 pthread/emscripten "emscripten-pthread"
+    0.16.2 pthread/Emscripten "emscripten-pthread"
         #LEN
 
-    0.16.3 node/emscripten "nodejs"
+    0.16.3 node/Emscripten "nodejs"
         #LEN
 
-    0.16.4 wasi/emscripten "wasi"  ; technically wasi-sdk, not emscripten
+    0.16.4 wasi/Emscripten "wasi"  ; technically wasi-sdk, not emscripten
         #LEN
 
     AIX: 17
@@ -546,7 +546,8 @@ use [
                 id.2 = number
             ]
             (to-text os-name) = (lowercase to-text os-name)
-            (to-text os-base) = (lowercase to-text os-base)
+            ; !!! Review casing strategy, currently propercase
+            ; (to-text os-base) = (lowercase to-text os-base)
             not find (to-text os-base) charset [#"-" #"_"]
             block? definitions
             block? cflags

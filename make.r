@@ -97,7 +97,7 @@ else [
 
 for-each [name value] options [
     switch name [
-        'CONFIG [
+        'config [
             ; A config file can inherit from other configurations with the
             ; `Inherits: %some-config.r` header option.
             ;
@@ -133,7 +133,7 @@ for-each [name value] options [
 
             change-dir saved-dir
         ]
-        'EXTENSIONS [
+        'extensions [
             ; [+|-|*] [NAME --[+|-|*|[modules]]--]...
             use [ext-file user-ext][
                 user-ext: load3 value
@@ -155,6 +155,9 @@ for-each [name value] options [
             ]
         ]
     ] else [
+        if not has user-config name [
+            panic ["Unknown config option on command line to %make.r:" name]
+        ]
         name: as word! replace to text! name #"_" #"-"
         set (has user-config name) transcode:one value  ; !!! else [value] ???
     ]
@@ -1765,7 +1768,7 @@ for-each 'ext extensions [
         ; We need to make a new "Project" abstraction to represent the DLL
 
         ext-proj: make rebmake.dynamic-library-class [
-            name: join either platform-config.os-base = 'windows ["r3-"]["libr3-"]
+            name: join either platform-config.os-base = 'Windows ["r3-"]["libr3-"]
                 lowercase to text! ext.name
             output: to file! name
             depends: compose [

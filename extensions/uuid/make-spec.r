@@ -13,7 +13,7 @@ includes: [
 ; but on Linux/Haiku we need to build in libuuid.
 ;
 depends: switch platform-config.os-base [
-    'linux 'Haiku [
+    'Linux 'Haiku [
         [
             %libuuid/gen_uuid.c
             %libuuid/unpack.c
