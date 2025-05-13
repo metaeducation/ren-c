@@ -174,18 +174,22 @@ bool Pushed_Continuation(
             Init_Heavy_Null(out);
         goto just_use_out;
 
-      case TYPE_META_BLOCK:
       case TYPE_BLOCK: {
         Level* L = Make_Level_At_Core(
             &Evaluator_Executor, c_cast(Element*, branch), binding, flags
         );
         Init_Void(Evaluator_Primed_Cell(L));
-        if (Unchecked_Heart_Of(branch) == TYPE_META_BLOCK) {
-            assert(!"META-BLOCK! branches are being rethought");
-        }
 
         Push_Level_Erase_Out_If_State_0(out, L);
         goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH
+
+      case TYPE_VAR_BLOCK:
+      case TYPE_VAR_GROUP:
+      case TYPE_VAR_FENCE:
+      case TYPE_VAR_WORD:
+        Derelativize(out, c_cast(Element*, branch), binding);
+        HEART_BYTE(out) = Plainify_Any_Var_Heart(Heart_Of(branch));
+        goto just_use_out;
 
       case TYPE_CHAIN: {  // effectively REDUCE
         if (not Is_Get_Block(branch))

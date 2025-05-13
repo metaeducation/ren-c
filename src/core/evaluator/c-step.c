@@ -1475,10 +1475,12 @@ Bounce Meta_Stepper_Executor(Level* L)
             if (heart == TYPE_WORD or heart == TYPE_TUPLE)
                 continue;
 
-            if (Is_Space(TOP) or Is_Quasar(TOP))  // nameless decay vs. no decay
-                continue;
+            if (Is_Blank(TOP) or Is_Space(TOP) or Is_Quasar(TOP))
+                continue;  // !!! should probably just be BLANK! now
 
-            return PANIC("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or ~/#");
+            return PANIC(
+                "SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or [~ _ #]"
+            );
         }
 
         level_->u.eval.stackindex_circled = circled;  // remember it
@@ -1512,9 +1514,6 @@ Bounce Meta_Stepper_Executor(Level* L)
         const Source* pack_array;  // needs GC guarding when OUT overwritten
         const Element* pack_meta_at;  // pack block items are ^META'd
         const Element* pack_meta_tail;
-
-        if (Is_Ghost(OUT))  // !!! Hack, want ([:foo]: eval) to always work
-            Init_Void(OUT);
 
         if (Is_Pack(OUT)) {  // antiform block
             pack_meta_at = Cell_List_At(&pack_meta_tail, OUT);
@@ -1563,8 +1562,10 @@ Bounce Meta_Stepper_Executor(Level* L)
             else
                 Copy_Cell(SPARE, pack_meta_at);
 
-            if (var_heart == TYPE_SIGIL and Cell_Sigil(var) == SIGIL_META)
-                goto circled_check;  // leave as meta the way it came in
+            if (var_heart == TYPE_SIGIL and Cell_Sigil(var) == SIGIL_META) {
+                panic ("META sigil should allow ghost pass thru, probably?");
+                /* goto circled_check; */
+            }
 
             if (var_heart == TYPE_META_WORD) {
                 if (pack_meta_at == pack_meta_tail) {  // special detection
@@ -1573,13 +1574,14 @@ Bounce Meta_Stepper_Executor(Level* L)
                     goto circled_check;
                 }
                 Set_Var_May_Panic(var, SPECIFIED, SPARE);  // is meta'd
+                Meta_Unquotify_Undecayed(SPARE);  // result should not be meta
                 goto circled_check;
             }
 
             Meta_Unquotify_Undecayed(SPARE);
 
             if (var_heart == TYPE_BLANK) {
-                assert(Is_Quasar(var));  // [~ ...]: -> no name, but don't decay
+                possibly(Is_Quasar(var));  // no name, but don't decay
                 goto circled_check;
             }
 

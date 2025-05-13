@@ -30,10 +30,10 @@ Rebol [
 
         This script attempts to make PARSE more "hackable", by factoring the
         implementation out so that each keyword or data behavior is handled
-        by an individual `parser` function.  The parameters to this function
-        are stylized so that the parse engine can compose these smaller
-        parsers together as part of larger processing operations.  This
-        approach is typically called "Parser Combinators":
+        by individual functions.  These functions are stylized so that th
+        parse engine can compose these smaller parsers together as part of
+        larger processing operations.  This approach is typically called
+        "Parser Combinators":
 
         https://en.wikipedia.org/wiki/Parser_combinator
 
@@ -54,12 +54,12 @@ Rebol [
     ]--
 
     notes: --[
-        * This implementation will be *extremely* slow for the foreseeable
-          future.  But since it is built on usermode facilities, any
-          optimizations that are applied to it will bring systemic benefits.
-          Ultimately the goal is to merge this architecture in with the
-          "messier" C code...hopefully preserving enough of the hackability
-          while leveraging low-level optimizations where possible.
+      * This implementation will be *extremely* slow for the foreseeable
+        future.  But since it is built on usermode facilities, optimizations
+        that are applied to it will bring systemic benefits.  Ultimately the
+        goal is to merge this architecture in with the "messier" C code...
+        hopefully preserving enough of the hackability while leveraging
+        low-level optimizations where possible.
     ]--
 ]
 
@@ -67,7 +67,7 @@ Rebol [
 ; All combinators receive the INPUT to be processed.  They are also given an
 ; object representing the STATE of the parse (currently that is just the
 ; FRAME! of the main UPARSE call which triggered the operation, so any of the
-; locals or parameters to that can be accessed, e.g. the list of /COMBINATORS)
+; locals or parameters to that can be accessed, e.g. the list of :COMBINATORS)
 ;
 ; The goal of a combinator is to decide whether to match (by returning a
 ; synthesized value and the updated position in the series) or fail to match
@@ -79,7 +79,7 @@ Rebol [
 ; One of the parameter types that can be given to these functions are another
 ; parser, to combine them (hence "parser combinator").  So you can take a
 ; combinator like OPT and parameterize it with SOME which is parameterized
-; with "A", to get a composite parser that implements `opt some "a"`.
+; with "A", to get a composite parser that implements [opt some "a"].
 ;
 ; But if a parameter to a combinator is marked as quoted, then that will take
 ; a value from the callsite literally.
@@ -188,14 +188,14 @@ bind construct [
                     ;
                     /f.(key): enclose (augment val/ [:modded]) func [
                         f2
-                        <local> result' remainder subpending
+                        <local> ^result remainder subpending
                     ][
-                        [^result' remainder subpending]:
+                        [^result remainder subpending]:
                             eval-free:undecayed f2 except e -> [
                                 return fail e
                             ]
                         pending: glom pending spread subpending
-                        return pack [^result' remainder subpending]
+                        return pack [^result remainder subpending]
                     ]
                 ]
             ]
@@ -290,14 +290,14 @@ default-combinators: to map! reduce [
         :negated
     ][
         if negated [  ; NOT NOT, e.g. call parser without negating it
-            return [{~} remainder]: parser input except e -> [
+            return [{_} remainder]: parser input except e -> [
                 return fail e
             ]
         ]
         if not negatable-parser? parser/ [
             panic "NOT called on non-negatable combinator"
         ]
-        return [{~} remainder]: parser:negated input except e -> [
+        return [{_} remainder]: parser:negated input except e -> [
             return fail e
         ]
     ]
@@ -339,13 +339,13 @@ default-combinators: to map! reduce [
         return: "PARSER's result if it succeeds, otherwise NULL"
             [any-value? pack!]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
-        [^result' remainder]: parser input except e -> [
+        [^result remainder]: parser input except e -> [
             remainder: input  ; succeed on parser fail but don't advance input
             return null
         ]
-        return ^result'  ; return successful parser result
+        return ^result  ; return successful parser result
     ]
 
     'optional combinator [
@@ -353,13 +353,13 @@ default-combinators: to map! reduce [
         return: "PARSER's result if it succeeds, otherwise VOID"
             [any-value? pack!]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
-        [^result' remainder]: parser input except e -> [
+        [^result remainder]: parser input except e -> [
             remainder: input  ; succeed on parser fail but don't advance input
             return void
         ]
-        return ^result'  ; return successful parser result
+        return ^result  ; return successful parser result
     ]
 
     'spread combinator [
@@ -367,15 +367,15 @@ default-combinators: to map! reduce [
         return: "Splice antiform if input is list"
             [~null~ ~[]~ element? splice!]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
-        [^result' remainder]: parser input except e -> [
+        [^result remainder]: parser input except e -> [
             return fail e
         ]
-        if (not quoted? result') or (not any-list? result': unquote result') [
+        if (not any-list? ^result) [
             panic "SPREAD only accepts ANY-LIST? and QUOTED!"
         ]
-        return spread result'  ; was unquoted above
+        return spread ^result
     ]
 
     'ahead combinator [
@@ -400,16 +400,16 @@ default-combinators: to map! reduce [
         return: "parser result if it succeeded and advanced input, else NULL"
             [any-value? pack!]
         parser [action!]
-        <local> result' pos
+        <local> ^result pos
     ][
-        [^result' pos]: parser input except e -> [
+        [^result pos]: parser input except e -> [
             return fail e  ; the parse rule did not match
         ]
         if (index of pos) <= (index of input) [
             return fail "FURTHER rule matched, but did not advance the input"
         ]
         remainder: pos
-        return ^result'
+        return ^result
     ]
 
     === LOOPING CONSTRUCT KEYWORDS ===
@@ -432,19 +432,19 @@ default-combinators: to map! reduce [
         return: "Result of last successful match"
             [any-value? pack!]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
         append state.loops binding of $return
 
-        [^result' input]: parser input except e -> [
+        [^result input]: parser input except e -> [
             take:last state.loops
             return fail e
         ]
         cycle [  ; if first try succeeds, we'll succeed overall--keep looping
-            [^result' input]: parser input except [
+            [^result input]: parser input except [
                 take:last state.loops
                 remainder: input
-                return ^result'
+                return ^result
             ]
         ]
         panic ~<unreachable>~
@@ -456,24 +456,24 @@ default-combinators: to map! reduce [
             [any-value? pack!]
         condition-parser [action!]
         body-parser [action!]
-        <local> result'
+        <local> ^result
     ][
         append state.loops binding of $return
 
-        ^result': void
+        result: meta void  ; should be (^result: void)
 
         cycle [
-            [^ input]: condition-parser input except [
+            [_ input]: condition-parser input except [
                 take:last state.loops
                 remainder: input
-                return ^result'
+                return ^result
             ]
 
             ; We don't worry about the body parser's success or failure, but
             ; if it fails we disregard the result
             ;
-            [^result' input]: body-parser input except [
-                ^result': void
+            [^result input]: body-parser input except [
+                result: meta void  ; should be (^result: void)
                 continue
             ]
         ]
@@ -485,15 +485,15 @@ default-combinators: to map! reduce [
         return: "Result of last body parser (or void if body never matched)"
             [any-value? pack!]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
         append state.loops binding of $return
 
-        ^result': void
+        result: meta void  ; should be (^result: void)
 
         cycle [
-            [^result' input]: parser input except [
-                ^result': ~
+            [^result input]: parser input except [
+                [^result]: ~
                 continue
             ]
         ]
@@ -511,7 +511,7 @@ default-combinators: to map! reduce [
 
         count: 0
         cycle [
-            [^ input]: parser input except [
+            [_ input]: parser input except [
                 take:last state.loops
                 remainder: input
                 return count
@@ -538,11 +538,11 @@ default-combinators: to map! reduce [
         "Break an iterated construct like SOME or REPEAT, succeeding the match"
         return: []
         parser [<end> action!]
-        <local> f result'
+        <local> f ^result
     ][
-        ^result': ~  ; default `[stop]` returns nothing
+        [^result]: ~  ; default `[stop]` returns nothing
         if :parser [  ; parser argument is optional
-            [^result' input]: parser input except e -> [
+            [^result input]: parser input except e -> [
                 return fail e
             ]
         ]
@@ -552,7 +552,7 @@ default-combinators: to map! reduce [
         ]
 
         f.remainder: input
-        f/return ^result'
+        f/return ^result
     ]
 
    === ACCEPT KEYWORD ===
@@ -572,9 +572,9 @@ default-combinators: to map! reduce [
         "Return a value explicitly from the parse, terminating early"
         return: []
         parser [action!]
-        <local> value'
+        <local> ^value
     ][
-        [^value' #]: parser input except e -> [
+        [^value _]: parser input except e -> [
             return fail e
         ]
 
@@ -584,7 +584,7 @@ default-combinators: to map! reduce [
         ; we can't leave it as unset).  Review.
         ;
         pending: _
-        state/return pack [^value' pending]
+        state/return pack [^value pending]
     ]
 
     === INDEX and MEASUREMENT COMBINATORS ===
@@ -626,7 +626,7 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> start end
     ][
-        [^ remainder]: parser input except e -> [return fail e]
+        [_ remainder]: parser input except e -> [return fail e]
 
         end: index of remainder
         start: index of input
@@ -659,19 +659,19 @@ default-combinators: to map! reduce [
         return: [~<change>~]
         parser [action!]
         replacer [action!]  ; !!! How to say result is used here?
-        <local> replacement'
+        <local> ^replacement
     ][
-        [^ remainder]: parser input except e -> [  ; first find end position
+        [_ remainder]: parser input except e -> [  ; first find end position
             return fail e
         ]
 
-        [^replacement' #]: replacer input except e -> [
+        [^replacement _]: replacer input except e -> [
             return fail e
         ]
 
         ; CHANGE returns tail, use as new remainder
         ;
-        remainder: change:part ^replacement' remainder
+        remainder: change:part ^replacement remainder
         return ~<change>~
     ]
 
@@ -680,7 +680,7 @@ default-combinators: to map! reduce [
         return: [~<remove>~]
         parser [action!]
     ][
-        [^ remainder]: parser input except e -> [  ; first find end position
+        [_ remainder]: parser input except e -> [  ; first find end position
             return fail e
         ]
 
@@ -692,13 +692,13 @@ default-combinators: to map! reduce [
         "Insert literal data into the input series"
         return: [~<insert>~]
         parser [action!]
-        <local> insertion'
+        <local> ^insertion
     ][
-        [^insertion' #]: parser input except e -> [  ; remainder ignored
+        [^insertion _]: parser input except e -> [  ; remainder ignored
             return fail e
         ]
 
-        remainder: insert input ^insertion'
+        remainder: insert input ^insertion
         return ~<insert>~
     ]
 
@@ -709,10 +709,10 @@ default-combinators: to map! reduce [
         return: "The rule's product"
             [any-value? pack!]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
         cycle [
-            [^result' #]: parser input except [
+            [^result _]: parser input except [
                 if tail? input [  ; could be `to <end>`, so check tail *after*
                     return fail "TO did not find desired pattern"
                 ]
@@ -720,7 +720,7 @@ default-combinators: to map! reduce [
                 continue
             ]
             remainder: input  ; TO means do not include match range
-            return ^result'
+            return ^result
         ]
         panic ~<unreachable>~
     ]
@@ -730,17 +730,17 @@ default-combinators: to map! reduce [
         return: "The rule's product"
             [any-value? pack!]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
         cycle [
-            [^result' remainder]: parser input except [
+            [^result remainder]: parser input except [
                 if tail? input [  ; could be `thru <end>`, check TAIL? *after*
                     return fail "THRU did not find desired pattern"
                 ]
                 input: next input
                 continue
             ]
-            return ^result'
+            return ^result
         ]
         panic ~<unreachable>~
     ]
@@ -779,18 +779,18 @@ default-combinators: to map! reduce [
         parser-right [action!]
         <local> start limit
     ][
-        [^ start]: (parser-left input) except e -> [
+        [_ start]: (parser-left input) except e -> [
             return fail e
         ]
 
         limit: start
         cycle [
-            [^ remainder]: (parser-right limit) except e -> [
+            [_ remainder]: (parser-right limit) except e -> [
                 if tail? limit [  ; remainder of null
                     return fail e
                 ]
                 limit: next limit
-                continue  ; don't try to assign the `[^ remainder]:`
+                continue  ; don't try to assign the `[_ remainder]:`
             ]
             return copy:part start limit
         ]
@@ -862,7 +862,7 @@ default-combinators: to map! reduce [
             [any-series?]
         parser [action!]
     ][
-        [^ remainder]: parser input except e -> [
+        [_ remainder]: parser input except e -> [
             return fail e
         ]
         if any-list? input [
@@ -933,7 +933,7 @@ default-combinators: to map! reduce [
         subparser [action!]
         :match "Return input on match, not synthesized value"
         :relax "Don't have to match input completely, just don't mismatch"
-        <local> subseries subremainder result'
+        <local> subseries subremainder ^result
     ][
         [^subseries remainder]: parser input except e -> [
             ;
@@ -965,7 +965,7 @@ default-combinators: to map! reduce [
         ; If the entirety of the item at the list is matched by the
         ; supplied parser rule, then we advance past the item.
         ;
-        [^result' subremainder]: subparser subseries except e -> [
+        [^result subremainder]: subparser subseries except e -> [
             return fail e
         ]
         if (not relax) and (not tail? subremainder) [
@@ -974,7 +974,7 @@ default-combinators: to map! reduce [
         if match [
             return subseries
         ]
-        return ^result'
+        return ^result
     ]
 
     === COLLECT AND KEEP ===
@@ -994,7 +994,7 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> collected
     ][
-        [^ remainder pending]: parser input except e -> [
+        [_ remainder pending]: parser input except e -> [
             return fail e
         ]
 
@@ -1021,16 +1021,16 @@ default-combinators: to map! reduce [
             [any-value?]
         :pending [blank! block!]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
-        [^result' remainder pending]: parser input except e -> [
+        [^result remainder pending]: parser input except e -> [
             return fail e
         ]
-        if void? ^result' [
+        if void? ^result [
             pending: _
             return null
         ]
-        ^result': decay ^result'
+        [^result]: decay ^result
 
         ; Since COLLECT is considered the most common `pending` client, we
         ; reserve QUOTED! items for collected things.
@@ -1041,18 +1041,18 @@ default-combinators: to map! reduce [
         ; used instead--though copies of blocks would be needed either way.
         ;
         case [
-            element? ^result' [
-                pending: glom pending result'  ; retain meta quote as signal
+            element? ^result [
+                pending: glom pending result  ; retain meta quote as signal
             ]
-            splice? ^result' [
-                for-each 'item unquasi result' [
+            splice? ^result [
+                for-each 'item unquasi result [
                     pending: glom pending quote item  ; quoteds target COLLECT
                 ]
             ]
             panic "Incorrect KEEP (not value or SPREAD)"
         ]
 
-        return ^result'
+        return ^result
     ]
 
     === ACCUMULATE ===
@@ -1073,7 +1073,7 @@ default-combinators: to map! reduce [
         remainder: input
         cycle [
             append collected (
-                [{#} remainder]: parser remainder except e -> [
+                [{_} remainder]: parser remainder except e -> [
                     return collected
                 ]
             )
@@ -1105,7 +1105,7 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> obj
     ][
-        [^ remainder pending]: parser input except e -> [
+        [_ remainder pending]: parser input except e -> [
             return fail e
         ]
 
@@ -1129,12 +1129,14 @@ default-combinators: to map! reduce [
         :pending [blank! block!]
         @target [set-word? set-group?]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
         if set-group? target [
             if not match [
                 any-word? set-word? get-word?
             ] (target: eval target) [
+                probe target
+                probe type of target
                 panic [
                     "GROUP! from EMIT (...): must produce an ANY-WORD?, not"
                     @target
@@ -1152,15 +1154,15 @@ default-combinators: to map! reduce [
             target: unbind target  ; `emit foo:` okay in function defining foo
         ]
 
-        [^result' remainder pending]: parser input except e -> [
+        [^result remainder pending]: parser input except e -> [
             return fail e
         ]
 
         ; The value is quoted or quasi because of ^ on ^(parser input).
         ; This lets us emit antiforms, since the MAKE OBJECT! evaluates.
         ;
-        pending: glom pending reduce [target result']
-        return ^result'
+        pending: glom pending reduce [target result]
+        return ^result
     ]
 
     === SET-WORD! and SET-TUPLE! COMBINATOR ===
@@ -1178,15 +1180,15 @@ default-combinators: to map! reduce [
         value [set-word? set-tuple? set-group?]
         parser "If assignment, failed parser means target will be unchanged"
             [action!]
-        <local> result' var
+        <local> ^result var
     ][
         if group? var: inside value value.1 [  ; eval left hand group first
             var: eval var
         ]
 
-        [^result' remainder]: parser input except e -> [return fail e]
+        [^result remainder]: parser input except e -> [return fail e]
 
-        return set var ^result'
+        return set var ^result
     ]
 
     'set combinator [
@@ -1230,7 +1232,7 @@ default-combinators: to map! reduce [
             ; no isolated value to capture.  Should we copy it?
 
             any-string? input [
-                [# remainder]: find // [
+                [_ remainder]: find // [
                     input value
                     :match ok
                     :case state.case
@@ -1240,7 +1242,7 @@ default-combinators: to map! reduce [
             ]
             <default> [
                 assert [blob? input]
-                [# remainder]: find // [
+                [_ remainder]: find // [
                     input value
                     :match ok
                     :case state.case
@@ -1294,7 +1296,7 @@ default-combinators: to map! reduce [
                     remainder: next input
                     return input.1
                 ]
-                [# remainder]: find:match:case input value else [
+                [_ remainder]: find:match:case input value else [
                     return fail [
                         "String at parse position does not match ISSUE!"
                     ]
@@ -1313,7 +1315,7 @@ default-combinators: to map! reduce [
                     remainder: next input
                     return make-char input.1
                 ]
-                [# remainder]: find:match:case input value else [
+                [_ remainder]: find:match:case input value else [
                     return fail [
                         "Binary at parse position does not match ISSUE!"
                     ]
@@ -1345,7 +1347,7 @@ default-combinators: to map! reduce [
             ]
             <default> [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
-                [# remainder]: find:match input value else [
+                [_ remainder]: find:match input value else [
                     return fail [
                         "Content at parse position does not match BLOB!"
                     ]
@@ -1367,14 +1369,14 @@ default-combinators: to map! reduce [
             [any-value?]
         'vars [set-word?]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
-        [^result' remainder]: parser input except e -> [
+        [^result remainder]: parser input except e -> [
             return fail e
         ]
-        state.env: add-let-binding state.env (unchain vars) ^result'
+        state.env: add-let-binding state.env (unchain vars) ^result
 
-        return ^result'
+        return ^result
     ]
 
     === IN COMBINATOR ===
@@ -1386,13 +1388,13 @@ default-combinators: to map! reduce [
         return: "Argument binding gotten INSIDE the current input"
             [any-value?]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
-        [^result' remainder]: parser input except e -> [
+        [^result remainder]: parser input except e -> [
             return fail e
         ]
 
-        return inside state.input ^result'
+        return inside state.input ^result
     ]
 
     === GROUP! AND PHASE COMBINATOR ===
@@ -1436,9 +1438,9 @@ default-combinators: to map! reduce [
             [any-value? pack! ghost!]
         :pending [blank! block!]
         parser [action!]
-        <local> result'
+        <local> ^result
     ][
-        [^result' remainder pending]: parser input except e -> [
+        [^result remainder pending]: parser input except e -> [
             return fail e
         ]
 
@@ -1448,13 +1450,13 @@ default-combinators: to map! reduce [
             if group? item [eval item, okay]
         ]
 
-        return ^result'
+        return ^result
     ]
 
-    === GET-GROUP! COMBINATOR ===
+    === INLINE COMBINATOR ===
 
     ; This allows the running of a rule generated by code, as if it had been
-    ; written in the spot where the GET-GROUP! is.
+    ; written in the spot.
     ;
     ; !!! The rules of what are allowed or not when triggering through WORD!s
     ; likely apply here.  Should that be factored out?
@@ -1464,79 +1466,55 @@ default-combinators: to map! reduce [
     ;    error indicating a problem inside the evaluation in a way that would
     ;    conflate it with the combinator simply not matching.  Must panic.
     ;
-    ; 2. NULL was originally prohibited, in the spirit of safety (kind of like
-    ;    not casually vaporizing nulls when used in COMPOSE groups).  But
-    ;    with "Flexible Logic", that safety broke the case of conditional
-    ;    tests like :(mode = 'read) because they now returned either ~okay~
-    ;    or ~null~ antiforms.  The safety tradeoff just doesn't work out to
-    ;    be worth it (other systemic NULL safety is being provided now with
-    ;    things like needing TRY with PICK and tuple on series to get null).
+    ; 2. The original INLINE concept allowed:
     ;
-    ; 3. Originally returning void would vaporize the expression.  But this
-    ;    makes it impossible to synthesize void from a GET-GROUP!, and it
-    ;    might be useful to do so, e.g.
-    ;
-    ;        parse [a b c] [append/ (data) :(? if flag '[across some word!])]
-    ;
-    ;    So instead, you can use ~okay~ to ask the GET-GROUP! to vaporize.
-    ;
-    ; 4. The original GET-GROUP! concept allowed:
-    ;
-    ;        parse "aaa" [:('some) "a"]
+    ;        parse "aaa" [inline ('some) "a"]
     ;
     ;    To do that variadically would require some kind of back-channel of
     ;    communication to the BLOCK! combinator to return the material, or
-    ;    have specific code in the BLOCK! combinator to process GET-GROUP!.
+    ;    have specific code in the BLOCK! combinator to process INLINE.
     ;    It's of questionable value--while this as an independent combinator
-    ;    has clear value.  However, arity-0 combinators may be an exception
-    ;    here (in particular, BYPASS).  Permit it inefficiently for now by
-    ;    enclosing in a block.
+    ;    has clear value.  Arity-0 combinators may be an exception here.
+    ;    Permit it inefficiently for now by enclosing in a block.
     ;
-    ; 5. We don't need to call COMBINATORIZE because we can't handle non
+    ; 3. We don't need to call COMBINATORIZE because we can't handle non
     ;    arity-0 combinators here.  But this should have better errors if the
     ;    datatype combinator takes arguments.
 
-    ':* combinator [
+    'inline combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [any-value? pack!]
+            [any-value? pack! ghost!]
         :pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
 
-        value [get-group?]
-        <local> r comb
+        parser [action!]
+        <local> ^r comb
     ][
-        ^r: eval:undecayed value.2 except e -> [panic e]  ; can't fail [1]
+        [^r]: parser input except e -> [panic e]  ; can't fail [1]
 
-        if null? ^r [  ; like [:(1 = 0)]
-            return fail "GET-GROUP! evaluated to NULL"  ; means no match [2]
+        if (void? ^r) or (ghost? ^r) [
+            return ghost
+        ]
+
+        [^r]: decay ^r  ; packs can't act as rules, decay them
+
+        if antiform? ^r [  ; REVIEW: splices?
+            return fail "INLINE can't evaluate to antiform"
         ]
 
         pending: _
         remainder: input
 
-        any [
-            okay? ^r  ; like [:(1 = 1)]
-            ghost? ^r  ; like [:(comment "hi")]
-        ] then [
-            return ~,~  ; invisible
+        if not block? ^r [
+            [^r]: envelop [] ^r  ; enable arity-0 combinators [2]
         ]
 
-        if void? ^r [  ; like [:(? if 1 = 0 [...])]
-            return void  ; couldn't produce void at all if vaporized [3]
-        ]
-
-        r: ^r  ; only needed as ^META to check for VOID
-
-        if word? r [
-            r: :[r]  ; enable 0-arity combinators [4]
-        ]
-
-        if not comb: select state.combinators (meta type of r) [
+        if not comb: select state.combinators (meta type of ^r) [
             panic [
-                "Unhandled type in GET-GROUP! combinator:" to word! type of r
+                "Unhandled type in GET-GROUP! combinator:" to word! type of ^r
             ]
         ]
 
-        return [{~} remainder pending]: run comb state input r  ; [5]
+        return [_ remainder pending]: run comb state input ^r  ; [3]
     ]
 
     === GET-BLOCK! COMBINATOR ===
@@ -1635,7 +1613,7 @@ default-combinators: to map! reduce [
 
         ensure [any-string? blob!] input
 
-        [# remainder]: find:match input value else [
+        [_ remainder]: find:match input value else [
             return fail "Molded form of QUOTED! item didn't match"
         ]
         return unquote value
@@ -1653,7 +1631,7 @@ default-combinators: to map! reduce [
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
         comb: (state.combinators).(meta quoted!)
-        return [{~} remainder pending]: run comb state input (meta value)
+        return [{_} remainder pending]: run comb state input (meta value)
     ]
 
     === ANTIFORM COMBINATORS ===
@@ -1684,7 +1662,7 @@ default-combinators: to map! reduce [
             panic make warning! [type: 'script, id: 'bad-antiform]
           ]
           ~okay~ [
-            return ~,~  ; let okay just act as a "guard", no influence
+            return ghost  ; let okay just act as a "guard", no influence
           ]
         ]
         panic ["Unknown keyword" mold meta value]
@@ -1785,30 +1763,30 @@ default-combinators: to map! reduce [
             [any-value? pack!]
         times-parser [action!]
         parser [action!]
-        <local> times' min max result'
+        <local> ^times min max ^result
     ][
-        [^times' input]: times-parser input except e -> [return fail e]
+        [^times input]: times-parser input except e -> [return fail e]
 
-        if void? ^times' [  ; VOID-in-NULL-out
+        if void? ^times [  ; VOID-in-NULL-out
             remainder: input
             return null
         ]
-        switch:type ^times' [
+        switch:type ^times [
             blank! [  ; should blank be tolerated if void is?
                 remainder: input
                 return void  ; `[repeat (_) rule]` is a no-op
             ]
             issue! [
-                if times' <> meta # [
+                if ^times <> # [
                     panic ["REPEAT takes ISSUE! of # to act like TRY SOME"]
                 ]
                 min: 0, max: #
             ]
             integer! [
-                max: min: unquote times'
+                max: min: ^times
             ]
             block! the-block! [
-                parse unquote times' [
+                parse ^times [
                     '_ '_ <end> (
                         remainder: input
                         return void  ; `[repeat ([_ _]) rule]` is a no-op
@@ -1828,7 +1806,7 @@ default-combinators: to map! reduce [
 
         append state.loops binding of $return
 
-        ^result': void  ; `repeat (0) one` => void intent
+        result: meta void  ; [repeat (0) one], should be (^result: void)
 
         count-up 'i max [  ; will count infinitely if max is #
             ;
@@ -1838,19 +1816,22 @@ default-combinators: to map! reduce [
             ; it would overwrite the last useful result.  Instead, the GROUP!
             ; potentially returns...only do the assignment if it does not.
             ;
-            [^result' input]: parser input except [
+            ; !!! Use ELIDE because packs have decay problems, and COUNT-UP
+            ; is looking at the loop body value to decay it.
+            ;
+            elide [^result input]: parser input except [
                 take:last state.loops
                 if i <= min [  ; `<=` not `<` as this iteration failed!
                     return fail "REPEAT did not reach minimum repetitions"
                 ]
                 remainder: input
-                return ^result'
+                return ^result
             ]
         ]
 
         take:last state.loops
         remainder: input
-        return ^result'
+        return ^result
     ]
 
     === TYPE-XXX! COMBINATORS ===
@@ -1996,52 +1977,52 @@ default-combinators: to map! reduce [
         <local> comb lookup'
     ][
         comb: (state.combinators).(meta type of get value)
-        return [{~} remainder pending]: run comb state input lookup'
+        return [{_} remainder pending]: run comb state input lookup'
     ]
 
     (meta the-group!) combinator compose [
         return: [any-atom?]
         :pending [blank! block!]
         value [the-group!]
-        <local> result' comb subpending single
+        <local> ^result comb subpending single
     ][
         value: as group! value  ; remove @ decoration
         comb: runs (state.combinators).(meta group!)
-        [^result' remainder pending]: comb state input value except e -> [
+        [^result remainder pending]: comb state input value except e -> [
             return fail e
         ]
 
-        comb: runs state.combinators.(meta type of decay ^result')
-        [^result' remainder subpending]: comb state remainder result'
+        comb: runs state.combinators.(meta type of decay ^result)
+        [^result remainder subpending]: comb state remainder result
             except e -> [
                 return fail e
             ]
 
         pending: glom pending spread subpending
-        return ^result'
+        return ^result
     ]
 
     (meta the-block!) combinator compose [  ; match literal block redundant [4]
         return: [any-atom?]
         :pending [blank! block!]
         value [the-block!]
-        <local> result' comb subpending
+        <local> ^result comb subpending
     ][
         value: as block! value  ; remove @ decoration
         comb: runs (state.combinators).(meta block!)
-        [^result' remainder pending]: comb state input value except e -> [
+        [^result remainder pending]: comb state input value except e -> [
             return fail e
         ]
 
-        ensure [quoted! quasiform!] result' ; quasi means antiform [2]
-        comb: runs (state.combinators).(meta type of decay ^result')
-        [^result' remainder subpending]: comb state remainder result'
+        ensure [quoted! quasiform!] result ; quasi means antiform [2]
+        comb: runs (state.combinators).(meta type of decay ^result)
+        [^result remainder subpending]: comb state remainder result
             except e -> [
                 return fail e
             ]
 
         pending: glom pending spread subpending
-        return ^result'
+        return ^result
     ]
 
     === META-XXX! COMBINATORS ===
@@ -2101,18 +2082,13 @@ default-combinators: to map! reduce [
 
     === INVISIBLE COMBINATORS ===
 
-    ; If BLOCK! is asked for a result, it will accumulate results from any
-    ; result-bearing rules it hits as it goes.  Not all rules give results
-    ; by default--such as GROUP! or literals for instance.  If something
-    ; gives a result and you do not want it to, use ELIDE.
-
     'elide combinator [
         "Transform a result-bearing combinator into one that has no result"
         return: [ghost!]
         parser [action!]
     ][
-        [^ remainder]: parser input except e -> [return fail e]
-        return ~,~
+        [_ remainder]: parser input except e -> [return fail e]
+        return ghost
     ]
 
     'comment combinator [
@@ -2120,46 +2096,29 @@ default-combinators: to map! reduce [
         return: [ghost!]
         'ignored [block! text! tag! issue!]
     ][
-        ; !!! This presents a dilemma, should it be quoting out a rule, or
-        ; quoting out material that's quoted?  This *could* make a parser and
-        ; simply not call it:
-        ;
-        ;    >> parse "aaa" [3 "a" comment across some "b"]
-        ;    == "a"
-        ;
-        ; In any case, forming a parser rule that's not going to be run is
-        ; less efficient than just quoting material, which can be done on
-        ; rules with illegal content:
-        ;
-        ;    >> parse "a" [comment [across some "a" ~illegal~] "a"]
-        ;    == "a"
-        ;
-        ; The more efficient and flexible form is presumed here to be the
-        ; most useful, and the closest parallel to the plain COMMENT action.
-        ;
         remainder: input
-        return ~,~
+        return ghost
     ]
 
     'skip combinator [
         "Skip an integral number of items"
         return: [ghost!]
         parser [action!]
-        <local> result
+        <local> ^result
     ][
-        [result #]: parser input except e -> [return fail e]
+        [^result _]: parser input except e -> [return fail e]
 
-        if blank? :result [
+        if blank? ^result [
             remainder: input
-            return ~,~
+            return ghost
         ]
-        if not integer? :result [
+        if not integer? ^result [
             panic "SKIP expects INTEGER! amount to skip"
         ]
-        remainder: skip input result else [
+        remainder: skip input ^result else [
             return fail "Attempt to SKIP past end of parse input"
         ]
-        return ~,~
+        return ghost
     ]
 
     'one combinator [  ; historically used "SKIP" for this
@@ -2227,18 +2186,10 @@ default-combinators: to map! reduce [
             let param: select value key
             if not param.optional [
                 ensure frame! parsers.1
-                if param.class = 'meta [
-                    f.(key): [{^} input subpending]: (
-                        run parsers.1 input
-                    ) except e -> [
-                        return fail e
-                    ]
-                ] else [
-                    f.(key): [{#} input subpending]: (
-                        run parsers.1 input
-                    ) except e -> [
-                        return fail e
-                    ]
+                f.(key): [{_} input subpending]: (
+                    run parsers.1 input
+                ) except e -> [
+                    return fail e
                 ]
                 pending: glom pending spread subpending
                 parsers: next parsers
@@ -2331,7 +2282,7 @@ default-combinators: to map! reduce [
         ;
         ; !!! REVIEW: handle `rule-start` and `rule-end` ?
         ;
-        return [{~} remainder pending]: run comb state input :r
+        return [{_} remainder pending]: run comb state input :r
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
@@ -2357,15 +2308,12 @@ default-combinators: to map! reduce [
         :pending [blank! block!]
         @arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
             [element?]  ; lie and take any element to report better error
-        <local> result' block
+        <local> ^result block
     ][
-        switch:type :arg [
-            group! [
-                if not block? block: eval arg [
-                    panic ["The ANY combinator requires a BLOCK! of alternates"]
-                ]
-            ]
-            block! [block: arg]
+        block: switch:type :arg [
+            word! [get arg]
+            group! [eval arg]
+            block! [arg]
         ] else [
             panic [
                 "The ANY combinator in UPARSE is not an iterating construct."
@@ -2374,14 +2322,19 @@ default-combinators: to map! reduce [
             ]
         ]
 
+        if not block? block [
+            panic ["The ANY combinator requires a BLOCK! of alternates"]
+        ]
+
         while [not tail? block] [
             ;
             ; Turn next alternative into a parser ACTION!, and run it.
             ; We take the first parser that succeeds.
             ;
             let [parser 'block]: parsify state block
-            [^result' remainder pending]: parser input except [continue]
-            return ^result'
+            return [{^result} remainder pending]: parser input except [
+                continue
+            ]
         ]
 
         return fail "All of the parsers in ANY block failed"
@@ -2412,7 +2365,7 @@ default-combinators: to map! reduce [
         :limit "Limit of how far to consider (used by ... recursion)"
             [block!]
         :thru "Keep trying rule until end of block"
-        <local> rules pos result' f sublimit subpending temp old-env
+        <local> rules pos ^result f sublimit subpending temp old-env
     ][
         rules: value  ; alias for clarity
         limit: default [tail of rules]
@@ -2420,7 +2373,7 @@ default-combinators: to map! reduce [
 
         pending: _  ; can become GLOM'd into a BLOCK!
 
-        result': '~,~  ; default result is invisible
+        [^result]: ghost  ; default result is invisible
 
         old-env: state.env
         /return: adapt return/ [state.env: old-env]
@@ -2466,7 +2419,7 @@ default-combinators: to map! reduce [
                 ; successful alternate means the whole block is done.
                 ;
                 remainder: pos
-                return ^result'
+                return ^result
             ]
 
             ; If you hit an inline sequencing operator here then it's the last
@@ -2485,7 +2438,7 @@ default-combinators: to map! reduce [
                 rules: next rules
                 if tail? rules [  ; if at end, act like [elide to <end>]
                     remainder: tail of pos
-                    return ^result'
+                    return ^result
                 ]
                 sublimit: find:part rules [...] limit
 
@@ -2507,7 +2460,7 @@ default-combinators: to map! reduce [
 
                 rules: sublimit else [tail of rules]
             ] else [
-                f: make frame! [{#} rules]: parsify state rules
+                f: make frame! [{_} rules]: parsify state rules
             ]
 
             f.input: pos
@@ -2522,12 +2475,12 @@ default-combinators: to map! reduce [
                     print mold:limit rules 200
                     panic "Combinator did not set pending"
                 ]
-                if temp <> '~,~ [
-                    result': temp  ; overwrite if was visible
+                if not ghost? ^temp [  ; overwrite only if was visible
+                    result: meta ^temp  ; should be (^result: ^temp)
                 ]
                 pending: glom pending spread subpending
             ] else [
-                result': '~,~  ; reset, e.g. `[bypass |]`
+                [^result]: ghost  ; reset, e.g. `[veto |]`
 
                 free pending  ; proactively release memory
                 pending: _
@@ -2567,7 +2520,7 @@ default-combinators: to map! reduce [
         ]
 
         remainder: pos
-        return ^result'
+        return ^result
     ])
 
     === PANIC COMBINATOR ===
@@ -2730,7 +2683,7 @@ comment [combinatorize: func [
                     set key null
                 ]
                 else [
-                    set key [{#} rules]: parsify state rules
+                    set key [{_} rules]: parsify state rules
                 ]
             ]
         ]
@@ -2974,7 +2927,7 @@ parse*: func [
     :hook "Call a hook on dispatch of each combinator"
         [<unrun> frame!]
 
-    <local> loops furthest synthesized' remainder pending env
+    <local> loops furthest ^synthesized remainder pending env
 ][
     ; PATH!s, TUPLE!s, and URL!s are read only and don't have indices.  But we
     ; want to be able to parse them, so make them read-only series aliases:
@@ -3042,7 +2995,7 @@ parse*: func [
     f.rule-end: null
 
     sys.util/rescue:relax [  ; :RELAX allows RETURN from block
-        [^synthesized' remainder pending]: eval:undecayed f except e -> [
+        [^synthesized remainder pending]: eval:undecayed f except e -> [
             assert [empty? state.loops]
             pending: _  ; didn't get assigned due to error
             return fail e  ; wrappers catch
@@ -3064,7 +3017,7 @@ parse*: func [
     ]
 
     return pack [
-        unghost ^synthesized'  ; combinators can vaporize, but PARSE shouldn't
+        unghost ^synthesized  ; combinators can vaporize, but PARSE shouldn't
         pending
     ]
 ]
@@ -3073,13 +3026,13 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     "Process input in the parse dialect, definitional error on failure"
 ] ]
     enclose parse*/ func [f] [
-        let [^synthesized' pending]: eval-free:undecayed f except e -> [
+        let [^synthesized pending]: eval-free:undecayed f except e -> [
             return fail e
         ]
         if not empty? pending [
             panic "PARSE completed, but pending list was not empty"
         ]
-        return ^synthesized'
+        return ^synthesized
     ]
 )
 
@@ -3137,14 +3090,14 @@ parse-trace-hook: func [
         print ["RULE:" mold spread copy:part f.rule-start f.rule-end]
     ]
 
-    let result': meta eval:undecayed f except e -> [
+    let result: meta eval:undecayed f except e -> [  ; should be ^result: ...
         print ["RESULT': FAIL"]
         return fail e
     ]
 
-    print ["RESULT':" @result']
+    print ["RESULT':" @result]
 
-    return ^result'
+    return ^result
 ]
 
 parse-trace: specialize parse/ [hook: parse-trace-hook/]
@@ -3155,16 +3108,16 @@ parse-furthest-hook: func [
     f [frame!]
     var [word! tuple!]
 ][
-    let result': ^ eval:undecayed f except e -> [
+    let [result]: eval:undecayed f except e -> [
         return fail e
     ]
 
-    let remainder: unquote second unquasi result'
+    let remainder: unquote second unquasi result
     if (index of remainder) > (index of get var) [
         set var remainder
     ]
 
-    return ^result'
+    return ^result
 ]
 
 /parse-furthest: adapt augment parse/ [

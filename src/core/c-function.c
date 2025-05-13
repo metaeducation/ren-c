@@ -138,13 +138,19 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
     if (mode == SPEC_MODE_LOCAL) {
         const Symbol* symbol;
         bool must_be_action;
-        if (Is_Word(item)) {
+        bool meta = false;
+        Option(SingleHeart) singleheart;
+        if (Is_Word(item) or (meta = Is_Meta_Word(item))) {
             symbol = Cell_Word_Symbol(item);
             must_be_action = false;
         }
         else if (
-            Is_Path(item) and
-            LEADING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(item)
+            Is_Path(item)
+            and (singleheart = Try_Get_Sequence_Singleheart(item))
+            and (
+                singleheart == LEADING_BLANK_AND(WORD)
+                or (meta = (singleheart == LEADING_BLANK_AND(META_WORD)))
+            )
         ){
             symbol = Cell_Word_Symbol(item);
             must_be_action = true;
@@ -169,11 +175,13 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         if (Trampoline_With_Top_As_Root_Throws())  // run the group
             return Error_No_Catch_For_Throw(L);
 
-        Meta_Unquotify_Undecayed(eval);  // Stepper is meta protocol
-        Decay_If_Unstable(eval);
+        if (not meta) {
+            Meta_Unquotify_Undecayed(eval);  // Stepper is meta protocol
+            Decay_If_Unstable(eval);
 
-        if (must_be_action and not Is_Action(eval))
-            return Error_User("Assignment using /FOO must be an action");
+            if (must_be_action and not Is_Action(eval))
+                return Error_User("Assignment using /FOO must be an action");
+        }
 
         Move_Cell(PUSH(), cast(Value*, eval));
 

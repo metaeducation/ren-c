@@ -441,7 +441,7 @@ count-up: func [
     var [word!]
     limit [<opt-out> integer! issue!]
     body [block!]
-    <local> start end result'
+    <local> start end ^result
 ][
     ; REPEAT in UPARSE wanted to try out some cutting-edge ideas about
     ; "opting in" to counting loops, e.g. `count-up 'i _` opts out and doesn't
@@ -457,15 +457,15 @@ count-up: func [
     ] else [
         limit
     ]
-    return cycle [
-        result': ^ cfor (var) start end 1 body except e -> [
+    return cycle [  ; v-- want to use ^result: ...
+        result: meta cfor var start end 1 body except e -> [
             return fail e
         ]
-        if null? ^result' [
+        if null? ^result [
             return null  ; a BREAK was encountered
         ]
-        if limit <> # [  ; Note: :WITH not ^META, decays PACK! etc
-            stop:with heavy ^result'  ; the limit was actually reached
+        if limit <> # [  ; Note: STOP:WITH not ^META, decays PACK! etc
+            return heavy ^result  ; the limit was actually reached
         ]
         ; otherwise keep going...
         end: end + 100
