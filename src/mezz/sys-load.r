@@ -599,7 +599,7 @@ load-module: function [
 
         if exports [
             if null? hdr/exports [
-                append hdr compose [exports: ((export-list))]
+                append hdr compose/only [exports: (export-list)]
             ] else [
                 append exports hdr/exports
                 hdr/exports: export-list

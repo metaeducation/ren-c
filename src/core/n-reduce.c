@@ -30,6 +30,78 @@
 #include "sys-core.h"
 
 
+
+//
+//  Startup_Reduce_Errors: C
+//
+void Startup_Reduce_Errors(void)
+{
+    g_error_veto = Init_Error(
+        Alloc_Value(),
+        Error_Veto_Raw()
+    );
+}
+
+
+//
+//  Shutdown_Reduce_Errors: C
+//
+void Shutdown_Reduce_Errors(void)
+{
+    rebRelease(g_error_veto);
+    g_error_veto = nullptr;
+}
+
+
+//
+//  Is_Error_Veto_Signal: C
+//
+bool Is_Error_Veto_Signal(Error* e) {
+    ERROR_VARS *vars = ERR_VARS(e);
+    if (not Is_Word(&vars->id))
+        return false;
+    return Cell_Word_Id(&vars->id) == SYM_VETO;
+}
+
+
+//
+//  veto: native [
+//
+//  "Give back an error with (id = 'veto), used to cancel an operation"
+//
+//      return: [error!]
+//  ]
+//
+DECLARE_NATIVE(VETO)
+{
+    INCLUDE_PARAMS_OF_VETO;
+
+    return Copy_Cell(OUT, g_error_veto);
+}
+
+
+//
+//  veto?: native [
+//
+//  "Detect whether argument is an error with (id = 'veto)"
+//
+//      return: [logic!]
+//      atom [any-atom!]
+//  ]
+//
+DECLARE_NATIVE(VETO_Q)
+{
+    INCLUDE_PARAMS_OF_VETO_Q;
+
+    const Value* atom = ARG(ATOM);
+
+    if (not Is_Error(atom))
+        return nullptr;
+
+    return LOGIC(Is_Error_Veto_Signal(cast(Error*, Cell_Varlist(atom))));
+}
+
+
 static Value* Init_Lib_Word(Cell* out, SymId id) {
     return Init_Any_Word_Bound(
         out,
@@ -314,21 +386,9 @@ bool Compose_To_Stack_Throws(
             // Don't compose at this level, but may need to walk deeply to
             // find compositions inside it if /DEEP and it's an array
         }
-        else {
-            if (Is_Doubled_Group(L->value)) { // non-spliced compose, if match
-                Cell* inner = Cell_List_At(L->value);
-                if (Match_For_Compose(inner, pattern)) {
-                    splice = false;
-                    match = inner;
-                    match_specifier = Derive_Specifier(specifier, inner);
-                }
-            }
-            else { // plain compose, if match
-                if (Match_For_Compose(L->value, pattern)) {
-                    match = L->value;
-                    match_specifier = specifier;
-                }
-            }
+        else if (Match_For_Compose(L->value, pattern)) {
+            match = L->value;
+            match_specifier = specifier;
         }
 
         if (match) { // only L->value if pattern is just [] or (), else deeper

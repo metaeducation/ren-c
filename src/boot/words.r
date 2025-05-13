@@ -209,9 +209,10 @@ then
 remove
 insert
 change
-bypass
+veto
 if
-when
+inline
+cond
 fail
 reject
 while

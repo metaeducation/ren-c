@@ -18,6 +18,8 @@ Rebol [
 
 ?: opt: optional/
 
+?!: optional:veto/
+
 assert: func [
     {Ensure conditions are conditionally true if hooked by debugging}
 
@@ -34,6 +36,11 @@ assert: func [
 
 raise: func [error [error!]] [  ; poor man's definitional error
     return error
+]
+
+enblock: func [item [<undo-opt> any-element!]] [
+    if null? item [return copy []]
+    return reduce [item]
 ]
 
 so: infix func [
@@ -90,7 +97,7 @@ function: func [
     parse spec [opt some [
         the <void> (append new-spec <void>)
     |
-        when (var) [
+        cond (var) [
             var: any-word! (
                 append exclusions var ;-- exclude args/refines
                 append new-spec var
@@ -101,7 +108,7 @@ function: func [
             )
         ]
     |
-        when (not var) [
+        cond (not var) [
             var: set-word! ( ;-- locals legal anywhere
                 append exclusions var
                 append new-spec var
@@ -125,7 +132,7 @@ function: func [
         )
     |
         (var: null)  ; everything below this line resets var
-        bypass  ; rolling over to next alternate
+        veto  ; rolling over to next alternate
     |
         the <local>
         opt some [var: word! other: try group! (
@@ -496,7 +503,9 @@ really: func [
 oneshot: specialize 'n-shot [n: 1]
 upshot: specialize 'n-shot [n: -1]
 
-attempt: ~<Use SYS.UTIL/RESCUE instead of ATTEMPT>~
+; New definition of ATTEMPT (usable with THEN and ELSE)
+;
+attempt: specialize repeat/ [count: 1]
 
 for-next: redescribe [
     "Evaluates a block for each position until the end, using NEXT to skip"
@@ -765,7 +774,7 @@ module: func [
         spec/version [~null~ tuple!]
         spec/options [~null~ block!]
     ][
-        eval compose [ensure ((types)) (var)] ;-- names to show if fails
+        eval compose/only [ensure (types) (var)] ;-- names to show if fails
     ]
 
     spec/options: default [copy []]

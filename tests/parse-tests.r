@@ -141,7 +141,7 @@
 
 [#1268 (
     i: 0
-    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[bypass]]) j]]
+    parse/match "a" [opt some [(i: i + 1 j: if i = 2 [[veto]]) j]]
     i = 2
 )]
 
@@ -150,8 +150,8 @@
 [#1267 (
     b: "abc"
     c: ["a" | "b"]
-    a2: [opt some [b e: (d: [:e]) then bypass | [c | (d: [bypass]) bypass]] d]
-    a4: [opt some [b then e: (d: [:e]) bypass | [c | (d: [bypass]) bypass]] d]
+    a2: [opt some [b e: (d: [:e]) then veto | [c | (d: [veto]) veto]] d]
+    a4: [opt some [b then e: (d: [:e]) veto | [c | (d: [veto]) veto]] d]
     equal? parse/match/redbol "aaaaabc" a2 parse/match/redbol "aaaaabc" a4
 )]
 
@@ -176,7 +176,7 @@
     (did parse/match "" [not ahead one])
 ]
 [#1240
-    (did parse/match "" [not ahead bypass])
+    (did parse/match "" [not ahead veto])
 ]
 
 
@@ -252,9 +252,11 @@
 ;; Doubled groups inject their material into the parse/match, if it is not null.
 ;; They act like a COMPOSE/ONLY that runs each time the GROUP! is passed.
 
-(did parse/match "aaabbb" [(([some "a"])) (([some "b"]))])
-(did parse/match "aaabbb" [(([some "a"])) ((if null [some "c"])) (([some "b"]))])
-(did parse/match "aaa" [(('some)) "a"])
+(did parse/match "aaabbb" [inline ([some "a"]) inline ([some "b"])])
+(did parse/match "aaabbb" [
+    inline ([some "a"]) inline (if null [some "c"]) inline ([some "b"])]
+)
+(did parse/match "aaa" [inline ('some) "a"])
 
 (did parse/match "aaabbb" [some "a" foo: <here> some "b" seek foo some "b"])
 

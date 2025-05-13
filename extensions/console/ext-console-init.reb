@@ -436,7 +436,9 @@ ext-console-impl: function [
             <bad> [
                 emit #no-unskin-if-error
                 emit [print (<*> mold meta prior)]
-                emit [panic ["Bad REPL continuation:" ((<*> meta result))]]
+                emit [
+                    panic ["Bad REPL continuation:" (<*> enblock [meta result])]
+                ]
             ]
         ] then [
             return-to-c instruction
@@ -732,7 +734,7 @@ ext-console-impl: function [
     ; Run the "dialect hook", which can transform the completed code block
     ;
     emit #unskin-if-halt ;-- Ctrl-C during dialect hook is a problem
-    emit [as group! system/console/dialect-hook ((<*> code))]
+    emit [as group! system/console/dialect-hook (<*> enblock code)]
     return group! ;-- a group RESULT should come back to HOST-CONSOLE
 ]
 

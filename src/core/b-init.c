@@ -1458,6 +1458,8 @@ void Startup_Core(void)
     //
     Startup_Stackoverflow();
 
+    Startup_Reduce_Errors();
+
 //==//////////////////////////////////////////////////////////////////////==//
 //
 // RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED
@@ -1566,6 +1568,7 @@ void Shutdown_Core(void)
 
     Shutdown_Data_Stack();
 
+    Shutdown_Reduce_Errors();
     Shutdown_Stackoverflow();
     Shutdown_System_Object();
     Shutdown_Typesets();

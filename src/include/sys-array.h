@@ -556,17 +556,6 @@ INLINE bool Splices_Into_Type_Without_Only(
 }
 
 
-// Checks to see if a GROUP! is like ((...)) or (...), used by COMPOSE & PARSE
-//
-INLINE bool Is_Doubled_Group(const Cell* group) {
-    assert(Is_Group(group));
-    Cell* inner = Cell_List_At(group);
-    if (VAL_TYPE_RAW(inner) != TYPE_GROUP or Cell_Series_Len_At(group) != 1)
-        return false; // plain (...) GROUP!
-    return true; // a ((...)) GROUP!, inject as rule
-}
-
-
 #if NO_RUNTIME_CHECKS
     #define Assert_Array(s) \
         NOOP

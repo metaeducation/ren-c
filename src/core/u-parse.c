@@ -462,25 +462,14 @@ Bounce Process_Group_For_Parse(
     if (P_POS > Flex_Len(P_INPUT))
         P_POS = Flex_Len(P_INPUT);
 
-    if (not Is_Doubled_Group(group))  // non-doubled groups always discard
-        return Init_Void(cell);
+    if (Is_Error(cell)) {
+        if (Is_Error_Veto_Signal(cast(Error*, Cell_Varlist(cell))))
+            return Init_Nulled(cell);
+        PANIC_IF_ERROR(cell);
+    }
 
-    if (Is_Void(cell))  // even for doubled groups, void evals are discarded
-        return cell;
 
-    if (Is_Trash(cell))
-        panic ("Doubled GROUP! eval returned TRASH!");
-
-    if (Is_Nulled(cell))
-        panic ("Doubled GROUP! eval returned NULL!");
-
-    if (Is_Group(cell))
-        panic ("Doubled GROUP! eval returned GROUP!, re-evaluation disabled.");
-
-    if (Is_Bar(cell))
-        panic ("Doubled GROUP! eval returned BAR!...cannot be abstracted.");
-
-    return cell;
+    return Init_Void(cell);
 }
 
 //
@@ -520,7 +509,8 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             assert(P_POS <= Flex_Len(P_INPUT)); // !!! Process_Group ensures
             return P_POS;
         }
-        // was a doubled group ((...)), use result as rule
+        assert(Is_Nulled(rule));  // was a veto
+        return END_FLAG;
     }
 
     switch (Type_Of(rule)) {
@@ -681,7 +671,8 @@ static REBIXO Parse_Array_One_Rule_Core(
             assert(pos <= Array_Len(array)); // !!! Process_Group ensures
             return pos;
         }
-        // was a doubled group ((...)), use result as rule
+        assert(Is_Nulled(rule));  // was a veto
+        return END_FLAG;
     }
 
     switch (Type_Of(rule)) {
@@ -1168,6 +1159,13 @@ DECLARE_NATIVE(SUBPARSE)
             return Init_Integer(P_OUT, P_POS);
         }
 
+        // Some iterated rules have a parameter.  `3 into [some "a"]` will
+        // actually run the INTO `rule` 3 times with the `subrule` of
+        // `[some "a"]`.  Because it is iterated it is only captured the first
+        // time through, nullptr indicates it's not been captured yet.
+        //
+        const Value* subrule = nullptr;
+
         // The rule in the block of rules can be literal, while the "real
         // rule" we want to process is the result of a variable fetched from
         // that item.  If the code makes it to the iterated rule matching
@@ -1182,18 +1180,19 @@ DECLARE_NATIVE(SUBPARSE)
                 Copy_Cell(P_OUT, save);
                 return BOUNCE_THROWN;
             }
-            if (Is_Void(rule)) { // was a (...), or null-bearing ((...))
+            if (Is_Void(rule)) { // nothing special
                 FETCH_NEXT_RULE(L); // ignore result and go on to next rule
                 continue;
             }
+            assert(Is_Nulled(rule));  // was a veto
+
+          handle_veto:
+            P_POS = NOT_FOUND;
+            FETCH_NEXT_RULE(L);
+            goto post_match_processing;
         }
 
-        // Some iterated rules have a parameter.  `3 into [some "a"]` will
-        // actually run the INTO `rule` 3 times with the `subrule` of
-        // `[some "a"]`.  Because it is iterated it is only captured the first
-        // time through, nullptr indicates it's not been captured yet.
-        //
-        const Value* subrule = nullptr;
+      reparse_rule:  // jumped to by INLINE with new rule
 
         // If word, set-word, or get-word, process it:
         if (Type_Of(rule) >= TYPE_WORD and Type_Of(rule) <= TYPE_GET_WORD) {
@@ -1494,22 +1493,19 @@ DECLARE_NATIVE(SUBPARSE)
 
                     case SYM_FAIL:
                         if (not (P_FLAGS & PF_REDBOL))
-                            panic ("Use BYPASS for next alternate in PARSE");
-                        goto handle_bypass;
+                            panic ("Use VETO for next alternate in PARSE");
+                        goto handle_veto;
 
-                    handle_bypass:
-                    case SYM_BYPASS:
-                        P_POS = NOT_FOUND;
-                        FETCH_NEXT_RULE(L);
-                        goto post_match_processing;
+                    case SYM_VETO:
+                        goto handle_veto;
 
                     case SYM_IF:
                         if (not (P_FLAGS & PF_REDBOL))
-                            panic ("Use WHEN for arity-1 IF in PARSE");
-                        goto handle_when;
+                            panic ("Use COND for arity-1 IF in PARSE");
+                        goto handle_cond;
 
-                    handle_when:
-                    case SYM_WHEN: {
+                    handle_cond:
+                    case SYM_COND: {
                         FETCH_NEXT_RULE(L);
                         if (IS_END(P_RULE))
                             panic (Error_Parse_End());
@@ -1536,6 +1532,42 @@ DECLARE_NATIVE(SUBPARSE)
 
                         P_POS = NOT_FOUND;
                         goto post_match_processing;
+                    }
+
+                    case SYM_INLINE: {
+                        FETCH_NEXT_RULE(L);
+                        if (IS_END(P_RULE))
+                            panic (Error_Parse_End());
+
+                        if (not Is_Group(P_RULE))
+                            panic (Error_Parse_Rule());
+
+                        Specifier* derived = Derive_Specifier(P_RULE_SPECIFIER, P_RULE);
+
+                        if (Eval_Array_At_Throws(save, Cell_Array(P_RULE), VAL_INDEX(P_RULE), derived))
+                            return BOUNCE_THROWN;
+
+                        // !!! The input is not locked from modification by agents other than the
+                        // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
+                        // allowed, each time arbitrary user code runs, rules have to be adjusted
+                        //
+                        if (P_POS > Flex_Len(P_INPUT))
+                            P_POS = Flex_Len(P_INPUT);
+
+                        if (Is_Error(save)) {
+                            if (Is_Error_Veto_Signal(cast(Error*, Cell_Varlist(save))))
+                                goto handle_veto;
+                            PANIC_IF_ERROR(save);
+                        }
+                        if (Is_Void(save)) {
+                            FETCH_NEXT_RULE(L);
+                            continue;
+                        }
+                        if (Is_Antiform(save))
+                            panic (Error_Bad_Antiform(save));
+
+                        rule = save;
+                        goto reparse_rule;
                     }
 
                     case SYM_LIMIT:

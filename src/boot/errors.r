@@ -41,6 +41,7 @@ internal: [
     ; stack overflows?  (Call stack, Data stack?)
     ;
     stack-overflow:     {stack overflow}
+    veto:               {Cancel operation}
 
     not-done:           {reserved for future use (or not yet implemented)}
 

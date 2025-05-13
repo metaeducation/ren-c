@@ -496,7 +496,7 @@ host-start: function [
                 when-done: default ['quit] ;-- override null, not CONSOLE
 
                 emit {Use /ONLY so that QUIT/VALUE quits, vs. return DO value}
-                emit [do/only ((<*> param-or-die "DO"))]
+                emit [do/only (<*> param-or-die "DO")]
             )
         |
             ["--halt" | "-h"] <end> (
@@ -676,7 +676,7 @@ host-start: function [
     ;
     if file? o/script [
         emit {Use DO/ONLY so QUIT exits vs. being DO's return value}
-        emit [do/only/args ((<*> o/script)) ((<*> script-args))]
+        emit [do/only/args (<*> o/script) (<*> enblock script-args)]
     ]
 
     host-start: 'done

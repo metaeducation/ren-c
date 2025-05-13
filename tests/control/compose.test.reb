@@ -53,11 +53,11 @@
     sum = 32768
 )
 
-; COMPOSE with implicit /ONLY-ing
+; COMPOSE with ENBLOCK (doubled-groups to suppress splicing removed)
 
 (
     block: [a b c]
-    [plain: a b c only: [a b c]] = compose [plain: (block) only: ((block))]
+    [plain: a b c only: [a b c]] = compose [plain: (block) only: (enblock block)]
 )
 
 ; COMPOSE with pattern, beginning tests
@@ -68,12 +68,4 @@
     'a/(b)/3/c = compose <*> 'a/(b)/(<*> 1 + 2)/c
 )(
     [(a b c) [((d) 1 + 2)]] = compose/deep <*> [(a (<*> 'b) c) [((d) 1 + 2)]]
-)
-
-(
-    [(left alone) [c b a] c b a ((left alone))]
-    = compose <*> [
-        (left alone) ((<*> reverse copy [a b c])) (<*> reverse copy [a b c])
-        ((left alone))
-    ]
 )

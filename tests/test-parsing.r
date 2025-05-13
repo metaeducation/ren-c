@@ -178,18 +178,18 @@ make object! [
             opt some [
                 any-wsp single-value
                 [
-                    when (tag? value) (
+                    cond (tag? value) (
                         type: in types 'flag
                         append flags value
                     )
                         |
-                    when (issue? value) (type: in types 'isu)
+                    cond (issue? value) (type: in types 'isu)
                 ]
                 emit-token
             ]
             opt [
                 any-wsp single-value
-                when (text? value) (type: in types 'str)
+                cond (text? value) (type: in types 'str)
                 emit-token
             ]
             opt some [any-wsp single-test emit-token]
@@ -211,12 +211,12 @@ make object! [
                 |
             single-value
             [
-                when (tag? get 'value) (
+                cond (tag? get 'value) (
                     type: in types 'flg
                     append flags value
                 )
                 |
-                when (file? get 'value) (
+                cond (file? get 'value) (
                     type: in types 'fil
                     collect-tests collected-tests value
                     print ["file:" mold test-file]

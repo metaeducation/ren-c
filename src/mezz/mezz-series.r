@@ -282,7 +282,7 @@ reword: function [
                 |
             ]
         ]
-        keep 'bypass  ; skip to next alternate if no match, vs. removing last |
+        keep 'veto  ; skip to next alternate if no match, vs. removing last |
     ]
 
     ; Note that `any-keyword-rule` will look something like:
@@ -290,7 +290,7 @@ reword: function [
     ; [
     ;     "keyword1" (keyword-match: the keyword1)
     ;     | "keyword2" (keyword-match: the keyword2)
-    ;     | bypass
+    ;     | veto
     ; ]
 
     rule: [
@@ -502,19 +502,19 @@ collect-lines: adapt 'collect [  ; https://forum.rebol.info/t/945/1
         keep: adapt specialize 'keep [
             line: okay  only: null  part: null
         ] [value: (spaced opt :value) else [[]]]  ; can't assign void
-        ((as group! body))
+        (as group! body)
     ]
 ]
 
 collect-text: cascade [  ; https://forum.rebol.info/t/945/2
     adapt 'collect [
         body: compose [
-             keep: adapt specialize 'keep [
+            keep: adapt specialize 'keep [
                 line: null  only: null  part: null
             ][
                 value: (unspaced opt :value) else [[]]  ; can't assign void
             ]
-            ((as group! body))
+            (as group! body)
         ]
     ]
     :opt

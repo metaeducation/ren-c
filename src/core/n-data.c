@@ -707,6 +707,7 @@ DECLARE_NATIVE(SET)
 //
 //      return: [any-atom!]
 //      atom [any-atom!]
+//      /veto "Instead of turning into a void, turn into a VETO"
 //  ]
 //
 DECLARE_NATIVE(OPTIONAL)
@@ -714,7 +715,7 @@ DECLARE_NATIVE(OPTIONAL)
     INCLUDE_PARAMS_OF_OPTIONAL;
 
     if (Is_Nulled(ARG(ATOM)))
-        return Init_Void(OUT);
+        return Bool_ARG(VETO) ? Copy_Cell(OUT, g_error_veto) : Init_Void(OUT);
 
     RETURN (ARG(ATOM));
 }

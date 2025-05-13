@@ -135,6 +135,7 @@ PVAR Value* Root_Action_Meta;
 PVAR Value* Root_Stats_Map;
 
 PVAR Value* Root_Stackoverflow_Error; // made in advance, avoids extra calls
+PVAR Value* g_error_veto; // made in advance, avoids extra calls
 
 
 // This signal word should be thread-local, but it will not work
