@@ -178,9 +178,7 @@ script: [
     bad-func-def:       ["invalid function definition:" :arg1]
     bad-func-arg:       ["function argument" :arg1 "is not valid"]
 
-    needs-return-opt:   [:arg1 "can't return null (see RETURN: [~null~ ...])"]
-    bad-return-type:    [:arg1 "doesn't have RETURN: enabled for" :arg2]
-    bad-void-return:    [:arg1 "doesn't have void RETURN enabled"]
+    bad-return-type:    [:arg1 "can't RETURN" :arg2 "but rather" :arg3]
 
     no-refine:          [:arg1 "has no refinement called" :arg2]
     bad-refines:        "incompatible or invalid refinements"

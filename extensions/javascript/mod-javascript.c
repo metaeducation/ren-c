@@ -832,7 +832,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     );
 
     if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
-        return PANIC(Error_Bad_Return_Type(L, OUT));
+        return PANIC(Error_Bad_Return_Type(L, OUT, param));
 
     return OUT;
 

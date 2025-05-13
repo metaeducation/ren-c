@@ -278,7 +278,7 @@ void Do_After_Action_Checks_Debug(Level* L) {
             L, param, L->out
         )){
             assert(!"'Raw' native code violated return type contract!\n");
-            crash (Error_Bad_Return_Type(L, L->out));
+            crash (Error_Bad_Return_Type(L, L->out, param));
         }
     }
   #endif

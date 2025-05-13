@@ -646,15 +646,15 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     Level* target_level = Level_Of_Varlist_May_Panic(unwrap coupling);
     Details* target_details = Ensure_Level_Details(target_level);
 
-    const Element* return_param = Quoted_Returner_Of_Paramlist(
+    const Element* param = Quoted_Returner_Of_Paramlist(
         Phase_Paramlist(target_details), SYM_RETURN
     );
 
     if (not Bool_ARG(RUN)) {  // plain simple RETURN (not weird tail-call)
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(  // do now [2]
-            LEVEL, return_param, OUT
+            LEVEL, param, OUT
         )){
-            return PANIC(Error_Bad_Return_Type(target_level, OUT));
+            return PANIC(Error_Bad_Return_Type(target_level, OUT, param));
         }
 
         DECLARE_VALUE (label);

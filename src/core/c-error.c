@@ -1153,10 +1153,14 @@ Error* Error_Bad_Argless_Refine(const Key* key)
 //
 //  Error_Bad_Return_Type: C
 //
-Error* Error_Bad_Return_Type(Level* L, Atom* atom) {
+Error* Error_Bad_Return_Type(Level* L, Atom* atom, const Element* param) {
     Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
 
-    return Error_Bad_Return_Type_Raw(maybe label, Datatype_Of(atom));
+    Option(const Source*) array = Cell_Parameter_Spec(param);
+    assert(array);  // if you return all types, no type should be bad!
+    DECLARE_ELEMENT (spec);
+    Init_Block(spec, unwrap array);
+    return Error_Bad_Return_Type_Raw(maybe label, Datatype_Of(atom), spec);
 }
 
 
