@@ -375,7 +375,7 @@ ext-console-impl: function [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [blank! block! group!]
     result "Unevaluated result of evaluating PRIOR, or error"
-        [~null~ word! group! error!]  ; null if never ran before
+        [~null~ any-metaform! error!]  ; null if never ran before
     resumable "Is the RESUME function allowed to exit this console"
         [logic!]
 ][

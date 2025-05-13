@@ -1219,18 +1219,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             Array* instruction = cast(Array*, m_cast(void*, p));
             Value* single = KNOWN(ARR_SINGLE(instruction));
 
-            if (Is_Word(single)) {
-                assert(
-                    Cell_Word_Id(single) == SYM__TNULL_T
-                    or Cell_Word_Id(single) == SYM__TOKAY_T
-                    or Cell_Word_Id(single) == SYM__TVOID_T
-                    or Cell_Word_Id(single) == SYM_TILDE_1
-                );
-            }
-            else {
-                assert(Is_Group(single));
-                assert(Cell_Series_Len_At(single) == 2);
-            }
+            assert(Any_Metaform(single));
 
             Copy_Cell(PUSH(), single);
 

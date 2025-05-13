@@ -21,6 +21,7 @@ any-value!
 any-equatable!
 any-element!
 logic!
+any-metaform!
 any-word!
 any-path!
 any-number!

@@ -487,6 +487,10 @@ e-types/emit {
 
     #define TS_LOGIC \
         (FLAGIT_KIND(TYPE_NULLED) | FLAGIT_KIND(TYPE_OKAY))
+
+    #define TS_METAFORM \
+        (FLAGIT_KIND(TYPE_WORD) | FLAGIT_KIND(TYPE_GROUP) \
+            | FLAGIT_KIND(TYPE_LIT_WORD) | FLAGIT_KIND(TYPE_LIT_PATH))
 }
 typeset-sets: copy []
 

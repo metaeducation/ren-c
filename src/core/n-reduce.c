@@ -114,6 +114,34 @@ static Value* Init_Lib_Word(Cell* out, SymId id) {
 
 
 //
+//  Any_Metaform: C
+//
+bool Any_Metaform(Value* v) {
+    if (Is_Word(v)) {
+        if (
+            Cell_Word_Id(v) == SYM__TNULL_T
+            or Cell_Word_Id(v) == SYM__TOKAY_T
+            or Cell_Word_Id(v) == SYM__TVOID_T
+            or Cell_Word_Id(v) == SYM_TILDE_1
+        ){
+            return true;
+        }
+        return false;
+    }
+
+    if (Is_Lit_Word(v) or Is_Lit_Path(v))
+        return true;
+
+    return (
+        Is_Group(v)
+        and Cell_Series_Len_At(v) == 2
+        and Is_Word(Cell_List_At(v))
+        and Cell_Word_Id(Cell_List_At(v)) == SYM_THE
+    );
+}
+
+
+//
 //  Meta_Quotify: C
 //
 // Poor man's implementation of the "meta" functionality.
@@ -135,6 +163,16 @@ Value* Meta_Quotify(Value* v)
     if (Is_Trash(v))
         return Init_Word(v, CANON(TILDE_1));
 
+    if (Is_Word(v)) {
+        KIND_BYTE(v) = TYPE_LIT_WORD;
+        return v;
+    }
+
+    if (Is_Path(v)) {
+        KIND_BYTE(v) = TYPE_LIT_PATH;
+        return v;
+    }
+
     Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
     Set_Flex_Len(a, 2);
     Init_Lib_Word(Array_At(a, 0), SYM_THE);
@@ -151,31 +189,38 @@ Value* Meta_Unquotify(Value* v)
 {
     if (Is_Word(v)) {
         switch (Cell_Word_Id(v)) {
-        case SYM__TVOID_T:
+          case SYM__TVOID_T:
             return Init_Void(v);
-        case SYM__TOKAY_T:
+          case SYM__TOKAY_T:
             return Init_Okay(v);
-        case SYM__TNULL_T:
+          case SYM__TNULL_T:
             return Init_Nulled(v);
-        case SYM_TILDE_1:
+          case SYM_TILDE_1:
             return Init_Trash(v);
         default:
-            panic ("Invalid WORD! passed to UNMETA");
+          break;
         }
     }
-
-    if (not Is_Group(v))
-        panic ("UMETA only works on GROUP! or WORD!");
-
-    if (
-        Cell_Series_Len_At(v) != 2
-        or not Is_Word(Cell_List_At(v))
-        or Cell_Word_Id(Cell_List_At(v)) != SYM_THE
+    else if (Is_Lit_Word(v)) {
+        KIND_BYTE(v) = TYPE_WORD;
+        return v;
+    }
+    else if (Is_Lit_Path(v)) {
+        KIND_BYTE(v) = TYPE_PATH;
+        return v;
+    }
+    else if (
+        Is_Group(v)
+        and Cell_Series_Len_At(v) == 2
+        and Is_Word(Cell_List_At(v))
+        and Cell_Word_Id(Cell_List_At(v)) == SYM_THE
     ){
-        panic ("UNMETA only works on (the <whatever>) GROUP!s");
+        return Copy_Cell(v, cast(Value*, Cell_List_At(v) + 1));
     }
 
-    return Copy_Cell(v, cast(Value*, Cell_List_At(v) + 1));
+    panic (
+        "UNMETA needs [~ ~NULL~ ~VOID~ ~OKAY~ LIT-WORD! LIT-PATH! (THE <item>)]"
+    );
 }
 
 
@@ -185,7 +230,7 @@ Value* Meta_Unquotify(Value* v)
 //  "Make expression that when evaluated, will produce the input"
 //
 //      return: {~null~ if null, or `(the ...)` where ... is passed-in cell}
-//          [word! group!]
+//          [any-metaform!]
 //      value [any-atom!]
 //   ]
 //
@@ -212,7 +257,7 @@ DECLARE_NATIVE(META)
 //  "Narrower form of evaluation that only evaluates META products"
 //
 //      return: [any-atom!]
-//      value [word! group!]
+//      value [any-metaform!]
 //   ]
 //
 DECLARE_NATIVE(UNMETA)
