@@ -42,7 +42,7 @@
         v: ~
         [#2] = parse "123" [
             collect [some [
-                keep [v: digit, elide when (even? transcode:one as text! v)]
+                keep [v: digit, elide cond (even? transcode:one as text! v)]
                 |
                 <next>
             ]]
@@ -53,7 +53,7 @@
         v: ~
         [2] = parse #{010203} [
             collect [some [
-                keep [v: digit, elide when (even? v)]
+                keep [v: digit, elide cond (even? v)]
                 |
                 <next>
             ]]
@@ -406,7 +406,7 @@ https://github.com/metaeducation/ren-c/issues/935
     (
         v: ~
         [2] = parse [1 2 3] [
-            collect [some [keep [v: integer! elide when (even? v)] | <next>]]
+            collect [some [keep [v: integer! elide cond (even? v)] | <next>]]
         ]
     )
     (

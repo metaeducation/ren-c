@@ -4,12 +4,12 @@
 ; been written in that spot.  If a WORD! is used as a rule, it cannot be
 ; variadic.  So this is legal:
 ;
-;    >> parse [a a a] [:(if 1 = 1 ['bypass]) | some 'a]
+;    >> parse [a a a] [inline (if 1 = 1 ['veto]) | some 'a]
 ;    == a
 ;
 ; But this is not legal:
 ;
-;    >> parse [a a a] [:(if 1 = 1 ['some]) 'a]
+;    >> parse [a a a] [inline (if 1 = 1 ['some]) 'a]
 ;    ** Error: Too few parameters for combinator
 ;
 ; It is a particularly powerful facility--though unlike COMPOSE it will run
@@ -18,29 +18,33 @@
 
 [
     ; === SPECIAL ANTIFORM MEANINGS ===
-    (
-        ; NULL means no match (does not cause panic)
-        'a = parse [a a a] [:(1 = 0) | some 'a]
+    ;
+    ; At one time ~null~ and ~okay~ could be used to say to continue or not.
+    ; That is now taken over with the ability to VETO out of an INLINE vs.
+    ; returning void.  So we get protection against nulls.  But void is
+    ; willing to just make the INLINE vaporize.
+
+    ~bad-antiform~ !! (
+        'a = parse [a a a] [inline (1 = 0) | some 'a]
+    )
+    ~bad-antiform~ !! (
+        'a = parse [a a a] ['a inline (1 = 1) elide some 'a]
     )
     (
-        ; OKAY synthesizes VOID and continues matching
-        'a = parse [a a a] ['a :(1 = 1) elide some 'a]
+        void = parse [a a a] ['a inline (void) elide some 'a]
     )
     (
-        ; VOID synthesizes VOID and continues matching
-        void = parse [a a a] ['a :(void) elide some 'a]
-    )
-    (
-        ; VOID synthesizes VOID and continues matching
-        'a = parse [a a a] ['a :(comment "hi") elide some 'a]
+        'a = parse [a a a] ['a inline (comment "hi") elide some 'a]
     )
 ]
 
-("aaa" = parse "aaa" [:(if null ["bbb"]) "aaa"])
-("aaa" = parse "bbbaaa" [:(if ok ["bbb"]) "aaa"])
+("aaa" = parse "aaa" [inline (when null ["bbb"]) "aaa"])
+("aaa" = parse "bbbaaa" [inline (when ok ["bbb"]) "aaa"])
 
-("b" = parse "aaabbb" [:([some "a"]) :([some "b"])])
-("b" = parse "aaabbb" [:([some "a"]) :(if null [some "c"]) :([some "b"])])
+("b" = parse "aaabbb" [inline ([some "a"]) inline ([some "b"])])
+("b" = parse "aaabbb" [
+    inline ([some "a"]) inline (when null [some "c"]) inline ([some "b"])]
+)
 
 ; !!! Partial rule splicing doesn't work with GET-GROUP! being a combinator
 ; under the constraints of the current design...this would mean it would be
@@ -50,35 +54,35 @@
 ; much more compelling.
 ;
 [(comment [
-    ("a" = parse "aaa" [:('some) "a"])
-    ~parse-mismatch~ !! (parse "aaa" [:(1 + 1) "a"])
-    ("a" = parse "aaa" [:(1 + 2) "a"])
+    ("a" = parse "aaa" [inline ('some) "a"])
+    ~parse-mismatch~ !! (parse "aaa" [repeat inline (1 + 1) "a"])
+    ("a" = parse "aaa" [repeat inline (1 + 2) "a"])
     (
         count: 0
         "a" = parse ["a" "aa" "aaa"] [
-            some [subparse text! [:(count: count + 1) "a"]]
+            some [subparse text! [repeat inline (count: count + 1) "a"]]
         ]
     )
 ] ok)]
 
 [https://github.com/red/red/issues/562
-    ~parse-incomplete~ !! (parse [+] [opt some ['+ when (null)]])
-    ~parse-incomplete~ !! (parse "+" [opt some [#+ when (null)]])
+    ~parse-incomplete~ !! (parse [+] [opt some ['+ cond (null)]])
+    ~parse-incomplete~ !! (parse "+" [opt some [#+ cond (null)]])
 ]
 
 
 [
     (
         x: ~
-        6 = parse [2 4 6] [some [x: integer! elide when (even? x)]]
+        6 = parse [2 4 6] [some [x: integer! elide cond (even? x)]]
     )
     ~parse-mismatch~ !! (
         x: ~
-        parse [1] [x: integer! elide when (even? x)]
+        parse [1] [x: integer! elide cond (even? x)]
     )
     ~parse-mismatch~ !! (
         x: ~
-        parse [1 5] [some [x: integer! elide when (even? x)]]
+        parse [1 5] [some [x: integer! elide cond (even? x)]]
     )
 ]
 
@@ -88,7 +92,7 @@
         res: ~
         f563: lambda [t [text!]] [did try parse t [opt some r]]
 
-        r: [#+, :(res: f563 "-", assert [not res], opt res)]
+        r: [#+, inline (res: f563 "-", assert [not res], opt res)]
 
         all [
             not f563 "-"
@@ -114,7 +118,7 @@
                 x: across repeat (l) one
                 [
                     #","
-                    | #"]" :(f x)
+                    | #"]" inline (f x)
                 ]
             ]
             return not error? parse s [opt some r <end>]
@@ -126,7 +130,7 @@
 
 ; Void/nihil handling, just vanishes
 [
-    ('z = parse [x z] ['x :(if null 'y) 'z])
+    ('z = parse [x z] ['x inline (when null 'y) 'z])
 
-    ('z = parse [x z] ['x :(assert [okay]) 'z])
+    ('z = parse [x z] ['x inline (assert [okay]) 'z])
 ]

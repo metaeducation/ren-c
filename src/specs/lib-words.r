@@ -104,8 +104,9 @@ fence!-EVAL  ; e.g. a function that turns {x: 10, y: null} => OBJECT!
     accept
     break
     reject
-    bypass
-    ??
+    veto
+    inline
+    cond
     seek  ; Ren-C addition
     ;
     ; DEPRECATED PARSE PRE-MATCH WORDS (still have case statements for errors,

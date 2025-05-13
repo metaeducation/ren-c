@@ -46,7 +46,7 @@
     with-return: null
 
     parse spec [opt some [
-        :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
+        inline (if var '[  ; so long as we haven't reached any <local> or <with> etc.
             var: [
                 set-word?/ | get-word?/ | any-word?/ | refinement?/
                 | quoted!
@@ -63,7 +63,7 @@
                 append new-spec spaced other  ; spec notes
             )
         ] else [
-            'bypass
+            'veto
         ])
     |
         other: group! (
@@ -81,7 +81,7 @@
         )
     |
         (var: null)  ; everything below this line resets var
-        bypass  ; failing here means rolling over to next rule
+        veto  ; failing here means rolling over to next rule
     |
         '<local> (append new-spec <local>)
         opt some [var: word! other: try group! (

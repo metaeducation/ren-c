@@ -196,7 +196,7 @@
         all [
             let [mark pos after]
             [x y z] = parse series [
-                to <end> mark: <here> [bypass]
+                to <end> mark: <here> [veto]
                 |
                 ; Try equivalent of Red's `insert only mark letters`
                 pos: <here>

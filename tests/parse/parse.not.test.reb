@@ -44,7 +44,7 @@
 [#1240
     ('~<not>~ = meta parse "" [not ahead "a"])
     ('~<not>~ = meta parse "" [not ahead <next>])
-    ('~<not>~ = meta parse "" [not ahead bypass])
+    ('~<not>~ = meta parse "" [not ahead veto])
 ]
 
 [

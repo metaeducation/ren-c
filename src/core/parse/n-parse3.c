@@ -343,47 +343,6 @@ INLINE Error* Error_Parse3_Variable(Level* level_) {
 }
 
 
-static void Print_Parse_Index(Level* level_) {
-    USE_PARAMS_OF_SUBPARSE;
-
-    DECLARE_ATOM (input);
-    Init_Series_At_Core(
-        input,
-        P_HEART,
-        P_INPUT,
-        P_POS,
-        Stub_Holds_Cells(P_INPUT)
-            ? P_INPUT_SPECIFIER
-            : SPECIFIED
-    );
-
-    // Either the rules or the data could be positioned at the end.  The
-    // data might even be past the end.
-    //
-    // !!! Or does PARSE adjust to ensure it never is past the end, e.g.
-    // when seeking a position given in a variable or modifying?
-    //
-    if (P_AT_END) {
-        if (P_POS >= P_INPUT_LEN)
-            rebElide("print {[]: ** END **}");
-        else
-            rebElide("print [{[]:} mold", input, "]");
-    }
-    else {
-        DECLARE_ATOM (rule);
-        Derelativize(rule, P_RULE, P_RULE_BINDING);
-
-        if (P_POS >= P_INPUT_LEN)
-            rebElide("print [mold", rule, "{** END **}]");
-        else {
-            rebElide("print ["
-                "mold", rule, "{:} mold", input,
-            "]");
-        }
-    }
-}
-
-
 //
 //  Get_Parse_Value: C
 //
@@ -444,53 +403,46 @@ static const Element* Get_Parse_Value(
 //
 //  Process_Group_For_Parse_Throws: C
 //
-// Historically a single group in PARSE ran code, discarding the value (with
-// a few exceptions when appearing in an argument position to a rule).  Ren-C
-// adds another behavior for GET-GROUP!, e.g. :(...).  This makes them act
-// like a COMPOSE that runs each time they are visited.
+// Ren-C adds the ability of a GROUP! evaluation to produce a VETO error
+// antiform, to signal that the group should count as a failed match.
+//
+// Other antiform errors are elevated to panics, while all other results are
+// simply ignored.
+//
+// The INLINE combinator is used in cases where a GROUP! wants to generate a
+// rule that is retriggered.  (Attempts to come up with a good decoration on
+// a group to mean this didn't come up with anything great, and it's rare
+// enough that it doesn't seem so bad to have to type INLINE to get it.)
 //
 bool Process_Group_For_Parse_Throws(
-    Sink(Element) out,
+    Sink(bool) veto,
     Level* level_,
     const Element* group  // can't be same as out
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    assert(out != group);
-
     Context* derived = (group == P_SAVE)
         ? SPECIFIED
         : Derive_Binding(P_RULE_BINDING, group);
 
-    Atom* atom_out = out;
-    if (Is_Group(group)) {
-        if (Eval_Any_List_At_Throws(atom_out, group, derived))
-            return true;
-    }
-    else {
-        assert(Is_Get_Group(group));
-        DECLARE_ELEMENT (inner);
-        Derelativize_Sequence_At(inner, group, derived, 1);
-        assert(Is_Group(inner));
-        if (Eval_Any_List_At_Throws(atom_out, inner, SPECIFIED))
-            return true;
-    }
+    DECLARE_ATOM (eval);
+    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;
+    if (Eval_Element_Core_Throws(eval, flags, group, derived))
+        return true;
 
-    if (Is_Group(group)) {
-        Erase_Cell(out);
-    }
-    else if (Is_Void(atom_out)) {
-        Init_Quasi_Word(atom_out, CANON(VOID));
-    }
-    else {
-        Decay_If_Unstable(atom_out);
-
-        if (Is_Antiform(atom_out)) {
-            if (Is_Logic(atom_out))
-                Meta_Quotify(atom_out);
-            else
-                panic (Error_Bad_Antiform(atom_out));
+    if (Is_Error(eval)) {
+        if (Is_Error_Veto_Signal(Cell_Error(eval))) {
+            *veto = true;
+            return false;
         }
+        panic (Cell_Error(eval));
+    }
+
+    if (Is_Void(eval)) {
+        // allow it (can't decay)
+    }
+    else {
+        Decay_If_Unstable(eval);
     }
 
     // !!! The input is not locked from modification by agents other than the
@@ -500,6 +452,7 @@ bool Process_Group_For_Parse_Throws(
     if (P_POS > P_INPUT_LEN)
         P_POS = P_INPUT_LEN;
 
+    *veto = false;
     return false;
 }
 
@@ -526,23 +479,16 @@ static REBIXO Parse_One_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    if (Is_Group(rule) or Is_Get_Group(rule)) {
-        bool inject = Is_Get_Group(rule);  // rule may be SPARE
-        if (Process_Group_For_Parse_Throws(SPARE, level_, rule))
+    if (Is_Group(rule)) {
+        bool veto;
+        if (Process_Group_For_Parse_Throws(&veto, level_, rule))
             return THROWN_FLAG;
 
-        if (not inject or Is_Quasi_Word_With_Id(stable_SPARE, SYM_VOID)) {
-            assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
-            return pos;
-        }
-        if (Is_Antiform(SPARE)) {
-            if (Is_Logic(SPARE))
-                Meta_Quotify(SPARE);
-            else
-                panic (Error_Bad_Antiform(SPARE));
-        }
-        // was a GET-GROUP! :(...), use result as rule
-        rule = cast(Element*, SPARE);
+        if (veto)
+            return END_FLAG;
+
+        assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
+        return pos;
     }
 
     if (pos == P_INPUT_LEN) {  // at end of input
@@ -788,19 +734,18 @@ static REBIXO To_Thru_Block_Rule(
             if (Is_Bar(blk))
                 panic (Error_Parse3_Rule());  // !!! Shouldn't `TO [|]` succeed?
 
-            const Element* rule;
-            if (not (Is_Group(blk) or Is_Get_Group(blk)))
-                rule = blk;
-            else {
-                bool inject = Is_Get_Group(blk);
-                if (Process_Group_For_Parse_Throws(cell, level_, blk))
+            if (Is_Group(blk)) {
+                bool veto;
+                if (Process_Group_For_Parse_Throws(&veto, level_, blk))
                     return THROWN_FLAG;
 
-                if (not inject or Is_Quasi_Word_With_Id(cell, SYM_VOID))
-                    continue;
+                if (veto)
+                    return END_FLAG;
 
-                rule = Ensure_Element(cell);
+                continue;
             }
+
+            const Element* rule = blk;
 
             if (Is_Word(rule)) {
                 Option(SymId) cmd = VAL_CMD(rule);
@@ -1373,14 +1318,16 @@ DECLARE_NATIVE(SUBPARSE)
         goto pre_rule;
     }
 
-    //=//// (GROUP!) AND :(GET-GROUP!) PROCESSING /////////////////////////=//
+    //=//// (GROUP!) PROCESSING /////////////////////////=//
 
-    if (Is_Group(rule) or Is_Get_Group(rule)) {
+  reparse_rule:
+
+    if (Is_Group(rule)) {
 
         // Code below may jump here to re-process groups, consider:
         //
         //    rule: just (print "Hi")
-        //    parse "a" [:('rule) "a"]
+        //    parse "a" [inline ($rule) "a"]
         //
         // First it processes the group to get RULE, then it looks that
         // up and gets another group.  In theory this could continue
@@ -1388,15 +1335,17 @@ DECLARE_NATIVE(SUBPARSE)
 
       process_group: {
 
-        bool inject = Is_Get_Group(rule);
-        if (Process_Group_For_Parse_Throws(SPARE, L, rule))  // makes Element
+        bool veto;
+        if (Process_Group_For_Parse_Throws(&veto, L, rule))
             return THROWN;
 
-        if (not inject) {  // (...) or void :(...)
-            FETCH_NEXT_RULE(L);  // ignore result and go on to next rule
-            goto pre_rule;
+        if (veto) {
+            Init_Nulled(ARG(POSITION));  // treat as mismatch
+            goto post_match_processing;
         }
-        rule = Move_Cell(P_SAVE, cast(Element*, SPARE));
+
+        FETCH_NEXT_RULE(L);  // ignore result and go on to next rule
+        goto pre_rule;
     }}
     else {
         // If we ran the GROUP! then that invokes the evaluator, and so
@@ -1589,7 +1538,45 @@ DECLARE_NATIVE(SUBPARSE)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
-              case SYM_WHEN: {
+              case SYM_INLINE: {
+                FETCH_NEXT_RULE(L);
+                if (P_AT_END)
+                    panic (Error_Parse3_End());
+
+                if (not Is_Group(P_RULE))
+                    panic (Error_Parse3_Rule());
+
+                DECLARE_ATOM (eval);
+                Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;
+                if (Eval_Any_List_At_Core_Throws(  // note: might GC
+                    eval,
+                    flags,
+                    P_RULE,
+                    P_RULE_BINDING
+                )) {
+                    goto return_thrown;
+                }
+
+                if (Is_Void(eval) or Is_Ghost(eval))
+                    goto pre_rule;
+
+                if (Is_Error(eval)) {
+                    if (Is_Error_Veto_Signal(Cell_Error(eval))) {
+                        Init_Nulled(ARG(POSITION));  // treat as mismatch
+                        goto post_match_processing;
+                    }
+                    return PANIC(Cell_Error(eval));
+                }
+
+                Decay_If_Unstable(eval);
+                if (Is_Antiform(eval))
+                    return PANIC(Error_Bad_Antiform(eval));
+
+                rule = Copy_Cell(P_SAVE, Known_Element(eval));
+
+                goto reparse_rule; }
+
+              case SYM_COND: {
                 FETCH_NEXT_RULE(L);
                 if (P_AT_END)
                     panic (Error_Parse3_End());
@@ -1657,15 +1644,10 @@ DECLARE_NATIVE(SUBPARSE)
                 Init_Thrown_With_Label(LEVEL, LIB(NULL), LIB(PARSE_REJECT));
                 goto return_thrown; }
 
-              case SYM_BYPASS:  // skip to next alternate
+              case SYM_VETO:  // skip to next alternate
                 Init_Nulled(ARG(POSITION));  // not found
                 FETCH_NEXT_RULE(L);
                 goto post_match_processing;
-
-              case SYM__Q_Q:
-                Print_Parse_Index(L);
-                FETCH_NEXT_RULE(L);
-                goto pre_rule;
 
               case SYM_SEEK: {
                 FETCH_NEXT_RULE(L);  // skip the SEEK word

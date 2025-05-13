@@ -15,7 +15,7 @@
     var: []
     'b = parse [a b] ['a 'b var]
 )
-('b = parse [a b] ['a 'b :(if ok '[])])
+('b = parse [a b] ['a 'b inline (if ok '[])])
 
 
 ; No-op rule of empty block should always match.

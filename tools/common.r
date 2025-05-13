@@ -384,7 +384,7 @@ export stripload: func [
     let pushed: copy []  ; <Q>uoted or <B>raced string delimiter stack
 
     let comment-or-space-rule: [
-        when (empty? pushed)  ; string not in effect, okay to proceed
+        cond (empty? pushed)  ; string not in effect, okay to proceed
 
         opt some [
             remove [some space]

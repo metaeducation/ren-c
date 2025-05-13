@@ -32,7 +32,7 @@
         let encoded: text!
         let arrow: ['<-> | '->]
         let decoded: text!
-        let re-encoded: [when (arrow = '->) ['-> text!] | (encoded)]
+        let re-encoded: [cond (arrow = '->) ['-> text!] | (encoded)]
         optional block!  ; headnote comment
         optional issue!  ; GitHub issue number
         (

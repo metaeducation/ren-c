@@ -326,7 +326,7 @@
 [#1268 (
     i: 0
     j: ~
-    parse3 "a" [some [opt "a" (i: i + 1, j: if i = 2 [[bypass]]) j]]
+    parse3 "a" [some [opt "a" (i: i + 1, j: if i = 2 [[veto]]) j]]
     i = 2
 )]
 
@@ -359,7 +359,7 @@
         ok
     )
     (
-        parse3 "" [not ahead bypass]
+        parse3 "" [not ahead veto]
         ok
     )
 ]
@@ -677,7 +677,7 @@
                 keep compose:deep $(counts.(t): me + 1)
                 keep:line '|
             ]
-            keep 'bypass
+            keep 'veto
         ]
         parse3 data (compose:deep [
             opt some [(spread rules)]  ; could also be `opt some [rules]`

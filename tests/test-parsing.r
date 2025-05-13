@@ -36,13 +36,13 @@ export test-source-rule: [
     opt some [
         let position: <here>
 
-        ["{" | -["]-] :(  ; handle string using TRANSCODE, see note
+        ["{" | -["]-] inline (  ; handle string using TRANSCODE, see note
             trap [
                 [position #]: transcode:next position
             ] then [
-                'bypass  ; result for :() is rule to say stop the parse
+                'veto  ; result rule to say stop the parse
             ] else [
-                [seek position]  ; result for :() go to transcoded position
+                [seek position]  ; result for go to transcoded position
             ]
         )
             |
@@ -251,7 +251,7 @@ export collect-logs: func [
                     |
                 (panic "collect-logs - log file parsing problem")
             ]
-            position: <here>, when (true? guard), break  ; Break on error
+            position: <here>, cond (true? guard), break  ; Break on error
                 |
             seek position
         ]

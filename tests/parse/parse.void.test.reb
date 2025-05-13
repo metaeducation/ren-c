@@ -80,10 +80,10 @@
     suffix: ")"
 
     ")" = parse "aaa)))" [
-        opt some further :(opt prefix)
+        opt some further inline (opt prefix)
         some "a"
-        opt some further :(opt suffix)
-     ]
+        opt some further inline (opt suffix)
+    ]
 )
 
 ; Voids synthesized from plain GROUP! also do not vanish

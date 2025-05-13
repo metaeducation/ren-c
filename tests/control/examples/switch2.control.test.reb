@@ -30,7 +30,7 @@ switch2: func [
                 ; If we've already found a condition that matched, skip any
                 ; following alternates.
                 ;
-                [when (yes? found) (log ["Skipping condition:" mold condition])]
+                [cond (yes? found) (log ["Skipping condition:" mold condition])]
 
                 ; Otherwise, try building a frame for the condition.  If the
                 ; frame is incomplete, slip switch value into antiform ~ slot
@@ -67,7 +67,7 @@ switch2: func [
         any [
             ; If we didn't find a matching condition, skip over this branch.
             ;
-            [when (no? found) (log ["Skipping branch:" mold branch])]
+            [cond (no? found) (log ["Skipping branch:" mold branch])]
 
             ; Otherwise, run the branch.  Keep going if we are using /MULTI,
             ; else return whatever that branch gives back.

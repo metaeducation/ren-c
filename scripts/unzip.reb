@@ -453,7 +453,7 @@ unzip: func [
         x: msdos-date-rule, (assert [x = date])
 
         [
-            when (not zero? flags.1 and+ 8)  ; "bit 3" -> has data descriptor
+            cond (not zero? flags.1 and+ 8)  ; "bit 3" -> has data descriptor
             ;
             ; "If this bit is set, the fields crc-32, compressed size, and
             ; uncompressed size are set to zero in the local header.  The

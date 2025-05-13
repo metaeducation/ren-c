@@ -302,9 +302,9 @@ default-combinators: to map! reduce [
         ]
     ]
 
-    === WHEN COMBINATOR ===
+    === CONDITIONAL COMBINATOR ===
 
-    'when combinator [
+    'conditional combinator [
         "If parser's synthesized result is null, skip to next alternate"
         return: [any-value?]
         parser [action!]
@@ -314,22 +314,22 @@ default-combinators: to map! reduce [
             return fail e  ; non-matching parser means WHEN did not match
         ]
         if void? ^result [
-            panic "WHEN combinator received VOID antiform result"
+            panic "CONDITIONAL combinator received VOID antiform result"
         ]
         if null? ^result [
-            return fail "WHEN combinator received ~null~ antiform result"
+            return fail "CONDITIONAL combinator received NULL antiform result"
         ]
-        return ^result  ; can say e.g. [x: when (next var)] if you like
+        return ^result  ; can say e.g. [x: cond (next var)] if you like
     ]
 
-    === BYPASS COMBINATOR ===
+    === VETO COMBINATOR ===
 
-    'bypass combinator [
+    'veto combinator [
         "Stop the current rule chain, and skip to the next `|` alternate"
         return: []
-        ; :negated  <- could this be negated to not bypass?
+        ; :negated  <- could this be negated to not veto?
     ][
-        return fail "BYPASS to next alternate rule requested"
+        return fail "VETO to next alternate rule requested"
     ]
 
     === BASIC KEYWORDS ===
@@ -1444,12 +1444,13 @@ default-combinators: to map! reduce [
             [any-atom?]
         :pending [blank! block!]
         value [any-list?]  ; allow any array to use this "EVAL combinator"
+        <local> ^result
     ][
         remainder: input
 
         if tail? value [
             pending: _
-            return ~,~
+            return ghost
         ]
 
         if <delay> = first value [
@@ -1457,11 +1458,29 @@ default-combinators: to map! reduce [
                 panic "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
             pending: reduce [next value]  ; GROUP! signals delayed groups
-            return ~,~  ; act invisible
+            return ghost  ; act invisible
         ]
 
         pending: _
-        return eval:undecayed value  ; !!! Pass on definitional failure?
+
+        result: meta* eval:undecayed value  ; (should be ^result: ...)
+
+        case [
+            error? ^result [
+                if veto? ^result [  ; VETO error means fail the GROUP! rule
+                    return ^result
+                ]
+                panic ^result  ; all other error antiforms escalate to panics
+            ]
+            void? ^result [  ; void is an interesting synthesized value...
+                return void  ; but it wouldn't DECAY, so handle specially
+            ]
+            ghost? ^result [  ; allow (elide print "HI") to vanish
+                return ghost
+            ]
+        ]
+
+        return decay ^result
     ]
 
     'phase combinator [
@@ -1545,7 +1564,7 @@ default-combinators: to map! reduce [
             ]
         ]
 
-        return [_ remainder pending]: run comb state input ^r  ; [3]
+        return [{_} remainder pending]: run comb state input ^r  ; [3]
     ]
 
     === GET-BLOCK! COMBINATOR ===
@@ -2605,6 +2624,7 @@ default-combinators: to map! reduce [
 
 default-combinators.opt: default-combinators.optional
 default-combinators.lit: default-combinators.literal
+default-combinators.cond: default-combinators.conditional
 default-combinators.(just @): default-combinators.one
 
 

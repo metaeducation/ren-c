@@ -256,7 +256,7 @@ bind construct [
 
             keep:line '|
         ]
-        keep 'bypass  ; add failure if no match, instead of removing last |
+        keep 'veto  ; add failure if no match, instead of removing last |
     ]
 
     let rule: [

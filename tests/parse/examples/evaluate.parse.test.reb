@@ -34,9 +34,9 @@
                 [',]  ; skip over commas
                 |
                 [value: parse-evaluate] [
-                    when (mode = #keep) keep (value)
+                    cond (mode = #keep) keep (value)
                     |
-                    when (mode = #save) (if did value [append saved value])
+                    cond (mode = #save) (if value [append saved value])
                 ]
             ]
         ]], saved]

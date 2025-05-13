@@ -138,13 +138,13 @@ elf-format: context [
         repeat 2 one  ; e_machine
         repeat 4 one  ; e_version
         [
-            when (bits = 32) [
+            cond (bits = 32) [
                 repeat 4 one ; e_entry
                 begin: <here>, repeat 4 one (handler e_phoff 4)
                 begin: <here>, repeat 4 one (handler e_shoff 4)
             ]
         |
-            when (bits = 64) [
+            cond (bits = 64) [
                 repeat 8 one ; e_entry
                 begin: <here>, repeat 8 one (handler e_phoff 8)
                 begin: <here>, repeat 8 one (handler e_shoff 8)
@@ -164,7 +164,7 @@ elf-format: context [
     program-header-rule: [
         begin: <here>, repeat 4 one (handler p_type 4)
         [
-            when (bits = 32) [
+            cond (bits = 32) [
                 begin: <here>, repeat 4 one (handler p_offset 4)
                 repeat 4 one  ; p_vaddr
                 repeat 4 one  ; p_paddr
@@ -172,7 +172,7 @@ elf-format: context [
                 repeat 4 one  ; p_memsz
             ]
         |
-            when (bits = 64) [
+            cond (bits = 64) [
                 repeat 4 one  ; p_flags, different position in 64-bit
                 begin: <here>, repeat 8 one (handler p_offset 8)
                 repeat 8 one  ; p_vaddr
@@ -182,12 +182,12 @@ elf-format: context [
             ]
         ]
         [
-            when (bits = 32) [
+            cond (bits = 32) [
                 repeat 4 one  ; p_flags, different position in 32-bit
                 repeat 4 one  ; p_align
             ]
         |
-            when (bits = 64) [
+            cond (bits = 64) [
                 repeat 8 one  ; p_align
             ]
         ]
@@ -199,14 +199,14 @@ elf-format: context [
         begin: <here>, repeat 4 one (handler sh_name 4)
         begin: <here>, repeat 4 one (handler sh_type 4)
         [
-            when (bits = 32) [
+            cond (bits = 32) [
                 begin: <here>, repeat 4 one (handler sh_flags 4)
                 begin: <here>, repeat 4 one (handler sh_addr 4)
                 begin: <here>, repeat 4 one (handler sh_offset 4)
                 begin: <here>, repeat 4 one (handler sh_size 4)
             ]
         |
-            when (bits = 64) [
+            cond (bits = 64) [
                 begin: <here>, repeat 8 one (handler sh_flags 8)
                 begin: <here>, repeat 8 one (handler sh_addr 8)
                 begin: <here>, repeat 8 one (handler sh_offset 8)
@@ -216,12 +216,12 @@ elf-format: context [
         begin: <here>, repeat 4 one (handler sh_link 4)
         begin: <here>, repeat 4 one (handler sh_info 4)
         [
-            when (bits = 32) [
+            cond (bits = 32) [
                 begin: <here>, repeat 4 one (handler sh_addralign 4)
                 begin: <here>, repeat 4 one (handler sh_entsize 4)
             ]
         |
-            when (bits = 64) [
+            cond (bits = 64) [
                 begin: <here>, repeat 8 one (handler sh_addralign 8)
                 begin: <here>, repeat 8 one (handler sh_entsize 8)
             ]
@@ -622,7 +622,7 @@ pe-format: context [
     pos: ~
 
     DOS-header-rule: gen-rule $DOS-header [
-        ["MZ" | fail-at: <here> (err: 'missing-dos-signature) bypass]
+        ["MZ" | fail-at: <here> (err: 'missing-dos-signature) veto]
         u16-le (last-size: u16)
         u16-le (n-blocks: u16)
         u16-le (n-reloc: u16)
@@ -644,7 +644,7 @@ pe-format: context [
     ]
 
     PE-header-rule: [
-        "PE" #{0000} | fail-at: <here>, (err: 'missing-PE-signature) bypass
+        "PE" #{0000} | fail-at: <here>, (err: 'missing-PE-signature) veto
     ]
 
     COFF-header: ~
@@ -680,7 +680,7 @@ pe-format: context [
         ahead [#{0b01} (signature: 'exe-32)
              | #{0b02} (signature: 'exe-64)
              | #{0701} (signature: 'ROM)
-             | fail-at: <here>, (err: 'missing-image-signature) bypass
+             | fail-at: <here>, (err: 'missing-image-signature) veto
         ]
         u16-le (signature-value: u16)
         major-linker-version: across one  ; 1 byte binary
@@ -714,18 +714,18 @@ pe-format: context [
         ahead [
             #{0000} (subsystem: 'unknown)
             | #{0100} (subsystem: 'native)
-            | #{0200} (subsystem: 'Widnows-GUI)
+            | #{0200} (subsystem: 'Windows-GUI)
             | #{0300} (subsystem: 'Windows-CUI)
             | #{0500} (subsystem: 'OS2-CUI)
             | #{0700} (subsystem: 'POSIX-CUI)
-            | #{0900} (subsystem: 'Widnows-CE-GUI)
+            | #{0900} (subsystem: 'Windows-CE-GUI)
             | #{1000} (subsystem: 'EFI-application)
             | #{1100} (subsystem: 'EFI-boot-service-driver)
             | #{1200} (subsystem: 'EFI-runtime-driver)
             | #{1300} (subsystem: 'EFI-ROM)
             | #{1400} (subsystem: 'Xbox)
             | #{1600} (subsystem: 'Windows-Boot-application)
-            | fail-at: <here>, (err: 'unrecoginized-subsystem), bypass
+            | fail-at: <here>, (err: 'unrecognized-subsystem), veto
         ]
         u16-le (subsystem-value: u16)
         u16-le (dll-characteristics: u16)

@@ -104,7 +104,7 @@ make-port*: func [
     ; an derived object via an object at this time.  Do it manually.
     ;
     for-each [key val] spec [
-        if not any [unset? $val, null? :val, blank? :val] [
+        if not any [vacant? $val, null? :val, blank? :val] [
             set (extend port.spec key) val
         ]
     ]
