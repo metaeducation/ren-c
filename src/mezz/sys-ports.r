@@ -33,9 +33,17 @@ make-port*: function [
         url! [
             spec: append (decode-url spec) reduce [to set-word! 'ref spec]
             name: select spec to set-word! 'scheme
+            if not lit-word? name [
+                panic ["BLOCK! scheme name is LIT-WORD!, not:" name]
+            ]
+            name: unmeta name
         ]
         block! [
             name: select spec to set-word! 'scheme
+            if not lit-word? name [
+                panic ["BLOCK! scheme name is LIT-WORD!, not:" name]
+            ]
+            name: unmeta name
         ]
         object! [
             name: get in spec 'scheme
@@ -52,8 +60,8 @@ make-port*: function [
 
     ; Get the scheme definition:
     all [
-        match [word! lit-word!] name
-        scheme: get opt in system/schemes as word! name
+        match [word!] name
+        scheme: get opt in system/schemes name
     ] else [
         cause-error 'access 'no-scheme name
     ]
@@ -61,7 +69,7 @@ make-port*: function [
     ; Create the port with the correct scheme spec:
     port: make system/standard/port []
     port/spec: make any [scheme/spec system/standard/port-spec-head] spec
-    port/spec/scheme: name
+    port/spec/scheme: ensure word! name
     port/scheme: scheme
 
     ; Defaults:
@@ -103,7 +111,7 @@ make-port*: function [
             ; scheme name: [//]
             s1: across some scheme-char ":" opt "//" (  ; "//" optional ("URN")
                 append out compose [
-                    scheme: (to lit-word! to text! s1)
+                    scheme: (meta to word! s1)
                 ]
             )
 
@@ -184,7 +192,7 @@ make-scheme: function [
     def [block!]
         "Scheme specification"
     /with
-    'base-name
+    base-name [word!]
         "Scheme name to use as base"
 ][
     with: either with [get in system/schemes base-name][system/standard/scheme]

@@ -755,7 +755,13 @@ sys/util/make-scheme [
             ]
             port/state/connection: conn: make port! compose [
                 scheme: (
-                    to lit-word! either port/spec/scheme = 'http ['tcp]['tls]
+                    meta switch port/spec/scheme [
+                        'http ['tcp]
+                        'tls [
+                            panic "TLS not included in bootstrap EXE anymore"
+                        ]
+                        panic ["Unknown port/spec/scheme:" port/spec/scheme]
+                    ]
                 )
                 host: port/spec/host
                 port-id: port/spec/port-id
