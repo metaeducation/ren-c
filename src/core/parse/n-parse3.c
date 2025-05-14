@@ -582,12 +582,11 @@ static REBIXO Parse_One_Rule(
         if (Is_Quoted(rule)) {  // fall through to direct match
             rule = Unquotify(Copy_Cell(SPARE, rule));
         }
-        else switch (Heart_Of_Fundamental(rule)) {
-          case TYPE_THE_WORD: {
+        else if (Is_Pinned(WORD, rule)) {
             Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
-            rule = Ensure_Element(SPARE);
-            break; }  // all through to direct match
-
+            rule = Ensure_Element(SPARE);  // fall through to direct match
+        }
+        else switch (Type_Of(rule)) {
           case TYPE_FRAME: {  // want to run a type constraint...
             Copy_Cell(SPARE, item);
             if (Typecheck_Spare_With_Predicate_Uses_Scratch(
@@ -2115,7 +2114,7 @@ DECLARE_NATIVE(SUBPARSE)
                     //
                     Init_Any_List(
                         sink,
-                        Any_Group_Type(P_HEART) ? TYPE_GROUP : TYPE_BLOCK,
+                        P_HEART == TYPE_GROUP ? TYPE_GROUP : TYPE_BLOCK,
                         Copy_Source_At_Max_Shallow(
                             P_INPUT_ARRAY,
                             begin,

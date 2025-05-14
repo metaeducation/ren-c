@@ -102,7 +102,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
     INCLUDE_PARAMS_OF_MAKE;
 
     Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
-    assert(Any_Word_Type(heart));
+    assert(heart == TYPE_WORD);
 
     Element* arg = Element_ARG(DEF);
 
@@ -128,7 +128,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
 }
 
 
-IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Word)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -137,10 +137,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
     bool form = Bool_ARG(FORM);
 
     UNUSED(form);
-
-    Option(Sigil) sigil = Sigil_For_Heart(Heart_Of(v));
-    if (sigil)
-        Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
 
     Append_Spelling(mo->string, Cell_Word_Symbol(v));
 
@@ -153,7 +149,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
 // be aliases of words, so TO conversions of strings to word may be able
 // to reuse the symbol underlying the string).
 //
-IMPLEMENT_GENERIC(TO, Any_Word)
+IMPLEMENT_GENERIC(TO, Is_Word)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -161,14 +157,14 @@ IMPLEMENT_GENERIC(TO, Any_Word)
 
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_Word_Type(to))
-        return GENERIC_CFUNC(AS, Any_Word)(LEVEL);  // immutable alias
+    if (to == TYPE_WORD)
+        return GENERIC_CFUNC(AS, Is_Word)(LEVEL);  // immutable alias
 
     if (Any_String_Type(to))  // need mutable copy
         return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);
 
     if (Any_Utf8_Type(to))
-        return GENERIC_CFUNC(AS, Any_Word)(LEVEL);  // non-string, immutable
+        return GENERIC_CFUNC(AS, Is_Word)(LEVEL);  // non-string, immutable
 
     return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);  // TO INTEGER!, etc.
 }
@@ -181,9 +177,9 @@ Option(Error*) Trap_Alias_Any_Word_As(
     const Element* word,
     Heart as
 ){
-    if (Any_Word_Type(as)) {
+    if (as == TYPE_WORD) {
         Copy_Cell(out, word);
-        HEART_BYTE(out) = as;
+        Plainify(out);
         return SUCCESS;
     }
 
@@ -216,7 +212,7 @@ Option(Error*) Trap_Alias_Any_Word_As(
 }
 
 
-IMPLEMENT_GENERIC(AS, Any_Word)
+IMPLEMENT_GENERIC(AS, Is_Word)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -232,7 +228,7 @@ IMPLEMENT_GENERIC(AS, Any_Word)
 }
 
 
-IMPLEMENT_GENERIC(BINDING_OF, Any_Word)
+IMPLEMENT_GENERIC(BINDING_OF, Is_Word)
 {
     INCLUDE_PARAMS_OF_BINDING_OF;
 

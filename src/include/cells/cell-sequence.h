@@ -560,30 +560,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
                 return error;
         }
 
-        Sigil sigil = maybe Sigil_For_Heart(sequence_heart);
-        if (not sigil)  // just wanted a plain pa/th or tu.p.le
-            return SUCCESS;  // let the item just decay to itself as-is
-
-        Option(Heart) heart = Heart_Of_Fundamental(out);
-
-        switch (heart) {  // Should there be Any_Decorable()? Any_Sigilable?
-          case TYPE_WORD:
-          case TYPE_TUPLE:
-          case TYPE_CHAIN:
-          case TYPE_PATH:
-          case TYPE_BLOCK:
-          case TYPE_GROUP:
-          case TYPE_FENCE:
-            break;
-
-          default:
-            return Error_Cant_Decorate_Type_Raw(out);
-        }
-
-        HEART_BYTE(out) = Sigilize_Any_Plain_Heart(
-            sigil, unwrap heart
-        );
-        return SUCCESS;  // pathness or tupleness vanished, just the value
+        return SUCCESS;  // let the item just decay to itself as-is
     }
 
     return Trap_Pop_Sequence_Or_Conflation(out, sequence_heart, base);

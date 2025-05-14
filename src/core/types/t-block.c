@@ -490,21 +490,17 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
         return TRASH;
     }
 
-    Sigil sigil = maybe Sigil_For_Heart(heart);
-    if (sigil)
-        Append_Codepoint(mo->string, Char_For_Sigil(sigil));
-
     const char *sep;
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)) {
         CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);  // only top level
         sep = "\000\000";
     }
-    else if (Any_Block_Type(heart))
+    else if (heart == TYPE_BLOCK)
         sep = "[]";
-    else if (Any_Group_Type(heart))
+    else if (heart == TYPE_GROUP)
         sep = "()";
-    else if (Any_Fence_Type(heart))
+    else if (heart == TYPE_FENCE)
         sep = "{}";
     else
         crash (v);
@@ -766,7 +762,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return FAIL("TO ANY-SEQUENCE? needs list with a sequence in it");
     }
 
-    if (Any_Word_Type(to)) {  // to word! '{a} -> a, see [3]
+    if (to == TYPE_WORD) {  // to word! '{a} -> a, see [3]
         Length len;
         const Element* item = Cell_List_Len_At(&len, list);
         if (Cell_Series_Len_At(list) != 1)
@@ -779,7 +775,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
     }
 
     if (Any_Utf8_Type(to)) {  // to tag! [1 a #b] => <1 a #b>
-        assert(not Any_Word_Type(to));
+        assert(to != TYPE_WORD);
 
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);

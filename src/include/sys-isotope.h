@@ -48,7 +48,6 @@
 //    allowed to be antiform "keywords".  Other words are reserved for future
 //    usage, though dialects can use quasi words however they want.
 //
-
 // 1. The convention here is that you have to pass an Atom in, because at
 //    the end of the operation you'll have either a Value* or an Atom*.
 //    If you were allowed to pass in an Element*, then you'd have an invalid
@@ -63,11 +62,14 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
 
     if (not Any_Isotopic_Type(heart)) {
         QUOTE_BYTE(elem) = NOQUOTE_1;
-        panic (Error_Non_Isotopic_Type_Raw(elem));
+        return Error_Non_Isotopic_Type_Raw(elem);
     }
 
+    if (Sigil_Of(elem))
+        return Error_User("Cells with sigils cannot become antiforms");
+
     if (Is_Bindable_Heart(heart)) {  // strip off any binding [2]
-        if (Any_Word_Type(heart)) {
+        if (heart == TYPE_WORD) {
             switch (Cell_Word_Id(elem)) {
               case SYM_NULL:
                 assert(not Is_Api_Value(elem));  // API uses nullptr [3]

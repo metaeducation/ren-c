@@ -177,7 +177,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 #define FLAG_HEART_BYTE_255  FLAG_SECOND_BYTE(63)  // for masking only
 
-#define HEART_CRUMB_SHIFT 6
+#define HEART_SIGIL_SHIFT 6
 
 
 //=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//

@@ -93,7 +93,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
         return Cell_String_At(c);
     }
 
-    assert(Any_Word_Type(Heart_Of(c)));
+    assert(Heart_Of(c) == TYPE_WORD);
     assert(limit == Cell_Series_Len_At(c));
 
     const String* spelling = Cell_Word_Symbol(c);

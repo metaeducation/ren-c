@@ -373,6 +373,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
 
     DECLARE_ELEMENT (element);
     Copy_Dequoted_Cell(element, cell);
+    Plainify(element);  // can't have Sigil and dispatch to mold
     Quotify(element);
 
     DECLARE_ELEMENT (molder);
@@ -420,6 +421,10 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     REBLEN i;
     for (i = 0; i < Quotes_Of(e); ++i)
         Append_Codepoint(mo->string, '\'');
+
+    Option(Sigil) sigil = Sigil_Of(e);
+    if (sigil)
+        Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
 
     Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);
 }

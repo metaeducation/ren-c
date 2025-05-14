@@ -195,13 +195,9 @@ DECLARE_NATIVE(RESUME)
 {
     INCLUDE_PARAMS_OF_RESUME;
 
-    Value* expr = ARG(EXPRESSION);
-    if (Is_Nulled(expr))  // e.g. <end> (actually null not legal)
-        Liftify(Init_Group(expr, g_empty_array));
-    else {
-        assert(Is_Block(expr));
-        HEART_BYTE(expr) = TYPE_META_GROUP;
-    }
+    Element* expr = Element_ARG(EXPRESSION);
+    assert(Is_Block(expr));
+    Liftify(expr);
 
     // We throw with /NAME as identity of the RESUME function.  (Note: there
     // is no NATIVE() variant for extensions yet.  Extract from current level.)

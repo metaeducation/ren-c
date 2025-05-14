@@ -1073,7 +1073,7 @@ DECLARE_NATIVE(SWITCH)
         if (at == nullptr)
             goto reached_end;
 
-        if (Is_Block(at) or Is_Meta_Block(at) or Is_Frame(at))
+        if (Is_Block(at) or Is_Lifted(BLOCK, at) or Is_Frame(at))
             break;
 
         Fetch_Next_In_Feed(SUBLEVEL->feed);

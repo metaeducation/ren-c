@@ -207,7 +207,8 @@ DECLARE_NATIVE(OVERBIND)
 //
 //  "Returns a word bound into the context, if it's available, else null"
 //
-//      return: [~null~ any-word?]
+//      return: "Preserves Sigil ('@foo = has obj '@foo)"
+//          [~null~ any-word?]
 //      context [any-context?]
 //      value [<opt-out> any-word?]  ; QUOTED? support?
 //  ]
@@ -216,10 +217,8 @@ DECLARE_NATIVE(HAS)
 {
     INCLUDE_PARAMS_OF_HAS;
 
-    Value* v = ARG(VALUE);
-
-    assert(Any_Word(v));
-    Heart heart = Heart_Of_Builtin(v);
+    Element* v = Element_ARG(VALUE);
+    assert(Any_Word(v));  // want to preserve sigil
 
     const Symbol* symbol = Cell_Word_Symbol(v);
     const bool strict = true;
@@ -229,11 +228,14 @@ DECLARE_NATIVE(HAS)
 
     if (not Is_Module(ARG(CONTEXT))) {
         VarList* varlist = Cell_Varlist(ARG(CONTEXT));
-        return Init_Any_Word_Bound(OUT, heart, symbol, varlist, unwrap index);
+        Init_Word_Bound(OUT, symbol, varlist, unwrap index);
+        Copy_Heart_Byte(Known_Element(OUT), v);
+        return OUT;
     }
 
     SeaOfVars* sea = Cell_Module_Sea(ARG(CONTEXT));
-    Init_Any_Word(OUT, heart, symbol);
+    Init_Word(OUT, symbol);
+    Copy_Heart_Byte(Known_Element(OUT), v);
     Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
     Tweak_Cell_Binding(OUT, Sea_Patch(sea, symbol, strict));
     return OUT;
@@ -256,7 +258,7 @@ DECLARE_NATIVE(WITHOUT)
     INCLUDE_PARAMS_OF_WITHOUT;
 
     VarList* ctx = Cell_Varlist(ARG(CONTEXT));
-    Value* v = ARG(VALUE);
+    Element* v = Element_ARG(VALUE);
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
     // input word as-is if the word wasn't in the requested context, while
@@ -271,13 +273,14 @@ DECLARE_NATIVE(WITHOUT)
         );
         if (not index)
             return nullptr;
-        return Init_Any_Word_Bound(
+        Init_Word_Bound(
             OUT,
-            Heart_Of_Builtin_Fundamental(v),
             symbol,  // !!! incoming case...consider impact of strict if false?
             ctx,
             unwrap index
         );
+        Copy_Heart_Byte(Known_Element(OUT), v);
+        return OUT;
     }
 
     Use* use = Alloc_Use_Inherits(Cell_List_Binding(v));
@@ -335,9 +338,7 @@ DECLARE_NATIVE(USE)
 bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
 {
     switch (Type_Of(v)) {
-    case TYPE_WORD:
-    case TYPE_META_WORD:
-    case TYPE_THE_WORD: {
+    case TYPE_WORD: {
         if (IS_WORD_UNBOUND(v))
             return false;
 
@@ -1202,6 +1203,28 @@ DECLARE_NATIVE(ANY_ATOM_Q)
     return OKAY;
 }
 
+
+//
+//  any-word?: native:intrinsic [
+//
+//  "!!! Temporary !!! attempt to answer if [word ^word $word @word]"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_NATIVE(ANY_WORD_Q)
+//
+// !!! Interim exposure of ANY-WORD?
+{
+    INCLUDE_PARAMS_OF_ANY_WORD_Q;
+
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(OUT, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return LOGIC(Any_Word(stable_OUT));
+}
 
 
 //

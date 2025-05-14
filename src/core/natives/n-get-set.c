@@ -286,10 +286,9 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         if (error)
             return error;
 
-        if (steps_out and steps_out != GROUPS_OK) {
-            Derelativize(unwrap steps_out, var, context);
-            HEART_BYTE(unwrap steps_out) = TYPE_THE_WORD;
-        }
+        if (steps_out and steps_out != GROUPS_OK)
+            Pinify(Derelativize(unwrap steps_out, var, context));
+
         return SUCCESS;
     }
 
@@ -769,7 +768,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
 //
 //      return: [any-value? ~[[word! tuple! @block!] any-value?]~]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
-//          [<opt-out> any-word? any-sequence? any-group? @block!]
+//          [<opt-out> any-word? any-sequence? group! @block!]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //      :steps "Provide invariant way to get this variable again"
@@ -794,7 +793,7 @@ DECLARE_NATIVE(GET)
     else
         steps = nullptr;  // no GROUP! evals
 
-    if (Any_Group(source)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
+    if (source == TYPE_GROUP) {
         if (not Bool_ARG(GROUPS))
             return PANIC(Error_Bad_Get_Group_Raw(source));
 
@@ -810,7 +809,9 @@ DECLARE_NATIVE(GET)
         Decay_If_Unstable(SPARE);
 
         if (not (
-            Any_Word(SPARE) or Any_Sequence(SPARE) or Is_Pinned(BLOCK, SPARE))
+            Any_Word(stable_SPARE)
+            or Any_Sequence(SPARE)
+            or Is_Pinned(BLOCK, SPARE))
         ){
             return PANIC(SPARE);
         }
@@ -882,9 +883,7 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_ATOM (temp);
 
-    Heart var_heart = Heart_Of_Builtin(var);
-
-    if (Any_Word_Type(var_heart)) {
+    if (Any_Word(var)) {
 
       set_target:
 
@@ -938,7 +937,7 @@ bool Set_Var_Core_Updater_Throws(
     // GROUP! by value).  These evaluations should only be allowed if the
     // caller has asked us to return steps.
 
-    if (Any_Sequence_Type(var_heart)) {
+    if (Any_Sequence(var)) {
         if (not Sequence_Has_Node(var))  // compressed byte form
             panic (var);
 
@@ -949,7 +948,7 @@ bool Set_Var_Core_Updater_Throws(
         else switch (Stub_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
             if (Get_Cell_Flag(var, LEADING_BLANK)) {  // `/a` or `.a`
-                if (var_heart == TYPE_TUPLE)
+                if (Heart_Of(var) == TYPE_TUPLE)
                     context = Adjust_Context_For_Coupling(context);
                 goto set_target;
             }
@@ -1163,7 +1162,7 @@ void Set_Var_May_Panic(
 //      return: "Same value as input (error passthru even it skips the assign)"
 //          [any-value?]
 //      ^target "Word or tuple, or calculated sequence steps (from GET)"
-//          [~[]~ any-word? tuple! any-group?
+//          [~[]~ any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]  ; should take PACK! [1]
 //      ^value "Will be decayed if not assigned to metavariables"
 //          [any-atom?]
@@ -1189,7 +1188,7 @@ DECLARE_NATIVE(SET)
     if (Is_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
         Unchain(target);
 
-    if (not Any_Group(target))  // !!! maybe SET-GROUP!, but GET-GROUP!?
+    if (target != TYPE_GROUP)  // !!! maybe SET-GROUP!, but GET-GROUP!?
         goto call_generic_set_var;
 
   process_group_target: { ////////////////////////////////////////////////////
@@ -1210,7 +1209,9 @@ DECLARE_NATIVE(SET)
     Decay_If_Unstable(SPARE);
 
     if (not (
-        Any_Word(SPARE) or Any_Sequence(SPARE) or Is_Pinned(BLOCK, SPARE)
+        Any_Word(stable_SPARE)
+        or Any_Sequence(SPARE)
+        or Is_Pinned(BLOCK, SPARE)
     )){
         return PANIC(SPARE);
     }

@@ -202,7 +202,10 @@ DECLARE_NATIVE(HEAD_Q)
 {
     INCLUDE_PARAMS_OF_HEAD_Q;
 
-    return Dispatch_Generic(HEAD_Q, Element_ARG(ELEMENT), LEVEL);
+    Element* elem = Element_ARG(ELEMENT);
+    Plainify(elem);  // (head? @[a b c]) -> ~okay~
+
+    return Dispatch_Generic(HEAD_Q, elem, LEVEL);
 }
 
 
@@ -219,7 +222,10 @@ DECLARE_NATIVE(TAIL_Q)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    return Dispatch_Generic(TAIL_Q, Element_ARG(ELEMENT), LEVEL);
+    Element* elem = Element_ARG(ELEMENT);
+    Plainify(elem);  // (tail? @[]) -> ~okay~
+
+    return Dispatch_Generic(TAIL_Q, elem, LEVEL);
 }
 
 
@@ -236,7 +242,10 @@ DECLARE_NATIVE(PAST_Q)
 {
     INCLUDE_PARAMS_OF_PAST_Q;
 
-    return Dispatch_Generic(PAST_Q, Element_ARG(ELEMENT), LEVEL);
+    Element* elem = Element_ARG(ELEMENT);
+    Plainify(elem);  // (past? next of @[]) -> ~okay~
+
+    return Dispatch_Generic(PAST_Q, elem, LEVEL);
 }
 
 

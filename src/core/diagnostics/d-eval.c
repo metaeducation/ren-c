@@ -170,7 +170,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
     // of arbitrary function execution.
     //
     if (L_next_gotten and not Is_Frame(L_next)) {
-        assert(Is_Word(L_next));
+        assert(Any_Word(L_next));
         assert(Lookup_Word(L_next, L_binding) == L_next_gotten);
     }
 

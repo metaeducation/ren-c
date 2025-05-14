@@ -7,7 +7,7 @@ INLINE bool Stringlike_Cell(const Cell* v) {
 
 INLINE const String* Cell_String(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
-    if (Any_Word_Type(heart))
+    if (heart == TYPE_WORD)
         return Cell_Word_Symbol(v);
 
     assert(Stringlike_Cell(v));

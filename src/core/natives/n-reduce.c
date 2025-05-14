@@ -424,16 +424,16 @@ bool Try_Match_For_Compose(
     Context* binding = Cell_Binding(pattern);
 
     if (Is_Group(pattern)) {  // top level only has to match plain heart [1]
-        if (not Any_Group_Type(Heart_Of(at)))
+        if (Heart_Of(at) != TYPE_GROUP)
             return false;
     }
     else if (Is_Fence(pattern)) {
-        if (not Any_Fence_Type(Heart_Of(at)))
+        if (Heart_Of(at) != TYPE_FENCE)
             return false;
     }
     else {
         assert(Is_Block(pattern));
-        if (not Any_Block_Type(Heart_Of(at)))
+        if (Heart_Of(at) != TYPE_BLOCK)
             return false;
     }
 
@@ -739,7 +739,7 @@ Bounce Composer_Executor(Level* const L)
     );
 
     QuoteByte list_quote_byte = QUOTE_BYTE(At_Level(L));
-    Option(Sigil) sigil = Sigil_For_Heart(Heart_Of(At_Level(L)));
+    Option(Sigil) sigil = Sigil_Of(At_Level(L));
 
     if (Is_Void(OUT)) {
         if (not sigil and list_quote_byte == NOQUOTE_1) {
@@ -971,19 +971,18 @@ DECLARE_NATIVE(COMPOSE2)
 
     switch (STATE) {
       case ST_COMPOSE2_INITIAL_ENTRY: {
-        assert(Any_List(pattern));
-
-        if (Any_The_Value(pattern)) {  // @() means use pattern's binding
+        if (Any_Pinned(pattern)) {  // @() means use pattern's binding
+            Plainify(pattern);  // drop the @ from the pattern for processing
             if (Cell_Binding(pattern) == nullptr)
                 return PANIC("@... patterns must have bindings");
-            Heart pattern_heart = Heart_Of_Builtin_Fundamental(pattern);
-            HEART_BYTE(pattern) = Plainify_Any_Pinned_Heart(pattern_heart);
         }
-        else if (Any_Plain_Value(pattern)) {
+        else if (not Sigil_Of(pattern)) {
             Tweak_Cell_Binding(pattern, Level_Binding(level_));
         }
         else
             return PANIC("COMPOSE2 takes plain and @... list patterns only");
+
+        assert(Any_List(pattern));
 
         if (Any_Word(input))
             return COPY(input);  // makes it easier to `set compose target`

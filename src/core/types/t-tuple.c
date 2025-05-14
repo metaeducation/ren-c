@@ -278,7 +278,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         return Init_Any_List(OUT, to, a);
     }
 
-    if (Any_Utf8_Type(to) and not Any_Word_Type(to)) {
+    if (Any_Utf8_Type(to) and to != TYPE_WORD) {
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
         Plainify(seq);  // to text! @a.b.c -> "a.b.c"
@@ -654,10 +654,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
         assert(heart == TYPE_PATH);
         interstitial = '/';
     }
-
-    Sigil sigil = maybe Sigil_For_Heart(heart);
-    if (sigil)
-        Append_Codepoint(mo->string, Char_For_Sigil(sigil));
 
     DECLARE_ELEMENT (element);
     Length len = Cell_Sequence_Len(c);

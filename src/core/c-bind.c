@@ -696,7 +696,7 @@ DECLARE_NATIVE(LET)
             where = SPARE;
         }
 
-        Init_Any_Word_Bound(where, TYPE_WORD, symbol, bindings, INDEX_PATCHED);
+        Init_Word_Bound(where, symbol, bindings, INDEX_PATCHED);
         if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
             Setify(where);
             if (Heart_Of(vars) == TYPE_PATH) {
@@ -762,9 +762,7 @@ DECLARE_NATIVE(LET)
                 break;
 
               wordlike:
-              case TYPE_WORD:
-              case TYPE_META_WORD:
-              case TYPE_THE_WORD: {
+              case TYPE_WORD: {
                 Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
                 symbol = Cell_Word_Symbol(temp);
                 bindings = Make_Let_Variable(symbol, bindings);

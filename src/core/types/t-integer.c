@@ -321,7 +321,7 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
     Element* val = Element_ARG(ELEMENT);
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_Utf8_Type(to) and not Any_Word_Type(to)) {
+    if (Any_Utf8_Type(to) and to != TYPE_WORD) {
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);

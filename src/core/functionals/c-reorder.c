@@ -184,7 +184,7 @@ DECLARE_NATIVE(REORDER)
         else if (Is_Quoted(item)) {
             if (
                 Quotes_Of(item) != 1
-                or not Any_Word_Type(Heart_Of(item))
+                or Heart_Of(item) != TYPE_WORD
             ) {
                 error = Error_User("REORDER allows single quoted ANY-WORD?");
                 goto cleanup_binder;
@@ -213,7 +213,7 @@ DECLARE_NATIVE(REORDER)
             goto cleanup_binder;
         }
 
-        Init_Any_Word_Bound(PUSH(), TYPE_WORD, symbol, paramlist, index);
+        Init_Word_Bound(PUSH(), symbol, paramlist, index);
     }
 
     // Make sure that all parameters that were mandatory got a place in the

@@ -620,7 +620,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
         sigil = Sigil_Of(item);
         if (sigil) {
-            if (Is_Antiform(v) or Sigil_Of(v) != sigil) {
+            if (Is_Antiform(v) or Sigil_Of(u_cast(Element*, v)) != sigil) {
                 sigil = SIGIL_0;  // don't unsigilize at test_failed
                 goto test_failed;
             }
@@ -629,7 +629,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         }
 
         const Value* test;
-        if (Any_Word_Type(Type_Of_Unchecked(item))) {
+        if (Any_Word(item)) {
             label = Cell_Word_Symbol(item);
             Option(Error*) error = Trap_Lookup_Word(&test, item, derived);
             if (error)

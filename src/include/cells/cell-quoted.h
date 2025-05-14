@@ -301,8 +301,9 @@ INLINE Element* Reify(Atom* v) {
 //=//// META QUOTING ///////////////////////////////////////////////////////=//
 
 // Meta quoting is a superset of plain quoting.  It has the twist that it can
-// quote antiforms to produce quasiforms.  This is done by META (alias ^)
-// and the TYPE_META_XXX family of values (like ^WORD, ^TU.P.LE...)
+// quote antiforms to produce quasiforms.  This is done by META, but also on
+// assignment by lifted forms (^foo: ...) and lifted forms will UNMETA when
+// fetching values.
 //
 // It's hard to summarize in one place all the various applications of this
 // feature!  But it's critical to accomplishing composability by which a

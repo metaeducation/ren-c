@@ -639,32 +639,6 @@ DECLARE_NATIVE(GETIFY)
 
 
 //
-//  Liftify: C
-//
-// Turn a value into its ^XXX equivalent, if possible.
-//
-Element* Liftify(Element* out) {  // called on stack values; can't call eval
-    if (Is_Blank(out))
-        return Init_Sigil(out, SIGIL_LIFT);
-
-    Option(Heart) heart = Heart_Of(out);
-    if (Any_Word_Type(heart)) {
-        HEART_BYTE(out) = TYPE_META_WORD;
-    }
-    else if (Any_Block_Type(heart)) {
-        HEART_BYTE(out) = TYPE_META_BLOCK;
-    }
-    else if (Any_Group_Type(heart)) {
-        HEART_BYTE(out) = TYPE_META_GROUP;
-    }
-    else
-        panic ("Cannot add ^ to value");
-
-    return out;
-}
-
-
-//
 //  lift: native [
 //
 //  "Convert a value to its ^XXX lifted representation"
@@ -678,32 +652,6 @@ DECLARE_NATIVE(LIFT)
     INCLUDE_PARAMS_OF_LIFT;
 
     return COPY(Liftify(Element_ARG(VALUE)));
-}
-
-
-//
-//  Pinify: C
-//
-// Turn a value into its @XXX equivalent, if possible.
-//
-Element* Pinify(Element* out) {  // called on stack values; can't call evaluator
-    if (Is_Blank(out))
-        return Init_Sigil(out, SIGIL_PIN);
-
-    Option(Heart) heart = Heart_Of(out);
-    if (Any_Word_Type(heart)) {
-        HEART_BYTE(out) = TYPE_THE_WORD;
-    }
-    else if (Any_Block_Type(heart)) {
-        HEART_BYTE(out) = TYPE_THE_BLOCK;
-    }
-    else if (Any_Group_Type(heart)) {
-        HEART_BYTE(out) = TYPE_THE_GROUP;
-    }
-    else
-        panic ("Cannot add @ to value");
-
-    return out;
 }
 
 
@@ -729,32 +677,6 @@ DECLARE_NATIVE(PIN)
 
 
 //
-//  Tieify: C
-//
-// Turn a value into its $XXX equivalent, if possible.
-//
-Element* Tieify(Element* out) {  // called on stack values; can't call evaluator
-    if (Is_Blank(out))
-        return Init_Sigil(out, SIGIL_TIE);
-
-    Option(Heart) heart = Heart_Of(out);
-    if (Any_Word_Type(heart)) {
-        HEART_BYTE(out) = TYPE_VAR_WORD;
-    }
-    else if (Any_Block_Type(heart)) {
-        HEART_BYTE(out) = TYPE_VAR_BLOCK;
-    }
-    else if (Any_Group_Type(heart)) {
-        HEART_BYTE(out) = TYPE_VAR_GROUP;
-    }
-    else
-        panic ("Cannot add $ to value");
-
-    return out;
-}
-
-
-//
 //  tie: native [
 //
 //  "Convert a value to its $XXX pinned representation"
@@ -768,26 +690,6 @@ DECLARE_NATIVE(TIE)
     INCLUDE_PARAMS_OF_TIE;
 
     return COPY(Tieify(Element_ARG(VALUE)));
-}
-
-
-//
-//  Plainify: C
-//
-// Turn a value into its "plain" equivalent.  This works for all Elements.
-//
-Element* Plainify(Element* e) {
-    Option(Heart) heart = Heart_Of(e);
-    if (Any_Word_Type(heart)) {
-        HEART_BYTE(e) = TYPE_WORD;
-    }
-    else if (Any_Block_Type(heart)) {
-        HEART_BYTE(e) = TYPE_BLOCK;
-    }
-    else if (Any_Group_Type(heart)) {
-        HEART_BYTE(e) = TYPE_GROUP;
-    }
-    return e;
 }
 
 
@@ -807,29 +709,6 @@ DECLARE_NATIVE(PLAIN)
     Element* e = Element_ARG(ELEMENT);
 
     return COPY(Plainify(e));
-}
-
-
-//
-//  Sigilize: C
-//
-Element* Sigilize(Element* e, Sigil sigil) {
-    switch (sigil) {
-      case SIGIL_LIFT:
-        return Liftify(e);
-
-      case SIGIL_PIN:
-        return Pinify(e);
-
-      case SIGIL_TIE:
-        return Tieify(e);
-
-      default:
-        break;
-    }
-
-    assert(false);
-    return e;
 }
 
 

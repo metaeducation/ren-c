@@ -155,7 +155,24 @@ bool Pushed_Continuation(
         goto pushed_continuation;
     }
 
-    switch (Type_Of(branch)) {
+    Option(Sigil) sigil = Sigil_Of(c_cast(Element*, branch));
+    if (sigil) {
+        switch (unwrap sigil) {
+          case SIGIL_LIFT:
+            break;  // define behavior!
+
+          case SIGIL_PIN:
+            Plainify(Derelativize(out, c_cast(Element*, branch), binding));
+            goto just_use_out;
+
+          case SIGIL_TIE:
+            break;  // define behavior!
+
+          default:
+            assert(false);
+        }
+    }
+    else switch (Type_Of(branch)) {
       case TYPE_BLANK:
         if (flags & LEVEL_FLAG_BRANCH)
             Init_Heavy_Null(out);
@@ -182,14 +199,6 @@ bool Pushed_Continuation(
 
         Push_Level_Erase_Out_If_State_0(out, L);
         goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH
-
-      case TYPE_VAR_BLOCK:
-      case TYPE_VAR_GROUP:
-      case TYPE_VAR_FENCE:
-      case TYPE_VAR_WORD:
-        Derelativize(out, c_cast(Element*, branch), binding);
-        HEART_BYTE(out) = Planify_Any_Tied_Heart(Heart_Of(branch));
-        goto just_use_out;
 
       case TYPE_CHAIN: {  // effectively REDUCE
         if (not Is_Get_Block(branch))

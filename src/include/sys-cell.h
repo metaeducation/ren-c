@@ -493,31 +493,16 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 }
 
 
-//=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
+//=//// CELL 2-bit SIGIL! /////////////////////////////////////////////////=//
 //
 // The HEART_BYTE() is structured so that the top two bits of the byte are
-// "type specific".  This 2-bit state (called a "crumb") holds the one of four
-// possible infix states for actions--for example.
-//
-// THEY ARE THE LAST TWO BITS ON PURPOSE.  If they needed to be shifted, the
-// fact that there's no unit smaller than a byte means static analyzers
-// will warn you about overflow if any shifting is involved, e.g.:
-//
-//     (((crumb << 6)) << 24)  <-- generates uintptr_t overflow warning
+// used for the "Sigil".  This can be [$ @ ^] or nothing.
 //
 
-#define Get_Cell_Crumb(c) \
-    (HEART_BYTE_RAW(c) >> HEART_CRUMB_SHIFT)
+#define FLAG_CELL_SIGIL(sigil) \
+    FLAG_HEART_BYTE_RAW((sigil) << HEART_SIGIL_SHIFT)
 
-#define FLAG_CELL_CRUMB(crumb) \
-    FLAG_HEART_BYTE_RAW((crumb) << HEART_CRUMB_SHIFT)
-
-#define CELL_MASK_CRUMB  FLAG_CELL_CRUMB(3)  // 0b11 << HEART_CRUMB_SHIFT
-
-INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
-    c->header.bits &= ~(CELL_MASK_CRUMB);
-    c->header.bits |= FLAG_CELL_CRUMB(crumb);
-}
+#define CELL_MASK_SIGIL_BITS  FLAG_CELL_SIGIL(3)  // 0b11 << HEART_SIGIL_SHIFT
 
 
 //=//// VALUE TYPE (always TYPE_XXX <= MAX_TYPE) ////////////////////////////=//
@@ -536,7 +521,19 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
         );
 
       case NOQUOTE_1:  // heart might be TYPE_0 to be extension type
-        return u_cast(HeartEnum, (HEART_BYTE(atom) % MOD_HEART_64));
+        switch (u_cast(Sigil, HEART_BYTE(atom) >> HEART_SIGIL_SHIFT)) {
+          case SIGIL_0:
+            return u_cast(HeartEnum, (HEART_BYTE(atom) % MOD_HEART_64));
+
+          case SIGIL_LIFT:
+            return TYPE_LIFTED;
+
+          case SIGIL_PIN:
+            return TYPE_PINNED;
+
+          case SIGIL_TIE:
+            return TYPE_TIED;
+        }
 
       case QUASIFORM_2_COERCE_ONLY:  // use this constant rarely!
         return TYPE_QUASIFORM;
@@ -552,6 +549,29 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
     #define Type_Of(atom) \
         Type_Of_Unchecked(Ensure_Readable(atom))
 #endif
+
+
+INLINE Option(Type) Type_Of_Unquoted(const Element* elem) {
+    if (QUOTE_BYTE(elem) == QUASIFORM_2_COERCE_ONLY)
+        return TYPE_QUASIFORM;
+
+    assert(QUOTE_BYTE(elem) != ANTIFORM_0_COERCE_ONLY);
+
+    switch (u_cast(Sigil, HEART_BYTE(elem) >> HEART_SIGIL_SHIFT)) {
+      case SIGIL_0:
+        return u_cast(HeartEnum, (HEART_BYTE(elem) % MOD_HEART_64));
+
+      case SIGIL_LIFT:
+        return TYPE_LIFTED;
+
+      case SIGIL_PIN:
+        return TYPE_PINNED;
+
+      default:
+        break;
+    }
+    return TYPE_TIED;  // work around "not all control paths return a value"
+}
 
 
 //=//// GETTING, SETTING, and CLEARING VALUE FLAGS ////////////////////////=//
@@ -586,6 +606,40 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
 #define Clear_Cell_Flag(c,name) \
     m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
         &= ~CELL_FLAG_##name
+
+
+//=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
+//
+// The cell flags are structured so that the top two bits of the byte are
+// "type specific", so that you can just take the last 2 bits.  This 2-bit
+// state (called a "crumb") holds the one of four possible infix states for
+// actions--for example.
+//
+// THEY ARE THE LAST TWO BITS ON PURPOSE.  If they needed to be shifted, the
+// fact that there's no unit smaller than a byte means static analyzers
+// will warn you about overflow if any shifting is involved, e.g.:
+//
+//     (((crumb << 6)) << 24)  <-- generates uintptr_t overflow warning
+//
+
+STATIC_ASSERT(
+    CELL_FLAG_TYPE_SPECIFIC_A == FLAG_LEFT_BIT(30)
+    and CELL_FLAG_TYPE_SPECIFIC_B == FLAG_LEFT_BIT(31)
+);
+
+#define CELL_MASK_CRUMB \
+    (CELL_FLAG_TYPE_SPECIFIC_A | CELL_FLAG_TYPE_SPECIFIC_B)
+
+#define Get_Cell_Crumb(c) \
+    (FOURTH_BYTE(&(c)->header.bits) & 0x3)
+
+#define FLAG_CELL_CRUMB(crumb) \
+    FLAG_FOURTH_BYTE(crumb)
+
+INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
+    c->header.bits &= ~(CELL_MASK_CRUMB);
+    c->header.bits |= FLAG_CELL_CRUMB(crumb);
+}
 
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//

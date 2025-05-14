@@ -25,12 +25,12 @@
 #include "sys-core.h"
 
 
-enum Reb_Spec_Mode {
+typedef enum {
     SPEC_MODE_DEFAULT,  // waiting, words seen will be arguments
     SPEC_MODE_PUSHED,  // argument pushed, information can be augmented
     SPEC_MODE_LOCAL,  // words are locals
     SPEC_MODE_WITH  // words are "extern"
-};
+} SpecMode;
 
 
 static void Force_Adjunct(VarList* *adjunct_out) {
@@ -71,7 +71,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         Init_Unreadable(PUSH());  // becomes parameter (explicitly or implicit)
     }
 
-    enum Reb_Spec_Mode mode = SPEC_MODE_DEFAULT;
+    SpecMode mode = SPEC_MODE_DEFAULT;
 
     Atom* eval = Level_Lifetime_Atom(L);
     Push_Level_Erase_Out_If_State_0(eval, L);
@@ -149,7 +149,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             and (singleheart = Try_Get_Sequence_Singleheart(item))
             and (
                 singleheart == LEADING_BLANK_AND(WORD)
-                or (meta = (singleheart == LEADING_BLANK_AND(META_WORD)))
+                /* or (meta = (singleheart == LEADING_BLANK_AND(META_WORD))) */
             )
         ){
             symbol = Cell_Word_Symbol(item);
@@ -268,8 +268,8 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             quoted = true;
         }
 
-        Option(Heart) heart = Heart_Of(item);
-        if (not heart)
+        Option(Type) type = Type_Of_Unquoted(item);
+        if (not type)
             return Error_User(
                 "Extension types not supported in function spec"
             );
@@ -280,12 +280,12 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         bool refinement = false;  // paths with blanks at head are refinements
         bool local = false;
         bool is_returner = false;
-        if (heart == TYPE_CHAIN) {
+        if (type == TYPE_CHAIN) {
             switch (Try_Get_Sequence_Singleheart(item)) {
               case LEADING_BLANK_AND(WORD): {
                 refinement = true;
                 symbol = Cell_Refinement_Symbol(item);
-                if (heart == TYPE_META_WORD) {
+                if ((type == TYPE_LIFTED) and Heart_Of(item) == TYPE_WORD) {
                     if (not quoted)
                         pclass = PARAMCLASS_LIFTED;
                 }
@@ -328,25 +328,23 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 }
             }
         }
-        else if (Any_Word_Type(heart)) {
+        else if (Heart_Of(item) == TYPE_WORD) {
             symbol = Cell_Word_Symbol(item);
 
-            if (heart == TYPE_THE_WORD) {  // output
+            if (Is_Pinned(WORD, item)) {  // output
                 if (quoted)
                     return Error_User("Can't quote @WORD! parameters");
                 pclass = PARAMCLASS_THE;
             }
-            else {
-                if (heart == TYPE_WORD) {
-                    if (quoted)
-                        pclass = PARAMCLASS_JUST;
-                    else
-                        pclass = PARAMCLASS_NORMAL;
-                }
-                else if (heart == TYPE_META_WORD) {
-                    if (not quoted)
-                        pclass = PARAMCLASS_LIFTED;
-                }
+            else if (Is_Lifted(WORD, item)) {
+                if (not quoted)
+                    pclass = PARAMCLASS_LIFTED;
+            }
+            else if (type == TYPE_WORD) {
+                if (quoted)
+                    pclass = PARAMCLASS_JUST;
+                else
+                    pclass = PARAMCLASS_NORMAL;
             }
         }
         else

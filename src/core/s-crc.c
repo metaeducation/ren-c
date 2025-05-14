@@ -233,19 +233,8 @@ uint32_t Hash_Value(const Cell* cell)
       hash_any_list:
         //
       case TYPE_BLOCK:
-      case TYPE_THE_BLOCK:
-      case TYPE_META_BLOCK:
-      case TYPE_VAR_BLOCK:
-        //
       case TYPE_FENCE:
-      case TYPE_THE_FENCE:
-      case TYPE_META_FENCE:
-      case TYPE_VAR_FENCE:
-        //
       case TYPE_GROUP:
-      case TYPE_THE_GROUP:
-      case TYPE_META_GROUP:
-      case TYPE_VAR_GROUP:
         //
         //
         // !!! Lame hash just to get it working.  There will be lots of
@@ -273,10 +262,7 @@ uint32_t Hash_Value(const Cell* cell)
 
       hash_any_word:
         //
-      case TYPE_WORD:
-      case TYPE_THE_WORD:
-      case TYPE_META_WORD:
-      case TYPE_VAR_WORD: {
+      case TYPE_WORD: {
         //
         // Note that the canon symbol may change for a group of word synonyms
         // if that canon is GC'd--it picks another synonym.  Thus the pointer

@@ -604,7 +604,7 @@ Option(Error*) Trap_Alias_Blob_As(
     }
 
     if (Any_Utf8_Type(as)) {  // convert to a string as first step [1]
-        if (Any_Word_Type(as)) {  // early fail on this, to save time
+        if (as == TYPE_WORD) {  // early fail on this, to save time
             if (VAL_INDEX(blob) != 0)  // (vs. failing on AS WORD! of string)
                 return Error_User("Can't alias BLOB! as WORD! unless at head");
         }

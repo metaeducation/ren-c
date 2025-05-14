@@ -95,7 +95,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
                 }
             }
             if (patch_found) {
-                Init_Any_Word(PUSH(), TYPE_WORD, *psym);
+                Init_Word(PUSH(), *psym);
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
                 Tweak_Cell_Binding(TOP, patch_found);
             }

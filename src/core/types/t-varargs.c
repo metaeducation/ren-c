@@ -573,7 +573,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
             break;
 
           case PARAMCLASS_THE:
-            Init_Any_Word(param_word, TYPE_THE_WORD, Key_Symbol(key));
+            Pinify(Init_Word(param_word, Key_Symbol(key)));
             break;
 
           case PARAMCLASS_SOFT:

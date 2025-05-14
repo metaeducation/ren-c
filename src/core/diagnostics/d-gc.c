@@ -315,19 +315,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case TYPE_BLOCK:
-      case TYPE_THE_BLOCK:
-      case TYPE_META_BLOCK:
-      case TYPE_VAR_BLOCK:
-        //
       case TYPE_FENCE:
-      case TYPE_THE_FENCE:
-      case TYPE_META_FENCE:
-      case TYPE_VAR_FENCE:
-        //
-      case TYPE_GROUP:
-      case TYPE_THE_GROUP:
-      case TYPE_META_GROUP:
-      case TYPE_VAR_GROUP: {
+      case TYPE_GROUP: {
         if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
@@ -349,10 +338,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Node_Marked(node1));
         break; }
 
-      case TYPE_WORD:
-      case TYPE_THE_WORD:
-      case TYPE_META_WORD:
-      case TYPE_VAR_WORD: {
+      case TYPE_WORD: {
         assert(Cell_Has_Node1(v));
 
         const String *spelling = Cell_Word_Symbol(v);

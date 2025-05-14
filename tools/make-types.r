@@ -251,7 +251,7 @@ e-types/emit [--[
      */
 
     #define CELL_HEART_QUOTE_MASK \
-        (FLAG_HEART_BYTE_63 | FLAG_QUOTE_BYTE(255))
+        (FLAG_HEART_BYTE_RAW(255) | FLAG_QUOTE_BYTE(255))
 ]--]
 
 for-each-datatype 't [
@@ -417,7 +417,7 @@ e-typespecs: make-emitter "Type Help Descriptions" (
     join prep-dir %specs/tmp-typespecs.r
 )
 
-fundamentals: make block! 128  ; "TYPE_XXX = (num)" for all HEART_BYTE
+plains: make block! 64  ; "TYPE_XXX = (num)" for all HEART_BYTE
 pseudotype-hearts: make block! 128  ; "PSEUDO_XXX = (num)" for all HEART_BYTE
 pseudotypes: make block! 128  ; "TYPE_XXX = (num)" for all pseudotypes
 types: make block! 128
@@ -431,8 +431,8 @@ index: 1
 
 max-heart: ~
 
-for-each-datatype 't [  ; fundamentals
-    append fundamentals cscape [t
+for-each-datatype 't [  ; plains
+    append plains cscape [t
         --[ENUM_TYPE_${T.NAME} = $<index>]--
     ]
 
@@ -472,64 +472,47 @@ for-each-datatype 't [  ; fundamentals
     index: me + 1
 ]
 
+for-each [pseudo spec] [
+    lifted "marker to read and write meta-representations"
+    tied "mark to bind in the evaluator in current context, and drop mark"
+    pinned "mark to bind in the evaluator in current context, and keep mark"
 
-; Emit the pseudotype for QUASIFORM!
-(
-    append memberships cscape [-[/* quasiform - $<index> */  (TYPESET_FLAG_BRANCH)]-]
+    ; ^-- "fundamentals" (though not "plain") should be first
 
-    append pseudotypes cscape [--[ENUM_TYPE_QUASIFORM = $<index>]--]
-
-    append types cscape [--[TYPE_QUASIFORM = $<index>]--]
-
-    append typedefines cscape [
-        --[#define TYPE_QUASIFORM  TYPE_ENUM(QUASIFORM)]--
+    quasiform "value which evaluates to an antiform"
+    quoted "container for arbitrary levels of quoting"
+][
+    append memberships cscape [pseudo
+        --[/* $<pseudo> - $<index> */  (TYPESET_FLAG_BRANCH)]--
     ]
 
-    e-typeset-bytes/emit [-[
-        quasiform $<index>
-    ]-]
+    append pseudotypes cscape [pseudo
+        --[ENUM_TYPE_$<PSEUDO> = $<index>]--
+    ]
 
-    e-typespecs/emit [-[
-        quasiform "value which evaluates to an antiform"
-    ]-]
+    append types cscape [pseudo
+        --[TYPE_$<PSEUDO> = $<index>]--
+    ]
 
-    append typeset-flags cscape [--[
-        /* $<index> - quasiform */
+    append typedefines cscape [pseudo
+        --[#define TYPE_$<PSEUDO>  TYPE_ENUM($<PSEUDO>)]--
+    ]
+
+    e-typeset-bytes/emit [pseudo --[
+        $<pseudo> $<index>
+    ]--]
+
+    e-typespecs/emit [pseudo spec --[
+        $<pseudo> $<mold spec>
+    ]--]
+
+    append typeset-flags cscape [pseudo --[
+        /* $<index> - $<pseudo> */
         TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
     ]--]
 
     index: me + 1
-)
-
-; Emit the pseudotype for QUOTED!
-(
-    append memberships cscape [
-        --[/* quoted - $<index> */  (TYPESET_FLAG_BRANCH)]--
-    ]
-
-    append pseudotypes cscape [--[ENUM_TYPE_QUOTED = $<index>]--]
-
-    append types cscape [--[TYPE_QUOTED = $<index>]--]
-
-    append typedefines cscape [
-        --[#define TYPE_QUOTED  TYPE_ENUM(QUOTED)]--
-    ]
-
-    e-typeset-bytes/emit [-[
-        quoted $<index>
-    ]-]
-
-    e-typespecs/emit [-[
-        quoted "container for arbitrary levels of quoting"
-    ]-]
-
-    append typeset-flags cscape [--[
-        /* $<index> - quoted */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
-    ]--]
-
-    index: me + 1
-)
+]
 
 first-antiform-index: index
 
@@ -639,7 +622,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-fundamental */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(u_cast(Byte, MAX_HEART))
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(u_cast(Byte, MAX_TYPE_FUNDAMENTAL))
     ]--]
     index: index + 1
 )
@@ -675,7 +658,7 @@ e-typesets/emit [--[
     };
 
     /*
-     * For each fundamental datatype, this is the OR'd together flags of all
+     * For each non-antiform TYPE_XXX, this is the OR'd together flags of all
      * the sparse typesets that datatype is a member of.  There can be up
      * to 31 of those TYPESET_FLAG_XXX flags in this model (avoids dependency
      * on 64-bit integers, which we are attempting to excise from the system).
@@ -744,7 +727,7 @@ e-hearts/emit [rebs --[
         enum HeartEnum {
       #endif
             ENUM_TYPE_0 = 0,  /* reserved falsey case for Option(Heart) */
-            $(Fundamentals),
+            $(Plains),
         };
 
       #if defined(_MSC_VER)  // MSVC has lax enum class conversions we can use
@@ -773,8 +756,13 @@ e-hearts/emit [rebs --[
     #define MAX_HEART  $<MAX-HEART>
     STATIC_ASSERT(u_cast(Byte, MAX_HEART) < 64);
 
-    STATIC_ASSERT(u_cast(int, TYPE_QUASIFORM) == u_cast(int, MAX_HEART) + 1);
-    STATIC_ASSERT(u_cast(int, TYPE_QUOTED) == u_cast(int, MAX_HEART) + 2);
+    STATIC_ASSERT(u_cast(int, TYPE_LIFTED) == u_cast(int, MAX_HEART) + 1);
+    STATIC_ASSERT(u_cast(int, TYPE_TIED) == u_cast(int, MAX_HEART) + 2);
+    STATIC_ASSERT(u_cast(int, TYPE_PINNED) == u_cast(int, MAX_HEART) + 3);
+    STATIC_ASSERT(u_cast(int, TYPE_QUASIFORM) == u_cast(int, MAX_HEART) + 4);
+    STATIC_ASSERT(u_cast(int, TYPE_QUOTED) == u_cast(int, MAX_HEART) + 5);
+
+    #define MAX_TYPE_FUNDAMENTAL  TYPE_PINNED
 
     #define MAX_TYPE_ELEMENT  TYPE_QUOTED
     #define MAX_TYPE_BYTE_ELEMENT  u_cast(Byte, TYPE_QUOTED)

@@ -498,9 +498,9 @@ Bounce Meta_Stepper_Executor(Level* L)
     assert(Is_Cell_Erased(OUT));
 
     if (QUOTE_BYTE(CURRENT) == NOQUOTE_1) {
-        Sigil sigil = Sigil_For_Heart(Heart_Of(CURRENT));
-        switch (sigil) {
-        case SIGIL_0:
+        Option(Sigil) sigil = Sigil_Of(CURRENT);
+        switch (maybe sigil) {
+          case SIGIL_0:
             goto handle_plain;
 
         case SIGIL_LIFT:  // ^ lifts the value
@@ -608,7 +608,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     //     ** Error: var is unbound
 
     Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    HEART_BYTE(OUT) = Planify_Any_Tied_Heart(Heart_Of(CURRENT));
+    Plainify(u_cast(Element*, OUT));
     goto lookahead;
 
 
@@ -617,7 +617,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     // LIFTED! types will META variables on storage, and UNMETA them on
     // fetching.  This is complex logic.
 
-switch (STATE = cast(Byte, Plainify_Any_Lifted_Heart(Heart_Of(CURRENT)))) {
+  switch (STATE = cast(Byte, Heart_Of(CURRENT))) {
 
   case TYPE_WORD: { //// LIFTED! WORD! ^XXX //////////////////////////////////
 
@@ -669,7 +669,7 @@ switch (STATE = cast(Byte, Plainify_Any_Lifted_Heart(Heart_Of(CURRENT)))) {
 
     return PANIC("Only ^WORD!, ^GROUP, ^BLOCK! eval at this time for LIFTED!");
 
-}} // end switch()
+  }} // end switch()
 
 
 } handle_plain: { //// *** THIS IS THE "MAIN" SWITCH STATEMENT *** ///////////
@@ -686,7 +686,7 @@ switch (STATE = cast(Byte, Plainify_Any_Lifted_Heart(Heart_Of(CURRENT)))) {
     // 1. The Meta_Stepper_Executor()'s state bytes are a superset of the
     //    Heart_Of() of processed values.  See the ST_STEPPER_XXX enumeration.
 
-switch ((STATE = cast(Byte, Heart_Of(CURRENT)))) {  // superset [1]
+  switch ((STATE = cast(Byte, Heart_Of(CURRENT)))) {  // superset [1]
 
   case TYPE_COMMA: { //// COMMA! , ///////////////////////////////////////////
 
@@ -1833,7 +1833,7 @@ for (; check != tail; ++check) {  // push variables
 
     crash (CURRENT);
 
-}}  //// END handle_plain: SWITCH STATEMENT //////////////////////////////////
+  }}  //// END handle_plain: SWITCH STATEMENT ////////////////////////////////
 
 
 } lookahead: { ///////////////////////////////////////////////////////////////

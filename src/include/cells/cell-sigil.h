@@ -25,6 +25,29 @@
 // was lifted, it became feasible to give them the type SIGIL!
 //
 
+INLINE bool Any_Plain(const Element* e) {
+    if (QUOTE_BYTE(e) != NOQUOTE_1)
+        return false;
+    return not (HEART_BYTE(e) & CELL_MASK_SIGIL_BITS);
+}
+
+#define Any_Lifted(v)  (Type_Of(v) == TYPE_LIFTED)
+#define Any_Pinned(v)  (Type_Of(v) == TYPE_PINNED)
+#define Any_Tied(v)    (Type_Of(v) == TYPE_TIED)
+
+#define Is_Pinned(heartname, v) \
+    (HEART_BYTE(v) == (u_cast(Byte, TYPE_##heartname) \
+        | (u_cast(Byte, SIGIL_PIN) << HEART_SIGIL_SHIFT)))
+
+#define Is_Lifted(heartname, v) \
+    (HEART_BYTE(v) == (u_cast(Byte, TYPE_##heartname) \
+        | (u_cast(Byte, SIGIL_LIFT) << HEART_SIGIL_SHIFT)))
+
+#define Is_Tied(heartname, v) \
+    (HEART_BYTE(v) == (u_cast(Byte, TYPE_##heartname) \
+        | (u_cast(Byte, SIGIL_TIE) << HEART_SIGIL_SHIFT)))
+
+
 INLINE char Char_For_Sigil(Sigil sigil) {
     switch (sigil) {
       case SIGIL_LIFT:  return '^';
@@ -50,15 +73,21 @@ INLINE Sigil Cell_Sigil(const Cell* cell) {
     return u_cast(Sigil, sigil_byte);
 }
 
-INLINE Option(Sigil) Sigil_For_Heart(Option(Heart) heart) {
-    if (Any_Meta_Value_Type(heart))
-        return SIGIL_LIFT;
-    if (Any_The_Value_Type(heart))
-        return SIGIL_PIN;
-    if (Any_Var_Value_Type(heart))
-        return SIGIL_TIE;
-    return SIGIL_0;
+INLINE Option(Sigil) Sigil_Of(const Element* e)
+  { return u_cast(Sigil, HEART_BYTE_RAW(e) >> HEART_SIGIL_SHIFT); }
+
+INLINE Element* Sigilize(Element* elem, Option(Sigil) sigil) {
+    elem->header.bits &= ~(CELL_MASK_SIGIL_BITS);
+    elem->header.bits |= FLAG_CELL_SIGIL(maybe sigil);
+    return elem;
 }
 
-#define Sigil_Of(e) \
-    Sigil_For_Heart(Heart_Of_Fundamental(e))
+#define Plainify(elem) Sigilize((elem), SIGIL_0)
+#define Liftify(elem)  Sigilize((elem), SIGIL_LIFT)
+#define Pinify(elem)   Sigilize((elem), SIGIL_PIN)
+#define Tieify(elem)   Sigilize((elem), SIGIL_TIE)
+
+INLINE Element* Copy_Heart_Byte(Element* out, const Element* in) {
+    HEART_BYTE(out) = HEART_BYTE(in);
+    return out;
+}

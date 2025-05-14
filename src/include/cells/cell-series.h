@@ -116,7 +116,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
         assert(Is_Stub_String(f));
     }
     else if (Any_Utf8_Type(heart)) {  // see also Init_Utf8_Non_String()
-        assert(not Any_Word_Type(heart));  // can't use this init!
+        assert(heart != TYPE_WORD);  // can't use this init!
         assert(Is_Stub_String(f));
         assert(Is_Flex_Frozen(f));
     }

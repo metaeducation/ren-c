@@ -134,7 +134,7 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
 ){
     assert(
         Any_Utf8_Type(heart)
-        and not Any_String_Type(heart) and not Any_Word_Type(heart)
+        and not Any_String_Type(heart) and heart != TYPE_WORD
     );
     assert(len <= size);
     if (size + 1 > Size_Of(out->payload.at_least_8))

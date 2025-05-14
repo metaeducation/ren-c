@@ -926,6 +926,12 @@ DECLARE_NATIVE(EQUAL_Q)
     QUOTE_BYTE(v1) = NOQUOTE_1;  // should work for VOID equality, too
     QUOTE_BYTE(v2) = NOQUOTE_1;
 
+    if (Sigil_Of(u_cast(Element*, v1)) != Sigil_Of(u_cast(Element*, v2)))
+        return nullptr;
+
+    Plainify(u_cast(Element*, v1));
+    Plainify(u_cast(Element*, v2));
+
     if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
         if (not relax)
             return nullptr;

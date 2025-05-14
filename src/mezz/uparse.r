@@ -1997,7 +1997,7 @@ default-combinators: to map! reduce [
     ;    means "look up var and match it at this location", a much more
     ;    interesting and common application for the @ sigil is as a synonym
     ;    for the ONE combinator, to mean match anything at the current spot.
-    ;    (This is a purpose that was imagined for BLANK!.
+    ;    (This is a purpose that was imagined for BLANK!).
     ;
     ; 2. Evaluatively, if we get a quasiform as the meta it means it was an
     ;    antiform.  Semantically that's matched by the quasiform combinator,
@@ -2020,53 +2020,43 @@ default-combinators: to map! reduce [
 
     ; @ combinator is used for a different purpose [1]
 
-    (meta the-word!) combinator compose [
+    (meta pinned!) combinator compose [
         return: [any-atom?]
         :pending [blank! block!]
-        value [@word!]
-        <local> comb lookup'
-    ][
-        comb: (state.combinators).(meta type of get value)
-        return [{_} remainder pending]: run comb state input lookup'
-    ]
-
-    (meta the-group!) combinator compose [
-        return: [any-atom?]
-        :pending [blank! block!]
-        value [@group!]
-        <local> ^result comb subpending single
-    ][
-        value: as group! value  ; remove @ decoration
-        comb: runs (state.combinators).(meta group!)
-        [^result remainder pending]: comb state input value except e -> [
-            return fail e
-        ]
-
-        comb: runs state.combinators.(meta type of decay ^result)
-        [^result remainder subpending]: comb state remainder result
-            except e -> [
-                return fail e
-            ]
-
-        pending: glom pending spread subpending
-        return ^result
-    ]
-
-    (meta the-block!) combinator compose [  ; match literal block redundant [4]
-        return: [any-atom?]
-        :pending [blank! block!]
-        value [@block!]
+        value [@any-element?]
         <local> ^result comb subpending
     ][
-        value: as block! value  ; remove @ decoration
-        comb: runs (state.combinators).(meta block!)
-        [^result remainder pending]: comb state input value except e -> [
-            return fail e
+        value: plain value  ; turn into plain GROUP!/WORD!/TUPLE!/etc.
+
+        case [
+            group? value [  ; run GROUP! to get *actual* value to match
+                comb: runs (state.combinators).(meta group!)
+                [^result remainder pending]: comb state input value
+                    except e -> [
+                        return fail e
+                    ]
+                if void? ^result [
+                    return void
+                ]
+                [^result]: decay ^result
+            ]
+            word? value [
+                [^result]: get value  ; should be ^result: ...
+                pending: _  ; no pending, only "subpending"
+                remainder: input  ; didn't need to consume input to get result
+            ]
+            block? value [  ; match literal block redundant [4]
+                comb: runs (state.combinators).(meta block!)
+                [^result remainder pending]: comb state input value
+                    except e -> [
+                        return fail e
+                    ]
+            ]
         ]
 
-        ensure [quoted! quasiform!] result ; quasi means antiform [2]
-        comb: runs (state.combinators).(meta type of decay ^result)
-        [^result remainder subpending]: comb state remainder result
+        ensure [quoted! quasiform!] result  ; quasi means antiform [2]
+        comb: runs state.combinators.(meta type of result)  ; quoted or quasi
+        [^result remainder subpending]: comb state remainder result  ; metaform
             except e -> [
                 return fail e
             ]
@@ -2075,60 +2065,6 @@ default-combinators: to map! reduce [
         return ^result
     ]
 
-    === LIFTED! (^XXX) COMBINATORS ===
-
-    ; The ^XXX! combinators add a quoting level to their result, unless
-    ; it's antiform in which case it becomes a qusaiform.  The quoting is
-    ; important with functions like KEEP...but advanced tunneling of behavior
-    ; regarding unsets, nulls, and invisibility requires the feature.
-    ;
-    ; Note: These are NOT fixed as `[:block-combinator | :meta]`, because
-    ; they want to inherit whatever combinator that is currently in use for
-    ; their un-meta'd type (by default).  This means dynamically reacting to
-    ; the set of combinators chosen for the particular parse.
-    ;
-    ; !!! These follow a simple pattern, could all use the same combinator and
-    ; just be sensitive to the received kind of value.
-
-    '^ combinator [
-        return: "Meta quoted" [~null~ quasiform! quoted!]
-        parser [action!]
-    ][
-        return [{^} remainder]: parser input
-    ]
-
-    (meta meta-word!) combinator [
-        return: "Meta quoted" [~null~ quasiform! quoted!]
-        :pending [blank! block!]
-        value [^word!]
-        <local> comb
-    ][
-        value: as word! value
-        comb: runs state.combinators.(meta word!)
-        return [{^} remainder pending]: comb state input value  ; leave meta
-    ]
-
-    (meta meta-group!) combinator [
-        return: "Meta quoted" [~null~ quasiform! quoted!]
-        :pending [blank! block!]
-        value [meta-group!]
-        <local> comb
-    ][
-        value: as group! value
-        comb: runs state.combinators.(meta group!)
-        return [{^} remainder pending]: comb state input value  ; leave meta
-    ]
-
-    (meta meta-block!) combinator [
-        return: "Meta quoted" [~null~ quasiform! quoted!]
-        :pending [blank! block!]
-        value [^block!]
-        <local> comb
-    ][
-        value: as block! value
-        comb: runs state.combinators.(meta block!)
-        return [{^} remainder pending]: comb state input value  ; leave meta
-    ]
 
     === INVISIBLE COMBINATORS ===
 

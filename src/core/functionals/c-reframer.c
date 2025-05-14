@@ -155,7 +155,7 @@ bool Init_Invokable_From_Feed_Throws(
     if (v == nullptr)  // no first, and feed was at end
         return false;
 
-    if (Any_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
+    if (Is_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
         panic ("Actions made with REFRAMER cannot work with GROUP!s");
 
     StackIndex base = TOP_INDEX;

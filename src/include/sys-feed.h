@@ -317,13 +317,13 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // in debugging than putting the actions themselves.
         //
       case FLAVOR_SYMBOL: {
-        Init_Any_Word(&feed->fetched, TYPE_WORD, c_cast(Symbol*, f));
+        Init_Word(&feed->fetched, c_cast(Symbol*, f));
         feed->p = &feed->fetched;
         break; }
 
       default:
         //
-        // Besides instructions, other series types aren't currenlty
+        // Besides instructions, other series types aren't currently
         // supported...though it was considered that you could use
         // VarList* or Phase* directly instead of their archetypes.  This
         // was considered when thinking about ditching value archetypes

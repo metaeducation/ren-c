@@ -679,7 +679,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return Init_Any_String(OUT, to, s);
     }
 
-    if (Any_Word_Type(to)) {
+    if (to == TYPE_WORD) {
         assert(not Any_Word(v));  // does not delegate this case
         if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v)))
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
@@ -687,7 +687,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         Size size;  // TO conversion of mutable data, can't reuse stub
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
         const Symbol* sym = Intern_UTF8_Managed(at, size);
-        return Init_Any_Word(OUT, to, sym);
+        return Init_Word(OUT, sym);
     }
 
     if (to == TYPE_ISSUE or to == TYPE_MONEY) {  // may make node if mutable
@@ -822,14 +822,14 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         return SUCCESS;
     }}
 
-    if (Any_Word_Type(as)) {  // aliasing as an ANY-WORD? freezes data
+    if (as == TYPE_WORD) {  // aliasing as WORD! freezes data
         if (Stringlike_Has_Node(v)) {
             const String* str = Cell_String(v);
             if (VAL_INDEX(v) != 0)
                 return Error_User("Can't alias string as WORD! unless at head");
 
             if (Is_String_Symbol(str)) {  // already frozen and checked!
-                Init_Any_Word(out, as, cast(const Symbol*, str));
+                Init_Word(out, cast(const Symbol*, str));
                 return SUCCESS;
             }
 
@@ -845,7 +845,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Size size;
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
         const Symbol* sym = Intern_UTF8_Managed(at, size);
-        Init_Any_Word(out, as, sym);
+        Init_Word(out, sym);
         return SUCCESS;
     }
 
@@ -873,7 +873,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
     }
 
     if (as == TYPE_ISSUE or as == TYPE_MONEY) {  // fits cell or freeze string
-        assert(not Any_Word_Type(as) and not (Any_String_Type(as)));
+        assert(as != TYPE_WORD and not (Any_String_Type(as)));
 
         if (Stringlike_Has_Node(v)) {
             const String *s = Cell_String(v);

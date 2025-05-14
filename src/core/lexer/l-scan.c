@@ -2116,14 +2116,9 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
     OnStack(Element*) top
 ){
     if (S->sigil_pending) {
-        Heart heart = Heart_Of_Builtin_Fundamental(top);
-        if (not Any_Plain_Value_Type(heart))
-            return Error_Syntax(S, TOKEN_BLANK);  // !!! token?
+        assert(not Sigil_Of(top));
 
-        HEART_BYTE(top) = Sigilize_Any_Plain_Heart(
-            unwrap S->sigil_pending,
-            heart
-        );
+        Sigilize(top, unwrap S->sigil_pending);
         S->sigil_pending = SIGIL_0;
     }
     if (S->num_quotes_pending != 0) {
@@ -2352,10 +2347,7 @@ Bounce Scanner_Executor(Level* const L) {
         assert(len != 0);
         Init_Word(PUSH(), Intern_UTF8_Managed(S->begin, len));
         if (S->sigil_pending) {
-            HEART_BYTE(TOP) = Sigilize_Any_Plain_Heart(
-                unwrap S->sigil_pending,
-                TYPE_WORD
-            );
+            Sigilize(TOP_ELEMENT, unwrap S->sigil_pending);
             S->sigil_pending = SIGIL_0;
         }
         break;
@@ -2967,12 +2959,9 @@ Bounce Scanner_Executor(Level* const L) {
             // this is an egregious hack in lieu of actually redesigning
             // the scanner, but still pretty cool we can do it this way.)
             //
-            DECLARE_ATOM (items);
-            Init_Any_List(
-                items,
-                TYPE_THE_BLOCK,  // don't want to evaluate
-                Pop_Source_From_Stack(stackindex_path_head - 1)
-            );
+            DECLARE_ELEMENT (items);
+            Init_Block(items, Pop_Source_From_Stack(stackindex_path_head - 1));
+            Pinify(items);  // don't want to evaluate
             Push_Lifeguard(items);
             Value* email = rebValue("as email! delimit -[.]-", items);
             Drop_Lifeguard(items);

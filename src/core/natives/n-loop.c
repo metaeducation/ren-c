@@ -702,7 +702,7 @@ DECLARE_NATIVE(CYCLE)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Block(body) or Is_Meta_Block(body)) {
+    if (Is_Block(body) or Is_Lifted(BLOCK, body)) {
         Add_Definitional_Break_Continue(body, level_);
         Add_Definitional_Stop(body, level_);
     }
@@ -935,11 +935,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         if (Any_Context_Type(heart)) {
             if (var) {
                 assert(les->u.evars.index != 0);
-                Init_Any_Word(
-                    var,
-                    TYPE_WORD,
-                    Key_Symbol(les->u.evars.key)
-                );
+                Init_Word(var, Key_Symbol(les->u.evars.key));
 
                 if (heart == TYPE_MODULE) {
                     Tweak_Cell_Word_Index(var, INDEX_PATCHED);
@@ -1071,7 +1067,7 @@ void Shutdown_Loop_Each(Value* iterator)
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! the-word? block!]
+//          [blank! word! @word! block!]
 //      data "The series to traverse"
 //          [<opt-out> blank! any-series? any-context? map! any-sequence?
 //           action!]  ; action support experimental, e.g. generators

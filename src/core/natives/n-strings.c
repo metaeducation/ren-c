@@ -362,7 +362,7 @@ DECLARE_NATIVE(JOIN)
         goto next_mold_step;
     }
 
-    if (Any_The_Value(item)) {  // fetch and mold
+    if (Any_Pinned(item)) {  // fetch and mold
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
         if (Is_Pinned(WORD, item)) {
@@ -585,9 +585,9 @@ DECLARE_NATIVE(JOIN)
     Size size = String_Size(mo->string) - mo->base.size;
     Length len = String_Len(mo->string) - mo->base.index;
 
-    if (Any_Word_Type(heart)) {
+    if (heart == TYPE_WORD) {
         const Symbol* s = Intern_UTF8_Managed(utf8, size);
-        Init_Any_Word(OUT, heart, s);
+        Init_Word(OUT, s);
     }
     else if (Any_String_Type(heart)) {
         Init_Any_String(OUT, heart, Pop_Molded_String(mo));

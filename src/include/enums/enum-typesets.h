@@ -88,45 +88,6 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
     (QUOTE_BYTE(Ensure_Readable(v)) == NOQUOTE_1)
 
 
-//=//// SHORTHANDS ////////////////////////////////////////////////////////=//
-//
-// Easier to define these than to try and write code for the exceptions when
-// you want them (sometimes you want `value`, sometimes you don't)
-//
-
-#define Any_Lifted   Any_Meta_Value
-#define Any_Pinned    Any_The_Value
-#define Any_Tied    Any_Var_Value
-
-#define Is_Pinned(heartname, v)  (Type_Of(v) == TYPE_THE_##heartname)
-#define Is_Lifted(heartname, v)  (Type_Of(v) == TYPE_META_##heartname)
-#define Is_Tied(heartname, v)  (Type_Of(v) == TYPE_VAR_##heartname)
-
-
-//=//// SIGIL TRANSFORMATION //////////////////////////////////////////////=//
-
-INLINE Heart Sigilize_Any_Plain_Heart(Sigil sigil, Heart h) {
-    assert(Any_Plain_Value_Type(h));
-    assert(sigil != SIGIL_0);
-    return cast(HeartEnum, u_cast(Byte, h) + u_cast(Byte, sigil));
-}
-
-INLINE Heart Plainify_Any_Lifted_Heart(Heart h) {
-    assert(Any_Meta_Value_Type(h));
-    return cast(HeartEnum, u_cast(Byte, h) - u_cast(int, SIGIL_LIFT));
-}
-
-INLINE Heart Plainify_Any_Pinned_Heart(Heart h) {
-    assert(Any_The_Value_Type(h));
-    return cast(HeartEnum, u_cast(Byte, h) - u_cast(int, SIGIL_PIN));
-}
-
-INLINE Heart Planify_Any_Tied_Heart(Heart h) {
-    assert(Any_Var_Value_Type(h));
-    return cast(HeartEnum, u_cast(Byte, h) - u_cast(int, SIGIL_TIE));
-}
-
-
 INLINE bool Any_Sequence_Or_List_Type(Option(Heart) h)  // !!! optimize?
   { return Any_Sequence_Type(h) or Any_List_Type(h); }
 

@@ -191,124 +191,57 @@ varargs     "evaluator position for variable numbers of arguments"
 
 <ANY-BINDABLE?>
 
-<ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Heart())
-
     word        "evaluates a variable or action"
     ~keyword~   "special constant values (e.g. ~null~, ~okay~)"
                 (node1)
-                [any-utf8? any-plain-value? any-sequencable?]
+                [any-utf8? any-sequencable?]
 
-    meta-word   "word that quotes product or turns quasiforms to antiforms"
-                (node1)
-                [any-utf8? any-meta-value? any-sequencable?]
-
-    the-word    "evaluates to the bound version of the word as a word!"
-                (node1)
-                [any-utf8? any-the-value? any-sequencable?]
-
-    var-word    "evaluates to the bound version of the word as a the-word!"
-                (node1)
-                [any-utf8? any-var-value? any-sequencable?]
-
-</ANY-WORD?>
-
-
-<ANY-SEQUENCE?>
+  <ANY-SEQUENCE?>
 
     tuple       "member selection with inert bias"
                 (:node1)
-                [any-scalar? any-plain-value?]
+                [any-scalar?]  ; !!! 1.2.3 maybe, but not all are scalars...
 
     chain       "refinement and function call dialect"
                 (:node1)
-                [any-scalar? any-plain-value?]
+                []
 
     path        "member or refinement selection with execution bias"
                 (:node1)
-                [any-plain-value?]
+                []
 
-</ANY-SEQUENCE?>
+  </ANY-SEQUENCE?>
 
-
-<ANY-LIST?>
-
-  <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Heart())
+  <ANY-LIST?>
 
     block       "list of elements that blocks evaluation unless EVAL is used"
     ~pack~:U    "multi-return that can be unpacked or decays to first item"
                 (node1)
-                [any-series? any-branch? any-plain-value? any-sequencable?]
-
-    meta-block  "block that evaluates to produce a quoted block"
-                (node1)
-                [any-series? any-branch? any-meta-value? any-sequencable?]
-
-    the-block   "evaluates to the bound version of the block as a the-block!"
-                (node1)
-                [any-series? any-branch? any-the-value? any-sequencable?]
-
-    var-block   "evaluates to the bound version of the block as a block!"
-                (node1)
-                [any-series? any-branch? any-var-value? any-sequencable?]
-
-  </ANY-BLOCK?>
-
-
-  <ANY-FENCE?>  ; (order matters, see Sigilize_Any_Plain_Heart())
+                [any-series? any-branch? any-sequencable?]
 
     fence       "list of elements that are used in construction via MAKE"
     ~datatype~  "the type of a value expressed as an antiform"
                 (node1)
-                [any-series? any-branch? any-plain-value? any-sequencable?]
-
-    meta-fence  "fence that we don't know what it does yet"
-                (node1)
-                [any-series? any-branch? any-meta-value? any-sequencable?]
-
-    the-fence   "evaluates to the bound version of the fence as a the-fence!"
-                (node1)
-                [any-series? any-branch? any-the-value? any-sequencable?]
-
-    var-fence   "evaluates to the bound version of the fence as a fence!"
-                (node1)
-                [any-series? any-branch? any-var-value? any-sequencable?]
-
-  </ANY-FENCE?>
-
-
-  <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Heart())
+                [any-series? any-branch? any-sequencable?]
 
     group       "list that evaluates expressions as an isolated group"
     ~splice~    "fragment of multiple values without a surrounding block"
                 (node1)
-                [any-series? any-plain-value? any-sequencable?]
+                [any-series? any-sequencable?]
 
-    meta-group  "group that quotes product or turns antiforms to quasiforms"
-                (node1)
-                [any-series? any-meta-value? any-sequencable?]
+  </ANY-LIST?>
 
-    the-group   "evaluates to the bound version of the group as a the-group!"
-                (node1)
-                [any-series? any-the-value? any-branch? any-sequencable?]
+    ; COMMA! is weirdly bindable, due to its application in variadic feeds.
+    ; It's an implementation detail which would require inventing another
+    ; datatype that was FEED-specific.  Better ideas welcome.
 
-    var-group   "evaluates to the bound version of the group as a group!"
-                (node1)
-                [any-series? any-var-value? any-sequencable?]
-
-  </ANY-GROUP?>
-
-</ANY-LIST?>
-
-; COMMA! is weirdly bindable, due to its application in variadic feeds.
-; It's an implementation detail which would require inventing another datatype
-; that was FEED-specific.  Better ideas welcome.
-
-comma         "separator between full evaluations"
-~ghost~:U     "elision state that is discarded by the evaluator"
-              (CELL_MASK_NO_NODES)
-              [any-unit?]  ; NOT inert
+    comma         "separator between full evaluations"
+    ~ghost~:U     "elision state that is discarded by the evaluator"
+                  (CELL_MASK_NO_NODES)
+                  [any-unit?]  ; NOT inert
 
 </ANY-BINDABLE?>
+
 
 ; ======= END "FUNDAMENTALS" THAT AREN'T QUOTED, QUASI, OR ANTIFORM ==========
 

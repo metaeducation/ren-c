@@ -108,7 +108,7 @@ IMPLEMENT_GENERIC(TO, Is_Blank)
     if (Any_String_Type(to))
         return Init_Any_String(OUT, to, Make_String(0));
 
-    if (Any_Word_Type(to))
+    if (to == TYPE_WORD)
         return UNHANDLED;
 
     if (to == TYPE_ISSUE) {
