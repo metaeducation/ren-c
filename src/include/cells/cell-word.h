@@ -90,12 +90,10 @@ INLINE Element* Init_Any_Word_Untracked(
 #define Init_Any_Word(out,heart,spelling) \
     TRACK(Init_Any_Word_Untracked((out), (heart), NOQUOTE_1, (spelling)))
 
-#define Init_Word(out,str)          Init_Any_Word((out), TYPE_WORD, (str))
-#define Init_The_Word(out,str)      Init_Any_Word((out), TYPE_THE_WORD, (str))
-#define Init_Meta_Word(out,str)     Init_Any_Word((out), TYPE_META_WORD, (str))
-#define Init_Var_Word(out,str)      Init_Any_Word((out), TYPE_VAR_WORD, (str))
+#define Init_Word(out,str) \
+    Init_Any_Word((out), TYPE_WORD, (str))
 
-INLINE Value* Init_Any_Word_Bound_Untracked(
+INLINE Element* Init_Any_Word_Bound_Untracked(
     Sink(Element) out,
     Heart heart,
     const Symbol* symbol,

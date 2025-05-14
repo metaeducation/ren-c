@@ -93,7 +93,7 @@ bool Do_Breakpoint_Throws(
     // the console's sandbox and return its result.  It's possible to use
     // quoting to return simple values, like ^('x)
 
-    assert(Is_Meta_Group(inst));
+    assert(Is_Lifted(GROUP, inst));
 
     bool threw = Eval_Any_List_At_Throws(out, inst, SPECIFIED);
 
@@ -197,7 +197,7 @@ DECLARE_NATIVE(RESUME)
 
     Value* expr = ARG(EXPRESSION);
     if (Is_Nulled(expr))  // e.g. <end> (actually null not legal)
-        Init_Any_List(expr, TYPE_META_GROUP, g_empty_array);
+        Liftify(Init_Group(expr, g_empty_array));
     else {
         assert(Is_Block(expr));
         HEART_BYTE(expr) = TYPE_META_GROUP;

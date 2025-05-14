@@ -119,8 +119,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
 }
 
 
-// "Make Type" dispatcher for BLOCK!, GROUP!, FENCE!, and variants (THE-GROUP!,
-// TYPE-FENCE!, etc.)
+// "Make Type" dispatcher for BLOCK!, GROUP!, FENCE!, and variants (@GROUP!,
+// ^FENCE!, etc.)
 //
 IMPLEMENT_GENERIC(MAKE, Any_List)
 {

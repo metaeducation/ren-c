@@ -14,7 +14,7 @@ one-hand-rule: [
     let suit: ('♣)
     collect [repeat 4 [
         opt some [
-            let rank: any (inert rank-order)
+            let rank: any @rank-order
             keep (join word! [suit, rank = 'T then [10] else [rank]])
         ]
         inline (
@@ -37,7 +37,7 @@ pbn-to-hands: func [
         opt whitespace  ; We allow leading whitespace, good idea?
 
         [
-            start: any (inert direction-order)
+            start: any @direction-order
             | (panic "PBN must start with N, E, S, or W")
         ]
         direction: (start)

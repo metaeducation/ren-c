@@ -21,5 +21,5 @@
 
 (
     options: [a b c]
-    'c = parse [a b c b b a c] [some any (inert options)]
+    'c = parse [a b c b b a c] [some any (pin options)]
 )

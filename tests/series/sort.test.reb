@@ -20,7 +20,7 @@
     (
         a: ~
         b: ~
-        [c d]: pack inert sort reduce [a: "a" b: "a"]
+        [c d]: pack pin sort reduce [a: "a" b: "a"]
         all [
             same? c a
             same? d b

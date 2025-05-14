@@ -262,15 +262,15 @@ split-path: ~<Use SPLIT-PATH3 in Bootstrap (:FILE takes WORD! vs multireturn)>~
 load: ~<Use LOAD3 in Bootstrap (:HEADER returns BLOCK! with OBJECT!)>~
 
 
-=== "FAKE UP QUASIFORM! AND THE-WORD! TYPES" ===
+=== "FAKE UP QUASIFORM! AND @WORD! TYPES" ===
 
 ; In the case of the iteration functions, they take ISSUE! (a WORD! type in
 ; the bootstrap executable) to mean that the variable has a binding already
 ; to use vs. create a new one.  It's essential to use with ITERATE in modern
 ; Ren-C, but we can't say `iterate @block [...]` in bootstrap (no @).  Hence
-; instead, INERT (which adds @ in new executables) is defined to add a #"."
+; instead, PIN (which adds @ in new executables) is defined to add a #"."
 
-inert: lambda3 [word [word!]] [to-issue word]
+pin: lambda3 [word [word!]] [to-issue word]
 
 quasiform!: word!  ; conflated, but can work in a very limited sense
 quasi?: func3 [v <local> spelling] [

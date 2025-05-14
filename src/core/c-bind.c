@@ -1163,10 +1163,9 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 //     for-each x [1 2 3] [x-word: $x, break]
 //     get x-word  ; returns 3
 //
-// Ren-C adds a feature of letting THE-WORD!s be used to indicate that the
-// loop variable should be written into the existing bound variable that the
-// THE-WORD! specified.  If all loop variables are of this form, then no
-// copy will be made.
+// Ren-C adds a feature of letting @WORD! be used to indicate that the loop
+// variable should be written into the existing bound variable that the @WORD!
+// specified.  If all loop variables are of this form, no copy will be made.
 //
 // !!! Loops should probably free their objects by default when finished
 //
@@ -1208,9 +1207,9 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             if (Is_Blank(check)) {
                 // Will be transformed into dummy item, no rebinding needed
             }
-            else if (Is_Word(check) or Is_Meta_Word(check))
+            else if (Is_Word(check) or Is_Lifted(WORD, check))
                 rebinding = true;
-            else if (not Is_The_Word(check)) {
+            else if (not Is_Pinned(WORD, check)) {
                 //
                 // Better to panic here, because if we wait until we're in
                 // the middle of building the context, the managed portion
@@ -1225,7 +1224,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
         item = cast(Element*, spec);
         tail = cast(Element*, spec);
         binding = SPECIFIED;
-        rebinding = Is_Word(item) or Is_Meta_Word(item);
+        rebinding = Is_Word(item) or Is_Lifted(WORD, item);
     }
 
     // KeyLists are always managed, but varlist is unmanaged by default (so
@@ -1264,7 +1263,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             if (rebinding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove
         }
-        else if (Is_Word(item) or Is_Meta_Word(item)) {
+        else if (Is_Word(item) or Is_Lifted(WORD, item)) {
             assert(rebinding); // shouldn't get here unless we're rebinding
 
             symbol = Cell_Word_Symbol(item);
@@ -1280,18 +1279,18 @@ VarList* Virtual_Bind_Deep_To_New_Context(
                 break;
             }
         }
-        else if (Is_The_Word(item)) {
+        else if (Is_Pinned(WORD, item)) {
 
-            // A THE-WORD! indicates that we wish to use the original binding.
+            // Pinned word indicates that we wish to use the original binding.
             // So `for-each @x [1 2 3] [...]` will actually set that x
             // instead of creating a new one.
             //
             // !!! Enumerations in the code walks through the context varlist,
             // setting the loop variables as they go.  It doesn't walk through
-            // the array the user gave us, so if it's a THE-WORD! the
-            // information is lost.  Do a trick where we put the THE-WORD!
-            // itself into the slot, and give it CELL_FLAG_NOTE...then
-            // hide it from the context and binding.
+            // the array the user gave us, so if it's an @WORD! the information
+            // is lost.  Do a trick where we put the @WORD! itself into the
+            // slot, and give it CELL_FLAG_NOTE...then hide it from the context
+            // and binding.
             //
             if (dummy_sym == SYM_DUMMY9)
                 panic ("Current limitation: only up to 9 foreign/blank keys");
@@ -1362,8 +1361,8 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 //
 //  Real_Var_From_Pseudo: C
 //
-// Virtual_Bind_To_New_Context() allows THE-WORD! syntax to reuse an existing
-// variables binding:
+// Virtual_Bind_To_New_Context() allows @WORD! syntax to reuse an existing
+// variable's binding:
 //
 //     x: 10
 //     for-each @x [20 30 40] [...]
@@ -1383,7 +1382,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     // expand and invalidate the location.  (The `context` for fabricated
     // variables is locked at fixed size.)
     //
-    assert(Is_The_Word(pseudo_var));
+    assert(Is_Pinned(WORD, pseudo_var));
     return Lookup_Mutable_Word_May_Panic(cast(Element*, pseudo_var), SPECIFIED);
 }
 

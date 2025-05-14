@@ -82,14 +82,14 @@
 // that is a deadlock and there is an error.
 //
 // So to accomplish the desire of a group that only evaluates to produce the
-// branch to run if the branch is to be taken, we use THE-GROUP!:
+// branch to run if the branch is to be taken, we use @GROUP!:
 //
 //     >> either okay @(print "a" branchy true) @(print "b" branchy false)
 //     a
 //     == <a>
 //
 // It's not super common to need this.  But if someone does...the way it is
-// accomplished is that THE-GROUP! branches have their own executor.  This
+// accomplished is that @GROUP! branches have their own executor.  This
 // means something like IF can push a level with the branch executor that
 // can complete and run the evaluated-to branch.
 //
@@ -173,7 +173,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 
     Decay_If_Unstable(branch);
 
-    if (Is_The_Group(branch))
+    if (Is_Pinned(WORD, branch))
         return PANIC(Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
 
     STATE = ST_GROUP_BRANCH_RUNNING_BRANCH;
@@ -404,7 +404,7 @@ DECLARE_NATIVE(ALSO)
 //      return: "Product of last passing evaluation if all truthy, else null"
 //          [any-value?]
 //      block "Block of expressions, @[block] will be treated inertly"
-//          [block! the-block!]
+//          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
 //          [<unrun> frame!]
 //  ]
@@ -443,7 +443,7 @@ DECLARE_NATIVE(ALL)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Executor* executor;
-    if (Is_The_Block(block))
+    if (Is_Pinned(BLOCK, block))
         executor = &Inert_Meta_Stepper_Executor;
     else {
         assert(Is_Block(block));
@@ -554,7 +554,7 @@ DECLARE_NATIVE(ALL)
 //      return: "First passing evaluative result, or null if none pass"
 //          [any-value?]
 //      block "Block of expressions, @[block] will be treated inertly"
-//          [block! the-block!]
+//          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
 //          [<unrun> frame!]
 //  ]
@@ -595,7 +595,7 @@ DECLARE_NATIVE(ANY)
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     Executor* executor;
-    if (Is_The_Block(block))
+    if (Is_Pinned(BLOCK, block))
         executor = &Inert_Meta_Stepper_Executor;
     else {
         assert(Is_Block(block));
@@ -821,7 +821,7 @@ DECLARE_NATIVE(CASE)
 
     Level* sub = Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
-        at_in_spare,  // non "THE-" GROUP! branches are run unconditionally
+        at_in_spare,  // non @GROUP! branches are run unconditionally
         Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
     );
@@ -1210,9 +1210,9 @@ DECLARE_NATIVE(DEFAULT)
 //
 DECLARE_NATIVE(MAYBE)
 //
-// 1. At time of writing this doesn't support BLOCK! or META-WORD! on the
-//    left hand side.  But it should be able to, so it takes the argument
-//    as a meta value of any atom.
+// 1. At time of writing this doesn't support BLOCK! or ^WORD! on the left
+//    hand side.  But it should be able to, so it takes the argument as a meta
+//    value of any atom.
 {
     INCLUDE_PARAMS_OF_MAYBE;
 

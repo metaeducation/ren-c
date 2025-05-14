@@ -237,7 +237,7 @@ typedef enum {
     //
     PARAMCLASS_JUST,
 
-    // `PARAMCLASS_THE` is cued by a THE-WORD! in the function spec
+    // `PARAMCLASS_THE` is cued by an @WORD! in the function spec
     // dialect.  It indicates that a single value of content at the callsite
     // should be passed through literally, BUT it will pick up binding:
     //
@@ -254,7 +254,7 @@ typedef enum {
     //
     PARAMCLASS_THE,
 
-    // `PARAMCLASS_SOFT` is cued by a THE-GROUP! in the function spec
+    // `PARAMCLASS_SOFT` is cued by an @GROUP! in the function spec
     // dialect.  It quotes with the exception of GROUP!, which is evaluated:
     //
     //     >> foo: function [@(a)] [print [{a is} a]
@@ -285,7 +285,7 @@ typedef enum {
     //
     PARAMCLASS_SOFT,
 
-    // `PARAMCLASS_META` is the only parameter type that can accept unstable
+    // `PARAMCLASS_LIFTED` is the only parameter type that can accept unstable
     // isotopes.  Antiforms become quasiforms when they are an argument, and
     // all other types receive one added quote level.
     //
@@ -297,5 +297,5 @@ typedef enum {
     //     >> foo get:any $asdfasfasdf
     //     a is ~
     //
-    PARAMCLASS_META
+    PARAMCLASS_LIFTED
 } ParamClass;

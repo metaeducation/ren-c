@@ -70,7 +70,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 //
 static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
     Sink(Value) out,
-    const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
+    const Element* word,  // sigils ignored (^WORD! doesn't "meta-get")
     Context* context  // context for `.xxx` tuples not adjusted
 ){
     assert(Wordlike_Cell(word));
@@ -153,7 +153,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Vacant(
         if (steps_out and steps_out != GROUPS_OK) {
             Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
             Derelativize(Stub_Cell(a), tuple, context);
-            Init_Any_List(unwrap steps_out, TYPE_THE_BLOCK, a);
+            Pinify(Init_Block(unwrap steps_out, a));
         }
         if (dot_at_head and Is_Action(out)) {  // need the coupling
             if (Cell_Frame_Coupling(out) == UNCOUPLED) {
@@ -225,7 +225,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Vacant(
 
     if (steps_out and steps_out != GROUPS_OK) {
         Source* a = Pop_Source_From_Stack(base);
-        Init_Any_List(unwrap steps_out, TYPE_THE_BLOCK, a);
+        Pinify(Init_Block(unwrap steps_out, a));
     }
     else
         Drop_Data_Stack_To(base);
@@ -339,7 +339,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
             out, steps_out, var, context
         );
 
-    if (Is_The_Block(var)) {  // "steps"
+    if (Is_Pinned(BLOCK, var)) {  // "steps"
         StackIndex base = TOP_INDEX;
 
         Context* at_binding = Derive_Binding(context, var);
@@ -648,7 +648,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 //
 Option(Error*) Trap_Get_Any_Word(
     Sink(Value) out,
-    const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
+    const Element* word,  // should heed sigil? (^WORD! should UNMETA?)
     Context* context
 ){
     Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Vacant(
@@ -672,7 +672,7 @@ Option(Error*) Trap_Get_Any_Word(
 //
 Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
     Sink(Value) out,
-    const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
+    const Element* word,  // should heed sigil? (^WORD! should UNMETA?)
     Context* context
 ){
     assert(Any_Word(word));
@@ -767,9 +767,9 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
 //
 //  "Gets the value of a word or path, or block of words/paths"
 //
-//      return: [any-value? ~[[word! tuple! the-block!] any-value?]~]
+//      return: [any-value? ~[[word! tuple! @block!] any-value?]~]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
-//          [<opt-out> any-word? any-sequence? any-group? the-block!]
+//          [<opt-out> any-word? any-sequence? any-group? @block!]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //      :steps "Provide invariant way to get this variable again"
@@ -810,7 +810,7 @@ DECLARE_NATIVE(GET)
         Decay_If_Unstable(SPARE);
 
         if (not (
-            Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE))
+            Any_Word(SPARE) or Any_Sequence(SPARE) or Is_Pinned(BLOCK, SPARE))
         ){
             return PANIC(SPARE);
         }
@@ -993,7 +993,7 @@ bool Set_Var_Core_Updater_Throws(
                 Derelativize(PUSH(), at, at_binding);
         }
     }
-    else if (Is_The_Block(var)) {
+    else if (Is_Pinned(BLOCK, var)) {
         const Element* tail;
         const Element* head = Cell_List_At(&tail, var);
         const Element* at;
@@ -1164,7 +1164,7 @@ void Set_Var_May_Panic(
 //          [any-value?]
 //      ^target "Word or tuple, or calculated sequence steps (from GET)"
 //          [~[]~ any-word? tuple! any-group?
-//          any-get-value? any-set-value? the-block!]  ; should take PACK! [1]
+//          any-get-value? any-set-value? @block!]  ; should take PACK! [1]
 //      ^value "Will be decayed if not assigned to metavariables"
 //          [any-atom?]
 //      :any "Do not error on unset words"
@@ -1210,7 +1210,7 @@ DECLARE_NATIVE(SET)
     Decay_If_Unstable(SPARE);
 
     if (not (
-        Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE)
+        Any_Word(SPARE) or Any_Sequence(SPARE) or Is_Pinned(BLOCK, SPARE)
     )){
         return PANIC(SPARE);
     }

@@ -35,12 +35,12 @@
 //
 // Both forms are allowed to contain WORD!, INTEGER!, GROUP!, BLOCK!, TEXT!,
 // and TAG!.  Quasiforms of these types (where legal) are also permitted.
-// There are SET-, GET-, META-, THE-, and TYPE- forms:
+// There are versions with Sigil as well.
 //
 //     <abc>/(d e f)/[g h i]    ; a 3-element PATH!
 //     foo.1.bar                ; a 3-element TUPLE!
-//     ^abc.(def)               ; a 2-element META-TUPLE!
-//     @<a>/<b>/<c>             ; a 3-element THE-TUPLE!
+//     ^abc.(def)               ; a 2-element ^TUPLE!
+//     @<a>/<b>/<c>             ; a 3-element @TUPLE!
 //     ~/home/README            ; a 3-element PATH!
 //
 // PATH!s may contain TUPLE!s, but not vice versa.  This means that mixed

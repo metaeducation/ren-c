@@ -1835,7 +1835,7 @@ default-combinators: to map! reduce [
             integer! [
                 max: min: ^times
             ]
-            block! the-block! [
+            block! block?:pinned/ [
                 parse ^times [
                     '_ '_ <end> (
                         remainder: input
@@ -1976,10 +1976,10 @@ default-combinators: to map! reduce [
         return value
     ]
 
-    === THE-XXX! COMBINATORS ===
+    === PINNED! (@XXX) COMBINATORS ===
 
-    ; What the THE-XXX! combinators are for is doing literal matches vs. a
-    ; match through a rule, e.g.:
+    ; What the @XXX! combinators are for is doing literal matches vs. a match
+    ; through a rule, e.g.:
     ;
     ;     >> block: [some "a"]
     ;
@@ -2004,12 +2004,12 @@ default-combinators: to map! reduce [
     ;    which treats source-level quasiforms as if they evaluated to their
     ;    antiforms, e.g. (parse [a b a b] [some ~(a b)~]) matches the splice.
     ;
-    ; 3. THE-PATH! might be argued to have the meaning of "run this function
+    ; 3. @PATH! might be argued to have the meaning of "run this function
     ;    on the current item and if the result returns okay, then consider it
     ;    a match".  But that is done more cleanly with type constraints e.g.
     ;    `&even?`, which is better than `@/even?` or `@even?/`
     ;
-    ; 4. THE-BLOCK! acting as just matching the block would be redundant with
+    ; 4. @BLOCK! acting as just matching the block would be redundant with
     ;    quoted block.  So the most "logical" choice is to make it mean
     ;    "literally match the result of running the block as a rule". There
     ;    is not currently an operator that would do that inline, e.g.
@@ -2023,7 +2023,7 @@ default-combinators: to map! reduce [
     (meta the-word!) combinator compose [
         return: [any-atom?]
         :pending [blank! block!]
-        value [the-word!]
+        value [@word!]
         <local> comb lookup'
     ][
         comb: (state.combinators).(meta type of get value)
@@ -2033,7 +2033,7 @@ default-combinators: to map! reduce [
     (meta the-group!) combinator compose [
         return: [any-atom?]
         :pending [blank! block!]
-        value [the-group!]
+        value [@group!]
         <local> ^result comb subpending single
     ][
         value: as group! value  ; remove @ decoration
@@ -2055,7 +2055,7 @@ default-combinators: to map! reduce [
     (meta the-block!) combinator compose [  ; match literal block redundant [4]
         return: [any-atom?]
         :pending [blank! block!]
-        value [the-block!]
+        value [@block!]
         <local> ^result comb subpending
     ][
         value: as block! value  ; remove @ decoration
@@ -2075,9 +2075,9 @@ default-combinators: to map! reduce [
         return ^result
     ]
 
-    === META-XXX! COMBINATORS ===
+    === LIFTED! (^XXX) COMBINATORS ===
 
-    ; The META-XXX! combinators add a quoting level to their result, unless
+    ; The ^XXX! combinators add a quoting level to their result, unless
     ; it's antiform in which case it becomes a qusaiform.  The quoting is
     ; important with functions like KEEP...but advanced tunneling of behavior
     ; regarding unsets, nulls, and invisibility requires the feature.
@@ -2100,7 +2100,7 @@ default-combinators: to map! reduce [
     (meta meta-word!) combinator [
         return: "Meta quoted" [~null~ quasiform! quoted!]
         :pending [blank! block!]
-        value [meta-word!]
+        value [^word!]
         <local> comb
     ][
         value: as word! value
@@ -2122,7 +2122,7 @@ default-combinators: to map! reduce [
     (meta meta-block!) combinator [
         return: "Meta quoted" [~null~ quasiform! quoted!]
         :pending [blank! block!]
-        value [meta-block!]
+        value [^block!]
         <local> comb
     ][
         value: as block! value
@@ -2356,19 +2356,25 @@ default-combinators: to map! reduce [
         return: "Last result value"
             [any-value? pack!]
         :pending [blank! block!]
-        @arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
-            [the-word! the-block! group? block?]
+        @arg "Acts as rules if WORD!/BLOCK!, pinned acts inert"
+            [word! block! group! @word! @block! @group! ]
         <local> ^result block
     ][
         block: switch:type arg [
-            the-word! [get arg]  ; similar to default (@var fetch literally)
+            word! [
+                (match block! get arg) else [
+                    panic "ANY with WORD! must lookup to plain BLOCK!"
+                ]
+            ]
+            word?:pinned/ [pin get arg]  ; treat result as literal
             group! [eval arg]  ; similar to default (synthesize eval)
+            group?:pinned/ [pin eval arg]
             block! [arg]  ; almost certainly want to override default behavior
-            the-block! [arg]  ; !!! override default behavior, good?  :-/
+            block?:pinned/ [arg]  ; !!! override default behavior, good?
             panic
         ]
 
-        if the-block? block [
+        if match [@block!] block [
             pending: _  ; not running any rules, won't add to pending
             if tail? block [
                 remainder: input
@@ -2605,7 +2611,7 @@ default-combinators: to map! reduce [
 
     'panic combinator [
         return: []
-        'reason [the-block!]
+        'reason [@block!]
         <local> e
     ][
         e: make warning! [

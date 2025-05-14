@@ -140,7 +140,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         bool must_be_action;
         bool meta = false;
         Option(SingleHeart) singleheart;
-        if (Is_Word(item) or (meta = Is_Meta_Word(item))) {
+        if (Is_Word(item) or (meta = Is_Lifted(WORD, item))) {
             symbol = Cell_Word_Symbol(item);
             must_be_action = false;
         }
@@ -287,7 +287,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 symbol = Cell_Refinement_Symbol(item);
                 if (heart == TYPE_META_WORD) {
                     if (not quoted)
-                        pclass = PARAMCLASS_META;
+                        pclass = PARAMCLASS_LIFTED;
                 }
                 else {
                     if (quoted)
@@ -319,7 +319,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 break;
             }
         }
-        else if (Is_The_Group(item)) {  // @(...) is PARAMCLASS_SOFT for now
+        else if (Is_Pinned(GROUP, item)) {  // @(...) is PARAMCLASS_SOFT atm.
             if (Cell_Series_Len_At(item) == 1) {
                 const Element* word = Cell_List_Item_At(item);
                 if (Is_Word(word)) {
@@ -333,7 +333,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
             if (heart == TYPE_THE_WORD) {  // output
                 if (quoted)
-                    return Error_User("Can't quote THE-WORD! parameters");
+                    return Error_User("Can't quote @WORD! parameters");
                 pclass = PARAMCLASS_THE;
             }
             else {
@@ -345,7 +345,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 }
                 else if (heart == TYPE_META_WORD) {
                     if (not quoted)
-                        pclass = PARAMCLASS_META;
+                        pclass = PARAMCLASS_LIFTED;
                 }
             }
         }
@@ -785,7 +785,7 @@ Details* Make_Dispatch_Details(
         ParamClass pclass = Cell_Parameter_Class(first);
         switch (pclass) {
           case PARAMCLASS_NORMAL:
-          case PARAMCLASS_META:
+          case PARAMCLASS_LIFTED:
             break;
 
           case PARAMCLASS_SOFT:

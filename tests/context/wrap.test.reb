@@ -49,6 +49,6 @@
 ;])
 ;
 ; ~not-bound~ !! (eval wrap [
-;     @[a [b (c)] ^d (e)]:  ; THE- set-blocks do not count
+;     @[a [b (c)] ^d (e)]:  ; @-set-blocks do not count
 ;    set $a 10
 ; ])

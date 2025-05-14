@@ -38,7 +38,7 @@
 // An experimental SQL dialect is implemented in the usermode portion of the
 // extension, which allows you to write your SQL as a BLOCK! of words and
 // other symbols, forming the words as text, turning GROUP!s into parentheses
-// and doing parameterized variable subsitutions with ^META-WORD!s.  So if you
+// and doing parameterized variable subsitutions with ^WORD!s.  So if you
 // were to write the Rebol code:
 //
 //     fptitle: "Title"
@@ -57,7 +57,7 @@
 //        "Title" "Inits" "Name"
 //     ]
 //
-// (Again, this is experimental, and the choice of ^META-WORD! is not final.)
+// (Again, this is experimental, and the choice of ^WORD! is not final.)
 //
 
 #include "reb-config.h"

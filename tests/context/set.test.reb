@@ -2,14 +2,14 @@
 [#1763
     (
         a: <before>
-        '~null~ = [a]: pack inert reduce:predicate [null] :reify
+        '~null~ = [a]: pack pin reduce:predicate [null] :reify
         '~null~ = a
     )
 ]
 (
     a: <a-before>
     b: <b-before>
-    2 = [a b]: pack inert reduce:predicate [2 null] :reify
+    2 = [a b]: pack pin reduce:predicate [2 null] :reify
     a = 2
     '~null~ = b
 )
@@ -29,7 +29,7 @@
 )
 
 ; set [:get-word] [word]
-(a: 1 b: ~ [b]: pack inert [a] b = 'a)
+(a: 1 b: ~ [b]: pack pin [a] b = 'a)
 
 (
     a: 10

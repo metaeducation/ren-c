@@ -32,10 +32,10 @@
 
 enum SigilEnum {
     SIGIL_0 = 0,
-    SIGIL_META = 1,     // ^
-    SIGIL_THE = 2,      // @
-    SIGIL_VAR = 3,      // $
-    MAX_SIGIL = SIGIL_VAR
+    SIGIL_LIFT = 1,     // ^
+    SIGIL_PIN = 2,      // @
+    SIGIL_TIE = 3,      // $
+    MAX_SIGIL = SIGIL_TIE
 };
 typedef enum SigilEnum Sigil;
 
@@ -48,9 +48,9 @@ typedef enum SigilEnum Sigil;
 //
 enum TokenEnum {
     TOKEN_0 = 0,
-    TOKEN_CARET = 1,  // SIGIL_META
-    TOKEN_AT = 2,  // SIGIL_THE
-    TOKEN_DOLLAR = 3,  // SIGIL_VAR
+    TOKEN_CARET = 1,  // SIGIL_LIFT
+    TOKEN_AT = 2,  // SIGIL_PIN
+    TOKEN_DOLLAR = 3,  // SIGIL_TIE
     TOKEN_NEWLINE,
     TOKEN_BLANK,
     TOKEN_COMMA,
@@ -88,9 +88,9 @@ enum TokenEnum {
 };
 typedef enum TokenEnum Token;
 
-STATIC_ASSERT(TOKEN_CARET == cast(int, SIGIL_META));
-STATIC_ASSERT(TOKEN_AT == cast(int, SIGIL_THE));
-STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_VAR));
+STATIC_ASSERT(TOKEN_CARET == cast(int, SIGIL_LIFT));
+STATIC_ASSERT(TOKEN_AT == cast(int, SIGIL_PIN));
+STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_TIE));
 
 
 

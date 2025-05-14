@@ -134,7 +134,7 @@ money       "digits and decimal points as a string, preserved precisely"
             (CELL_MASK_NO_NODES)
             [any-utf8? any-inert? any-sequencable?]
 
-sigil       "Decorators like $ ^ & @ ' ~~"
+sigil       "Decorators like $ ^ @ (possibly ~~ someday?)"
             (CELL_MASK_NO_NODES)
             [any-utf8? any-sequencable?]  ; NOT inert
 

@@ -28,7 +28,7 @@
     return: [any-value?]
     @vars [set-block? set-group?]
     block "Reduced if normal [block], but values used as-is if @[block]"
-        [block! the-block!]
+        [block! @block!]
 ][
     if group? vars: unchain vars [vars: eval vars]
 
@@ -38,7 +38,7 @@
     ; (Hence need to do validation on the ... for unpacking and COMPOSE the
     ; vars list too, but this is a first step.)
     ;
-    block: if the-block? block [
+    block: if match [@block!] block [
         map-each 'item block [quote item]  ; should REDUCE do this for @[...] ?
     ]
     else [
@@ -109,18 +109,18 @@
 
 (
     a: <before>
-    '~null~ = [a]: pack-old inert reduce:predicate [null] :reify
+    '~null~ = [a]: pack-old pin reduce:predicate [null] :reify
     '~null~ = a
 )
 (
     a: <a-before>
     b: <b-before>
-    2 = [a b]: pack-old inert reduce:predicate [2 null] :reify
+    2 = [a b]: pack-old pin reduce:predicate [2 null] :reify
     a = 2
     '~null~ = b
 )
 
-(a: 1 b: null [b]: pack-old inert [a] b = 'a)
+(a: 1 b: null [b]: pack-old pin [a] b = 'a)
 
 (
     a: 10

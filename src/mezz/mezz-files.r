@@ -22,7 +22,7 @@ decode-url: sys.util.decode-url/
 ;    relative to its original location.  These issues are parallel to that of
 ;    using the current working directory, so one should be cautious.
 ;
-; 2. THE-WORD! like `@tool` gets translated into a URL!.  The list is itself
+; 2. @WORD! like `@tool` gets translated into a URL!.  The list is itself
 ;    loaded from the internet, URL is in `system.locale.library.utilities`.
 ;
 ;    !!! As the project matures, this would have to come from a curated list,
@@ -33,7 +33,7 @@ clean-path: func [
     "Returns new directory path with `.` and `..` processed"
 
     return: [file! url! text!]
-    path [file! url! text! tag! the-word!]
+    path [file! url! text! tag! @word!]
     :only "Do not prepend current directory"
     :dir "Add a trailing / if missing"
 ][
@@ -49,7 +49,7 @@ clean-path: func [
         ]
     ]
 
-    if the-word? path [  ; lookup @tool on the internet [2]
+    if match [@word!] path [  ; lookup @tool on the internet [2]
         path: switch as tag! path  ; !!! list actually used tags, should change
             (load system.locale.library.utilities)
         else [

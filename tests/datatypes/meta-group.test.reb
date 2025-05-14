@@ -1,4 +1,4 @@
-; The META-GROUP! type is new and needs testing.
+; The ^GROUP! type is new and needs testing.
 
 (meta-group! = type of '^(a b c))
 

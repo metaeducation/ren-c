@@ -196,7 +196,7 @@ each: quote/
 ;
 ->: infix lambda [
     @words "Names of arguments (will not be type checked)"
-        [<end> blank! word! lit-word? meta-word! refinement? block! group!]
+        [<end> blank! word! lit-word? ^word! refinement? block! group!]
     body "Code to execute (will not be deep copied)"
         [block!]
 ][
@@ -263,7 +263,7 @@ print: func [
     return: "Returns null if line outputs nothing, e.g. print [void]"
         [~ ~null~]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
-        [<opt-out> char? text! block! any-the-value?]
+        [<opt-out> char? text! block! @any-element?]
 ][
     if char? line [
         if line <> newline [
@@ -273,11 +273,11 @@ print: func [
         return ~
     ]
 
-    case [
-        the-block? line [
+    if pinned? line [
+        line: plain line
+        if block? line [
             line: mold spread line  ; better than FORM-ing (what is FORM?)
-        ]
-        any-the-value? line [
+        ] else [
             line: reduce [line]  ; in block, let SPACED handle molding logic
         ]
     ]
@@ -311,8 +311,8 @@ echo: func [
     ]
     write-stdout form map-each 'item line [
         switch:type item [
-            the-word!
-            the-group! [
+            word?:pinned/
+            group?:pinned/ [
                 get:groups inside line item
             ]
         ] else [

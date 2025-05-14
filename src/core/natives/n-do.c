@@ -187,7 +187,7 @@ DECLARE_NATIVE(SHOVE)
 
     switch (Cell_Parameter_Class(param)) {
       case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative infix [1]
-      case PARAMCLASS_META: {
+      case PARAMCLASS_LIFTED: {
         Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;  // will decay if normal
         if (Eval_Element_Core_Throws(OUT, flags, left, Level_Binding(L)))
             return THROWN;
@@ -848,7 +848,7 @@ DECLARE_NATIVE(APPLY)
 
 } copy_meta_spare_to_var_in_frame: {  ////////////////////////////////////////
 
-    if (/* param and */ Cell_Parameter_Class(param) == PARAMCLASS_META) {
+    if (/* param and */ Cell_Parameter_Class(param) == PARAMCLASS_LIFTED) {
         // do not decay
     }
     else {

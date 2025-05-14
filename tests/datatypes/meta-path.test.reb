@@ -1,4 +1,4 @@
-; The META-PATH! type is new and needs testing.
+; The ^PATH! type is new and needs testing.
 
 (path! = type of '^a/b/c)
 ('^a = first '^a/b/c)

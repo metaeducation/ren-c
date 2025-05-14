@@ -106,12 +106,12 @@ INLINE void Reset_Evaluator_Erase_Out(Level* L) {
 }
 
 #define Init_Pushed_Refinement(out,symbol) \
-    Init_Any_Word((out), TYPE_THE_WORD, symbol)
+    Pinify(Init_Any_Word((out), TYPE_WORD, symbol))
 
 #define Init_Pushable_Refinement_Bound(out,symbol,context,index) \
-    Init_Any_Word_Bound((out), TYPE_THE_WORD, (symbol), (context), (index))
+    Pinify(Init_Any_Word_Bound((out), TYPE_WORD, (symbol), (context), (index)))
 
-#define Is_Pushed_Refinement Is_The_Word
+#define Is_Pushed_Refinement(v)  Is_Pinned(WORD, (v))
 
 INLINE Element* Refinify_Pushed_Refinement(Element* e) {
     assert(Is_Pushed_Refinement(e));

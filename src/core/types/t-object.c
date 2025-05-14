@@ -1718,7 +1718,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
 //
 //      return: [~null~ object!]
 //      spec "Object spec block, top-level SET-WORD!s will be object keys"
-//          [<opt-out> block! the-block! fence!]
+//          [<opt-out> block! @block! fence!]
 //      :with "Use a parent/prototype context"
 //          [object!]
 //  ]
@@ -1785,7 +1785,7 @@ DECLARE_NATIVE(CONSTRUCT)
     Init_Object(OUT, varlist);  // GC protects context
 
     Executor* executor;
-    if (Is_The_Block(spec))
+    if (Is_Pinned(BLOCK, spec))
         executor = &Inert_Meta_Stepper_Executor;
     else {
         assert(Is_Block(spec) or Is_Fence(spec));
@@ -1837,7 +1837,7 @@ DECLARE_NATIVE(CONSTRUCT)
 
     } while ((symbol = Try_Get_Settable_Word_Symbol(nullptr, at)));
 
-    if (not Is_The_Block(spec)) {
+    if (not Is_Pinned(BLOCK, spec)) {
         Copy_Cell(Level_Scratch(SUBLEVEL), TOP);
         DROP();
 

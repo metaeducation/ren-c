@@ -90,7 +90,7 @@
     for [:x] each [] []
 )
 
-; A THE-WORD! does not create a new variable or binding, but a WORD! does
+; An @WORD! does not create a new variable or binding, but a WORD! does
 (
     x: 10
     sum: 0
@@ -111,7 +111,7 @@
     all [x = 3, y = 20, sum = 10]
 )
 
-; Redundancy is checked for.  THE-WORD! redundancy is legal because those
+; Redundancy is checked for.  @WORD! redundancy is legal because those
 ; words may have distinct bindings and the same spelling, and they're not
 ; being fabricated.
 ;

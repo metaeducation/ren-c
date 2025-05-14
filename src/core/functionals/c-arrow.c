@@ -153,7 +153,7 @@ bool Arrow_Details_Querier(
 //
 //      return: [action!]
 //      spec "Names of arguments"
-//          [blank! word! lit-word? meta-word! refinement? block!]
+//          [blank! word! lit-word? ^word! refinement? block!]
 //      body "Code to execute"
 //          [<const> block!]
 //  ]
@@ -177,7 +177,7 @@ DECLARE_NATIVE(ARROW)
     else if (
         Is_Word(spec)
         or Is_Get_Word(spec)
-        or Is_Meta_Word(spec)
+        or Is_Lifted(WORD, spec)
         or Is_Quoted(spec)
         or (Is_Path(spec) and Is_Refinement(spec))
     ){
@@ -198,8 +198,8 @@ DECLARE_NATIVE(ARROW)
             pclass = PARAMCLASS_NORMAL;
             symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_Meta_Word(item)) {
-            pclass = PARAMCLASS_META;
+        else if (Is_Lifted(WORD, item)) {
+            pclass = PARAMCLASS_LIFTED;
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_Quoted(item)) {
@@ -211,7 +211,7 @@ DECLARE_NATIVE(ARROW)
                 return PANIC(item);
             symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_The_Word(item)) {
+        else if (Is_Pinned(WORD, item)) {
             pclass = PARAMCLASS_THE;
             symbol = Cell_Word_Symbol(item);
         }

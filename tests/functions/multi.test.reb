@@ -46,7 +46,7 @@
         h = <z-result>
     ])
 
-    ; "Circling" results using THE-XXX! is a way of making the overall
+    ; "Circling" results using FENCE! is a way of making the overall
     ; multi-return result of the expression come from another output.
 
     (
@@ -107,8 +107,8 @@
     error? [#]: panic "a"
 )]
 
-; The META-XXX! types can be used to ask for variables to be raised to a meta
-; level, and can be used also as plain ^
+; The ^XXX! types can be used to ask for variables to be raised to a meta
+; level on assignment, and lowered via unmeta on fetch
 [
     (
         a: b: ~

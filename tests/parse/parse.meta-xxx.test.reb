@@ -1,22 +1,11 @@
 ; %parse-meta-xxx.test.reb
 
-; META-BLOCK! runs a rule, but META-ifies the result.
+; ^BLOCK! runs a rule, but unmetas the result.
 
 [
     (all  [
         let synthesized
-        '~,~ = parse "" [synthesized: ^[]]
-        '~,~ = synthesized
+        (the '3) = parse "" [synthesized: ^[(meta 1 + 2)]]
+        (the '3) = synthesized
     ])
-    (all  [
-        let synthesized
-        '~,~ = parse "" [synthesized: ^[comment "hi"]]
-        '~,~ = synthesized
-    ])
-    (all  [
-        let synthesized
-        '~()~ = parse "" [synthesized: ^[(~()~)]]
-        '~()~ = synthesized
-    ])
-    ('~friendly~ = parse [~friendly~] [quasi-word?/])
 ]

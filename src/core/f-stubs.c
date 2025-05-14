@@ -639,13 +639,13 @@ DECLARE_NATIVE(GETIFY)
 
 
 //
-//  Metafy: C
+//  Liftify: C
 //
-// Turn a value into its META-XXX! equivalent, if possible.
+// Turn a value into its ^XXX equivalent, if possible.
 //
-Element* Metafy(Element* out) {  // called on stack values; can't call eval
+Element* Liftify(Element* out) {  // called on stack values; can't call eval
     if (Is_Blank(out))
-        return Init_Sigil(out, SIGIL_META);
+        return Init_Sigil(out, SIGIL_LIFT);
 
     Option(Heart) heart = Heart_Of(out);
     if (Any_Word_Type(heart)) {
@@ -658,37 +658,37 @@ Element* Metafy(Element* out) {  // called on stack values; can't call eval
         HEART_BYTE(out) = TYPE_META_GROUP;
     }
     else
-        panic ("Cannot METAFY");
+        panic ("Cannot add ^ to value");
 
     return out;
 }
 
 
 //
-//  metafy: native [
+//  lift: native [
 //
-//  "If possible, convert a value to a META-XXX! representation"
+//  "Convert a value to its ^XXX lifted representation"
 //
-//      return: [any-meta-value? sigil!]
-//      value [<opt-out> element?]  ; blank! makes @ as a SIGIL!
+//      return: [@any-element? sigil!]
+//      value [<opt-out> element?]  ; blank! makes ^ as a SIGIL!
 //  ]
 //
-DECLARE_NATIVE(METAFY)
+DECLARE_NATIVE(LIFT)
 {
-    INCLUDE_PARAMS_OF_METAFY;
+    INCLUDE_PARAMS_OF_LIFT;
 
-    return COPY(Metafy(Element_ARG(VALUE)));
+    return COPY(Liftify(Element_ARG(VALUE)));
 }
 
 
 //
-//  Theify: C
+//  Pinify: C
 //
-// Turn a value into its THE-XXX! equivalent, if possible.
+// Turn a value into its @XXX equivalent, if possible.
 //
-Element* Theify(Element* out) {  // called on stack values; can't call evaluator
+Element* Pinify(Element* out) {  // called on stack values; can't call evaluator
     if (Is_Blank(out))
-        return Init_Sigil(out, SIGIL_THE);
+        return Init_Sigil(out, SIGIL_PIN);
 
     Option(Heart) heart = Heart_Of(out);
     if (Any_Word_Type(heart)) {
@@ -701,30 +701,73 @@ Element* Theify(Element* out) {  // called on stack values; can't call evaluator
         HEART_BYTE(out) = TYPE_THE_GROUP;
     }
     else
-        panic ("Cannot THEIFY");
+        panic ("Cannot add @ to value");
 
     return out;
 }
 
 
 //
-//  inert: native [
+//  pin: native [
 //
-//  "If possible, convert a value to a THE-XXX! representation"
+//  "Convert a value to its @XXX pinned representation"
 //
-//      return: [~null~ any-the-value? sigil!]
+//      return: [~null~ @any-element? sigil!]
 //      value [<opt-out> element?]
 //  ]
 //
-DECLARE_NATIVE(INERT)
+DECLARE_NATIVE(PIN)
 //
 // Operators such as ANY and ALL have a behavior variation for @[xxx] blocks
 // that assume the content is already reduced.  This helps to produce that
 // form of value from a regular value.
 {
-    INCLUDE_PARAMS_OF_INERT;
+    INCLUDE_PARAMS_OF_PIN;
 
-    return COPY(Theify(Element_ARG(VALUE)));
+    return COPY(Pinify(Element_ARG(VALUE)));
+}
+
+
+//
+//  Tieify: C
+//
+// Turn a value into its $XXX equivalent, if possible.
+//
+Element* Tieify(Element* out) {  // called on stack values; can't call evaluator
+    if (Is_Blank(out))
+        return Init_Sigil(out, SIGIL_TIE);
+
+    Option(Heart) heart = Heart_Of(out);
+    if (Any_Word_Type(heart)) {
+        HEART_BYTE(out) = TYPE_VAR_WORD;
+    }
+    else if (Any_Block_Type(heart)) {
+        HEART_BYTE(out) = TYPE_VAR_BLOCK;
+    }
+    else if (Any_Group_Type(heart)) {
+        HEART_BYTE(out) = TYPE_VAR_GROUP;
+    }
+    else
+        panic ("Cannot add $ to value");
+
+    return out;
+}
+
+
+//
+//  tie: native [
+//
+//  "Convert a value to its $XXX pinned representation"
+//
+//      return: [~null~ $any-element? sigil!]
+//      value [<opt-out> element?]
+//  ]
+//
+DECLARE_NATIVE(TIE)
+{
+    INCLUDE_PARAMS_OF_TIE;
+
+    return COPY(Tieify(Element_ARG(VALUE)));
 }
 
 
@@ -764,6 +807,29 @@ DECLARE_NATIVE(PLAIN)
     Element* e = Element_ARG(ELEMENT);
 
     return COPY(Plainify(e));
+}
+
+
+//
+//  Sigilize: C
+//
+Element* Sigilize(Element* e, Sigil sigil) {
+    switch (sigil) {
+      case SIGIL_LIFT:
+        return Liftify(e);
+
+      case SIGIL_PIN:
+        return Pinify(e);
+
+      case SIGIL_TIE:
+        return Tieify(e);
+
+      default:
+        break;
+    }
+
+    assert(false);
+    return e;
 }
 
 

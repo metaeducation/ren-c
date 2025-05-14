@@ -6,8 +6,8 @@
 ;
 ; Since you can also put BLOCK! and GROUP! in paths:
 ;
-;   * META-BLOCK! represents BLOCK!
-;   * META-GROUP! represents GROUP!
+;   * ^BLOCK! represents BLOCK!
+;   * ^GROUP! represents GROUP!
 ;
 ; Each test starts with a string to transcode, then `->`, and then the one or
 ; more transformed representations of what the string is expected to load as.

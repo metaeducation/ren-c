@@ -45,9 +45,19 @@
 //          [logic?]
 //      value "Value to test"
 //      :type "Test a concrete type, (integer?:type integer!) passes"
+//      :quoted
+//      :tied
+//      :pinned
+//      :lifted
 //  ]
 //
 DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
+//
+// !!! Due to bootstrapping issues, we can't simply use the phase of
+// LIB(TYPECHECKER_ARCHETYPE) to get the paramlist to use when building
+// typecheckers.  It has to be built manually.  This paramlist is just
+// for reference, to use as INCLUDE_PARAMS_OF_TYPECHECKER_ARCHETYPE in the
+// Typechecker_Dispatcher().
 {
     return PANIC("TYPECHECKER-ARCHETYPE called (internal use only)");
 }
@@ -78,14 +88,58 @@ Bounce Typechecker_Dispatcher(Level* const L)
         details = Ensure_Cell_Frame_Details(SCRATCH);
     }
     else {
-        bool check_datatype = Cell_Logic(Level_Arg(L, 2));
-        if (check_datatype and not Is_Datatype(v))
-            return FAIL("Datatype check on non-datatype (use TRY for NULL)");
+        INCLUDE_PARAMS_OF_TYPECHECKER_ARCHETYPE;
 
-        if (check_datatype)
+        bool check_datatype = Bool_ARG(TYPE);
+        if (check_datatype) {
+            if (not Is_Datatype(v))
+                return FAIL(
+                    "Datatype check on non-datatype (use TRY for NULL)"
+                );
+
+            if (
+                Bool_ARG(QUOTED)
+                or Bool_ARG(TIED) or Bool_ARG(PINNED) or Bool_ARG(LIFTED)
+            ){
+                return FAIL(Error_Bad_Refines_Raw());
+            }
+
             type = Cell_Datatype_Type(v);
-        else
-            type = Type_Of(v);
+        }
+        else {
+            if (Bool_ARG(QUOTED)) {
+                if (Is_Antiform(v))
+                    return LOGIC(false);
+                type = Type_Of_Unquoted(cast(Element*, v));
+            }
+            else
+                type = Type_Of(v);
+
+            if (Bool_ARG(TIED)) {
+                if (Bool_ARG(PINNED) or Bool_ARG(LIFTED))
+                    return FAIL(Error_Bad_Refines_Raw());
+
+                if (type != TYPE_TIED)
+                    return LOGIC(false);
+
+                type = Heart_Of(v);
+            }
+            else if (Bool_ARG(PINNED)) {
+                if (Bool_ARG(LIFTED))
+                    return FAIL(Error_Bad_Refines_Raw());
+
+                if (type != TYPE_PINNED)
+                    return LOGIC(false);
+
+                type = Heart_Of(v);
+            }
+            else if (Bool_ARG(LIFTED)) {
+                if (type != TYPE_LIFTED)
+                    return LOGIC(false);
+
+                type = Heart_Of(v);
+            }
+        }
 
         details = Ensure_Level_Details(L);
     }
@@ -155,10 +209,14 @@ bool Typechecker_Details_Querier(
 //
 Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     DECLARE_ELEMENT (spec);  // simple spec [2]
-    Source* spec_array = Make_Source_Managed(2);
-    Set_Flex_Len(spec_array, 2);
+    Source* spec_array = Make_Source_Managed(6);
+    Set_Flex_Len(spec_array, 6);
     Init_Word(Array_At(spec_array, 0), CANON(VALUE));
     Init_Get_Word(Array_At(spec_array, 1), CANON(TYPE));
+    Init_Get_Word(Array_At(spec_array, 2), CANON(QUOTED));
+    Init_Get_Word(Array_At(spec_array, 3), CANON(TIED));
+    Init_Get_Word(Array_At(spec_array, 4), CANON(PINNED));
+    Init_Get_Word(Array_At(spec_array, 5), CANON(LIFTED));
     Init_Block(spec, spec_array);
 
     VarList* adjunct;
@@ -377,7 +435,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     Copy_Cell(arg, v);  // do not decay [4]
 
-    if (Cell_Parameter_Class(param) == PARAMCLASS_META)
+    if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED)
         Meta_Quotify(arg);
 
     if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
@@ -501,6 +559,8 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
         Option(const Symbol*) label = nullptr;  // so goto doesn't cross
 
+        Option(Sigil) sigil = SIGIL_0;  // added then removed if non-zero
+
         if (Is_Quasiform(item)) {  // quasiforms e.g. [~null~] mean antiform
             if (Heart_Of(item) == TYPE_BLOCK) {  // typecheck pack
                 if (not Is_Pack(v))
@@ -558,8 +618,18 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             goto test_failed;
         }
 
+        sigil = Sigil_Of(item);
+        if (sigil) {
+            if (Is_Antiform(v) or Sigil_Of(v) != sigil) {
+                sigil = SIGIL_0;  // don't unsigilize at test_failed
+                goto test_failed;
+            }
+
+            Plainify(Known_Element(SPARE));  // make plain, will re-sigilize
+        }
+
         const Value* test;
-        if (Type_Of_Unchecked(item) == TYPE_WORD) {
+        if (Any_Word_Type(Type_Of_Unchecked(item))) {
             label = Cell_Word_Symbol(item);
             Option(Error*) error = Trap_Lookup_Word(&test, item, derived);
             if (error)
@@ -606,6 +676,9 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         panic ("Invalid element in TYPE-GROUP!");
 
       test_succeeded:
+        if (sigil)
+            Sigilize(Known_Element(SPARE), unwrap sigil);
+
         if (not match_all) {
             result = true;
             goto return_result;
@@ -613,6 +686,9 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         continue;
 
       test_failed:
+        if (sigil)
+            Sigilize(Known_Element(SPARE), unwrap sigil);
+
         if (match_all) {
             result = false;
             goto return_result;
@@ -681,7 +757,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
     //
     bool unquoted = false;
 
-    if (Cell_Parameter_Class(param) == PARAMCLASS_META) {
+    if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED) {
         if (Is_Nulled(atom))
             return Get_Parameter_Flag(param, ENDABLE);
 

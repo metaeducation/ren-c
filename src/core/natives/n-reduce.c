@@ -275,9 +275,9 @@ DECLARE_NATIVE(REDUCE)
 //      return: "Last body result"
 //          [any-atom?]
 //      @(vars) "Variable to receive each reduced value (multiple TBD)"
-//          [word! meta-word!]
-//      block "Input block of expressions (@[block] acts like FOR-EACH)"
-//          [block! the-block!]
+//          [word! ^word!]
+//      block "Input block of expressions (@[...] acts like FOR-EACH)"
+//          [block! @block!]
 //      body "Code to run on each step"
 //          [block!]
 //  ]
@@ -319,7 +319,7 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (Is_Meta_Word(vars)) {  // Note: gets converted to object in next step
+    if (Is_Lifted(WORD, vars)) {  // Note: converted to object in next step
         flags |= LEVEL_FLAG_ERROR_RESULT_OK;
         assert(!"need to review REDUCE-EACH with meta word");
     }
@@ -334,7 +334,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     Add_Definitional_Break_Continue(body, level_);
 
     Executor* executor;
-    if (Is_The_Block(block))
+    if (Is_Pinned(BLOCK, block))
         executor = &Inert_Meta_Stepper_Executor;
     else {
         assert(Is_Block(block));
@@ -739,10 +739,10 @@ Bounce Composer_Executor(Level* const L)
     );
 
     QuoteByte list_quote_byte = QUOTE_BYTE(At_Level(L));
-    Heart list_heart = Heart_Of_Builtin(At_Level(L));
+    Option(Sigil) sigil = Sigil_For_Heart(Heart_Of(At_Level(L)));
 
     if (Is_Void(OUT)) {
-        if (Any_Plain_Type(list_heart) and list_quote_byte == NOQUOTE_1) {
+        if (not sigil and list_quote_byte == NOQUOTE_1) {
             L->u.compose.changed = true;
             goto handle_next_item;  // compose [(void)] => []
         }
@@ -787,12 +787,8 @@ Bounce Composer_Executor(Level* const L)
 
     Copy_Cell(PUSH(), cast(Element*, OUT));
 
-    if (Any_Meta_Type(list_heart))
-        Metafy(TOP_ELEMENT);
-    else if (Any_The_Type(list_heart))
-        Theify(TOP_ELEMENT);
-    else
-        assert(Any_Plain_Type(list_heart));
+    if (sigil)
+        Sigilize(TOP_ELEMENT, sigil);  // ^ or @ or $
 
     if (list_quote_byte & NONQUASI_BIT)
         Quotify_Depth(TOP_ELEMENT, list_quote_byte / 2);  // adds to existing
@@ -845,7 +841,7 @@ Bounce Composer_Executor(Level* const L)
 
     assert(Is_Splice(OUT));
 
-    if (list_quote_byte != NOQUOTE_1 or not Any_Plain_Type(list_heart))  // [1]
+    if (list_quote_byte != NOQUOTE_1 or sigil)  // [1]
         return FAIL("Quoted COMPOSE slots are not distributed over splices");
 
     const Element* push_tail;
@@ -940,8 +936,8 @@ Bounce Composer_Executor(Level* const L)
 //          any-utf8?
 //          ~null~ quasi-word? blank! quasar?  ; :CONFLATE can produce these
 //      ]
-//      pattern "Use ANY-THE-LIST-TYPE? (e.g. @{{}}) to use pattern's binding"
-//          [any-list?]
+//      pattern "Pass @ANY-LIST? (e.g. @{{}}) to use the pattern's binding"
+//          [any-list? @any-list?]
 //      template "The template to fill in (no-op if WORD!)"
 //          [<opt-out> any-list? any-sequence? any-word? any-utf8?]
 //      :deep "Compose deeply into nested lists and sequences"
@@ -981,7 +977,7 @@ DECLARE_NATIVE(COMPOSE2)
             if (Cell_Binding(pattern) == nullptr)
                 return PANIC("@... patterns must have bindings");
             Heart pattern_heart = Heart_Of_Builtin_Fundamental(pattern);
-            HEART_BYTE(pattern) = Plainify_Any_The_Heart(pattern_heart);
+            HEART_BYTE(pattern) = Plainify_Any_Pinned_Heart(pattern_heart);
         }
         else if (Any_Plain_Value(pattern)) {
             Tweak_Cell_Binding(pattern, Level_Binding(level_));

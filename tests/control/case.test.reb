@@ -39,7 +39,7 @@
 )
 
 ; Plain GROUP!s run to generate a branch regardless of if the branch is taken.
-; THE-GROUP!s only run to generate the branch if it would be taken.
+; @GROUP!s only run to generate the branch if it would be taken.
 [
     (3 = case [okay (reduce ['add 1 2])])
     (

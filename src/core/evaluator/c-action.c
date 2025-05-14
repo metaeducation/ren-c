@@ -148,7 +148,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
-            if (Cell_Parameter_Class(PARAM) != PARAMCLASS_META) {
+            if (Cell_Parameter_Class(PARAM) != PARAMCLASS_LIFTED) {
                 if (Is_Meta_Of_Ghost(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Trash_Due_To_End(ARG);
@@ -381,7 +381,7 @@ Bounce Action_Executor(Level* L)
                 Move_Atom(ARG, OUT);
                 break;
 
-              case PARAMCLASS_META: {
+              case PARAMCLASS_LIFTED: {
                 Move_Meta_Atom(ARG, OUT);
                 break; }
 
@@ -505,7 +505,7 @@ Bounce Action_Executor(Level* L)
   //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) /////=//
 
           case PARAMCLASS_NORMAL:
-          case PARAMCLASS_META: {
+          case PARAMCLASS_LIFTED: {
             if (Is_Level_At_End(L)) {
                 Init_Trash_Due_To_End(ARG);
                 goto continue_fulfilling;

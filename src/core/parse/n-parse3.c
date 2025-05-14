@@ -627,7 +627,7 @@ static REBIXO Parse_One_Rule(
     else {
         assert(Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB);
 
-        if (Is_The_Word(rule)) {
+        if (Is_Pinned(WORD, rule)) {
             Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
             if (Is_Antiform(SPARE))
                 panic (Error_Bad_Antiform(SPARE));
@@ -1007,7 +1007,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Unquotify(Derelativize(temp, rule, P_RULE_BINDING));
         }
-        else if (Is_The_Word(rule)) {
+        else if (Is_Pinned(WORD, rule)) {
             Get_Var_May_Panic(temp, rule, P_RULE_BINDING);
         }
         else if (Is_Meta_Of_Datatype(rule)) {
@@ -1041,7 +1041,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         return i;
     }
     else {
-        if (Is_The_Word(rule)) {
+        if (Is_Pinned(WORD, rule)) {
             Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
             rule = Ensure_Element(SPARE);
         }

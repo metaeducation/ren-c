@@ -457,7 +457,7 @@ console*: func [
     "Rebol ACTION! that is called from C in a loop to implement the console"
 
     return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
-        [block! group! integer! meta-group! handle!]  ; RETURN is hooked below!
+        [block! group! integer! ^group! handle!]  ; RETURN is hooked below!
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [~null~ block! group!]
     result "^META result from PRIOR eval, non-quoted error, or exit code #"
@@ -518,7 +518,7 @@ console*: func [
         "Hooked RETURN function which finalizes any gathered EMIT lines"
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
-            [integer! tag! group! datatype! meta-group! handle!]
+            [integer! tag! group! datatype! ^group! handle!]
         <with> instruction
         <local> /return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
     ][
@@ -661,7 +661,7 @@ console*: func [
         result.id = 'no-catch
         result.arg2 = unrun lib.resume/  ; throw's :NAME
     ] then [
-        assert [match [meta-group! handle!] result.arg1]
+        assert [match [^group! handle!] result.arg1]
         if no? resumable [
             e: make warning! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e.near: result.near

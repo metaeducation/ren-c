@@ -362,7 +362,7 @@ void Set_Location_Of_Error(
             Init_Quasar(TOP);  // [2]
 
         if (Is_Level_Fulfilling(L)) { // differentiate fulfilling levels [3]
-            Source* a = Alloc_Singular(FLAG_FLAVOR(SOURCE) | NODE_FLAG_MANAGED);
+            Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
             Move_Cell(Stub_Cell(a), TOP);
             Init_Fence(TOP, a);
             continue;
@@ -1068,7 +1068,7 @@ Error* Error_Arg_Type(
     const Param* param,
     const Value* arg
 ){
-    if (Cell_Parameter_Class(param) == PARAMCLASS_META and Is_Meta_Of_Error(arg))
+    if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED and Is_Meta_Of_Error(arg))
         return Cell_Error(arg);
 
     const Symbol* param_symbol = Key_Symbol(key);
@@ -1106,7 +1106,7 @@ Error* Error_Phase_Arg_Type(
     if (Level_Phase(L) == L->u.action.original)  // not an internal phase
         return Error_Arg_Type(Level_Label(L), key, param, arg);
 
-    if (Cell_Parameter_Class(param) == PARAMCLASS_META and Is_Meta_Of_Error(arg))
+    if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED and Is_Meta_Of_Error(arg))
         return Cell_Error(arg);
 
     Error* error = Error_Arg_Type(Level_Label(L), key, param, arg);
@@ -1245,7 +1245,7 @@ VarList* Startup_Errors(const Element* boot_errors)
 
     assert(VAL_INDEX(boot_errors) == 0);
 
-    Value* catalog_val = rebValue(CANON(CONSTRUCT), CANON(INERT), boot_errors);
+    Value* catalog_val = rebValue(CANON(CONSTRUCT), CANON(PIN), boot_errors);
     VarList* catalog = Cell_Varlist(catalog_val);
 
     // Morph blocks into objects for all error categories.
@@ -1254,7 +1254,7 @@ VarList* Startup_Errors(const Element* boot_errors)
     Value* category = Varlist_Slots(&category_tail, catalog);
     for (; category != category_tail; ++category) {
         assert(Is_Block(category));
-        Value* error = rebValue(CANON(CONSTRUCT), CANON(INERT), category);
+        Value* error = rebValue(CANON(CONSTRUCT), CANON(PIN), category);
         Copy_Cell(category, error);  // actually an OBJECT! :-/
         rebRelease(error);
     }

@@ -449,7 +449,7 @@ DECLARE_NATIVE(CFOR)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
 
-    if (Is_Block(body) or Is_Meta_Block(body))
+    if (Is_Block(body) or Is_Lifted(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Value* var = Varlist_Slot(context, 1);  // not movable, see #2274
@@ -508,7 +508,7 @@ DECLARE_NATIVE(CFOR)
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
 //      word "Variable set to each position in the series at skip distance"
-//          [word! the-word? blank!]
+//          [word! @word? blank!]
 //      series "The series to iterate over"
 //          [<opt-out> blank! any-series?]
 //      skip "Number of positions to skip each time"
@@ -542,7 +542,7 @@ DECLARE_NATIVE(FOR_SKIP)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
 
-    if (Is_Block(body) or Is_Meta_Block(body))
+    if (Is_Block(body) or Is_Lifted(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Value* pseudo_var = Varlist_Slot(context, 1); // not movable, see #2274
@@ -584,7 +584,7 @@ DECLARE_NATIVE(FOR_SKIP)
 
         // Modifications to var are allowed, to another ANY-SERIES? value.
         //
-        // If `var` is movable (e.g. specified via THE-WORD!) it must be
+        // If `var` is movable (e.g. specified via @WORD!) it must be
         // refreshed each time arbitrary code runs, since the context may
         // expand and move the address, may get PROTECTed, etc.
         //
@@ -1076,7 +1076,7 @@ void Shutdown_Loop_Each(Value* iterator)
 //          [<opt-out> blank! any-series? any-context? map! any-sequence?
 //           action!]  ; action support experimental, e.g. generators
 //      body "Block to evaluate each time"
-//          [<const> block! meta-block!]
+//          [<const> block! ^block!]
 //      <local> iterator
 //  ]
 //
@@ -1127,7 +1127,7 @@ DECLARE_NATIVE(FOR_EACH)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(vars, pseudo_vars_ctx));
 
-    if (Is_Block(body) or Is_Meta_Block(body))
+    if (Is_Block(body) or Is_Lifted(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
@@ -1181,10 +1181,10 @@ DECLARE_NATIVE(FOR_EACH)
 //      return: "null on BREAK, void on empty, null or the last non-null value"
 //          [any-value?]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! the-word! block!]
+//          [blank! word! @word! block!]
 //      data "The series to traverse"
 //          [<opt-out> blank! any-series? any-context? map! action!]
-//      body [<const> block! meta-block!]
+//      body [<const> block! ^block!]
 //          "Block to evaluate each time"
 //      <local> iterator
 //  ]
@@ -1230,7 +1230,7 @@ DECLARE_NATIVE(EVERY)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), pseudo_vars_ctx));
 
-    if (Is_Block(body) or Is_Meta_Block(body))
+    if (Is_Block(body) or Is_Lifted(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
@@ -1306,7 +1306,7 @@ DECLARE_NATIVE(EVERY)
 //      return: "Modified Input"
 //          [~null~ ~[[blank! any-series?] integer!]~]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! the-word! block!]
+//          [blank! word! @word! block!]
 //      data "The series to traverse (modified)"
 //          [<opt-out> blank! any-series?]
 //      body "Block to evaluate (return TRUE to remove)"
@@ -1654,7 +1654,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //      return: "Collected block"
 //          [~null~ block!]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! the-word! block!]
+//          [blank! word! @word! block!]
 //      data "The series to traverse"
 //          [<opt-out> blank! any-series? any-sequence? any-context?]
 //      body "Block to evaluate each time (result will be kept literally)"
@@ -1703,11 +1703,11 @@ DECLARE_NATIVE(MAP_EACH)
 //      return: "Collected block"
 //          [~null~ block!]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! the-word! block!]
+//          [blank! word! @word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
 //          [<opt-out> blank! quoted! action!]
 //      @(body) "Block to evaluate each time"
-//          [<const> block! meta-block!]
+//          [<const> block! ^block!]
 //      <local> iterator
 //  ]
 //
@@ -1748,7 +1748,7 @@ DECLARE_NATIVE(MAP)
     if (Is_Blank(data))  // same response as to empty series
         return Init_Block(OUT, Make_Source(0));
 
-    if (Is_Block(body) or Is_Meta_Block(body))
+    if (Is_Block(body) or Is_Lifted(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     if (Is_Action(data)) {
@@ -1787,7 +1787,7 @@ DECLARE_NATIVE(MAP)
         goto finalize_map;
 
     STATE = ST_MAP_RUNNING_BODY;
-    return CONTINUE(SPARE, body);  // body may be META-BLOCK!
+    return CONTINUE(SPARE, body);  // body may be ^BLOCK!
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
@@ -1953,7 +1953,7 @@ DECLARE_NATIVE(REPEAT)
 //      return: "Last body result, or NULL if BREAK"
 //          [any-value?]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! the-word! block!]
+//          [blank! word! @word! block!]
 //      value "Maximum number or series to traverse"
 //          [<opt-out> any-number? any-sequence? quoted! block! action!]
 //      body [<const> block!]

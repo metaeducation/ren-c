@@ -178,7 +178,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // this argument happens.  Review if that should be an error.
 
         switch (pclass) {
-        case PARAMCLASS_META:
+        case PARAMCLASS_LIFTED:
             panic ("Variadic literal parameters not yet implemented");
 
         case PARAMCLASS_NORMAL: {

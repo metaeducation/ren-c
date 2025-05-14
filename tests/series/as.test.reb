@@ -1,6 +1,6 @@
 (
     block: copy [a b c]
-    path: join path! inert block
+    path: join path! pin block
     append block 'd
     path = 'a/b/c  ; AS was not legal
 )

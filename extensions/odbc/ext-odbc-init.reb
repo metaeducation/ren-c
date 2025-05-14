@@ -187,24 +187,24 @@ sqlform: func [
             ]
         ]
 
-        the-word! [
+        word?:pinned/ [
             append parameters get:groups value
             "?"
         ]
 
-        the-group! [
+        group?:pinned/ [
             append parameters eval as block! value
             "?"
         ]
 
-        meta-word! [
+        word?:lifted/ [
             any [
                 try as text! get:groups value
                 ""
             ]
         ]
 
-        meta-group! [
+        group?:lifted/ [
             let product': ^ eval as block! value
             if void? ^product' [
                 ""

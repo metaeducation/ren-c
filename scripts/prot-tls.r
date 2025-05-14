@@ -513,7 +513,7 @@ client-hello: func [
     randomize now:time:precise
     repeat 28 [append ctx.client-random (random-between 0 255)]
 
-    let cs-data: join blob! inert map-each 'item cipher-suites [
+    let cs-data: join blob! pin map-each 'item cipher-suites [
         opt match blob! item
     ]
 
@@ -1911,7 +1911,7 @@ sys.util/make-scheme [
                     either hash-method = 'sha384 ['sha384] ['sha256]
                 ]
 
-                cryptspec: accessor does [find suite the-word?/]
+                cryptspec: accessor does [find suite word?:pinned/]
                 crypt-method: accessor does [first cryptspec]
                 crypt-size: accessor does [
                     select (ensure block! second cryptspec) 'size

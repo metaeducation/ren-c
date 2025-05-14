@@ -2117,7 +2117,7 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
 ){
     if (S->sigil_pending) {
         Heart heart = Heart_Of_Builtin_Fundamental(top);
-        if (not Any_Plain_Type(heart))
+        if (not Any_Plain_Value_Type(heart))
             return Error_Syntax(S, TOKEN_BLANK);  // !!! token?
 
         HEART_BYTE(top) = Sigilize_Any_Plain_Heart(

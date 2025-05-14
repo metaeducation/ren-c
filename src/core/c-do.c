@@ -78,7 +78,7 @@ void Prep_Action_Level(
 
         Copy_Cell(arg, unwrap with);  // do not decay [1]
 
-        if (Cell_Parameter_Class(param) == PARAMCLASS_META)
+        if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED)
             Meta_Quotify(arg);
         else
             Decay_If_Unstable(arg);
@@ -139,7 +139,7 @@ bool Pushed_Continuation(
     if (Is_Antiform(branch))  // no other antiforms can be branches
         panic (Error_Bad_Antiform(branch));
 
-    if (Is_The_Group(branch)) {  // [2] for GET-GROUP!
+    if (Is_Pinned(GROUP, branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
         Level* grouper = Make_Level_At_Core(
             &The_Group_Branch_Executor,  // evaluates to synthesize branch
@@ -188,7 +188,7 @@ bool Pushed_Continuation(
       case TYPE_VAR_FENCE:
       case TYPE_VAR_WORD:
         Derelativize(out, c_cast(Element*, branch), binding);
-        HEART_BYTE(out) = Plainify_Any_Var_Heart(Heart_Of(branch));
+        HEART_BYTE(out) = Planify_Any_Tied_Heart(Heart_Of(branch));
         goto just_use_out;
 
       case TYPE_CHAIN: {  // effectively REDUCE

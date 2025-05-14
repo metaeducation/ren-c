@@ -344,7 +344,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
 //
 //      return: []
 //      @info "If you want to implicate a value, use (crash @value)"
-//          [<end> warning! text! the-word!]
+//          [<end> warning! text! @word!]
 //  ]
 //
 DECLARE_NATIVE(CRASH)
@@ -366,7 +366,7 @@ DECLARE_NATIVE(CRASH)
 
     const void *p;
 
-    if (Is_The_Word(info)) {  // interpret reason as value to diagnose
+    if (Is_Pinned(WORD, info)) {  // interpret reason as value to diagnose
         Value* fetched = rebValue(CANON(GET), rebQ(info));
         Copy_Cell(info, fetched);
         rebRelease(fetched);
@@ -380,7 +380,7 @@ DECLARE_NATIVE(CRASH)
             p = Cell_Varlist(info);
         }
         else {
-            assert(!"Called CRASH on non-TEXT!, non-WARNING!, non THE-WORD!");
+            assert(!"Called CRASH on non-TEXT!, non-WARNING!, non @WORD!");
             p = info;
         }
     }

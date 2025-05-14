@@ -143,7 +143,7 @@ bind construct [
         return pack [null body line final]  ; !!! impure null
     ]
 
-    hdr: construct:with (inert hdr) system.standard.header except [
+    hdr: construct:with (pin hdr) system.standard.header except [
         return fail "bad-header"
     ]
 
@@ -231,13 +231,13 @@ load: func [
     return: "BLOCK! if Rebol code (or codec value) plus optional header"
         [~null~ ~[element? [~null~ object!]]~]
     source "Source of the information being loaded"
-        [<opt-out> file! url! tag! the-word! text! blob!]
+        [<opt-out> file! url! tag! @word! text! blob!]
     :type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
     <local> header file line data
 ][
-    if match [file! url! tag! the-word!] source [
+    if match [file! url! tag! @word!] source [
         source: clean-path source
 
         file: ensure [file! url!] source
@@ -395,7 +395,7 @@ import*: func [
     source [
         file! url!  ; get from location, run with location as working dir
         tag!  ; load relative to system.script.path
-        the-word!  ; look up as a shorthand in registry
+        @word!  ; look up as a shorthand in registry
         blob!  ; UTF-8 source, needs to be checked for invalid byte patterns
         text!  ; source internally stored as validated UTF-8, *may* scan faster
         word!  ; not entirely clear on what WORD! does.  :-/
@@ -466,7 +466,7 @@ bind construct [
     ;
     let old-importing-remotely: importing-remotely
     if all [yes? importing-remotely, word? source] [
-        source: to the-word! source
+        source: pin source
     ]
 
     if word? source [
@@ -491,7 +491,7 @@ bind construct [
     ; so extract the net path where we're executing to save in system.script.
 
     let dir: null
-    match [file! url! the-word! tag!] source then [
+    match [file! url! @word! tag!] source then [
         source: clean-path source
         dir: as text! source
         let [before file]: find-last dir slash

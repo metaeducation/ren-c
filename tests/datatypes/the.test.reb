@@ -2,7 +2,7 @@
 ;
 ; @ is a WORD! that is nominally used as a special operator
 ;
-; The other THE-XXX! types are pretty simple since they are inert.
+; The other @XXX types are pretty simple since they are inert.
 ;
 
 (@word = first [@word])

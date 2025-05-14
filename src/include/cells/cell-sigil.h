@@ -27,9 +27,9 @@
 
 INLINE char Char_For_Sigil(Sigil sigil) {
     switch (sigil) {
-      case SIGIL_META:  return '^';
-      case SIGIL_THE:   return '@';
-      case SIGIL_VAR:   return '$';
+      case SIGIL_LIFT:  return '^';
+      case SIGIL_PIN:   return '@';
+      case SIGIL_TIE:   return '$';
       default:
         assert(false);
         return 0;  // silence warning
@@ -51,12 +51,12 @@ INLINE Sigil Cell_Sigil(const Cell* cell) {
 }
 
 INLINE Option(Sigil) Sigil_For_Heart(Option(Heart) heart) {
-    if (Any_Meta_Type(heart))
-        return SIGIL_META;
-    if (Any_The_Type(heart))
-        return SIGIL_THE;
-    if (Any_Var_Type(heart))
-        return SIGIL_VAR;
+    if (Any_Meta_Value_Type(heart))
+        return SIGIL_LIFT;
+    if (Any_The_Value_Type(heart))
+        return SIGIL_PIN;
+    if (Any_Var_Value_Type(heart))
+        return SIGIL_TIE;
     return SIGIL_0;
 }
 

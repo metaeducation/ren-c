@@ -410,7 +410,7 @@
     (void? any @[])
     (1 = any @[1 + 2])
     ('~null~ = any @[~null~ _])
-    ('null = any inert reduce ['null blank])
+    ('null = any pin reduce ['null blank])
     ('null = any @[null])  ; just the word, and words are truthy
 ]
 

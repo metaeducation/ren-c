@@ -84,7 +84,7 @@ save: func [
         header: if object? header [
             trim header  ; clean out words set to blank
         ] else [
-            construct (inert header)  ; does not use STANDARD.HEADER
+            construct (pin header)  ; does not use STANDARD.HEADER
         ]
 
         ; Sync the header option with the :COMPRESS setting

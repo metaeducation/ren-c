@@ -635,7 +635,7 @@ Bounce Meta_Stepper_Executor(Level* L)
       case TYPE_SIGIL: {
         Sigil sigil = Cell_Sigil(CURRENT);
         switch (sigil) {
-          case SIGIL_THE: {
+          case SIGIL_PIN: {
             if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
                 return PANIC(Error_Need_Non_End(CURRENT));
 
@@ -651,8 +651,8 @@ Bounce Meta_Stepper_Executor(Level* L)
                 Meta_Unquotify_Known_Stable(L->out);
             break; }
 
-          case SIGIL_META:  // ^
-          case SIGIL_VAR: {  // $
+          case SIGIL_LIFT:  // ^
+          case SIGIL_TIE: {  // $
             Level* right = Maybe_Rightward_Continuation_Needed(L);
             if (not right)
                 goto sigil_rightside_meta_in_out;
@@ -669,10 +669,10 @@ Bounce Meta_Stepper_Executor(Level* L)
         assert(Is_Quoted(OUT) or Is_Quasiform(OUT));
 
         switch (Cell_Sigil(CURRENT)) {
-          case SIGIL_META:  // ^
+          case SIGIL_LIFT:  // ^
             break;  // it's already meta
 
-          case SIGIL_VAR:  // $
+          case SIGIL_TIE:  // $
             Meta_Unquotify_Undecayed(OUT);
             if (Is_Antiform(OUT))
                 return PANIC("$ operator cannot bind antiforms");
@@ -771,7 +771,7 @@ Bounce Meta_Stepper_Executor(Level* L)
               case PARAMCLASS_NORMAL:
                 break;
 
-              case PARAMCLASS_META:
+              case PARAMCLASS_LIFTED:
                 flags |= LEVEL_FLAG_ERROR_RESULT_OK;
                 break;
 
@@ -922,7 +922,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             (STATE == ST_STEPPER_GET_WORD and Is_Word(CURRENT))
             or (
                 STATE == cast(StepperState, TYPE_META_WORD)
-                and Is_Meta_Word(CURRENT)
+                and Is_Lifted(WORD, CURRENT)
             )
         );
         Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
@@ -935,14 +935,14 @@ Bounce Meta_Stepper_Executor(Level* L)
 
         if (STATE == cast(StepperState, TYPE_META_WORD)) {
             if (not Is_Quoted(OUT) and not Is_Quasiform(OUT))
-                return PANIC("META-WORD! only works on quoted/quasiform");
+                return PANIC("^WORD! only works on quoted/quasiform");
             Meta_Unquotify_Undecayed(OUT);
         }
 
         goto lookahead; }
 
 
-    //=//// GROUP!, GET-GROUP!, and META-GROUP! ///////////////////////////=//
+    //=//// GROUP!, GET-GROUP!, and ^GROUP! ///////////////////////////////=//
     //
     // Groups simply evaluate their contents, and can evaluate to nihil if
     // the contents completely disappear.
@@ -1268,7 +1268,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto lookahead; }
 
 
-    //=//// GET-TUPLE! and META-TUPLE! ////////////////////////////////////=//
+    //=//// GET-TUPLE! and ^TUPLE! ////////////////////////////////////////=//
     //
     // Note that the GET native on a TUPLE! won't allow GROUP! execution:
     //
@@ -1334,9 +1334,9 @@ Bounce Meta_Stepper_Executor(Level* L)
     //
     // It supports `_` in slots whose results you don't want to ask for, `#`
     // in slots you want to ask for (but don't want to name), will evaluate
-    // GROUP!s, and also allows THE-WORD! to `@circle` which result you want
-    // to be the overall result of the expression (defaults to the normal
-    // main return value).
+    // GROUP!s, and also allows FENCE! to {circle} which result you want to be
+    // the overall result of the expression (defaults to passing through the
+    // entire pack).
 
       // 1. Empty SET-BLOCK! are not supported, although it could be argued
       //    that an empty set-block could receive a VOID (~[]~) pack.
@@ -1446,9 +1446,9 @@ Bounce Meta_Stepper_Executor(Level* L)
                         return PANIC(Error_Bad_Antiform(SPARE));
 
                     if (heart == TYPE_THE_GROUP)
-                        Theify(Known_Element(SPARE));  // transfer @ decoration
+                        Pinify(Known_Element(SPARE));  // add @ decoration
                     else if (heart == TYPE_META_GROUP)
-                        Metafy(Known_Element(SPARE));  // transfer ^ decoration
+                        Liftify(Known_Element(SPARE));  // add ^ decoration
                 }
 
                 heart = Heart_Of(SPARE);
@@ -1466,7 +1466,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             if (
                 // ^xxx is indicator of a ^META result [4]
                 //
-                (heart == TYPE_SIGIL and Cell_Sigil(TOP) == SIGIL_META)
+                (heart == TYPE_SIGIL and Cell_Sigil(TOP) == SIGIL_LIFT)
                 or heart == TYPE_META_WORD
             ){
                 continue;
@@ -1562,7 +1562,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             else
                 Copy_Cell(SPARE, pack_meta_at);
 
-            if (var_heart == TYPE_SIGIL and Cell_Sigil(var) == SIGIL_META) {
+            if (var_heart == TYPE_SIGIL and Cell_Sigil(var) == SIGIL_LIFT) {
                 panic ("META sigil should allow ghost pass thru, probably?");
                 /* goto circled_check; */
             }
@@ -1643,20 +1643,36 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto lookahead; }
 
 
-    //=//// META-BLOCK! ////////////////////////////////////////////////////=//
+    //=//// ^BLOCK! ///////////////////////////////////////////////////////=//
     //
-    // Just produces a quoted version of the block it is given:
+    // Produces an PACK! of what it is given:
     //
-    //    >> ^[a b c]
-    //    == '[a b c]
+    //    >> ^[1 + 2 null]
+    //    == ~['3 ~null~]~  ; anti
     //
-    // (It's hard to think of another meaning that would be sensible.)
+    // This is the most useful meaning, and it round trips the values:
+    //
+    //    >> ^[a b]: ^[1 + 2 null]
+    //    == ~['3 ~null~]~
+    //
+    //    >> a
+    //    == 3
+    //
+    //    >> b
+    //    == ~null~  ; anti
 
-      case TYPE_META_BLOCK:
-        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+      case TYPE_META_BLOCK: {
+        Quotify(Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed));
         HEART_BYTE(OUT) = TYPE_BLOCK;
-        Quotify(cast(Element*, OUT));
-        goto lookahead;
+        Init_Word(SPARE, CANON(PACK));
+        unnecessary(Quotify(Known_Element(SPARE)));  // want to run word
+        Value* temp = rebMeta_helper(
+            Level_Binding(L), stable_SPARE, stable_OUT, rebEND
+        );
+        Copy_Cell(OUT, temp);
+        rebRelease(temp);
+        Meta_Unquotify_Undecayed(OUT);
+        goto lookahead; }
 
 
     //=//// FENCE! ////////////////////////////////////////////////////////=//
@@ -1676,13 +1692,13 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto lookahead; }
 
 
-    //=//// META-FENCE! ///////////////////////////////////////////////////=//
+    //=//// ^FENCE! ///////////////////////////////////////////////////////=//
 
       case TYPE_META_FENCE:
-        return PANIC("Don't know what META-FENCE! is going to do yet");
+        return PANIC("Don't know what ^FENCE! is going to do yet");
 
 
-    //=//// THE-XXX! //////////////////////////////////////////////////////=//
+    //=//// PINNED! @XXX //////////////////////////////////////////////////=//
     //
     // Type that just leaves the sigil:
     //
@@ -1710,7 +1726,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    import @xml
     //    import @json/1.1.2
     //
-    // Leaving the sigil means IMPORT can typecheck for THE-WORD! + THE-PATH!
+    // Leaving the sigil means IMPORT can typecheck against a @WORD! + @PATH!
     // and not have a degree of freedom that it can't distinguish from being
     // called as (import 'xml) or (import 'json/1.1.2)
 
@@ -1722,7 +1738,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto lookahead;
 
 
-    //=///// VAR-XXX! /////////////////////////////////////////////////////=//
+    //=///// TIED! ($XXX) /////////////////////////////////////////////////=//
     //
     // The $xxx types evaluate to remove the decoration, but be bound:
     //
@@ -1747,7 +1763,7 @@ Bounce Meta_Stepper_Executor(Level* L)
       case TYPE_VAR_GROUP:
       case TYPE_VAR_WORD:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        HEART_BYTE(OUT) = Plainify_Any_Var_Heart(u_cast(HeartEnum, STATE));
+        HEART_BYTE(OUT) = Planify_Any_Tied_Heart(u_cast(HeartEnum, STATE));
         goto lookahead;
 
 

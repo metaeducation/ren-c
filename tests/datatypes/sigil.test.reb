@@ -3,9 +3,9 @@
 ; Sigils cover symbols that aren't legal words, but are useful to have
 ; in the evaluator and dialects:
 ;
-;     SIGIL_META = 1     // ^
-;     SIGIL_THE = 2      // @
-;     SIGIL_VAR = 3      // $
+;     SIGIL_LIFT = 1     // ^
+;     SIGIL_PIN = 2      // @
+;     SIGIL_TIE = 3      // $
 
 [ ; Establish FOR-EACH test to simplify further testing
 (

@@ -35,7 +35,7 @@
 //
 //      return: [frame! action! any-list? any-sequence? any-word? quoted!]
 //      spec "Target context or a word whose binding should be the target"
-//          [block! the-word? any-context?]
+//          [block! @word! any-context?]
 //      value "Value whose bound form is to be returned"
 //          [any-list? any-sequence? any-word? quoted!]
 //  ]
@@ -43,7 +43,7 @@
 DECLARE_NATIVE(BIND)
 //
 // !!! The "BIND dialect" is just being mapped out.  Right now, it accepts
-// a context, or a THE-WORD!, or a block of THE-WORD!s.
+// a context, or an @WORD!, or a block of @WORD!s.
 {
     INCLUDE_PARAMS_OF_BIND;
 
@@ -58,7 +58,7 @@ DECLARE_NATIVE(BIND)
             return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         for (; at != tail; ++at) {
-            if (not Is_The_Word(at))
+            if (not Is_Pinned(WORD, at))
                 return PANIC("BLOCK! binds all @word for the moment");
 
             Use* use = Alloc_Use_Inherits(Cell_Binding(v));
@@ -83,7 +83,7 @@ DECLARE_NATIVE(BIND)
         context = spec;
     }
     else {
-        assert(Is_The_Word(spec));
+        assert(Is_Pinned(WORD, spec));
         if (not IS_WORD_BOUND(spec))
             return PANIC(Error_Not_Bound_Raw(spec));
 

@@ -113,7 +113,7 @@
     1020 = either okay '1020 '304
 )
 
-; THE-XXX! Branching (TBD)
+; @XXX Branching (TBD)
 ;(
 ;    j: 304
 ;    304 = either okay @j [panic "Shouldn't run"]

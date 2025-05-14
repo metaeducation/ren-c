@@ -402,7 +402,7 @@ trap: func [
 ](
     specialize enclose for-skip/ func [f] [
         if blank? let word: f.word [return null]
-        assert [the-word? f.word]
+        assert [match [@word!] f.word]
         f.series: get word
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
@@ -561,7 +561,7 @@ fail: func [
         [
             <end>  ; non-specific failure
             warning!  ; already constructed error
-            the-word!  ; invalid-arg error with variable name/value
+            @word!  ; invalid-arg error with variable name/value
             text!  ; textual error message
             tripwire!  ; same as text (but more attention grabbing at callsite)
             block!  ; mixture of object error spec and message
@@ -591,7 +591,7 @@ fail: func [
 
     let error: switch:type :reason [
         warning! [reason]
-        the-word! [
+        word?:pinned/ [
             blame: default [to word! reason]
             make warning! [
                 id: 'invalid-arg

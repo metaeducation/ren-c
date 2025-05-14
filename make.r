@@ -912,7 +912,7 @@ for-each [name val] user-config.extensions [  ; all found ones were removed
 ]
 
 extension-names: map-each 'x extension-names [
-    quote x  ; in bootstrap, can't (delimit "," inert extension-names)
+    quote x  ; in bootstrap, can't (delimit "," pin extension-names)
 ]
 
 
@@ -1148,7 +1148,7 @@ help: func [
 ; process help: {-h | -help | --help} [TOPIC]
 
 if commands [
-    iterate (inert $commands) [
+    iterate (pin $commands) [
         if find ["-h" "-help" "--help"] commands.1 [
             if second commands [  ; bootstrap commands.2 errors if null
                 help:topic second commands

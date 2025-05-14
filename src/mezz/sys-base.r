@@ -144,7 +144,7 @@ module: func [
         comment [
             unbind:deep spec  ; !!! preserve binding?
         ]
-        spec: construct:with (inert spec) system.standard.header  ; see def.
+        spec: construct:with (pin spec) system.standard.header  ; see def.
     ]
 
     if spec [  ; validate the important fields of the header, if there is one
@@ -263,7 +263,7 @@ do: func [
             url!  ; load code from URL via protocol
             file!  ; load from file relative to OS current directory
             tag!  ; load relative to system.script.name
-            the-word!  ; module name (URL! looked up from table)
+            @word!  ; module name (URL! looked up from table)
         ]
     :args "Args passed as system.script.args to a script (normally a string)"
         [element?]

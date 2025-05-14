@@ -472,7 +472,7 @@ INLINE bool Pack_Native_Core_Throws(
     const Value* block,
     const Value* predicate
 ){
-    if (Is_The_Block(block)) {  // as-is: pack @[1 + 2] -> ~['1 '+ '2']~ anti
+    if (Is_Pinned(BLOCK, block)) {  // pack @[1 + 2] -> ~['1 '+ '2']~ anti
         const Element* tail;
         const Element* at = Cell_List_At(&tail, block);
 
@@ -510,8 +510,8 @@ INLINE bool Pack_Native_Core_Throws(
 //
 //      return: "Antiform of BLOCK!"
 //          [pack!]
-//      block "Reduce if plain BLOCK!, not if THE-BLOCK!"
-//          [<opt-out> the-block! block!]
+//      block "Reduce if plain BLOCK!, don't if @BLOCK!"
+//          [<opt-out> block! @block!]
 //  ]
 //
 DECLARE_NATIVE(PACK)
@@ -538,8 +538,8 @@ DECLARE_NATIVE(PACK)
 //
 //      return: "Antiform of BLOCK!"
 //          [pack!]
-//      block "Reduce if plain BLOCK!, not if THE-BLOCK!"
-//          [<opt-out> the-block! block!]
+//      block "Reduce if plain BLOCK!, don't if @BLOCK!"
+//          [<opt-out> block! @block!]
 //  ]
 //
 DECLARE_NATIVE(PACK_P)

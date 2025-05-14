@@ -1,4 +1,4 @@
-; The META-WORD! type is new and needs testing.
+; The ^WORD! type is new and needs testing.
 
 (any-word? '^foo)
 ("foo" = as text! '^foo)

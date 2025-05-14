@@ -206,10 +206,10 @@ void Enable_Ctrl_C(void)
 //  "Runs customizable Read-Eval-Print Loop, may 'provoke' code before input"
 //
 //      return: "Exit code, RESUME instruction, or handle to evaluator hook"
-//          [integer! meta-group! handle!]
+//          [integer! ^group! handle!]
 //      :provoke "Block must return a console state, group is cancellable"
 //          [block! group!]
-//      :resumable "Allow RESUME instruction (will return a META-GROUP!)"
+//      :resumable "Allow RESUME instruction (will return a ^GROUP!)"
 //      :skin "File containing console skin, or MAKE CONSOLE! derived object"
 //          [file! object!]
 //      <local>
@@ -340,14 +340,14 @@ DECLARE_NATIVE(CONSOLE)
     //    then the console skin must not be broken beyond all repair.  So
     //    re-enable recovery.
     //
-    // 3. This once used a META-GROUP! to reduce the amount of code on the
-    //    stack which the user might see in a backtrace.  So instead of:
+    // 3. This once used a ^GROUP! to reduce the amount of code on the stack
+    //    which the user might see in a backtrace.  So instead of:
     //
     //        metaresult: meta eval:undecayed [print "hi"]
     //
     //    It would just execute the code directly:
     //
-    //        metaresult: ^(print "hi")
+    //        metaresult: ^(print "hi")  ; BUT ^(...) no longer means META!
     //
     //    That might be a nice idea, but as it turns out there's no mechanism
     //    for rescuing abrupt panics in the API...and I'm not entirely sure
@@ -373,7 +373,7 @@ DECLARE_NATIVE(CONSOLE)
     if (rebUnboxLogic("integer? code"))
         goto finished;  // if HOST-CONSOLE returns INTEGER! it means exit code
 
-    if (rebDid("match [meta-group! handle!] code")) {
+    if (rebDid("match [^group! handle!] code")) {
         rebElide("assert [resumable]");
         goto finished;
     }

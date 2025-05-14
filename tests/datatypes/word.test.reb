@@ -213,7 +213,7 @@
 
         [pos l]: transcode:next unspaced ["^^" str]
         assert [pos = ""]
-        assert [l = metafy word]
+        assert [l = lift word]
     ]
     ok)
 ]

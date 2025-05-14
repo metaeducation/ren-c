@@ -111,7 +111,7 @@ DECLARE_NATIVE(LATIN1_Q)
 //          [~null~ any-utf8? any-list? any-sequence? blob!]
 //      base [datatype! any-utf8? any-list? any-sequence? blob!]
 //      ^rest "Plain [...] blocks reduced, @[...] block items used as is"
-//          [~[]~ block! the-block! any-utf8? blob! integer!]
+//          [~[]~ block! @block! any-utf8? blob! integer!]
 //      :with [element? splice!]
 //      :head "Include delimiter at head of a non-NULL result"
 //      :tail "Include delimiter at tail of a non-NULL result"
@@ -166,7 +166,8 @@ DECLARE_NATIVE(JOIN)
         if (Any_List(ARG(BASE)) or Any_Sequence(ARG(BASE))) {
             if (
                 rest and (
-                    not Is_Block(unwrap rest) and not Is_The_Block(unwrap rest)
+                    not Is_Block(unwrap rest)
+                    and not Is_Pinned(BLOCK,unwrap rest)
                 )
             ){
                 return PANIC("JOIN of list or sequence must join with BLOCK!");
@@ -191,7 +192,7 @@ DECLARE_NATIVE(JOIN)
         goto stack_step_meta_in_spare;
 
       case ST_JOIN_EVALUATING_THE_GROUP:
-        if (Is_The_Block(unwrap rest))
+        if (Is_Pinned(BLOCK, unwrap rest))
             SUBLEVEL->executor = &Inert_Meta_Stepper_Executor;
         else {
             assert(Is_Block(unwrap rest));
@@ -239,7 +240,7 @@ DECLARE_NATIVE(JOIN)
     if (Is_Block(unwrap rest)) {
         sub = Make_Level_At(&Meta_Stepper_Executor, unwrap rest, flags);
     }
-    else if (Is_The_Block(unwrap rest))
+    else if (Is_Pinned(BLOCK, unwrap rest))
         sub = Make_Level_At(&Inert_Meta_Stepper_Executor, unwrap rest, flags);
     else {
         Feed* feed = Prep_Array_Feed(  // leverage feed mechanics [1]
@@ -364,13 +365,13 @@ DECLARE_NATIVE(JOIN)
     if (Any_The_Value(item)) {  // fetch and mold
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
-        if (Is_The_Word(item)) {
+        if (Is_Pinned(WORD, item)) {
             Get_Var_May_Panic(SPARE, item, Level_Binding(sub));
             Fetch_Next_In_Feed(sub->feed);
             goto mold_step_result_in_spare;
         }
 
-        if (Is_The_Group(item)) {
+        if (Is_Pinned(GROUP, item)) {
             SUBLEVEL->executor = &Just_Use_Out_Executor;
             Derelativize(SCRATCH, item, Level_Binding(sub));
             HEART_BYTE(SCRATCH) = TYPE_BLOCK;  // the-block is different

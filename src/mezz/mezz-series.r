@@ -497,7 +497,7 @@ split: func [
         [
             ~[]~  ; just return input
             block!  ; parse rule
-            the-block!  ; list of integers for piece lengths
+            @[block!]  ; list of integers for piece lengths
             integer!  ; length of pieces (or number of pieces if /INTO)
             bitset!  ; set of characters to split by
             char? text!  ; text to split by
@@ -516,10 +516,10 @@ split: func [
         panic "SPLIT on SPLICE?! would need UPARSE, currently based on PARSE3"
     ]
 
-    if the-block? dlm [
+    if match [@block!] dlm [
         return map-each 'len dlm [
             if not integer? len [
-                panic ["THE-BLOCK! in SPLIT must be all integers:" mold len]
+                panic ["@BLOCK! in SPLIT must be all integers:" mold len]
             ]
             if len <= 0 [
                 series: skip series negate len

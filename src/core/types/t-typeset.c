@@ -256,6 +256,12 @@ void Set_Parameter_Spec(
             continue;
         }
 
+        Option(Sigil) sigil = Sigil_Of(item);
+        if (sigil) {  // !!! no sigil optimization yet (ever?)
+            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+            continue;
+        }
+
         const Value* lookup;
         if (Heart_Of(item) == TYPE_WORD) {  // allow abstraction [3]
             lookup = maybe Lookup_Word(item, spec_binding);
@@ -400,14 +406,14 @@ Element* Decorate_According_To_Parameter(
       case PARAMCLASS_NORMAL:
         break;
 
-      case PARAMCLASS_META:
-        Metafy(e);
+      case PARAMCLASS_LIFTED:
+        Liftify(e);
         break;
 
       case PARAMCLASS_SOFT: {
         Source *a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
         Move_Cell(Stub_Cell(a), e);
-        Init_Any_List(e, TYPE_THE_GROUP, a);
+        Pinify(Init_Group(e, a));
         break; }
 
       case PARAMCLASS_JUST:
@@ -415,7 +421,7 @@ Element* Decorate_According_To_Parameter(
         break;
 
       case PARAMCLASS_THE:
-        Theify(e);
+        Pinify(e);
         break;
 
       default:
@@ -478,7 +484,7 @@ IMPLEMENT_GENERIC(PICK, Is_Parameter)
           case PARAMCLASS_NORMAL:
             return Init_Word(OUT, CANON(NORMAL));
 
-          case PARAMCLASS_META:
+          case PARAMCLASS_LIFTED:
             return Init_Word(OUT, CANON(META));
 
           case PARAMCLASS_THE:

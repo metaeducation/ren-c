@@ -72,11 +72,7 @@ INLINE Count Quotes_Of(const Element* v) {
 
 INLINE bool Any_Metaform(const Cell* cell) {  // quasiform or quoted
     QuoteByte quote_byte = QUOTE_BYTE(Ensure_Readable(cell));
-    return (
-        quote_byte == QUASIFORM_2
-        or quote_byte == ONEQUOTE_NONQUASI_3
-        or quote_byte == ONEQUOTE_QUASI_4
-    );
+    return quote_byte >= QUASIFORM_2;
 }
 
 
