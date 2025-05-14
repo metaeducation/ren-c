@@ -51,7 +51,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
                 limit + 1
             );
 
-            Init_Word(Array_At(copy, limit), CANON(ELLIPSIS_1));
+            Init_Word(Array_At(copy, limit), CANON(ELLIPSIS_3));
 
             Collapsify_Array(copy, limit);
 
@@ -109,7 +109,7 @@ Element* Init_Near_For_Level(Sink(Element) out, Level* L)
 
     REBINT start = Level_Array_Index(L) - 3;
     if (start > 0)
-        Init_Word(PUSH(), CANON(ELLIPSIS_1));
+        Init_Word(PUSH(), CANON(ELLIPSIS_3));
     else if (start < 0)
         start = 0;
 
@@ -132,7 +132,7 @@ Element* Init_Near_For_Level(Sink(Element) out, Level* L)
     }
 
     if (item != tail)
-        Init_Word(PUSH(), CANON(ELLIPSIS_1));
+        Init_Word(PUSH(), CANON(ELLIPSIS_3));
 
     // !!! This code can be called on an executing level, such as when an
     // error happens in that level.  Or it can be called on a pending level

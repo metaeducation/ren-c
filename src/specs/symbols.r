@@ -30,8 +30,8 @@ Rebol [
 
 true
 false
-on
-off
+#on
+#off
 yes
 no
 
@@ -44,19 +44,6 @@ errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
 optimized-out
 anonymous
 
-test  ; used by MATCHER
-
-;=== COMBINATORS ===
-
-input
-#remainder
-state
-rule-start
-rule-end
-
-
-#type  ; used by TYPECHECKER
-value ; used by TYPECHECKER to name the argument of the generated function
 
 ; See notes on ACTION-ADJUNCT in %sysobj.r
 description
@@ -67,7 +54,7 @@ description
 class  ; parameter.fields
 escapable
 #optional
-spec
+#spec
 text
 
 normal  ; parameter classes
@@ -76,30 +63,30 @@ normal  ; parameter classes
 #just
 
 
-x
-y
+#x
+#y
 +
 -
 *
-code        ; error field
+#code        ; error field
 
 eval
-memory
+#memory
 ; Time:
 hour
 minute
 second
 
 ; Date:
-year
-month
-day
+#year
+#month
+#day
 time
 date
 weekday
 julian
 yearday
-zone
+#zone
 utc
 
 
@@ -116,12 +103,12 @@ decode
 encode
 
 
-...  ; SYM_ELLIPSIS_1
+...  ; SYM_ELLIPSIS_3
 
-bits
+#bits
 
-data
-flags
+#data
+#flags
 
 id
 exit-code
@@ -169,5 +156,5 @@ lookup
 ready
 #time
 
-show
-hide
+#show
+#hide

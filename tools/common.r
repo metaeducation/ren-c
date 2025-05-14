@@ -61,7 +61,7 @@ export to-c-name: func [
     switch string [
         ; Used specifically by t-routine.c to make SYM_ELLIPSIS
         ;
-        "..." ["ellipsis_1"]
+        "..." ["ellipsis_3"]
 
         ; Used to make SYM_HYPHEN which is needed by `charset [#"A" - #"Z"]`
         ;

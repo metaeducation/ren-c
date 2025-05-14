@@ -212,11 +212,20 @@ e-params: make-emitter "PARAM() and REFINE() Automatic Macros" (
     join output-dir %include/tmp-paramlists.h
 )
 
+e-param-symbols: make-emitter "Symbols for Native Arguments and Refinements" (
+    join output-dir %specs/tmp-param-symbols.r
+)
+
 for-each 'info natives [
-    emit-include-params-macro e-params info.proto
+    let symbols: emit-include-params-macro e-params info.proto
+    for-each 'param symbols [
+        e-param-symbols/emit as text! param
+        e-param-symbols/emit newline
+    ]
 ]
 
 e-params/write-emitted
+e-param-symbols/write-emitted
 
 
 === "EMIT DECLARE_NATIVE() FORWARD DECLS" ===

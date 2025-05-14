@@ -114,11 +114,15 @@ export extract-native-protos: func [
 export emit-include-params-macro: func [
     "Emit macros for a native's parameters"
 
-    return: [~]
-    e [object!] "where to emit (see %common-emitters.r)"
+    return: "Block of symbols for arguments"
+        [block!]
+    e "where to emit (see %common-emitters.r)"
+        [object!]
     proto [text!]
-    :extension [text!] "extension name"  ; once used not used now
+    :extension "extension name (not currently in use)"
+        [text!]
 ][
+    let symbols: copy []
     let native-name: ~
     parse3:match proto [
         opt some newline  ; stripload preserves newlines
@@ -217,6 +221,7 @@ export emit-include-params-macro: func [
             ]
 
             let param-name: resolve noquote item
+            append symbols param-name
             all [
                 is-intrinsic
                 n = 1  ; first parameter
@@ -262,6 +267,8 @@ export emit-include-params-macro: func [
             $[Varlist-Hold] \
             $(Items); \
     ]--]
+
+    return symbols
 ]
 
 

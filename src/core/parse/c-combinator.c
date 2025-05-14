@@ -755,7 +755,7 @@ static bool Combinator_Param_Hook(
 //      state "Parse State" [frame!]
 //      :value "Initiating value (if datatype)" [element?]
 //      :path "Invoking Path" [path!]
-//      <local> rule-start
+//      <local> rule-start rule-end
 //  ]
 //
 DECLARE_NATIVE(COMBINATORIZE)

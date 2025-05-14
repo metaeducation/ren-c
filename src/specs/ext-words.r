@@ -83,7 +83,7 @@ routine?
 #void
 #return
 library
-name
+#name
 ; #...  ; for variadics, #... is an invalid issue :-(
 varargs  ; still needed?
 
@@ -121,7 +121,7 @@ n64-soft-float  ; mips abi
 window
 
 key
-mode
+#mode
 control
 #shift  ; there's a bit shift native
 alt-down
@@ -137,9 +137,9 @@ page-down
 #end  ; parse keyword
 home
 up
-down
-left
-right
+#down
+#left
+#right
 #insert  ; GENERIC action insert
 #delete  ; GENERIC action delete
 f1  ; should these be capitalized, or capitalized variants offered?  F1, etc?
@@ -167,7 +167,7 @@ drop-file
 
 [=== event ===]
 
-ignore
+#ignore
 interrupt
 device
 callback

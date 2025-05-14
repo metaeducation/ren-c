@@ -260,6 +260,19 @@ for-each 'name native-names [
 add-sym:placeholder </MAX_SYM_LIB_PREMADE>
 
 
+=== "SYMBOLS FOR NATIVE PARAMETERS AND REFINEMENTS" ===
+
+; This lets us talk about the parameters to natives via CANON(PARAM_NAME).
+; These don't necessarily have corresponding variables in LIB (though they
+; might, so we use ADD-SYM:RELAX).
+
+native-param-symbols: load3 join prep-dir %specs/tmp-param-symbols.r
+for-each 'param native-param-symbols [
+    add-sym:relax param
+]
+native-param-symbols: ~<native-param-symbols accounted for>~
+
+
 === "SYMBOLS FOR DATATYPES (INTEGER! or BLOCK!, with the !)" ===
 
 ; INTEGER? and BLOCK? are type constraint functions in SYS.CONTEXTS.LIB, but
