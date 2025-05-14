@@ -726,7 +726,7 @@ static bool Combinator_Param_Hook(
                 assert(!"LET failed");
             Element* temp = cast(Element*, SPARE);
             Value* parser = rebValue(
-                "[#", temp, "]: parsify", rebQ(ARG(STATE)), ARG(RULES)
+                "[_", temp, "]: parsify", rebQ(ARG(STATE)), ARG(RULES)
             );
             Get_Var_May_Panic(ARG(RULES), temp, SPECIFIED);
             Copy_Cell(var, parser);

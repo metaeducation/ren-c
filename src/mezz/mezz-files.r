@@ -340,7 +340,7 @@ list-dir: func [
             if greater? length of l 60 [print l clear l]
         ] else [
             let info: get (words of query file)
-            let [# filename]: split-path info.1
+            let [_ filename]: split-path info.1
             change info
             printf [i 16 -8 #" " 24 #" " 6] info
             if all [r, dir? file] [
@@ -400,12 +400,12 @@ to-relative-file: func [
     if text? file [ ; Local file
         comment [
             ; file-to-local drops trailing / in R2, not in R3
-            if [# tmp]: find:match file file-to-local what-dir [
+            if [_ tmp]: find:match file file-to-local what-dir [
                 file: next tmp
             ]
         ]
         let pos
-        if [# pos]: find:match file (file-to-local what-dir) [
+        if [_ pos]: find:match file (file-to-local what-dir) [
             file: pos  ; !!! https://forum.rebol.info/t/1582/6
         ]
         if as-rebol [
@@ -414,7 +414,7 @@ to-relative-file: func [
         ]
     ] else [
         let pos
-        if [# pos]: find:match file what-dir [
+        if [_ pos]: find:match file what-dir [
             file: pos  ; !!! https://forum.rebol.info/t/1582/6
         ]
         if as-local [

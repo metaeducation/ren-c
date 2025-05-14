@@ -89,13 +89,13 @@
         foo: func [return: [~[integer! integer!]~] arg] [
             return pack [20 10]
         ]
-        null? insist [[{~} #]: foo break]
+        null? insist [[{_} _]: foo break]
     )
 ]
 
 [(
     all wrap [
-        'abc = [rest {#}]: transcode:next "abc def"
+        'abc = [rest {_}]: transcode:next "abc def"
         rest = " def"
     ]
 )(
@@ -104,7 +104,7 @@
         rest = " def"
     ]
 )(
-    error? [#]: panic "a"
+    error? [_]: panic "a"
 )]
 
 ; The ^XXX! types can be used to ask for variables to be raised to a meta
@@ -182,7 +182,7 @@
 ; You can use a {} without a variable to get a return result
 ;
 (all wrap [
-    " cd" = [# item]: transcode:next "ab cd"
+    " cd" = [_ item]: transcode:next "ab cd"
     item = 'ab
 ])
 
@@ -231,16 +231,15 @@
     )
 ]
 
-; Using @ or _ allows passthru of antiforms
 [
     (
-        '~(a b c)~ = ^ [x]: spread [a b c]
+        '~(a b c)~ = meta decay [x]: spread [a b c]
     )
     (
-        '~(a b c)~ = ^ [{~}]: spread [a b c]
+        '~(a b c)~ = meta [{_}]: spread [a b c]
     )
     (
-        '~(a b c)~ = ^ [#]: spread [a b c]  ; definitive behavior TBD
+        '~(a b c)~ = meta decay [_]: spread [a b c]  ; definitive behavior TBD
     )
 ]
 

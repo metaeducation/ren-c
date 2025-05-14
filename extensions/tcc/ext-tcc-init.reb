@@ -581,7 +581,7 @@ c99: func [
             panic [
                 elide trunc: ~
                 "Could not parse C99 command line at:"
-                append [# trunc]: (mold:limit last-pos 40) if trunc ["..."]
+                append [_ trunc]: (mold:limit last-pos 40) if trunc ["..."]
             ]
         ]
     ]

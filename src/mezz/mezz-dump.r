@@ -46,7 +46,7 @@ bind construct [
         ] else [
             let trunc
             append (
-                [# trunc]: mold:limit :val system.options.dump-size
+                [_ trunc]: mold:limit :val system.options.dump-size
             ) if trunc ["..."]
         ]
     ]
@@ -57,7 +57,7 @@ bind construct [
             text! [  ; good for longer labeling when you need spaces/etc.
                 let trunc
                 print unspaced [
-                    [# trunc]: mold:limit item system.options.dump-size
+                    [_ trunc]: mold:limit item system.options.dump-size
                     if trunc ["..."]
                 ]
             ]

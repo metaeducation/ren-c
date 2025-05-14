@@ -616,12 +616,12 @@ split: func [
             char?/ [boolean dlm = last series]
             text! [
                 boolean (find series dlm) and (
-                    empty? [# {#}]: find-last series dlm
+                    empty? [_ {_}]: find-last series dlm
                 )
             ]
             quoted! [
                 boolean (find series unquote dlm) and (
-                    empty? [# {#}]: find-last series unquote dlm
+                    empty? [_ {_}]: find-last series unquote dlm
                 )
             ]
             block! ['false]

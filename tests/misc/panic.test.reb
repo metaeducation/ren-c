@@ -51,7 +51,7 @@
 ; Multi-returns which aren't writing to a variable should be willing to
 ; tolerate an arbitrary result coming out.
 [
-    (error? [{#}]: fail "hi")
+    (error? [{_}]: fail "hi")
 ]
 
 ; A ^META'd error! still does a lookahead step for infix, and if that step

@@ -49,7 +49,7 @@
             panic ["Unhandled type in GROUP! combinator:" to word! type of r]
         ]
 
-        return [{~} remainder pending]: run comb state input r
+        return [{_} remainder pending]: run comb state input r
     ]
 
     ; DISCARD is different from ELIDE when GROUP! acts like a GET-GROUP!,

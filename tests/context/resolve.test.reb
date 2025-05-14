@@ -24,7 +24,7 @@
         <local> steps
     ][
         unmeta (
-            (non:meta [defaultable?] [steps {#}]: get:steps target) else [
+            (non:meta [defaultable?] [steps {_}]: get:steps target) else [
                 meta set steps eval branch
             ]
         )

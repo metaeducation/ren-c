@@ -243,7 +243,7 @@
     'abc = let [(var) #]: transcode:next "abc def"
 )(
     var: null  ; opting out of second result, hence full transcode
-    [abc def] = let [# (var)]: transcode:next "abc def"
+    [abc def] = let [_ (var)]: transcode:next "abc def"
 )]
 
 ; This is all very shaky and speculative, and missing any semblance of

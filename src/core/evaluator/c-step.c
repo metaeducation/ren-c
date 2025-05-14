@@ -59,6 +59,8 @@
 // * Meta_Stepper_Executor() is LONG.  That's largely on purpose.  Breaking it
 //   into functions would add overhead (in the RUNTIME_CHECKS build, if not
 //   also NO_RUNTIME_CHECKS builds) and prevent interesting optimizations.
+//   Factoring better is desired--but more in order to reduce redundant code
+//   paths, as opposed to making this file shorter as a goal in and of itself.
 //
 //   It is separated into sections, and the invariants in each section are
 //   made clear with comments and asserts.
@@ -310,8 +312,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto sigil_rightside_meta_in_out;
 
       case TYPE_GROUP:
-      case TYPE_META_GROUP:
-        goto lookahead;
+        goto group_or_lifted_group_result_in_out;
 
       case ST_STEPPER_SET_GROUP:
         goto set_group_result_in_spare;
@@ -339,13 +340,8 @@ Bounce Meta_Stepper_Executor(Level* L)
     Evaluator_Expression_Checks_Debug(L);
   #endif
 
-  start_new_expression: {  ///////////////////////////////////////////////////
 
-    // 1. !!! There is a current edge case with rebValue(""), where a bad mix
-    //    of FEED_FLAG_NEEDS_SYNC and end testing means that the stepper can
-    //    be called on an end Level.  It is non-trivial to sort out the set
-    //    of concerns so for now just return void...but ultimately this
-    //    should be fixed.
+  start_new_expression: {  ///////////////////////////////////////////////////
 
     Sync_Feed_At_Cell_Or_End_May_Panic(L->feed);
 
@@ -362,10 +358,11 @@ Bounce Meta_Stepper_Executor(Level* L)
     Copy_Cell(CURRENT, L_next);
     Fetch_Next_In_Feed(L->feed);
 
+
 } look_ahead_for_left_literal_infix: { ///////////////////////////////////////
 
     // The first thing we do in an evaluation step has to be to look ahead for
-    // any function that takes its left hand side literally.  Lambda functions
+    // any function that takes its left hand side literally.  Arrow functions
     // are a good example:
     //
     //     >> x: does [print "Running X the function"]
@@ -422,6 +419,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     }
 
     goto check_first_infix_parameter_class;
+
 
   check_first_infix_parameter_class: { ///////////////////////////////////////
 
@@ -480,6 +478,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     goto right_hand_literal_infix_wins;
 
+
 } right_hand_literal_infix_wins: { ///////////////////////////////////////////
 
     Level* sub = Make_Action_Sublevel(L);
@@ -493,9 +492,187 @@ Bounce Meta_Stepper_Executor(Level* L)
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
     goto process_action;
 
-}} give_up_backward_quote_priority:
 
-  //=//// BEGIN MAIN SWITCH STATEMENT /////////////////////////////////////=//
+}} give_up_backward_quote_priority: {
+
+    assert(Is_Cell_Erased(OUT));
+
+    if (QUOTE_BYTE(CURRENT) == NOQUOTE_1) {
+        Sigil sigil = Sigil_For_Heart(Heart_Of(CURRENT));
+        switch (sigil) {
+        case SIGIL_0:
+            goto handle_plain;
+
+        case SIGIL_LIFT:  // ^ lifts the value
+            goto handle_lifted;
+
+        case SIGIL_PIN:  // @ pins the value
+            goto handle_pinned;
+
+        case SIGIL_TIE:  // $ ties the value
+            goto handle_tied;
+        }
+    }
+
+    if (QUOTE_BYTE(CURRENT) == QUASIFORM_2)
+        goto handle_quasiform;
+
+    assert(QUOTE_BYTE(CURRENT) != ANTIFORM_0);
+    goto handle_quoted;
+
+
+} handle_quoted: { //// QUOTED! [ 'XXX  '''@XXX  '~XXX~ ] ////////////////////
+
+    // Quoted values drop one quote level.  Binding is left as-is.
+
+    Copy_Cell(OUT, CURRENT);
+
+    QUOTE_BYTE(OUT) -= Quote_Shift(1);
+    STATE = cast(StepperState, TYPE_QUOTED);  // can't leave STATE_0
+
+    goto lookahead;
+
+
+} handle_quasiform: { //// QUASIFORM! ~XXX~ //////////////////////////////////
+
+    // Quasiforms produce antiforms when they evaluate.  Binding is erased.
+    //
+    // 1. Not all quasiforms have legal antiforms.  For instance: while all
+    //    WORD!s have quasiforms, only a few are allowed to become antiform
+    //    keywords (e.g. ~null~ and ~okay~)
+
+    Copy_Cell(OUT, CURRENT);
+
+    Option(Error*) e = Trap_Coerce_To_Antiform(OUT);  // may be illegal [1]
+    if (e)
+        return PANIC(unwrap e);
+
+    STATE = cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
+    goto lookahead;
+
+
+} handle_pinned: { //// PINNED! (@) //////////////////////////////////////////
+
+    // Type that just leaves the sigil:
+    //
+    //    >> @word
+    //    == @word
+    //
+    // This offers some parity with the @ operator, which gives its next
+    // argument back literally (used heavily in the API):
+    //
+    //    >> @ var:
+    //    == var:
+    //
+    // Most of the datatypes use is in dialects, but the evaluator behavior
+    // comes in handy for cases like passing a signal that reducing constructs
+    // should not perform further reduction:
+    //
+    //    >> pack [1 + 2 10 + 20]
+    //    == ~['3 '30]~  ; anti
+    //
+    //    >> pack @[1 + 2 10 + 20]
+    //    == ~['1 '+ '2 '10 '+ '20]~  ; anti
+    //
+    // It also helps in cases like:
+    //
+    //    import @xml
+    //    import @json/1.1.2
+    //
+    // Leaving the sigil means IMPORT can typecheck against a @WORD! + @PATH!
+    // and not have a degree of freedom that it can't distinguish from being
+    // called as (import 'xml) or (import 'json/1.1.2)
+
+    Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+    goto lookahead;
+
+
+} handle_tied: { //// TIED! ($) //////////////////////////////////////////////
+
+    // The $XXX types evaluate to remove the decoration, but be bound:
+    //
+    //     >> var: 1020
+    //
+    //     >> $var
+    //     == var
+    //
+    //     >> get $var
+    //     == 1020
+    //
+    // This is distinct from quoting the item, which would give you the item
+    // undecorated but not changing the binding (usually resulting in unbound).
+    //
+    //     >> var: 1020
+    //
+    //     >> get 'var
+    //     ** Error: var is unbound
+
+    Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+    HEART_BYTE(OUT) = Planify_Any_Tied_Heart(Heart_Of(CURRENT));
+    goto lookahead;
+
+
+} handle_lifted: { //// LIFTED! (^) //////////////////////////////////////////
+
+    // LIFTED! types will META variables on storage, and UNMETA them on
+    // fetching.  This is complex logic.
+
+switch (STATE = cast(Byte, Plainify_Any_Lifted_Heart(Heart_Of(CURRENT)))) {
+
+  case TYPE_WORD: { //// LIFTED! WORD! ^XXX //////////////////////////////////
+
+    goto handle_get_word;
+
+
+} case TYPE_GROUP: { //// LIFTED! GROUP! ^(...) //////////////////////////////
+
+    goto handle_group_or_lifted_group;
+
+
+} case TYPE_BLOCK: { //// LIFTED! BLOCK! ^[...] //////////////////////////////
+
+    // Produces a PACK! of what it is given:
+    //
+    //    >> ^[1 + 2 null]
+    //    == ~['3 ~null~]~  ; anti
+    //
+    // This is the most useful meaning, and it round trips the values:
+    //
+    //    >> ^[a b]: ^[1 + 2 null]
+    //    == ~['3 ~null~]~
+    //
+    //    >> a
+    //    == 3
+    //
+    //    >> b
+    //    == ~null~  ; anti
+
+    Quotify(Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed));
+    HEART_BYTE(OUT) = TYPE_BLOCK;
+    Init_Word(SPARE, CANON(PACK));
+    unnecessary(Quotify(Known_Element(SPARE)));  // want to run word
+    Value* temp = rebMeta_helper(
+        Level_Binding(L), stable_SPARE, stable_OUT, rebEND
+    );
+    Copy_Cell(OUT, temp);
+    rebRelease(temp);
+    Meta_Unquotify_Undecayed(OUT);
+    goto lookahead;
+
+
+} case TYPE_FENCE: { /////////////////////////////////////////////////////////
+
+    return PANIC("Don't know what ^FENCE! is going to do yet");
+
+
+} default: { /////////////////////////////////////////////////////////////////
+
+    return PANIC("Only ^WORD!, ^GROUP, ^BLOCK! eval at this time for LIFTED!");
+
+}} // end switch()
+
+
+} handle_plain: { //// *** THIS IS THE "MAIN" SWITCH STATEMENT *** ///////////
 
     // This switch is done with a case for all TYPE_XXX values, in order to
     // facilitate use of a "jump table optimization":
@@ -506,36 +683,13 @@ Bounce Meta_Stepper_Executor(Level* L)
     // fast tests like Any_Inert() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
     //
-    // 1. Quasiforms produce antiforms, and quoted values drop one quote
-    //    level.  Binding is left as-is in both cases, and not influenced by
-    //    the current binding of the evaluator (antiforms are always unbound).
-    //
-    // 2. The Meta_Stepper_Executor()'s state bytes are a superset of the Type_Of()
-    //    of processed values.  See the ST_STEPPER_XXX enumeration.
+    // 1. The Meta_Stepper_Executor()'s state bytes are a superset of the
+    //    Heart_Of() of processed values.  See the ST_STEPPER_XXX enumeration.
 
-    assert(Is_Cell_Erased(OUT));
+switch ((STATE = cast(Byte, Heart_Of(CURRENT)))) {  // superset [1]
 
-    if (QUOTE_BYTE(CURRENT) != NOQUOTE_1) {  // quasiform or quoted [1]
-        assert(QUOTE_BYTE(CURRENT) != ANTIFORM_0);
+  case TYPE_COMMA: { //// COMMA! , ///////////////////////////////////////////
 
-        Copy_Cell(OUT, CURRENT);
-
-        if (QUOTE_BYTE(CURRENT) == QUASIFORM_2) {
-            Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
-            if (e)
-                return PANIC(unwrap e);
-
-            STATE = cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
-        }
-        else {
-            QUOTE_BYTE(OUT) -= Quote_Shift(1);
-            STATE = cast(StepperState, TYPE_QUOTED);  // can't leave STATE_0
-        }
-    }
-    else switch ((STATE = cast(Byte, Heart_Of(CURRENT)))) {  // superset [2]
-
-    //=//// COMMA! ////////////////////////////////////////////////////////=//
-    //
     // A comma is a lightweight looking expression barrier.  Though it acts
     // something like COMMENT or ELIDE, it does not evaluate to a "ghost"
     // state.  It just errors on evaluations that aren't interstitial, or
@@ -543,14 +697,14 @@ Bounce Meta_Stepper_Executor(Level* L)
     //
     //   https://forum.rebol.info/t/1387/6
 
-      case TYPE_COMMA:
-        if (Get_Eval_Executor_Flag(L, FULFILLING_ARG))
-            return PANIC(Error_Expression_Barrier_Raw());
-        goto start_new_expression;
+    if (Get_Eval_Executor_Flag(L, FULFILLING_ARG))
+        return PANIC(Error_Expression_Barrier_Raw());
+
+    goto start_new_expression;
 
 
-    //=//// FRAME! ////////////////////////////////////////////////////////=//
-    //
+} case TYPE_FRAME: { //// FRAME! /////////////////////////////////////////////
+
     // If a FRAME! makes it to the SWITCH statement, that means it is either
     // literally a frame in the array (eval compose [(unrun :add) 1 2]) or
     // is being retriggered via REEVAL.
@@ -561,44 +715,29 @@ Bounce Meta_Stepper_Executor(Level* L)
     // 1. If an infix function is run at this moment, it will not have a left
     //    hand side argument.
 
-      case TYPE_FRAME: {
-        if (Cell_Frame_Lens(CURRENT))  // running frame if lensed
-            return PANIC("Use REDO to restart a running FRAME! (can't EVAL)");
+    if (Cell_Frame_Lens(CURRENT))  // running frame if lensed
+        return PANIC("Use REDO to restart a running FRAME! (can't EVAL)");
 
-        Level* sub = Make_Action_Sublevel(L);
-        Push_Action(sub, CURRENT);
-        Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(CURRENT);
-        assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
-        Begin_Action(sub, Cell_Frame_Label_Deep(CURRENT), infix_mode);
-        Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
+    Level* sub = Make_Action_Sublevel(L);
+    Push_Action(sub, CURRENT);
+    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(CURRENT);
+    assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
+    Begin_Action(sub, Cell_Frame_Label_Deep(CURRENT), infix_mode);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
 
-        goto process_action; }
+    goto process_action;
 
-    //=//// ACTION! ARGUMENT FULFILLMENT AND/OR TYPE CHECKING PROCESS /////=//
+} process_action: {
 
-        // This one processing loop is able to handle ordinary action
-        // invocation, specialization, and type checking of an already filled
-        // action frame.  It walks through both the formal parameters (in
-        // the spec) and the actual arguments (in the call frame) using
-        // pointer incrementation.
-        //
-        // Based on the parameter type, it may be necessary to "consume" an
-        // expression from values that come after the invocation point.  But
-        // not all parameters will consume arguments for all calls.
+    // Gather args and execute function (the arg gathering makes nested
+    // eval calls that lookahead, but no lookahead after the action runs)
 
-      process_action: {
-        //
-        // Gather args and execute function (the arg gathering makes nested
-        // eval calls that lookahead, but no lookahead after the action runs)
-        //
-        STATE = cast(StepperState, TYPE_FRAME);
-        return CONTINUE_SUBLEVEL(TOP_LEVEL); }
+    STATE = cast(StepperState, TYPE_FRAME);
+    return CONTINUE_SUBLEVEL(TOP_LEVEL);
 
 
-    //=//// SIGIL! ////////////////////////////////////////////////////////=//
-    //
-    // ^ acts like META
-    //
+} case TYPE_SIGIL: { //// SIGIL! [ @ ^ $ ] ///////////////////////////////////
+
     // @ acts like THE (literal, but bound):
     //
     //     >> abc: 10
@@ -632,62 +771,63 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    that will error on FEED_NOTE_META to prevent the suspended-animation
     //    antiforms from being seen by any other part of the code.
 
-      case TYPE_SIGIL: {
-        Sigil sigil = Cell_Sigil(CURRENT);
-        switch (sigil) {
-          case SIGIL_PIN: {
-            if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
-                return PANIC(Error_Need_Non_End(CURRENT));
+    Sigil sigil = Cell_Sigil(CURRENT);
+    switch (sigil) {
+      case SIGIL_PIN: {
+        if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
+            return PANIC(Error_Need_Non_End(CURRENT));
 
-            assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
-            const Element* elem = c_cast(Element*, L->feed->p);
+        assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
+        const Element* elem = c_cast(Element*, L->feed->p);
 
-            bool antiform = Get_Cell_Flag(elem, FEED_NOTE_META);  // [2]
-            Clear_Cell_Flag(m_cast(Element*, elem), FEED_NOTE_META);  // [3]
+        bool antiform = Get_Cell_Flag(elem, FEED_NOTE_META);  // [2]
+        Clear_Cell_Flag(m_cast(Element*, elem), FEED_NOTE_META);  // [3]
 
-            The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
+        The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
 
-            if (antiform)  // exception [2]
-                Meta_Unquotify_Known_Stable(L->out);
-            break; }
+        if (antiform)  // exception [2]
+            Meta_Unquotify_Known_Stable(L->out);
+        break; }
 
-          case SIGIL_LIFT:  // ^
-          case SIGIL_TIE: {  // $
-            Level* right = Maybe_Rightward_Continuation_Needed(L);
-            if (not right)
-                goto sigil_rightside_meta_in_out;
+      case SIGIL_LIFT:  // ^
+      case SIGIL_TIE: {  // $
+        Level* right = Maybe_Rightward_Continuation_Needed(L);
+        if (not right)
+            goto sigil_rightside_meta_in_out;
 
-            return CONTINUE_SUBLEVEL(right); }
+        return CONTINUE_SUBLEVEL(right); }
 
-          default:
-            assert(false);
-        }
-        goto lookahead; }
+      default:
+        assert(false);
+    }
 
-      sigil_rightside_meta_in_out: {
+    goto lookahead;
 
-        assert(Is_Quoted(OUT) or Is_Quasiform(OUT));
+} sigil_rightside_meta_in_out: {
 
-        switch (Cell_Sigil(CURRENT)) {
-          case SIGIL_LIFT:  // ^
-            break;  // it's already meta
+    assert(Is_Quoted(OUT) or Is_Quasiform(OUT));
 
-          case SIGIL_TIE:  // $
-            Meta_Unquotify_Undecayed(OUT);
-            if (Is_Antiform(OUT))
-                return PANIC("$ operator cannot bind antiforms");
-            Derelativize(SPARE, cast(Element*, OUT), Level_Binding(L));
-            Copy_Cell(OUT, SPARE);  // !!! inefficient
-            break;
+    switch (Cell_Sigil(CURRENT)) {
+      case SIGIL_LIFT:  // ^
+        break;  // it's already meta
 
-          default:
-            assert(false);
-        }
-        goto lookahead; }
+      case SIGIL_TIE:  // $
+        Meta_Unquotify_Undecayed(OUT);
+        if (Is_Antiform(OUT))
+            return PANIC("$ operator cannot bind antiforms");
+        Derelativize(SPARE, cast(Element*, OUT), Level_Binding(L));
+        Copy_Cell(OUT, SPARE);  // !!! inefficient
+        break;
+
+      default:
+        assert(false);
+    }
+
+    goto lookahead;
 
 
-    //=//// WORD! //////////////////////////////////////////////////////////=//
-    //
+} case TYPE_WORD: { //// WORD! ///////////////////////////////////////////////
+
     // A plain word tries to fetch its value through its binding.  It panics
     // if the word is unbound (or if the binding is to a variable which is
     // set, but to the antiform of blank e.g. TRASH).  Should the word
@@ -705,278 +845,281 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    though we're doing infix.  So pushing *before* we set the flags
     //    means the FLAG_STATE_BYTE() will be 0, and we get clearing.
 
-      word_common: ///////////////////////////////////////////////////////////
+} word_common: {
 
-      case TYPE_WORD: {
-        Option(Error*) error = Trap_Get_Any_Word(OUT, CURRENT, L_binding);
-        if (error)
-            return PANIC(unwrap error);  // don't conflate with function result
+    Option(Error*) error = Trap_Get_Any_Word(OUT, CURRENT, L_binding);
+    if (error)
+        return PANIC(unwrap error);  // don't conflate with function result
 
-        if (Is_Action(OUT))
+    if (Is_Action(OUT))
+        goto run_action_in_out;
+
+    if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD)) {
+        if (Is_Frame(OUT))
             goto run_action_in_out;
+        return PANIC("Leading slash means execute FRAME! or ACTION! only");
+    }
 
-        if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD)) {
-            if (Is_Frame(OUT))
-                goto run_action_in_out;
-            return PANIC("Leading slash means execute FRAME! or ACTION! only");
-        }
+    if (Any_Vacancy(stable_OUT))  // checked second
+        return PANIC(Error_Bad_Word_Get(CURRENT, OUT));
 
-        if (Any_Vacancy(stable_OUT))  // checked second
-            return PANIC(Error_Bad_Word_Get(CURRENT, OUT));
+    goto lookahead;
 
-        goto lookahead; }
+} run_action_in_out: {
 
-      run_action_in_out: { ///////////////////////////////////////////////////
+    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(OUT);
+    const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
 
-        Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(OUT);
-        const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
-
-        if (infix_mode) {
-            if (infix_mode != INFIX_TIGHT) {  // defer or postpone
-                if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
-                    Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
-                    Set_Feed_Flag(L->feed, DEFERRING_INFIX);
-                    goto finished;
-                }
+    if (infix_mode) {
+        if (infix_mode != INFIX_TIGHT) {  // defer or postpone
+            if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
+                Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
+                Set_Feed_Flag(L->feed, DEFERRING_INFIX);
+                goto finished;
             }
         }
+    }
 
-        if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH)) {
-            if (infix_mode)
-                assert(false);  // !!! this won't work, can it happen?
+    if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH)) {
+        if (infix_mode)
+            assert(false);  // !!! this won't work, can it happen?
 
-            Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
+        Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
+    }
+
+  #if (! DEBUG_DISABLE_INTRINSICS)
+    Details* details = maybe Try_Cell_Frame_Details(OUT);
+    if (
+        not infix_mode  // too rare a case for intrinsic optimization
+        and details
+        and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
+        and Not_Level_At_End(L)  // can't do <end>, fallthru to error
+        and not SPORADICALLY(10)  // checked builds sometimes bypass
+    ){
+        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
+        Init_Frame(
+            CURRENT,
+            details,
+            label,
+            coupling
+        );
+        Param* param = Phase_Param(details, 1);
+        Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
+
+        switch (Cell_Parameter_Class(param)) {
+          case PARAMCLASS_NORMAL:
+            break;
+
+          case PARAMCLASS_LIFTED:
+            flags |= LEVEL_FLAG_ERROR_RESULT_OK;
+            break;
+
+          case PARAMCLASS_JUST:
+            Just_Next_In_Feed(SPARE, L->feed);
+            Meta_Quotify(SPARE);
+            goto intrinsic_meta_arg_in_spare;
+
+          case PARAMCLASS_THE:
+            The_Next_In_Feed(SPARE, L->feed);
+            Meta_Quotify(SPARE);
+            goto intrinsic_meta_arg_in_spare;
+
+          default:
+            return PANIC("Unsupported Intrinsic parameter convention");
         }
 
-     #if (! DEBUG_DISABLE_INTRINSICS)
-        Details* details = maybe Try_Cell_Frame_Details(OUT);
-        if (
-            not infix_mode  // too rare a case for intrinsic optimization
-            and details
-            and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
-            and Not_Level_At_End(L)  // can't do <end>, fallthru to error
-            and not SPORADICALLY(10)  // checked builds sometimes bypass
-        ){
-            Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
-            Init_Frame(
-                CURRENT,
-                details,
-                label,
-                coupling
-            );
-            Param* param = Phase_Param(details, 1);
-            Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
+        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
 
-            switch (Cell_Parameter_Class(param)) {
-              case PARAMCLASS_NORMAL:
-                break;
+        Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, flags);
+        Push_Level_Erase_Out_If_State_0(SPARE, sub);
+        STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
+        return CONTINUE_SUBLEVEL(sub);
+    }
+  #endif
 
-              case PARAMCLASS_LIFTED:
-                flags |= LEVEL_FLAG_ERROR_RESULT_OK;
-                break;
+    Level* sub = Make_Action_Sublevel(L);
+    Push_Action(sub, OUT);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);  // *always* clear out
+    Begin_Action(sub, label, infix_mode);
+    unnecessary(Push_Level_Erase_Out_If_State_0(OUT, sub)); // see [1]
 
-              case PARAMCLASS_JUST:
-                Just_Next_In_Feed(SPARE, L->feed);
-                Meta_Quotify(SPARE);
-                goto intrinsic_meta_arg_in_spare;
-
-              case PARAMCLASS_THE:
-                The_Next_In_Feed(SPARE, L->feed);
-                Meta_Quotify(SPARE);
-                goto intrinsic_meta_arg_in_spare;
-
-              default:
-                return PANIC("Unsupported Intrinsic parameter convention");
-            }
-
-            Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
-
-            Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, flags);
-            Push_Level_Erase_Out_If_State_0(SPARE, sub);
-            STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
-            return CONTINUE_SUBLEVEL(sub);
-        }
-      #endif
-
-        Level* sub = Make_Action_Sublevel(L);
-        Push_Action(sub, OUT);
-        Push_Level_Erase_Out_If_State_0(OUT, sub);  // *always* clear out
-        Begin_Action(sub, label, infix_mode);
-        unnecessary(Push_Level_Erase_Out_If_State_0(OUT, sub)); // see [1]
-
-        goto process_action; }
+    goto process_action;
 
 
-    //=//// CHAIN! ////////////////////////////////////////////////////////=//
-    //
+} case TYPE_CHAIN: { //// CHAIN! [ a:  b:c:d  :e ] ///////////////////////////
+
     // Due to the consolidation of all the SET-XXX! and GET-XXX! types as
     // CHAIN! with leading or trailing blanks, CHAIN! has to break that down
     // and dispatch to the appropriate behavior.
 
-      case TYPE_CHAIN: {
-        switch (Try_Get_Sequence_Singleheart(CURRENT)) {
-          case NOT_SINGLEHEART_0:
-            break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
+    switch (Try_Get_Sequence_Singleheart(CURRENT)) {
+      case NOT_SINGLEHEART_0:
+        break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
-          case TRAILING_BLANK_AND(WORD):  // FOO:, set word
-            Derelativize(  // !!! binding may be sensitive to "set-words only"
-                SPARE, CURRENT, L_binding
-            );
-            Unchain(Copy_Cell(CURRENT, cast(Element*, SPARE)));
-            assert(Is_Word(CURRENT));
-            goto handle_generic_set;
-
-          case TRAILING_BLANK_AND(TUPLE):  // a.b.c: is a set tuple
-            Unchain(CURRENT);
-            assert(Is_Tuple(CURRENT));
-            goto handle_generic_set;
-
-          case TRAILING_BLANK_AND(BLOCK):  // [a b]: multi-return assign
-            Unchain(CURRENT);
-            STATE = ST_STEPPER_SET_BLOCK;
-            goto handle_set_block;
-
-          case TRAILING_BLANK_AND(GROUP): {  // (xxx): -- generic retrigger set
-            Unchain(CURRENT);
-            L_next_gotten = nullptr;  // arbitrary code changes fetched vars
-            Level* sub = Make_Level_At_Inherit_Const(
-                &Evaluator_Executor,
-                CURRENT,
-                L_binding,
-                LEVEL_MASK_NONE
-            );
-            Init_Void(Evaluator_Primed_Cell(sub));
-            Push_Level_Erase_Out_If_State_0(SPARE, sub);
-            STATE = ST_STEPPER_SET_GROUP;
-            return CONTINUE_SUBLEVEL(sub); }
-
-          case LEADING_BLANK_AND(WORD):  // :FOO, refinement, error on eval?
-            Unchain(CURRENT);
-            STATE = ST_STEPPER_GET_WORD;
-            goto handle_get_word;
-
-          case LEADING_BLANK_AND(TUPLE):  // :a.b.c -- what will this do?
-            Unchain(CURRENT);
-            STATE = ST_STEPPER_GET_TUPLE;
-            goto handle_get_tuple;
-
-          case LEADING_BLANK_AND(BLOCK):  // !!! :[a b] reduces, not great...
-            Unchain(CURRENT);
-            Derelativize(SPARE, CURRENT, L_binding);
-            if (rebRunThrows(
-                cast(Value*, OUT),  // <-- output, API won't make atoms
-                CANON(REDUCE), SPARE
-            )){
-                goto return_thrown;
-            }
-            goto lookahead;
-
-          case LEADING_BLANK_AND(GROUP):
-            Unchain(CURRENT);
-            return PANIC("GET-GROUP! has no evaluator meaning at this time");
-
-          default:  // it's just something like :1 or <tag>:
-            return PANIC("No current evaluation for things like :1 or <tag>:");
-        }
-
-        Option(Error*) error = Trap_Get_Chain_Push_Refinements(
-            OUT,  // where to write action
-            SPARE,  // temporary GC-safe scratch space
-            CURRENT,
-            L_binding
+      case TRAILING_BLANK_AND(WORD):  // FOO:, set word
+        Derelativize(  // !!! binding may be sensitive to "set-words only"
+            SPARE, CURRENT, L_binding
         );
-        if (error)  // lookup failed, a GROUP! in path threw, etc.
-            return PANIC(unwrap error);  // don't definitional error for now
+        Unchain(Copy_Cell(CURRENT, cast(Element*, SPARE)));
+        assert(Is_Word(CURRENT));
+        goto handle_generic_set;
 
-        assert(Is_Action(OUT));
+      case TRAILING_BLANK_AND(TUPLE):  // a.b.c: is a set tuple
+        Unchain(CURRENT);
+        assert(Is_Tuple(CURRENT));
+        goto handle_generic_set;
 
-        if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated
-            Drop_Data_Stack_To(STACK_BASE);
-            return PANIC("Use `->-` to shove left infix operands into CHAIN!s");
+      case TRAILING_BLANK_AND(BLOCK):  // [a b]: multi-return assign
+        Unchain(CURRENT);
+        STATE = ST_STEPPER_SET_BLOCK;
+        goto handle_set_block;
+
+      case TRAILING_BLANK_AND(GROUP): {  // (xxx): -- generic retrigger set
+        Unchain(CURRENT);
+        L_next_gotten = nullptr;  // arbitrary code changes fetched vars
+        Level* sub = Make_Level_At_Inherit_Const(
+            &Evaluator_Executor,
+            CURRENT,
+            L_binding,
+            LEVEL_MASK_NONE
+        );
+        Init_Void(Evaluator_Primed_Cell(sub));
+        Push_Level_Erase_Out_If_State_0(SPARE, sub);
+        STATE = ST_STEPPER_SET_GROUP;
+        return CONTINUE_SUBLEVEL(sub); }
+
+      case LEADING_BLANK_AND(WORD):  // :FOO, refinement, error on eval?
+        Unchain(CURRENT);
+        STATE = ST_STEPPER_GET_WORD;
+        goto handle_get_word;
+
+      case LEADING_BLANK_AND(TUPLE):  // :a.b.c -- what will this do?
+        Unchain(CURRENT);
+        STATE = ST_STEPPER_GET_TUPLE;
+        goto handle_get_tuple;
+
+      case LEADING_BLANK_AND(BLOCK):  // !!! :[a b] reduces, not great...
+        Unchain(CURRENT);
+        Derelativize(SPARE, CURRENT, L_binding);
+        if (rebRunThrows(
+            cast(Value*, OUT),  // <-- output, API won't make atoms
+            CANON(REDUCE), SPARE
+        )){
+            goto return_thrown;
         }
-        goto handle_action_in_out_with_refinements_pushed; }
+        goto lookahead;
 
-     handle_action_in_out_with_refinements_pushed: { /////////////////////////
+      case LEADING_BLANK_AND(GROUP):
+        Unchain(CURRENT);
+        return PANIC("GET-GROUP! has no evaluator meaning at this time");
 
-        Level* sub = Make_Action_Sublevel(L);
-        sub->baseline.stack_base = STACK_BASE;  // refinements
+      default:  // it's just something like :1 or <tag>:
+        return PANIC("No current evaluation for things like :1 or <tag>:");
+    }
 
-        Option(const Symbol*) label = Cell_Frame_Label_Deep(OUT);
+    Option(Error*) error = Trap_Get_Chain_Push_Refinements(
+        OUT,  // where to write action
+        SPARE,  // temporary GC-safe scratch space
+        CURRENT,
+        L_binding
+    );
+    if (error)  // lookup failed, a GROUP! in path threw, etc.
+        return PANIC(unwrap error);  // don't definitional error for now
 
-        Push_Action(sub, OUT);
-        Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
-        Push_Level_Erase_Out_If_State_0(OUT, sub);
-        goto process_action; }
+    assert(Is_Action(OUT));
+
+    if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated
+        Drop_Data_Stack_To(STACK_BASE);
+        return PANIC("Use `->-` to shove left infix operands into CHAIN!s");
+    }
+
+} handle_action_in_out_with_refinements_pushed: {
+
+    Level* sub = Make_Action_Sublevel(L);
+    sub->baseline.stack_base = STACK_BASE;  // refinements
+
+    Option(const Symbol*) label = Cell_Frame_Label_Deep(OUT);
+
+    Push_Action(sub, OUT);
+    Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
+    goto process_action;
 
 
-    //=//// GET-WORD! /////////////////////////////////////////////////////=//
-    //
+} handle_get_word: {  // jumps here for CHAIN! that's like a GET-WORD!
+
     // A GET-WORD! gives you the contents of a variable as-is, with no
     // dispatch on functions.  This includes antiforms.
     //
     // https://forum.rebol.info/t/1301
 
-      handle_get_word:  // jumps here for CHAIN! that's like a GET-WORD!
-      case TYPE_META_WORD: {
-        assert(
-            (STATE == ST_STEPPER_GET_WORD and Is_Word(CURRENT))
-            or (
-                STATE == cast(StepperState, TYPE_META_WORD)
-                and Is_Lifted(WORD, CURRENT)
-            )
-        );
-        Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
-            OUT,
-            CURRENT,
-            L_binding
-        );
-        if (error)
-            return PANIC(unwrap error);
+    assert(
+        (STATE == ST_STEPPER_GET_WORD and Is_Word(CURRENT))
+        or (
+            STATE == cast(StepperState, TYPE_WORD)
+            and Is_Lifted(WORD, CURRENT)
+        )
+    );
+    Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
+        OUT,
+        CURRENT,
+        L_binding
+    );
+    if (error)
+        return PANIC(unwrap error);
 
-        if (STATE == cast(StepperState, TYPE_META_WORD)) {
-            if (not Is_Quoted(OUT) and not Is_Quasiform(OUT))
-                return PANIC("^WORD! only works on quoted/quasiform");
-            Meta_Unquotify_Undecayed(OUT);
-        }
+    if (Is_Lifted(WORD, CURRENT)) {
+        if (not Is_Metaform(OUT))
+            return PANIC("^WORD! can only UNMETA quoted/quasiform");
+        Meta_Unquotify_Undecayed(OUT);
+    }
 
-        goto lookahead; }
+    goto lookahead;
 
 
-    //=//// GROUP!, GET-GROUP!, and ^GROUP! ///////////////////////////////=//
-    //
-    // Groups simply evaluate their contents, and can evaluate to nihil if
+} case TYPE_GROUP: //// GROUP! (...) /////////////////////////////////////////
+  handle_group_or_lifted_group: {
+
+    // Groups simply evaluate their contents, and can evaluate to GHOST! if
     // the contents completely disappear.
     //
-    // GET-GROUP! currently acts as a synonym for group [1].
-    //
-    //////////////////////////////////////////////////////////////////////////
-    //
-    // 2. We prime the array executor with nihil in order to avoid generating
+    // 1. We prime the array executor with ghost in order to avoid generating
     //    voids from thin air when using GROUP!s
     //
     //        >> 1 + 2 (comment "hi")
     //        == 3  ; e.g. not void
 
-      case TYPE_GROUP:
-      case TYPE_META_GROUP: {
-        L_next_gotten = nullptr;  // arbitrary code changes fetched variables
+    L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;  // [2]
+    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;  // [2]
 
-        Level* sub = Make_Level_At_Inherit_Const(
-            &Evaluator_Executor,
-            CURRENT,
-            L_binding,
-            flags
-        );
-        Init_Ghost(Evaluator_Primed_Cell(sub));
-        Push_Level_Erase_Out_If_State_0(OUT, sub);
+    Level* sub = Make_Level_At_Inherit_Const(
+        &Evaluator_Executor,
+        CURRENT,
+        L_binding,
+        flags
+    );
+    Init_Ghost(Evaluator_Primed_Cell(sub));  // want to vaporize ghosts [1]
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-        return CONTINUE_SUBLEVEL(sub); }
+    return CONTINUE_SUBLEVEL(sub);
+
+} group_or_lifted_group_result_in_out: {
+
+    if (Is_Group(CURRENT))
+        goto lookahead;  // not decayed, result is good
+
+    assert(Is_Lifted(GROUP, CURRENT));
+
+    if (not Is_Metaform(OUT))
+        return PANIC("^GROUP! can only UNMETA quoted/quasiforms");
+
+    Meta_Unquotify_Undecayed(OUT);  // GHOST! legal, ACTION! legal...
+    goto lookahead;
 
 
-    //=//// TUPLE! /////////////////////////////////////////////////////////=//
-    //
+} case TYPE_TUPLE: { //// TUPLE! [ a.  b.c.d  .e ] ///////////////////////////
+
     // TUPLE! runs through an extensible mechanism based on PICK and POKE.
     // Hence `a.b.c` is kind of like a shorthand for `pick (pick a 'b) 'c`.
     //
@@ -990,41 +1133,40 @@ Bounce Meta_Stepper_Executor(Level* L)
     // WORD! and GET-WORD!, and will error...directing you use GET:ANY if
     // fetching nothing is what you actually intended.
 
-      case TYPE_TUPLE: {
-        Copy_Sequence_At(SPARE, CURRENT, 0);
-        bool blank_at_head = Is_Blank(SPARE);
-        if (
-            not blank_at_head  // `.a` means pick member from "self"
-            and Any_Inert(SPARE)  // `1.2.3` is inert
-        ){
-            Derelativize(OUT, CURRENT, L_binding);
-            goto lookahead;
-        }
+    Copy_Sequence_At(SPARE, CURRENT, 0);
+    bool blank_at_head = Is_Blank(SPARE);
+    if (
+        not blank_at_head  // `.a` means pick member from "self"
+        and Any_Inert(SPARE)  // `1.2.3` is inert
+    ){
+        Derelativize(OUT, CURRENT, L_binding);
+        goto lookahead;
+    }
 
-        Option(Error*) error = Trap_Get_Tuple(  // vacant will cause error
-            OUT,
-            GROUPS_OK,
-            CURRENT,
-            L_binding
-        );
-        if (error) {  // tuples never run actions, erroring won't conflate
-            Init_Warning(OUT, unwrap error);
-            Failify(OUT);
-            goto lookahead;  // e.g. EXCEPT might want error
-        }
+    Option(Error*) error = Trap_Get_Tuple(  // vacant will cause error
+        OUT,
+        GROUPS_OK,
+        CURRENT,
+        L_binding
+    );
+    if (error) {  // tuples never run actions, erroring won't conflate
+        Init_Warning(OUT, unwrap error);
+        Failify(OUT);
+        goto lookahead;  // e.g. EXCEPT might want error
+    }
 
-        if (Is_Action(OUT)) {  // don't RAISE, conflates
-            if (blank_at_head)
-                goto run_action_in_out;
+    if (Is_Action(OUT)) {  // don't RAISE, conflates
+        if (blank_at_head)
+            goto run_action_in_out;
 
-            return PANIC(Error_Action_Tuple_Raw(CURRENT));
-        }
+        return PANIC(Error_Action_Tuple_Raw(CURRENT));
+    }
 
-        goto lookahead; }
+    goto lookahead;
 
 
-    //=//// PATH! //////////////////////////////////////////////////////////=//
-    //
+} case TYPE_PATH: { //// PATH! [ a/  b/c/d  e/ ] /////////////////////////////
+
     // Ren-C moved to member access with "dots instead of slashes" (TUPLE!)
     // and refinements are done with "colons instead of slashes" (CHAIN!).
     // So PATH!s role has come to be specificially dealing with functions:
@@ -1040,17 +1182,74 @@ Bounce Meta_Stepper_Executor(Level* L)
     // 2. Slash at head will signal running actions soon enough.  But for the
     //    moment it is still refinement.  Let's try not binding it by default
     //    just to see what headaches that causes...if any.
-    //
-    // 3. It would not make sense to return a definitional error when a path
+
+} path_common: {
+
+    bool slash_at_head;
+    bool slash_at_tail;
+    Option(SingleHeart) single = Try_Get_Sequence_Singleheart(CURRENT);
+
+    if (not single) {
+        Copy_Sequence_At(SPARE, CURRENT, 0);
+        if (Any_Inert(SPARE)) {
+            if (Is_Blank(SPARE))
+                slash_at_head = true;
+            else {
+                Derelativize(OUT, CURRENT, L_binding);  // inert [2]
+                goto lookahead;
+            }
+        }
+        else
+            slash_at_head = false;
+
+        Length len = Cell_Sequence_Len(CURRENT);
+        Copy_Sequence_At(SPARE, CURRENT, len - 1);
+        slash_at_tail = Is_Blank(SPARE);
+    }
+    else switch (unwrap single) {
+      case LEADING_BLANK_AND(WORD):
+        Unpath(CURRENT);
+        Set_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD);
+        goto word_common;
+
+      case LEADING_BLANK_AND(CHAIN): {  // /abc: or /?:?:?
+        Unpath(CURRENT);
+
+        switch (Try_Get_Sequence_Singleheart(CURRENT)) {
+          case TRAILING_BLANK_AND(WORD):  // /abc: is set actions only
+            Unchain(CURRENT);
+            Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
+            goto handle_generic_set;
+
+          case TRAILING_BLANK_AND(TUPLE):  // /a.b.c: is set actions only
+            Unchain(CURRENT);
+            Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
+            goto handle_generic_set;
+
+          default:
+            return PANIC("/a:b:c will guarantee a function call, in time");
+        }
+        break; }
+
+      default:
+        slash_at_tail = Singleheart_Has_Trailing_Blank(unwrap single);
+        slash_at_head = Singleheart_Has_Leading_Blank(unwrap single);
+        assert(slash_at_head == not slash_at_tail);
+        break;
+    }
+
+  delegate_to_get_path: {
+
+    // 1. It would not make sense to return a definitional error when a path
     //    lookup does not exist.  Imagine making null back for `try lib/append`
     //    if you wrote `try lib/append [a b c] [d e]` when lib/append did not
     //    exist--that's completely broken.
     //
-    // 4. Since paths with trailing slashes just return the action as-is, it's
+    // 2. Since paths with trailing slashes just return the action as-is, it's
     //    an arity-0 operation.  So returning a definitional error isn't
     //    complete nonsense, but still might not be great.  Review the choice.
     //
-    // 5. Trailing slash notation is a particularly appealing way of denoting
+    // 3. Trailing slash notation is a particularly appealing way of denoting
     //    that something is an action, and that you'd like to fetch it in a
     //    way that does not take arguments:
     //
@@ -1058,103 +1257,47 @@ Bounce Meta_Stepper_Executor(Level* L)
     //         ;                         ---^
     //         ; slash helps show block is not argument
     //
-    // 6. The left hand side does not look ahead at paths to find infix
+    // 4. The left hand side does not look ahead at paths to find infix
     //    functions.  This is because PATH! dispatch is costly and can error
     //    in more ways than sniffing a simple WORD! for infix can.  So the
     //    prescribed way of running infix with paths is `left ->- right/side`,
     //    which uses an infix WORD! to mediate the interaction.
 
-      path_common:
-      case TYPE_PATH: {
-        bool slash_at_head;
-        bool slash_at_tail;
-        Option(SingleHeart) single = Try_Get_Sequence_Singleheart(CURRENT);
+    Option(Error*) error = Trap_Get_Path_Push_Refinements(
+        OUT,  // where to write action
+        SPARE,  // temporary GC-safe scratch space
+        CURRENT,
+        L_binding
+    );
+    if (error) {  // lookup failed, a GROUP! in path threw, etc.
+        if (not slash_at_tail)
+            return PANIC(unwrap error);  // RAISE error would conflate [1]
+        return PANIC(unwrap error);  // don't RAISE error for now [2]
+    }
 
-        if (not single) {
-            Copy_Sequence_At(SPARE, CURRENT, 0);
-            if (Any_Inert(SPARE)) {
-                if (Is_Blank(SPARE))
-                    slash_at_head = true;
-                else {
-                    Derelativize(OUT, CURRENT, L_binding);  // inert [2]
-                    goto lookahead;
-                }
+    assert(Is_Action(OUT));
+    if (slash_at_tail) {  // do not run action, just return it [3]
+        if (STACK_BASE != TOP_INDEX) {
+            if (Specialize_Action_Throws(
+                SPARE, stable_OUT, nullptr, STACK_BASE
+            )){
+                goto return_thrown;
             }
-            else
-                slash_at_head = false;
-
-            Length len = Cell_Sequence_Len(CURRENT);
-            Copy_Sequence_At(SPARE, CURRENT, len - 1);
-            slash_at_tail = Is_Blank(SPARE);
+            Move_Atom(OUT, SPARE);
         }
-        else switch (unwrap single) {
-          case LEADING_BLANK_AND(WORD):
-            Unpath(CURRENT);
-            Set_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD);
-            goto word_common;
+        goto lookahead;
+    }
 
-          case LEADING_BLANK_AND(CHAIN): {  // /abc: or /?:?:?
-            Unpath(CURRENT);
+    if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated [4]
+        Drop_Data_Stack_To(STACK_BASE);
+        return PANIC("Use `->-` to shove left infix operands into PATH!s");
+    }
 
-            switch (Try_Get_Sequence_Singleheart(CURRENT)) {
-              case TRAILING_BLANK_AND(WORD):  // /abc: is set actions only
-                Unchain(CURRENT);
-                Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
-                goto handle_generic_set;
+    UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as warning?
+    goto handle_action_in_out_with_refinements_pushed;
 
-              case TRAILING_BLANK_AND(TUPLE):  // /a.b.c: is set actions only
-                Unchain(CURRENT);
-                Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
-                goto handle_generic_set;
+}} handle_generic_set: {
 
-              default:
-                return PANIC("/a:b:c will guarantee a function call, in time");
-            }
-            break; }
-
-          default:
-            slash_at_tail = Singleheart_Has_Trailing_Blank(unwrap single);
-            slash_at_head = Singleheart_Has_Leading_Blank(unwrap single);
-            assert(slash_at_head == not slash_at_tail);
-            break;
-        }
-
-        Option(Error*) error = Trap_Get_Path_Push_Refinements(
-            OUT,  // where to write action
-            SPARE,  // temporary GC-safe scratch space
-            CURRENT,
-            L_binding
-        );
-        if (error) {  // lookup failed, a GROUP! in path threw, etc.
-            if (not slash_at_tail)
-                return PANIC(unwrap error);  // RAISE error would conflate [3]
-            return PANIC(unwrap error);  // don't RAISE error for now [4]
-        }
-
-        assert(Is_Action(OUT));
-        if (slash_at_tail) {  // do not run action, just return it [5]
-            if (STACK_BASE != TOP_INDEX) {
-                if (Specialize_Action_Throws(
-                    SPARE, stable_OUT, nullptr, STACK_BASE
-                )){
-                    goto return_thrown;
-                }
-                Move_Atom(OUT, SPARE);
-            }
-            goto lookahead;
-        }
-
-        if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated [6]
-            Drop_Data_Stack_To(STACK_BASE);
-            return PANIC("Use `->-` to shove left infix operands into PATH!s");
-        }
-
-        UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as warning?
-        goto handle_action_in_out_with_refinements_pushed; }
-
-
-    //=//// TUPLE! or WORD! VARIABLE ASSIGNMENT ///////////////////////////=//
-    //
     // Right side is evaluated into `out`, and then copied to the variable.
     //
     // !!! The evaluation ordering is dictated by the fact that there isn't a
@@ -1182,94 +1325,92 @@ Bounce Meta_Stepper_Executor(Level* L)
     //
     // * Antiform assignments are allowed: https://forum.rebol.info/t/895/4
 
-    handle_generic_set: { ////////////////////////////////////////////////////
-        assert(
-            Is_Word(CURRENT) or Is_Tuple(CURRENT) or Is_Meta_Of_Void(CURRENT)
-        );
-        STATE = ST_STEPPER_GENERIC_SET;
+    assert(
+        Is_Word(CURRENT) or Is_Tuple(CURRENT) or Is_Meta_Of_Void(CURRENT)
+    );
+    STATE = ST_STEPPER_GENERIC_SET;
 
-        Level* right = Maybe_Rightward_Continuation_Needed(L);
-        if (not right)
-            goto generic_set_rightside_meta_in_out;
+    Level* right = Maybe_Rightward_Continuation_Needed(L);
+    if (not right)
+        goto generic_set_rightside_meta_in_out;
 
-        return CONTINUE_SUBLEVEL(right);
+    return CONTINUE_SUBLEVEL(right);
 
-    } generic_set_rightside_meta_in_out: {  //////////////////////////////////
+} generic_set_rightside_meta_in_out: {
 
-        Meta_Unquotify_Undecayed(OUT);
+    Meta_Unquotify_Undecayed(OUT);
 
-        if (Is_Ghost(OUT)) {  // even `(void):,` needs to error
-            return PANIC(Error_Need_Non_End(CURRENT));
-        }
-        else if (Is_Error(OUT)) {
-            // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
-            goto lookahead;
-        }
+    if (Is_Ghost(OUT)) {  // even `(void):,` needs to error
+        return PANIC(Error_Need_Non_End(CURRENT));
+    }
+    else if (Is_Error(OUT)) {
+        // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
+        goto lookahead;
+    }
 
-        if (Is_Meta_Of_Void(CURRENT))  // e.g. `(void): ...`
-            goto lookahead;
+    if (Is_Meta_Of_Void(CURRENT))  // e.g. `(void): ...`
+        goto lookahead;
 
-        Option(Value*) setval;
-        if (Is_Void(OUT))
-            setval = nullptr;
-        else
-            setval = Decay_If_Unstable(OUT);  // !!! packs should passthru
+    Option(Value*) setval;
+    if (Is_Void(OUT))
+        setval = nullptr;
+    else
+        setval = Decay_If_Unstable(OUT);  // !!! packs should passthru
 
-        if (Is_Action(OUT)) {  // !!! Review: When to update labels?
-            if (Is_Word(CURRENT))
-                Update_Frame_Cell_Label(OUT, Cell_Word_Symbol(CURRENT));
-        }
-        else {  // assignments of /foo: or /obj.field: require action
-            if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION))
-                return PANIC(
-                    "/word: and /obj.field: assignments require Action"
-                );
-        }
+    if (Is_Action(OUT)) {  // !!! Review: When to update labels?
+        if (Is_Word(CURRENT))
+            Update_Frame_Cell_Label(OUT, Cell_Word_Symbol(CURRENT));
+    }
+    else {  // assignments of /foo: or /obj.field: require action
+        if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION))
+            return PANIC(
+                "/word: and /obj.field: assignments require Action"
+            );
+    }
 
-        if (Set_Var_Core_Throws(  // cheaper on panic vs. Set_Var_May_Panic()
-            SPARE,
-            GROUPS_OK,
-            CURRENT,
-            L_binding,
-            OUT
-        )){
-            goto return_thrown;
-        }
+    if (Set_Var_Core_Throws(  // cheaper on panic vs. Set_Var_May_Panic()
+        SPARE,
+        GROUPS_OK,
+        CURRENT,
+        L_binding,
+        OUT
+    )){
+        goto return_thrown;
+    }
 
-        L_next_gotten = nullptr;  // cache can tamper with lookahead [1]
+    L_next_gotten = nullptr;  // cache can tamper with lookahead [1]
 
-        goto lookahead; }
+    goto lookahead;
 
-      set_group_result_in_spare: {  ////////////////////////////////////////
+} set_group_result_in_spare: {
 
-        assert(L_current_gotten == nullptr);
+    assert(L_current_gotten == nullptr);
 
-        if (Is_Void(SPARE)) {
-            Init_Meta_Of_Void(CURRENT);  // can't put voids in feed position
-            goto handle_generic_set;
-        }
-        else switch (Type_Of(SPARE)) {
-          case TYPE_BLOCK :
-            Copy_Cell(CURRENT, cast(Element*, SPARE));
-            STATE = ST_STEPPER_SET_BLOCK;
-            goto handle_set_block;
+    if (Is_Void(SPARE)) {
+        Init_Meta_Of_Void(CURRENT);  // can't put voids in feed position
+        goto handle_generic_set;
+    }
+    else switch (Type_Of(SPARE)) {
+      case TYPE_BLOCK :
+        Copy_Cell(CURRENT, cast(Element*, SPARE));
+        STATE = ST_STEPPER_SET_BLOCK;
+        goto handle_set_block;
 
-          case TYPE_WORD :
-            Copy_Cell(CURRENT, cast(Element*, SPARE));
-            goto handle_generic_set;
+      case TYPE_WORD :
+        Copy_Cell(CURRENT, cast(Element*, SPARE));
+        goto handle_generic_set;
 
-          case TYPE_TUPLE :
-            Copy_Cell(CURRENT, cast(Element*, SPARE));
-            goto handle_generic_set;
+      case TYPE_TUPLE :
+        Copy_Cell(CURRENT, cast(Element*, SPARE));
+        goto handle_generic_set;
 
-          default:
-            return PANIC("Unknown type for use in SET-GROUP!");
-        }
-        goto lookahead; }
+      default:
+        return PANIC("Unknown type for use in SET-GROUP!");
+    }
+    goto lookahead;
 
+} handle_get_tuple: {
 
-    //=//// GET-TUPLE! and ^TUPLE! ////////////////////////////////////////=//
-    //
     // Note that the GET native on a TUPLE! won't allow GROUP! execution:
     //
     //    foo: [X]
@@ -1284,27 +1425,25 @@ Bounce Meta_Stepper_Executor(Level* L)
     // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
     // the plain (unfriendly) forms.
 
-      handle_get_tuple: {
-        assert(
-            (STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(CURRENT))
-        );
-        Option(Error*) error = Trap_Get_Tuple_Maybe_Vacant(
-            OUT,
-            GROUPS_OK,
-            CURRENT,
-            L_binding
-        );
-        if (error) {
-            Init_Warning(OUT, unwrap error);
-            Failify(OUT);
-            goto lookahead;  // e.g. EXCEPT might want to see error
-        }
+    assert(STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(CURRENT));
 
-        goto lookahead; }
+    Option(Error*) error = Trap_Get_Tuple_Maybe_Vacant(
+        OUT,
+        GROUPS_OK,
+        CURRENT,
+        L_binding
+    );
+    if (error) {
+        Init_Warning(OUT, unwrap error);
+        Failify(OUT);
+        goto lookahead;  // e.g. EXCEPT might want to see error
+    }
+
+    goto lookahead;
 
 
-    //=//// SET-BLOCK! ////////////////////////////////////////////////////=//
-    //
+} handle_set_block: {
+
     // The evaluator treats SET-BLOCK! specially as a means for implementing
     // multiple return values.  It unpacks antiform blocks into components.
     //
@@ -1337,173 +1476,175 @@ Bounce Meta_Stepper_Executor(Level* L)
     // GROUP!s, and also allows FENCE! to {circle} which result you want to be
     // the overall result of the expression (defaults to passing through the
     // entire pack).
+    //
+    // 1. Empty SET-BLOCK! are not supported, although it could be argued
+    //    that an empty set-block could receive a VOID (~[]~) pack.
 
-      // 1. Empty SET-BLOCK! are not supported, although it could be argued
-      //    that an empty set-block could receive a VOID (~[]~) pack.
-      //
-      // 2. We pre-process the SET-BLOCK! first and collect the variables to
-      //    write on the stack.  (It makes more sense for any GROUP!s in the
-      //    set-block to be evaluated on the left before the right.)
-      //
-      //    !!! Should the block be locked while the advancement happens?  It
-      //    wouldn't need to be since everything is on the stack before code
-      //    is run on the right...but it might reduce confusion.
-      //
-      // 3. {xxx} indicates a desire for a "circled" result.  By default, the
-      //    whole input is returned.  (While checking we set stackindex_circled
-      //    when we see `[{...} ...]: ...` to give an error if more than one
-      //    return were circled.)
-      //
-      // 4. ^xxx indicate a desire to get a "meta" result.
-      //
-      //    !!! ^META composition with use-existing-binding is proposed as
-      //    ^[@x] but this has not been implemented yet.
-      //
-      //    !!! The multi-return mechanism doesn't allow an arbitrary number
-      //    of meta steps, just one.  Should you be able to say ^(^(x)) or
-      //    something like that to add more?  :-/
-      //
+    assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(CURRENT));
 
-      handle_set_block: {
-        assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(CURRENT));
+    if (Cell_Series_Len_At(CURRENT) == 0)  // not supported [1]
+        return PANIC("SET-BLOCK! must not be empty for now.");
 
-        if (Cell_Series_Len_At(CURRENT) == 0)  // not supported [1]
-            return PANIC("SET-BLOCK! must not be empty for now.");
+    const Element* tail;
+    const Element* check = Cell_List_At(&tail, CURRENT);
+    Context* check_binding = Derive_Binding(L_binding, CURRENT);
 
-        const Element* tail;
-        const Element* check = Cell_List_At(&tail, CURRENT);
-        Context* check_binding = Derive_Binding(L_binding, CURRENT);
+    // we've extracted the array at and tail, can reuse current now
 
-        // we've extracted the array at and tail, can reuse current now
+    Option(StackIndex) circled = 0;
 
-        Option(StackIndex) circled = 0;
+for (; check != tail; ++check) {  // push variables
 
-        for (; check != tail; ++check) {  // push variables first [2]
-            if (Is_Quoted(check))
-                return PANIC("QUOTED? not currently permitted in SET-BLOCK!s");
+    // We pre-process the SET-BLOCK! first and collect the variables to write
+    // on the stack.  (It makes more sense for any GROUP!s in the set-block to
+    // be evaluated on the left before the right.)
+    //
+    // !!! Should the block be locked while the advancement happens?  It
+    // wouldn't need to be since everything is on the stack before code is run
+    // on the right...but it might reduce confusion.
 
-            Option(Heart) heart = Heart_Of(check);
+    if (Is_Quoted(check))
+        return PANIC("QUOTED? not currently permitted in SET-BLOCK!s");
 
-            bool circle_this;
+    bool circle_this;
 
-            if (heart == TYPE_FENCE) {  // [x {y}]: ... fence means eval to that
-                if (circled)
-                    return PANIC("Can only {Circle} one multi-return result");
-                Length len_at = Cell_Series_Len_At(check);
-                if (len_at == 1) {
-                    Derelativize(
-                        CURRENT,
-                        Cell_List_Item_At(check),
-                        check_binding
-                    );
-                }
-                else  // !!! should {} be a synonym for {#} or {~} ?
-                    return PANIC("{Circle} only one element in multi-return");
+    if (not Is_Fence(check)) {  // not "circled"
+        circle_this = false;
+        Derelativize(CURRENT, check, check_binding);  // same heart
+        goto circle_detection_finished;
+    }
 
-                circle_this = true;
-                heart = Heart_Of(CURRENT);
-            }
+  handle_fence_in_set_block: {  // "circled"
+
+    // By default, the evaluation product of a SET-BLOCK expression is what
+    // the right hand side was (e.g. an entire pack).  But {xxx} indicates a
+    // desire to pick a specific unpacked result as the return.
+    //
+    //     >> [a b]: pack [1 2]
+    //     == ~['1 '2]~  ; anti
+    //
+    //     >> [a {b}]: pack [1 2]
+    //     == 2
+
+    if (circled)
+        return PANIC("Can only {Circle} one multi-return result");
+
+    Length len_at = Cell_Series_Len_At(check);
+    if (len_at == 1) {
+        Derelativize(
+            CURRENT,
+            Cell_List_Item_At(check),
+            check_binding
+        );
+    }
+    else  // !!! should {} be a synonym for {_}?
+        return PANIC("{Circle} only one element in multi-return");
+
+    circle_this = true;
+
+} circle_detection_finished: {
+
+    bool is_optional;
+
+    if (not Is_Chain(CURRENT)) {
+        is_optional = false;
+        goto optional_detection_finished;
+    }
+
+  handle_chain_in_set_block: {
+
+    Option(SingleHeart) single;
+    if (
+        not (single = Try_Get_Sequence_Singleheart(CURRENT))
+        or not Singleheart_Has_Leading_Blank(unwrap single)
+    ){
+        return PANIC(
+            "Only leading blank CHAIN! in SET BLOCK! dialect"
+        );
+    }
+    Unchain(CURRENT);
+    is_optional = true;
+
+} optional_detection_finished: {
+
+    if (
+        Is_Group(CURRENT)
+        or Is_Pinned(GROUP, CURRENT)
+        or Is_Lifted(GROUP, CURRENT)
+    ){
+        if (Eval_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
+            Drop_Data_Stack_To(STACK_BASE);
+            goto return_thrown;
+        }
+        if (Is_Void(SPARE) and Is_Group(CURRENT)) {
+            Init_Quasar(SPARE);  // [(void)]: ... pass thru
+        }
+        else {
+            Decay_If_Unstable(SPARE);
+            if (Is_Antiform(SPARE))
+                return PANIC(Error_Bad_Antiform(SPARE));
+
+            if (Is_Pinned(GROUP, CURRENT))
+                Pinify(Known_Element(SPARE));  // add @ decoration
             else {
-                circle_this = false;
-                Derelativize(CURRENT, check, check_binding);  // same heart
+                assert(Is_Lifted(GROUP, CURRENT));
+                Liftify(Known_Element(SPARE));  // add ^ decoration
             }
-
-            bool is_optional;
-
-            if (heart == TYPE_CHAIN) {
-                Option(SingleHeart) single;
-                if (
-                    not (single = Try_Get_Sequence_Singleheart(CURRENT))
-                    or not Singleheart_Has_Leading_Blank(unwrap single)
-                ){
-                    return PANIC(
-                        "Only leading blank CHAIN! in SET BLOCK! dialect"
-                    );
-                }
-                Unchain(CURRENT);
-                heart = Heart_Of_Singleheart(unwrap single);
-                assert(heart == Heart_Of(CURRENT));
-                is_optional = true;
-            }
-            else
-                is_optional = false;
-
-            if (
-                heart == TYPE_GROUP
-                or heart == TYPE_THE_GROUP
-                or heart == TYPE_META_GROUP
-            ){
-                if (Eval_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
-                    Drop_Data_Stack_To(STACK_BASE);
-                    goto return_thrown;
-                }
-                if (Is_Void(SPARE) and heart == TYPE_GROUP) {
-                    Init_Quasar(SPARE);  // [(void)]: ... pass thru
-                }
-                else {
-                    Decay_If_Unstable(SPARE);
-                    if (Is_Antiform(SPARE))
-                        return PANIC(Error_Bad_Antiform(SPARE));
-
-                    if (heart == TYPE_THE_GROUP)
-                        Pinify(Known_Element(SPARE));  // add @ decoration
-                    else if (heart == TYPE_META_GROUP)
-                        Liftify(Known_Element(SPARE));  // add ^ decoration
-                }
-
-                heart = Heart_Of(SPARE);
-                Copy_Cell(PUSH(), stable_SPARE);
-            }
-            else
-                Copy_Cell(PUSH(), CURRENT);
-
-            if (is_optional)  // so next phase won't worry about leading slash
-                Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
-
-            if (circle_this)
-                circled = TOP_INDEX;
-
-            if (
-                // ^xxx is indicator of a ^META result [4]
-                //
-                (heart == TYPE_SIGIL and Cell_Sigil(TOP) == SIGIL_LIFT)
-                or heart == TYPE_META_WORD
-            ){
-                continue;
-            }
-
-            if (heart == TYPE_WORD or heart == TYPE_TUPLE)
-                continue;
-
-            if (Is_Blank(TOP) or Is_Space(TOP) or Is_Quasar(TOP))
-                continue;  // !!! should probably just be BLANK! now
-
-            return PANIC(
-                "SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or [~ _ #]"
-            );
         }
 
-        level_->u.eval.stackindex_circled = circled;  // remember it
+        Copy_Cell(PUSH(), stable_SPARE);
+    }
+    else
+        Copy_Cell(PUSH(), CURRENT);
 
-        Level* sub = Maybe_Rightward_Continuation_Needed(L);
-        if (not sub)
-            goto set_block_rightside_meta_in_out;
+    UNUSED(*CURRENT);  // look at stack top now
 
-        return CONTINUE_SUBLEVEL(sub);
+    if (is_optional)  // so next phase won't worry about leading slash
+        Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
 
-    } set_block_rightside_meta_in_out: {  ////////////////////////////////////
+    if (circle_this)
+        circled = TOP_INDEX;
 
-      // 1. On errors we don't assign variables, yet pass the error through.
-      //    That permits code like this to work:
-      //
-      //        trap [[a b]: transcode "1&aa"]
+    if (
+        (Is_Sigil(TOP) and Cell_Sigil(TOP) == SIGIL_LIFT)
+        or Is_Lifted(WORD, TOP)  // "lift" result (e.g. meta-assign it)
+    ){
+        continue;
+    }
 
-        Meta_Unquotify_Undecayed(OUT);
+    if (Is_Word(TOP) or Is_Tuple(TOP))
+        continue;
 
-        if (Is_Error(OUT))  // don't assign variables [1]
-            goto set_block_drop_stack_and_continue;
+    if (Is_Blank(TOP))
+        continue;
 
-   } set_block_result_not_error: {  /////////////////////////////////////////
+    return PANIC(
+        "SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or _ or ^]"
+    );
+
+}}} set_block_eval_right_hand_side: {
+
+    level_->u.eval.stackindex_circled = circled;  // remember it
+
+    Level* sub = Maybe_Rightward_Continuation_Needed(L);
+    if (not sub)
+        goto set_block_rightside_meta_in_out;
+
+    return CONTINUE_SUBLEVEL(sub);
+
+}} set_block_rightside_meta_in_out: {
+
+    // 1. On errors we don't assign variables, yet pass the error through.
+    //    That permits code like this to work:
+    //
+    //        trap [[a b]: transcode "1&aa"]
+
+    Meta_Unquotify_Undecayed(OUT);
+
+    if (Is_Error(OUT))  // don't assign variables [1]
+        goto set_block_drop_stack_and_continue;
+
+} set_block_result_not_error: {
 
       // 2. We enumerate from left to right in the SET-BLOCK!, with the "main"
       //    being the first assigned to any variables.  This has the benefit
@@ -1511,317 +1652,191 @@ Bounce Meta_Stepper_Executor(Level* L)
       //    overwrite of the returned OUT for the whole evaluation will happen
       //    *after* the original OUT was captured into any desired variable.
 
-        const Source* pack_array;  // needs GC guarding when OUT overwritten
-        const Element* pack_meta_at;  // pack block items are ^META'd
-        const Element* pack_meta_tail;
+    const Source* pack_array;  // needs GC guarding when OUT overwritten
+    const Element* pack_meta_at;  // pack block items are ^META'd
+    const Element* pack_meta_tail;
 
-        if (Is_Pack(OUT)) {  // antiform block
-            pack_meta_at = Cell_List_At(&pack_meta_tail, OUT);
+    if (Is_Pack(OUT)) {  // antiform block
+        pack_meta_at = Cell_List_At(&pack_meta_tail, OUT);
 
-            pack_array = Cell_Array(OUT);
-            Push_Lifeguard(pack_array);
-        }
-        else {
-            Meta_Quotify(OUT);  // standardize to align with pack items
+        pack_array = Cell_Array(OUT);
+        Push_Lifeguard(pack_array);
+    }
+    else {
+        Meta_Quotify(OUT);  // standardize to align with pack items
 
-            pack_meta_at = cast(Element*, OUT);
-            pack_meta_tail = cast(Element*, OUT) + 1;  // not a valid cell
+        pack_meta_at = cast(Element*, OUT);
+        pack_meta_tail = cast(Element*, OUT) + 1;  // not a valid cell
 
-            pack_array = nullptr;
-        }
+        pack_array = nullptr;
+    }
 
-        StackIndex stackindex_var = STACK_BASE + 1;  // [2]
-        Option(StackIndex) circled = level_->u.eval.stackindex_circled;
+    StackIndex stackindex_var = STACK_BASE + 1;  // [2]
+    Option(StackIndex) circled = level_->u.eval.stackindex_circled;
 
-        for (
-            ;
-            stackindex_var != TOP_INDEX + 1;
-            ++stackindex_var, ++pack_meta_at
-        ){
-            bool is_optional = Get_Cell_Flag(
-                Data_Stack_Cell_At(stackindex_var),
-                STACK_NOTE_OPTIONAL
-            );
+  next_pack_item: {
 
-            Element* var = CURRENT;  // stable location, safe across SET of var
-            Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
+    if (stackindex_var == TOP_INDEX + 1)
+        goto set_block_finalize_and_drop_stack;
 
-            assert(QUOTE_BYTE(var) == NOQUOTE_1 or Is_Quasar(var));
-            Heart var_heart = Heart_Of_Builtin(var);
+    bool is_optional = Get_Cell_Flag(
+        Data_Stack_Cell_At(stackindex_var),
+        STACK_NOTE_OPTIONAL
+    );
 
-            if (pack_meta_at == pack_meta_tail) {
-                if (not is_optional)
-                    return PANIC("Not enough values for required multi-return");
+    Element* var = CURRENT;  // stable location, safe across SET of var
+    Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
 
-                // match typical input of meta which will be Meta_Unquotify'd
-                // (special handling in TYPE_META_WORD below will actually use
-                // plain null to distinguish)
-                //
-                Init_Meta_Of_Null(SPARE);
-            }
-            else
-                Copy_Cell(SPARE, pack_meta_at);
+    assert(QUOTE_BYTE(var) == NOQUOTE_1);
 
-            if (var_heart == TYPE_SIGIL and Cell_Sigil(var) == SIGIL_LIFT) {
-                panic ("META sigil should allow ghost pass thru, probably?");
-                /* goto circled_check; */
-            }
+    if (pack_meta_at == pack_meta_tail) {
+        if (not is_optional)
+            return PANIC("Not enough values for required multi-return");
 
-            if (var_heart == TYPE_META_WORD) {
-                if (pack_meta_at == pack_meta_tail) {  // special detection
-                    Init_Nulled(SPARE);  // LIB(NULL) isn't mutable/atom
-                    Set_Var_May_Panic(var, SPECIFIED, SPARE);
-                    goto circled_check;
-                }
-                Set_Var_May_Panic(var, SPECIFIED, SPARE);  // is meta'd
-                Meta_Unquotify_Undecayed(SPARE);  // result should not be meta
-                goto circled_check;
-            }
-
-            Meta_Unquotify_Undecayed(SPARE);
-
-            if (var_heart == TYPE_BLANK) {
-                possibly(Is_Quasar(var));  // no name, but don't decay
-                goto circled_check;
-            }
-
-            if (Is_Error(SPARE))  // don't pass thru errors if not @
-                return PANIC(Cell_Error(SPARE));
-
-            Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
-
-            if (var_heart == TYPE_ISSUE) {
-                assert(Is_Space(var));  // [# ...]: -> no name, but decay
-                goto circled_check;
-            }
-
-            if (
-                var_heart == TYPE_WORD or var_heart == TYPE_TUPLE
-                or var_heart == TYPE_THE_WORD
-            ){
-                DECLARE_VALUE (dummy);
-                if (Set_Var_Core_Throws(
-                    dummy,
-                    GROUPS_OK,
-                    var,
-                    SPECIFIED,
-                    SPARE
-                )){
-                    return PANIC(Error_No_Catch_For_Throw(L));
-                }
-            }
-            else
-                assert(false);
-
-          circled_check:  // Note: no circling passes through the original OUT
-
-            if (circled == stackindex_var)
-                Copy_Cell(OUT, SPARE);
-        }
-
-        // We've just changed the values of variables, and these variables
-        // might be coming up next.  Consider:
+        // match typical input of meta which will be Meta_Unquotify'd
+        // (special handling ^WORD! below will actually use plain null to
+        // distinguish)
         //
-        //     304 = [a]: test 1020
-        //     a = 304
-        //
-        // The `a` was fetched and found to not be infix, and in the process
-        // its value was known.  But then we assigned that a with a new value
-        // in the implementation of SET-BLOCK! here, so, it's incorrect.
-        //
-        L_next_gotten = nullptr;
+        Init_Meta_Of_Null(SPARE);
+    }
+    else
+        Copy_Cell(SPARE, pack_meta_at);
 
-        if (pack_array)
-            Drop_Lifeguard(pack_array);
+    if (Is_Sigil(var) and Cell_Sigil(var) == SIGIL_LIFT) {
+        panic ("META sigil should allow ghost pass thru, probably?");
+        /* goto circled_check; */
+    }
 
-        if (not circled and not Is_Pack(OUT))  // reverse quotification
-            Meta_Unquotify_Undecayed(OUT);
+    if (Is_Lifted(WORD, var)) {
+        if (pack_meta_at == pack_meta_tail) {  // special detection
+            Init_Nulled(SPARE);  // LIB(NULL) isn't mutable/atom
+            Set_Var_May_Panic(var, SPECIFIED, SPARE);
+            goto circled_check;
+        }
+        Set_Var_May_Panic(var, SPECIFIED, SPARE);  // is meta'd
+        Meta_Unquotify_Undecayed(SPARE);  // result should not be meta
+        goto circled_check;
+    }
 
-    } set_block_drop_stack_and_continue: {  //////////////////////////////////
+    Meta_Unquotify_Undecayed(SPARE);
 
-        Drop_Data_Stack_To(STACK_BASE);  // drop writeback variables
-        goto lookahead; }
+    if (Is_Blank(var))
+        goto circled_check;
 
+    if (Is_Error(SPARE))  // don't pass thru errors if not @
+        return PANIC(Cell_Error(SPARE));
 
-    //=//// ^BLOCK! ///////////////////////////////////////////////////////=//
-    //
-    // Produces an PACK! of what it is given:
-    //
-    //    >> ^[1 + 2 null]
-    //    == ~['3 ~null~]~  ; anti
-    //
-    // This is the most useful meaning, and it round trips the values:
-    //
-    //    >> ^[a b]: ^[1 + 2 null]
-    //    == ~['3 ~null~]~
-    //
-    //    >> a
-    //    == 3
-    //
-    //    >> b
-    //    == ~null~  ; anti
+    Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 
-      case TYPE_META_BLOCK: {
-        Quotify(Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed));
-        HEART_BYTE(OUT) = TYPE_BLOCK;
-        Init_Word(SPARE, CANON(PACK));
-        unnecessary(Quotify(Known_Element(SPARE)));  // want to run word
-        Value* temp = rebMeta_helper(
-            Level_Binding(L), stable_SPARE, stable_OUT, rebEND
-        );
-        Copy_Cell(OUT, temp);
-        rebRelease(temp);
+    if (Is_Word(var) or Is_Tuple(var) or Is_Pinned(WORD, var)) {
+        DECLARE_VALUE (dummy);
+        if (Set_Var_Core_Throws(
+            dummy,
+            GROUPS_OK,
+            var,
+            SPECIFIED,
+            SPARE
+        )){
+            return PANIC(Error_No_Catch_For_Throw(L));
+        }
+    }
+    else
+        assert(false);
+
+} circled_check: { // Note: no circling passes through the original OUT
+
+    if (circled == stackindex_var)
+        Copy_Cell(OUT, SPARE);
+
+    ++stackindex_var;
+    ++pack_meta_at;
+    goto next_pack_item;
+
+} set_block_finalize_and_drop_stack: {
+
+    if (pack_array)
+        Drop_Lifeguard(pack_array);
+
+    if (not circled and not Is_Pack(OUT))  // reverse quotification
         Meta_Unquotify_Undecayed(OUT);
-        goto lookahead; }
 
+}} set_block_drop_stack_and_continue: {
 
-    //=//// FENCE! ////////////////////////////////////////////////////////=//
+    // We've just changed the values of variables, and these variables
+    // might be coming up next.  Consider:
     //
+    //     304 = [a]: test 1020
+    //     a = 304
+    //
+    // The `a` was fetched and found to not be infix, and in the process
+    // its value was known.  But then we assigned that a with a new value
+    // in the implementation of SET-BLOCK! here, so, it's incorrect.
+
+    L_next_gotten = nullptr;
+
+    Drop_Data_Stack_To(STACK_BASE);  // drop writeback variables
+    goto lookahead;
+
+
+} case TYPE_FENCE: { ///// FENCE! {...} //////////////////////////////////////
+
     // FENCE! is the guinea pig for a technique of calling a function defined
     // in the local environment to do the handling.
 
-      case TYPE_FENCE: {
-        Quotify(Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed));
-        Init_Word(SPARE, CANON(FENCE_X_EVAL));
-        unnecessary(Quotify(Known_Element(SPARE)));  // want to run word
-        Value* temp = rebValue_helper(
-            Level_Binding(L), stable_SPARE, stable_OUT, rebEND
-        );
-        Copy_Cell(OUT, temp);
-        rebRelease(temp);
-        goto lookahead; }
+    Quotify(Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed));
+    Init_Word(SPARE, CANON(FENCE_X_EVAL));
+    unnecessary(Quotify(Known_Element(SPARE)));  // want to run word
+    Value* temp = rebValue_helper(
+        Level_Binding(L), stable_SPARE, stable_OUT, rebEND
+    );
+    Copy_Cell(OUT, temp);
+    rebRelease(temp);
+    goto lookahead;
 
 
-    //=//// ^FENCE! ///////////////////////////////////////////////////////=//
+} case HEART_ENUM(0): //// "INERT" TYPES (EXTENSIBILITY TBD) /////////////////
+  case TYPE_BLOCK:
+  case TYPE_BLOB:
+  case TYPE_TEXT:
+  case TYPE_FILE:
+  case TYPE_EMAIL:
+  case TYPE_URL:
+  case TYPE_TAG:
+  case TYPE_ISSUE:
+  case TYPE_BITSET:
+  case TYPE_MAP:
+  case TYPE_VARARGS:
+  case TYPE_OBJECT:
+  case TYPE_MODULE:
+  case TYPE_WARNING:
+  case TYPE_PORT:
+  case TYPE_BLANK:
+  case TYPE_INTEGER:
+  case TYPE_DECIMAL:
+  case TYPE_PERCENT:
+  case TYPE_MONEY:
+  case TYPE_PAIR:
+  case TYPE_TIME:
+  case TYPE_DATE:
+  case TYPE_PARAMETER:
+  case TYPE_HANDLE: {
 
-      case TYPE_META_FENCE:
-        return PANIC("Don't know what ^FENCE! is going to do yet");
+    // Today these datatypes are all inert, but with RebindableSyntax the
+    // concept is that you can define a function that says how things like
+    // INTEGER! will behave.
 
-
-    //=//// PINNED! @XXX //////////////////////////////////////////////////=//
-    //
-    // Type that just leaves the sigil:
-    //
-    //    >> @word
-    //    == @word
-    //
-    // This offers some parity with the @ operator, which gives its next
-    // argument back literally (used heavily in the API):
-    //
-    //    >> @ var:
-    //    == var:
-    //
-    // Most of the datatypes use is in dialects, but the evaluator behavior
-    // comes in handy for cases like passing a signal that reducing constructs
-    // should not perform further reduction:
-    //
-    //    >> pack [1 + 2 10 + 20]
-    //    == ~['3 '30]~  ; anti
-    //
-    //    >> pack @[1 + 2 10 + 20]
-    //    == ~['1 '+ '2 '10 '+ '20]~  ; anti
-    //
-    // It also helps in cases like:
-    //
-    //    import @xml
-    //    import @json/1.1.2
-    //
-    // Leaving the sigil means IMPORT can typecheck against a @WORD! + @PATH!
-    // and not have a degree of freedom that it can't distinguish from being
-    // called as (import 'xml) or (import 'json/1.1.2)
-
-      case TYPE_THE_BLOCK:
-      case TYPE_THE_FENCE:
-      case TYPE_THE_GROUP:
-      case TYPE_THE_WORD:
-        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        goto lookahead;
+    Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+    goto lookahead;
 
 
-    //=///// TIED! ($XXX) /////////////////////////////////////////////////=//
-    //
-    // The $xxx types evaluate to remove the decoration, but be bound:
-    //
-    //     >> var: 1020
-    //
-    //     >> $var
-    //     == var
-    //
-    //     >> get $var
-    //     == 1020
-    //
-    // This is distinct from quoting the item, which would give you the item
-    // undecorated but not changing the binding (usually resulting in unbound).
-    //
-    //     >> var: 1020
-    //
-    //     >> get 'var
-    //     ** Error: var is unbound
+} default: { //// !! CORRUPTION (pseudotypes or otherwise) !! ////////////////
 
-      case TYPE_VAR_BLOCK:
-      case TYPE_VAR_FENCE:
-      case TYPE_VAR_GROUP:
-      case TYPE_VAR_WORD:
-        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        HEART_BYTE(OUT) = Planify_Any_Tied_Heart(u_cast(HeartEnum, STATE));
-        goto lookahead;
+    crash (CURRENT);
+
+}}  //// END handle_plain: SWITCH STATEMENT //////////////////////////////////
 
 
-      case TYPE_BLOCK:
-        //
-      case TYPE_BLOB:
-        //
-      case TYPE_TEXT:
-      case TYPE_FILE:
-      case TYPE_EMAIL:
-      case TYPE_URL:
-      case TYPE_TAG:
-      case TYPE_ISSUE:
-        //
-      case TYPE_BITSET:
-        //
-      case TYPE_MAP:
-        //
-      case TYPE_VARARGS:
-        //
-      case TYPE_OBJECT:
-      case TYPE_MODULE:
-      case TYPE_WARNING:
-      case TYPE_PORT:
-        goto inert;
-
-
-    //=///////////////////////////////////////////////////////////////////=//
-    //
-    // Treat all the other NOT Is_Bindable() types as inert
-    //
-    //=///////////////////////////////////////////////////////////////////=//
-
-    inert:
-      case HEART_ENUM(0):
-      case TYPE_BLANK:  // once blanks evaluated to null, but that was panned
-      case TYPE_INTEGER:
-      case TYPE_DECIMAL:
-      case TYPE_PERCENT:
-      case TYPE_MONEY:
-      case TYPE_PAIR:
-      case TYPE_TIME:
-      case TYPE_DATE:
-        //
-      case TYPE_PARAMETER:
-      case TYPE_HANDLE:
-
-        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        goto lookahead;
-
-
-    //=//// GARBAGE (pseudotypes or otherwise //////////////////////////////=//
-
-      default:
-        crash (CURRENT);
-    }
-
-  //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//
+} lookahead: { ///////////////////////////////////////////////////////////////
 
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider infix.  e.g.
@@ -1845,24 +1860,19 @@ Bounce Meta_Stepper_Executor(Level* L)
     //
     // So this post-switch step is where all of it happens, and it's tricky!
     //
-    // 2. If something was run with the expectation it should take the next
+    // 1. If something was run with the expectation it should take the next
     //    arg from the output cell, and an evaluation cycle ran that wasn't
     //    an ACTION! (or that was an arity-0 action), that's not what was
     //    meant.  But it can happen, e.g. `x: 10 | x ->-`, where ->- doesn't
     //    get an opportunity to quote left because it has no argument...and
     //    instead retriggers and lets x run.
-
-  lookahead:
+    //
+    // 2. For long-pondered technical reasons, only WORD! is able to dispatch
+    //    infix.  If necessary to dispatch an infix function via path, then
+    //    a word is used to do it, like `>>` in `x: >> lib/default [...]`.
 
     if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
-        return PANIC(Error_Literal_Left_Path_Raw());
-
-
-  //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION ///////////=//
-
-    // For long-pondered technical reasons, only WORD! is able to dispatch
-    // infix.  If it's necessary to dispatch an infix function via path, then
-    // a word is used to do it, like `>-` in `x: >- lib/method [...] [...]`.
+        return PANIC(Error_Literal_Left_Path_Raw());  // [1]
 
     if (Is_Feed_At_End(L->feed)) {
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
@@ -1870,7 +1880,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     }
 
     switch (Type_Of_Unchecked(L_next)) {
-      case TYPE_WORD:
+      case TYPE_WORD:  // only WORD! does infix now (TBD: CHAIN!) [2]
         if (not L_next_gotten)
             L_next_gotten = Lookup_Word(L_next, Feed_Binding(L->feed));
         else
@@ -1881,25 +1891,14 @@ Bounce Meta_Stepper_Executor(Level* L)
         L_next_gotten = L_next;
         break;
 
-      default:
+      default:  // if not a WORD! or ACTION!, start new non-infix expression
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
         goto finished;
     }
 
-  //=//// FETCH WORD! TO PERFORM SPECIAL HANDLING FOR INFIX/INVISIBLES ////=//
+} test_word_or_action_for_infix: { ///////////////////////////////////////////
 
-    // First things first, we fetch the WORD! (if not previously fetched) so
-    // we can see if it looks up to any kind of ACTION! at all.
-
-
-  //=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-INFIX ///////////=//
-
-    // These cases represent finding the start of a new expression.
-    //
-    // Fall back on word-like "dispatch" even if ->gotten is null (unset or
-    // unbound word).  It'll be an error, but that code path handles it.
-
- { Option(InfixMode) infix_mode;
+    Option(InfixMode) infix_mode;
 
     if (
         not L_next_gotten
@@ -1918,24 +1917,22 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto finished;
     }
 
-  //=//// IS WORD INFIXEDLY TIED TO A FUNCTION (MAY BE "INVISIBLE") ///////=//
+  check_for_literal_first: { /////////////////////////////////////////////////
 
-  blockscope {
+    // 1. Left-quoting by infix needs to be done in the lookahead before an
+    //    evaluation, not this one that's after.  This happens in cases like:
+    //
+    //        left-the: infix func [@value] [value]
+    //        the <something> left-the
+    //
+    //    But due to the existence of <end>-able parameters, the left quoting
+    //    function might be okay with seeing nothing on the left.  Start a
+    //    new expression and let it error if that's not ok.
+
     Phase* infixed = Cell_Frame_Phase(unwrap L_next_gotten);
     ParamList* paramlist = Phase_Paramlist(infixed);
 
-    if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {
-        //
-        // Left-quoting by infix needs to be done in the lookahead before an
-        // evaluation, not this one that's after.  This happens in cases like:
-        //
-        //     /left-the: infix func [@value] [value]
-        //     the <something> left-the
-        //
-        // But due to the existence of <end>-able parameters, the left quoting
-        // function might be okay with seeing nothing on the left.  Start a
-        // new expression and let it error if that's not ok.
-        //
+    if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {  // [1]
         assert(Not_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH));
         if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
             return PANIC(Error_Literal_Left_Path_Raw());
@@ -2058,22 +2055,23 @@ Bounce Meta_Stepper_Executor(Level* L)
     Fetch_Next_In_Feed(L->feed);
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
-    goto process_action; }}
+    goto process_action;
 
-  finished:
+
+}} finished: { ///////////////////////////////////////////////////////////////
 
     Meta_Quotify(OUT);  // see top of file notes about why it's Meta_Stepper()
 
-  finished_dont_meta_out:  // called if at end, and it's trash
+} finished_dont_meta_out: {  // called if at end, and it's trash
 
-    // Want to keep this flag between an operation and an ensuing infix in
-    // the same level, so can't clear in Drop_Action(), e.g. due to:
+    // 1. Want to keep this flag between an operation and an ensuing infix in
+    //    the same level, so can't clear in Drop_Action(), e.g. due to:
     //
-    //     left-the: infix the/
-    //     o: make object! [f: does [1]]
-    //     o.f left-the  ; want error suggesting >- here, need flag for that
-    //
-    Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
+    //        left-the: infix the/
+    //        o: make object! [f: does [1]]
+    //        o.f left-the  ; want error suggesting SHOVE, need flag for it
+
+    Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);  // [1]
 
   #if RUNTIME_CHECKS
     Evaluator_Exit_Checks_Debug(L);
@@ -2084,11 +2082,12 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     return OUT;
 
-  return_thrown:
+
+} return_thrown: { ///////////////////////////////////////////////////////////
 
   #if RUNTIME_CHECKS
     Evaluator_Exit_Checks_Debug(L);
   #endif
 
     return BOUNCE_THROWN;
-}
+}}

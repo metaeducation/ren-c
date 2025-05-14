@@ -266,7 +266,7 @@
         result': meta:except eval [1 / 0 1 + 2]
     )
     (
-        result': meta:except [pos {~}]: eval:step [1 / 0 1 + 2]
+        result': meta:except [pos {_}]: eval:step [1 / 0 1 + 2]
         all [
             warning? result'
             result'.id = 'zero-divide

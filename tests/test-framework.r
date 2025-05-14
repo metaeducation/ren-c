@@ -221,7 +221,7 @@ process-tests: func [
             'collect-tests body: block! (
                 log ["@collect-tests" space mold body]
 
-                let [# collected]: module void compose:deep [collect [
+                let [_ collected]: module void compose:deep [collect [
                     let /keep-test: adapt keep/ [
                         if not block? :value [
                             panic "KEEP-TEST takes BLOCK! (acts as GROUP!)"
@@ -367,7 +367,7 @@ export do-recover: func [
             panic "do-recover log file parsing problem"
         ]
         last-vector
-        [# test-sources]: find-last test-sources last-vector
+        [_ test-sources]: find-last test-sources last-vector
 
         print [
             "recovering at:"
