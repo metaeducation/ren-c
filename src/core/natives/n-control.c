@@ -1178,7 +1178,7 @@ DECLARE_NATIVE(DEFAULT)
     if (error)
         return PANIC(unwrap error);
 
-    if (not (Is_Trash(OUT) or Is_Nulled(OUT) or Is_Hole(OUT)))
+    if (not (Is_Trash(OUT) or Is_Nulled(OUT) or Is_Blank(OUT)))
         return OUT;  // consider it a "value" [1]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;

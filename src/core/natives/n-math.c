@@ -821,7 +821,7 @@ DECLARE_NATIVE(SQUARE_ROOT)
 //
 //  vacant?: native [
 //
-//  "Tells you if default would overwrite a value (TRASH, NULL?, HOLE?)"
+//  "Tells you if default would overwrite a value (TRASH, NULL?, BLANK?)"
 //
 //      return: [logic?]
 //      ^value [any-value?]
@@ -837,7 +837,7 @@ DECLARE_NATIVE(VACANT_Q)
 
     Value* v = ARG(VALUE);  // meta
     Meta_Unquotify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
-    return Init_Logic(OUT, Is_Trash(v) or Is_Nulled(v) or Is_Hole(v));
+    return Init_Logic(OUT, Is_Trash(v) or Is_Nulled(v) or Is_Blank(v));
 }
 
 

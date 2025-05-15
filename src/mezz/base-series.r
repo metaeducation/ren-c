@@ -116,7 +116,7 @@ trim: func [
                 ;
                 panic 'core/bad-refines
             ]
-            rule: hole
+            rule: blank
 
             if not any [head tail] [
                 head: tail: #  ; plain TRIM => TRIM:HEAD:TAIL

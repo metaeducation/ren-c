@@ -256,7 +256,7 @@ INLINE Value* Init_Splice_Untracked(Init(Value) out, Source* a) {
 #define Init_Splice(out,a) \
     TRACK(Init_Splice_Untracked((out), (a)))
 
-INLINE bool Is_Hole(const Cell* v) {
+INLINE bool Is_Blank(const Cell* v) {
     if (not Is_Splice(v))
         return false;
     const Element* tail;
@@ -264,5 +264,5 @@ INLINE bool Is_Hole(const Cell* v) {
     return tail == at;
 }
 
-#define Init_Hole(out) \
+#define Init_Blank(out) \
     TRACK(Init_Splice_Untracked((out), g_empty_array))

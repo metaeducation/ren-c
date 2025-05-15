@@ -69,10 +69,10 @@
     ]
 )
 
-; HOLE acts same as empty block, void opts out and generates BREAK signal
+; BLANK acts same as empty block, void opts out and generates BREAK signal
 [
     ([] = map-each 'x [] [panic])
-    ([] = map-each 'x hole [panic])
+    ([] = map-each 'x blank [panic])
     (null? map-each 'x void [panic])
 
     ~expect-arg~ !! (map-each 'x '~ [panic])

@@ -510,7 +510,7 @@ DECLARE_NATIVE(CFOR)
 //      word "Variable set to each position in the series at skip distance"
 //          [word! @word? _]
 //      series "The series to iterate over"
-//          [<opt-out> hole? any-series?]
+//          [<opt-out> blank? any-series?]
 //      skip "Number of positions to skip each time"
 //          [<opt-out> integer!]
 //      body "Code to evaluate each time"
@@ -525,7 +525,7 @@ DECLARE_NATIVE(FOR_SKIP)
     Element* series = Element_ARG(SERIES);
     Element* body = Element_ARG(BODY);
 
-    if (Is_Hole(series))
+    if (Is_Blank(series))
         return VOID;
 
     REBINT skip = Int32(ARG(SKIP));
@@ -1069,7 +1069,7 @@ void Shutdown_Loop_Each(Value* iterator)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt-out> hole? any-series? any-context? map! any-sequence?
+//          [<opt-out> blank? any-series? any-context? map! any-sequence?
 //           action!]  ; action support experimental, e.g. generators
 //      body "Block to evaluate each time"
 //          [<const> block! ^block!]
@@ -1114,7 +1114,7 @@ DECLARE_NATIVE(FOR_EACH)
     //    even in the code of this dispatcher, we need to clean up the
     //    iterator state.
 
-    if (Is_Hole(data))  // same response as to empty series
+    if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
@@ -1179,7 +1179,7 @@ DECLARE_NATIVE(FOR_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt-out> hole? any-series? any-context? map! action!]
+//          [<opt-out> blank? any-series? any-context? map! action!]
 //      body [<const> block! ^block!]
 //          "Block to evaluate each time"
 //      <local> iterator
@@ -1217,7 +1217,7 @@ DECLARE_NATIVE(EVERY)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Hole(data))  // same response as to empty series
+    if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
@@ -1300,11 +1300,11 @@ DECLARE_NATIVE(EVERY)
 //  "Removes values for each block that returns true"
 //
 //      return: "Modified Input"
-//          [~null~ ~[[hole? any-series?] integer!]~]
+//          [~null~ ~[[blank? any-series?] integer!]~]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (modified)"
-//          [<opt-out> hole? any-series?]
+//          [<opt-out> blank? any-series?]
 //      body "Block to evaluate (return TRUE to remove)"
 //          [<const> block!]
 //  ]
@@ -1326,8 +1326,8 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Count removals = 0;
 
-    if (Is_Hole(data)) {
-        Init_Hole(OUT);
+    if (Is_Blank(data)) {
+        Init_Blank(OUT);
         goto return_pack;
     }
 
@@ -1652,7 +1652,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt-out> hole? any-series? any-sequence? any-context?]
+//          [<opt-out> blank? any-series? any-sequence? any-context?]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //      <local> iterator
@@ -1675,7 +1675,7 @@ DECLARE_NATIVE(MAP_EACH)
     UNUSED(PARAM(BODY));
     UNUSED(LOCAL(ITERATOR));
 
-    if (Is_Hole(ARG(DATA)))  // should have same result as empty list
+    if (Is_Blank(ARG(DATA)))  // should have same result as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
     Quotify(Element_ARG(DATA));  // dialect, in theory [1]
@@ -1701,7 +1701,7 @@ DECLARE_NATIVE(MAP_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
-//          [<opt-out> hole? quoted! action!]
+//          [<opt-out> blank? quoted! action!]
 //      @(body) "Block to evaluate each time"
 //          [<const> block! ^block!]
 //      <local> iterator
@@ -1741,7 +1741,7 @@ DECLARE_NATIVE(MAP)
 
     assert(Is_Cell_Erased(OUT));  // output only written in MAP if BREAK hit
 
-    if (Is_Hole(data))  // same response as to empty series
+    if (Is_Blank(data))  // same response as to empty series
         return Init_Block(OUT, Make_Source(0));
 
     if (Is_Block(body) or Is_Lifted(BLOCK, body))

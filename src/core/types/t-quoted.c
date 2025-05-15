@@ -406,7 +406,7 @@ DECLARE_NATIVE(ANTI)
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
 //          [~null~ ~[]~ element? splice!]
-//      ^value [~null~ ~[]~ hole? any-list? quasiform!]  ; see [1] [2] [3]
+//      ^value [~null~ ~[]~ blank? any-list? quasiform!]  ; see [1] [2] [3]
 //  ]
 //
 DECLARE_NATIVE(SPREAD)
@@ -424,12 +424,9 @@ DECLARE_NATIVE(SPREAD)
 //    ~[]~ or a ~null~ here instead of erroring helps more than it hurts.
 //    Should it turn out to be bad for some reason, this might be dropped.
 //
-// 3. HOLE? is considered EMPTY? and hence legal to use with spread.  It
-//    could return an empty splice...but that would then wind up having to
-//    make a decision on using a "cheap" shared read-only array, or making
-//    a new empty array to use.  Different usage situations would warrant
-//    one vs. the other, e.g. GLOM expects splices to be mutable.  Void is
-//    cheap and agnostic, so it's the logical choice here.
+// 3. BLANK? is considered EMPTY? and hence legal to use with spread, though
+//    it is already a splice.  This may suggest in general that splicing a
+//    splice should be a no-op, but more investigation is needed.
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
@@ -449,7 +446,7 @@ DECLARE_NATIVE(SPREAD)
         return OUT;
     }
 
-    if (Is_Hole(v))
+    if (Is_Blank(v))
         return VOID;  // immutable empty array makes problems for GLOM [3]
 
     if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]

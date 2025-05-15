@@ -56,7 +56,7 @@ utrim: func [
                 ;
                 panic 'core/bad-refines
             ]
-            rule: hole
+            rule: blank
 
             if not any [head tail] [
                 head: tail: okay  ; plain utrim => utrim/HEAD/TAIL

@@ -155,7 +155,7 @@ Bounce Action_Executor(Level* L)
                 }
                 else if (Is_Meta_Of_Void(ARG)) {
                     if (Get_Parameter_Flag(PARAM, OPT_OUT))
-                        Init_Hole(ARG);  // !!! Temporary hack
+                        Init_Blank(ARG);  // !!! Temporary hack
                     else if (Get_Parameter_Flag(PARAM, UNDO_OPT))
                         Init_Nulled(ARG);
                     else
@@ -760,7 +760,7 @@ Bounce Action_Executor(Level* L)
             return PANIC(Error_Unspecified_Arg(L));
         }
 
-        if (Is_Hole(ARG)) {
+        if (Is_Blank(ARG)) {
             if (Get_Parameter_Flag(param, OPT_OUT)) {  // <opt-out> param
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
                 Mark_Typechecked(stable_ARG);

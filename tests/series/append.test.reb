@@ -172,7 +172,7 @@
     ([a b c] = append [a b c] opt if null [<a>])
 ]
 
-; HOLE acts like an empty block when passed to SPREAD
+; BLANK acts like an empty block when passed to SPREAD
 [
     ([a b] = append [a b] spread second [c []])
     ([a b] = append [a b] spread degrade second [c ~()~])

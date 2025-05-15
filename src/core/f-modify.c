@@ -47,7 +47,7 @@ REBLEN Modify_Array(
 
     const Value* src_val;
     if (op == SYM_CHANGE and not opt_src) {
-        src_val = LIB(HOLE);  // CHANGE to void acts same as with empty splice
+        src_val = LIB(BLANK);  // CHANGE to void acts same as with empty splice
     }
     else if (not opt_src or dups <= 0) {
         //

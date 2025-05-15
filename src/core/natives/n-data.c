@@ -1245,7 +1245,7 @@ DECLARE_NATIVE(VOID_Q)
 
 
 //
-//  hole?: native:intrinsic [
+//  blank?: native:intrinsic [
 //
 //  "Tells you if argument is an ~()~ antiform, e.g. an empty splice"
 //
@@ -1253,16 +1253,16 @@ DECLARE_NATIVE(VOID_Q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(HOLE_Q)
+DECLARE_NATIVE(BLANK_Q)
 {
-    INCLUDE_PARAMS_OF_HOLE_Q;
+    INCLUDE_PARAMS_OF_BLANK_Q;
 
     DECLARE_VALUE (v);
     Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
-    return LOGIC(Is_Hole(v));
+    return LOGIC(Is_Blank(v));
 }
 
 

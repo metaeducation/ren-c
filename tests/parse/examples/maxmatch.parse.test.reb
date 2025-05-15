@@ -197,7 +197,7 @@
 
         return: "Result of the longest match (favors first parser if equal)"
            [any-value? pack!]
-        :pending [hole? block!]
+        :pending [blank? block!]
         parser1 [action!]
         parser2 [action!]
         <local>

@@ -1295,7 +1295,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     const Value* result;
     if (Is_Void(OUT))
-        result = LIB(HOLE);
+        result = LIB(BLANK);  // void is translated to blank splice
     else
         result = Decay_If_Unstable(OUT);
 
@@ -1340,7 +1340,7 @@ DECLARE_NATIVE(COMPOSE2)
 
         at_offset = end_offset;
 
-        if (Is_Hole(eval))  // VOID translated to empty splice for data stack
+        if (Is_Blank(eval))  // VOID translated to empty splice for data stack
             continue;
 
         if (QUOTE_BYTE(eval) != NOQUOTE_1)

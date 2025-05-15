@@ -246,12 +246,12 @@ empty?: func [
     "OKAY if blank or void, if empty, or if index is at or beyond its tail"
     return: [logic?]
     container [
-        <undo-opt> hole? any-series? any-sequence? object! port! bitset! map!
+        <undo-opt> blank? any-series? any-sequence? object! port! bitset! map!
     ]
 ][
     return any [
         null? container  ; e.g. input was void
-        hole? container
+        blank? container
         0 = length of container  ; sequences always have > 0 length, not empty
     ]
 ]

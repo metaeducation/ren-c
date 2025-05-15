@@ -32,7 +32,7 @@ quasar
 trash
 null
 okay
-hole
+blank
 NUL
 
 atom?
