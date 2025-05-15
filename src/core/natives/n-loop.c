@@ -79,7 +79,7 @@ bool Try_Catch_Break_Or_Continue(
 //
 //  "Exit the current iteration of a loop and stop iterating further"
 //
-//      return: []
+//      return: [<divergent>]
 //  ]
 //
 DECLARE_NATIVE(DEFINITIONAL_BREAK)
@@ -114,7 +114,7 @@ DECLARE_NATIVE(DEFINITIONAL_BREAK)
 //
 //  "Throws control back to top of loop for next iteration"
 //
-//      return: []
+//      return: [<divergent>]
 //      :with "Act as if loop body finished with this value"
 //          [any-value?]
 //  ]
@@ -615,7 +615,7 @@ DECLARE_NATIVE(FOR_SKIP)
 //
 //  "End the current iteration of CYCLE, optionally returning a value"
 //
-//      return: []
+//      return: [<divergent>]
 //      :with "Act as if loop body finished with this value"
 //          [any-value?]
 //  ]

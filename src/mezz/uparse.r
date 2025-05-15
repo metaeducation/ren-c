@@ -326,7 +326,7 @@ default-combinators: to map! reduce [
 
     'veto combinator [
         "Stop the current rule chain, and skip to the next `|` alternate"
-        return: []
+        return: [<divergent>]
         ; :negated  <- could this be negated to not veto?
     ][
         return fail "VETO to next alternate rule requested"
@@ -554,7 +554,7 @@ default-combinators: to map! reduce [
 
     'break combinator [
         "Break an iterated construct like SOME or REPEAT, failing the match"
-        return: []
+        return: [<divergent>]
         <local> f
     ][
         f: take:last state.loops except [
@@ -567,7 +567,7 @@ default-combinators: to map! reduce [
 
     'stop combinator [
         "Break an iterated construct like SOME or REPEAT, succeeding the match"
-        return: []
+        return: [<divergent>]
         parser [<end> action!]
         <local> f ^result
     ][
@@ -601,7 +601,7 @@ default-combinators: to map! reduce [
 
     'accept combinator [
         "Return a value explicitly from the parse, terminating early"
-        return: []
+        return: [<divergent>]
         parser [action!]
         <local> ^value
     ][
@@ -907,7 +907,7 @@ default-combinators: to map! reduce [
 
     'copy combinator [
         "Disabled combinator, included to help guide to use ACROSS"
-        return: []
+        return: [<divergent>]
     ][
         panic [
             "Transitionally (maybe permanently?) the COPY function in UPARSE"
@@ -1224,7 +1224,7 @@ default-combinators: to map! reduce [
 
     'set combinator [
         "Disabled combinator, included to help guide to use SET-WORD!"
-        return: []
+        return: [<divergent>]
     ][
         panic [
             "The SET keyword in UPARSE is done with SET-WORD!, and if SET does"
@@ -1719,7 +1719,7 @@ default-combinators: to map! reduce [
     ]
 
     (meta splice!) combinator [
-        return: []
+        return: [<divergent>]
         :pending [blank? block!]
         value [splice!]
         <local> comb neq?
@@ -2501,7 +2501,7 @@ default-combinators: to map! reduce [
     ; processed as a rule.  For the moment it quotes it for convenience.
 
     'panic combinator [
-        return: []
+        return: [<divergent>]
         'reason [@block!]
         <local> e
     ][

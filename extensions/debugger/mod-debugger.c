@@ -169,7 +169,7 @@ DECLARE_NATIVE(PAUSE)
 //
 //  "Resume after a breakpoint, can evaluate code in the breaking context"
 //
-//      return: []
+//      return: [<divergent>]
 //      expression "Evalue the given code as return value from BREAKPOINT"
 //          [<end> block!]
 //  ]

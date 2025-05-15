@@ -30,7 +30,7 @@
 //
 //  "Stops evaluation and returns to the input prompt"
 //
-//      return: []
+//      return: [<divergent>]
 //  ]
 //
 DECLARE_NATIVE(HALT)
@@ -46,7 +46,7 @@ DECLARE_NATIVE(HALT)
 //
 //  "Stop the interpreter, return exit status"
 //
-//      return: []
+//      return: [<divergent>]
 //      status "See: http://en.wikipedia.org/wiki/Exit_status"
 //          [integer!]
 //      :abrupt "Don't shut down, end process immediately (leaks in Valgrind)"

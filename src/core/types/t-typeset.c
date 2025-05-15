@@ -255,6 +255,12 @@ void Set_Parameter_Spec(
                 //
                 Init_Quasi_Word(dest, CANON(UNRUN));
             }
+            else if (0 == CT_Utf8(item, Root_Divergent_Tag, strict)) {
+                //
+                // !!! Currently just commentary so we can find the divergent
+                // functions.  Review what the best notation or functionality
+                // concept is.
+            }
             else {
                 panic (item);
             }

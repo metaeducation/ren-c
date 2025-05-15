@@ -250,6 +250,9 @@ static Element* Make_Locked_Tag(const char *utf8) { // helper
 // natives and run during bootstrap, so these string comparisons are
 // needed.
 //
+// !!! These should be created by Rebol, specified in the %specs/ directory,
+// along with most of the other random literals boot is creating right now.
+//
 static void Init_Action_Spec_Tags(void)
 {
     ensure(nullptr, Root_With_Tag) = Make_Locked_Tag("with");
@@ -259,6 +262,7 @@ static void Init_Action_Spec_Tags(void)
     ensure(nullptr, Root_Undo_Opt_Tag) = Make_Locked_Tag("undo-opt");
     ensure(nullptr, Root_Local_Tag) = Make_Locked_Tag("local");
     ensure(nullptr, Root_Const_Tag) = Make_Locked_Tag("const");
+    ensure(nullptr, Root_Divergent_Tag) = Make_Locked_Tag("divergent");
     ensure(nullptr, Root_Unrun_Tag) = Make_Locked_Tag("unrun");
 
     ensure(nullptr, Root_Here_Tag) = Make_Locked_Tag("here");  // used by PARSE
@@ -273,6 +277,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&Root_Undo_Opt_Tag);
     rebReleaseAndNull(&Root_Local_Tag);
     rebReleaseAndNull(&Root_Const_Tag);
+    rebReleaseAndNull(&Root_Divergent_Tag);
     rebReleaseAndNull(&Root_Unrun_Tag);
 
     rebReleaseAndNull(&Root_Here_Tag);  // used by PARSE

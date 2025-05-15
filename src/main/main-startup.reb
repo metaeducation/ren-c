@@ -254,7 +254,7 @@ bind construct [
     return: func [
         "Hooked RETURN function which finalizes any gathered EMIT lines"
 
-        return: []
+        return: [<divergent>]
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype!]
         <with> instruction
@@ -450,7 +450,7 @@ bind construct [
 
     let param-missing: func [
         "Take --option argv and then check if param arg is present, else die"
-        return: []
+        return: [<divergent>]
         option [text!] "Name of command-line option (switch) used"
     ][
         die [option "parameter missing"]

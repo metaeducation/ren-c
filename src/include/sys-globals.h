@@ -101,14 +101,14 @@ PVAR Flex* g_dispatcher_table;
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR Element* Root_With_Tag; // overrides locals gathering (can disable RETURN)
+PVAR Element* Root_With_Tag; // documents external variables used by function
 PVAR Element* Root_Variadic_Tag; // marks variadic argument <variadic>
 PVAR Element* Root_End_Tag; // marks endable argument (NULL if at end of input)
 PVAR Element* Root_Opt_Out_Tag; // passing void makes action a noop
 PVAR Element* Root_Undo_Opt_Tag; // passing void turns argument into a null
 PVAR Element* Root_Local_Tag; // marks beginning of a list of "pure locals"
 PVAR Element* Root_Const_Tag; // pass a CONST version of the input argument
-PVAR Element* Root_Void_Tag;  // tolerance for void returns or passing void args
+PVAR Element* Root_Divergent_Tag;  // marks divergent functions
 PVAR Element* Root_Unrun_Tag;  // parameters that degrade antiform actions
 
 PVAR Element* Root_Here_Tag;  // https://forum.rebol.info/t/1558/5

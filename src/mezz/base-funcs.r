@@ -556,7 +556,7 @@ cause-error: func [
 fail: func [
     "Interrupts execution by reporting an error (a TRAP can intercept it)"
 
-    return: []
+    return: [<divergent>]
     reason "ERROR! value, ID, URL, message text, or failure spec"
         [
             <end>  ; non-specific failure
