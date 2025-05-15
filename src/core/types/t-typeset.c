@@ -172,6 +172,9 @@ void Set_Parameter_Spec(
     TypesetByte* optimized = copy->misc.at_least_4;
     TypesetByte* optimized_tail = optimized + sizeof(uintptr_t);
 
+    if (item == tail)
+        *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
+
     for (; item != tail; ++item, ++dest) {
         Derelativize(dest, item, spec_binding);
         Clear_Cell_Flag(dest, NEWLINE_BEFORE);

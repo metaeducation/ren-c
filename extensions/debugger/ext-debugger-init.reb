@@ -45,7 +45,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.]--
     focus-frame: null
     focus-index: null
 
-    print-greeting: method [return: [~]] [
+    print-greeting: method [return: []] [
         ;
         ; We override in order to avoid printing out the redundant Rebol
         ; version information (and to print the greeting only once, which
@@ -61,7 +61,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.]--
         focus-index: 1
     ]
 
-    print-prompt: func [return: [~]] [
+    print-prompt: func [return: []] [
         ;
         ; If a debug frame is in focus then show it in the prompt, e.g.
         ; as `if:|4|>>` to indicate stack frame 4 is being examined, and
@@ -296,7 +296,7 @@ backtrace*: func [
 backtrace: func [
     "Prints out a backtrace at the current location"
 
-    return: [~]
+    return: []
 ][
     ; We could backtrace relative to `binding of $return`, but this would
     ; mean `>> if ok [backtrace]` would see that IF in the trace.
@@ -335,7 +335,7 @@ backtrace: func [
 
 debug: func [
     "Dialect for interactive debugging, see documentation for details"
-    return: [~]
+    return: []
     'value "Stack level to inspect or dialect block, or enter debug mode"
         [~null~ integer! frame! block!]
 ][
@@ -352,7 +352,7 @@ debug: func [
 ]
 
 
-locals: func [return: [~]] [
+locals: func [return: []] [
     print [debug-console-skin.focus-frame]
 ]
 

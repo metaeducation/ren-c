@@ -88,7 +88,7 @@ export console!: make object! [
 
     print-greeting: method [
         "Adds live elements to static greeting content (build #, version)"
-        return: [~]
+        return: []
     ][
         boot-print [
             "Rebol 3 (Ren-C branch)"
@@ -99,7 +99,7 @@ export console!: make object! [
         boot-print greeting
     ]
 
-    print-prompt: method [return: [~]] [
+    print-prompt: method [return: []] [
         ;
         ; Note: See example override in skin in the Debugger extension, which
         ; adds the stack "level" number and "current" function name.
@@ -112,7 +112,7 @@ export console!: make object! [
     ]
 
     print-result: method [
-        return: [~]
+        return: []
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-atom?]
     ][
@@ -252,23 +252,23 @@ export console!: make object! [
         ]
     ]
 
-    print-warning: method [return: [~] s] [print [warning reduce s]]
+    print-warning: method [return: [] s] [print [warning reduce s]]
 
-    print-error: method [return: [~] e [warning!]] [
+    print-error: method [return: [] e [warning!]] [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
         print form e
     ]
 
-    print-halted: method [return: [~]] [
+    print-halted: method [return: []] [
         print newline  ; interrupts happen anytime, clearer to start newline
         print "[interrupted by Ctrl-C or HALT instruction]"
     ]
 
-    print-info: method [return: [~] s] [print [info reduce s]]
+    print-info: method [return: [] s] [print [info reduce s]]
 
-    print-gap: method [return: [~]] [print newline]
+    print-gap: method [return: []] [print newline]
 
     === BEHAVIOR (can be overridden) ===
 
@@ -341,7 +341,7 @@ export console!: make object! [
 
     add-shortcut: method [
         "Add/Change console shortcut"
-        return: [~]
+        return: []
         name [word!] "Shortcut name"
         block [block!] "Command(s) expanded to"
     ][
@@ -353,7 +353,7 @@ export console!: make object! [
 start-console: func [
     "Called when a REPL is desired after command-line processing, vs quitting"
 
-    return: [~]
+    return: []
     :skin "Custom skin (e.g. derived from MAKE CONSOLE!) or file"
         [file! object!]
 ]
@@ -491,7 +491,7 @@ console*: func [
     let emit: func [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
-        return: [~]
+        return: []
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction
@@ -869,7 +869,7 @@ console*: func [
 
 export why: func [
     "Explain the last error in more detail."
-    return: [~]
+    return: []
     'err [<end> word! path! warning!] "Optional error value"
 ][
     let err: default [system.state.last-error]
@@ -890,7 +890,7 @@ export why: func [
 
 export upgrade: func [
     "Check for newer versions."
-    return: [~]
+    return: []
 ][
     ; Should this be a console-detected command, like Q, or is it meaningful
     ; to define this as a function you could call from code?

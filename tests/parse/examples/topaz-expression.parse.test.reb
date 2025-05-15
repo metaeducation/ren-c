@@ -78,7 +78,7 @@
     ]
 
     emit-node: func [
-        return: [~]
+        return: []
         output [block!]
         node [object! any-number? word!]
     ][

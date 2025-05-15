@@ -48,7 +48,7 @@ e-funcs: make-emitter "Internal API" (
 prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
 emit-proto: func [
-    return: [~]
+    return: []
     proto [text!]
 ][
     any [
@@ -108,7 +108,7 @@ emit-proto: func [
 ]
 
 process-conditional: func [
-    return: [~]
+    return: []
     directive
     dir-position
     emitter [object!]
@@ -128,7 +128,7 @@ process-conditional: func [
     ]
 ]
 
-emit-directive: func [return: [~] directive] [
+emit-directive: func [return: [] directive] [
     process-conditional directive proto-parser.parse-position e-funcs
 ]
 
@@ -176,7 +176,7 @@ e-funcs/emit [--[
 ;
 handle-item: func [
     "Handle a single item in %file-base.r"
-    return: [~]
+    return: []
     item [path! tuple! block!]  ; bootstrap EXE loads [foo.c] as [foo/c]
     dir [~null~ file!]
 ][
@@ -239,7 +239,7 @@ sys-globals-parser: context [
     id: null
     data: ~
 
-    process: func [return: [~] text] [
+    process: func [return: [] text] [
         parse3 text grammar.rule  ; Review: no END (return result unused?)
     ]
 

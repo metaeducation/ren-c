@@ -3100,7 +3100,7 @@ parse-furthest-hook: func [
 ; the UPARSE tests involve it.
 ;
 using: func [
-    return: [~]  ; should it return a value?  (e.g. the object?)
+    return: []  ; should it return a value?  (e.g. the object?)
     obj [<opt-out> object!]
 ][
     add-use-object (binding of $obj) obj

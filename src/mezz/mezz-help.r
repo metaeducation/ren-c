@@ -80,7 +80,7 @@ description-of: func [
 
 
 print-general-help: func [
-    return: [~]
+    return: []
 ][
     print trim:auto copy --[
         You are in a Rebol terminal.  QUIT or Ctrl-C should let you exit.
@@ -115,7 +115,7 @@ print-general-help: func [
 
 
 help-action: func [
-    return: [~]
+    return: []
     frame [<unrun> frame!]
     :name [word! tuple! path!]
 ][
@@ -204,7 +204,7 @@ help-action: func [
 help-value: func [
     "Give non-dialected help for an atom with any datatype"
 
-    return: [~]
+    return: []
     ^atom' [any-atom?]
     :name [word! tuple! path!]
 ][
@@ -309,7 +309,7 @@ help: func [
         help object!
         help datatype!]--
 
-    return: [~]
+    return: []
     @topic "WORD! to explain, or other HELP target (if no args, general help)"
         [<end> element?]
     :web "Open web browser to related documentation."
@@ -422,7 +422,7 @@ help: func [
 source: func [
     "Prints the source code for an ACTION! (if available)"
 
-    return: [~]
+    return: []
     @arg [<unrun> word! path! frame! tag!]
 ][
     let name
@@ -542,7 +542,7 @@ what: func [
 ]
 
 
-bugs: func [return: [~]] [
+bugs: func [return: []] [
     "View bug database."
 ][
     browse https://github.com/metaeducation/ren-c/issues
@@ -554,7 +554,7 @@ bugs: func [return: [~]] [
 require-commit: func [
     "checks current commit against required commit"
 
-    return: [~]
+    return: []
     commit [text!]
 ][
     let c: select system.script.header 'commit else [return ~]

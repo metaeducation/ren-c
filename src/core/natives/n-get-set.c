@@ -1260,7 +1260,7 @@ DECLARE_NATIVE(SET)
 //
 //  "Put a function in charge of getting/setting a variable's value"
 //
-//      return: [~]
+//      return: []
 //      var [word!]
 //      action [action!]
 //  ]

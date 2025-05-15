@@ -50,32 +50,32 @@
 
 (
     success: 'true
-    f1: func [return: [~]] [return ~, success: 'false]
+    f1: func [return: []] [return ~, success: 'false]
     f1
     true? success
 )
 (
-    f1: func [return: [~]] [return ~]
+    f1: func [return: []] [return ~]
     (meta trash) = meta f1
 )
 [#1515 (  ; the "result" of a return should not be assignable
     a: 1
-    run func [return: [~]] [a: return ~]
+    run func [return: []] [a: return ~]
     a = 1
 )]
-(a: 1 reeval reify func [return: [~]] [set $a return ~] a = 1)
-(a: 1 reeval reify func [return: [~]] [set:any $a return ~] a = 1)
+(a: 1 reeval reify func [return: []] [set $a return ~] a = 1)
+(a: 1 reeval reify func [return: []] [set:any $a return ~] a = 1)
 [#1509 (  ; the "result" of a return should not be passable to functions
     a: 1
-    run func [return: [~]] [a: warning? return ~]
+    run func [return: []] [a: warning? return ~]
     a = 1
 )]
 [#1535
-    (trash? reeval noquasi reify func [return: [~]] [words of return ~])
+    (trash? reeval noquasi reify func [return: []] [words of return ~])
 ]
-(trash? run func [return: [~]] [values of return ~])
+(trash? run func [return: []] [values of return ~])
 [#1945
-    (trash? run func [return: [~]] [spec-of return ~])
+    (trash? run func [return: []] [spec-of return ~])
 ]
 
 

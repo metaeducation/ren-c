@@ -362,7 +362,7 @@ CharColumnEncoding char_column_encoding = CHAR_COL_UTF16;
 //
 //  "Set the encoding for CHAR, CHAR(n), VARCHAR(n), LONGVARCHAR fields"
 //
-//      return: [~]
+//      return: []
 //      encoding "Currently you have to use UTF-16 for UCS-2"
 //          ['utf-8 'latin-1 'utf-16]
 //  ]
@@ -1796,7 +1796,7 @@ DECLARE_NATIVE(COPY_ODBC)
 //
 //  export update-odbc: native [
 //
-//      return: [~]
+//      return: []
 //      connection [object!]
 //      access [logic?]
 //      commit [logic?]
@@ -1926,7 +1926,7 @@ DECLARE_NATIVE(CLOSE_CONNECTION)
 //
 //  "Start up the ODBC Extension"
 //
-//      return: [~]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -1951,7 +1951,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shut down the ODBC Extension"
 //
-//      return: [~]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)

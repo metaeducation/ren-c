@@ -287,7 +287,7 @@ confirm: func [
 list-dir: func [
     "Print contents of a directory (ls)"
 
-    return: [~]
+    return: []
     'path [<end> file! word! path! text!]
         "Accepts %file, :variables, and just words (as dirs)"
     :l "Line of info format"
@@ -436,7 +436,7 @@ to-relative-file: func [
 detab-file: func [
     "detabs a disk file"
 
-    return: [~]
+    return: []
     filename [file!]
 ][
     write filename detab to text! read filename

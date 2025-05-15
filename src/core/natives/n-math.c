@@ -342,7 +342,7 @@ DECLARE_NATIVE(EVEN_Q)
 //
 //  "Seed random number generator"
 //
-//      return: [~]
+//      return: []
 //      seed "Pass e.g. NOW:TIME:PRECISE for nondeterminism"
 //          [fundamental?]
 //  ]

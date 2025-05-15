@@ -1120,7 +1120,7 @@ topic: spec: ~  ; avoid leaks (FWIW)
 
 
 help: func [
-    return: [~]
+    return: []
     :topic [text!]
 ][
     if not topic [
@@ -1467,7 +1467,7 @@ pthread: make rebmake.ext-dynamic-class [
 folders: copy [%objs/ %objs/main/]
 
 add-new-obj-folders: func [
-    return: [~]
+    return: []
     objs
     folders
     <local>
@@ -1531,7 +1531,7 @@ print ["SKIPPED (-) EXTENSIONS:" mold skipped-extensions, newline]
 print ["UNMENTIONED EXTENSIONS:" mold unmentioned-extensions, newline]
 
 add-project-flags: func [
-    return: [~]
+    return: []
     project [object!]
     :I "includes" [block!]
     :D "definitions" [block!]

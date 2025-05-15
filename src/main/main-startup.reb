@@ -99,7 +99,7 @@ boot-banner: [
 
 about: func [
     "Information about REBOL"
-    return: [~]
+    return: []
 ][
     print make-banner boot-banner
 ]
@@ -115,7 +115,7 @@ about: func [
 ;
 usage: func [
     "Prints command-line arguments."
-    return: [~]
+    return: []
 ][
 ;       --cgi (-c)       Load CGI utiliy module and modes
 ;       --version tuple  Script must be this version or greater
@@ -164,14 +164,14 @@ usage: func [
 
 license: func [
     "Prints the REBOL/core license agreement."
-    return: [~]
+    return: []
 ][
     print system.license
 ]
 
 host-script-pre-load: func [
     "Code registered as a hook when a module or script are loaded"
-    return: [~]
+    return: []
     is-module [yesno?]
     hdr "Header object (missing for DO of BLOB! with no header)"
         [~null~ object!]
@@ -228,7 +228,7 @@ bind construct [
     let emit: func [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
-        return: [~]
+        return: []
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction

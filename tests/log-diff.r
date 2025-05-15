@@ -16,7 +16,7 @@ Rebol [
 import %test-parsing.r
 
 make-diff: func [
-    return: [~]
+    return: []
     old-log [file!]
     new-log [file!]
     diff-file [file!]

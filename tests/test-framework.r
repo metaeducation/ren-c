@@ -21,7 +21,7 @@ import %test-parsing.r
 log-file: ~
 
 log: func [
-    return: [~]
+    return: []
     report [block!]
 ][
     write:append log-file unspaced report
@@ -48,7 +48,7 @@ error: ~
 run-single-test: func [
     "Run code and write the success or failure to the log file"
 
-    return: [~]
+    return: []
     code "Code GROUP! from test file, assumed bound into isolated module"
         [group!]
     expected-id [~null~ word!]
@@ -112,7 +112,7 @@ run-single-test: func [
 ]
 
 run-test-cluster: func [
-    return: [~]
+    return: []
     flags [block!]
     cluster "Block of GROUP!s to be run together in a common isolated context"
         [block!]
@@ -185,7 +185,7 @@ run-test-cluster: func [
 ; long list of BLOCK!s that are test groups.
 ;
 process-tests: func [
-    return: [~]
+    return: []
     test-sources [block!]
     handler [action!]
 ][

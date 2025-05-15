@@ -30,7 +30,7 @@
     1 = f1
 )
 ; Test that arity-0 return stops the loop
-(trash? reeval unrun func [return: [~]] [cycle [return ~]])
+(trash? reeval unrun func [return: []] [cycle [return ~]])
 
 ; Test that errors do not stop the loop and errors can be returned
 (

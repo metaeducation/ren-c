@@ -1046,7 +1046,7 @@ void halt_poll_timer_callback(uv_timer_t* handle) {
 //
 //  "Initialize Network Extension (e.g. call WSAStartup() on Windows)"
 //
-//      return: [~]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -1089,7 +1089,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shutdown Network Extension"
 //
-//      return: [~]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)

@@ -527,7 +527,7 @@ eval-all: func [
 ; call the accessor when 99 times out of 100 the value would be discarded.
 ;
 /accessor: infix func [
-    return: [~]
+    return: []
     var [set-word?]
     action [action!]
 ][

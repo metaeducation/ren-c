@@ -677,7 +677,21 @@ modernize-action: func3 [
     proxiers: copy []
 
     new-spec: collect3 [  ; Note: offers KEEP/ONLY
+        while [text? spec.1] [
+            keep3 spec.1
+            spec: my next
+            continue
+        ]
         until [tail? spec] [
+            if spec.1 = the return: [
+                if spec.2 = [] [
+                    keep3 [return: [trash!]]
+                    spec: my next
+                    spec: my next
+                    continue
+                ]
+            ]
+
             if tag? spec.1 [
                 last-refine-word: null
                 keep3:only spec.1

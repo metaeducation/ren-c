@@ -282,7 +282,7 @@ windows: make platform-class [
 ]
 
 set-target-platform: func [
-    return: [~]
+    return: []
     platform
 ][
     switch platform [
@@ -422,7 +422,7 @@ compiler-class: make object! [
 
     check: method [
         "Check if the compiler is available"
-        return: [~]
+        return: []
         exec -[Executable path (can be text!, e.g. "r3 --do c99 --")]-
             [~null~ file! text!]
     ][
@@ -459,7 +459,7 @@ cc: make compiler-class [
 
     check: method [
         "Assigns .exec-file, extracts the compiler version"
-        return: [~]
+        return: []
         exec [~null~ file! text!]
     ][
         .exec-file: any [exec, .exec-file]
@@ -772,7 +772,7 @@ cl: make compiler-class [
 
     check: method [
         "Assigns .exec-file, extracts the compiler version"
-        return: [~]
+        return: []
         exec [~null~ file! text!]
     ][
         .exec-file: any [exec, .exec-file]
@@ -1017,7 +1017,7 @@ strip-class: make object! [
 strip: make strip-class [
     id: ["gcc" "gnu"]
     check: method [
-        return: [~]
+        return: []
         exec [~null~ file! text!]
     ][
         .exec-file: exec: default ["strip"]
@@ -1234,7 +1234,7 @@ generator-class: make object! [
     ]
 
     prepare: method [
-        return: [~]
+        return: []
         solution [object!]
     ][
         if find words-of solution 'output [
@@ -1255,7 +1255,7 @@ generator-class: make object! [
     ]
 
     flip-flag: method [
-        return: [~]
+        return: []
         project [object!]
         to [yesno?]
     ][
@@ -1273,7 +1273,7 @@ generator-class: make object! [
     ]
 
     setup-output: method [
-        return: [~]
+        return: []
         project [object!]
     ][
         assert [project.class]
@@ -1327,7 +1327,7 @@ generator-class: make object! [
 
     setup-outputs: method [
         "Set the output and implib for the project tree"
-        return: [~]
+        return: []
         project [object!]
     ][
         ;print ["Setting outputs for:"]
@@ -1446,7 +1446,7 @@ makefile: make generator-class [
     ]
 
     emit: method [
-        return: [~]
+        return: []
         buf [blob!]
         project [object!]
         :parent [object!]  ; !!! Not heeded?
@@ -1515,7 +1515,7 @@ makefile: make generator-class [
     ]
 
     generate: method [
-        return: [~]
+        return: []
         output [file!]
         solution [object!]
     ][
@@ -1570,7 +1570,7 @@ export execution: make generator-class [
     gen-cmd-strip: get $host.gen-cmd-strip
 
     run-target: method [
-        return: [~]
+        return: []
         target [object!]
         :cwd "change working directory"  ; !!! Not heeded (?)
             [file!]
@@ -1606,7 +1606,7 @@ export execution: make generator-class [
     ]
 
     run: method [
-        return: [~]
+        return: []
         project [object!]
         :parent "parent project"
             [object!]

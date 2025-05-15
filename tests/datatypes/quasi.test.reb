@@ -117,11 +117,11 @@
 
 
 [(
-    foo: func [return: [~]] []
+    foo: func [return: []] []
     (meta trash) = meta foo
 )(
     data: [a b c]
-    f: func [return: [~]] [append data spread [1 2 3]]
+    f: func [return: []] [append data spread [1 2 3]]
     (meta trash) = meta f
 )]
 

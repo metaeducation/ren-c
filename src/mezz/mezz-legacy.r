@@ -69,7 +69,7 @@ comment [
 prin: func [
     "Print without implicit line break, blocks are SPACED."
 
-    return: [~]
+    return: []
     value [~null~ element?]
 ][
     write-stdout switch:type value [

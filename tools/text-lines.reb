@@ -83,7 +83,7 @@ encode-lines: func [
 for-each-line: func [
     "Iterate over text lines"
 
-    return: [~]
+    return: []
     var "Word set to metadata for each line"
         [word!]
     text "Text with lines"

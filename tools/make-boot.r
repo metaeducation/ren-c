@@ -349,7 +349,7 @@ c-debug-break: get $lib/c-debug-break
 make-obj-defs: func [
     "Given a Rebol OBJECT!, write C structs that can access its raw variables"
 
-    return: [~]
+    return: []
     e "The emitter to write definitions to"
         [object!]
     obj

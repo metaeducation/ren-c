@@ -354,7 +354,7 @@ export make-emitter: func [
         emit: method [
             "Write data to the emitter using CSCAPE templating (see HELP)"
 
-            return: [~]
+            return: []
             template "Adds newline if BLOCK! (use EMIT CSCAPE [...] to avoid)"
                 [text! block! char?]
         ][
@@ -379,7 +379,7 @@ export make-emitter: func [
         ]
 
         write-emitted: method [
-            return: [~]
+            return: []
             :tabbed
         ][
             if newline != last .buf-emit [

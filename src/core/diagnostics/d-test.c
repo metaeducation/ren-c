@@ -211,7 +211,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 //
 //  "Introduce periodic or deterministic fuzzing of out of memory errors"
 //
-//      return: [~]
+//      return: []
 //      factor "Ticks or percentage of time to cause allocation errors"
 //          [integer! percent!]
 //  ]

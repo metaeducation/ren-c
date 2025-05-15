@@ -58,7 +58,7 @@
 )(
     x: 10
     y: null
-    foo: func [return: [~] <local> x] [
+    foo: func [return: [] <local> x] [
         set unquote the 'x: 20
         set unquote the 'y x
     ]
@@ -76,7 +76,7 @@
     x: 10
     y: null
     foo: func [
-        return: [~]
+        return: []
         <local> x
     ][
         set noquote the '''''''x: 20  ; x is local assignment

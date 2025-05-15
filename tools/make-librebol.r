@@ -76,7 +76,7 @@ for-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
 ]
 
 emit-proto: func [
-    return: [~]
+    return: []
     proto [text!]
     <local>
         identifier-chars
@@ -179,7 +179,7 @@ emit-proto: func [
     ]
 ]
 
-process: func [return: [~] file] [
+process: func [return: [] file] [
     proto-parser.file: file
     proto-parser.emit-proto: emit-proto/
     proto-parser/process as text! read file
@@ -806,7 +806,7 @@ e-lib/emit [ver --[
      *
      *     Value* action = rebFunction(R"(
      *         -[Another way to do functions]-
-     *         return: [~]
+     *         return: []
      *         message [text!]
      *     ])",
      *     [](Context* binding) {

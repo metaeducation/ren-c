@@ -450,7 +450,7 @@ Bounce Delegate_Operation_With_Part(
 //
 //  "Generic aggregator for the old-style generic dispatch"
 //
-//      return: [~] "Not actually used"
+//      return: [] "Not actually used"
 //  ]
 //
 DECLARE_NATIVE(OLDGENERIC)

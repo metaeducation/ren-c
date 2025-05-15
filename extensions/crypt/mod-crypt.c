@@ -1763,7 +1763,7 @@ EXTERN_C int tf_snprintf(char* s, size_t n, const char* fmt, ...);
 //
 //  "Initialize random number generators and OS-provided crypto services"
 //
-//      return: [~]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -1812,7 +1812,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shut down random number generators and OS-provided crypto services"
 //
-//      return: [~]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)

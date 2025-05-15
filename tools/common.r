@@ -312,7 +312,7 @@ export propercase-of: func [
 ]
 
 export write-if-changed: func [
-    return: [~]
+    return: []
     dest [file!]
     content [text!]
 ][

@@ -170,7 +170,7 @@
 ; tests a pretty weird piece of functionality...so preserved here.
 (
     run func [
-        return: [~]
+        return: []
         @set-words [<variadic> set-word? tag!]
         <local>
             set-word type-name tester meta

@@ -203,7 +203,7 @@ bytes-to-version: reverse copy version-to-bytes
 emit: func [
     "Emits binary data, optionally marking positions with SET-WORD!"
 
-    return: [~]
+    return: []
     ctx [object!]
     code [block! blob!]
 ][
@@ -418,7 +418,7 @@ make-state-updater: func [
     ]
 
     return func [
-        return: [~]  ; !!! Should it have a return?
+        return: []  ; !!! Should it have a return?
         ctx [object!]
         new [tag! issue!]
     ][
@@ -461,7 +461,7 @@ update-write-state: make-state-updater 'write [
 === TLS PROTOCOL CODE ===
 
 client-hello: func [
-    return: [~]
+    return: []
     ctx [object!]
     :version "TLS version to request (block is [lowest highest] allowed)"
         [decimal! block!]
@@ -671,7 +671,7 @@ client-hello: func [
 
 
 client-key-exchange: func [
-    return: [~]
+    return: []
     ctx [object!]
 ][
     let [key-data key-len]
@@ -780,7 +780,7 @@ client-key-exchange: func [
 
 
 change-cipher-spec: func [
-    return: [~]
+    return: []
     ctx [object!]
 ][
     emit ctx [
@@ -793,7 +793,7 @@ change-cipher-spec: func [
 
 
 encrypted-handshake-msg: func [
-    return: [~]
+    return: []
     ctx [object!]
     unencrypted [blob!]
 ][
@@ -809,7 +809,7 @@ encrypted-handshake-msg: func [
 
 
 application-data: func [
-    return: [~]
+    return: []
     ctx [object!]
     unencrypted [blob! text!]
 ][
@@ -824,7 +824,7 @@ application-data: func [
 
 
 alert-close-notify: func [
-    return: [~]
+    return: []
     ctx [object!]
 ][
     let encrypted: encrypt-data ctx #{0100} ; close notify
@@ -1622,7 +1622,7 @@ make-master-secret: func [
 
 
 do-commands: func [
-    return: [~]  ; some paths returned LOGIC!, others none...was unused
+    return: []  ; some paths returned LOGIC!, others none...was unused
     tls-port [port!]
     commands [block!]
 ][
@@ -1680,7 +1680,7 @@ do-commands: func [
 
 
 tls-init: func [
-    return: [~]
+    return: []
     ctx [object!]
 ][
     ctx.seq-num-r: 0
@@ -1743,7 +1743,7 @@ tls-read-data: func [
 
 
 perform-read: func [
-    return: [~]
+    return: []
     port [port!]
 ][
     debug ["READ" open? port.state.connection]

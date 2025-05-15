@@ -221,7 +221,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
 //
 //  "Use system sleep to wait a certain amount of time (doesn't use PORT!s)"
 //
-//      return: [~]
+//      return: []
 //      duration "Length to sleep (integer and decimal measure seconds)"
 //          [integer! decimal! time!]
 //  ]
@@ -282,7 +282,7 @@ static Bounce Delegate_Kill_Process(pid_t pid, int signal)
 //
 //  "Terminate a process (not current one)"
 //
-//      return: [~]
+//      return: []
 //      pid "The process ID"
 //          [integer!]
 //  ]

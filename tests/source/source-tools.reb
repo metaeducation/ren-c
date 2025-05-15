@@ -114,7 +114,7 @@ whitelisted: [
 log-emit: func [
     "Append a COMPOSE'd block to a log block, clearing any new-line flags"
 
-    return: [~]
+    return: []
     log [block!]
     label [tag!]
     body [block!]
@@ -201,7 +201,7 @@ export analyse: context [
 
             let non-std-func-space: null
 
-            let emit-proto: func [return: [~] proto] [
+            let emit-proto: func [return: [] proto] [
                 if not block? proto-parser.data [return ~]
 
                 eval overbind c-parser-extension [
