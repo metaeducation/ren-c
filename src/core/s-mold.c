@@ -423,8 +423,11 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
         Append_Codepoint(mo->string, '\'');
 
     Option(Sigil) sigil = Sigil_Of(e);
-    if (sigil)
+    if (sigil) {
         Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
+        if (Heart_Of(e) == TYPE_BLANK)
+            return;  // We want [@ ^ $] not [@_ ^_ $_] for sigilized BLANK!
+    }
 
     Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);
 }

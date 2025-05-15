@@ -35,17 +35,19 @@ INLINE bool Any_Plain(const Element* e) {
 #define Any_Pinned(v)  (Type_Of(v) == TYPE_PINNED)
 #define Any_Tied(v)    (Type_Of(v) == TYPE_TIED)
 
+#define Is_Sigiled(heart,sigil,v) \
+    ((Ensure_Readable(v)->header.bits & CELL_HEART_QUOTE_MASK) == \
+        (FLAG_QUOTE_BYTE(NOQUOTE_1) | \
+            (FLAG_HEART_ENUM(heart) | FLAG_SIGIL_ENUM(sigil))))
+
 #define Is_Pinned(heartname, v) \
-    (HEART_BYTE(v) == (u_cast(Byte, TYPE_##heartname) \
-        | (u_cast(Byte, SIGIL_PIN) << HEART_SIGIL_SHIFT)))
+    Is_Sigiled(TYPE_##heartname, SIGIL_PIN, (v))
 
 #define Is_Lifted(heartname, v) \
-    (HEART_BYTE(v) == (u_cast(Byte, TYPE_##heartname) \
-        | (u_cast(Byte, SIGIL_LIFT) << HEART_SIGIL_SHIFT)))
+    Is_Sigiled(TYPE_##heartname, SIGIL_LIFT, (v))
 
 #define Is_Tied(heartname, v) \
-    (HEART_BYTE(v) == (u_cast(Byte, TYPE_##heartname) \
-        | (u_cast(Byte, SIGIL_TIE) << HEART_SIGIL_SHIFT)))
+    Is_Sigiled(TYPE_##heartname, SIGIL_TIE, (v))
 
 
 INLINE char Char_For_Sigil(Sigil sigil) {
@@ -59,28 +61,43 @@ INLINE char Char_For_Sigil(Sigil sigil) {
     }
 }
 
-INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
-    Init_Char_Unchecked(out, Char_For_Sigil(sigil));
-    HEART_BYTE(out) = TYPE_SIGIL;
-    out->extra.at_least_4[IDX_EXTRA_SIGIL] = sigil;
-    return out;
-}
-
-INLINE Sigil Cell_Sigil(const Cell* cell) {
-    assert(Heart_Of(cell) == TYPE_SIGIL);
-    Byte sigil_byte = cell->extra.at_least_4[IDX_EXTRA_SIGIL];
-    assert(sigil_byte != SIGIL_0 and sigil_byte <= MAX_SIGIL);
-    return u_cast(Sigil, sigil_byte);
-}
-
 INLINE Option(Sigil) Sigil_Of(const Element* e)
   { return u_cast(Sigil, HEART_BYTE_RAW(e) >> HEART_SIGIL_SHIFT); }
 
 INLINE Element* Sigilize(Element* elem, Option(Sigil) sigil) {
     elem->header.bits &= ~(CELL_MASK_SIGIL_BITS);
-    elem->header.bits |= FLAG_CELL_SIGIL(maybe sigil);
+    elem->header.bits |= FLAG_SIGIL_ENUM(maybe sigil);
     return elem;
 }
+
+INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
+    return Sigilize(Init_Blank(out), sigil);
+}
+
+INLINE bool Is_Sigil(const Element* e) {
+    if (QUOTE_BYTE(e) != NOQUOTE_1)
+        return false;
+    return Heart_Of(e) == TYPE_BLANK and Sigil_Of(e);
+}
+
+INLINE bool Is_Lift_Sigil(const Cell* cell) {
+    if (QUOTE_BYTE(cell) != NOQUOTE_1)
+        return false;
+    return HEART_BYTE(cell) == (u_cast(Byte, TYPE_BLANK) | FLAG_SIGIL(LIFT));
+}
+
+INLINE bool Is_Pin_Sigil(const Cell* cell) {
+    if (QUOTE_BYTE(cell) != NOQUOTE_1)
+        return false;
+    return HEART_BYTE(cell) == (u_cast(Byte, TYPE_BLANK) | FLAG_SIGIL(PIN));
+}
+
+INLINE bool Is_Tie_Sigil(const Cell* cell) {
+    if (QUOTE_BYTE(cell) != NOQUOTE_1)
+        return false;
+    return HEART_BYTE(cell) == (u_cast(Byte, TYPE_BLANK) | FLAG_SIGIL(TIE));
+}
+
 
 #define Plainify(elem) Sigilize((elem), SIGIL_0)
 #define Liftify(elem)  Sigilize((elem), SIGIL_LIFT)

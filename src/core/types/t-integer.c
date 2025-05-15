@@ -443,7 +443,7 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
         Heart to_heart = Heart_Of_Builtin_Fundamental(to);
         Reset_Cell_Header_Noquote(
             TRACK(OUT),
-            FLAG_HEART_BYTE(to_heart) | CELL_MASK_NO_NODES
+            FLAG_HEART_ENUM(to_heart) | CELL_MASK_NO_NODES
         );
         VAL_DECIMAL(OUT) = dec;
         return OUT;

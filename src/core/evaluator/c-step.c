@@ -308,9 +308,6 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto lookahead; }
       #endif
 
-      case TYPE_SIGIL:
-        goto sigil_rightside_meta_in_out;
-
       case TYPE_GROUP:
         goto group_or_lifted_group_result_in_out;
 
@@ -325,6 +322,12 @@ Bounce Meta_Stepper_Executor(Level* L)
 
       case TYPE_FRAME:
         goto lookahead;
+
+      case ST_STEPPER_TIE_EVALUATING_RIGHT_SIDE:
+        goto tie_rightside_meta_in_out;
+
+      case ST_STEPPER_LIFT_EVALUATING_RIGHT_SIDE:
+        goto lift_rightside_meta_in_out;
 
     #if RUNTIME_CHECKS
       case ST_STEPPER_FINISHED_DEBUG:
@@ -503,14 +506,14 @@ Bounce Meta_Stepper_Executor(Level* L)
           case SIGIL_0:
             goto handle_plain;
 
-        case SIGIL_LIFT:  // ^ lifts the value
-            goto handle_lifted;
+          case SIGIL_LIFT:  // ^ lifts the value
+            goto handle_any_lifted;
 
-        case SIGIL_PIN:  // @ pins the value
-            goto handle_pinned;
+          case SIGIL_PIN:  // @ pins the value
+            goto handle_any_pinned;
 
-        case SIGIL_TIE:  // $ ties the value
-            goto handle_tied;
+          case SIGIL_TIE:  // $ ties the value
+            goto handle_any_tied;
         }
     }
 
@@ -551,7 +554,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} handle_pinned: { //// PINNED! (@) //////////////////////////////////////////
+} handle_any_pinned: { //// PINNED! (@XXX) ///////////////////////////////////
 
     // Type that just leaves the sigil:
     //
@@ -583,11 +586,64 @@ Bounce Meta_Stepper_Executor(Level* L)
     // and not have a degree of freedom that it can't distinguish from being
     // called as (import 'xml) or (import 'json/1.1.2)
 
-    Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+    if (Heart_Of(CURRENT) != TYPE_BLANK) {  // special handling for lone @
+        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+        goto lookahead;
+    }
+
+} handle_pin: {  //// "PIN" Pinned BLANK! Sigil (@) //////////////////////////
+
+    // @ acts like THE (literal, but bound):
+    //
+    //     >> abc: 10
+    //
+    //     >> word: @ abc
+    //     == abc
+    //
+    //     >> get word
+    //     == 10
+    //
+    // 2. There's a twist, that @ can actually handle antiforms if they are
+    //    coming in via an API feed.  This is a convenience so you can write:
+    //
+    //        rebElide("append block opt @", value_might_be_null);
+    //
+    //     ...instead of:
+    //
+    //        rebElide("append block opt", rebQ(value_might_be_null));
+    //
+    //    If you consider the API to be equivalent to TRANSCODE-ing the
+    //    given material into a BLOCK! and then EVAL-ing it, then this is
+    //    creating an impossible situation of having an antiform in the
+    //    block.  But the narrow exception limited to seeing such a sequence
+    //    in the evaluator is considered worth it:
+    //
+    //      https://forum.rebol.info/t/why-isnt-a-precise-synonym-for-the/2215
+    //
+    // 3. We know all feed items with FEED_NOTE_META were synthesized in the
+    //    feed and so it should be safe to tweak the flag.  Doing so lets us
+    //    use The_Next_In_Feed() and Just_Next_In_Feed() which use At_Feed()
+    //    that will error on FEED_NOTE_META to prevent the suspended-animation
+    //    antiforms from being seen by any other part of the code.
+
+    if (Is_Feed_At_End(L->feed))  // no literal to take as argument
+        return PANIC(Error_Need_Non_End(CURRENT));
+
+    assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
+    const Element* elem = c_cast(Element*, L->feed->p);
+
+    bool antiform = Get_Cell_Flag(elem, FEED_NOTE_META);  // [2]
+    Clear_Cell_Flag(m_cast(Element*, elem), FEED_NOTE_META);  // [3]
+
+    The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
+
+    if (antiform)  // exception [2]
+        Meta_Unquotify_Known_Stable(L->out);
+
     goto lookahead;
 
 
-} handle_tied: { //// TIED! ($) //////////////////////////////////////////////
+} handle_any_tied: { //// TIED! ($XXX) ///////////////////////////////////////
 
     // The $XXX types evaluate to remove the decoration, but be bound:
     //
@@ -607,12 +663,36 @@ Bounce Meta_Stepper_Executor(Level* L)
     //     >> get 'var
     //     ** Error: var is unbound
 
-    Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    Plainify(u_cast(Element*, OUT));
+    if (Heart_Of(CURRENT) != TYPE_BLANK) {  // special handling for lone $
+        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+        Plainify(u_cast(Element*, OUT));  // remove the $ Sigil
+        goto lookahead;
+    }
+
+} handle_tie: {  //// "TIE" Tied BLANK! Sigil ($) ////////////////////////////
+
+    // The $ sigil will evaluate the right hand side, and then bind the
+    // product into the current evaluator environment.
+
+    Level* right = Maybe_Rightward_Continuation_Needed(L);
+    if (not right)
+        goto tie_rightside_meta_in_out;
+
+    STATE = ST_STEPPER_TIE_EVALUATING_RIGHT_SIDE;
+    return CONTINUE_SUBLEVEL(right);
+
+} tie_rightside_meta_in_out: {
+
+    Meta_Unquotify_Undecayed(OUT);
+    if (Is_Antiform(OUT))
+        return PANIC("$ operator cannot bind antiforms");
+
+    Derelativize(SPARE, cast(Element*, OUT), Level_Binding(L));
+    Copy_Cell(OUT, SPARE);  // !!! inefficient
     goto lookahead;
 
 
-} handle_lifted: { //// LIFTED! (^) //////////////////////////////////////////
+} handle_any_lifted: { //// LIFTED! (^) //////////////////////////////////////
 
     // LIFTED! types will META variables on storage, and UNMETA them on
     // fetching.  This is complex logic.
@@ -660,9 +740,30 @@ Bounce Meta_Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case TYPE_FENCE: { /////////////////////////////////////////////////////////
+} case TYPE_FENCE: { //// LIFTED FENCE! ^{...} ///////////////////////////////
 
     return PANIC("Don't know what ^FENCE! is going to do yet");
+
+
+} case TYPE_BLANK: { //// "LIFT" Lifted BLANK! Sigil (^) /////////////////////
+
+    // !!! Historically ^ was a synonym for META, but it now has a much more
+    // noble purpose slated... to "approve" the creation of ghosts or of
+    // actions from functions that don't *just* return ghosts or actions.
+    //
+    // This work is not done yet, so it's still a synonym for META.
+
+    Level* right = Maybe_Rightward_Continuation_Needed(L);
+    if (not right)
+        goto lift_rightside_meta_in_out;
+
+    STATE = ST_STEPPER_LIFT_EVALUATING_RIGHT_SIDE;
+    return CONTINUE_SUBLEVEL(right);
+
+} lift_rightside_meta_in_out: {
+
+    assert(Is_Quoted(OUT) or Is_Quasiform(OUT));  // it's already meta
+    goto lookahead;
 
 
 } default: { /////////////////////////////////////////////////////////////////
@@ -734,96 +835,6 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     STATE = cast(StepperState, TYPE_FRAME);
     return CONTINUE_SUBLEVEL(TOP_LEVEL);
-
-
-} case TYPE_SIGIL: { //// SIGIL! [ @ ^ $ ] ///////////////////////////////////
-
-    // @ acts like THE (literal, but bound):
-    //
-    //     >> abc: 10
-    //
-    //     >> word: @ abc
-    //     == abc
-    //
-    //     >> get word
-    //     == 10
-    //
-    // 2. There's a twist, that @ can actually handle antiforms if they are
-    //    coming in via an API feed.  This is a convenience so you can write:
-    //
-    //        rebElide("append block opt @", value_might_be_null);
-    //
-    //     ...instead of:
-    //
-    //        rebElide("append block opt", rebQ(value_might_be_null));
-    //
-    //    If you consider the API to be equivalent to TRANSCODE-ing the
-    //    given material into a BLOCK! and then EVAL-ing it, then this is
-    //    creating an impossible situation of having an antiform in the
-    //    block.  But the narrow exception limited to seeing such a sequence
-    //    in the evaluator is considered worth it:
-    //
-    //      https://forum.rebol.info/t/why-isnt-a-precise-synonym-for-the/2215
-    //
-    // 3. We know all feed items with FEED_NOTE_META were synthesized in the
-    //    feed and so it should be safe to tweak the flag.  Doing so lets us
-    //    use The_Next_In_Feed() and Just_Next_In_Feed() which use At_Feed()
-    //    that will error on FEED_NOTE_META to prevent the suspended-animation
-    //    antiforms from being seen by any other part of the code.
-
-    Sigil sigil = Cell_Sigil(CURRENT);
-    switch (sigil) {
-      case SIGIL_PIN: {
-        if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
-            return PANIC(Error_Need_Non_End(CURRENT));
-
-        assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
-        const Element* elem = c_cast(Element*, L->feed->p);
-
-        bool antiform = Get_Cell_Flag(elem, FEED_NOTE_META);  // [2]
-        Clear_Cell_Flag(m_cast(Element*, elem), FEED_NOTE_META);  // [3]
-
-        The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
-
-        if (antiform)  // exception [2]
-            Meta_Unquotify_Known_Stable(L->out);
-        break; }
-
-      case SIGIL_LIFT:  // ^
-      case SIGIL_TIE: {  // $
-        Level* right = Maybe_Rightward_Continuation_Needed(L);
-        if (not right)
-            goto sigil_rightside_meta_in_out;
-
-        return CONTINUE_SUBLEVEL(right); }
-
-      default:
-        assert(false);
-    }
-
-    goto lookahead;
-
-} sigil_rightside_meta_in_out: {
-
-    assert(Is_Quoted(OUT) or Is_Quasiform(OUT));
-
-    switch (Cell_Sigil(CURRENT)) {
-      case SIGIL_LIFT:  // ^
-        break;  // it's already meta
-
-      case SIGIL_TIE:  // $
-        Meta_Unquotify_Undecayed(OUT);
-        if (Is_Antiform(OUT))
-            return PANIC("$ operator cannot bind antiforms");
-        Derelativize(SPARE, cast(Element*, OUT), Level_Binding(L));
-        Copy_Cell(OUT, SPARE);  // !!! inefficient
-        break;
-
-      default:
-        assert(false);
-    }
-
-    goto lookahead;
 
 
 } case TYPE_WORD: { //// WORD! ///////////////////////////////////////////////
@@ -1605,12 +1616,8 @@ for (; check != tail; ++check) {  // push variables
     if (circle_this)
         circled = TOP_INDEX;
 
-    if (
-        (Is_Sigil(TOP) and Cell_Sigil(TOP) == SIGIL_LIFT)
-        or Is_Lifted(WORD, TOP)  // "lift" result (e.g. meta-assign it)
-    ){
+    if (Is_Lift_Sigil(TOP) or Is_Lifted(WORD, TOP))  // meta-assign result
         continue;
-    }
 
     if (Is_Word(TOP) or Is_Tuple(TOP))
         continue;
@@ -1702,7 +1709,7 @@ for (; check != tail; ++check) {  // push variables
     else
         Copy_Cell(SPARE, pack_meta_at);
 
-    if (Is_Sigil(var) and Cell_Sigil(var) == SIGIL_LIFT) {
+    if (Is_Lift_Sigil(var)) {
         panic ("META sigil should allow ghost pass thru, probably?");
         /* goto circled_check; */
     }
@@ -1905,7 +1912,6 @@ for (; check != tail; ++check) {  // push variables
         or (
             not (Is_Word(L_next) and Is_Action(unwrap L_next_gotten))
             and not Is_Frame(L_next)
-            and not Is_Sigil(L_next)
         )
         or not (infix_mode = Cell_Frame_Infix_Mode(unwrap L_next_gotten))
     ){

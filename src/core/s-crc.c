@@ -195,7 +195,6 @@ uint32_t Hash_Value(const Cell* cell)
       case TYPE_EMAIL:
       case TYPE_URL:
       case TYPE_TAG:
-      case TYPE_SIGIL:  // same payload as issue, but always short
       case TYPE_ISSUE: {
         REBLEN len;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, cell);

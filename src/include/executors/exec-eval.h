@@ -177,11 +177,14 @@ typedef enum {
     ST_STEPPER_REEVALUATING,
     ST_STEPPER_CALCULATING_INTRINSIC_ARG,
 
+    ST_STEPPER_TIE_EVALUATING_RIGHT_SIDE,  // $ ("tie") sigil
+    ST_STEPPER_LIFT_EVALUATING_RIGHT_SIDE,  // ^ ("lift") sigil
+
     ST_STEPPER_GET_WORD,
     ST_STEPPER_GET_TUPLE,
     ST_STEPPER_GENERIC_SET,
     ST_STEPPER_SET_BLOCK,
-    ST_STEPPER_SET_GROUP
+    ST_STEPPER_SET_GROUP,
 } StepperState;
 
 // There's a rule that the Level's OUT has to be fresh if it's in the

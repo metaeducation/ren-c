@@ -249,9 +249,6 @@ e-types/emit [--[
      *
      * Note that Ensure_Readable() is a no-op in the release build.
      */
-
-    #define CELL_HEART_QUOTE_MASK \
-        (FLAG_HEART_BYTE_RAW(255) | FLAG_QUOTE_BYTE(255))
 ]--]
 
 for-each-datatype 't [

@@ -134,7 +134,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(heart)
+        FLAG_HEART_ENUM(heart)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // series stub needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );

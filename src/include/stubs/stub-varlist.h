@@ -167,7 +167,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
     Cell* rootvar = Array_Head(varlist);
     Reset_Cell_Header_Noquote(
         rootvar,
-        FLAG_HEART_BYTE(heart)
+        FLAG_HEART_ENUM(heart)
             | CELL_MASK_ANY_CONTEXT
             | CELL_FLAG_PROTECTED  // should not be modified
     );

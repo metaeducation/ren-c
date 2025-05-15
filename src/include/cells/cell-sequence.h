@@ -250,7 +250,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
 
     Reset_Cell_Header_Noquote(
         e,
-        FLAG_HEART_BYTE(heart)
+        FLAG_HEART_ENUM(heart)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // mark the pairing
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
@@ -287,7 +287,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
     assert(Any_Sequence_Type(heart));
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
+        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_NODES
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths bindable, can't have garbage
 
@@ -327,7 +327,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
+        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_NODES
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths are bindable, can't be garbage
 
@@ -436,7 +436,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(heart)
+        FLAG_HEART_ENUM(heart)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // first is pairing
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );

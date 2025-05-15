@@ -159,15 +159,21 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // Most of the time code wants to check the Type_Of() of a cell and not it's
 // HEART, because that treats quoted cells differently.  If you only check
 // the heart, then (''''x) will equal (x) because both hearts are WORD!.
+//
+// 1. There's a complex runtime check to ensure coherence in the heart byte
+//    with the rest of the cell, which is triggered in some C++ builds when
+//    you use HEART_BYTE() directly.  This raw accessor is used to implement
+//    that layer, and can also be used for efficiency in some cases that
+//    want to subvert those checks.
 
-#define HEART_BYTE_RAW(cell) \
-    SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
+#define HEART_BYTE_RAW(cell) /* don't go through HeartHolder() [1] */ \
+    SECOND_BYTE(&(cell)->header.bits)
 
-#define FLAG_HEART_BYTE_RAW(byte) \
+#define FLAG_HEART_BYTE(byte) \
     FLAG_SECOND_BYTE(byte)
 
-#define FLAG_HEART_BYTE(heart) \
-    FLAG_HEART_BYTE_RAW(cast(Byte, ensure(HeartEnum, (heart))))
+#define FLAG_HEART_ENUM(heart) \
+    FLAG_HEART_BYTE(cast(Byte, ensure(HeartEnum, (heart))))
 
 #define FLAG_HEART(name) \
     FLAG_SECOND_BYTE(u_cast(Byte, u_cast(HeartEnum, TYPE_##name)))
@@ -246,6 +252,9 @@ typedef Byte QuoteByte;  // help document when Byte means a quoting byte
 #define FLAG_QUOTE_BYTE(byte)         FLAG_THIRD_BYTE(byte)
 #define FLAG_QUOTE_BYTE_ANTIFORM_0    FLAG_THIRD_BYTE(ANTIFORM_0_COERCE_ONLY)
 #define FLAG_QUOTE_BYTE_QUASIFORM_2   FLAG_THIRD_BYTE(QUASIFORM_2_COERCE_ONLY)
+
+#define CELL_HEART_QUOTE_MASK /* mask in both heart and quote bytes */ \
+    (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
@@ -491,7 +500,6 @@ STATIC_ASSERT(sizeof(UintptrUnion) == sizeof(uintptr_t));
 //
 #define IDX_EXTRA_USED 0
 #define IDX_EXTRA_LEN 1
-#define IDX_EXTRA_SIGIL 2
 
 // optimized TUPLE! and PATH! byte forms must leave extra field empty, as
 // it's used for binding on these types.  Length is in the payload itself.

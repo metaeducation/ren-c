@@ -75,7 +75,7 @@ INLINE Element* Init_Word_Untracked(
     Freshen_Cell_Header(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(TYPE_WORD) | FLAG_QUOTE_BYTE(quote_byte)
+            | FLAG_HEART_ENUM(TYPE_WORD) | FLAG_QUOTE_BYTE(quote_byte)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
@@ -97,7 +97,7 @@ INLINE Element* Init_Word_Bound_Untracked(
     assert(index != 0);
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(TYPE_WORD)
+        FLAG_HEART_ENUM(TYPE_WORD)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );

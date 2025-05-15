@@ -114,10 +114,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_MONEY:
         break;
 
-      case TYPE_SIGIL:
-        assert(not Stringlike_Has_Node(v));
-        break;
-
       case TYPE_EMAIL:
       case TYPE_URL:
       case TYPE_ISSUE: {

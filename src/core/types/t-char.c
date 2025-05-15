@@ -436,21 +436,6 @@ static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
 }
 
 
-IMPLEMENT_GENERIC(MOLDIFY, Is_Sigil)
-{
-    INCLUDE_PARAMS_OF_MOLDIFY;
-
-    Element* v = Element_ARG(ELEMENT);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
-
-    UNUSED(form);
-    Append_Any_Utf8(mo->string, v);
-
-    return TRASH;
-}
-
-
 IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
@@ -704,7 +689,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         );
     }
 
-    if (to == TYPE_EMAIL or to == TYPE_URL or to == TYPE_SIGIL) {
+    if (to == TYPE_EMAIL or to == TYPE_URL) {
         Length len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
@@ -719,21 +704,13 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
             return Move_Drop_Top_Stack_Element(OUT);
         }
 
-        if (to == TYPE_URL) {
-            if (
-                cast(const Byte*, utf8) + size
-                != Try_Scan_URL_To_Stack(utf8, size)
-            ){
-                return FAIL(Error_Scan_Invalid_Raw(ARG(TYPE), v));
-            }
-            return Move_Drop_Top_Stack_Element(OUT);
+        if (
+            cast(const Byte*, utf8) + size
+            != Try_Scan_URL_To_Stack(utf8, size)
+        ){
+            return FAIL(Error_Scan_Invalid_Raw(ARG(TYPE), v));
         }
-
-        assert(to == TYPE_SIGIL);  // transcoding is slow--need to refactor
-        Option(Error*) error = Trap_Transcode_One(OUT, TYPE_SIGIL, v);
-        if (error)
-            return FAIL(unwrap error);
-        return OUT;
+        return Move_Drop_Top_Stack_Element(OUT);
     }
 
     if (
@@ -895,7 +872,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         return SUCCESS;
     }
 
-    if (as == TYPE_EMAIL or as == TYPE_URL or as == TYPE_SIGIL) {
+    if (as == TYPE_EMAIL or as == TYPE_URL) {
         if (Stringlike_Has_Node(v)) {
             const String *s = Cell_String(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen

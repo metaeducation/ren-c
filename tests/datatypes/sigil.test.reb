@@ -42,7 +42,7 @@
 ; MATCH SIGIL!
 (
     for-each-sigil 'sig [
-        assert [sig = match sigil! sig]
+        assert [sig = match [sigil?] sig]
     ]
     ok
 )
@@ -68,6 +68,8 @@
 
 
 ; Test SIGIL OF for each bindable type
+;
+; !!! UPDATE: now legal on *all* datatypes
 (
     for-each [sigil items] [
         ~null~  [  word    tu.p.le    pa/th    [bl o ck]    (gr o up)  ]
@@ -76,7 +78,6 @@
         $       [ $word   $tu.p.le   $pa/th   $[bl o ck]   $(gr o up)  ]
     ][
         for-each 'item items [
-            if blank? item [continue]
             assert [any [quoted? item, quasi? item, bindable? item]]
             if (degrade sigil) <> sigil of item [
                 panic [mold item]
@@ -86,7 +87,7 @@
     ok
 )
 
-; ^ is META
+; ^ is LIFT
 
     ((@ '3) = ^ 1 + 2)
     ((meta null) = ^ null)
@@ -94,7 +95,7 @@
     ~need-non-end~ !! (^)
 
 
-; $ is bind to current context (faster version of IN [])
+; $ acts like BIND HERE
 
     (
         foo: 10
@@ -104,7 +105,7 @@
     ~need-non-end~ !! ($)
 
 
-; @ is THE, with exception that it has special handling in API feeds to
+; @ acts like THE, with exception that it has special handling in API feeds to
 ; be able to reconstitute antiforms.  (See TEST-LIBREBOL)  It will bind
 ; its argument.
 

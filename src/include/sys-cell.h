@@ -499,10 +499,16 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 // used for the "Sigil".  This can be [$ @ ^] or nothing.
 //
 
-#define FLAG_CELL_SIGIL(sigil) \
-    FLAG_HEART_BYTE_RAW((sigil) << HEART_SIGIL_SHIFT)
+#define FLAG_SIGIL_CRUMB(crumb) \
+    FLAG_HEART_BYTE((crumb) << HEART_SIGIL_SHIFT)
 
-#define CELL_MASK_SIGIL_BITS  FLAG_CELL_SIGIL(3)  // 0b11 << HEART_SIGIL_SHIFT
+#define FLAG_SIGIL_ENUM(sigil) \
+    FLAG_SIGIL_CRUMB(u_cast(Byte, ensure(Sigil, sigil)))
+
+#define FLAG_SIGIL(name) \
+    FLAG_SIGIL_ENUM(SIGIL_##name)
+
+#define CELL_MASK_SIGIL_BITS  FLAG_SIGIL_CRUMB(3)  // 0b11 << HEART_SIGIL_SHIFT
 
 
 //=//// VALUE TYPE (always TYPE_XXX <= MAX_TYPE) ////////////////////////////=//

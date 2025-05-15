@@ -643,7 +643,7 @@ DECLARE_NATIVE(GETIFY)
 //
 //  "Convert a value to its ^XXX lifted representation"
 //
-//      return: [@any-element? sigil!]
+//      return: [@any-element?]
 //      value [<opt-out> element?]  ; blank! makes ^ as a SIGIL!
 //  ]
 //
@@ -660,7 +660,7 @@ DECLARE_NATIVE(LIFT)
 //
 //  "Convert a value to its @XXX pinned representation"
 //
-//      return: [~null~ @any-element? sigil!]
+//      return: [~null~ @any-element?]
 //      value [<opt-out> element?]
 //  ]
 //
@@ -681,7 +681,7 @@ DECLARE_NATIVE(PIN)
 //
 //  "Convert a value to its $XXX pinned representation"
 //
-//      return: [~null~ $any-element? sigil!]
+//      return: [~null~ $any-element?]
 //      value [<opt-out> element?]
 //  ]
 //

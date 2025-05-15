@@ -92,11 +92,11 @@ DECLARE_NATIVE(QUOTES_OF)
 
 
 //
-//  sigil-of: native:generic [
+//  sigil-of: native [
 //
 //  "Get the SIGIL! on a value, e.g. $WORD has the $ sigil, WORD has none"
 //
-//      return: [~null~ sigil!]
+//      return: [~null~ sigil?]
 //      element [<opt-out> fundamental?]
 //  ]
 //
@@ -110,6 +110,28 @@ DECLARE_NATIVE(SIGIL_OF)
     if (not sigil)
         return nullptr;
     return Init_Sigil(OUT, unwrap sigil);
+}
+
+
+//
+//  sigil?: native:intrinsic [
+//
+//  "Get the SIGIL! on a value, e.g. $WORD has the $ sigil, WORD has none"
+//
+//      return: [~null~ sigil?]
+//      element [<opt-out> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(SIGIL_Q)
+{
+    INCLUDE_PARAMS_OF_SIGIL_Q;
+
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
+    if (b)
+        return unwrap b;
+
+    return LOGIC(Is_Sigil(e));
 }
 
 

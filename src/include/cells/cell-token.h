@@ -141,7 +141,7 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
         return false;
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
+        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_NODES
     );
     memcpy(&out->payload.at_least_8, utf8, size + 1);  // copy '\0' term
     out->payload.at_least_8[size] = '\0';
