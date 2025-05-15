@@ -97,6 +97,8 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 #define Is_Meta_Of_Null(v) \
     Is_Quasi_Null(v)
 
+#define Is_Undone_Opt_Nulled(v)  Is_Nulled(v)
+
 
 //=//// "HEAVY NULLS" (BLOCK! Antiform Pack with `~null~` in it) //////////=//
 //

@@ -144,7 +144,7 @@
 ; questionable.  Review when there's enough time in priorities to think on it.
 ;
 ;     (not error? trap [reeval (lambda [x [<end>]] []) ||| 1 2 3])
-;     (warning? trap [reeval (lambda [x [~null~]] []) ||| 1 2 3])
+;     (warning? trap [reeval (lambda [x [null?]] []) ||| 1 2 3])
 
 (
     [3 11] = reduce [1 + 2 elide 3 + 4 5 + 6]
@@ -165,27 +165,27 @@
 [
     (
         left-normal: infix /right-normal: (
-            func [return: [~null~ word!] x [word!]] [return x]
+            func [return: [null? word!] x [word!]] [return x]
         )
         left-normal*: infix /right-normal*: (
-            func [return: [~null~ word!] x [word! <end>]] [return x]
+            func [return: [null? word!] x [word! <end>]] [return x]
         )
 
         left-defer: infix:defer left-normal/
         left-defer*: infix:defer left-normal/
 
         left-soft: infix /right-soft: (
-            func [return: [~null~ word!] @(x) [word!]] [return x]
+            func [return: [null? word!] @(x) [word!]] [return x]
         )
         left-soft*: infix /right-soft*: (
-            func [return: [~null~ word!] @(x) [word! <end>]] [return x]
+            func [return: [null? word!] @(x) [word! <end>]] [return x]
         )
 
         left-hard: infix /right-hard: (
-            func [return: [~null~ word!] 'x [word!]] [return x]
+            func [return: [null? word!] 'x [word!]] [return x]
         )
         left-hard*: infix /right-hard*: (
-            func [return: [~null~ word!] 'x [word! <end>]] [return x]
+            func [return: [null? word!] 'x [word! <end>]] [return x]
         )
 
         ok
@@ -225,11 +225,11 @@
 [
     (
         left-normal: infix /right-normal:
-            func [return: [~null~ word!] x [word! <variadic>]] [
+            func [return: [null? word!] x [word! <variadic>]] [
                 return take x
             ]
         left-normal*: infix /right-normal*:
-            func [return: [~null~ word!] x [word! <variadic> <end>]] [
+            func [return: [null? word!] x [word! <variadic> <end>]] [
                 return try take x
             ]
 
@@ -237,20 +237,20 @@
         left-defer*: infix:defer left-normal/
 
         left-soft: infix /right-soft:
-            func [return: [~null~ word!] @(x) [word! <variadic>]] [
+            func [return: [null? word!] @(x) [word! <variadic>]] [
                 return take x
             ]
         left-soft*: infix /right-soft*:
-            func [return: [~null~ word!] @(x) [word! <variadic> <end>]] [
+            func [return: [null? word!] @(x) [word! <variadic> <end>]] [
                 return try take x
             ]
 
         left-hard: infix /right-hard:
-            func [return: [~null~ word!] 'x [word! <variadic>]] [
+            func [return: [null? word!] 'x [word! <variadic>]] [
                 return take x
             ]
         left-hard*: infix /right-hard*:
-            func [return: [~null~ word!] 'x [word! <variadic> <end>]] [
+            func [return: [null? word!] 'x [word! <variadic> <end>]] [
                 return try take x
             ]
 

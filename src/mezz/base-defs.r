@@ -261,7 +261,7 @@ print: func [
     "Output SPACED text with newline (evaluating elements if BLOCK!)"
 
     return: "Returns null if line outputs nothing, e.g. print [void]"
-        [~ ~null~]
+        [trash? null?]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
         [<opt-out> char? text! block! @any-element?]
 ][

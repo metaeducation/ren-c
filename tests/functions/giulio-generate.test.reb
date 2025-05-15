@@ -45,7 +45,7 @@
     read-lines: func [
         "Makes a generator that yields lines from a file or port"
         return: [action!]
-        src [~null~ port! file!]
+        src [<undo-opt> port! file!]
         :delimiter [blob! char? text! bitset!]
         :keep "Don't remove delimiter"
         :binary "Return BINARY instead of TEXT"

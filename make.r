@@ -232,7 +232,7 @@ gen-obj: func [
         [object!]
     spec "single file representation, or spec block with file as first item"
         [file! word! path! tuple! block!]
-    dir "directory" [~null~ file!]  ; bootstrap lacks ~[]~ or ^META args
+    dir "directory" [<undo-opt> file!]
     :D "definitions" [block!]
     :I "includes" [block!]
     :F "cflags" [block!]
@@ -1186,7 +1186,7 @@ rebmake.default-stripper: pick rebmake (any [
 ]) else [
     panic ["Unknown stripper type in configuration:" mold user-config.stripper]
 ]
-rebmake.default-stripper/check user-config.stripper-path
+rebmake.default-stripper/check opt user-config.stripper-path
 
 
 === "GENERATE OVERALL APPLICATION CONFIGURATION" ===

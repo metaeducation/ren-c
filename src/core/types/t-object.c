@@ -571,7 +571,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 //
 //  "Get a reference to the 'adjunct' context associated with a value"
 //
-//      return: [~null~ any-context?]
+//      return: [null? any-context?]
 //      value [<unrun> <opt-out> frame! any-context?]
 //  ]
 //
@@ -605,9 +605,9 @@ DECLARE_NATIVE(ADJUNCT_OF)
 //
 //  "Set 'adjunct' object associated with all references to a value"
 //
-//      return: [~null~ any-context?]
+//      return: [null? any-context?]
 //      value [<unrun> frame! any-context?]
-//      adjunct [~null~ any-context?]
+//      adjunct [<undo-opt> any-context?]
 //  ]
 //
 DECLARE_NATIVE(SET_ADJUNCT)
@@ -1217,7 +1217,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
 //
 //  "Get the keys of a context or map (should be KEYS-OF)"
 //
-//      return: [~null~ block!]
+//      return: [null? block!]
 //      element [<opt-out> fundamental?]
 //  ]
 //
@@ -1243,7 +1243,7 @@ IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
 //
 //  "Get the values of a context or map (may panic if context has antiforms)"
 //
-//      return: [~null~ block!]
+//      return: [null? block!]
 //      element [<opt-out> fundamental?]
 //  ]
 //
@@ -1270,7 +1270,7 @@ IMPLEMENT_GENERIC(VALUES_OF, Any_Context)
 //
 //  "Get the underlying data e.g. of an image or struct as a BLOB! value"
 //
-//      return: [~null~ blob!]
+//      return: [null? blob!]
 //      value [<opt-out> element?]
 //  ]
 //
@@ -1419,7 +1419,7 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
 //  "Get what object a FRAME! or ACTION? uses to looks up .XXX references"
 //
 //      return: "Returns TRASH if uncoupled, ~null~ if non-method"
-//          [~ ~null~ object!]
+//          [trash? null? object!]
 //      frame [<unrun> frame!]
 //  ]
 //
@@ -1445,7 +1445,7 @@ DECLARE_NATIVE(COUPLING_OF)
 //
 //  "Get the cached name a FRAME! or ACTION? was last referred to by"
 //
-//      return: [~null~ word!]
+//      return: [null? word!]
 //      frame [<unrun> frame!]
 //  ]
 //
@@ -1573,7 +1573,7 @@ IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
 //
 //  "Get the near information for an executing frame"
 //
-//      return: [~null~ block!]
+//      return: [null? block!]
 //      frame [<opt-out> <unrun> frame!]
 //  ]
 //
@@ -1597,7 +1597,7 @@ DECLARE_NATIVE(NEAR_OF)
 //
 //  "Get the frame corresponding to the parent of a frame"
 //
-//      return: [~null~ frame!]
+//      return: [null? frame!]
 //      frame [<opt-out> <unrun> frame!]
 //  ]
 //
@@ -1716,7 +1716,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
 //
 //  "Creates an OBJECT! from a spec that is not bound into the object"
 //
-//      return: [~null~ object!]
+//      return: [null? object!]
 //      spec "Object spec block, top-level SET-WORD!s will be object keys"
 //          [<opt-out> block! @block! fence!]
 //      :with "Use a parent/prototype context"

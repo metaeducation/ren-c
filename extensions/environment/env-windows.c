@@ -97,7 +97,7 @@ Option(ErrorValue*) Trap_Update_Environment_Variable(
     Option(const Value*) value
 ){
   #if RUNTIME_CHECKS
-    rebElide("ensure [~null~ text!] @", maybe value);
+    rebElide("ensure [null? text!] @", maybe value);
   #endif
 
     Option(ErrorValue*) e = nullptr;

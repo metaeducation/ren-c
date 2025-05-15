@@ -89,7 +89,7 @@ bind construct [
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
     "Returns the current directory path"
-    return: [~null~ file! url!]
+    return: [null? file! url!]
 ][
     return system.options.current-path
 ]
@@ -373,7 +373,7 @@ attempt: specialize repeat/ [count: 1]
 trap: func [
     "If evaluation returns an antiform error, return as warning, else NULL"
 
-    return: [~null~ warning!]
+    return: [null? warning!]
     code [block!]
 ][
     return match warning! entrap code

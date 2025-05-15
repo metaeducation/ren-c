@@ -616,10 +616,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(SERIES));
 
-        if (Is_Meta_Of_Void(ARG(VALUE)))
+        if (Is_Undone_Opt_Nulled(ARG(VALUE)))
             return COPY(map);  // don't panic on read only if it would be no-op
 
-        if (not Is_Meta_Of_Splice(ARG(VALUE)))
+        if (not Is_Splice(ARG(VALUE)))
             return PANIC(
                 "Appending to MAP! only accepts a splice block of key/value"
             );

@@ -62,7 +62,7 @@ export: lib3/func [
 
     :set-word [<skip> set-word!]  ; old style unescapable literal, old <skip>!
     args "`export x: ...` for single or `export [...]` for words list"
-        [~null~ any-value! <...>]  ; <...> is old-style variadic indicator
+        [null? any-value! <...>]  ; <...> is old-style variadic indicator
     <local>
         items
 ][

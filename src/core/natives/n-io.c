@@ -31,7 +31,7 @@
 //  "Converts a value to a human-readable string"
 //
 //      return: "Returns null if input is void"
-//          [~null~ text!]
+//          [null? text!]
 //      value "The value to form (currently errors on antiforms)"
 //          [<opt-out> element?]
 //  ]
@@ -96,7 +96,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
 //  "Converts value to a REBOL-readable string"
 //
 //      return: "null if input is void, if truncated returns integer /LIMIT "
-//          [~null~ ~[text! [~null~ integer!]]~]
+//          [null? ~[text! [null? integer!]]~]
 //      value [<opt-out> element? splice!]
 //      :flat "No indentation"
 //      :limit "Limit to a certain length"

@@ -170,7 +170,7 @@ emit-proto: func [
     ; https://github.com/rebol/rebol-issues/issues/2317
     ;
     append api-objects make object! compose [
-        spec: ensure [~null~ block!] try header.3  ; Rebol metadata API comment
+        spec: ensure [null? block!] try header.3  ; Rebol metadata API comment
         name: (ensure text! name)
         return-type: (ensure text! trim:tail return-type)
         paramlist: (ensure block! paramlist)

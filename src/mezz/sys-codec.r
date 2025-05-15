@@ -26,9 +26,9 @@ register-codec: func [
         [word!]
     suffixes "File extension or block of file extensions the codec processes"
         [file! block!]
-    identify? [~null~ <unrun> frame!]
-    decode [~null~ <unrun> frame!]
-    encode [~null~ <unrun> frame!]
+    identify? [<undo-opt> <unrun> frame!]
+    decode [<undo-opt> <unrun> frame!]
+    encode [<undo-opt> <unrun> frame!]
     <local> codec
 ][
     if not block? suffixes [suffixes: reduce [suffixes]]
@@ -127,7 +127,7 @@ encode: func [
 encoding-of: func [
     "Returns the media codec name for given binary data. (identify)"
 
-    return: [~null~ word!]
+    return: [null? word!]
     data [blob!]
 ][
     for-each [name codec] system.codecs [

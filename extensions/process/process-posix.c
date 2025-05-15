@@ -127,7 +127,7 @@ DECLARE_NATIVE(SET_UID)
 //  "Get effective user ID of the process"
 //
 //      return: "Same ID as input"
-//          [~null~]
+//          [integer!]
 //      euid "The effective user ID"
 //          [integer!]
 //  ]

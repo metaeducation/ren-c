@@ -236,7 +236,7 @@ elf-format: context [
     ;
     find-section: method [
         return: "The index of the section header with encap (sh_xxx vars set)"
-            [~null~ integer!]
+            [null? integer!]
         name [text!]
         section-headers [blob!]
         string-section [blob!]
@@ -493,7 +493,7 @@ elf-format: context [
     ]
 
     get-embedding: method [
-        return: [~null~ blob!]
+        return: [null? blob!]
         file [file!]
     ][
         let header-data: read:part file 64  ; 64-bit size, 32-bit is smaller
@@ -997,7 +997,7 @@ pe-format: context [
 
     find-section: func [
         "Find a section to the exe"
-        return: [~null~ blob!]
+        return: [null? blob!]
         exe-data [blob!]
         section-name [text!]
         :header "Return only the section header"
@@ -1157,7 +1157,7 @@ pe-format: context [
     ]
 
     get-embedding: func [
-        return: [~null~ blob!]
+        return: [null? blob!]
         file [file!]
     ][
         ;print ["Geting embedded from" mold file]
@@ -1216,7 +1216,7 @@ generic-format: context [
     ]
 
     get-embedding: method [
-        return: [~null~ blob!]
+        return: [null? blob!]
         file [file!]
     ][
         let info: query file
@@ -1302,7 +1302,7 @@ encap: func [
 
 get-encap: func [
     return: "NULL if no encapping found, unzipped BLOCK! results if found"
-        [~null~ block!]
+        [null? block!]
     rebol-path "The executable to search for the encap information in"
         [file!]
 ][

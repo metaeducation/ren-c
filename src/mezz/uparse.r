@@ -365,7 +365,7 @@ default-combinators: to map! reduce [
     'spread combinator [
         "Return antiform group for list arguments"
         return: "Splice antiform if input is list"
-            [~null~ ~[]~ element? splice!]
+            [null? void? element? splice!]
         parser [action!]
         <local> ^result
     ][

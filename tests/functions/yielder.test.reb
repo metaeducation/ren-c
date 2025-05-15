@@ -31,7 +31,7 @@
     pattern-filter: func [next-coroutine [action!] :pattern [text!]] [
         pattern: default ["ing"]
 
-        return yielder [token [~null~ text!]] [
+        return yielder [token [null? text!]] [
             log <start-filtering>
             while [token] [  ; Python does a blocking `token = (yield)`
                 log [filter: (token)]
@@ -47,7 +47,7 @@
         ]
     ]
 
-    emit-token: yielder [token [~null~ text!]] [
+    emit-token: yielder [token [null? text!]] [
         log <start-emitting>
         while [token] [  ; Python does a blocking `token = (yield)`
             log [emit: (token)]

@@ -70,7 +70,7 @@ prin: func [
     "Print without implicit line break, blocks are SPACED."
 
     return: []
-    value [~null~ element?]
+    value [<undo-opt> element?]
 ][
     write-stdout switch:type value [
         null?/ [return ~]  ; type of VOID is currently null

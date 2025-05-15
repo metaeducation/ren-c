@@ -256,7 +256,7 @@ e-cwrap/emit ---[
 ;    Emscripten uses lowercase names in cwrap/ccall.
 ;
 to-js-type: func [
-    return: [~null~ text! tag!]
+    return: [null? text! tag!]
     s [text!] "C type as string"
 ][
     return case [

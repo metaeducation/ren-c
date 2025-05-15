@@ -192,7 +192,7 @@ DECLARE_NATIVE(POKE)
 //  "Implementation helper for POKE"
 //
 //      return: "Updated location state"  ; not the input value, see [1]
-//          [~null~ any-value?]
+//          [null? any-value?]
 //      location "(modified)"
 //          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"

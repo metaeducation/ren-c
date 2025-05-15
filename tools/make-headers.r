@@ -178,7 +178,7 @@ handle-item: func [
     "Handle a single item in %file-base.r"
     return: []
     item [path! tuple! block!]  ; bootstrap EXE loads [foo.c] as [foo/c]
-    dir [~null~ file!]
+    dir [<undo-opt> file!]
 ][
     if block? item [
         all [
@@ -214,7 +214,7 @@ parse3 file-base.core [some [
         (subdir: null)
     ]
     |
-    item: one (handle-item item null)
+    item: one (handle-item item void)
 ]]
 
 

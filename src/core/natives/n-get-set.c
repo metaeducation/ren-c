@@ -1161,8 +1161,8 @@ void Set_Var_May_Panic(
 //
 //      return: "Same value as input (error passthru even it skips the assign)"
 //          [any-value?]
-//      ^target "Word or tuple, or calculated sequence steps (from GET)"
-//          [~[]~ any-word? tuple! group!
+//      target "Word or tuple, or calculated sequence steps (from GET)"
+//          [<undo-opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]  ; should take PACK! [1]
 //      ^value "Will be decayed if not assigned to metavariables"
 //          [any-atom?]
@@ -1179,12 +1179,12 @@ DECLARE_NATIVE(SET)
     INCLUDE_PARAMS_OF_SET;
 
     Element* meta_setval = Element_ARG(VALUE);
-    Element* meta_target = Element_ARG(TARGET);
 
-    if (Is_Meta_Of_Void(meta_target))
+    if (Is_Nulled(ARG(TARGET)))
         return UNMETA(meta_setval);   // same for SET as [10 = (void): 10]
 
-    Element* target = Unquotify(meta_target);
+    Element* target = Element_ARG(TARGET);
+
     if (Is_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
         Unchain(target);
 
@@ -1294,7 +1294,7 @@ DECLARE_NATIVE(SET_ACCESSOR)
 //
 //  "Get the current coupling from the binding environment"
 //
-//      return: [~null~ object!]
+//      return: [null? object!]
 //  ]
 //
 DECLARE_NATIVE(DOT_1)

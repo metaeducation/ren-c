@@ -114,7 +114,7 @@ DECLARE_NATIVE(CLOSE)
 //  "Read from a file, URL, or other port"
 //
 //      return: "null on (some) failures (REVIEW port model!)" [
-//          ~null~ blob!  ; should all READ return a BLOB!?
+//          null? blob!  ; should all READ return a BLOB!?
 //          text!  ; READ:STRING returned TEXT!
 //          block!  ; READ:LINES returned BLOCK!
 //          port!  ; asynchronous READ on PORT!s returned the PORT!
@@ -166,7 +166,7 @@ DECLARE_NATIVE(WRITE)
 //
 //  "Returns information about a port, file, or URL"
 //
-//      return: [~null~ object!]
+//      return: [null? object!]
 //      target [port! file! url! block!]
 //  ]
 //

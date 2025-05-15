@@ -516,7 +516,7 @@ join: func3 [
 ]
 
 collect*: func3 [  ; variant giving NULL if no actual material kept
-    return: [~null~ block!]
+    return: [null? block!]
     body [block!]
     <local> out keeper
 ][
@@ -638,7 +638,7 @@ modernize-typespec: func3 [
 ][
     types: copy types
     for-each [current bootstrap] [
-        any-value?      [~null~ any-value!]
+        any-value?      [null? any-value!]
         any-string?     any-string!
         element?        any-value!
         action?         action!
@@ -910,7 +910,7 @@ mold: adapt mold3/ [  ; update so MOLD SPREAD works
     ]
 ]
 
-noquote: func3 [x [~null~ any-value!]] [
+noquote: func3 [x [<undo-opt> any-value!]] [
     assert [not action? get $x]
     switch type of x [
         lit-word3! [return to word! x]

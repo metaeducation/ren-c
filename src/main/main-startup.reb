@@ -174,7 +174,7 @@ host-script-pre-load: func [
     return: []
     is-module [yesno?]
     hdr "Header object (missing for DO of BLOB! with no header)"
-        [~null~ object!]
+        [<undo-opt> object!]
 ][
     ; Print out the script info
     boot-print [
@@ -356,7 +356,7 @@ bind construct [
         "Convert string path to absolute dir! path"
 
         return: "Null if not found"
-            [~null~ file!]
+            [null? file!]
         dir [<opt-out> text!]
     ][
         return all [
@@ -368,7 +368,7 @@ bind construct [
 
     let get-home-path: func [
         "Return HOME path (e.g. $HOME on *nix)"
-        return: [~null~ element? file!]
+        return: [null? element? file!]
     ][
         let get-env: if select system.modules 'Environment [
             runs :system.modules.Environment.get-env
@@ -392,7 +392,7 @@ bind construct [
 
     let get-resources-path: func [
         "Return platform specific resources path"
-        return: [~null~ file!]
+        return: [null? file!]
     ][
         ; lives under systems.options.home
 

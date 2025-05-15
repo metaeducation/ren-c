@@ -874,8 +874,8 @@ DECLARE_NATIVE(VACANT_Q)
 //  "TRUE if the values are equal"
 //
 //      return: [logic?]
-//      ^value1 [any-value? ~[]~]
-//      ^value2 [any-value? ~[]~]
+//      ^value1 [any-value? void?]
+//      ^value2 [any-value? void?]
 //      :relax "Use less strict comparison rules (e.g. caseless comparison)"
 //  ]
 //
@@ -990,8 +990,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Element)
 //  "TRUE if the values are identical"
 //
 //      return: [logic?]
-//      ^value1 [any-value? ~[]~]  ; !!! antiforms okay? e.g. "same splice"?
-//      ^value2 [any-value? ~[]~]
+//      ^value1 [any-value? void?]  ; !!! antiforms okay? e.g. "same splice"?
+//      ^value2 [any-value? void?]
 //  ]
 //
 DECLARE_NATIVE(SAME_Q)

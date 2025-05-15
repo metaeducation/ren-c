@@ -272,8 +272,8 @@ bool Hijacker_Details_Querier(
 //          [action! ~]
 //      victim "Frame whose inherited instances are to be affected"
 //          [<unrun> frame!]
-//      ^hijacker "The frame to run in its place (void to leave TBD)"
-//          [<unrun> frame! ~[]~]
+//      hijacker "The frame to run in its place (void to leave TBD)"
+//          [<undo-opt> <unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(HIJACK)
@@ -301,7 +301,9 @@ DECLARE_NATIVE(HIJACK)
 
     Phase* victim = Cell_Frame_Phase(ARG(VICTIM));
 
-    Option(const Element*) opt_hijacker = Optional_Element_ARG(HIJACKER);
+    Option(const Element*) opt_hijacker = Is_Nulled(ARG(HIJACKER))
+        ? nullptr
+        : Element_ARG(HIJACKER);
 
     bool victim_unimplemented =
         Is_Stub_Details(victim) and

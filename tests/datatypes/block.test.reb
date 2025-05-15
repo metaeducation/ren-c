@@ -41,7 +41,7 @@
 
 (
     make-one-thru-five: func [
-        return: [~null~ integer!]
+        return: [null? integer!]
     ]
     bind construct [count: 0] [
         if count = 5 [count: 0 return null]

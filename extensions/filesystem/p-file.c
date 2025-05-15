@@ -329,15 +329,16 @@ DECLARE_NATIVE(FILE_ACTOR)
       case SYM_APPEND: {
         INCLUDE_PARAMS_OF_APPEND;
 
-        Option(const Value*) v = Optional_ARG(VALUE);
-        if (not v or Is_Antiform(unwrap v))
+        if (Is_Antiform(ARG(VALUE)))
             return PANIC(PARAM(VALUE));
+
+        Element* v = Element_ARG(VALUE);
 
         if (Bool_ARG(PART) or Bool_ARG(DUP) or Bool_ARG(LINE))
             return PANIC(Error_Bad_Refines_Raw());
 
         assert(Is_Port(ARG(SERIES)));  // !!! poorly named
-        return rebValue("write:append @", ARG(SERIES), "@", unwrap v); }
+        return rebValue("write:append @", ARG(SERIES), "@", v); }
 
     //=//// WRITE //////////////////////////////////////////////////////////=//
 

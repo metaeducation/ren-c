@@ -870,7 +870,7 @@ DetailsQuerier* Details_Querier(Details *details) {
 //
 //      return: [action! frame!]
 //      action [action! frame!]
-//      coupling [~null~ object! frame!]
+//      coupling [<undo-opt> object! frame!]
 //  ]
 //
 DECLARE_NATIVE(COUPLE)

@@ -44,7 +44,7 @@ typedef RebolValue Value;
 //
 //   "Get locale specific information"
 //
-//      return: [~null~ text!]
+//      return: [null? text!]
 //      category ['language 'language* 'territory 'territory*]
 //          --[language: English name of the language,
 //          territory: English name of the country/region,
@@ -134,7 +134,7 @@ DECLARE_NATIVE(LOCALE)
 //
 //  "Set/Get current locale, just a simple wrapper around C version"
 //
-//      return: [~null~ text!]
+//      return: [null? text!]
 //      category [word!]
 //      value [text!]
 //  ]

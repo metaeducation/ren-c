@@ -599,7 +599,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         INCLUDE_PARAMS_OF_INSERT;
         USED(PARAM(SERIES));
 
-        Option(const Value*) arg = Optional_ARG(VALUE);
+        Option(const Value*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
+            ? nullptr
+            : ARG(VALUE);
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
@@ -1319,16 +1321,18 @@ IMPLEMENT_GENERIC(SORT, Any_List)
 //
 //  "If a value isn't already a BLOCK!, enclose it in a block, else return it"
 //
-//      return: [block!]
-//      ^value "VOID input will produce an empty block"
-//          [~[]~ element?]
+//      return: [null? block!]
+//      value [<opt-out> blank? element?]
 //  ]
 //
 DECLARE_NATIVE(BLOCKIFY)
 {
     INCLUDE_PARAMS_OF_BLOCKIFY;
 
-    Option(const Element*) v = Optional_Element_ARG(VALUE);
+    Option(const Element*) v = Is_Blank(ARG(VALUE))
+        ? nullptr
+        : Element_ARG(VALUE);
+
     if (v and Is_Block(unwrap v))
         return COPY(unwrap v);
 
@@ -1350,15 +1354,17 @@ DECLARE_NATIVE(BLOCKIFY)
 //  "If a value isn't already a GROUP!, enclose it in a group, else return it"
 //
 //      return: [group!]
-//      ^value "VOID input will produce an empty group"
-//          [~[]~ element?]
+//      value [<opt-out> blank? element?]
 //  ]
 //
 DECLARE_NATIVE(GROUPIFY)
 {
     INCLUDE_PARAMS_OF_GROUPIFY;
 
-    Option(const Element*) v = Optional_Element_ARG(VALUE);
+    Option(const Element*) v = Is_Blank(ARG(VALUE))
+        ? nullptr
+        : Element_ARG(VALUE);
+
     if (v and Is_Group(unwrap v))
         return COPY(unwrap v);
 
@@ -1379,11 +1385,10 @@ DECLARE_NATIVE(GROUPIFY)
 //
 //  "Enclose element(s) in arbitrarily deep list structures"
 //
-//      return: [any-list?]
+//      return: [null? any-list?]
 //      example "Example's binding (or lack of) will be used"
 //          [datatype! any-list?]
-//      ^content "Void input is treated the same as an empty splice"
-//          [~[]~ element? splice!]
+//      content [<opt-out> element? splice!]
 //  ]
 //
 DECLARE_NATIVE(ENVELOP)
@@ -1393,7 +1398,7 @@ DECLARE_NATIVE(ENVELOP)
     INCLUDE_PARAMS_OF_ENVELOP;
 
     Value* example = ARG(EXAMPLE);
-    Option(const Value*) content = Optional_ARG(CONTENT);
+    const Value* content = ARG(CONTENT);
 
     Element* copy;
 
@@ -1409,8 +1414,8 @@ DECLARE_NATIVE(ENVELOP)
     Length len;
     if (
         not content or (
-            Is_Splice(unwrap content)
-            and (Cell_List_Len_At(&len, unwrap content), len == 0)
+            Is_Splice(content)
+            and (Cell_List_Len_At(&len, content), len == 0)
         )
     ){
         return copy;
@@ -1421,7 +1426,7 @@ DECLARE_NATIVE(ENVELOP)
         const Element* tail;
         Element* at = Cell_List_At_Known_Mutable(&tail, temp);
         if (at == tail) {  // empty list, just append
-            rebElide(CANON(APPEND), rebQ(temp), rebQ(unwrap content));
+            rebElide(CANON(APPEND), rebQ(temp), rebQ(content));
             return copy;
         }
         if (Any_List(at)) {  // content should be inserted deeper
@@ -1429,7 +1434,7 @@ DECLARE_NATIVE(ENVELOP)
             continue;
         }
         VAL_INDEX_UNBOUNDED(temp) += 1;  // just skip first item
-        rebElide(CANON(INSERT), rebQ(temp), rebQ(unwrap content));
+        rebElide(CANON(INSERT), rebQ(temp), rebQ(content));
         VAL_INDEX_UNBOUNDED(temp) -= 1;  // put back if copy = temp for head
         return copy;
     }

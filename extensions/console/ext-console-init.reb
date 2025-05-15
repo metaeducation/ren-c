@@ -144,7 +144,7 @@ export console!: make object! [
         if pack? ^v [
             v: unquasi v
             if 0 = length of v [  ; mold like a regular antiform, for now
-                print unspaced [result _ "~[]~" _ _ ";" _ "anti"]
+                print unspaced [result _ "~[]~" _ _ ";" _ "anti (void)"]
                 return ~
             ]
 
@@ -210,7 +210,11 @@ export console!: make object! [
             ; Those quasiforms are received quoted by this routine like other
             ; ordinary values; this case is just for the antiforms.
             ;
-            print unspaced [result _ mold v _ _ ";" _ "anti"]
+            if blank? ^v [
+                print unspaced [result _ mold v _ _ ";" _ "anti (blank)"]
+            ] else [
+                print unspaced [result _ mold v _ _ ";" _ "anti"]
+            ]
             return ~
         ]
 
@@ -276,7 +280,7 @@ export console!: make object! [
         "Receives line input, parse and transform, send back to CONSOLE eval"
 
         return: "~escape~ if canceled, null on no input, else line of text"
-            [~null~ text! '~escape~]
+            [null? text! '~escape~]
     ][
         return read-line stdin except ['~escape~]
     ]
@@ -459,13 +463,13 @@ console*: func [
     return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
         [block! group! integer! ^group! handle!]  ; RETURN is hooked below!
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
-        [~null~ block! group!]
+        [<undo-opt> block! group!]
     result "^META result from PRIOR eval, non-quoted error, or exit code #"
-        [~null~ warning! quoted! quasiform! integer!]
+        [<undo-opt> warning! quoted! quasiform! integer!]
     resumable "Is the RESUME function allowed to exit this console"
         [yesno?]
     skin "Console skin to use if the console has to be launched"
-        [~null~ object! file!]
+        [<undo-opt> object! file!]
 ][
     === HANDLE EXIT CODE ===
 

@@ -310,7 +310,7 @@ unzip: func [
     "Decompresses a zip archive to a directory or a block"
 
     return: "If `where` was a block, then position after archive insertion"
-        [~ block!]
+        [trash? block!]
     where "Where to decompress it"
         [file! block!]
     source "Archive to decompress (only STORE and DEFLATE supported)"

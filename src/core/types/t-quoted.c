@@ -284,7 +284,7 @@ DECLARE_NATIVE(META_P)
 //
 //      return: [any-atom?]
 //      ^value "Can be plain or antiform like NULL or VOID if :LITE"
-//          [~null~ ~[]~ element? quoted! quasiform!]
+//          [null? void? element? quoted! quasiform!]
 //      :lite "Pass thru NULL and VOID antiforms as-is"
 //  ]
 //
@@ -405,8 +405,8 @@ DECLARE_NATIVE(ANTI)
 //  "Make block arguments splice"
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
-//          [~null~ ~[]~ element? splice!]
-//      ^value [~null~ ~[]~ blank? any-list? quasiform!]  ; see [1] [2] [3]
+//          [null? void? element? splice!]
+//      ^value [null? void? blank? any-list? quasiform!]  ; see [1] [2] [3]
 //  ]
 //
 DECLARE_NATIVE(SPREAD)

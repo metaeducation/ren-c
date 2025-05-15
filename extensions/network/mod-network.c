@@ -1129,7 +1129,7 @@ DECLARE_NATIVE(SHUTDOWN_P)
 //  "Waits for a duration, port, or both"
 //
 //      return: "NULL if timeout, PORT! that awoke or BLOCK! of ports if /ALL"
-//          [~null~ port! block!]
+//          [null? port! block!]
 //      value [<undo-opt> any-number? time! port! block!]
 //  ]
 //

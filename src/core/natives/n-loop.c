@@ -1300,7 +1300,7 @@ DECLARE_NATIVE(EVERY)
 //  "Removes values for each block that returns true"
 //
 //      return: "Modified Input"
-//          [~null~ ~[[blank? any-series?] integer!]~]
+//          [null? ~[[blank? any-series?] integer!]~]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (modified)"
@@ -1648,7 +1648,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
 //      return: "Collected block"
-//          [~null~ block!]
+//          [null? block!]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
@@ -1697,7 +1697,7 @@ DECLARE_NATIVE(MAP_EACH)
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
 //      return: "Collected block"
-//          [~null~ block!]
+//          [null? block!]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"

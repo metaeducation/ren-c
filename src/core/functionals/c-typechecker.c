@@ -998,13 +998,13 @@ DECLARE_NATIVE(MATCH)
 //    "didn't match" signal with the "did match" signal.  To solve this problem
 //    requires MATCH:META
 //
-//        >> match:meta [~null~ integer!] 10
+//        >> match:meta [null? integer!] 10
 //        == '10
 //
-//        >> match:meta [~null~ integer!] null
+//        >> match:meta [null? integer!] null
 //        == ~null~
 //
-//        >> match:meta [~null~ integer!] <some-tag>
+//        >> match:meta [null? integer!] <some-tag>
 //        == ~null~  ; anti
 {
     INCLUDE_PARAMS_OF_MATCH;

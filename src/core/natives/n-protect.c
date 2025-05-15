@@ -30,7 +30,7 @@
 //
 //  "Return value whose access level doesn't allow mutation to its content"
 //
-//      return: [~null~ element?]
+//      return: [null? element?]
 //      value "Argument to change access to (can be locked or not)"
 //          [<opt-out> element?]  ; !!! affect INTEGER! when it's a bignum?
 //  ]
@@ -71,7 +71,7 @@ DECLARE_NATIVE(CONST_Q) {
 //  "Return value whose access allows mutation to its argument (if unlocked)"
 //
 //      return: "Same as input -- no errors are given if locked or immediate"
-//          [~null~ element?]
+//          [null? element?]
 //      value "Argument to change access to (if such access can be granted)"
 //          [<opt-out> element?]  ; !!! affect INTEGER! when it's a bignum?
 //  ]
@@ -349,7 +349,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 //  "Low-level hook for PROTECT, used as :UPDATER with SET"
 //
 //      return: "Bits referencing cell must update (nullptr if no update needed)"
-//          [~null~ element?]
+//          [null? element?]
 //      location "Target value (on some steps, bits are modified)"
 //          [element?]
 //      picker "The property to update (e.g. object field)"

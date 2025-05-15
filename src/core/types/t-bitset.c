@@ -582,12 +582,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         INCLUDE_PARAMS_OF_APPEND;
         USED(PARAM(SERIES));  // covered by `v`
 
-        Option(const Value*) opt_arg = Optional_ARG(VALUE);
-        if (not opt_arg)
+        if (Is_Undone_Opt_Nulled(ARG(VALUE)))
             return COPY(v);  // don't panic on read only if it would be a no-op
-        if (Is_Antiform(unwrap opt_arg))
+        if (Is_Antiform(ARG(VALUE)))
             return PANIC(PARAM(VALUE));
-        const Element* arg = c_cast(Element*, unwrap opt_arg);
+        const Element* arg = Element_ARG(VALUE);
 
         if (Bool_ARG(PART) or Bool_ARG(DUP) or Bool_ARG(LINE))
             return PANIC(Error_Bad_Refines_Raw());

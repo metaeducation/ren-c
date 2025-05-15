@@ -18,7 +18,7 @@ Rebol [
 
 info?: func [
     "Returns an info object about a file or url"
-    return: [~null~ object! word!]
+    return: [null? object! word!]
     target [file! url!]
     :only "for urls, returns 'file or null"
 ][
@@ -39,7 +39,7 @@ info?: func [
 
 exists?: func [
     "Returns the type of a file or URL if it exists, otherwise null"
-    return: [~null~ word!]
+    return: [null? word!]
         "FILE, DIR, or null"  ; should return LOGIC!, FILETYPE OF separate
     target [<opt-out> file! url!]
 ][
@@ -60,7 +60,7 @@ exists?: func [
 
 modified?: func [
     "Returns the last modified date of a file"
-    return: [~null~ date!]
+    return: [null? date!]
     target [file! url!]
 ][
     return all [
@@ -71,7 +71,7 @@ modified?: func [
 
 suffix-of: func [
     "Return the file suffix of a filename or url, else null"
-    return: [~null~ file!]
+    return: [null? file!]
     path [file! url! text!]
 ][
     path: as text! path
@@ -170,7 +170,7 @@ delete-dir: func [
 script?: func [
     "Checks file, url, or text string for a valid script header"
 
-    return: [~null~ blob!]
+    return: [null? blob!]
     source [file! url! blob! text!]
 ][
     if match [file! url!] source [
@@ -185,7 +185,7 @@ script?: func [
 
 file-type?: func [
     "Return the identifying word for a specific file type (or null)"
-    return: [~null~ word!]
+    return: [null? word!]
     file [file! url!]
 ][
     return all [
@@ -196,7 +196,7 @@ file-type?: func [
 
 split-path: func [  ; /FILE used in bootstrap vs. multi-return
     "Splits and returns ~[directory filename]~ (either may be null)"
-    return: [~[[~null~ file! url!] [~null~ file! url!]]~]
+    return: [~[[null? file! url!] [null? file! url!]]~]
 
     target [file! url!]
     :relax "Allow filenames to be . and .."

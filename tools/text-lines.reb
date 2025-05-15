@@ -18,7 +18,7 @@ import <bootstrap-shim.r>
 
 decode-lines: func [
     "Decode text encoded using a line prefix e.g. comments (modifies)"
-    text [~null~ text! warning!]  ; error? in modern exe, not ERROR!
+    text [<undo-opt> text! warning!]  ; error? in modern exe, not ERROR!
     line-prefix [text! block!] "matched using parse, usually ** or // -"
     indent [text! block!] -[Matched using parse, usually "  "]-
 ] [
@@ -112,7 +112,7 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
     "Return the line numbers of lines exceeding line-length"
 
     return: "Returns null if no lines (is this better than returning []?)"
-        [~null~ block!]
+        [null? block!]
     line-length [integer!]
     text [text!]
 ] [
@@ -151,7 +151,7 @@ text-line-of: func [
     "Returns line number of position within text"
 
     return: "Line 0 does not exist, no counting is performed for empty text"
-        [~null~ integer!]
+        [null? integer!]
     position "Position (newline is considered the last character of a line)"
         [text! blob!]
 ] [

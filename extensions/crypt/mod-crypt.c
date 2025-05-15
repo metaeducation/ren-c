@@ -653,8 +653,8 @@ DECLARE_NATIVE(RSA_ENCRYPT)
 
     // N and E are required
     //
-    Value* n = rebValue("ensure [~null~ blob!] public-key.n");
-    Value* e = rebValue("ensure [~null~ blob!] public-key.e");
+    Value* n = rebValue("ensure [null? blob!] public-key.n");
+    Value* e = rebValue("ensure [null? blob!] public-key.e");
 
     if (not n or not e)
         return "panic -[RSA requires N and E components of key object]-";
@@ -1450,7 +1450,7 @@ DECLARE_NATIVE(AES_KEY)
 //  "Encrypt/decrypt data using AES algorithm"
 //
 //      return: "Encrypted/decrypted data (null if zero length)"
-//          [~null~ blob!]
+//          [null? blob!]
 //      ctx "Stream cipher context"
 //          [handle!]
 //      data [blob!]

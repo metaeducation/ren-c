@@ -311,7 +311,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
         UNUSED(PARAM(SERIES));  // covered by `v`
 
-        Option(const Value*) arg = Optional_ARG(VALUE);
+        Option(const Value*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
+            ? nullptr
+            : ARG(VALUE);
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)

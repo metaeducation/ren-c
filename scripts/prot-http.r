@@ -78,7 +78,7 @@ make-http-request: func [
     headers "Request headers (set-word? text! pairs)"
         [block!]
     content "Content-Length is created automatically"
-        [~null~ text! blob!]
+        [<undo-opt> text! blob!]
     <local> result
 ][
     ; The HTTP 1.1 protocol requires a `Host:` header.  Simple logic used

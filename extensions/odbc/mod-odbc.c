@@ -870,7 +870,7 @@ SQLRETURN Get_ODBC_Catalog(
     int index;
     for (index = 2; index != 6; ++index) {
         pattern[index - 2] = rebSpellWideMaybe(  // returns nullptr if NULL
-            "ensure [~null~ text!]",
+            "ensure [null? text!]",
                 "pick ensure block!", block, rebI(index)
         );
     }
@@ -1266,7 +1266,7 @@ DECLARE_NATIVE(INSERT_ODBC)
         // then prepare a new statement.
         //
         use_cache = rebUnboxLogic(
-            "equal? (first sql) ensure [~null~ text!] statement.string"
+            "equal? (first sql) ensure [null? text!] statement.string"
         );
 
         SQLLEN sql_index = 1;
@@ -1401,7 +1401,7 @@ DECLARE_NATIVE(INSERT_ODBC)
         return rebValue("ensure block! statement.titles");
 
     Value* old_columns_value = rebValue(
-        "ensure [~null~ handle!] statement.columns"
+        "ensure [null? handle!] statement.columns"
     );
     if (old_columns_value) {
         //
@@ -1856,7 +1856,7 @@ DECLARE_NATIVE(CLOSE_STATEMENT)
     INCLUDE_PARAMS_OF_CLOSE_STATEMENT;
 
     Value* columns_value = rebValue(
-        "ensure [~null~ handle!] statement.columns"
+        "ensure [null? handle!] statement.columns"
     );
     if (columns_value) {
         ColumnList* list = rebUnboxHandle(ColumnList*, columns_value);
@@ -1866,7 +1866,7 @@ DECLARE_NATIVE(CLOSE_STATEMENT)
         rebRelease(columns_value);
     }
 
-    Value* hstmt_value = rebValue("ensure [~null~ handle!] statement.hstmt");
+    Value* hstmt_value = rebValue("ensure [null? handle!] statement.hstmt");
     if (hstmt_value) {
         SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT, hstmt_value);
         assert(hstmt);
@@ -1896,7 +1896,7 @@ DECLARE_NATIVE(CLOSE_CONNECTION)
 {
     INCLUDE_PARAMS_OF_CLOSE_CONNECTION;
 
-    Value* hdbc_value = rebValue("ensure [~null~ handle!] connection.hdbc");
+    Value* hdbc_value = rebValue("ensure [null? handle!] connection.hdbc");
     if (not hdbc_value)  // connection was already closed (be tolerant?)
         return rebLogic(false);
 

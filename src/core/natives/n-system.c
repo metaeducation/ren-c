@@ -71,7 +71,7 @@ DECLARE_NATIVE(EXIT)  // moved to SYS.UTIL/EXIT by boot code, for safety
 //  "Recycles unused memory"
 //
 //      return: "Number of Flex Nodes recycled (if applicable)"
-//          [~null~ integer!]
+//          [null? integer!]
 //      :off "Disable auto-recycling"
 //      :on "Enable auto-recycling"
 //      :ballast "Trigger for auto-recycle (memory used)"
@@ -262,7 +262,7 @@ int ceil_log2(unsigned long long x) {
 //
 //  "Get the evaluator tick count (currently only available in checked builds)"
 //
-//      return: [~null~ integer!]
+//      return: [null? integer!]
 //  ]
 //
 DECLARE_NATIVE(C_DEBUG_TICK)

@@ -163,7 +163,7 @@ bool Combinator_Details_Querier(
 //             [return: [any-value?]],
 //         ])
 //
-//         remainder: [~null~ any-series?]
+//         remainder: [null? any-series?]
 //
 //         state [frame!]
 //         input [any-series?]
@@ -412,7 +412,7 @@ DECLARE_NATIVE(OPT_COMBINATOR)
 //  "Match a TEXT! value as a list item or at current position of bin/string"
 //
 //      return: "The rule series matched against (not input value)"
-//          [~null~ text!]
+//          [null? text!]
 //      value [text!]
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]

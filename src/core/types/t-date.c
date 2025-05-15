@@ -1222,8 +1222,8 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Date)
 //          [integer!]
 //      seconds "3600 for each hour, 60 for each minute"
 //          [integer!]
-//      nano [~null~ integer!]
-//      zone [~null~ integer!]
+//      nano [<undo-opt> integer!]
+//      zone [<undo-opt> integer!]
 //  ]
 //
 DECLARE_NATIVE(MAKE_DATE_YMDSNZ)
@@ -1264,7 +1264,7 @@ DECLARE_NATIVE(MAKE_DATE_YMDSNZ)
 //      seconds "3600 for each hour, 60 for each minute"
 //          [integer!]
 //      nano "Nanoseconds"
-//          [~null~ integer!]
+//          [<undo-opt> integer!]
 //  ]
 //
 DECLARE_NATIVE(MAKE_TIME_SN)

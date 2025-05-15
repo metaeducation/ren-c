@@ -22,7 +22,7 @@ spec-of: func [
 
     return collect [
         if adjunct [
-            keep:line ? ensure [~null~ text!] select adjunct 'description
+            keep:line ? ensure [null? text!] select adjunct 'description
         ]
 
         let r-param: return of action
@@ -56,7 +56,7 @@ decorated-words-of: func [
 description-of: func [
     "One-line summary of a value's purpose"
 
-    return: [~null~ text!]
+    return: [null? text!]
     v [<opt-out> any-value?]
 ][
     if action? :v [
@@ -499,7 +499,7 @@ source: func [
 what: func [
     "Prints a list of known actions"
 
-    return: [~ block!]
+    return: [trash? block!]
     @name [<end> word! lit-word?]
         "Optional module name"
     :args "Show arguments not titles"

@@ -74,7 +74,7 @@ ends-with?: func [
 ]
 
 filter-flag: func [
-    return: [~null~ text! file!]
+    return: [null? text! file!]
     flag "If TAG! then <prefix:flag>, e.g. <gcc:-Wno-unknown-warning>"
         [tag! text! file!]
     prefixes "gnu -> GCC-compatible compilers, msc -> Microsoft C"
@@ -424,7 +424,7 @@ compiler-class: make object! [
         "Check if the compiler is available"
         return: []
         exec -[Executable path (can be text!, e.g. "r3 --do c99 --")]-
-            [~null~ file! text!]
+            [<undo-opt> file! text!]
     ][
         panic ~<archetype check invoked>~
     ]
@@ -441,11 +441,11 @@ compiler-class: make object! [
     ]
 
     link: method [
-        return: [~null~ block!]
+        return: [null? block!]
         output [file!]
-        depends [~null~ block!]
-        searches [~null~ block!]
-        ldflags [~null~ block! any-string?]
+        depends [<undo-opt> block!]
+        searches [<undo-opt> block!]
+        ldflags [<undo-opt> block! any-string?]
     ][
         panic ~<archetype link invoked>~
     ]
@@ -460,7 +460,7 @@ cc: make compiler-class [
     check: method [
         "Assigns .exec-file, extracts the compiler version"
         return: []
-        exec [~null~ file! text!]
+        exec [<undo-opt> file! text!]
     ][
         .exec-file: any [exec, .exec-file]
 
@@ -615,9 +615,9 @@ cc: make compiler-class [
     link: link-backup: method [  ; !!! hacky inheritance mechanism
         return: [text!]
         output [file!]
-        depends [~null~ block!]
-        searches [~null~ block!]
-        ldflags [~null~ block! any-string?]
+        depends [<undo-opt> block!]
+        searches [<undo-opt> block!]
+        ldflags [<undo-opt> block! any-string?]
         :dynamic
         :debug
     ][
@@ -660,7 +660,7 @@ cc: make compiler-class [
     ]
 
     accept: method [
-        return: [~null~ text!]
+        return: [null? text!]
         dep [object!]
     ][
         return degrade switch dep.class [
@@ -750,9 +750,9 @@ emcc: make gcc [
     link: method [
         return: [text!]
         output [file!]
-        depends [~null~ block!]
-        searches [~null~ block!]
-        ldflags [~null~ block! any-string?]
+        depends [<undo-opt> block!]
+        searches [<undo-opt> block!]
+        ldflags [<undo-opt> block! any-string?]
         :dynamic
         :debug
     ][
@@ -773,7 +773,7 @@ cl: make compiler-class [
     check: method [
         "Assigns .exec-file, extracts the compiler version"
         return: []
-        exec [~null~ file! text!]
+        exec [<undo-opt> file! text!]
     ][
         .exec-file: any [exec, .exec-file]
 
@@ -878,9 +878,9 @@ cl: make compiler-class [
     link: method [
         return: [text!]
         output [file!]
-        depends [~null~ block!]
-        searches [~null~ block!]
-        ldflags [~null~ block! any-string?]
+        depends [<undo-opt> block!]
+        searches [<undo-opt> block!]
+        ldflags [<undo-opt> block! any-string?]
         :dynamic
         :debug
     ][
@@ -935,7 +935,7 @@ cl: make compiler-class [
     ]
 
     accept: method [
-        return: [~null~ text!]
+        return: [null? text!]
         dep [object!]
     ][
         return degrade switch dep.class [
@@ -1018,7 +1018,7 @@ strip: make strip-class [
     id: ["gcc" "gnu"]
     check: method [
         return: []
-        exec [~null~ file! text!]
+        exec [<undo-opt> file! text!]
     ][
         .exec-file: exec: default ["strip"]
     ]
@@ -1189,7 +1189,7 @@ generator-class: make object! [
     do-substitutions: method [
         "Substitute variables (recursively) in the command with its value"
 
-        return: [~null~ object! any-string?]
+        return: [null? object! any-string?]
         cmd [object! any-string?]
     ][
         ; !!! These were previously static, but bootstrap executable's non

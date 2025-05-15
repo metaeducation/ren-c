@@ -113,7 +113,7 @@ save: func [
             ]
         ]
 
-        length: ensure [~null~ integer!] try select header 'length
+        length: ensure [null? integer!] try select header 'length
         header: map-each [key val] header [
             assert [not antiform? val]
             spread [setify key val]

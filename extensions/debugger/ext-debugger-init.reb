@@ -111,7 +111,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.]--
 backtrace*: func [
     "Backtrace to find a specific FRAME!, or other queried property."
 
-    return: [~null~ block! frame!]
+    return: [null? block! frame!]
         "Null if printing, if specific level a frame! else block"
     start [frame!]
         "Where to consider the trace point as starting from"
@@ -337,7 +337,7 @@ debug: func [
     "Dialect for interactive debugging, see documentation for details"
     return: []
     'value "Stack level to inspect or dialect block, or enter debug mode"
-        [~null~ integer! frame! block!]
+        [<undo-opt> integer! frame! block!]
 ][
     if not integer? :value [
         panic "Since switching to usermode, for now DEBUG only takes INTEGER!"
