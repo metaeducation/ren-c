@@ -989,7 +989,7 @@ strip-class: make object! [
     commands: method [
         return: [block!]
         target [file!]
-        params [~null~ blank! block! any-string?]
+        params [<undo-opt> block! any-string?]
     ][
         return reduce [spaced collect [
             keep any [(file-to-local:pass opt .exec-file) "strip"]

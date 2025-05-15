@@ -130,7 +130,7 @@ latest-of: func [
     return: [url!]
 
     os "https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r"
-        [<end> blank! tuple!]
+        [<end> <undo-opt> tuple!]
     :variant "Note: Stakeholders are asked to use checked builds, for now"
         ['checked 'release]
     :commit "Link for specific commit number (defaults to latest commit)"

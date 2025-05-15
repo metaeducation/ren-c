@@ -554,8 +554,8 @@ void Startup_Builtin_Symbols(
 
     rebFree(bytes);
 
-    if (0 != strcmp("blank!", String_UTF8(CANON(BLANK_X))))
-        crash (CANON(BLANK_X));
+    if (0 != strcmp("integer!", String_UTF8(CANON(INTEGER_X))))
+        crash (CANON(INTEGER_X));
 
     if (0 != strcmp("true", String_UTF8(CANON(TRUE))))
         crash (CANON(TRUE));

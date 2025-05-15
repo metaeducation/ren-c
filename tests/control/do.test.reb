@@ -102,7 +102,7 @@
     a-value: []
     same? a-value eval reduce [a-value]
 )
-(same? blank! eval reduce [blank!])
+(same? integer! eval reduce [integer!])
 (1/Jan/0000 = eval [1/Jan/0000])
 (0.0 = eval [0.0])
 (1.0 = eval [1.0])

@@ -53,7 +53,7 @@
     same? a-value all [a-value]
 )
 (
-    a-value: blank!
+    a-value: integer!
     same? a-value all [a-value]
 )
 (1/Jan/0000 = all [1/Jan/0000])
@@ -150,7 +150,7 @@
     same? a-value all [okay a-value]
 )
 (
-    a-value: blank!
+    a-value: integer!
     same? a-value all [okay a-value]
 )
 (1/Jan/0000 = all [okay 1/Jan/0000])
@@ -244,7 +244,7 @@
     okay = all [a-value okay]
 )
 (
-    a-value: blank!
+    a-value: integer!
     okay = all [a-value okay]
 )
 (okay = all [1/Jan/0000 okay])

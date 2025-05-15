@@ -33,13 +33,13 @@
 ]
 
 [#1535
-    (run func [return: [blank!]] [words of return blank] ok)
+    (run func [return: [integer!]] [words of return 1020] ok)
 ]
 
-(reeval reify func [return: [blank!]] [values of return blank] ok)
+(reeval reify func [return: [integer!]] [values of return 1020] ok)
 
 [#1945
-    (run func [return: [blank!]] [spec-of return blank] ok)
+    (run func [return: [integer!]] [spec-of return 1020] ok)
 ]
 
 ; return should not be caught by TRAP

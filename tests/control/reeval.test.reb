@@ -25,7 +25,7 @@
     same? a-value reeval a-value
 )
 (
-    a-value: blank!
+    a-value: integer!
     same? a-value reeval a-value
 )
 (1/Jan/0000 = reeval 1/Jan/0000)

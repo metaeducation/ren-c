@@ -492,12 +492,12 @@ export for-each-platform: func [
         opt some [
             id: tuple!
             [
-                blank! (os: os-name: os-base: null)
+                [_] (os: os-name: os-base: null)
                     |
                 os: path! (os-name: os.1, os-base: os.2)
             ]
             [
-                blank! (build-label: null)
+                [_] (build-label: null)
                     |
                 build-label: text! (build-label: to-word build-label)
             ]

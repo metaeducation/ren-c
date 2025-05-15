@@ -8,7 +8,7 @@
         "Make a generator"
         return: [action!]
         init [block!] "Init code"
-        condition [block! blank!] "While condition"
+        condition [<undo-opt> block!] "While condition"
         iteration [block!] "Step code"
     ][
         let words: make block! 2

@@ -39,7 +39,7 @@
 ]
 
 ; datatype
-(if blank! [okay])
+(if integer! [okay])
 ; typeset
 (if any-number?/ [okay])
 ; date

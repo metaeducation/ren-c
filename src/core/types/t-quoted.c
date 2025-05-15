@@ -406,7 +406,7 @@ DECLARE_NATIVE(ANTI)
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
 //          [~null~ ~[]~ element? splice!]
-//      ^value [~null~ ~[]~ blank! any-list? quasiform!]  ; see [1] [2] [3]
+//      ^value [~null~ ~[]~ hole? any-list? quasiform!]  ; see [1] [2] [3]
 //  ]
 //
 DECLARE_NATIVE(SPREAD)
@@ -449,7 +449,7 @@ DECLARE_NATIVE(SPREAD)
         return OUT;
     }
 
-    if (Is_Blank(v))
+    if (Is_Hole(v))
         return VOID;  // immutable empty array makes problems for GLOM [3]
 
     if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]

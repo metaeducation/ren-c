@@ -41,7 +41,7 @@ exists?: func [
     "Returns the type of a file or URL if it exists, otherwise blank"
     return: [~null~ word!]
         "FILE, DIR, or null"  ; should return LOGIC!, FILETYPE OF separate
-    target [file! url! blank!]
+    target [<opt-out> file! url!]
 ][
     if blank? target [return null]  ; https://forum.rebol.info/t/954
 

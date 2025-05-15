@@ -387,11 +387,11 @@ typechecker: lambda3 [x [datatype! typeset! block!]] [
 
 spread: func3 [
     return: [~void~ ~null~ block!]  ; !!! bootstrap has stable ~void~
-    x [~null~ blank! block!]
+    x [~null~ ~void~ block!]
 ][
     return case [
         null? :x [return null]
-        blank? :x [return void]
+        void? :x [return void]
         <else> [reduce [#splice! x]]
     ]
 ]

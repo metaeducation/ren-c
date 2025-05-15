@@ -34,7 +34,7 @@
     same? a-value f
 )
 (
-    a-value: blank!
+    a-value: integer!
     f: does [a-value]
     same? a-value f
 )

@@ -185,7 +185,7 @@ DECLARE_NATIVE(QUERY)
 //      return: "TRUE if successful, FALSE if unsuccessful (!!! REVIEW)"
 //          [logic?]
 //      target [port! file!]
-//      field [word! blank!]
+//      field [<opt-out> word!]
 //      value
 //  ]
 //

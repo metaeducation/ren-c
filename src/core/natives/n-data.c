@@ -1073,7 +1073,7 @@ DECLARE_NATIVE(IDENTITY) // sample uses: https://stackoverflow.com/q/3136338
 //  "Releases the underlying data of a value so it can no longer be accessed"
 //
 //      return: [~]
-//      memory [<opt-out> blank! any-series? any-context? handle!]
+//      memory [<opt-out> any-series? any-context? handle!]
 //  ]
 //
 DECLARE_NATIVE(FREE)
@@ -1081,8 +1081,6 @@ DECLARE_NATIVE(FREE)
     INCLUDE_PARAMS_OF_FREE;
 
     Value* v = ARG(MEMORY);
-    if (Is_Blank(v))
-        return TRASH;
 
     if (Any_Context(v) or Is_Handle(v))
         return PANIC("FREE only implemented for ANY-SERIES? at the moment");
@@ -1243,6 +1241,28 @@ DECLARE_NATIVE(VOID_Q)
     const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
     return LOGIC(Is_Meta_Of_Void(meta));
+}
+
+
+//
+//  hole?: native:intrinsic [
+//
+//  "Tells you if argument is an ~()~ antiform, e.g. an empty splice"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_NATIVE(HOLE_Q)
+{
+    INCLUDE_PARAMS_OF_HOLE_Q;
+
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return LOGIC(Is_Hole(v));
 }
 
 

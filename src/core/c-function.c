@@ -250,7 +250,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
             OnStack(Value*) param = TOP;
 
-            if (Cell_Parameter_Spec(param))  // `func [x [integer!] [blank!]]`
+            if (Cell_Parameter_Spec(param))  // `func [x [integer!] [integer!]]`
                 panic (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
 
             Context* derived = Derive_Binding(Level_Binding(L), item);

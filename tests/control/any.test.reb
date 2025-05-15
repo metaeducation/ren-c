@@ -43,7 +43,7 @@
     same? a-value any [a-value]
 )
 (
-    a-value: blank!
+    a-value: integer!
     same? a-value any [a-value]
 )
 (1/Jan/0000 = any [1/Jan/0000])
@@ -142,7 +142,7 @@
     same? a-value any [null a-value]
 )
 (
-    a-value: blank!
+    a-value: integer!
     same? a-value any [null a-value]
 )
 (1/Jan/0000 = any [null 1/Jan/0000])
@@ -238,7 +238,7 @@
     same? a-value any [a-value null]
 )
 (
-    a-value: blank!
+    a-value: integer!
     same? a-value any [a-value null]
 )
 (1/Jan/0000 = any [1/Jan/0000 null])

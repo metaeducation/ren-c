@@ -110,11 +110,11 @@
 ]
 
 [https://github.com/red/red/issues/4678
-    ('_ = parse as blob! "_" [blank!])
+    ('_ = parse as blob! "_" [_])
 
-    ~parse-mismatch~ !! (parse as blob! "#(" [blank!])
-    ~parse-mismatch~ !! (parse as blob! "(" [blank!])
-    ~parse-mismatch~ !! (parse as blob! "[" [blank!])
+    ~parse-mismatch~ !! (parse as blob! "#(" [_])
+    ~parse-mismatch~ !! (parse as blob! "(" [_])
+    ~parse-mismatch~ !! (parse as blob! "[" [_])
 ]
 
 ; QUOTED! needs to be recognized

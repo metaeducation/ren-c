@@ -174,16 +174,15 @@ add-sym: func [
 ; that is handled in %make-types.r and we merely read the product of that
 ; process, e.g. a table of TypesetByte, like:
 ;
-;    blank 1
-;    integer 2
-;    decimal 3
+;    integer 1
+;    decimal 2
 ;    ...
-;    any-list 90
-;    any-bindable 91
-;    any-element 92
+;    any-list 89
+;    any-bindable 90
+;    any-element 91
 ;
-; We use this table to make symbols, e.g. SYM_BLANK or SYM_BLANK_X for `blank!`
-; or SYM_BLANK_Q for `blank?`
+; We use this table to make symbols, e.g. SYM_INTEGER or SYM_INTEGER_X for
+; `integer!` or SYM_INTEGER_Q for `integer?`
 
 name-to-typeset-byte: load3 (join prep-dir %specs/tmp-typeset-bytes.r)
 

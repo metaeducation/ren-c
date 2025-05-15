@@ -115,22 +115,20 @@ backtrace*: func [
         "Null if printing, if specific level a frame! else block"
     start [frame!]
         "Where to consider the trace point as starting from"
-    level [blank! integer!]
-        "Stack level to return frame for (blank to list)"
+    level [<undo-opt> integer!]
+        "Stack level to return frame for (void to list)"
     :limit "Max number of frames (pending and active), false for no limit"
         [logic? integer!]
     :brief "Do not list depths, just function labels on one line"
 ][
-    let get-frame: not blank? :level
-
-    if get-frame [
+    if level [
         any [limit brief] then [
             panic "Can't use :LIMIT or :BRIEF unless getting a list of frames"
         ]
 
         ; See notes on handling of breakpoint below for why 0 is accepted.
         ;
-        if all [integer? level | level < 0] [
+        if all [integer? level, level < 0] [
             panic ["Invalid backtrace level" level]
         ]
     ]

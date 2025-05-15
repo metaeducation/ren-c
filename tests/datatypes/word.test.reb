@@ -19,7 +19,7 @@
     same? :a-value a-value
 )
 (
-    a-value: blank!
+    a-value: integer!
     same? :a-value a-value
 )
 (

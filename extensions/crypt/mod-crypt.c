@@ -1357,7 +1357,7 @@ static void Aes_Ctx_Handle_Cleaner(void* p, size_t length)
 //          [handle!]
 //      key [blob!]
 //      iv "Optional initialization vector"
-//          [blob! blank!]
+//          [<undo-opt> blob!]
 //      :decrypt "Make cipher context for decryption (default is to encrypt)"
 //  ]
 //
@@ -1409,7 +1409,7 @@ DECLARE_NATIVE(AES_KEY)
   setup_initialization_vector: { /////////////////////////////////////////////
 
     size_t blocksize = mbedtls_cipher_get_block_size(ctx);
-    if (rebUnboxLogic("blob? iv")) {
+    if (rebUnboxLogic("blob? opt iv")) {
         size_t iv_size;
         const Byte* iv_bytes = rebLockBytes(&iv_size, "iv");
 
@@ -1425,7 +1425,7 @@ DECLARE_NATIVE(AES_KEY)
         rebUnlockBytes(iv_bytes);
     }
     else
-        assert(rebUnboxLogic("blank? iv"));
+        assert(rebUnboxLogic("null? iv"));
 
 } cleanup: { /////////////////////////////////////////////////////////////////
 

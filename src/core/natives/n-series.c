@@ -106,7 +106,7 @@ DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT
 //
 //      return: [any-value?]  ; !!! Variadic TAKE may evaluate, rethink
 //      series "At position (modified)"
-//          [blank! any-series? port! varargs!]
+//          [<opt-out> any-series? port! varargs!]
 //      :part "Specifies a length or end position"
 //          [any-number? any-series? pair!]
 //      :deep "Also copies series values within the block"
@@ -305,7 +305,7 @@ DECLARE_NATIVE(AT)
 //
 //      return: "position found and tail of find, else null"
 //          [~null~ ~[any-series? any-series?]~]
-//      series [<opt-out> blank! any-series?]
+//      series [<opt-out> any-series?]
 //      pattern "What to find, if an action call as a predicate on each item"
 //          [<opt-out> element? splice! action! datatype!]
 //      :part "Limits the search to a given length or position"
@@ -329,7 +329,7 @@ DECLARE_NATIVE(FIND)  // Must be frame-compatible with SELECT
 //  "Searches for a value; returns the value that follows, else null"
 //
 //      return: [any-value?]
-//      series [<opt-out> blank! any-series? any-context? map! bitset!]
+//      series [<opt-out> any-series? any-context? map! bitset!]
 //      value [<opt-out> element? splice! action!]
 //      :part "Limits the search to a given length or position"
 //          [any-number? any-series? pair!]

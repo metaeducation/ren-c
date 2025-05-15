@@ -1454,9 +1454,9 @@ DECLARE_NATIVE(ENVELOP)
 //
 //  "Efficient destructive appending operation that will reuse appended memory"
 //
-//      return: [blank! block!]
-//      accumulator [blank! block!]
-//      ^value [~[]~ element? splice!]
+//      return: [hole? block!]
+//      accumulator [hole? block!]
+//      value [<undo-opt> element? splice!]
 //  ]
 //
 DECLARE_NATIVE(GLOM)
@@ -1478,25 +1478,17 @@ DECLARE_NATIVE(GLOM)
     INCLUDE_PARAMS_OF_GLOM;
 
     Value* accumulator = ARG(ACCUMULATOR);  // may not be at head [1]
+    Value* value = ARG(VALUE);  // may not be at head [1]
 
-    Option(const Value*) opt_value = Optional_ARG(VALUE);
-    if (
-        not opt_value
-        or (
-            Is_Splice(unwrap opt_value)
-            and Cell_Series_Len_At(unwrap opt_value) == 0
-        )
-    ){
+    if (Is_Nulled(value) or Is_Hole(value))
         return COPY(accumulator);
-    }
-    const Value* value = unwrap opt_value;  // may not be at head [1]
 
     if (Is_Block(accumulator))
         goto handle_block_accumulator;
 
   handle_blank_accumulator: { ////////////////////////////////////////////////
 
-    assert(Is_Blank(accumulator));
+    assert(Is_Hole(accumulator));
 
     if (Is_Splice(value)) {  // see note: index may be nonzero
         Copy_Cell(OUT, value);

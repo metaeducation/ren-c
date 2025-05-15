@@ -181,10 +181,10 @@ export cscape: func [
 
             sub: unmeta sub
 
-            if null? :sub  [  ; shim null, e.g. blank!
+            if null? sub  [
                 print mold template
                 print mold code
-                panic "Substitution can't be NULL (shim BLANK!)"
+                panic "Substitution can't be NULL"
             ]
 
             sub: switch mode [
