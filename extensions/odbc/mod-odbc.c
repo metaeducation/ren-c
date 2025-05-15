@@ -364,7 +364,7 @@ CharColumnEncoding char_column_encoding = CHAR_COL_UTF16;
 //
 //      return: []
 //      encoding "Currently you have to use UTF-16 for UCS-2"
-//          ['utf-8 'latin-1 'utf-16]
+//          [~(utf-8 latin-1 utf-16)~]
 //  ]
 //
 DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)

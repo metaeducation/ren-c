@@ -400,7 +400,7 @@ bind construct [
 
 make-state-updater: func [
     return: [action!]
-    direction ['read 'write]
+    direction [~(read write)~]
     transdialect "dialected mapping from state to legal next states"
         [block!]
     <local> transitions state-rule left right

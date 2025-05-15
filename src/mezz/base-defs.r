@@ -196,7 +196,7 @@ each: quote/
 ;
 ->: infix lambda [
     @words "Names of arguments (will not be type checked)"
-        [<end> _ word! lit-word? ^word! refinement? block! group!]
+        [<end> _ word! 'word! ^word! refinement? block! group!]
     body "Code to execute (will not be deep copied)"
         [block!]
 ][

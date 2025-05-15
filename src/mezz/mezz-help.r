@@ -500,7 +500,7 @@ what: func [
     "Prints a list of known actions"
 
     return: [trash? block!]
-    @name [<end> word! lit-word?]
+    @name [<end> word! 'word!]
         "Optional module name"
     :args "Show arguments not titles"
     :as-block "Return data as block"

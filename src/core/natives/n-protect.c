@@ -354,7 +354,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 //          [element?]
 //      picker "The property to update (e.g. object field)"
 //          [element?]
-//      value ['protect 'unprotect 'hide]
+//      value [~(protect unprotect hide)~]
 //  ]
 //
 DECLARE_NATIVE(PROTECT_P)

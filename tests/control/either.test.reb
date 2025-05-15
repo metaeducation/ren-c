@@ -92,7 +92,7 @@
 
     (
         takes-2-logics: func [x [logic?] y [logic?]] [return x]
-        infix-voider: infix func [return: [quasi-word?] x y] [
+        infix-voider: infix func [return: [~word?~] x y] [
             return '~bad~
         ]
         ok

@@ -153,7 +153,7 @@ bool Arrow_Details_Querier(
 //
 //      return: [action!]
 //      spec "Names of arguments"
-//          [_ word! lit-word? ^word! refinement? block!]
+//          [_ word! 'word! ^word! refinement? block!]
 //      body "Code to execute"
 //          [<const> block!]
 //  ]

@@ -97,11 +97,11 @@
 //      :shell "Forces command to be run from shell"
 //      :info "Returns process information object"
 //      :input "Redirects stdin (none = /dev/null)"
-//          ['none 'inherit text! blob! file!]
+//          [~(none inherit)~ text! blob! file!]
 //      :output "Redirects stdout (none = /dev/null)"
-//          ['none 'inherit text! blob! file!]
+//          [~(none inherit)~ text! blob! file!]
 //      :error "Redirects stderr (none = /dev/null)"
-//          ['none 'inherit text! blob! file!]
+//          [~(none inherit)~ text! blob! file!]
 //  ]
 //
 DECLARE_NATIVE(CALL_INTERNAL_P)

@@ -181,7 +181,7 @@ DECLARE_NATIVE(YESNO_Q)
 //  "Tests if word is the word TRUE (errors if not TRUE or FALSE)"
 //
 //      return: [logic?]
-//      word ['true 'false]
+//      word [~(true false)~]
 //  ]
 //
 DECLARE_NATIVE(TRUE_Q)
@@ -198,7 +198,7 @@ DECLARE_NATIVE(TRUE_Q)
 //  "Tests if value is the word FALSE (errors if not TRUE or FALSE)"
 //
 //      return: [logic?]
-//      word ['true 'false]
+//      word [~(true false)~]
 //  ]
 //
 DECLARE_NATIVE(FALSE_Q)
@@ -214,7 +214,7 @@ DECLARE_NATIVE(FALSE_Q)
 //
 //  "The word TRUE if the supplied value is a branch trigger, otherwise FALSE"
 //
-//      return: [boolean?]
+//      return: [~(true false)~]
 //      value [any-value?]
 //  ]
 //
@@ -232,7 +232,7 @@ DECLARE_NATIVE(BOOLEAN)
 //  "Tests if word is the word YES (errors if not YES or NO)"
 //
 //      return: [logic?]
-//      word ['yes 'no]
+//      word [~(yes no)~]
 //  ]
 //
 DECLARE_NATIVE(YES_Q)
@@ -249,7 +249,7 @@ DECLARE_NATIVE(YES_Q)
 //  "Tests if value is the word NO (errors if not YES or NO)"
 //
 //      return: [logic?]
-//      word ['yes 'no]
+//      word [~(yes no)~]
 //  ]
 //
 DECLARE_NATIVE(NO_Q)
@@ -265,7 +265,7 @@ DECLARE_NATIVE(NO_Q)
 //
 //  "The word YES if the supplied value is a branch trigger, otherwise NO"
 //
-//      return: [yesno?]
+//      return: [~(yes no)~]
 //      value [any-value?]
 //  ]
 //
@@ -283,7 +283,7 @@ DECLARE_NATIVE(TO_YESNO)
 //  "Tests if word is the word ON (errors if not ON or OFF)"
 //
 //      return: [logic?]
-//      word ['on 'off]
+//      word [~(on off)~]
 //  ]
 //
 DECLARE_NATIVE(ON_Q)
@@ -300,7 +300,7 @@ DECLARE_NATIVE(ON_Q)
 //  "Tests if value is the word OFF (errors if not ON or OFF)"
 //
 //      return: [logic?]
-//      word ['on 'off]
+//      word [~(on off)~]
 //  ]
 //
 DECLARE_NATIVE(OFF_Q)
@@ -316,7 +316,7 @@ DECLARE_NATIVE(OFF_Q)
 //
 //  "The word ON if the supplied value is a branch trigger, otherwise OFF"
 //
-//      return: [onoff?]
+//      return: [~(on off)~]
 //      value [any-value?]
 //  ]
 //

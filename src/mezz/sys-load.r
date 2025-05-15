@@ -387,8 +387,8 @@ import*: func [
 
     return: "Loaded module and evaluative product (if execution needed)"
         [
-            ~[module! ['cached 'registered 'nameless]]~
-            ~[module! 'executed any-atom?]~
+            ~[module! ~(cached registered nameless)~]~
+            ~[module! ~(executed)~ any-atom?]~
         ]
     where "Where to put exported definitions from SOURCE"
         [<undo-opt> module!]

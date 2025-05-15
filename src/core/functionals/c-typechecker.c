@@ -554,167 +554,222 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         panic ("Bad test passed to Typecheck_Value");
     }
 
-    for (; item != tail; ++item) {
-        Assert_Cell_Readable(item);
+    if (item == tail)
+       goto end_looping_over_tests;  // might mean all match or no match
 
-        Option(const Symbol*) label = nullptr;  // so goto doesn't cross
+  check_spare_against_test_in_item: { ////////////////////////////////////////
 
-        Option(Sigil) sigil = SIGIL_0;  // added then removed if non-zero
+    // 1. Some elements in the parameter specification array are accounted
+    //    for in type checking by flags or optimization bytes.  There is no
+    //    need to check those here...just cehck the things that don't have
+    //    the PARAMSPEC_SPOKEN_FOR flag set.
+    //
+    // 2. We need [~word!~] to be a typecheck that matches a QUASI-WORD, and
+    //    ['integer!] to typecheck QUOTED-INTEGER, and [''~any-series?~] to
+    //    check DOUBLE_QUOTED-QUASI-ANY-SERIES?... etc.  Because we don't want
+    //    to make an infinite number of type constraint functions to cover
+    //    every combination.
+    //
+    //    This pretty much ties our hands on the meaning of quasiform or
+    //    quoted WORD!s in the type spec.  But non-WORD!s can have more
+    //    flexible interpretations...
 
-        if (Is_Quasiform(item)) {  // quasiforms e.g. [~null~] mean antiform
-            if (Heart_Of(item) == TYPE_BLOCK) {  // typecheck pack
-                if (not Is_Pack(v))
-                    goto test_failed;
-                if (Typecheck_Pack_In_Spare_Uses_Scratch(L, item))
-                    goto test_succeeded;
-                goto test_failed;
-            }
+    Option(Sigil) sigil = SIGIL_0;  // added then removed if non-zero
+    QuoteByte quote_byte = QUOTE_BYTE(SPARE);  // adjusted if test quoted/quasi
 
-            assert(Is_Stable_Antiform_Heart(Heart_Of(item)));
+    if (Get_Cell_Flag(item, PARAMSPEC_SPOKEN_FOR))
+        goto continue_loop;
 
-            if (Not_Antiform(v) or Heart_Of(item) != Heart_Of(v))
-                goto test_failed;
+    if (Heart_Of(item) == TYPE_WORD)  // our hands are tied on the meaning [2]
+        goto adjust_quote_level_and_run_type_constraint;
 
-            assert(v == SPARE);  // hack: temporarily make quasiform
-            QUOTE_BYTE(SPARE) = QUASIFORM_2_COERCE_ONLY;
+    if (Is_Quasiform(item))
+        goto handle_non_word_quasiform;
 
-            bool strict = false;  // !!! Is being case-insensitive good?
-            bool equal = Equal_Values(
-                item,  // was a quasiform in the types list
-                Known_Element(v),  // we turned the antiform to a quasiform
-                strict
-            );
+    if (Is_Quoted(item))
+        goto handle_non_word_quoted;
 
-            QUOTE_BYTE(SPARE) = ANTIFORM_0_COERCE_ONLY;  // now put it back
+    if (Is_Space(item)) {
+        if (Is_Stable(SPARE) and Is_Space(stable_SPARE))
+            goto test_succeeded;
+        goto test_failed;
+    }
 
-            if (equal)
-                goto test_succeeded;
+    panic (item);
 
+  handle_non_word_quasiform: { ///////////////////////////////////////////////
+
+    // 1. ~[integer! word!]~ is a typecheck that matches a 2-element PACK!
+    //    containing an integer and a word.  It's recursive, so you can
+    //    have packs that contain packs, etc.
+    //
+    // 2. Because people might build a type spec block by composing, they
+    //    might wind up REIFY'ing an antiform DATATYPE! directly into the
+    //    spec, something like:
+    //
+    //        type: word!
+    //        compose [return: [integer! (reify type)] ...]
+    //
+    //    If this happens, they'll get a quasiform FENCE!.  So the friendliest
+    //    choice of interpretation of that is as the DATATYPE! it represents.
+    //
+    // 3. Because 'XXX! is now matching quoted things of type XXX!, an old
+    //    behavior of matching e.g. ['true 'false] against the words true
+    //    and false is no longer valid.  Quasiform group seems like a decent
+    //    choice, and [~(true false)~] actually looks kind of good.  It will
+    //    match any of the single items in the group literally.
+
+    if (Heart_Of(item) == TYPE_BLOCK) {  // typecheck pack [1]
+        if (not Is_Pack(v))
             goto test_failed;
-        }
+        if (Typecheck_Pack_In_Spare_Uses_Scratch(L, item))
+            goto test_succeeded;
+        goto test_failed;
+    }
 
-        if (Is_Quoted(item)) {  // quoted items e.g. ['off 'on] mean literal
-            if (Is_Antiform(v))
-                goto test_failed;
+    if (Heart_Of(item) == TYPE_FENCE) {  // interpret as datatype [2]
+        panic ("Quasiform FENCE! in type spec not supported yet");
+    }
 
-            if (QUOTE_BYTE(item) - Quote_Shift(1) != QUOTE_BYTE(v))
-                goto test_failed;
+    if (Heart_Of(item) == TYPE_GROUP) {  // match any element literally [3]
+        if (Is_Antiform(SPARE))
+            goto test_failed;  // can't match against antiforms
 
-            assert(v == SPARE);  // hack: temporarily make quoted
-            Quotify(Known_Element(SPARE));
+        const Element* splice_tail;
+        const Element* splice_at = Cell_List_At(&splice_tail, item);
 
-            bool strict = false;  // !!! Is being case-insensitive good?
-            bool equal = Equal_Values(
-                item,  // was a quasiform in the types list
-                Known_Element(v),  // we turned the antiform to a quasiform
+        for (; splice_at != splice_tail; ++splice_at) {
+            bool strict = true;  // system now case-sensitive by default
+            if (Equal_Values(
+                Known_Element(SPARE),
+                splice_at,
                 strict
-            );
-
-            Unquotify(Known_Element(SPARE));  // now put it back
-
-            if (equal)
-                goto test_succeeded;
-
-            goto test_failed;
-        }
-
-        sigil = Sigil_Of(item);
-        if (sigil) {
-            if (Is_Antiform(v) or Sigil_Of(u_cast(Element*, v)) != sigil) {
-                sigil = SIGIL_0;  // don't unsigilize at test_failed
-                goto test_failed;
-            }
-
-            Plainify(Known_Element(SPARE));  // make plain, will re-sigilize
-        }
-
-        const Value* test;
-        if (Any_Word(item)) {
-            label = Cell_Word_Symbol(item);
-            Option(Error*) error = Trap_Lookup_Word(&test, item, derived);
-            if (error)
-                panic (unwrap error);
-        }
-        else
-            test = item;
-
-        if (Is_Action(test))
-            goto run_action;
-
-        switch (Type_Of_Unchecked(test)) {
-          run_action: {
-            if (Typecheck_Spare_With_Predicate_Uses_Scratch(L, test, label))
-                goto test_succeeded;
-            goto test_failed; }
-
-          case TYPE_QUOTED:
-          case TYPE_QUASIFORM: {
-            panic ("QUOTED? and QUASI? not supported in TYPE-XXX!"); }
-
-          case TYPE_PARAMETER: {
-            if (Typecheck_Atom_In_Spare_Uses_Scratch(
-                L, test, SPECIFIED
             )){
                 goto test_succeeded;
             }
-            goto test_failed; }
-
-          case TYPE_DATATYPE: {
-            Option(Type) t = Type_Of(v);
-            if (t) {  // builtin type
-                if (Cell_Datatype_Type(test) == t)
-                    goto test_succeeded;
-                goto test_failed;
-            }
-            if (Cell_Datatype_Extra_Heart(test) == Cell_Extra_Heart(v))
-                goto test_succeeded;
-            goto test_failed; }
-
-          default:
-            break;
         }
-        if (Is_Space(test)) {
-            if (Is_Stable(SPARE) and Is_Space(stable_SPARE))
+        goto test_failed;
+    }
+
+    panic (item);
+
+} handle_non_word_quoted: { //////////////////////////////////////////////////
+
+    // It's not clear exactly what non-word quoteds would do.  It could be
+    // that '[integer! word!] would match a non-quoted BLOCK! with 2
+    // elements in it that were an integer and a word, for instance.  But
+    // anything we do would be inconsistent with the WORD! interpretation
+    // that it's exactly the same quoting level as the quotes on the test.
+    //
+    // Review when this gets further.
+
+    panic (item);
+
+} adjust_quote_level_and_run_type_constraint: {
+
+    if (QUOTE_BYTE(item) != NOQUOTE_1) {
+        if (QUOTE_BYTE(item) != QUOTE_BYTE(SPARE))
+            goto test_failed;  // should be willing to accept subset quotes
+        QUOTE_BYTE(SPARE) = NOQUOTE_1;
+    }
+
+} handle_after_any_quoting_adjustments: {
+
+    sigil = Sigil_Of(item);
+    if (sigil) {
+        if (Is_Antiform(v) or Sigil_Of(u_cast(Element*, v)) != sigil) {
+            sigil = SIGIL_0;  // don't unsigilize at test_failed
+            goto test_failed;
+        }
+
+        Plainify(Known_Element(SPARE));  // make plain, will re-sigilize
+    }
+
+    Option(const Symbol*) label = Cell_Word_Symbol(item);
+
+    const Value* test;
+    Option(Error*) error = Trap_Lookup_Word(&test, item, derived);
+    if (error)
+        panic (unwrap error);
+
+    if (Is_Action(test)) {
+        if (Typecheck_Spare_With_Predicate_Uses_Scratch(L, test, label))
+            goto test_succeeded;
+        goto test_failed;
+    }
+
+    switch (Type_Of_Unchecked(test)) {
+      case TYPE_PARAMETER: {
+        if (Typecheck_Atom_In_Spare_Uses_Scratch(L, test, SPECIFIED))
+            goto test_succeeded;
+        goto test_failed; }
+
+      case TYPE_DATATYPE: {
+        Option(Type) t = Type_Of(v);
+        if (t) {  // builtin type
+            if (Cell_Datatype_Type(test) == t)
                 goto test_succeeded;
             goto test_failed;
         }
-        panic ("Invalid element in TYPE-GROUP!");
+        if (Cell_Datatype_Extra_Heart(test) == Cell_Extra_Heart(v))
+            goto test_succeeded;
+        goto test_failed; }
 
-      test_succeeded:
-        if (sigil)
-            Sigilize(Known_Element(SPARE), unwrap sigil);
-
-        if (not match_all) {
-            result = true;
-            goto return_result;
-        }
-        continue;
-
-      test_failed:
-        if (sigil)
-            Sigilize(Known_Element(SPARE), unwrap sigil);
-
-        if (match_all) {
-            result = false;
-            goto return_result;
-        }
-        continue;
+      default:
+        break;
     }
+
+    panic ("Invalid element in TYPE-GROUP!");
+
+} test_succeeded: {
+
+    if (sigil)
+        Sigilize(Known_Element(SPARE), unwrap sigil);
+
+    QUOTE_BYTE(SPARE) = quote_byte;  // restore quote level
+
+    if (not match_all) {
+        result = true;
+        goto return_result;
+    }
+    goto continue_loop;
+
+} test_failed: {
+
+    if (sigil)
+        Sigilize(Known_Element(SPARE), unwrap sigil);
+
+    QUOTE_BYTE(SPARE) = quote_byte;  // restore quote level
+
+    if (match_all) {
+        result = false;
+        goto return_result;
+    }
+    goto continue_loop;
+
+}} continue_loop: {
+
+    ++item;
+    if (item != tail)
+        goto check_spare_against_test_in_item;
+
+} end_looping_over_tests: {
 
     if (match_all)
         result = true;
     else
         result = false;
+
     goto return_result;
 
-  return_result:
+} return_result: {
 
   #if RUNTIME_CHECKS
     Init_Unreadable(SCRATCH);
   #endif
 
     return result;
-}
+}}
 
 
 //

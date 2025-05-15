@@ -938,7 +938,7 @@ Bounce Composer_Executor(Level* const L)
 //          any-list? any-sequence?
 //          any-word?  ; passed through as-is, or :CONFLATE can produce
 //          any-utf8?
-//          ~null~ quasi-word? _ quasar?  ; :CONFLATE can produce these
+//          null? ~word!~ space? quasar?  ; :CONFLATE can produce these
 //      ]
 //      pattern "Pass @ANY-LIST? (e.g. @{{}}) to use the pattern's binding"
 //          [any-list? @any-list?]

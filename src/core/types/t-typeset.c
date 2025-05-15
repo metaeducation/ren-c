@@ -172,47 +172,20 @@ void Set_Parameter_Spec(
     TypesetByte* optimized = copy->misc.at_least_4;
     TypesetByte* optimized_tail = optimized + sizeof(uintptr_t);
 
-    if (item == tail)
+    if (item == tail) {
         *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
-
-    for (; item != tail; ++item, ++dest) {
+    }
+    else for (; item != tail; ++item, ++dest) {
         Derelativize(dest, item, spec_binding);
         Clear_Cell_Flag(dest, NEWLINE_BEFORE);
 
         if (Is_Space(item)) {
             *flags |= PARAMETER_FLAG_SPACE_DEFINITELY_OK;
+            Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
             continue;
         }
 
-        if (Is_Quasiform(item)) {
-            if (Is_Quasar(item)) {
-                *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
-                continue;
-            }
-            if (not Is_Stable_Antiform_Heart(Heart_Of(item))) {
-                if (
-                    Heart_Of(item) != TYPE_BLOCK  // typecheck packs ok
-                    and Heart_Of(item) != TYPE_COMMA  // allow ~,~ ghosts too
-                ){
-                    panic (item);
-                }
-            }
-
-            if (Heart_Of(item) != TYPE_WORD) {
-                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-                continue;
-            }
-
-            switch (Cell_Word_Id(item)) {
-              case SYM_NULL:
-                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
-                break;
-              default:  // !!! optimize ~okay~, or not worth it?
-                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-            }
-            continue;
-        }
-        if (Is_Quoted(item)) {  // foo: func [size ['small 'medium 'large]]...
+        if (Is_Quasiform(item)) {  // optimize some cases? (e.g. ~word!~ ?)
             *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             continue;
         }
@@ -230,33 +203,25 @@ void Set_Parameter_Spec(
                 // to shuffle should only be done once (when final is known).
                 //
                 *flags |= PARAMETER_FLAG_VARIADIC;
-                Init_Quasi_Word(dest, CANON(VARIADIC_Q)); // !!!
             }
             else if (0 == CT_Utf8(item, Root_End_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_ENDABLE;
-                Init_Meta_Of_Null(dest);  // !!!
                 *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_Utf8(item, Root_Opt_Out_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_OPT_OUT;
-                Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-                Init_Meta_Of_Void(dest);  // !!!
+                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
             }
             else if (0 == CT_Utf8(item, Root_Undo_Opt_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_UNDO_OPT;
-                Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-                Init_Meta_Of_Void(dest);  // !!!
+                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
             }
             else if (0 == CT_Utf8(item, Root_Const_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_CONST;
-                Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-                Init_Quasi_Word(dest, CANON(CONST));
             }
             else if (0 == CT_Utf8(item, Root_Unrun_Tag, strict)) {
                 // !!! Currently just commentary, degrading happens due
                 // to type checking.  Review this.
-                //
-                Init_Quasi_Word(dest, CANON(UNRUN));
             }
             else if (0 == CT_Utf8(item, Root_Divergent_Tag, strict)) {
                 //
@@ -267,6 +232,7 @@ void Set_Parameter_Spec(
             else {
                 panic (item);
             }
+            Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
             continue;
         }
 
