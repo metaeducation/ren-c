@@ -787,8 +787,12 @@ Bounce Composer_Executor(Level* const L)
 
     Copy_Cell(PUSH(), cast(Element*, OUT));
 
-    if (sigil)
-        Sigilize(TOP_ELEMENT, sigil);  // ^ or @ or $
+    if (sigil) {
+        if (Sigil_Of(TOP_ELEMENT))
+            return PANIC("COMPOSE cannot sigilize items already sigilized");
+
+        Sigilize(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
+    }
 
     if (list_quote_byte & NONQUASI_BIT)
         Quotify_Depth(TOP_ELEMENT, list_quote_byte / 2);  // adds to existing

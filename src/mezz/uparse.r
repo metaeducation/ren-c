@@ -2311,6 +2311,7 @@ default-combinators: to map! reduce [
         ]
 
         if match [@block!] block [
+            block: unpin block  ; should be able to enumerate regardless..
             pending: _  ; not running any rules, won't add to pending
             if tail? block [
                 remainder: input

@@ -116,9 +116,9 @@ DECLARE_NATIVE(SIGIL_OF)
 //
 //  sigil?: native:intrinsic [
 //
-//  "Get the SIGIL! on a value, e.g. $WORD has the $ sigil, WORD has none"
+//  "Test if a value is a SIGIL... e.g. pin, meta, or tie [@ ^ $]"
 //
-//      return: [~null~ sigil?]
+//      return: [logic?]
 //      element [<opt-out> fundamental?]
 //  ]
 //
@@ -131,7 +131,7 @@ DECLARE_NATIVE(SIGIL_Q)
     if (b)
         return unwrap b;
 
-    return LOGIC(Is_Sigil(e));
+    return LOGIC(Any_Sigil(e));
 }
 
 

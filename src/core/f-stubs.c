@@ -638,58 +638,152 @@ DECLARE_NATIVE(GETIFY)
 }
 
 
+// Right now if we used SPECIALIZE of a SIGILIZE native, it would not be able
+// to take advantage of the intrinsic optimization...since the sigil would
+// have to live in a frame cell.  So the natives are made by hand here.
 //
-//  lift: native [
+static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
+{
+    INCLUDE_PARAMS_OF_LIFT;  // LIFT, PIN, TIE all same signature.
+
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
+    if (b)
+        return unwrap b;
+
+    attempt {
+        if (Any_Plain(e))
+            continue;
+
+        if (Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))
+            if (Bool_ARG(FORCE)) {
+                Plainify(e);
+                continue;
+            }
+
+        return FAIL("Trying to add Sigil to already lifted/tied/pinned value");
+    }
+
+    return COPY(Sigilize(e, sigil));
+}
+
+
+//
+//  lift: native:intrinsic [
 //
 //  "Convert a value to its ^XXX lifted representation"
 //
-//      return: [@any-element?]
-//      value [<opt-out> element?]  ; blank! makes ^ as a SIGIL!
+//      return: "Error if already lifted/tied/pinned and not :FORCE"
+//          [error! ^fundamental?]  ; should be ^plain?
+//      value [<opt-out> fundamental?]
+//      :force "Apply lift, even if already lifted/tied/pinned"
 //  ]
 //
 DECLARE_NATIVE(LIFT)
 {
-    INCLUDE_PARAMS_OF_LIFT;
-
-    return COPY(Liftify(Element_ARG(VALUE)));
+    return Sigilize_Native_Core(LEVEL, SIGIL_LIFT);
 }
 
 
 //
-//  pin: native [
+//  pin: native:intrinsic [
 //
 //  "Convert a value to its @XXX pinned representation"
 //
-//      return: [~null~ @any-element?]
-//      value [<opt-out> element?]
+//      return: "Error if already lifted/tied/pinned and not :FORCE"
+//          [error! @fundamental?]  ; should be @plain?
+//      value [<opt-out> fundamental?]
+//      :force "Apply pin, even if already lifted/tied/pinned"
 //  ]
 //
 DECLARE_NATIVE(PIN)
-//
-// Operators such as ANY and ALL have a behavior variation for @[xxx] blocks
-// that assume the content is already reduced.  This helps to produce that
-// form of value from a regular value.
 {
-    INCLUDE_PARAMS_OF_PIN;
-
-    return COPY(Pinify(Element_ARG(VALUE)));
+    return Sigilize_Native_Core(LEVEL, SIGIL_PIN);
 }
 
 
 //
-//  tie: native [
+//  tie: native:intrinsic [
 //
-//  "Convert a value to its $XXX pinned representation"
+//  "Convert a value to its $XXX tied representation"
 //
-//      return: [~null~ $any-element?]
-//      value [<opt-out> element?]
+//      return: "Error if already lifted/tied/pinned and not :FORCE"
+//          [error! $fundamental?]  ; should be $plain?
+//      value [<opt-out> fundamental?]
+//      :force "Apply tie, even if already lifted/tied/pinned"
 //  ]
 //
 DECLARE_NATIVE(TIE)
 {
-    INCLUDE_PARAMS_OF_TIE;
+    return Sigilize_Native_Core(LEVEL, SIGIL_TIE);
+}
 
-    return COPY(Tieify(Element_ARG(VALUE)));
+
+// Right now if we used SPECIALIZE of a UNSIGILIZE native, it would not be able
+// to take advantage of the intrinsic optimization...since the sigil would
+// have to live in a frame cell.  So the natives are made by hand here.
+//
+static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
+{
+    INCLUDE_PARAMS_OF_UNLIFT;  // same signature as UNPIN, UNTIE
+
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
+    if (b)
+        return unwrap b;
+
+    if (Sigil_Of(e) != sigil)
+        return FAIL("Trying to remove Sigil from value without that Sigil");
+
+    return COPY(Plainify(e));
+}
+
+
+//
+//  unlift: native:intrinsic [
+//
+//  "Convert ^XXX lifted representation to plain XXX"
+//
+//      return: "Error if value not lifted"
+//          [~null~ fundamental? error!]  ; should return `plain?`
+//      value [<opt-out> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(UNLIFT)
+{
+    return Unsigilize_Native_Core(LEVEL, SIGIL_LIFT);
+}
+
+
+//
+//  unpin: native:intrinsic [
+//
+//  "Convert @XXX pinned representation to plain XXX"
+//
+//      return: "Error if value not pinned"
+//          [~null~ fundamental? error!]  ; should return plain?
+//      value [<opt-out> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(UNPIN)
+{
+    return Unsigilize_Native_Core(LEVEL, SIGIL_PIN);
+}
+
+
+//
+//  untie: native:intrinsic [
+//
+//  "Convert ^XXX tied representation to plain XXX"
+//
+//      return: "Error if value not tied"
+//          [~null~ fundamental? error!]  ; should return plain?
+//      value [<opt-out> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(UNTIE)
+{
+    return Unsigilize_Native_Core(LEVEL, SIGIL_TIE);
 }
 
 
@@ -698,7 +792,7 @@ DECLARE_NATIVE(TIE)
 //
 //  "Convert a value into its plain representation"
 //
-//      return: [~null~ element?]
+//      return: [~null~ element?]  ; should return plain?
 //      element [<opt-out> element?]
 //  ]
 //
@@ -706,7 +800,10 @@ DECLARE_NATIVE(PLAIN)
 {
     INCLUDE_PARAMS_OF_PLAIN;
 
-    Element* e = Element_ARG(ELEMENT);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
+    if (b)
+        return unwrap b;
 
     return COPY(Plainify(e));
 }

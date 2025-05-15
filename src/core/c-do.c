@@ -162,11 +162,11 @@ bool Pushed_Continuation(
             break;  // define behavior!
 
           case SIGIL_PIN:
-            Plainify(Derelativize(out, c_cast(Element*, branch), binding));
-            goto just_use_out;
+            break;
 
           case SIGIL_TIE:
-            break;  // define behavior!
+            Plainify(Derelativize(out, c_cast(Element*, branch), binding));
+            goto just_use_out;
 
           default:
             assert(false);
