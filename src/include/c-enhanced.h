@@ -1577,9 +1577,8 @@
 
 //=//// CORRUPT UNUSED FIELDS /////////////////////////////////////////////=//
 //
-// It would seem that structs--such as the Cell struct for TYPE_BLANK--which
-// don't use their payloads could just leave them uninitialized...saving time
-// on the assignments.
+// It would seem that structs which don't use their payloads could just leave
+// them uninitialized...saving time on the assignments.
 //
 // Unfortunately, this is a technically gray area in C.  If you try to
 // copy the memory of that cell (as cells are often copied), it might be a

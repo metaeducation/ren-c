@@ -246,7 +246,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
         if (cderr == 0) {
             //
             // returned FALSE because of cancellation, that's fine, just
-            // don't push anything to the data stack and we'll return blank
+            // don't push anything to the data stack and we'll return ~null~
         }
         else if (cderr == FNERR_BUFFERTOOSMALL) // ofn.nMaxFile too small
             error = rebValue(
@@ -358,7 +358,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
     if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
         //
         // If there was a cancellation, don't push any FILE!s to the stack.
-        // A blank will be returned later.
+        // A ~null~ will be returned later.
     }
     else {
         // On success there are two different code paths, because the multi

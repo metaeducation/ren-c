@@ -536,28 +536,28 @@ unzip: func [
             ;
             data: <here>
             (
-                let uncompressed-data: catch [
+                let uncompressed-data: attempt [
 
                     ; STORE(0) and DEFLATE(8) are the only widespread
                     ; methods used for .ZIP compression in the wild today
 
                     if method-number = 0 [  ; STORE
-                        throw copy:part data compressed-size
+                        continue:with copy:part data compressed-size
                     ]
 
                     if method-number <> 8 [  ; DEFLATE
                         info ["-> failed [method" method-number "]"]
-                        throw blank
+                        break
                     ]
                     data: copy:part data compressed-size
                     data: inflate:max data uncompressed-size except [
                         info "-> failed [deflate]"
-                        throw blank
+                        break
                     ]
 
                     if uncompressed-size != length of data [
                         info "-> failed [wrong output size]"
-                        throw blank
+                        break
                     ]
 
                     let check: checksum-core 'crc32 data
@@ -567,10 +567,10 @@ unzip: func [
                             "expected crc:" crc LF
                             "actual crc:" check
                         ]
-                        throw data
+                        break
                     ]
 
-                    throw data
+                    <- data
                 ]
 
                 either uncompressed-data [
@@ -584,7 +584,7 @@ unzip: func [
                     where: insert where all [
                         #"/" = last name
                         empty? uncompressed-data
-                    ] then [blank] else [uncompressed-data]
+                    ] then [_] else [uncompressed-data]
                 ][
                     ; make directory and/or write file
                     either #"/" = last name [

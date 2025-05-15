@@ -164,7 +164,7 @@ for-each [file fix] files [
         "->" target LF
     ]
 
-    if not blank? fix [data: run fix data]  ; correct compiler warnings
+    if not space? fix [data: run fix data]  ; correct compiler warnings
 
     replace data tab --[    ]--  ; spaces not tabs
 

@@ -1147,7 +1147,7 @@ default-combinators: to map! reduce [
             remove-each 'item pending [
                 if block? item [keep spread item, okay]
             ] else [
-                ; should it error or fail if pending was blank ?
+                ; should it error or fail if pending was space ?
             ]
         ]
 
@@ -1747,47 +1747,6 @@ default-combinators: to map! reduce [
         return value  ; matched splice is result
     ]
 
-    === BLANK! COMBINATOR ===
-
-    ; Blanks match themselves literally in blocks.  This is particularly
-    ; helpful for recognizing things like refinement:
-    ;
-    ;     >> refinement-rule: [subparse chain! [_ word!]]
-    ;
-    ;     >> parse [:a] [refinement-rule]
-    ;     == a
-    ;
-    ; In strings, they are matched as spaces, saving you the need to write out
-    ; the full word "space" or use an ugly abbreviation like "sp"
-
-    (meta blank!) combinator [
-        return: "BLANK! if matched in list or space character in strings"
-            [blank! char?]
-        value [blank!]
-    ][
-        if tail? input [
-            return fail "BLANK! cannot match at end of input"
-        ]
-        remainder: next input  ; if we consume an item, we'll consume just one
-        if any-list? input [
-            if blank? input.1 [
-                return blank
-            ]
-            return fail "BLANK! rule found next input in list was not a blank"
-        ]
-        if any-string? input [
-            if space = input.1 [
-                return space
-            ]
-            return fail "BLANK! rule found next input in list was not space"
-        ]
-        assert [blob? input]
-        if 32 = input.1 [  ; codepoint of space, crucially single byte for test
-            return space  ; acts like if you'd written space in the rule
-        ]
-        return fail "BLANK! rule found next input in binary was not ASCII 32"
-    ]
-
     === INTEGER! COMBINATOR ===
 
     ; The behavior of INTEGER! in UPARSE is to just evaluate to itself.  If you
@@ -1797,7 +1756,7 @@ default-combinators: to map! reduce [
     ; (though variadic combinators would be required to accomplish [2 4 rule]
     ; meaning "apply the rule between 2 and 4 times")
     ;
-    ; Note that REPEAT allows the use of BLANK! to opt out of an iteration.
+    ; Note that REPEAT allows the use of SPACE to opt out of an iteration.
 
     (meta integer!) combinator [
         return: "Just the INTEGER! (see REPEAT for repeating rules)"
@@ -1822,11 +1781,12 @@ default-combinators: to map! reduce [
             return null
         ]
         switch:type ^times [
-            blank! [  ; should blank be tolerated if void is?
-                remainder: input
-                return void  ; `[repeat (_) rule]` is a no-op
-            ]
             issue! [
+                if ^times = _ [  ; should space be tolerated if void is?
+                    remainder: input
+                    return void  ; `[repeat (_) rule]` is a no-op
+                ]
+
                 if ^times <> # [
                     panic ["REPEAT takes ISSUE! of # to act like TRY SOME"]
                 ]
@@ -1843,7 +1803,7 @@ default-combinators: to map! reduce [
                     )
                     |
                     min: [integer! | '_ (0)]
-                    max: [integer! | '_ (min) | '#]  ; blank means max = min
+                    max: [integer! | '_ (min) | '#]  ; space means max = min
                 ]
             ]
         ] else [
@@ -1997,7 +1957,6 @@ default-combinators: to map! reduce [
     ;    means "look up var and match it at this location", a much more
     ;    interesting and common application for the @ sigil is as a synonym
     ;    for the ONE combinator, to mean match anything at the current spot.
-    ;    (This is a purpose that was imagined for BLANK!).
     ;
     ; 2. Evaluatively, if we get a quasiform as the meta it means it was an
     ;    antiform.  Semantically that's matched by the quasiform combinator,
@@ -2094,7 +2053,7 @@ default-combinators: to map! reduce [
     ][
         [^result _]: parser input except e -> [return fail e]
 
-        if blank? ^result [
+        if space? ^result [
             remainder: input
             return ghost
         ]
@@ -2232,11 +2191,6 @@ default-combinators: to map! reduce [
             ; Bitsets were also legal as rules without decoration
             ;
             bitset! []
-
-            ; Blanks were legal as inert...they may become the actual canon
-            ; representation of the space CHAR!.
-            ;
-            blank! []
 
             void?/ [
                 remainder: input
@@ -2818,7 +2772,7 @@ parsify: func [
             ; fall through to datatype-based WORD! combinator handling
         ]
 
-        (path? r) and (blank? first r) [  ; "action combinator" [5]
+        (path? r) and (space? first r) [  ; "action combinator" [5]
             if not frame? let gotten: unrun get:any r [
                 panic "In UPARSE PATH starting in / must be action or frame"
             ]
@@ -2858,7 +2812,7 @@ parsify: func [
             return combinatorize:value comb rules state gotten
         ]
 
-        (path? r) and (blank? last r) [  ; type constraint combinator
+        (path? r) and (space? last r) [  ; type constraint combinator
             let action: get r
             comb: state.combinators.match
             return combinatorize:value comb rules state action/
@@ -2871,11 +2825,11 @@ parsify: func [
     if not comb: any [  ; datatype dispatch, special case sequences [6]
         if any-sequence? r [any [
             all [
-                blank? last r
+                space? last r
                 comb: try state.combinators.(as type of r '*.)  ; hack!
             ]
             all [
-                blank? first r
+                space? first r
                 comb: try state.combinators.(as type of r '.*)  ; hack!
             ]
         ]]

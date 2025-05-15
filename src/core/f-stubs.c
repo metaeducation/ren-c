@@ -380,7 +380,7 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
 //
 REBLEN Part_Len_May_Modify_Index(
     Value* series,  // ANY-SERIES? value whose index may be modified
-    const Value* part  // :PART (number, position in value, or BLANK! cell)
+    const Value* part  // :PART (number, position in value, or nulled cell)
 ){
     assert(Is_Issue(series) or Any_Series(series));
 
@@ -535,7 +535,7 @@ Element* Setify(Element* out) {  // called on stack values; can't call eval
 //
 //  Trap_Unsingleheart: C
 //
-// Evolve a cell containing a sequence that's just an element and a blank into
+// Evolve a cell containing a sequence that's just an element and a SPACE into
 // the element alone, e.g. `a:` -> `a` or `:[a b]` -> `[a b]`
 //
 Option(Error*) Trap_Unsingleheart(Element* out) {
@@ -549,12 +549,12 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
     const Node* node1 = CELL_NODE1(out);
     if (Is_Node_A_Cell(node1)) {  // compressed 2-elements, sizeof(Stub)
         const Pairing* pairing = c_cast(Pairing*, node1);
-        if (Is_Blank(Pairing_First(pairing))) {
-            assert(not Is_Blank(Pairing_Second(pairing)));
+        if (Is_Space(Pairing_First(pairing))) {
+            assert(not Is_Space(Pairing_Second(pairing)));
             Derelativize(out, Pairing_Second(pairing), Cell_Binding(out));
             return SUCCESS;
         }
-        if (Is_Blank(Pairing_Second(pairing))) {
+        if (Is_Space(Pairing_Second(pairing))) {
             Derelativize(out, Pairing_First(pairing), Cell_Binding(out));
             return SUCCESS;
         }
@@ -566,21 +566,21 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
     const Flex* f = c_cast(Flex*, node1);
     if (Is_Stub_Symbol(f)) {
         HEART_BYTE(out) = TYPE_WORD;
-        Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary?
+        Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary?
         return SUCCESS;
     }
 
     Option(Heart) mirror = Mirror_Of(c_cast(Source*, f));
     if (mirror) {  // no length 2 sequence arrays unless mirror
         HEART_BYTE(out) = unwrap mirror;
-        Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary
+        Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary
         return SUCCESS;
     }
 
 }} unchain_error: {
 
     return Error_User(
-        "UNCHAIN/UNPATH/UNTUPLE only on length 2 chains (when 1 item is blank)"
+        "UNCHAIN/UNPATH/UNTUPLE only on length 2 chains (when 1 item is SPACE)"
     );
 }}
 
@@ -611,7 +611,7 @@ DECLARE_NATIVE(SETIFY)
 //
 Element* Getify(Element* out) {  // called on stack values; can't call eval
     Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        out, TYPE_CHAIN, CELL_FLAG_LEADING_BLANK
+        out, TYPE_CHAIN, CELL_FLAG_LEADING_SPACE
     );
     if (error)
         panic (unwrap error);

@@ -831,9 +831,6 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return PANIC("TO PAIR! only works on lists with two integers");
     }
 
-    if (to == TYPE_BLANK)
-        return GENERIC_CFUNC(AS, Any_List)(LEVEL);
-
     return UNHANDLED;
 }
 
@@ -875,16 +872,6 @@ Option(Error*) Trap_Alias_Any_List_As(
         Derelativize(out, temp, Cell_Binding(list));  // try this instead (?)
 
         return SUCCESS;
-    }
-
-    if (as == TYPE_BLANK) {  // !!! think it needs to make list immutable?
-        Length len;
-        Cell_List_Len_At(&len, list);
-        if (len == 0) {
-            Init_Blank(out);
-            return SUCCESS;
-        }
-        return Error_User("Can only AS/TO convert empty series to BLANK!");
     }
 
     return Error_Invalid_Type(as);

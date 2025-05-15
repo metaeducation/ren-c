@@ -669,7 +669,7 @@ DECLARE_NATIVE(LET)
     // 1. It would be nice if we could just copy the input variable and
     //    rewrite the binding, but at time of writing /foo: is not binding
     //    compatible with WORD!...it has a pairing allocation for the chain
-    //    holding the word and a blank, and no binding index of its own.
+    //    holding the word and a space, and no binding index of its own.
     //    This will all be reviewed at some point, but for now we do a
     //    convoluted rebuilding of the matching structure from a word basis.
 
@@ -701,7 +701,7 @@ DECLARE_NATIVE(LET)
             Setify(where);
             if (Heart_Of(vars) == TYPE_PATH) {
                 Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-                    where, TYPE_PATH, CELL_FLAG_LEADING_BLANK
+                    where, TYPE_PATH, CELL_FLAG_LEADING_SPACE
                 );
                 assert(not error);  // was a path when we got it!
                 UNUSED(error);
@@ -739,7 +739,7 @@ DECLARE_NATIVE(LET)
                     return THROWN;
 
                 if (Is_Void(OUT)) {
-                    Init_Blank(OUT);
+                    Init_Space(OUT);
                 }
                 else {
                     Decay_If_Unstable(OUT);
@@ -756,8 +756,7 @@ DECLARE_NATIVE(LET)
             if (Is_Set_Word(temp))
                 goto wordlike;
             else switch (Heart_Of(temp)) {  // permit quasi
-              case TYPE_ISSUE:  // is multi-return opt-in for dialect, passthru
-              case TYPE_BLANK:  // is multi-return opt-out for dialect, passthru
+              case TYPE_ISSUE:  // is multi-return opt for dialect, passthru
                 Derelativize(PUSH(), temp, temp_binding);
                 break;
 
@@ -1202,7 +1201,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
         rebinding = false;
         for (; check != tail; ++check) {
-            if (Is_Blank(check)) {
+            if (Is_Space(check)) {
                 // Will be transformed into dummy item, no rebinding needed
             }
             else if (Is_Word(check) or Is_Lifted(WORD, check))
@@ -1246,15 +1245,15 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     while (index <= num_vars) {
         const Symbol* symbol;
 
-        if (Is_Blank(item)) {
+        if (Is_Space(item)) {
             if (dummy_sym == SYM_DUMMY9)
-                panic ("Current limitation: only up to 9 foreign/blank keys");
+                panic ("Current limitation: only up to 9 foreign/space keys");
 
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
             Value* var = Append_Context(c, symbol);
-            Init_Blank(var);
+            Init_Space(var);
             Set_Cell_Flag(var, BIND_NOTE_REUSE);
             Set_Cell_Flag(var, PROTECTED);
 
@@ -1291,7 +1290,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             // and binding.
             //
             if (dummy_sym == SYM_DUMMY9)
-                panic ("Current limitation: only up to 9 foreign/blank keys");
+                panic ("Current limitation: only up to 9 foreign/space keys");
 
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
@@ -1372,7 +1371,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     if (Not_Cell_Flag(pseudo_var, BIND_NOTE_REUSE))
         return pseudo_var;
-    if (Is_Blank(pseudo_var))  // e.g. `for-each _ [1 2 3] [...]`
+    if (Is_Space(pseudo_var))  // e.g. `for-each _ [1 2 3] [...]`
         return nullptr;  // signal to throw generated quantity away
 
     // Note: these variables are fetched across running arbitrary user code.

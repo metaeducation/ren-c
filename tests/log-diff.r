@@ -53,7 +53,7 @@ make-diff: func [
                 new-test
                 new-result <> 'skipped
                 any [
-                    blank? old-test
+                    space? old-test
                     all [
                         old-test != new-test
                         old-test = second sort:case reduce [new-test old-test]
@@ -88,7 +88,7 @@ make-diff: func [
                 old-test
                 old-result <> 'skipped
                 any [
-                    blank? new-test
+                    space? new-test
                     all [
                         new-test != old-test
                         new-test = second sort:case reduce [old-test new-test]
@@ -136,14 +136,14 @@ make-diff: func [
         next-old-log: all [
             old-test
             any [
-                blank? new-test
+                space? new-test
                 old-test = first sort:case reduce [old-test new-test]
             ]
         ]
         next-new-log: all [
             new-test
             any [
-                blank? old-test
+                space? old-test
                 new-test = first sort:case reduce [new-test old-test]
             ]
         ]

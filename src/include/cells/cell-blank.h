@@ -1,6 +1,6 @@
 //
-//  file: %cell-blank.h
-//  summary: "BLANK! inert placeholder type"
+//  file: %cell-space.h
+//  summary: "SPACE inert placeholder type"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -19,91 +19,56 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// BLANK! cells are inert in the evaluator, and represented by an underscore.
+// Space cells are inert in the evaluator, and represented by an underscore.
 // They are used as agnostic placeholders.
 //
 //    >> append [a b c] _
 //    == [a b c _]
 //
-// BLANK! takes on some placeholder responsibilities of Rebol2's #[none]
+// Space takes on some placeholder responsibilities of Rebol2's #[none]
 // value, while the "soft failure" aspects are covered by NULL (which unlike
-// blanks, can't be stored in blocks).  Consequently blanks are not "falsey"
+// blanks, can't be stored in blocks).  Consequently spaces are not "falsey"
 // which means all "reified" values that can be stored in blocks are
 // conditionally true.
 //
-//     >> if fourth [a b c _] [print "Blanks are truthy"]
-//     Blanks are truthy
-//
-// Aiding in blank's usefulness as a placeholder, SPREAD of BLANK! gives
-// back the same behavior as if you were to SPREAD an empty block:
-//
-//    >> append [d e] spread fourth [a b c []]
-//    == [d e]
-//
-//    >> append [d e] spread fourth [a b c _]
-//    == [d e]
-//
-//=//// NOTES /////////////////////////////////////////////////////////////=//
-//
-// * A speculative feature for blanks is to consider them as spaces when
-//   dealing with string operations:
-//
-//       >> append "ab" _
-//       == "ab "
-//
-//       >> parse "a b" ["a" _ "b"]
-//       == "b"
-//
-//   There are benefits and drawbacks to being casual about tihs conversion,
-//   so at time of writing, it's not certain if this will be kept.
+//     >> if fourth [a b c _] [print "Spaces are truthy"]
+//     Spaces are truthy
 //
 
-INLINE Element* Init_Blank_Untracked(Init(Element) out) {
-    Reset_Cell_Header_Noquote(out, CELL_MASK_BLANK);
-    Corrupt_Unused_Field(out->extra.corrupt);  // doesn't get marked
-    Corrupt_Unused_Field(out->payload.split.one.corrupt);
-    Corrupt_Unused_Field(out->payload.split.two.corrupt);
-
-    return out;
-}
-
-#define Init_Blank(out) \
-    TRACK(Init_Blank_Untracked(out))
 
 
 //=//// '~' QUASIFORM (a.k.a. QUASAR) /////////////////////////////////////=//
 //
-// The quasiform of BLANK! is a tilde (instead of ~_~), and called QUASAR
+// The quasiform of space is a tilde (instead of ~_~), and called QUASAR
 //
-//    >> meta print "Quasiform of BLANK is QUASAR"
-//    Quasiform of BLANK is QUASAR
+//    >> meta print "Quasiform of SPACE is QUASAR"
+//    Quasiform of SPACE is QUASAR
 //    == ~
 //
-// Quasar cannot be SPREAD or passed to routines like EMPTY?, so it is a more
-// ornery placeholder than blank.  Depending on one's desires, it can be
-// a better substitution for Rebol's historical NONE! type than BLANK!.
-// (Although both QUASAR and BLANK! are truthy in Ren-C.)
+// !!! At one point it was very fast to initialize a QUASAR, as it could be
+// done with only the header.  Consider the idea of making character literals
+// able to be initialized with just the header for space-like cases.
 //
 
 INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
-    Reset_Cell_Header(out, QUASIFORM_2_COERCE_ONLY, CELL_MASK_BLANK);
-    Corrupt_Unused_Field(out->extra.corrupt);  // doesn't get marked
-    Corrupt_Unused_Field(out->payload.split.one.corrupt);
-    Corrupt_Unused_Field(out->payload.split.two.corrupt);
-
+    Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
+    QUOTE_BYTE(out) = QUASIFORM_2_COERCE_ONLY;
     return out;
 }
 
 #define Init_Quasar(out) \
     TRACK(Init_Quasar_Untracked(out))
 
-INLINE bool Is_Quasar(Need(const Element*) v)
-  { return Heart_Of(v) == TYPE_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }
+INLINE bool Is_Quasar(Need(const Element*) v) {
+    if (QUOTE_BYTE(v) != QUASIFORM_2)
+        return false;
+    return IS_CHAR_CELL(v) and Cell_Codepoint(v) == ' ';
+}
 
 
 //=//// '~' ANTIFORM (a.k.a. TRASH) ///////////////////////////////////////=//
 //
-// The antiform of BLANK! is called TRASH, and it is used for the state of
+// The antiform of SPACE is called TRASH, and it is used for the state of
 // an unset variable.  It is also the result when a function has no meaningful
 // value of return, so it has no display in the console.
 //
@@ -121,24 +86,22 @@ INLINE bool Is_Quasar(Need(const Element*) v)
 // and resolved as superior to trying to claim there's such a thing as an
 // "unset value".
 //
-// Picking antiform BLANK! as the contents of unset variables has many benefits
+// Picking antiform SPACE as the contents of unset variables has many benefits
 // over choosing a WORD! antiform like `~unset~` or `~trash~`:
 //
 //  * Reduces noise when looking at a list of variables to see which are unset
 //
-//  * We consider variables to be unset and not values, e.g. (unset? $var).
-//    This has less chance for confusion as if it were named ~unset~ people
-//    would likely expect `(unset? ~unset~)` to work.
-//
 //  * Quick way to unset variables, simply `(var: ~)`
+//
+//  * Variables that are trashed are not "unset", they are set to trash.
+//    The question of if a variable holds trash is better as TRASHED?, while
+//    UNRESOLVED? can be used to talk about variables that can't be found
+//    at all (UNSET? would be a weird name for that).
 //
 
 INLINE Value* Init_Trash_Untracked(Init(Value) out) {
-    Reset_Cell_Header(out, ANTIFORM_0_COERCE_ONLY, CELL_MASK_BLANK);
-    Corrupt_Unused_Field(out->extra.corrupt);  // doesn't get marked
-    Corrupt_Unused_Field(out->payload.split.one.corrupt);
-    Corrupt_Unused_Field(out->payload.split.two.corrupt);
-
+    Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
+    QUOTE_BYTE(out) = ANTIFORM_0_COERCE_ONLY;
     return out;
 }
 

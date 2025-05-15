@@ -173,13 +173,6 @@ bool Pushed_Continuation(
         }
     }
     else switch (Type_Of(branch)) {
-      case TYPE_BLANK:
-        if (flags & LEVEL_FLAG_BRANCH)
-            Init_Heavy_Null(out);
-        else
-            Init_Nulled(out);
-        goto just_use_out;
-
       case TYPE_QUOTED:
         Unquotify(Derelativize(out, c_cast(Element*, branch), binding));
         goto just_use_out;

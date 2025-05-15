@@ -172,7 +172,7 @@ cipher-suites: compose [
 
 === SUPPORT FUNCTIONS ===
 
-debug: (comment [print/] blank)
+debug: (comment [print/] noop/)
 
 ; !!! There was a /SECURE refinement to RANDOM, which implemented the
 ; following after generating the REBI64 into a tmp variable:
@@ -2017,9 +2017,6 @@ sys.util/make-scheme [
             ; data one at a time.  It keeps the progressive state of the
             ; encryption process in the -stream variables, which under the
             ; hood are memory-allocated items stored as a HANDLE!.
-            ;
-            ; Calling the encryption functions with BLANK! as the data to
-            ; input will assume you are done, and will free the handle.
             ;
             ; !!! Is there a good reason for not doing this with an ordinary
             ; OBJECT! containing a BLOB! ?

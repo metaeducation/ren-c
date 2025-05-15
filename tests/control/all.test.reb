@@ -332,7 +332,7 @@
 )
 (
     success: okay
-    all [blank success: null]
+    all [space success: null]
     success = null
 )
 ; evaluation continues otherwise

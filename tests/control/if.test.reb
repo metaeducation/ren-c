@@ -63,7 +63,7 @@
 (if ok [okay])
 ((meta void) = ^ if null [okay])
 (if (specialize of/ [property: 'type]) [okay])
-(okay = if blank [okay])
+(okay = if space [okay])
 (if make object! [] [okay])
 (if +/ [okay])
 (if 0x0 [okay])

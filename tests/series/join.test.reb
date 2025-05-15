@@ -21,7 +21,7 @@
 
 ~???~ !! (join path! [a b])
 
-~bad-sequence-blank~ !! (join 'a/ spread [/b _ /c.c])
+~bad-sequence-space~ !! (join 'a/ spread [/b _ /c.c])
 
 ('a/b/c.c = join 'a/ spread [b /c.c])
 
@@ -44,13 +44,13 @@
 ; DIRECT PATH AND TUPLE SPLICING WITHOUT A BLOCK
 [
     ('a/b/c/d = join 'a/b '/c/d)
-    ~bad-sequence-blank~ !! (transcode "//c/d")
+    ~bad-sequence-space~ !! (transcode "//c/d")
     ('a/b/c/d = join 'a/b/ 'c/d)
     ~???~ !! (join 'a/b 'c/d)  ; missing slash, can't glue b to c
 
     ('a.b.c.d = join 'a.b '.c.d)
-    ~bad-sequence-blank~ !! (transcode "..c.d")
-    ~bad-sequence-blank~ !! (join 'a.b. '.c.d)
+    ~bad-sequence-space~ !! (transcode "..c.d")
+    ~bad-sequence-space~ !! (join 'a.b. '.c.d)
     ('a.b.c.d = join 'a.b. 'c.d)
     ~???~ !! (join 'a.b 'c.d)  ; missing slash, can't glue b to c
 ]

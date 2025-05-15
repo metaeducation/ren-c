@@ -22,7 +22,7 @@
         42
         -[foo]-
         #{CAFE}
-        blank  ; forces quoting in save, see note
+        space
         http://somewhere
         1900-01-30
     ][

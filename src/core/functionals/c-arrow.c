@@ -153,7 +153,7 @@ bool Arrow_Details_Querier(
 //
 //      return: [action!]
 //      spec "Names of arguments"
-//          [blank! word! lit-word? ^word! refinement? block!]
+//          [_ word! lit-word? ^word! refinement? block!]
 //      body "Code to execute"
 //          [<const> block!]
 //  ]
@@ -185,7 +185,7 @@ DECLARE_NATIVE(ARROW)
         item_tail = item + 1;
     }
     else {
-        assert(Is_Blank(spec));
+        assert(Is_Space(spec));
         item = nullptr;
         item_tail = nullptr;
     }

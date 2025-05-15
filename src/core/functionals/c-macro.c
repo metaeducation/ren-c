@@ -236,8 +236,8 @@ DECLARE_NATIVE(MACRO)
 //  "Inject a list of content into the execution stream, or single value"
 //
 //      return: [any-value?]
-//      ^code "If quoted single value, if void no insertion (e.g. invisible)"
-//          [~[]~ block! quoted!]
+//      code "If quoted single value, if void no insertion (e.g. invisible)"
+//          [<undo-opt> block! quoted!]
 //  ]
 //
 DECLARE_NATIVE(INLINE)
@@ -262,10 +262,9 @@ DECLARE_NATIVE(INLINE)
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    Option(const Element*) opt_code = Optional_Element_ARG(CODE);
-    if (not opt_code)
+    if (Is_Nulled(ARG(CODE)))
         return VOID;  // do nothing, just return invisibly
-    const Element* code = unwrap opt_code;
+    const Element* code = Element_ARG(CODE);
 
     if (Is_Quoted(code)) {
         //

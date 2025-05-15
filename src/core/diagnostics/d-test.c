@@ -68,7 +68,7 @@
 //      return: "Block of test numbers and failures"
 //          [text! block!]
 //      ^value "Argument that may be useful for ad hoc tests"
-//          [any-value?]  ; ^META to allow passing antiform blank (TRASH)
+//          [any-value?]  ; ^META to allow passing antiform space (TRASH)
 //  ]
 //
 DECLARE_NATIVE(TEST_LIBREBOL)

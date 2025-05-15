@@ -1,7 +1,7 @@
 ; %parse-path.test.reb
 ;
 ; PATH!s only have meaning in the default combinator set when they terminate
-; in a BLANK!, and mean "run as action combinator".
+; in a SPACE, and mean "run as action combinator".
 ;
 ; When paths represent cascades of functions vs. refinements, there will be
 ; more to test here.

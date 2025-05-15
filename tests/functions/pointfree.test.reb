@@ -35,7 +35,7 @@
 
         return: [action!]
         frame [<unrun> frame!]
-        block "Invocation by example (BLANK!s are unspecialized)"
+        block "Invocation by example (SPACE slots are unspecialized)"
             [block!]
         <local> e
     ][
@@ -44,7 +44,7 @@
         for-each [key param] (parameters of frame) [
             if tail? block [break]  ; no more args, leave rest unspecialized
 
-            if blank? block.1 [  ; means leave unspecialized [3]
+            if space? block.1 [  ; means leave unspecialized [3]
                 block: skip block 1  ; this code avoided NEXT when mezzanine
                 continue
             ]
@@ -124,7 +124,7 @@
         return: [action!]
         @(left) "Enforces nothing to the left of the pointfree expression"
             [<end>]
-        @expression "POINTFREE expression, BLANK!s are unspecialized arg slots"
+        @expression "POINTFREE expression, SPACEs are unspecialized arg slots"
             [element? <variadic>]
     ][
         return pointfree make block! expression  ; !!! vararg param, efficiency?

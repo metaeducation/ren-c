@@ -48,7 +48,7 @@
     let result': meta void
     for-each [val'] block [
         if void? ^result' [
-            result': either blank? vars.1 [meta void] [val']
+            result': either space? vars.1 [meta void] [val']
         ]
         if tail? vars [
             panic "Too many values for vars in PACK (use <...> if on purpose)"
@@ -57,7 +57,7 @@
             continue  ; ignore all other values (but must reduce all)
         ]
         switch:type vars.1 [
-            blank! []  ; no assignment
+            space?/ []  ; no assignment
             word! tuple! [set inside vars vars.1 unmeta val']
             meta-word! [set inside vars vars.1 val']
         ]
@@ -73,7 +73,7 @@
         ; be a refinement to choose whether to error on this case.
         ;
         for-each 'var vars [  ; if not enough values for variables, unset
-            if not blank? var [unset inside vars var]
+            if not space? var [unset inside vars var]
         ]
     ]
     return unmeta any [result' (meta void)]
@@ -125,7 +125,7 @@
 (
     a: 10
     b: 20
-    all wrap [blank = [a b]: pack-old @[_ _], blank? a, blank? b]
+    all wrap [space = [a b]: pack-old @[_ _], space? a, space? b]
 )
 (
     a: 10

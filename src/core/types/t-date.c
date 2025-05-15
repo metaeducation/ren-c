@@ -666,7 +666,7 @@ static REBINT Int_From_Date_Arg(const Value* poke) {
     if (Is_Integer(poke) or Is_Decimal(poke))
         return Int32s(poke, 0);
 
-    if (Is_Blank(poke))
+    if (Is_Space(poke))
         return 0;
 
     panic (poke);

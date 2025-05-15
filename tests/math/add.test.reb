@@ -210,7 +210,7 @@
 
 ; pair + ...
 [
-    ~expect-arg~ !! (0x0 + blank)
+    ~expect-arg~ !! (0x0 + space)
     ~expect-arg~ !! (0x0 + "")
 ]
 

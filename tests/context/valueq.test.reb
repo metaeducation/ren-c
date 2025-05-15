@@ -15,7 +15,7 @@
 (set? $set?)
 
 [#1914 (
-    set? run lambda [x] [$x] blank
+    set? run lambda [x] [$x] space
 )(
-    set? run func [x] [return $x] blank
+    set? run func [x] [return $x] space
 )]

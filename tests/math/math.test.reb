@@ -119,7 +119,7 @@ bind construct [
     ]
 ][
     clear nested-expr-val
-    let res: if parse3:match expr expression [expr-val] else [blank]
+    let res: if parse3:match expr expression [expr-val] else [space]
 
     either only [
         return res

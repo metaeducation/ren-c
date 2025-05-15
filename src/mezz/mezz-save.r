@@ -82,7 +82,7 @@ save: func [
         ; Make header an object if it's not already
         ;
         header: if object? header [
-            trim header  ; clean out words set to blank
+            trim header  ; clean out words set to space
         ] else [
             construct (pin header)  ; does not use STANDARD.HEADER
         ]
@@ -166,7 +166,7 @@ save: func [
             return write where data
         ]
 
-        blank? where [
+        space? where [
             return data  ; just return the UTF-8 binary
         ]
     ]

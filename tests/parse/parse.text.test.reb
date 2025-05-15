@@ -3,11 +3,6 @@
 ; A TEXT! rule will capture the actual match in a block.  But for a string, it
 ; will capture the *rule*.
 
-; No-op rules need thought in UPARSE, in terms of NULL/BLANK! behavior.  But
-; empty string should be a no-op on string input, and an empty rule should
-; always match.
-;
-
 ; rule capture: efficient (doesn't require a copy if you're not using it)
 (
     rule: "cd"

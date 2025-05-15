@@ -549,7 +549,7 @@ static void Push_Composer_Level(
 //
 // 2. See Try_Pop_Sequence_Or_Element_Or_Nulled() for how reduced cases like
 //    `(void).1` will turn into just INTEGER!, not `.1` -- this is in contrast
-//    to `(blank).1` which does turn into `.1`
+//    to `(space).1` which does turn into `.1`
 //
 // 3. There are N instances of the NEWLINE_BEFORE flags on the pushed items,
 //    and we need N + 1 flags.  Borrow the tail flag from the input array.
@@ -938,7 +938,7 @@ Bounce Composer_Executor(Level* const L)
 //          any-list? any-sequence?
 //          any-word?  ; passed through as-is, or :CONFLATE can produce
 //          any-utf8?
-//          ~null~ quasi-word? blank! quasar?  ; :CONFLATE can produce these
+//          ~null~ quasi-word? _ quasar?  ; :CONFLATE can produce these
 //      ]
 //      pattern "Pass @ANY-LIST? (e.g. @{{}}) to use the pattern's binding"
 //          [any-list? @any-list?]

@@ -7,7 +7,7 @@
     x = 20
 )
 (
-    capture: blank
+    capture: ~
     /foo: adapt any/ [capture: block]
     all [
         foo [1 2 3]

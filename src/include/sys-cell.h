@@ -943,7 +943,7 @@ INLINE Cell* Copy_Cell_Untracked(
 // Cell movement is distinct from cell copying, because it invalidates the
 // old location (which must be mutable).  The old location is erased if it's
 // an Atom and can legally hold CELL_MASK_ERASED_0 for GC, or it's set
-// to be quasar (quasiform BLANK!) if it can't hold that state.
+// to be quasar (quasiform SPACE) if it can't hold that state.
 //
 // Currently the advantage to moving vs. copying is that if the old location
 // held GC nodes live, it doesn't anymore.  So it speeds up the GC and also
@@ -962,10 +962,7 @@ INLINE Cell* Copy_Cell_Untracked(
 // Note: Not being willing to disrupt flags currently means that Move_Cell()
 // doesn't work on API cells.  Review.
 
-#define CELL_MASK_QUASAR \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL \
-        | FLAG_HEART(BLANK) | FLAG_QUOTE_BYTE(QUASIFORM_2_COERCE_ONLY) \
-        | CELL_MASK_NO_NODES)
+INLINE Element* Init_Quasar_Untracked(Init(Element) out);
 
 INLINE Cell* Move_Cell_Untracked(
     Cell* out,
@@ -974,11 +971,7 @@ INLINE Cell* Move_Cell_Untracked(
 ){
     Copy_Cell_Untracked(out, c, copy_mask);  // Move_Cell() adds track to `out`
     Assert_Cell_Header_Overwritable(c);
-    c->header.bits = CELL_MASK_QUASAR;  // fast overwrite
-
-    Corrupt_Pointer_If_Debug(c->extra.corrupt);
-    Corrupt_Pointer_If_Debug(c->payload.split.one.corrupt);
-    Corrupt_Pointer_If_Debug(c->payload.split.two.corrupt);
+    Init_Quasar_Untracked(c);  // !!! slower than we'd like it to be, review
 
     return out;
 }

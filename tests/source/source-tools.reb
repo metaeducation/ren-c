@@ -219,7 +219,7 @@ export analyse: context [
                             let line: text-line-of proto-parser.parse-position
                             append
                                 non-std-func-space: default [copy []]
-                                line  ; should it be appending BLANK! ?
+                                line
                         ]
                     ]
                 ]

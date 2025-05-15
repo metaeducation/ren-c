@@ -780,12 +780,12 @@ Error* Error_Need_Non_End(const Element* target) {
 //
 Error* Error_Bad_Word_Get(
     const Element* target,
-    const Atom* vacancy
+    const Atom* trash
 ){
-    assert(Any_Vacancy(vacancy));
+    assert(Is_Trash(trash));
 
     DECLARE_ELEMENT (reified);
-    Copy_Meta_Cell(reified, vacancy);  // avoid panics in error message [1]
+    Copy_Meta_Cell(reified, trash);  // avoid panics in error message [1]
 
     return Error_Bad_Word_Get_Raw(target, reified);
 }
@@ -1182,7 +1182,7 @@ Error* Error_On_Port(SymId id, Value* port, REBINT err_code)
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
     Value* val = Varlist_Slot(Cell_Varlist(spec), STD_PORT_SPEC_HEAD_REF);
-    if (Is_Blank(val))
+    if (Is_Space(val))
         val = Varlist_Slot(Cell_Varlist(spec), STD_PORT_SPEC_HEAD_TITLE);  // less
 
     DECLARE_ATOM (err_code_value);

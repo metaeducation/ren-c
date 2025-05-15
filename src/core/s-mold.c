@@ -389,12 +389,12 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     ){
         rebElide(CANON(MOLDIFY), element, molder, formval);
     }
+    else if (Is_Quasar(cell))  // special case, quasi space is just `~`
+        Append_Codepoint(mo->string, '~');
     else {
         Append_Codepoint(mo->string, '~');
-        if (HEART_BYTE(cell) != TYPE_BLANK) {
-            rebElide(CANON(MOLDIFY), element, molder, formval);
-            Append_Codepoint(mo->string, '~');
-        }
+        rebElide(CANON(MOLDIFY), element, molder, formval);
+        Append_Codepoint(mo->string, '~');
     }
 
     Assert_Flex_Term_If_Needed(s);
@@ -425,8 +425,8 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     Option(Sigil) sigil = Sigil_Of(e);
     if (sigil) {
         Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
-        if (Heart_Of(e) == TYPE_BLANK)
-            return;  // We want [@ ^ $] not [@_ ^_ $_] for sigilized BLANK!
+        if (Any_Sigil(e))
+            return;  // We want [@ ^ $] not [@_ ^_ $_] for sigilized space
     }
 
     Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);

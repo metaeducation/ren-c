@@ -193,7 +193,7 @@ for-each-typerange: func [
                 ]
             )]
             [<end> | [
-                [name*: word! (if not blank? types* [
+                [name*: word! (if not space? types* [
                     name*: to text! name*
                     assert [#"?" <> last name*]
                     append types* to text! name*
@@ -447,10 +447,10 @@ for-each-datatype 't [  ; plains
     ]
 
     append singlehearts cscape [t
-        --[SINGLEHEART_TAIL_BLANK_${T.NAME} = $<index * 256>]--
+        --[SINGLEHEART_TAIL_SPACE_${T.NAME} = $<index * 256>]--
     ]
     append singlehearts cscape [t
-        --[SINGLEHEART_HEAD_BLANK_${T.NAME} = $<(index * 256) + 1>]--
+        --[SINGLEHEART_HEAD_SPACE_${T.NAME} = $<(index * 256) + 1>]--
     ]
 
     e-typeset-bytes/emit [t -[
@@ -794,7 +794,7 @@ e-hearts/emit [rebs --[
         /*
          * !!! NOTE THAT ALL THESE COMBINATIONS ARE NOT ACTUALLY VALID !!!
          *
-         * (e.g. there is no such thing as SINGLEHEART_TRAILING_BLANK_BLANK)
+         * (you can't put everything in sequences)
          *
          * It's just easier to make this enum and have the math work out by
          * filling it with all the combinatorics...

@@ -126,22 +126,21 @@
 )
 
 ; No longer contentious concept: NULL is not legal as a parse rule.
-;
-; BLANK! behavior is still contentious at time of writing.
+; No longer contentious concept: _ is matched literally (it's *the* SPACE char)
 [
     ~bad-null~ !! (
         parse3 [x] ['x null]
     )
     (
-        parse3 [_ x] [blank 'x <end>]
+        parse3 [_ x] [space 'x <end>]
         ok
     )
 
     ~parse3-incomplete~ !! (
-        parse3 [] [blank blank blank]
+        parse3 [] [space space space]
     )
     (
-        parse3 [_ _ _] [blank blank blank]
+        parse3 [_ _ _] [space space space]
         ok
     )
     (
@@ -160,8 +159,8 @@
         ok
     )
     (
-        q-blank: quote '_
-        parse3 [_ _ _] [q-blank q-blank q-blank]
+        q-space: quote '_
+        parse3 [_ _ _] [q-space q-space q-space]
         ok
     )
 
@@ -169,7 +168,7 @@
         parse3 [] [[[_ _ _]]]
     )
     (
-        parse3 [_ _ _] [[[blank blank blank]]]
+        parse3 [_ _ _] [[[space space space]]]
         ok
     )
 ]

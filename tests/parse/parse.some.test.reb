@@ -194,7 +194,7 @@
 ; WHILE tests from %parse-test.red, rethought as OPT SOME
 [
     (
-        x: blank
+        x: ~
         ok
     )
     (#{06} = parse #{020406} [

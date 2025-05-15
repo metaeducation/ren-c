@@ -24,8 +24,8 @@ Rebol [
 ; If the host wants to know if a script or module is loaded, e.g. to print out
 ; a message.  (Printing directly from this code would be presumptuous.)
 ;
-; !!! This is not null but is unset because it is risky to have variables
-; meant to hold functions be NULL or BLANK! as they act as no-ops.
+; !!! This is not null but trash because it is risky to have variables meant to
+; hold functions be NULL since they act as no-ops.
 ;
 script-pre-load-hook: ~
 

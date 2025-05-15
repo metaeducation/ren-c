@@ -219,7 +219,7 @@ bind construct [
     final: ensure [blob! text!] end
 
     ensure object! hdr
-    ensure [~null~ block! blank!] hdr.options
+    ensure [~null~ block! _] hdr.options
 
     return pack [hdr body line final]
 ]

@@ -612,8 +612,6 @@ enum {
 
 #include "cells/cell-quoted.h"  // has special handling for voids/nones
 
-#include "cells/cell-blank.h"
-
 #include "sys-datastack.h"
 
 #include "cells/cell-integer.h"
@@ -643,7 +641,8 @@ enum {
 #include "cells/cell-error.h"
 
 #include "cells/cell-token.h"
-#include "cells/cell-sigil.h"  // requires quoted/quasi and char
+#include "cells/cell-blank.h"
+#include "cells/cell-sigil.h"
 
 #include "cells/cell-map.h"
 #include "cells/cell-varargs.h"

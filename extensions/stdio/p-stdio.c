@@ -333,7 +333,7 @@ DECLARE_NATIVE(STDIO_ACTOR)
                 rebRelease(result);
                 return rebTrash();
             }
-            if (rebUnboxLogic("blank?", result)) {  // ESCAPE received
+            if (rebUnboxLogic("space?", result)) {  // ESCAPE received
                 rebRelease(result);
                 return rebValue(
                     "as blob!", rebR(rebChar(ESC))

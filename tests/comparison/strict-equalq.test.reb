@@ -39,9 +39,9 @@
     a-value: #a
     equal? equal? a-value to text! a-value equal? to text! a-value a-value
 )
-(not equal? #{} blank)
+(not equal? #{} space)
 ; symmetry
-(equal? equal? #{} blank equal? blank #{})
+(equal? equal? #{} space equal? space #{})
 (
     a-value: to tag! ""
     not equal? a-value to text! a-value
@@ -94,9 +94,9 @@
 ;    )
 ; ]
 
-(not equal? [] blank)
+(not equal? [] space)
 ; symmetry
-(equal? equal? [] blank equal? blank [])
+(equal? equal? [] space equal? space [])
 [#1068 #1066 (
     a-value: first [()]
     b-value: ~

@@ -118,7 +118,7 @@ DECLARE_NATIVE(BREAKPOINT_P)
     if (Do_Breakpoint_Throws(
         SPARE,
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
-        LIB(BLANK)  // default result if RESUME does not override
+        LIB(SPACE)  // default result if RESUME does not override
     )){
         return THROWN;
     }

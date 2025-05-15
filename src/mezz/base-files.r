@@ -20,7 +20,7 @@ info?: func [
     "Returns an info object about a file or url"
     return: [~null~ object! word!]
     target [file! url!]
-    :only "for urls, returns 'file or blank"
+    :only "for urls, returns 'file or null"
 ][
     if file? target [
         return query target
@@ -38,12 +38,12 @@ info?: func [
 ]
 
 exists?: func [
-    "Returns the type of a file or URL if it exists, otherwise blank"
+    "Returns the type of a file or URL if it exists, otherwise null"
     return: [~null~ word!]
         "FILE, DIR, or null"  ; should return LOGIC!, FILETYPE OF separate
     target [<opt-out> file! url!]
 ][
-    if blank? target [return null]  ; https://forum.rebol.info/t/954
+    if space? target [return null]  ; https://forum.rebol.info/t/954
 
     if url? target [
         return info?:only target

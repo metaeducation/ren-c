@@ -148,8 +148,8 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             Is_Path(item)
             and (singleheart = Try_Get_Sequence_Singleheart(item))
             and (
-                singleheart == LEADING_BLANK_AND(WORD)
-                /* or (meta = (singleheart == LEADING_BLANK_AND(META_WORD))) */
+                singleheart == LEADING_SPACE_AND(WORD)
+                /* or (meta = (singleheart == LEADING_SPACE_AND(META_WORD))) */
             )
         ){
             symbol = Cell_Word_Symbol(item);
@@ -282,7 +282,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         bool is_returner = false;
         if (type == TYPE_CHAIN) {
             switch (Try_Get_Sequence_Singleheart(item)) {
-              case LEADING_BLANK_AND(WORD): {
+              case LEADING_SPACE_AND(WORD): {
                 refinement = true;
                 symbol = Cell_Refinement_Symbol(item);
                 if ((type == TYPE_LIFTED) and Heart_Of(item) == TYPE_WORD) {
@@ -303,7 +303,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 mode = SPEC_MODE_DEFAULT;
                 break; }
 
-              case TRAILING_BLANK_AND(WORD):
+              case TRAILING_SPACE_AND(WORD):
                 if (not returner)
                     return Error_User(
                         "SET-WORD in spec but no RETURN or YIELD in effect"

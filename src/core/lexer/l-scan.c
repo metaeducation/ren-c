@@ -1257,8 +1257,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     // BLOCK! structure to hold the code.
     //
     while (not transcode->at) {
-        if (L->feed->p == nullptr) {  // API null, can't be in feed, use BLANK
-            Init_Quasi_Null(PUSH());
+        if (L->feed->p == nullptr) {  // API null, can't be in feed...
+            Init_Quasi_Null(PUSH());  // ...so use a quasi null
             Set_Cell_Flag(TOP, FEED_NOTE_META);
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
@@ -1689,12 +1689,12 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
           case LEX_SPECIAL_UNDERSCORE:
             //
-            // `_` standalone should become a BLANK!, so if followed by a
+            // `_` standalone should become a SPACE, so if followed by a
             // delimiter or space.  However `_a_` and `a_b` are left as
             // legal words (at least for the time being).
             //
             if (Is_Lex_Delimit(cp[1]) or Is_Lex_Whitespace(cp[1]))
-                return LOCATED(TOKEN_BLANK);
+                return LOCATED(TOKEN_UNDERSCORE);
             goto prescan_word;
 
           case LEX_SPECIAL_POUND:
@@ -2284,9 +2284,9 @@ Bounce Scanner_Executor(Level* const L) {
             goto loop;
         break; }
 
-      case TOKEN_BLANK:
+      case TOKEN_UNDERSCORE:
         assert(*S->begin == '_' and len == 1);
-        Init_Blank(PUSH());
+        Init_Space(PUSH());
         break;
 
       case TOKEN_COMMA: {
@@ -2310,7 +2310,7 @@ Bounce Scanner_Executor(Level* const L) {
             if (Is_Interstitial_Scan(L)) {
                 //
                 // We only see a comma during a PATH! or TUPLE! scan in cases
-                // where a blank is needed.  So we'll get here with [/a/ , xxx]
+                // where a space is needed.  So we'll get here with [/a/ , xxx]
                 // but won't get here with [/a , xxx].
                 //
                 // Note that `[/a/, xxx]` will bypass the recursion, so we also
@@ -2466,7 +2466,7 @@ Bounce Scanner_Executor(Level* const L) {
             S->quasi_pending = 0;  // quasi-sequences don't exist
         }
         else
-            Init_Blank(PUSH());
+            Init_Space(PUSH());
 
         assert(transcode->at == S->end);
         transcode->at = S->begin;  // "unconsume" .` or `/` or `:` token
@@ -2738,7 +2738,7 @@ Bounce Scanner_Executor(Level* const L) {
                 or *transcode->at == ','
                 or *transcode->at == ';'
             ){
-                Init_Blank(PUSH());
+                Init_Space(PUSH());
                 goto done;
             }
 
@@ -2902,9 +2902,9 @@ Bounce Scanner_Executor(Level* const L) {
         // array that's too short.  This isn't just an optimization: due to
         // the lack of a TOKEN_WHITESPACE we really have to take action now,
         // because if we sub-scanned we'd not be able to tell when adding
-        // a blank to the tail was appropriate.
+        // a space to the tail was appropriate.
         //
-        Init_Blank(PUSH());
+        Init_Space(PUSH());
     }
     else {
         Level* sub = Make_Scan_Level(

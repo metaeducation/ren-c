@@ -32,7 +32,6 @@ quasar
 trash
 null
 okay
-blank
 hole
 NUL
 
@@ -58,8 +57,7 @@ file
 sigil
 
 ; When building PATH! and TUPLE! the system collapses 2-element sequences
-; that are all BLANK! to these words.  Different meanings in bootstrap exe
-; so just use strings.
+; that are all SPACE to these words.
 ;
 /  ; SYM_SLASH_1
 .  ; SYM_DOT_1
@@ -151,7 +149,7 @@ stop
 quit
 
 ; It is convenient to be able to say `for-each [_ x y] [1 2 3 ...] [...]` and
-; let the blank indicate you are not interested in a value.  This might be
+; let the space indicate you are not interested in a value.  This might be
 ; doable with a generalized "anonymous key" system.  But for now it is assumed
 ; that all keys have unique symbols.
 ;

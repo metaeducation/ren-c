@@ -1,6 +1,6 @@
-; %parse-blank.test.reb
+; %parse-space.test.reb
 ;
-; BLANK! matches blanks in lists literally.  This is helpful in particular
+; _ matches blanks in lists literally.  This is helpful in particular
 ; with breaking down paths with empty slots:
 ;
 ;    >> refinement-rule: [subparse path! [_ word!]]
@@ -14,7 +14,7 @@
 ; underscore is sometimes used in this wildcarding fashion in some languages:
 ;
 ;    >> parse [x <y> "z"] [_ _ _]
-;    == "z"  ; one idea for the behavior of blank...
+;    == "z"  ; one idea for the behavior of space...
 ;
 ; ...but the @ combinator does this better.  See %parse-the.test.reb
 ;
@@ -24,11 +24,11 @@
    'a = parse [/a] [run-word-rule]
 )
 
-~parse-mismatch~ !! (parse [x] ['x blank])
+~parse-mismatch~ !! (parse [x] ['x space])
 ('_ = parse [x _] ['x _])
-('x = parse [x] [opt blank 'x <end>])
+('x = parse [x] [opt space 'x <end>])
 
-~parse-mismatch~ !! (parse [] [blank blank blank])
+~parse-mismatch~ !! (parse [] [space space space])
 
 ~parse-mismatch~ !! (parse [x <y> "z"] ['_ '_ '_])
 (_ = parse [_ _ _] ['_ '_ '_])
@@ -37,14 +37,14 @@
 [
     ~parse-mismatch~ !! (parse "" [_])
     (space = parse " " [_])
-    ~parse-mismatch~ !! (parse "" [blank])
-    (space = parse " " [blank])
+    ~parse-mismatch~ !! (parse "" [space])
+    (space = parse " " [space])
 ]
 
-; !!! Should matching in a binary against blank return 32 or SPACE?
+; !!! Should matching in a binary against space return 32 or SPACE?
 [
     ~parse-mismatch~ !! (parse #{} [_])
     (space = parse #{20} [_])
-    ~parse-mismatch~ !! (parse #{} [blank])
-    (space = parse #{20} [blank])
+    ~parse-mismatch~ !! (parse #{} [space])
+    (space = parse #{20} [space])
 ]

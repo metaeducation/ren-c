@@ -118,7 +118,7 @@
 )
 (
     f: does [_]
-    blank? f
+    space? f
 )
 (
     a-value: make object! []
@@ -329,14 +329,14 @@
 ; !!! Review: Fix these tests.
 
 ~expect-arg~ !! (
-    f: func [code value] [return either blank? code [$value] [eval code]]
-    f-value: f blank blank
+    f: func [code value] [return either space? code [$value] [eval code]]
+    f-value: f space space
     f compose [2 * (f-value)] 21  ; re-entering same function
 )
 ~expect-arg~ !! (
-    f: func [code value] [return either blank? code [$value] [eval code]]
-    g: func [code value] [return either blank? code [$value] [eval code]]
-    f-value: f blank blank
+    f: func [code value] [return either space? code [$value] [eval code]]
+    g: func [code value] [return either space? code [$value] [eval code]]
+    f-value: f space space
     g compose [2 * (f-value)] 21  ; re-entering different function
 )
 

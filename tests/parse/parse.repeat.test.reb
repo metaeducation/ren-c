@@ -39,9 +39,9 @@
 ;    >> parse "aa" [repeat (:[min max]) "a"]
 ;    ** Error: PARSE BLOCK! combinator did not match input
 ;
-; If maximum is blank then it's assumed to be the same as if it were equal
+; If maximum is space then it's assumed to be the same as if it were equal
 ; to the minimum, so `repeat (:[n _])` is the same as `repeat (n)`.  So if
-; both maximum and minimum are blank, it's the same as `repeat (_)`, a no-op.
+; both maximum and minimum are space, it's the same as `repeat (_)`, a no-op.
 ;
 
 (

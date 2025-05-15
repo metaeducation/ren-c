@@ -283,7 +283,7 @@ DECLARE_NATIVE(JOIN)
     // 1. We want (join 'a: [...]) to work, and (join 'a: []) to give `a:`
     //    In order to do that we use the flag of whether the join produced
     //    anything (e.g. the output is non-null) and if it didn't, we will
-    //    add a blank back.
+    //    add a space back.
 
     if (not joining_datatype) {
         if (Any_Sequence_Type(heart)) {
@@ -291,7 +291,7 @@ DECLARE_NATIVE(JOIN)
             REBINT i;
             for (i = 0; i < len; ++i)
                 Copy_Sequence_At(PUSH(), unwrap base, i);
-            if (Is_Blank(TOP))
+            if (Is_Space(TOP))
                 DROP();  // will add back if join produces nothing [1]
         }
         else {
@@ -322,18 +322,14 @@ DECLARE_NATIVE(JOIN)
     Level* sub = SUBLEVEL;
 
     // 1. There's a concept that being able to put undelimited portions in the
-    //    delimit is useful--and it really is:
+    //    delimit is useful:
     //
-    //       >> print ["Outer" "spaced" ["inner" "unspaced"] "is" "useful"]
-    //       Outer spaced innerunspaced is useful
+    //       >> print ["Outer" "spaced" ["inner" "unspaced"] "seems" "useful"]
+    //       Outer spaced innerunspaced seems useful
     //
-    //    Hacked in for the moment, but this routine should be reformulated
-    //    to make it part of one continuous mold.
-    //
-    // 2. Blanks at source-level count as spaces (deemed too potentially broken
-    //    to fetch them from variables and have them mean space).  This is
-    //    a long-running experiment that may not pan out, but is cool enough to
-    //    keep weighing the pros/cons.  Looked-up-to blanks are illegal.
+    //    BUT it may only look like a good idea because it came around before
+    //    we could do real string interpolation.  Hacked in for the moment,
+    //    review the idea's relevance...
 
     if (Is_Level_At_End(sub))
         goto finish_mold_join;
@@ -351,14 +347,6 @@ DECLARE_NATIVE(JOIN)
         Copy_Cell(PUSH(), unspaced);
         rebRelease(unspaced);
         Mark_Join_Delimiter_Pending();
-        goto next_mold_step;
-    }
-
-    if (Is_Blank(item)) {  // BLANK! acts as space [2]
-        if (delimiter)
-            Clear_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING);
-        Init_Space(PUSH());
-        Fetch_Next_In_Feed(sub->feed);
         goto next_mold_step;
     }
 
@@ -570,9 +558,6 @@ DECLARE_NATIVE(JOIN)
         if (Is_Metaform(cast(Element*, v)) or Sigil_Of(cast(Element*, v)))
             return PANIC("JOIN requires @var for elements with sigils");
 
-        if (Is_Blank(v))
-            return PANIC("JOIN only treats source-level BLANK! as space");
-
         Form_Element(mo, cast(Element*, v));
     }
   }
@@ -651,9 +636,6 @@ DECLARE_NATIVE(JOIN)
             Drop_Mold(mo);
         }
         else switch (Type_Of(at)) {
-          case TYPE_BLANK:
-            return PANIC("JOIN only treats source-level BLANK! as space");
-
           case TYPE_INTEGER:
             Expand_Flex_Tail(buf, 1);
             *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can panic()

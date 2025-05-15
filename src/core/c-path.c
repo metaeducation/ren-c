@@ -71,10 +71,10 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     const Element* head = Array_At(a, offset);  // head of what sequence uses
     const Element* at = head;
     for (; at != tail; ++at) {
-        if (at == head and Is_Blank(at))
-            continue;  // blank valid at head
-        if (at == tail - 1 and Is_Blank(at))
-            continue;  // blank valid at tail
+        if (at == head and Is_Space(at))
+            continue;  // (_) valid at head
+        if (at == tail - 1 and Is_Space(at))
+            continue;  // (_) valid at tail
 
         Option(Error*) error = Trap_Check_Sequence_Element(
             heart,

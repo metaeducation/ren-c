@@ -185,6 +185,8 @@ typedef enum {
     ST_STEPPER_GENERIC_SET,
     ST_STEPPER_SET_BLOCK,
     ST_STEPPER_SET_GROUP,
+
+    ST_STEPPER_NONZERO_STATE  // sometimes just can't leave state at 0
 } StepperState;
 
 // There's a rule that the Level's OUT has to be fresh if it's in the

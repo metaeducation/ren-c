@@ -125,7 +125,7 @@ script: [
 
     sequence-too-short: "PATH!, CHAIN!, and TUPLE! must have more than 2 items"
     conflated-sequence: ["Sequence would conflate with" :arg1 "--" :arg2]
-    bad-sequence-blank: "BLANK! only legal at head and tail of sequence"
+    bad-sequence-space: "SPACE only legal at head and tail of sequence"
     bad-sequence-item:  ["Value is not a valid" :arg1 "element:" :arg2]
     cant-decorate-type: ["Cannot apply `:` or `^` decoration to:" :arg1]
 

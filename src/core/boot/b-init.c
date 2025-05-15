@@ -773,7 +773,7 @@ void Startup_Core(void)
 
     Startup_Evaluator();
 
-  //=//// STARTUP CONSTANTS (like NULL, BLANK, etc.) //////////////////////=//
+  //=//// STARTUP CONSTANTS (like NULL, SPACE, etc.) //////////////////////=//
 
     // These may be used in the system object definition.  At one time code
     // manually added definitions like NULL to LIB, but having it expressed
@@ -788,7 +788,7 @@ void Startup_Core(void)
     );
 
     Protect_Cell(Mutable_Lib_Var(SYM_NULL));
-    Protect_Cell(Mutable_Lib_Var(SYM_BLANK));
+    Protect_Cell(Mutable_Lib_Var(SYM_SPACE));
     Protect_Cell(Mutable_Lib_Var(SYM_QUASAR));
     Protect_Cell(Mutable_Lib_Var(SYM_NUL));
 
@@ -853,7 +853,7 @@ void Startup_Core(void)
   //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED ///////=//
 
     // By this point, the g_lib_context contains basic definitions for things
-    // like null, blank, the natives, and the generics.  `system` is set up.
+    // like null, space, the natives, and the generics.  `system` is set up.
     //
     // There is theoretically some level of error recovery that could be done
     // here.  e.g. the evaluator works, it just doesn't have many functions you

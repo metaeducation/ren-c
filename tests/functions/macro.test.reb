@@ -29,7 +29,7 @@
 
 ; INLINE is a variant of macro for putting code directly into the feed
 ; It accepts BLOCK! (spread contents), QUOTED! (splice single value) or just
-; BLANK! as a no-op.
+; VOID as a no-op.
 [
     (
         y: ~
@@ -40,5 +40,5 @@
         ]
     )
     (0 = (1 + inline the 'negate 1))
-    (3 = (1 + inline blank 2))
+    (3 = (1 + inline void 2))
 ]

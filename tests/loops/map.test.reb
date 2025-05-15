@@ -1,14 +1,7 @@
 ; %loops/map.test.reb
 ;
 ; MAP is a new generalized form of loop which implicitly collects the result
-; of running its body branch.  The body branch is collected according to the
-; same rules as APPEND: blocks are spliced, quoted items have a quote level
-; removed then are collected as-is, inert items are collected as-is,
-; evaluative items trigger an error, and blanks opt-out.  The exception is
-; that NULL is treated the same as blank, opting out of the result.
-;
-; MAP-EACH is a legacy construct which is equivalent to running MAP with a
-; ^META branch: items are collected as-is, except for NULL which opts out.
+; of running its body branch.
 
 ; "return bug"
 (
@@ -20,7 +13,7 @@
     [a 1 b 1 c 1] = map 'x each 'a/b/c [spread reduce [x 1]]
 )
 
-; BLANK! is legal for slots you don't want to name variables for:
+; SPACE is legal for slots you don't want to name variables for:
 [(
     [5 11] = map [_ a b] each [1 2 3 4 5 6] [a + b]
 )]
@@ -76,10 +69,10 @@
     ]
 )
 
-; BLANK! acts same as empty block, void opts out and generates BREAK signal
+; HOLE acts same as empty block, void opts out and generates BREAK signal
 [
     ([] = map-each 'x [] [panic])
-    ([] = map-each 'x _ [panic])
+    ([] = map-each 'x hole [panic])
     (null? map-each 'x void [panic])
 
     ~expect-arg~ !! (map-each 'x '~ [panic])

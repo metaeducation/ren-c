@@ -8,7 +8,7 @@
 ; other 19 parameter descriptions to be copied onto a new function.
 ;
 ; The code trying to sort out these relationships has come along organically,
-; and involves a number of core questions--such as when to use null vs. blank.
+; and involves a number of core questions--such as when to use null vs. space.
 ; It has had a tendency to break, so these tests are here even though they
 ; spew a large amount of output, in the interests of making HELP stay working.
 

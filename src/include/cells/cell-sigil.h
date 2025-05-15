@@ -91,7 +91,7 @@ INLINE Option(Sigil) Sigil_Of(const Element* e)
 INLINE Element* Sigilize(Element* elem, Sigil sigil) {
     assert(QUOTE_BYTE(elem) == NOQUOTE_1);  // no quotes, no quasiforms
     assert(not (elem->header.bits & CELL_MASK_SIGIL_BITS));  // clearest [1]
-    elem->header.bits |= FLAG_SIGIL_ENUM(maybe sigil);
+    elem->header.bits |= FLAG_SIGIL_ENUM(sigil);
     return elem;
 }
 
@@ -113,37 +113,30 @@ INLINE Element* Copy_Heart_Byte(Element* out, const Element* in) {
 
 //=//// STANDALONE "SIGIL?" ELEMENTS (@ ^ $) //////////////////////////////=//
 //
-// These are just sigilized versions of BLANK!.  BLANK! itself is not thought
-// of as a "Sigil" because (sigil of [a b]) is null, not blank.
+// These are just sigilized versions of (_) which is the literal space char.
+// Space itself is not thought of as a "Sigil" because (sigil of [a b]) is
+// null, not space.
 //
 
 INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
-    return Sigilize(Init_Blank(out), sigil);
+    return Sigilize(Init_Space(out), sigil);
 }
 
 INLINE bool Any_Sigil(const Element* e) {
-    if (QUOTE_BYTE(e) != NOQUOTE_1)
+    if (QUOTE_BYTE(e) != NOQUOTE_1 or not Sigil_Of(e))
         return false;
-    return Heart_Of(e) == TYPE_BLANK and Sigil_Of(e);
+    return IS_CHAR_CELL(e) and Cell_Codepoint(e) == ' ';
 }
 
-INLINE bool Is_Lift_Sigil(const Cell* cell) {
-    if (QUOTE_BYTE(cell) != NOQUOTE_1)
+INLINE bool Is_Sigil(const Cell* c, Sigil sigil) {
+    if (QUOTE_BYTE(c) != NOQUOTE_1 or Sigil_Of(c_cast(Element*, c)) != sigil)
         return false;
-    return HEART_BYTE(cell) == (u_cast(Byte, TYPE_BLANK) | FLAG_SIGIL(LIFT));
+    return IS_CHAR_CELL(c) and Cell_Codepoint(c) == ' ';
 }
 
-INLINE bool Is_Pin_Sigil(const Cell* cell) {
-    if (QUOTE_BYTE(cell) != NOQUOTE_1)
-        return false;
-    return HEART_BYTE(cell) == (u_cast(Byte, TYPE_BLANK) | FLAG_SIGIL(PIN));
-}
-
-INLINE bool Is_Tie_Sigil(const Cell* cell) {
-    if (QUOTE_BYTE(cell) != NOQUOTE_1)
-        return false;
-    return HEART_BYTE(cell) == (u_cast(Byte, TYPE_BLANK) | FLAG_SIGIL(TIE));
-}
+#define Is_Pin_Sigil(cell)  Is_Sigil((cell), SIGIL_PIN)
+#define Is_Lift_Sigil(cell)  Is_Sigil((cell), SIGIL_LIFT)
+#define Is_Tie_Sigil(cell)  Is_Sigil((cell), SIGIL_TIE)
 
 
 //=//// SIGIL-TO-CHARACTER CONVERSION /////////////////////////////////////=//

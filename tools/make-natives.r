@@ -256,13 +256,12 @@ e-forward/write-emitted
 
 ; %make-types.r creates a table of TypesetByte, like:
 ;
-;    blank 1
-;    integer 2
-;    decimal 3
+;    integer 1
+;    decimal 2
 ;    ...
-;    any-list 90
-;    any-bindable 91
-;    any-element 92
+;    any-list 89
+;    any-bindable 90
+;    any-element 91
 ;
 ; The generic registry uses this, sorting the more specific values used in
 ; IMPLEMENT_GENERIC() first in the table for each generic.

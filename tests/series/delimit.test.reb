@@ -7,17 +7,16 @@
 
 ("1^/^/2" = delimit #"^/" ["1^/" "2"])
 
-; Empty text is distinct from BLANK/null
+; Empty text is distinct from SPACE/null
 (" A" = delimit ":" [_ "A" opt null])
 (":A:" = delimit ":" ["" "A" ""])
 
-; Blanks act as spaces in some dialected contexts when seen literally, but
-; if fetched from variables the odds for misunderstanding are too great.
+; _ is now the literal space character, fetching from variables is valid.
 [
     ("a  c" = unspaced ["a" _ comment <b> _ "c"])
-    ~???~ !! ("a  c" = spaced ["a" blank comment <b> blank "c"])
-    ("a c" = spaced ["a" opt null comment <b> (null else '#) "c"])
-    ("a c" = unspaced ["a" opt null comment <b> (null else '#) "c"])
+    ("a  c" = spaced ["a" space comment <b> space "c"])
+    ("a c" = spaced ["a" opt null comment <b> (null else '_) "c"])
+    ("a c" = unspaced ["a" opt null comment <b> (null else '_) "c"])
 ]
 
 ; ISSUE! is to be merged with CHAR! and does not space

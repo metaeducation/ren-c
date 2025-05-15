@@ -138,7 +138,7 @@ redescribe: func [
 /vacant?: redescribe [
     "Determine if a variable is nothing or antiform tag"
 ](
-    cascade [get:any/ vacancy?/]
+    cascade [get:any/ trash?/]
 )
 
 defined?: func [
@@ -401,7 +401,7 @@ trap: func [
     "Variant of FOR-SKIP that directly modifies a series variable in a word"
 ](
     specialize enclose for-skip/ func [f] [
-        if blank? let word: f.word [return null]
+        if space? let word: f.word [return null]
         assert [match [@word!] f.word]
         f.series: get word
 

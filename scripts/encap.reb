@@ -105,7 +105,7 @@ elf-format: context [
     ; When parsing a binary header, the properties are either 'read or 'write
     ; In the current update pattern, a read phase is followed by tweaking
     ; the desired parameters, then seeking back and doing a write phase.
-    ; For safety, the mode is reset to blank after each rule, to force being
+    ; For safety, the mode is reset to null after each rule, to force being
     ; explicit at the callsites.
     ;
     mode: ~

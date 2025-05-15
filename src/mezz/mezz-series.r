@@ -52,8 +52,7 @@ last?: single?: lambda [
 array: func [
     "Makes and initializes a block of a given size"
 
-    return: "Generated block or null if blank input"
-        [block!]
+    return: [~null~ block!]
     size "Size or block of sizes for each dimension"
         [<opt-out> integer! block!]
     :initial "Initial value (will be called each time if action)"

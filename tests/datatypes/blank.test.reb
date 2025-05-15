@@ -1,55 +1,48 @@
-; %blank.test.reb
+; %space.test.reb
 
-(blank? _)
-(blank? blank)
-(not blank? 1)
-(blank! = type of blank)
+(space? _)
+(space? space)
+(not space? 1)
+(issue! = type of space)
 
-(blank = '_)
+(space = '_)
 
-(null = make blank! opt null)
-(warning? trap [make blank! [a b c]])
+(null? to opt null 1)  ; TO's universal protocol for space 1st argument
 
-(null? to blank! opt null)  ; TO's universal protocol for void 2nd argument
-(null? to opt null 1)  ; TO's universal protocol for blank 1st argument
-
-~bad-cast~ !! (to blank! 1)  ; no other types allow "conversion" to blank
-
-("_" = mold blank)
+("_" = mold space)
 
 [#1666 #1650 (
     f: does [_]
-    blank = f
+    space = f
 )]
 
 [
-    (void? for-each 'x _ [1020])
-    ([] = map-each 'x _ [1020])
-    (void? for-next 'x _ [1020])
+    (void? for-each 'x hole [1020])
+    ([] = map-each 'x hole [1020])
+    (void? for-next 'x hole [1020])
     (all wrap [
-        _ = [result count]: remove-each 'x _ [panic "this never gets called"]
-        result = _
+        hole = [result count]: remove-each 'x hole [panic "never gets called"]
+        result = hole
         count = 0
     ])
-    (void? every 'x _ [okay])
-    (void? for-skip 'x _ 2 [1020])
+    (void? every 'x hole [okay])
+    (void? for-skip 'x hole 2 [1020])
 
-    ~nothing-to-take~ !! (take _)
-    (null = try take _)
-    (null = find _ 304)
-    (null = select _ 304)
+    ~nothing-to-take~ !! (take [])
+    (null = try take void)
+    (null = find void 304)
+    (null = select void 304)
 
-    ~bad-pick~ !! (pick _ 304)
-    (null = try pick _ 304)
+    ~bad-pick~ !! (pick void 304)
+    (null = try pick void 304)
 
     (_ = copy _)  ; do NOT want opt-out of copy
 ]
 
-; BLANK!s are considered to be EMPTY?, and in accordance with that they report
-; that their length is 0.  However they do not have an index.
+; (_) is now SPACE, hence no longer considered empty.  Also have no index.
 [
-    (empty? _)
-    (0 = length of _)
+    (not empty? _)
+    (1 = length of _)
     ~type-has-no-index~ !! (index of _)
     (null = try index of _)
 ]

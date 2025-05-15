@@ -109,7 +109,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 #define DATASTACK_FLAG_HAS_SPARE            STUB_SUBCLASS_FLAG_26
 #define DATASTACK_FLAG_HAS_SCRATCH          STUB_SUBCLASS_FLAG_27
 
-#define SPARE_PROXY     x_cast(Atom*, LIB(BLANK))
+#define SPARE_PROXY     x_cast(Atom*, LIB(SPACE))
 #define SCRATCH_PROXY   x_cast(Atom*, LIB(NULL))
 
 #define PLUG_SUSPENDED_LEVEL(plug)   (plug)->link.p
@@ -233,7 +233,7 @@ void Unplug_Stack(
             // !!! This is true for YIELD's relationship to the YIELDER, but
             // why would it be generically the case?
             //
-            /* assert(temp->out == LIB(BLANK)); */  // should have matched base
+            /* assert(temp->out == LIB(SPACE)); */  // should have matched base
 
             temp->prior = nullptr;  // show where the fragment of stack ends
             break;

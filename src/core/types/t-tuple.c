@@ -342,7 +342,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
 
         Trust_Const(Copy_Cell(out, seq));
         HEART_BYTE(out) = as;
-        possibly(Get_Cell_Flag(out, LEADING_BLANK));
+        possibly(Get_Cell_Flag(out, LEADING_SPACE));
         return SUCCESS;
     }
 
@@ -372,15 +372,15 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
           case FLAVOR_SYMBOL: {
             Source* a = Make_Source_Managed(2);
             Set_Flex_Len(a, 2);
-            if (Get_Cell_Flag(seq, LEADING_BLANK)) {
-                Init_Blank(Array_At(a, 0));
+            if (Get_Cell_Flag(seq, LEADING_SPACE)) {
+                Init_Space(Array_At(a, 0));
                 Copy_Cell(Array_At(a, 1), seq);
                 HEART_BYTE(Array_At(a, 1)) = TYPE_WORD;
             }
             else {
                 Copy_Cell(Array_At(a, 0), seq);
                 HEART_BYTE(Array_At(a, 0)) = TYPE_WORD;
-                Init_Blank(Array_At(a, 1));
+                Init_Space(Array_At(a, 1));
             }
             Freeze_Source_Shallow(a);
             Init_Any_List(out, as, a);
@@ -392,23 +392,23 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
                 Source* two = Make_Source_Managed(2);
                 Set_Flex_Len(two, 2);
                 Cell* tweak;
-                if (Get_Cell_Flag(seq, LEADING_BLANK)) {
-                    Init_Blank(Array_At(two, 0));
+                if (Get_Cell_Flag(seq, LEADING_SPACE)) {
+                    Init_Space(Array_At(two, 0));
                     tweak = Copy_Cell(Array_At(two, 1), seq);
                 }
                 else {
                     tweak = Copy_Cell(Array_At(two, 0), seq);
-                    Init_Blank(Array_At(two, 1));
+                    Init_Space(Array_At(two, 1));
                 }
                 HEART_BYTE(tweak) = MIRROR_BYTE(a);
-                Clear_Cell_Flag(tweak, LEADING_BLANK);
+                Clear_Cell_Flag(tweak, LEADING_SPACE);
                 Init_Any_List(out, as, two);
             }
             else {
                 assert(Is_Source_Frozen_Shallow(a));
                 Copy_Cell(out, seq);
                 HEART_BYTE(out) = TYPE_BLOCK;
-                Clear_Cell_Flag(out, LEADING_BLANK);  // don't want stray flag
+                Clear_Cell_Flag(out, LEADING_SPACE);  // don't want stray flag
             }
             break; }
 
@@ -533,9 +533,9 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
 // See notes on RANDOM-PICK on whether specializations like this are worth it.
 //
 // 1. When a sequence has a Symbol* in its Payload, that implies that it is
-//    a sequence representing a BLANK! and a WORD!.  A flag controls whether
-//    that is a leading blank or trailing blank.  We don't care which--all
-//    we do is have a 50-50 chance of making a blank or a word.
+//    a sequence representing a SPACE and a WORD!.  A flag controls whether
+//    that is a leading space or trailing space.  We don't care which--all
+//    we do is have a 50-50 chance of making a space or a word.
 //
 IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 {
@@ -546,7 +546,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
     if (Wordlike_Cell(seq)) {  // e.g. FOO: or :FOO [1]
         REBI64 one_or_two = Random_Range(2, Bool_ARG(SECURE));
         if (one_or_two == 1)
-            return Init_Blank(OUT);
+            return Init_Space(OUT);
         Copy_Cell(OUT, seq);
         HEART_BYTE(OUT) = TYPE_WORD;
         return OUT;
@@ -667,7 +667,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
             Append_Codepoint(mo->string, interstitial);
         }
 
-        if (Is_Blank(element)) {  // blank molds invisibly
+        if (Is_Space(element)) {  // space molds invisibly
             assert(i == 0 or i == len - 1);  // head or tail only
         }
         else {

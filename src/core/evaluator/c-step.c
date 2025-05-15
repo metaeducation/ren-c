@@ -156,7 +156,7 @@ STATIC_ASSERT(
 
 
 // When a SET-BLOCK! is being processed for multi-returns, it may encounter
-// leading-blank chains as in ([foo :bar]: 10).  Once the work of extracting
+// leading-SPACE chains as in ([foo :bar]: 10).  Once the work of extracting
 // the real variable from the path is done and pushed to the stack, this bit
 // is used to record that the variable was optional.  This makes it easier
 // for the phase after the right hand side is evaluated--vs. making it pick
@@ -353,7 +353,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     if (Is_Feed_At_End(L->feed)) {
         assert(Is_Cell_Erased(OUT));
         Init_Endlike_Trash(OUT);
-        STATE = cast(StepperState, TYPE_BLANK);  // can't leave as STATE_0
+        STATE = ST_STEPPER_NONZERO_STATE;
         goto finished_dont_meta_out;
     }
 
@@ -586,12 +586,13 @@ Bounce Meta_Stepper_Executor(Level* L)
     // and not have a degree of freedom that it can't distinguish from being
     // called as (import 'xml) or (import 'json/1.1.2)
 
-    if (Heart_Of(CURRENT) != TYPE_BLANK) {  // special handling for lone @
-        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        goto lookahead;
-    }
+    if (Is_Sigil(CURRENT, SIGIL_PIN))
+        goto handle_pin;  // special handling for lone @
 
-} handle_pin: {  //// "PIN" Pinned BLANK! Sigil (@) //////////////////////////
+    Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+    goto lookahead;
+
+} handle_pin: {  //// "PIN" Pinned Space Sigil (@) ///////////////////////////
 
     // @ acts like THE (literal, but bound):
     //
@@ -663,13 +664,14 @@ Bounce Meta_Stepper_Executor(Level* L)
     //     >> get 'var
     //     ** Error: var is unbound
 
-    if (Heart_Of(CURRENT) != TYPE_BLANK) {  // special handling for lone $
-        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        Plainify(u_cast(Element*, OUT));  // remove the $ Sigil
-        goto lookahead;
-    }
+    if (Is_Sigil(CURRENT, SIGIL_TIE))
+        goto handle_tie;  // special handling for lone $
 
-} handle_tie: {  //// "TIE" Tied BLANK! Sigil ($) ////////////////////////////
+    Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+    Plainify(u_cast(Element*, OUT));  // remove the $ Sigil
+    goto lookahead;
+
+} handle_tie: {  //// "TIE" Tied Space Sigil ($) /////////////////////////////
 
     // The $ sigil will evaluate the right hand side, and then bind the
     // product into the current evaluator environment.
@@ -745,7 +747,14 @@ Bounce Meta_Stepper_Executor(Level* L)
     return PANIC("Don't know what ^FENCE! is going to do yet");
 
 
-} case TYPE_BLANK: { //// "LIFT" Lifted BLANK! Sigil (^) /////////////////////
+} case TYPE_ISSUE: { //// LIFTED ISSUE! /////////////////////////////////////
+
+    if (Is_Sigil(CURRENT, SIGIL_LIFT))
+        goto handle_lift;  // special handling for lone ^
+
+    return PANIC("Don't know what ^ISSUE! is going to do yet (besides ^)");
+
+} handle_lift: {  //// "LIFT" Lifted Space Sigil (^) ////////////////////////
 
     // !!! Historically ^ was a synonym for META, but it now has a much more
     // noble purpose slated... to "approve" the creation of ghosts or of
@@ -841,7 +850,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     // A plain word tries to fetch its value through its binding.  It panics
     // if the word is unbound (or if the binding is to a variable which is
-    // set, but to the antiform of blank e.g. TRASH).  Should the word
+    // set, but to the antiform of space e.g. TRASH).  Should the word
     // look up to an antiform FRAME!, then that "Action" will be invoked.
     //
     // NOTE: The usual dispatch of infix functions is *not* via a TYPE_WORD in
@@ -871,7 +880,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         return PANIC("Leading slash means execute FRAME! or ACTION! only");
     }
 
-    if (Any_Vacancy(stable_OUT))  // checked second
+    if (Is_Trash(stable_OUT))  // checked second
         return PANIC(Error_Bad_Word_Get(CURRENT, OUT));
 
     goto lookahead;
@@ -967,7 +976,7 @@ Bounce Meta_Stepper_Executor(Level* L)
       case NOT_SINGLEHEART_0:
         break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
-      case TRAILING_BLANK_AND(WORD):  // FOO:, set word
+      case TRAILING_SPACE_AND(WORD):  // FOO:, set word
         Derelativize(  // !!! binding may be sensitive to "set-words only"
             SPARE, CURRENT, L_binding
         );
@@ -975,17 +984,17 @@ Bounce Meta_Stepper_Executor(Level* L)
         assert(Is_Word(CURRENT));
         goto handle_generic_set;
 
-      case TRAILING_BLANK_AND(TUPLE):  // a.b.c: is a set tuple
+      case TRAILING_SPACE_AND(TUPLE):  // a.b.c: is a set tuple
         Unchain(CURRENT);
         assert(Is_Tuple(CURRENT));
         goto handle_generic_set;
 
-      case TRAILING_BLANK_AND(BLOCK):  // [a b]: multi-return assign
+      case TRAILING_SPACE_AND(BLOCK):  // [a b]: multi-return assign
         Unchain(CURRENT);
         STATE = ST_STEPPER_SET_BLOCK;
         goto handle_set_block;
 
-      case TRAILING_BLANK_AND(GROUP): {  // (xxx): -- generic retrigger set
+      case TRAILING_SPACE_AND(GROUP): {  // (xxx): -- generic retrigger set
         Unchain(CURRENT);
         L_next_gotten = nullptr;  // arbitrary code changes fetched vars
         Level* sub = Make_Level_At_Inherit_Const(
@@ -999,17 +1008,17 @@ Bounce Meta_Stepper_Executor(Level* L)
         STATE = ST_STEPPER_SET_GROUP;
         return CONTINUE_SUBLEVEL(sub); }
 
-      case LEADING_BLANK_AND(WORD):  // :FOO, refinement, error on eval?
+      case LEADING_SPACE_AND(WORD):  // :FOO, refinement, error on eval?
         Unchain(CURRENT);
         STATE = ST_STEPPER_GET_WORD;
         goto handle_get_word;
 
-      case LEADING_BLANK_AND(TUPLE):  // :a.b.c -- what will this do?
+      case LEADING_SPACE_AND(TUPLE):  // :a.b.c -- what will this do?
         Unchain(CURRENT);
         STATE = ST_STEPPER_GET_TUPLE;
         goto handle_get_tuple;
 
-      case LEADING_BLANK_AND(BLOCK):  // !!! :[a b] reduces, not great...
+      case LEADING_SPACE_AND(BLOCK):  // !!! :[a b] reduces, not great...
         Unchain(CURRENT);
         Derelativize(SPARE, CURRENT, L_binding);
         if (rebRunThrows(
@@ -1020,7 +1029,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         }
         goto lookahead;
 
-      case LEADING_BLANK_AND(GROUP):
+      case LEADING_SPACE_AND(GROUP):
         Unchain(CURRENT);
         return PANIC("GET-GROUP! has no evaluator meaning at this time");
 
@@ -1145,7 +1154,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     // fetching nothing is what you actually intended.
 
     Copy_Sequence_At(SPARE, CURRENT, 0);
-    bool blank_at_head = Is_Blank(SPARE);
+    bool blank_at_head = Is_Space(stable_SPARE);
     if (
         not blank_at_head  // `.a` means pick member from "self"
         and Any_Inert(SPARE)  // `1.2.3` is inert
@@ -1203,7 +1212,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     if (not single) {
         Copy_Sequence_At(SPARE, CURRENT, 0);
         if (Any_Inert(SPARE)) {
-            if (Is_Blank(SPARE))
+            if (Is_Space(stable_SPARE))
                 slash_at_head = true;
             else {
                 Derelativize(OUT, CURRENT, L_binding);  // inert [2]
@@ -1215,24 +1224,24 @@ Bounce Meta_Stepper_Executor(Level* L)
 
         Length len = Cell_Sequence_Len(CURRENT);
         Copy_Sequence_At(SPARE, CURRENT, len - 1);
-        slash_at_tail = Is_Blank(SPARE);
+        slash_at_tail = Is_Space(stable_SPARE);
     }
     else switch (unwrap single) {
-      case LEADING_BLANK_AND(WORD):
+      case LEADING_SPACE_AND(WORD):
         Unpath(CURRENT);
         Set_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD);
         goto word_common;
 
-      case LEADING_BLANK_AND(CHAIN): {  // /abc: or /?:?:?
+      case LEADING_SPACE_AND(CHAIN): {  // /abc: or /?:?:?
         Unpath(CURRENT);
 
         switch (Try_Get_Sequence_Singleheart(CURRENT)) {
-          case TRAILING_BLANK_AND(WORD):  // /abc: is set actions only
+          case TRAILING_SPACE_AND(WORD):  // /abc: is set actions only
             Unchain(CURRENT);
             Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
             goto handle_generic_set;
 
-          case TRAILING_BLANK_AND(TUPLE):  // /a.b.c: is set actions only
+          case TRAILING_SPACE_AND(TUPLE):  // /a.b.c: is set actions only
             Unchain(CURRENT);
             Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
             goto handle_generic_set;
@@ -1243,8 +1252,8 @@ Bounce Meta_Stepper_Executor(Level* L)
         break; }
 
       default:
-        slash_at_tail = Singleheart_Has_Trailing_Blank(unwrap single);
-        slash_at_head = Singleheart_Has_Leading_Blank(unwrap single);
+        slash_at_tail = Singleheart_Has_Trailing_Space(unwrap single);
+        slash_at_head = Singleheart_Has_Leading_Space(unwrap single);
         assert(slash_at_head == not slash_at_tail);
         break;
     }
@@ -1567,10 +1576,10 @@ for (; check != tail; ++check) {  // push variables
     Option(SingleHeart) single;
     if (
         not (single = Try_Get_Sequence_Singleheart(CURRENT))
-        or not Singleheart_Has_Leading_Blank(unwrap single)
+        or not Singleheart_Has_Leading_Space(unwrap single)
     ){
         return PANIC(
-            "Only leading blank CHAIN! in SET BLOCK! dialect"
+            "Only leading SPACE CHAIN! in SET BLOCK! dialect"
         );
     }
     Unchain(CURRENT);
@@ -1622,7 +1631,7 @@ for (; check != tail; ++check) {  // push variables
     if (Is_Word(TOP) or Is_Tuple(TOP))
         continue;
 
-    if (Is_Blank(TOP))
+    if (Is_Space(TOP))
         continue;
 
     return PANIC(
@@ -1727,7 +1736,7 @@ for (; check != tail; ++check) {  // push variables
 
     Meta_Unquotify_Undecayed(SPARE);
 
-    if (Is_Blank(var))
+    if (Is_Space(var))
         goto circled_check;
 
     if (Is_Error(SPARE))  // don't pass thru errors if not @
@@ -1817,7 +1826,6 @@ for (; check != tail; ++check) {  // push variables
   case TYPE_MODULE:
   case TYPE_WARNING:
   case TYPE_PORT:
-  case TYPE_BLANK:
   case TYPE_INTEGER:
   case TYPE_DECIMAL:
   case TYPE_PERCENT:

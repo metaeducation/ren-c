@@ -424,7 +424,7 @@ DECLARE_NATIVE(SPREAD)
 //    ~[]~ or a ~null~ here instead of erroring helps more than it hurts.
 //    Should it turn out to be bad for some reason, this might be dropped.
 //
-// 3. BLANK! is considered EMPTY? and hence legal to use with spread.  It
+// 3. HOLE? is considered EMPTY? and hence legal to use with spread.  It
 //    could return an empty splice...but that would then wind up having to
 //    make a decision on using a "cheap" shared read-only array, or making
 //    a new empty array to use.  Different usage situations would warrant

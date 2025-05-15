@@ -346,7 +346,7 @@ bool Reframer_Details_Querier(
 //
 //  Alloc_Action_From_Exemplar: C
 //
-// Leaves details blank, and lets you specify the dispatcher.
+// Leaves details uninitialized, and lets you specify the dispatcher.
 //
 Details* Alloc_Action_From_Exemplar(
     ParamList* paramlist,

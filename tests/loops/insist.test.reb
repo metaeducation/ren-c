@@ -51,7 +51,7 @@
 )(
     x: [1 "hi" <foo> _ <bar> "baz" 2]
     all [
-        blank? until:predicate [take x] z -> [blank? z]
+        space? until:predicate [take x] z -> [space? z]
         x = [<bar> "baz" 2]
     ]
 )

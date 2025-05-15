@@ -219,7 +219,7 @@
 ;
 ([1 2 3] = collect [for-each 'x [1 2 3] [keep x]])
 
-; BLANK! is legal for slots you want to opt out of
+; SPACE is legal for slots you want to opt out of
 (
     sum: 0
     for _ each [a b c] [sum: sum + 1]
@@ -236,10 +236,10 @@
 ~???~ !! (for-each [x y z] make object! [key: <value>] [])
 
 
-; BLANK! acts same as empty block, void opts out and generates BREAK signal
+; HOLE acts same as empty block, void opts out and generates BREAK signal
 [
     (void? for-each 'x [] [panic])
-    (void? for-each 'x _ [panic])
+    (void? for-each 'x hole [panic])
     (null? for-each 'x void [panic])
 
     ~expect-arg~ !! (for-each 'x '~ [panic])

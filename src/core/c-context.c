@@ -71,7 +71,7 @@ SeaOfVars* Alloc_Sea_Core(Flags flags) {
 
     Stub* s = Prep_Stub(flags | FLEX_MASK_SEA, Alloc_Stub());
     Force_Erase_Cell(&s->content.fixed.cell);
-    Init_Blank(Stub_Cell(s));
+    Init_Space(Stub_Cell(s));
     Tweak_Link_Inherit_Bind(s, nullptr);
     s->misc.node = nullptr;  // adjunct
 

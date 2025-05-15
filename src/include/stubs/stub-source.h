@@ -66,7 +66,7 @@
 // they don't need the USED_BYTE() because they can use a poisoned cell to
 // tell the difference between the only two possible used lengths: 1 and 0.
 //
-// This is taken advantage of by when sequences hold only a list (and a blank),
+// This is taken advantage of by when sequences hold only a list (and a space),
 // to put the list type into the array, so the array itself can be the payload
 // of the sequence.  The heart of the cell is the sequence heart (TYPE_CHAIN,
 // TYPE_PATH, TYPE_TUPLE...) but then the implied heart of the contained list

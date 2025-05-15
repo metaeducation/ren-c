@@ -127,7 +127,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Vacant(
     bool dot_at_head;  // dot at head means look in coupled context
     DECLARE_ELEMENT (detect);
     Copy_Sequence_At(detect, tuple, 0);
-    if (Is_Blank(detect))
+    if (Is_Space(detect))
         dot_at_head = true;
     else
         dot_at_head = false;
@@ -251,7 +251,7 @@ Option(Error*) Trap_Get_Tuple(
     if (error)
         return error;
 
-    if (Any_Vacancy(out))
+    if (Is_Trash(out))
         return Error_Bad_Word_Get(tuple, out);
 
     return SUCCESS;
@@ -383,7 +383,7 @@ Option(Error*) Trap_Get_Var(
     if (error)
         return error;
 
-    if (Any_Vacancy(out))
+    if (Is_Trash(out))
         return Error_Bad_Word_Get(var, out);
 
     return SUCCESS;
@@ -410,7 +410,7 @@ Value* Get_Var_May_Panic(
     if (error)
         panic (unwrap error);
 
-    assert(not Any_Vacancy(out));  // shouldn't have returned it
+    assert(not Is_Trash(out));  // shouldn't have returned it
     return out;
 }
 
@@ -471,7 +471,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
     const Value* at = tail - 1;
 
     for (; at != head - 1; --at) {
-        assert(not Is_Blank(at));  // no internal blanks
+        assert(not Is_Space(at));  // no internal blanks
 
         const Value* item = at;
         if (Is_Group(at)) {
@@ -553,9 +553,9 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 
     Context* derived = Derive_Binding(context, path);
 
-    if (Is_Blank(at)) {  // leading slash means execute (but we're GET-ing)
+    if (Is_Space(at)) {  // leading slash means execute (but we're GET-ing)
         ++at;
-        assert(not Is_Blank(at));  // two blanks would be `/` as WORD!
+        assert(not Is_Space(at));  // two blanks would be `/` as WORD!
     }
 
     if (Is_Group(at)) {
@@ -576,7 +576,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
             panic (unwrap error);  // must be abrupt
     }
     else if (Is_Chain(at)) {
-        if ((at + 1 != tail) and not Is_Blank(at + 1))
+        if ((at + 1 != tail) and not Is_Space(at + 1))
             panic ("CHAIN! can only be last item in a path right now");
         Option(Error*) error = Trap_Get_Chain_Push_Refinements(
             out,
@@ -593,10 +593,10 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 
     ++at;
 
-    if (at == tail or Is_Blank(at))
+    if (at == tail or Is_Space(at))
         goto ensure_out_is_action;
 
-    if (at + 1 != tail and not Is_Blank(at + 1))
+    if (at + 1 != tail and not Is_Space(at + 1))
         panic ("PATH! can only be two items max at this time");
 
     // When we see `lib/append` for instance, we want to pick APPEND out of
@@ -656,7 +656,7 @@ Option(Error*) Trap_Get_Any_Word(
     if (error)
         return error;
 
-    if (Any_Vacancy(out))
+    if (Is_Trash(out))
         return Error_Bad_Word_Get(word, out);
 
     return SUCCESS;
@@ -667,7 +667,7 @@ Option(Error*) Trap_Get_Any_Word(
 //  Trap_Get_Any_Word_Maybe_Vacant: C
 //
 // High-level: see notes on Trap_Get_Any_Word().  This version just gives back
-// "trash" (antiform blank) or "tripwire" (antiform tag) vs. give an error.
+// TRASH! vs. give an error.
 //
 Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
     Sink(Value) out,
@@ -826,7 +826,7 @@ DECLARE_NATIVE(GET)
         return FAIL(unwrap error);
 
     if (not Bool_ARG(ANY))
-        if (Any_Vacancy(stable_OUT))
+        if (Is_Trash(stable_OUT))
             return FAIL(Error_Bad_Word_Get(source, stable_OUT));
 
     if (steps and steps != GROUPS_OK) {
@@ -947,7 +947,7 @@ bool Set_Var_Core_Updater_Throws(
         }
         else switch (Stub_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
-            if (Get_Cell_Flag(var, LEADING_BLANK)) {  // `/a` or `.a`
+            if (Get_Cell_Flag(var, LEADING_SPACE)) {  // `/a` or `.a`
                 if (Heart_Of(var) == TYPE_TUPLE)
                     context = Adjust_Context_For_Coupling(context);
                 goto set_target;

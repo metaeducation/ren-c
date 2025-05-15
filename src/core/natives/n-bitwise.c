@@ -62,7 +62,7 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
     if (Is_Logic(arg))
         return Cell_Logic(arg);
 
-    if (Is_Blank(arg))
+    if (Is_Space(arg))
         return false;
 
     panic (Error_Unexpected_Type(TYPE_INTEGER, Datatype_Of(arg)));

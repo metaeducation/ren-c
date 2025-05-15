@@ -445,7 +445,7 @@ void Poke_Time_Immediate(
     REBINT n;
     if (Is_Integer(poke) || Is_Decimal(poke))
         n = Int32s(poke, 0);
-    else if (Is_Blank(poke))
+    else if (Is_Space(poke))
         n = 0;
     else
         panic (poke);

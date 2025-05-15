@@ -673,6 +673,11 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
           default:
             break;
         }
+        if (Is_Space(test)) {
+            if (Is_Stable(SPARE) and Is_Space(stable_SPARE))
+                goto test_succeeded;
+            goto test_failed;
+        }
         panic ("Invalid element in TYPE-GROUP!");
 
       test_succeeded:
@@ -740,7 +745,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
     assert(atom != SCRATCH and atom != SPARE);
     if (not is_return)
-        assert(not Is_Trash(atom));  // antiform blank must be ^META as argument
+        assert(not Is_Trash(atom));  // antiform space must be ^META as argument
 
     if (Get_Parameter_Flag(param, OPT_OUT))
         assert(not Is_Void(atom));  // should have bypassed this check
@@ -808,6 +813,10 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
         }
         goto return_true;  // other parameters
     }
+
+    if (Get_Parameter_Flag(param, SPACE_DEFINITELY_OK))
+        if (Is_Stable(atom) and Is_Space(u_cast(Value*, atom)))
+            goto return_true;
 
   blockscope {
     const Array* spec = maybe Cell_Parameter_Spec(param);

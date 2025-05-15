@@ -17,9 +17,10 @@
 (null = match [even?] 3)
 
 
-(_ = match blank! _)
-(null = match blank! 10)
-(null = match blank! 'false)
+(_ = match [space?] _)
+(_ = match [_] _)
+(null = match [_] 10)
+(null = match [_] 'false)
 
 
 [
@@ -31,7 +32,6 @@
     ~???~ !! (match [void?] void)
     (null = match:meta [void?] void)  ; acts as void-in-null-out ATM.
 
-    ('_ = match blank! blank)
     ('true = match [boolean?] 'true)
     ('false = match [boolean?] 'false)
 

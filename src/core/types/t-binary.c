@@ -567,9 +567,6 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
         return Copy_Blob_Part_At_May_Modify_Index(OUT, v, part);
     }
 
-    if (to == TYPE_BLANK)
-        return GENERIC_CFUNC(AS, Is_Blob)(LEVEL);
-
     return UNHANDLED;
 }
 
@@ -687,16 +684,6 @@ Option(Error*) Trap_Alias_Blob_As(
         Init_Any_String_At(any_string, TYPE_TEXT, str, index);
 
         return Trap_Any_String_As(out, any_string, as);
-    }
-
-    if (as == TYPE_BLANK) {
-        Size size;
-        Cell_Bytes_At(&size, blob);
-        if (size == 0) {
-            Init_Blank(out);
-            return SUCCESS;
-        }
-        return Error_User("Can only AS/TO convert empty series to BLANK!");
     }
 
     return Error_Invalid_Type(as);

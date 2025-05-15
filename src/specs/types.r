@@ -48,11 +48,6 @@ Rebol [
 ]
 
 
-blank       "placeholder unit type"
-~trash~     "state held by unset variables, can't be passed as normal argument"
-            (CELL_MASK_NO_NODES)
-            [any-unit? any-inert?]  ; allow as `branch`?
-
 integer     "64 bit integer"
             (CELL_MASK_NO_NODES)  ; would change with bignum ints
             [any-number? any-scalar? any-inert? any-sequencable?]
@@ -127,6 +122,7 @@ email       "email address"
             [any-utf8? any-inert?]
 
 issue       "immutable codepoint or codepoint sequence"
+~trash~     "state held by unset variables, can't be passed as normal argument"
             (:node1)  ; may or may not embed data in issue vs. use node
             [any-utf8? any-inert? any-sequencable?]
 
@@ -266,6 +262,6 @@ varargs     "evaluator position for variable numbers of arguments"
 ; (Just one example: ANY-VALUE? is currently defined in such a way that it
 ; tolerates the state of an unset variable, since it's supposed to model
 ; anything that can be stored in a variable (the `Value` typedef can hold
-; antiform blank).  But since the ANY-VALUE? function must thus take its
+; antiform space).  But since the ANY-VALUE? function must thus take its
 ; argument as ^META to receive the state, we don't automatically produce the
 ; ANY-VALUE? function by means of this table, it has to be a native.)

@@ -134,7 +134,7 @@ backtrace*: func [
     ]
 
     let max-rows: case [
-        blank? limit [
+        space? limit [
             20  ; Default 20, leaves room to type on 80x25 terminal
         ]
         limit = false [

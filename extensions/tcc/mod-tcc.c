@@ -87,7 +87,7 @@ enum {
     IDX_TCC_NATIVE_CONTEXT = 1,
     IDX_TCC_NATIVE_LINKNAME,  // auto-generated if unspecified
     IDX_TCC_NATIVE_SOURCE,  // textual source code
-    IDX_TCC_NATIVE_STATE,  // will be a BLANK! until COMPILE happens
+    IDX_TCC_NATIVE_STATE,  // will be a SPACE until COMPILE happens
     MAX_IDX_TCC_NATIVE = IDX_TCC_NATIVE_STATE
 };
 
@@ -274,7 +274,7 @@ static bool Pending_Native_Details_Querier(
 
       case SYM_BODY_OF: {
         assert(!"Body of not supported by Pending Native yet");
-        Init_Blank(out);
+        Init_Space(out);
         return true; }
 
       default:
@@ -366,7 +366,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
         rebRelease(linkname);
     }
 
-    Init_Blank(Details_At(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet
+    Init_Space(Details_At(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet
 
     assert(Misc_Phase_Adjunct(details) == nullptr);
     Tweak_Misc_Phase_Adjunct(details, adjunct);

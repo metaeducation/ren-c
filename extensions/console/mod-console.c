@@ -228,9 +228,6 @@ DECLARE_NATIVE(CONSOLE)
 // little bit of injected information like telling you the current stack
 // level it's focused on.  How that's going to work is still pretty up
 // in the air.
-//
-// What it will return will be either an exit code (INTEGER!), a signal for
-// cancellation (BLANK!), or a debugging instruction (BLOCK!).
 {
     INCLUDE_PARAMS_OF_CONSOLE;
 

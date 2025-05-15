@@ -182,7 +182,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         if (Is_Frame(original_frame))
             goto resume_body_if_not_reentrant;
 
-        if (Is_Blank(original_frame))
+        if (Is_Space(original_frame))
             goto invoke_completed_yielder;
 
         assert(Is_Quasar(original_frame));
@@ -382,7 +382,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Frame(original_frame));
 
     if (not Is_Throwing(L)) {
-        Init_Blank(original_frame);  // body reached end, signal completed [3]
+        Init_Space(original_frame);  // body reached end, signal completed [3]
         goto invoke_completed_yielder;
     }
 
@@ -399,11 +399,11 @@ Bounce Yielder_Dispatcher(Level* const L)
     ){
         CATCH_THROWN(OUT, L);
         if (not Is_Meta_Of_Error(OUT)) {  // THROW:FINAL value
-            Init_Blank(original_frame);
+            Init_Space(original_frame);
             return Meta_Unquotify_Undecayed(OUT);  // done, this is last value
         }
         if (Is_Error_Done_Signal(Cell_Error(OUT))) {
-            Init_Blank(original_frame);
+            Init_Space(original_frame);
             goto invoke_completed_yielder;
         }
         Init_Quasar(original_frame);
@@ -411,7 +411,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         return THROWN;
     }
 
-    Init_Blank(original_frame);  // THROW counts as completion [1]
+    Init_Space(original_frame);  // THROW counts as completion [1]
     return THROWN;
 
 } invoke_completed_yielder: {  ///////////////////////////////////////////////
@@ -420,7 +420,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // error antiform pushes it out of band from all other return states,
     // because other error antiforms passed to YIELD are elevated to a panic.
 
-    assert(Is_Blank(original_frame));
+    assert(Is_Space(original_frame));
 
     Copy_Cell(OUT, g_error_done);
     return Failify(OUT);

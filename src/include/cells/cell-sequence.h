@@ -49,12 +49,12 @@
 //     a.b.c/d.e.f    ; a 2-element PATH! containing 3-element TUPLEs
 //     a/b/c.d/e/f    ; a 5-element PATH! with 2-element TUPLE! in the middle
 //
-// It is also legal to put BLANK! in slots at the head or tail.  They render
+// It is also legal to put SPACE in slots at the head or tail.  They render
 // invisibly, allowing you to begin or terminate sequences with the delimiter:
 //
-//     .foo.bar     ; a 3-element TUPLE! with BLANK! in the first slot
-//     1/2/3/       ; a 4-element PATH! with BLANK! in the last slot
-//     /a           ; a 2-element PATH! with BLANK! in the first slot
+//     .foo.bar     ; a 3-element TUPLE! with SPACE in the first slot
+//     1/2/3/       ; a 4-element PATH! with SPACE in the last slot
+//     /a           ; a 2-element PATH! with SPACE in the first slot
 //
 // Internal blanks are not allowed.  Because although there might be some
 // theoretical use for `a//b` or similar sequences, those aren't as compelling
@@ -94,7 +94,7 @@
 //   - Pair compression has the first node with NODE_FLAG_CELL
 //
 //   - Single WORD! forms have the first node as FLAVOR_SYMBOL
-//        If CELL_FLAG_LEADING_BLANK it is either a `/foo` or `.foo` case
+//        If CELL_FLAG_LEADING_SPACE it is either a `/foo` or `.foo` case
 //        Without the flag, it is either a `foo/` or `foo.` case
 //
 //   - Uncompressed forms have the first node as FLAVOR_SOURCE
@@ -137,12 +137,12 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
         goto bad_sequence_item;
     }
 
-    if (h == TYPE_BLANK) {
-        if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform blank (quasar)
+    if (h == TYPE_ISSUE) {
+        if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform space (quasar)
             return SUCCESS;  // Legal, e.g. `~/home/Projects/ren-c/README.md`
 
-        assert(not is_head); // callers should check blank at head or tail
-        return Error_Bad_Sequence_Blank_Raw();  // blank only legal at head
+        assert(not is_head); // callers should check space at head or tail
+        return Error_Bad_Sequence_Space_Raw();  // space only legal at head
     }
 
     if (not Any_Sequencable_Type(h))
@@ -178,14 +178,14 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
     Trap_Init_Any_Sequence_At_Listlike((out), (heart), (a), 0)
 
 
-//=//// Leading-BLANK! SEQUENCE OPTIMIZATION //////////////////////////////=//
+//=//// Leading-SPACE SEQUENCE OPTIMIZATION ///////////////////////////////=//
 //
-// Ren-C has no REFINEMENT! datatype, so `/foo` is a PATH!, which generalizes
-// to where `/foo/bar` is a PATH! as well, etc.
+// Ren-C has no REFINEMENT! datatype, so `:foo` is a CHAIN!, which generalizes
+// to where `:foo:bar` is a CHAIN! as well.
 //
 // In order to make this not cost more than a "REFINEMENT!" word type did in
-// R3-Alpha, the underlying representation of `/foo` in the cell is the same
-// as an ANY-WORD?
+// R3-Alpha, the underlying representation of `:foo` in the cell is the same
+// as a WORD!.  This is true for `/foo` and `foo/` and `.foo` and `foo.` too.
 //
 // 1. !!! Temporarily raise attention to usage like `.5` or `5.` to guide
 //    people that these are contentious with tuples.  There is no other way
@@ -198,19 +198,19 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     Heart heart,
     Flags flag
 ){
-    assert(flag == CELL_MASK_ERASED_0 or flag == CELL_FLAG_LEADING_BLANK);
+    assert(flag == CELL_MASK_ERASED_0 or flag == CELL_FLAG_LEADING_SPACE);
     assert(Any_Sequence_Type(heart));
 
     Option(Error*) error = Trap_Check_Sequence_Element(
         heart,
         e,
-        flag == CELL_MASK_ERASED_0  // 0 means no leading blank, item is "head"
+        flag == CELL_MASK_ERASED_0  // 0 means no leading space, item is "head"
     );
     if (error)
         return error;
 
     if (Is_Word(e)) {  // see notes at top of file on `/a` cell optimization
-        e->header.bits &= (~ CELL_FLAG_LEADING_BLANK);
+        e->header.bits &= (~ CELL_FLAG_LEADING_SPACE);
         e->header.bits |= flag;
         HEART_BYTE(e) = heart;  // e.g. TYPE_WORD => TYPE_PATH
         return SUCCESS;
@@ -239,13 +239,13 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     }
 
     Pairing* p = Alloc_Pairing(NODE_FLAG_MANAGED);
-    if (flag == CELL_FLAG_LEADING_BLANK) {
-        Init_Blank(Pairing_First(p));
+    if (flag == CELL_FLAG_LEADING_SPACE) {
+        Init_Space(Pairing_First(p));
         Copy_Cell(Pairing_Second(p), e);
     }
     else {
         Copy_Cell(Pairing_First(p), e);
-        Init_Blank(Pairing_Second(p));
+        Init_Space(Pairing_Second(p));
     }
 
     Reset_Cell_Header_Noquote(
@@ -362,7 +362,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
 
     if (
         (Is_Quasar(first) and Is_Quasar(second))  // ~/~ is a WORD!
-        or (Is_Blank(first) and Is_Blank(second))  // plain / is a WORD!
+        or (Is_Space(first) and Is_Space(second))  // plain / is a WORD!
     ){
         if (heart == TYPE_PATH)
             Init_Word(out, CANON(SLASH_1));
@@ -375,13 +375,13 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         return SUCCESS;
     }
 
-    if (Is_Blank(first)) {  // try optimize e.g. `/a` or `.a` or `:a` etc.
+    if (Is_Space(first)) {  // try optimize e.g. `/a` or `.a` or `:a` etc.
         Copy_Cell(out, second);
         return Trap_Blank_Head_Or_Tail_Sequencify(
-            out, heart, CELL_FLAG_LEADING_BLANK
+            out, heart, CELL_FLAG_LEADING_SPACE
         );
     }
-    else if (Is_Blank(second)) {
+    else if (Is_Space(second)) {
         Copy_Cell(out, first);
         return Trap_Blank_Head_Or_Tail_Sequencify(  // optimize `a/` or `a:`
             out, heart, CELL_MASK_ERASED_0
@@ -526,7 +526,7 @@ INLINE Option(Error*) Trap_Pop_Sequence(
 //     >> compose $(void)/a
 //     == a
 //
-//     >> compose $(blank)/a
+//     >> compose $(space)/a
 //     == /a
 //
 //     >> compose @ (void)/(void)/(void)
@@ -550,7 +550,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
     if (TOP_INDEX - 1 == base) {  // only one item, use as-is if possible
         Move_Drop_Top_Stack_Element(out);  // balances stack, ensures element
 
-        if (not Is_Blank(out)) {  // allow _.(void) to be _ if COMPOSE'd
+        if (not Is_Space(out)) {  // allow _.(void) to be _ if COMPOSE'd
             Option(Error*) error = Trap_Check_Sequence_Element(
                 sequence_heart,
                 cast(Element*, out),
@@ -645,8 +645,8 @@ INLINE Element* Derelativize_Sequence_At(
     switch (Stub_Flavor(x_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
-        if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
-            return Init_Blank(out);
+        if (Get_Cell_Flag(sequence, LEADING_SPACE) ? n == 0 : n != 0)
+            return Init_Space(out);
 
         Derelativize(out, sequence, context);  // [2]
         HEART_BYTE(out) = TYPE_WORD;
@@ -657,8 +657,8 @@ INLINE Element* Derelativize_Sequence_At(
         const Source* a = c_cast(Source*, CELL_SERIESLIKE_NODE(sequence));
         if (Mirror_Of(a)) {  // [4]
             assert(n < 2);
-            if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
-                return Init_Blank(out);
+            if (Get_Cell_Flag(sequence, LEADING_SPACE) ? n == 0 : n != 0)
+                return Init_Space(out);
 
             Derelativize(out, sequence, context);
             HEART_BYTE(out) = MIRROR_BYTE(a);
@@ -782,7 +782,7 @@ INLINE Element* Init_Set_Word(Init(Element) out, const Symbol* s) {
 INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);
     HEART_BYTE(out) = TYPE_CHAIN;
-    Set_Cell_Flag(out, LEADING_BLANK);
+    Set_Cell_Flag(out, LEADING_SPACE);
     return out;
 }
 
@@ -796,31 +796,31 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
     if (Is_Node_A_Cell(CELL_SERIESLIKE_NODE(c))) {
         const Pairing* p = u_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(c));
 
-        if (Is_Blank(Pairing_First(p)))
-            return Leading_Blank_And(Heart_Of_Builtin(Pairing_Second(p)));
+        if (Is_Space(Pairing_First(p)))
+            return Leading_Space_And(Heart_Of_Builtin(Pairing_Second(p)));
 
-        if (Is_Blank(Pairing_Second(p)))
-            return Trailing_Blank_And(Heart_Of_Builtin(Pairing_First(p)));
+        if (Is_Space(Pairing_Second(p)))
+            return Trailing_Space_And(Heart_Of_Builtin(Pairing_First(p)));
 
         return NOT_SINGLEHEART_0;
     }
 
     const Flex* f = cast(Flex*, CELL_NODE1(c));
     if (Stub_Flavor(f) == FLAVOR_SYMBOL) {
-        if (c->header.bits & CELL_FLAG_LEADING_BLANK)
-            return Leading_Blank_And(TYPE_WORD);
+        if (c->header.bits & CELL_FLAG_LEADING_SPACE)
+            return Leading_Space_And(TYPE_WORD);
 
-        return Trailing_Blank_And(TYPE_WORD);
+        return Trailing_Space_And(TYPE_WORD);
     }
 
     Option(Heart) mirror = Mirror_Of(u_cast(const Source*, f));
     if (not mirror)  // s actually is sequence elements, not one element
         return NOT_SINGLEHEART_0;
 
-    if (c->header.bits & CELL_FLAG_LEADING_BLANK)
-        return Leading_Blank_And(unwrap mirror);
+    if (c->header.bits & CELL_FLAG_LEADING_SPACE)
+        return Leading_Space_And(unwrap mirror);
 
-    return Trailing_Blank_And(unwrap mirror);
+    return Trailing_Space_And(unwrap mirror);
 }
 
 
@@ -829,7 +829,7 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
 INLINE bool Is_Get_Word_Cell(const Cell* c) {
     return (
         Heart_Of(c) == TYPE_CHAIN and
-        LEADING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(c)
+        LEADING_SPACE_AND(WORD) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -839,7 +839,7 @@ INLINE bool Is_Get_Word(const Value* v)
 INLINE bool Is_Set_Word_Cell(const Cell* c) {
     return (
         Heart_Of(c) == TYPE_CHAIN and
-        TRAILING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(c)
+        TRAILING_SPACE_AND(WORD) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -865,14 +865,14 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
     }
     if (Heart_Of(e) != TYPE_PATH)
         return nullptr;
-    if (LEADING_BLANK_AND(CHAIN) != Try_Get_Sequence_Singleheart(e))
+    if (LEADING_SPACE_AND(CHAIN) != Try_Get_Sequence_Singleheart(e))
         return nullptr;  // e is not /?:?:? style path
 
     DECLARE_ELEMENT (temp);  // !!! should be able to optimize and not need this
     Derelativize_Sequence_At(temp, e, Cell_Sequence_Binding(e), 1);
     assert(Is_Chain(temp));
 
-    if (TRAILING_BLANK_AND(WORD) != Try_Get_Sequence_Singleheart(temp))
+    if (TRAILING_SPACE_AND(WORD) != Try_Get_Sequence_Singleheart(temp))
         return nullptr;  // e is not /foo: style path
 
     if (bound)
@@ -886,7 +886,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
 INLINE bool Is_Get_Tuple_Cell(const Cell* c) {
     return (
         Heart_Of(c) == TYPE_CHAIN and
-        LEADING_BLANK_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
+        LEADING_SPACE_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -896,7 +896,7 @@ INLINE bool Is_Get_Tuple(const Value* v)
 INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
     return (
         Heart_Of(c) == TYPE_CHAIN and
-        TRAILING_BLANK_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
+        TRAILING_SPACE_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -909,7 +909,7 @@ INLINE bool Is_Set_Tuple(const Value* v)
 INLINE bool Is_Get_Block_Cell(const Cell* c) {
     return (
         Heart_Of(c) == TYPE_CHAIN and
-        LEADING_BLANK_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
+        LEADING_SPACE_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -919,7 +919,7 @@ INLINE bool Is_Get_Block(const Value* v)
 INLINE bool Is_Set_Block_Cell(const Cell* c) {
     return (
         Heart_Of(c) == TYPE_CHAIN and
-        TRAILING_BLANK_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
+        TRAILING_SPACE_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -932,7 +932,7 @@ INLINE bool Is_Set_Block(const Value* v)
 INLINE bool Is_Get_Group_Cell(const Cell* c) {
     return (
         Heart_Of(c) == TYPE_CHAIN and
-        LEADING_BLANK_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
+        LEADING_SPACE_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -942,7 +942,7 @@ INLINE bool Is_Get_Group(const Value* v)
 INLINE bool Is_Set_Group_Cell(const Cell* c) {
     return (
         Heart_Of(c) == TYPE_CHAIN and
-        TRAILING_BLANK_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
+        TRAILING_SPACE_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -956,7 +956,7 @@ INLINE bool Any_Set_Value(const Value* v) {  // !!! optimize?
         QUOTE_BYTE(v) == NOQUOTE_1
         and Heart_Of(v) == TYPE_CHAIN
         and (single = Try_Get_Sequence_Singleheart(v))
-        and Singleheart_Has_Trailing_Blank(unwrap single)
+        and Singleheart_Has_Trailing_Space(unwrap single)
     );
 }
 
@@ -966,13 +966,13 @@ INLINE bool Any_Get_Value(const Value* v) {  // !!! optimize?
         QUOTE_BYTE(v) == NOQUOTE_1
         and Heart_Of(v) == TYPE_CHAIN
         and (single = Try_Get_Sequence_Singleheart(v))
-        and Singleheart_Has_Leading_Blank(unwrap single)
+        and Singleheart_Has_Leading_Space(unwrap single)
     );
 }
 
 INLINE Element* Refinify(Element* e) {
     Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        e, TYPE_CHAIN, CELL_FLAG_LEADING_BLANK
+        e, TYPE_CHAIN, CELL_FLAG_LEADING_SPACE
     );
     if (error)
         panic (unwrap error);

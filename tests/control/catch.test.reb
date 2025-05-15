@@ -36,11 +36,11 @@
     (a: 1 catch [a: warning? throw 2] a = 1)
 ]
 [#1535
-    (blank = catch [words of throw blank])
+    (space = catch [words of throw space])
 ]
-(blank = catch [values of throw blank])
+(space = catch [values of throw space])
 [#1945
-    (blank = catch [spec of throw blank])
+    (space = catch [spec of throw space])
 ]
 ; throw should not be caught by TRAP
 (a: 1 catch [a: warning? trap [throw 2]] a = 1)

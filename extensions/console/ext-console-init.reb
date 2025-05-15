@@ -170,7 +170,7 @@ export console!: make object! [
             v: first v  ; items in pack are ^META'd
         ]
 
-        === PRINT NO OUTPUT FOR "TRASH" (antiform blank) ===
+        === PRINT NO OUTPUT FOR "TRASH" (antiform SPACE [_]) ===
 
         ; By default, we've decided that some value needs to not display in
         ; the console, to suppress output from things like HELP or PRINT,
@@ -181,7 +181,7 @@ export console!: make object! [
         ;
         ; Whatever doesn't display will be a "lie" in some sense.  The two
         ; competing lies are VOID (a.k.a. empty block antiform, result of
-        ; things like `eval []`) and TRASH (a.k.a. the antiform of blank,
+        ; things like `eval []`) and TRASH (a.k.a. the antiform of SPACE,
         ; contents of an unset variable).  The decision has flipped many times,
         ; but trash wins.
         ;
@@ -367,7 +367,7 @@ bind construct [
 
     let skin-file: case [
         file? skin [skin]
-        object? skin [blank]
+        object? skin [null]
     ] else [%console-skin.reb]
 
     loud-print "Starting console..."

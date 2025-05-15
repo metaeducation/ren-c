@@ -338,7 +338,7 @@
 )
 (
     success: null
-    blank = any [blank success: okay]
+    space = any [space success: okay]
 )
 ; RETURN stops evaluation
 (
@@ -410,7 +410,7 @@
     (void? any @[])
     (1 = any @[1 + 2])
     ('~null~ = any @[~null~ _])
-    ('null = any pin reduce ['null blank])
+    ('null = any pin reduce ['null space])
     ('null = any @[null])  ; just the word, and words are truthy
 ]
 

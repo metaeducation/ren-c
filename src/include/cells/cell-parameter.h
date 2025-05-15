@@ -278,7 +278,17 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     FLAG_LEFT_BIT(20)
 
 
-#define PARAMETER_FLAG_21           FLAG_LEFT_BIT(21)
+//=//// PARAMETER_FLAG_SPACE_DEFINITELY_OK ////////////////////////////////=//
+//
+// We allow type specs to contain just [_] to signal space is ok.  It would
+// probably be better as an optimization case for the 1-255 range of test
+// (as many of these flags would be, if they're not multiplexed across all
+// possible optimizations)
+//
+#define PARAMETER_FLAG_SPACE_DEFINITELY_OK \
+    FLAG_LEFT_BIT(21)
+
+
 #define PARAMETER_FLAG_22           FLAG_LEFT_BIT(22)
 #define PARAMETER_FLAG_23           FLAG_LEFT_BIT(23)
 
@@ -473,21 +483,6 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
 
 INLINE bool Is_Parameter_Unconstrained(const Cell* param) {
     return Cell_Parameter_Spec(param) == nullptr;  // e.g. `[/refine]`
-}
-
-
-// There's no facility for making automatic typesets that include antiforms
-// in the %types.r table.  If there were, this would be defined there.
-//
-INLINE bool Any_Vacancy(Need(const Value*) a) {
-    if (Not_Antiform(a))
-        return false;
-
-    Option(Heart) heart = Heart_Of(a);
-    if (heart == TYPE_BLANK or heart == TYPE_TAG)
-        return true;
-
-    return false;
 }
 
 

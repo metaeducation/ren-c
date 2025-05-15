@@ -273,12 +273,12 @@
 ; COMPOSE is by default not willing to decay to other types than what's given.
 ; Can override with /CONFLATE
 [
-    ~conflated-sequence~ !! (compose $(blank)/(blank))
-    ~conflated-sequence~ !! (compose $(blank).(blank))
+    ~conflated-sequence~ !! (compose $(space)/(space))
+    ~conflated-sequence~ !! (compose $(space).(space))
     ~conflated-sequence~ !! (compose $(void).(void))
 
-    (the / = compose:conflate $(blank)/(blank))
-    (the . = compose:conflate $(blank).(blank))
+    (the / = compose:conflate $(space)/(space))
+    (the . = compose:conflate $(space).(space))
     (null? compose:conflate $(void).(void))
 
     (_ = compose:conflate $(void).(_))

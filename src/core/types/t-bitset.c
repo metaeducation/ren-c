@@ -191,10 +191,6 @@ REBINT Find_Max_Bit(const Value* val)
         //maxi++;
         break; }
 
-    case TYPE_BLANK:
-        maxi = 0;
-        break;
-
     default:
         return NOT_FOUND;
     }

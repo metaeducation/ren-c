@@ -377,17 +377,17 @@ typedef Byte QuoteByte;  // help document when Byte means a quoting byte
 // If independent, it's one bit that is custom to the datatype, and is
 // persisted when the cell is copied.
 //
-// CELL_FLAG_LEADING_BLANK (for ANY-SEQUENCE?)
+// CELL_FLAG_LEADING_SPACE (for ANY-SEQUENCE?)
 //
 // 2-element sequences can be stored in an optimized form if one of the two
-// elements is a BLANK!.  This permits things like `/a` and `b.` to fit in
+// elements is a SPACE.  This permits things like `/a` and `b.` to fit in
 // a single cell.  It assumes that if the node flavor is FLAVOR_SYMBOL then
 // the nonblank thing is a WORD!.
 //
 #define CELL_FLAG_TYPE_SPECIFIC_B \
     FLAG_LEFT_BIT(31)
 
-#define CELL_FLAG_LEADING_BLANK   CELL_FLAG_TYPE_SPECIFIC_B  // ANY-SEQUENCE?
+#define CELL_FLAG_LEADING_SPACE   CELL_FLAG_TYPE_SPECIFIC_B  // ANY-SEQUENCE?
 
 
 //=//// PLATFORM-POINTER-SIZED VARIANT UNION //////////////////////////////=//

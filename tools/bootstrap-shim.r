@@ -234,6 +234,18 @@ blob!: binary!
 blob?: binary?/
 
 
+=== "TRY TO UNIFY SPACE AND BLANK TESTING" ===
+
+; There's only one literal for (_) and (#" ") in modern Ren_C, so that might
+; confuse matters in bootstrap.  Try saying either is a space.
+
+space?: func3 [x] [
+    return (x = space) or (x = _)
+]
+
+blank?: ~<No BLANK? Anymore, Use SPACE?>~
+
+
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
 
 ; Even if you see you are using the COLLECT3 version of COLLECT, it's easy

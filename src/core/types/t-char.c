@@ -455,7 +455,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
     Length len;
     Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, v);
 
-    Append_Codepoint(mo->string, '#');
+    if (Is_Space(v)) {  // character molding exception, space is _
+        Append_Codepoint(mo->string, '_');
+        return TRASH;
+    }
 
     if (len == 0) {
         Append_Codepoint(mo->string, '"');
@@ -742,9 +745,6 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return rebValue(CANON(AS), ARG(TYPE), CANON(TRANSCODE), rebQ(v));
     }
 
-    if (to == TYPE_BLANK)
-        return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);
-
     return UNHANDLED;
 }
 
@@ -889,16 +889,6 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Copy_Cell(out, Known_Element(result));
         rebRelease(result);
         return SUCCESS;
-    }
-
-    if (as == TYPE_BLANK) {
-        Size size;
-        Cell_Utf8_Size_At(&size, v);
-        if (size == 0) {
-            Init_Blank(out);
-            return SUCCESS;
-        }
-        return Error_User("Can only AS/TO convert empty series to BLANK!");
     }
 
     return Error_Invalid_Type(as);

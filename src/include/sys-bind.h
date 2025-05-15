@@ -115,7 +115,7 @@ INLINE Element* Derelativize_Untracked(
         if (FLAVOR_SYMBOL == Stub_Flavor(stub1)) {  // x. or /x, wordlike
             if (
                 heart == TYPE_TUPLE
-                and Get_Cell_Flag(v, LEADING_BLANK)  // !!! HACK for .word form
+                and Get_Cell_Flag(v, LEADING_SPACE)  // !!! HACK for .word form
             ){
                 context = Adjust_Context_For_Coupling(context);
                 if (not context) {

@@ -89,7 +89,7 @@
 )
 ; natives are word-active
 (frame! = type of unrun :reduce)
-(:blank = blank)
+(:space = space)
 ; library test?
 (
     a-value: make object! []

@@ -25,7 +25,7 @@ zero: 0
 
 ; Char constants
 
-space:     #  ; more useful as space than as synonym for rarely-useful NUL
+space:     _  ; extremely popular single-character literal!
 sp: SP:    space
 backspace: #"^(BACK)"
 bs: BS:    backspace
@@ -42,7 +42,6 @@ lf: LF:    newline
 
 nul: NUL:  #{00}  ; ^(NULL) no longer legal internal to strings
 
-blank: _
 hole: ~()~
 quasar: '~
 

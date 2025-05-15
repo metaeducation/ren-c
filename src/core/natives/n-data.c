@@ -392,7 +392,7 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
 //
 //  refinement?: native:intrinsic [
 //
-//  "Test if an argument is a chain with a leading blank"
+//  "Test if an argument is a chain with a leading space"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -414,7 +414,7 @@ DECLARE_NATIVE(REFINEMENT_Q)
 //
 //  set-word?: native:intrinsic [
 //
-//  "Test if an argument is a chain with a word and trailing blank"
+//  "Test if an argument is a chain with a word and trailing space"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -477,14 +477,14 @@ DECLARE_NATIVE(RUN_WORD_Q)
         return LOGIC(false);
 
     Option(SingleHeart) single = Try_Get_Sequence_Singleheart(e);
-    return LOGIC(single == LEADING_BLANK_AND(WORD));
+    return LOGIC(single == LEADING_SPACE_AND(WORD));
 }
 
 
 //
 //  get-word?: native:intrinsic [
 //
-//  "Test if an argument is a chain with a leading blank and a word"
+//  "Test if an argument is a chain with a leading space and a word"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -506,7 +506,7 @@ DECLARE_NATIVE(GET_WORD_Q)
 //
 //  set-tuple?: native:intrinsic [
 //
-//  "Test if an argument is a chain with a tuple and trailing blank"
+//  "Test if an argument is a chain with a tuple and trailing space"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -528,7 +528,7 @@ DECLARE_NATIVE(SET_TUPLE_Q)
 //
 //  get-tuple?: native:intrinsic [
 //
-//  "Test if an argument is a chain with a leading blank and a tuple"
+//  "Test if an argument is a chain with a leading space and a tuple"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -550,7 +550,7 @@ DECLARE_NATIVE(GET_TUPLE_Q)
 //
 //  set-group?: native:intrinsic [
 //
-//  "Test if an argument is a chain with a group and trailing blank"
+//  "Test if an argument is a chain with a group and trailing space"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -572,7 +572,7 @@ DECLARE_NATIVE(SET_GROUP_Q)
 //
 //  get-group?: native:intrinsic [
 //
-//  "Test if an argument is a chain with a leading blank and a group"
+//  "Test if an argument is a chain with a leading space and a group"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -594,7 +594,7 @@ DECLARE_NATIVE(GET_GROUP_Q)
 //
 //  set-block?: native:intrinsic [
 //
-//  "Test if an argument is a chain with a block and trailing blank"
+//  "Test if an argument is a chain with a block and trailing space"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -616,7 +616,7 @@ DECLARE_NATIVE(SET_BLOCK_Q)
 //
 //  get-block?: native:intrinsic [
 //
-//  "Test if an argument is a chain with a leading blank and a block"
+//  "Test if an argument is a chain with a leading space and a block"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -638,7 +638,7 @@ DECLARE_NATIVE(GET_BLOCK_Q)
 //
 //  any-set-value?: native:intrinsic [
 //
-//  "Test if an argument is a 2-element chain with a trailing blank"
+//  "Test if an argument is a 2-element chain with a trailing space"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]
@@ -660,7 +660,7 @@ DECLARE_NATIVE(ANY_SET_VALUE_Q)
 //
 //  any-get-value?: native:intrinsic [
 //
-//  "Test if an argument is a 2-element chain with a leading blank"
+//  "Test if an argument is a 2-element chain with a leading space"
 //
 //      return: [logic?]
 //      value
@@ -884,16 +884,16 @@ DECLARE_NATIVE(RESOLVE)
             return PANIC(source);
 
         if (
-            single == LEADING_BLANK_AND(WORD)  // /a
-            or single == LEADING_BLANK_AND(TUPLE)  // /a.b.c or /.a
-            or single == TRAILING_BLANK_AND(WORD)  // a/
-            or single == TRAILING_BLANK_AND(TUPLE)  // a.b.c/ or .a/
+            single == LEADING_SPACE_AND(WORD)  // /a
+            or single == LEADING_SPACE_AND(TUPLE)  // /a.b.c or /.a
+            or single == TRAILING_SPACE_AND(WORD)  // a/
+            or single == TRAILING_SPACE_AND(TUPLE)  // a.b.c/ or .a/
         ){
             return COPY(Unpath(source));
         }
         if (
-            single == LEADING_BLANK_AND(CHAIN)  // /a: or /a:b:c or /:a
-            or single == TRAILING_BLANK_AND(CHAIN)  // a:/ or a:b:c/ or :a/
+            single == LEADING_SPACE_AND(CHAIN)  // /a: or /a:b:c or /:a
+            or single == TRAILING_SPACE_AND(CHAIN)  // a:/ or a:b:c/ or :a/
         ){
             Unpath(source);
             // fall through to chain decoding.
@@ -907,10 +907,10 @@ DECLARE_NATIVE(RESOLVE)
         // fall through
     }
     else if (
-        single == LEADING_BLANK_AND(WORD)  // a:
-        or single == LEADING_BLANK_AND(TUPLE)  // a.b.c:
-        or single == TRAILING_BLANK_AND(WORD)  // :a
-        or single == TRAILING_BLANK_AND(TUPLE)  // :a.b.c
+        single == LEADING_SPACE_AND(WORD)  // a:
+        or single == LEADING_SPACE_AND(TUPLE)  // a.b.c:
+        or single == TRAILING_SPACE_AND(WORD)  // :a
+        or single == TRAILING_SPACE_AND(TUPLE)  // :a.b.c
     ){
         return COPY(Unchain(source));
     }
@@ -1269,7 +1269,7 @@ DECLARE_NATIVE(HOLE_Q)
 //
 //  trash?: native:intrinsic [
 //
-//  "Is argument antiform blank (the state used to indicate an unset variable)"
+//  "Is argument antiform space (the state used to indicate an unset variable)"
 //
 //      return: [logic?]
 //      ^value [any-value?]  ; must be ^META
@@ -1300,7 +1300,7 @@ DECLARE_NATIVE(TRASH_Q)
 //
 //  trash: native [  ; native:intrinsic currently needs at least 1 argument
 //
-//  "Returns antiform BLANK! (aka TRASH)"
+//  "Returns antiform SPACE (aka TRASH)"
 //
 //      return: [~]
 //  ]
@@ -1316,7 +1316,7 @@ DECLARE_NATIVE(TRASH)
 //
 //  not-trash?: native:intrinsic [
 //
-//  "Tells you if the argument is not antiform blank or antiform tag"
+//  "Tells you if the argument is not antiform issue (SPACE or a message)"
 //
 //      return: [logic?]
 //      ^value [any-value?]
@@ -1345,7 +1345,7 @@ DECLARE_NATIVE(NOT_TRASH_Q)
 //
 //  quasar?: native:intrinsic [
 //
-//  "Tells you if argument is a quasiform blank (~)"
+//  "Tells you if argument is a quasiform space (~)"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]

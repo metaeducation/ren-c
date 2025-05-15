@@ -126,7 +126,7 @@ run-test-cluster: func [
 
     ; Here we use MODULE instead of MAKE MODULE! so that we get IMPORT and
     ; INTERN available.  (MAKE MODULE! is lower level, and makes a completely
-    ; empty context).  We pass a BLANK! instead of a header to indicate that
+    ; empty context).  We pass a VOID instead of a header to indicate that
     ; it is a "do-style" context (this result also comes back from DO* as
     ; a secondary result, which could be useful as this feature expands.)
     ;

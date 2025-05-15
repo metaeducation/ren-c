@@ -25,9 +25,9 @@
 ; No blob! padding
 (not lax-equal? #{00} #{0000})
 (lax-equal? lax-equal? #{00} #{0000} lax-equal? #{0000} #{00})
-; Empty blob! not blank
-(not lax-equal? #{} blank)
-(lax-equal? lax-equal? #{} blank lax-equal? blank #{})
+; Empty blob! not space
+(not lax-equal? #{} space)
+(lax-equal? lax-equal? #{} space lax-equal? space #{})
 ; case sensitivity
 [#1459
     (lax-not-equal? #{0141} #{0161})
@@ -113,8 +113,8 @@
 ;    )
 ; ]
 
-(not lax-equal? [] blank)
-(lax-equal? lax-equal? [] blank lax-equal? blank [])
+(not lax-equal? [] space)
+(lax-equal? lax-equal? [] space lax-equal? space [])
 ; block! vs. group!
 (not lax-equal? [] first [()])
 ; block! vs. group! symmetry
@@ -497,23 +497,23 @@
 ; NULL is legal to test with equality (as is UNSET! in R3-Alpha/Red)
 [
     (lax-equal? null null)
-    (lax-not-equal? null blank)
-    (lax-not-equal? blank null)
-    (lax-equal? (lax-equal? blank null) (lax-equal? null blank))
-    (not (null = blank))
-    (null <> blank)
-    (not (blank = null))
-    (blank != null)
+    (lax-not-equal? null space)
+    (lax-not-equal? space null)
+    (lax-equal? (lax-equal? space null) (lax-equal? null space))
+    (not (null = space))
+    (null <> space)
+    (not (space = null))
+    (space != null)
     (null = null)
     (not (null != null))
-    (lax-equal? (blank = null) (null = blank))
+    (lax-equal? (space = null) (null = space))
 ]
 
 
 ; warning! reflexivity
 ; Evaluates (trap [1 / 0]) to get warning! value.
 (
-    a-value: blank
+    a-value: space
     set $a-value (trap [1 / 0])
     lax-equal? a-value a-value
 )
@@ -527,23 +527,23 @@
 ; warning! difference in data
 (not lax-equal? (make warning! "hello") (make warning! "there"))
 ; warning! basic comparison
-(not lax-equal? (trap [1 / 0]) blank)
+(not lax-equal? (trap [1 / 0]) space)
 ; warning! basic comparison
-(not lax-equal? blank (trap [1 / 0]))
+(not lax-equal? space (trap [1 / 0]))
 ; warning! basic comparison symmetry
-(lax-equal? lax-equal? (trap [1 / 0]) blank lax-equal? blank (trap [1 / 0]))
+(lax-equal? lax-equal? (trap [1 / 0]) space lax-equal? space (trap [1 / 0]))
 ; warning! basic comparison with = op
-(not ((trap [1 / 0]) = blank))
+(not ((trap [1 / 0]) = space))
 ; warning! basic comparison with != op
-((trap [1 / 0]) != blank)
+((trap [1 / 0]) != space)
 ; warning! basic comparison with = op
-(not (blank = (trap [1 / 0])))
+(not (space = (trap [1 / 0])))
 ; warning! basic comparison with != op
-(blank != (trap [1 / 0]))
+(space != (trap [1 / 0]))
 ; warning! symmetry with = op
-(lax-equal? not ((trap [1 / 0]) = blank) not (blank = (trap [1 / 0])))
+(lax-equal? not ((trap [1 / 0]) = space) not (space = (trap [1 / 0])))
 ; warning! symmetry with != op
-(lax-equal? (trap [1 / 0]) != blank blank != (trap [1 / 0]))
+(lax-equal? (trap [1 / 0]) != space space != (trap [1 / 0]))
 ; port! reflexivity
 ; Error in R2 (could be fixed).
 (lax-equal? p: make port! http:// p)

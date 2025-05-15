@@ -508,7 +508,7 @@ DECLARE_NATIVE(CFOR)
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
 //      word "Variable set to each position in the series at skip distance"
-//          [word! @word? blank!]
+//          [word! @word? _]
 //      series "The series to iterate over"
 //          [<opt-out> hole? any-series?]
 //      skip "Number of positions to skip each time"
@@ -870,7 +870,7 @@ void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
 //
 // ANY-CONTEXT? and MAP! allow one var (keys) or two vars (keys/vals).
 //
-// It's possible to opt out of variable slots using BLANK!.
+// It's possible to opt out of variable slots using SPACE.
 //
 static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 {
@@ -1067,7 +1067,7 @@ void Shutdown_Loop_Each(Value* iterator)
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! @word! block!]
+//          [_ word! @word! block!]
 //      data "The series to traverse"
 //          [<opt-out> hole? any-series? any-context? map! any-sequence?
 //           action!]  ; action support experimental, e.g. generators
@@ -1177,7 +1177,7 @@ DECLARE_NATIVE(FOR_EACH)
 //      return: "null on BREAK, void on empty, null or the last non-null value"
 //          [any-value?]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! @word! block!]
+//          [_ word! @word! block!]
 //      data "The series to traverse"
 //          [<opt-out> hole? any-series? any-context? map! action!]
 //      body [<const> block! ^block!]
@@ -1302,7 +1302,7 @@ DECLARE_NATIVE(EVERY)
 //      return: "Modified Input"
 //          [~null~ ~[[hole? any-series?] integer!]~]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! @word! block!]
+//          [_ word! @word! block!]
 //      data "The series to traverse (modified)"
 //          [<opt-out> hole? any-series?]
 //      body "Block to evaluate (return TRUE to remove)"
@@ -1650,7 +1650,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //      return: "Collected block"
 //          [~null~ block!]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! @word! block!]
+//          [_ word! @word! block!]
 //      data "The series to traverse"
 //          [<opt-out> hole? any-series? any-sequence? any-context?]
 //      body "Block to evaluate each time (result will be kept literally)"
@@ -1699,7 +1699,7 @@ DECLARE_NATIVE(MAP_EACH)
 //      return: "Collected block"
 //          [~null~ block!]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! @word! block!]
+//          [_ word! @word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
 //          [<opt-out> hole? quoted! action!]
 //      @(body) "Block to evaluate each time"
@@ -1949,7 +1949,7 @@ DECLARE_NATIVE(REPEAT)
 //      return: "Last body result, or NULL if BREAK"
 //          [any-value?]
 //      vars "Word or block of words to set each time, no new var if @word"
-//          [blank! word! @word! block!]
+//          [_ word! @word! block!]
 //      value "Maximum number or series to traverse"
 //          [<opt-out> any-number? any-sequence? quoted! block! action!]
 //      body [<const> block!]

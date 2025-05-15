@@ -263,7 +263,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
       case FLAVOR_INSTRUCTION_SPLICE: {
         Array* inst1 = x_cast(Array*, f);
         Element* single = cast(Element*, Stub_Cell(inst1));
-        if (Is_Blank(single)) {
+        if (Is_Space(single)) {
             GC_Kill_Flex(inst1);
             return nullptr;
         }

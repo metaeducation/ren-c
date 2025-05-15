@@ -112,7 +112,7 @@
 (
     e: trap [join tuple! @[a _ b]]
     all [
-        e.id = 'bad-sequence-blank
+        e.id = 'bad-sequence-space
     ]
 )
 

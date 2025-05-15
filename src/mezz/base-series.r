@@ -97,7 +97,7 @@ trim: func [
         ]
         trimmed: make (type of series) collect [
             for-each [key val] series [
-                if not blank? :val [keep key]
+                if not space? :val [keep key]
             ]
         ]
         for-each [key val] series [

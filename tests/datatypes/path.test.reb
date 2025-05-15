@@ -39,8 +39,8 @@
     3 = eval [blk.('_)]
 )
 (
-    blk: [blank 3]
-    3 = eval [blk.blank]
+    blk: [space 3]
+    3 = eval [blk.space]
 )
 (
     a-value: 1/Jan/0000
@@ -231,7 +231,7 @@
 (
     e: trap [join path! @[a _ b]]
     all [
-        e.id = 'bad-sequence-blank
+        e.id = 'bad-sequence-space
     ]
 )
 

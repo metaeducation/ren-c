@@ -237,7 +237,6 @@
     ]
 )
 
-; BLANK! and ISSUE! should be legal in LET.
 [(
     var: #  ; v-- second result is discarded, but request did partial transcode
     'abc = let [(var) #]: transcode:next "abc def"

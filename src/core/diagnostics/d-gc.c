@@ -104,7 +104,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
         break;
 
-      case TYPE_BLANK:
       case TYPE_COMMA:
         break;
 

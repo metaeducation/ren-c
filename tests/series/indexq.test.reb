@@ -8,6 +8,6 @@
     2 = index of a
 )
 [#1611
-    ~type-has-no-index~ !! (index of blank)
-    (null? try index of blank)
+    ~type-has-no-index~ !! (index of space)
+    (null? try index of space)
 ]

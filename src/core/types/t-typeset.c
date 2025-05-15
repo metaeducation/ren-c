@@ -176,8 +176,13 @@ void Set_Parameter_Spec(
         Derelativize(dest, item, spec_binding);
         Clear_Cell_Flag(dest, NEWLINE_BEFORE);
 
+        if (Is_Space(item)) {
+            *flags |= PARAMETER_FLAG_SPACE_DEFINITELY_OK;
+            continue;
+        }
+
         if (Is_Quasiform(item)) {
-            if (Heart_Of(item) == TYPE_BLANK) {
+            if (Is_Quasar(item)) {
                 *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
                 continue;
             }

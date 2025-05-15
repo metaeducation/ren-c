@@ -33,11 +33,11 @@
         ":::"  ->  :::
 
         "/a"  ->  [_ a]
-        "//a"  !!  ~bad-sequence-blank~
+        "//a"  !!  ~bad-sequence-space~
         "a/"  ->  [a _]
         "a//"  !!  ~bad-sequence-item~
         "/a/"  ->  [_ a _]
-        "//a//"  !!  ~bad-sequence-blank~
+        "//a//"  !!  ~bad-sequence-space~
 
         "(a b)/c"  ->  [^(a b) c]
         "(a b) /c"  ->  ^(a b)  [_ c]

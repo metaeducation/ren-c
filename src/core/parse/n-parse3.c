@@ -376,7 +376,7 @@ static const Element* Get_Parse_Value(
         if (Is_Nulled(sink))
             panic (Error_Bad_Null(rule));
 
-        if (Any_Vacancy(sink))
+        if (Is_Trash(sink))
             panic (Error_Bad_Word_Get(rule, sink));
 
         if (Is_Logic(sink) or Is_Splice(sink))
@@ -608,7 +608,6 @@ static REBIXO Parse_One_Rule(
 
           case TYPE_TEXT:
           case TYPE_ISSUE:
-          case TYPE_BLANK:
             break;  // all interpreted literally
 
           default:

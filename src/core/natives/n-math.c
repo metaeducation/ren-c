@@ -819,48 +819,25 @@ DECLARE_NATIVE(SQUARE_ROOT)
 
 
 //
-//  vacancy?: native [
+//  vacant?: native [
 //
-//  "Tells you if the argument causes errors on WORD! access (and defaultable)"
-//
-//      return: [logic?]
-//      ^value [any-value?]
-//  ]
-//
-DECLARE_NATIVE(VACANCY_Q)
-//
-// 1. Because BLANK! antiforms signify unspecialized function call slots,
-//    they must be taken as ^META values if passed as an argument--even
-//    though they are stable antiforms.
-{
-    INCLUDE_PARAMS_OF_VACANCY_Q;
-
-    Value* v = ARG(VALUE);  // meta
-    Meta_Unquotify_Known_Stable(v);  // checked ANY-VALUE?, so stable [1]
-    return Init_Logic(OUT, Any_Vacancy(v));
-}
-
-
-//
-//  defaultable?: native [
-//
-//  "Tells you if default would overwrite a value (VACANCY?, NULL?, VOID?)"
+//  "Tells you if default would overwrite a value (TRASH, NULL?, HOLE?)"
 //
 //      return: [logic?]
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(DEFAULTABLE_Q)
+DECLARE_NATIVE(VACANT_Q)
 //
-// 1. Because PARAMETER! antiforms signify unspecialized function call slots,
+// 1. Because TRASH! antiforms signify unspecialized function call slots,
 //    they must be taken as ^META values if passed as an argument--even
 //    though they are stable antiforms.
 {
-    INCLUDE_PARAMS_OF_DEFAULTABLE_Q;
+    INCLUDE_PARAMS_OF_VACANT_Q;
 
     Value* v = ARG(VALUE);  // meta
     Meta_Unquotify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
-    return Init_Logic(OUT, Any_Vacancy(v) or Is_Nulled(v));
+    return Init_Logic(OUT, Is_Trash(v) or Is_Nulled(v) or Is_Hole(v));
 }
 
 
@@ -990,10 +967,10 @@ DECLARE_NATIVE(LESSER_Q)
 // We want LESSER? to always give a soft failure through an error antiform, so
 // that we can fall back on EQUAL?.  e.g.
 //
-//    >> [1 _ "a"] < [2 _ "b"]
+//    >> [1 -> "a"] < [2 -> "b"]
 //    == ~okay~  ; null
 //
-// Even though BLANK! can't be compared with less than, the equality means
+// Even though -> can't be compared with less than, the equality means
 // we let the test go through.
 //
 IMPLEMENT_GENERIC(LESSER_Q, Any_Element)

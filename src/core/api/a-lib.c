@@ -586,7 +586,7 @@ RebolValue* API_rebBlank(void)
 {
     ENTER_API;
 
-    return Init_Blank(Alloc_Value());
+    return Init_Space(Alloc_Value());
 }
 
 
@@ -2263,7 +2263,7 @@ unsigned char* API_rebBytesMaybe(
 
     if (Is_Nulled(v)) {
         *size_out = 0;
-        return nullptr;  // blank in, null out
+        return nullptr;  // opt on input makes void, means null out
     }
 
     Size size = Bytes_Into(nullptr, 0, v);
@@ -2591,8 +2591,8 @@ RebolNodeInternal* API_rebINLINE(const RebolValue* v)
 
     Stub* s = Make_Untracked_Stub(FLAG_FLAVOR(INSTRUCTION_SPLICE));
 
-    if (not (Is_Block(v) or Is_Quoted(v) or Is_Blank(v)))
-        panic ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/BLANK!");
+    if (not (Is_Block(v) or Is_Quoted(v) or Is_Space(v)))
+        panic ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/SPACE");
 
     Copy_Cell(Stub_Cell(s), v);
 

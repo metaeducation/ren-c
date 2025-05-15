@@ -10,7 +10,7 @@
     ]
 )]
 
-([_] = append copy [] (blank))
+([_] = append copy [] (space))
 
 
 ; Slipstream in some tests of MY (there don't seem to be a lot of tests here)
@@ -172,16 +172,13 @@
     ([a b c] = append [a b c] opt if null [<a>])
 ]
 
-; BLANK! acts like an empty block when passed to SPREAD
+; HOLE acts like an empty block when passed to SPREAD
 [
     ([a b] = append [a b] spread second [c []])
-    ([a b] = append [a b] spread second [c _])
+    ([a b] = append [a b] spread degrade second [c ~()~])
 
     ~bad-value~ !! (
         [a b] = append [a b] spread second [c ~]
-    )
-    (
-        [a b] = append [a b] spread second [c _]
     )
 ]
 

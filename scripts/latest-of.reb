@@ -26,7 +26,7 @@ Rebol [
 
         >> latest-of: do @latest-of
 
-        ; An invocation with no arguments (or a blank argument) will assume you
+        ; An invocation with no arguments (or a void argument) will assume you
         ; want the latest version of the currently running interpreter.
 
         >> latest-of

@@ -334,7 +334,7 @@ Value* Request_Connect_Socket(const Value* port)
         uv_run(uv_default_loop(), UV_RUN_ONCE);
     } while (rebreq->result == nullptr);
 
-    if (not Is_Blank(rebreq->result))
+    if (not Is_Space(rebreq->result))
         panic (rebreq->result);
     rebRelease(rebreq->result);
 
@@ -848,7 +848,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             uv_run(uv_default_loop(), UV_RUN_ONCE);
         } while (rebreq->result == nullptr);
 
-        if (not Is_Blank(rebreq->result))
+        if (not Is_Space(rebreq->result))
             return FAIL(rebreq->result);  // e.g. "broken pipe" ?
         rebRelease(rebreq->result);
 
@@ -917,7 +917,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             uv_run(uv_default_loop(), UV_RUN_ONCE);
         } while (rebreq->result == nullptr);
 
-        if (not Is_Blank(rebreq->result))
+        if (not Is_Space(rebreq->result))
             return FAIL(rebreq->result);  // e.g. "broken pipe" ?
         rebRelease(rebreq->result);
 
@@ -1130,7 +1130,7 @@ DECLARE_NATIVE(SHUTDOWN_P)
 //
 //      return: "NULL if timeout, PORT! that awoke or BLOCK! of ports if /ALL"
 //          [~null~ port! block!]
-//      value [~null~ any-number? time! port! block!]
+//      value [<undo-opt> any-number? time! port! block!]
 //  ]
 //
 DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
@@ -1144,54 +1144,53 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
     REBLEN timeout = 0;  // in milliseconds
     Value* ports = nullptr;
 
-    const Element* val;
+    Option(const Element*) val;
     if (not Is_Block(ARG(VALUE)))
-        val = cast(Element*, ARG(VALUE));
+        val = Is_Nulled(ARG(VALUE)) ? nullptr : Element_ARG(VALUE);
     else {
         ports = ARG(VALUE);
 
         REBLEN num_pending = 0;
         const Element* tail;
-        val = Cell_List_At(&tail, ports);
-        for (; val != tail; ++val) {  // find timeout
-            if (Is_Port(val))
+        const Element* at = Cell_List_At(&tail, ports);
+        for (; at != tail; ++at) {  // find timeout
+            if (Is_Port(at))
                 ++num_pending;
 
-            if (Is_Integer(val) or Is_Decimal(val) or Is_Time(val))
+            if (Is_Integer(at) or Is_Decimal(at) or Is_Time(at))
                 break;
         }
-        if (val == tail) {
+        if (at == tail) {
             if (num_pending == 0)
                 return nullptr; // has no pending ports!
-            timeout = ALL_BITS; // no timeout provided
-            val = nullptr;
+            val = nullptr;  // no timeout provided
+        }
+        else {
+            val = at;
         }
     }
 
-    if (val != nullptr) {
-        switch (Type_Of(val)) {
-          case TYPE_INTEGER:
-          case TYPE_DECIMAL:
-          case TYPE_TIME:
-            timeout = Milliseconds_From_Value(val);
-            break;
+    if (not val) {
+        timeout = ALL_BITS; // wait for all windows
+    }
+    else switch (Type_Of(unwrap val)) {
+      case TYPE_INTEGER:
+      case TYPE_DECIMAL:
+      case TYPE_TIME:
+        timeout = Milliseconds_From_Value(unwrap val);
+        break;
 
-          case TYPE_PORT: {
-            Source* single = Make_Source(1);
-            Append_Value(single, val);
-            Init_Block(ARG(VALUE), single);
-            ports = ARG(VALUE);
+      case TYPE_PORT: {
+        Source* single = Make_Source(1);
+        Append_Value(single, unwrap val);
+        Init_Block(ARG(VALUE), single);
+        ports = ARG(VALUE);
 
-            timeout = ALL_BITS;
-            break; }
+        timeout = ALL_BITS;
+        break; }
 
-          case TYPE_BLANK:
-            timeout = ALL_BITS; // wait for all windows
-            break;
-
-          default:
-            return PANIC(Error_Bad_Value(val));
-        }
+      default:
+        return PANIC(Error_Bad_Value(unwrap val));
     }
 
     const uint64_t repeat_ms = 0;  // do not repeat the timer

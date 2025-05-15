@@ -263,7 +263,7 @@
         ]
     )
     (
-        v: blank
+        v: ~
         all [
             [a a a] = parse:part input2 [v: across repeat 3 'a] skip input2 3
             v = [a a a]
