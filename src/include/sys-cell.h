@@ -844,7 +844,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 //    Template magic lets an overload exclude itself to break the contention.
 
 #define CELL_MASK_COPY \
-    ~(CELL_MASK_PERSIST | CELL_FLAG_NOTE | CELL_FLAG_PROTECTED)
+    ~(CELL_MASK_PERSIST |  CELL_FLAG_PROTECTED \
+        | CELL_FLAG_NOTE | CELL_FLAG_HINT)
 
 #define CELL_MASK_ALL  ~cast(Flags, 0)  // use with caution!
 

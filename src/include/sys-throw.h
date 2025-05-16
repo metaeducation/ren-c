@@ -72,6 +72,17 @@ INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
 #define Is_Throwing_Panic(level_) \
     Is_Warning(VAL_THROWN_LABEL(level_))  // non-definitional errors [1]
 
+
+// When RETURN throws, we want to keep CELL_FLAG_OUT_HINT_UNSURPRISING so that
+// whether it is surprising or not can be seen by the receiver of the t
+//
+// !!! Generally this flag gets preserved by Move_Atom(), but initializing
+// thrown takes the argument as const.  Should Init_Thrown() force you to
+// pass an Atom* that it can move?  This would be a little clearer to help
+// emphasize that you're actually moving the value, not just copying it.
+//
+#define CELL_MASK_THROW (CELL_MASK_COPY | CELL_FLAG_HINT)
+
 INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* L,
     const Atom* arg,
@@ -83,7 +94,7 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     assert(not Is_Throwing(L));
 
     assert(Is_Cell_Erased(&g_ts.thrown_arg));
-    Copy_Cell(&g_ts.thrown_arg, arg);
+    Copy_Cell_Core(&g_ts.thrown_arg, arg, CELL_MASK_THROW);
 
     assert(Is_Cell_Erased(&g_ts.thrown_label));
     Copy_Cell(&g_ts.thrown_label, label);

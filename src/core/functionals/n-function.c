@@ -52,9 +52,8 @@
 //   possible using CLOSURE which made a costly deep copy of the function's
 //   body on every invocation.  Ren-C's method does not require a copy.)
 //
-// * Invisible functions (return: [~,~]) return ghost! and vanish completely,
-//   leaving whatever result was in the evaluation previous to the function
-//   call as-is.
+// * Functions that (return: [ghost!]) vanish completely, leaving whatever
+//   result was in the evaluation previous to the function call as-is.
 //
 // * Refinements-as-their-own-arguments--which streamlines the evaluator,
 //   saves memory, simplifies naming, and simplifies the FRAME! mechanics.
@@ -567,31 +566,40 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
         return true;  // kind of common... necessary?
 
-    if (Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true))
-        return true;
-
-    if (not Is_Ghost(atom))
+    if (not Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true))
         return false;
 
-  try_coerce_ghost_to_void: { ////////////////////////////////////////////////
+  determine_if_result_is_surprising: { ///////////////////////////////////////
 
-    // Motivated by constructs in PARSE, we make it easier for functions that
-    // don't want to be invisible to give VOID intent instead of GHOST!.
+    // If a function returns a value but doesn't always return a value of
+    // that type, we consider it "surprising"...in particular we are concerned
+    // with "surprising ghosts" or "surprising functions":
     //
     //   https://rebol.metaeducation.com/t/leaky-ghosts/2437
     //
-    // This doesn't actually work for PARSE itself, because it is returning
-    // a PACK!, and we don't do coercions of elements in pack.  e.g. if the
-    // type checks against ~[pack! integer!]~ and you have ~[~,~ '10]~ as
-    // your pack, this coercion doesn't touch that in-pack value.
+    // But it's actually faster to just determine if any type is surprising.
+    // The information might come in handy somewhere.
 
-    Init_Void(atom);
-
-    if (Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true))
+    const Array* spec = maybe Cell_Parameter_Spec(param);
+    if (not spec)
         return true;
 
-    Init_Ghost(atom);
-    return false;
+    const TypesetByte* optimized = spec->misc.at_least_4;
+
+    possibly(Get_Cell_Flag(atom, OUT_HINT_UNSURPRISING));  // may get moved
+
+    if (
+        optimized[1] == 0  // more than one optimized type, surprising...
+        and optimized[0] == u_cast(Byte, Type_Of(atom))
+        and Type_Of(atom) != TYPE_PACK  // all PACK! are potentially surprising
+    ){
+        Set_Cell_Flag(atom, OUT_HINT_UNSURPRISING);
+    }
+    else {
+        Clear_Cell_Flag(atom, OUT_HINT_UNSURPRISING);
+    }
+
+    return true;
 }}
 
 

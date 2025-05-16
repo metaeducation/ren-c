@@ -282,7 +282,7 @@ DECLARE_NATIVE(C_DEBUG_TICK)
 //
 //  "Break at next evaluation point (only use when running under C debugger)"
 //
-//      return: [~,~] "Invisible"
+//      return: [ghost!] "Invisible"
 //  ]
 //
 DECLARE_NATIVE(C_DEBUG_BREAK)

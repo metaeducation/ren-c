@@ -176,7 +176,7 @@ module: func [
         decay/  ; don't want body evaluative result
     ]
 
-    set extend mod 'export (
+    set extend mod 'export ^ (
         if spec and (spec.type = 'module) [  ; only modules export
             specialize sys.util.export*/ [  ; specialize low-level [3]
                 where: mod

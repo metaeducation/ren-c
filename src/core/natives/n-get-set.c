@@ -885,12 +885,18 @@ bool Set_Var_Core_Updater_Throws(
             // review that case.)
             //
             Value* sink = Sink_Word_May_Panic(var, context);
-            if (Any_Lifted(var))
+            if (Any_Lifted(var)) {
+                possibly(Not_Cell_Flag(poke, OUT_HINT_UNSURPRISING));  // ok
                 Copy_Meta_Cell(sink, poke);
+            }
             else {
+                if (Is_Action(poke)) {
+                    if (Get_Cell_Flag(poke, OUT_HINT_UNSURPRISING))
+                        Update_Frame_Cell_Label(poke, Cell_Word_Symbol(var));
+                    else
+                        panic ("Surprising ACTION! assign, use ^LIFT: assign");
+                }
                 Copy_Cell(sink, Decay_If_Unstable(poke));
-                if (Is_Action(poke))
-                    Update_Frame_Cell_Label(poke, Cell_Word_Symbol(var));
             }
         }
         else {
@@ -1253,7 +1259,7 @@ DECLARE_NATIVE(SET)
         // (more general filtering available via accessors)
     }
 
-    Copy_Cell(OUT, meta_setval);
+    Copy_Cell_Core(OUT, meta_setval, CELL_MASK_THROW);
     Meta_Unquotify_Undecayed(OUT);
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, OUT)) {

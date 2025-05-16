@@ -901,8 +901,8 @@ DECLARE_NATIVE(COUPLE)
 //
 //  "Disassociate an ACTION from OBJECT!"
 //
-//      return: [action! frame!]
-//      action [action! frame!]
+//      return: [action!]
+//      action [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(UNCOUPLE)
@@ -915,5 +915,5 @@ DECLARE_NATIVE(UNCOUPLE)
 
     Tweak_Cell_Frame_Coupling(action_or_frame, UNCOUPLED);
 
-    return COPY(action_or_frame);
+    return Actionify(COPY(action_or_frame));
 }

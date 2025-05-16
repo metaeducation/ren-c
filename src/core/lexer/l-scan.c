@@ -2294,7 +2294,9 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (*S->end == '~') {
             if (not S->quasi_pending)
-                return PANIC("Comma only followed by ~ for ~,~ quasiform");
+                return PANIC(
+                    "Comma only followed by ~ for ~,~ quasiform (meta-GHOST!)"
+                );
             Quasify_Isotopic_Fundamental(Init_Comma(PUSH()));
             S->sigil_pending = SIGIL_0;
         }

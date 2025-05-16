@@ -587,12 +587,12 @@ Bounce Meta_Stepper_Executor(Level* L)
     // called as (import 'xml) or (import 'json/1.1.2)
 
     if (Is_Sigil(CURRENT, SIGIL_PIN))
-        goto handle_pin;  // special handling for lone @
+        goto handle_pin_sigil;  // special handling for lone @
 
     Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
     goto lookahead;
 
-} handle_pin: {  //// "PIN" Pinned Space Sigil (@) ///////////////////////////
+} handle_pin_sigil: {  //// "PIN" Pinned Space Sigil (@) /////////////////////
 
     // @ acts like THE (literal, but bound):
     //
@@ -665,13 +665,13 @@ Bounce Meta_Stepper_Executor(Level* L)
     //     ** Error: var is unbound
 
     if (Is_Sigil(CURRENT, SIGIL_TIE))
-        goto handle_tie;  // special handling for lone $
+        goto handle_tie_sigil;  // special handling for lone $
 
     Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
     Plainify(u_cast(Element*, OUT));  // remove the $ Sigil
     goto lookahead;
 
-} handle_tie: {  //// "TIE" Tied Space Sigil ($) /////////////////////////////
+} handle_tie_sigil: {  //// "TIE" Tied Space Sigil ($) ///////////////////////
 
     // The $ sigil will evaluate the right hand side, and then bind the
     // product into the current evaluator environment.
@@ -755,17 +755,16 @@ Bounce Meta_Stepper_Executor(Level* L)
 } case TYPE_ISSUE: { //// LIFTED ISSUE! /////////////////////////////////////
 
     if (Is_Sigil(CURRENT, SIGIL_LIFT))
-        goto handle_lift;  // special handling for lone ^
+        goto handle_unafraid_sigil;  // special handling for lone ^
 
     return PANIC("Don't know what ^ISSUE! is going to do yet (besides ^)");
 
-} handle_lift: {  //// "LIFT" Lifted Space Sigil (^) ////////////////////////
+} handle_unafraid_sigil: {  //// "UNAFRAID" Lifted Space Sigil (^) ///////////
 
-    // !!! Historically ^ was a synonym for META, but it now has a much more
-    // noble purpose slated... to "approve" the creation of ghosts or of
-    // actions from functions that don't *just* return ghosts or actions.
+    // [^] is used to make "surprising ghosts" vanish, e.g. products from
+    // functions that returned a GHOST!, but don't *always* return GHOST!.
     //
-    // This work is not done yet, so it's still a synonym for META.
+    // See CELL_FLAG_OUT_HINT_UNSURPRISING for more details.
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)
@@ -776,7 +775,8 @@ Bounce Meta_Stepper_Executor(Level* L)
 
 } lift_rightside_meta_in_out: {
 
-    assert(Is_Quoted(OUT) or Is_Quasiform(OUT));  // it's already meta
+    Meta_Unquotify_Undecayed(OUT);
+    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // see flag notes
     goto lookahead;
 
 
@@ -1121,6 +1121,9 @@ Bounce Meta_Stepper_Executor(Level* L)
     //
     //        >> 1 + 2 (comment "hi")
     //        == 3  ; e.g. not void
+    //
+    // 2. If you say just `()` then that creates an "unsurprising ghost", so
+    //    that (eval [1 + 2 ()]) is 3.
 
     L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
@@ -1132,12 +1135,19 @@ Bounce Meta_Stepper_Executor(Level* L)
         L_binding,
         flags
     );
-    Init_Ghost(Evaluator_Primed_Cell(sub));  // want to vaporize ghosts [1]
-    Push_Level_Erase_Out_If_State_0(OUT, sub);
 
+    Atom* primed = Evaluator_Primed_Cell(sub);
+    Init_Ghost(primed);  // want to vaporize ghosts [1]
+    Set_Cell_Flag(primed, OUT_HINT_UNSURPRISING);  // () not "surprising" [2]
+
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
     return CONTINUE_SUBLEVEL(sub);
 
 } group_or_lifted_group_result_in_out: {
+
+    // 1. As a mitigation of making people write (x: ^ ^arg), we allow for
+    //    you to instead write (x: ^(arg)) and it will assume the ^.  This
+    //    is maybe a bit random but it makes the code look better.
 
     if (Is_Group(CURRENT))
         goto lookahead;  // not decayed, result is good
@@ -1148,6 +1158,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         return PANIC("^GROUP! can only UNMETA quoted/quasiforms");
 
     Meta_Unquotify_Undecayed(OUT);  // GHOST! legal, ACTION! legal...
+    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // just lifted approve [1]
     goto lookahead;
 
 
@@ -1318,6 +1329,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             }
             Move_Atom(OUT, SPARE);
         }
+        Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // foo/ is always ACTION!
         goto lookahead;
     }
 

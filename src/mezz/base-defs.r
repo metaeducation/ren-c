@@ -152,7 +152,7 @@ elide-if-void: func [
 ; COMMA! is the new expression barrier.  But `||` is included as a way to
 ; make comma antiforms to show how to create custom barrier-like constructs.
 ;
-||: func [] [return ~,~]
+||: func [] [return ghost]
 
 |||: func [
     "Inertly consumes all subsequent data, evaluating to previous result"
@@ -161,7 +161,7 @@ elide-if-void: func [
     'omit [element? <variadic>]
 ][
     insist [null? try take omit]
-    return ~,~
+    return ghost
 ]
 
 

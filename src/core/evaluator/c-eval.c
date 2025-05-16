@@ -146,7 +146,12 @@ Bounce Evaluator_Executor(Level* const L)
 
 } step_done_with_meta_or_end_in_out: {  //////////////////////////////////////
 
-    // 1. An idea was tried once where the error wasn't panicked until a step
+    // 1. See CELL_FLAG_OUT_HINT_UNSURPRISING for a full explanation of this.
+    //    But what's going on is that if a function doesn't return GHOST!
+    //    all the time, it gets flagged as "surprising"... you need to use
+    //    the `^` to get the GHOST! out of it.
+    //
+    // 2. An idea was tried once where the error wasn't panicked until a step
     //    was shown to be non-invisible.  This would allow invisible
     //    evaluations to come after an error and still fall out:
     //
@@ -171,13 +176,18 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Endlike_Trash(OUT))  // the "official" way to detect reaching end
         goto finished;
 
-    if (Is_Meta_Of_Ghost(OUT))  // something like an ELIDE or COMMENT
-        goto start_new_step;  // leave previous result as-is in PRIMED
+    if (Is_Meta_Of_Ghost(OUT)) { // something like an ELIDE or COMMENT
+        if (Get_Cell_Flag(OUT, OUT_HINT_UNSURPRISING))
+            goto start_new_step;  // leave previous result as-is in PRIMED
+
+        Init_Ghost(PRIMED);  // (use ^ to be "UNAFRAID" of vaporization) [1]
+        goto start_new_step;
+    }
 
     Move_Atom(PRIMED, OUT);  // make current result the preserved one
     Meta_Unquotify_Undecayed(PRIMED);
 
-    if (Is_Error(PRIMED)) {  // panic if error seen before last step [1]
+    if (Is_Error(PRIMED)) {  // panic if error seen before last step [2]
         dont(Try_Is_Level_At_End_Optimization(L));  // (fail x,) must error
         if (not Is_Feed_At_End(L->feed))
             return PANIC(Cell_Error(PRIMED));
@@ -191,7 +201,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Using_Sublevel_For_Stepping(L))
         Drop_Level(SUBLEVEL);
 
-    Copy_Cell(OUT, PRIMED);
+    Move_Atom(OUT, PRIMED);
     return OUT;
 }}
 

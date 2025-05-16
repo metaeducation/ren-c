@@ -32,7 +32,7 @@
             ^r = okay  ; like [:(1 = 1)]
             ghost? ^r  ; like [:(comment "hi")]
         ] then [
-            return ~,~  ; invisible
+            return ghost
         ]
 
         if void? ^r [  ; like [:(if 1 = 0 [...])]
@@ -61,7 +61,7 @@
     ][
         eval group
         remainder: input
-        return ~,~
+        return ghost
     ]
 
     /ugly-parse: specialize parse/ [combinators: ugly-combinators]

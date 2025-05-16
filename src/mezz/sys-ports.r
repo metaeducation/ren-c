@@ -240,7 +240,7 @@ make-scheme: func [
             op: inside scheme.actor op
             args: inside scheme.actor args
             body: inside scheme.actor body
-            set (extend actor resolve name) reeval op args body
+            set (extend actor resolve name) ^ reeval op args body
         ]
         scheme.actor: actor
     ]

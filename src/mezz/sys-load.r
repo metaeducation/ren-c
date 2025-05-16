@@ -653,13 +653,13 @@ export*: func [
         ] else [
             word: resolve what
         ]
-        args: try take args  ; eval before EXTEND clears variable...
+        ^args: try take args  ; eval before EXTEND clears variable...
         return (  ; can't append until after, if prev. definition used in expr
             (
                 if word [  ; no "attached" state, must append word to get IN
                     extend where word  ; maybe bound e.g. WHAT-DIR
                 ]
-            ): get:any $args
+            ): ^(args)
             elide if word [append exports word]
         )
     ]
@@ -667,14 +667,14 @@ export*: func [
     items: what
 
     until [tail? items] [
-        val: get:any inside items word: match word! items.1 else [
+        ^val: get:any inside items word: match word! items.1 else [
             panic ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
         ]
         ; !!! notation for exporting antiforms?
         items: next items
 
         (types: match block! ?? items.1) then [
-            (match types val) else [
+            (match types ^val) else [
                 panic [
                     "EXPORT expected" word "to be in" @types
                     "but it was" (to word! type of val) else ["null"]

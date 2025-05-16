@@ -101,7 +101,12 @@ DECLARE_NATIVE(COMMENT)
 {
     INCLUDE_PARAMS_OF_COMMENT;
 
-    return GHOST;
+    Init_Ghost(OUT);
+
+    possibly(Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC));
+    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // if intrinsic no return check
+
+    return OUT;
 }
 
 
@@ -119,7 +124,12 @@ DECLARE_NATIVE(ELIDE)
 {
     INCLUDE_PARAMS_OF_ELIDE;
 
-    return GHOST;
+    Init_Ghost(OUT);
+
+    possibly(Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC));
+    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // if intrinsic no return check
+
+    return OUT;
 }
 
 

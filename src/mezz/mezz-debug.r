@@ -55,7 +55,7 @@ verify: func [
 
         conditions: pos   ; move expression position and continue
     ]
-    return ~,~
+    return ghost
 ]
 
 

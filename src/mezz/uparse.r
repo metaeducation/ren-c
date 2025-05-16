@@ -137,7 +137,7 @@ bind construct [
                 pack [ensure text! spec.2, ensure block! spec.3]
                 elide spec: my skip 3
             ]
-            ghostable: did any [find types 'ghost!, find types '~,~]
+            ghostable: did find types 'ghost!
             spread compose:deep [
                 return: (opt description)
                     [~[(types) any-series? [blank? block!]]~]
@@ -853,10 +853,10 @@ default-combinators: to map! reduce [
             if negated [
                 return fail "PARSE position at <end> (but parser negated)"
             ]
-            return ~,~
+            return ghost
         ]
         if negated [
-            return ~,~
+            return ghost
         ]
         return fail "PARSE position not at <end>"
     ]
@@ -1251,7 +1251,7 @@ default-combinators: to map! reduce [
     ][
         case [
             any-list? input [
-                neq?: either state.case [:not-equal?] [:lax-not-equal?]
+                neq?: ^ either state.case [not-equal?/] [lax-not-equal?/]
                 if neq? try input.1 value [
                     return fail "Value at parse position does not match TEXT!"
                 ]
@@ -1641,7 +1641,7 @@ default-combinators: to map! reduce [
         ]
 
         if any-list? input [
-            neq?: either state.case [:not-equal?] [:lax-not-equal?]
+            neq?: ^ either state.case [not-equal?/] [lax-not-equal?/]
             remainder: next input
             if neq? input.1 unquote value [
                 if negated [
@@ -1735,7 +1735,7 @@ default-combinators: to map! reduce [
             panic "Splice combinators only match ANY-LIST? input"
         ]
 
-        neq?: either state.case [:not-equal?] [:lax-not-equal?]
+        neq?: ^ either state.case [not-equal?/] [lax-not-equal?/]
         for-each 'item unquasi meta value [
             if neq? remainder.1 item [
                 return fail [
