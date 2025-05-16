@@ -397,7 +397,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             memcpy(Binary_At(buf, tail), data, size);
             break; }
 
-          case TYPE_ISSUE:
+          case TYPE_RUNE:
           case TYPE_TEXT:
           case TYPE_FILE:
           case TYPE_EMAIL:

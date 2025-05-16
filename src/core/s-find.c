@@ -501,7 +501,7 @@ REBINT Find_Bitset_In_Binstr(
 //  Find_Value_In_Binstr: C
 //
 // Service routine for both FIND and PARSE for searching in an ANY-STRING?,
-// ISSUE!, or BLOB!
+// RUNE!, or BLOB!
 //
 REBLEN Find_Value_In_Binstr(
     REBLEN *len,

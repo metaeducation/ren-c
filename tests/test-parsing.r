@@ -141,13 +141,13 @@ export collect-tests: func [
                 keep:line block
             )]
             |
-            ; ISSUE! and URL! have historically just been ignored, they are a
+            ; RUNE! and URL! have historically just been ignored, they are a
             ; kind of comment that you don't have to put a semicolon on.  It
             ; may be they have a better dialect use, perhaps even automated
-            ; tests could keep track of how often a particular issue or URL
+            ; tests could keep track of how often a particular rune or URL
             ; had a bad test and mark it as "active"?
             ;
-            [url! | issue!]  ; ignore
+            [url! | rune!]  ; ignore
             |
             ; Tags represent flags which can control the behavior of tests.
             ; Each test grouping resets the flags here, but that suggests

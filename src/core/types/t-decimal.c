@@ -143,7 +143,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         return OUT;
     }
     else switch (type) {
-      case TYPE_ISSUE: {
+      case TYPE_RUNE: {
         REBDEC d = cast(REBDEC, Cell_Codepoint(arg));
         return Init_Decimal(OUT, d); }
 
@@ -396,7 +396,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
             || heart == TYPE_INTEGER
             || heart == TYPE_PERCENT
             || heart == TYPE_MONEY
-            || heart == TYPE_ISSUE
+            || heart == TYPE_RUNE
         ){
             if (heart == TYPE_DECIMAL) {
                 d2 = VAL_DECIMAL(arg);
@@ -408,7 +408,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 else if (not Is_Percent(val))
                     heart = Heart_Of_Builtin_Fundamental(val);
             }
-            else if (heart == TYPE_ISSUE) {
+            else if (heart == TYPE_RUNE) {
                 d2 = cast(REBDEC, Cell_Codepoint(arg));
                 heart = TYPE_DECIMAL;
             }

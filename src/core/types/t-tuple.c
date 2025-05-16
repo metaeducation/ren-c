@@ -52,7 +52,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
 
     REBLEN alen;
 
-    if (Is_Issue(arg)) {
+    if (Is_Rune(arg)) {
         Byte buf[MAX_TUPLE];
         Byte* vp = buf;
 

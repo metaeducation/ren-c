@@ -181,3 +181,21 @@
     (null? form void)
     ~expect-arg~ !! (form null)
 ]
+
+(
+    string: ""
+    for-each 'item [
+        ? * + - = |     ; word!s - ordinary
+        < > : / . %     ; word!s - special (limited in some contexts)
+        #               ; rune! - "hash"/"octothorpe"/"pound"
+        _               ; rune! - "space"
+        $               ; tied! - tied "space" rune (a "tie")
+        ^               ; lifted! - lifted "space" rune (a "lift")
+        @               ; pinned! - pinned "space" rune (a "pin")
+        ~               ; quasiform! - quasi "space" rune (a "quasar")
+        ,               ; comma!
+    ][
+        append string mold item
+    ]
+    assert [string = "?*+-=<>|:/.%#_$^^@~,"]
+)

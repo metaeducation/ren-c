@@ -48,7 +48,7 @@
 (not lax-equal? #{00} decode [BE +] #{00})
 (lax-equal? lax-equal? #{00} (decode [BE +] #{00}) lax-equal? (decode [BE +] #{00}) #{00})
 
-; issue! vs. text!
+; rune! vs. text!
 ; RAMBO #3518
 (not lax-equal? a-value: #a to text! a-value)
 (
@@ -355,7 +355,7 @@
 (not lax-equal? #"a" #"A")
 ; text! case
 (lax-equal? "a" "A")
-; issue! case
+; rune! case
 (not lax-equal? #a #A)
 ; tag! case
 (lax-equal? <a a="a"> <A A="A">)

@@ -39,7 +39,7 @@ Rebol [
           to be recompiled anyway, allowing more builtin symbols to fold in
           the executable such that CANON(...) works with them.
 
-        * As with %symbols.r and %lib-words.r, ISSUE! in this file marks a
+        * As with %symbols.r and %lib-words.r, RUNE! in this file marks a
           word that logically belongs as part of a set but has been defined
           previously for other purposes, so it won't be defined again.
     ]--

@@ -39,7 +39,6 @@
 %datatypes/get-word.test.reb
 %datatypes/hash.test.reb
 %datatypes/integer.test.reb
-%datatypes/issue.test.reb
 %datatypes/lit-path.test.reb
 %datatypes/lit-word.test.reb
 %datatypes/logic.test.reb
@@ -56,6 +55,7 @@
 %datatypes/quasi.test.reb
 %datatypes/quoted.test.reb
 %datatypes/refinement.test.reb
+%datatypes/rune.test.reb
 %datatypes/set-block.test.reb
 %datatypes/set-group.test.reb
 %datatypes/set-path.test.reb
@@ -252,7 +252,6 @@
 %parse/parse.get-group.test.reb
 %parse/parse.group.test.reb
 %parse/parse.insert.test.reb
-%parse/parse.issue.test.reb
 %parse/parse.just.test.reb
 %parse/parse.let.test.reb
 %parse/parse.literal.test.reb
@@ -268,6 +267,7 @@
 %parse/parse.quoted.test.reb
 %parse/parse.remove.test.reb
 %parse/parse.repeat.test.reb
+%parse/parse.rune.test.reb
 %parse/parse.seek.test.reb
 %parse/parse.set-word.test.reb
 %parse/parse.set-group.test.reb

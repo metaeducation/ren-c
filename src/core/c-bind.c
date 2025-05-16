@@ -806,7 +806,7 @@ DECLARE_NATIVE(LET)
         if (Is_Set_Word(temp))
             goto wordlike;
         else switch (Heart_Of(temp)) {  // permit quasi
-          case TYPE_ISSUE:  // is multi-return opt for dialect, passthru
+          case TYPE_RUNE:  // is multi-return opt for dialect, passthru
             Derelativize(PUSH(), temp, temp_binding);
             break;
 

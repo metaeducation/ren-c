@@ -1286,50 +1286,50 @@ default-combinators: to map! reduce [
         return value
     ]
 
-    === TOKEN! COMBINATOR (currently ISSUE! and CHAR!) ===
+    === TOKEN! COMBINATOR (currently RUNE! and CHAR!) ===
 
     ; The TOKEN! type is an optimized immutable form of string that will
     ; often be able to fit into a cell with no series allocation.  This makes
     ; it good for representing characters, but it can also represent short
     ; strings.  It matches case-sensitively.
 
-    (meta issue!) combinator [
+    (meta rune!) combinator [
         return: "The token matched against (not input value)"
-            [issue!]
-        value [issue!]
+            [rune!]
+        value [rune!]
         :negated
     ][
         if tail? input [
-            return fail "ISSUE! cannot match at end of input"
+            return fail "RUNE! cannot match at end of input"
         ]
         case [
             any-list? input [
                 remainder: next input
                 if value = input.1 [
                     if negated [
-                        return fail "ISSUE! matched, but combinator negated"
+                        return fail "RUNE! matched, but combinator negated"
                     ]
                     return input.1
                 ]
                 if negated [
                     return input.1
                 ]
-                return fail "Value at parse position does not match ISSUE!"
+                return fail "Value at parse position does not match RUNE!"
             ]
             any-string? input [
                 if negated [
                     if (not char? value) [
-                        panic "NOT ISSUE! with strings is only for single char"
+                        panic "NOT RUNE! with strings is only for single char"
                     ]
                     if input.1 = value [
-                        return fail "Negated ISSUE! char matched at string"
+                        return fail "Negated RUNE! char matched at string"
                     ]
                     remainder: next input
                     return input.1
                 ]
                 [_ remainder]: find:match:case input value else [
                     return fail [
-                        "String at parse position does not match ISSUE!"
+                        "String at parse position does not match RUNE!"
                     ]
                 ]
                 return value
@@ -1338,17 +1338,17 @@ default-combinators: to map! reduce [
                 assert [blob? input]
                 if negated [
                     if (not char? value) or (255 < codepoint of value) [
-                        panic "NOT ISSUE! with blobs is only for single byte"
+                        panic "NOT RUNE! with blobs is only for single byte"
                     ]
                     if input.1 = codepoint of value [
-                        return fail "Negated ISSUE! char matched at blob"
+                        return fail "Negated RUNE! char matched at blob"
                     ]
                     remainder: next input
                     return make-char input.1
                 ]
                 [_ remainder]: find:match:case input value else [
                     return fail [
-                        "Binary at parse position does not match ISSUE!"
+                        "Binary at parse position does not match RUNE!"
                     ]
                 ]
                 return value
@@ -1781,14 +1781,14 @@ default-combinators: to map! reduce [
             return null
         ]
         switch:type ^times [
-            issue! [
+            rune! [
                 if ^times = _ [  ; should space be tolerated if void is?
                     remainder: input
                     return void  ; `[repeat (_) rule]` is a no-op
                 ]
 
                 if ^times <> # [
-                    panic ["REPEAT takes ISSUE! of # to act like TRY SOME"]
+                    panic ["REPEAT takes RUNE! of # to act like TRY SOME"]
                 ]
                 min: 0, max: #
             ]
@@ -2039,7 +2039,7 @@ default-combinators: to map! reduce [
     'comment combinator [
         "Comment out an arbitrary amount of PARSE material"
         return: [ghost!]
-        'ignored [block! text! tag! issue!]
+        'ignored [block! text! tag! rune!]
     ][
         remainder: input
         return ghost
@@ -2182,7 +2182,7 @@ default-combinators: to map! reduce [
             ;
             text! []
             blob! []
-            issue! []
+            rune! []
 
             ; Datatypes looked up by words (e.g. TAG!) are legal as rules
             ;
@@ -2274,7 +2274,7 @@ default-combinators: to map! reduce [
             if not tail? input [
                 for-each 'item block [
                     if input.1 = any [
-                        ? if any-string? input [to issue! item]
+                        ? if any-string? input [to rune! item]
                         ? if blob? input [to blob! item]
                         item
                     ][

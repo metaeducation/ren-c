@@ -295,7 +295,7 @@ bool Func_Details_Querier(
         ));
 
         Element* slot = Array_At(fake, real_body_index);
-        assert(Is_Issue(slot));  // should be #BODY [2]
+        assert(Is_Rune(slot));  // should be #BODY [2]
 
         assert(VAL_INDEX(body) == 0);
         Init_Group(slot, Cell_Array(body));

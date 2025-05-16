@@ -74,7 +74,7 @@ prin: func [
 ][
     write-stdout switch:type value [
         null?/ [return ~]  ; type of VOID is currently null
-        text! issue! [value]
+        text! rune! [value]
         block! [spaced value]
     ] else [
         form value

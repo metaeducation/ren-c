@@ -20,14 +20,14 @@
 (the a/b/c = join path! @[a b c])
 (the /(a b c) = join path! [_ the (a b c)])
 
-; strings and words can TO-convert to ISSUE!
+; strings and words can TO-convert to RUNE!
 [
-    (#x = to issue! 'x)
-    (#xx = to issue! 'xx)
+    (#x = to rune! 'x)
+    (#xx = to rune! 'xx)
 
-    (#x = to issue! "x")
-    (#xx = to issue! "xx")
+    (#x = to rune! "x")
+    (#xx = to rune! "xx")
 
     ; !!! Should this be legal and return `#`?
-    ('illegal-zero-byte = pick trap [to issue! ""] 'id)
+    ('illegal-zero-byte = pick trap [to rune! ""] 'id)
 ]

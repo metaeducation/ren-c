@@ -1,10 +1,5 @@
-; %parse-issue.test.reb
+; %parse-rune.test.reb
 ;
-; The migration of ISSUE! to be a unified type with CHAR! as TOKEN! is
-; something that is moving along slowly, as the impacts are absorbed.
-;
-; They are case-sensitive matched in PARSE, unlike text strings by default.
-
 ; We don't leak internal detail that BLOB! or ANY-STRING? are 0-terminated
 ; This comes "for free" because the NUL codepoint is #{00} as a blob, and
 ; we don't allow binary searches in strings already for other reasons

@@ -501,7 +501,7 @@ export for-each-platform: func [
                     |
                 build-label: text! (build-label: to-word build-label)
             ]
-            definitions: across [opt some issue!] (
+            definitions: across [opt some rune!] (
                 definitions: map-each 'x definitions [to-word x]
             )
             cflags: across [opt some tag!] (

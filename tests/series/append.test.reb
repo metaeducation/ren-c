@@ -156,7 +156,7 @@
 
 ([a b c ~void~] = append [a b c] the ~void~)  ; no antiform of ~void~
 
-; Added support for :PART on ISSUE!
+; Added support for :PART on RUNE!
 ;
 ("abcdef" = append:part "abc" #defghi 3)
 

@@ -150,7 +150,7 @@ sqlform: func [
     "Helper for producing SQL string from SQL dialect"
 
     return: "Formed SQL string with ? in parameter spots"
-        [text! issue!]  ; issue will not have spaces around it when rendered
+        [text! rune!]  ; rune will not have spaces around it when rendered
 
     parameters "Parameter block being gathered"
         [block!]

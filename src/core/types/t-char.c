@@ -110,7 +110,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 //
 // 2. This check was considered "too expensive" and omitted in R3-Alpha:
 //
-//      https://github.com/rebol/rebol-issues/issues/638
+//      https://github.com/rebol/rebol-runes/runes/638
 //      https://en.wikipedia.org/wiki/UTF-8#Overlong_encodings
 //
 //    ...which meant that various illegal input patterns would be tolerated,
@@ -182,7 +182,7 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
 //
 //  CT_Utf8: C
 //
-// 1. As the replacement for CHAR!, ISSUE! inherits the behavior that there
+// 1. As the replacement for CHAR!, RUNE! inherits the behavior that there
 //    are no non-strict comparisons.  To compare non-strictly, they must be
 //    aliased as TEXT!.  (!!! This should be reviewed.)
 //
@@ -191,7 +191,7 @@ REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
     assert(Any_Utf8_Type(Heart_Of(a)));
     assert(Any_Utf8_Type(Heart_Of(b)));
 
-    if (Heart_Of(a) == TYPE_ISSUE or Heart_Of(b) == TYPE_ISSUE)
+    if (Heart_Of(a) == TYPE_RUNE or Heart_Of(b) == TYPE_RUNE)
         strict = true;  // always true? [1]
 
     REBLEN l1;
@@ -254,8 +254,8 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
     switch(Type_Of(arg)) {
       case TYPE_INTEGER: {
-        if (heart != TYPE_ISSUE)
-            panic ("Only ISSUE! can MAKE a UTF-8 immutable type with INTEGER!");
+        if (heart != TYPE_RUNE)
+            panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
         Option(Error*) error = Trap_Init_Char(OUT, n);
@@ -264,8 +264,8 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         return OUT; }
 
       case TYPE_BLOB: {
-        if (heart != TYPE_ISSUE)
-            panic ("Only ISSUE! can MAKE a UTF-8 immutable type with BLOB!");
+        if (heart != TYPE_RUNE)
+            panic ("Only RUNE! can MAKE a UTF-8 immutable type with BLOB!");
 
         Size size;
         const Byte* bp = Cell_Blob_Size_At(&size, arg);
@@ -275,7 +275,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         Codepoint c;
         if (*bp <= 0x80) {
             if (size != 1) {
-                Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_ISSUE));
+                Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_RUNE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
 
@@ -288,7 +288,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
-                Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_ISSUE));
+                Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_RUNE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
@@ -350,7 +350,7 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
 DECLARE_NATIVE(TO_CHAR)
 //
 // !!! For efficiency, this avoids things like (to-char [A] -> #A).
-// It could be that this was implemented in terms of TO ISSUE! and then got
+// It could be that this was implemented in terms of TO RUNE! and then got
 // the result and ensured it was a single character, or that the code was
 // factored in such a way to permit it.  Review if real-world needs come up.
 //
@@ -421,7 +421,7 @@ DECLARE_NATIVE(NUL_Q)
 static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
 {
     switch (Type_Of(arg)) {
-      case TYPE_ISSUE:
+      case TYPE_RUNE:
         return Cell_Codepoint(arg);
 
       case TYPE_INTEGER:
@@ -431,12 +431,12 @@ static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
         return cast(REBINT, VAL_DECIMAL(arg));
 
       default:
-        panic (Error_Math_Args(TYPE_ISSUE, verb));
+        panic (Error_Math_Args(TYPE_RUNE, verb));
     }
 }
 
 
-IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -455,22 +455,32 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
     Length len;
     Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, v);
 
-    if (Is_Space(v)) {  // character molding exception, space is _
+  handle_single_char_representations: { //////////////////////////////////////
+
+    // Much reflection led to conclude that _ is the best representation for
+    // the space rune, and # is the best representation for the hash rune.
+    //
+    // https://rebol.metaeducation.com/t/2287
+
+    if (not IS_CHAR(v))
+        goto handle_ordinary_runes;
+
+    Codepoint c = Cell_Codepoint(v);
+    if (c == ' ') {
         Append_Codepoint(mo->string, '_');
-        return TRASH;
+        goto finished;
+    }
+    if (c == '#') {
+        Append_Codepoint(mo->string, '#');
+        goto finished;
     }
 
-    if (len == 0) {
-        Append_Codepoint(mo->string, '"');
-        Append_Codepoint(mo->string, '"');
-        return TRASH;
-    }
+} handle_ordinary_runes: { ///////////////////////////////////////////////////
+
+    Append_Codepoint(mo->string, '#');
 
     bool no_quotes = true;
     Codepoint c = Codepoint_At(cp);
-
-    if (len == 1 and c == ' ')
-        return TRASH;  // # is notationally a space character
 
     // !!! This should be smarter and share code with FILE! on whether
     // it's necessary to use double quotes or braces, and how escaping
@@ -512,8 +522,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
         Mold_Text_Flex_At(mo, s, 0);
     }
 
-    return TRASH;
-}
+} finished: { ///////////////////////////////////////////////////////////////
+
+    return TRASH;  // MOLDIFY should return TRASH
+}}
 
 
 IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
@@ -521,25 +533,25 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* issue = cast(Element*, ARG_N(1));
-    assert(Any_Utf8(issue) and not Any_Word(issue));
-    possibly(Any_String(issue));  // gets priority, but may delegate
+    Element* rune = cast(Element*, ARG_N(1));
+    assert(Any_Utf8(rune) and not Any_Word(rune));
+    possibly(Any_String(rune));  // gets priority, but may delegate
 
-    if (Stringlike_Has_Node(issue)) {
-        assert(not IS_CHAR(issue));  // no string math
+    if (Stringlike_Has_Node(rune)) {
+        assert(not IS_CHAR(rune));  // no string math
         return GENERIC_CFUNC(OLDGENERIC, Any_String)(level_);
     }
 
     // !!! All the math operations below are inherited from the CHAR!
-    // implementation, and will not work if the ISSUE! length is > 1.
+    // implementation, and will not work if the RUNE! length is > 1.
     //
-    if (not IS_CHAR(issue))
-        return PANIC("Math operations only usable on single-character ISSUE!");
+    if (not IS_CHAR(rune))
+        return PANIC("Math operations only usable on single-character RUNE!");
 
     // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
     //
-    REBI64 chr = cast(REBI64, Cell_Codepoint(issue));
+    REBI64 chr = cast(REBI64, Cell_Codepoint(rune));
     REBI64 arg;
 
     switch (id) {
@@ -653,7 +665,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* v = Element_ARG(ELEMENT);  // issue, email, etc.
+    Element* v = Element_ARG(ELEMENT);  // rune, email, etc.
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
     possibly(Any_Word(v));  // delegates some cases
 
@@ -678,7 +690,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return Init_Word(OUT, sym);
     }
 
-    if (to == TYPE_ISSUE or to == TYPE_MONEY) {  // may make node if mutable
+    if (to == TYPE_RUNE or to == TYPE_MONEY) {  // may make node if mutable
         if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v))) {
             possibly(Any_Word(v));
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
@@ -843,13 +855,13 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
     if (as == TYPE_INTEGER) {
         if (not IS_CHAR(v))
             return Error_User(
-                "AS INTEGER! only supports what-were-CHAR! issues ATM"
+                "AS INTEGER! only supports what-were-CHAR! runes ATM"
             );
         Init_Integer(out, Cell_Codepoint(v));
         return SUCCESS;
     }
 
-    if (as == TYPE_ISSUE or as == TYPE_MONEY) {  // fits cell or freeze string
+    if (as == TYPE_RUNE or as == TYPE_MONEY) {  // fits cell or freeze string
         assert(as != TYPE_WORD and not (Any_String_Type(as)));
 
         if (Stringlike_Has_Node(v)) {
@@ -910,11 +922,11 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Issue)
+IMPLEMENT_GENERIC(PICK, Is_Rune)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* issue = Element_ARG(LOCATION);
+    const Element* rune = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
@@ -925,7 +937,7 @@ IMPLEMENT_GENERIC(PICK, Is_Issue)
         return FAIL(Error_Bad_Pick_Raw(picker));
 
     REBLEN len;
-    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, issue);
+    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, rune);
     if (n > len)
         return nullptr;
 
@@ -969,16 +981,16 @@ IMPLEMENT_GENERIC(RANDOMIZE, Any_Utf8)
 }
 
 
-IMPLEMENT_GENERIC(RANDOM, Is_Issue)
+IMPLEMENT_GENERIC(RANDOM, Is_Rune)
 {
     INCLUDE_PARAMS_OF_RANDOM;
 
-    Element* issue = Element_ARG(MAX);
+    Element* rune = Element_ARG(MAX);
 
-    if (not IS_CHAR(issue))
-        return PANIC("RANDOM only for single-character ISSUE!");
+    if (not IS_CHAR(rune))
+        return PANIC("RANDOM only for single-character RUNE!");
 
-    Codepoint c = Cell_Codepoint(issue);
+    Codepoint c = Cell_Codepoint(rune);
     if (c == 0)
         return UNHANDLED;
 
@@ -1017,7 +1029,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
 //
 //  codepoint-of: native:generic [
 //
-//  "Get the singular codepoint that an ISSUE! or BINARY! correspond to"
+//  "Get the singular codepoint that an RUNE! or BINARY! correspond to"
 //
 //      return: [null? integer!]
 //      element [<opt-out> fundamental?]
@@ -1031,20 +1043,20 @@ DECLARE_NATIVE(CODEPOINT_OF)
 }
 
 
-IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Issue)
+IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Rune)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* issue = Element_ARG(ELEMENT);
-    assert(Is_Issue(issue));
+    Element* rune = Element_ARG(ELEMENT);
+    assert(Is_Rune(rune));
 
     if (
-        Stringlike_Has_Node(issue)
-        or issue->extra.at_least_4[IDX_EXTRA_LEN] != 1
+        Stringlike_Has_Node(rune)
+        or rune->extra.at_least_4[IDX_EXTRA_LEN] != 1
     ){
         return FAIL(Error_Not_One_Codepoint_Raw());
     }
-    return Init_Integer(OUT, Cell_Codepoint(issue));
+    return Init_Integer(OUT, Cell_Codepoint(rune));
 }
 
 

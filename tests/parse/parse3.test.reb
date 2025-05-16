@@ -77,7 +77,7 @@
 
 ; Don't leak internal detail that BLOB! or ANY-STRING? are 0-terminated
 [
-    (NUL = as issue! 0)
+    (NUL = as rune! 0)
 
     ~parse3-incomplete~ !! (parse3 "" [to NUL])
     ~parse3-incomplete~ !! (parse3 "" [thru NUL])

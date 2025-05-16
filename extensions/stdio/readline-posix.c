@@ -536,7 +536,7 @@ Value* Unrecognized_Key_Sequence(STD_TERM *t, int delta)
     //
     Term_Abandon_Pending_Events(t);
 
-    return rebValue("as issue! -[[KEY?]]-");
+    return rebValue("as rune! -[[KEY?]]-");
 }
 
 
@@ -630,7 +630,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
 
         Value* char_bin = rebSizedBinary(encoded, encoded_size);
         if (not buffered) {
-            e = rebValue("make issue!", char_bin);
+            e = rebValue("make rune!", char_bin);
         }
         else {
             if (e_buffered)

@@ -22,7 +22,7 @@ Rebol [
         That means there is no ordering contract about the relative values
         of symbols in this file.  See %lib-words.r for that application.
 
-        ISSUE! is used to denote items that should already exist.
+        RUNE! is used to denote items that should already exist.
     ]--
 ]
 

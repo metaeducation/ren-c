@@ -19,7 +19,7 @@
     ("a c" = unspaced ["a" opt null comment <b> (null else '_) "c"])
 ]
 
-; ISSUE! is to be merged with CHAR! and does not space
+; RUNE! does not space
 (
     project: 'Ren-C
     bad-thing: "Software Complexity"

@@ -370,6 +370,6 @@ INLINE bool Singleheart_Has_Leading_Space(SingleHeart single) {
 INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
     assert(single != NOT_SINGLEHEART_0);
     HeartEnum heart = u_cast(HeartEnum, u_cast(uint_fast16_t, single) >> 8);
-    assert(heart != TYPE_0 and heart != TYPE_ISSUE);
+    assert(heart != TYPE_0 and heart != TYPE_RUNE);
     return heart;
 }

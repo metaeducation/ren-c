@@ -65,7 +65,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
 INLINE Utf8(const*) Cell_String_At(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
 
-    if (not Any_String_Type(heart))  // non-positional: URL, ISSUE, WORD...
+    if (not Any_String_Type(heart))  // non-positional: URL, RUNE, WORD...
         return Cell_Utf8_Head(v);  // might store utf8 directly in cell
 
     const String* str = c_cast(String*, Cell_Flex(v));

@@ -167,12 +167,15 @@ warning!: error!
 ; shorter name for lib3 variants while doing so (e.g. FUNC3 for LIB3/FUNC)
 ;
 ; 1. Words not mentioned don't get bound and mentioned in system.contexts.user
-;    Mention them so that (system.contexts.(word): <...>) will work.
+;    Mention them so that (system.contexts.user.(word): <...>) will work.
 ;
 ; 2. Using SET-WORD!s here also helps searchability if you're looking for
 ;    where `func3: ...` is defined.
 
-comment [tail char! any-word! any-path! lit-word! lit-path!]  ; workaround [1]
+comment [  ; need unmentioned words in user context [1]
+    tail
+    char! any-word! any-path! lit-word! lit-path! issue! issue?
+]
 
 for-each [alias] [
     parse3:                     ; PARSE is a completely new model ("UPARSE")
@@ -194,11 +197,10 @@ for-each [alias] [
     head3:                      ; use HEAD OF instead
     tail3:                      ; use TAIL OF instead
 
-    ; Type constraints
-
+    issue3!:                    ; now it's rune!
+    issue3?:                    ; ...
     refinement3?:               ; Former refinements of /FOO now :FOO
     refinement3!:               ; ...
-
     set-word3!:                 ; use set-word?
     set-path3!:                 ; use set-path?
     get-word3!:                 ; use get-word?
@@ -232,6 +234,12 @@ function3: ~<FUNCTION slated for synonym of FUNC, so no FUNCTION3>~
 
 blob!: binary!
 blob?: binary?/
+
+
+=== "ISSUE! => RUNE!" ===
+
+rune!: issue3!
+rune?: issue3?/
 
 
 === "TRY TO UNIFY SPACE AND BLANK TESTING" ===
@@ -276,13 +284,13 @@ load: ~<Use LOAD3 in Bootstrap (:HEADER returns BLOCK! with OBJECT!)>~
 
 === "FAKE UP QUASIFORM! AND @WORD! TYPES" ===
 
-; In the case of the iteration functions, they take ISSUE! (a WORD! type in
+; In the case of the iteration functions, they take RUNE! (a WORD! type in
 ; the bootstrap executable) to mean that the variable has a binding already
 ; to use vs. create a new one.  It's essential to use with ITERATE in modern
 ; Ren-C, but we can't say `iterate @block [...]` in bootstrap (no @).  Hence
 ; instead, PIN (which adds @ in new executables) is defined to add a #"."
 
-pin: lambda3 [word [word!]] [to-issue word]
+pin: lambda3 [word [word!]] [to rune! word]
 
 quasiform!: word!  ; conflated, but can work in a very limited sense
 quasi?: func3 [v <local> spelling] [

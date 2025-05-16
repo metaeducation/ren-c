@@ -34,7 +34,7 @@
         let decoded: text!
         let re-encoded: [cond (arrow = '->) ['-> text!] | (encoded)]
         optional block!  ; headnote comment
-        optional issue!  ; GitHub issue number
+        optional rune!  ; GitHub issue number
         (
             let de: dehex encoded
             if de != decoded [

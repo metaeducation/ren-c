@@ -188,7 +188,7 @@ Option(Error*) Trap_Alias_Any_Word_As(
         return SUCCESS;
     }
 
-    if (as == TYPE_ISSUE) {  // immutable (note no EMAIL! or URL! possible)
+    if (as == TYPE_RUNE) {  // immutable (note no EMAIL! or URL! possible)
         const Symbol* s = Cell_Word_Symbol(word);
         if (Try_Init_Small_Utf8(  // invariant: fit in cell if it can
             out,

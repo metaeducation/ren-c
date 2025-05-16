@@ -145,7 +145,7 @@ DECLARE_NATIVE(READ)
 //      return: [port! block!]  ; !!! http write returns BLOCK!, why?
 //      destination [port! file! url! block!]
 //      data "Data to write (non-binary converts to UTF-8)"
-//          [blob! text! block! object! issue!]
+//          [blob! text! block! object! rune!]
 //      :part "Partial write a given number of units"
 //          [any-number?]
 //      :seek "Write at a specific position"

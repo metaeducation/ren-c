@@ -420,7 +420,7 @@ DECLARE_NATIVE(JOIN)
     else if (Is_Antiform(SPARE))
         return FAIL(Error_Bad_Antiform(SPARE));
 
-    if (Is_Issue(SPARE)) {  // do not delimit (unified w/char) [5]
+    if (Is_Rune(SPARE)) {  // do not delimit (unified w/char) [5]
         if (delimiter)
             Clear_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING);
         Copy_Cell(PUSH(), stable_SPARE);
@@ -579,7 +579,7 @@ DECLARE_NATIVE(JOIN)
     else if (Any_String_Type(heart)) {
         Init_Any_String(OUT, heart, Pop_Molded_String(mo));
     }
-    else if (heart == TYPE_ISSUE) {
+    else if (heart == TYPE_RUNE) {
         Init_Utf8_Non_String(OUT, heart, utf8, size, len);
     }
     else if (heart == TYPE_EMAIL) {
@@ -650,7 +650,7 @@ DECLARE_NATIVE(JOIN)
             memcpy(Binary_At(buf, used), data, size);
             break; }
 
-          case TYPE_ISSUE:
+          case TYPE_RUNE:
           case TYPE_TEXT:
           case TYPE_FILE:
           case TYPE_EMAIL:
@@ -1329,9 +1329,9 @@ DECLARE_NATIVE(UPPERCASE)
 //
 //  to-hex: native [
 //
-//  "Converts numeric value to a hex issue! datatype (with leading # and 0's)"
+//  "Converts numeric value to a hex rune! datatype (with leading # and 0's)"
 //
-//      return: [issue!]
+//      return: [rune!]
 //      value [integer! tuple!]
 //      :size "Specify number of hex digits in result"
 //          [integer!]
@@ -1379,7 +1379,7 @@ DECLARE_NATIVE(TO_HEX)
     // UTF-8 Everywhere unification of ANY-WORD? and ANY-STRING? is done.
     //
     assert(len == String_Size(mo->string) - mo->base.size);
-    if (not Try_Scan_Issue_To_Stack(Binary_At(mo->string, mo->base.size), len))
+    if (not Try_Scan_Rune_To_Stack(Binary_At(mo->string, mo->base.size), len))
         return PANIC(PARAM(VALUE));
 
     Move_Drop_Top_Stack_Element(OUT);

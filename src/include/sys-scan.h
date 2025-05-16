@@ -79,7 +79,7 @@ enum TokenEnum {
     TOKEN_FILE,
     TOKEN_EMAIL,
     TOKEN_URL,
-    TOKEN_ISSUE,
+    TOKEN_RUNE,
     TOKEN_TAG,
     TOKEN_PATH,  // only triggered in leading slash cases (/ // /foo /foo.bar)
     TOKEN_CONSTRUCT,

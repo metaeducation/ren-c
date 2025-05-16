@@ -582,7 +582,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
 //
 // 1. We first alias the BLOB's Binary data as a string (if possible).
 //    Then if further conversion is needed to an ANY-WORD? or non-string
-//    UTF-8 type (like ISSUE! or URL!), that subdispatches to the code
+//    UTF-8 type (like RUNE! or URL!), that subdispatches to the code
 //    that converts strings.
 //
 // 2. There's no way to pass AS options for narrowing the validation of the
@@ -925,7 +925,7 @@ IMPLEMENT_GENERIC(SIZE_OF, Is_Blob)
 //    of one character.
 //
 // 2. Zero bytes are illegal in strings, and it was deemed that #"" was
-//    better as an empty issue than as a conceptual "NUL codepoint".
+//    better as an empty rune than as a conceptual "NUL codepoint".
 //    But #{00} as NUL serves some of those purposes.
 //
 IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)

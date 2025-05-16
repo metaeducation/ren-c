@@ -20,24 +20,31 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// ISSUE! (to be renamed TOKEN!) merges historical Rebol's CHAR! and ISSUE!.
-// If possible, it will store encoded UTF-8 data entirely in a cell...saving
+// RUNE! merges two of Rebol's historical types: CHAR! and ISSUE!.  Due to
+// the merging, single codepoints can often be represented without delimiters:
+//
+//     >> second "abc"
+//     == #b  ; instead of #"b" CHAR! (not ISSUE!) in historical Rebol
+//
+// As with ISSUE!, multiple codepoint runes are legal.
+//
+// If possible, runes store encoded UTF-8 data entirely in a cell...saving
 // on allocations and improving locality.  In this system, a "character" is
 // simply a sigle-length token, which is translated to a codepoint using the
 // `CODEPOINT OF` operation, or by using FIRST on the token.
 //
-// TYPE_ISSUE has two forms: one with a separate node allocation and one that
+// TYPE_RUNE has two forms: one with a separate node allocation and one that
 // stores data where a node and index would be.  Stringlike_Has_Node()
 // is what discerns the two categories, and can only be treated as a string
-// when it has that flag.  Hence generically speaking, ISSUE! is not considered
+// when it has that flag.  Hence generically speaking, RUNE! is not considered
 // an ANY-SERIES? or ANY-STRING? type.
 //
 // However, there are UTF-8-based accessors VAL_UTF8_XXX which can be used to
-// polymorphically access const data across ANY-STRING?, ANY-WORD?, and ISSUE!
+// polymorphically access const data across ANY-STRING?, ANY-WORD?, and RUNE!
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * In addition to the encoded bytes of the UTF-8, a single-codepoint ISSUE!
+// * In addition to the encoded bytes of the UTF-8, a single-codepoint RUNE!
 //   will also cache that codepoint.  Hence a CHAR? cell has both the UTF-8
 //   representation and the codepoint on hand locally in the cell.
 //
@@ -53,10 +60,10 @@
 
 //=//// CELL REPRESENTATION OF NUL CODEPOINT (USES #{00} BLOB!) ///////////=//
 //
-// Ren-C's unification of chars and "ISSUE!" to a single immutable stringlike
+// Ren-C's unification of chars and "RUNE!" to a single immutable stringlike
 // type meant they could not physically contain a zero codepoint.
 //
-// It would be possible to declare the empty issue of #"" representing the
+// It would be possible to declare the empty rune of #"" representing the
 // NUL codepoint state.  But that would be odd, since inserting empty strings
 // into other strings is considered to be legal and not change the string.
 // saying that (insert "abc" #"") would generate an illegal-zero-byte error
@@ -96,7 +103,7 @@ INLINE bool IS_CHAR_CELL(const Cell* c) {
     if (Is_Cell_NUL(c))
         return true;
 
-    if (Heart_Of(c) != TYPE_ISSUE)
+    if (Heart_Of(c) != TYPE_RUNE)
         return false;
 
     if (Stringlike_Has_Node(c))
@@ -115,7 +122,7 @@ INLINE Codepoint Cell_Codepoint(const Cell* c) {  // must pass IS_CHAR_CELL()
     if (Is_Cell_NUL(c))
         return 0;
 
-    assert(Heart_Of(c) == TYPE_ISSUE);
+    assert(Heart_Of(c) == TYPE_RUNE);
     assert(not Stringlike_Has_Node(c));
 
     assert(c->extra.at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
@@ -177,7 +184,7 @@ INLINE Element* Init_Utf8_Non_String(
     Init_Utf8_Non_String((out), TYPE_URL, (utf8), (size), (len))
 
 #define Init_Issue(out,utf8,size,len) \
-    Init_Utf8_Non_String((out), TYPE_ISSUE, (utf8), (size), (len))
+    Init_Utf8_Non_String((out), TYPE_RUNE, (utf8), (size), (len))
 
 
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING?)
@@ -186,10 +193,10 @@ INLINE Element* Init_Utf8_Non_String(
 INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(ISSUE) | CELL_MASK_NO_NODES
+        FLAG_HEART(RUNE) | CELL_MASK_NO_NODES
     );
 
-    if (c == 0) {  // NUL is #{00}, a BLOB! not an ISSUE! (see Is_NUL())
+    if (c == 0) {  // NUL is #{00}, a BLOB! not an RUNE! (see Is_NUL())
         Copy_Cell(out, cast(const Element*, LIB(NUL)));
     }
     else {
@@ -199,7 +206,7 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
 
         out->extra.at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
         out->extra.at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
-        HEART_BYTE(out) = TYPE_ISSUE;  // heart is TEXT, presents as issue
+        HEART_BYTE(out) = TYPE_RUNE;  // heart is TEXT, presents as issue
     }
 
     assert(Cell_Codepoint(out) == c);
@@ -260,7 +267,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         size_out = &dummy_size;  // force size calculation for debug check
   #endif
 
-    if (not Stringlike_Has_Node(v)) {  // SIGIL!, some ISSUE!...
+    if (not Stringlike_Has_Node(v)) {  // SIGIL!, some RUNE!...
         assert(not Any_String_Type(Heart_Of(v)));
 
         REBLEN len;

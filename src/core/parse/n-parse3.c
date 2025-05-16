@@ -607,7 +607,7 @@ static REBIXO Parse_One_Rule(
             return END_FLAG; }
 
           case TYPE_TEXT:
-          case TYPE_ISSUE:
+          case TYPE_RUNE:
             break;  // all interpreted literally
 
           default:
@@ -649,7 +649,7 @@ static REBIXO Parse_One_Rule(
             Quotes_Of(rule) == 1  // '<a> will mold to "<a>"
             or (Quotes_Of(rule) == 0 and (
                 rule_heart == TYPE_TEXT
-                or rule_heart == TYPE_ISSUE
+                or rule_heart == TYPE_RUNE
                 or rule_heart == TYPE_BLOB
             ))
         ){
@@ -660,7 +660,7 @@ static REBIXO Parse_One_Rule(
                 Cell_Series_Len_Head(ARG(POSITION)),
                 rule,
                 (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH
-                    | (Is_Issue(rule) ? AM_FIND_CASE : 0),
+                    | (Is_Rune(rule) ? AM_FIND_CASE : 0),
                 1  // skip
             );
             if (index == NOT_FOUND)

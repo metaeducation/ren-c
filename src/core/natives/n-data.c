@@ -704,7 +704,7 @@ DECLARE_NATIVE(QUASI_WORD_Q)
 //
 //  char?: native:intrinsic [
 //
-//  "Test if an argument is an issue with one codepoint (or #{00} NUL blob)"
+//  "Test if an argument is a rune with one codepoint (or #{00} NUL blob)"
 //
 //      return: [logic?]
 //      element [<opt-out> element?]

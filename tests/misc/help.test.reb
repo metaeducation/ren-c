@@ -29,7 +29,7 @@
         if action? get w
             (compose:deep [assert [trash? help (w)]])
         else [
-            if not issue? get w [  ; "don't open web browser"
+            if not rune? get w [  ; "don't open web browser"
                 assert [trash? help (get w)]
             ]
         ]

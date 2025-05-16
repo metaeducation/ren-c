@@ -137,7 +137,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
         goto bad_sequence_item;
     }
 
-    if (h == TYPE_ISSUE) {
+    if (h == TYPE_RUNE) {
         if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform space (quasar)
             return SUCCESS;  // Legal, e.g. `~/home/Projects/ren-c/README.md`
 
@@ -275,7 +275,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
 //
 // !!! Since arrays use full cells for INTEGER! values, it would be more
 // optimal to allocate an immutable binary series for larger allocations.
-// This will likely be easy to reuse in an ISSUE!+CHAR! unification, so
+// This will likely be easy to reuse in an RUNE!+CHAR! unification, so
 // revisit this low-priority idea at that time.
 
 INLINE Element* Init_Any_Sequence_Bytes(

@@ -283,7 +283,7 @@ help: func [
 
         help "insert"  ; will find INSERT, INSERT-ITEMS, DO-INSERT, etc.
 
-    [ISSUE!] - Browse online topics with the given tag:
+    [RUNE!] - Browse online topics with the given tag:
 
         help #compiling
 
@@ -384,7 +384,7 @@ help: func [
             ]
         ]
 
-        issue! [  ; look up hashtag on web
+        rune! [  ; look up hashtag on web
             browse join https://r3n.github.io/topics/ as text! topic
             print newline
         ]

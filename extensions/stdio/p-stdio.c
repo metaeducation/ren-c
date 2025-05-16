@@ -259,7 +259,7 @@ Value* Read_Line(STD_TERM *t)
                 );
             }
         }
-        else if (rebUnboxLogic("issue? @", e)) {  // unrecognized key
+        else if (rebUnboxLogic("rune? @", e)) {  // unrecognized key
             //
             // When an unrecognized key is hit, people may want to know that
             // at least the keypress was received.  Or not.  For now, output

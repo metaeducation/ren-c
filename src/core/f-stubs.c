@@ -382,10 +382,10 @@ REBLEN Part_Len_May_Modify_Index(
     Value* series,  // ANY-SERIES? value whose index may be modified
     const Value* part  // :PART (number, position in value, or nulled cell)
 ){
-    assert(Is_Issue(series) or Any_Series(series));
+    assert(Is_Rune(series) or Any_Series(series));
 
     if (Is_Nulled(part)) {  // indicates :PART refinement unused
-        if (not Is_Issue(series))
+        if (not Is_Rune(series))
             return Cell_Series_Len_At(series);  // use plain length
 
         Size size;
@@ -395,14 +395,14 @@ REBLEN Part_Len_May_Modify_Index(
 
     // VAL_INDEX() checks to make sure it's for in-bounds
     //
-    REBLEN iseries = Is_Issue(series) ? 0 : VAL_INDEX(series);
+    REBLEN iseries = Is_Rune(series) ? 0 : VAL_INDEX(series);
 
     REBI64 len;
     if (Is_Integer(part) or Is_Decimal(part))
         len = Int32(part);  // may be positive or negative
     else {  // must be same series
         if (
-            Is_Issue(part)
+            Is_Rune(part)
             or Type_Of(series) != Type_Of(part)  // !!! allow AS aliases?
             or Cell_Flex(series) != Cell_Flex(part)
         ){
@@ -420,7 +420,7 @@ REBLEN Part_Len_May_Modify_Index(
             len = maxlen;
     }
     else {
-        if (Is_Issue(part))
+        if (Is_Rune(part))
             panic (Error_Invalid_Part_Raw(part));
 
         len = -len;
@@ -439,7 +439,7 @@ REBLEN Part_Len_May_Modify_Index(
     }
 
     assert(len >= 0);
-    if (not Is_Issue(series))
+    if (not Is_Rune(series))
         assert(Cell_Series_Len_Head(series) >= len);
     return len;
 }

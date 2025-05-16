@@ -3,7 +3,7 @@
 (space? _)
 (space? space)
 (not space? 1)
-(issue! = type of space)
+(rune! = type of space)
 
 (space = '_)
 

@@ -167,7 +167,7 @@ standard: make object! [  ; can't CONSTRUCT, dependency of MAKE on prior fields
     ; the BODY-OF the function is.
     ;
     ; The substitution location is hardcoded at index 7.  It does not "scan"
-    ; to find #BODY, just asserts the position is an ISSUE!.
+    ; to find #BODY, just asserts the position is an RUNE!.
 
     func-body: [
         /return: couple definitional-return/ binding of $return

@@ -162,7 +162,7 @@ REBINT Find_Max_Bit(const Value* val)
     case TYPE_FILE:
     case TYPE_EMAIL:
     case TYPE_URL:
-    case TYPE_ISSUE:
+    case TYPE_RUNE:
     case TYPE_TAG: {
         REBLEN len;
         Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, val);
@@ -290,7 +290,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
         return true;
     }
 
-    if (Is_Issue(val) or Any_String(val)) {
+    if (Is_Rune(val) or Any_String(val)) {
         REBLEN len;
         Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, val);
         for (; len > 0; --len) {
@@ -343,7 +343,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
                 Set_Bit(bset, c, set);
         }
         else switch (Type_Of(item)) {
-        case TYPE_ISSUE: {
+        case TYPE_RUNE: {
             if (not IS_CHAR(item)) {  // no special handling for hyphen
                 Set_Bits(bset, item, set);
                 break;
@@ -459,7 +459,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
 
         switch (Type_Of(item)) {
 
-        case TYPE_ISSUE: {
+        case TYPE_RUNE: {
             if (not IS_CHAR(item)) {
                 if (Check_Bits(bset, item, uncased))
                     return true;
@@ -518,7 +518,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
         case TYPE_EMAIL:
         case TYPE_URL:
         case TYPE_TAG:
-//      case TYPE_ISSUE:
+//      case TYPE_RUNE:
             if (Check_Bits(bset, item, uncased))
                 return true;
             break;

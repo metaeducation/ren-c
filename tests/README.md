@@ -60,7 +60,7 @@ The test file format was originally designed by Carl Sassenrath to be Rebol comp
 
 The Ren-C project has modified the original block test format by Carl to
 support grouped tests. Test groups are encoded as BLOCK! while individual
-tests are encoded as GROUP!. References to issues (bugs) are encoded as ISSUE!
+tests are encoded as GROUP!. References to issues (bugs) are encoded as RUNE!
 within the test group's BLOCK!. Here is a sample of parse tests, note that the
 grouped test here only contains one test vector:
 

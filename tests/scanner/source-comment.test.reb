@@ -4,10 +4,10 @@
 ; comments is that a comment must have space between it and another token,
 ; otherwise the semicolon is considered part of the token:
 ;
-;     >> #; ; comment after a one-codepoint issue for `;`
+;     >> #; ; comment after a one-codepoint rune for `;`
 ;     == #;
 ;
-;     >> # ; comment after a zero-codepoint issue
+;     >> # ; comment after a zero-codepoint rune
 ;     == #
 ;
 ;     >> 'a ; comment after a quoted word
@@ -19,20 +19,20 @@
 ; This differs from Rebol2 and Red.
 
 (
-    issue: transcode:one "#; ; comment after a one-codepoint issue"
+    rune: transcode:one "#; ; comment after a one-codepoint rune"
     all [
-        issue? issue
-        1 = length of issue
-        59 = codepoint of issue
-        ";" = to text! issue
+        rune? rune
+        1 = length of rune
+        59 = codepoint of rune
+        ";" = to text! rune
     ]
 )(
-    issue: transcode:one "# ; comment after a zero-codepoint issue"
+    rune: transcode:one "# ; comment after a zero-codepoint rune"
     all [
-        issue? issue
-        1 = length of issue
-        32 = codepoint of issue
-        " " = to text! issue
+        rune? rune
+        1 = length of rune
+        32 = codepoint of rune
+        " " = to text! rune
     ]
 )
 

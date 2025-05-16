@@ -90,7 +90,7 @@
 
         "/a/, b."  ->  [_ a _] , (b _)
 
-        === ISSUE TESTS ===
+        === RUNE TESTS ===
 
         "/#a"  ->  [_ #a]
 

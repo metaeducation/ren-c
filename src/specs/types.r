@@ -114,16 +114,16 @@ blob        "series of bytes"
 </ANY-STRING?>
 
 url         "uniform resource locator or identifier"
-            (:node1)  ; may or may not embed data in issue vs. use node
+            (:node1)  ; may or may not embed data in url vs. use node
             [any-utf8? any-inert?]
 
 email       "email address"
-            (:node1)  ; may or may not embed data in issue vs. use node
+            (:node1)  ; may or may not embed data in email vs. use node
             [any-utf8? any-inert?]
 
-issue       "immutable codepoint or codepoint sequence"
+rune        "immutable codepoint or codepoint sequence"
 ~trash~     "state held by unset variables, can't be passed as normal argument"
-            (:node1)  ; may or may not embed data in issue vs. use node
+            (:node1)  ; may or may not embed data in rune vs. use node
             [any-utf8? any-inert? any-sequencable?]
 
 money       "digits and decimal points as a string, preserved precisely"

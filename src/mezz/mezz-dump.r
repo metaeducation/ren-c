@@ -66,7 +66,7 @@ bind construct [
                 print [@(setify item) val-to-text get:groups:any item]
             ]
 
-            issue! [
+            rune! [
                 enablements.(prefix): item
             ]
 
@@ -140,12 +140,12 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
     return: [action!]
     @(name) [set-word?]
     @(value) "If issue, create non-specialized dumper...#on or #off by default"
-        [issue! text! integer! word! set-word? set-tuple? group! block!]
+        [rune! text! integer! word! set-word? set-tuple? group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
         [<undo-opt> any-value? <variadic>]
 ][
     let d
-    if issue? value [
+    if rune? value [
         /d: specialize dump-to-newline/ [prefix: as text! unchain name]
         if value <> #off [d #on]  ; note: d hard quotes its argument
     ] else [

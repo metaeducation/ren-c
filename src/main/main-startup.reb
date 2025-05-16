@@ -229,12 +229,12 @@ bind construct [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
         return: []
-        item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
-            [block! issue! text!]
+        item "RUNE! directive, TEXT! comment, (<*> composed) code BLOCK!"
+            [block! rune! text!]
         <with> instruction
     ][
         switch:type item [
-            issue! [
+            rune! [
                 if not empty? instruction [append:line instruction ',]
                 insert instruction item
             ]

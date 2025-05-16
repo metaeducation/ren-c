@@ -115,7 +115,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case TYPE_EMAIL:
       case TYPE_URL:
-      case TYPE_ISSUE: {
+      case TYPE_RUNE: {
         if (Stringlike_Has_Node(v)) {
             const Flex* f = Cell_String(v);
             assert(Is_Flex_Frozen(f));

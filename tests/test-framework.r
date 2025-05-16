@@ -151,13 +151,13 @@ run-test-cluster: func [
     ;
     parse cluster [while not <end> [
         ;
-        ; !!! Skip any ISSUE! or URL!, as this style has been used:
+        ; !!! Skip any RUNE! or URL!, as this style has been used:
         ;
         ;     [#123 http://example.com (
         ;        2 = 1 + 1
         ;     )]
         ;
-        opt some [url! | issue!]
+        opt some [url! | rune!]
 
         let expected-id: (~)
         (expected-id: null)  ; default expects a true result, not error w/id

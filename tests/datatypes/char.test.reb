@@ -1,14 +1,14 @@
 ; datatypes/char.r
-(issue! = type of #"a")
+(rune! = type of #"a")
 
 (char? #"a")
 (char? #a)
 (not char? 1)
 (not char? #aa)
 
-; Only length 1 issues should register as CHAR?
+; Only length 1 runes should register as CHAR?
 (
-    for-each [issue length size] [
+    for-each [rune length size] [
         #b 1 1
         #à 1 2
         #漢 1 3
@@ -20,10 +20,10 @@
 
         #12345678901234567890 20 20  ; longer than fits in cell
     ][
-        assert [length = length of issue]
-        assert [size = size of issue]
-        assert [(char? issue) = (1 = length of issue)]
-        assert [issue = copy issue]
+        assert [length = length of rune]
+        assert [size = size of rune]
+        assert [(char? rune) = (1 = length of rune)]
+        assert [rune = copy rune]
     ]
     ok
 )

@@ -87,13 +87,13 @@ DECLARE_NATIVE(WRITE_STDOUT)
 //    a very long write can be canceled with this.
 //
 // 3. We want to make the chunking in [2] easier by having a position in the
-//    cell, but ISSUE! has no position.  Alias it as a read-only TEXT!
+//    cell, but RUNE! has no position.  Alias it as a read-only TEXT!
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
     Value* v = ARG(VALUE);
 
-    if (Is_Issue(v)) {  // [3]
+    if (Is_Rune(v)) {  // [3]
         Value *alias = rebValue("as text!", v);
         Copy_Cell(v, alias);
         rebRelease(alias);
@@ -446,7 +446,7 @@ DECLARE_NATIVE(READ_CHAR)
             goto retry;
         }
 
-        if (rebUnboxLogic("issue? @", e)) {  // unrecognized key
+        if (rebUnboxLogic("rune? @", e)) {  // unrecognized key
             if (raw)
                 return e;
 

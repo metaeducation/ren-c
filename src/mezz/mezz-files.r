@@ -213,7 +213,7 @@ ask: func [
         panic ~<unreachable>~
     ]
 
-    if type = issue! [
+    if type = rune! [
         return read-char stdin  ; won't work buffered [1]
     ]
 

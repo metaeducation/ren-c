@@ -575,7 +575,7 @@ typedef union { //=///////////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //
     REBDEC dec;
 
-    // Small ISSUE!s which can fit entirely inside a cell use this space to
+    // Small RUNE!s which can fit entirely inside a cell use this space to
     // store their UTF-8 data.  It's at least 8 bytes on 32-bit platforms,
     // but 16 bytes on 64-bit.
     //

@@ -744,12 +744,12 @@ Bounce Meta_Stepper_Executor(Level* L)
     return PANIC("Don't know what ^FENCE! is going to do yet");
 
 
-} case TYPE_ISSUE: { //// LIFTED ISSUE! /////////////////////////////////////
+} case TYPE_RUNE: { //// LIFTED RUNE! /////////////////////////////////////
 
     if (Is_Sigil(CURRENT, SIGIL_LIFT))
         goto handle_action_approval_sigil;  // special handling for lone ^
 
-    return PANIC("Don't know what ^ISSUE! is going to do yet (besides ^)");
+    return PANIC("Don't know what ^RUNE! is going to do yet (besides ^)");
 
 } handle_action_approval_sigil: {  //// "APPROVE" Lifted Space Sigil (^) /////
 
@@ -1836,7 +1836,7 @@ for (; check != tail; ++check) {  // push variables
   case TYPE_EMAIL:
   case TYPE_URL:
   case TYPE_TAG:
-  case TYPE_ISSUE:
+  case TYPE_RUNE:
   case TYPE_BITSET:
   case TYPE_MAP:
   case TYPE_VARARGS:

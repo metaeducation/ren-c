@@ -299,7 +299,7 @@ static void Reverse_String(String* str, REBLEN index, Length len)
 }
 
 
-// 1. IMPLEMENT_GENERIC(MAKE, Is_Issue) calls GENERIC_CFUNC(MAKE, Any_String)
+// 1. IMPLEMENT_GENERIC(MAKE, Is_Rune) calls GENERIC_CFUNC(MAKE, Any_String)
 //    in its implementation.
 //
 // 2. !!! We can't really know how many bytes to allocate for a certain
@@ -312,7 +312,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
     INCLUDE_PARAMS_OF_MAKE;
 
     Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
-    assert(Any_String_Type(heart) or Any_Utf8_Type(heart));  // issue calls [1]
+    assert(Any_String_Type(heart) or Any_Utf8_Type(heart));  // rune calls [1]
 
     Element* def = Element_ARG(DEF);
 
@@ -756,7 +756,7 @@ bool Try_Get_Series_Index_From_Picker(
 }
 
 
-// 1. When things like ISSUE! or URL! have a node, their considerations are
+// 1. When things like RUNE! or URL! have a node, their considerations are
 //    not different from strings.  Their cell format has room for an index,
 //    and that index is valid.  The special case of TO conversions is written
 //    here so that non-node-having entities work.

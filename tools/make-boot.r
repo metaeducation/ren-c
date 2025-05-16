@@ -213,7 +213,7 @@ add-sym:placeholder </MAX_SYM_TYPESETS>
 
 for-each 'term load3 %lib-words.r [
     case [
-        issue? term [
+        rune? term [
             term: as word! term
             if not add-sym:relax term [  ; returns POS if already present
                 panic ["Expected symbol for" term "from [native type]"]
@@ -308,7 +308,7 @@ add-sym:placeholder </MAX_SYM_BUILTIN_TYPES>
 for-each 'item load3 %symbols.r [
     switch type of item [
         word! [add-sym item]
-        issue! [
+        rune! [
             if not find sym-table as text! item [
                 panic ["Expected symbol for" item "from [native type]"]
             ]
@@ -591,7 +591,7 @@ for-each 'item load3 %ext-words.r [
         block! [  ; will someday define reserved groups
             add-sym:placeholder item
         ]
-        issue! [
+        rune! [
             if not find sym-table as text! item [
                 panic ["Expected symbol for" item "from [native type]"]
             ]

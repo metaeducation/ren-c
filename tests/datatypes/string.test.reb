@@ -169,7 +169,7 @@
 
 
 [#207
-    ~bad-cast~ !! (as issue! 0)
+    ~bad-cast~ !! (as rune! 0)
 ]
 
 [#2280 (  ; Byte-Order-Mark ("BOM") deprecated in UTF-8, don't hide it

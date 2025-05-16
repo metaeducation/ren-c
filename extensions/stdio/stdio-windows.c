@@ -221,7 +221,7 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
 //
 void Write_IO(const Value* data, REBLEN len)
 {
-    assert(Is_Blob(data) or Is_Text(data) or Is_Issue(data));
+    assert(Is_Blob(data) or Is_Text(data) or Is_Rune(data));
 
     if (Stdout_Handle == nullptr)
         return;

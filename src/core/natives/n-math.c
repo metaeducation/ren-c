@@ -74,7 +74,7 @@ DECLARE_NATIVE(ADD)
 // 1. See comments on Is_NUL() about #{00} as a NUL? state for the CHAR? type
 //    constraint.  We preserve (NUL + 65) -> #A and (#A - NUL) -> 0 partially
 //    because they were in the tests, but also because it may find use in
-//    generalized code.  But we don't dispatch to BLOB! or ISSUE! to handle
+//    generalized code.  But we don't dispatch to BLOB! or RUNE! to handle
 //    SYM_ADD for this case, instead localizing it here so it's easier to
 //    reason about or delete.
 {
@@ -431,7 +431,7 @@ DECLARE_NATIVE(RANDOM_PICK)
 // most types it can easily be implemented based on RANDOM + LENGTH_OF + PICK.
 // The choice to have specialized implementations for ANY-LIST? and BLOB?
 // and ANY-STRING? are mostly based on history.  However there was no code
-// for ISSUE!, and the details of cells that don't have nodes make it such
+// for RUNE!, and the details of cells that don't have nodes make it such
 // that it makes more sense to avoid the pitfallls of reimplementing all that.
 //
 // It may be that the RANDOM_PICK specializations should be deleted where

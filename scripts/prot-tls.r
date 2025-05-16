@@ -394,7 +394,7 @@ bind construct [
 === PROTOCOL STATE (MODE) HANDLING ===
 
 ; The legal state transitions for the TLS protocol are defined by a light
-; dialect that is easily validated and transformed into a MAP!.  ISSUE!
+; dialect that is easily validated and transformed into a MAP!.  RUNE!
 ; represents a state that can be final, and a TAG! represents a state that may
 ; move to the competed state.
 
@@ -406,7 +406,7 @@ make-state-updater: func [
     <local> transitions state-rule left right
 ][
     transitions: to map! []  ; transformed dialect that always maps to BLOCK!
-    state-rule: [tag! | issue!]
+    state-rule: [tag! | rune!]
     parse transdialect [
         some [
             left: state-rule '-> right: [
@@ -420,9 +420,9 @@ make-state-updater: func [
     return func [
         return: []  ; !!! Should it have a return?
         ctx [object!]
-        new [tag! issue!]
+        new [tag! rune!]
     ][
-        let old: ensure [null? issue! tag!] ctx.mode
+        let old: ensure [null? rune! tag!] ctx.mode
         debug [mold old unspaced ["=" direction "=>"] mold new]
 
         let legal
@@ -1724,7 +1724,7 @@ tls-read-data: func [
 
         data: skip data len
 
-        all [tail? data, issue? ctx.mode] then [
+        all [tail? data, rune? ctx.mode] then [
             debug [
                 "READING FINISHED"
                 length of head of ctx.data-buffer
@@ -1884,7 +1884,7 @@ sys.util/make-scheme [
 
                 key-method: accessor does [first find suite tag?/]
 
-                hashspec: accessor does [find suite issue?/]
+                hashspec: accessor does [find suite rune?/]
                 hash-method: accessor does [to word! first hashspec]
                 hash-size: accessor does [
                     select (ensure block! second hashspec) 'size

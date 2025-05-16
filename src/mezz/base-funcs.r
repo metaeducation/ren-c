@@ -439,7 +439,7 @@ count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
     return: [any-atom?]
     var [word!]
-    limit [<opt-out> integer! issue!]
+    limit [<opt-out> integer! rune!]
     body [block!]
     <local> start end ^result
 ][
@@ -451,7 +451,7 @@ count-up: func [
     ; native code.
 
     start: 1
-    end: if issue? limit [
+    end: if rune? limit [
         if limit <> # [panic]
         100  ; not forever...don't use max int to help test "pseudoforever"
     ] else [

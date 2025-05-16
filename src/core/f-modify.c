@@ -317,7 +317,7 @@ REBLEN Modify_String_Or_Binary(
 
     Byte src_byte;  // only used by BLOB! (mold buffer is UTF-8 legal)
 
-    if (Is_Issue(src)) {  // characters store their encoding in their payload
+    if (Is_Rune(src)) {  // characters store their encoding in their payload
         //
         // !!! We pass in UNLIMITED for the limit of how long the input is
         // because currently :PART speaks in terms of the destination series.
@@ -346,7 +346,7 @@ REBLEN Modify_String_Or_Binary(
         Any_String(src)
         and not Is_Tag(src)  // tags need `<` and `>` to render
     ){
-        // !!! Branch is very similar to the one for ISSUE! above (merge?)
+        // !!! Branch is very similar to the one for RUNE! above (merge?)
 
         // If Source == Destination we must prevent possible conflicts in
         // the memory regions being moved.  Clone the Flex just to be safe.

@@ -403,7 +403,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
     const Byte* data;
     Size size;
 
-    if (Is_Text(value) or Is_Issue(value)) {
+    if (Is_Text(value) or Is_Rune(value)) {
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At_Limit(
             nullptr,
             &size,
@@ -426,7 +426,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
     }
     else {
         if (not Is_Blob(value))
-            return rebValue("make warning! {ISSUE!, TEXT!, BLOB! for WRITE}");
+            return rebValue("make warning! {RUNE!, TEXT!, BLOB! for WRITE}");
 
         data = Cell_Blob_At(value);
         size = limit;

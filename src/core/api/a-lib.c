@@ -1682,7 +1682,7 @@ intptr_t API_rebUnbox(
       case TYPE_INTEGER:
         return VAL_INT64(v);
 
-      case TYPE_ISSUE:
+      case TYPE_RUNE:
         return Cell_Codepoint(v);
 
       default:
@@ -2190,7 +2190,7 @@ static size_t Bytes_Into(
             return size;
         }
 
-        assert(Is_Issue(v));
+        assert(Is_Rune(v));
         assert(not Stringlike_Has_Node(v));
         assert(v->extra.at_least_4[IDX_EXTRA_LEN] == 1);
 

@@ -767,7 +767,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
 }
 
 
-// This does a scan of a UTF-8 item like a FILE! or an ISSUE!, when it's not
+// This does a scan of a UTF-8 item like a FILE! or an RUNE!, when it's not
 // enclosed in quotes.  This means it's terminated by delimiters--such as a
 // space or a closing bracket, parentheses, or brace.  However, we want things
 // like %(get $dir)/foo.bar to be legal, and since we're aiming to put code
@@ -792,7 +792,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
     if (token == TOKEN_FILE)  // percent-encoded historically :-/
         invalids = cb_cast(":;\"");
     else {
-        assert(token == TOKEN_ISSUE);
+        assert(token == TOKEN_RUNE);
         invalids = nullptr;
     }
 
@@ -1580,7 +1580,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             Has_Lex_Flag(flags, LEX_SPECIAL_AT)  // @ anywhere but at the head
             and *cp != '<'  // want <foo="@"> to be a TAG!, not an EMAIL!
             and *cp != '\''  // want '@foo to be a ... ?
-            and *cp != '#'  // want #@ to be an ISSUE! (charlike)
+            and *cp != '#'  // want #@ to be an RUNE! (charlike)
         ){
             if (*cp == '@')  // consider `@a@b`, `@@`, etc. ambiguous
                 return Error_Syntax(S, TOKEN_EMAIL);
@@ -1609,8 +1609,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
             token = TOKEN_FILE;
 
-          issue_or_file_token: {  // issue jumps here, should set `token`
-            assert(token == TOKEN_FILE or token == TOKEN_ISSUE);
+          rune_or_file_token: {  // rune jumps here, should set `token`
+            assert(token == TOKEN_FILE or token == TOKEN_RUNE);
 
             if (*cp == ';') {
                 //
@@ -1744,8 +1744,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 //
                 return Error_Missing(S, '}');
             }
-            token = TOKEN_ISSUE;
-            goto issue_or_file_token;  // different policies on / : .
+            token = TOKEN_RUNE;
+            goto rune_or_file_token;  // different policies on / : .
 
           case LEX_SPECIAL_DOLLAR:
             if (
@@ -2350,14 +2350,14 @@ Bounce Scanner_Executor(Level* const L) {
         Init_Word(PUSH(), Intern_UTF8_Managed(S->begin, len));
         break;  // don't apply sigils yet (^a.b puts sigil on TUPLE!, not a)
 
-      case TOKEN_ISSUE: {
+      case TOKEN_RUNE: {
         Size mold_size = String_Size(mo->string) - mo->base.size;
         Length mold_len = String_Len(mo->string) - mo->base.index;
         Utf8(const*) utf8 = Binary_At(mo->string, mo->base.size);
 
         if (mold_size == 0) {
             assert(mold_len == 0);
-            Init_Space(PUSH());  // !!! can't discern #"", for now
+            Init_Char_Unchecked(PUSH(), '#');
         }
         else  // small strings fit in cell
             Init_Issue(PUSH(), utf8, mold_size, mold_len);
@@ -2596,7 +2596,7 @@ Bounce Scanner_Executor(Level* const L) {
         transcode->at = S->end;  // consume extended token
         break; }
 
-      case TOKEN_CHAR: {  // now just "issue enclosed in quotes"
+      case TOKEN_CHAR: {  // now just "rune enclosed in quotes"
         Init_Issue(
             PUSH(),
             cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
@@ -2622,6 +2622,11 @@ Bounce Scanner_Executor(Level* const L) {
         break;
 
       case TOKEN_FILE: {
+        if (mo->base.size == String_Size(mo->string)) {  // % is WORD!
+            Init_Word(PUSH(), Intern_UTF8_Managed(cb_cast("%"), 1));
+            Drop_Mold(mo);
+            break;
+        }
         String* s = Pop_Molded_String(mo);
         Init_File(PUSH(), s);
         break; }
@@ -3458,9 +3463,9 @@ DECLARE_NATIVE(TRANSCODE)
 
 
 //
-//  Try_Scan_Issue_To_Stack: C
+//  Try_Scan_Rune_To_Stack: C
 //
-// Scan an issue word, allowing special characters.
+// Scan a #rune, allowing special characters.
 // Returning null should trigger an error in the caller.
 //
 // Passed in buffer and size does not count the leading `#` so that the code
@@ -3469,11 +3474,11 @@ DECLARE_NATIVE(TRANSCODE)
 // !!! Since this follows the same rules as FILE!, the code should merge,
 // though FILE! will make mutable strings and not have in-cell optimization.
 //
-Option(const Byte*) Try_Scan_Issue_To_Stack(const Byte* cp, Size size)
+Option(const Byte*) Try_Scan_Rune_To_Stack(const Byte* cp, Size size)
 {
     const Byte* bp = cp;
 
-    // !!! ISSUE! loading should use the same escaping as FILE!, and have a
+    // !!! RUNE! loading should use the same escaping as FILE!, and have a
     // pre-counted mold buffer, with UTF-8 validation done on the prescan.
     //
     REBLEN len = 0;

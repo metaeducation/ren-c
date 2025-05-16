@@ -261,7 +261,7 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         return Init_Any_List(OUT, to, a);
     }
 
-    if (Any_String_Type(to) or to == TYPE_ISSUE) {
+    if (Any_String_Type(to) or to == TYPE_RUNE) {
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
         Mold_Element(mo, Cell_Pair_First(v));
