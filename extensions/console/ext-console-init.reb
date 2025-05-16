@@ -370,8 +370,8 @@ bind construct [
     ; %console-skin.reb if in system.options.resources
 
     let skin-file: case [
-        file? skin [skin]
-        object? skin [null]
+        file? opt skin [skin]
+        object? opt skin [null]
     ] else [%console-skin.reb]
 
     loud-print "Starting console..."
@@ -682,7 +682,7 @@ console*: func [
         ; a chance to be initialized (it may *never* be initialized if the
         ; interpreter is being called non-interactively from the shell).
         ;
-        if object? system.console [
+        if object? opt system.console [
             emit [system.console/print-error (<*> result)]
         ] else [
             emit [print [(<*> form result)]]

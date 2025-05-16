@@ -43,7 +43,7 @@
 //
 //      return: "Whether the type matched"
 //          [logic?]
-//      value "Value to test"
+//      ^value "Value to test"
 //      :type "Test a concrete type, (integer?:type integer!) passes"
 //      :quoted
 //      :tied
@@ -75,19 +75,26 @@ Bounce Typechecker_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
 
-    Option(Type) type;
+    if (Is_Meta_Of_Void(meta))
+        return LOGIC(false);  // opt-out of the typecheck (null fails)
+
     Details* details;
-
-    if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        type = Type_Of(v);
+    if (Get_Level_Flag(L, DISPATCHING_INTRINSIC))
         details = Ensure_Cell_Frame_Details(SCRATCH);
-    }
-    else {
+    else
+        details = Ensure_Level_Details(L);
+    assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
+
+    DECLARE_ATOM (temp);  // can't overwrite scratch if error can be raised
+    Copy_Cell(temp, meta);
+    Meta_Unquotify_Undecayed(temp);
+    Value* v = Decay_If_Unstable(temp);
+
+    Option(Type) type = Type_Of(v);
+
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         INCLUDE_PARAMS_OF_TYPECHECKER_ARCHETYPE;
 
         bool check_datatype = Bool_ARG(TYPE);
@@ -140,18 +147,29 @@ Bounce Typechecker_Dispatcher(Level* const L)
                 type = Heart_Of(v);
             }
         }
+    }
 
-        details = Ensure_Level_Details(L);
+    TypesetByte typeset_byte = VAL_UINT8(
+        Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
+    );
+
+    if (Is_Trash(v) and typeset_byte != u_cast(Byte, TYPE_TRASH))
+        return PANIC("trash! antiforms can't be typechecked");
+
+    if (
+        Is_Nulled(v) and (
+            typeset_byte != u_cast(Byte, TYPE_KEYWORD)
+            and typeset_byte != u_cast(Byte, TYPE_TRASH)
+        )
+    ){
+        return PANIC(
+            "NULL antiforms have limited typechecking (e.g. KEYWORD?, TRASH?)"
+        );
     }
 
     if (not type)  // not a built-in type, no typechecks apply
         return LOGIC(false);
 
-    assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
-
-    TypesetByte typeset_byte = VAL_UINT8(
-        Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
-    );
     return LOGIC(Builtin_Typeset_Check(typeset_byte, unwrap type));
 }
 
@@ -211,7 +229,7 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     DECLARE_ELEMENT (spec);  // simple spec [2]
     Source* spec_array = Make_Source_Managed(6);
     Set_Flex_Len(spec_array, 6);
-    Init_Word(Array_At(spec_array, 0), CANON(VALUE));
+    Liftify(Init_Word(Array_At(spec_array, 0), CANON(VALUE)));
     Init_Get_Word(Array_At(spec_array, 1), CANON(TYPE));
     Init_Get_Word(Array_At(spec_array, 2), CANON(QUOTED));
     Init_Get_Word(Array_At(spec_array, 3), CANON(TIED));

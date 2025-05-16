@@ -403,12 +403,12 @@ Option(Error*) Trap_Make_Interpreted_Action(
 //
 //  function: native [
 //
-//  "Defines an ACTION! with given spec and body"
+//  "Generates an ACTION! with RETURN capability"
 //
 //      return: [action!]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
-//      body "Code implementing the function--use RETURN to yield a result"
+//      body "Code implementing function (if no RETURN, evaluates to TRASH!)"
 //          [block!]
 //  ]
 //

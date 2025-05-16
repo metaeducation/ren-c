@@ -186,7 +186,7 @@ module: func [
         ]
     )
 
-    if object? mixin [body: bind mixin body]
+    if object? opt mixin [body: bind mixin body]
 
     trap [  ; !!! currently `then x -> [...] except e -> [...]` is broken
         catch* 'quit [  ; fill in definitional QUIT slot in module [4]

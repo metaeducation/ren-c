@@ -763,10 +763,7 @@ bind construct [
     ;
     ;     r3 --do "eval %script1.reb" --do "eval %script2.reb"
     ;
-    any [
-        file? o.script
-        url? o.script
-    ] then [
+    if match [file! url!] opt o.script [
         emit [
             (do:args (<*> o.script) (<*> script-args)) except e -> [
                 quit e.exit-code

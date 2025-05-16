@@ -1267,37 +1267,6 @@ DECLARE_NATIVE(BLANK_Q)
 
 
 //
-//  trash?: native:intrinsic [
-//
-//  "Is argument antiform space (the state used to indicate an unset variable)"
-//
-//      return: [logic?]
-//      ^value [any-value?]  ; must be ^META
-//  ]
-//
-DECLARE_NATIVE(TRASH_Q)
-//
-// 1. Antiform blanks are considered to be unspecialized slots, as they are
-//    what is used to fill arguments in MAKE FRAME!.  So if you try to invoke
-//    a frame with TRASH in slots, that gives an "unspecified parameter"
-//    error.  It could have been that MAKE FRAME! gave you antiform parameters
-//    in unused slots, but that was "cluttered" and the empty slots would not
-//    work with DEFAULT or other functions that tried to detect emptiness.
-{
-    INCLUDE_PARAMS_OF_TRASH_Q;
-
-    DECLARE_ELEMENT (meta);
-    Option(Bounce) bounce = Trap_Bounce_Meta_Decay_Value_Intrinsic(
-        meta, LEVEL
-    );
-    if (bounce)
-        return unwrap bounce;
-
-    return LOGIC(Is_Meta_Of_Trash(meta));
-}
-
-
-//
 //  trash: native [  ; native:intrinsic currently needs at least 1 argument
 //
 //  "Returns antiform SPACE (aka TRASH)"
@@ -1310,35 +1279,6 @@ DECLARE_NATIVE(TRASH)
     INCLUDE_PARAMS_OF_TRASH;
 
     return Init_Trash(OUT);
-}
-
-
-//
-//  not-trash?: native:intrinsic [
-//
-//  "Tells you if the argument is not antiform issue (SPACE or a message)"
-//
-//      return: [logic?]
-//      ^value [any-value?]
-//  ]
-//
-DECLARE_NATIVE(NOT_TRASH_Q)
-//
-// See notes on TRASH?  This is useful because comparisons in particular do
-// not allow you to compare against TRASH.
-//
-//   https://forum.rebol.info/t/2068
-{
-    INCLUDE_PARAMS_OF_NOT_TRASH_Q;
-
-    DECLARE_ELEMENT (meta);
-    Option(Bounce) bounce = Trap_Bounce_Meta_Decay_Value_Intrinsic(
-        meta, LEVEL
-    );
-    if (bounce)
-        return unwrap bounce;
-
-    return LOGIC(not Is_Meta_Of_Trash(meta));
 }
 
 

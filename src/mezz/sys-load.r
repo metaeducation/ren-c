@@ -159,7 +159,8 @@ bind construct [
 
     let end
     all [
-        integer? let tmp: select hdr 'length
+        let tmp: select hdr 'length
+        integer? tmp
         elide end: skip rest tmp
     ] else [
         end: tail of data
@@ -283,7 +284,7 @@ load: func [
 
     [header data line]: load-header:file data file except e -> [return fail e]
 
-    if word? header [cause-error 'syntax header source]
+    if word? opt header [cause-error 'syntax header source]
 
     ensure [null? object!] header
     ensure [blob! block! text!] data
