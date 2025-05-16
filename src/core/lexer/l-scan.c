@@ -3380,13 +3380,12 @@ DECLARE_NATIVE(TRANSCODE)
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    if (Bool_ARG(NEXT)) {
-        if (TOP_INDEX == STACK_BASE)
-            Init_Nulled(OUT);
-        else {
-            assert(TOP_INDEX == STACK_BASE + 1);
-            Move_Drop_Top_Stack_Element(OUT);
-        }
+    if (TOP_INDEX == STACK_BASE) {  // (transcode "") is null, not []
+        Init_Nulled(OUT);
+    }
+    else if (Bool_ARG(NEXT)) {
+        assert(TOP_INDEX == STACK_BASE + 1);
+        Move_Drop_Top_Stack_Element(OUT);
     }
     else {
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
@@ -3408,13 +3407,13 @@ DECLARE_NATIVE(TRANSCODE)
             return THROWN;
     }
 
-    if (not Bool_ARG(NEXT)) {
-        assert(Is_Block(OUT));  // should be single block result
-        return OUT;
-    }
-
     if (Is_Nulled(OUT))  // no more Elements were left to transcode
         return nullptr;  // must return pure null for THEN/ELSE to work right
+
+    if (not Bool_ARG(NEXT)) {
+        assert(Is_Block(OUT));
+        return OUT;  // single block result
+    }
 
     // Return the input BLOB! or TEXT! advanced by how much the transcode
     // operation consumed.

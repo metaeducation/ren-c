@@ -132,6 +132,13 @@ export console!: make object! [
             return ~
         ]
 
+        === GHOSTS! ===
+
+        if ghost? ^v [
+            print unspaced [result _ "~,~" _ _ ";" _ "anti (ghost)"]
+            return ~
+        ]
+
         === UNPACK FIRST VALUE IN "PACKS" ===
 
         ; Block antiforms represent multiple returns.  Only the first output
@@ -822,6 +829,15 @@ console*: func [
         ; on a new line cannot legally close ATM
         ;
         emit [system.console/print-error (<*> error)]
+        return <prompt>
+    ]
+
+    ; If the transcode returned null, then it was like (transcode "") or
+    ; transcode "; some comment" - rather than have the console print out
+    ; a note that evaluated to GHOST!, we just cycle the prompt.  This is
+    ; more pleasing if you just hit enter to see if the console is responding.
+    ;
+    if not code [
         return <prompt>
     ]
 

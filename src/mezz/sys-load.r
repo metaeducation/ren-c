@@ -296,6 +296,9 @@ load: func [
         data: (transcode:file:line data file $line) except e -> [
             return fail e
         ]
+        if not data [  ; completely empty file e.g. (load "Rebol []")
+            data: copy []  ; allow it in this case
+        ]
     ]
 
     ; !!! Once this would bind code to user context, now we're thinking of
