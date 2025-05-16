@@ -147,12 +147,12 @@
         ]
     ]
 
-    a': b: c': d: e: ~
+    a: b: c: d: e: ~
 
     /g: e-generator [
-        a': ^ yield done
+        ^a: yield done
         b: yield 1
-        c': ^ yield done
+        ^c: yield done
         d: yield null  ; rigged to terminate the generator
         e: yield <unreachable>
     ]
@@ -164,9 +164,9 @@
         g = null
         g = null
 
-        done? unmeta a'
+        done? ^a
         b = 1
-        done? unmeta c'
+        done? ^c
         unset? $d
         unset? $e
     ]

@@ -873,14 +873,6 @@ bool Set_Var_Core_Updater_Throws(
     possibly(spare == steps_out or var == steps_out);
     assert(spare != poke and var != poke);
 
-    Option(const Value*) setval;
-    if (Is_Void(poke))
-        setval = nullptr;
-    else if (Is_Error(poke))  // for now, skip assign
-        return false;
-    else
-        setval = Decay_If_Unstable(poke);
-
     DECLARE_ATOM (temp);
 
     if (Any_Word(var)) {
@@ -892,18 +884,28 @@ bool Set_Var_Core_Updater_Throws(
             // Shortcut past POKE for WORD! (though this subverts hijacking,
             // review that case.)
             //
-            if (not setval)
-                panic ("Can't poke a plain WORD! with VOID at this time");
-            Copy_Cell(
-                Sink_Word_May_Panic(var, context),
-                unwrap setval
-            );
+            Value* sink = Sink_Word_May_Panic(var, context);
+            if (Any_Lifted(var))
+                Copy_Meta_Cell(sink, poke);
+            else {
+                Copy_Cell(sink, Decay_If_Unstable(poke));
+                if (Is_Action(poke))
+                    Update_Frame_Cell_Label(poke, Cell_Word_Symbol(var));
+            }
         }
         else {
             // !!! This is a hack to try and get things working for PROTECT*.
             // Things are in roughly the right place, but very shaky.  Revisit
             // as BINDING OF is reviewed in terms of answers for LET.
             //
+            Option(const Value*) setval;
+            if (Is_Void(poke))
+                setval = nullptr;
+            else if (Is_Error(poke))  // for now, skip assign
+                return false;
+            else
+                setval = Decay_If_Unstable(poke);
+
             Derelativize(temp, var, context);
             QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
             Push_Lifeguard(temp);
@@ -929,6 +931,14 @@ bool Set_Var_Core_Updater_Throws(
         }
         return false;  // did not throw
     }
+
+    Option(const Value*) setval;
+    if (Is_Void(poke))
+        setval = nullptr;
+    else if (Is_Error(poke))  // for now, skip assign
+        return false;
+    else
+        setval = Decay_If_Unstable(poke);
 
     StackIndex base = TOP_INDEX;
 

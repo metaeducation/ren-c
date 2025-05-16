@@ -590,7 +590,7 @@ console*: func [
             unset? $system.console
             not system.console
         ] then [
-            emit [start-console:skin (<*> ^ skin)]
+            emit [start-console:skin (<*> meta skin)]
         ]
         return <prompt>
     ]
@@ -612,7 +612,7 @@ console*: func [
     ]
 
     if find directives #start-console [
-        emit [start-console:skin (<*> ^ skin)]
+        emit [start-console:skin (<*> meta skin)]
         return <prompt>
     ]
 
@@ -629,7 +629,7 @@ console*: func [
             return 128 + 2 ; standard cancellation exit status for bash
         ]
         if find directives #console-if-halt [
-            emit [start-console:skin (<*> ^ skin)]
+            emit [start-console:skin (<*> meta skin)]
             return <prompt>
         ]
         if find directives #unskin-if-halt [

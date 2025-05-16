@@ -460,7 +460,7 @@ default-combinators: to map! reduce [
     ][
         append state.loops binding of $return
 
-        result: meta void  ; should be (^result: void)
+        ^result: void
 
         cycle [
             [_ input]: condition-parser input except [
@@ -473,7 +473,7 @@ default-combinators: to map! reduce [
             ; if it fails we disregard the result
             ;
             [^result input]: body-parser input except [
-                result: meta void  ; should be (^result: void)
+                ^result: void
                 continue
             ]
         ]
@@ -490,7 +490,7 @@ default-combinators: to map! reduce [
     ][
         append state.loops binding of $return
 
-        result: meta void  ; should be (^result: void)
+        ^result: void
 
         cycle [
             [_ input]: condition-parser input except [
@@ -499,7 +499,7 @@ default-combinators: to map! reduce [
                 ; but if it fails we disregard the result
                 ;
                 [^result input]: body-parser input except [
-                    result: meta void  ; should be (^result: void)
+                    ^result: void
                     continue
                 ]
                 continue
@@ -520,11 +520,11 @@ default-combinators: to map! reduce [
     ][
         append state.loops binding of $return
 
-        result: meta void  ; should be (^result: void)
+        ^result: void
 
         cycle [
             [^result input]: parser input except [
-                [^result]: ~
+                ^result: ~
                 continue
             ]
         ]
@@ -571,7 +571,7 @@ default-combinators: to map! reduce [
         parser [<end> action!]
         <local> f ^result
     ][
-        [^result]: ~  ; default `[stop]` returns nothing
+        ^result: ~  ; default `[stop]` returns trash
         if :parser [  ; parser argument is optional
             [^result input]: parser input except e -> [
                 return fail e
@@ -1061,7 +1061,7 @@ default-combinators: to map! reduce [
             pending: blank
             return null
         ]
-        [^result]: decay ^result
+        ^result: decay ^result
 
         ; Since COLLECT is considered the most common `pending` client, we
         ; reserve QUOTED! items for collected things.
@@ -1463,7 +1463,7 @@ default-combinators: to map! reduce [
 
         pending: blank
 
-        result: meta* eval:undecayed value  ; (should be ^result: ...)
+        ^result: eval:undecayed value
 
         case [
             error? ^result [
@@ -1539,13 +1539,13 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> ^r comb
     ][
-        [^r]: parser input except e -> [panic e]  ; can't fail [1]
+        ^r: parser input except e -> [panic e]  ; can't fail [1]
 
         if (void? ^r) or (ghost? ^r) [
             return ghost
         ]
 
-        [^r]: decay ^r  ; packs can't act as rules, decay them
+        ^r: decay ^r  ; packs can't act as rules, decay them
 
         if antiform? ^r [  ; REVIEW: splices?
             return fail "INLINE can't evaluate to antiform"
@@ -1555,7 +1555,7 @@ default-combinators: to map! reduce [
         remainder: input
 
         if not block? ^r [
-            [^r]: envelop [] ^r  ; enable arity-0 combinators [2]
+            ^r: envelop [] ^r  ; enable arity-0 combinators [2]
         ]
 
         if not comb: select state.combinators (meta type of ^r) [
@@ -1816,7 +1816,7 @@ default-combinators: to map! reduce [
 
         append state.loops binding of $return
 
-        result: meta void  ; [repeat (0) one], should be (^result: void)
+        ^result: void  ; [repeat (0) one] is void
 
         count-up 'i max [  ; will count infinitely if max is #
             ;
@@ -1997,10 +1997,10 @@ default-combinators: to map! reduce [
                 if void? ^result [
                     return void
                 ]
-                [^result]: decay ^result
+                ^result: decay ^result
             ]
             word? value [
-                [^result]: get value  ; should be ^result: ...
+                ^result: get value
                 pending: blank  ; no pending, only "subpending"
                 remainder: input  ; didn't need to consume input to get result
             ]
@@ -2337,7 +2337,7 @@ default-combinators: to map! reduce [
 
         pending: blank  ; can become GLOM'd into a BLOCK!
 
-        [^result]: ghost  ; default result is invisible
+        ^result: ghost  ; default result is invisible
 
         old-env: state.env
         /return: adapt return/ [state.env: old-env]
@@ -2440,11 +2440,11 @@ default-combinators: to map! reduce [
                     panic "Combinator did not set pending"
                 ]
                 if not ghost? ^temp [  ; overwrite only if was visible
-                    result: meta ^temp  ; should be (^result: ^temp)
+                    ^result: ^temp
                 ]
                 pending: glom pending spread subpending
             ] else [
-                [^result]: ghost  ; reset, e.g. `[veto |]`
+                ^result: ghost  ; reset, e.g. `[veto |]`
 
                 free pending  ; proactively release memory
                 pending: blank
@@ -3055,7 +3055,7 @@ parse-trace-hook: func [
         print ["RULE:" mold spread copy:part f.rule-start f.rule-end]
     ]
 
-    let result: meta eval:undecayed f except e -> [  ; should be ^result: ...
+    let ^result: eval:undecayed f except e -> [
         print ["RESULT': FAIL"]
         return fail e
     ]

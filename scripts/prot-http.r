@@ -703,8 +703,8 @@ sys.util/make-scheme [
                 info: make port.scheme.info [type: 'file]
             ]
             port.state.connection: conn: make port! compose [
-                scheme: (
-                    either port.spec.scheme = 'http [the 'tcp][the 'tls]
+                scheme: '(
+                    either port.spec.scheme = 'http ['tcp] ['tls]
                 )
                 host: port.spec.host  ; can be tuple, e.g. 127.0.0.1
                 port-id: port.spec.port-id

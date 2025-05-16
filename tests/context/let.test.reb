@@ -17,7 +17,7 @@
     (
        x: <in-user-context>
        all [
-           1020 = eval compose [let (unbind 'x:) 20, 1000 + (unbind 'x)]
+           1020 = eval compose [let ('x:) 20, 1000 + ('x)]
            x = <in-user-context>
        ]
     )
@@ -294,7 +294,7 @@
     (
         x: <x>
         all [
-            quasi? e: ^ let x: fail 'test
+            quasi? e: meta let x: fail 'test
             warning? e: unquasi e
             e.id = 'test
             unset? $x  ; the LET is still in effect
@@ -305,7 +305,7 @@
         a: <a>
         b: <b>
         all [
-            quasi? e: ^ let ['a b]: fail 'test
+            quasi? e: meta let ['a b]: fail 'test
             warning? e: unquasi e
             e.id = 'test
             a = <a>  ; exempted from let

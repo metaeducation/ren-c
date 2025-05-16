@@ -547,7 +547,7 @@ bind construct [
         header: hdr
         parent: original-script
         path: dir
-        args: (^ :args)  ; variable same name as field, trips up binding
+        args: '(:args)  ; variable same name as field, trips up binding
     ]
 
     if (set? $script-pre-load-hook) and (match [file! url!] source) [
@@ -642,7 +642,7 @@ export*: func [
 
     if not block? what [
         if set-group? what [
-            what: ^ eval what
+            ^what: eval what
             case [
                 void? ^what [word: null]
                 word? ^what [word: ^what]

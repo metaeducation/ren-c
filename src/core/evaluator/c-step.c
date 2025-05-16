@@ -706,6 +706,11 @@ Bounce Meta_Stepper_Executor(Level* L)
     goto handle_get_word;
 
 
+} case TYPE_CHAIN: { //// LIFTED! CHAIN! (^XXX: ^:XXX ...) ///////////////////
+
+    goto handle_chain_or_lifted_chain;
+
+
 } case TYPE_GROUP: { //// LIFTED! GROUP! ^(...) //////////////////////////////
 
     goto handle_group_or_lifted_group;
@@ -966,23 +971,31 @@ Bounce Meta_Stepper_Executor(Level* L)
     goto process_action;
 
 
-} case TYPE_CHAIN: { //// CHAIN! [ a:  b:c:d  :e ] ///////////////////////////
+} handle_chain_or_lifted_chain:  //// CHAIN! [ a:  ^a:  b:c:d  ^:e ] /////////
+  case TYPE_CHAIN: {
 
     // Due to the consolidation of all the SET-XXX! and GET-XXX! types as
     // CHAIN! with leading or trailing blanks, CHAIN! has to break that down
     // and dispatch to the appropriate behavior.
+    //
+    // 1. There's a weird feature of binding being sensitive to SET-WORD!s
+    //    only that is currently broken.  When we convert a SET-WORD to a
+    //    WORD! to do the assign, that feature is lost.
 
     switch (Try_Get_Sequence_Singleheart(CURRENT)) {
       case NOT_SINGLEHEART_0:
         break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
-      case TRAILING_SPACE_AND(WORD):  // FOO:, set word
-        Derelativize(  // !!! binding may be sensitive to "set-words only"
-            SPARE, CURRENT, L_binding
-        );
-        Unchain(Copy_Cell(CURRENT, cast(Element*, SPARE)));
-        assert(Is_Word(CURRENT));
-        goto handle_generic_set;
+      case TRAILING_SPACE_AND(WORD): {  // FOO: or ^FOO:
+        Copy_Cell(CURRENT, Derelativize(SPARE, CURRENT, L_binding));
+        if (Any_Lifted(CURRENT)) {  // ^foo: -> ^foo
+            Plainify(CURRENT);
+            Unchain(CURRENT);
+            Liftify(CURRENT);
+        }
+        else
+            Unchain(CURRENT);  // foo: -> foo
+        goto handle_generic_set; }
 
       case TRAILING_SPACE_AND(TUPLE):  // a.b.c: is a set tuple
         Unchain(CURRENT);
@@ -1346,7 +1359,9 @@ Bounce Meta_Stepper_Executor(Level* L)
     // * Antiform assignments are allowed: https://forum.rebol.info/t/895/4
 
     assert(
-        Is_Word(CURRENT) or Is_Tuple(CURRENT) or Is_Meta_Of_Void(CURRENT)
+        Is_Word(CURRENT) or Is_Lifted(WORD, CURRENT)
+        or Is_Tuple(CURRENT)
+        or Is_Meta_Of_Void(CURRENT)
     );
     STATE = ST_STEPPER_GENERIC_SET;
 
@@ -1360,33 +1375,8 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     Meta_Unquotify_Undecayed(OUT);
 
-    if (Is_Ghost(OUT)) {  // even `(void):,` needs to error
-        return PANIC(Error_Need_Non_End(CURRENT));
-    }
-    else if (Is_Error(OUT)) {
-        // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
-        goto lookahead;
-    }
-
     if (Is_Meta_Of_Void(CURRENT))  // e.g. `(void): ...`
-        goto lookahead;
-
-    Option(Value*) setval;
-    if (Is_Void(OUT))
-        setval = nullptr;
-    else
-        setval = Decay_If_Unstable(OUT);  // !!! packs should passthru
-
-    if (Is_Action(OUT)) {  // !!! Review: When to update labels?
-        if (Is_Word(CURRENT))
-            Update_Frame_Cell_Label(OUT, Cell_Word_Symbol(CURRENT));
-    }
-    else {  // assignments of /foo: or /obj.field: require action
-        if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION))
-            return PANIC(
-                "/word: and /obj.field: assignments require Action"
-            );
-    }
+        goto lookahead;  // pass through everything
 
     if (Set_Var_Core_Throws(  // cheaper on panic vs. Set_Var_May_Panic()
         SPARE,
@@ -1396,6 +1386,18 @@ Bounce Meta_Stepper_Executor(Level* L)
         OUT
     )){
         goto return_thrown;
+    }
+
+    // assignments of /foo: or /obj.field: require action
+    //
+    // !!! This is too late, needs to be folded in with Set_Var_Core_Throws()
+    // But we don't pre-decay, so have to do it here for now.
+    //
+    if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION)) {
+        if (not Is_Action(OUT))
+            return PANIC(
+                "/word: and /obj.field: assignments require Action"
+            );
     }
 
     L_next_gotten = nullptr;  // cache can tamper with lookahead [1]
@@ -1724,6 +1726,7 @@ for (; check != tail; ++check) {  // push variables
     }
 
     if (Is_Lifted(WORD, var)) {
+        Plainify(var);  // !!! temporary, remove ^ sigil (set should see it)
         if (pack_meta_at == pack_meta_tail) {  // special detection
             Init_Nulled(SPARE);  // LIB(NULL) isn't mutable/atom
             Set_Var_May_Panic(var, SPECIFIED, SPARE);

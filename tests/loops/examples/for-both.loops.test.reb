@@ -112,7 +112,7 @@
     ([1 2 3 4] = collect [
         let result': ~
         assert [
-            '~[~null~]~ = result': ^ for-both 'x [1 2] [3 4] [
+            '~[~null~]~ = result': meta for-both 'x [1 2] [3 4] [
                 keep x
                 null
             ]

@@ -205,11 +205,11 @@ sqlform: func [
         ]
 
         group?:lifted/ [
-            let product': ^ eval as block! value
-            if void? ^product' [
+            let ^product: eval as block! value
+            if void? ^product [
                 ""
             ] else [
-                as text! unquote product'
+                as text! ^product
             ]
         ]
     ]

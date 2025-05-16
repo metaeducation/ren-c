@@ -2346,11 +2346,7 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_WORD:
         assert(len != 0);
         Init_Word(PUSH(), Intern_UTF8_Managed(S->begin, len));
-        if (S->sigil_pending) {
-            Sigilize(TOP_ELEMENT, unwrap S->sigil_pending);
-            S->sigil_pending = SIGIL_0;
-        }
-        break;
+        break;  // don't apply sigils yet (^a.b puts sigil on TUPLE!, not a)
 
       case TOKEN_ISSUE: {
         Size mold_size = String_Size(mo->string) - mo->base.size;

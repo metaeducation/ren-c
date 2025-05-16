@@ -20,7 +20,7 @@
 
     (all [
         let x: ~
-        '~,~ = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
+        ghost? ^x: comment "HI" comment "HI"  ; not eval'd in same step
         x = '~,~
     ])
 

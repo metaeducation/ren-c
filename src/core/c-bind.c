@@ -507,160 +507,162 @@ Option(Stub*) Get_Word_Container(
 }
 
 
+// We remove the decoration from the VARS argument, but remember whether we
+// were setting or not.  e.g.
+//
+//     let x: ...
+//     let [x y]: ...
+//     let (expr): ...
+//
+// As opposed to (let x) or (let [x y]) or (let (expr)), which just LET.
+//
+#define LEVEL_FLAG_LET_IS_SETTING  LEVEL_FLAG_MISCELLANEOUS
+
+
 //
 //  let: native [
 //
 //  "Dynamically add a new binding into the stream of evaluation"
 //
 //      return: "Expression result if SET form, else gives the new vars"
-//          [any-value?]
-//      'vars "Variable(s) to create"  ; can't soft quote ATM [0]
-//          [word! block! group! set-run-word? set-word? set-block? set-group?]
+//          [any-value?]  ; should vanish if (let x), give var if (let $x)
+//      'vars "Variable(s) to create"  ; can't soft quote due to DEFAULT
+//          [word! ^word! set-word? ^set-word? set-run-word? group!
+//          block! set-block? set-group?]
 //      @expression "Optional Expression to assign"
-//          [<variadic> element?]
+//          [<variadic> element?]  ; fake variadic [1]
 //      <local> bindings-holder
 //  ]
 //
 DECLARE_NATIVE(LET)
 //
-// 0. There's a contention at the moment with `let (...): default [...]`, as
-//    we want the LET to win.  So this means we have to make left win in a
-//    prioritization battle with right, if they're both soft literal.  At
-//    the moment, left will defer if right is literal at all.  It needs some
-//    conscious tweaking when there is time for it...but the code was
-//    written to do the eval here in LET with a hard literal...works for now.
-//
 // 1. Though LET shows as a variadic function on its interface, it does not
 //    need to use the variadic argument...since it is a native (and hence
 //    can access the frame and feed directly).
 //
-// 2. For convenience, the group can evaluate to a SET-BLOCK,  e.g.
+// 2. Because we stacklessly evaluate the right hand side, we can't persist
+//    a `Context*` stack variable of the LET bindings chain we built across
+//    that evaluation.  We need to put the `Context*` somewhere that it will
+//    be GC safe during the evaluation, and retrievable after it.
 //
-//        block: $[x y]:
-//        (block): <whatever>  ; no real reason to prohibit this
-//
-//    But there are conflicting demands where we want `(thing):` equivalent
-//    to `[(thing)]:`, while at the same time we don't want to wind up with
-//    "mixed decorations" where `('^thing):` would become both SET! and SYM!.
-//
-// 3. Question: Should it be allowed to write `let 'x: <whatever>` and have it
-//    act as if you had written `x: <whatever>`, e.g. no LET behavior at all?
-//    This may seem useless, but it could be useful in generated code to
-//    "escape out of" a LET in some boilerplate.  And it would be consistent
-//    with the behavior of `let ['x]: <whatever>`
-//
-// 4. Right now what is permitted is conservative.  Bias it so that if you
-//    want something to just "pass through the LET" that you use a quote mark
-//    on it, and the LET will ignore it.
-//
-// 5. In the "LET dialect", quoted words are a way to pass through things with
-//    their existing binding, but allowing them to participate in the same
-//    multi-return operation:
-//
-//        let [value error]
-//        [value position error]: transcode data  ; awkward
-//
-//        let [value 'position error]: transcode data  ; better
-//
-//    This is applied generically, that no quoted items are processed by the
-//    LET...it merely removes the quoting level and generates a new block as
-//    output which doesn't have the quote.
-//
-// 6. Once the multi-return dialect was planned to have more features like
-//    naming arguments literally.  That wouldn't have any meaning to LET and
-//    would be skipped.  That feature of naming outputs has been scrapped,
-//    though...so questions about what to do if things like integers etc.
-//    appear in blocks are open at this point.
-//
-// 7. The evaluation may have expanded the bindings, as in:
-//
-//        let y: let x: 1 + 2 print [x y]
-//
-//    The LET Y: is running the LET X step, but if it doesn't incorporate that
-//    it will be setting the feed's bindings to just include Y.  We have to
-//    merge them, with the outer one taking priority:
-//
-//        >> x: 10, let x: 1000 + let x: x + 10, print [x]
-//        1020
-//
-// 8. When it was looking at infix, the evaluator caches the fetched value of
-//    the word for the next execution.  But we are pulling the rug out from
-//    under that if the immediately following item is the same as what we
-//    have... or a path starting with it, etc.
-//
-//        (x: 10 let x: 20 x)  (x: 10 let x: make object! [y: 20] x.y)
-//
-//    We could try to be clever and maintain that cache in the cases that call
-//    for it.  But with evaluator hooks we don't know what kinds of overrides
-//    it may have (maybe the binding for items not at the head of a path is
-//    relevant?)  Simplest thing to do is drop the cache.
+//    But there's not currently any kind of CONTEXT! abstraction exposed that
+//    captures the binding environment that a Context* does.  That needs to
+//    change... and there need to be individual parts like LET! as well.
+//    Until such an abstraction exists, we have things like BLOCK! which can
+//    hold a Context* in its Cell->extra slot as a binding, so that serves as
+//    a proxy for the functionality.
 {
     INCLUDE_PARAMS_OF_LET;
 
     Element* vars = Element_ARG(VARS);
 
     UNUSED(ARG(EXPRESSION));
-    Level* L = level_;  // fake variadic [1]
+    Level* L = level_;  // fake variadic [2]
     Context* L_binding = Level_Binding(L);
 
-    Value* bindings_holder = LOCAL(BINDINGS_HOLDER);
+    Value* let_bindings_holder = LOCAL(BINDINGS_HOLDER);  // workaround [2]
 
     enum {
         ST_LET_INITIAL_ENTRY = STATE_0,
-        ST_LET_EVAL_STEP
+        ST_LET_EVAL_STEP  // only used when LEVEL_FLAG_LET_IS_SETTING
     };
 
     switch (STATE) {
       case ST_LET_INITIAL_ENTRY:
-        Init_Block(bindings_holder, g_empty_array);
+        Init_Block(let_bindings_holder, g_empty_array);
         goto initial_entry;
 
       case ST_LET_EVAL_STEP:
         Meta_Unquotify_Undecayed(OUT);
         goto integrate_eval_bindings;
 
-      default : assert (false);
+      default:
+        assert (false);
     }
 
   initial_entry: {  ///////////////////////////////////////////////////////////
 
-    //=//// HANDLE LET (GROUP): VARIANTS ///////////////////////////////////=//
+    if (Is_Group(vars))
+        goto escape_groups;
 
-    // A first amount of indirection is permitted since LET allows the syntax
-    // [let (word_or_block): <whatever>].  Handle those groups in such a way
-    // that it updates `At_Level(L)` itself to reflect the group product.
-
-    if (
-        Is_Group(vars) or Is_Set_Group(vars)
-    ){
-        if (Eval_Any_List_At_Throws(SPARE, vars, SPECIFIED))
-            return THROWN;
-
-        Value* result = Decay_If_Unstable(SPARE);
-
-        if (Is_Quoted(result))  // should (let 'x: <whatever>) be legal? [3]
-            return PANIC("QUOTED? escapes not supported at top level of LET");
-
-        if (Is_Antiform(result))
-            return PANIC(Error_Bad_Antiform(result));
-
-        if (
-            Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, result))
-            or Is_Set_Block(result)
-        ){
-            // Allow `(set-word):` to ignore redundant colon [2]
-        }
-        else if (Is_Word(result) or Is_Block(result)) {
-            if (Is_Set_Group(vars))
-                Setify(cast(Element*, SPARE));  //  let ('word): -> let word:
-        }
-        else
-            return PANIC("LET GROUP! limited to WORD! and BLOCK!");  // [4]
-
-        vars = cast(Element*, result);
+    if (Is_Set_Group(vars)) {
+        Set_Level_Flag(L, LET_IS_SETTING);
+        Unchain(vars);  // turn into a normal GROUP!
+        goto escape_groups;
     }
 
-    //=//// GENERATE NEW BLOCK IF QUOTED? OR GROUP! ELEMENTS ///////////////=//
+    goto generate_new_block_if_quoted_or_group;
+
+} escape_groups: { //=//// let (...): ... /////////////////////////////////=//
+
+    // Though the evaluator offers parameter conventions that escape groups
+    // for you before your function gets called, we can't use that convention
+    // here due to a contention with DEFAULT:
+    //
+    //     let (...): default [...]
+    //
+    // We want the LET to win.  So this means we have to make left win in a
+    // prioritization battle with right, if they're both soft literal.  At
+    // the moment, left will defer if right is literal at all.  It needs some
+    // conscious tweaking when there is time for it...but the code was
+    // written to do the eval here in LET with a hard literal...works for now.
+    //
+    // 1. Question: Should it be allowed to write (let 'x: ...) and have it
+    //    act as if you had written (x: ...), e.g. no LET behavior at all?
+    //    This may seem useless, but it could be useful in generated code to
+    //    "escape out of" a LET in some boilerplate.  And it would be
+    //    consistent with the behavior of (let ['x]: ...)
+    //
+    // 2. For convenience, the group can evaluate to a SET-BLOCK,  e.g.
+    //
+    //        block: $[x y]:
+    //        (block): <whatever>  ; no real reason to prohibit this
+    //
+    //    There are conflicting demands where we want `(thing):` equivalent
+    //    to `[(thing)]:`, while we don't want "mixed decorations" where
+    //    `('^thing):` would become both SET! and LIFTED!.
+    //
+    // 3. Right now what is permitted is conservative.  Bias it so that if you
+    //    want something to just "pass through the LET" that you use a quote
+    //    mark on it, and the LET will ignore it.
+
+    assert(Is_Group(vars));
+
+    if (Eval_Any_List_At_Throws(SPARE, vars, SPECIFIED))
+        return THROWN;
+
+    Decay_If_Unstable(SPARE);
+    if (Is_Antiform(SPARE))
+        return PANIC(Error_Bad_Antiform(SPARE));
+
+    Element* spare = Known_Element(SPARE);
+
+    if (Is_Quoted(spare))  // should (let 'x: <whatever>) be legal? [1]
+        return PANIC("QUOTED? escapes not supported at top level of LET");
+
+    if (Try_Get_Settable_Word_Symbol(nullptr, spare) or Is_Set_Block(spare)) {
+        if (Get_Level_Flag(L, LET_IS_SETTING)) {
+            // Allow `(set-word):` to ignore redundant colon [2]
+            Clear_Level_Flag(L, LET_IS_SETTING);  // let block/word signal it
+        }
+        else {
+            return PANIC(
+                "[let (expr)] can't have expr be SET-XXX!, use [let (expr):]"
+            );
+        }
+    }
+    else if (Is_Word(spare) or Is_Block(spare)) {
+        if (Get_Level_Flag(L, LET_IS_SETTING)) {
+            Setify(spare);  // graft the colon off of (...): onto word/block
+            Clear_Level_Flag(L, LET_IS_SETTING);  // let block/word signal it
+        }
+    }
+    else
+        return PANIC("LET GROUP! limited to WORD! and BLOCK!");  // [3]
+
+    vars = spare;
+
+} generate_new_block_if_quoted_or_group: {
 
     // Writes rebound copy of `vars` to SPARE if it's a SET-WORD! or SET-BLOCK!
     // so it can be used in a reevaluation.  For WORD!/BLOCK! forms of LET it
@@ -678,130 +680,185 @@ DECLARE_NATIVE(LET)
     if (bindings and Not_Node_Managed(bindings))
         Set_Node_Managed_Bit(bindings);  // natives don't always manage
 
-    const Symbol* symbol;
-    if (
-        (Is_Word(vars) and (symbol = Cell_Word_Symbol(vars)))
-        or
-        (symbol = maybe Try_Get_Settable_Word_Symbol(
-            nullptr, cast(Element*, vars)
-        ))
-    ){
-        bindings = Make_Let_Variable(symbol, bindings);
+    assert(Not_Level_Flag(L, LET_IS_SETTING));
 
-        Sink(Element) where;
-        if (Is_Word(vars))
-            where = OUT;
-        else {
-            STATE = ST_LET_EVAL_STEP;
-            where = SPARE;
-        }
+    if (Is_Block(vars))
+        goto handle_block_or_set_block;
 
-        Init_Word_Bound(where, symbol, bindings, INDEX_PATCHED);
-        if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
-            Setify(where);
-            if (Heart_Of(vars) == TYPE_PATH) {
-                Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-                    where, TYPE_PATH, CELL_FLAG_LEADING_SPACE
-                );
-                assert(not error);  // was a path when we got it!
-                UNUSED(error);
-            }
-            else
-                assert(Heart_Of(vars) == TYPE_CHAIN);
-        }
-
-        Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
+    if (Is_Set_Block(vars)) {
+        Set_Level_Flag(L, LET_IS_SETTING);
+        goto handle_block_or_set_block;
     }
-    else {
-        assert(Is_Block(vars) or Is_Set_Block(vars));
 
-        const Element* tail;
-        const Element* item = Cell_List_At(&tail, vars);
-        Context* item_binding = Cell_List_Binding(vars);
+  detect_word_or_set_word: {
 
-        assert(TOP_INDEX == STACK_BASE);
+    const Symbol* symbol;
 
-        bool altered = false;
+    if (Is_Word(vars) or Is_Lifted(WORD, vars)) {
+        symbol = Cell_Word_Symbol(vars);
+        goto handle_word_or_set_word;
+    }
 
-        for (; item != tail; ++item) {
-            const Element* temp = item;
-            Context* temp_binding = item_binding;
+    symbol = maybe Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, vars));
+    if (symbol) {
+        Set_Level_Flag(L, LET_IS_SETTING);
+        goto handle_word_or_set_word;
+    }
 
-            if (Is_Quoted(temp)) {
-                Derelativize(PUSH(), temp, temp_binding);
-                Unquotify(TOP_ELEMENT);  // drop quote in output block [5]
-                altered = true;
-                continue;  // do not make binding
-            }
+    return PANIC("Malformed LET.");
 
-            if (Is_Group(temp)) {  // evaluate non-QUOTED? groups in LET block
-                if (Eval_Any_List_At_Throws(OUT, temp, item_binding))
-                    return THROWN;
+  handle_word_or_set_word: {
 
-                if (Is_Void(OUT)) {
-                    Init_Space(OUT);
-                }
-                else {
-                    Decay_If_Unstable(OUT);
-                    if (Is_Antiform(OUT))
-                        return PANIC(Error_Bad_Antiform(OUT));
-                }
+    bindings = Make_Let_Variable(symbol, bindings);
 
-                temp = cast(Element*, OUT);
-                temp_binding = SPECIFIED;
+    Sink(Element) where;
+    if (Get_Level_Flag(L, LET_IS_SETTING))
+        where = SPARE;
+    else
+        where = OUT;
 
-                altered = true;
-            }
-
-            if (Is_Set_Word(temp))
-                goto wordlike;
-            else switch (Heart_Of(temp)) {  // permit quasi
-              case TYPE_ISSUE:  // is multi-return opt for dialect, passthru
-                Derelativize(PUSH(), temp, temp_binding);
-                break;
-
-              wordlike:
-              case TYPE_WORD: {
-                Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
-                symbol = Cell_Word_Symbol(temp);
-                bindings = Make_Let_Variable(symbol, bindings);
-                CELL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
-                Tweak_Cell_Binding(TOP, bindings);
-                break; }
-
-              default:
-                return PANIC(temp);  // default to passthru [6]
-            }
-        }
-
-        Value* where;
-        if (Is_Set_Block(vars)) {
-            STATE = ST_LET_EVAL_STEP;
-            where = stable_SPARE;
+    Init_Word_Bound(where, symbol, bindings, INDEX_PATCHED);
+    if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
+        Setify(where);
+        if (Heart_Of(vars) == TYPE_PATH) {
+            Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
+                where, TYPE_PATH, CELL_FLAG_LEADING_SPACE
+            );
+            assert(not error);  // was a path when we got it!
+            UNUSED(error);
         }
         else
-            where = stable_OUT;
+            assert(Heart_Of(vars) == TYPE_CHAIN);
+    }
+    if (Any_Lifted(vars))
+        Liftify(where);
 
-        if (altered) {  // elements altered, can't reuse input block rebound
-            assert(Is_Set_Block(vars));
-            Setify(Init_Any_List(
-                where,  // may be SPARE, and vars may point to it
-                TYPE_BLOCK,
-                Pop_Managed_Source_From_Stack(STACK_BASE)
-            ));
-        }
-        else {
-            Drop_Data_Stack_To(STACK_BASE);
+    Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
 
-            if (vars != where)
-                Copy_Cell(where, vars);  // Move_Cell() of ARG() not allowed
-        }
-        Tweak_Cell_Binding(where, bindings);
+    goto finished_making_let_bindings;
 
-        Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
+}} handle_block_or_set_block: {
+
+    // 1. In the "LET dialect", quoted words pass through things with their
+    //    existing binding, but allowing them to participate in the same
+    //    multi-return operation:
+    //
+    //        let [value error]
+    //        [value position error]: transcode data  ; awkward
+    //
+    //        let [value 'position error]: transcode data  ; better
+    //
+    //    This is applied generically: no quoted items are processed by the
+    //    LET...it merely removes the quoting level and generates a new block
+    //    as output which doesn't have the quote.
+    //
+    // 2. Once the multi-return dialect was planned to have more features like
+    //    naming arguments literally.  That wouldn't have any meaning to LET
+    //    and would be skipped.  That feature of naming outputs has been
+    //    scrapped, though...so questions about what to do if things like
+    //    integers etc. appear in blocks are open at this point.
+
+    if (Is_Set_Block(vars))
+        assert(Get_Level_Flag(L, LET_IS_SETTING));
+    else {
+        assert(Not_Level_Flag(L, LET_IS_SETTING));
+        assert(Is_Block(vars));
     }
 
-    //=//// ONE EVAL STEP WITH OLD BINDINGS IF SET-WORD! or SET-BLOCK! /////=//
+    const Element* tail;
+    const Element* item = Cell_List_At(&tail, vars);
+    Context* item_binding = Cell_List_Binding(vars);
+
+    assert(TOP_INDEX == STACK_BASE);
+
+    bool altered = false;
+
+    for (; item != tail; ++item) {
+        const Element* temp = item;
+        Context* temp_binding = item_binding;
+
+        if (Is_Quoted(temp)) {
+            Derelativize(PUSH(), temp, temp_binding);
+            Unquotify(TOP_ELEMENT);  // drop quote in output block [1]
+            altered = true;
+            continue;  // do not make binding
+        }
+
+        if (Is_Group(temp)) {  // evaluate non-QUOTED? groups in LET block
+            if (Eval_Any_List_At_Throws(OUT, temp, item_binding))
+                return THROWN;
+
+            if (Is_Void(OUT)) {
+                Init_Space(OUT);
+            }
+            else {
+                Decay_If_Unstable(OUT);
+                if (Is_Antiform(OUT))
+                    return PANIC(Error_Bad_Antiform(OUT));
+            }
+
+            temp = cast(Element*, OUT);
+            temp_binding = SPECIFIED;
+
+            altered = true;
+        }
+
+        if (Is_Set_Word(temp))
+            goto wordlike;
+        else switch (Heart_Of(temp)) {  // permit quasi
+          case TYPE_ISSUE:  // is multi-return opt for dialect, passthru
+            Derelativize(PUSH(), temp, temp_binding);
+            break;
+
+          wordlike:
+          case TYPE_WORD: {
+            Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
+            Option(const Symbol*) symbol = Cell_Word_Symbol(temp);
+            bindings = Make_Let_Variable(symbol, bindings);
+            CELL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
+            Tweak_Cell_Binding(TOP, bindings);
+            break; }
+
+          default:
+            return PANIC(temp);  // default to passthru [2]
+        }
+    }
+
+    Value* where;
+    if (Get_Level_Flag(L, LET_IS_SETTING))
+        where = stable_SPARE;
+    else
+        where = stable_OUT;
+
+    if (altered) {  // elements altered, can't reuse input block rebound
+        assert(Get_Level_Flag(L, LET_IS_SETTING));
+        Setify(Init_Any_List(
+            where,  // may be SPARE, and vars may point to it
+            TYPE_BLOCK,
+            Pop_Managed_Source_From_Stack(STACK_BASE)
+        ));
+    }
+    else {
+        Drop_Data_Stack_To(STACK_BASE);
+
+        if (vars != where)
+            Copy_Cell(where, vars);  // Move_Cell() of ARG() not allowed
+    }
+    Tweak_Cell_Binding(where, bindings);
+
+    Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
+
+} finished_making_let_bindings: {
+
+    Tweak_Cell_Binding(let_bindings_holder, bindings);
+
+    if (Get_Level_Flag(L, LET_IS_SETTING))
+        goto eval_right_hand_side_if_let_is_setting;
+
+    assert(Is_Word(OUT) or Is_Block(OUT) or Is_Lifted(WORD, OUT));
+    goto integrate_let_bindings;
+
+}} eval_right_hand_side_if_let_is_setting: {  // no `bindings` use after here
 
     // We want the left hand side to use the *new* LET bindings, but the right
     // hand side should use the *old* bindings.  For instance:
@@ -810,14 +867,10 @@ DECLARE_NATIVE(LET)
     //
     // Leverage same mechanism as REEVAL to preload the next execution step
     // with the rebound SET-WORD! or SET-BLOCK!
-
-    Tweak_Cell_Binding(bindings_holder, bindings);
-    Corrupt_Pointer_If_Debug(bindings);  // catch uses after this point in scope
-
-    if (STATE != ST_LET_EVAL_STEP) {
-        assert(Is_Word(OUT) or Is_Block(OUT));  // should have written output
-        goto update_feed_binding;
-    }
+    //
+    // (We want infix operations to be able to "see" the left side of the
+    // LET, so this requires reevaluation--as opposed to just evaluating
+    // the right hand side and then running SET on the result.)
 
     assert(
         Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, SPARE))
@@ -835,24 +888,46 @@ DECLARE_NATIVE(LET)
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    assert(STATE == ST_LET_EVAL_STEP);  // checked above
+    STATE = ST_LET_EVAL_STEP;
     return CONTINUE_SUBLEVEL(sub);
 
 } integrate_eval_bindings: {  ////////////////////////////////////////////////
 
-    // !!! Currently, any bindings added during the eval are lost.
-    // Rethink this.
+    // The evaluation may have expanded the bindings, as in:
+    //
+    //     let y: let x: 1 + 2 print [x y]
+    //
+    // The LET Y: is running the LET X step, but if it doesn't incorporate that
+    // it will be setting the feed's bindings to just include Y.  We have to
+    // merge them, with the outer one taking priority:
+    //
+    //    >> x: 10, let x: 1000 + let x: x + 10, print [x]
+    //    1020
+    //
+    // !!! Currently, any bindings added during eval are lost. Review this.
+    //
+    // 1. When it was looking at infix, the evaluator caches the fetched value
+    //    of the word for the next execution.  But we are pulling the rug out
+    //    from under that if the immediately following item is the same as
+    //    what we have... or a TUPLE! starting with it, etc.
+    //
+    //        (x: 10 let x: 20 x)  (x: 10 let x: make object! [y: 20] x.y)
+    //
+    //    We could try to be clever and maintain that cache in the cases that
+    //    call for it.  But with evaluator hooks we don't know what kinds of
+    //    overrides it may have (maybe the binding for items not at the head
+    //    of a path is relevant?)  Simplest thing to do is drop the cache.
 
-    L->feed->gotten = nullptr;  // invalidate next word's cache [8]
-    goto update_feed_binding;
+    L->feed->gotten = nullptr;  // invalidate next word's cache [1]
+    goto integrate_let_bindings;
 
-} update_feed_binding: {  /////////////////////////////////////////////////////
+} integrate_let_bindings: {  /////////////////////////////////////////////////
 
     // Going forward we want the feed's binding to include the LETs.  Note
     // that this can create the problem of applying the binding twice; this
     // needs systemic review.
 
-    Context* bindings = Cell_List_Binding(bindings_holder);
+    Context* bindings = Cell_List_Binding(let_bindings_holder);
     Tweak_Cell_Binding(Feed_Data(L->feed), bindings);
 
     return OUT;

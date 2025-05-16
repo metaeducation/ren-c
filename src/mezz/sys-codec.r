@@ -40,10 +40,10 @@ register-codec: func [
         ; IMAGE!.  Should the argument types of the encode function be cached
         ; here, or be another parameter, or...?
 
-        suffixes: (^ suffixes)
-        identify?: (^ identify?)
-        decode: (^ decode)
-        encode: (^ encode)
+        suffixes: '(suffixes)
+        identify?: '(identify?)
+        decode: '(decode)
+        encode: '(encode)
     ]
 
     set (extend system.codecs name) codec

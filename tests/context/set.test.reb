@@ -59,7 +59,7 @@
 (null = get void)
 
 (
-    e: ^ set $x fail 'test
+    ^e: set $x fail 'test
     all [
         quasi? e
         warning? e: unquasi e

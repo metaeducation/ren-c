@@ -222,7 +222,7 @@ trim: func [
     ]
 
     let line-start-rule: compose [
-        remove (if indent '[opt [repeat (indent) rule]] else '[opt some rule])
+        remove (if indent $[opt [repeat (indent) rule]] else $[opt some rule])
     ]
 
     parse3 series [

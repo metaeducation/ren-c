@@ -61,7 +61,7 @@
     (
         x': ~
         all [
-            (error? unmeta [x']: ^ fail "hi" void)
+            (error? unmeta [x']: meta fail "hi" void)
             error? unmeta x'
         ]
     )

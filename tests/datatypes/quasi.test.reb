@@ -49,7 +49,7 @@
 (
     x: 10
     all [
-        '~,~ = x: ^ eval:undecayed []
+        '~,~ = x: meta eval:undecayed []
         ghost? unmeta x
     ]
 )

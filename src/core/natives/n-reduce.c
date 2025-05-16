@@ -746,10 +746,16 @@ Bounce Composer_Executor(Level* const L)
             L->u.compose.changed = true;
             goto handle_next_item;  // compose [(void)] => []
         }
-        return PANIC(
-            "Can't quote/quasi-COMPOSE VOID, e.g. ''(void) or ~(void)~"
-        );
-    }
+
+      push_antiform_incorporating_quote_byte: {
+
+        if (not (list_quote_byte & NONQUASI_BIT))
+            return PANIC("Can't COMPOSE antiforms into ~(...)~ slots");
+
+        Copy_Meta_Cell(PUSH(), OUT);
+        QUOTE_BYTE(OUT) = list_quote_byte;
+        goto handle_next_item;
+    }}
 
     if (Is_Error(OUT)) {
         if (Is_Error_Veto_Signal(Cell_Error(OUT))) {
@@ -762,6 +768,9 @@ Bounce Composer_Executor(Level* const L)
     Decay_If_Unstable(OUT);
 
     if (Is_Antiform(OUT)) {
+        if (list_quote_byte != NOQUOTE_1)
+            goto push_antiform_incorporating_quote_byte;
+
         if (Is_Splice(OUT))
             goto push_out_spliced;
 
