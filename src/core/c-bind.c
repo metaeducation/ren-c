@@ -51,10 +51,10 @@ void Bind_Values_Inner_Loop(
           if (Is_Stub_Sea(context)) {
             SeaOfVars* sea = cast(SeaOfVars*, context);
             bool strict = true;
-            Value* lookup = Sea_Slot(sea, symbol, strict);
+            Option(Value*) lookup = Sea_Slot(sea, symbol, strict);
             if (lookup) {
                 Tweak_Cell_Word_Index(v, INDEX_PATCHED);
-                Tweak_Cell_Binding(v, Compact_Stub_From_Cell(lookup));
+                Tweak_Cell_Binding(v, Compact_Stub_From_Cell(unwrap lookup));
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -417,7 +417,7 @@ Option(Stub*) Get_Word_Container(
     // slot which is needed by ParamList to hold the inherited phase.
 
     if (flavor == FLAVOR_LET) {
-        if (Info_Let_Symbol(c) == symbol) {
+        if (Let_Symbol(c) == symbol) {
             *index_out = INDEX_PATCHED;
             return c;
         }

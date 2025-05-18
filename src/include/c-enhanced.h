@@ -857,6 +857,9 @@
         static_assert(std::is_same<decltype((void)(expr)), void>::value, "")
 #endif
 
+#define UNNECESSARY(expr) /* macro version */ \
+    struct GlobalScopeNoopTrick  // https://stackoverflow.com/q/53923706
+
 
 //=//// MARK UNUSED VARIABLES /////////////////////////////////////////////=//
 //

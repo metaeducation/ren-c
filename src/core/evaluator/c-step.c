@@ -1858,6 +1858,7 @@ for (; check != tail; ++check) {  // push variables
   case TYPE_MODULE:
   case TYPE_WARNING:
   case TYPE_PORT:
+  case TYPE_LET:
   case TYPE_INTEGER:
   case TYPE_DECIMAL:
   case TYPE_PERCENT:

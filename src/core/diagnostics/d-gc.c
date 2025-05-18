@@ -299,6 +299,9 @@ void Assert_Cell_Marked_Correctly(const Atom* v)
 
         break; }
 
+      case TYPE_LET:  // add checks
+        break;
+
       case TYPE_MODULE:  // add checks
         break;
 

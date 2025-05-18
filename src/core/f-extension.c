@@ -345,21 +345,21 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
         OS_CLOSE_LIBRARY(Cell_Library_FD(lib));
     */
 
-   Value* shutdown_action = Sea_Slot(
+   Option(Value*) shutdown_action = Sea_Slot(
        Cell_Module_Sea(extension),
        CANON(SHUTDOWN_P),
        true
     );
-   if (shutdown_action != nullptr)
-        rebElide(rebRUN(shutdown_action));
+   if (shutdown_action)
+        rebElide(rebRUN(unwrap shutdown_action));
 
-   Value* unregister_extension_action = Sea_Slot(
+   Option(Value*) unregister_extension_action = Sea_Slot(
        Cell_Module_Sea(extension),
        CANON(UNREGISTER_EXTENSION_P),
        true
     );
-   if (unregister_extension_action != nullptr)
-        rebElide(rebRUN(unregister_extension_action));
+   if (unregister_extension_action)
+        rebElide(rebRUN(unwrap unregister_extension_action));
 
    return TRASH;
 }

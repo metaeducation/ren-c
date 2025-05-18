@@ -133,7 +133,10 @@ DECLARE_NATIVE(BINDING_OF)
 {
     INCLUDE_PARAMS_OF_BINDING_OF;
 
-    return Dispatch_Generic(BINDING_OF, Element_ARG(ELEMENT), LEVEL);
+    Element* elem = Element_ARG(ELEMENT);
+    Plainify(elem);  // drop [@ $ ^] sigils
+
+    return Dispatch_Generic(BINDING_OF, elem, LEVEL);
 }
 
 
@@ -344,8 +347,8 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
         if (IS_WORD_UNBOUND(v))
             return false;
 
-        if (Is_Stub_Let(Cell_Binding(v))) {  // temporary (LETs not exposed)
-            Init_Word(out, CANON(LET));
+        if (Is_Stub_Let(Cell_Binding(v))) {
+            Init_Let(out, u_cast(Let*, Cell_Binding(v)));
             return true;
         }
 
@@ -974,19 +977,19 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 
         bool strict = true;
 
-        const Value* src = Sea_Slot(source, symbol, strict);
-        if (src == nullptr)
+        Option(const Value*) src = Sea_Slot(source, symbol, strict);
+        if (not src)
             return PANIC(v);  // panic if unset value, also?
 
-        Value* dest = Sea_Slot(where, symbol, strict);
-        if (dest != nullptr) {
+        Option(Value*) dest = Sea_Slot(where, symbol, strict);
+        if (dest) {
             // Fail if found?
         }
         else {
             dest = Append_Context(where, symbol);
         }
 
-        Copy_Cell(dest, src);
+        Copy_Cell(unwrap dest, unwrap src);
     }
 
     return COPY(ARG(WHERE));

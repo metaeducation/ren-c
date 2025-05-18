@@ -240,7 +240,7 @@ void* Probe_Core_Debug(
 
       case FLAVOR_LET: {
         Probe_Print_Helper(p, expr, "LET single variable", file, line);
-        Append_Spelling(mo->string, Info_Let_Symbol(f));
+        Append_Spelling(mo->string, Let_Symbol(c_cast(Let*, f)));
         break; }
 
       case FLAVOR_USE: {

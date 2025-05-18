@@ -46,12 +46,12 @@
 //=//// "LET" FOR VIRTUAL BINDING OF "MINI-OBJECT" ////////////////////////=//
 //
 // Next node is either to another let, a frame binding context, or nullptr.
-//
-//    LINK: Link_Inherit_Bind()
-//    MISC: Unused
-//    INFO: Info_Let_Symbol()
 
 
+#define INFO_LET_SYMBOL(let)    STUB_INFO(let)
+#define MISC_LET_RESERVED(let)  STUB_MISC(let)
+
+UNNECESSARY(#define LINK_LET_INHERIT_BIND(let));  // context defines it
 
 
 //=//// "USE" FOR VIRTUAL BINDING TO OBJECTS //////////////////////////////=//
@@ -62,6 +62,8 @@
 // This optimization was adding complexity and didn't seem to be hitting
 // all that often in practice.  It was removed for now.
 //
-//     LINK: Link_Inherit_Bind()
-//     MISC: Unused
-//     INFO: Unused
+
+#define INFO_USE_RESERVED(let)    STUB_INFO(let)
+#define MISC_USE_RESERVED(let)    STUB_MISC(let)
+
+UNNECESSARY(#define LINK_USE_INHERIT_BIND(use));  // context defines it

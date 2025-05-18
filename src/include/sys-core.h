@@ -259,6 +259,8 @@ typedef RebolHandleCleaner HandleCleaner;
 
 #include "structs/struct-patch.h"
 
+#include "structs/struct-mold.h"
+
 #include "enums/enum-typesets.h"  // built-in order dependent type checks
 
 #include "enums/enum-flavor.h"  // Flex subclass byte (uses sizeof(Cell))
@@ -492,9 +494,6 @@ typedef struct {
 
 #include "sys-crash.h"  // "blue screen of death"-style termination
 
-#include "sys-mold.h"
-
-
 
 /***********************************************************************
 **
@@ -577,6 +576,8 @@ enum {
 
 #include "sys-cell.h"
 #include "sys-stub.h"
+
+#include "sys-mold.h"
 
 #include "stubs/stub-flex.h"  // needs Is_Cell_Poisoned(), Erase_Cell()
 

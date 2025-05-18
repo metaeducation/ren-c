@@ -21,20 +21,6 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-struct MolderStruct {
-    String* string;  // destination String (utf8, as all String are)
-    struct {
-        REBLEN index;  // codepoint index where mold starts within String
-        Size size;  // byte offset where mold starts within String
-    } base;
-    Flags opts;       // special option flags
-    REBLEN limit;       // how many characters before cutting off
-    REBLEN reserve;     // how much capacity to reserve at the outset
-    REBINT indent;      // indentation amount
-    Byte period;      // for decimal point
-    Byte dash;        // for date fields
-    Byte digits;      // decimal digits
-};
 
 #define Drop_Mold_If_Pushed(mo) \
     Drop_Mold_Core((mo), true)
@@ -61,31 +47,19 @@ struct MolderStruct {
     Copy_Mold_Or_Form_Cell_Ignore_Quotes((v), (opts), false)
 
 
-// Modes allowed by FORM
-enum {
-    FORM_FLAG_ONLY = 0,
-    FORM_FLAG_REDUCE = 1 << 0,
-    FORM_FLAG_NEWLINE_SEQUENTIAL_STRINGS = 1 << 1,
-    FORM_FLAG_NEWLINE_UNLESS_EMPTY = 1 << 2,
-    FORM_FLAG_MOLD = 1 << 3
-};
 
-// Mold and form options:
-enum {
-    MOLD_FLAG_0 = 0,
-    MOLD_FLAG_1 = 1 << 0,
-    MOLD_FLAG_COMMA_PT = 1 << 1, // Decimal point is a comma.
-    MOLD_FLAG_SLASH_DATE = 1 << 2, // Date as 1/1/2000
-    MOLD_FLAG_INDENT = 1 << 3, // Indentation
-    MOLD_FLAG_TIGHT = 1 << 4, // No space between block values
-    MOLD_FLAG_SPREAD = 1 << 5, // Mold Spread - no outer block []
-    MOLD_FLAG_LINES  = 1 << 6, // add a linefeed between each value
-    MOLD_FLAG_LIMIT = 1 << 7, // Limit length to mold->limit, then "..."
-    MOLD_FLAG_RESERVE = 1 << 8,  // At outset, reserve capacity for buffer
-    MOLD_FLAG_WAS_TRUNCATED = 1 << 9  // Set true upon truncation
-};
+// We want the molded object to be able to "round trip" back to the state it's
+// in based on reloading the values.  Currently this is conservative and
+// doesn't put quote marks on things that don't need it because they are inert,
+// but maybe not a good idea... depends on the whole block/object model.
+//
+// https://forum.rebol.info/t/997
+//
+INLINE void Output_Apostrophe_If_Not_Inert(String* s, const Element* cell) {
+    if (not Any_Inert(cell))
+        Append_Codepoint(s, '\'');
+}
 
-#define MOLD_MASK_NONE 0
 
 INLINE void Construct_Molder(Molder* mo) {
     mo->string = nullptr;  // used to tell if pushed or not

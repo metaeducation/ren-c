@@ -174,6 +174,10 @@ varargs     "evaluator position for variable numbers of arguments"
                 (node1 node2)
                 [any-branch?]
 
+    let         "context containing a single variable"
+                (node1)
+                [any-inert?]
+
 </ANY-CONTEXT?>
 
 

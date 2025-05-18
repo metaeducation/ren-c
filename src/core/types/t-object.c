@@ -192,7 +192,7 @@ void Init_Evars(EVARS *e, const Element* v) {
 bool Try_Advance_Evars(EVARS *e) {
     if (e->word) {
         while (++e->word != e->word_tail) {
-            e->var = Sea_Slot(
+            e->var = unwrap Sea_Slot(
                 cast(SeaOfVars*, e->ctx), Cell_Word_Symbol(e->word), true
             );
             if (Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
@@ -882,20 +882,12 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 
             DECLARE_ELEMENT (reified);
             Copy_Meta_Cell(reified, e.var);  // will become quasi...
-            Mold_Element(mo, cast(Element*, reified));  // ...molds as `~xxx~`
+            Mold_Element(mo, reified);  // ...molds as `~xxx~`
         }
         else {
-            // We want the molded object to be able to "round trip" back to the
-            // state it's in based on reloading the values.  Currently this is
-            // conservative and doesn't put quote marks on things that don't
-            // need it because they are inert, but maybe not a good idea...
-            // depends on the whole block/object model.
-            //
-            // https://forum.rebol.info/t/997
-            //
-            if (not Any_Inert(e.var))
-                Append_Ascii(s, "'");
-            Mold_Element(mo, cast(Element*, e.var));
+            Element* elem = Known_Element(e.var);
+            Output_Apostrophe_If_Not_Inert(s, elem);
+            Mold_Element(mo, elem);
         }
     }
     Shutdown_Evars(&e);
@@ -907,6 +899,89 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
     End_Non_Lexical_Mold(mo);
 
     Drop_Pointer_From_Flex(g_mold.stack, c);
+
+    return TRASH;
+}
+
+
+IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
+{
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = Bool_ARG(FORM);
+
+    String* s = mo->string;
+
+    Let* let = Cell_Let(v);
+
+    // Prevent endless mold loop:
+    //
+    if (Find_Pointer_In_Flex(g_mold.stack, let) != NOT_FOUND) {
+        if (not form) {
+            Begin_Non_Lexical_Mold(mo, v); // If molding, get #[object! etc.
+            Append_Codepoint(s, '[');
+        }
+        Append_Ascii(s, "...");
+
+        if (not form) {
+            Append_Codepoint(s, ']');
+            End_Non_Lexical_Mold(mo);
+        }
+        return TRASH;
+    }
+    Push_Pointer_To_Flex(g_mold.stack, let);
+
+    const Symbol* spelling = Let_Symbol(let);
+    const Value* slot = Let_Slot(let);
+
+    if (form) {
+        Append_Spelling(mo->string, spelling);
+        Append_Ascii(mo->string, ": ");
+
+        if (Is_Antiform(slot))
+            return PANIC(Error_Bad_Antiform(slot));  // can't FORM antiforms
+
+        Mold_Element(mo, Known_Element(slot));
+
+        Drop_Pointer_From_Flex(g_mold.stack, let);
+        return TRASH;
+    }
+
+    // Otherwise we are molding
+
+    Begin_Non_Lexical_Mold(mo, v);
+
+    Append_Codepoint(s, '[');
+
+    mo->indent++;
+    New_Indented_Line(mo);
+
+    DECLARE_ELEMENT (set_word);
+    Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
+
+    Mold_Element(mo, set_word);
+    Append_Codepoint(mo->string, ' ');
+
+    if (Is_Antiform(slot)) {
+        DECLARE_ELEMENT (reified);
+        Copy_Meta_Cell(reified, slot);  // will become quasi...
+        Mold_Element(mo, reified);  // ...molds as `~xxx~`
+    }
+    else {
+        const Element* elem = Known_Element(slot);
+        Output_Apostrophe_If_Not_Inert(s, elem);
+        Mold_Element(mo, elem);
+    }
+
+    mo->indent--;
+    New_Indented_Line(mo);
+    Append_Codepoint(s, ']');
+
+    End_Non_Lexical_Mold(mo);
+
+    Drop_Pointer_From_Flex(g_mold.stack, let);
 
     return TRASH;
 }

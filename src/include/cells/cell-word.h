@@ -111,7 +111,7 @@ INLINE Element* Init_Word_Bound_Untracked(
     else {
         assert(Is_Stub_Let(binding));
         assert(index == INDEX_PATCHED);
-        assert(symbol == Info_Let_Symbol(binding));
+        assert(symbol == Let_Symbol(binding));
     }
 
     return out;

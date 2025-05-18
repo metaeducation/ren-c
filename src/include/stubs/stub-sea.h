@@ -119,11 +119,11 @@ INLINE Option(Patch*) Sea_Patch(
     return nullptr;
 }
 
-INLINE Value* Sea_Slot(SeaOfVars* sea, const Symbol* sym, bool strict) {
+INLINE Option(Value*) Sea_Slot(SeaOfVars* sea, const Symbol* sym, bool strict) {
     Patch* patch = maybe Sea_Patch(sea, sym, strict);
     if (not patch)
         return nullptr;
-    return cast(Value*, Stub_Cell(patch));
+    return Stub_Cell(patch);
 }
 
 INLINE Value* Mutable_Lib_Var(SymId id) {

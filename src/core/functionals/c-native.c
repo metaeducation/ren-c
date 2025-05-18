@@ -618,6 +618,7 @@ void Startup_Natives(const Element* boot_natives)
     possibly(  // could be more complex (INFIX NATIVE, NATIVE:COMBINATOR...)
         Is_Word(At_Level(L)) and Cell_Word_Id(At_Level(L)) == SYM_NATIVE
     );
+    Fetch_Next_In_Feed(L->feed);
 
     if (Eval_Step_Throws(meta_step, L))  // write directly to var [1]
         crash (Error_No_Catch_For_Throw(TOP_LEVEL));

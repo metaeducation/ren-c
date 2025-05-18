@@ -276,12 +276,6 @@ enum Reb_Strmode {
 };
 
 
-//=//// MOLDING ///////////////////////////////////////////////////////////=//
-//
-struct MolderStruct;
-typedef struct MolderStruct Molder;
-
-
 //=//// VARIADIC OPERATIONS ///////////////////////////////////////////////=//
 //
 // These 3 operations are the current legal set of what can be done with a

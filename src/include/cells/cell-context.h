@@ -37,11 +37,6 @@ INLINE SeaOfVars* Cell_Module_Sea(const Cell* c) {
     return cast(SeaOfVars*, CELL_NODE1(c));
 }
 
-INLINE Context* Cell_Context(const Cell* c) {
-    if (Heart_Of(c) == TYPE_MODULE)
-        return Cell_Module_Sea(c);
-    return Cell_Varlist(c);
-}
 
 INLINE Error* Cell_Error(const Cell* c) {
     assert(Heart_Of(c) == TYPE_WARNING);
@@ -76,6 +71,25 @@ INLINE Element* Init_Context_Cell(
     Init_Context_Cell((out), TYPE_PORT, (c))
 
 
+INLINE Element* Init_Let(Init(Element) out, Let* let) {
+    assert(Is_Node_Managed(let));
+    Reset_Cell_Header_Noquote(out, CELL_MASK_LET);
+    CELL_EXTRA(out) = nullptr;
+    CELL_NODE1(out) = let;
+    Corrupt_Unused_Field(out->payload.split.two.corrupt);
+    return out;
+}
+
+INLINE Let* Cell_Let(const Cell* c) {
+    assert(Heart_Of(c) == TYPE_LET);
+
+    Node* node = CELL_NODE1(c);
+    if (Not_Node_Readable(node))
+        panic (Error_Series_Data_Freed_Raw());
+
+    return cast(Let*, node);
+}
+
 
 INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
     assert(Is_Node_Managed(sea));
@@ -92,9 +106,12 @@ INLINE Option(const Value*) Cell_Context_Slot_Core(
     bool writable
 ){
     bool strict = false;
-    Value* slot;
+    Option(Value*) slot;
     if (Is_Module(context)) {
         slot = Sea_Slot(Cell_Module_Sea(context), symbol, strict);
+    }
+    else if (Is_Let(context)) {
+        slot = Lookup_Let_Slot(Cell_Let(context), symbol, strict);
     }
     else {
         Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
@@ -103,7 +120,7 @@ INLINE Option(const Value*) Cell_Context_Slot_Core(
         else
             slot = Varlist_Slot(Cell_Varlist(context), unwrap index);
     }
-    if (slot and writable and Get_Cell_Flag(slot, PROTECTED))
+    if (slot and writable and Get_Cell_Flag(unwrap slot, PROTECTED))
         panic (Error_Protected_Key(symbol));
     return slot;
 }
@@ -114,3 +131,12 @@ INLINE Option(const Value*) Cell_Context_Slot_Core(
 #define Cell_Context_Slot_Mutable(context,symbol) \
     cast(Option(Value*), m_cast(Value*, \
         maybe Cell_Context_Slot_Core((context), (symbol), true)))
+
+
+INLINE Context* Cell_Context(const Cell* c) {
+    if (Heart_Of(c) == TYPE_MODULE)
+        return Cell_Module_Sea(c);
+    if (Heart_Of(c) == TYPE_LET)
+        return Cell_Let(c);
+    return Cell_Varlist(c);
+}

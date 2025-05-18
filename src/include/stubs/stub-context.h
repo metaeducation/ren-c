@@ -67,7 +67,22 @@ INLINE Heart CTX_TYPE(Context* c) {
 }
 
 
-INLINE const Symbol* Info_Let_Symbol(const Stub* stub) {
-    assert(Is_Stub_Let(stub));
-    return cast(const Symbol*, INFO_LET_SYMBOL(stub));
+INLINE const Symbol* Let_Symbol(const Let* let) {
+    return cast(const Symbol*, INFO_LET_SYMBOL(let));
+}
+
+INLINE Value* Let_Slot(Let* let) {
+    return Stub_Cell(let);
+}
+
+INLINE Option(Value*) Lookup_Let_Slot(
+    Let* let,
+    const Symbol* symbol,
+    bool strict
+){
+    UNUSED(strict);  // TBD
+    if (INFO_LET_SYMBOL(let) != symbol)
+        return nullptr;
+
+    return Let_Slot(let);
 }
