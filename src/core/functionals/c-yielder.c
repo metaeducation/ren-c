@@ -624,13 +624,13 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     // yielder will elevate to an abrupt panic.
 
     if (Is_Meta_Of_Error(meta) or Bool_ARG(FINAL)) {  // not resumable, throw
-        Init_Action(
+        Value* spare = Init_Action(
             SPARE,  // use as label for throw
             Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),
             CANON(YIELD),
             Level_Varlist(yielder_level)
         );
-        return Init_Thrown_With_Label(LEVEL, meta, stable_SPARE);
+        return Init_Thrown_With_Label(LEVEL, meta, spare);
     }
 
   //=//// PLAIN YIELD MUST "UNPLUG STACK" FOR LATER RESUMPTION ////////////=//

@@ -806,34 +806,35 @@ DECLARE_NATIVE(GET)
         if (Is_Void(SPARE))
             return nullptr;  // !!! Is this a good idea, or should it warning?
 
-        Decay_If_Unstable(SPARE);
+        Value* spare = Decay_If_Unstable(SPARE);
 
         if (not (
-            Any_Word(stable_SPARE)
-            or Any_Sequence(SPARE)
-            or Is_Pinned(BLOCK, SPARE))
+            Any_Word(spare)
+            or Any_Sequence(spare)
+            or Is_Pinned(BLOCK, spare))
         ){
-            return PANIC(SPARE);
+            return PANIC(spare);
         }
 
-        source = cast(Element*, SPARE);
+        source = Known_Element(spare);
     }
 
+    Sink(Value) out = OUT;
     Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
-        OUT, steps, source, SPECIFIED
+        out, steps, source, SPECIFIED
     );
     if (error)
         return FAIL(unwrap error);
 
     if (not Bool_ARG(ANY))
-        if (Is_Trash(stable_OUT))
-            return FAIL(Error_Bad_Word_Get(source, stable_OUT));
+        if (Is_Trash(out))
+            return FAIL(Error_Bad_Word_Get(source, out));
 
     if (steps and steps != GROUPS_OK) {
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
         Copy_Meta_Cell(Array_At(pack, 0), steps);
-        Copy_Meta_Cell(Array_At(pack, 1), stable_OUT);
+        Copy_Meta_Cell(Array_At(pack, 1), out);
         return Init_Pack(OUT, pack);
     }
 
@@ -890,9 +891,10 @@ bool Set_Var_Core_Updater_Throws(
                 Copy_Meta_Cell(sink, poke);
             }
             else {
-                if (Is_Action(poke)) {
+                if (Is_Atom_Action(poke)) {
+                    Value* action = cast(Value*, poke);
                     if (Get_Cell_Flag(poke, OUT_HINT_UNSURPRISING))
-                        Update_Frame_Cell_Label(poke, Cell_Word_Symbol(var));
+                        Update_Frame_Cell_Label(action, Cell_Word_Symbol(var));
                     else
                         panic ("Surprising ACTION! assign, use ^LIFT: assign");
                 }
@@ -1222,17 +1224,17 @@ DECLARE_NATIVE(SET)
     if (Is_Void(SPARE))
         return UNMETA(meta_setval);
 
-    Decay_If_Unstable(SPARE);
+    Value* spare = Decay_If_Unstable(SPARE);
 
     if (not (
-        Any_Word(stable_SPARE)
-        or Any_Sequence(SPARE)
-        or Is_Pinned(BLOCK, SPARE)
+        Any_Word(spare)
+        or Any_Sequence(spare)
+        or Is_Pinned(BLOCK, spare)
     )){
-        return PANIC(SPARE);
+        return PANIC(spare);
     }
 
-    Copy_Cell(target, cast(Element*, SPARE));  // update ARG(TARGET)
+    Copy_Cell(target, Known_Element(spare));  // update ARG(TARGET)
 
 } call_generic_set_var: { ////////////////////////////////////////////////////
 

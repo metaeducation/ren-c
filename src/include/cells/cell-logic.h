@@ -79,6 +79,9 @@ INLINE bool Is_Logic(Need(const Value*) v) {
 #define Is_Okay(v) \
     Is_Anti_Word_With_Id((v), SYM_OKAY)
 
+#define Is_Atom_Okay(a) \
+    Is_Anti_Word_With_Id(u_cast(Value*, (a)), SYM_OKAY)  // !!! hack, temporary
+
 #define Init_Okay(out) \
     TRACK(Init_Word_Untracked( \
         (out), \

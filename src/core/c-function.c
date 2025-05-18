@@ -177,9 +177,9 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
         if (not meta) {
             Meta_Unquotify_Undecayed(eval);  // Stepper is meta protocol
-            Decay_If_Unstable(eval);
+            Value* decayed = Decay_If_Unstable(eval);
 
-            if (must_be_action and not Is_Action(eval))
+            if (must_be_action and not Is_Action(decayed))
                 return Error_User("Assignment using /FOO must be an action");
         }
 

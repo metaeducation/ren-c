@@ -394,17 +394,19 @@ DECLARE_NATIVE(JOIN)
 
 } mold_step_result_in_spare: { ///////////////////////////////////////////////
 
+    // 1. spaced [match [logic?] null ...]
+
     if (Is_Ghost_Or_Void(SPARE))  // spaced [elide print "hi"], etc
         goto next_mold_step;  // vaporize
 
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
         goto vetoed;
 
-    Decay_If_Unstable(SPARE);  // spaced [match [logic?] false ...]
+    Value* spare = Decay_If_Unstable(SPARE);  // [1]
 
-    if (Is_Splice(SPARE)) {  // only allow splice for mold, for now
+    if (Is_Splice(spare)) {  // only allow splice for mold, for now
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, SPARE);
+        const Element* at = Cell_List_At(&tail, spare);
         if (at == tail)
             goto next_mold_step;  // vaporize
 
@@ -417,18 +419,18 @@ DECLARE_NATIVE(JOIN)
             goto next_mold_step;
         }
     }
-    else if (Is_Antiform(SPARE))
-        return FAIL(Error_Bad_Antiform(SPARE));
+    else if (Is_Antiform(spare))
+        return FAIL(Error_Bad_Antiform(spare));
 
-    if (Is_Rune(SPARE)) {  // do not delimit (unified w/char) [5]
+    if (Is_Rune(spare)) {  // do not delimit (unified w/char) [5]
         if (delimiter)
             Clear_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING);
-        Copy_Cell(PUSH(), stable_SPARE);
+        Copy_Cell(PUSH(), spare);
         goto next_mold_step;
     }
 
     Push_Join_Delimiter_If_Pending();
-    Copy_Cell(PUSH(), stable_SPARE);
+    Copy_Cell(PUSH(), spare);
     if (Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT))
         Set_Cell_Flag(TOP, STACK_NOTE_MOLD);
     Mark_Join_Delimiter_Pending();
@@ -457,11 +459,11 @@ DECLARE_NATIVE(JOIN)
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
         goto vetoed;
 
-    Decay_If_Unstable(SPARE);
+    Value* spare = Decay_If_Unstable(SPARE);
 
-    if (Is_Splice(SPARE)) {
+    if (Is_Splice(spare)) {
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, SPARE);
+        const Element* at = Cell_List_At(&tail, spare);
 
         if (at == tail)
             goto next_stack_step;  // don't mark produced something
@@ -474,11 +476,11 @@ DECLARE_NATIVE(JOIN)
 
         goto next_stack_step;
     }
-    else if (Is_Antiform(SPARE))
-        return FAIL(Error_Bad_Antiform(SPARE));
+    else if (Is_Antiform(spare))
+        return FAIL(Error_Bad_Antiform(spare));
 
     Push_Join_Delimiter_If_Pending();
-    Copy_Cell(PUSH(), stable_SPARE);
+    Copy_Cell(PUSH(), spare);
     Mark_Join_Delimiter_Pending();
 
     goto next_stack_step;
@@ -538,7 +540,7 @@ DECLARE_NATIVE(JOIN)
 
     for (; at != tail; ++at) {
         bool mold = Get_Cell_Flag(Data_Stack_At(Value, at), STACK_NOTE_MOLD);
-        Value* v = Copy_Cell(stable_SPARE, Data_Stack_At(Value, at));
+        Value* v = Copy_Cell(SPARE, Data_Stack_At(Value, at));
 
         if (mold) {
             assert(NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD));

@@ -260,9 +260,13 @@ for-each-datatype 't [
     ]
 
     e-types/emit [propercase-of t --[
+        INLINE bool Is_${propercase-of T.name}_Core(const Atom* cell) {
+            return ((cell->header.bits & CELL_HEART_QUOTE_MASK)
+                == (FLAG_QUOTE_BYTE(NOQUOTE_1) | FLAG_HEART($<T.NAME>)));
+        }
+
         #define Is_${propercase-of T.name}(cell)  /* $<T.HEART> */ \
-            ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
-              == (FLAG_HEART(${T.NAME}) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
+            Is_${propercase-of T.name}_Core(Ensure_Readable(cell))
     ]--]
 ]
 
@@ -275,8 +279,8 @@ for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
         INLINE bool Any_${Proper-Name}_Type(Option(Type) t)
           { return u_cast(Byte, maybe t) >= $<TR.START> and u_cast(Byte, maybe t) <= $<TR.END>; }
 
-        #define Any_${Proper-Name}(v) \
-            Any_${Proper-Name}_Type(Type_Of(v))
+        #define Any_${Proper-Name}(cell) \
+            Any_${Proper-Name}_Type(Type_Of(cell))
     ]--]
 ]
 
@@ -334,8 +338,8 @@ for-each [ts-name types] sparse-typesets [
             return did (g_sparse_memberships[u_cast(Byte, maybe t)] & TYPESET_FLAG_${TS-NAME});
         }
 
-        #define Any_${propercase-of Ts-Name}(v) \
-            Any_${propercase-of Ts-Name}_Type(Type_Of(v))
+        #define Any_${propercase-of Ts-Name}(cell) \
+            Any_${propercase-of Ts-Name}_Type(Type_Of(cell))
     ]--]
 ]
 
@@ -350,20 +354,40 @@ for-each-datatype 't [
     ; a macro vs. an inline function.  Revisit.
     ;
     e-types/emit [t proper-name --[
-        INLINE bool Is_$<Proper-Name>_Core(Need(const $<Need>*) v) {
-            return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE_63))
+        INLINE bool Is_$<Proper-Name>_Core(const $<Need>* cell) {
+            return ((cell->header.bits & CELL_HEART_QUOTE_MASK)
                 == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART($<T.NAME>)));
         }
 
-        #define Is_$<Proper-Name>(v) \
-            Is_$<Proper-Name>_Core(Ensure_Readable(v))
+        #define Is_$<Proper-Name>(cell) \
+            Is_$<Proper-Name>_Core(Ensure_Readable(cell))
 
-        #define Is_Meta_Of_$<Proper-Name>(v) \
-            ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE_63)) \
+        #define Is_Meta_Of_$<Proper-Name>(cell) \
+            ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
             == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART($<T.NAME>)))
 
-        #define Is_Quasi_$<Propercase-Of T.Name>(v) \
-            Is_Meta_Of_$<Proper-Name>(v)  /* alternative */
+        #define Is_Quasi_$<Propercase-Of T.Name>(cell) \
+            Is_Meta_Of_$<Proper-Name>(cell)  /* alternative */
+    ]--]
+
+    if yes? t.unstable [continue]
+
+    ; Usually we don't want people testing Atom* directly to see if it's any
+    ; stable type (antiform or otherwise) because it might be a PACK! or an
+    ; ERROR! and need to decay.  But occasionally code is checking return
+    ; types and has special reasons to see if an Atom is an ACTION! or a
+    ; TRASH!, etc.  Allow the test, but throw in a speedbump by making them
+    ; call Is_Atom_Action() instead of just Is_Action(), to provoke some
+    ; thought from testing casually.
+    ;
+    e-types/emit [t proper-name --[
+        INLINE bool Is_Atom_$<Proper-Name>_Core(const Atom* cell) {
+            return ((cell->header.bits & CELL_HEART_QUOTE_MASK)
+                == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART($<T.NAME>)));
+        }
+
+        #define Is_Atom_$<Proper-Name>(cell) \
+            Is_Atom_$<Proper-Name>_Core(Ensure_Readable(cell))
     ]--]
 ]
 

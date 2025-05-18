@@ -824,11 +824,11 @@ DECLARE_NATIVE(LET)
         }
     }
 
-    Value* where;
+    Sink(Value) where;
     if (Get_Level_Flag(L, LET_IS_SETTING))
-        where = stable_SPARE;
+        where = SPARE;
     else
-        where = stable_OUT;
+        where = OUT;
 
     if (altered) {  // elements altered, can't reuse input block rebound
         assert(Get_Level_Flag(L, LET_IS_SETTING));
@@ -855,7 +855,9 @@ DECLARE_NATIVE(LET)
     if (Get_Level_Flag(L, LET_IS_SETTING))
         goto eval_right_hand_side_if_let_is_setting;
 
-    assert(Is_Word(OUT) or Is_Block(OUT) or Is_Lifted(WORD, OUT));
+    Element* out = Known_Element(OUT);
+    assert(Is_Word(out) or Is_Block(out) or Is_Lifted(WORD, out));
+    USED(out);
     goto integrate_let_bindings;
 
 }} eval_right_hand_side_if_let_is_setting: {  // no `bindings` use after here
@@ -872,9 +874,10 @@ DECLARE_NATIVE(LET)
     // LET, so this requires reevaluation--as opposed to just evaluating
     // the right hand side and then running SET on the result.)
 
+    Element* spare = Known_Element(SPARE);
     assert(
-        Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, SPARE))
-        or Is_Set_Block(stable_SPARE)
+        Try_Get_Settable_Word_Symbol(nullptr, spare)
+        or Is_Set_Block(spare)
     );
 
     Flags flags =
@@ -883,7 +886,7 @@ DECLARE_NATIVE(LET)
         | (L->flags.bits & LEVEL_FLAG_ERROR_RESULT_OK);
 
     Level* sub = Make_Level(&Meta_Stepper_Executor, LEVEL->feed, flags);
-    Copy_Cell(Evaluator_Level_Current(sub), cast(Element*, SPARE));
+    Copy_Cell(Evaluator_Level_Current(sub), spare);
     sub->u.eval.current_gotten = nullptr;
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);

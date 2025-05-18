@@ -164,7 +164,7 @@ INLINE bool Is_Bar_Bar(const Atom* v) {
     );
 }
 
-INLINE bool Is_Anti_Word_With_Id(const Atom* v, SymId id) {
+INLINE bool Is_Anti_Word_With_Id(const Value* v, SymId id) {
     assert(id != 0);
     if (not Is_Keyword(v))
         return false;

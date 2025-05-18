@@ -182,9 +182,9 @@ DECLARE_NATIVE(MULTIPLY)
         not Heart_Of_Is_0(e1)  // left is not an extension type
         and cast(Byte, Heart_Of(e1)) < cast(Byte, Heart_Of(e2))  // [1]
     ){
-        Move_Cell(stable_SPARE, e2);
+        Element* spare = Move_Cell(SPARE, e2);
         Move_Cell(e2, e1);  // ...so move simpler type to be on the right
-        Move_Cell(e1, cast(Element*, SPARE));
+        Move_Cell(e1, spare);
     }
 
     return Dispatch_Generic(MULTIPLY, e1, LEVEL);

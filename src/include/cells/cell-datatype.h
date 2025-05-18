@@ -178,7 +178,7 @@ INLINE Heart Cell_Datatype_Builtin_Heart(const Atom* v) {
     return u_cast(HeartEnum, type_byte);
 }
 
-INLINE const ExtraHeart* Cell_Datatype_Extra_Heart(const Atom* v) {
+INLINE const ExtraHeart* Cell_Datatype_Extra_Heart(const Value* v) {
     assert(Is_Datatype(v));
 
     const Symbol* s = Cell_Word_Symbol(Cell_List_Item_At(v));

@@ -601,9 +601,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
             // date dispatcher already.  Instead of repeating the code here in
             // the time dispatcher, swap the arguments and call DATE's version.
             //
-            Move_Cell(stable_SPARE, ARG_N(1));
-            Move_Cell(ARG_N(1), arg);
-            Move_Cell(ARG_N(2), stable_SPARE);
+            Element* spare = Move_Cell(SPARE, time);
+            Move_Cell(time, arg);
+            Move_Cell(arg, spare);
             return GENERIC_CFUNC(OLDGENERIC, Is_Date)(level_);
         }
         return PANIC(Error_Math_Args(TYPE_TIME, verb));

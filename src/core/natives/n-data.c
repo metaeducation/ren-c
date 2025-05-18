@@ -1028,23 +1028,23 @@ DECLARE_NATIVE(INFIX)
 {
     INCLUDE_PARAMS_OF_INFIX;
 
-    Actionify(Copy_Cell(OUT, ARG(ACTION)));
+    Value* out = Actionify(Copy_Cell(OUT, ARG(ACTION)));
 
     if (Bool_ARG(OFF)) {
         if (Bool_ARG(DEFER) or Bool_ARG(POSTPONE))
             return PANIC(Error_Bad_Refines_Raw());
-        Tweak_Cell_Frame_Infix_Mode(OUT, PREFIX_0);
+        Tweak_Cell_Frame_Infix_Mode(out, PREFIX_0);
     }
     else if (Bool_ARG(DEFER)) {  // not OFF, already checked
         if (Bool_ARG(POSTPONE))
             return PANIC(Error_Bad_Refines_Raw());
-        Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_DEFER);
+        Tweak_Cell_Frame_Infix_Mode(out, INFIX_DEFER);
     }
     else if (Bool_ARG(POSTPONE)) {  // not OFF or DEFER, we checked
-        Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_POSTPONE);
+        Tweak_Cell_Frame_Infix_Mode(out, INFIX_POSTPONE);
     }
     else
-        Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_TIGHT);
+        Tweak_Cell_Frame_Infix_Mode(out, INFIX_TIGHT);
 
     return UNSURPRISING(OUT);
 }
@@ -1219,11 +1219,12 @@ DECLARE_NATIVE(ANY_WORD_Q)
 {
     INCLUDE_PARAMS_OF_ANY_WORD_Q;
 
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(OUT, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
-    return LOGIC(Any_Word(stable_OUT));
+    return LOGIC(Any_Word(v));
 }
 
 
@@ -1430,6 +1431,7 @@ DECLARE_NATIVE(REIFY)
     if (bounce)
         return unwrap bounce;
 
+    Assert_Cell_Stable(OUT);  // Value* should always be stable
     return Reify(OUT);
 }
 

@@ -213,6 +213,12 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
 // Ensure_Element() when you are not sure and want to panic if not.
 //
 
+INLINE Option(Element*) As_Element(const_if_c Value* v) {
+    if (Is_Antiform(v))
+        return nullptr;
+    return u_cast(Element*, v);
+}
+
 #if NO_RUNTIME_CHECKS
     #define Known_Element(cell) \
         c_cast(Element*, (cell))
@@ -230,6 +236,12 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
 }
 
 #if CPLUSPLUS_11
+    INLINE Option(const Element*) As_Element(const Value* v) {
+        if (Is_Antiform(v))
+            return nullptr;
+        return c_cast(Element*, v);
+    }
+
     INLINE const Element* Ensure_Element(const Atom* cell)
       { return Ensure_Element(m_cast(Atom*, cell)); }
 

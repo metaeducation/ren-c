@@ -589,8 +589,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (ret >= limit)
             return nullptr;
 
-        Derelativize(OUT, Array_At(arr, ret), binding);
-        return Inherit_Const(stable_OUT, list); }
+        Element* out = Derelativize(OUT, Array_At(arr, ret), binding);
+        return Inherit_Const(out, list); }
 
     //-- Modification:
       case SYM_APPEND:

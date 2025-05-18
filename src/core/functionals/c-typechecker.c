@@ -80,11 +80,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
     if (Is_Meta_Of_Void(meta))
         return LOGIC(false);  // opt-out of the typecheck (null fails)
 
-    Details* details;
-    if (Get_Level_Flag(L, DISPATCHING_INTRINSIC))
-        details = Ensure_Cell_Frame_Details(SCRATCH);
-    else
-        details = Ensure_Level_Details(L);
+    Details* details = Level_Intrinsic_Details(L);
     assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
 
     DECLARE_ATOM (temp);  // can't overwrite scratch if error can be raised
@@ -356,7 +352,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     assert(test != SCRATCH);
     assert(test != SPARE);
 
-    const Value* v = stable_SPARE;
+    Need(const Value*) const v = SPARE;
 
 { //=//// TRY BUILTIN TYPESET CHECKER DISPATCH ////////////////////////////=//
 
@@ -490,7 +486,6 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 } return_result: {
 
   #if RUNTIME_CHECKS
-    assert(v == stable_SPARE);
     Init_Unreadable(SCRATCH);
   #endif
 
@@ -608,7 +603,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         goto handle_non_word_quoted;
 
     if (Is_Space(item)) {
-        if (Is_Stable(SPARE) and Is_Space(stable_SPARE))
+        if (Is_Stable(SPARE) and Is_Space(cast(Value*, SPARE)))
             goto test_succeeded;
         goto test_failed;
     }
@@ -818,7 +813,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
     assert(atom != SCRATCH and atom != SPARE);
     if (not is_return)
-        assert(not Is_Trash(atom));  // antiform space must be ^META as argument
+        assert(not Is_Atom_Trash(atom));  // must be ^META as argument
 
     if (Get_Parameter_Flag(param, OPT_OUT))
         assert(not Is_Void(atom));  // should have bypassed this check
@@ -866,7 +861,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
         if (
             Get_Parameter_Flag(param, TRASH_DEFINITELY_OK)
-            and Is_Trash(atom)
+            and Is_Atom_Trash(atom)
         ){
             goto return_true;
         }
@@ -880,7 +875,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
     if (Is_Parameter_Unconstrained(param)) {
         if (Get_Parameter_Flag(param, REFINEMENT)) {  // no-arg refinement
-            if (Is_Okay(atom))
+            if (Is_Atom_Okay(atom))
                 goto return_true;  // nulls handled by NULL_DEFINITELY_OK
             goto return_false;
         }
@@ -917,7 +912,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
       do_coercion:
 
-        if (Is_Action(atom)) {
+        if (Is_Atom_Action(atom)) {
             QUOTE_BYTE(atom) = NOQUOTE_1;
             coerced = true;
             goto typecheck_again;

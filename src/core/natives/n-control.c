@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -23,25 +23,20 @@
 //
 // Control constructs follow these rules:
 //
-// * If they do not run any branches, most constructs will return NULL.  This
-//   will signal functions like ELSE and DIDN'T, much like the NULL state
-//   conveying soft failure does.
+// * If they do not run any branches, they return NULL.  This will signal
+//   functions like ELSE and THEN.
 //
-//   (The exception is IF, which returns VOID.  The thinking is that since
-//   it's obvious that an IF may not run its single branch, it's less likely
-//   that someone saying e.g. (append block if condition [...]) is mistaken
-//   in believing branches are exhaustive.  But (append block case [...])
-//   would be more likely to mask errors and generate spurious voids).
+//   (The exception is WHEN, which returns VOID).
 //
-// * If a branch *does* run--and its evaluation happens to produce VOID or
-//   NULL, those states are wrapped in a BLOCK! antiform.  This way THEN runs
-//   instead of ELSE.  Although this does mean there is some conflation of
+// * If a branch *does* run--and its evaluation *happens* to produce NULL--the
+//   null will be wrapped in a BLOCK! antiform ("heavy null").  This way THEN
+//   runs instead of ELSE.  Although this does mean there is some conflation of
 //   the results, the conflated values have properties that mostly align with
 //   what their intent was--so it works about as well as it can.
 //
 // * Zero-arity function values used as branches will be executed, and
 //   single-arity functions used as branches will also be executed--but passed
-//   the value of the triggering condition.  Especially useful with lambda:
+//   the value of the triggering condition.  Useful with arrow functions:
 //
 //       >> if 1 < 2 [10 + 20] then x -> [print ["THEN got" x]]
 //       THEN got 30
@@ -112,7 +107,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
     if (THROWING)
         return THROWN;
 
-    Value* with = stable_SPARE;  // value passed to branch if it runs [1]
+    Need(Value*) with = SPARE;  // value passed to branch if it runs [1]
     Atom* branch = SCRATCH;  // GC-safe if eval target
 
     enum {
@@ -466,12 +461,12 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
 
     Meta_Unquotify_Undecayed(SPARE);
-    Decay_If_Unstable(SPARE);
+    Value* spare = Decay_If_Unstable(SPARE);
 
     if (not Is_Nulled(predicate))
         goto run_predicate_on_eval_product;
 
-    condition = stable_SPARE;  // w/o predicate, `condition` is eval result
+    condition = spare;  // w/o predicate, `condition` is eval result
     goto process_condition;
 
 } run_predicate_on_eval_product: {  //////////////////////////////////////////
@@ -656,8 +651,6 @@ DECLARE_NATIVE(CASE)
     Element* cases = Element_ARG(CASES);
     Value* predicate = ARG(PREDICATE);
 
-    Atom* branch = SCRATCH;
-
     enum {
         ST_CASE_INITIAL_ENTRY = STATE_0,
         ST_CASE_CONDITION_EVAL_STEP,
@@ -667,22 +660,12 @@ DECLARE_NATIVE(CASE)
     };
 
     switch (STATE) {
-      case ST_CASE_INITIAL_ENTRY:
-        goto initial_entry;
-
-      case ST_CASE_CONDITION_EVAL_STEP:
-        goto condition_meta_in_spare;
-
-      case ST_CASE_RUNNING_PREDICATE:
-        goto predicate_result_in_spare;
-
+      case ST_CASE_INITIAL_ENTRY: goto initial_entry;
+      case ST_CASE_CONDITION_EVAL_STEP: goto condition_meta_in_spare;
+      case ST_CASE_RUNNING_PREDICATE: goto predicate_result_in_spare;
       case ST_CASE_EVALUATING_GROUP_BRANCH:
-        Decay_If_Unstable(branch);
-        goto handle_processed_branch;
-
-      case ST_CASE_RUNNING_BRANCH:
-        goto branch_result_in_out;
-
+        goto handle_processed_branch_in_scratch;
+      case ST_CASE_RUNNING_BRANCH: goto branch_result_in_out;
       default: assert(false);
     }
 
@@ -720,7 +703,7 @@ DECLARE_NATIVE(CASE)
 
     Meta_Unquotify_Undecayed(SPARE);
 
-    if (Is_Ghost_Or_Void(SPARE))  // skip nihils, e.g. ELIDE
+    if (Is_Ghost(SPARE))  // skip over things like ELIDE, but not voids!
         goto handle_next_clause;
 
     Decay_If_Unstable(SPARE);
@@ -763,19 +746,19 @@ DECLARE_NATIVE(CASE)
     //    being evaluated as const.  But we have to proxy that const flag
     //    over to the block.
 
-    Element* at_in_spare = Derelativize(
-        branch, At_Level(SUBLEVEL), Level_Binding(SUBLEVEL)
+    Element* branch = Derelativize(
+        SCRATCH, At_Level(SUBLEVEL), Level_Binding(SUBLEVEL)
     );
-    Inherit_Const(at_in_spare, cases);  // branch needs to respect const [1]
+    Inherit_Const(branch, cases);  // branch needs to respect const [1]
 
     Fetch_Next_In_Feed(SUBLEVEL->feed);
 
     if (not Is_Group(branch))
-        goto handle_processed_branch;
+        goto handle_processed_branch_in_scratch;
 
     Level* sub = Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
-        at_in_spare,  // non @GROUP! branches are run unconditionally
+        branch,  // non @GROUP! branches are run unconditionally
         Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
     );
@@ -783,33 +766,35 @@ DECLARE_NATIVE(CASE)
 
     STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
-    Push_Level_Erase_Out_If_State_0(branch, sub);  // level has array and index
+    Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // level has array and index
     return CONTINUE_SUBLEVEL(sub);
 
-} handle_processed_branch: {  ////////////////////////////////////////////////
+} handle_processed_branch_in_scratch: {  /////////////////////////////////////
 
     // 1. Maintain symmetry with IF on non-taken branches:
     //
     //        >> if null <some-tag>
     //        ** Script Error: if does not allow tag! for its branch...
 
-    Assert_Cell_Stable(branch);
+    Value* branch = Decay_If_Unstable(SCRATCH);
+
+    Value* spare = Decay_If_Unstable(SPARE);
 
     bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, stable_SPARE);
+    Option(Error*) e = Trap_Test_Conditional(&cond, spare);
     if (e)
         return PANIC(unwrap e);
 
     if (not cond) {
         if (not Any_Branch(branch))  // like IF [1]
-            return PANIC(Error_Bad_Value_Raw(cast(Value*, branch)));  // stable
+            return PANIC(Error_Bad_Value_Raw(branch));  // stable
 
         goto handle_next_clause;
     }
 
     STATE = ST_CASE_RUNNING_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
-    return CONTINUE_BRANCH(OUT, cast(Value*, branch), SPARE);
+    return CONTINUE_BRANCH(OUT, branch, SPARE);
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
@@ -882,8 +867,6 @@ DECLARE_NATIVE(SWITCH)
     Element* cases = Element_ARG(CASES);
     Value* predicate = ARG(PREDICATE);
 
-    Atom* right = SPARE;
-
     enum {
         ST_SWITCH_INITIAL_ENTRY = STATE_0,
         ST_SWITCH_EVALUATING_RIGHT,
@@ -915,7 +898,7 @@ DECLARE_NATIVE(SWITCH)
     //    be worked on and sped up, such as to create one frame and reuse
     //    it over and over.  Review.
 
-    assert(Is_Cell_Erased(right));  // initial condition
+    assert(Is_Cell_Erased(SPARE));  // initial condition
     assert(Is_Cell_Erased(OUT));  // if no writes to out performed, we act void
 
     if (Bool_ARG(TYPE) and Bool_ARG(PREDICATE))
@@ -932,7 +915,7 @@ DECLARE_NATIVE(SWITCH)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
-    Push_Level_Erase_Out_If_State_0(right, sub);
+    Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
 } next_switch_step: {  ///////////////////////////////////////////////////////
 
@@ -949,7 +932,7 @@ DECLARE_NATIVE(SWITCH)
     //
     //      https://forum.rebol.info/t/match-in-rust-vs-switch/1835
 
-    Erase_Cell(right);  // fallout must be reset each time
+    Erase_Cell(SPARE);  // fallout must be reset each time
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
@@ -988,23 +971,26 @@ DECLARE_NATIVE(SWITCH)
     //    being evaluated as const.  But we have to proxy that const flag
     //    over to the block.
 
-    Meta_Unquotify_Undecayed(right);
+    Meta_Unquotify_Undecayed(SPARE);
 
-    if (Is_Ghost_Or_Void(right))  // skip comments or ELIDEs
+    if (Is_Ghost(SPARE))  // skip comments or ELIDEs
         goto next_switch_step;
+
+    if (Is_Void(SPARE))
+        return PANIC(Error_Bad_Void());
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
 
-    if (Bool_ARG(TYPE)) {
-        Decay_If_Unstable(right);
+    Value* spare = Decay_If_Unstable(SPARE);  // !!! predicate wants decayed?
 
-        if (not Is_Datatype(right) and not Is_Action(right))
+    if (Bool_ARG(TYPE)) {
+        if (not Is_Datatype(spare) and not Is_Action(spare))
             return PANIC("switch:type conditions must be DATATYPE! or ACTION!");
 
-        Copy_Cell(Level_Spare(SUBLEVEL), left);
+        Copy_Cell(Level_Spare(SUBLEVEL), left);  // spare of the *sublevel!*
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(  // *sublevel*'s SPARE!
-            SUBLEVEL, cast(Value*, right), SPECIFIED
+            SUBLEVEL, spare, SPECIFIED
         )){
             goto next_switch_step;
         }
@@ -1012,17 +998,18 @@ DECLARE_NATIVE(SWITCH)
     else {
         assert(not Is_Nulled(predicate));
 
+        Sink(Value) scratch = SCRATCH;
         if (rebRunThrows(
-            cast(Sink(Value), SCRATCH),  // <-- output cell
+            scratch,  // <-- output cell
             predicate,
                 rebQ(left),  // first arg (left hand side if infix)
-                rebQ(cast(Value*, right))  // second arg (right side if infix)
+                rebQ(spare)  // second arg (right side if infix)
         )){
             return BOUNCE_THROWN;  // aborts sublevel
         }
 
         bool cond;
-        Option(Error*) e = Trap_Test_Conditional(&cond, stable_SCRATCH);
+        Option(Error*) e = Trap_Test_Conditional(&cond, scratch);
         if (e)
             return PANIC(unwrap e);
 
@@ -1043,12 +1030,12 @@ DECLARE_NATIVE(SWITCH)
         at = At_Level(SUBLEVEL);
     }
 
-    Derelativize(SCRATCH, at, Level_Binding(SUBLEVEL));
-    Inherit_Const(SCRATCH, cases);  // need to inherit proxy const bit [3]
+    Element* scratch = Derelativize(SCRATCH, at, Level_Binding(SUBLEVEL));
+    Inherit_Const(scratch, cases);  // need to inherit proxy const bit [3]
 
     STATE = ST_SWITCH_RUNNING_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
-    return CONTINUE_BRANCH(OUT, cast(Element*, SCRATCH), right);
+    return CONTINUE_BRANCH(OUT, scratch, spare);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
@@ -1067,9 +1054,9 @@ DECLARE_NATIVE(SWITCH)
 
     Drop_Level(SUBLEVEL);
 
-    if (Not_Cell_Erased(right)) {  // something counts as fallout [1]
-        Assert_Cell_Stable(right);
-        Move_Atom(OUT, right);
+    if (Not_Cell_Erased(SPARE)) {  // something counts as fallout [1]
+        Assert_Cell_Stable(SPARE);
+        Move_Atom(OUT, SPARE);
         return BRANCHED(OUT);
     }
 
@@ -1132,8 +1119,9 @@ DECLARE_NATIVE(DEFAULT)
 
     Unchain(target);
 
+    Sink(Value) out = OUT;
     Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
-        OUT,
+        out,
         steps,  // use steps to avoid double-evaluation on GET + SET pair
         target,
         SPECIFIED
@@ -1141,7 +1129,7 @@ DECLARE_NATIVE(DEFAULT)
     if (error)
         return PANIC(unwrap error);
 
-    if (not (Is_Trash(OUT) or Is_Nulled(OUT) or Is_Blank(OUT)))
+    if (not (Is_Trash(out) or Is_Nulled(out) or Is_Blank(out)))
         return OUT;  // consider it a "value" [1]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;

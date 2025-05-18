@@ -52,7 +52,7 @@ DECLARE_NATIVE(NOW)
 {
     INCLUDE_PARAMS_OF_NOW;
 
-    Value* timestamp = Get_Current_Datetime_Value();
+    RebolValue* timestamp = Get_Current_Datetime_Value();
 
     // However OS-level date and time is plugged into the system, it needs to
     // have enough granularity to give back date, time, and time zone.
@@ -61,7 +61,7 @@ DECLARE_NATIVE(NOW)
     assert(Does_Date_Have_Time(timestamp));
     assert(Does_Date_Have_Zone(timestamp));
 
-    Copy_Cell(OUT, timestamp);
+    Value* out = Copy_Cell(OUT, timestamp);
     rebRelease(timestamp);
 
     if (not Bool_ARG(PRECISE)) {
@@ -71,7 +71,7 @@ DECLARE_NATIVE(NOW)
         // seconds portion (with the nanoseconds set to 0).  This achieves
         // that by extracting the seconds and then multiplying by nanoseconds.
         //
-        Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_SECS(OUT)));
+        Tweak_Cell_Nanoseconds(out, SECS_TO_NANO(VAL_SECS(out)));
     }
 
     if (Bool_ARG(UTC)) {
@@ -79,13 +79,13 @@ DECLARE_NATIVE(NOW)
         // Say it has a time zone component, but it's 0:00 (as opposed
         // to saying it has no time zone component at all?)
         //
-        VAL_ZONE(OUT) = 0;
+        VAL_ZONE(out) = 0;
     }
     else if (Bool_ARG(LOCAL)) {
         //
         // Clear out the time zone flag
         //
-        VAL_ZONE(OUT) = NO_DATE_ZONE;
+        VAL_ZONE(out) = NO_DATE_ZONE;
     }
     else {
         if (
@@ -97,36 +97,36 @@ DECLARE_NATIVE(NOW)
             or Bool_ARG(WEEKDAY)
             or Bool_ARG(YEARDAY)
         ){
-            Fold_Zone_Into_Date(OUT);
+            Fold_Zone_Into_Date(out);
         }
     }
 
     REBINT n = -1;
 
     if (Bool_ARG(DATE)) {
-        Tweak_Cell_Nanoseconds(OUT, NO_DATE_TIME);
-        VAL_ZONE(OUT) = NO_DATE_ZONE;
+        Tweak_Cell_Nanoseconds(out, NO_DATE_TIME);
+        VAL_ZONE(out) = NO_DATE_ZONE;
     }
     else if (Bool_ARG(TIME)) {
-        HEART_BYTE(OUT) = TYPE_TIME;
+        HEART_BYTE(out) = TYPE_TIME;
     }
     else if (Bool_ARG(ZONE)) {
-        Tweak_Cell_Nanoseconds(OUT, VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC);
-        HEART_BYTE(OUT) = TYPE_TIME;
+        Tweak_Cell_Nanoseconds(out, VAL_ZONE(out) * ZONE_MINS * MIN_SEC);
+        HEART_BYTE(out) = TYPE_TIME;
     }
     else if (Bool_ARG(WEEKDAY))
-        n = Week_Day(stable_OUT);
+        n = Week_Day(out);
     else if (Bool_ARG(YEARDAY))
-        n = Julian_Date(stable_OUT);
+        n = Julian_Date(out);
     else if (Bool_ARG(YEAR))
-        n = VAL_YEAR(OUT);
+        n = VAL_YEAR(out);
     else if (Bool_ARG(MONTH))
-        n = VAL_MONTH(OUT);
+        n = VAL_MONTH(out);
     else if (Bool_ARG(DAY))
-        n = VAL_DAY(OUT);
+        n = VAL_DAY(out);
 
     if (n > 0)
-        Init_Integer(OUT, n);
+        Init_Integer(out, n);
 
     return OUT;
 }

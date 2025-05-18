@@ -396,7 +396,7 @@ DECLARE_NATIVE(PROTECT)
             nullptr,
             e,
             SPECIFIED,
-            stable_SPARE,
+            SPARE,
             LIB(PROTECT_P)
         )){
             return THROWN;
@@ -456,7 +456,7 @@ DECLARE_NATIVE(UNPROTECT)
             nullptr,
             e,
             SPECIFIED,
-            stable_SPARE,
+            SPARE,
             LIB(PROTECT_P)
         )){
             return THROWN;

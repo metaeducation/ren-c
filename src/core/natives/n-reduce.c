@@ -220,14 +220,14 @@ DECLARE_NATIVE(REDUCE)
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
         goto vetoed;
 
-    Decay_If_Unstable(SPARE);
+    Value* spare = Decay_If_Unstable(SPARE);
 
-    if (Is_Splice(SPARE)) {
+    if (Is_Splice(spare)) {
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, SPARE);
+        const Element* at = Cell_List_At(&tail, spare);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
-            Derelativize(PUSH(), at, Cell_List_Binding(SPARE));
+            Derelativize(PUSH(), at, Cell_List_Binding(spare));
             SUBLEVEL->baseline.stack_base += 1;  // [3]
             if (newline) {
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // [2]
@@ -235,10 +235,10 @@ DECLARE_NATIVE(REDUCE)
             }
         }
     }
-    else if (Is_Antiform(SPARE))
-        return FAIL(Error_Bad_Antiform(SPARE));
+    else if (Is_Antiform(spare))
+        return FAIL(Error_Bad_Antiform(spare));
     else {
-        Move_Cell(PUSH(), cast(Element*, SPARE));  // not void, not antiform
+        Move_Cell(PUSH(), Known_Element(spare));  // not void, not antiform
         SUBLEVEL->baseline.stack_base += 1;  // [3]
 
         if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // [2]
@@ -779,19 +779,19 @@ Bounce Composer_Executor(Level* const L)
         return OUT;
     }
 
-    Decay_If_Unstable(OUT);
+    Value* out = Decay_If_Unstable(OUT);
 
-    if (Is_Antiform(OUT)) {
+    if (Is_Antiform(out)) {
         if (list_quote_byte != NOQUOTE_1)
             goto push_antiform_incorporating_quote_byte;
 
-        if (Is_Splice(OUT))
+        if (Is_Splice(out))
             goto push_out_spliced;
 
-        return PANIC(Error_Bad_Antiform(OUT));
+        return PANIC(Error_Bad_Antiform(out));
     }
 
-  push_single_element_in_out: { //////////////////////////////////////////////
+  push_single_element_in_out: {
 
     // 1. When composing a single element, we use the newline intent from the
     //    GROUP! in the compose pattern...because there is no meaning to
@@ -808,7 +808,7 @@ Bounce Composer_Executor(Level* const L)
     //        == [a
     //               bar b]
 
-    Copy_Cell(PUSH(), cast(Element*, OUT));
+    Copy_Cell(PUSH(), Known_Element(out));
 
     if (sigil) {
         if (Sigil_Of(TOP_ELEMENT))
@@ -866,13 +866,13 @@ Bounce Composer_Executor(Level* const L)
     //               thing3
     //           ]
 
-    assert(Is_Splice(OUT));
+    assert(Is_Splice(out));
 
     if (list_quote_byte != NOQUOTE_1 or sigil)  // [1]
         return FAIL("Quoted COMPOSE slots are not distributed over splices");
 
     const Element* push_tail;
-    const Element* push = Cell_List_At(&push_tail, OUT);
+    const Element* push = Cell_List_At(&push_tail, out);
     if (push != push_tail) {
         Copy_Cell(PUSH(), push);
 
@@ -902,7 +902,7 @@ Bounce Composer_Executor(Level* const L)
         return OUT;
     }
 
-    assert(Is_Okay(OUT));  // "return values" are data stack contents
+    assert(Is_Atom_Okay(OUT));  // "return values" are data stack contents
 
     if (not SUBLEVEL->u.compose.changed) {  // optimize on no substitutions [2]
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);  // [1]
@@ -913,20 +913,21 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
+    Need(Value*) out = OUT;
     Option(Error*) e = Trap_Finalize_Composer_Level(
-        OUT, SUBLEVEL, At_Level(L), conflate
+        out, SUBLEVEL, At_Level(L), conflate
     );
     Drop_Level(SUBLEVEL);
 
     if (e)
         return PANIC(unwrap e);
 
-    if (Is_Nulled(OUT)) {
+    if (Is_Nulled(out)) {
         // compose:deep [a (void)/(void) b] => path makes null, vaporize it
     }
     else {
-        assert(not Is_Antiform(OUT));
-        Move_Cell(PUSH(), stable_OUT);
+        assert(not Is_Antiform(out));
+        Move_Cell(PUSH(), out);
     }
 
     if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))

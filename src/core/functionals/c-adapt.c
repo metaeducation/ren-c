@@ -93,7 +93,7 @@ Bounce Adapter_Dispatcher(Level* const L)
     //    is not generally a final execution (REVIEW: could an ADAPT sense
     //    if it's a final phase, e.g. an ADAPT on a phaseless ParamList?)
 
-    Value* prelude = Details_At(details, IDX_ADAPTER_PRELUDE);
+    Element* prelude = Details_Element_At(details, IDX_ADAPTER_PRELUDE);
     assert(Is_Block(prelude) and VAL_INDEX(prelude) == 0);
 
     STATE = ST_ADAPTER_RUNNING_PRELUDE;
@@ -110,14 +110,14 @@ Bounce Adapter_Dispatcher(Level* const L)
         Level_Coupling(L)
     );
 
-    Copy_Cell(SPARE, prelude);
-    Tweak_Cell_Binding(SPARE, use);  // must USE [1]
+    Element* spare = Copy_Cell(SPARE, prelude);
+    Tweak_Cell_Binding(spare, use);  // must USE [1]
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
         OUT,  // note: result is discarded
         LEVEL_MASK_NONE,  // plain result (warning if it was an error)
         SPECIFIED,
-        stable_SPARE
+        spare
     );
 
 } run_adaptee_in_same_frame: {  //////////////////////////////////////////////

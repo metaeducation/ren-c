@@ -726,15 +726,20 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    >> b
     //    == ~null~  ; anti
 
-    Quotify(Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed));
-    HEART_BYTE(OUT) = TYPE_BLOCK;
-    Init_Word(SPARE, CANON(PACK));
-    unnecessary(Quotify(Known_Element(SPARE)));  // want to run word
+    Element* out = Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+    HEART_BYTE(out) = TYPE_BLOCK;
+    Quotify(out);  // !!! was quoting, to avoid binding?
+
+    Element* spare = Init_Word(SPARE, CANON(PACK));
+    dont(Quotify(Known_Element(SPARE)));  // want to run word
+
     Value* temp = rebMeta_helper(
-        Level_Binding(L), stable_SPARE, stable_OUT, rebEND
+        Level_Binding(L),
+        spare, out, rebEND
     );
     Copy_Cell(OUT, temp);
     rebRelease(temp);
+
     Meta_Unquotify_Undecayed(OUT);
     goto lookahead;
 
@@ -776,7 +781,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    definitely not turn surprising ghosts into unsurprising ghosts.)
 
     Meta_Unquotify_Undecayed(OUT);
-    if (Is_Action(OUT))  // do not make ghosts unsurprising, just actions [1]
+    if (Is_Atom_Action(OUT))  // don't do ghosts, just actions [1]
         Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // see flag notes
     goto lookahead;
 
@@ -873,27 +878,29 @@ Bounce Meta_Stepper_Executor(Level* L)
 
 } word_common: {
 
-    Option(Error*) error = Trap_Get_Any_Word(OUT, CURRENT, L_binding);
+    Sink(Value) out = OUT;
+    Option(Error*) error = Trap_Get_Any_Word(out, CURRENT, L_binding);
     if (error)
         return PANIC(unwrap error);  // don't conflate with function result
 
-    if (Is_Action(OUT))
+    if (Is_Action(out))
         goto run_action_in_out;
 
     if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD)) {
-        if (Is_Frame(OUT))
+        if (Is_Frame(out))
             goto run_action_in_out;
         return PANIC("Leading slash means execute FRAME! or ACTION! only");
     }
 
-    if (Is_Trash(stable_OUT))  // checked second
-        return PANIC(Error_Bad_Word_Get(CURRENT, OUT));
+    if (Is_Trash(out))  // checked second
+        return PANIC(Error_Bad_Word_Get(CURRENT, out));
 
     goto lookahead;
 
 } run_action_in_out: {
 
-    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(OUT);
+    Value* out = cast(Value*, OUT);
+    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(out);
     const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
 
     if (infix_mode) {
@@ -914,7 +921,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     }
 
   #if (! DEBUG_DISABLE_INTRINSICS)
-    Details* details = maybe Try_Cell_Frame_Details(OUT);
+    Details* details = maybe Try_Cell_Frame_Details(out);
     if (
         not infix_mode  // too rare a case for intrinsic optimization
         and details
@@ -922,7 +929,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         and Not_Level_At_End(L)  // can't do <end>, fallthru to error
         and not SPORADICALLY(10)  // checked builds sometimes bypass
     ){
-        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
+        Option(VarList*) coupling = Cell_Frame_Coupling(out);
         Init_Frame(
             CURRENT,
             details,
@@ -964,7 +971,7 @@ Bounce Meta_Stepper_Executor(Level* L)
   #endif
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, OUT);
+    Push_Action(sub, out);
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // *always* clear out
     Begin_Action(sub, label, infix_mode);
     unnecessary(Push_Level_Erase_Out_If_State_0(OUT, sub)); // see [1]
@@ -1053,8 +1060,9 @@ Bounce Meta_Stepper_Executor(Level* L)
         return PANIC("No current evaluation for things like :1 or <tag>:");
     }
 
+    Sink(Value) out = OUT;
     Option(Error*) error = Trap_Get_Chain_Push_Refinements(
-        OUT,  // where to write action
+        out,  // where to write action
         SPARE,  // temporary GC-safe scratch space
         CURRENT,
         L_binding
@@ -1062,21 +1070,23 @@ Bounce Meta_Stepper_Executor(Level* L)
     if (error)  // lookup failed, a GROUP! in path threw, etc.
         return PANIC(unwrap error);  // don't definitional error for now
 
-    assert(Is_Action(OUT));
+    assert(Is_Action(out));
 
-    if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated
+    if (Is_Cell_Frame_Infix(out)) {  // too late, left already evaluated
         Drop_Data_Stack_To(STACK_BASE);
         return PANIC("Use `->-` to shove left infix operands into CHAIN!s");
     }
 
 } handle_action_in_out_with_refinements_pushed: {
 
+    Value* out = cast(Value*, OUT);
+
     Level* sub = Make_Action_Sublevel(L);
     sub->baseline.stack_base = STACK_BASE;  // refinements
 
-    Option(const Symbol*) label = Cell_Frame_Label_Deep(OUT);
+    Option(const Symbol*) label = Cell_Frame_Label_Deep(out);
 
-    Push_Action(sub, OUT);
+    Push_Action(sub, out);
     Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     goto process_action;
@@ -1182,18 +1192,19 @@ Bounce Meta_Stepper_Executor(Level* L)
     // WORD! and GET-WORD!, and will error...directing you use GET:ANY if
     // fetching nothing is what you actually intended.
 
-    Copy_Sequence_At(SPARE, CURRENT, 0);
-    bool blank_at_head = Is_Space(stable_SPARE);
+    Element* spare = Copy_Sequence_At(SPARE, CURRENT, 0);
+    bool blank_at_head = Is_Space(spare);
     if (
         not blank_at_head  // `.a` means pick member from "self"
-        and Any_Inert(SPARE)  // `1.2.3` is inert
+        and Any_Inert(spare)  // `1.2.3` is inert
     ){
         Derelativize(OUT, CURRENT, L_binding);
         goto lookahead;
     }
 
+    Sink(Value) out = OUT;
     Option(Error*) error = Trap_Get_Tuple(  // vacant will cause error
-        OUT,
+        out,
         GROUPS_OK,
         CURRENT,
         L_binding
@@ -1204,8 +1215,8 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto lookahead;  // e.g. EXCEPT might want error
     }
 
-    if (Is_Action(OUT))
-        assert(Not_Cell_Flag(OUT, OUT_HINT_UNSURPRISING));
+    if (Is_Action(out))
+        assert(Not_Cell_Flag(out, OUT_HINT_UNSURPRISING));
 
     goto lookahead;
 
@@ -1235,9 +1246,9 @@ Bounce Meta_Stepper_Executor(Level* L)
     Option(SingleHeart) single = Try_Get_Sequence_Singleheart(CURRENT);
 
     if (not single) {
-        Copy_Sequence_At(SPARE, CURRENT, 0);
-        if (Any_Inert(SPARE)) {
-            if (Is_Space(stable_SPARE))
+        Element* spare = Copy_Sequence_At(SPARE, CURRENT, 0);
+        if (Any_Inert(spare)) {
+            if (Is_Space(spare))
                 slash_at_head = true;
             else {
                 Derelativize(OUT, CURRENT, L_binding);  // inert [2]
@@ -1248,8 +1259,8 @@ Bounce Meta_Stepper_Executor(Level* L)
             slash_at_head = false;
 
         Length len = Cell_Sequence_Len(CURRENT);
-        Copy_Sequence_At(SPARE, CURRENT, len - 1);
-        slash_at_tail = Is_Space(stable_SPARE);
+        spare = Copy_Sequence_At(SPARE, CURRENT, len - 1);
+        slash_at_tail = Is_Space(spare);
     }
     else switch (unwrap single) {
       case LEADING_SPACE_AND(WORD):
@@ -1308,8 +1319,9 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    prescribed way of running infix with paths is `left ->- right/side`,
     //    which uses an infix WORD! to mediate the interaction.
 
+    Sink(Value) out = OUT;
     Option(Error*) error = Trap_Get_Path_Push_Refinements(
-        OUT,  // where to write action
+        out,  // where to write action
         SPARE,  // temporary GC-safe scratch space
         CURRENT,
         L_binding
@@ -1320,11 +1332,11 @@ Bounce Meta_Stepper_Executor(Level* L)
         return PANIC(unwrap error);  // don't RAISE error for now [2]
     }
 
-    assert(Is_Action(OUT));
+    assert(Is_Action(out));
     if (slash_at_tail) {  // do not run action, just return it [3]
         if (STACK_BASE != TOP_INDEX) {
             if (Specialize_Action_Throws(
-                SPARE, stable_OUT, nullptr, STACK_BASE
+                SPARE, out, nullptr, STACK_BASE
             )){
                 goto return_thrown;
             }
@@ -1334,7 +1346,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto lookahead;
     }
 
-    if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated [4]
+    if (Is_Cell_Frame_Infix(out)) {  // too late, left already evaluated [4]
         Drop_Data_Stack_To(STACK_BASE);
         return PANIC("Use `->-` to shove left infix operands into PATH!s");
     }
@@ -1407,7 +1419,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     // But we don't pre-decay, so have to do it here for now.
     //
     if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION)) {
-        if (not Is_Action(OUT))
+        if (not Is_Atom_Action(OUT))
             return PANIC(
                 "/word: and /obj.field: assignments require Action"
             );
@@ -1612,22 +1624,21 @@ for (; check != tail; ++check) {  // push variables
             goto return_thrown;
         }
         if (Is_Void(SPARE) and Is_Group(CURRENT)) {
-            Init_Quasar(SPARE);  // [(void)]: ... pass thru
+            Init_Quasar(PUSH());  // [(void)]: ... pass thru
         }
         else {
-            Decay_If_Unstable(SPARE);
-            if (Is_Antiform(SPARE))
-                return PANIC(Error_Bad_Antiform(SPARE));
+            Value* spare = Decay_If_Unstable(SPARE);
+            if (Is_Antiform(spare))
+                return PANIC(Error_Bad_Antiform(spare));
 
             if (Is_Pinned(GROUP, CURRENT))
-                Pinify(Known_Element(SPARE));  // add @ decoration
+                Pinify(Known_Element(spare));  // add @ decoration
             else {
                 assert(Is_Lifted(GROUP, CURRENT));
-                Liftify(Known_Element(SPARE));  // add ^ decoration
+                Liftify(Known_Element(spare));  // add ^ decoration
             }
+            Copy_Cell(PUSH(), spare);
         }
-
-        Copy_Cell(PUSH(), stable_SPARE);
     }
     else
         Copy_Cell(PUSH(), CURRENT);
@@ -1815,11 +1826,16 @@ for (; check != tail; ++check) {  // push variables
     // FENCE! is the guinea pig for a technique of calling a function defined
     // in the local environment to do the handling.
 
-    Quotify(Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed));
-    Init_Word(SPARE, CANON(FENCE_X_EVAL));
-    unnecessary(Quotify(Known_Element(SPARE)));  // want to run word
-    Value* temp = rebValue_helper(
-        Level_Binding(L), stable_SPARE, stable_OUT, rebEND
+    Element* out = Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+    Quotify(out);
+
+    Element* spare = Init_Word(SPARE, CANON(FENCE_X_EVAL));
+    dont(Quotify(Known_Element(SPARE)));  // want to run word
+
+    Value* temp = rebValue_helper(  // passing binding explicitly, use helper
+        Level_Binding(L),
+        spare, out,
+        rebEND  // must pass END explicitly to helper
     );
     Copy_Cell(OUT, temp);
     rebRelease(temp);

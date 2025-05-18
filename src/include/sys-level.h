@@ -318,11 +318,11 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 // 1-based indexing into the arglist (0 slot is for FRAME! value)
 
 #define Level_Args_Head(L) \
-    ((L)->rootvar + 1)
+    (u_cast(Value*, (L)->rootvar) + 1)
 
 #if NO_RUNTIME_CHECKS
     #define Level_Arg(L,n) \
-        ((L)->rootvar + (n))
+        (u_cast(Value*, (L)->rootvar) + (n))
 #else
     INLINE Value* Level_Arg(Level* L, REBLEN n) {
         assert(n != 0 and n <= Level_Num_Args(L));
@@ -968,10 +968,6 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define SCRATCH Level_Scratch(level_)
     #define STATE   LEVEL_STATE_BYTE(level_)
 
-    #define stable_SPARE            Stable_Unchecked(SPARE)
-    #define stable_SCRATCH          Stable_Unchecked(SCRATCH)
-    #define stable_OUT              Stable_Unchecked(OUT)
-
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
     #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
@@ -1062,7 +1058,7 @@ INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
 //
 INLINE void Inject_Definitional_Returner(
     Level* L,
-    const Cell* definitional,  // LIB(DEFINITIONAL_RETURN), or YIELD
+    const Value* definitional,  // LIB(DEFINITIONAL_RETURN), or YIELD
     SymId returner  // SYM_YIELD, SYM_RETURN
 ){
     assert(Key_Id(Phase_Keys_Head(Ensure_Level_Details(L))) == returner);

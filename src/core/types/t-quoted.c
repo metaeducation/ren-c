@@ -442,7 +442,7 @@ DECLARE_NATIVE(SPREAD)
         Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
         assert(not e);
         UNUSED(e);
-        assert(Is_Splice(OUT));
+        assert(Is_Atom_Splice(OUT));
         return OUT;
     }
 
@@ -645,10 +645,10 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
     if (Is_Meta_Of_Ghost(meta))
         return PANIC("Cannot OPT a GHOST!");  // !!! Should we opt out ghosts?
 
-    Copy_Cell(OUT, meta);
-    Meta_Unquotify_Decayed(stable_OUT);
+    Value* out = Copy_Cell(OUT, meta);
+    Meta_Unquotify_Decayed(out);
 
-    if (Is_Nulled(OUT))
+    if (Is_Nulled(out))
         goto opt_out;
 
     return OUT;

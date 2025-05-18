@@ -193,16 +193,16 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
         return OUT;
     }
 
-    Decay_If_Unstable(OUT);  // should packs from TO be legal?
+    Value* out = Decay_If_Unstable(OUT);  // should packs from TO be legal?
 
-    if (Heart_Of_Fundamental(OUT) != to_or_as)
+    if (Heart_Of_Fundamental(out) != to_or_as)
         return PANIC("Forward TO/AS transform produced wrong type");
 
     if (
         Get_Level_Flag(L, CHECKING_TO)
-        and (Any_List(OUT) or Any_String(OUT) or Is_Blob(OUT))
+        and (Any_List(out) or Any_String(out) or Is_Blob(out))
     ){
-        if (Is_Flex_Read_Only(Cell_Flex(OUT)))
+        if (Is_Flex_Read_Only(Cell_Flex(out)))
             panic ("TO transform of LIST/STRING/BLOB made immutable series");
     }
 
@@ -219,7 +219,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Erase_Cell(ARG(ELEMENT));
 
     Copy_Cell(ARG(TYPE), Datatype_From_Type(from));
-    Copy_Cell(ARG(ELEMENT), cast(Element*, stable_OUT));
+    Copy_Cell(ARG(ELEMENT), out);
     STATE = STATE_0;
 
     assert(Get_Level_Flag(level_, TRAMPOLINE_KEEPALIVE));

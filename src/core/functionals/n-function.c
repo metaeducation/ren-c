@@ -145,7 +145,7 @@ Bounce Func_Dispatcher(Level* const L)
     //    RETURN:RUN catching, but that would require multiplexing the signal
     //    of whether to :RUN or not into the thrown value.
 
-    Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
+    Element* body = Details_Element_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
     Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(body));
@@ -155,12 +155,12 @@ Bounce Func_Dispatcher(Level* const L)
 
     STATE = ST_FUNC_BODY_EXECUTING;
 
-    Copy_Cell(SPARE, body);
-    Tweak_Cell_Binding(SPARE, L->varlist);
+    Element* spare = Copy_Cell(SPARE, body);
+    Tweak_Cell_Binding(spare, L->varlist);
 
     Enable_Dispatcher_Catching_Of_Throws(L);  // for RETURN:RUN, not RETURN [1]
 
-    return CONTINUE(OUT, stable_SPARE);  // body result is discarded
+    return CONTINUE(OUT, spare);  // body result is discarded
 
 } redo_with_current_frame_values: { //////////////////////////////////////////
 
@@ -210,9 +210,11 @@ Bounce Func_Dispatcher(Level* const L)
 
     Drop_Action(L);
 
+    Value* out = cast(Value*, OUT);
+
     Restart_Action_Level(L);
-    Push_Action(L, cast(Value*, OUT));
-    Begin_Action(L, Cell_Frame_Label_Deep(OUT), PREFIX_0);
+    Push_Action(L, out);
+    Begin_Action(L, Cell_Frame_Label_Deep(out), PREFIX_0);
 
     Erase_Cell(OUT);  // invariant for ST_ACTION_INITIAL_ENTRY
 
@@ -561,7 +563,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     if (Is_Error(atom))
         return true;  // For now, all functions return definitional errors
 
-    if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(atom))
+    if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Atom_Trash(atom))
         return true;  // common case, make fast
 
     if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
@@ -597,7 +599,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
         if (
             Get_Details_Flag(details, RAW_NATIVE)
             and Not_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
-            and (Is_Action(atom) or Is_Ghost(atom))
+            and (Is_Atom_Action(atom) or Is_Ghost(atom))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
             and (details != Cell_Frame_Phase(LIB(LET)))  // review
@@ -614,7 +616,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
         if (
             Get_Details_Flag(details, RAW_NATIVE)
             and Get_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
-            and (Is_Action(atom) or Is_Ghost(atom))
+            and (Is_Atom_Action(atom) or Is_Ghost(atom))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
             and (details != Cell_Frame_Phase(LIB(LET)))  // review
@@ -711,15 +713,15 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 
     const Value* gather_args;
 
+    Value* v = Decay_If_Unstable(atom);
     if (
-        Is_Tag(atom)
-        and strcmp(c_cast(char*, Cell_Utf8_At(atom)), "redo") == 0
+        Is_Tag(v)
+        and strcmp(c_cast(char*, Cell_Utf8_At(v)), "redo") == 0
     ){
         gather_args = LIB(NULL);
     }
-    else if (Is_Action(atom) or Is_Frame(atom)) {  // just reuse Level
-        gather_args = cast(Value*, atom);
-
+    else if (Is_Action(v) or Is_Frame(v)) {  // just reuse Level
+        gather_args = v;
         Release_Feed(target_level->feed);
         target_level->feed = return_level->feed;
         Add_Feed_Reference(return_level->feed);
@@ -731,13 +733,13 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     // of the frame.  Use DEFINITIONAL-REDO as the throw label that Eval_Core()
     // will identify for that behavior.
     //
-    Copy_Cell(SPARE, LIB(DEFINITIONAL_REDO));
+    Value* spare = Copy_Cell(SPARE, LIB(DEFINITIONAL_REDO));
     Tweak_Cell_Frame_Coupling(  // comment said "may have changed"?
-        SPARE,
+        spare,
         Varlist_Of_Level_Force_Managed(target_level)
     );
 
-    return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
+    return Init_Thrown_With_Label(LEVEL, gather_args, spare);
 }
 
 

@@ -129,12 +129,13 @@ DECLARE_NATIVE(SHOVE)
         Is_Word(right) or Is_Tuple(right)
         or Is_Path(right) or Is_Chain(right)
     ){
+        Sink(Value) out = OUT;
         Get_Var_May_Panic(
-            OUT,  // can't eval directly into arg slot
+            out,  // can't eval directly into arg slot
             At_Level(L),
             Level_Binding(L)
         );
-        Move_Cell(shovee, stable_OUT);  // variable contents always stable
+        Move_Cell(shovee, out);  // variable contents always stable
     }
     else if (Is_Group(right)) {
         if (Eval_Any_List_At_Throws(OUT, right, Level_Binding(L)))
@@ -842,19 +843,13 @@ DECLARE_NATIVE(APPLY)
 } copy_meta_spare_to_var_in_frame: {  ////////////////////////////////////////
 
     if (/* param and */ Cell_Parameter_Class(param) == PARAMCLASS_LIFTED) {
-        // do not decay
+        Move_Cell(var, Known_Element(SPARE));
     }
     else {
         Meta_Unquotify_Undecayed(SPARE);
-        Decay_If_Unstable(SPARE);
+        Value* spare = Decay_If_Unstable(SPARE);
+        Move_Cell(var, spare);
     }
-
-    // !!! Low-level frame mechanics require that no-argument refinements be
-    // either ~okay~ or ~null~ antiforms.  As a higher-level utility, APPLY
-    // *could* turn [true false yes no on off] into the corresponding canon
-    // logic...but the core APPLY is agnostic and does not do this.
-
-    Move_Cell(var, stable_SPARE);  // !!! Review stability
 
     goto handle_next_item;
 
@@ -913,17 +908,19 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 
     Element* operation = Element_ARG(OPERATION);
 
+    Sink(Value) gotten = SPARE;
     Option(Error*) error = Trap_Get_Var(
-        SPARE, GROUPS_OK, operation, SPECIFIED
+        gotten, GROUPS_OK, operation, SPECIFIED
     );
     if (error)
         return PANIC(unwrap error);
 
-    if (not Is_Action(SPARE) and not Is_Frame(SPARE))
-        return PANIC(SPARE);
-    Deactivate_If_Action(SPARE);  // APPLY has <unrun> on ARG(OPERATION)
+    if (not Is_Action(gotten) and not Is_Frame(gotten))
+        return PANIC(gotten);
 
-    Copy_Cell(ARG(OPERATION), stable_SPARE);
+    Deactivate_If_Action(gotten);  // APPLY has <unrun> on ARG(OPERATION)
+
+    Copy_Cell(ARG(OPERATION), gotten);
     UNUSED(Bool_ARG(RELAX));
     UNUSED(Bool_ARG(ARGS));
     UNUSED(LOCAL(FRAME));

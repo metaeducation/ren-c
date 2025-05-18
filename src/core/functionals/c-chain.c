@@ -156,7 +156,7 @@ Bounce Cascader_Executor(Level* const L)
     Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist [1]
     L->executor = &Cascader_Executor;  // so trampoline calls us [2]
 
-    const Cell* first = Cell_List_Item_At(pipeline);
+    const Element* first = Cell_List_Item_At(pipeline);
     ++VAL_INDEX_RAW(pipeline);  // point series index to next FRAME! to call
 
     Tweak_Level_Phase(
@@ -190,8 +190,8 @@ Bounce Cascader_Executor(Level* const L)
 
     sub->varlist = nullptr;
 
-    assert(Is_Block(SPARE));
-    Element* pipeline = cast(Element*, SPARE);  // series indexes frame to call
+    Element* pipeline = Known_Element(SPARE);
+    assert(Is_Block(pipeline));  // series indexes frame to call
     const Element* pipeline_tail;
     const Element* pipeline_at = Cell_List_At(&pipeline_tail, pipeline);
 

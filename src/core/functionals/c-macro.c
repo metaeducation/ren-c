@@ -157,13 +157,13 @@ Bounce Macro_Dispatcher(Level* const L)
     if (Is_Void(OUT))
         return OUT;
 
-    if (not Is_Block(OUT))
+    Value* out = Decay_If_Unstable(OUT);
+    if (not Is_Block(out))
         return PANIC("MACRO must return VOID or BLOCK! for the moment");
 
-    Splice_Block_Into_Feed(L->feed, stable_OUT);
+    Splice_Block_Into_Feed(L->feed, out);
 
     Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, LEVEL_MASK_NONE);
-    Erase_Cell(OUT);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     STATE = ST_MACRO_REEVALUATING;

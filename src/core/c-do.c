@@ -50,7 +50,7 @@
 //
 void Prep_Action_Level(
     Level* L,
-    const Cell* action,
+    const Value* action,
     Option(const Atom*) with
 ){
     Push_Action(L, action);

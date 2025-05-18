@@ -304,7 +304,7 @@ static bool Subparse_Throws(
 
             if (Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(PARSE_BREAK))) {
                 CATCH_THROWN(out, LEVEL);
-                assert(Is_Integer(out));
+                assert(Is_Integer(Known_Element(out)));
                 *interrupted_out = true;
                 return false;
             }
@@ -1412,7 +1412,7 @@ DECLARE_NATIVE(SUBPARSE)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
-              case SYM_REPEAT:
+              case SYM_REPEAT: {
                 //
                 // !!! OPT REPEAT (N) RULE can't work because OPT is done by
                 // making the minimum number of match counts zero.  But
@@ -1435,23 +1435,24 @@ DECLARE_NATIVE(SUBPARSE)
                     Derelativize(OUT, P_RULE, P_RULE_BINDING);
                 }
 
-                if (Is_Integer(OUT)) {
-                    mincount = Int32s(stable_OUT, 0);
-                    maxcount = Int32s(stable_OUT, 0);
+                Value* out = Decay_If_Unstable(OUT);
+                if (Is_Integer(out)) {
+                    mincount = Int32s(out, 0);
+                    maxcount = Int32s(out, 0);
                 } else {
                     if (
-                        not Is_Block(OUT)
+                        not Is_Block(out)
                         or not (
-                            Cell_Series_Len_At(OUT) == 2
-                            and Is_Integer(Cell_List_Item_At(OUT))
-                            and Is_Integer(Cell_List_Item_At(OUT) + 1)
+                            Cell_Series_Len_At(out) == 2
+                            and Is_Integer(Cell_List_Item_At(out))
+                            and Is_Integer(Cell_List_Item_At(out) + 1)
                         )
                     ){
                         panic ("REPEAT takes INTEGER! or length 2 BLOCK! range");
                     }
 
-                    mincount = Int32s(Cell_List_Item_At(OUT), 0);
-                    maxcount = Int32s(Cell_List_Item_At(OUT) + 1, 0);
+                    mincount = Int32s(Cell_List_Item_At(out), 0);
+                    maxcount = Int32s(Cell_List_Item_At(out) + 1, 0);
 
                     if (maxcount < mincount)
                         panic ("REPEAT range can't have lower max than minimum");
@@ -1460,7 +1461,7 @@ DECLARE_NATIVE(SUBPARSE)
                 Erase_Cell(OUT);
 
                 FETCH_NEXT_RULE(L);
-                goto pre_rule;
+                goto pre_rule; }
 
               case SYM_FURTHER:  // require advancement
                 P_FLAGS |= PF_FURTHER;
@@ -1731,20 +1732,22 @@ DECLARE_NATIVE(SUBPARSE)
         }
     }
     else if (Is_Tuple(rule)) {
-        Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
-        if (Is_Datatype(SPARE)) {
-            Init_Typechecker(P_SAVE, stable_SPARE);
-            QUOTE_BYTE(SPARE) = NOQUOTE_1;
-            rule = Known_Element(SPARE);
+        Value* spare = Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
+        if (Is_Datatype(spare)) {
+            Init_Typechecker(P_SAVE, spare);
+            QUOTE_BYTE(spare) = NOQUOTE_1;
+            rule = Known_Element(spare);
         }
+        else if (Is_Antiform(spare))
+            return PANIC(Error_Bad_Antiform(spare));
         else
-            rule = cast(Element*, Copy_Cell(P_SAVE, stable_SPARE));
+            rule = Copy_Cell(P_SAVE, Known_Element(spare));
     }
     else if (Is_Path(rule)) {
-        Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
-        assert(Is_Action(SPARE));
-        QUOTE_BYTE(SPARE) = NOQUOTE_1;
-        rule = cast(Element*, Copy_Cell(P_SAVE, stable_SPARE));
+        Value* spare = Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
+        assert(Is_Action(spare));
+        QUOTE_BYTE(spare) = NOQUOTE_1;
+        rule = Copy_Cell(P_SAVE, Known_Element(SPARE));
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
@@ -2006,8 +2009,9 @@ DECLARE_NATIVE(SUBPARSE)
             if (Is_Nulled(SPARE))
                 i = END_FLAG;
             else {
-                assert(Is_Integer(SPARE));
-                i = VAL_INT32(SPARE);
+                Value* spare = Known_Element(SPARE);
+                assert(Is_Integer(spare));
+                i = VAL_INT32(spare);
             }
 
             if (interrupted) {  // ACCEPT or REJECT ran

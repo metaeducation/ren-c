@@ -111,7 +111,7 @@ uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, Length len) {
 // Fails if datatype cannot be hashed.  Note that the binding is not used
 // in hashing, because it is not used in comparisons either.
 //
-uint32_t Hash_Value(const Cell* cell)
+uint32_t Hash_Value(const Value* cell)
 {
     Option(Heart) heart = Heart_Of(cell);
 

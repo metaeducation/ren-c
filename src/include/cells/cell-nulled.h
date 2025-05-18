@@ -130,7 +130,7 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 #define Init_Heavy_Null(out) \
     Init_Pack((out), g_1_quasi_null_array)
 
-INLINE bool Is_Heavy_Null(const Cell* v) {
+INLINE bool Is_Heavy_Null(const Atom* v) {
     if (not Is_Pack(v))
         return false;
     const Element* tail;

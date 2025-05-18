@@ -1862,7 +1862,7 @@ DECLARE_NATIVE(CONSTRUCT)
 } eval_set_step_meta_in_spare: {  ////////////////////////////////////////////
 
     Meta_Unquotify_Undecayed(SPARE);
-    Decay_If_Unstable(SPARE);
+    Value* spare = Decay_If_Unstable(SPARE);
 
     VarList* varlist = Cell_Varlist(OUT);
 
@@ -1870,7 +1870,7 @@ DECLARE_NATIVE(CONSTRUCT)
         Option(Index) index = CELL_WORD_INDEX_I32(TOP);
         assert(index);  // created a key for every SET-WORD! above!
 
-        Copy_Cell(Varlist_Slot(varlist, unwrap index), stable_SPARE);
+        Copy_Cell(Varlist_Slot(varlist, unwrap index), spare);
 
         DROP();
     }

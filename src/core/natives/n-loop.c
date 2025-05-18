@@ -1291,8 +1291,10 @@ DECLARE_NATIVE(EVERY)
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
+    Value* spare = Decay_If_Unstable(SPARE);
+
     bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, stable_SPARE);
+    Option(Error*) e = Trap_Test_Conditional(&cond, spare);
     if (e)
         return PANIC(unwrap e);
 
@@ -1471,22 +1473,22 @@ DECLARE_NATIVE(REMOVE_EACH)
             goto handle_keep_or_no_keep;
         }
 
-        Decay_If_Unstable(OUT);
+        Value* out = Decay_If_Unstable(OUT);
 
-        if (Is_Okay(OUT)) {  // pure logic required [1]
+        if (Is_Okay(out)) {  // pure logic required [1]
             keep = false;  // okay is remove
         }
-        else if (Is_Nulled(OUT)) {  // don't remove
+        else if (Is_Nulled(out)) {  // don't remove
             keep = true;
             Init_Heavy_Null(OUT);  // NULL reserved for BREAK signal
         }
         else {
             threw = true;
-            Init_Warning(
+            Element* spare = Init_Warning(
                 SPARE,
                 Error_User("Use [NULL OKAY VOID] with REMOVE-EACH")
             );
-            Init_Thrown_With_Label(LEVEL, LIB(NULL), stable_SPARE);
+            Init_Thrown_With_Label(LEVEL, LIB(NULL), spare);
             goto finalize_remove_each;
         }
 
@@ -1838,20 +1840,20 @@ DECLARE_NATIVE(MAP)
         goto finalize_map;
     }
 
-    Decay_If_Unstable(SPARE);
+    Value* spare = Decay_If_Unstable(SPARE);
 
-    if (Is_Splice(SPARE)) {
+    if (Is_Splice(spare)) {
         const Element* tail;
-        const Element* v = Cell_List_At(&tail, SPARE);
+        const Element* v = Cell_List_At(&tail, spare);
         for (; v != tail; ++v)
-            Derelativize(PUSH(), v, Cell_List_Binding(SPARE));
+            Derelativize(PUSH(), v, Cell_List_Binding(spare));
     }
-    else if (Is_Antiform(SPARE)) {
-        Init_Thrown_Panic(LEVEL, Error_Bad_Antiform(SPARE));
+    else if (Is_Antiform(spare)) {
+        Init_Thrown_Panic(LEVEL, Error_Bad_Antiform(spare));
         goto finalize_map;
     }
     else
-        Copy_Cell(PUSH(), stable_SPARE);  // non nulls added to result
+        Copy_Cell(PUSH(), spare);  // non nulls added to result
 
     goto next_iteration;
 

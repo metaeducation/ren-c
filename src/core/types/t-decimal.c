@@ -387,10 +387,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         ) and (
             id == SYM_ADD
         )){
-            Move_Cell(stable_OUT, ARG_N(2));
-            Move_Cell(ARG_N(2), ARG_N(1));
-            Move_Cell(ARG_N(1), stable_OUT);
-            return Run_Generic_Dispatch(cast(Element*, ARG_N(1)), level_, verb);
+            Element* out = Move_Cell(OUT, arg);
+            Move_Cell(arg, val);
+            Move_Cell(val, out);
+            return Run_Generic_Dispatch(val, level_, verb);
         }
 
         // If the type of the second arg is something we can handle:

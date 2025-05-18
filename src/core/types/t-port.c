@@ -88,15 +88,16 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         return Init_Port(OUT, context);
     }
 
+    Sink(Value) out = OUT;
     if (rebRunThrows(
-        cast(Value*, OUT),  // <-- output cell
+        out,  // <-- output cell
         rebRUN(SYS_UTIL(MAKE_PORT_P)), rebQ(arg)
     )){
         return PANIC(Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
-    if (not Is_Port(OUT))  // should always create a port
-        return FAIL(OUT);
+    if (not Is_Port(out))  // should always create a port
+        return FAIL(out);
 
     return OUT;
 }
@@ -199,23 +200,25 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         if (Is_Nulled(OUT))
             return nullptr;  // !!! `read dns://` returns nullptr on failure
 
-        if ((Bool_ARG(STRING) or Bool_ARG(LINES)) and not Is_Text(OUT)) {
-            if (not Is_Blob(OUT))
+        Element* out = Known_Element(OUT);
+
+        if ((Bool_ARG(STRING) or Bool_ARG(LINES)) and not Is_Text(out)) {
+            if (not Is_Blob(out))
                 return PANIC(
                     "READ :STRING or :LINES used on a non-BLOB!/STRING! read"
                 );
 
             Size size;
-            const Byte* data = Cell_Blob_Size_At(&size, OUT);
+            const Byte* data = Cell_Blob_Size_At(&size, out);
             String* decoded = Make_Sized_String_UTF8(cs_cast(data), size);
             Init_Text(OUT, decoded);
         }
 
         if (Bool_ARG(LINES)) { // caller wants a BLOCK! of STRING!s, not one string
-            assert(Is_Text(OUT));
+            assert(Is_Text(out));
 
             DECLARE_ELEMENT (temp);
-            Move_Cell(temp, cast(Element*, OUT));
+            Move_Cell(temp, out);
             Init_Block(OUT, Split_Lines(temp));
         }
     }

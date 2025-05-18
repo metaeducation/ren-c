@@ -684,7 +684,7 @@ INLINE Element* Derelativize_Sequence_At(
     Derelativize_Sequence_At((out), c_cast(Element*, sequence), SPECIFIED, (n))
 
 INLINE Byte Cell_Sequence_Byte_At(const Cell* sequence, REBLEN n) {
-    DECLARE_ATOM (at);
+    DECLARE_ELEMENT (at);
     Copy_Sequence_At(at, sequence, n);
     if (not Is_Integer(at))
         panic ("Cell_Sequence_Byte_At() used on non-byte ANY-SEQUENCE?");

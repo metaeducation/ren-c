@@ -101,12 +101,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
     Element* arg = Element_ARG(DEF);
 
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
-        Option(Error*) error = Trap_Transcode_One(OUT, TYPE_0, arg);
+        Sink(Element) out = OUT;
+        Option(Error*) error = Trap_Transcode_One(out, TYPE_0, arg);
         if (not error) {
-            if (Is_Integer(OUT))
+            if (Is_Integer(out))
                 return OUT;
-            if (Is_Decimal(OUT))
-                return rebValue(CANON(ROUND), stable_OUT);
+            if (Is_Decimal(out))
+                return rebDelegate(CANON(ROUND), out);
             return FAIL(Error_User("Trap_Transcode_One() gave unwanted type"));
         }
 
@@ -195,7 +196,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
         or id == SYM_BITWISE_AND_NOT
         or id == SYM_REMAINDER
     ){
-        Value* val2 = ARG_N(2);
+        INCLUDE_PARAMS_OF_ADD;
+        USED(ARG(VALUE1));
+        Element* val2 = Element_ARG(VALUE2);
 
         if (Is_Integer(val2))
             arg = VAL_INT64(val2);
@@ -208,10 +211,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD: {
                 // Swap parameter order:
-                Move_Cell(stable_OUT, val2);  // Use as temp workspace
+                Element* out = Move_Cell(OUT, val2);
                 Move_Cell(val2, val);
-                Move_Cell(val, cast(Element*, OUT));
-                return Run_Generic_Dispatch(cast(Element*, val), level_, verb); }
+                Move_Cell(val, out);
+                return Run_Generic_Dispatch(val, level_, verb); }
 
             // Only type valid to subtract from, divide into, is decimal/money:
             case SYM_SUBTRACT:

@@ -116,7 +116,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     assert(Not_Node_Managed(varlist));  // shouldn't be [3]
     L->varlist = varlist;  // put varlist back
 
-    assert(Is_Trash(L->out));  // should only have gathered arguments
+    assert(Is_Atom_Trash(L->out));  // should only have gathered arguments
 
     assert(Get_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);  // [2]
@@ -296,8 +296,9 @@ Bounce Reframer_Dispatcher(Level* const L)
     // invisibility.  So the frame's spare cell is used.
     //
     bool error_on_deferred = true;
+    Sink(Value) spare = SPARE;
     if (Init_Invokable_From_Feed_Throws(
-        SPARE,
+        spare,
         nullptr,
         L->feed,
         error_on_deferred
@@ -306,7 +307,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     }
 
     Value* arg = Level_Arg(L, VAL_INT32(param_index));
-    Move_Cell(arg, stable_SPARE);
+    Move_Cell(arg, spare);
 
     Tweak_Level_Phase(L, Cell_Frame_Phase(shim));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(shim));

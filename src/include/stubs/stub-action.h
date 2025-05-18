@@ -150,6 +150,9 @@ INLINE Value* Details_At(Details* details, Index idx) {
     return Flex_Head_Dynamic(Value, a) + idx;
 }
 
+#define Details_Element_At(details,idx) \
+    Known_Element(Details_At(details, idx))
+
 #define Details_Max(details) \
     (Array_Len(Details_Array(details)) - 1)
 

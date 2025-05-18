@@ -3312,7 +3312,7 @@ DECLARE_NATIVE(TRANSCODE)
     else
         file = ANONYMOUS;
 
-    Value* line_number = stable_SCRATCH;  // use as scratch space
+    Sink(Value) line_number = SCRATCH;  // use as scratch space
     if (Any_Word(ARG(LINE)))
         Get_Var_May_Panic(
             line_number,
@@ -3377,6 +3377,8 @@ DECLARE_NATIVE(TRANSCODE)
         return OUT;
     }
 
+    assert(Is_Void(OUT));  // scanner returns void if it doesn't return error
+
     if (Bool_ARG(ONE)) {  // want *exactly* one element
         if (TOP_INDEX == STACK_BASE)
             return FAIL("Transcode was empty (or all comments)");
@@ -3416,7 +3418,7 @@ DECLARE_NATIVE(TRANSCODE)
         return nullptr;  // must return pure null for THEN/ELSE to work right
 
     if (not Bool_ARG(NEXT)) {
-        assert(Is_Block(OUT));
+        assert(Is_Block(Known_Element(OUT)));
         return OUT;  // single block result
     }
 

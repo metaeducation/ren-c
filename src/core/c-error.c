@@ -341,9 +341,8 @@ void Set_Location_Of_Error(
     Level* L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
         if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {  // [1]
-            Option(const Symbol*) label = Cell_Frame_Label_Deep(
-                Level_Scratch(L)
-            );
+            Element* frame = Known_Element(Level_Scratch(L));
+            Option(const Symbol*) label = Cell_Frame_Label_Deep(frame);
             if (label)
                 Init_Word(PUSH(), unwrap label);
             else
@@ -780,14 +779,11 @@ Error* Error_Need_Non_End(const Element* target) {
 //
 Error* Error_Bad_Word_Get(
     const Element* target,
-    const Atom* trash
+    const Value* trash
 ){
     assert(Is_Trash(trash));
 
-    DECLARE_ELEMENT (reified);
-    Copy_Meta_Cell(reified, trash);  // avoid panics in error message [1]
-
-    return Error_Bad_Word_Get_Raw(target, reified);
+    return Error_Bad_Word_Get_Raw(target, trash);
 }
 
 
@@ -823,7 +819,7 @@ Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 //  Error_Unspecified_Arg: C
 //
 Error* Error_Unspecified_Arg(Level* L) {
-    assert(Is_Trash(L->u.action.arg));
+    assert(Is_Atom_Trash(L->u.action.arg));
 
     const Symbol* param_symbol = Key_Symbol(L->u.action.key);
 
@@ -910,20 +906,14 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details;
-    Value* arg;
-    Option(const Symbol*) label;
+    Details* details = Level_Intrinsic_Details(L);
+    Option(const Symbol*) label = Level_Intrinsic_Label(L);
 
-    if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        details = Ensure_Cell_Frame_Details(SCRATCH);
-        arg = stable_SPARE;
-        label = Cell_Frame_Label_Deep(SCRATCH);
-    }
-    else {
-        details = Ensure_Level_Details(L);
+    Need(Value*) arg;
+    if (Get_Level_Flag(L, DISPATCHING_INTRINSIC))
+        arg = SPARE;
+    else
         arg = Level_Arg(L, 2);
-        label = Try_Get_Action_Level_Label(L);
-    }
 
     Param* param = Phase_Param(details, 2);
     assert(Is_Parameter(param));

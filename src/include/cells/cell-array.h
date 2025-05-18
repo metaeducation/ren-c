@@ -256,7 +256,7 @@ INLINE Value* Init_Splice_Untracked(Init(Value) out, Source* a) {
 #define Init_Splice(out,a) \
     TRACK(Init_Splice_Untracked((out), (a)))
 
-INLINE bool Is_Blank(const Cell* v) {
+INLINE bool Is_Blank(const Value* v) {
     if (not Is_Splice(v))
         return false;
     const Element* tail;

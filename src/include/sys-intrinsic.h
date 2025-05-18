@@ -82,6 +82,22 @@ INLINE const Element* Level_Intrinsic_Arg_Meta(Level* L) {
     return Known_Element(Level_Spare(L));
 }
 
+INLINE Details* Level_Intrinsic_Details(Level* L) {
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
+        return Ensure_Level_Details(L);
+
+    Element* frame = Known_Element(Level_Scratch(L));
+    return Ensure_Cell_Frame_Details(frame);
+}
+
+INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
+        return Try_Get_Action_Level_Label(L);
+
+    Element* frame = Known_Element(Level_Scratch(L));
+    return Cell_Frame_Label_Deep(frame);
+}
+
 
 // If the intrinsic just wants to look at the heart byte and quote byte of
 // an unconstrained ^META parameter, that can be done without making

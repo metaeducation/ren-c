@@ -375,9 +375,9 @@ Bounce Action_Executor(Level* L)
             }
 
             if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
-                assert(not Is_Trash(OUT));
-                Decay_If_Unstable(OUT);  // !!! ^META variadics?
-                Init_Varargs_Untyped_Infix(ARG, stable_OUT);
+                assert(not Is_Atom_Trash(OUT));
+                Value* out = Decay_If_Unstable(OUT);  // !!! ^META variadics?
+                Init_Varargs_Untyped_Infix(ARG, out);
                 Erase_Cell(OUT);
             }
             else switch (pclass) {
@@ -649,6 +649,8 @@ Bounce Action_Executor(Level* L)
     // second time through, and we were just jumping up to check the
     // parameters in response to a BOUNCE_REDO_CHECKED; if so, skip this.
     //
+    // 1. PANIC() uses the data stack, so we can't pass stack values to it.
+    //
     if (TOP_INDEX != STACK_BASE) {
 
       next_pickup:
@@ -657,8 +659,8 @@ Bounce Action_Executor(Level* L)
 
         if (not Cell_Binding(TOP)) {  // duplicate or junk, loop didn't index
             Refinify_Pushed_Refinement(TOP_ELEMENT);
-            Copy_Cell(SPARE, TOP);  // FAIL() uses the data stack
-            return PANIC(Error_Bad_Parameter_Raw(stable_SPARE));
+            Element* spare = Copy_Cell(SPARE, TOP_ELEMENT);  // [1]
+            return PANIC(Error_Bad_Parameter_Raw(spare));
         }
 
         // Level_Args_Head offsets are 0-based, while index is 1-based.
@@ -747,8 +749,9 @@ Bounce Action_Executor(Level* L)
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         Assert_Cell_Stable(ARG);  // implicitly asserts Ensure_Readable(ARG)
+        Value* arg = u_cast(Value*, ARG);
 
-        if (Is_Typechecked(stable_ARG))
+        if (Is_Typechecked(arg))
             continue;  // Note: typechecked trash is legal (e.g. locals)
 
         Phase* phase = Level_Phase(L);
@@ -756,47 +759,47 @@ Bounce Action_Executor(Level* L)
         while (Is_Specialized(param)) {
             Element* archetype = Flex_Head(Element, phase);
             phase = Cell_Frame_Phase(archetype);
-            param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
+            param = Phase_Param(phase, arg - cast(Value*, L->rootvar));
         }
 
-        if (Is_Trash(stable_ARG)) {  // other trash are unspecified/"end"
+        if (Is_Trash(arg)) {  // other trash are unspecified/"end"
             if (Get_Parameter_Flag(param, ENDABLE))  // !!! "optional?"
                 continue;
             return PANIC(Error_Unspecified_Arg(L));
         }
 
-        if (Is_Blank(ARG)) {
+        if (Is_Blank(arg)) {
             if (Get_Parameter_Flag(param, OPT_OUT)) {  // <opt-out> param
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
-                Mark_Typechecked(stable_ARG);
+                Mark_Typechecked(arg);
                 Init_Nulled(OUT);
                 continue;
             }
         }
 
-        if (Get_Parameter_Flag(param, UNDO_OPT) and Is_Nulled(ARG)) {
-            Mark_Typechecked(stable_ARG);  // null generally not in typeset
+        if (Get_Parameter_Flag(param, UNDO_OPT) and Is_Nulled(arg)) {
+            Mark_Typechecked(arg);  // null generally not in typeset
             continue;
         }
 
         if (Get_Parameter_Flag(param, VARIADIC)) {  // can't check now [2]
-            if (not Is_Varargs(ARG))  // argument itself is always VARARGS!
-                return PANIC(Error_Not_Varargs(L, KEY, param, stable_ARG));
+            if (not Is_Varargs(arg))  // argument itself is always VARARGS!
+                return PANIC(Error_Not_Varargs(L, KEY, param, arg));
 
-            Tweak_Cell_Varargs_Phase(ARG, phase);
+            Tweak_Cell_Varargs_Phase(arg, phase);
 
             bool infix = false;  // !!! how does infix matter?
-            CELL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [3]
+            CELL_VARARGS_SIGNED_PARAM_INDEX(arg) =  // store offset [3]
                 infix
-                    ? -(ARG - cast(Atom*, Level_Args_Head(L)) + 1)
-                    : ARG - cast(Atom*, Level_Args_Head(L)) + 1;
+                    ? -(arg - Level_Args_Head(L) + 1)
+                    : arg - Level_Args_Head(L) + 1;
 
-            assert(CELL_VARARGS_SIGNED_PARAM_INDEX(ARG) != 0);
+            assert(CELL_VARARGS_SIGNED_PARAM_INDEX(arg) != 0);
             continue;
         }
 
         if (not Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, ARG, false))
-            return PANIC(Error_Phase_Arg_Type(L, KEY, param, stable_ARG));
+            return PANIC(Error_Phase_Arg_Type(L, KEY, param, arg));
 
         Mark_Typechecked(stable_ARG);
     }
@@ -1023,7 +1026,7 @@ Bounce Action_Executor(Level* L)
 // done by this routine.  In practice, Begin_Action() is a tiny amount of
 // reused work.  This separation may be reconsidered.
 //
-void Push_Action(Level* L, const Cell* frame) {
+void Push_Action(Level* L, const Value* frame) {
     assert(L->executor == &Action_Executor);
 
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
