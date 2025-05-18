@@ -401,20 +401,17 @@ DECLARE_NATIVE(ALSO)
 #define LEVEL_FLAG_SAW_NON_VOID_OR_NON_GHOST  LEVEL_FLAG_MISCELLANEOUS
 
 
+typedef enum {
+    NATIVE_IS_ANY,
+    NATIVE_IS_ALL,
+    NATIVE_IS_NONE
+} WhichAnyAllNone;
+
+
+// ANY and ALL were very similar, and it made sense to factor their common
+// code out into a single function.
 //
-//  all: native [
-//
-//  "Short-circuiting variant of AND, using a block of expressions as input"
-//
-//      return: "Product of last passing evaluation if all truthy, else null"
-//          [any-value?]
-//      block "Block of expressions, @[block] will be treated inertly"
-//          [block! @block!]
-//      :predicate "Test for whether an evaluation passes (default is DID)"
-//          [<unrun> frame!]
-//  ]
-//
-DECLARE_NATIVE(ALL)
+Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 {
     INCLUDE_PARAMS_OF_ALL;
 
@@ -424,28 +421,21 @@ DECLARE_NATIVE(ALL)
     Value* condition;  // will be found in OUT or SCRATCH
 
     enum {
-        ST_ALL_INITIAL_ENTRY = STATE_0,
-        ST_ALL_EVAL_STEP,
-        ST_ALL_PREDICATE
+        ST_ANY_ALL_NONE_INITIAL_ENTRY = STATE_0,
+        ST_ANY_ALL_NONE_EVAL_STEP,
+        ST_ANY_ALL_NONE_PREDICATE
     };
 
     switch (STATE) {
-      case ST_ALL_INITIAL_ENTRY:
-        assert(Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST));
-        goto initial_entry;
-
-      case ST_ALL_EVAL_STEP:
-        if (Is_Endlike_Trash(SPARE))
-            goto reached_end;
-        goto eval_step_meta_in_spare;
-
-      case ST_ALL_PREDICATE:
-        goto predicate_result_in_scratch;
-
+      case ST_ANY_ALL_NONE_INITIAL_ENTRY: goto initial_entry;
+      case ST_ANY_ALL_NONE_EVAL_STEP: goto eval_step_meta_or_end_in_spare;
+      case ST_ANY_ALL_NONE_PREDICATE: goto predicate_result_in_scratch;
       default: assert(false);
     }
 
-  initial_entry: {  //////////////////////////////////////////////////////////
+  initial_entry: { ///////////////////////////////////////////////////////////
+
+    assert(Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST));
 
     Executor* executor;
     if (Is_Pinned(BLOCK, block))
@@ -459,13 +449,16 @@ DECLARE_NATIVE(ALL)
     Level* sub = Make_Level_At(executor, block, flags);
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
-    STATE = ST_ALL_EVAL_STEP;
+    STATE = ST_ANY_ALL_NONE_EVAL_STEP;
     return CONTINUE_SUBLEVEL(sub);
 
-} eval_step_meta_in_spare: {  ////////////////////////////////////////////////
+} eval_step_meta_or_end_in_spare: {  /////////////////////////////////////////
+
+    if (Is_Endlike_Trash(SPARE))
+        goto reached_end;
 
     if (Is_Meta_Of_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue
-        assert(STATE == ST_ALL_EVAL_STEP);
+        assert(STATE == ST_ANY_ALL_NONE_EVAL_STEP);
         Reset_Evaluator_Erase_Out(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
@@ -490,7 +483,7 @@ DECLARE_NATIVE(ALL)
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [1]
 
-    STATE = ST_ALL_PREDICATE;
+    STATE = ST_ANY_ALL_NONE_PREDICATE;
     return CONTINUE(SCRATCH, predicate, SPARE);
 
 } predicate_result_in_scratch: {  ////////////////////////////////////////////
@@ -505,33 +498,39 @@ DECLARE_NATIVE(ALL)
     Packify_If_Inhibitor(SCRATCH);  // predicates can approve null [1]
 
     SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling [2]
-    STATE = ST_ALL_EVAL_STEP;
+    STATE = ST_ANY_ALL_NONE_EVAL_STEP;
 
     condition = Decay_If_Unstable(SCRATCH);
-    goto process_condition;  // with predicate, `condition` is predicate result
 
-} process_condition: {  //////////////////////////////////////////////////////
+} process_condition: {
 
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, condition);
     if (e)
         return PANIC(unwrap e);
 
-    if (not cond) {
-        Drop_Level(SUBLEVEL);
-        return nullptr;
+    switch (which) {
+      case NATIVE_IS_ANY:
+        if (cond)
+            goto return_spare;  // successful ANY clause returns the value
+        break;
+
+      case NATIVE_IS_ALL:
+        if (not cond)
+            goto return_null;  // failed ALL clause returns null
+        Move_Atom(OUT, SPARE);  // leaves SPARE as fresh...good for next step
+        break;
+
+      case NATIVE_IS_NONE:
+        if (cond)
+            goto return_null;  // succeeding NONE clause returns null
+        break;
     }
-
-    goto update_out_from_spare;
-
-} update_out_from_spare: {  //////////////////////////////////////////////////
-
-    Move_Atom(OUT, SPARE);  // leaves SPARE as fresh...good for next step
 
     if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
         goto reached_end;
 
-    assert(STATE == ST_ALL_EVAL_STEP);
+    assert(STATE == ST_ANY_ALL_NONE_EVAL_STEP);
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
@@ -552,8 +551,50 @@ DECLARE_NATIVE(ALL)
     if (Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST))
         return VOID;  // return void if all evaluations vaporized [1]
 
+    switch (which) {
+      case NATIVE_IS_ANY:
+        return nullptr;  // non-vanishing expressions, but none of them passed
+
+      case NATIVE_IS_ALL:
+        return BRANCHED(OUT);  // successful ALL returns the last value
+
+      case NATIVE_IS_NONE:
+        return OKAY;  // successful NONE has no value to return, use OKAY
+
+      default:  // some C compilers don't seem to know this is unreachable
+        crash (nullptr);
+    }
+
+} return_spare: { ////////////////////////////////////////////////////////////
+
+    Drop_Level(SUBLEVEL);
+    Move_Atom(OUT, SPARE);
     return BRANCHED(OUT);
+
+} return_null: { /////////////////////////////////////////////////////////////
+
+    Drop_Level(SUBLEVEL);
+    return nullptr;
 }}
+
+
+//
+//  all: native [
+//
+//  "Short-circuiting variant of AND, using a block of expressions as input"
+//
+//      return: "Product of last passing evaluation if all truthy, else null"
+//          [any-value?]
+//      block "Block of expressions, @[block] will be treated inertly"
+//          [block! @block!]
+//      :predicate "Test for whether an evaluation passes (default is DID)"
+//          [<unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(ALL)
+{
+    return Any_All_None_Native_Core(LEVEL, NATIVE_IS_ALL);
+}
 
 
 //
@@ -571,129 +612,27 @@ DECLARE_NATIVE(ALL)
 //
 DECLARE_NATIVE(ANY)
 {
-    INCLUDE_PARAMS_OF_ANY;
+    return Any_All_None_Native_Core(LEVEL, NATIVE_IS_ANY);
+}
 
-    Element* block = Element_ARG(BLOCK);
-    Value* predicate = ARG(PREDICATE);
 
-    Value* condition;  // could point to OUT or SPARE
-
-    enum {
-        ST_ANY_INITIAL_ENTRY = STATE_0,
-        ST_ANY_EVAL_STEP,
-        ST_ANY_PREDICATE
-    };
-
-    switch (STATE) {
-      case ST_ANY_INITIAL_ENTRY:
-        assert(Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST));
-        goto initial_entry;
-
-      case ST_ANY_EVAL_STEP:
-        if (Is_Endlike_Trash(OUT))
-            goto reached_end;
-        goto eval_step_meta_in_out;
-
-      case ST_ANY_PREDICATE:
-        goto predicate_result_in_spare;
-
-      default: assert(false);
-    }
-
-  initial_entry: {  //////////////////////////////////////////////////////////
-
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
-
-    Executor* executor;
-    if (Is_Pinned(BLOCK, block))
-        executor = &Inert_Meta_Stepper_Executor;
-    else {
-        assert(Is_Block(block));
-        executor = &Meta_Stepper_Executor;
-    }
-
-    Level* sub = Make_Level_At(executor, block, flags);
-    Push_Level_Erase_Out_If_State_0(OUT, sub);
-
-    STATE = ST_ANY_EVAL_STEP;
-    return CONTINUE_SUBLEVEL(sub);
-
-} eval_step_meta_in_out: {  //////////////////////////////////////////////////
-
-    if (Is_Meta_Of_Ghost_Or_Void(OUT)) {  // no vote...ignore and continue
-        assert(STATE == ST_ANY_EVAL_STEP);
-        Reset_Evaluator_Erase_Out(SUBLEVEL);
-        return CONTINUE_SUBLEVEL(SUBLEVEL);
-    }
-
-    Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
-
-    Meta_Unquotify_Undecayed(OUT);
-    Decay_If_Unstable(OUT);
-
-    if (not Is_Nulled(predicate))
-        goto run_predicate_on_eval_product;
-
-    condition = stable_OUT;
-    goto process_condition;
-
-} run_predicate_on_eval_product: {  //////////////////////////////////////////
-
-    // 1. See ALL's run_predicate_on_eval_product [1]
-
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [1]
-
-    STATE = ST_ANY_PREDICATE;
-    return CONTINUE(SPARE, predicate, OUT);
-
-} predicate_result_in_spare: {  //////////////////////////////////////////////
-
-    // 1. See ALL's predicate_result_in_scratch [1]
-
-    if (Is_Void(SPARE))
-        return PANIC(Error_Bad_Void());
-
-    Packify_If_Inhibitor(OUT);  // predicates can approve null [1]
-
-    SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling
-    STATE = ST_ANY_EVAL_STEP;
-
-    condition = Decay_If_Unstable(SPARE);
-    goto process_condition;
-
-} process_condition: {  //////////////////////////////////////////////////////
-
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
-    if (e)
-        return PANIC(unwrap e);
-
-    if (cond)
-        goto return_out;
-
-    if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
-        goto reached_end;
-
-    assert(STATE == ST_ANY_EVAL_STEP);
-    Reset_Evaluator_Erase_Out(SUBLEVEL);
-    return CONTINUE_SUBLEVEL(SUBLEVEL);
-
-} return_out: {  /////////////////////////////////////////////////////////////
-
-    Drop_Level(SUBLEVEL);
-    return BRANCHED(OUT);  // successful ANY returns the value
-
-} reached_end: {  ////////////////////////////////////////////////////////////
-
-    // 1. see ALL's reached_end [1]
-
-    Drop_Level(SUBLEVEL);
-
-    if (Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST))
-        return VOID;  // [1]
-
-    return nullptr;  // non-vanishing expressions, but none of them passed
-}}
+//
+//  none: native [
+//
+//  "Short-circuiting shorthand for NOT ALL"
+//
+//      return: "First passing evaluative result, or null if none pass"
+//          [any-value?]
+//      block "Block of expressions, @[block] will be treated inertly"
+//          [block! @block!]
+//      :predicate "Test for whether an evaluation passes (default is DID)"
+//          [<unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(NONE)
+{
+    return Any_All_None_Native_Core(LEVEL, NATIVE_IS_NONE);
+}
 
 
 //

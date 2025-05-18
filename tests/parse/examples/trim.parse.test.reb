@@ -58,7 +58,7 @@ utrim: func [
             ]
             rule: blank
 
-            if not any [head tail] [
+            if none [head tail] [
                 head: tail: okay  ; plain utrim => utrim/HEAD/TAIL
             ]
         ]
@@ -102,7 +102,7 @@ utrim: func [
                 charset with
             ]
 
-            if not any [head tail] [
+            if none [head tail] [
                 head: tail: okay  ; plain utrim => utrim/HEAD/TAIL
             ]
         ]

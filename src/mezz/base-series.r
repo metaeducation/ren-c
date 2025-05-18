@@ -118,7 +118,7 @@ trim: func [
             ]
             rule: blank
 
-            if not any [head tail] [
+            if none [head tail] [
                 head: tail: #  ; plain TRIM => TRIM:HEAD:TAIL
             ]
         ]
@@ -162,7 +162,7 @@ trim: func [
                 charset with
             ]
 
-            if not any [head tail] [
+            if none [head tail] [
                 head: tail: #  ; plain TRIM => TRIM:HEAD:TAIL
             ]
         ]

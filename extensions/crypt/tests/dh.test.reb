@@ -27,10 +27,10 @@
     randomize "Deterministic!"
     repeat 1000 (wrap [
         g: p: ~
-        until [
+        insist [
             g: random-pick byte-primes
             p: random-pick byte-primes
-            not any [
+            none [
                p = 2
                p = 3
                g >= p

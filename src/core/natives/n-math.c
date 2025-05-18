@@ -1078,7 +1078,7 @@ DECLARE_NATIVE(GREATER_Q)
     Quotify(v2);
 
     return rebDelegate(
-        "not any [equal?", v1, v2, "lesser?", v1, v2, "]"
+        "none [equal?", v1, v2, "lesser?", v1, v2, "]"
     );
 }
 

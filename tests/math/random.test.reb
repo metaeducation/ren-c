@@ -16,7 +16,7 @@
 
 [#1084 (
     randomize 0
-    not any [
+    none [
         negative? random 1.0
         negative? random 1.0
     ]
