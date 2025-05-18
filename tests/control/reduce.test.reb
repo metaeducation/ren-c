@@ -115,11 +115,11 @@
 ; REDUCE-EACH is a variant which lets you intercept the values, and thus
 ; intervene in questions of how unstable antiforms will be handled.
 [
-    ([<null> 3] = collect [reduce-each x [null 1 + 2] [keep (x else '<null>)]])
+    ([<null> 3] = collect [reduce-each 'x [null 1 + 2] [keep (x else '<null>)]])
 
-    ([3 7] = collect [reduce-each x [1 + 2 3 + 4] [keep x]])
+    ([3 7] = collect [reduce-each 'x [1 + 2 3 + 4] [keep x]])
 
-    ([1 + 2] = collect [reduce-each x @[1 + 2] [keep x]])
+    ([1 + 2] = collect [reduce-each 'x @[1 + 2] [keep x]])
 ]
 
 ; REDUCE-EACH can do ^META processing, this is the basis of ATTEMPT

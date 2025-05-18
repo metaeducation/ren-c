@@ -261,7 +261,7 @@ Let* Make_Let_Variable(
 
 
 #define CELL_FLAG_BIND_NOTE_REUSE CELL_FLAG_NOTE
-
+#define CELL_FLAG_BIND_MARKED_LIFT NODE_FLAG_ROOT
 
 //
 //  Get_Word_Container: C
@@ -813,7 +813,7 @@ DECLARE_NATIVE(LET)
           wordlike:
           case TYPE_WORD: {
             Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
-            Option(const Symbol*) symbol = Cell_Word_Symbol(temp);
+            const Symbol* symbol = Cell_Word_Symbol(temp);
             bindings = Make_Let_Variable(symbol, bindings);
             CELL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
             Tweak_Cell_Binding(TOP, bindings);
@@ -1343,6 +1343,8 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             if (Try_Add_Binder_Index(binder, symbol, index)) {
                 Value* var = Append_Context(c, symbol);
                 Init_Trash(var);  // code shared with USE, user may see
+                if (Is_Lifted(WORD, item))
+                    Set_Cell_Flag(var, BIND_MARKED_LIFT);
             }
             else {  // note for-each [x @x] is bad, too
                 DECLARE_ELEMENT (word);
@@ -1431,7 +1433,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
 
 //
-//  Real_Var_From_Pseudo: C
+//  Real_Slot_From_Pseudo_Slot: C
 //
 // Virtual_Bind_To_New_Context() allows @WORD! syntax to reuse an existing
 // variable's binding:
@@ -1443,19 +1445,23 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 // It accomplishes this by putting a word into the "variable" slot, and having
 // a flag to indicate a dereference is necessary.
 //
-Value* Real_Var_From_Pseudo(Value* pseudo_var) {
-    if (Not_Cell_Flag(pseudo_var, BIND_NOTE_REUSE))
-        return pseudo_var;
-    if (Is_Space(pseudo_var))  // e.g. `for-each _ [1 2 3] [...]`
+// 1. These variables are fetched across running arbitrary user code.  So the
+//    address cannot be cached...e.g. the object it lives in might expand and
+//    invalidate the location.  (The `context` for fabricated variables is
+//    locked at fixed size, so no cache is needed.)
+//
+Option(Value*) Real_Slot_From_Pseudo_Slot(Sink(bool) lift, Value* pseudo) {
+    *lift = false;
+    if (Not_Cell_Flag(pseudo, BIND_NOTE_REUSE)) {
+        *lift = Get_Cell_Flag(pseudo, BIND_MARKED_LIFT);
+        return pseudo;
+    }
+    assert(Not_Cell_Flag(pseudo, BIND_MARKED_LIFT));
+    if (Is_Space(pseudo))  // e.g. `for-each _ [1 2 3] [...]`
         return nullptr;  // signal to throw generated quantity away
 
-    // Note: these variables are fetched across running arbitrary user code.
-    // So the address cannot be cached...e.g. the object it lives in might
-    // expand and invalidate the location.  (The `context` for fabricated
-    // variables is locked at fixed size.)
-    //
-    assert(Is_Pinned(WORD, pseudo_var));
-    return Lookup_Mutable_Word_May_Panic(cast(Element*, pseudo_var), SPECIFIED);
+    assert(Is_Pinned(WORD, pseudo));  // must re-lookup each time [1]
+    return Lookup_Mutable_Word_May_Panic(cast(Element*, pseudo), SPECIFIED);
 }
 
 

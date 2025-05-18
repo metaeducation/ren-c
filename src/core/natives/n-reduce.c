@@ -274,8 +274,8 @@ DECLARE_NATIVE(REDUCE)
 //
 //      return: "Last body result"
 //          [any-atom?]
-//      @(vars) "Variable to receive each reduced value (multiple TBD)"
-//          [word! ^word!]
+//      vars "Variable to receive each reduced value (multiple TBD)"
+//          [_ word! @word! block!]
 //      block "Input block of expressions (@[...] acts like FOR-EACH)"
 //          [block! @block!]
 //      body "Code to run on each step"
@@ -283,16 +283,6 @@ DECLARE_NATIVE(REDUCE)
 //  ]
 //
 DECLARE_NATIVE(REDUCE_EACH)
-//
-// !!! There used to be a /COMMAS refinement on this, which allowed you to
-// see source-level commas.  Once comma antiforms took over the barrier role,
-// they were distinguishable from nihils and could be filtered separately.
-// With this you can write `pack [1, ~[]~, 2]` and get a 3-element pack.
-// It may be that some use case requires /COMMAS to come back, but waiting
-// to see one.
-//
-// 1. This current REDUCE-EACH only works with one variable; it should be able
-//    to take a block of variables.
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
 
@@ -309,13 +299,16 @@ DECLARE_NATIVE(REDUCE_EACH)
     };
 
     switch (STATE) {
-      case ST_REDUCE_EACH_INITIAL_ENTRY : goto initial_entry;
-      case ST_REDUCE_EACH_REDUCING_STEP : goto reduce_step_meta_in_spare;
-      case ST_REDUCE_EACH_RUNNING_BODY : goto body_result_in_out;
+      case ST_REDUCE_EACH_INITIAL_ENTRY: goto initial_entry;
+      case ST_REDUCE_EACH_REDUCING_STEP: goto reduce_step_meta_in_spare;
+      case ST_REDUCE_EACH_RUNNING_BODY: goto body_result_in_out;
       default : assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    // 1. This current REDUCE-EACH only works with one variable; it should be
+    //    able to take a block of variables.
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
@@ -330,6 +323,9 @@ DECLARE_NATIVE(REDUCE_EACH)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), context));
 
+    if (Varlist_Len(Cell_Varlist(vars)) != 1)  // current limitation [1]
+        return PANIC("REDUCE-EACH only supports one variable for now");
+
     assert(Is_Block(body));
     Add_Definitional_Break_Continue(body, level_);
 
@@ -343,14 +339,16 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Level* sub = Make_Level_At(executor, block, flags);
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
-    goto reduce_next;
 
-} reduce_next: {  ////////////////////////////////////////////////////////////
+} reduce_next: {
 
     if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;
 
-    SUBLEVEL->executor = &Meta_Stepper_Executor;  // undo &Just_Use_Out_Executor
+    if (Is_Pinned(BLOCK, block))  // undo &Just_Use_Out_Executor
+        SUBLEVEL->executor = &Inert_Meta_Stepper_Executor;
+    else
+        SUBLEVEL->executor = &Meta_Stepper_Executor;
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
     Reset_Evaluator_Erase_Out(SUBLEVEL);
@@ -360,19 +358,35 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Meta_Unquotify_Undecayed(SPARE);  // unquote the result of evaluation
 
-    if (Is_Ghost(SPARE)) {
-        Init_Void(OUT);
-        goto reduce_next;  // always cull antiform commas (barriers)
+    Value* pseudo = Varlist_Slot(Cell_Varlist(vars), 1);
+
+    bool lift;
+    Value* slot = maybe Real_Slot_From_Pseudo_Slot(&lift, pseudo);
+    if (not slot)
+        goto next_reduce_each;
+
+    if (lift) {  // accept all values when lifting, don't cull ghost/void
+        Copy_Meta_Cell(slot, SPARE);  // even ERROR! is okay here
+        goto next_reduce_each;
     }
 
-    if (Is_Void(SPARE)) {
+    if (Is_Ghost_Or_Void(SPARE)) {  // if REDUCE culls voids/ghosts, so do we
         Init_Void(OUT);
-        goto reduce_next;  // cull voids and nihils if not ^META
+        goto reduce_next;
     }
+    if (Is_Error(SPARE))
+        return PANIC(Cell_Error(SPARE));
 
-    Decay_If_Unstable(SPARE);
+    Value* spare = Decay_If_Unstable(SPARE);
 
-    Move_Cell(Varlist_Slot(Cell_Varlist(vars), 1), stable_SPARE);  // multiple? [1]
+    if (Is_Action(spare) or Is_Trash(spare))
+        return PANIC(
+            "Need ^LIFT variables in REDUCE-EACH to accept ACTION! or TRASH!"
+        );
+
+    Move_Cell(slot, spare);
+
+} next_reduce_each: {
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
 
@@ -380,7 +394,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
     return CONTINUE_BRANCH(OUT, body);
 
-} body_result_in_out: {  /////////////////////////////////////////////////////
+} body_result_in_out: { //////////////////////////////////////////////////////
 
     if (THROWING) {
         if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
@@ -393,7 +407,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     Disable_Dispatcher_Catching_Of_Throws(LEVEL);
     goto reduce_next;
 
-} finished: {  ///////////////////////////////////////////////////////////////
+} finished: { ////////////////////////////////////////////////////////////////
 
     Drop_Level(SUBLEVEL);
 

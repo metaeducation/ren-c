@@ -159,6 +159,12 @@
 // This flag is masked out by CELL_MASK_COPY, so that when values are moved
 // into or out of API handle cells the flag is left untouched.
 //
+// !!! Due to the fact that this is a "sticky" bit, it is currently abused
+// by the FOR-EACH type of machinery to mark slots in an object as requiring
+// a lift.  See CELL_FLAG_BIND_MARKED_LIFT.  That code is going to be redone
+// completely, so it may not be an issue...but it does raise the general
+// question of whether this is an approved use for a generic bit.
+//
 #define NODE_FLAG_ROOT \
     FLAG_LEFT_BIT(6)
 #define NODE_BYTEMASK_0x02_ROOT  0x02
