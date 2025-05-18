@@ -495,7 +495,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
             // Find correct message for ID: (if any)
 
             Option(Value*) message = Select_Symbol_In_Context(
-                unwrap category,
+                Known_Element(unwrap category),
                 Cell_Word_Symbol(&vars->id)
             );
 

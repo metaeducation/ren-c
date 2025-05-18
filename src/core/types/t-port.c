@@ -162,7 +162,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     // Dispatch object function:
 
     const bool strict = false;
-    Option(Index) index = Find_Symbol_In_Context(actor, verb, strict);
+    Option(Index) index = Find_Symbol_In_Context(
+        Known_Element(actor), verb, strict
+    );
 
     Value* action;
     if (not index)

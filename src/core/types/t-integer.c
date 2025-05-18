@@ -432,9 +432,9 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
     if (not Bool_ARG(TO))
         return Init_Integer(OUT, Round_Int(num, level_, 0L));
 
-    Value* to = ARG(TO);
-    if (Is_Nulled(to))
-        Init_Integer(to, 1);
+    Element* to = Is_Nulled(ARG(TO))
+        ? Init_Integer(ARG(TO), 1)  // default to round to integer 1
+        : Element_ARG(TO);
 
     if (Is_Decimal(to) || Is_Percent(to)) {
         REBDEC dec = Round_Dec(

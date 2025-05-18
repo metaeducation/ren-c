@@ -47,7 +47,7 @@ DECLARE_NATIVE(BIND)
 {
     INCLUDE_PARAMS_OF_BIND;
 
-    Value* v = ARG(VALUE);
+    Element* v = Element_ARG(VALUE);
     Element* spec = Element_ARG(SPEC);
 
     if (Is_Block(spec)) {
@@ -220,20 +220,22 @@ DECLARE_NATIVE(HAS)
     Element* v = Element_ARG(VALUE);
     assert(Any_Word(v));  // want to preserve sigil
 
+    Element* context = Element_ARG(CONTEXT);
+
     const Symbol* symbol = Cell_Word_Symbol(v);
     const bool strict = true;
-    Option(Index) index = Find_Symbol_In_Context(ARG(CONTEXT), symbol, strict);
+    Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
     if (not index)
         return nullptr;
 
-    if (not Is_Module(ARG(CONTEXT))) {
-        VarList* varlist = Cell_Varlist(ARG(CONTEXT));
+    if (not Is_Module(context)) {
+        VarList* varlist = Cell_Varlist(context);
         Init_Word_Bound(OUT, symbol, varlist, unwrap index);
         Copy_Heart_Byte(Known_Element(OUT), v);
         return OUT;
     }
 
-    SeaOfVars* sea = Cell_Module_Sea(ARG(CONTEXT));
+    SeaOfVars* sea = Cell_Module_Sea(context);
     Init_Word(OUT, symbol);
     Copy_Heart_Byte(Known_Element(OUT), v);
     Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
@@ -269,7 +271,7 @@ DECLARE_NATIVE(WITHOUT)
         const Symbol* symbol = Cell_Word_Symbol(v);
         const bool strict = true;
         Option(Index) index = Find_Symbol_In_Context(
-            ARG(CONTEXT), symbol, strict
+            Element_ARG(CONTEXT), symbol, strict
         );
         if (not index)
             return nullptr;

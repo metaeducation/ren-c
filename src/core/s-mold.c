@@ -113,7 +113,7 @@ Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 //
 // https://forum.rebol.info/t/2225
 //
-void Begin_Non_Lexical_Mold(Molder* mo, const Cell* v)
+void Begin_Non_Lexical_Mold(Molder* mo, const Element* v)
 {
     Append_Ascii(mo->string, "#[");
 

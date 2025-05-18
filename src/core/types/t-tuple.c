@@ -465,8 +465,8 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     Length len = Cell_Sequence_Len(seq);
     Offset n;
     for (n = 0; n < len; ++len) {  // first let's see if it's a trivial copy
-        Copy_Sequence_At(SPARE, seq, n);
-        Heart item_heart = Heart_Of_Builtin_Fundamental(SPARE);
+        Element* spare = Copy_Sequence_At(SPARE, seq, n);
+        Heart item_heart = Heart_Of_Builtin_Fundamental(spare);
         if (Handles_Builtin_Generic(COPY, item_heart)) {
             trivial_copy = false;
             break;

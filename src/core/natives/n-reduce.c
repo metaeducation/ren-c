@@ -1099,7 +1099,7 @@ DECLARE_NATIVE(COMPOSE2)
     Copy_Cell(PUSH(), pattern); // top of stack is pattern currently matching
 
     Byte begin_delimiter = Begin_Delimit_For_List(
-        Heart_Of_Builtin_Fundamental(TOP)
+        Heart_Of_Builtin_Fundamental(TOP_ELEMENT)
     );
     Option(Byte) end_delimiter = 0;
 
@@ -1117,7 +1117,7 @@ DECLARE_NATIVE(COMPOSE2)
                 break;
 
             end_delimiter = End_Delimit_For_List(
-                Heart_Of_Builtin_Fundamental(TOP)
+                Heart_Of_Builtin_Fundamental(TOP_ELEMENT)
             );
 
             const Element* pattern_at = Cell_List_Item_At(TOP);
@@ -1129,13 +1129,13 @@ DECLARE_NATIVE(COMPOSE2)
                 return PANIC("COMPOSE2 pattern layers must be length 1 or 0");
 
             begin_delimiter = Begin_Delimit_For_List(
-                Heart_Of_Builtin_Fundamental(TOP)
+                Heart_Of_Builtin_Fundamental(TOP_ELEMENT)
             );
         }
         else if (end_delimiter and c == end_delimiter) {
             DROP();
             begin_delimiter = Begin_Delimit_For_List(
-                Heart_Of_Builtin_Fundamental(TOP)
+                Heart_Of_Builtin_Fundamental(TOP_ELEMENT)
             );
             if (TOP_INDEX == base + 1)
                 end_delimiter = 0;
@@ -1149,7 +1149,7 @@ DECLARE_NATIVE(COMPOSE2)
         else if (end_delimiter) {  // back the pattern out to the start [1]
             Drop_Data_Stack_To(base + 1);
             begin_delimiter = Begin_Delimit_For_List(
-                Heart_Of_Builtin_Fundamental(TOP)
+                Heart_Of_Builtin_Fundamental(TOP_ELEMENT)
             );
             end_delimiter = 0;
         }

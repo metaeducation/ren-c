@@ -430,7 +430,7 @@ DECLARE_NATIVE(SPREAD)
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
-    Option(const Value*) opt_v = Optional_ARG(VALUE);
+    Option(const Value*) opt_v = Voidable_ARG(VALUE);
     if (not opt_v or Is_Meta_Of_Void(unwrap opt_v))  // quasi ok [2]
         return VOID;  // pass through [1]
     const Value* v = unwrap opt_v;

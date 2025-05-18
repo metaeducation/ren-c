@@ -311,7 +311,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Pair)
     const Element* picker = Element_ARG(PICKER);
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
 
-    Option(const Value*) opt_poke = Optional_ARG(VALUE);
+    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
         return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);

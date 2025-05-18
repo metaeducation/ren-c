@@ -746,7 +746,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Blob)
     if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
         return PANIC(Error_Out_Of_Range(picker));
 
-    Option(const Value*) opt_poke = Optional_ARG(VALUE);
+    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
         return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);

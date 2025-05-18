@@ -313,7 +313,7 @@ IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
 {
     INCLUDE_PARAMS_OF_UNIQUE;
 
-    Heart heart = Heart_Of_Builtin_Fundamental(ARG(SERIES));
+    Heart heart = Heart_Of_Builtin_Fundamental(Element_ARG(SERIES));
 
     Flex* flex = Make_Set_Operation_Flex(
         ARG(SERIES),
@@ -333,8 +333,8 @@ IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
 //
 Option(Error*) Trap_Resolve_Dual_Hearts(
     Sink(Heart) heart,
-    Value* value1,
-    Value* value2
+    Element* value1,
+    Element* value2
 ){
     UNUSED(value2);
     *heart = Heart_Of_Builtin_Fundamental(value1);
@@ -348,7 +348,7 @@ IMPLEMENT_GENERIC(INTERSECT, Any_Series)
 
     Heart heart;
     Option(Error*) e = Trap_Resolve_Dual_Hearts(
-        &heart, ARG(VALUE1), ARG(VALUE2)
+        &heart, Element_ARG(VALUE1), Element_ARG(VALUE2)
     );
     if (e)
         return PANIC(unwrap e);
@@ -371,7 +371,7 @@ IMPLEMENT_GENERIC(UNION, Any_Series)
 
     Heart heart;
     Option(Error*) e = Trap_Resolve_Dual_Hearts(
-        &heart, ARG(VALUE1), ARG(VALUE2)
+        &heart, Element_ARG(VALUE1), Element_ARG(VALUE2)
     );
     if (e)
         return PANIC(unwrap e);
@@ -394,7 +394,7 @@ IMPLEMENT_GENERIC(DIFFERENCE, Any_Series)
 
     Heart heart;
     Option(Error*) e = Trap_Resolve_Dual_Hearts(
-        &heart, ARG(VALUE1), ARG(VALUE2)
+        &heart, Element_ARG(VALUE1), Element_ARG(VALUE2)
     );
     if (e)
         return PANIC(unwrap e);
@@ -417,7 +417,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
 
     Heart heart;
     Option(Error*) e = Trap_Resolve_Dual_Hearts(
-        &heart, ARG(DATA), ARG(EXCLUSIONS)
+        &heart, Element_ARG(DATA), Element_ARG(EXCLUSIONS)
     );
     if (e)
         return PANIC(unwrap e);

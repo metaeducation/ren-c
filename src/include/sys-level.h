@@ -687,19 +687,31 @@ INLINE Level* Prep_Level_Core(
 #define Bool_ARG(name) \
     (not Is_Nulled(Level_Arg(level_, param_##name##_)))
 
-INLINE Option(const Value*) Optional_Level_Arg(Level* L, REBLEN n)
+// Voidable arguments are used e.g. by POKE, where it has to tell the
+// difference between a VOID and regular value poke.  (We don't want to make
+// it possible for POKE to take arbitrary unstable antiforms...that might
+// seem to enable interesting features like entities that stored packs or
+// errors, but we don't want that outside the narrow feature of lifted
+// variables implemented by poke itself.)
+//
+// This makes it easier for POKE handlers to handle the voids, which can't
+// be turned into nulled cells because you might actually want to poke a null.
+// Instead, this makes the pointer to the argument itself a nullptr if it
+// was a VOID, and unmetas anything else.
+//
+INLINE Option(const Value*) Voidable_Level_Arg(Level* L, REBLEN n)
 {
     Value* arg = Level_Arg(L, n);
 
     if (Get_Cell_Flag(arg, PROTECTED)) {
-        if (Is_Node_Marked(arg)) {  // marked means "was nihil"
+        if (Is_Node_Marked(arg)) {  // marked means "was void"
             assert(Is_Quasi_Word_With_Id(arg, SYM_VOID));
             return nullptr;
         }
         return arg;
     }
 
-    assert(not Is_Node_Marked(arg));  // use mark for saying it was nihil
+    assert(not Is_Node_Marked(arg));  // use mark for saying it was void
 
     Option(const Value*) result;
     if (Is_Meta_Of_Void(arg)) {
@@ -715,16 +727,16 @@ INLINE Option(const Value*) Optional_Level_Arg(Level* L, REBLEN n)
     return result;
 }
 
+#define Voidable_ARG(name) \
+    Voidable_Level_Arg(level_, param_##name##_)
+
 INLINE Option(const Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 {
-    const Value* arg = maybe Optional_Level_Arg(L, n);
-    if (arg == nullptr)
+    const Value* arg = Level_Arg(L, n);
+    if (Is_Nulled(arg))
         return nullptr;
     return Known_Element(arg);
 }
-
-#define Optional_ARG(name) /* Note: can only be called ONCE! */ \
-    Optional_Level_Arg(level_, param_##name##_)
 
 #define Optional_Element_ARG(name) /* Note: can only be called ONCE! */ \
     Optional_Element_Level_Arg(level_, param_##name##_)

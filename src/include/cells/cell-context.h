@@ -87,7 +87,7 @@ INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
 }
 
 INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
-    const Value* context,
+    const Element* context,
     const Symbol* symbol,
     bool writable
 ){

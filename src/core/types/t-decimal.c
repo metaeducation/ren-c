@@ -356,7 +356,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
     Element* val = cast(Element*, ARG_N(1));
     REBDEC d1 = VAL_DECIMAL(val);
 
-    Value* arg;
+    Element* arg;
     REBDEC  d2;
     Heart heart;  // heart of ARG guaranteed to be integer, decimal, or percent
     // (this invariant hasn't been taken advantage of yet, but will be when
@@ -372,7 +372,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         || id == SYM_REMAINDER
         || id == SYM_POWER
     ){
-        arg = ARG_N(2);
+        INCLUDE_PARAMS_OF_ADD;  // must have same layout as others
+        USED(ARG(VALUE1));  // is val
+        arg = Element_ARG(VALUE2);
         if (QUOTE_BYTE(arg) != NOQUOTE_1)
             return PANIC(Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
@@ -616,8 +618,8 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Float)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Heart heart = Heart_Of_Builtin_Fundamental(ARG(VALUE1));
-    REBDEC d1 = VAL_DECIMAL(ARG(VALUE1));
+    Heart heart = Heart_Of_Builtin_Fundamental(Element_ARG(VALUE1));
+    REBDEC d1 = VAL_DECIMAL(Element_ARG(VALUE1));
 
     Value* v2 = ARG(VALUE2);
     REBDEC d2;
@@ -635,7 +637,7 @@ IMPLEMENT_GENERIC(ROUND, Any_Float)
     INCLUDE_PARAMS_OF_ROUND;
 
     REBDEC d1 = VAL_DECIMAL(ARG(VALUE));
-    Heart heart = Heart_Of_Builtin_Fundamental(ARG(VALUE));
+    Heart heart = Heart_Of_Builtin_Fundamental(Element_ARG(VALUE));
 
     USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
     USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));

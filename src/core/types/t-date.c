@@ -1012,7 +1012,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
     REBI64 secs = Does_Date_Have_Time(v) ? VAL_NANO(v) : NO_DATE_TIME;
 
     if (id == SYM_SUBTRACT or id == SYM_ADD) {
-        Value* arg = ARG_N(2);
+        INCLUDE_PARAMS_OF_ADD;  // must have same layout as SUBTRACT
+        USED(ARG(VALUE1));  // is v
+        Element* arg = Element_ARG(VALUE2);
         Heart heart = Heart_Of_Builtin_Fundamental(arg);
 
         if (heart == TYPE_DATE) {
@@ -1113,7 +1115,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Date)
     Element* date = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Option(const Value*) opt_poke = Optional_ARG(VALUE);
+    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
         return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);

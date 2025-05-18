@@ -129,7 +129,7 @@ PVAR Element* Root_Feed_Null_Substitute;  // flagged with FEED_NOTE_META
 
 PVAR Stub PG_Inaccessible_Stub;  // GC canonizes all inaccessible stubs to this
 
-PVAR Value* Root_Action_Adjunct;
+PVAR Element* Root_Action_Adjunct;
 
 PVAR Value* g_error_stack_overflow;  // made in advance, avoids extra calls
 PVAR Value* g_error_no_memory;  // also must be made in advance

@@ -172,7 +172,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 Value* Append_To_Sea_Core(
     SeaOfVars* sea,
     const Symbol* symbol,
-    Option(Cell*) any_word  // binding modified (Note: quoted words allowed)
+    Option(Element*) any_word  // binding modified (Note: quoted words allowed)
 ){
     Option(SymId) id;
     if (sea == g_lib_context)
@@ -277,7 +277,7 @@ static Value* Append_To_Varlist_Core(
 static Value* Append_Context_Core(
     Context* context,
     const Symbol* symbol,
-    Option(Cell*) any_word  // binding modified (Note: quoted words allowed)
+    Option(Element*) any_word  // binding modified (Note: quoted words allowed)
 ){
     if (Is_Stub_Sea(context))
         return Append_To_Sea_Core(cast(SeaOfVars*, context), symbol, any_word);
@@ -291,7 +291,7 @@ static Value* Append_Context_Core(
 //
 Value* Append_Context_Bind_Word(
     Context* context,
-    Cell* any_word  // binding modified (Note: quoted words allowed)
+    Element* any_word  // binding modified (Note: quoted words allowed)
 ){
     return Append_Context_Core(context, Cell_Word_Symbol(any_word), any_word);
 }
@@ -864,7 +864,7 @@ VarList* Make_Varlist_Detect_Managed(
 //     2 for value
 //     3 for words and values
 //
-Source* Context_To_Array(const Cell* context, REBINT mode)
+Source* Context_To_Array(const Element* context, REBINT mode)
 {
     assert(!(mode & 4));
 
@@ -926,7 +926,7 @@ Source* Context_To_Array(const Cell* context, REBINT mode)
 // name, the Cell_Frame_Lens() of the context has to be taken into account.
 //
 Option(Index) Find_Symbol_In_Context(
-    const Cell* context,
+    const Element* context,
     const Symbol* symbol,
     bool strict
 ){
@@ -970,7 +970,7 @@ Option(Index) Find_Symbol_In_Context(
 // value for the word.  Return NULL if the symbol is not found.
 //
 Option(Value*) Select_Symbol_In_Context(
-    const Cell* context,
+    const Element* context,
     const Symbol* symbol
 ){
     const bool strict = false;

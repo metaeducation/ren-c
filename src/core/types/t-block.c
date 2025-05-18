@@ -303,7 +303,7 @@ REBINT Find_In_Array(
         *len = 1;
 
         for (; index >= start and index < end; index += skip) {
-            const Cell* item = Array_At(array, index);
+            const Element* item = Array_At(array, index);
 
             if (rebUnboxLogic(rebRUN(pattern), rebQ(item)))
                 return index;
@@ -954,7 +954,7 @@ IMPLEMENT_GENERIC(POKE_P, Any_List)
     Element* list = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Option(const Value*) opt_poke = Optional_ARG(VALUE);
+    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
         return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);

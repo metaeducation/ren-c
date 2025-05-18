@@ -828,11 +828,11 @@ void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
         }
         else if (Is_Module(data)) {
             les->flex = g_empty_array;  // !!! workaround, not a Flex
-            Init_Evars(&les->u.evars, data);
+            Init_Evars(&les->u.evars, Known_Element(data));
         }
         else if (Any_Context(data)) {
             les->flex = Varlist_Array(Cell_Varlist(data));
-            Init_Evars(&les->u.evars, data);
+            Init_Evars(&les->u.evars, Known_Element(data));
         }
         else if (Is_Map(data)) {
             les->flex = MAP_PAIRLIST(VAL_MAP(data));
@@ -925,7 +925,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             goto maybe_lift_and_continue;
         }
 
-        Heart heart = Heart_Of_Builtin_Fundamental(les->data);
+        Heart heart = Heart_Of_Builtin_Fundamental(Known_Element(les->data));
 
         if (Any_List_Type(heart)) {
             if (slot)

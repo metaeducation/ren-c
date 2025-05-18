@@ -140,7 +140,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
     if (not Is_Word(picker) and not Is_Text(picker))
         return PANIC("ENVIRONMENT! picker must be WORD! or TEXT!");
 
-    Option(const Value*) poke = Optional_ARG(VALUE);
+    Option(const Value*) poke = Voidable_ARG(VALUE);
 
     if (not poke) {
         // remove from environment (was a nihil)

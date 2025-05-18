@@ -55,7 +55,7 @@
 // The init initializes to one behind the enumeration, so you have to call
 // Try_Advance_Evars() on even the first.
 //
-void Init_Evars(EVARS *e, const Cell* v) {
+void Init_Evars(EVARS *e, const Element* v) {
     Heart heart = Heart_Of_Builtin_Fundamental(v);
 
     e->lens_mode = LENS_MODE_ALL_UNSEALED;  // ensure not uninitialized
@@ -277,7 +277,7 @@ void Shutdown_Evars(EVARS *e)
 //
 //  CT_Context: C
 //
-REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Context(const Element* a, const Element* b, bool strict)
 {
     Heart a_heart = Heart_Of_Builtin_Fundamental(a);
     Heart b_heart = Heart_Of_Builtin_Fundamental(b);
@@ -367,7 +367,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Context)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Context(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* value1 = Element_ARG(VALUE1);
+    Element* value2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Context(value1, value2, strict) == 0);
 }
 
 
@@ -375,7 +378,10 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Context(ARG(VALUE1), ARG(VALUE2), true) == -1);
+    Element* value1 = Element_ARG(VALUE1);
+    Element* value2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Context(value1, value2, true) == -1);
 }
 
 
@@ -1179,7 +1185,7 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
     const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    Option(const Value*) poke = Optional_ARG(VALUE);
+    Option(const Value*) poke = Voidable_ARG(VALUE);
     if (not poke)
         return PANIC(
             "Can't remove fields from ANY-CONTEXT! by setting to VOID"
@@ -1630,7 +1636,7 @@ DECLARE_NATIVE(PARENT_OF)
 //
 // !!! What are the semantics of comparison in frames?
 //
-REBINT CT_Frame(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Frame(const Element* a, const Element* b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -1658,7 +1664,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Frame)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Frame(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* value1 = Element_ARG(VALUE1);
+    Element* value2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Frame(value1, value2, strict) == 0);
 }
 
 
@@ -1666,7 +1675,10 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Frame)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Frame(ARG(VALUE1), ARG(VALUE2), true) == 0);
+    Element* value1 = Element_ARG(VALUE1);
+    Element* value2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Frame(value1, value2, true) == 0);
 }
 
 

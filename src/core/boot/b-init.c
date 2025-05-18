@@ -495,7 +495,7 @@ static void Init_System_Object(
     //
     assert(
         0 == CT_Context(
-            Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT),
+            Known_Element(Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT)),
             Root_Action_Adjunct,
             true  // "strict equality"
         )

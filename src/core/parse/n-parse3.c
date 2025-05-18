@@ -115,7 +115,7 @@
 #define P_RULE              At_Level(level_)  // rvalue
 #define P_RULE_BINDING      Level_Binding(level_)
 
-#define P_HEART             Heart_Of_Builtin_Fundamental(ARG(INPUT))
+#define P_HEART             Heart_Of_Builtin_Fundamental(Element_ARG(INPUT))
 #define P_INPUT             Cell_Flex(ARG(INPUT))
 #define P_INPUT_BINARY      Cell_Binary(ARG(INPUT))
 #define P_INPUT_STRING      Cell_String(ARG(INPUT))
@@ -2209,7 +2209,7 @@ DECLARE_NATIVE(SUBPARSE)
             if (P_FLAGS & PF_REMOVE) {
                 Ensure_Mutable(ARG(POSITION));
                 if (count)
-                    Remove_Any_Series_Len(ARG(POSITION), begin, count);
+                    Remove_Any_Series_Len(Element_ARG(POSITION), begin, count);
                 P_POS = begin;
             }
 

@@ -697,6 +697,8 @@ DECLARE_NATIVE(APPLY)
     //
     // 2. Binders cannot be held across evaluations at this time.  Do slow
     //    lookups for refinements, but this is something that needs rethinking.
+    //
+    // 3. Varlist_Archetype(exemplar) is phased, sees locals
 
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
         op,
@@ -723,7 +725,7 @@ DECLARE_NATIVE(APPLY)
     Push_Level_Erase_Out_If_State_0(SPARE, L);
 
     EVARS *e = Try_Alloc_Memory(EVARS);
-    Init_Evars(e, frame);  // Varlist_Archetype(exemplar) is phased, sees locals
+    Init_Evars(e, Known_Element(frame));  // sees locals [3]
 
     Init_Handle_Cdata(iterator, e, sizeof(EVARS));
     STATE = ST_APPLY_INITIALIZED_ITERATOR;
@@ -758,7 +760,9 @@ DECLARE_NATIVE(APPLY)
 
         const Symbol* symbol = Cell_Word_Symbol(At_Level(L));
 
-        Option(Index) index = Find_Symbol_In_Context(frame, symbol, false);
+        Option(Index) index = Find_Symbol_In_Context(
+            Known_Element(frame), symbol, false
+        );
         if (not index)
             return PANIC(Error_Bad_Parameter_Raw(at));
 

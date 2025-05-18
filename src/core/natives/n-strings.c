@@ -824,11 +824,13 @@ DECLARE_NATIVE(ENHEX)
 {
     INCLUDE_PARAMS_OF_ENHEX;
 
+    Element* string = Element_ARG(STRING);
+
     DECLARE_MOLDER (mo);
     Push_Mold (mo);
 
     REBLEN len;
-    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(STRING));
+    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, string);
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
@@ -861,7 +863,7 @@ DECLARE_NATIVE(ENHEX)
 
     return Init_Any_String(
         OUT,
-        Heart_Of_Builtin_Fundamental(ARG(STRING)),
+        Heart_Of_Builtin_Fundamental(string),
         Pop_Molded_String(mo)
     );
 }
@@ -889,13 +891,15 @@ DECLARE_NATIVE(DEHEX)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
+    Element* string = Element_ARG(STRING);
+
     if (Bool_ARG(BLOB))
         return PANIC("DEHEX:BLOB not yet implemented, but will permit %00");
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    Utf8(const*) cp = Cell_Utf8_Head(ARG(STRING));
+    Utf8(const*) cp = Cell_Utf8_Head(string);
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
@@ -974,7 +978,7 @@ DECLARE_NATIVE(DEHEX)
 
     return Init_Any_String(
         OUT,
-        Heart_Of_Builtin_Fundamental(ARG(STRING)),
+        Heart_Of_Builtin_Fundamental(string),
         Pop_Molded_String(mo)
     );
 }
@@ -1072,13 +1076,13 @@ DECLARE_NATIVE(ENLINE)
 {
     INCLUDE_PARAMS_OF_ENLINE;
 
-    Value* val = ARG(STRING);
+    Element* string = Element_ARG(STRING);
 
-    String* s = Cell_String_Ensure_Mutable(val);
-    REBLEN idx = VAL_INDEX(val);
+    String* s = Cell_String_Ensure_Mutable(string);
+    REBLEN idx = VAL_INDEX(string);
 
     Length len;
-    Size size = Cell_String_Size_Limit_At(&len, val, UNLIMITED);
+    Size size = Cell_String_Size_Limit_At(&len, string, UNLIMITED);
 
     REBLEN delta = 0;
 
@@ -1145,7 +1149,7 @@ DECLARE_NATIVE(ENLINE)
         --size;
     }
 
-    return COPY(ARG(STRING));
+    return COPY(string);
 }
 
 
@@ -1165,6 +1169,8 @@ DECLARE_NATIVE(ENTAB)
 {
     INCLUDE_PARAMS_OF_ENTAB;
 
+    Element* string = Element_ARG(STRING);
+
     REBINT tabsize;
     if (Bool_ARG(SIZE))
         tabsize = Int32s(ARG(SIZE), 1);
@@ -1174,10 +1180,10 @@ DECLARE_NATIVE(ENTAB)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    REBLEN len = Cell_Series_Len_At(ARG(STRING));
+    REBLEN len = Cell_Series_Len_At(string);
 
-    Utf8(const*) up = Cell_String_At(ARG(STRING));
-    REBLEN index = VAL_INDEX(ARG(STRING));
+    Utf8(const*) up = Cell_String_At(string);
+    REBLEN index = VAL_INDEX(string);
 
     REBINT n = 0;
     for (; index < len; index++) {
@@ -1220,7 +1226,7 @@ DECLARE_NATIVE(ENTAB)
         }
     }
 
-    Heart heart = Heart_Of_Builtin_Fundamental(ARG(STRING));
+    Heart heart = Heart_Of_Builtin_Fundamental(string);
     return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 
@@ -1241,7 +1247,9 @@ DECLARE_NATIVE(DETAB)
 {
     INCLUDE_PARAMS_OF_DETAB;
 
-    REBLEN len = Cell_Series_Len_At(ARG(STRING));
+    Element* string = Element_ARG(STRING);
+
+    REBLEN len = Cell_Series_Len_At(string);
 
     REBINT tabsize;
     if (Bool_ARG(SIZE))
@@ -1279,7 +1287,7 @@ DECLARE_NATIVE(DETAB)
         Append_Codepoint(mo->string, c);
     }
 
-    Heart heart = Heart_Of_Builtin_Fundamental(ARG(STRING));
+    Heart heart = Heart_Of_Builtin_Fundamental(string);
     return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 

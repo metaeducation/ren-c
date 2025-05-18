@@ -201,7 +201,7 @@ void Unbind_Values_Core(
 // Returns 0 if word is not part of the context, otherwise the index of the
 // word in the context.
 //
-bool Try_Bind_Word(const Value* context, Value* word)
+bool Try_Bind_Word(const Element* context, Element* word)
 {
     const bool strict = true;
     if (Is_Module(context)) {

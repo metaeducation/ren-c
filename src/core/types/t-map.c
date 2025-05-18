@@ -739,7 +739,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Map) {
 
     bool strict = false;  // case-preserving [1]
 
-    Option(const Value*) poke = Optional_ARG(VALUE);
+    Option(const Value*) poke = Voidable_ARG(VALUE);
     if (poke and Is_Antiform(unwrap poke))
         return PANIC(Error_Bad_Antiform(ARG(VALUE)));
 

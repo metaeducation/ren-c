@@ -478,7 +478,7 @@ INLINE Heart Heart_Of_Builtin(const Cell* c) {
     return maybe heart;  // faster than unwrap, we already checked for 0
 }
 
-INLINE Heart Heart_Of_Builtin_Fundamental(const Cell* c) {
+INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
     assert(QUOTE_BYTE(c) == NOQUOTE_1);
     Option(Heart) heart = Heart_Of(c);
     assert(heart != TYPE_0);
