@@ -102,13 +102,13 @@ Bounce Lambda_Dispatcher(Level* const L)
     Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(block));
     Force_Level_Varlist_Managed(L);
 
-    Element* block_rebound = Copy_Cell(SPARE, block);
-    Tweak_Cell_Binding(SPARE, L->varlist);
+    Element* spare_rebound = Copy_Cell(SPARE, block);
+    Tweak_Cell_Binding(spare_rebound, L->varlist);
 
     Flags flags = (LEVEL->flags.bits & LEVEL_FLAG_ERROR_RESULT_OK);
 
     Level* sub = Make_Level_At_Core(
-        &Evaluator_Executor, block_rebound, SPECIFIED, flags
+        &Evaluator_Executor, spare_rebound, SPECIFIED, flags
     );
     Init_Unsurprising_Ghost(Evaluator_Primed_Cell(sub));  // allow vanish [1]
 
@@ -181,6 +181,6 @@ DECLARE_NATIVE(LAMBDA)
     if (e)
         return PANIC(unwrap e);
 
-    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);
 }

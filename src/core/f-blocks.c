@@ -123,7 +123,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
 //  Clonify: C
 //
 void Clonify(
-    Value* v,
+    Element* v,
     Flags flags,
     bool deeply
 ){

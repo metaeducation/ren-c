@@ -691,18 +691,19 @@ DECLARE_NATIVE(JOIN)
     if (Bool_ARG(TAIL) and delimiter)
         Copy_Cell(PUSH(), unwrap delimiter);
 
+    Sink(Element) out = OUT;
     if (Any_Sequence_Type(heart)) {
-        Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
+        Option(Error*) error = Trap_Pop_Sequence(out, heart, STACK_BASE);
         if (error)
             return FAIL(unwrap error);
     }
     else {
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
-        Init_Any_List(OUT, heart, a);
+        Init_Any_List(out, heart, a);
     }
 
     if (not joining_datatype)
-        Tweak_Cell_Binding(OUT, Cell_Binding(unwrap base));
+        Tweak_Cell_Binding(out, Cell_Binding(unwrap base));
 
     return OUT;
 
@@ -1351,7 +1352,7 @@ DECLARE_NATIVE(TO_HEX)
 {
     INCLUDE_PARAMS_OF_TO_HEX;
 
-    Value* arg = ARG(VALUE);
+    Element* arg = Element_ARG(VALUE);
 
     REBLEN len;
     if (Bool_ARG(SIZE))

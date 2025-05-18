@@ -683,7 +683,7 @@ INLINE Element* Derelativize_Sequence_At(
 #define Copy_Sequence_At(out,sequence,n) \
     Derelativize_Sequence_At((out), c_cast(Element*, sequence), SPECIFIED, (n))
 
-INLINE Byte Cell_Sequence_Byte_At(const Cell* sequence, REBLEN n) {
+INLINE Byte Cell_Sequence_Byte_At(const Element* sequence, REBLEN n) {
     DECLARE_ELEMENT (at);
     Copy_Sequence_At(at, sequence, n);
     if (not Is_Integer(at))
@@ -691,7 +691,7 @@ INLINE Byte Cell_Sequence_Byte_At(const Cell* sequence, REBLEN n) {
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
-INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
+INLINE Context* Cell_Sequence_Binding(const Element* sequence) {
     assert(Any_Sequence_Type(Heart_Of(sequence)));
 
     // Getting the binding for any of the optimized types means getting

@@ -468,7 +468,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
     // as refinements to the function.  The action execution machinery will
     // decide if they are valid or not.
     //
-    const Value* at = tail - 1;
+    const Element* at = tail - 1;
 
     for (; at != head - 1; --at) {
         assert(not Is_Space(at));  // no internal blanks

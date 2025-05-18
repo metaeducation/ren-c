@@ -497,7 +497,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
         assert(
             Is_Cell_Erased(L->out)
             or Not_Cell_Readable(L->out)
-            or not Is_Api_Value(L->out)
+            or not Is_Atom_Api_Value(L->out)
         );
   #endif
 
@@ -744,6 +744,9 @@ INLINE Option(const Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 #define LOCAL(name) \
     Level_Arg(level_, (param_##name##_))  // alias (enforce not argument?)
 
+#define Element_LOCAL(name) \
+    Known_Element(Level_Arg(level_, (param_##name##_)))
+
 #define PARAM(name) \
     Phase_Param(Level_Phase(level_), (param_##name##_))  // a TYPESET!
 
@@ -884,7 +887,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
     assert(out == level_->out);
     UNUSED(out);
     assert(v != level_->out);   // Copy_Cell() would fail; don't tolerate
-    assert(not Is_Api_Value(v));  // too easy to not release()
+    assert(not Is_Atom_Api_Value(v));  // too easy to not release()
     Copy_Cell_Untracked(level_->out, v, CELL_MASK_COPY);
     return level_->out;
 }

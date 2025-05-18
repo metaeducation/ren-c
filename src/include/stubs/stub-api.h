@@ -67,9 +67,14 @@ enum {
 // What distinguishes an API value is that it has both the NODE_FLAG_CELL and
 // NODE_FLAG_ROOT bits set.
 //
-INLINE bool Is_Api_Value(const Cell* c) {
-    Assert_Cell_Readable(c);
-    return Is_Node_Root_Bit_Set(c);
+INLINE bool Is_Api_Value(const Value* v) {
+    Assert_Cell_Readable(v);
+    return Is_Node_Root_Bit_Set(v);
+}
+
+INLINE bool Is_Atom_Api_Value(const Atom* v) {
+    Assert_Cell_Readable(v);
+    return Is_Node_Root_Bit_Set(v);
 }
 
 // 1. The head of the list isn't null, but points at the level, so that

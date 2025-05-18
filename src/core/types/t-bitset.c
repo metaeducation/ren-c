@@ -34,10 +34,10 @@
 // not attempt to answer any existential questions--as comparisons in R3-Alpha
 // need significant review.
 //
-REBINT CT_Bitset(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Bitset(const Element* a, const Element* b, bool strict)
 {
-    DECLARE_ATOM (atemp);
-    DECLARE_ATOM (btemp);
+    DECLARE_ELEMENT (atemp);
+    DECLARE_ELEMENT (btemp);
     Init_Blob(atemp, VAL_BITSET(a));
     Init_Blob(btemp, VAL_BITSET(b));
 
@@ -53,7 +53,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Bitset)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Bitset(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Bitset(v1, v2, strict) == 0);
 }
 
 
@@ -61,7 +64,10 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Bitset(ARG(VALUE1), ARG(VALUE2), true) == -1);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Bitset(v1, v2, true) == -1);
 }
 
 

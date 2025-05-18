@@ -169,7 +169,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     Details* details = Ensure_Level_Details(L);
 
-    Value* body = Details_At(details, IDX_YIELDER_BODY);
+    Element* body = Details_Element_At(details, IDX_YIELDER_BODY);
     Value* original_frame = Details_At(details, IDX_YIELDER_ORIGINAL_FRAME);
     Value* plug = Details_At(details, IDX_YIELDER_PLUG);
     Value* meta_yielded = Details_At(details, IDX_YIELDER_META_YIELDED);
@@ -516,7 +516,7 @@ DECLARE_NATIVE(YIELDER)
     Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
     Init_Unreadable(Details_At(details, IDX_YIELDER_META_YIELDED));
 
-    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);
 }
 

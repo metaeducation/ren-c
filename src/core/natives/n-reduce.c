@@ -227,7 +227,7 @@ DECLARE_NATIVE(REDUCE)
         const Element* at = Cell_List_At(&tail, spare);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
-            Derelativize(PUSH(), at, Cell_List_Binding(spare));
+            Copy_Cell(PUSH(), at);  // Note: no binding on antiform SPLICE!
             SUBLEVEL->baseline.stack_base += 1;  // [3]
             if (newline) {
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // [2]
@@ -255,8 +255,8 @@ DECLARE_NATIVE(REDUCE)
     if (Get_Source_Flag(Cell_Array(v), NEWLINE_AT_TAIL))
         Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
-    Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(v), a);
-    Tweak_Cell_Binding(OUT, Cell_Binding(v));
+    Element* out = Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(v), a);
+    Tweak_Cell_Binding(out, Cell_Binding(v));
     return OUT;
 
 } vetoed: {  ///////////////////////////////////////////////////////////////
@@ -618,10 +618,10 @@ static Option(Error*) Trap_Finalize_Composer_Level(
     if (Get_Source_Flag(Cell_Array(composee), NEWLINE_AT_TAIL))
         Set_Source_Flag(a, NEWLINE_AT_TAIL);  // proxy newline flag [3]
 
-    Init_Any_List(out, heart, a);
+    Element* list = Init_Any_List(out, heart, a);
 
-    Tweak_Cell_Binding(out, Cell_Binding(composee));  // preserve binding
-    QUOTE_BYTE(out) = QUOTE_BYTE(composee);  // apply quote byte [4]
+    Tweak_Cell_Binding(list, Cell_Binding(composee));  // preserve binding
+    QUOTE_BYTE(list) = QUOTE_BYTE(composee);  // apply quote byte [4]
     return SUCCESS;
 }
 
@@ -998,28 +998,8 @@ DECLARE_NATIVE(COMPOSE2)
     };
 
     switch (STATE) {
-      case ST_COMPOSE2_INITIAL_ENTRY: {
-        if (Any_Pinned(pattern)) {  // @() means use pattern's binding
-            Plainify(pattern);  // drop the @ from the pattern for processing
-            if (Cell_Binding(pattern) == nullptr)
-                return PANIC("@... patterns must have bindings");
-        }
-        else if (not Sigil_Of(pattern)) {
-            Tweak_Cell_Binding(pattern, Level_Binding(level_));
-        }
-        else
-            return PANIC("COMPOSE2 takes plain and @... list patterns only");
-
-        assert(Any_List(pattern));
-
-        if (Any_Word(input))
-            return COPY(input);  // makes it easier to `set compose target`
-
-        if (Any_Utf8(input))
-            goto string_initial_entry;
-
-        assert(Any_List(input) or Any_Sequence(input));
-        goto list_initial_entry; }
+      case ST_COMPOSE2_INITIAL_ENTRY:
+        goto initial_entry;
 
       case ST_COMPOSE2_COMPOSING_LIST:
         goto list_compose_finished_out_is_null_if_vetoed;
@@ -1033,7 +1013,31 @@ DECLARE_NATIVE(COMPOSE2)
       default: assert(false);
     }
 
-  list_initial_entry: {  /////////////////////////////////////////////////////
+  initial_entry: { ///////////////////////////////////////////////////////////
+
+    if (Any_Pinned(pattern)) {  // @() means use pattern's binding
+        Plainify(pattern);  // drop the @ from the pattern for processing
+        if (Cell_Binding(pattern) == nullptr)
+            return PANIC("@... patterns must have bindings");
+    }
+    else if (not Sigil_Of(pattern)) {
+        Tweak_Cell_Binding(pattern, Level_Binding(level_));
+    }
+    else
+        return PANIC("COMPOSE2 takes plain and @... list patterns only");
+
+    assert(Any_List(pattern));
+
+    if (Any_Word(input))
+        return COPY(input);  // makes it easier to `set compose target`
+
+    if (Any_Utf8(input))
+        goto string_initial_entry;
+
+    assert(Any_List(input) or Any_Sequence(input));
+    goto list_initial_entry;
+
+} list_initial_entry: { //////////////////////////////////////////////////////
 
     Push_Composer_Level(OUT, level_, input, Cell_List_Binding(input));
 
@@ -1077,7 +1081,8 @@ DECLARE_NATIVE(COMPOSE2)
 
     StackIndex base = TOP_INDEX;  // base above the triples pushed so far
 
-    TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, SCRATCH);
+    Element* handle = Known_Element(SCRATCH);
+    TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, handle);
 
     Utf8(const*) head = Cell_Utf8_At(input);
     Utf8(const*) at = cast(Utf8(const*), transcode->at);
@@ -1231,7 +1236,8 @@ DECLARE_NATIVE(COMPOSE2)
     //    scanned from inside the pattern, and the offset right after the
     //    end character of where the pattern matched.
 
-    TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, SCRATCH);
+    Element* handle = Known_Element(SCRATCH);
+    TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, handle);
     Element* elem_start_offset = Known_Element(SPARE);
     assert(Is_Integer(elem_start_offset));
 
@@ -1263,7 +1269,8 @@ DECLARE_NATIVE(COMPOSE2)
     //    pattern was legal?  Or we could just say that if you use an illegal
     //    pattern but no instances come up, that's ok?
 
-    TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, SCRATCH);
+    Element* handle = Known_Element(SCRATCH);
+    TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, handle);
 
     if (TOP_INDEX == STACK_BASE) {  // no triples pushed, so no matches [1]
         assert(not transcode->saved_levels);
@@ -1289,7 +1296,7 @@ DECLARE_NATIVE(COMPOSE2)
     // which is preferable.  It also helps with locality.  But it means the
     // evaluations have to be done on an already built stack.
 
-    StackIndex triples = VAL_INT32(SCRATCH);
+    StackIndex triples = VAL_INT32(Known_Element(SCRATCH));
 
     assert(Is_Integer(Data_Stack_At(Element, triples)));  // start offset
     OnStack(Element*) code = Data_Stack_At(Element, triples + 1);
@@ -1323,7 +1330,7 @@ DECLARE_NATIVE(COMPOSE2)
     else
         result = Decay_If_Unstable(OUT);
 
-    StackIndex triples = VAL_INT32(SCRATCH);
+    StackIndex triples = VAL_INT32(Known_Element(SCRATCH));
     assert(Is_Block(Data_Stack_At(Element, triples + 1)));  // evaluated code
     Copy_Cell(Data_Stack_At(Value, triples + 1), result);  // replace w/eval
 
@@ -1462,12 +1469,14 @@ DECLARE_NATIVE(FLATTEN)
 {
     INCLUDE_PARAMS_OF_FLATTEN;
 
+    Element* block = Element_ARG(BLOCK);
+
     const Element* tail;
-    Element* at = Cell_List_At_Ensure_Mutable(&tail, ARG(BLOCK));
+    Element* at = Cell_List_At_Ensure_Mutable(&tail, block);
     Flatten_Core(
         at,
         tail,
-        Cell_List_Binding(ARG(BLOCK)),
+        Cell_List_Binding(block),
         Bool_ARG(DEEP) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 

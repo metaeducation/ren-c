@@ -315,7 +315,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // a nested level is running might expose intermediate bad states.  The
     // argument cells can be used to hold other fully formed cells.)
     //
-    Cell spare;
+    Atom spare;
 
     // A second GC-safe cell is available, but with a particular purpose in
     // the evaluator.  It stores a copy of the current cell being evaluated.
@@ -332,7 +332,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // LEVEL_FLAG_DISPATCHING_INTRINSIC then current must hold the cell of
     // the intrinsic being run.
     //
-    Cell scratch;  // raw vs. derived class due to union/destructor combo
+    Atom scratch;  // raw vs. derived class due to union/destructor combo
 
     // Each executor subclass can store specialized information in the level.
     // We place it here up top where we've been careful to make sure the

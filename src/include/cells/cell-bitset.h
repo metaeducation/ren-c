@@ -55,7 +55,7 @@ INLINE void INIT_BITS_NOT(Flex* f, bool negated)
   { MISC_BITSET_NEGATED(f) = negated; }
 
 
-INLINE Binary* VAL_BITSET(const Cell* v) {
+INLINE Binary* VAL_BITSET(const Value* v) {
     assert(Heart_Of(v) == TYPE_BITSET);
     return cast(Binary*, CELL_BITSET_BINARY(v));
 }

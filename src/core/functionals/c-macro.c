@@ -59,7 +59,7 @@ enum {
 // 3. The feed->p (retrieved by At_Feed()) which would have been seen next has
 //    to be preserved as the first thing to get when the saved splice happens.
 //
-void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
+void Splice_Block_Into_Feed(Feed* feed, const Element* splice) {
     if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // !!! holds need work [1]
         assert(Get_Flex_Info(Feed_Array(feed), HOLD));
         Clear_Flex_Info(Feed_Array(feed), HOLD);
@@ -161,7 +161,7 @@ Bounce Macro_Dispatcher(Level* const L)
     if (not Is_Block(out))
         return PANIC("MACRO must return VOID or BLOCK! for the moment");
 
-    Splice_Block_Into_Feed(L->feed, out);
+    Splice_Block_Into_Feed(L->feed, Known_Element(out));
 
     Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, LEVEL_MASK_NONE);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -226,7 +226,7 @@ DECLARE_NATIVE(MACRO)
     if (e)
         return PANIC(unwrap e);
 
-    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);
 }
 
@@ -263,9 +263,10 @@ DECLARE_NATIVE(INLINE)
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    if (Is_Nulled(ARG(CODE)))
+    const Element* code = maybe Optional_Element_ARG(CODE);
+
+    if (not code)
         return VOID;  // do nothing, just return invisibly
-    const Element* code = Element_ARG(CODE);
 
     if (Is_Quoted(code)) {
         //
@@ -275,11 +276,11 @@ DECLARE_NATIVE(INLINE)
         Source* a = Alloc_Singular(FLEX_MASK_UNMANAGED_SOURCE);
         Unquotify(Copy_Cell(Stub_Cell(a), code));
         Init_Block(code, a);
-        Splice_Block_Into_Feed(level_->feed, ARG(CODE));
+        Splice_Block_Into_Feed(level_->feed, code);
     }
     else {
         assert(Is_Block(code));
-        Splice_Block_Into_Feed(level_->feed, ARG(CODE));
+        Splice_Block_Into_Feed(level_->feed, code);
     }
 
     Level* sub = Make_Level(&Meta_Stepper_Executor, level_->feed, LEVEL_MASK_NONE);

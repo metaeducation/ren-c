@@ -74,8 +74,10 @@
 #define Feed_Singular(feed) \
     (&(feed)->singular)
 
+// TYPE_BLOCK, TYPE_COMMA if va_list
+//
 #define Feed_Data(feed) \
-    Stub_Cell(&(feed)->singular)  // TYPE_BLOCK, TYPE_COMMA if va_list
+    u_cast(Element*, Stub_Cell(&(feed)->singular))
 
 
 // Nullptr is used by the API to indicate null cells.  We want the frequent

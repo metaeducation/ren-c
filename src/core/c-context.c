@@ -239,7 +239,7 @@ Value* Append_To_Sea_Core(
 static Value* Append_To_Varlist_Core(
     VarList* varlist,
     const Symbol* symbol,
-    Option(Cell*) any_word
+    Option(Element*) any_word
 ){
   #if RUNTIME_CHECKS  // catch duplicate insertions
   blockscope {
@@ -441,7 +441,7 @@ static Option(Error*) Trap_Collect_Inner_Loop(
 
             if (cl->sea) {
                 bool strict = true;
-                if (Sea_Var(unwrap cl->sea, unwrap symbol, strict))
+                if (Sea_Slot(unwrap cl->sea, unwrap symbol, strict))
                     continue;
             }
 
@@ -836,8 +836,10 @@ VarList* Make_Varlist_Detect_Managed(
             assert(Is_Trash(dest));
             Copy_Cell(dest, src);
             bool deeply = true;  // !!! Copies series deeply, why? [1]
-            Clonify(dest, clone_flags, deeply);
-            Clear_Cell_Flag(dest, CONST);  // remove constness from copies
+            if (not Is_Antiform(dest)) {  // !!! whole model needs review
+                Clonify(Known_Element(dest), clone_flags, deeply);
+                Clear_Cell_Flag(dest, CONST);  // remove constness from copies
+            }
         }
     }
 
@@ -880,18 +882,18 @@ Source* Context_To_Array(const Element* context, REBINT mode)
             if (mode & 2)
                 Setify(TOP_ELEMENT);
             if (Is_Module(context)) {
-                Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
-                Tweak_Cell_Binding(TOP, Sea_Patch(
+                Tweak_Cell_Word_Index(TOP_ELEMENT, INDEX_PATCHED);
+                Tweak_Cell_Binding(TOP_ELEMENT, Sea_Patch(
                     cast(SeaOfVars*, e.ctx), Key_Symbol(e.key), true
                 ));
             }
             else {
-                Tweak_Cell_Word_Index(TOP, e.index);
-                Tweak_Cell_Binding(TOP, e.ctx);
+                Tweak_Cell_Word_Index(TOP_ELEMENT, e.index);
+                Tweak_Cell_Binding(TOP_ELEMENT, e.ctx);
             }
 
             if (mode & 2)
-                Set_Cell_Flag(TOP, NEWLINE_BEFORE);
+                Set_Cell_Flag(TOP_ELEMENT, NEWLINE_BEFORE);
         }
 
         if (mode & 2) {
@@ -938,7 +940,7 @@ Option(Index) Find_Symbol_In_Context(
         // list with other modules who also have variables of that name.
         //
         SeaOfVars* sea = Cell_Module_Sea(context);
-        return Sea_Var(sea, symbol, strict) ? INDEX_PATCHED : 0;
+        return Sea_Slot(sea, symbol, strict) ? INDEX_PATCHED : 0;
     }
 
     EVARS e;

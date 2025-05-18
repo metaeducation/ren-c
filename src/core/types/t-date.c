@@ -45,7 +45,7 @@
 // time zone" would result in determinism problems for this comparison, so
 // date value literals on different machines would compare differently.
 //
-REBINT CT_Date(const Cell* a_in, const Cell* b_in, bool strict)
+REBINT CT_Date(const Element* a_in, const Cell* b_in, bool strict)
 //
 // 1. This comparison doesn't know if it's being asked on behalf of equality or
 //    not.  This is suboptimal, a redesign is needed:
@@ -103,7 +103,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Date)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Date(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Date(v1, v2, strict) == 0);
 }
 
 
@@ -127,7 +130,10 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Date)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Date(ARG(VALUE1), ARG(VALUE2), false) == -1);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Date(v1, v2, false) == -1);
 }
 
 

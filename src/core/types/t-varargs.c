@@ -492,7 +492,7 @@ IMPLEMENT_GENERIC(PICK, Varargs)
 // Simple comparison function stub (required for every type--rules TBD for
 // levels of "exactness" in equality checking, or sort-stable comparison.)
 //
-REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Varargs(const Element* a, const Element* b, bool strict)
 {
     UNUSED(strict);
 
@@ -529,9 +529,12 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Varargs)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = Bool_ARG(RELAX);
+    bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Varargs(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Varargs(v1, v2, strict) == 0);
 }
 
 

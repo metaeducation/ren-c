@@ -43,11 +43,11 @@
 #else
     // allows an assert, but also lvalue: `VAL_INT64(v) = xxx`
     //
-    INLINE REBI64 VAL_INT64(const Cell* c) {
+    INLINE REBI64 VAL_INT64(const Value* c) {
         assert(Heart_Of(c) == TYPE_INTEGER);
         return c->payload.i64;
     }
-    INLINE REBI64 & mutable_VAL_INT64(Cell* c) {
+    INLINE REBI64 & mutable_VAL_INT64(Value* c) {
         assert(Heart_Of(c) == TYPE_INTEGER);
         Assert_Cell_Writable(c);
         return c->payload.i64;
@@ -70,19 +70,19 @@ INLINE Element* Init_Integer_Untracked(Init(Element) out, REBI64 i64) {
     cast(int32_t, floor((MAX(INT32_MIN, MIN(INT32_MAX, d))) + 0.5))
 
 
-INLINE int32_t VAL_INT32(const Cell* v) {
+INLINE int32_t VAL_INT32(const Value* v) {
     if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN)
         panic (Error_Out_Of_Range(v));
     return cast(int32_t, VAL_INT64(v));
 }
 
-INLINE uint32_t VAL_UINT32(const Cell* v) {
+INLINE uint32_t VAL_UINT32(const Value* v) {
     if (VAL_INT64(v) < 0 or VAL_INT64(v) > UINT32_MAX)
         panic (Error_Out_Of_Range(v));
     return cast(uint32_t, VAL_INT64(v));
 }
 
-INLINE Byte VAL_UINT8(const Cell* v) {
+INLINE Byte VAL_UINT8(const Value* v) {
     if (VAL_INT64(v) > 255 or VAL_INT64(v) < 0)
         panic (Error_Out_Of_Range(v));
     return cast(Byte, VAL_INT32(v));

@@ -3060,7 +3060,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
     Force_Level_Varlist_Managed(L);  // may or may not be managed
 
-    Value* holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
+    Element* holder = Details_Element_At(details, IDX_API_ACTION_BINDING_BLOCK);
 
     Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(holder));  // [1]
 
@@ -3264,14 +3264,16 @@ RebolValue* API_rebFunctionFlipped(
         Details_At(details, IDX_API_ACTION_CFUNC),
         cast(CFunction*, cfunc)
     );
-    Value* holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
-    Init_Block(holder, g_empty_array);  // only care about binding GC safety
+    Element* holder = Init_Block(  // only care about binding GC safety
+        Details_At(details, IDX_API_ACTION_BINDING_BLOCK),
+        g_empty_array
+    );
     Tweak_Cell_Binding(holder, Cell_Binding(spec));
 
     assert(Misc_Phase_Adjunct(details) == nullptr);
     Tweak_Misc_Phase_Adjunct(details, adjunct);
 
-    return Init_Action(Alloc_Value(), details, ANONYMOUS, UNBOUND);
+    return Init_Action(Alloc_Value(), details, ANONYMOUS, NONMETHOD);
 }
 
 

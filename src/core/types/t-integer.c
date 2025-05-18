@@ -29,7 +29,7 @@
 //
 //  CT_Integer: C
 //
-REBINT CT_Integer(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Integer(const Element* a, const Element* b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -44,7 +44,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Integer)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Integer(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Integer(v1, v2, strict) == 0);
 }
 
 
@@ -52,7 +55,10 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Integer)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Integer(ARG(VALUE1), ARG(VALUE2), true) == -1);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Integer(v1, v2, true) == -1);
 }
 
 
@@ -444,11 +450,12 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
             cast(REBDEC, num), level_, VAL_DECIMAL(to)
         );
         Heart to_heart = Heart_Of_Builtin_Fundamental(to);
+        Init(Element) out = OUT;
         Reset_Cell_Header_Noquote(
-            TRACK(OUT),
+            TRACK(out),
             FLAG_HEART_ENUM(to_heart) | CELL_MASK_NO_NODES
         );
-        VAL_DECIMAL(OUT) = dec;
+        VAL_DECIMAL(out) = dec;
         return OUT;
     }
 

@@ -307,18 +307,18 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
 
 
-INLINE ParamClass Cell_Parameter_Class(const Cell* param) {
+INLINE ParamClass Cell_Parameter_Class(const Element* param) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
     ParamClass pclass = u_cast(ParamClass, PARAMCLASS_BYTE(param));
     return pclass;
 }
 
-INLINE Option(const String*) Cell_Parameter_String(const Cell* param) {
+INLINE Option(const String*) Cell_Parameter_String(const Element* param) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
     return cast(const String*, CELL_PARAMETER_STRING(param));
 }
 
-INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
+INLINE void Set_Parameter_String(Element* param, Option(const String*) string) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
     CELL_PARAMETER_STRING(param) = m_cast(String*, maybe string);
 }
@@ -444,7 +444,7 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
     );
     CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, symbol);
     CELL_WORD_INDEX_I32(out) = 0;
-    Tweak_Cell_Binding(out, UNBOUND);
+    out->extra.node = UNBOUND;
     return out;
 }
 

@@ -49,7 +49,7 @@ DECLARE_NATIVE(AS_PAIR)
 //
 //  CT_Pair: C
 //
-REBINT CT_Pair(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Pair(const Element* a, const Element* b, bool strict)
 {
     UNUSED(strict);  // !!! Should this be heeded for the decimal?
 
@@ -66,7 +66,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Pair)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Pair(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Pair(v1, v2, strict) == 0);
 }
 
 

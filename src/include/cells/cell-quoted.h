@@ -200,9 +200,15 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
 
 #if NO_RUNTIME_CHECKS
     #define Assert_Cell_Stable(c)  NOOP
+    #define Known_Stable(a)  u_cast(Value*, (a))
 #else
     #define Assert_Cell_Stable(c) \
         assert(Is_Stable(cast(const Atom*, (c))));
+
+    INLINE Value* Known_Stable(Atom* atom) {
+        assert(Is_Stable(atom));
+        return u_cast(Value*, atom);
+    }
 #endif
 
 

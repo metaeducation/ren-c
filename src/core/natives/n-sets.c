@@ -209,7 +209,7 @@ Flex* Make_Set_Operation_Flex(
             //
             const String* str = Cell_String(val1);
 
-            DECLARE_ATOM (iter);
+            DECLARE_VALUE (iter);
             Copy_Cell(iter, val1);
 
             // Iterate over first series
@@ -239,7 +239,7 @@ Flex* Make_Set_Operation_Flex(
 
                 if (!h) continue;
 
-                DECLARE_ATOM (mo_value);
+                DECLARE_ELEMENT (mo_value);
                 Reset_Cell_Header_Noquote(TRACK(mo_value), CELL_MASK_TEXT);
                 CELL_NODE1(mo_value) = mo->string;
                 VAL_INDEX_RAW(mo_value) = mo->base.index;
@@ -288,7 +288,7 @@ Flex* Make_Set_Operation_Flex(
 
             // Iterate over first series
             //
-            DECLARE_ATOM (iter);
+            DECLARE_VALUE (iter);
             Copy_Cell(iter, val1);
 
             for (
@@ -316,7 +316,7 @@ Flex* Make_Set_Operation_Flex(
 
                 if (!h) continue;
 
-                DECLARE_ATOM (buf_value);
+                DECLARE_ELEMENT (buf_value);
                 Reset_Cell_Header_Noquote(
                     TRACK(buf_value),
                     CELL_MASK_BLOB

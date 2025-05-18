@@ -144,7 +144,7 @@ INLINE SymId Symbol_Id_From_Type(Type type) {
 }
 
 
-INLINE Option(SymId) Cell_Datatype_Id(const Atom* v) {
+INLINE Option(SymId) Cell_Datatype_Id(const Value* v) {
     assert(Type_Of(v) == TYPE_DATATYPE);
     if (Cell_Series_Len_At(v) != 1)
         panic ("Type blocks only allowed one element for now");
@@ -154,14 +154,14 @@ INLINE Option(SymId) Cell_Datatype_Id(const Atom* v) {
     return Cell_Word_Id(item);
 }
 
-INLINE Option(Type) Cell_Datatype_Type(const Atom* v) {
+INLINE Option(Type) Cell_Datatype_Type(const Value* v) {
     Option(SymId) id = Cell_Datatype_Id(v);
     if (id and Is_Symbol_Id_Of_Builtin_Type(unwrap id))
         return Type_From_Symbol_Id(unwrap id);
     return TYPE_0;
 }
 
-INLINE Option(Heart) Cell_Datatype_Heart(const Atom* v) {
+INLINE Option(Heart) Cell_Datatype_Heart(const Value* v) {
     Option(SymId) id = Cell_Datatype_Id(v);
     if (not id or not Is_Symbol_Id_Of_Builtin_Type(unwrap id))
         return TYPE_0;
@@ -171,7 +171,7 @@ INLINE Option(Heart) Cell_Datatype_Heart(const Atom* v) {
     return u_cast(HeartEnum, type_byte);
 }
 
-INLINE Heart Cell_Datatype_Builtin_Heart(const Atom* v) {
+INLINE Heart Cell_Datatype_Builtin_Heart(const Value* v) {
     Option(SymId) id = Cell_Datatype_Id(v);
     Byte type_byte = cast(Byte, Type_From_Symbol_Id(unwrap id));
     assert(type_byte <= u_cast(Byte, MAX_HEART));  // not QUOTED/QUASI/ANTI

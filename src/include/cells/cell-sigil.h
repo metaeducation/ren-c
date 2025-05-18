@@ -128,7 +128,7 @@ INLINE bool Any_Sigil(const Element* e) {
     return IS_CHAR_CELL(e) and Cell_Codepoint(e) == ' ';
 }
 
-INLINE bool Is_Sigil(const Cell* c, Sigil sigil) {
+INLINE bool Is_Sigil(const Value* c, Sigil sigil) {
     if (QUOTE_BYTE(c) != NOQUOTE_1 or Sigil_Of(c_cast(Element*, c)) != sigil)
         return false;
     return IS_CHAR_CELL(c) and Cell_Codepoint(c) == ' ';

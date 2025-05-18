@@ -51,7 +51,7 @@ void Bind_Values_Inner_Loop(
           if (Is_Stub_Sea(context)) {
             SeaOfVars* sea = cast(SeaOfVars*, context);
             bool strict = true;
-            Value* lookup = Sea_Var(sea, symbol, strict);
+            Value* lookup = Sea_Slot(sea, symbol, strict);
             if (lookup) {
                 Tweak_Cell_Word_Index(v, INDEX_PATCHED);
                 Tweak_Cell_Binding(v, Compact_Stub_From_Cell(lookup));
@@ -531,7 +531,7 @@ Option(Stub*) Get_Word_Container(
 //          block! set-block? set-group?]
 //      @expression "Optional Expression to assign"
 //          [<variadic> element?]  ; fake variadic [1]
-//      <local> bindings-holder
+//      <local> bindings-holder  ; workaround [2]
 //  ]
 //
 DECLARE_NATIVE(LET)
@@ -560,8 +560,6 @@ DECLARE_NATIVE(LET)
     Level* L = level_;  // fake variadic [2]
     Context* L_binding = Level_Binding(L);
 
-    Value* let_bindings_holder = LOCAL(BINDINGS_HOLDER);  // workaround [2]
-
     enum {
         ST_LET_INITIAL_ENTRY = STATE_0,
         ST_LET_EVAL_STEP  // only used when LEVEL_FLAG_LET_IS_SETTING
@@ -569,7 +567,7 @@ DECLARE_NATIVE(LET)
 
     switch (STATE) {
       case ST_LET_INITIAL_ENTRY:
-        Init_Block(let_bindings_holder, g_empty_array);
+        Init_Block(LOCAL(BINDINGS_HOLDER), g_empty_array);
         goto initial_entry;
 
       case ST_LET_EVAL_STEP:
@@ -815,8 +813,8 @@ DECLARE_NATIVE(LET)
             Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
             const Symbol* symbol = Cell_Word_Symbol(temp);
             bindings = Make_Let_Variable(symbol, bindings);
-            CELL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
-            Tweak_Cell_Binding(TOP, bindings);
+            CELL_WORD_INDEX_I32(TOP_ELEMENT) = INDEX_PATCHED;
+            Tweak_Cell_Binding(TOP_ELEMENT, bindings);
             break; }
 
           default:
@@ -824,7 +822,7 @@ DECLARE_NATIVE(LET)
         }
     }
 
-    Sink(Value) where;
+    Sink(Element) where;
     if (Get_Level_Flag(L, LET_IS_SETTING))
         where = SPARE;
     else
@@ -850,7 +848,7 @@ DECLARE_NATIVE(LET)
 
 } finished_making_let_bindings: {
 
-    Tweak_Cell_Binding(let_bindings_holder, bindings);
+    Tweak_Cell_Binding(Element_LOCAL(BINDINGS_HOLDER), bindings);
 
     if (Get_Level_Flag(L, LET_IS_SETTING))
         goto eval_right_hand_side_if_let_is_setting;
@@ -930,7 +928,7 @@ DECLARE_NATIVE(LET)
     // that this can create the problem of applying the binding twice; this
     // needs systemic review.
 
-    Context* bindings = Cell_List_Binding(let_bindings_holder);
+    Context* bindings = Cell_List_Binding(Element_LOCAL(BINDINGS_HOLDER));
     Tweak_Cell_Binding(Feed_Data(L->feed), bindings);
 
     return OUT;
@@ -962,7 +960,7 @@ DECLARE_NATIVE(ADD_LET_BINDING)
 {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
-    Value* env = ARG(ENVIRONMENT);
+    Element* env = Element_ARG(ENVIRONMENT);
     Context* parent;
 
     Value* v = Meta_Unquotify_Known_Stable(ARG(VALUE));  // can be nothing [1]
@@ -1052,7 +1050,7 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
 //    again...but is that worth testing if it's a sequence here?
 //
 void Clonify_And_Bind_Relative(
-    Value* v,
+    Element* v,
     Flags flags,
     bool deeply,
     Option(Binder*) binder,
@@ -1473,7 +1471,7 @@ Option(Value*) Real_Slot_From_Pseudo_Slot(Sink(bool) lift, Value* pseudo) {
 //
 //  Assert_Cell_Binding_Valid_Core: C
 //
-void Assert_Cell_Binding_Valid_Core(const Cell* cell)
+void Assert_Cell_Binding_Valid_Core(const Value* cell)
 {
     Option(Heart) heart = Unchecked_Heart_Of(cell);
     assert(Is_Bindable_Heart(heart));
@@ -1481,6 +1479,8 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     Context* binding = u_cast(Context*, cell->extra.node);
     if (not binding)
         return;
+
+    assert(not Is_Antiform(cell));  // antiforms should not have bindings
 
     assert(Is_Node(binding));
     assert(Is_Node_Managed(binding));

@@ -74,7 +74,7 @@ REBINT Compare_Spellings(const Symbol* a, const Symbol* b, bool strict)
 // Compare the names of two words and return the difference.
 // Note that words are kept UTF8 encoded.
 //
-REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Word(const Element* a, const Element* b, bool strict)
 {
     return Compare_Spellings(
         Cell_Word_Symbol(a),

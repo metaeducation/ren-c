@@ -48,7 +48,7 @@ static bool Not_Node_Accessible_Canon(const Node* n) {
 //
 // Note: We assume the binding was marked correctly if the type was bindable.
 //
-void Assert_Cell_Marked_Correctly(const Cell* v)
+void Assert_Cell_Marked_Correctly(const Atom* v)
 {
     Assert_Cell_Readable(v);  // then we use unchecked() on v below
 
@@ -152,7 +152,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case TYPE_MAP: {
         assert(Cell_Has_Node1(v));
-        const Map* map = VAL_MAP(v);
+        const Map* map = VAL_MAP(Known_Element(v));
         assert(Is_Node_Marked(map));
         assert(Stub_Holds_Cells(MAP_PAIRLIST(map)));
         break; }

@@ -149,11 +149,12 @@ Bounce Action_Executor(Level* L)
 
           case ST_ACTION_FULFILLING_ARGS:
             if (Cell_Parameter_Class(PARAM) != PARAMCLASS_LIFTED) {
-                if (Is_Meta_Of_Ghost(ARG)) {
+                Element* arg = Known_Element(ARG);  // quoted or quasi
+                if (Is_Meta_Of_Ghost(arg)) {
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Trash_Due_To_End(ARG);
                 }
-                else if (Is_Meta_Of_Void(ARG)) {
+                else if (Is_Meta_Of_Void(arg)) {
                     if (Get_Parameter_Flag(PARAM, OPT_OUT))
                         Init_Blank(ARG);  // !!! Temporary hack
                     else if (Get_Parameter_Flag(PARAM, UNDO_OPT))
@@ -891,10 +892,10 @@ Bounce Action_Executor(Level* L)
         Init_Nulled(OUT);
     }
     else if (Is_Bounce_An_Atom(b)) {  // Cell pointer (must be Api cell)
-        Atom* r = Atom_From_Bounce(b);
-        assert(Is_Api_Value(r));
-        Copy_Cell_Core(OUT, r, CELL_MASK_THROW);  // keep unsurprising bit
-        Release_Api_Value_If_Unmanaged(r);
+        Atom* atom = Atom_From_Bounce(b);
+        assert(Is_Atom_Api_Value(atom));
+        Copy_Cell_Core(OUT, atom, CELL_MASK_THROW);  // keep unsurprising bit
+        Release_Api_Value_If_Unmanaged(atom);
     }
     else if (Is_Bounce_Wild(b)) switch (Bounce_Type(b)) {
 

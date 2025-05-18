@@ -86,30 +86,31 @@ INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
     return out;
 }
 
-INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
+INLINE Option(const Value*) Cell_Context_Slot_Core(
     const Element* context,
     const Symbol* symbol,
     bool writable
 ){
     bool strict = false;
-    Value* var;
+    Value* slot;
     if (Is_Module(context)) {
-        var = Sea_Var(Cell_Module_Sea(context), symbol, strict);
+        slot = Sea_Slot(Cell_Module_Sea(context), symbol, strict);
     }
     else {
         Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
         if (not index)
-            var = nullptr;
+            slot = nullptr;
         else
-            var = Varlist_Slot(Cell_Varlist(context), unwrap index);
+            slot = Varlist_Slot(Cell_Varlist(context), unwrap index);
     }
-    if (var and writable and Get_Cell_Flag(var, PROTECTED))
+    if (slot and writable and Get_Cell_Flag(slot, PROTECTED))
         panic (Error_Protected_Key(symbol));
-    return var;
+    return slot;
 }
 
-#define TRY_VAL_CONTEXT_VAR(context,symbol) \
-    TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), false)
+#define Cell_Context_Slot(context,symbol) \
+    Cell_Context_Slot_Core((context), (symbol), false)
 
-#define TRY_VAL_CONTEXT_MUTABLE_VAR(context,symbol) \
-    m_cast(Value*, TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), true))
+#define Cell_Context_Slot_Mutable(context,symbol) \
+    cast(Option(Value*), m_cast(Value*, \
+        maybe Cell_Context_Slot_Core((context), (symbol), true)))

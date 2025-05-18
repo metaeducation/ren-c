@@ -81,7 +81,7 @@
 // call it on #{00}
 //
 
-INLINE bool Is_Cell_NUL(const Cell* c) {
+INLINE bool Is_Cell_NUL(const Value* c) {
     if (Heart_Of(c) != TYPE_BLOB)
         return false;
 
@@ -93,13 +93,13 @@ INLINE bool Is_Cell_NUL(const Cell* c) {
     return *at == 0;
 }
 
-INLINE bool Is_NUL(const Atom* v) {
+INLINE bool Is_NUL(const Value* v) {
     if (QUOTE_BYTE(v) != NOQUOTE_1)
         return false;
     return Is_Cell_NUL(v);
 }
 
-INLINE bool IS_CHAR_CELL(const Cell* c) {
+INLINE bool IS_CHAR_CELL(const Value* c) {
     if (Is_Cell_NUL(c))
         return true;
 
@@ -112,13 +112,13 @@ INLINE bool IS_CHAR_CELL(const Cell* c) {
     return c->extra.at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
 }
 
-INLINE bool IS_CHAR(const Atom* v) {
+INLINE bool IS_CHAR(const Value* v) {
     if (QUOTE_BYTE(v) != NOQUOTE_1)
         return false;
     return IS_CHAR_CELL(v);
 }
 
-INLINE Codepoint Cell_Codepoint(const Cell* c) {  // must pass IS_CHAR_CELL()
+INLINE Codepoint Cell_Codepoint(const Value* c) {  // must pass IS_CHAR_CELL()
     if (Is_Cell_NUL(c))
         return 0;
 

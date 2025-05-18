@@ -152,7 +152,7 @@ DECLARE_NATIVE(INSIDE)
     INCLUDE_PARAMS_OF_INSIDE;
 
     Element* element = Element_ARG(ELEMENT);
-    Value* where = ARG(WHERE);
+    Element* where = Element_ARG(WHERE);
 
     Context* context;
     if (Any_Context(where))
@@ -230,16 +230,16 @@ DECLARE_NATIVE(HAS)
 
     if (not Is_Module(context)) {
         VarList* varlist = Cell_Varlist(context);
-        Init_Word_Bound(OUT, symbol, varlist, unwrap index);
-        Copy_Heart_Byte(Known_Element(OUT), v);
+        Element* out = Init_Word_Bound(OUT, symbol, varlist, unwrap index);
+        Copy_Heart_Byte(out, v);
         return OUT;
     }
 
     SeaOfVars* sea = Cell_Module_Sea(context);
-    Init_Word(OUT, symbol);
-    Copy_Heart_Byte(Known_Element(OUT), v);
-    Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
-    Tweak_Cell_Binding(OUT, Sea_Patch(sea, symbol, strict));
+    Element* out = Init_Word(OUT, symbol);
+    Copy_Heart_Byte(out, v);
+    Tweak_Cell_Word_Index(out, INDEX_PATCHED);
+    Tweak_Cell_Binding(out, Sea_Patch(sea, symbol, strict));
     return OUT;
 }
 
@@ -811,7 +811,7 @@ DECLARE_NATIVE(UNBIND)
 {
     INCLUDE_PARAMS_OF_UNBIND;
 
-    Value* word = ARG(WORD);
+    Element* word = Element_ARG(WORD);
 
     if (Any_Word(word) or Is_Set_Word(word))
         Unbind_Any_Word(word);
@@ -841,7 +841,7 @@ DECLARE_NATIVE(BINDABLE)
 {
     INCLUDE_PARAMS_OF_BINDABLE;
 
-    Value* v = ARG(VALUE);
+    Element* v = Element_ARG(VALUE);
 
     if (Any_Word(v))
         Unbind_Any_Word(v);
@@ -974,11 +974,11 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 
         bool strict = true;
 
-        const Value* src = Sea_Var(source, symbol, strict);
+        const Value* src = Sea_Slot(source, symbol, strict);
         if (src == nullptr)
             return PANIC(v);  // panic if unset value, also?
 
-        Value* dest = Sea_Var(where, symbol, strict);
+        Value* dest = Sea_Slot(where, symbol, strict);
         if (dest != nullptr) {
             // Fail if found?
         }
@@ -1370,7 +1370,7 @@ DECLARE_NATIVE(LIGHT)
         return UNMETA(meta);
 
     Length len;
-    const Cell* first = Cell_List_Len_At(&len, meta);
+    const Element* first = Cell_List_Len_At(&len, meta);
 
     if (len != 1)
         return UNMETA(meta);

@@ -188,7 +188,7 @@ DECLARE_NATIVE(ADAPT)
     INCLUDE_PARAMS_OF_ADAPT;
 
     Value* adaptee = ARG(ORIGINAL);
-    Value* prelude = ARG(PRELUDE);
+    Element* prelude = Element_ARG(PRELUDE);
 
     Details* details = Make_Dispatch_Details(
         NODE_FLAG_MANAGED,
@@ -209,6 +209,6 @@ DECLARE_NATIVE(ADAPT)
     );
     Tweak_Cell_Binding(rebound, Cell_List_Binding(prelude));
 
-    Init_Action(OUT, details, Cell_Frame_Label_Deep(adaptee), UNBOUND);
+    Init_Action(OUT, details, Cell_Frame_Label_Deep(adaptee), NONMETHOD);
     return UNSURPRISING(OUT);
 }

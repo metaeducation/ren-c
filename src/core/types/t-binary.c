@@ -38,7 +38,7 @@
 //
 //  CT_Blob: C
 //
-REBINT CT_Blob(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Blob(const Element* a, const Element* b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -67,7 +67,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Blob)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Blob(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Blob(v1, v2, strict) == 0);
 }
 
 
@@ -75,7 +78,10 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Blob)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Blob(ARG(VALUE1), ARG(VALUE2), true) == -1);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Blob(v1, v2, true) == -1);
 }
 
 
@@ -142,7 +148,8 @@ DECLARE_NATIVE(ENCODE_IEEE_754) {
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(DECODE_IEEE_754) {
+DECLARE_NATIVE(DECODE_IEEE_754)
+{
     INCLUDE_PARAMS_OF_DECODE_IEEE_754;
 
     Element* blob = Element_ARG(BLOB);
@@ -155,9 +162,10 @@ DECLARE_NATIVE(DECODE_IEEE_754) {
     if (size < 8)
         return FAIL(blob);
 
-    Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_DECIMAL);
+    Init(Element) out = OUT;
+    Reset_Cell_Header_Noquote(TRACK(out), CELL_MASK_DECIMAL);
 
-    Byte* dp = cast(Byte*, &VAL_DECIMAL(OUT));
+    Byte* dp = cast(Byte*, &VAL_DECIMAL(out));
 
   #if defined(ENDIAN_LITTLE)
     REBLEN n;

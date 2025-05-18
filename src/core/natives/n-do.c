@@ -557,7 +557,7 @@ DECLARE_NATIVE(EVAL_FREE)
 //      operation [<unrun> frame!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
-//      <local> frame
+//      <local> frame  ; GC-safe cell for frame
 //  ]
 //
 DECLARE_NATIVE(APPLIQUE)
@@ -570,10 +570,8 @@ DECLARE_NATIVE(APPLIQUE)
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    Value* op = ARG(OPERATION);
-    Value* def = ARG(DEF);
-
-    Value* frame = LOCAL(FRAME);  // GC-safe cell for FRAME!
+    Element* op = Element_ARG(OPERATION);
+    Element* def = Element_ARG(DEF);
 
     enum {
         ST_APPLIQUE_INITIAL_ENTRY = STATE_0,
@@ -600,7 +598,7 @@ DECLARE_NATIVE(APPLIQUE)
     );
     Manage_Flex(exemplar);
     Init_Lensed_Frame(
-        frame,
+        LOCAL(FRAME),
         exemplar,
         Cell_Frame_Phase(op),
         Cell_Frame_Coupling(op)
@@ -612,7 +610,7 @@ DECLARE_NATIVE(APPLIQUE)
         USE_FLAG_SET_WORDS_ONLY,
         Cell_List_Binding(def)
     );
-    Copy_Cell(Stub_Cell(use), frame);
+    Copy_Cell(Stub_Cell(use), Element_LOCAL(FRAME));
 
     Tweak_Cell_Binding(def, use);
 
@@ -621,7 +619,7 @@ DECLARE_NATIVE(APPLIQUE)
 
 } definition_result_in_spare: {  /////////////////////////////////////////////
 
-    return DELEGATE(OUT, frame);  // now run the frame
+    return DELEGATE(OUT, Element_LOCAL(FRAME));  // now run the frame
 }}
 
 

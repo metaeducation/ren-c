@@ -923,8 +923,8 @@ IMPLEMENT_GENERIC(COPY, Any_List)
         Bool_ARG(DEEP)
     ));
 
-    Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(list), copy);
-    Tweak_Cell_Binding(OUT, Cell_List_Binding(list));
+    Element* out = Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(list), copy);
+    Tweak_Cell_Binding(out, Cell_List_Binding(list));
     return OUT;
 }
 

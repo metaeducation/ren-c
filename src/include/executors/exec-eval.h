@@ -131,7 +131,7 @@ typedef struct {
     // Level that knows it's only requesting a single step could write
     // some value there if it needed to.)
     //
-    Cell primed;
+    Atom primed;
 
     Option(const Value*) current_gotten;
 

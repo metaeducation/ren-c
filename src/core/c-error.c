@@ -995,7 +995,7 @@ Error* Error_Invalid_Type(Type type)
 // status is supposed to be ignored).  Copy_Dequoted_Cell() is defined
 // after %cell-integer.h, so we handle the issue here.
 //
-Error* Error_Out_Of_Range(const Cell* arg)
+Error* Error_Out_Of_Range(const Value* arg)
 {
     DECLARE_ELEMENT (unquoted);
     Copy_Dequoted_Cell(unquoted, arg);

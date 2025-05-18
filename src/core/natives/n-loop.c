@@ -160,7 +160,7 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 //  Add_Definitional_Break_Continue: C
 //
 void Add_Definitional_Break_Continue(
-    Value* body,
+    Element* body,
     Level* loop_level
 ){
     Context* parent = Cell_List_Binding(body);
@@ -658,7 +658,7 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 //  Add_Definitional_Stop: C
 //
 void Add_Definitional_Stop(
-    Value* body,
+    Element* body,
     Level* loop_level
 ){
     Context* parent = Cell_List_Binding(body);
@@ -692,7 +692,7 @@ DECLARE_NATIVE(CYCLE)
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
-    Value* body = ARG(BODY);
+    Element* body = Element_ARG(BODY);
 
     enum {
         ST_CYCLE_INITIAL_ENTRY = STATE_0,
@@ -945,19 +945,21 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         if (Any_Context_Type(heart)) {
             if (slot) {
                 assert(les->u.evars.index != 0);
-                Init_Word(unwrap slot, Key_Symbol(les->u.evars.key));
+                Element* word = Init_Word(
+                    unwrap slot, Key_Symbol(les->u.evars.key)
+                );
 
                 if (heart == TYPE_MODULE) {
-                    Tweak_Cell_Word_Index(unwrap slot, INDEX_PATCHED);
-                    Tweak_Cell_Binding(unwrap slot, Sea_Patch(
+                    Tweak_Cell_Word_Index(word, INDEX_PATCHED);
+                    Tweak_Cell_Binding(word, Sea_Patch(
                         Cell_Module_Sea(les->data),
                         Key_Symbol(les->u.evars.key),
                         true
                     ));
                 }
                 else {
-                    Tweak_Cell_Word_Index(unwrap slot, les->u.evars.index);
-                    Tweak_Cell_Binding(unwrap slot, Cell_Varlist(les->data));
+                    Tweak_Cell_Word_Index(word, les->u.evars.index);
+                    Tweak_Cell_Binding(word, Cell_Varlist(les->data));
                 }
             }
 
@@ -1846,7 +1848,7 @@ DECLARE_NATIVE(MAP)
         const Element* tail;
         const Element* v = Cell_List_At(&tail, spare);
         for (; v != tail; ++v)
-            Derelativize(PUSH(), v, Cell_List_Binding(spare));
+            Copy_Cell(PUSH(), v);  // Note: no binding on antiform SPLICE!
     }
     else if (Is_Antiform(spare)) {
         Init_Thrown_Panic(LEVEL, Error_Bad_Antiform(spare));
@@ -1904,7 +1906,7 @@ DECLARE_NATIVE(REPEAT)
     INCLUDE_PARAMS_OF_REPEAT;
 
     Value* count = ARG(COUNT);
-    Value* body = ARG(BODY);
+    Element* body = Element_ARG(BODY);
 
     Value* index = cast(Value*, SPARE);  // spare cell holds current index
 
@@ -2088,7 +2090,7 @@ DECLARE_NATIVE(INSIST)
 {
     INCLUDE_PARAMS_OF_INSIST;
 
-    Value* body = ARG(BODY);
+    Element* body = Element_ARG(BODY);
 
     enum {
         ST_INSIST_INITIAL_ENTRY = STATE_0,
@@ -2176,8 +2178,8 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 {
     INCLUDE_PARAMS_OF_WHILE;  // must have same parameters as UNTIL
 
-    Value* condition = ARG(CONDITION);
-    Value* body = ARG(BODY);
+    Element* condition = Element_ARG(CONDITION);
+    Element* body = Element_ARG(BODY);
 
     enum {
         ST_WHILE_OR_UNTIL_INITIAL_ENTRY = STATE_0,

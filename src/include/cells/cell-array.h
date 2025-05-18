@@ -1,7 +1,7 @@
 // %cell-array.h
 
 
-INLINE bool Listlike_Cell(const Cell* v) {
+INLINE bool Listlike_Cell(const Atom* v) {  // PACK!s are allowed
     // called by core code, sacrifice Ensure_Readable() checks
     if (Any_List_Type(Unchecked_Heart_Of(v)))
         return true;
@@ -15,7 +15,7 @@ INLINE bool Listlike_Cell(const Cell* v) {
     return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SOURCE;
 }
 
-INLINE const Source* Cell_Array(const Cell* c) {
+INLINE const Source* Cell_Array(const Atom* c) {  // PACK!s are allowed
     assert(Listlike_Cell(c));
 
     const Node* series = CELL_SERIESLIKE_NODE(c);
@@ -43,7 +43,7 @@ INLINE const Source* Cell_Array(const Cell* c) {
 //
 INLINE const Element* Cell_List_Len_At(
     Option(Sink(Length)) len_at_out,
-    const Cell* v
+    const Atom* v  // want to be able to pass PACK!s, SPLICE!, etc.
 ){
     const Node* node = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node)) {
@@ -65,7 +65,7 @@ INLINE const Element* Cell_List_Len_At(
 
 INLINE const Element* Cell_List_At(
     Option(const Element**) tail_out,
-    const Cell* v
+    const Atom* v  // want to be able to pass PACK!s, SPLICE!, etc.
 ){
     const Node* node = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node)) {
@@ -86,7 +86,7 @@ INLINE const Element* Cell_List_At(
     return at;
 }
 
-INLINE const Element* Cell_List_Item_At(const Cell* v) {
+INLINE const Element* Cell_List_Item_At(const Value* v) {
     const Element* tail;
     const Element* item = Cell_List_At(&tail, v);
     assert(item != tail);  // should be a valid value
@@ -166,7 +166,7 @@ INLINE Element* Init_Relative_Block_At(
     #define Cell_List_Binding(v) \
         Cell_Binding(v)
 #else
-    INLINE Context* Cell_List_Binding(const Cell* v) {
+    INLINE Context* Cell_List_Binding(const Element* v) {
         assert(Listlike_Cell(v));
         Context* c = Cell_Binding(v);
         if (not c)

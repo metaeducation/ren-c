@@ -238,7 +238,7 @@ DECLARE_NATIVE(NATIVE)
         if (e)
             return PANIC(unwrap e);
 
-        Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+        Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     }
 
     return UNSURPRISING(OUT);
@@ -590,7 +590,7 @@ void Startup_Natives(const Element* boot_natives)
         Sink_Lib_Var(SYM_NATIVE),
         the_native_details,
         CANON(NATIVE),  // label
-        UNBOUND  // coupling
+        NONMETHOD  // coupling
     );
 
     assert(Cell_Frame_Phase(LIB(NATIVE)) == the_native_details);

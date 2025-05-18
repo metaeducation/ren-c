@@ -69,20 +69,20 @@ INLINE void Tweak_Handle_Cleaner(
 }
 
 
-INLINE bool Is_Handle_Cfunc(const Cell* v) {
+INLINE bool Is_Handle_Cfunc(const Value* v) {
     assert(Unchecked_Heart_Of(v) == TYPE_HANDLE);
     return CELL_HANDLE_LENGTH_U(v) == 0;
 }
 
-INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* c) {
+INLINE Value* Extract_Cell_Handle_Canon(const_if_c Value* c) {
     assert(Unchecked_Heart_Of(c) == TYPE_HANDLE);
     if (not Cell_Has_Node1(c))
-        return m_cast(Cell*, c);  // changing instance won't be seen by copies
+        return m_cast(Value*, c);  // changing instance won't be seen by copies
     return Stub_Cell(Extract_Cell_Handle_Stub(c));  // has shared node
 }
 
 #if CPLUSPLUS_11
-    INLINE const Cell* Extract_Cell_Handle_Canon(const Cell* c) {
+    INLINE const Value* Extract_Cell_Handle_Canon(const Value* c) {
         assert(Unchecked_Heart_Of(c) == TYPE_HANDLE);
         if (not Cell_Has_Node1(c))
             return c;  // changing handle instance won't be seen by copies
@@ -90,23 +90,23 @@ INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* c) {
     }
 #endif
 
-INLINE uintptr_t Cell_Handle_Len(const Cell* v) {
+INLINE uintptr_t Cell_Handle_Len(const Value* v) {
     assert(not Is_Handle_Cfunc(v));
-    const Cell* canon = Extract_Cell_Handle_Canon(v);
+    const Value* canon = Extract_Cell_Handle_Canon(v);
     assert(Get_Cell_Flag(canon, DONT_MARK_NODE2));
     return CELL_HANDLE_LENGTH_U(canon);
 }
 
-INLINE void* Cell_Handle_Void_Pointer(const Cell* v) {
+INLINE void* Cell_Handle_Void_Pointer(const Value* v) {
     assert(not Is_Handle_Cfunc(v));
-    const Cell* canon = Extract_Cell_Handle_Canon(v);
+    const Value* canon = Extract_Cell_Handle_Canon(v);
     assert(Get_Cell_Flag(canon, DONT_MARK_NODE2));
     return CELL_HANDLE_CDATA_P(canon);
 }
 
-INLINE const Node* Cell_Handle_Node(const Cell* v) {
+INLINE const Node* Cell_Handle_Node(const Value* v) {
     assert(not Is_Handle_Cfunc(v));
-    const Cell* canon = Extract_Cell_Handle_Canon(v);
+    const Value* canon = Extract_Cell_Handle_Canon(v);
     assert(Not_Cell_Flag(canon, DONT_MARK_NODE2));
     return CELL_HANDLE_NODE_P(canon);
 }
@@ -114,12 +114,12 @@ INLINE const Node* Cell_Handle_Node(const Cell* v) {
 #define Cell_Handle_Pointer(T, v) \
     cast(T*, Cell_Handle_Void_Pointer(v))
 
-INLINE CFunction* Cell_Handle_Cfunc(const Cell* v) {
+INLINE CFunction* Cell_Handle_Cfunc(const Value* v) {
     assert(Is_Handle_Cfunc(v));
     return CELL_HANDLE_CFUNC_P(Extract_Cell_Handle_Canon(v));
 }
 
-INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Cell* v) {
+INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Value* v) {
     assert(Unchecked_Heart_Of(v) == TYPE_HANDLE);
     if (not Cell_Has_Node1(v))
         return nullptr;
@@ -127,18 +127,18 @@ INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Cell* v) {
     return Handle_Cleaner(stub);
 }
 
-INLINE void Tweak_Cell_Handle_Len(Cell* v, uintptr_t length)
+INLINE void Tweak_Cell_Handle_Len(Value* v, uintptr_t length)
   { CELL_HANDLE_LENGTH_U(Extract_Cell_Handle_Canon(v)) = length; }
 
-INLINE void Tweak_Cell_Handle_Cdata(Cell* v, void *cdata) {
-    Cell* canon = Extract_Cell_Handle_Canon(v);
+INLINE void Tweak_Cell_Handle_Cdata(Value* v, void *cdata) {
+    Value* canon = Extract_Cell_Handle_Canon(v);
     assert(CELL_HANDLE_LENGTH_U(canon) != 0);
     CELL_HANDLE_CDATA_P(canon) = cdata;
 }
 
-INLINE void Tweak_Cell_Handle_Cfunc(Cell* v, CFunction* cfunc) {
+INLINE void Tweak_Cell_Handle_Cfunc(Value* v, CFunction* cfunc) {
     assert(Is_Handle_Cfunc(v));
-    Cell* canon = Extract_Cell_Handle_Canon(v);
+    Value* canon = Extract_Cell_Handle_Canon(v);
     assert(CELL_HANDLE_LENGTH_U(canon) == 0);
     CELL_HANDLE_CFUNC_P(canon) = cfunc;
 }
@@ -201,7 +201,7 @@ INLINE void Init_Handle_Managed_Common(
 
     Tweak_Handle_Cleaner(stub, cleaner);  // FLAVOR_HANDLE in Diminish_Stub()
 
-    Cell* single = Stub_Cell(stub);
+    Value* single = Stub_Cell(stub);
     Reset_Cell_Header_Noquote(
         single,
         FLAG_HEART(HANDLE)
@@ -267,7 +267,7 @@ INLINE Element* Init_Handle_Node_Managed(
 
     // Leave the non-singular cdata corrupt; clients should not be using
 
-    Cell* cell = Stub_Cell(Extract_Cell_Handle_Stub(out));
+    Value* cell = Stub_Cell(Extract_Cell_Handle_Stub(out));
     Clear_Cell_Flag(cell, DONT_MARK_NODE2);
     CELL_HANDLE_NODE_P(cell) = m_cast(Node*, node);  // extracted as const
     return out;

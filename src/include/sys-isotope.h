@@ -157,7 +157,8 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         const Element* pack_meta_at = Cell_List_At(&pack_meta_tail, v);
         if (pack_meta_at == pack_meta_tail)
             panic (Error_No_Value_Raw());  // treat as void?
-        Derelativize(v, pack_meta_at, Cell_List_Binding(v));
+        Sink(Element) sink = v;
+        Copy_Cell(sink, pack_meta_at);  // Note: no antiform binding (PACK!)
         Meta_Unquotify_Undecayed(v);
         if (Is_Pack(v))
             panic (Error_Bad_Antiform(v));  // need more granular unpacking [2]

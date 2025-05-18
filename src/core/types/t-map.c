@@ -56,7 +56,7 @@ Count Num_Map_Entries_Used(const Map* map)
 // !!! Was never implemented in R3-Alpha; called into raw array comparison,
 // which is clearly incorrect.  Needs to be written.
 //
-REBINT CT_Map(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Map(const Element* a, const Element* b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -70,7 +70,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Map(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Map(v1, v2, strict) == 0);
 }
 
 
@@ -431,7 +434,9 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
             continue;
 
         Flags flags = NODE_FLAG_MANAGED;  // !!! Review
-        Clonify(v, flags, deeply);
+        if (not Is_Antiform(v)) {
+            Clonify(Known_Element(v), flags, deeply);
+        }
     }
 
     return cast(Map*, copy);

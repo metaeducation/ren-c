@@ -28,7 +28,7 @@
 //
 //  CT_Port: C
 //
-REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Port(const Element* a, const Element* b, bool strict)
 {
     UNUSED(strict);
     if (Cell_Varlist(a) == Cell_Varlist(b))
@@ -59,7 +59,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Port)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Port(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Port(v1, v2, strict) == 0);
 }
 
 
@@ -149,7 +152,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
            Init_Nulled(OUT);
         else if (b != OUT) {
             Atom* r = Atom_From_Bounce(b);
-            assert(Is_Api_Value(r));
+            assert(Is_Atom_Api_Value(r));
             Copy_Cell(OUT, r);
             Release_Api_Value_If_Unmanaged(r);
         }

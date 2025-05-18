@@ -305,7 +305,7 @@ INLINE Option(REBINT) Try_Get_Binder_Index(  // 0 if not present
 
     Stump* stump = cast(Stump*, Misc_Hitch(symbol));
     assert(Info_Stump_Bind_Symbol(stump) == symbol);
-    REBINT index = VAL_INT32(Stub_Cell(stump));
+    REBINT index = VAL_INT32(Known_Element(Stub_Cell(stump)));
     assert(index != 0);
     return index;
 }
@@ -327,7 +327,7 @@ INLINE void Update_Binder_Index(
 
     Stump* stump = cast(Stump*, Misc_Hitch(symbol));
     assert(Info_Stump_Bind_Symbol(stump) == symbol);
-    assert(VAL_INT32(Stub_Cell(stump)) != 0);
+    assert(VAL_INT32(Known_Element(Stub_Cell(stump))) != 0);
     Init_Integer(Stub_Cell(stump), index);
 }
 
@@ -377,7 +377,7 @@ INLINE REBINT VAL_WORD_INDEX(const Cell* v) {
     return i;
 }
 
-INLINE void Unbind_Any_Word(Cell* v) {
+INLINE void Unbind_Any_Word(Element* v) {
     assert(Wordlike_Cell(v));
     CELL_WORD_INDEX_I32(v) = 0;
     Tweak_Cell_Binding(v, UNBOUND);
@@ -414,24 +414,24 @@ INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
 //
 
 INLINE Option(Error*) Trap_Lookup_Word(
-    Sink(const Value*) out,  // returns read-only pointer to cell
+    Sink(const Value*) slot,  // returns read-only pointer to cell
     const Element* word,
     Context* context
 ){
     REBLEN index;
     Stub* s = maybe Get_Word_Container(&index, word, context);
     if (not s) {
-        *out = nullptr;  // avoid aggressive callsite warnings
+        *slot = nullptr;  // avoid aggressive callsite warnings
         return Error_Not_Bound_Raw(word);
     }
 
     if (Is_Stub_Let(s) or Is_Stub_Patch(s)) {
-        *out = Stub_Cell(s);
+        *slot = Stub_Cell(s);
         return SUCCESS;
     }
     assert(Is_Node_Readable(s));
     VarList* c = cast(VarList*, s);
-    *out = Varlist_Slot(c, index);
+    *slot = Varlist_Slot(c, index);
     return SUCCESS;
 }
 
@@ -526,7 +526,7 @@ INLINE Sink(Value) Sink_Word_May_Panic(
 //
 INLINE Context* Derive_Binding(
     Context* context,
-    const Cell* list
+    const Element* list
 ){
     assert(Listlike_Cell(list));
 

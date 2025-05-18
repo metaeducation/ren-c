@@ -164,13 +164,13 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     assert(Array_Len(collated) == MAX_COLLATOR + 1);
     Push_Lifeguard(collated);
 
-    const Cell* binding_ref_handle
+    const Element* binding_ref_handle
         = Array_At(collated, COLLATOR_BINDING_REF);
-    const Cell* script_compressed
+    const Element* script_compressed
         = Array_At(collated, COLLATOR_SCRIPT);
     REBLEN script_num_codepoints
         = VAL_UINT32(Array_At(collated, COLLATOR_SCRIPT_NUM_CODEPOINTS));
-    const Cell* cfuncs_handle
+    const Element* cfuncs_handle
         = Array_At(collated, COLLATOR_CFUNCS);
 
     REBLEN num_natives = Cell_Handle_Len(cfuncs_handle);
@@ -345,7 +345,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
         OS_CLOSE_LIBRARY(Cell_Library_FD(lib));
     */
 
-   Value* shutdown_action = Sea_Var(
+   Value* shutdown_action = Sea_Slot(
        Cell_Module_Sea(extension),
        CANON(SHUTDOWN_P),
        true
@@ -353,7 +353,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
    if (shutdown_action != nullptr)
         rebElide(rebRUN(shutdown_action));
 
-   Value* unregister_extension_action = Sea_Var(
+   Value* unregister_extension_action = Sea_Slot(
        Cell_Module_Sea(extension),
        CANON(UNREGISTER_EXTENSION_P),
        true

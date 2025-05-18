@@ -177,7 +177,7 @@ bool Combinator_Details_Querier(
 // and the rebValue("...") function won't work, so it had to be hacked up as
 // a handcoded routine.  Review.
 //
-Source* Expanded_Combinator_Spec(const Value* original)
+Source* Expanded_Combinator_Spec(const Element* original)
 {
     StackIndex base = TOP_INDEX;
 
@@ -523,7 +523,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
     //    removing frames from the loops list in usermode.  Mirror that
     //    limitation here in the native implementation for now.
 
-    Cell* loop_last = Alloc_Tail_Array(loops);
+    Element* loop_last = Alloc_Tail_Array(loops);
     Init_Frame(loop_last, Level_Varlist(level_), CANON(SOME), NONMETHOD);
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);
@@ -631,6 +631,8 @@ static bool Combinator_Param_Hook(
     Level* level_ = s->level_;
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
+    Element* rules = Element_ARG(RULES);
+
     UNUSED(Bool_ARG(PATH));  // used by caller of hook
 
     Option(SymId) symid = Key_Id(key);
@@ -688,7 +690,7 @@ static bool Combinator_Param_Hook(
         // Quoted parameters represent a literal element captured from rules.
         //
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, ARG(RULES));
+        const Element* item = Cell_List_At(&tail, rules);
 
         if (
             item == tail
@@ -700,12 +702,12 @@ static bool Combinator_Param_Hook(
         }
         else {
             if (Cell_Parameter_Class(param) == PARAMCLASS_THE)
-                Derelativize(var, item, Cell_List_Binding(ARG(RULES)));
+                Derelativize(var, item, Cell_List_Binding(rules));
             else {
                 assert(Cell_Parameter_Class(param) == PARAMCLASS_JUST);
                 Copy_Cell(var, item);
             }
-            ++VAL_INDEX_UNBOUNDED(ARG(RULES));
+            ++VAL_INDEX_UNBOUNDED(rules);
         }
         break; }
 
@@ -714,7 +716,7 @@ static bool Combinator_Param_Hook(
         // Need to make PARSIFY a native!  Work around it for now...
         //
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, ARG(RULES));
+        const Element* item = Cell_List_At(&tail, rules);
         if (
             item == tail
             or (Is_Comma(item) or Is_Bar(item) or Is_Bar_Bar(item))

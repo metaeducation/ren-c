@@ -96,8 +96,8 @@ void Init_Evars(EVARS *e, const Element* v) {
             }
             if (patch_found) {
                 Init_Word(PUSH(), *psym);
-                Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
-                Tweak_Cell_Binding(TOP, patch_found);
+                Tweak_Cell_Word_Index(TOP_ELEMENT, INDEX_PATCHED);
+                Tweak_Cell_Binding(TOP_ELEMENT, patch_found);
             }
         }
 
@@ -192,7 +192,7 @@ void Init_Evars(EVARS *e, const Element* v) {
 bool Try_Advance_Evars(EVARS *e) {
     if (e->word) {
         while (++e->word != e->word_tail) {
-            e->var = Sea_Var(
+            e->var = Sea_Slot(
                 cast(SeaOfVars*, e->ctx), Cell_Word_Symbol(e->word), true
             );
             if (Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
@@ -748,7 +748,9 @@ VarList* Copy_Varlist_Extra_Managed(
         );
 
         Flags flags = NODE_FLAG_MANAGED;  // !!! Review, which flags?
-        Clonify(dest, flags, deeply);
+        if (not Is_Antiform(dest)) {
+            Clonify(Known_Element(dest), flags, deeply);
+        }
     }
 
     varlist->leader.bits |= FLEX_MASK_VARLIST;
@@ -982,8 +984,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         Value* setval = ARG(VALUE);
 
-        Value* var = m_cast(Value*, TRY_VAL_CONTEXT_VAR(context, symbol));
-        if (not var)
+        Value* slot = m_cast(Value*, maybe Cell_Context_Slot(context, symbol));
+        if (not slot)
             return PANIC(Error_Bad_Pick_Raw(picker));
 
         if (not Is_Word(setval))
@@ -991,19 +993,19 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         switch (Cell_Word_Id(setval)) {
           case SYM_PROTECT:
-            Set_Cell_Flag(var, PROTECTED);
+            Set_Cell_Flag(slot, PROTECTED);
             break;
 
           case SYM_UNPROTECT:
-            Clear_Cell_Flag(var, PROTECTED);
+            Clear_Cell_Flag(slot, PROTECTED);
             break;
 
           case SYM_HIDE:
-            Set_Cell_Flag(var, VAR_MARKED_HIDDEN);
+            Set_Cell_Flag(slot, VAR_MARKED_HIDDEN);
             break;
 
           default:
-            return PANIC(var);
+            return PANIC(slot);
         }
 
         return nullptr; }  // caller's VarList* is not stale, no update needed
@@ -1157,18 +1159,18 @@ IMPLEMENT_GENERIC(PICK, Any_Context)
     const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    const Value* var = TRY_VAL_CONTEXT_VAR(context, symbol);
-    if (not var)
+    const Value* slot = maybe Cell_Context_Slot(context, symbol);
+    if (not slot)
         return FAIL(Error_Bad_Pick_Raw(picker));
 
-    Copy_Cell(OUT, var);
+    Value* out = Copy_Cell(OUT, slot);
 
     if (
-        HEART_BYTE(var) == TYPE_FRAME
-        and QUOTE_BYTE(var) == ANTIFORM_0
-        and Cell_Frame_Coupling(var) == UNCOUPLED
+        HEART_BYTE(slot) == TYPE_FRAME
+        and QUOTE_BYTE(slot) == ANTIFORM_0
+        and Cell_Frame_Coupling(slot) == UNCOUPLED
     ){
-        Tweak_Cell_Frame_Coupling(OUT, cast(VarList*, c));
+        Tweak_Cell_Frame_Coupling(out, cast(VarList*, c));
     }
 
     return OUT;
@@ -1191,12 +1193,12 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
             "Can't remove fields from ANY-CONTEXT! by setting to VOID"
         );
 
-    Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
-    if (not var)
+    Value* slot = maybe Cell_Context_Slot_Mutable(context, symbol);
+    if (not slot)
         return PANIC(Error_Bad_Pick_Raw(picker));
 
-    assert(Not_Cell_Flag(var, PROTECTED));
-    Copy_Cell(var, unwrap poke);
+    assert(Not_Cell_Flag(slot, PROTECTED));
+    Copy_Cell(slot, unwrap poke);
     return nullptr;  // VarList* in cell not changed, caller need not update
 }
 
@@ -1835,8 +1837,8 @@ DECLARE_NATIVE(CONSTRUCT)
         assert(index);  // created a key for every SET-WORD! above!
 
         Copy_Cell(PUSH(), at);
-        Tweak_Cell_Binding(TOP, varlist);
-        CELL_WORD_INDEX_I32(TOP) = unwrap index;
+        Tweak_Cell_Binding(TOP_ELEMENT, varlist);
+        CELL_WORD_INDEX_I32(TOP_ELEMENT) = unwrap index;
 
         Fetch_Next_In_Feed(SUBLEVEL->feed);
 

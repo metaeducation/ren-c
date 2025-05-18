@@ -102,14 +102,14 @@ Bounce Arrow_Dispatcher(Level* const L)
     Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(block));
     Force_Level_Varlist_Managed(L);
 
-    Element* block_rebound = Copy_Cell(SPARE, block);
-    Tweak_Cell_Binding(SPARE, L->varlist);
+    Element* spare_rebound = Copy_Cell(SPARE, block);
+    Tweak_Cell_Binding(spare_rebound, L->varlist);
 
     return DELEGATE_CORE(
         OUT,
         LEVEL_MASK_NONE,
         SPECIFIED,
-        block_rebound
+        spare_rebound
     );
 }
 
@@ -281,6 +281,6 @@ DECLARE_NATIVE(ARROW)
 
     Copy_Cell(Array_At(details, IDX_ARROW_BODY), body);
 
-    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);
 }

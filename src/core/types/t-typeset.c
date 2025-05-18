@@ -28,7 +28,7 @@
 //
 //  CT_Parameter: C
 //
-REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Parameter(const Element* a, const Element* b, bool strict)
 {
     UNUSED(strict);
 
@@ -85,7 +85,7 @@ void Startup_Type_Predicates(void)
 
         Details* details = Make_Typechecker(typeset_byte);
 
-        Init_Action(Sink_Lib_Var(id), details, Canon_Symbol(id), UNBOUND);
+        Init_Action(Sink_Lib_Var(id), details, Canon_Symbol(id), NONMETHOD);
         assert(Ensure_Cell_Frame_Details(Lib_Var(id)));
     }
 
@@ -143,8 +143,8 @@ void Shutdown_Typesets(void)
 //    as a WORD! typecheck.)
 //
 void Set_Parameter_Spec(
-    Cell* param,  // target is usually a stack value [1]
-    const Cell* spec,
+    Element* param,  // target is usually a stack value [1]
+    const Element* spec,
     Context* spec_binding
 ){
     ParamClass pclass = Cell_Parameter_Class(param);
@@ -167,7 +167,7 @@ void Set_Parameter_Spec(
         len
     ));
     Set_Flex_Len(copy, len);
-    Cell* dest = Array_Head(copy);
+    Element* dest = Array_Head(copy);
 
     TypesetByte* optimized = copy->misc.at_least_4;
     TypesetByte* optimized_tail = optimized + sizeof(uintptr_t);
@@ -377,7 +377,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
 //
 Element* Decorate_According_To_Parameter(
     Need(Element*) e,
-    const Cell* param
+    const Element* param
 ){
     if (Get_Parameter_Flag(param, REFINEMENT))
         Refinify(e);

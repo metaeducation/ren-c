@@ -1,6 +1,6 @@
 // %cell-binary.h
 
-INLINE const Binary* Cell_Binary(const Cell* v) {
+INLINE const Binary* Cell_Binary(const Value* v) {
     assert(Heart_Of(v) == TYPE_BLOB);
     return c_cast(Binary*, Cell_Flex(v));
 }
@@ -14,7 +14,7 @@ INLINE const Binary* Cell_Binary(const Cell* v) {
 
 INLINE const Byte* Cell_Blob_Size_At(
     Option(Sink(Size)) size_at,
-    const Cell* v
+    const Value* v
 ){
     const Binary* b = Cell_Binary(v);
     REBIDX i = VAL_INDEX_RAW(v);
@@ -63,7 +63,7 @@ INLINE const Byte* Cell_Blob_Size_At(
 //
 INLINE const Byte* Cell_Bytes_Limit_At(
     Size* size_out,
-    const Cell* c,
+    const Value* c,
     Option(const Length*) limit_in
 ){
     Option(Heart) heart = Heart_Of(c);

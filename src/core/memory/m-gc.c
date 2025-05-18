@@ -116,9 +116,9 @@
 #endif
 
 
-static void Queue_Mark_Cell_Deep(const Cell* v);
+static void Queue_Mark_Cell_Deep(const Atom* v);
 
-INLINE void Queue_Mark_Maybe_Erased_Cell_Deep(const Cell* v) {
+INLINE void Queue_Mark_Maybe_Erased_Cell_Deep(const Atom* v) {
     if (not Is_Cell_Erased(v))
         Queue_Mark_Cell_Deep(v);
 }
@@ -310,7 +310,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
 //
 //  Queue_Mark_Cell_Deep: C
 //
-static void Queue_Mark_Cell_Deep(const Cell* c)
+static void Queue_Mark_Cell_Deep(const Atom* c)
 {
     if (Not_Cell_Readable(c))
         return;
@@ -328,15 +328,15 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
 
     if (Is_Extra_Mark_Heart(heart))
         if (c->extra.node)
-            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.node);
+            Queue_Mark_Node_Deep(&m_cast(Atom*, c)->extra.node);
 
     if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE1))
         if (c->payload.split.one.node)
-            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.one.node);
+            Queue_Mark_Node_Deep(&m_cast(Atom*, c)->payload.split.one.node);
 
     if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE2))
         if (c->payload.split.two.node)
-            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.two.node);
+            Queue_Mark_Node_Deep(&m_cast(Atom*, c)->payload.split.two.node);
 
   #if RUNTIME_CHECKS
     in_mark = false;
@@ -387,8 +387,8 @@ static void Propagate_All_GC_Marks(void)
         //
         assert(Is_Node_Marked(a));
 
-        Cell* v = Array_Head(a);
-        const Cell* tail = Array_Tail(a);
+        Element* v = Array_Head(a);
+        const Element* tail = Array_Tail(a);
         for (; v != tail; ++v) {
           #if RUNTIME_CHECKS
             Flavor flavor = Stub_Flavor(a);
@@ -611,16 +611,16 @@ static void Mark_Root_Stubs(void)
 //
 static void Mark_Data_Stack(void)
 {
-    const Cell* head = Flex_Head(Cell, g_ds.array);  // unstable allowed
+    const Value* head = Flex_Head(Value, g_ds.array);  // unstable allowed
     assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) deliberately invalid
 
-    Cell* stackval = g_ds.movable_top;
+    Value* stackval = g_ds.movable_top;
     for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)
         Queue_Mark_Cell_Deep(stackval);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     stackval = g_ds.movable_top + 1;
-    for (; stackval != Flex_Tail(Cell, g_ds.array); ++stackval)
+    for (; stackval != Flex_Tail(Value, g_ds.array); ++stackval)
         assert(Is_Cell_Poisoned(stackval));
   #endif
 
@@ -651,14 +651,14 @@ static void Mark_Guarded_Nodes(void)
     REBLEN n = Flex_Used(g_gc.guarded);
     for (; n > 0; --n, ++pp) {
         if (FIRST_BYTE(*pp) == 0) {  // assume erased cell, tolerate [1]
-            assert(Is_Cell_Erased(c_cast(Cell*, *pp)));
+            assert(Is_Cell_Erased(c_cast(Atom*, *pp)));
             continue;
         }
 
         Node** npp = cast(Node**, pp);
         if (Is_Node_A_Cell(*npp)) {
             assert(Not_Node_Marked(*npp));  // shouldn't live in array [2]
-            Queue_Mark_Maybe_Erased_Cell_Deep(c_cast(Cell*, *npp));
+            Queue_Mark_Maybe_Erased_Cell_Deep(c_cast(Atom*, *npp));
         }
         else  // a Stub
             Queue_Mark_Node_Deep(npp);

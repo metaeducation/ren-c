@@ -286,20 +286,23 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     }
 
     if (Is_Block(value)) {
+        Element* block = Known_Element(value);
+
         if (Bool_ARG(WORDS)) {
             const Element* tail;
-            const Element* item = Cell_List_At(&tail, value);
+            const Element* item = Cell_List_At(&tail, block);
             for (; item != tail; ++item) {
                 DECLARE_VALUE (word); // need binding, can't pass Cell
-                Derelativize(word, item, Cell_List_Binding(value));
+                Derelativize(word, item, Cell_List_Binding(block));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
             return COPY(ARG(VALUE));
         }
+
         if (Bool_ARG(VALUES)) {
-            const Value* var;
+            const Value* slot;
             const Element* tail;
-            const Element* item = Cell_List_At(&tail, value);
+            const Element* item = Cell_List_At(&tail, block);
 
             DECLARE_VALUE (safe);
 
@@ -310,22 +313,22 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     // references to even protected values to protect them.
                     //
                     Option(Error*) error = Trap_Lookup_Word(
-                        &var, item, Cell_List_Binding(value)
+                        &slot, item, Cell_List_Binding(block)
                     );
                     if (error)
                         panic (unwrap error);
                 }
-                else if (Is_Path(value)) {
+                else if (Is_Path(item)) {
                     panic ("PATH! handling no longer in Protect_Unprotect");
                 }
                 else {
-                    Copy_Cell(safe, value);
-                    var = safe;
+                    Copy_Cell(safe, item);
+                    slot = safe;
                 }
 
-                Protect_Value(m_cast(Value*, var), flags);
+                Protect_Value(m_cast(Value*, slot), flags);
                 if (flags & PROT_DEEP)
-                    Uncolor(m_cast(Value*, var));
+                    Uncolor(m_cast(Value*, slot));
             }
             return COPY(ARG(VALUE));
         }
@@ -523,7 +526,7 @@ DECLARE_NATIVE(LOCKED_Q)
 // that would prevent *them* from later mutating it.
 //
 void Force_Value_Frozen_Core(
-    const Cell* v,
+    const Value* v,
     bool deep,
     Option(Flex*) locker
 ){

@@ -186,7 +186,7 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
 //    are no non-strict comparisons.  To compare non-strictly, they must be
 //    aliased as TEXT!.  (!!! This should be reviewed.)
 //
-REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Utf8(const Element* a, const Element* b, bool strict)
 {
     assert(Any_Utf8_Type(Heart_Of(a)));
     assert(Any_Utf8_Type(Heart_Of(b)));
@@ -231,7 +231,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Utf8)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Utf8(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Utf8(v1, v2, strict) == 0);
 }
 
 
@@ -239,7 +242,10 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Utf8(ARG(VALUE1), ARG(VALUE2), true) == -1);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Utf8(v1, v2, true) == -1);
 }
 
 

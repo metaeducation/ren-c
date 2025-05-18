@@ -123,7 +123,11 @@ bool Pushed_Continuation(
     Option(const Atom*) with  // can be same as out or not GC-safe, may copy
 ){
     assert(u_cast(const Atom*, branch) != out);
-    assert(not with or (unwrap with) == out or not Is_Api_Value(unwrap with));
+    assert(
+        not with
+        or (unwrap with) == out
+        or not Is_Atom_Api_Value(unwrap with)
+    );
 
     if (Is_Action(branch))  // antiform frames are legal
         goto handle_action;

@@ -387,7 +387,7 @@ Option(Error*) Trap_Make_Interpreted_Action(
         // Ideally Source arrays should be connected with *some* file and line
     }
 
-    Cell* rebound = Init_Block(
+    Element* rebound = Init_Block(
         Details_At(details, IDX_INTERPRETED_BODY),
         copy
     );
@@ -432,7 +432,7 @@ DECLARE_NATIVE(FUNCTION)
     if (e)
         return PANIC(unwrap e);
 
-    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);
 }
 
@@ -549,7 +549,7 @@ DECLARE_NATIVE(UNWIND)
 //
 bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     Level* L,  // Level whose spare/scratch used (not necessarily return level)
-    const Value* param,  // parameter for the RETURN (may be quoted)
+    const Element* param,  // parameter for the RETURN (may be quoted)
     Atom* atom  // coercion needs mutability
 ){
     assert(  // to be in specialized slot, RETURN can't be a plain PARAMETER!

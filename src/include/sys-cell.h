@@ -798,14 +798,14 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     #define Tweak_Cell_Relative_Binding(c,binding) \
         ((c)->extra.node = binding)
 #else
-    INLINE void Tweak_Cell_Binding(Cell* c, Option(Context*) binding) {
+    INLINE void Tweak_Cell_Binding(Element* c, Option(Context*) binding) {
         assert(Is_Bindable_Heart(Heart_Of(c)));
         Assert_Cell_Writable(c);
         c->extra.node = maybe binding;
         if (binding)
             Assert_Cell_Binding_Valid(c);
     }
-    INLINE void Tweak_Cell_Relative_Binding(Cell* c, Phase* phase) {
+    INLINE void Tweak_Cell_Relative_Binding(Element* c, Phase* phase) {
         c->extra.node = phase;
     }
 #endif
@@ -813,7 +813,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 #define SPECIFIED \
     x_cast(Context*, nullptr)  // x_cast (don't want DEBUG_CHECK_CASTS)
 
-#define UNBOUND nullptr  // making this a stub did not improve performance [1]
+#define UNBOUND \
+    x_cast(Context*, nullptr)  // using a stub did not improve performance [1]
 
 
 //=//// COPYING CELLS /////////////////////////////////////////////////////=//

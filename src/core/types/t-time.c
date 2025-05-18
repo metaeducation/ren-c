@@ -223,7 +223,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
 //
 //  CT_Time: C
 //
-REBINT CT_Time(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Time(const Element* a, const Element* b, bool strict)
 {
     UNUSED(strict);
 
@@ -243,7 +243,10 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Time)
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
 
-    return LOGIC(CT_Time(ARG(VALUE1), ARG(VALUE2), strict) == 0);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Time(v1, v2, strict) == 0);
 }
 
 
@@ -251,7 +254,10 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Time)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Time(ARG(VALUE1), ARG(VALUE2), true) == -1);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
+
+    return LOGIC(CT_Time(v1, v2, true) == -1);
 }
 
 

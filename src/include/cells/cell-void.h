@@ -50,7 +50,7 @@ INLINE Element* Init_Meta_Of_Void_Untracked(Sink(Element) out) {
 #define Init_Meta_Of_Void(out) \
     TRACK(Init_Meta_Of_Void_Untracked((out)))
 
-INLINE bool Is_Meta_Of_Void(const Cell* v) {
+INLINE bool Is_Meta_Of_Void(const Atom* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
     const Element* tail;
@@ -62,6 +62,6 @@ INLINE bool Is_Ghost_Or_Void(Need(Atom*) v) {
     return Is_Ghost(v) or Is_Void(v);
 }
 
-INLINE bool Is_Meta_Of_Ghost_Or_Void(const Cell* v) {
+INLINE bool Is_Meta_Of_Ghost_Or_Void(const Atom* v) {
     return Is_Meta_Of_Ghost(v) or Is_Meta_Of_Void(v);
 }

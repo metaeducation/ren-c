@@ -260,6 +260,6 @@ DECLARE_NATIVE(REORDER)
 
     Drop_Data_Stack_To(STACK_BASE);  // !!! None of this works ATM.
 
-    Init_Action(OUT, details, label, UNBOUND);
+    Init_Action(OUT, details, label, NONMETHOD);
     return UNSURPRISING(OUT);
 }

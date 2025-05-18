@@ -120,9 +120,9 @@
 #define P_INPUT_BINARY      Cell_Binary(ARG(INPUT))
 #define P_INPUT_STRING      Cell_String(ARG(INPUT))
 #define P_INPUT_ARRAY       Cell_Array(ARG(INPUT))
-#define P_INPUT_SPECIFIER   Cell_List_Binding(ARG(INPUT))
-#define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(ARG(INPUT))
-#define P_INPUT_LEN         Cell_Series_Len_Head(ARG(INPUT))
+#define P_INPUT_SPECIFIER   Cell_List_Binding(Element_ARG(INPUT))
+#define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(Element_ARG(INPUT))
+#define P_INPUT_LEN         Cell_Series_Len_Head(Element_ARG(INPUT))
 
 #define P_FLAGS             mutable_VAL_INT64(ARG(FLAGS))
 
@@ -233,7 +233,7 @@ INLINE Option(SymId) VAL_CMD(const Cell* v) {
 static bool Subparse_Throws(
     bool *interrupted_out,
     Sink(Atom) out,
-    const Cell* input,
+    const Element* input,
     Context* input_binding,
     Level* const L,
     Flags flags
@@ -553,7 +553,7 @@ static REBIXO Parse_One_Rule(
         if (Subparse_Throws(
             &interrupted,
             subresult,
-            ARG(POSITION),  // affected by P_POS assignment above
+            Element_ARG(POSITION),  // affected by P_POS assignment above
             SPECIFIED,
             sub,
             (P_FLAGS & PF_FIND_MASK)
@@ -568,7 +568,7 @@ static REBIXO Parse_One_Rule(
         if (Is_Nulled(subresult))
             return END_FLAG;
 
-        REBINT index = VAL_INT32(subresult);
+        REBINT index = VAL_INT32(Known_Element(subresult));
         assert(index >= 0);
         return index; }
 
@@ -708,7 +708,7 @@ static REBIXO Parse_One_Rule(
 //
 static REBIXO To_Thru_Block_Rule(
     Level* level_,
-    const Cell* rule_block,
+    const Element* rule_block,
     bool is_thru
 ){
     USE_PARAMS_OF_SUBPARSE;
@@ -1962,7 +1962,8 @@ DECLARE_NATIVE(SUBPARSE)
                     i = END_FLAG;
                 }
                 else {
-                    if (VAL_INT32(OUT) != Cell_Series_Len_Head(into))
+                    Element* out = Known_Element(OUT);
+                    if (VAL_INT32(out) != Cell_Series_Len_Head(into))
                         i = END_FLAG;
                     else
                         i = P_POS + 1;
@@ -1996,7 +1997,7 @@ DECLARE_NATIVE(SUBPARSE)
             if (Subparse_Throws(
                 &interrupted,
                 SPARE,
-                ARG(POSITION),
+                Element_ARG(POSITION),
                 SPECIFIED,
                 sub,
                 (P_FLAGS & PF_FIND_MASK)  // no PF_ONE_RULE
@@ -2412,7 +2413,7 @@ DECLARE_NATIVE(PARSE3)
         return FAIL(Error_Parse3_Incomplete_Raw());
     }
 
-    REBLEN index = VAL_UINT32(OUT);
+    REBLEN index = VAL_UINT32(Known_Element(OUT));
     assert(index <= Cell_Series_Len_Head(input));
 
     if (index != Cell_Series_Len_Head(input)) {  // didn't reach end of input

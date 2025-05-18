@@ -37,11 +37,11 @@
 #else
     // allows an assert, but also lvalue: `VAL_DECIMAL(v) = xxx`
     //
-    INLINE REBDEC VAL_DECIMAL(const Cell* c) {
+    INLINE REBDEC VAL_DECIMAL(const Value* c) {
         assert(Heart_Of(c) == TYPE_DECIMAL or Heart_Of(c) == TYPE_PERCENT);
         return c->payload.dec;
     }
-    INLINE REBDEC & VAL_DECIMAL(Cell* c) {
+    INLINE REBDEC & VAL_DECIMAL(Value* c) {
         assert(Heart_Of(c) == TYPE_DECIMAL or Heart_Of(c) == TYPE_PERCENT);
         return c->payload.dec;
     }

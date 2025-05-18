@@ -536,13 +536,13 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
       case TYPE_BLOCK:
         item = Cell_List_At(&tail, tests);
-        derived = Derive_Binding(tests_binding, tests);
+        derived = Derive_Binding(tests_binding, Known_Element(tests));
         match_all = false;
         break;
 
       case TYPE_GROUP:
         item = Cell_List_At(&tail, tests);
-        derived = Derive_Binding(tests_binding, tests);
+        derived = Derive_Binding(tests_binding, Known_Element(tests));
         match_all = true;
         break;
 
@@ -805,7 +805,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 //
 bool Typecheck_Coerce_Uses_Spare_And_Scratch(
     Level* const L,
-    const Value* param,
+    const Element* param,
     Atom* atom,  // need mutability for coercion
     bool is_return
 ){
@@ -988,12 +988,11 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
     Set_Flex_Len(a, 2);
     Init_Set_Word(Array_At(a, 0), CANON(TEST));
 
+    const Element* block = Known_Element(datatype_or_block);
     Element* param = Init_Unconstrained_Parameter(
         Array_At(a, 1), FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
     );
-    Set_Parameter_Spec(
-        param, datatype_or_block, Cell_Binding(datatype_or_block)
-    );
+    Set_Parameter_Spec(param, block, Cell_Binding(block));
 
     DECLARE_ELEMENT (def);
 

@@ -856,16 +856,17 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     // payload.time.nanoseconds set
     // may be NO_DATE_TIME, don't Freshen_Cell_Header()
     //
-    Reset_Cell_Header_Noquote(PUSH(), CELL_MASK_DATE);
-    VAL_YEAR(TOP) = year;
-    VAL_MONTH(TOP) = month;
-    VAL_DAY(TOP) = day;
-    VAL_ZONE(cast(Cell*, TOP)) = NO_DATE_ZONE;  // Adjust_Date_Zone() needs
-    Tweak_Cell_Nanoseconds(TOP, nanoseconds);
+    OnStack(Value*) top = PUSH();
+    Reset_Cell_Header_Noquote(top, CELL_MASK_DATE);
+    VAL_YEAR(top) = year;
+    VAL_MONTH(top) = month;
+    VAL_DAY(top) = day;
+    CELL_DATE_YMDZ(top).zone = NO_DATE_ZONE;  // Adjust_Date_Zone() needs
+    Tweak_Cell_Nanoseconds(top, nanoseconds);
 
-    Adjust_Date_Zone_Core(TOP, tz);
+    Adjust_Date_Zone_Core(top, tz);
 
-    VAL_ZONE(cast(Cell*, TOP)) = tz;
+    CELL_DATE_YMDZ(top).zone = tz;
 
     return cp;
 }

@@ -218,13 +218,13 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 // act as description for current parameter
                 assert(mode == SPEC_MODE_PUSHED);
 
-                if (Cell_Parameter_String(TOP))
+                if (Cell_Parameter_String(TOP_ELEMENT))
                     return Error_Bad_Func_Def_Raw(item);
 
                 String* string = Copy_String_At(item);
                 Manage_Flex(string);
                 Freeze_Flex(string);
-                Set_Parameter_String(TOP, string);
+                Set_Parameter_String(TOP_ELEMENT, string);
             }
 
             continue;
@@ -248,7 +248,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             if (mode != SPEC_MODE_PUSHED)  // must come after parameter [1]
                 panic (Error_Bad_Func_Def_Raw(item));
 
-            OnStack(Value*) param = TOP;
+            OnStack(Element*) param = TOP_ELEMENT;
 
             if (Cell_Parameter_Spec(param))  // `func [x [integer!] [integer!]]`
                 panic (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
