@@ -236,17 +236,23 @@ INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
 #define Cell_No(v) (not Cell_Yes(v))
 
 
-//=//// BRANCH TRIGGERING & BRANCH INHIBITING /////////////////////////////=//
+//=//// CONDITIONAL "TRUTHINESS" and "FALSEYNESS" /////////////////////////=//
 //
-// At time of writing, ~null~ antiforms are the only branch inhibitors.
+// The default behavior of the system is to consider there being only one
+// conditionally false value: the ~null~ antiform.
 //
-// 1. VOID antiforms are neither triggering nor inhibiting: since voids opt
+// This is slated to be extensible, so that contexts can provide a different
+// definition of "truthiness" and "falseyness" via the COND(ITIONAL) function.
+// That hasn't happened yet, so at time of writing, ~null~ antiforms are the
+// only conditionally false state.
+//
+// 1. VOID antiforms are neither "truthy" nor "falsey": since voids opt
 //    out of aggregate logic operations, an isolated operation like IF cannot
 //    consider void to be either true or false.  Type checking helps enforce
 //    this rule, since unstable values cannot be passed as a condition to
 //    the test functions.
 //
-//    It would be possible to say that VOIDs were true, and that would
+//    It would be possible to say that VOIDs were truthy, and that would
 //    produce some potentially interesting use cases like (any [expr, void])
 //    being able to evaluate to void if expr1 was falsey or opted out.  Yet
 //    semantically, we want to think of the truthiness of a PACK! as being
@@ -255,38 +261,47 @@ INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
 //    not particularly coherent to try and argue voids are true or false,
 //    and creates ambiguity to gain a relatively unimportant feature.
 //
-// 2. Because a branch evaluation can produce NULL, we would not be able from
-//    the outside to discern a taken branch from a non-taken one in order to
-//    implement constructs like ELSE and THEN:
+//    !!! Should this enforce Value* passed, and disallow Element*, since
+//    the builtin conditional never considers elements to be falsey?
 //
-//        >> if ok [null] else [print "If passthru null, we get this :-("]
-//        If passthru null, we get this :-(  ; <-- BAD!
-//
-//    For this reason, branching constructs "box" NULLs to antiform blocks,
-//    as a parameter "pack".  Since these decay back to plain NULL in *most*
-//    contexts, this gives the right behavior *most* of the time...while being
-//    distinct enough that ELSE and THEN can react to them as signals the
-//    branch was taken.
-//
-INLINE bool Is_Trigger(const Value* v) {  // stable only, can't test void [1]
+// 2. There used to be a ~void~ antiform as "stable void", but the role has
+//    been overtaken by the ~()~ empty splice antiform ("BLANK").  So now
+//    ~okay~ and ~null~ are the only two KEYWORD!s (antiform WORD!s).  There
+//    is some question on what behavior is wanted from ~NaN~... would it be
+//    falsey?  Not known since it's not in use yet.  But generally right now
+//    it looks like ~null~ and ~okay~ the only things to consider, and if
+//    anything else is tested it errors.
+
+INLINE Option(Error*) Trap_Test_Conditional(
+    Sink(bool) cond,
+    const Value* v  // Not Atom*, has to be stable... no VOID [1]
+){
     Assert_Cell_Readable(v);
 
-    if (QUOTE_BYTE(v) != ANTIFORM_0)
-        return true;  // all non-antiforms (including quasi/quoted) are truthy
+    if (QUOTE_BYTE(v) != ANTIFORM_0) {
+        *cond = true;  // all non-antiforms (including quasi/quoted) are truthy
+        return SUCCESS;
+    }
 
-    if (Heart_Of(v) != TYPE_WORD)
-        return true;  // !!! all stable non-word antiforms are truthy
+    if (Heart_Of(v) == TYPE_RUNE)  // trash--not legal to test conditionally
+        return Error_Trash_Condition_Raw(v);
+
+    if (Heart_Of(v) != TYPE_WORD) {
+        *cond = true;  // !!! all stable non-word antiforms are truthy
+        return SUCCESS;
+    }
 
     Option(SymId) id = Cell_Word_Id(v);
-    if (id == SYM_NULL)
-        return false;
-    if (id == SYM_OKAY)
-        return true;
-    panic (Error_Bad_Antiform(v));  // !!! special warning?
+    if (id == SYM_NULL) {
+        *cond = false;  // ~null~ antiform is the only falsey value
+        return SUCCESS;
+    }
+    if (id == SYM_OKAY) {
+        *cond = true;  // ~okay~ antiform is the only truthy keyword
+        return SUCCESS;
+    }
+    return Error_Keyword_Condition_Raw(v);  // none exist yet, review [2]
 }
-
-#define Is_Inhibitor(v) \
-    (not Is_Trigger(v))
 
 INLINE Atom* Packify_If_Inhibitor(Atom* v) {
     if (Is_Nulled(v))

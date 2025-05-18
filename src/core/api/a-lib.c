@@ -1603,12 +1603,17 @@ bool API_rebDid(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (condition);
+    DECLARE_VALUE (eval);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(condition, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End_May_Panic(eval, flags, binding, p, vaptr);
 
-    return Is_Trigger(condition);  // will panic() on (most) antiforms
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, eval);
+    if (e)
+        panic (unwrap e);
+
+    return cond;
 }
 
 
@@ -1622,14 +1627,7 @@ bool API_rebNot(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
-    ENTER_API;
-
-    DECLARE_VALUE (condition);
-
-    Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(condition, flags, binding, p, vaptr);
-
-    return Is_Inhibitor(condition);  // will panic() on (most) antiforms
+    return not API_rebDid(binding, p, vaptr);
 }
 
 
@@ -1642,14 +1640,7 @@ bool API_rebDidnt(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
-    ENTER_API;
-
-    DECLARE_VALUE (condition);
-
-    Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(condition, flags, binding, p, vaptr);
-
-    return Is_Inhibitor(condition);  // will panic() on (most) antiforms
+    return not API_rebDid(binding, p, vaptr);
 }
 
 
@@ -1693,6 +1684,10 @@ intptr_t API_rebUnbox(
 
 //
 //  rebUnboxLogic: API
+//
+// This API is narrower than rebDid()... it tests specifically for the ~null~
+// and ~okay~ antiforms as input.  Hence it's not a synonym for rebDid(),
+// which accepts any non-trash/non-void value.
 //
 bool API_rebUnboxLogic(
     RebolContext* binding,

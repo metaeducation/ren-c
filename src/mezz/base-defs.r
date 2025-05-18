@@ -51,8 +51,7 @@ probe: func [
     ; Remember this is early in the boot, so many things not defined.
 
     write-stdout if antiform? ^atom [
-        ensure [quoted! quasiform!] atom
-        unspaced [atom _ _ "; anti"]
+        unspaced [@atom _ _ "; anti"]  ; lifted atom is a quasiform
     ] else [
         mold ^atom
     ]
@@ -66,10 +65,30 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 /branched?: then?/  ; alias, maybe more catchy?
 
 
-; Logic synonyms DID and DIDN'T, sometimes look better
+; It's easier to pre-process CASCADE's block in usermode, which also offers a
+; lower-level version CASCADE* that just takes a block of frames.
+;
+/cascade: adapt cascade*/ [
+    pipeline: reduce:predicate pipeline unrun/
+]
 
-/did: to-logic/
-/didn't: not/
+
+; Alternative spellings.
+;
+; Question mark versions may seem of questionable use--who would say `NOT?`
+; instead of just saying `NOT`--but maybe it would add some extra clarity that
+; you were getting a logic back.  Also it would allow people to do things
+; like redefine NOT locally and still have access to NOT? without having to
+; say LIB.NOT ... maybe useful.  Just trying it out.
+
+did: did?: to-logic/
+didn't: didn't?: not/
+not?: not/
+both: both?: and?/
+nor?: cascade [or?/ not/]
+nand?: cascade [and?/ not/]
+nor: infix cascade [or/ not/]
+nand: infix cascade [and/ not/]
 
 
 ; ARITHMETIC OPERATORS
@@ -89,14 +108,6 @@ compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 /or+: infix bitwise-or/
 /xor+: infix bitwise-xor/
 /and-not+: infix bitwise-and-not/
-
-
-; It's easier to pre-process CASCADE's block in usermode, which also offers a
-; lower-level version CASCADE* that just takes a block of frames.
-;
-/cascade: adapt cascade*/ [
-    pipeline: reduce:predicate pipeline unrun/
-]
 
 
 ; Equality variants (note: bootstrap needs to REDESCRIBE)
@@ -322,9 +333,3 @@ echo: func [
     ]
     write-stdout newline
 ]
-
-
-; Convenient alternatives for readability
-;
-neither?: nand?/
-both?: and?/

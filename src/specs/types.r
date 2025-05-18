@@ -161,7 +161,7 @@ varargs     "evaluator position for variable numbers of arguments"
                 [any-inert?]
 
     warning     "context with id, arguments, and stack origin"
-    ~error~:U   "error state that is promoted to a panic if not handled"
+    ~error~:U   "error state that is escalated to a panic if not triaged"
                 (node1 node2)
                 [any-inert?]
 

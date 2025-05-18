@@ -222,7 +222,12 @@ DECLARE_NATIVE(BOOLEAN)
 {
     INCLUDE_PARAMS_OF_BOOLEAN;
 
-    return Init_Word(OUT, Is_Trigger(ARG(VALUE)) ? CANON(TRUE) : CANON(FALSE));
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, ARG(VALUE));
+    if (e)
+        return PANIC(unwrap e);
+
+    return Init_Word(OUT, cond ? CANON(TRUE) : CANON(FALSE));
 }
 
 
@@ -273,7 +278,12 @@ DECLARE_NATIVE(TO_YESNO)
 {
     INCLUDE_PARAMS_OF_TO_YESNO;
 
-    return Init_Word(OUT, Is_Trigger(ARG(VALUE)) ? CANON(YES) : CANON(NO));
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, ARG(VALUE));
+    if (e)
+        return PANIC(unwrap e);
+
+    return Init_Word(OUT, cond ? CANON(YES) : CANON(NO));
 }
 
 
@@ -324,7 +334,12 @@ DECLARE_NATIVE(TO_ONOFF)
 {
     INCLUDE_PARAMS_OF_TO_ONOFF;
 
-    return Init_Word(OUT, Is_Trigger(ARG(VALUE)) ? CANON(ON) : CANON(OFF));
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, ARG(VALUE));
+    if (e)
+        return PANIC(unwrap e);
+
+    return Init_Word(OUT, cond ? CANON(ON) : CANON(OFF));
 }
 
 
@@ -342,7 +357,17 @@ DECLARE_NATIVE(AND_Q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
-    if (Is_Trigger(ARG(VALUE1)) && Is_Trigger(ARG(VALUE2)))
+    bool cond1;
+    Option(Error*) e = Trap_Test_Conditional(&cond1, ARG(VALUE1));
+    if (e)
+        return PANIC(unwrap e);
+
+    bool cond2;
+    e = Trap_Test_Conditional(&cond2, ARG(VALUE2));
+    if (e)
+        return PANIC(unwrap e);
+
+    if (cond1 and cond2)
         return Init_Logic(OUT, true);
 
     return Init_Logic(OUT, false);
@@ -350,7 +375,7 @@ DECLARE_NATIVE(AND_Q)
 
 
 //
-//  nor?: native [
+//  or?: native [
 //
 //  "Returns true if both values are conditionally false (no 'short-circuit')"
 //
@@ -359,35 +384,24 @@ DECLARE_NATIVE(AND_Q)
 //      value2 [any-value?]
 //  ]
 //
-DECLARE_NATIVE(NOR_Q)
+DECLARE_NATIVE(OR_Q)
 {
-    INCLUDE_PARAMS_OF_NOR_Q;
+    INCLUDE_PARAMS_OF_OR_Q;
 
-    if (Is_Inhibitor(ARG(VALUE1)) && Is_Inhibitor(ARG(VALUE2)))
+    bool cond1;
+    Option(Error*) e = Trap_Test_Conditional(&cond1, ARG(VALUE1));
+    if (e)
+        return PANIC(unwrap e);
+
+    bool cond2;
+    e = Trap_Test_Conditional(&cond2, ARG(VALUE2));
+    if (e)
+        return PANIC(unwrap e);
+
+    if (cond1 or cond2)
         return Init_Logic(OUT, true);
 
     return Init_Logic(OUT, false);
-}
-
-
-//
-//  nand?: native [
-//
-//  "Returns false if both values are conditionally true (no 'short-circuit')"
-//
-//      return: [logic?]
-//      value1 [any-value?]
-//      value2 [any-value?]
-//  ]
-//
-DECLARE_NATIVE(NAND_Q)
-{
-    INCLUDE_PARAMS_OF_NAND_Q;
-
-    return Init_Logic(
-        OUT,
-        Is_Trigger(ARG(VALUE1)) and Is_Trigger(ARG(VALUE2))
-    );
 }
 
 
@@ -426,7 +440,12 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
     if (bounce)
         return unwrap bounce;
 
-    return LOGIC(Is_Inhibitor(v));
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, v);
+    if (e)
+        return PANIC(unwrap e);
+
+    return LOGIC(not cond);
 }
 
 
@@ -448,7 +467,12 @@ DECLARE_NATIVE(TO_LOGIC)
     if (bounce)
         return unwrap bounce;
 
-    return LOGIC(Is_Trigger(v));
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, v);
+    if (e)
+        return PANIC(unwrap e);
+
+    return LOGIC(cond);
 }
 
 
@@ -461,23 +485,32 @@ DECLARE_NATIVE(TO_LOGIC)
 // WORD!, or TUPLE!.
 //
 INLINE bool Do_Logic_Right_Side_Throws(
-    Sink(Value) out,
-    const Element* right
+    Sink(bool) cond,
+    Level* level_
 ){
+    INCLUDE_PARAMS_OF_AND_1;  // should be same as OR and XOR
+
+    USED(ARG(LEFT));  // caller examines
+    Element* right = Element_ARG(RIGHT);
+
+    Value* synthesized;
     if (Is_Group(right)) {
-        Atom* atom_out = out;
-        if (Eval_Any_List_At_Throws(atom_out, right, SPECIFIED))
+        if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED))
             return true;
-        Decay_If_Unstable(atom_out);
-        return false;
+        synthesized = Decay_If_Unstable(SPARE);
+    }
+    else {
+        assert(Is_Word(right) or Is_Tuple(right));
+
+        synthesized = Get_Var_May_Panic(SPARE, right, SPECIFIED);
+
+        if (Is_Action(synthesized))
+            panic ("words/tuples can't be action as right side of OR AND XOR");
     }
 
-    assert(Is_Word(right) or Is_Tuple(right));
-
-    Get_Var_May_Panic(out, right, SPECIFIED);
-
-    if (Is_Action(out))
-        panic ("words/tuples can't be action as right hand of OR, AND, XOR");
+    Option(Error*) e = Trap_Test_Conditional(cond, synthesized);
+    if (e)
+        panic (unwrap e);
 
     return false;
 }
@@ -498,16 +531,19 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_AND_1;
 
-    Value* left = ARG(LEFT);
-    Element* right = Element_ARG(RIGHT);
+    bool left;
+    Option(Error*) e = Trap_Test_Conditional(&left, ARG(LEFT));
+    if (e)
+        return PANIC(unwrap e);
 
-    if (Is_Inhibitor(left))
-        return LOGIC(false);
+    if (not left)
+        return LOGIC(false);  // if left is false, don't run right hand side
 
-    if (Do_Logic_Right_Side_Throws(SPARE, right))
+    bool right;
+    if (Do_Logic_Right_Side_Throws(&right, LEVEL))
         return THROWN;
 
-    return LOGIC(Is_Trigger(stable_SPARE));
+    return LOGIC(right);
 }
 
 
@@ -526,16 +562,19 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_OR_1;
 
-    Value* left = ARG(LEFT);
-    Element* right = Element_ARG(RIGHT);
+    bool left;
+    Option(Error*) e = Trap_Test_Conditional(&left, ARG(LEFT));
+    if (e)
+        return PANIC(unwrap e);
 
-    if (Is_Trigger(left))
-        return LOGIC(true);
+    if (left)
+        return LOGIC(true);  // if left is true, don't run right hand side
 
-    if (Do_Logic_Right_Side_Throws(SPARE, right))
+    bool right;
+    if (Do_Logic_Right_Side_Throws(&right, LEVEL))
         return THROWN;
 
-    return LOGIC(Is_Trigger(stable_SPARE));
+    return LOGIC(right);
 }
 
 
@@ -554,16 +593,19 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_XOR_1;
 
-    Value* left = ARG(LEFT);
-    Element* right = Element_ARG(RIGHT);
-
-    if (Do_Logic_Right_Side_Throws(SPARE, right))
+    bool right;
+    if (Do_Logic_Right_Side_Throws(&right, LEVEL))  // run right side always
         return THROWN;
 
-    if (Is_Inhibitor(left))
-        return LOGIC(Is_Trigger(stable_SPARE));
+    bool left;
+    Option(Error*) e = Trap_Test_Conditional(&left, ARG(LEFT));
+    if (e)
+        return PANIC(unwrap e);
 
-    return LOGIC(Is_Inhibitor(stable_SPARE));
+    if (not left)
+        return LOGIC(right);
+
+    return LOGIC(not right);
 }
 
 

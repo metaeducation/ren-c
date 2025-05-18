@@ -655,11 +655,16 @@ IMPLEMENT_GENERIC(POKE_P, Is_Bitset) {
         return PANIC(PARAM(VALUE));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, poke);
+    if (e)
+        panic (unwrap e);
+
     Binary* bits = cast(Binary*, VAL_BITSET_Ensure_Mutable(bset));
     if (not Set_Bits(
         bits,
         picker,
-        BITS_NOT(bits) ? Is_Inhibitor(poke) : Is_Trigger(poke)
+        BITS_NOT(bits) ? not cond : cond
     )){
         return PANIC(PARAM(PICKER));
     }

@@ -102,19 +102,26 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 
 //=//// "HEAVY NULLS" (BLOCK! Antiform Pack with `~null~` in it) //////////=//
 //
-// An "pack" of ~[~null~]~ antiform is used for the concept of a "heavy null".
-// This is something that will act like "light null" in almost all contexts,
-// except that things like THEN will consider it to have been the product of
-// a "taken branch".
+// Because a branch evaluation can produce NULL, we would not be able from
+// the outside to discern a taken branch from a non-taken one in order to
+// implement constructs like ELSE and THEN:
+//
+//     >> if ok [null] else [print "If passthru null, we get this :-("]
+//     If passthru null, we get this :-(  ; <-- BAD!
+//
+// For this reason, branching constructs "box" NULLs to antiform blocks, as a
+// parameter "pack".  Since these decay back to plain NULL in *most* contexts,
+// this gives the right behavior *most* of the time...while being distinct
+// enough that ELSE & THEN can react to them as signals the branch was taken.
 //
 //     >> x: ~[~null~]~
 //     == ~null~  ; anti
 //
 //     >> if ok [null]
-//     == ~[~null~]~  ; anti
+//     == ~[~null~]~  ; anti (heavy null)
 //
 //     >> if ok [null] else [print "This won't run"]
-//     == ~[~null~]~  ; anti
+//     == ~[~null~]~  ; anti (heavy null)
 //
 
 #define Init_Heavy_Null_Untracked(out) \

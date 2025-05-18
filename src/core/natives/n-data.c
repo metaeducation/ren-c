@@ -1331,8 +1331,8 @@ DECLARE_NATIVE(SPACE_Q)
 //
 //  "Make the heavy form of NULL (passes through all other values)"
 //
-//      return: [any-value? pack!]
-//      ^atom [any-value? pack!]
+//      return: [any-value? pack! ghost!]
+//      ^atom [any-value? pack! ghost!]
 //  ]
 //
 DECLARE_NATIVE(HEAVY)

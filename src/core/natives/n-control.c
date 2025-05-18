@@ -198,11 +198,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //
 DECLARE_NATIVE(IF)
 //
-// 1. ~null~ antiforms are branch inhibitors, while trash antiforms will
-//    trigger an abrupt panic.  (Voids opt out of "voting" in aggregate
-//    conditional testing, so a single isolated test can't have an answer.)
-//
-// 2. Evaluations must be performed through continuations, so IF can't be on
+// 1. Evaluations must be performed through continuations, so IF can't be on
 //    the C function stack while the branch runs.  Rather than asking to be
 //    called back after the evaluation so it can turn null and void into
 //    "heavy" pack forms, it requests "branch semantics" so that the evaluator
@@ -213,10 +209,15 @@ DECLARE_NATIVE(IF)
     Value* condition = ARG(CONDITION);
     Value* branch = ARG(BRANCH);
 
-    if (Is_Inhibitor(condition))  // [1]
-        return nullptr;
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
+    if (e)
+        return PANIC(unwrap e);
 
-    return DELEGATE_BRANCH(OUT, branch, condition);  // no callback [2]
+    if (not cond)
+        return nullptr;  // return "light" null (unboxed) if condition is false
+
+    return DELEGATE_BRANCH(OUT, branch, condition);  // no callback [1]
 }
 
 
@@ -237,13 +238,14 @@ DECLARE_NATIVE(EITHER)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
-    Value* condition = ARG(CONDITION);
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, ARG(CONDITION));
+    if (e)
+        return PANIC(unwrap e);
 
-    Value* branch = Is_Trigger(condition)  // [1] on IF native
-        ? ARG(OKAY_BRANCH)
-        : ARG(NULL_BRANCH);
+    Value* branch = cond ? ARG(OKAY_BRANCH) : ARG(NULL_BRANCH);
 
-    return DELEGATE_BRANCH(OUT, branch, condition);  // [2] on IF native
+    return DELEGATE_BRANCH(OUT, branch, ARG(CONDITION));  // [1] on IF native
 }
 
 
@@ -510,7 +512,12 @@ DECLARE_NATIVE(ALL)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    if (Is_Inhibitor(condition)) {
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
+    if (e)
+        return PANIC(unwrap e);
+
+    if (not cond) {
         Drop_Level(SUBLEVEL);
         return nullptr;
     }
@@ -656,7 +663,12 @@ DECLARE_NATIVE(ANY)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    if (Is_Trigger(condition))
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
+    if (e)
+        return PANIC(unwrap e);
+
+    if (cond)
         goto return_out;
 
     if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
@@ -844,9 +856,12 @@ DECLARE_NATIVE(CASE)
 
     Assert_Cell_Stable(branch);
 
-    bool matched = Is_Trigger(stable_SPARE);
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, stable_SPARE);
+    if (e)
+        return PANIC(unwrap e);
 
-    if (not matched) {
+    if (not cond) {
         if (not Any_Branch(branch))  // like IF [1]
             return PANIC(Error_Bad_Value_Raw(cast(Value*, branch)));  // stable
 
@@ -1066,7 +1081,13 @@ DECLARE_NATIVE(SWITCH)
         )){
             return BOUNCE_THROWN;  // aborts sublevel
         }
-        if (Is_Inhibitor(stable_SCRATCH))
+
+        bool cond;
+        Option(Error*) e = Trap_Test_Conditional(&cond, stable_SCRATCH);
+        if (e)
+            return PANIC(unwrap e);
+
+        if (not cond)
             goto next_switch_step;
     }
 

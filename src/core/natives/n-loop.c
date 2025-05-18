@@ -1271,7 +1271,12 @@ DECLARE_NATIVE(EVERY)
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
-    if (Is_Inhibitor(stable_SPARE)) {
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, stable_SPARE);
+    if (e)
+        return PANIC(unwrap e);
+
+    if (not cond) {
         Init_Nulled(OUT);
     }
     else if (Is_Cell_Erased(OUT) or not Is_Nulled(OUT)) {
@@ -1432,8 +1437,8 @@ DECLARE_NATIVE(REMOVE_EACH)
   } process_body_result: {  //////////////////////////////////////////////////
 
     // The only signals allowed are OKAY, NULL, and VOID.  This likely catches
-    // more errors than allowing any Is_Trigger() value to mean "remove" (so
-    // use DID MATCH or NOT MATCH instead of just MATCH, for example).
+    // more errors than allowing any Trap_Test_Conditional() value to mean
+    // "remove" (e.g. use DID MATCH or NOT MATCH instead of just MATCH).
     //
     // 1. The reason VOID is tolerated is because CONTINUE with no argument
     //    acts as if the body returned VOID.  This is a general behavioral
@@ -2131,9 +2136,14 @@ DECLARE_NATIVE(INSIST)
     if (Is_Ghost(OUT))
         return PANIC("Body of INSIST must not return GHOST");  // tolerate? [3]
 
-    Decay_If_Unstable(OUT);  // decay for truth test [4]
+    Value* out = Decay_If_Unstable(OUT);  // decay for truth test [4]
 
-    if (Is_Trigger(stable_OUT))
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, out);
+    if (e)
+        return PANIC(unwrap e);
+
+    if (cond)
         return LOOPED(OUT);
 
     goto loop_again;  // not truthy, keep going
@@ -2200,14 +2210,19 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
     if (Is_Error(SPARE) and Is_Error_Done_Signal(Cell_Error(SPARE)))
         goto return_out;
 
-    Decay_If_Unstable(SPARE);
+    Value* spare = Decay_If_Unstable(SPARE);
+
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, spare);
+    if (e)
+        return PANIC(unwrap e);
 
     if (is_while) {
-        if (Is_Inhibitor(stable_SPARE))
+        if (not cond)
             goto return_out;  // falsey condition => last body result
     }
-    else {
-        if (Is_Trigger(stable_SPARE))
+    else {  // is_until
+        if (cond)
             goto return_out;  // truthy condition => last body result
     }
 

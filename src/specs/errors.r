@@ -85,6 +85,9 @@ script: [
     not-bound:          [:arg1 "word is not bound to a context"]
     not-in-context:     [:arg1 "is not in the specified context"]
 
+    trash-condition:    ["Can't conditionally test TRASH!:" :arg1]
+    keyword-condition:  ["Invalid antiform WORD! for conditional test:" :arg1]
+
     collectable-bound:  ["Collectable" :arg1 "bound, use :PREBOUND if intended"]
     assertion-failure:  ["assertion failure:" :arg1]
 

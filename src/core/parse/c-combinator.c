@@ -422,7 +422,14 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
     INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
 
     VarList* state = Cell_Varlist(ARG(STATE));
-    bool cased = Is_Trigger(Varlist_Slot(state, IDX_UPARSE_PARAM_CASE));
+
+    bool cased;
+    Option(Error*) e = Trap_Test_Conditional(  // or trust it's a LOGIC ?
+        &cased,
+        Varlist_Slot(state, IDX_UPARSE_PARAM_CASE)
+    );
+    if (e)
+        return PANIC(unwrap e);
 
     Element* v = Element_ARG(VALUE);
     Element* input = Element_ARG(INPUT);

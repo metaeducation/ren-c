@@ -1582,9 +1582,9 @@ DECLARE_NATIVE(SUBPARSE)
                 if (not Is_Group(P_RULE))
                     panic (Error_Parse3_Rule());
 
-                DECLARE_ATOM (condition);
+                DECLARE_ATOM (eval);
                 if (Eval_Any_List_At_Throws(  // note: might GC
-                    condition,
+                    eval,
                     P_RULE,
                     P_RULE_BINDING
                 )) {
@@ -1593,7 +1593,14 @@ DECLARE_NATIVE(SUBPARSE)
 
                 FETCH_NEXT_RULE(L);
 
-                if (Is_Trigger(Stable_Unchecked(condition)))
+                Value* condition = Decay_If_Unstable(eval);
+
+                bool cond;
+                Option(Error*) e = Trap_Test_Conditional(&cond, condition);
+                if (e)
+                    return PANIC(unwrap e);
+
+                if (cond)
                     goto pre_rule;
 
                 Init_Nulled(ARG(POSITION));  // not found
