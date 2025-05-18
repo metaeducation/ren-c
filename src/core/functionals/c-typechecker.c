@@ -1043,7 +1043,7 @@ DECLARE_NATIVE(TYPECHECKER)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    return Init_Typechecker(OUT, ARG(TYPES));
+    return UNSURPRISING(Init_Typechecker(OUT, ARG(TYPES)));
 }
 
 
@@ -1167,5 +1167,5 @@ DECLARE_NATIVE(MATCHER)
     if (Specialize_Action_Throws(OUT, LIB(MATCH), block_in_spare, STACK_BASE))
         return THROWN;
 
-    return OUT;
+    return UNSURPRISING(OUT);
 }

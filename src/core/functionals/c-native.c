@@ -241,7 +241,7 @@ DECLARE_NATIVE(NATIVE)
         Init_Action(OUT, details, ANONYMOUS, UNBOUND);
     }
 
-    return OUT;
+    return UNSURPRISING(OUT);
 }
 
 

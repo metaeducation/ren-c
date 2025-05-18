@@ -180,7 +180,7 @@ Bounce Evaluator_Executor(Level* const L)
         if (Get_Cell_Flag(OUT, OUT_HINT_UNSURPRISING))
             goto start_new_step;  // leave previous result as-is in PRIMED
 
-        Init_Ghost(PRIMED);  // (use ^ to be "UNAFRAID" of vaporization) [1]
+        Init_Surprising_Ghost(PRIMED);  // (use ^ to be "UNAFRAID") [1]
         goto start_new_step;
     }
 

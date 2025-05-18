@@ -765,6 +765,12 @@ INLINE Bounce Native_Void_Result_Untracked(
     return Init_Void_Untracked(level_->out);
 }
 
+// 1. Typically the function typechecking machinery will notice when a function
+//    returns a GHOST! and always returns a GHOST!...setting the flag for
+//    CELL_FLAG_OUT_HINT_UNSURPRISING.  But if running as a native, then in
+//    release builds returns are not typechecked.  We assume all natives
+//    that return GHOST are doing so "unsurprisingly".  See flag notes.
+//
 INLINE Bounce Native_Ghost_Result_Untracked(
     Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
@@ -772,7 +778,8 @@ INLINE Bounce Native_Ghost_Result_Untracked(
     assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Ghost_Untracked(level_->out);
+    bool surprising = false;  // no return typecheck to set unsurprising [1]
+    return Init_Ghost_Untracked(level_->out, surprising);
 }
 
 INLINE Bounce Native_Unmeta_Result(Level* level_, const Element* v) {
@@ -874,6 +881,7 @@ INLINE Bounce Native_Branched_Result(Level* level_, Atom* v) {
     assert(v == level_->out);  // would not be zero cost if we supported copy
     if (Is_Nulled(v))
         Init_Heavy_Null(v);  // box up for THEN reactivity [2]
+    Clear_Cell_Flag(v, OUT_HINT_UNSURPRISING);  // all branches are surprises
     return level_->out;
 }
 
@@ -955,7 +963,7 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
     #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
-    #define GHOST       Native_Ghost_Result_Untracked(TRACK(OUT), level_)
+    #undef GHOST        // must specify whether it's "surprising" or not
     #define TRASH       Native_Trash_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))

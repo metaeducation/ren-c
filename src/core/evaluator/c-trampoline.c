@@ -210,9 +210,16 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 goto bounce_on_trampoline;
             }
         }
-        else if (Get_Level_Flag(L, BRANCH)) {
-            Packify_If_Inhibitor(L->out);  // heavy nulls
+        else if (Get_Level_Flag(L, FORCE_HEAVY_NULLS)) {
+            assert(Get_Level_Flag(L, FORCE_SURPRISING));  // true as of now
+            if (Is_Ghost(L->out))
+                Init_Void(L->out);  // !!! should this be a separate flag?
+            else
+                Packify_If_Inhibitor(L->out);  // heavy nulls
         }
+
+        if (Get_Level_Flag(L, FORCE_SURPRISING))
+            Clear_Cell_Flag(L->out, OUT_HINT_UNSURPRISING);
 
         if (Get_Level_Flag(L, ROOT_LEVEL)) {
             assert(L == TOP_LEVEL);

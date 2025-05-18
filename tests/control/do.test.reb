@@ -1,22 +1,22 @@
 ; functions/control/do.r
 
 [
-    (ghost? eval:undecayed [])
-    ('~,~ = meta eval:undecayed [])
+    (ghost? eval [])
+    ('~,~ = meta eval [])
 
-    (ghost? (eval:undecayed []))
-    (3 = (1 + 2 eval:undecayed []))
-    (3 = (1 + 2 unmeta ^ eval:undecayed []))
+    (ghost? (eval []))
+    (3 = (1 + 2 eval []))
+    (3 = (1 + 2 unmeta ^ eval []))
 
-    (''30 = ^ (10 + 20 eval:undecayed []))
+    (''30 = ^ (10 + 20 eval []))
     ((meta void) = ^ (10 + 20 eval [void]))
-    (''30 = ^ (10 + 20 eval:undecayed [comment "hi"]))
-    (''30 = ^ (10 + 20 eval:undecayed make frame! func [] [return ~,~]))
+    (''30 = ^ (10 + 20 eval [comment "hi"]))
+    (''30 = ^ (10 + 20 eval make frame! func [] [return ~,~]))
 
     (else? eval [null])
-    ('~[~null~]~ = ^ eval:undecayed [if okay [null]])
-    ((meta void) = ^ eval:undecayed [if null [<a>]])
-    ((meta void) = ^ eval:undecayed [10 + 20 if null [<a>]])
+    ('~[~null~]~ = ^ eval [if okay [null]])
+    ((meta void) = ^ eval [if null [<a>]])
+    ((meta void) = ^ eval [10 + 20 if null [<a>]])
 
     (all [
         let x: ~
@@ -26,53 +26,53 @@
 
     (all [
         let x: ~
-        '~,~ = (x: (meta comment "HI") meta eval:undecayed [comment "HI"])
+        '~,~ = (x: (meta comment "HI") meta eval [comment "HI"])
         '~,~ = x
     ])
 
-    ('~,~ = (10 + 20 meta (eval:undecayed [])))
-    ('~,~ = (10 + 20 meta (eval:undecayed [comment "hi"])))
-    ((meta void) = (10 + 20 meta (eval:undecayed make frame! lambda [] [void])))
+    ('~,~ = (10 + 20 meta (eval [])))
+    ('~,~ = (10 + 20 meta (eval [comment "hi"])))
+    ((meta void) = (10 + 20 meta (eval make frame! lambda [] [void])))
     (null = ^(meta eval [null]))
-    ('~[~null~]~ = meta (eval:undecayed [if okay [null]]))
+    ('~[~null~]~ = meta (eval [if okay [null]]))
 
-    (30 = (10 + 20 eval:undecayed []))
-    (30 = (10 + 20 eval:undecayed [comment "hi"]))
-    (30 = (10 + 20 eval:undecayed make frame! func [] [return ~,~]))
-    (null = ^(meta eval:undecayed [null]))
-    ('~[~null~]~ = ^ eval:undecayed [heavy null])
-    ('~[~null~]~ = ^ eval:undecayed [if okay [null]])
+    (30 = (10 + 20 eval []))
+    (30 = (10 + 20 eval [comment "hi"]))
+    (30 = (10 + 20 eval make frame! func [] [return ~,~]))
+    (null = ^(meta eval [null]))
+    ('~[~null~]~ = ^ eval [heavy null])
+    ('~[~null~]~ = ^ eval [if okay [null]])
 
     ; Try standalone ^ operator so long as we're at it.
-    ('~,~ = ^ eval:undecayed [])
-    ('~,~ = ^ eval:undecayed [comment "hi"])
-    ('~,~ = ^ eval:undecayed make frame! func [] [return ~,~])
-    ((meta void) = ^ eval:undecayed [void])
+    ('~,~ = ^ eval [])
+    ('~,~ = ^ eval [comment "hi"])
+    ('~,~ = ^ eval make frame! func [] [return ~,~])
+    ((meta void) = ^ eval [void])
 
-    ((meta null) = ^ eval:undecayed [null])
-    (null = ^(meta eval:undecayed [null]))
-    ((meta null) = ^ (eval:undecayed [null]))
-    ((meta null) = meta eval:undecayed [null])
+    ((meta null) = ^ eval [null])
+    (null = ^(meta eval [null]))
+    ((meta null) = ^ (eval [null]))
+    ((meta null) = meta eval [null])
 
-    ('~[~null~]~ = ^ eval:undecayed [heavy null])
-    ('~[~null~]~ = meta (eval:undecayed [heavy null]))
-    ('~[~null~]~ = ^ (eval:undecayed [heavy null]))
-    ('~[~null~]~ = meta eval:undecayed [heavy null])
+    ('~[~null~]~ = ^ eval [heavy null])
+    ('~[~null~]~ = meta (eval [heavy null]))
+    ('~[~null~]~ = ^ (eval [heavy null]))
+    ('~[~null~]~ = meta eval [heavy null])
 
-    ('~[~null~]~ = ^ eval:undecayed [if ok [null]])
+    ('~[~null~]~ = ^ eval [if ok [null]])
 ]
 
 
 [
-    (''3 = ^ (1 + 2 eval:undecayed [comment "HI"]))
-    ('~,~ = ^ eval:undecayed [comment "HI"])
+    (''3 = ^ (1 + 2 eval [comment "HI"]))
+    ('~,~ = ^ eval [comment "HI"])
 
-    (3 = (1 + 2 eval:undecayed [comment "HI"]))
-    (void? eval:undecayed [comment "HI"])
+    (3 = (1 + 2 eval [comment "HI"]))
+    (void? eval [comment "HI"])
 
     (
         y: <overwritten>
-        x: (1 + 2 y: (void eval:undecayed [comment "HI"]))
+        x: (1 + 2 y: (void eval [comment "HI"]))
         all [
             void? x
             void? y
@@ -240,7 +240,7 @@
 )
 (
     all wrap [
-        null? [pos :value]: evaluate:step:undecayed []
+        null? [pos :value]: evaluate:step []
         pos = null
         null? value
     ]

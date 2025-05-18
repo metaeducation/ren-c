@@ -259,5 +259,7 @@ DECLARE_NATIVE(REORDER)
     Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), original);
 
     Drop_Data_Stack_To(STACK_BASE);  // !!! None of this works ATM.
-    return Init_Action(OUT, details, label, UNBOUND);
+
+    Init_Action(OUT, details, label, UNBOUND);
+    return UNSURPRISING(OUT);
 }

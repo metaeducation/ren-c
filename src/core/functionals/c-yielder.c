@@ -516,7 +516,8 @@ DECLARE_NATIVE(YIELDER)
     Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
     Init_Unreadable(Details_At(details, IDX_YIELDER_META_YIELDED));
 
-    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    return UNSURPRISING(OUT);
 }
 
 

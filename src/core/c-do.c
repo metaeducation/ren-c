@@ -117,7 +117,7 @@ void Push_Frame_Continuation(
 //
 bool Pushed_Continuation(
     Need(Atom*) out,  // not Sink (would corrupt, but with can be same as out)
-    Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
+    Flags flags,  // LEVEL_FLAG_FORCE_HEAVY_NULLS, etc. for pushed levels
     Context* binding,  // before branch forces non-empty variadic call
     const Value* branch,  // *cannot* be the same as out
     Option(const Atom*) with  // can be same as out or not GC-safe, may copy
@@ -140,12 +140,12 @@ bool Pushed_Continuation(
         panic (Error_Bad_Antiform(branch));
 
     if (Is_Pinned(GROUP, branch)) {  // [2] for GET-GROUP!
-        assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
+        assert(flags & LEVEL_FLAG_FORCE_HEAVY_NULLS);  // needed for trick
         Level* grouper = Make_Level_At_Core(
             &The_Group_Branch_Executor,  // evaluates to synthesize branch
             c_cast(Element*, branch),
             binding,
-            (flags & (~ LEVEL_FLAG_BRANCH))
+            (flags & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS))
         );
         if (with == nullptr)  // spare will hold the value
             assert(Is_Cell_Erased(Level_Spare(grouper)));
@@ -180,7 +180,7 @@ bool Pushed_Continuation(
       case TYPE_QUASIFORM:
         Derelativize(out, c_cast(Element*, branch), binding);
         Meta_Unquotify_Undecayed(out);
-        if (Is_Nulled(out) and (flags & LEVEL_FLAG_BRANCH))
+        if (Is_Nulled(out) and (flags & LEVEL_FLAG_FORCE_HEAVY_NULLS))
             Init_Heavy_Null(out);
         goto just_use_out;
 
@@ -191,7 +191,7 @@ bool Pushed_Continuation(
         Init_Void(Evaluator_Primed_Cell(L));
 
         Push_Level_Erase_Out_If_State_0(out, L);
-        goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH
+        goto pushed_continuation; }
 
       case TYPE_CHAIN: {  // effectively REDUCE
         if (not Is_Get_Block(branch))

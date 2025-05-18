@@ -412,7 +412,7 @@ DECLARE_NATIVE(SPECIALIZE)
         return THROWN;  // e.g. (specialize append:dup/ [value: throw 10])
     }
 
-    return OUT;
+    return UNSURPRISING(OUT);
 }
 
 

@@ -590,8 +590,10 @@ DECLARE_NATIVE(RUNS)
 //
 // 1. Is allowing things that are already antiforms a good idea?
 //
-// 2. This is designed to be a type checked synonym for `anti`...all the
-//    actual work would be done regardless of using this routine.
+// 2. This is mostly a type checked synonym for `anti`, with the exception
+//    that it sets the "unsurprising" flag on the result.  This means you
+//    can directly assign the result of RUNS e.g. (x: runs frame) and you will
+//    not be required to say (x: ^ runs frame)
 {
     INCLUDE_PARAMS_OF_RUNS;
 
@@ -605,7 +607,7 @@ DECLARE_NATIVE(RUNS)
     if (e)
         return PANIC(unwrap e);
 
-    return OUT;
+    return UNSURPRISING(OUT);
 }
 
 

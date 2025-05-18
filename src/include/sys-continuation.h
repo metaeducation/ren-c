@@ -35,11 +35,11 @@
 
 #define CONTINUE_CORE_5(...) ( \
     Pushed_Continuation(__VA_ARGS__), \
-    BOUNCE_CONTINUE)  /* ^-- don't heed result: want callback, push or not */
+        BOUNCE_CONTINUE)  /* ^-- don't heed result: always want callback */
 
 #define CONTINUE_CORE_4(...) ( \
     Pushed_Continuation(__VA_ARGS__, nullptr), \
-    BOUNCE_CONTINUE)  /* ^-- don't heed result: want callback, push or not */
+        BOUNCE_CONTINUE)  /* ^-- don't heed result: always want callback */
 
 #define CONTINUE_CORE(...) \
     PP_CONCAT(CONTINUE_CORE_, PP_NARGS(__VA_ARGS__))(__VA_ARGS__)
@@ -47,8 +47,13 @@
 #define CONTINUE(out,...) \
     CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
 
+#define CONTINUE(out,...) \
+    CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
+
 #define CONTINUE_BRANCH(out,...) \
-    CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
+    CONTINUE_CORE((out), \
+        LEVEL_FLAG_FORCE_HEAVY_NULLS | LEVEL_FLAG_FORCE_SURPRISING, \
+        SPECIFIED, __VA_ARGS__)
 
 INLINE Bounce Continue_Sublevel_Helper(Level* L, Level* sub) {
     assert(sub == TOP_LEVEL);  // currently sub must be pushed & top level
@@ -94,9 +99,11 @@ INLINE Bounce Continue_Sublevel_Helper(Level* L, Level* sub) {
     DELEGATE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
 
 #define DELEGATE_BRANCH(out,...) \
-    DELEGATE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
+    DELEGATE_CORE((out), \
+        LEVEL_FLAG_FORCE_HEAVY_NULLS | LEVEL_FLAG_FORCE_SURPRISING, \
+        SPECIFIED, __VA_ARGS__)
 
 #define DELEGATE_SUBLEVEL(sub) \
     (assert(Not_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES)), \
         Continue_Sublevel_Helper(level_, (sub)), \
-        BOUNCE_DELEGATE)
+        /* <- */ BOUNCE_DELEGATE)

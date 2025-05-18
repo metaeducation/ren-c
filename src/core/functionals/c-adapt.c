@@ -209,5 +209,6 @@ DECLARE_NATIVE(ADAPT)
     );
     Tweak_Cell_Binding(rebound, Cell_List_Binding(prelude));
 
-    return Init_Action(OUT, details, Cell_Frame_Label_Deep(adaptee), UNBOUND);
+    Init_Action(OUT, details, Cell_Frame_Label_Deep(adaptee), UNBOUND);
+    return UNSURPRISING(OUT);
 }

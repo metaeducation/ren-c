@@ -340,7 +340,7 @@ DECLARE_NATIVE(CONSOLE)
     // 3. This once used a ^GROUP! to reduce the amount of code on the stack
     //    which the user might see in a backtrace.  So instead of:
     //
-    //        metaresult: meta eval:undecayed [print "hi"]
+    //        ^metaresult: eval [print "hi"]
     //
     //    It would just execute the code directly:
     //
@@ -386,12 +386,12 @@ DECLARE_NATIVE(CONSOLE)
         "sys.util/rescue [",  // pollutes stack trace [3]
             "catch* 'quit* [",  // definitional quit (customized THROW) [4]
                 "sys.contexts.user.quit: sys.util/make-quit:console :quit*",
-                "metaresult: meta eval:undecayed code",
+                "^metaresult: eval code",
             "] then caught -> [",  // QUIT wraps QUIT* to only throw integers
-                "metaresult: caught",  // INTEGER! due to /CONSOLE, out of band
+                "metaresult: caught",  // INTEGER! due to :CONSOLE, out of band
             "]",
-        "] then error -> [",
-            "metaresult: error",  // ERROR! out of band
+        "] then warning -> [",
+            "metaresult: warning",  // non-meta WARNING! out of band
         "]"
     );
 

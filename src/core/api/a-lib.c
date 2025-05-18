@@ -1128,7 +1128,7 @@ static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
     Level* L = Make_Level(&Evaluator_Executor, feed, LEVEL_MASK_NONE);
-    Init_Void(Evaluator_Primed_Cell(L));
+    Init_Unsurprising_Ghost(Evaluator_Primed_Cell(L));
 
     if (run_flags & RUN_VA_FLAG_INTERRUPTIBLE)
         L->flags.bits &= (~ LEVEL_FLAG_UNINTERRUPTIBLE);
@@ -1346,7 +1346,7 @@ void API_rebPushContinuation_internal(
         Tweak_Cell_Binding(block, g_lib_context);  // [3]
 
     Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
-    Init_Void(Evaluator_Primed_Cell(L));
+    Init_Unsurprising_Ghost(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
 }
 
@@ -3088,7 +3088,10 @@ Bounce Api_Function_Dispatcher(Level* const L)
     //    which is currently not legal.  Some rules and tightening would
     //    be needed, so for now we do `rebContinue("pack [...]")`
     //
-    // 3. While it might seem more obvious for `return "some string"` to
+    // 3. If a native does `return rebValue("lambda [x] [x]")` that should
+    //    count as an "unsurprising" function result.  Preserve the flag.
+    //
+    // 4. While it might seem more obvious for `return "some string"` to
     //    give back a text string, it's actually far more useful to run
     //    UTF-8 returns as delegated code:
     //
@@ -3110,7 +3113,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
         Value* result = cast(Value*, Atom_From_Bounce(bounce));
         Assert_Cell_Stable(result);  // can't make unstable directly [2]
         assert(Is_Api_Value(result));  // rebArg(), other violators?
-        Copy_Cell(L->out, result);
+        Copy_Cell_Core(L->out, result, CELL_MASK_THROW);  // unsurprising [3]
         rebRelease(result);
         goto typecheck_out;
     }
@@ -3127,7 +3130,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
     PointerDetect detect = Detect_Rebol_Pointer(bounce);
 
-    if (detect == DETECTED_AS_UTF8) {  // runs code! [3]
+    if (detect == DETECTED_AS_UTF8) {  // runs code! [4]
         const char* cp = cast(const char*, bounce);
         if (cp[0] == '~' and cp[1] == '\0') {
             Init_Trash(L->out);

@@ -369,7 +369,7 @@ help: func [
 
     switch:type topic [
         group! [
-            help-value eval:undecayed topic
+            help-value eval topic
         ]
 
         word! tuple! path! [

@@ -48,7 +48,7 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
     FLAG_LEFT_BIT(2)
 
 
-//=//// LEVEL_FLAG_BRANCH /////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_FORCE_HEAVY_NULLS //////////////////////////////////////=//
 //
 // If something is a branch and it is evaluating, then it cannot result in
 // either a pure null or void result.  So they have to be put in a PACK!.
@@ -57,7 +57,7 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 // not, this would require a separate continuation callback to do it.  So
 // routines like IF would not be able to just delegate to another level.
 //
-#define LEVEL_FLAG_BRANCH \
+#define LEVEL_FLAG_FORCE_HEAVY_NULLS \
     FLAG_LEFT_BIT(3)
 
 
@@ -74,13 +74,12 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == NODE_FLAG_CELL);
 
 
-//=//// LEVEL_FLAG_5 ///////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_FORCE_SURPRISING ///////////////////////////////////////=//
 //
-// Temporarily ACTION_EXECUTOR_FLAG_DOING_PICKUPS because action executor
-// flags are scarce.  The action executor design needs review to see if it
-// can use fewer flags.
+// When you DELEGATE to a level to do work, you don't get a chance to clear
+// the unsurprising flag on the output cell.  This makes the trampoline do it.
 //
-#define LEVEL_FLAG_5 \
+#define LEVEL_FLAG_FORCE_SURPRISING \
     FLAG_LEFT_BIT(5)
 
 

@@ -1044,7 +1044,7 @@ DECLARE_NATIVE(INFIX)
     else
         Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_TIGHT);
 
-    return OUT;
+    return UNSURPRISING(OUT);
 }
 
 

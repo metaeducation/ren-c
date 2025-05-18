@@ -105,10 +105,6 @@
 //    value pointer...hence it needs to be stored somewhere.  So the group
 //    executor expects it to be preloaded into SPARE, or be unreadable.
 //
-// 2. The Trampoline has some sanity checking asserts that try to stop you
-//    from making mistakes.  Because this does something weird to use the
-//    OUT cell as `with` the LEVEL_FLAG_BRANCH was taken off at the callsite.
-//
 Bounce The_Group_Branch_Executor(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
@@ -140,6 +136,13 @@ Bounce The_Group_Branch_Executor(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    // 1. The Trampoline has some sanity checking asserts that try to stop you
+    //    from making mistakes.  Because this does something weird to use the
+    //    OUT cell as `with` the LEVEL_FLAG_FORCE_HEAVY_NULLS was taken off at
+    //    the callsite.
+    //
+    // 2. For as long as the evaluator is running, its out cell is GC-safe.
+
     if (Is_Cell_Erased(with))
         Init_Nulled(with);
 
@@ -147,10 +150,10 @@ Bounce The_Group_Branch_Executor(Level* const L)
         &Evaluator_Executor,
         LEVEL->feed,
         LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
-            & (~ LEVEL_FLAG_BRANCH)  // take off branch flag [2]
+            & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS)  // take off branch flag [1]
     );
     Init_Void(Evaluator_Primed_Cell(sub));
-    Push_Level_Erase_Out_If_State_0(branch, sub);  // branch GC-protected during evaluation
+    Push_Level_Erase_Out_If_State_0(branch, sub);  // branch GC-protected [2]
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
     return CONTINUE_SUBLEVEL(sub);

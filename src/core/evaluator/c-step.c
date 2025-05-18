@@ -142,17 +142,9 @@
 // reified FRAME! objects to the user.  Now that Levels and Frames are
 // distinct, this should be revisited.
 
-// !!! Evil Macro, repeats parent!
-//
-STATIC_ASSERT(
-    EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
-    == ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
-);
 
 #define Make_Action_Sublevel(parent) \
-    Make_Level(&Action_Executor, (parent)->feed, \
-        LEVEL_FLAG_ERROR_RESULT_OK \
-        | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH))
+    Make_Level(&Action_Executor, (parent)->feed, LEVEL_FLAG_ERROR_RESULT_OK)
 
 
 // When a SET-BLOCK! is being processed for multi-returns, it may encounter
@@ -326,8 +318,8 @@ Bounce Meta_Stepper_Executor(Level* L)
       case ST_STEPPER_TIE_EVALUATING_RIGHT_SIDE:
         goto tie_rightside_meta_in_out;
 
-      case ST_STEPPER_LIFT_EVALUATING_RIGHT_SIDE:
-        goto lift_rightside_meta_in_out;
+      case ST_STEPPER_APPROVE_EVALUATING_RIGHT_SIDE:
+        goto approval_rightside_meta_in_out;
 
     #if RUNTIME_CHECKS
       case ST_STEPPER_FINISHED_DEBUG:
@@ -755,28 +747,37 @@ Bounce Meta_Stepper_Executor(Level* L)
 } case TYPE_ISSUE: { //// LIFTED ISSUE! /////////////////////////////////////
 
     if (Is_Sigil(CURRENT, SIGIL_LIFT))
-        goto handle_unafraid_sigil;  // special handling for lone ^
+        goto handle_action_approval_sigil;  // special handling for lone ^
 
     return PANIC("Don't know what ^ISSUE! is going to do yet (besides ^)");
 
-} handle_unafraid_sigil: {  //// "UNAFRAID" Lifted Space Sigil (^) ///////////
+} handle_action_approval_sigil: {  //// "APPROVE" Lifted Space Sigil (^) /////
 
-    // [^] is used to make "surprising ghosts" vanish, e.g. products from
-    // functions that returned a GHOST!, but don't *always* return GHOST!.
+    // [^] is used to turn "surprising actions" into "unsurprising actions".
     //
     // See CELL_FLAG_OUT_HINT_UNSURPRISING for more details.
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)
-        goto lift_rightside_meta_in_out;
+        goto approval_rightside_meta_in_out;
 
-    STATE = ST_STEPPER_LIFT_EVALUATING_RIGHT_SIDE;
+    STATE = ST_STEPPER_APPROVE_EVALUATING_RIGHT_SIDE;
     return CONTINUE_SUBLEVEL(right);
 
-} lift_rightside_meta_in_out: {
+} approval_rightside_meta_in_out: {
+
+    // 1. It does not also turn "surprising ghosts" into "unsurprising ghosts",
+    //    because that would conflate the functionality to where if you used ^
+    //    you could either be saying "I approve this as an action" or "I want
+    //    to allow the entire structure of this code to be disrupted".  Ghosts
+    //    are the lower-priority feature, so they are not affected by the ^.
+    //
+    //    (Possibly ^ should turn surprising ghosts into voids, but it should
+    //    definitely not turn surprising ghosts into unsurprising ghosts.)
 
     Meta_Unquotify_Undecayed(OUT);
-    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // see flag notes
+    if (Is_Action(OUT))  // do not make ghosts unsurprising, just actions [1]
+        Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // see flag notes
     goto lookahead;
 
 
@@ -1116,18 +1117,21 @@ Bounce Meta_Stepper_Executor(Level* L)
     // Groups simply evaluate their contents, and can evaluate to GHOST! if
     // the contents completely disappear.
     //
-    // 1. We prime the array executor with ghost in order to avoid generating
-    //    voids from thin air when using GROUP!s
+    // 1. If you say just `()` then that creates an "unsurprising ghost":
     //
-    //        >> 1 + 2 (comment "hi")
-    //        == 3  ; e.g. not void
+    //        >> eval [1 + 2 ()])
+    //        == 3
     //
-    // 2. If you say just `()` then that creates an "unsurprising ghost", so
-    //    that (eval [1 + 2 ()]) is 3.
+    //    If more unsurprising ghosts vaporize in the Evaluator_Executor(),
+    //    the result that will fall out is that original unsurprising ghost:
+    //
+    //        >> 1 + 2 (elide "we all vanish" comment "unsurprisingly")
+    //        we all vanish
+    //        == 3
 
     L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;  // [2]
+    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;
 
     Level* sub = Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
@@ -1137,8 +1141,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     );
 
     Atom* primed = Evaluator_Primed_Cell(sub);
-    Init_Ghost(primed);  // want to vaporize ghosts [1]
-    Set_Cell_Flag(primed, OUT_HINT_UNSURPRISING);  // () not "surprising" [2]
+    Init_Unsurprising_Ghost(primed);  // want to vaporize if all ghosts [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return CONTINUE_SUBLEVEL(sub);

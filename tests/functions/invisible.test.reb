@@ -10,8 +10,8 @@
 ('~,~ = (meta comment "a"))
 ((quote '~,~) = meta (meta comment "a"))
 
-('~,~ = meta eval:undecayed [comment "a"])
-((quote '~,~) = meta (meta eval:undecayed [comment "a"]))
+('~,~ = meta eval [comment "a"])
+((quote '~,~) = meta (meta eval [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be infix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -51,7 +51,7 @@
     1 = eval [1 elide "a"]
 )
 (
-    '~,~ = ^ eval:undecayed [elide "a"]
+    '~,~ = ^ eval [elide "a"]
 )
 (ghost? elide "a")
 ('~,~ = ^ elide "a")
@@ -132,7 +132,7 @@
 ]
 
 (
-    void? eval:undecayed [|||]
+    void? eval [|||]
 )
 (
     3 = eval [1 + 2 ||| 10 + 20, 100 + 200]

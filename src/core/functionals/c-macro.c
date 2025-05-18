@@ -226,7 +226,8 @@ DECLARE_NATIVE(MACRO)
     if (e)
         return PANIC(unwrap e);
 
-    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    return UNSURPRISING(OUT);
 }
 
 

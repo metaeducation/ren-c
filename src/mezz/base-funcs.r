@@ -437,7 +437,7 @@ trap: func [
 
 count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
-    return: [any-value?]
+    return: [any-atom?]
     var [word!]
     limit [<opt-out> integer! issue!]
     body [block!]
@@ -457,11 +457,8 @@ count-up: func [
     ] else [
         limit
     ]
-    return cycle [  ; v-- want to use ^result: ...
-        result: meta cfor var start end 1 body except e -> [
-            return fail e
-        ]
-        if null? ^result [
+    return cycle [
+        ^result: cfor var start end 1 body else [
             return null  ; a BREAK was encountered
         ]
         if limit <> # [  ; Note: STOP:WITH not ^META, decays PACK! etc

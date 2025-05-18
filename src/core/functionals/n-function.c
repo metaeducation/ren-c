@@ -430,7 +430,8 @@ DECLARE_NATIVE(FUNCTION)
     if (e)
         return PANIC(unwrap e);
 
-    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    return UNSURPRISING(OUT);
 }
 
 
@@ -586,16 +587,42 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
 
     const TypesetByte* optimized = spec->misc.at_least_4;
 
-    possibly(Get_Cell_Flag(atom, OUT_HINT_UNSURPRISING));  // may get moved
-
     if (
         optimized[1] == 0  // more than one optimized type, surprising...
         and optimized[0] == u_cast(Byte, Type_Of(atom))
         and Type_Of(atom) != TYPE_PACK  // all PACK! are potentially surprising
     ){
+      #if RUNTIME_CHECKS
+        Details* details = Ensure_Level_Details(L);
+        if (
+            Get_Details_Flag(details, RAW_NATIVE)
+            and Not_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
+            and (Is_Action(atom) or Is_Ghost(atom))
+            and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
+            and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
+            and (details != Cell_Frame_Phase(LIB(LET)))  // review
+        ){
+            assert(!"NATIVE relies on typechecking for UNSURPRISING flag");
+        }
+      #endif
+
         Set_Cell_Flag(atom, OUT_HINT_UNSURPRISING);
     }
     else {
+      #if RUNTIME_CHECKS
+        Details* details = Ensure_Level_Details(L);
+        if (
+            Get_Details_Flag(details, RAW_NATIVE)
+            and Get_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
+            and (Is_Action(atom) or Is_Ghost(atom))
+            and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
+            and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
+            and (details != Cell_Frame_Phase(LIB(LET)))  // review
+        ){
+            assert(!"NATIVE relies on typechecking for SURPRISING flag");
+        }
+      #endif
+
         Clear_Cell_Flag(atom, OUT_HINT_UNSURPRISING);
     }
 

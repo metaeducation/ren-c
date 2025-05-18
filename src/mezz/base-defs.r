@@ -46,18 +46,19 @@ probe: func [
 
     return: "Same as the input value"
         [any-atom?]
-    ^value' [any-atom?]
+    ^atom [any-atom?]
 ][
     ; Remember this is early in the boot, so many things not defined.
 
-    write-stdout if antiform? ^value' [
-        unspaced [mold value' space space "; anti"]
+    write-stdout if antiform? ^atom [
+        ensure [quoted! quasiform!] atom
+        unspaced [atom _ _ "; anti"]
     ] else [
-        mold ^value'
+        mold ^atom
     ]
     write-stdout newline
 
-    return ^value'
+    return ^atom
 ]
 
 compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()

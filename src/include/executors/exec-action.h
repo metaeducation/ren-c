@@ -25,29 +25,6 @@
 #define EXECUTOR_ACTION &Action_Executor   // shorthand in Xxx_Executor_Flag()
 
 
-//=//// ACTION_EXECUTOR_FLAG_DOING_PICKUPS ////////////////////////////////=//
-//
-// If actions are invoked via path and use refinements in a different order
-// from how they appear in the frame's parameter definition, then the arguments
-// at the callsite can't be gathered in sequence.  Revisiting will be
-// necessary.  This flag is set while they are revisited, which is important
-// for Action_Executor() to know -and- the GC...since it means it must protect
-// *all* of the arguments--not just up thru `key`.
-//
-// Note: It was tried to do this with ST_ACTION_DOING_PICKUPS as a state byte,
-// which are not as scarce as executor flags.  But that overwrote the case
-// of ST_ACTION_FULFILLING_INFIX_FROM_OUT, and sometimes the infix argument
-// is actually a pickup (e.g. a refinement specialized to be the first
-// ordinary argument).  There's a good reason for INFIX_FROM_OUT to be a state
-// byte, so this moved to being a flag.
-//
-// Note: This flag only applies when not IN_DISPATCH, so could have a distinct
-// meaning during dispatch if desired (e.g. DELEGATE_CONTROL)
-//
-#define ACTION_EXECUTOR_FLAG_DOING_PICKUPS \
-    LEVEL_FLAG_5   // !!! temporary, was LEVEL_FLAG_25
-
-
 //=//// ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX //////////////////////=//
 //
 // !!! TEMPORARILY DISABLED (defined to 0) - SHORT ON FLAGS AND NEED FOR
@@ -138,19 +115,27 @@
     LEVEL_FLAG_27
 
 
-//=//// ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH ////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_DOING_PICKUPS ////////////////////////////////=//
 //
-// See EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH for an explanation.
+// If actions are invoked via path and use refinements in a different order
+// from how they appear in the frame's parameter definition, then the arguments
+// at the callsite can't be gathered in sequence.  Revisiting will be
+// necessary.  This flag is set while they are revisited, which is important
+// for Action_Executor() to know -and- the GC...since it means it must protect
+// *all* of the arguments--not just up thru `key`.
 //
-// !!! Does this need both an ACTION and EVAL executor flag?
+// Note: It was tried to do this with ST_ACTION_DOING_PICKUPS as a state byte,
+// which are not as scarce as executor flags.  But that overwrote the case
+// of ST_ACTION_FULFILLING_INFIX_FROM_OUT, and sometimes the infix argument
+// is actually a pickup (e.g. a refinement specialized to be the first
+// ordinary argument).  There's a good reason for INFIX_FROM_OUT to be a state
+// byte, so this moved to being a flag.
 //
-#define ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH \
+// Note: This flag only applies when not IN_DISPATCH, so could have a distinct
+// meaning during dispatch if desired (e.g. DELEGATE_CONTROL)
+//
+#define ACTION_EXECUTOR_FLAG_DOING_PICKUPS \
     LEVEL_FLAG_28
-
-STATIC_ASSERT(
-    ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
-    == EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
-);
 
 
 //=//// ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES ///////////////////////////=//

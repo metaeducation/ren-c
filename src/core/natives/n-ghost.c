@@ -43,7 +43,7 @@ DECLARE_NATIVE(GHOST)
 {
     INCLUDE_PARAMS_OF_GHOST;
 
-    return GHOST;
+    return Init_Unsurprising_Ghost(OUT);
 }
 
 
@@ -99,14 +99,9 @@ DECLARE_NATIVE(GHOST_OR_VOID_Q)
 //
 DECLARE_NATIVE(COMMENT)
 {
-    INCLUDE_PARAMS_OF_COMMENT;
+    INCLUDE_PARAMS_OF_COMMENT;  // no ARG(SKIPPED), parameter is intrinsic
 
-    Init_Ghost(OUT);
-
-    possibly(Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC));
-    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // if intrinsic no return check
-
-    return OUT;
+    return Init_Unsurprising_Ghost(OUT);
 }
 
 
@@ -122,14 +117,9 @@ DECLARE_NATIVE(COMMENT)
 //
 DECLARE_NATIVE(ELIDE)
 {
-    INCLUDE_PARAMS_OF_ELIDE;
+    INCLUDE_PARAMS_OF_ELIDE;  // no ARG(DISCARDED), parameter is intrinsic
 
-    Init_Ghost(OUT);
-
-    possibly(Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC));
-    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // if intrinsic no return check
-
-    return OUT;
+    return Init_Unsurprising_Ghost(OUT);
 }
 
 

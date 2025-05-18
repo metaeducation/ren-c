@@ -49,13 +49,13 @@
 (
     x: 10
     all [
-        '~,~ = x: meta eval:undecayed []
+        '~,~ = x: meta eval []
         ghost? unmeta x
     ]
 )
 (
     x: 10
-    10 = (x eval:undecayed [])
+    10 = (x eval [])
 )
 
 [

@@ -915,5 +915,6 @@ DECLARE_NATIVE(UNCOUPLE)
 
     Tweak_Cell_Frame_Coupling(action_or_frame, UNCOUPLED);
 
-    return Actionify(COPY(action_or_frame));
+    Actionify(Copy_Cell(OUT, action_or_frame));
+    return UNSURPRISING(OUT);
 }

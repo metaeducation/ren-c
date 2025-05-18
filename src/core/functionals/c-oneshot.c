@@ -167,5 +167,6 @@ DECLARE_NATIVE(N_SHOT)
     );
     Init_Integer(Details_At(details, IDX_ONESHOT_COUNTER), n);
 
-    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    return UNSURPRISING(OUT);
 }

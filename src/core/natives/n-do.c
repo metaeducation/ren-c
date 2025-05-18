@@ -65,6 +65,7 @@ DECLARE_NATIVE(REEVAL)
     if (Trampoline_Throws(OUT, sub))  // review: rewrite stackless
         return THROWN;
 
+    Clear_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);
     return Meta_Unquotify_Undecayed(OUT);
 }
 
@@ -253,7 +254,6 @@ DECLARE_NATIVE(SHOVE)
 //          warning!  ; panic on the error
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
-//      :undecayed "Don't convert VOID or COMMA! antiforms to VOID"
 //      :step "Do one step of evaluation (return null position if at tail)"
 //  ]
 //
@@ -318,8 +318,6 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         }
         goto single_step_meta_in_out;
 
-      case ST_EVALUATE_RUNNING_TO_END:
-        goto result_in_out;
 
       default: assert(false);
     }
@@ -331,8 +329,21 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    or any other variation.  Should lists vary their behavior?  It
     //    has been considered to make GROUP!s be ghostable and BLOCK!s not
     //    so that it's guided by the type, but that's likely not useful.
+    //
+    // 2. EVAL can return any result, including GHOST!.  We don't want to be
+    //    too casual about ghosts vanishing, e.g.:
+    //
+    //        ^result: (mode: <processing> eval code)
+    //
+    //    If that EVAL returns a GHOST!, we wouldn't want result to get the
+    //    <processing> tag as its value.  Hence the ghosts that EVAL returns
+    //    must be "surprising" so Evaluator_Executor() doesn't erase them.
+    //
+    //    (We can't count on the RETURN: type check to do this, because
+    //    natives do not run typechecking in release builds.)
 
-    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;
+    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK \
+        | LEVEL_FLAG_FORCE_SURPRISING;
 
     Level* sub = Make_Level_At(
         Bool_ARG(STEP) ? &Meta_Stepper_Executor : &Evaluator_Executor,
@@ -340,16 +351,11 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         flags
     );
     if (not Bool_ARG(STEP))
-        Init_Void(Evaluator_Primed_Cell(sub));
+        Init_Surprising_Ghost(Evaluator_Primed_Cell(sub));  // don't vanish [2]
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    if (not Bool_ARG(STEP)) {  // plain evaluation to end, maybe void
-        if (Bool_ARG(UNDECAYED))
-            return DELEGATE_SUBLEVEL(sub);
-
-        STATE = ST_EVALUATE_RUNNING_TO_END;
-        return CONTINUE_SUBLEVEL(sub);  // need callback to decay
-    }
+    if (not Bool_ARG(STEP))  // plain evaluation to end, maybe void/ghost
+        return DELEGATE_SUBLEVEL(sub);
 
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
 
@@ -420,7 +426,6 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Level* sub = Make_Level(  // need to do evaluation in a sublevel [3]
         &Evaluator_Executor, L->feed, LEVEL_MASK_NONE
     );
-    Init_Void(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 
@@ -449,14 +454,6 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Drop_Level(SUBLEVEL);
 
     Tweak_Cell_Binding(source, binding);  // integrate LETs [1]
-    goto result_in_out;
-
-} result_in_out: {  //////////////////////////////////////////////////////////
-
-    if (not Bool_ARG(UNDECAYED)) {
-        if (Is_Ghost(OUT))
-            Init_Void(OUT);
-    }
 
     if (Bool_ARG(STEP)) {
         Source* pack = Make_Source_Managed(2);
@@ -478,7 +475,6 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 //
 //      return: [any-atom?]
 //      frame [frame!]
-//      :undecayed "Don't convert VOID or COMMA! antiforms to VOID"
 //  ]
 //
 DECLARE_NATIVE(EVAL_FREE)
@@ -539,20 +535,13 @@ DECLARE_NATIVE(EVAL_FREE)
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
-    if (Bool_ARG(UNDECAYED))
-        return DELEGATE_SUBLEVEL(L);
-
     STATE = ST_EVAL_FREE_EVALUATING;
     return CONTINUE_SUBLEVEL(L);
 
 } result_in_out: { ///////////////////////////////////////////////////////////
 
-    Diminish_Stub(Cell_Frame_Phase(frame));  // the "FREE" of EVAL-FREE
-
-    if (not Bool_ARG(UNDECAYED)) {
-        if (Is_Ghost_Or_Void(OUT))
-            Init_Void(OUT);
-    }
+    /*Diminish_Stub(Cell_Frame_Phase(frame));  // the "FREE" of EVAL-FREE*/
+    // fix
 
     return OUT;
 }}

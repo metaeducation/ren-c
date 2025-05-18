@@ -81,7 +81,7 @@ DECLARE_NATIVE(DOES)
     Value* source = ARG(SOURCE);
 
     if (Is_Block(source))
-        return rebValue(CANON(LAMBDA), g_empty_block, source);
+        return rebDelegate(CANON(LAMBDA), g_empty_block, source);
 
     assert(!"DOES with types other than BLOCK! not currently active");  // [1]
 
@@ -97,5 +97,7 @@ DECLARE_NATIVE(DOES)
     Copy_Cell(Varlist_Slot(exemplar, 2), source);
 
     const Symbol* label = CANON(EVALUATE);  // !!! Better answer?
-    return Init_Action(OUT, exemplar, label, NONMETHOD);
+
+    Init_Action(OUT, exemplar, label, NONMETHOD);
+    return UNSURPRISING(OUT);
 }

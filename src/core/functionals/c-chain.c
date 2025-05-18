@@ -278,8 +278,6 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
 {
     INCLUDE_PARAMS_OF_CASCADE_P;
 
-    Atom* out = OUT;  // plan ahead for factoring into Cascade_Action(out..
-
     Element* pipeline = Element_ARG(PIPELINE);
     const Element* tail;
     const Element* first = Cell_List_At(&tail, pipeline);
@@ -305,5 +303,7 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
         pipeline
     );
 
-    return Init_Action(out, details, Cell_Frame_Label_Deep(first), NONMETHOD);
+    Init_Action(OUT, details, Cell_Frame_Label_Deep(first), NONMETHOD);
+
+    return UNSURPRISING(OUT);
 }

@@ -44,7 +44,7 @@
         return ~,~
     ]
     outer: enclose inner/ func [return: [quoted! quasiform!] f] [
-        return meta (eval-free:undecayed f)  ; don't unquote it here
+        return meta (eval-free f)  ; don't unquote it here
     ]
     all [
         '~,~ = outer
@@ -57,7 +57,7 @@
         return ~,~
     ]
     /outer: enclose inner/ func [return: [ghost! any-value?] f] [
-        return eval-free:undecayed f  ; now try unquoting
+        return eval-free f  ; now try unquoting
     ]
     all [
         '~,~ = ^(outer)

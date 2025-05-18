@@ -281,5 +281,6 @@ DECLARE_NATIVE(ARROW)
 
     Copy_Cell(Array_At(details, IDX_ARROW_BODY), body);
 
-    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    return UNSURPRISING(OUT);
 }

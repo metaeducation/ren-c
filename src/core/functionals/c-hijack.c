@@ -342,10 +342,12 @@ DECLARE_NATIVE(HIJACK)
     if (victim_unimplemented)
         return TRASH;
 
-    return Init_Action(
+    Init_Action(
         OUT,
         proxy,  // after Swap_Flex_Content(), new identity for victim
         Cell_Frame_Label(ARG(VICTIM)),
         Cell_Frame_Coupling(ARG(VICTIM))
     );
+
+    return UNSURPRISING(OUT);
 }

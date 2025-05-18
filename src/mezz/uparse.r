@@ -116,7 +116,7 @@ bind construct [
         either f.state.hook [
             run f.state.hook f
         ][
-            eval-free:undecayed f
+            eval-free f
         ]
     ]
 ][
@@ -191,7 +191,7 @@ bind construct [
                         <local> ^result remainder subpending
                     ][
                         [^result remainder subpending]:
-                            eval-free:undecayed f2 except e -> [
+                            eval-free f2 except e -> [
                                 return fail e
                             ]
                         pending: glom pending spread subpending
@@ -1463,7 +1463,7 @@ default-combinators: to map! reduce [
 
         pending: blank
 
-        ^result: eval:undecayed value
+        ^result: eval value
 
         case [
             error? ^result [
@@ -2960,7 +2960,7 @@ parse*: func [
     f.rule-end: null
 
     sys.util/rescue:relax [  ; :RELAX allows RETURN from block
-        [^synthesized remainder pending]: eval:undecayed f except e -> [
+        [^synthesized remainder pending]: eval f except e -> [
             assert [empty? state.loops]
             pending: blank  ; didn't get assigned due to error
             return fail e  ; wrappers catch
@@ -2991,7 +2991,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     "Process input in the parse dialect, definitional error on failure"
 ] ]
     enclose parse*/ func [f] [
-        let [^synthesized pending]: eval-free:undecayed f except e -> [
+        let [^synthesized pending]: eval-free f except e -> [
             return fail e
         ]
         if not empty? pending [
@@ -3055,7 +3055,7 @@ parse-trace-hook: func [
         print ["RULE:" mold spread copy:part f.rule-start f.rule-end]
     ]
 
-    let ^result: eval:undecayed f except e -> [
+    let ^result: eval f except e -> [
         print ["RESULT': FAIL"]
         return fail e
     ]
@@ -3073,7 +3073,7 @@ parse-furthest-hook: func [
     f [frame!]
     var [word! tuple!]
 ][
-    let [result]: eval:undecayed f except e -> [
+    let ^result: eval f except e -> [
         return fail e
     ]
 

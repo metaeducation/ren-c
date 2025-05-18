@@ -1,12 +1,12 @@
 //
 //  file: %c-action.c
-//  summary: "Central Interpreter Evaluator"
+//  summary: "Central Action Executor"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -354,8 +354,13 @@ Bounce Action_Executor(Level* L)
             STATE = ST_ACTION_FULFILLING_ARGS;
 
             if (Is_Cell_Erased(OUT)) {  // "nothing" to left, but [1]
-                if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
+
+                if (
+                    L->prior->executor == &Action_Executor
+                    and Get_Executor_Flag(EVAL, L->prior, DIDNT_LEFT_QUOTE_PATH)
+                ){
                     return PANIC(Error_Literal_Left_Path_Raw());  // [2]
+                }
 
                 if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // empty is ok [3]
                     Init_Varargs_Untyped_Infix(ARG, nullptr);
@@ -839,8 +844,12 @@ Bounce Action_Executor(Level* L)
     Corrupt_If_Debug(L->u.action.param);
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {  // can happen [2]
-        if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))  // see notes
+        if (
+            L->prior->executor == &Meta_Stepper_Executor
+            and Get_Executor_Flag(EVAL, L->prior, DIDNT_LEFT_QUOTE_PATH)
+        ){  // see notes
             return PANIC(Error_Literal_Left_Path_Raw());
+        }
 
         assert(Is_Level_Infix(L));
     }
@@ -881,7 +890,7 @@ Bounce Action_Executor(Level* L)
     else if (Is_Bounce_An_Atom(b)) {  // Cell pointer (must be Api cell)
         Atom* r = Atom_From_Bounce(b);
         assert(Is_Api_Value(r));
-        Copy_Cell(OUT, r);
+        Copy_Cell_Core(OUT, r, CELL_MASK_THROW);  // keep unsurprising bit
         Release_Api_Value_If_Unmanaged(r);
     }
     else if (Is_Bounce_Wild(b)) switch (Bounce_Type(b)) {
@@ -983,7 +992,8 @@ Bounce Action_Executor(Level* L)
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)  // [1]
         return PANIC("Left lookback toward thing that took no args");
 
-    Clear_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);  // [2]
+    if (L->prior->executor == &Meta_Stepper_Executor)
+        Clear_Executor_Flag(EVAL, L->prior, DIDNT_LEFT_QUOTE_PATH);  // [2]
 
     Drop_Action(L);  // must panic before Drop_Action()
 

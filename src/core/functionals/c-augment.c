@@ -135,5 +135,6 @@ DECLARE_NATIVE(AUGMENT)
     assert(Misc_Phase_Adjunct(paramlist) == nullptr);
     Tweak_Misc_Phase_Adjunct(paramlist, adjunct);
 
-    return Init_Action(OUT, paramlist, label, coupling);
+    Init_Action(OUT, paramlist, label, coupling);
+    return UNSURPRISING(OUT);
 }}

@@ -84,12 +84,9 @@ enum {
 //        >> 1 + 2 test2
 //        == 3
 //
-//    But if anything is seen--even a void--then the lambda won't vanish:
-//
-//        test3: lambda [] [void comment "only the comment vaporizes"]
-//
-//        >> 1 + 2 test3
-//        == ~[]~  ; anti
+//    It's an "unsurprising" ghost, hence you don't see ~,~ antiforms as
+//    the result as a precaution.  The lambda will vanish if the code would
+//    have vanished as a GROUP! in the evaluator.
 //
 Bounce Lambda_Dispatcher(Level* const L)
 {
@@ -113,7 +110,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     Level* sub = Make_Level_At_Core(
         &Evaluator_Executor, block_rebound, SPECIFIED, flags
     );
-    Init_Ghost(Evaluator_Primed_Cell(sub));  // lambdas willing to vanish [1]
+    Init_Unsurprising_Ghost(Evaluator_Primed_Cell(sub));  // allow vanish [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
@@ -184,5 +181,6 @@ DECLARE_NATIVE(LAMBDA)
     if (e)
         return PANIC(unwrap e);
 
-    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    return UNSURPRISING(OUT);
 }

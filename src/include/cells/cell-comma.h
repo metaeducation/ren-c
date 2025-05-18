@@ -74,11 +74,22 @@ INLINE Element* Init_Comma_Untracked(Init(Element) out) {
 // evaluation can be preserved.
 //
 
-INLINE Atom* Init_Ghost_Untracked(Init(Atom) out) {
+INLINE Atom* Init_Ghost_Untracked(Init(Atom) out, bool surprising) {
     Init_Comma_Untracked(out);
     QUOTE_BYTE(out) = ANTIFORM_0_COERCE_ONLY;
+    if (not surprising)
+        Set_Cell_Flag(out, OUT_HINT_UNSURPRISING);
     return out;
 }
 
-#define Init_Ghost(out) \
-    TRACK(Init_Ghost_Untracked(out))
+#define Init_Surprising_Ghost(out) \
+    TRACK(Init_Ghost_Untracked((out), true))
+
+#define Init_Unsurprising_Ghost(out) \
+    TRACK(Init_Ghost_Untracked((out), false))
+
+INLINE Atom* UNSURPRISING(Atom* atom) {
+    assert(Is_Ghost(atom) or Is_Action(atom));
+    Set_Cell_Flag(atom, OUT_HINT_UNSURPRISING);
+    return atom;
+}
