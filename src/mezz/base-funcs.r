@@ -298,10 +298,10 @@ specialized?: func [
             ;
             panic [
                 "ENSURE failed with argument of type"
-                    (mold reify try type of :f.value) else ["VOID"]
+                    (mold reify try type of f.value) else ["VOID"]
             ]
         ]
-        :f.value
+        f.value
     ]
 )
 
@@ -314,8 +314,8 @@ specialized?: func [
 ](
     enclose match/ func [f] [
         eval f then [return null]
-        if f.meta [return meta :f.value]
-        return :f.value
+        if f.meta [return meta f.value]
+        return f.value
     ]
 )
 
@@ -330,10 +330,10 @@ specialized?: func [
             ;
             panic [
                 "PROHIBIT failed with argument of type"
-                    (mold reify try type of :f.value) else ["NULL"]
+                    (mold reify try type of f.value) else ["NULL"]
             ]
         ]
-        :f.value
+        f.value
     ]
 )
 
@@ -408,12 +408,12 @@ trap: func [
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
             let result
-            trap [result: eval f] then e -> [
+            trap [^result: eval f] then e -> [
                 set word f.series
                 panic e
             ]
             set word f.series
-            :result
+            ^result
         ]
 
         return (eval f, elide set word f.series)
@@ -568,7 +568,7 @@ fail: func [
         [word! frame!]
 ][
     if tripwire? get:any $reason [
-        reason: as text! unquasi ^reason  ; antiform tag! ~<unreachable>~
+        reason: as text! meta:lite reason  ; antiform tag! ~<unreachable>~
     ]
     all [warning? reason, not blame] then [
         return fail* reason  ; fast shortcut
@@ -586,7 +586,7 @@ fail: func [
     ;
     ;     panic:with ["The key" :key-name "is invalid"] [key-name: key]
 
-    let error: switch:type :reason [
+    let error: switch:type reason [
         warning! [reason]
         word?:pinned/ [
             blame: default [to word! reason]

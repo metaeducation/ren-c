@@ -511,13 +511,13 @@ what: func [
     ; copy to get around error: "temporary hold for iteration"
     let ctx: (copy opt select system.modules opt name) else [lib]
 
-    for-each [word val] ctx [
+    for-each [word ^val] ctx [
         ; word val
-        if (activation? :val) or (action? :val) [
+        if action? ^val [
             arg: either args [
-                mold words of :val
+                mold words of ^val
             ][
-                description-of :val else ["(undocumented)"]
+                description-of ^val else ["(undocumented)"]
             ]
             append list spread reduce [word arg]
             size: max size length of to-text word

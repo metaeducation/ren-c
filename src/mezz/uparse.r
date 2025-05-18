@@ -173,20 +173,20 @@ bind construct [
 
             pending: blank
             let in-args: 'no
-            for-each [key val] f [
+            for-each [key ^val] f [
                 if no? in-args [
                     if key = 'input [in-args: 'yes]
                     continue
                 ]
                 all [
-                    not unset? $val
-                    action? opt :val
+                    not trash? ^val
+                    action? opt ^val
                 ] then [
                     ; All parsers passed as arguments, we want it to be
                     ; rigged so that their results append to an aggregator in
                     ; the order they are run (if they succeed).
                     ;
-                    /f.(key): enclose (augment val/ [:modded]) func [
+                    /f.(key): enclose (augment ^val [:modded]) func [
                         f2
                         <local> ^result remainder subpending
                     ][
@@ -2159,19 +2159,19 @@ default-combinators: to map! reduce [
             [any-value? pack!]
         :pending [blank? block!]
         value [word! tuple!]
-        <local> r comb rule-start rule-end
+        <local> ^r comb rule-start rule-end
     ][
         rule-start: null
         rule-end: null
 
-        switch:type r: get value [
+        switch:type ^r: get value [
             ;
             ; BLOCK!s are accepted as rules, and looked up via combinator.
             ; Most common case, make them first to shortcut earlier.
             ;
             block! [
-                rule-start: r
-                rule-end: tail of r
+                rule-start: ^r
+                rule-end: tail of ^r
             ]
 
             ; These types are accepted literally (though they do run through
@@ -2212,8 +2212,8 @@ default-combinators: to map! reduce [
             ]
         ]
 
-        if not comb: select state.combinators (meta type of r) [
-            panic ["Unhandled type in WORD! combinator:" to word! type of r]
+        if not comb: select state.combinators (meta type of ^r) [
+            panic ["Unhandled type in WORD! combinator:" to word! type of ^r]
         ]
 
         ; !!! We don't need to call COMBINATORIZE because we can't handle
@@ -2222,7 +2222,7 @@ default-combinators: to map! reduce [
         ;
         ; !!! REVIEW: handle `rule-start` and `rule-end` ?
         ;
-        return [{_} remainder pending]: run comb state input :r
+        return [{_} remainder pending]: run comb state input ^r
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
@@ -2756,7 +2756,7 @@ parsify: func [
                 panic make warning! [type: 'script, id: 'bad-antiform]
             ]
 
-            if comb: match frame! :value [  ; variable held a combinator [4]
+            if comb: match frame! value [  ; variable held a combinator [4]
                 if combinator? :comb [
                     return combinatorize :comb rules state
                 ]

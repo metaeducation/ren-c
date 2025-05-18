@@ -39,7 +39,7 @@ last: redescribe [
     "Returns the last value of a series"
 ](
     specialize adapt pick/ [
-        picker: length of :location
+        picker: length of location
     ][
         picker: <removed-parameter>
     ]
@@ -97,11 +97,11 @@ trim: func [
         ]
         trimmed: make (type of series) collect [
             for-each [key val] series [
-                if not space? :val [keep key]
+                if not space? val [keep key]
             ]
         ]
         for-each [key val] series [
-            poke trimmed key :val
+            poke trimmed key val
         ]
         return trimmed
     ]

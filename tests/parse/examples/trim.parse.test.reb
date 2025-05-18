@@ -36,12 +36,12 @@ utrim: func [
             panic 'core/bad-refines
         ]
         trimmed: make (type of series) collect [
-            for-each [key val] series [
-                if not space? :val [keep key]
+            for-each [key ^val] series [
+                if not space? ^val [keep key]
             ]
         ]
         for-each [key val] series [
-            poke trimmed key :val
+            poke trimmed key val
         ]
         return trimmed
     ]

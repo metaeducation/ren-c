@@ -482,7 +482,7 @@ printf: func [
     fmt "Format"
     val "Value or block of values"
 ][
-    print format :fmt :val
+    print format fmt val
 ]
 
 
@@ -645,7 +645,7 @@ find-all: func [
 ][
     verify [any-series? orig: get series]
     while [any [
-        , set series find get series :value
+        , set series find get series value
         , (set series orig, false)  ; reset series and break loop
     ]][
         eval body

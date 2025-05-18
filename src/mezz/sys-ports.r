@@ -104,7 +104,7 @@ make-port*: func [
     ; an derived object via an object at this time.  Do it manually.
     ;
     for-each [key val] spec [
-        if not any [vacant? $val, null? :val, space? :val] [
+        if not any [vacant? $val, space? val] [
             set (extend port.spec key) val
         ]
     ]
@@ -227,7 +227,7 @@ make-scheme: func [
     if not scheme.name [cause-error 'access 'no-scheme-name scheme]
 
     ; If actor is block build a non-contextual actor object:
-    if block? :scheme.actor [
+    if block? scheme.actor [
         let actor: make object! (length of scheme.actor) / 4
         for-each [name op args body] scheme.actor [
             assert [
@@ -245,7 +245,7 @@ make-scheme: func [
         scheme.actor: actor
     ]
 
-    match [object! action!] :scheme.actor else [
+    match [object! action!] scheme.actor else [
         panic [
             "Scheme actor" scheme.name "can't be" to word! type of scheme.actor
         ]

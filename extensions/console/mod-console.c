@@ -261,7 +261,7 @@ DECLARE_NATIVE(CONSOLE)
     //    rebRequestHalt(), as basic startup cannot meaningfully be halted.
     //    The system would be in an incomplete state.)
 
-    rebElide("old-console: :system.console");  // !!! unfinished for debug [1]
+    rebElide("old-console: get:any $system.console");  // !!! for debug [1]
 
     rebElide(
         "if skin [system.console: null]",  // !!! needed for now
@@ -385,7 +385,7 @@ DECLARE_NATIVE(CONSOLE)
 
         "sys.util/rescue [",  // pollutes stack trace [3]
             "catch* 'quit* [",  // definitional quit (customized THROW) [4]
-                "sys.contexts.user.quit: sys.util/make-quit:console :quit*",
+                "sys.contexts.user.quit: sys.util/make-quit:console quit*/",
                 "^metaresult: eval code",
             "] then caught -> [",  // QUIT wraps QUIT* to only throw integers
                 "metaresult: caught",  // INTEGER! due to :CONSOLE, out of band

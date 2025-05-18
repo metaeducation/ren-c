@@ -21,10 +21,10 @@ verify: func [
         [<unrun> block! frame!]
     <local> pos result
 ][
-    while [[pos :result]: evaluate:step conditions] [
+    while [[pos ^result]: evaluate:step conditions else [return ghost]] [
         all [
-            not void? :result
-            not :result
+            not void? ^result
+            not ^result
 
             if handler [  ; may or may-not take two arguments
                 let ^reaction: if block? handler [
@@ -32,7 +32,7 @@ verify: func [
                 ] else [
                     apply:relax handler [  ; arity 0 or 1 is okay
                         copy:part conditions pos
-                        result
+                        ^result
                     ]
                 ]
 
@@ -48,7 +48,7 @@ verify: func [
                 type: 'script
                 id: 'assertion-failure
                 arg1: compose [
-                    (spread copy:part conditions pos) ** (reify result)
+                    (spread copy:part conditions pos) ** (reify ^result)
                 ]
             ] $conditions
         ]

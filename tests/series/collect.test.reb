@@ -29,7 +29,7 @@
                 line: ok
                 part: null
             ][
-                value: try spaced :value
+                value: try spaced value
             ]
             eval overbind $keep (body)
         ]
@@ -53,7 +53,7 @@
                     line: null
                     part: null
                 ][
-                    value: opt unspaced :value
+                    value: opt unspaced value
                 ]
                 eval overbind $keep (body)
             ]

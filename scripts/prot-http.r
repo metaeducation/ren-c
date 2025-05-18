@@ -654,8 +654,8 @@ sys.util/make-scheme [
             value
             <local> data
         ][
-            if not match [block! blob! text!] :value [
-                value: form :value
+            if not match [block! blob! text!] value [
+                value: form value
             ]
             if not block? value [
                 value: reduce [

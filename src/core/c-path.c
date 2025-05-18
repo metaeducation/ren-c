@@ -145,7 +145,7 @@ DECLARE_NATIVE(PICK)
 //
 //  poke: native [
 //
-//  "Perform a path poking operation, same as `(location).(picker): :value`"
+//  "Perform a path poking operation, same as `(location).(picker): ^value`"
 //
 //      return: "Input value, or propagated error (no assignment on errors)"
 //          [any-value? error!]

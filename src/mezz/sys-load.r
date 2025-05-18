@@ -456,7 +456,7 @@ bind construct [
 
     ; If URL is decorated source (syntax highlighting, etc.) get raw form.
     ;
-    (adjust-url-for-raw opt match url! :source) then adjusted -> [
+    (adjust-url-for-raw opt match url! source) then adjusted -> [
         source: adjusted  ; !!! https://forum.rebol.info/t/1582/6
     ]
 
@@ -550,7 +550,7 @@ bind construct [
         header: hdr
         parent: original-script
         path: dir
-        args: '(:args)  ; variable same name as field, trips up binding
+        args: '(args)  ; variable same name as field, trips up binding
     ]
 
     if (set? $script-pre-load-hook) and (match [file! url!] source) [

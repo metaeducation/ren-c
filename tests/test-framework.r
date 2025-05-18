@@ -100,10 +100,10 @@ run-single-test: func [
         quasi? result [
             "test returned antiform:" (mold:limit result 40)
         ]
-        (elide result: unmeta result)
+        (elide result: ^result)
 
         <default> [
-            spaced ["was" (to word! type of :result) ", not true or false"]
+            spaced ["was" (to word! type of result) ", not true or false"]
         ]
     ] then message -> [
         test-failures: me + 1
@@ -223,7 +223,7 @@ process-tests: func [
 
                 let [_ collected]: module void compose:deep [collect [
                     let /keep-test: adapt keep/ [
-                        if not block? :value [
+                        if not block? value [
                             panic "KEEP-TEST takes BLOCK! (acts as GROUP!)"
                         ]
                         value: quote as group! value

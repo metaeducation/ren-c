@@ -38,9 +38,9 @@ switch2: func [
                     log ["Testing condition:" mold condition]
 
                     let f: make frame! make varargs! condition
-                    for-each [key val] f [
-                        if unset? $val [
-                            f.(key): :value
+                    for-each [key ^val] f [
+                        if trash? ^val [
+                            f.(key): value
                             break
                         ]
                     ]

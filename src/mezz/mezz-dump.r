@@ -46,7 +46,7 @@ bind construct [
         ] else [
             let trunc
             append (
-                [_ trunc]: mold:limit :val system.options.dump-size
+                [_ trunc]: mold:limit val system.options.dump-size
             ) if trunc ["..."]
         ]
     ]
@@ -78,10 +78,10 @@ bind construct [
 
     let swp
     case [
-        swp: match [set-word? set-tuple?] :value [  ; `dump x: 1 + 2`
-            let [pos result]: evaluate:step extra
-            set swp :result
-            print [swp, result]
+        swp: match [set-word? set-tuple?] value [  ; `dump x: 1 + 2`
+            let [pos ^result]: evaluate:step extra
+            set swp ^result
+            print [swp, ^result]
         ]
 
         let b: match block! value [

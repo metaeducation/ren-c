@@ -219,9 +219,9 @@ emit: func [
         ]
         else [
             let result
-            if [code :result]: evaluate:step code [
-                if void? :result [continue]  ; invisible
-                append ctx.msg ensure blob! :result
+            if [code ^result]: evaluate:step code [
+                if void? ^result [continue]  ; invisible
+                append ctx.msg ensure blob! ^result
             ]
         ]
     ]

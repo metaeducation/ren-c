@@ -214,7 +214,7 @@ sqlform: func [
         ]
     ]
     else [
-        panic ["Invalid type for ODBC-EXECUTE dialect:" mold:limit :value 60]
+        panic ["Invalid type for ODBC-EXECUTE dialect:" mold:limit value 60]
     ]
 ]
 

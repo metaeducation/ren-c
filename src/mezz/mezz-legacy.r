@@ -28,10 +28,10 @@ REBOL: ~<The Rebol [] header of a script must be interpreted by LOAD (and
 input: ~<Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):
        https://forum.rebol.info/t/1124>~
 
-repend: ~<REPEND is just (adapt append/ [value: reduce :value]), and is not
+repend: ~<REPEND is just (adapt append/ [value: reduce value]), and is not
         provided in the box.>~
 
-remold: ~<REMOLD is just (adapt mold/ [value: reduce :value]), but is not
+remold: ~<REMOLD is just (adapt mold/ [value: reduce value]), but is not
         provided in the box.>~
 
 rejoin: ~<REJOIN is replaced in textual sceanarios by UNSPACED, but in more

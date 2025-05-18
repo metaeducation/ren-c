@@ -56,7 +56,7 @@ export to-c-name: func [
         #"_"
     ]
 
-    let string: either block? :value [unspaced value] [form value]
+    let string: either block? value [unspaced value] [form value]
 
     switch string [
         ; Used specifically by t-routine.c to make SYM_ELLIPSIS

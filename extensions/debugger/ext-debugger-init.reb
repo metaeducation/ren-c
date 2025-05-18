@@ -339,7 +339,7 @@ debug: func [
     'value "Stack level to inspect or dialect block, or enter debug mode"
         [<undo-opt> integer! frame! block!]
 ][
-    if not integer? :value [
+    if not integer? value [
         panic "Since switching to usermode, for now DEBUG only takes INTEGER!"
     ]
 

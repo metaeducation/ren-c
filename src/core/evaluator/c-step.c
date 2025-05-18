@@ -1025,11 +1025,13 @@ Bounce Meta_Stepper_Executor(Level* L)
       case LEADING_SPACE_AND(WORD):  // :FOO, refinement, error on eval?
         Unchain(CURRENT);
         STATE = ST_STEPPER_GET_WORD;
+        assert(!":WORD! meaning is likely to become TRY WORD!");
         goto handle_get_word;
 
       case LEADING_SPACE_AND(TUPLE):  // :a.b.c -- what will this do?
         Unchain(CURRENT);
         STATE = ST_STEPPER_GET_TUPLE;
+        assert(!":TUPLE! meaning is likely to become TRY TUPLE!");
         goto handle_get_tuple;
 
       case LEADING_SPACE_AND(BLOCK):  // !!! :[a b] reduces, not great...
@@ -1202,12 +1204,8 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto lookahead;  // e.g. EXCEPT might want error
     }
 
-    if (Is_Action(OUT)) {  // don't RAISE, conflates
-        if (blank_at_head)
-            goto run_action_in_out;
-
-        return PANIC(Error_Action_Tuple_Raw(CURRENT));
-    }
+    if (Is_Action(OUT))
+        assert(Not_Cell_Flag(OUT, OUT_HINT_UNSURPRISING));
 
     goto lookahead;
 
