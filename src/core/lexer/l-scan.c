@@ -1287,7 +1287,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (not e)
                 goto get_next_variadic_pointer;
 
-            Copy_Cell(PUSH(), unwrap e);
+            Copy_Cell_Core(PUSH(), unwrap e, CELL_MASK_THROW);
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -2352,7 +2352,18 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_WORD:
         assert(len != 0);
         Init_Word(PUSH(), Intern_UTF8_Managed(S->begin, len));
-        break;  // don't apply sigils yet (^a.b puts sigil on TUPLE!, not a)
+
+        if (Is_Interstitial_Scan(L)) {
+            Option(Error*) error = Trap_Apply_Pending_Decorations(
+                S, TOP_ELEMENT
+            );
+            if (error)
+                return FAIL(unwrap error);
+        }
+        else {
+            // don't apply sigils yet (^a.b puts sigil on TUPLE!, not a)
+        }
+        break;
 
       case TOKEN_RUNE: {
         Size mold_size = String_Size(mo->string) - mo->base.size;
@@ -3391,11 +3402,15 @@ DECLARE_NATIVE(TRANSCODE)
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // wanted the line number updated
+    if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // want line number updated
         Init_Integer(OUT, transcode->line);
-        Element* line_var = Copy_Cell(SCRATCH, Element_ARG(LINE));
-        if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, OUT))
+        Meta_Quotify(OUT);  // set uses meta protocol, will unquotify
+        Copy_Cell(SCRATCH, Element_ARG(LINE));  // LINE is a variable
+        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+            LEVEL, NO_STEPS, LIB(POKE_P)
+        )){
             return THROWN;
+        }
         UNUSED(*OUT);
     }
 

@@ -238,11 +238,11 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
 
     if (QUOTE_BYTE(v) == ANTIFORM_0) {
         Assert_Cell_Stable(v);
-        Copy_Meta_Cell(out, v);
+        Meta_Quotify(u_cast(Atom*, Copy_Cell_Core(out, v, CELL_MASK_THROW)));
         Set_Cell_Flag(out, FEED_NOTE_META);  // @ turns back [2]
     }
     else
-        Copy_Cell(out, c_cast(Element*, v));
+        Copy_Cell_Core(out, c_cast(Element*, v), CELL_MASK_THROW);
 
     return out;
 }

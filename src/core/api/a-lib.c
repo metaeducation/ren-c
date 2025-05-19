@@ -2490,7 +2490,8 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
             return c_cast(RebolNodeInternal*, g_quasi_null);
         }
 
-        Value* v = Copy_Cell(Alloc_Value(), at);
+        Value* v = Alloc_Value();
+        Copy_Cell_Core(v, at, CELL_MASK_THROW);
         stub = Compact_Stub_From_Cell(v);
         Set_Flavor_Flag(API, stub, RELEASE);
         break; }
@@ -3073,24 +3074,6 @@ Bounce Api_Function_Dispatcher(Level* const L)
     // 1. RebolContext accepts an Array* in the C++ build, but not the C build.
     //    So the cast is needed here.
     //
-    // 2. As of yet, no API functions have been exported which return an
-    //    unstable Atom directly.  If it did, it would have to return it as
-    //    a RebolBounce* not a Value*.  There's no particular reason why
-    //    we couldn't offer a `rebPack()` function that did give back a
-    //    pack, solely intended to use in the form `return rebPack(...)`,
-    //    but it hasn't yet happened...because even if it returned a Bounce
-    //    it would backed by an API cell form holding an unstable value,
-    //    which is currently not legal.  Some rules and tightening would
-    //    be needed, so for now we do `rebContinue("pack [...]")`
-    //
-    // 3. If a native does `return rebValue("lambda [x] [x]")` that should
-    //    count as an "unsurprising" function result.  Preserve the flag.
-    //
-    // 4. While it might seem more obvious for `return "some string"` to
-    //    give back a text string, it's actually far more useful to run
-    //    UTF-8 returns as delegated code:
-    //
-    //    https://forum.rebol.info/t/returning-a-string-from-a-native/2357
 
     assert(Is_Node_Managed(L->varlist));
     assert(Link_Inherit_Bind(L->varlist));  // must inherit from something (?)
@@ -3102,38 +3085,21 @@ Bounce Api_Function_Dispatcher(Level* const L)
         Cell_Handle_Cfunc(cfunc_handle)
     );
 
-    Bounce bounce = cast(Bounce, (*cfunc)(context));
-
-    if (Is_Bounce_An_Atom(bounce)) {
-        Value* result = cast(Value*, Atom_From_Bounce(bounce));
-        Assert_Cell_Stable(result);  // can't make unstable directly [2]
-        assert(Is_Api_Value(result));  // rebArg(), other violators?
-        Copy_Cell_Core(L->out, result, CELL_MASK_THROW);  // unsurprising [3]
-        rebRelease(result);
+    Bounce b = maybe Irreducible_Bounce(
+        L,
+        cast(Bounce, Apply_Cfunc(*cfunc, context))
+    );
+    if (not b)  // not irreducible, so final value in OUT cell
         goto typecheck_out;
-    }
 
-    if (bounce == BOUNCE_DELEGATE) {  // still need to type check
+    if (b == BOUNCE_DELEGATE) {  // still need to type check
         LEVEL_STATE_BYTE(L) = ST_API_FUNC_DELEGATING;
         return BOUNCE_CONTINUE;
     }
 
-    if (bounce == BOUNCE_CONTINUE) {  // wants callback after execution
+    if (b == BOUNCE_CONTINUE) {  // wants callback after execution
         LEVEL_STATE_BYTE(L) = ST_API_FUNC_CONTINUING;
         return BOUNCE_CONTINUE;
-    }
-
-    PointerDetect detect = Detect_Rebol_Pointer(bounce);
-
-    if (detect == DETECTED_AS_UTF8) {  // runs code! [4]
-        const char* cp = cast(const char*, bounce);
-        if (cp[0] == '~' and cp[1] == '\0') {
-            Init_Trash(L->out);
-            goto typecheck_out;  // make return "~" fast!
-        }
-        // ...could do other optimizations here...
-        LEVEL_STATE_BYTE(L) = ST_API_FUNC_DELEGATING;
-        return cast(Bounce, rebDelegateCore(context, cp));
     }
 
     return Native_Panic_Result(

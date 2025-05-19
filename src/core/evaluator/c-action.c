@@ -77,6 +77,80 @@
 #define level_ L  // for OUT, SPARE, STATE macros
 
 
+//
+//  Irreducible_Bounce: C
+//
+// This tries to simplify a bounce to get it to be just an Atom content in
+// the OUT cell, if possible.  Not all bounces can be simplified, but when
+// they can be this can save when delegating code, on needing to call a cycle
+// of trampoline.
+//
+Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
+    if (b == OUT) {  // common case, made fastest
+        assert(Is_Cell_Readable(OUT));  // must write output, even if just void
+        return nullptr;
+    }
+
+    if (b == nullptr) {  // API and internal code can both return `nullptr`
+        Init_Nulled(OUT);
+        return nullptr;
+    }
+
+    if (Is_Bounce_Wild(b))
+        return b;  // can't simplify, may be a panic, continuation, etc.
+
+    if (b == BOUNCE_OKAY) {  // BOUNCE_OKAY is just LIB(OKAY) (fixed pointer)
+        Init_Okay(OUT);  // ...optimization doesn't write OUT, but we do here
+        return nullptr;  // essential to typechecker intrinsic optimization...
+    }
+
+  copy_api_cell_to_out_and_release_it: {
+
+    // 1. As of yet, no API functions have been exported which return an
+    //    unstable Atom directly.  If it did, it would have to return it as
+    //    a RebolBounce* not a Value*.  There's no particular reason why
+    //    we couldn't offer a `rebPack()` function that did give back a
+    //    pack, solely intended to use in the form `return rebPack(...)`,
+    //    but it hasn't yet happened...because even if it returned a Bounce
+    //    it would backed by an API cell form holding an unstable value,
+    //    which is currently not legal.  Some rules and tightening would
+    //    be needed, so for now we do `rebContinue("pack [...]")`
+    //
+    // 2. If a native does `return rebValue("lambda [x] [x]")` that should
+    //    count as an "unsurprising" function result.  Preserve the flag.
+
+    if (Is_Bounce_An_Atom(b)) {  // Cell pointer (must be Api cell)
+        Atom* atom = Atom_From_Bounce(b);
+        assert(Is_Atom_Api_Value(atom));
+        Assert_Cell_Stable(atom);  // API cells always stable, for now [1]
+        Copy_Cell_Core(OUT, atom, CELL_MASK_THROW);  // keep unsurprising [2]
+        Release_Api_Value_If_Unmanaged(atom);
+        return nullptr;
+    }
+
+} turn_utf8_into_delegated_code: {
+
+    // While it might seem more obvious for `return "some string";` to give
+    // back a text string, it's actually far more useful to run UTF-8 returns
+    // as delegated code:
+    //
+    // https://forum.rebol.info/t/returning-a-string-from-a-native/2357
+
+    assert(Detect_Rebol_Pointer(b) == DETECTED_AS_UTF8);
+
+    const char* cp = cast(const char*, b);
+    if (cp[0] == '~' and cp[1] == '\0') {
+        Init_Trash(L->out);
+        return nullptr;  // make return "~" fast!
+    }
+
+    assert(Link_Inherit_Bind(L->varlist) != nullptr);
+    assert(Is_Node_Managed(L->varlist));
+    rebDelegateCore(cast(RebolContext*, L->varlist), cp);
+    return BOUNCE_DELEGATE;
+}}
+
+
 // When arguments are hard quoted or soft-quoted, they don't call into the
 // evaluator to do it.  But they need to use the logic of the evaluator for
 // noticing when to defer infix:
@@ -689,7 +763,7 @@ Bounce Action_Executor(Level* L)
         goto fulfill_arg;
     }
 
-} fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
+} fulfill_and_any_pickups_done: {
 
     if (Get_Action_Executor_Flag(L, FULFILL_ONLY)) {  // no typecheck
         assert(Is_Cell_Erased(OUT));  // didn't touch out, should be fresh
@@ -701,7 +775,7 @@ Bounce Action_Executor(Level* L)
 
     // Action arguments now gathered, do typecheck pass
 
-} typecheck_then_dispatch: {  ////////////////////////////////////////////////
+} typecheck_then_dispatch: {
 
   // It might seem convenient to type check arguments while they are being
   // fulfilled vs. performing another loop.  But the semantics of the system
@@ -807,9 +881,9 @@ Bounce Action_Executor(Level* L)
 
     Tweak_Level_Phase(L, Phase_Details(Level_Phase(L)));  // ensure Details [4]
 
-  // Action arguments now gathered, begin dispatching
+    // Action arguments are gathered, begin dispatching
 
-} dispatch: {  ///////////////////////////////////////////////////////////////
+} dispatch: {
 
   // 1. When dispatching, we aren't using the parameter enumeration states.
   //    These are essentially 4 free pointers (though once a BOUNCE is
@@ -873,7 +947,7 @@ Bounce Action_Executor(Level* L)
 
     L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-} dispatch_phase: {  /////////////////////////////////////////////////////////
+} dispatch_phase: {
 
     // 1. After typechecking is complete, it "digs" through the phases until
     //    it finds a Details* and makes that the phase.
@@ -883,30 +957,14 @@ Bounce Action_Executor(Level* L)
     Details* details = Ensure_Level_Details(L);  // guaranteed Details [1]
     Dispatcher* dispatcher = Details_Dispatcher(details);
 
-    Bounce b = Apply_Cfunc(dispatcher, L);
+    Bounce b = maybe Irreducible_Bounce(L, Apply_Cfunc(dispatcher, L));
+    if (not b)
+        goto check_output;  // consolidated return result into OUT cell
 
-    if (b == OUT) {  // common case, made fastest
-        assert(Is_Cell_Readable(OUT));  // must write output, even if just void
-    }
-    else if (b == nullptr) {  // API and internal code can both return `nullptr`
-        Init_Nulled(OUT);
-    }
-    else if (Is_Bounce_An_Atom(b)) {  // Cell pointer (must be Api cell)
-        Atom* atom = Atom_From_Bounce(b);
-        assert(Is_Atom_Api_Value(atom));
-        Copy_Cell_Core(OUT, atom, CELL_MASK_THROW);  // keep unsurprising bit
-        Release_Api_Value_If_Unmanaged(atom);
-    }
-    else if (Is_Bounce_Wild(b)) switch (Bounce_Type(b)) {
-
-      case C_OKAY:  // essential to typechecker intrinsic optimization...
-        Init_Okay(OUT);  // ...optimization doesn't write OUT, but we do here
-        break;
-
+    switch (Bounce_Type(b)) {  // need some actual Bounce behavior...
       case C_CONTINUATION:
         return BOUNCE_CONTINUE;  // Note: may not have pushed a new level...
 
-      bounce_delegate:
       case C_DELEGATION:
         Set_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL);
         STATE = 123;  // BOUNCE_CONTINUE does not allow STATE_0
@@ -940,20 +998,12 @@ Bounce Action_Executor(Level* L)
       case C_BAD_INTRINSIC_ARG:
         assert(Not_Action_Executor_Flag(L, DISPATCHER_CATCHES));
         b = Native_Panic_Result(L, Error_Bad_Intrinsic_Arg_1(L));
+        UNUSED(b);  // doesn't get used, not visible @handle_thrown
         goto handle_thrown;
 
       default:
         assert(!"Invalid pseudotype returned from action dispatcher");
     }
-    else {
-        assert(Detect_Rebol_Pointer(b) == DETECTED_AS_UTF8);
-        assert(Link_Inherit_Bind(L->varlist) != nullptr);
-        assert(Is_Node_Managed(L->varlist));
-        rebDelegateCore(cast(RebolContext*, L->varlist), cast(const char*, b));
-        goto bounce_delegate;
-    }
-
-    goto check_output;
 
 } check_output: {  ///////////////////////////////////////////////////////////
 

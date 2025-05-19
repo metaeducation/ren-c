@@ -315,7 +315,6 @@ static void Init_Root_Vars(void)
     Init_Bounce_Wild(g_bounce_continuation, C_CONTINUATION);
     Init_Bounce_Wild(g_bounce_delegation, C_DELEGATION);
     Init_Bounce_Wild(g_bounce_suspend, C_SUSPEND);
-    Init_Bounce_Wild(g_bounce_okay, C_OKAY);
     Init_Bounce_Wild(g_bounce_bad_intrinsic_arg, C_BAD_INTRINSIC_ARG);
 
     g_empty_array = Make_Source_Managed(0);
@@ -417,7 +416,6 @@ static void Shutdown_Root_Vars(void)
     Erase_Bounce_Wild(g_bounce_continuation);
     Erase_Bounce_Wild(g_bounce_delegation);
     Erase_Bounce_Wild(g_bounce_suspend);
-    Erase_Bounce_Wild(g_bounce_okay);
     Erase_Bounce_Wild(g_bounce_bad_intrinsic_arg);
 
     rebReleaseAndNull(&g_empty_text);

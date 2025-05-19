@@ -100,6 +100,15 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 }
 
 
+// Use a flag on PICK vs. a state byte, so that we can reuse the same frame
+// for the calls to the generic PICK implementations, even if it wants to
+// use the state byte and do continuations/delegations.
+//
+#define LEVEL_FLAG_PICK_NOT_INITIAL_ENTRY  LEVEL_FLAG_MISCELLANEOUS
+
+#define CELL_FLAG_LOCATION_HINT_UNLIFT  CELL_FLAG_HINT
+
+
 //
 //  pick: native:generic [
 //
@@ -119,17 +128,25 @@ DECLARE_NATIVE(PICK)
 //
 // Ren-C rethought this to build tuple dispatch on top of PICK and POKE.
 // So `foo.(expr)` and `pick foo (expr)` will always give the same answer
-//
-// 1. !!! PICK in R3-Alpha historically would use a logic TRUE to get the first
-//    element in a list, and a logic FALSE to get the second.  It did this
-//    regardless of how many elements were in the list.  For safety, it has
-//    been suggested lists > length 2 should fail).
 {
     INCLUDE_PARAMS_OF_PICK;
 
+    Element* location = Element_ARG(LOCATION);
+
+    if (Get_Level_Flag(LEVEL, PICK_NOT_INITIAL_ENTRY))
+        goto dispatch_generic;
+
+  initial_entry: {
+
+    Set_Level_Flag(LEVEL, PICK_NOT_INITIAL_ENTRY);
+
+    // PICK in R3-Alpha historically would use a logic TRUE to get the first
+    // element in a list, and a logic FALSE to get the second.  It did this
+    // regardless of how many elements were in the list.
+
     Value* picker = ARG(PICKER);
 
-    if (Is_Okay(picker)) {  // !!! should we verify that LENGTH-OF is 2? [1]
+    if (Is_Okay(picker)) {  // !!! should we verify that LENGTH-OF is 2?
         Init_Integer(picker, 1);
     }
     else if (Is_Nulled(picker)) {
@@ -137,9 +154,51 @@ DECLARE_NATIVE(PICK)
     }
     assert(not Is_Antiform(picker));  // LOGIC? is the only supported antiform
 
-    Element* location = Element_ARG(LOCATION);
-    return Dispatch_Generic(PICK, location, LEVEL);
-}
+} handle_sigils: {
+
+    assert(Not_Cell_Flag(location, LOCATION_HINT_UNLIFT));
+
+    Element* picker = Element_ARG(PICKER);
+    switch (Sigil_Of(picker)) {
+      case SIGIL_0:
+        goto dispatch_generic;;
+
+      case SIGIL_LIFT:
+        Plainify(picker);  // remove lifted sigil
+        Set_Cell_Flag(location, LOCATION_HINT_UNLIFT);  // remember to unlift
+        goto dispatch_generic;
+
+      case SIGIL_PIN:
+        Plainify(picker);
+        goto dispatch_generic;
+
+      case SIGIL_TIE:
+        return PANIC("PICK can't use a tied picker at the moment");
+    }
+
+} dispatch_generic: {
+
+    Bounce bounce = maybe Irreducible_Bounce(
+        LEVEL,
+        Dispatch_Generic(PICK, location, LEVEL)
+    );
+
+    if (bounce)
+        return bounce;  // we will get a callback (if not error/etc.)
+
+} possibly_unlift_out: {
+
+    if (Not_Cell_Flag(location, LOCATION_HINT_UNLIFT))
+        return OUT;  // no unlift needed
+
+    if (not Is_Metaform(OUT))
+        return PANIC(
+            "PICK with ^LIFTED picker must retrieve a metaform to unlift"
+        );
+
+    Meta_Unquotify_Undecayed(OUT);
+    return OUT;
+}}
 
 
 //
@@ -166,13 +225,8 @@ DECLARE_NATIVE(POKE)
     INCLUDE_PARAMS_OF_POKE;
 
     Element* location = Element_ARG(LOCATION);
-    USED(ARG(PICKER));  // passed to handler via LEVEL
+    USED(ARG(PICKER));
     Element* meta_value = Element_ARG(VALUE);
-
-    if (Is_Meta_Of_Error(meta_value)) {
-        Copy_Cell(OUT, meta_value);
-        return Meta_Unquotify_Undecayed(OUT);
-    }
 
     Copy_Cell(ARG(STORE), meta_value);  // save value to return [1]
 
@@ -182,7 +236,7 @@ DECLARE_NATIVE(POKE)
         return PANIC("Cannot write-back to location in POKE");
 
     Copy_Cell(OUT, ARG(STORE));
-    return Meta_Unquotify_Known_Stable(OUT);
+    return Meta_Unquotify_Known_Stable(OUT);  // if lifting, return not lifted!
 }
 
 
@@ -197,7 +251,7 @@ DECLARE_NATIVE(POKE)
 //          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> element?]
-//      ^value [any-value? void?]
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(POKE_P)
@@ -221,9 +275,70 @@ DECLARE_NATIVE(POKE_P)
 // was being poked with the value (e.g. obj.date.year: 1999) then the bits
 // in obj.date would have to be changed.
 {
-    Element* location = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_POKE_P;
+
+    Element* location = Element_ARG(LOCATION);
+    Element* picker = Element_ARG(PICKER);
+    Element* meta_value = Element_ARG(VALUE);
+
+  handle_sigils: {
+
+    switch (Sigil_Of(picker)) {
+      case SIGIL_0:
+        goto handle_decayed_cases;;
+
+      case SIGIL_LIFT:
+        Meta_Quotify(meta_value);  // add another meta level if storing lifted
+        Plainify(picker);  // remove lifted sigil
+        goto dispatch_generic;  // don't do any decay, write errors/packs/etc.
+
+      case SIGIL_PIN:  // "STEPS" pins pickers.  Tolerate it.
+        Plainify(picker);  // remove pinned sigil
+        goto handle_decayed_cases;;
+
+      case SIGIL_TIE:
+        return PANIC("POKE* can't use a tied picker at the moment");
+    }
+
+} handle_decayed_cases: {
+
+    // 1. There could conceivably be a kind of extension type which would
+    //    store ERROR! or PACK!, etc..  But we limit the "meta visibility"
+    //    purely to lifted pokes, and handle it at the POKE* native level,
+    //    so no POKE* generic handlers will see any unstable antiforms besides
+    //    the VOID antiform.  Perhaps limiting, but it's likely to be a good
+    //    constraint for sanity...where the "freedom from" entities that store
+    //    unstable antiforms is better than the "freedom to" world would be.
+
+    if (Is_Meta_Of_Error(meta_value))
+        return FAIL(Cell_Error(meta_value));
+
+    if (Is_Meta_Of_Void(meta_value))
+        goto dispatch_generic;  // non-meta pokes may treat void as removal
+
+    if (not Is_Meta_Of_Action(meta_value))
+        goto perform_decay;
+
+} check_for_surprises: {
+
+    if (Get_Cell_Flag(meta_value, OUT_HINT_UNSURPRISING)) {
+        if (Is_Word(picker))
+            Update_Frame_Cell_Label(meta_value, Cell_Word_Symbol(picker));
+    }
+    else
+        return PANIC("Surprising ACTION! assign, use ^LIFT: assign");
+
+} perform_decay: {
+
+    Copy_Cell(SPARE, meta_value);
+    Meta_Unquotify_Undecayed(SPARE);
+    Decay_If_Unstable(SPARE);  // pre-decay for sanity [1]
+    Copy_Meta_Cell(meta_value, SPARE);
+
+} dispatch_generic: { ///////////////////////////////////////////////////////
+
     return Dispatch_Generic(POKE_P, location, LEVEL);
-}
+}}
 
 
 // 1. R3-Alpha and Red considered TUPLE! with any number of trailing zeros to

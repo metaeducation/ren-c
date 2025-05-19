@@ -847,7 +847,7 @@ DECLARE_NATIVE(GET)
 
 
 //
-//  Set_Var_Core_Updater_Throws: C
+//  Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws: C
 //
 // This is centralized code for setting variables.  If it returns `true`, the
 // out cell will contain the thrown value.  If it returns `false`, the out
@@ -865,95 +865,58 @@ DECLARE_NATIVE(GET)
 // It is legal to have `target == out`.  It means the target may be overwritten
 // in the course of the assignment.
 //
-bool Set_Var_Core_Updater_Throws(
-    Sink(Value) spare,  // temp GC-safe location, not used for output
-    Option(Value*) steps_out,  // no GROUP!s if nulled
-    Element* var,  // mutates (removes sigils)
-    Context* context,
-    Atom* poke,  // e.g. L->out (in evaluator, right hand side)
-    const Value* updater
+bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+    Level* level_,
+    Option(Element*) steps_out,  // no GROUP!s if nulled
+    const Value* updater  // function to write the last step (e.g. POKE*)
 ){
+    Element* var = Known_Element(SCRATCH);  // binding might get tweaked :-/
+    Sink(Value) spare = SPARE;
+
+    Element* meta_poke = Known_Element(OUT);
+    assert(Is_Metaform(meta_poke));
+
     possibly(spare == steps_out or var == steps_out);
-    assert(spare != poke and var != poke);
 
     StackIndex base = TOP_INDEX;
 
-    DECLARE_ATOM (temp);
-
-    Option(const Value*) setval;
-
     if (Any_Word(var))
-        goto handle_wordlike;
-
-    if (Is_Void(poke))
-        setval = nullptr;
-    else if (Is_Error(poke))  // for now, skip assign
-        return false;
-    else
-        setval = Decay_If_Unstable(poke);
+        goto handle_var_as_wordlike;
 
     if (Any_Sequence(var))
-        goto handle_sequence;
+        goto handle_var_as_sequence;
 
     if (Is_Pinned(BLOCK, var))
-        goto handle_steps;
+        goto handle_var_as_pinned_steps_block;
 
     panic (var);
 
-  handle_wordlike: {
+  handle_var_as_wordlike: {
 
-    if (updater == Mutable_Lib_Var(SYM_POKE_P)) {  // unset poke ok for boot
-        //
-        // Shortcut past POKE for WORD! (though this subverts hijacking,
-        // review that case.)
-        //
-        Value* sink = Sink_Word_May_Panic(var, context);
-        if (Any_Lifted(var)) {
-            possibly(Not_Cell_Flag(poke, OUT_HINT_UNSURPRISING));  // ok
-            Copy_Meta_Cell(sink, poke);
-        }
-        else {
-            if (Is_Atom_Action(poke)) {
-                Value* action = cast(Value*, poke);
-                if (Get_Cell_Flag(poke, OUT_HINT_UNSURPRISING))
-                    Update_Frame_Cell_Label(action, Cell_Word_Symbol(var));
-                else
-                    panic ("Surprising ACTION! assign, use ^LIFT: assign");
-            }
-            Copy_Cell(sink, Decay_If_Unstable(poke));
-        }
+    if (rebRunThrows(
+        spare,  // <-- output cell
+        rebRUN(updater), "binding of", rebQ(var), rebQ(var), meta_poke
+    )){
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
-    else {
-        // !!! This is a hack to try and get things working for PROTECT*.
-        // Things are in roughly the right place, but very shaky.  Revisit
-        // as BINDING OF is reviewed in terms of answers for LET.
-        //
-        Derelativize(temp, var, context);
-        QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
-        Push_Lifeguard(temp);
-        if (rebRunThrows(
-            spare,  // <-- output cell
-            rebRUN(updater), "binding of", temp, temp,
-                CANON(EITHER), rebL(did setval), rebQ(unwrap setval), "~[]~"
-        )){
-            Drop_Lifeguard(temp);
-            panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-        }
-        Drop_Lifeguard(temp);
-    }
+
+    Meta_Unquotify_Undecayed(OUT);  // pass through all forms
+    if (not Any_Lifted(var))
+        Decay_If_Unstable(OUT);  // only pass decay'd forms
 
     if (steps_out and steps_out != GROUPS_OK) {
         if (steps_out != var)  // could be true if GROUP eval
-            Derelativize(unwrap steps_out, var, context);
+            Copy_Cell(unwrap steps_out, var);
 
         // If the variable is a compressed path form like `a.` then turn
         // it into a plain word.
         //
         HEART_BYTE(unwrap steps_out) = TYPE_WORD;
+        Pinify(unwrap steps_out);  // !!! should we always pinify steps?
     }
     return false;  // did not throw
 
-} handle_sequence: {
+} handle_var_as_sequence: {
 
     // If we have a sequence, then GROUP!s must be evaluated.  (If we're given
     // a steps array as input, then a GROUP! is literally meant as a
@@ -970,9 +933,12 @@ bool Set_Var_Core_Updater_Throws(
     else switch (Stub_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL: {
         if (Get_Cell_Flag(var, LEADING_SPACE)) {  // `/a` or `.a`
-            if (Heart_Of(var) == TYPE_TUPLE)
+            if (Heart_Of(var) == TYPE_TUPLE) {
+                Context* context = Cell_Binding(var);
                 context = Adjust_Context_For_Coupling(context);
-            goto handle_wordlike;
+                Tweak_Cell_Binding(var, context);
+            }
+            goto handle_var_as_wordlike;
         }
 
         // `a/` or `a.`
@@ -980,7 +946,7 @@ bool Set_Var_Core_Updater_Throws(
         // !!! If this is a PATH!, it should error if it's not an action...
         // and if it's a TUPLE! it should error if it is an action.  Review.
         //
-        goto handle_wordlike; }
+        goto handle_var_as_wordlike; }
 
       case FLAVOR_SOURCE:
         break;  // fall through
@@ -992,12 +958,13 @@ bool Set_Var_Core_Updater_Throws(
     const Element* tail;
     const Element* head = Cell_List_At(&tail, var);
     const Element* at;
-    Context* at_binding = Derive_Binding(context, var);
+    Context* at_binding = Cell_Binding(var);
     for (at = head; at != tail; ++at) {
         if (Is_Group(at)) {
             if (not steps_out)
                 panic (Error_Bad_Get_Group_Raw(var));
 
+            DECLARE_ATOM (temp);
             if (Eval_Any_List_At_Throws(temp, at, at_binding)) {
                 Drop_Data_Stack_To(base);
                 return true;
@@ -1014,35 +981,38 @@ bool Set_Var_Core_Updater_Throws(
             Derelativize(PUSH(), at, at_binding);
     }
 
-    goto set_from_stack;
+    goto set_from_steps_on_stack;
 
-} handle_steps: {
+} handle_var_as_pinned_steps_block: {
 
     const Element* tail;
     const Element* head = Cell_List_At(&tail, var);
     const Element* at;
-    Context* at_binding = Derive_Binding(context, var);
+    Context* at_binding = Cell_Binding(var);
     for (at = head; at != tail; ++at)
         Derelativize(PUSH(), at, at_binding);
 
-    goto set_from_stack;
+    goto set_from_steps_on_stack;
 
-} set_from_stack: {
+} set_from_steps_on_stack: {
 
     assert(Is_Action(updater));  // we will use rebM() on it
 
     DECLARE_VALUE (writeback);
     Push_Lifeguard(writeback);
 
+    DECLARE_ATOM (temp);
     Init_Unreadable(temp);
     Push_Lifeguard(temp);
 
     StackIndex stackindex_top = TOP_INDEX;
 
   poke_again: {
+
     StackIndex stackindex = base + 1;
 
-  blockscope {
+  do_stack_thing: {
+
     OnStack(Element*) at = Data_Stack_At(Element, stackindex);
     if (Is_Quoted(at)) {
         Unquotify(Copy_Cell(spare, at));
@@ -1058,11 +1028,10 @@ bool Set_Var_Core_Updater_Throws(
     }
     else
         panic (Copy_Cell(spare, at));
-  }
+
+} keep_picking_until_last_step:
 
     ++stackindex;
-
-    // Keep PICK-ing until you come to the last step.
 
     while (stackindex != stackindex_top) {
         Move_Cell(temp, spare);
@@ -1079,7 +1048,13 @@ bool Set_Var_Core_Updater_Throws(
         ++stackindex;
     }
 
-    // Now do a the final step, an update (often a poke)
+  perform_update: {
+
+    // This may be the first time we do an update, or it may be a writeback
+    // as we go back through the list of steps to update any bits that are
+    // required to update in the referencing cells.
+
+    possibly(meta_poke == Known_Element(OUT));  // may be new writeback
 
     Move_Cell(temp, spare);
     QuoteByte quote_byte = QUOTE_BYTE(temp);
@@ -1088,22 +1063,27 @@ bool Set_Var_Core_Updater_Throws(
     assert(Is_Action(updater));
     if (rebRunThrows(
         spare,  // <-- output cell
-        rebRUN(updater), temp, ins,
-            CANON(EITHER), rebL(did setval), rebQ(unwrap setval), "~[]~"
+        rebRUN(updater), temp, ins, meta_poke
     )){
         Drop_Lifeguard(temp);
         Drop_Lifeguard(writeback);
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let POKEs throw
     }
 
+  force_updater_to_poke: {
+
     // Subsequent updates become pokes, regardless of initial updater function
 
+    possibly(updater == LIB(POKE_P));
     updater = LIB(POKE_P);
+
+} do_a_writeback:
 
     if (not Is_Nulled(spare)) {
         Move_Cell(writeback, spare);
         QUOTE_BYTE(writeback) = quote_byte;
-        setval = writeback;
+        Meta_Quotify(writeback);
+        meta_poke = Known_Element(writeback);
 
         --stackindex_top;
 
@@ -1114,16 +1094,16 @@ bool Set_Var_Core_Updater_Throws(
         if (not Is_Word(Data_Stack_At(Element, base + 1)))
             panic ("Can't POKE back immediate value unless it's to a WORD!");
 
-        if (not setval)
+        if (Is_Meta_Of_Void(meta_poke))
             panic ("Can't writeback POKE immediate with VOID at this time");
 
-        Copy_Cell(
-            Sink_Word_May_Panic(
-                Data_Stack_At(Element, base + 1),
-                SPECIFIED
-            ),
-            unwrap setval
+        Sink(Value) sink = Sink_Word_May_Panic(
+            Data_Stack_At(Element, base + 1),
+            SPECIFIED
         );
+
+        Copy_Cell(sink, meta_poke);
+        Meta_Unquotify_Decayed(sink);
     }
 
     Drop_Lifeguard(temp);
@@ -1134,48 +1114,12 @@ bool Set_Var_Core_Updater_Throws(
     else
         Drop_Data_Stack_To(base);
 
+    Meta_Unquotify_Undecayed(OUT);
+    if (not Any_Lifted(var))
+        Decay_If_Unstable(OUT);
+
     return false;
-}}}
-
-
-//
-//  Set_Var_Core_Throws: C
-//
-bool Set_Var_Core_Throws(
-    Sink(Value) spare,  // temp GC-safe location, not used for output
-    Option(Value*) steps_out,  // no GROUP!s if nulled
-    Element* var,
-    Context* context,
-    Atom* poke  // e.g. L->out (in evaluator, right hand side)
-){
-    return Set_Var_Core_Updater_Throws(
-        spare,
-        steps_out,
-        var,
-        context,
-        poke,
-        Mutable_Lib_Var(SYM_POKE_P)  // mutable means unset is okay
-    );
-}
-
-
-//
-//  Set_Var_May_Panic: C
-//
-// Simpler function, where GROUP! is not ok...and there's no interest in
-// preserving the "steps" to reuse in multiple assignments.
-//
-void Set_Var_May_Panic(
-    Element* var,
-    Context* context,
-    Atom* poke
-){
-    Option(Value*) steps_out = nullptr;
-
-    DECLARE_ATOM (dummy);
-    if (Set_Var_Core_Throws(dummy, steps_out, var, context, poke))
-        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-}
+}}}}
 
 
 //
@@ -1267,10 +1211,12 @@ DECLARE_NATIVE(SET)
         // (more general filtering available via accessors)
     }
 
-    Copy_Cell_Core(OUT, meta_setval, CELL_MASK_THROW);
-    Meta_Unquotify_Undecayed(OUT);
+    Copy_Cell_Core(OUT, meta_setval, CELL_MASK_THROW);  // set decays
+    Copy_Cell(SCRATCH, target);
 
-    if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, OUT)) {
+    if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+        LEVEL, steps, LIB(POKE_P)
+    )){
         assert(steps or Is_Throwing_Panic(LEVEL));  // throws must eval [1]
         return THROWN;
     }

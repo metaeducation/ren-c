@@ -394,13 +394,12 @@ DECLARE_NATIVE(PROTECT)
             Init_Word(OUT, CANON(HIDE));
         else
             Init_Word(OUT, CANON(PROTECT));
-        if (Set_Var_Core_Updater_Throws(
-            SPARE,
-            nullptr,
-            e,
-            SPECIFIED,
-            OUT,
-            LIB(PROTECT_P)
+
+        Copy_Cell(SCRATCH, e);
+        Meta_Quotify(OUT);
+
+        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+            LEVEL, NO_STEPS, LIB(PROTECT_P)
         )){
             return THROWN;
         }
@@ -454,13 +453,12 @@ DECLARE_NATIVE(UNPROTECT)
     Element* e = Element_ARG(VALUE);
     if (Any_Word(e) or Is_Tuple(e)) {
         Init_Word(OUT, CANON(UNPROTECT));
-        if (Set_Var_Core_Updater_Throws(
-            SPARE,
-            nullptr,
-            e,
-            SPECIFIED,
-            OUT,
-            LIB(PROTECT_P)
+
+        Meta_Quotify(OUT);
+        Copy_Cell(SCRATCH, e);
+
+        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+            LEVEL, NO_STEPS, LIB(PROTECT_P)
         )){
             return THROWN;
         }

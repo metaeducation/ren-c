@@ -90,7 +90,6 @@ PVAR WildTwo g_bounce_panic;
 PVAR WildTwo g_bounce_continuation;
 PVAR WildTwo g_bounce_delegation;
 PVAR WildTwo g_bounce_suspend;
-PVAR WildTwo g_bounce_okay;
 PVAR WildTwo g_bounce_bad_intrinsic_arg;
 
 PVAR Flex* g_dispatcher_table;

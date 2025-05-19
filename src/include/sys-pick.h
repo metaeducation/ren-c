@@ -121,3 +121,4 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 // has the protected bit set to avoid accidents)
 //
 #define GROUPS_OK  cast(Option(Element*), x_cast(Element*, g_empty_text))
+#define NO_STEPS  cast(Option(Element*), nullptr)

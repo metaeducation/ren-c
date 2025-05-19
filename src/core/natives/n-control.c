@@ -1134,10 +1134,13 @@ DECLARE_NATIVE(DEFAULT)
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
-    Element* steps = Known_Element(SCRATCH);
+    assert(Any_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
 
-    if (Set_Var_Core_Throws(SPARE, nullptr, steps, SPECIFIED, OUT)) {
-        assert(false);  // shouldn't be able to happen.
+    Meta_Quotify(OUT);
+    if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+        LEVEL, NO_STEPS, LIB(POKE_P)
+    )){
+        assert(false);  // shouldn't be able to happen (steps is pinned)
         return PANIC(Error_No_Catch_For_Throw(LEVEL));
     }
 

@@ -350,7 +350,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     }
 
     L_current_gotten = L_next_gotten;  // Lookback clears it
-    Copy_Cell(CURRENT, L_next);
+    Copy_Cell_Core(CURRENT, L_next, CELL_MASK_THROW);
     Fetch_Next_In_Feed(L->feed);
 
 
@@ -536,7 +536,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    WORD!s have quasiforms, only a few are allowed to become antiform
     //    keywords (e.g. ~null~ and ~okay~)
 
-    Copy_Cell(OUT, CURRENT);
+    Copy_Cell_Core(OUT, CURRENT, CELL_MASK_THROW);
 
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);  // may be illegal [1]
     if (e)
@@ -1398,24 +1398,23 @@ Bounce Meta_Stepper_Executor(Level* L)
 
 } generic_set_rightside_meta_in_out: {
 
-    Meta_Unquotify_Undecayed(OUT);
-
-    if (Is_Meta_Of_Void(CURRENT))  // e.g. `(void): ...`
+    if (Is_Meta_Of_Void(CURRENT)) {  // e.g. `(void): ...`
+        Meta_Unquotify_Undecayed(OUT);  // !!! do this with space VAR instead
         goto lookahead;  // pass through everything
+    }
 
-    if (Set_Var_Core_Throws(  // cheaper on panic vs. Set_Var_May_Panic()
-        SPARE,
-        GROUPS_OK,
-        CURRENT,
-        L_binding,
-        OUT
+    Derelativize(SPARE, CURRENT, L_binding);  // !!! workaround !!! FIX !!!
+    Move_Atom(CURRENT, SPARE);
+
+    if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+        LEVEL, GROUPS_OK, LIB(POKE_P)
     )){
         goto return_thrown;
     }
 
     // assignments of /foo: or /obj.field: require action
     //
-    // !!! This is too late, needs to be folded in with Set_Var_Core_Throws()
+    // !!! This is too late, needs to be folded in with Set_Var...()
     // But we don't pre-decay, so have to do it here for now.
     //
     if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION)) {
@@ -1732,7 +1731,7 @@ for (; check != tail; ++check) {  // push variables
         STACK_NOTE_OPTIONAL
     );
 
-    Element* var = CURRENT;  // stable location, safe across SET of var
+    Element* var = CURRENT;  // stable location (scratch), safe across SET
     Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
 
     assert(QUOTE_BYTE(var) == NOQUOTE_1);
@@ -1758,34 +1757,40 @@ for (; check != tail; ++check) {  // push variables
     if (Is_Lifted(WORD, var)) {
         Plainify(var);  // !!! temporary, remove ^ sigil (set should see it)
         if (pack_meta_at == pack_meta_tail) {  // special detection
-            Init_Nulled(OUT);  // LIB(NULL) isn't mutable/atom
-            Set_Var_May_Panic(var, SPECIFIED, OUT);
+            Init_Meta_Of_Null(OUT);
+            if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+                LEVEL, NO_STEPS, LIB(POKE_P)
+            )){
+                goto return_thrown;
+            }
             goto circled_check;
         }
-        Set_Var_May_Panic(var, SPECIFIED, OUT);  // is meta'd
-        Meta_Unquotify_Undecayed(OUT);  // result should not be meta
-        goto circled_check;
+        assert(Is_Metaform(OUT));  // out is meta'd
+        Meta_Quotify(OUT);  // quote it again !!! TBD: set heeds lift
+        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+            LEVEL, NO_STEPS, LIB(POKE_P)
+        )){
+            goto return_thrown;
+        }
+        Meta_Unquotify_Undecayed(OUT);  // set unquotified, undo it again...
+        goto circled_check;  // ...because we may have circled this
     }
 
-    Meta_Unquotify_Undecayed(OUT);
-
-    if (Is_Space(var))
+    if (Is_Space(var)) {
+        Meta_Unquotify_Undecayed(OUT);
         goto circled_check;
+    }
 
     if (Is_Error(OUT))  // don't pass thru errors if not @
         return PANIC(Cell_Error(OUT));
 
-    Decay_If_Unstable(OUT);  // if pack in slot, resolve it
-
     if (Is_Word(var) or Is_Tuple(var) or Is_Pinned(WORD, var)) {
-        if (Set_Var_Core_Throws(
-            SPARE,  // may overwrite SPARE if single item, but we're done w/it
+        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+            LEVEL,  // overwrites SPARE if single item, but we're done w/it
             GROUPS_OK,
-            var,
-            SPECIFIED,
-            OUT
+            LIB(POKE_P)
         )){
-            return PANIC(Error_No_Catch_For_Throw(L));
+            goto return_thrown;
         }
     }
     else

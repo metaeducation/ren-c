@@ -136,8 +136,13 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 // action, but not overwrite the ->out cell of the level.  They motivate
 // a special state for OKAY so that the L->out can be left as-is.
 //
-#define C_OKAY  'O'
-#define BOUNCE_OKAY  cast(Bounce, &g_bounce_okay)
+// We don't make this a Wild so it's out of band from "irreducible" bounces,
+// e.g. those that can't just resolve to a state in the output cell.
+//
+// (A direct address is used, so it can signal "Okay" even if the code that
+// assigns `okay: ~okay~` hasn't even run yet)
+//
+#define BOUNCE_OKAY  Stub_Cell(&g_lib_patches[SYM_OKAY])
 
 
 // This signals that the evaluator is in a "thrown state".
