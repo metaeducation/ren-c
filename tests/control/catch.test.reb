@@ -133,7 +133,7 @@
 
 ; Antiforms
 (
-    '~<ugly>~ = ^ catch [throw ~<ugly>~]
+    '~#ugly~ = meta catch [throw ~#ugly~]
 )
 
 ; ELSE/THEN reactivity

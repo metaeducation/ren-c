@@ -342,7 +342,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
     bool form = Bool_ARG(FORM);
 
     if (not form) {
-        Begin_Non_Lexical_Mold(mo, v);  // #[parameter! or make parameter!
+        Begin_Non_Lexical_Mold(mo, v);  // &[parameter!
     }
 
     DECLARE_ELEMENT(temp);

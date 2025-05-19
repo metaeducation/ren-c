@@ -25,7 +25,7 @@
 // to that function itself.  This meant you could do things like:
 //
 //     >> f: make frame! negate/
-//     == #[frame! [value: ~]]  ; remembered it was for negate
+//     == &[frame! [value: ~]]  ; remembered it was for negate
 //
 //     >> f.value: 1020
 //

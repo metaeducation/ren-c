@@ -650,8 +650,8 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 // actually use an instance of this native, and poke a binding into it to
 // identify the action.
 //
-// This means the RETURN that is in LIB is actually a "tripwire" (antiform
-// tag) to inform you that no definitional return is in effect.
+// This means the RETURN that is in LIB is actually a labeled TRASH! to inform
+// you that no definitional return is in effect.
 //
 // 1. The cached name for values holding this native is set to RETURN by the
 //    dispatchers that use it, overriding DEFINITIONAL-RETURN, which might

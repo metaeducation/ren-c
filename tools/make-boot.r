@@ -269,7 +269,7 @@ native-param-symbols: load3 join prep-dir %specs/tmp-param-symbols.r
 for-each 'param native-param-symbols [
     add-sym:relax param
 ]
-native-param-symbols: ~<native-param-symbols accounted for>~
+native-param-symbols: ~#[native-param-symbols accounted for]#~
 
 
 === "SYMBOLS FOR DATATYPES (INTEGER! or BLOCK!, with the !)" ===
@@ -541,9 +541,7 @@ mezz-files: load3 %../mezz/boot-files.r  ; base, sys, mezz
 sys-toplevel: copy []
 
 ; 1. The boot process makes sure that the evaluation produces a QUASI-WORD!
-;    with the symbol "END".  We don't use an antiform because ~end~ antiforms
-;    are weird, and we don't use a tripwire like ~<end>~ because the bootstrap
-;    executable doesn't know how to load tripwires.  Quasi-word is sufficient.
+;    with the symbol "END".  (~end~ won't make a valid antiform)
 ;
 boot-constants: boot-base: boot-system-util: boot-mezz: ~  ; !!! better answer?
 for-each 'section [boot-constants boot-base boot-system-util boot-mezz] [
@@ -762,7 +760,7 @@ print [symid "words + natives + errors"]
 
 e-symids/write-emitted
 
-add-sym: ~<Symbol table finalized, can't ADD-SYM at this point>~
+add-sym: ~#[Symbol table finalized, can't ADD-SYM at this point]#~
 
 
 === "MAKE BOOT BLOCK!" ===

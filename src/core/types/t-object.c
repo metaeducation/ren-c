@@ -813,7 +813,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
     //
     if (Find_Pointer_In_Flex(g_mold.stack, c) != NOT_FOUND) {
         if (not form) {
-            Begin_Non_Lexical_Mold(mo, v); // If molding, get #[object! etc.
+            Begin_Non_Lexical_Mold(mo, v); // If molding, get &[object! etc.
             Append_Codepoint(s, '[');
         }
         Append_Ascii(s, "...");
@@ -920,7 +920,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
     //
     if (Find_Pointer_In_Flex(g_mold.stack, let) != NOT_FOUND) {
         if (not form) {
-            Begin_Non_Lexical_Mold(mo, v); // If molding, get #[object! etc.
+            Begin_Non_Lexical_Mold(mo, v); // If molding, get &[let! etc.
             Append_Codepoint(s, '[');
         }
         Append_Ascii(s, "...");
@@ -1773,7 +1773,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     bool form = Bool_ARG(FORM);
     UNUSED(form);
 
-    Append_Ascii(mo->string, "#[frame! ");
+    Begin_Non_Lexical_Mold(mo, v);
 
     Option(const Symbol*) label = Cell_Frame_Label_Deep(v);
     if (label) {

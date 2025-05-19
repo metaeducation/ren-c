@@ -153,9 +153,9 @@
 
     ([1 2 3 4] = collect [
         assert [
-            '~<bad>~ = ^ for-both 'x [1 2] [3 4] [
+            '~#bad~ = meta for-both 'x [1 2] [3 4] [
                 keep x
-                ~<bad>~  ; makes antiform
+                ~#bad~  ; makes antiform
             ]
         ]
     ])

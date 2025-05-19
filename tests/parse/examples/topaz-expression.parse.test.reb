@@ -14,7 +14,7 @@
 ;   an EMIT instruction to presume a field emission intended.
 ;
 ; * Topaz's OBJECT returned a Red MAP! and not an OBJECT!, for some reason
-;   (appears that map/key for missing key was #[none] vs. error for object)
+;   (appears that map/key for missing key was NONE! vs. panic for object)
 ;
 ; * Ren-C uses TUPLE! for field selection of objects, not PATH!
 ;

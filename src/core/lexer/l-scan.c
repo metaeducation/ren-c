@@ -804,6 +804,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
         *cp != '\0'
         and (not Is_Codepoint_Whitespace(*cp))
         and *cp != ']' and *cp != ')' and *cp != '}' and *cp != ','
+        and (not (token == TOKEN_RUNE and *cp == '~'))  // ~#foo~ is TRASH!
     ){
         Codepoint c = *cp;  // may be first byte of UTF-8 encoded char
 
@@ -1328,6 +1329,11 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
     const Byte* cp = S->begin;
 
+    if (*cp == '&') {
+        S->end = cp + 1;
+        return LOCATED(TOKEN_CONSTRUCT);
+    }
+
     if (*cp == '-') {  // first priority: -[...]- --[...]--
         Count dashes = 1;
         const Byte* dp = cp;
@@ -1422,7 +1428,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
       case LEX_CLASS_DELIMIT:
         switch (Get_Lex_Delimit(*cp)) {
           case LEX_DELIMIT_SPACE:
-            crash ("Prescan_Token did not skip whitespace");
+            crash ("Prescan_Fingerprint() did not skip whitespace");
 
           case LEX_DELIMIT_RETURN:
           delimit_return: {
@@ -1700,11 +1706,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           case LEX_SPECIAL_POUND:
           pound:
             ++cp;
-            if (*cp == '[') {
-                S->end = ++cp;
-                return LOCATED(TOKEN_CONSTRUCT);
-            }
-            if (*cp == '"') {  // CHAR #"C"
+            if (*cp == '"' or *cp == '[') {  // CHAR #"]" or #["]
                 S->end = S->begin;
                 S->begin = cp;
                 Option(Error*) e = Trap_Scan_String_Push_Mold(
@@ -1712,6 +1714,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 );
                 if (e)
                     return e;
+                if (*cp == '#')  // allow for e.g. ~#[this is trash]#~
+                    ++cp;
                 S->begin = S->end;  // restore start
                 S->end = cp;
                 return LOCATED(TOKEN_CHAR);
@@ -3033,23 +3037,23 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (Array_Len(array) == 1) {
         //
-        // #[true] #[false] #[none] #[unset] -- no equivalents.
+        // &[true] &[false] &[none] &[unset] -- no equivalents.
         //
         DECLARE_ELEMENT (temp);
         Init_Block(temp, array);
         return FAIL(Error_Malconstruct_Raw(temp));
     }
-    else if (Array_Len(array) == 2) {  // #[xxx! [...]], #[xxx! yyy!], etc.
+    else if (Array_Len(array) == 2) {  // &[xxx! [...]], &[xxx! yyy!], etc.
         //
         // !!! At one time, Ren-C attempted to merge "construction syntax"
-        // with MAKE, so that `#[xxx! [...]]` matched `make xxx! [...]`.
+        // with MAKE, so that `&[xxx! [...]]` matched `make xxx! [...]`.
         // But the whole R3-Alpha concept was flawed, as round-tripping
         // structures neglected binding...and the scanner is just supposed
         // to be making a data structure.
         //
         // Hence this doesn't really work in any general sense.
 
-        return PANIC("#[xxx! [...]] construction syntax no longer supported");
+        return PANIC("&[xxx! [...]] construction syntax no longer supported");
     }
     else {
         DECLARE_ELEMENT (temp);

@@ -34,14 +34,14 @@ script-pre-load-hook: ~
     match warning! eval-free f
 ]
 
-lib.enrescue: ~<See SYS.UTIL/ENRESCUE and https://forum.rebol.info/t/1871>~
+lib.enrescue: ~#[See SYS.UTIL/ENRESCUE and https://forum.rebol.info/t/1871]#~
 
 set extend lib 'rescue (
-    ~<See SYS.UTIL/RESCUE and https://forum.rebol.info/t/1871>~
+    ~#[See SYS.UTIL/RESCUE and https://forum.rebol.info/t/1871]#~
 )
 
 exit: lib.exit/
-lib.exit: ~<See SYS.UTIL/EXIT>~
+lib.exit: ~#[See SYS.UTIL/EXIT]#~
 
 
 ; 1. The console exits to the shell, and hence really only needs the exit code
@@ -182,7 +182,7 @@ module: func [
                 where: mod
             ]
         ] else [
-            ~<Scripts must be invoked via IMPORT to get EXPORT>~
+            ~#[Scripts must be invoked via IMPORT to get EXPORT]#~
         ]
     )
 

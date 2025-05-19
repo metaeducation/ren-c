@@ -145,12 +145,12 @@
     same? :a-value a-value
 )
 ~bad-word-get~ !! (
-    a-value: ~<bad>~
-    a-value = ~<bad>~
+    a-value: ~#bad~
+    a-value = ~#bad~
 )
 (
-    a-value: ~<bad>~
-    (meta get:any $a-value) = '~<bad>~
+    a-value: ~#bad~
+    (meta get:any $a-value) = '~#bad~
 )
 (
     a-value: 'a

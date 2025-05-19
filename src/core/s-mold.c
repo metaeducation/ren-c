@@ -39,7 +39,14 @@
 // "construction syntax", e.g. #[word! "123"] or #[block! [a b c] 1].  But
 // to get this output MOLD:ALL had to be used, and it was implemented in
 // something of an ad-hoc way.  :ALL was deemed too meaningless to wield
-// effectively and was removed.
+// effectively and was removed.  And #[...] was retaken for RUNE! syntax:
+//
+//     >> trash? ~#[Runes with spaces used as trash]#~
+//     == ~okay~  ; antiform
+//
+//     >> second --[a"b]--
+//     == #["]  ; single character exception, no # on tail
+//
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -105,7 +112,7 @@ Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 //  Begin_Non_Lexical_Mold: C
 //
 // For datatypes that don't have lexical representations, use a legacy
-// format (like #[object! ...]) just to have something to say.
+// format (like &[object! ...]) just to have something to say.
 //
 // At one type an attempt was made to TRANSCODE these forms.  That idea is
 // under review, likely in favor of a more thought-out concept involving
@@ -115,7 +122,7 @@ Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 //
 void Begin_Non_Lexical_Mold(Molder* mo, const Element* v)
 {
-    Append_Ascii(mo->string, "#[");
+    Append_Ascii(mo->string, "&[");
 
     Heart heart = Heart_Of_Builtin_Fundamental(v);
     const Symbol* type_name = Canon_Symbol(Symbol_Id_From_Type(heart));

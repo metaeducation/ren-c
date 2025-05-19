@@ -554,7 +554,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
 
     UNUSED(form);
 
-    Begin_Non_Lexical_Mold(mo, v);  // #[varargs! or make varargs!
+    Begin_Non_Lexical_Mold(mo, v);  // &[varargs!
 
     Append_Codepoint(mo->string, '[');
 

@@ -237,7 +237,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
 //
 //  Trap_Get_Tuple: C
 //
-// Convenience wrapper for getting tuples that errors on nothing and tripwires.
+// Convenience wrapper for getting tuples that errors on trash.
 //
 Option(Error*) Trap_Get_Tuple(
     Sink(Value) out,
@@ -394,8 +394,8 @@ Option(Error*) Trap_Get_Var(
 //  Get_Var_May_Panic: C
 //
 // Simplest interface.  Gets a variable, doesn't process groups, and will
-// panic if the variable is vacant (holding nothing or a tripwire).  Use the
-// appropriate Trap_Get_XXXX() interface if this is too simplistic.
+// panic if the variable is trash.  Use the appropriate Trap_Get_XXXX()
+// interface if this is too simplistic.
 //
 Value* Get_Var_May_Panic(
     Sink(Value) out,  // variables never store unstable Atom* values

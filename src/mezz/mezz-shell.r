@@ -14,7 +14,7 @@ Rebol [
 ls: list-dir/
 pwd: what-dir/
 
-rm: ~<Use DELETE, not RM (Rebol REMOVE is different, shell dialect coming)>~
+rm: ~#[Use DELETE, not RM (Rebol REMOVE is different, shell dialect coming)]#~
 
 mkdir: make-dir/
 

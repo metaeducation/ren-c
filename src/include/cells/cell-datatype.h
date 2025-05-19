@@ -36,13 +36,13 @@
 // Ren-C's approach is to leverage antiform fences to act as datatypes:
 //
 //    >> integer!
-//    == ~{integer}~  ; anti
+//    == ~{integer!}~  ; anti
 //
 //    >> type of first ['''10]
-//    == ~{quoted}~  ; anti
+//    == ~{quoted!}~  ; anti
 //
 //    >> heart of first ['''10]
-//    == ~{integer}~   ; anti
+//    == ~{integer!}~   ; anti
 //
 // They cannot be put in blocks, but their metaforms can.  Not being able to
 // appear in blocks has advantages, such as disambiguating situations like

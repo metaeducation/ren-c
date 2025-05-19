@@ -95,7 +95,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
 
     UNUSED(form); // all bitsets are "molded" at this time
 
-    Begin_Non_Lexical_Mold(mo, v); // #[bitset! or make bitset!
+    Begin_Non_Lexical_Mold(mo, v); // &[bitset!
 
     const Binary* bset = VAL_BITSET(v);
 

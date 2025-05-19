@@ -70,7 +70,7 @@
 ; a pure NULL, for use with the API...and that this provoking quasivalue be
 ; something the API puts in automatically when a nullptr is given as input.
 (
-    null? (~null~ then [panic ~<unreachable>~])
+    null? (~null~ then [panic ~#unreachable~])
 )
 
 (~ then [okay])
@@ -92,34 +92,34 @@
 [
     ~no-arg~ !! (else [~unused~])
     ~???~ !! (() else [okay])  ; should VOID with infix look like no value?
-    ~???~ !! (1000 + 20 () then [panic ~<unreachable>~])
+    ~???~ !! (1000 + 20 () then [panic ~#unreachable~])
 
     (void else [okay])
-    (1020 = (1000 + 20 elide-if-void (void then [panic ~<unreachable>~])))
+    (1020 = (1000 + 20 elide-if-void (void then [panic ~#unreachable~])))
 
     ((void) else [okay])
-    (void? (1000 + 20 ((void) then [panic ~<unreachable>~])))
+    (void? (1000 + 20 ((void) then [panic ~#unreachable~])))
 
     (eval [] else [okay])
-    (void? eval [] then [panic ~<unreachable>~])
+    (void? eval [] then [panic ~#unreachable~])
 ]
 
 [
     (foo: func [] [return void], ok)
     (foo else [okay])
-    (1020 = (1000 + 20 elide-if-void (foo then [panic ~<unreachable>~])))
+    (1020 = (1000 + 20 elide-if-void (foo then [panic ~#unreachable~])))
 ]
 
 [
-    (foo: lambda [] [if null [panic ~<unreachable>~]], ok)
+    (foo: lambda [] [if null [panic ~#unreachable~]], ok)
     (foo else [okay])
-    (void? (1000 + 20 foo then [panic ~<unreachable>~]))
+    (void? (1000 + 20 foo then [panic ~#unreachable~]))
 ]
 
 [
     (foo: lambda [] [], ok)
     (foo else [okay])
-    (1020 = (1000 + 20 elide-if-void (foo then [panic ~<unreachable>~])))
+    (1020 = (1000 + 20 elide-if-void (foo then [panic ~#unreachable~])))
 ]
 
 ; https://forum.rebol.info/t/2176

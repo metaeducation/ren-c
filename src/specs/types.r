@@ -107,7 +107,6 @@ blob        "series of bytes"
                 [any-series? any-utf8? any-inert?]
 
     tag         "markup string (HTML or XML)"
-    ~tripwire~  "unset variable state with informative message"
                 (node1)
                 [any-series? any-utf8? any-inert? any-sequencable?]
 

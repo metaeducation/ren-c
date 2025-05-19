@@ -81,7 +81,7 @@
 
     ; Unrelated USE should not interfere
     ;
-    (30 = use [z] [z: ~<whatever>~ eval compose [(group)]])
+    (30 = use [z] [z: ~#whatever~ eval compose [(group)]])
 
     ; Related USE shouldn't interfere, either
     ;

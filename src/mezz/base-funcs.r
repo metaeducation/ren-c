@@ -45,19 +45,19 @@ steal: lambda [
 
 assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
 
-return: ~<RETURN used when no function generator is providing it>~
+return: ~#[RETURN used when no function generator is providing it]#~
 
-continue: ~<CONTINUE used when no loop is providing it>~
+continue: ~#[CONTINUE used when no loop is providing it]#~
 
-break: ~<BREAK used when no loop is providing it>~
+break: ~#[BREAK used when no loop is providing it]#~
 
-stop: ~<STOP used when no loop is providing it>~
+stop: ~#[STOP used when no loop is providing it]#~
 
-throw: ~<THROW used when no catch is providing it>~
+throw: ~#[THROW used when no catch is providing it]#~
 
-quit: ~<QUIT used when no [DO IMPORT CONSOLE] is providing it>~
+quit: ~#[QUIT used when no (DO IMPORT CONSOLE) is providing it]#~
 
-yield: ~<YIELD used when no generator or yielder is providing it>~
+yield: ~#[YIELD used when no generator or yielder is providing it]#~
 
 /catch: specialize catch*/ [name: 'throw]
 
@@ -560,15 +560,15 @@ fail: func [
             warning!  ; already constructed error
             @word!  ; invalid-arg error with variable name/value
             text!  ; textual error message
-            tripwire!  ; same as text (but more attention grabbing at callsite)
+            trash!  ; same as text (but more attention grabbing at callsite)
             block!  ; mixture of object error spec and message
             word! path! url!  ; increasing specificity of error ID
         ]
     :blame "Point to variable or parameter to blame"
         [word! frame!]
 ][
-    if tripwire? get:any $reason [
-        reason: as text! meta:lite reason  ; antiform tag! ~<unreachable>~
+    if trash? get:any $reason [
+        reason: as text! meta:lite reason  ; antiform tag! ~#unreachable~
     ]
     all [warning? reason, not blame] then [
         return fail* reason  ; fast shortcut

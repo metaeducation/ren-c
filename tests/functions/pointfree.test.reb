@@ -73,7 +73,7 @@
                     block: skip block 1  ; avoided NEXT when mezzanine
                 ]
 
-                panic ~<unexpected parameter class>~
+                panic ~#[unexpected parameter class]#~
             ]
         ]
 

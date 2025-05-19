@@ -25,7 +25,7 @@
 //    >> append [a b c] _
 //    == [a b c _]
 //
-// Space takes on some placeholder responsibilities of Rebol2's #[none]
+// Space takes on some placeholder responsibilities of Rebol2's NONE!
 // value, while the "soft failure" aspects are covered by NULL (which unlike
 // blanks, can't be stored in blocks).  Consequently spaces are not "falsey"
 // which means all "reified" values that can be stored in blocks are

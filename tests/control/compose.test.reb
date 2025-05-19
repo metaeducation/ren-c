@@ -21,7 +21,7 @@
 
 
 ~bad-antiform~ !! (
-    compose [(~<bad>~) * <ok>]
+    compose [(~#bad~) * <ok>]
 )
 ~bad-antiform~ !! (
     compose [(null) * <ok>]

@@ -18,26 +18,21 @@ Rebol [
 
 binary!: blob!
 
-loop: ~<Short word LOOP is reserved for a generalized looping dialect:
-        https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878>~
+loop: ~#[Short word LOOP is reserved for a generalized looping dialect:
+        https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878]#~
 
 
-REBOL: ~<The Rebol [] header of a script must be interpreted by LOAD (and
-       functions like DO).  It cannot be executed directly.>~
+Rebol: ~#[The Rebol header of a script must be interpreted by LOAD (and
+       functions like DO).  It cannot be executed directly.]#~
 
-input: ~<Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):
-       https://forum.rebol.info/t/1124>~
+input: ~#[Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):
+       https://forum.rebol.info/t/1124]#~
 
-repend: ~<REPEND is just (adapt append/ [value: reduce value]), and is not
-        provided in the box.>~
+repend: ~#[REPEND is not provided in the box.]#~
 
-remold: ~<REMOLD is just (adapt mold/ [value: reduce value]), but is not
-        provided in the box.>~
+remold: ~#[REMOLD is not provided in the box.]#~
 
-rejoin: ~<REJOIN is replaced in textual sceanarios by UNSPACED, but in more
-        general cases by JOIN, which accepts datatypes as a first parameter,
-        e.g. (join blob! [-[ABC]- 1 + 2 3 + 4])
-        https://forum.rebol.info/t/248>~
+rejoin: ~#[REJOIN replaced by UNSPACED + JOIN https://forum.rebol.info/t/248]#~
 
 
 ; CONSTRUCT is a "verb-ish" word slated to replace the "noun-ish" CONTEXT:

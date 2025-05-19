@@ -210,7 +210,7 @@ ask: func [
                 panic -[ASK currently only supports ["Prompt:" datatype!]]-
             ]
         ]
-        panic ~<unreachable>~
+        panic ~#unreachable~
     ]
 
     if type = rune! [

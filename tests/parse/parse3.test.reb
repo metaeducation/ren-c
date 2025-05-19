@@ -93,13 +93,13 @@
 
 [
     ~bad-word-get~ !! (
-        foo: ~<bad>~
+        foo: ~#bad~
         parse3 "a" [foo]
         ok
     )
     ~???~ !! (
-        foo: '~<bad>~
-        parse3 [~<bad>~] [foo <end>]
+        foo: '~#bad~
+        parse3 [~#bad~] [foo <end>]
         ok
     )
 ]

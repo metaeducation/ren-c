@@ -7,7 +7,7 @@
 
 ; !!! literal form no longer supported
 ;
-~???~ !! (load "#[action! [[] []]]")
+~???~ !! (load "&[action! [[] []]]")
 
 ; return-less return value tests
 (

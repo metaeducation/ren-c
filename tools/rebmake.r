@@ -66,7 +66,7 @@ ends-with?: func [
     s [any-string?]
     suffix [<undo-opt> any-string?]
 ][
-    return to-logic any [  ; TO-LOGIC for bootstrap (xxx? returns #[true])
+    return any [
         null? suffix
         empty? suffix
         suffix ?= (skip tail of s negate length of suffix)  ; ?= lax compare
@@ -426,7 +426,7 @@ compiler-class: make object! [
         exec -[Executable path (can be text!, e.g. "r3 --do c99 --")]-
             [<undo-opt> file! text!]
     ][
-        panic ~<archetype check invoked>~
+        panic ~#[archetype check invoked]#~
     ]
 
     compile: method [
@@ -437,7 +437,7 @@ compiler-class: make object! [
         definitions [text! tag! block!]
         cflags [text! tag! block!]
     ][
-        panic ~<archetype compile invoked>~
+        panic ~#[archetype compile invoked]#~
     ]
 
     link: method [
@@ -447,7 +447,7 @@ compiler-class: make object! [
         searches [<undo-opt> block!]
         ldflags [<undo-opt> block! any-string?]
     ][
-        panic ~<archetype link invoked>~
+        panic ~#[archetype link invoked]#~
     ]
 ]
 

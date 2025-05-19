@@ -89,7 +89,7 @@ sys.util/rescue [
     ; It is more brittle and less composable, but it is available in the
     ; bootstrap executable..and much faster (at time of writing) than UPARSE.
 
-    export parse: ~<Use PARSE3 in Bootstrap Code, not PARSE>~
+    export parse: ~#[Use PARSE3 in Bootstrap Code, not PARSE]#~
 
     export /split-path3: enclose (
         augment split-path/ [:file [any-word? tuple!]]
@@ -98,7 +98,7 @@ sys.util/rescue [
         set opt f.file unmeta results.2
         unmeta results.1
     ]
-    export split-path: ~<Use SPLIT-PATH3 in Bootstrap (no multi-return)>~
+    export split-path: ~#[Use SPLIT-PATH3 in Bootstrap (no multi-return)]#~
 
     export /transcode: enclose (
         augment lib.transcode/ [:next3 [word!] "set to transcoded value"]
@@ -115,9 +115,9 @@ sys.util/rescue [
 
     export cscape-inside: inside/  ; modern string interpolation tool
 
-    export for: ~<FOR is being repurposed, use CFOR>~
+    export for: ~#[FOR is being repurposed, use CFOR]#~
 
-    export unless: ~<Don't use UNLESS in Bootstrap, definition in flux>~
+    export unless: ~#[Don't use UNLESS in Bootstrap, definition in flux]#~
 
     export /bind: augment bind/ [
         :copy3  ; modern BIND is non-mutating, but bootstrap EXE needs :COPY
@@ -140,7 +140,7 @@ sys.util/rescue [
         ]
         return ensure block! unquote first result'
     ]
-    export load: ~<Use LOAD3 in Bootstrap (no multi-returns for header)>~
+    export load: ~#[Use LOAD3 in Bootstrap (no multi-returns for header)]#~
 
     quit 0
 ]
@@ -227,7 +227,7 @@ for-each [alias] [
     ]
 ]
 
-function3: ~<FUNCTION slated for synonym of FUNC, so no FUNCTION3>~
+function3: ~#[FUNCTION slated for synonym of FUNC, so no FUNCTION3]#~
 
 
 === "BINARY! => BLOB!" ===
@@ -251,7 +251,7 @@ space?: func3 [x] [
     return (x = space) or (x = _)
 ]
 
-blank?: ~<No BLANK? Anymore, Use SPACE?>~
+blank?: ~#[No BLANK? in Bootstrap, Use SPACE?]#~
 
 
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
@@ -275,11 +275,11 @@ collect3: adapt lib3.collect/ [
 ; can't be emulated by older executables.  Here we panic in the old executable
 ; on any undecorated functions that have no emulation equivalent.
 
-parse: ~<Use PARSE3 in bootstrap code, not PARSE (UPARSE too slow, for now)>~
+parse: ~#[Use PARSE3 in bootstrap code, not PARSE (UPARSE too slow, for now)]#~
 
-split-path: ~<Use SPLIT-PATH3 in Bootstrap (:FILE takes WORD! vs multireturn)>~
+split-path: ~#[Use SPLIT-PATH3 in Bootstrap (:FILE takes WORD! vs multirtn)]#~
 
-load: ~<Use LOAD3 in Bootstrap (:HEADER returns BLOCK! with OBJECT!)>~
+load: ~#[Use LOAD3 in Bootstrap (:HEADER returns BLOCK! with OBJECT!)]#~
 
 
 === "FAKE UP QUASIFORM! AND @WORD! TYPES" ===
@@ -309,7 +309,7 @@ unquasi: func3 [v <local> spelling] [
 ]
 
 
-unrun: ~<No UNRUN in bootstrap, but could be done w/make FRAME!>~
+unrun: ~#[No UNRUN in bootstrap, but could be done w/make FRAME!]#~
 
 has: in/  ; old IN behavior of word lookup achieved by HAS now
 overbind: in/  ; works in a limited sense
@@ -317,7 +317,7 @@ bindable: lambda3 [what] [:what]
 inside: lambda3 [where value] [:value]  ; no-op in bootstrap
 wrap: identity/  ; no op in bootstrap
 
-in: ~<Use HAS or OVERBIND instead of IN in bootstrap>~
+in: ~#[Use HAS or OVERBIND instead of IN in bootstrap]#~
 
 quote: lambda3 [x [any-value!]] [  ; see the more general UNEVAL
     switch type of x [
@@ -828,7 +828,7 @@ lambda: adapt lambda3/ [set [spec body] modernize-action spec body]
 
 func: adapt func3/ [set [spec body] modernize-action spec body]
 
-function: ~<FUNCTION deprecated (will be FUNC synonym, eventually)>~
+function: ~#[FUNCTION deprecated (will be FUNC synonym, eventually)]#~
 
 method: infix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
 

@@ -247,7 +247,7 @@ bind construct [
                     compose2:deep inside item '@(<*>) item
                 )
             ]
-            panic ~<unreachable>~
+            panic ~#unreachable~
         ]
     ]
 
@@ -263,11 +263,11 @@ bind construct [
         switch state [
             <die> [
                 emit [quit 1]  ; must leave unbound to get console's QUIT [1]
-                emit [panic ~<unreachable>~]
+                emit [panic ~#unreachable~]
             ]
             <quit> [
                 emit [quit 0]  ; must leave unbound to get console's QUIT [1]
-                emit [panic ~<unreachable>~]
+                emit [panic ~#unreachable~]
             ]
             <start-console> [
                 ; Done actually via #start-console, but we return something
@@ -771,7 +771,7 @@ bind construct [
         ]
     ]
 
-    main-startup: ~<MAIN-STARTUP done>~  ; free function for GC
+    main-startup: ~#[MAIN-STARTUP done]#~  ; free function for GC
 
     if 'yes = quit-when-done [  ; can be null, YES? would complain...
         return <quit>  ; quits after instructions done

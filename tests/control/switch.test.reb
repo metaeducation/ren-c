@@ -50,5 +50,5 @@
     ("COOL!" = switch:type <asdf> [any-string?/ ["COOL!"]])
     ("COOL!" = switch:type "asdf" [any-string?/ ["COOL!"]])
 
-    (null? switch 1020 [any-string?/ [panic ~<unreachable>~]])
+    (null? switch 1020 [any-string?/ [panic ~#unreachable~]])
 ]

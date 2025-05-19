@@ -161,18 +161,18 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
 //=//// PARAMETER_FLAG_FINAL_TYPECHECK ////////////////////////////////////=//
 //
-// When a Param in a ParamList is unspecialized (e.g. antiform PARAMETER!, aka
-// a "Hole") then if it does not carry this flag, then that means typechecking
-// against it is not the last word.  There is a type underlying it which also
-// needs to be checked.  Consider:
+// When a Param in a ParamList is unspecialized (e.g. a PARAMETER! value)
+// then if it does not carry this flag, then that means typechecking against
+// it is not the last word.  There is a type underlying it which also needs
+// to be checked.  Consider:
 //
 //     >> ap-int: copy meta:lite append/
 //
-//     >> ap-int.value: anti make parameter! [integer!]  ; or whatever syntax
-//     == ~#[parameter! [integer!]]~  ; anti
+//     >> ap-int.value: make parameter! [integer!]  ; or whatever syntax
+//     == &[parameter! [integer!]]
 //
 //     >> /ap-int: anti ap-int
-//     == ~#[frame! ...]~  ; anti
+//     == ~&[frame! ...]~  ; anti
 //
 // You've just created a version of APPEND with a tighter type constraint.
 // But what if that type were -looser-?  You must check this type, and also

@@ -246,7 +246,7 @@ export console!: make object! [
                 ; molding is excessive, and there's not a ton to learn
                 ; about them.  Cut down the output more than the mold:limit.
                 ;
-                print [result "#[port! [...] [...]]"]
+                print [result "&[port! [...] [...]]"]
             ]
         ]
         else [

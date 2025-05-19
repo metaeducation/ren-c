@@ -547,13 +547,15 @@ static void Init_System_Object(
 //
 void Startup_Core(void)
 {
+    assert(PG_Boot_Phase == BOOT_START_0);
+
+  seed_random_number_generator: {
+
   #if ALLOW_SPORADICALLY_NON_DETERMINISTIC
-    srand(time(nullptr));  // seed random number generator
+    srand(time(nullptr));
   #endif
 
-  //=//// INITIALIZE BASIC DIAGNOSTICS ////////////////////////////////////=//
-
-    assert(PG_Boot_Phase == BOOT_START_0);
+} perform_early_diagnostics: {
 
   #if defined(TEST_EARLY_BOOT_CRASH)
     crash ("early crash test");  // should crash
@@ -567,7 +569,7 @@ void Startup_Core(void)
 
     Check_Basics();
 
-  //=//// INITIALIZE MEMORY AND ALLOCATORS ////////////////////////////////=//
+} startup_memory_and_allocators: {
 
     Startup_Signals();  // allocation can set signal flags for recycle etc.
 
@@ -579,7 +581,7 @@ void Startup_Core(void)
     Startup_String();
 
     Init_Char_Cases();
-    Startup_CRC();             // For word hashing
+    Startup_CRC();  // For word hashing
     Set_Random(0);
 
     Startup_Mold(MIN_COMMON / 4);
@@ -591,7 +593,7 @@ void Startup_Core(void)
     Startup_Data_Stack(STACK_MIN / 4);
     Startup_Trampoline();  // uses CANON() in File_Of_Level() currently
 
-  //=//// INITIALIZE API //////////////////////////////////////////////////=//
+} startup_api: {
 
     // The API contains functionality for memory allocation, decompression,
     // and other things needed to generate Lib.  So it has to be initialized
@@ -600,7 +602,7 @@ void Startup_Core(void)
 
     Startup_Api();
 
-  //=//// STARTUP INTERNING AND BUILT-IN SYMBOLS //////////////////////////=//
+} startup_interning_and_builtin_symbols: {
 
     // The build process makes a list of Symbol ID numbers (SymId) which
     // are given fixed values.  e.g. SYM_LENGTH for the word `length` has an
@@ -615,7 +617,7 @@ void Startup_Core(void)
         Symbol_Strings_Compressed_Size
     );
 
-  //=//// MAKE DATATYPES MODULE AND VARIABLES FOR BUILT-IN TYPES //////////=//
+} startup_datatypes: {
 
     // Builtin datatypes no longer live in LIB, but in SYS.CONTEXTS.DATATYPES
     // which is inherited by LIB.  This is also where extension datatypes are
@@ -623,7 +625,10 @@ void Startup_Core(void)
 
     Startup_Datatypes();
 
-  //=//// MAKE LIB MODULE AND VARIABLES FOR BUILT-IN SYMBOLS //////////////=//
+    ensure(nullptr, g_datatypes_module) = Alloc_Element();
+    Init_Module(g_datatypes_module, g_datatypes_context);  // GC protect
+
+} startup_lib: {
 
     // For many of the built-in symbols, we know there will be variables in
     // the Lib module for them.  e.g. since FOR-EACH is in the list of native
@@ -642,15 +647,10 @@ void Startup_Core(void)
 
     Startup_Lib();
 
-  //=//// MAKE API HANDLES TO GC PROTECT LIB AND DATATYPES ///////////////=//
-
-    ensure(nullptr, g_datatypes_module) = Alloc_Element();
-    Init_Module(g_datatypes_module, g_datatypes_context);
-
     ensure(nullptr, g_lib_module) = Alloc_Element();
-    Init_Module(g_lib_module, g_lib_context);
+    Init_Module(g_lib_module, g_lib_context);  // GC protect
 
-  //=//// INITIALIZE THE API BINDING FOR CORE /////////////////////////////=//
+} initialize_core_api_binding: {
 
     // If you call a librebol API function from an arbitrary point in the
     // core, it will do its lookups in the lib context.
@@ -659,7 +659,7 @@ void Startup_Core(void)
 
     ensure(nullptr, librebol_binding) = cast(RebolContext*, g_lib_context);
 
-  //=//// CREATE GLOBAL OBJECTS ///////////////////////////////////////////=//
+} create_global_objects: {
 
     // The API is one means by which variables can be made whose lifetime is
     // indefinite until program shutdown.  In R3-Alpha this was done with
@@ -673,31 +673,24 @@ void Startup_Core(void)
     Assert_Pointer_Detection_Working();  // uses root Flex/Values to test
   #endif
 
-  //=//// LOAD BOOT BLOCK /////////////////////////////////////////////////=//
+} load_boot_block: {
 
-    // The %make-boot.r process takes all the various definitions and
-    // mezzanine code and packs it into one compressed string in
-    // %tmp-boot-block.c which gets embedded into the executable.  This
-    // includes the type list, word list, error message templates, system
-    // object, mezzanines, etc.
+    // 1. The %make-boot.r process takes all the various definitions and
+    //    mezzanine code and packs it into one compressed string in
+    //    %tmp-boot-block.c which gets embedded into the executable.  This
+    //    includes the type list, word list, error message templates, system
+    //    object, mezzanines, etc.
 
     Size utf8_size;
     const int max = -1;  // trust size in gzip data
     Byte* utf8 = Decompress_Alloc_Core(
         &utf8_size,
-        Boot_Block_Compressed,
+        Boot_Block_Compressed,  // from %tmp-boot-block.c [1]
         Boot_Block_Compressed_Size,
         max,
         SYM_GZIP
     );
 
-    // The boot code contains portions that are supposed to be interned to the
-    // SYS.UTIL context instead of the LIB context.  But the Base and Mezzanine
-    // are interned to the Lib, so go ahead and take advantage of that.
-    //
-    // (We could separate the text of the SYS.UTIL portion out, and scan that
-    // separately to avoid the extra work.  Not a high priority.)
-    //
     const String* tmp_boot = Intern_Unsized_Managed("tmp-boot.r");  // const
     Push_Lifeguard(tmp_boot);  // recycle torture frees on scanner first push!
     Array* boot_array = Scan_UTF8_Managed(
@@ -722,7 +715,7 @@ void Startup_Core(void)
 
     PG_Boot_Phase = BOOT_LOADED;
 
-  //=//// REGISTER BUILT-IN DISPATCHERS ///////////////////////////////////=//
+ register_builtin_dispatchers: {
 
     // We need to be able to navigate from dispatcher to querier.  It would
     // be too costly to store queriers in stubs, and we'd have to double
@@ -753,21 +746,14 @@ void Startup_Core(void)
         &Unimplemented_Details_Querier
     );
 
-  //=//// CREATE BASIC VALUES /////////////////////////////////////////////=//
+} startup_type_predicates: {
 
-    // Before any code can start running (even simple bootstrap code), some
-    // basic words need to be defined.  For instance: You can't run %sysobj.r
-    // unless `true` and `false` have been added to the g_lib_context--they'd be
-    // undefined.  And while analyzing the function specs during the
-    // definition of natives, things like the <opt-out> tag are needed as a
-    // basis for comparison to see if a usage matches that.
-    //
     // Startup_Type_Predicates() uses symbols, data stack, and adds words
     // to lib--not available until this point in time.
     //
     Startup_Type_Predicates();
 
-  //=//// RUN CODE BEFORE ERROR HANDLING INITIALIZED //////////////////////=//
+} startup_natives: {
 
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
@@ -776,10 +762,19 @@ void Startup_Core(void)
 
     Startup_Natives(&boot->natives);
 
+} startup_evaluator: {
+
     Startup_Evaluator();
 
-  //=//// STARTUP CONSTANTS (like NULL, SPACE, etc.) //////////////////////=//
+} startup_constants: {  // like NULL, SPACE, etc.
 
+    // Before any code can start running (even simple bootstrap code), some
+    // basic words need to be defined.  For instance: You can't run %sysobj.r
+    // unless `null` and `okay` have been added to the g_lib_context--they'd be
+    // undefined.  And while analyzing the function specs during the
+    // definition of natives, things like the <opt-out> tag are needed as a
+    // basis for comparison to see if a usage matches that.
+    //
     // These may be used in the system object definition.  At one time code
     // manually added definitions like NULL to LIB, but having it expressed
     // as simply (null: ~null~) in usermode code is clearer.
@@ -797,11 +792,11 @@ void Startup_Core(void)
     Protect_Cell(Mutable_Lib_Var(SYM_QUASAR));
     Protect_Cell(Mutable_Lib_Var(SYM_NUL));
 
-  //=//// STARTUP ERRORS AND SYSTEM OBJECT ////////////////////////////////=//
+} startup_errors: {
 
-    // boot->errors is the error definition list from %errors.r
-    //
-    VarList* errors_catalog = Startup_Errors(&boot->errors);
+    // 1. boot->errors is the error definition list from %errors.r
+
+    VarList* errors_catalog = Startup_Errors(&boot->errors);  // %errors.r [1]
     Push_Lifeguard(errors_catalog);
 
     Tweak_Cell_Binding(&boot->sysobj, g_lib_context);
@@ -821,7 +816,7 @@ void Startup_Core(void)
     // during a stack overflow).  Error creation machinery depends heavily
     // on the system object being initialized, so this can't be done until
     // now.
-    //
+
     Startup_Stackoverflow();
 
     // Pre-make UTF-8 decoding errors so that UTF-8 failures aren't slow
@@ -833,29 +828,23 @@ void Startup_Core(void)
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
-  //=//// INITIALIZE SYSTEM.CONTEXTS.LIB //////////////////////////////////=//
+} initialize_lib: { // SYSTEM.CONTEXTS.LIB
 
     // The basic model for bootstrap is that the "user context" is the
     // default area for new code evaluation.  It starts out as a copy of an
     // initial state set up in the lib context.  When native routines or other
     // content gets overwritten in the user context, it can be borrowed back
     // from `system.contexts.lib` (aliased as "lib" in the user context).
-    //
-    // Set up the alias for lib, but put a "tripwire" (antiform tag) in the
-    // slot for the user context to give a more obvious error message if
-    // something tries to use it before startup finishes.
 
-  blockscope {
     Copy_Cell(Get_System(SYS_CONTEXTS, CTX_DATATYPES), g_datatypes_module);
     Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), g_lib_module);
-    RebolValue* tripwire = rebValue(
-        "~<SYS.CONTEXTS.USER not available: Mezzanine Startup not finished>~"
+    RebolValue* trash = rebValue(
+        "~#[SYS.CONTEXTS.USER unavailable: Mezzanine Startup not finished]#~"
     );
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_USER), tripwire);
-    rebRelease(tripwire);
-  }
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_USER), trash);
+    rebRelease(trash);
 
-  //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED ///////=//
+} update_boot_phase: {  // Note: error handling initialized
 
     // By this point, the g_lib_context contains basic definitions for things
     // like null, space, the natives, and the generics.  `system` is set up.
@@ -874,25 +863,22 @@ void Startup_Core(void)
 
     PG_Boot_Phase = BOOT_MEZZ;
 
- //=//// BASE STARTUP ////////////////////////////////////////////////////=//
+} startup_base: {
 
     // The code in "base" is the lowest level of initialization written as
     // Rebol code.  This is where things like `+` being an infix form of ADD is
     // set up, or FIRST being a specialization of PICK.  It also has wrappers
     // for more basic natives that handle aspects that are easier to write in
     // usermode than in C.
+    //
+    // 1. Create actual variables for top-level SET-WORD!s only.
 
     rebElide(
-        //
-        // Create actual variables for top-level SET-WORD!s only, and run.
-        //
-        "wrap*", g_lib_module, rebQ(&boot->base),
-        "evaluate inside", g_lib_module, rebQ(&boot->base)
-        //
-        // Note: ENSURE not available yet.
+        "wrap*", g_lib_module, rebQ(&boot->base),  // top-level variables [1]
+        "evaluate inside", g_lib_module, rebQ(&boot->base)  // no ENSURE yet
     );
 
-  //=//// SYSTEM.UTIL STARTUP /////////////////////////////////////////////=//
+} startup_sys_util: {
 
     // The SYSTEM.UTIL context contains supporting Rebol code for implementing
     // "system" features.  It is lower-level than the LIB context, but has
@@ -904,6 +890,13 @@ void Startup_Core(void)
     // (Note: The SYSTEM.UTIL context was renamed from just "SYS" to avoid
     //  being confused with "the system object", which is a different thing.
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
+    //
+    // 1. The scan of the boot block interned everything to g_lib_context, but
+    //    we want to overwrite that with the g_sys_util_context here.
+    //
+    // 2. SYS contains the implementation of the module machinery itself, so
+    //    we don't have MODULE or EXPORT available.  Do the exports manually,
+    //    and then import the results to lib.
 
     SeaOfVars* util = Alloc_Sea_Core(NODE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(util, g_lib_context);
@@ -912,27 +905,21 @@ void Startup_Core(void)
     ensure(nullptr, g_sys_util_context) = util;
 
     rebElide(
-        //
-        // The scan of the boot block interned everything to g_lib_context, but
-        // we want to overwrite that with the g_sys_util_context here.
-        //
-        "sys.util:", g_sys_util_module,
+        "sys.util:", g_sys_util_module,  // overwrite [1]
 
         "wrap*", g_sys_util_module, rebQ(&boot->system_util),
         "if not equal? '~end~",
           "evaluate inside", g_sys_util_module, rebQ(&boot->system_util),
-            "[panic -[sys.util]-]",
+            "[panic ~#[sys.util]#~]",
 
-        // SYS contains the implementation of the module machinery itself, so
-        // we don't have MODULE or EXPORT available.  Do the exports manually,
-        // and then import the results to lib.
-        //
-        "set-adjunct sys.util make object! [",
+        "set-adjunct sys.util make object! [",  // no MODULE/EXPORT yet [2]
             "name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
             "exports: [do module load decode encode encoding-of]",
         "]",
         "sys.util/import*", g_lib_module, g_sys_util_module
     );
+
+} protect_system_object: {
 
     // !!! It was a stated goal at one point that it should be possible to
     // protect the entire system object and still run the interpreter.  That
@@ -940,7 +927,7 @@ void Startup_Core(void)
     //
     //    comment [if get $lib/secure [protect-system-object]]
 
-  //=//// MEZZ STARTUP /////////////////////////////////////////////////////=//
+} startup_mezzanine: {
 
     rebElide(
         // (It's not necessarily the greatest idea to have LIB be this
@@ -954,7 +941,7 @@ void Startup_Core(void)
         "evaluate inside", g_lib_module, rebQ(&boot->mezz)
     );
 
-  //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//
+} make_user_context: {
 
     // None of the above code should have needed the "user" context, which is
     // purely application-space.  We probably shouldn't even create it during
@@ -970,7 +957,7 @@ void Startup_Core(void)
     // and carry the lib context.  This achieves the desired inheritance,
     // because when we say EVAL INSIDE SYSTEM.CONTEXTS.USER CODE we want the
     // code to find definitions in user as well as in lib.
-    //
+
     rebElide(
         "system.contexts.user: module [Name: User] []"
     );
@@ -982,7 +969,16 @@ void Startup_Core(void)
     rebUnmanage(g_user_module);
     g_user_context = Cell_Module_Sea(g_user_module);
 
-  //=//// FINISH UP ///////////////////////////////////////////////////////=//
+} startup_extension_loader: {
+
+    // We don't actually load any extensions during the core startup.  The
+    // builtin extensions can be selectively loaded in whatever order the
+    // API client wants (they may not want to load all extensions that are
+    // built in that were available all the time).
+
+    Startup_Extension_Loader();
+
+} finished_startup: {
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
@@ -994,15 +990,8 @@ void Startup_Core(void)
     Check_Memory_Debug();  // old R3-Alpha check, call here to keep it working
   #endif
 
-    // We don't actually load any extensions during the core startup.  The
-    // builtin extensions can be selectively loaded in whatever order the
-    // API client wants (they may not want to load all extensions that are
-    // built in that were available all the time).
-    //
-    Startup_Extension_Loader();
-
     Recycle(); // necessary?
-}
+}}}
 
 
 //
@@ -1026,12 +1015,16 @@ void Shutdown_Core(bool clean)
 {
     assert(g_ts.jump_list == nullptr);
 
+  shutdown_extensions: {
+
     // Shutting down extensions is currently considered semantically mandatory,
     // as it may flush writes to files (filesystem extension) or do other
     // work.  If you really want to do a true "unclean shutdown" you can always
     // call exit().
-    //
+
     Shutdown_Extension_Loader();
+
+} shutdown_more: {
 
     Run_All_Handle_Cleaners();  // there may be rebFree() and other API code
 
@@ -1065,12 +1058,12 @@ void Shutdown_Core(bool clean)
     Shutdown_Action_Spec_Tags();
     Shutdown_Root_Vars();
 
-  //=//// SHUTDOWN THE API BINDING FOR CORE //////////////////////////////=//
+} shutdown_core_api_binding: {
 
     assert(librebol_binding == g_lib_context);
     librebol_binding = nullptr;
 
-  //=//// FREE API HANDLES PROTECTING DATATYPES AND LIB, SWEEP STUBS //////=//
+} free_api_handles_protecting_lib_and_datatypes: {
 
     rebReleaseAndNull(&g_lib_module);
     dont(g_lib_context = nullptr);  // do at end of Shutdown_Lib()
@@ -1078,9 +1071,11 @@ void Shutdown_Core(bool clean)
     rebReleaseAndNull(&g_datatypes_module);
     dont(g_datatypes_context = nullptr);  // do at end of Shutdown_Datatypes()
 
+} sweep_stubs: {
+
     Sweep_Stubs();  // free all managed Stubs, no more GC [1]
 
-  //=//// SHUTDOWN LIB AND DATATYPES //////////////////////////////////////=//
+} shutdown_lib_and_datatypes: {
 
     // The lib module and datatypes module both have premade stubs that are
     // not subject to garbage collection.  This means that after all the
@@ -1090,7 +1085,7 @@ void Shutdown_Core(bool clean)
     Shutdown_Lib();
     Shutdown_Datatypes();
 
-  //=//////////////////////////////////////////////////////////////////////=//
+} shutdown_rest: {
 
     Shutdown_Builtin_Symbols();
     Shutdown_Interning();
@@ -1122,4 +1117,4 @@ void Shutdown_Core(bool clean)
     // calls have been made to balance their Alloc_Mem calls.
     //
     Shutdown_Pools();
-}
+}}

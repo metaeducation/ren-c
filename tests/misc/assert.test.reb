@@ -63,11 +63,11 @@
 ]
 
 
-; Custom handler, can request to ~ignore~ the assert, otherwise panics as usual
+; Custom handler, can request to #ignore the assert, otherwise panics as usual
 [
     (
         [[1 = 2] [2 = 3]] = collect [
-            assert:handler [1 = 2, 2 = 2, 2 = 3] [x] -> [keep x, ~<ignore>~]
+            assert:handler [1 = 2, 2 = 2, 2 = 3] [x] -> [keep x, #ignore]
         ]
     )
     (

@@ -80,7 +80,7 @@
 ], ok)
 
 (
-    a: b: ~<bad>~
+    a: b: ~#bad~
     all [
         3 = [a b]: pack-old [1 + 2 3 + 4]
         a = 3
@@ -89,7 +89,7 @@
 )
 
 (
-    a: b: ~<bad>~
+    a: b: ~#bad~
     all wrap [
         1 = [a b c]: pack-old @[1 + 2]
         a = 1

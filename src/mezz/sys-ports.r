@@ -17,7 +17,7 @@ Rebol [
     ]--
 ]
 
-parse: ~<higher-level %uparse.r hasn't set SYS.UTIL/PARSE yet>~
+parse: ~#[Higher-level %uparse.r hasn't set SYS.UTIL/PARSE yet]#~
 
 make-port*: func [
     "SYS: Called by system on MAKE of PORT! port from a scheme."
@@ -147,7 +147,7 @@ make-port*: func [
             "@"
             |
             emit user: (null)
-            emit pass: (~<no user>~)  ; is this better than NULL?
+            emit pass: (~#[no user]#~)  ; is this better than NULL?
         ]
 
         ; optional host [:port]

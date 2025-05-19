@@ -82,9 +82,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
 
     const Value* datatype = Datatype_Of(custom);
 
-    Append_Ascii(mo->string, "#[");
+    Begin_Non_Lexical_Mold(mo, custom);
     Mold_Or_Form_Cell_Ignore_Quotes(mo, Cell_List_Item_At(datatype), false);
-    Append_Ascii(mo->string, "]");
+    End_Non_Lexical_Mold(mo);
 
     return TRASH;  // no return value
 }

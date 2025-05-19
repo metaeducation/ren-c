@@ -55,7 +55,7 @@
     x: default [1020]
     x = '~
 )(
-    x: ~<problem-signal>~
+    x: ~#uninitialized~
     x: default [1020]
     x = 1020
 )]

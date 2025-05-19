@@ -117,7 +117,7 @@
 ;
 [#2273
     (
-        x: ~<shouldn't be seen>~
+        x: ~#[shouldn't be seen]#~
         obj1: make object! [x: 20]
         obj2: make object! [x: 30]
         ok

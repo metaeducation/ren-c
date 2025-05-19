@@ -887,12 +887,12 @@ DECLARE_NATIVE(EQUAL_Q)
     Value* v2 = ARG(VALUE2);
     bool relax = Bool_ARG(RELAX);
 
-    if (Is_Meta_Of_Trash(v1) or Is_Meta_Of_Tripwire(v1)) {
+    if (Is_Meta_Of_Trash(v1)) {
         QUOTE_BYTE(v1) = ANTIFORM_0_COERCE_ONLY;
         return PANIC(PARAM(VALUE1));
     }
 
-    if (Is_Meta_Of_Trash(v2) or Is_Meta_Of_Tripwire(v2)) {
+    if (Is_Meta_Of_Trash(v2)) {
         QUOTE_BYTE(v2) = ANTIFORM_0_COERCE_ONLY;
         return PANIC(PARAM(VALUE2));
     }

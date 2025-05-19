@@ -37,11 +37,11 @@ verify: func [
                 ]
 
                 ; If the handler doesn't itself panic--and does not return
-                ; ~<ignore>~, then we go ahead and panic.  This lets you
+                ; #ignore, then we go ahead and panic.  This lets you
                 ; write simple handlers that just print you a message...like
                 ; some context for the assert.
                 ;
-                reaction != '~<ignore>~
+                reaction != #ignore
             ]
         ] then [
             panic:blame make warning! [

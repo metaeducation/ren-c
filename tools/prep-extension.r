@@ -763,7 +763,7 @@ script-uncompressed: cscape [--[
 
     /register-extension*
 
-    register-extension*: ~<registration of $<mod> complete>~
+    register-extension*: ~#[registration of $<mod> complete]#~
 
     ; These NATIVE invocations execute to define the natives, implicitly
     ; picking up a CFunction from an array in the extension.  The order of

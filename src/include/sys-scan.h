@@ -253,16 +253,13 @@ enum LexSpecialEnum {               // The order is important!
     LEX_SPECIAL_PLUS,               // 2B + - positive number
     LEX_SPECIAL_MINUS,              // 2D - - date, negative number
     LEX_SPECIAL_BAR,                // 7C | - can be part of an "arrow word"
-    LEX_SPECIAL_UNDERSCORE,         // 5F _ - blank
-
-                                    // Any of these can follow - or ~ :
-
-    LEX_SPECIAL_POUND,              // 23 # - hex number
+    LEX_SPECIAL_UNDERSCORE,         // 5F _ - space rune or word character
+    LEX_SPECIAL_POUND,              // 23 # - runes
     LEX_SPECIAL_DOLLAR,             // 24 $ - money
     LEX_SPECIAL_SEMICOLON,          // 3B ; - comment
 
     // LEX_SPECIAL_WORD is not a LEX_VALUE() of anything in LEX_CLASS_SPECIAL,
-    // it is used to set a flag by Prescan_Token().
+    // it is used to set a flag by Prescan_Fingerprint().
     //
     LEX_SPECIAL_WORD,
 
@@ -361,7 +358,7 @@ INLINE bool Ascii_Char_Needs_Percent_Encoding(Byte b) {
               return false;
 
             case LEX_SPECIAL_WORD:
-              assert(false);  // only occurs in use w/Prescan_Token()
+              assert(false);  // only occurs in use w/Prescan_Fingerprint()
               return false;
 
             case LEX_SPECIAL_UTF8_ERROR:  // not for c < 0x80
