@@ -1106,7 +1106,7 @@ Bounce Meta_Stepper_Executor(Level* L)
             and Is_Lifted(WORD, CURRENT)
         )
     );
-    Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Any_Word_Maybe_Trash(
         OUT,
         CURRENT,
         L_binding
@@ -1474,7 +1474,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     assert(STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(CURRENT));
 
-    Option(Error*) error = Trap_Get_Tuple_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Tuple_Maybe_Trash(
         OUT,
         GROUPS_OK,
         CURRENT,
@@ -1681,34 +1681,40 @@ for (; check != tail; ++check) {  // push variables
     //
     //        trap [[a b]: transcode "1&aa"]
 
-    Meta_Unquotify_Undecayed(OUT);
-
-    if (Is_Error(OUT))  // don't assign variables [1]
+    if (Is_Meta_Of_Error(OUT)) {  // don't assign variables [1]
+        Meta_Unquotify_Undecayed(OUT);
         goto set_block_drop_stack_and_continue;
+    }
 
 } set_block_result_not_error: {
 
-      // 2. We enumerate from left to right in the SET-BLOCK!, with the "main"
-      //    being the first assigned to any variables.  This has the benefit
-      //    that if any of the multi-returns were marked as "circled" then the
-      //    overwrite of the returned OUT for the whole evaluation will happen
-      //    *after* the original OUT was captured into any desired variable.
+    // 1. The OUT cell is used by the Set_Var() mechanics as the place to
+    //    write from.  Free it up so there's more space to work.  (This
+    //    means we have to stop our variable enumeration right before the
+    //    top of the stack.)
+    //
+    // 2. We enumerate from left to right in the SET-BLOCK!, with the "main"
+    //    being the first assigned to any variables.  This has the benefit
+    //    that if any of the multi-returns were marked as "circled" then the
+    //    overwrite of the returned OUT for the whole evaluation will happen
+    //    *after* the original OUT was captured into any desired variable.
+
+    Copy_Cell(PUSH(), Known_Element(OUT));  // free up OUT cell [1]
 
     const Source* pack_array;  // needs GC guarding when OUT overwritten
     const Element* pack_meta_at;  // pack block items are ^META'd
     const Element* pack_meta_tail;
 
-    if (Is_Pack(OUT)) {  // antiform block
+    if (Is_Meta_Of_Pack(OUT)) {  // antiform block
         pack_meta_at = Cell_List_At(&pack_meta_tail, OUT);
 
         pack_array = Cell_Array(OUT);
         Push_Lifeguard(pack_array);
     }
-    else {
-        Meta_Quotify(OUT);  // standardize to align with pack items
-
-        pack_meta_at = cast(Element*, OUT);
-        pack_meta_tail = cast(Element*, OUT) + 1;  // not a valid cell
+    else {  // keep quoted (it aligns with pack items being metaforms)
+        Move_Atom(SPARE, OUT);
+        pack_meta_at = cast(Element*, SPARE);
+        pack_meta_tail = cast(Element*, SPARE) + 1;  // not a valid cell
 
         pack_array = nullptr;
     }
@@ -1718,7 +1724,7 @@ for (; check != tail; ++check) {  // push variables
 
   next_pack_item: {
 
-    if (stackindex_var == TOP_INDEX + 1)
+    if (stackindex_var == (TOP_INDEX + 1) - 1)  // -1 accounts for pushed OUT
         goto set_block_finalize_and_drop_stack;
 
     bool is_optional = Get_Cell_Flag(
@@ -1739,10 +1745,10 @@ for (; check != tail; ++check) {  // push variables
         // (special handling ^WORD! below will actually use plain null to
         // distinguish)
         //
-        Init_Meta_Of_Null(SPARE);
+        Init_Meta_Of_Null(OUT);
     }
     else
-        Copy_Cell(SPARE, pack_meta_at);
+        Copy_Cell(OUT, pack_meta_at);
 
     if (Is_Lift_Sigil(var)) {
         panic ("META sigil should allow ghost pass thru, probably?");
@@ -1752,33 +1758,32 @@ for (; check != tail; ++check) {  // push variables
     if (Is_Lifted(WORD, var)) {
         Plainify(var);  // !!! temporary, remove ^ sigil (set should see it)
         if (pack_meta_at == pack_meta_tail) {  // special detection
-            Init_Nulled(SPARE);  // LIB(NULL) isn't mutable/atom
-            Set_Var_May_Panic(var, SPECIFIED, SPARE);
+            Init_Nulled(OUT);  // LIB(NULL) isn't mutable/atom
+            Set_Var_May_Panic(var, SPECIFIED, OUT);
             goto circled_check;
         }
-        Set_Var_May_Panic(var, SPECIFIED, SPARE);  // is meta'd
-        Meta_Unquotify_Undecayed(SPARE);  // result should not be meta
+        Set_Var_May_Panic(var, SPECIFIED, OUT);  // is meta'd
+        Meta_Unquotify_Undecayed(OUT);  // result should not be meta
         goto circled_check;
     }
 
-    Meta_Unquotify_Undecayed(SPARE);
+    Meta_Unquotify_Undecayed(OUT);
 
     if (Is_Space(var))
         goto circled_check;
 
-    if (Is_Error(SPARE))  // don't pass thru errors if not @
-        return PANIC(Cell_Error(SPARE));
+    if (Is_Error(OUT))  // don't pass thru errors if not @
+        return PANIC(Cell_Error(OUT));
 
-    Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
+    Decay_If_Unstable(OUT);  // if pack in slot, resolve it
 
     if (Is_Word(var) or Is_Tuple(var) or Is_Pinned(WORD, var)) {
-        DECLARE_VALUE (dummy);
         if (Set_Var_Core_Throws(
-            dummy,
+            SPARE,  // may overwrite SPARE if single item, but we're done w/it
             GROUPS_OK,
             var,
             SPECIFIED,
-            SPARE
+            OUT
         )){
             return PANIC(Error_No_Catch_For_Throw(L));
         }
@@ -1789,7 +1794,7 @@ for (; check != tail; ++check) {  // push variables
 } circled_check: { // Note: no circling passes through the original OUT
 
     if (circled == stackindex_var)
-        Copy_Cell(OUT, SPARE);
+        Copy_Meta_Cell(TOP_ELEMENT, OUT);  // unmeta'd on finalization
 
     ++stackindex_var;
     ++pack_meta_at;
@@ -1797,11 +1802,18 @@ for (; check != tail; ++check) {  // push variables
 
 } set_block_finalize_and_drop_stack: {
 
+    // 1. At the start of the process we pushed the meta-value of whatever the
+    //    right hand side of the SET_BLOCK! was (as long as it wasn't an
+    //    ERROR!).  OUT gets overwritten each time we write a variable, so we
+    //    have to restore it to make the overall SET-BLOCK! process match
+    //    the right hand side.  (This value is overwritten by a circled value,
+    //    so it may not actually be the original right hand side.);
+
     if (pack_array)
         Drop_Lifeguard(pack_array);
 
-    if (not circled and not Is_Pack(OUT))  // reverse quotification
-        Meta_Unquotify_Undecayed(OUT);
+    Move_Cell(OUT, TOP_ELEMENT);  // restore OUT (or circled) from stack [1]
+    Meta_Unquotify_Undecayed(OUT);
 
 }} set_block_drop_stack_and_continue: {
 

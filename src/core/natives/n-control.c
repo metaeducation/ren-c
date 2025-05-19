@@ -1078,24 +1078,14 @@ DECLARE_NATIVE(SWITCH)
 //          [set-group? set-word? set-tuple?]  ; to left of DEFAULT
 //      @(branch) "If target needs default, this is evaluated and stored there"
 //          [any-branch?]
-//      <local> steps
 //  ]
 //
 DECLARE_NATIVE(DEFAULT)
-//
-// 1. The TARGET may be something like a TUPLE! that contains GROUP!s.  This
-//    could put us at risk of double-evaluation if we do a GET to check the
-//    variable--find it's unset--and then use that tuple again.  GET and SET
-//    have an answer for this problem in the form of giving back a block of
-//    `steps` which can resolve the variable without doing more evaluations.
-//
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
     Element* target = Element_ARG(TARGET);
     Value* branch = ARG(BRANCH);
-
-    Element* steps = cast(Element*, LOCAL(STEPS));  // hold resolved steps [1]
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,
@@ -1106,23 +1096,30 @@ DECLARE_NATIVE(DEFAULT)
     switch (STATE) {
       case ST_DEFAULT_INITIAL_ENTRY: goto initial_entry;
       case ST_DEFAULT_GETTING_TARGET: assert(false); break;  // !!! TBD
-      case ST_DEFAULT_EVALUATING_BRANCH: goto branch_result_in_spare;
+      case ST_DEFAULT_EVALUATING_BRANCH: goto branch_result_in_out;
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-  // 1. TRASH!, TRIPWIRE! and NULL are considered "defaultable".  VOID can't
-  //    be stored in variables directly, but it might be the case that
-  //    metavariables such as (^x: void, ^x: default [1020]) should be willing
-  //    to overwrite the void state.  Review.
+    // 1. TARGET may be something like a TUPLE! that contains GROUP!s.  This
+    //    puts us at risk of double-evaluation if we do a GET to check the
+    //    variable--find it's unset--and use that tuple again.  GET and SET
+    //    have an answer for this problem by giving back a block of "steps"
+    //    which can resolve the variable without doing more evaluations.
+    //
+    // 2. TRASH!, BLANK, and NULL are considered "defaultable".  VOID can't
+    //    be stored in variables directly, but it might be the case that
+    //    metavariables such as (^x: void, ^x: default [1020]) should be
+    //    willing to overwrite the void state.  Review.
 
     Unchain(target);
 
     Sink(Value) out = OUT;
-    Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
+    Sink(Element) steps = SCRATCH;
+    Option(Error*) error = Trap_Get_Var_Maybe_Trash(
         out,
-        steps,  // use steps to avoid double-evaluation on GET + SET pair
+        steps,  // save steps avoids double-evaluation on GET + SET pair [1]
         target,
         SPECIFIED
     );
@@ -1130,19 +1127,21 @@ DECLARE_NATIVE(DEFAULT)
         return PANIC(unwrap error);
 
     if (not (Is_Trash(out) or Is_Nulled(out) or Is_Blank(out)))
-        return OUT;  // consider it a "value" [1]
+        return OUT;  // consider it a "value" [2]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
-    return CONTINUE(SPARE, branch, OUT);
+    return CONTINUE(OUT, branch, OUT);
 
-} branch_result_in_spare: {  /////////////////////////////////////////////////
+} branch_result_in_out: {  ///////////////////////////////////////////////////
 
-    if (Set_Var_Core_Throws(OUT, nullptr, steps, SPECIFIED, SPARE)) {
+    Element* steps = Known_Element(SCRATCH);
+
+    if (Set_Var_Core_Throws(SPARE, nullptr, steps, SPECIFIED, OUT)) {
         assert(false);  // shouldn't be able to happen.
         return PANIC(Error_No_Catch_For_Throw(LEVEL));
     }
 
-    return COPY(SPARE);
+    return OUT;
 }}
 
 

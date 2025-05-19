@@ -68,7 +68,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 // only be called by things like Trap_Get_Tuple(), because there are no
 // special adjustments for sequences like `.a`
 //
-static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
+static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Trash(
     Sink(Value) out,
     const Element* word,  // sigils ignored (^WORD! doesn't "meta-get")
     Context* context  // context for `.xxx` tuples not adjusted
@@ -107,15 +107,15 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
 
 
 //
-//  Trap_Get_Tuple_Maybe_Vacant: C
+//  Trap_Get_Tuple_Maybe_Trash: C
 //
 // 1. Using a leading dot in a tuple is a cue to look up variables in the
 //    object from which a function was dispatched, so `var` and `.var` can
 //    look up differently inside a function's body.
 //
-Option(Error*) Trap_Get_Tuple_Maybe_Vacant(
+Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     Sink(Value) out,
-    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
+    Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
     Context* context
 ){
@@ -143,7 +143,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Vacant(
     }
     else switch (Stub_Flavor(x_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL: {
-        Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Trash(
             out,
             tuple,  // optimized "wordlike" representation, like a. or .a
             context
@@ -215,7 +215,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Vacant(
     // in theory, as types in the system are extended, they only need to
     // implement PICK in order to have tuples work with them.
 
-    Option(Error*) error = Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_From_Steps_On_Stack_Maybe_Trash(
         out, base
     );
     if (error) {
@@ -241,11 +241,11 @@ Option(Error*) Trap_Get_Tuple_Maybe_Vacant(
 //
 Option(Error*) Trap_Get_Tuple(
     Sink(Value) out,
-    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
+    Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
     Context* context
 ){
-    Option(Error*) error = Trap_Get_Tuple_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Tuple_Maybe_Trash(
         out, steps_out, tuple, context
     );
     if (error)
@@ -259,7 +259,7 @@ Option(Error*) Trap_Get_Tuple(
 
 
 //
-//  Trap_Get_Var_Maybe_Vacant: C
+//  Trap_Get_Var_Maybe_Trash: C
 //
 // This is a generalized service routine for getting variables that will
 // specialize paths into concrete actions.
@@ -270,9 +270,9 @@ Option(Error*) Trap_Get_Tuple(
 //    this function, and then let the Action_Executor() use the refinements
 //    on the stack directly.  That avoids making an intermediate action.
 //
-Option(Error*) Trap_Get_Var_Maybe_Vacant(
+Option(Error*) Trap_Get_Var_Maybe_Trash(
     Sink(Value) out,
-    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
+    Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* var,
     Context* context
 ){
@@ -280,7 +280,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Any_Word(var)) {
-        Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Trash(
             out, var, context
         );
         if (error)
@@ -328,13 +328,13 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         }
 
         if (steps_out and steps_out != GROUPS_OK)
-            Init_Trash(unwrap steps_out);  // !!! What to return?
+            Init_Quasar(unwrap steps_out);  // !!! What to return?
 
         return SUCCESS;
     }
 
     if (Is_Tuple(var))
-        return Trap_Get_Tuple_Maybe_Vacant(
+        return Trap_Get_Tuple_Maybe_Trash(
             out, steps_out, var, context
         );
 
@@ -348,7 +348,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         for (at = head; at != tail; ++at)
             Derelativize(PUSH(), at, at_binding);
 
-        Option(Error*) error = Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_From_Steps_On_Stack_Maybe_Trash(
             out, base
         );
         Drop_Data_Stack_To(base);
@@ -369,15 +369,15 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
 //
 //  Trap_Get_Var: C
 //
-// May generate specializations for paths.  See Trap_Get_Var_Maybe_Vacant()
+// May generate specializations for paths.  See Trap_Get_Var_Maybe_Trash()
 //
 Option(Error*) Trap_Get_Var(
     Sink(Value) out,
-    Option(Value*) steps_out,  // if nullptr, then GROUP!s not legal
+    Option(Element*) steps_out,  // if nullptr, then GROUP!s not legal
     const Element* var,
     Context* context
 ){
-    Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Var_Maybe_Trash(
         out, steps_out, var, context
     );
     if (error)
@@ -402,7 +402,7 @@ Value* Get_Var_May_Panic(
     const Element* var,
     Context* context
 ){
-    Value* steps_out = nullptr;  // signal groups not allowed to run
+    Option(Element*) steps_out = nullptr;  // signal groups not allowed to run
 
     Option(Error*) error = Trap_Get_Var(  // vacant will give error
         out, steps_out, var, context
@@ -438,7 +438,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             return Error_No_Catch_For_Throw(TOP_LEVEL);
     }
     else if (Is_Tuple(head)) {  // .member-function:refinement is legal
-        DECLARE_VALUE (steps);
+        DECLARE_ELEMENT (steps);
         Option(Error*) error = Trap_Get_Tuple(  // vacant is error
             out, steps, head, derived
         );
@@ -563,7 +563,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
             return Error_No_Catch_For_Throw(TOP_LEVEL);
     }
     else if (Is_Tuple(at)) {
-        DECLARE_VALUE (steps);
+        DECLARE_ELEMENT (steps);
         Option(Error*) error = Trap_Get_Tuple(  // vacant is error
             out, steps, at, derived
         );
@@ -650,7 +650,7 @@ Option(Error*) Trap_Get_Any_Word(
     const Element* word,  // should heed sigil? (^WORD! should UNMETA?)
     Context* context
 ){
-    Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Trash(
         out, word, context
     );
     if (error)
@@ -664,23 +664,23 @@ Option(Error*) Trap_Get_Any_Word(
 
 
 //
-//  Trap_Get_Any_Word_Maybe_Vacant: C
+//  Trap_Get_Any_Word_Maybe_Trash: C
 //
 // High-level: see notes on Trap_Get_Any_Word().  This version just gives back
 // TRASH! vs. give an error.
 //
-Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
+Option(Error*) Trap_Get_Any_Word_Maybe_Trash(
     Sink(Value) out,
     const Element* word,  // should heed sigil? (^WORD! should UNMETA?)
     Context* context
 ){
     assert(Any_Word(word));
-    return Trap_Get_Wordlike_Cell_Maybe_Vacant(out, word, context);
+    return Trap_Get_Wordlike_Cell_Maybe_Trash(out, word, context);
 }
 
 
 //
-//  Trap_Get_From_Steps_On_Stack_Maybe_Vacant: C
+//  Trap_Get_From_Steps_On_Stack_Maybe_Trash: C
 //
 // The GET and SET operations are able to tolerate :GROUPS, whereby you can
 // run somewhat-arbitrary code that appears in groups in tuples.  This can
@@ -693,7 +693,7 @@ Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
 // which uses the stack (to avoid needing to generate an intermediate array
 // in the case evaluations were performed).
 //
-Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
+Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Trash(
     Sink(Value) out,
     StackIndex base
 ){
@@ -785,9 +785,11 @@ DECLARE_NATIVE(GET)
             Unchain(source);  // want to GET or SET normally
     }
 
-    Value* steps;
-    if (Bool_ARG(STEPS))
-        steps = ARG(STEPS);
+    Option(Element*) steps;
+    if (Bool_ARG(STEPS)) {
+        Init_Space(ARG(STEPS));
+        steps = Element_ARG(STEPS);  // we write into the STEPS slot directly
+    }
     else if (Bool_ARG(GROUPS))
         steps = GROUPS_OK;
     else
@@ -820,7 +822,7 @@ DECLARE_NATIVE(GET)
     }
 
     Sink(Value) out = OUT;
-    Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Var_Maybe_Trash(
         out, steps, source, SPECIFIED
     );
     if (error)
@@ -833,7 +835,7 @@ DECLARE_NATIVE(GET)
     if (steps and steps != GROUPS_OK) {
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
-        Copy_Meta_Cell(Array_At(pack, 0), steps);
+        Copy_Meta_Cell(Array_At(pack, 0), unwrap steps);
         Copy_Meta_Cell(Array_At(pack, 1), out);
         return Init_Pack(OUT, pack);
     }
@@ -866,7 +868,7 @@ DECLARE_NATIVE(GET)
 bool Set_Var_Core_Updater_Throws(
     Sink(Value) spare,  // temp GC-safe location, not used for output
     Option(Value*) steps_out,  // no GROUP!s if nulled
-    const Element* var,
+    Element* var,  // mutates (removes sigils)
     Context* context,
     Atom* poke,  // e.g. L->out (in evaluator, right hand side)
     const Value* updater
@@ -874,73 +876,15 @@ bool Set_Var_Core_Updater_Throws(
     possibly(spare == steps_out or var == steps_out);
     assert(spare != poke and var != poke);
 
+    StackIndex base = TOP_INDEX;
+
     DECLARE_ATOM (temp);
 
-    if (Any_Word(var)) {
-
-      set_target:
-
-        if (updater == Mutable_Lib_Var(SYM_POKE_P)) {  // unset poke ok for boot
-            //
-            // Shortcut past POKE for WORD! (though this subverts hijacking,
-            // review that case.)
-            //
-            Value* sink = Sink_Word_May_Panic(var, context);
-            if (Any_Lifted(var)) {
-                possibly(Not_Cell_Flag(poke, OUT_HINT_UNSURPRISING));  // ok
-                Copy_Meta_Cell(sink, poke);
-            }
-            else {
-                if (Is_Atom_Action(poke)) {
-                    Value* action = cast(Value*, poke);
-                    if (Get_Cell_Flag(poke, OUT_HINT_UNSURPRISING))
-                        Update_Frame_Cell_Label(action, Cell_Word_Symbol(var));
-                    else
-                        panic ("Surprising ACTION! assign, use ^LIFT: assign");
-                }
-                Copy_Cell(sink, Decay_If_Unstable(poke));
-            }
-        }
-        else {
-            // !!! This is a hack to try and get things working for PROTECT*.
-            // Things are in roughly the right place, but very shaky.  Revisit
-            // as BINDING OF is reviewed in terms of answers for LET.
-            //
-            Option(const Value*) setval;
-            if (Is_Void(poke))
-                setval = nullptr;
-            else if (Is_Error(poke))  // for now, skip assign
-                return false;
-            else
-                setval = Decay_If_Unstable(poke);
-
-            Derelativize(temp, var, context);
-            QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
-            Push_Lifeguard(temp);
-            if (rebRunThrows(
-                spare,  // <-- output cell
-                rebRUN(updater), "binding of", temp, temp,
-                    CANON(EITHER), rebL(did setval), rebQ(unwrap setval), "~[]~"
-            )){
-                Drop_Lifeguard(temp);
-                panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-            }
-            Drop_Lifeguard(temp);
-        }
-
-        if (steps_out and steps_out != GROUPS_OK) {
-            if (steps_out != var)  // could be true if GROUP eval
-                Derelativize(unwrap steps_out, var, context);
-
-            // If the variable is a compressed path form like `a.` then turn
-            // it into a plain word.
-            //
-            HEART_BYTE(unwrap steps_out) = TYPE_WORD;
-        }
-        return false;  // did not throw
-    }
-
     Option(const Value*) setval;
+
+    if (Any_Word(var))
+        goto handle_wordlike;
+
     if (Is_Void(poke))
         setval = nullptr;
     else if (Is_Error(poke))  // for now, skip assign
@@ -948,78 +892,142 @@ bool Set_Var_Core_Updater_Throws(
     else
         setval = Decay_If_Unstable(poke);
 
-    StackIndex base = TOP_INDEX;
+    if (Any_Sequence(var))
+        goto handle_sequence;
+
+    if (Is_Pinned(BLOCK, var))
+        goto handle_steps;
+
+    panic (var);
+
+  handle_wordlike: {
+
+    if (updater == Mutable_Lib_Var(SYM_POKE_P)) {  // unset poke ok for boot
+        //
+        // Shortcut past POKE for WORD! (though this subverts hijacking,
+        // review that case.)
+        //
+        Value* sink = Sink_Word_May_Panic(var, context);
+        if (Any_Lifted(var)) {
+            possibly(Not_Cell_Flag(poke, OUT_HINT_UNSURPRISING));  // ok
+            Copy_Meta_Cell(sink, poke);
+        }
+        else {
+            if (Is_Atom_Action(poke)) {
+                Value* action = cast(Value*, poke);
+                if (Get_Cell_Flag(poke, OUT_HINT_UNSURPRISING))
+                    Update_Frame_Cell_Label(action, Cell_Word_Symbol(var));
+                else
+                    panic ("Surprising ACTION! assign, use ^LIFT: assign");
+            }
+            Copy_Cell(sink, Decay_If_Unstable(poke));
+        }
+    }
+    else {
+        // !!! This is a hack to try and get things working for PROTECT*.
+        // Things are in roughly the right place, but very shaky.  Revisit
+        // as BINDING OF is reviewed in terms of answers for LET.
+        //
+        Derelativize(temp, var, context);
+        QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
+        Push_Lifeguard(temp);
+        if (rebRunThrows(
+            spare,  // <-- output cell
+            rebRUN(updater), "binding of", temp, temp,
+                CANON(EITHER), rebL(did setval), rebQ(unwrap setval), "~[]~"
+        )){
+            Drop_Lifeguard(temp);
+            panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+        }
+        Drop_Lifeguard(temp);
+    }
+
+    if (steps_out and steps_out != GROUPS_OK) {
+        if (steps_out != var)  // could be true if GROUP eval
+            Derelativize(unwrap steps_out, var, context);
+
+        // If the variable is a compressed path form like `a.` then turn
+        // it into a plain word.
+        //
+        HEART_BYTE(unwrap steps_out) = TYPE_WORD;
+    }
+    return false;  // did not throw
+
+} handle_sequence: {
 
     // If we have a sequence, then GROUP!s must be evaluated.  (If we're given
     // a steps array as input, then a GROUP! is literally meant as a
     // GROUP! by value).  These evaluations should only be allowed if the
     // caller has asked us to return steps.
 
-    if (Any_Sequence(var)) {
-        if (not Sequence_Has_Node(var))  // compressed byte form
-            panic (var);
+    if (not Sequence_Has_Node(var))  // compressed byte form
+        panic (var);
 
-        const Node* node1 = CELL_NODE1(var);
-        if (Is_Node_A_Cell(node1)) {  // pair optimization
-            // pairings considered "Listlike", handled by Cell_List_At()
-        }
-        else switch (Stub_Flavor(c_cast(Flex*, node1))) {
-          case FLAVOR_SYMBOL: {
-            if (Get_Cell_Flag(var, LEADING_SPACE)) {  // `/a` or `.a`
-                if (Heart_Of(var) == TYPE_TUPLE)
-                    context = Adjust_Context_For_Coupling(context);
-                goto set_target;
-            }
-
-            // `a/` or `a.`
-            //
-            // !!! If this is a PATH!, it should error if it's not an action...
-            // and if it's a TUPLE! it should error if it is an action.  Review.
-            //
-            goto set_target; }
-
-          case FLAVOR_SOURCE:
-            break;  // fall through
-
-          default:
-            crash (var);
-        }
-
-        const Element* tail;
-        const Element* head = Cell_List_At(&tail, var);
-        const Element* at;
-        Context* at_binding = Derive_Binding(context, var);
-        for (at = head; at != tail; ++at) {
-            if (Is_Group(at)) {
-                if (not steps_out)
-                    panic (Error_Bad_Get_Group_Raw(var));
-
-                if (Eval_Any_List_At_Throws(temp, at, at_binding)) {
-                    Drop_Data_Stack_To(base);
-                    return true;
-                }
-                Decay_If_Unstable(temp);
-                if (Is_Antiform(temp))
-                    panic (Error_Bad_Antiform(temp));
-
-                Move_Cell(PUSH(), cast(Element*, temp));
-                if (at == head)
-                    Quotify(TOP_ELEMENT);  // signal not literally the head
-            }
-            else  // Note: must keep WORD!s at head as-is for writeback
-                Derelativize(PUSH(), at, at_binding);
-        }
+    const Node* node1 = CELL_NODE1(var);
+    if (Is_Node_A_Cell(node1)) {  // pair optimization
+        // pairings considered "Listlike", handled by Cell_List_At()
     }
-    else if (Is_Pinned(BLOCK, var)) {
-        const Element* tail;
-        const Element* head = Cell_List_At(&tail, var);
-        const Element* at;
-        Context* at_binding = Derive_Binding(context, var);
-        for (at = head; at != tail; ++at)
+    else switch (Stub_Flavor(c_cast(Flex*, node1))) {
+      case FLAVOR_SYMBOL: {
+        if (Get_Cell_Flag(var, LEADING_SPACE)) {  // `/a` or `.a`
+            if (Heart_Of(var) == TYPE_TUPLE)
+                context = Adjust_Context_For_Coupling(context);
+            goto handle_wordlike;
+        }
+
+        // `a/` or `a.`
+        //
+        // !!! If this is a PATH!, it should error if it's not an action...
+        // and if it's a TUPLE! it should error if it is an action.  Review.
+        //
+        goto handle_wordlike; }
+
+      case FLAVOR_SOURCE:
+        break;  // fall through
+
+      default:
+        crash (var);
+    }
+
+    const Element* tail;
+    const Element* head = Cell_List_At(&tail, var);
+    const Element* at;
+    Context* at_binding = Derive_Binding(context, var);
+    for (at = head; at != tail; ++at) {
+        if (Is_Group(at)) {
+            if (not steps_out)
+                panic (Error_Bad_Get_Group_Raw(var));
+
+            if (Eval_Any_List_At_Throws(temp, at, at_binding)) {
+                Drop_Data_Stack_To(base);
+                return true;
+            }
+            Decay_If_Unstable(temp);
+            if (Is_Antiform(temp))
+                panic (Error_Bad_Antiform(temp));
+
+            Move_Cell(PUSH(), cast(Element*, temp));
+            if (at == head)
+                Quotify(TOP_ELEMENT);  // signal not literally the head
+        }
+        else  // Note: must keep WORD!s at head as-is for writeback
             Derelativize(PUSH(), at, at_binding);
     }
-    else
-        panic (var);
+
+    goto set_from_stack;
+
+} handle_steps: {
+
+    const Element* tail;
+    const Element* head = Cell_List_At(&tail, var);
+    const Element* at;
+    Context* at_binding = Derive_Binding(context, var);
+    for (at = head; at != tail; ++at)
+        Derelativize(PUSH(), at, at_binding);
+
+    goto set_from_stack;
+
+} set_from_stack: {
 
     assert(Is_Action(updater));  // we will use rebM() on it
 
@@ -1031,8 +1039,7 @@ bool Set_Var_Core_Updater_Throws(
 
     StackIndex stackindex_top = TOP_INDEX;
 
-  poke_again:
-  blockscope {
+  poke_again: {
     StackIndex stackindex = base + 1;
 
   blockscope {
@@ -1118,7 +1125,6 @@ bool Set_Var_Core_Updater_Throws(
             unwrap setval
         );
     }
-  }
 
     Drop_Lifeguard(temp);
     Drop_Lifeguard(writeback);
@@ -1129,7 +1135,7 @@ bool Set_Var_Core_Updater_Throws(
         Drop_Data_Stack_To(base);
 
     return false;
-}
+}}}
 
 
 //
@@ -1138,7 +1144,7 @@ bool Set_Var_Core_Updater_Throws(
 bool Set_Var_Core_Throws(
     Sink(Value) spare,  // temp GC-safe location, not used for output
     Option(Value*) steps_out,  // no GROUP!s if nulled
-    const Element* var,
+    Element* var,
     Context* context,
     Atom* poke  // e.g. L->out (in evaluator, right hand side)
 ){
@@ -1160,7 +1166,7 @@ bool Set_Var_Core_Throws(
 // preserving the "steps" to reuse in multiple assignments.
 //
 void Set_Var_May_Panic(
-    const Element* var,
+    Element* var,
     Context* context,
     Atom* poke
 ){
@@ -1250,7 +1256,7 @@ DECLARE_NATIVE(SET)
     //    the quasiform error to X, but will still pass through the error
     //    antiform as the overall expression result.
 
-    Value* steps;
+    Option(Element*) steps;
     if (Bool_ARG(GROUPS))
         steps = GROUPS_OK;
     else

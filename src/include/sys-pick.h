@@ -120,4 +120,4 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 // passing a separate flag, the g_trash pointer is used (mutable, but it
 // has the protected bit set to avoid accidents)
 //
-#define GROUPS_OK  m_cast(Value*, g_trash)
+#define GROUPS_OK  cast(Option(Element*), x_cast(Element*, g_empty_text))

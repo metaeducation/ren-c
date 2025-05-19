@@ -391,15 +391,15 @@ DECLARE_NATIVE(PROTECT)
     Element* e = Element_ARG(VALUE);
     if (Any_Word(e) or Is_Tuple(e)) {
         if (Bool_ARG(HIDE))
-            Init_Word(SPARE, CANON(HIDE));
+            Init_Word(OUT, CANON(HIDE));
         else
-            Init_Word(SPARE, CANON(PROTECT));
+            Init_Word(OUT, CANON(PROTECT));
         if (Set_Var_Core_Updater_Throws(
-            OUT,
+            SPARE,
             nullptr,
             e,
             SPECIFIED,
-            SPARE,
+            OUT,
             LIB(PROTECT_P)
         )){
             return THROWN;
@@ -453,13 +453,13 @@ DECLARE_NATIVE(UNPROTECT)
 
     Element* e = Element_ARG(VALUE);
     if (Any_Word(e) or Is_Tuple(e)) {
-        Init_Word(SPARE, CANON(UNPROTECT));
+        Init_Word(OUT, CANON(UNPROTECT));
         if (Set_Var_Core_Updater_Throws(
-            OUT,
+            SPARE,
             nullptr,
             e,
             SPECIFIED,
-            SPARE,
+            OUT,
             LIB(PROTECT_P)
         )){
             return THROWN;

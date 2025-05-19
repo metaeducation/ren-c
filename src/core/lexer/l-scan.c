@@ -3387,6 +3387,14 @@ DECLARE_NATIVE(TRANSCODE)
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
+    if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // wanted the line number updated
+        Init_Integer(OUT, transcode->line);
+        Element* line_var = Copy_Cell(SCRATCH, Element_ARG(LINE));
+        if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, OUT))
+            return THROWN;
+        UNUSED(*OUT);
+    }
+
     if (TOP_INDEX == STACK_BASE) {  // (transcode "") is null, not []
         Init_Nulled(OUT);
     }
@@ -3406,13 +3414,6 @@ DECLARE_NATIVE(TRANSCODE)
     }
 
     Drop_Level(SUBLEVEL);
-
-    if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // wanted the line number updated
-        Atom* line_int = Init_Integer(SCRATCH, transcode->line);
-        const Element* line_var = Element_ARG(LINE);
-        if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, line_int))
-            return THROWN;
-    }
 
     if (Is_Nulled(OUT))  // no more Elements were left to transcode
         return nullptr;  // must return pure null for THEN/ELSE to work right
