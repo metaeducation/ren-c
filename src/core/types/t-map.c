@@ -700,9 +700,9 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Map)
+IMPLEMENT_GENERIC(PICK_P, Is_Map)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* map = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
@@ -716,16 +716,16 @@ IMPLEMENT_GENERIC(PICK, Is_Map)
     );
 
     if (not n)
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PICK_OUT_OF_RANGE;
 
     const Element* val = Array_At(
         MAP_PAIRLIST(VAL_MAP(map)),
         (((unwrap n) - 1) * 2) + 1
     );
     if (Is_Zombie(val))
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PICK_OUT_OF_RANGE;
 
-    return Copy_Cell(OUT, val);
+    return PICKED(Copy_Cell(OUT, val));
 }
 
 

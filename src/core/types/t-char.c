@@ -928,9 +928,13 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Rune)
+// !!! Review if RUNE! should be PICK-able at all, or if you should have to
+// alias it as TEXT!... this would go along with the idea of saying that
+// the (_) "Space Rune" is EMPTY?.
+//
+IMPLEMENT_GENERIC(PICK_P, Is_Rune)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* rune = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
@@ -940,19 +944,19 @@ IMPLEMENT_GENERIC(PICK, Is_Rune)
 
     REBI64 n = VAL_INT64(picker);
     if (n <= 0)
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PICK_OUT_OF_RANGE;
 
     REBLEN len;
     Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, rune);
     if (n > len)
-        return nullptr;
+        return PICK_OUT_OF_RANGE;
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
     for (; n != 1; --n)
         cp = Utf8_Next(&c, cp);
 
-    return Init_Char_Unchecked(OUT, c);
+    return PICKED(Init_Char_Unchecked(OUT, c));
 }
 
 

@@ -447,7 +447,7 @@ DECLARE_NATIVE(RANDOM_PICK)
     const Value* datatype = Datatype_Of_Builtin_Fundamental(collection);
     if (
         not Handles_Generic(LENGTH_OF, datatype)
-        or not Handles_Generic(PICK, datatype)
+        or not Handles_Generic(PICK_P, datatype)
     ){
         return UNHANDLED;
     }

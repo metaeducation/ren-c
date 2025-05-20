@@ -982,6 +982,9 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
     #define LOOPED(v)   Native_Looped_Result(level_, (v))
 
+    #define PICKED(v)   Meta_Quotify(v ? v : Init_Nulled(OUT))
+    #define PICK_OUT_OF_RANGE  cast(Bounce, Init_Nulled(OUT))
+
     // Note: For efficiency, intrinsic typecheckers must return BOUNCE_OKAY
     // or nullptr.  This means that trying to make LOGIC(b) "more efficient"
     // by doing Init_Okay(OUT) or Init_Nulled(OUT) will break things.

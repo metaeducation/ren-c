@@ -110,7 +110,45 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 
 
 //
-//  pick: native:generic [
+//  pick*: native:generic [
+//
+//  "Lower-level implementation hook for PICK, return value is meta-protocol"
+//
+//      return: "Meta of picked value, null if not present, action if lazy"
+//          [null? error! action! quoted! quasiform!]
+//      location [fundamental?]  ; can't pick from quoted/quasi
+//      picker "Index offset, symbol, or other value to use as index"
+//          [element?]
+//  ]
+//
+DECLARE_NATIVE(PICK_P)
+//
+// PICK* underlies tuple/path picking, and it uses a "meta-protocol".  The
+// reason is that sometimes you might face a picking situation like what
+// occurs in the FFI, with:
+//
+//    struct.million_ints_field.10
+//
+// PICK* is called on each path step.  But if the underlying C data for the
+// STRUCT! is a C array of a million `int`s, then you don't want to explode
+// that into a BLOCK! of a million INTEGER!s... to then only pick the 10th!
+//
+// Hence, being able to return an ACTION! to be a "lazy" result that can
+// narrowly do the 10th pick is useful.  But this must be distinguishable
+// from a PICK that actually returns an ACTION! as the value (e.g. if an
+// OBJECT! had an ACTION! as a field).  Hence, the meta-protocol.
+{
+    INCLUDE_PARAMS_OF_PICK_P;  // PICK_P must be frame compatible with PICK!
+
+    Element* location = Element_ARG(LOCATION);
+    UNUSED(ARG(PICKER));
+
+    return Dispatch_Generic(PICK_P, location, LEVEL);
+}
+
+
+//
+//  pick: native [
 //
 //  "Perform a path picking operation, same as `:(location).(picker)`"
 //
@@ -161,7 +199,7 @@ DECLARE_NATIVE(PICK)
     Element* picker = Element_ARG(PICKER);
     switch (Sigil_Of(picker)) {
       case SIGIL_0:
-        goto dispatch_generic;;
+        goto dispatch_generic;
 
       case SIGIL_LIFT:
         Plainify(picker);  // remove lifted sigil
@@ -180,13 +218,38 @@ DECLARE_NATIVE(PICK)
 
     Bounce bounce = maybe Irreducible_Bounce(
         LEVEL,
-        Dispatch_Generic(PICK, location, LEVEL)
+        Dispatch_Generic(PICK_P, location, LEVEL)
     );
 
     if (bounce)
         return bounce;  // we will get a callback (if not error/etc.)
 
-} possibly_unlift_out: {
+    if (Is_Metaform(OUT)) // if a value was found, it's returned as META
+        goto pick_p_succeeded_out_is_metaform;
+
+} pick_p_gave_signal_antiform: {
+
+    // When PICK* returns an antiform, that means it needs special handling.
+
+    if (Is_Atom_Action(OUT))
+        return PANIC("PICK* delegation machinery not done yet");
+
+    if (Is_Error(OUT))
+        return OUT;
+
+    if (Is_Nulled(OUT))  // absent (distinct from meta "NULL-but-present")
+        return FAIL(Error_Bad_Pick_Raw(ARG(PICKER)));
+
+    return PANIC("Non-ACTION! antiform returned by PICK* meta protocol");
+
+} pick_p_succeeded_out_is_metaform: {
+
+    Meta_Unquotify_Undecayed(OUT);
+
+    if (not Is_Stable(OUT)) {
+        assert(false);  // Note: once usermode PICK* exists, it may screw up
+        return PANIC("PICK* returned metaform of an unstable antiform");
+    }
 
     if (Not_Cell_Flag(location, LOCATION_HINT_UNLIFT))
         return OUT;  // no unlift needed

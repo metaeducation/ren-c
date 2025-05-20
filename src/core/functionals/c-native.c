@@ -385,7 +385,7 @@ bool Try_Dispatch_Generic_Core(
         switch (symid) {  // exempt port's IMPLEMENT_GENERIC() cases
           case SYM_MAKE:
           case SYM_EQUAL_Q:
-          case SYM_PICK:
+          case SYM_PICK_P:
           case SYM_POKE_P:
           case SYM_MOLDIFY:
             break;  // fall through to modern dispatch

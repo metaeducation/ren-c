@@ -726,20 +726,20 @@ IMPLEMENT_GENERIC(COPY, Is_Blob)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Blob)
+IMPLEMENT_GENERIC(PICK_P, Is_Blob)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* blob = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
     REBINT n;
     if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PICK_OUT_OF_RANGE;
 
     Byte b = *Binary_At(Cell_Binary(blob), n);
 
-    return Init_Integer(OUT, b);
+    return PICKED(Init_Integer(OUT, b));
 }
 
 

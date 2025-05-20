@@ -291,17 +291,19 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Pair)
+IMPLEMENT_GENERIC(PICK_P, Is_Pair)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* pair = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
+    if (n != 1 and n != 2)
+        return PICK_OUT_OF_RANGE;
 
     Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
-    return Copy_Cell(OUT, which);
+    return PICKED(Copy_Cell(OUT, which));
 }
 
 

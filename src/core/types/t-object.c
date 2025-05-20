@@ -1224,9 +1224,9 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Any_Context)
+IMPLEMENT_GENERIC(PICK_P, Any_Context)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* context = Element_ARG(LOCATION);
     Context* c = Cell_Context(context);
@@ -1236,7 +1236,7 @@ IMPLEMENT_GENERIC(PICK, Any_Context)
 
     const Value* slot = maybe Cell_Context_Slot(context, symbol);
     if (not slot)
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PICK_OUT_OF_RANGE;
 
     Value* out = Copy_Cell(OUT, slot);
 
@@ -1248,7 +1248,7 @@ IMPLEMENT_GENERIC(PICK, Any_Context)
         Tweak_Cell_Frame_Coupling(out, cast(VarList*, c));
     }
 
-    return OUT;
+    return PICKED(OUT);
 }
 
 

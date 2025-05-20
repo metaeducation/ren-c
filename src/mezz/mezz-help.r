@@ -274,9 +274,10 @@ help: func [
 
     Other usages have meaning dependent on the datatype.
 
-    [WORD! TUPLE! PATH!] - Give help on what the value looks up to:
+    [WORD! TUPLE!] - Behavior depends on the looked-up value
 
         help insert  ; describe argument types and return value of INSERT
+        help integer!  ; shows all the integer variables in the system
 
     [TEXT!] - Search help strings in system for the given text as substring:
 
@@ -285,10 +286,6 @@ help: func [
     [RUNE!] - Browse online topics with the given tag:
 
         help #compiling
-
-    [TYPE-WORD!] - List all data instances of the type:
-
-        help integer!  ; shows all the integer variables in the system
 
     [BLOCK!, etc.] - TBD.  Can you think of a good meaning for other types?
 
@@ -372,14 +369,14 @@ help: func [
         ]
 
         word! tuple! path! [
-            let value: get:any topic except e -> [
+            let ^value: get:any topic except e -> [
                 print form e  ; not bound, etc.
                 return ~
             ]
-            if action? get $value [
-                help-action:name value/ topic  ; bypass print name
+            if action? ^value [
+                help-action:name ^value topic  ; bypass print name
             ] else [
-                help-value:name value topic  ; prints name (should it?)
+                help-value:name ^value topic  ; prints name (should it?)
             ]
         ]
 

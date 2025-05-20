@@ -640,15 +640,15 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Time)
+IMPLEMENT_GENERIC(PICK_P, Is_Time)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* time = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
     Pick_Time(OUT, time, picker);
-    return OUT;
+    return PICKED(OUT);
 }
 
 

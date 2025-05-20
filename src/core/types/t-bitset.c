@@ -637,16 +637,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Bitset)
+IMPLEMENT_GENERIC(PICK_P, Is_Bitset)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* bset = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
     bool bit = Check_Bits(VAL_BITSET(bset), picker, false);
 
-    return Init_Logic(OUT, bit);
+    return PICKED(Init_Logic(OUT, bit));
 }
 
 

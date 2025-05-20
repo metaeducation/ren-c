@@ -1063,9 +1063,9 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Any_String)
+IMPLEMENT_GENERIC(PICK_P, Any_String)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* any_string = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
@@ -1076,7 +1076,7 @@ IMPLEMENT_GENERIC(PICK, Any_String)
 
     Codepoint c = Get_Char_At(Cell_String(any_string), n);
 
-    return Init_Char_Unchecked(OUT, c);
+    return PICKED(Init_Char_Unchecked(OUT, c));
 }
 
 

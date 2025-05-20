@@ -458,9 +458,9 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Varargs)
+IMPLEMENT_GENERIC(PICK_P, Varargs)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* varargs = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
@@ -480,10 +480,10 @@ IMPLEMENT_GENERIC(PICK, Varargs)
         return THROWN;
     }
     if (Is_Ghost(OUT))
-        Init_Nulled(OUT);
+        return nullptr;
 
-    return OUT; }
-
+    return PICKED(OUT);
+}
 
 
 //

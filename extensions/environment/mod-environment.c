@@ -88,15 +88,15 @@ DECLARE_NATIVE(MAKE_ENVIRONMENT)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Environment)
+IMPLEMENT_GENERIC(PICK_P, Is_Environment)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     Element* env = Element_ARG(LOCATION);
     Element* picker = Element_ARG(PICKER);
 
     if (not Is_Word(picker) and not Is_Text(picker))
-        return PANIC("ENVIRONMENT! picker must be WORD! or TEXT!");
+        return "panic ENVIRONMENT! picker must be WORD! or TEXT!";
 
     Option(Value*) value;
     Option(ErrorValue*) error = Trap_Get_Environment_Variable(&value, picker);
@@ -104,16 +104,19 @@ IMPLEMENT_GENERIC(PICK, Is_Environment)
         return rebDelegate("panic", unwrap error);
 
     if (not value)  // return error if not present, must TRY or OPT
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PICK_OUT_OF_RANGE;
 
     if (
         Environment_Conflates_Empty_Strings_As_Absent(env)
         and Cell_Series_Len_At(unwrap value) == 0
     ){
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PICK_OUT_OF_RANGE;
     }
 
-    return maybe value;
+    if (not value)
+        return PICK_OUT_OF_RANGE;
+
+    return PICKED(unwrap value);
 }
 
 

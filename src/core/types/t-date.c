@@ -1102,15 +1102,15 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Date)
+IMPLEMENT_GENERIC(PICK_P, Is_Date)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     Element* date = Element_ARG(LOCATION);  // needs to not be const
     const Element* picker = Element_ARG(PICKER);
 
     Pick_Or_Poke_Date(OUT, date, picker, nullptr);  // won't modify date
-    return OUT;
+    return PICKED(OUT);
 }
 
 

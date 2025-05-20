@@ -489,9 +489,9 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Any_Sequence)
+IMPLEMENT_GENERIC(PICK_P, Any_Sequence)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* seq = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
@@ -504,10 +504,10 @@ IMPLEMENT_GENERIC(PICK, Any_Sequence)
         return PANIC(picker);
 
     if (n < 0 or n >= Cell_Sequence_Len(seq))
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PICK_OUT_OF_RANGE;
 
     Copy_Sequence_At(OUT, seq, n);
-    return OUT;
+    return PICKED(OUT);
 }
 
 

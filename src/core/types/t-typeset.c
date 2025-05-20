@@ -433,9 +433,9 @@ DECLARE_NATIVE(DECORATE_PARAMETER)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Is_Parameter)
+IMPLEMENT_GENERIC(PICK_P, Is_Parameter)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* param = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
@@ -447,39 +447,40 @@ IMPLEMENT_GENERIC(PICK, Is_Parameter)
       case SYM_TEXT: {
         Option(const String*) string = Cell_Parameter_String(param);
         if (not string)
-            return nullptr;
-        return Init_Text(OUT, unwrap string); }
+            return PICKED(nullptr);
+        return PICKED(Init_Text(OUT, unwrap string)); }
 
       case SYM_SPEC: {
         Option(const Source*) spec = Cell_Parameter_Spec(param);
         if (not spec)
-            return nullptr;
-        return Init_Block(OUT, unwrap spec); }
+            return PICKED(nullptr);
+        return PICKED(Init_Block(OUT, unwrap spec)); }
 
       case SYM_OPTIONAL:
-        return Init_Logic(OUT, Get_Parameter_Flag(param, REFINEMENT));
+        return PICKED(Init_Logic(OUT, Get_Parameter_Flag(param, REFINEMENT)));
 
       case SYM_CLASS:
         switch (Cell_Parameter_Class(param)) {
           case PARAMCLASS_NORMAL:
-            return Init_Word(OUT, CANON(NORMAL));
+            return PICKED(Init_Word(OUT, CANON(NORMAL)));
 
           case PARAMCLASS_LIFTED:
-            return Init_Word(OUT, CANON(META));
+            return PICKED(Init_Word(OUT, CANON(META)));
 
           case PARAMCLASS_THE:
           case PARAMCLASS_SOFT:
-            return Init_Word(OUT, CANON(THE));
+            return PICKED(Init_Word(OUT, CANON(THE)));
 
           case PARAMCLASS_JUST:
-            return Init_Word(OUT, CANON(JUST));
+            return PICKED(Init_Word(OUT, CANON(JUST)));
 
           default: assert(false);
         }
         crash (nullptr);
 
       case SYM_ESCAPABLE:
-        return Init_Logic(OUT, Cell_Parameter_Class(param) == PARAMCLASS_SOFT);
+        Init_Logic(OUT, Cell_Parameter_Class(param) == PARAMCLASS_SOFT);
+        return PICKED(OUT);
 
       /* case SYM_DECORATED: */  // No symbol! Use DECORATE-PARAMETER...
 

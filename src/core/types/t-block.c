@@ -929,21 +929,21 @@ IMPLEMENT_GENERIC(COPY, Any_List)
 }
 
 
-IMPLEMENT_GENERIC(PICK, Any_List)
+IMPLEMENT_GENERIC(PICK_P, Any_List)
 {
-    INCLUDE_PARAMS_OF_PICK;
+    INCLUDE_PARAMS_OF_PICK_P;
 
     const Element* list = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
     REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
     if (n < 0 or n >= Cell_Series_Len_Head(list))
-        return FAIL(Error_Bad_Pick_Raw(picker));
+        return PICK_OUT_OF_RANGE;
 
     const Element* at = Array_At(Cell_Array(list), n);
 
     Copy_Cell(OUT, at);
-    return Inherit_Const(OUT, list);
+    return PICKED(Inherit_Const(OUT, list));
 }
 
 
