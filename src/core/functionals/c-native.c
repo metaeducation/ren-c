@@ -387,6 +387,7 @@ bool Try_Dispatch_Generic_Core(
           case SYM_EQUAL_Q:
           case SYM_PICK:
           case SYM_POKE_P:
+          case SYM_MOLDIFY:
             break;  // fall through to modern dispatch
 
           default:

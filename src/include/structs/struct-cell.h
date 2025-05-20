@@ -166,6 +166,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //    that layer, and can also be used for efficiency in some cases that
 //    want to subvert those checks.
 
+typedef Byte HeartByte;  // help document when Byte means a heart byte
+
 #define HEART_BYTE_RAW(cell) /* don't go through HeartHolder() [1] */ \
     SECOND_BYTE(&(cell)->header.bits)
 

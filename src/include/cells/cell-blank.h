@@ -133,3 +133,45 @@ INLINE Value* Init_Trash_Untracked(Init(Value) out) {
 //
 #define Init_Trash_Due_To_End(out) \
     Init_Trash(out)
+
+
+//=//// STANDALONE "SIGIL?" ELEMENTS (@ ^ $) //////////////////////////////=//
+//
+// These are just sigilized versions of (_) which is the literal space char.
+// Space itself is not thought of as a "Sigil" because (sigil of [a b]) is
+// null, not space.
+//
+
+INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
+    return Sigilize(Init_Space(out), sigil);
+}
+
+INLINE bool Any_Sigil(const Element* e) {
+    if (QUOTE_BYTE(e) != NOQUOTE_1 or not Sigil_Of(e))
+        return false;
+    return IS_CHAR_CELL(e) and Cell_Codepoint(e) == ' ';
+}
+
+INLINE bool Is_Sigil(const Value* c, Sigil sigil) {
+    if (QUOTE_BYTE(c) != NOQUOTE_1 or Sigil_Of(c_cast(Element*, c)) != sigil)
+        return false;
+    return IS_CHAR_CELL(c) and Cell_Codepoint(c) == ' ';
+}
+
+#define Is_Pin_Sigil(cell)  Is_Sigil((cell), SIGIL_PIN)
+#define Is_Lift_Sigil(cell)  Is_Sigil((cell), SIGIL_LIFT)
+#define Is_Tie_Sigil(cell)  Is_Sigil((cell), SIGIL_TIE)
+
+
+//=//// SIGIL-TO-CHARACTER CONVERSION /////////////////////////////////////=//
+
+INLINE char Char_For_Sigil(Sigil sigil) {
+    switch (sigil) {
+      case SIGIL_LIFT:  return '^';
+      case SIGIL_PIN:   return '@';
+      case SIGIL_TIE:   return '$';
+      default:
+        assert(false);
+        return 0;  // silence warning
+    }
+}

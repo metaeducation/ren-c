@@ -128,6 +128,8 @@ script: [
     conflated-sequence: ["Sequence would conflate with" :arg1 "--" :arg2]
     bad-sequence-space: "SPACE only legal at head and tail of sequence"
     bad-sequence-item:  ["Value is not a valid" :arg1 "element:" :arg2]
+    bad-sequence-head:  ["Value is not a valid sequence head:" :arg2]
+
     cant-decorate-type: ["Cannot apply `:` or `^` decoration to:" :arg1]
 
     action-with-dotted: "ACTION! used with dotted sequence access form"

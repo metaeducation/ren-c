@@ -239,11 +239,27 @@
 ; that %% is a FILE! named percent?  Unclear.  Review.
 [
     ("%%" = as text! match word! '%%)
-    ("%%" = as text! unchain match [set-word?] '%%:)
-    ("%%" = as text! unchain match [get-word?] ':%%)
     ("%%" = as text! match meta-word! '^%%)
     ("%%" = as text! match word! first [%%])
-    ("%%" = as text! unchain match [set-word?] first [%%:])
-    ("%%" = as text! unchain match [get-word?] first [:%%])
     ("%%" = as text! match meta-word! first [^%%])
+
+    ; REVIEW meanings of %%: and :%% etc.
+    ;
+    ; %/foo has to be a FILE!, and %.foo should be a FILE!, so we would
+    ; probably assume %:foo is a file as well as %foo:
+    ;
+    ; If you want to assign things like % or %% then use [%]: or [%%]:
+
+    ~???~ !! (transcode "'%%:")
+    ~???~ !! (transcode "':%%")
+    ~???~ !! (transcode "%%:")
+    ~???~ !! (transcode ":%%")
+
+    (
+        [%]: 304
+        % = 304
+    )(
+        [%%]: 1020
+        %% = 1020
+    )
 ]

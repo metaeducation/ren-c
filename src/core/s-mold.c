@@ -380,6 +380,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
 
     DECLARE_ELEMENT (element);
     Copy_Dequoted_Cell(element, cell);
+    Option(Sigil) sigil = Sigil_Of(element);
     Plainify(element);  // can't have Sigil and dispatch to mold
     Quotify(element);
 
@@ -394,14 +395,28 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
         GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
         or (QUOTE_BYTE(cell) & NONQUASI_BIT)
     ){
+        if (sigil)
+            Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
+
         rebElide(CANON(MOLDIFY), element, molder, formval);
     }
-    else if (Is_Quasar(cell))  // special case, quasi space is just `~`
-        Append_Codepoint(mo->string, '~');
     else {
         Append_Codepoint(mo->string, '~');
-        rebElide(CANON(MOLDIFY), element, molder, formval);
-        Append_Codepoint(mo->string, '~');
+
+        if (sigil)
+            Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
+
+        if (IS_CHAR_CELL(element) and Cell_Codepoint(element) == ' ') {
+            // don't mold the _ on quasiforms
+
+            if (sigil)  // e.g. don't mold (quasi _) as "~~"
+                Append_Codepoint(mo->string, '~');
+        }
+        else {
+            rebElide(CANON(MOLDIFY), element, molder, formval);
+
+            Append_Codepoint(mo->string, '~');
+        }
     }
 
     Assert_Flex_Term_If_Needed(s);
@@ -428,13 +443,6 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     REBLEN i;
     for (i = 0; i < Quotes_Of(e); ++i)
         Append_Codepoint(mo->string, '\'');
-
-    Option(Sigil) sigil = Sigil_Of(e);
-    if (sigil) {
-        Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
-        if (Any_Sigil(e))
-            return;  // We want [@ ^ $] not [@_ ^_ $_] for sigilized space
-    }
 
     Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);
 }

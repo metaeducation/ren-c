@@ -117,9 +117,9 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 
     Option(Heart) h = Heart_Of(e);
 
-    if (is_head) {
-        if (Is_Quoted(e))  // note quasiforms legal, even at head [1]
-            goto bad_sequence_item;
+    if (is_head) {  // note quasiforms legal, even at head [1]
+        if (Is_Quoted(e) or Sigil_Of(e))  // $a.b => $[a b], not [$a b]
+            return Error_Bad_Sequence_Head_Raw(e);
     }
 
     if (h == TYPE_PATH)  // path can't put be put in path, tuple, or chain
@@ -138,11 +138,18 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
     }
 
     if (h == TYPE_RUNE) {
-        if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform space (quasar)
-            return SUCCESS;  // Legal, e.g. `~/home/Projects/ren-c/README.md`
+        if (Is_Quasar(e))  // Legal, e.g. `~/home/Projects/ren-c/README.md`
+            return SUCCESS;
 
-        assert(not is_head); // callers should check space at head or tail
-        return Error_Bad_Sequence_Space_Raw();  // space only legal at head
+        if (Any_Sigil(e))
+            return SUCCESS;  // single-char forms legal for now
+
+        if (Is_Space(e)) {
+            assert(not is_head); // callers should check space at head or tail
+            return Error_Bad_Sequence_Space_Raw();  // space only legal at head
+        }
+
+        goto bad_sequence_item;
     }
 
     if (not Any_Sequencable_Type(h))
@@ -366,6 +373,8 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     ){
         if (heart == TYPE_PATH)
             Init_Word(out, CANON(SLASH_1));
+        else if (heart == TYPE_CHAIN)
+            Init_Word(out, CANON(COLON_1));
         else {
             assert(heart == TYPE_TUPLE);
             Init_Word(out, CANON(DOT_1));

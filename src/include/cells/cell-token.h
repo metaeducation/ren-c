@@ -115,7 +115,7 @@ INLINE bool IS_CHAR_CELL(const Value* c) {
 INLINE bool IS_CHAR(const Value* v) {
     if (QUOTE_BYTE(v) != NOQUOTE_1)
         return false;
-    return IS_CHAR_CELL(v);
+    return not Sigil_Of(u_cast(Element*, v)) and IS_CHAR_CELL(v);
 }
 
 INLINE Codepoint Cell_Codepoint(const Value* c) {  // must pass IS_CHAR_CELL()
@@ -183,7 +183,7 @@ INLINE Element* Init_Utf8_Non_String(
 #define Init_Url(out,utf8,size,len) \
     Init_Utf8_Non_String((out), TYPE_URL, (utf8), (size), (len))
 
-#define Init_Issue(out,utf8,size,len) \
+#define Init_Rune(out,utf8,size,len) \
     Init_Utf8_Non_String((out), TYPE_RUNE, (utf8), (size), (len))
 
 

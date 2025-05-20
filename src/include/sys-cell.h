@@ -421,22 +421,22 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
             : ref (const_cast<Cell* &>(ref))
           {}
 
-        operator Byte() const {  // implicit cast, add read checks here
+        operator HeartByte() const {  // implicit cast, add read checks here
             return HEART_BYTE_RAW(ref);
         }
 
-        void operator=(Byte right) {  // add any write checks you want here
+        void operator=(HeartByte right) {  // add write checks you want here
             HEART_BYTE_RAW(ref) = right;
         }
 
         void operator=(const HeartHolder& right)  // must write explicitly
-          { *this = u_cast(Byte, right); }
+          { *this = u_cast(HeartByte, right); }
 
         template <typename T, EnableIfSame<T,
             HeartEnum, HeartHolder, Heart
         > = nullptr>
         void operator=(T right)
-          { *this = u_cast(Byte, right); }  // inherit operator=(Byte) checks
+          { *this = u_cast(HeartByte, right); }  // inherit operator= checks
 
         template <typename T, EnableIfSame<T,
             Heart, HeartEnum
