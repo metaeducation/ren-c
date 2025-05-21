@@ -177,7 +177,7 @@ DECLARE_NATIVE(ARROW)
     else if (
         Is_Word(spec)
         or Is_Get_Word(spec)
-        or Is_Lifted(WORD, spec)
+        or Is_Metaform(WORD, spec)
         or Is_Quoted(spec)
         or (Is_Path(spec) and Is_Refinement(spec))
     ){
@@ -198,8 +198,8 @@ DECLARE_NATIVE(ARROW)
             pclass = PARAMCLASS_NORMAL;
             symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_Lifted(WORD, item)) {
-            pclass = PARAMCLASS_LIFTED;
+        else if (Is_Metaform(WORD, item)) {
+            pclass = PARAMCLASS_META;
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_Quoted(item)) {

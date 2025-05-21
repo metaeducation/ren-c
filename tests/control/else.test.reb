@@ -77,7 +77,7 @@
 
 ; Although branches can be triggered by heavy null, if functions ask to
 ; receive the value it is decayed, so they do not have to be ^META.  But if
-; they *are* meta then the true state is passed through.
+; they *are* lifted then the true state is passed through.
 [
     (~[~null~]~ then x -> [x = null])
     (~[~null~]~ then ^x -> [x = the ~[~null~]~])

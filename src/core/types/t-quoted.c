@@ -212,7 +212,7 @@ DECLARE_NATIVE(UNQUASI)
 
 
 //
-//  meta: native [
+//  lift: native [
 //
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
@@ -223,62 +223,62 @@ DECLARE_NATIVE(UNQUASI)
 //      :except "If argument is antiform ERROR!, give back as plain ERROR!"
 //  ]
 //
-DECLARE_NATIVE(META)
+DECLARE_NATIVE(LIFT)
 //
 // 1. Most code has to go through Coerce_To_Antiform()...even code that has
 //    a quasiform in its hand (as not all quasiforms can be antiforms).  But
 //    ^META parameters are guaranteed to be things that were validated as
 //    antiforms.
 {
-    INCLUDE_PARAMS_OF_META;
+    INCLUDE_PARAMS_OF_LIFT;
 
-    Value* meta = ARG(ATOM); // arg already ^META, no need to Meta_Quotify()
+    Value* lifted = ARG(ATOM); // arg already ^META, no need to Liftify()
 
-    if (Is_Meta_Of_Error(meta)) {
+    if (Is_Lifted_Error(lifted)) {
         if (not Bool_ARG(EXCEPT))
             return PANIC(Cell_Error(ARG(ATOM)));
 
-        QUOTE_BYTE(meta) = NOQUOTE_1;
-        return COPY(meta);  // no longer meta, just a plain ERROR!
+        QUOTE_BYTE(lifted) = NOQUOTE_1;
+        return COPY(lifted);  // no longer meta, just a plain ERROR!
     }
 
     if (
-        Bool_ARG(LITE)  // META:LITE handles quasiforms specially
-        and Is_Quasiform(meta)
+        Bool_ARG(LITE)  // LIFT:LITE handles quasiforms specially
+        and Is_Quasiform(lifted)
     ){
-        if (Is_Meta_Of_Null(meta) or Is_Meta_Of_Void(meta)) {
-            QUOTE_BYTE(meta) = ANTIFORM_0_COERCE_ONLY;  // ^META validated [1]
-            return COPY(meta);
+        if (Is_Lifted_Null(lifted) or Is_Lifted_Void(lifted)) {
+            QUOTE_BYTE(lifted) = ANTIFORM_0_COERCE_ONLY;  // ^META valid [1]
+            return COPY(lifted);
         }
-        QUOTE_BYTE(meta) = NOQUOTE_1;  // META:LITE gives plain for the rest.
-        return COPY(meta);
+        QUOTE_BYTE(lifted) = NOQUOTE_1;  // META:LITE gives plain for the rest
+        return COPY(lifted);
     }
 
-    return COPY(meta);
+    return COPY(lifted);
 }
 
 
 //
-//  meta*: native:intrinsic [
+//  lift*: native:intrinsic [
 //
-//  "META operator that works on any value (errors, packs, ghosts, etc.)"
+//  "LIFT operator that works on any value (errors, packs, ghosts, etc.)"
 //
 //      return: [quoted! quasiform!]
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(META_P)
+DECLARE_NATIVE(LIFT_P)
 {
-    INCLUDE_PARAMS_OF_META_P;
+    INCLUDE_PARAMS_OF_LIFT_P;
 
-    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
+    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
 
-    return Copy_Cell(OUT, meta);  // argument was ^META by convention
+    return Copy_Cell(OUT, lifted);  // argument was ^META by convention
 }
 
 
 //
-//  unmeta: native [
+//  unlift: native [
 //
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
@@ -288,25 +288,25 @@ DECLARE_NATIVE(META_P)
 //      :lite "Pass thru NULL and VOID antiforms as-is"
 //  ]
 //
-DECLARE_NATIVE(UNMETA)
+DECLARE_NATIVE(UNLIFT)
 {
-    INCLUDE_PARAMS_OF_UNMETA;
+    INCLUDE_PARAMS_OF_UNLIFT;
 
-    Element* meta_meta = Element_ARG(VALUE);
+    Element* lifted_lifted = Element_ARG(VALUE);
 
-    if (Is_Quasiform(meta_meta)) {  // e.g. value is antiform
-        assert(Is_Meta_Of_Void(meta_meta) or Is_Meta_Of_Null(meta_meta));
+    if (Is_Quasiform(lifted_lifted)) {  // e.g. value is antiform
+        assert(Is_Lifted_Void(lifted_lifted) or Is_Lifted_Null(lifted_lifted));
         if (not Bool_ARG(LITE))
-            return PANIC("UNMETA only accepts NULL or VOID if :LITE");
-        return UNMETA(meta_meta);
+            return PANIC("UNLIFT only accepts NULL or VOID if :LITE");
+        return UNLIFT(lifted_lifted);
     }
 
-    Element* meta = Unquotify(meta_meta);
+    Element* lifted = Unquotify(lifted_lifted);
 
-    if (QUOTE_BYTE(meta) == NOQUOTE_1) {
+    if (QUOTE_BYTE(lifted) == NOQUOTE_1) {
         if (not Bool_ARG(LITE))
-            return PANIC("UNMETA only takes non quoted/quasi things if :LITE");
-        Copy_Cell(OUT, meta);
+            return PANIC("UNLIFT only takes non quoted/quasi things if :LITE");
+        Copy_Cell(OUT, lifted);
 
         Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
         if (e)
@@ -315,30 +315,30 @@ DECLARE_NATIVE(UNMETA)
         return OUT;
     }
 
-    if (QUOTE_BYTE(meta) == QUASIFORM_2 and Bool_ARG(LITE))
+    if (QUOTE_BYTE(lifted) == QUASIFORM_2 and Bool_ARG(LITE))
         return PANIC(
-            "UNMETA:LITE does not accept quasiforms (plain forms are meta)"
+            "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
         );
 
-    return UNMETA(meta);  // quoted or quasi
+    return UNLIFT(lifted);  // quoted or quasi
 }
 
 
 //
-//  unmeta*: native [
+//  unlift*: native [
 //
-//  "Variant of UNMETA that can synthesize any atom (error, pack, ghost...)"
+//  "Variant of UNLIFT that can synthesize any atom (error, pack, ghost...)"
 //
 //      return: [any-atom?]
-//      metaform [quoted! quasiform?]
+//      lifted [quoted! quasiform?]
 //  ]
 //
-DECLARE_NATIVE(UNMETA_P)
+DECLARE_NATIVE(UNLIFT_P)
 {
-    INCLUDE_PARAMS_OF_UNMETA_P;
+    INCLUDE_PARAMS_OF_UNLIFT_P;
 
-    Copy_Cell(OUT, ARG(METAFORM));
-    return Meta_Unquotify_Undecayed(OUT);
+    Copy_Cell(OUT, ARG(LIFTED));
+    return Unliftify_Undecayed(OUT);
 }
 
 
@@ -431,7 +431,7 @@ DECLARE_NATIVE(SPREAD)
     INCLUDE_PARAMS_OF_SPREAD;
 
     Option(const Value*) opt_v = Voidable_ARG(VALUE);
-    if (not opt_v or Is_Meta_Of_Void(unwrap opt_v))  // quasi ok [2]
+    if (not opt_v or Is_Lifted_Void(unwrap opt_v))  // quasi ok [2]
         return VOID;  // pass through [1]
     const Value* v = unwrap opt_v;
 
@@ -479,7 +479,7 @@ INLINE bool Pack_Native_Core_Throws(
         Element *dest = Array_Head(a);
 
         for (; at != tail; ++at, ++dest)
-            Copy_Meta_Cell(dest, at);
+            Copy_Lifted_Cell(dest, at);
 
         Init_Pack(out, a);
         return false;
@@ -495,7 +495,7 @@ INLINE bool Pack_Native_Core_Throws(
         return true;
     }
 
-    Meta_Unquotify_Undecayed(out);
+    Unliftify_Undecayed(out);
     return false;
 }
 
@@ -522,7 +522,7 @@ DECLARE_NATIVE(PACK)
 
     Element* block = Element_ARG(BLOCK);
 
-    if (Pack_Native_Core_Throws(OUT, block, LIB(META)))  // no errors [1]
+    if (Pack_Native_Core_Throws(OUT, block, LIB(LIFT)))  // no errors [1]
         return THROWN;
     return OUT;
 }
@@ -541,7 +541,7 @@ DECLARE_NATIVE(PACK)
 //
 DECLARE_NATIVE(PACK_P)
 //
-// 1. Using the predicate META* means that errors will be tolerated by PACK*,
+// 1. Using the predicate LIFT* means that errors will be tolerated by PACK*,
 //    whereas PACK does not.
 //
 //        https://forum.rebol.info/t/2206
@@ -550,7 +550,7 @@ DECLARE_NATIVE(PACK_P)
 
     Element* block = Element_ARG(BLOCK);
 
-    if (Pack_Native_Core_Throws(OUT, block, LIB(META_P)))  // fail ok [1]
+    if (Pack_Native_Core_Throws(OUT, block, LIB(LIFT_P)))  // fail ok [1]
         return THROWN;
     return OUT;
 }
@@ -634,19 +634,19 @@ DECLARE_NATIVE(UNRUN)
 // with a refinement.  Share the code.
 //
 static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
-    const Element* meta = Get_Meta_Atom_Intrinsic(level_);
+    const Element* lifted = Get_Lifted_Atom_Intrinsic(level_);
 
-    if (Is_Meta_Of_Error(meta))
-        return UNMETA(meta);  // will pass thru vetos, and other errors
+    if (Is_Lifted_Error(lifted))
+        return UNLIFT(lifted);  // will pass thru vetos, and other errors
 
-    if (Is_Meta_Of_Void(meta))
+    if (Is_Lifted_Void(lifted))
         goto opt_out;  // void => void in OPT, or void => veto in OPT:VETO
 
-    if (Is_Meta_Of_Ghost(meta))
+    if (Is_Lifted_Ghost(lifted))
         return PANIC("Cannot OPT a GHOST!");  // !!! Should we opt out ghosts?
 
-    Value* out = Copy_Cell(OUT, meta);
-    Meta_Unquotify_Decayed(out);
+    Value* out = Copy_Cell(OUT, lifted);
+    Unliftify_Decayed(out);
 
     if (Is_Nulled(out))
         goto opt_out;

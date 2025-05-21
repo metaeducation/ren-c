@@ -2,21 +2,21 @@
 
 [
     (ghost? eval [])
-    ('~,~ = meta eval [])
+    ('~,~ = lift eval [])
 
     (ghost? (eval []))
-    (3 = (1 + 2 eval []))
-    (3 = (1 + 2 unmeta ^ eval []))
+    (ghost? (1 + 2 eval []))
+    (ghost? (1 + 2 unlift lift eval []))
 
     (''30 = ^ (10 + 20 eval []))
-    ((meta void) = ^ (10 + 20 eval [void]))
+    ((lift void) = ^ (10 + 20 eval [void]))
     (''30 = ^ (10 + 20 eval [comment "hi"]))
     (''30 = ^ (10 + 20 eval make frame! func [] [return ~,~]))
 
     (else? eval [null])
     ('~[~null~]~ = ^ eval [if okay [null]])
-    ((meta void) = ^ eval [if null [<a>]])
-    ((meta void) = ^ eval [10 + 20 if null [<a>]])
+    ((lift void) = ^ eval [if null [<a>]])
+    ((lift void) = ^ eval [10 + 20 if null [<a>]])
 
     (all [
         let x: ~
@@ -26,20 +26,20 @@
 
     (all [
         let x: ~
-        '~,~ = (x: (meta comment "HI") meta eval [comment "HI"])
+        '~,~ = (x: (lift comment "HI") lift eval [comment "HI"])
         '~,~ = x
     ])
 
-    ('~,~ = (10 + 20 meta (eval [])))
-    ('~,~ = (10 + 20 meta (eval [comment "hi"])))
-    ((meta void) = (10 + 20 meta (eval make frame! lambda [] [void])))
-    (null = ^(meta eval [null]))
-    ('~[~null~]~ = meta (eval [if okay [null]]))
+    ('~,~ = (10 + 20 lift (eval [])))
+    ('~,~ = (10 + 20 lift (eval [comment "hi"])))
+    ((lift void) = (10 + 20 lift (eval make frame! lambda [] [void])))
+    (null = ^(lift eval [null]))
+    ('~[~null~]~ = lift (eval [if okay [null]]))
 
     (30 = (10 + 20 eval []))
     (30 = (10 + 20 eval [comment "hi"]))
     (30 = (10 + 20 eval make frame! func [] [return ~,~]))
-    (null = ^(meta eval [null]))
+    (null = ^(lift eval [null]))
     ('~[~null~]~ = ^ eval [heavy null])
     ('~[~null~]~ = ^ eval [if okay [null]])
 
@@ -47,17 +47,17 @@
     ('~,~ = ^ eval [])
     ('~,~ = ^ eval [comment "hi"])
     ('~,~ = ^ eval make frame! func [] [return ~,~])
-    ((meta void) = ^ eval [void])
+    ((lift void) = ^ eval [void])
 
-    ((meta null) = ^ eval [null])
-    (null = ^(meta eval [null]))
-    ((meta null) = ^ (eval [null]))
-    ((meta null) = meta eval [null])
+    ((lift null) = ^ eval [null])
+    (null = ^(lift eval [null]))
+    ((lift null) = ^ (eval [null]))
+    ((lift null) = lift eval [null])
 
     ('~[~null~]~ = ^ eval [heavy null])
-    ('~[~null~]~ = meta (eval [heavy null]))
+    ('~[~null~]~ = lift (eval [heavy null]))
     ('~[~null~]~ = ^ (eval [heavy null]))
-    ('~[~null~]~ = meta eval [heavy null])
+    ('~[~null~]~ = lift eval [heavy null])
 
     ('~[~null~]~ = ^ eval [if ok [null]])
 ]
@@ -178,7 +178,7 @@
 )
 (0:00 = eval [0:00])
 (0.0.0 = eval [0.0.0])
-((meta void) = ^ eval [()])
+((lift void) = ^ eval [()])
 ('a = eval ['a])
 
 ; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,
@@ -256,17 +256,17 @@
 ; META:EXCEPT: intercept errors
 [
     (
-        result': meta:except eval [1 + 2 1 / 0]
+        result': lift:except eval [1 + 2 1 / 0]
         all [
             warning? result'
             result'.id = 'zero-divide
         ]
     )
     ~zero-divide~ !! (  ; full eval can only trap last error (is that correct?)
-        result': meta:except eval [1 / 0 1 + 2]
+        result': lift:except eval [1 / 0 1 + 2]
     )
     (
-        result': meta:except [pos {_}]: eval:step [1 / 0 1 + 2]
+        result': lift:except [pos {_}]: eval:step [1 / 0 1 + 2]
         all [
             warning? result'
             result'.id = 'zero-divide
@@ -277,10 +277,10 @@
         block: [1 + 2 1 / 0 10 + 20]
         [3 ~zero-divide~ 30] = collect [
             while [[block :^result']: eval:step block] [
-                if error? unmeta result' [
+                if error? unlift result' [
                     keep quasi (unquasi result').id
                 ] else [
-                    keep unmeta result'
+                    keep unlift result'
                 ]
             ]
         ]

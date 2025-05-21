@@ -48,7 +48,7 @@
 //      :quoted
 //      :tied
 //      :pinned
-//      :lifted
+//      :metaform
 //  ]
 //
 DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
@@ -75,17 +75,17 @@ Bounce Typechecker_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
+    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
 
-    if (Is_Meta_Of_Void(meta))
+    if (Is_Lifted_Void(lifted))
         return LOGIC(false);  // opt-out of the typecheck (null fails)
 
     Details* details = Level_Intrinsic_Details(L);
     assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
 
     DECLARE_ATOM (temp);  // can't overwrite scratch if error can be raised
-    Copy_Cell(temp, meta);
-    Meta_Unquotify_Undecayed(temp);
+    Copy_Cell(temp, lifted);
+    Unliftify_Undecayed(temp);
     Value* v = Decay_If_Unstable(temp);
 
     Option(Type) type = Type_Of(v);
@@ -102,7 +102,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
             if (
                 Bool_ARG(QUOTED)
-                or Bool_ARG(TIED) or Bool_ARG(PINNED) or Bool_ARG(LIFTED)
+                or Bool_ARG(TIED) or Bool_ARG(PINNED) or Bool_ARG(METAFORM)
             ){
                 return FAIL(Error_Bad_Refines_Raw());
             }
@@ -119,7 +119,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
                 type = Type_Of(v);
 
             if (Bool_ARG(TIED)) {
-                if (Bool_ARG(PINNED) or Bool_ARG(LIFTED))
+                if (Bool_ARG(PINNED) or Bool_ARG(METAFORM))
                     return FAIL(Error_Bad_Refines_Raw());
 
                 if (type != TYPE_TIED)
@@ -128,7 +128,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
                 type = Heart_Of(v);
             }
             else if (Bool_ARG(PINNED)) {
-                if (Bool_ARG(LIFTED))
+                if (Bool_ARG(METAFORM))
                     return FAIL(Error_Bad_Refines_Raw());
 
                 if (type != TYPE_PINNED)
@@ -136,8 +136,8 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
                 type = Heart_Of(v);
             }
-            else if (Bool_ARG(LIFTED)) {
-                if (type != TYPE_LIFTED)
+            else if (Bool_ARG(METAFORM)) {
+                if (type != TYPE_METAFORM)
                     return LOGIC(false);
 
                 type = Heart_Of(v);
@@ -225,12 +225,12 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     DECLARE_ELEMENT (spec);  // simple spec [2]
     Source* spec_array = Make_Source_Managed(6);
     Set_Flex_Len(spec_array, 6);
-    Liftify(Init_Word(Array_At(spec_array, 0), CANON(VALUE)));
+    Metafy(Init_Word(Array_At(spec_array, 0), CANON(VALUE)));
     Init_Get_Word(Array_At(spec_array, 1), CANON(TYPE));
     Init_Get_Word(Array_At(spec_array, 2), CANON(QUOTED));
     Init_Get_Word(Array_At(spec_array, 3), CANON(TIED));
     Init_Get_Word(Array_At(spec_array, 4), CANON(PINNED));
-    Init_Get_Word(Array_At(spec_array, 5), CANON(LIFTED));
+    Init_Get_Word(Array_At(spec_array, 5), CANON(METAFORM));
     Init_Block(spec, spec_array);
 
     VarList* adjunct;
@@ -312,7 +312,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
     for (; types_at != types_tail; ++types_at, ++pack_at) {
         Copy_Cell(SPARE, pack_at);
-        Meta_Unquotify_Undecayed(SPARE);
+        Unliftify_Undecayed(SPARE);
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(
             L, types_at, types_binding
         )){
@@ -389,7 +389,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
       #if DEBUG_CELL_READ_WRITE
         assert(Not_Cell_Flag(SPARE, PROTECTED));
-        Meta_Quotify(SPARE);
+        Liftify(SPARE);
         Set_Cell_Flag(SPARE, PROTECTED);
       #endif
 
@@ -400,7 +400,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
       #if DEBUG_CELL_READ_WRITE
         Clear_Cell_Flag(SPARE, PROTECTED);
-        Meta_Unquotify_Undecayed(SPARE);
+        Unliftify_Undecayed(SPARE);
       #endif
 
         if (bounce == nullptr or bounce == BOUNCE_BAD_INTRINSIC_ARG)
@@ -449,8 +449,8 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     Copy_Cell(arg, v);  // do not decay [4]
 
-    if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED)
-        Meta_Quotify(arg);
+    if (Cell_Parameter_Class(param) == PARAMCLASS_META)
+        Liftify(arg);
 
     if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
         sub, param, arg, false
@@ -830,14 +830,14 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
     //
     bool unquoted = false;
 
-    if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED) {
+    if (Cell_Parameter_Class(param) == PARAMCLASS_META) {
         if (Is_Nulled(atom))
             return Get_Parameter_Flag(param, ENDABLE);
 
         if (not Is_Quasiform(atom) and not Is_Quoted(atom))
             return false;
 
-        Meta_Unquotify_Undecayed(atom);  // temp adjustment (easiest option)
+        Unliftify_Undecayed(atom);  // temp adjustment (easiest option)
         unquoted = true;
     }
     else if (is_return) {
@@ -947,7 +947,7 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
   return_result:
 
     if (unquoted)
-        Meta_Quotify(atom);
+        Liftify(atom);
 
     if ((result == true) and Not_Stable(atom))
         assert(is_return);
@@ -1049,9 +1049,9 @@ DECLARE_NATIVE(TYPECHECKER)
 //      return: "Input if it matched, NULL if it did not"
 //          [any-value?]
 //      test [block! datatype! parameter! action!]
-//      value "If not :META, NULL values illegal (null return is no match)"
+//      value "If not :LIFT, NULL values illegal (null return is no match)"
 //          [<opt-out> any-value?]
-//      :meta "Return the ^^META result (allows checks on NULL)"
+//      :lift "Return the result lifted (allows checks on NULL)"
 //  ]
 //
 DECLARE_NATIVE(MATCH)
@@ -1063,15 +1063,15 @@ DECLARE_NATIVE(MATCH)
 //
 // 1. Passing in NULL for value creates a problem, because it conflates the
 //    "didn't match" signal with the "did match" signal.  To solve this problem
-//    requires MATCH:META
+//    requires MATCH:LIFT
 //
-//        >> match:meta [null? integer!] 10
+//        >> match:lift [null? integer!] 10
 //        == '10
 //
-//        >> match:meta [null? integer!] null
+//        >> match:lift [null? integer!] null
 //        == ~null~
 //
-//        >> match:meta [null? integer!] <some-tag>
+//        >> match:lift [null? integer!] <some-tag>
 //        == ~null~  ; anti
 {
     INCLUDE_PARAMS_OF_MATCH;
@@ -1080,7 +1080,7 @@ DECLARE_NATIVE(MATCH)
 
     Copy_Cell(SPARE, ARG(VALUE));
 
-    if (not Bool_ARG(META)) {
+    if (not Bool_ARG(LIFT)) {
         if (Is_Nulled(SPARE))
             return FAIL(Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
     }
@@ -1111,8 +1111,8 @@ DECLARE_NATIVE(MATCH)
 
     Copy_Cell(OUT, SPARE);
 
-    if (Bool_ARG(META))
-        Meta_Quotify(OUT);
+    if (Bool_ARG(LIFT))
+        Liftify(OUT);
 
     return OUT;
 }
@@ -1144,7 +1144,7 @@ DECLARE_NATIVE(MATCHER)
 //    >> m null
 //    ** Script Error: non-NULL value required
 //
-//    >> m:meta null
+//    >> m:lift null
 //    == ~null~
 {
     INCLUDE_PARAMS_OF_MATCHER;
@@ -1154,7 +1154,7 @@ DECLARE_NATIVE(MATCHER)
     Source* a = Make_Source_Managed(2);
     Set_Flex_Len(a, 2);
     Init_Set_Word(Array_At(a, 0), CANON(TEST));
-    Copy_Meta_Cell(Array_At(a, 1), test);
+    Copy_Lifted_Cell(Array_At(a, 1), test);
 
     Element* block_in_spare = Init_Block(SPARE, a);
 

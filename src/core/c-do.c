@@ -40,7 +40,7 @@
 //    (The theory here is that we're not throwing away any safety, as the
 //     heavy branch process was usually just for the purposes of making the
 //     branch trigger or not.  With that addressed, it's just inconvenient to
-//     force functions to be meta to get things like NULL.)
+//     force functions to take ^ARG to get things like NULL.)
 //
 //         if ok [null] then x -> [
 //             ;
@@ -78,8 +78,8 @@ void Prep_Action_Level(
 
         Copy_Cell(arg, unwrap with);  // do not decay [1]
 
-        if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED)
-            Meta_Quotify(arg);
+        if (Cell_Parameter_Class(param) == PARAMCLASS_META)
+            Liftify(arg);
         else
             Decay_If_Unstable(arg);
         break;
@@ -162,7 +162,7 @@ bool Pushed_Continuation(
     Option(Sigil) sigil = Sigil_Of(c_cast(Element*, branch));
     if (sigil) {
         switch (unwrap sigil) {
-          case SIGIL_LIFT:
+          case SIGIL_META:
             break;  // define behavior!
 
           case SIGIL_PIN:
@@ -183,7 +183,7 @@ bool Pushed_Continuation(
 
       case TYPE_QUASIFORM:
         Derelativize(out, c_cast(Element*, branch), binding);
-        Meta_Unquotify_Undecayed(out);
+        Unliftify_Undecayed(out);
         if (Is_Nulled(out) and (flags & LEVEL_FLAG_FORCE_HEAVY_NULLS))
             Init_Heavy_Null(out);
         goto just_use_out;

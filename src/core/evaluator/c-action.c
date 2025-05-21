@@ -222,13 +222,13 @@ Bounce Action_Executor(Level* L)
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
-            if (Cell_Parameter_Class(PARAM) != PARAMCLASS_LIFTED) {
+            if (Cell_Parameter_Class(PARAM) != PARAMCLASS_META) {
                 Element* arg = Known_Element(ARG);  // quoted or quasi
-                if (Is_Meta_Of_Ghost(arg)) {
+                if (Is_Lifted_Ghost(arg)) {
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Trash_Due_To_End(ARG);
                 }
-                else if (Is_Meta_Of_Void(arg)) {
+                else if (Is_Lifted_Void(arg)) {
                     if (Get_Parameter_Flag(PARAM, OPT_OUT))
                         Init_Blank(ARG);  // !!! Temporary hack
                     else if (Get_Parameter_Flag(PARAM, UNDO_OPT))
@@ -239,7 +239,7 @@ Bounce Action_Executor(Level* L)
                         );
                 }
                 else {
-                    Meta_Unquotify_Undecayed(ARG);
+                    Unliftify_Undecayed(ARG);
                     Decay_If_Unstable(ARG);
                 }
             }
@@ -461,8 +461,8 @@ Bounce Action_Executor(Level* L)
                 Move_Atom(ARG, OUT);
                 break;
 
-              case PARAMCLASS_LIFTED: {
-                Move_Meta_Atom(ARG, OUT);
+              case PARAMCLASS_META: {
+                Move_Lifted_Atom(ARG, OUT);
                 break; }
 
               case PARAMCLASS_JUST:
@@ -585,7 +585,7 @@ Bounce Action_Executor(Level* L)
   //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) /////=//
 
           case PARAMCLASS_NORMAL:
-          case PARAMCLASS_LIFTED: {
+          case PARAMCLASS_META: {
             if (Is_Level_At_End(L)) {
                 Init_Trash_Due_To_End(ARG);
                 goto continue_fulfilling;
@@ -593,7 +593,7 @@ Bounce Action_Executor(Level* L)
 
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
-            Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, flags);
+            Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
             Push_Level_Erase_Out_If_State_0(ARG, sub);
 
             return CONTINUE_SUBLEVEL(sub); }
@@ -672,7 +672,7 @@ Bounce Action_Executor(Level* L)
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
-                Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, flags);
+                Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
                 Push_Level_Erase_Out_If_State_0(ARG, sub);  // not state 0
                 return CONTINUE_SUBLEVEL(sub);
             }
@@ -923,7 +923,7 @@ Bounce Action_Executor(Level* L)
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {  // can happen [2]
         if (
-            L->prior->executor == &Meta_Stepper_Executor
+            L->prior->executor == &Stepper_Executor
             and Get_Executor_Flag(EVAL, L->prior, DIDNT_LEFT_QUOTE_PATH)
         ){  // see notes
             return PANIC(Error_Literal_Left_Path_Raw());
@@ -1046,7 +1046,7 @@ Bounce Action_Executor(Level* L)
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)  // [1]
         return PANIC("Left lookback toward thing that took no args");
 
-    if (L->prior->executor == &Meta_Stepper_Executor)
+    if (L->prior->executor == &Stepper_Executor)
         Clear_Executor_Flag(EVAL, L->prior, DIDNT_LEFT_QUOTE_PATH);  // [2]
 
     Drop_Action(L);  // must panic before Drop_Action()

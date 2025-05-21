@@ -386,8 +386,8 @@ Element* Decorate_According_To_Parameter(
       case PARAMCLASS_NORMAL:
         break;
 
-      case PARAMCLASS_LIFTED:
-        Liftify(e);
+      case PARAMCLASS_META:
+        Metafy(e);
         break;
 
       case PARAMCLASS_SOFT: {
@@ -464,7 +464,7 @@ IMPLEMENT_GENERIC(PICK_P, Is_Parameter)
           case PARAMCLASS_NORMAL:
             return PICKED(Init_Word(OUT, CANON(NORMAL)));
 
-          case PARAMCLASS_LIFTED:
+          case PARAMCLASS_META:
             return PICKED(Init_Word(OUT, CANON(META)));
 
           case PARAMCLASS_THE:

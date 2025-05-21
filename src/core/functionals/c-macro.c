@@ -109,8 +109,8 @@ Bounce Macro_Dispatcher(Level* const L)
       case ST_MACRO_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_MACRO_REEVALUATING:  // stepper uses meta protocol
-        return Meta_Unquotify_Undecayed(OUT);
+      case ST_MACRO_REEVALUATING:  // stepper uses dual protocol
+        return Unliftify_Undecayed(OUT);
 
       default:
         assert(false);
@@ -163,7 +163,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Splice_Block_Into_Feed(L->feed, Known_Element(out));
 
-    Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, LEVEL_MASK_NONE);
+    Level* sub = Make_Level(&Stepper_Executor, L->feed, LEVEL_MASK_NONE);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     STATE = ST_MACRO_REEVALUATING;
@@ -254,8 +254,8 @@ DECLARE_NATIVE(INLINE)
       case ST_INLINE_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_INLINE_REEVALUATING:  // stepper uses meta protocol
-        return Meta_Unquotify_Undecayed(OUT);
+      case ST_INLINE_REEVALUATING:  // stepper uses dual protocol
+        return Unliftify_Undecayed(OUT);
 
       default:
         assert(false);
@@ -283,7 +283,7 @@ DECLARE_NATIVE(INLINE)
         Splice_Block_Into_Feed(level_->feed, code);
     }
 
-    Level* sub = Make_Level(&Meta_Stepper_Executor, level_->feed, LEVEL_MASK_NONE);
+    Level* sub = Make_Level(&Stepper_Executor, level_->feed, LEVEL_MASK_NONE);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     STATE = ST_INLINE_REEVALUATING;

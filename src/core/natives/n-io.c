@@ -131,14 +131,14 @@ DECLARE_NATIVE(MOLD)
     Set_Flex_Len(pack, 2);
 
     String* popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
-    Meta_Quotify(Init_Text(Array_At(pack, 0), popped));
+    Liftify(Init_Text(Array_At(pack, 0), popped));
 
     if (mo->opts & MOLD_FLAG_WAS_TRUNCATED) {
         assert(Bool_ARG(LIMIT));
-        Copy_Meta_Cell(Array_At(pack, 1), ARG(LIMIT));
+        Copy_Lifted_Cell(Array_At(pack, 1), ARG(LIMIT));
     }
     else
-        Init_Meta_Of_Null(Array_At(pack, 1));
+        Init_Lifted_Null(Array_At(pack, 1));
 
     return Init_Pack(OUT, pack);
 }

@@ -362,12 +362,12 @@ for-each-datatype 't [
         #define Is_$<Proper-Name>(cell) \
             Is_$<Proper-Name>_Core(Ensure_Readable(cell))
 
-        #define Is_Meta_Of_$<Proper-Name>(cell) \
+        #define Is_Lifted_$<Proper-Name>(cell) \
             ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
             == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART($<T.NAME>)))
 
         #define Is_Quasi_$<Propercase-Of T.Name>(cell) \
-            Is_Meta_Of_$<Proper-Name>(cell)  /* alternative */
+            Is_Lifted_$<Proper-Name>(cell)  /* alternative */
     ]--]
 
     if yes? t.unstable [continue]
@@ -494,7 +494,7 @@ for-each-datatype 't [  ; plains
 ]
 
 for-each [pseudo spec] [
-    lifted "marker to read and write meta-representations"
+    metaform "marker to read unlifted and write lifted representations"
     tied "mark to bind in the evaluator in current context, and drop mark"
     pinned "mark to bind in the evaluator in current context, and keep mark"
 
@@ -777,7 +777,7 @@ e-hearts/emit [rebs --[
     #define MAX_HEART  $<MAX-HEART>
     STATIC_ASSERT(u_cast(Byte, MAX_HEART) < 64);
 
-    STATIC_ASSERT(u_cast(int, TYPE_LIFTED) == u_cast(int, MAX_HEART) + 1);
+    STATIC_ASSERT(u_cast(int, TYPE_METAFORM) == u_cast(int, MAX_HEART) + 1);
     STATIC_ASSERT(u_cast(int, TYPE_TIED) == u_cast(int, MAX_HEART) + 2);
     STATIC_ASSERT(u_cast(int, TYPE_PINNED) == u_cast(int, MAX_HEART) + 3);
     STATIC_ASSERT(u_cast(int, TYPE_QUASIFORM) == u_cast(int, MAX_HEART) + 4);

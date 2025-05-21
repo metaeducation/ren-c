@@ -396,9 +396,9 @@ DECLARE_NATIVE(PROTECT)
             Init_Word(OUT, CANON(PROTECT));
 
         Copy_Cell(SCRATCH, e);
-        Meta_Quotify(OUT);
+        Liftify(OUT);
 
-        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+        if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
             LEVEL, NO_STEPS, LIB(PROTECT_P)
         )){
             return THROWN;
@@ -454,10 +454,10 @@ DECLARE_NATIVE(UNPROTECT)
     if (Any_Word(e) or Is_Tuple(e)) {
         Init_Word(OUT, CANON(UNPROTECT));
 
-        Meta_Quotify(OUT);
+        Liftify(OUT);
         Copy_Cell(SCRATCH, e);
 
-        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+        if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
             LEVEL, NO_STEPS, LIB(PROTECT_P)
         )){
             return THROWN;

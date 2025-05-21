@@ -11,7 +11,7 @@
 )
 (1 = if ok [1])
 
-((meta void) = ^ if null [])
+((lift void) = ^ if null [])
 ('~[]~ = ^ if ok [])
 
 (warning? if ok [trap [1 / 0]])
@@ -61,7 +61,7 @@
 (if first ['a/b] [okay])
 (if first ['a] [okay])
 (if ok [okay])
-((meta void) = ^ if null [okay])
+((lift void) = ^ if null [okay])
 (if (specialize of/ [property: 'type]) [okay])
 (okay = if space [okay])
 (if make object! [] [okay])
@@ -82,7 +82,7 @@
 
 ; recursive behaviour
 
-('~[]~ = meta if ok [if null [1]])
+('~[]~ = lift if ok [if null [1]])
 (void? if ok [2 if null [1]])
 (1 = if ok [if ok [1]])
 
@@ -105,7 +105,7 @@
 )
 (1 = if false? 'false [1])
 
-((meta void) = ^ if not okay [1])
+((lift void) = ^ if not okay [1])
 ('~[~null~]~ = ^ if no? 'no [null])
 
 (warning? if off? 'off [trap [1 / 0]])

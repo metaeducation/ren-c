@@ -120,7 +120,7 @@ redescribe: func [
 /unset: redescribe [
     "Clear the value of a word to the unset state (in its current context)"
 ](
-    specialize set/ [value: meta ~]  ; SET's value is a ^META parameter
+    specialize set/ [value: lift ~]  ; SET's value is a ^META parameter
 )
 
 /unset?: redescribe [
@@ -290,7 +290,7 @@ specialized?: func [
 /ensure: redescribe [
     "Pass through value if it matches test, otherwise trigger a FAIL"
 ](
-    enclose match:meta/ lambda [f] [
+    enclose match:lift/ lambda [f] [
         eval f else [  ; :META allows any value, must UNMETA
             ; !!! Can't use FAIL:BLAME until we can implicate the callsite.
             ;
@@ -314,7 +314,7 @@ specialized?: func [
 ](
     enclose match/ func [f] [
         eval f then [return null]
-        if f.meta [return meta f.value]
+        if f.lift [return lift f.value]
         return f.value
     ]
 )
@@ -322,7 +322,7 @@ specialized?: func [
 /prohibit: redescribe [
     "Pass through value if it *doesn't* match test, else panic"
 ](
-    enclose match:meta/ lambda [f] [
+    enclose match:lift/ lambda [f] [
         eval f then [
             ; !!! Can't use FAIL:BLAME until we can implicate the callsite.
             ;

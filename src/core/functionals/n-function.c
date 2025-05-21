@@ -538,7 +538,7 @@ DECLARE_NATIVE(UNWIND)
     Value* level = ARG(LEVEL);
 
     Copy_Cell(SPARE, ARG(RESULT));  // SPARE can hold unstable isotopes
-    Meta_Unquotify_Undecayed(SPARE);
+    Unliftify_Undecayed(SPARE);
 
     return Init_Thrown_Unwind_Value(LEVEL, level, SPARE, level_);
 }
@@ -670,7 +670,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
     Atom* atom = Copy_Cell(OUT, ARG(ATOM));  // ARG can't be unstable
-    Meta_Unquotify_Undecayed(atom);
+    Unliftify_Undecayed(atom);
 
     Level* return_level = LEVEL;  // Level of this RETURN call
 
@@ -759,7 +759,7 @@ DECLARE_NATIVE(DEFINITIONAL_REDO)
 // about the flag and copied cells, losing it).  Or it could be part of the
 // meta-representational mechanics, where any value that isn't a quoted or
 // quasiform was presumed to be a redo signal...and plain RETURN would just
-// unmeta the result.
+// unlift the result.
 //
 // However, RETURN has been using a generic UNWIND facility provided by the
 // trampoline, which keeps that tested.  It also underscores the fact that

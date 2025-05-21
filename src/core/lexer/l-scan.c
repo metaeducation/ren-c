@@ -3031,7 +3031,7 @@ Bounce Scanner_Executor(Level* const L) {
   // the `a` we push to the stack.  Similarly, the second element of that
   // PATH! is the quoted-tied TUPLE! of (b.^c) where the quote and Sigil are
   // not on `b` either.  However, the second element of that TUPLE! is
-  // actually the lifted word `^c`, so the lift *is* on the second element.
+  // actually metaform word `^c`, so the metaform *is* on the second element.
   //
   // Trying to get this right a-priori would be difficult--especially if we
   // are afraid to put the Sigils on, there has to be a way to send the
@@ -3305,7 +3305,7 @@ Option(Error*) Trap_Transcode_One(
         rebRelease(trapped);
         return error;
     }
-    Meta_Unquotify_Known_Stable(trapped);
+    Unliftify_Known_Stable(trapped);
     if (heart and Heart_Of(trapped) != heart) {
         rebRelease(trapped);
         return Error_User("Trap_Transcode_One() gave unwanted type");
@@ -3497,9 +3497,9 @@ DECLARE_NATIVE(TRANSCODE)
 
     if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // want line number updated
         Init_Integer(OUT, transcode->line);
-        Meta_Quotify(OUT);  // set uses meta protocol, will unquotify
+        Liftify(OUT);  // SET will unlift
         Copy_Cell(SCRATCH, Element_ARG(LINE));  // LINE is a variable
-        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+        if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
             LEVEL, NO_STEPS, LIB(POKE_P)
         )){
             return THROWN;
@@ -3570,8 +3570,8 @@ DECLARE_NATIVE(TRANSCODE)
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
-    Copy_Meta_Cell(Array_At(pack, 0), rest);
-    Copy_Meta_Cell(Array_At(pack, 1), OUT);
+    Copy_Lifted_Cell(Array_At(pack, 0), rest);
+    Copy_Lifted_Cell(Array_At(pack, 1), OUT);
 
     return Init_Pack(OUT, pack);
 }}

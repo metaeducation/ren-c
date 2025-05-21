@@ -72,12 +72,12 @@
 //
 
 
-// Intrinsics always receive their arguments as a meta representation.  Many
+// Intrinsics always receive their arguments as a Lifted representation.  Many
 // are not allowed to modify the SPARE cell.  This requirement of not
 // modifying is important for instance in type checking... the typechecks
 // have to be applied multiple times to the same value.
 //
-INLINE const Element* Level_Intrinsic_Arg_Meta(Level* L) {
+INLINE const Element* Level_Intrinsic_Arg_Lifted(Level* L) {
     assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));
     return Known_Element(Level_Spare(L));
 }
@@ -111,15 +111,15 @@ INLINE void Get_Heart_And_Quote_Of_Atom_Intrinsic(
     Sink(QuoteByte) quote_byte,
     Level* L
 ){
-    const Element* meta;
+    const Element* lifted;
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
-        meta = Known_Element(Level_Arg(L, 1));  // already checked
+        lifted = Known_Element(Level_Arg(L, 1));  // already checked
     else
-        meta = Level_Intrinsic_Arg_Meta(L);
+        lifted = Level_Intrinsic_Arg_Lifted(L);
 
-    *heart = Heart_Of(meta);
-    assert(QUOTE_BYTE(meta) >= QUASIFORM_2);
-    *quote_byte = QUOTE_BYTE(meta) - Quote_Shift(1);
+    *heart = Heart_Of(lifted);
+    assert(QUOTE_BYTE(lifted) >= QUASIFORM_2);
+    *quote_byte = QUOTE_BYTE(lifted) - Quote_Shift(1);
     return;
 }
 
@@ -142,29 +142,29 @@ INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
         return nullptr;
     }
 
-    const Element* meta = Level_Intrinsic_Arg_Meta(L);
+    const Element* lifted = Level_Intrinsic_Arg_Lifted(L);
 
-    if (Is_Meta_Of_Void(meta))  // do PARAMETER_FLAG_OPT_OUT [1]
+    if (Is_Lifted_Void(lifted))  // do PARAMETER_FLAG_OPT_OUT [1]
         return Init_Nulled(L->out);  // !!! overwrites out, illegal [2]
 
-    if (Is_Quasiform(meta))  // antiform including
+    if (Is_Quasiform(lifted))  // antiform including
         return BOUNCE_BAD_INTRINSIC_ARG;
 
-    Copy_Cell(out, meta);
+    Copy_Cell(out, lifted);
     Unquotify(out);
 
     return nullptr;
 }
 
-INLINE const Element* Get_Meta_Atom_Intrinsic(Level* L) {
-    const Element* meta;
+INLINE const Element* Get_Lifted_Atom_Intrinsic(Level* L) {
+    const Element* lifted;
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
-        meta = Known_Element(Level_Arg(L, 1));  // already checked, and meta
+        lifted = Known_Element(Level_Arg(L, 1));  // already checked
     else
-        meta = Level_Intrinsic_Arg_Meta(L);  // intrinsic arg always meta
+        lifted = Level_Intrinsic_Arg_Lifted(L);  // intrinsic arg always lifted
 
-    assert(QUOTE_BYTE(meta) >= QUASIFORM_2);
-    return meta;
+    assert(QUOTE_BYTE(lifted) >= QUASIFORM_2);
+    return lifted;
 }
 
 INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
@@ -176,36 +176,36 @@ INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
         return nullptr;
     }
 
-    const Element* meta = Level_Intrinsic_Arg_Meta(L);
+    const Element* lifted = Level_Intrinsic_Arg_Lifted(L);
 
-    if (Is_Meta_Of_Error(meta))
-        return Native_Panic_Result(L, Cell_Error(meta));
+    if (Is_Lifted_Error(lifted))
+        return Native_Panic_Result(L, Cell_Error(lifted));
 
-    Copy_Cell(v, meta);
-    Meta_Unquotify_Undecayed(u_cast(Atom*, v));
+    Copy_Cell(v, lifted);
+    Unliftify_Undecayed(u_cast(Atom*, v));
     Decay_If_Unstable(u_cast(Atom*, v));
     return nullptr;
 }
 
-INLINE Option(Bounce) Trap_Bounce_Meta_Decay_Value_Intrinsic(
+INLINE Option(Bounce) Trap_Bounce_Lifted_Decay_Value_Intrinsic(
     Sink(Element) out,
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Element* meta = Known_Element(Level_Arg(L, 1));  // already checked
-        Copy_Cell(out, meta);
+        Element* lifted = Known_Element(Level_Arg(L, 1));  // already checked
+        Copy_Cell(out, lifted);
         return nullptr;
     }
 
-    const Element* meta = Level_Intrinsic_Arg_Meta(L);
+    const Element* lifted = Level_Intrinsic_Arg_Lifted(L);
 
-    if (Is_Meta_Of_Error(meta))
-        return Native_Panic_Result(L, Cell_Error(meta));
+    if (Is_Lifted_Error(lifted))
+        return Native_Panic_Result(L, Cell_Error(lifted));
 
-    Copy_Cell(out, meta);
-    Meta_Unquotify_Undecayed(u_cast(Atom*, out));
+    Copy_Cell(out, lifted);
+    Unliftify_Undecayed(u_cast(Atom*, out));
     Decay_If_Unstable(u_cast(Atom*, out));
-    Meta_Quotify(out);
+    Liftify(out);
 
     return nullptr;
 }

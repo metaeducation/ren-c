@@ -150,7 +150,7 @@
 )
 (
     a-value: ~#bad~
-    (meta get:any $a-value) = '~#bad~
+    (lift get:any $a-value) = '~#bad~
 )
 (
     a-value: 'a
@@ -213,7 +213,7 @@
 
         [pos l]: transcode:next unspaced ["^^" str]
         assert [pos = ""]
-        assert [l = lift word]
+        assert [l = meta word]
     ]
     ok)
 ]

@@ -31,7 +31,7 @@
 (
     a: first [(0)]
     b: make group! 0
-    insert b meta a
+    insert b lift a
     b = '('(0))
 )
 ; text

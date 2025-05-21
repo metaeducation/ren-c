@@ -43,7 +43,7 @@
 //   because they have to have the right number of slots to line up with the
 //   frame of the underlying function.
 //
-// * The `misc.meta` field of the details holds a meta object (if any) that
+// * The `misc.meta` field of the details may hold an adjunct object that
 //   describes the function.  This is read by help.  A similar facility is
 //   enabled by the `misc.meta` field of varlists.
 //

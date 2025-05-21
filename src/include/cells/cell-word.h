@@ -125,7 +125,7 @@ INLINE Element* Init_Word_Bound_Untracked(
 
 
 // !!! It used to be that ANY-WORD? included sigilized words.  That is no
-// longer a fundamental type, since a sigilized word is e.g. LIFTED!.  This
+// longer a fundamental type, since a sigilized word is e.g. METAFORM!.  This
 // is a placeholder to try and get things compiling.
 //
 INLINE bool Any_Word(const Value* v)

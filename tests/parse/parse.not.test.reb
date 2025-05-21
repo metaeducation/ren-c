@@ -42,9 +42,9 @@
 ]
 
 [#1240
-    ('~#not~ = meta parse "" [not ahead "a"])
-    ('~#not~ = meta parse "" [not ahead <next>])
-    ('~#not~ = meta parse "" [not ahead veto])
+    ('~#not~ = lift parse "" [not ahead "a"])
+    ('~#not~ = lift parse "" [not ahead <next>])
+    ('~#not~ = lift parse "" [not ahead veto])
 ]
 
 [

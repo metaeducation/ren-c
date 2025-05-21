@@ -42,14 +42,14 @@
 (
     x: <overwritten>
     all [
-        (meta void) = ^ x: eval []
-        void? ^(meta x)
+        (lift void) = ^ x: eval []
+        void? ^(lift x)
     ]
 )
 (
     x: 10
     all [
-        '~,~ = x: meta eval []
+        '~,~ = x: lift eval []
         ghost? unmeta x
     ]
 )
@@ -63,10 +63,10 @@
 
     (void? foo)
 
-    ((meta void) = ^ applique foo/ [])
+    ((lift void) = lift applique foo/ [])
     (void? applique foo/ [])
 
-    ((meta void) = ^ eval foo/)
+    ((lift void) = lift eval foo/)
     (void? eval foo/)
 
     (void? eval foo/)
@@ -77,13 +77,13 @@
 
     (trash? foo)
 
-    ((meta trash) = meta applique foo/ [])
+    ((lift trash) = lift applique foo/ [])
     (trash? applique foo/ [])
 
-    ((meta trash) = meta eval foo/)
+    ((lift trash) = lift eval foo/)
     (trash? eval foo/)
 
-    ((meta trash) = meta eval foo/)
+    ((lift trash) = lift eval foo/)
 ]
 
 ; Explicit return of VOID
@@ -91,7 +91,7 @@
     (did foo: func [return: [any-value?]] [return void])
 
     (void? foo)
-    ((meta void) = ^ foo)
+    ((lift void) = lift foo)
 
     (void? (1 + 2 foo))
 ]
@@ -118,11 +118,11 @@
 
 [(
     foo: func [return: []] []
-    (meta trash) = meta foo
+    (lift trash) = lift foo
 )(
     data: [a b c]
     f: func [return: []] [append data spread [1 2 3]]
-    (meta trash) = meta f
+    (lift trash) = lift f
 )]
 
 ; locals are unset before they are assigned
@@ -213,7 +213,7 @@
 
 (
     a: ~okay~
-    (meta a) = '~okay~
+    (lift a) = '~okay~
 )
 (
     a: ~
@@ -234,30 +234,30 @@
 ; It passes through keywords, and makes antiforms their plain forms
 ; Other types receive a quoting level
 [
-    (null = meta:lite null)
-    (void = meta:lite void)
-    (okay = meta:lite okay)
+    (null = lift:lite null)
+    (void = lift:lite void)
+    (okay = lift:lite okay)
 
-    (['1 '2] = meta:lite pack [1 2])
+    (['1 '2] = lift:lite pack [1 2])
 
-    (the '[1 2] = meta:lite [1 2])
-    (the ''a = meta:lite first ['a])
+    (the '[1 2] = lift:lite [1 2])
+    (the ''a = lift:lite first ['a])
 ]
 
 ; UNMETA:LITE works on keywords, but not other "antiform" forms as a trick
-; meta forms are plain forms, not quasiforms
+; lift forms are plain forms, not quasiforms
 [
-    (void? unmeta:lite void)
-    (null? unmeta:lite null)
-    (okay? unmeta:lite okay)
+    (void? unlift:lite void)
+    (null? unlift:lite null)
+    (okay? unlift:lite okay)
 
     ~expect-arg~ !! (
-        unmeta:lite ~(a b c)~
+        unlift:lite ~(a b c)~
     )
 
     ~???~ !! (
-        unmeta:lite '~(a b c)~
+        unlift:lite '~(a b c)~
     )
-    (splice? unmeta:lite the (a b c))
-    (pack? unmeta:lite ['1 '2])
+    (splice? unlift:lite the (a b c))
+    (pack? unlift:lite ['1 '2])
 ]

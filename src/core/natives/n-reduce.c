@@ -78,12 +78,12 @@ DECLARE_NATIVE(VETO_Q)
 {
     INCLUDE_PARAMS_OF_VETO_Q;
 
-    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
+    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
 
-    if (not Is_Meta_Of_Error(meta))
+    if (not Is_Lifted_Error(lifted))
         return nullptr;
 
-    return LOGIC(Is_Error_Veto_Signal(Cell_Error(meta)));
+    return LOGIC(Is_Error_Veto_Signal(Cell_Error(lifted)));
 }
 
 
@@ -122,7 +122,7 @@ DECLARE_NATIVE(REDUCE)
       case ST_REDUCE_EVAL_STEP:
         if (Is_Endlike_Trash(SPARE))
             goto finished;
-        goto reduce_step_meta_in_spare;
+        goto reduce_step_dual_in_spare;
 
       case ST_REDUCE_RUNNING_PREDICATE:
         goto process_out;
@@ -142,7 +142,7 @@ DECLARE_NATIVE(REDUCE)
         return COPY(v);  // save time if it's something like a TEXT!
 
     Level* sub = Make_End_Level(
-        &Meta_Stepper_Executor,
+        &Stepper_Executor,
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
     );
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -155,7 +155,7 @@ DECLARE_NATIVE(REDUCE)
 } initial_entry_list: {  /////////////////////////////////////////////////////
 
     Level* sub = Make_Level_At(
-        &Meta_Stepper_Executor,
+        &Stepper_Executor,
         v,  // TYPE_BLOCK or TYPE_GROUP
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
             | LEVEL_FLAG_ERROR_RESULT_OK  // predicates like META may handle
@@ -180,14 +180,14 @@ DECLARE_NATIVE(REDUCE)
             Clear_Cell_Flag(v, NEWLINE_BEFORE);
     }
 
-    SUBLEVEL->executor = &Meta_Stepper_Executor;
+    SUBLEVEL->executor = &Stepper_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} reduce_step_meta_in_spare: { ///////////////////////////////////////////////
+} reduce_step_dual_in_spare: { ///////////////////////////////////////////////
 
-    Meta_Unquotify_Undecayed(SPARE);  // unquote the result of evaluation
+    Unliftify_Undecayed(SPARE);  // unquote the result of evaluation
 
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
@@ -300,7 +300,7 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     switch (STATE) {
       case ST_REDUCE_EACH_INITIAL_ENTRY: goto initial_entry;
-      case ST_REDUCE_EACH_REDUCING_STEP: goto reduce_step_meta_in_spare;
+      case ST_REDUCE_EACH_REDUCING_STEP: goto reduce_step_dual_in_spare;
       case ST_REDUCE_EACH_RUNNING_BODY: goto body_result_in_out;
       default : assert(false);
     }
@@ -312,7 +312,7 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (Is_Lifted(WORD, vars)) {  // Note: converted to object in next step
+    if (Is_Metaform(WORD, vars)) {  // Note: converted to object in next step
         flags |= LEVEL_FLAG_ERROR_RESULT_OK;
         assert(!"need to review REDUCE-EACH with meta word");
     }
@@ -331,10 +331,10 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Executor* executor;
     if (Is_Pinned(BLOCK, block))
-        executor = &Inert_Meta_Stepper_Executor;
+        executor = &Inert_Stepper_Executor;
     else {
         assert(Is_Block(block));
-        executor = &Meta_Stepper_Executor;
+        executor = &Stepper_Executor;
     }
 
     Level* sub = Make_Level_At(executor, block, flags);
@@ -346,17 +346,17 @@ DECLARE_NATIVE(REDUCE_EACH)
         goto finished;
 
     if (Is_Pinned(BLOCK, block))  // undo &Just_Use_Out_Executor
-        SUBLEVEL->executor = &Inert_Meta_Stepper_Executor;
+        SUBLEVEL->executor = &Inert_Stepper_Executor;
     else
-        SUBLEVEL->executor = &Meta_Stepper_Executor;
+        SUBLEVEL->executor = &Stepper_Executor;
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} reduce_step_meta_in_spare: {  //////////////////////////////////////////////
+} reduce_step_dual_in_spare: {  //////////////////////////////////////////////
 
-    Meta_Unquotify_Undecayed(SPARE);  // unquote the result of evaluation
+    Unliftify_Undecayed(SPARE);  // unquote the result of evaluation
 
     Value* pseudo = Varlist_Slot(Cell_Varlist(vars), 1);
 
@@ -366,7 +366,7 @@ DECLARE_NATIVE(REDUCE_EACH)
         goto next_reduce_each;
 
     if (lift) {  // accept all values when lifting, don't cull ghost/void
-        Copy_Meta_Cell(slot, SPARE);  // even ERROR! is okay here
+        Copy_Lifted_Cell(slot, SPARE);  // even ERROR! is okay here
         goto next_reduce_each;
     }
 
@@ -766,7 +766,7 @@ Bounce Composer_Executor(Level* const L)
         if (not (list_quote_byte & NONQUASI_BIT))
             return PANIC("Can't COMPOSE antiforms into ~(...)~ slots");
 
-        Copy_Meta_Cell(PUSH(), OUT);
+        Copy_Lifted_Cell(PUSH(), OUT);
         QUOTE_BYTE(OUT) = list_quote_byte;
         goto handle_next_item;
     }}

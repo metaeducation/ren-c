@@ -258,7 +258,7 @@ void Unplug_Stack(
 
     if (Not_Cell_Erased(&base->spare)) {
         if (Is_Cell_Readable(&base->spare))
-            Copy_Meta_Cell(PUSH(), Level_Spare(base));
+            Copy_Lifted_Cell(PUSH(), Level_Spare(base));
         else
             Init_Quasar(PUSH());
         flags |= DATASTACK_FLAG_HAS_SPARE;
@@ -266,7 +266,7 @@ void Unplug_Stack(
 
     if (Not_Cell_Erased(&base->scratch)) {
         if (Is_Cell_Readable(&base->scratch))
-            Copy_Meta_Cell(PUSH(), Level_Scratch(base));
+            Copy_Lifted_Cell(PUSH(), Level_Scratch(base));
         else
             Init_Quasar(PUSH());
 
@@ -374,7 +374,7 @@ void Replug_Stack(Level* base, Value* plug) {
             Init_Unreadable(Level_Scratch(base));
         else {
             Copy_Cell(Level_Scratch(base), item);
-            Meta_Unquotify_Undecayed(Level_Scratch(base));
+            Unliftify_Undecayed(Level_Scratch(base));
         }
     }
     else
@@ -386,7 +386,7 @@ void Replug_Stack(Level* base, Value* plug) {
             Init_Unreadable(Level_Spare(base));
         else {
             Copy_Cell(&base->spare, item);
-            Meta_Unquotify_Undecayed(Level_Spare(base));
+            Unliftify_Undecayed(Level_Spare(base));
         }
     }
     else

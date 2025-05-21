@@ -147,7 +147,7 @@ bind construct [
         return fail "bad-header"
     ]
 
-    if not match:meta [null? block!] hdr.options [
+    if not match:lift [null? block!] hdr.options [
         return fail "bad-header"
     ]
 

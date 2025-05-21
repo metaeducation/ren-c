@@ -574,10 +574,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             Source* pack = Make_Source_Managed(2);
             Set_Flex_Len(pack, 2);
 
-            Copy_Meta_Cell(Array_At(pack, 0), list);
+            Copy_Lifted_Cell(Array_At(pack, 0), list);
             VAL_INDEX_RAW(Array_At(pack, 0)) = ret;
 
-            Copy_Meta_Cell(Array_At(pack, 1), list);
+            Copy_Lifted_Cell(Array_At(pack, 1), list);
             VAL_INDEX_RAW(Array_At(pack, 1)) = ret + len;
 
             return Init_Pack(OUT, pack);

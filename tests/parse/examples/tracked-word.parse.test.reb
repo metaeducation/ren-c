@@ -64,7 +64,7 @@
             ])
         ]
 
-        return pack [unmeta result', remainder, subpending]
+        return pack [unlift result', remainder, subpending]
     ]
 
     tracked-combinators: copy default-combinators

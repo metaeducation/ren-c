@@ -156,9 +156,9 @@ export console!: make object! [
             ]
 
             any [  ; cannot decay packs automatically with unstable antiforms
-                void? unmeta v.1
-                ghost? unmeta v.1
-                error? unmeta v.1
+                void? unlift v.1
+                ghost? unlift v.1
+                error? unlift v.1
             ] then [
                 print "; undecayable pack"
                 print unspaced [result _ mold quasi v _ _ ";" _ "anti"]
@@ -597,7 +597,7 @@ console*: func [
             unset? $system.console
             not system.console
         ] then [
-            emit [start-console:skin (<*> meta skin)]
+            emit [start-console:skin (<*> lift skin)]
         ]
         return <prompt>
     ]
@@ -619,7 +619,7 @@ console*: func [
     ]
 
     if find directives #start-console [
-        emit [start-console:skin (<*> meta skin)]
+        emit [start-console:skin (<*> lift skin)]
         return <prompt>
     ]
 
@@ -636,7 +636,7 @@ console*: func [
             return 128 + 2 ; standard cancellation exit status for bash
         ]
         if find directives #console-if-halt [
-            emit [start-console:skin (<*> meta skin)]
+            emit [start-console:skin (<*> lift skin)]
             return <prompt>
         ]
         if find directives #unskin-if-halt [
@@ -754,7 +754,7 @@ console*: func [
     ; GROUP! - code to be run in a sandbox on behalf of the user
     ; BLOCK! - block of gathered input lines so far, need another one
     ;
-    result: unmeta result
+    result: unlift result
 
     if group? result [
         return result  ; GROUP! signals we're running user-requested code

@@ -5,22 +5,22 @@
 ; Vanishing stuff via ghosts (empty packs) can only be observed via meta
 ; operations.  You cannot pass a ghost antiform to `=`
 [
-    ('~,~ = meta ())
-    ('~,~ = meta (comment "hi"))
-    (void? ^(meta void))
+    ('~,~ = lift ())
+    ('~,~ = lift (comment "hi"))
+    (void? ^(lift void))
 
-    (void? ^(meta opt void))
-    ((meta void) = ^ (opt void))
+    (void? ^(lift opt void))
+    ((lift void) = ^ (opt void))
     ~no-value~ !! (opt comment "hi")
 
     ('~,~ = ^ ())
     ('~,~ = ^ (comment "hi"))
-    ((meta void) = ^ (void))
+    ((lift void) = ^ (void))
 ]
 
-((the '10) = meta (10 comment "hi"))
+((the '10) = lift (10 comment "hi"))
 
-(null = ^(meta null))
-('~[~null~]~ = meta (if ok [null]))
+(null = ^(lift null))
+('~[~null~]~ = lift (if ok [null]))
 
-((the '1020) = meta (1000 + 20))
+((the '1020) = lift (1000 + 20))

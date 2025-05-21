@@ -836,7 +836,7 @@ DECLARE_NATIVE(VACANT_Q)
     INCLUDE_PARAMS_OF_VACANT_Q;
 
     Value* v = ARG(VALUE);  // meta
-    Meta_Unquotify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
+    Unliftify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
     return Init_Logic(OUT, Is_Trash(v) or Is_Nulled(v) or Is_Blank(v));
 }
 
@@ -887,12 +887,12 @@ DECLARE_NATIVE(EQUAL_Q)
     Value* v2 = ARG(VALUE2);
     bool relax = Bool_ARG(RELAX);
 
-    if (Is_Meta_Of_Trash(v1)) {
+    if (Is_Lifted_Trash(v1)) {
         QUOTE_BYTE(v1) = ANTIFORM_0_COERCE_ONLY;
         return PANIC(PARAM(VALUE1));
     }
 
-    if (Is_Meta_Of_Trash(v2)) {
+    if (Is_Lifted_Trash(v2)) {
         QUOTE_BYTE(v2) = ANTIFORM_0_COERCE_ONLY;
         return PANIC(PARAM(VALUE2));
     }
@@ -1050,8 +1050,8 @@ DECLARE_NATIVE(SAME_Q)
         );
     }
 
-    Meta_Quotify(v1);  // may be null or other antiform :-/
-    Meta_Quotify(v2);
+    Liftify(v1);  // may be null or other antiform :-/
+    Liftify(v2);
 
     return rebDelegate(CANON(EQUAL_Q), v1, v2);
 }

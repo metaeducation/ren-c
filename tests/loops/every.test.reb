@@ -51,9 +51,9 @@
     ]
 )
 
-((meta void) = ^ every 'x [] [panic ~#unreachable~])
+((lift void) = lift every 'x [] [panic ~#unreachable~])
 
-('~null~ = meta every 'x [1 2 3 4] [if odd? x [x]])
+('~null~ = lift every 'x [1 2 3 4] [if odd? x [x]])
 
 (trash? every 'x [1 2 3 4] [opt if odd? x [x]])
-('~ = meta every 'x [1 2 3 4] [comment "heavy"])
+('~ = lift every 'x [1 2 3 4] [comment "heavy"])

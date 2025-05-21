@@ -61,8 +61,8 @@
     (
         x': ~
         all [
-            (error? unmeta [x']: meta fail "hi" void)
-            error? unmeta x'
+            (error? unlift [x']: lift fail "hi" void)
+            error? unlift x'
         ]
     )
 ]

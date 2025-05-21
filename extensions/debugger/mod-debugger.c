@@ -93,7 +93,7 @@ bool Do_Breakpoint_Throws(
     // the console's sandbox and return its result.  It's possible to use
     // quoting to return simple values, like ^('x)
 
-    assert(Is_Lifted(GROUP, inst));
+    assert(Is_Metaform(GROUP, inst));
 
     bool threw = Eval_Any_List_At_Throws(out, inst, SPECIFIED);
 
@@ -197,7 +197,7 @@ DECLARE_NATIVE(RESUME)
 
     Element* expr = Element_ARG(EXPRESSION);
     assert(Is_Block(expr));
-    Liftify(expr);
+    Metafy(expr);
 
     // We throw with /NAME as identity of the RESUME function.  (Note: there
     // is no NATIVE() variant for extensions yet.  Extract from current level.)

@@ -644,7 +644,7 @@ DECLARE_NATIVE(GETIFY)
 //
 static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
 {
-    INCLUDE_PARAMS_OF_LIFT;  // LIFT, PIN, TIE all same signature.
+    INCLUDE_PARAMS_OF_META;  // META, PIN, TIE all same signature.
 
     DECLARE_ELEMENT (e);
     Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
@@ -661,7 +661,9 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
                 continue;
             }
 
-        return FAIL("Trying to add Sigil to already lifted/tied/pinned value");
+        return FAIL(
+            "Trying to add Sigil to already metaform/tied/pinned value"
+        );
     }
 
     return COPY(Sigilize(e, sigil));
@@ -669,19 +671,19 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
 
 
 //
-//  lift: native:intrinsic [
+//  meta: native:intrinsic [
 //
-//  "Convert a value to its ^XXX lifted representation"
+//  "Convert a value to its ^XXX metaform representation"
 //
-//      return: "Error if already lifted/tied/pinned and not :FORCE"
+//      return: "Error if already metaform/tied/pinned and not :FORCE"
 //          [error! ^fundamental?]  ; should be ^plain?
 //      value [<opt-out> fundamental?]
-//      :force "Apply lift, even if already lifted/tied/pinned"
+//      :force "Apply lift, even if already metaform/tied/pinned"
 //  ]
 //
-DECLARE_NATIVE(LIFT)
+DECLARE_NATIVE(META)
 {
-    return Sigilize_Native_Core(LEVEL, SIGIL_LIFT);
+    return Sigilize_Native_Core(LEVEL, SIGIL_META);
 }
 
 
@@ -690,10 +692,10 @@ DECLARE_NATIVE(LIFT)
 //
 //  "Convert a value to its @XXX pinned representation"
 //
-//      return: "Error if already lifted/tied/pinned and not :FORCE"
+//      return: "Error if already metaform/tied/pinned and not :FORCE"
 //          [error! @fundamental?]  ; should be @plain?
 //      value [<opt-out> fundamental?]
-//      :force "Apply pin, even if already lifted/tied/pinned"
+//      :force "Apply pin, even if already metaform/tied/pinned"
 //  ]
 //
 DECLARE_NATIVE(PIN)
@@ -707,10 +709,10 @@ DECLARE_NATIVE(PIN)
 //
 //  "Convert a value to its $XXX tied representation"
 //
-//      return: "Error if already lifted/tied/pinned and not :FORCE"
+//      return: "Error if already metaform/tied/pinned and not :FORCE"
 //          [error! $fundamental?]  ; should be $plain?
 //      value [<opt-out> fundamental?]
-//      :force "Apply tie, even if already lifted/tied/pinned"
+//      :force "Apply tie, even if already metaform/tied/pinned"
 //  ]
 //
 DECLARE_NATIVE(TIE)
@@ -725,7 +727,7 @@ DECLARE_NATIVE(TIE)
 //
 static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
 {
-    INCLUDE_PARAMS_OF_UNLIFT;  // same signature as UNPIN, UNTIE
+    INCLUDE_PARAMS_OF_UNMETA;  // same signature as UNPIN, UNTIE
 
     DECLARE_ELEMENT (e);
     Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
@@ -740,18 +742,18 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
 
 
 //
-//  unlift: native:intrinsic [
+//  unmeta: native:intrinsic [
 //
-//  "Convert ^XXX lifted representation to plain XXX"
+//  "Convert ^XXX metaform representation to plain XXX"
 //
-//      return: "Error if value not lifted"
+//      return: "Error if value not metaform"
 //          [null? fundamental? error!]  ; should return `plain?`
 //      value [<opt-out> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(UNLIFT)
+DECLARE_NATIVE(UNMETA)
 {
-    return Unsigilize_Native_Core(LEVEL, SIGIL_LIFT);
+    return Unsigilize_Native_Core(LEVEL, SIGIL_META);
 }
 
 

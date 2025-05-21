@@ -97,8 +97,8 @@
 
     ('~mojo~ = baz '~mojo~)
     ('~jojo~ = baz '~jojo~)
-    ('~(mojo jojo)~ = baz meta spread [mojo jojo])
-    ~expect-arg~ !! (baz meta spread [jojo mojo])
+    ('~(mojo jojo)~ = baz lift spread [mojo jojo])
+    ~expect-arg~ !! (baz lift spread [jojo mojo])
 
     (~(a b c)~ = mumble ~(a b c)~)
     ~expect-arg~ !! (mumble ~(a b c d)~)

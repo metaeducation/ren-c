@@ -67,10 +67,10 @@
 ; ENTRAP (similar to TRAP but single result, ^META result if not an error)
 
 #entrap (
-    (meta void) = entrap []
+    (lift void) = entrap []
 )
 #entrap (
-    (meta null) = entrap [null]
+    (lift null) = entrap [null]
 )
 #entrap (
     (the '3) = entrap [1 + 2]

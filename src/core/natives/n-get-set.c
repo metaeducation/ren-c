@@ -835,8 +835,8 @@ DECLARE_NATIVE(GET)
     if (steps and steps != GROUPS_OK) {
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
-        Copy_Meta_Cell(Array_At(pack, 0), unwrap steps);
-        Copy_Meta_Cell(Array_At(pack, 1), out);
+        Copy_Lifted_Cell(Array_At(pack, 0), unwrap steps);
+        Copy_Lifted_Cell(Array_At(pack, 1), out);
         return Init_Pack(OUT, pack);
     }
 
@@ -847,7 +847,7 @@ DECLARE_NATIVE(GET)
 
 
 //
-//  Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws: C
+//  Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws: C
 //
 // This is centralized code for setting variables.  If it returns `true`, the
 // out cell will contain the thrown value.  If it returns `false`, the out
@@ -865,7 +865,7 @@ DECLARE_NATIVE(GET)
 // It is legal to have `target == out`.  It means the target may be overwritten
 // in the course of the assignment.
 //
-bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+bool Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
     Level* level_,
     Option(Element*) steps_out,  // no GROUP!s if nulled
     const Value* updater  // function to write the last step (e.g. POKE*)
@@ -873,8 +873,8 @@ bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
     Element* var = Known_Element(SCRATCH);  // binding might get tweaked :-/
     Sink(Value) spare = SPARE;
 
-    Element* meta_poke = Known_Element(OUT);
-    assert(Is_Metaform(meta_poke));
+    Element* lifted_poke = Known_Element(OUT);
+    assert(Any_Lifted(lifted_poke));
 
     possibly(spare == steps_out or var == steps_out);
 
@@ -895,13 +895,13 @@ bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
 
     if (rebRunThrows(
         spare,  // <-- output cell
-        rebRUN(updater), "binding of", rebQ(var), rebQ(var), meta_poke
+        rebRUN(updater), "binding of", rebQ(var), rebQ(var), lifted_poke
     )){
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
-    Meta_Unquotify_Undecayed(OUT);  // pass through all forms
-    if (not Any_Lifted(var))
+    Unliftify_Undecayed(OUT);  // pass through all forms
+    if (not Any_Metaform(var))
         Decay_If_Unstable(OUT);  // only pass decay'd forms
 
     if (steps_out and steps_out != GROUPS_OK) {
@@ -1054,7 +1054,7 @@ bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
     // as we go back through the list of steps to update any bits that are
     // required to update in the referencing cells.
 
-    possibly(meta_poke == Known_Element(OUT));  // may be new writeback
+    possibly(lifted_poke == Known_Element(OUT));  // may be new writeback
 
     Move_Cell(temp, spare);
     QuoteByte quote_byte = QUOTE_BYTE(temp);
@@ -1063,7 +1063,7 @@ bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
     assert(Is_Action(updater));
     if (rebRunThrows(
         spare,  // <-- output cell
-        rebRUN(updater), temp, ins, meta_poke
+        rebRUN(updater), temp, ins, lifted_poke
     )){
         Drop_Lifeguard(temp);
         Drop_Lifeguard(writeback);
@@ -1082,8 +1082,8 @@ bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
     if (not Is_Nulled(spare)) {
         Move_Cell(writeback, spare);
         QUOTE_BYTE(writeback) = quote_byte;
-        Meta_Quotify(writeback);
-        meta_poke = Known_Element(writeback);
+        Liftify(writeback);
+        lifted_poke = Known_Element(writeback);
 
         --stackindex_top;
 
@@ -1094,7 +1094,7 @@ bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
         if (not Is_Word(Data_Stack_At(Element, base + 1)))
             panic ("Can't POKE back immediate value unless it's to a WORD!");
 
-        if (Is_Meta_Of_Void(meta_poke))
+        if (Is_Lifted_Void(lifted_poke))
             panic ("Can't writeback POKE immediate with VOID at this time");
 
         Sink(Value) sink = Sink_Word_May_Panic(
@@ -1102,8 +1102,8 @@ bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
             SPECIFIED
         );
 
-        Copy_Cell(sink, meta_poke);
-        Meta_Unquotify_Decayed(sink);
+        Copy_Cell(sink, lifted_poke);
+        Unliftify_Decayed(sink);
     }
 
     Drop_Lifeguard(temp);
@@ -1114,8 +1114,8 @@ bool Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
     else
         Drop_Data_Stack_To(base);
 
-    Meta_Unquotify_Undecayed(OUT);
-    if (not Any_Lifted(var))
+    Unliftify_Undecayed(OUT);
+    if (not Any_Metaform(var))
         Decay_If_Unstable(OUT);
 
     return false;
@@ -1146,10 +1146,10 @@ DECLARE_NATIVE(SET)
 {
     INCLUDE_PARAMS_OF_SET;
 
-    Element* meta_setval = Element_ARG(VALUE);
+    Element* lifted_setval = Element_ARG(VALUE);
 
     if (Is_Nulled(ARG(TARGET)))
-        return UNMETA(meta_setval);   // same for SET as [10 = (void): 10]
+        return UNLIFT(lifted_setval);   // same for SET as [10 = (void): 10]
 
     Element* target = Element_ARG(TARGET);
 
@@ -1172,7 +1172,7 @@ DECLARE_NATIVE(SET)
         return PANIC(Error_No_Catch_For_Throw(LEVEL));
 
     if (Is_Void(SPARE))
-        return UNMETA(meta_setval);
+        return UNLIFT(lifted_setval);
 
     Value* spare = Decay_If_Unstable(SPARE);
 
@@ -1211,17 +1211,17 @@ DECLARE_NATIVE(SET)
         // (more general filtering available via accessors)
     }
 
-    Copy_Cell_Core(OUT, meta_setval, CELL_MASK_THROW);  // set decays
+    Copy_Cell_Core(OUT, lifted_setval, CELL_MASK_THROW);  // set unlifts
     Copy_Cell(SCRATCH, target);
 
-    if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+    if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
         LEVEL, steps, LIB(POKE_P)
     )){
         assert(steps or Is_Throwing_Panic(LEVEL));  // throws must eval [1]
         return THROWN;
     }
 
-    return UNMETA(meta_setval);  // even if we don't assign, pass through [2]
+    return UNLIFT(lifted_setval);  // even if we don't assign, pass through [2]
 }}
 
 

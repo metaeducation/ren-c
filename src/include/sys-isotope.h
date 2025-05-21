@@ -134,7 +134,7 @@ INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
 
 
 // When you're sure that the value isn't going to be consumed by a multireturn
-// then use this to get the first value unmeta'd
+// then use this to get the first value unlift'd
 //
 // 1. We fall through in case result is pack or error (should this iterate?)
 //
@@ -153,26 +153,26 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         return u_cast(Value*, u_cast(Atom*, v));
 
     if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
-        const Element* pack_meta_tail;
-        const Element* pack_meta_at = Cell_List_At(&pack_meta_tail, v);
-        if (pack_meta_at == pack_meta_tail)
+        const Element* pack_tail;
+        const Element* pack_at = Cell_List_At(&pack_tail, v);
+        if (pack_at == pack_tail)
             panic (Error_No_Value_Raw());  // treat as void?
         Sink(Element) sink = v;
-        Copy_Cell(sink, pack_meta_at);  // Note: no antiform binding (PACK!)
-        Meta_Unquotify_Undecayed(v);
+        Copy_Cell(sink, pack_at);  // Note: no antiform binding (PACK!)
+        Unliftify_Undecayed(v);
         if (Is_Pack(v))
             panic (Error_Bad_Antiform(v));  // need more granular unpacking [2]
         if (Is_Error(v))
             panic (Cell_Error(v));
         assert(Not_Antiform(v) or Is_Antiform_Stable(v));
 
-        while (++pack_meta_at != pack_meta_tail) {
-            if (not Is_Quasiform(pack_meta_at))
+        while (++pack_at != pack_tail) {
+            if (not Is_Quasiform(pack_at))
                 continue;
-            if (Is_Stable_Antiform_Heart(Heart_Of(pack_meta_at)))
+            if (Is_Stable_Antiform_Heart(Heart_Of(pack_at)))
                 continue;
             DECLARE_ATOM (temp);
-            Copy_Cell(temp, pack_meta_at);
+            Copy_Cell(temp, pack_at);
             Decay_If_Unstable(temp);  // don't drop errors on floor [3]
         }
 
@@ -199,11 +199,11 @@ INLINE bool Is_Pack_Undecayable(Atom* pack)
     if (Is_Void(pack))
         return true;
     const Element* at = Cell_List_At(nullptr, pack);
-    if (Is_Meta_Of_Error(at))
+    if (Is_Lifted_Error(at))
         return true;
-    if (Is_Meta_Of_Pack(at))
+    if (Is_Lifted_Pack(at))
         return true;
-    if (Is_Meta_Of_Ghost(at))
+    if (Is_Lifted_Ghost(at))
         return true;
     return false;
 }

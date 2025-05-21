@@ -18,7 +18,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The Evaluator_Executor() just calls Meta_Stepper_Executor() consecutively,
+// The Evaluator_Executor() just calls Stepper_Executor() consecutively,
 // and if the output is invisible (e.g. the result of a COMMENT, ELIDE, etc.)
 // it won't overwrite the previous output.
 //
@@ -27,7 +27,7 @@
 //    >> eval [1 + 2 comment "hi"]
 //    == 3
 //
-// The 1 + 2 evaluated to 3.  If we merely called the Meta_Stepper_Executor()
+// The 1 + 2 evaluated to 3.  If we merely called the Stepper_Executor()
 // again on the same output cell, the comment would evaluate to an antiform
 // comma (e.g. a GHOST, ~,~ antiform).  That would overwrite the 3.  So the
 // Evaluator_Executor() has a holding cell for the last result that it does
@@ -36,7 +36,7 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // A. The reason this isn't done with something like a DO_TO_END flag that
-//    controls a mode of the Meta_Stepper_Executor() is so the stepper can
+//    controls a mode of the Stepper_Executor() is so the stepper can
 //    have its own Level in a debugger.  If it didn't have its own Level,
 //    then in order to keep alive it could not return a result to the
 //    Trampoline until it had reached the end.  Thus, a generalized debugger
@@ -46,7 +46,7 @@
 //    ...BUT a performance trick in Evaluator_Executor() is that if you're NOT
 //    debugging, it can actually avoid making its own Level structure.  It's
 //    able to use a Cell in the Level structure for its holding of the last
-//    result, and actually just passes through to the Meta_Stepper_Executor().
+//    result, and actually just passes through to the Stepper_Executor().
 //
 // B. !!! A debugger that was giving insights into the steps would show the
 //    steps being meta-values, and giving a "trash" to indicate the end of
@@ -65,7 +65,7 @@ static INLINE bool Using_Sublevel_For_Stepping(Level* L) {  // see [A]
     if (L == TOP_LEVEL)
         return false;
     assert(TOP_LEVEL->prior == L);
-    assert(TOP_LEVEL->executor == &Meta_Stepper_Executor);
+    assert(TOP_LEVEL->executor == &Stepper_Executor);
     return true;
 }
 
@@ -99,7 +99,7 @@ Bounce Evaluator_Executor(Level* const L)
       default:
         if (Using_Sublevel_For_Stepping(L)) {
             assert(STATE == ST_EVALUATOR_STEPPING);
-            goto step_done_with_meta_or_end_in_out;
+            goto step_done_with_dual_in_out;
         }
         goto call_stepper_executor_directly;  // callback on behalf of stepper
     }
@@ -108,7 +108,7 @@ Bounce Evaluator_Executor(Level* const L)
 
     if (In_Debug_Mode(64)) {
         Level* sub = Make_Level(  // need sublevel to hook steps, see [A]
-            &Meta_Stepper_Executor,
+            &Stepper_Executor,
             L->feed,
             LEVEL_FLAG_ERROR_RESULT_OK
                 | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
@@ -137,14 +137,14 @@ Bounce Evaluator_Executor(Level* const L)
 
     assert(not Using_Sublevel_For_Stepping(L));
 
-    Bounce bounce = Meta_Stepper_Executor(L);
+    Bounce bounce = Stepper_Executor(L);
 
     if (bounce == OUT)  // completed step, possibly reached end of feed
-        goto step_done_with_meta_or_end_in_out;
+        goto step_done_with_dual_in_out;
 
     return bounce;  // requesting a continuation on behalf of the stepper
 
-} step_done_with_meta_or_end_in_out: {  //////////////////////////////////////
+} step_done_with_dual_in_out: {  /////////////////////////////////////////////
 
     // 1. See CELL_FLAG_OUT_HINT_UNSURPRISING for a full explanation of this.
     //    But what's going on is that if a function doesn't return GHOST!
@@ -176,7 +176,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Endlike_Trash(OUT))  // the "official" way to detect reaching end
         goto finished;
 
-    if (Is_Meta_Of_Ghost(OUT)) { // something like an ELIDE or COMMENT
+    if (Is_Lifted_Ghost(OUT)) { // something like an ELIDE or COMMENT
         if (Get_Cell_Flag(OUT, OUT_HINT_UNSURPRISING))
             goto start_new_step;  // leave previous result as-is in PRIMED
 
@@ -185,7 +185,7 @@ Bounce Evaluator_Executor(Level* const L)
     }
 
     Move_Atom(PRIMED, OUT);  // make current result the preserved one
-    Meta_Unquotify_Undecayed(PRIMED);
+    Unliftify_Undecayed(PRIMED);
 
     if (Is_Error(PRIMED)) {  // panic if error seen before last step [2]
         dont(Try_Is_Level_At_End_Optimization(L));  // (fail x,) must error

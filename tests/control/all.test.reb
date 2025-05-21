@@ -6,7 +6,7 @@
 ; a kind of "non-vote", as a void.
 [
     (void? all [])
-    ((meta void) = ^ all [])
+    ((lift void) = lift all [])
 
     ~bad-void~ !! (if all [] [<safety>])
 

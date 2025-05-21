@@ -478,8 +478,8 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
 
     bool relax = not strict;
 
-    Copy_Meta_Cell(Erase_Cell(ARG(VALUE1)), s);
-    Copy_Meta_Cell(Erase_Cell(ARG(VALUE2)), t);
+    Copy_Lifted_Cell(Erase_Cell(ARG(VALUE1)), s);
+    Copy_Lifted_Cell(Erase_Cell(ARG(VALUE2)), t);
     Init_Logic(Erase_Cell(ARG(RELAX)), relax);
 
     DECLARE_ATOM (out);

@@ -67,7 +67,7 @@
     (void? parse "" [repeat 0 one])
 
     (void? parse "a" ["a" repeat (0) "b"])
-    (void? parse "a" ["a" ^[meta repeat (0) "b"]])
+    (void? parse "a" ["a" ^[lift repeat (0) "b"]])
 
     ("a" = parse "a" ["a" /elide-if-void repeat 0 "b"])
     (

@@ -215,7 +215,7 @@ INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
 #define Init_Pack(out,a) \
     TRACK(Init_Pack_Untracked((out), (a)))
 
-#define Init_Meta_Pack(out,a) \
+#define Init_Lifted_Pack(out,a) \
     TRACK(Quasify_Isotopic_Fundamental(Init_Any_List_At_Core_Untracked( \
         (out), TYPE_BLOCK, (a), 0, SPECIFIED)))
 

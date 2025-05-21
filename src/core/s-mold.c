@@ -330,7 +330,7 @@ void Form_Array_At(
             );
             if (wval) {
                 if (relax and (Is_Antiform(wval)))
-                    item = Copy_Meta_Cell(safe, wval);
+                    item = Copy_Lifted_Cell(safe, wval);
                 else
                     item = Ensure_Element(wval);
             }
@@ -389,7 +389,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
 
     DECLARE_VALUE (formval);
     Init_Logic(formval, form);
-    Meta_Quotify(formval);
+    Liftify(formval);
 
     if (
         GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)

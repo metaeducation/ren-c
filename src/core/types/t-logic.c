@@ -630,13 +630,13 @@ DECLARE_NATIVE(UNLESS)
     INCLUDE_PARAMS_OF_UNLESS;
 
     Value* left = ARG(LEFT);
-    Element* meta_right = Element_ARG(RIGHT);
+    Element* lifted_right = Element_ARG(RIGHT);
 
-    if (Is_Meta_Of_Ghost(meta_right))
+    if (Is_Lifted_Ghost(lifted_right))
         return PANIC("UNLESS can't be used with GHOST! antiform");
 
-    if (Is_Meta_Of_Null(meta_right))
+    if (Is_Lifted_Null(lifted_right))
         return COPY(left);
 
-    return UNMETA(meta_right);  // preserve packs
+    return UNLIFT(lifted_right);  // preserve packs
 }

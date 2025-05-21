@@ -1051,15 +1051,15 @@ RebolValue* API_rebArg(
 #define RUN_VA_MASK_NONE  0
 
 
-//=//// RUN_VA_FLAG_META_RESULT ///////////////////////////////////////////=//
+//=//// RUN_VA_FLAG_LIFT_RESULT ///////////////////////////////////////////=//
 //
-// Originally the trampoline offered meta results as a service.  The new idea
-// is that the stepper evaluator uses the meta protocol all the time (and
-// will return non-meta trash if it's at the evaluation end, as a special
-// signal).  For simplification the trampoline thus will not offer the meta
+// Originally the trampoline offered lifted results as a service.  New idea
+// is that the stepper evaluator uses the lifted protocol all the time (and
+// will return non-lifted trash if it's at the evaluation end, as a special
+// signal).  For simplification the trampoline thus will not offer lifted
 // results, but we simulate the flag here for the APIs.
 //
-#define RUN_VA_FLAG_META_RESULT  FLAG_LEFT_BIT(0)
+#define RUN_VA_FLAG_LIFT_RESULT  FLAG_LEFT_BIT(0)
 
 
 //=//// RUN_VA_FLAG_INTERRUPTIBLE /////////////////////////////////////////=//
@@ -1142,8 +1142,8 @@ static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     if (threw)
         return Error_No_Catch_For_Throw(TOP_LEVEL);
 
-    if (run_flags & RUN_VA_FLAG_META_RESULT)
-        Meta_Quotify(cast(Atom*, out));
+    if (run_flags & RUN_VA_FLAG_LIFT_RESULT)
+        Liftify(cast(Atom*, out));
     else
         Decay_If_Unstable(cast(Atom*, out));  // should Trap(), not panic
 
@@ -1225,7 +1225,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     assert(Is_Node_Managed(binding));
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
-    Level* L = Make_Level(&Meta_Stepper_Executor, feed, flags);
+    Level* L = Make_Level(&Stepper_Executor, feed, flags);
     Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
@@ -1242,13 +1242,13 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
         panic (Error_Apply_Too_Many_Raw());
 
     if (
-        Is_Meta_Of_Error(out) and (flags & LEVEL_FLAG_ERROR_RESULT_OK)
+        Is_Lifted_Error(out) and (flags & LEVEL_FLAG_ERROR_RESULT_OK)
     ){
-        Meta_Unquotify_Undecayed(cast(Atom*, out));
+        Unliftify_Undecayed(cast(Atom*, out));
         return false;  // !!! Lying about the result being a RebolValue !
     }
 
-    Decay_If_Unstable(Meta_Unquotify_Undecayed(cast(Atom*, out)));
+    Decay_If_Unstable(Unliftify_Undecayed(cast(Atom*, out)));
     return false;
 }
 
@@ -1352,15 +1352,13 @@ void API_rebPushContinuation_internal(
 
 
 //
-//  rebMeta: API
+//  rebLift: API
 //
-// Builds in a ^META operation to rebValue; shorthand that's more efficient.
+// Builds in a LIFT operation to rebValue; shorthand that's more efficient.
 //
-//     rebMeta(...) => rebValue("meta", ...")
+//     rebLift(...) => rebValue("lift", ...")
 //
-// Will return parameter packs as-is.
-//
-RebolValue* API_rebMeta(
+RebolValue* API_rebLift(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
@@ -1368,10 +1366,10 @@ RebolValue* API_rebMeta(
 
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
-    Flags flags = RUN_VA_FLAG_META_RESULT;
+    Flags flags = RUN_VA_FLAG_LIFT_RESULT;
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
-    assert(not Is_Nulled(v));  // meta operations cannot produce NULL
+    assert(not Is_Nulled(v));  // lift operations cannot produce NULL
 
     Set_Node_Root_Bit(v);
     return v;  // caller must rebRelease()
@@ -1393,12 +1391,12 @@ RebolValue* API_rebEntrap(
 
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
-    Flags flags = RUN_VA_FLAG_META_RESULT;
+    Flags flags = RUN_VA_FLAG_LIFT_RESULT;
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
-    assert(not Is_Nulled(v));  // meta operations cannot produce NULL
+    assert(not Is_Nulled(v));  // lift operations cannot produce NULL
 
-    if (Is_Meta_Of_Error(v))
+    if (Is_Lifted_Error(v))
         QUOTE_BYTE(v) = NOQUOTE_1;  // plain error
     else
         assert(QUOTE_BYTE(v) > NOQUOTE_1);
@@ -1524,7 +1522,7 @@ void API_rebElide(
 
     DECLARE_VALUE (discarded);
 
-    Flags flags = RUN_VA_FLAG_META_RESULT;  // discarding, allow nihil
+    Flags flags = RUN_VA_FLAG_LIFT_RESULT;  // discarding, allow void/etc.
     Run_Valist_And_Call_Va_End_May_Panic(discarded, flags, binding, p, vaptr);
 }
 
@@ -2501,7 +2499,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
     }
 
     Value* v = x_cast(Value*, Stub_Cell(stub));
-    Meta_Quotify(v);
+    Liftify(v);
     return c_cast(RebolNodeInternal*, stub);  // C needs cast
 }
 

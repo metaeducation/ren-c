@@ -571,7 +571,7 @@ DECLARE_NATIVE(LET)
         goto initial_entry;
 
       case ST_LET_EVAL_STEP:
-        Meta_Unquotify_Undecayed(OUT);
+        Unliftify_Undecayed(OUT);
         goto integrate_eval_bindings;
 
       default:
@@ -618,7 +618,7 @@ DECLARE_NATIVE(LET)
     //
     //    There are conflicting demands where we want `(thing):` equivalent
     //    to `[(thing)]:`, while we don't want "mixed decorations" where
-    //    `('^thing):` would become both SET! and LIFTED!.
+    //    `('^thing):` would become both SET! and METAFORM!.
     //
     // 3. Right now what is permitted is conservative.  Bias it so that if you
     //    want something to just "pass through the LET" that you use a quote
@@ -692,7 +692,7 @@ DECLARE_NATIVE(LET)
 
     const Symbol* symbol;
 
-    if (Is_Word(vars) or Is_Lifted(WORD, vars)) {
+    if (Is_Word(vars) or Is_Metaform(WORD, vars)) {
         symbol = Cell_Word_Symbol(vars);
         goto handle_word_or_set_word;
     }
@@ -728,8 +728,8 @@ DECLARE_NATIVE(LET)
         else
             assert(Heart_Of(vars) == TYPE_CHAIN);
     }
-    if (Any_Lifted(vars))
-        Liftify(where);
+    if (Any_Metaform(vars))
+        Metafy(where);
 
     Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
 
@@ -854,7 +854,7 @@ DECLARE_NATIVE(LET)
         goto eval_right_hand_side_if_let_is_setting;
 
     Element* out = Known_Element(OUT);
-    assert(Is_Word(out) or Is_Block(out) or Is_Lifted(WORD, out));
+    assert(Is_Word(out) or Is_Block(out) or Is_Metaform(WORD, out));
     USED(out);
     goto integrate_let_bindings;
 
@@ -883,7 +883,7 @@ DECLARE_NATIVE(LET)
         | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
         | (L->flags.bits & LEVEL_FLAG_ERROR_RESULT_OK);
 
-    Level* sub = Make_Level(&Meta_Stepper_Executor, LEVEL->feed, flags);
+    Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags);
     Copy_Cell(Evaluator_Level_Current(sub), spare);
     sub->u.eval.current_gotten = nullptr;
 
@@ -963,7 +963,7 @@ DECLARE_NATIVE(ADD_LET_BINDING)
     Element* env = Element_ARG(ENVIRONMENT);
     Context* parent;
 
-    Value* v = Meta_Unquotify_Known_Stable(ARG(VALUE));  // can be nothing [1]
+    Value* v = Unliftify_Known_Stable(ARG(VALUE));  // can be nothing [1]
 
     if (Is_Frame(env)) {
         Level* L = Level_Of_Varlist_May_Panic(Cell_Varlist(env));
@@ -1280,7 +1280,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             if (Is_Space(check)) {
                 // Will be transformed into dummy item, no rebinding needed
             }
-            else if (Is_Word(check) or Is_Lifted(WORD, check))
+            else if (Is_Word(check) or Is_Metaform(WORD, check))
                 rebinding = true;
             else if (not Is_Pinned(WORD, check)) {
                 //
@@ -1297,7 +1297,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
         item = cast(Element*, spec);
         tail = cast(Element*, spec);
         binding = SPECIFIED;
-        rebinding = Is_Word(item) or Is_Lifted(WORD, item);
+        rebinding = Is_Word(item) or Is_Metaform(WORD, item);
     }
 
     // KeyLists are always managed, but varlist is unmanaged by default (so
@@ -1336,7 +1336,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             if (rebinding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove
         }
-        else if (Is_Word(item) or Is_Lifted(WORD, item)) {
+        else if (Is_Word(item) or Is_Metaform(WORD, item)) {
             assert(rebinding); // shouldn't get here unless we're rebinding
 
             symbol = Cell_Word_Symbol(item);
@@ -1344,7 +1344,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             if (Try_Add_Binder_Index(binder, symbol, index)) {
                 Value* var = Append_Context(c, symbol);
                 Init_Trash(var);  // code shared with USE, user may see
-                if (Is_Lifted(WORD, item))
+                if (Is_Metaform(WORD, item))
                     Set_Cell_Flag(var, BIND_MARKED_LIFT);
             }
             else {  // note for-each [x @x] is bad, too

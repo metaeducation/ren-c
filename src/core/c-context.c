@@ -611,8 +611,8 @@ DECLARE_NATIVE(WRAP)
 
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
-    Copy_Meta_Cell(Array_At(pack, 0), list);
-    Meta_Quotify(Init_Object(Array_At(pack, 1), varlist));
+    Copy_Lifted_Cell(Array_At(pack, 0), list);
+    Liftify(Init_Object(Array_At(pack, 1), varlist));
 
     return Init_Pack(OUT, pack);
 }

@@ -76,7 +76,7 @@
             ]
             defaulters: default [inside body copy '[]]
             append defaulters spread compose [
-                (var): default (meta eval inside spec other)
+                (var): default (lift eval inside spec other)
             ]
         )
     |
@@ -89,7 +89,7 @@
             if other [
                 defaulters: default [inside body copy '[]]
                 append defaulters spread compose [  ; always sets
-                    (var): (meta eval inside spec other)
+                    (var): (lift eval inside spec other)
                 ]
             ]
         )]

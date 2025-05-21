@@ -141,7 +141,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
         // The arguments were already evaluated to put them in the frame, do
         // not evaluate them again.
         //
-        Copy_Meta_Cell(Alloc_Tail_Array(normals), e.var);
+        Copy_Lifted_Cell(Alloc_Tail_Array(normals), e.var);
     }
 
     Shutdown_Evars(&e);

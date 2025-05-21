@@ -74,7 +74,7 @@
     ])
 ]
 
-; ^META functions will receive the meta form of the argument, antiforms will
+; ^META functions will receive the lifted form of the argument, antiforms will
 ; be converted to quasiforms and other values quoted.  This is a service given
 ; by APPLY, because the fundamental frame mechanics do not intervene.
 [

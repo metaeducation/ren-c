@@ -12,8 +12,8 @@
     ]
 )
 
-((meta null) = ^ switch 2 [1 []])
-('~[~null~]~ = ^ switch 1 [1 [null]])
+((lift null) = lift switch 2 [1 []])
+('~[~null~]~ = lift switch 1 [1 [null]])
 
 (
     cases: reduce [1 head of insert copy [] trap [1 / 0]]
@@ -33,7 +33,7 @@
 (<b> = switch:all 10 [5 + 5 [<a>] 5 + 5 [<b>]])
 (<b> = switch:all 10 [0 + 0 [<a>] 5 + 5 [<b>]])
 (<a> = switch:all 10 [5 + 5 [<a>] 0 + 0 [<b>]])
-((meta null) = ^ switch:all 10 [0 + 0 [<a>] 0 + 0 [<b>]])
+((lift null) = lift switch:all 10 [0 + 0 [<a>] 0 + 0 [<b>]])
 
 (<fallout> = switch:all 10 [5 + 5 [<a>] 5 + 5 [<b>] <fallout>])
 (<fallout> = switch:all 10 [0 + 0 [<a>] 5 + 5 [<b>] <fallout>])

@@ -294,7 +294,7 @@
     (
         x: <x>
         all [
-            quasi? e: meta let x: fail 'test
+            quasi? e: lift let x: fail 'test
             warning? e: unquasi e
             e.id = 'test
             unset? $x  ; the LET is still in effect
@@ -305,7 +305,7 @@
         a: <a>
         b: <b>
         all [
-            quasi? e: meta let ['a b]: fail 'test
+            quasi? e: lift let ['a b]: fail 'test
             warning? e: unquasi e
             e.id = 'test
             a = <a>  ; exempted from let

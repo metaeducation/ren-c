@@ -167,19 +167,19 @@ export cscape: func [
 
             code: cscape-inside template code
 
-            let sub: meta eval code
+            let sub: lift eval code
 
             ; We want to recognize lines that had substitutions that all
             ; vanished, and remove them (distinctly from lines left empty
             ; on purpose in the template).  We need to put some kind of signal
             ; to get that behavior.
             ;
-            if void? unmeta sub [
+            if void? unlift sub [
                 keep void-marker  ; replaced in post phase
                 continue
             ]
 
-            sub: unmeta sub
+            sub: unlift sub
 
             if null? sub  [
                 print mold template

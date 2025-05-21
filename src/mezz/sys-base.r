@@ -154,7 +154,7 @@ module: func [
             spec.version [null? tuple!]
             spec.options [null? block!]
         ][
-            if not (match:meta inside [] types get inside [] var) [
+            if not (match:lift inside [] types get inside [] var) [
                 panic ["Module" var "must be" mold types "not" @(reify get var)]
             ]
         ]
@@ -211,7 +211,7 @@ module: func [
         ]
     ]
 
-    return pack* [mod (unmeta product')]  ; pack* for error antiform tolerance
+    return pack* [mod (unlift product')]  ; pack* for error antiform tolerance
 ]
 
 

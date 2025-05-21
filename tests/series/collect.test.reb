@@ -16,8 +16,8 @@
     (null = collect* [assert [null? keep void]])
     ([] = collect [assert [null? keep void]])
 
-    ([] = collect* [assert [(quasi '()) = meta (keep spread [])]])
-    ([] = collect [assert [(quasi '()) = meta (keep spread [])]])
+    ([] = collect* [assert [(quasi '()) = lift (keep spread [])]])
+    ([] = collect [assert [(quasi '()) = lift (keep spread [])]])
 ]
 
 [

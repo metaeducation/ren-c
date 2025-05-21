@@ -3,7 +3,7 @@
 ; Sigils cover symbols that aren't legal words, but are useful to have
 ; in the evaluator and dialects:
 ;
-;     SIGIL_LIFT = 1     // ^
+;     SIGIL_META = 1     // ^
 ;     SIGIL_PIN = 2      // @
 ;     SIGIL_TIE = 3      // $
 
@@ -87,10 +87,9 @@
     ok
 )
 
-; ^ is LIFT
+; ^ is APPROVE
 
-    ((@ '3) = ^ 1 + 2)
-    ((meta null) = ^ null)
+    (x: ^ either null [append/] [insert/])
 
     ~need-non-end~ !! (^)
 

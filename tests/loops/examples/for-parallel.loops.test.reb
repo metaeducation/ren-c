@@ -11,7 +11,7 @@
         body [block!]
         <local> context
     ][
-        blk1: any [^blk1 null]  ; turn voids to null or unmeta
+        blk1: any [^blk1 null]  ; turn voids to null or unlift
         blk2: any [^blk2 null]  ; "
 
         [vars context]: wrap:set compose vars
@@ -39,8 +39,8 @@
     ([1 2] = collect [for-parallel [x y] void [1 2] [keep opt x, keep y]])
     ([a b] = collect [for-parallel [x y] [a b] void [keep x, keep opt y]])
 
-    ((meta null) = meta for-parallel [x y] [a b] [1 2] [if x = 'b [break]])
-    ('~[~null~]~ = meta for-parallel [x y] [a b] [1 2] [null])
+    ((lift null) = lift for-parallel [x y] [a b] [1 2] [if x = 'b [break]])
+    ('~[~null~]~ = lift for-parallel [x y] [a b] [1 2] [null])
 
     ('z = for-parallel [x y] [a b] [1 2] [if x = 'b [continue:with 'z]])
     ([a b 2] = collect [

@@ -112,9 +112,9 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 //
 //  pick*: native:generic [
 //
-//  "Lower-level implementation hook for PICK, return value is meta-protocol"
+//  "Lower-level implementation hook for PICK, return value is dual protocol"
 //
-//      return: "Meta of picked value, null if not present, action if lazy"
+//      return: "Lifted picked value or null if not present, action if lazy"
 //          [null? error! action! quoted! quasiform!]
 //      location [fundamental?]  ; can't pick from quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
@@ -123,7 +123,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 //
 DECLARE_NATIVE(PICK_P)
 //
-// PICK* underlies tuple/path picking, and it uses a "meta-protocol".  The
+// PICK* underlies tuple/path picking, and it uses a "dual protocol".  The
 // reason is that sometimes you might face a picking situation like what
 // occurs in the FFI, with:
 //
@@ -136,7 +136,7 @@ DECLARE_NATIVE(PICK_P)
 // Hence, being able to return an ACTION! to be a "lazy" result that can
 // narrowly do the 10th pick is useful.  But this must be distinguishable
 // from a PICK that actually returns an ACTION! as the value (e.g. if an
-// OBJECT! had an ACTION! as a field).  Hence, the meta-protocol.
+// OBJECT! had an ACTION! as a field).  Hence, PICK* uses the dual protocol.
 {
     INCLUDE_PARAMS_OF_PICK_P;  // PICK_P must be frame compatible with PICK!
 
@@ -201,8 +201,8 @@ DECLARE_NATIVE(PICK)
       case SIGIL_0:
         goto dispatch_generic;
 
-      case SIGIL_LIFT:
-        Plainify(picker);  // remove lifted sigil
+      case SIGIL_META:
+        Plainify(picker);  // remove meta sigil
         Set_Cell_Flag(location, LOCATION_HINT_UNLIFT);  // remember to unlift
         goto dispatch_generic;
 
@@ -224,8 +224,8 @@ DECLARE_NATIVE(PICK)
     if (bounce)
         return bounce;  // we will get a callback (if not error/etc.)
 
-    if (Is_Metaform(OUT)) // if a value was found, it's returned as META
-        goto pick_p_succeeded_out_is_metaform;
+    if (Any_Lifted(OUT)) // if a value was found, it's returned as LIFTED
+        goto pick_p_succeeded_out_is_lifted;
 
 } pick_p_gave_signal_antiform: {
 
@@ -237,29 +237,29 @@ DECLARE_NATIVE(PICK)
     if (Is_Error(OUT))
         return OUT;
 
-    if (Is_Nulled(OUT))  // absent (distinct from meta "NULL-but-present")
+    if (Is_Nulled(OUT))  // absent (distinct from lifted "NULL-but-present")
         return FAIL(Error_Bad_Pick_Raw(ARG(PICKER)));
 
-    return PANIC("Non-ACTION! antiform returned by PICK* meta protocol");
+    return PANIC("Non-ACTION! antiform returned by PICK* dual protocol");
 
-} pick_p_succeeded_out_is_metaform: {
+} pick_p_succeeded_out_is_lifted: {
 
-    Meta_Unquotify_Undecayed(OUT);
+    Unliftify_Undecayed(OUT);
 
     if (not Is_Stable(OUT)) {
         assert(false);  // Note: once usermode PICK* exists, it may screw up
-        return PANIC("PICK* returned metaform of an unstable antiform");
+        return PANIC("PICK* returned a lifted unstable antiform");
     }
 
     if (Not_Cell_Flag(location, LOCATION_HINT_UNLIFT))
         return OUT;  // no unlift needed
 
-    if (not Is_Metaform(OUT))
+    if (not Any_Lifted(OUT))
         return PANIC(
-            "PICK with ^LIFTED picker must retrieve a metaform to unlift"
+            "PICK with ^META picker must retrieve a metaform to unlift"
         );
 
-    Meta_Unquotify_Undecayed(OUT);
+    Unliftify_Undecayed(OUT);
     return OUT;
 }}
 
@@ -289,9 +289,9 @@ DECLARE_NATIVE(POKE)
 
     Element* location = Element_ARG(LOCATION);
     USED(ARG(PICKER));
-    Element* meta_value = Element_ARG(VALUE);
+    Element* lifted_value = Element_ARG(VALUE);
 
-    Copy_Cell(ARG(STORE), meta_value);  // save value to return [1]
+    Copy_Cell(ARG(STORE), lifted_value);  // save value to return [1]
 
     Bounce bounce = Dispatch_Generic(POKE_P, location, LEVEL);
 
@@ -299,7 +299,7 @@ DECLARE_NATIVE(POKE)
         return PANIC("Cannot write-back to location in POKE");
 
     Copy_Cell(OUT, ARG(STORE));
-    return Meta_Unquotify_Known_Stable(OUT);  // if lifting, return not lifted!
+    return Unliftify_Known_Stable(OUT);  // if lifting, return not lifted!
 }
 
 
@@ -342,7 +342,7 @@ DECLARE_NATIVE(POKE_P)
 
     Element* location = Element_ARG(LOCATION);
     Element* picker = Element_ARG(PICKER);
-    Element* meta_value = Element_ARG(VALUE);
+    Element* lifted_value = Element_ARG(VALUE);
 
   handle_sigils: {
 
@@ -350,9 +350,9 @@ DECLARE_NATIVE(POKE_P)
       case SIGIL_0:
         goto handle_decayed_cases;;
 
-      case SIGIL_LIFT:
-        Meta_Quotify(meta_value);  // add another meta level if storing lifted
-        Plainify(picker);  // remove lifted sigil
+      case SIGIL_META:
+        Liftify(lifted_value);  // add another lift if storing lifted
+        Plainify(picker);  // remove meta sigil
         goto dispatch_generic;  // don't do any decay, write errors/packs/etc.
 
       case SIGIL_PIN:  // "STEPS" pins pickers.  Tolerate it.
@@ -366,37 +366,37 @@ DECLARE_NATIVE(POKE_P)
 } handle_decayed_cases: {
 
     // 1. There could conceivably be a kind of extension type which would
-    //    store ERROR! or PACK!, etc..  But we limit the "meta visibility"
+    //    store ERROR! or PACK!, etc..  But we limit the "lifted visibility"
     //    purely to lifted pokes, and handle it at the POKE* native level,
     //    so no POKE* generic handlers will see any unstable antiforms besides
     //    the VOID antiform.  Perhaps limiting, but it's likely to be a good
     //    constraint for sanity...where the "freedom from" entities that store
     //    unstable antiforms is better than the "freedom to" world would be.
 
-    if (Is_Meta_Of_Error(meta_value))
-        return FAIL(Cell_Error(meta_value));
+    if (Is_Lifted_Error(lifted_value))
+        return FAIL(Cell_Error(lifted_value));
 
-    if (Is_Meta_Of_Void(meta_value))
-        goto dispatch_generic;  // non-meta pokes may treat void as removal
+    if (Is_Lifted_Void(lifted_value))
+        goto dispatch_generic;  // non-lifted pokes may treat void as removal
 
-    if (not Is_Meta_Of_Action(meta_value))
+    if (not Is_Lifted_Action(lifted_value))
         goto perform_decay;
 
 } check_for_surprises: {
 
-    if (Get_Cell_Flag(meta_value, OUT_HINT_UNSURPRISING)) {
+    if (Get_Cell_Flag(lifted_value, OUT_HINT_UNSURPRISING)) {
         if (Is_Word(picker))
-            Update_Frame_Cell_Label(meta_value, Cell_Word_Symbol(picker));
+            Update_Frame_Cell_Label(lifted_value, Cell_Word_Symbol(picker));
     }
     else
         return PANIC("Surprising ACTION! assign, use ^LIFT: assign");
 
 } perform_decay: {
 
-    Copy_Cell(SPARE, meta_value);
-    Meta_Unquotify_Undecayed(SPARE);
+    Copy_Cell(SPARE, lifted_value);
+    Unliftify_Undecayed(SPARE);
     Decay_If_Unstable(SPARE);  // pre-decay for sanity [1]
-    Copy_Meta_Cell(meta_value, SPARE);
+    Copy_Lifted_Cell(lifted_value, SPARE);
 
 } dispatch_generic: { ///////////////////////////////////////////////////////
 

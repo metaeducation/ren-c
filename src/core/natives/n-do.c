@@ -58,7 +58,7 @@ DECLARE_NATIVE(REEVAL)
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
-    Level* sub = Make_Level(&Meta_Stepper_Executor, level_->feed, flags);
+    Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
     Copy_Cell(Evaluator_Level_Current(sub), v);  // evaluator's CURRENT
     sub->u.eval.current_gotten = nullptr;
 
@@ -66,7 +66,7 @@ DECLARE_NATIVE(REEVAL)
         return THROWN;
 
     Clear_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);
-    return Meta_Unquotify_Undecayed(OUT);
+    return Unliftify_Undecayed(OUT);
 }
 
 
@@ -189,14 +189,14 @@ DECLARE_NATIVE(SHOVE)
 
     switch (Cell_Parameter_Class(param)) {
       case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative infix [1]
-      case PARAMCLASS_LIFTED: {
+      case PARAMCLASS_META: {
         Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;  // will decay if normal
         if (Eval_Element_Core_Throws(OUT, flags, left, Level_Binding(L)))
             return THROWN;
         if (pclass == PARAMCLASS_NORMAL)
             Decay_If_Unstable(OUT);
         else {
-            // The infix fulfillment code will Meta_Quotify() OUT
+            // The infix fulfillment code will Liftify() OUT
         }
         break; }
 
@@ -317,7 +317,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
             Drop_Level(SUBLEVEL);
             return nullptr;  // no result, not even GHOST [3]
         }
-        goto single_step_meta_in_out;
+        goto single_step_dual_in_out;
 
 
       default: assert(false);
@@ -347,7 +347,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         | LEVEL_FLAG_FORCE_SURPRISING;
 
     Level* sub = Make_Level_At(
-        Bool_ARG(STEP) ? &Meta_Stepper_Executor : &Evaluator_Executor,
+        Bool_ARG(STEP) ? &Stepper_Executor : &Evaluator_Executor,
         source,  // all lists treated the same [1]
         flags
     );
@@ -430,7 +430,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 
-} single_step_meta_in_out: {  ////////////////////////////////////////////////
+} single_step_dual_in_out: {  ////////////////////////////////////////////////
 
     // 1. There may have been a LET statement in the code.  If there was, we
     //    have to incorporate the binding it added into the reported state
@@ -444,7 +444,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    probably be to make EVALUATE return something with more limited
     //    privileges... more like a FRAME!/VARARGS!.
 
-    Meta_Unquotify_Undecayed(OUT);  // undecayed allows vanishing
+    Unliftify_Undecayed(OUT);  // undecayed allows vanishing
 
     assert(Bool_ARG(STEP));
 
@@ -459,8 +459,8 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     if (Bool_ARG(STEP)) {
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
-        Copy_Meta_Cell(Array_At(pack, 0), source);  // pack wants META values
-        Move_Meta_Atom(Array_At(pack, 1), OUT);  // may be ERROR!
+        Copy_Lifted_Cell(Array_At(pack, 0), source);  // pack wants META values
+        Move_Lifted_Atom(Array_At(pack, 1), OUT);  // may be ERROR!
 
         Init_Pack(OUT, pack);
     }
@@ -672,7 +672,7 @@ DECLARE_NATIVE(APPLY)
       case ST_APPLY_LABELED_EVAL_STEP:
         if (THROWING)
             goto finalize_apply;
-        goto labeled_step_meta_in_spare;
+        goto labeled_step_dual_in_spare;
 
       case ST_APPLY_UNLABELED_EVAL_STEP:
         if (THROWING)
@@ -681,7 +681,7 @@ DECLARE_NATIVE(APPLY)
             assert(Bool_ARG(RELAX));
             goto handle_next_item;
         }
-        goto unlabeled_step_meta_in_spare;
+        goto unlabeled_step_dual_in_spare;
 
       default : assert(false);
     }
@@ -717,7 +717,7 @@ DECLARE_NATIVE(APPLY)
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
     Level* L = Make_Level_At(
-        &Meta_Stepper_Executor,
+        &Stepper_Executor,
         args,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -820,31 +820,31 @@ DECLARE_NATIVE(APPLY)
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} labeled_step_meta_in_spare: {  /////////////////////////////////////////////
+} labeled_step_dual_in_spare: {  /////////////////////////////////////////////
 
     REBLEN index = VAL_UINT32(ARG(INDEX));
 
     var = Varlist_Slot(Cell_Varlist(frame), index);
     param = Phase_Param(Cell_Frame_Phase(op), index);
 
-    goto copy_meta_spare_to_var_in_frame;
+    goto copy_dual_spare_to_var_in_frame;
 
-} unlabeled_step_meta_in_spare: {  ///////////////////////////////////////////
+} unlabeled_step_dual_in_spare: {  ///////////////////////////////////////////
 
     EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
     var = e->var;
     param = e->param;
 
-    goto copy_meta_spare_to_var_in_frame;
+    goto copy_dual_spare_to_var_in_frame;
 
-} copy_meta_spare_to_var_in_frame: {  ////////////////////////////////////////
+} copy_dual_spare_to_var_in_frame: {  ////////////////////////////////////////
 
-    if (/* param and */ Cell_Parameter_Class(param) == PARAMCLASS_LIFTED) {
+    if (/* param and */ Cell_Parameter_Class(param) == PARAMCLASS_META) {
         Move_Cell(var, Known_Element(SPARE));
     }
     else {
-        Meta_Unquotify_Undecayed(SPARE);
+        Unliftify_Undecayed(SPARE);
         Value* spare = Decay_If_Unstable(SPARE);
         Move_Cell(var, spare);
     }

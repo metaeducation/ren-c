@@ -285,7 +285,7 @@ typedef enum {
     //
     PARAMCLASS_SOFT,
 
-    // `PARAMCLASS_LIFTED` is the only parameter type that can accept unstable
+    // `PARAMCLASS_META` is the only parameter type that can accept unstable
     // isotopes.  Antiforms become quasiforms when they are an argument, and
     // all other types receive one added quote level.
     //
@@ -297,5 +297,5 @@ typedef enum {
     //     >> foo get:any $asdfasfasdf
     //     a is ~
     //
-    PARAMCLASS_LIFTED
+    PARAMCLASS_META
 } ParamClass;

@@ -971,7 +971,7 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Utf8)
 
     return Delegate_Operation_With_Part(
         SYM_REVERSE, SYM_TEXT_X,
-        Meta_Quotify(datatype), Quotify(any_utf8), Meta_Quotify(part)
+        Liftify(datatype), Quotify(any_utf8), Liftify(part)
     );
 }
 
@@ -1031,7 +1031,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
 
     return Delegate_Operation_With_Part(
         SYM_SHUFFLE, SYM_TEXT_X,
-        Meta_Quotify(datatype), Quotify(any_utf8), Meta_Quotify(part)
+        Liftify(datatype), Quotify(any_utf8), Liftify(part)
     );
 }
 

@@ -6,7 +6,7 @@
 (
     str: "aaa"
     all [
-        '~#change~ = meta parse str [
+        '~#change~ = lift parse str [
             change [some "a"] (if ok ["literally"])
         ]
         str = "literally"
@@ -50,11 +50,11 @@
 ; BLOCK! change tests from %parse-test.red
 [
     (all wrap [
-        '~#change~ = meta parse blk: [1] [change integer! (the a)]
+        '~#change~ = lift parse blk: [1] [change integer! (the a)]
         blk = [a]
     ])
     (all wrap [
-        '~#change~ = meta parse blk: [1 2 3] [change [some integer!] (the a)]
+        '~#change~ = lift parse blk: [1 2 3] [change [some integer!] (the a)]
         blk = [a]
     ])
     (all wrap [
@@ -62,22 +62,22 @@
         blk = [1 #"." 2 #"." 3]
     ])
     (all wrap [
-        '~#change~ = meta parse blk: [1 2 3] [change [some integer!] (99)]
+        '~#change~ = lift parse blk: [1 2 3] [change [some integer!] (99)]
         blk = [99]
     ])
     (all wrap [
-        '~#change~ = meta parse blk: [1 2 3] [change [some integer!] ([a])]
+        '~#change~ = lift parse blk: [1 2 3] [change [some integer!] ([a])]
         blk = [[a]]
     ])
     (all wrap [
-        '~#change~ = meta parse blk: [1 2 3] [
+        '~#change~ = lift parse blk: [1 2 3] [
             change [some integer!] (reduce [1 + 2])
         ]
         blk = [[3]]
     ])
     (
         b: ["long long long string" "long long long string" 1]
-        '~#change~ = meta parse copy "." [change one (spread b)]
+        '~#change~ = lift parse copy "." [change one (spread b)]
     )
 ]
 
@@ -85,11 +85,11 @@
 ; TEXT! change tests from %parse-test.red
 [
     (all wrap [
-        '~#change~ = meta parse str: "1" [change one (#a)]
+        '~#change~ = lift parse str: "1" [change one (#a)]
         str = "a"
     ])
     (all wrap [
-        '~#change~ = meta parse str: "123" [change [repeat 3 one] (#a)]
+        '~#change~ = lift parse str: "123" [change [repeat 3 one] (#a)]
         str = "a"
     ])
     (
@@ -102,11 +102,11 @@
         ]
     )
     (all wrap [
-        '~#change~ = meta parse str: "123" [change skip 3 (99)]
+        '~#change~ = lift parse str: "123" [change skip 3 (99)]
         str = "99"
     ])
     (all wrap [
-        '~#change~ = meta parse str: "test" [some [change #t (#o) | one]]
+        '~#change~ = lift parse str: "test" [some [change #t (#o) | one]]
         str = "oeso"
     ])
     (all wrap [
@@ -121,24 +121,24 @@
 ; BLOB! change tests from %parse-test.red
 [
     (all wrap [
-        '~#change~ = meta parse bin: #{01} [change one (#{0A})]
+        '~#change~ = lift parse bin: #{01} [change one (#{0A})]
         bin = #{0A}
     ])
     (all wrap [
-        '~#change~ = meta parse bin: #{010203} [change [skip 3] (#{0A})]
+        '~#change~ = lift parse bin: #{010203} [change [skip 3] (#{0A})]
         bin = #{0A}
     ])
     (
         digit: charset [1 - 9]
         all wrap [
-            '~#change~ = meta parse bin: #{010A020B03} [
+            '~#change~ = lift parse bin: #{010A020B03} [
                 some [change digit (#{00}) | <next>]
             ]
             bin = #{000A000B00}
         ]
     )
     (all wrap [
-        '~#change~ = meta parse bin: #{010203} [change skip 3 (99)]
+        '~#change~ = lift parse bin: #{010203} [change skip 3 (99)]
         bin = #{63}
     ])
     (all wrap [
@@ -157,7 +157,7 @@
 
 [#1245
     (all wrap [
-        '~#change~ = meta parse s: "(1)" [change "(1)" ("()")]
+        '~#change~ = lift parse s: "(1)" [change "(1)" ("()")]
         s = "()"
     ])
 ]
@@ -167,7 +167,7 @@
     s: ~
     all wrap [
         let n
-        '~#change~ = meta parse s: [1] [change n: integer! (n * 10)]
+        '~#change~ = lift parse s: [1] [change n: integer! (n * 10)]
         s = [10]
     ]
 )

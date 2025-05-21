@@ -7,7 +7,7 @@
     (did detector: lambda [^x [<end> any-value? pack!]] [x])
 
     ((the '10) = detector 10)
-    ((meta null) = detector null)
+    ((lift null) = detector null)
     ('~[~null~]~ = detector if ok [null])
 
     ('~,~ = detector (comment "hi"))
@@ -22,6 +22,6 @@
 
 (
     x: 'false
-    ^(meta void) then [x: 'true]
+    ^(lift void) then [x: 'true]
     true? x
 )

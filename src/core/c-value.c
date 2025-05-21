@@ -88,7 +88,7 @@ void Probe_Cell_Print_Helper(
 
     if (Is_Antiform(atom)) {
         DECLARE_ELEMENT (reified);
-        Copy_Meta_Cell(reified, atom);
+        Copy_Lifted_Cell(reified, atom);
         Mold_Element(mo, reified);
         Append_Ascii(mo->string, "  ; anti");
     }

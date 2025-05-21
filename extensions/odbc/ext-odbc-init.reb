@@ -197,14 +197,14 @@ sqlform: func [
             "?"
         ]
 
-        word?:lifted/ [
+        word?:metaform/ [
             any [
                 try as text! get:groups value
                 ""
             ]
         ]
 
-        group?:lifted/ [
+        group?:metaform/ [
             let ^product: eval as block! value
             if void? ^product [
                 ""

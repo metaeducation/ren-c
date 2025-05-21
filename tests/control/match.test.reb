@@ -25,11 +25,11 @@
 
 [
     ~bad-antiform~ !! (match [null?] null)
-    ('~null~ = match:meta [null?] null)
+    ('~null~ = match:lift [null?] null)
 
     (null = match [integer!] void)
     ~???~ !! (match [void?] void)
-    (null = match:meta [void?] void)  ; acts as void-in-null-out ATM.
+    (null = match:lift [void?] void)  ; acts as void-in-null-out ATM.
 
     ('true = match [boolean?] 'true)
     ('false = match [boolean?] 'false)
@@ -63,8 +63,8 @@
 
     ~bad-antiform~ !! (non [null?] null)
     ~???~ !! (non null?/ 10)
-    (null = non:meta null null)
-    ((the '10) = non:meta null 10)
+    (null = non:lift null null)
+    ((the '10) = non:lift null 10)
 
     (null = non [logic?] okay)
 ]

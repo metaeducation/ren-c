@@ -272,7 +272,7 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
 
 // * Quasiforms are truthy.  There's a reason for this, because it allows
 //   operations in the ^META domain to easily use functions like ALL and ANY
-//   on the meta values.  (See the FOR-BOTH example.)
+//   on the lifted values.  (See the FOR-BOTH example.)
 
 INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom);
 INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v);
@@ -316,12 +316,11 @@ INLINE Element* Reify(Atom* v) {
 }
 
 
-//=//// META QUOTING ///////////////////////////////////////////////////////=//
+//=//// LIFTING ///////////////////////////////////////////////////////////=//
 
-// Meta quoting is a superset of plain quoting.  It has the twist that it can
-// quote antiforms to produce quasiforms.  This is done by META, but also on
-// assignment by lifted forms (^foo: ...) and lifted forms will UNMETA when
-// fetching values.
+// Lifting is a superset of plain quoting.  It has the twist that it can
+// "quote antiforms" to produce quasiforms.  This is done by LIFT, but also on
+// assignment by metaforms (^foo: ...) and metaforms UNLIFT when fetching.
 //
 // It's hard to summarize in one place all the various applications of this
 // feature!  But it's critical to accomplishing composability by which a
@@ -331,10 +330,10 @@ INLINE Element* Reify(Atom* v) {
 //  https://forum.rebol.info/t/1833
 //
 
-#define Is_Metaform(v) \
+#define Any_Lifted(v) \
     (QUOTE_BYTE(Ensure_Readable(v)) >= QUASIFORM_2)  // quasi or quoted
 
-INLINE Element* Meta_Quotify(Atom* atom) {
+INLINE Element* Liftify(Atom* atom) {
     if (QUOTE_BYTE(atom) == ANTIFORM_0) {
         QUOTE_BYTE(atom) = QUASIFORM_2_COERCE_ONLY;  // anti means quasi valid
         return cast(Element*, atom);
@@ -342,7 +341,7 @@ INLINE Element* Meta_Quotify(Atom* atom) {
     return Quotify(cast(Element*, atom));  // a non-antiform winds up quoted
 }
 
-INLINE Atom* Meta_Unquotify_Undecayed(Need(Atom*) atom) {
+INLINE Atom* Unliftify_Undecayed(Need(Atom*) atom) {
     if (QUOTE_BYTE(atom) == QUASIFORM_2) {
         Option(Error*) e = Trap_Coerce_To_Antiform(atom);
         if (e)
@@ -353,14 +352,14 @@ INLINE Atom* Meta_Unquotify_Undecayed(Need(Atom*) atom) {
     return Unquotify(cast(Element*, atom));  // asserts that it's quoted
 }
 
-INLINE Value* Meta_Unquotify_Known_Stable(Need(Value*) val) {
-    Meta_Unquotify_Undecayed(cast(Atom*, val));
+INLINE Value* Unliftify_Known_Stable(Need(Value*) val) {
+    Unliftify_Undecayed(cast(Atom*, val));
     Assert_Cell_Stable(val);
     return val;
 }
 
 INLINE Value* Decay_If_Unstable(Need(Atom*) v);
 
-INLINE Value* Meta_Unquotify_Decayed(Value* v) {
-    return Decay_If_Unstable(Meta_Unquotify_Undecayed(cast(Atom*, v)));
+INLINE Value* Unliftify_Decayed(Value* v) {
+    return Decay_If_Unstable(Unliftify_Undecayed(cast(Atom*, v)));
 }

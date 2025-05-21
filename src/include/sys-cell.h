@@ -531,8 +531,8 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
           case SIGIL_0:
             return u_cast(HeartEnum, (HEART_BYTE(atom) % MOD_HEART_64));
 
-          case SIGIL_LIFT:
-            return TYPE_LIFTED;
+          case SIGIL_META:
+            return TYPE_METAFORM;
 
           case SIGIL_PIN:
             return TYPE_PINNED;
@@ -567,8 +567,8 @@ INLINE Option(Type) Type_Of_Unquoted(const Element* elem) {
       case SIGIL_0:
         return u_cast(HeartEnum, (HEART_BYTE(elem) % MOD_HEART_64));
 
-      case SIGIL_LIFT:
-        return TYPE_LIFTED;
+      case SIGIL_META:
+        return TYPE_METAFORM;
 
       case SIGIL_PIN:
         return TYPE_PINNED;
@@ -936,8 +936,8 @@ INLINE Cell* Copy_Cell_Untracked(
 #define Copy_Cell_Core(out,v,copy_mask) \
     Copy_Cell_Untracked(TRACK(out), (v), (copy_mask))
 
-#define Copy_Meta_Cell(out,v) \
-    cast(Element*, Meta_Quotify(Copy_Cell(u_cast(Atom*, (out)), (v))))
+#define Copy_Lifted_Cell(out,v) \
+    cast(Element*, Liftify(Copy_Cell(u_cast(Atom*, (out)), (v))))
 
 
 //=//// CELL MOVEMENT //////////////////////////////////////////////////////=//
@@ -1006,8 +1006,8 @@ INLINE Cell* Move_Cell_Untracked(
 #define Move_Cell_Core(out,v,cell_mask) \
     Move_Cell_Untracked(TRACK(out), (v), (cell_mask))
 
-#define Move_Meta_Cell(out,v) \
-    cast(Element*, Meta_Quotify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
+#define Move_Lifted_Cell(out,v) \
+    cast(Element*, Liftify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
 
 INLINE Atom* Move_Atom_Untracked(
     Atom* out,
@@ -1043,8 +1043,8 @@ INLINE Atom* Move_Atom_Untracked(
 #define Move_Atom(out,a) \
     Move_Atom_Untracked(TRACK(out), (a))
 
-#define Move_Meta_Atom(out,a) \
-    cast(Element*, Meta_Quotify(Move_Atom_Untracked(TRACK(out), (a))))
+#define Move_Lifted_Atom(out,a) \
+    cast(Element*, Liftify(Move_Atom_Untracked(TRACK(out), (a))))
 
 
 //=//// CELL "BLITTING" (COMPLETE OVERWRITE) //////////////////////////////=//

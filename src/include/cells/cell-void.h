@@ -41,17 +41,17 @@ INLINE bool Is_Void(Need(const Atom*) v) {
     return tail == at;
 }
 
-INLINE Element* Init_Meta_Of_Void_Untracked(Sink(Element) out) {
+INLINE Element* Init_Lifted_Void_Untracked(Sink(Element) out) {
     Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, g_empty_array, 0, SPECIFIED);
     QUOTE_BYTE(out) = QUASIFORM_2_COERCE_ONLY;
     return out;
 }
 
-#define Init_Meta_Of_Void(out) \
-    TRACK(Init_Meta_Of_Void_Untracked((out)))
+#define Init_Lifted_Void(out) \
+    TRACK(Init_Lifted_Void_Untracked((out)))
 
-INLINE bool Is_Meta_Of_Void(const Atom* v) {
-    if (not Is_Meta_Of_Pack(v))
+INLINE bool Is_Lifted_Void(const Atom* v) {
+    if (not Is_Lifted_Pack(v))
         return false;
     const Element* tail;
     const Element* at = Cell_List_At(&tail, v);
@@ -62,6 +62,6 @@ INLINE bool Is_Ghost_Or_Void(Need(Atom*) v) {
     return Is_Ghost(v) or Is_Void(v);
 }
 
-INLINE bool Is_Meta_Of_Ghost_Or_Void(const Atom* v) {
-    return Is_Meta_Of_Ghost(v) or Is_Meta_Of_Void(v);
+INLINE bool Is_Lifted_Ghost_Or_Void(const Atom* v) {
+    return Is_Lifted_Ghost(v) or Is_Lifted_Void(v);
 }

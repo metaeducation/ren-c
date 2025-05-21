@@ -57,7 +57,7 @@
     INLINE Level* ensure_executor(Executor *executor, Level* L) {
         if (L->executor != executor) {
             if (
-                executor == &Meta_Stepper_Executor
+                executor == &Stepper_Executor
                 and L->executor == &Evaluator_Executor
             ){
                 // See Evaluator_Executor(), this is allowed
@@ -185,7 +185,7 @@ INLINE REBLEN Level_Array_Index(Level* L) {
 }
 
 INLINE REBLEN Level_Expression_Index(Level* L) {  // !!! Not called?
-    assert(L->executor == &Meta_Stepper_Executor);
+    assert(L->executor == &Stepper_Executor);
     assert(not Level_Is_Variadic(L));
     return L->u.eval.expr_index - 1;
 }
@@ -228,7 +228,7 @@ INLINE Option(LineNumber) Line_Number_Of_Level(Level* L) {
     u_cast(Atom*, &(L->scratch))
 
 INLINE Element* Evaluator_Level_Current(Level* L) {
-    assert(L->executor == &Meta_Stepper_Executor);
+    assert(L->executor == &Stepper_Executor);
     return u_cast(Element*, &(L->scratch));
 }
 
@@ -340,7 +340,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 // When evaluative contexts ask "Is_Level_At_End()" and see [], they might
 // think that is the end of the level.  But [, , ,] would be an end of the
 // level after an evaluation step with no result (e.g. Is_Endlike_Trash()
-// coming back from Meta_Stepper_Executor()).  So you don't want to get
+// coming back from Stepper_Executor()).  So you don't want to get
 // lulled into a false sense of security that [] is the only way a level ends.
 //
 // Additionally, if you skip a call into the stepper because you see [] then
@@ -475,7 +475,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //
 // 2. The commitment of an Intrinsic is that if it runs without a Level, then
 //    it won't perform evaluations or use continuations.  Those mechanics are
-//    not available when being called directly from the Meta_Stepper_Executor.
+//    not available when being called directly from the Stepper_Executor.
 //
 // 3. Levels are pushed to reuse for several sequential operations like ANY,
 //    ALL, CASE, REDUCE.  It is allowed to change the output cell for each
@@ -534,7 +534,7 @@ INLINE void Push_Level_Erase_Out_If_State_0(  // inherits uninterruptibility [4]
 
 INLINE void Update_Expression_Start(Level* L) {
     assert(
-        L->executor == &Meta_Stepper_Executor
+        L->executor == &Stepper_Executor
         or L->executor == &Evaluator_Executor
     );
     if (not Level_Is_Variadic(L))
@@ -691,13 +691,13 @@ INLINE Level* Prep_Level_Core(
 // difference between a VOID and regular value poke.  (We don't want to make
 // it possible for POKE to take arbitrary unstable antiforms...that might
 // seem to enable interesting features like entities that stored packs or
-// errors, but we don't want that outside the narrow feature of lifted
+// errors, but we don't want that outside the narrow feature of meta
 // variables implemented by poke itself.)
 //
 // This makes it easier for POKE handlers to handle the voids, which can't
 // be turned into nulled cells because you might actually want to poke a null.
 // Instead, this makes the pointer to the argument itself a nullptr if it
-// was a VOID, and unmetas anything else.
+// was a VOID, and unlifts anything else.
 //
 INLINE Option(const Value*) Voidable_Level_Arg(Level* L, REBLEN n)
 {
@@ -714,13 +714,13 @@ INLINE Option(const Value*) Voidable_Level_Arg(Level* L, REBLEN n)
     assert(not Is_Node_Marked(arg));  // use mark for saying it was void
 
     Option(const Value*) result;
-    if (Is_Meta_Of_Void(arg)) {
+    if (Is_Lifted_Void(arg)) {
         Init_Quasi_Word(arg, CANON(VOID));  // fib, but helps FAIL(PARAM(...))
         Set_Node_Marked_Bit(arg);
         result = nullptr;
     }
     else {
-        Meta_Unquotify_Known_Stable(arg);
+        Unliftify_Known_Stable(arg);
         result = arg;
     }
     Set_Cell_Flag(arg, PROTECTED);  // helps stop double-unquotify
@@ -797,10 +797,10 @@ INLINE Bounce Native_Ghost_Result_Untracked(
     return Init_Ghost_Untracked(level_->out, surprising);
 }
 
-INLINE Bounce Native_Unmeta_Result(Level* level_, const Element* v) {
+INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
     assert(not THROWING);
     Copy_Cell(level_->out, v);
-    return Meta_Unquotify_Undecayed(level_->out);
+    return Unliftify_Undecayed(level_->out);
 }
 
 INLINE Bounce Native_Trash_Result_Untracked(
@@ -978,11 +978,11 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define TRASH       Native_Trash_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
-    #define UNMETA(v)   Native_Unmeta_Result(level_, (v))
+    #define UNLIFT(v)   Native_Unlift_Result(level_, (v))
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
     #define LOOPED(v)   Native_Looped_Result(level_, (v))
 
-    #define PICKED(v)   Meta_Quotify(v ? v : Init_Nulled(OUT))
+    #define PICKED(v)   Liftify(v ? v : Init_Nulled(OUT))
     #define PICK_OUT_OF_RANGE  cast(Bounce, Init_Nulled(OUT))
 
     // Note: For efficiency, intrinsic typecheckers must return BOUNCE_OKAY

@@ -4,7 +4,7 @@
 ; fetched from words), voids have no-op behavior...leaving the parse position
 ; alone and succeeding, evaluating to void.
 
-; meta voids are just skipped, and skipped if hit in a variable
+; lifted voids are just skipped, and skipped if hit in a variable
 
 ('b = parse [a b] ['a ~[]~ 'b])
 (

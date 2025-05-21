@@ -16,7 +16,7 @@
 )]
 
 (all wrap [
-    '~#remove~ = meta parse text: "a ^/ " [
+    '~#remove~ = lift parse text: "a ^/ " [
         some [newline remove [to <end>] | "a" [remove [to newline]] | <next>]
     ]
     text = "a^/"
@@ -30,7 +30,7 @@
     (
         blk: [a]
         all [
-            '~#remove~ = meta parse blk [remove one]
+            '~#remove~ = lift parse blk [remove one]
             blk = []
         ]
     )
@@ -55,7 +55,7 @@
     (
         str: "a"
         all [
-            '~#remove~ = meta parse str [remove one]
+            '~#remove~ = lift parse str [remove one]
             str = ""
         ]
     )
@@ -82,12 +82,12 @@
     )
     (all [
         let s
-        '~#remove~ = meta parse s: " t e s t " [some [remove ws | <next>]]
+        '~#remove~ = lift parse s: " t e s t " [some [remove ws | <next>]]
         s = "test"
     ])
     (all [
         let s
-        '~#remove~ = meta parse s: " t e s t " [some [remove ws | one]]
+        '~#remove~ = lift parse s: " t e s t " [some [remove ws | one]]
         s = "test"
     ])
     (
@@ -113,7 +113,7 @@
     (
         bin: #{0A}
         all [
-            '~#remove~ = meta parse bin [remove one]
+            '~#remove~ = lift parse bin [remove one]
             bin = #{}
         ]
     )
@@ -141,12 +141,12 @@
     )
     (all wrap [
         ws: make bitset! [" ^- ^/^M" #{00}]
-        '~#remove~ = meta parse s: #{00DE00AD00} [some [remove ws | <next>]]
+        '~#remove~ = lift parse s: #{00DE00AD00} [some [remove ws | <next>]]
         s = #{DEAD}
     ])
     (all wrap [
         ws: make bitset! [" ^- ^/^M" #{00}]
-        '~#remove~ = meta parse s: #{00DE00AD00} [some [remove ws | one]]
+        '~#remove~ = lift parse s: #{00DE00AD00} [some [remove ws | one]]
         s = #{DEAD}
     ])
     (
@@ -174,12 +174,12 @@
 [#1251
     (all [
         let e
-        '~#insert~ = meta parse e: "a" [remove one insert ("xxx")]
+        '~#insert~ = lift parse e: "a" [remove one insert ("xxx")]
         e = "xxx"
     ])
     (all [
         let e
-        '~#insert~ = meta parse e: "a" [[remove one] insert ("xxx")]
+        '~#insert~ = lift parse e: "a" [[remove one] insert ("xxx")]
         e = "xxx"
     ])
 ]

@@ -1066,9 +1066,9 @@ DECLARE_NATIVE(IDENTITY) // sample uses: https://stackoverflow.com/q/3136338
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    Element* meta = Element_ARG(VALUE);
+    Element* lifted = Element_ARG(VALUE);
 
-    return UNMETA(meta);
+    return UNLIFT(lifted);
 }
 
 
@@ -1244,9 +1244,9 @@ DECLARE_NATIVE(VOID_Q)
 {
     INCLUDE_PARAMS_OF_VOID_Q;
 
-    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
+    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
 
-    return LOGIC(Is_Meta_Of_Void(meta));
+    return LOGIC(Is_Lifted_Void(lifted));
 }
 
 
@@ -1345,12 +1345,12 @@ DECLARE_NATIVE(HEAVY)
 {
     INCLUDE_PARAMS_OF_HEAVY;
 
-    Element* meta = Element_ARG(ATOM);
+    Element* lifted = Element_ARG(ATOM);
 
-    if (Is_Meta_Of_Null(meta))
+    if (Is_Lifted_Null(lifted))
         return Init_Heavy_Null(OUT);
 
-    return UNMETA(meta);
+    return UNLIFT(lifted);
 }
 
 
@@ -1367,21 +1367,21 @@ DECLARE_NATIVE(LIGHT)
 {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Element* meta = Element_ARG(ATOM);
+    Element* lifted = Element_ARG(ATOM);
 
-    if (not Is_Meta_Of_Pack(meta))
-        return UNMETA(meta);
+    if (not Is_Lifted_Pack(lifted))
+        return UNLIFT(lifted);
 
     Length len;
-    const Element* first = Cell_List_Len_At(&len, meta);
+    const Element* first = Cell_List_Len_At(&len, lifted);
 
     if (len != 1)
-        return UNMETA(meta);
+        return UNLIFT(lifted);
 
-    if (Is_Meta_Of_Null(first))
+    if (Is_Lifted_Null(first))
         return nullptr;
 
-    return UNMETA(meta);
+    return UNLIFT(lifted);
 }
 
 

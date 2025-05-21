@@ -478,9 +478,9 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
-    Meta_Quotify(datatype);
+    Liftify(datatype);
     Quotify(seq);
-    Meta_Quotify(part);
+    Liftify(part);
     return rebDelegate(  // slow, but not a high priority to write it fast [1]
         CANON(AS), datatype, CANON(COPY), CANON(_S_S), "[",
             CANON(AS), CANON(BLOCK_X), seq, ":part", part, ":deep ~okay~"
@@ -525,7 +525,7 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
 
     return Delegate_Operation_With_Part(
         SYM_REVERSE, SYM_BLOCK_X,
-        Meta_Quotify(datatype), Quotify(seq), Meta_Quotify(part)
+        Liftify(datatype), Quotify(seq), Liftify(part)
     );
 }
 
@@ -589,7 +589,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
 
     return Delegate_Operation_With_Part(
         SYM_SHUFFLE, SYM_BLOCK_X,
-        Meta_Quotify(datatype), Quotify(seq), Meta_Quotify(part)
+        Liftify(datatype), Quotify(seq), Liftify(part)
     );
 }
 

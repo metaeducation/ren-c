@@ -54,7 +54,7 @@ INLINE bool Any_Plain(const Element* e) {
     return not (e->header.bits & CELL_MASK_SIGIL_BITS);
 }
 
-#define Any_Lifted(v)  (Type_Of(v) == TYPE_LIFTED)
+#define Any_Metaform(v)  (Type_Of(v) == TYPE_METAFORM)
 #define Any_Pinned(v)  (Type_Of(v) == TYPE_PINNED)
 #define Any_Tied(v)    (Type_Of(v) == TYPE_TIED)
 
@@ -66,8 +66,8 @@ INLINE bool Any_Plain(const Element* e) {
 #define Is_Pinned(heartname, v) \
     Is_Sigiled(TYPE_##heartname, SIGIL_PIN, (v))
 
-#define Is_Lifted(heartname, v) \
-    Is_Sigiled(TYPE_##heartname, SIGIL_LIFT, (v))
+#define Is_Metaform(heartname, v) \
+    Is_Sigiled(TYPE_##heartname, SIGIL_META, (v))
 
 #define Is_Tied(heartname, v) \
     Is_Sigiled(TYPE_##heartname, SIGIL_TIE, (v))
@@ -85,7 +85,7 @@ INLINE Option(Sigil) Sigil_Of(const Element* e)
 //    to give you ^@foo.  Also, the Sigilize() function would be paying to
 //    mask out bits a lot of time when it's not needed.  So if you really
 //    intend to sigilize a plain form, make that clear at the callsite by
-//    writing e.e. `Liftify(Plainify(elem))`.
+//    writing e.e. `Metafy(Plainify(elem))`.
 //
 
 INLINE Element* Sigilize(Element* elem, Sigil sigil) {
@@ -101,7 +101,7 @@ INLINE Element* Plainify(Element* elem) {
     return elem;
 }
 
-#define Liftify(elem)  Sigilize((elem), SIGIL_LIFT)
+#define Metafy(elem)  Sigilize((elem), SIGIL_META)
 #define Pinify(elem)   Sigilize((elem), SIGIL_PIN)
 #define Tieify(elem)   Sigilize((elem), SIGIL_TIE)
 

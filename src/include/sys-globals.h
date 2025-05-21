@@ -122,7 +122,7 @@ PVAR Source* g_empty_array; // optimization of Cell_Array(g_empty_block)
 PVAR VarList* g_empty_varlist;
 PVAR Source* g_1_quasi_null_array;  // used by heavy nulls ~[~null~]~
 
-PVAR Value* g_meta_heavy_null;  // keeps g_1_quasi_null_array alive
+PVAR Value* g_lifted_heavy_null;  // keeps g_1_quasi_null_array alive
 
 PVAR Element* Root_Feed_Null_Substitute;  // flagged with FEED_NOTE_META
 

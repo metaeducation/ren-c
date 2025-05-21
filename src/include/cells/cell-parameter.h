@@ -194,7 +194,7 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 // This helps avoid the need to take the argument as ^META just to do the
 // test for void, if this is the intent.  Beyond convenience, it doesn't speed
 // natives up all that much, as they could test `Is_Void(arg)` and then
-// `return Init_Nulled(OUT); Meta_Unquotify_Undecayed(arg);`...which would
+// `return Init_Nulled(OUT); Unliftify_Undecayed(arg);`...which would
 // be fairly fast.  But it speeds up usermode code much more, considering that
 // `if void? ^arg [return null]` needs several frames and lookups to run.
 //

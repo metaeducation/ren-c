@@ -89,7 +89,7 @@
 // can complete and run the evaluated-to branch.
 //
 // So the group branch executor is pushed with the feed of the GROUP! to run.
-// It gives this feed to an Meta_Stepper_Executor(), and then delegates to the
+// It gives this feed to an Stepper_Executor(), and then delegates to the
 // branch returned as a result.
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -258,8 +258,8 @@ DECLARE_NATIVE(THEN_Q)
 {
     INCLUDE_PARAMS_OF_THEN_Q;
 
-    Element* meta = Element_ARG(ATOM);
-    return LOGIC(not Is_Meta_Of_Null(meta));
+    Element* lifted = Element_ARG(ATOM);
+    return LOGIC(not Is_Lifted_Null(lifted));
 }
 
 
@@ -277,8 +277,8 @@ DECLARE_NATIVE(ELSE_Q)
 {
     INCLUDE_PARAMS_OF_ELSE_Q;
 
-    Element* meta = Element_ARG(ATOM);
-    return LOGIC(Is_Meta_Of_Null(meta));
+    Element* lifted = Element_ARG(ATOM);
+    return LOGIC(Is_Lifted_Null(lifted));
 }
 
 
@@ -299,14 +299,14 @@ DECLARE_NATIVE(THEN)
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Element* meta = Element_ARG(ATOM);
+    Element* lifted = Element_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
-    if (Is_Meta_Of_Null(meta))
+    if (Is_Lifted_Null(lifted))
         return nullptr;
 
-    Copy_Cell(SPARE, meta);
-    Meta_Unquotify_Undecayed(SPARE);
+    Copy_Cell(SPARE, lifted);
+    Unliftify_Undecayed(SPARE);
 
     return DELEGATE_BRANCH(OUT, branch, SPARE);
 }
@@ -328,14 +328,14 @@ DECLARE_NATIVE(ELSE)
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    Element* meta = Element_ARG(ATOM);
+    Element* lifted = Element_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
-    if (not Is_Meta_Of_Null(meta))
-        return UNMETA(meta);
+    if (not Is_Lifted_Null(lifted))
+        return UNLIFT(lifted);
 
-    Copy_Cell(SPARE, meta);
-    Meta_Unquotify_Undecayed(SPARE);
+    Copy_Cell(SPARE, lifted);
+    Unliftify_Undecayed(SPARE);
 
     return DELEGATE_BRANCH(OUT, branch, SPARE);
 }
@@ -358,7 +358,7 @@ DECLARE_NATIVE(ALSO)
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Element* meta = Element_ARG(ATOM);
+    Element* lifted = Element_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
     enum {
@@ -378,18 +378,18 @@ DECLARE_NATIVE(ALSO)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Meta_Of_Null(meta))
+    if (Is_Lifted_Null(lifted))
         return nullptr;
 
-    Copy_Cell(SPARE, meta);
-    Meta_Unquotify_Undecayed(SPARE);
+    Copy_Cell(SPARE, lifted);
+    Unliftify_Undecayed(SPARE);
 
     STATE = ST_ALSO_RUNNING_BRANCH;
     return CONTINUE_BRANCH(OUT, branch, SPARE);
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
-    return UNMETA(meta);  // discard branch result, return input value
+    return UNLIFT(lifted);  // discard branch result, return input value
 }}
 
 
@@ -423,7 +423,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     switch (STATE) {
       case ST_ANY_ALL_NONE_INITIAL_ENTRY: goto initial_entry;
-      case ST_ANY_ALL_NONE_EVAL_STEP: goto eval_step_meta_or_end_in_spare;
+      case ST_ANY_ALL_NONE_EVAL_STEP: goto eval_step_dual_in_spare;
       case ST_ANY_ALL_NONE_PREDICATE: goto predicate_result_in_scratch;
       default: assert(false);
     }
@@ -434,10 +434,10 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     Executor* executor;
     if (Is_Pinned(BLOCK, block))
-        executor = &Inert_Meta_Stepper_Executor;
+        executor = &Inert_Stepper_Executor;
     else {
         assert(Is_Block(block));
-        executor = &Meta_Stepper_Executor;
+        executor = &Stepper_Executor;
     }
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
@@ -447,12 +447,12 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     STATE = ST_ANY_ALL_NONE_EVAL_STEP;
     return CONTINUE_SUBLEVEL(sub);
 
-} eval_step_meta_or_end_in_spare: {  /////////////////////////////////////////
+} eval_step_dual_in_spare: {  ////////////////////////////////////////////////
 
     if (Is_Endlike_Trash(SPARE))
         goto reached_end;
 
-    if (Is_Meta_Of_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue
+    if (Is_Lifted_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue
         assert(STATE == ST_ANY_ALL_NONE_EVAL_STEP);
         Reset_Evaluator_Erase_Out(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
@@ -460,7 +460,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
 
-    Meta_Unquotify_Undecayed(SPARE);
+    Unliftify_Undecayed(SPARE);
     Value* spare = Decay_If_Unstable(SPARE);
 
     if (not Is_Nulled(predicate))
@@ -473,7 +473,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     // 1. The predicate-running is pushed over the "keepalive" stepper, but we
     //    don't want the stepper to take a step before coming back to us.
-    //    Temporarily patch out the Meta_Stepper_Executor() so we get control
+    //    Temporarily patch out the Stepper_Executor() so we get control
     //    back without that intermediate step.
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [1]
@@ -492,7 +492,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     Packify_If_Inhibitor(SCRATCH);  // predicates can approve null [1]
 
-    SUBLEVEL->executor = &Meta_Stepper_Executor;  // done tunneling [2]
+    SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ANY_ALL_NONE_EVAL_STEP;
 
     condition = Decay_If_Unstable(SCRATCH);
@@ -661,7 +661,7 @@ DECLARE_NATIVE(CASE)
 
     switch (STATE) {
       case ST_CASE_INITIAL_ENTRY: goto initial_entry;
-      case ST_CASE_CONDITION_EVAL_STEP: goto condition_meta_in_spare;
+      case ST_CASE_CONDITION_EVAL_STEP: goto condition_dual_in_spare;
       case ST_CASE_RUNNING_PREDICATE: goto predicate_result_in_spare;
       case ST_CASE_EVALUATING_GROUP_BRANCH:
         goto handle_processed_branch_in_scratch;
@@ -672,7 +672,7 @@ DECLARE_NATIVE(CASE)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Level* L = Make_Level_At(
-        &Meta_Stepper_Executor,
+        &Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -694,14 +694,14 @@ DECLARE_NATIVE(CASE)
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
-    SUBLEVEL->executor = &Meta_Stepper_Executor;  // undo &Just_Use_Out_Executor
+    SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
     Reset_Evaluator_Erase_Out(SUBLEVEL);
 
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate [1]
 
-} condition_meta_in_spare: {  ////////////////////////////////////////////////
+} condition_dual_in_spare: {  ////////////////////////////////////////////////
 
-    Meta_Unquotify_Undecayed(SPARE);
+    Unliftify_Undecayed(SPARE);
 
     if (Is_Ghost(SPARE))  // skip over things like ELIDE, but not voids!
         goto handle_next_clause;
@@ -878,7 +878,7 @@ DECLARE_NATIVE(SWITCH)
         goto initial_entry;
 
       case ST_SWITCH_EVALUATING_RIGHT:
-        goto right_meta_in_spare;
+        goto right_dual_in_spare;
 
       case ST_SWITCH_RUNNING_BRANCH:
         if (not Bool_ARG(ALL)) {
@@ -910,7 +910,7 @@ DECLARE_NATIVE(SWITCH)
     }
 
     Level* sub = Make_Level_At(
-        &Meta_Stepper_Executor,
+        &Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -945,11 +945,11 @@ DECLARE_NATIVE(SWITCH)
     }
 
     STATE = ST_SWITCH_EVALUATING_RIGHT;
-    SUBLEVEL->executor = &Meta_Stepper_Executor;
+    SUBLEVEL->executor = &Stepper_Executor;
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call [1]
 
-} right_meta_in_spare: {  ////////////////////////////////////////////////////
+} right_dual_in_spare: {  ////////////////////////////////////////////////////
 
     // 1. At one point the value was allowed to corrupt during comparison, due
     //    to the idea equality was transitive.  So if it changes 0.01 to 1% in
@@ -971,7 +971,7 @@ DECLARE_NATIVE(SWITCH)
     //    being evaluated as const.  But we have to proxy that const flag
     //    over to the block.
 
-    Meta_Unquotify_Undecayed(SPARE);
+    Unliftify_Undecayed(SPARE);
 
     if (Is_Ghost(SPARE))  // skip comments or ELIDEs
         goto next_switch_step;
@@ -1023,7 +1023,7 @@ DECLARE_NATIVE(SWITCH)
         if (at == nullptr)
             goto reached_end;
 
-        if (Is_Block(at) or Is_Lifted(BLOCK, at) or Is_Frame(at))
+        if (Is_Block(at) or Is_Metaform(BLOCK, at) or Is_Frame(at))
             break;
 
         Fetch_Next_In_Feed(SUBLEVEL->feed);
@@ -1136,8 +1136,8 @@ DECLARE_NATIVE(DEFAULT)
 
     assert(Any_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
 
-    Meta_Quotify(OUT);
-    if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+    Liftify(OUT);
+    if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
         LEVEL, NO_STEPS, LIB(POKE_P)
     )){
         assert(false);  // shouldn't be able to happen (steps is pinned)
@@ -1170,15 +1170,15 @@ DECLARE_NATIVE(MAYBE)
     INCLUDE_PARAMS_OF_MAYBE;
 
     Element* target = Element_ARG(TARGET);
-    Element* meta = Element_ARG(ATOM);
+    Element* lifted = Element_ARG(ATOM);
 
-    if (Is_Meta_Of_Error(meta))
-        return UNMETA(meta);  // pass through but don't assign anything
+    if (Is_Lifted_Error(lifted))
+        return UNLIFT(lifted);  // pass through but don't assign anything
 
-    if (Is_Meta_Of_Null(meta))
+    if (Is_Lifted_Null(lifted))
         return rebDelegate("get:any @", target);
 
-    return rebDelegate("set @", target, meta);  // should decay if needed
+    return rebDelegate("set @", target, lifted);  // should decay if needed
 }
 
 
@@ -1269,7 +1269,7 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
     INCLUDE_PARAMS_OF_DEFINITIONAL_THROW;
 
     Atom* atom = Copy_Cell(SPARE, ARG(ATOM));
-    Meta_Unquotify_Undecayed(atom);
+    Unliftify_Undecayed(atom);
 
     Level* throw_level = LEVEL;  // Level of this RETURN call
 

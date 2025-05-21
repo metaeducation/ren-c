@@ -505,7 +505,7 @@ void Startup_Trampoline(void)
     assert(BOTTOM_LEVEL == nullptr);
 
     Level* L = Make_End_Level(  // ensure L->prior [1]
-        &Meta_Stepper_Executor,  // executor is irrelevant (permit nullptr?)
+        &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
         LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
     );
     Push_Level_Dont_Inherit_Interruptibility(&g_erased_cell, L);  // API [3]

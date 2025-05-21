@@ -82,12 +82,12 @@ DECLARE_NATIVE(DONE_Q)
 {
     INCLUDE_PARAMS_OF_DONE_Q;
 
-    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
+    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
 
-    if (not Is_Meta_Of_Error(meta))
+    if (not Is_Lifted_Error(lifted))
         return nullptr;
 
-    return LOGIC(Is_Error_Done_Signal(Cell_Error(meta)));
+    return LOGIC(Is_Error_Done_Signal(Cell_Error(lifted)));
 }
 
 
@@ -96,8 +96,8 @@ enum {
     IDX_YIELDER_BODY = IDX_INTERPRETED_BODY,  // Trap_Make_Interpreted_Action()
     IDX_YIELDER_ORIGINAL_FRAME,  // varlist identity to steal on resume
     IDX_YIELDER_PLUG,  // saved when you YIELD (captures data stack etc.)
-    IDX_YIELDER_META_YIELDED,  // the argument YIELD was passed
-    MAX_IDX_YIELDER = IDX_YIELDER_META_YIELDED
+    IDX_YIELDER_YIELDED_LIFTED,  // the argument YIELD was passed
+    MAX_IDX_YIELDER = IDX_YIELDER_YIELDED_LIFTED
 };
 
 //=//// YIELDER STATE BYTE (DIFFERENT: VERY LIMITED!) /////////////////////=//
@@ -172,7 +172,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     Element* body = Details_Element_At(details, IDX_YIELDER_BODY);
     Value* original_frame = Details_At(details, IDX_YIELDER_ORIGINAL_FRAME);
     Value* plug = Details_At(details, IDX_YIELDER_PLUG);
-    Value* meta_yielded = Details_At(details, IDX_YIELDER_META_YIELDED);
+    Value* yielded_lifted = Details_At(details, IDX_YIELDER_YIELDED_LIFTED);
 
     switch (STATE) {  // Can't use STATE byte for "mode" (see ST_YIELDER enum)
       case ST_YIELDER_INVOKED: {
@@ -189,7 +189,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         goto invoke_yielder_that_abruptly_panicked; }
 
       case ST_YIELDER_RUNNING_BODY: {
-        if (Is_Cell_Readable(meta_yielded))  // YIELD is suspending us
+        if (Is_Cell_Readable(yielded_lifted))  // YIELD is suspending us
             goto yielding;
 
         goto body_finished_or_threw; }
@@ -243,22 +243,22 @@ Bounce Yielder_Dispatcher(Level* const L)
     // gets bounced to, and it's what bubbles the value in OUT.
 
     if (Not_Cell_Readable(plug)) {  // no plug, must be YIELD of a RAISED...
-        assert(Is_Meta_Of_Error(meta_yielded));
+        assert(Is_Lifted_Error(yielded_lifted));
 
-        if (Is_Error_Done_Signal(Cell_Error(meta_yielded))) {
+        if (Is_Error_Done_Signal(Cell_Error(yielded_lifted))) {
             // don't elevate to a panic, just consider it finished
         }
         else {  // all other error antiforms elevated to panics
-            Init_Thrown_Panic(L, Cell_Error(meta_yielded));
+            Init_Thrown_Panic(L, Cell_Error(yielded_lifted));
         }
         goto body_finished_or_threw;
     }
 
-    assert(not Is_Meta_Of_Error(meta_yielded));
+    assert(not Is_Lifted_Error(yielded_lifted));
     assert(Is_Handle(plug));
 
-    Copy_Cell(OUT, meta_yielded);  // keep meta_yielded around for resume
-    return Meta_Unquotify_Undecayed(OUT);
+    Copy_Cell(OUT, yielded_lifted);  // keep yielded_lifted around for resume
+    return Unliftify_Undecayed(OUT);
 
 } resume_body_if_not_reentrant: {  ///////////////////////////////////////////
 
@@ -339,9 +339,9 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(yield_level != L);
     assert(LEVEL_STATE_BYTE(yield_level) == ST_YIELD_SUSPENDED);
 
-    Copy_Cell(yield_level->out, meta_yielded);  // resumed YIELD's result [2]
-    Meta_Unquotify_Undecayed(yield_level->out);
-    Init_Unreadable(meta_yielded);
+    Copy_Cell(yield_level->out, yielded_lifted);  // resumed YIELD's result [2]
+    Unliftify_Undecayed(yield_level->out);
+    Init_Unreadable(yielded_lifted);
 
     assert(STATE == ST_YIELDER_INVOKED);
     STATE = ST_YIELDER_RUNNING_BODY;  // resume where the last YIELD left off
@@ -377,7 +377,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Block(body));  // clean up details for GC [2]
     Init_Unreadable(body);
     assert(Not_Cell_Readable(plug));
-    assert(Not_Cell_Readable(meta_yielded));
+    assert(Not_Cell_Readable(yielded_lifted));
 
     assert(Is_Frame(original_frame));
 
@@ -398,9 +398,9 @@ Bounce Yielder_Dispatcher(Level* const L)
         and Cell_Frame_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
-        if (not Is_Meta_Of_Error(OUT)) {  // THROW:FINAL value
+        if (not Is_Lifted_Error(OUT)) {  // THROW:FINAL value
             Init_Space(original_frame);
-            return Meta_Unquotify_Undecayed(OUT);  // done, this is last value
+            return Unliftify_Undecayed(OUT);  // done, this is last value
         }
         if (Is_Error_Done_Signal(Cell_Error(OUT))) {
             Init_Space(original_frame);
@@ -514,7 +514,7 @@ DECLARE_NATIVE(YIELDER)
     assert(Is_Block(Details_At(details, IDX_YIELDER_BODY)));
     Init_Unreadable(Details_At(details, IDX_YIELDER_ORIGINAL_FRAME));
     Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
-    Init_Unreadable(Details_At(details, IDX_YIELDER_META_YIELDED));
+    Init_Unreadable(Details_At(details, IDX_YIELDER_YIELDED_LIFTED));
 
     Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);
@@ -589,7 +589,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
       default: assert(false);
     }
 
-    Element* meta = Element_ARG(ATOM);
+    Element* lifted = Element_ARG(ATOM);
 
   //=//// EXTRACT YIELDER FROM DEFINITIONAL YIELD'S CELL ///////////////////=//
 
@@ -612,8 +612,10 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     Value* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
     assert(Not_Cell_Readable(plug));
 
-    Value* meta_yielded = Details_At(yielder_details, IDX_YIELDER_META_YIELDED);
-    assert(Not_Cell_Readable(meta_yielded));
+    Value* yielded_lifted = Details_At(
+        yielder_details, IDX_YIELDER_YIELDED_LIFTED
+    );
+    assert(Not_Cell_Readable(yielded_lifted));
 
   //=//// IF YIELD:FINAL OR RAISED ERROR, THROW YIELD'S ARGUMENT //////////=//
 
@@ -623,14 +625,14 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     // of one value, YIELD DONE, or YIELD of any other error antiform which the
     // yielder will elevate to an abrupt panic.
 
-    if (Is_Meta_Of_Error(meta) or Bool_ARG(FINAL)) {  // not resumable, throw
+    if (Is_Lifted_Error(lifted) or Bool_ARG(FINAL)) {  // not resumable, throw
         Value* spare = Init_Action(
             SPARE,  // use as label for throw
             Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),
             CANON(YIELD),
             Level_Varlist(yielder_level)
         );
-        return Init_Thrown_With_Label(LEVEL, meta, spare);
+        return Init_Thrown_With_Label(LEVEL, lifted, spare);
     }
 
   //=//// PLAIN YIELD MUST "UNPLUG STACK" FOR LATER RESUMPTION ////////////=//
@@ -651,7 +653,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     Unplug_Stack(plug, yielder_level, yield_level);  // preserve stack [1]
     assert(yielder_level == TOP_LEVEL);
 
-    Copy_Cell(meta_yielded, meta);  // atom argument is already ^META
+    Copy_Cell(yielded_lifted, lifted);  // atom argument is already ^META
 
     STATE = ST_YIELD_SUSPENDED;  // can't BOUNCE_CONTINUE with STATE_0 [2]
     return BOUNCE_CONTINUE;  // now continues yielder_level, not yield_level

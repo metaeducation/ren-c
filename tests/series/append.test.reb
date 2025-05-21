@@ -116,12 +116,12 @@
 [
     ([a b c '[d e]] = append [a b c] quote [d e])
 
-    ([a b c '[3 d e]] = append [a b c] meta compose [(1 + 2) d e])
+    ([a b c '[3 d e]] = append [a b c] lift compose [(1 + 2) d e])
 
-    ([a b c ~[]~] = append [a b c] meta void)
+    ([a b c ~[]~] = append [a b c] lift void)
 
     (
-        [a b c ~null~] = append [a b c] meta null
+        [a b c ~null~] = append [a b c] lift null
     )
 ]
 

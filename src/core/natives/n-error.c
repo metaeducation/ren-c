@@ -39,15 +39,15 @@ DECLARE_NATIVE(TRY)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    Element* meta = Element_ARG(ATOM);
+    Element* lifted = Element_ARG(ATOM);
 
-    if (Is_Meta_Of_Void(meta) or Is_Meta_Of_Null(meta))
+    if (Is_Lifted_Void(lifted) or Is_Lifted_Null(lifted))
         return Init_Nulled(OUT);
 
-    if (Is_Meta_Of_Error(meta))
+    if (Is_Lifted_Error(lifted))
         return nullptr;
 
-    return UNMETA(meta);  // !!! also tolerates other antiforms, should it?
+    return UNLIFT(lifted);  // !!! also tolerates other antiforms, should it?
 }
 
 
@@ -116,7 +116,7 @@ DECLARE_NATIVE(ENRESCUE)
             QUOTE_BYTE(OUT) = NOQUOTE_1;  // turn it into normal error
             return OUT;
         }
-        return Meta_Quotify(OUT);
+        return Liftify(OUT);
     }
 
     if (not Is_Throwing_Panic(LEVEL)) {  // non-ERROR! throws
@@ -167,7 +167,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
         goto initial_entry;
 
       case ST_ENTRAP_EVAL_STEPPING:
-        Meta_Unquotify_Undecayed(SPARE);
+        Unliftify_Undecayed(SPARE);
         goto eval_step_result_in_spare;
 
       case ST_ENTRAP_RUNNING_FRAME:
@@ -189,7 +189,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
     Level* sub;
     if (Is_Block(code)) {
         sub = Make_Level_At(
-            &Meta_Stepper_Executor,
+            &Stepper_Executor,
             code,  // TYPE_BLOCK or TYPE_GROUP
             flags
         );
@@ -235,7 +235,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 } finished: {  ///////////////////////////////////////////////////////////////
 
     Drop_Level(SUBLEVEL);
-    return Meta_Quotify(OUT);  // ^META result, may be initial void state
+    return Liftify(OUT);  // ^META result, may be initial void state
 }}
 
 
@@ -256,16 +256,16 @@ DECLARE_NATIVE(EXCEPT)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Element* meta_atom = Element_ARG(ATOM);
+    Element* lifted_atom = Element_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
-    if (not Is_Meta_Of_Error(meta_atom))
-        return UNMETA(meta_atom);  // pass thru any non-errors
+    if (not Is_Lifted_Error(lifted_atom))
+        return UNLIFT(lifted_atom);  // pass thru any non-errors
 
     return DELEGATE_BRANCH(
         OUT,
         branch,  // if branch is an action, wants plain ERROR! as argument...
-        Unquasify(meta_atom)  // ...meta_atom is ~QUASI-ERROR!~, unquasify it
+        Unquasify(lifted_atom)  // lifted_atom is ~QUASI-ERROR!~, unquasify it
     );
 }
 

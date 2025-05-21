@@ -91,10 +91,10 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
     return Cell_Word_Id(v) == SYM_NULL;
 }
 
-#define Init_Meta_Of_Null(out) \
+#define Init_Lifted_Null(out) \
     Init_Quasi_Null(out)
 
-#define Is_Meta_Of_Null(v) \
+#define Is_Lifted_Null(v) \
     Is_Quasi_Null(v)
 
 #define Is_Undone_Opt_Nulled(v)  Is_Nulled(v)
@@ -135,13 +135,13 @@ INLINE bool Is_Heavy_Null(const Atom* v) {
         return false;
     const Element* tail;
     const Element* at = Cell_List_At(&tail, v);
-    return (tail == at + 1) and Is_Meta_Of_Null(at);
+    return (tail == at + 1) and Is_Lifted_Null(at);
 }
 
-INLINE bool Is_Meta_Of_Heavy_Null(const Atom* v) {
-    if (not Is_Meta_Of_Pack(v))
+INLINE bool Is_Lifted_Heavy_Null(const Atom* v) {
+    if (not Is_Lifted_Pack(v))
         return false;
     const Element* tail;
     const Element* at = Cell_List_At(&tail, v);
-    return (tail == at + 1) and Is_Meta_Of_Null(at);
+    return (tail == at + 1) and Is_Lifted_Null(at);
 }

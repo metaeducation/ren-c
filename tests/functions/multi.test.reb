@@ -108,7 +108,7 @@
 )]
 
 ; The ^XXX! types can be used to ask for variables to be raised to a meta
-; level on assignment, and lowered via unmeta on fetch
+; level on assignment, and lowered via unlift on fetch
 [
     (
         a: b: ~
@@ -233,23 +233,23 @@
 
 [
     (
-        '~(a b c)~ = meta decay [x]: spread [a b c]
+        '~(a b c)~ = lift decay [x]: spread [a b c]
     )
     (
-        '~(a b c)~ = meta [{_}]: spread [a b c]
+        '~(a b c)~ = lift [{_}]: spread [a b c]
     )
     (
-        '~(a b c)~ = meta decay [_]: spread [a b c]  ; definitive behavior TBD
+        '~(a b c)~ = lift decay [_]: spread [a b c]  ; definitive behavior TBD
     )
 ]
 
-; If you want to unpack an empty pack, you have to use meta to tell the
+; If you want to unpack an empty pack, you have to use lift to tell the
 ; difference between an empty pack and a null.
 [
     (
         x: ~
         [:^x]: null
-        x = (meta null)
+        x = (lift null)
     )
     (
         x: ~

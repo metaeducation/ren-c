@@ -449,7 +449,7 @@ DECLARE_NATIVE(CFOR)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
 
-    if (Is_Block(body) or Is_Lifted(BLOCK, body))
+    if (Is_Block(body) or Is_Metaform(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Value* var = Varlist_Slot(context, 1);  // not movable, see #2274
@@ -542,7 +542,7 @@ DECLARE_NATIVE(FOR_SKIP)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
 
-    if (Is_Block(body) or Is_Lifted(BLOCK, body))
+    if (Is_Block(body) or Is_Metaform(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Value* pseudo = Varlist_Slot(context, 1); // not movable, see #2274
@@ -707,7 +707,7 @@ DECLARE_NATIVE(CYCLE)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Block(body) or Is_Lifted(BLOCK, body)) {
+    if (Is_Block(body) or Is_Metaform(BLOCK, body)) {
         Add_Definitional_Break_Continue(body, level_);
         Add_Definitional_Stop(body, level_);
     }
@@ -898,12 +898,12 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         }
 
         if (Is_Action(les->data)) {
-            Value* generated = rebMeta(rebRUN(les->data));
+            Value* generated = rebLift(rebRUN(les->data));
             if (not (
-                Is_Meta_Of_Error(generated)
+                Is_Lifted_Error(generated)
                 and Is_Error_Done_Signal(Cell_Error(generated))
             )) {
-                Meta_Unquotify_Decayed(generated);
+                Unliftify_Decayed(generated);
                 if (slot)
                     Copy_Cell(unwrap slot, generated);
                 rebRelease(generated);
@@ -1055,7 +1055,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
       maybe_lift_and_continue:
 
         if (slot and lift)
-            Meta_Quotify(unwrap slot);
+            Liftify(unwrap slot);
     }
 
     return true;
@@ -1145,7 +1145,7 @@ DECLARE_NATIVE(FOR_EACH)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(vars, pseudo_vars_ctx));
 
-    if (Is_Block(body) or Is_Lifted(BLOCK, body))
+    if (Is_Block(body) or Is_Metaform(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
@@ -1248,7 +1248,7 @@ DECLARE_NATIVE(EVERY)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), pseudo_vars_ctx));
 
-    if (Is_Block(body) or Is_Lifted(BLOCK, body))
+    if (Is_Block(body) or Is_Metaform(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
@@ -1664,8 +1664,8 @@ DECLARE_NATIVE(REMOVE_EACH)
     Source* pack = Make_Source(2);
     Set_Flex_Len(pack, 2);
 
-    Copy_Meta_Cell(Array_At(pack, 0), OUT);
-    Meta_Quotify(Init_Integer(Array_At(pack, 1), removals));
+    Copy_Lifted_Cell(Array_At(pack, 0), OUT);
+    Liftify(Init_Integer(Array_At(pack, 1), removals));
 
     return Init_Pack(OUT, pack);
 }}
@@ -1773,7 +1773,7 @@ DECLARE_NATIVE(MAP)
     if (Is_Blank(data))  // same response as to empty series
         return Init_Block(OUT, Make_Source(0));
 
-    if (Is_Block(body) or Is_Lifted(BLOCK, body))
+    if (Is_Block(body) or Is_Metaform(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     if (Is_Action(data)) {

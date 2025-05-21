@@ -7,11 +7,11 @@
 (void? comment "a")
 (void? (comment "a"))
 
-('~,~ = (meta comment "a"))
-((quote '~,~) = meta (meta comment "a"))
+('~,~ = (lift comment "a"))
+((quote '~,~) = lift (lift comment "a"))
 
-('~,~ = meta eval [comment "a"])
-((quote '~,~) = meta (meta eval [comment "a"]))
+('~,~ = lift eval [comment "a"])
+((quote '~,~) = lift (lift eval [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be infix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -319,8 +319,8 @@
     (<kept> obj.x:,)
 )
 
-('~[]~ = meta (if ok [] else [<else>]))
-('~[]~ = meta (if ok [comment <true-branch>] else [<else>]))
+('~[]~ = lift (if ok [] else [<else>]))
+('~[]~ = lift (if ok [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <vaporize>])
 (1 = any [1 elide <vaporize>])
@@ -381,7 +381,7 @@
     (<test> = (<test> vanish-if-odd 1))
 
     (vanish-if-even: func [return: [ghost! integer!] y] [
-        return unmeta ^(vanish-if-odd y + 1)
+        return unlift ^(vanish-if-odd y + 1)
     ] ok)
 
     (<test> = (<test> vanish-if-even 2))
@@ -408,7 +408,7 @@
     )
 ]
 
-((meta void) = ^ void)
+((lift void) = lift void)
 
 ~no-value~ !! (
     1 + 2 (comment "stale") + 3

@@ -464,7 +464,7 @@ void RunPromise(void)
     Tweak_Cell_Binding(code, cast(Context*, info->binding));
 
     Level* L = Make_Level_At(
-        &Meta_Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL
+        &Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL
     );
 
     Push_Level_Dont_Inherit_Interruptibility(  // you can HALT inside a promise
@@ -488,7 +488,7 @@ void RunPromise(void)
         metaresult = Init_Warning(TOP_LEVEL->out, error);
     }
     else
-        metaresult = Meta_Quotify(TOP_LEVEL->out);
+        metaresult = Liftify(TOP_LEVEL->out);
 
     Drop_Level(TOP_LEVEL);
 
@@ -520,7 +520,7 @@ void RunPromise(void)
             // But what if it doesn't pay attention to it and release it?
             // It could cause leaks.
             //
-            Value* result = rebValue("unmeta", rebQ(metaresult));
+            Value* result = rebValue("unlift", rebQ(metaresult));
             Free_Value(metaresult);
             rebUnmanage(result);
 

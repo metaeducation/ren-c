@@ -843,7 +843,7 @@ DECLARE_NATIVE(COMBINATORIZE)
     Init_Frame(Array_At(pack, 0), paramlist, label, coupling);
     Quasify_Isotopic_Fundamental(Array_At(pack, 0));
 
-    Copy_Meta_Cell(Array_At(pack, 1), ARG(RULES));  // advanced by param hook
+    Copy_Lifted_Cell(Array_At(pack, 1), ARG(RULES));  // advanced by param hook
 
     return Init_Pack(OUT, pack);
 }

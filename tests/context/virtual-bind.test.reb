@@ -10,7 +10,7 @@
 (
     x: 1000
     block: '[add x 20]
-    obj284: make object! compose [x: 284, add: (meta add/)]
+    obj284: make object! compose [x: 284, add: (lift add/)]
     all [
         1020 = eval $ block
         304 = eval inside obj284 block

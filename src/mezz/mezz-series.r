@@ -509,7 +509,7 @@ split: func [
     if void? ^dlm [
         return reduce [series]
     ]
-    dlm: unmeta dlm
+    dlm: unlift dlm
 
     if splice? dlm [
         panic "SPLIT on SPLICE?! would need UPARSE, currently based on PARSE3"

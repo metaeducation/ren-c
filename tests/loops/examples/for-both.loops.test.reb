@@ -45,7 +45,7 @@
 [
     (
         for-both: lambda [var blk1 blk2 body] [
-            unmeta:lite all [
+            unlift:lite all [
                 meta:lite for-each var blk1 body
                 meta:lite for-each var blk2 body
             ]
@@ -62,10 +62,10 @@
     ; voids and nulls as-is, to serve as the signal for breaking or opting out
     ; of contributing to the final loop result:
     ;
-    ;     >> meta void
+    ;     >> lift void
     ;     == ~[]~
     ;
-    ;     >> meta:lite void
+    ;     >> lift:lite void
     ;     == ~[]~  ; anti
     ;
 
@@ -112,7 +112,7 @@
     ([1 2 3 4] = collect [
         let result': ~
         assert [
-            '~[~null~]~ = result': meta for-both 'x [1 2] [3 4] [
+            '~[~null~]~ = result': lift for-both 'x [1 2] [3 4] [
                 keep x
                 null
             ]
@@ -153,7 +153,7 @@
 
     ([1 2 3 4] = collect [
         assert [
-            '~#bad~ = meta for-both 'x [1 2] [3 4] [
+            '~#bad~ = lift for-both 'x [1 2] [3 4] [
                 keep x
                 ~#bad~  ; makes antiform
             ]

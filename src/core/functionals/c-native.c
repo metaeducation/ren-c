@@ -161,7 +161,7 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
         Copy_Cell(Details_At(details, IDX_COMBINATOR_BODY), native);
     }
 
-    // We want the meta information on the wrapped version if it's a
+    // We want the adjunct information on the wrapped version if it's a
     // NATIVE-COMBINATOR.
     //
     assert(Misc_Phase_Adjunct(details) == nullptr);
@@ -419,28 +419,28 @@ bool Try_Dispatch_Generic_Core(
 // It's easiest to build that pattern on top of functions that exist, as there
 // isn't a strong need to write error-prone "efficient" code to do it.
 //
-// 1. To speed up slightly, callers are expected to quote (or metaquote) the
+// 1. To speed up slightly, callers are expected to quote (or lift) the
 //    cells so they can be passed to the API without rebQ() calls.
 //
 Bounce Delegate_Operation_With_Part(
     SymId operation,
     SymId delegate,
-    // arguments are passed as quoted/meta [1]
-    const Element* meta_datatype,
+    // arguments are passed as quoted/lifted [1]
+    const Element* lifted_datatype,
     const Element* quoted_element,
-    const Element* meta_part
+    const Element* lifted_part
 ){
     assert(delegate == SYM_TEXT_X or delegate == SYM_BLOCK_X);
 
-    assert(Any_Metaform(meta_datatype));  // note: likely only quasiform soon
+    assert(Any_Lifted(lifted_datatype));  // note: likely only quasiform soon
     assert(Is_Quoted(quoted_element));
-    assert(Any_Metaform(meta_part));
+    assert(Any_Lifted(lifted_part));
 
     return rebDelegate(
-        CANON(AS), meta_datatype, Canon_Symbol(operation),
+        CANON(AS), lifted_datatype, Canon_Symbol(operation),
             CANON(COPY), CANON(_S_S), "[",
                 CANON(AS), Canon_Symbol(delegate), quoted_element,
-                ":part", meta_part,
+                ":part", lifted_part,
             "]"
     );
 }
@@ -535,11 +535,11 @@ void Startup_Natives(const Element* boot_natives)
     assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
     assert(Cell_Binding(boot_natives) == UNBOUND);
 
-    DECLARE_ATOM (meta_step);
+    DECLARE_ATOM (dual_step);
     Level* L = Make_Level_At_Core(
-        &Meta_Stepper_Executor, boot_natives, lib, LEVEL_MASK_NONE
+        &Stepper_Executor, boot_natives, lib, LEVEL_MASK_NONE
     );
-    Push_Level_Erase_Out_If_State_0(meta_step, L);
+    Push_Level_Erase_Out_If_State_0(dual_step, L);
 
   setup_native_dispatcher_enumeration: { /////////////////////////////////////
 
@@ -621,11 +621,11 @@ void Startup_Natives(const Element* boot_natives)
     );
     Fetch_Next_In_Feed(L->feed);
 
-    if (Eval_Step_Throws(meta_step, L))  // write directly to var [1]
+    if (Eval_Step_Throws(dual_step, L))  // write directly to var [1]
         crash (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    Copy_Cell(slot, Known_Element(meta_step));
-    Meta_Unquotify_Known_Stable(slot);
+    Copy_Cell(slot, Known_Element(dual_step));
+    Unliftify_Known_Stable(slot);
     assert(Is_Action(slot));
 
     if (not Is_Quasi_Word(At_Level(L)))

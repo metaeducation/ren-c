@@ -23,9 +23,9 @@
             [<unrun> frame!]
         <local> steps
     ][
-        unmeta (
-            (non:meta [vacant?] [steps {_}]: get:steps target) else [
-                meta set steps eval branch
+        unlift (
+            (non:lift [vacant?] [steps {_}]: get:steps target) else [
+                lift set steps eval branch
             ]
         )
     ],

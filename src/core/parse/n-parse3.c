@@ -971,7 +971,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         ){
             return P_POS;  // no-op
         }
-        if (not Is_Meta_Of_Datatype(rule))
+        if (not Is_Lifted_Datatype(rule))
             panic ("PARSE3 supports ~void~, ~okay~, and datatype antiforms");
     }
 
@@ -1008,7 +1008,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         else if (Is_Pinned(WORD, rule)) {
             Get_Var_May_Panic(temp, rule, P_RULE_BINDING);
         }
-        else if (Is_Meta_Of_Datatype(rule)) {
+        else if (Is_Lifted_Datatype(rule)) {
             DECLARE_ELEMENT (rule_value);
             Copy_Cell(rule_value, rule);
             Quasify_Isotopic_Fundamental(rule_value);

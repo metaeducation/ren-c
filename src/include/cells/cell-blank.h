@@ -41,7 +41,7 @@
 //
 // The quasiform of space is a tilde (instead of ~_~), and called QUASAR
 //
-//    >> meta print "Quasiform of SPACE is QUASAR"
+//    >> lift print "Quasiform of SPACE is QUASAR"
 //    Quasiform of SPACE is QUASAR
 //    == ~
 //
@@ -108,7 +108,7 @@ INLINE Value* Init_Trash_Untracked(Init(Value) out) {
 #define Init_Trash(out) \
     TRACK(Init_Trash_Untracked(out))
 
-#define Init_Meta_Of_Trash(out)  Init_Quasar(out)
+#define Init_Lifted_Trash(out)  Init_Quasar(out)
 
 #define Is_Endlike_Trash(cell) \
     Is_Atom_Trash(cell)
@@ -159,7 +159,7 @@ INLINE bool Is_Sigil(const Value* c, Sigil sigil) {
 }
 
 #define Is_Pin_Sigil(cell)  Is_Sigil((cell), SIGIL_PIN)
-#define Is_Lift_Sigil(cell)  Is_Sigil((cell), SIGIL_LIFT)
+#define Is_Meta_Sigil(cell)  Is_Sigil((cell), SIGIL_META)
 #define Is_Tie_Sigil(cell)  Is_Sigil((cell), SIGIL_TIE)
 
 
@@ -167,7 +167,7 @@ INLINE bool Is_Sigil(const Value* c, Sigil sigil) {
 
 INLINE char Char_For_Sigil(Sigil sigil) {
     switch (sigil) {
-      case SIGIL_LIFT:  return '^';
+      case SIGIL_META:  return '^';
       case SIGIL_PIN:   return '@';
       case SIGIL_TIE:   return '$';
       default:

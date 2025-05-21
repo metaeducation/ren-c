@@ -217,7 +217,7 @@ void Enable_Ctrl_C(void)
 //          was-ctrl-c-enabled
 //          can-recover
 //          code
-//          metaresult
+//          result'
 //          state
 //  ]
 //
@@ -271,7 +271,7 @@ DECLARE_NATIVE(CONSOLE)
         Disable_Ctrl_C();
 
     if (rebUnboxLogic(
-        "metaresult: null",  // invalid "meta" result, but first call expects
+        "result': null",  // invalid "meta" result, but first call expects
         "can-recover: 'yes",  // one chance at HOST-CONSOLE internal error
         "null <> code: provoke"
     )){
@@ -304,7 +304,7 @@ DECLARE_NATIVE(CONSOLE)
         &code,
         "console*",  // action that takes 4 args, run it
             "code",  // group! or block! executed prior (or null)
-            "metaresult",  // prior result meta, or error (or null)
+            "(result')",  // prior result lifted, or error (or null)
             "to-yesno resumable",
             "skin"
     );
@@ -317,13 +317,13 @@ DECLARE_NATIVE(CONSOLE)
 
         rebElide(
             "code: [#host-console-error]",
-            "metaresult:", warning,
+            "result':", warning,
             "can-recover: 'no"  // unrecoverable until user can request eval
         );
         goto recover;
     }
 
-    rebElide("code: @", code);  // meta quotes non-error
+    rebElide("code: @", code);  // lifts non-error
     rebRelease(code); // don't need the outer block any more
 
 } provoked: {  ///////////////////////////////////////////////////////////////
@@ -340,11 +340,11 @@ DECLARE_NATIVE(CONSOLE)
     // 3. This once used a ^GROUP! to reduce the amount of code on the stack
     //    which the user might see in a backtrace.  So instead of:
     //
-    //        ^metaresult: eval [print "hi"]
+    //        ^result': eval [print "hi"]
     //
     //    It would just execute the code directly:
     //
-    //        metaresult: ^(print "hi")  ; BUT ^(...) no longer means META!
+    //        result': ^(print "hi")  ; BUT ^(...) no longer means META!
     //
     //    That might be a nice idea, but as it turns out there's no mechanism
     //    for rescuing abrupt panics in the API...and I'm not entirely sure
@@ -386,12 +386,12 @@ DECLARE_NATIVE(CONSOLE)
         "sys.util/rescue [",  // pollutes stack trace [3]
             "catch* 'quit* [",  // definitional quit (customized THROW) [4]
                 "sys.contexts.user.quit: sys.util/make-quit:console quit*/",
-                "^metaresult: eval code",
+                "^result': eval code",
             "] then caught -> [",  // QUIT wraps QUIT* to only throw integers
-                "metaresult: caught",  // INTEGER! due to :CONSOLE, out of band
+                "result': caught",  // INTEGER! due to :CONSOLE, out of band
             "]",
         "] then warning -> [",
-            "metaresult: warning",  // non-meta WARNING! out of band
+            "result': warning",  // non-lifted WARNING! out of band
         "]"
     );
 

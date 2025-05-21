@@ -411,10 +411,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             Source* pack = Make_Source_Managed(2);
             Set_Flex_Len(pack, 2);
 
-            Copy_Meta_Cell(Array_At(pack, 0), v);
+            Copy_Lifted_Cell(Array_At(pack, 0), v);
             VAL_INDEX_RAW(Array_At(pack, 0)) = ret;
 
-            Copy_Meta_Cell(Array_At(pack, 1), v);
+            Copy_Lifted_Cell(Array_At(pack, 1), v);
             VAL_INDEX_RAW(Array_At(pack, 1)) = ret + size;
 
             return Init_Pack(OUT, pack);

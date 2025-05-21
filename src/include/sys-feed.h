@@ -146,7 +146,7 @@ INLINE const Element* At_Feed(Feed* feed) {
     ){
         DECLARE_VALUE (temp);
         Copy_Cell(temp, elem);
-        Meta_Unquotify_Known_Stable(temp);
+        Unliftify_Known_Stable(temp);
         panic (Error_Bad_Antiform(temp));
     }
     return elem;
@@ -225,7 +225,7 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
 //    can be put into a TYPE_BLOCK.  This means it cannot hold antiforms
 //    (or voids).  But we want to hold antiforms and voids in suspended
 //    animation in case there is an @ operator in the feed that will turn
-//    them back into those forms.  So in those cases, meta it and set a
+//    them back into those forms.  So in those cases, lift it and set a
 //    cell flag to notify the At_Feed() machinery about the strange case
 //    (it will error, the @ code in the evaluator uses a different function).
 //
@@ -238,7 +238,7 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
 
     if (QUOTE_BYTE(v) == ANTIFORM_0) {
         Assert_Cell_Stable(v);
-        Meta_Quotify(u_cast(Atom*, Copy_Cell_Core(out, v, CELL_MASK_THROW)));
+        Liftify(u_cast(Atom*, Copy_Cell_Core(out, v, CELL_MASK_THROW)));
         Set_Cell_Flag(out, FEED_NOTE_META);  // @ turns back [2]
     }
     else

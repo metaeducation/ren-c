@@ -23,8 +23,8 @@
     2 = data.(a-word)
 )
 (
-    blk: reduce [meta abs/ 2]
-    2 = blk.(meta abs/)
+    blk: reduce [lift abs/ 2]
+    2 = blk.(lift abs/)
 )
 ~bad-sequence-item~ !! (
     blk: reduce [charset "a" 3]

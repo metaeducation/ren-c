@@ -17,7 +17,7 @@
 ;            remainder: input  ; succeed on parser fail but don't advance input
 ;            return ~,~  ; act invisible
 ;        ]
-;        return unmeta result'  ; return successful parser result
+;        return unlift result'  ; return successful parser result
 ;    ]
 ;
 

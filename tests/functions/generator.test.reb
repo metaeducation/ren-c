@@ -138,12 +138,12 @@
                 if null? f.^atom [
                     f.^atom: done
                 ]
-                return unmeta eval-free f
+                return unlift eval-free f
             ]
             eval overbind binding of $yield body
         ]
         return does [
-            unmeta (g except [meta null])
+            unlift (g except [lift null])
         ]
     ]
 
@@ -178,7 +178,7 @@
     /c: cascade [
         generator [yield 1 yield 2 yield 3]
 
-        func [^x] [return either done? unmeta x [done] [(unmeta x) + 10]]
+        func [^x] [return either done? unlift x [done] [(unlift x) + 10]]
     ]
     all [
         c = 11

@@ -75,7 +75,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 {
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
 
-    Value* v = Meta_Unquotify_Known_Stable(ARG(VALUE));
+    Value* v = Unliftify_Known_Stable(ARG(VALUE));
     USED(v);
 
   start: { ///////////////////////////////////////////////////////////////////
@@ -193,10 +193,10 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 
     Set_Cell_Flag(Init_Integer(PUSH(), 9), NEWLINE_BEFORE);
 
-    Value* noop = rebMeta("");
-    assert(Is_Meta_Of_Void(noop));
+    Value* noop = rebLift("");
+    assert(Is_Lifted_Void(noop));
     rebRelease(noop);
-    Init_Meta_Of_Void(PUSH());
+    Init_Lifted_Void(PUSH());
 
 } finish: { //////////////////////////////////////////////////////////////////
 

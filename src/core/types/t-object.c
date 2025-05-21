@@ -785,7 +785,7 @@ VarList* Copy_Varlist_Extra_Managed(
     if (CTX_TYPE(original) == TYPE_FRAME)
         Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
     else {
-        // !!! Should the meta object be copied for other context types?
+        // !!! Should the adjunct object be copied for other context types?
         // Deep copy?  Shallow copy?  Just a reference to the same object?
         //
         Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
@@ -881,7 +881,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             assert(Is_Antiform_Stable(cast(Atom*, e.var)));  // extra check
 
             DECLARE_ELEMENT (reified);
-            Copy_Meta_Cell(reified, e.var);  // will become quasi...
+            Copy_Lifted_Cell(reified, e.var);  // will become quasi...
             Mold_Element(mo, reified);  // ...molds as `~xxx~`
         }
         else {
@@ -966,7 +966,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
 
     if (Is_Antiform(slot)) {
         DECLARE_ELEMENT (reified);
-        Copy_Meta_Cell(reified, slot);  // will become quasi...
+        Copy_Lifted_Cell(reified, slot);  // will become quasi...
         Mold_Element(mo, reified);  // ...molds as `~xxx~`
     }
     else {
@@ -1844,7 +1844,7 @@ DECLARE_NATIVE(CONSTRUCT)
         goto continue_processing_spec;
 
       case ST_CONSTRUCT_EVAL_SET_STEP:
-        goto eval_set_step_meta_in_spare;
+        goto eval_set_step_dual_in_spare;
 
       default: assert(false);
     }
@@ -1875,10 +1875,10 @@ DECLARE_NATIVE(CONSTRUCT)
 
     Executor* executor;
     if (Is_Pinned(BLOCK, spec))
-        executor = &Inert_Meta_Stepper_Executor;
+        executor = &Inert_Stepper_Executor;
     else {
         assert(Is_Block(spec) or Is_Fence(spec));
-        executor = &Meta_Stepper_Executor;
+        executor = &Stepper_Executor;
     }
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
@@ -1936,9 +1936,9 @@ DECLARE_NATIVE(CONSTRUCT)
     STATE = ST_CONSTRUCT_EVAL_SET_STEP;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} eval_set_step_meta_in_spare: {  ////////////////////////////////////////////
+} eval_set_step_dual_in_spare: {  ////////////////////////////////////////////
 
-    Meta_Unquotify_Undecayed(SPARE);
+    Unliftify_Undecayed(SPARE);
     Value* spare = Decay_If_Unstable(SPARE);
 
     VarList* varlist = Cell_Varlist(OUT);

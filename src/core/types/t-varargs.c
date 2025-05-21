@@ -178,12 +178,12 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // this argument happens.  Review if that should be an error.
 
         switch (pclass) {
-        case PARAMCLASS_LIFTED:
+        case PARAMCLASS_META:
             panic ("Variadic literal parameters not yet implemented");
 
         case PARAMCLASS_NORMAL: {
             Level* L_temp = Make_Level_At(
-                &Meta_Stepper_Executor,
+                &Stepper_Executor,
                 shared,
                 EVAL_EXECUTOR_FLAG_FULFILLING_ARG
             );
@@ -288,10 +288,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAMCLASS_NORMAL: {
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
-            Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, flags);
+            Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
             if (Trampoline_Throws(out, sub))  // !!! Stackful, should yield!
                 return true;
-            Meta_Unquotify_Undecayed(out);
+            Unliftify_Undecayed(out);
             break; }
 
         case PARAMCLASS_JUST:

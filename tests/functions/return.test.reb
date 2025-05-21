@@ -56,7 +56,7 @@
 )
 (
     f1: func [return: []] [return ~]
-    (meta trash) = meta f1
+    (lift trash) = lift f1
 )
 [#1515 (  ; the "result" of a return should not be assignable
     a: 1

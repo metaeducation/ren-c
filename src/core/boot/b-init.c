@@ -364,8 +364,8 @@ static void Init_Root_Vars(void)
     Init_Quasi_Null(Stub_Cell(a));
     Freeze_Source_Deep(a);
     ensure(nullptr, g_1_quasi_null_array) = a;
-    ensure(nullptr, g_meta_heavy_null) = Init_Meta_Pack(Alloc_Value(), a);
-    Force_Value_Frozen_Deep(g_meta_heavy_null);
+    ensure(nullptr, g_lifted_heavy_null) = Init_Lifted_Pack(Alloc_Value(), a);
+    Force_Value_Frozen_Deep(g_lifted_heavy_null);
   }
 
     ensure(nullptr, Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
@@ -423,7 +423,7 @@ static void Shutdown_Root_Vars(void)
     g_empty_array = nullptr;
     rebReleaseAndNull(&g_empty_object);
     g_empty_varlist = nullptr;
-    rebReleaseAndNull(&g_meta_heavy_null);
+    rebReleaseAndNull(&g_lifted_heavy_null);
     g_1_quasi_null_array = nullptr;
     rebReleaseAndNull(&Root_Feed_Null_Substitute);
     rebReleaseAndNull(&g_empty_blob);

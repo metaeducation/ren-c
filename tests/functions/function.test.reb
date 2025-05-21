@@ -182,7 +182,7 @@
 )
 (
     f: does [()]
-    (meta void) = ^ f
+    (lift void) = ^ f
 )
 (
     f: does ['a]
@@ -445,7 +445,7 @@
         use [x] [return ~]
         42
     ]
-    (meta trash) = meta f
+    (lift trash) = lift f
 )]
 
 (
@@ -453,7 +453,7 @@
     all [
         (the '1020) = (foo 1020)
         '~,~ = (foo comment "HI")
-        (meta null) = (foo any [1 > 2, 3 > 4])
+        (lift null) = (foo any [1 > 2, 3 > 4])
         trash? (foo)
     ]
 )

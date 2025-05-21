@@ -95,8 +95,8 @@ sys.util/rescue [
         augment split-path/ [:file [any-word? tuple!]]
     ) f -> [
         let results: meta:lite eval f  ; no [...]: in bootstrap load of file
-        set opt f.file unmeta results.2
-        unmeta results.1
+        set opt f.file unlift results.2
+        unlift results.1
     ]
     export split-path: ~#[Use SPLIT-PATH3 in Bootstrap (no multi-return)]#~
 
@@ -132,7 +132,7 @@ sys.util/rescue [
     export load3: enclose (
         augment load/ [:header]  ; no multi-return values
     ) func [f] [
-        let result': unquasi meta eval f
+        let result': unquasi lift eval f
         if f.header [
             ensure block! unquote result'.1
             ensure object! unquote result'.2
@@ -197,6 +197,9 @@ for-each [alias] [
     head3:                      ; use HEAD OF instead
     tail3:                      ; use TAIL OF instead
 
+    meta3:                      ; became LIFT
+    unmeta3:                    ; became UNLIFT
+
     issue3!:                    ; now it's rune!
     issue3?:                    ; ...
     refinement3?:               ; Former refinements of /FOO now :FOO
@@ -228,6 +231,9 @@ for-each [alias] [
 ]
 
 function3: ~#[FUNCTION slated for synonym of FUNC, so no FUNCTION3]#~
+
+lift: meta3/
+unlift: unmeta3/
 
 
 === "BINARY! => BLOB!" ===
@@ -566,12 +572,12 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
             continue
         ]
 
-        product: meta eval pos.1  ; can't SET-WORD! of VOID in bootstrap
-        if void? unmeta product [
+        product: lift eval pos.1  ; can't SET-WORD! of VOID in bootstrap
+        if void? unlift product [
             change3:part pos void 1
             continue
         ]
-        product: unmeta product
+        product: unlift product
         if okay? :product [  ; e.g. compose [(print "HI")]
             panic:blame "~okay~ antiform compose found" $return
         ]

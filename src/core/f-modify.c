@@ -473,7 +473,7 @@ REBLEN Modify_String_Or_Binary(
             // be some advantage to the mold buffer being UTF-8 only.
             //
             DECLARE_ELEMENT (group);
-            Copy_Meta_Cell(group, src);
+            Copy_Lifted_Cell(group, src);
             QUOTE_BYTE(group) = NOQUOTE_1;
             Join_Binary_In_Byte_Buf(group, -1);
             src_ptr = Binary_Head(BYTE_BUF);  // cleared each time

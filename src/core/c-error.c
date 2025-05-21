@@ -626,10 +626,10 @@ Error* Make_Error_Managed_Vaptr(
     else // Just a string, no arguments expected.
         assert(Is_Text(message));
 
-    // !!! Should things like NEAR and WHERE be in the META and not in the
+    // !!! Should things like NEAR and WHERE be in the ADJUNCT and not in the
     // object for the ERROR! itself, so the error could have arguments with
     // any name?  (e.g. NEAR and WHERE?)  In that case, we would be copying
-    // the "standard format" error as a meta object instead.
+    // the "standard format" error as an adjunct object instead.
     //
     bool deeply = false;
     VarList* varlist = Copy_Varlist_Extra_Managed(
@@ -764,7 +764,7 @@ Error* Error_User(const char *utf8) {
 //
 Error* Error_Need_Non_End(const Element* target) {
     assert(
-        Is_Lift_Sigil(target) or Is_Tie_Sigil(target)
+        Is_Meta_Sigil(target) or Is_Tie_Sigil(target) or Is_Pin_Sigil(target)
         or Any_Word(target) or Is_Tuple(target)
     );
     return Error_Need_Non_End_Raw(target);
@@ -970,7 +970,7 @@ Error* Error_No_Catch_For_Throw(Level* level_)
     }
 
     if (Is_Antiform(arg) and Is_Antiform_Unstable(arg))
-        Meta_Quotify(arg);  // !!! Review, error can't take Atom*
+        Liftify(arg);  // !!! Review, error can't take Atom*
 
     return Error_No_Catch_Raw(cast(Value*, arg), label);
 }
@@ -1058,7 +1058,7 @@ Error* Error_Arg_Type(
     const Param* param,
     const Value* arg
 ){
-    if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED and Is_Meta_Of_Error(arg))
+    if (Cell_Parameter_Class(param) == PARAMCLASS_META and Is_Lifted_Error(arg))
         return Cell_Error(arg);
 
     const Symbol* param_symbol = Key_Symbol(key);
@@ -1096,7 +1096,7 @@ Error* Error_Phase_Arg_Type(
     if (Level_Phase(L) == L->u.action.original)  // not an internal phase
         return Error_Arg_Type(Level_Label(L), key, param, arg);
 
-    if (Cell_Parameter_Class(param) == PARAMCLASS_LIFTED and Is_Meta_Of_Error(arg))
+    if (Cell_Parameter_Class(param) == PARAMCLASS_META and Is_Lifted_Error(arg))
         return Cell_Error(arg);
 
     Error* error = Error_Arg_Type(Level_Label(L), key, param, arg);
@@ -1189,7 +1189,7 @@ Error* Error_Bad_Antiform(const Atom* anti) {
     assert(Is_Antiform(anti));
 
     DECLARE_ELEMENT (reified);
-    Copy_Meta_Cell(reified, anti);
+    Copy_Lifted_Cell(reified, anti);
 
     return Error_Bad_Antiform_Raw(reified);
 }

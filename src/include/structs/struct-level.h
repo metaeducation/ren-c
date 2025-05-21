@@ -153,7 +153,7 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
 // Intrinsics can be run without creating levels for them, if they do not
 // use refinements, and if you're not using a debug mode which mandates that
 // levels always be created.  In this case there is no Level* to pass to the
-// native, so a parent level is passed (which may be a Meta_Stepper_Executor(),
+// native, so a parent level is passed (which may be a Stepper_Executor(),
 // for instance, instead of an Action_Executor())
 //
 // The parent's OUT can be used, but the macro for getting the argument will

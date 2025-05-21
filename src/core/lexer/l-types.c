@@ -56,7 +56,7 @@ DECLARE_NATIVE(TYPE_OF)
 //  "Give back a cell's heart (e.g. HEART OF ~FOO~ or ''FOO is WORD!)"
 //
 //      return: [null? datatype!]
-//      element "Antiforms not accepted, use (heart of meta value) if needed"
+//      element "Antiforms not accepted, use (heart of lift value) if needed"
 //          [<opt-out> element?]
 //  ]
 //
@@ -299,7 +299,7 @@ DECLARE_NATIVE(OF)
         goto initial_entry;
 
       case ST_OF_REEVALUATING:  // stepper gives a meta-result
-        return Meta_Unquotify_Undecayed(OUT);
+        return Unliftify_Undecayed(OUT);
 
       default: assert(false);
     }
@@ -391,8 +391,8 @@ DECLARE_NATIVE(OF)
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
         | LEVEL_FLAG_ERROR_RESULT_OK;
 
-    Level* sub = Make_Level(&Meta_Stepper_Executor, level_->feed, flags);
-    Copy_Meta_Cell(Evaluator_Level_Current(sub), fetched);
+    Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
+    Copy_Lifted_Cell(Evaluator_Level_Current(sub), fetched);
     QUOTE_BYTE(Evaluator_Level_Current(sub)) = NOQUOTE_1;  // plain FRAME!
     sub->u.eval.current_gotten = nullptr;
 

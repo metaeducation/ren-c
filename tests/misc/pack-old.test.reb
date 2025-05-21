@@ -42,13 +42,13 @@
         map-each 'item block [quote item]  ; should REDUCE do this for @[...] ?
     ]
     else [
-        reduce:predicate block :meta
+        reduce:predicate block lift/
     ]
 
-    let result': meta void
+    let ^result: void
     for-each [val'] block [
-        if void? ^result' [
-            result': either space? vars.1 [meta void] [val']
+        if void? ^result [
+            result: either space? vars.1 [lift void] [val']
         ]
         if tail? vars [
             panic "Too many values for vars in PACK (use <...> if on purpose)"
@@ -58,8 +58,8 @@
         ]
         switch:type vars.1 [
             space?/ []  ; no assignment
-            word! tuple! [set inside vars vars.1 unmeta val']
-            meta-word! [set inside vars vars.1 val']
+            word! tuple! [set inside vars vars.1 unlift val']
+            word?:metaform/ [set inside vars vars.1 val']
         ]
         vars: my next
     ]
@@ -76,7 +76,7 @@
             if not space? var [unset inside vars var]
         ]
     ]
-    return unmeta any [result' (meta void)]
+    return ^result
 ], ok)
 
 (

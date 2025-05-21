@@ -140,7 +140,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         bool must_be_action;
         bool meta = false;
         Option(SingleHeart) singleheart;
-        if (Is_Word(item) or (meta = Is_Lifted(WORD, item))) {
+        if (Is_Word(item) or (meta = Is_Metaform(WORD, item))) {
             symbol = Cell_Word_Symbol(item);
             must_be_action = false;
         }
@@ -176,7 +176,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             return Error_No_Catch_For_Throw(L);
 
         if (not meta) {
-            Meta_Unquotify_Undecayed(eval);  // Stepper is meta protocol
+            Unliftify_Undecayed(eval);  // Stepper is dual protocol
             Value* decayed = Decay_If_Unstable(eval);
 
             if (must_be_action and not Is_Action(decayed))
@@ -285,9 +285,9 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
               case LEADING_SPACE_AND(WORD): {
                 refinement = true;
                 symbol = Cell_Refinement_Symbol(item);
-                if ((type == TYPE_LIFTED) and Heart_Of(item) == TYPE_WORD) {
+                if ((type == TYPE_METAFORM) and Heart_Of(item) == TYPE_WORD) {
                     if (not quoted)
-                        pclass = PARAMCLASS_LIFTED;
+                        pclass = PARAMCLASS_META;
                 }
                 else {
                     if (quoted)
@@ -336,9 +336,9 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                     return Error_User("Can't quote @WORD! parameters");
                 pclass = PARAMCLASS_THE;
             }
-            else if (Is_Lifted(WORD, item)) {
+            else if (Is_Metaform(WORD, item)) {
                 if (not quoted)
-                    pclass = PARAMCLASS_LIFTED;
+                    pclass = PARAMCLASS_META;
             }
             else if (type == TYPE_WORD) {
                 if (quoted)
@@ -476,7 +476,7 @@ Option(Error*) Trap_Push_Keys_And_Params(
     Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
 ){
     Level* L = Make_Level_At(
-        &Meta_Stepper_Executor,
+        &Stepper_Executor,
         spec,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -636,8 +636,8 @@ Option(Error*) Trap_Pop_Paramlist(
 //
 // Ren-C breaks this into two parts: one is the mechanical understanding of
 // FUNC and LAMBDA for parameters in the evaluator.  Then it is the job
-// of a generator to tag the resulting function with a "meta object" with any
-// descriptions.  As a proxy for the work of a usermode generator, this
+// of a generator to tag the resulting function with an adjunct object" with
+// any descriptions.  As a proxy for the work of a usermode generator, this
 // routine tries to fill in FUNCTION-META (see %sysobj.r) as well as to
 // produce a paramlist suitable for the function.
 //
@@ -783,7 +783,7 @@ Details* Make_Dispatch_Details(
         ParamClass pclass = Cell_Parameter_Class(first);
         switch (pclass) {
           case PARAMCLASS_NORMAL:
-          case PARAMCLASS_LIFTED:
+          case PARAMCLASS_META:
             break;
 
           case PARAMCLASS_SOFT:

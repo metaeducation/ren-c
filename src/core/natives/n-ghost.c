@@ -81,9 +81,9 @@ DECLARE_NATIVE(GHOST_OR_VOID_Q)
 {
     INCLUDE_PARAMS_OF_GHOST_OR_VOID_Q;
 
-    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
+    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
 
-    return LOGIC(Is_Meta_Of_Ghost_Or_Void(meta));
+    return LOGIC(Is_Lifted_Ghost_Or_Void(lifted));
 }
 
 
@@ -139,10 +139,10 @@ DECLARE_NATIVE(UNGHOST)
 {
     INCLUDE_PARAMS_OF_UNGHOST;
 
-    const Element* meta = Get_Meta_Atom_Intrinsic(LEVEL);
+    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
 
-    if (Is_Meta_Of_Ghost(meta))
+    if (Is_Lifted_Ghost(lifted))
         return VOID;
 
-    return UNMETA(meta);
+    return UNLIFT(lifted);
 }

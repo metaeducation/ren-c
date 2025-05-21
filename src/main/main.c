@@ -274,7 +274,7 @@ int main(int argc, char *argv_ansi[])
     if (rebUnboxLogic("warning?", enrescued))  // error in MAIN-STARTUP itself
         rebJumps("crash", enrescued);  // terminates
 
-    Value* code = rebValue("unmeta @", enrescued);  // non-errors are ^META
+    Value* code = rebValue("unlift @", enrescued);  // non-errors are ^META
     rebRelease(enrescued);
 
     // !!! For the moment, the CONSOLE extension does all the work of running

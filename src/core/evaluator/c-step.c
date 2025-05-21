@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This file contains code for the `Meta_Stepper_Executor()`.  It's responsible
+// This file contains code for the `Stepper_Executor()`.  It's responsible
 // for the typical interpretation of BLOCK! or GROUP!, in terms of giving
 // sequences like `x: 1 + 2` a meaning for how SET-WORD! or INTEGER! behaves.
 //
@@ -56,7 +56,7 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Meta_Stepper_Executor() is LONG.  That's largely on purpose.  Breaking it
+// * Stepper_Executor() is LONG.  That's largely on purpose.  Breaking it
 //   into functions would add overhead (in the RUNTIME_CHECKS build, if not
 //   also NO_RUNTIME_CHECKS builds) and prevent interesting optimizations.
 //   Factoring better is desired--but more in order to reduce redundant code
@@ -111,7 +111,7 @@
 // would be when a SET-WORD! evaluates its right hand side, causing the feed
 // to advance an arbitrary amount.
 //
-// So the Meta_Stepper_Executor() has its own state (in `u.eval`) to track the
+// So the Stepper_Executor() has its own state (in `u.eval`) to track the
 // "current" position, and maintains the optional cache of what the fetched
 // value of that is.  These macros help make the code less ambiguous.
 //
@@ -181,7 +181,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
         | LEVEL_FLAG_ERROR_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
     Level* sub = Make_Level(
-        &Meta_Stepper_Executor,
+        &Stepper_Executor,
         L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
     );
@@ -192,7 +192,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 
 
 //
-//  Inert_Meta_Stepper_Executor: C
+//  Inert_Stepper_Executor: C
 //
 // This simplifies implementation of operators that can run in an "inert" mode:
 //
@@ -208,7 +208,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 // handles all the things like locking the array from modification during the
 // iteration, etc.
 //
-Bounce Inert_Meta_Stepper_Executor(Level* L)
+Bounce Inert_Stepper_Executor(Level* L)
 {
     enum {
         ST_INERT_STEPPER_INITIAL_ENTRY = STATE_0,
@@ -223,12 +223,12 @@ Bounce Inert_Meta_Stepper_Executor(Level* L)
 
     Derelativize(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
     Fetch_Next_In_Feed(L->feed);
-    return Meta_Quotify(OUT);
+    return Liftify(OUT);
 }
 
 
 //
-//  Meta_Stepper_Executor: C
+//  Stepper_Executor: C
 //
 // Expression execution can be thought of as having four distinct states:
 //
@@ -239,7 +239,7 @@ Bounce Inert_Meta_Stepper_Executor(Level* L)
 //
 // It is possible to preload states and start an evaluator at any of these.
 //
-Bounce Meta_Stepper_Executor(Level* L)
+Bounce Stepper_Executor(Level* L)
 {
     if (THROWING)
         return THROWN;  // no state to clean up
@@ -272,7 +272,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         goto look_ahead_for_left_literal_infix; }
 
     #if (! DEBUG_DISABLE_INTRINSICS)
-      intrinsic_meta_arg_in_spare:
+      intrinsic_lifted_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
         Details* details = Ensure_Cell_Frame_Details(CURRENT);
         Dispatcher* dispatcher = Details_Dispatcher(details);
@@ -301,25 +301,25 @@ Bounce Meta_Stepper_Executor(Level* L)
       #endif
 
       case TYPE_GROUP:
-        goto group_or_lifted_group_result_in_out;
+        goto group_or_meta_group_result_in_out;
 
       case ST_STEPPER_SET_GROUP:
         goto set_group_result_in_spare;
 
       case ST_STEPPER_GENERIC_SET:
-        goto generic_set_rightside_meta_in_out;
+        goto generic_set_rightside_dual_in_out;
 
       case ST_STEPPER_SET_BLOCK:
-        goto set_block_rightside_meta_in_out;
+        goto set_block_rightside_dual_in_out;
 
       case TYPE_FRAME:
         goto lookahead;
 
       case ST_STEPPER_TIE_EVALUATING_RIGHT_SIDE:
-        goto tie_rightside_meta_in_out;
+        goto tie_rightside_dual_in_out;
 
       case ST_STEPPER_APPROVE_EVALUATING_RIGHT_SIDE:
-        goto approval_rightside_meta_in_out;
+        goto approval_rightside_dual_in_out;
 
     #if RUNTIME_CHECKS
       case ST_STEPPER_FINISHED_DEBUG:
@@ -346,7 +346,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         assert(Is_Cell_Erased(OUT));
         Init_Endlike_Trash(OUT);
         STATE = ST_STEPPER_NONZERO_STATE;
-        goto finished_dont_meta_out;
+        goto finished_dont_lift_out;
     }
 
     L_current_gotten = L_next_gotten;  // Lookback clears it
@@ -498,8 +498,8 @@ Bounce Meta_Stepper_Executor(Level* L)
           case SIGIL_0:
             goto handle_plain;
 
-          case SIGIL_LIFT:  // ^ lifts the value
-            goto handle_any_lifted;
+          case SIGIL_META:  // ^ lifts the value
+            goto handle_any_metaform;
 
           case SIGIL_PIN:  // @ pins the value
             goto handle_any_pinned;
@@ -631,7 +631,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
 
     if (antiform)  // exception [2]
-        Meta_Unquotify_Known_Stable(L->out);
+        Unliftify_Known_Stable(L->out);
 
     goto lookahead;
 
@@ -670,14 +670,14 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)
-        goto tie_rightside_meta_in_out;
+        goto tie_rightside_dual_in_out;
 
     STATE = ST_STEPPER_TIE_EVALUATING_RIGHT_SIDE;
     return CONTINUE_SUBLEVEL(right);
 
-} tie_rightside_meta_in_out: {
+} tie_rightside_dual_in_out: {
 
-    Meta_Unquotify_Undecayed(OUT);
+    Unliftify_Undecayed(OUT);
     if (Is_Antiform(OUT))
         return PANIC("$ operator cannot bind antiforms");
 
@@ -686,29 +686,29 @@ Bounce Meta_Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} handle_any_lifted: { //// LIFTED! (^) //////////////////////////////////////
+} handle_any_metaform: { //// META (^) ///////////////////////////////////////
 
-    // LIFTED! types will META variables on storage, and UNMETA them on
+    // METAFORM! types will LIFT variables on storage, and UNLIFT them on
     // fetching.  This is complex logic.
 
   switch (STATE = cast(Byte, Heart_Of(CURRENT))) {
 
-  case TYPE_WORD: { //// LIFTED! WORD! ^XXX //////////////////////////////////
+  case TYPE_WORD: { //// META WORD! ^XXX /////////////////////////////////////
 
     goto handle_get_word;
 
 
-} case TYPE_CHAIN: { //// LIFTED! CHAIN! (^XXX: ^:XXX ...) ///////////////////
+} case TYPE_CHAIN: { //// META CHAIN! (^XXX: ^:XXX ...) //////////////////////
 
-    goto handle_chain_or_lifted_chain;
-
-
-} case TYPE_GROUP: { //// LIFTED! GROUP! ^(...) //////////////////////////////
-
-    goto handle_group_or_lifted_group;
+    goto handle_chain_or_meta_chain;
 
 
-} case TYPE_BLOCK: { //// LIFTED! BLOCK! ^[...] //////////////////////////////
+} case TYPE_GROUP: { //// META GROUP! ^(...) /////////////////////////////////
+
+    goto handle_group_or_meta_group;
+
+
+} case TYPE_BLOCK: { //// META BLOCK! ^[...] /////////////////////////////////
 
     // Produces a PACK! of what it is given:
     //
@@ -733,30 +733,30 @@ Bounce Meta_Stepper_Executor(Level* L)
     Element* spare = Init_Word(SPARE, CANON(PACK));
     dont(Quotify(Known_Element(SPARE)));  // want to run word
 
-    Value* temp = rebMeta_helper(
+    Value* temp = rebLift_helper(
         Level_Binding(L),
         spare, out, rebEND
     );
     Copy_Cell(OUT, temp);
     rebRelease(temp);
 
-    Meta_Unquotify_Undecayed(OUT);
+    Unliftify_Undecayed(OUT);
     goto lookahead;
 
 
-} case TYPE_FENCE: { //// LIFTED FENCE! ^{...} ///////////////////////////////
+} case TYPE_FENCE: { //// META FENCE! ^{...} /////////////////////////////////
 
     return PANIC("Don't know what ^FENCE! is going to do yet");
 
 
-} case TYPE_RUNE: { //// LIFTED RUNE! /////////////////////////////////////
+} case TYPE_RUNE: { //// META RUNE! /////////////////////////////////////////
 
-    if (Is_Sigil(CURRENT, SIGIL_LIFT))
+    if (Is_Sigil(CURRENT, SIGIL_META))
         goto handle_action_approval_sigil;  // special handling for lone ^
 
     return PANIC("Don't know what ^RUNE! is going to do yet (besides ^)");
 
-} handle_action_approval_sigil: {  //// "APPROVE" Lifted Space Sigil (^) /////
+} handle_action_approval_sigil: {  //// "APPROVE" Meta Space Sigil (^) ///////
 
     // [^] is used to turn "surprising actions" into "unsurprising actions".
     //
@@ -764,12 +764,12 @@ Bounce Meta_Stepper_Executor(Level* L)
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)
-        goto approval_rightside_meta_in_out;
+        goto approval_rightside_dual_in_out;
 
     STATE = ST_STEPPER_APPROVE_EVALUATING_RIGHT_SIDE;
     return CONTINUE_SUBLEVEL(right);
 
-} approval_rightside_meta_in_out: {
+} approval_rightside_dual_in_out: {
 
     // 1. It does not also turn "surprising ghosts" into "unsurprising ghosts",
     //    because that would conflate the functionality to where if you used ^
@@ -780,7 +780,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     //    (Possibly ^ should turn surprising ghosts into voids, but it should
     //    definitely not turn surprising ghosts into unsurprising ghosts.)
 
-    Meta_Unquotify_Undecayed(OUT);
+    Unliftify_Undecayed(OUT);
     if (Is_Atom_Action(OUT))  // don't do ghosts, just actions [1]
         Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // see flag notes
     goto lookahead;
@@ -788,7 +788,9 @@ Bounce Meta_Stepper_Executor(Level* L)
 
 } default: { /////////////////////////////////////////////////////////////////
 
-    return PANIC("Only ^WORD!, ^GROUP, ^BLOCK! eval at this time for LIFTED!");
+    return PANIC(
+        "Only ^WORD!, ^GROUP, ^BLOCK! eval at this time for METAFORM!"
+    );
 
   }} // end switch()
 
@@ -804,7 +806,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     // fast tests like Any_Inert() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
     //
-    // 1. The Meta_Stepper_Executor()'s state bytes are a superset of the
+    // 1. The Stepper_Executor()'s state bytes are a superset of the
     //    Heart_Of() of processed values.  See the ST_STEPPER_XXX enumeration.
 
   switch ((STATE = cast(Byte, Heart_Of(CURRENT)))) {  // superset [1]
@@ -943,19 +945,19 @@ Bounce Meta_Stepper_Executor(Level* L)
           case PARAMCLASS_NORMAL:
             break;
 
-          case PARAMCLASS_LIFTED:
+          case PARAMCLASS_META:
             flags |= LEVEL_FLAG_ERROR_RESULT_OK;
             break;
 
           case PARAMCLASS_JUST:
             Just_Next_In_Feed(SPARE, L->feed);
-            Meta_Quotify(SPARE);
-            goto intrinsic_meta_arg_in_spare;
+            Liftify(SPARE);
+            goto intrinsic_lifted_arg_in_spare;
 
           case PARAMCLASS_THE:
             The_Next_In_Feed(SPARE, L->feed);
-            Meta_Quotify(SPARE);
-            goto intrinsic_meta_arg_in_spare;
+            Liftify(SPARE);
+            goto intrinsic_lifted_arg_in_spare;
 
           default:
             return PANIC("Unsupported Intrinsic parameter convention");
@@ -963,7 +965,7 @@ Bounce Meta_Stepper_Executor(Level* L)
 
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
 
-        Level* sub = Make_Level(&Meta_Stepper_Executor, L->feed, flags);
+        Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
         STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
         return CONTINUE_SUBLEVEL(sub);
@@ -979,7 +981,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     goto process_action;
 
 
-} handle_chain_or_lifted_chain:  //// CHAIN! [ a:  ^a:  b:c:d  ^:e ] /////////
+} handle_chain_or_meta_chain:  //// CHAIN! [ a:  ^a:  b:c:d  ^:e ] /////////
   case TYPE_CHAIN: {
 
     // Due to the consolidation of all the SET-XXX! and GET-XXX! types as
@@ -996,10 +998,10 @@ Bounce Meta_Stepper_Executor(Level* L)
 
       case TRAILING_SPACE_AND(WORD): {  // FOO: or ^FOO:
         Copy_Cell(CURRENT, Derelativize(SPARE, CURRENT, L_binding));
-        if (Any_Lifted(CURRENT)) {  // ^foo: -> ^foo
+        if (Any_Metaform(CURRENT)) {  // ^foo: -> ^foo
             Plainify(CURRENT);
             Unchain(CURRENT);
-            Liftify(CURRENT);
+            Metafy(CURRENT);
         }
         else
             Unchain(CURRENT);  // foo: -> foo
@@ -1103,7 +1105,7 @@ Bounce Meta_Stepper_Executor(Level* L)
         (STATE == ST_STEPPER_GET_WORD and Is_Word(CURRENT))
         or (
             STATE == cast(StepperState, TYPE_WORD)
-            and Is_Lifted(WORD, CURRENT)
+            and Is_Metaform(WORD, CURRENT)
         )
     );
     Option(Error*) error = Trap_Get_Any_Word_Maybe_Trash(
@@ -1114,17 +1116,17 @@ Bounce Meta_Stepper_Executor(Level* L)
     if (error)
         return PANIC(unwrap error);
 
-    if (Is_Lifted(WORD, CURRENT)) {
-        if (not Is_Metaform(OUT))
+    if (Is_Metaform(WORD, CURRENT)) {
+        if (not Any_Lifted(OUT))
             return PANIC("^WORD! can only UNMETA quoted/quasiform");
-        Meta_Unquotify_Undecayed(OUT);
+        Unliftify_Undecayed(OUT);
     }
 
     goto lookahead;
 
 
 } case TYPE_GROUP: //// GROUP! (...) /////////////////////////////////////////
-  handle_group_or_lifted_group: {
+  handle_group_or_meta_group: {
 
     // Groups simply evaluate their contents, and can evaluate to GHOST! if
     // the contents completely disappear.
@@ -1158,7 +1160,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return CONTINUE_SUBLEVEL(sub);
 
-} group_or_lifted_group_result_in_out: {
+} group_or_meta_group_result_in_out: {
 
     // 1. As a mitigation of making people write (x: ^ ^arg), we allow for
     //    you to instead write (x: ^(arg)) and it will assume the ^.  This
@@ -1167,12 +1169,12 @@ Bounce Meta_Stepper_Executor(Level* L)
     if (Is_Group(CURRENT))
         goto lookahead;  // not decayed, result is good
 
-    assert(Is_Lifted(GROUP, CURRENT));
+    assert(Is_Metaform(GROUP, CURRENT));
 
-    if (not Is_Metaform(OUT))
-        return PANIC("^GROUP! can only UNMETA quoted/quasiforms");
+    if (not Any_Lifted(OUT))
+        return PANIC("^GROUP! can only UNLIFT quoted/quasiforms");
 
-    Meta_Unquotify_Undecayed(OUT);  // GHOST! legal, ACTION! legal...
+    Unliftify_Undecayed(OUT);  // GHOST! legal, ACTION! legal...
     Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // just lifted approve [1]
     goto lookahead;
 
@@ -1384,29 +1386,29 @@ Bounce Meta_Stepper_Executor(Level* L)
     // * Antiform assignments are allowed: https://forum.rebol.info/t/895/4
 
     assert(
-        Is_Word(CURRENT) or Is_Lifted(WORD, CURRENT)
+        Is_Word(CURRENT) or Is_Metaform(WORD, CURRENT)
         or Is_Tuple(CURRENT)
-        or Is_Meta_Of_Void(CURRENT)
+        or Is_Lifted_Void(CURRENT)
     );
     STATE = ST_STEPPER_GENERIC_SET;
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)
-        goto generic_set_rightside_meta_in_out;
+        goto generic_set_rightside_dual_in_out;
 
     return CONTINUE_SUBLEVEL(right);
 
-} generic_set_rightside_meta_in_out: {
+} generic_set_rightside_dual_in_out: {
 
-    if (Is_Meta_Of_Void(CURRENT)) {  // e.g. `(void): ...`
-        Meta_Unquotify_Undecayed(OUT);  // !!! do this with space VAR instead
+    if (Is_Lifted_Void(CURRENT)) {  // e.g. `(void): ...`
+        Unliftify_Undecayed(OUT);  // !!! do this with space VAR instead
         goto lookahead;  // pass through everything
     }
 
     Derelativize(SPARE, CURRENT, L_binding);  // !!! workaround !!! FIX !!!
     Move_Atom(CURRENT, SPARE);
 
-    if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+    if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
         LEVEL, GROUPS_OK, LIB(POKE_P)
     )){
         goto return_thrown;
@@ -1433,7 +1435,7 @@ Bounce Meta_Stepper_Executor(Level* L)
     assert(L_current_gotten == nullptr);
 
     if (Is_Void(SPARE)) {
-        Init_Meta_Of_Void(CURRENT);  // can't put voids in feed position
+        Init_Lifted_Void(CURRENT);  // can't put voids in feed position
         goto handle_generic_set;
     }
     else switch (Type_Of(SPARE)) {
@@ -1616,7 +1618,7 @@ for (; check != tail; ++check) {  // push variables
     if (
         Is_Group(CURRENT)
         or Is_Pinned(GROUP, CURRENT)
-        or Is_Lifted(GROUP, CURRENT)
+        or Is_Metaform(GROUP, CURRENT)
     ){
         if (Eval_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
             Drop_Data_Stack_To(STACK_BASE);
@@ -1633,8 +1635,8 @@ for (; check != tail; ++check) {  // push variables
             if (Is_Pinned(GROUP, CURRENT))
                 Pinify(Known_Element(spare));  // add @ decoration
             else {
-                assert(Is_Lifted(GROUP, CURRENT));
-                Liftify(Known_Element(spare));  // add ^ decoration
+                assert(Is_Metaform(GROUP, CURRENT));
+                Metafy(Known_Element(spare));  // add ^ decoration
             }
             Copy_Cell(PUSH(), spare);
         }
@@ -1650,7 +1652,7 @@ for (; check != tail; ++check) {  // push variables
     if (circle_this)
         circled = TOP_INDEX;
 
-    if (Is_Lift_Sigil(TOP) or Is_Lifted(WORD, TOP))  // meta-assign result
+    if (Is_Meta_Sigil(TOP) or Is_Metaform(WORD, TOP))  // meta-assign result
         continue;
 
     if (Is_Word(TOP) or Is_Tuple(TOP))
@@ -1669,19 +1671,19 @@ for (; check != tail; ++check) {  // push variables
 
     Level* sub = Maybe_Rightward_Continuation_Needed(L);
     if (not sub)
-        goto set_block_rightside_meta_in_out;
+        goto set_block_rightside_dual_in_out;
 
     return CONTINUE_SUBLEVEL(sub);
 
-}} set_block_rightside_meta_in_out: {
+}} set_block_rightside_dual_in_out: {
 
     // 1. On errors we don't assign variables, yet pass the error through.
     //    That permits code like this to work:
     //
     //        trap [[a b]: transcode "1&aa"]
 
-    if (Is_Meta_Of_Error(OUT)) {  // don't assign variables [1]
-        Meta_Unquotify_Undecayed(OUT);
+    if (Is_Lifted_Error(OUT)) {  // don't assign variables [1]
+        Unliftify_Undecayed(OUT);
         goto set_block_drop_stack_and_continue;
     }
 
@@ -1701,19 +1703,19 @@ for (; check != tail; ++check) {  // push variables
     Copy_Cell(PUSH(), Known_Element(OUT));  // free up OUT cell [1]
 
     const Source* pack_array;  // needs GC guarding when OUT overwritten
-    const Element* pack_meta_at;  // pack block items are ^META'd
-    const Element* pack_meta_tail;
+    const Element* pack_at;  // individualpack block items are lifted
+    const Element* pack_tail;
 
-    if (Is_Meta_Of_Pack(OUT)) {  // antiform block
-        pack_meta_at = Cell_List_At(&pack_meta_tail, OUT);
+    if (Is_Lifted_Pack(OUT)) {  // antiform block
+        pack_at = Cell_List_At(&pack_tail, OUT);
 
         pack_array = Cell_Array(OUT);
         Push_Lifeguard(pack_array);
     }
     else {  // keep quoted (it aligns with pack items being metaforms)
         Move_Atom(SPARE, OUT);
-        pack_meta_at = cast(Element*, SPARE);
-        pack_meta_tail = cast(Element*, SPARE) + 1;  // not a valid cell
+        pack_at = cast(Element*, SPARE);
+        pack_tail = cast(Element*, SPARE) + 1;  // not a valid cell
 
         pack_array = nullptr;
     }
@@ -1736,48 +1738,48 @@ for (; check != tail; ++check) {  // push variables
 
     assert(QUOTE_BYTE(var) == NOQUOTE_1);
 
-    if (pack_meta_at == pack_meta_tail) {
+    if (pack_at == pack_tail) {
         if (not is_optional)
             return PANIC("Not enough values for required multi-return");
 
-        // match typical input of meta which will be Meta_Unquotify'd
+        // match typical input of lift which will be Unliftify'd
         // (special handling ^WORD! below will actually use plain null to
         // distinguish)
         //
-        Init_Meta_Of_Null(OUT);
+        Init_Lifted_Null(OUT);
     }
     else
-        Copy_Cell(OUT, pack_meta_at);
+        Copy_Cell(OUT, pack_at);
 
-    if (Is_Lift_Sigil(var)) {
+    if (Is_Meta_Sigil(var)) {
         panic ("META sigil should allow ghost pass thru, probably?");
         /* goto circled_check; */
     }
 
-    if (Is_Lifted(WORD, var)) {
+    if (Is_Metaform(WORD, var)) {
         Plainify(var);  // !!! temporary, remove ^ sigil (set should see it)
-        if (pack_meta_at == pack_meta_tail) {  // special detection
-            Init_Meta_Of_Null(OUT);
-            if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+        if (pack_at == pack_tail) {  // special detection
+            Init_Lifted_Null(OUT);
+            if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
                 LEVEL, NO_STEPS, LIB(POKE_P)
             )){
                 goto return_thrown;
             }
             goto circled_check;
         }
-        assert(Is_Metaform(OUT));  // out is meta'd
-        Meta_Quotify(OUT);  // quote it again !!! TBD: set heeds lift
-        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+        assert(Any_Lifted(OUT));  // out is lifted'd
+        Liftify(OUT);  // quote it again !!! TBD: set heeds lift
+        if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
             LEVEL, NO_STEPS, LIB(POKE_P)
         )){
             goto return_thrown;
         }
-        Meta_Unquotify_Undecayed(OUT);  // set unquotified, undo it again...
+        Unliftify_Undecayed(OUT);  // set unquotified, undo it again...
         goto circled_check;  // ...because we may have circled this
     }
 
     if (Is_Space(var)) {
-        Meta_Unquotify_Undecayed(OUT);
+        Unliftify_Undecayed(OUT);
         goto circled_check;
     }
 
@@ -1785,7 +1787,7 @@ for (; check != tail; ++check) {  // push variables
         return PANIC(Cell_Error(OUT));
 
     if (Is_Word(var) or Is_Tuple(var) or Is_Pinned(WORD, var)) {
-        if (Set_Var_In_Scratch_To_Unquotify_Out_Uses_Spare_Throws(
+        if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
             LEVEL,  // overwrites SPARE if single item, but we're done w/it
             GROUPS_OK,
             LIB(POKE_P)
@@ -1799,10 +1801,10 @@ for (; check != tail; ++check) {  // push variables
 } circled_check: { // Note: no circling passes through the original OUT
 
     if (circled == stackindex_var)
-        Copy_Meta_Cell(TOP_ELEMENT, OUT);  // unmeta'd on finalization
+        Copy_Lifted_Cell(TOP_ELEMENT, OUT);  // unlift'd on finalization
 
     ++stackindex_var;
-    ++pack_meta_at;
+    ++pack_at;
     goto next_pack_item;
 
 } set_block_finalize_and_drop_stack: {
@@ -1818,7 +1820,7 @@ for (; check != tail; ++check) {  // push variables
         Drop_Lifeguard(pack_array);
 
     Move_Cell(OUT, TOP_ELEMENT);  // restore OUT (or circled) from stack [1]
-    Meta_Unquotify_Undecayed(OUT);
+    Unliftify_Undecayed(OUT);
 
 }} set_block_drop_stack_and_continue: {
 
@@ -2124,9 +2126,9 @@ for (; check != tail; ++check) {  // push variables
 
 }} finished: { ///////////////////////////////////////////////////////////////
 
-    Meta_Quotify(OUT);  // see top of file notes about why it's Meta_Stepper()
+    Liftify(OUT);  // see top of file notes about why it's Stepper()
 
-} finished_dont_meta_out: {  // called if at end, and it's trash
+} finished_dont_lift_out: {  // called if at end, and it's trash
 
     // 1. Want to keep this flag between an operation and an ensuing infix in
     //    the same level, so can't clear in Drop_Action(), e.g. due to:
