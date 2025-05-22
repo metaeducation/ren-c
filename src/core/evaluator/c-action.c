@@ -288,7 +288,7 @@ Bounce Action_Executor(Level* L)
 
       skip_fulfilling_arg_for_now:
         assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
-        assert(Is_Cell_Erased(ARG));
+        assert(Is_Nulled(ARG));  // couldn't leave erased, so make it nulled
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
@@ -363,7 +363,7 @@ Bounce Action_Executor(Level* L)
                     goto continue_fulfilling;
                 }
 
-                Erase_Cell(ARG);
+                Init_Nulled(Erase_Cell(ARG));  // can't bypass and leave erased
                 goto skip_fulfilling_arg_for_now;
             }
         }
@@ -594,7 +594,7 @@ Bounce Action_Executor(Level* L)
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
             Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-            Push_Level_Erase_Out_If_State_0(ARG, sub);
+            Push_Level_Erase_Out_If_State_0(ARG, sub);  // duplicate erase!
 
             return CONTINUE_SUBLEVEL(sub); }
 
@@ -757,7 +757,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill_and_any_pickups_done;
         }
 
-        assert(Is_Cell_Erased(ARG));
+        assert(Is_Nulled(ARG));  // had to null before (could not leave erased)
 
         Set_Action_Executor_Flag(L, DOING_PICKUPS);
         goto fulfill_arg;

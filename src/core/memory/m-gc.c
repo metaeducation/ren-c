@@ -1387,7 +1387,7 @@ void Startup_GC(void)
 
   #if RUNTIME_CHECKS  // !!! How to give message in release build (no printf?)
     if (g_gc.ballast == 0) {
-        printf(
+        fprintf(stderr,
             "**\n" \
             "** R3_RECYCLE_TORTURE is nonzero in environment variable!\n" \
             "** (or g_gc.ballast is set to 0 manually in the init code)\n" \
