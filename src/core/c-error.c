@@ -145,7 +145,13 @@ Error* Panic_Abruptly_Helper(Error* error)
     // but remained pushed, it must be dropped before the level that pushes
     // it issues a panic.
     //
-    assert(TOP_LEVEL->executor != nullptr);
+    // !!! This turned out to be too restrictive, it's too often useful to
+    // panic() while a Level is still pushed (e.g. one being reused across
+    // multiple pick steps).
+    //
+    dont(assert(TOP_LEVEL->executor != nullptr));
+    while (TOP_LEVEL->executor == nullptr)
+        Drop_Level(TOP_LEVEL);
 
   #if DEBUG_EXTANT_STACK_POINTERS
     //
@@ -913,13 +919,13 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC))
         arg = SPARE;
     else
-        arg = Level_Arg(L, 2);
+        arg = Level_Arg(L, 1);
 
-    Param* param = Phase_Param(details, 2);
+    Param* param = Phase_Param(details, 1);
     assert(Is_Parameter(param));
     UNUSED(param);
 
-    const Symbol* param_symbol = Key_Symbol(Phase_Key(details, 2));
+    const Symbol* param_symbol = Key_Symbol(Phase_Key(details, 1));
 
     return Error_Invalid_Arg_Raw(maybe label, param_symbol, arg);
 }
