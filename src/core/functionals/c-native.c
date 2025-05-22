@@ -511,6 +511,64 @@ void Shutdown_Action_Adjunct_Shim(void) {
 }
 
 
+// Create a native in the library without using the evaluator.
+//
+// 1. Used with [native: any-atom? any-value? poke*: pick*:]
+//
+static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
+{
+    assert(Is_Set_Word(At_Level(L)));  // limited set [1]
+    assert(
+        Symbol_Id(unwrap Try_Get_Settable_Word_Symbol(nullptr, At_Level(L)))
+        == id
+    );
+    Fetch_Next_In_Feed(L->feed);
+
+    NativeType native_type;
+    if (id == SYM_ANY_ATOM_Q or id == SYM_ANY_VALUE_Q) {
+        assert(Is_Chain(At_Level(L)));  // native:intrinsic [...]
+        native_type = NATIVE_INTRINSIC;
+    }
+    else if (id == SYM_PICK_P or id == SYM_POKE_P) {
+        assert(Is_Chain(At_Level(L)));  // native:generic [...]
+        native_type = NATIVE_NORMAL;  // genericness only in make prep ATM
+    }
+    else {
+        assert(Is_Word(At_Level(L)));
+        assert(Cell_Word_Id(At_Level(L)) == SYM_NATIVE);  // native [...]
+        native_type = NATIVE_NORMAL;
+    }
+
+    Fetch_Next_In_Feed(L->feed);
+
+    assert(Is_Block(At_Level(L)));
+    DECLARE_ELEMENT (spec);
+    Derelativize(spec, At_Level(L), g_lib_context);
+    Fetch_Next_In_Feed(L->feed);;
+
+    Details* details;
+    Option(Error*) e = Trap_Make_Native_Dispatch_Details(
+        &details,
+        spec,
+        native_type,
+        cast(Dispatcher*, *g_native_cfunc_pos)
+    );
+    if (e)
+        crash (unwrap e);
+
+    ++g_native_cfunc_pos;
+
+    Init_Action(
+        Sink_Lib_Var(id),
+        details,
+        Canon_Symbol(id),  // label
+        NONMETHOD  // coupling
+    );
+
+    assert(Cell_Frame_Phase(Lib_Var(id)) == details);  // sanity check
+}
+
+
 //
 //  Startup_Natives: C
 //
@@ -541,7 +599,7 @@ void Startup_Natives(const Element* boot_natives)
     );
     Push_Level_Erase_Out_If_State_0(dual_step, L);
 
-  setup_native_dispatcher_enumeration: { /////////////////////////////////////
+  setup_native_dispatcher_enumeration: {
 
     // When we call NATIVE it doesn't take any parameter to say what the
     // Dispatcher* is.  It's assumed there is some global state, which it
@@ -560,41 +618,28 @@ void Startup_Natives(const Element* boot_natives)
 
     g_current_uses_librebol = false;  // raw natives don't use librebol
 
-} make_native_for_native_itself: { ///////////////////////////////////////////
+} make_bedrock_natives_by_hand: {
 
-    assert(Is_Set_Word(At_Level(L)));
-    assert(
-        Symbol_Id(unwrap Try_Get_Settable_Word_Symbol(nullptr, At_Level(L)))
-        == SYM_NATIVE
-    );
-    Fetch_Next_In_Feed(L->feed);
-    assert(Is_Word(At_Level(L)) and Cell_Word_Id(At_Level(L)) == SYM_NATIVE);
-    Fetch_Next_In_Feed(L->feed);
-    assert(Is_Block(At_Level(L)));
-    DECLARE_ELEMENT (spec);
-    Derelativize(spec, At_Level(L), lib);
-    Fetch_Next_In_Feed(L->feed);;
+    // Eval can't run `native: native [...]` or `poke*: native [...]`
+    //
+    // PICK*, and POKE* are fundamental to interpreter operation for SET and
+    // GET operations.  NATIVE is fundamental to making natives themselves.
+    //
+    // So they're pushed up to the front of the boot block and "made by hand",
+    // e.g. not by running evaluation.  (This reordering to put them at the
+    // head is done in %make-natives.r)
+    //
+    // 1. PICK* and POKE* use ANY-ATOM? and ANY-VALUE? type constraints.
+    //    These are intrinsics not currently made by Startup_Type_Predicates().
+    //    Probably should be.
 
-    Details* the_native_details;
-    Option(Error*) e = Trap_Make_Native_Dispatch_Details(
-        &the_native_details,
-        spec,
-        NATIVE_NORMAL,  // not a combinator or intrinsic
-        cast(Dispatcher*, *g_native_cfunc_pos)
-    );
-    if (e)
-        crash (unwrap e);
+    Make_Native_In_Lib_By_Hand(L, SYM_NATIVE);
+    Make_Native_In_Lib_By_Hand(L, SYM_ANY_ATOM_Q);  // PICK* and POKE* use [1]
+    Make_Native_In_Lib_By_Hand(L, SYM_ANY_VALUE_Q);  // PICK* and POKE* use [1]
+    Make_Native_In_Lib_By_Hand(L, SYM_PICK_P);
+    Make_Native_In_Lib_By_Hand(L, SYM_POKE_P);
 
-    ++g_native_cfunc_pos;
-
-    Init_Action(
-        Sink_Lib_Var(SYM_NATIVE),
-        the_native_details,
-        CANON(NATIVE),  // label
-        NONMETHOD  // coupling
-    );
-
-    assert(Cell_Frame_Phase(LIB(NATIVE)) == the_native_details);
+    goto make_next_native;
 
 } make_next_native: { ////////////////////////////////////////////////////////
 
@@ -616,10 +661,11 @@ void Startup_Natives(const Element* boot_natives)
     );
     Sink(Value) slot = Sink_Lib_Var(unwrap Symbol_Id(symbol));
 
+    Fetch_Next_In_Feed(L->feed);
+
     possibly(  // could be more complex (INFIX NATIVE, NATIVE:COMBINATOR...)
         Is_Word(At_Level(L)) and Cell_Word_Id(At_Level(L)) == SYM_NATIVE
     );
-    Fetch_Next_In_Feed(L->feed);
 
     if (Eval_Step_Throws(dual_step, L))  // write directly to var [1]
         crash (Error_No_Catch_For_Throw(TOP_LEVEL));
@@ -635,7 +681,7 @@ void Startup_Natives(const Element* boot_natives)
     Fetch_Next_In_Feed(L->feed);
     assert(Is_Feed_At_End(L->feed));
 
-} finished: { ////////////////////////////////////////////////////////////////
+} finished: {
 
     Drop_Level(L);
 
