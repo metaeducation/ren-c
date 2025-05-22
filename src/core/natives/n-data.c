@@ -1391,7 +1391,7 @@ DECLARE_NATIVE(LIGHT)
 //  "Handle unstable isotopes like assignments do, pass through other values"
 //
 //      return: [any-value?]
-//      atom
+//      ^atom
 //  ]
 //
 DECLARE_NATIVE(DECAY)
@@ -1402,8 +1402,8 @@ DECLARE_NATIVE(DECAY)
     if (bounce)
         return unwrap bounce;
 
-    Assert_Cell_Stable(OUT);  // Value* should always be stable
-    return OUT;  // pre-decay by non-^META argument if not running as intrinsic
+    Decay_If_Unstable(OUT);
+    return OUT;
 }
 
 

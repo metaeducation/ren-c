@@ -1748,12 +1748,14 @@ for (; check != tail; ++check) {  // push variables
         //
         Init_Lifted_Null(OUT);
     }
-    else
+    else {
         Copy_Cell(OUT, pack_at);
+        assert(Any_Lifted(OUT));  // out is lifted'd
+    }
 
     if (Is_Meta_Sigil(var)) {
-        panic ("META sigil should allow ghost pass thru, probably?");
-        /* goto circled_check; */
+        Unliftify_Undecayed(OUT);  // unlift for output...
+        goto circled_check;
     }
 
     if (Is_Metaform(WORD, var)) {
@@ -1783,7 +1785,7 @@ for (; check != tail; ++check) {  // push variables
         goto circled_check;
     }
 
-    if (Is_Error(OUT))  // don't pass thru errors if not @
+    if (Is_Error(OUT))  // don't pass thru errors if not ^ sigil
         return PANIC(Cell_Error(OUT));
 
     if (Is_Word(var) or Is_Tuple(var) or Is_Pinned(WORD, var)) {

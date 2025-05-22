@@ -133,6 +133,53 @@ INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
 }
 
 
+// Some packs (e.g. those with lifted unstbale antiforms in them) can't be
+// decayed automatically.  They must be explicitly unpacked.
+//
+// Type checking has to be aware of this, and know that such packs shouldn't
+// return errors.
+//
+// 1. It is very atypical to allow unstable antiforms in a pack.  But if you
+//    do, then they could be masking an arbitrary amount of things like
+//    errors (e.g. errors in a PACK!)  The limited use cases for unstable
+//    antiforms in packs must unpack them, and not just allow them to drop
+//    into non-existence just because they weren't requested in an unpack.
+//
+// 2. An antiform block that contains non-lifted Elements *could* have those
+//    Elements convey a "dual representation".  e.g. a FRAME! could be
+//    interpreted as "be the accessor function for what you assign to".
+//    That's a novel concept, but better to use SET:DUAL and GET:DUAL and
+//    avoid the overhead of a PACK! to weirdly encode the idea.
+//
+INLINE bool Is_Pack_Undecayable(Atom* pack)
+{
+    assert(Is_Pack(pack));
+
+    const Element* tail;
+    const Element* at = Cell_List_At(&tail, pack);
+
+    if (at == tail)  // Is_Void() empty pack... not decayable
+        return true;
+
+    for (; at != tail; ++at) {  // all pack elements get checked [1]
+        if (QUOTE_BYTE(at) >= ONEQUOTE_NONQUASI_3)
+            continue;  // most common case, lifted normal Elements
+
+        if (QUOTE_BYTE(at) == QUASIFORM_2) {
+            if (Is_Stable_Antiform_Heart(Heart_Of(at)))
+                continue;  // lifted stable antiform, decayable
+
+            return true;  // lifted unstable antiform... not decayable
+        }
+
+        assert(QUOTE_BYTE(at) == NOQUOTE_1);
+        return true;  // today we consider this corrupt [2]
+    }
+
+    return false;
+}
+
+
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unlift'd
 //
@@ -153,29 +200,13 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         return u_cast(Value*, u_cast(Atom*, v));
 
     if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
-        const Element* pack_tail;
-        const Element* pack_at = Cell_List_At(&pack_tail, v);
-        if (pack_at == pack_tail)
-            panic (Error_No_Value_Raw());  // treat as void?
+        if (Is_Pack_Undecayable(v))
+            panic ("Undecayable pack in Decay_If_Unstable()");
+
+        const Element* pack_at = Cell_List_At(nullptr, v);
         Sink(Element) sink = v;
         Copy_Cell(sink, pack_at);  // Note: no antiform binding (PACK!)
         Unliftify_Undecayed(v);
-        if (Is_Pack(v))
-            panic (Error_Bad_Antiform(v));  // need more granular unpacking [2]
-        if (Is_Error(v))
-            panic (Cell_Error(v));
-        assert(Not_Antiform(v) or Is_Antiform_Stable(v));
-
-        while (++pack_at != pack_tail) {
-            if (not Is_Quasiform(pack_at))
-                continue;
-            if (Is_Stable_Antiform_Heart(Heart_Of(pack_at)))
-                continue;
-            DECLARE_ATOM (temp);
-            Copy_Cell(temp, pack_at);
-            Decay_If_Unstable(temp);  // don't drop errors on floor [3]
-        }
-
         return u_cast(Value*, u_cast(Atom*, v));
     }
 
@@ -186,24 +217,4 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         panic (Cell_Error(v));
 
     return u_cast(Value*, u_cast(Atom*, v));
-}
-
-
-// Packs with unstable antiforms in their first cell aren't able to be decayed.
-// Type checking has to be aware of this, and know that such packs shouldn't
-// return errors.
-//
-INLINE bool Is_Pack_Undecayable(Atom* pack)
-{
-    assert(Is_Pack(pack));
-    if (Is_Void(pack))
-        return true;
-    const Element* at = Cell_List_At(nullptr, pack);
-    if (Is_Lifted_Error(at))
-        return true;
-    if (Is_Lifted_Pack(at))
-        return true;
-    if (Is_Lifted_Ghost(at))
-        return true;
-    return false;
 }

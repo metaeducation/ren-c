@@ -290,14 +290,14 @@ default-combinators: to map! reduce [
         :negated
     ][
         if negated [  ; NOT NOT, e.g. call parser without negating it
-            return [{_} remainder]: parser input except e -> [
+            return [{^} remainder]: parser input except e -> [
                 return fail e
             ]
         ]
         if not negatable-parser? parser/ [
             panic "NOT called on non-negatable combinator"
         ]
-        return [{_} remainder]: parser:negated input except e -> [
+        return [{^} remainder]: parser:negated input except e -> [
             return fail e
         ]
     ]
@@ -463,7 +463,7 @@ default-combinators: to map! reduce [
         ^result: void
 
         cycle [
-            [_ input]: condition-parser input except [
+            [^ input]: condition-parser input except [
                 take:last state.loops
                 remainder: input
                 return ^result
@@ -493,7 +493,7 @@ default-combinators: to map! reduce [
         ^result: void
 
         cycle [
-            [_ input]: condition-parser input except [
+            [^ input]: condition-parser input except [
                 ;
                 ; We don't worry about the body parser's success or failure,
                 ; but if it fails we disregard the result
@@ -542,7 +542,7 @@ default-combinators: to map! reduce [
 
         count: 0
         cycle [
-            [_ input]: parser input except [
+            [^ input]: parser input except [
                 take:last state.loops
                 remainder: input
                 return count
@@ -657,7 +657,7 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> start end
     ][
-        [_ remainder]: parser input except e -> [return fail e]
+        [^ remainder]: parser input except e -> [return fail e]
 
         end: index of remainder
         start: index of input
@@ -692,7 +692,7 @@ default-combinators: to map! reduce [
         replacer [action!]  ; !!! How to say result is used here?
         <local> ^replacement
     ][
-        [_ remainder]: parser input except e -> [  ; first find end position
+        [^ remainder]: parser input except e -> [  ; first find end position
             return fail e
         ]
 
@@ -711,7 +711,7 @@ default-combinators: to map! reduce [
         return: [~#remove~]
         parser [action!]
     ][
-        [_ remainder]: parser input except e -> [  ; first find end position
+        [^ remainder]: parser input except e -> [  ; first find end position
             return fail e
         ]
 
@@ -810,18 +810,18 @@ default-combinators: to map! reduce [
         parser-right [action!]
         <local> start limit
     ][
-        [_ start]: (parser-left input) except e -> [
+        [^ start]: parser-left input except e -> [
             return fail e
         ]
 
         limit: start
         cycle [
-            [_ remainder]: (parser-right limit) except e -> [
+            [^ remainder]: parser-right limit except e -> [
                 if tail? limit [  ; remainder of null
                     return fail e
                 ]
                 limit: next limit
-                continue  ; don't try to assign the `[_ remainder]:`
+                continue  ; don't try to assign the `[^ remainder]:`
             ]
             return copy:part start limit
         ]
@@ -893,7 +893,7 @@ default-combinators: to map! reduce [
             [any-series?]
         parser [action!]
     ][
-        [_ remainder]: parser input except e -> [
+        [^ remainder]: parser input except e -> [
             return fail e
         ]
         if any-list? input [
@@ -1025,7 +1025,7 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> collected
     ][
-        [_ remainder pending]: parser input except e -> [
+        [^ remainder pending]: parser input except e -> [
             return fail e
         ]
 
@@ -1104,7 +1104,7 @@ default-combinators: to map! reduce [
         remainder: input
         cycle [
             append collected (
-                [{_} remainder]: parser remainder except e -> [
+                [{^} remainder]: parser remainder except e -> [
                     return collected
                 ]
             )
@@ -1136,7 +1136,7 @@ default-combinators: to map! reduce [
         parser [action!]
         <local> obj
     ][
-        [_ remainder pending]: parser input except e -> [
+        [^ remainder pending]: parser input except e -> [
             return fail e
         ]
 
@@ -1564,7 +1564,7 @@ default-combinators: to map! reduce [
             ]
         ]
 
-        return [{_} remainder pending]: run comb state input ^r  ; [3]
+        return [{^} remainder pending]: run comb state input ^r  ; [3]
     ]
 
     === GET-BLOCK! COMBINATOR ===
@@ -2032,7 +2032,7 @@ default-combinators: to map! reduce [
         return: [ghost!]
         parser [action!]
     ][
-        [_ remainder]: parser input except e -> [return fail e]
+        [^ remainder]: parser input except e -> [return fail e]
         return ghost
     ]
 
@@ -2222,7 +2222,7 @@ default-combinators: to map! reduce [
         ;
         ; !!! REVIEW: handle `rule-start` and `rule-end` ?
         ;
-        return [{_} remainder pending]: run comb state input ^r
+        return [{^} remainder pending]: run comb state input ^r
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
