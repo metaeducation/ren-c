@@ -340,10 +340,9 @@ DECLARE_NATIVE(USE)
 //
 //  Try_Get_Binding_Of: C
 //
-bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
+bool Try_Get_Binding_Of(Sink(Element) out, const Element* v)
 {
-    switch (Type_Of(v)) {
-    case TYPE_WORD: {
+    if (Any_Word(v)) {
         if (IS_WORD_UNBOUND(v))
             return false;
 
@@ -379,9 +378,8 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
             Init_Module(out, cast(SeaOfVars*, c));
         else
             Copy_Cell(out, Varlist_Archetype(cast(VarList*, c)));
-        break; }
-
-      default:
+    }
+    else {
         //
         // Will OBJECT!s or FRAME!s have "contexts"?  Or if they are passed
         // in should they be passed trough as "the context"?  For now, keep
@@ -1197,6 +1195,10 @@ DECLARE_NATIVE(ANY_VALUE_Q)
 //  ]
 //
 DECLARE_NATIVE(ANY_ATOM_Q)
+//
+// !!! The automatic typecheckers that are built don't handle unstable
+// antiforms at this time.  They need to, so things like this and PACK?
+// and ERROR? don't have to be special cased.
 //
 // !!! ELEMENT? isn't ANY-ELEMENT?, so should this just be ATOM?  The policy
 // for putting ANY- in front of things has been in flux.

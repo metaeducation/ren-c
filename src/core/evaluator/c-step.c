@@ -463,12 +463,12 @@ Bounce Stepper_Executor(Level* L)
 
         if (Is_Word(CURRENT)) {
             STATE = cast(StepperState, TYPE_WORD);
-            goto word_common;
+            goto handle_word_where_action_lookups_are_active;
         }
 
         assert(Is_Path(CURRENT));
         STATE = cast(StepperState, TYPE_PATH);
-        goto path_common;
+        goto handle_path_where_action_lookups_are_active;
     }
 
     goto right_hand_literal_infix_wins;
@@ -695,7 +695,51 @@ Bounce Stepper_Executor(Level* L)
 
   case TYPE_WORD: { //// META WORD! ^XXX /////////////////////////////////////
 
-    goto handle_get_word;
+    // A META-WORD! gives you the unlifted representation of a variable as-is,
+    // with no dispatch on functions.
+
+    Option(Error*) error = Trap_Get_Any_Word_Maybe_Trash(
+        OUT, CURRENT, L_binding
+    );
+    if (error)
+        return PANIC(unwrap error);
+
+    possibly(not Is_Stable(OUT) or Is_Atom_Trash(OUT));
+
+    goto lookahead;
+
+
+} case TYPE_TUPLE: { //// META TUPLE! ^XXX.YYY ///////////////////////////////
+
+    // Note that the GET native on a TUPLE! won't allow GROUP! execution:
+    //
+    //    foo: [X]
+    //    path: 'foo.(print "side effect!" 1)
+    //    get path  ; not allowed, due to surprising side effects
+    //
+    // However a source-level GET-TUPLE! allows them, since they are at the
+    // callsite and you are assumed to know what you are doing:
+    //
+    //    :foo.(print "side effect" 1)  ; this is allowed
+    //
+    // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
+    // the plain (unfriendly) forms.
+
+    Plainify(CURRENT);  // remove the ^ sigil
+
+    Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
+    Move_Atom(CURRENT, SPARE);
+
+    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
+        L, GROUPS_OK
+    );
+    if (e) {
+        Init_Warning(OUT, unwrap e);
+        Failify(OUT);
+        goto lookahead;  // e.g. EXCEPT might want to see error
+    }
+
+    goto lookahead;
 
 
 } case TYPE_CHAIN: { //// META CHAIN! (^XXX: ^:XXX ...) //////////////////////
@@ -878,12 +922,27 @@ Bounce Stepper_Executor(Level* L)
     //    though we're doing infix.  So pushing *before* we set the flags
     //    means the FLAG_STATE_BYTE() will be 0, and we get clearing.
 
-} word_common: {
+} handle_word_where_action_lookups_are_active: {
 
-    Sink(Value) out = OUT;
-    Option(Error*) error = Trap_Get_Any_Word(out, CURRENT, L_binding);
+    // 1. Even though we intend to panic on trash, we want to use a lower
+    //    level function that doesn't check for trash...because we want to
+    //    push the trash check *after* we check for it being an action.
+    //    This is because error cases are uncommon compared to successful
+    //    lookups, and we don't want to pay for the trash check on success.
+
+    assert(not Sigil_Of(CURRENT));
+
+    Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
+    Move_Atom(CURRENT, SPARE);
+
+    Option(Error*) error = Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
+        LEVEL, GROUPS_OK  // no groups!
+    );
     if (error)
         return PANIC(unwrap error);  // don't conflate with function result
+
+    assert(Is_Stable(OUT));
+    Value* out = cast(Value*, OUT);
 
     if (Is_Action(out))
         goto run_action_in_out;
@@ -894,7 +953,7 @@ Bounce Stepper_Executor(Level* L)
         return PANIC("Leading slash means execute FRAME! or ACTION! only");
     }
 
-    if (Is_Trash(out))  // checked second
+    if (Is_Trash(out))  // checked second [1]
         return PANIC(Error_Bad_Word_Get(CURRENT, out));
 
     goto lookahead;
@@ -1034,14 +1093,12 @@ Bounce Stepper_Executor(Level* L)
       case LEADING_SPACE_AND(WORD):  // :FOO, refinement, error on eval?
         Unchain(CURRENT);
         STATE = ST_STEPPER_GET_WORD;
-        assert(!":WORD! meaning is likely to become TRY WORD!");
-        goto handle_get_word;
+        return PANIC(":WORD! meaning is likely to become TRY WORD!");
 
       case LEADING_SPACE_AND(TUPLE):  // :a.b.c -- what will this do?
         Unchain(CURRENT);
         STATE = ST_STEPPER_GET_TUPLE;
-        assert(!":TUPLE! meaning is likely to become TRY TUPLE!");
-        goto handle_get_tuple;
+        return PANIC(":TUPLE! meaning is likely to become TRY TUPLE!");
 
       case LEADING_SPACE_AND(BLOCK):  // !!! :[a b] reduces, not great...
         Unchain(CURRENT);
@@ -1092,37 +1149,6 @@ Bounce Stepper_Executor(Level* L)
     Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     goto process_action;
-
-
-} handle_get_word: {  // jumps here for CHAIN! that's like a GET-WORD!
-
-    // A GET-WORD! gives you the contents of a variable as-is, with no
-    // dispatch on functions.  This includes antiforms.
-    //
-    // https://forum.rebol.info/t/1301
-
-    assert(
-        (STATE == ST_STEPPER_GET_WORD and Is_Word(CURRENT))
-        or (
-            STATE == cast(StepperState, TYPE_WORD)
-            and Is_Metaform(WORD, CURRENT)
-        )
-    );
-    Option(Error*) error = Trap_Get_Any_Word_Maybe_Trash(
-        OUT,
-        CURRENT,
-        L_binding
-    );
-    if (error)
-        return PANIC(unwrap error);
-
-    if (Is_Metaform(WORD, CURRENT)) {
-        if (not Any_Lifted(OUT))
-            return PANIC("^WORD! can only UNMETA quoted/quasiform");
-        Unliftify_Undecayed(OUT);
-    }
-
-    goto lookahead;
 
 
 } case TYPE_GROUP: //// GROUP! (...) /////////////////////////////////////////
@@ -1204,21 +1230,20 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead;
     }
 
-    Sink(Value) out = OUT;
-    Option(Error*) error = Trap_Get_Tuple(  // vacant will cause error
-        out,
-        GROUPS_OK,
-        CURRENT,
-        L_binding
+    Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
+    Move_Atom(CURRENT, SPARE);
+
+    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
+        L, GROUPS_OK
     );
-    if (error) {  // tuples never run actions, erroring won't conflate
-        Init_Warning(OUT, unwrap error);
+    if (e) {  // tuples never run actions, erroring won't conflate (!!! oops)
+        Init_Warning(OUT, unwrap e);
         Failify(OUT);
         goto lookahead;  // e.g. EXCEPT might want error
     }
 
-    if (Is_Action(out))
-        assert(Not_Cell_Flag(out, OUT_HINT_UNSURPRISING));
+    if (Is_Atom_Action(OUT))
+        assert(Not_Cell_Flag(OUT, OUT_HINT_UNSURPRISING));
 
     goto lookahead;
 
@@ -1241,7 +1266,7 @@ Bounce Stepper_Executor(Level* L)
     //    moment it is still refinement.  Let's try not binding it by default
     //    just to see what headaches that causes...if any.
 
-} path_common: {
+} handle_path_where_action_lookups_are_active: {
 
     bool slash_at_head;
     bool slash_at_tail;
@@ -1268,7 +1293,7 @@ Bounce Stepper_Executor(Level* L)
       case LEADING_SPACE_AND(WORD):
         Unpath(CURRENT);
         Set_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD);
-        goto word_common;
+        goto handle_word_where_action_lookups_are_active;
 
       case LEADING_SPACE_AND(CHAIN): {  // /abc: or /?:?:?
         Unpath(CURRENT);
@@ -1400,31 +1425,31 @@ Bounce Stepper_Executor(Level* L)
 
 } generic_set_rightside_dual_in_out: {
 
-    if (Is_Lifted_Void(CURRENT)) {  // e.g. `(void): ...`
-        Unliftify_Undecayed(OUT);  // !!! do this with space VAR instead
+    Unliftify_Undecayed(OUT);  // !!! do this with space VAR instead
+
+    if (Is_Lifted_Void(CURRENT))  // e.g. `(void): ...`  !!! use space var!
         goto lookahead;  // pass through everything
-    }
 
     Derelativize(SPARE, CURRENT, L_binding);  // !!! workaround !!! FIX !!!
     Move_Atom(CURRENT, SPARE);
 
-    if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
-        LEVEL, GROUPS_OK, LIB(POKE_P)
-    )){
-        goto return_thrown;
-    }
+    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
+        LEVEL, GROUPS_OK
+    );
+    if (e)
+        return PANIC(unwrap e);
 
     // assignments of /foo: or /obj.field: require action
     //
     // !!! This is too late, needs to be folded in with Set_Var...()
     // But we don't pre-decay, so have to do it here for now.
     //
-    if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION)) {
+    /*if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION)) {
         if (not Is_Atom_Action(OUT))
             return PANIC(
                 "/word: and /obj.field: assignments require Action"
             );
-    }
+    }*/
 
     L_next_gotten = nullptr;  // cache can tamper with lookahead [1]
 
@@ -1439,54 +1464,22 @@ Bounce Stepper_Executor(Level* L)
         goto handle_generic_set;
     }
     else switch (Type_Of(SPARE)) {
-      case TYPE_BLOCK :
+      case TYPE_BLOCK:
         Copy_Cell(CURRENT, cast(Element*, SPARE));
         STATE = ST_STEPPER_SET_BLOCK;
         goto handle_set_block;
 
-      case TYPE_WORD :
+      case TYPE_WORD:
         Copy_Cell(CURRENT, cast(Element*, SPARE));
         goto handle_generic_set;
 
-      case TYPE_TUPLE :
+      case TYPE_TUPLE:
         Copy_Cell(CURRENT, cast(Element*, SPARE));
         goto handle_generic_set;
 
       default:
         return PANIC("Unknown type for use in SET-GROUP!");
     }
-    goto lookahead;
-
-} handle_get_tuple: {
-
-    // Note that the GET native on a TUPLE! won't allow GROUP! execution:
-    //
-    //    foo: [X]
-    //    path: 'foo.(print "side effect!" 1)
-    //    get path  ; not allowed, due to surprising side effects
-    //
-    // However a source-level GET-TUPLE! allows them, since they are at the
-    // callsite and you are assumed to know what you are doing:
-    //
-    //    :foo.(print "side effect" 1)  ; this is allowed
-    //
-    // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
-    // the plain (unfriendly) forms.
-
-    assert(STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(CURRENT));
-
-    Option(Error*) error = Trap_Get_Tuple_Maybe_Trash(
-        OUT,
-        GROUPS_OK,
-        CURRENT,
-        L_binding
-    );
-    if (error) {
-        Init_Warning(OUT, unwrap error);
-        Failify(OUT);
-        goto lookahead;  // e.g. EXCEPT might want to see error
-    }
-
     goto lookahead;
 
 
@@ -1761,41 +1754,41 @@ for (; check != tail; ++check) {  // push variables
     if (Is_Metaform(WORD, var)) {
         Plainify(var);  // !!! temporary, remove ^ sigil (set should see it)
         if (pack_at == pack_tail) {  // special detection
-            Init_Lifted_Null(OUT);
-            if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
-                LEVEL, NO_STEPS, LIB(POKE_P)
-            )){
-                goto return_thrown;
-            }
+            Init_Nulled(OUT);
+            Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
+                LEVEL, NO_STEPS
+            );
+            if (e)
+                return PANIC(unwrap e);
             goto circled_check;
         }
         assert(Any_Lifted(OUT));  // out is lifted'd
-        Liftify(OUT);  // quote it again !!! TBD: set heeds lift
-        if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
-            LEVEL, NO_STEPS, LIB(POKE_P)
-        )){
-            goto return_thrown;
-        }
-        Unliftify_Undecayed(OUT);  // set unquotified, undo it again...
+        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
+            LEVEL, NO_STEPS
+        );
+        if (e)
+            return PANIC(unwrap e);
+
+        Unliftify_Undecayed(OUT);  // unquotify for output...
         goto circled_check;  // ...because we may have circled this
     }
 
-    if (Is_Space(var)) {
-        Unliftify_Undecayed(OUT);
-        goto circled_check;
-    }
+    Unliftify_Undecayed(OUT);
 
     if (Is_Error(OUT))  // don't pass thru errors if not ^ sigil
         return PANIC(Cell_Error(OUT));
 
+    Decay_If_Unstable(OUT);
+
+    if (Is_Space(var))
+        goto circled_check;
+
     if (Is_Word(var) or Is_Tuple(var) or Is_Pinned(WORD, var)) {
-        if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
-            LEVEL,  // overwrites SPARE if single item, but we're done w/it
-            GROUPS_OK,
-            LIB(POKE_P)
-        )){
-            goto return_thrown;
-        }
+        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
+            LEVEL, GROUPS_OK  // overwrites SPARE and SCRATCH, that's ok
+        );
+        if (e)
+            return PANIC(unwrap e);
     }
     else
         assert(false);

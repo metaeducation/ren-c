@@ -339,10 +339,10 @@
 // is a 2-element CHAIN! with a space at the tail.  Due to how common these
 // are, and the fact that they are immutable sequences, there is investment
 // in optimizing them.  They are called "SingleHeart" sequences, and because
-// detection of these is so common there's a special type which multiplexes
+// detection of these is so common there's a special enum which multiplexes
 // both the Heart and whether there is a space at the head or tail.
 //
-// (It's encoded in a single type, because if the leading space or trailing
+// (It's encoded in a single enum, because if the leading space or trailing
 // space were separated from the heart type, you could accidentally check
 // the leading space or trailing space without verifying a sequence was a
 // single hearted type.  Static analysis caught bugs of that kind, and they

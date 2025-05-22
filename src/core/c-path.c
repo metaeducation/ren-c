@@ -100,25 +100,14 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 }
 
 
-// Use a flag on PICK vs. a state byte, so that we can reuse the same frame
-// for the calls to the generic PICK implementations, even if it wants to
-// use the state byte and do continuations/delegations.
 //
-#define LEVEL_FLAG_PICK_NOT_INITIAL_ENTRY  LEVEL_FLAG_MISCELLANEOUS
-
-#define CELL_FLAG_LOCATION_HINT_UNLIFT  CELL_FLAG_HINT
-
-
+//  pick*: native:generic [  ; users can call directly, but 99.9% want POKE
 //
-//  pick*: native:generic [
+//  "Implementation detail of PICK, return value uses dual protocol"
 //
-//  "Lower-level implementation hook for PICK, return value is dual protocol"
-//
-//      return: "Lifted picked value or null if not present, action if lazy"
-//          [null? error! action! quoted! quasiform!]
-//      location [fundamental?]  ; can't pick from quoted/quasi
-//      picker "Index offset, symbol, or other value to use as index"
-//          [element?]
+//      return: [null? error! action! quoted! quasiform!]
+//      location [<opt-out> fundamental?]  ; can't pick from quoted/quasi
+//      picker [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(PICK_P)
@@ -142,9 +131,19 @@ DECLARE_NATIVE(PICK_P)
 
     Element* location = Element_ARG(LOCATION);
     UNUSED(ARG(PICKER));
+    // more ARG(...) may be in this location if PICK called us, reusing frame
+
+    possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for PICK's use
 
     return Dispatch_Generic(PICK_P, location, LEVEL);
 }
+
+
+// Use Level flag vs. a state byte, so that we can reuse the same frame
+// for the calls to the generic PICK* implementations, even if it wants to
+// use the state byte and do continuations/delegations.
+//
+#define LEVEL_FLAG_PICK_NOT_INITIAL_ENTRY  LEVEL_FLAG_MISCELLANEOUS
 
 
 //
@@ -192,29 +191,7 @@ DECLARE_NATIVE(PICK)
     }
     assert(not Is_Antiform(picker));  // LOGIC? is the only supported antiform
 
-} handle_sigils: {
-
-    assert(Not_Cell_Flag(location, LOCATION_HINT_UNLIFT));
-
-    Element* picker = Element_ARG(PICKER);
-    switch (Sigil_Of(picker)) {
-      case SIGIL_0:
-        goto dispatch_generic;
-
-      case SIGIL_META:
-        Plainify(picker);  // remove meta sigil
-        Set_Cell_Flag(location, LOCATION_HINT_UNLIFT);  // remember to unlift
-        goto dispatch_generic;
-
-      case SIGIL_PIN:
-        Plainify(picker);
-        goto dispatch_generic;
-
-      case SIGIL_TIE:
-        return PANIC("PICK can't use a tied picker at the moment");
-    }
-
-} dispatch_generic: {
+} dispatch_generic: { ////////////////////////////////////////////////////////
 
     Bounce bounce = maybe Irreducible_Bounce(
         LEVEL,
@@ -227,9 +204,7 @@ DECLARE_NATIVE(PICK)
     if (Any_Lifted(OUT)) // if a value was found, it's returned as LIFTED
         goto pick_p_succeeded_out_is_lifted;
 
-} pick_p_gave_signal_antiform: {
-
-    // When PICK* returns an antiform, that means it needs special handling.
+} pick_p_gave_dual_signal: {  // non-LIFTED?s are signals in dual protocol
 
     if (Is_Atom_Action(OUT))
         return PANIC("PICK* delegation machinery not done yet");
@@ -251,78 +226,24 @@ DECLARE_NATIVE(PICK)
         return PANIC("PICK* returned a lifted unstable antiform");
     }
 
-    if (Not_Cell_Flag(location, LOCATION_HINT_UNLIFT))
-        return OUT;  // no unlift needed
-
-    if (not Any_Lifted(OUT))
-        return PANIC(
-            "PICK with ^META picker must retrieve a metaform to unlift"
-        );
-
-    Unliftify_Undecayed(OUT);
     return OUT;
 }}
 
 
 //
-//  poke: native [
+//  poke*: native:generic [  ; users can call directly, but 99.9% want POKE
 //
-//  "Perform a path poking operation, same as `(location).(picker): ^value`"
+//  "Implementation detail of POKE, returns Cell writeback bits (if needed)"
 //
-//      return: "Input value, or propagated error (no assignment on errors)"
-//          [any-value? error!]
-//      location "(modified)"
-//          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
-//      picker "Index offset, symbol, or other value to use as index"
-//          [<opt-out> element?]
-//      ^value [any-value? error! void?]
-//      <local> store
-//  ]
-//
-DECLARE_NATIVE(POKE)
-//
-// 1. We don't want to limit the POKE* function from changing value, and
-//    also want it to have full use of SPARE, SCRATCH, and OUT.  So POKE
-//    just has a slightly larger frame where it stores the value in a local.
-{
-    INCLUDE_PARAMS_OF_POKE;
-
-    Element* location = Element_ARG(LOCATION);
-    USED(ARG(PICKER));
-    Element* lifted_value = Element_ARG(VALUE);
-
-    Copy_Cell(ARG(STORE), lifted_value);  // save value to return [1]
-
-    Bounce bounce = Dispatch_Generic(POKE_P, location, LEVEL);
-
-    if (bounce != nullptr)
-        return PANIC("Cannot write-back to location in POKE");
-
-    Copy_Cell(OUT, ARG(STORE));
-    return Unliftify_Known_Stable(OUT);  // if lifting, return not lifted!
-}
-
-
-//
-//  poke*: native:generic [
-//
-//  "Implementation helper for POKE"
-//
-//      return: "Updated location state"  ; not the input value, see [1]
-//          [null? any-value?]
-//      location "(modified)"
-//          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
-//      picker "Index offset, symbol, or other value to use as index"
-//          [<opt-out> element?]
-//      ^value [any-atom?]
+//      return: [null? any-value?]
+//      location [<opt-out> fundamental?]  ; can't poke a quoted/quasi
+//      picker [<opt-out> element?]
+//      ^value [void? any-value?]
 //  ]
 //
 DECLARE_NATIVE(POKE_P)
 //
-// Users can call POKE* directly, but usually they will use POKE which gives
-// back the value that was poked.
-//
-// Note: In Ren-C, POKE* underlies the implementation of SET on TUPLE!.
+// POKE* underlies the implementation of SET (on TUPLE!, WORD!, etc.)
 // For it to work, the return value is the cell contents that should be
 // written back for immediate types.  This makes its return value somewhat
 // useless for users, as it's an implementation detail, that if anything
@@ -338,69 +259,84 @@ DECLARE_NATIVE(POKE_P)
 // was being poked with the value (e.g. obj.date.year: 1999) then the bits
 // in obj.date would have to be changed.
 {
-    INCLUDE_PARAMS_OF_POKE_P;
+    INCLUDE_PARAMS_OF_POKE_P;  // POKE_P must be frame compatible with POKE!
 
     Element* location = Element_ARG(LOCATION);
-    Element* picker = Element_ARG(PICKER);
-    Element* lifted_value = Element_ARG(VALUE);
+    USED(ARG(PICKER));
+    USED(ARG(VALUE));
+    // more ARG(...) may be in this location if POKE called us, reusing frame
 
-  handle_sigils: {
-
-    switch (Sigil_Of(picker)) {
-      case SIGIL_0:
-        goto handle_decayed_cases;;
-
-      case SIGIL_META:
-        Liftify(lifted_value);  // add another lift if storing lifted
-        Plainify(picker);  // remove meta sigil
-        goto dispatch_generic;  // don't do any decay, write errors/packs/etc.
-
-      case SIGIL_PIN:  // "STEPS" pins pickers.  Tolerate it.
-        Plainify(picker);  // remove pinned sigil
-        goto handle_decayed_cases;;
-
-      case SIGIL_TIE:
-        return PANIC("POKE* can't use a tied picker at the moment");
-    }
-
-} handle_decayed_cases: {
-
-    // 1. There could conceivably be a kind of extension type which would
-    //    store ERROR! or PACK!, etc..  But we limit the "lifted visibility"
-    //    purely to lifted pokes, and handle it at the POKE* native level,
-    //    so no POKE* generic handlers will see any unstable antiforms besides
-    //    the VOID antiform.  Perhaps limiting, but it's likely to be a good
-    //    constraint for sanity...where the "freedom from" entities that store
-    //    unstable antiforms is better than the "freedom to" world would be.
-
-    if (Is_Lifted_Error(lifted_value))
-        return FAIL(Cell_Error(lifted_value));
-
-    if (Is_Lifted_Void(lifted_value))
-        goto dispatch_generic;  // non-lifted pokes may treat void as removal
-
-    if (not Is_Lifted_Action(lifted_value))
-        goto perform_decay;
-
-} check_for_surprises: {
-
-    if (Get_Cell_Flag(lifted_value, OUT_HINT_UNSURPRISING)) {
-        if (Is_Word(picker))
-            Update_Frame_Cell_Label(lifted_value, Cell_Word_Symbol(picker));
-    }
-    else
-        return PANIC("Surprising ACTION! assign, use ^LIFT: assign");
-
-} perform_decay: {
-
-    Copy_Cell(SPARE, lifted_value);
-    Unliftify_Undecayed(SPARE);
-    Decay_If_Unstable(SPARE);  // pre-decay for sanity [1]
-    Copy_Lifted_Cell(lifted_value, SPARE);
-
-} dispatch_generic: { ///////////////////////////////////////////////////////
+    possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for POKE's use
 
     return Dispatch_Generic(POKE_P, location, LEVEL);
+}
+
+
+// Use Level flag vs. a state byte, so that we can reuse the same frame
+// for the calls to the generic POKE* implementations, even if it wants to
+// use the state byte and do continuations/delegations.
+//
+#define LEVEL_FLAG_POKE_NOT_INITIAL_ENTRY  LEVEL_FLAG_MISCELLANEOUS
+
+
+//
+//  poke: native [
+//
+//  "Perform a path poking operation, same as `(location).(picker): value`"
+//
+//      return: "Input value, or propagated error (no assignment on errors)"
+//          [any-value? error!]
+//      location "(modified)"
+//          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
+//      picker "Index offset, symbol, or other value to use as index"
+//          [<opt-out> element?]
+//      ^value [any-value? error! void?]
+//      <local> store
+//  ]
+//
+DECLARE_NATIVE(POKE)
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* location = Element_ARG(LOCATION);
+    USED(ARG(PICKER));
+    Element* lifted_value = Element_ARG(VALUE);
+
+    if (Get_Level_Flag(LEVEL, POKE_NOT_INITIAL_ENTRY))
+        goto dispatch_generic;
+
+  initial_entry: {
+
+    // 1. We don't want to limit the POKE* function from changing value, and
+    //    also want it to have full use of SPARE, SCRATCH, and OUT.  So POKE
+    //    has a slightly larger frame where it stores the value in a local.
+
+    Set_Level_Flag(LEVEL, POKE_NOT_INITIAL_ENTRY);
+
+    Copy_Cell(LOCAL(STORE), lifted_value);  // save value to return [1]
+
+    goto dispatch_generic;
+
+} dispatch_generic: { ////////////////////////////////////////////////////////
+
+    // 1. Though the POKE frame is slightly larger than that for POKE*, its
+    //    memory layout is compatible with POKE*, and can be reused.
+
+    Bounce bounce = maybe Irreducible_Bounce(
+        LEVEL,
+        Dispatch_Generic(POKE_P, location, LEVEL)
+    );
+
+    if (bounce)
+        return bounce;  // we will get a callback (if not error/etc.)
+
+    if (not Is_Nulled(OUT))  // see POKE* for its meaning of non-null results
+        return PANIC(
+            "Can't writeback to immediate in POKE (use POKE* if intentional)"
+        );
+
+    Copy_Cell(OUT, LOCAL(STORE));
+    return Unliftify_Undecayed(OUT);  // stored ^VALUE argument was meta
 }}
 
 

@@ -64,8 +64,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 
 
 // This is the core implementation of Trap_Get_Any_Word(), that allows being
-// called on "wordlike" sequences (like `.a` or `a/`).  But it should really
-// only be called by things like Trap_Get_Tuple(), because there are no
+// called on "wordlike" sequences (like `.a` or `a/`).  But there are no
 // special adjustments for sequences like `.a`
 //
 static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Trash(
@@ -109,9 +108,7 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Trash(
 //
 //  Trap_Get_Tuple_Maybe_Trash: C
 //
-// 1. Using a leading dot in a tuple is a cue to look up variables in the
-//    object from which a function was dispatched, so `var` and `.var` can
-//    look up differently inside a function's body.
+// Convenience wrapper for getting tuples that errors on trash.
 //
 Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     Sink(Value) out,
@@ -119,140 +116,23 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     const Element* tuple,
     Context* context
 ){
-    assert(Is_Tuple(tuple));
+    Level* level_ = Make_End_Level(&Stepper_Executor, LEVEL_MASK_NONE);
+    STATE = 1;  // rule for trampoline (we're setting out to non-erased)
 
-    if (not Sequence_Has_Node(tuple))  // byte compressed
-        return Error_User("Cannot GET a numeric tuple");
+    Sink(Atom) atom = cast(Atom*, out);
+    Push_Level_Erase_Out_If_State_0(atom, level_);
 
-    bool dot_at_head;  // dot at head means look in coupled context
-    DECLARE_ELEMENT (detect);
-    Copy_Sequence_At(detect, tuple, 0);
-    if (Is_Space(detect))
-        dot_at_head = true;
-    else
-        dot_at_head = false;
+    Derelativize(SCRATCH, tuple, context);
 
-    if (dot_at_head and context)  // avoid adjust if tuple has non-cache binding?
-        context = Adjust_Context_For_Coupling(context);
-
-  //=//// HANDLE SIMPLE "WORDLIKE" CASE (.a or a.) ////////////////////////=//
-
-    const Node* node1 = CELL_NODE1(tuple);
-    if (Is_Node_A_Cell(node1)) { // pair compressed
-        // is considered "Listlike", can answer Cell_List_At()
-    }
-    else switch (Stub_Flavor(x_cast(Flex*, node1))) {
-      case FLAVOR_SYMBOL: {
-        Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Trash(
-            out,
-            tuple,  // optimized "wordlike" representation, like a. or .a
-            context
-        );
-        if (error)
-            return error;
-        if (steps_out and steps_out != GROUPS_OK) {
-            Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
-            Derelativize(Stub_Cell(a), tuple, context);
-            Pinify(Init_Block(unwrap steps_out, a));
-        }
-        if (dot_at_head and Is_Action(out)) {  // need the coupling
-            if (Cell_Frame_Coupling(out) == UNCOUPLED) {
-                if (IS_WORD_BOUND(tuple))
-                    Tweak_Cell_Frame_Coupling(out, cast(VarList*, Cell_Binding(tuple)));
-                else
-                    Tweak_Cell_Frame_Coupling(out, cast(VarList*, context));
-            }
-        }
-        return SUCCESS; }
-
-      case FLAVOR_SOURCE:
-        break;
-
-      default:
-        crash (tuple);
-    }
-
-  //=//// PUSH PROCESSED TUPLE ELEMENTS TO STACK //////////////////////////=//
-
-    // The tuple may contain GROUP!s that we evaluate.  Rather than process
-    // tuple elements directly, we push their possibly-evaluated elements to
-    // the stack.  This way we can share code with the "sequence of steps"
-    // formulation of tuple processing.
-    //
-    // 1. By convention, picker steps quote the first item if it was a GROUP!.
-    //    It has to be somehow different because `('a).b` is trying to pick B
-    //    out of the WORD! a...not out of what's fetched from A.  So if the
-    //    first item of a "steps" block needs to be "fetched" we ^META it.
-
-    StackIndex base = TOP_INDEX;
-
-    const Element* tail;
-    const Element* head = Cell_List_At(&tail, tuple);
-    const Element* at;
-    Context* at_binding = Derive_Binding(context, tuple);
-    for (at = head; at != tail; ++at) {
-        if (Is_Group(at)) {
-            if (not steps_out)
-                return Error_User("GET:GROUPS must be used to eval in GET");
-
-            if (Eval_Any_List_At_Throws(cast(Atom*, out), at, at_binding)) {
-                Drop_Data_Stack_To(base);
-                return Error_No_Catch_For_Throw(TOP_LEVEL);
-            }
-            Decay_If_Unstable(cast(Atom*, out));
-
-            Move_Cell(PUSH(), out);
-            if (at == head)
-                Quotify(TOP_ELEMENT);  // signify not literal
-        }
-        else  // Note: must keep words at head as-is for writeback!
-            Derelativize(PUSH(), at, at_binding);
-    }
-
-  //=//// CALL COMMON CODE TO RUN CHAIN OF PICKS //////////////////////////=//
-
-    // The behavior of getting a TUPLE! is generalized, and based on PICK.  So
-    // in theory, as types in the system are extended, they only need to
-    // implement PICK in order to have tuples work with them.
-
-    Option(Error*) error = Trap_Get_From_Steps_On_Stack_Maybe_Trash(
-        out, base
-    );
-    if (error) {
-        Drop_Data_Stack_To(base);
-        return error;
-    }
-
-    if (steps_out and steps_out != GROUPS_OK) {
-        Source* a = Pop_Source_From_Stack(base);
-        Pinify(Init_Block(unwrap steps_out, a));
-    }
-    else
-        Drop_Data_Stack_To(base);
-
-    return SUCCESS;
-}
-
-
-//
-//  Trap_Get_Tuple: C
-//
-// Convenience wrapper for getting tuples that errors on trash.
-//
-Option(Error*) Trap_Get_Tuple(
-    Sink(Value) out,
-    Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
-    const Element* tuple,
-    Context* context
-){
-    Option(Error*) error = Trap_Get_Tuple_Maybe_Trash(
-        out, steps_out, tuple, context
+    Option(Error*) error = Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
+        level_, steps_out
     );
     if (error)
         return error;
 
-    if (Is_Trash(out))
-        return Error_Bad_Word_Get(tuple, out);
+    Drop_Level(level_);
+
+    Decay_If_Unstable(atom);
 
     return SUCCESS;
 }
@@ -334,9 +214,7 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
     }
 
     if (Is_Tuple(var))
-        return Trap_Get_Tuple_Maybe_Trash(
-            out, steps_out, var, context
-        );
+        return Trap_Get_Tuple_Maybe_Trash(out, steps_out, var, context);
 
     if (Is_Pinned(BLOCK, var)) {  // "steps"
         StackIndex base = TOP_INDEX;
@@ -439,11 +317,13 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
     }
     else if (Is_Tuple(head)) {  // .member-function:refinement is legal
         DECLARE_ELEMENT (steps);
-        Option(Error*) error = Trap_Get_Tuple(  // vacant is error
+        Option(Error*) error = Trap_Get_Tuple_Maybe_Trash(
             out, steps, head, derived
         );
         if (error)
             panic (unwrap error);  // must be abrupt
+        if (Is_Trash(out))
+            panic (Error_Bad_Word_Get(head, out));
     }
     else if (Is_Word(head)) {
         Option(Error*) error = Trap_Get_Any_Word(out, head, derived);
@@ -564,11 +444,13 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
     }
     else if (Is_Tuple(at)) {
         DECLARE_ELEMENT (steps);
-        Option(Error*) error = Trap_Get_Tuple(  // vacant is error
+        Option(Error*) error = Trap_Get_Tuple_Maybe_Trash(
             out, steps, at, derived
         );
         if (error)
             panic (unwrap error);  // must be abrupt
+        if (Is_Trash(out))
+            return Error_Bad_Word_Get(at, out);
     }
     else if (Is_Word(at)) {
         Option(Error*) error = Trap_Get_Any_Word(out, at, derived);
@@ -650,11 +532,16 @@ Option(Error*) Trap_Get_Any_Word(
     const Element* word,  // should heed sigil? (^WORD! should UNMETA?)
     Context* context
 ){
+    assert(Sigil_Of(word) == SIGIL_0);
+
+    Sink(Atom) atom = cast(Atom*, out);
     Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Trash(
-        out, word, context
+        atom, word, context
     );
     if (error)
         return error;
+
+    assert(Is_Stable(atom));
 
     if (Is_Trash(out))
         return Error_Bad_Word_Get(word, out);
@@ -670,12 +557,31 @@ Option(Error*) Trap_Get_Any_Word(
 // TRASH! vs. give an error.
 //
 Option(Error*) Trap_Get_Any_Word_Maybe_Trash(
-    Sink(Value) out,
-    const Element* word,  // should heed sigil? (^WORD! should UNMETA?)
+    Sink(Atom) out,
+    const Element* word,  // heeds Sigil (^WORD! will UNLIFT)
     Context* context
 ){
     assert(Any_Word(word));
-    return Trap_Get_Wordlike_Cell_Maybe_Trash(out, word, context);
+    Option(Error*) e = Trap_Get_Wordlike_Cell_Maybe_Trash(out, word, context);
+    if (e)
+        return e;
+
+    switch (Sigil_Of(word)) {
+      case SIGIL_0:
+        break;
+
+      case SIGIL_META:
+        if (not Any_Lifted(out))
+            return Error_User("^WORD! can only UNLIFT quoted/quasiform");
+        Unliftify_Undecayed(out);
+        break;
+
+      case SIGIL_PIN:
+      case SIGIL_TIE:
+        return Error_User("Cannot GET a @PINNED or $TIED variable yet");
+    }
+
+    return SUCCESS;
 }
 
 
@@ -845,100 +751,335 @@ DECLARE_NATIVE(GET)
 
 
 
+// This breaks out the stylized code for calling PICK*, in a Level that
+// can be reused across multiple PICK* calls.
+//
+// The stylization is to reduce the number of C-stack-based cells that need
+// to be protected from GC.  Instead, cells are written directly into the
+// locations they need to be, with careful orchestration.  (This also means
+// less make-work of copying bits around from one location to another.)
+//
+// 1. SPARE indicates both the LOCATION used for the PICK*, and the output
+//    of the PICK* call.  It's a "dual" because for normal values it is
+//    a lifted representation--but if it's a non-lifted ACTION! then it is
+//    a function to call to do the next PICK* with.  This prevents explosions
+//    in cases like (some-struct.million-ints.10), where you don't want the
+//    (some-struct.million-ints) pick to give back a BLOCK! of a million
+//    INTEGER!s just so you can pick one of them out of it.
+//
+static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
+    Level* level_,
+    Level* sub,  // will Push_Level() if not already pushed
+    StackIndex picker_index
+){
+    Push_Action(sub, LIB(PICK_P));
+    Begin_Action(sub, CANON(PICK_P), PREFIX_0);
+    Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
+
+    bool picker_was_meta;
+
+    Element* location_arg;
+    Element* picker_arg;
+
+  proxy_arguments_to_frame_dont_panic_in_this_scope: {
+
+  // We carefully lay things out so the old SPARE gets moved into the frame,
+  // to free it up to be used for the output.  But this is delicate, as we
+  // cannot panic() while an allocated-but-not-pushed Level is extant.
+  // So everything in this section must succeed.
+
+    assert(Is_Quoted(SPARE));  // don't support ACTION!s in dual yet...
+    location_arg = Copy_Cell(
+        Force_Erase_Cell(Level_Arg(sub, 1)),
+        Known_Element(SPARE)
+    );
+    Unquotify(location_arg);
+
+    picker_arg = Copy_Cell(
+        Force_Erase_Cell(Level_Arg(sub, 2)),
+        Data_Stack_At(Element, picker_index)
+    );
+
+    if (sub == TOP_LEVEL)
+        Erase_Cell(SPARE);
+    else
+        Push_Level_Erase_Out_If_State_0(SPARE, sub);
+
+} adjust_frame_arguments_now_that_its_safe_to_panic: {
+
+    if (Is_Quoted(picker_arg)) {  // literal x.'y or x.('y) => 'y
+        Unquotify(picker_arg);
+        picker_was_meta = false;
+    }
+    else {
+        if (Any_Metaform(picker_arg))
+            picker_was_meta = true;  // assume pick product is meta, unlift
+        else
+            picker_was_meta = false;
+
+        Plainify(picker_arg);  // drop any sigil (on cell in frame, not stack)
+    }
+
+} call_pick_p: {
+
+    // We actually call PICK*, the lower-level function that uses the dual
+    // protocol--instead of PICK.  That is because if the pick is not the
+    // last pick, it may return an out-of-band function value that we need
+    // to use to do the next pick.
+
+    bool threw = Trampoline_With_Top_As_Root_Throws();
+    if (threw)  // don't want to return casual error you can TRY from
+        panic (Error_No_Catch_For_Throw(sub));
+
+    assert(sub == TOP_LEVEL);
+    unnecessary(Drop_Action(sub));  // !! action is dropped, should it be?
+
+    if (not Any_Lifted(SPARE)) {
+        if (Is_Nulled(SPARE)) {  // bad pick on final step should be trappable
+            Copy_Cell(SPARE, Data_Stack_At(Element, picker_index));
+            Drop_Level(sub);
+
+            return Error_Bad_Pick_Raw(Known_Element(SPARE));
+        }
+
+        panic ("PICK* (dual protocol) didn't return a lifted value");
+    }
+
+    Unliftify_Undecayed(SPARE);  // review efficiency of unlift + lift here
+
+    if (picker_was_meta) {
+        Unliftify_Undecayed(SPARE);
+        Decay_If_Unstable(SPARE);
+    }
+
+    Liftify(SPARE);  // need lifted for dual protocol (review)
+
+    return SUCCESS;
+}}
+
+
+Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_In_Spare(
+    Level* level_,
+    Level* sub,
+    StackIndex picker_index,
+    Option(Atom*) atom_poke_if_not_on_stack,
+    const Value* updater  // possibly POKE_P, or compatible function
+){
+    Atom* spare_location_dual = SPARE;
+
+    Push_Action(sub, updater);
+    Begin_Action(sub, Cell_Frame_Label_Deep(updater), PREFIX_0);
+    Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
+
+    Element* location_arg;
+    Element* picker_arg;
+    Atom* value_arg;
+
+  proxy_arguments_to_frame_dont_panic_in_this_scope: {
+
+  // We can't panic while there's an extant level that's not pushed.
+  //
+  // (See notes in Trap_Call_Pick_Refresh_Dual_In_Spare() for more details.)
+  //
+  // 1. GET:STEPS returns @var for steps of var.  But is (get @var) same as
+  //    (get $var) ?
+
+    assert(Is_Quoted(spare_location_dual));
+    location_arg = Copy_Cell(
+        Force_Erase_Cell(Level_Arg(sub, 1)),
+        Known_Element(spare_location_dual)
+    );
+    Unquotify(location_arg);
+
+    picker_arg = Copy_Cell(
+        Force_Erase_Cell(Level_Arg(sub, 2)),
+        Data_Stack_At(Element, picker_index)
+    );
+
+    value_arg = u_cast(Atom*, Force_Erase_Cell(Level_Arg(sub, 3)));
+
+    Push_Level_Erase_Out_If_State_0(SPARE, sub);  // SPARE becomes writeback
+
+} adjust_frame_arguments_now_that_its_safe_to_panic: {
+
+    attempt {
+        if (Is_Quoted(picker_arg)) {  // literal x.'y or x.('y) => 'y
+            Unquotify(picker_arg);
+
+            if (atom_poke_if_not_on_stack)
+                Copy_Lifted_Cell(value_arg, unwrap atom_poke_if_not_on_stack);
+            else {
+                Copy_Cell(value_arg, TOP_ELEMENT);
+                DROP();
+            }
+
+            break;
+        }
+
+        Option(Sigil) picker_sigil = Sigil_Of(picker_arg);
+        if (picker_sigil == SIGIL_META) {
+            if (atom_poke_if_not_on_stack)
+                Copy_Lifted_Cell(value_arg, unwrap atom_poke_if_not_on_stack);
+            else {
+                Copy_Cell(value_arg, TOP_ELEMENT);
+                DROP();
+            }
+            Liftify(value_arg);  // lift it again to be ^META argument
+            continue;
+        }
+
+        // if not meta, needs to decay if unstable
+        Value* stable_poke;
+        if (atom_poke_if_not_on_stack)
+            stable_poke = Decay_If_Unstable(unwrap atom_poke_if_not_on_stack);
+        else
+            stable_poke = TOP;
+
+        if (Is_Action(stable_poke)) {  // not lifted now...
+            if (Not_Cell_Flag(stable_poke, OUT_HINT_UNSURPRISING))
+                panic ("Surprising ACTION! assignment, use ^ to APPROVE");
+
+            if (Is_Word(picker_arg)) {
+                Update_Frame_Cell_Label(
+                    stable_poke, Cell_Word_Symbol(picker_arg)
+                );
+            }
+        }
+        Copy_Lifted_Cell(value_arg, stable_poke);  // lift it to be ^META arg
+    }
+    then {  // not quoted...
+        Plainify(picker_arg);  // drop any sigils
+    }
+
+} call_updater: {
+
+    bool threw = Trampoline_With_Top_As_Root_Throws();
+
+    if (threw)  // don't want to return casual error you can TRY from
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+
+    return SUCCESS;
+}}
+
 
 //
-//  Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws: C
+//  Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps: C
 //
-// This is centralized code for setting variables.  If it returns `true`, the
-// out cell will contain the thrown value.  If it returns `false`, the out
-// cell will have steps with any GROUP!s evaluated.
-//
-// It tries to improve efficiency by handling cases that don't need methodized
-// calling of POKE up front.  If a frame is needed, then it leverages that a
-// frame with pushed cells is available to avoid needing more temporaries.
+// This is centralized code for setting variables.
 //
 // **Almost all parts of the system should go through this code for assignment,
 // even when they know they have just a WORD! in their hand and don't need path
 // dispatch.**  Only a few places bypass this code for reasons of optimization,
-// but they must do so carefully.
+// but they must do so carefully, because that would skip things like
+// accessors (which implement type checking, etc.)
 //
-// It is legal to have `target == out`.  It means the target may be overwritten
-// in the course of the assignment.
-//
-bool Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
-    Level* level_,
-    Option(Element*) steps_out,  // no GROUP!s if nulled
-    const Value* updater  // function to write the last step (e.g. POKE*)
+Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
+    Level* level_,  // SPARE will be overwritten, OUT might be decayed
+    bool groups_ok,
+    Option(const Value*) updater  //  writes the final step (e.g. POKE*)
 ){
-    Element* var = Known_Element(SCRATCH);  // binding might get tweaked :-/
-    Sink(Value) spare = SPARE;
+    Flags flags = LEVEL_MASK_NONE;  // reused, top level, no keepalive needed
 
-    Element* lifted_poke = Known_Element(OUT);
-    assert(Any_Lifted(lifted_poke));
-
-    possibly(spare == steps_out or var == steps_out);
+    Sink(Atom) spare_location_dual = SPARE;
 
     StackIndex base = TOP_INDEX;
+    StackIndex stackindex_top;
 
-    if (Any_Word(var))
-        goto handle_var_as_wordlike;
+    Option(Error*) e = SUCCESS;  // for common exit path on error
 
-    if (Any_Sequence(var))
-        goto handle_var_as_sequence;
+  #if RUNTIME_CHECKS
+    Protect_Cell(SCRATCH);  // (common exit path undoes this protect)
+  #endif
 
-    if (Is_Pinned(BLOCK, var))
-        goto handle_var_as_pinned_steps_block;
+  dispatch_based_on_scratch_var_type: {
 
-    panic (var);
+    Element* scratch_var = Known_Element(SCRATCH);
 
-  handle_var_as_wordlike: {
+    if (Any_Word(scratch_var))
+        goto handle_scratch_var_as_wordlike;
 
-    if (rebRunThrows(
-        spare,  // <-- output cell
-        rebRUN(updater), "binding of", rebQ(var), rebQ(var), lifted_poke
-    )){
-        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+    if (Any_Sequence(scratch_var))
+        goto handle_scratch_var_as_sequence;
+
+    if (Is_Pinned(BLOCK, scratch_var))
+        goto handle_scratch_var_as_pinned_steps_block;
+
+    panic (scratch_var);
+
+  handle_scratch_var_as_wordlike: {
+
+    if (not Try_Get_Binding_Of(spare_location_dual, scratch_var))
+        panic ("Couldn't get binding...");
+
+    Liftify(spare_location_dual);  // dual protocol, lift
+
+    Copy_Cell(PUSH(), scratch_var);  // save var for steps + error messages
+
+    Level* sub = Make_End_Level(&Action_Executor, flags);
+
+    if (updater) {
+        Atom* atom_poke = OUT;
+        possibly(not Is_Stable(atom_poke));
+
+        e = Trap_Updater_Spare_Is_Dual_Put_Writeback_In_Spare(
+            level_,
+            sub,
+            TOP_INDEX,  // picker_index
+            atom_poke,
+            unwrap updater
+        );
+        if (e) {
+            unnecessary(Drop_Level(sub));  // Call_Poke_P() drops on error
+            goto return_error;
+        }
+
+        Atom* spare_writeback = SPARE;
+
+        if (not Is_Nulled(spare_writeback))  // only one unit of POKE* to do!
+            panic ("Last POKE* step gave non-null cell writeback bits");
+    }
+    else {
+        e = Trap_Call_Pick_Refresh_Dual_In_Spare(
+            level_,
+            sub,
+            TOP_INDEX  // picker_index
+        );
+        if (e) {
+            unnecessary(Drop_Level(sub));  // Call_Poke_P() drops on error
+            goto return_error;
+        }
+        Copy_Cell(OUT, spare_location_dual);
+        Unliftify_Undecayed(OUT);  // already decayed if it was non-meta
     }
 
-    Unliftify_Undecayed(OUT);  // pass through all forms
-    if (not Any_Metaform(var))
-        Decay_If_Unstable(OUT);  // only pass decay'd forms
+    Drop_Level(sub);
 
-    if (steps_out and steps_out != GROUPS_OK) {
-        if (steps_out != var)  // could be true if GROUP eval
-            Copy_Cell(unwrap steps_out, var);
+    goto return_success;
 
-        // If the variable is a compressed path form like `a.` then turn
-        // it into a plain word.
-        //
-        HEART_BYTE(unwrap steps_out) = TYPE_WORD;
-        Pinify(unwrap steps_out);  // !!! should we always pinify steps?
-    }
-    return false;  // did not throw
-
-} handle_var_as_sequence: {
+} handle_scratch_var_as_sequence: {
 
     // If we have a sequence, then GROUP!s must be evaluated.  (If we're given
     // a steps array as input, then a GROUP! is literally meant as a
     // GROUP! by value).  These evaluations should only be allowed if the
     // caller has asked us to return steps.
 
-    if (not Sequence_Has_Node(var))  // compressed byte form
-        panic (var);
+    if (not Sequence_Has_Node(scratch_var))  // compressed byte form
+        panic (scratch_var);
 
-    const Node* node1 = CELL_NODE1(var);
+    const Node* node1 = CELL_NODE1(scratch_var);
     if (Is_Node_A_Cell(node1)) {  // pair optimization
         // pairings considered "Listlike", handled by Cell_List_At()
     }
     else switch (Stub_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL: {
-        if (Get_Cell_Flag(var, LEADING_SPACE)) {  // `/a` or `.a`
-            if (Heart_Of(var) == TYPE_TUPLE) {
-                Context* context = Cell_Binding(var);
+        if (Get_Cell_Flag(scratch_var, LEADING_SPACE)) {  // `/a` or `.a`
+            panic ("Leading dot selection is being redesigned.");
+            /*if (Heart_Of(scratch_var) == TYPE_TUPLE) {
+                Context* context = Cell_Binding(scratch_var);
                 context = Adjust_Context_For_Coupling(context);
-                Tweak_Cell_Binding(var, context);
+                Tweak_Cell_Binding(scratch_var, context);
             }
-            goto handle_var_as_wordlike;
+            goto handle_scratch_var_as_wordlike;*/
         }
 
         // `a/` or `a.`
@@ -946,180 +1087,278 @@ bool Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
         // !!! If this is a PATH!, it should error if it's not an action...
         // and if it's a TUPLE! it should error if it is an action.  Review.
         //
-        goto handle_var_as_wordlike; }
+        goto handle_scratch_var_as_wordlike; }
 
       case FLAVOR_SOURCE:
         break;  // fall through
 
       default:
-        crash (var);
+        crash (scratch_var);
     }
 
     const Element* tail;
-    const Element* head = Cell_List_At(&tail, var);
+    const Element* head = Cell_List_At(&tail, scratch_var);
     const Element* at;
-    Context* at_binding = Cell_Binding(var);
+    Context* at_binding = Cell_Binding(scratch_var);
     for (at = head; at != tail; ++at) {
-        if (Is_Group(at)) {
-            if (not steps_out)
-                panic (Error_Bad_Get_Group_Raw(var));
-
-            DECLARE_ATOM (temp);
-            if (Eval_Any_List_At_Throws(temp, at, at_binding)) {
-                Drop_Data_Stack_To(base);
-                return true;
-            }
-            Decay_If_Unstable(temp);
-            if (Is_Antiform(temp))
-                panic (Error_Bad_Antiform(temp));
-
-            Move_Cell(PUSH(), cast(Element*, temp));
-            if (at == head)
-                Quotify(TOP_ELEMENT);  // signal not literally the head
-        }
-        else  // Note: must keep WORD!s at head as-is for writeback
+        if (not Is_Group(at)) {  // must keep WORD!s at head as-is for writeback
+            possibly(Is_Quoted(at));  // will be interpreted "literally"
             Derelativize(PUSH(), at, at_binding);
+            continue;
+        }
+
+        if (not groups_ok)
+            panic (Error_Bad_Get_Group_Raw(scratch_var));
+
+        if (Eval_Any_List_At_Throws(SPARE, at, at_binding)) {
+            Drop_Data_Stack_To(base);
+            e = Error_No_Catch_For_Throw(TOP_LEVEL);
+            goto finalize_and_return;
+        }
+        Decay_If_Unstable(SPARE);
+        if (Is_Antiform(SPARE))
+            panic (Error_Bad_Antiform(SPARE));
+
+        Move_Cell(PUSH(), Known_Element(SPARE));  // PICKER for PICKPOKE
+        Quotify(TOP_ELEMENT);  // signal literal pick
     }
 
     goto set_from_steps_on_stack;
 
-} handle_var_as_pinned_steps_block: {
+} handle_scratch_var_as_pinned_steps_block: {
 
     const Element* tail;
-    const Element* head = Cell_List_At(&tail, var);
+    const Element* head = Cell_List_At(&tail, scratch_var);
     const Element* at;
-    Context* at_binding = Cell_Binding(var);
+    Context* at_binding = Cell_Binding(scratch_var);
     for (at = head; at != tail; ++at)
         Derelativize(PUSH(), at, at_binding);
 
     goto set_from_steps_on_stack;
 
-} set_from_steps_on_stack: {
+}} set_from_steps_on_stack: { ////////////////////////////////////////////////
 
-    assert(Is_Action(updater));  // we will use rebM() on it
+    possibly(not Is_Stable(OUT));
 
-    DECLARE_VALUE (writeback);
-    Push_Lifeguard(writeback);
+    Option(Atom*) atom_poke_if_not_on_stack = OUT;  // writeback becomes null
 
-    DECLARE_ATOM (temp);
-    Init_Unreadable(temp);
-    Push_Lifeguard(temp);
+    stackindex_top = TOP_INDEX;
 
-    StackIndex stackindex_top = TOP_INDEX;
-
-  poke_again: {
+  poke_again: { //////////////////////////////////////////////////////////////
 
     StackIndex stackindex = base + 1;
 
   do_stack_thing: {
 
     OnStack(Element*) at = Data_Stack_At(Element, stackindex);
-    if (Is_Quoted(at)) {
-        Unquotify(Copy_Cell(spare, at));
+    if (Is_Quoted(at)) {  // don't dereference
+        Copy_Cell(spare_location_dual, at);  // dual protocol, leave lifted
     }
     else if (Is_Word(at)) {
         const Value* slot;
-        Option(Error*) error = Trap_Lookup_Word(
-            &slot, cast(Element*, at), SPECIFIED
-        );
+        Option(Error*) error = Trap_Lookup_Word(&slot, at, SPECIFIED);
         if (error)
             panic (unwrap error);
-        Copy_Cell(spare, slot);
+        if (Any_Lifted(slot))
+            panic ("Can't PICK from a lifted LOCATION");
+        if (Is_Antiform(slot)) {
+            if (Is_Action(slot))
+                QUOTE_BYTE(slot) = NOQUOTE_1;  // (append.series) -> parameter!
+            else
+                panic (Error_Bad_Antiform(slot));
+        }
+        Copy_Cell(spare_location_dual, Known_Element(slot));
+        Liftify(spare_location_dual);  // dual protocol, lift
     }
     else
-        panic (Copy_Cell(spare, at));
-
-} keep_picking_until_last_step:
+        panic (Copy_Cell(SPARE, at));
 
     ++stackindex;
 
-    while (stackindex != stackindex_top) {
-        Move_Cell(temp, spare);
-        Quotify(Known_Element(temp));
-        const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
-        if (rebRunThrows(
-            spare,  // <-- output cell
-            CANON(PICK), temp, ins
-        )){
-            Drop_Lifeguard(temp);
-            Drop_Lifeguard(writeback);
-            panic (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let PICKs throw
+} calculate_pick_stack_limit:
+
+    StackIndex limit = stackindex_top;
+    if (not updater)
+        limit = stackindex_top + 1;
+
+    if (stackindex == limit)
+        goto check_for_updater;
+
+  keep_picking_until_last_step: {
+
+    Level* sub = Make_End_Level(&Action_Executor, flags);
+
+    for (; stackindex != limit; Restart_Action_Level(sub)) {
+        e = Trap_Call_Pick_Refresh_Dual_In_Spare(
+            level_, sub, stackindex
+        );
+        if (e) {
+            unnecessary(Drop_Level(sub));  // Call_Pick_P() drops on error
+
+            if (stackindex == limit - 1)
+                goto return_error;  // last step, interceptible error
+
+            panic (unwrap e);  // intermediate step, must abrupt panic
         }
         ++stackindex;
     }
 
-  perform_update: {
+    Drop_Level(sub);
+
+} check_for_updater: {
+
+    // 1. SPARE was picked via dual protocol.  At the moment of the PICK,
+    //    the picker may have been ^META, in which case we wouldn't want to
+    //    decay... but otherwise we would.  But that decay was already done
+    //    (it just re-lifted it) so the undecayed won't make an unstable
+    //    value here if the picker wasn't ^META.
+
+    if (not updater) {
+        Copy_Cell(OUT, spare_location_dual);
+        Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]
+        goto return_success;
+    }
 
     // This may be the first time we do an update, or it may be a writeback
     // as we go back through the list of steps to update any bits that are
     // required to update in the referencing cells.
 
-    possibly(lifted_poke == Known_Element(OUT));  // may be new writeback
+    Level* sub = Make_End_Level(&Action_Executor, flags);
 
-    Move_Cell(temp, spare);
-    QuoteByte quote_byte = QUOTE_BYTE(temp);
-    QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
-    const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
-    assert(Is_Action(updater));
-    if (rebRunThrows(
-        spare,  // <-- output cell
-        rebRUN(updater), temp, ins, lifted_poke
-    )){
-        Drop_Lifeguard(temp);
-        Drop_Lifeguard(writeback);
-        panic (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let POKEs throw
+    e = Trap_Updater_Spare_Is_Dual_Put_Writeback_In_Spare(
+        level_,
+        sub,
+        stackindex,  // picker_index
+        atom_poke_if_not_on_stack,
+        unwrap updater
+    );
+    if (e) {
+        unnecessary(Drop_Level(sub));  // Call_Poke_P() drops on error
+        goto return_error;
     }
 
-  force_updater_to_poke: {
+    Atom* spare_writeback = SPARE;
+
+    Drop_Level(sub);
 
     // Subsequent updates become pokes, regardless of initial updater function
 
-    possibly(updater == LIB(POKE_P));
-    updater = LIB(POKE_P);
+    if (not Is_Nulled(spare_writeback)) {
+        if (stackindex_top == base + 1)
+            panic ("Last POKE* step in POKE gave non-null cell writeback bits");
 
-} do_a_writeback:
+        Move_Atom(Data_Stack_At(Atom, TOP_INDEX), spare_writeback);
+        Liftify(Data_Stack_At(Atom, TOP_INDEX));  // ^-- want unsurprising bit
 
-    if (not Is_Nulled(spare)) {
-        Move_Cell(writeback, spare);
-        QUOTE_BYTE(writeback) = quote_byte;
-        Liftify(writeback);
-        lifted_poke = Known_Element(writeback);
+        possibly(atom_poke_if_not_on_stack == nullptr);
+        atom_poke_if_not_on_stack = nullptr;  // signal it's on stack now
 
         --stackindex_top;
 
-        if (stackindex_top != base + 1)
-            goto poke_again;
+        possibly(updater == LIB(POKE_P));
+        updater = LIB(POKE_P);
 
-        // can't use POKE, need to use SET
-        if (not Is_Word(Data_Stack_At(Element, base + 1)))
-            panic ("Can't POKE back immediate value unless it's to a WORD!");
-
-        if (Is_Lifted_Void(lifted_poke))
-            panic ("Can't writeback POKE immediate with VOID at this time");
-
-        Sink(Value) sink = Sink_Word_May_Panic(
-            Data_Stack_At(Element, base + 1),
-            SPECIFIED
-        );
-
-        Copy_Cell(sink, lifted_poke);
-        Unliftify_Decayed(sink);
+        goto poke_again;
     }
 
-    Drop_Lifeguard(temp);
-    Drop_Lifeguard(writeback);
+    goto return_success;
 
-    if (steps_out and steps_out != GROUPS_OK)
-        Init_Block(unwrap steps_out, Pop_Source_From_Stack(base));
-    else
+}} return_error: { ///////////////////////////////////////////////////////////
+
+    assert(e);
+    Drop_Data_Stack_To(base);
+    goto finalize_and_return;
+
+}} return_success: { //////////////////////////////////////////////////////////
+
+    assert(not e);
+    goto finalize_and_return;
+
+} finalize_and_return: { /////////////////////////////////////////////////////
+
+  #if RUNTIME_CHECKS
+    Init_Unreadable(SPARE);
+    Unprotect_Cell(SCRATCH);
+  #endif
+
+    return e;
+}}
+
+
+//
+//  Trap_Update_Var_In_Scratch_With_Out_Uses_Spare: C
+//
+Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
+    Level* level_,
+    Option(Element*) steps_out,  // no GROUP!s if nulled
+    Option(const Value*) updater  // function to write last step (e.g. POKE*)
+){
+    possibly(SPARE == steps_out or SCRATCH == steps_out);
+
+    assert(STATE != STATE_0);  // trampoline rule: OUT only erased if STATE_0
+
+    dont(assert(TOP_INDEX == STACK_BASE));  // Hmmm, why not?
+    StackIndex base = TOP_INDEX;
+
+    Option(Error*) e;
+    e = Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
+        level_,
+        steps_out != NO_STEPS,
+        updater
+    );
+    if (e)
+        return e;
+
+    if (not steps_out or steps_out == GROUPS_OK) {
         Drop_Data_Stack_To(base);
+        return SUCCESS;
+    }
 
-    Unliftify_Undecayed(OUT);
-    if (not Any_Metaform(var))
-        Decay_If_Unstable(OUT);
+    if (TOP_INDEX == base + 1 and Is_Word(TOP_ELEMENT)) {
+        Copy_Cell(unwrap steps_out, TOP_ELEMENT);
+        DROP();
+    }
+    else
+        Init_Block(unwrap steps_out, Pop_Source_From_Stack(base));
 
-    return false;
-}}}}
+    Pinify(unwrap steps_out);  // steps are @[bl o ck] or @word
+
+    return SUCCESS;
+}
+
+
+//
+//  Trap_Set_Var_In_Scratch_To_Out_Uses_Spare: C
+//
+Option(Error*) Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
+    Level* level_,
+    Option(Element*) steps_out  // no GROUP!s if nulled
+){
+    return Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
+        level_,
+        steps_out,
+        LIB(POKE_P)  // typical "update" step is a complete overwite (a POKE)
+    );
+}
+
+
+//
+//  Trap_Get_Var_In_Scratch_To_Out_Uses_Spare: C
+//
+Option(Error*) Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
+    Level* level_,
+    Option(Element*) steps_out  // no GROUP!s if nulled
+){
+  #if RUNTIME_CHECKS
+    Init_Unreadable(OUT);  // written, but shouldn't be read
+  #endif
+
+    return Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
+        level_,
+        steps_out,
+        nullptr  // if no updater, then it's a GET
+    );
+}
 
 
 //
@@ -1145,6 +1384,11 @@ DECLARE_NATIVE(SET)
 //    an urgent priority, but it needs to be done.
 {
     INCLUDE_PARAMS_OF_SET;
+
+    enum {
+        ST_SET_INITIAL_ENTRY = STATE_0,
+        ST_SET_SETTING  // trampoline rule: OUT must be erased if STATE_0
+    };
 
     Element* lifted_setval = Element_ARG(VALUE);
 
@@ -1211,17 +1455,22 @@ DECLARE_NATIVE(SET)
         // (more general filtering available via accessors)
     }
 
-    Copy_Cell_Core(OUT, lifted_setval, CELL_MASK_THROW);  // set unlifts
+    Copy_Cell_Core(OUT, lifted_setval, CELL_MASK_THROW);
+    Unliftify_Undecayed(OUT);
+
     Copy_Cell(SCRATCH, target);
 
-    if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
-        LEVEL, steps, LIB(POKE_P)
-    )){
+    STATE = ST_SET_SETTING;  // we'll be setting out to something not erased
+
+    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
+        LEVEL, steps
+    );
+    if (e) {
         assert(steps or Is_Throwing_Panic(LEVEL));  // throws must eval [1]
-        return THROWN;
+        return PANIC(unwrap e);
     }
 
-    return UNLIFT(lifted_setval);  // even if we don't assign, pass through [2]
+    return OUT;  // even if we don't assign, pass through [2]
 }}
 
 

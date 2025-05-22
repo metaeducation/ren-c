@@ -1136,12 +1136,12 @@ DECLARE_NATIVE(DEFAULT)
 
     assert(Any_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
 
-    Liftify(OUT);
-    if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
-        LEVEL, NO_STEPS, LIB(POKE_P)
-    )){
+    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
+        LEVEL, NO_STEPS
+    );
+    if (e) {
         assert(false);  // shouldn't be able to happen (steps is pinned)
-        return PANIC(Error_No_Catch_For_Throw(LEVEL));
+        return PANIC(unwrap e);
     }
 
     return OUT;

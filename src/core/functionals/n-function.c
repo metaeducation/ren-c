@@ -603,6 +603,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
             and (details != Cell_Frame_Phase(LIB(LET)))  // review
+            and (details != Cell_Frame_Phase(LIB(SET)))  // review
         ){
             assert(!"NATIVE relies on typechecking for UNSURPRISING flag");
         }
@@ -620,6 +621,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
             and (details != Cell_Frame_Phase(LIB(LET)))  // review
+            and (details != Cell_Frame_Phase(LIB(SET)))  // review
         ){
             assert(!"NATIVE relies on typechecking for SURPRISING flag");
         }

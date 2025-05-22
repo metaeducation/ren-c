@@ -388,29 +388,30 @@ DECLARE_NATIVE(PROTECT)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
-    Element* e = Element_ARG(VALUE);
-    if (Any_Word(e) or Is_Tuple(e)) {
+    Element* v = Element_ARG(VALUE);
+
+    if (Any_Word(v) or Is_Tuple(v)) {
         if (Bool_ARG(HIDE))
             Init_Word(OUT, CANON(HIDE));
         else
             Init_Word(OUT, CANON(PROTECT));
 
-        Copy_Cell(SCRATCH, e);
-        Liftify(OUT);
+        Copy_Cell(SCRATCH, v);
 
-        if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
+        Option(Error*) e = Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
             LEVEL, NO_STEPS, LIB(PROTECT_P)
-        )){
-            return THROWN;
-        }
-        return COPY(e);
+        );
+        if (e)
+            return PANIC(unwrap e);
+
+        return COPY(v);
     }
 
     // Avoid unused parameter warnings (core routine handles them via level_)
     //
-    UNUSED(PARAM(DEEP));
-    UNUSED(PARAM(WORDS));
-    UNUSED(PARAM(VALUES));
+    USED(PARAM(DEEP));
+    USED(PARAM(WORDS));
+    USED(PARAM(VALUES));
 
     Flags flags = PROT_SET;
 
@@ -442,27 +443,28 @@ DECLARE_NATIVE(UNPROTECT)
 
     // Avoid unused parameter warnings (core handles them via frame)
     //
-    UNUSED(PARAM(VALUE));
-    UNUSED(PARAM(DEEP));
-    UNUSED(PARAM(WORDS));
-    UNUSED(PARAM(VALUES));
+    USED(PARAM(VALUE));
+    USED(PARAM(DEEP));
+    USED(PARAM(WORDS));
+    USED(PARAM(VALUES));
 
     if (Bool_ARG(HIDE))
         panic ("Cannot un-hide an object field once hidden");
 
-    Element* e = Element_ARG(VALUE);
-    if (Any_Word(e) or Is_Tuple(e)) {
+    Element* v = Element_ARG(VALUE);
+
+    if (Any_Word(v) or Is_Tuple(v)) {
         Init_Word(OUT, CANON(UNPROTECT));
 
-        Liftify(OUT);
-        Copy_Cell(SCRATCH, e);
+        Copy_Cell(SCRATCH, v);
 
-        if (Set_Var_In_Scratch_To_Unlift_Out_Uses_Spare_Throws(
+        Option(Error*) e = Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
             LEVEL, NO_STEPS, LIB(PROTECT_P)
-        )){
-            return THROWN;
-        }
-        return COPY(e);
+        );
+        if (e)
+            return PANIC(unwrap e);
+
+        return COPY(v);
     }
 
     return Protect_Unprotect_Core(level_, PROT_WORD);
