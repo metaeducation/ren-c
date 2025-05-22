@@ -634,6 +634,20 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 ]
 
 
+; Add ANY-PLAIN? to be anything that's not meta/tied/pinned/quoted/quasi.
+(
+    e-typeset-bytes/emit [ts-name -[
+        any-plain $<index>
+    ]-]
+
+    append typeset-flags cscape [tr --[
+        /* $<index> - any-plain */
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(u_cast(Byte, MAX_HEART))
+    ]--]
+    index: index + 1
+)
+
+
 ; Add ANY-FUNDAMENTAL? to go right up to the max heart byte (don't include
 ; quoted or quasi).  Include TYPE_0 for ExtraHeart types.
 (

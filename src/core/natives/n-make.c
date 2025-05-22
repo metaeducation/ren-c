@@ -300,9 +300,9 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 //  "Converts to a specified datatype, copying any underying data"
 //
 //      return: "ELEMENT converted to TYPE (copied if same type as ELEMENT)"
-//          [element?]
+//          [plain?]
 //      type [<opt-out> datatype!]
-//      element [<opt-out> fundamental? datatype!]
+//      element [<opt-out> plain? datatype!]
 //  ]
 //
 DECLARE_NATIVE(TO)
@@ -351,9 +351,9 @@ DECLARE_NATIVE(TO)
 //
 //  "Aliases underlying data of one value to act as another of same class"
 //
-//      return: [null? fundamental?]
+//      return: [null? plain?]
 //      type [datatype!]
-//      element [<opt-out> fundamental?]
+//      element [<opt-out> plain?]
 //  ]
 //
 DECLARE_NATIVE(AS)

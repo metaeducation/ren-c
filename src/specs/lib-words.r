@@ -38,6 +38,7 @@ NUL
 atom?
 element?
 fundamental?
+plain?
 quasi?
 bindable?
 

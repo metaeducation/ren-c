@@ -154,7 +154,7 @@ DECLARE_NATIVE(PICK_P)
 //
 //      return: "Picked value, or null if picker can't fulfill the request"
 //          [any-value?]
-//      location [<opt-out> <unrun> fundamental?]  ; can't pick from quoted/quasi
+//      location [<opt-out> <unrun> plain?]  ; can't pick sigil'd/quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> element? logic?]
 //  ]

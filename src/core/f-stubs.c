@@ -676,7 +676,7 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
 //  "Convert a value to its ^XXX metaform representation"
 //
 //      return: "Error if already metaform/tied/pinned and not :FORCE"
-//          [error! ^fundamental?]  ; should be ^plain?
+//          [error! ^plain?]
 //      value [<opt-out> fundamental?]
 //      :force "Apply lift, even if already metaform/tied/pinned"
 //  ]
@@ -693,7 +693,7 @@ DECLARE_NATIVE(META)
 //  "Convert a value to its @XXX pinned representation"
 //
 //      return: "Error if already metaform/tied/pinned and not :FORCE"
-//          [error! @fundamental?]  ; should be @plain?
+//          [error! @plain?]
 //      value [<opt-out> fundamental?]
 //      :force "Apply pin, even if already metaform/tied/pinned"
 //  ]
@@ -710,7 +710,7 @@ DECLARE_NATIVE(PIN)
 //  "Convert a value to its $XXX tied representation"
 //
 //      return: "Error if already metaform/tied/pinned and not :FORCE"
-//          [error! $fundamental?]  ; should be $plain?
+//          [error! $plain?]
 //      value [<opt-out> fundamental?]
 //      :force "Apply tie, even if already metaform/tied/pinned"
 //  ]
@@ -747,7 +747,7 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
 //  "Convert ^XXX metaform representation to plain XXX"
 //
 //      return: "Error if value not metaform"
-//          [null? fundamental? error!]  ; should return `plain?`
+//          [null? plain? error!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -763,7 +763,7 @@ DECLARE_NATIVE(UNMETA)
 //  "Convert @XXX pinned representation to plain XXX"
 //
 //      return: "Error if value not pinned"
-//          [null? fundamental? error!]  ; should return plain?
+//          [null? plain? error!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -779,7 +779,7 @@ DECLARE_NATIVE(UNPIN)
 //  "Convert ^XXX tied representation to plain XXX"
 //
 //      return: "Error if value not tied"
-//          [null? fundamental? error!]  ; should return plain?
+//          [null? plain? error!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -794,7 +794,7 @@ DECLARE_NATIVE(UNTIE)
 //
 //  "Convert a value into its plain representation"
 //
-//      return: [null? element?]  ; should return plain?
+//      return: [null? plain?]
 //      element [<opt-out> element?]
 //  ]
 //

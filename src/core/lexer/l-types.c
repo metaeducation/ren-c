@@ -141,7 +141,7 @@ DECLARE_NATIVE(SIGIL_Q)
 //  "Get the length (in series units, e.g. codepoints) of series or other type"
 //
 //      return: [null? integer!]
-//      element [<opt-out> fundamental?]  ; not quoted or quasi [1]
+//      element [<opt-out> plain?]  ; not quoted/quasi/sigil'd [1]
 //  ]
 //
 DECLARE_NATIVE(LENGTH_OF)

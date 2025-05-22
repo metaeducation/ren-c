@@ -91,6 +91,7 @@ void Startup_Type_Predicates(void)
 
     // Shorthands used in native specs, so have to be available in boot
     //
+    Copy_Cell(Mutable_Lib_Var(SYM_PLAIN_Q), LIB(ANY_PLAIN_Q));
     Copy_Cell(Mutable_Lib_Var(SYM_FUNDAMENTAL_Q), LIB(ANY_FUNDAMENTAL_Q));
     Copy_Cell(Mutable_Lib_Var(SYM_ELEMENT_Q), LIB(ANY_ELEMENT_Q));
     Copy_Cell(Mutable_Lib_Var(SYM_QUASI_Q), LIB(QUASIFORM_Q));
