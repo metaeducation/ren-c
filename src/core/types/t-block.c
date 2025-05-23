@@ -947,33 +947,61 @@ IMPLEMENT_GENERIC(PICK_P, Any_List)
 }
 
 
-IMPLEMENT_GENERIC(POKE_P, Any_List)
+IMPLEMENT_GENERIC(POKE_P, Any_Series)
 {
     INCLUDE_PARAMS_OF_POKE_P;
 
-    Element* list = Element_ARG(LOCATION);
+    Element* series = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
-    if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(DUAL));
-    const Element* poke = c_cast(Element*, unwrap opt_poke);
+    REBINT n;
+    if (Any_List(series))
+        n = Try_Get_Array_Index_From_Picker(series, picker);
+    else {
+        if (not Try_Get_Series_Index_From_Picker(&n, series, picker))
+            return PANIC(Error_Out_Of_Range(picker));
+    }
 
-    // !!! If we are jumping here from getting updated bits, then
-    // if the block isn't immutable or locked from modification, the
-    // memory may have moved!  There's no way to guarantee semantics
-    // of an update if we don't lock the array for the poke duration.
-    //
-    REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
-    if (n < 0 or n >= Cell_Series_Len_Head(list))
+    if (n < 0 or n >= Cell_Series_Len_Head(series))
         return PANIC(Error_Out_Of_Range(picker));
 
-    Array* mut_arr = Cell_Array_Ensure_Mutable(list);
-    Element* at = Array_At(mut_arr, n);
-    Copy_Cell(at, poke);
+    bool signal;
+    Option(const Value*) poke = Dual_ARG(&signal, DUAL);
+    if (signal) {
+        if (poke)  // any non-remove signal
+            return PANIC(Error_Bad_Poke_Dual_Raw(unwrap poke));
+    }
+    else if (
+        not poke
+        or (Is_Antiform(unwrap poke) and not Is_Splice(unwrap poke))
+    ){
+        return PANIC(PARAM(DUAL));
+    }
+
+  call_modify: {
+
+    // We use the same mechanics that CHANGE with :PART of 1 does.  This means
+    // that poking into an array slot can erase elements entirely with VOID,
+    // or put splices in--basically whatever CHANGE allows.
+
+    REBLEN part = 1;  // overwrite one element's worth of content
+    REBLEN dups = 1;  // write exactly one copy of the material
+
+    if (Any_List(series)) {
+        Source* arr = Cell_Array_Ensure_Mutable(series);
+        Modify_Array(arr, n, SYM_CHANGE, poke, AM_PART, part, dups);
+    }
+    else if (Any_String(series)) {
+        VAL_INDEX_RAW(series) = n;
+        Modify_String_Or_Binary(series, SYM_CHANGE, poke, AM_PART, part, dups);
+    }
+    else {
+        VAL_INDEX_RAW(series) = n;
+        Modify_String_Or_Binary(series, SYM_CHANGE, poke, AM_PART, part, dups);
+    }
 
     return NO_WRITEBACK_NEEDED;  // Array* in Cell stays the same
-}
+}}
 
 
 IMPLEMENT_GENERIC(TAKE, Any_List)

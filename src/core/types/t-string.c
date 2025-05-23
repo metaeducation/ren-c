@@ -1080,42 +1080,6 @@ IMPLEMENT_GENERIC(PICK_P, Any_String)
 }
 
 
-IMPLEMENT_GENERIC(POKE_P, Any_String)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
-
-    Element* any_string = Element_ARG(LOCATION);
-
-    const Element* picker = Element_ARG(PICKER);
-    REBINT n;
-    if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
-        return PANIC(Error_Out_Of_Range(picker));
-
-    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
-    if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(DUAL));
-    const Element* poke = c_cast(Element*, unwrap opt_poke);
-
-    Codepoint c;
-    if (IS_CHAR(poke)) {
-        c = Cell_Codepoint(poke);
-    }
-    else if (Is_Integer(poke)) {
-        c = Int32(poke);
-    }
-    else  // CHANGE is a better route for splicing/removal/etc.
-        return PANIC(PARAM(DUAL));
-
-    if (c == 0)
-        return PANIC(Error_Illegal_Zero_Byte_Raw());
-
-    String* s = Cell_String_Ensure_Mutable(any_string);
-    Set_Char_At(s, n, c);
-
-    return NO_WRITEBACK_NEEDED;  // String* in Cell unchanged
-}
-
-
 IMPLEMENT_GENERIC(TAKE, Any_String)
 {
     INCLUDE_PARAMS_OF_TAKE;

@@ -743,46 +743,6 @@ IMPLEMENT_GENERIC(PICK_P, Is_Blob)
 }
 
 
-IMPLEMENT_GENERIC(POKE_P, Is_Blob)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
-
-    Element* blob = Element_ARG(LOCATION);
-
-    const Element* picker = Element_ARG(PICKER);
-    REBINT n;
-    if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
-        return PANIC(Error_Out_Of_Range(picker));
-
-    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
-    if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(DUAL));
-    const Element* poke = c_cast(Element*, unwrap opt_poke);
-
-    REBINT i;
-    if (IS_CHAR(poke)) {
-        i = Cell_Codepoint(poke);
-    }
-    else if (Is_Integer(poke)) {
-        i = Int32(poke);
-    }
-    else {
-        // !!! See notes in the IMPLEMENT_GENERIC(POKE_P, Any_String)
-        // about alternate cases for the POKE'd value.
-        //
-        return PANIC(PARAM(DUAL));
-    }
-
-    if (i > 0xff)
-        return PANIC(Error_Out_Of_Range(poke));
-
-    Binary* bin = Cell_Binary_Ensure_Mutable(blob);
-    Binary_Head(bin)[n] = cast(Byte, i);
-
-    return NO_WRITEBACK_NEEDED;  // updated indirectly through Binary*
-}
-
-
 IMPLEMENT_GENERIC(TAKE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_TAKE;

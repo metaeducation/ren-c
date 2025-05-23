@@ -48,6 +48,10 @@ REBLEN Modify_Array(
     const Value* src_val;
     if (op == SYM_CHANGE and not opt_src) {
         src_val = LIB(BLANK);  // CHANGE to void acts same as with empty splice
+        if (not (flags & AM_PART)) {
+            flags |= AM_PART;  // no PART with VOID erases one item...
+            part = 1;  // ...but erases one item
+        }
     }
     else if (not opt_src or dups <= 0) {
         //
