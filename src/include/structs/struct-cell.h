@@ -284,12 +284,9 @@ typedef Byte QuoteByte;  // help document when Byte means a quoting byte
     FLAG_LEFT_BIT(24)  // NOTE: Must be SAME BIT as FEED_FLAG_CONST
 
 
-//=//// CELL_FLAG_VAR_IS_ACCESSOR /////////////////////////////////////////=//
+//=//// CELL_FLAG_25 //////////////////////////////////////////////////////=//
 //
-// WIP: Accessor feature.  This bit could be multiplexed with other features,
-// as it only applies to variable-bearing cells.
-//
-#define CELL_FLAG_VAR_IS_ACCESSOR \
+#define CELL_FLAG_25 \
     FLAG_LEFT_BIT(25)
 
 

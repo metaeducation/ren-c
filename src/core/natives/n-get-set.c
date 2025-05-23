@@ -63,47 +63,6 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 }
 
 
-// This is the core implementation of Trap_Get_Any_Word(), that allows being
-// called on "wordlike" sequences (like `.a` or `a/`).  But there are no
-// special adjustments for sequences like `.a`
-//
-static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Trash(
-    Sink(Value) out,
-    const Element* word,  // sigils ignored (^WORD! doesn't "meta-get")
-    Context* context  // context for `.xxx` tuples not adjusted
-){
-    assert(Wordlike_Cell(word));
-
-    const Value* lookup;
-    Option(Error*) error = Trap_Lookup_Word(&lookup, word, context);
-    if (error)
-        return error;
-
-    if (not (lookup->header.bits & CELL_FLAG_VAR_IS_ACCESSOR)) {
-        Copy_Cell(out, lookup);  // non-accessor variable, just plain value
-        return SUCCESS;
-    }
-
-    assert(Heart_Of(lookup) == TYPE_FRAME);  // alias accessors as WORD! ?
-    assert(QUOTE_BYTE(lookup) == ANTIFORM_0);
-
-    DECLARE_ELEMENT (accessor);
-    Push_Lifeguard(accessor);
-    accessor->header.bits |= (
-        NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
-        | (lookup->header.bits & CELL_MASK_COPY & (~ NODE_FLAG_UNREADABLE))
-    );
-    accessor->extra = lookup->extra;
-    accessor->payload = lookup->payload;
-    QUOTE_BYTE(accessor) = NOQUOTE_1;
-
-    bool threw = rebRunThrows(out, accessor);  // run accessor as GET
-    Drop_Lifeguard(accessor);
-    if (threw)
-        return Error_No_Catch_For_Throw(TOP_LEVEL);
-    return SUCCESS;
-}
-
 
 //
 //  Trap_Get_Tuple_Maybe_Trash: C
@@ -160,11 +119,14 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Any_Word(var)) {
-        Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Trash(
-            out, var, context
+        const Value* slot;
+        Option(Error*) error = Trap_Lookup_Word(
+            &slot, var, context
         );
         if (error)
             return error;
+
+        Copy_Cell(out, slot);
 
         if (steps_out and steps_out != GROUPS_OK)
             Pinify(Derelativize(unwrap steps_out, var, context));
@@ -534,14 +496,12 @@ Option(Error*) Trap_Get_Any_Word(
 ){
     assert(Sigil_Of(word) == SIGIL_0);
 
-    Sink(Atom) atom = cast(Atom*, out);
-    Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Trash(
-        atom, word, context
-    );
+    const Value* slot;
+    Option(Error*) error = Trap_Lookup_Word(&slot, word, context);
     if (error)
         return error;
 
-    assert(Is_Stable(atom));
+    Copy_Cell(out, slot);
 
     if (Is_Trash(out))
         return Error_Bad_Word_Get(word, out);
@@ -562,9 +522,12 @@ Option(Error*) Trap_Get_Any_Word_Maybe_Trash(
     Context* context
 ){
     assert(Any_Word(word));
-    Option(Error*) e = Trap_Get_Wordlike_Cell_Maybe_Trash(out, word, context);
+    const Value* slot;
+    Option(Error*) e = Trap_Lookup_Word(&slot, word, context);
     if (e)
         return e;
+
+    Copy_Cell(out, slot);
 
     switch (Sigil_Of(word)) {
       case SIGIL_0:
@@ -1482,40 +1445,6 @@ DECLARE_NATIVE(SET)
 
     return OUT;  // even if we don't assign, pass through [2]
 }}
-
-
-//
-//  set-accessor: native [
-//
-//  "Put a function in charge of getting/setting a variable's value"
-//
-//      return: []
-//      var [word!]
-//      action [action!]
-//  ]
-//
-DECLARE_NATIVE(SET_ACCESSOR)
-//
-// 1. While Get_Var()/Set_Var() and their variants are specially written to
-//    know about accessors, lower level code is not.  Only code that is
-//    sensitive to the fact that the cell contains an accessor should be
-//    dealing with the raw cell.  We use the read and write protection
-//    abilities to catch violators.
-{
-    INCLUDE_PARAMS_OF_SET_ACCESSOR;
-
-    Element* word = Element_ARG(VAR);
-    Value* action = ARG(ACTION);
-
-    Value* var = Lookup_Mutable_Word_May_Panic(word, SPECIFIED);
-    Copy_Cell(var, action);
-    Set_Cell_Flag(var, VAR_IS_ACCESSOR);
-
-    Set_Cell_Flag(var, PROTECTED);  // help trap unintentional writes [1]
-    Set_Node_Unreadable_Bit(var);  // help trap unintentional reads [1]
-
-    return TRASH;
-}
 
 
 //
