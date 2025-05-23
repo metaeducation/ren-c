@@ -26,7 +26,7 @@
 // * If they do not run any branches, they return NULL.  This will signal
 //   functions like ELSE and THEN.
 //
-//   (The exception is WHEN, which returns VOID).
+//   (The exception is WHEN, which returns VOID)
 //
 // * If a branch *does* run--and its evaluation *happens* to produce NULL--the
 //   null will be wrapped in a BLOCK! antiform ("heavy null").  This way THEN
@@ -42,6 +42,14 @@
 //       THEN got 30
 //
 //   (See Eval_Branch_Throws() for supported ANY-BRANCH? types and behaviors.)
+//
+//=//// NOTES ////////////////////////////////////////////////////////////=//
+//
+// A. Evaluations must be performed through continuations, so things like IF
+//    can't be on the C function stack while the branch runs.  Rather than
+//    asking to be called back after the evaluation so it can turn null into
+//    a "heavy" pack forms, it requests "branch semantics" so the evaluator
+//    does that automatically.  DELEGATE means it doesn't need a callback.
 //
 
 #include "sys-core.h"
@@ -182,9 +190,9 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //
 //  if: native [
 //
-//  "When CONDITION is not NULL, execute branch"
+//  "If CONDITION is not NULL, execute branch, otherwise return NULL"
 //
-//      return: "null if branch not run, otherwise branch result (see HEAVY)"
+//      return: "will be a PACK! containing NULL if branch evaluates to NULL"
 //          [any-atom?]
 //      condition [any-value?]
 //      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
@@ -192,12 +200,6 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //  ]
 //
 DECLARE_NATIVE(IF)
-//
-// 1. Evaluations must be performed through continuations, so IF can't be on
-//    the C function stack while the branch runs.  Rather than asking to be
-//    called back after the evaluation so it can turn null and void into
-//    "heavy" pack forms, it requests "branch semantics" so that the evaluator
-//    does that automatically.  `delegate` means it doesn't need a callback.
 {
     INCLUDE_PARAMS_OF_IF;
 
@@ -210,9 +212,40 @@ DECLARE_NATIVE(IF)
         return PANIC(unwrap e);
 
     if (not cond)
-        return nullptr;  // return "light" null (unboxed) if condition is false
+        return nullptr;  // "light" null (not in a pack) if condition is false
 
-    return DELEGATE_BRANCH(OUT, branch, condition);  // no callback [1]
+    return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
+}
+
+
+//
+//  when: native [
+//
+//  "When CONDITION is not NULL, execute branch, otherwise return VOID"
+//
+//      return: "will be a PACK! containing NULL if branch evaluates to NULL"
+//          [any-atom?]
+//      condition [any-value?]
+//      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
+//          [any-branch?]
+//  ]
+//
+DECLARE_NATIVE(WHEN)
+{
+    INCLUDE_PARAMS_OF_WHEN;
+
+    Value* condition = ARG(CONDITION);
+    Value* branch = ARG(BRANCH);
+
+    bool cond;
+    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
+    if (e)
+        return PANIC(unwrap e);
+
+    if (not cond)
+        return VOID;  // deviation from IF (!)
+
+    return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }
 
 
@@ -221,7 +254,8 @@ DECLARE_NATIVE(IF)
 //
 //  "Choose a branch to execute, based on whether CONDITION is NULL"
 //
-//      return: [any-atom?]
+//      return: "will be a PACK! containing NULL if branch evaluates to NULL"
+//          [any-atom?]
 //      condition [any-value?]
 //      @(okay-branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
@@ -233,25 +267,26 @@ DECLARE_NATIVE(EITHER)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
+    Value* condition = ARG(CONDITION);
+
     bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, ARG(CONDITION));
+    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
     if (e)
         return PANIC(unwrap e);
 
     Value* branch = cond ? ARG(OKAY_BRANCH) : ARG(NULL_BRANCH);
 
-    return DELEGATE_BRANCH(OUT, branch, ARG(CONDITION));  // [1] on IF native
+    return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }
 
 
 //
 //  then?: native [
 //
-//  "Tests for not being a 'pure' null or void (IF THEN? is prefix THEN)"
+//  "Test for NOT being a 'light' null (IF THEN? is prefix THEN)"
 //
 //      return: [logic?]
-//      ^atom "Argument to test"
-//          [any-atom?]
+//      ^atom [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(THEN_Q)
@@ -266,11 +301,10 @@ DECLARE_NATIVE(THEN_Q)
 //
 //  else?: native [
 //
-//  "Test for being a 'pure' null or void (`IF ELSE?` is prefix `ELSE`)"
+//  "Test for being a 'light' null (`IF ELSE?` is prefix `ELSE`)"
 //
 //      return: [logic?]
-//      ^atom "Argument to test"
-//          [any-atom?]
+//      ^atom [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(ELSE_Q)

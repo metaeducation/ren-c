@@ -405,8 +405,8 @@ DECLARE_NATIVE(ANTI)
 //  "Make block arguments splice"
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
-//          [null? void? element? splice!]
-//      ^value [null? void? blank? any-list? quasiform!]  ; see [1] [2] [3]
+//          [null? element? splice!]
+//      value [<opt-out> blank? any-list? quasiform!]  ; see [1] [2]
 //  ]
 //
 DECLARE_NATIVE(SPREAD)
@@ -415,25 +415,18 @@ DECLARE_NATIVE(SPREAD)
 // and there is no particular contention for its design.  SPLICE may be a more
 // complex operation.
 //
-// 1. The current thinking on SPREAD is that it acts as passthru for null and
-//    for void, and whatever you were going to pass the result of spread to
-//    is responsible for raising errors or OPT'ing it.  Seems to work out.
-//
-// 2. Generally speaking, functions are not supposed to conflate quasiforms
+// 1. Generally speaking, functions are not supposed to conflate quasiforms
 //    with their antiforms.  But it seems like being willing to DEGRADE a
 //    ~[]~ or a ~null~ here instead of erroring helps more than it hurts.
 //    Should it turn out to be bad for some reason, this might be dropped.
 //
-// 3. BLANK? is considered EMPTY? and hence legal to use with spread, though
-//    it is already a splice.  This may suggest in general that splicing a
+// 2. BLANK? is considered EMPTY? and hence legal to use with spread, though
+//    it is already a splice.  This may suggest in general that spreading a
 //    splice should be a no-op, but more investigation is needed.
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
-    Option(const Value*) opt_v = Voidable_ARG(VALUE);
-    if (not opt_v or Is_Lifted_Void(unwrap opt_v))  // quasi ok [2]
-        return VOID;  // pass through [1]
-    const Value* v = unwrap opt_v;
+    Value* v = ARG(VALUE);
 
     if (Any_List(v)) {  // most common case
         Copy_Cell(OUT, v);

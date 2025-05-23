@@ -168,7 +168,7 @@ bind construct [
         ; we receive in will automatically bubble up their pending contents in
         ; order of being called.
 
-        (? spread if yes? autopipe '[
+        (? spread when yes? autopipe '[
             let f: binding of $return
 
             pending: blank
