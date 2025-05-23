@@ -820,17 +820,16 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 }}
 
 
-Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
+Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
     Level* level_,
     Level* sub,
     StackIndex picker_index,
-    Option(Atom*) atom_poke_if_not_on_stack,
-    const Value* updater  // possibly POKE_P, or compatible function
+    Option(Value*) dual_poke_if_not_on_stack
 ){
     Atom* spare_location_dual = SPARE;
 
-    Push_Action(sub, updater);
-    Begin_Action(sub, Cell_Frame_Label_Deep(updater), PREFIX_0);
+    Push_Action(sub, LIB(POKE_P));
+    Begin_Action(sub, CANON(POKE_P), PREFIX_0);
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     Element* location_arg;
@@ -868,10 +867,10 @@ Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
         if (Is_Quoted(picker_arg)) {  // literal x.'y or x.('y) => 'y
             Unquotify(picker_arg);
 
-            if (atom_poke_if_not_on_stack)
-                Copy_Lifted_Cell(value_arg, unwrap atom_poke_if_not_on_stack);
+            if (dual_poke_if_not_on_stack)
+                Copy_Cell(value_arg, unwrap dual_poke_if_not_on_stack);
             else {
-                Copy_Cell(value_arg, TOP_ELEMENT);
+                Copy_Cell(value_arg, TOP);
                 DROP();
             }
 
@@ -880,8 +879,8 @@ Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 
         Option(Sigil) picker_sigil = Sigil_Of(picker_arg);
         if (picker_sigil == SIGIL_META) {
-            if (atom_poke_if_not_on_stack)
-                Copy_Lifted_Cell(value_arg, unwrap atom_poke_if_not_on_stack);
+            if (dual_poke_if_not_on_stack)
+                Copy_Cell(value_arg, unwrap dual_poke_if_not_on_stack);
             else {
                 Copy_Cell(value_arg, TOP_ELEMENT);
                 DROP();
@@ -892,16 +891,23 @@ Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 
         // if not meta, needs to decay if unstable
         Value* stable_poke;
-        if (atom_poke_if_not_on_stack) {
-            if (Is_Void(unwrap atom_poke_if_not_on_stack)) {
-                assert(OUT == unwrap atom_poke_if_not_on_stack);
+        if (dual_poke_if_not_on_stack) {
+            if (not Any_Lifted(unwrap dual_poke_if_not_on_stack)) {
+                Copy_Cell(value_arg, unwrap dual_poke_if_not_on_stack);
+                continue;  // dual signal, do not lift dual
+            }
+
+            if (Is_Lifted_Void(unwrap dual_poke_if_not_on_stack)) {
+                assert(OUT == unwrap dual_poke_if_not_on_stack);
                 Init_Nulled(value_arg);
                 continue;  // do not lift dual null
             }
 
-            stable_poke = Decay_If_Unstable(
-                unwrap atom_poke_if_not_on_stack
-            );
+            Atom* atom = unwrap dual_poke_if_not_on_stack;  // !!! FIX
+            Unliftify_Undecayed(atom);
+            Decay_If_Unstable(atom);
+            Liftify(atom);
+            stable_poke = unwrap dual_poke_if_not_on_stack;
         }
         else {
             stable_poke = TOP;
@@ -917,7 +923,7 @@ Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
                 );
             }
         }
-        Copy_Lifted_Cell(value_arg, stable_poke);  // lift it to be ^META arg
+        Copy_Cell(value_arg, stable_poke);  // lift it to be ^META arg
     }
     then {  // not quoted...
         Plainify(picker_arg);  // drop any sigils
@@ -934,10 +940,18 @@ Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 }}
 
 
+// Currently, setting the output cell to trash is how you signal a Tweak
+// operation should act as a GET, not a SET.  This can't overlap with signals
+// that are valid for dual.  It should be something fast to check...
 //
-//  Trap_Update_Var_In_Scratch_With_Out_Push_Steps: C
+#define Is_Tweak_A_Get(L)  Is_Atom_Trash((L)->out)
+#define Mark_Tweak_As_Get(L)  Init_Trash((L)->out)
+
+
 //
-// This is centralized code for setting variables.
+//  Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps: C
+//
+// This is centralized code for setting or "tweaking" variables.
 //
 // **Almost all parts of the system should go through this code for assignment,
 // even when they know they have just a WORD! in their hand and don't need path
@@ -950,10 +964,9 @@ Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 //    evaluation.  (It's better than trying to work "Corrupts_Spare()" into
 //    the already quite-long name of the function.)
 //
-Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
+Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Level* level_,  // SPARE will be overwritten, OUT might be decayed
-    bool groups_ok,
-    Option(const Value*) updater  //  writes the final step (e.g. POKE*)
+    bool groups_ok
 ){
   #if PERFORM_CORRUPTIONS  // caller pre-corrupts spare [1]
     assert(Not_Cell_Readable(SPARE));
@@ -998,16 +1011,14 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
 
     Level* sub = Make_End_Level(&Action_Executor, flags);
 
-    if (updater) {
-        Atom* atom_poke = OUT;
-        possibly(Not_Stable(atom_poke));
+    if (not Is_Tweak_A_Get(LEVEL)) {
+        Value* dual_poke = Known_Stable(OUT);
 
-        e = Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
+        e = Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
             level_,
             sub,
             TOP_INDEX,  // picker_index
-            atom_poke,
-            unwrap updater
+            dual_poke
         );
         if (e) {
             unnecessary(Drop_Level(sub));  // Call_Poke_P() drops on error
@@ -1119,9 +1130,7 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
 
 }} set_from_steps_on_stack: { ////////////////////////////////////////////////
 
-    possibly(Not_Stable(OUT));
-
-    Option(Atom*) atom_poke_if_not_on_stack = OUT;  // writeback becomes null
+    Option(Value*) dual_poke_if_not_on_stack = Known_Stable(OUT);
 
     stackindex_top = TOP_INDEX;
 
@@ -1159,7 +1168,7 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
 } calculate_pick_stack_limit:
 
     StackIndex limit = stackindex_top;
-    if (not updater)
+    if (Is_Tweak_A_Get(LEVEL))
         limit = stackindex_top + 1;
 
     if (stackindex == limit)
@@ -1194,7 +1203,7 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
     //    (it just re-lifted it) so the undecayed won't make an unstable
     //    value here if the picker wasn't ^META.
 
-    if (not updater) {
+    if (Is_Tweak_A_Get(LEVEL)) {
         Copy_Cell(OUT, spare_location_dual);
         Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]
         goto return_success;
@@ -1206,12 +1215,11 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
 
     Level* sub = Make_End_Level(&Action_Executor, flags);
 
-    e = Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
+    e = Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
         level_,
         sub,
         stackindex,  // picker_index
-        atom_poke_if_not_on_stack,
-        unwrap updater
+        dual_poke_if_not_on_stack
     );
     if (e) {
         unnecessary(Drop_Level(sub));  // Call_Poke_P() drops on error
@@ -1230,17 +1238,13 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
     if (stackindex_top == base + 1)
         panic ("Last POKE* step in POKE gave non-null writeback instruction");
 
-    assert(Any_Lifted(spare_writeback_dual));  // TBD: writeback actions?
+    Assert_Cell_Stable(spare_writeback_dual);
     Copy_Cell(Data_Stack_At(Atom, TOP_INDEX), spare_writeback_dual);
-    Unliftify_Known_Stable(TOP);  // must be stable
 
-    possibly(atom_poke_if_not_on_stack == nullptr);
-    atom_poke_if_not_on_stack = nullptr;  // signal it's on stack now
+    possibly(dual_poke_if_not_on_stack == nullptr);
+    dual_poke_if_not_on_stack = nullptr;  // signal it's on stack now
 
     --stackindex_top;
-
-    possibly(updater == LIB(POKE_P));
-    updater = LIB(POKE_P);
 
     goto poke_again;
 
@@ -1268,12 +1272,11 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
 
 
 //
-//  Trap_Update_Var_In_Scratch_With_Out: C
+//  Trap_Tweak_Var_In_Scratch_With_Dual_Out: C
 //
-Option(Error*) Trap_Update_Var_In_Scratch_With_Out(
+Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
     Level* level_,
-    Option(Element*) steps_out,  // no GROUP!s if nulled
-    Option(const Value*) updater  // function to write last step (e.g. POKE*)
+    Option(Element*) steps_out  // no GROUP!s if nulled
 ){
     possibly(SPARE == steps_out or SCRATCH == steps_out);
 
@@ -1283,10 +1286,9 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out(
     StackIndex base = TOP_INDEX;
 
     Option(Error*) e;
-    e = Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
+    e = Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         level_,
-        steps_out != NO_STEPS,
-        updater
+        steps_out != NO_STEPS
     );
     if (e)
         return e;
@@ -1316,11 +1318,13 @@ Option(Error*) Trap_Set_Var_In_Scratch_To_Out(
     Level* level_,
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
-    return Trap_Update_Var_In_Scratch_With_Out(
+    Liftify(OUT);  // must be lifted to be taken literally in dual protocol
+    Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
         level_,
-        steps_out,
-        LIB(POKE_P)  // typical "update" step is a complete overwite (a POKE)
+        steps_out
     );
+    Unliftify_Undecayed(OUT);
+    return e;
 }
 
 
@@ -1331,14 +1335,11 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
     Level* level_,
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
-  #if RUNTIME_CHECKS
-    Init_Unreadable(OUT);  // written, but shouldn't be read
-  #endif
+    heeded(Mark_Tweak_As_Get(level_));  // mark OUT to signal a GET, not a SET
 
-    return Trap_Update_Var_In_Scratch_With_Out(
+    return Trap_Tweak_Var_In_Scratch_With_Dual_Out(
         level_,
-        steps_out,
-        nullptr  // if no updater, then it's a GET
+        steps_out
     );
 }
 

@@ -240,7 +240,7 @@ DECLARE_NATIVE(PICK)
 //      location [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker [<opt-out> element?]
 //      dual "DUAL PROTOCOL: action is accessor, lifted action is action"
-//          [null? action! quoted! quasiform!]
+//          [null? action! word! quoted! quasiform!]
 //  ]
 //
 DECLARE_NATIVE(POKE_P)

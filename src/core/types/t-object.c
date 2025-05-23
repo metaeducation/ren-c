@@ -1050,41 +1050,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
 
-      case SYM_PROTECT_P: {
-        INCLUDE_PARAMS_OF_PROTECT_P;
-        UNUSED(ARG(LOCATION));
-
-        const Element* picker = Element_ARG(PICKER);
-        const Symbol* symbol = Symbol_From_Picker(context, picker);
-
-        Value* setval = ARG(VALUE);
-
-        Value* slot = m_cast(Value*, maybe Cell_Context_Slot(context, symbol));
-        if (not slot)
-            return PANIC(Error_Bad_Pick_Raw(picker));
-
-        if (not Is_Word(setval))
-            return PANIC("PROTECT* currently takes just WORD!");
-
-        switch (Cell_Word_Id(setval)) {
-          case SYM_PROTECT:
-            Set_Cell_Flag(slot, PROTECTED);
-            break;
-
-          case SYM_UNPROTECT:
-            Clear_Cell_Flag(slot, PROTECTED);
-            break;
-
-          case SYM_HIDE:
-            Set_Cell_Flag(slot, VAR_MARKED_HIDDEN);
-            break;
-
-          default:
-            return PANIC(slot);
-        }
-
-        return nullptr; }  // caller's VarList* is not stale, no update needed
-
       case SYM_APPEND:
         panic ("APPEND on OBJECT!, MODULE!, etc. replaced with EXTEND");
 
@@ -1262,21 +1227,52 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
     const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    Option(const Value*) poke = Non_Dual_ARG(DUAL);
+    bool signal;
+    Option(const Value*) poke = Dual_ARG(&signal, DUAL);
 
-    Value* slot = maybe Cell_Context_Slot_Mutable(context, symbol);
+    if (signal) {
+        if (not poke)
+            return PANIC("ANY-CONTEXT! can't have fields removed by VOID ATM");
+
+        if (not Is_Word(unwrap poke))
+            return PANIC(Error_Bad_Poke_Dual_Raw(unwrap poke));
+    }
+
+    const Value* slot = maybe Cell_Context_Slot(context, symbol);
     if (not slot)
         return PANIC(Error_Bad_Pick_Raw(picker));
 
-    assert(Not_Cell_Flag(slot, PROTECTED));
+    if (signal) {
+        switch (Cell_Word_Id(unwrap poke)) {
+          case SYM_PROTECT:
+            Set_Cell_Flag(slot, PROTECTED);
+            break;
+
+          case SYM_UNPROTECT:
+            Clear_Cell_Flag(slot, PROTECTED);
+            break;
+
+          case SYM_HIDE:
+            Set_Cell_Flag(slot, VAR_MARKED_HIDDEN);
+            break;
+
+          default:
+            return PANIC(Error_Bad_Poke_Dual_Raw(unwrap poke));
+        }
+
+        return NO_WRITEBACK_NEEDED;  // VarList* in context not changed
+    }
+
+    if (Get_Cell_Flag(slot, PROTECTED))
+        return PANIC(Error_Protected_Key(symbol));
+
     if (not poke)
-        Init_Nulled(slot);
+        Init_Nulled(m_cast(Value*, slot));
     else
-        Copy_Cell(slot, unwrap poke);
+        Copy_Cell(m_cast(Value*, slot), unwrap poke);
 
     return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
 }
-
 
 
 // !!! Should this be legal?

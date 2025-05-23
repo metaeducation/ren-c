@@ -410,7 +410,7 @@ INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
 // may *not* hold the intended "varible".  For instance: it may hold functions
 // that the system has to call to generate the variable (an "Accessor").  So
 // trying to read or write cells coming from this routine without using the
-// proper higher layers will result in asserts.
+// proper higher layers that go through PICK* and POKE* will break.
 //
 
 INLINE Option(Error*) Trap_Lookup_Word(

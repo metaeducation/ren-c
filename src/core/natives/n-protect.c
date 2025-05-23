@@ -347,27 +347,6 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
 
 //
-//  protect*: native:generic [
-//
-//  "Low-level hook for PROTECT, used as :UPDATER with SET"
-//
-//      return: "Bits referencing cell must update (nullptr if no update needed)"
-//          [null? element?]
-//      location "Target value (on some steps, bits are modified)"
-//          [element?]
-//      picker "The property to update (e.g. object field)"
-//          [element?]
-//      value [~(protect unprotect hide)~]
-//  ]
-//
-DECLARE_NATIVE(PROTECT_P)
-{
-    Element* location = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(location, LEVEL, CANON(PROTECT_P));
-}
-
-
-//
 //  protect: native [
 //
 //  "Protect a series or a variable from being modified"
@@ -388,6 +367,11 @@ DECLARE_NATIVE(PROTECT)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
+    enum {
+        ST_PROTECT_INITIAL_ENTRY = STATE_0,
+        ST_PROTECT_POKING
+    };
+
     Element* v = Element_ARG(VALUE);
 
     if (Any_Word(v) or Is_Tuple(v)) {
@@ -398,8 +382,12 @@ DECLARE_NATIVE(PROTECT)
 
         Copy_Cell(SCRATCH, v);
 
-        Option(Error*) e = Trap_Update_Var_In_Scratch_With_Out(
-            LEVEL, NO_STEPS, LIB(PROTECT_P)
+        STATE = ST_PROTECT_POKING;
+
+        heeded(Corrupt_Cell_If_Debug(SPARE));
+
+        Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
+            LEVEL, NO_STEPS
         );
         if (e)
             return PANIC(unwrap e);
@@ -441,6 +429,11 @@ DECLARE_NATIVE(UNPROTECT)
 {
     INCLUDE_PARAMS_OF_UNPROTECT;
 
+    enum {
+        ST_UNPROTECT_INITIAL_ENTRY = STATE_0,
+        ST_UNPROTECT_POKING
+    };
+
     // Avoid unused parameter warnings (core handles them via frame)
     //
     USED(PARAM(VALUE));
@@ -458,8 +451,12 @@ DECLARE_NATIVE(UNPROTECT)
 
         Copy_Cell(SCRATCH, v);
 
-        Option(Error*) e = Trap_Update_Var_In_Scratch_With_Out(
-            LEVEL, NO_STEPS, LIB(PROTECT_P)
+        STATE = ST_UNPROTECT_POKING;
+
+        heeded(Corrupt_Cell_If_Debug(SPARE));
+
+        Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
+            LEVEL, NO_STEPS
         );
         if (e)
             return PANIC(unwrap e);

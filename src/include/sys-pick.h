@@ -168,7 +168,7 @@ INLINE Option(const Value*) Dual_Level_Arg(
             panic (Error_Bad_Poke_Dual_Raw(arg));
         *signal = true;
         Set_Node_Marked_Bit(arg);
-        result = nullptr;
+        result = arg;
     }
     Set_Cell_Flag(arg, PROTECTED);  // helps stop double-unlift
     return result;
