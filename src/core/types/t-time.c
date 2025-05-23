@@ -648,7 +648,7 @@ IMPLEMENT_GENERIC(PICK_P, Is_Time)
     const Element* picker = Element_ARG(PICKER);
 
     Pick_Time(OUT, time, picker);
-    return PICKED(OUT);
+    return DUAL_LIFTED(OUT);
 }
 
 
@@ -659,13 +659,13 @@ IMPLEMENT_GENERIC(POKE_P, Is_Time)
     Element* time = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
+    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     Poke_Time_Immediate(time, picker, poke);
-    return COPY(time);  // caller needs to update their time bits
+    return WRITEBACK(COPY(time));  // caller needs to update their time bits
 }
 
 

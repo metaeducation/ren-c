@@ -300,10 +300,10 @@ IMPLEMENT_GENERIC(PICK_P, Is_Pair)
 
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
     if (n != 1 and n != 2)
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
     Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
-    return PICKED(Copy_Cell(OUT, which));
+    return DUAL_LIFTED(Copy_Cell(OUT, which));
 }
 
 
@@ -316,18 +316,18 @@ IMPLEMENT_GENERIC(POKE_P, Is_Pair)
     const Element* picker = Element_ARG(PICKER);
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
 
-    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
+    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     if (not Is_Integer(poke))
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
 
     Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
     Copy_Cell(which, poke);
 
-    return nullptr;
+    return NO_WRITEBACK_NEEDED;  // PAIR! is two independent cells in Ren-C
 }
 
 

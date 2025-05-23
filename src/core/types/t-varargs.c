@@ -482,7 +482,7 @@ IMPLEMENT_GENERIC(PICK_P, Varargs)
     if (Is_Ghost(OUT))
         return nullptr;
 
-    return PICKED(OUT);
+    return DUAL_LIFTED(OUT);
 }
 
 

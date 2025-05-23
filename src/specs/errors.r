@@ -191,6 +191,7 @@ script: [
     bad-field-set:      ["cannot set" :arg1 "field to" :arg2 "datatype"]
     bad-pick:           ["cannot pick" :arg1]
     bad-poke:           ["cannot poke" :arg1]
+    bad-poke-dual:      ["poke of dual signal incompatible with target" :arg1]
     dup-vars:           ["duplicate variable specified:" :arg1]
 
     expression-barrier: "expression barrier hit while fulfilling argument"

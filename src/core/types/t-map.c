@@ -716,16 +716,16 @@ IMPLEMENT_GENERIC(PICK_P, Is_Map)
     );
 
     if (not n)
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
     const Element* val = Array_At(
         MAP_PAIRLIST(VAL_MAP(map)),
         (((unwrap n) - 1) * 2) + 1
     );
     if (Is_Zombie(val))
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
-    return PICKED(Copy_Cell(OUT, val));
+    return DUAL_LIFTED(Copy_Cell(OUT, val));
 }
 
 
@@ -736,7 +736,8 @@ IMPLEMENT_GENERIC(PICK_P, Is_Map)
 //    the operation tentatively named PUT should be used if a map is to
 //    distinguish multiple casings of the same key.
 //
-IMPLEMENT_GENERIC(POKE_P, Is_Map) {
+IMPLEMENT_GENERIC(POKE_P, Is_Map)
+{
     INCLUDE_PARAMS_OF_POKE_P;
 
     Element* map = Element_ARG(LOCATION);
@@ -744,9 +745,17 @@ IMPLEMENT_GENERIC(POKE_P, Is_Map) {
 
     bool strict = false;  // case-preserving [1]
 
-    Option(const Value*) poke = Voidable_ARG(VALUE);
-    if (poke and Is_Antiform(unwrap poke))
-        return PANIC(Error_Bad_Antiform(ARG(VALUE)));
+    bool signal;
+    Option(const Value*) poke = Dual_ARG(&signal, DUAL);
+
+    if (signal) {
+        if (poke)  // only null poke (removal signal) is allowed
+            return PANIC(Error_Bad_Poke_Dual_Raw(ARG(DUAL)));
+    }
+    else {
+        if (not poke or Is_Antiform(unwrap poke))
+            return PANIC(Error_Bad_Antiform(ARG(DUAL)));
+    }
 
     Update_Map_Entry(
         VAL_MAP_Ensure_Mutable(map),  // modified
@@ -755,7 +764,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Map) {
         strict
     );
 
-    return nullptr;  // no upstream changes needed for Map* reference
+    return NO_WRITEBACK_NEEDED;  // no upstream change for Map* reference
 }
 
 

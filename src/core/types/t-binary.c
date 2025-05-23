@@ -735,11 +735,11 @@ IMPLEMENT_GENERIC(PICK_P, Is_Blob)
 
     REBINT n;
     if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
     Byte b = *Binary_At(Cell_Binary(blob), n);
 
-    return PICKED(Init_Integer(OUT, b));
+    return DUAL_LIFTED(Init_Integer(OUT, b));
 }
 
 
@@ -754,9 +754,9 @@ IMPLEMENT_GENERIC(POKE_P, Is_Blob)
     if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
         return PANIC(Error_Out_Of_Range(picker));
 
-    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
+    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     REBINT i;
@@ -770,7 +770,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Blob)
         // !!! See notes in the IMPLEMENT_GENERIC(POKE_P, Any_String)
         // about alternate cases for the POKE'd value.
         //
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
     }
 
     if (i > 0xff)
@@ -779,7 +779,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Blob)
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
     Binary_Head(bin)[n] = cast(Byte, i);
 
-    return nullptr;  // caller's Binary* is not stale, no update needed
+    return NO_WRITEBACK_NEEDED;  // updated indirectly through Binary*
 }
 
 

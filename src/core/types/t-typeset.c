@@ -448,32 +448,32 @@ IMPLEMENT_GENERIC(PICK_P, Is_Parameter)
       case SYM_TEXT: {
         Option(const String*) string = Cell_Parameter_String(param);
         if (not string)
-            return PICKED(nullptr);
-        return PICKED(Init_Text(OUT, unwrap string)); }
+            return DUAL_LIFTED(nullptr);
+        return DUAL_LIFTED(Init_Text(OUT, unwrap string)); }
 
       case SYM_SPEC: {
         Option(const Source*) spec = Cell_Parameter_Spec(param);
         if (not spec)
-            return PICKED(nullptr);
-        return PICKED(Init_Block(OUT, unwrap spec)); }
+            return DUAL_LIFTED(nullptr);
+        return DUAL_LIFTED(Init_Block(OUT, unwrap spec)); }
 
       case SYM_OPTIONAL:
-        return PICKED(Init_Logic(OUT, Get_Parameter_Flag(param, REFINEMENT)));
+        return DUAL_LIFTED(Init_Logic(OUT, Get_Parameter_Flag(param, REFINEMENT)));
 
       case SYM_CLASS:
         switch (Cell_Parameter_Class(param)) {
           case PARAMCLASS_NORMAL:
-            return PICKED(Init_Word(OUT, CANON(NORMAL)));
+            return DUAL_LIFTED(Init_Word(OUT, CANON(NORMAL)));
 
           case PARAMCLASS_META:
-            return PICKED(Init_Word(OUT, CANON(META)));
+            return DUAL_LIFTED(Init_Word(OUT, CANON(META)));
 
           case PARAMCLASS_THE:
           case PARAMCLASS_SOFT:
-            return PICKED(Init_Word(OUT, CANON(THE)));
+            return DUAL_LIFTED(Init_Word(OUT, CANON(THE)));
 
           case PARAMCLASS_JUST:
-            return PICKED(Init_Word(OUT, CANON(JUST)));
+            return DUAL_LIFTED(Init_Word(OUT, CANON(JUST)));
 
           default: assert(false);
         }
@@ -481,7 +481,7 @@ IMPLEMENT_GENERIC(PICK_P, Is_Parameter)
 
       case SYM_ESCAPABLE:
         Init_Logic(OUT, Cell_Parameter_Class(param) == PARAMCLASS_SOFT);
-        return PICKED(OUT);
+        return DUAL_LIFTED(OUT);
 
       /* case SYM_DECORATED: */  // No symbol! Use DECORATE-PARAMETER...
 
@@ -503,9 +503,10 @@ IMPLEMENT_GENERIC(POKE_P, Is_Parameter)
     if (not Is_Word(picker))
         return PANIC(picker);
 
-    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
+    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
+
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     switch (Cell_Word_Id(picker)) {
@@ -516,7 +517,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Parameter)
         Manage_Flex(string);
         Freeze_Flex(string);
         Set_Parameter_String(param, string);
-        return COPY(param); }  // update to container (e.g. varlist) needed
+        return WRITEBACK(COPY(param)); }  // update of pointer in cell needed
 
       default:
         break;

@@ -858,7 +858,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 }}
 
 
-Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_In_Spare(
+Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
     Level* level_,
     Level* sub,
     StackIndex picker_index,
@@ -930,10 +930,20 @@ Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_In_Spare(
 
         // if not meta, needs to decay if unstable
         Value* stable_poke;
-        if (atom_poke_if_not_on_stack)
-            stable_poke = Decay_If_Unstable(unwrap atom_poke_if_not_on_stack);
-        else
+        if (atom_poke_if_not_on_stack) {
+            if (Is_Void(unwrap atom_poke_if_not_on_stack)) {
+                assert(OUT == unwrap atom_poke_if_not_on_stack);
+                Init_Nulled(value_arg);
+                continue;  // do not lift dual null
+            }
+
+            stable_poke = Decay_If_Unstable(
+                unwrap atom_poke_if_not_on_stack
+            );
+        }
+        else {
             stable_poke = TOP;
+        }
 
         if (Is_Action(stable_poke)) {  // not lifted now...
             if (Not_Cell_Flag(stable_poke, OUT_HINT_UNSURPRISING))
@@ -1019,9 +1029,9 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
 
     if (updater) {
         Atom* atom_poke = OUT;
-        possibly(not Is_Stable(atom_poke));
+        possibly(Not_Stable(atom_poke));
 
-        e = Trap_Updater_Spare_Is_Dual_Put_Writeback_In_Spare(
+        e = Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
             level_,
             sub,
             TOP_INDEX,  // picker_index
@@ -1033,9 +1043,9 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
             goto return_error;
         }
 
-        Atom* spare_writeback = SPARE;
+        Value* spare_writeback_dual = Known_Stable(SPARE);
 
-        if (not Is_Nulled(spare_writeback))  // only one unit of POKE* to do!
+        if (not Is_Nulled(spare_writeback_dual))  // only one unit of POKE* !
             panic ("Last POKE* step gave non-null cell writeback bits");
     }
     else {
@@ -1138,7 +1148,7 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
 
 }} set_from_steps_on_stack: { ////////////////////////////////////////////////
 
-    possibly(not Is_Stable(OUT));
+    possibly(Not_Stable(OUT));
 
     Option(Atom*) atom_poke_if_not_on_stack = OUT;  // writeback becomes null
 
@@ -1225,7 +1235,7 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
 
     Level* sub = Make_End_Level(&Action_Executor, flags);
 
-    e = Trap_Updater_Spare_Is_Dual_Put_Writeback_In_Spare(
+    e = Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
         level_,
         sub,
         stackindex,  // picker_index
@@ -1237,31 +1247,31 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
         goto return_error;
     }
 
-    Atom* spare_writeback = SPARE;
+    Value* spare_writeback_dual = Known_Stable(SPARE);
 
     Drop_Level(sub);
 
     // Subsequent updates become pokes, regardless of initial updater function
 
-    if (not Is_Nulled(spare_writeback)) {
-        if (stackindex_top == base + 1)
-            panic ("Last POKE* step in POKE gave non-null cell writeback bits");
+    if (Is_Nulled(spare_writeback_dual))
+        goto return_success;
 
-        Move_Atom(Data_Stack_At(Atom, TOP_INDEX), spare_writeback);
-        Liftify(Data_Stack_At(Atom, TOP_INDEX));  // ^-- want unsurprising bit
+    if (stackindex_top == base + 1)
+        panic ("Last POKE* step in POKE gave non-null writeback instruction");
 
-        possibly(atom_poke_if_not_on_stack == nullptr);
-        atom_poke_if_not_on_stack = nullptr;  // signal it's on stack now
+    assert(Any_Lifted(spare_writeback_dual));  // TBD: writeback actions?
+    Copy_Cell(Data_Stack_At(Atom, TOP_INDEX), spare_writeback_dual);
+    Unliftify_Known_Stable(TOP);  // must be stable
 
-        --stackindex_top;
+    possibly(atom_poke_if_not_on_stack == nullptr);
+    atom_poke_if_not_on_stack = nullptr;  // signal it's on stack now
 
-        possibly(updater == LIB(POKE_P));
-        updater = LIB(POKE_P);
+    --stackindex_top;
 
-        goto poke_again;
-    }
+    possibly(updater == LIB(POKE_P));
+    updater = LIB(POKE_P);
 
-    goto return_success;
+    goto poke_again;
 
 }} return_error: { ///////////////////////////////////////////////////////////
 

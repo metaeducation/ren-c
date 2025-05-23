@@ -687,48 +687,6 @@ INLINE Level* Prep_Level_Core(
 #define Bool_ARG(name) \
     (not Is_Nulled(Level_Arg(level_, param_##name##_)))
 
-// Voidable arguments are used e.g. by POKE, where it has to tell the
-// difference between a VOID and regular value poke.  (We don't want to make
-// it possible for POKE to take arbitrary unstable antiforms...that might
-// seem to enable interesting features like entities that stored packs or
-// errors, but we don't want that outside the narrow feature of meta
-// variables implemented by poke itself.)
-//
-// This makes it easier for POKE handlers to handle the voids, which can't
-// be turned into nulled cells because you might actually want to poke a null.
-// Instead, this makes the pointer to the argument itself a nullptr if it
-// was a VOID, and unlifts anything else.
-//
-INLINE Option(const Value*) Voidable_Level_Arg(Level* L, REBLEN n)
-{
-    Value* arg = Level_Arg(L, n);
-
-    if (Get_Cell_Flag(arg, PROTECTED)) {
-        if (Is_Node_Marked(arg)) {  // marked means "was void"
-            assert(Is_Quasi_Word_With_Id(arg, SYM_VOID));
-            return nullptr;
-        }
-        return arg;
-    }
-
-    assert(not Is_Node_Marked(arg));  // use mark for saying it was void
-
-    Option(const Value*) result;
-    if (Is_Lifted_Void(arg)) {
-        Init_Quasi_Word(arg, CANON(VOID));  // fib, but helps FAIL(PARAM(...))
-        Set_Node_Marked_Bit(arg);
-        result = nullptr;
-    }
-    else {
-        Unliftify_Known_Stable(arg);
-        result = arg;
-    }
-    Set_Cell_Flag(arg, PROTECTED);  // helps stop double-unquotify
-    return result;
-}
-
-#define Voidable_ARG(name) \
-    Voidable_Level_Arg(level_, param_##name##_)
 
 INLINE Option(const Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 {
@@ -982,8 +940,8 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
     #define LOOPED(v)   Native_Looped_Result(level_, (v))
 
-    #define PICKED(v)   Liftify(v ? v : Init_Nulled(OUT))
-    #define PICK_OUT_OF_RANGE  cast(Bounce, Init_Nulled(OUT))
+    #define DUAL_LIFTED(v)    Liftify(v ? v : Init_Nulled(OUT))
+    #define DUAL_SIGNAL_NULL  cast(Bounce, Init_Nulled(OUT))
 
     // Note: For efficiency, intrinsic typecheckers must return BOUNCE_OKAY
     // or nullptr.  This means that trying to make LOGIC(b) "more efficient"

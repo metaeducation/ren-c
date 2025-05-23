@@ -938,12 +938,12 @@ IMPLEMENT_GENERIC(PICK_P, Any_List)
 
     REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
     if (n < 0 or n >= Cell_Series_Len_Head(list))
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
     const Element* at = Array_At(Cell_Array(list), n);
 
     Copy_Cell(OUT, at);
-    return PICKED(Inherit_Const(OUT, list));
+    return DUAL_LIFTED(Inherit_Const(OUT, list));
 }
 
 
@@ -954,9 +954,9 @@ IMPLEMENT_GENERIC(POKE_P, Any_List)
     Element* list = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
+    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     // !!! If we are jumping here from getting updated bits, then
@@ -972,7 +972,7 @@ IMPLEMENT_GENERIC(POKE_P, Any_List)
     Element* at = Array_At(mut_arr, n);
     Copy_Cell(at, poke);
 
-    return nullptr;  // Array* is still fine, caller need not update
+    return NO_WRITEBACK_NEEDED;  // Array* in Cell stays the same
 }
 
 

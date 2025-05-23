@@ -1236,7 +1236,7 @@ IMPLEMENT_GENERIC(PICK_P, Any_Context)
 
     const Value* slot = maybe Cell_Context_Slot(context, symbol);
     if (not slot)
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
     Value* out = Copy_Cell(OUT, slot);
 
@@ -1248,7 +1248,7 @@ IMPLEMENT_GENERIC(PICK_P, Any_Context)
         Tweak_Cell_Frame_Coupling(out, cast(VarList*, c));
     }
 
-    return PICKED(OUT);
+    return DUAL_LIFTED(OUT);
 }
 
 
@@ -1262,19 +1262,19 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
     const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    Option(const Value*) poke = Voidable_ARG(VALUE);
-    if (not poke)
-        return PANIC(
-            "Can't remove fields from ANY-CONTEXT! by setting to VOID"
-        );
+    Option(const Value*) poke = Non_Dual_ARG(DUAL);
 
     Value* slot = maybe Cell_Context_Slot_Mutable(context, symbol);
     if (not slot)
         return PANIC(Error_Bad_Pick_Raw(picker));
 
     assert(Not_Cell_Flag(slot, PROTECTED));
-    Copy_Cell(slot, unwrap poke);
-    return nullptr;  // VarList* in cell not changed, caller need not update
+    if (not poke)
+        Init_Nulled(slot);
+    else
+        Copy_Cell(slot, unwrap poke);
+
+    return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
 }
 
 

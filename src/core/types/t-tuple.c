@@ -504,10 +504,10 @@ IMPLEMENT_GENERIC(PICK_P, Any_Sequence)
         return PANIC(picker);
 
     if (n < 0 or n >= Cell_Sequence_Len(seq))
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
     Copy_Sequence_At(OUT, seq, n);
-    return PICKED(OUT);
+    return DUAL_LIFTED(OUT);
 }
 
 

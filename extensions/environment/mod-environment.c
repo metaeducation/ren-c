@@ -104,19 +104,19 @@ IMPLEMENT_GENERIC(PICK_P, Is_Environment)
         return rebDelegate("panic", unwrap error);
 
     if (not value)  // return error if not present, must TRY or OPT
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
     if (
         Environment_Conflates_Empty_Strings_As_Absent(env)
         and Cell_Series_Len_At(unwrap value) == 0
     ){
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
     }
 
     if (not value)
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
-    return PICKED(unwrap value);
+    return DUAL_LIFTED(unwrap value);
 }
 
 
@@ -128,11 +128,6 @@ IMPLEMENT_GENERIC(PICK_P, Is_Environment)
 //
 //      http://stackoverflow.com/a/5876818/211160
 //
-// 1. To raise awareness about the empty string and null equivalence, force
-//    callers to use null instead of empty strings to unset (since you would
-//    only be able to get null back if you set to either an empty string or
-//    a null in this mode).
-//
 IMPLEMENT_GENERIC(POKE_P, Is_Environment)
 {
     INCLUDE_PARAMS_OF_POKE_P;
@@ -143,31 +138,45 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
     if (not Is_Word(picker) and not Is_Text(picker))
         return PANIC("ENVIRONMENT! picker must be WORD! or TEXT!");
 
-    Option(const Value*) poke = Voidable_ARG(VALUE);
+    bool signal;
+    Option(const Value*) poke = Dual_ARG(&signal, DUAL);
 
-    if (not poke) {
-        // remove from environment (was a nihil)
+  handle_dual_signals: {
+
+    if (signal) {
+        if (not poke)  // removal signal (e.g. SET to VOID)
+            goto update_environment;
+
+        return PANIC(Error_Bad_Poke_Dual_Raw(unwrap poke));
     }
-    else if (not Is_Text(unwrap poke)) {
-        return PANIC("ENVIRONMENT! can only be poked with TRASH! or TEXT!");
+
+} handle_normal_values: {
+
+  // 1. To raise awareness about the empty string and null equivalence, force
+  //    callers to use VOID instead of empty strings to unset (since you would
+  //    only be able to get null back if you set to either an empty string or
+  //    a void in this mode).
+
+    if (not poke or not Is_Text(unwrap poke))
+        return PANIC("ENVIRONMENT! can only be poked with VOID or TEXT!");
+
+    if (
+        Environment_Conflates_Empty_Strings_As_Absent(env)
+        and Cell_Series_Len_At(unwrap poke) == 0
+    ){
+        return PANIC(
+            "ENVIRONMENT! not configured to accept empty strings"  // [1]
+        );
     }
-    else {
-        if (
-            Environment_Conflates_Empty_Strings_As_Absent(env)
-            and Cell_Series_Len_At(unwrap poke) == 0
-        ){
-            return PANIC(
-                "ENVIRONMENT! not configured to accept empty strings"  // [1]
-            );
-        }
-    }
+
+} update_environment: {
 
     Option(ErrorValue*) error = Trap_Update_Environment_Variable(picker, poke);
     if (error)
         return rebDelegate("panic", unwrap error);
 
-    return nullptr;  // no writeback
-}
+    return NO_WRITEBACK_NEEDED;
+}}
 
 
 //

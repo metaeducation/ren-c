@@ -646,19 +646,20 @@ IMPLEMENT_GENERIC(PICK_P, Is_Bitset)
 
     bool bit = Check_Bits(VAL_BITSET(bset), picker, false);
 
-    return PICKED(Init_Logic(OUT, bit));
+    return DUAL_LIFTED(Init_Logic(OUT, bit));
 }
 
 
-IMPLEMENT_GENERIC(POKE_P, Is_Bitset) {
+IMPLEMENT_GENERIC(POKE_P, Is_Bitset)
+{
     INCLUDE_PARAMS_OF_POKE_P;
 
     Element* bset = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
+    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     bool cond;
@@ -674,7 +675,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Bitset) {
     )){
         return PANIC(PARAM(PICKER));
     }
-    return nullptr;
+    return NO_WRITEBACK_NEEDED;
 }
 
 

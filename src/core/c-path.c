@@ -105,7 +105,8 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 //
 //  "Implementation detail of PICK, return value uses dual protocol"
 //
-//      return: [null? error! action! quoted! quasiform!]
+//      return: "DUAL PROTOCOL: action is accessor, lifted action is action"
+//          [null? error! action! quoted! quasiform!]
 //      location [<opt-out> fundamental?]  ; can't pick from quoted/quasi
 //      picker [<opt-out> element?]
 //  ]
@@ -221,7 +222,7 @@ DECLARE_NATIVE(PICK)
 
     Unliftify_Undecayed(OUT);
 
-    if (not Is_Stable(OUT)) {
+    if (Not_Stable(OUT)) {
         assert(false);  // Note: once usermode PICK* exists, it may screw up
         return PANIC("PICK* returned a lifted unstable antiform");
     }
@@ -238,7 +239,8 @@ DECLARE_NATIVE(PICK)
 //      return: [null? any-value?]
 //      location [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker [<opt-out> element?]
-//      ^value [void? any-value?]
+//      dual "DUAL PROTOCOL: action is accessor, lifted action is action"
+//          [null? action! quoted! quasiform!]
 //  ]
 //
 DECLARE_NATIVE(POKE_P)
@@ -263,13 +265,43 @@ DECLARE_NATIVE(POKE_P)
 
     Element* location = Element_ARG(LOCATION);
     USED(ARG(PICKER));
-    USED(ARG(VALUE));
+    Value* dual = ARG(DUAL);
     // more ARG(...) may be in this location if POKE called us, reusing frame
 
     possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for POKE's use
 
+  ensure_lifted_antiforms_are_stable: {
+
+    // We don't want to make it possible for POKE* to take unstable antiforms.
+    // That might seem to enable interesting features, like a container that
+    // could store PACK! or ERROR! states:
+    //
+    //     >> magic-store.x: pack [1 2]
+    //     == \~['1 '2]~\  ; antiform (pack!)
+    //
+    //     >> magic-store.x
+    //     == \~['1 '2]~\  ; antiform (pack!)
+    //
+    // But this would likely cause more problems than it could possibly solve.
+    // Working with unstable antiforms is a pain, and the internal machinery
+    // would get more complex and face existential questions trying to
+    // do this "correctly".
+    //
+    // Perhaps enabled in the future, but right now the "freedom from" needing
+    // to confront this in the mechanics outweighs the "freedom to" do it.
+    //
+    // 1. It's expected that magic inside the SET and GET code will bypass
+    //    calling POKE* and use Dispatch_Generic() directly.  When that
+    //    happens, this check (as well as other type checking) would not
+    //    be applied.
+
+    if (Is_Quasiform(dual))  // this check may be bypassed by optimization [1]
+        assert(Is_Stable_Antiform_Heart(Heart_Of(dual)));
+
+} dispatch_generic: {
+
     return Dispatch_Generic(POKE_P, location, LEVEL);
-}
+}}
 
 
 // Use Level flag vs. a state byte, so that we can reuse the same frame
@@ -310,10 +342,26 @@ DECLARE_NATIVE(POKE)
     // 1. We don't want to limit the POKE* function from changing value, and
     //    also want it to have full use of SPARE, SCRATCH, and OUT.  So POKE
     //    has a slightly larger frame where it stores the value in a local.
+    //
+    // 2. We produce the DUAL argument in the same frame.  However, we don't
+    //    have a way to produce the dual ACTION! to indicate an accessor.
+    //    Should there be a POKE:DUAL, or just a SET:DUAL?
+
+    if (Is_Lifted_Error(lifted_value))
+        return UNLIFT(lifted_value);  // bypass and don't do the poke
 
     Set_Level_Flag(LEVEL, POKE_NOT_INITIAL_ENTRY);
 
     Copy_Cell(LOCAL(STORE), lifted_value);  // save value to return [1]
+
+    Value* dual = ARG(VALUE);  // same slot (POKE* reuses this frame!) [2]
+
+    if (Is_Lifted_Void(lifted_value)) {
+        Init_Nulled(dual);  // POKE* experiences VOID as non-lifted null
+    }
+    else {
+        // leave lifted, POKE* expects QUOTED!/QUASIFORM! for literal DUAL
+    }
 
     goto dispatch_generic;
 

@@ -944,19 +944,19 @@ IMPLEMENT_GENERIC(PICK_P, Is_Rune)
 
     REBI64 n = VAL_INT64(picker);
     if (n <= 0)
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
     REBLEN len;
     Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, rune);
     if (n > len)
-        return PICK_OUT_OF_RANGE;
+        return DUAL_SIGNAL_NULL;
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
     for (; n != 1; --n)
         cp = Utf8_Next(&c, cp);
 
-    return PICKED(Init_Char_Unchecked(OUT, c));
+    return DUAL_LIFTED(Init_Char_Unchecked(OUT, c));
 }
 
 

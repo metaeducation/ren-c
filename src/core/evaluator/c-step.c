@@ -704,7 +704,7 @@ Bounce Stepper_Executor(Level* L)
     if (error)
         return PANIC(unwrap error);
 
-    possibly(not Is_Stable(OUT) or Is_Atom_Trash(OUT));
+    possibly(Not_Stable(OUT) or Is_Atom_Trash(OUT));
 
     goto lookahead;
 
@@ -1739,41 +1739,26 @@ for (; check != tail; ++check) {  // push variables
         // (special handling ^WORD! below will actually use plain null to
         // distinguish)
         //
-        Init_Lifted_Null(OUT);
+        Init_Nulled(OUT);
     }
     else {
         Copy_Cell(OUT, pack_at);
         assert(Any_Lifted(OUT));  // out is lifted'd
+        Unliftify_Undecayed(OUT);  // unlift for output...
     }
 
-    if (Is_Meta_Sigil(var)) {
-        Unliftify_Undecayed(OUT);  // unlift for output...
+    if (Is_Meta_Sigil(var))
         goto circled_check;
-    }
 
     if (Is_Metaform(WORD, var)) {
-        Plainify(var);  // !!! temporary, remove ^ sigil (set should see it)
-        if (pack_at == pack_tail) {  // special detection
-            Init_Nulled(OUT);
-            Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
-                LEVEL, NO_STEPS
-            );
-            if (e)
-                return PANIC(unwrap e);
-            goto circled_check;
-        }
-        assert(Any_Lifted(OUT));  // out is lifted'd
         Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
             LEVEL, NO_STEPS
         );
         if (e)
             return PANIC(unwrap e);
 
-        Unliftify_Undecayed(OUT);  // unquotify for output...
         goto circled_check;  // ...because we may have circled this
     }
-
-    Unliftify_Undecayed(OUT);
 
     if (Is_Error(OUT))  // don't pass thru errors if not ^ sigil
         return PANIC(Cell_Error(OUT));

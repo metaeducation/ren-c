@@ -1076,7 +1076,7 @@ IMPLEMENT_GENERIC(PICK_P, Any_String)
 
     Codepoint c = Get_Char_At(Cell_String(any_string), n);
 
-    return PICKED(Init_Char_Unchecked(OUT, c));
+    return DUAL_LIFTED(Init_Char_Unchecked(OUT, c));
 }
 
 
@@ -1091,9 +1091,9 @@ IMPLEMENT_GENERIC(POKE_P, Any_String)
     if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
         return PANIC(Error_Out_Of_Range(picker));
 
-    Option(const Value*) opt_poke = Voidable_ARG(VALUE);
+    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
     if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
     const Element* poke = c_cast(Element*, unwrap opt_poke);
 
     Codepoint c;
@@ -1104,7 +1104,7 @@ IMPLEMENT_GENERIC(POKE_P, Any_String)
         c = Int32(poke);
     }
     else  // CHANGE is a better route for splicing/removal/etc.
-        return PANIC(PARAM(VALUE));
+        return PANIC(PARAM(DUAL));
 
     if (c == 0)
         return PANIC(Error_Illegal_Zero_Byte_Raw());
@@ -1112,7 +1112,7 @@ IMPLEMENT_GENERIC(POKE_P, Any_String)
     String* s = Cell_String_Ensure_Mutable(any_string);
     Set_Char_At(s, n, c);
 
-    return nullptr;  // String* in Cell unchanged, caller need not update
+    return NO_WRITEBACK_NEEDED;  // String* in Cell unchanged
 }
 
 
