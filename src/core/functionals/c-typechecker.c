@@ -452,9 +452,10 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     if (Cell_Parameter_Class(param) == PARAMCLASS_META)
         Liftify(arg);
 
-    if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
-        sub, param, arg, false
-    )){
+    heeded(Corrupt_Cell_If_Debug(Level_Spare(sub)));
+    heeded(Corrupt_Cell_If_Debug(Level_Scratch(sub)));
+
+    if (not Typecheck_Coerce(sub, param, arg, false)) {
         Drop_Action(sub);
         Drop_Level(sub);
         goto test_failed;
@@ -786,7 +787,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
 
 //
-//  Typecheck_Coerce_Uses_Spare_And_Scratch: C
+//  Typecheck_Coerce: C
 //
 // This does extra typechecking pertinent to function parameters, compared to
 // the basic type checking.
@@ -796,20 +797,25 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 //    multiplexed with intrinsics (see DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC)
 //    it has to give up those cells for the duration of that call.  Type
 //    checking uses intrinsics a vast majority of the time, so this function
-//    ensures you don't rely on SCRATCH or SPARE not being modified (it
+//    ensures you don't rely on SCRATCH or SPARE not being modified (it also
 //    marks them unreadable at the end).
 //
 // 2. !!! Should explicit mutability override, so people can say things
 //    like (foo: func [...] mutable [...]) ?  This seems bad, because the
 //    contract of the function hasn't been "tweaked" with reskinning.
 //
-bool Typecheck_Coerce_Uses_Spare_And_Scratch(
+bool Typecheck_Coerce(
     Level* const L,
     const Element* param,
     Atom* atom,  // need mutability for coercion
     bool is_return
 ){
     USE_LEVEL_SHORTHANDS (L);
+
+  #if PERFORM_CORRUPTIONS  // we use SCRATCH and SPARE as workspaces [1]
+    assert(Not_Cell_Readable(SCRATCH));
+    assert(Not_Cell_Readable(SPARE));
+  #endif
 
     assert(atom != SCRATCH and atom != SPARE);
     if (not is_return)

@@ -3497,10 +3497,10 @@ DECLARE_NATIVE(TRANSCODE)
 
     if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // want line number updated
         Init_Integer(OUT, transcode->line);
-        Copy_Cell(SCRATCH, Element_ARG(LINE));  // LINE is a variable
-        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
-            LEVEL, NO_STEPS
-        );
+        Copy_Cell(Level_Scratch(SUBLEVEL), Element_ARG(LINE));  // variable
+        heeded(Corrupt_Cell_If_Debug(Level_Spare(SUBLEVEL)));
+
+        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(SUBLEVEL, NO_STEPS);
         if (e)
             return PANIC(unwrap e);
 

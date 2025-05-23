@@ -243,7 +243,10 @@ Bounce Func_Dispatcher(Level* const L)
         Phase_Paramlist(details), SYM_RETURN
     );
 
-    if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
+    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Debug(SCRATCH));
+
+    if (not Typecheck_Coerce_Return(L, param, OUT))
         return PANIC(
             "End of function without a RETURN, but ~ not in RETURN: spec"
         );
@@ -545,13 +548,18 @@ DECLARE_NATIVE(UNWIND)
 
 
 //
-//  Typecheck_Coerce_Return_Uses_Spare_And_Scratch: C
+//  Typecheck_Coerce_Return: C
 //
-bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
+bool Typecheck_Coerce_Return(
     Level* L,  // Level whose spare/scratch used (not necessarily return level)
     const Element* param,  // parameter for the RETURN (may be quoted)
     Atom* atom  // coercion needs mutability
 ){
+  #if PERFORM_CORRUPTIONS
+    assert(Not_Cell_Readable(Level_Scratch(L)));
+    assert(Not_Cell_Readable(Level_Spare(L)));
+  #endif
+
     assert(  // to be in specialized slot, RETURN can't be a plain PARAMETER!
         Heart_Of(param) == TYPE_PARAMETER
         and (
@@ -569,7 +577,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
         return true;  // kind of common... necessary?
 
-    if (not Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true))
+    if (not Typecheck_Coerce(L, param, atom, true))
         return false;
 
   determine_if_result_is_surprising: { ///////////////////////////////////////
@@ -690,11 +698,11 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     );
 
     if (not Bool_ARG(RUN)) {  // plain simple RETURN (not weird tail-call)
-        if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(  // do now [2]
-            LEVEL, param, OUT
-        )){
+        heeded(Corrupt_Cell_If_Debug(SPARE));
+        heeded(Corrupt_Cell_If_Debug(SCRATCH));
+
+        if (not Typecheck_Coerce_Return(LEVEL, param, OUT))  // do it now [2]
             return PANIC(Error_Bad_Return_Type(target_level, OUT, param));
-        }
 
         DECLARE_VALUE (label);
         Copy_Cell(label, LIB(UNWIND)); // see Make_Thrown_Unwind_Value

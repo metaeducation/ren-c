@@ -335,9 +335,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     }
 
     if (param and not Is_Ghost(out)) {
-        if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
-            TOP_LEVEL, param, out, false
-        )){
+        heeded(Corrupt_Cell_If_Debug(Level_Spare(TOP_LEVEL)));
+        heeded(Corrupt_Cell_If_Debug(Level_Scratch(TOP_LEVEL)));
+
+        if (not Typecheck_Coerce(TOP_LEVEL, param, out, false)) {
             // !!! Array-based varargs only store the parameter list they are
             // stamped with, not the level.  This is because storing non-reified
             // types in payloads is unsafe...only safe to store Level* in a

@@ -1169,10 +1169,9 @@ DECLARE_NATIVE(DEFAULT)
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
     assert(Any_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
+    heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
-        LEVEL, NO_STEPS
-    );
+    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
     if (e) {
         assert(false);  // shouldn't be able to happen (steps is pinned)
         return PANIC(unwrap e);

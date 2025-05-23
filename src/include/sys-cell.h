@@ -329,7 +329,13 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 #define Init_Unreadable(out) \
     TRACK(Init_Unreadable_Untracked_Inline((out)))
 
-#if RUNTIME_CHECKS && CPLUSPLUS_11 && (! DEBUG_STATIC_ANALYZING)
+#if PERFORM_CORRUPTIONS
+    #define Corrupt_Cell_If_Debug(c)  Init_Unreadable(c)
+#else
+    #define Corrupt_Cell_If_Debug(c)  (c)
+#endif
+
+#if PERFORM_CORRUPTIONS && CPLUSPLUS_11
     //
     // We don't actually want things like Sink(Value) to set a cell's bits to
     // a corrupt pattern, as we need to be able to call Init_Xxx() routines
@@ -342,17 +348,17 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
     // address locally...but there's no function call.
 
     INLINE void Corrupt_If_Debug(Cell& ref)
-      { Cell* c = &ref; Init_Unreadable_Untracked(c); }
+      { Cell* c = &ref; Corrupt_Cell_If_Debug(c); }
 
   #if CHECK_CELL_SUBCLASSES
     INLINE void Corrupt_If_Debug(Atom& ref)
-      { Atom* a = &ref; Init_Unreadable_Untracked(a); }
+      { Atom* a = &ref; Corrupt_Cell_If_Debug(a); }
 
     INLINE void Corrupt_If_Debug(Value& ref)
-      { Value* v = &ref; Init_Unreadable_Untracked(v); }
+      { Value* v = &ref; Corrupt_Cell_If_Debug(v); }
 
     INLINE void Corrupt_If_Debug(Element& ref)
-      { Element* e = &ref; Init_Unreadable_Untracked(e); }
+      { Element* e = &ref; Corrupt_Cell_If_Debug(e); }
   #endif
 #endif
 

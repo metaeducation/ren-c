@@ -873,7 +873,10 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        if (not Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, ARG, false))
+        heeded(Corrupt_Cell_If_Debug(SPARE));
+        heeded(Corrupt_Cell_If_Debug(SCRATCH));
+
+        if (not Typecheck_Coerce(L, param, ARG, false))
             return PANIC(Error_Phase_Arg_Type(L, KEY, param, arg));
 
         Mark_Typechecked(stable_ARG);

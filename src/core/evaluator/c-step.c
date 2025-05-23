@@ -729,10 +729,9 @@ Bounce Stepper_Executor(Level* L)
 
     Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
     Move_Atom(CURRENT, SPARE);
+    heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
-        L, GROUPS_OK
-    );
+    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
     if (e) {
         Init_Warning(OUT, unwrap e);
         Failify(OUT);
@@ -934,10 +933,9 @@ Bounce Stepper_Executor(Level* L)
 
     Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
     Move_Atom(CURRENT, SPARE);
+    heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) error = Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
-        LEVEL, GROUPS_OK  // no groups!
-    );
+    Option(Error*) error = Trap_Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
     if (error)
         return PANIC(unwrap error);  // don't conflate with function result
 
@@ -1232,10 +1230,9 @@ Bounce Stepper_Executor(Level* L)
 
     Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
     Move_Atom(CURRENT, SPARE);
+    heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
-        L, GROUPS_OK
-    );
+    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
     if (e) {  // tuples never run actions, erroring won't conflate (!!! oops)
         Init_Warning(OUT, unwrap e);
         Failify(OUT);
@@ -1432,10 +1429,9 @@ Bounce Stepper_Executor(Level* L)
 
     Derelativize(SPARE, CURRENT, L_binding);  // !!! workaround !!! FIX !!!
     Move_Atom(CURRENT, SPARE);
+    heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
-        LEVEL, GROUPS_OK
-    );
+    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);
     if (e)
         return PANIC(unwrap e);
 
@@ -1751,9 +1747,8 @@ for (; check != tail; ++check) {  // push variables
         goto circled_check;
 
     if (Is_Metaform(WORD, var)) {
-        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
-            LEVEL, NO_STEPS
-        );
+        heeded(Corrupt_Cell_If_Debug(SPARE));
+        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
         if (e)
             return PANIC(unwrap e);
 
@@ -1769,9 +1764,8 @@ for (; check != tail; ++check) {  // push variables
         goto circled_check;
 
     if (Is_Word(var) or Is_Tuple(var) or Is_Pinned(WORD, var)) {
-        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
-            LEVEL, GROUPS_OK  // overwrites SPARE and SCRATCH, that's ok
-        );
+        heeded(Corrupt_Cell_If_Debug(SPARE));
+        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);
         if (e)
             return PANIC(unwrap e);
     }

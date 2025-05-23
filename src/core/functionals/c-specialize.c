@@ -300,11 +300,11 @@ bool Specialize_Action_Throws(
         if (Get_Parameter_Flag(param, VARIADIC))
             panic ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
-            TOP_LEVEL, param, arg, false
-        )){
+        heeded(Corrupt_Cell_If_Debug(Level_Scratch(TOP_LEVEL)));
+        heeded(Corrupt_Cell_If_Debug(Level_Spare(TOP_LEVEL)));
+
+        if (not Typecheck_Coerce(TOP_LEVEL, param, arg, false))
             panic (Error_Arg_Type(label, key, param, arg));
-        }
 
         Mark_Typechecked(arg);
 

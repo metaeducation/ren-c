@@ -82,10 +82,9 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     Push_Level_Erase_Out_If_State_0(atom, level_);
 
     Derelativize(SCRATCH, tuple, context);
+    heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) error = Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
-        level_, steps_out
-    );
+    Option(Error*) error = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
     if (error)
         return error;
 
@@ -936,7 +935,7 @@ Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 
 
 //
-//  Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps: C
+//  Trap_Update_Var_In_Scratch_With_Out_Push_Steps: C
 //
 // This is centralized code for setting variables.
 //
@@ -946,11 +945,20 @@ Option(Error*) Trap_Updater_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 // but they must do so carefully, because that would skip things like
 // accessors (which implement type checking, etc.)
 //
-Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
+// 1. The calling function should do `heeded(Corrupt_Cell_If_Debug(SPARE))`.  This
+//    helps us know they are not expecting SPARE to be maintained across the
+//    evaluation.  (It's better than trying to work "Corrupts_Spare()" into
+//    the already quite-long name of the function.)
+//
+Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
     Level* level_,  // SPARE will be overwritten, OUT might be decayed
     bool groups_ok,
     Option(const Value*) updater  //  writes the final step (e.g. POKE*)
 ){
+  #if PERFORM_CORRUPTIONS  // caller pre-corrupts spare [1]
+    assert(Not_Cell_Readable(SPARE));
+  #endif
+
     Flags flags = LEVEL_MASK_NONE;  // reused, top level, no keepalive needed
 
     Sink(Atom) spare_location_dual = SPARE;
@@ -1249,8 +1257,9 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
 
 } finalize_and_return: { /////////////////////////////////////////////////////
 
+    Corrupt_Cell_If_Debug(SPARE);
+
   #if RUNTIME_CHECKS
-    Init_Unreadable(SPARE);
     Unprotect_Cell(SCRATCH);
   #endif
 
@@ -1259,9 +1268,9 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
 
 
 //
-//  Trap_Update_Var_In_Scratch_With_Out_Uses_Spare: C
+//  Trap_Update_Var_In_Scratch_With_Out: C
 //
-Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
+Option(Error*) Trap_Update_Var_In_Scratch_With_Out(
     Level* level_,
     Option(Element*) steps_out,  // no GROUP!s if nulled
     Option(const Value*) updater  // function to write last step (e.g. POKE*)
@@ -1274,7 +1283,7 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
     StackIndex base = TOP_INDEX;
 
     Option(Error*) e;
-    e = Trap_Update_Var_In_Scratch_With_Out_Uses_Spare_Push_Steps(
+    e = Trap_Update_Var_In_Scratch_With_Out_Push_Steps(
         level_,
         steps_out != NO_STEPS,
         updater
@@ -1301,13 +1310,13 @@ Option(Error*) Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
 
 
 //
-//  Trap_Set_Var_In_Scratch_To_Out_Uses_Spare: C
+//  Trap_Set_Var_In_Scratch_To_Out: C
 //
-Option(Error*) Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
+Option(Error*) Trap_Set_Var_In_Scratch_To_Out(
     Level* level_,
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
-    return Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
+    return Trap_Update_Var_In_Scratch_With_Out(
         level_,
         steps_out,
         LIB(POKE_P)  // typical "update" step is a complete overwite (a POKE)
@@ -1316,9 +1325,9 @@ Option(Error*) Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
 
 
 //
-//  Trap_Get_Var_In_Scratch_To_Out_Uses_Spare: C
+//  Trap_Get_Var_In_Scratch_To_Out: C
 //
-Option(Error*) Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
+Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
     Level* level_,
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
@@ -1326,7 +1335,7 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out_Uses_Spare(
     Init_Unreadable(OUT);  // written, but shouldn't be read
   #endif
 
-    return Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
+    return Trap_Update_Var_In_Scratch_With_Out(
         level_,
         steps_out,
         nullptr  // if no updater, then it's a GET
@@ -1431,13 +1440,12 @@ DECLARE_NATIVE(SET)
     Copy_Cell_Core(OUT, lifted_setval, CELL_MASK_THROW);
     Unliftify_Undecayed(OUT);
 
-    Copy_Cell(SCRATCH, target);
-
     STATE = ST_SET_SETTING;  // we'll be setting out to something not erased
 
-    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out_Uses_Spare(
-        LEVEL, steps
-    );
+    heeded(Copy_Cell(SCRATCH, target));
+    heeded(Corrupt_Cell_If_Debug(SPARE));
+
+    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, steps);
     if (e) {
         assert(steps or Is_Throwing_Panic(LEVEL));  // throws must eval [1]
         return PANIC(unwrap e);

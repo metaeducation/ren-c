@@ -398,7 +398,7 @@ DECLARE_NATIVE(PROTECT)
 
         Copy_Cell(SCRATCH, v);
 
-        Option(Error*) e = Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
+        Option(Error*) e = Trap_Update_Var_In_Scratch_With_Out(
             LEVEL, NO_STEPS, LIB(PROTECT_P)
         );
         if (e)
@@ -458,7 +458,7 @@ DECLARE_NATIVE(UNPROTECT)
 
         Copy_Cell(SCRATCH, v);
 
-        Option(Error*) e = Trap_Update_Var_In_Scratch_With_Out_Uses_Spare(
+        Option(Error*) e = Trap_Update_Var_In_Scratch_With_Out(
             LEVEL, NO_STEPS, LIB(PROTECT_P)
         );
         if (e)

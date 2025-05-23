@@ -83,6 +83,11 @@
     #define ASSIGN_UNUSED_FIELDS 1
 #endif
 
+#if !defined(PERFORM_CORRUPTIONS)  // 1. See Corrupt_If_Debug()
+    #define PERFORM_CORRUPTIONS \
+        (RUNTIME_CHECKS && (! DEBUG_STATIC_ANALYZING))  // [1]
+#endif
+
 
 //=//// STDINT.H AND STDBOOL.H ////////////////////////////////////////////=//
 //
@@ -841,6 +846,12 @@
 // `dont` exists to point out something you really *shouldn't* do, not
 // because it's unnecessary or redundant, but because it would break things.
 //
+// `heeded` is when you do something that seems like it wouldn't be needed,
+// but is actually a signal to something to show you know what you're doing.
+// This happens e.g. when corrupting a variable in debug builds for the sole
+// purpose of showing a routine you call that you weren't expecting it to
+// have valid data at the end of their call.
+//
 #if NO_CPLUSPLUS_11
     #define possibly(expr)  NOOP
     #define unnecessary(expr)  NOOP
@@ -856,6 +867,8 @@
     #define dont(expr) \
         static_assert(std::is_same<decltype((void)(expr)), void>::value, "")
 #endif
+
+#define heeded(expr)  (expr)
 
 #define UNNECESSARY(expr) /* macro version */ \
     struct GlobalScopeNoopTrick  // https://stackoverflow.com/q/53923706
@@ -886,7 +899,7 @@
 #define USED(x) \
     ((void)(x))
 
-#if NO_RUNTIME_CHECKS || DEBUG_STATIC_ANALYZING // [1]
+#if (! PERFORM_CORRUPTIONS)
 
     #define Corrupt_If_Debug(x)  NOOP
 
@@ -894,6 +907,8 @@
         ((void)(x))
 
 #elif NO_CPLUSPLUS_11
+    STATIC_ASSERT(! DEBUG_STATIC_ANALYZING);  // [1]
+
     #include <string.h>
 
     // See definition of Cell for why casting to void* is needed.
@@ -905,6 +920,8 @@
     #define UNUSED(x) \
         ((void)(x))
 #else
+    STATIC_ASSERT(! DEBUG_STATIC_ANALYZING);  // [1]
+
     #include <cstring>  // for memset
 
     // Introduce some variation in the runtimes based on something that is

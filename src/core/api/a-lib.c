@@ -3020,6 +3020,8 @@ DECLARE_NATIVE(API_TRANSIENT)
 //
 Bounce Api_Function_Dispatcher(Level* const L)
 {
+    UNNECESSARY(USE_LEVEL_SHORTHANDS (L));  // don't compete with windows.h
+
     Details* details = Ensure_Level_Details(L);
 
     enum {
@@ -3113,7 +3115,10 @@ Bounce Api_Function_Dispatcher(Level* const L)
         Phase_Paramlist(details), SYM_RETURN
     );
 
-    if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, L->out))
+    heeded(Corrupt_Cell_If_Debug(Level_Spare(L)));
+    heeded(Corrupt_Cell_If_Debug(Level_Scratch(L)));
+
+    if (not Typecheck_Coerce_Return(L, param, L->out))
         panic (Error_Bad_Return_Type(L, L->out, param));
 
     return L->out;

@@ -258,8 +258,8 @@ void Evaluator_Expression_Checks_Debug(Level* L)
 //
 //  Do_After_Action_Checks_Debug: C
 //
-void Do_After_Action_Checks_Debug(Level* L) {
-    assert(not Is_Throwing(L));
+void Do_After_Action_Checks_Debug(Level* level_) {
+    assert(not Is_Throwing(LEVEL));
 
     // Usermode functions check the return type via Func_Dispatcher(),
     // with everything else assumed to return the correct type.  But this
@@ -267,18 +267,19 @@ void Do_After_Action_Checks_Debug(Level* L) {
     // so native return types are checked instead of just trusting the C.
     //
   #if CHECK_RAW_NATIVE_RETURNS
-    Details* details = Ensure_Level_Details(L);
-    if (Get_Details_Flag(details, RAW_NATIVE) and Is_Stable(L->out)) {
+    Details* details = Ensure_Level_Details(LEVEL);
+    if (Get_Details_Flag(details, RAW_NATIVE) and Is_Stable(OUT)) {
         const Param* param = cast(Param*,
             Details_At(details, IDX_RAW_NATIVE_RETURN)
         );
         assert(Is_Parameter(param));
 
-        if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
-            L, param, L->out
-        )){
+        heeded(Corrupt_Cell_If_Debug(SPARE));
+        heeded(Corrupt_Cell_If_Debug(SCRATCH));
+
+        if (not Typecheck_Coerce_Return(LEVEL, param, OUT)) {
             assert(!"'Raw' native code violated return type contract!\n");
-            crash (Error_Bad_Return_Type(L, L->out, param));
+            crash (Error_Bad_Return_Type(LEVEL, OUT, param));
         }
     }
   #endif
