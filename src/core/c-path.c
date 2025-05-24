@@ -100,48 +100,9 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 }
 
 
-//
-//  pick*: native:generic [  ; users can call directly, but 99.9% want POKE
-//
-//  "Implementation detail of PICK, return value uses dual protocol"
-//
-//      return: "DUAL PROTOCOL: action is accessor, lifted action is action"
-//          [null? error! action! quoted! quasiform!]
-//      location [<opt-out> fundamental?]  ; can't pick from quoted/quasi
-//      picker [<opt-out> element?]
-//  ]
-//
-DECLARE_NATIVE(PICK_P)
-//
-// PICK* underlies tuple/path picking, and it uses a "dual protocol".  The
-// reason is that sometimes you might face a picking situation like what
-// occurs in the FFI, with:
-//
-//    struct.million_ints_field.10
-//
-// PICK* is called on each path step.  But if the underlying C data for the
-// STRUCT! is a C array of a million `int`s, then you don't want to explode
-// that into a BLOCK! of a million INTEGER!s... to then only pick the 10th!
-//
-// Hence, being able to return an ACTION! to be a "lazy" result that can
-// narrowly do the 10th pick is useful.  But this must be distinguishable
-// from a PICK that actually returns an ACTION! as the value (e.g. if an
-// OBJECT! had an ACTION! as a field).  Hence, PICK* uses the dual protocol.
-{
-    INCLUDE_PARAMS_OF_PICK_P;  // PICK_P must be frame compatible with PICK!
-
-    Element* location = Element_ARG(LOCATION);
-    UNUSED(ARG(PICKER));
-    // more ARG(...) may be in this location if PICK called us, reusing frame
-
-    possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for PICK's use
-
-    return Dispatch_Generic(PICK_P, location, LEVEL);
-}
-
 
 // Use Level flag vs. a state byte, so that we can reuse the same frame
-// for the calls to the generic PICK* implementations, even if it wants to
+// for the calls to the generic TWEAK* implementations, even if it wants to
 // use the state byte and do continuations/delegations.
 //
 #define LEVEL_FLAG_PICK_NOT_INITIAL_ENTRY  LEVEL_FLAG_MISCELLANEOUS
@@ -157,6 +118,7 @@ DECLARE_NATIVE(PICK_P)
 //      location [<opt-out> <unrun> plain?]  ; can't pick sigil'd/quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> element? logic?]
+//      <local> dual  ; slot in position of DUAL for TWEAK*
 //  ]
 //
 DECLARE_NATIVE(PICK)
@@ -165,11 +127,14 @@ DECLARE_NATIVE(PICK)
 // was distinct from the code that ran the PICK action.
 //
 // Ren-C rethought this to build tuple dispatch on top of PICK and POKE.
-// So `foo.(expr)` and `pick foo (expr)` will always give the same answer
+// So `foo.(expr)` and `pick foo (expr)` will always give the same answer.
+// There is one function called TWEAK* that performs a superset of PICK/POKE
+// for one step's-worth of tuple.
 {
     INCLUDE_PARAMS_OF_PICK;
 
     Element* location = Element_ARG(LOCATION);
+    Value* picker = ARG(PICKER);
 
     if (Get_Level_Flag(LEVEL, PICK_NOT_INITIAL_ENTRY))
         goto dispatch_generic;
@@ -178,11 +143,13 @@ DECLARE_NATIVE(PICK)
 
     Set_Level_Flag(LEVEL, PICK_NOT_INITIAL_ENTRY);
 
+    Init_Dual_Space_Pick_Signal(LOCAL(DUAL));  // PICK, not POKE
+
+} adjust_logic_to_index: {
+
     // PICK in R3-Alpha historically would use a logic TRUE to get the first
     // element in a list, and a logic FALSE to get the second.  It did this
     // regardless of how many elements were in the list.
-
-    Value* picker = ARG(PICKER);
 
     if (Is_Okay(picker)) {  // !!! should we verify that LENGTH-OF is 2?
         Init_Integer(picker, 1);
@@ -192,23 +159,27 @@ DECLARE_NATIVE(PICK)
     }
     assert(not Is_Antiform(picker));  // LOGIC? is the only supported antiform
 
+    goto dispatch_generic;
+
 } dispatch_generic: { ////////////////////////////////////////////////////////
 
     Bounce bounce = maybe Irreducible_Bounce(
         LEVEL,
-        Dispatch_Generic(PICK_P, location, LEVEL)
+        Dispatch_Generic(TWEAK_P, location, LEVEL)
     );
 
     if (bounce)
         return bounce;  // we will get a callback (if not error/etc.)
 
     if (Any_Lifted(OUT)) // if a value was found, it's returned as LIFTED
-        goto pick_p_succeeded_out_is_lifted;
+        goto pick_succeeded_out_is_lifted;
 
-} pick_p_gave_dual_signal: {  // non-LIFTED?s are signals in dual protocol
+} tweak_gave_dual_signal: {
+
+    // Non-LIFTED?s are signals in dual protocol
 
     if (Is_Atom_Action(OUT))
-        return PANIC("PICK* delegation machinery not done yet");
+        return PANIC("TWEAK* delegation machinery not done yet");
 
     if (Is_Error(OUT))
         return OUT;
@@ -216,15 +187,15 @@ DECLARE_NATIVE(PICK)
     if (Is_Nulled(OUT))  // absent (distinct from lifted "NULL-but-present")
         return FAIL(Error_Bad_Pick_Raw(ARG(PICKER)));
 
-    return PANIC("Non-ACTION! antiform returned by PICK* dual protocol");
+    return PANIC("Non-ACTION! antiform returned by TWEAK* dual protocol");
 
-} pick_p_succeeded_out_is_lifted: {
+} pick_succeeded_out_is_lifted: {
 
     Unliftify_Undecayed(OUT);
 
     if (Not_Stable(OUT)) {
-        assert(false);  // Note: once usermode PICK* exists, it may screw up
-        return PANIC("PICK* returned a lifted unstable antiform");
+        assert(false);  // Note: once usermode TWEAK* exists, it may screw up
+        return PANIC("TWEAK* returned a lifted unstable antiform");
     }
 
     return OUT;
@@ -232,26 +203,33 @@ DECLARE_NATIVE(PICK)
 
 
 //
-//  poke*: native:generic [  ; users can call directly, but 99.9% want POKE
+//  tweak*: native:generic [  ; can call directly, but 99.9% want PICK/POKE
 //
-//  "Implementation detail of POKE, returns Cell writeback bits (if needed)"
+//  "Implementation detail of PICK and POKE, also underlies SET and GET"
 //
-//      return: [null? any-value?]
+//      return: "DUAL PROTOCOL: null means no writeback, lifted null is null"
+//          [null? quoted! quasiform!]
 //      location [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker [<opt-out> element?]
 //      dual "DUAL PROTOCOL: action is accessor, lifted action is action"
-//          [null? action! word! quoted! quasiform!]
+//          [null? space? action! word! quoted! quasiform!]
 //  ]
 //
-DECLARE_NATIVE(POKE_P)
+DECLARE_NATIVE(TWEAK_P)
 //
-// POKE* underlies the implementation of SET (on TUPLE!, WORD!, etc.)
-// For it to work, the return value is the cell contents that should be
-// written back for immediate types.  This makes its return value somewhat
-// useless for users, as it's an implementation detail, that if anything
-// signals an error.
+// TWEAK* underlies the implementation of SET/GET (on TUPLE!, WORD!, etc.)
 //
-// For instance, if the overall result isn't null here, that means there was
+// If it receives a SPACE as the DUAL, then it acts "pick-like", and will
+// tell you what's in that cell as the result...using the dual protocol.
+//
+// If it receives any other state, then it will use that to modify the
+// target... and it will return whatever bits would be required to "write
+// back" the cell in the stored location to reflect the updated state.  This
+// update can be a complete overwrite of the value, or it can be a "tweak"
+// e.g. to ask to update the PROTECTED bits of a cell.
+//
+// To give an example: if you're asking to poke, that is translated into a
+// TWEAK request.  If TWEAK's result isn't null here, that means there was
 // a modification which nothing is writing back.  It would be like saying:
 //
 //     >> poke 12-Dec-2012 'year 1999
@@ -260,8 +238,21 @@ DECLARE_NATIVE(POKE_P)
 // Because the return value is not null, it's telling you that if a tuple
 // was being poked with the value (e.g. obj.date.year: 1999) then the bits
 // in obj.date would have to be changed.
+//
+// ACTION!s are used as a currency to help with situations like in the FFI:
+//
+//    struct.million_ints_field.10
+//
+// TWEAK* is called on each path step.  But if the underlying C data for the
+// STRUCT! is a C array of a million `int`s, then you don't want to explode
+// that into a BLOCK! of a million INTEGER!s... to then only pick the 10th!
+//
+// Hence, being able to return an ACTION! to be a "lazy" result that can
+// narrowly do the 10th pick is useful.  But this must be distinguishable
+// from a PICK that actually returns an ACTION! as the value (e.g. if an
+// OBJECT! had an ACTION! as a field).  Hence, TWEAK* uses the dual protocol.
 {
-    INCLUDE_PARAMS_OF_POKE_P;  // POKE_P must be frame compatible with POKE!
+    INCLUDE_PARAMS_OF_TWEAK_P;  // TWEAK* must be frame compatible w/PICK+POKE
 
     Element* location = Element_ARG(LOCATION);
     USED(ARG(PICKER));
@@ -272,7 +263,7 @@ DECLARE_NATIVE(POKE_P)
 
   ensure_lifted_antiforms_are_stable: {
 
-    // We don't want to make it possible for POKE* to take unstable antiforms.
+    // We don't want to make it possible for TWEAK* to take unstable antiforms.
     // That might seem to enable interesting features, like a container that
     // could store PACK! or ERROR! states:
     //
@@ -291,7 +282,7 @@ DECLARE_NATIVE(POKE_P)
     // to confront this in the mechanics outweighs the "freedom to" do it.
     //
     // 1. It's expected that magic inside the SET and GET code will bypass
-    //    calling POKE* and use Dispatch_Generic() directly.  When that
+    //    calling TWEAK* and use Dispatch_Generic() directly.  When that
     //    happens, this check (as well as other type checking) would not
     //    be applied.
 
@@ -300,12 +291,12 @@ DECLARE_NATIVE(POKE_P)
 
 } dispatch_generic: {
 
-    return Dispatch_Generic(POKE_P, location, LEVEL);
+    return Dispatch_Generic(TWEAK_P, location, LEVEL);
 }}
 
 
 // Use Level flag vs. a state byte, so that we can reuse the same frame
-// for the calls to the generic POKE* implementations, even if it wants to
+// for the calls to the generic TWEAK* implementations, even if it wants to
 // use the state byte and do continuations/delegations.
 //
 #define LEVEL_FLAG_POKE_NOT_INITIAL_ENTRY  LEVEL_FLAG_MISCELLANEOUS
@@ -339,7 +330,7 @@ DECLARE_NATIVE(POKE)
 
   initial_entry: {
 
-    // 1. We don't want to limit the POKE* function from changing value, and
+    // 1. We don't want to limit the TWEAK* function from changing value, and
     //    also want it to have full use of SPARE, SCRATCH, and OUT.  So POKE
     //    has a slightly larger frame where it stores the value in a local.
     //
@@ -354,33 +345,33 @@ DECLARE_NATIVE(POKE)
 
     Copy_Cell(LOCAL(STORE), lifted_value);  // save value to return [1]
 
-    Value* dual = ARG(VALUE);  // same slot (POKE* reuses this frame!) [2]
+    Value* dual = ARG(VALUE);  // same slot (TWEAK* reuses this frame!) [2]
 
     if (Is_Lifted_Void(lifted_value)) {
-        Init_Nulled(dual);  // POKE* experiences VOID as non-lifted null
+        Init_Nulled(dual);  // TWEAK* experiences VOID as non-lifted null
     }
     else {
-        // leave lifted, POKE* expects QUOTED!/QUASIFORM! for literal DUAL
+        // leave lifted, TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL
     }
 
     goto dispatch_generic;
 
 } dispatch_generic: { ////////////////////////////////////////////////////////
 
-    // 1. Though the POKE frame is slightly larger than that for POKE*, its
-    //    memory layout is compatible with POKE*, and can be reused.
+    // 1. Though the POKE frame is slightly larger than that for TWEAK*, its
+    //    memory layout is compatible with TWEAK*, and can be reused.
 
     Bounce bounce = maybe Irreducible_Bounce(
         LEVEL,
-        Dispatch_Generic(POKE_P, location, LEVEL)
+        Dispatch_Generic(TWEAK_P, location, LEVEL)
     );
 
     if (bounce)
         return bounce;  // we will get a callback (if not error/etc.)
 
-    if (not Is_Nulled(OUT))  // see POKE* for its meaning of non-null results
+    if (not Is_Nulled(OUT))  // see TWEAK* for its meaning of non-null results
         return PANIC(
-            "Can't writeback to immediate in POKE (use POKE* if intentional)"
+            "Can't writeback to immediate in POKE (use TWEAK* if intentional)"
         );
 
     Copy_Cell(OUT, LOCAL(STORE));

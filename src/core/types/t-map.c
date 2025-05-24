@@ -700,14 +700,33 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Is_Map)
+// 1. Fetching and setting with path-based access is case-preserving for
+//    initial insertions.  However, the case-insensitivity means that all
+//    writes after that to the same key will not be overriding the key,
+//    it will just change the data value for the existing key.  SELECT and
+//    the operation tentatively named PUT should be used if a map is to
+//    distinguish multiple casings of the same key.
+//
+IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
-    const Element* map = Element_ARG(LOCATION);
+    Element* map = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    bool strict = false;
+    bool strict = false;  // case-preserving [1]
+
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
+
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
 
     Option(Index) n = Find_Map_Entry(
         m_cast(Map*, VAL_MAP(map)),  // not modified
@@ -716,38 +735,18 @@ IMPLEMENT_GENERIC(PICK_P, Is_Map)
     );
 
     if (not n)
-        return DUAL_SIGNAL_NULL;
+        return DUAL_SIGNAL_NULL_ABSENT;
 
     const Element* val = Array_At(
         MAP_PAIRLIST(VAL_MAP(map)),
         (((unwrap n) - 1) * 2) + 1
     );
     if (Is_Zombie(val))
-        return DUAL_SIGNAL_NULL;
+        return DUAL_SIGNAL_NULL_ABSENT;
 
     return DUAL_LIFTED(Copy_Cell(OUT, val));
-}
 
-
-// 1. Fetching and setting with path-based access is case-preserving for
-//    initial insertions.  However, the case-insensitivity means that all
-//    writes after that to the same key will not be overriding the key,
-//    it will just change the data value for the existing key.  SELECT and
-//    the operation tentatively named PUT should be used if a map is to
-//    distinguish multiple casings of the same key.
-//
-IMPLEMENT_GENERIC(POKE_P, Is_Map)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
-
-    Element* map = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
-
-    bool strict = false;  // case-preserving [1]
-
-    Value* dual = ARG(DUAL);
-    if (Not_Lifted(dual))
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+} handle_poke: { /////////////////////////////////////////////////////////////
 
     Unliftify_Known_Stable(dual);
 
@@ -764,7 +763,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Map)
     );
 
     return NO_WRITEBACK_NEEDED;  // no upstream change for Map* reference
-}
+}}
 
 
 IMPLEMENT_GENERIC(LENGTH_OF, Is_Map)

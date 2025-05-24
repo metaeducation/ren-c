@@ -385,8 +385,7 @@ bool Try_Dispatch_Generic_Core(
         switch (symid) {  // exempt port's IMPLEMENT_GENERIC() cases
           case SYM_MAKE:
           case SYM_EQUAL_Q:
-          case SYM_PICK_P:
-          case SYM_POKE_P:
+          case SYM_TWEAK_P:
           case SYM_MOLDIFY:
             break;  // fall through to modern dispatch
 
@@ -513,7 +512,7 @@ void Shutdown_Action_Adjunct_Shim(void) {
 
 // Create a native in the library without using the evaluator.
 //
-// 1. Used with [native: any-atom? any-value? poke*: pick*:]
+// 1. Used with `native:` and `tweak*`
 //
 static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
 {
@@ -525,11 +524,7 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
     Fetch_Next_In_Feed(L->feed);
 
     NativeType native_type;
-    if (id == SYM_ANY_ATOM_Q or id == SYM_ANY_VALUE_Q) {
-        assert(Is_Chain(At_Level(L)));  // native:intrinsic [...]
-        native_type = NATIVE_INTRINSIC;
-    }
-    else if (id == SYM_PICK_P or id == SYM_POKE_P) {
+    if (id == SYM_TWEAK_P) {
         assert(Is_Chain(At_Level(L)));  // native:generic [...]
         native_type = NATIVE_NORMAL;  // genericness only in make prep ATM
     }
@@ -620,24 +615,17 @@ void Startup_Natives(const Element* boot_natives)
 
 } make_bedrock_natives_by_hand: {
 
-    // Eval can't run `native: native [...]` or `poke*: native [...]`
+    // Eval can't run `native: native [...]` or `tweak*: native [...]`
     //
-    // PICK*, and POKE* are fundamental to interpreter operation for SET and
-    // GET operations.  NATIVE is fundamental to making natives themselves.
+    // TWEAK* is fundamental to interpreter operation for SET and GET
+    // operations.  NATIVE is fundamental to making natives themselves.
     //
     // So they're pushed up to the front of the boot block and "made by hand",
     // e.g. not by running evaluation.  (This reordering to put them at the
     // head is done in %make-natives.r)
-    //
-    // 1. PICK* and POKE* use ANY-ATOM? and ANY-VALUE? type constraints.
-    //    These are intrinsics not currently made by Startup_Type_Predicates().
-    //    Probably should be.
 
     Make_Native_In_Lib_By_Hand(L, SYM_NATIVE);
-    Make_Native_In_Lib_By_Hand(L, SYM_ANY_ATOM_Q);  // PICK* and POKE* use [1]
-    Make_Native_In_Lib_By_Hand(L, SYM_ANY_VALUE_Q);  // PICK* and POKE* use [1]
-    Make_Native_In_Lib_By_Hand(L, SYM_PICK_P);
-    Make_Native_In_Lib_By_Hand(L, SYM_POKE_P);
+    Make_Native_In_Lib_By_Hand(L, SYM_TWEAK_P);
 
     goto make_next_native;
 

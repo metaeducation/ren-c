@@ -726,23 +726,6 @@ IMPLEMENT_GENERIC(COPY, Is_Blob)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Is_Blob)
-{
-    INCLUDE_PARAMS_OF_PICK_P;
-
-    const Element* blob = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
-
-    REBINT n;
-    if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
-        return DUAL_SIGNAL_NULL;
-
-    Byte b = *Binary_At(Cell_Binary(blob), n);
-
-    return DUAL_LIFTED(Init_Integer(OUT, b));
-}
-
-
 IMPLEMENT_GENERIC(TAKE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_TAKE;

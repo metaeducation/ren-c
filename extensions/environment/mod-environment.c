@@ -88,38 +88,6 @@ DECLARE_NATIVE(MAKE_ENVIRONMENT)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Is_Environment)
-{
-    INCLUDE_PARAMS_OF_PICK_P;
-
-    Element* env = Element_ARG(LOCATION);
-    Element* picker = Element_ARG(PICKER);
-
-    if (not Is_Word(picker) and not Is_Text(picker))
-        return "panic ENVIRONMENT! picker must be WORD! or TEXT!";
-
-    Option(Value*) value;
-    Option(ErrorValue*) error = Trap_Get_Environment_Variable(&value, picker);
-    if (error)
-        return rebDelegate("panic", unwrap error);
-
-    if (not value)  // return error if not present, must TRY or OPT
-        return DUAL_SIGNAL_NULL;
-
-    if (
-        Environment_Conflates_Empty_Strings_As_Absent(env)
-        and Cell_Series_Len_At(unwrap value) == 0
-    ){
-        return DUAL_SIGNAL_NULL;
-    }
-
-    if (not value)
-        return DUAL_SIGNAL_NULL;
-
-    return DUAL_LIFTED(unwrap value);
-}
-
-
 // !!! WARNING: While reading environment variables from a C program is fine,
 // writing them is a generally sketchy proposition and should probably be
 // avoided.  On UNIX there is no thread-safe way to do it, and even in a
@@ -128,9 +96,9 @@ IMPLEMENT_GENERIC(PICK_P, Is_Environment)
 //
 //      http://stackoverflow.com/a/5876818/211160
 //
-IMPLEMENT_GENERIC(POKE_P, Is_Environment)
+IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
 {
-    INCLUDE_PARAMS_OF_POKE_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* env = Element_ARG(LOCATION);
     Element* picker = Element_ARG(PICKER);
@@ -142,9 +110,10 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
 
     Option(const Value*) poke;  // set to nullptr if removing
 
-  handle_dual_signals: {
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
 
-    if (Any_Lifted(dual)) {
         if (Is_Dual_Null_Remove_Signal(dual)) {
             poke = nullptr;
             goto update_environment;
@@ -153,14 +122,38 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
         return PANIC(Error_Bad_Poke_Dual_Raw(dual));
     }
 
-} handle_normal_values: {
+    poke = Unliftify_Known_Stable(dual);
+
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
+
+    Option(Value*) value;
+    Option(ErrorValue*) error = Trap_Get_Environment_Variable(&value, picker);
+    if (error)
+        return rebDelegate("panic", unwrap error);
+
+    if (not value)  // return error if not present, must TRY or OPT
+        return DUAL_SIGNAL_NULL_ABSENT;
+
+    if (
+        Environment_Conflates_Empty_Strings_As_Absent(env)
+        and Cell_Series_Len_At(unwrap value) == 0
+    ){
+        return DUAL_SIGNAL_NULL_ABSENT;
+    }
+
+    if (not value)
+        return DUAL_SIGNAL_NULL_ABSENT;
+
+    return DUAL_LIFTED(unwrap value);
+
+} handle_poke: { /////////////////////////////////////////////////////////////
 
   // 1. To raise awareness about the empty string and null equivalence, force
   //    callers to use VOID instead of empty strings to unset (since you would
   //    only be able to get null back if you set to either an empty string or
   //    a void in this mode).
-
-    poke = Unliftify_Known_Stable(dual);
 
     if (not Is_Text(unwrap poke))
         return PANIC("ENVIRONMENT! can only be poked with VOID or TEXT!");
@@ -174,7 +167,9 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
         );
     }
 
-} update_environment: {
+    goto update_environment;
+
+} update_environment: { //////////////////////////////////////////////////////
 
     Option(ErrorValue*) error = Trap_Update_Environment_Variable(picker, poke);
     if (error)

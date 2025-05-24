@@ -434,15 +434,27 @@ DECLARE_NATIVE(DECORATE_PARAMETER)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Is_Parameter)
+IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
-    const Element* param = Element_ARG(LOCATION);
+    Element* param = Element_ARG(LOCATION);
+
     const Element* picker = Element_ARG(PICKER);
-
     if (not Is_Word(picker))
         return PANIC(picker);
+
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
+
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
 
     switch (Cell_Word_Id(picker)) {
       case SYM_TEXT: {
@@ -490,22 +502,8 @@ IMPLEMENT_GENERIC(PICK_P, Is_Parameter)
     }
 
     return FAIL(Error_Bad_Pick_Raw(picker));
-}
 
-
-IMPLEMENT_GENERIC(POKE_P, Is_Parameter)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
-
-    Element* param = Element_ARG(LOCATION);
-
-    const Element* picker = Element_ARG(PICKER);
-    if (not Is_Word(picker))
-        return PANIC(picker);
-
-    Value* dual = ARG(DUAL);
-    if (Not_Lifted(dual))
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+} handle_poke: { /////////////////////////////////////////////////////////////
 
     Unliftify_Known_Stable(dual);
 
@@ -528,4 +526,5 @@ IMPLEMENT_GENERIC(POKE_P, Is_Parameter)
         break;
     }
 
-    return PANIC(Error_Bad_Pick_Raw(picker)); }
+    return PANIC(Error_Bad_Pick_Raw(picker));
+}}

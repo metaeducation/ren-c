@@ -679,332 +679,6 @@ static REBINT Int_From_Date_Arg(const Value* poke) {
 }
 
 
-//
-//  Pick_Or_Poke_Date: C
-//
-void Pick_Or_Poke_Date(
-    Option(Sink(Value)) opt_out,
-    Element* v,
-    const Element* picker,
-    Option(const Value*) opt_poke
-){
-    Option(SymId) sym;
-    if (Is_Word(picker)) {
-        sym = Cell_Word_Id(picker); // error later if SYM_0 or not a match
-    }
-    else if (Is_Integer(picker)) {
-        switch (Int32(picker)) {
-        case 1: sym = SYM_YEAR; break;
-        case 2: sym = SYM_MONTH; break;
-        case 3: sym = SYM_DAY; break;
-        case 4: sym = SYM_TIME; break;
-        case 5: sym = SYM_ZONE; break;
-        case 6: sym = SYM_DATE; break;
-        case 7: sym = SYM_WEEKDAY; break;
-        case 8: sym = SYM_JULIAN; break; // a.k.a. SYM_YEARDAY
-        case 9: sym = SYM_UTC; break;
-        case 10: sym = SYM_HOUR; break;
-        case 11: sym = SYM_MINUTE; break;
-        case 12: sym = SYM_SECOND; break;
-        default:
-            panic (picker);
-        }
-    }
-    else
-        panic (picker);
-
-    // When a date has a time zone on it, then this can distort the integer
-    // value of the month/day/year that is seen in rendering from what is
-    // stored.  (So you might see the day as the 2nd, when VAL_DAY() is
-    // actually 3.)  We extract the original values so we have them if we
-    // need them (e.g if asked for the UTC or zone) and adjust.
-    //
-    DECLARE_VALUE (adjusted);
-    Copy_Cell(adjusted, v);
-    Fold_Zone_Into_Date(adjusted);
-    assert(not Does_Date_Have_Zone(adjusted));
-
-    REBINT day = VAL_DAY(adjusted);
-    REBINT month = VAL_MONTH(adjusted);
-    REBINT year = VAL_YEAR(adjusted);
-    REBI64 nano = Does_Date_Have_Time(adjusted)
-        ? VAL_NANO(adjusted)
-        : NO_DATE_TIME;
-    REBINT zone = Does_Date_Have_Zone(v)  // original...can be changed by poke
-        ? VAL_ZONE(v)
-        : NO_DATE_ZONE;
-
-    if (not opt_poke) {
-        assert(opt_out);
-        Value* out = unwrap opt_out;
-
-        switch (sym) {
-          case SYM_YEAR:
-            Init_Integer(out, year);  // tz adjusted year
-            break;
-
-          case SYM_MONTH:
-            Init_Integer(out, month);  // tz adjusted month
-            break;
-
-          case SYM_DAY:
-            Init_Integer(out, day);  // tz adjusted day
-            break;
-
-          case SYM_TIME:
-            if (not Does_Date_Have_Time(v))
-                Init_Nulled(out);
-            else
-                Init_Time_Nanoseconds(out, nano);  // tz adjusted nano
-            break;
-
-          case SYM_ZONE:
-            if (not Does_Date_Have_Zone(v))  // un-adjusted zone (obviously!)
-                Init_Nulled(out);
-            else
-                Init_Time_Nanoseconds(
-                    out,
-                    cast(int64_t, VAL_ZONE(v)) * ZONE_MINS * MIN_SEC
-                );
-            break;
-
-          case SYM_DATE: {
-            Copy_Cell(out, adjusted);  // want the adjusted date
-            Tweak_Cell_Nanoseconds(out, NO_DATE_TIME);  // with no time
-            assert(not Does_Date_Have_Zone(out));  // time zone removed
-            break; }
-
-          case SYM_WEEKDAY:
-            Init_Integer(out, Week_Day(adjusted));  // adjusted date
-            break;
-
-          case SYM_JULIAN:
-          case SYM_YEARDAY:
-            Init_Integer(out, Julian_Date(adjusted));
-            break;
-
-          case SYM_UTC: {
-            if (not Does_Date_Have_Time(v) or not Does_Date_Have_Zone(v))
-                panic ("DATE! must have /TIME and /ZONE components to get UTC");
-
-            // We really just want the original un-adjusted stored time but
-            // with the time zone component set to 0:00
-            //
-            Move_Cell(out, v);
-            VAL_ZONE(out) = 0;  // GMT
-            break; }
-
-          case SYM_HOUR:
-            if (not Does_Date_Have_Time(v))
-                Init_Nulled(out);
-            else {
-                REB_TIMEF time;
-                Split_Time(nano, &time);  // tz adjusted time
-                Init_Integer(out, time.h);
-            }
-            break;
-
-          case SYM_MINUTE:
-            if (not Does_Date_Have_Time(v))
-                Init_Nulled(out);
-            else {
-                REB_TIMEF time;
-                Split_Time(nano, &time);  // tz adjusted time
-                Init_Integer(out, time.m);
-            }
-            break;
-
-          case SYM_SECOND:
-            if (not Does_Date_Have_Time(v))
-                Init_Nulled(out);
-            else {
-                REB_TIMEF time;
-                Split_Time(nano, &time);  // tz adjusted time
-                if (time.n == 0)
-                    Init_Integer(out, time.s);
-                else
-                    Init_Decimal(
-                        out,
-                        cast(REBDEC, time.s) + (time.n * NANO)
-                    );
-            }
-            break;
-
-          default:
-            Init_Nulled(out);  // "out of range" PICK semantics
-        }
-    }
-    else {
-        assert(not opt_out);
-        const Value* poke = unwrap opt_poke;
-
-        // Here the desire is to modify the incoming date directly.  This is
-        // done by changing the components that need to change which were
-        // extracted, and building a new date out of the parts.
-        //
-        // The modifications are done to the time zone adjusted fields, and
-        // then the time is fixed back.
-
-        switch (sym) {
-          case SYM_YEAR:
-            year = Int_From_Date_Arg(poke);
-            break;
-
-          case SYM_MONTH:
-            month = Int_From_Date_Arg(poke);
-            if (month < 1 or month > 12)
-                panic (Error_Out_Of_Range(poke));
-            break;
-
-          case SYM_DAY:
-            day = Int_From_Date_Arg(poke);
-            if (
-                day < 1
-                or day > Month_Length(VAL_MONTH(v), VAL_YEAR(v))
-            ){
-                panic (Error_Out_Of_Range(poke));
-            }
-            break;
-
-          case SYM_TIME:
-            if (Is_Nulled(poke)) {  // clear out the time component
-                nano = NO_DATE_TIME;
-                zone = NO_DATE_ZONE;
-            }
-            else if (Is_Time(poke) or Is_Date(poke))
-                nano = VAL_NANO(poke);
-            else if (Is_Integer(poke))
-                nano = Int_From_Date_Arg(poke) * SEC_SEC;
-            else if (Is_Decimal(poke))
-                nano = DEC_TO_SECS(VAL_DECIMAL(poke));
-            else
-                panic (poke);
-
-            Tweak_Cell_Nanoseconds(v, nano);
-
-          check_nanoseconds:
-            if (
-                nano != NO_DATE_TIME
-                and (nano < 0 or nano >= SECS_TO_NANO(24 * 60 * 60))
-            ){
-                panic (Error_Out_Of_Range(poke));
-            }
-            break;
-
-          case SYM_ZONE:
-            if (Is_Nulled(poke)) {  // clear out the zone component
-                zone = NO_DATE_ZONE;
-            }
-            else {
-                // Make it easier to turn a time into one that math can be
-                // done on by letting you set the time zone even if it does
-                // not have a time component.  Will become 00:00:00
-                //
-                if (not Does_Date_Have_Time(v))
-                    nano = 0;
-
-                if (Is_Time(poke))
-                    zone = cast(REBINT, VAL_NANO(poke) / (ZONE_MINS * MIN_SEC));
-                else if (Is_Date(poke))
-                    zone = VAL_ZONE(poke);
-                else
-                    zone = Int_From_Date_Arg(poke) * (60 / ZONE_MINS);
-                if (zone > MAX_ZONE or zone < -MAX_ZONE)
-                    panic (Error_Out_Of_Range(poke));
-            }
-            break;
-
-          case SYM_JULIAN:
-          case SYM_WEEKDAY:
-          case SYM_UTC:
-            panic (picker);
-
-          case SYM_DATE: {
-            if (not Is_Date(poke))
-                panic (poke);
-
-            // We want to adjust the date being poked, so the year/month/day
-            // that the user sees is the one reflected.  Safest is to work in
-            // UTC instead of mixing and matching :-/ but if you're going to
-            // mix then visual consistency gives the most coherent experience.
-            //
-            // (It could also be an error if the time zones don't line up)
-
-            DECLARE_ATOM (poke_adjusted);
-            Copy_Cell(poke_adjusted, poke);
-            Fold_Zone_Into_Date(poke_adjusted);
-            assert(not Does_Date_Have_Zone(poke_adjusted));
-
-            year = VAL_YEAR(poke_adjusted);
-            month = VAL_MONTH(poke_adjusted);
-            day = VAL_DAY(poke_adjusted);
-            break; }
-
-          case SYM_HOUR: {
-            if (not Does_Date_Have_Time(v))
-                nano = 0;  // allow assignment if no prior time component
-
-            REB_TIMEF time;
-            Split_Time(nano, &time);
-            time.h = Int_From_Date_Arg(poke);
-            nano = Join_Time(&time, false);
-            goto check_nanoseconds; }
-
-          case SYM_MINUTE: {
-            if (not Does_Date_Have_Time(v))
-                nano = 0;  // allow assignment if no prior time component
-
-            REB_TIMEF time;
-            Split_Time(nano, &time);
-            time.m = Int_From_Date_Arg(poke);
-            nano = Join_Time(&time, false);
-            goto check_nanoseconds; }
-
-          case SYM_SECOND: {
-            if (not Does_Date_Have_Time(v))
-                nano = 0;  // allow assignment if no prior time component
-
-            REB_TIMEF time;
-            Split_Time(nano, &time);
-            if (Is_Integer(poke)) {
-                time.s = Int_From_Date_Arg(poke);
-                time.n = 0;
-            }
-            else {
-                time.s = cast(REBINT, VAL_DECIMAL(poke));
-                time.n = cast(REBINT,
-                    (VAL_DECIMAL(poke) - time.s) * SEC_SEC);
-            }
-            nano = Join_Time(&time, false);
-            goto check_nanoseconds; }
-
-          default:
-            panic (picker);
-        }
-
-        // R3-Alpha went through a shady process of "normalization" if you
-        // created an invalid date/time combination.  So if you have February
-        // 29 in a non-leap year, it would adjust that to be March 1st.  That
-        // code was basically reusing the code from date math on fieldwise
-        // assignment.  Consensus was to error on invalid dates instead:
-        //
-        // https://forum.rebol.info/t/240/
-        //
-        VAL_YEAR(v) = year;
-        VAL_MONTH(v) = month;
-        VAL_DAY(v) = day;
-        VAL_ZONE(v) = NO_DATE_ZONE;  // to be adjusted
-        Tweak_Cell_Nanoseconds(v, nano);  // may be NO_DATE_TIME
-
-        // This is not a canon stored date, so we have to take into account
-        // the separated zone variable (which may have been changed or cleared).
-
-        if (zone != NO_DATE_ZONE)
-            Adjust_Date_Zone_Core(v, zone);
-    }
-}
-
-
 IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
@@ -1102,40 +776,349 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Is_Date)
+IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
-
-    Element* date = Element_ARG(LOCATION);  // needs to not be const
-    const Element* picker = Element_ARG(PICKER);
-
-    Pick_Or_Poke_Date(OUT, date, picker, nullptr);  // won't modify date
-    return DUAL_LIFTED(OUT);
-}
-
-
-IMPLEMENT_GENERIC(POKE_P, Is_Date)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* date = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
+    Option(SymId) sym;
+    if (Is_Word(picker)) {
+        sym = Cell_Word_Id(picker); // error later if SYM_0 or not a match
+    }
+    else if (Is_Integer(picker)) {
+        switch (Int32(picker)) {
+          case 1: sym = SYM_YEAR; break;
+          case 2: sym = SYM_MONTH; break;
+          case 3: sym = SYM_DAY; break;
+          case 4: sym = SYM_TIME; break;
+          case 5: sym = SYM_ZONE; break;
+          case 6: sym = SYM_DATE; break;
+          case 7: sym = SYM_WEEKDAY; break;
+          case 8: sym = SYM_JULIAN; break; // a.k.a. SYM_YEARDAY
+          case 9: sym = SYM_UTC; break;
+          case 10: sym = SYM_HOUR; break;
+          case 11: sym = SYM_MINUTE; break;
+          case 12: sym = SYM_SECOND; break;
+          default:
+            return PANIC(PARAM(PICKER));
+        }
+    }
+    else
+        return PANIC(PARAM(PICKER));
+
+    // When a date has a time zone on it, then this can distort the integer
+    // value of the month/day/year that is seen in rendering from what is
+    // stored.  (So you might see the day as the 2nd, when VAL_DAY() is
+    // actually 3.)  We extract the original values so we have them if we
+    // need them (e.g if asked for the UTC or zone) and adjust.
+    //
+    DECLARE_ELEMENT (adjusted);
+    Copy_Cell(adjusted, date);
+    Fold_Zone_Into_Date(adjusted);
+    assert(not Does_Date_Have_Zone(adjusted));
+
+    REBINT day = VAL_DAY(adjusted);
+    REBINT month = VAL_MONTH(adjusted);
+    REBINT year = VAL_YEAR(adjusted);
+    REBI64 nano = Does_Date_Have_Time(adjusted)
+        ? VAL_NANO(adjusted)
+        : NO_DATE_TIME;
+    REBINT zone = Does_Date_Have_Zone(date)  // original can be changed by poke
+        ? VAL_ZONE(date)
+        : NO_DATE_ZONE;
+
     Value* dual = ARG(DUAL);
-    if (Not_Lifted(dual))
+
+ dispatch_pick_or_poke: {
+
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
         return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
 
-    Unliftify_Known_Stable(dual);
+    goto handle_poke;
 
-    if (Is_Antiform(dual))
-        return PANIC(Error_Bad_Antiform(dual));
+} handle_pick: { /////////////////////////////////////////////////////////////
 
-    Element* poke = Known_Element(dual);
+    switch (sym) {
+      case SYM_YEAR:
+        Init_Integer(OUT, year);  // tz adjusted year
+        break;
 
-    Pick_Or_Poke_Date(nullptr, date, picker, poke);
+      case SYM_MONTH:
+        Init_Integer(OUT, month);  // tz adjusted month
+        break;
+
+      case SYM_DAY:
+        Init_Integer(OUT, day);  // tz adjusted day
+        break;
+
+      case SYM_TIME:
+        if (not Does_Date_Have_Time(date))
+            Init_Nulled(OUT);
+        else
+            Init_Time_Nanoseconds(OUT, nano);  // tz adjusted nano
+        break;
+
+      case SYM_ZONE:
+        if (not Does_Date_Have_Zone(date))  // un-adjusted zone (obviously!)
+            Init_Nulled(OUT);
+        else
+            Init_Time_Nanoseconds(
+                OUT,
+                cast(int64_t, VAL_ZONE(date)) * ZONE_MINS * MIN_SEC
+            );
+        break;
+
+      case SYM_DATE: {
+        Element* out = Copy_Cell(OUT, adjusted);  // want the adjusted date
+        Tweak_Cell_Nanoseconds(out, NO_DATE_TIME);  // with no time
+        assert(not Does_Date_Have_Zone(out));  // time zone removed
+        break; }
+
+      case SYM_WEEKDAY:
+        Init_Integer(OUT, Week_Day(adjusted));  // adjusted date
+        break;
+
+      case SYM_JULIAN:
+      case SYM_YEARDAY:
+        Init_Integer(OUT, Julian_Date(adjusted));
+        break;
+
+      case SYM_UTC: {
+        if (not Does_Date_Have_Time(date) or not Does_Date_Have_Zone(date))
+            panic ("DATE! must have :TIME and :ZONE components to get UTC");
+
+        // We really just want the original un-adjusted stored time but
+        // with the time zone component set to 0:00
+        //
+        Element* out = Move_Cell(OUT, date);
+        VAL_ZONE(out) = 0;  // GMT
+        break; }
+
+      case SYM_HOUR:
+        if (not Does_Date_Have_Time(date))
+            Init_Nulled(OUT);
+        else {
+            REB_TIMEF time;
+            Split_Time(nano, &time);  // tz adjusted time
+            Init_Integer(OUT, time.h);
+        }
+        break;
+
+      case SYM_MINUTE:
+        if (not Does_Date_Have_Time(date))
+            Init_Nulled(OUT);
+        else {
+            REB_TIMEF time;
+            Split_Time(nano, &time);  // tz adjusted time
+            Init_Integer(OUT, time.m);
+        }
+        break;
+
+      case SYM_SECOND:
+        if (not Does_Date_Have_Time(date))
+            Init_Nulled(OUT);
+        else {
+            REB_TIMEF time;
+            Split_Time(nano, &time);  // tz adjusted time
+            if (time.n == 0)
+                Init_Integer(OUT, time.s);
+            else
+                Init_Decimal(
+                    OUT,
+                    cast(REBDEC, time.s) + (time.n * NANO)
+                );
+        }
+        break;
+
+      default:
+        return DUAL_SIGNAL_NULL_ABSENT;
+    }
+
+    return DUAL_LIFTED(OUT);
+
+} handle_poke: { /////////////////////////////////////////////////////////////
+
+    // Here the desire is to modify the incoming date directly.  This is
+    // done by changing the components that need to change which were
+    // extracted, and building a new date out of the parts.
+    //
+    // The modifications are done to the time zone adjusted fields, and
+    // then the time is fixed back.
+
+    Value* poke = Unliftify_Known_Stable(dual);
+
+    switch (sym) {
+      case SYM_YEAR:
+        year = Int_From_Date_Arg(poke);
+        break;
+
+      case SYM_MONTH:
+        month = Int_From_Date_Arg(poke);
+        if (month < 1 or month > 12)
+            panic (Error_Out_Of_Range(poke));
+        break;
+
+      case SYM_DAY:
+        day = Int_From_Date_Arg(poke);
+        if (
+            day < 1
+            or day > Month_Length(VAL_MONTH(date), VAL_YEAR(date))
+        ){
+            panic (Error_Out_Of_Range(poke));
+        }
+        break;
+
+      case SYM_TIME:
+        if (Is_Nulled(poke)) {  // clear out the time component
+            nano = NO_DATE_TIME;
+            zone = NO_DATE_ZONE;
+        }
+        else if (Is_Time(poke) or Is_Date(poke))
+            nano = VAL_NANO(poke);
+        else if (Is_Integer(poke))
+            nano = Int_From_Date_Arg(poke) * SEC_SEC;
+        else if (Is_Decimal(poke))
+            nano = DEC_TO_SECS(VAL_DECIMAL(poke));
+        else
+            panic (poke);
+
+        Tweak_Cell_Nanoseconds(date, nano);
+        goto check_nanoseconds;
+
+      case SYM_ZONE:
+        if (Is_Nulled(poke)) {  // clear out the zone component
+            zone = NO_DATE_ZONE;
+        }
+        else {
+            // Make it easier to turn a time into one that math can be
+            // done on by letting you set the time zone even if it does
+            // not have a time component.  Will become 00:00:00
+            //
+            if (not Does_Date_Have_Time(date))
+                nano = 0;
+
+            if (Is_Time(poke))
+                zone = cast(REBINT, VAL_NANO(poke) / (ZONE_MINS * MIN_SEC));
+            else if (Is_Date(poke))
+                zone = VAL_ZONE(poke);
+            else
+                zone = Int_From_Date_Arg(poke) * (60 / ZONE_MINS);
+            if (zone > MAX_ZONE or zone < -MAX_ZONE)
+                panic (Error_Out_Of_Range(poke));
+        }
+        break;
+
+      case SYM_JULIAN:
+      case SYM_WEEKDAY:
+      case SYM_UTC:
+        return PANIC(PARAM(PICKER));
+
+      case SYM_DATE: {
+        if (not Is_Date(poke))
+            panic (poke);
+
+        // We want to adjust the date being poked, so the year/month/day
+        // that the user sees is the one reflected.  Safest is to work in
+        // UTC instead of mixing and matching :-/ but if you're going to
+        // mix then visual consistency gives the most coherent experience.
+        //
+        // (It could also be an error if the time zones don't line up)
+
+        DECLARE_ATOM (poke_adjusted);
+        Copy_Cell(poke_adjusted, poke);
+        Fold_Zone_Into_Date(poke_adjusted);
+        assert(not Does_Date_Have_Zone(poke_adjusted));
+
+        year = VAL_YEAR(poke_adjusted);
+        month = VAL_MONTH(poke_adjusted);
+        day = VAL_DAY(poke_adjusted);
+        break; }
+
+      case SYM_HOUR: {
+        if (not Does_Date_Have_Time(date))
+            nano = 0;  // allow assignment if no prior time component
+
+        REB_TIMEF time;
+        Split_Time(nano, &time);
+        time.h = Int_From_Date_Arg(poke);
+        nano = Join_Time(&time, false);
+        goto check_nanoseconds; }
+
+      case SYM_MINUTE: {
+        if (not Does_Date_Have_Time(date))
+            nano = 0;  // allow assignment if no prior time component
+
+        REB_TIMEF time;
+        Split_Time(nano, &time);
+        time.m = Int_From_Date_Arg(poke);
+        nano = Join_Time(&time, false);
+        goto check_nanoseconds; }
+
+      case SYM_SECOND: {
+        if (not Does_Date_Have_Time(date))
+            nano = 0;  // allow assignment if no prior time component
+
+        REB_TIMEF time;
+        Split_Time(nano, &time);
+        if (Is_Integer(poke)) {
+            time.s = Int_From_Date_Arg(poke);
+            time.n = 0;
+        }
+        else {
+            time.s = cast(REBINT, VAL_DECIMAL(poke));
+            time.n = cast(REBINT,
+                (VAL_DECIMAL(poke) - time.s) * SEC_SEC);
+        }
+        nano = Join_Time(&time, false);
+        goto check_nanoseconds; }
+
+      default:
+        panic (picker);
+    }
+
+    goto finalize;
+
+  check_nanoseconds: { ///////////////////////////////////////////////////////
+
+    if (
+        nano != NO_DATE_TIME
+        and (nano < 0 or nano >= SECS_TO_NANO(24 * 60 * 60))
+    ){
+        return PANIC(Error_Out_Of_Range(poke));
+    }
+
+    goto finalize;
+
+}} finalize: { ////////////////////////////////////////////////////////////////
+
+    // R3-Alpha went through a shady process of "normalization" if you
+    // created an invalid date/time combination.  So if you have February
+    // 29 in a non-leap year, it would adjust that to be March 1st.  That
+    // code was basically reusing the code from date math on fieldwise
+    // assignment.  Consensus was to error on invalid dates instead:
+    //
+    // https://forum.rebol.info/t/240/
+
+    VAL_YEAR(date) = year;
+    VAL_MONTH(date) = month;
+    VAL_DAY(date) = day;
+    VAL_ZONE(date) = NO_DATE_ZONE;  // to be adjusted
+    Tweak_Cell_Nanoseconds(date, nano);  // may be NO_DATE_TIME
+
+    // This is not a canon stored date, so we have to take into account
+    // the separated zone variable (which may have been changed or cleared).
+
+    if (zone != NO_DATE_ZONE)
+        Adjust_Date_Zone_Core(date, zone);
 
     return WRITEBACK(COPY(date));  // all bits in the cell, must writeback
-}
+}}
 
 
 IMPLEMENT_GENERIC(RANDOMIZE, Is_Date)

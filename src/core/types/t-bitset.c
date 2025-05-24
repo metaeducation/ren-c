@@ -637,29 +637,30 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Is_Bitset)
+IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
-
-    const Element* bset = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
-
-    bool bit = Check_Bits(VAL_BITSET(bset), picker, false);
-
-    return DUAL_LIFTED(Init_Logic(OUT, bit));
-}
-
-
-IMPLEMENT_GENERIC(POKE_P, Is_Bitset)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* bset = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
     Value* dual = ARG(DUAL);
-    if (Not_Lifted(dual))
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
         return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
+
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
+
+    bool bit = Check_Bits(VAL_BITSET(bset), picker, false);
+
+    return DUAL_LIFTED(Init_Logic(OUT, bit));
+
+} handle_poke: { /////////////////////////////////////////////////////////////
 
     Value* poke = Unliftify_Known_Stable(dual);  // ~null~/~okay~ antiforms
 
@@ -677,7 +678,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Bitset)
         return PANIC(PARAM(PICKER));
     }
     return NO_WRITEBACK_NEEDED;
-}
+}}
 
 
 IMPLEMENT_GENERIC(COPY, Is_Bitset)

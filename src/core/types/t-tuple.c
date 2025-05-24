@@ -489,9 +489,9 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Any_Sequence)
+IMPLEMENT_GENERIC(TWEAK_P, Any_Sequence)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
     const Element* seq = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
@@ -503,12 +503,29 @@ IMPLEMENT_GENERIC(PICK_P, Any_Sequence)
     else
         return PANIC(picker);
 
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
+
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
+
     if (n < 0 or n >= Cell_Sequence_Len(seq))
-        return DUAL_SIGNAL_NULL;
+        return DUAL_SIGNAL_NULL_ABSENT;
 
     Copy_Sequence_At(OUT, seq, n);
     return DUAL_LIFTED(OUT);
-}
+
+} handle_poke: { /////////////////////////////////////////////////////////////
+
+    return PANIC("Cannot modify a TUPLE!, PATH!, or CHAIN! (immutable)");
+
+}}
 
 
 // Sequences (TUPLE!, PATH!, etc.) are not mutable, so they don't support

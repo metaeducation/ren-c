@@ -380,112 +380,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 }
 
 
-//
-//  Pick_Time: C
-//
-void Pick_Time(Sink(Value) out, const Cell* value, const Element* picker)
-{
-    REBINT i;
-    if (Is_Word(picker)) {
-        switch (Cell_Word_Id(picker)) {
-        case SYM_HOUR:   i = 0; break;
-        case SYM_MINUTE: i = 1; break;
-        case SYM_SECOND: i = 2; break;
-        default:
-            panic (picker);
-        }
-    }
-    else if (Is_Integer(picker))
-        i = VAL_INT32(picker) - 1;
-    else
-        panic (picker);
-
-    REB_TIMEF tf;
-    Split_Time(VAL_NANO(value), &tf); // loses sign
-
-    switch(i) {
-    case 0: // hours
-        Init_Integer(out, tf.h);
-        break;
-    case 1: // minutes
-        Init_Integer(out, tf.m);
-        break;
-    case 2: // seconds
-        if (tf.n == 0)
-            Init_Integer(out, tf.s);
-        else
-            Init_Decimal(out, cast(REBDEC, tf.s) + (tf.n * NANO));
-        break;
-    default:
-        Init_Nulled(out); // "out of range" behavior for pick
-    }
-}
-
-
-//
-//  Poke_Time_Immediate: C
-//
-void Poke_Time_Immediate(
-    Element* time,
-    const Element* picker,
-    const Value* poke
-) {
-    REBINT i;
-    if (Is_Word(picker)) {
-        switch (Cell_Word_Id(picker)) {
-        case SYM_HOUR:   i = 0; break;
-        case SYM_MINUTE: i = 1; break;
-        case SYM_SECOND: i = 2; break;
-        default:
-            panic (picker);
-        }
-    }
-    else if (Is_Integer(picker))
-        i = VAL_INT32(picker) - 1;
-    else
-        panic (picker);
-
-    REB_TIMEF tf;
-    Split_Time(VAL_NANO(time), &tf); // loses sign
-
-    REBINT n;
-    if (Is_Integer(poke) || Is_Decimal(poke))
-        n = Int32s(poke, 0);
-    else if (Is_Space(poke))
-        n = 0;
-    else
-        panic (poke);
-
-    switch(i) {
-    case 0:
-        tf.h = n;
-        break;
-    case 1:
-        tf.m = n;
-        break;
-    case 2:
-        if (Is_Decimal(poke)) {
-            REBDEC f = VAL_DECIMAL(poke);
-            if (f < 0.0)
-                panic (Error_Out_Of_Range(poke));
-
-            tf.s = f;
-            tf.n = (f - tf.s) * SEC_SEC;
-        }
-        else {
-            tf.s = n;
-            tf.n = 0;
-        }
-        break;
-
-    default:
-        panic (picker);
-    }
-
-    Tweak_Cell_Nanoseconds(time, Join_Time(&tf, false));
-}
-
-
 IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 {
     const Symbol* verb = Level_Verb(LEVEL);
@@ -640,28 +534,66 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Is_Time)
+IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
-
-    const Element* time = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
-
-    Pick_Time(OUT, time, picker);
-    return DUAL_LIFTED(OUT);
-}
-
-
-IMPLEMENT_GENERIC(POKE_P, Is_Time)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* time = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
+    REBINT i;
+    if (Is_Word(picker)) {
+        switch (Cell_Word_Id(picker)) {
+        case SYM_HOUR:   i = 0; break;
+        case SYM_MINUTE: i = 1; break;
+        case SYM_SECOND: i = 2; break;
+        default:
+            panic (picker);
+        }
+    }
+    else if (Is_Integer(picker))
+        i = VAL_INT32(picker) - 1;
+    else
+        panic (picker);
+
+    REB_TIMEF tf;
+    Split_Time(VAL_NANO(time), &tf); // loses sign
+
     Value* dual = ARG(DUAL);
-    if (Not_Lifted(dual))
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
         return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
+
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
+
+    switch(i) {
+      case 0: // hours
+        Init_Integer(OUT, tf.h);
+        break;
+
+      case 1: // minutes
+        Init_Integer(OUT, tf.m);
+        break;
+
+      case 2: // seconds
+        if (tf.n == 0)
+            Init_Integer(OUT, tf.s);
+        else
+            Init_Decimal(OUT, cast(REBDEC, tf.s) + (tf.n * NANO));
+        break;
+
+      default:
+        return DUAL_SIGNAL_NULL_ABSENT;
+    }
+
+    return DUAL_LIFTED(OUT);
+
+} handle_poke: { /////////////////////////////////////////////////////////////
 
     Unliftify_Known_Stable(dual);
 
@@ -670,9 +602,46 @@ IMPLEMENT_GENERIC(POKE_P, Is_Time)
 
     Element* poke = Known_Element(dual);
 
-    Poke_Time_Immediate(time, picker, poke);
+    REBINT n;
+    if (Is_Integer(poke) || Is_Decimal(poke))
+        n = Int32s(poke, 0);
+    else if (Is_Space(poke))
+        n = 0;
+    else
+        return PANIC(PARAM(DUAL));
+
+    switch(i) {
+      case 0:
+        tf.h = n;
+        break;
+
+      case 1:
+        tf.m = n;
+        break;
+
+      case 2:
+        if (Is_Decimal(poke)) {
+            REBDEC f = VAL_DECIMAL(poke);
+            if (f < 0.0)
+                panic (Error_Out_Of_Range(poke));
+
+            tf.s = f;
+            tf.n = (f - tf.s) * SEC_SEC;
+        }
+        else {
+            tf.s = n;
+            tf.n = 0;
+        }
+        break;
+
+      default:
+        return PANIC(PARAM(PICKER));
+    }
+
+    Tweak_Cell_Nanoseconds(time, Join_Time(&tf, false));
+
     return WRITEBACK(COPY(time));  // caller needs to update their time bits
-}
+}}
 
 
 IMPLEMENT_GENERIC(RANDOMIZE, Is_Time)

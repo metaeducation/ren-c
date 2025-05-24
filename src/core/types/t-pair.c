@@ -291,25 +291,9 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Is_Pair)
+IMPLEMENT_GENERIC(TWEAK_P, Is_Pair)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
-
-    const Element* pair = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
-
-    REBINT n = Index_From_Picker_For_Pair(pair, picker);
-    if (n != 1 and n != 2)
-        return DUAL_SIGNAL_NULL;
-
-    Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
-    return DUAL_LIFTED(Copy_Cell(OUT, which));
-}
-
-
-IMPLEMENT_GENERIC(POKE_P, Is_Pair)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* pair = Element_ARG(LOCATION);
 
@@ -317,8 +301,24 @@ IMPLEMENT_GENERIC(POKE_P, Is_Pair)
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
 
     Value* dual = ARG(DUAL);
-    if (Not_Lifted(dual))
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
         return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
+
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
+
+    if (n != 1 and n != 2)
+        return DUAL_SIGNAL_NULL_ABSENT;
+
+    Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
+    return DUAL_LIFTED(Copy_Cell(OUT, which));
+
+} handle_poke: { /////////////////////////////////////////////////////////////
 
     Unliftify_Known_Stable(dual);
 
@@ -334,7 +334,7 @@ IMPLEMENT_GENERIC(POKE_P, Is_Pair)
     Copy_Cell(which, poke);
 
     return NO_WRITEBACK_NEEDED;  // PAIR! is two independent cells in Ren-C
-}
+}}
 
 
 IMPLEMENT_GENERIC(REVERSE, Is_Pair)

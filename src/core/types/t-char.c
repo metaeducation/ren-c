@@ -932,9 +932,9 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
 // alias it as TEXT!... this would go along with the idea of saying that
 // the (_) "Space Rune" is EMPTY?.
 //
-IMPLEMENT_GENERIC(PICK_P, Is_Rune)
+IMPLEMENT_GENERIC(TWEAK_P, Is_Rune)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
     const Element* rune = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
@@ -943,13 +943,26 @@ IMPLEMENT_GENERIC(PICK_P, Is_Rune)
         return PANIC(PARAM(PICKER));
 
     REBI64 n = VAL_INT64(picker);
+
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
+
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
+
     if (n <= 0)
-        return DUAL_SIGNAL_NULL;
+        return DUAL_SIGNAL_NULL_ABSENT;
 
     REBLEN len;
     Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, rune);
     if (n > len)
-        return DUAL_SIGNAL_NULL;
+        return DUAL_SIGNAL_NULL_ABSENT;
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
@@ -957,7 +970,11 @@ IMPLEMENT_GENERIC(PICK_P, Is_Rune)
         cp = Utf8_Next(&c, cp);
 
     return DUAL_LIFTED(Init_Char_Unchecked(OUT, c));
-}
+
+} handle_poke: { /////////////////////////////////////////////////////////////
+
+    return PANIC("RUNE! is immutable, cannot be modified");
+}}
 
 
 IMPLEMENT_GENERIC(REVERSE_OF, Any_Utf8)

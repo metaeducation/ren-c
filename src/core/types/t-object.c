@@ -1189,19 +1189,34 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Any_Context)
+IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
-    const Element* context = Element_ARG(LOCATION);
-    Context* c = Cell_Context(context);
+    Element* context = Element_ARG(LOCATION);
+    possibly(Is_Port(context));
 
     const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
     const Value* slot = maybe Cell_Context_Slot(context, symbol);
     if (not slot)
-        return DUAL_SIGNAL_NULL;
+        return DUAL_SIGNAL_NULL_ABSENT;
+
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
+        if (Is_Dual_Word_Named_Signal(dual))
+            goto handle_named_signal;
+
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));  // smart error RE:remove?
+    }
+
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
 
     Value* out = Copy_Cell(OUT, slot);
 
@@ -1210,68 +1225,44 @@ IMPLEMENT_GENERIC(PICK_P, Any_Context)
         and QUOTE_BYTE(slot) == ANTIFORM_0
         and Cell_Frame_Coupling(slot) == UNCOUPLED
     ){
+        Context* c = Cell_Context(context);
         Tweak_Cell_Frame_Coupling(out, cast(VarList*, c));
     }
 
     return DUAL_LIFTED(OUT);
-}
 
-
-IMPLEMENT_GENERIC(POKE_P, Any_Context)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
-
-    Element* context = Element_ARG(LOCATION);
-    possibly(Is_Port(context));
-
-    const Element* picker = Element_ARG(PICKER);
-    const Symbol* symbol = Symbol_From_Picker(context, picker);
-
-    Value* dual = ARG(DUAL);
-    if (Not_Lifted(dual)) {
-        if (Is_Dual_Null_Remove_Signal(dual))
-            return PANIC("ANY-CONTEXT! can't have fields removed by VOID ATM");
-
-        if (not Is_Dual_Word_Named_Signal(dual))
-            return PANIC(Error_Bad_Poke_Dual_Raw(dual));
-
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
-    }
-
-    const Value* slot = maybe Cell_Context_Slot(context, symbol);
-    if (not slot)
-        return PANIC(Error_Bad_Pick_Raw(picker));
-
-    if (Not_Lifted(dual)) {
-        switch (Cell_Word_Id(dual)) {
-          case SYM_PROTECT:
-            Set_Cell_Flag(slot, PROTECTED);
-            break;
-
-          case SYM_UNPROTECT:
-            Clear_Cell_Flag(slot, PROTECTED);
-            break;
-
-          case SYM_HIDE:
-            Set_Cell_Flag(slot, VAR_MARKED_HIDDEN);
-            break;
-
-          default:
-            return PANIC(Error_Bad_Poke_Dual_Raw(dual));
-        }
-
-        return NO_WRITEBACK_NEEDED;  // VarList* in context not changed
-    }
-
-    if (Get_Cell_Flag(slot, PROTECTED))
-        return PANIC(Error_Protected_Key(symbol));
+} handle_poke: { /////////////////////////////////////////////////////////////
 
     Value* poke = Unliftify_Known_Stable(dual);
+
+    if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
+        return PANIC(Error_Protected_Key(symbol));
 
     Copy_Cell(m_cast(Value*, slot), poke);
 
     return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
-}
+
+} handle_named_signal: { /////////////////////////////////////////////////////
+
+    switch (Cell_Word_Id(dual)) {
+      case SYM_PROTECT:
+        Set_Cell_Flag(slot, PROTECTED);
+        break;
+
+      case SYM_UNPROTECT:
+        Clear_Cell_Flag(slot, PROTECTED);
+        break;
+
+      case SYM_HIDE:
+        Set_Cell_Flag(slot, VAR_MARKED_HIDDEN);
+        break;
+
+      default:
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
+
+    return NO_WRITEBACK_NEEDED;  // VarList* in context not changed
+}}
 
 
 // !!! Should this be legal?

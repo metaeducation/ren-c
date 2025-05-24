@@ -929,27 +929,9 @@ IMPLEMENT_GENERIC(COPY, Any_List)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Any_List)
+IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
-
-    const Element* list = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
-
-    REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
-    if (n < 0 or n >= Cell_Series_Len_Head(list))
-        return DUAL_SIGNAL_NULL;
-
-    const Element* at = Array_At(Cell_Array(list), n);
-
-    Copy_Cell(OUT, at);
-    return DUAL_LIFTED(Inherit_Const(OUT, list));
-}
-
-
-IMPLEMENT_GENERIC(POKE_P, Any_Series)
-{
-    INCLUDE_PARAMS_OF_POKE_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* series = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
@@ -959,29 +941,57 @@ IMPLEMENT_GENERIC(POKE_P, Any_Series)
         n = Try_Get_Array_Index_From_Picker(series, picker);
     else {
         if (not Try_Get_Series_Index_From_Picker(&n, series, picker))
-            return PANIC(Error_Out_Of_Range(picker));
+            return DUAL_SIGNAL_NULL_ABSENT;
     }
 
     if (n < 0 or n >= Cell_Series_Len_Head(series))
-        return PANIC(Error_Out_Of_Range(picker));
+        return DUAL_SIGNAL_NULL_ABSENT;
 
     Value* poke;
 
     Value* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
         if (not Is_Dual_Null_Remove_Signal(dual))
             return PANIC(Error_Bad_Poke_Dual_Raw(dual));
 
         assert(Is_Nulled(dual));  // removal signal is null ATM
         poke = dual;
-    }
-    else {
-        poke = Unliftify_Known_Stable(dual);
-        if (Is_Antiform(poke) and not Is_Splice(poke))
-            return PANIC(PARAM(DUAL));
+        goto call_modify;
     }
 
-  call_modify: {
+    goto handle_poke;
+
+  handle_pick: { /////////////////////////////////////////////////////////////
+
+    if (Any_List(series)) {
+        const Element* at = Array_At(Cell_Array(series), n);
+
+        Copy_Cell(OUT, at);
+        return DUAL_LIFTED(Inherit_Const(OUT, series));
+    }
+
+    if (Any_String(series)) {
+        Codepoint c = Get_Char_At(Cell_String(series), n);
+        return DUAL_LIFTED(Init_Char_Unchecked(OUT, c));
+    }
+
+    assert(Is_Blob(series));
+
+    Byte b = *Binary_At(Cell_Binary(series), n);
+    return DUAL_LIFTED(Init_Integer(OUT, b));
+
+} handle_poke: { /////////////////////////////////////////////////////////////
+
+    poke = Unliftify_Known_Stable(dual);
+    if (Is_Antiform(poke) and not Is_Splice(poke))
+        return PANIC(PARAM(DUAL));
+
+    goto call_modify;
+
+} call_modify: { /////////////////////////////////////////////////////////////
 
     // We use the same mechanics that CHANGE with :PART of 1 does.  This means
     // that poking into an array slot can erase elements entirely with VOID,

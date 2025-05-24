@@ -1063,23 +1063,6 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Any_String)
-{
-    INCLUDE_PARAMS_OF_PICK_P;
-
-    const Element* any_string = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
-
-    REBINT n;
-    if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
-        return FAIL(Error_Bad_Pick_Raw(picker));
-
-    Codepoint c = Get_Char_At(Cell_String(any_string), n);
-
-    return DUAL_LIFTED(Init_Char_Unchecked(OUT, c));
-}
-
-
 IMPLEMENT_GENERIC(TAKE, Any_String)
 {
     INCLUDE_PARAMS_OF_TAKE;

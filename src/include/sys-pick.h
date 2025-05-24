@@ -125,10 +125,13 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 
 
 
-#define NO_WRITEBACK_NEEDED  DUAL_SIGNAL_NULL
+#define NO_WRITEBACK_NEEDED  DUAL_SIGNAL_NULL_ABSENT
 
 #define WRITEBACK(out)  DUAL_LIFTED(out)  // commentary
 
+
+#define Is_Dual_Space_Pick_Signal(dual)  Is_Space(dual)
+#define Init_Dual_Space_Pick_Signal(dual)  Init_Space(dual)
 
 #define Is_Dual_Null_Remove_Signal(dual)  Is_Nulled(dual)
 

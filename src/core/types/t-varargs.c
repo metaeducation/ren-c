@@ -459,15 +459,27 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
 }
 
 
-IMPLEMENT_GENERIC(PICK_P, Varargs)
+IMPLEMENT_GENERIC(TWEAK_P, Varargs)
 {
-    INCLUDE_PARAMS_OF_PICK_P;
+    INCLUDE_PARAMS_OF_TWEAK_P;
 
     const Element* varargs = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
         return PANIC(picker);
+
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Space_Pick_Signal(dual))
+            goto handle_pick;
+
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+    }
+
+    goto handle_poke;
+
+  handle_pick: {
 
     if (VAL_INT32(picker) != 1)
         return PANIC(Error_Varargs_No_Look_Raw());
@@ -484,7 +496,11 @@ IMPLEMENT_GENERIC(PICK_P, Varargs)
         return nullptr;
 
     return DUAL_LIFTED(OUT);
-}
+
+} handle_poke: {
+
+    return PANIC("VARARGS! does not support modification at this time");
+}}
 
 
 //

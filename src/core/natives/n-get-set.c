@@ -713,18 +713,18 @@ DECLARE_NATIVE(GET)
 
 
 
-// This breaks out the stylized code for calling PICK*, in a Level that
-// can be reused across multiple PICK* calls.
+// This breaks out the stylized code for calling TWEAK*, in a Level that
+// can be reused across multiple TWEAK* calls.
 //
 // The stylization is to reduce the number of C-stack-based cells that need
 // to be protected from GC.  Instead, cells are written directly into the
 // locations they need to be, with careful orchestration.  (This also means
 // less make-work of copying bits around from one location to another.)
 //
-// 1. SPARE indicates both the LOCATION used for the PICK*, and the output
-//    of the PICK* call.  It's a "dual" because for normal values it is
+// 1. SPARE indicates both the LOCATION used for the TWEAK*, and the output
+//    of the TWEAK* call.  It's a "dual" because for normal values it is
 //    a lifted representation--but if it's a non-lifted ACTION! then it is
-//    a function to call to do the next PICK* with.  This prevents explosions
+//    a function to call to do the next TWEAK* with.  This prevents explosions
 //    in cases like (some-struct.million-ints.10), where you don't want the
 //    (some-struct.million-ints) pick to give back a BLOCK! of a million
 //    INTEGER!s just so you can pick one of them out of it.
@@ -734,14 +734,15 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     Level* sub,  // will Push_Level() if not already pushed
     StackIndex picker_index
 ){
-    Push_Action(sub, LIB(PICK_P));
-    Begin_Action(sub, CANON(PICK_P), PREFIX_0);
+    Push_Action(sub, LIB(TWEAK_P));
+    Begin_Action(sub, CANON(TWEAK_P), PREFIX_0);
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     bool picker_was_meta;
 
     Element* location_arg;
     Element* picker_arg;
+    Element* dual_arg;
 
   proxy_arguments_to_frame_dont_panic_in_this_scope: {
 
@@ -761,6 +762,8 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
         Force_Erase_Cell(Level_Arg(sub, 2)),
         Data_Stack_At(Element, picker_index)
     );
+
+    dual_arg = Init_Space(Force_Erase_Cell(Level_Arg(sub, 3)));
 
     if (sub == TOP_LEVEL)
         Erase_Cell(SPARE);
@@ -784,7 +787,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
 } call_pick_p: {
 
-    // We actually call PICK*, the lower-level function that uses the dual
+    // We actually call TWEAK*, the lower-level function that uses the dual
     // protocol--instead of PICK.  That is because if the pick is not the
     // last pick, it may return an out-of-band function value that we need
     // to use to do the next pick.
@@ -804,7 +807,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
             return Error_Bad_Pick_Raw(Known_Element(SPARE));
         }
 
-        panic ("PICK* (dual protocol) didn't return a lifted value");
+        panic ("TWEAK* (dual protocol) didn't return a lifted value");
     }
 
     Unliftify_Undecayed(SPARE);  // review efficiency of unlift + lift here
@@ -828,8 +831,8 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 ){
     Atom* spare_location_dual = SPARE;
 
-    Push_Action(sub, LIB(POKE_P));
-    Begin_Action(sub, CANON(POKE_P), PREFIX_0);
+    Push_Action(sub, LIB(TWEAK_P));
+    Begin_Action(sub, CANON(TWEAK_P), PREFIX_0);
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     Element* location_arg;
@@ -1027,8 +1030,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
         Value* spare_writeback_dual = Known_Stable(SPARE);
 
-        if (not Is_Nulled(spare_writeback_dual))  // only one unit of POKE* !
-            panic ("Last POKE* step gave non-null cell writeback bits");
+        if (not Is_Nulled(spare_writeback_dual))  // only one unit of TWEAK* !
+            panic ("Last TWEAK* step gave non-null cell writeback bits");
     }
     else {
         e = Trap_Call_Pick_Refresh_Dual_In_Spare(
@@ -1236,7 +1239,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         goto return_success;
 
     if (stackindex_top == base + 1)
-        panic ("Last POKE* step in POKE gave non-null writeback instruction");
+        panic ("Last TWEAK* step in POKE gave non-null writeback instruction");
 
     Assert_Cell_Stable(spare_writeback_dual);
     Copy_Cell(Data_Stack_At(Atom, TOP_INDEX), spare_writeback_dual);
