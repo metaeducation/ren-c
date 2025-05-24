@@ -745,22 +745,21 @@ IMPLEMENT_GENERIC(POKE_P, Is_Map)
 
     bool strict = false;  // case-preserving [1]
 
-    bool signal;
-    Option(const Value*) poke = Dual_ARG(&signal, DUAL);
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual))
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
 
-    if (signal) {
-        if (poke)  // only null poke (removal signal) is allowed
-            return PANIC(Error_Bad_Poke_Dual_Raw(ARG(DUAL)));
-    }
-    else {
-        if (not poke or Is_Antiform(unwrap poke))
-            return PANIC(Error_Bad_Antiform(ARG(DUAL)));
-    }
+    Unliftify_Known_Stable(dual);
+
+    if (Is_Antiform(dual))
+        return PANIC(Error_Bad_Antiform(dual));
+
+    Element* poke = Known_Element(dual);
 
     Update_Map_Entry(
         VAL_MAP_Ensure_Mutable(map),  // modified
         picker,
-        cast(Option(const Element*), c_cast(Element*, maybe poke)),
+        poke,
         strict
     );
 

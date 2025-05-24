@@ -138,16 +138,19 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
     if (not Is_Word(picker) and not Is_Text(picker))
         return PANIC("ENVIRONMENT! picker must be WORD! or TEXT!");
 
-    bool signal;
-    Option(const Value*) poke = Dual_ARG(&signal, DUAL);
+    Value* dual = ARG(DUAL);
+
+    Option(const Value*) poke;  // set to nullptr if removing
 
   handle_dual_signals: {
 
-    if (signal) {
-        if (not poke)  // removal signal (e.g. SET to VOID)
+    if (Any_Lifted(dual)) {
+        if (Is_Dual_Null_Remove_Signal(dual)) {
+            poke = nullptr;
             goto update_environment;
+        }
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(unwrap poke));
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
     }
 
 } handle_normal_values: {
@@ -157,7 +160,9 @@ IMPLEMENT_GENERIC(POKE_P, Is_Environment)
   //    only be able to get null back if you set to either an empty string or
   //    a void in this mode).
 
-    if (not poke or not Is_Text(unwrap poke))
+    poke = Unliftify_Known_Stable(dual);
+
+    if (not Is_Text(unwrap poke))
         return PANIC("ENVIRONMENT! can only be poked with VOID or TEXT!");
 
     if (

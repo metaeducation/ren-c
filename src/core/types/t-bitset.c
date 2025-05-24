@@ -657,15 +657,16 @@ IMPLEMENT_GENERIC(POKE_P, Is_Bitset)
     Element* bset = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
-    if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(DUAL));
-    const Element* poke = c_cast(Element*, unwrap opt_poke);
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual))
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, poke);
-    if (e)
-        panic (unwrap e);
+    Value* poke = Unliftify_Known_Stable(dual);  // ~null~/~okay~ antiforms
+
+    if (not Is_Logic(poke))
+        return PANIC(Error_Bad_Value_Raw(poke));
+
+    bool cond = Cell_Logic(poke);
 
     Binary* bits = cast(Binary*, VAL_BITSET_Ensure_Mutable(bset));
     if (not Set_Bits(

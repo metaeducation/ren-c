@@ -124,63 +124,12 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 #define NO_STEPS  cast(Option(Element*), nullptr)
 
 
-// This is a helper for working with the "Dual" convention, which multiplexes
-// regular values as a lifted state, on top of stable non-quoted non-quasi
-// value states... to be able to use one value slot to communicate both values
-// and signals.
-//
-// (While this could be done with a refinement when passing values *in* to a
-// function, it wouldn't work for giving them back *out*.  Also, it's more
-// efficient than a refinement because it uses one Cell instead of two.)
-//
-// The helper adjusts the Cell so that it holds the non-dual state, moving
-// the dual state onto a boolean bit.  The adjustment remembers if it was
-// done, so that Dual_ARG() can be called multiple times e.g. through
-// successive continuations and not mutate the cell multiple times.
-//
-INLINE Option(const Value*) Dual_Level_Arg(
-    bool* signal,  // may be nullptr (be cheap, don't use Option(Sink(bool))))
-    Level* L,
-    REBLEN n
-){
-    Value* arg = Level_Arg(L, n);
-
-    if (Get_Cell_Flag(arg, PROTECTED)) {
-        *signal = Is_Node_Marked(arg);
-        if (signal)
-            assert(not Any_Lifted(arg));  // signals couldn't be quoted/quasi
-        if (Is_Nulled(arg))
-            return nullptr;
-        return arg;
-    }
-
-    assert(not Is_Node_Marked(arg));  // use mark for saying was dual
-
-    Option(const Value*) result;
-    if (Any_Lifted(arg)) {
-        if (signal != nullptr)
-            *signal = false;  // regular values are lifted
-        Unliftify_Known_Stable(arg);  // duals can't be unstable ATM
-        result = arg;
-    }
-    else {
-        if (signal == nullptr)
-            panic (Error_Bad_Poke_Dual_Raw(arg));
-        *signal = true;
-        Set_Node_Marked_Bit(arg);
-        result = arg;
-    }
-    Set_Cell_Flag(arg, PROTECTED);  // helps stop double-unlift
-    return result;
-}
-
-#define Dual_ARG(signal,name) \
-    Dual_Level_Arg((signal), level_, param_##name##_)
-
-#define Non_Dual_ARG(name) \
-    Dual_Level_Arg(nullptr, level_, param_##name##_)
-
 
 #define NO_WRITEBACK_NEEDED  DUAL_SIGNAL_NULL
 
 #define WRITEBACK(out)  DUAL_LIFTED(out)  // commentary
+
+
+#define Is_Dual_Null_Remove_Signal(dual)  Is_Nulled(dual)
+
+#define Is_Dual_Word_Named_Signal(dual)  Is_Word(dual)

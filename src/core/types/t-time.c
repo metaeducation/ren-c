@@ -659,10 +659,16 @@ IMPLEMENT_GENERIC(POKE_P, Is_Time)
     Element* time = Element_ARG(LOCATION);
     const Element* picker = Element_ARG(PICKER);
 
-    Option(const Value*) opt_poke = Non_Dual_ARG(DUAL);
-    if (not opt_poke or Is_Antiform(unwrap opt_poke))
-        return PANIC(PARAM(DUAL));
-    const Element* poke = c_cast(Element*, unwrap opt_poke);
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual))
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+
+    Unliftify_Known_Stable(dual);
+
+    if (Is_Antiform(dual))
+        return PANIC(Error_Bad_Antiform(dual));
+
+    Element* poke = Known_Element(dual);
 
     Poke_Time_Immediate(time, picker, poke);
     return WRITEBACK(COPY(time));  // caller needs to update their time bits

@@ -154,6 +154,9 @@ INLINE Count Dequotify(Element* elem) {
 INLINE bool Is_Antiform(const Atom* a)
   { return QUOTE_BYTE(Ensure_Readable(a)) == ANTIFORM_0; }
 
+INLINE bool Is_Lifted_Antiform(const Atom* a)
+  { return QUOTE_BYTE(Ensure_Readable(a)) == QUASIFORM_2; }
+
 #if CHECK_CELL_SUBCLASSES
     INLINE bool Is_Antiform(const Element* elem) = delete;
 #endif
@@ -332,6 +335,9 @@ INLINE Element* Reify(Atom* v) {
 
 #define Any_Lifted(v) \
     (QUOTE_BYTE(Ensure_Readable(v)) >= QUASIFORM_2)  // quasi or quoted
+
+#define Not_Lifted(v) \
+    (QUOTE_BYTE(Ensure_Readable(v)) < QUASIFORM_2)  // anti or fundamental
 
 INLINE Element* Liftify(Atom* atom) {
     if (QUOTE_BYTE(atom) == ANTIFORM_0) {

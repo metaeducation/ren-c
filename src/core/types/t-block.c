@@ -965,17 +965,20 @@ IMPLEMENT_GENERIC(POKE_P, Any_Series)
     if (n < 0 or n >= Cell_Series_Len_Head(series))
         return PANIC(Error_Out_Of_Range(picker));
 
-    bool signal;
-    Option(const Value*) poke = Dual_ARG(&signal, DUAL);
-    if (signal) {
-        if (poke)  // any non-remove signal
-            return PANIC(Error_Bad_Poke_Dual_Raw(unwrap poke));
+    Value* poke;
+
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual)) {
+        if (not Is_Dual_Null_Remove_Signal(dual))
+            return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+
+        assert(Is_Nulled(dual));  // removal signal is null ATM
+        poke = dual;
     }
-    else if (
-        not poke
-        or (Is_Antiform(unwrap poke) and not Is_Splice(unwrap poke))
-    ){
-        return PANIC(PARAM(DUAL));
+    else {
+        poke = Unliftify_Known_Stable(dual);
+        if (Is_Antiform(poke) and not Is_Splice(poke))
+            return PANIC(PARAM(DUAL));
     }
 
   call_modify: {

@@ -1227,23 +1227,23 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
     const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    bool signal;
-    Option(const Value*) poke = Dual_ARG(&signal, DUAL);
-
-    if (signal) {
-        if (not poke)
+    Value* dual = ARG(DUAL);
+    if (Not_Lifted(dual)) {
+        if (Is_Dual_Null_Remove_Signal(dual))
             return PANIC("ANY-CONTEXT! can't have fields removed by VOID ATM");
 
-        if (not Is_Word(unwrap poke))
-            return PANIC(Error_Bad_Poke_Dual_Raw(unwrap poke));
+        if (not Is_Dual_Word_Named_Signal(dual))
+            return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+
+        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
     }
 
     const Value* slot = maybe Cell_Context_Slot(context, symbol);
     if (not slot)
         return PANIC(Error_Bad_Pick_Raw(picker));
 
-    if (signal) {
-        switch (Cell_Word_Id(unwrap poke)) {
+    if (Not_Lifted(dual)) {
+        switch (Cell_Word_Id(dual)) {
           case SYM_PROTECT:
             Set_Cell_Flag(slot, PROTECTED);
             break;
@@ -1257,7 +1257,7 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
             break;
 
           default:
-            return PANIC(Error_Bad_Poke_Dual_Raw(unwrap poke));
+            return PANIC(Error_Bad_Poke_Dual_Raw(dual));
         }
 
         return NO_WRITEBACK_NEEDED;  // VarList* in context not changed
@@ -1266,10 +1266,9 @@ IMPLEMENT_GENERIC(POKE_P, Any_Context)
     if (Get_Cell_Flag(slot, PROTECTED))
         return PANIC(Error_Protected_Key(symbol));
 
-    if (not poke)
-        Init_Nulled(m_cast(Value*, slot));
-    else
-        Copy_Cell(m_cast(Value*, slot), unwrap poke);
+    Value* poke = Unliftify_Known_Stable(dual);
+
+    Copy_Cell(m_cast(Value*, slot), poke);
 
     return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
 }
