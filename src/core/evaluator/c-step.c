@@ -724,6 +724,10 @@ Bounce Stepper_Executor(Level* L)
     //
     // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
     // the plain (unfriendly) forms.
+    //
+    // 1. It's possible for (^obj.^lifted-error) to give back an ERROR! due
+    //    to the field being a lifted error, or (^obj.missing-field) to give
+    //    an ERROR! due to the field being absent.
 
     Plainify(CURRENT);  // remove the ^ sigil
 
@@ -732,13 +736,11 @@ Bounce Stepper_Executor(Level* L)
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
-    if (e) {
-        Init_Warning(OUT, unwrap e);
-        Failify(OUT);
-        goto lookahead;  // e.g. EXCEPT might want to see error
-    }
+    if (e)
+        return PANIC(unwrap e);
 
-    goto lookahead;
+    possibly(Is_Error(OUT));  // last step may be missing, or meta-error [1]
+    goto lookahead;  // even ERROR! wants lookahead (e.g. for EXCEPT)
 
 
 } case TYPE_CHAIN: { //// META CHAIN! (^XXX: ^:XXX ...) //////////////////////
@@ -935,11 +937,14 @@ Bounce Stepper_Executor(Level* L)
     Move_Atom(CURRENT, SPARE);
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) error = Trap_Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
-    if (error)
-        return PANIC(unwrap error);  // don't conflate with function result
+    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
+    if (e)
+        return PANIC(unwrap e);
 
-    assert(Is_Stable(OUT));
+    if (Is_Error(OUT))  // e.g. couldn't pick word as field from binding
+        return PANIC(Cell_Error(OUT));  // don't conflate with action result
+
+    assert(Is_Stable(OUT));  // plain WORD! pick, ERROR! is only antiform
     Value* out = cast(Value*, OUT);
 
     if (Is_Action(out))
@@ -1217,6 +1222,9 @@ Bounce Stepper_Executor(Level* L)
     // Tuples looking up to nothing (~ antiform) are handled consistently with
     // WORD! and GET-WORD!, and will error...directing you use GET:ANY if
     // fetching nothing is what you actually intended.
+    //
+    // 1. Cases like (obj.^lifted-error) and (obj.missing-field) will return
+    //    an ERROR! antiform, and (obj.^lifted-pack) can return a PACK!, etc.
 
     Element* spare = Copy_Sequence_At(SPARE, CURRENT, 0);
     bool blank_at_head = Is_Space(spare);
@@ -1233,11 +1241,10 @@ Bounce Stepper_Executor(Level* L)
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
-    if (e) {  // tuples never run actions, erroring won't conflate (!!! oops)
-        Init_Warning(OUT, unwrap e);
-        Failify(OUT);
-        goto lookahead;  // e.g. EXCEPT might want error
-    }
+    if (e)
+        return PANIC(unwrap e);
+
+    possibly(Not_Stable(OUT));  // last step or unmeta'd item [1]
 
     if (Is_Atom_Action(OUT))
         assert(Not_Cell_Flag(OUT, OUT_HINT_UNSURPRISING));

@@ -21,6 +21,47 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// Getting and Setting in Ren-C are far more nuanced than the "lookup word to
+// direct Cell value" technique of historical Redbol.  Things like OBJECT!
+// store lifted representations of their fields, which makes room for storing
+// special states in the unlifted range.  These allow for things like ACTION!
+// to represent a "getter" or "setter" for a field, while lifted ACTION! means
+// an actual action is stored there.
+//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// A. The generalized GET of an arbitrary variable may return an ERROR!
+//    antiform as the value in OUT (vs. returning an Option(Error*) for the
+//    Trap_XXX()).  This happens if you are doing an ordinary GET of a
+//    TUPLE! and the last "step" in the path is not in an object:
+//
+//         >> obj: make object! [a: 1020]
+//
+//         >> obj.b
+//         ** Error: b is not a field of the OBJECT!
+//
+//         >> try obj.b
+//         == ~null~  ; antiform
+//
+//     However, the rules change with meta-representation, to where the only
+//     way to get an ERROR! back in that case is if the field exists and holds
+//     a lifted representation of an ERROR!.
+//
+//     (!!! It's not clear if the convenience of the raised error on a normal
+//     TUPLE!-type assignment is a good idea or not.  This depends on how
+//     often generalized variable fetching is performed where you don't know
+//     if the variable is meta-represented or not, and might have different
+//     meanings for unlifting an ERROR! vs. a missing field.  The convenience
+//     of allowing TRY existed before meta-representation unlifting, so this
+//     is an open question that arose.)
+//
+//     In the case of an assignment, the only way to get it to return a
+//     raised ERROR! will be if the value being assigned was an ERROR!.  In
+//     the case of a regular assignment the assignment itself will not be
+//     performed and the error just passed through.  In a meta-assignment,
+//     the assignment will be performed and the ERROR! passed through in its
+//     unlifted form.
+//
 
 #include "sys-core.h"
 
@@ -84,9 +125,9 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     Derelativize(SCRATCH, tuple, context);
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) error = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
-    if (error)
-        return error;
+    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
+    if (e)
+        return e;
 
     Drop_Level(level_);
 
@@ -794,20 +835,24 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
     if (threw)  // don't want to return casual error you can TRY from
-        panic (Error_No_Catch_For_Throw(sub));
+        return Error_No_Catch_For_Throw(sub);
 
     assert(sub == TOP_LEVEL);
     unnecessary(Drop_Action(sub));  // !! action is dropped, should it be?
 
     if (not Any_Lifted(SPARE)) {
         if (Is_Nulled(SPARE)) {  // bad pick on final step should be trappable
-            Copy_Cell(SPARE, Data_Stack_At(Element, picker_index));
+            Copy_Cell(OUT, Data_Stack_At(Element, picker_index));
             Drop_Level(sub);
 
-            return Error_Bad_Pick_Raw(Known_Element(SPARE));
+            Init_Warning(SPARE, Error_Bad_Pick_Raw(Known_Element(OUT)));
+            Failify(SPARE);  // signal bad pick distinct from other panics
+            return SUCCESS;
         }
 
-        panic ("TWEAK* (dual protocol) didn't return a lifted value");
+        return Error_User(
+            "TWEAK* (dual protocol) didn't return a lifted value"
+        );
     }
 
     Unliftify_Undecayed(SPARE);  // review efficiency of unlift + lift here
@@ -937,7 +982,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
     bool threw = Trampoline_With_Top_As_Root_Throws();
 
     if (threw)  // don't want to return casual error you can TRY from
-        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+        return Error_No_Catch_For_Throw(TOP_LEVEL);
 
     return SUCCESS;
 }}
@@ -968,7 +1013,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 //    the already quite-long name of the function.)
 //
 Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
-    Level* level_,  // SPARE will be overwritten, OUT might be decayed
+    Level* level_,  // OUT may be ERROR! antiform, see [A]
     bool groups_ok
 ){
   #if PERFORM_CORRUPTIONS  // caller pre-corrupts spare [1]
@@ -1001,12 +1046,15 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     if (Is_Pinned(BLOCK, scratch_var))
         goto handle_scratch_var_as_pinned_steps_block;
 
-    panic (scratch_var);
+    e = Error_Bad_Value(scratch_var);
+    goto return_error;
 
   handle_scratch_var_as_wordlike: {
 
-    if (not Try_Get_Binding_Of(spare_location_dual, scratch_var))
-        panic ("Couldn't get binding...");
+    if (not Try_Get_Binding_Of(spare_location_dual, scratch_var)) {
+        e = Error_User("Couldn't get binding...");
+        goto return_error;
+    }
 
     Liftify(spare_location_dual);  // dual protocol, lift
 
@@ -1030,8 +1078,12 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
         Value* spare_writeback_dual = Known_Stable(SPARE);
 
-        if (not Is_Nulled(spare_writeback_dual))  // only one unit of TWEAK* !
-            panic ("Last TWEAK* step gave non-null cell writeback bits");
+        if (not Is_Nulled(spare_writeback_dual)) { // only one unit of TWEAK* !
+            e = Error_User(
+                "Last TWEAK* step gave non-null cell writeback bits"
+            );
+            goto return_error;
+        }
     }
     else {
         e = Trap_Call_Pick_Refresh_Dual_In_Spare(
@@ -1042,6 +1094,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         if (e) {
             unnecessary(Drop_Level(sub));  // Call_Poke_P() drops on error
             goto return_error;
+        }
+        if (Is_Error(spare_location_dual)) {  // in-band PICK error
+            e = Cell_Error(spare_location_dual);
+            goto return_error;  // WORD!-access not TRY-able (action conflate)
         }
         Copy_Cell(OUT, spare_location_dual);
         Unliftify_Undecayed(OUT);  // already decayed if it was non-meta
@@ -1058,8 +1114,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     // GROUP! by value).  These evaluations should only be allowed if the
     // caller has asked us to return steps.
 
-    if (not Sequence_Has_Node(scratch_var))  // compressed byte form
-        panic (scratch_var);
+    if (not Sequence_Has_Node(scratch_var)) {  // compressed byte form
+        e = Error_Bad_Value(scratch_var);
+        goto return_error;
+    }
 
     const Node* node1 = CELL_NODE1(scratch_var);
     if (Is_Node_A_Cell(node1)) {  // pair optimization
@@ -1102,8 +1160,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             continue;
         }
 
-        if (not groups_ok)
-            panic (Error_Bad_Get_Group_Raw(scratch_var));
+        if (not groups_ok) {
+            e = Error_Bad_Get_Group_Raw(scratch_var);
+            goto return_error;
+        }
 
         if (Eval_Any_List_At_Throws(SPARE, at, at_binding)) {
             Drop_Data_Stack_To(base);
@@ -1111,8 +1171,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto finalize_and_return;
         }
         Decay_If_Unstable(SPARE);
-        if (Is_Antiform(SPARE))
-            panic (Error_Bad_Antiform(SPARE));
+        if (Is_Antiform(SPARE)) {
+            e = Error_Bad_Antiform(SPARE);
+            goto return_error;
+        }
 
         Move_Cell(PUSH(), Known_Element(SPARE));  // PICKER for PICKPOKE
         Quotify(TOP_ELEMENT);  // signal literal pick
@@ -1152,19 +1214,25 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         Option(Error*) error = Trap_Lookup_Word(&slot, at, SPECIFIED);
         if (error)
             panic (unwrap error);
-        if (Any_Lifted(slot))
-            panic ("Can't PICK from a lifted LOCATION");
+        if (Any_Lifted(slot)) {
+            e = Error_User("Can't PICK from a lifted LOCATION");
+            goto return_error;
+        }
         if (Is_Antiform(slot)) {
             if (Is_Action(slot))
                 QUOTE_BYTE(slot) = NOQUOTE_1;  // (append.series) -> parameter!
-            else
-                panic (Error_Bad_Antiform(slot));
+            else {
+                e = Error_Bad_Antiform(slot);
+                goto return_error;
+            }
         }
         Copy_Cell(spare_location_dual, Known_Element(slot));
         Liftify(spare_location_dual);  // dual protocol, lift
     }
-    else
-        panic (Copy_Cell(SPARE, at));
+    else {
+        e = Error_Bad_Value(Copy_Cell(SPARE, at));
+        goto return_error;
+    }
 
     ++stackindex;
 
@@ -1185,14 +1253,21 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         e = Trap_Call_Pick_Refresh_Dual_In_Spare(
             level_, sub, stackindex
         );
-        if (e) {
-            unnecessary(Drop_Level(sub));  // Call_Pick_P() drops on error
+        if (e)
+            goto return_error;
 
-            if (stackindex == limit - 1)
-                goto return_error;  // last step, interceptible error
-
-            panic (unwrap e);  // intermediate step, must abrupt panic
+        if (Is_Error(spare_location_dual)) {  // PICK failed
+            if (
+                stackindex == limit - 1
+                and not Any_Metaform(Data_Stack_At(Element, stackindex))
+            ){
+                Move_Atom(OUT, SPARE);
+                goto return_success;  // last step can be tolerant, see [A]
+            }
+            e = Cell_Error(spare_location_dual);
+            goto return_error;
         }
+
         ++stackindex;
     }
 
@@ -1224,10 +1299,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         stackindex,  // picker_index
         dual_poke_if_not_on_stack
     );
-    if (e) {
-        unnecessary(Drop_Level(sub));  // Call_Poke_P() drops on error
+    if (e)
         goto return_error;
-    }
 
     Value* spare_writeback_dual = Known_Stable(SPARE);
 
@@ -1238,8 +1311,12 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     if (Is_Nulled(spare_writeback_dual))
         goto return_success;
 
-    if (stackindex_top == base + 1)
-        panic ("Last TWEAK* step in POKE gave non-null writeback instruction");
+    if (stackindex_top == base + 1) {
+        e = Error_User(
+            "Last TWEAK* step in POKE gave non-null writeback instruction"
+        );
+        goto return_error;
+    }
 
     Assert_Cell_Stable(spare_writeback_dual);
     Copy_Cell(Data_Stack_At(Atom, TOP_INDEX), spare_writeback_dual);
@@ -1258,6 +1335,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     goto finalize_and_return;
 
 }} return_success: { //////////////////////////////////////////////////////////
+
+    possibly(Is_Error(OUT));  // success may be ERROR! antiform, see [A]
 
     assert(not e);
     goto finalize_and_return;
@@ -1278,7 +1357,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 //  Trap_Tweak_Var_In_Scratch_With_Dual_Out: C
 //
 Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
-    Level* level_,
+    Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
     possibly(SPARE == steps_out or SCRATCH == steps_out);
@@ -1318,7 +1397,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
 //  Trap_Set_Var_In_Scratch_To_Out: C
 //
 Option(Error*) Trap_Set_Var_In_Scratch_To_Out(
-    Level* level_,
+    Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
     Liftify(OUT);  // must be lifted to be taken literally in dual protocol
@@ -1335,7 +1414,7 @@ Option(Error*) Trap_Set_Var_In_Scratch_To_Out(
 //  Trap_Get_Var_In_Scratch_To_Out: C
 //
 Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
-    Level* level_,
+    Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
     heeded(Mark_Tweak_As_Get(level_));  // mark OUT to signal a GET, not a SET
