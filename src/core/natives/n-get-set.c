@@ -158,22 +158,6 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
     assert(var != cast(Cell*, out));
     assert(steps_out != out);  // Legal for SET, not for GET
 
-    if (Any_Word(var)) {
-        const Value* slot;
-        Option(Error*) error = Trap_Lookup_Word(
-            &slot, var, context
-        );
-        if (error)
-            return error;
-
-        Copy_Cell(out, slot);
-
-        if (steps_out and steps_out != GROUPS_OK)
-            Pinify(Derelativize(unwrap steps_out, var, context));
-
-        return SUCCESS;
-    }
-
     if (Is_Chain(var) or Is_Path(var)) {
         StackIndex base = TOP_INDEX;
 
@@ -215,34 +199,24 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
         return SUCCESS;
     }
 
-    if (Is_Tuple(var))
-        return Trap_Get_Tuple_Maybe_Trash(out, steps_out, var, context);
+    Level* level_ = Make_End_Level(&Stepper_Executor, LEVEL_MASK_NONE);
+    STATE = 1;  // rule for trampoline (we're setting out to non-erased)
 
-    if (Is_Pinned(BLOCK, var)) {  // "steps"
-        StackIndex base = TOP_INDEX;
+    Sink(Atom) out_atom = cast(Atom*, out);
+    Push_Level_Erase_Out_If_State_0(out_atom, level_);
 
-        Context* at_binding = Derive_Binding(context, var);
-        const Element* tail;
-        const Element* head = Cell_List_At(&tail, var);
-        const Element* at;
-        for (at = head; at != tail; ++at)
-            Derelativize(PUSH(), at, at_binding);
+    heeded(Derelativize(SCRATCH, var, context));
+    heeded(Corrupt_Cell_If_Debug(SPARE));
 
-        Option(Error*) error = Trap_Get_From_Steps_On_Stack_Maybe_Trash(
-            out, base
-        );
-        Drop_Data_Stack_To(base);
+    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
+    if (e)
+        return e;
 
-        if (error)
-            return error;
+    Drop_Level(level_);
 
-        if (steps_out and steps_out != GROUPS_OK)
-            Copy_Cell(unwrap steps_out, var);
+    Decay_If_Unstable(out_atom);
 
-        return SUCCESS;
-    }
-
-    panic (var);
+    return SUCCESS;
 }
 
 
@@ -584,88 +558,6 @@ Option(Error*) Trap_Get_Any_Word_Maybe_Trash(
         return Error_User("Cannot GET a @PINNED or $TIED variable yet");
     }
 
-    return SUCCESS;
-}
-
-
-//
-//  Trap_Get_From_Steps_On_Stack_Maybe_Trash: C
-//
-// The GET and SET operations are able to tolerate :GROUPS, whereby you can
-// run somewhat-arbitrary code that appears in groups in tuples.  This can
-// mean that running GET on something and then SET on it could run that code
-// twice.  If you want to avoid that, a sequence of :STEPS can be requested
-// that can be used to find the same location after initially calculating
-// the groups, without doubly evaluating.
-//
-// This is a common service routine used for both tuples and "step lists",
-// which uses the stack (to avoid needing to generate an intermediate array
-// in the case evaluations were performed).
-//
-Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Trash(
-    Sink(Value) out,
-    StackIndex base
-){
-    StackIndex stackindex = base + 1;
-
-  blockscope {
-    OnStack(Element*) at = Data_Stack_At(Element, stackindex);
-    if (Is_Quoted(at)) {
-        Copy_Cell(out, at);
-        Unquotify(Known_Element(out));
-    }
-    else if (Is_Word(at)) {
-        const Value* slot;
-        Option(Error*) error = Trap_Lookup_Word(
-            &slot, cast(Element*, at), SPECIFIED
-        );
-        if (error)
-            panic (unwrap error);
-        Copy_Cell(out, slot);
-    }
-    else
-        panic (Copy_Cell(out, at));
-  }
-
-    ++stackindex;
-
-    DECLARE_ATOM (temp);
-    Push_Lifeguard(temp);
-
-    while (stackindex != TOP_INDEX + 1) {
-        Move_Cell(temp, out);
-        QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
-        const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
-        if (rebRunCoreThrows_internal(
-            out,  // <-- output cell
-            EVAL_EXECUTOR_FLAG_NO_RESIDUE
-                | LEVEL_FLAG_UNINTERRUPTIBLE
-                | LEVEL_FLAG_ERROR_RESULT_OK,
-            CANON(PICK), temp, ins
-        )){
-            Drop_Data_Stack_To(base);
-            Drop_Lifeguard(temp);
-            return Error_No_Catch_For_Throw(TOP_LEVEL);
-        }
-
-        if (Is_Error(cast(Atom*, out))) {
-            Error* error = Cell_Error(out);  // extract error
-            bool last_step = (stackindex == TOP_INDEX);
-
-            Drop_Data_Stack_To(base);  // Note: changes TOP_INDEX
-            Drop_Lifeguard(temp);
-            if (last_step)
-                return error;  // last step, interceptible error
-            panic (error);  // intermediate step, must abrupt panic
-        }
-
-        if (Is_Antiform(cast(Atom*, out)))
-            assert(not Is_Antiform_Unstable(cast(Atom*, out)));
-
-        ++stackindex;
-    }
-
-    Drop_Lifeguard(temp);
     return SUCCESS;
 }
 

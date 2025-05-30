@@ -876,6 +876,9 @@ DECLARE_NATIVE(APPLY)
 }}
 
 
+#define LEVEL_FLAG__S_S_DELEGATING  LEVEL_FLAG_MISCELLANEOUS
+
+
 //
 //  //: infix native [  ; !!! MUST UPDATE SPEC FOR APPLY NATIVE IF CHANGED [1]
 //
@@ -892,19 +895,24 @@ DECLARE_NATIVE(APPLY)
 DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 //
 // 1. See notes on APPLY for the required frame compatibility.
-//
-// 2. After every state past the beginning STATE_0, we want to tunnel through
-//    to APPLY for whatever it would do with the continuations.  However, we
-//    know that it has its own handler for abrupt panics.  Use a special
-//    state byte accessor to convey that we know that, and aren't reading the
-//    byte and proceeding obliviously about the abrupt panic.
 {
     INCLUDE_PARAMS_OF_APPLY;  // needs to be frame-compatible [1]
 
-    if (STATE != STATE_0)  // [2]
-        return NATIVE_CFUNC(APPLY)(level_);
+    enum {
+        ST__S_S_INITIAL_ENTRY = STATE_0,
+        ST__S_S_GETTING_OPERATION
+    };
+
+    if (Get_Level_Flag(LEVEL, _S_S_DELEGATING)) {
+        assert(STATE != STATE_0);  // re-entering, should not be initial entry
+        goto delegate_to_apply;
+    }
+
+  fetch_action_for_operation: {
 
     Element* operation = Element_ARG(OPERATION);
+
+    STATE = ST__S_S_GETTING_OPERATION;  // will be necessary in the future...
 
     Sink(Value) gotten = SPARE;
     Option(Error*) error = Trap_Get_Var(
@@ -925,8 +933,17 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
     UNUSED(LOCAL(INDEX));
     UNUSED(LOCAL(ITERATOR));
 
+    STATE = STATE_0;  // reset state for APPLY so it looks like initial entry
+    Set_Level_Flag(LEVEL, _S_S_DELEGATING);  // [2]
+
+} delegate_to_apply: { ///////////////////////////////////////////////////////
+
+  // Once the operator has finished doing its prep work, we tunnel through
+  // to APPLY for whatever it would do, reusing the same frame.
+
+    assert(Get_Level_Flag(LEVEL, _S_S_DELEGATING));
     return NATIVE_CFUNC(APPLY)(level_);
-}
+}}
 
 
 // From %c-eval.c -- decide if this should be shared or otherwise.

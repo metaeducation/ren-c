@@ -1115,6 +1115,11 @@ DECLARE_NATIVE(SWITCH)
 //  ]
 //
 DECLARE_NATIVE(DEFAULT)
+//
+// 1. Right now, the GET and SET mechanisms create a nested Trampoline stack,
+//    and do not yield to the already-running Trampoline.  This would limit
+//    GETTER and SETTER if it had to do something that would yield (e.g. to
+//    the JavaScript event loop), so this should be revisited.
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
@@ -1129,39 +1134,44 @@ DECLARE_NATIVE(DEFAULT)
 
     switch (STATE) {
       case ST_DEFAULT_INITIAL_ENTRY: goto initial_entry;
-      case ST_DEFAULT_GETTING_TARGET: assert(false); break;  // !!! TBD
+      case ST_DEFAULT_GETTING_TARGET: assert(false); break;  // !!! TBD [1]
       case ST_DEFAULT_EVALUATING_BRANCH: goto branch_result_in_out;
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. TARGET may be something like a TUPLE! that contains GROUP!s.  This
-    //    puts us at risk of double-evaluation if we do a GET to check the
-    //    variable--find it's unset--and use that tuple again.  GET and SET
-    //    have an answer for this problem by giving back a block of "steps"
-    //    which can resolve the variable without doing more evaluations.
-    //
-    // 2. TRASH!, BLANK, and NULL are considered "defaultable".  VOID can't
-    //    be stored in variables directly, but it might be the case that
-    //    metavariables such as (^x: void, ^x: default [1020]) should be
-    //    willing to overwrite the void state.  Review.
+  // 1. TARGET may be something like a TUPLE! that contains GROUP!s.  This
+  //    puts us at risk of double-evaluation if we do a GET to check the
+  //    variable--find it's unset--and use that tuple again.  GET and SET have
+  //    an answer for this problem by giving back a block of "steps" which can
+  //    resolve the variable without doing more evaluations.
+  //
+  // 2. Right now GET allows for ERROR! to be returned in cases like a missing
+  //    field from an OBJECT!.  This may not be a good idea, given that ^META
+  //    fields can legitimately give back ERROR! in-band if a field stores
+  //    a lifted error.  It's under review.
+  //
+  // 3. TRASH!, BLANK, and NULL are considered "defaultable".  VOID can't be
+  //    stored in variables directly, but it might be that metavariables such
+  //    as (^x: void, ^x: default [1020]) should be willing to overwrite the
+  //    void state.  Review.
+
+    Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]
+    STATE = ST_DEFAULT_GETTING_TARGET;  // can't leave at STATE_0
 
     Unchain(target);
+    heeded(Copy_Cell(SCRATCH, target));
+    heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Sink(Value) out = OUT;
-    Sink(Element) steps = SCRATCH;
-    Option(Error*) error = Trap_Get_Var_Maybe_Trash(
-        out,
-        steps,  // save steps avoids double-evaluation on GET + SET pair [1]
-        target,
-        SPECIFIED
-    );
-    if (error)
-        return PANIC(unwrap error);
+    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps);
+    if (e)
+        return PANIC(unwrap e);
+
+    Value* out = Decay_If_Unstable(OUT);  // decay may be needed [2]
 
     if (not (Is_Trash(out) or Is_Nulled(out) or Is_Blank(out)))
-        return OUT;  // consider it a "value" [2]
+        return OUT;  // consider it a "value" [3]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
     return CONTINUE(OUT, branch, OUT);
