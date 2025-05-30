@@ -130,11 +130,15 @@ DECLARE_NATIVE(SHOVE)
         or Is_Path(right) or Is_Chain(right)
     ){
         Sink(Value) out = OUT;
-        Get_Var_May_Panic(
+        Option(Error*) e = Trap_Get_Var(
             out,  // can't eval directly into arg slot
+            NO_STEPS,
             At_Level(L),
             Level_Binding(L)
         );
+        if (e)
+            return PANIC(unwrap e);
+
         Move_Cell(shovee, out);  // variable contents always stable
     }
     else if (Is_Group(right)) {

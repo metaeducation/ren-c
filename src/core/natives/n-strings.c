@@ -356,7 +356,12 @@ DECLARE_NATIVE(JOIN)
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
         if (Is_Pinned(WORD, item)) {
-            Get_Var_May_Panic(SPARE, item, Level_Binding(sub));
+            Option(Error*) e = Trap_Get_Var(
+                SPARE, NO_STEPS, item, Level_Binding(sub)
+            );
+            if (e)
+                return PANIC(unwrap e);
+
             Fetch_Next_In_Feed(sub->feed);
             goto mold_step_result_in_spare;
         }

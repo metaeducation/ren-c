@@ -426,14 +426,15 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
         Add_Feed_Reference(feed);
 
         bool error_on_deferred = true;
-        if (Init_Frame_From_Feed_Throws(
+
+        Option(Error*) e = Trap_Init_Frame_From_Feed(
             OUT,
             nullptr,
             feed,
             error_on_deferred
-        )){
-            return BOUNCE_THROWN;
-        }
+        );
+        if (e)
+            return PANIC(unwrap e);
 
         Release_Feed(feed);
 

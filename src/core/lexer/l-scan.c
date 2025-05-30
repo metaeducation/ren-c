@@ -3421,14 +3421,20 @@ DECLARE_NATIVE(TRANSCODE)
         file = ANONYMOUS;
 
     Sink(Value) line_number = SCRATCH;  // use as scratch space
-    if (Any_Word(ARG(LINE)))
-        Get_Var_May_Panic(
+    if (Any_Word(ARG(LINE))) {
+        Option(Error*) e = Trap_Get_Var(
             line_number,
+            NO_STEPS,
             Element_ARG(LINE),
             SPECIFIED
         );
-    else
+        if (e)
+            return PANIC(unwrap e);
+    }
+    else {
+        assert(Is_Nulled(ARG(LINE)) or Is_Integer(ARG(LINE)));
         Copy_Cell(line_number, ARG(LINE));
+    }
 
     LineNumber start_line;
     if (Is_Nulled(line_number)) {

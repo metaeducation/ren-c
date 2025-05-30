@@ -130,7 +130,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 
 
 //
-//  Init_Invokable_From_Feed_Throws: C
+//  Trap_Init_Invokable_From_Feed: C
 //
 // This builds a frame from a feed *as if* it were going to be used to call
 // an action, but doesn't actually make the call.  Instead it leaves the
@@ -141,7 +141,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 // version of what would be evaluated to.  So in the case of NULL, it will be
 // a single quote of nothing.
 //
-bool Init_Invokable_From_Feed_Throws(
+Option(Error*) Trap_Init_Invokable_From_Feed(
     Sink(Value) out,
     Option(const Element*) first,  // override first value, vs. At_Feed(feed)
     Feed* feed,
@@ -153,15 +153,18 @@ bool Init_Invokable_From_Feed_Throws(
     // needs review.
     //
     if (v == nullptr)  // no first, and feed was at end
-        return false;
+        return SUCCESS;
 
     if (Is_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
         panic ("Actions made with REFRAMER cannot work with GROUP!s");
 
     StackIndex base = TOP_INDEX;
 
-    if (Is_Word(v) or Is_Tuple(v) or Is_Path(v) or Is_Chain(v))
-        Get_Var_May_Panic(out, v, Feed_Binding(feed));  // !!! throws?
+    if (Is_Word(v) or Is_Tuple(v) or Is_Path(v) or Is_Chain(v)) {
+        Option(Error*) e = Trap_Get_Var(out, NO_STEPS, v, Feed_Binding(feed));
+        if (e)
+            return e;
+    }
     else
         Derelativize(out, v, Feed_Binding(feed));
 
@@ -170,7 +173,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     if (not Is_Action(out)) {
         Quotify(Known_Element(out));
-        return false;
+        return SUCCESS;
     }
 
     // !!! Process_Action_Throws() calls Drop_Action() and loses the phase.
@@ -194,7 +197,7 @@ bool Init_Invokable_From_Feed_Throws(
     if (Is_Throwing(L)) {  // signals threw
         Drop_Level(L);
         Drop_Lifeguard(action);
-        return true;
+        return Error_No_Catch_For_Throw(L);
     }
 
     // The exemplar may or may not be managed as of yet.  We want it
@@ -216,12 +219,12 @@ bool Init_Invokable_From_Feed_Throws(
     ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(action));
     Init_Lensed_Frame(out, varlist, lens, coupling);
 
-    return false;  // didn't throw
+    return SUCCESS;
 }
 
 
 //
-//  Init_Frame_From_Feed_Throws: C
+//  Trap_Init_Frame_From_Feed: C
 //
 // Making an invokable from a feed might return a QUOTED?, because that is
 // more efficient (and truthful) than creating a FRAME! for the identity
@@ -229,17 +232,20 @@ bool Init_Invokable_From_Feed_Throws(
 // that has to follow the rules of MAKE FRAME!...e.g. returning a frame.
 // This converts QUOTED?s into frames for the identity function.
 //
-bool Init_Frame_From_Feed_Throws(
+Option(Error*) Trap_Init_Frame_From_Feed(
     Sink(Value) out,
     const Element* first,
     Feed* feed,
     bool error_on_deferred
 ){
-    if (Init_Invokable_From_Feed_Throws(out, first, feed, error_on_deferred))
-        return true;
+    Option(Error*) e = Trap_Init_Invokable_From_Feed(
+        out, first, feed, error_on_deferred
+    );
+    if (e)
+        return e;
 
     if (Is_Frame(out))
-        return false;
+        return SUCCESS;
 
     assert(Is_Quoted(out));
     ParamList* exemplar = Make_Varlist_For_Action(
@@ -256,7 +262,7 @@ bool Init_Frame_From_Feed_Throws(
     //
     Option(const Symbol*) label = nullptr;
     Init_Frame(out, exemplar, label, NONMETHOD);
-    return false;
+    return SUCCESS;
 }
 
 
@@ -297,14 +303,15 @@ Bounce Reframer_Dispatcher(Level* const L)
     //
     bool error_on_deferred = true;
     Sink(Value) spare = SPARE;
-    if (Init_Invokable_From_Feed_Throws(
+
+    Option(Error*) e = Trap_Init_Invokable_From_Feed(
         spare,
         nullptr,
         L->feed,
         error_on_deferred
-    )){
-        return THROWN;
-    }
+    );
+    if (e)
+        return PANIC(unwrap e);
 
     Value* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, spare);

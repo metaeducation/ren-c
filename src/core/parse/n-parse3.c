@@ -139,7 +139,7 @@
 // always put the fetched rule in the same place...and then the binding
 // is only used when the rule *isn't* in that cell.
 //
-#define P_SAVE              ARG(SAVE)
+#define P_SAVE              u_cast(Element*, ARG(SAVE))
 #define rule_binding() \
     (rule == ARG(SAVE) ? SPECIFIED : P_RULE_BINDING)
 
@@ -344,7 +344,7 @@ INLINE Error* Error_Parse3_Variable(Level* level_) {
 
 
 //
-//  Get_Parse_Value: C
+//  Trap_Get_Parse_Value: C
 //
 // Gets the value of a word (when not a command) or path.  Returns all other
 // values as-is.
@@ -352,53 +352,75 @@ INLINE Error* Error_Parse3_Variable(Level* level_) {
 // If the fetched value is an antiform logic or splice, it is returned as
 // a quasiform.  Fetched quasiforms are errors.
 //
-static const Element* Get_Parse_Value(
-    Sink(Value) sink,  // storage for fetched values; must be GC protected
+// 1. The caller expects an Element, but we transiently write non-Elements
+//    into the `out` cell when doing a variable fetch.  To defuse the Sink's
+//    overwriting property, we alias the out to `~`.  If antiform bits are
+//    written to the aliased location, we fix them up or return an error.
+//
+static Option(Error*) Trap_Get_Parse_Value(
+    Sink(Element) out,  // storage for fetched values; must be GC protected
     const Element* rule,
     Context* context
 ){
-    if (Is_Word(rule)) {
-        if (VAL_CMD(rule))  // includes Is_Bar()...also a "command"
-            return rule;
+    assert(out != rule);
 
-        Get_Var_May_Panic(sink, rule, context);
+    Value* out_value = Init_Quasar(out);  // defuses Sink() behavior [1]
+
+    if (Is_Word(rule)) {
+        if (VAL_CMD(rule)) {  // includes Is_Bar()...also a "command"
+            Copy_Cell(out, rule);
+            return SUCCESS;
+        }
+
+        Option(Error*) e = Trap_Get_Var(out_value, NO_STEPS, rule, context);
+        if (e)
+            return e;
+        // fallthrough to fix up antiforms in aliased out
     }
     else if (Is_Tuple(rule) or Is_Path(rule)) {
-        Get_Var_May_Panic(sink, rule, context);
+        Option(Error*) e = Trap_Get_Var(out_value, NO_STEPS, rule, context);
+        if (e)
+            return e;
+        // fallthrough to fix up antiforms in aliased out
     }
-    else
-        return rule;
-
-    if (Is_Quasiform(sink)) {
-        panic ("RULE should not look up to quasiforms");
+    else {
+        Copy_Cell(out, rule);
+        return SUCCESS;
     }
-    else if (Is_Antiform(sink)) {
-        if (Is_Nulled(sink))
-            panic (Error_Bad_Null(rule));
 
-        if (Is_Trash(sink))
-            panic (Error_Bad_Word_Get(rule, sink));
+    if (Is_Quasiform(out_value))
+        return Error_User("RULE should not look up to quasiforms");
 
-        if (Is_Logic(sink) or Is_Splice(sink))
-            Quasify_Antiform(sink);
-        else if (Is_Datatype(sink)) {  // convert to functions for now
+    if (Is_Antiform(out_value)) {
+        if (Is_Nulled(out_value))
+            return Error_Bad_Null(rule);
+
+        if (Is_Trash(out_value))
+            return Error_Bad_Word_Get(rule, out_value);
+
+        if (Is_Logic(out_value) or Is_Splice(out_value))
+            Quasify_Antiform(out_value);
+        else if (Is_Datatype(out_value)) {  // convert to functions for now
             DECLARE_VALUE (checker);
-            Init_Typechecker(checker, sink);
+            Init_Typechecker(checker, out_value);
             assert(Heart_Of(checker) == TYPE_FRAME);
-            Copy_Cell(sink, checker);
-            QUOTE_BYTE(sink) = NOQUOTE_1;
+            Copy_Cell(out_value, checker);
+            QUOTE_BYTE(out_value) = NOQUOTE_1;
         }
         else {
-            panic (Error_Bad_Antiform(sink));
+            return Error_Bad_Antiform(out_value);
         }
     }
     else {
-        if (Is_Integer(sink))
-            panic ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
+        if (Is_Integer(out_value))
+            return Error_User(
+                "Use REPEAT on integers https://forum.rebol.info/t/1578/6"
+            );
     }
 
-    return cast(Element*, sink);
+    return SUCCESS;
 }
+
 
 //
 //  Process_Group_For_Parse_Throws: C
@@ -583,8 +605,15 @@ static REBIXO Parse_One_Rule(
             rule = Unquotify(Copy_Cell(SPARE, rule));
         }
         else if (Is_Pinned(WORD, rule)) {
-            Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
-            rule = Ensure_Element(SPARE);  // fall through to direct match
+            Option(Error*) e = Trap_Get_Var(
+                SPARE, NO_STEPS, rule, P_RULE_BINDING
+            );
+            if (e)
+                panic (unwrap e);
+            if (Is_Antiform(SPARE))
+                panic (Error_Bad_Antiform(SPARE));
+
+            rule = Known_Element(SPARE);  // fall through to direct match
         }
         else switch (Type_Of(rule)) {
           case TYPE_FRAME: {  // want to run a type constraint...
@@ -626,10 +655,14 @@ static REBIXO Parse_One_Rule(
         assert(Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB);
 
         if (Is_Pinned(WORD, rule)) {
-            Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
+            Option(Error*) e = Trap_Get_Var(
+                SPARE, NO_STEPS, rule, P_RULE_BINDING
+            );
+            if (e)
+                panic (unwrap e);
             if (Is_Antiform(SPARE))
                 panic (Error_Bad_Antiform(SPARE));
-            rule = cast(Element*, SPARE);
+            rule = Known_Element(SPARE);
         }
 
         // Build upon FIND's behavior to mold quoted items, e.g.:
@@ -713,7 +746,7 @@ static REBIXO To_Thru_Block_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    DECLARE_VALUE (cell);  // holds evaluated rules (use frame cell instead?)
+    DECLARE_ELEMENT (cell);  // holds evaluated rules (use frame cell instead?)
 
     // Note: This enumeration goes through <= P_INPUT_LEN, because the
     // block rule might be something like `to [{a} | <end>]`.  e.g. being
@@ -764,8 +797,12 @@ static REBIXO To_Thru_Block_Rule(
                         panic (Error_Parse3_Rule());
                 }
                 else {
-                    Get_Var_May_Panic(cell, rule, P_RULE_BINDING);
-                    rule = cast(Element*, cell);
+                    Option(Error*) e = Trap_Get_Parse_Value(
+                        cell, rule, P_RULE_BINDING
+                    );
+                    if (e)
+                        panic (unwrap e);
+                    rule = cell;
                 }
             }
             else if (Is_Tag(rule)) {
@@ -781,8 +818,15 @@ static REBIXO To_Thru_Block_Rule(
                 else
                     panic ("TAG! combinator must be <here> or <end> ATM");
             }
-            else if (Is_Tuple(rule) or Is_Path(rule))
-                rule = Get_Parse_Value(cell, rule, P_RULE_BINDING);
+            else if (Is_Tuple(rule) or Is_Path(rule)) {
+                Option(Error*) e = Trap_Get_Parse_Value(
+                    cell, rule, P_RULE_BINDING
+                );
+                if (e)
+                    panic (unwrap e);
+
+                rule = cell;
+            }
             else {
                 // fallthrough to literal match of rule (text, bitset, etc)
             }
@@ -1006,7 +1050,14 @@ static REBIXO To_Thru_Non_Block_Rule(
             Unquotify(Derelativize(temp, rule, P_RULE_BINDING));
         }
         else if (Is_Pinned(WORD, rule)) {
-            Get_Var_May_Panic(temp, rule, P_RULE_BINDING);
+            Option(Error*) e = Trap_Get_Var(
+                temp, NO_STEPS, rule, P_RULE_BINDING
+            );
+            if (e)
+                panic (unwrap e);
+            if (Is_Antiform(temp))
+                panic (Error_Bad_Antiform(temp));
+            rule = Known_Element(temp);  // fall through to direct match
         }
         else if (Is_Lifted_Datatype(rule)) {
             DECLARE_ELEMENT (rule_value);
@@ -1040,8 +1091,14 @@ static REBIXO To_Thru_Non_Block_Rule(
     }
     else {
         if (Is_Pinned(WORD, rule)) {
-            Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
-            rule = Ensure_Element(SPARE);
+            Option(Error*) e = Trap_Get_Var(
+                SPARE, NO_STEPS, rule, P_RULE_BINDING
+            );
+            if (e)
+                panic (unwrap e);
+            if (Is_Antiform(SPARE))
+                panic (Error_Bad_Antiform(SPARE));
+            rule = Known_Element(SPARE);
         }
     }
 
@@ -1120,10 +1177,14 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 
     Option(Type) t = Type_Of(rule);
     if (t == TYPE_WORD or t == TYPE_TUPLE) {
-        Get_Var_May_Panic(SPARE, rule, context);
+        Option(Error*) e = Trap_Get_Var(
+            SPARE, NO_STEPS, rule, context
+        );
+        if (e)
+            panic (unwrap e);
         if (Is_Antiform(SPARE))
             panic (Error_Bad_Antiform(SPARE));
-        rule = cast(Element*, SPARE);
+        rule = Known_Element(SPARE);
         t = Type_Of(rule);
     }
 
@@ -1726,15 +1787,25 @@ DECLARE_NATIVE(SUBPARSE)
                 assert(Is_Word(rule));  // word - some other variable
 
                 if (rule != P_SAVE) {
-                    rule = Get_Parse_Value(P_SAVE, rule, P_RULE_BINDING);
+                    Option(Error*) e = Trap_Get_Parse_Value(
+                        P_SAVE, rule, P_RULE_BINDING
+                    );
+                    if (e)
+                        return PANIC(unwrap e);
+
+                    rule = P_SAVE;
                 }
             }
         }
     }
     else if (Is_Tuple(rule)) {
-        Value* spare = Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
+        Sink(Value) spare = SPARE;
+        Option(Error*) e = Trap_Get_Var(spare, NO_STEPS, rule, P_RULE_BINDING);
+        if (e)
+            return PANIC(unwrap e);
+
         if (Is_Datatype(spare)) {
-            Init_Typechecker(P_SAVE, spare);
+            Init_Typechecker(u_cast(Value*, P_SAVE), spare);  // will be FRAME!
             QUOTE_BYTE(spare) = NOQUOTE_1;
             rule = Known_Element(spare);
         }
@@ -1744,10 +1815,18 @@ DECLARE_NATIVE(SUBPARSE)
             rule = Copy_Cell(P_SAVE, Known_Element(spare));
     }
     else if (Is_Path(rule)) {
-        Value* spare = Get_Var_May_Panic(SPARE, rule, P_RULE_BINDING);
-        assert(Is_Action(spare));
+        Sink(Value) spare = SPARE;
+        Option(Error*) e = Trap_Get_Var(
+            spare, NO_STEPS, rule, P_RULE_BINDING
+        );
+        if (e)
+            return PANIC(unwrap e);
+
+        if (not Is_Action(spare))
+            return PANIC("PATH! in PARSE3 must be an ACTION!");
+
         QUOTE_BYTE(spare) = NOQUOTE_1;
-        rule = Copy_Cell(P_SAVE, Known_Element(SPARE));
+        rule = Copy_Cell(P_SAVE, Known_Element(spare));
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
@@ -1861,10 +1940,14 @@ DECLARE_NATIVE(SUBPARSE)
                 if (P_AT_END)
                     panic (Error_Parse3_End());
 
-                if (!subrule) {  // capture only on iteration #1
-                    subrule = Get_Parse_Value(
+                if (subrule == nullptr) {  // capture only on iteration #1
+                    Option(Error*) e = Trap_Get_Parse_Value(
                         P_SAVE, P_RULE, P_RULE_BINDING
                     );
+                    if (e)
+                        return PANIC(unwrap e);
+
+                    subrule = P_SAVE;
                     FETCH_NEXT_RULE(L);
                 }
 
@@ -1906,10 +1989,14 @@ DECLARE_NATIVE(SUBPARSE)
                 if (P_AT_END)
                     panic (Error_Parse3_End());
 
-                if (!subrule) {
-                    subrule = Get_Parse_Value(
+                if (subrule == nullptr) {  // capture only on iteration #1
+                    Option(Error*) e = Trap_Get_Parse_Value(
                         P_SAVE, P_RULE, P_RULE_BINDING
                     );
+                    if (e)
+                        return PANIC(unwrap e);
+
+                    subrule = P_SAVE;
                     FETCH_NEXT_RULE(L);
                 }
 
@@ -2224,7 +2311,14 @@ DECLARE_NATIVE(SUBPARSE)
                     panic (Error_Parse3_End());
 
                 // new value...comment said "CHECK FOR QUOTE!!"
-                rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_BINDING);
+
+                Option(Error*) e = Trap_Get_Parse_Value(
+                    P_SAVE, P_RULE, P_RULE_BINDING
+                );
+                if (e)
+                    return PANIC(unwrap e);
+
+                rule = P_SAVE;
                 FETCH_NEXT_RULE(L);
 
                 if (not Is_Group(rule))

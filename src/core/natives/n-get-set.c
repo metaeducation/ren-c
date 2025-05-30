@@ -245,31 +245,6 @@ Option(Error*) Trap_Get_Var(
 
 
 //
-//  Get_Var_May_Panic: C
-//
-// Simplest interface.  Gets a variable, doesn't process groups, and will
-// panic if the variable is trash.  Use the appropriate Trap_Get_XXXX()
-// interface if this is too simplistic.
-//
-Value* Get_Var_May_Panic(
-    Sink(Value) out,  // variables never store unstable Atom* values
-    const Element* var,
-    Context* context
-){
-    Option(Element*) steps_out = nullptr;  // signal groups not allowed to run
-
-    Option(Error*) error = Trap_Get_Var(  // vacant will give error
-        out, steps_out, var, context
-    );
-    if (error)
-        panic (unwrap error);
-
-    assert(not Is_Trash(out));  // shouldn't have returned it
-    return out;
-}
-
-
-//
 //  Trap_Get_Chain_Push_Refinements: C
 //
 Option(Error*) Trap_Get_Chain_Push_Refinements(

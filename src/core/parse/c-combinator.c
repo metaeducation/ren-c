@@ -737,7 +737,11 @@ static bool Combinator_Param_Hook(
             Value* parser = rebValue(
                 "[_", temp, "]: parsify", rebQ(ARG(STATE)), ARG(RULES)
             );
-            Get_Var_May_Panic(ARG(RULES), temp, SPECIFIED);
+            Option(Error*) e = Trap_Get_Var(
+                ARG(RULES), NO_STEPS, temp, SPECIFIED
+            );
+            if (e)
+                panic (unwrap e);
             Copy_Cell(var, parser);
             rebRelease(parser);
         }

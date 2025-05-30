@@ -481,10 +481,10 @@ DECLARE_NATIVE(TO_LOGIC)
 // left hand side to the right).  There was also behavior for GET-GROUP!, to
 // run the provided code whether the condition on the left was true or not.
 //
-// This scales the idea back to a very simple concept of a quoted GROUP!,
+// This scales the idea back to a very simple concept of a literal GROUP!,
 // WORD!, or TUPLE!.
 //
-INLINE bool Do_Logic_Right_Side_Throws(
+INLINE Option(Error*) Trap_Eval_Logic_Operation_Right_Side(
     Sink(bool) cond,
     Level* level_
 ){
@@ -496,23 +496,30 @@ INLINE bool Do_Logic_Right_Side_Throws(
     Value* synthesized;
     if (Is_Group(right)) {
         if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED))
-            return true;
+            return Error_No_Catch_For_Throw(level_);
         synthesized = Decay_If_Unstable(SPARE);
     }
     else {
         assert(Is_Word(right) or Is_Tuple(right));
 
-        synthesized = Get_Var_May_Panic(SPARE, right, SPECIFIED);
+        Sink(Value) spare = SPARE;
+        Option(Error*) e = Trap_Get_Var(
+            spare, NO_STEPS, right, SPECIFIED
+        );
+        if (e)
+            return e;
 
-        if (Is_Action(synthesized))
+        if (Is_Action(spare))
             panic ("words/tuples can't be action as right side of OR AND XOR");
+
+        synthesized = spare;
     }
 
     Option(Error*) e = Trap_Test_Conditional(cond, synthesized);
     if (e)
-        panic (unwrap e);
+        return e;
 
-    return false;
+    return SUCCESS;
 }
 
 
@@ -540,8 +547,9 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
         return LOGIC(false);  // if left is false, don't run right hand side
 
     bool right;
-    if (Do_Logic_Right_Side_Throws(&right, LEVEL))
-        return THROWN;
+    e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
+    if (e)
+        return PANIC(unwrap e);
 
     return LOGIC(right);
 }
@@ -571,8 +579,9 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
         return LOGIC(true);  // if left is true, don't run right hand side
 
     bool right;
-    if (Do_Logic_Right_Side_Throws(&right, LEVEL))
-        return THROWN;
+    e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
+    if (e)
+        return PANIC(unwrap e);
 
     return LOGIC(right);
 }
@@ -594,11 +603,12 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_XOR_1;
 
     bool right;
-    if (Do_Logic_Right_Side_Throws(&right, LEVEL))  // run right side always
-        return THROWN;
+    Option(Error*) e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);  // run always
+    if (e)
+        return PANIC(unwrap e);
 
     bool left;
-    Option(Error*) e = Trap_Test_Conditional(&left, ARG(LEFT));
+    e = Trap_Test_Conditional(&left, ARG(LEFT));
     if (e)
         return PANIC(unwrap e);
 
