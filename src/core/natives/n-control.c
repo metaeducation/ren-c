@@ -483,7 +483,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
 } eval_step_dual_in_spare: {  ////////////////////////////////////////////////
 
-    if (Is_Endlike_Trash(SPARE))
+    if (Is_Endlike_Tripwire(SPARE))
         goto reached_end;
 
     if (Is_Lifted_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue

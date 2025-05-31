@@ -163,12 +163,12 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         Fetch_Next_In_Feed(L->feed);
 
         if (Is_Level_At_End(L)) {
-            Init_Trash(PUSH());  // default initializer for local
+            Init_Tripwire(PUSH());  // default initializer for local
             break;
         }
 
         if (not Is_Group(At_Level(L))) {
-            Init_Trash(PUSH());
+            Init_Tripwire(PUSH());
             goto loop_dont_fetch_next;
         }
 
@@ -418,7 +418,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         // Non-annotated arguments allow all parameter types.
 
         if (local) {
-            Init_Trash(param);
+            Init_Tripwire(param);
             assert(mode == SPEC_MODE_LOCAL);
         }
         else if (refinement) {

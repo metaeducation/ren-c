@@ -180,7 +180,7 @@ static void Startup_Lib(void)
         Tweak_Misc_Hitch(symbol, patch);  // ...but now it has one!
         Tweak_Misc_Hitch(patch, symbol);  // link back for singly-linked-list
 
-        Init_Trash(Stub_Cell(patch));  // start as unset variable
+        Init_Tripwire(Stub_Cell(patch));  // start as unset variable
     }
 
     ensure(nullptr, g_lib_context) = lib;
@@ -393,8 +393,8 @@ static void Init_Root_Vars(void)
     ensure(nullptr, g_quasi_null) = Init_Quasi_Null(Alloc_Value());
     Protect_Cell(g_quasi_null);
 
-    ensure(nullptr, g_trash) = Init_Trash(Alloc_Value());
-    Protect_Cell(g_trash);
+    ensure(nullptr, g_tripwire) = Init_Tripwire(Alloc_Value());
+    Protect_Cell(g_tripwire);
 
     ensure(nullptr, g_dispatcher_table) = Make_Flex(
         FLAG_FLAVOR(DISPATCHERTABLE) | STUB_FLAG_DYNAMIC,
@@ -428,7 +428,7 @@ static void Shutdown_Root_Vars(void)
     rebReleaseAndNull(&Root_Feed_Null_Substitute);
     rebReleaseAndNull(&g_empty_blob);
     rebReleaseAndNull(&g_quasi_null);
-    rebReleaseAndNull(&g_trash);
+    rebReleaseAndNull(&g_tripwire);
 }
 
 

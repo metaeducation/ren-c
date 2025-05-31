@@ -1289,7 +1289,7 @@ DECLARE_NATIVE(EVERY)
     }
 
     if (Is_Ghost_Or_Void(SPARE)) {
-        Init_Trash(OUT);  // forget OUT for loop composition [1]
+        Init_Tripwire(OUT);  // forget OUT for loop composition [1]
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 

@@ -140,7 +140,7 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
 
     const char* cp = cast(const char*, b);
     if (cp[0] == '~' and cp[1] == '\0') {
-        Init_Trash(L->out);
+        Init_Tripwire(L->out);
         return nullptr;  // make return "~" fast!
     }
 
@@ -226,7 +226,7 @@ Bounce Action_Executor(Level* L)
                 Element* arg = Known_Element(ARG);  // quoted or quasi
                 if (Is_Lifted_Ghost(arg)) {
                     STATE = ST_ACTION_BARRIER_HIT;
-                    Init_Trash_Due_To_End(ARG);
+                    Init_Tripwire_Due_To_End(ARG);
                 }
                 else if (Is_Lifted_Void(arg)) {
                     if (Get_Parameter_Flag(PARAM, OPT_OUT))
@@ -421,7 +421,7 @@ Bounce Action_Executor(Level* L)
     //    first-cut approximation by unbinding.
 
         if (STATE == ST_ACTION_BARRIER_HIT) {
-            Init_Trash_Due_To_End(ARG);
+            Init_Tripwire_Due_To_End(ARG);
             goto continue_fulfilling;
         }
 
@@ -576,7 +576,7 @@ Bounce Action_Executor(Level* L)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (Is_Level_At_End(L)) {
-            Init_Trash_Due_To_End(ARG);
+            Init_Tripwire_Due_To_End(ARG);
             goto continue_fulfilling;
         }
 
@@ -587,7 +587,7 @@ Bounce Action_Executor(Level* L)
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META: {
             if (Is_Level_At_End(L)) {
-                Init_Trash_Due_To_End(ARG);
+                Init_Tripwire_Due_To_End(ARG);
                 goto continue_fulfilling;
             }
 
@@ -767,7 +767,7 @@ Bounce Action_Executor(Level* L)
 
     if (Get_Action_Executor_Flag(L, FULFILL_ONLY)) {  // no typecheck
         assert(Is_Cell_Erased(OUT));  // didn't touch out, should be fresh
-        Init_Trash(OUT);  // trampoline requires some valid OUT result
+        Init_Tripwire(OUT);  // trampoline requires some valid OUT result
         goto skip_output_check;
     }
 

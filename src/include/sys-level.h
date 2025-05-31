@@ -339,7 +339,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 
 // When evaluative contexts ask "Is_Level_At_End()" and see [], they might
 // think that is the end of the level.  But [, , ,] would be an end of the
-// level after an evaluation step with no result (e.g. Is_Endlike_Trash()
+// level after an evaluation step with no result (e.g. Is_Endlike_Tripwire()
 // coming back from Stepper_Executor()).  So you don't want to get
 // lulled into a false sense of security that [] is the only way a level ends.
 //
@@ -768,7 +768,7 @@ INLINE Bounce Native_Trash_Result_Untracked(
     assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Trash(level_->out);
+    return Init_Tripwire(level_->out);
 }
 
 INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
@@ -893,7 +893,7 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     if (Is_Nulled(atom))
         Init_Heavy_Null_Untracked(atom);  // distinguish from null for BREAK
     else if (Is_Void(atom))
-        Init_Trash_Untracked(atom);  // distinguish from loop that never ran
+        Init_Tripwire_Untracked(atom);  // distinguish from loop that never ran
     return level_->out;
 }
 

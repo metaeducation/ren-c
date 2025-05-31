@@ -526,7 +526,7 @@ Option(Error*) Trap_Wrap_Extend_Core(
     Option(Stump*) stump = cl->binder.stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
         const Symbol* symbol = Info_Stump_Bind_Symbol(unwrap stump);
-        Init_Trash(Append_Context(context, symbol));
+        Init_Tripwire(Append_Context(context, symbol));
     }
 
     Destruct_Collector(cl);
@@ -825,7 +825,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     REBINT i;
     for (i = 1; i <= len; ++i, ++var)  // 0th item is rootvar, already filled
-        Init_Trash(var);
+        Init_Tripwire(var);
 
     if (parent) {
         Value* dest = Flex_At(Value, a, 1);

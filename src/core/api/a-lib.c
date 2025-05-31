@@ -564,7 +564,7 @@ RebolValue* API_rebTrash(void)
 {
     ENTER_API;
 
-    return Init_Trash(Alloc_Value());
+    return Init_Tripwire(Alloc_Value());
 }
 
 

@@ -29,7 +29,7 @@ Rebol [
 
 void
 quasar
-trash
+tripwire
 null
 okay
 blank

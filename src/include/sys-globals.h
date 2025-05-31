@@ -61,8 +61,8 @@ PVAR Codepoint *Lower_Cases;
 #endif
 
 // These are some canon cells that cannot be offered via LIB(XXX).  e.g. if
-// TRASH were a variable in Lib, users couldn't access it by typing
-// `trash` (they'd get an error on antiform var access)...so it's a function.
+// TRIPWIRE were actually a TRASH! value, users couldn't access it by typing
+// `tripwire` (they'd get an error on trash access)...so it's a function.
 //
 
 PVAR Value PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
@@ -117,7 +117,7 @@ PVAR Element* g_empty_blob; // read-only #{}
 PVAR Element* g_empty_block; // read-only []
 PVAR Element* g_empty_object;
 PVAR Element* g_quasi_null;  // ~null~ quasiform
-PVAR Value* g_trash;  // ~ antiform (LIB(TRASH) is a function)
+PVAR Value* g_tripwire;  // ~ antiform (LIB(TRIPWIRE) is a function)
 PVAR Source* g_empty_array; // optimization of Cell_Array(g_empty_block)
 PVAR VarList* g_empty_varlist;
 PVAR Source* g_1_quasi_null_array;  // used by heavy nulls ~[~null~]~

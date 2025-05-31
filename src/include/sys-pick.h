@@ -117,7 +117,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 //
 // Requesting steps will supress that, but sometimes you don't actually need
 // the steps (as the evaluator doesn't when doing SET-TUPLE!).  Rather than
-// passing a separate flag, the g_trash pointer is used (mutable, but it
+// passing a separate flag, the g_tripwire pointer is used (mutable, but it
 // has the protected bit set to avoid accidents)
 //
 #define GROUPS_OK  cast(Option(Element*), x_cast(Element*, g_empty_text))

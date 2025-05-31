@@ -177,9 +177,9 @@ export console!: make object! [
             v: first v  ; items in pack are ^META'd
         ]
 
-        === PRINT NO OUTPUT FOR "TRASH" (antiform SPACE [_]) ===
+        === PRINT NO OUTPUT FOR TRASH! (antiform RUNE!) ===
 
-        ; By default, we've decided that some value needs to not display in
+        ; By default, we've decided that some state(s) need to not display in
         ; the console, to suppress output from things like HELP or PRINT,
         ; because it's noisy to have `== xxx` produced in that case.
         ;
@@ -188,11 +188,16 @@ export console!: make object! [
         ;
         ; Whatever doesn't display will be a "lie" in some sense.  The two
         ; competing lies are VOID (a.k.a. empty block antiform, result of
-        ; things like `eval []`) and TRASH (a.k.a. the antiform of SPACE,
-        ; contents of an unset variable).  The decision has flipped many times,
-        ; but trash wins.
+        ; things like `eval []`) and TRASH (a.k.a. the antiforms of RUNE!).
+        ;
+        ; The decision has flipped many times, but trash wins:
         ;
         ; https://forum.rebol.info/t/console-treatment-of-void-vs-trash/2045
+        ;
+        ; TRASH? can hold arbitrary message content as an antiform RUNE!, but
+        ; the most succinct state of trash is antiform space (TRIPWIRE, whose
+        ; quasiform looks like a single tilde `~`).  Right now we don't show
+        ; any trash, regardless of whether it contains a label or not.
 
         if trash? ^v [
             return ~

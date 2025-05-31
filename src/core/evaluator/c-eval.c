@@ -173,7 +173,7 @@ Bounce Evaluator_Executor(Level* const L)
     //    That's a bad enough outcome that the feature of being able to put
     //    invisible material after the error has to be sacrificed.
 
-    if (Is_Endlike_Trash(OUT))  // the "official" way to detect reaching end
+    if (Is_Endlike_Tripwire(OUT))  // the "official" way to detect reaching end
         goto finished;
 
     if (Is_Lifted_Ghost(OUT)) { // something like an ELIDE or COMMENT

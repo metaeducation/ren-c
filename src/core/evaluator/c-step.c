@@ -219,7 +219,7 @@ Bounce Inert_Stepper_Executor(Level* L)
     STATE = ST_INERT_STEPPER_FINISHED;  // can't leave as STATE_0
 
     if (Is_Feed_At_End(L->feed))
-        return Init_Endlike_Trash(OUT);
+        return Init_Tripwire_Due_To_End(OUT);
 
     Derelativize(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
     Fetch_Next_In_Feed(L->feed);
@@ -344,7 +344,7 @@ Bounce Stepper_Executor(Level* L)
 
     if (Is_Feed_At_End(L->feed)) {
         assert(Is_Cell_Erased(OUT));
-        Init_Endlike_Trash(OUT);
+        Init_Tripwire_Due_To_End(OUT);
         STATE = ST_STEPPER_NONZERO_STATE;
         goto finished_dont_lift_out;
     }

@@ -237,7 +237,7 @@ Bounce Func_Dispatcher(Level* const L)
     //    big a hassle to force people to put RETURN ~ or RETURN at the end.
     //    So this is the compromise chosen...at the moment.
 
-    Init_Trash(OUT);  // TRASH, regardless of body result [1]
+    Init_Tripwire(OUT);  // TRASH, regardless of body result [1]
 
     const Element* param = Quoted_Returner_Of_Paramlist(
         Phase_Paramlist(details), SYM_RETURN

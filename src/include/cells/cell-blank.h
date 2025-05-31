@@ -66,11 +66,14 @@ INLINE bool Is_Quasar(Need(const Element*) v) {
 }
 
 
-//=//// '~' ANTIFORM (a.k.a. TRASH) ///////////////////////////////////////=//
+//=//// '~' ANTIFORM (a.k.a. TRIPWIRE) ////////////////////////////////////=//
 //
-// The antiform of SPACE is called TRASH, and it is used for the state of
-// an unset variable.  It is also the result when a function has no meaningful
-// value of return, so it has no display in the console.
+// All RUNE! values have antiforms, that are considered to be TRASH!.
+//
+// The antiform of SPACE is a particularly succinct trash state, called
+// TRIPWIRE, and it is frequently the default state of an unset variable.  It
+// is also the result when a function has no meaningful value of return, so it
+// has no display in the console.
 //
 //    >> x: anti _
 //
@@ -79,60 +82,59 @@ INLINE bool Is_Quasar(Need(const Element*) v) {
 //
 //    >> print "Hello"
 //
-//    >> trash? print "Hello"
+//    >> tripwire? print "Hello"
 //    == ~true~
 //
-// The name "trash" (vs. "unset") was meditated on for quite some time,
+// The name "tripwire" (vs. "unset") was meditated on for quite some time,
 // and resolved as superior to trying to claim there's such a thing as an
 // "unset value".
 //
 // Picking antiform SPACE as the contents of unset variables has many benefits
-// over choosing a WORD! antiform like `~unset~` or `~trash~`:
+// over choosing a WORD! antiform like `~unset~` or `~tripwire~`:
 //
 //  * Reduces noise when looking at a list of variables to see which are unset
 //
 //  * Quick way to unset variables, simply `(var: ~)`
 //
-//  * Variables that are trashed are not "unset", they are set to trash.
+//  * Variables that hold tripwires aren't "unset", they're set to a tripwire.
 //    The question of if a variable holds trash is better as TRASHED?, while
 //    UNRESOLVED? can be used to talk about variables that can't be found
 //    at all (UNSET? would be a weird name for that).
 //
 
-INLINE Value* Init_Trash_Untracked(Init(Value) out) {
+INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
     Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
     LIFT_BYTE_RAW(out) = ANTIFORM_0;  // spaces are isotopic
     return out;
 }
 
-#define Init_Trash(out) \
-    TRACK(Init_Trash_Untracked(out))
+#define Init_Tripwire(out) \
+    TRACK(Init_Tripwire_Untracked(out))
 
-#define Init_Lifted_Trash(out)  Init_Quasar(out)
-
-#define Is_Endlike_Trash(cell) \
-    Is_Atom_Trash(cell)
-
-#define Init_Endlike_Trash(out) \
-    Init_Trash(out)
+#define Init_Lifted_Tripwire(out) \
+    Init_Quasar(out)
 
 
-//=//// <end> SIGNALING WITH TRASH (~ antiform) ///////////////////////////=//
+//=//// <end> SIGNALING WITH TRIPWIRE (~ antiform) ////////////////////////=//
 //
 // Special handling is required in order to allow a kind of "light variadic"
 // form, where a parameter can be missing.
 //
 // For a time this was distinguished with a special ~end~ antiform.  But this
-// was rethought in light of the fact that the trash antiform is unique
+// was rethought in light of the fact that trash antiforms are unique
 // among stable antiforms, as needing to be a ^META parameter in order to be
 // passed to a function.  That means it can signal willingness of a parameter
 // to be "fully missing" no matter what position it is in an argument list.
 //
 // This macro helps keep track of those places in the source that are the
-// implementation of the "trash due to end" behavior.
+// implementation of the "tripwire due to end" behavior.
 //
-#define Init_Trash_Due_To_End(out) \
-    Init_Trash(out)
+
+#define Init_Tripwire_Due_To_End(out) \
+    Init_Tripwire(out)
+
+#define Is_Endlike_Tripwire(cell) \
+    Is_Atom_Trash(cell)
 
 
 //=//// STANDALONE "SIGIL?" ELEMENTS (@ ^ $) //////////////////////////////=//

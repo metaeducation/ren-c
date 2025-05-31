@@ -666,7 +666,7 @@ Error* Make_Error_Managed_Vaptr(
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
                 assert(!"Not enough arguments in Make_Error_Managed()");
-                Init_Trash_Due_To_End(var);
+                Init_Tripwire_Due_To_End(var);
                 break;
 
               case DETECTED_AS_CELL: {

@@ -860,7 +860,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 // that are valid for dual.  It should be something fast to check...
 //
 #define Is_Tweak_A_Get(L)  Is_Atom_Trash((L)->out)
-#define Mark_Tweak_As_Get(L)  Init_Trash((L)->out)
+#define Mark_Tweak_As_Get(L)  Init_Tripwire((L)->out)
 
 
 //

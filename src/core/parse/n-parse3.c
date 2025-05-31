@@ -265,10 +265,10 @@ static bool Subparse_Throws(
 
     // Locals in frame would be unset on entry if called by action dispatch.
     //
-    Init_Trash(Erase_Cell(ARG(NUM_QUOTES)));
-    Init_Trash(Erase_Cell(ARG(POSITION)));
-    Init_Trash(Erase_Cell(ARG(SAVE)));
-    Init_Trash(Erase_Cell(ARG(LOOKBACK)));
+    Init_Tripwire(Erase_Cell(ARG(NUM_QUOTES)));
+    Init_Tripwire(Erase_Cell(ARG(POSITION)));
+    Init_Tripwire(Erase_Cell(ARG(SAVE)));
+    Init_Tripwire(Erase_Cell(ARG(LOOKBACK)));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do

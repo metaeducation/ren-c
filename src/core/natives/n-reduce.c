@@ -120,7 +120,7 @@ DECLARE_NATIVE(REDUCE)
         goto initial_entry_non_list;  // semantics in question [1]
 
       case ST_REDUCE_EVAL_STEP:
-        if (Is_Endlike_Trash(SPARE))
+        if (Is_Endlike_Tripwire(SPARE))
             goto finished;
         goto reduce_step_dual_in_spare;
 

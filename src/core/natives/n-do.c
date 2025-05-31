@@ -317,7 +317,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         return PANIC(Cell_Error(source)); }  // would panic anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:
-        if (Is_Endlike_Trash(OUT)) {
+        if (Is_Endlike_Tripwire(OUT)) {
             Drop_Level(SUBLEVEL);
             return nullptr;  // no result, not even GHOST [3]
         }
@@ -598,7 +598,7 @@ DECLARE_NATIVE(APPLIQUE)
         op,
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr,  // no binder needed
-        g_trash  // fill all slots with nothing to start
+        g_tripwire  // fill all slots with nothing to start
     );
     Manage_Flex(exemplar);
     Init_Lensed_Frame(

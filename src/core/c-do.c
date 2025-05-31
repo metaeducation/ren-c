@@ -67,7 +67,7 @@ void Prep_Action_Level(
             if (Get_Parameter_Flag(param, REFINEMENT))
                 Init_Nulled(arg);
             else
-                Init_Trash(arg);
+                Init_Tripwire(arg);
         }
     }
 
@@ -218,7 +218,7 @@ bool Pushed_Continuation(
                 Blit_Param_Drop_Mark(arg, param);
             else {
                 Erase_Cell(arg);
-                Init_Trash(arg);
+                Init_Tripwire(arg);
             }
         }
 

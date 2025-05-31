@@ -452,7 +452,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
         arg,  // being used here as input (e.g. the ACTION!)
         lowest_stackindex,  // will weave in any refinements pushed
         nullptr,  // no binder needed, not running any code
-        g_trash  // use COPY UNRUN FRAME! for parameters vs. nothing
+        g_tripwire  // use COPY UNRUN FRAME! for parameters vs. nothing
     );
 
     ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(arg));
@@ -1074,7 +1074,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
                     Tweak_Cell_Binding(def, c);
                 return COPY(def);
             }
-            Init_Trash(Append_Context_Bind_Word(c, def));
+            Init_Tripwire(Append_Context_Bind_Word(c, def));
             return COPY(def);
         }
 

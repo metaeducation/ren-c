@@ -1275,18 +1275,18 @@ DECLARE_NATIVE(BLANK_Q)
 
 
 //
-//  trash: native [  ; native:intrinsic currently needs at least 1 argument
+//  tripwire: native [  ; native:intrinsic currently needs at least 1 argument
 //
-//  "Returns antiform SPACE (aka TRASH)"
+//  "Returns antiform SPACE (aka TRIPWIRE)"
 //
 //      return: []
 //  ]
 //
-DECLARE_NATIVE(TRASH)
+DECLARE_NATIVE(TRIPWIRE)
 {
-    INCLUDE_PARAMS_OF_TRASH;
+    INCLUDE_PARAMS_OF_TRIPWIRE;
 
-    return Init_Trash(OUT);
+    return Init_Tripwire(OUT);
 }
 
 

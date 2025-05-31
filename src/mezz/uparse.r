@@ -571,7 +571,7 @@ default-combinators: to map! reduce [
         parser [<end> action!]
         <local> f ^result
     ][
-        ^result: ~  ; default `[stop]` returns trash
+        ^result: ~  ; default `[stop]` returns trash (tripwire)
         if :parser [  ; parser argument is optional
             [^result input]: parser input except e -> [
                 return fail e
