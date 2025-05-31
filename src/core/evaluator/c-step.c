@@ -384,7 +384,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(not L_next_gotten);  // Fetch_Next_In_Feed() cleared it
 
-    if (QUOTE_BYTE(L_next) != NOQUOTE_1)  // quoted right can't look back
+    if (LIFT_BYTE(L_next) != NOQUOTE_1)  // quoted right can't look back
         goto give_up_backward_quote_priority;
 
     Option(InfixMode) infix_mode;
@@ -492,7 +492,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(Is_Cell_Erased(OUT));
 
-    if (QUOTE_BYTE(CURRENT) == NOQUOTE_1) {
+    if (LIFT_BYTE(CURRENT) == NOQUOTE_1) {
         Option(Sigil) sigil = Sigil_Of(CURRENT);
         switch (maybe sigil) {
           case SIGIL_0:
@@ -509,10 +509,10 @@ Bounce Stepper_Executor(Level* L)
         }
     }
 
-    if (QUOTE_BYTE(CURRENT) == QUASIFORM_2)
+    if (LIFT_BYTE(CURRENT) == QUASIFORM_2)
         goto handle_quasiform;
 
-    assert(QUOTE_BYTE(CURRENT) != ANTIFORM_0);
+    assert(LIFT_BYTE(CURRENT) != ANTIFORM_0);
     goto handle_quoted;
 
 
@@ -522,7 +522,7 @@ Bounce Stepper_Executor(Level* L)
 
     Copy_Cell(OUT, CURRENT);
 
-    QUOTE_BYTE(OUT) -= Quote_Shift(1);
+    LIFT_BYTE(OUT) -= Quote_Shift(1);
     STATE = cast(StepperState, TYPE_QUOTED);  // can't leave STATE_0
 
     goto lookahead;
@@ -1732,7 +1732,7 @@ for (; check != tail; ++check) {  // push variables
     Element* var = CURRENT;  // stable location (scratch), safe across SET
     Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
 
-    assert(QUOTE_BYTE(var) == NOQUOTE_1);
+    assert(LIFT_BYTE(var) == NOQUOTE_1);
 
     if (pack_at == pack_tail) {
         if (not is_optional)

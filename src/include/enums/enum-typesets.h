@@ -44,7 +44,7 @@
 //
 // Note that the HEART_BYTE() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
-// indicators in the quote byte do not affect it.
+// indicators in the LIFT_BYTE() do not affect it.
 
 INLINE bool Is_Extra_Mark_Heart(Option(Heart) heart)
   { return (maybe heart) >= TYPE_VARARGS; }
@@ -57,7 +57,7 @@ INLINE bool Is_Extra_Mark_Heart(Option(Heart) heart)
 //
 // Note that the HEART_BYTE() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
-// indicators in the quote byte do not affect it.
+// indicators in the LIFT_BYTE() do not affect it.
 //
 // 1. There's a range check created automatically for ANY-BINDABLE?, and
 //    that's good for fitting into the typeset optimization cases.  But it
@@ -85,7 +85,7 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
 }
 
 #define Any_Fundamental(v) \
-    (QUOTE_BYTE(Ensure_Readable(v)) == NOQUOTE_1)
+    (LIFT_BYTE(Ensure_Readable(v)) == NOQUOTE_1)
 
 
 INLINE bool Any_Sequence_Or_List_Type(Option(Heart) h)  // !!! optimize?

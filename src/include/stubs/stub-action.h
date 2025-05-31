@@ -304,7 +304,7 @@ INLINE const Element* Quoted_Returner_Of_Paramlist(
     UNUSED(returner);
     Value* param = Phase_Params_Head(paramlist);
     assert(
-        QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+        LIFT_BYTE(param) == ONEQUOTE_NONQUASI_3
         and Heart_Of(param) == TYPE_PARAMETER
     );
     return cast(Element*, param);
@@ -321,5 +321,5 @@ INLINE void Extract_Paramlist_Returner(
 ){
     const Element* param = Quoted_Returner_Of_Paramlist(paramlist, returner);
     Copy_Cell(out, param);
-    QUOTE_BYTE(out) = NOQUOTE_1;
+    LIFT_BYTE(out) = NOQUOTE_1;
 }

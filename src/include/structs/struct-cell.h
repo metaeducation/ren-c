@@ -38,7 +38,7 @@
 //   3 slots in the cell describe.  It corresponds to a datatype, such as
 //   TYPE_INTEGER, TYPE_BLOCK, TYPE_TEXT, tec.
 //
-// * QUOTE_BYTE: the third byte indicates how quoted something is, or if it
+// * LIFT_BYTE: the third byte indicates how quoted something is, or if it
 //   is a quaisform or antiform.  See %sys-quoted.h for more on how the byte
 //   is interpreted.
 //
@@ -188,57 +188,40 @@ typedef Byte HeartByte;  // help document when Byte means a heart byte
 #define HEART_SIGIL_SHIFT 6
 
 
-//=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//
+//=//// BITS 16-23: QUOTED/QUASIFORM/ANTIFORM BYTE ("LIFT") ///////////////=//
 //
 // Cells can be quote-escaped up to 126 levels.  Because the low bit of the
-// quoting byte is reserved for whether the contained value is a quasiform,
-// each quoting level effectively adds 2 to the quote byte.
+// lifting byte is reserved for whether the contained value is a quasiform,
+// each quoting level effectively adds 2 to the lift byte.
 //
-// A cell's underlying "HEART" can report it as something like a TYPE_WORD, but
-// if the quoting byte is > 1 Type_Of() says it is TYPE_QUOTED.  This has the
-// potential to cause confusion in the internals.  But the type system is used
-// to check at compile-time so that different views of the same cell don't
-// get conflated, e.g. Cell* can't have Type_Of() taken on it.
+// A Cell's underlying "HEART" can report it as something like TYPE_WORD, but
+// that is only reported as the result of Type_Of() when LIFT_BYTE() is 1.
+// When LIFT_BYTE() is 2 it says it is TYPE_QUASIFORM, and when it's greater
+// than 2 then Type_Of() reports TYPE_QUOTED.  A LIFT_BYTE() of 0 will give
+// back various TYPE_XXX answers corresponding to the antiforms (such as
+// TYPE_SPLICE, TYPE_TRASH, TYPE_ERROR, etc.)
 //
-// 1. See the documentation point [1] on HEART_BYTE for why no ensure().
+// 1. There's a complex runtime check to ensure coherence in the lift byte
+//    with the rest of the cell, which is triggered in some C++ builds when
+//    you use LIFT_BYTE() directly.  This raw accessor is used to implement
+//    that layer, and can also be used for efficiency in some cases that
+//    want to subvert those checks.
 //
-// 2. We want to control all the places where a cell becomes an antiform, to
-//    avoid letting them be created with bindings, and to avoid illegal
-//    types (e.g. paths aren't antiforms, because ~/foo/~ is a 3-element
-//    path with quasi-blanks at the head and tail, so no quasiform exists).
-//    So this makes it possible to read the antiform quote byte but not
-//    to write it through the ANTIFORM_0 definition.
+// 2. Not all datatypes have quasiforms/antiforms (e.g. ~/foo/~ is a PATH!
+//    with a Quasi-Space in the first and last slots, not a quasiform).  To
+//    help avoid casual assignments to LIFT_BYTE() of the 0 and 2 values
+//    we prohibit them in certain builds, requiring LIFT_BYTE_RAW() to be
+//    used if you are truly sure it's safe.
+//
 
-typedef Byte QuoteByte;  // help document when Byte means a quoting byte
+typedef Byte LiftByte;  // help document when Byte means a lifting byte
 
-#define QUOTE_BYTE(cell) \
-    THIRD_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
+#define LIFT_BYTE_RAW(cell) /* don't go through LiftHolder() [1] */ \
+    THIRD_BYTE(&(cell)->header.bits)
 
-#define ANTIFORM_0_COERCE_ONLY      0  // also "QUASI" (NONQUASI_BIT is clear)
-#define NOQUOTE_1                   1
-#define NONQUASI_BIT                1
-#define QUASIFORM_2_COERCE_ONLY     2
-#define ONEQUOTE_NONQUASI_3         3  // non-quasiquoted state of 1 quote
-#define ONEQUOTE_QUASI_4            4  // quasiquoted state of 1 quote
-
-#if RUNTIME_CHECKS && CPLUSPLUS_11  // Stop `QUOTE_BYTE(cell) = ANTIFORM_0` [2]
-    struct Antiform_0_Struct {};
-    INLINE bool operator==(Byte byte, const Antiform_0_Struct& a0)
-      { UNUSED(a0); return byte == ANTIFORM_0_COERCE_ONLY; }
-    INLINE bool operator!=(Byte byte, const Antiform_0_Struct& a0)
-      { UNUSED(a0); return byte != ANTIFORM_0_COERCE_ONLY; }
-
-    struct Quasiform_2_Struct {};
-    INLINE bool operator==(Byte byte, const Quasiform_2_Struct& a0)
-      { UNUSED(a0); return byte == QUASIFORM_2_COERCE_ONLY; }
-    INLINE bool operator!=(Byte byte, const Quasiform_2_Struct& a0)
-      { UNUSED(a0); return byte != QUASIFORM_2_COERCE_ONLY; }
-    INLINE bool operator>=(Byte byte, const Quasiform_2_Struct& a0)
-      { UNUSED(a0); return byte >= QUASIFORM_2_COERCE_ONLY; }
-    INLINE bool operator<=(Byte byte, const Quasiform_2_Struct& a0)
-      { UNUSED(a0); return byte <= QUASIFORM_2_COERCE_ONLY; }
-    INLINE bool operator<(Byte byte, const Quasiform_2_Struct& a0)
-      { UNUSED(a0); return byte < QUASIFORM_2_COERCE_ONLY; }
+#if DEBUG_HOOK_LIFT_BYTE  // Stop `LIFT_BYTE(cell) = ANTIFORM_0` [2]
+    struct Antiform_0_Struct { operator LiftByte() const { return 0; } };
+    struct Quasiform_2_Struct { operator LiftByte() const { return 2; } };
 
     constexpr Antiform_0_Struct antiform_0;
     constexpr Quasiform_2_Struct quasiform_2;
@@ -246,26 +229,30 @@ typedef Byte QuoteByte;  // help document when Byte means a quoting byte
     #define ANTIFORM_0      antiform_0
     #define QUASIFORM_2     quasiform_2
 #else
-    #define ANTIFORM_0      ANTIFORM_0_COERCE_ONLY
-    #define QUASIFORM_2     QUASIFORM_2_COERCE_ONLY
+    #define ANTIFORM_0      0  // also "QUASI" (NONQUASI_BIT is clear)
+    #define QUASIFORM_2     1
 #endif
+
+// see above for ANTIFORM_0
+#define NOQUOTE_1               1
+#define NONQUASI_BIT            1
+// see above for QUASIFORM_2
+#define ONEQUOTE_NONQUASI_3     3  // non-quasiquoted state of 1 quote
 
 #define MAX_QUOTE_DEPTH     126         // highest legal quoting level
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites
 
-#define FLAG_QUOTE_BYTE(byte)         FLAG_THIRD_BYTE(byte)
-#define FLAG_QUOTE_BYTE_ANTIFORM_0    FLAG_THIRD_BYTE(ANTIFORM_0_COERCE_ONLY)
-#define FLAG_QUOTE_BYTE_QUASIFORM_2   FLAG_THIRD_BYTE(QUASIFORM_2_COERCE_ONLY)
+#define FLAG_LIFT_BYTE(byte)         FLAG_THIRD_BYTE(byte)
 
-#define CELL_HEART_QUOTE_MASK /* mask in both heart and quote bytes */ \
-    (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
+#define CELL_HEART_LIFT_MASK /* mask in both heart and lift bytes */ \
+    (FLAG_HEART_BYTE(255) | FLAG_LIFT_BYTE(255))
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
 //
 // Because the header for cells is only 32 bits on 32-bit platforms, there
 // are only 8 bits left over when you've used up the NODE_BYTE, HEART_BYTE,
-// and QUOTE_BYTE.  These 8 scarce remaining cell bits have to be used very
+// and LIFT_BYTE.  These 8 scarce remaining cell bits have to be used very
 // carefully...and are multiplexed across types that can be tricky.
 //
 

@@ -940,7 +940,7 @@ DECLARE_NATIVE(SWITCH)
 
     if (not Bool_ARG(TYPE) and not Bool_ARG(PREDICATE)) {
         Copy_Cell(predicate, LIB(EQUAL_Q));  // no more builtin comparison [1]
-        QUOTE_BYTE(predicate) = NOQUOTE_1;
+        LIFT_BYTE(predicate) = NOQUOTE_1;
     }
 
     Level* sub = Make_Level_At(

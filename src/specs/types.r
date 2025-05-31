@@ -250,7 +250,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
 ; The TYPE_QUOTED, TYPE_QUASIFORM, and all the antiform types (TYPE_SPLICE,
 ; TYPE_TRASH, etc.) enum values never appear in the HEART_BYTE() of a cell.
-; These are synthesized datatypes when the QUOTE_BYTE() contains values other
+; These are synthesized datatypes when the LIFT_BYTE() contains values other
 ; than one (NOQUOTE_1).
 ;
 ; They're not inert... QUASIFORM? becomes ANTIFORM? when evaluated, and QUOTED?

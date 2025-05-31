@@ -884,20 +884,20 @@ DECLARE_NATIVE(EQUAL_Q)
     bool relax = Bool_ARG(RELAX);
 
     if (Is_Lifted_Trash(v1)) {
-        QUOTE_BYTE(v1) = ANTIFORM_0_COERCE_ONLY;
+        Unliftify_Known_Stable(v1);
         return PANIC(PARAM(VALUE1));
     }
 
     if (Is_Lifted_Trash(v2)) {
-        QUOTE_BYTE(v2) = ANTIFORM_0_COERCE_ONLY;
+        Unliftify_Known_Stable(v2);
         return PANIC(PARAM(VALUE2));
     }
 
-    if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
+    if (LIFT_BYTE(v1) != LIFT_BYTE(v2))
         return nullptr;
 
-    QUOTE_BYTE(v1) = NOQUOTE_1;  // should work for VOID equality, too
-    QUOTE_BYTE(v2) = NOQUOTE_1;
+    LIFT_BYTE(v1) = NOQUOTE_1;  // should work for VOID equality, too
+    LIFT_BYTE(v2) = NOQUOTE_1;
 
     if (Sigil_Of(u_cast(Element*, v1)) != Sigil_Of(u_cast(Element*, v2)))
         return nullptr;
@@ -941,11 +941,11 @@ DECLARE_NATIVE(LESSER_Q)
     Value* v1 = ARG(VALUE1);
     Value* v2 = ARG(VALUE2);
 
-    if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
+    if (LIFT_BYTE(v1) != LIFT_BYTE(v2))
         return FAIL("Differing quote levels are not comparable");
 
-    QUOTE_BYTE(v1) = NOQUOTE_1;
-    QUOTE_BYTE(v2) = NOQUOTE_1;
+    LIFT_BYTE(v1) = NOQUOTE_1;
+    LIFT_BYTE(v2) = NOQUOTE_1;
 
     if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
         if (Is_Integer(v1) and Is_Decimal(v2))
@@ -1003,14 +1003,14 @@ DECLARE_NATIVE(SAME_Q)
     Value* v1 = ARG(VALUE1);
     Value* v2 = ARG(VALUE2);
 
-    if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
+    if (LIFT_BYTE(v1) != LIFT_BYTE(v2))
         return Init_Logic(OUT, false);  // not "same" value if not same quote
 
     if (HEART_BYTE(v1) != HEART_BYTE(v2))
         return Init_Logic(OUT, false);  // not "same" value if not same heart
 
-    QUOTE_BYTE(v1) = NOQUOTE_1;  // trick works for VOID equality, too
-    QUOTE_BYTE(v2) = NOQUOTE_1;
+    LIFT_BYTE(v1) = NOQUOTE_1;  // trick works for VOID equality, too
+    LIFT_BYTE(v2) = NOQUOTE_1;
 
     if (Is_Bitset(v1))  // same if binaries are same
         return Init_Logic(OUT, VAL_BITSET(v1) == VAL_BITSET(v2));

@@ -94,7 +94,7 @@ INLINE bool Is_Cell_NUL(const Value* c) {
 }
 
 INLINE bool Is_NUL(const Value* v) {
-    if (QUOTE_BYTE(v) != NOQUOTE_1)
+    if (LIFT_BYTE(v) != NOQUOTE_1)
         return false;
     return Is_Cell_NUL(v);
 }
@@ -113,7 +113,7 @@ INLINE bool IS_CHAR_CELL(const Value* c) {
 }
 
 INLINE bool IS_CHAR(const Value* v) {
-    if (QUOTE_BYTE(v) != NOQUOTE_1)
+    if (LIFT_BYTE(v) != NOQUOTE_1)
         return false;
     return not Sigil_Of(u_cast(Element*, v)) and IS_CHAR_CELL(v);
 }

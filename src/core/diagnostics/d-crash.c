@@ -129,7 +129,7 @@ ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
     const char *name = id ? String_UTF8(Canon_Symbol(unwrap id)) : "custom-0";
     Printf_Stderr("cell_heart_byte=%d\n", u_cast(int, HEART_BYTE(c)));
     Printf_Stderr("cell heart name=%s\n", name);
-    Printf_Stderr("quote_byte=%d\n", u_cast(int, QUOTE_BYTE(c)));
+    Printf_Stderr("lift_byte=%d\n", u_cast(int, LIFT_BYTE(c)));
 
     if (Cell_Has_Node1(c))
         Printf_Stderr("has node1: %p\n", c_cast(void*, CELL_NODE1(c)));

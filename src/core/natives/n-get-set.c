@@ -1087,7 +1087,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         }
         if (Is_Antiform(slot)) {
             if (Is_Action(slot))
-                QUOTE_BYTE(slot) = NOQUOTE_1;  // (append.series) -> parameter!
+                LIFT_BYTE(slot) = NOQUOTE_1;  // (append.series) -> parameter!
             else {
                 e = Error_Bad_Antiform(slot);
                 goto return_error;

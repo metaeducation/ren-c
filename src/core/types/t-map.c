@@ -629,7 +629,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
                 "Appending to MAP! only accepts a splice block of key/value"
             );
 
-        QUOTE_BYTE(ARG(VALUE)) = NOQUOTE_1;
+        LIFT_BYTE(ARG(VALUE)) = NOQUOTE_1;
         Element* arg = Element_ARG(VALUE);
 
         Map* m = VAL_MAP_Ensure_Mutable(map);

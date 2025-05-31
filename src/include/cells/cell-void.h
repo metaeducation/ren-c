@@ -43,7 +43,7 @@ INLINE bool Is_Void(Need(const Atom*) v) {
 
 INLINE Element* Init_Lifted_Void_Untracked(Sink(Element) out) {
     Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, g_empty_array, 0, SPECIFIED);
-    QUOTE_BYTE(out) = QUASIFORM_2_COERCE_ONLY;
+    LIFT_BYTE_RAW(out) = QUASIFORM_2;  // blocks are isotopic
     return out;
 }
 

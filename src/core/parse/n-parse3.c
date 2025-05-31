@@ -405,7 +405,7 @@ static Option(Error*) Trap_Get_Parse_Value(
             Init_Typechecker(checker, out_value);
             assert(Heart_Of(checker) == TYPE_FRAME);
             Copy_Cell(out_value, checker);
-            QUOTE_BYTE(out_value) = NOQUOTE_1;
+            LIFT_BYTE(out_value) = NOQUOTE_1;
         }
         else {
             return Error_Bad_Antiform(out_value);
@@ -1806,7 +1806,7 @@ DECLARE_NATIVE(SUBPARSE)
 
         if (Is_Datatype(spare)) {
             Init_Typechecker(u_cast(Value*, P_SAVE), spare);  // will be FRAME!
-            QUOTE_BYTE(spare) = NOQUOTE_1;
+            LIFT_BYTE(spare) = NOQUOTE_1;
             rule = Known_Element(spare);
         }
         else if (Is_Antiform(spare))
@@ -1825,7 +1825,7 @@ DECLARE_NATIVE(SUBPARSE)
         if (not Is_Action(spare))
             return PANIC("PATH! in PARSE3 must be an ACTION!");
 
-        QUOTE_BYTE(spare) = NOQUOTE_1;
+        LIFT_BYTE(spare) = NOQUOTE_1;
         rule = Copy_Cell(P_SAVE, Known_Element(spare));
     }
     else if (Is_Set_Tuple(rule)) {
@@ -2344,10 +2344,8 @@ DECLARE_NATIVE(SUBPARSE)
 
                 if (Stub_Holds_Cells(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
-                    if (Any_List(evaluated)) {  // bootstrap r3 has no SPREAD
-                        QUOTE_BYTE(evaluated) = QUASIFORM_2_COERCE_ONLY;
-                        HEART_BYTE(evaluated) = TYPE_GROUP;
-                    }
+                    if (Any_List(evaluated))  // bootstrap r3 has no SPREAD
+                        Splicify(evaluated);
 
                     // Note: We could check for mutability at the start
                     // of the operation -but- by checking right at the

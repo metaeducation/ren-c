@@ -235,15 +235,15 @@ e-types/emit [--[
      *         (Type_Of(cell) == TYPE_TEXT)
      *
      * So you'd calculate TYPE_QUOTED, TYPE_QUASI, or TYPE_ANTIFORM from the
-     * QUOTE_BYTE(), and those would be filtered out and not match.
+     * LIFT_BYTE(), and those would be filtered out and not match.
      *
-     * This was changed to instead mask out the heart byte and quote byte
+     * This was changed to instead mask out the heart byte and lift byte
      * from the header, and compare to the precise mask of NOQUOTE_1 with
      * the specific heart byte:
      *
      *     #define Is_Text(cell) \
-     *         ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
-     *           == (FLAG_HEART(TEXT) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
+     *         ((Ensure_Readable(cell)->header.bits & CELL_HEART_LIFT_MASK) \
+     *           == (FLAG_HEART(TEXT) | FLAG_LIFT_BYTE(NOQUOTE_1)))
      *
      * This avoids the branching in Type_Of(), so it's a slight bit faster.
      *
@@ -261,8 +261,8 @@ for-each-datatype 't [
 
     e-types/emit [propercase-of t --[
         INLINE bool Is_${propercase-of T.name}_Core(const Atom* cell) {
-            return ((cell->header.bits & CELL_HEART_QUOTE_MASK)
-                == (FLAG_QUOTE_BYTE(NOQUOTE_1) | FLAG_HEART($<T.NAME>)));
+            return ((cell->header.bits & CELL_HEART_LIFT_MASK)
+                == (FLAG_LIFT_BYTE(NOQUOTE_1) | FLAG_HEART($<T.NAME>)));
         }
 
         #define Is_${propercase-of T.name}(cell)  /* $<T.HEART> */ \
@@ -355,16 +355,16 @@ for-each-datatype 't [
     ;
     e-types/emit [t proper-name --[
         INLINE bool Is_$<Proper-Name>_Core(const $<Need>* cell) {
-            return ((cell->header.bits & CELL_HEART_QUOTE_MASK)
-                == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART($<T.NAME>)));
+            return ((cell->header.bits & CELL_HEART_LIFT_MASK)
+                == (FLAG_LIFT_BYTE(ANTIFORM_0) | FLAG_HEART($<T.NAME>)));
         }
 
         #define Is_$<Proper-Name>(cell) \
             Is_$<Proper-Name>_Core(Ensure_Readable(cell))
 
         #define Is_Lifted_$<Proper-Name>(cell) \
-            ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
-            == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART($<T.NAME>)))
+            ((Ensure_Readable(cell)->header.bits & CELL_HEART_LIFT_MASK) \
+            == (FLAG_LIFT_BYTE(QUASIFORM_2) | FLAG_HEART($<T.NAME>)))
 
         #define Is_Quasi_$<Propercase-Of T.Name>(cell) \
             Is_Lifted_$<Proper-Name>(cell)  /* alternative */
@@ -382,8 +382,8 @@ for-each-datatype 't [
     ;
     e-types/emit [t proper-name --[
         INLINE bool Is_Atom_$<Proper-Name>_Core(const Atom* cell) {
-            return ((cell->header.bits & CELL_HEART_QUOTE_MASK)
-                == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART($<T.NAME>)));
+            return ((cell->header.bits & CELL_HEART_LIFT_MASK)
+                == (FLAG_LIFT_BYTE(ANTIFORM_0) | FLAG_HEART($<T.NAME>)));
         }
 
         #define Is_Atom_$<Proper-Name>(cell) \

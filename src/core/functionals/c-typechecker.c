@@ -589,7 +589,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     //    flexible interpretations...
 
     Option(Sigil) sigil = SIGIL_0;  // added then removed if non-zero
-    QuoteByte quote_byte = QUOTE_BYTE(SPARE);  // adjusted if test quoted/quasi
+    LiftByte lift_byte = LIFT_BYTE(SPARE);  // adjusted if test quoted/quasi
 
     if (Get_Cell_Flag(item, PARAMSPEC_SPOKEN_FOR))
         goto continue_loop;
@@ -681,10 +681,10 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
 } adjust_quote_level_and_run_type_constraint: {
 
-    if (QUOTE_BYTE(item) != NOQUOTE_1) {
-        if (QUOTE_BYTE(item) != QUOTE_BYTE(SPARE))
+    if (LIFT_BYTE(item) != NOQUOTE_1) {
+        if (LIFT_BYTE(item) != LIFT_BYTE(SPARE))
             goto test_failed;  // should be willing to accept subset quotes
-        QUOTE_BYTE(SPARE) = NOQUOTE_1;
+        LIFT_BYTE(SPARE) = NOQUOTE_1;
     }
 
 } handle_after_any_quoting_adjustments: {
@@ -740,7 +740,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     if (sigil)
         Sigilize(Known_Element(SPARE), unwrap sigil);
 
-    QUOTE_BYTE(SPARE) = quote_byte;  // restore quote level
+    LIFT_BYTE(SPARE) = lift_byte;  // restore quote level
 
     if (not match_all) {
         result = true;
@@ -753,7 +753,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     if (sigil)
         Sigilize(Known_Element(SPARE), unwrap sigil);
 
-    QUOTE_BYTE(SPARE) = quote_byte;  // restore quote level
+    LIFT_BYTE(SPARE) = lift_byte;  // restore quote level
 
     if (match_all) {
         result = false;
@@ -919,7 +919,7 @@ bool Typecheck_Coerce(
       do_coercion:
 
         if (Is_Atom_Action(atom)) {
-            QUOTE_BYTE(atom) = NOQUOTE_1;
+            LIFT_BYTE(atom) = NOQUOTE_1;
             coerced = true;
             goto typecheck_again;
         }

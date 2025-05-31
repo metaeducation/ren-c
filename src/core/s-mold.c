@@ -393,7 +393,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
 
     if (
         GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
-        or (QUOTE_BYTE(cell) & NONQUASI_BIT)
+        or (LIFT_BYTE(cell) & NONQUASI_BIT)
     ){
         if (sigil)
             Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));

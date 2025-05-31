@@ -69,13 +69,13 @@ INLINE void Tweak_Cell_Word_Index(Cell* v, Index i) {
 
 INLINE Element* Init_Word_Untracked(
     Sink(Element) out,
-    QuoteByte quote_byte,
+    LiftByte lift_byte,
     const Symbol* sym
 ){
     Freshen_Cell_Header(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_ENUM(TYPE_WORD) | FLAG_QUOTE_BYTE(quote_byte)
+            | FLAG_HEART_ENUM(TYPE_WORD) | FLAG_LIFT_BYTE(lift_byte)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
@@ -121,7 +121,7 @@ INLINE Element* Init_Word_Bound_Untracked(
     TRACK(Init_Word_Bound_Untracked((out), (symbol), (context), (index)))
 
 #define Init_Quasi_Word(out,symbol) \
-    TRACK(Init_Word_Untracked((out), QUASIFORM_2_COERCE_ONLY, (symbol)))
+    TRACK(Init_Word_Untracked((out), QUASIFORM_2, (symbol)))
 
 
 // !!! It used to be that ANY-WORD? included sigilized words.  That is no
@@ -151,7 +151,7 @@ INLINE const String* Intern_Unsized_Managed(const char *utf8)
 INLINE bool Is_Bar(const Value* v) {
     return (
         Heart_Of(v) == TYPE_WORD
-        and QUOTE_BYTE(v) == NOQUOTE_1
+        and LIFT_BYTE(v) == NOQUOTE_1
         and Cell_Word_Symbol(v) == CANON(BAR_1)  // caseless | always canon
     );
 }
@@ -159,7 +159,7 @@ INLINE bool Is_Bar(const Value* v) {
 INLINE bool Is_Bar_Bar(const Atom* v) {
     return (
         Heart_Of(v) == TYPE_WORD
-        and QUOTE_BYTE(v) == NOQUOTE_1
+        and LIFT_BYTE(v) == NOQUOTE_1
         and Cell_Word_Symbol(v) == CANON(_B_B)  // caseless || always canon
     );
 }

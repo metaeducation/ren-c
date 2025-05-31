@@ -745,7 +745,7 @@ DECLARE_NATIVE(LIT_WORD_Q)
         return unwrap b;
 
     return LOGIC(
-        QUOTE_BYTE(e) == ONEQUOTE_NONQUASI_3 and Heart_Of(e) == TYPE_WORD
+        LIFT_BYTE(e) == ONEQUOTE_NONQUASI_3 and Heart_Of(e) == TYPE_WORD
     );
 }
 
@@ -1175,10 +1175,10 @@ DECLARE_NATIVE(ANY_VALUE_Q)
     INCLUDE_PARAMS_OF_ANY_VALUE_Q;
 
     Option(Heart) heart;
-    QuoteByte quote_byte;
-    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    LiftByte lift_byte;
+    Get_Heart_And_Lift_Of_Atom_Intrinsic(&heart, &lift_byte, LEVEL);
 
-    if (quote_byte != ANTIFORM_0)
+    if (lift_byte != ANTIFORM_0)
         return LOGIC(true);
 
     return LOGIC(Is_Stable_Antiform_Heart(heart));
@@ -1459,7 +1459,7 @@ DECLARE_NATIVE(NOQUASI)
         return unwrap b;
 
     if (Is_Quasiform(OUT))
-        QUOTE_BYTE(OUT) = NOQUOTE_1;
+        LIFT_BYTE(OUT) = NOQUOTE_1;
     return OUT;
 }
 
@@ -1510,6 +1510,6 @@ DECLARE_NATIVE(NOANTIFORM)
         return unwrap bounce;
 
     if (Is_Antiform(v))
-        QUOTE_BYTE(v) = NOQUOTE_1;
+        LIFT_BYTE(v) = NOQUOTE_1;
     return COPY(v);
 }

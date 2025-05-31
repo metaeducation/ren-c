@@ -291,7 +291,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 #define CELL_MASK_UNREADABLE \
     (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
         | CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2 \
-        | FLAG_HEART_BYTE_255 | FLAG_QUOTE_BYTE(255))
+        | FLAG_HEART_BYTE_255 | FLAG_LIFT_BYTE(255))
 
 #define Init_Unreadable_Untracked(out) do { \
     STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
@@ -474,7 +474,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
     Unchecked_Heart_Of(Ensure_Readable(c))
 
 INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
-    assert(QUOTE_BYTE(c) == NOQUOTE_1);
+    assert(LIFT_BYTE_RAW(c) == NOQUOTE_1);
     return Heart_Of(c);
 }
 
@@ -485,7 +485,7 @@ INLINE Heart Heart_Of_Builtin(const Cell* c) {
 }
 
 INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
-    assert(QUOTE_BYTE(c) == NOQUOTE_1);
+    assert(LIFT_BYTE_RAW(c) == NOQUOTE_1);
     Option(Heart) heart = Heart_Of(c);
     assert(heart != TYPE_0);
     return maybe heart;  // faster than unwrap, we already checked for 0
@@ -495,8 +495,62 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
     (0 == HEART_BYTE_RAW(Ensure_Readable(cell)))
 
 INLINE bool Type_Of_Is_0(const Cell* cell) {
-    return Heart_Of_Is_0(cell) and QUOTE_BYTE(cell) == NOQUOTE_1;
+    return Heart_Of_Is_0(cell) and LIFT_BYTE_RAW(cell) == NOQUOTE_1;
 }
+
+
+
+//=//// HOOKABLE LIFT_BYTE() ACCESSOR /////////////////////////////////////=//
+//
+// While all datatypes have quoted forms, only some have quasiforms/antiforms.
+// For instance: paths don't have them, because ~/foo/~ is a 3-element path
+// with quasi-blanks at the head and tail, so no quasiform exists).
+//
+// This mechanism captures manipulations of the LIFT_BYTE() to be sure the
+// bad forms don't get made.
+//
+
+#if (! DEBUG_HOOK_LIFT_BYTE)
+    #define LIFT_BYTE(cell) \
+        LIFT_BYTE_RAW(cell)
+#else
+    struct LiftHolder {  // class for intercepting lift assignments [2]
+        Cell* & ref;
+
+        LiftHolder(const Cell* const& ref)
+            : ref (const_cast<Cell* &>(ref))
+          {}
+
+        operator LiftByte() const {  // implicit cast, add read checks here
+            return LIFT_BYTE_RAW(ref);
+        }
+
+        void operator=(int right) {  // add write checks you want here
+            assert(right >= 0 and right <= 255);
+
+            Heart heart = Unchecked_Heart_Of(ref);
+            if (not (right & NONQUASI_BIT))
+                assert(Any_Isotopic_Type(heart));  // has quasiforms/antiforms
+
+            LIFT_BYTE_RAW(ref) = right;
+        }
+
+        void operator=(const Antiform_0_Struct& right) = delete;
+        void operator=(const Quasiform_2_Struct& right) = delete;
+
+        void operator=(const LiftHolder& right)  // must write explicitly
+          { *this = u_cast(LiftByte, right); }
+
+        void operator-=(int shift)  // must write explicitly
+          { LIFT_BYTE_RAW(ref) -= shift; }
+
+        void operator+=(int shift)  // must write explicitly
+          { LIFT_BYTE_RAW(ref) += shift; }
+    };
+
+    #define LIFT_BYTE(cell) \
+        LiftHolder{cell}
+#endif
 
 
 //=//// CELL 2-bit SIGIL! /////////////////////////////////////////////////=//
@@ -526,8 +580,8 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 
 INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
-    switch (QUOTE_BYTE(atom)) {
-      case ANTIFORM_0_COERCE_ONLY:  // use this constant rarely!
+    switch (LIFT_BYTE(atom)) {
+      case 0:  // ANTIFORM_0 (not constant in some debug builds)
         return u_cast(TypeEnum,
             (HEART_BYTE(atom) % MOD_HEART_64) + MAX_TYPE_BYTE_ELEMENT
         );
@@ -547,7 +601,7 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
             return TYPE_TIED;
         }
 
-      case QUASIFORM_2_COERCE_ONLY:  // use this constant rarely!
+      case 2:  // QUASIFORM_2 (not constant in some debug builds)
         return TYPE_QUASIFORM;
 
       default:
@@ -564,10 +618,10 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
 
 
 INLINE Option(Type) Type_Of_Unquoted(const Element* elem) {
-    if (QUOTE_BYTE(elem) == QUASIFORM_2_COERCE_ONLY)
+    if (LIFT_BYTE(elem) == QUASIFORM_2)
         return TYPE_QUASIFORM;
 
-    assert(QUOTE_BYTE(elem) != ANTIFORM_0_COERCE_ONLY);
+    assert(LIFT_BYTE(elem) != ANTIFORM_0);
 
     switch (u_cast(Sigil, HEART_BYTE(elem) >> HEART_SIGIL_SHIFT)) {
       case SIGIL_0:
@@ -661,19 +715,19 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 
 INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
 {
-    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
+    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(ANTIFORM_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_QUOTE_BYTE(NOQUOTE_1)
+        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_1)
     );
 }
 
-INLINE void Reset_Cell_Header(Cell* c, QuoteByte quote_byte, uintptr_t flags)
+INLINE void Reset_Cell_Header(Cell* c, LiftByte lift_byte, uintptr_t flags)
 {
-    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
+    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(ANTIFORM_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_QUOTE_BYTE(quote_byte)
+        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_LIFT_BYTE(lift_byte)
     );
 }
 
@@ -683,11 +737,11 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     uintptr_t flags
 ){
     assert((flags & FLAG_HEART_BYTE_255) == 0);
-    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
+    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(ANTIFORM_0));
 
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_QUOTE_BYTE(NOQUOTE_1)
+        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_1)
     );
     c->extra.node = m_cast(ExtraHeart*, extra_heart);
 }

@@ -20,9 +20,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // There are several rules that have to be followed with antiforms.  Having
-// the logic for enforcing those rules centralized is important.  See the
-// definition of ANTIFORM_0 for how we avoid other places in the code doing
-// assignments to the quote byte without going through this function.
+// the logic for enforcing those rules centralized is important.
 //
 // 1. Unstable antiforms are not legal in API handles.  They are analogous
 //    to variables, and if you need to deal in the currency of unstable
@@ -61,7 +59,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
         assert(not Is_Api_Value(elem));  // no unstable antiforms in API [1]
 
     if (not Any_Isotopic_Type(heart)) {
-        QUOTE_BYTE(elem) = NOQUOTE_1;
+        LIFT_BYTE(elem) = NOQUOTE_1;
         return Error_Non_Isotopic_Type_Raw(elem);
     }
 
@@ -80,7 +78,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
                 break;
 
               default: {
-                QUOTE_BYTE(elem) = NOQUOTE_1;
+                LIFT_BYTE(elem) = NOQUOTE_1;
                 return Error_Illegal_Keyword_Raw(elem);  // only a few ok [4]
               }
             }
@@ -112,7 +110,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
             Tweak_Cell_Frame_Lens_Or_Label(elem, ANONYMOUS);
     }
 
-    QUOTE_BYTE(atom) = ANTIFORM_0_COERCE_ONLY;  // nowhere else should assign!
+    LIFT_BYTE_RAW(atom) = ANTIFORM_0;  // few places should use LIFT_BYTE_RAW!
     return SUCCESS;
 }
 
@@ -124,11 +122,11 @@ INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
     Option(Heart) heart = Heart_Of(v);
 
     if (not Any_Isotopic_Type(heart)) {  // Note: all words have quasiforms [1]
-        QUOTE_BYTE(v) = NOQUOTE_1;
+        LIFT_BYTE(v) = NOQUOTE_1;
         return Error_Non_Isotopic_Type_Raw(v);
     }
 
-    QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // few places should assign
+    LIFT_BYTE_RAW(v) = QUASIFORM_2;  // few places should use LIFT_BYTE_RAW!
     return SUCCESS;
 }
 
@@ -162,17 +160,17 @@ INLINE bool Is_Pack_Undecayable(Atom* pack)
         return true;
 
     for (; at != tail; ++at) {  // all pack elements get checked [1]
-        if (QUOTE_BYTE(at) >= ONEQUOTE_NONQUASI_3)
+        if (LIFT_BYTE(at) >= ONEQUOTE_NONQUASI_3)
             continue;  // most common case, lifted normal Elements
 
-        if (QUOTE_BYTE(at) == QUASIFORM_2) {
+        if (LIFT_BYTE(at) == QUASIFORM_2) {
             if (Is_Stable_Antiform_Heart(Heart_Of(at)))
                 continue;  // lifted stable antiform, decayable
 
             return true;  // lifted unstable antiform... not decayable
         }
 
-        assert(QUOTE_BYTE(at) == NOQUOTE_1);
+        assert(LIFT_BYTE(at) == NOQUOTE_1);
         return true;  // today we consider this corrupt [2]
     }
 

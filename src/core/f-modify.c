@@ -478,7 +478,7 @@ REBLEN Modify_String_Or_Binary(
             //
             DECLARE_ELEMENT (group);
             Copy_Lifted_Cell(group, src);
-            QUOTE_BYTE(group) = NOQUOTE_1;
+            LIFT_BYTE(group) = NOQUOTE_1;
             Join_Binary_In_Byte_Buf(group, -1);
             src_ptr = Binary_Head(BYTE_BUF);  // cleared each time
             src_len_raw = src_size_raw = Binary_Len(BYTE_BUF);

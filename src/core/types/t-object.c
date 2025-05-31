@@ -1223,7 +1223,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     if (
         HEART_BYTE(slot) == TYPE_FRAME
-        and QUOTE_BYTE(slot) == ANTIFORM_0
+        and LIFT_BYTE(slot) == ANTIFORM_0
         and Cell_Frame_Coupling(slot) == UNCOUPLED
     ){
         Context* c = Cell_Context(context);
@@ -1753,7 +1753,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
 
-    if (QUOTE_BYTE(v) != QUASIFORM_2) {
+    if (LIFT_BYTE(v) != QUASIFORM_2) {
         return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds Bool_ARG(FORM)
     }
 

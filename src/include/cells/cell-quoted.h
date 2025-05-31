@@ -19,7 +19,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Cells reserve a byte in their header called the QUOTE_BYTE().  The most
+// Cells reserve a byte in their header called the LIFT_BYTE().  The most
 // basic usage is that any value can be "quote" escaped.  The depth is the
 // number of apostrophes, e.g. ''''X is a depth of 4.  The operator QUOTE can
 // be used to add a quoting level to a value, UNQUOTE to remove one, and
@@ -31,7 +31,7 @@
 //     >> noquote first ['''''a]
 //     == a
 //
-// But the QUOTE_BYTE() is used to encode other states as well: all datatypes
+// But the LIFT_BYTE() is used to encode other states as well: all datatypes
 // (besides QUOTED! itself) have an "antiform" form as well as a "quasi" form.
 // The quasi form will evaluate to the antiform form, and the antiform form is
 // expressly prohibited from being put in arrays:
@@ -60,26 +60,26 @@
 //
 
 INLINE Count Quotes_Of(const Element* v) {
-    assert(QUOTE_BYTE(v) != ANTIFORM_0);
-    return (QUOTE_BYTE(v) - NOQUOTE_1) >> 1;
+    assert(LIFT_BYTE(v) != ANTIFORM_0);
+    return (LIFT_BYTE(v) - NOQUOTE_1) >> 1;
 }
 
 #define Is_Unquoted(cell) \
-    (QUOTE_BYTE(Ensure_Readable(cell)) == NOQUOTE_1)
+    (LIFT_BYTE(Ensure_Readable(cell)) == NOQUOTE_1)
 
 #define Is_Quoted(cell) \
-    (QUOTE_BYTE(Ensure_Readable(cell)) >= ONEQUOTE_NONQUASI_3)
+    (LIFT_BYTE(Ensure_Readable(cell)) >= ONEQUOTE_NONQUASI_3)
 
 INLINE bool Any_Metaform(const Cell* cell) {  // quasiform or quoted
-    QuoteByte quote_byte = QUOTE_BYTE(Ensure_Readable(cell));
-    return quote_byte >= QUASIFORM_2;
+    LiftByte lift_byte = LIFT_BYTE(Ensure_Readable(cell));
+    return lift_byte >= QUASIFORM_2;
 }
 
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
 //
 INLINE Element* Quotify_Depth(Element* elem, Count depth) {
-    assert(QUOTE_BYTE(elem) != ANTIFORM_0);
+    assert(LIFT_BYTE_RAW(elem) != ANTIFORM_0);
 
     if (depth == 0)
         return elem;
@@ -87,7 +87,7 @@ INLINE Element* Quotify_Depth(Element* elem, Count depth) {
     if (Quotes_Of(elem) + depth >  MAX_QUOTE_DEPTH)
         panic ("Quoting Depth of 126 Exceeded");
 
-    QUOTE_BYTE(elem) += Quote_Shift(depth);
+    LIFT_BYTE_RAW(elem) += Quote_Shift(depth);
     return elem;
 }
 
@@ -95,7 +95,7 @@ INLINE Element* Quotify_Depth(Element* elem, Count depth) {
 // Turns 'X into X, or '''''[1 + 2] into '''(1 + 2), etc.
 //
 INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
-    assert(QUOTE_BYTE(elem) != ANTIFORM_0);
+    assert(LIFT_BYTE_RAW(elem) != ANTIFORM_0);
 
     if (depth == 0)
         return elem;
@@ -103,7 +103,7 @@ INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
     if (depth > Quotes_Of(elem))
         panic ("Attempt to set quoting level of value to less than 0");
 
-    QUOTE_BYTE(elem) -= Quote_Shift(depth);
+    LIFT_BYTE_RAW(elem) -= Quote_Shift(depth);
     return elem;
 }
 
@@ -112,10 +112,10 @@ INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
 
 INLINE Count Dequotify(Element* elem) {
     Count depth = Quotes_Of(elem);
-    if (QUOTE_BYTE(elem) & NONQUASI_BIT)
-        QUOTE_BYTE(elem) = NOQUOTE_1;
+    if (LIFT_BYTE_RAW(elem) & NONQUASI_BIT)
+        LIFT_BYTE_RAW(elem) = NOQUOTE_1;
     else
-        QUOTE_BYTE(elem) = QUASIFORM_2_COERCE_ONLY;  // already quasi
+        LIFT_BYTE_RAW(elem) = QUASIFORM_2;  // already quasi
     return depth;
 }
 
@@ -152,10 +152,10 @@ INLINE Count Dequotify(Element* elem) {
 // antiforms aren't just not allowed in blocks, they can't be in variables.
 
 INLINE bool Is_Antiform(const Atom* a)
-  { return QUOTE_BYTE(Ensure_Readable(a)) == ANTIFORM_0; }
+  { return LIFT_BYTE(Ensure_Readable(a)) == ANTIFORM_0; }
 
 INLINE bool Is_Lifted_Antiform(const Atom* a)
-  { return QUOTE_BYTE(Ensure_Readable(a)) == QUASIFORM_2; }
+  { return LIFT_BYTE(Ensure_Readable(a)) == QUASIFORM_2; }
 
 #if CHECK_CELL_SUBCLASSES
     INLINE bool Is_Antiform(const Element* elem) = delete;
@@ -167,7 +167,7 @@ INLINE bool Is_Lifted_Antiform(const Atom* a)
 
 INLINE bool Is_Antiform_Unstable(const Atom* a) {
     // Assume Is_Antiform() checked Ensure_Readable()
-    assert(QUOTE_BYTE(a) == ANTIFORM_0);
+    assert(LIFT_BYTE(a) == ANTIFORM_0);
     return (
         Heart_Of(a) == TYPE_BLOCK  // Is_Pack()
         or Heart_Of(a) == TYPE_WARNING  // Is_Error()
@@ -190,7 +190,7 @@ INLINE bool Is_Stable_Antiform_Heart(Option(Heart) heart) {
 
 INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
     Assert_Cell_Readable(a);
-    if (QUOTE_BYTE(a) != ANTIFORM_0)
+    if (LIFT_BYTE(a) != ANTIFORM_0)
         return true;
     return (
         Heart_Of(a) != TYPE_BLOCK  // Is_Pack()
@@ -233,13 +233,13 @@ INLINE Option(Element*) As_Element(const_if_c Value* v) {
         c_cast(Element*, (cell))
 #else
     INLINE Element* Known_Element(const_if_c Atom* cell) {
-        assert(QUOTE_BYTE(cell) != ANTIFORM_0);
+        assert(LIFT_BYTE(cell) != ANTIFORM_0);
         return u_cast(Element*, cell);
     }
 #endif
 
 INLINE Element* Ensure_Element(const_if_c Atom* cell) {
-    if (QUOTE_BYTE(cell) == ANTIFORM_0)
+    if (LIFT_BYTE(cell) == ANTIFORM_0)
         panic (Error_Bad_Antiform(cell));
     return u_cast(Element*, cell);
 }
@@ -256,7 +256,7 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
 
   #if RUNTIME_CHECKS
     INLINE const Element* Known_Element(const Atom* cell) {
-        assert(QUOTE_BYTE(cell) != ANTIFORM_0);
+        assert(LIFT_BYTE(cell) != ANTIFORM_0);
         return c_cast(Element*, cell);
     }
   #endif
@@ -281,11 +281,11 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom);
 INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v);
 
 #define Is_Quasiform(v) \
-    (QUOTE_BYTE(Ensure_Readable(v)) == QUASIFORM_2)
+    (LIFT_BYTE(Ensure_Readable(v)) == QUASIFORM_2)
 
 INLINE Element* Unquasify(Element* elem) {
-    assert(QUOTE_BYTE(elem) == QUASIFORM_2);
-    QUOTE_BYTE(elem) = NOQUOTE_1;
+    assert(LIFT_BYTE(elem) == QUASIFORM_2);
+    LIFT_BYTE(elem) = NOQUOTE_1;
     return elem;
 }
 
@@ -293,28 +293,28 @@ INLINE Element* Quasify_Isotopic_Fundamental(Element* elem) {
     assert(Any_Isotopic(elem));
     if (Is_Bindable(elem))
         assert(not Cell_Binding(elem));
-    assert(QUOTE_BYTE(elem) == NOQUOTE_1);
-    QUOTE_BYTE(elem) = QUASIFORM_2_COERCE_ONLY;
+    assert(LIFT_BYTE(elem) == NOQUOTE_1);
+    LIFT_BYTE_RAW(elem) = QUASIFORM_2;
     return elem;
 }
 
 INLINE Atom* Destabilize_Unbound_Fundamental(Need(Atom*) atom) {
     assert(Any_Isotopic(atom));
-    assert(QUOTE_BYTE(atom) == NOQUOTE_1);
-    QUOTE_BYTE(atom) = ANTIFORM_0_COERCE_ONLY;
+    assert(LIFT_BYTE(atom) == NOQUOTE_1);
+    LIFT_BYTE_RAW(atom) = ANTIFORM_0;
     assert(Is_Antiform_Unstable(atom));
     return atom;
 }
 
 INLINE Element* Quasify_Antiform(Atom* v) {
     assert(Is_Antiform(v));
-    QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // all antiforms can be quasi
+    LIFT_BYTE_RAW(v) = QUASIFORM_2;  // all antiforms can be quasi
     return u_cast(Element*, v);
 }
 
 INLINE Element* Reify(Atom* v) {
-    if (QUOTE_BYTE(v) == ANTIFORM_0)
-        QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // all antiforms can be quasi
+    if (LIFT_BYTE(v) == ANTIFORM_0)
+        LIFT_BYTE_RAW(v) = QUASIFORM_2;  // all antiforms can be quasi
     return cast(Element*, v);
 }
 
@@ -334,21 +334,21 @@ INLINE Element* Reify(Atom* v) {
 //
 
 #define Any_Lifted(v) \
-    (QUOTE_BYTE(Ensure_Readable(v)) >= QUASIFORM_2)  // quasi or quoted
+    (LIFT_BYTE(Ensure_Readable(v)) >= QUASIFORM_2)  // quasi or quoted
 
 #define Not_Lifted(v) \
-    (QUOTE_BYTE(Ensure_Readable(v)) < QUASIFORM_2)  // anti or fundamental
+    (LIFT_BYTE(Ensure_Readable(v)) < QUASIFORM_2)  // anti or fundamental
 
 INLINE Element* Liftify(Atom* atom) {
-    if (QUOTE_BYTE(atom) == ANTIFORM_0) {
-        QUOTE_BYTE(atom) = QUASIFORM_2_COERCE_ONLY;  // anti means quasi valid
+    if (LIFT_BYTE_RAW(atom) == ANTIFORM_0) {
+        LIFT_BYTE_RAW(atom) = QUASIFORM_2;  // anti means quasi valid
         return cast(Element*, atom);
     }
     return Quotify(cast(Element*, atom));  // a non-antiform winds up quoted
 }
 
 INLINE Atom* Unliftify_Undecayed(Need(Atom*) atom) {
-    if (QUOTE_BYTE(atom) == QUASIFORM_2) {
+    if (LIFT_BYTE_RAW(atom) == QUASIFORM_2) {
         Option(Error*) e = Trap_Coerce_To_Antiform(atom);
         if (e)
             panic (unwrap e);  // !!! shouldn't abruptly panic :-(

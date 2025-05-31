@@ -442,7 +442,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
 //
 bool Equal_Values(const Value* s, const Value* t, bool strict)
 {
-    if (QUOTE_BYTE(s) != QUOTE_BYTE(t))
+    if (LIFT_BYTE(s) != LIFT_BYTE(t))
         return false;
 
     Option(Heart) s_heart = Heart_Of(s);
@@ -500,10 +500,10 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
 //
 bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
 {
-    if (QUOTE_BYTE(s) == ANTIFORM_0 or QUOTE_BYTE(t) == ANTIFORM_0)
+    if (LIFT_BYTE(s) == ANTIFORM_0 or LIFT_BYTE(t) == ANTIFORM_0)
         return false;  // can't do less than on antiforms
 
-    if (QUOTE_BYTE(s) != QUOTE_BYTE(t))
+    if (LIFT_BYTE(s) != LIFT_BYTE(t))
         return false;  // comparisons against different-quoting levels illegal
 
     Option(Heart) s_heart = Heart_Of(s);

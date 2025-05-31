@@ -437,7 +437,7 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
     out->header.bits = (
         NODE_FLAG_NODE | NODE_FLAG_CELL
             | FLAG_HEART(WORD)
-            | FLAG_QUOTE_BYTE(ANTIFORM_0_COERCE_ONLY)
+            | FLAG_LIFT_BYTE(ANTIFORM_0)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED

@@ -3056,13 +3056,13 @@ Bounce Scanner_Executor(Level* const L) {
     OnStack(Element*) head = Data_Stack_At(Element, stackindex_path_head);
 
     sigil_and_quote_mask = head->header.bits & (
-        CELL_MASK_SIGIL_BITS | FLAG_QUOTE_BYTE(255 - NONQUASI_BIT)
+        CELL_MASK_SIGIL_BITS | FLAG_LIFT_BYTE(255 - NONQUASI_BIT)
     );
     head->header.bits &= ~(
-        CELL_MASK_SIGIL_BITS | FLAG_QUOTE_BYTE(255 - NONQUASI_BIT)
+        CELL_MASK_SIGIL_BITS | FLAG_LIFT_BYTE(255 - NONQUASI_BIT)
     );
-    if (QUOTE_BYTE(head) == ANTIFORM_0_COERCE_ONLY)
-        QUOTE_BYTE(head) = QUASIFORM_2_COERCE_ONLY;
+    if (LIFT_BYTE_RAW(head) == ANTIFORM_0)  // was an antiform...
+        LIFT_BYTE_RAW(head) = QUASIFORM_2;  // ... so quasiforms legal
 
 } trap_pop: {
 

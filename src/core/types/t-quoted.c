@@ -238,7 +238,7 @@ DECLARE_NATIVE(LIFT)
         if (not Bool_ARG(EXCEPT))
             return PANIC(Cell_Error(ARG(ATOM)));
 
-        QUOTE_BYTE(lifted) = NOQUOTE_1;
+        LIFT_BYTE(lifted) = NOQUOTE_1;
         return COPY(lifted);  // no longer meta, just a plain ERROR!
     }
 
@@ -246,11 +246,10 @@ DECLARE_NATIVE(LIFT)
         Bool_ARG(LITE)  // LIFT:LITE handles quasiforms specially
         and Is_Quasiform(lifted)
     ){
-        if (Is_Lifted_Null(lifted) or Is_Lifted_Void(lifted)) {
-            QUOTE_BYTE(lifted) = ANTIFORM_0_COERCE_ONLY;  // ^META valid [1]
-            return COPY(lifted);
-        }
-        QUOTE_BYTE(lifted) = NOQUOTE_1;  // META:LITE gives plain for the rest
+        if (Is_Lifted_Null(lifted) or Is_Lifted_Void(lifted))
+            return UNLIFT(Known_Element(lifted));  // ^META valid [1]
+
+        LIFT_BYTE(lifted) = NOQUOTE_1;  // META:LITE gives plain for the rest
         return COPY(lifted);
     }
 
@@ -303,7 +302,7 @@ DECLARE_NATIVE(UNLIFT)
 
     Element* lifted = Unquotify(lifted_lifted);
 
-    if (QUOTE_BYTE(lifted) == NOQUOTE_1) {
+    if (LIFT_BYTE(lifted) == NOQUOTE_1) {
         if (not Bool_ARG(LITE))
             return PANIC("UNLIFT only takes non quoted/quasi things if :LITE");
         Copy_Cell(OUT, lifted);
@@ -315,7 +314,7 @@ DECLARE_NATIVE(UNLIFT)
         return OUT;
     }
 
-    if (QUOTE_BYTE(lifted) == QUASIFORM_2 and Bool_ARG(LITE))
+    if (LIFT_BYTE(lifted) == QUASIFORM_2 and Bool_ARG(LITE))
         return PANIC(
             "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
         );
@@ -360,10 +359,10 @@ DECLARE_NATIVE(ANTIFORM_Q)
     INCLUDE_PARAMS_OF_ANTIFORM_Q;
 
     Option(Heart) heart;
-    QuoteByte quote_byte;
-    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    LiftByte lift_byte;
+    Get_Heart_And_Lift_Of_Atom_Intrinsic(&heart, &lift_byte, LEVEL);
 
-    return LOGIC(quote_byte == ANTIFORM_0);
+    return LOGIC(lift_byte == ANTIFORM_0);
 }
 
 
@@ -563,10 +562,10 @@ DECLARE_NATIVE(PACK_Q)
     INCLUDE_PARAMS_OF_PACK_Q;
 
     Option(Heart) heart;
-    QuoteByte quote_byte;
-    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    LiftByte lift_byte;
+    Get_Heart_And_Lift_Of_Atom_Intrinsic(&heart, &lift_byte, LEVEL);
 
-    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_BLOCK);
+    return LOGIC(lift_byte == ANTIFORM_0 and heart == TYPE_BLOCK);
 }
 
 
@@ -618,7 +617,7 @@ DECLARE_NATIVE(UNRUN)
     INCLUDE_PARAMS_OF_UNRUN;
 
     Value* action = ARG(ACTION);  // may or may not be antiform
-    QUOTE_BYTE(action) = NOQUOTE_1;  // now it's known to not be antiform
+    LIFT_BYTE(action) = NOQUOTE_1;  // now it's known to not be antiform
     return COPY(action);
 }
 
@@ -716,6 +715,6 @@ DECLARE_NATIVE(NOQUOTE)
     if (b)
         return unwrap b;
 
-    QUOTE_BYTE(OUT) = NOQUOTE_1;
+    LIFT_BYTE(OUT) = NOQUOTE_1;
     return OUT;
 }

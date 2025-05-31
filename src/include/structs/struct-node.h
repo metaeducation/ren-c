@@ -334,7 +334,7 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
 
         unsigned int _08to15_heart_byte:8;
 
-        unsigned int _16to23_quote_byte:8;
+        unsigned int _16to23_lift_byte:8;
 
         int _31_type_specific_b:1;
         int _30_type_specific_a:1;

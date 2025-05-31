@@ -113,7 +113,7 @@ DECLARE_NATIVE(ENRESCUE)
 
     if (not THROWING) {  // successful result
         if (Is_Error(OUT)) {
-            QUOTE_BYTE(OUT) = NOQUOTE_1;  // turn it into normal error
+            LIFT_BYTE(OUT) = NOQUOTE_1;  // turn it into normal error
             return OUT;
         }
         return Liftify(OUT);
@@ -219,7 +219,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
     if (Is_Error(SPARE)) {
         Drop_Level(SUBLEVEL);
         Move_Atom(OUT, SPARE);
-        QUOTE_BYTE(OUT) = NOQUOTE_1;  // change antiform error to plain
+        LIFT_BYTE(OUT) = NOQUOTE_1;  // change antiform error to plain
         return BRANCHED(OUT);
     }
 
@@ -284,10 +284,10 @@ DECLARE_NATIVE(ERROR_Q)
     INCLUDE_PARAMS_OF_ERROR_Q;
 
     Option(Heart) heart;
-    QuoteByte quote_byte;
-    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    LiftByte lift_byte;
+    Get_Heart_And_Lift_Of_Atom_Intrinsic(&heart, &lift_byte, LEVEL);
 
-    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_WARNING);
+    return LOGIC(lift_byte == ANTIFORM_0 and heart == TYPE_WARNING);
 }
 
 

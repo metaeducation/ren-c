@@ -1397,9 +1397,9 @@ RebolValue* API_rebEntrap(
     assert(not Is_Nulled(v));  // lift operations cannot produce NULL
 
     if (Is_Lifted_Error(v))
-        QUOTE_BYTE(v) = NOQUOTE_1;  // plain error
+        LIFT_BYTE(v) = NOQUOTE_1;  // plain error
     else
-        assert(QUOTE_BYTE(v) > NOQUOTE_1);
+        assert(LIFT_BYTE(v) > NOQUOTE_1);
 
     Set_Node_Root_Bit(v);
     return v;  // caller must rebRelease()
@@ -2634,7 +2634,7 @@ RebolNodeInternal* API_rebRUN(const void* p)
 
     Value* v = Stub_Cell(stub);
     if (Is_Action(v))
-        QUOTE_BYTE(v) = NOQUOTE_1;
+        LIFT_BYTE(v) = NOQUOTE_1;
     else if (not Is_Frame(v))
         panic ("rebRUN() requires FRAME! or actions (aka FRAME! antiforms)");
 

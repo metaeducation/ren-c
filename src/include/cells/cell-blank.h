@@ -52,7 +52,7 @@
 
 INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
-    QUOTE_BYTE(out) = QUASIFORM_2_COERCE_ONLY;
+    LIFT_BYTE_RAW(out) = QUASIFORM_2;  // spaces are isotopic
     return out;
 }
 
@@ -60,7 +60,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     TRACK(Init_Quasar_Untracked(out))
 
 INLINE bool Is_Quasar(Need(const Element*) v) {
-    if (QUOTE_BYTE(v) != QUASIFORM_2)
+    if (LIFT_BYTE(v) != QUASIFORM_2)
         return false;
     return IS_CHAR_CELL(v) and Cell_Codepoint(v) == ' ';
 }
@@ -101,7 +101,7 @@ INLINE bool Is_Quasar(Need(const Element*) v) {
 
 INLINE Value* Init_Trash_Untracked(Init(Value) out) {
     Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
-    QUOTE_BYTE(out) = ANTIFORM_0_COERCE_ONLY;
+    LIFT_BYTE_RAW(out) = ANTIFORM_0;  // spaces are isotopic
     return out;
 }
 
@@ -147,13 +147,13 @@ INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
 }
 
 INLINE bool Any_Sigil(const Element* e) {
-    if (QUOTE_BYTE(e) != NOQUOTE_1 or not Sigil_Of(e))
+    if (LIFT_BYTE(e) != NOQUOTE_1 or not Sigil_Of(e))
         return false;
     return IS_CHAR_CELL(e) and Cell_Codepoint(e) == ' ';
 }
 
 INLINE bool Is_Sigil(const Value* c, Sigil sigil) {
-    if (QUOTE_BYTE(c) != NOQUOTE_1 or Sigil_Of(c_cast(Element*, c)) != sigil)
+    if (LIFT_BYTE(c) != NOQUOTE_1 or Sigil_Of(c_cast(Element*, c)) != sigil)
         return false;
     return IS_CHAR_CELL(c) and Cell_Codepoint(c) == ' ';
 }

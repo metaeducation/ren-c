@@ -69,7 +69,7 @@
 
 INLINE bool Is_Nulled(Need(const Value*) v) {
     Assert_Cell_Readable(v);
-    return QUOTE_BYTE(v) == ANTIFORM_0
+    return LIFT_BYTE(v) == ANTIFORM_0
         and Heart_Of(v) == TYPE_WORD
         and Cell_Word_Id(v) == SYM_NULL;
 }
@@ -77,7 +77,7 @@ INLINE bool Is_Nulled(Need(const Value*) v) {
 #define Init_Nulled(out) \
     TRACK(Init_Word_Untracked( \
         (out), \
-        ANTIFORM_0_COERCE_ONLY,  /* NULL is valid keyword symbol */ \
+        ANTIFORM_0,  /* NULL is valid keyword symbol */ \
         CANON(NULL)))
 
 #define Init_Quasi_Null(out) \

@@ -1121,7 +1121,7 @@ void Push_Action(Level* L, const Value* frame) {
             | NODE_FLAG_CELL
             | CELL_FLAG_PROTECTED  // payload/coupling tweaked, but not by user
             | CELL_MASK_FRAME
-            | FLAG_QUOTE_BYTE(NOQUOTE_1);
+            | FLAG_LIFT_BYTE(NOQUOTE_1);
     L->rootvar->extra = frame->extra;
     L->rootvar->payload = frame->payload;
 

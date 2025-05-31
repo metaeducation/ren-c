@@ -110,7 +110,7 @@ INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
 
     Value* datatype = Append_Context(g_datatypes_context, symbol);
     Init_Fence(datatype, a);
-    QUOTE_BYTE(datatype) = ANTIFORM_0_COERCE_ONLY;
+    LIFT_BYTE_RAW(datatype) = ANTIFORM_0;  // fences are isotopic
 
     Copy_Cell(result, datatype);
     return rebUnmanage(result);

@@ -99,16 +99,16 @@ INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
 }
 
 
-// If the intrinsic just wants to look at the heart byte and quote byte of
+// If the intrinsic just wants to look at the heart byte and lift byte of
 // an unconstrained ^META parameter, that can be done without making
 // another Cell at the callsite.
 //
 // 1. Typechecker intrinsics aren't allowed to modify SPARE, because it is
 //    used multiple times in the same type check.
 //
-INLINE void Get_Heart_And_Quote_Of_Atom_Intrinsic(
+INLINE void Get_Heart_And_Lift_Of_Atom_Intrinsic(
     Sink(Option(Heart)) heart,
-    Sink(QuoteByte) quote_byte,
+    Sink(LiftByte) lift_byte,
     Level* L
 ){
     const Element* lifted;
@@ -118,8 +118,8 @@ INLINE void Get_Heart_And_Quote_Of_Atom_Intrinsic(
         lifted = Level_Intrinsic_Arg_Lifted(L);
 
     *heart = Heart_Of(lifted);
-    assert(QUOTE_BYTE(lifted) >= QUASIFORM_2);
-    *quote_byte = QUOTE_BYTE(lifted) - Quote_Shift(1);
+    assert(LIFT_BYTE(lifted) >= QUASIFORM_2);
+    *lift_byte = LIFT_BYTE(lifted) - Quote_Shift(1);
     return;
 }
 
@@ -163,7 +163,7 @@ INLINE const Element* Get_Lifted_Atom_Intrinsic(Level* L) {
     else
         lifted = Level_Intrinsic_Arg_Lifted(L);  // intrinsic arg always lifted
 
-    assert(QUOTE_BYTE(lifted) >= QUASIFORM_2);
+    assert(LIFT_BYTE(lifted) >= QUASIFORM_2);
     return lifted;
 }
 

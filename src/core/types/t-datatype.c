@@ -66,7 +66,7 @@ void Startup_Datatypes(void)
         Init_Word(Stub_Cell(a), Canon_Symbol(Symbol_Id_From_Type(type)));
         Freeze_Source_Deep(a);
         Init_Fence(datatype, a);
-        QUOTE_BYTE(datatype) = ANTIFORM_0_COERCE_ONLY;
+        LIFT_BYTE_RAW(datatype) = ANTIFORM_0;  // fences are isotopic
 
         assert(datatype == Datatype_From_Type(type));  // convenient [2]
         assert(Cell_Datatype_Type(datatype) == type);  // sanity check

@@ -401,7 +401,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             param = Data_Stack_At(Value, base + 2);
             if (Is_Cell_Readable(param)) {
                 assert(
-                    QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+                    LIFT_BYTE(param) == ONEQUOTE_NONQUASI_3
                     and Heart_Of(param) == TYPE_PARAMETER
                 );
                 if (SYM_RETURN == unwrap returner)
@@ -453,7 +453,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         }
         else
             assert(Is_Parameter(param_1));
-        QUOTE_BYTE(param_1) = ONEQUOTE_NONQUASI_3;  // quoted parameter
+        LIFT_BYTE(param_1) = ONEQUOTE_NONQUASI_3;  // quoted parameter
     }
 
     if (*adjunct)
@@ -698,9 +698,9 @@ void Pop_Unpopped_Return(Sink(Element) out, StackIndex base)
     assert(TOP_INDEX == base + 2);
     assert(
         Heart_Of(TOP) == TYPE_PARAMETER
-        and QUOTE_BYTE(TOP) == ONEQUOTE_NONQUASI_3
+        and LIFT_BYTE(TOP) == ONEQUOTE_NONQUASI_3
     );
-    QUOTE_BYTE(TOP) = NOQUOTE_1;
+    LIFT_BYTE(TOP) = NOQUOTE_1;
     Copy_Cell(out, TOP_ELEMENT);
     DROP();
     assert(Cell_Word_Id(TOP) == SYM_RETURN);
@@ -756,12 +756,12 @@ Details* Make_Dispatch_Details(
 
     assert(Heart_Of(exemplar) == TYPE_FRAME);
     assert(
-        QUOTE_BYTE(exemplar) == NOQUOTE_1
-        or QUOTE_BYTE(exemplar) == ANTIFORM_0  // allow action antiform
+        LIFT_BYTE(exemplar) == NOQUOTE_1
+        or LIFT_BYTE(exemplar) == ANTIFORM_0  // allow action antiform
     );
     Cell* rootvar = Array_Head(a);
     Copy_Cell(rootvar, exemplar);
-    QUOTE_BYTE(rootvar) = NOQUOTE_1;  // canonize action antiforms to FRAME!
+    LIFT_BYTE(rootvar) = NOQUOTE_1;  // canonize action antiforms to FRAME!
     Protect_Rootvar_If_Debug(rootvar);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
