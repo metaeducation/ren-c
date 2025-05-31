@@ -716,13 +716,27 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
 
     bool strict = false;  // case-preserving [1]
 
+    Option(Element*) poke;
+
     Value* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
-        if (Is_Dual_Space_Pick_Signal(dual))
+        if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
+
+        if (Is_Dual_Tripwire_Remove_Signal(dual)) {
+            poke = nullptr;  // remove signal
+            goto handle_poke;
+        }
 
         return PANIC(Error_Bad_Poke_Dual_Raw(dual));
     }
+
+    Unliftify_Known_Stable(dual);
+
+    if (Is_Antiform(dual))
+        return PANIC(Error_Bad_Antiform(dual));
+
+    poke = Known_Element(dual);
 
     goto handle_poke;
 
@@ -747,13 +761,6 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
     return DUAL_LIFTED(Copy_Cell(OUT, val));
 
 } handle_poke: { /////////////////////////////////////////////////////////////
-
-    Unliftify_Known_Stable(dual);
-
-    if (Is_Antiform(dual))
-        return PANIC(Error_Bad_Antiform(dual));
-
-    Element* poke = Known_Element(dual);
 
     Update_Map_Entry(
         VAL_MAP_Ensure_Mutable(map),  // modified

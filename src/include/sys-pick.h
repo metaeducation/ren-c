@@ -130,9 +130,10 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 #define WRITEBACK(out)  DUAL_LIFTED(out)  // commentary
 
 
-#define Is_Dual_Space_Pick_Signal(dual)  Is_Space(dual)
-#define Init_Dual_Space_Pick_Signal(dual)  Init_Space(dual)
+#define Is_Dual_Nulled_Pick_Signal(dual)  Is_Nulled(dual)
+#define Init_Dual_Nulled_Pick_Signal(dual)  Init_Nulled(dual)
 
-#define Is_Dual_Null_Remove_Signal(dual)  Is_Nulled(dual)
+#define Is_Dual_Tripwire_Remove_Signal(dual)  Is_Tripwire(dual)
+#define Init_Dual_Tripwire_Remove_Signal(dual)  Init_Tripwire(dual)
 
 #define Is_Dual_Word_Named_Signal(dual)  Is_Word(dual)

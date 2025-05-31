@@ -446,7 +446,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
     Value* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
-        if (Is_Dual_Space_Pick_Signal(dual))
+        if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
         return PANIC(Error_Bad_Poke_Dual_Raw(dual));

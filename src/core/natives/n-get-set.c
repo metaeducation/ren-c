@@ -671,7 +671,9 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
         Data_Stack_At(Element, picker_index)
     );
 
-    dual_arg = Init_Space(Force_Erase_Cell(Level_Arg(sub, 3)));
+    dual_arg = Init_Dual_Nulled_Pick_Signal(
+        Force_Erase_Cell(Level_Arg(sub, 3))
+    );
     USED(dual_arg);
 
     if (sub == TOP_LEVEL)
@@ -815,7 +817,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 
             if (Is_Lifted_Void(unwrap dual_poke_if_not_on_stack)) {
                 assert(OUT == unwrap dual_poke_if_not_on_stack);
-                Init_Nulled(value_arg);
+                Init_Dual_Tripwire_Remove_Signal(value_arg);
                 continue;  // do not lift dual null
             }
 

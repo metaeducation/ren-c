@@ -1206,7 +1206,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     Value* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
-        if (Is_Dual_Space_Pick_Signal(dual))
+        if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
         if (Is_Dual_Word_Named_Signal(dual))

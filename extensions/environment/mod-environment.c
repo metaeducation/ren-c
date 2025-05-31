@@ -111,10 +111,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
     Option(const Value*) poke;  // set to nullptr if removing
 
     if (Not_Lifted(dual)) {
-        if (Is_Dual_Space_Pick_Signal(dual))
+        if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        if (Is_Dual_Null_Remove_Signal(dual)) {
+        if (Is_Dual_Tripwire_Remove_Signal(dual)) {
             poke = nullptr;
             goto update_environment;
         }

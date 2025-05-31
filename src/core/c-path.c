@@ -143,7 +143,7 @@ DECLARE_NATIVE(PICK)
 
     Set_Level_Flag(LEVEL, PICK_NOT_INITIAL_ENTRY);
 
-    Init_Dual_Space_Pick_Signal(LOCAL(DUAL));  // PICK, not POKE
+    Init_Dual_Nulled_Pick_Signal(LOCAL(DUAL));  // PICK, not POKE
 
 } adjust_logic_to_index: {
 
@@ -348,7 +348,7 @@ DECLARE_NATIVE(POKE)
     Value* dual = ARG(VALUE);  // same slot (TWEAK* reuses this frame!) [2]
 
     if (Is_Lifted_Void(lifted_value)) {
-        Init_Nulled(dual);  // TWEAK* experiences VOID as non-lifted null
+        Init_Dual_Tripwire_Remove_Signal(dual);  // signal to TWEAK*
     }
     else {
         // leave lifted, TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL

@@ -114,6 +114,12 @@ INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
 #define Init_Lifted_Tripwire(out) \
     Init_Quasar(out)
 
+INLINE bool Is_Tripwire(Need(const Value*) v) {
+    if (LIFT_BYTE(v) != ANTIFORM_0)
+        return false;
+    return IS_CHAR_CELL(v) and Cell_Codepoint(v) == ' ';
+}
+
 
 //=//// <end> SIGNALING WITH TRIPWIRE (~ antiform) ////////////////////////=//
 //
