@@ -122,6 +122,12 @@ DECLARE_NATIVE(REORDER)
 {
     INCLUDE_PARAMS_OF_REORDER;
 
+    // IMPORTANT: Binders use global state and code is not allowed to panic()
+    // without cleaning the binder up first, balancing it all out to zeros.
+    // Errors must be stored and reported after the cleanup.
+    //
+    Option(Error*) error = SUCCESS;
+
     Element* original = Element_ARG(ORIGINAL);
     Phase* reorderee = Cell_Frame_Phase(ARG(ORIGINAL));
     Option(const Symbol*) label  = Cell_Frame_Label_Deep(ARG(ORIGINAL));
@@ -138,7 +144,8 @@ DECLARE_NATIVE(REORDER)
     DECLARE_BINDER (binder);
     Construct_Binder(binder);
 
-  blockscope {
+  add_binder_indices: {
+
     const Key* tail;
     const Key* key = Phase_Keys(&tail, reorderee);
     const Param* param = Phase_Params_Head(reorderee);
@@ -148,13 +155,8 @@ DECLARE_NATIVE(REORDER)
             continue;
         Add_Binder_Index(binder, Key_Symbol(key), index);
     }
-  }
 
-    // IMPORTANT: Binders use global state and code is not allowed to panic()
-    // without cleaning the binder up first, balancing it all out to zeros.
-    // Errors must be stored and reported after the cleanup.
-    //
-    Option(Error*) error = SUCCESS;
+} use_binder: {
 
     // We proceed through the list, and remove the binder indices as we go.
     // This lets us check for double uses or use of words that aren't in the
@@ -219,7 +221,8 @@ DECLARE_NATIVE(REORDER)
     // Make sure that all parameters that were mandatory got a place in the
     // ordering list.
 
-  cleanup_binder: {
+} cleanup_binder: {
+
     const Key* tail;
     const Key* key = Phase_Keys(&tail, reorderee);
     const Param* param = Phase_Params_Head(reorderee);
@@ -242,7 +245,8 @@ DECLARE_NATIVE(REORDER)
             error = Error_No_Arg(label, Key_Symbol(key));
         }
     }
-  }
+
+} destruct_binder: {
 
     Destruct_Binder(binder);
 
@@ -262,4 +266,4 @@ DECLARE_NATIVE(REORDER)
 
     Init_Action(OUT, details, label, NONMETHOD);
     return UNSURPRISING(OUT);
-}
+}}

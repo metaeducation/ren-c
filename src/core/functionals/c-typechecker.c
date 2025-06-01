@@ -24,13 +24,13 @@
 //     >> integer?: lambda [v [any-value?]] [integer! = type of :v]
 //
 //     >> integer? 10
-//     == ~true~  ; anti
+//     == \~okay~\  ; antiform
 //
 //     >> integer? <foo>
-//     == ~false~  ; anti
+//     == \~null~\  ; antiform
 //
 // But given that it is done so often, it's more efficient to have these done
-// via optimized internal functions...created at boot time.
+// via optimized "intrinsic" (frameless) functions...created at boot time.
 //
 
 #include "sys-core.h"
@@ -354,14 +354,11 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     Need(const Value*) const v = SPARE;
 
-{ //=//// TRY BUILTIN TYPESET CHECKER DISPATCH ////////////////////////////=//
+  try_builtin_typeset_checker_dispatch: {
 
-    // The fastest (and most common case) is when we recognize the dispatcher
-    // as being the Typechecker_Dispatcher.  This means it's one of the 255
-    // built-in type checks, such as ANY-WORD? or INTEGER? or INTEGER!.
-    //
-    // Note things like SET-WORD? and ANY-VALUE? are not built-in type checks,
-    // but they are intrinsic type checks.
+  // The fastest (and most common case) is when we recognize the dispatcher as
+  // being the Typechecker_Dispatcher().  This means it's one of 255 built-in
+  // type checks, such as ANY-WORD? or INTEGER? or INTEGER!.
 
     Details* details = maybe Try_Cell_Frame_Details(test);
     if (not details)
@@ -378,7 +375,10 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         goto test_failed;
     }
 
-  //=//// TRY DISPATCHING AS AN INTRINSIC ///////////////////////////////=//
+  try_dispatch_as_intrinsic: {
+
+  // Second-fastest are "intrinsic" typechecks.  These functions are designed
+  // to be called without a FRAME! in cases where they only take one argument.
 
   #if (! DEBUG_DISABLE_INTRINSICS)
     if (
@@ -417,7 +417,9 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     }
   #endif
 
-} non_intrinsic_dispatch: { //////////////////////////////////////////////////
+  goto non_intrinsic_dispatch;
+
+}} non_intrinsic_dispatch: { /////////////////////////////////////////////////
 
     Flags flags = 0;
     Level* sub = Make_End_Level(
@@ -484,7 +486,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     result = true;
     goto return_result;
 
-} return_result: {
+} return_result: { ///////////////////////////////////////////////////////////
 
   #if RUNTIME_CHECKS
     Init_Unreadable(SCRATCH);
@@ -856,7 +858,7 @@ bool Typecheck_Coerce(
             goto do_coercion;
     }
 
-  typecheck_again:
+  typecheck_again: {
 
     if (Is_Antiform(atom)) {
         if (Get_Parameter_Flag(param, NULL_DEFINITELY_OK) and Is_Nulled(atom))
@@ -892,7 +894,8 @@ bool Typecheck_Coerce(
         if (Is_Stable(atom) and Is_Space(u_cast(Value*, atom)))
             goto return_true;
 
-  blockscope {
+} do_optimized_checks_signaled_by_bytes: {
+
     const Array* spec = maybe Cell_Parameter_Spec(param);
     const TypesetByte* optimized = spec->misc.at_least_4;
     const TypesetByte* optimized_tail
@@ -912,7 +915,8 @@ bool Typecheck_Coerce(
         if (Typecheck_Atom_In_Spare_Uses_Scratch(L, param, SPECIFIED))
             goto return_true;
     }
-  }
+
+} more_stuff: {
 
     if (not coerced) {
 
@@ -940,17 +944,17 @@ bool Typecheck_Coerce(
         }
     }
 
-  return_false:
+} return_false: { ////////////////////////////////////////////////////////////
 
     result = false;
     goto return_result;
 
-  return_true:
+} return_true: { /////////////////////////////////////////////////////////////
 
     result = true;
     goto return_result;
 
-  return_result:
+} return_result: { ///////////////////////////////////////////////////////////
 
     if (unquoted)
         Liftify(atom);
@@ -964,7 +968,7 @@ bool Typecheck_Coerce(
   #endif
 
     return result;
-}
+}}
 
 
 //

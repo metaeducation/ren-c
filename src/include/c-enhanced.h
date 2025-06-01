@@ -543,19 +543,9 @@
 // VOID would be a more purposeful name, but Windows headers define that
 // for the type (as used in types like LPVOID)
 //
-// As an added application, it is used to annotate a block that you don't
-// want picked up as an argument to an `if` or anything.  It makes it more
-// obvious why the block is there, and looks like a language feature:
-//
-//     blockscope {  // better looking, explains more than `{` by itself
-//         int x = 3;
-//         y = y + x;
-//     }
-//
 #ifndef NOOP
     #define NOOP ((void)0)
 #endif
-#define blockscope NOOP;
 
 
 //=//// "ATTEMPT" AND "UNTIL" CONSTRUCTS //////////////////////////////////=//

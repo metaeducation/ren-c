@@ -165,7 +165,8 @@ void* Probe_Core_Debug(
 
     // If we didn't jump to cleanup above, it's a Flex.  New switch().
 
-  blockscope {
+  handle_flex: {
+
     const Flex* f = c_cast(Flex* , p);
     assert(Is_Node_Readable(f));
     Flavor flavor = Stub_Flavor(f);
@@ -354,9 +355,8 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "!!! Unknown Stub_Flavor() !!!", file, line);
         break;
     }
-  }
 
-  cleanup:
+} cleanup: {
 
     if (mo->base.size != String_Size(mo->string))
         printf("%s\n", c_cast(char*, Binary_At(mo->string, mo->base.size)));
@@ -372,7 +372,7 @@ void* Probe_Core_Debug(
     g_gc.disabled = was_disabled;
 
     return m_cast(void*, p); // must be cast back to const if source was const
-}
+}}
 
 
 // Version with fewer parameters, useful to call from the C debugger (which

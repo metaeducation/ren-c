@@ -327,7 +327,8 @@ static bool Read_Bytes_Interruptible(
     }
   #endif
 
-  blockscope {
+  perform_read: {
+
     int len = read(STDIN_FILENO, t->buf, READ_BUF_LEN - 1);  // -1, room for \0
     if (len < 0) {
         if (errno == EINTR)
@@ -340,19 +341,20 @@ static bool Read_Bytes_Interruptible(
     t->cp = t->buf;
 
     return true;  // success (note we could return `len` if needed)
-  }
 
-  handle_interruption:  // Ctrl-C etc, see sigaction()/SIGINT
-    //
-    // If we don't clear the error, every successive read() gets
-    // EINTR.  Hope caller handles interruption intelligently.
-    //
+} handle_interruption: { /////////////////////////////////////////////////////
+
+  // This is Ctrl-C etc (see sigaction()/SIGINT)
+
+  // If we don't clear the error, every successive read() gets EINTR.  Hope
+  // caller handles interruption intelligently.
+
     clearerr(stdin);
     t->cp = t->buf;
     t->buf[0] = '\0';
     *interrupted = true;
     return false;
-}
+}}
 
 
 //

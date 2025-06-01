@@ -296,16 +296,7 @@ static void Shutdown_Action_Spec_Tags(void)
 //
 static void Init_Root_Vars(void)
 {
-    // Return signals should only be accessed by macros which cast them as
-    // as `const`, to avoid the risk of accidentally changing them.  (This
-    // rule is broken by some special system code which `m_cast`s them for
-    // the purpose of using them as directly recognizable pointers which
-    // also look like values.)
-    //
-    // It is presumed that these types will never need to have GC behavior,
-    // and thus can be stored safely in program globals without mention in
-    // the root set.  Should that change, they could be explicitly added
-    // to the GC's root set.
+  make_bounce_signals: {
 
     Init_Bounce_Wild(g_bounce_thrown, C_THROWN);
     Init_Bounce_Wild(g_bounce_panic, C_PANIC);
@@ -317,6 +308,8 @@ static void Init_Root_Vars(void)
     Init_Bounce_Wild(g_bounce_suspend, C_SUSPEND);
     Init_Bounce_Wild(g_bounce_bad_intrinsic_arg, C_BAD_INTRINSIC_ARG);
 
+} make_empty_block: {
+
     g_empty_array = Make_Source_Managed(0);
     Freeze_Source_Deep(g_empty_array);
 
@@ -326,7 +319,8 @@ static void Init_Root_Vars(void)
     );
     Force_Value_Frozen_Deep(g_empty_block);
 
-  blockscope {
+} make_empty_object: {
+
     Length len = 0;
     Array* a = Make_Array_Core(
         FLEX_MASK_VARLIST
@@ -357,16 +351,19 @@ static void Init_Root_Vars(void)
         g_empty_varlist  // holds empty varlist alive
     );
     Force_Value_Frozen_Deep(g_empty_object);
-  }
 
-  blockscope {  // keep array alive via stable API handle (META PACK, not PACK)
+} make_heavy_null: {
+
+  // keep array alive via stable API handle (META PACK, not PACK)
+
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
     Init_Quasi_Null(Stub_Cell(a));
     Freeze_Source_Deep(a);
     ensure(nullptr, g_1_quasi_null_array) = a;
     ensure(nullptr, g_lifted_heavy_null) = Init_Lifted_Pack(Alloc_Value(), a);
     Force_Value_Frozen_Deep(g_lifted_heavy_null);
-  }
+
+} make_other_things: {
 
     ensure(nullptr, Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
     Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_NOTE_META);
@@ -401,7 +398,7 @@ static void Init_Root_Vars(void)
         Flex,
         15
     );
-}
+}}
 
 static void Shutdown_Root_Vars(void)
 {
@@ -510,11 +507,12 @@ static void Init_System_Object(
         Alloc_Varlist_Core(NODE_FLAG_MANAGED, TYPE_OBJECT, 10)
     );
 
-    // The "standard error" template was created as an OBJECT!, because the
-    // `make warning!` functionality is not ready when %sysobj.r runs.  Fix
-    // up its archetype so that it is an actual ERROR!.
-    //
-  blockscope {
+  fix_standard_error: {
+
+  // The "standard error" template was created as an OBJECT!, because the
+  // `make warning!` functionality is not ready when %sysobj.r runs.  Fix
+  // up its archetype so that it is an actual ERROR!.
+
     Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
     VarList* c = Cell_Varlist(std_error);
     HEART_BYTE(std_error) = TYPE_WARNING;
@@ -522,8 +520,7 @@ static void Init_System_Object(
     Value* rootvar = Rootvar_Of_Varlist(c);
     assert(Get_Cell_Flag(rootvar, PROTECTED));
     HEART_BYTE(rootvar) = TYPE_WARNING;
-  }
-}
+}}
 
 
 //

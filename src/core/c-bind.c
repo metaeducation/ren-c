@@ -1156,24 +1156,23 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
     DECLARE_BINDER (binder);
     Construct_Binder(binder);
 
-    // Setup binding table from the argument word list.  Note that some cases
-    // (like an ADAPT) reuse the exemplar from the function they are adapting,
-    // and should not have the locals visible from their binding.  Other cases
-    // such as the plain binding of the body of a FUNC created the exemplar
-    // from scratch, and should see the locals.  Caller has to decide.
-    //
-  blockscope {
+  add_binder_indices: {
+
+  // Setup binding table from the argument word list.  Note that some cases
+  // (like an ADAPT) reuse the exemplar from the function they are adapting,
+  // and should not have the locals visible from their binding.  Other cases
+  // such as the plain binding of the body of a FUNC created the exemplar
+  // from scratch, and should see the locals.  Caller has to decide.
+
     EVARS e;
     Init_Evars(&e, Phase_Archetype(relative));
     e.lens_mode = lens_mode;
     while (Try_Advance_Evars(&e))
         Add_Binder_Index(binder, Key_Symbol(e.key), e.index);
     Shutdown_Evars(&e);
-  }
 
-    Source* copy;
+} shallow_copy_then_adjust: {
 
-  blockscope {
     const Source* original = Cell_Array(body);
     REBLEN index = VAL_INDEX(body);
    /* Context* binding = Cell_List_Binding(body); */
@@ -1190,7 +1189,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 
     // Currently we start by making a shallow copy and then adjust it
 
-    copy = cast(Source*, Make_Array_For_Copy(flags, original, len));
+    Source* copy = cast(Source*, Make_Array_For_Copy(flags, original, len));
     Set_Flex_Len(copy, len);
 
     const Element* src = Array_At(original, index);
@@ -1206,11 +1205,10 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
             relative
         );
     }
-  }
 
     Destruct_Binder(binder);
     return copy;
-}
+}}
 
 
 //

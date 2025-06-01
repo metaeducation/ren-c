@@ -192,7 +192,7 @@ Value* Append_To_Sea_Core(
         patch = cast(Patch*, Make_Untracked_Stub(STUB_MASK_PATCH));
     }
 
-  //=//// ADD TO CIRCULARLY LINKED LIST HUNG ON SYMBOL ////////////////////=//
+  add_to_circularly_linked_list_hung_on_symbol: {
 
     // The variables are linked reachable from the symbol node for the word's
     // spelling, and can be directly linked to from a word as a singular value
@@ -217,39 +217,43 @@ Value* Append_To_Sea_Core(
         Tweak_Cell_Binding(unwrap any_word, patch);
     }
 
+} assert_if_duplicate_patch: {
+
   #if RUNTIME_CHECKS  // ensure we didn't add a duplicate patch for this sea
-  blockscope {
     Stub *check = Misc_Hitch(patch);
     while (check != symbol) {  // walk chain to look for duplicates
         assert(Info_Patch_Sea(cast(Patch*, check)) != sea);
         check = Misc_Hitch(check);
     }
-  }
   #endif
 
+} return_patch: {
+
     return Stub_Cell(patch);
-}
+}}
 
 
-// 1. If objects have identical keys, they may share the same keylist.  But
-//    when an object gets expanded, that shared keylist has to be copied to
-//    become unique to that object.  When this happens, the keylist identity
-//    can change.
-//
 static Value* Append_To_Varlist_Core(
     VarList* varlist,
     const Symbol* symbol,
     Option(Element*) any_word
 ){
-  #if RUNTIME_CHECKS  // catch duplicate insertions
-  blockscope {
+  catch_duplicate_insertions: {
+
+  // 1. If objects have identical keys, they may share the same keylist.  But
+  //    when an object gets expanded, that shared keylist has to be copied to
+  //    become unique to that object.  When this happens, the keylist identity
+  //    can change.
+
+  #if RUNTIME_CHECKS
     KeyList* before = Bonus_Keylist(varlist);  // may change if shared [1]
     const Key* check_tail = Flex_Tail(Key, before);
     const Key* check = Flex_Head(Key, before);
     for (; check != check_tail; ++check)
         assert(Key_Symbol(check) != symbol);
-  }
   #endif
+
+} perform_append: {
 
     KeyList* keylist = Keylist_Of_Expanded_Varlist(varlist, 1);  // unique [1]
     Init_Key(Flex_Last(Key, keylist), symbol);
@@ -264,7 +268,7 @@ static Value* Append_To_Varlist_Core(
     }
 
     return cast(Value*, slot);  // location we just added (void cell)
-}
+}}
 
 
 // Append a word to the context word list. Expands the list if necessary.

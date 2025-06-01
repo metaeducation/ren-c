@@ -865,8 +865,10 @@ SQLRETURN Get_ODBC_Catalog(
     );
 
     SQLWCHAR *pattern[4];
+    SQLRETURN rc;
 
-  blockscope {
+  extract_patterns: {
+
     int index;
     for (index = 2; index != 6; ++index) {
         pattern[index - 2] = rebSpellWideMaybe(  // returns nullptr if NULL
@@ -874,9 +876,8 @@ SQLRETURN Get_ODBC_Catalog(
                 "pick ensure block!", block, rebI(index)
         );
     }
-  }
 
-    SQLRETURN rc;
+} query_catalog: {
 
     switch (which) {
       case 1:
@@ -908,17 +909,19 @@ SQLRETURN Get_ODBC_Catalog(
         rebJumps ("panic -[Invalid GET_CATALOG_XXX value]-");
     }
 
-  blockscope {
+} free_patterns: {
+
     int n;
     for (n = 0; n != 4; ++n)
         rebFree(pattern[n]);  // no-op if nullptr
-  }
+
+} panic_on_failure_or_return: {
 
     if (not SQL_SUCCEEDED(rc))
         rebJumps("panic", Error_ODBC_Stmt(hstmt));
 
     return rc;
-}
+}}
 
 
 #define COLUMN_TITLE_SIZE 255

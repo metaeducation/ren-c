@@ -354,7 +354,7 @@ void Replug_Stack(Level* base, Value* plug) {
     if (not Handle_Holds_Node(plug))  // no array of additional information
         goto finished;
 
-  blockscope {
+  restore_state_components: {
 
     Array* array = x_cast(Array*, Cell_Handle_Node(plug));
     assert(Stub_Flavor(array) == FLAVOR_DATASTACK);

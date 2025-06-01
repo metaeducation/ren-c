@@ -542,7 +542,8 @@ DECLARE_NATIVE(JOIN)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-  blockscope {
+  iterate_utf8_stack: {
+
     StackIndex at = STACK_BASE + 1;
     StackIndex tail = TOP_INDEX + 1;
 
@@ -572,7 +573,8 @@ DECLARE_NATIVE(JOIN)
 
         Form_Element(mo, cast(Element*, v));
     }
-  }
+
+} drop_utf8_stack_and_return: {
 
     Drop_Data_Stack_To(STACK_BASE);  // can't be while OnStack() is in scope
 
@@ -618,14 +620,15 @@ DECLARE_NATIVE(JOIN)
 
     return OUT;
 
-} finish_blob_join: { ////////////////////////////////////////////////////////
+}} finish_blob_join: { ///////////////////////////////////////////////////////
 
     Binary* buf = BYTE_BUF;
     Count used = 0;
 
     Set_Flex_Len(buf, 0);
 
-  blockscope {  // needed so Drop_Stack_To() can be outside the block
+  iterate_stack: {
+
     OnStack(Value*) at = Data_Stack_At(Value, STACK_BASE + 1);
     OnStack(Value*) tail = Data_Stack_At(Value, TOP_INDEX + 1);
 
@@ -680,7 +683,8 @@ DECLARE_NATIVE(JOIN)
 
         used = Flex_Used(buf);
     }
-  }
+
+} drop_stack_and_return_blob: {
 
     Drop_Data_Stack_To(STACK_BASE);  // can't be while OnStack() is in scope
 
@@ -692,7 +696,7 @@ DECLARE_NATIVE(JOIN)
 
     return Init_Blob(OUT, bin);
 
-}} finish_stack_join: { //////////////////////////////////////////////////////
+}}} finish_stack_join: { /////////////////////////////////////////////////////
 
     Drop_Level_Unbalanced(SUBLEVEL);
 

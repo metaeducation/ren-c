@@ -2326,7 +2326,8 @@ DECLARE_NATIVE(SUBPARSE)
                     rule
                 );
 
-              blockscope {
+              perform_evaluation: {
+
                 Atom* atom_evaluated = evaluated;
                 if (Eval_Any_List_At_Throws(
                     atom_evaluated,
@@ -2336,7 +2337,8 @@ DECLARE_NATIVE(SUBPARSE)
                     goto return_thrown;
                 }
                 Decay_If_Unstable(atom_evaluated);
-              }
+
+            } handle_result: {
 
                 if (Stub_Holds_Cells(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
@@ -2377,7 +2379,7 @@ DECLARE_NATIVE(SUBPARSE)
                         1
                     );
                 }
-            }
+            }}
 
             if (P_FLAGS & PF_AHEAD)
                 P_POS = begin;

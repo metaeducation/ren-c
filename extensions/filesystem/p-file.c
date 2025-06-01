@@ -245,7 +245,8 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         Value* result;
 
-     blockscope {
+     handle_read: {
+    
         // Seek addresses are 0-based:
         //
         // https://discourse.julialang.org/t/why-is-seek-zero-based/55569/
@@ -301,9 +302,9 @@ DECLARE_NATIVE(FILE_ACTOR)
         }
 
         result = Read_File(port, len);
-     }
 
-     cleanup_read:
+    } cleanup_read: {
+
         if (opened_temporarily) {
             Value* close_error = Close_File(port);
             if (result and Is_Warning(result))
@@ -316,7 +317,8 @@ DECLARE_NATIVE(FILE_ACTOR)
             return FAIL(result);
 
         assert(result == nullptr or Is_Blob(result));
-        return result; }
+        return result;
+    }}
 
     //=//// APPEND ////////////////////////////////////////////////////////=//
     //
@@ -390,7 +392,8 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         Value* result;
 
-      blockscope {
+      handle_write: {
+
         uint64_t file_size = File_Size_Cacheable_May_Panic(port);
 
         if (Bool_ARG(APPEND)) {
@@ -457,9 +460,8 @@ DECLARE_NATIVE(FILE_ACTOR)
         }
 
         result = Write_File(port, data, len);
-      }
 
-      cleanup_write:
+    } cleanup_write: {
 
         if (opened_temporarily) {
             Value* close_error = Close_File(port);
@@ -472,7 +474,8 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (result)
             return PANIC(result);
 
-        return COPY(port); }
+        return COPY(port);
+    }}
 
     //=//// OPEN ///////////////////////////////////////////////////////////=//
     //

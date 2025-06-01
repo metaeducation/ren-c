@@ -492,14 +492,16 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 
     REBLEN count = 0;
 
-  blockscope {
+  count_entries: {
+
     const Value* mval_tail = Flex_Tail(Value, MAP_PAIRLIST(map));
     const Value* mval = Flex_Head(Value, MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Zombie(mval + 1))
             ++count;
     }
-  }
+
+} copy_to_varlist: {
 
     // See Alloc_Varlist() - cannot use it directly because no Collect_Words
 
@@ -516,7 +518,7 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
     }
 
     return c;
-}
+}}
 
 
 IMPLEMENT_GENERIC(MOLDIFY, Is_Map)

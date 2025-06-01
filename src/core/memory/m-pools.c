@@ -338,8 +338,9 @@ void  Startup_Pools(REBINT scale)
 //
 void Shutdown_Pools(void)
 {
+  check_for_leaks: {
+
   #if RUNTIME_CHECKS
-  blockscope {
     Count num_leaks = 0;
     Stub* leaked = nullptr;
     Segment* seg = g_mem.pools[STUB_POOL].segments;
@@ -374,8 +375,9 @@ void Shutdown_Pools(void)
         printf("%d leaked Flexes...crash()ing one\n", cast(int, num_leaks));
         crash (leaked);
     }
-  }
   #endif
+
+} shutdown_pools: {
 
     PoolId pool_id;
     for (pool_id = 0; pool_id < MAX_POOLS; ++pool_id) {
@@ -430,7 +432,7 @@ void Shutdown_Pools(void)
         );
     }
   #endif
-}
+}}
 
 
 //
