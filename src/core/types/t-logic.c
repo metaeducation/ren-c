@@ -548,6 +548,7 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
 
     bool right;
     e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
+    USED(ARG(RIGHT));
     if (e)
         return PANIC(unwrap e);
 
@@ -580,6 +581,7 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
 
     bool right;
     e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
+    USED(ARG(RIGHT));
     if (e)
         return PANIC(unwrap e);
 
@@ -602,8 +604,9 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_XOR_1;
 
-    bool right;
-    Option(Error*) e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);  // run always
+    bool right;  // right side always executed
+    Option(Error*) e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
+    USED(ARG(RIGHT));
     if (e)
         return PANIC(unwrap e);
 

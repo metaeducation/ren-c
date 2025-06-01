@@ -790,7 +790,7 @@ DECLARE_NATIVE(UNTIE)
 
 
 //
-//  plain: native [
+//  plain: native:intrinsic [
 //
 //  "Convert a value into its plain representation"
 //

@@ -671,6 +671,7 @@ static bool Combinator_Param_Hook(
     }
     else if (symid == SYM_RULE_END) {
         s->rule_end = var;  // can't set until rules consumed, let caller do it
+        USED(ARG(RULE_END));
     }
     else if (Get_Parameter_Flag(param, REFINEMENT)) {
         //
@@ -840,6 +841,7 @@ DECLARE_NATIVE(COMBINATORIZE)
     // For debug and tracing, combinators are told where their rule end is
     //
     Copy_Cell(s.rule_end, ARG(RULES));
+    USED(ARG(RULE_END));
 
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);

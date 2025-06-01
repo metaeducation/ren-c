@@ -571,7 +571,7 @@ DECLARE_NATIVE(GET)
     else
         steps = nullptr;  // no GROUP! evals
 
-    if (source == TYPE_GROUP) {
+    if (Is_Group(source)) {
         if (not Bool_ARG(GROUPS))
             return PANIC(Error_Bad_Get_Group_Raw(source));
 
@@ -672,6 +672,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     );
 
     dual_arg = Init_Space(Force_Erase_Cell(Level_Arg(sub, 3)));
+    USED(dual_arg);
 
     if (sub == TOP_LEVEL)
         Erase_Cell(SPARE);
@@ -1195,13 +1196,13 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     goto poke_again;
 
-}} return_error: { ///////////////////////////////////////////////////////////
+}}} return_error: { ///////////////////////////////////////////////////////////
 
     assert(e);
     Drop_Data_Stack_To(base);
     goto finalize_and_return;
 
-}} return_success: { //////////////////////////////////////////////////////////
+} return_success: { //////////////////////////////////////////////////////////
 
     possibly(Is_Error(OUT));  // success may be ERROR! antiform, see [A]
 
@@ -1332,10 +1333,10 @@ DECLARE_NATIVE(SET)
     if (Is_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
         Unchain(target);
 
-    if (target != TYPE_GROUP)  // !!! maybe SET-GROUP!, but GET-GROUP!?
+    if (not Is_Group(target))  // !!! maybe SET-GROUP!, but GET-GROUP!?
         goto call_generic_set_var;
 
-  process_group_target: { ////////////////////////////////////////////////////
+  process_group_target: {
 
    // !!! At the moment, the generic Set_Var() mechanics aren't written to
    // handle GROUP!s.  But it probably should, since it handles groups that

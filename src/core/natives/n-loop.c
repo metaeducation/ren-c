@@ -925,6 +925,8 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             goto maybe_lift_and_continue;
         }
 
+      switch_on_heart: {
+
         Heart heart = Heart_Of_Builtin_Fundamental(Known_Element(les->data));
 
         if (Any_List_Type(heart)) {
@@ -1052,11 +1054,11 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 
         crash (les->data);
 
-      maybe_lift_and_continue:
+    } maybe_lift_and_continue: { /////////////////////////////////////////////
 
         if (slot and lift)
             Liftify(unwrap slot);
-    }
+    }}
 
     return true;
 }
@@ -1475,6 +1477,8 @@ DECLARE_NATIVE(REMOVE_EACH)
             goto handle_keep_or_no_keep;
         }
 
+      decay_out: {
+
         Value* out = Decay_If_Unstable(OUT);
 
         if (Is_Okay(out)) {  // pure logic required [1]
@@ -1494,7 +1498,7 @@ DECLARE_NATIVE(REMOVE_EACH)
             goto finalize_remove_each;
         }
 
-      handle_keep_or_no_keep: ////////////////////////////////////////////////
+    } handle_keep_or_no_keep: ////////////////////////////////////////////////
 
         if (Any_List(data)) {
             if (keep) {

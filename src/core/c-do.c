@@ -159,6 +159,8 @@ bool Pushed_Continuation(
         goto pushed_continuation;
     }
 
+  switch_on_sigil: {
+
     Option(Sigil) sigil = Sigil_Of(c_cast(Element*, branch));
     if (sigil) {
         switch (unwrap sigil) {
@@ -229,10 +231,8 @@ bool Pushed_Continuation(
         Push_Level_Erase_Out_If_State_0(out, L);
         goto pushed_continuation; }
 
-      handle_action:
-      case TYPE_FRAME: {
-        Push_Frame_Continuation(out, flags, branch, with);
-        goto pushed_continuation; }
+      case TYPE_FRAME:
+        goto handle_action;
 
       default:
         break;
@@ -240,9 +240,16 @@ bool Pushed_Continuation(
 
     panic (Error_Bad_Branch_Type_Raw());  // narrow input types? [3]
 
-  pushed_continuation:
+} handle_action: { ///////////////////////////////////////////////////////////
+
+    Push_Frame_Continuation(out, flags, branch, with);
+    goto pushed_continuation;
+
+} pushed_continuation: { /////////////////////////////////////////////////////
+
     return true;
 
-  just_use_out:
+} just_use_out: { ////////////////////////////////////////////////////////////
+
     return false;
-}
+}}

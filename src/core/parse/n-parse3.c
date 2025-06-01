@@ -460,7 +460,7 @@ bool Process_Group_For_Parse_Throws(
         panic (Cell_Error(eval));
     }
 
-    if (Is_Void(eval)) {
+    if (Is_Ghost_Or_Void(eval)) {
         // allow it (can't decay)
     }
     else {
@@ -1333,7 +1333,7 @@ DECLARE_NATIVE(SUBPARSE)
     // The input index is not advanced here, but may be changed by
     // a GET-WORD variable.
 
-  pre_rule: ;  // next line is declaration, need semicolon
+  pre_rule: {
 
     const Element* rule = P_AT_END ? nullptr : P_RULE;
 
@@ -1423,12 +1423,6 @@ DECLARE_NATIVE(SUBPARSE)
         Maybe_Trampoline_Break_On_Tick(LEVEL);
     }
 
-    // Some iterated rules have a parameter.  `3 into [some "a"]` will
-    // actually run the INTO `rule` 3 times with the `subrule` of
-    // `[some "a"]`.  Because it is iterated it is only captured the first
-    // time through, nullptr indicates it's not been captured yet.
-    //
-    const Element* subrule = nullptr;
 
     if (rule == nullptr)  // means at end
         goto return_position;  // done all needed to do for end position
@@ -1859,42 +1853,8 @@ DECLARE_NATIVE(SUBPARSE)
     if (Is_Bar(rule))
         panic ("BAR! must be source level (else PARSE can't skip it)");
 
-    if (Is_Quasiform(rule)) {
-        if (
-            Is_Quasi_Word_With_Id(rule, SYM_VOID)
-            or Is_Quasi_Word_With_Id(rule, SYM_OKAY)
-        ){
-            FETCH_NEXT_RULE(L);
-            goto pre_rule;
-        }
-        panic ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
-    }
-    else switch (Type_Of(rule)) {
-      case TYPE_GROUP:
+    if (Is_Group(rule))
         goto process_group;  // GROUP! can make WORD! that fetches GROUP!
-
-      case TYPE_INTEGER:  // Specify repeat count
-        panic (
-            "[1 2 rule] now illegal https://forum.rebol.info/t/1578/6"
-            " (use REPEAT)"
-        );
-
-      case TYPE_TAG: {  // tag combinator in UPARSE, matches in UPARSE2
-        bool strict = true;
-        if (0 == CT_Utf8(rule, Root_Here_Tag, strict)) {
-            FETCH_NEXT_RULE(L);  // not being assigned with set-word!, no-op
-            goto pre_rule;
-        }
-        if (0 == CT_Utf8(rule, Root_End_Tag, strict)) {
-            FETCH_NEXT_RULE(L);
-            begin = P_POS;
-            goto handle_end;
-        }
-        panic ("Only TAG! combinators PARSE3 supports are <here> and <end>"); }
-
-      default:;
-        // Fall through to next section
-    }
 
 
     //==////////////////////////////////////////////////////////////////==//
@@ -1902,6 +1862,8 @@ DECLARE_NATIVE(SUBPARSE)
     // ITERATED RULE PROCESSING SECTION
     //
     //==////////////////////////////////////////////////////////////////==//
+
+  iterated_rule_processing: {
 
     // Repeats the same rule N times or until the rule fails.
     // The index is advanced and stored in a temp variable i until
@@ -1911,8 +1873,42 @@ DECLARE_NATIVE(SUBPARSE)
 
     begin = P_POS;  // input at beginning of match section
 
-    REBINT count;  // gotos would cross initialization
-    count = 0;
+    // Some iterated rules have a parameter.  `3 into [some "a"]` will
+    // actually run the INTO `rule` 3 times with the `subrule` of
+    // `[some "a"]`.  Because it is iterated it is only captured the first
+    // time through, nullptr indicates it's not been captured yet.
+    //
+    const Element* subrule = nullptr;
+
+    REBINT count = 0;
+
+    if (Is_Quasiform(rule)) {
+        if (Is_Quasi_Word_With_Id(rule, SYM_OKAY))
+            goto pre_rule;
+
+        panic ("PARSE3 only supports ~okay~ quasiforms/antiforms");
+    }
+    else switch (Type_Of(rule)) {
+      case TYPE_INTEGER:  // Specify repeat count
+        panic (
+            "[1 2 rule] now illegal https://forum.rebol.info/t/1578/6"
+            " (use REPEAT)"
+        );
+
+      case TYPE_TAG: {  // tag combinator in UPARSE, matches in UPARSE2
+        bool strict = true;
+        if (0 == CT_Utf8(rule, Root_Here_Tag, strict)) {
+            goto pre_rule;
+        }
+        if (0 == CT_Utf8(rule, Root_End_Tag, strict)) {
+            goto handle_end;
+        }
+        panic ("Only TAG! combinators PARSE3 supports are <here> and <end>"); }
+
+      default:
+        break;  // fall through
+    }
+
     while (count < maxcount) {
         assert(
             not Is_Bar(rule)
@@ -2181,7 +2177,7 @@ DECLARE_NATIVE(SUBPARSE)
     // from SUBPARSE, as there still may be alternate rules to apply
     // with bar e.g. `[a | b | c]`.
 
-  post_match_processing:;
+} post_match_processing: {
 
     if (P_FLAGS & PF_STATE_MASK) {
         if (P_FLAGS & PF_NOT) {
@@ -2197,7 +2193,7 @@ DECLARE_NATIVE(SUBPARSE)
             //
             // Set count to how much input was advanced
             //
-            count = (begin > P_POS) ? 0 : P_POS - begin;
+            REBINT count = (begin > P_POS) ? 0 : P_POS - begin;
 
             if (P_FLAGS & PF_ACROSS) {
                 Value* sink = Sink_Word_May_Panic(
@@ -2415,15 +2411,18 @@ DECLARE_NATIVE(SUBPARSE)
     mincount = maxcount = 1;
     goto pre_rule;
 
-  return_position:
+}} return_position: {
+
     return Init_Integer(OUT, P_POS);  // !!! return switched input series??
 
-  return_null:
+} return_null: {
+
     return Init_Nulled(OUT);
 
-  return_thrown:
+} return_thrown: {
+
     return THROWN;
-}
+}}
 
 
 //

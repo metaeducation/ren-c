@@ -37,7 +37,7 @@
 
 
 //
-//  typechecker-archetype: native [
+//  typechecker-archetype: native:intrinsic [
 //
 //  "For internal use (builds parameters and return slot)"
 //

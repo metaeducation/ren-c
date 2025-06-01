@@ -528,7 +528,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
         void operator=(int right) {  // add write checks you want here
             assert(right >= 0 and right <= 255);
 
-            Heart heart = Unchecked_Heart_Of(ref);
+            Option(Heart) heart = Unchecked_Heart_Of(ref);
             if (not (right & NONQUASI_BIT))
                 assert(Any_Isotopic_Type(heart));  // has quasiforms/antiforms
 
@@ -598,8 +598,9 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
             return TYPE_PINNED;
 
           case SIGIL_TIE:
-            return TYPE_TIED;
+            break;  // compiler warns of fallthrough
         }
+        return TYPE_TIED;  // workaround "not all control paths return a value"
 
       case 2:  // QUASIFORM_2 (not constant in some debug builds)
         return TYPE_QUASIFORM;

@@ -637,6 +637,8 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
     if (Is_Lifted_Ghost(lifted))
         return PANIC("Cannot OPT a GHOST!");  // !!! Should we opt out ghosts?
 
+  perform_unlift: {
+
     Value* out = Copy_Cell(OUT, lifted);
     Unliftify_Decayed(out);
 
@@ -645,7 +647,7 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
 
     return OUT;
 
-  opt_out: { /////////////////////////////////////////////////////////////////
+} opt_out: { /////////////////////////////////////////////////////////////////
 
     return veto ? FAIL(Cell_Error(g_error_veto)) : VOID;
 }}
