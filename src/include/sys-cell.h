@@ -1219,3 +1219,32 @@ INLINE Value* Constify(Value* v) {
         *e = nullptr;
     }
 #endif
+
+
+//=//// PASS SINK()/NEED() TO API VARIADICS ///////////////////////////////=//
+//
+// C doesn't have any type checking of variadic parameters, but when compiling
+// with C++ we can recursively break down the variadics and do typechecking
+// (as well as do interesting type conversions).  Here we just enable Sink()
+// and Need() for Element* and Value* (it's not legal to pass unstable
+// antiforms, e.g. Atom*, to the API)
+//
+// Note that a similar converter should NOT be made for OnStack(...), as you
+// should not be passing values on the data stack to API functions.
+//
+
+#if DEBUG_USE_SINKS
+    inline const void* to_rebarg(const Sink(Value)& val)
+        { return u_cast(Value*, val); }
+
+    inline const void* to_rebarg(const Need(Value)& val)
+        { return u_cast(Value*, val); }
+
+  #if CHECK_CELL_SUBCLASSES
+    inline const void* to_rebarg(const Sink(Element)& val)
+        { return u_cast(Value*, val); }
+
+    inline const void* to_rebarg(const Need(Element)& val)
+        { return u_cast(Value*, val); }
+  #endif
+#endif
