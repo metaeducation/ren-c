@@ -891,7 +891,9 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
 
       case SYM_UTC: {
         if (not Does_Date_Have_Time(date) or not Does_Date_Have_Zone(date))
-            panic ("DATE! must have :TIME and :ZONE components to get UTC");
+            return PANIC(
+                "DATE! must have :TIME and :ZONE components to get UTC"
+            );
 
         // We really just want the original un-adjusted stored time but
         // with the time zone component set to 0:00

@@ -642,6 +642,9 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     Level* sub,  // will Push_Level() if not already pushed
     StackIndex picker_index
 ){
+    if (Is_Quasiform(SPARE))
+        return Error_User("TWEAK* cannot be used on antiforms");
+
     Push_Action(sub, LIB(TWEAK_P));
     Begin_Action(sub, CANON(TWEAK_P), PREFIX_0);
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
@@ -744,6 +747,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
     StackIndex picker_index,
     Option(Value*) dual_poke_if_not_on_stack
 ){
+    if (Is_Quasiform(SPARE))
+        return Error_User("TWEAK* cannot be used on antiforms");
+
     Atom* spare_location_dual = SPARE;
 
     Push_Action(sub, LIB(TWEAK_P));
@@ -921,61 +927,18 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
   handle_scratch_var_as_wordlike: {
 
-    if (not Try_Get_Binding_Of(spare_location_dual, scratch_var)) {
+    if (not Try_Get_Binding_Of(SPARE, scratch_var)) {
         e = Error_User("Couldn't get binding...");
         goto return_error;
     }
 
-    Liftify(spare_location_dual);  // dual protocol, lift
+    Copy_Cell(PUSH(), Known_Element(SPARE));
+    Liftify(TOP);  // dual protocol, lift (?)
 
     Copy_Cell(PUSH(), scratch_var);  // save var for steps + error messages
+    unnecessary(Liftify(TOP));  // if ^x, not literally ^x ... meta-variable
 
-    Level* sub = Make_End_Level(&Action_Executor, flags);
-
-    if (not Is_Tweak_A_Get(LEVEL)) {
-        Value* dual_poke = Known_Stable(OUT);
-
-        e = Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
-            level_,
-            sub,
-            TOP_INDEX,  // picker_index
-            dual_poke
-        );
-        if (e) {
-            unnecessary(Drop_Level(sub));  // Call_Poke_P() drops on error
-            goto return_error;
-        }
-
-        Value* spare_writeback_dual = Known_Stable(SPARE);
-
-        if (not Is_Nulled(spare_writeback_dual)) { // only one unit of TWEAK* !
-            e = Error_User(
-                "Last TWEAK* step gave non-null cell writeback bits"
-            );
-            goto return_error;
-        }
-    }
-    else {
-        e = Trap_Call_Pick_Refresh_Dual_In_Spare(
-            level_,
-            sub,
-            TOP_INDEX  // picker_index
-        );
-        if (e) {
-            unnecessary(Drop_Level(sub));  // Call_Poke_P() drops on error
-            goto return_error;
-        }
-        if (Is_Error(spare_location_dual)) {  // in-band PICK error
-            e = Cell_Error(spare_location_dual);
-            goto return_error;  // WORD!-access not TRY-able (action conflate)
-        }
-        Copy_Cell(OUT, spare_location_dual);
-        Unliftify_Undecayed(OUT);  // already decayed if it was non-meta
-    }
-
-    Drop_Level(sub);
-
-    goto return_success;
+    goto set_from_steps_on_stack;
 
 } handle_scratch_var_as_sequence: {
 
@@ -1023,6 +986,19 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     const Element* head = Cell_List_At(&tail, scratch_var);
     const Element* at;
     Context* at_binding = Cell_Binding(scratch_var);
+
+    if (Any_Word(head)) {  // add binding at head
+        if (not Try_Get_Binding_Of(
+            PUSH(), Derelativize(SPARE, head, at_binding)
+        )){
+            DROP();
+            e = Error_User("Couldn't get binding...");
+            goto return_error;
+        }
+
+        Liftify(TOP);  // dual protocol, lift (?)
+    }
+
     for (at = head; at != tail; ++at) {
         if (not Is_Group(at)) {  // must keep WORD!s at head as-is for writeback
             possibly(Is_Quoted(at));  // will be interpreted "literally"
@@ -1076,7 +1052,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
   do_stack_thing: {
 
     OnStack(Element*) at = Data_Stack_At(Element, stackindex);
-    if (Is_Quoted(at)) {  // don't dereference
+    if (Any_Lifted(at)) {  // don't dereference
         Copy_Cell(spare_location_dual, at);  // dual protocol, leave lifted
     }
     else if (Is_Word(at)) {
@@ -1123,8 +1099,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         e = Trap_Call_Pick_Refresh_Dual_In_Spare(
             level_, sub, stackindex
         );
-        if (e)
+        if (e) {
+            Drop_Level(sub);
             goto return_error;
+        }
 
         if (Is_Error(spare_location_dual)) {  // PICK failed
             if (
@@ -1169,12 +1147,16 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         stackindex,  // picker_index
         dual_poke_if_not_on_stack
     );
+    if (sub != TOP_LEVEL) {
+        assert(e);  // ack, fix!
+        Push_Level_Erase_Out_If_State_0(SPARE, sub);
+    }
+    Drop_Level(sub);
+
     if (e)
         goto return_error;
 
     Value* spare_writeback_dual = Known_Stable(SPARE);
-
-    Drop_Level(sub);
 
     // Subsequent updates become pokes, regardless of initial updater function
 
@@ -1212,6 +1194,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     goto finalize_and_return;
 
 } finalize_and_return: { /////////////////////////////////////////////////////
+
+    assert(LEVEL == TOP_LEVEL);
 
     Corrupt_Cell_If_Debug(SPARE);
 
@@ -1367,23 +1351,11 @@ DECLARE_NATIVE(SET)
 
 } call_generic_set_var: { ////////////////////////////////////////////////////
 
-    // 1. Plain POKE can't throw (e.g. from GROUP!) because it won't evaluate
-    //    them.  However, we can get errors.  Confirm we only are raising
-    //    errors unless steps_out were passed.
-    //
-    // 2. We want parity between (set $x expression) and (x: expression).  It's
-    //    very useful that you can write (e: trap [x: expression]) and in the
-    //    case of an error, have the assignment skipped and the error trapped.
-    //
-    //    Note that (set $ ^x fail "hi") will perform a meta-assignment of
-    //    the quasiform error to X, but will still pass through the error
-    //    antiform as the overall expression result.
-
     Option(Element*) steps;
     if (Bool_ARG(GROUPS))
         steps = GROUPS_OK;
     else
-        steps = nullptr;  // no GROUP! evals
+        steps = NO_STEPS;  // no GROUP! evals
 
     if (not Bool_ARG(ANY)) {
         // !!! The only SET prohibitions will be on antiform actions, TBD
@@ -1399,12 +1371,20 @@ DECLARE_NATIVE(SET)
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, steps);
-    if (e) {
-        assert(steps or Is_Throwing_Panic(LEVEL));  // throws must eval [1]
+    if (e)
         return PANIC(unwrap e);
-    }
 
-    return OUT;  // even if we don't assign, pass through [2]
+} return_value_even_if_we_dont_assign: {
+
+  // We want parity between (set $x expression) and (x: expression).  It's
+  // very useful that you can write (e: trap [x: expression]) and in the case
+  // of an error, have the assignment skipped and the error trapped.
+  //
+  // Note that (set $ ^x fail "hi") will perform a lifted-assignment of the
+  // quasiform error to X, but will still pass through the ERROR! antiform as
+  // the overall expression result.
+
+    return OUT;
 }}
 
 

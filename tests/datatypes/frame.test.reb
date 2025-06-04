@@ -162,7 +162,7 @@
             f-prelude: binding of $private
         ]
 
-        f-outer: make frame! unrun :bar
+        f-outer: make frame! bar/
         f-outer.public: 1020
         f-outer.private: <different!>
 
