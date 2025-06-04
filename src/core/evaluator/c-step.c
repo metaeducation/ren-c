@@ -1429,6 +1429,9 @@ Bounce Stepper_Executor(Level* L)
 
 } generic_set_rightside_dual_in_out: {
 
+    if (Is_Endlike_Tripwire(OUT))
+        return PANIC(Error_Need_Non_End_Raw(CURRENT));
+
     Unliftify_Undecayed(OUT);  // !!! do this with space VAR instead
 
     if (Is_Lifted_Void(CURRENT))  // e.g. `(void): ...`  !!! use space var!
@@ -1628,12 +1631,15 @@ for (; check != tail; ++check) {  // push variables
             if (Is_Antiform(spare))
                 return PANIC(Error_Bad_Antiform(spare));
 
-            if (Is_Pinned(GROUP, CURRENT))
+            if (Is_Pinned(GROUP, CURRENT)) {
                 Pinify(Known_Element(spare));  // add @ decoration
-            else {
-                assert(Is_Metaform(GROUP, CURRENT));
+            }
+            else if (Is_Metaform(GROUP, CURRENT)) {
                 Metafy(Known_Element(spare));  // add ^ decoration
             }
+            else
+                assert(Is_Group(CURRENT));
+
             Copy_Cell(PUSH(), spare);
         }
     }

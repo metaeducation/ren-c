@@ -197,9 +197,12 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 return true;
             }
 
-            if (Is_Feed_At_End(L_temp->feed) or Is_Ghost(out))
+            if (Is_Endlike_Tripwire(out) or Is_Feed_At_End(L_temp->feed)) {
                 Poison_Cell(shared);
+            }
             else {
+                Unliftify_Undecayed(out);
+
                 // The indexor is "prefetched", so though the temp level would
                 // be ready to use again we're throwing it away, and need to
                 // effectively "undo the prefetch" by taking it down by 1.
@@ -329,12 +332,14 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     if (Is_Cell_Erased(out))
         return false;
 
+    Decay_If_Unstable(out);
+
     if (op == VARARG_OP_TAIL_Q) {
         assert(Is_Logic(out));
         return false;
     }
 
-    if (param and not Is_Ghost(out)) {
+    if (param and not Is_Atom_Trash(out)) {
         heeded(Corrupt_Cell_If_Debug(Level_Spare(TOP_LEVEL)));
         heeded(Corrupt_Cell_If_Debug(Level_Scratch(TOP_LEVEL)));
 

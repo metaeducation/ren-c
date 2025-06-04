@@ -163,16 +163,9 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
     };
 
     switch (STATE) {
-      case ST_ENTRAP_INITIAL_ENTRY:
-        goto initial_entry;
-
-      case ST_ENTRAP_EVAL_STEPPING:
-        Unliftify_Undecayed(SPARE);
-        goto eval_step_result_in_spare;
-
-      case ST_ENTRAP_RUNNING_FRAME:
-        goto eval_step_result_in_spare;
-
+      case ST_ENTRAP_INITIAL_ENTRY: goto initial_entry;
+      case ST_ENTRAP_EVAL_STEPPING: goto eval_step_lifted_or_end_in_spare;
+      case ST_ENTRAP_RUNNING_FRAME: goto eval_result_in_spare;
       default: assert(false);
     }
 
@@ -214,7 +207,14 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
     unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
     return CONTINUE_SUBLEVEL(sub);
 
-} eval_step_result_in_spare: {  //////////////////////////////////////////////
+} eval_step_lifted_or_end_in_spare: {  ///////////////////////////////////////
+
+    if (Is_Endlike_Tripwire(SPARE))
+        goto finished;
+
+    Unliftify_Undecayed(SPARE);
+
+} eval_result_in_spare: {  ///////////////////////////////////////////////////
 
     if (Is_Error(SPARE)) {
         Drop_Level(SUBLEVEL);
@@ -223,10 +223,15 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
         return BRANCHED(OUT);
     }
 
+    if (STATE == ST_ENTRAP_RUNNING_FRAME) {
+        Copy_Cell(OUT, SPARE);
+        goto finished;
+    }
+
     if (not Is_Ghost_Or_Void(SPARE))
         Move_Atom(OUT, SPARE);
 
-    if (Is_Level_At_End(SUBLEVEL))
+    if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
         goto finished;
 
     Reset_Evaluator_Erase_Out(SUBLEVEL);
