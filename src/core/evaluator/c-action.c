@@ -276,7 +276,9 @@ Bounce Action_Executor(Level* L)
         goto fulfill_loop_body;  // optimized out
 
       continue_fulfilling:
-        assert(Is_Stable(ARG));  // also checks ARG is readable
+        /* assert(Is_Stable(ARG)); */  // also checks ARG is readable
+        if (not Is_Stable(ARG))
+            return PANIC("ARG is unstable--FIX!");
 
         if (Get_Action_Executor_Flag(L, DOING_PICKUPS)) {
             if (TOP_INDEX != L->baseline.stack_base)
@@ -476,7 +478,10 @@ Bounce Action_Executor(Level* L)
                 break;
 
               case PARAMCLASS_SOFT:
-                assert(Not_Antiform(OUT));
+                /*assert(Not_Antiform(OUT));*/
+                if (Is_Antiform(OUT))  // !!! Fix this
+                    return PANIC("Unexpected antiform on left of soft escape");
+
                 if (Is_Soft_Escapable_Group(cast(Element*, OUT))) {
                     if (Eval_Any_List_At_Throws(
                         ARG,
