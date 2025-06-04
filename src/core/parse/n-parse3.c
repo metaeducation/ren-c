@@ -315,6 +315,11 @@ static bool Subparse_Throws(
 
     Drop_Level(L);
 
+    if (b == BOUNCE_PANIC) {
+        assert(Is_Throwing_Panic(TOP_LEVEL));
+        return true;
+    }
+
     assert(b == out);
 
     *interrupted_out = false;

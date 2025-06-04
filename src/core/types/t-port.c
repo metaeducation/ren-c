@@ -144,18 +144,15 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
         Details* details = Ensure_Cell_Frame_Details(actor);
         Dispatcher* dispatcher = Details_Dispatcher(details);
-        Bounce b = Apply_Cfunc(dispatcher, level_);
-        if (b == BOUNCE_PANIC)
+        Bounce b = maybe Irreducible_Bounce(
+            LEVEL,
+            Apply_Cfunc(dispatcher, LEVEL)
+        );
+        if (b)  // couldn't reduce to being something in OUT
             return b;
 
-        if (b == nullptr)
-           Init_Nulled(OUT);
-        else if (b != OUT) {
-            Atom* r = Atom_From_Bounce(b);
-            assert(Is_Atom_Api_Value(r));
-            Copy_Cell(OUT, r);
-            Release_Api_Value_If_Unmanaged(r);
-        }
+        if (Is_Error(OUT))
+            return OUT;
 
         goto post_process_output;
     }
