@@ -34,7 +34,6 @@
         "strings could be used in R3-Alpha/Red"
         %ren-c/lets-you-use.file
         ren-c-also-allows-words-as-seeds-now
-        @all-word-variants-as-well
         #A
         #issue-of-more-than-one-char-works-now-too
         1020%

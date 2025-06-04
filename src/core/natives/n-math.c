@@ -344,7 +344,7 @@ DECLARE_NATIVE(EVEN_Q)
 //
 //      return: []
 //      seed "Pass e.g. NOW:TIME:PRECISE for nondeterminism"
-//          [fundamental?]
+//          [plain?]
 //  ]
 //
 DECLARE_NATIVE(RANDOMIZE)
@@ -365,9 +365,9 @@ DECLARE_NATIVE(RANDOMIZE)
 //
 //  "Returns random value of the given type, 'zero' to max (see also SHUFFLE)"
 //
-//      return: [element?]
+//      return: [plain?]
 //      max "Maximum value of result (inclusive)"
-//          [fundamental?]
+//          [plain?]
 //      :secure "Old refinement from R3-Alpha: Review"
 //  ]
 //
