@@ -124,11 +124,13 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 #define NO_STEPS  cast(Option(Element*), nullptr)
 
 
-
-#define NO_WRITEBACK_NEEDED  DUAL_SIGNAL_NULL_ABSENT
+#define DUAL_LIFTED(v)    Liftify(v ? v : Init_Nulled(OUT))
+#define DUAL_SIGNAL_NULL_ABSENT  cast(Bounce, Init_Nulled(OUT))
+#define Is_Dual_Nulled_Absent_Signal(dual)  Is_Nulled(dual)
 
 #define WRITEBACK(out)  DUAL_LIFTED(out)  // commentary
-
+#define NO_WRITEBACK_NEEDED  DUAL_SIGNAL_NULL_ABSENT
+#define Is_Dual_Nulled_No_Writeback_Signal(dual)  Is_Nulled(dual)
 
 #define Is_Dual_Nulled_Pick_Signal(dual)  Is_Nulled(dual)
 #define Init_Dual_Nulled_Pick_Signal(dual)  Init_Nulled(dual)

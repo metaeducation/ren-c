@@ -940,9 +940,6 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
     #define LOOPED(v)   Native_Looped_Result(level_, (v))
 
-    #define DUAL_LIFTED(v)    Liftify(v ? v : Init_Nulled(OUT))
-    #define DUAL_SIGNAL_NULL_ABSENT  cast(Bounce, Init_Nulled(OUT))
-
     // Note: For efficiency, intrinsic typecheckers must return BOUNCE_OKAY
     // or nullptr.  This means that trying to make LOGIC(b) "more efficient"
     // by doing Init_Okay(OUT) or Init_Nulled(OUT) will break things.

@@ -713,29 +713,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     assert(sub == TOP_LEVEL);
     unnecessary(Drop_Action(sub));  // !! action is dropped, should it be?
 
-    if (not Any_Lifted(SPARE)) {
-        if (Is_Nulled(SPARE)) {  // bad pick on final step should be trappable
-            Copy_Cell(OUT, Data_Stack_At(Element, picker_index));
-            Drop_Level(sub);
-
-            Init_Warning(SPARE, Error_Bad_Pick_Raw(Known_Element(OUT)));
-            Failify(SPARE);  // signal bad pick distinct from other panics
-            return SUCCESS;
-        }
-
-        return Error_User(
-            "TWEAK* (dual protocol) didn't return a lifted value"
-        );
-    }
-
-    Unliftify_Undecayed(SPARE);  // review efficiency of unlift + lift here
-
-    if (picker_was_meta) {
-        Unliftify_Undecayed(SPARE);
-        Decay_If_Unstable(SPARE);
-    }
-
-    Liftify(SPARE);  // need lifted for dual protocol (review)
+    UNUSED(picker_was_meta);  // !!! caller checks picker on stack for metaform
 
     return SUCCESS;
 }}
@@ -864,14 +842,6 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 }}
 
 
-// Currently, setting the output cell to trash is how you signal a Tweak
-// operation should act as a GET, not a SET.  This can't overlap with signals
-// that are valid for dual.  It should be something fast to check...
-//
-#define Is_Tweak_A_Get(L)  Is_Atom_Trash((L)->out)
-#define Mark_Tweak_As_Get(L)  Init_Tripwire((L)->out)
-
-
 //
 //  Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps: C
 //
@@ -883,16 +853,16 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 // but they must do so carefully, because that would skip things like
 // accessors (which implement type checking, etc.)
 //
-// 1. The calling function should do `heeded(Corrupt_Cell_If_Debug(SPARE))`.  This
-//    helps us know they are not expecting SPARE to be maintained across the
-//    evaluation.  (It's better than trying to work "Corrupts_Spare()" into
-//    the already quite-long name of the function.)
+// 1. The calling function should do `heeded(Corrupt_Cell_If_Debug(SPARE))`.
+//    This helps be sure they're not expecting SPARE to be untouched.  (It's
+//    better than trying to work "Corrupts_Spare()" into the already quite-long
+//    name of the function.)
 //
 Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     bool groups_ok
 ){
-  #if PERFORM_CORRUPTIONS  // caller pre-corrupts spare [1]
+  #if PERFORM_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
   #endif
 
@@ -1052,31 +1022,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
   do_stack_thing: {
 
     OnStack(Element*) at = Data_Stack_At(Element, stackindex);
-    if (Any_Lifted(at)) {  // don't dereference
-        Copy_Cell(spare_location_dual, at);  // dual protocol, leave lifted
-    }
-    else if (Is_Word(at)) {
-        const Value* slot;
-        Option(Error*) error = Trap_Lookup_Word(&slot, at, SPECIFIED);
-        if (error)
-            panic (unwrap error);
-        if (Any_Lifted(slot)) {
-            e = Error_User("Can't PICK from a lifted LOCATION");
-            goto return_error;
-        }
-        if (Is_Antiform(slot)) {
-            if (Is_Action(slot))
-                LIFT_BYTE(slot) = NOQUOTE_1;  // (append.series) -> parameter!
-            else {
-                e = Error_Bad_Antiform(slot);
-                goto return_error;
-            }
-        }
-        Copy_Cell(spare_location_dual, Known_Element(slot));
-        Liftify(spare_location_dual);  // dual protocol, lift
-    }
-    else {
-        e = Error_Bad_Value(Copy_Cell(SPARE, at));
+    Copy_Cell(spare_location_dual, at);  // dual protocol, leave lifted
+    if (not Any_Lifted(spare_location_dual)) {
+        e = Error_User("First Element in STEPS must be lifted");
         goto return_error;
     }
 
@@ -1085,7 +1033,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 } calculate_pick_stack_limit:
 
     StackIndex limit = stackindex_top;
-    if (Is_Tweak_A_Get(LEVEL))
+    if (Is_Dual_Nulled_Pick_Signal(OUT))
         limit = stackindex_top + 1;
 
     if (stackindex == limit)
@@ -1095,7 +1043,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     Level* sub = Make_End_Level(&Action_Executor, flags);
 
-    for (; stackindex != limit; Restart_Action_Level(sub)) {
+    for (; stackindex != limit; ++stackindex, Restart_Action_Level(sub)) {
         e = Trap_Call_Pick_Refresh_Dual_In_Spare(
             level_, sub, stackindex
         );
@@ -1104,19 +1052,39 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto return_error;
         }
 
-        if (Is_Error(spare_location_dual)) {  // PICK failed
+        if (Any_Lifted(SPARE)) {  // most common answer--successful pick
+            Unliftify_Undecayed(SPARE);  // review efficiency of unlift + lift
+
+            if (Any_Metaform(Data_Stack_At(Element, stackindex))) {
+                Unliftify_Undecayed(SPARE);
+                Decay_If_Unstable(SPARE);
+            }
+
+            Liftify(SPARE);  // need lifted for dual protocol (review)
+            continue;
+        }
+
+        if (Is_Dual_Nulled_Absent_Signal(SPARE)) {
+            Copy_Cell(SPARE, Data_Stack_At(Element, stackindex));
+            e = Error_Bad_Pick_Raw(Known_Element(SPARE));
             if (
                 stackindex == limit - 1
                 and not Any_Metaform(Data_Stack_At(Element, stackindex))
             ){
-                Move_Atom(OUT, SPARE);
+                Init_Warning(OUT, unwrap e);
+                Failify(OUT);  // signal bad pick distinct from panics
+
+                e = SUCCESS;
+                Drop_Level(sub);
                 goto return_success;  // last step can be tolerant, see [A]
             }
-            e = Cell_Error(spare_location_dual);
+            Drop_Level(sub);
             goto return_error;
         }
 
-        ++stackindex;
+        e = Error_User("TWEAK* (dual protocol) gave unknown state for PICK");
+        Drop_Level(sub);
+        goto return_error;
     }
 
     Drop_Level(sub);
@@ -1129,7 +1097,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     //    (it just re-lifted it) so the undecayed won't make an unstable
     //    value here if the picker wasn't ^META.
 
-    if (Is_Tweak_A_Get(LEVEL)) {
+    if (Is_Dual_Nulled_Pick_Signal(OUT)) {
         Copy_Cell(OUT, spare_location_dual);
         Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]
         goto return_success;
@@ -1160,7 +1128,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     // Subsequent updates become pokes, regardless of initial updater function
 
-    if (Is_Nulled(spare_writeback_dual))
+    if (Is_Dual_Nulled_No_Writeback_Signal(spare_writeback_dual))
         goto return_success;
 
     if (stackindex_top == base + 1) {
@@ -1271,7 +1239,7 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
-    heeded(Mark_Tweak_As_Get(level_));  // mark OUT to signal a GET, not a SET
+    heeded(Init_Dual_Nulled_Pick_Signal(OUT));
 
     return Trap_Tweak_Var_In_Scratch_With_Dual_Out(
         level_,
