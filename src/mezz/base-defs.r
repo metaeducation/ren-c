@@ -239,7 +239,7 @@ max: maximum/
 abs: absolute/
 
 delimit: lambda [delimiter line :head :tail] [
-    join // [text! line :with delimiter :head head :tail tail]
+    join // [text! line with: delimiter head: head tail: tail]
 ]
 /unspaced: specialize delimit/ [delimiter: null]
 /spaced: specialize delimit/ [delimiter: space]

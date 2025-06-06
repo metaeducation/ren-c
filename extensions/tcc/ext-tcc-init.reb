@@ -442,11 +442,11 @@ compile: func [
     config.librebol-path: ~#[taken into account]#~  ; COMPILE* does not read
 
     let result: compile* // [
-        :compilables compilables
-        :config config
-        :files files
-        :inspect inspect
-        :librebol use-librebol
+        compilables
+        config
+        files: files
+        inspect: inspect
+        librebol: use-librebol
     ]
 
     if inspect [
@@ -624,9 +624,9 @@ c99: func [
     ;
     compile // [
         compilables
-        :files okay  ; compilables represents a list of files
-        :inspect inspect  ; return C source as text but don't compile it
-        :settings settings
+        files: okay  ; compilables represents a list of files
+        inspect: inspect  ; return C source as text but don't compile it
+        settings: settings
     ]
 
     return 0  ; must translate errors into integer codes...

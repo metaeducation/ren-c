@@ -628,24 +628,12 @@ DECLARE_NATIVE(APPLIQUE)
 
 
 //
-//  apply: native [  ; !!! MUST UPDATE SPEC FOR // NATIVE IF CHANGED [1]
+//  Native_Frame_Filler_Core: C
 //
-//  "Invoke an action with all required arguments specified"
+// This extracts the code for turning a BLOCK! into a partially (or fully)
+// filled FRAME!.  It's shared between SPECIALIZE and APPLY.
 //
-//      return: [any-atom?]
-//      operation [<unrun> frame!]
-//      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
-//          [block!]
-//      :relax "Don't worry about too many arguments to the APPLY"
-//      <local> frame index iterator  ; update // native if this changes [1]
-//  ]
-//
-DECLARE_NATIVE(APPLY)
-//
-// 1. For efficiency, the // infix version of APPLY is native, and just calls
-//    right through to the apply code without going through any "Bounce"
-//    or specialization code.  But that means the frame pushed for // must
-//    be directly usable by APPLY.  Keep them in sync.
+Bounce Native_Frame_Filler_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_APPLY;
 
@@ -658,29 +646,22 @@ DECLARE_NATIVE(APPLY)
     Value* var;  // may come from evars iterator or found by index
     Param* param;  // (same)
 
-    enum {
-        ST_APPLY_INITIAL_ENTRY = STATE_0,
-        ST_APPLY_INITIALIZED_ITERATOR,
-        ST_APPLY_LABELED_EVAL_STEP,
-        ST_APPLY_UNLABELED_EVAL_STEP
-    };
-
     switch (STATE) {
-      case ST_APPLY_INITIAL_ENTRY:
+      case ST_FRAME_FILLER_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_APPLY_INITIALIZED_ITERATOR:
+      case ST_FRAME_FILLER_INITIALIZED_ITERATOR:
         assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
-        goto finalize_apply;
+        goto finalize_maybe_throwing;
 
-      case ST_APPLY_LABELED_EVAL_STEP:
+      case ST_FRAME_FILLER_LABELED_EVAL_STEP:
         if (THROWING)
-            goto finalize_apply;
+            goto finalize_maybe_throwing;
         goto labeled_step_dual_in_spare;
 
-      case ST_APPLY_UNLABELED_EVAL_STEP:
+      case ST_FRAME_FILLER_UNLABELED_EVAL_STEP:
         if (THROWING)
-            goto finalize_apply;
+            goto finalize_maybe_throwing;
         if (Not_Cell_Readable(iterator)) {
             assert(Bool_ARG(RELAX));
             goto handle_next_item;
@@ -692,16 +673,16 @@ DECLARE_NATIVE(APPLY)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. Make a FRAME! for the ACTION!, weaving in the ordered refinements
-    //    collected on the stack (if any).  Any refinements that are used in
-    //    any specialization level will be pushed as well, which makes them
-    //    out-prioritize (e.g. higher-ordered) than any used in a PATH! that
-    //    were pushed during the Get of the ACTION!.
-    //
-    // 2. Binders cannot be held across evaluations at this time.  Do slow
-    //    lookups for refinements, but this is something that needs rethinking.
-    //
-    // 3. Varlist_Archetype(exemplar) is phased, sees locals
+  // 1. Make a FRAME! for the ACTION!, weaving in the ordered refinements
+  //    collected on the stack (if any).  Any refinements that are used in any
+  //    specialization level will be pushed, which makes them out-prioritize
+  //    (e.g. higher-ordered) than any used in a CHAIN! that were pushed
+  //    during the Get of the ACTION!.
+  //
+  // 2. Binders cannot be held across evaluations at this time.  Do slow
+  //    lookups for refinements, but this is something that needs rethinking.
+  //
+  // 3. Varlist_Archetype(exemplar) is phased, sees locals
 
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
         op,
@@ -731,21 +712,17 @@ DECLARE_NATIVE(APPLY)
     Init_Evars(e, Known_Element(frame));  // sees locals [3]
 
     Init_Handle_Cdata(iterator, e, sizeof(EVARS));
-    STATE = ST_APPLY_INITIALIZED_ITERATOR;
-    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_apply
+    STATE = ST_FRAME_FILLER_INITIALIZED_ITERATOR;
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // finalize_maybe_throwing
 
     goto handle_next_item;
 
 } handle_next_item: {  ///////////////////////////////////////////////////////
 
-    // 1. Two argument-name labels in a row is not legal...treat it like the
-    //    next refinement is reaching a comma or end of block.  (Though this
-    //    could be treated as an <end> case?)
-
     Level* L = SUBLEVEL;
 
     if (Is_Level_At_End(L))
-        goto finalize_apply;
+        goto finalize_maybe_throwing;
 
     const Element* at = At_Level(L);
 
@@ -758,66 +735,107 @@ DECLARE_NATIVE(APPLY)
     Corrupt_Pointer_If_Debug(param);
   #endif
 
-    if (Is_Get_Word(at)) {  // :REFINEMENT names next arg
-        STATE = ST_APPLY_LABELED_EVAL_STEP;
+    Option(SingleHeart) single;
+    if (
+        not Is_Chain(at)
+        or not (single = Try_Get_Sequence_Singleheart(at))
+        or not (Singleheart_Has_Trailing_Space(unwrap single))
+    ){
+        if (Not_Cell_Readable(iterator))
+            goto handle_discarded_item;
 
-        const Symbol* symbol = Cell_Word_Symbol(At_Level(L));
-
-        Option(Index) index = Find_Symbol_In_Context(
-            Known_Element(frame), symbol, false
-        );
-        if (not index)
-            return PANIC(Error_Bad_Parameter_Raw(at));
-
-        var = Varlist_Slot(Cell_Varlist(frame), unwrap index);
-        param = Phase_Param(Cell_Frame_Phase(op), unwrap index);
-
-        if (not Is_Parameter(var))
-            return PANIC(Error_Bad_Parameter_Raw(at));
-
-        Sink(Value) lookback = SCRATCH;  // for error
-        Copy_Cell(lookback, At_Level(L));
-        Fetch_Next_In_Feed(L->feed);
-        at = Try_At_Level(L);
-
-        if (at == nullptr or Is_Comma(at))
-            return PANIC(Error_Need_Non_End_Raw(lookback));
-
-        if (Is_Get_Word(at))  // catch e.g. :DUP :LINE [1]
-            return PANIC(Error_Need_Non_End_Raw(lookback));
-
-        Init_Integer(ARG(INDEX), unwrap index);
+        goto handle_unlabeled_item;
     }
-    else if (Not_Cell_Readable(iterator)) {
-        STATE = ST_APPLY_UNLABELED_EVAL_STEP;
-        param = nullptr;  // throw away result
+
+  handle_labeled_item: {  // REFINEMENT: names next arg
+
+  // 1. We could do (negate // [('number): 10]) or (negate // [1: 10]) etc.
+  //    Not a priority at the moment--higher priority is to share this code
+  //    with SPECIALIZE.
+  //
+  // 2. Two argument-name labels in a row is not legal...treat it like the
+  //    next refinement is reaching a comma or end of block.  (Though this
+  //    could be treated as an <end> case?)
+
+    if (single != TRAILING_SPACE_AND(WORD))  // more possibilities later [1]
+        return PANIC("Only WORD!: labels handled in APPLY at this time");
+
+    STATE = ST_FRAME_FILLER_LABELED_EVAL_STEP;
+
+    const Symbol* symbol = Cell_Word_Symbol(At_Level(L));
+
+    Option(Index) index = Find_Symbol_In_Context(
+        Known_Element(frame), symbol, false
+    );
+    if (not index)
+        return PANIC(Error_Bad_Parameter_Raw(at));
+
+    var = Varlist_Slot(Cell_Varlist(frame), unwrap index);
+    param = Phase_Param(Cell_Frame_Phase(op), unwrap index);
+
+    if (not Is_Parameter(var))
+        return PANIC(Error_Bad_Parameter_Raw(at));
+
+    Sink(Value) lookback = SCRATCH;  // for error
+    Copy_Cell(lookback, At_Level(L));
+    Fetch_Next_In_Feed(L->feed);
+    at = Try_At_Level(L);
+
+    if (at == nullptr or Is_Comma(at))
+        return PANIC(Error_Need_Non_End_Raw(lookback));
+
+    if (  // catch e.g. DUP: LINE: [2]
+        Is_Chain(at)
+        and (single = Try_Get_Sequence_Singleheart(at))
+        and Singleheart_Has_Trailing_Space(unwrap single)
+    ){
+        return PANIC(Error_Need_Non_End_Raw(lookback));
     }
-    else {
-        STATE = ST_APPLY_UNLABELED_EVAL_STEP;
 
-        EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
+    Init_Integer(ARG(INDEX), unwrap index);
+    goto eval_step_maybe_labeled;
 
-        while (true) {
-            if (not Try_Advance_Evars(e)) {
-                if (not Bool_ARG(RELAX))
-                    return PANIC(Error_Apply_Too_Many_Raw());
+}} handle_unlabeled_item: { //////////////////////////////////////////////////
 
-                Shutdown_Evars(e);
-                Free_Memory(EVARS, e);
-                Init_Unreadable(iterator);
-                param = nullptr;  // we're throwing away the evaluated product
-                break;
-            }
+    STATE = ST_FRAME_FILLER_UNLABELED_EVAL_STEP;
 
-            if (Get_Parameter_Flag(e->param, REFINEMENT))
-                continue;
+    EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
-            if (Is_Parameter(e->var)) {
-                param = e->param;
-                break;
-            }
+    while (true) {
+        if (not Try_Advance_Evars(e)) {
+            if (not Bool_ARG(RELAX))
+                return PANIC(Error_Apply_Too_Many_Raw());
+
+            Shutdown_Evars(e);
+            Free_Memory(EVARS, e);
+            Init_Unreadable(iterator);
+            param = nullptr;  // we're throwing away the evaluated product
+            break;
+        }
+
+        if (Get_Parameter_Flag(e->param, REFINEMENT))
+            continue;
+
+        if (Is_Parameter(e->var)) {
+            param = e->param;
+            break;
         }
     }
+
+    goto eval_step_maybe_labeled;
+
+} handle_discarded_item: { ///////////////////////////////////////////////////
+
+    STATE = ST_FRAME_FILLER_UNLABELED_EVAL_STEP;
+    param = nullptr;  // throw away result
+    goto eval_step_maybe_labeled;
+
+} eval_step_maybe_labeled: { /////////////////////////////////////////////////
+
+    assert(
+        STATE == ST_FRAME_FILLER_LABELED_EVAL_STEP
+        or STATE == ST_FRAME_FILLER_UNLABELED_EVAL_STEP
+    );
 
     assert(not Is_Pointer_Corrupt_Debug(param));  // nullptr means toss result
 
@@ -855,11 +873,11 @@ DECLARE_NATIVE(APPLY)
 
     goto handle_next_item;
 
-} finalize_apply: {  /////////////////////////////////////////////////////////
+} finalize_maybe_throwing: { /////////////////////////////////////////////////
 
-    // 1. We don't want to get any further notifications of abrupt panics
-    //    that happen after we have delegated to the function.  But should
-    //    DELEGATE itself rule that out automatically?  It asserts for now.
+  // 1. We don't want to get any further notifications of abrupt panics that
+  //    happen after we have delegated to the function.  But should DELEGATE()
+  //    itself rule that out automatically?  It asserts for now.
 
     if (Not_Cell_Readable(iterator))
         assert(Bool_ARG(RELAX));
@@ -876,8 +894,48 @@ DECLARE_NATIVE(APPLY)
     Drop_Level(SUBLEVEL);
 
     Disable_Dispatcher_Catching_Of_Throws(LEVEL);  // no more finalize needed
-    return DELEGATE(OUT, frame);
+
+    return BOUNCE_FRAME_FILLER_FINISHED;
 }}
+
+
+//
+//  apply: native [  ; !!! MUST UPDATE SPEC FOR // NATIVE IF CHANGED [1]
+//
+//  "Invoke an action with all required arguments specified"
+//
+//      return: [any-atom?]
+//      operation [<unrun> frame!]
+//      args "Arguments and Refinements, e.g. [arg1 arg2 ref: refine1]"
+//          [block!]
+//      :relax "Don't worry about too many arguments to the APPLY"
+//      <local> frame index iterator  ; update // native if this changes [1]
+//  ]
+//
+DECLARE_NATIVE(APPLY)
+//
+// 1. For efficiency, the // infix version of APPLY is native, and just calls
+//    right through to the apply code without going through any "Bounce"
+//    or specialization code.  But that means the frame pushed for // must
+//    be directly usable by APPLY.  Keep them in sync.
+{
+    INCLUDE_PARAMS_OF_APPLY;
+
+    USED(ARG(OPERATION));
+    USED(ARG(ARGS));
+    USED(ARG(RELAX));
+    // FRAME used below
+    USED(LOCAL(INDEX));
+    USED(LOCAL(ITERATOR));
+
+    Bounce b = Native_Frame_Filler_Core(LEVEL);
+    if (b != BOUNCE_FRAME_FILLER_FINISHED) {
+        possibly(THROWING);
+        return b;
+    }
+
+    return DELEGATE(OUT, LOCAL(FRAME));
+}
 
 
 #define LEVEL_FLAG__S_S_DELEGATING  LEVEL_FLAG_MISCELLANEOUS
@@ -931,11 +989,6 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
     Deactivate_If_Action(gotten);  // APPLY has <unrun> on ARG(OPERATION)
 
     Copy_Cell(ARG(OPERATION), gotten);
-    UNUSED(Bool_ARG(RELAX));
-    UNUSED(Bool_ARG(ARGS));
-    UNUSED(LOCAL(FRAME));
-    UNUSED(LOCAL(INDEX));
-    UNUSED(LOCAL(ITERATOR));
 
     STATE = STATE_0;  // reset state for APPLY so it looks like initial entry
     Set_Level_Flag(LEVEL, _S_S_DELEGATING);  // [2]
@@ -946,7 +999,21 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
   // to APPLY for whatever it would do, reusing the same frame.
 
     assert(Get_Level_Flag(LEVEL, _S_S_DELEGATING));
-    return NATIVE_CFUNC(APPLY)(level_);
+
+    // OPERATION used above
+    USED(ARG(RELAX));
+    USED(ARG(ARGS));
+    // FRAME used below
+    USED(LOCAL(INDEX));
+    USED(LOCAL(ITERATOR));
+
+    Bounce b = Native_Frame_Filler_Core(LEVEL);
+    if (b != BOUNCE_FRAME_FILLER_FINISHED) {
+        possibly(THROWING);
+        return b;
+    }
+
+    return DELEGATE(OUT, LOCAL(FRAME));
 }}
 
 

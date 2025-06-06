@@ -379,41 +379,69 @@ bool Specialize_Action_Throws(
 }
 
 
+#define LEVEL_FLAG_SPECIALIZE_FINISHED_FILLING  LEVEL_FLAG_MISCELLANEOUS
+
+
 //
 //  specialize: native [
 //
 //  "Create a new action through partial or full specialization of another"
 //
 //      return: [action!]
-//      original "Frame whose parameters will be set to fixed values"
-//          [<unrun> frame!]
-//      def "Definition code setting fields for args and refinements"
+//      operation [<unrun> frame!]
+//      args "Arguments and Refinements, e.g. [arg1 arg2 ref: refine1]"
 //          [block!]
+//      :relax "Don't worry about too many arguments to the SPECIALIZE"
+//      <local> frame index iterator  ; update // native if this changes [1]
 //  ]
 //
 DECLARE_NATIVE(SPECIALIZE)
 //
 // 1. Refinement specializations via path are pushed to the stack, giving
 //    order information that can't be meaningfully gleaned from an arbitrary
-//    code block (specialize append/ [dup: x | if y [part: z]]), we shouldn't
+//    code block (specialize append/ [dup: x, if y [part: z]]), we shouldn't
 //    think that intends any ordering of :dup:part or :part:dup)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
 
-    Element* specializee = Element_ARG(ORIGINAL);
-    Element* def = Element_ARG(DEF);
+    if (Get_Level_Flag(LEVEL, SPECIALIZE_FINISHED_FILLING))
+        goto finished_filling_frame;
 
-    if (Specialize_Action_Throws(
-        OUT,
-        specializee,
-        def,
-        STACK_BASE  // lowest ordered stackindex [1]
-    )){
-        return THROWN;  // e.g. (specialize append:dup/ [value: throw 10])
+  fill_frame_using_common_code_with_apply: {
+
+    // This work is shared with APPLY.  We keep passing whatever the frame
+    // filler Bounce is back up to the Trampoline until we get a signal that
+    // it is finished, at which point we take over.
+
+    // OPERATION used below
+    USED(ARG(ARGS));
+    USED(ARG(RELAX));
+    // FRAME used below
+    USED(LOCAL(INDEX));
+    USED(LOCAL(ITERATOR));
+
+    Bounce b = Native_Frame_Filler_Core(LEVEL);
+    if (b != BOUNCE_FRAME_FILLER_FINISHED) {
+        possibly(THROWING);
+        return b;
     }
 
+    Set_Level_Flag(LEVEL, SPECIALIZE_FINISHED_FILLING);
+    goto finished_filling_frame;
+
+} finished_filling_frame: { //////////////////////////////////////////////////
+
+    Element* specializee = Element_ARG(OPERATION);
+
+    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(specializee);
+
+    Value* out = Copy_Cell(OUT, LOCAL(FRAME));
+    Actionify(out);
+
+    Tweak_Cell_Frame_Infix_Mode(out, infix_mode);
+
     return UNSURPRISING(OUT);
-}
+}}
 
 
 //

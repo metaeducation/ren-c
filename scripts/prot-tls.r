@@ -861,15 +861,15 @@ finished: func [
         #{00 00 0c} ; protocol message length (12 bytes)
 
         prf // [
-            :ctx ctx
-            :secret ctx.master-secret
-            :label if yes? ctx.is-server [
+            ctx: ctx
+            secret: ctx.master-secret
+            label: if yes? ctx.is-server [
                 "server finished"
             ] else [
                 "client finished"
             ]
-            :seed seed
-            :output-length 12
+            seed: seed
+            output-length: 12
         ]
     ]
 ]

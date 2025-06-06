@@ -78,7 +78,7 @@ make-quit: lambda [
         if not integer? ^result [
             panic // [
                 "QUIT without :VALUE accepts INTEGER! exit status only"
-                :blame $result
+                blame: $result
             ]
         ]
         let exit-code: ^result
@@ -207,7 +207,7 @@ module: func [
     mod.quit: func [atom] [
         panic // [
             "Module finished init, no QUIT (do you want SYS.UTIL/EXIT?)"
-            :blame $atom
+            blame: $atom
         ]
     ]
 

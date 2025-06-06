@@ -863,10 +863,10 @@ apply: func3 [
         params: next params
     ]
 
-    ; Now go by the refinements.  If it's a refinement that takes an argument,
+    ; Now go by the SET-WORD!s.  If it's a refinement that takes an argument,
     ; we have to set the refinement to okay
     ;
-    while [refinement? :args.1] [  ; new refinements are GET-WORD! in boot
+    while [set-word? :args.1] [
         pos: find params to refinement3! args.1 else [
             panic ["Unknown refinement" args.1]
         ]

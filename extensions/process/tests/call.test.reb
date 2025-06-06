@@ -11,8 +11,8 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     call:shell // [
         [(system.options.boot) --suppress -["*"]- print.reb 100]  ; small
 
-        :input 'none  ; avoid child process eating pastes of length test
-        :output data
+        input: 'none  ; avoid child process eating pastes of length test
+        output: data
     ]
 
     100 = length of data
@@ -22,8 +22,8 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     call:shell // [
         [(system.options.boot) --suppress -["*"]- print.reb 9000]  ; medium
 
-        :input 'none  ; avoid child process eating pastes of length test
-        :output data
+        input: 'none  ; avoid child process eating pastes of length test
+        output: data
     ]
 
     9000 = length of data
@@ -33,8 +33,8 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     call:shell // [
         [(system.options.boot) --suppress -["*"]- print.reb 80000]  ; large
 
-        :input 'none  ; avoid child process eating pastes of length test
-        :output data
+        input: 'none  ; avoid child process eating pastes of length test
+        output: data
     ]
 
     80'000 = length of data

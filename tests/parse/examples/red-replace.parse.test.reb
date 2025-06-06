@@ -23,7 +23,7 @@
         ] else '[
             change f.pattern (f.replacement)
         ]
-        parse // [:case f.case, f.target [
+        parse // [case: f.case, f.target [
             while [thru rule] (
                 if f.one [return f.target]
             )

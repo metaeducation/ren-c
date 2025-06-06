@@ -1718,9 +1718,9 @@ for-each 'ext extensions [
     append ext-objlib.depends gen-obj // [
         ext-init-source
         ext-prep-dir
-        :I ext.includes
-        :D ext.definitions
-        :F ext.cflags
+        I: ext.includes
+        D: ext.definitions
+        F: ext.cflags
     ]
 
     ; Here we graft things like the global debug settings and optimization
@@ -1736,14 +1736,14 @@ for-each 'ext extensions [
     ;
     add-project-flags // [
         ext-objlib
-        :I app-config.includes
-        :D compose [
+        I: app-config.includes
+        D: compose [
             (? if ext.mode = <dynamic> ["LIBREBOL_USES_API_TABLE=1"])
             (spread app-config.definitions)
         ]
-        :c app-config.cflags
-        :O app-config.optimization
-        :g app-config.debug
+        c: app-config.cflags
+        O: app-config.optimization
+        g: app-config.debug
     ]
 
     if ext.mode = <builtin> [
@@ -1804,14 +1804,14 @@ for-each 'ext extensions [
         ;
         add-project-flags // [
             ext-proj
-            :I app-config.includes
-            :D compose [
+            I: app-config.includes
+            D: compose [
                 "LIBREBOL_USES_API_TABLE=1"
                 (spread app-config.definitions)
             ]
-            :c app-config.cflags
-            :O app-config.optimization
-            :g app-config.debug
+            c: app-config.cflags
+            O: app-config.optimization
+            g: app-config.debug
         ]
 
         append dynamic-libs ext-proj  ; need to add app as a dependency later

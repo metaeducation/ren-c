@@ -88,7 +88,7 @@ bind construct [
             [let keyword-match: any (keyword-suffix-rules), (
                 append:part out a offset? a b  ; output before prefix
 
-                let v: select // [values keyword-match, :case case_REWORD]
+                let v: select // [values keyword-match, case: case_REWORD]
                 append out switch:type v [
                     frame! [
                         apply:relax v [keyword-match]  ; arity-0 ok
@@ -106,7 +106,7 @@ bind construct [
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    parse-thru // [source rule :case case_REWORD] else [panic]  ; why panic?
+    parse-thru // [source rule case: case_REWORD] else [panic]  ; why panic?
     return out
 ]
 ok)

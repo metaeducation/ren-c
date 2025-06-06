@@ -375,7 +375,7 @@ application-class: make project-class [
         let cc: any [.compiler, default-compiler]
         return cc.link // [
             .output, .depends, .searches, .ldflags,
-            :debug on? .debug
+            debug: on? .debug
         ]
     ]
 
@@ -397,8 +397,8 @@ dynamic-library-class: make project-class [
         let cc: any [.compiler, default-compiler]
         return cc.link // [
             .output, .depends, .searches, .ldflags
-            :debug on? .debug
-            :dynamic okay
+            debug: on? .debug
+            dynamic: okay
         ]
     ]
 ]
@@ -759,7 +759,7 @@ emcc: make gcc [
         ; custom link behavior could go here
 
         return link-backup // [
-            output depends searches ldflags :dynamic dynamic :debug debug
+            output depends searches ldflags dynamic: dynamic debug: debug
         ]
     ]
 ]
@@ -1065,19 +1065,19 @@ object-file-class: make object! [
             .output
             .source
 
-            :I compose [(opt spread .includes) (opt spread I)]
-            :D compose [(opt spread .definitions) (opt spread D)]
-            :F compose [(opt spread F) (opt spread .cflags)]
+            I: compose [(opt spread .includes) (opt spread I)]
+            D: compose [(opt spread .definitions) (opt spread D)]
+            F: compose [(opt spread F) (opt spread .cflags)]
                                                 ; ^-- reverses priority, why?
 
             ; "current setting overwrites :refinement"
             ; "because the refinements are inherited from the parent" (?)
 
-            :O any [O, .optimization]
-            :g any [g, .debug]
+            O: any [O, .optimization]
+            g: any [g, .debug]
 
-            :PIC PIC
-            :E E
+            PIC: PIC
+            E: E
         ]
     ]
 
@@ -1099,12 +1099,12 @@ object-file-class: make object! [
             target: .output
             depends: append (copy any [.depends []]) .source
             commands: reduce [.compile // [
-                :I opt parent.includes
-                :D opt parent.definitions
-                :F opt parent.cflags
-                :O opt parent.optimization
-                :g opt parent.debug
-                :PIC any [PIC, parent.class = #dynamic-library]
+                I: opt parent.includes
+                D: opt parent.definitions
+                F: opt parent.cflags
+                O: opt parent.optimization
+                g: opt parent.debug
+                PIC: any [PIC, parent.class = #dynamic-library]
             ]]
         ]
     ]
@@ -1494,7 +1494,7 @@ makefile: make generator-class [
                             obj.generated: 'yes
                             append buf (.gen-rule obj.gen-entries // [
                                 dep
-                                :PIC (project.class = #dynamic-library)
+                                PIC: (project.class = #dynamic-library)
                             ])
                         ]
                     ]
@@ -1647,7 +1647,7 @@ export execution: make generator-class [
                         obj.generated: 'yes
                         .run-target obj.gen-entries // [
                             project
-                            :PIC (parent.class = #dynamic-library)
+                            PIC: (parent.class = #dynamic-library)
                         ]
                     ]
                 ]

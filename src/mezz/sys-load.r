@@ -50,8 +50,8 @@ transcode-header: func [
     line: 1
     [rest :key]: transcode:next // [  ; "REBOL"
         data
-        :file file
-        :line $line
+        file: file
+        line: $line
     ] except e -> [
         return fail e
     ]
@@ -60,8 +60,8 @@ transcode-header: func [
     ]
     [rest :hdr]: transcode:next // [ ; BLOCK!
         rest
-        :file file
-        :line $line
+        file: file
+        line: $line
     ] except e -> [
         return fail e
     ]

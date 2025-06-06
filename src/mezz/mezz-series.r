@@ -120,7 +120,7 @@ replace: func [
     while [[pos :tail]: find // [
         pos
         ^pattern
-        :case case_REPLACE
+        case: case_REPLACE
     ]][
         if action? ^replacement [
             ;
@@ -369,7 +369,7 @@ alter: func [
         append series value
         return okay
     ]
-    if remove find // [series value :case case_ALTER] [
+    if remove find // [series value case: case_ALTER] [
         append series value
         return okay
     ]

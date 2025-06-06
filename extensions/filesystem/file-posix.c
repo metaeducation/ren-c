@@ -188,8 +188,8 @@ Value* Try_Read_Directory_Entry(FILEREQ *dir)
 
     Value* path = rebValue(
         "local-to-file // [",
-            ":path", rebT(dirent.name),
-            ":dir", rebQ(rebL(is_dir)),
+            "path:", rebT(dirent.name),
+            "dir:", rebQ(rebL(is_dir)),
         "]"
     );
 

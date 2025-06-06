@@ -206,7 +206,7 @@
 [
     ([<a> ~null~ <b>] = compose // [
         [<a> (if ok [void]) <b>]
-        :predicate cascade [eval/ reify/]
+        predicate: cascade [eval/ reify/]
     ])
     ([<a>] = compose [<a> (~()~)])  ; "BLANK"
     ([<a>] = compose [<a> (~[]~)])  ; "VOID"

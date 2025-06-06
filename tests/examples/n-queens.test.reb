@@ -220,7 +220,7 @@
     [num boards]: solve-n-queens 4
     all [
         num = 2
-        boards = reduce // [:predicate trim/ [
+        boards = reduce // [predicate: trim/ [
           -[. Q . .
             . . . Q
             Q . . .
@@ -238,7 +238,7 @@
     [num boards]: solve-n-queens 5
     all [
         num = 10
-        boards = reduce // [:predicate trim/, [
+        boards = reduce // [predicate: trim/, [
           -[Q . . . .
             . . Q . .
             . . . . Q

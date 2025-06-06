@@ -131,8 +131,8 @@
 ; APPLY is called by the evaluator when it sees a // using whatever is on the
 ; left as the action.
 [
-    ([a b c [d e] [d e]] = append // [[a b c] [d e] :dup 2])
-    ([a b c e f e f] = append // [:dup 2 [a b c] spread [e f]])
+    ([a b c [d e] [d e]] = append // [[a b c] [d e] dup: 2])
+    ([a b c e f e f] = append // [dup: 2 [a b c] spread [e f]])
 
     ; !!! More complex forms not implemented yet, just WORD!, but will be
     ;

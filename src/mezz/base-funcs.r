@@ -120,7 +120,7 @@ redescribe: func [
 /unset: redescribe [
     "Clear the value of a word to the unset state (in its current context)"
 ](
-    specialize set/ [value: lift ~]  ; SET's value is a ^META parameter
+    specialize set/ [value: ~]
 )
 
 /unset?: redescribe [
