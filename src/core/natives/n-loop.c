@@ -546,13 +546,8 @@ DECLARE_NATIVE(FOR_SKIP)
         Add_Definitional_Break_Continue(body, level_);
 
     Value* pseudo = Varlist_Slot(context, 1); // not movable, see #2274
-    bool lift;
-    Option(Value*) opt_slot = Real_Slot_From_Pseudo_Slot(&lift, pseudo);
-    if (not opt_slot)
-        return PANIC("Cannot use a blank as a variable in FOR-SKIP");
 
-    Value* var = unwrap opt_slot;  // rewrite...
-    Copy_Cell(var, series);
+    Value* var = Read_Pseudo_Slot(SPARE, pseudo);
 
     // Starting location when past end with negative skip:
     //
@@ -578,6 +573,8 @@ DECLARE_NATIVE(FOR_SKIP)
             VAL_INDEX_UNBOUNDED(var) = index;
         }
 
+        Write_Pseudo_Slot(pseudo, var);
+
         if (Eval_Branch_Throws(OUT, ARG(BODY))) {
             bool breaking;
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
@@ -593,10 +590,8 @@ DECLARE_NATIVE(FOR_SKIP)
         // refreshed each time arbitrary code runs, since the context may
         // expand and move the address, may get PROTECTed, etc.
         //
-        var = unwrap Real_Slot_From_Pseudo_Slot(&lift, pseudo);
+        var = Read_Pseudo_Slot(SPARE, pseudo);
 
-        if (Is_Nulled(var))
-            return PANIC(PARAM(WORD));
         if (not Any_Series(var))
             return PANIC(var);
 
@@ -887,12 +882,8 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
     const Value* pseudo_tail;
     Value* pseudo = Varlist_Slots(&pseudo_tail, vars_ctx);
     for (; pseudo != pseudo_tail; ++pseudo) {
-        bool lift;
-        Option(Value*) slot = Real_Slot_From_Pseudo_Slot(&lift, pseudo);
-
         if (not les->more_data) {  // Y is null in `for-each [x y] [1] ...`
-            if (slot)
-                Init_Nulled(unwrap slot);
+            Write_Pseudo_Slot(pseudo, LIB(NULL));
 
             goto maybe_lift_and_continue;
         }
@@ -904,8 +895,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 and Is_Error_Done_Signal(Cell_Error(generated))
             )) {
                 Unliftify_Decayed(generated);
-                if (slot)
-                    Copy_Cell(unwrap slot, generated);
+                Write_Pseudo_Slot(pseudo, generated);
                 rebRelease(generated);
             }
             else {
@@ -918,8 +908,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                     //
                     return false;
                 }
-                if (slot)
-                    Init_Nulled(unwrap slot);
+                Write_Pseudo_Slot(pseudo, LIB(NULL));
             }
 
             goto maybe_lift_and_continue;
@@ -930,14 +919,10 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         Heart heart = Heart_Of_Builtin_Fundamental(Known_Element(les->data));
 
         if (Any_List_Type(heart)) {
-            if (slot)
-                Copy_Cell(
-                    unwrap slot,
-                    Array_At(
-                        c_cast(Array*, les->flex),
-                        les->u.eser.index
-                    )
-                );
+            Write_Pseudo_Slot(
+                pseudo,
+                Array_At(c_cast(Array*, les->flex), les->u.eser.index)
+            );
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
 
@@ -945,25 +930,24 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         }
 
         if (Any_Context_Type(heart)) {
-            if (slot) {
-                assert(les->u.evars.index != 0);
-                Element* word = Init_Word(
-                    unwrap slot, Key_Symbol(les->u.evars.key)
-                );
+            assert(les->u.evars.index != 0);
 
-                if (heart == TYPE_MODULE) {
-                    Tweak_Cell_Word_Index(word, INDEX_PATCHED);
-                    Tweak_Cell_Binding(word, Sea_Patch(
-                        Cell_Module_Sea(les->data),
-                        Key_Symbol(les->u.evars.key),
-                        true
-                    ));
-                }
-                else {
-                    Tweak_Cell_Word_Index(word, les->u.evars.index);
-                    Tweak_Cell_Binding(word, Cell_Varlist(les->data));
-                }
+            DECLARE_ELEMENT (word);
+            Init_Word(word, Key_Symbol(les->u.evars.key));
+
+            if (heart == TYPE_MODULE) {
+                Tweak_Cell_Word_Index(word, INDEX_PATCHED);
+                Tweak_Cell_Binding(word, Sea_Patch(
+                    Cell_Module_Sea(les->data),
+                    Key_Symbol(les->u.evars.key),
+                    true
+                ));
             }
+            else {
+                Tweak_Cell_Word_Index(word, les->u.evars.index);
+                Tweak_Cell_Binding(word, Cell_Varlist(les->data));
+            }
+            Write_Pseudo_Slot(pseudo, word);
 
             if (Varlist_Len(vars_ctx) == 1) {
                 //
@@ -974,9 +958,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 // Want keys and values (`for-each 'key val obj [...]`)
                 //
                 ++pseudo;
-                slot = Real_Slot_From_Pseudo_Slot(&lift, pseudo);
-                if (slot)
-                    Copy_Cell(unwrap slot, les->u.evars.var);
+                Write_Pseudo_Slot(pseudo, les->u.evars.var);
             }
             else
                 panic ("Loop enumeration of contexts must be 1 or 2 vars");
@@ -1008,8 +990,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                     return false;
             } while (Is_Zombie(val));
 
-            if (slot)
-                Copy_Cell(unwrap slot, key);
+            Write_Pseudo_Slot(pseudo, key);
 
             if (Varlist_Len(vars_ctx) == 1) {
                 //
@@ -1020,9 +1001,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 // Want keys and values (`for-each 'key val map [...]`)
                 //
                 ++pseudo;
-                slot = Real_Slot_From_Pseudo_Slot(&lift, pseudo);
-                if (slot)
-                    Copy_Cell(unwrap slot, val);
+                Write_Pseudo_Slot(pseudo, val);
             }
             else
                 panic ("Loop enumeration of contexts must be 1 or 2 vars");
@@ -1031,11 +1010,14 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         }
 
         if (Any_String_Type(heart)) {
-            if (slot)
-                Init_Char_Unchecked(
-                    unwrap slot,
-                    Get_Char_At(c_cast(String*, les->flex), les->u.eser.index)
-                );
+            DECLARE_ELEMENT (rune);
+            Init_Char_Unchecked(
+                rune,
+                Get_Char_At(c_cast(String*, les->flex), les->u.eser.index)
+            );
+
+            Write_Pseudo_Slot(pseudo, rune);
+
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
 
@@ -1044,8 +1026,11 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 
         if (heart == TYPE_BLOB) {
             const Binary* b = c_cast(Binary*, les->flex);
-            if (slot)
-                Init_Integer(unwrap slot, Binary_Head(b)[les->u.eser.index]);
+
+            DECLARE_ELEMENT (i);
+            Init_Integer(i, Binary_Head(b)[les->u.eser.index]);
+            Write_Pseudo_Slot(pseudo, i);
+
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
 
@@ -1056,8 +1041,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 
     } maybe_lift_and_continue: { /////////////////////////////////////////////
 
-        if (slot and lift)
-            Liftify(unwrap slot);
+        // LIFTING NOW HANDLED BY WRITE (but other post-processing?)
     }}
 
     return true;

@@ -430,42 +430,6 @@ INLINE Option(const Value*) Lookup_Word(
     return Varlist_Slot(c, index);
 }
 
-// 1. Contexts can be permanently frozen (`lock obj`) or temporarily protected,
-//    e.g. `protect obj | unprotect obj`.  A native will use FLEX_FLAG_HOLD on
-//    a FRAME! context in order to prevent setting values to types with bit
-//    patterns the C might crash on.  Lock bits are all in SER->info and
-//    checked in the same instruction.
-//
-// 2. All variables can be put in a CELL_FLAG_PROTECTED state.  This is a flag
-//    on the variable cell itself--not the key--so different instances of
-//    the same object sharing the keylist don't all have to be protected just
-//    because one instance is.  This is not one of the flags included in the
-//    CELL_MASK_COPY, so it shouldn't be able to leak out of a cell.
-//
-INLINE Value* Lookup_Mutable_Word_May_Panic(
-    const Element* any_word,
-    Context* context
-){
-    REBLEN index;
-    Stub* s = maybe Get_Word_Container(&index, any_word, context);
-    if (not s)
-        panic (Error_Not_Bound_Raw(any_word));
-
-    Value* var;
-    if (Is_Stub_Let(s) or Is_Stub_Patch(s))
-        var = Stub_Cell(s);
-    else {
-        VarList* c = cast(VarList*, s);
-        Panic_If_Read_Only_Flex(c);  // check lock bits [1]
-        var = Varlist_Slot(c, index);
-    }
-
-    if (Get_Cell_Flag(var, PROTECTED))  // protect is per-cell [2]
-        panic (Error_Protected_Word_Raw(Cell_Word_Symbol(any_word)));
-
-    return var;
-}
-
 
 //=////////////////////////////////////////////////////////////////////////=//
 //

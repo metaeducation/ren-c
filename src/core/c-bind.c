@@ -1432,7 +1432,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
 
 //
-//  Real_Slot_From_Pseudo_Slot: C
+//  Read_Pseudo_Slot: C
 //
 // Virtual_Bind_To_New_Context() allows @WORD! syntax to reuse an existing
 // variable's binding:
@@ -1449,18 +1449,41 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 //    invalidate the location.  (The `context` for fabricated variables is
 //    locked at fixed size, so no cache is needed.)
 //
-Option(Value*) Real_Slot_From_Pseudo_Slot(Sink(bool) lift, Value* pseudo) {
-    *lift = false;
-    if (Not_Cell_Flag(pseudo, BIND_NOTE_REUSE)) {
-        *lift = Get_Cell_Flag(pseudo, BIND_MARKED_LIFT);
-        return pseudo;
-    }
+Value* Read_Pseudo_Slot(Sink(Value) out, Value* pseudo) {
     assert(Not_Cell_Flag(pseudo, BIND_MARKED_LIFT));
-    if (Is_Space(pseudo))  // e.g. `for-each _ [1 2 3] [...]`
-        return nullptr;  // signal to throw generated quantity away
 
-    assert(Is_Pinned(WORD, pseudo));  // must re-lookup each time [1]
-    return Lookup_Mutable_Word_May_Panic(cast(Element*, pseudo), SPECIFIED);
+    assert(not Is_Space(pseudo));  // e.g. `for-each _ [1 2 3] [...]`
+
+    if (Get_Cell_Flag(pseudo, BIND_NOTE_REUSE)) {
+        assert(Is_Pinned(WORD, pseudo));
+        assert(!"not yet");
+        if (rebRunThrows(out, CANON(GET), pseudo))
+            panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+    }
+    else
+        Copy_Cell(out, pseudo);
+
+    return out;
+}
+
+
+//
+//  Write_Pseudo_Slot: C
+//
+void Write_Pseudo_Slot(Value* pseudo, const Value* write) {
+    if (Is_Space(pseudo))  // e.g. `for-each _ [1 2 3] [...]`
+        return;  // toss it
+
+    if (Get_Cell_Flag(pseudo, BIND_NOTE_REUSE)) {
+        assert(Is_Pinned(WORD, pseudo));
+        assert(!"not yet");
+        rebElide(CANON(SET), pseudo, rebQ(write));
+    }
+    else {
+        Copy_Cell(pseudo, write);
+        if (Get_Cell_Flag(pseudo, BIND_MARKED_LIFT))
+            Liftify(pseudo);
+    }
 }
 
 

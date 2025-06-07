@@ -360,31 +360,25 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Value* pseudo = Varlist_Slot(Cell_Varlist(vars), 1);
 
-    bool lift;
-    Value* slot = maybe Real_Slot_From_Pseudo_Slot(&lift, pseudo);
-    if (not slot)
-        goto next_reduce_each;
+    Value* spare = Decay_If_Unstable(SPARE);  // !!! shouldn't always decay
 
-    if (lift) {  // accept all values when lifting, don't cull ghost/void
-        Copy_Lifted_Cell(slot, SPARE);  // even ERROR! is okay here
-        goto next_reduce_each;
-    }
+    Write_Pseudo_Slot(pseudo, spare);
 
-    if (Is_Ghost_Or_Void(SPARE)) {  // if REDUCE culls voids/ghosts, so do we
+    // !!! This intelligence needs to be in Write_Pseudo_Slot(), probably?
+    // !!! Review after "LIFT THE UNIVERSE"
+
+    /*if (Is_Ghost_Or_Void(SPARE)) {  // if REDUCE culls voids/ghosts, so do we
         Init_Void(OUT);
         goto reduce_next;
     }
     if (Is_Error(SPARE))
         return PANIC(Cell_Error(SPARE));
 
-    Value* spare = Decay_If_Unstable(SPARE);
-
     if (Is_Action(spare) or Is_Trash(spare))
         return PANIC(
             "Need ^LIFT variables in REDUCE-EACH to accept ACTION! or TRASH!"
         );
-
-    Move_Cell(slot, spare);
+    */
 
 } next_reduce_each: {
 
