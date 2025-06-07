@@ -1254,21 +1254,21 @@ Bounce Stepper_Executor(Level* L)
 
 } case TYPE_PATH: { //// PATH! [ a/  b/c/d  e/ ] /////////////////////////////
 
-    // Ren-C moved to member access with "dots instead of slashes" (TUPLE!)
-    // and refinements are done with "colons instead of slashes" (CHAIN!).
-    // So PATH!s role has come to be specificially dealing with functions:
-    //
-    // * abc/     - means ABC is a function, return it as-is
-    // * /abc     - means ensure ABC is a function and run it
-    // * abc/def  - means ABC is a context, DEF is a function, run it
-    // * abc/def/ - means ABC and DEF are functions, compose them
-    //
-    // 1. It's likely that paths like 1/2 or otherwise inert-headed will be
-    //    inert and evaluate to themselves.
-    //
-    // 2. Slash at head will signal running actions soon enough.  But for the
-    //    moment it is still refinement.  Let's try not binding it by default
-    //    just to see what headaches that causes...if any.
+  // Ren-C moved to member access with "dots instead of slashes" (TUPLE!)
+  // and refinements are done with "colons instead of slashes" (CHAIN!).  So
+  // PATH!s role has come to be specificially dealing with functions:
+  //
+  //   * abc/     - means ABC is a function, return it as-is
+  //   * /abc     - means ensure ABC is a function and run it
+  //   * abc/def  - means ABC is a context, DEF is a function, run it
+  //   * abc/def/ - means ABC and DEF are functions, compose them
+  //
+  // 1. It's likely that paths like 1/2 or otherwise inert-headed will be
+  //    inert and evaluate to themselves.
+  //
+  // 2. Slash at head will signal running actions soon enough.  But for the
+  //    moment it is still refinement.  Let's try not binding it by default
+  //    just to see what headaches that causes...if any.
 
 } handle_path_where_action_lookups_are_active: {
 
@@ -1327,43 +1327,42 @@ Bounce Stepper_Executor(Level* L)
 
   delegate_to_get_path: {
 
-    // 1. It would not make sense to return a definitional error when a path
-    //    lookup does not exist.  Imagine making null back for `try lib/append`
-    //    if you wrote `try lib/append [a b c] [d e]` when lib/append did not
-    //    exist--that's completely broken.
-    //
-    // 2. Since paths with trailing slashes just return the action as-is, it's
-    //    an arity-0 operation.  So returning a definitional error isn't
-    //    complete nonsense, but still might not be great.  Review the choice.
-    //
-    // 3. Trailing slash notation is a particularly appealing way of denoting
-    //    that something is an action, and that you'd like to fetch it in a
-    //    way that does not take arguments:
-    //
-    //         /for-next: specialize for-skip/ [skip: 1]
-    //         ;                         ---^
-    //         ; slash helps show block is not argument
-    //
-    // 4. The left hand side does not look ahead at paths to find infix
-    //    functions.  This is because PATH! dispatch is costly and can error
-    //    in more ways than sniffing a simple WORD! for infix can.  So the
-    //    prescribed way of running infix with paths is `left ->- right/side`,
-    //    which uses an infix WORD! to mediate the interaction.
+  // 1. It would not make sense to return a definitional error when a path
+  //    lookup does not exist.  Imagine making null back for `try lib/append`
+  //    if you wrote `try lib/append [a b c] [d e]` when lib/append did not
+  //    exist--that's completely broken.
+  //
+  // 2. Since paths with trailing slashes just return the action as-is, it's
+  //    an arity-0 operation.  Returning a definitional error isn't complete
+  //    nonsense, but still might not be great.  Review the choice.
+  //
+  // 3. Trailing slash notation is a particularly appealing way of denoting
+  //    that something is an action, and that you'd like to fetch it in a
+  //    way that does not take arguments:
+  //
+  //         for-next: specialize for-skip/ [skip: 1]
+  //         ;                         ---^
+  //         ; slash helps show block is not argument
+  //
+  // 4. Left hand sides don't not look ahead at paths to find infix functions.
+  //    This is because PATH! dispatch is costly and can error in more ways
+  //    than sniffing a simple WORD! for infix can.  So the prescribed way of
+  //    running infix with paths is `left ->- right/side`, which uses an infix
+  //    WORD! to mediate the interaction.
 
-    Sink(Value) out = OUT;
-    Option(Error*) error = Trap_Get_Path_Push_Refinements(
-        out,  // where to write action
-        SPARE,  // temporary GC-safe scratch space
-        CURRENT,
-        L_binding
-    );
-    if (error) {  // lookup failed, a GROUP! in path threw, etc.
-        if (not slash_at_tail)
-            return PANIC(unwrap error);  // RAISE error would conflate [1]
-        return PANIC(unwrap error);  // don't RAISE error for now [2]
+    Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
+    Move_Atom(CURRENT, SPARE);
+    heeded(Corrupt_Cell_If_Debug(SPARE));
+
+    Option(Error*) e = Trap_Get_Path_Push_Refinements(LEVEL);
+    if (e) {  // don't FAIL, PANIC [1]
+        possibly(slash_at_tail);  // ...or, exception for arity-0? [2]
+        return PANIC(unwrap e);
     }
 
+    Value* out = Known_Stable(OUT);
     assert(Is_Action(out));
+
     if (slash_at_tail) {  // do not run action, just return it [3]
         if (STACK_BASE != TOP_INDEX) {
             if (Specialize_Action_Throws(
@@ -1385,7 +1384,7 @@ Bounce Stepper_Executor(Level* L)
     UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as warning?
     goto handle_action_in_out_with_refinements_pushed;
 
-}} handle_generic_set: {
+}} handle_generic_set: { /////////////////////////////////////////////////////
 
     // Right side is evaluated into `out`, and then copied to the variable.
     //

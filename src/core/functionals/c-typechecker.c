@@ -570,6 +570,9 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         panic ("Bad test passed to Typecheck_Value");
     }
 
+    DECLARE_VALUE (test);
+    Push_Lifeguard(test);
+
     if (item == tail)
        goto end_looping_over_tests;  // might mean all match or no match
 
@@ -703,8 +706,12 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
     Option(const Symbol*) label = Cell_Word_Symbol(item);
 
-    const Value* test;
-    Option(Error*) error = Trap_Lookup_Word(&test, item, derived);
+    DECLARE_ELEMENT (temp_item_word);
+    Copy_Cell(temp_item_word, item);
+    HEART_BYTE(temp_item_word) = TYPE_WORD;
+    LIFT_BYTE(temp_item_word) = NOQUOTE_1;  // ~word!~ or 'word! etc.
+
+    Option(Error*) error = Trap_Get_Word(test, temp_item_word, derived);
     if (error)
         panic (unwrap error);
 
@@ -783,6 +790,8 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
   #if RUNTIME_CHECKS
     Init_Unreadable(SCRATCH);
   #endif
+
+    Drop_Lifeguard(test);
 
     return result;
 }}

@@ -140,17 +140,17 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
 //
 //  Trap_Get_Var_Maybe_Trash: C
 //
-// This is a generalized service routine for getting variables that will
-// specialize paths into concrete actions.
+// This is a generalized service routine for getting variables--including
+// PATH! and CHAIN!.
 //
-// 1. This specialization process has cost.  So if you know you have a path in
+// 1. Refinements will be specialized.  So if you know you have a path in
 //    your hand--and all you plan to do with the result after getting it is
 //    to execute it--then use Trap_Get_Path_Push_Refinements() instead of
 //    this function, and then let the Action_Executor() use the refinements
 //    on the stack directly.  That avoids making an intermediate action.
 //
 Option(Error*) Trap_Get_Var_Maybe_Trash(
-    Sink(Value) out,
+    Sink(Atom) out,
     Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* var,
     Context* context
@@ -169,20 +169,29 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
             error = Trap_Get_Chain_Push_Refinements(
                 out, safe, var, context
             );
-        else
-            error = Trap_Get_Path_Push_Refinements(
-                out, safe, var, context
-            );
+        else {
+            Level* level_ = Make_End_Level(&Stepper_Executor, LEVEL_MASK_NONE);
+            STATE = 1;  // rule for trampoline (we're setting out to non-erased)
+
+            Push_Level_Erase_Out_If_State_0(out, level_);
+
+            heeded(Derelativize(SCRATCH, var, context));
+            heeded(Corrupt_Cell_If_Debug(SPARE));
+
+            error = Trap_Get_Path_Push_Refinements(level_);
+
+            Drop_Level(level_);
+        }
         Drop_Lifeguard(safe);
 
         if (error)
             return error;
 
-        assert(Is_Action(out));
+        assert(Is_Atom_Action(out));
 
         if (TOP_INDEX != base) {
             DECLARE_VALUE (action);
-            Move_Cell(action, out);
+            Move_Cell(action, Known_Stable(out));
             Deactivate_If_Action(action);
 
             Option(Element*) def = nullptr;  // !!! g_empty_block doesn't work?
@@ -202,19 +211,17 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
     Level* level_ = Make_End_Level(&Stepper_Executor, LEVEL_MASK_NONE);
     STATE = 1;  // rule for trampoline (we're setting out to non-erased)
 
-    Sink(Atom) out_atom = cast(Atom*, out);
-    Push_Level_Erase_Out_If_State_0(out_atom, level_);
+    Push_Level_Erase_Out_If_State_0(out, level_);
 
     heeded(Derelativize(SCRATCH, var, context));
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
-    if (e)
-        return e;
 
     Drop_Level(level_);
 
-    Decay_If_Unstable(out_atom);
+    if (e)
+        return e;
 
     return SUCCESS;
 }
@@ -231,11 +238,15 @@ Option(Error*) Trap_Get_Var(
     const Element* var,
     Context* context
 ){
+    Atom* atom_out = u_cast(Atom*, Init_Unreadable(out));
+
     Option(Error*) error = Trap_Get_Var_Maybe_Trash(
-        out, steps_out, var, context
+        atom_out, steps_out, var, context
     );
     if (error)
         return error;
+
+    Decay_If_Unstable(atom_out);
 
     if (Is_Trash(out))
         return Error_Bad_Word_Get(var, out);
@@ -277,7 +288,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             panic (Error_Bad_Word_Get(head, out));
     }
     else if (Is_Word(head)) {
-        Option(Error*) error = Trap_Get_Any_Word(out, head, derived);
+        Option(Error*) error = Trap_Get_Word(out, head, derived);
         if (error)
             panic (unwrap error);  // must be abrupt
     }
@@ -336,93 +347,110 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
 //
 //  Trap_Get_Path_Push_Refinements: C
 //
-// This form of Get_Path() is low-level, and may return a non-ACTION! value
-// if the path is inert (e.g. `/abc` or `.a.b/c/d`).
+// This is a high-level Get_Path() which only returns ACTION! in OUT.
 //
-Option(Error*) Trap_Get_Path_Push_Refinements(
-    Sink(Value) out,
-    Sink(Value) safe,
-    const Element* path,
-    Context* context
-){
+// Long-term it should be able to do things like turn not/even/ into a CASCADE
+// of functions.  That's not actually super hard to do, it just hasn't been
+// implemented yet.  Right now a PATH! can only have two parts: a left side
+// (a WORD! or a TUPLE!) and a right side (a WORD! or a CHAIN!)
+//
+Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
+{
+  #if PERFORM_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
+    assert(Not_Cell_Readable(SPARE));
+  #endif
+
+    StackIndex base = TOP_INDEX;
+
+    Option(Error*) e = SUCCESS;
+
+  #if RUNTIME_CHECKS
+    Protect_Cell(SCRATCH);  // (common exit path undoes this protect)
+  #endif
+
+    const Element* path = Known_Element(SCRATCH);
+    assert(Is_Path(path));
+
     if (not Sequence_Has_Node(path)) {  // byte compressed
-        Copy_Cell(out, path);
-        goto ensure_out_is_action;  // will panic, it's not an action
+        e = Error_Bad_Value(path);  // no meaning to 1.2.3/ or /1.2.3 etc.
+        goto return_error;
+    }
 
-      ensure_out_is_action: { ////////////////////////////////////////////////
-
-        if (Is_Action(out))
-            return SUCCESS;
-        if (Is_Frame(out)) {
-            Actionify(out);
-            return SUCCESS;
-        }
-        panic ("PATH! must retrieve an action or frame");
-    }}
+ detect_path_compression: {
 
     const Node* node1 = CELL_NODE1(path);
     if (Is_Node_A_Cell(node1)) {
         // pairing, but "Listlike", so Cell_List_At() will work on it
     }
     else switch (Stub_Flavor(c_cast(Flex*, node1))) {
-      case FLAVOR_SYMBOL : {  // `/a` or `a/`
-        Option(Error*) error = Trap_Get_Any_Word(out, path, context);
-        if (error)
-            return error;
+      case FLAVOR_SYMBOL: {  // `/a` or `a/`
+        Element* spare = Copy_Cell(SPARE, path);
+        HEART_BYTE(spare) = TYPE_WORD;
+        e = Trap_Get_Any_Word_Maybe_Trash(OUT, spare, SPECIFIED);
+        if (e)
+            goto return_error;
 
         goto ensure_out_is_action; }
 
-      case FLAVOR_SOURCE : {}
+      case FLAVOR_SOURCE:
         break;
 
-      default :
+      default:
         crash (path);
     }
+
+} handle_listlike_path: {
 
     const Element* tail;
     const Element* at = Cell_List_At(&tail, path);
 
-    Context* derived = Derive_Binding(context, path);
+    Context* binding = Cell_Sequence_Binding(path);
 
     if (Is_Space(at)) {  // leading slash means execute (but we're GET-ing)
         ++at;
         assert(not Is_Space(at));  // two blanks would be `/` as WORD!
     }
 
+    Sink(Value) out = OUT;
     if (Is_Group(at)) {
-        if (Eval_Value_Throws(out, at, derived))
-            return Error_No_Catch_For_Throw(TOP_LEVEL);
+        if (Eval_Value_Throws(out, at, binding)) {
+            e = Error_No_Catch_For_Throw(TOP_LEVEL);
+            goto return_error;
+        }
     }
     else if (Is_Tuple(at)) {
         DECLARE_ELEMENT (steps);
-        Option(Error*) error = Trap_Get_Tuple_Maybe_Trash(
-            out, steps, at, derived
+        e = Trap_Get_Tuple_Maybe_Trash(
+            out, steps, at, binding
         );
-        if (error)
-            panic (unwrap error);  // must be abrupt
-        if (Is_Trash(out))
-            return Error_Bad_Word_Get(at, out);
+        if (e)
+            goto return_error;
     }
     else if (Is_Word(at)) {
-        Option(Error*) error = Trap_Get_Any_Word(out, at, derived);
-        if (error)
-            panic (unwrap error);  // must be abrupt
+        e = Trap_Get_Word(out, at, binding);
+        if (e)
+            goto return_error;
     }
     else if (Is_Chain(at)) {
-        if ((at + 1 != tail) and not Is_Space(at + 1))
-            panic ("CHAIN! can only be last item in a path right now");
-        Option(Error*) error = Trap_Get_Chain_Push_Refinements(
+        if ((at + 1 != tail) and not Is_Space(at + 1)) {
+            e = Error_User("CHAIN! can only be last item in a path right now");
+            goto return_error;
+        }
+        e = Trap_Get_Chain_Push_Refinements(
             out,
-            safe,
+            SPARE,  // scratch space...
             c_cast(Element*, at),
-            Derive_Binding(derived, at)
+            Derive_Binding(binding, at)
         );
-        if (error)
-            return error;
-        return SUCCESS;
+        if (e)
+            goto return_error;
+
+        goto return_success;  // chain must resolve to an action (?!)
     }
-    else
-        panic (at);  // what else could it have been?
+    else {
+        e = Error_Bad_Value(at);  // what else could it have been?
+        goto return_error;
+    }
 
     ++at;
 
@@ -430,80 +458,95 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         goto ensure_out_is_action;
 
     if (at + 1 != tail and not Is_Space(at + 1))
-        panic ("PATH! can only be two items max at this time");
+        return Error_User("PATH! can only be two items max at this time");
 
     // When we see `lib/append` for instance, we want to pick APPEND out of
     // LIB and make sure it is an action.
     //
-    if (Any_Context(out)) {
-        if (Is_Chain(at)) {  // lib/append:dup
-            Option(Error*) error = Trap_Get_Chain_Push_Refinements(
-                out,
-                safe,
-                c_cast(Element*, at),
-                Cell_Context(out)  // need to find head of chain in object
-            );
-            if (error)
-                return error;
-            return SUCCESS;
-        }
-
-        possibly(Is_Frame(out));
-        Quotify(Known_Element(out));  // frame would run if eval sees unquoted
-
-        DECLARE_ATOM (temp);
-        if (rebRunThrows(
-            cast(RebolValue*, temp),
-            CANON(PICK),
-            cast(const RebolValue*, out),  // was quoted above
-            rebQ(cast(const RebolValue*, at)))  // Cell, but is Element*
-        ){
-            return Error_No_Catch_For_Throw(TOP_LEVEL);
-        }
-        Copy_Cell(out, Decay_If_Unstable(temp));
+    if (not Any_Context(out)) {
+        e = Error_Bad_Value(path);
+        goto return_error;
     }
-    else
-        panic (path);
+
+  handle_context_on_left_of_at: {
+
+    if (Is_Chain(at)) {  // lib/append:dup
+        e = Trap_Get_Chain_Push_Refinements(
+            out,
+            SPARE,  // scratch space...
+            c_cast(Element*, at),
+            Cell_Context(out)  // need to find head of chain in object
+        );
+        if (e)
+            goto return_error;
+
+        goto return_success;  // chain must resolve to an action (?!)
+    }
+
+    possibly(Is_Frame(out));
+    Quotify(Known_Element(out));  // frame would run if eval sees unquoted
+
+    DECLARE_ATOM (temp);
+    if (rebRunThrows(
+        cast(RebolValue*, temp),
+        CANON(PICK),
+        cast(const RebolValue*, out),  // was quoted above
+        rebQ(cast(const RebolValue*, at)))  // Cell, but is Element*
+    ){
+        e = Error_No_Catch_For_Throw(TOP_LEVEL);
+        goto return_error;
+    }
+    Copy_Cell(out, Decay_If_Unstable(temp));
 
     goto ensure_out_is_action;
-}
 
+}} ensure_out_is_action: { ///////////////////////////////////////////////////
 
-//
-//  Trap_Get_Any_Word: C
-//
-// This is the "high-level" chokepoint for looking up a word and getting a
-// value from it.  If the word is bound to a "getter" slot, then this will
-// actually run a function to retrieve the value.  For that reason, almost
-// all code should be going through this layer (or higher) when fetching an
-// ANY-WORD! variable.
-//
-Option(Error*) Trap_Get_Any_Word(
-    Sink(Value) out,
-    const Element* word,  // should heed sigil? (^WORD! should UNMETA?)
-    Context* context
-){
-    assert(Sigil_Of(word) == SIGIL_0);
+    const Value* out = Known_Stable(OUT);
 
-    const Value* slot;
-    Option(Error*) error = Trap_Lookup_Word(&slot, word, context);
-    if (error)
-        return error;
+    if (Is_Action(out))
+        goto return_success;
 
-    Copy_Cell(out, slot);
+    if (Is_Frame(out)) {
+        Actionify(out);
+        goto return_success;
+    }
 
-    if (Is_Trash(out))
-        return Error_Bad_Word_Get(word, out);
+    e = Error_User("PATH! must retrieve an action or frame");
+    goto return_error;
 
-    return SUCCESS;
-}
+} return_error: { ////////////////////////////////////////////////////////////
+
+    assert(e);
+    Drop_Data_Stack_To(base);
+    goto finalize_and_return;
+
+} return_success: { //////////////////////////////////////////////////////////
+
+  // Currently there are no success modes that return ERROR! antiforms (as
+  // described by [A] at top of file.)  Would you ever TRY a PATH! (?)
+
+    assert(Is_Atom_Action(OUT));
+
+    assert(not e);
+    goto finalize_and_return;
+
+} finalize_and_return: { /////////////////////////////////////////////////////
+
+    assert(LEVEL == TOP_LEVEL);
+
+    Corrupt_Cell_If_Debug(SPARE);
+
+  #if RUNTIME_CHECKS
+    Unprotect_Cell(SCRATCH);
+  #endif
+
+    return e;
+}}
 
 
 //
 //  Trap_Get_Any_Word_Maybe_Trash: C
-//
-// High-level: see notes on Trap_Get_Any_Word().  This version just gives back
-// TRASH! vs. give an error.
 //
 Option(Error*) Trap_Get_Any_Word_Maybe_Trash(
     Sink(Atom) out,
@@ -511,27 +554,46 @@ Option(Error*) Trap_Get_Any_Word_Maybe_Trash(
     Context* context
 ){
     assert(Any_Word(word));
-    const Value* slot;
-    Option(Error*) e = Trap_Lookup_Word(&slot, word, context);
-    if (e)
-        return e;
-
-    Copy_Cell(out, slot);
 
     switch (Sigil_Of(word)) {
       case SIGIL_0:
         break;
 
       case SIGIL_META:
-        if (not Any_Lifted(out))
-            return Error_User("^WORD! can only UNLIFT quoted/quasiform");
-        Unliftify_Undecayed(out);
         break;
 
       case SIGIL_PIN:
       case SIGIL_TIE:
         return Error_User("Cannot GET a @PINNED or $TIED variable yet");
     }
+
+    return Trap_Get_Var_Maybe_Trash(out, NO_STEPS, word, context);
+}
+
+
+//
+//  Trap_Get_Any_Word: C
+//
+Option(Error*) Trap_Get_Word(
+    Sink(Value) out,
+    const Element* word,
+    Context* context
+){
+    assert(Is_Word(word));  // no sigil, can't give back unstable form
+
+    Sink(Atom) atom_out = u_cast(Atom*, Init_Unreadable(out));
+
+    Option(Error*) e = Trap_Get_Any_Word_Maybe_Trash(
+        atom_out, word, context
+    );
+    if (e)
+        return e;
+
+    if (Is_Error(atom_out))  // !!! bad pick
+        return Cell_Error(atom_out);
+
+    if (Is_Trash(out))
+        return Error_Bad_Word_Get(word, out);
 
     return SUCCESS;
 }
@@ -597,22 +659,23 @@ DECLARE_NATIVE(GET)
         source = Known_Element(spare);
     }
 
-    Sink(Value) out = OUT;
     Option(Error*) error = Trap_Get_Var_Maybe_Trash(
-        out, steps, source, SPECIFIED
+        OUT, steps, source, SPECIFIED
     );
     if (error)
         return FAIL(unwrap error);
 
-    if (not Bool_ARG(ANY))
+    if (not Bool_ARG(ANY)) {
+        Value* out = Decay_If_Unstable(OUT);
         if (Is_Trash(out))
             return FAIL(Error_Bad_Word_Get(source, out));
+    }
 
     if (steps and steps != GROUPS_OK) {
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
         Copy_Lifted_Cell(Array_At(pack, 0), unwrap steps);
-        Copy_Lifted_Cell(Array_At(pack, 1), out);
+        Copy_Lifted_Cell(Array_At(pack, 1), OUT);
         return Init_Pack(OUT, pack);
     }
 
@@ -862,6 +925,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     bool groups_ok
 ){
+    assert(LEVEL == TOP_LEVEL);
+
   #if PERFORM_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
   #endif
@@ -1055,10 +1120,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         if (Any_Lifted(SPARE)) {  // most common answer--successful pick
             Unliftify_Undecayed(SPARE);  // review efficiency of unlift + lift
 
-            if (Any_Metaform(Data_Stack_At(Element, stackindex))) {
+            if (Any_Metaform(Data_Stack_At(Element, stackindex)))
                 Unliftify_Undecayed(SPARE);
+            else
                 Decay_If_Unstable(SPARE);
-            }
 
             Liftify(SPARE);  // need lifted for dual protocol (review)
             continue;

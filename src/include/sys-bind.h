@@ -413,28 +413,6 @@ INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
 // proper higher layers that go through TWEAK* will break.
 //
 
-INLINE Option(Error*) Trap_Lookup_Word(
-    Sink(const Value*) slot,  // returns read-only pointer to cell
-    const Element* word,
-    Context* context
-){
-    REBLEN index;
-    Stub* s = maybe Get_Word_Container(&index, word, context);
-    if (not s) {
-        *slot = nullptr;  // avoid aggressive callsite warnings
-        return Error_Not_Bound_Raw(word);
-    }
-
-    if (Is_Stub_Let(s) or Is_Stub_Patch(s)) {
-        *slot = Stub_Cell(s);
-        return SUCCESS;
-    }
-    assert(Is_Node_Readable(s));
-    VarList* c = cast(VarList*, s);
-    *slot = Varlist_Slot(c, index);
-    return SUCCESS;
-}
-
 INLINE Option(const Value*) Lookup_Word(
     const Element* word,
     Context* context
@@ -485,14 +463,6 @@ INLINE Value* Lookup_Mutable_Word_May_Panic(
     if (Get_Cell_Flag(var, PROTECTED))  // protect is per-cell [2]
         panic (Error_Protected_Word_Raw(Cell_Word_Symbol(any_word)));
 
-    return var;
-}
-
-INLINE Sink(Value) Sink_Word_May_Panic(
-    const Element* any_word,
-    Context* context
-){
-    Value* var = Lookup_Mutable_Word_May_Panic(any_word, context);
     return var;
 }
 

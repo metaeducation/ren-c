@@ -374,25 +374,25 @@ DECLARE_NATIVE(OF)
 
 } have_sym_of: { /////////////////////////////////////////////////////////////
 
-    Element* prop_of = Init_Word(SPARE, sym_of);
+    Element* prop_of = Init_Word(SCRATCH, sym_of);
 
-    const Value* fetched;
-    Option(Error*) e = Trap_Lookup_Word(
-        &fetched,
+    Sink(Value) spare_action = SPARE;
+    Option(Error*) e = Trap_Get_Word(
+        spare_action,
         prop_of,
         Feed_Binding(LEVEL->feed)
     );
     if (e)
         return PANIC(unwrap e);
 
-    if (not Is_Action(fetched))
+    if (not Is_Action(spare_action))
         return PANIC("OF looked up to a value that wasn't an ACTION!");
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
         | LEVEL_FLAG_ERROR_RESULT_OK;
 
     Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
-    Copy_Lifted_Cell(Evaluator_Level_Current(sub), fetched);
+    Copy_Lifted_Cell(Evaluator_Level_Current(sub), spare_action);
     LIFT_BYTE(Evaluator_Level_Current(sub)) = NOQUOTE_1;  // plain FRAME!
     sub->u.eval.current_gotten = nullptr;
 
