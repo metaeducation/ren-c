@@ -108,43 +108,6 @@ DECLARE_NATIVE(MUTABLE_Q) {
 
 
 //
-//  Protect_Var: C
-//
-// In R3-Alpha, protection status was put on context key cells.  This made for
-// problems when keylists were reused.  Ren-C goes even further to reduce
-// keylists to being just lists of symbols, not full cells.  The key is not
-// the right place for the flag.
-//
-// So the flag is put in a bit on the variable storage cell which is not
-// copied when the cell is copied.  This "active masking" in cell copying is
-// a new-to-Ren-C feature; you have to use Copy_Cell(), Move_Cell() and
-// Derelativize() vs. just blitting the raw bits of a cell around.  (The C++
-// build enforces this by disallowing direct bit assignment via `=`).
-//
-static void Protect_Var(const Value* var, Flags flags)
-{
-    if (flags & PROT_WORD) {
-        if (flags & PROT_SET)
-            Set_Cell_Flag(var, PROTECTED);
-        else
-            Clear_Cell_Flag(var, PROTECTED);
-    }
-
-    if (flags & PROT_HIDE) {
-        //
-        // R3-Alpha implemented hiding via typeset flags, which would have
-        // meant making a new keylist.  Ren-C does this with a flag that lives
-        // in the cell of the variable.
-
-        if (flags & PROT_SET)
-            Set_Cell_Flag(var, VAR_MARKED_HIDDEN);
-        else
-            panic ("Un-hiding is not supported");
-    }
-}
-
-
-//
 //  Protect_Value: C
 //
 // Anything that calls this must call Uncolor() when done.
@@ -236,31 +199,6 @@ void Protect_Varlist(VarList* varlist, Flags flags)
 
 
 //
-//  Protect_Word_Value: C
-//
-static void Protect_Word_Value(Value* word, Flags flags)
-{
-    if (Any_Word(word) and IS_WORD_BOUND(word)) {
-        const Value* slot;
-        Option(Error*) error = Trap_Lookup_Word(
-            &slot, cast(Element*, word), SPECIFIED
-        );
-        if (error)
-            panic (unwrap error);
-
-        Protect_Var(slot, flags);
-        if (flags & PROT_DEEP) {
-            Protect_Value(slot, flags);
-            Uncolor(slot);
-        }
-    }
-    else if (Any_Sequence(word)) {
-        panic ("Sequences no longer handled in Protect_Unprotect");
-    }
-}
-
-
-//
 //  Protect_Unprotect_Core: C
 //
 // Common arguments between protect and unprotect:
@@ -272,6 +210,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     UNUSED(PARAM(HIDE)); // unused here, but processed in caller
 
     Value* value = ARG(VALUE);
+    assert(not Any_Word(value) and not Is_Tuple(value));
 
     // flags has PROT_SET bit (set or not)
 
@@ -280,24 +219,11 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     //if (Bool_ARG(WORDS))
     //  flags |= PROT_WORDS;
 
-    if (Any_Word(value) || Any_Sequence(value)) {
-        Protect_Word_Value(value, flags); // will unmark if deep
-        return COPY(ARG(VALUE));
-    }
-
     if (Is_Block(value)) {
         Element* block = Known_Element(value);
 
-        if (Bool_ARG(WORDS)) {
-            const Element* tail;
-            const Element* item = Cell_List_At(&tail, block);
-            for (; item != tail; ++item) {
-                DECLARE_VALUE (word); // need binding, can't pass Cell
-                Derelativize(word, item, Cell_List_Binding(block));
-                Protect_Word_Value(word, flags);  // will unmark if deep
-            }
-            return COPY(ARG(VALUE));
-        }
+        if (Bool_ARG(WORDS))
+            return PANIC("WORDS not currently implemented in PROTECT");
 
         if (Bool_ARG(VALUES)) {
             const Value* slot;
@@ -308,15 +234,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
             for (; item != tail; ++item) {
                 if (Is_Word(item)) {
-                    //
-                    // Since we *are* PROTECT we allow ourselves to get mutable
-                    // references to even protected values to protect them.
-                    //
-                    Option(Error*) error = Trap_Lookup_Word(
-                        &slot, item, Cell_List_Binding(block)
-                    );
-                    if (error)
-                        panic (unwrap error);
+                    return PANIC("WORDS! in VALUES needs work in PROTECT");
                 }
                 else if (Is_Path(item)) {
                     panic ("PATH! handling no longer in Protect_Unprotect");
