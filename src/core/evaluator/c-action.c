@@ -59,7 +59,10 @@
 
 
 #define L_next              cast(const Cell*, L->feed->p)
-#define L_next_gotten       L->feed->gotten
+
+#define L_next_gotten_raw  (&L->feed->gotten)
+#define L_next_gotten      (not Is_Gotten_Invalid(L_next_gotten_raw))
+
 #define L_binding           Level_Binding(L)
 
 #undef ARG                       // undefine the ARG(X) macro that natives use
@@ -167,7 +170,7 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
 //
 bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
     assert(Not_Feed_Flag(feed, DEFERRING_INFIX));
-    assert(not feed->gotten);
+    assert(Is_Gotten_Invalid(&feed->gotten));
 
     Clear_Feed_Flag(feed, NO_LOOKAHEAD);
 
@@ -177,16 +180,20 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
     if (Type_Of_Unchecked(At_Feed(feed)) != TYPE_WORD)
         return false;
 
-    feed->gotten = Lookup_Word(At_Feed(feed), Feed_Binding(feed));
+    Option(Error*) e = Trap_Get_Word(
+        &feed->gotten, At_Feed(feed), Feed_Binding(feed)
+    );
 
-    if (
-        not feed->gotten
-        or not Is_Action(unwrap feed->gotten)
-    ){
+    if (e) {
+        Erase_Cell(&feed->gotten);  // could this be Trap_Get_Word() invariant?
+        UNUSED(e);  // don't care (if we care, we'll hit it on next step)
         return false;
     }
 
-    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(unwrap feed->gotten);
+    if (not Is_Action(&feed->gotten))
+        return false;
+
+    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(&feed->gotten);
     if (not infix_mode)
         return false;
 
@@ -663,7 +670,7 @@ Bounce Action_Executor(Level* L)
                 Lookahead_To_Sync_Infix_Defer_Flag(L->feed) and  // ensure got
                 (Get_Flavor_Flag(
                     VARLIST,
-                    Phase_Paramlist(Cell_Frame_Phase(unwrap L->feed->gotten)),
+                    Phase_Paramlist(Cell_Frame_Phase(&L->feed->gotten)),
                     PARAMLIST_LITERAL_FIRST
                 ))
             ){
@@ -953,7 +960,7 @@ Bounce Action_Executor(Level* L)
 
     STATE = STATE_0;  // reset to zero for each phase
 
-    L_next_gotten = nullptr;  // arbitrary code changes fetched variables
+    Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes variables
 
 } dispatch_phase: {
 

@@ -133,7 +133,7 @@ typedef struct {
     //
     Atom primed;
 
-    Option(const Value*) current_gotten;
+    Value current_gotten;  // costs a Cell... worth it?!
 
     // The error reporting machinery doesn't want where `index` is right now,
     // but where it was at the beginning of a single EVALUATE step.

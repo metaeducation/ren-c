@@ -117,8 +117,12 @@
 //
 #undef At_Level
 #define L_next              cast(const Element*, L->feed->p)
-#define L_next_gotten       L->feed->gotten
-#define L_current_gotten    L->u.eval.current_gotten
+
+#define L_next_gotten_raw   (&L->feed->gotten)
+#define L_next_gotten  (not Is_Gotten_Invalid(L_next_gotten_raw))
+
+#define L_current_gotten_raw  (&L->u.eval.current_gotten)
+#define L_current_gotten  (not Is_Gotten_Invalid(L_current_gotten_raw))
 
 #undef SCRATCH  // rename for its specific use in the evaluator
 #define CURRENT  u_cast(Element*, &L->scratch)  // no executor check
@@ -244,6 +248,8 @@ Bounce Stepper_Executor(Level* L)
     if (THROWING)
         return THROWN;  // no state to clean up
 
+    assert(L == TOP_LEVEL);
+
     assert(TOP_INDEX >= STACK_BASE);  // e.g. REDUCE accrues
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
@@ -268,7 +274,7 @@ Bounce Stepper_Executor(Level* L)
         // the infix state in the action itself?
         //
         Erase_Cell(OUT);
-        L_current_gotten = nullptr;  // !!! allow/require to be passed in?
+        Force_Invalidate_Gotten(L_current_gotten_raw);  // !!! require pass in?
         goto look_ahead_for_left_literal_infix; }
 
     #if (! DEBUG_DISABLE_INTRINSICS)
@@ -349,7 +355,9 @@ Bounce Stepper_Executor(Level* L)
         goto finished_dont_lift_out;
     }
 
-    L_current_gotten = L_next_gotten;  // Lookback clears it
+    Force_Blit_Cell(  // Lookback clears it
+        L_current_gotten_raw, L_next_gotten_raw
+    );
     Copy_Cell_Core(CURRENT, L_next, CELL_MASK_THROW);
     Fetch_Next_In_Feed(L->feed);
 
@@ -390,20 +398,28 @@ Bounce Stepper_Executor(Level* L)
     Option(InfixMode) infix_mode;
     Phase* infixed;
 
-    switch (Heart_Of(L_next)) {  // words and chains on right may look back
+    if (LIFT_BYTE(L_next) != NOQUOTE_1)
+       goto give_up_backward_quote_priority;
+
+    switch (HEART_BYTE_RAW(L_next)) {  // ignore Sigil
       case TYPE_WORD: {
-        L_next_gotten = Lookup_Word(
+        Option(Error*) e = Trap_Get_Word(
+            L_next_gotten_raw,
             L_next,
             Feed_Binding(L->feed)  // L_binding breaks here [2]
         );
+        if (e) {
+            Erase_Cell(L_next_gotten_raw);
+            UNUSED(e);  // don't care (will hit on next step if we care)
+            goto give_up_backward_quote_priority;
+        }
         if (
-            not L_next_gotten
-            or not Is_Action(unwrap L_next_gotten)
-            or not (infix_mode = Cell_Frame_Infix_Mode(unwrap L_next_gotten))
+            not Is_Action(L_next_gotten_raw)
+            or not (infix_mode = Cell_Frame_Infix_Mode(L_next_gotten_raw))
         ){
             goto give_up_backward_quote_priority;
         }
-        infixed = Cell_Frame_Phase(unwrap L_next_gotten);
+        infixed = Cell_Frame_Phase(L_next_gotten_raw);
         break; }
 
       case TYPE_CHAIN:
@@ -441,7 +457,7 @@ Bounce Stepper_Executor(Level* L)
         Derelativize(OUT, CURRENT, L_binding);  // put left side in OUT [1]
     }
 
-    L_current_gotten = L_next_gotten;
+    Force_Blit_Cell(L_current_gotten_raw, L_next_gotten_raw);
     Copy_Cell(CURRENT, L_next);  // CURRENT now invoking word (->-, OF, =>)
     Fetch_Next_In_Feed(L->feed);  // ...now skip that invoking word
 
@@ -454,10 +470,10 @@ Bounce Stepper_Executor(Level* L)
     ){  // exemption: put OUT back in CURRENT and CURRENT back in feed [2]
         Move_Atom(&L->feed->fetched, CURRENT);
         L->feed->p = &L->feed->fetched;
-        L->feed->gotten = L_current_gotten;
+        Force_Blit_Cell(&L->feed->gotten, L_current_gotten_raw);
 
         Move_Atom(CURRENT, cast(Element*, OUT));
-        L_current_gotten = nullptr;
+        Invalidate_Gotten(L_current_gotten_raw);
 
         Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
 
@@ -477,7 +493,7 @@ Bounce Stepper_Executor(Level* L)
 } right_hand_literal_infix_wins: { ///////////////////////////////////////////
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, unwrap L_current_gotten);
+    Push_Action(sub, L_current_gotten_raw);
 
     Option(const Symbol*) label = Is_Word(CURRENT)
         ? Cell_Word_Symbol(CURRENT)
@@ -937,6 +953,8 @@ Bounce Stepper_Executor(Level* L)
     Move_Atom(CURRENT, SPARE);
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
+    assert(L == LEVEL);
+    assert(L == TOP_LEVEL);
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
     if (e)
         return PANIC(unwrap e);
@@ -1081,7 +1099,7 @@ Bounce Stepper_Executor(Level* L)
 
       case TRAILING_SPACE_AND(GROUP): {  // (xxx): -- generic retrigger set
         Unchain(CURRENT);
-        L_next_gotten = nullptr;  // arbitrary code changes fetched vars
+        Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes
         Level* sub = Make_Level_At_Inherit_Const(
             &Evaluator_Executor,
             CURRENT,
@@ -1172,7 +1190,7 @@ Bounce Stepper_Executor(Level* L)
     //        we all vanish
     //        == 3
 
-    L_next_gotten = nullptr;  // arbitrary code changes fetched variables
+    Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes variables
 
     Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;
 
@@ -1456,13 +1474,13 @@ Bounce Stepper_Executor(Level* L)
             );
     }*/
 
-    L_next_gotten = nullptr;  // cache can tamper with lookahead [1]
+    Invalidate_Gotten(L_next_gotten_raw);  // cache tampers with lookahead [1]
 
     goto lookahead;
 
 } set_group_result_in_spare: {
 
-    assert(L_current_gotten == nullptr);
+    assert(not L_current_gotten);
 
     if (Is_Void(SPARE)) {
         Init_Lifted_Void(CURRENT);  // can't put voids in feed position
@@ -1820,7 +1838,7 @@ for (; check != tail; ++check) {  // push variables
     // its value was known.  But then we assigned that a with a new value
     // in the implementation of SET-BLOCK! here, so, it's incorrect.
 
-    L_next_gotten = nullptr;
+    Invalidate_Gotten(L_next_gotten_raw);
 
     Drop_Data_Stack_To(STACK_BASE);  // drop writeback variables
     goto lookahead;
@@ -1934,14 +1952,29 @@ for (; check != tail; ++check) {  // push variables
 
     switch (Type_Of_Unchecked(L_next)) {
       case TYPE_WORD:  // only WORD! does infix now (TBD: CHAIN!) [2]
-        if (not L_next_gotten)
-            L_next_gotten = Lookup_Word(L_next, Feed_Binding(L->feed));
-        else
-            assert(L_next_gotten == Lookup_Word(L_next, Feed_Binding(L->feed)));
+        if (not L_next_gotten) {
+            Option(Error*) e = Trap_Get_Word(
+                L_next_gotten_raw, L_next, Feed_Binding(L->feed)
+            );
+            if (e) {
+                Erase_Cell(L_next_gotten_raw);
+                UNUSED(e);
+            }
+        }
+        else {
+            DECLARE_VALUE (check);
+            Option(Error*) e = Trap_Get_Word(
+                check, L_next, Feed_Binding(L->feed)
+            );
+            assert(not e);
+            assert(
+                memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
+            );
+        }
         break;  // need to check for lookahead
 
       case TYPE_FRAME:
-        L_next_gotten = L_next;
+        Copy_Cell(L_next_gotten_raw, L_next);
         break;
 
       default:  // if not a WORD! or ACTION!, start new non-infix expression
@@ -1956,10 +1989,10 @@ for (; check != tail; ++check) {  // push variables
     if (
         not L_next_gotten
         or (
-            not (Is_Word(L_next) and Is_Action(unwrap L_next_gotten))
+            not (Is_Word(L_next) and Is_Action(L_next_gotten_raw))
             and not Is_Frame(L_next)
         )
-        or not (infix_mode = Cell_Frame_Infix_Mode(unwrap L_next_gotten))
+        or not (infix_mode = Cell_Frame_Infix_Mode(L_next_gotten_raw))
     ){
       lookback_quote_too_late: // run as if starting new expression
 
@@ -1981,7 +2014,7 @@ for (; check != tail; ++check) {  // push variables
     //    function might be okay with seeing nothing on the left.  Start a
     //    new expression and let it error if that's not ok.
 
-    Phase* infixed = Cell_Frame_Phase(unwrap L_next_gotten);
+    Phase* infixed = Cell_Frame_Phase(L_next_gotten_raw);
     ParamList* paramlist = Phase_Paramlist(infixed);
 
     if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {  // [1]
@@ -2097,7 +2130,7 @@ for (; check != tail; ++check) {  // push variables
     // into the new function's frame.
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, unwrap L_next_gotten);
+    Push_Action(sub, L_next_gotten_raw);
 
     Option(const Symbol*) label = Is_Word(L_next)
         ? Cell_Word_Symbol(L_next)

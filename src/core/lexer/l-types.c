@@ -394,7 +394,7 @@ DECLARE_NATIVE(OF)
     Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
     Copy_Lifted_Cell(Evaluator_Level_Current(sub), spare_action);
     LIFT_BYTE(Evaluator_Level_Current(sub)) = NOQUOTE_1;  // plain FRAME!
-    sub->u.eval.current_gotten = nullptr;
+    Force_Invalidate_Gotten(&sub->u.eval.current_gotten);
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 

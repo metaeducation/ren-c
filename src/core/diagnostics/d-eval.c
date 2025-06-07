@@ -46,7 +46,10 @@
 #undef At_Level
 
 #define L_next          At_Feed(L->feed)
-#define L_next_gotten   L->feed->gotten
+
+#define L_next_gotten_raw  (&L->feed->gotten)
+#define L_next_gotten  (not Is_Gotten_Invalid(L_next_gotten_raw))
+
 #define L_binding     Level_Binding(L)
 
 #if DEBUG_HAS_PROBE
@@ -171,7 +174,19 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
     //
     if (L_next_gotten and not Is_Frame(L_next)) {
         assert(Any_Word(L_next));
-        assert(Lookup_Word(L_next, L_binding) == L_next_gotten);
+
+        // !!! With ACCESSORs this may be incoherent.  We need to track if
+        // the value came from an accessor or not, and if it does, we should
+        // not bother checking it.
+        //
+        // !!! This is totally dicey, and likely to break.
+
+        DECLARE_VALUE (check);
+        Option(Error*) e = Trap_Get_Word(check, L_next, L_binding);
+        assert(not e);
+        assert(
+            memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
+        );
     }
 
     assert(L == TOP_LEVEL);

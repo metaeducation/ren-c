@@ -1116,17 +1116,24 @@ INLINE Atom* Move_Atom_Untracked(
 // target cell to be poisoned or erased.
 //
 
-INLINE Cell* Blit_Cell_Untracked(Cell* out, const Cell* c) {
-  #if DEBUG_POISON_UNINITIALIZED_CELLS
-    assert(Is_Cell_Poisoned(out) or Is_Cell_Erased(out));
-  #endif
+INLINE Cell* Force_Blit_Cell_Untracked(Cell* out, const Cell* c) {
     out->header = c->header;
     out->extra = c->extra;
     out->payload = c->payload;
     return out;
 }
 
+INLINE Cell* Blit_Cell_Untracked(Cell* out, const Cell* c) {
+  #if DEBUG_POISON_UNINITIALIZED_CELLS
+    assert(Is_Cell_Poisoned(out) or Is_Cell_Erased(out));
+  #endif
+   return Force_Blit_Cell_Untracked(out, c);
+}
+
 #define Blit_Cell(out,c)   TRACK(Blit_Cell_Untracked(out, c))
+
+#define Force_Blit_Cell(out,c) \
+    TRACK(Force_Blit_Cell_Untracked(out, c))
 
 
 //=//// CELL CONST INHERITANCE ////////////////////////////////////////////=//

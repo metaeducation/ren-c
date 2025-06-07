@@ -456,7 +456,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
     // explicitly set ->gotten to null is overkill.  Could be split into
     // a version that just corrupts ->gotten in the checked build vs. null.
     //
-    feed->gotten = nullptr;
+    Invalidate_Gotten(&feed->gotten);
 
   retry_splice:
     if (Feed_Pending(feed)) {
@@ -639,7 +639,7 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
 
     feed->flags.bits = flags;
     Corrupt_Pointer_If_Debug(feed->p);
-    Corrupt_Pointer_If_Debug(feed->gotten);
+    Force_Invalidate_Gotten(&feed->gotten);
 
     feed->refcount = 0;  // putting in levels should add references
 
@@ -686,7 +686,7 @@ INLINE Feed* Prep_Array_Feed(
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 
-    feed->gotten = nullptr;
+    Force_Invalidate_Gotten(&feed->gotten);
     if (Is_Feed_At_End(feed))
         assert(Feed_Pending(feed) == nullptr);
     else
@@ -754,7 +754,7 @@ INLINE Feed* Prep_Variadic_Feed(
     // "instruction", it must be synchronized before you get a cell pointer.
     // So At_Feed() will assert if you do not synchronize first.
 
-    feed->gotten = nullptr;
+    Force_Invalidate_Gotten(&feed->gotten);
 
     return feed;
 }

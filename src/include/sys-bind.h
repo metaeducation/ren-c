@@ -399,40 +399,6 @@ INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  ***LOW-LEVEL*** LOOKUP OF CELL SLOTS
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// PLEASE TAKE NOTE: Most code should use higher level routines, like
-// Trap_Get_Any_Word() or Trap_Get_Var_XXX().
-//
-// These routines will get the cell which a word looks up to, but that cell
-// may *not* hold the intended "varible".  For instance: it may hold functions
-// that the system has to call to generate the variable (an "Accessor").  So
-// trying to read or write cells coming from this routine without using the
-// proper higher layers that go through TWEAK* will break.
-//
-
-INLINE Option(const Value*) Lookup_Word(
-    const Element* word,
-    Context* context
-){
-    REBLEN index;
-    Stub* s = maybe Get_Word_Container(&index, word, context);
-    if (not s)
-        return nullptr;
-
-    if (Is_Stub_Let(s) or Is_Stub_Patch(s))
-        return Stub_Cell(s);
-
-    assert(Is_Node_Readable(s));
-    VarList* c = cast(VarList*, s);
-    return Varlist_Slot(c, index);
-}
-
-
-//=////////////////////////////////////////////////////////////////////////=//
-//
 //  DETERMINING BINDING FOR CHILDREN IN A LIST
 //
 //=////////////////////////////////////////////////////////////////////////=//

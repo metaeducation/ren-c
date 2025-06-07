@@ -879,7 +879,7 @@ DECLARE_NATIVE(LET)
 
     Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags);
     Copy_Cell(Evaluator_Level_Current(sub), spare);
-    sub->u.eval.current_gotten = nullptr;
+    Force_Invalidate_Gotten(&sub->u.eval.current_gotten);
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
@@ -913,7 +913,7 @@ DECLARE_NATIVE(LET)
     //    overrides it may have (maybe the binding for items not at the head
     //    of a path is relevant?)  Simplest thing to do is drop the cache.
 
-    L->feed->gotten = nullptr;  // invalidate next word's cache [1]
+    Invalidate_Gotten(&L->feed->gotten);  // invalidate next word's cache [1]
     goto integrate_let_bindings;
 
 } integrate_let_bindings: {  /////////////////////////////////////////////////
