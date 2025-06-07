@@ -269,12 +269,6 @@ Let* Make_Let_Variable(
 // Find the context a word is bound into.  This must account for the various
 // binding forms: Relative Binding, Derived Binding, and Virtual Binding.
 //
-// The reason this is broken out from the Lookup_Word() routines is because
-// sometimes read-only-ness of the context is heeded, and sometimes it is not.
-// Splitting into a step that returns the context and the index means the
-// main work of finding where to look up doesn't need to be parameterized
-// with that.
-//
 // This function is used by Derelativize(), and so it shouldn't have any
 // failure mode while it's running...even if the context is inaccessible or
 // the word is unbound.  Errors should be panicked by callers if applicable.

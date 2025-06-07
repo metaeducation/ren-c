@@ -115,7 +115,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
     // cases of <with> hanging around that were non-useless, though they were
     // only comments.
     //
-    // Enforce that they're at least WORD!s that are bound.
+    // 1. Enforce that they're at least WORD!s that are bound.
 
     if (mode == SPEC_MODE_WITH) {
         if (not Is_Word(item))
@@ -123,8 +123,12 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 "<with> must be followed by WORD!s in FUNCTION spec"
             );
 
-        if (not Lookup_Word(item, Level_Binding(L)))
-            return Error_Not_Bound_Raw(item);
+        DECLARE_ATOM (dummy);  // don't care about the actual value [1]
+        Option(Error*) e = Trap_Get_Any_Word_Maybe_Trash(
+            dummy, item, Level_Binding(L)
+        );
+        if (e)
+            return e;
 
         continue;
     }

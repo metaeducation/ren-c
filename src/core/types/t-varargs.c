@@ -75,10 +75,11 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         // Look ahead, and if actively bound see if it's to an infix function
         // and the rules apply.
 
-        const Value* child_gotten = maybe Lookup_Word(look, binding);
+        Sink(Value) out_value = out;
+        Option(Error*) e = Trap_Get_Word(out_value, look, binding);
 
-        if (child_gotten and Is_Action(child_gotten)) {
-            Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(child_gotten);
+        if (not e and Is_Action(out_value)) {
+            Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(out_value);
             if (infix_mode) {
                 if (
                     pclass == PARAMCLASS_NORMAL or
@@ -89,6 +90,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
                 }
             }
         }
+        Corrupt_Cell_If_Debug(out);
     }
 
     // The odd circumstances which make things simulate END--as well as an

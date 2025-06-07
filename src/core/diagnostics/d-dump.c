@@ -158,15 +158,14 @@ DECLARE_NATIVE(DUMP)
     PROBE(v);
     printf("=> ");
     if (Is_Word(v)) {
-        const Value* var = maybe Lookup_Word(v, SPECIFIED);
-        if (not var) {
-            PROBE("\\unbound\\");
-        }
-        else if (Is_Nulled(var)) {
-            PROBE("\\null\\");
+        Sink(Value) spare = SPARE;
+        Option(Error*) e = Trap_Get_Word(spare, v, SPECIFIED);
+        if (e) {
+            printf("!!! ERROR FETCHING WORD FOR DUMP !!!");
+            PROBE(unwrap e);
         }
         else
-            PROBE(var);
+            PROBE(spare);
     }
 
     return TRASH;
