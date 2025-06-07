@@ -1011,7 +1011,9 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
     Element* param = Init_Unconstrained_Parameter(
         Array_At(a, 1), FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
     );
+    Push_Lifeguard(param);
     Set_Parameter_Spec(param, block, Cell_Binding(block));
+    Drop_Lifeguard(param);
 
     DECLARE_ELEMENT (def);
 

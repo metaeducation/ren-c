@@ -202,6 +202,57 @@ DECLARE_NATIVE(PICK)
 }}
 
 
+// Because TWEAK* is fundamental to getting and setting all WORD!s, bootstrap
+// needs it to be able to be established before it can look up words that
+// are in type specs.  So it has two variations: bootstrap-tweak* and tweak*.
+//
+// (The NATIVE native also has this dual nature.)
+//
+static Bounce Tweak_P_Native_Core(Level* level_)
+{
+    INCLUDE_PARAMS_OF_TWEAK_P;  // TWEAK* must be frame compatible w/PICK+POKE
+
+    Element* location = Element_ARG(LOCATION);
+    USED(ARG(PICKER));
+    Value* dual = ARG(DUAL);
+    // more ARG(...) may be in this location if POKE called us, reusing frame
+
+    possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for POKE's use
+
+  ensure_lifted_antiforms_are_stable: {
+
+    // We don't want to make it possible for TWEAK* to take unstable antiforms.
+    // That might seem to enable interesting features, like a container that
+    // could store PACK! or ERROR! states:
+    //
+    //     >> magic-store.x: pack [1 2]
+    //     == \~['1 '2]~\  ; antiform (pack!)
+    //
+    //     >> magic-store.x
+    //     == \~['1 '2]~\  ; antiform (pack!)
+    //
+    // But this would likely cause more problems than it could possibly solve.
+    // Working with unstable antiforms is a pain, and the internal machinery
+    // would get more complex and face existential questions trying to
+    // do this "correctly".
+    //
+    // Perhaps enabled in the future, but right now the "freedom from" needing
+    // to confront this in the mechanics outweighs the "freedom to" do it.
+    //
+    // 1. It's expected that magic inside the SET and GET code will bypass
+    //    calling TWEAK* and use Dispatch_Generic() directly.  When that
+    //    happens, this check (as well as other type checking) would not
+    //    be applied.
+
+    if (Is_Quasiform(dual))  // this check may be bypassed by optimization [1]
+        assert(Is_Stable_Antiform_Heart(Heart_Of(dual)));
+
+} dispatch_generic: {
+
+    return Dispatch_Generic(TWEAK_P, location, LEVEL);
+}}
+
+
 //
 //  tweak*: native:generic [  ; can call directly, but 99.9% want PICK/POKE
 //
@@ -252,47 +303,24 @@ DECLARE_NATIVE(TWEAK_P)
 // from a PICK that actually returns an ACTION! as the value (e.g. if an
 // OBJECT! had an ACTION! as a field).  Hence, TWEAK* uses the dual protocol.
 {
-    INCLUDE_PARAMS_OF_TWEAK_P;  // TWEAK* must be frame compatible w/PICK+POKE
+    return Tweak_P_Native_Core(LEVEL);
+}
 
-    Element* location = Element_ARG(LOCATION);
-    USED(ARG(PICKER));
-    Value* dual = ARG(DUAL);
-    // more ARG(...) may be in this location if POKE called us, reusing frame
 
-    possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for POKE's use
-
-  ensure_lifted_antiforms_are_stable: {
-
-    // We don't want to make it possible for TWEAK* to take unstable antiforms.
-    // That might seem to enable interesting features, like a container that
-    // could store PACK! or ERROR! states:
-    //
-    //     >> magic-store.x: pack [1 2]
-    //     == \~['1 '2]~\  ; antiform (pack!)
-    //
-    //     >> magic-store.x
-    //     == \~['1 '2]~\  ; antiform (pack!)
-    //
-    // But this would likely cause more problems than it could possibly solve.
-    // Working with unstable antiforms is a pain, and the internal machinery
-    // would get more complex and face existential questions trying to
-    // do this "correctly".
-    //
-    // Perhaps enabled in the future, but right now the "freedom from" needing
-    // to confront this in the mechanics outweighs the "freedom to" do it.
-    //
-    // 1. It's expected that magic inside the SET and GET code will bypass
-    //    calling TWEAK* and use Dispatch_Generic() directly.  When that
-    //    happens, this check (as well as other type checking) would not
-    //    be applied.
-
-    if (Is_Quasiform(dual))  // this check may be bypassed by optimization [1]
-        assert(Is_Stable_Antiform_Heart(Heart_Of(dual)));
-
-} dispatch_generic: {
-
-    return Dispatch_Generic(TWEAK_P, location, LEVEL);
-}}
+//
+//  tweak*-bootstrap: native [  ; don't put :GENERIC (covered by TWEAK*)
+//
+//  "(Bootstrap Variation of TWEAK*, before type spec lookups work)"
+//
+//      location
+//      picker
+//      dual
+//  ]
+//
+DECLARE_NATIVE(TWEAK_P_BOOTSTRAP)
+{
+    return Tweak_P_Native_Core(LEVEL);
+}
 
 
 // Use Level flag vs. a state byte, so that we can reuse the same frame

@@ -114,11 +114,7 @@ void Shutdown_Typesets(void)
 // setting flags appropriately and making notes for optimizations to help in
 // the later typechecking.
 //
-// 1. As written, the function spec processing code builds the parameter
-//    directly into a stack variable.  That means this code can't PUSH()
-//    (or call code that does).  It's not impossible to relax this and
-//    have the code build the parameter into a non-stack variable then
-//    copy it...but try avoiding that.
+// 1. Right now the assumption is that the param is GC safe.
 //
 // 2. TAG! parameter modifiers can't be abstracted.  So you can't say:
 //
@@ -144,7 +140,7 @@ void Shutdown_Typesets(void)
 //    as a WORD! typecheck.)
 //
 void Set_Parameter_Spec(
-    Element* param,  // target is usually a stack value [1]
+    Element* param,  // target should be GC safe [1]
     const Element* spec,
     Context* spec_binding
 ){
@@ -157,17 +153,44 @@ void Set_Parameter_Spec(
     }
     UNUSED(pclass);
 
+    Source* copy;
+
+  copy_derelativized_spec_array: {
+
+  // We go ahead and make a copy of the spec array, because we want to write
+  // optimization bytes into it as we go.  Also, we do lookups of words which
+  // may run arbitrary code (in theory), so we have to make sure the array
+  // is in good enough shape to be GC protected.  So we make two passes.
+  //
+  // (This could be more efficient by doing a memcpy and then adjusting the
+  // binding on the second walk, but just trying to keep the spec array from
+  // getting GC'd in the middle of a first walk for now.)
+
     const Element* tail;
     const Element* item = Cell_List_At(&tail, spec);
 
     Length len = tail - item;
 
-    Source* copy = cast(Source*, Make_Array_For_Copy(
+    copy = cast(Source*, Make_Array_For_Copy(
         FLEX_MASK_MANAGED_SOURCE,
         Cell_Array(spec),
         len
     ));
     Set_Flex_Len(copy, len);
+
+    Element* dest = Array_Head(copy);
+    for (; item != tail; ++item, ++dest) {
+        Derelativize(dest, item, spec_binding);
+        Clear_Cell_Flag(dest, NEWLINE_BEFORE);
+    }
+
+} process_parameter_spec: {
+
+    CELL_PARAMETER_SPEC(param) = copy;  // should GC protect the copy
+
+    const Element* tail;
+    const Element* item = Cell_List_At(&tail, spec);
+
     Element* dest = Array_Head(copy);
 
     TypesetByte* optimized = copy->misc.at_least_4;
@@ -177,9 +200,6 @@ void Set_Parameter_Spec(
         *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
     }
     else for (; item != tail; ++item, ++dest) {
-        Derelativize(dest, item, spec_binding);
-        Clear_Cell_Flag(dest, NEWLINE_BEFORE);
-
         if (Is_Space(item)) {
             *flags |= PARAMETER_FLAG_SPACE_DEFINITELY_OK;
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
@@ -243,23 +263,15 @@ void Set_Parameter_Spec(
             continue;
         }
 
-        const Value* lookup;
-        if (Heart_Of(item) == TYPE_WORD) {  // allow abstraction [3]
-            lookup = maybe Lookup_Word(item, spec_binding);
-            if (not lookup)  // not even bound to anything
-                panic (item);
-            if (Is_Trash(lookup)) {  // bound but not set
-                //
-                // !!! This happens on things like LOGIC?, because they are
-                // assigned in usermode code.  That misses an optimization
-                // opportunity...suggesting strongly those be done sooner.
-                //
-                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-                continue;
-            }
+        DECLARE_VALUE (lookup);
+
+        if (Is_Word(item)) {  // allow abstraction [3]
+            Option(Error*) e = Trap_Get_Word(lookup, item, spec_binding);
+            if (e)  // couldn't get the word (or got, and it was trash)
+                panic (unwrap e);
         }
         else
-            lookup = item;
+            Copy_Cell(lookup, item);
 
         Option(Type) type = Type_Of(lookup);
 
@@ -310,6 +322,9 @@ void Set_Parameter_Spec(
             else
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
         }
+        else if (HEART_BYTE(lookup) == TYPE_WORD) {  // @word! etc.
+            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+        }
         else {
             // By pre-checking we can avoid needing to double check in the
             // actual type-checking phase.
@@ -322,10 +337,9 @@ void Set_Parameter_Spec(
         *optimized = 0;  // signal termination (else tail is termination)
 
     Freeze_Source_Shallow(copy);  // !!! copy and freeze should likely be deep
-    CELL_PARAMETER_SPEC(param) = copy;
 
     assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
-}
+}}
 
 
 IMPLEMENT_GENERIC(MAKE, Is_Parameter)

@@ -207,7 +207,11 @@ export emit-include-params-macro: func [
         ]][
             paramlist: next paramlist
         ]
-        if (the return:) <> paramlist.1 [
+        all [
+            (the return:) <> paramlist.1
+            native-name != "native-bootstrap"
+            native-name != "tweak*-bootstrap"
+        ] then [
             panic [native-name "does not have a RETURN: specification"]
         ]
         paramlist: next paramlist

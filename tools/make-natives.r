@@ -108,20 +108,47 @@ gather-natives: func [
 gather-natives join src-dir %core/
 
 
-=== "MOVE `/NATIVE: NATIVE` AND TYPE CONSTRAINTS TO START OF BOOT" ===
+=== "MOVE `NATIVE: NATIVE` AND TYPE CONSTRAINTS TO START OF BOOT" ===
 
 ; The construction `native: native [...]` obviously has to be treated in a
 ; special way.  Startup constructs it manually, before skipping it and invoking
 ; the evaluator to do the other `xxx: native:yyy [...]` evaluations.
 
 leaders: [
-    native
-    tweak*  ; uses ANY-VALUE? as a type constraint for return
-    any-atom?
+    native-bootstrap
+    tweak*-bootstrap
+
+    native  ; REAL native (overwrites bootstrap)
+
     logic?
-    moldify  ; want this early so PROBE() works as early as it can!
+    moldify  ; early so PROBE() works as early as it can! (uses LOGIC?)
+
+    ;... these all use LOGIC?
+    any-value?
+    any-atom?
+    null?
+    space?
+
+    tweak*  ; REAL tweak* (overwrites bootstrap) uses NULL?, SPACE?
+
     antiform?  ; needs to accept unstable antiforms, overwrites auto-gen case
+    void?  ; same
     infix
+
+    any-word?  ; Not clear what future of this is (any-sigil'd word)
+
+    sigil?  ; [@ ^ $]
+
+    char?  ; single-character RUNE! constraint
+
+    boolean?  ; good name [true false]
+    yesno?  ; bad name (perhaps CONFIRM(ATION)?)
+    onoff?  ; bad name (perhaps TOGGLE?)
+
+    ; !!! These will be replaced by things like [word!:] in type specs.
+    ; Until they are, they have to be at the front in case a function randomly
+    ; is in the order before them.
+    ;
     set-word?
     get-word?
     set-tuple?
@@ -130,6 +157,10 @@ leaders: [
     get-group?
     get-block?
     set-block?
+    any-set-value?
+    any-get-value?
+    set-run-word?
+    refinement?
 ]
 leader-protos: to map! []
 

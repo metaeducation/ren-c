@@ -182,19 +182,14 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
 }
 
 
+// The NATIVE native has two entry points: one with no typechecking (used in
+// bootstrapping, when TWEAK* is not available to look up the words in the
+// type specs) and another that is overwritten into that slot after the
+// boot is complete.
 //
-//  native: native [
+// (TWEAK* also has this dual nature.)
 //
-//  "(Internal Function) Create a native, using compiled C code"
-//
-//      return: [action!]
-//      spec [block!]
-//      :combinator "This native is an implementation of a PARSE keyword"
-//      :intrinsic "This native can be called without building a frame"
-//      :generic "This native delegates to type-specific code"
-//  ]
-//
-DECLARE_NATIVE(NATIVE)
+static Bounce Native_Native_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_NATIVE;
 
@@ -242,6 +237,41 @@ DECLARE_NATIVE(NATIVE)
     }
 
     return UNSURPRISING(OUT);
+}
+
+
+//
+//  native: native [
+//
+//  "(Internal Function) Create a native, using compiled C code"
+//
+//      return: [action!]
+//      spec [block!]
+//      :combinator "This native is an implementation of a PARSE keyword"
+//      :intrinsic "This native can be called without building a frame"
+//      :generic "This native delegates to type-specific code"
+//  ]
+//
+DECLARE_NATIVE(NATIVE)
+{
+    return Native_Native_Core(LEVEL);
+}
+
+
+//
+//  native-bootstrap: native [
+//
+//  "(Bootstrap Variation) Version of NATIVE with no typechecking"
+//
+//      spec
+//      :combinator
+//      :intrinsic
+//      :generic
+//  ]
+//
+DECLARE_NATIVE(NATIVE_BOOTSTRAP)
+{
+    return Native_Native_Core(LEVEL);
 }
 
 
@@ -524,11 +554,15 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
     Fetch_Next_In_Feed(L->feed);
 
     NativeType native_type;
-    if (id == SYM_TWEAK_P) {
-        assert(Is_Chain(At_Level(L)));  // native:generic [...]
-        native_type = NATIVE_NORMAL;  // genericness only in make prep ATM
+    if (id == SYM_TWEAK_P_BOOTSTRAP) {
+        id = SYM_TWEAK_P;  // update the ID we write to
+        assert(Is_Word(At_Level(L)));  // native [...]
+        assert(Cell_Word_Id(At_Level(L)) == SYM_NATIVE);  // native [...]
+        native_type = NATIVE_NORMAL;  // genericness only in prep for TWEAK*
     }
     else {
+        assert(id == SYM_NATIVE_BOOTSTRAP);
+        id = SYM_NATIVE;  // update the ID we write to
         assert(Is_Word(At_Level(L)));
         assert(Cell_Word_Id(At_Level(L)) == SYM_NATIVE);  // native [...]
         native_type = NATIVE_NORMAL;
@@ -624,8 +658,8 @@ void Startup_Natives(const Element* boot_natives)
     // e.g. not by running evaluation.  (This reordering to put them at the
     // head is done in %make-natives.r)
 
-    Make_Native_In_Lib_By_Hand(L, SYM_NATIVE);
-    Make_Native_In_Lib_By_Hand(L, SYM_TWEAK_P);
+    Make_Native_In_Lib_By_Hand(L, SYM_NATIVE_BOOTSTRAP);
+    Make_Native_In_Lib_By_Hand(L, SYM_TWEAK_P_BOOTSTRAP);
 
     goto make_next_native;
 
