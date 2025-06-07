@@ -1134,8 +1134,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 //
 static void Handle_Mark_Rule(
     Level* level_,
-    const Element* rule,
-    Context* context
+    const Element* quoted_set_or_copy_word  // bound
 ){
     USE_PARAMS_OF_SUBPARSE;
 
@@ -1146,28 +1145,18 @@ static void Handle_Mark_Rule(
 
     Quotify_Depth(Element_ARG(POSITION), P_NUM_QUOTES);
 
-    Option(Type) t = Type_Of(rule);
-    if (t == TYPE_WORD or Is_Set_Word(rule)) {
-        Copy_Cell(Sink_Word_May_Panic(rule, context), ARG(POSITION));
+    // !!! Assume we might not be able to corrupt SPARE (rule may be
+    // in SPARE?)
+    //
+    Sink(Value) out = OUT;
+    DECLARE_ATOM (temp);
+    if (rebRunThrows(
+        out,  // <-- output cell
+        CANON(SET), quoted_set_or_copy_word, ARG(POSITION)
+    )){
+        panic (Error_No_Catch_For_Throw(LEVEL));
     }
-    else if (
-        t == TYPE_PATH or t == TYPE_TUPLE or Is_Set_Tuple(rule)
-    ){
-        // !!! Assume we might not be able to corrupt SPARE (rule may be
-        // in SPARE?)
-        //
-        DECLARE_ATOM (temp);
-        Quotify(Derelativize(OUT, rule, context));
-        if (rebRunThrows(
-            cast(Value*, temp),  // <-- output cell
-            CANON(SET), OUT, ARG(POSITION)
-        )){
-            panic (Error_No_Catch_For_Throw(LEVEL));
-        }
-        Erase_Cell(OUT);
-    }
-    else
-        panic (Error_Parse3_Variable(level_));
+    Erase_Cell(OUT);
 
     Dequotify(Element_ARG(POSITION));  // go back to 0 quote level
 }
@@ -1322,7 +1311,7 @@ DECLARE_NATIVE(SUBPARSE)
     //
     assert((P_FLAGS & PF_STATE_MASK) == 0);
 
-    const Element* set_or_copy_word = nullptr;
+    const Element* quoted_set_or_copy_word = nullptr;
 
     REBINT mincount = 1;  // min pattern count
     REBINT maxcount = 1;  // max pattern count
@@ -1553,7 +1542,9 @@ DECLARE_NATIVE(SUBPARSE)
                     goto handle_set;
                 }
 
-                set_or_copy_word = Copy_Cell(LOCAL(LOOKBACK), P_RULE);
+                quoted_set_or_copy_word = Quotify(Derelativize(
+                    LOCAL(LOOKBACK), P_RULE, P_RULE_BINDING
+                ));
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
@@ -1829,7 +1820,9 @@ DECLARE_NATIVE(SUBPARSE)
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
-        set_or_copy_word = Copy_Cell(LOCAL(LOOKBACK), rule);
+        quoted_set_or_copy_word = Quotify(
+            Derelativize(LOCAL(LOOKBACK), rule, P_RULE_BINDING)
+        );
         FETCH_NEXT_RULE(L);
 
         if (Is_Word(P_RULE) and Cell_Word_Id(P_RULE) == SYM_ACROSS) {
@@ -1847,7 +1840,7 @@ DECLARE_NATIVE(SUBPARSE)
             else
                 panic ("SET-WORD! works with <HERE> tag in PARSE3");
 
-            Handle_Mark_Rule(L, set_or_copy_word, P_RULE_BINDING);
+            Handle_Mark_Rule(L, quoted_set_or_copy_word);
             goto pre_rule;
         }
 
@@ -2201,10 +2194,6 @@ DECLARE_NATIVE(SUBPARSE)
             REBINT count = (begin > P_POS) ? 0 : P_POS - begin;
 
             if (P_FLAGS & PF_ACROSS) {
-                Value* sink = Sink_Word_May_Panic(
-                    set_or_copy_word,
-                    P_RULE_BINDING
-                );
                 if (Any_List_Type(P_HEART)) {
                     //
                     // Act like R3-Alpha in preserving GROUP! vs. BLOCK!
@@ -2212,7 +2201,7 @@ DECLARE_NATIVE(SUBPARSE)
                     // SET-XXX! or GET-XXX! (like how quoting is not kept)
                     //
                     Init_Any_List(
-                        sink,
+                        OUT,
                         P_HEART == TYPE_GROUP ? TYPE_GROUP : TYPE_BLOCK,
                         Copy_Source_At_Max_Shallow(
                             P_INPUT_ARRAY,
@@ -2223,7 +2212,7 @@ DECLARE_NATIVE(SUBPARSE)
                 }
                 else if (P_HEART == TYPE_BLOB) {
                     Init_Blob(  // R3-Alpha behavior (e.g. not AS TEXT!)
-                        sink,
+                        OUT,
                         Copy_Binary_At_Len(P_INPUT_BINARY, begin, count)
                     );
                 }
@@ -2239,7 +2228,7 @@ DECLARE_NATIVE(SUBPARSE)
                     // out of <abcd> as if `<b` or `c>` had been found.
                     //
                     Init_Text(
-                        sink,
+                        OUT,
                         Copy_String_At_Limit(begin_val, &count)
                     );
                 }
@@ -2247,6 +2236,9 @@ DECLARE_NATIVE(SUBPARSE)
                 // !!! As we are losing the datatype here, it doesn't make
                 // sense to carry forward the quoting on the input.  It is not
                 // obvious what marking a position should do.
+
+                rebElide(CANON(SET), quoted_set_or_copy_word, Liftify(OUT));
+                Erase_Cell(OUT);
             }
             else if (P_FLAGS & PF_SET) {
                 if (count > 1)
@@ -2265,38 +2257,29 @@ DECLARE_NATIVE(SUBPARSE)
                     // is hard to get composability on such things.
                     //
                     if (P_FLAGS & PF_TRY)  // don't just leave alone
-                        Init_Nulled(
-                            Sink_Word_May_Panic(
-                                set_or_copy_word,
-                                P_RULE_BINDING
-                            )
-                        );
+                        Init_Nulled(OUT);
                     else if (P_FLAGS & PF_OPTIONAL)
                         panic ("Cannot assign OPT VOID to variable in PARSE3");
                 }
                 else if (Stub_Holds_Cells(P_INPUT)) {
                     assert(count == 1);  // check for > 1 would have errored
 
-                    Copy_Cell(
-                        Sink_Word_May_Panic(set_or_copy_word, P_RULE_BINDING),
-                        Array_At(P_INPUT_ARRAY, begin)
-                    );
+                    Copy_Cell(OUT, Array_At(P_INPUT_ARRAY, begin));
                 }
                 else {
                     assert(count == 1);  // check for > 1 would have errored
 
-                    Value* var = Sink_Word_May_Panic(
-                        set_or_copy_word, P_RULE_BINDING
-                    );
-
                     if (P_HEART == TYPE_BLOB)
-                        Init_Integer(var, *Binary_At(P_INPUT_BINARY, begin));
+                        Init_Integer(OUT, *Binary_At(P_INPUT_BINARY, begin));
                     else
                         Init_Char_Unchecked(
-                            var,
+                            OUT,
                             Get_Char_At(P_INPUT_STRING, begin)
                         );
                 }
+
+                rebElide(CANON(SET), quoted_set_or_copy_word, Liftify(OUT));
+                Erase_Cell(OUT);
             }
 
             if (P_FLAGS & PF_REMOVE) {
@@ -2391,7 +2374,7 @@ DECLARE_NATIVE(SUBPARSE)
         }
 
         P_FLAGS &= ~PF_STATE_MASK;  // reset any state-oriented flags
-        set_or_copy_word = NULL;
+        quoted_set_or_copy_word = nullptr;
     }
 
     if (Is_Nulled(ARG(POSITION))) {
