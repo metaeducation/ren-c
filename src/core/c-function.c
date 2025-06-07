@@ -261,6 +261,8 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
             Copy_Cell(TOP_ELEMENT, param);  // put modification back on stack
 
+            Copy_Cell(TOP_ELEMENT, param);  // put modification back on stack
+
             continue;
         }
 
