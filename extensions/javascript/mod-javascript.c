@@ -1138,7 +1138,7 @@ DECLARE_NATIVE(JS_EVAL_P)
         );
 
     if (addr == 0)
-        return TRASH;
+        return TRIPWIRE;
 
     goto handle_error;
 
@@ -1211,7 +1211,7 @@ DECLARE_NATIVE(STARTUP_P)
 
     Register_Dispatcher(&JavaScript_Dispatcher, &Javascript_Details_Querier);
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 
@@ -1230,7 +1230,7 @@ DECLARE_NATIVE(JS_TRACE)
 
   #if DEBUG_JAVASCRIPT_EXTENSION
     g_probe_panics = PG_JS_Trace = Cell_Logic(ARG(ENABLE));
-    return TRASH;
+    return TRIPWIRE;
   #else
     return PANIC(
         "JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r"

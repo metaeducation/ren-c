@@ -704,5 +704,5 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
         }
     }
 
-    return TRASH;
+    return TRIPWIRE;
 }

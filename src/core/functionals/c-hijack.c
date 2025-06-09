@@ -340,7 +340,7 @@ DECLARE_NATIVE(HIJACK)
     CELL_FRAME_PHASE(victim_archetype) = proxy;  // adjust for swap
 
     if (victim_unimplemented)
-        return TRASH;
+        return TRIPWIRE;
 
     Init_Action(
         OUT,

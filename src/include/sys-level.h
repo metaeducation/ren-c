@@ -761,7 +761,7 @@ INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
     return Unliftify_Undecayed(level_->out);
 }
 
-INLINE Bounce Native_Trash_Result_Untracked(
+INLINE Bounce Native_Tripwire_Result_Untracked(
     Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
 ){
@@ -933,7 +933,7 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
 
     #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
     #undef GHOST        // must specify whether it's "surprising" or not
-    #define TRASH       Native_Trash_Result_Untracked(TRACK(OUT), level_)
+    #define TRIPWIRE    Native_Tripwire_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define UNLIFT(v)   Native_Unlift_Result(level_, (v))

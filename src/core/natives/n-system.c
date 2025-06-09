@@ -180,7 +180,7 @@ DECLARE_NATIVE(LIMIT_USAGE)
     else
         return PANIC(PARAM(FIELD));
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 

@@ -174,7 +174,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Integer)
     REBINT len = Emit_Integer(buf, VAL_INT64(v));
     Append_Ascii_Len(mo->string, s_cast(buf), len);
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 
@@ -379,7 +379,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Integer)
     REBI64 num = VAL_INT64(Element_ARG(SEED));
 
     Set_Random(num);
-    return TRASH;
+    return TRIPWIRE;
 }
 
 

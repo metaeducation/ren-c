@@ -361,5 +361,5 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
    if (unregister_extension_action)
         rebElide(rebRUN(Slot_Hack(unregister_extension_action)));
 
-   return TRASH;
+   return TRIPWIRE;
 }

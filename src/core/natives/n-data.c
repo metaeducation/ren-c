@@ -1095,7 +1095,7 @@ DECLARE_NATIVE(FREE)
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
     Diminish_Stub(f);
-    return TRASH; // !!! Could return freed value
+    return TRIPWIRE; // !!! Could return freed value
 }
 
 

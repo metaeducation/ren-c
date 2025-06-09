@@ -1488,5 +1488,5 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
             Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }
 
-    return TRASH;
+    return TRIPWIRE;
 }

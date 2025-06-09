@@ -248,7 +248,7 @@ DECLARE_NATIVE(SLEEP)
     usleep(msec * 1000);
   #endif
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 
@@ -256,7 +256,7 @@ DECLARE_NATIVE(SLEEP)
 static Bounce Delegate_Kill_Process(pid_t pid, int signal)
 {
     if (kill(pid, signal) >= 0)
-        return rebTrash();  // success
+        return "~";  // success
 
     switch (errno) {
       case EINVAL:
@@ -316,7 +316,7 @@ DECLARE_NATIVE(TERMINATE)
 
     if (TerminateProcess(ph, 0)) {
         CloseHandle(ph);
-        return TRASH;
+        return TRIPWIRE;
     }
 
     err = GetLastError();

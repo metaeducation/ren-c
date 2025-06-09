@@ -216,7 +216,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
         Trim_Tail(mo, '0');
     }
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 
@@ -652,7 +652,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Time)
     REBI64 secs = VAL_NANO(time);
 
     Set_Random(secs);
-    return TRASH;
+    return TRIPWIRE;
 }
 
 

@@ -140,7 +140,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Word)
 
     Append_Spelling(mo->string, Cell_Word_Symbol(v));
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 

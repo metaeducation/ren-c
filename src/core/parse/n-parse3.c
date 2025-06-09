@@ -2507,7 +2507,7 @@ DECLARE_NATIVE(PARSE3)
     if (Bool_ARG(MATCH))
         return COPY(ARG(INPUT));
 
-    return TRASH;  // no synthesized result in PARSE3 unless ACCEPT
+    return TRIPWIRE;  // no synthesized result in PARSE3 unless ACCEPT
 }
 
 

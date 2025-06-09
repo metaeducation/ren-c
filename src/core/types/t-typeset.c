@@ -376,7 +376,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
         End_Non_Lexical_Mold(mo);
     }
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 

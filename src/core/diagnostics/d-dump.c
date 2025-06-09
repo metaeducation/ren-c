@@ -168,7 +168,7 @@ DECLARE_NATIVE(DUMP)
             PROBE(spare);
     }
 
-    return TRASH;
+    return TRIPWIRE;
   #else
     UNUSED(ARG(VALUE));
     return PANIC(Error_Checked_Build_Only_Raw());

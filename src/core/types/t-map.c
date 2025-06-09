@@ -534,7 +534,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
     // Prevent endless mold loop:
     if (Find_Pointer_In_Flex(g_mold.stack, m) != NOT_FOUND) {
         Append_Ascii(mo->string, "...]");
-        return TRASH;
+        return TRIPWIRE;
     }
 
     Push_Pointer_To_Flex(g_mold.stack, m);
@@ -575,7 +575,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
     Drop_Pointer_From_Flex(g_mold.stack, m);
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 

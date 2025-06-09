@@ -181,8 +181,8 @@ typedef struct ColumnListStruct ColumnList;
 // The only time anything is actually removed from this list is when the
 // HANDLE! holding the reference is GC'd.
 //
-Connection* all_connections = nullptr;
-ColumnList* all_columnlists = nullptr;
+Connection* g_all_connections = nullptr;
+ColumnList* g_all_columnlists = nullptr;
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -306,10 +306,10 @@ static void Connection_Handle_Cleaner(void* p, size_t length) {
 
     Force_Connection_Cleanup(conn);
 
-    if (conn == all_connections)
-        all_connections = conn->next;
+    if (conn == g_all_connections)
+        g_all_connections = conn->next;
     else {
-        Connection* temp = all_connections;
+        Connection* temp = g_all_connections;
         while (temp->next != conn)
             temp = temp->next;
         temp->next = temp->next->next;
@@ -354,7 +354,7 @@ typedef enum {
 // driver/driver-manager do the translation from wide characters, but that is
 // less efficient than doing UTF-8
 //
-CharColumnEncoding char_column_encoding = CHAR_COL_UTF16;
+CharColumnEncoding g_char_column_encoding = CHAR_COL_UTF16;
 
 
 //
@@ -373,7 +373,7 @@ DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)
 {
     INCLUDE_PARAMS_OF_ODBC_SET_CHAR_ENCODING;
 
-    char_column_encoding = cast(CharColumnEncoding, rebUnboxInteger(
+    g_char_column_encoding = cast(CharColumnEncoding, rebUnboxInteger(
         "switch encoding [",
             "'utf-8 [", rebI(CHAR_COL_UTF8), "]",
             "'utf-16 [", rebI(CHAR_COL_UTF16), "]",
@@ -383,7 +383,7 @@ DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)
         "]"
     ));
 
-    return rebTrash();
+    return "~";
 }
 
 
@@ -494,8 +494,8 @@ DECLARE_NATIVE(OPEN_CONNECTION)
     rebUnmanageMemory(conn);
 
     conn->hdbc = hdbc;
-    conn->next = all_connections;
-    all_connections = conn;
+    conn->next = g_all_connections;
+    g_all_connections = conn;
 
     Value* hdbc_value = rebHandle(
         conn, sizeof(Connection*), &Connection_Handle_Cleaner
@@ -752,7 +752,7 @@ SQLRETURN ODBC_BindParameter(
         //
       case SQL_C_CHAR: {  // TEXT! when target column is VARCHAR
         size_t encoded_size_no_term;
-        switch (char_column_encoding) {
+        switch (g_char_column_encoding) {
           case CHAR_COL_UTF8: {
             unsigned char *utf8 = rebBytes(&encoded_size_no_term, v);
             p->buffer = utf8;
@@ -946,10 +946,10 @@ static void Column_List_Handle_Cleaner(void* p, size_t length) {
 
     Force_ColumnList_Cleanup(list);
 
-    if (list == all_columnlists)
-        all_columnlists = list->next;
+    if (list == g_all_columnlists)
+        g_all_columnlists = list->next;
     else {
-        ColumnList* temp = all_columnlists;
+        ColumnList* temp = g_all_columnlists;
         while (temp->next != list)
             temp = temp->next;
         temp->next = temp->next->next;
@@ -1144,7 +1144,7 @@ void Describe_ODBC_Results(
 
           case SQL_CHAR:
           case SQL_VARCHAR:
-            if (char_column_encoding == CHAR_COL_UTF16)
+            if (g_char_column_encoding == CHAR_COL_UTF16)
                 goto decode_as_utf16;  // !!! see notes on CHAR_COL_UTF16
 
             col->c_type = SQL_C_CHAR;
@@ -1168,7 +1168,7 @@ void Describe_ODBC_Results(
             break;
 
           case SQL_LONGVARCHAR:
-            if (char_column_encoding == CHAR_COL_UTF16)
+            if (g_char_column_encoding == CHAR_COL_UTF16)
                 goto decode_as_long_utf16;  // !!! see notes on CHAR_COL_UTF16
 
             col->c_type = SQL_C_CHAR;
@@ -1425,8 +1425,8 @@ DECLARE_NATIVE(INSERT_ODBC)
     rebUnmanageMemory(list->columns);
 
     list->num_columns = num_columns;
-    list->next = all_columnlists;
-    all_columnlists = list;
+    list->next = g_all_columnlists;
+    g_all_columnlists = list;
 
     Value* columns_value = rebHandle(list, 1, &Column_List_Handle_Cleaner);
 
@@ -1571,7 +1571,7 @@ Value* ODBC_Column_To_Rebol_Value(
     // fails?
 
       case SQL_C_CHAR: {
-        switch (char_column_encoding) {
+        switch (g_char_column_encoding) {
           case CHAR_COL_UTF8:
             return rebSizedText(
                 cast(char*, col->buffer),  // unixodbc SQLCHAR is unsigned
@@ -1843,7 +1843,7 @@ DECLARE_NATIVE(UPDATE_ODBC)
     if (not SQL_SUCCEEDED(rc))
         return rebDelegate("panic", Error_ODBC_Dbc(hdbc));
 
-    return rebTrash();
+    return "~";
 }
 
 
@@ -1942,10 +1942,10 @@ DECLARE_NATIVE(STARTUP_P)
 
     assert(henv == SQL_NULL_HANDLE);
 
-    assert(all_connections == nullptr);
-    assert(all_columnlists == nullptr);
+    assert(g_all_connections == nullptr);
+    assert(g_all_columnlists == nullptr);
 
-    return rebTrash();
+    return "~";
 }
 
 
@@ -1978,11 +1978,11 @@ DECLARE_NATIVE(SHUTDOWN_P)
     // no longer in use so that when the handles are later processed they
     // know to only free the associated memory.
 
-    ColumnList* list = all_columnlists;
+    ColumnList* list = g_all_columnlists;
     for (; list != nullptr; list = list->next)
         Force_ColumnList_Cleanup(list);
 
-    Connection* conn = all_connections;
+    Connection* conn = g_all_connections;
     for (; conn != nullptr; conn = conn->next)
         Force_Connection_Cleanup(conn);
 
@@ -1991,5 +1991,5 @@ DECLARE_NATIVE(SHUTDOWN_P)
         henv = SQL_NULL_HANDLE;
     }
 
-    return rebTrash();
+    return "~";
 }

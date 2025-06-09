@@ -571,7 +571,7 @@ DECLARE_NATIVE(WRAP_P)
         return COPY(list);  // should this return a list?
     */
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 

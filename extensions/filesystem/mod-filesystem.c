@@ -57,7 +57,7 @@ DECLARE_NATIVE(STARTUP_P)
 {
     INCLUDE_PARAMS_OF_STARTUP_P;
 
-    return rebTrash();
+    return "~";
 }
 
 
@@ -73,7 +73,7 @@ DECLARE_NATIVE(SHUTDOWN_P)
 {
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
-    return rebTrash();
+    return "~";
 }
 
 

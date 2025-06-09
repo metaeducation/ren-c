@@ -284,7 +284,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_WAS_TRUNCATED))
         Append_Codepoint(mo->string, '}');
 
-    return TRASH;
+    return TRIPWIRE;
 }
 
 
@@ -811,7 +811,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Blob)
     Size size;
     const Byte* data = Cell_Blob_Size_At(&size, blob);
     Set_Random(crc32_z(0L, data, size));
-    return TRASH;
+    return TRIPWIRE;
 }
 
 

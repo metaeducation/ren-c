@@ -331,7 +331,7 @@ DECLARE_NATIVE(STDIO_ACTOR)
             Value* result = Read_Line(Term_IO);
             if (rebUnboxLogic("'~halt~ =", rebQ(result))) {  // HALT received
                 rebRelease(result);
-                return rebTrash();
+                return "~";
             }
             if (rebUnboxLogic("space?", result)) {  // ESCAPE received
                 rebRelease(result);

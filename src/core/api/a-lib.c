@@ -558,9 +558,16 @@ uintptr_t API_rebTick(void)
 
 
 //
-//  rebTrash: API
+//  rebTripwire: API
 //
-RebolValue* API_rebTrash(void)
+// In many places where you might use this, e.g. `return rebTripwire();`,
+// you could just use `return "~";` and it would be as good or better (there
+// is an optimization to take care of this when returning from functions).
+//
+// (Natives using the core API can use `return TRIPWIRE;` for slightly more
+// efficiency, as it directly initializes the OUT cell with a tripwire.)
+//
+RebolValue* API_rebTripwire(void)
 {
     ENTER_API;
 
