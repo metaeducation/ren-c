@@ -283,8 +283,10 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 //
 // "Hint" is another name for a non-sticky flag like CELL_FLAG_NOTE.  We are
 // running out of bits (in 32-bit builds) and competing purposes for bits
-// on the evaluative output cell for CELL_FLAG_OUT_HINT_UNSURPRISING made
-// this be taken.  It was a convenience, but the flags should be reviewed.
+// on the evaluative output cell required this to be taken:
+//
+// * See CELL_FLAG_OUT_HINT_UNSURPRISING
+// * See CELL_FLAG_SLOT_HINT_DUAL
 //
 #define CELL_FLAG_HINT \
     FLAG_LEFT_BIT(26)

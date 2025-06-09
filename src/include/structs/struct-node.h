@@ -160,8 +160,8 @@
 // into or out of API handle cells the flag is left untouched.
 //
 // !!! Due to the fact that this is a "sticky" bit, it is currently abused
-// by the FOR-EACH type of machinery to mark slots in an object as requiring
-// a lift.  See CELL_FLAG_BIND_MARKED_LIFT.  That code is going to be redone
+// by the FOR-EACH type of machinery to mark slots in an object as accepting
+// meta.  See CELL_FLAG_BIND_MARKED_META.  That code is going to be redone
 // completely, so it may not be an issue...but it does raise the general
 // question of whether this is an approved use for a generic bit.
 //

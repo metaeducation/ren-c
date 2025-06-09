@@ -100,13 +100,13 @@ INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
     return out;
 }
 
-INLINE Option(const Value*) Cell_Context_Slot_Core(
+INLINE Option(const Slot*) Cell_Context_Slot_Core(
     const Element* context,
     const Symbol* symbol,
     bool writable
 ){
     bool strict = false;
-    Option(Value*) slot;
+    Option(Slot*) slot;
     if (Is_Module(context)) {
         slot = Sea_Slot(Cell_Module_Sea(context), symbol, strict);
     }

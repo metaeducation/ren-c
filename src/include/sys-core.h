@@ -289,7 +289,7 @@ struct Reb_Enum_Vars {
     const Key* key_tail;
     Param* param;
     LensMode lens_mode;
-    Value* var;
+    Slot* slot;
     REBLEN index;  // important for enumerations that are binding
 
     // !!! Enumerating key/val pairs in modules in the "sea of words" model is

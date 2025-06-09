@@ -406,7 +406,7 @@ bool Try_Dispatch_Generic_Core(
             VarList* ctx = Cell_Varlist(Level_Arg(L, 1));
             if (
                 Varlist_Len(ctx) < MAX_STD_PORT
-                or not Is_Object(Varlist_Slot(ctx, STD_PORT_SPEC))
+                or not Is_Object(Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC)))
             ){
                 *bounce = Native_Fail_Result(L, Error_Invalid_Port_Raw());
             }  // "old check" for invalid port

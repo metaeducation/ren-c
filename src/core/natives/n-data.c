@@ -324,11 +324,14 @@ DECLARE_NATIVE(USE)
     Element* vars = Element_ARG(VARS);
     Element* body = Element_ARG(BODY);
 
-    VarList* context = Virtual_Bind_Deep_To_New_Context(
-        body,  // may be replaced with rebound copy, or left the same
-        vars  // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
+    VarList* varlist;
+    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
+        &varlist, body, vars
     );
-    UNUSED(context);  // managed, but [1]
+    if (e)
+        return PANIC(unwrap e);
+
+    UNUSED(varlist);  // managed, but [1]
 
     if (Eval_Any_List_At_Throws(OUT, body, SPECIFIED))
         return THROWN;
@@ -975,19 +978,18 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 
         bool strict = true;
 
-        Option(const Value*) src = Sea_Slot(source, symbol, strict);
+        const Slot* src = maybe Sea_Slot(source, symbol, strict);
         if (not src)
             return PANIC(v);  // panic if unset value, also?
 
-        Option(Value*) dest = Sea_Slot(where, symbol, strict);
+        Slot* dest = maybe Sea_Slot(where, symbol, strict);
         if (dest) {
             // Fail if found?
+            Copy_Cell(Slot_Hack(dest), Slot_Hack(src));
         }
         else {
-            dest = Append_Context(where, symbol);
+            Copy_Cell(Append_Context(where, symbol), Slot_Hack(src));
         }
-
-        Copy_Cell(unwrap dest, unwrap src);
     }
 
     return COPY(ARG(WHERE));

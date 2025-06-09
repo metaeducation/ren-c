@@ -119,11 +119,11 @@ INLINE Option(Patch*) Sea_Patch(
     return nullptr;
 }
 
-INLINE Option(Value*) Sea_Slot(SeaOfVars* sea, const Symbol* sym, bool strict) {
+INLINE Option(Slot*) Sea_Slot(SeaOfVars* sea, const Symbol* sym, bool strict) {
     Patch* patch = maybe Sea_Patch(sea, sym, strict);
     if (not patch)
         return nullptr;
-    return Stub_Cell(patch);
+    return u_cast(Slot*, Stub_Cell(patch));
 }
 
 INLINE Value* Mutable_Lib_Var(SymId id) {
@@ -146,7 +146,3 @@ INLINE Sink(Value) Sink_Lib_Var(SymId id) {
 }
 
 #define LIB(name)  Lib_Var(SYM_##name)
-
-#define SYS_UTIL(name) \
-    cast(const Value*, \
-        Sea_Slot(g_sys_util_context, Canon_Symbol(SYM_##name), true))

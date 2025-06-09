@@ -879,9 +879,6 @@ void Startup_Core(void)
     // "system" features.  It is lower-level than the LIB context, but has
     // natives, generics, and the definitions from Startup_Base() available.
     //
-    // See the helper SYS_UTIL() for a quick way of getting the functions by
-    // their symbol.
-    //
     // (Note: The SYSTEM.UTIL context was renamed from just "SYS" to avoid
     //  being confused with "the system object", which is a different thing.
     //  Better was to say SYS was just an abbreviation for SYSTEM.)

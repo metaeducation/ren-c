@@ -512,8 +512,8 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Zombie(mval + 1)) {
-            Value* var = Append_Context(c, Cell_Word_Symbol(mval));
-            Copy_Cell(var, mval + 1);
+            Init(Slot) slot = Append_Context(c, Cell_Word_Symbol(mval));
+            Copy_Cell(slot, mval + 1);
         }
     }
 

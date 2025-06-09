@@ -361,7 +361,7 @@ DECLARE_NATIVE(STDIO_ACTOR)
 
         const Size readbuf_size = 30 * 1024;  // may back off to smaller size
 
-        Value* data = Varlist_Slot(ctx, STD_PORT_DATA);
+        Value* data = Slot_Hack(Varlist_Slot(ctx, STD_PORT_DATA));
         if (not Is_Blob(data)) {
             Init_Blob(data, Make_Binary(readbuf_size));
         }

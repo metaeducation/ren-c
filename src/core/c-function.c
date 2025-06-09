@@ -213,7 +213,9 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 Manage_Flex(string);
                 Freeze_Flex(string);
                 Init_Text(
-                    Varlist_Slot(*adjunct, STD_ACTION_ADJUNCT_DESCRIPTION),
+                    Slot_Hack(
+                        Varlist_Slot(*adjunct, STD_ACTION_ADJUNCT_DESCRIPTION)
+                    ),
                     string
                 );
                 Push_Lifeguard(*adjunct);

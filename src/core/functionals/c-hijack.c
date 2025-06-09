@@ -127,13 +127,13 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
             continue;
 
         if (Get_Parameter_Flag(e.param, REFINEMENT)) {
-            if (Is_Nulled(e.var))  // don't add to PATH!
+            if (Is_Nulled(Slot_Hack(e.slot)))  // don't add to PATH!
                 continue;
 
             Init_Pushed_Refinement(PUSH(), Key_Symbol(e.key));
 
             if (Is_Parameter_Unconstrained(e.param)) {
-                assert(Is_Okay(e.var));  // used but argless refinement
+                assert(Is_Okay(Slot_Hack(e.slot)));  // used but argless refine
                 continue;
             }
         }
@@ -141,7 +141,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
         // The arguments were already evaluated to put them in the frame, do
         // not evaluate them again.
         //
-        Copy_Lifted_Cell(Alloc_Tail_Array(normals), e.var);
+        Copy_Lifted_Cell(Alloc_Tail_Array(normals), Slot_Hack(e.slot));
     }
 
     Shutdown_Evars(&e);

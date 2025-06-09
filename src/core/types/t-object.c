@@ -108,7 +108,7 @@ void Init_Evars(EVARS *e, const Element* v) {
         e->word_tail = cast(Value*, Array_Tail(e->wordlist));
 
         Corrupt_Pointer_If_Debug(e->key_tail);
-        e->var = nullptr;
+        e->slot = nullptr;
         e->param = nullptr;
     }
     else {
@@ -117,7 +117,7 @@ void Init_Evars(EVARS *e, const Element* v) {
         VarList* varlist = Cell_Varlist(v);
         e->ctx = varlist;
 
-        e->var = Varlist_Slots_Head(varlist) - 1;
+        e->slot = Varlist_Slots_Head(varlist) - 1;
 
         assert(Flex_Used(Bonus_Keylist(varlist)) <= Varlist_Len(varlist));
 
@@ -133,7 +133,7 @@ void Init_Evars(EVARS *e, const Element* v) {
     //    This is because the Lens slot is used for a label when not lensed,
     //    common with antiforms.
 
-            e->var = Varlist_Slots_Head(varlist) - 1;
+            e->slot = Varlist_Slots_Head(varlist) - 1;
 
             Phase* lens = maybe Cell_Frame_Lens(v);
             if (not lens) {  // unlensed, only inputs visible [1]
@@ -192,10 +192,10 @@ void Init_Evars(EVARS *e, const Element* v) {
 bool Try_Advance_Evars(EVARS *e) {
     if (e->word) {
         while (++e->word != e->word_tail) {
-            e->var = unwrap Sea_Slot(
+            e->slot = unwrap Sea_Slot(
                 cast(SeaOfVars*, e->ctx), Cell_Word_Symbol(e->word), true
             );
-            if (Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
+            if (Get_Cell_Flag(e->slot, VAR_MARKED_HIDDEN))
                 continue;
             e->keybuf = Cell_Word_Symbol(e->word);
             e->key = &e->keybuf;
@@ -207,8 +207,8 @@ bool Try_Advance_Evars(EVARS *e) {
     ++e->key;  // !! Note: keys can move if an ordinary context expands
     if (e->param)
         ++e->param;  // params are locked and should never move
-    if (e->var)
-        ++e->var;  // !! Note: vars can move if an ordinary context expands
+    if (e->slot)
+        ++e->slot;  // !! Note: vars can move if an ordinary context expands
     ++e->index;
 
     for (
@@ -216,10 +216,10 @@ bool Try_Advance_Evars(EVARS *e) {
         e->key != e->key_tail;
         (++e->index, ++e->key,
             e->param ? ++e->param : cast(Param*, nullptr),
-            e->var ? ++e->var : cast(Value*, nullptr)
+            e->slot ? ++e->slot : nullptr
         )
     ){
-        if (e->var and Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
+        if (e->slot and Get_Cell_Flag(e->slot, VAR_MARKED_HIDDEN))
             continue;  // user-specified hidden bit, on the variable itself
 
         if (e->param) {
@@ -332,20 +332,22 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
             goto finished;
 
         bool lesser;
-        if (Try_Lesser_Value(&lesser, e1.var, e2.var)) {  // works w/LESSER?
+        Value* v1 = Slot_Hack(e1.slot);
+        Value* v2 = Slot_Hack(e2.slot);
+        if (Try_Lesser_Value(&lesser, v1, v2)) {  // works w/LESSER?
             if (lesser) {
                 diff = -1;
                 goto finished;
             }
 
-            if (not Equal_Values(e1.var, e2.var, strict)) {
+            if (not Equal_Values(v1, v2, strict)) {
                 diff = 1;
                 goto finished;
             }
             continue;
         }
 
-        if (Equal_Values(e1.var, e2.var, strict))  // if equal, we can continue
+        if (Equal_Values(v1, v2, strict))  // if equal, we can continue
             continue;
 
         Shutdown_Evars(&e1);
@@ -688,8 +690,8 @@ SeaOfVars* Copy_Sea_Managed(SeaOfVars* original) {
 
         for (; stub != *psym; stub = Misc_Hitch(stub)) {
             if (original == Info_Patch_Sea(cast(Patch*, stub))) {
-                Value* var = Append_Context(copy, *psym);
-                Copy_Cell(var, Stub_Cell(stub));
+                Init(Slot) slot = Append_Context(copy, *psym);
+                Copy_Cell(slot, Stub_Cell(stub));
                 break;
             }
         }
@@ -739,12 +741,12 @@ VarList* Copy_Varlist_Extra_Managed(
     // Now copy the actual vars in the context, from wherever they may be
     // (might be in an array, or might be in the chunk stack for FRAME!)
     //
-    const Value* src_tail;
-    Value* src = Varlist_Slots(&src_tail, original);
+    const Slot* src_tail;
+    Slot* src = Varlist_Slots(&src_tail, original);
     for (; src != src_tail; ++src, ++dest) {
         Copy_Cell_Core(  // trying to duplicate slot precisely
             dest,
-            src,
+            Slot_Hack(src),
             CELL_MASK_ALL  // include VAR_MARKED_HIDDEN, PARAM_NOTE_TYPECHECKED
         );
 
@@ -839,11 +841,12 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Append_Spelling(mo->string, Key_Symbol(e.key));
             Append_Ascii(mo->string, ": ");
 
-            if (Is_Antiform(e.var)) {
-                panic (Error_Bad_Antiform(e.var));  // can't FORM antiforms
+            Value* var = Slot_Hack(e.slot);
+            if (Is_Antiform(var)) {
+                panic (Error_Bad_Antiform(var));  // can't FORM antiforms
             }
             else
-                Mold_Element(mo, cast(Element*, e.var));
+                Mold_Element(mo, Known_Element(var));
 
             Append_Codepoint(mo->string, LF);
             had_output = true;
@@ -878,15 +881,16 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         Mold_Element(mo, set_word);
         Append_Codepoint(mo->string, ' ');
 
-        if (Is_Antiform(e.var)) {
-            assert(Is_Antiform_Stable(cast(Atom*, e.var)));  // extra check
+        Value* var = Slot_Hack(e.slot);
+        if (Is_Antiform(var)) {
+            assert(Is_Antiform_Stable(cast(Atom*, var)));  // extra check
 
             DECLARE_ELEMENT (reified);
-            Copy_Lifted_Cell(reified, e.var);  // will become quasi...
+            Copy_Lifted_Cell(reified, var);  // will become quasi...
             Mold_Element(mo, reified);  // ...molds as `~xxx~`
         }
         else {
-            Element* elem = Known_Element(e.var);
+            Element* elem = Known_Element(var);
             Output_Apostrophe_If_Not_Inert(s, elem);
             Mold_Element(mo, elem);
         }
@@ -935,16 +939,16 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
     Push_Pointer_To_Flex(g_mold.stack, let);
 
     const Symbol* spelling = Let_Symbol(let);
-    const Value* slot = Let_Slot(let);
+    const Value* var = Slot_Hack(Let_Slot(let));
 
     if (form) {
         Append_Spelling(mo->string, spelling);
         Append_Ascii(mo->string, ": ");
 
-        if (Is_Antiform(slot))
-            return PANIC(Error_Bad_Antiform(slot));  // can't FORM antiforms
+        if (Is_Antiform(var))
+            return PANIC(Error_Bad_Antiform(var));  // can't FORM antiforms
 
-        Mold_Element(mo, Known_Element(slot));
+        Mold_Element(mo, Known_Element(var));
 
         Drop_Pointer_From_Flex(g_mold.stack, let);
         return TRASH;
@@ -965,13 +969,13 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
     Mold_Element(mo, set_word);
     Append_Codepoint(mo->string, ' ');
 
-    if (Is_Antiform(slot)) {
+    if (Is_Antiform(var)) {
         DECLARE_ELEMENT (reified);
-        Copy_Lifted_Cell(reified, slot);  // will become quasi...
+        Copy_Lifted_Cell(reified, var);  // will become quasi...
         Mold_Element(mo, reified);  // ...molds as `~xxx~`
     }
     else {
-        const Element* elem = Known_Element(slot);
+        const Element* elem = Known_Element(var);
         Output_Apostrophe_If_Not_Inert(s, elem);
         Mold_Element(mo, elem);
     }
@@ -1127,7 +1131,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         if (Is_Stub_Sea(c))
             return PANIC("SeaOfVars SELECT not implemented yet");
 
-        return COPY(Varlist_Slot(cast(VarList*, c), unwrap index)); }
+        Slot* slot = Varlist_Slot(cast(VarList*, c), unwrap index);
+        return COPY(Slot_Hack(slot)); }
 
       default:
         break;
@@ -1200,7 +1205,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    const Value* slot = maybe Cell_Context_Slot(context, symbol);
+    const Slot* slot = maybe Cell_Context_Slot(context, symbol);
     if (not slot)
         return DUAL_SIGNAL_NULL_ABSENT;
 
@@ -1219,18 +1224,22 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    Value* out = Copy_Cell(OUT, slot);
+    Value* out = Copy_Cell(OUT, Slot_Hack(slot));
 
     if (
         HEART_BYTE(slot) == TYPE_FRAME
         and LIFT_BYTE(slot) == ANTIFORM_0
-        and Cell_Frame_Coupling(slot) == UNCOUPLED
+        and Cell_Frame_Coupling(Slot_Hack(slot)) == UNCOUPLED
     ){
         Context* c = Cell_Context(context);
         Tweak_Cell_Frame_Coupling(out, cast(VarList*, c));
     }
 
-    return DUAL_LIFTED(OUT);
+    if (Not_Cell_Flag(slot, SLOT_HINT_DUAL))  // not lifted
+        return DUAL_LIFTED(OUT);
+
+    assert(Any_Lifted(OUT));  // !!! won't always be lifted, transitional
+    return OUT;
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
@@ -1239,7 +1248,9 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
         return PANIC(Error_Protected_Key(symbol));
 
-    Copy_Cell(m_cast(Value*, slot), poke);
+    Copy_Cell(m_cast(Value*, Slot_Hack(slot)), poke);
+
+    assert(Not_Cell_Flag(slot, SLOT_HINT_DUAL));  // not yet implemented
 
     return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
 
@@ -1934,7 +1945,7 @@ DECLARE_NATIVE(CONSTRUCT)
         Option(Index) index = CELL_WORD_INDEX_I32(TOP);
         assert(index);  // created a key for every SET-WORD! above!
 
-        Copy_Cell(Varlist_Slot(varlist, unwrap index), spare);
+        Copy_Cell(Slot_Hack(Varlist_Slot(varlist, unwrap index)), spare);
 
         DROP();
     }

@@ -363,9 +363,9 @@ void on_new_connection(uv_stream_t *server, int status) {
     VarList* client = Copy_Varlist_Shallow_Managed(listener_port_ctx);
     Push_Lifeguard(client);
 
-    Init_Nulled(Varlist_Slot(client, STD_PORT_DATA));  // just to be sure
+    Init_Nulled(Slot_Hack(Varlist_Slot(client, STD_PORT_DATA)));  // be sure
 
-    Value* c_state = Varlist_Slot(client, STD_PORT_STATE);
+    Value* c_state = Slot_Hack(Varlist_Slot(client, STD_PORT_STATE));
     SOCKREQ* sock = Try_Alloc_Memory(SOCKREQ);
     memset(sock, 0, sizeof(SOCKREQ));
 
@@ -487,7 +487,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, handle->data);
 
     VarList* port_ctx = rebreq->port_ctx;
-    Value* port_data = Varlist_Slot(port_ctx, STD_PORT_DATA);
+    Value* port_data = Slot_Hack(Varlist_Slot(port_ctx, STD_PORT_DATA));
 
     Size bufsize;
     if (rebreq->length == UNLIMITED)  // read maximum amount possible
@@ -552,7 +552,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     Reb_Read_Request* rebreq = cast(Reb_Read_Request*, stream->data);
     VarList* port_ctx = rebreq->port_ctx;
 
-    Value* port_data = Varlist_Slot(port_ctx, STD_PORT_DATA);
+    Value* port_data = Slot_Hack(Varlist_Slot(port_ctx, STD_PORT_DATA));
 
     if (Is_Nulled(port_data))
         assert(nread <= 0);  // can happen, e.g. "connection reset by peer" [1]
@@ -668,7 +668,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         );
 
     VarList* ctx = Cell_Varlist(port);
-    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
+    Value* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
 
     // If a transfer is in progress, the port_data is a BLOB!.  Its index
     // represents how much of the transfer has finished.  The data starts
@@ -677,11 +677,11 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
     // being written...and text was allowed (even though it might be wide
     // characters, a likely oversight from the addition of unicode).
     //
-    Value* port_data = Varlist_Slot(ctx, STD_PORT_DATA);
+    Value* port_data = Slot_Hack(Varlist_Slot(ctx, STD_PORT_DATA));
     assert(Is_Blob(port_data) or Is_Nulled(port_data));
 
     SOCKREQ *sock;
-    Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
+    Value* state = Slot_Hack(Varlist_Slot(ctx, STD_PORT_STATE));
     if (Is_Handle(state)) {
         sock = Sock_Of_Port(port);
         assert(sock->transport == transport);
@@ -937,22 +937,22 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         VarList* info = Cell_Varlist(result);
 
         Init_Tuple_Bytes(
-            Varlist_Slot(info, STD_NET_INFO_LOCAL_IP),
+            Slot_Hack(Varlist_Slot(info, STD_NET_INFO_LOCAL_IP)),
             cast(Byte*, &sock->local_ip),
             4
         );
         Init_Integer(
-            Varlist_Slot(info, STD_NET_INFO_LOCAL_PORT),
+            Slot_Hack(Varlist_Slot(info, STD_NET_INFO_LOCAL_PORT)),
             sock->local_port_number
         );
 
         Init_Tuple_Bytes(
-            Varlist_Slot(info, STD_NET_INFO_REMOTE_IP),
+            Slot_Hack(Varlist_Slot(info, STD_NET_INFO_REMOTE_IP)),
             cast(Byte*, &sock->remote_ip),
             4
         );
         Init_Integer(
-            Varlist_Slot(info, STD_NET_INFO_REMOTE_PORT),
+            Slot_Hack(Varlist_Slot(info, STD_NET_INFO_REMOTE_PORT)),
             sock->remote_port_number
         );
 

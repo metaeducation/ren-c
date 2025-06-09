@@ -266,7 +266,7 @@ bool Specialize_Action_Throws(
     const Key* key = Phase_Keys(&tail, unspecialized);
     const Param* param = Phase_Params_Head(unspecialized);
 
-    Value* arg = Varlist_Slots_Head(exemplar);
+    Value* arg = Slot_Hack(Varlist_Slots_Head(exemplar));
 
     StackIndex ordered_stackindex = lowest_stackindex;
 
@@ -344,7 +344,9 @@ bool Specialize_Action_Throws(
                 panic (Error_Bad_Parameter_Raw(ordered));
             }
 
-            Value* slot = Varlist_Slot(exemplar, VAL_WORD_INDEX(ordered));
+            Value* slot = Slot_Hack(
+                Varlist_Slot(exemplar, VAL_WORD_INDEX(ordered))
+            );
             if (not Is_Specialized(cast(Param*, slot))) {
                 //
                 // It's still partial...

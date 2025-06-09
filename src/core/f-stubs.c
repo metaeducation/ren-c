@@ -277,12 +277,12 @@ Type Type_Of_Builtin_Fundamental(const Atom* value)
 //
 Value* Get_System(REBLEN i1, REBLEN i2)
 {
-    Value* obj = Varlist_Slot(Cell_Varlist(LIB(SYSTEM)), i1);
+    Slot* obj = Varlist_Slot(Cell_Varlist(LIB(SYSTEM)), i1);
     if (i2 == 0)
-        return obj;
+        return Slot_Hack(obj);
 
-    assert(Is_Object(obj));
-    return Varlist_Slot(Cell_Varlist(obj), i2);
+    assert(Is_Object(Slot_Hack(obj)));
+    return Slot_Hack(Varlist_Slot(Cell_Varlist(Slot_Hack(obj)), i2));
 }
 
 

@@ -301,6 +301,8 @@
 
 #define FLEX_FLAG_DONT_RELOCATE FLEX_FLAG_FIXED_SIZE
 
+#define Fixed(pointer)  pointer  // commentary for non-movable pointer
+
 
 //=////////////////////////////////////////////////////////////////////////=//
 //

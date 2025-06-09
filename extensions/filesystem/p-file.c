@@ -124,7 +124,7 @@ DECLARE_NATIVE(FILE_ACTOR)
     // operation is something like a RENAME that does not require a port to be
     // open, then this capturing of the specification is all the setup needed.
     //
-    Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
+    Value* state = Slot_Hack(Varlist_Slot(ctx, STD_PORT_STATE));
     FILEREQ *file;
     if (Is_Blob(state)) {
         file = File_Of_Port(port);
@@ -148,7 +148,7 @@ DECLARE_NATIVE(FILE_ACTOR)
     else {
         assert(Is_Nulled(state));
 
-        Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
+        Value* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
         if (not Is_Object(spec))
             return PANIC(Error_Invalid_Spec_Raw(spec));
 
@@ -246,7 +246,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         Value* result;
 
      handle_read: {
-    
+
         // Seek addresses are 0-based:
         //
         // https://discourse.julialang.org/t/why-is-seek-zero-based/55569/

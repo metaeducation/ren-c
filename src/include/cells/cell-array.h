@@ -106,9 +106,7 @@ INLINE const Element* Cell_List_Item_At(const Value* v) {
 // more notions of immutability (const, holds, locking/freezing) and enforces
 // it at compile-time...which caught many bugs.  But being able to bind
 // "immutable" data was mechanically required by R3-Alpha for efficiency...so
-// new answers will be needed.  See Virtual_Bind_Deep_To_New_Context() for
-// some of the thinking on this topic.  Until it's solved, binding-related
-// calls to this function get mutable access on non-mutable series.  :-/
+// new answers will be needed. :-/
 //
 #define Cell_List_At_Mutable_Hack(tail_out,v) \
     m_cast(Element*, Cell_List_At((tail_out), (v)))

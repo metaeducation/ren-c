@@ -317,13 +317,16 @@ DECLARE_NATIVE(REDUCE_EACH)
         assert(!"need to review REDUCE-EACH with meta word");
     }
 
-    VarList* context = Virtual_Bind_Deep_To_New_Context(
-        body,  // may be updated, will still be GC safe
-        vars
+    VarList* varlist;
+    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
+        &varlist, body, vars
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), context));
+    if (e)
+        return PANIC(unwrap e);
 
-    if (Varlist_Len(Cell_Varlist(vars)) != 1)  // current limitation [1]
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
+
+    if (Varlist_Len(varlist) != 1)  // current limitation [1]
         return PANIC("REDUCE-EACH only supports one variable for now");
 
     assert(Is_Block(body));
@@ -358,13 +361,15 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Unliftify_Undecayed(SPARE);  // unquote the result of evaluation
 
-    Value* pseudo = Varlist_Slot(Cell_Varlist(vars), 1);
+    Slot* slot = Varlist_Slot(Cell_Varlist(vars), 1);
 
     Value* spare = Decay_If_Unstable(SPARE);  // !!! shouldn't always decay
 
-    Write_Pseudo_Slot(pseudo, spare);
+    Option(Error*) e = Trap_Write_Slot(slot, spare);
+    if (e)
+        return PANIC(unwrap e);
 
-    // !!! This intelligence needs to be in Write_Pseudo_Slot(), probably?
+    // !!! This intelligence needs to be in Trap_Write_Slot(), probably?
     // !!! Review after "LIFT THE UNIVERSE"
 
     /*if (Is_Ghost_Or_Void(SPARE)) {  // if REDUCE culls voids/ghosts, so do we

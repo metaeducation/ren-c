@@ -91,10 +91,15 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         return Init_Port(OUT, context);
     }
 
+    Slot* make_port_p = maybe Sea_Slot(
+        g_sys_util_context, CANON(MAKE_PORT_P), true
+    );
+    assert(make_port_p);
+
     Sink(Value) out = OUT;
     if (rebRunThrows(
         out,  // <-- output cell
-        rebRUN(SYS_UTIL(MAKE_PORT_P)), rebQ(arg)
+        rebRUN(Slot_Hack(make_port_p)), rebQ(arg)
     )){
         return PANIC(Error_No_Catch_For_Throw(TOP_LEVEL));
     }
@@ -135,7 +140,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     VarList* ctx = Cell_Varlist(port);
-    Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
+    Value* actor = Slot_Hack(Varlist_Slot(ctx, STD_PORT_ACTOR));
 
     // If actor is an ACTION!, it should be an OLDGENERIC Dispatcher for PORT!
     //
@@ -171,7 +176,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     if (not index)
         action = nullptr;
     else
-        action = Varlist_Slot(Cell_Varlist(actor), unwrap index);
+        action = Slot_Hack(Varlist_Slot(Cell_Varlist(actor), unwrap index));
 
     if (not action or not Is_Action(action))
         return PANIC(Error_No_Port_Action_Raw(verb));

@@ -71,11 +71,11 @@ INLINE const Symbol* Let_Symbol(const Let* let) {
     return cast(const Symbol*, INFO_LET_SYMBOL(let));
 }
 
-INLINE Value* Let_Slot(Let* let) {
-    return Stub_Cell(let);
+INLINE Slot* Let_Slot(Let* let) {
+    return u_cast(Slot*, Stub_Cell(let));
 }
 
-INLINE Option(Value*) Lookup_Let_Slot(
+INLINE Option(Slot*) Lookup_Let_Slot(
     Let* let,
     const Symbol* symbol,
     bool strict

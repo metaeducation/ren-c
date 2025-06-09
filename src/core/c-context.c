@@ -169,7 +169,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 //    e.g. to forward references to a cache back to the context in order to
 //    "delete" variables?
 //
-Value* Append_To_Sea_Core(
+Init(Slot) Append_To_Sea_Core(
     SeaOfVars* sea,
     const Symbol* symbol,
     Option(Element*) any_word  // binding modified (Note: quoted words allowed)
@@ -229,11 +229,11 @@ Value* Append_To_Sea_Core(
 
 } return_patch: {
 
-    return Stub_Cell(patch);
+    return u_cast(Init(Slot), u_cast(Cell*, Stub_Cell(patch)));
 }}
 
 
-static Value* Append_To_Varlist_Core(
+static Init(Slot) Append_To_Varlist_Core(
     VarList* varlist,
     const Symbol* symbol,
     Option(Element*) any_word
@@ -267,7 +267,7 @@ static Value* Append_To_Varlist_Core(
         Tweak_Cell_Binding(unwrap any_word, varlist);
     }
 
-    return cast(Value*, slot);  // location we just added (void cell)
+    return u_cast(Init(Slot), slot);  // location we just added (void cell)
 }}
 
 
@@ -278,7 +278,7 @@ static Value* Append_To_Varlist_Core(
 // use sym.  When using a word, it will be modified to be specifically bound
 // to this context after the operation.
 //
-static Value* Append_Context_Core(
+static Init(Slot) Append_Context_Core(
     Context* context,
     const Symbol* symbol,
     Option(Element*) any_word  // binding modified (Note: quoted words allowed)
@@ -293,7 +293,7 @@ static Value* Append_Context_Core(
 //
 //  Append_Context_Bind_Word: C
 //
-Value* Append_Context_Bind_Word(
+Init(Slot) Append_Context_Bind_Word(
     Context* context,
     Element* any_word  // binding modified (Note: quoted words allowed)
 ){
@@ -303,7 +303,7 @@ Value* Append_Context_Bind_Word(
 //
 //  Append_Context: C
 //
-Value* Append_Context(Context* context, const Symbol* symbol)
+Init(Slot) Append_Context(Context* context, const Symbol* symbol)
 {
     return Append_Context_Core(context, symbol, nullptr);
 }
@@ -833,12 +833,12 @@ VarList* Make_Varlist_Detect_Managed(
 
     if (parent) {
         Value* dest = Flex_At(Value, a, 1);
-        const Value* src_tail;
-        Value* src = Varlist_Slots(&src_tail, unwrap parent);
+        const Slot* src_tail;
+        Slot* src = Varlist_Slots(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
             Flags clone_flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(Is_Trash(dest));
-            Copy_Cell(dest, src);
+            Copy_Cell(dest, Slot_Hack(src));
             bool deeply = true;  // !!! Copies series deeply, why? [1]
             if (not Is_Antiform(dest)) {  // !!! whole model needs review
                 Clonify(Known_Element(dest), clone_flags, deeply);
@@ -905,10 +905,10 @@ Source* Context_To_Array(const Element* context, REBINT mode)
             // Context might have antiforms, which cannot be put in blocks.
             // This whole idea needs review.
             //
-            if (Is_Antiform(e.var))
+            if (Is_Antiform(Slot_Hack(e.slot)))
                 panic (Error_Anti_Object_Block_Raw());
 
-            Copy_Cell(PUSH(), e.var);
+            Copy_Cell(PUSH(), Slot_Hack(e.slot));
         }
     }
 
@@ -975,7 +975,7 @@ Option(Index) Find_Symbol_In_Context(
 // Search a context's keylist looking for the given symbol, and return the
 // value for the word.  Return NULL if the symbol is not found.
 //
-Option(Value*) Select_Symbol_In_Context(
+Option(Slot*) Select_Symbol_In_Context(
     const Element* context,
     const Symbol* symbol
 ){
@@ -1005,7 +1005,7 @@ Value* Obj_Value(Value* value, Index index)
     if (index > Varlist_Len(context))
         panic ("Could not pick index out of object");  // !!! Review [1]
 
-    return Varlist_Slot(context, index);
+    return Slot_Hack(Varlist_Slot(context, index));
 }
 
 
@@ -1059,15 +1059,15 @@ void Assert_Varlist_Core(VarList* varlist)
         crash (varlist);
 
     const Key* key = Varlist_Keys_Head(varlist);
-    Value* var = Varlist_Slots_Head(varlist);
+    Slot* slot = Varlist_Slots_Head(varlist);
 
     Length n;
-    for (n = 1; n < array_len; n++, var++, key++) {
+    for (n = 1; n < array_len; ++n, ++slot, ++key) {
         if (Stub_Flavor(*key) != FLAVOR_SYMBOL)
             crash (*key);
 
       #if DEBUG_POISON_FLEX_TAILS
-        if (Is_Cell_Poisoned(var)) {
+        if (Is_Cell_Poisoned(slot)) {
             printf("** Early var end at index: %d\n", cast(int, n));
             crash (varlist);
         }
@@ -1075,9 +1075,9 @@ void Assert_Varlist_Core(VarList* varlist)
     }
 
   #if DEBUG_POISON_FLEX_TAILS
-    if (not Is_Cell_Poisoned(var)) {
+    if (not Is_Cell_Poisoned(slot)) {
         printf("** Missing var end at index: %d\n", cast(int, n));
-        crash (var);
+        crash (slot);
     }
   #endif
 }

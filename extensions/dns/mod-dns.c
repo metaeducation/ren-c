@@ -163,7 +163,7 @@ DECLARE_NATIVE(DNS_ACTOR)
     const Symbol* verb = Level_Verb(LEVEL);
 
     VarList* ctx = Cell_Varlist(port);
-    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
+    Value* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
 
     switch (Symbol_Id(verb)) {
       case SYM_OPEN_Q:

@@ -255,7 +255,8 @@ Option(Error*) Trap_Init_Frame_From_Feed(
         nullptr  // leave unspecialized slots with parameter! antiforms
     );
 
-    Unquotify(Copy_Cell(Varlist_Slot(exemplar, 2), cast(Element*, out)));
+    Value* var = Slot_Hack(Varlist_Slot(exemplar, 2));
+    Unquotify(Copy_Cell(var, cast(Element*, out)));
 
     // Should we save the WORD! from a variable access to use as the name of
     // the identity alias?
@@ -367,7 +368,7 @@ Details* Alloc_Action_From_Exemplar(
     const Key* tail;
     const Key* key = Phase_Keys(&tail, unspecialized);
     const Param* param = Phase_Params_Head(unspecialized);
-    Value* arg = Varlist_Slots_Head(paramlist);
+    Value* arg = Slot_Hack(Varlist_Slots_Head(paramlist));
     for (; key != tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param))
             continue;
@@ -480,7 +481,9 @@ DECLARE_NATIVE(REFRAMER)
 
     Destruct_Binder(binder);
 
-    Value* var = Varlist_Slot(exemplar, param_index);  // "specialize" slot [2]
+    Value* var = Slot_Hack(
+        Varlist_Slot(exemplar, param_index)  // "specialize" slot [2]
+    );
     assert(Is_Parameter(var));
     Copy_Cell(var, Varlist_Archetype(exemplar));
 

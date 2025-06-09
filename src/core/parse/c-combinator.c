@@ -335,8 +335,11 @@ void Push_Parser_Sublevel(
         panic ("Push_Parser_Sublevel() only works on unadulterated combinators");
     }
 
-    Copy_Cell(Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_REMAINDER), remainder);
-    Copy_Cell(Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_INPUT), input);
+    Slot* remainder_slot = Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
+    Slot* input_slot = Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_INPUT);
+
+    Copy_Cell(Slot_Hack(remainder_slot), remainder);
+    Copy_Cell(Slot_Hack(input_slot), input);
 
     DECLARE_ELEMENT (temp);  // can't overwrite spare
     Init_Frame(temp, ctx, ANONYMOUS, NONMETHOD);
@@ -426,7 +429,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
     bool cased;
     Option(Error*) e = Trap_Test_Conditional(  // or trust it's a LOGIC ?
         &cased,
-        Varlist_Slot(state, IDX_UPARSE_PARAM_CASE)
+        Slot_Hack(Varlist_Slot(state, IDX_UPARSE_PARAM_CASE))
     );
     if (e)
         return PANIC(unwrap e);
@@ -495,7 +498,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 
     Value* state = ARG(STATE);
     Array* loops = Cell_Array_Ensure_Mutable(
-        Varlist_Slot(Cell_Varlist(state), IDX_UPARSE_PARAM_LOOPS)
+        Slot_Hack(Varlist_Slot(Cell_Varlist(state), IDX_UPARSE_PARAM_LOOPS))
     );
 
     enum {
@@ -653,7 +656,7 @@ static bool Combinator_Param_Hook(
     REBLEN offset = param - Phase_Params_Head(
         Cell_Frame_Phase(ARG(COMBINATOR))
     );
-    Value* var = Varlist_Slots_Head(s->ctx) + offset;
+    Value* var = Slot_Hack(Varlist_Slots_Head(s->ctx) + offset);
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
         Copy_Cell(var, ARG(STATE));

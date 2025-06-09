@@ -229,6 +229,8 @@ Bounce Action_Executor(Level* L)
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
+            Clear_Cell_Flag(ARG, OUT_HINT_UNSURPRISING);  // !!! review
+
             if (Cell_Parameter_Class(PARAM) != PARAMCLASS_META) {
                 Element* arg = Known_Element(ARG);  // quoted or quasi
                 if (Is_Lifted_Ghost(arg)) {

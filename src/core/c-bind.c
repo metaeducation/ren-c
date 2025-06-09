@@ -51,10 +51,10 @@ void Bind_Values_Inner_Loop(
           if (Is_Stub_Sea(context)) {
             SeaOfVars* sea = cast(SeaOfVars*, context);
             bool strict = true;
-            Option(Value*) lookup = Sea_Slot(sea, symbol, strict);
+            Slot* lookup = maybe Sea_Slot(sea, symbol, strict);
             if (lookup) {
                 Tweak_Cell_Word_Index(v, INDEX_PATCHED);
-                Tweak_Cell_Binding(v, Compact_Stub_From_Cell(unwrap lookup));
+                Tweak_Cell_Binding(v, Compact_Stub_From_Cell(Slot_Hack(lookup)));
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -147,8 +147,8 @@ void Bind_Values_Core(
     REBLEN index = 1;
     const Key* key_tail;
     const Key* key = Varlist_Keys(&key_tail, c);
-    const Value* var = Varlist_Slots_Head(c);
-    for (; key != key_tail; key++, var++, index++)
+    const Slot* slot = Varlist_Slots_Head(c);
+    for (; key != key_tail; key++, slot++, index++)
         Add_Binder_Index(binder, Key_Symbol(key), index);
   }
 
@@ -261,7 +261,7 @@ Let* Make_Let_Variable(
 
 
 #define CELL_FLAG_BIND_NOTE_REUSE CELL_FLAG_NOTE
-#define CELL_FLAG_BIND_MARKED_LIFT NODE_FLAG_ROOT
+#define CELL_FLAG_BIND_MARKED_META NODE_FLAG_ROOT
 
 //
 //  Get_Word_Container: C
@@ -1206,37 +1206,38 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 
 
 //
-//  Virtual_Bind_Deep_To_New_Context: C
+//  Create_Loop_Context_May_Bind_Body: C
 //
-// Looping constructs which are parameterized by WORD!s to set each time
-// through the loop must copy the body in R3-Alpha's model.  For instance:
+// Looping constructs are parameterized by WORD!s to set each time:
 //
-//    for-each [x y] [1 2 3] [print ["this body must be copied for" x y]]
-//
-// The reason is because the context in which X and Y live does not exist
-// prior to the execution of the FOR-EACH.  And if the body were destructively
-// rebound, then this could mutate and disrupt bindings of code that was
-// intended to be reused.
-//
-// (Note that R3-Alpha was somewhat inconsistent on the idea of being
-// sensitive about non-destructively binding arguments in this way.
-// MAKE OBJECT! purposefully mutated bindings in the passed-in block.)
-//
-// The context is effectively an ordinary object, and outlives the loop:
-//
-//     x-word: ~
-//     for-each x [1 2 3] [x-word: $x, break]
-//     get x-word  ; returns 3
+//    for-each [x y] [1 2 3] [print ["x is" x "and y is" y]]
 //
 // Ren-C adds a feature of letting @WORD! be used to indicate that the loop
 // variable should be written into the existing bound variable that the @WORD!
-// specified.  If all loop variables are of this form, no copy will be made.
+// specified.
 //
-// !!! Loops should probably free their objects by default when finished
+// 1. The returned VarList* is an ordinary object, that outlives the loop:
 //
-VarList* Virtual_Bind_Deep_To_New_Context(
-    Element* body_in_out, // input *and* output parameter
-    Element* spec
+//        x-word: ~
+//        for-each x [1 2 3] [x-word: $x, break]
+//        get x-word  ; returns 3
+//
+//    !!! Loops should probably free their objects by default when finished
+//
+// 2. The binding of BODY will only be modified if there are actual new loop
+//    variables created.  So (for-each @x ...) won't make any new variables.
+//    But note that this means there won't be a reference to the VarList*
+//    containing the alias that gets created in that case...which means that
+//    the caller needs to be sure that VarList* gets GC-protected.
+//
+//    !!! Consider perhaps finding a way to put a "no-op" in the bind chain
+//    that can still hold onto the VarList*, to relieve the caller of the
+//    concern of protecting the VarList*.
+//
+Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
+    Sink(VarList*) varlist_out,  // VarList outlives loop [1]
+    Element* body,  // binding modified if new loop variables created [2]
+    Element* spec  // spec BLOCK! -or- just a plain WORD!, @WORD!, SPACE, etc.
 ){
     // !!! This just hacks in GROUP! behavior, because the :param convention
     // does not support groups and gives GROUP! by value.  In the stackless
@@ -1245,16 +1246,16 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     if (Is_Group(spec)) {
         DECLARE_ATOM (temp);
         if (Eval_Any_List_At_Throws(temp, spec, SPECIFIED))
-            panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+            return Error_No_Catch_For_Throw(TOP_LEVEL);
         Decay_If_Unstable(temp);
         if (Is_Antiform(temp))
-            panic (Error_Bad_Antiform(temp));
+            return Error_Bad_Antiform(temp);
         Move_Cell(spec, cast(Element*, temp));
     }
 
     REBLEN num_vars = Is_Block(spec) ? Cell_Series_Len_At(spec) : 1;
     if (num_vars == 0)
-        panic (spec);  // !!! should panic() take unstable?
+        return Error_Bad_Value(spec);
 
     const Element* tail;
     const Element* item;
@@ -1276,12 +1277,12 @@ VarList* Virtual_Bind_Deep_To_New_Context(
                 rebinding = true;
             else if (not Is_Pinned(WORD, check)) {
                 //
-                // Better to panic here, because if we wait until we're in
+                // Better to error here, because if we wait until we're in
                 // the middle of building the context, the managed portion
                 // (keylist) would be incomplete and tripped on by the GC if
                 // we didn't do some kind of workaround.
                 //
-                panic (Error_Bad_Value(check));
+                return Error_Bad_Value(check);
             }
         }
     }
@@ -1295,7 +1296,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     // KeyLists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
-    VarList* c = Alloc_Varlist(TYPE_OBJECT, num_vars);
+    VarList* varlist = Alloc_Varlist(TYPE_OBJECT, num_vars);
 
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but note that a panic() cannot happen while binders are
@@ -1305,7 +1306,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     DECLARE_BINDER (binder);
     Construct_Binder(binder);  // only used if `rebinding`
 
-    Option(Error*) error = SUCCESS;
+    Option(Error*) e = SUCCESS;
 
     SymId dummy_sym = SYM_DUMMY1;
 
@@ -1315,15 +1316,17 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
         if (Is_Space(item)) {
             if (dummy_sym == SYM_DUMMY9)
-                panic ("Current limitation: only up to 9 foreign/space keys");
+                e = Error_User(
+                    "Current limitation: only up to 9 foreign/space keys"
+                );
 
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
-            Value* var = Append_Context(c, symbol);
-            Init_Space(var);
-            Set_Cell_Flag(var, BIND_NOTE_REUSE);
-            Set_Cell_Flag(var, PROTECTED);
+            Init(Slot) slot = Append_Context(varlist, symbol);
+            Init_Space(slot);
+            Set_Cell_Flag(slot, BIND_NOTE_REUSE);
+            Set_Cell_Flag(slot, PROTECTED);
 
             if (rebinding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove
@@ -1334,15 +1337,14 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             symbol = Cell_Word_Symbol(item);
 
             if (Try_Add_Binder_Index(binder, symbol, index)) {
-                Value* var = Append_Context(c, symbol);
-                Init_Tripwire(var);  // code shared with USE, user may see
+                Value* var = Init_Tripwire(Append_Context(varlist, symbol));
                 if (Is_Metaform(WORD, item))
-                    Set_Cell_Flag(var, BIND_MARKED_LIFT);
+                    Set_Cell_Flag(var, BIND_MARKED_META);
             }
             else {  // note for-each [x @x] is bad, too
                 DECLARE_ELEMENT (word);
                 Init_Word(word, symbol);
-                error = Error_Dup_Vars_Raw(word);
+                e = Error_Dup_Vars_Raw(word);
                 break;
             }
         }
@@ -1352,29 +1354,26 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             // So `for-each @x [1 2 3] [...]` will actually set that x
             // instead of creating a new one.
             //
-            // !!! Enumerations in the code walks through the context varlist,
-            // setting the loop variables as they go.  It doesn't walk through
-            // the array the user gave us, so if it's an @WORD! the information
-            // is lost.  Do a trick where we put the @WORD! itself into the
-            // slot, and give it CELL_FLAG_NOTE...then hide it from the context
-            // and binding.
+            // We use the ALIAS dual convention, of storing the pinned word
+            // in the slot with CELL_FLAG_SLOT_HINT_DUAL
             //
             if (dummy_sym == SYM_DUMMY9)
-                panic ("Current limitation: only up to 9 foreign/space keys");
+                e = Error_User(
+                    "Current limitation: only up to 9 foreign/space keys"
+                );
 
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
-            Value* var = Append_Context(c, symbol);
-            Derelativize(var, item, binding);
-            Set_Cell_Flag(var, BIND_NOTE_REUSE);
-            Set_Cell_Flag(var, PROTECTED);
+            Init(Slot) slot = Append_Context(varlist, symbol);
+            Derelativize(slot, item, binding);
+            Set_Cell_Flag(slot, SLOT_HINT_DUAL);
 
             if (rebinding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove
         }
         else {
-            error = Error_User("Bad datatype in variable spec");
+            e = Error_User("Bad datatype in variable spec");
             break;
         }
 
@@ -1400,36 +1399,37 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 
     Destruct_Binder(binder);  // must remove bind indices even if failing
 
-    if (error) {
-        Free_Unmanaged_Flex(c);
-        panic (unwrap error);
+    if (e) {
+        Free_Unmanaged_Flex(varlist);
+        return e;
     }
 
-    Manage_Flex(c);  // must be managed to use in binding
+    Manage_Flex(varlist);  // must be managed to use in binding
 
     // If the user gets ahold of these contexts, we don't want them to be
     // able to expand them...because things like FOR-EACH have historically
     // not been robust to the memory moving.
     //
-    Set_Flex_Flag(c, FIXED_SIZE);
+    Set_Flex_Flag(varlist, FIXED_SIZE);
 
     // Virtual version of `Bind_Values_Deep(Array_Head(body_out), context)`
     //
     if (rebinding) {
-        Use* use = Alloc_Use_Inherits(Cell_List_Binding(body_in_out));
-        Copy_Cell(Stub_Cell(use), Varlist_Archetype(c));
-        Tweak_Cell_Binding(body_in_out, use);
+        Use* use = Alloc_Use_Inherits(Cell_List_Binding(body));
+        Copy_Cell(Stub_Cell(use), Varlist_Archetype(varlist));
+        Tweak_Cell_Binding(body, use);
     }
 
-    return c;
+    *varlist_out = varlist;
+    return SUCCESS;
 }
 
 
 //
-//  Read_Pseudo_Slot: C
+//  Trap_Read_Slot: C
 //
-// Virtual_Bind_To_New_Context() allows @WORD! syntax to reuse an existing
-// variable's binding:
+// Trap_Create_Loop_Context_May_Bind_Body() allows @WORD! for reusing an
+// existing variable's binding:
 //
 //     x: 10
 //     for-each @x [20 30 40] [...]
@@ -1438,47 +1438,62 @@ VarList* Virtual_Bind_Deep_To_New_Context(
 // It accomplishes this by putting a word into the "variable" slot, and having
 // a flag to indicate a dereference is necessary.
 //
-// 1. These variables are fetched across running arbitrary user code.  So the
-//    address cannot be cached...e.g. the object it lives in might expand and
-//    invalidate the location.  (The `context` for fabricated variables is
-//    locked at fixed size, so no cache is needed.)
+Option(Error*) Trap_Read_Slot(Sink(Value) out, Slot* slot)
+{
+    assert(Not_Cell_Flag(slot, BIND_MARKED_META));
+
+    if (Get_Cell_Flag(slot, SLOT_HINT_DUAL))
+        goto handle_dual_signal;
+
+  handle_non_weird: {
+
+    Value* var = Slot_Hack(slot);
+
+    assert(not Is_Space(var));  // e.g. `for-each _ [1 2 3] [...]`
+
+    Copy_Cell(out, var);
+    return SUCCESS;
+
+} handle_dual_signal: { //////////////////////////////////////////////////////
+
+    assert(Is_Pinned(WORD, slot));
+    if (rebRunThrows(out, CANON(GET), slot))
+        return Error_No_Catch_For_Throw(TOP_LEVEL);
+
+    return SUCCESS;
+}}
+
+
 //
-Value* Read_Pseudo_Slot(Sink(Value) out, Value* pseudo) {
-    assert(Not_Cell_Flag(pseudo, BIND_MARKED_LIFT));
-
-    assert(not Is_Space(pseudo));  // e.g. `for-each _ [1 2 3] [...]`
-
-    if (Get_Cell_Flag(pseudo, BIND_NOTE_REUSE)) {
-        assert(Is_Pinned(WORD, pseudo));
-        assert(!"not yet");
-        if (rebRunThrows(out, CANON(GET), pseudo))
-            panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-    }
-    else
-        Copy_Cell(out, pseudo);
-
-    return out;
-}
-
-
+//  Trap_Write_Slot: C
 //
-//  Write_Pseudo_Slot: C
-//
-void Write_Pseudo_Slot(Value* pseudo, const Value* write) {
-    if (Is_Space(pseudo))  // e.g. `for-each _ [1 2 3] [...]`
-        return;  // toss it
+Option(Error*) Trap_Write_Slot(Slot* slot, const Value* write)
+{
+    // assert(Not_Cell_Flag(slot, BIND_MARKED_META));
 
-    if (Get_Cell_Flag(pseudo, BIND_NOTE_REUSE)) {
-        assert(Is_Pinned(WORD, pseudo));
-        assert(!"not yet");
-        rebElide(CANON(SET), pseudo, rebQ(write));
-    }
-    else {
-        Copy_Cell(pseudo, write);
-        if (Get_Cell_Flag(pseudo, BIND_MARKED_LIFT))
-            Liftify(pseudo);
-    }
-}
+    if (Get_Cell_Flag(slot, SLOT_HINT_DUAL))
+        goto handle_dual_signal;
+
+  handle_non_weird: {
+
+    Value* var = u_cast(Value*, slot);
+
+    if (Is_Space(var))  // e.g. `for-each _ [1 2 3] [...]`
+        return SUCCESS;  // toss it
+
+    Copy_Cell(var, write);
+    if (Get_Cell_Flag(slot, BIND_MARKED_META))
+        Liftify(var);
+
+    return SUCCESS;
+
+} handle_dual_signal: { //////////////////////////////////////////////////////
+
+    assert(Is_Pinned(WORD, slot));
+    rebElide(CANON(SET), slot, rebQ(write));
+
+    return SUCCESS;
+}}
 
 
 #if RUNTIME_CHECKS

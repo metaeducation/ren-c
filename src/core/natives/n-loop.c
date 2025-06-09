@@ -283,7 +283,7 @@ static Bounce Loop_Integer_Common(
     REBI64 bump
 ){
     // A value cell exposed to the user is used to hold the state.  This means
-    // if they change `var` during the loop, it affects the iteration.  Hence
+    // if they change `slot` during the loop, it affects the iteration.  Hence
     // it must be checked for changing to a non-integer form.
     //
     Reset_Cell_Header_Noquote(TRACK(var), CELL_MASK_INTEGER);
@@ -443,16 +443,20 @@ DECLARE_NATIVE(CFOR)
     Element* word = Element_ARG(WORD);
     Element* body = Element_ARG(BODY);
 
-    VarList* context = Virtual_Bind_Deep_To_New_Context(
-        body,  // may be updated, will still be GC safe
-        word
+    VarList* varlist;
+    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
+        &varlist, body, word
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
+    if (e)
+        return PANIC(unwrap e);
+
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
     if (Is_Block(body) or Is_Metaform(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Value* var = Varlist_Slot(context, 1);  // not movable, see #2274
+    Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
+    Value* var = Slot_Hack(slot);
 
     if (
         Is_Integer(ARG(START))
@@ -529,38 +533,37 @@ DECLARE_NATIVE(FOR_SKIP)
         return VOID;
 
     REBINT skip = Int32(ARG(SKIP));
-    if (skip == 0) {
-        //
-        // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
-        //
-        return VOID;
-    }
+    if (skip == 0)
+        return VOID;  // https://forum.rebol.info/t/infinite-loop-vs-error/936
 
-    VarList* context = Virtual_Bind_Deep_To_New_Context(
-        body,  // may be updated, will still be GC safe
-        word
+    VarList* varlist;
+    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
+        &varlist, body, word
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
+    if (e)
+        return PANIC(unwrap e);
+
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
     if (Is_Block(body) or Is_Metaform(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Value* pseudo = Varlist_Slot(context, 1); // not movable, see #2274
+    Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
 
-    Value* var = Read_Pseudo_Slot(SPARE, pseudo);
+    Value* spare = Copy_Cell(SPARE, series);
 
     // Starting location when past end with negative skip:
     //
     if (
         skip < 0
-        and VAL_INDEX_UNBOUNDED(var) >= Cell_Series_Len_Head(var)
+        and VAL_INDEX_UNBOUNDED(spare) >= Cell_Series_Len_Head(spare)
     ){
-        VAL_INDEX_UNBOUNDED(var) = Cell_Series_Len_Head(var) + skip;
+        VAL_INDEX_UNBOUNDED(spare) = Cell_Series_Len_Head(spare) + skip;
     }
 
     while (true) {
-        REBINT len = Cell_Series_Len_Head(var);  // always >= 0
-        REBINT index = VAL_INDEX_RAW(var);  // may have been set to < 0 below
+        REBINT len = Cell_Series_Len_Head(spare);  // always >= 0
+        REBINT index = VAL_INDEX_RAW(spare);  // may have been set to < 0 below
 
         if (index < 0)
             break;
@@ -570,10 +573,12 @@ DECLARE_NATIVE(FOR_SKIP)
             index = len + skip;  // negative
             if (index < 0)
                 break;
-            VAL_INDEX_UNBOUNDED(var) = index;
+            VAL_INDEX_UNBOUNDED(spare) = index;
         }
 
-        Write_Pseudo_Slot(pseudo, var);
+        e = Trap_Write_Slot(slot, spare);
+        if (e)
+            return PANIC(unwrap e);
 
         if (Eval_Branch_Throws(OUT, ARG(BODY))) {
             bool breaking;
@@ -586,21 +591,19 @@ DECLARE_NATIVE(FOR_SKIP)
 
         // Modifications to var are allowed, to another ANY-SERIES? value.
         //
-        // If `var` is movable (e.g. specified via @WORD!) it must be
-        // refreshed each time arbitrary code runs, since the context may
-        // expand and move the address, may get PROTECTed, etc.
-        //
-        var = Read_Pseudo_Slot(SPARE, pseudo);
+        e = Trap_Read_Slot(spare, slot);
+        if (e)
+            return PANIC(unwrap e);
 
-        if (not Any_Series(var))
-            return PANIC(var);
+        if (not Any_Series(spare))
+            return PANIC(spare);
 
         // Increment via skip, which may go before 0 or after the tail of
         // the series.
         //
         // !!! Should also check for overflows of REBIDX range.
         //
-        VAL_INDEX_UNBOUNDED(var) += skip;
+        VAL_INDEX_UNBOUNDED(spare) += skip;
     }
 
     if (Is_Cell_Erased(OUT))
@@ -857,9 +860,6 @@ void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
 }
 
 
-//
-//  Try_Loop_Each_Next: C
-//
 // Common to FOR-EACH, MAP-EACH, and EVERY.  This takes an enumeration state
 // and fills variables in a context with as much of that state as possible.
 // The context containing the variables is created from a block:
@@ -872,18 +872,27 @@ void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
 //
 // It's possible to opt out of variable slots using SPACE.
 //
-static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
-{
+static Option(Error*) Trap_Loop_Each_Next(
+    Sink(bool) done,
+    const Value* iterator,
+    VarList* vars_ctx
+){
     LoopEachState *les = Cell_Handle_Pointer(LoopEachState, iterator);
 
-    if (not les->more_data)
-        return false;
+    if (not les->more_data) {
+        *done = true;
+        return SUCCESS;
+    }
 
-    const Value* pseudo_tail;
-    Value* pseudo = Varlist_Slots(&pseudo_tail, vars_ctx);
-    for (; pseudo != pseudo_tail; ++pseudo) {
+    Option(Error*) e;
+
+    const Slot* slot_tail;
+    Slot* slot = Varlist_Slots(&slot_tail, vars_ctx);
+    for (; slot != slot_tail; ++slot) {
         if (not les->more_data) {  // Y is null in `for-each [x y] [1] ...`
-            Write_Pseudo_Slot(pseudo, LIB(NULL));
+            e = Trap_Write_Slot(slot, LIB(NULL));
+            if (e)
+                return e;
 
             goto maybe_lift_and_continue;
         }
@@ -895,20 +904,25 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 and Is_Error_Done_Signal(Cell_Error(generated))
             )) {
                 Unliftify_Decayed(generated);
-                Write_Pseudo_Slot(pseudo, generated);
+                e = Trap_Write_Slot(slot, generated);
                 rebRelease(generated);
+                if (e)
+                    return e;
             }
             else {
                 rebRelease(generated);
                 les->more_data = false;  // any remaining vars must be unset
-                if (pseudo == Varlist_Slots_Head(vars_ctx)) {
+                if (slot == Varlist_Slots_Head(vars_ctx)) {
                     //
                     // If we don't have at least *some* of the variables
                     // set for this body loop run, don't run the body.
                     //
-                    return false;
+                    *done = true;
+                    return SUCCESS;
                 }
-                Write_Pseudo_Slot(pseudo, LIB(NULL));
+                e = Trap_Write_Slot(slot, LIB(NULL));
+                if (e)
+                    return e;
             }
 
             goto maybe_lift_and_continue;
@@ -919,10 +933,12 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         Heart heart = Heart_Of_Builtin_Fundamental(Known_Element(les->data));
 
         if (Any_List_Type(heart)) {
-            Write_Pseudo_Slot(
-                pseudo,
+            e = Trap_Write_Slot(
+                slot,
                 Array_At(c_cast(Array*, les->flex), les->u.eser.index)
             );
+            if (e)
+                return e;
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
 
@@ -947,7 +963,9 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 Tweak_Cell_Word_Index(word, les->u.evars.index);
                 Tweak_Cell_Binding(word, Cell_Varlist(les->data));
             }
-            Write_Pseudo_Slot(pseudo, word);
+            e = Trap_Write_Slot(slot, word);
+            if (e)
+                return e;
 
             if (Varlist_Len(vars_ctx) == 1) {
                 //
@@ -957,8 +975,10 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 //
                 // Want keys and values (`for-each 'key val obj [...]`)
                 //
-                ++pseudo;
-                Write_Pseudo_Slot(pseudo, les->u.evars.var);
+                ++slot;
+                e = Trap_Write_Slot(slot, Slot_Hack(les->u.evars.slot));
+                if (e)
+                    return e;
             }
             else
                 panic ("Loop enumeration of contexts must be 1 or 2 vars");
@@ -986,11 +1006,15 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                     les->more_data = false;
                 if (not Is_Zombie(val))
                     break;
-                if (not les->more_data)
-                    return false;
+                if (not les->more_data) {
+                    *done = true;
+                    return SUCCESS;
+                }
             } while (Is_Zombie(val));
 
-            Write_Pseudo_Slot(pseudo, key);
+            e = Trap_Write_Slot(slot, key);
+            if (e)
+                return e;
 
             if (Varlist_Len(vars_ctx) == 1) {
                 //
@@ -1000,8 +1024,10 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 //
                 // Want keys and values (`for-each 'key val map [...]`)
                 //
-                ++pseudo;
-                Write_Pseudo_Slot(pseudo, val);
+                ++slot;
+                e = Trap_Write_Slot(slot, val);
+                if (e)
+                    return e;
             }
             else
                 panic ("Loop enumeration of contexts must be 1 or 2 vars");
@@ -1016,7 +1042,9 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 Get_Char_At(c_cast(String*, les->flex), les->u.eser.index)
             );
 
-            Write_Pseudo_Slot(pseudo, rune);
+            e = Trap_Write_Slot(slot, rune);
+            if (e)
+                return e;
 
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
@@ -1029,7 +1057,9 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 
             DECLARE_ELEMENT (i);
             Init_Integer(i, Binary_Head(b)[les->u.eser.index]);
-            Write_Pseudo_Slot(pseudo, i);
+            e = Trap_Write_Slot(slot, i);
+            if (e)
+                return e;
 
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
@@ -1044,7 +1074,8 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
         // LIFTING NOW HANDLED BY WRITE (but other post-processing?)
     }}
 
-    return true;
+    *done = false;
+    return SUCCESS;
 }
 
 //
@@ -1125,11 +1156,14 @@ DECLARE_NATIVE(FOR_EACH)
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
-    VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
-        body,  // may be updated, will still be GC safe
-        vars
+    VarList* varlist;
+    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
+        &varlist, body, vars
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(vars, pseudo_vars_ctx));
+    if (e)
+        return PANIC(unwrap e);
+
+    Remember_Cell_Is_Lifeguard(Init_Object(vars, varlist));
 
     if (Is_Block(body) or Is_Metaform(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1142,7 +1176,11 @@ DECLARE_NATIVE(FOR_EACH)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    if (not Try_Loop_Each_Next(iterator, Cell_Varlist(vars)))
+    bool done;
+    Option(Error*) e = Trap_Loop_Each_Next(&done, iterator, Cell_Varlist(vars));
+    if (e)
+        panic (unwrap e);  // !!! review shutdown mechanic
+    if (done)
         goto finalize_for_each;
 
     STATE = ST_FOR_EACH_RUNNING_BODY;
@@ -1228,11 +1266,14 @@ DECLARE_NATIVE(EVERY)
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
-    VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
-        body,  // may be updated, will still be GC safe
-        vars
+    VarList* varlist;
+    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
+        &varlist, body, vars
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), pseudo_vars_ctx));
+    if (e)
+        return PANIC(unwrap e);
+
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     if (Is_Block(body) or Is_Metaform(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1245,7 +1286,11 @@ DECLARE_NATIVE(EVERY)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    if (not Try_Loop_Each_Next(iterator, Cell_Varlist(vars)))
+    bool done;
+    Option(Error*) e = Trap_Loop_Each_Next(&done, iterator, Cell_Varlist(vars));
+    if (e)
+        panic (unwrap e);  // !!! review shutdown mechanic
+    if (done)
         goto finalize_every;
 
     STATE = ST_EVERY_RUNNING_BODY;
@@ -1336,17 +1381,18 @@ DECLARE_NATIVE(REMOVE_EACH)
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
     Element* vars = Element_ARG(VARS);
-    Element* data = Element_ARG(DATA);
     Element* body = Element_ARG(BODY);
 
     Count removals = 0;
 
-    if (Is_Blank(data)) {
+    if (Is_Blank(ARG(DATA))) {
         Init_Blank(OUT);
         goto return_pack;
     }
 
   process_non_blank: { ////////////////////////////////////////////////////=//
+
+    Element* data = Element_ARG(DATA);
 
     // 1. Updating arrays in place may not be better than pushing values to
     //    the data stack and creating a precisely-sized output Flex to swap as
@@ -1363,11 +1409,14 @@ DECLARE_NATIVE(REMOVE_EACH)
     if (VAL_INDEX(data) >= Cell_Series_Len_At(data))  // past series end
         return nullptr;
 
-    VarList* context = Virtual_Bind_Deep_To_New_Context(
-        body,  // may be updated, will still be GC safe
-        vars
+    VarList* varlist;
+    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
+        &varlist, body, vars
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), context));
+    if (e)
+        return PANIC(unwrap e);
+
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1395,9 +1444,10 @@ DECLARE_NATIVE(REMOVE_EACH)
     while (index < len) {
         assert(start == index);
 
-        const Value* var_tail;
-        Value* var = Varlist_Slots(&var_tail, context);  // fixed (#2274)
-        for (; var != var_tail; ++var) {
+        const Slot* slot_tail;
+        Fixed(Slot*) slot = Varlist_Fixed_Slots(&slot_tail, varlist);
+        for (; slot != slot_tail; ++slot) {
+            Value* var = Slot_Hack(slot);
             if (index == len) {
                 Init_Nulled(var);  // Y on 2nd step of remove-each [x y] "abc"
                 continue;  // the `for` loop setting variables
@@ -1782,11 +1832,14 @@ DECLARE_NATIVE(MAP)
         );
     }
 
-    VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
-        body,  // may be updated, will still be GC safe
-        vars
+    VarList* varlist;
+    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
+        &varlist, body, vars
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), pseudo_vars_ctx));
+    if (e)
+        return PANIC(unwrap e);
+
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
     STATE = ST_MAP_INITIALIZED_ITERATOR;
@@ -1796,7 +1849,11 @@ DECLARE_NATIVE(MAP)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    if (not Try_Loop_Each_Next(iterator, Cell_Varlist(vars)))
+    bool done;
+    Option(Error*) e = Trap_Loop_Each_Next(&done, iterator, Cell_Varlist(vars));
+    if (e)
+        panic (unwrap e);  // !!! review shutdown mechanic
+    if (done)
         goto finalize_map;
 
     STATE = ST_MAP_RUNNING_BODY;
@@ -2024,17 +2081,26 @@ DECLARE_NATIVE(FOR)
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    VarList* context = Virtual_Bind_Deep_To_New_Context(body, vars);
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), context));
+    VarList* varlist;
+    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
+        &varlist, body, vars
+    );
+    if (e)
+        return PANIC(unwrap e);
 
-    assert(Varlist_Len(context) == 1);
+    assert(Varlist_Len(varlist) == 1);
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
-    Value* var = Varlist_Slot(Cell_Varlist(vars), 1);  // not movable, see #2274
-    Init_Integer(var, 1);
+    Value* spare_one = Init_Integer(SPARE, 1);
+
+    Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
+    e = Trap_Write_Slot(slot, spare_one);
+    if (e)
+        return PANIC(unwrap e);
 
     STATE = ST_FOR_RUNNING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
-    return CONTINUE_BRANCH(OUT, body, var);
+    return CONTINUE_BRANCH(OUT, body, Slot_Hack(slot));
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -2047,20 +2113,29 @@ DECLARE_NATIVE(FOR)
             return nullptr;
     }
 
-    Value* var = Varlist_Slot(Cell_Varlist(vars), 1);  // not movable, see #2274
+    Fixed(Slot*) slot = Varlist_Fixed_Slot(Cell_Varlist(vars), 1);
 
-    if (not Is_Integer(var))
-        return PANIC(Error_Invalid_Type_Raw(Datatype_Of(var)));
+    Sink(Value) spare = SPARE;
+    Option(Error*) e = Trap_Read_Slot(spare, slot);
+    if (e)
+        return PANIC(unwrap e);
 
-    if (VAL_INT64(var) == VAL_INT64(value))
+    if (not Is_Integer(spare))
+        return PANIC(Error_Invalid_Type_Raw(Datatype_Of(spare)));
+
+    if (VAL_INT64(spare) == VAL_INT64(value))
         return LOOPED(OUT);
 
-    if (Add_I64_Overflows(&mutable_VAL_INT64(var), VAL_INT64(var), 1))
+    if (Add_I64_Overflows(&mutable_VAL_INT64(spare), VAL_INT64(spare), 1))
         return PANIC(Error_Overflow_Raw());
+
+    e = Trap_Write_Slot(slot, spare);
+    if (e)
+        return PANIC(unwrap e);
 
     assert(STATE == ST_FOR_RUNNING_BODY);
     assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
-    return CONTINUE_BRANCH(OUT, body, var);
+    return CONTINUE_BRANCH(OUT, body, spare);
 }}
 
 

@@ -302,7 +302,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     const Key* key_tail;  // move this yielder call frame into old varlist [1]
     const Key* key = Varlist_Keys(&key_tail, original_varlist);
     Param* param = Phase_Params_Head(Level_Phase(L));
-    Value* dest = Varlist_Slots_Head(original_varlist);
+    Value* dest = Slot_Hack(Varlist_Slots_Head(original_varlist));
     Value* src = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {
         if (Is_Specialized(param))

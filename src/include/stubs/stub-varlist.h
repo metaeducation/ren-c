@@ -241,10 +241,36 @@ INLINE const Key* Varlist_Key(VarList* c, Index n) {  // 1-based
     return Flex_At(const Key, Bonus_Keylist(c), n - 1);
 }
 
-INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
+INLINE Slot* Varlist_Slot(VarList* c, Index n) {  // 1-based
     assert(n != 0 and n <= Varlist_Len(c));
-    return Flex_Head_Dynamic(Value, c) + n;
+    return Flex_Head_Dynamic(Slot, c) + n;
 }
+
+INLINE Fixed(Slot*) Varlist_Fixed_Slot(VarList* c, Index n) {  // 1-based
+    assert(Get_Flex_Flag(c, FIXED_SIZE));  // not movable, see #2274
+    return Varlist_Slot(c, n);
+}
+
+
+//=//// TRANSITIONAL HACK FOR SLOT=>VALUE //////////////////////////////////=//
+//
+// This is a temporary workaround.  Ultimately slots should only be converted
+// to Value* directly in a narrow set of cases, where the field is controlled
+// (e.g. a LIB variable which is initialized as not SLOT_HINT_DUAL and then
+// PROTECT'ed in order to enusre it never gets that flag set).
+
+INLINE Value* Slot_Hack(const_if_c Slot* slot) {
+    assert(Not_Cell_Flag(slot, SLOT_HINT_DUAL));
+    return u_cast(Value*, slot);
+}
+
+#if CPLUSPLUS_11
+    INLINE const Value* Slot_Hack(const Slot* slot) {
+        assert(Not_Cell_Flag(slot, SLOT_HINT_DUAL));
+        return u_cast(Value*, slot);
+    }
+#endif
+
 
 
 // Varlist_Slots_Head() and Varlist_Keys_Head() allow Varlist_Len() to be 0,
@@ -254,7 +280,7 @@ INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
     Flex_At(Key, Bonus_Keylist(c), 0)  // 0-based
 
 #define Varlist_Slots_Head(c) \
-    (Flex_Head_Dynamic(Value, c) + 1)
+    (Flex_Head_Dynamic(Slot, c) + 1)
 
 INLINE const Key* Varlist_Keys(Sink(const Key*) tail, VarList* c) {
     KeyList* keylist = Bonus_Keylist(c);
@@ -262,10 +288,15 @@ INLINE const Key* Varlist_Keys(Sink(const Key*) tail, VarList* c) {
     return Flex_Head(Key, keylist);
 }
 
-INLINE Value* Varlist_Slots(Sink(const Value*) tail, VarList* v) {
-    Value* head = Varlist_Slots_Head(v);
+INLINE Slot* Varlist_Slots(Sink(const Slot*) tail, VarList* v) {
+    Slot* head = Varlist_Slots_Head(v);
     *tail = head + v->content.dynamic.used - 1;
     return head;
+}
+
+INLINE Fixed(Slot*) Varlist_Fixed_Slots(Sink(const Slot*) tail, VarList* v) {
+    assert(Get_Flex_Flag(v, FIXED_SIZE));  // not movable, see #2274
+    return Varlist_Slots(tail, v);
 }
 
 

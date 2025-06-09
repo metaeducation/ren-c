@@ -770,7 +770,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     if (not index)
         return PANIC(Error_Bad_Parameter_Raw(at));
 
-    var = Varlist_Slot(Cell_Varlist(frame), unwrap index);
+    var = Slot_Hack(Varlist_Slot(Cell_Varlist(frame), unwrap index));
     param = Phase_Param(Cell_Frame_Phase(op), unwrap index);
 
     if (not Is_Parameter(var))
@@ -816,7 +816,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         if (Get_Parameter_Flag(e->param, REFINEMENT))
             continue;
 
-        if (Is_Parameter(e->var)) {
+        if (Is_Parameter(Slot_Hack(e->slot))) {
             param = e->param;
             break;
         }
@@ -846,7 +846,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     REBLEN index = VAL_UINT32(ARG(INDEX));
 
-    var = Varlist_Slot(Cell_Varlist(frame), index);
+    var = Slot_Hack(Varlist_Slot(Cell_Varlist(frame), index));
     param = Phase_Param(Cell_Frame_Phase(op), index);
 
     goto copy_dual_spare_to_var_in_frame;
@@ -855,7 +855,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
-    var = e->var;
+    var = Slot_Hack(e->slot);
     param = e->param;
 
     goto copy_dual_spare_to_var_in_frame;

@@ -83,7 +83,7 @@ DECLARE_NATIVE(DIR_ACTOR)
     const Symbol* verb = Level_Verb(LEVEL);
     VarList* ctx = Cell_Varlist(port);
 
-    Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
+    Value* state = Slot_Hack(Varlist_Slot(ctx, STD_PORT_STATE));
     FILEREQ *dir;
     if (Is_Blob(state)) {
         dir = File_Of_Port(port);
@@ -91,7 +91,7 @@ DECLARE_NATIVE(DIR_ACTOR)
     else {
         assert(Is_Nulled(state));
 
-        Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
+        Value* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
         if (not Is_Object(spec))
             return PANIC(Error_Invalid_Spec_Raw(spec));
 

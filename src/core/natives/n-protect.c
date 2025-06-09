@@ -191,10 +191,10 @@ void Protect_Varlist(VarList* varlist, Flags flags)
 
     Flip_Stub_To_Black(varlist);  // for recursion
 
-    const Value* var_tail;
-    Value* var = Varlist_Slots(&var_tail, varlist);
-    for (; var != var_tail; ++var)
-        Protect_Value(var, flags);
+    const Slot* slot_tail;
+    Slot* slot = Varlist_Slots(&slot_tail, varlist);
+    for (; slot != slot_tail; ++slot)
+        Protect_Value(Slot_Hack(slot), flags);
 }
 
 

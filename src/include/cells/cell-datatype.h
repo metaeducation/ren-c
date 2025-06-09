@@ -108,8 +108,8 @@ INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
     Init_Word(Stub_Cell(a), symbol);
     Freeze_Source_Deep(a);
 
-    Value* datatype = Append_Context(g_datatypes_context, symbol);
-    Init_Fence(datatype, a);
+    Init(Slot) slot = Append_Context(g_datatypes_context, symbol);
+    Value* datatype = Init_Fence(slot, a);
     LIFT_BYTE_RAW(datatype) = ANTIFORM_0;  // fences are isotopic
 
     Copy_Cell(result, datatype);

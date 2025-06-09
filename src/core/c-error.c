@@ -273,7 +273,7 @@ const Value* Find_Error_For_Sym(SymId id)
         Index n = 1;
         for (; n <= Varlist_Len(category); ++n) {
             if (Are_Synonyms(Key_Symbol(Varlist_Key(category, n)), canon)) {
-                Value* message = Varlist_Slot(category, n);
+                Value* message = Slot_Hack(Varlist_Slot(category, n));
                 assert(Is_Block(message) or Is_Text(message));
                 return message;
             }
@@ -489,28 +489,28 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         VarList* categories = Cell_Varlist(Get_System(SYS_CATALOG, CAT_ERRORS));
 
         // Find correct category for TYPE: (if any)
-        Option(Value*) category = Select_Symbol_In_Context(
+        Slot* category = maybe Select_Symbol_In_Context(
             Varlist_Archetype(categories),
             Cell_Word_Symbol(&vars->type)
         );
-
         if (category) {
-            assert(Is_Object(unwrap category));
+            assert(Is_Object(Slot_Hack(category)));
 
             // Find correct message for ID: (if any)
 
-            Option(Value*) message = Select_Symbol_In_Context(
-                Known_Element(unwrap category),
+            Slot* message = maybe Select_Symbol_In_Context(
+                Known_Element(Slot_Hack(category)),
                 Cell_Word_Symbol(&vars->id)
             );
-
             if (message) {
-                assert(Is_Text(unwrap message) or Is_Block(unwrap message));
-
+                assert(
+                    Is_Text(Slot_Hack(message))
+                    or Is_Block(Slot_Hack(message))
+                );
                 if (not Is_Nulled(&vars->message))
                     return FAIL(Error_Invalid_Error_Raw(arg));
 
-                Copy_Cell(&vars->message, unwrap message);
+                Copy_Cell(&vars->message, Slot_Hack(message));
             }
             else {
                 // At the moment, we don't let the user make a user-ID'd
@@ -656,26 +656,26 @@ Error* Make_Error_Managed_Vaptr(
                 continue;
 
             const Symbol* symbol = Cell_Word_Symbol(msg_item);
-            Value* var = Append_Context(varlist, symbol);
+            Init(Slot) slot = Append_Context(varlist, symbol);
 
             const void *p = va_arg(*vaptr, const void*);
 
             if (p == nullptr) {
-                Init_Nulled(var);  // we permit both nulled cells and nullptr
+                Init_Nulled(slot);  // we permit both nulled cells and nullptr
             }
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
                 assert(!"Not enough arguments in Make_Error_Managed()");
-                Init_Tripwire_Due_To_End(var);
+                Init_Tripwire_Due_To_End(slot);
                 break;
 
               case DETECTED_AS_CELL: {
-                Copy_Cell(var, c_cast(Value*, p));
+                Copy_Cell(slot, c_cast(Value*, p));
                 break; }
 
               case DETECTED_AS_STUB: {  // let symbols act as words
                 assert(Is_Stub_Symbol(c_cast(Stub*, p)));
-                Init_Word(var, c_cast(Symbol*, p));
+                Init_Word(slot, c_cast(Symbol*, p));
                 break; }
 
               default:
@@ -1175,10 +1175,10 @@ Error* Error_Bad_Make(Type type, const Element* spec)
 Error* Error_On_Port(SymId id, Value* port, REBINT err_code)
 {
     VarList* ctx = Cell_Varlist(port);
-    Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
+    Slot* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
-    Value* val = Varlist_Slot(Cell_Varlist(spec), STD_PORT_SPEC_HEAD_REF);
-    if (Is_Space(val))
+    Slot* val = Varlist_Slot(Cell_Varlist(spec), STD_PORT_SPEC_HEAD_REF);
+    if (Is_Space(Slot_Hack(val)))
         val = Varlist_Slot(Cell_Varlist(spec), STD_PORT_SPEC_HEAD_TITLE);  // less
 
     DECLARE_ATOM (err_code_value);
@@ -1246,12 +1246,14 @@ VarList* Startup_Errors(const Element* boot_errors)
 
     // Morph blocks into objects for all error categories.
     //
-    const Value* category_tail;
-    Value* category = Varlist_Slots(&category_tail, catalog);
+    const Slot* category_tail;
+    Slot* category = Varlist_Slots(&category_tail, catalog);
     for (; category != category_tail; ++category) {
-        assert(Is_Block(category));
-        Value* error = rebValue(CANON(CONSTRUCT), CANON(PIN), category);
-        Copy_Cell(category, error);  // actually an OBJECT! :-/
+        assert(Is_Block(Slot_Hack(category)));
+        Value* error = rebValue(
+            CANON(CONSTRUCT), CANON(PIN), Slot_Hack(category)
+        );
+        Copy_Cell(Slot_Hack(category), error);  // actually an OBJECT! :-/
         rebRelease(error);
     }
 

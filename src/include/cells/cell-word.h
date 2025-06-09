@@ -68,7 +68,7 @@ INLINE void Tweak_Cell_Word_Index(Cell* v, Index i) {
 }
 
 INLINE Element* Init_Word_Untracked(
-    Sink(Element) out,
+    Init(Element) out,
     LiftByte lift_byte,
     const Symbol* sym
 ){
