@@ -1426,6 +1426,21 @@
 //    https://stackoverflow.com/questions/3279543/
 //
 #if DEBUG_USE_SINKS
+    template<typename U, typename T>
+    struct AllowInitConversion : std::false_type {};
+
+    template<typename U, typename T>
+    struct AllowSinkConversion : std::false_type {};
+
+    template<bool sink, typename U, typename T>
+    struct AllowConversionSwitch;
+
+    template<typename U, typename T>
+    struct AllowConversionSwitch<false, U, T> : AllowInitConversion<U, T> {};
+
+    template<typename U, typename T>
+    struct AllowConversionSwitch<true, U, T> : AllowSinkConversion<U, T> {};
+
     template<typename T, bool sink>
     struct NeedWrapper {
         T* p;
@@ -1437,7 +1452,9 @@
 
         template<typename U>  // for CHECK_CELL_SUBCLASSES [1]
         using IfReverseInheritable = typename std::enable_if<
-            std::is_same<U,T>::value or std::is_base_of<U,T>::value
+            std::is_same<U, T>::value
+            or std::is_base_of<U, T>::value
+            or AllowConversionSwitch<sink, U, T>::value
         >::type;
 
       //=//// CONSTRUCTORS ////////////////////////////////////////////////=//
@@ -1462,6 +1479,35 @@
         }
 
         template<typename U, bool B, IfReverseInheritable<U>* = nullptr>
+        NeedWrapper(const NeedWrapper<U, B>& other) {
+            p = u_cast(T*, other.p);
+            corruption_pending = p and (other.corruption_pending or sink);
+            other.corruption_pending = false;
+        }
+
+      //=//// INIT CONVERSIONS e.g. for Init(Slot) [3] ////////////////////=//
+
+        template<typename U, typename = typename std::enable_if<
+            not sink and AllowInitConversion<U, T>::value>::type
+        >
+        NeedWrapper(const NeedWrapper<U, sink>& other) {
+            p = u_cast(T*, other.p);
+            corruption_pending = p and (other.corruption_pending or sink);
+            other.corruption_pending = false;
+        }
+
+        template<typename U, typename = typename std::enable_if<
+            not sink and AllowInitConversion<U, T>::value>::type>
+        NeedWrapper(U* u) {
+            p = u_cast(T*, u);
+            corruption_pending = p and sink;
+        }
+
+        // Accept Init<U> when sink and AllowInitConversion<U, T> are true
+        //
+        template<typename U, bool B, typename = typename std::enable_if<
+            sink and not B and AllowInitConversion<U, T>::value>::type
+        >
         NeedWrapper(const NeedWrapper<U, B>& other) {
             p = u_cast(T*, other.p);
             corruption_pending = p and (other.corruption_pending or sink);
