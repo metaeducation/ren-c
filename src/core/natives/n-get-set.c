@@ -599,91 +599,6 @@ Option(Error*) Trap_Get_Word(
 }
 
 
-//
-//  get: native [
-//
-//  "Gets the value of a word or path, or block of words/paths"
-//
-//      return: [any-value? ~[[word! tuple! @block!] any-value?]~]
-//      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
-//          [<opt-out> any-word? any-sequence? group! @block!]
-//      :any "Do not error on unset words"
-//      :groups "Allow GROUP! Evaluations"
-//      :steps "Provide invariant way to get this variable again"
-//  ]
-//
-DECLARE_NATIVE(GET)
-{
-    INCLUDE_PARAMS_OF_GET;
-
-    Element* source = Element_ARG(SOURCE);
-
-    if (Is_Chain(source)) {  // GET-WORD, SET-WORD, SET-GROUP, etc.
-        if (Try_Get_Sequence_Singleheart(source))
-            Unchain(source);  // want to GET or SET normally
-    }
-
-    Option(Element*) steps;
-    if (Bool_ARG(STEPS)) {
-        Init_Space(ARG(STEPS));
-        steps = Element_ARG(STEPS);  // we write into the STEPS slot directly
-    }
-    else if (Bool_ARG(GROUPS))
-        steps = GROUPS_OK;
-    else
-        steps = nullptr;  // no GROUP! evals
-
-    if (Is_Group(source)) {
-        if (not Bool_ARG(GROUPS))
-            return PANIC(Error_Bad_Get_Group_Raw(source));
-
-        if (steps != GROUPS_OK)
-            return PANIC("GET on GROUP! with steps doesn't have answer ATM");
-
-        if (Eval_Any_List_At_Throws(SPARE, source, SPECIFIED))
-            return PANIC(Error_No_Catch_For_Throw(LEVEL));
-
-        if (Is_Void(SPARE))
-            return nullptr;  // !!! Is this a good idea, or should it warning?
-
-        Value* spare = Decay_If_Unstable(SPARE);
-
-        if (not (
-            Any_Word(spare)
-            or Any_Sequence(spare)
-            or Is_Pinned(BLOCK, spare))
-        ){
-            return PANIC(spare);
-        }
-
-        source = Known_Element(spare);
-    }
-
-    Option(Error*) error = Trap_Get_Var_Maybe_Trash(
-        OUT, steps, source, SPECIFIED
-    );
-    if (error)
-        return FAIL(unwrap error);
-
-    if (not Bool_ARG(ANY)) {
-        Value* out = Decay_If_Unstable(OUT);
-        if (Is_Trash(out))
-            return FAIL(Error_Bad_Word_Get(source, out));
-    }
-
-    if (steps and steps != GROUPS_OK) {
-        Source* pack = Make_Source_Managed(2);
-        Set_Flex_Len(pack, 2);
-        Copy_Lifted_Cell(Array_At(pack, 0), unwrap steps);
-        Copy_Lifted_Cell(Array_At(pack, 1), OUT);
-        return Init_Pack(OUT, pack);
-    }
-
-    return OUT;
-}
-
-
-
 // This breaks out the stylized code for calling TWEAK*, in a Level that
 // can be reused across multiple TWEAK* calls.
 //
@@ -1162,7 +1077,6 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     if (Is_Dual_Nulled_Pick_Signal(OUT)) {
         Copy_Cell(OUT, spare_location_dual);
-        Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]
         goto return_success;
     }
 
@@ -1304,46 +1218,53 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
 ){
     heeded(Init_Dual_Nulled_Pick_Signal(OUT));
 
-    return Trap_Tweak_Var_In_Scratch_With_Dual_Out(
+    Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
         level_,
         steps_out
     );
+    if (e)
+        return e;
+
+    if (Is_Error(OUT))  // !!! weird can't pick case
+        return SUCCESS;
+
+    Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]
+    return SUCCESS;
 }
 
 
 //
-//  set: native [
+//  tweak: native [
 //
-//  "Sets a word or path to specified value (see also: UNPACK)"
+//  "Low-level variable setter, that can assign within the dual band"
 //
 //      return: "Same value as input (error passthru even it skips the assign)"
 //          [any-value?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<undo-opt> any-word? tuple! group!
-//          any-get-value? any-set-value? @block!]  ; should take PACK! [1]
-//      ^value "Will be decayed if not assigned to metavariables"
-//          [any-atom?]
+//          any-get-value? any-set-value? @block!]
+//      dual "Ordinary GET or SET with lifted value (unlifts), else dual"
+//          [null? quasiform! quoted!]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //  ]
 //
-DECLARE_NATIVE(SET)
-//
-// 1. SET of a BLOCK! should expose the implementation of the multi-return
-//    mechanics used by SET-BLOCK!.  That will take some refactoring... not
-//    an urgent priority, but it needs to be done.
+DECLARE_NATIVE(TWEAK)
 {
-    INCLUDE_PARAMS_OF_SET;
+    INCLUDE_PARAMS_OF_TWEAK;
 
     enum {
-        ST_SET_INITIAL_ENTRY = STATE_0,
-        ST_SET_SETTING  // trampoline rule: OUT must be erased if STATE_0
+        ST_TWEAK_INITIAL_ENTRY = STATE_0,
+        ST_TWEAK_TWEAKING  // trampoline rule: OUT must be erased if STATE_0
     };
 
-    Element* lifted_setval = Element_ARG(VALUE);
+    Value* dual = ARG(DUAL);
+
+    assert(Is_Nulled(dual) or Is_Tripwire(dual) or Any_Lifted(dual));
+    Copy_Cell_Core(OUT, dual, CELL_MASK_THROW);
 
     if (Is_Nulled(ARG(TARGET)))
-        return UNLIFT(lifted_setval);   // same for SET as [10 = (void): 10]
+        return OUT;   // same for SET as [10 = (void): 10]
 
     Element* target = Element_ARG(TARGET);
 
@@ -1351,7 +1272,7 @@ DECLARE_NATIVE(SET)
         Unchain(target);
 
     if (not Is_Group(target))  // !!! maybe SET-GROUP!, but GET-GROUP!?
-        goto call_generic_set_var;
+        goto call_generic_tweak;
 
   process_group_target: {
 
@@ -1366,7 +1287,7 @@ DECLARE_NATIVE(SET)
         return PANIC(Error_No_Catch_For_Throw(LEVEL));
 
     if (Is_Void(SPARE))
-        return UNLIFT(lifted_setval);
+        return OUT;
 
     Value* spare = Decay_If_Unstable(SPARE);
 
@@ -1380,7 +1301,7 @@ DECLARE_NATIVE(SET)
 
     Copy_Cell(target, Known_Element(spare));  // update ARG(TARGET)
 
-} call_generic_set_var: { ////////////////////////////////////////////////////
+} call_generic_tweak: { //////////////////////////////////////////////////////
 
     Option(Element*) steps;
     if (Bool_ARG(GROUPS))
@@ -1393,15 +1314,12 @@ DECLARE_NATIVE(SET)
         // (more general filtering available via accessors)
     }
 
-    Copy_Cell_Core(OUT, lifted_setval, CELL_MASK_THROW);
-    Unliftify_Undecayed(OUT);
-
-    STATE = ST_SET_SETTING;  // we'll be setting out to something not erased
+    STATE = ST_TWEAK_TWEAKING;  // we'll be setting out to something not erased
 
     heeded(Copy_Cell(SCRATCH, target));
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, steps);
+    Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(LEVEL, steps);
     if (e)
         return PANIC(unwrap e);
 
@@ -1411,12 +1329,108 @@ DECLARE_NATIVE(SET)
   // very useful that you can write (e: trap [x: expression]) and in the case
   // of an error, have the assignment skipped and the error trapped.
   //
-  // Note that (set $ ^x fail "hi") will perform a lifted-assignment of the
-  // quasiform error to X, but will still pass through the ERROR! antiform as
-  // the overall expression result.
+  // Note that (set $ '^x fail "hi") will assign the error! to X, but will
+  // still pass through the ERROR! antiform as the overall expression result.
 
     return OUT;
 }}
+
+
+//
+//  set: native [
+//
+//  "Sets a variable to specified value (for dual band states, see TWEAK)"
+//
+//      return: "Same value as input (error passthru even it skips the assign)"
+//          [any-value?]
+//      target "Word or tuple, or calculated sequence steps (from GET)"
+//          [<undo-opt> any-word? tuple! group!
+//          any-get-value? any-set-value? @block!]
+//      ^value "Will be decayed if not assigned to metavariables"
+//          [any-atom?]  ; should take PACK! [1]
+//      :any "Do not error on unset words"
+//      :groups "Allow GROUP! Evaluations"
+//  ]
+//
+DECLARE_NATIVE(SET)
+//
+// SET is really just a version of TWEAK that passes a lifted argument, but
+// also wants to make its return value match the assignment value.  This means
+// it has to unlift value.
+//
+// 1. SET of a BLOCK! should expose the implementation of the multi-return
+//    mechanics used by SET-BLOCK!.  That will take some refactoring... not
+//    an urgent priority, but it needs to be done.
+{
+    INCLUDE_PARAMS_OF_TWEAK;  // !!! must have compatible frame
+
+    USED(ARG(TARGET));
+    // ARG(VALUE) used below
+    USED(ARG(ANY));
+    USED(ARG(GROUPS));
+
+    Option(Bounce) b = Irreducible_Bounce(
+        LEVEL,
+        Apply_Cfunc(NATIVE_CFUNC(TWEAK), LEVEL)
+    );
+    if (b)
+        return unwrap b;  // keep bouncing while we couldn't get OUT as answer
+
+    Element* lifted = Known_Element(ARG(DUAL));
+    assert(Any_Lifted(lifted));
+
+    return UNLIFT(lifted);
+}
+
+
+//
+//  get: native [
+//
+//  "Gets a variable (for dual band states, see TWEAK)"
+//
+//      return: "Same value as input (error passthru even it skips the assign)"
+//          [any-value?]
+//      target "Word or tuple, or calculated sequence steps (from GET)"
+//          [<undo-opt> any-word? tuple! group!
+//          any-get-value? any-set-value? @block!]
+//      :dual-ignore "!!! Just for frame compatibility !!!"  ; dummy [1]
+//      :any "Do not error on unset words"
+//      :groups "Allow GROUP! Evaluations"
+//  ]
+//
+DECLARE_NATIVE(GET)
+//
+// GET is really just a version of TWEAK that passes null, and unlifts the
+// return result.
+//
+// 1. Something has to be picked for placeholder slots or locals in the
+//    frame, so you can make dummy slots but not show them on the interface
+//    of the function.  Once upon a time this would be like `.dual` but that
+//    was removed.  Several instances of this exist and need an answer.
+{
+    INCLUDE_PARAMS_OF_TWEAK;  // !!! must have compatible frame
+
+    USED(ARG(TARGET));
+    assert(Is_Nulled(ARG(DUAL)));  // "value" slot
+    USED(ARG(DUAL));
+    USED(ARG(ANY));
+    USED(ARG(GROUPS));
+
+    Option(Bounce) b = Irreducible_Bounce(
+        LEVEL,
+        Apply_Cfunc(NATIVE_CFUNC(TWEAK), LEVEL)
+    );
+    if (b)
+        return unwrap b;  // keep bouncing while we couldn't get OUT as answer
+
+    if (Is_Error(OUT))
+        return OUT;  // weird can't pick case, see [A]
+
+    if (not Any_Lifted(OUT))
+        return PANIC("GET of UNSET or other weird state (see TWEAK)");
+
+    return Unliftify_Undecayed(OUT);
+}
 
 
 //
