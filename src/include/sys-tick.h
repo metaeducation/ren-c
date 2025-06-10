@@ -76,6 +76,7 @@
             ){ \
                 printf("TRAMPOLINE g_break_at_tick = %" PRIu64 "\n", g_tick); \
                 debug_break(); /* see %debug_break.h */ \
+                g_break_at_tick = 0; /* reset so it doesn't break again */ \
             } \
         } while (0)  // macro so that breakpoint is at right stack level!
 #else
