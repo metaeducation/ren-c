@@ -1226,10 +1226,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     Value* out = Copy_Cell(OUT, Slot_Hack(slot));
 
-    if (
+    if (  // !!! BUGGY, new system needed
         HEART_BYTE(slot) == TYPE_FRAME
-        and LIFT_BYTE(slot) == ANTIFORM_0
-        and Cell_Frame_Coupling(Slot_Hack(slot)) == UNCOUPLED
+        and LIFT_BYTE_RAW(slot) == ANTIFORM_0
+        and Cell_Frame_Coupling(u_cast(Value*, slot)) == UNCOUPLED
     ){
         Context* c = Cell_Context(context);
         Tweak_Cell_Frame_Coupling(out, cast(VarList*, c));

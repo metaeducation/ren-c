@@ -1442,8 +1442,10 @@ Option(Error*) Trap_Read_Slot(Sink(Value) out, Slot* slot)
 {
     assert(Not_Cell_Flag(slot, BIND_MARKED_META));
 
-    if (Get_Cell_Flag(slot, SLOT_HINT_DUAL))
-        goto handle_dual_signal;
+    if (Get_Cell_Flag(slot, SLOT_HINT_DUAL)) {
+        if (not Any_Lifted_Dual(slot))
+            goto handle_dual_signal;
+    }
 
   handle_non_weird: {
 
@@ -1471,8 +1473,10 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Value* write)
 {
     // assert(Not_Cell_Flag(slot, BIND_MARKED_META));
 
-    if (Get_Cell_Flag(slot, SLOT_HINT_DUAL))
-        goto handle_dual_signal;
+    if (Get_Cell_Flag(slot, SLOT_HINT_DUAL)) {
+        if (not Any_Lifted_Dual(slot))
+            goto handle_dual_signal;
+    }
 
   handle_non_weird: {
 

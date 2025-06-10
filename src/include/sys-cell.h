@@ -399,6 +399,92 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 } while (0)
 
 
+//=//// GETTING, SETTING, and CLEARING VALUE FLAGS ////////////////////////=//
+//
+// The header of a cell contains information about what kind of cell it is,
+// as well as some flags that are reserved for system purposes.  These are
+// the NODE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
+//
+// 1. Avoid cost that inline functions (even constexpr) add to checked builds
+//    by "typechecking" via finding the name ->header.bits in (c).
+//
+// 2. Cell flags are managed distinctly from conceptual immutability of their
+//    data, and so we m_cast away constness.  We do this on the HeaderUnion
+//    vs. x_cast() on the (c) to get the typechecking of [1]
+
+#define Get_Cell_Flag(c,name) /* [1] */ \
+    ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) != 0)
+
+#define Not_Cell_Flag(c,name) \
+    ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) == 0)
+
+#define Get_Cell_Flag_Unchecked(c,name) \
+    (((c)->header.bits & CELL_FLAG_##name) != 0)
+
+#define Not_Cell_Flag_Unchecked(c,name) \
+    (((c)->header.bits & CELL_FLAG_##name) == 0)
+
+#define Set_Cell_Flag(c,name) /* [2] */ \
+    m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
+        |= CELL_FLAG_##name
+
+#define Clear_Cell_Flag(c,name) \
+    m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
+        &= ~CELL_FLAG_##name
+
+
+//=//// CELL 2-bit SIGIL! /////////////////////////////////////////////////=//
+//
+// The HEART_BYTE() is structured so that the top two bits of the byte are
+// used for the "Sigil".  This can be [$ @ ^] or nothing.
+//
+
+#define FLAG_SIGIL_CRUMB(crumb) \
+    FLAG_HEART_BYTE((crumb) << HEART_SIGIL_SHIFT)
+
+#define FLAG_SIGIL_ENUM(sigil) \
+    FLAG_SIGIL_CRUMB(u_cast(Byte, ensure(Sigil, sigil)))
+
+#define FLAG_SIGIL(name) \
+    FLAG_SIGIL_ENUM(SIGIL_##name)
+
+#define CELL_MASK_SIGIL_BITS  FLAG_SIGIL_CRUMB(3)  // 0b11 << HEART_SIGIL_SHIFT
+
+
+//=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
+//
+// The cell flags are structured so that the top two bits of the byte are
+// "type specific", so that you can just take the last 2 bits.  This 2-bit
+// state (called a "crumb") holds the one of four possible infix states for
+// actions--for example.
+//
+// THEY ARE THE LAST TWO BITS ON PURPOSE.  If they needed to be shifted, the
+// fact that there's no unit smaller than a byte means static analyzers
+// will warn you about overflow if any shifting is involved, e.g.:
+//
+//     (((crumb << 6)) << 24)  <-- generates uintptr_t overflow warning
+//
+
+STATIC_ASSERT(
+    CELL_FLAG_TYPE_SPECIFIC_A == FLAG_LEFT_BIT(30)
+    and CELL_FLAG_TYPE_SPECIFIC_B == FLAG_LEFT_BIT(31)
+);
+
+#define CELL_MASK_CRUMB \
+    (CELL_FLAG_TYPE_SPECIFIC_A | CELL_FLAG_TYPE_SPECIFIC_B)
+
+#define Get_Cell_Crumb(c) \
+    (FOURTH_BYTE(&(c)->header.bits) & 0x3)
+
+#define FLAG_CELL_CRUMB(crumb) \
+    FLAG_FOURTH_BYTE(crumb)
+
+INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
+    c->header.bits &= ~(CELL_MASK_CRUMB);
+    c->header.bits |= FLAG_CELL_CRUMB(crumb);
+}
+
+
 //=//// HOOKABLE HEART_BYTE() ACCESSOR ////////////////////////////////////=//
 //
 // This has to be defined after `Cell` is fully defined.
@@ -499,7 +585,6 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 }
 
 
-
 //=//// HOOKABLE LIFT_BYTE() ACCESSOR /////////////////////////////////////=//
 //
 // While all datatypes have quoted forms, only some have quasiforms/antiforms.
@@ -509,17 +594,25 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 // This mechanism captures manipulations of the LIFT_BYTE() to be sure the
 // bad forms don't get made.
 //
+// 1. The `Slot` can be using "dual representation" to store its cell, based
+//    on CELL_FLAG_SLOT_HINT_DUAL.  This means that the LIFT_BYTE() may be
+//    bigger by 2 than what the actual representation is.  This requires
+//    care to handle, so a Slot must knowingly check the flag and use the
+//    LIFT_BYTE_RAW() when dealing with Slots.
+//
 
 #if (! DEBUG_HOOK_LIFT_BYTE)
     #define LIFT_BYTE(cell) \
         LIFT_BYTE_RAW(cell)
 #else
-    struct LiftHolder {  // class for intercepting lift assignments [2]
+    struct LiftHolder {  // class for intercepting lift assignments
         Cell* & ref;
 
         LiftHolder(const Cell* const& ref)
             : ref (const_cast<Cell* &>(ref))
           {}
+
+        LiftHolder(const Slot* const& ref) = delete;  // may be dual [1]
 
         operator LiftByte() const {  // implicit cast, add read checks here
             return LIFT_BYTE_RAW(ref);
@@ -551,24 +644,6 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
     #define LIFT_BYTE(cell) \
         LiftHolder{cell}
 #endif
-
-
-//=//// CELL 2-bit SIGIL! /////////////////////////////////////////////////=//
-//
-// The HEART_BYTE() is structured so that the top two bits of the byte are
-// used for the "Sigil".  This can be [$ @ ^] or nothing.
-//
-
-#define FLAG_SIGIL_CRUMB(crumb) \
-    FLAG_HEART_BYTE((crumb) << HEART_SIGIL_SHIFT)
-
-#define FLAG_SIGIL_ENUM(sigil) \
-    FLAG_SIGIL_CRUMB(u_cast(Byte, ensure(Sigil, sigil)))
-
-#define FLAG_SIGIL(name) \
-    FLAG_SIGIL_ENUM(SIGIL_##name)
-
-#define CELL_MASK_SIGIL_BITS  FLAG_SIGIL_CRUMB(3)  // 0b11 << HEART_SIGIL_SHIFT
 
 
 //=//// VALUE TYPE (always TYPE_XXX <= MAX_TYPE) ////////////////////////////=//
@@ -638,74 +713,6 @@ INLINE Option(Type) Type_Of_Unquoted(const Element* elem) {
         break;
     }
     return TYPE_TIED;  // work around "not all control paths return a value"
-}
-
-
-//=//// GETTING, SETTING, and CLEARING VALUE FLAGS ////////////////////////=//
-//
-// The header of a cell contains information about what kind of cell it is,
-// as well as some flags that are reserved for system purposes.  These are
-// the NODE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
-//
-// 1. Avoid cost that inline functions (even constexpr) add to checked builds
-//    by "typechecking" via finding the name ->header.bits in (c).
-//
-// 2. Cell flags are managed distinctly from conceptual immutability of their
-//    data, and so we m_cast away constness.  We do this on the HeaderUnion
-//    vs. x_cast() on the (c) to get the typechecking of [1]
-
-#define Get_Cell_Flag(c,name) /* [1] */ \
-    ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) != 0)
-
-#define Not_Cell_Flag(c,name) \
-    ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) == 0)
-
-#define Get_Cell_Flag_Unchecked(c,name) \
-    (((c)->header.bits & CELL_FLAG_##name) != 0)
-
-#define Not_Cell_Flag_Unchecked(c,name) \
-    (((c)->header.bits & CELL_FLAG_##name) == 0)
-
-#define Set_Cell_Flag(c,name) /* [2] */ \
-    m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
-        |= CELL_FLAG_##name
-
-#define Clear_Cell_Flag(c,name) \
-    m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
-        &= ~CELL_FLAG_##name
-
-
-//=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
-//
-// The cell flags are structured so that the top two bits of the byte are
-// "type specific", so that you can just take the last 2 bits.  This 2-bit
-// state (called a "crumb") holds the one of four possible infix states for
-// actions--for example.
-//
-// THEY ARE THE LAST TWO BITS ON PURPOSE.  If they needed to be shifted, the
-// fact that there's no unit smaller than a byte means static analyzers
-// will warn you about overflow if any shifting is involved, e.g.:
-//
-//     (((crumb << 6)) << 24)  <-- generates uintptr_t overflow warning
-//
-
-STATIC_ASSERT(
-    CELL_FLAG_TYPE_SPECIFIC_A == FLAG_LEFT_BIT(30)
-    and CELL_FLAG_TYPE_SPECIFIC_B == FLAG_LEFT_BIT(31)
-);
-
-#define CELL_MASK_CRUMB \
-    (CELL_FLAG_TYPE_SPECIFIC_A | CELL_FLAG_TYPE_SPECIFIC_B)
-
-#define Get_Cell_Crumb(c) \
-    (FOURTH_BYTE(&(c)->header.bits) & 0x3)
-
-#define FLAG_CELL_CRUMB(crumb) \
-    FLAG_FOURTH_BYTE(crumb)
-
-INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
-    c->header.bits &= ~(CELL_MASK_CRUMB);
-    c->header.bits |= FLAG_CELL_CRUMB(crumb);
 }
 
 

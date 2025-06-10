@@ -730,6 +730,60 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 #endif
 
 
+//=//// SLOTS /////////////////////////////////////////////////////////////=//
+//
+// Contexts like OBJECT!, MODULE!, FRAME!, LET!, etc. store "variables".  A
+// Cell that holds a variable's value is called a "Slot".  Slots have special
+// considerations for handling, because they may store bit patterns that
+// indicate a function should be run to fulfill the variable (a "GETTER") or
+// a function should be run to accept a value to store (a "SETTER").
+//
+// This means you can't casually use something like Init_Integer() or
+// Copy_Cell() to blindly write bit patterns into a Slot, because it might
+// overlook handling of the special cases.  And you can't use functions like
+// Type_Of() to read a Slot, either.  This means Slots have to go through
+// special functions that in the general case, may run arbitrary code in
+// the evaluator.
+//
+// There is one exception: an Init(Slot) e.g. what you get from adding a
+// fresh variable to a context, is able to be initialized by any routine
+// that could do an Init(Element) or Init(Value).  This is because a slot that
+// does not carry CELL_FLAG_SLOT_HINT_DUAL is assumed to be literal.
+//
+// Hence instead of writing:
+//
+//      VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
+//      Liftify(Init_Integer(Append_Context(info, CANON(ID)), pid));
+//      Liftify(Init_Integer(Append_Context(info, CANON(CODE)), code));
+//
+// You can simply say:
+//
+//      VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
+//      Init_Integer(Append_Context(info, CANON(ID)), pid);
+//      Init_Integer(Append_Context(info, CANON(CODE)), code);
+//
+// While checking for CELL_FLAG_SLOT_HINT_DUAL adds some overhead to GET and
+// SET operations, it avoids code like this needing to call Liftify() which
+// would have to pay the cost of checking for overflow of the LIFT_BYTE().
+//
+
+#define CELL_FLAG_SLOT_HINT_DUAL  CELL_FLAG_HINT
+
+#if DONT_CHECK_CELL_SUBCLASSES
+    typedef struct RebolValueStruct Slot;
+#else
+    struct Slot : public Cell {};  // can hold unstable antiforms
+
+  #if DEBUG_USE_SINKS
+    template<>
+    struct AllowInitConversion<Slot, Value> : std::true_type {};
+
+    template<>
+    struct AllowInitConversion<Slot, Element> : std::true_type {};
+  #endif
+#endif
+
+
 //=//// ENSURE CELL TYPES ARE STANDARD LAYOUT /////////////////////////////=//
 //
 // Using too much C++ magic can potentially lead to the exported structure
@@ -741,7 +795,8 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
         std::is_standard_layout<Cell>::value
             and std::is_standard_layout<Atom>::value
             and std::is_standard_layout<Value>::value
-            and std::is_standard_layout<Element>::value,
+            and std::is_standard_layout<Element>::value
+            and std::is_standard_layout<Slot>::value,
         "C++ Cells must match C Cells: http://stackoverflow.com/a/7189821/"
     );
 #endif

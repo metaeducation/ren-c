@@ -139,3 +139,11 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 #define Init_Dual_Tripwire_Remove_Signal(dual)  Init_Tripwire(dual)
 
 #define Is_Dual_Word_Named_Signal(dual)  Is_Word(dual)
+
+
+// Show that we know we're dealing with a lifted dual slot.
+//
+INLINE bool Any_Lifted_Dual(const Slot* slot) {
+    assert(Get_Cell_Flag(slot, SLOT_HINT_DUAL));
+    return LIFT_BYTE_RAW(slot) >= QUASIFORM_2;
+}
