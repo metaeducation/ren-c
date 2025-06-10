@@ -509,6 +509,8 @@ Bounce Action_Executor(Level* L)
                 assert(false);
             }
 
+            Clear_Cell_Flag(ARG, OUT_HINT_UNSURPRISING);  // !!! review
+
             // When we see `1 + 2 * 3`, when we're at the 2, we don't
             // want to let the * run yet.  So set a flag which says we
             // won't do lookahead that will be cleared when function
@@ -705,6 +707,8 @@ Bounce Action_Executor(Level* L)
             assert(false);
         }
 
+        Clear_Cell_Flag(ARG, OUT_HINT_UNSURPRISING);  // !!! review
+
         // If FEED_FLAG_NO_LOOKAHEAD was set going into the argument
         // gathering above, it should have been cleared or converted into
         // FEED_FLAG_DEFERRING_INFIX.
@@ -840,8 +844,10 @@ Bounce Action_Executor(Level* L)
         Assert_Cell_Stable(ARG);  // implicitly asserts Ensure_Readable(ARG)
         Value* arg = u_cast(Value*, ARG);
 
-        if (Is_Typechecked(arg))
+        if (Is_Typechecked(arg)) {
+            /*assert(Not_Cell_Flag(arg, SLOT_HINT_DUAL));*/
             continue;  // Note: typechecked trash is legal (e.g. locals)
+        }
 
         Phase* phase = Level_Phase(L);
         const Param* param = PARAM;
@@ -849,6 +855,19 @@ Bounce Action_Executor(Level* L)
             Element* archetype = Flex_Head(Element, phase);
             phase = Cell_Frame_Phase(archetype);
             param = Phase_Param(phase, arg - cast(Value*, L->rootvar));
+        }
+
+        if (Cell_Parameter_Class(param) != PARAMCLASS_META) {
+            if (Get_Cell_Flag(arg, SLOT_HINT_DUAL)) {  // !!! temp
+                Unliftify_Known_Stable(arg);
+                Clear_Cell_Flag(arg, SLOT_HINT_DUAL);
+            }
+        }
+        else {
+            assert(Any_Lifted(arg));
+            Set_Cell_Flag(arg, SLOT_HINT_DUAL);
+            // leave dual flag for a moment...
+            // this *should* screw up ARG() etc. but they ignore it
         }
 
         if (Is_Trash(arg)) {  // other trash are unspecified/"end"

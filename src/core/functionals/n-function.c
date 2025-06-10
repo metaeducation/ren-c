@@ -291,7 +291,9 @@ bool Func_Details_Querier(
       case SYM_BODY_OF: {
         Element* body = cast(Element*, Array_At(details, IDX_DETAILS_1));
 
-        Value* example = Get_System(SYS_STANDARD, STD_FUNC_BODY);  // [1]
+        Value* example = Slot_Hack(  // [1]
+            Get_System(SYS_STANDARD, STD_FUNC_BODY)
+        );
         REBLEN real_body_index = 6;
 
         Source* fake = cast(Source*, Copy_Array_Shallow_Flags(

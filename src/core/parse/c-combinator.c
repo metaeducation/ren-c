@@ -338,8 +338,8 @@ void Push_Parser_Sublevel(
     Slot* remainder_slot = Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
     Slot* input_slot = Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_INPUT);
 
-    Copy_Cell(Slot_Hack(remainder_slot), remainder);
-    Copy_Cell(Slot_Hack(input_slot), input);
+    Copy_Cell(Slot_Init_Hack(remainder_slot), remainder);
+    Copy_Cell(Slot_Init_Hack(input_slot), input);
 
     DECLARE_ELEMENT (temp);  // can't overwrite spare
     Init_Frame(temp, ctx, ANONYMOUS, NONMETHOD);

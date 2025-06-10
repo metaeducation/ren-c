@@ -838,7 +838,14 @@ VarList* Make_Varlist_Detect_Managed(
         for (; src != src_tail; ++dest, ++src) {
             Flags clone_flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(Is_Trash(dest));
-            Copy_Cell(dest, Slot_Hack(src));
+
+            // !!! If we are creating a derived object, should it be able
+            // to copy the ACCESSOR/etc.?
+            //
+            e = Trap_Read_Slot(dest, src);
+            if (e)
+                panic (unwrap e);  // !!! review if panic should be possible
+
             bool deeply = true;  // !!! Copies series deeply, why? [1]
             if (not Is_Antiform(dest)) {  // !!! whole model needs review
                 Clonify(Known_Element(dest), clone_flags, deeply);
@@ -989,23 +996,18 @@ Option(Slot*) Select_Symbol_In_Context(
 
 
 //
-//  Obj_Value: C
+//  Obj_Slot: C
 //
-// Return pointer to the nth VALUE of an object.
-// Return NULL if the index is not valid.
+// !!! All instances of this should be reviewed...
 //
-// 1. !!! All cases of this should be reviewed...mostly for getting an indexed
-//    field out of a port.  If the port doesn't have the index, should it
-//    always be an warning?
-//
-Value* Obj_Value(Value* value, Index index)
+Slot* Obj_Slot(Value* value, Index index)
 {
     VarList* context = Cell_Varlist(value);
 
     if (index > Varlist_Len(context))
         panic ("Could not pick index out of object");  // !!! Review [1]
 
-    return Slot_Hack(Varlist_Slot(context, index));
+    return Varlist_Slot(context, index);
 }
 
 

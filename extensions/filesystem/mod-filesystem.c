@@ -537,9 +537,15 @@ DECLARE_NATIVE(WHAT_DIR)
 {
     INCLUDE_PARAMS_OF_WHAT_DIR;
 
-    Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
+    Sink(Value) spare_current_path = SPARE;
+    Option(Error*) e = Trap_Read_Slot(
+        spare_current_path,
+        Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH)
+    );
+    if (e)
+        return PANIC(unwrap e);
 
-    if (Is_File(current_path) or Is_Nulled(current_path)) {
+    if (Is_File(spare_current_path) or Is_Nulled(spare_current_path)) {
         //
         // !!! Because of the need to track a notion of "current path" which
         // could be a URL! as well as a FILE!, the state is stored in the
@@ -550,18 +556,26 @@ DECLARE_NATIVE(WHAT_DIR)
         // reconsider the duplication.
 
         Value* refresh = Get_Current_Dir_Value();
-        Copy_Cell(current_path, refresh);
+        Copy_Cell(spare_current_path, refresh);
+        e = Trap_Write_Slot(
+            Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH),
+            refresh
+        );
+        if (e)
+            return PANIC(unwrap e);
         rebRelease(refresh);
     }
-    else if (not Is_Url(current_path)) {
+    else if (not Is_Url(spare_current_path)) {
         //
         // Lousy error, but ATM the user can directly edit system.options.
         // They shouldn't be able to (or if they can, it should be validated)
         //
-        return PANIC(current_path);
+        return PANIC(spare_current_path);
     }
 
-    return rebValue(CANON(TRY), CANON(COPY), current_path);  // caller mutates
+    return rebValue(
+        CANON(TRY), CANON(COPY), spare_current_path  // "caller mutates"
+    );
 }
 
 
@@ -579,7 +593,9 @@ DECLARE_NATIVE(CHANGE_DIR)
     INCLUDE_PARAMS_OF_CHANGE_DIR;
 
     Value* arg = ARG(PATH);
-    Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
+    Value* current_path = Slot_Hack(
+        Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH)
+    );
 
     if (Is_Url(arg)) {
         // There is no directory listing protocol for HTTP (although this

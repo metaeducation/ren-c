@@ -985,10 +985,20 @@ DECLARE_NATIVE(PROXY_EXPORTS)
         Slot* dest = maybe Sea_Slot(where, symbol, strict);
         if (dest) {
             // Fail if found?
-            Copy_Cell(Slot_Hack(dest), Slot_Hack(src));
+            Option(Error*) e = Trap_Read_Slot(
+                Slot_Init_Hack(dest),
+                src
+            );
+            if (e)
+                return PANIC(unwrap e);
         }
         else {
-            Copy_Cell(Append_Context(where, symbol), Slot_Hack(src));
+            Option(Error*) e = Trap_Read_Slot(
+                Append_Context(where, symbol),
+                src
+            );
+            if (e)
+                return PANIC(unwrap e);
         }
     }
 

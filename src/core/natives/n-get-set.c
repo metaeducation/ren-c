@@ -850,7 +850,6 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
                 Copy_Cell(value_arg, TOP_ELEMENT);
                 DROP();
             }
-            Liftify(value_arg);  // lift it again to be ^META argument
             continue;
         }
 
@@ -1118,14 +1117,13 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         }
 
         if (Any_Lifted(SPARE)) {  // most common answer--successful pick
-            Unliftify_Undecayed(SPARE);  // review efficiency of unlift + lift
 
-            if (Any_Metaform(Data_Stack_At(Element, stackindex)))
-                Unliftify_Undecayed(SPARE);
-            else
+            if (not Any_Metaform(Data_Stack_At(Element, stackindex))) {
+                Unliftify_Undecayed(SPARE);  // review unlift + lift
                 Decay_If_Unstable(SPARE);
+                Liftify(SPARE);  // need lifted for dual protocol (review)
+            }
 
-            Liftify(SPARE);  // need lifted for dual protocol (review)
             continue;
         }
 

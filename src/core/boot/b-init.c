@@ -488,22 +488,32 @@ static void Init_System_Object(
     // %sysobj.r's code could run using those natives.  But make sure what it
     // made is actually identical to the definition in %sysobj.r.
     //
+    DECLARE_VALUE (check);
+    Option(Error*) e = Trap_Read_Slot(
+        check,
+        Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT)
+    );
+    assert(not e);
     assert(
         0 == CT_Context(
-            Known_Element(Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT)),
+            Known_Element(check),
             Root_Action_Adjunct,
             true  // "strict equality"
         )
     );
+    UNUSED(check);
 
     // Store pointer to errors catalog (for GC protection)
     //
-    Init_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errors_catalog);
+    Init_Object(
+        Slot_Init_Hack(Get_System(SYS_CATALOG, CAT_ERRORS)),
+        errors_catalog
+    );
 
     // Create SYSTEM.CODECS object
     //
     Init_Object(
-        Get_System(SYS_CODECS, 0),
+        Slot_Init_Hack(Get_System(SYS_CODECS, 0)),
         Alloc_Varlist_Core(NODE_FLAG_MANAGED, TYPE_OBJECT, 10)
     );
 
@@ -513,11 +523,13 @@ static void Init_System_Object(
   // `make warning!` functionality is not ready when %sysobj.r runs.  Fix
   // up its archetype so that it is an actual ERROR!.
 
-    Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
-    VarList* c = Cell_Varlist(std_error);
-    HEART_BYTE(std_error) = TYPE_WARNING;
+    Slot* std_error_slot = Get_System(SYS_STANDARD, STD_ERROR);
+    assert(HEART_BYTE(std_error_slot) == TYPE_OBJECT);
+    assert(LIFT_BYTE_RAW(std_error_slot) == ONEQUOTE_NONQUASI_3);
+    VarList* varlist = Cell_Varlist(u_cast(Element*, std_error_slot));
+    HEART_BYTE(std_error_slot) = TYPE_WARNING;
 
-    Value* rootvar = Rootvar_Of_Varlist(c);
+    Value* rootvar = Rootvar_Of_Varlist(varlist);
     assert(Get_Cell_Flag(rootvar, PROTECTED));
     HEART_BYTE(rootvar) = TYPE_WARNING;
 }}
@@ -831,12 +843,21 @@ void Startup_Core(void)
     // content gets overwritten in the user context, it can be borrowed back
     // from `system.contexts.lib` (aliased as "lib" in the user context).
 
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_DATATYPES), g_datatypes_module);
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), g_lib_module);
+    Copy_Cell(
+        Slot_Init_Hack(Get_System(SYS_CONTEXTS, CTX_DATATYPES)),
+        g_datatypes_module
+    );
+    Copy_Cell(
+        Slot_Init_Hack(Get_System(SYS_CONTEXTS, CTX_LIB)),
+        g_lib_module
+    );
     RebolValue* trash = rebValue(
         "~#[SYS.CONTEXTS.USER unavailable: Mezzanine Startup not finished]#~"
     );
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_USER), trash);
+    Copy_Cell(
+        Slot_Init_Hack(Get_System(SYS_CONTEXTS, CTX_USER)),
+        trash
+    );
     rebRelease(trash);
 
 } update_boot_phase: {  // Note: error handling initialized
@@ -954,11 +975,14 @@ void Startup_Core(void)
         "system.contexts.user: module [Name: User] []"
     );
 
-    ensure(nullptr, g_user_module) = cast(Element*, Copy_Cell(
-        Alloc_Value(),
-        Get_System(SYS_CONTEXTS, CTX_USER)
-    ));
+    Sink(Value) user = Alloc_Value();
+    Option(Error*) e = Trap_Read_Slot(user, Get_System(SYS_CONTEXTS, CTX_USER));
+    assert(not e);
+    UNUSED(e);
+
+    g_user_module = Known_Element(user);
     rebUnmanage(g_user_module);
+
     g_user_context = Cell_Module_Sea(g_user_module);
 
 } startup_extension_loader: {

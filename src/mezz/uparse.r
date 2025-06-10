@@ -2430,7 +2430,7 @@ default-combinators: to map! reduce [
             f.input: pos
 
             if not warning? temp: entrap f [
-                [^temp pos subpending]: ^temp
+                [^temp pos subpending]: unlift temp
                 if unset? $pos [
                     print mold:limit rules 200
                     panic "Combinator did not set remainder"

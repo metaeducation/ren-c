@@ -179,7 +179,7 @@ DECLARE_NATIVE(DNS_ACTOR)
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher
 
-        Value* host = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
+        Value* host = Slot_Hack(Obj_Slot(spec, STD_PORT_SPEC_NET_HOST));
 
         if (Is_Nulled(host)) {
             //

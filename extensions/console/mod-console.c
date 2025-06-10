@@ -304,7 +304,7 @@ DECLARE_NATIVE(CONSOLE)
         &code,
         "console*",  // action that takes 4 args, run it
             "code",  // group! or block! executed prior (or null)
-            "(result')",  // prior result lifted, or error (or null)
+            "result'",  // prior result lifted, or error (or null)
             "to-yesno resumable",
             "skin"
     );
@@ -386,7 +386,7 @@ DECLARE_NATIVE(CONSOLE)
         "sys.util/rescue [",  // pollutes stack trace [3]
             "catch* 'quit* [",  // definitional quit (customized THROW) [4]
                 "sys.contexts.user.quit: sys.util/make-quit:console quit*/",
-                "^result': eval code",
+                "result': lift* eval code",
             "] then caught -> [",  // QUIT wraps QUIT* to only throw integers
                 "result': caught",  // INTEGER! due to :CONSOLE, out of band
             "]",

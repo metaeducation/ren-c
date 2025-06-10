@@ -68,10 +68,16 @@
 #define VAL_ERR_VARS(v) \
     ERR_VARS(Cell_Varlist(v))
 
-INLINE void Force_Location_Of_Error(Error* error, Level* where) {
+INLINE void Force_Location_Of_Error(Error* error, Level* L) {
     ERROR_VARS *vars = ERR_VARS(error);
-    if (Is_Nulled(&vars->where))
-        Set_Location_Of_Error(error, where);
+
+    DECLARE_VALUE (where);
+    Option(Error*) e = Trap_Read_Slot(where, &vars->where);
+    if (e)
+        panic (unwrap e);
+
+    if (Is_Nulled(where))
+        Set_Location_Of_Error(error, L);
 }
 
 
@@ -126,11 +132,17 @@ INLINE Atom* Failify(Need(Atom*) atom) {  // WARNING! => ERROR!
 //     == ~null~  ; anti
 //
 
-INLINE bool Is_Error_Veto_Signal(Error* e) {
-    ERROR_VARS *vars = ERR_VARS(e);
-    if (not Is_Word(&vars->id))
+INLINE bool Is_Error_Veto_Signal(Error* error) {
+    ERROR_VARS *vars = ERR_VARS(error);
+
+    DECLARE_VALUE (id);
+    Option(Error*) e = Trap_Read_Slot(id, &vars->id);
+    if (e)
+        panic (unwrap e);
+
+    if (not Is_Word(id))
         return false;
-    return Cell_Word_Id(&vars->id) == SYM_VETO;
+    return Cell_Word_Id(id) == SYM_VETO;
 }
 
 
@@ -155,9 +167,15 @@ INLINE bool Is_Error_Veto_Signal(Error* e) {
 // the generator can return anything that can be stored as a variable in-band.
 //
 
-INLINE bool Is_Error_Done_Signal(Error* e) {
-    ERROR_VARS *vars = ERR_VARS(e);
-    if (not Is_Word(&vars->id))
+INLINE bool Is_Error_Done_Signal(Error* error) {
+    ERROR_VARS *vars = ERR_VARS(error);
+
+    DECLARE_VALUE (id);
+    Option(Error*) e = Trap_Read_Slot(id, &vars->id);
+    if (e)
+        panic (unwrap e);
+
+    if (not Is_Word(id))
         return false;
-    return Cell_Word_Id(&vars->id) == SYM_DONE;
+    return Cell_Word_Id(id) == SYM_DONE;
 }

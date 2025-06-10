@@ -94,7 +94,7 @@ DECLARE_NATIVE(DOES)
     assert(Is_Node_Managed(exemplar));
 
     assert(Key_Id(Varlist_Key(exemplar, 1)) == SYM_RETURN);
-    Copy_Cell(Slot_Hack(Varlist_Slot(exemplar, 2)), source);
+    Copy_Cell(Slot_Init_Hack(Varlist_Slot(exemplar, 2)), source);
 
     const Symbol* label = CANON(EVALUATE);  // !!! Better answer?
 

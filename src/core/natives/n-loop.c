@@ -976,7 +976,7 @@ static Option(Error*) Trap_Loop_Each_Next(
                 // Want keys and values (`for-each 'key val obj [...]`)
                 //
                 ++slot;
-                e = Trap_Write_Slot(slot, Slot_Hack(les->u.evars.slot));
+                e = Trap_Read_Slot(Slot_Init_Hack(slot), les->u.evars.slot);
                 if (e)
                     return e;
             }

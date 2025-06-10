@@ -427,7 +427,7 @@ bind construct [
         ;
         assert [pack? ^atom]
         if where [
-            let mod: ensure module! unquote first unquasi atom
+            let mod: ensure module! atom  ; decaying fetch
             let exports: select (opt adjunct-of mod) 'exports
             proxy-exports where mod (opt exports)
         ]
@@ -659,10 +659,10 @@ export*: func [
         ^args: try take args  ; eval before EXTEND clears variable...
         return (  ; can't append until after, if prev. definition used in expr
             (
-                if word [  ; no "attached" state, must append word to get IN
+                when word [  ; no "attached" state, must append word to get IN
                     extend where word  ; maybe bound e.g. WHAT-DIR
                 ]
-            ): ^(args)
+            ): ^args
             elide if word [append exports word]
         )
     ]

@@ -91,16 +91,31 @@ DECLARE_NATIVE(DIR_ACTOR)
     else {
         assert(Is_Nulled(state));
 
-        Value* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
+        DECLARE_VALUE (spec);
+        Option(Error*) e = Trap_Read_Slot(
+            spec, Varlist_Slot(ctx, STD_PORT_SPEC)
+        );
+        if (e)
+            return PANIC(unwrap e);
         if (not Is_Object(spec))
             return PANIC(Error_Invalid_Spec_Raw(spec));
 
-        Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-        if (path == nullptr)
+        DECLARE_VALUE (path);
+        e = Trap_Read_Slot(
+            path, Obj_Slot(spec, STD_PORT_SPEC_HEAD_REF)
+        );
+        if (e)
+            return PANIC(unwrap e);
+        if (Is_Nulled(path))
             return PANIC(Error_Invalid_Spec_Raw(spec));
 
-        if (Is_Url(path))
-            path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
+        if (Is_Url(path)) {
+            e = Trap_Read_Slot(
+                path, Obj_Slot(spec, STD_PORT_SPEC_HEAD_PATH)
+            );
+            if (e)
+                return PANIC(unwrap e);
+        }
         else if (not Is_File(path))
             return PANIC(Error_Invalid_Spec_Raw(path));
 

@@ -711,8 +711,7 @@ Bounce Stepper_Executor(Level* L)
 
   case TYPE_WORD: { //// META WORD! ^XXX /////////////////////////////////////
 
-    // A META-WORD! gives you the unlifted representation of a variable as-is,
-    // with no dispatch on functions.
+    // A META-WORD! gives you the undecayed representation of the variable
 
     Option(Error*) error = Trap_Get_Any_Word_Maybe_Trash(
         OUT, CURRENT, L_binding

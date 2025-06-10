@@ -396,7 +396,7 @@ bind construct [
 ; The legal state transitions for the TLS protocol are defined by a light
 ; dialect that is easily validated and transformed into a MAP!.  RUNE!
 ; represents a state that can be final, and a TAG! represents a state that may
-; move to the competed state.
+; move to the completed state.
 
 make-state-updater: func [
     return: [action!]

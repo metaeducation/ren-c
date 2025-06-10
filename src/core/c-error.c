@@ -373,10 +373,15 @@ void Set_Location_Of_Error(
             continue;
         }
     }
-    Init_Block(&vars->where, Pop_Source_From_Stack(base));
+    Init_Block(Slot_Init_Hack(&vars->where), Pop_Source_From_Stack(base));
 
-    if (Is_Nulled(&vars->nearest))  // don't override scanner data [4]
-        Init_Near_For_Level(&vars->nearest, where);
+    DECLARE_VALUE (nearest);
+    Option(Error*) e = Trap_Read_Slot(nearest, &vars->nearest);
+    if (e)
+        panic (unwrap e);
+
+    if (Is_Nulled(nearest))  // don't override scanner data [4]
+        Init_Near_For_Level(Slot_Init_Hack(&vars->nearest), where);
 
     L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
@@ -393,9 +398,9 @@ void Set_Location_Of_Error(
         LineNumber line = MISC_SOURCE_LINE(Level_Array(L));
 
         if (file)
-            Init_File(&vars->file, unwrap file);
+            Init_File(Slot_Init_Hack(&vars->file), unwrap file);
         if (line != 0)
-            Init_Integer(&vars->line, line);
+            Init_Integer(Slot_Init_Hack(&vars->line), line);
     }
 }
 
@@ -422,14 +427,16 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
     //
     VarList* root_error = Cell_Varlist(Get_System(SYS_STANDARD, STD_ERROR));
 
-    VarList* error;
+    VarList* varlist;
     ERROR_VARS *vars; // C struct mirroring fixed portion of error fields
+
+    Option(Error*) e;
 
     if (Is_Block(arg)) {  // reuse MAKE OBJECT! logic for block
         const Element* tail;
         const Element* head = Cell_List_At(&tail, arg);
 
-        error = Make_Varlist_Detect_Managed(
+        varlist = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
             TYPE_WARNING, // type
             head, // values to scan for toplevel set-words
@@ -438,7 +445,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         );
 
         Use* use = Alloc_Use_Inherits(Cell_List_Binding(arg));
-        Init_Warning(Stub_Cell(use), error);
+        Init_Warning(Stub_Cell(use), varlist);
 
         Tweak_Cell_Binding(arg, use);  // arg is GC protected, so Use is too
         Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // protects Error in eval
@@ -448,7 +455,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
 
         Erase_Cell(SPARE);  // ignore result of evaluation
 
-        vars = ERR_VARS(error);
+        vars = ERR_VARS(varlist);
     }
     else if (Is_Text(arg)) {
         //
@@ -461,16 +468,31 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         //
         // Minus the message, this is the default state of root_error.
 
-        error = Copy_Varlist_Shallow_Managed(root_error);
+        varlist = Copy_Varlist_Shallow_Managed(root_error);
 
-        vars = ERR_VARS(error);
-        assert(Is_Nulled(&vars->type));
-        assert(Is_Nulled(&vars->id));
+        vars = ERR_VARS(varlist);
+        /*assert(Is_Nulled(&vars->type));*/  // TEMP! IGNORE
+        /*assert(Is_Nulled(&vars->id));*/
 
-        Init_Text(&vars->message, Copy_String_At(arg));
+        Init_Text(Slot_Init_Hack(&vars->message), Copy_String_At(arg));
     }
     else
         return FAIL(arg);
+
+    DECLARE_VALUE (id);
+    e = Trap_Read_Slot(id, &vars->id);
+    if (e)
+        return PANIC(unwrap e);
+
+    DECLARE_VALUE (type);
+    e = Trap_Read_Slot(type, &vars->type);
+    if (e)
+        return PANIC(unwrap e);
+
+    DECLARE_VALUE (message);
+    e = Trap_Read_Slot(message, &vars->message);
+    if (e)
+        return PANIC(unwrap e);
 
     // Validate the error contents, and reconcile message template and ID
     // information with any data in the object.  Do this for the IS_STRING
@@ -481,7 +503,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
     // traffic cones to make it easy to pick and choose what parts to excise
     // or tighten in an error enhancement upgrade.
 
-    if (Is_Word(&vars->type) and Is_Word(&vars->id)) {
+    if (Is_Word(type) and Is_Word(id)) {
         // If there was no CODE: supplied but there was a TYPE: and ID: then
         // this may overlap a combination used by Rebol where we wish to
         // fill in the code.  (No fast lookup for this, must search.)
@@ -491,26 +513,28 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         // Find correct category for TYPE: (if any)
         Slot* category = maybe Select_Symbol_In_Context(
             Varlist_Archetype(categories),
-            Cell_Word_Symbol(&vars->type)
+            Cell_Word_Symbol(type)
         );
         if (category) {
             assert(Is_Object(Slot_Hack(category)));
 
             // Find correct message for ID: (if any)
 
-            Slot* message = maybe Select_Symbol_In_Context(
+            Slot* correct_message = maybe Select_Symbol_In_Context(
                 Known_Element(Slot_Hack(category)),
                 Cell_Word_Symbol(&vars->id)
             );
-            if (message) {
+            if (correct_message) {
                 assert(
-                    Is_Text(Slot_Hack(message))
-                    or Is_Block(Slot_Hack(message))
+                    Is_Text(Slot_Hack(correct_message))
+                    or Is_Block(Slot_Hack(correct_message))
                 );
-                if (not Is_Nulled(&vars->message))
+                if (not Is_Nulled(message))
                     return FAIL(Error_Invalid_Error_Raw(arg));
 
-                Copy_Cell(&vars->message, Slot_Hack(message));
+                Copy_Cell(
+                    Slot_Init_Hack(&vars->message), Slot_Hack(correct_message)
+                );
             }
             else {
                 // At the moment, we don't let the user make a user-ID'd
@@ -526,7 +550,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
                 //     make warning! [type: 'script id: 'set-self]
 
                 return FAIL(
-                    Error_Invalid_Error_Raw(Varlist_Archetype(error))
+                    Error_Invalid_Error_Raw(Varlist_Archetype(varlist))
                 );
             }
         }
@@ -545,19 +569,19 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         // good for general purposes.
 
         if (not (
-            (Is_Word(&vars->id) or Is_Nulled(&vars->id))
-            and (Is_Word(&vars->type) or Is_Nulled(&vars->type))
+            (Is_Word(id) or Is_Nulled(id))
+            and (Is_Word(type) or Is_Nulled(type))
             and (
-                Is_Block(&vars->message)
-                or Is_Text(&vars->message)
-                or Is_Nulled(&vars->message)
+                Is_Block(message)
+                or Is_Text(message)
+                or Is_Nulled(message)
             )
         )){
-            return PANIC(Error_Invalid_Error_Raw(Varlist_Archetype(error)));
+            return PANIC(Error_Invalid_Error_Raw(Varlist_Archetype(varlist)));
         }
     }
 
-    return Init_Warning(OUT, error);
+    return Init_Warning(OUT, varlist);
 }
 
 
@@ -693,9 +717,9 @@ Error* Make_Error_Managed_Vaptr(
     //
     ERROR_VARS *vars = ERR_VARS(varlist);
 
-    Copy_Cell(&vars->message, message);
-    Copy_Cell(&vars->id, id_value);
-    Copy_Cell(&vars->type, type);
+    Copy_Cell(Slot_Init_Hack(&vars->message), message);
+    Copy_Cell(Slot_Init_Hack(&vars->id), id_value);
+    Copy_Cell(Slot_Init_Hack(&vars->type), type);
 
     return cast(Error*, varlist);
 }
@@ -1106,10 +1130,18 @@ Error* Error_Phase_Arg_Type(
         return Cell_Error(arg);
 
     Error* error = Error_Arg_Type(Level_Label(L), key, param, arg);
+
     ERROR_VARS* vars = ERR_VARS(error);
-    assert(Is_Word(&vars->id));
-    assert(Cell_Word_Id(&vars->id) == SYM_EXPECT_ARG);
-    Init_Word(&vars->id, CANON(PHASE_EXPECT_ARG));
+
+    DECLARE_VALUE (id);
+    Option(Error*) e = Trap_Read_Slot(id, &vars->id);
+    if (e)
+        return unwrap e;
+
+    assert(Is_Word(id));
+    assert(Cell_Word_Id(id) == SYM_EXPECT_ARG);
+
+    Init_Word(Slot_Init_Hack(&vars->id), CANON(PHASE_EXPECT_ARG));
     return error;
 }
 
@@ -1253,7 +1285,7 @@ VarList* Startup_Errors(const Element* boot_errors)
         Value* error = rebValue(
             CANON(CONSTRUCT), CANON(PIN), Slot_Hack(category)
         );
-        Copy_Cell(Slot_Hack(category), error);  // actually an OBJECT! :-/
+        Copy_Cell(Slot_Init_Hack(category), error);  // actually an OBJECT! :-/
         rebRelease(error);
     }
 
@@ -1402,29 +1434,60 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     Error* error = Cell_Error(v);
     ERROR_VARS *vars = ERR_VARS(error);
 
+    Option(Error*) e;
+
+    DECLARE_VALUE (type);
+    e = Trap_Read_Slot(type, &vars->type);
+    if (e)
+        return PANIC(unwrap e);
+
+    DECLARE_VALUE (message);
+    e = Trap_Read_Slot(message, &vars->message);
+    if (e)
+        return PANIC(unwrap e);
+
+    DECLARE_VALUE (where);
+    e = Trap_Read_Slot(where, &vars->where);
+    if (e)
+        return PANIC(unwrap e);
+
+    DECLARE_VALUE (nearest);
+    e = Trap_Read_Slot(nearest, &vars->nearest);
+    if (e)
+        return PANIC(unwrap e);
+
+    DECLARE_VALUE (file);
+    e = Trap_Read_Slot(file, &vars->file);
+    if (e)
+        return PANIC(unwrap e);
+
+    DECLARE_VALUE (line);
+    e = Trap_Read_Slot(line, &vars->line);
+    if (e)
+        return PANIC(unwrap e);
+
     // Form: ** <type> Error:
     //
     Append_Ascii(mo->string, "** ");
-    if (Is_Word(&vars->type)) {  // has a <type>
-        Append_Spelling(mo->string, Cell_Word_Symbol(&vars->type));
+    if (Is_Word(type)) {  // has a <type>
+        Append_Spelling(mo->string, Cell_Word_Symbol(type));
         Append_Codepoint(mo->string, ' ');
     }
     else
-        assert(Is_Nulled(&vars->type));  // no <type>
+        assert(Is_Nulled(type));  // no <type>
     Append_Ascii(mo->string, RM_ERROR_LABEL);  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
-    if (Is_Block(&vars->message)) {
+    if (Is_Block(message)) {
         bool relax = true;  // don't want error rendering to cause errors
-        Form_Array_At(mo, Cell_Array(&vars->message), 0, error, relax);
+        Form_Array_At(mo, Cell_Array(message), 0, error, relax);
     }
-    else if (Is_Text(&vars->message))
-        Form_Element(mo, cast(Element*, &vars->message));
+    else if (Is_Text(message))
+        Form_Element(mo, cast(Element*, message));
     else
         Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
 
     // Form: ** Where: function
-    Value* where = &vars->where;
     if (
         not Is_Nulled(where)
         and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
@@ -1439,7 +1502,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     }
 
     // Form: ** Near: location
-    Value* nearest = &vars->nearest;
     if (not Is_Nulled(nearest)) {
         Append_Codepoint(mo->string, '\n');
         Append_Ascii(mo->string, RM_ERROR_NEAR);
@@ -1467,7 +1529,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     // only be used in ANY-WORD? values at the moment, so the filename is
     // not a FILE!.
     //
-    Value* file = &vars->file;
     if (not Is_Nulled(file)) {
         Append_Codepoint(mo->string, '\n');
         Append_Ascii(mo->string, RM_ERROR_FILE);
@@ -1478,7 +1539,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     }
 
     // Form: ** Line: line-number
-    Value* line = &vars->line;
     if (not Is_Nulled(line)) {
         Append_Codepoint(mo->string, '\n');
         Append_Ascii(mo->string, RM_ERROR_LINE);

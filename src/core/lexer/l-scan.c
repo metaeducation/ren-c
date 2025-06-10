@@ -424,14 +424,14 @@ static void Update_Error_Near_For_Line(
     Append_UTF8_May_Panic(mo->string, cs_cast(bp), size, STRMODE_NO_CR);
 
     ERROR_VARS *vars = ERR_VARS(error);
-    Init_Text(&vars->nearest, Pop_Molded_String(mo));
+    Init_Text(Slot_Init_Hack(&vars->nearest), Pop_Molded_String(mo));
 
     if (transcode->file)
-        Init_File(&vars->file, unwrap transcode->file);
+        Init_File(Slot_Init_Hack(&vars->file), unwrap transcode->file);
     else
-        Init_Nulled(&vars->file);
+        Init_Nulled(Slot_Init_Hack(&vars->file));
 
-    Init_Integer(&vars->line, transcode->line);  // different from line above
+    Init_Integer(Slot_Init_Hack(&vars->line), transcode->line);  // different
 }
 
 
@@ -2177,10 +2177,17 @@ INLINE Bounce Scanner_Fail_Helper(
     Error* error
 ){
     ERROR_VARS *vars = ERR_VARS(error);
-    if (Is_Nulled(&vars->nearest))  // only update if it doesn't have it [1]
+
+    DECLARE_VALUE (nearest);
+    Option(Error*) e = Trap_Read_Slot(nearest, &vars->nearest);
+    if (e)
+        return PANIC(unwrap e);
+
+    if (Is_Nulled(nearest))  // only update if it doesn't have it [1]
         Update_Error_Near_For_Line(
             error, transcode, transcode->line, transcode->line_head
         );
+
     return Native_Fail_Result(level_, error);
 }
 
@@ -2195,10 +2202,17 @@ INLINE Bounce Scanner_Panic_Helper(
     Error* error
 ){
     ERROR_VARS *vars = ERR_VARS(error);
-    if (Is_Nulled(&vars->nearest))  // only update if it doesn't have it [1]
+
+    DECLARE_VALUE (nearest);
+    Option(Error*) e = Trap_Read_Slot(nearest, &vars->nearest);
+    if (e)
+        return PANIC(unwrap e);
+
+    if (Is_Nulled(nearest))  // only update if it doesn't have it [1]
         Update_Error_Near_For_Line(
             error, transcode, transcode->line, transcode->line_head
         );
+    
     return Native_Fail_Result(level_, error);
 }
 

@@ -408,9 +408,9 @@ e-errfuncs: make-emitter "Error structure and functions" (
 fields: collect [
     for-each 'word words-of ob.standard.error [
         either word = 'near [
-            keep --[/* near & far are old C keywords */ Value nearest]--
+            keep --[/* near & far are old C keywords */ Slot nearest]--
         ][
-            keep cscape [word "Value ${word}"]
+            keep cscape [word "Slot ${word}"]
         ]
     ]
 ]

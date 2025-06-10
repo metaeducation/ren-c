@@ -133,7 +133,7 @@ module: func [
     :into "Add data to existing MODULE! context (vs making a new one)"
         [module!]
     <local>
-        mod product'  ; note: overwrites MODULO shorthand in this function
+        mod ^product  ; note: overwrites MODULO shorthand in this function
 ][
     mod: any [
         into
@@ -198,10 +198,10 @@ module: func [
             quit ~  ; this is the "THROW" to the customized CATCH* above
         ]
         then ^arg-to-quit -> [  ; !!! should THEN with ^META get errors?
-            product': arg-to-quit  ; meta convention used for product
+            ^product: ^arg-to-quit  ; meta convention used for product
         ]
     ] then error -> [
-        product': quasi error
+        ^product: fail error
     ]
 
     mod.quit: func [atom] [
@@ -211,7 +211,7 @@ module: func [
         ]
     ]
 
-    return pack* [mod (unlift product')]  ; pack* for error antiform tolerance
+    return pack* [mod ^product]  ; pack* for ERROR! antiform tolerance
 ]
 
 

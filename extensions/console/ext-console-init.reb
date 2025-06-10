@@ -116,9 +116,7 @@ export console!: make object! [
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-atom?]
     ][
-        ; Store LAST-RESULT in ^META form so unstable isotopes don't decay.
-        ;
-        last-result: v
+        ^last-result: ^v  ; don't decay
 
         === FORM ERROR IF RAISED ===
 
@@ -149,7 +147,7 @@ export console!: make object! [
         ; 0-length packs (~[]~ antiform, a.k.a. "void") mold like antiforms.
 
         if pack? ^v [
-            v: unquasi v
+            v: unquasi lift ^v
             if 0 = length of v [  ; mold like a regular antiform, for now
                 print unspaced [result _ "~[]~" _ _ ";" _ "anti (void)"]
                 return ~
@@ -219,20 +217,12 @@ export console!: make object! [
             ;     >> first [~something~]
             ;     == ~something~
             ;
-            ; Those quasiforms are received quoted by this routine like other
-            ; ordinary values; this case is just for the antiforms.
-            ;
-            if blank? ^v [
-                print unspaced [result _ mold v _ _ ";" _ "anti (blank)"]
-            ] else [
-                print unspaced [result _ mold v _ _ ";" _ "anti"]
-            ]
+            v: lift ^v  ; turn antiform into quasiform
+            print unspaced [result _ mold v _ _ ";" _ "anti"]
             return ~
         ]
 
-        === "ORDINARY" VALUES (^META v parameter means they get quoted) ===
-
-        v: unquote v
+        === "ORDINARY" VALUES (non-antiform) ===
 
         case [
             free? v [

@@ -91,15 +91,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         return Init_Port(OUT, context);
     }
 
-    Slot* make_port_p = maybe Sea_Slot(
-        g_sys_util_context, CANON(MAKE_PORT_P), true
-    );
-    assert(make_port_p);
-
     Sink(Value) out = OUT;
     if (rebRunThrows(
         out,  // <-- output cell
-        rebRUN(Slot_Hack(make_port_p)), rebQ(arg)
+        "sys.util/make-port*", rebQ(arg)
     )){
         return PANIC(Error_No_Catch_For_Throw(TOP_LEVEL));
     }
@@ -140,14 +135,22 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     VarList* ctx = Cell_Varlist(port);
-    Value* actor = Slot_Hack(Varlist_Slot(ctx, STD_PORT_ACTOR));
+
+    Sink(Value) spare_actor = SPARE;
+
+    Option(Error*) e = Trap_Read_Slot(
+        spare_actor,
+        Varlist_Slot(ctx, STD_PORT_ACTOR)
+    );
+    if (e)
+        return PANIC(unwrap e);
 
     // If actor is an ACTION!, it should be an OLDGENERIC Dispatcher for PORT!
     //
-    if (Is_Action(actor)) {
+    if (Is_Action(spare_actor)) {
         level_->u.action.label = verb;  // legacy hack, used by Level_Verb()
 
-        Details* details = Ensure_Cell_Frame_Details(actor);
+        Details* details = Ensure_Cell_Frame_Details(spare_actor);
         Dispatcher* dispatcher = Details_Dispatcher(details);
         Bounce b = maybe Irreducible_Bounce(
             LEVEL,
@@ -162,26 +165,32 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         goto post_process_output;
     }
 
-    if (not Is_Object(actor))
+    if (not Is_Object(spare_actor))
         return PANIC(Error_Invalid_Actor_Raw());
 
     // Dispatch object function:
 
     const bool strict = false;
     Option(Index) index = Find_Symbol_In_Context(
-        Known_Element(actor), verb, strict
+        Known_Element(spare_actor), verb, strict
     );
 
-    Value* action;
+    Sink(Value) scratch_action = SCRATCH;
     if (not index)
-        action = nullptr;
-    else
-        action = Slot_Hack(Varlist_Slot(Cell_Varlist(actor), unwrap index));
+        Init_Nulled(scratch_action);
+    else {
+        e = Trap_Read_Slot(
+            scratch_action,
+            Varlist_Slot(Cell_Varlist(spare_actor), unwrap index)
+        );
+        if (e)
+            return PANIC(unwrap e);
+    }
 
-    if (not action or not Is_Action(action))
+    if (not Is_Action(scratch_action))
         return PANIC(Error_No_Port_Action_Raw(verb));
 
-    Push_Redo_Action_Level(OUT, level_, action);
+    Push_Redo_Action_Level(OUT, level_, scratch_action);
 
     STATE = ST_TYPE_PORT_RUNNING_ACTOR;
     return CONTINUE_SUBLEVEL(TOP_LEVEL);

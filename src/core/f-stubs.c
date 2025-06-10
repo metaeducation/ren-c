@@ -275,14 +275,20 @@ Type Type_Of_Builtin_Fundamental(const Atom* value)
 //
 // Return a second level object field of the system object.
 //
-Value* Get_System(REBLEN i1, REBLEN i2)
+Slot* Get_System(REBLEN i1, REBLEN i2)
 {
-    Slot* obj = Varlist_Slot(Cell_Varlist(LIB(SYSTEM)), i1);
+    Slot* obj_slot = Varlist_Slot(Cell_Varlist(LIB(SYSTEM)), i1);
     if (i2 == 0)
-        return Slot_Hack(obj);
+        return obj_slot;
 
-    assert(Is_Object(Slot_Hack(obj)));
-    return Slot_Hack(Varlist_Slot(Cell_Varlist(Slot_Hack(obj)), i2));
+    DECLARE_VALUE (obj);
+    Option(Error*) e = Trap_Read_Slot(obj, obj_slot);
+    if (e)
+        panic (unwrap e);
+
+    assert(Is_Object(obj));
+
+    return Varlist_Slot(Cell_Varlist(obj), i2);
 }
 
 
@@ -293,8 +299,11 @@ Value* Get_System(REBLEN i1, REBLEN i2)
 //
 REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 {
-    Value* val = Get_System(i1, i2);
-    if (Is_Integer(val)) return VAL_INT32(val);
+    Slot* slot = Get_System(i1, i2);
+
+    if (Is_Integer(Slot_Hack(slot)))
+        return VAL_INT32(Slot_Hack(slot));
+
     return default_int;
 }
 

@@ -214,7 +214,8 @@ static Bounce Tweak_P_Native_Core(Level* level_)
 
     Element* location = Element_ARG(LOCATION);
     USED(ARG(PICKER));
-    Value* dual = ARG(DUAL);
+    USED(ARG(DUAL));
+
     // more ARG(...) may be in this location if POKE called us, reusing frame
 
     possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for POKE's use
@@ -244,8 +245,11 @@ static Bounce Tweak_P_Native_Core(Level* level_)
     //    happens, this check (as well as other type checking) would not
     //    be applied.
 
+    // !!! REVIEW: New rules, ^x gets/sets unstable antiforms
+    /*
     if (Is_Quasiform(dual))  // this check may be bypassed by optimization [1]
         assert(Is_Stable_Antiform_Heart(Heart_Of(dual)));
+    */
 
 } dispatch_generic: {
 

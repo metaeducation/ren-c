@@ -259,6 +259,10 @@ INLINE Fixed(Slot*) Varlist_Fixed_Slot(VarList* c, Index n) {  // 1-based
 // (e.g. a LIB variable which is initialized as not SLOT_HINT_DUAL and then
 // PROTECT'ed in order to enusre it never gets that flag set).
 
+INLINE Init(Slot) Slot_Init_Hack(Slot* slot) {
+    return u_cast(Init(Slot), slot);
+}
+
 INLINE Value* Slot_Hack(const_if_c Slot* slot) {
     assert(Not_Cell_Flag(slot, SLOT_HINT_DUAL));
     return u_cast(Value*, slot);

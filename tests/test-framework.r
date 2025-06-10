@@ -100,7 +100,7 @@ run-single-test: func [
         quasi? result [
             "test returned antiform:" (mold:limit result 40)
         ]
-        (elide result: ^result)
+        (elide result: unlift result)
 
         <default> [
             spaced ["was" (to word! type of result) ", not true or false"]

@@ -363,7 +363,9 @@ void on_new_connection(uv_stream_t *server, int status) {
     VarList* client = Copy_Varlist_Shallow_Managed(listener_port_ctx);
     Push_Lifeguard(client);
 
-    Init_Nulled(Slot_Hack(Varlist_Slot(client, STD_PORT_DATA)));  // be sure
+    Init_Nulled(
+        Slot_Init_Hack(Varlist_Slot(client, STD_PORT_DATA))  // "be sure" (?)
+    );
 
     Value* c_state = Slot_Hack(Varlist_Slot(client, STD_PORT_STATE));
     SOCKREQ* sock = Try_Alloc_Memory(SOCKREQ);
@@ -712,15 +714,19 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             return Init_False(OUT);
 
           case SYM_OPEN: {
-            Value* arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
-            Value* port_id = Obj_Value(spec, STD_PORT_SPEC_NET_PORT_ID);
+            Value* arg = Slot_Hack(Obj_Slot(spec, STD_PORT_SPEC_NET_HOST));
+            Value* port_id = Slot_Hack(
+                Obj_Slot(spec, STD_PORT_SPEC_NET_PORT_ID)
+            );
 
             // OPEN needs to know to bind() the socket to a local port before
             // the first sendto() is called, if the user is particular about
             // what the port ID of originating messages is.  So local_port
             // must be set before the OS_Do_Device() call.
             //
-            Value* local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
+            Value* local_id = Slot_Hack(
+                Obj_Slot(spec, STD_PORT_SPEC_NET_LOCAL_ID)
+            );
             if (Is_Nulled(local_id))
                 sock->local_port_number = 0;  // let the system pick
             else if (Is_Integer(local_id))
@@ -937,22 +943,22 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         VarList* info = Cell_Varlist(result);
 
         Init_Tuple_Bytes(
-            Slot_Hack(Varlist_Slot(info, STD_NET_INFO_LOCAL_IP)),
+            Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_LOCAL_IP)),
             cast(Byte*, &sock->local_ip),
             4
         );
         Init_Integer(
-            Slot_Hack(Varlist_Slot(info, STD_NET_INFO_LOCAL_PORT)),
+            Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_LOCAL_PORT)),
             sock->local_port_number
         );
 
         Init_Tuple_Bytes(
-            Slot_Hack(Varlist_Slot(info, STD_NET_INFO_REMOTE_IP)),
+            Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_REMOTE_IP)),
             cast(Byte*, &sock->remote_ip),
             4
         );
         Init_Integer(
-            Slot_Hack(Varlist_Slot(info, STD_NET_INFO_REMOTE_PORT)),
+            Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_REMOTE_PORT)),
             sock->remote_port_number
         );
 

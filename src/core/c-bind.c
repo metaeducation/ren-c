@@ -1438,18 +1438,22 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 // It accomplishes this by putting a word into the "variable" slot, and having
 // a flag to indicate a dereference is necessary.
 //
-Option(Error*) Trap_Read_Slot(Sink(Value) out, Slot* slot)
+Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot)
 {
     assert(Not_Cell_Flag(slot, BIND_MARKED_META));
 
     if (Get_Cell_Flag(slot, SLOT_HINT_DUAL)) {
         if (not Any_Lifted_Dual(slot))
             goto handle_dual_signal;
+
+        Copy_Cell(out, u_cast(Value*, slot));
+        Unliftify_Known_Stable(out);
+        return SUCCESS;
     }
 
   handle_non_weird: {
 
-    Value* var = Slot_Hack(slot);
+    const Value* var = Slot_Hack(slot);
 
     assert(not Is_Space(var));  // e.g. `for-each _ [1 2 3] [...]`
 
@@ -1476,6 +1480,8 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Value* write)
     if (Get_Cell_Flag(slot, SLOT_HINT_DUAL)) {
         if (not Any_Lifted_Dual(slot))
             goto handle_dual_signal;
+
+        // fallthrough, just overwrite
     }
 
   handle_non_weird: {
