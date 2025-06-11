@@ -296,7 +296,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
             if (Trampoline_Throws(out, sub))  // !!! Stackful, should yield!
                 return true;
-            Unliftify_Undecayed(out);
             break; }
 
         case PARAMCLASS_JUST:

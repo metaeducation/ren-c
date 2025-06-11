@@ -110,8 +110,7 @@ Bounce Evaluator_Executor(Level* const L)
         Level* sub = Make_Level(  // need sublevel to hook steps, see [A]
             &Stepper_Executor,
             L->feed,
-            LEVEL_FLAG_ERROR_RESULT_OK
-                | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+            LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );
         Push_Level_Erase_Out_If_State_0(OUT, sub);
         STATE = ST_EVALUATOR_STEPPING;
@@ -176,7 +175,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Endlike_Tripwire(OUT))  // the "official" way to detect reaching end
         goto finished;
 
-    if (Is_Lifted_Ghost(OUT)) { // something like an ELIDE or COMMENT
+    if (Is_Ghost(OUT)) { // something like an ELIDE or COMMENT
         if (Get_Cell_Flag(OUT, OUT_HINT_UNSURPRISING))
             goto start_new_step;  // leave previous result as-is in PRIMED
 
@@ -185,7 +184,6 @@ Bounce Evaluator_Executor(Level* const L)
     }
 
     Move_Atom(PRIMED, OUT);  // make current result the preserved one
-    Unliftify_Undecayed(PRIMED);
 
     if (Is_Error(PRIMED)) {  // panic if error seen before last step [2]
         dont(Try_Is_Level_At_End_Optimization(L));  // (fail x,) must error

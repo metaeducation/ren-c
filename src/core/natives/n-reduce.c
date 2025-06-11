@@ -158,7 +158,6 @@ DECLARE_NATIVE(REDUCE)
         &Stepper_Executor,
         v,  // TYPE_BLOCK or TYPE_GROUP
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-            | LEVEL_FLAG_ERROR_RESULT_OK  // predicates like META may handle
     );
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
     goto next_reduce_step;
@@ -186,8 +185,6 @@ DECLARE_NATIVE(REDUCE)
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_dual_in_spare: { ///////////////////////////////////////////////
-
-    Unliftify_Undecayed(SPARE);  // unquote the result of evaluation
 
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
@@ -313,7 +310,6 @@ DECLARE_NATIVE(REDUCE_EACH)
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (Is_Metaform(WORD, vars)) {  // Note: converted to object in next step
-        flags |= LEVEL_FLAG_ERROR_RESULT_OK;
         assert(!"need to review REDUCE-EACH with meta word");
     }
 
@@ -358,8 +354,6 @@ DECLARE_NATIVE(REDUCE_EACH)
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_dual_in_spare: {  //////////////////////////////////////////////
-
-    Unliftify_Undecayed(SPARE);  // unquote the result of evaluation
 
     Slot* slot = Varlist_Slot(Cell_Varlist(vars), 1);
 
@@ -543,7 +537,6 @@ static void Push_Composer_Level(
             Is_Cell_Erased(adjusted) ? list_or_seq : adjusted
         ),
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
-            | LEVEL_FLAG_ERROR_RESULT_OK  // bubbles up definitional errors
     );
     Push_Level_Erase_Out_If_State_0(out, sub);  // sublevel may fail
 
@@ -733,12 +726,7 @@ Bounce Composer_Executor(Level* const L)
 
     if (Is_Nulled(predicate)) {
         STATE = ST_COMPOSER_EVAL_GROUP;
-        return CONTINUE_CORE(
-            OUT,
-            LEVEL_FLAG_ERROR_RESULT_OK,  // want to react to VETO
-            SPECIFIED,
-            cast(Element*, SPARE)
-        );
+        return CONTINUE(OUT, Known_Element(SPARE));
     }
 
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
@@ -1182,7 +1170,6 @@ DECLARE_NATIVE(COMPOSE2)
             );
 
             Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-                /*| LEVEL_FLAG_ERROR_RESULT_OK*/  // definitional errors?
                 | FLAG_STATE_BYTE(Scanner_State_For_Terminal(terminal));
 
             if (stack_index != TOP_INDEX - 1)
@@ -1234,6 +1221,9 @@ DECLARE_NATIVE(COMPOSE2)
     //    start offset where the pattern first begins, the code that was
     //    scanned from inside the pattern, and the offset right after the
     //    end character of where the pattern matched.
+
+    if (Is_Error(OUT))  // transcode had a problem
+        return PANIC(Cell_Error(OUT));
 
     Element* handle = Known_Element(SCRATCH);
     TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, handle);
@@ -1305,10 +1295,8 @@ DECLARE_NATIVE(COMPOSE2)
     Tweak_Cell_Binding(code, Cell_Binding(pattern));  // bind unbound code
 
     STATE = ST_COMPOSE2_STRING_EVAL;
-    return CONTINUE_CORE(
+    return CONTINUE(
         OUT,
-        LEVEL_FLAG_ERROR_RESULT_OK,  // we will bubble out error antiforms
-        SPECIFIED,
         Copy_Cell(SPARE, code)  // pass non-stack code
     );
 

@@ -66,7 +66,7 @@ DECLARE_NATIVE(REEVAL)
         return THROWN;
 
     Clear_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);
-    return Unliftify_Undecayed(OUT);
+    return OUT;
 }
 
 
@@ -194,7 +194,7 @@ DECLARE_NATIVE(SHOVE)
     switch (Cell_Parameter_Class(param)) {
       case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative infix [1]
       case PARAMCLASS_META: {
-        Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;  // will decay if normal
+        Flags flags = LEVEL_MASK_NONE;
         if (Eval_Element_Core_Throws(OUT, flags, left, Level_Binding(L)))
             return THROWN;
         if (pclass == PARAMCLASS_NORMAL)
@@ -347,8 +347,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    (We can't count on the RETURN: type check to do this, because
     //    natives do not run typechecking in release builds.)
 
-    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK \
-        | LEVEL_FLAG_FORCE_SURPRISING;
+    Flags flags = LEVEL_FLAG_FORCE_SURPRISING;
 
     Level* sub = Make_Level_At(
         Bool_ARG(STEP) ? &Stepper_Executor : &Evaluator_Executor,
@@ -384,7 +383,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Option(const Atom*) with = nullptr;
     Push_Frame_Continuation(
         OUT,
-        LEVEL_FLAG_ERROR_RESULT_OK,
+        LEVEL_MASK_NONE,
         source,
         with
     );
@@ -447,8 +446,6 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    Right now we can politely ask "don't do that".  But better would
     //    probably be to make EVALUATE return something with more limited
     //    privileges... more like a FRAME!/VARARGS!.
-
-    Unliftify_Undecayed(OUT);  // undecayed allows vanishing
 
     assert(Bool_ARG(STEP));
 
@@ -515,7 +512,6 @@ DECLARE_NATIVE(EVAL_FREE)
     Level* L = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-            | LEVEL_FLAG_ERROR_RESULT_OK
     );
 
     L->varlist = Varlist_Array(varlist);
@@ -863,10 +859,9 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 } copy_dual_spare_to_var_in_frame: {  ////////////////////////////////////////
 
     if (/* param and */ Cell_Parameter_Class(param) == PARAMCLASS_META) {
-        Move_Cell(var, Known_Element(SPARE));
+        Move_Cell(var, Liftify(SPARE));
     }
     else {
-        Unliftify_Undecayed(SPARE);
         Value* spare = Decay_If_Unstable(SPARE);
         Move_Cell(var, spare);
     }
@@ -1021,8 +1016,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 //
 #define Make_Action_Sublevel(parent) \
     Make_Level(&Action_Executor, (parent)->feed, \
-        LEVEL_FLAG_ERROR_RESULT_OK \
-        | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH))
+        ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH))
 
 
 

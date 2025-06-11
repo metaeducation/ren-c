@@ -1966,7 +1966,6 @@ DECLARE_NATIVE(CONSTRUCT)
 
 } eval_set_step_dual_in_spare: {  ////////////////////////////////////////////
 
-    Unliftify_Undecayed(SPARE);
     Value* spare = Decay_If_Unstable(SPARE);
 
     VarList* varlist = Cell_Varlist(OUT);

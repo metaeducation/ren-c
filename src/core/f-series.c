@@ -528,7 +528,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
 
     Level* const L = Make_End_Level(
         &Action_Executor,
-        FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | LEVEL_FLAG_ERROR_RESULT_OK
+        FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     );
     const Value* action = LIB(LESSER_Q);
     Push_Action(L, action);

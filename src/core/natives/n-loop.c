@@ -2285,12 +2285,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 } evaluate_condition: {  /////////////////////////////////////////////////////
 
     STATE = ST_WHILE_OR_UNTIL_EVALUATING_CONDITION;
-    return CONTINUE_CORE(
-        SPARE,
-        LEVEL_FLAG_ERROR_RESULT_OK,  // want to catch DONE error
-        SPECIFIED,
-        condition
-    );
+    return CONTINUE(SPARE, condition);
 
 } condition_eval_in_spare: {  ////////////////////////////////////////////////
 

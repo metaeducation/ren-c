@@ -24,7 +24,7 @@
 // for the typical interpretation of BLOCK! or GROUP!, in terms of giving
 // sequences like `x: 1 + 2` a meaning for how SET-WORD! or INTEGER! behaves.
 //
-// It returns its results "Meta", e.g. stepping across [1 + 2] returns '3.
+// It returns what might be a "dual" result (with CELL_FLAG_SLOT_WEIRD_DUAL).
 // The reason for this choice is that there needs to be a way to return
 // a signal indicating that there was no evaluative product.  That's because
 // it's necessary for functions like EVAL:STEP to be able to know when there
@@ -51,8 +51,9 @@
 // To provide the fundamental information that EVAL:STEP needs, there has to
 // be a way to return something to indicate "no synthesized result" that is
 // completely out of band of all possible expression evaluation results.
-// This can be done by having expression results be ^META (quasiform and
-// quoted) and reserving e.g. the "trash" antiform state to signal no result.
+// Rather than awkwardly make all states ^META with an unlifted value to
+// represent nothing, this uses the same concept as CELL_FLAG_SLOT_WEIRD_DUAL
+// to uniquely mark the "sub-band" state of no result.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -148,7 +149,7 @@
 
 
 #define Make_Action_Sublevel(parent) \
-    Make_Level(&Action_Executor, (parent)->feed, LEVEL_FLAG_ERROR_RESULT_OK)
+    Make_Level(&Action_Executor, (parent)->feed, LEVEL_MASK_NONE)
 
 
 // When a SET-BLOCK! is being processed for multi-returns, it may encounter
@@ -181,8 +182,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
     Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements [2]
 
     Flags flags =  // v-- if L was fulfilling, we are
-        (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | LEVEL_FLAG_ERROR_RESULT_OK;  // trap [e: transcode "1&aa"] works
+        (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
     Level* sub = Make_Level(
         &Stepper_Executor,
@@ -227,7 +227,7 @@ Bounce Inert_Stepper_Executor(Level* L)
 
     Derelativize(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
     Fetch_Next_In_Feed(L->feed);
-    return Liftify(OUT);
+    return OUT;
 }
 
 
@@ -278,12 +278,12 @@ Bounce Stepper_Executor(Level* L)
         goto look_ahead_for_left_literal_infix; }
 
     #if (! DEBUG_DISABLE_INTRINSICS)
-      intrinsic_lifted_arg_in_spare:
+      intrinsic_dual_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
         Details* details = Ensure_Cell_Frame_Details(CURRENT);
         Dispatcher* dispatcher = Details_Dispatcher(details);
 
-        assert(Is_Quoted(SPARE) or Is_Quasiform(SPARE));
+        Liftify(SPARE);  // always pass lifted (review concept...)
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);  // level_ is not its Level
         Bounce bounce = Apply_Cfunc(dispatcher, L);
@@ -352,7 +352,7 @@ Bounce Stepper_Executor(Level* L)
         assert(Is_Cell_Erased(OUT));
         Init_Tripwire_Due_To_End(OUT);
         STATE = ST_STEPPER_NONZERO_STATE;
-        goto finished_dont_lift_out;
+        goto finished;
     }
 
     Force_Blit_Cell(  // Lookback clears it
@@ -693,7 +693,6 @@ Bounce Stepper_Executor(Level* L)
 
 } tie_rightside_dual_in_out: {
 
-    Unliftify_Undecayed(OUT);
     if (Is_Antiform(OUT))
         return PANIC("$ operator cannot bind antiforms");
 
@@ -840,7 +839,6 @@ Bounce Stepper_Executor(Level* L)
     //    (Possibly ^ should turn surprising ghosts into voids, but it should
     //    definitely not turn surprising ghosts into unsurprising ghosts.)
 
-    Unliftify_Undecayed(OUT);
     if (Is_Atom_Action(OUT))  // don't do ghosts, just actions [1]
         Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // see flag notes
     goto lookahead;
@@ -1025,18 +1023,15 @@ Bounce Stepper_Executor(Level* L)
             break;
 
           case PARAMCLASS_META:
-            flags |= LEVEL_FLAG_ERROR_RESULT_OK;
             break;
 
           case PARAMCLASS_JUST:
             Just_Next_In_Feed(SPARE, L->feed);
-            Liftify(SPARE);
-            goto intrinsic_lifted_arg_in_spare;
+            goto intrinsic_dual_arg_in_spare;
 
           case PARAMCLASS_THE:
             The_Next_In_Feed(SPARE, L->feed);
-            Liftify(SPARE);
-            goto intrinsic_lifted_arg_in_spare;
+            goto intrinsic_dual_arg_in_spare;
 
           default:
             return PANIC("Unsupported Intrinsic parameter convention");
@@ -1191,7 +1186,7 @@ Bounce Stepper_Executor(Level* L)
 
     Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes variables
 
-    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;
+    Flags flags = LEVEL_MASK_NONE;
 
     Level* sub = Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
@@ -1448,8 +1443,6 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Endlike_Tripwire(OUT))
         return PANIC(Error_Need_Non_End_Raw(CURRENT));
 
-    Unliftify_Undecayed(OUT);  // !!! do this with space VAR instead
-
     if (Is_Lifted_Void(CURRENT))  // e.g. `(void): ...`  !!! use space var!
         goto lookahead;  // pass through everything
 
@@ -1700,10 +1693,8 @@ for (; check != tail; ++check) {  // push variables
     //
     //        trap [[a b]: transcode "1&aa"]
 
-    if (Is_Lifted_Error(OUT)) {  // don't assign variables [1]
-        Unliftify_Undecayed(OUT);
+    if (Is_Error(OUT))  // don't assign variables [1]
         goto set_block_drop_stack_and_continue;
-    }
 
 } set_block_result_not_error: {
 
@@ -1718,6 +1709,7 @@ for (; check != tail; ++check) {  // push variables
     //    overwrite of the returned OUT for the whole evaluation will happen
     //    *after* the original OUT was captured into any desired variable.
 
+    Liftify(OUT);  // so we can put it on the stack
     Copy_Cell(PUSH(), Known_Element(OUT));  // free up OUT cell [1]
 
     const Source* pack_array;  // needs GC guarding when OUT overwritten
@@ -1730,7 +1722,7 @@ for (; check != tail; ++check) {  // push variables
         pack_array = Cell_Array(OUT);
         Push_Lifeguard(pack_array);
     }
-    else {  // keep quoted (it aligns with pack items being metaforms)
+    else {  // single lifted item (lifted state aligns with pack items)
         Move_Atom(SPARE, OUT);
         pack_at = cast(Element*, SPARE);
         pack_tail = cast(Element*, SPARE) + 1;  // not a valid cell
@@ -2143,10 +2135,6 @@ for (; check != tail; ++check) {  // push variables
 
 
 }} finished: { ///////////////////////////////////////////////////////////////
-
-    Liftify(OUT);  // see top of file notes about why it's Stepper()
-
-} finished_dont_lift_out: {  // called if at end, and it's trash
 
     // 1. Want to keep this flag between an operation and an ensuing infix in
     //    the same level, so can't clear in Drop_Action(), e.g. due to:

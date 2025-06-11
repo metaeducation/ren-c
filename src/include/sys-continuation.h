@@ -83,7 +83,7 @@ INLINE Bounce Continue_Sublevel_Helper(Level* L, Level* sub) {
     assert((o) == level_->out), \
     Pushed_Continuation( \
         level_->out, \
-        (sub_flags) | (level_->flags.bits & LEVEL_FLAG_ERROR_RESULT_OK), \
+        (sub_flags), \
         __VA_ARGS__  /* binding, branch, and "with" argument */ \
     ) ? BOUNCE_DELEGATE \
         : level_->out)  // no need to give callback to delegator

@@ -191,10 +191,7 @@ INLINE bool Eval_Element_Core_Throws(
 
     Level* L = Make_Level(&Stepper_Executor, feed, flags);
 
-    bool threw = Trampoline_Throws(out, L);
-    if (not threw)
-        Unliftify_Undecayed(out);
-    return threw;
+    return Trampoline_Throws(out, L);
 }
 
 #define Eval_Value_Throws(out,value,context) \

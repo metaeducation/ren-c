@@ -693,9 +693,9 @@ void Startup_Natives(const Element* boot_natives)
     if (Eval_Step_Throws(dual_step, L))  // write directly to var [1]
         crash (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    Copy_Cell(slot, Known_Element(dual_step));
-    Unliftify_Known_Stable(slot);
-    assert(Is_Action(slot));
+    assert(Is_Atom_Action(dual_step));
+
+    Copy_Cell(slot, Known_Stable(dual_step));
 
     if (not Is_Quasi_Word(At_Level(L)))
         goto make_next_native;

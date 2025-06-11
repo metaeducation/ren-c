@@ -187,7 +187,6 @@ DECLARE_NATIVE(JOIN)
 
       case ST_JOIN_MOLD_STEPPING:
         assert(Not_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
-        Unliftify_Undecayed(SPARE);
         goto mold_step_result_in_spare;
 
       case ST_JOIN_STACK_STEPPING:
@@ -458,8 +457,6 @@ DECLARE_NATIVE(JOIN)
 
     if (Is_Endlike_Tripwire(SPARE))
         goto finish_stack_join;
-
-    Unliftify_Undecayed(SPARE);
 
     if (Is_Ghost_Or_Void(SPARE))
         goto next_stack_step;  // vaporize

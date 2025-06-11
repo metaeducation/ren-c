@@ -100,24 +100,6 @@ Bounce Macro_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    enum {
-        ST_MACRO_INITIAL_ENTRY = STATE_0,
-        ST_MACRO_REEVALUATING
-    };
-
-    switch (STATE) {
-      case ST_MACRO_INITIAL_ENTRY:
-        goto initial_entry;
-
-      case ST_MACRO_REEVALUATING:  // stepper uses dual protocol
-        return Unliftify_Undecayed(OUT);
-
-      default:
-        assert(false);
-    }
-
-  initial_entry: { ///////////////////////////////////////////////////////////
-
     Details* details = Ensure_Level_Details(L);
     Element* body = cast(Element*, Details_At(details, IDX_DETAILS_1));
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
@@ -166,9 +148,8 @@ Bounce Macro_Dispatcher(Level* const L)
     Level* sub = Make_Level(&Stepper_Executor, L->feed, LEVEL_MASK_NONE);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    STATE = ST_MACRO_REEVALUATING;
-    return CONTINUE_SUBLEVEL(sub);
-}}
+    return DELEGATE_SUBLEVEL(sub);
+}
 
 
 //

@@ -199,18 +199,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         assert(Is_Cell_Readable(L->out));
 
-        if (Is_Error(L->out)) {
-            if (Not_Level_Flag(L, ERROR_RESULT_OK)) {
-                //
-                // treat any failure as if it could have been thrown from
-                // anywhere, so it is bubbled up as a throw.
-                //
-                Init_Thrown_Panic(TOP_LEVEL, Cell_Error(L->out));
-                L = TOP_LEVEL;
-                goto bounce_on_trampoline;
-            }
-        }
-        else if (Get_Level_Flag(L, FORCE_HEAVY_NULLS)) {
+        if (Get_Level_Flag(L, FORCE_HEAVY_NULLS)) {
             assert(Get_Level_Flag(L, FORCE_SURPRISING));  // true as of now
             if (Is_Ghost(L->out))
                 Init_Void(L->out);  // !!! should this be a separate flag?

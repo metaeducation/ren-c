@@ -453,7 +453,7 @@ bool Process_Group_For_Parse_Throws(
         : Derive_Binding(P_RULE_BINDING, group);
 
     DECLARE_ATOM (eval);
-    Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;
+    Flags flags = LEVEL_MASK_NONE;
     if (Eval_Element_Core_Throws(eval, flags, group, derived))
         return true;
 
@@ -1597,7 +1597,7 @@ DECLARE_NATIVE(SUBPARSE)
                     panic (Error_Parse3_Rule());
 
                 DECLARE_ATOM (eval);
-                Flags flags = LEVEL_FLAG_ERROR_RESULT_OK;
+                Flags flags = LEVEL_MASK_NONE;
                 if (Eval_Any_List_At_Core_Throws(  // note: might GC
                     eval,
                     flags,

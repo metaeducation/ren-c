@@ -486,7 +486,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     if (Is_Endlike_Tripwire(SPARE))
         goto reached_end;
 
-    if (Is_Lifted_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue
+    if (Is_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue
         assert(STATE == ST_ANY_ALL_NONE_EVAL_STEP);
         Reset_Evaluator_Erase_Out(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
@@ -494,7 +494,6 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
 
-    Unliftify_Undecayed(SPARE);
     Value* spare = Decay_If_Unstable(SPARE);
 
     if (not Is_Nulled(predicate))
@@ -734,8 +733,6 @@ DECLARE_NATIVE(CASE)
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate [1]
 
 } condition_dual_in_spare: {  ////////////////////////////////////////////////
-
-    Unliftify_Undecayed(SPARE);
 
     if (Is_Ghost(SPARE))  // skip over things like ELIDE, but not voids!
         goto handle_next_clause;
@@ -1004,8 +1001,6 @@ DECLARE_NATIVE(SWITCH)
     //    So the FUNC's const body evaluation led to SWITCH's argument block
     //    being evaluated as const.  But we have to proxy that const flag
     //    over to the block.
-
-    Unliftify_Undecayed(SPARE);
 
     if (Is_Ghost(SPARE))  // skip comments or ELIDEs
         goto next_switch_step;

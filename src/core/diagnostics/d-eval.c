@@ -332,7 +332,6 @@ void Evaluator_Exit_Checks_Debug(Level* L) {
         filtered &= ~ (
             LEVEL_FLAG_FORCE_HEAVY_NULLS
             | LEVEL_FLAG_FORCE_SURPRISING
-            | LEVEL_FLAG_ERROR_RESULT_OK
             | LEVEL_FLAG_UNINTERRUPTIBLE
             | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
             | EVAL_EXECUTOR_FLAG_NO_RESIDUE

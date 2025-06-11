@@ -229,13 +229,18 @@ Bounce Action_Executor(Level* L)
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
-            if (Cell_Parameter_Class(PARAM) != PARAMCLASS_META) {
-                Element* arg = Known_Element(ARG);  // quoted or quasi
-                if (Is_Lifted_Ghost(arg)) {
+            if (Is_Endlike_Tripwire(ARG))
+                goto continue_fulfilling;  // use "unset" state to convey
+
+            if (Cell_Parameter_Class(PARAM) == PARAMCLASS_META) {
+                Liftify(ARG);
+            }
+            else {
+                if (Is_Ghost(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Tripwire_Due_To_End(ARG);
                 }
-                else if (Is_Lifted_Void(arg)) {
+                else if (Is_Void(ARG)) {
                     if (Get_Parameter_Flag(PARAM, OPT_OUT))
                         Init_Blank(ARG);  // !!! Temporary hack
                     else if (Get_Parameter_Flag(PARAM, UNDO_OPT))
@@ -246,7 +251,6 @@ Bounce Action_Executor(Level* L)
                         );
                 }
                 else {
-                    Unliftify_Undecayed(ARG);
                     Decay_If_Unstable(ARG);
                 }
             }

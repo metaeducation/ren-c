@@ -289,23 +289,6 @@ DECLARE_NATIVE(OF)
 {
     INCLUDE_PARAMS_OF_OF;
 
-    enum {
-        ST_OF_INITIAL_ENTRY = STATE_0,
-        ST_OF_REEVALUATING
-    };
-
-    switch (STATE) {
-      case ST_OF_INITIAL_ENTRY:
-        goto initial_entry;
-
-      case ST_OF_REEVALUATING:  // stepper gives a meta-result
-        return Unliftify_Undecayed(OUT);
-
-      default: assert(false);
-    }
-
-  initial_entry: { /////////////////////////////////////////////////////////
-
     Element* prop = Element_ARG(PROPERTY);
     assert(Is_Word(prop));
     const Symbol* sym = Cell_Word_Symbol(prop);
@@ -388,8 +371,7 @@ DECLARE_NATIVE(OF)
     if (not Is_Action(spare_action))
         return PANIC("OF looked up to a value that wasn't an ACTION!");
 
-    Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
-        | LEVEL_FLAG_ERROR_RESULT_OK;
+    Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
     Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
     Copy_Lifted_Cell(Evaluator_Level_Current(sub), spare_action);
@@ -398,9 +380,8 @@ DECLARE_NATIVE(OF)
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    STATE = ST_OF_REEVALUATING;
-    return CONTINUE_SUBLEVEL(sub);  // !!! could/should we replace this level?
-}}}
+    return DELEGATE_SUBLEVEL(sub);  // !!! could/should we replace this level?
+}}
 
 
 //

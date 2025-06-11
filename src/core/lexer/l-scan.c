@@ -823,7 +823,6 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
 
             Flags flags = (
                  FLAG_STATE_BYTE(Scanner_State_For_Terminal(terminal))
-              /* | LEVEL_FLAG_ERROR_RESULT_OK */  // definitional errors?
             );
 
             Level* scan = Make_Scan_Level(&transcode, TG_End_Feed, flags);
@@ -2212,7 +2211,7 @@ INLINE Bounce Scanner_Panic_Helper(
         Update_Error_Near_For_Line(
             error, transcode, transcode->line, transcode->line_head
         );
-    
+
     return Native_Fail_Result(level_, error);
 }
 
@@ -2453,7 +2452,6 @@ Bounce Scanner_Executor(Level* const L) {
         L->feed,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
             | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-            | LEVEL_FLAG_ERROR_RESULT_OK
             | FLAG_STATE_BYTE(mode)
     );
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -2725,7 +2723,6 @@ Bounce Scanner_Executor(Level* const L) {
         L->feed,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
             | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-            | LEVEL_FLAG_ERROR_RESULT_OK
             | FLAG_STATE_BYTE(ST_SCANNER_BLOCK_MODE)
     );
 
@@ -2977,8 +2974,7 @@ Bounce Scanner_Executor(Level* const L) {
     Level* sub = Make_Scan_Level(
         transcode,
         L->feed,
-        LEVEL_FLAG_ERROR_RESULT_OK
-            | FLAG_STATE_BYTE(sub_mode)
+        FLAG_STATE_BYTE(sub_mode)
             | SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN
     );
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -3473,7 +3469,6 @@ DECLARE_NATIVE(TRANSCODE)
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
-        | LEVEL_FLAG_ERROR_RESULT_OK  // want to pass on definitional error
         | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
 
     if (Bool_ARG(NEXT) or Bool_ARG(ONE))

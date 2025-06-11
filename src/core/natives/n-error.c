@@ -99,7 +99,7 @@ DECLARE_NATIVE(ENRESCUE)
     Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
-        LEVEL_FLAG_ERROR_RESULT_OK
+        LEVEL_MASK_NONE
     );
     Init_Void(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
 
@@ -148,9 +148,8 @@ DECLARE_NATIVE(ENRESCUE)
 DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 //
 // Unlike SYS.UTIL/RESCUE, the ENTRAP function only reacts to errors from the
-// functions it directly calls via LEVEL_FLAG_ERROR_RESULT_OK.  Hence it
-// does not intercept thrown "failures", making it much safer to react to the
-// errors one gets back from it.
+// functions it directly calls.  Hence it doesn't intercept "panics", making it
+// much safer to react to the errors one gets back from it.
 {
     INCLUDE_PARAMS_OF_ENTRAP;
 
@@ -164,7 +163,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 
     switch (STATE) {
       case ST_ENTRAP_INITIAL_ENTRY: goto initial_entry;
-      case ST_ENTRAP_EVAL_STEPPING: goto eval_step_lifted_or_end_in_spare;
+      case ST_ENTRAP_EVAL_STEPPING: goto eval_step_dual_in_spare;
       case ST_ENTRAP_RUNNING_FRAME: goto eval_result_in_spare;
       default: assert(false);
     }
@@ -175,9 +174,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 
     Init_Void(OUT);  // default if all evaluations produce void
 
-    Flags flags =
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-        | LEVEL_FLAG_ERROR_RESULT_OK;  // we're trapping it
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;  // reused for each step
 
     Level* sub;
     if (Is_Block(code)) {
@@ -207,12 +204,10 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
     unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
     return CONTINUE_SUBLEVEL(sub);
 
-} eval_step_lifted_or_end_in_spare: {  ///////////////////////////////////////
+} eval_step_dual_in_spare: {  ////////////////////////////////////////////////
 
     if (Is_Endlike_Tripwire(SPARE))
         goto finished;
-
-    Unliftify_Undecayed(SPARE);
 
 } eval_result_in_spare: {  ///////////////////////////////////////////////////
 

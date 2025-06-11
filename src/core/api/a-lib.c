@@ -1248,14 +1248,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     if (too_many)
         panic (Error_Apply_Too_Many_Raw());
 
-    if (
-        Is_Lifted_Error(out) and (flags & LEVEL_FLAG_ERROR_RESULT_OK)
-    ){
-        Unliftify_Undecayed(cast(Atom*, out));
-        return false;  // !!! Lying about the result being a RebolValue !
-    }
-
-    Decay_If_Unstable(Unliftify_Undecayed(cast(Atom*, out)));
+    Decay_If_Unstable(cast(Atom*, out));
     return false;
 }
 
@@ -1440,7 +1433,6 @@ RebolValue* API_rebRescue(
         Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
     }
-    assert(not Is_Error(cast(Atom*, v)));  // no LEVEL_FLAG_ERROR_RESULT_OK
     Decay_If_Unstable(cast(Atom*, v));
     Set_Node_Root_Bit(v);
     *value = v;
@@ -1475,7 +1467,6 @@ RebolValue* API_rebRescueInterruptible(
         Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
     }
-    assert(not Is_Error(cast(Atom*, v)));  // no LEVEL_FLAG_ERROR_RESULT_OK
     Decay_If_Unstable(cast(Atom*, v));
     Set_Node_Root_Bit(v);
     *value = v;
@@ -3329,7 +3320,7 @@ RebolBounce API_rebDelegate(
     API_rebPushContinuation_internal(
         binding,
         cast(Value*, TOP_LEVEL->out),
-        LEVEL_FLAG_ERROR_RESULT_OK,
+        LEVEL_MASK_NONE,
         p, vaptr
     );
     return BOUNCE_DELEGATE;

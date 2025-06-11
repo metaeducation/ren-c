@@ -565,7 +565,6 @@ DECLARE_NATIVE(LET)
         goto initial_entry;
 
       case ST_LET_EVAL_STEP:
-        Unliftify_Undecayed(OUT);
         goto integrate_eval_bindings;
 
       default:
@@ -874,8 +873,7 @@ DECLARE_NATIVE(LET)
 
     Flags flags =
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
-        | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | (L->flags.bits & LEVEL_FLAG_ERROR_RESULT_OK);
+        | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
     Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags);
     Copy_Cell(Evaluator_Level_Current(sub), spare);

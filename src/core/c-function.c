@@ -180,7 +180,6 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             return Error_No_Catch_For_Throw(L);
 
         if (not meta) {
-            Unliftify_Undecayed(eval);  // Stepper is dual protocol
             Value* decayed = Decay_If_Unstable(eval);
 
             if (must_be_action and not Is_Action(decayed))
