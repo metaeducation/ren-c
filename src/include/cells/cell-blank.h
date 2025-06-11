@@ -136,11 +136,17 @@ INLINE bool Is_Tripwire(Need(const Value*) v) {
 // implementation of the "tripwire due to end" behavior.
 //
 
-#define Init_Tripwire_Due_To_End(out) \
-    Init_Tripwire(out)
+INLINE Atom* Init_Tripwire_Due_To_End(Sink(Atom) out) {
+    Init_Tripwire(out);
+    Set_Cell_Flag(out, SLOT_WEIRD_DUAL);
+    return out;
+}
 
-#define Is_Endlike_Tripwire(cell) \
-    Is_Atom_Trash(cell)
+INLINE bool Is_Endlike_Tripwire(const Atom* atom) {
+    if (Not_Cell_Flag(atom, SLOT_WEIRD_DUAL))
+        return false;
+    return Is_Atom_Trash(atom);
+}
 
 
 //=//// STANDALONE "SIGIL?" ELEMENTS (@ ^ $) //////////////////////////////=//

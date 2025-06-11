@@ -83,13 +83,13 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     const Key* key = Phase_Keys(&tail, phase);
     const Param* param = Phase_Params_Head(phase);
 
-    Value* arg = Flex_At(Value, a, 1);
+    Slot* arg = Flex_At(Slot, a, 1);
 
     REBLEN index = 1;  // used to bind REFINEMENT? values to parameter slots
 
     for (; key != tail; ++key, ++param, ++arg, ++index) {
         if (Is_Specialized(param)) {  // includes locals
-            Blit_Param_Keep_Mark(arg, param);
+            Blit_Param_Keep_Mark(Slot_Init_Hack(arg), param);
 
           continue_specialized:
 
@@ -104,12 +104,14 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
             Erase_Cell(arg);
             if (placeholder) {
                 if (Get_Parameter_Flag(param, REFINEMENT))
-                    Init_Nulled(arg);
-                else
-                    Copy_Cell(arg, unwrap placeholder);
+                    Init_Nulled(Slot_Init_Hack(arg));
+                else {
+                    UNUSED(placeholder);  // !!! temp, ignore!
+                    Init_Dual_Unset(Slot_Init_Hack(arg));
+                }
             }
             else
-                Copy_Cell(arg, param);
+                Copy_Cell(Slot_Init_Hack(arg), param);
 
             if (binder)
                 Add_Binder_Index(unwrap binder, symbol, index);
@@ -143,7 +145,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
             //     >> specialize skip:unbounded/ [unbounded: ok]
             //     ** Error: unbounded not bound
             //
-            Init_Okay(arg);
+            Init_Okay(Slot_Init_Hack(arg));
             goto continue_specialized;
         }
 

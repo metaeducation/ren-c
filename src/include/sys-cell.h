@@ -595,7 +595,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 // bad forms don't get made.
 //
 // 1. The `Slot` can be using "dual representation" to store its cell, based
-//    on CELL_FLAG_SLOT_HINT_DUAL.  This means that the LIFT_BYTE() may be
+//    on CELL_FLAG_SLOT_WEIRD_DUAL.  This means that the LIFT_BYTE() may be
 //    bigger by 2 than what the actual representation is.  This requires
 //    care to handle, so a Slot must knowingly check the flag and use the
 //    LIFT_BYTE_RAW() when dealing with Slots.
@@ -914,7 +914,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 
 #define CELL_MASK_COPY \
     ~(CELL_MASK_PERSIST |  CELL_FLAG_PROTECTED \
-        | CELL_FLAG_NOTE | CELL_FLAG_HINT)
+        | CELL_FLAG_NOTE | CELL_FLAG_HINT | CELL_FLAG_WEIRD)
 
 #define CELL_MASK_ALL  ~cast(Flags, 0)  // use with caution!
 

@@ -263,11 +263,11 @@ static Bounce Tweak_P_Native_Core(Level* level_)
 //  "Implementation detail of PICK and POKE, also underlies SET and GET"
 //
 //      return: "DUAL PROTOCOL: null means no writeback, lifted null is null"
-//          [null? quoted! quasiform!]
+//          [null? trash? quoted! quasiform!]  ; tripwire? !!!
 //      location [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker [<opt-out> element?]
 //      dual "DUAL PROTOCOL: action is accessor, lifted action is action"
-//          [null? space? action! word! quoted! quasiform!]
+//          [null? space? action! word! quoted! quasiform!]  ; tripwire? !!!
 //  ]
 //
 DECLARE_NATIVE(TWEAK_P)
@@ -380,7 +380,7 @@ DECLARE_NATIVE(POKE)
     Value* dual = ARG(VALUE);  // same slot (TWEAK* reuses this frame!) [2]
 
     if (Is_Lifted_Void(lifted_value)) {
-        Init_Dual_Tripwire_Remove_Signal(dual);  // signal to TWEAK*
+        Init_Dual_Word_Remove_Signal(dual);  // signal to TWEAK*
     }
     else {
         // leave lifted, TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL

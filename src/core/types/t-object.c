@@ -888,6 +888,11 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         Mold_Element(mo, set_word);
         Append_Codepoint(mo->string, ' ');
 
+        if (Is_Dual_Unset(evars.slot)) {
+            Append_Ascii(mo->string, "\\~\\  ; unset");  // !!! review
+            continue;
+        }
+
         DECLARE_VALUE (var);
         Option(Error*) e = Trap_Read_Slot(var, evars.slot);
         if (e)
@@ -1228,6 +1233,9 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
+        if (Is_Dual_Tripwire_Unset_Signal(dual))
+            goto handle_poke;
+
         if (Is_Dual_Word_Named_Signal(dual))
             goto handle_named_signal;
 
@@ -1249,17 +1257,18 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         Tweak_Cell_Frame_Coupling(out, cast(VarList*, c));
     }
 
-    if (Not_Cell_Flag(slot, SLOT_HINT_DUAL)) {  // not lifted
+    if (Not_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {  // not lifted
         Liftify(OUT);
         return OUT;
     }
 
-    assert(Any_Lifted(OUT));  // !!! won't always be lifted, transitional
+    assert(Any_Lifted(OUT) or Is_Tripwire(OUT));
     return OUT;
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
     Value* poke_lifted = dual;
+    assert(Any_Lifted(poke_lifted) or Is_Tripwire(poke_lifted));
 
     if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
         return PANIC(Error_Protected_Key(symbol));
@@ -1271,7 +1280,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
     }
 
-    Set_Cell_Flag(slot, SLOT_HINT_DUAL);  // mark as lifted
+    Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);  // mark as lifted
 
     return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
 

@@ -954,7 +954,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        if (not Is_Dual_Tripwire_Remove_Signal(dual))
+        if (not Is_Dual_Word_Remove_Signal(dual))
             return PANIC(Error_Bad_Poke_Dual_Raw(dual));
 
         poke = nullptr;  // nullptr for removal in Modify_Xxx() atm

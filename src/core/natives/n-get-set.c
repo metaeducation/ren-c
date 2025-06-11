@@ -778,7 +778,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 
             if (Is_Lifted_Void(unwrap dual_poke_if_not_on_stack)) {
                 assert(OUT == unwrap dual_poke_if_not_on_stack);
-                Init_Dual_Tripwire_Remove_Signal(value_arg);
+                Init_Dual_Word_Remove_Signal(value_arg);
                 continue;  // do not lift dual null
             }
 
@@ -1060,6 +1060,18 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto return_error;
         }
 
+        if (Is_Dual_Tripwire_Unset_Signal(SPARE)) {
+            if (
+                stackindex == limit - 1
+                and Is_Dual_Nulled_Pick_Signal(OUT)
+            ){
+                break;  // let tweak return the unset signal
+            }
+
+            Drop_Level(sub);
+            return Error_User("Unset variable");
+        }
+
         e = Error_User("TWEAK* (dual protocol) gave unknown state for PICK");
         Drop_Level(sub);
         goto return_error;
@@ -1228,6 +1240,9 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
     if (Is_Error(OUT))  // !!! weird can't pick case
         return SUCCESS;
 
+    if (Is_Dual_Tripwire_Unset_Signal(OUT))
+        return Error_User("UNSET variable");
+
     Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]
     return SUCCESS;
 }
@@ -1244,7 +1259,7 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
 //          [<undo-opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
 //      dual "Ordinary GET or SET with lifted value (unlifts), else dual"
-//          [null? quasiform! quoted!]
+//          [null? trash? space? quasiform! quoted!]  ; need TRIPWIRE?
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //  ]
@@ -1260,8 +1275,10 @@ DECLARE_NATIVE(TWEAK)
 
     Value* dual = ARG(DUAL);
 
-    assert(Is_Nulled(dual) or Is_Tripwire(dual) or Any_Lifted(dual));
-    Copy_Cell_Core(OUT, dual, CELL_MASK_THROW);
+    if (Is_Space(dual))
+        Init_Tripwire(OUT);  // !!! Temporary !!!
+    else
+        Copy_Cell(OUT, dual);
 
     if (Is_Nulled(ARG(TARGET)))
         return OUT;   // same for SET as [10 = (void): 10]

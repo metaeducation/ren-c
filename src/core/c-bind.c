@@ -1355,7 +1355,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
             // instead of creating a new one.
             //
             // We use the ALIAS dual convention, of storing the pinned word
-            // in the slot with CELL_FLAG_SLOT_HINT_DUAL
+            // in the slot with CELL_FLAG_SLOT_WEIRD_DUAL
             //
             if (dummy_sym == SYM_DUMMY9)
                 e = Error_User(
@@ -1367,7 +1367,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 
             Init(Slot) slot = Append_Context(varlist, symbol);
             Derelativize(slot, item, binding);
-            Set_Cell_Flag(slot, SLOT_HINT_DUAL);
+            Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);
 
             if (rebinding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove
@@ -1442,7 +1442,7 @@ Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot)
 {
     assert(Not_Cell_Flag(slot, BIND_MARKED_META));
 
-    if (Get_Cell_Flag(slot, SLOT_HINT_DUAL)) {
+    if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {
         if (not Any_Lifted_Dual(slot))
             goto handle_dual_signal;
 
@@ -1477,7 +1477,7 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Value* write)
 {
     // assert(Not_Cell_Flag(slot, BIND_MARKED_META));
 
-    if (Get_Cell_Flag(slot, SLOT_HINT_DUAL)) {
+    if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {
         if (not Any_Lifted_Dual(slot))
             goto handle_dual_signal;
 

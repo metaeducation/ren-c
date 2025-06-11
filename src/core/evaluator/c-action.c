@@ -229,8 +229,6 @@ Bounce Action_Executor(Level* L)
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
-            Clear_Cell_Flag(ARG, OUT_HINT_UNSURPRISING);  // !!! review
-
             if (Cell_Parameter_Class(PARAM) != PARAMCLASS_META) {
                 Element* arg = Known_Element(ARG);  // quoted or quasi
                 if (Is_Lifted_Ghost(arg)) {
@@ -509,8 +507,6 @@ Bounce Action_Executor(Level* L)
                 assert(false);
             }
 
-            Clear_Cell_Flag(ARG, OUT_HINT_UNSURPRISING);  // !!! review
-
             // When we see `1 + 2 * 3`, when we're at the 2, we don't
             // want to let the * run yet.  So set a flag which says we
             // won't do lookahead that will be cleared when function
@@ -707,8 +703,6 @@ Bounce Action_Executor(Level* L)
             assert(false);
         }
 
-        Clear_Cell_Flag(ARG, OUT_HINT_UNSURPRISING);  // !!! review
-
         // If FEED_FLAG_NO_LOOKAHEAD was set going into the argument
         // gathering above, it should have been cleared or converted into
         // FEED_FLAG_DEFERRING_INFIX.
@@ -845,7 +839,7 @@ Bounce Action_Executor(Level* L)
         Value* arg = u_cast(Value*, ARG);
 
         if (Is_Typechecked(arg)) {
-            /*assert(Not_Cell_Flag(arg, SLOT_HINT_DUAL));*/
+            /*assert(Not_Cell_Flag(arg, SLOT_WEIRD_DUAL));*/
             continue;  // Note: typechecked trash is legal (e.g. locals)
         }
 
@@ -858,14 +852,14 @@ Bounce Action_Executor(Level* L)
         }
 
         if (Cell_Parameter_Class(param) != PARAMCLASS_META) {
-            if (Get_Cell_Flag(arg, SLOT_HINT_DUAL)) {  // !!! temp
+            if (Get_Cell_Flag(arg, SLOT_WEIRD_DUAL)) {  // !!! temp
                 Unliftify_Known_Stable(arg);
-                Clear_Cell_Flag(arg, SLOT_HINT_DUAL);
+                Clear_Cell_Flag(arg, SLOT_WEIRD_DUAL);
             }
         }
         else {
             assert(Any_Lifted(arg));
-            Set_Cell_Flag(arg, SLOT_HINT_DUAL);
+            Set_Cell_Flag(arg, SLOT_WEIRD_DUAL);
             // leave dual flag for a moment...
             // this *should* screw up ARG() etc. but they ignore it
         }

@@ -725,7 +725,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        if (Is_Dual_Tripwire_Remove_Signal(dual)) {
+        if (Is_Dual_Word_Remove_Signal(dual)) {
             poke = nullptr;  // remove signal
             goto handle_poke;
         }
