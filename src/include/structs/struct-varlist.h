@@ -237,13 +237,13 @@
 
     template<>
     struct OptionWrapper<Error*> {  // repeats some code, but that's life [2]
-        Error* wrapped;
+        Error* p;
 
         OptionWrapper() = default;
 
-        OptionWrapper(SuccessSentinel) : wrapped(nullptr) {}
+        OptionWrapper(SuccessSentinel) : p {nullptr} {}
 
-        OptionWrapper(Error* ptr) : wrapped(ptr) {
+        OptionWrapper(Error* ptr) : p {ptr} {
             assert(ptr != nullptr && "Use SUCCESS for success, not nullptr");
         }
 
@@ -251,18 +251,18 @@
 
         template<typename X>
         OptionWrapper(const OptionWrapper<X>& other)
-            : wrapped(other.wrapped) {
+            : p {other.p} {
             static_assert(std::is_convertible<X, Error*>::value,
                 "Incompatible pointer type");
-            assert(wrapped != nullptr and "Use SUCCESS for null values");
+            assert(p != nullptr and "Use SUCCESS for null values");
         }
 
         operator uintptr_t() const
-          { return reinterpret_cast<uintptr_t>(wrapped); }
+          { return reinterpret_cast<uintptr_t>(p); }
 
-        explicit operator Error*() { return wrapped; }
+        explicit operator Error*() { return p; }
 
         explicit operator bool()
-          { return wrapped != nullptr; }
+          { return p != nullptr; }
     };
 #endif

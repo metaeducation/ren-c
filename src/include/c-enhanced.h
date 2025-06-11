@@ -1285,53 +1285,53 @@
 #else
     template<typename T>
     struct OptionWrapper {
-        T wrapped;
+        T p;  // not always pointer, but use common convention with Sink/Need
 
         OptionWrapper () = default;  // garbage, or 0 if global [2]
 
         template <typename U>
-        OptionWrapper (U something) : wrapped (something)
+        OptionWrapper (const U& something) : p (something)
           {}
 
         template <typename X>
-        OptionWrapper (const OptionWrapper<X>& other) : wrapped (other.wrapped)
+        OptionWrapper (const OptionWrapper<X>& other) : p (other.p)
           {}
 
         operator uintptr_t() const  // so it works in switch() statements
-          { return cast(uintptr_t, wrapped); }
+          { return cast(uintptr_t, p); }
 
         explicit operator T()  // must be an *explicit* cast
-          { return wrapped; }
+          { return p; }
 
         explicit operator bool() {
            // explicit exception in if https://stackoverflow.com/q/39995573/
-           return wrapped ? true : false;
+           return p ? true : false;
         }
     };
 
     template<typename L, typename R>
     bool operator==(const OptionWrapper<L>& left, const OptionWrapper<R>& right)
-        { return left.wrapped == right.wrapped; }
+        { return left.p == right.p; }
 
     template<typename L, typename R>
     bool operator==(const OptionWrapper<L>& left, R right)
-        { return left.wrapped == right; }
+        { return left.p == right; }
 
     template<typename L, typename R>
     bool operator==(L left, const OptionWrapper<R>& right)
-        { return left == right.wrapped; }
+        { return left == right.p; }
 
     template<typename L, typename R>
     bool operator!=(const OptionWrapper<L>& left, const OptionWrapper<R>& right)
-        { return left.wrapped != right.wrapped; }
+        { return left.p != right.p; }
 
     template<typename L, typename R>
     bool operator!=(const OptionWrapper<L>& left, R right)
-        { return left.wrapped != right; }
+        { return left.p != right; }
 
     template<typename L, typename R>
     bool operator!=(L left, const OptionWrapper<R>& right)
-        { return left != right.wrapped; }
+        { return left != right.p; }
 
     struct UnwrapHelper {};
     struct MaybeHelper {};
@@ -1342,8 +1342,8 @@
         const OptionWrapper<T>& option
     ){
         UNUSED(left);
-        assert(option.wrapped);  // non-null pointers or int/enum checks != 0
-        return option.wrapped;
+        assert(option.p);  // non-null pointers or int/enum checks != 0
+        return option.p;
     }
 
     template<typename T>
@@ -1352,7 +1352,7 @@
         const OptionWrapper<T>& option
     ){
         UNUSED(left);
-        return option.wrapped;
+        return option.p;
     }
 
     constexpr UnwrapHelper g_unwrap_helper = {};
@@ -1364,16 +1364,16 @@
 
     template<class P>
     INLINE void Corrupt_Pointer_If_Debug(Option(P) &option)
-      { Corrupt_Pointer_If_Debug(option.wrapped); }
+      { Corrupt_Pointer_If_Debug(option.p); }
 
     template<class P>
     INLINE bool Is_Pointer_Corrupt_Debug(Option(P) &option)
-      { return Is_Pointer_Corrupt_Debug(option.wrapped); }
+      { return Is_Pointer_Corrupt_Debug(option.p); }
 
   #if (! DEBUG_STATIC_ANALYZING)
     template<class P>
     INLINE void Corrupt_If_Debug(Option(P) &option)
-      { Corrupt_If_Debug(option.wrapped); }
+      { Corrupt_If_Debug(option.p); }
   #endif
 #endif
 

@@ -183,12 +183,12 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
   #if CHECK_OPTIONAL_TYPEMACRO
     template<>
     struct OptionWrapper<Index> {  // bypass the 0 assert
-        intptr_t wrapped;
-        OptionWrapper(intptr_t i) : wrapped {i} {}  // no assert
+        intptr_t p;
+        OptionWrapper(intptr_t i) : p {i} {}  // no assert
 
         explicit operator bool() {
            // explicit exception in if https://stackoverflow.com/q/39995573/
-           return wrapped ? true : false;
+           return p != 0 ? true : false;
         }
     };
 
@@ -197,8 +197,8 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
         const OptionWrapper<Index>& option
     ){
         UNUSED(left);
-        assert(option.wrapped);  // non-0 check
-        return option.wrapped;
+        assert(option.p != 0);
+        return option.p;
     }
 
     INLINE uintptr_t operator<<(  // see definition of Option() for explanation
@@ -206,7 +206,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
         const OptionWrapper<Index>& option
     ){
         UNUSED(left);
-        return option.wrapped;
+        return option.p;
     }
   #endif
 #endif
