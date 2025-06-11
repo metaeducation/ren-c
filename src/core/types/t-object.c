@@ -1971,7 +1971,7 @@ DECLARE_NATIVE(CONSTRUCT)
     VarList* varlist = Cell_Varlist(OUT);
 
     while (TOP_INDEX != STACK_BASE) {
-        Option(Index) index = CELL_WORD_INDEX_I32(TOP);
+        Option(Index) index = CELL_WORD_INDEX_I32(TOP_ELEMENT);
         assert(index);  // created a key for every SET-WORD! above!
 
         Copy_Cell(Slot_Hack(Varlist_Slot(varlist, unwrap index)), spare);

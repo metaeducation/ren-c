@@ -317,7 +317,7 @@ struct JumpStruct {
       { return Derive_Error_From_Pointer(sink.p); }
 
     template <class T>
-    INLINE Error* Derive_Error_From_Pointer(Need(T) need)
+    INLINE Error* Derive_Error_From_Pointer(Need(T*) need)
       { return Derive_Error_From_Pointer(need.p); }
   #endif
 #else

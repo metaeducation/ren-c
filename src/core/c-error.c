@@ -939,11 +939,9 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
     Details* details = Level_Intrinsic_Details(L);
     Option(const Symbol*) label = Level_Intrinsic_Label(L);
 
-    Need(Value*) arg;
-    if (Get_Level_Flag(L, DISPATCHING_INTRINSIC))
-        arg = SPARE;
-    else
-        arg = Level_Arg(L, 1);
+    Need(Value*) arg = Get_Level_Flag(L, DISPATCHING_INTRINSIC)
+        ? SPARE
+        : Level_Arg(L, 1);
 
     Param* param = Phase_Param(details, 1);
     assert(Is_Parameter(param));

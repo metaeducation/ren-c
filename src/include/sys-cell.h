@@ -299,7 +299,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
     (out)->header.bits |= CELL_MASK_UNREADABLE;  /* note: bitwise OR [1] */ \
 } while (0)
 
-INLINE Element* Init_Unreadable_Untracked_Inline(Init(Element) out) {
+INLINE Cell* Init_Unreadable_Untracked_Inline(Cell* out) {
     Init_Unreadable_Untracked(out);
     return out;
 }
@@ -307,7 +307,7 @@ INLINE Element* Init_Unreadable_Untracked_Inline(Init(Element) out) {
 #define Force_Unreadable_Cell_Untracked(out) \
     ((out)->header.bits = CELL_MASK_UNREADABLE)
 
-INLINE Element* Force_Unreadable_Cell_Untracked_Inline(Init(Element) out) {
+INLINE Cell* Force_Unreadable_Cell_Untracked_Inline(Cell* out) {
     Force_Unreadable_Cell_Untracked(out);
     return out;
 }
@@ -348,17 +348,20 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
     // address locally...but there's no function call.
 
     INLINE void Corrupt_If_Debug(Cell& ref)
-      { Cell* c = &ref; Corrupt_Cell_If_Debug(c); }
+      { Cell* c = &ref; Init_Unreadable_Untracked(c); }
 
   #if CHECK_CELL_SUBCLASSES
     INLINE void Corrupt_If_Debug(Atom& ref)
-      { Atom* a = &ref; Corrupt_Cell_If_Debug(a); }
+      { Atom* a = &ref; Init_Unreadable_Untracked(a); }
 
     INLINE void Corrupt_If_Debug(Value& ref)
-      { Value* v = &ref; Corrupt_Cell_If_Debug(v); }
+      { Value* v = &ref; Init_Unreadable_Untracked(v); }
 
     INLINE void Corrupt_If_Debug(Element& ref)
-      { Element* e = &ref; Corrupt_Cell_If_Debug(e); }
+      { Element* e = &ref; Init_Unreadable_Untracked(e); }
+
+    INLINE void Corrupt_If_Debug(Slot& ref)
+      { Slot* s = &ref; Init_Unreadable_Untracked(s); }
   #endif
 #endif
 
@@ -980,11 +983,11 @@ INLINE Cell* Copy_Cell_Untracked(
         return out;
     }
 
-    template<  // avoid overload conflict when Element* coerces to Value* [3]
+    template<  // avoid conflict when Element* coerces to Value* [3]
         typename T,
         typename std::enable_if<
-            std::is_convertible<T,const Value*>::value
-            && !std::is_convertible<T,const Element*>::value
+            std::is_convertible<T, const Value*>::value
+            and not std::is_convertible<T, const Element*>::value
         >::type* = nullptr
     >
     INLINE Value* Copy_Cell_Overload(Init(Value) out, const T& v) {
@@ -992,7 +995,15 @@ INLINE Cell* Copy_Cell_Untracked(
         return out;
     }
 
-    INLINE Atom* Copy_Cell_Overload(Init(Atom) out, const Atom* v) {
+    template<  // avoid conflict when Element*/Value* coerces to Atom* [3]
+        typename T,
+        typename std::enable_if<
+            std::is_convertible<T, const Atom*>::value
+            and not std::is_convertible<T, const Value*>::value
+            and not std::is_convertible<T, const Element*>::value
+        >::type* = nullptr
+    >
+    INLINE Atom* Copy_Cell_Overload(Init(Atom) out, const T& v) {
         Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }

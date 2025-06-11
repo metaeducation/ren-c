@@ -184,10 +184,16 @@ bool Pushed_Continuation(
         goto just_use_out;
 
       case TYPE_QUASIFORM:
-        Derelativize(out, c_cast(Element*, branch), binding);
-        Unliftify_Undecayed(out);
-        if (Is_Nulled(out) and (flags & LEVEL_FLAG_FORCE_HEAVY_NULLS))
+        if (
+            Is_Lifted_Null(c_cast(Element*, branch))
+            and (flags & LEVEL_FLAG_FORCE_HEAVY_NULLS)
+        ){
             Init_Heavy_Null(out);
+        }
+        else {
+            Derelativize(out, c_cast(Element*, branch), binding);
+            Unliftify_Undecayed(out);
+        }
         goto just_use_out;
 
       case TYPE_BLOCK: {

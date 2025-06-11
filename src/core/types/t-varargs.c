@@ -333,10 +333,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     if (Is_Cell_Erased(out))
         return false;
 
-    Decay_If_Unstable(out);
+    Value* out_value = Decay_If_Unstable(out);
 
     if (op == VARARG_OP_TAIL_Q) {
-        assert(Is_Logic(out));
+        assert(Is_Logic(out_value));
         return false;
     }
 

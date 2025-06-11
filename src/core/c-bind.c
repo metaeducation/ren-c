@@ -702,11 +702,9 @@ DECLARE_NATIVE(LET)
 
     bindings = Make_Let_Variable(symbol, bindings);
 
-    Sink(Element) where;
-    if (Get_Level_Flag(L, LET_IS_SETTING))
-        where = SPARE;
-    else
-        where = OUT;
+    Sink(Element) where = Get_Level_Flag(L, LET_IS_SETTING)
+        ? SPARE
+        : OUT;
 
     Init_Word_Bound(where, symbol, bindings, INDEX_PATCHED);
     if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
@@ -815,11 +813,9 @@ DECLARE_NATIVE(LET)
         }
     }
 
-    Sink(Element) where;
-    if (Get_Level_Flag(L, LET_IS_SETTING))
-        where = SPARE;
-    else
-        where = OUT;
+    Sink(Element) where = Get_Level_Flag(L, LET_IS_SETTING)
+        ? SPARE
+        : OUT;
 
     if (altered) {  // elements altered, can't reuse input block rebound
         assert(Get_Level_Flag(L, LET_IS_SETTING));

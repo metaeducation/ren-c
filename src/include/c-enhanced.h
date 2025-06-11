@@ -1426,133 +1426,37 @@
 //    https://stackoverflow.com/questions/3279543/
 //
 #if DEBUG_USE_SINKS
-    template<typename U, typename T>
-    struct AllowInitConversion : std::false_type {};
+    template<typename T> struct PointerWrapper;
+    template<typename T> struct NeedWrapper;
+    template<typename T> struct SinkWrapper;
 
     template<typename U, typename T>
     struct AllowSinkConversion : std::false_type {};
 
-    template<bool sink, typename U, typename T>
-    struct AllowConversionSwitch;
-
     template<typename U, typename T>
-    struct AllowConversionSwitch<false, U, T> : AllowInitConversion<U, T> {};
+    struct AllowInitConversion : std::false_type {};
 
-    template<typename U, typename T>
-    struct AllowConversionSwitch<true, U, T> : AllowSinkConversion<U, T> {};
+    //=//// BASE POINTER WRAPPER ////////////////////////////////////////////=//
 
-    template<typename T, bool sink>
-    struct NeedWrapper {
+    template<typename T>
+    struct PointerWrapper {
         T* p;
-        mutable bool corruption_pending;  // can't corrupt on construct [2]
-
-      //=//// TYPE ALIASES ////////////////////////////////////////////////=//
+        mutable bool corruption_pending;
 
         using MT = typename std::remove_const<T>::type;
 
-        template<typename U>  // for CHECK_CELL_SUBCLASSES [1]
-        using IfReverseInheritable = typename std::enable_if<
-            std::is_same<U, T>::value
-            or std::is_base_of<U, T>::value
-            or AllowConversionSwitch<sink, U, T>::value
-        >::type;
+      protected:
+        PointerWrapper(T* ptr, bool corrupt) : p(ptr), corruption_pending(corrupt) {}
 
-      //=//// CONSTRUCTORS ////////////////////////////////////////////////=//
-
-        NeedWrapper() = default;  // or MSVC warns making Option(Sink(Value))
-
-        NeedWrapper(nullptr_t) {
-            p = nullptr;
-            corruption_pending = false;
-        }
-
-        NeedWrapper (const NeedWrapper<T,sink>& other) {
-            p = other.p;
-            corruption_pending = p and (other.corruption_pending or sink);
+        PointerWrapper(const PointerWrapper& other)
+            : p(other.p), corruption_pending(other.corruption_pending) {
             other.corruption_pending = false;
         }
 
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper(U* u) {
-            p = u_cast(T*, u);
-            corruption_pending = p and sink;
-        }
+      public:
+        operator bool() const { return p != nullptr; }
 
-        template<typename U, bool B, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper(const NeedWrapper<U, B>& other) {
-            p = u_cast(T*, other.p);
-            corruption_pending = p and (other.corruption_pending or sink);
-            other.corruption_pending = false;
-        }
-
-      //=//// INIT CONVERSIONS e.g. for Init(Slot) [3] ////////////////////=//
-
-        template<typename U, typename = typename std::enable_if<
-            not sink and AllowInitConversion<U, T>::value>::type
-        >
-        NeedWrapper(const NeedWrapper<U, sink>& other) {
-            p = u_cast(T*, other.p);
-            corruption_pending = p and (other.corruption_pending or sink);
-            other.corruption_pending = false;
-        }
-
-        template<typename U, typename = typename std::enable_if<
-            not sink and AllowInitConversion<U, T>::value>::type>
-        NeedWrapper(U* u) {
-            p = u_cast(T*, u);
-            corruption_pending = p and sink;
-        }
-
-        // Accept Init<U> when sink and AllowInitConversion<U, T> are true
-        //
-        template<typename U, bool B, typename = typename std::enable_if<
-            sink and not B and AllowInitConversion<U, T>::value>::type
-        >
-        NeedWrapper(const NeedWrapper<U, B>& other) {
-            p = u_cast(T*, other.p);
-            corruption_pending = p and (other.corruption_pending or sink);
-            other.corruption_pending = false;
-        }
-
-      //=//// ASSIGNMENT //////////////////////////////////////////////////=//
-
-        NeedWrapper& operator=(nullptr_t) {
-            p = nullptr;
-            corruption_pending = false;
-            return *this;
-        }
-
-        NeedWrapper& operator=(const NeedWrapper<T,sink>& other) {
-            if (this != &other) {  // self-assignment possible
-                p = other.p;
-                corruption_pending = p and (other.corruption_pending or sink);
-                other.corruption_pending = false;
-            }
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper& operator=(const NeedWrapper& other) {
-            if (this != &other) {  // self-assignment possible
-                p = other.p;
-                corruption_pending = p and (other.corruption_pending or sink);
-                other.corruption_pending = false;
-            }
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper& operator=(U* other) {
-            p = u_cast(T*, other);
-            corruption_pending = p and sink;
-            return *this;
-        }
-
-      //=//// OPERATORS ///////////////////////////////////////////////////=//
-
-        operator bool () const { return p != nullptr; }
-
-        operator T* () const {
+        operator T*() const {
             if (corruption_pending) {
                 Corrupt_If_Debug(*const_cast<MT*>(p));
                 corruption_pending = false;
@@ -1568,36 +1472,197 @@
             return p;
         }
 
-      //=//// DESTRUCTOR //////////////////////////////////////////////////=//
-
-        ~NeedWrapper() {
+        ~PointerWrapper() {
             if (corruption_pending)
                 Corrupt_If_Debug(*const_cast<MT*>(p));
         }
     };
 
-    template<typename T, bool B>
-    void Corrupt_If_Debug(NeedWrapper<T, B>& wrapper) {
-        Corrupt_If_Debug(wrapper.p);  // asked to corrupt the actual pointer
-        wrapper.corruption_pending = false;  // destructor would crash
+    //=//// NEED WRAPPER (INPUT PARAMETERS) /////////////////////////////////=//
+
+    template<typename T>
+    struct NeedWrapper : public PointerWrapper<T> {
+        using Base = PointerWrapper<T>;
+
+        template<typename U> friend struct SinkWrapper;
+
+        template<typename U>
+        using IfReverseInheritable = typename std::enable_if<
+            std::is_same<U, T>::value
+            or std::is_base_of<U, T>::value
+        >::type;
+
+        // Default constructor from nullptr
+        NeedWrapper(nullptr_t) : Base(nullptr, false) {}
+
+        // Special constructor to convert from non-const to const wrapper
+        template<typename U,
+                typename = typename std::enable_if<
+                    std::is_same<typename std::remove_const<T>::type, U>::value
+                    and std::is_const<T>::value
+                >::type>
+        NeedWrapper(const NeedWrapper<U>& other) : Base(other.p, false) {
+            // No corruption_pending handling needed for NeedWrapper
+        }
+
+        // Constructor from raw pointer
+        template<typename U, IfReverseInheritable<U>* = nullptr>
+        NeedWrapper(U* u) : Base(u_cast(T*, u), false) {}
+
+        // Copy constructor
+        NeedWrapper(const NeedWrapper& other) : Base(other) {}
+
+        // Move constructor from SinkWrapper - NO TEMPORARY!
+        template<typename U, IfReverseInheritable<U>* = nullptr>
+        NeedWrapper(const SinkWrapper<U>& sink) : Base(sink.p, false) {
+            sink.corruption_pending = false;  // Clear sink's pending corruption
+        }
+
+        // Assignment operators
+        NeedWrapper& operator=(nullptr_t) {
+            this->p = nullptr;
+            this->corruption_pending = false;
+            return *this;
+        }
+
+        NeedWrapper& operator=(const NeedWrapper& other) {
+            if (this != &other) {
+                this->p = other.p;
+                this->corruption_pending = other.corruption_pending;
+                other.corruption_pending = false;
+            }
+            return *this;
+        }
+
+        template<typename U, IfReverseInheritable<U>* = nullptr>
+        NeedWrapper& operator=(U* ptr) {
+            this->p = u_cast(T*, ptr);
+            this->corruption_pending = false;
+            return *this;
+        }
+
+        template<typename U, IfReverseInheritable<U>* = nullptr>
+        NeedWrapper& operator=(const SinkWrapper<U>& sink) {
+            this->p = u_cast(T*, sink.p);
+            this->corruption_pending = false;  // Need doesn't corrupt
+            sink.corruption_pending = false;   // Clear sink's pending corruption
+            return *this;
+        }
+    };
+
+    //=//// SINK WRAPPER (OUTPUT PARAMETERS) ////////////////////////////////=//
+
+    template<typename T>
+    struct SinkWrapper : public PointerWrapper<T> {
+        using Base = PointerWrapper<T>;
+
+        template<typename U> friend struct NeedWrapper;
+
+        template<typename U>
+        using IfReverseInheritable = typename std::enable_if<
+            std::is_same<U, T>::value
+            or std::is_base_of<U, T>::value  // Contravariant for sinks
+            or AllowSinkConversion<U, T>::value
+            or AllowInitConversion<U, T>::value
+        >::type;
+
+        // Default constructor from nullptr
+        SinkWrapper(nullptr_t) : Base(nullptr, false) {}
+
+        // Constructor from raw pointer
+        template<typename U, IfReverseInheritable<U>* = nullptr>
+        SinkWrapper(U* u) : Base(u_cast(T*, u), u != nullptr) {}
+
+        // Copy constructor - creates new corruption obligation
+        SinkWrapper(const SinkWrapper& other)
+            : Base(other.p, other.p != nullptr) {  // Always set corruption_pending for copies
+            other.corruption_pending = false;
+        }
+
+        // Constructor from NeedWrapper
+        template<typename U, IfReverseInheritable<U>* = nullptr>
+        SinkWrapper(const NeedWrapper<U>& need)
+            : Base(u_cast(T*, need.p), need.p != nullptr) {  // Set corruption_pending
+            need.corruption_pending = false;  // Clear need's pending (shouldn't have any)
+        }
+
+        // Constructor from SinkWrapper
+        template<typename U, IfReverseInheritable<U>* = nullptr>
+        SinkWrapper(const SinkWrapper<U>& need)
+            : Base(u_cast(T*, need.p), need.p != nullptr) {  // Set corruption_pending
+            need.corruption_pending = false;  // Clear need's pending (shouldn't have any)
+        }
+
+        // Assignment operators
+        SinkWrapper& operator=(nullptr_t) {
+            this->p = nullptr;
+            this->corruption_pending = false;
+            return *this;
+        }
+
+        SinkWrapper& operator=(const SinkWrapper& other) {
+            if (this != &other) {
+                this->p = other.p;
+                this->corruption_pending = (other.p != nullptr);  // New corruption obligation
+                other.corruption_pending = false;
+            }
+            return *this;
+        }
+
+        template<typename U, IfReverseInheritable<U>* = nullptr>
+        SinkWrapper& operator=(U* ptr) {
+            this->p = u_cast(T*, ptr);
+            this->corruption_pending = (ptr != nullptr);
+            return *this;
+        }
+
+        template<typename U, IfReverseInheritable<U>* = nullptr>
+        SinkWrapper& operator=(const NeedWrapper<U>& need) {
+            this->p = u_cast(T*, need.p);
+            this->corruption_pending = (need.p != nullptr);  // Set corruption for sink
+            need.corruption_pending = false;  // Clear need's pending
+            return *this;
+        }
+    };
+
+    //=//// CORRUPTION HELPERS //////////////////////////////////////////////=//
+
+    template<typename T>
+    void Corrupt_If_Debug(NeedWrapper<T>& wrapper) {
+        Corrupt_If_Debug(wrapper.p);
+        wrapper.corruption_pending = false;
     }
 
-    template<typename T, bool B>
-    void Unused_Helper(NeedWrapper<T, B>& wrapper) {
-        Corrupt_If_Debug(wrapper.p);  // asked to corrupt the actual pointer
-        wrapper.corruption_pending = false;  // destructor would crash
+    template<typename T>
+    void Corrupt_If_Debug(SinkWrapper<T>& wrapper) {
+        Corrupt_If_Debug(wrapper.p);
+        wrapper.corruption_pending = false;
     }
 
-    template<typename T, bool B>
-    void Unused_Helper(const NeedWrapper<T, B>& wrapper) {
+    template<typename T>
+    void Unused_Helper(NeedWrapper<T>& wrapper) {
+        Corrupt_If_Debug(wrapper.p);
+        wrapper.corruption_pending = false;
+    }
+
+    template<typename T>
+    void Unused_Helper(const NeedWrapper<T>& wrapper) {
         USED(wrapper.p);
     }
 
-    #define SinkTypemacro(T) \
-        NeedWrapper<T, true>
+    template<typename T>
+    void Unused_Helper(SinkWrapper<T>& wrapper) {
+        Corrupt_If_Debug(wrapper.p);
+        wrapper.corruption_pending = false;
+    }
 
-    #define NeedTypemacro(TP) \
-        NeedWrapper<typename std::remove_pointer<TP>::type, false>
+    template<typename T>
+    void Unused_Helper(const SinkWrapper<T>& wrapper) {
+        USED(wrapper.p);
+    }
+
+    #define SinkTypemacro(T) SinkWrapper<T>
+    #define NeedTypemacro(TP) NeedWrapper<typename std::remove_pointer<TP>::type>
 #else
     #define SinkTypemacro(T) T *
     #define NeedTypemacro(TP) TP
@@ -1622,9 +1687,9 @@
 //
 #if DEBUG_USE_SINKS
     #if DEBUG_CHECK_INIT_SINKS
-        #define InitTypemacro(T) NeedWrapper<T, true>  // sink=true
+        #define InitTypemacro(T) SinkWrapper<T>
     #else
-        #define InitTypemacro(T) NeedWrapper<T, false>  // sink=false
+        #define InitTypemacro(T) SinkWrapper<T>
     #endif
 #else
     #define InitTypemacro(T) T *

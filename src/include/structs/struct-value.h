@@ -57,9 +57,21 @@
     struct c_cast_helper<Byte*, Sink(Value) const&>
       { typedef Byte* type; };
 
-    template<typename V, typename T, bool Vsink>
-    struct cast_helper<NeedWrapper<V, Vsink>,T> {
-        static T convert(const NeedWrapper<V, Vsink>& wrapper) {
+    template<typename V, typename T>
+    struct cast_helper<NeedWrapper<V>,T> {
+        static T convert(const NeedWrapper<V>& wrapper) {
+            using MV = typename std::remove_const<V>::type;
+            if (wrapper.corruption_pending) {
+                Corrupt_If_Debug(*const_cast<MV*>(wrapper.p));
+                wrapper.corruption_pending = false;
+            }
+            return (T)(wrapper.p);
+        }
+    };
+
+    template<typename V, typename T>
+    struct cast_helper<SinkWrapper<V>,T> {
+        static T convert(const SinkWrapper<V>& wrapper) {
             using MV = typename std::remove_const<V>::type;
             if (wrapper.corruption_pending) {
                 Corrupt_If_Debug(*const_cast<MV*>(wrapper.p));

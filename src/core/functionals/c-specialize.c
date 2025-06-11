@@ -89,7 +89,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 
     for (; key != tail; ++key, ++param, ++arg, ++index) {
         if (Is_Specialized(param)) {  // includes locals
-            Blit_Param_Keep_Mark(Slot_Init_Hack(arg), param);
+            Blit_Param_Keep_Mark(arg, param);
 
           continue_specialized:
 
@@ -294,7 +294,7 @@ bool Specialize_Action_Throws(
           #if DEBUG_POISON_UNINITIALIZED_CELLS
             Poison_Cell(slot);
           #endif
-            Blit_Param_Unmarked(Slot_Init_Hack(slot), param);
+            Blit_Param_Unmarked(slot, param);
             if (first_param)
                 first_param = false;  // leave infix as is
             continue;
