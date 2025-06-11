@@ -125,9 +125,9 @@ DECLARE_NATIVE(FILE_ACTOR)
     // open, then this capturing of the specification is all the setup needed.
     //
     Value* state = Slot_Hack(Varlist_Slot(ctx, STD_PORT_STATE));
-    FILEREQ *file;
+    FileReq* file;
     if (Is_Blob(state)) {
-        file = File_Of_Port(port);
+        file = Filereq_Of_Port(port);
 
       #if !defined(NDEBUG)
         //
@@ -148,31 +148,14 @@ DECLARE_NATIVE(FILE_ACTOR)
     else {
         assert(Is_Nulled(state));
 
-        DECLARE_VALUE (spec);
-        Option(Error*) e = Trap_Read_Slot(
-            spec, Varlist_Slot(ctx, STD_PORT_SPEC)
+        DECLARE_VALUE (file_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            file_path, port
         );
         if (e)
             return PANIC(unwrap e);
-        if (not Is_Object(spec))
-            return PANIC(Error_Invalid_Spec_Raw(spec));
 
-        DECLARE_VALUE (path);
-        e = Trap_Read_Slot(
-            path, Obj_Slot(spec, STD_PORT_SPEC_HEAD_REF)
-        );
-        if (Is_Nulled(path))
-            return PANIC(Error_Invalid_Spec_Raw(spec));
-
-        if (Is_Url(path)) {
-            e = Trap_Read_Slot(
-                path, Obj_Slot(spec, STD_PORT_SPEC_HEAD_PATH)
-            );
-            if (e)
-                return PANIC(unwrap e);
-        }
-        else if (not Is_File(path))
-            return PANIC(Error_Invalid_Spec_Raw(path));
+        UNUSED(file_path);  // we just tested to make sure would work later
 
         // Historically the native ports would store a C structure of data
         // in a BLOB! in the port state.  This makes it easier and more
@@ -180,23 +163,15 @@ DECLARE_NATIVE(FILE_ACTOR)
         // was seen as having another benefit in making the internal state
         // opaque to users, so they didn't depend on it or fiddle with it.
         //
-        Binary* b = Make_Binary(sizeof(FILEREQ));
+        Binary* b = Make_Binary(sizeof(FileReq));
         Init_Blob(state, b);
-        Term_Binary_Len(b, sizeof(FILEREQ));
+        Term_Binary_Len(b, sizeof(FileReq));
 
-        file = File_Of_Port(port);
+        file = Filereq_Of_Port(port);
         file->id = FILEHANDLE_NONE;
         file->is_dir = false;  // would be dispatching to Dir Actor if dir
         file->size_cache = FILESIZE_UNKNOWN;
         file->offset = FILEOFFSET_UNKNOWN;
-
-        // Generally speaking, you don't want to store Value* or Flex* in
-        // something like this struct-embedded-in-a-BLOB! as it will be
-        // invisible to the GC.  But this pointer is into the port spec, which
-        // we will assume is good for the lifetime of the port.  :-/  (Not a
-        // perfect assumption as there's no protection on it.)
-        //
-        file->path = path;
     }
 
     switch (Symbol_Id(verb)) {
@@ -245,13 +220,21 @@ DECLARE_NATIVE(FILE_ACTOR)
         // Handle the READ %file shortcut case, where the FILE! has been
         // converted into a PORT! but has not been opened yet.
 
+        DECLARE_VALUE (file_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            file_path, port
+        );
+        if (e)
+            return PANIC(unwrap e);
+
         bool opened_temporarily;
         if (file->id != FILEHANDLE_NONE)
             opened_temporarily = false; // was already open
         else {
             Value* open_error = Open_File(port, UV_FS_O_RDONLY);
+
             if (open_error != nullptr)
-                return PANIC(Error_Cannot_Open_Raw(file->path, open_error));
+                return PANIC(Error_Cannot_Open_Raw(file_path, open_error));
 
             opened_temporarily = true;
         }
@@ -370,6 +353,13 @@ DECLARE_NATIVE(FILE_ACTOR)
         // Handle the WRITE %file shortcut case, where the FILE! is converted
         // to a PORT! but it hasn't been opened yet.
 
+        DECLARE_VALUE (file_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            file_path, port
+        );
+        if (e)
+            return PANIC(unwrap e);
+
         bool opened_temporarily;
         if (file->id != FILEHANDLE_NONE) {  // already open
             //
@@ -379,7 +369,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             if (not (
                 (file->flags & UV_FS_O_WRONLY) or (file->flags & UV_FS_O_RDWR)
             )){
-                return PANIC(Error_Read_Only_Raw(file->path));
+                return PANIC(Error_Read_Only_Raw(file_path));
             }
 
             opened_temporarily = false;
@@ -398,7 +388,7 @@ DECLARE_NATIVE(FILE_ACTOR)
 
             Value* open_error = Open_File(port, flags);
             if (open_error != nullptr)
-                return PANIC(Error_Cannot_Open_Raw(file->path, open_error));
+                return PANIC(Error_Cannot_Open_Raw(file_path, open_error));
 
             opened_temporarily = true;
         }
@@ -508,6 +498,13 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         UNUSED(PARAM(SPEC));
 
+        DECLARE_VALUE (file_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            file_path, port
+        );
+        if (e)
+            return PANIC(unwrap e);
+
         Flags flags = 0;
 
         if (Bool_ARG(NEW))
@@ -532,7 +529,7 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         Value* error = Open_File(port, flags);
         if (error != nullptr)
-            return PANIC(Error_Cannot_Open_Raw(file->path, error));
+            return PANIC(Error_Cannot_Open_Raw(file_path, error));
 
         return COPY(port); }
 
@@ -608,6 +605,13 @@ DECLARE_NATIVE(FILE_ACTOR)
         INCLUDE_PARAMS_OF_RENAME;
         UNUSED(ARG(FROM));  // implicitly same as `port`
 
+        DECLARE_VALUE (file_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            file_path, port
+        );
+        if (e)
+            return PANIC(unwrap e);
+
         int flags = -1;
         size_t index = -1;
         bool closed_temporarily = false;
@@ -629,7 +633,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             Value* open_error = Open_File(port, flags);
             if (rename_error) {
                 rebRelease(rename_error);  // Note: FAIL would cleanup
-                return PANIC(Error_No_Rename_Raw(file->path));
+                return PANIC(Error_No_Rename_Raw(file_path));
             }
             if (open_error)
                 return PANIC(open_error);
@@ -639,10 +643,10 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         if (rename_error) {
             rebRelease(rename_error);  // Note: FAIL would cleanup
-            return PANIC(Error_No_Rename_Raw(file->path));
+            return PANIC(Error_No_Rename_Raw(file_path));
         }
 
-        Copy_Cell(file->path, ARG(TO));  // !!! this mutates the spec, bad?
+        Copy_Cell(file_path, ARG(TO));  // !!! this needs to mutate the spec!
 
         return COPY(port); }
 

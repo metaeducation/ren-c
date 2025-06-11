@@ -66,7 +66,7 @@ extern Value* Create_Directory(const Value* port);
 extern Value* Delete_File_Or_Directory(const Value* port);
 extern Value* Rename_File_Or_Directory(const Value* port, const Value* to);
 
-Value* Try_Read_Directory_Entry(FILEREQ *dir);
+Value* Try_Read_Directory_Entry(FileReq* dir, Value* dir_path);
 
 
 //
@@ -84,70 +84,43 @@ DECLARE_NATIVE(DIR_ACTOR)
     VarList* ctx = Cell_Varlist(port);
 
     Value* state = Slot_Hack(Varlist_Slot(ctx, STD_PORT_STATE));
-    FILEREQ *dir;
+    FileReq* dir;
     if (Is_Blob(state)) {
-        dir = File_Of_Port(port);
+        dir = Filereq_Of_Port(port);
     }
     else {
         assert(Is_Nulled(state));
 
-        DECLARE_VALUE (spec);
-        Option(Error*) e = Trap_Read_Slot(
-            spec, Varlist_Slot(ctx, STD_PORT_SPEC)
+        DECLARE_VALUE (dir_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            dir_path, port
         );
         if (e)
             return PANIC(unwrap e);
-        if (not Is_Object(spec))
-            return PANIC(Error_Invalid_Spec_Raw(spec));
 
-        DECLARE_VALUE (path);
-        e = Trap_Read_Slot(
-            path, Obj_Slot(spec, STD_PORT_SPEC_HEAD_REF)
-        );
-        if (e)
-            return PANIC(unwrap e);
-        if (Is_Nulled(path))
-            return PANIC(Error_Invalid_Spec_Raw(spec));
-
-        if (Is_Url(path)) {
-            e = Trap_Read_Slot(
-                path, Obj_Slot(spec, STD_PORT_SPEC_HEAD_PATH)
-            );
-            if (e)
-                return PANIC(unwrap e);
-        }
-        else if (not Is_File(path))
-            return PANIC(Error_Invalid_Spec_Raw(path));
+        UNUSED(dir_path);  // we just tested to make sure would work later
 
         // !!! In R3-Alpha, there were manipulations on the name representing
         // the directory, for instance by adding "*" onto the end so that
         // Windows could use it for wildcard reading.  Yet this wasn't even
         // needed in the POSIX code, so it would have to strip it out.
 
-        // !!! We are mirroring the use of the FILEREQ here, in order to make
+        // !!! We are mirroring the use of the FileReq here, in order to make
         // the directories compatible in the PORT! calls.  This is probably
         // not useful, and files and directories can avoid using the same
         // structure...which would mean different Rename_Directory() and
         // Rename_File() calls, for instance.
         //
-        Binary* b = Make_Binary(sizeof(FILEREQ));
+        Binary* b = Make_Binary(sizeof(FileReq));
         Init_Blob(state, b);
-        Term_Binary_Len(b, sizeof(FILEREQ));
+        Term_Binary_Len(b, sizeof(FileReq));
 
-        dir = File_Of_Port(port);
+        dir = Filereq_Of_Port(port);
         dir->handle = nullptr;
         dir->id = FILEHANDLE_NONE;
         dir->is_dir = true;  // would be dispatching to File Actor if dir
         dir->size_cache = FILESIZE_UNKNOWN;
         dir->offset = FILEOFFSET_UNKNOWN;
-
-        // Generally speaking, you don't want to store Value* or Flex* in
-        // something like this struct-embedded-in-a-BLOB! as it will be
-        // invisible to the GC.  But this pointer is into the port spec, which
-        // we will assume is good for the lifetime of the port.  :-/  (Not a
-        // perfect assumption as there's no protection on it.)
-        //
-        dir->path = path;
     }
 
     Option(SymId) id = Symbol_Id(verb);
@@ -179,9 +152,16 @@ DECLARE_NATIVE(DIR_ACTOR)
         if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(STRING) or Bool_ARG(LINES))
             return PANIC(Error_Bad_Refines_Raw());
 
+        DECLARE_VALUE (dir_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            dir_path, port
+        );
+        if (e)
+            return PANIC(unwrap e);
+
         assert(TOP_INDEX == STACK_BASE);
         while (true) {
-            Value* result = Try_Read_Directory_Entry(dir);
+            Value* result = Try_Read_Directory_Entry(dir, dir_path);
             if (result == nullptr)
                 break;
 
@@ -189,7 +169,7 @@ DECLARE_NATIVE(DIR_ACTOR)
             // find the file specified" message that doesn't say the name)
             //
             if (Is_Warning(result))
-                return PANIC(Error_Cannot_Open_Raw(dir->path, result));
+                return PANIC(Error_Cannot_Open_Raw(dir_path, result));
 
             assert(Is_File(result));
             Copy_Cell(PUSH(), result);
@@ -202,13 +182,20 @@ DECLARE_NATIVE(DIR_ACTOR)
     //=//// CREATE /////////////////////////////////////////////////////////=//
 
       case SYM_CREATE: {
+        DECLARE_VALUE (dir_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            dir_path, port
+        );
+        if (e)
+            return PANIC(unwrap e);
+
         if (Is_Block(state))
-            return PANIC(Error_Already_Open_Raw(dir->path));
+            return PANIC(Error_Already_Open_Raw(dir_path));
 
         Value* error = Create_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            return PANIC(Error_No_Create_Raw(dir->path));  // higher level error
+            return PANIC(Error_No_Create_Raw(dir_path));  // higher level error
         }
 
         return COPY(port); }
@@ -219,23 +206,37 @@ DECLARE_NATIVE(DIR_ACTOR)
         INCLUDE_PARAMS_OF_RENAME;
         UNUSED(ARG(FROM));  // already have as port parameter
 
+        DECLARE_VALUE (dir_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            dir_path, port
+        );
+        if (e)
+            return PANIC(unwrap e);
+
         Value* error = Rename_File_Or_Directory(port, ARG(TO));
         if (error) {
             rebRelease(error);  // !!! throws away details
-            return PANIC(Error_No_Rename_Raw(dir->path));  // higher level error
+            return PANIC(Error_No_Rename_Raw(dir_path));  // higher level error
         }
 
-        Copy_Cell(dir->path, ARG(TO));  // !!! this mutates the spec, bad?
+        Copy_Cell(dir_path, ARG(TO));  // !!! this needs to mutate the spec!
 
         return COPY(port); }
 
     //=//// DELETE /////////////////////////////////////////////////////////=//
 
       case SYM_DELETE: {
+        DECLARE_VALUE (dir_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            dir_path, port
+        );
+        if (e)
+            return PANIC(unwrap e);
+
         Value* error = Delete_File_Or_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            return PANIC(Error_No_Delete_Raw(dir->path));  // higher level error
+            return PANIC(Error_No_Delete_Raw(dir_path));  // higher level error
         }
         return COPY(port); }
 
@@ -253,6 +254,13 @@ DECLARE_NATIVE(DIR_ACTOR)
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
+        DECLARE_VALUE (dir_path);
+        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+            dir_path, port
+        );
+        if (e)
+            return PANIC(unwrap e);
+
         UNUSED(PARAM(SPEC));
 
         if (Bool_ARG(READ) or Bool_ARG(WRITE))
@@ -262,7 +270,7 @@ DECLARE_NATIVE(DIR_ACTOR)
             Value* error = Create_Directory(port);
             if (error) {
                 rebRelease(error);  // !!! throws away details
-                return PANIC(Error_No_Create_Raw(dir->path));  // hi-level error
+                return PANIC(Error_No_Create_Raw(dir_path));  // hi-level error
             }
         }
 

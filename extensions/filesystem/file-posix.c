@@ -90,7 +90,7 @@ Value* rebError_UV(int err) {
 //
 Value* Get_File_Size_Cacheable(uint64_t *size, const Value* port)
 {
-    FILEREQ *file = File_Of_Port(port);
+    FileReq* file = Filereq_Of_Port(port);
 
     if (file->size_cache != FILESIZE_UNKNOWN) {
         *size = file->size_cache;
@@ -120,7 +120,7 @@ Value* Get_File_Size_Cacheable(uint64_t *size, const Value* port)
 // The processing of these can be done in the OS (if supported) or by a
 // separate filter operation during the read."  How does libuv handle this?
 //
-Value* Try_Read_Directory_Entry(FILEREQ *dir)
+Value* Try_Read_Directory_Entry(FileReq* dir, Value* dir_path)
 {
     assert(dir->is_dir);
 
@@ -128,7 +128,7 @@ Value* Try_Read_Directory_Entry(FILEREQ *dir)
     // call in a batch that expects to keep calling until done) open the dir
     //
     if (dir->handle == nullptr) {
-        char *dir_utf8 = rebSpell("file-to-local", dir->path);
+        char *dir_utf8 = rebSpell("file-to-local", dir_path);
 
         uv_fs_t req;
         int result = uv_fs_opendir(uv_default_loop(), &req, dir_utf8, nullptr);
@@ -262,7 +262,7 @@ int Extract_Access_Mode_From_Flags(int flags) {
 //
 Value* Open_File(const Value* port, int flags)
 {
-    FILEREQ *file = File_Of_Port(port);
+    FileReq* file = Filereq_Of_Port(port);
 
     if (file->id != FILEHANDLE_NONE)
         return rebValue("make warning! {File is already open}");
@@ -286,7 +286,14 @@ Value* Open_File(const Value* port, int flags)
         }
     }
 
-    char *path_utf8 = rebSpell("file-to-local:full", file->path);
+    DECLARE_VALUE (file_path);
+    Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+        file_path, port
+    );
+    if (e)
+        panic (unwrap e);
+
+    char *path_utf8 = rebSpell("file-to-local:full", file_path);
 
     uv_fs_t req;
     int h;
@@ -320,7 +327,7 @@ Value* Open_File(const Value* port, int flags)
 //
 Value* Close_File(const Value* port)
 {
-    FILEREQ *file = File_Of_Port(port);
+    FileReq* file = Filereq_Of_Port(port);
 
     assert(file->id != FILEHANDLE_NONE);
 
@@ -343,7 +350,7 @@ Value* Close_File(const Value* port)
 //
 Value* Read_File(const Value* port, size_t length)
 {
-    FILEREQ *file = File_Of_Port(port);
+    FileReq* file = Filereq_Of_Port(port);
 
     assert(not file->is_dir);  // should call Read_Directory!
     assert(file->id != FILEHANDLE_NONE);
@@ -388,7 +395,7 @@ Value* Read_File(const Value* port, size_t length)
 //
 Value* Write_File(const Value* port, const Value* value, REBLEN limit)
 {
-    FILEREQ *file = File_Of_Port(port);
+    FileReq* file = Filereq_Of_Port(port);
 
     assert(file->id != FILEHANDLE_NONE);
 
@@ -474,7 +481,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
 //
 Value* Truncate_File(const Value* port)
 {
-    FILEREQ *file = File_Of_Port(port);
+    FileReq* file = Filereq_Of_Port(port);
     assert(file->id != FILEHANDLE_NONE);
 
     uv_fs_t req;
@@ -493,14 +500,21 @@ Value* Truncate_File(const Value* port)
 //
 Value* Create_Directory(const Value* port)
 {
-    FILEREQ *dir = File_Of_Port(port);
+    FileReq* dir = Filereq_Of_Port(port);
     assert(dir->is_dir);
+
+    DECLARE_VALUE (dir_path);
+    Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+        dir_path, port
+    );
+    if (e)
+        panic (unwrap e);
 
     // !!! We use /NO-TAIL-SLASH here because there was some historical issue
     // about leaving the tail slash on calling mkdir() on some implementation.
     //
     char *path_utf8 = rebSpell(
-        "file-to-local:full:no-tail-slash", dir->path
+        "file-to-local:full:no-tail-slash", dir_path
     );
 
     uv_fs_t req;
@@ -522,13 +536,20 @@ Value* Create_Directory(const Value* port)
 //
 Value* Delete_File_Or_Directory(const Value* port)
 {
-    FILEREQ *file = File_Of_Port(port);
+    FileReq* file = Filereq_Of_Port(port);
+
+    DECLARE_VALUE (file_path);
+    Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+        file_path, port
+    );
+    if (e)
+        panic (unwrap e);
 
     // !!! There is a /NO-TAIL-SLASH refinement, but the tail slash was left on
     // for directory removal, because it seemed to be supported.  Review if
     // there is any reason to remove it.
     //
-    char *path_utf8 = rebSpell("file-to-local:full", file->path);
+    char *path_utf8 = rebSpell("file-to-local:full", file_path);
 
     uv_fs_t req;
     int result;
@@ -551,10 +572,18 @@ Value* Delete_File_Or_Directory(const Value* port)
 //
 Value* Rename_File_Or_Directory(const Value* port, const Value* to)
 {
-    FILEREQ *file = File_Of_Port(port);
+    FileReq* file = Filereq_Of_Port(port);
+    UNUSED(file);  // was once needed for path
+
+    DECLARE_VALUE (file_path);
+    Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+        file_path, port
+    );
+    if (e)
+        panic (unwrap e);
 
     char *from_utf8 = rebSpell(
-        "file-to-local:full:no-tail-slash", file->path
+        "file-to-local:full:no-tail-slash", file_path
     );
     char *to_utf8 = rebSpell("file-to-local:full:no-tail-slash", to);
 
@@ -734,7 +763,14 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
 //
 Value* Query_File_Or_Directory(const Value* port)
 {
-    FILEREQ *file = File_Of_Port(port);
+    FileReq* file = Filereq_Of_Port(port);
+
+    DECLARE_VALUE (file_path);
+    Option(Error*) e = Trap_Get_Port_Path_From_Spec(
+        file_path, port
+    );
+    if (e)
+        panic (unwrap e);
 
     // The original implementation here used /no-trailing-slash for the
     // FILE-TO-LOCAL, which meant that %/ would turn into an empty string.
@@ -744,7 +780,7 @@ Value* Query_File_Or_Directory(const Value* port)
     //
     // https://superuser.com/questions/240743/
     //
-    char *path_utf8 = rebSpell("file-to-local:full", file->path);
+    char *path_utf8 = rebSpell("file-to-local:full", file_path);
 
     uv_fs_t req;
     int result = uv_fs_stat(uv_default_loop(), &req, path_utf8, nullptr);
@@ -771,7 +807,7 @@ Value* Query_File_Or_Directory(const Value* port)
 
     return rebValue(
         "make ensure object! (", port , ").scheme.info [",
-            "name:", file->path,
+            "name:", file_path,
             "size:", is_dir ? rebQ(nullptr) : rebI(req.statbuf.st_size),
             "type:", is_dir ? "'dir" : "'file",
             "date:", rebR(timestamp),

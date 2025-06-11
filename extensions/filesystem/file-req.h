@@ -69,23 +69,18 @@
 #define FILESIZE_UNKNOWN UINT64_MAX
 #define FILEOFFSET_UNKNOWN UINT64_MAX
 
-struct Reb_File_Port_State {
+typedef struct {
     uv_dir_t *handle;  // stored during directory enumeration
     uv_file id;  // an int, FILEHANDLE_NONE means not open
 
-    // This is the file string in POSIX (Rebol) format, e.g. forward slashes.
+    // !!! A pointer to a Value* was originally found in the port spec and
+    // pointed to here.  That hinged on the lifetime of the value being the
+    // same as the lifetime of the filereq.  However, direct pointers into
+    // objects are not used now, since object slots may be abstracted to
+    // be getters or typechecked/etc.  So you should instead read the path
+    // each time.
     //
-    // !!! Caching this as the UTF-8 extraction might seem good for efficiency,
-    // but that would create a memory allocation that would have to be cleaned
-    // up sometime with the port.  That's needed anyway--since a GC'd port
-    // that isn't closed leaks OS handles.  But it's probably not that needed
-    // since the file path extraction doesn't happen too often.
-    //
-    // !!! This is mutated in the case of a RENAME, which means it may be
-    // changing the spec location from which it came.  That's probably not
-    // ideal if the spec isn't copied/owned and might be read only (?)
-    //
-    Value* path;
+    /* Value* path; */
 
     // !!! To the extent Ren-C can provide any value in this space at all,
     // one thing it can do is make sure it is unambiguous that all directories
@@ -105,12 +100,10 @@ struct Reb_File_Port_State {
     uint64_t size_cache;  // may be FILESIZE_UNKNOWN, use accessors
 
     uint64_t offset;
-};
+} FileReq;
 
-typedef struct Reb_File_Port_State FILEREQ;
-
-INLINE FILEREQ *File_Of_Port(const Value* port)
+INLINE FileReq* Filereq_Of_Port(const Value* port)
 {
     Value* state = Slot_Hack(Varlist_Slot(Cell_Varlist(port), STD_PORT_STATE));
-    return cast(FILEREQ*, Cell_Blob_At_Ensure_Mutable(state));
+    return cast(FileReq*, Cell_Blob_At_Ensure_Mutable(state));
 }
