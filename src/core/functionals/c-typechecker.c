@@ -829,8 +829,7 @@ bool Typecheck_Coerce(
   #endif
 
     assert(atom != SCRATCH and atom != SPARE);
-    if (not is_return)
-        assert(not Is_Atom_Trash(atom));  // must be ^META as argument
+    assert(not Is_Endlike_Tripwire(atom));  // no DUAL flag on trash atoms
 
     if (Get_Parameter_Flag(param, OPT_OUT))
         assert(not Is_Void(atom));  // should have bypassed this check

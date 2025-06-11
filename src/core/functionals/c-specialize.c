@@ -102,16 +102,19 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
           continue_unspecialized:
 
             Erase_Cell(arg);
-            if (placeholder) {
+            if (placeholder == g_tripwire) {
                 if (Get_Parameter_Flag(param, REFINEMENT))
                     Init_Nulled(Slot_Init_Hack(arg));
-                else {
-                    UNUSED(placeholder);  // !!! temp, ignore!
+                else
                     Init_Dual_Unset(Slot_Init_Hack(arg));
-                }
             }
-            else
+            else if (placeholder == g_quasi_null) {
+                Init_Dual_Unset(Slot_Init_Hack(arg));
+            }
+            else {
+                assert(placeholder == nullptr);
                 Copy_Cell(Slot_Init_Hack(arg), param);
+            }
 
             if (binder)
                 Add_Binder_Index(unwrap binder, symbol, index);
@@ -228,7 +231,7 @@ bool Specialize_Action_Throws(
         specializee,
         lowest_stackindex,
         def ? binder : nullptr,
-        nullptr  // no placeholder, leave parameter! antiforms
+        g_quasi_null  // !!! random hack, signal now weird
     );
     Manage_Flex(exemplar);  // destined to be managed, guarded
 
@@ -268,7 +271,7 @@ bool Specialize_Action_Throws(
     const Key* key = Phase_Keys(&tail, unspecialized);
     const Param* param = Phase_Params_Head(unspecialized);
 
-    Value* arg = Slot_Hack(Varlist_Slots_Head(exemplar));
+    Slot* slot = Varlist_Slots_Head(exemplar);
 
     StackIndex ordered_stackindex = lowest_stackindex;
 
@@ -280,21 +283,24 @@ bool Specialize_Action_Throws(
     bool first_param = true;
     Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(specializee);
 
-    for (; key != tail; ++key, ++param, ++arg) {
+    for (; key != tail; ++key, ++param, ++slot) {
         if (Is_Specialized(param)) {  // was specialized in underlying phase
-            assert(not Is_Parameter(arg));  // user couldn't have changed it!
+            if (not Is_Dual_Unset(slot))
+                assert(not Is_Parameter(Slot_Hack(slot)));  // couldn't change
             continue;
         }
 
-        if (Is_Parameter(arg)) {
+        if (Is_Dual_Unset(slot)) {  // no assignments in specialization
           #if DEBUG_POISON_UNINITIALIZED_CELLS
-            Poison_Cell(arg);
+            Poison_Cell(slot);
           #endif
-            Blit_Param_Unmarked(arg, param);
+            Blit_Param_Unmarked(Slot_Init_Hack(slot), param);
             if (first_param)
                 first_param = false;  // leave infix as is
             continue;
         }
+
+        Value* arg = Slot_Hack(slot);
 
         // !!! If argument was previously specialized, should have been type
         // checked already... don't type check again (?)
@@ -346,10 +352,10 @@ bool Specialize_Action_Throws(
                 panic (Error_Bad_Parameter_Raw(ordered));
             }
 
-            Value* slot = Slot_Hack(
+            Value* ordered_slot = Slot_Hack(
                 Varlist_Slot(exemplar, VAL_WORD_INDEX(ordered))
             );
-            if (not Is_Specialized(cast(Param*, slot))) {
+            if (not Is_Specialized(cast(Param*, ordered_slot))) {
                 //
                 // It's still partial...
                 //

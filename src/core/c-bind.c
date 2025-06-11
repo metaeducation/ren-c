@@ -1323,7 +1323,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 
             Init(Slot) slot = Append_Context(varlist, symbol);
             Init_Space(slot);
-            Set_Cell_Flag(slot, BIND_NOTE_REUSE);
+            Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);
             Set_Cell_Flag(slot, PROTECTED);
 
             if (rebinding)
@@ -1453,12 +1453,14 @@ Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot)
 
     const Value* var = Slot_Hack(slot);
 
-    assert(not Is_Space(var));  // e.g. `for-each _ [1 2 3] [...]`
-
     Copy_Cell(out, var);
     return SUCCESS;
 
 } handle_dual_signal: { //////////////////////////////////////////////////////
+
+    // e.g. `for-each _ [1 2 3] [...]` sets slot to "toss values"
+
+    assert(not Is_Space(u_cast(Value*, slot)));
 
     assert(Is_Pinned(WORD, slot));
     if (rebRunThrows(out, CANON(GET), slot))
@@ -1486,9 +1488,6 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Value* write)
 
     Value* var = u_cast(Value*, slot);
 
-    if (Is_Space(var))  // e.g. `for-each _ [1 2 3] [...]`
-        return SUCCESS;  // toss it
-
     Copy_Cell(var, write);
     if (Get_Cell_Flag(slot, BIND_MARKED_META))
         Liftify(var);
@@ -1496,6 +1495,9 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Value* write)
     return SUCCESS;
 
 } handle_dual_signal: { //////////////////////////////////////////////////////
+
+    if (Is_Space(u_cast(Value*, slot)))  // e.g. `for-each _ [1 2 3] [...]`
+        return SUCCESS;  // toss it
 
     assert(Is_Pinned(WORD, slot));
     rebElide(CANON(SET), slot, rebQ(write));

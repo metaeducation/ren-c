@@ -1159,14 +1159,23 @@ DECLARE_NATIVE(DEFAULT)
     heeded(Copy_Cell(SCRATCH, target));
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps);
+    heeded(Init_Dual_Nulled_Pick_Signal(OUT));
+
+    Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(level_, steps);
     if (e)
         return PANIC(unwrap e);
 
-    Value* out = Decay_If_Unstable(OUT);  // decay may be needed [2]
+    if (Is_Error(OUT))
+        return PANIC(Cell_Error(OUT));
 
-    if (not (Is_Trash(out) or Is_Nulled(out) or Is_Blank(out)))
-        return OUT;  // consider it a "value" [3]
+    if (not Is_Tripwire(Known_Stable(OUT))) {
+        Unliftify_Undecayed(OUT);
+
+        Value* out = Decay_If_Unstable(OUT);  // decay may be needed [2]
+
+        if (not (Is_Trash(out) or Is_Nulled(out) or Is_Blank(out)))
+            return OUT;  // consider it a "value" [3]
+    }
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
     return CONTINUE(OUT, branch, OUT);

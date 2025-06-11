@@ -4,20 +4,22 @@
 ; and a nihil`
 
 [
-    (did detector: lambda [^x [<end> any-value? pack!]] [x])
+    (did detector: lambda [^x [<end> any-value? pack! ghost!]] [
+        tweak $ '^x null
+    ])
 
     ((the '10) = detector 10)
     ((lift null) = detector null)
     ('~[~null~]~ = detector if ok [null])
 
     ('~,~ = detector (comment "hi"))
-    (null = detector)
+    (tripwire? detector)
 
     (did left-detector: infix detector/)
 
     ((the '1) = (1 left-detector))
-    (null = left-detector)
-    (null = (left-detector))
+    (tripwire? left-detector)
+    (tripwire? (left-detector))
 ]
 
 (

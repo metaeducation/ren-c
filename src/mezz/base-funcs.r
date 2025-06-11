@@ -118,21 +118,21 @@ redescribe: func [
 
 
 /unset: redescribe [
-    "Clear the value of a word to the unset state (in its current context)"
+    "Put variable into a dual state that prohibits any form of GET on it"
 ](
-    specialize set/ [value: ~]
+    specialize tweak/ [dual: ~]
 )
 
 /unset?: redescribe [
-    "Determine if a variable looks up to a `~` antiform"
+    "Determine if a variable is truly unset (tweaked to a dual tripwire)"
 ](
-    cascade [get:any/ trash?/]
+    cascade [specialize tweak/ [dual: null], trash?/]
 )
 
 /set?: redescribe [
-    "Determine if a variable does not look up to the ~ antiform"
+    "Determine if a variable can give back a value"
 ](
-    cascade [get:any/ trash?/ not/]
+    cascade [unset?/ not?/]
 )
 
 /vacant?: redescribe [

@@ -1287,6 +1287,28 @@ DECLARE_NATIVE(BLANK_Q)
 
 
 //
+//  tripwire?: native:intrinsic [
+//
+//  "Tells you if argument is an ~ antiform, e.g. an tripwire TRASH! form"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_NATIVE(TRIPWIRE_Q)
+{
+    INCLUDE_PARAMS_OF_TRIPWIRE_Q;
+
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return LOGIC(Is_Tripwire(v));
+}
+
+
+//
 //  tripwire: native [  ; native:intrinsic currently needs at least 1 argument
 //
 //  "Returns antiform SPACE (aka TRIPWIRE)"

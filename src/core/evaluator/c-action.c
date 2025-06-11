@@ -458,7 +458,7 @@ Bounce Action_Executor(Level* L)
                 if (Not_Parameter_Flag(PARAM, ENDABLE))
                     return PANIC(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
 
-                Init_Nulled(ARG);
+                Init_Tripwire_Due_To_End(ARG);
                 goto continue_fulfilling;
             }
 
@@ -855,6 +855,12 @@ Bounce Action_Executor(Level* L)
             param = Phase_Param(phase, arg - cast(Value*, L->rootvar));
         }
 
+        if (Is_Endlike_Tripwire(arg)) {  // special state, SLOT_WEIRD_DUAL
+            if (Get_Parameter_Flag(param, ENDABLE))  // !!! "<unset>?
+                continue;
+            return PANIC(Error_Unspecified_Arg(L));
+        }
+
         if (Cell_Parameter_Class(param) != PARAMCLASS_META) {
             if (Get_Cell_Flag(arg, SLOT_WEIRD_DUAL)) {  // !!! temp
                 Unliftify_Known_Stable(arg);
@@ -866,12 +872,6 @@ Bounce Action_Executor(Level* L)
             Set_Cell_Flag(arg, SLOT_WEIRD_DUAL);
             // leave dual flag for a moment...
             // this *should* screw up ARG() etc. but they ignore it
-        }
-
-        if (Is_Trash(arg)) {  // other trash are unspecified/"end"
-            if (Get_Parameter_Flag(param, ENDABLE))  // !!! "optional?"
-                continue;
-            return PANIC(Error_Unspecified_Arg(L));
         }
 
         if (Is_Blank(arg)) {

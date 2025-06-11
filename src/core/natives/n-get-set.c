@@ -1259,7 +1259,7 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
 //          [<undo-opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
 //      dual "Ordinary GET or SET with lifted value (unlifts), else dual"
-//          [null? trash? space? quasiform! quoted!]  ; need TRIPWIRE?
+//          [null? tripwire? space? quasiform! quoted!]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //  ]
@@ -1275,10 +1275,7 @@ DECLARE_NATIVE(TWEAK)
 
     Value* dual = ARG(DUAL);
 
-    if (Is_Space(dual))
-        Init_Tripwire(OUT);  // !!! Temporary !!!
-    else
-        Copy_Cell(OUT, dual);
+    Copy_Cell_Core(OUT, dual, CELL_MASK_THROW);
 
     if (Is_Nulled(ARG(TARGET)))
         return OUT;   // same for SET as [10 = (void): 10]

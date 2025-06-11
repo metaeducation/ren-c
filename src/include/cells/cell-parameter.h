@@ -324,7 +324,7 @@ INLINE void Set_Parameter_String(Element* param, Option(const String*) string) {
 }
 
 
-// Antiform parameters are used to represent unspecialpized parameters.  When
+// Antiform parameters are used to represent unspecialized parameters.  When
 // the slot they are in is overwritten by another value, that indicates they
 // are then fixed at a value and hence specialized--so not part of the public
 // interface of the function.
@@ -367,7 +367,6 @@ INLINE bool Is_Typechecked(const Value* v) {
 
 INLINE void Mark_Typechecked(const Value* v) {
     Assert_Cell_Stable(v);
-    assert(not Is_Trash(v));  // only local creation can flag nothing
     Set_Cell_Flag(v, PARAM_NOTE_TYPECHECKED);
 }
 
