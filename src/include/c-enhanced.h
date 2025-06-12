@@ -842,26 +842,36 @@
 // purpose of showing a routine you call that you weren't expecting it to
 // have valid data at the end of their call.
 //
+// `impossible` when you want to document something that could be an assert,
+// but it would waste time because you know it should never happen.  (Uses
+// of this are a bit of a red flag that the design may benefit from rethinking
+// such that the impossible case isn't expressable at all.)
+//
 #if NO_CPLUSPLUS_11
-    #define possibly(expr)  NOOP
-    #define unnecessary(expr)  NOOP
-    #define dont(expr)  NOOP
+    #define STATIC_ASSERT_DECLTYPE_BOOL(expr)     NOOP
+    #define STATIC_ASSERT_DECLTYPE_VALID(expr)      NOOP
 #else
-    #define possibly(expr) \
+    #define STATIC_ASSERT_DECLTYPE_BOOL(expr) \
         static_assert(std::is_convertible<decltype((expr)), bool>::value, \
-            "possibly() expression must be convertible to bool")
+            "expression must be convertible to bool")
 
-    #define unnecessary(expr) \
-        static_assert(std::is_same<decltype((void)(expr)), void>::value, "")
-
-    #define dont(expr) \
+    #define STATIC_ASSERT_DECLTYPE_VALID(expr) \
         static_assert(std::is_same<decltype((void)(expr)), void>::value, "")
 #endif
 
-#define heeded(expr)  (expr)
+#define possibly(expr)       STATIC_ASSERT_DECLTYPE_BOOL(expr)
+#define unnecessary(expr)    STATIC_ASSERT_DECLTYPE_VALID(expr)
+#define dont(expr)           STATIC_ASSERT_DECLTYPE_VALID(expr)
+#define heeded(expr)         (expr)
+#define impossible(expr)     STATIC_ASSERT_DECLTYPE_BOOL(expr)
 
-#define UNNECESSARY(expr) /* macro version */ \
-    struct GlobalScopeNoopTrick  // https://stackoverflow.com/q/53923706
+// Macros. For GlobalScopeNoopTrick: https://stackoverflow.com/q/53923706
+
+#define POSSIBLY(expr)       struct GlobalScopeNoopTrick
+#define UNNECESSARY(expr)    struct GlobalScopeNoopTrick
+#define DONT(expr)           struct GlobalScopeNoopTrick
+#define HEEDED(expr)         expr
+#define IMPOSSIBLE(expr)     struct GlobalScopeNoopTrick
 
 
 //=//// MARK UNUSED VARIABLES /////////////////////////////////////////////=//

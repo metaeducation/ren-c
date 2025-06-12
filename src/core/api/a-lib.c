@@ -3019,7 +3019,7 @@ DECLARE_NATIVE(API_TRANSIENT)
 //
 Bounce Api_Function_Dispatcher(Level* const L)
 {
-    UNNECESSARY(USE_LEVEL_SHORTHANDS (L));  // don't compete with windows.h
+    DONT(USE_LEVEL_SHORTHANDS (L));  // don't compete with windows.h
 
     Details* details = Ensure_Level_Details(L);
 
