@@ -77,7 +77,7 @@
 //    arguments to speed up these critical tests, then wrap them in
 //    Ensure_Readable() and Ensure_Writable() functions for callers that
 //    don't mind the cost.  The STATIC_ASSERT_LVALUE() macro catches any
-//    potential violators.
+//    potential violators...though narrow need for the evil macros exist.
 //
 // 2. One might think that because you're asking if a cell is writable that
 //    the function should only take non-const Cells, but the question is
@@ -89,6 +89,9 @@
 #define CELL_MASK_ERASED_0  0  // "initable", but not readable or writable
 
 #if (! DEBUG_CELL_READ_WRITE)  // these are all no-ops in release builds!
+    #define Assert_Cell_Initable_Evil_Macro(c)  NOOP
+    #define Assert_Cell_Writable_Evil_Macro(c)  NOOP
+
     #define Assert_Cell_Readable(c)    NOOP
     #define Assert_Cell_Writable(c)    NOOP
     #define Assert_Cell_Initable(c)    NOOP
@@ -107,21 +110,31 @@
         } \
     } while (0)
 
-    #define Assert_Cell_Writable(c) do { \
-        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
+    #define Assert_Cell_Writable_Evil_Macro(c) do { \
+        /* don't STATIC_ASSERT_LVALUE(out), it's evil on purpose */ \
         if ( \
             (((c)->header.bits) & ( \
                 NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_PROTECTED \
             )) != (NODE_FLAG_NODE | NODE_FLAG_CELL) \
         ){ \
-            Crash_On_Unwritable_Cell(c);  /* despite write, passed const [2] */ \
+            Crash_On_Unwritable_Cell(c);  /* despite write, pass const [2] */ \
         } \
+    } while (0)
+
+    #define Assert_Cell_Writable(c) do { \
+        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
+        Assert_Cell_Writable_Evil_Macro(c); \
+    } while (0)
+
+    #define Assert_Cell_Initable_Evil_Macro(c) do { \
+        /* don't STATIC_ASSERT_LVALUE(out), it's evil on purpose */ \
+        if ((c)->header.bits != CELL_MASK_ERASED_0)  /* 0 is initable */ \
+            Assert_Cell_Writable_Evil_Macro(c);  /* else need NODE and CELL */ \
     } while (0)
 
     #define Assert_Cell_Initable(c) do { \
         STATIC_ASSERT_LVALUE(c);  /* evil macro [1] */ \
-        if ((c)->header.bits != CELL_MASK_ERASED_0)  /* 0 is initable */ \
-            Assert_Cell_Writable(c);  /* else need NODE and CELL flags */ \
+        Assert_Cell_Initable_Evil_Macro(c); \
     } while (0)
 
   #if NO_CPLUSPLUS_11
@@ -294,20 +307,25 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
         | FLAG_HEART_BYTE_255 | FLAG_LIFT_BYTE(255))
 
 #if CORRUPT_CELL_HEADERS_ONLY
-    #define Init_Unreadable_Untracked(out) do { \
-        STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
-        Assert_Cell_Initable(out); \
+    #define Init_Unreadable_Untracked_Evil_Macro(out) do { \
+        /* don't STATIC_ASSERT_LVALUE(out), it's evil on purpose */ \
+        Assert_Cell_Initable_Evil_Macro(out); \
         (out)->header.bits |= CELL_MASK_UNREADABLE;  /* bitwise OR [1] */ \
     } while (0)
 #else
-    #define Init_Unreadable_Untracked(out) do { \
-        STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
-        Assert_Cell_Initable(out); \
+    #define Init_Unreadable_Untracked_Evil_Macro(out) do { \
+        /* don't STATIC_ASSERT_LVALUE(out), it's evil on purpose */ \
+        Assert_Cell_Initable_Evil_Macro(out); \
         (out)->header.bits |= CELL_MASK_UNREADABLE;  /* bitwise OR [1] */ \
         Corrupt_If_Debug((out)->extra); \
         Corrupt_If_Debug((out)->payload); \
     } while (0)
 #endif
+
+#define Init_Unreadable_Untracked(out) do { \
+    STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
+    Init_Unreadable_Untracked_Evil_Macro(out); \
+} while (0)
 
 INLINE Cell* Init_Unreadable_Untracked_Inline(Cell* out) {
     Init_Unreadable_Untracked(out);
@@ -340,9 +358,9 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
     TRACK(Init_Unreadable_Untracked_Inline((out)))
 
 #if PERFORM_CORRUPTIONS
-    #define Corrupt_Cell_If_Debug(c)  Init_Unreadable(c)
+    #define Corrupt_Cell_If_Debug(c)  USED(Init_Unreadable(c))
 #else
-    #define Corrupt_Cell_If_Debug(c)  (c)
+    #define Corrupt_Cell_If_Debug(c)  NOOP
 #endif
 
 #if PERFORM_CORRUPTIONS && CPLUSPLUS_11
@@ -353,29 +371,32 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
     // because that would lose header bits like whether the cell is an API
     // value.  We use the Init_Unreadable_Untracked().
     //
-    // Note that Init_Unreadable_Untracked() is an "evil macro" that checks
-    // to be sure that its argument is an LVALUE, so we have to take an
-    // address locally...but there's no function call.
-
-    INLINE void Corrupt_If_Debug(Cell& ref)
-      { Cell* c = &ref; Init_Unreadable_Untracked(c); }
-
-  #if CHECK_CELL_SUBCLASSES
-    INLINE void Corrupt_If_Debug(Atom& ref)
-      { Atom* a = &ref; Init_Unreadable_Untracked(a); }
-
-    INLINE void Corrupt_If_Debug(Value& ref)
-      { Value* v = &ref; Init_Unreadable_Untracked(v); }
-
-    INLINE void Corrupt_If_Debug(Element& ref)
-      { Element* e = &ref; Init_Unreadable_Untracked(e); }
-
-    INLINE void Corrupt_If_Debug(Slot& ref)
-      { Slot* s = &ref; Init_Unreadable_Untracked(s); }
-
-    INLINE void Corrupt_If_Debug(Param& ref)
-      { Param* p = &ref; Init_Unreadable_Untracked(p); }
-  #endif
+    // 1. This only runs in checked builds, but it is performance sensitive.
+    //    So we want to avoid making a temporary, which would be needed to
+    //    subvert the usual STATIC_ASSERT_LVALUE() check:
+    //
+    //        Cell* cell = &ref;
+    //        Init_Unreadable_Untracked(cell);
+    //
+    //    In the C++ model there's no way to tell the difference between &ref
+    //    and an expression with side effects that synthsized a reference.
+    //    There would be ways to make a macro that "approved" a reference:
+    //
+    //       Init_Unredable_Untracked(NO_SIDE_EFFECTS(&ref));
+    //
+    //    However, even a constexpr which did this would add cost in the
+    //    checked build (functions aren't inlined).  So for this case, we
+    //    just use a macro variant with no STATIC_ASSERT_LVALUE() check.
+    //
+    template<typename T>
+    struct Corrupter<
+        T,
+        typename std::enable_if<std::is_base_of<Cell, T>::value>::type
+    >{
+      static void corrupt(T& ref) {
+        Init_Unreadable_Untracked_Evil_Macro(&ref);  // &ref needs evil [1]
+      }
+    };
 #endif
 
 

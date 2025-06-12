@@ -935,15 +935,48 @@
     #define CORRUPT_IF_DEBUG_DOSE 7
   #endif
 
-    // Pointer, set to spam or 0 (faster than memset() template)
+    // Helper stuct for Corrupt_If_Debug() with generalized memset() fallback.
     //
-    template<
-        typename T,
-        typename std::enable_if<
-            std::is_pointer<T>::value
-        >::type* = nullptr
-    >
-    void Corrupt_If_Debug(T& ref) {
+    // Function templates can't be partially specialized, class templates can.
+    // Using a struct allows us to provide custom behavior for type families
+    // (e.g. "all classes derived from some Base") while still being able to
+    // have a generic fallback.  (A function template would see a generic
+    // fallback as ambiguous with SFINAE trying to "carve up" the space.)
+    //
+    // 1. It's unsafe to memory fill an arbitrary C++ class by value with
+    //    garbage bytes, because they can have extra vtables and such--you
+    //    can overwrite private compiler data.  But this is a C codebase
+    //    which uses just a few C++ features.  If you don't have virtual
+    //    methods then is_standard_layout<> should be true, and the memset()
+    //    shouldn't be a problem...
+    //
+    // 2. See definition of Cell and Mem_Set() for why casting to void* is
+    //    needed.  (Mem_Set() macro that is not defined for %c-enhanced.h)
+    //
+    template<typename T, typename Enable = void>
+    struct Corrupter {
+      static void corrupt(T& ref) {  // fallback if no other specialization
+        static_assert(
+            std::is_standard_layout<T>::value,  // would break C++ [1]
+            "Cannot memset() a C++ struct or class that's not standard layout"
+        );
+        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
+        if (countdown == 0) {
+            memset(cast(void*, &ref), 0, sizeof(T));  // void cast needed [2]
+            countdown = CORRUPT_IF_DEBUG_DOSE;
+        }
+        else {
+            memset(cast(void*, &ref), 189, sizeof(T));  // void cast needed [2]
+            --countdown;
+        }
+      }
+    };
+
+    // Pointer, set to null or corrupt pointer (faster than memset() template)
+    //
+    template<typename T>
+    struct Corrupter<T*> {
+      static void corrupt(T*& ref) {  // faster pointer corruption
         static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
         if (countdown == 0) {
             ref = nullptr;  // nullptr occasionally, deterministic
@@ -953,67 +986,42 @@
             Corrupt_Pointer_If_Debug(ref); // corrupt other half of the time
             --countdown;
         }
-    }
+      }
+    };
 
     // Integer/bool/float, set to spam or 0 (faster than memset() template)
     //
-    template<
-        typename T,
+    template<typename T>
+    struct Corrupter<
+        T,
         typename std::enable_if<
-            not std::is_pointer<T>::value
-            and std::is_arithmetic<T>::value
-        >::type* = nullptr
-    >
-    void Corrupt_If_Debug(T& ref) {
+            not std::is_pointer<T>::value and std::is_arithmetic<T>::value
+        >::type
+    >{
+      static void corrupt(T& ref) {
         static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
         if (countdown == 0) {
             ref = static_cast<T>(0);  // false/0 occasionally, deterministic
             countdown = CORRUPT_IF_DEBUG_DOSE;
         }
         else {
-            ref = static_cast<T>(12345678); // garbage the rest of the time
+            ref = static_cast<T>(12345678);  // garbage the rest of the time
             --countdown;
         }
-    }
+      }
+    };
 
-    // Generalized memset() template for Corrupt_If_Debug()
+    // Use macro for efficiency, avoid another function call overhead
     //
-    // 1. This memset technique could be applied to all types, but we can
-    //    dodge the cost of calling memset() with specializations above,
-    //    and give easier-to-recognize "that's corrupt!" values as well.
+    // decltype(ref) deduces the type of ref (incl. reference/cv qualifiers)
     //
-    // 2. It's unsafe to memory fill an arbitrary C++ class by value with
-    //    garbage bytes, because they can have extra vtables and such--you
-    //    can overwrite private compiler data.  But this is a C codebase
-    //    which uses just a few C++ features.  If you don't have virtual
-    //    methods then is_standard_layout<> should be true, and the memset()
-    //    shouldn't be a problem...
+    // std::remove_reference strips the reference, so the template matches
+    // the Corrupter<T> specializations
     //
-    // 3. See definition of Cell and Mem_Set() for why casting to void* is
-    //    needed.  (Mem_Set() macro that is not defined for %c-enhanced.h)
-    //
-    template<
-        typename T,
-        typename std::enable_if<
-            not std::is_pointer<T>::value  // could work, but see [1]
-            and not std::is_arithmetic<T>::value  // could work, but see [1]
-        >::type* = nullptr
-    >
-    void Corrupt_If_Debug(T& ref) {
-        static_assert(
-            std::is_standard_layout<T>::value,  // would break C++ [1]
-            "Cannot memset() a C++ struct or class that's not standard layout"
-        );
-        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
-        if (countdown == 0) {
-            memset(cast(void*, &ref), 0, sizeof(T));  // void cast needed [1]
-            countdown = CORRUPT_IF_DEBUG_DOSE;
-        }
-        else {
-            memset(cast(void*, &ref), 189, sizeof(T));  // void cast needed [1]
-            --countdown;
-        }
-    }
+    #define Corrupt_If_Debug(ref) \
+        Corrupter< \
+            typename std::remove_reference<decltype(ref)>::type \
+        >::corrupt(ref)
 
     // We want to be able to write UNUSED() for things that aren't used
     // even if they are RValues and can't be corrupted, like UNUSED(Bool_ARG(FOO)).
@@ -1234,9 +1242,12 @@
         { return Is_Pointer_Corrupt_Debug(nn.p); }
 
   #if (! DEBUG_STATIC_ANALYZING)
-    template<class P>
-    INLINE void Corrupt_If_Debug(NeverNull(P) &nn)
-        { Corrupt_Pointer_If_Debug(nn.p); }
+    template<typename T>
+    struct Corrupter<NeverNullEnforcer<T>> {
+      static void corrupt(NeverNullEnforcer<T>& nn) {
+        Corrupt_If_Debug(nn.p);
+     }
+    };
   #endif
 #endif
 
@@ -1373,17 +1384,20 @@
     #define maybe g_maybe_helper <<        // [5]
 
     template<class P>
-    INLINE void Corrupt_Pointer_If_Debug(Option(P) &option)
+    INLINE void Corrupt_Pointer_If_Debug(OptionWrapper<P> &option)
       { Corrupt_Pointer_If_Debug(option.p); }
 
     template<class P>
-    INLINE bool Is_Pointer_Corrupt_Debug(Option(P) &option)
+    INLINE bool Is_Pointer_Corrupt_Debug(OptionWrapper<P> &option)
       { return Is_Pointer_Corrupt_Debug(option.p); }
 
   #if (! DEBUG_STATIC_ANALYZING)
-    template<class P>
-    INLINE void Corrupt_If_Debug(Option(P) &option)
-      { Corrupt_If_Debug(option.p); }
+    template<typename P>
+    struct Corrupter<OptionWrapper<P>> {
+      static void corrupt(OptionWrapper<P>& option) {
+        Corrupt_If_Debug(option.p);
+      }
+    };
   #endif
 #endif
 
@@ -1764,24 +1778,15 @@
         T* operator->() const { return p; }
     };
 
-    //=//// CORRUPTION HELPERS //////////////////////////////////////////////=//
+    //=//// CORRUPTION HELPER /////////////////////////////////////////////=//
 
     template<typename T>
-    void Corrupt_If_Debug(SinkWrapper<T>& wrapper) {
+    struct Corrupter<SinkWrapper<T>> {  // C pointer corrupt fails
+      static void corrupt(SinkWrapper<T>& wrapper) {
         Corrupt_If_Debug(wrapper.p);
         wrapper.corruption_pending = false;
-    }
-
-    template<typename T>
-    void Unused_Helper(SinkWrapper<T>& wrapper) {
-        Corrupt_If_Debug(wrapper.p);
-        wrapper.corruption_pending = false;
-    }
-
-    template<typename T>
-    void Unused_Helper(const SinkWrapper<T>& wrapper) {
-        USED(wrapper.p);
-    }
+      }
+    };
 #endif
 
 
