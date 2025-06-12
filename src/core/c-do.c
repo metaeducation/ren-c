@@ -91,7 +91,7 @@ void Prep_Action_Level(
 //  Push_Frame_Continuation: C
 //
 void Push_Frame_Continuation(
-    Atom* out,
+    Init(Atom) out,
     Flags flags,
     const Value* frame,  // may be antiform
     Option(const Atom*) with

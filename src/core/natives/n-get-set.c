@@ -116,11 +116,13 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     const Element* tuple,
     Context* context
 ){
-    Level* level_ = Make_End_Level(&Stepper_Executor, LEVEL_MASK_NONE);
-    STATE = 1;  // rule for trampoline (we're setting out to non-erased)
+    Level* level_ = Make_End_Level(
+        &Stepper_Executor,
+        LEVEL_MASK_NONE | FLAG_STATE_BYTE(1) // rule for trampoline
+    );
 
-    Sink(Atom) atom = cast(Atom*, out);
-    Push_Level_Erase_Out_If_State_0(atom, level_);
+    Sink(Atom) atom_out = u_cast(Atom*, out);
+    Push_Level_Erase_Out_If_State_0(atom_out, level_);
 
     Derelativize(SCRATCH, tuple, context);
     heeded(Corrupt_Cell_If_Debug(SPARE));
@@ -131,7 +133,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
 
     Drop_Level(level_);
 
-    Decay_If_Unstable(atom);
+    Decay_If_Unstable(atom_out);
 
     return SUCCESS;
 }
@@ -170,8 +172,10 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
                 out, safe, var, context
             );
         else {
-            Level* level_ = Make_End_Level(&Stepper_Executor, LEVEL_MASK_NONE);
-            STATE = 1;  // rule for trampoline (we're setting out to non-erased)
+            Level* level_ = Make_End_Level(
+                &Stepper_Executor,
+                LEVEL_MASK_NONE | FLAG_STATE_BYTE(1)  // rule for trampoline
+            );
 
             Push_Level_Erase_Out_If_State_0(out, level_);
 
@@ -208,10 +212,12 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
         return SUCCESS;
     }
 
-    Level* level_ = Make_End_Level(&Stepper_Executor, LEVEL_MASK_NONE);
-    STATE = 1;  // rule for trampoline (we're setting out to non-erased)
+    Level* level_ = Make_End_Level(
+        &Stepper_Executor,
+        LEVEL_MASK_NONE | FLAG_STATE_BYTE(1)  // rule for trampoline
+    );
 
-    Push_Level_Erase_Out_If_State_0(out, level_);
+    Push_Level_Erase_Out_If_State_0(out, level_);  // flushes corruption
 
     heeded(Derelativize(SCRATCH, var, context));
     heeded(Corrupt_Cell_If_Debug(SPARE));
@@ -238,7 +244,7 @@ Option(Error*) Trap_Get_Var(
     const Element* var,
     Context* context
 ){
-    Atom* atom_out = u_cast(Atom*, Init_Unreadable(out));
+    Sink(Atom) atom_out = u_cast(Atom*, out);
 
     Option(Error*) error = Trap_Get_Var_Maybe_Trash(
         atom_out, steps_out, var, context
@@ -317,17 +323,18 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
 
         const Value* item = at;
         if (Is_Group(at)) {
+            Sink(Atom) atom_spare = u_cast(Atom*, spare);
             if (Eval_Value_Throws(
-                cast(Atom*, spare),
+                atom_spare,
                 c_cast(Element*, at),
                 Derive_Binding(derived, at)
             )){
                 return Error_No_Catch_For_Throw(TOP_LEVEL);
             }
-            if (Is_Void(cast(Atom*, spare)))
+            if (Is_Void(atom_spare))
                 continue;  // just skip it (voids are ignored, NULLs error)
 
-            item = Decay_If_Unstable(cast(Atom*, spare));
+            item = Decay_If_Unstable(atom_spare);
 
             if (Is_Antiform(item))
                 return Error_Bad_Antiform(item);
@@ -490,7 +497,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     if (rebRunThrows(
         cast(RebolValue*, temp),
         CANON(PICK),
-        cast(const RebolValue*, out),  // was quoted above
+        out,  // was quoted above
         rebQ(cast(const RebolValue*, at)))  // Cell, but is Element*
     ){
         e = Error_No_Catch_For_Throw(TOP_LEVEL);
@@ -581,7 +588,7 @@ Option(Error*) Trap_Get_Word(
 ){
     assert(Is_Word(word));  // no sigil, can't give back unstable form
 
-    Sink(Atom) atom_out = u_cast(Atom*, Init_Unreadable(out));
+    Sink(Atom) atom_out = u_cast(Atom*, out);
 
     Option(Error*) e = Trap_Get_Any_Word_Maybe_Trash(
         atom_out, word, context

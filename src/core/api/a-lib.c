@@ -1142,7 +1142,8 @@ static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     else
         L->flags.bits |= LEVEL_FLAG_UNINTERRUPTIBLE;
 
-    Push_Level_Dont_Inherit_Interruptibility(u_cast(Atom*, out), L);
+    Sink(Atom) atom_out = u_cast(Atom*, out);
+    Push_Level_Dont_Inherit_Interruptibility(atom_out, L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Level(L);
 
@@ -1150,9 +1151,9 @@ static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
         return Error_No_Catch_For_Throw(TOP_LEVEL);
 
     if (run_flags & RUN_VA_FLAG_LIFT_RESULT)
-        Liftify(cast(Atom*, out));
+        Liftify(atom_out);
     else
-        Decay_If_Unstable(cast(Atom*, out));  // should Trap(), not panic
+        Decay_If_Unstable(atom_out);  // should Trap(), not panic
 
     return SUCCESS;
 }

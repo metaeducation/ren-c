@@ -244,8 +244,7 @@ DECLARE_NATIVE(INLINE)
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    const Element* code = maybe Optional_Element_ARG(CODE);
-
+    Element* code = maybe Optional_Element_ARG(CODE);
     if (not code)
         return VOID;  // do nothing, just return invisibly
 

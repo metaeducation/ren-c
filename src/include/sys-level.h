@@ -531,7 +531,6 @@ INLINE void Push_Level_Erase_Out_If_State_0(  // inherits uninterruptibility [4]
     L->flags.bits |= L->prior->flags.bits & LEVEL_FLAG_UNINTERRUPTIBLE;  // [4]
 }
 
-
 INLINE void Update_Expression_Start(Level* L) {
     assert(
         L->executor == &Stepper_Executor
@@ -688,9 +687,9 @@ INLINE Level* Prep_Level_Core(
     (not Is_Nulled(Level_Arg(level_, param_##name##_)))
 
 
-INLINE Option(const Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
+INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 {
-    const Value* arg = Level_Arg(L, n);
+    Value* arg = Level_Arg(L, n);
     if (Is_Nulled(arg))
         return nullptr;
     return Known_Element(arg);
