@@ -784,10 +784,10 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 
   #if DEBUG_USE_SINKS
     template<>
-    struct AllowInitConversion<Slot, Value> : std::true_type {};
+    struct AllowSinkConversion<Slot, Value> : std::true_type {};
 
     template<>
-    struct AllowInitConversion<Slot, Element> : std::true_type {};
+    struct AllowSinkConversion<Slot, Element> : std::true_type {};
   #endif
 #endif
 

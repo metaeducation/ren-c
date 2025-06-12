@@ -124,12 +124,16 @@
         }
 
         operator T* () const { return p; }
-        operator Sink(Value) () const { return p; }
-        operator Sink(Element) () const { return p; }
-        operator Need(Value*) () const { return p; }
-        operator Need(const Value*) () const { return p; }
-        operator Need(Element*) () const { return p; }
-        operator Need(const Element*) () const { return p; }
+
+        operator NeedWrapper<Value> () const { return p; }
+        operator NeedWrapper<const Value> () const { return p; }
+        operator NeedWrapper<Element> () const { return p; }
+        operator NeedWrapper<const Element> () const { return p; }
+        operator SinkWrapper<Value> () const { return p; }
+        operator SinkWrapper<Element> () const { return p; }
+        operator InitWrapper<Value> () const { return p; }
+        operator InitWrapper<Element> () const { return p; }
+
         operator SymbolOrValue(const*) () const { return p; }
 
         explicit operator Byte* () const { return cast(Byte*, p); }

@@ -39,50 +39,6 @@
     x_cast(Value*, ensure(const Atom*, (atom)))
 
 
-// Because atoms are supersets of value, you may want to pass an atom to a
-// function that writes a value.  But such passing is usually illegal, due
-// to wanting to protect functions that only expect stable isotopes from
-// getting unstable ones.  So you need to specifically point out that the
-// atom is being written into and its contents not heeded.
-//
-// We do this with the Sink() wrapper class (which must be enabled in order
-// for the CHECK_CELL_SUBCLASSES to work).  We have to extend it with
-// some helpers.
-//
-// In the checked build we can give this extra teeth by wiping the contents
-// of the atom, to ensure they are not examined.
-//
-#if CHECK_CELL_SUBCLASSES  // Note: Sink(Value) wrapper has runtime cost
-    template<>
-    struct c_cast_helper<Byte*, Sink(Value) const&>
-      { typedef Byte* type; };
-
-    template<typename V, typename T>
-    struct cast_helper<NeedWrapper<V>,T> {
-        static T convert(const NeedWrapper<V>& wrapper) {
-            using MV = typename std::remove_const<V>::type;
-            if (wrapper.corruption_pending) {
-                Corrupt_If_Debug(*const_cast<MV*>(wrapper.p));
-                wrapper.corruption_pending = false;
-            }
-            return (T)(wrapper.p);
-        }
-    };
-
-    template<typename V, typename T>
-    struct cast_helper<SinkWrapper<V>,T> {
-        static T convert(const SinkWrapper<V>& wrapper) {
-            using MV = typename std::remove_const<V>::type;
-            if (wrapper.corruption_pending) {
-                Corrupt_If_Debug(*const_cast<MV*>(wrapper.p));
-                wrapper.corruption_pending = false;
-            }
-            return (T)(wrapper.p);
-        }
-    };
-#endif
-
-
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//
 //
 // See %sys-datastack.h for a deeper explanation.

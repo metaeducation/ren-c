@@ -185,14 +185,14 @@ typedef struct BookmarkStruct Bookmark;
       #endif
 
       #if DEBUG_USE_SINKS
-        SymbolOrValueHolder(Need(Value*)& v) : p (v) {}
-        SymbolOrValueHolder(Sink(Value)& v) : p (v) {}
+        SymbolOrValueHolder(const NeedWrapper<Value>& v) : p (v.p) {}
+        SymbolOrValueHolder(const SinkWrapper<Value>& v) : p (v.p) {}
+        SymbolOrValueHolder(const InitWrapper<Value>& v) : p (v.p) {}
         #if CHECK_CELL_SUBCLASSES
-            SymbolOrValueHolder(Need(Element*)& e) : p (e) {}
-            SymbolOrValueHolder(Sink(Element)& e) : p (e) {}
+            SymbolOrValueHolder(const NeedWrapper<Element>& e) : p (e.p) {}
+            SymbolOrValueHolder(const SinkWrapper<Element>& e) : p (e.p) {}
+            SymbolOrValueHolder(const InitWrapper<Element>& e) : p (e.p) {}
         #endif
-        /*SymbolOrValueHolder(Init(Value)& v) : p (v) {}*/  // Sink / Value*
-        /*SymbolOrValueHolder(Init(Element)& e) : p (e) {}*/  // Sink / Element*
       #endif
     };
 
