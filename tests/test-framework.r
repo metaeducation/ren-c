@@ -51,7 +51,7 @@ run-single-test: func [
     return: []
     code "Code GROUP! from test file, assumed bound into isolated module"
         [group!]
-    expected-id [<undo-opt> word!]
+    expected-id [<opt> word!]
 ][
     assert [expected-id <> '!!!]  ; dialecting mistake, vs. ???, easy to make
 
@@ -257,7 +257,7 @@ export do-recover: func [
         [~[file! text!]~]
     file [file!] "test file"
     flags [block!] "which flags to accept"
-    code-checksum [<undo-opt> blob!]
+    code-checksum [<opt> blob!]
     log-file-prefix [file!]
     <local>
         interpreter last-vector value position next-position

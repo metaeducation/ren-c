@@ -43,7 +43,7 @@
 //      value "BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns..."
 //          [element?]
 //      expressions "Depending on VALUE, more expressions may be consumed"
-//          [<undo-opt> element? <variadic>]
+//          [<opt> element? <variadic>]
 //  ]
 //
 DECLARE_NATIVE(REEVAL)

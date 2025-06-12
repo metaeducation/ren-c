@@ -255,32 +255,32 @@ static Element* Make_Locked_Tag(const char *utf8) { // helper
 //
 static void Init_Action_Spec_Tags(void)
 {
-    ensure(nullptr, Root_With_Tag) = Make_Locked_Tag("with");
-    ensure(nullptr, Root_Variadic_Tag) = Make_Locked_Tag("variadic");
-    ensure(nullptr, Root_End_Tag) = Make_Locked_Tag("end");
-    ensure(nullptr, Root_Opt_Out_Tag) = Make_Locked_Tag("opt-out");
-    ensure(nullptr, Root_Undo_Opt_Tag) = Make_Locked_Tag("undo-opt");
-    ensure(nullptr, Root_Local_Tag) = Make_Locked_Tag("local");
-    ensure(nullptr, Root_Const_Tag) = Make_Locked_Tag("const");
-    ensure(nullptr, Root_Divergent_Tag) = Make_Locked_Tag("divergent");
-    ensure(nullptr, Root_Unrun_Tag) = Make_Locked_Tag("unrun");
+    ensure(nullptr, g_tag_with) = Make_Locked_Tag("with");
+    ensure(nullptr, g_tag_variadic) = Make_Locked_Tag("variadic");
+    ensure(nullptr, g_tag_end) = Make_Locked_Tag("end");
+    ensure(nullptr, g_tag_opt_out) = Make_Locked_Tag("opt-out");
+    ensure(nullptr, g_tag_opt) = Make_Locked_Tag("opt");
+    ensure(nullptr, g_tag_local) = Make_Locked_Tag("local");
+    ensure(nullptr, g_tag_const) = Make_Locked_Tag("const");
+    ensure(nullptr, g_tag_divergent) = Make_Locked_Tag("divergent");
+    ensure(nullptr, g_tag_unrun) = Make_Locked_Tag("unrun");
 
-    ensure(nullptr, Root_Here_Tag) = Make_Locked_Tag("here");  // used by PARSE
+    ensure(nullptr, g_tag_here) = Make_Locked_Tag("here");  // used by PARSE
 }
 
 static void Shutdown_Action_Spec_Tags(void)
 {
-    rebReleaseAndNull(&Root_With_Tag);
-    rebReleaseAndNull(&Root_Variadic_Tag);
-    rebReleaseAndNull(&Root_End_Tag);
-    rebReleaseAndNull(&Root_Opt_Out_Tag);
-    rebReleaseAndNull(&Root_Undo_Opt_Tag);
-    rebReleaseAndNull(&Root_Local_Tag);
-    rebReleaseAndNull(&Root_Const_Tag);
-    rebReleaseAndNull(&Root_Divergent_Tag);
-    rebReleaseAndNull(&Root_Unrun_Tag);
+    rebReleaseAndNull(&g_tag_with);
+    rebReleaseAndNull(&g_tag_variadic);
+    rebReleaseAndNull(&g_tag_end);
+    rebReleaseAndNull(&g_tag_opt_out);
+    rebReleaseAndNull(&g_tag_opt);
+    rebReleaseAndNull(&g_tag_local);
+    rebReleaseAndNull(&g_tag_const);
+    rebReleaseAndNull(&g_tag_divergent);
+    rebReleaseAndNull(&g_tag_unrun);
 
-    rebReleaseAndNull(&Root_Here_Tag);  // used by PARSE
+    rebReleaseAndNull(&g_tag_here);  // used by PARSE
 }
 
 

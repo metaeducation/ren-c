@@ -532,7 +532,7 @@ export stripload: func [
 export to-block-of-file-blocks: func [
     return: "Will be a top-level COPY of the block, or new block"
         [block!]
-    x [<undo-opt> file! block!]
+    x [<opt> file! block!]
 ][
     if file? x [
         return reduce [blockify x]  ; case A

@@ -48,7 +48,7 @@
 //
 // ** WHEN RUN AS AN INTRINSIC, THE ARG IN THE SPARE CELL CONTAINS A FULLY NON
 // TYPECHECKED META REPRESENTATION, AND THE NATIVE IS RESPONSIBLE FOR ALL
-// ARGUMENT PROCESSING (INCLUDING <opt-out> or <undo-opt>).**
+// ARGUMENT PROCESSING (INCLUDING <opt> or <opt-out>).**
 //
 // Not only that, but the special case of typechecking intrinsics (that
 // return LOGIC?) is that they can't write to L->out...because if you were

@@ -115,7 +115,7 @@ backtrace*: func [
         "Null if printing, if specific level a frame! else block"
     start [frame!]
         "Where to consider the trace point as starting from"
-    level [<undo-opt> integer!]
+    level [<opt> integer!]
         "Stack level to return frame for (void to list)"
     :limit "Max number of frames (pending and active), false for no limit"
         [logic? integer!]
@@ -337,7 +337,7 @@ debug: func [
     "Dialect for interactive debugging, see documentation for details"
     return: []
     'value "Stack level to inspect or dialect block, or enter debug mode"
-        [<undo-opt> integer! frame! block!]
+        [<opt> integer! frame! block!]
 ][
     if not integer? value [
         panic "Since switching to usermode, for now DEBUG only takes INTEGER!"

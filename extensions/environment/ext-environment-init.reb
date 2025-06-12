@@ -39,7 +39,7 @@ export set-env: func [
     variable "Variable to set (case-insensitive in Windows)"
         [<opt-out> text! word!]
     value "Value to set the variable to, or void to unset it"
-        [<undo-opt> text!]
+        [<opt> text!]
 ][
     return environment.(variable): opt value
 ]

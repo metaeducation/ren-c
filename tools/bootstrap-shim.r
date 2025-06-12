@@ -658,7 +658,7 @@ modernize-typespec: func3 [
         action?         action!
         logic?          logic!
         <opt-out>       <opt-out>   ; !!! works in both now !
-        <undo-opt>      <undo-opt>  ; !!! works in both now !
+        <opt>           <undo-opt>  ; !!! will be updated at some point...
         <variadic>      <...>
         boolean?        word!
         onoff?          word!

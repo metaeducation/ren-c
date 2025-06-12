@@ -219,7 +219,7 @@ DECLARE_NATIVE(MACRO)
 //
 //      return: [any-value?]
 //      code "If quoted single value, if void no insertion (e.g. invisible)"
-//          [<undo-opt> block! quoted!]
+//          [<opt> block! quoted!]
 //  ]
 //
 DECLARE_NATIVE(INLINE)

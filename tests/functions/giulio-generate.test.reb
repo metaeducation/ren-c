@@ -8,7 +8,7 @@
         "Make a generator"
         return: [action!]
         init [block!] "Init code"
-        condition [<undo-opt> block!] "While condition"
+        condition [<opt> block!] "While condition"
         iteration [block!] "Step code"
     ][
         let words: make block! 2
@@ -45,7 +45,7 @@
     read-lines: func [
         "Makes a generator that yields lines from a file or port"
         return: [action!]
-        src [<undo-opt> port! file!]
+        src [<opt> port! file!]
         :delimiter [blob! char? text! bitset!]
         :keep "Don't remove delimiter"
         :binary "Return BINARY instead of TEXT"

@@ -64,10 +64,10 @@ map-files-to-local: func [
 ends-with?: func [
     return: [logic?]
     s [any-string?]
-    suffix [<undo-opt> any-string?]
+    suffix [<opt> any-string?]
 ][
     return any [
-        null? suffix
+        not suffix
         empty? suffix
         suffix ?= (skip tail of s negate length of suffix)  ; ?= lax compare
     ]
@@ -424,7 +424,7 @@ compiler-class: make object! [
         "Check if the compiler is available"
         return: []
         exec -[Executable path (can be text!, e.g. "r3 --do c99 --")]-
-            [<undo-opt> file! text!]
+            [<opt> file! text!]
     ][
         panic ~#[archetype check invoked]#~
     ]
@@ -443,9 +443,9 @@ compiler-class: make object! [
     link: method [
         return: [null? block!]
         output [file!]
-        depends [<undo-opt> block!]
-        searches [<undo-opt> block!]
-        ldflags [<undo-opt> block! any-string?]
+        depends [<opt> block!]
+        searches [<opt> block!]
+        ldflags [<opt> block! any-string?]
     ][
         panic ~#[archetype link invoked]#~
     ]
@@ -460,7 +460,7 @@ cc: make compiler-class [
     check: method [
         "Assigns .exec-file, extracts the compiler version"
         return: []
-        exec [<undo-opt> file! text!]
+        exec [<opt> file! text!]
     ][
         .exec-file: any [exec, .exec-file]
 
@@ -615,9 +615,9 @@ cc: make compiler-class [
     link: link-backup: method [  ; !!! hacky inheritance mechanism
         return: [text!]
         output [file!]
-        depends [<undo-opt> block!]
-        searches [<undo-opt> block!]
-        ldflags [<undo-opt> block! any-string?]
+        depends [<opt> block!]
+        searches [<opt> block!]
+        ldflags [<opt> block! any-string?]
         :dynamic
         :debug
     ][
@@ -750,9 +750,9 @@ emcc: make gcc [
     link: method [
         return: [text!]
         output [file!]
-        depends [<undo-opt> block!]
-        searches [<undo-opt> block!]
-        ldflags [<undo-opt> block! any-string?]
+        depends [<opt> block!]
+        searches [<opt> block!]
+        ldflags [<opt> block! any-string?]
         :dynamic
         :debug
     ][
@@ -773,7 +773,7 @@ cl: make compiler-class [
     check: method [
         "Assigns .exec-file, extracts the compiler version"
         return: []
-        exec [<undo-opt> file! text!]
+        exec [<opt> file! text!]
     ][
         .exec-file: any [exec, .exec-file]
 
@@ -878,9 +878,9 @@ cl: make compiler-class [
     link: method [
         return: [text!]
         output [file!]
-        depends [<undo-opt> block!]
-        searches [<undo-opt> block!]
-        ldflags [<undo-opt> block! any-string?]
+        depends [<opt> block!]
+        searches [<opt> block!]
+        ldflags [<opt> block! any-string?]
         :dynamic
         :debug
     ][
@@ -989,7 +989,7 @@ strip-class: make object! [
     commands: method [
         return: [block!]
         target [file!]
-        params [<undo-opt> block! any-string?]
+        params [<opt> block! any-string?]
     ][
         return reduce [spaced collect [
             keep any [(file-to-local:pass opt .exec-file) "strip"]
@@ -1018,7 +1018,7 @@ strip: make strip-class [
     id: ["gcc" "gnu"]
     check: method [
         return: []
-        exec [<undo-opt> file! text!]
+        exec [<opt> file! text!]
     ][
         .exec-file: exec: default ["strip"]
     ]

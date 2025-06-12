@@ -271,7 +271,7 @@ bool Hijacker_Details_Querier(
 //      victim "Frame whose inherited instances are to be affected"
 //          [<unrun> frame!]
 //      hijacker "The frame to run in its place (void to leave TBD)"
-//          [<undo-opt> <unrun> frame!]
+//          [<opt> <unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(HIJACK)

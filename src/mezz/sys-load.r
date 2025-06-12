@@ -395,7 +395,7 @@ import*: func [
             ~[module! ~(executed)~ any-atom?]~
         ]
     where "Where to put exported definitions from SOURCE"
-        [<undo-opt> module!]
+        [<opt> module!]
     source [
         file! url!  ; get from location, run with location as working dir
         tag!  ; load relative to system.script.path

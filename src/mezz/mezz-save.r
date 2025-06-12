@@ -46,7 +46,7 @@ save: func [
 
     ; !!! what RETURN values make sense?
     where "Where to save (suffix determines encoding)"
-        [<undo-opt> file! url! blob! text!]
+        [<opt> file! url! blob! text!]
     value "Value(s) to save"
         [<const> element?]
     :header "Provide REBOL header block/object, or INCLUDED if in value"

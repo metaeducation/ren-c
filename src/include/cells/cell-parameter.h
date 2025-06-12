@@ -29,7 +29,7 @@
 //
 //     foo: func [
 //         return: [integer!]  ; specialized to plain PARAMETER! (not antiform)
-//         arg [<undo-opt> block!] ; PARAMCLASS_NORMAL
+//         arg [<opt> block!]  ; PARAMCLASS_NORMAL
 //         'qarg [word!]       ; PARAMCLASS_QUOTED
 //         earg [<end> time!]  ; PARAMCLASS_NORMAL + PARAMETER_FLAG_ENDABLE
 //         :refine [tag!]      ; PARAMCLASS_NORMAL + PARAMETER_FLAG_REFINEMENT
@@ -267,7 +267,7 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
 //=//// PARAMETER_FLAG_UNDO_OPT ///////////////////////////////////////////=//
 //
-// This is set by the <undo-opt> parameter flag.  It helps avoid the need to
+// This is set by the <opt> parameter flag.  It helps avoid the need to
 // make a function take ^META parameters just in order to test if something is
 // a void, so long as there's no need to distinguish it from null.  See also
 // the <opt-out> parameter flag, which can be used if the only processing

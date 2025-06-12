@@ -26,9 +26,9 @@ register-codec: func [
         [word!]
     suffixes "File extension or block of file extensions the codec processes"
         [file! block!]
-    identify? [<undo-opt> <unrun> frame!]
-    decode [<undo-opt> <unrun> frame!]
-    encode [<undo-opt> <unrun> frame!]
+    identify? [<opt> <unrun> frame!]
+    decode [<opt> <unrun> frame!]
+    encode [<opt> <unrun> frame!]
     <local> codec
 ][
     if not block? suffixes [suffixes: reduce [suffixes]]

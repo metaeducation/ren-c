@@ -36,7 +36,7 @@
 //      series "At position (modified)"
 //          [<opt-out> any-series? port! map! object! bitset! port!]
 //      value "What to insert (antiform groups will splice, e.g. SPREAD)"
-//          [<undo-opt> element? splice!]
+//          [<opt> element? splice!]
 //      :part "Limits to a given length or position"
 //          [any-number? any-series? pair!]
 //      :dup "Duplicates the insert a specified number of times"
@@ -60,7 +60,7 @@ DECLARE_NATIVE(INSERT)  // Must be frame-compatible with APPEND, CHANGE
 //      series "Any position (modified)"
 //          [<opt-out> any-series? port! map! object! module! bitset!]
 //      value "What to append (antiform groups will splice, e.g. SPREAD)"
-//          [<undo-opt> element? splice!]
+//          [<opt> element? splice!]
 //      :part "Limits to a given length or position"
 //          [any-number? any-series? pair!]
 //      :dup "Duplicates the insert a specified number of times"
@@ -84,7 +84,7 @@ DECLARE_NATIVE(APPEND)  // Must be frame-compatible with CHANGE, INSERT
 //      series "At position (modified)"
 //          [<opt-out> any-series? port!]
 //      value "The new value (antiform groups will splice, e.g. SPREAD)"
-//          [<undo-opt> element? splice!]
+//          [<opt> element? splice!]
 //      :part "Limits the amount to change to a given length or position"
 //          [any-number? any-series? pair!]
 //      :dup "Duplicates the change a specified number of times"

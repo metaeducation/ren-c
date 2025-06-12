@@ -1256,7 +1256,7 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
 //      return: "Same value as input (error passthru even it skips the assign)"
 //          [any-value?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [<undo-opt> any-word? tuple! group!
+//          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
 //      dual "Ordinary GET or SET with lifted value (unlifts), else dual"
 //          [null? tripwire? space? quasiform! quoted!]
@@ -1358,7 +1358,7 @@ DECLARE_NATIVE(TWEAK)
 //      return: "Same value as input (error passthru even it skips the assign)"
 //          [any-value?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [<undo-opt> any-word? tuple! group!
+//          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
 //      ^value "Will be decayed if not assigned to metavariables"
 //          [any-atom?]  ; should take PACK! [1]
@@ -1405,7 +1405,7 @@ DECLARE_NATIVE(SET)
 //      return: "Same value as input (error passthru even it skips the assign)"
 //          [any-value?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [<undo-opt> any-word? tuple! group!
+//          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
 //      :dual-ignore "!!! Just for frame compatibility !!!"  ; dummy [1]
 //      :any "Do not error on unset words"

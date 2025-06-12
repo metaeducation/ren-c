@@ -100,17 +100,17 @@ PVAR Flex* g_dispatcher_table;
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR Element* Root_With_Tag; // documents external variables used by function
-PVAR Element* Root_Variadic_Tag; // marks variadic argument <variadic>
-PVAR Element* Root_End_Tag; // marks endable argument (NULL if at end of input)
-PVAR Element* Root_Opt_Out_Tag; // passing void makes action a noop
-PVAR Element* Root_Undo_Opt_Tag; // passing void turns argument into a null
-PVAR Element* Root_Local_Tag; // marks beginning of a list of "pure locals"
-PVAR Element* Root_Const_Tag; // pass a CONST version of the input argument
-PVAR Element* Root_Divergent_Tag;  // marks divergent functions
-PVAR Element* Root_Unrun_Tag;  // parameters that degrade antiform actions
+PVAR Element* g_tag_with;  // documents external variables used by function
+PVAR Element* g_tag_variadic;  // marks variadic argument <variadic>
+PVAR Element* g_tag_end;  // marks endable argument (NULL if at end of input)
+PVAR Element* g_tag_opt_out;  // passing void makes action a noop
+PVAR Element* g_tag_opt;  // passing void turns argument into a null
+PVAR Element* g_tag_local; // marks beginning of a list of "pure locals"
+PVAR Element* g_tag_const; // pass a CONST version of the input argument
+PVAR Element* g_tag_divergent;  // marks divergent functions
+PVAR Element* g_tag_unrun;  // parameters that degrade antiform actions
 
-PVAR Element* Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
+PVAR Element* g_tag_here;  // https://forum.rebol.info/t/1558/5
 
 PVAR Element* g_empty_text; // read-only ""
 PVAR Element* g_empty_blob; // read-only #{}

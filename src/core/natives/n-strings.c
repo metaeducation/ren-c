@@ -111,7 +111,7 @@ DECLARE_NATIVE(LATIN1_Q)
 //          [null? any-utf8? any-list? any-sequence? blob!]
 //      base [datatype! any-utf8? any-list? any-sequence? blob!]
 //      rest "Plain [...] blocks reduced, @[...] block items used as is"
-//          [<undo-opt> block! @block! any-utf8? blob! integer!]
+//          [<opt> block! @block! any-utf8? blob! integer!]
 //      :with [element? splice!]
 //      :head "Include delimiter at head of a non-NULL result"
 //      :tail "Include delimiter at tail of a non-NULL result"

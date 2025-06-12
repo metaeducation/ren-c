@@ -174,7 +174,7 @@ host-script-pre-load: func [
     return: []
     is-module [yesno?]
     hdr "Header object (missing for DO of BLOB! with no header)"
-        [<undo-opt> object!]
+        [<opt> object!]
 ][
     ; Print out the script info
     boot-print [

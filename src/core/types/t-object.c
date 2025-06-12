@@ -623,7 +623,7 @@ DECLARE_NATIVE(ADJUNCT_OF)
 //
 //      return: [null? any-context?]
 //      value [<unrun> frame! any-context?]
-//      adjunct [<undo-opt> any-context?]
+//      adjunct [<opt> any-context?]
 //  ]
 //
 DECLARE_NATIVE(SET_ADJUNCT)

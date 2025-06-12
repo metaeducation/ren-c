@@ -130,7 +130,7 @@ latest-of: func [
     return: [url!]
 
     os "https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r"
-        [<end> <undo-opt> tuple!]
+        [<end> <opt> tuple!]
     :variant "Note: Stakeholders are asked to use checked builds, for now"
         ['checked 'release]
     :commit "Link for specific commit number (defaults to latest commit)"
@@ -139,7 +139,8 @@ latest-of: func [
 ][
     variant: default ['checked]
 
-    if not os [
+    if (unset? $os) or (not os) [
+        os: null
         print warning
     ]
 
@@ -156,7 +157,8 @@ latest-of: func [
     ; https://stackoverflow.com/q/1741933
     ;
     if (not os) and (system.version.4 = 16) [  ; web build
-        let platform: js-eval {
+        let platform: js-eval --[
+            /* <begin JavaScript code> */
             var userAgent = window.navigator.userAgent
             var platform = window.navigator.platform
 
@@ -169,8 +171,8 @@ latest-of: func [
             else if (userAgent.indexOf("Win64") != -1)
                 platform = 'Win64'  // may be 32 bit browser on 64 bit platform
 
-            platform
-        }
+            platform  /* <end JavaScript code> */
+        ]--
         os: switch platform [
             ; "Mac68K"
             ; "MacPPC" - Is this 0.2.1 (pre OS X) or OS X PPC ?

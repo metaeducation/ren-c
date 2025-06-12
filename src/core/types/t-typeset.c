@@ -215,7 +215,7 @@ void Set_Parameter_Spec(
             bool strict = false;
 
             if (
-                0 == CT_Utf8(item, Root_Variadic_Tag, strict)
+                0 == CT_Utf8(item, g_tag_variadic, strict)
             ){
                 // !!! The actual final notation for variadics is not decided
                 // on, so there is compatibility for now with the <...> form
@@ -225,26 +225,26 @@ void Set_Parameter_Spec(
                 //
                 *flags |= PARAMETER_FLAG_VARIADIC;
             }
-            else if (0 == CT_Utf8(item, Root_End_Tag, strict)) {
+            else if (0 == CT_Utf8(item, g_tag_end, strict)) {
                 *flags |= PARAMETER_FLAG_ENDABLE;
                 *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
-            else if (0 == CT_Utf8(item, Root_Opt_Out_Tag, strict)) {
+            else if (0 == CT_Utf8(item, g_tag_opt_out, strict)) {
                 *flags |= PARAMETER_FLAG_OPT_OUT;
                 *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
             }
-            else if (0 == CT_Utf8(item, Root_Undo_Opt_Tag, strict)) {
+            else if (0 == CT_Utf8(item, g_tag_opt, strict)) {
                 *flags |= PARAMETER_FLAG_UNDO_OPT;
                 *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
             }
-            else if (0 == CT_Utf8(item, Root_Const_Tag, strict)) {
+            else if (0 == CT_Utf8(item, g_tag_const, strict)) {
                 *flags |= PARAMETER_FLAG_CONST;
             }
-            else if (0 == CT_Utf8(item, Root_Unrun_Tag, strict)) {
+            else if (0 == CT_Utf8(item, g_tag_unrun, strict)) {
                 // !!! Currently just commentary, degrading happens due
                 // to type checking.  Review this.
             }
-            else if (0 == CT_Utf8(item, Root_Divergent_Tag, strict)) {
+            else if (0 == CT_Utf8(item, g_tag_divergent, strict)) {
                 //
                 // !!! Currently just commentary so we can find the divergent
                 // functions.  Review what the best notation or functionality

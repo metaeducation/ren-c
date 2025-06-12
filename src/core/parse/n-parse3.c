@@ -812,12 +812,12 @@ static REBIXO To_Thru_Block_Rule(
             }
             else if (Is_Tag(rule)) {
                 bool strict = true;
-                if (0 == CT_Utf8(rule, Root_End_Tag, strict)) {
+                if (0 == CT_Utf8(rule, g_tag_end, strict)) {
                     if (VAL_INDEX(iter) >= P_INPUT_LEN)
                         return P_INPUT_LEN;
                     goto next_alternate_rule;
                 }
-                else if (0 == CT_Utf8(rule, Root_Here_Tag, strict)) {
+                else if (0 == CT_Utf8(rule, g_tag_here, strict)) {
                     // ignore for now
                 }
                 else
@@ -1032,10 +1032,10 @@ static REBIXO To_Thru_Non_Block_Rule(
 
     if (t == TYPE_TAG) {
         bool strict = true;
-        if (0 == CT_Utf8(rule, Root_End_Tag, strict)) {
+        if (0 == CT_Utf8(rule, g_tag_end, strict)) {
             return P_INPUT_LEN;
         }
-        else if (0 == CT_Utf8(rule, Root_Here_Tag, strict)) {
+        else if (0 == CT_Utf8(rule, g_tag_here, strict)) {
             panic ("TO/THRU <here> isn't supported in PARSE3");
         }
         else
@@ -1560,7 +1560,7 @@ DECLARE_NATIVE(SUBPARSE)
                     Is_Tag(P_RULE)
                     and 0 == CT_Utf8(
                         P_RULE,
-                        Root_End_Tag,
+                        g_tag_end,
                         strict
                     )
                 )){
@@ -1835,7 +1835,7 @@ DECLARE_NATIVE(SUBPARSE)
         //
         if (Is_Tag(P_RULE)) {
             bool strict = true;
-            if (0 == CT_Utf8(P_RULE, Root_Here_Tag, strict))
+            if (0 == CT_Utf8(P_RULE, g_tag_here, strict))
                 FETCH_NEXT_RULE(L);
             else
                 panic ("SET-WORD! works with <HERE> tag in PARSE3");
@@ -1895,10 +1895,10 @@ DECLARE_NATIVE(SUBPARSE)
 
       case TYPE_TAG: {  // tag combinator in UPARSE, matches in UPARSE2
         bool strict = true;
-        if (0 == CT_Utf8(rule, Root_Here_Tag, strict)) {
+        if (0 == CT_Utf8(rule, g_tag_here, strict)) {
             goto pre_rule;
         }
-        if (0 == CT_Utf8(rule, Root_End_Tag, strict)) {
+        if (0 == CT_Utf8(rule, g_tag_end, strict)) {
             goto handle_end;
         }
         panic ("Only TAG! combinators PARSE3 supports are <here> and <end>"); }

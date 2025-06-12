@@ -101,14 +101,14 @@ replace: func [
     target "Series to replace within (modified)"
         [any-series?]
     pattern "Value to be replaced (converted if necessary)"
-        [<undo-opt> element? splice!]
+        [<opt> element? splice!]
     ^replacement "Value to replace with (called each time if action)"
         [void? element? splice! action!]
 
     :one "Replace one (or zero) occurrences"
     :case "Case-sensitive replacement"  ; !!! Note this aliases CASE native!
 
-    <local> value' pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
+    <local> ^value pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
 ][
     if not pattern [return target]  ; could fall thru, but optimize...
 
@@ -131,12 +131,12 @@ replace: func [
             ; They are passed as const so that the replacing function answers
             ; merely by providing the replacement.
             ;
-            ^value': apply:relax ^replacement [const pos, const tail]
+            ^value: apply:relax ^replacement [const pos, const tail]
         ] else [
-            ^value': ^replacement  ; might be void
+            ^value: ^replacement  ; might be void
         ]
 
-        pos: change:part pos ^value' tail
+        pos: change:part pos ^value tail
 
         if one [break]
     ]
@@ -492,9 +492,9 @@ split: func [
     return: [null? block!]
     series "The series to split"
         [<opt-out> any-series?]
-    ^dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
+    dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
         [
-            ~[]~  ; just return input
+            <opt>  ; just return input
             block!  ; parse rule
             @[block!]  ; list of integers for piece lengths
             integer!  ; length of pieces (or number of pieces if /INTO)
@@ -506,10 +506,9 @@ split: func [
         ]
     :into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    if void? ^dlm [
+    if not dlm [
         return reduce [series]
     ]
-    dlm: unlift dlm
 
     if splice? dlm [
         panic "SPLIT on SPLICE?! would need UPARSE, currently based on PARSE3"

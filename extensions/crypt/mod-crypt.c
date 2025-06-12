@@ -1357,7 +1357,7 @@ static void Aes_Ctx_Handle_Cleaner(void* p, size_t length)
 //          [handle!]
 //      key [blob!]
 //      iv "Optional initialization vector"
-//          [<undo-opt> blob!]
+//          [<opt> blob!]
 //      :decrypt "Make cipher context for decryption (default is to encrypt)"
 //  ]
 //

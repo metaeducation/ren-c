@@ -232,7 +232,7 @@ gen-obj: func [
         [object!]
     spec "single file representation, or spec block with file as first item"
         [file! word! path! tuple! block!]
-    dir "directory" [<undo-opt> file!]
+    dir "directory" [<opt> file!]
     :D "definitions" [block!]
     :I "includes" [block!]
     :F "cflags" [block!]

@@ -596,7 +596,7 @@ use [
 export configure-platform: func [
     "Return build configuration information"
     hint "Version ID (null means guess)"
-        [<undo-opt> text! tuple!]
+        [<opt> text! tuple!]
 ][
     if null? hint [  ; Try same version as this r3-make was built with
         hint: join tuple! [0 system.version.4 system.version.5]

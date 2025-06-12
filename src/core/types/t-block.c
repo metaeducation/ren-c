@@ -1488,7 +1488,7 @@ DECLARE_NATIVE(ENVELOP)
 //
 //      return: [blank? block!]
 //      accumulator [blank? block!]
-//      value [<undo-opt> element? splice!]
+//      value [<opt> element? splice!]
 //  ]
 //
 DECLARE_NATIVE(GLOM)

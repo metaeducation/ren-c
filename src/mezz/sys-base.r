@@ -125,7 +125,7 @@ module: func [
     return: "Module and meta-result (may be error) of running the body"  ; [1]
         [~[module! any-atom?]~]
     spec "The header block of the module (modified)"
-        [<undo-opt> block! object!]
+        [<opt> block! object!]
     body "The body of the module"
         [block!]
     :mixin "Bind body to this additional object before executing"

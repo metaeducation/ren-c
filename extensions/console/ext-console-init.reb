@@ -465,13 +465,13 @@ console*: func [
     return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
         [block! group! integer! ^group! handle!]  ; RETURN is hooked below!
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
-        [<undo-opt> block! group!]
+        [<opt> block! group!]
     result "^META result from PRIOR eval, non-quoted error, or exit code #"
-        [<undo-opt> warning! quoted! quasiform! integer!]
+        [<opt> warning! quoted! quasiform! integer!]
     resumable "Is the RESUME function allowed to exit this console"
         [yesno?]
     skin "Console skin to use if the console has to be launched"
-        [<undo-opt> object! file!]
+        [<opt> object! file!]
 ][
     === HANDLE EXIT CODE ===
 

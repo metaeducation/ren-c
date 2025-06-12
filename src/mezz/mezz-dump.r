@@ -142,7 +142,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
     @(value) "If issue, create non-specialized dumper...#on or #off by default"
         [rune! text! integer! word! set-word? set-tuple? group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
-        [<undo-opt> any-value? <variadic>]
+        [<opt> any-value? <variadic>]
 ][
     let d
     if rune? value [
