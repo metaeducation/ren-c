@@ -499,6 +499,12 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_CELL_READ_WRITE  RUNTIME_CHECKS
 #endif
 
+// Usually corrupting corrupts the headers only.
+//
+#if !defined(CORRUPT_CELL_HEADERS_ONLY)
+    #define CORRUPT_CELL_HEADERS_ONLY  1
+#endif
+
 #if !defined(DEBUG_CHECK_BINDING)
     #define DEBUG_CHECK_BINDING  (RUNTIME_CHECKS && CPLUSPLUS_11)
 #endif

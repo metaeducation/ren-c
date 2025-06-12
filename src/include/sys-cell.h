@@ -293,11 +293,21 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
         | CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2 \
         | FLAG_HEART_BYTE_255 | FLAG_LIFT_BYTE(255))
 
-#define Init_Unreadable_Untracked(out) do { \
-    STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
-    Assert_Cell_Initable(out); \
-    (out)->header.bits |= CELL_MASK_UNREADABLE;  /* note: bitwise OR [1] */ \
-} while (0)
+#if CORRUPT_CELL_HEADERS_ONLY
+    #define Init_Unreadable_Untracked(out) do { \
+        STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
+        Assert_Cell_Initable(out); \
+        (out)->header.bits |= CELL_MASK_UNREADABLE;  /* bitwise OR [1] */ \
+    } while (0)
+#else
+    #define Init_Unreadable_Untracked(out) do { \
+        STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
+        Assert_Cell_Initable(out); \
+        (out)->header.bits |= CELL_MASK_UNREADABLE;  /* bitwise OR [1] */ \
+        Corrupt_If_Debug((out)->extra); \
+        Corrupt_If_Debug((out)->payload); \
+    } while (0)
+#endif
 
 INLINE Cell* Init_Unreadable_Untracked_Inline(Cell* out) {
     Init_Unreadable_Untracked(out);
@@ -362,6 +372,9 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 
     INLINE void Corrupt_If_Debug(Slot& ref)
       { Slot* s = &ref; Init_Unreadable_Untracked(s); }
+
+    INLINE void Corrupt_If_Debug(Param& ref)
+      { Param* p = &ref; Init_Unreadable_Untracked(p); }
   #endif
 #endif
 

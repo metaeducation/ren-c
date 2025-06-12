@@ -185,11 +185,11 @@ INLINE void Tweak_Cell_Nanoseconds(Cell* c, REBI64 nano) {
 #define TIME_IN_DAY \
     SEC_TIME(cast(REBI64, SECS_IN_DAY))
 
-INLINE Value* Init_Time_Nanoseconds(
+INLINE Element* Init_Time_Nanoseconds(
     Init(Element) v,
     REBI64 nanoseconds
 ){
     Reset_Cell_Header_Noquote(v, CELL_MASK_TIME);
     Tweak_Cell_Nanoseconds(v, nanoseconds);
-    return cast(Value*, v);
+    return v;
 }

@@ -461,6 +461,8 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     Init(Element) out,
     Flags flags
 ){
+    Init(Param) param = u_cast(Param*, out);
+
     ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));
     assert(pclass != PARAMCLASS_0);  // must have class
     if (flags & PARAMETER_FLAG_REFINEMENT) {
@@ -468,12 +470,12 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     }
     UNUSED(pclass);
 
-    Reset_Cell_Header_Noquote(out, CELL_MASK_PARAMETER);
-    PARAMETER_FLAGS(out) = flags;
-    CELL_PARAMETER_SPEC(out) = nullptr;
-    CELL_PARAMETER_STRING(out) = nullptr;
+    Reset_Cell_Header_Noquote(param, CELL_MASK_PARAMETER);
+    PARAMETER_FLAGS(param) = flags;
+    CELL_PARAMETER_SPEC(param) = nullptr;
+    CELL_PARAMETER_STRING(param) = nullptr;
 
-    return cast(Param*, out);
+    return param;
 }
 
 #define Init_Unconstrained_Parameter(out,param_flags) \
