@@ -19,7 +19,7 @@
     ; 2. A case can be made for considering the encoding of characters that
     ;    don't need it to be an error by default.
     ;
-    parse compose $() [
+    parse compose [
         "a%20b" <-> "a b"
         "a%25b" <-> "a%b"
         "a%ce%b2c" -> "aβc" -> "a%CE%B2c"  [1]

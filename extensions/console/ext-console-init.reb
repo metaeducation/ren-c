@@ -5,7 +5,7 @@ Rebol [
     type: module
 
     rights: --[
-        Copyright 2016-2021 Ren-C Open Source Contributors
+        Copyright 2016-2025 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
 
@@ -116,7 +116,7 @@ export console!: make object! [
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-atom?]
     ][
-        ^last-result: ^v  ; don't decay
+        try ^last-result: ^v  ; don't decay, suppress ERROR! propagation
 
         === FORM ERROR IF RAISED ===
 
@@ -126,7 +126,7 @@ export console!: make object! [
         ; it looks ugly to show the molded antiform object.
 
         if error? ^v [
-            print form unquasi v
+            print form unquasi lift* ^v
             return ~
         ]
 

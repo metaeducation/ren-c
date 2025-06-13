@@ -893,8 +893,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             continue;
         }
 
-        DECLARE_VALUE (var);
-        Option(Error*) e = Trap_Read_Slot(var, evars.slot);
+        DECLARE_ATOM (var);
+        Option(Error*) e = Trap_Read_Slot_Meta(var, evars.slot);
         if (e)
             return PANIC(unwrap e);  // !! rethink accessor error here
 
@@ -1974,7 +1974,7 @@ DECLARE_NATIVE(CONSTRUCT)
         Option(Index) index = CELL_WORD_INDEX_I32(TOP_ELEMENT);
         assert(index);  // created a key for every SET-WORD! above!
 
-        Copy_Cell(Slot_Hack(Varlist_Slot(varlist, unwrap index)), spare);
+        Copy_Cell(Slot_Init_Hack(Varlist_Slot(varlist, unwrap index)), spare);
 
         DROP();
     }

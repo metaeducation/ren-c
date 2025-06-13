@@ -1420,7 +1420,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 
 
 //
-//  Trap_Read_Slot: C
+//  Trap_Read_Slot_Meta: C
 //
 // Trap_Create_Loop_Context_May_Bind_Body() allows @WORD! for reusing an
 // existing variable's binding:
@@ -1432,7 +1432,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 // It accomplishes this by putting a word into the "variable" slot, and having
 // a flag to indicate a dereference is necessary.
 //
-Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot)
+Option(Error*) Trap_Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
 {
     assert(Not_Cell_Flag(slot, BIND_MARKED_META));
 
@@ -1441,7 +1441,7 @@ Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot)
             goto handle_dual_signal;
 
         Copy_Cell(out, u_cast(Value*, slot));
-        Unliftify_Known_Stable(out);
+        Unliftify_Undecayed(out);
         return SUCCESS;
     }
 
@@ -1458,12 +1458,27 @@ Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot)
 
     assert(not Is_Space(u_cast(Value*, slot)));
 
+    Sink(Value) out_value = u_cast(Value*, out);
     assert(Is_Pinned(WORD, slot));
-    if (rebRunThrows(out, CANON(GET), slot))
+    if (rebRunThrows(out_value, CANON(GET), slot))
         return Error_No_Catch_For_Throw(TOP_LEVEL);
 
     return SUCCESS;
 }}
+
+
+//
+//  Trap_Read_Slot: C
+//
+Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot) {
+    Sink(Atom) atom_out = u_cast(Atom*, out);
+    Option(Error*) e = Trap_Read_Slot_Meta(atom_out, slot);
+    if (e)
+        return e;
+    if (not Is_Stable(atom_out))
+        return Error_User("Cannot read unstable slot with Trap_Read_Slot()");
+    return SUCCESS;  // out is Known_Stable()
+}
 
 
 //

@@ -90,7 +90,7 @@ Value* rebError_UV(int err) {
 //
 Value* Get_File_Size_Cacheable(uint64_t *size, const Value* port)
 {
-    FileReq* file = Filereq_Of_Port(port);
+    FileReq* file = unwrap Filereq_Of_Port(port);
 
     if (file->size_cache != FILESIZE_UNKNOWN) {
         *size = file->size_cache;
@@ -262,7 +262,7 @@ int Extract_Access_Mode_From_Flags(int flags) {
 //
 Value* Open_File(const Value* port, int flags)
 {
-    FileReq* file = Filereq_Of_Port(port);
+    FileReq* file = unwrap Filereq_Of_Port(port);
 
     if (file->id != FILEHANDLE_NONE)
         return rebValue("make warning! {File is already open}");
@@ -327,7 +327,7 @@ Value* Open_File(const Value* port, int flags)
 //
 Value* Close_File(const Value* port)
 {
-    FileReq* file = Filereq_Of_Port(port);
+    FileReq* file = unwrap Filereq_Of_Port(port);
 
     assert(file->id != FILEHANDLE_NONE);
 
@@ -350,7 +350,7 @@ Value* Close_File(const Value* port)
 //
 Value* Read_File(const Value* port, size_t length)
 {
-    FileReq* file = Filereq_Of_Port(port);
+    FileReq* file = unwrap Filereq_Of_Port(port);
 
     assert(not file->is_dir);  // should call Read_Directory!
     assert(file->id != FILEHANDLE_NONE);
@@ -395,7 +395,7 @@ Value* Read_File(const Value* port, size_t length)
 //
 Value* Write_File(const Value* port, const Value* value, REBLEN limit)
 {
-    FileReq* file = Filereq_Of_Port(port);
+    FileReq* file = unwrap Filereq_Of_Port(port);
 
     assert(file->id != FILEHANDLE_NONE);
 
@@ -481,7 +481,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
 //
 Value* Truncate_File(const Value* port)
 {
-    FileReq* file = Filereq_Of_Port(port);
+    FileReq* file = unwrap Filereq_Of_Port(port);
     assert(file->id != FILEHANDLE_NONE);
 
     uv_fs_t req;
@@ -500,7 +500,7 @@ Value* Truncate_File(const Value* port)
 //
 Value* Create_Directory(const Value* port)
 {
-    FileReq* dir = Filereq_Of_Port(port);
+    FileReq* dir = unwrap Filereq_Of_Port(port);
     assert(dir->is_dir);
 
     DECLARE_VALUE (dir_path);
@@ -536,7 +536,7 @@ Value* Create_Directory(const Value* port)
 //
 Value* Delete_File_Or_Directory(const Value* port)
 {
-    FileReq* file = Filereq_Of_Port(port);
+    FileReq* file = unwrap Filereq_Of_Port(port);
 
     DECLARE_VALUE (file_path);
     Option(Error*) e = Trap_Get_Port_Path_From_Spec(
@@ -572,7 +572,7 @@ Value* Delete_File_Or_Directory(const Value* port)
 //
 Value* Rename_File_Or_Directory(const Value* port, const Value* to)
 {
-    FileReq* file = Filereq_Of_Port(port);
+    FileReq* file = unwrap Filereq_Of_Port(port);
     UNUSED(file);  // was once needed for path
 
     DECLARE_VALUE (file_path);
@@ -763,7 +763,7 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
 //
 Value* Query_File_Or_Directory(const Value* port)
 {
-    FileReq* file = Filereq_Of_Port(port);
+    FileReq* file = unwrap Filereq_Of_Port(port);
 
     DECLARE_VALUE (file_path);
     Option(Error*) e = Trap_Get_Port_Path_From_Spec(

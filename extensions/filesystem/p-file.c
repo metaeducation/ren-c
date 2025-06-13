@@ -124,11 +124,8 @@ DECLARE_NATIVE(FILE_ACTOR)
     // operation is something like a RENAME that does not require a port to be
     // open, then this capturing of the specification is all the setup needed.
     //
-    Value* state = Slot_Hack(Varlist_Slot(ctx, STD_PORT_STATE));
-    FileReq* file;
-    if (Is_Blob(state)) {
-        file = Filereq_Of_Port(port);
-
+    FileReq* file = maybe Filereq_Of_Port(port);
+    if (file) {
       #if !defined(NDEBUG)
         //
         // If we think we know the size of the file, it needs to be actually
@@ -146,8 +143,6 @@ DECLARE_NATIVE(FILE_ACTOR)
       #endif
     }
     else {
-        assert(Is_Nulled(state));
-
         DECLARE_VALUE (file_path);
         Option(Error*) e = Trap_Get_Port_Path_From_Spec(
             file_path, port
@@ -163,11 +158,12 @@ DECLARE_NATIVE(FILE_ACTOR)
         // was seen as having another benefit in making the internal state
         // opaque to users, so they didn't depend on it or fiddle with it.
         //
-        Binary* b = Make_Binary(sizeof(FileReq));
-        Init_Blob(state, b);
-        Term_Binary_Len(b, sizeof(FileReq));
+        Binary* bin = Make_Binary(sizeof(FileReq));
+        Slot* state_slot = Varlist_Slot(ctx, STD_PORT_STATE);
+        Init_Blob(Slot_Init_Hack(state_slot), bin);
+        Term_Binary_Len(bin, sizeof(FileReq));
 
-        file = Filereq_Of_Port(port);
+        file = u_cast(FileReq*, Binary_Head(bin));
         file->id = FILEHANDLE_NONE;
         file->is_dir = false;  // would be dispatching to Dir Actor if dir
         file->size_cache = FILESIZE_UNKNOWN;

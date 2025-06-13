@@ -83,14 +83,10 @@ DECLARE_NATIVE(DIR_ACTOR)
     const Symbol* verb = Level_Verb(LEVEL);
     VarList* ctx = Cell_Varlist(port);
 
-    Value* state = Slot_Hack(Varlist_Slot(ctx, STD_PORT_STATE));
-    FileReq* dir;
-    if (Is_Blob(state)) {
-        dir = Filereq_Of_Port(port);
-    }
-    else {
-        assert(Is_Nulled(state));
+    Slot* state_slot = Varlist_Slot(ctx, STD_PORT_STATE);
 
+    FileReq* dir = maybe Filereq_Of_Port(port);
+    if (not dir) {
         DECLARE_VALUE (dir_path);
         Option(Error*) e = Trap_Get_Port_Path_From_Spec(
             dir_path, port
@@ -111,11 +107,11 @@ DECLARE_NATIVE(DIR_ACTOR)
         // structure...which would mean different Rename_Directory() and
         // Rename_File() calls, for instance.
         //
-        Binary* b = Make_Binary(sizeof(FileReq));
-        Init_Blob(state, b);
-        Term_Binary_Len(b, sizeof(FileReq));
+        Binary* bin = Make_Binary(sizeof(FileReq));
+        Init_Blob(Slot_Init_Hack(state_slot), bin);
+        Term_Binary_Len(bin, sizeof(FileReq));
 
-        dir = Filereq_Of_Port(port);
+        dir = u_cast(FileReq*, Binary_Head(bin));
         dir->handle = nullptr;
         dir->id = FILEHANDLE_NONE;
         dir->is_dir = true;  // would be dispatching to File Actor if dir
@@ -189,8 +185,8 @@ DECLARE_NATIVE(DIR_ACTOR)
         if (e)
             return PANIC(unwrap e);
 
-        if (Is_Block(state))
-            return PANIC(Error_Already_Open_Raw(dir_path));
+        /*if (Is_Block(state))  // !!! what?
+            return PANIC(Error_Already_Open_Raw(dir_path));*/
 
         Value* error = Create_Directory(port);
         if (error) {
@@ -279,7 +275,7 @@ DECLARE_NATIVE(DIR_ACTOR)
     //=//// CLOSE //////////////////////////////////////////////////////////=//
 
       case SYM_CLOSE:
-        Init_Nulled(state);
+        Init_Nulled(Slot_Init_Hack(state_slot));
         return COPY(port);
 
     //=//// QUERY //////////////////////////////////////////////////////////=//

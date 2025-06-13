@@ -832,17 +832,17 @@ VarList* Make_Varlist_Detect_Managed(
         Init_Tripwire(var);
 
     if (parent) {
-        Value* dest = Flex_At(Value, a, 1);
+        Atom* dest = Flex_At(Atom, a, 1);
         const Slot* src_tail;
         Slot* src = Varlist_Slots(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
             Flags clone_flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
-            assert(Is_Trash(dest));
+            assert(Is_Atom_Trash(dest));
 
             // !!! If we are creating a derived object, should it be able
             // to copy the ACCESSOR/etc.?
             //
-            e = Trap_Read_Slot(dest, src);
+            e = Trap_Read_Slot_Meta(dest, src);
             if (e)
                 panic (unwrap e);  // !!! review if panic should be possible
 
@@ -851,6 +851,8 @@ VarList* Make_Varlist_Detect_Managed(
                 Clonify(Known_Element(dest), clone_flags, deeply);
                 Clear_Cell_Flag(dest, CONST);  // remove constness from copies
             }
+            Liftify(dest);
+            Set_Cell_Flag(dest, SLOT_WEIRD_DUAL);  // arbitrary antiforms
         }
     }
 
