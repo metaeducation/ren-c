@@ -275,10 +275,10 @@ INLINE Value* Actionify(Need(Value*) val) {
         ensure(Sink(Value), (out)), (a), (label), (coupling)) \
     ))  // note that antiform frames can't have lenses, only labels!
 
-INLINE Element* Deactivate_If_Action(Need(Value*) v) {
+INLINE Value* Deactivate_If_Action(Need(Value*) v) {
     if (Is_Action(v))
         LIFT_BYTE(v) = NOQUOTE_1;
-    return cast(Element*, v);
+    return v;
 }
 
 

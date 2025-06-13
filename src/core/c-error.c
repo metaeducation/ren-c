@@ -359,12 +359,11 @@ void Set_Location_Of_Error(
         if (not Is_Action_Level(L))
             continue;
 
-        PUSH();
         Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
         if (label)
-            Init_Word(TOP, unwrap label);
+            Init_Word(PUSH(), unwrap label);
         else
-            Init_Quasar(TOP);  // [2]
+            Init_Quasar(PUSH());  // [2]
 
         if (Is_Level_Fulfilling(L)) { // differentiate fulfilling levels [3]
             Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);

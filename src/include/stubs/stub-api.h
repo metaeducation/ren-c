@@ -148,7 +148,7 @@ INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 #define CELL_MASK_API_INITABLE \
     (CELL_MASK_UNREADABLE | NODE_FLAG_ROOT)
 
-INLINE Value* Alloc_Value_Core(Flags flags)
+INLINE Init(Value) Alloc_Value_Core(Flags flags)
 {
     Stub* stub = Make_Untracked_Stub(
         FLAG_FLAVOR(API) | NODE_FLAG_ROOT | NODE_FLAG_MANAGED
@@ -159,7 +159,7 @@ INLINE Value* Alloc_Value_Core(Flags flags)
 
     Connect_Api_Handle_To_Level(stub, TOP_LEVEL);  // [2]
 
-    return cast(Value*, cell);
+    return cell;
 }
 
 #define Alloc_Value() \

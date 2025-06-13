@@ -82,7 +82,10 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Integer)
 //    the field is a bit wider open, but I feel like if you want this you
 //    should have to ask for a decimal! on purpose and then ROUND it.
 //
-// 2. While historical Rebol TO INTEGER! of BLOB! would interpret the
+// 2. See rebDelegate() for notes on how it is legal to use the OUT, SPARE, or
+//    SCRATCH cells in the delegation valist.
+//
+// 3. While historical Rebol TO INTEGER! of BLOB! would interpret the
 //    bytes as a big-endian form of their internal representations, wanting to
 //    futureproof for BigNum integers has changed Ren-C's point of view...
 //    delegating that highly parameterized conversion to operations currently
@@ -93,7 +96,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Integer)
 //    This is a stopgap while ENBIN and DEBIN are hammered out which preserves
 //    the old behavior in the MAKE INTEGER! case.
 //
-// 3. Historical Rebol (to integer! 1:00) would give you 3600 despite it
+// 4. Historical Rebol (to integer! 1:00) would give you 3600 despite it
 //    being scarcely clear why that's a logical TO moreso than 1, or 100, or
 //    anything else.  We move this oddity to MAKE.
 //
@@ -113,14 +116,16 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
             if (Is_Integer(out))
                 return OUT;
             if (Is_Decimal(out))
-                return rebDelegate(CANON(ROUND), out);
+                return rebDelegate(CANON(ROUND), out);  // out is legal ATM [2]
             return FAIL(Error_User("Trap_Transcode_One() gave unwanted type"));
         }
 
         return PANIC(Error_Bad_Make(TYPE_INTEGER, arg));
     }
 
-    if (Is_Time(arg))  // !!! (make integer! 1:00) -> 3600 :-( [3]
+    dont(Is_Blob(arg));  // [3]
+
+    if (Is_Time(arg))  // !!! (make integer! 1:00) -> 3600 :-( [4]
         return Init_Integer(OUT, SECS_FROM_NANO(VAL_NANO(arg)));
 
     if (Is_Decimal(arg) or Is_Percent(arg)) {  // !!! prefer ROUND

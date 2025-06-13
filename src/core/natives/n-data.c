@@ -1193,7 +1193,7 @@ DECLARE_NATIVE(ANY_VALUE_Q)
     if (lift_byte != ANTIFORM_0)
         return LOGIC(true);
 
-    return LOGIC(Is_Stable_Antiform_Heart(heart));
+    return LOGIC(Is_Stable_Antiform_Heart_Byte(maybe heart));
 }
 
 

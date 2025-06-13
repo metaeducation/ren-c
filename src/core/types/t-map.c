@@ -224,7 +224,7 @@ void Rehash_Map(Map* map)
         }
 
         REBLEN hash = Find_Key_Hashed(
-            pairlist, hashlist, cast(Element*, key), 2, cased, 0
+            pairlist, hashlist, key, 2, cased, 0
         );
         hashes[hash] = n / 2 + 1;
 

@@ -305,8 +305,8 @@ struct Reb_Enum_Vars {
     //
     Context* ctx;
     Array* wordlist;
-    Value* word;
-    Value* word_tail;
+    Element* word;
+    Element* word_tail;
     const Symbol* keybuf;  // backing store for key
 };
 
@@ -556,15 +556,6 @@ enum {
 #include "sys-trampoline.h"
 
 
-//=//// INSTRUMENTATION HOOKS INTO THE CAST() OPERATOR ////////////////////=//
-//
-// In the C++ build, there is the opportunity to hook any cast() operation
-// with code that can do checking or validation.  See comments in file.
-//
-#if DEBUG_CHECK_CASTS
-    #include "sys-debug-casts.hpp"
-#endif
-
 
 //=//// STUB-DERIVED STRUCTURE ACCESSORS //////////////////////////////////=//
 
@@ -576,6 +567,21 @@ enum {
 
 #include "sys-cell.h"
 #include "sys-stub.h"
+
+//=//// INSTRUMENTATION HOOKS INTO THE CAST() OPERATOR ////////////////////=//
+//
+// In the C++ build, there is the opportunity to hook any cast() operation
+// with code that can do checking or validation.  See comments in file.
+//
+// We do this after the %sys-cell.h and %sys-stub.h files, because they have
+// fundamental definitions that are important for the casts.
+//
+#if DEBUG_CHECK_CASTS
+    #include "casts/cast-node.hpp"
+    #include "casts/cast-stubs.hpp"
+    #include "casts/cast-cells.hpp"
+    #include "casts/cast-misc.hpp"
+#endif
 
 #include "sys-mold.h"
 

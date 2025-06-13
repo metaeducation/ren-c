@@ -59,7 +59,7 @@
 INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
     assert(L->executor == &Evaluator_Executor);
     Force_Erase_Cell_Untracked(&L->u.eval.primed);
-    return cast(Atom*, &L->u.eval.primed);
+    return &L->u.eval.primed;
 }
 
 // !!! This is for historical non-stackless code, which needs a place to write
@@ -83,7 +83,7 @@ INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
 INLINE Sink(Atom) Level_Lifetime_Atom(Level* L) {
     assert(L->executor == &Stepper_Executor);
     Force_Erase_Cell_Untracked(&L->u.eval.primed);
-    return cast(Atom*, &L->u.eval.primed);
+    return &L->u.eval.primed;
 }
 
 

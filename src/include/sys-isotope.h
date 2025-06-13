@@ -55,7 +55,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
     Element* elem = Known_Element(atom);  // guaranteed element on input (?)
     Option(Heart) heart = Heart_Of(atom);
 
-    if (not Is_Stable_Antiform_Heart(heart))
+    if (not Is_Stable_Antiform_Heart_Byte(u_cast(HeartByte, maybe heart)))
         assert(not Is_Api_Value(elem));  // no unstable antiforms in API [1]
 
     if (not Any_Isotopic_Type(heart)) {
@@ -164,7 +164,7 @@ INLINE bool Is_Pack_Undecayable(Atom* pack)
             continue;  // most common case, lifted normal Elements
 
         if (LIFT_BYTE(at) == QUASIFORM_2) {
-            if (Is_Stable_Antiform_Heart(Heart_Of(at)))
+            if (Is_Stable_Antiform_Heart_Byte(HEART_BYTE(at)))
                 continue;  // lifted stable antiform, decayable
 
             return true;  // lifted unstable antiform... not decayable

@@ -178,16 +178,6 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
 #define Is_Antiform_Stable(a) \
     (not Is_Antiform_Unstable(a))
 
-// !!! Would this be faster as a flag in g_sparse_memberships[]?  Test that.
-//
-INLINE bool Is_Stable_Antiform_Heart(Option(Heart) heart) {
-    return (
-        heart != TYPE_BLOCK  // Is_Pack()
-        and heart != TYPE_WARNING  // Is_Error()
-        and heart != TYPE_COMMA  // Is_Ghost()
-    );
-}
-
 INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
     Assert_Cell_Readable(a);
     if (LIFT_BYTE(a) != ANTIFORM_0)

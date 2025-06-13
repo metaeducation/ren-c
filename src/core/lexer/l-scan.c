@@ -3553,15 +3553,15 @@ DECLARE_NATIVE(TRANSCODE)
     // Return the input BLOB! or TEXT! advanced by how much the transcode
     // operation consumed.
     //
-    Element* rest = cast(Element*, SPARE);
-    Copy_Cell(rest, source);
+    Sink(Element) spare_rest = SPARE;
+    Copy_Cell(spare_rest, source);
 
     if (Is_Blob(source)) {
         const Binary* b = Cell_Binary(source);
         if (transcode->at)
-            VAL_INDEX_UNBOUNDED(rest) = transcode->at - Binary_Head(b);
+            VAL_INDEX_UNBOUNDED(spare_rest) = transcode->at - Binary_Head(b);
         else
-            VAL_INDEX_UNBOUNDED(rest) = Binary_Len(b);
+            VAL_INDEX_UNBOUNDED(spare_rest) = Binary_Len(b);
     }
     else {
         assert(Is_Text(source));
@@ -3577,15 +3577,17 @@ DECLARE_NATIVE(TRANSCODE)
         // maybe that would make it slower when this isn't needed?)
         //
         if (transcode->at)
-            VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, transcode->at);
+            VAL_INDEX_RAW(spare_rest) += Num_Codepoints_For_Bytes(
+                bp, transcode->at
+            );
         else
-            VAL_INDEX_RAW(rest) += Binary_Tail(Cell_String(source)) - bp;
+            VAL_INDEX_RAW(spare_rest) += Binary_Tail(Cell_String(source)) - bp;
     }
 
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
-    Copy_Lifted_Cell(Array_At(pack, 0), rest);
+    Copy_Lifted_Cell(Array_At(pack, 0), spare_rest);
     Copy_Lifted_Cell(Array_At(pack, 1), OUT);
 
     return Init_Pack(OUT, pack);

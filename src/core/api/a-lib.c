@@ -1233,8 +1233,9 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     assert(Is_Node_Managed(binding));
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
+    Sink(Atom) atom_out = u_cast(Atom*, out);
     Level* L = Make_Level(&Stepper_Executor, feed, flags);
-    Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
+    Push_Level_Erase_Out_If_State_0(atom_out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
         Drop_Level(L);
@@ -1249,7 +1250,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     if (too_many)
         panic (Error_Apply_Too_Many_Raw());
 
-    Decay_If_Unstable(cast(Atom*, out));
+    Decay_If_Unstable(atom_out);
     return false;
 }
 
@@ -1330,16 +1331,20 @@ RebolValue* API_rebTranscodeInto(
 //
 void API_rebPushContinuation_internal(
     RebolContext* binding,
-    RebolValue* out,
+    RebolValue* out,  // possibly in the valist!
     uintptr_t flags,
     const void* p, void* vaptr
 ){
     ENTER_API;
 
+    possibly(out == p);  // out, spare, scratch can be p or in va_list
+
     DECLARE_ELEMENT (block);
     RebolContext* dummy_binding = nullptr;  // transcode ignores
     Corrupt_Pointer_If_Debug(dummy_binding);
     API_rebTranscodeInto(dummy_binding, block, p, vaptr);  // use "API_" [1]
+
+    // ...valist has been processed, out/spare/scratch are now mutable
 
     if (binding)
         Tweak_Cell_Binding(block, cast(Context*, binding));  // [2]
@@ -1348,7 +1353,7 @@ void API_rebPushContinuation_internal(
 
     Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
     Init_Unsurprising_Ghost(Evaluator_Primed_Cell(L));
-    Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
+    Push_Level_Erase_Out_If_State_0(u_cast(Cell*, out), L);
 }
 
 
@@ -3310,6 +3315,10 @@ static void Panic_If_Top_Level_Not_Continuable() {
 // be designed for it (e.g. if the interpreter was built with longjmp() and
 // the API client uses C++ code, things like destructors won't be run.)
 //
+// 1. It is currently legal for callers of rebDelegate() to pass a pointer
+//    to the out cell of the TOP_LEVEL in the valist.  Thus we don't want
+//    to erase the top level's OUT cell in case that is true.
+//
 RebolBounce API_rebDelegate(
     RebolContext* binding,
     const void* p, void* vaptr
@@ -3320,7 +3329,7 @@ RebolBounce API_rebDelegate(
 
     API_rebPushContinuation_internal(
         binding,
-        cast(Value*, TOP_LEVEL->out),
+        u_cast(RebolValue*, TOP_LEVEL->out),  // don't sink, OUT in valist [1]
         LEVEL_MASK_NONE,
         p, vaptr
     );
@@ -3354,7 +3363,7 @@ RebolBounce API_rebContinue(
 
     API_rebPushContinuation_internal(
         binding,
-        cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
+        u_cast(RebolValue*, TOP_LEVEL->out),  // don't sink, OUT in valist [1]
         LEVEL_FLAG_UNINTERRUPTIBLE,  // default, see rebContinueInterruptbile()
         p, vaptr
     );
@@ -3377,7 +3386,7 @@ RebolBounce API_rebContinueInterruptible(
 
     API_rebPushContinuation_internal(
         binding,
-        cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
+        u_cast(RebolValue*, TOP_LEVEL->out),  // don't sink, OUT in valist [1]
         LEVEL_MASK_NONE,  // will inherit interruptibility of parent.
         p, vaptr
     );

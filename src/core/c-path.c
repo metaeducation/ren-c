@@ -235,7 +235,7 @@ static Bounce Tweak_P_Native_Core(Level* level_)
     // !!! REVIEW: New rules, ^x gets/sets unstable antiforms
     /*
     if (Is_Quasiform(dual))  // this check may be bypassed by optimization [1]
-        assert(Is_Stable_Antiform_Heart(Heart_Of(dual)));
+        assert(Is_Stable_Antiform_Heart_Byte(Heart_Of(dual)));
     */
 
 } dispatch_generic: {

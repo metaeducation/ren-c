@@ -146,7 +146,7 @@ INLINE Element* Derelativize_Untracked(
 //
 INLINE Element* Copy_Dequoted_Cell(Sink(Element) out, const Cell* in) {
     Assert_Cell_Stable(in);
-    Copy_Cell(out, c_cast(Element*, in));
+    Copy_Cell_Untracked(u_cast(Cell*, out), in, CELL_MASK_COPY);
     LIFT_BYTE(out) = NOQUOTE_1;
     return out;
 }

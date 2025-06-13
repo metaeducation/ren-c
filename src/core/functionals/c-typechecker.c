@@ -304,7 +304,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
     bool result = true;
 
     assert(TOP_INDEX == L->baseline.stack_base);
-    Move_Atom(cast(Atom*, PUSH()), SPARE);  // need somewhere to save spare [1]
+    Copy_Lifted_Cell(PUSH(), SPARE);  // need somewhere to save spare [1]
     ++L->baseline.stack_base;  // typecheck functions should not see that push
     assert(TOP_INDEX == L->baseline.stack_base);
 
@@ -326,6 +326,8 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
     assert(TOP_INDEX == L->baseline.stack_base);
     --L->baseline.stack_base;
     Move_Drop_Top_Stack_Value(SPARE);  // restore pack to the SPARE [1]
+    Unliftify_Undecayed(SPARE);
+    assert(Is_Pack(SPARE));
 
   #if RUNTIME_CHECKS
     Init_Unreadable(SCRATCH);

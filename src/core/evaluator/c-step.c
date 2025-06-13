@@ -1119,7 +1119,7 @@ Bounce Stepper_Executor(Level* L)
         Unchain(CURRENT);
         Derelativize(SPARE, CURRENT, L_binding);
         if (rebRunThrows(
-            cast(Value*, OUT),  // <-- output, API won't make atoms
+            u_cast(Sink(Value), OUT),  // <-- output, API won't make atoms
             CANON(REDUCE), SPARE
         )){
             goto return_thrown;

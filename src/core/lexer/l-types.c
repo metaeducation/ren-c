@@ -896,10 +896,8 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 
     Term_String_Len_Size(s, num_chars, up - String_Head(s));
 
-    PUSH();
-
     if (Try_Init_Small_Utf8(
-        TOP,
+        PUSH(),
         TYPE_EMAIL,
         String_Head(s),
         String_Len(s),
@@ -909,8 +907,10 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
         return cp;
     }
 
+    DROP();  // didn't write, try again (stack may have moved...!)
+
     Freeze_Flex(s);
-    Init_Any_String(TOP, TYPE_EMAIL, s);
+    Init_Any_String(PUSH(), TYPE_EMAIL, s);
     return cp;
 }
 
@@ -971,10 +971,8 @@ Option(const Byte*) Try_Scan_Money_To_Stack(const Byte* cp, REBLEN len)
 
     Term_String_Len_Size(s, len, up - String_Head(s));
 
-    PUSH();
-
     if (Try_Init_Small_Utf8(
-        TOP,
+        PUSH(),
         TYPE_MONEY,
         String_Head(s),
         String_Len(s),
@@ -984,8 +982,10 @@ Option(const Byte*) Try_Scan_Money_To_Stack(const Byte* cp, REBLEN len)
         return cp;
     }
 
+    DROP();  // didn't write, try again (stack may have moved...!)
+
     Freeze_Flex(s);
-    Init_Any_String(TOP, TYPE_MONEY, s);
+    Init_Any_String(PUSH(), TYPE_MONEY, s);
     return cp;
 }
 
@@ -1051,10 +1051,8 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
         STRMODE_NO_CR
     );
 
-    PUSH();
-
     if (Try_Init_Small_Utf8(
-        TOP,
+        PUSH(),
         TYPE_URL,
         String_Head(s),
         String_Len(s),
@@ -1064,8 +1062,10 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
         return cp + len;
     }
 
+    DROP();  // didn't write, try again (stack may have moved...!)
+
     Freeze_Flex(s);
-    Init_Any_String(TOP, TYPE_URL, s);
+    Init_Any_String(PUSH(), TYPE_URL, s);
 
     return cp + len;
 }

@@ -362,7 +362,10 @@ Bounce Action_Executor(Level* L)
                 if (Cell_Word_Symbol(ordered) != param_symbol)
                     continue;
 
-                REBLEN offset = ARG - cast(Atom*, Level_Args_Head(L));
+                possibly(  // need to use u_cast() due to this possibility
+                    ARG == Level_Args_Head(L) and Is_Cell_Poisoned(ARG)
+                );
+                REBLEN offset = ARG - u_cast(Atom*, Level_Args_Head(L));
                 Tweak_Cell_Word_Index(ordered, offset + 1);
                 Tweak_Cell_Binding(ordered, L->u.action.original);
 

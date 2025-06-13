@@ -197,10 +197,10 @@
 // TOP is the most recently pushed item.
 //
 #define TOP \
-    cast(OnStack(Value*), cast(Value*, g_ds.movable_top))
+    cast(OnStack(Value*), cast(Value*, g_ds.movable_top))  // assume valid
 
 #define TOP_ELEMENT \
-    cast(OnStack(Element*), Known_Element(g_ds.movable_top))
+    cast(OnStack(Element*), cast(Element*, g_ds.movable_top))  // assume valid
 
 
 // 1. Use the fact that the data stack is always dynamic to avoid having to
@@ -234,8 +234,8 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
     return at;
 }
 
-#define Data_Stack_At(T,i) \
-    cast(OnStack(T*), cast(T*, Data_Stack_Cell_At(i)))
+#define Data_Stack_At(T,i)  /* may be erased cell */ \
+    cast(OnStack(T*), u_cast(T*, Data_Stack_Cell_At(i)))  // u_cast() needed
 
 #if RUNTIME_CHECKS
     #define IN_DATA_STACK_DEBUG(v) \
@@ -254,7 +254,7 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
 
 // Note: g_ds.movable_top is just TOP, but accessing TOP asserts on ENDs
 //
-INLINE OnStack(Value*) PUSH(void) {
+INLINE OnStack(Value*) PUSH(void) {  // !!! OnStack(Init(Value)) ?
     Assert_No_DataStack_Pointers_Extant();
 
     ++g_ds.index;
@@ -267,7 +267,7 @@ INLINE OnStack(Value*) PUSH(void) {
   #endif
 
     Erase_Cell(g_ds.movable_top);
-    return cast(Value*, g_ds.movable_top);
+    return u_cast(Value*, g_ds.movable_top);  // must u_cast(), erased
 }
 
 #define atom_PUSH() cast(Atom*, PUSH())

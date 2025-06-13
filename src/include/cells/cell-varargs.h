@@ -129,8 +129,11 @@ INLINE bool Is_Block_Style_Varargs(
     // filled by the evaluator on a <variadic> parameter.  Should be a singular
     // array with one BLOCK!, that is the actual array and index to advance.
     //
+    // !!! Rethink interface to give back Option(Element*) vs. exposing an
+    // implementation detail of a poisoned cell
+    //
     Array* array1 = source;
-    *shared_out = cast(Element*, Stub_Cell(array1));
+    *shared_out = u_cast(Element*, Stub_Cell(array1));
     assert(Is_Cell_Poisoned(*shared_out) or Is_Block(*shared_out));
 
     return true;

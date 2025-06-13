@@ -104,8 +104,8 @@ void Init_Evars(EVARS *e, const Element* v) {
         e->wordlist = Pop_Managed_Source_From_Stack(base);
         Clear_Node_Managed_Bit(e->wordlist);  // [1]
 
-        e->word = cast(Value*, Array_Head(e->wordlist)) - 1;
-        e->word_tail = cast(Value*, Array_Tail(e->wordlist));
+        e->word = Array_Head(e->wordlist) - 1;
+        e->word_tail = Array_Tail(e->wordlist);
 
         Corrupt_Pointer_If_Debug(e->key_tail);
         e->slot = nullptr;

@@ -480,7 +480,7 @@ INLINE bool Pack_Native_Core_Throws(
     assert(Is_Block(block));
 
     if (rebRunThrows(
-        cast(Value*, out),  // output cell
+        u_cast(Init(Value), out),
         CANON(QUASI), "reduce:predicate",  // commas excluded by :PREDICATE [1]
             rebQ(block), rebQ(predicate)
     )){

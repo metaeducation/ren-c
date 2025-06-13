@@ -236,7 +236,7 @@ INLINE Value* Stub_Cell(const_if_c Stub* s) {
 #endif
 
 INLINE Stub* Compact_Stub_From_Cell(const Cell* v) {
-    Stub* s = cast(Stub*,  // DEBUG_CHECK_CASTS checks Array
+    Stub* s = u_cast(Stub*,  // DEBUG_CHECK_CASTS checks Array
         cast(void*,
             cast(Byte*, m_cast(Cell*, v))
             - offsetof(Stub, content)

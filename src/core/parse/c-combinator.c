@@ -735,7 +735,7 @@ static bool Combinator_Param_Hook(
             // write to native frame variables, so hack in a temporary here.
             // (could be done much more efficiently another way!)
 
-            if (rebRunThrows(cast(RebolValue*, SPARE), "let temp"))
+            if (rebRunThrows(u_cast(Sink(Value), SPARE), "let temp"))
                 assert(!"LET failed");
             Element* temp = cast(Element*, SPARE);
             Value* parser = rebValue(

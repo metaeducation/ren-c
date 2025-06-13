@@ -167,15 +167,15 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Heart to_or_as = u_cast(HeartEnum, LEVEL_STATE_BYTE(L));
     assert(to_or_as != TYPE_0);
 
-    Element* input = cast(Element*, Level_Spare(L));
-    Heart from = Heart_Of_Builtin_Fundamental(input);
+    Element* spare_input = cast(Element*, Level_Spare(L));
+    Heart from = Heart_Of_Builtin_Fundamental(spare_input);
 
-    Atom* reverse = Level_Scratch(L);
+    Atom* scratch_reverse_atom = Level_Scratch(L);
 
     if (Get_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING))
         goto ensure_results_equal;
 
-    Erase_Cell(reverse);
+    Erase_Cell(scratch_reverse_atom);
     goto check_type_and_run_reverse_to;
 
   check_type_and_run_reverse_to: {  //////////////////////////////////////////
@@ -226,7 +226,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Clear_Level_Flag(level_, TRAMPOLINE_KEEPALIVE);
 
     Set_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING);
-    level_->out = reverse;  // don't overwrite OUT
+    level_->out = scratch_reverse_atom;  // don't overwrite OUT
     return CONTINUE_SUBLEVEL(level_);  // wasn't action, no DOWNSHIFT
 
 } ensure_results_equal: {  ///////////////////////////////////////////////////
@@ -236,29 +236,27 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     if (THROWING)
         return BOUNCE_THROWN;
 
-    if (Is_Error(reverse))
-        return PANIC(Cell_Error(reverse));
+    if (Is_Error(scratch_reverse_atom))
+        return PANIC(Cell_Error(scratch_reverse_atom));
 
-    Decay_If_Unstable(reverse);  // should packs from TO be legal?
+    Value* scratch_reverse = Decay_If_Unstable(scratch_reverse_atom);
 
     if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
-        if (Type_Of(cast(Value*, reverse)) != Type_Of(input))
+        if (Type_Of(scratch_reverse) != Type_Of(spare_input))
             return PANIC("Reverse TO/AS of MAP! didn't produce original type");
         return OUT;
     }
 
-    Push_Lifeguard(reverse);  // was guarded as level_->OUT, but no longer
     bool equal_reversal = rebUnboxLogic(
-        CANON(EQUAL_Q), rebQ(input), rebQ(cast(Value*, reverse))
+        CANON(EQUAL_Q), rebQ(spare_input), rebQ(scratch_reverse)
     );
-    Drop_Lifeguard(reverse);
 
     if (not equal_reversal)
         return PANIC("Reverse TO/AS transform didn't produce original result");
 
     if (to_or_as == from and Get_Level_Flag(L, CHECKING_TO)) {
         bool equal_copy = rebUnboxLogic(
-            CANON(EQUAL_Q), rebQ(input), CANON(COPY), rebQ(input)
+            CANON(EQUAL_Q), rebQ(spare_input), CANON(COPY), rebQ(spare_input)
         );
         if (not equal_copy)
             return PANIC("Reverse TO/AS transform not same as COPY");

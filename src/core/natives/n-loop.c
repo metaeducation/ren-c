@@ -1953,7 +1953,7 @@ DECLARE_NATIVE(REPEAT)
     Value* count = ARG(COUNT);
     Element* body = Element_ARG(BODY);
 
-    Value* index = cast(Value*, SPARE);  // spare cell holds current index
+    Need(Value*) index = SPARE;  // spare holds current index, erased on entry
 
     enum {
         ST_REPEAT_INITIAL_ENTRY = STATE_0,
@@ -2064,7 +2064,7 @@ DECLARE_NATIVE(FOR)
         // way around, with FOR-EACH delegating to FOR).
         //
         rebPushContinuation_internal(
-            cast(Value*, OUT),  // <-- output cell
+            u_cast(RebolValue*, OUT),  // <-- output cell (can be in valist)
             LEVEL_MASK_NONE,
             CANON(FOR_EACH), rebQ(ARG(VARS)), rebQ(value), body
         );
