@@ -1465,8 +1465,6 @@
 
         using MT = typename std::remove_const<T>::type;  // mutable type
 
-        template<typename U> friend struct InitWrapper;
-
         template<typename U>
         using IfReverseInheritable = typename std::enable_if<
             std::is_same<U, T>::value
@@ -1484,7 +1482,7 @@
                     and std::is_const<T>::value
                 >::type>
         NeedWrapper(const NeedWrapper<U>& other)
-            : p {reinterpret_cast<MT*>(other.p)}
+            : p {static_cast<T*>(other.p)}
           {}
 
         // Constructor from raw pointer
@@ -1562,9 +1560,6 @@
         mutable bool corruption_pending;
 
         using MT = typename std::remove_const<T>::type;  // mutable type
-
-        template<typename U> friend struct NeedWrapper;
-        template<typename U> friend struct InitWrapper;
 
         template<typename U>
         using IfReverseInheritable = typename std::enable_if<
@@ -1684,16 +1679,26 @@
         }
     };
 
+    template<typename T>
+    struct Corrupter<SinkWrapper<T>&> {  // C pointer corrupt fails
+      static void corrupt(SinkWrapper<T>& wrapper) {
+        Corrupt_If_Debug(wrapper.p);
+        wrapper.corruption_pending = false;
+      }
+    };
+
+    // taking SinkWrapper<T> by value corrupts via temp, make ref version
+    template<typename V, typename T>
+    struct CastHelper<SinkWrapper<V>,T*> {  // don't use SinkWrapper<V>& here
+      static constexpr T* convert(SinkWrapper<V>& sink)  // must be ref here
+        { return static_cast<T*>(sink); }  // not sink.p (flush corrupt)
+    };
+
     //=//// INIT WRAPPER (PERFORMANCE SINK) ///////////////////////////////=//
 
     template<typename T>
     struct InitWrapper {
         T* p;
-
-        using MT = typename std::remove_const<T>::type;  // mutable type
-
-        template<typename U> friend struct NeedWrapper;
-        template<typename U> friend struct SinkWrapper;
 
         template<typename U>
         using IfReverseInheritable = typename std::enable_if<
@@ -1776,16 +1781,6 @@
           { return const_cast<U*>(reinterpret_cast<const U*>(p)); }
 
         T* operator->() const { return p; }
-    };
-
-    //=//// CORRUPTION HELPER /////////////////////////////////////////////=//
-
-    template<typename T>
-    struct Corrupter<SinkWrapper<T>> {  // C pointer corrupt fails
-      static void corrupt(SinkWrapper<T>& wrapper) {
-        Corrupt_If_Debug(wrapper.p);
-        wrapper.corruption_pending = false;
-      }
     };
 #endif
 

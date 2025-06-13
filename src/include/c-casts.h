@@ -41,8 +41,8 @@
 //
 // SAFETY LEVEL
 //    * Normal usage:             cast()      // safe default choice
-//    * Not checked at all:       u_cast()    // use with fresh malloc()s
-//                                            //   ...or critical debug paths
+//    * Unchecked completely:     u_cast()    // use with fresh malloc()s
+//                                              // ...or critical debug paths
 //
 // POINTER CONSTNESS
 //    * Preserving constness:     c_cast()    // T1* => T2* ...or...
@@ -76,6 +76,29 @@
 //     signature. Everyone can specialize that -- both fully and partially,
 //     and without affecting the results of overload resolution."
 //
+// C. decltype(v) when v is a variable and not an expression will not be
+//    a reference type.  decltype((v)) will be a reference if v is a lvalue.
+//
+//    When decltype() is used in a macro like cast(), we don't want there to
+//    be a difference between `cast(T, v)` and `cast(T, (v))`...so we have
+//    to decide to either remove the reference from the type or always have
+//    the reference.  It's best to remove it.
+//
+//    Consequently, the CastHelper classes do not use references in their
+//    specialization.
+//
+//    So don't write:
+//
+//        struct CastHelper<Foo<X>&, Y*>
+//          { static Y* convert(Foo<X>& foo) { ... } }
+//
+//    It won't ever match since the reference was removed by the macro.  But
+//    do note you can leave the reference on the convert method if needed:
+//
+//        struct CastHelper<Foo<X>, Y*>  // note no reference on Foo<X>
+//          { static Y* convert(Foo<X>& foo) { ... } }
+//
+
 
 #ifndef C_CASTS_H  // "include guard" allows multiple #includes
 #define C_CASTS_H
@@ -253,7 +276,7 @@
 
     #define cast(T,v)  /* needs outer parens, see [A] */ \
         (CastHelper<typename std::remove_reference< \
-            decltype(v)>::type, T>::convert(v))
+            decltype(v)>::type, T>::convert(v))  // remove ref for sanity [C]
 #endif
 
 
@@ -294,7 +317,8 @@
 
     #define c_cast(TP,v)  /* needs outer parens, see [A] */ \
         (CastHelper< \
-            decltype(v), typename ConstPreservingCastHelper<TP,decltype(v)>::type \
+            decltype(v), \
+            typename ConstPreservingCastHelper<TP,decltype(v)>::type \
         >::convert(v))
 #endif
 
