@@ -478,6 +478,14 @@
 //
 //    Note this is not defined in the `std::` namespace since it is a shim.
 //
+// 2. always_false<T> is a template that always yields false, but is dependent
+//    on T.  This works around the problem of static_assert()s inside of
+//    SFINAE'd functions, which would fail even if the SFINAE conditions
+//    were not met:
+//
+//        static_assert(false, "Always fails, even if not SFINAE'd");
+//        static_assert(always_false<T>::value, "Only fails if SFINAE'd");
+//
 #if CPLUSPLUS_11
     #include <type_traits>
 
@@ -486,6 +494,9 @@
     struct is_explicitly_convertible : public std::is_constructible<_To, _From>
       { };
   }
+
+    template<typename>
+    struct always_false : std::false_type {};  // for SFINAE static_assert [2]
 #endif
 
 

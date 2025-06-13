@@ -212,43 +212,95 @@
 // This way, whenever you cast from a Number* to a Float*, debug builds can
 // check that the number actually was allocated as a float.
 //
+// 1. This has to be an object template and not a function template, in order
+//    to allow partial specialization.  Without partial specialization you
+//    can't provide a default that doesn't create ambiguities with the
+//    SFINAE that come afterwards.
+//
+// 2. It's ugly to have a nested template<typename V_ = V, typename T_ = T>,
+//    but unfortunately there is no other way in C++ to get SFINAE inside
+//    this struct.  Really.  Other cases can be simplified, not this one.
+//
 #if NO_CPLUSPLUS_11
-    #define cast(T,v) \
-        ((T)(v))  // in C, just another alias for parentheses cast
+  #define cast(T,v) \
+    ((T)(v))  // in C, just another alias for parentheses cast
 #else
-    template<typename V, typename T>
-    struct CastHelper {
-        // arithmetic/enum types that aren't explicitly convertible
-        template<typename V_ = V, typename T_ = T>
-        static constexpr typename std::enable_if<
-            not shim::is_explicitly_convertible<V_,T_>::value and (
+  template<typename V, typename T>
+  struct CastHelper  // must be object with static member functions [1]
+  {
+    // Prohibit const-to-non-const pointer casts
+    template<
+        typename V_ = V, typename T_ = T,  // [2]
+        typename std::enable_if<
+            std::is_pointer<V_>::value and
+            std::is_pointer<T_>::value and
+            std::is_const<typename std::remove_pointer<V_>::type>::value and
+            not std::is_const<typename std::remove_pointer<T_>::type>::value
+        >::type* = nullptr
+    >
+    static T_ convert(V_ v) {
+        static_assert(always_false<V_>::value,
+            "Mutable cast on const pointer--use m_cast() or x_cast()");
+        UNUSED(v);
+        return nullptr;
+    }
+
+    // Fallback for const-to-const pointer casts
+    template<
+        typename V_ = V, typename T_ = T,  // [2]
+        typename std::enable_if<
+            std::is_pointer<V_>::value and
+            std::is_pointer<T_>::value and
+            (not std::is_const<typename std::remove_pointer<V_>::type>::value
+            or (
+                std::is_const<typename std::remove_pointer<V_>::type>::value
+                   and
+                std::is_const<typename std::remove_pointer<T_>::type>::value
+            ))
+        >::type* = nullptr
+    >
+    static constexpr T_ convert(V_ v) {
+        return reinterpret_cast<T>(v);
+    }
+
+    // arithmetic/enum types that aren't explicitly convertible
+    template<
+        typename V_ = V, typename T_ = T,  // [2]
+        typename std::enable_if<
+            (not std::is_pointer<V_>::value or not std::is_pointer<T_>::value)
+                and
+            (not shim::is_explicitly_convertible<V_,T_>::value and (
                 (std::is_arithmetic<V_>::value or std::is_enum<V_>::value)
                 and (std::is_arithmetic<T_>::value or std::is_enum<T_>::value)
-            ),
-        T>::type convert(V_ v) { return static_cast<T>(v); }
+            ))
+        >::type* = nullptr
+    >
+    static constexpr T_ convert(V_ v) {
+        return static_cast<T>(v);
+    }
 
-        // pointer-to-pointer conversions that aren't explicitly convertible
-        template<typename V_ = V, typename T_ = T>
-        static constexpr typename std::enable_if<
-            not shim::is_explicitly_convertible<V_,T_>::value and (
-                std::is_pointer<V_>::value and std::is_pointer<T_>::value
-            ),
-        T>::type convert(V_ v) { return reinterpret_cast<T>(v); }
-
-        // for types that are explicitly convertible
-        template<typename V_ = V, typename T_ = T>
-        static constexpr typename std::enable_if<
+    // for types that are explicitly convertible
+    template<
+        typename V_ = V, typename T_ = T,  // [2]
+        typename std::enable_if<
+            (not std::is_pointer<V_>::value or not std::is_pointer<T_>::value)
+                and
             shim::is_explicitly_convertible<V_,T_>::value,
-        T>::type convert(V_ v) { return static_cast<T>(v); }
-    };
+        T>::type* = nullptr
+    >
+    static constexpr T_ convert(V_ v) {
+        return static_cast<T>(v);
+    }
+  };
 
-    template<typename V>
-    struct CastHelper<V,void>
-      { static void convert(V v) { (void)(v); } };  // void can't be constexpr
+  template<typename V>
+  struct CastHelper<V,void> {
+    static void convert(V /* v */) { }  // void can't be constexpr
+  };
 
-    #define cast(T,v)  /* needs outer parens, see [A] */ \
-        (CastHelper<typename std::remove_reference< \
-            decltype(v)>::type, T>::convert(v))  // remove ref for sanity [C]
+  #define cast(T,v)  /* needs outer parens, see [A] */ \
+    (CastHelper<typename std::remove_reference< \
+        decltype(v)>::type, T>::convert(v))  // remove ref for sanity [C]
 #endif
 
 
@@ -409,6 +461,9 @@
 //=//// REMOVE REFERENCE CAST /////////////////////////////////////////////=//
 //
 // Simplifying remove-reference cast.
+//
+// !!! This was used in the past, but isn't currently used.  Should it be
+// kept around or removed?
 //
 #if NO_CPLUSPLUS_11
     #define rr_cast(T,v) \
