@@ -539,7 +539,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* time = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = ARG(PICKER);
 
     REBINT i;
     if (Is_Word(picker)) {

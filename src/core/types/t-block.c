@@ -404,7 +404,7 @@ void Shuffle_Array(Array* arr, REBLEN idx, bool secure)
 
 static REBINT Try_Get_Array_Index_From_Picker(
     const Element* v,
-    const Element* picker
+    const Value* picker
 ){
     REBINT n;
 
@@ -458,7 +458,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
 bool Try_Pick_Block(
     Sink(Element) out,
     const Element* block,
-    const Element* picker
+    const Value* picker
 ){
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
@@ -934,7 +934,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* series = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = Element_ARG(PICKER);
 
     REBINT n;
     if (Any_List(series))

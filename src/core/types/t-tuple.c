@@ -494,7 +494,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Sequence)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     const Element* seq = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = ARG(PICKER);
 
     REBINT n;
     if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312

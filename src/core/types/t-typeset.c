@@ -454,7 +454,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
     Element* param = Element_ARG(LOCATION);
 
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = ARG(PICKER);
     if (not Is_Word(picker))
         return PANIC(picker);
 

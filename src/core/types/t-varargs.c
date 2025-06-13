@@ -470,7 +470,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Varargs)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     const Element* varargs = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
         return PANIC(picker);

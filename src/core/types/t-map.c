@@ -714,6 +714,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* map = Element_ARG(LOCATION);
+
+    if (Is_Antiform(ARG(PICKER)))
+        return PANIC("Antiforms as keys in maps not currently allowed (TBD)");
+
     const Element* picker = Element_ARG(PICKER);
 
     bool strict = false;  // case-preserving [1]

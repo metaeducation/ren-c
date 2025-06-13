@@ -117,7 +117,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 //          [any-value?]
 //      location [<opt-out> <unrun> plain?]  ; can't pick sigil'd/quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
-//          [<opt-out> element? logic?]
+//          [<opt-out> any-value?]
 //      <local> dual  ; slot in position of DUAL for TWEAK*
 //  ]
 //
@@ -145,21 +145,8 @@ DECLARE_NATIVE(PICK)
 
     Init_Dual_Nulled_Pick_Signal(LOCAL(DUAL));  // PICK, not POKE
 
-} adjust_logic_to_index: {
-
-    // PICK in R3-Alpha historically would use a logic TRUE to get the first
-    // element in a list, and a logic FALSE to get the second.  It did this
-    // regardless of how many elements were in the list.
-
-    if (Is_Okay(picker)) {  // !!! should we verify that LENGTH-OF is 2?
-        Init_Integer(picker, 1);
-    }
-    else if (Is_Nulled(picker)) {
-        Init_Integer(picker, 2);
-    }
-    assert(not Is_Antiform(picker));  // LOGIC? is the only supported antiform
-
-    goto dispatch_generic;
+    if (Is_Keyword(picker) or Is_Trash(picker))
+        return PANIC("PICK with keyword or trash picker never allowed");
 
 } dispatch_generic: { ////////////////////////////////////////////////////////
 
@@ -344,7 +331,7 @@ DECLARE_NATIVE(TWEAK_P_BOOTSTRAP)
 //      location "(modified)"
 //          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
-//          [<opt-out> element?]
+//          [<opt-out> any-value?]
 //      ^value [any-value? error! void?]
 //      <local> store
 //  ]
@@ -354,7 +341,7 @@ DECLARE_NATIVE(POKE)
     INCLUDE_PARAMS_OF_POKE;
 
     Element* location = Element_ARG(LOCATION);
-    USED(ARG(PICKER));
+    Value* picker = ARG(PICKER);
     Element* lifted_value = Element_ARG(VALUE);
 
     if (Get_Level_Flag(LEVEL, POKE_NOT_INITIAL_ENTRY))
@@ -369,6 +356,9 @@ DECLARE_NATIVE(POKE)
     // 2. We produce the DUAL argument in the same frame.  However, we don't
     //    have a way to produce the dual ACTION! to indicate an accessor.
     //    Should there be a POKE:DUAL, or just a SET:DUAL?
+
+    if (Is_Keyword(picker) or Is_Trash(picker))
+        return PANIC("PICK with keyword or trash picker never allowed");
 
     if (Is_Lifted_Error(lifted_value))
         return UNLIFT(lifted_value);  // bypass and don't do the poke

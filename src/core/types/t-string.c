@@ -734,7 +734,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 bool Try_Get_Series_Index_From_Picker(
     REBINT *out,
     const Element* v,
-    const Element* picker
+    const Value* picker
 ){
     if (not (Is_Integer(picker) or Is_Decimal(picker)))  // !!! why DECIMAL! ?
         panic (Error_Bad_Pick_Raw(picker));

@@ -642,6 +642,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* bset = Element_ARG(LOCATION);
+
+    if (Is_Antiform(ARG(PICKER)))
+        return PANIC(PARAM(PICKER));
+
     const Element* picker = Element_ARG(PICKER);
 
     Value* dual = ARG(DUAL);

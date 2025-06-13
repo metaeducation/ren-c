@@ -781,7 +781,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* date = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = Element_ARG(PICKER);
 
     Option(SymId) sym;
     if (Is_Word(picker)) {

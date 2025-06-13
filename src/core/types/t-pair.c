@@ -153,7 +153,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 
 REBINT Index_From_Picker_For_Pair(
     const Element* pair,
-    const Element* picker
+    const Value* picker
 ){
     UNUSED(pair); // Might the picker be pair-sensitive?
 
@@ -297,7 +297,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Pair)
 
     Element* pair = Element_ARG(LOCATION);
 
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = ARG(PICKER);
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
 
     Value* dual = ARG(DUAL);

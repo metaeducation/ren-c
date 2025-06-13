@@ -101,7 +101,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* env = Element_ARG(LOCATION);
-    Element* picker = Element_ARG(PICKER);
+    Value* picker = ARG(PICKER);
 
     if (not Is_Word(picker) and not Is_Text(picker))
         return PANIC("ENVIRONMENT! picker must be WORD! or TEXT!");

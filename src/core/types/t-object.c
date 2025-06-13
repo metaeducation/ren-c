@@ -1006,7 +1006,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
 }
 
 
-const Symbol* Symbol_From_Picker(const Element* context, const Element* picker)
+const Symbol* Symbol_From_Picker(const Element* context, const Value* picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
 
@@ -1221,7 +1221,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     Element* context = Element_ARG(LOCATION);
     possibly(Is_Port(context));
 
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
     const Slot* slot = maybe Cell_Context_Slot(context, symbol);

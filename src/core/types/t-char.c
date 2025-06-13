@@ -937,7 +937,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Rune)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     const Element* rune = Element_ARG(LOCATION);
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
         return PANIC(PARAM(PICKER));

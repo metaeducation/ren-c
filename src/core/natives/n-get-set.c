@@ -128,10 +128,11 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
-    if (e)
-        return e;
 
     Drop_Level(level_);
+
+    if (e)
+        return e;
 
     Decay_If_Unstable(atom_out);
 
@@ -637,7 +638,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     bool picker_was_meta;
 
     Element* location_arg;
-    Element* picker_arg;
+    Value* picker_arg;
     Element* dual_arg;
 
   proxy_arguments_to_frame_dont_panic_in_this_scope: {
@@ -656,7 +657,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
     picker_arg = Copy_Cell(
         Force_Erase_Cell(Level_Arg(sub, 2)),
-        Data_Stack_At(Element, picker_index)
+        Data_Stack_At(Value, picker_index)
     );
 
     dual_arg = Init_Dual_Nulled_Pick_Signal(
@@ -671,17 +672,23 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
 } adjust_frame_arguments_now_that_its_safe_to_panic: {
 
-    if (Is_Quoted(picker_arg)) {  // literal x.'y or x.('y) => 'y
-        Unquotify(picker_arg);
+    if (Any_Lifted(picker_arg)) {  // literal x.'y or x.('y) => 'y
+        Unliftify_Known_Stable(picker_arg);
         picker_was_meta = false;
+
+        if (Is_Keyword(picker_arg) or Is_Trash(picker_arg))
+            return Error_User(
+                "PICK with keyword or trash picker never allowed"
+            );
     }
     else {
-        if (Any_Metaform(picker_arg))
+        Element* pick_instruction = Known_Element(picker_arg);
+        if (Any_Metaform(pick_instruction))
             picker_was_meta = true;  // assume pick product is meta, unlift
         else
             picker_was_meta = false;
 
-        Plainify(picker_arg);  // drop any sigil (on cell in frame, not stack)
+        Plainify(pick_instruction);  // drop any sigil (frame cell, not stack)
     }
 
 } call_pick_p: {
@@ -720,7 +727,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     Element* location_arg;
-    Element* picker_arg;
+    Value* picker_arg;
     Atom* value_arg;
 
   proxy_arguments_to_frame_dont_panic_in_this_scope: {
@@ -751,8 +758,13 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 } adjust_frame_arguments_now_that_its_safe_to_panic: {
 
     attempt {
-        if (Is_Quoted(picker_arg)) {  // literal x.'y or x.('y) => 'y
-            Unquotify(picker_arg);
+        if (Any_Lifted(picker_arg)) {  // literal x.'y or x.('y) => 'y
+            Unliftify_Known_Stable(picker_arg);
+
+            if (Is_Keyword(picker_arg) or Is_Trash(picker_arg))
+                return Error_User(
+                    "PICK with keyword or trash picker never allowed"
+                );
 
             if (dual_poke_if_not_on_stack)
                 Copy_Cell(value_arg, unwrap dual_poke_if_not_on_stack);
@@ -764,7 +776,8 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
             break;
         }
 
-        Option(Sigil) picker_sigil = Sigil_Of(picker_arg);
+        Element* picker_instruction = Known_Element(picker_arg);
+        Option(Sigil) picker_sigil = Sigil_Of(picker_instruction);
         if (picker_sigil == SIGIL_META) {
             if (dual_poke_if_not_on_stack)
                 Copy_Cell(value_arg, unwrap dual_poke_if_not_on_stack);
@@ -801,7 +814,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 
         if (Is_Action(stable_poke)) {  // not lifted now...
             if (Not_Cell_Flag(stable_poke, OUT_HINT_UNSURPRISING))
-                panic ("Surprising ACTION! assignment, use ^ to APPROVE");
+                return Error_User(
+                    "Surprising ACTION! assignment, use ^ to APPROVE"
+                );
 
             if (Is_Word(picker_arg)) {
                 Update_Frame_Cell_Label(
@@ -812,7 +827,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
         Copy_Cell(value_arg, stable_poke);  // lift it to be ^META arg
     }
     then {  // not quoted...
-        Plainify(picker_arg);  // drop any sigils
+        Plainify(Known_Element(picker_arg));  // drop any sigils
     }
 
 } call_updater: {
@@ -972,14 +987,11 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             e = Error_No_Catch_For_Throw(TOP_LEVEL);
             goto finalize_and_return;
         }
-        Decay_If_Unstable(SPARE);
-        if (Is_Antiform(SPARE)) {
-            e = Error_Bad_Antiform(SPARE);
-            goto return_error;
-        }
 
-        Move_Cell(PUSH(), Known_Element(SPARE));  // PICKER for PICKPOKE
-        Quotify(TOP_ELEMENT);  // signal literal pick
+        Value* spare_picker = Decay_If_Unstable(SPARE);
+        possibly(Is_Antiform(spare_picker));  // e.g. PICK DATATYPE! from MAP!
+        Liftify(spare_picker);  // signal literal pick
+        Move_Cell(PUSH(), spare_picker);
     }
 
     goto set_from_steps_on_stack;
@@ -1034,6 +1046,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             level_, sub, stackindex
         );
         if (e) {
+            if (sub->varlist)
+                Drop_Action(sub);  // drop any varlist, if it exists
             Drop_Level(sub);
             goto return_error;
         }
@@ -1115,6 +1129,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         assert(e);  // ack, fix!
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
     }
+    if (sub->varlist)
+        Drop_Action(sub);
     Drop_Level(sub);
 
     if (e)
