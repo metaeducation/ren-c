@@ -109,7 +109,7 @@ Map* Make_Map(REBLEN capacity)
 REBINT Find_Key_Hashed(
     Array* array,  // not always a pairlist, may group by amounts other than 2
     HashList* hashlist,
-    const Element* key,  // !!! assumes ++key finds the values
+    const Value* key,  // !!! assumes ++key finds the values
     REBLEN wide,  // how much to group by (2 for MAP! and PairList arrays)
     bool strict,
     Byte mode
@@ -181,18 +181,18 @@ REBINT Find_Key_Hashed(
         assert(mode == 0);
         slot = zombie_slot;
         Copy_Cell(
-            Array_At(array, (indexes[slot] - 1) * wide),
+            u_cast(Value*, Array_At(array, (indexes[slot] - 1) * wide)),
             key
         );
     }
 
     if (mode > 1) { // append new value to the target array
-        const Element* src = key;
+        const Value* src = key;
         indexes[slot] = (Array_Len(array) / wide) + 1;
 
         REBLEN index;
         for (index = 0; index < wide; ++src, ++index)
-            Append_Value(array, src);
+            Copy_Cell(u_cast(Value*, Alloc_Tail_Array(array)), src);
     }
 
     return (mode > 0) ? -1 : slot;
@@ -266,7 +266,7 @@ void Expand_Hashlist(HashList* hashlist)
 //
 Option(Index) Find_Map_Entry(
     Map* map,
-    const Element* key,
+    const Value* key,
     bool strict
 ) {
     HashList* hashlist = MAP_HASHLIST(map);
@@ -302,8 +302,8 @@ Option(Index) Find_Map_Entry(
 //
 Option(Index) Update_Map_Entry(
     Map* map,
-    const Element* key,
-    Option(const Element*) val,  // nullptr is remove
+    const Value* key,
+    Option(const Value*) val,  // nullptr (not nulled cell) is remove
     bool strict
 ){
     Force_Value_Frozen_Deep_Blame(key, MAP_PAIRLIST(map));  // freeze [1]
@@ -326,7 +326,7 @@ Option(Index) Update_Map_Entry(
     REBLEN n = indexes[slot];
 
     if (n) {  // found, must set or overwrite the value
-        Element* at = Array_At(pairlist, ((n - 1) * 2) + 1);
+        Value* at = Flex_At(Value, pairlist, ((n - 1) * 2) + 1);
         if (not val)  // remove
             Init_Zombie(at);
         else
@@ -337,8 +337,8 @@ Option(Index) Update_Map_Entry(
     if (not val)
         return 0;  // trying to remove non-existing key
 
-    Append_Value(pairlist, key);  // does not copy key (hence why we freeze it)
-    Append_Value(pairlist, unwrap val);
+    Copy_Cell(u_cast(Value*, Alloc_Tail_Array(pairlist)), key);
+    Copy_Cell(u_cast(Value*, Alloc_Tail_Array(pairlist)), unwrap val);
 
     return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
@@ -391,11 +391,104 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
     Element* arg = Element_ARG(DEF);
 
+    enum {
+        ST_MAKE_MAP_INITIAL_ENTRY,
+        ST_MAKE_MAP_EVAL_STEP_KEY,
+        ST_MAKE_MAP_EVAL_STEP_VALUE
+    };
+
+    switch (STATE) {
+      case ST_MAKE_MAP_INITIAL_ENTRY: goto initial_entry;
+      case ST_MAKE_MAP_EVAL_STEP_KEY: goto key_step_dual_in_out;
+      case ST_MAKE_MAP_EVAL_STEP_VALUE: goto value_step_dual_in_out;
+      default: assert(false);
+    }
+
+  initial_entry: { ///////////////////////////////////////////////////////////
+
     if (Any_Number(arg))
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
 
-    return PANIC(Error_Bad_Make(TYPE_MAP, arg));
-}
+    Executor* executor;
+    if (Is_Pinned(BLOCK, arg))
+        executor = &Inert_Stepper_Executor;
+    else {
+        if (not Is_Block(arg))
+            return PANIC(Error_Bad_Make(TYPE_MAP, arg));
+
+        executor = &Stepper_Executor;
+    }
+
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
+
+    Level* sub = Make_Level_At(executor, arg, flags);
+    Push_Level_Erase_Out_If_State_0(SPARE, sub);
+
+} reduce_key: { /////////////////////////////////////////////////////////////
+
+    if (Is_Feed_At_End(SUBLEVEL->feed))
+        goto finished;
+
+    STATE = ST_MAKE_MAP_EVAL_STEP_KEY;
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
+
+} key_step_dual_in_out: { ////////////////////////////////////////////////////
+
+    if (Is_Endlike_Tripwire(SPARE))  // no more key, not a problem, done
+        goto finished;
+
+    if (Is_Ghost(SPARE))
+        goto reduce_key;  // try again...
+
+    Value* key = Decay_If_Unstable(SPARE);
+    if (Is_Nulled(key) or Is_Trash(key))
+        return PANIC("Null or trash can't be used as key in MAP!");
+
+    Copy_Cell(PUSH(), key);
+
+    goto reduce_value;
+
+} reduce_value: { ///////////////////////////////////////////////////////////
+
+    STATE = ST_MAKE_MAP_EVAL_STEP_VALUE;
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
+
+} value_step_dual_in_out: { //////////////////////////////////////////////////
+
+    if (Is_Endlike_Tripwire(SPARE))  // no value for key, that's an error
+        return PANIC("Key without value terminating MAKE MAP!");
+
+    if (Is_Ghost(SPARE))
+        goto reduce_value;  // try again...
+
+    Value* val = Decay_If_Unstable(SPARE);
+    if (Is_Nulled(val) or Is_Trash(val))
+        return PANIC("Null or trash can't be used as value in MAP!");
+
+    Copy_Cell(PUSH(), val);
+
+    goto reduce_key;
+
+} finished: { ////////////////////////////////////////////////////////////////
+
+    Array* pairlist = Pop_Stack_Values_Core(
+        FLEX_MASK_PAIRLIST | NODE_FLAG_MANAGED,
+        STACK_BASE
+    );
+    assert(Array_Len(pairlist) % 2 == 0);  // is [key value key value...]
+    Count capacity = Array_Len(pairlist) / 2;
+    Tweak_Link_Hashlist(pairlist, Make_Hashlist(capacity));
+
+    Map* map = cast(Map*, pairlist);
+    Init_Map(OUT, map);  // !!! Note: hashlist invalid...
+
+    Drop_Level(SUBLEVEL);
+
+    Rehash_Map(map);  // !!! Rehash calls evaluator for equality testing!
+    return OUT;
+}}
 
 
 INLINE Map* Copy_Map(const Map* map, bool deeply) {
@@ -558,9 +651,17 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
         if (not form)
             New_Indented_Line(mo);
-        Mold_Element(mo, c_cast(Element*, key));
+
+        DECLARE_ELEMENT (lifted_key);
+        Copy_Lifted_Cell(lifted_key, key);
+        Mold_Element(mo, lifted_key);
+
         Append_Codepoint(mo->string, ' ');
-        Mold_Element(mo, c_cast(Element*, key + 1));
+
+        DECLARE_ELEMENT (lifted_value);
+        Copy_Lifted_Cell(lifted_value, key + 1);
+        Mold_Element(mo, lifted_value);
+
         if (form)
             Append_Codepoint(mo->string, '\n');
     }
@@ -589,8 +690,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
     switch (id) {
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
-        if (Is_Antiform(ARG(VALUE)))
-            return PANIC(ARG(VALUE));
 
         UNUSED(PARAM(SERIES));  // covered by `v`
 
@@ -601,7 +700,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         Option(Index) n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
-            Element_ARG(VALUE),
+            ARG(VALUE),
             Bool_ARG(CASE)
         );
 
@@ -715,14 +814,12 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
 
     Element* map = Element_ARG(LOCATION);
 
-    if (Is_Antiform(ARG(PICKER)))
-        return PANIC("Antiforms as keys in maps not currently allowed (TBD)");
-
-    const Element* picker = Element_ARG(PICKER);
+    const Value* picker = ARG(PICKER);
+    assert(not Is_Keyword(picker) and not Is_Trash(picker));
 
     bool strict = false;  // case-preserving [1]
 
-    Option(Element*) poke;
+    Option(Value*) poke;
 
     Value* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
@@ -739,10 +836,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
 
     Unliftify_Known_Stable(dual);
 
-    if (Is_Antiform(dual))
+    if (Is_Nulled(dual) or Is_Trash(dual))
         return PANIC(Error_Bad_Antiform(dual));
 
-    poke = Known_Element(dual);
+    poke = dual;
 
     goto handle_poke;
 
@@ -757,7 +854,8 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
     if (not n)
         return DUAL_SIGNAL_NULL_ABSENT;
 
-    const Element* val = Array_At(
+    const Value* val = Flex_At(
+        Value,
         MAP_PAIRLIST(VAL_MAP(map)),
         (((unwrap n) - 1) * 2) + 1
     );

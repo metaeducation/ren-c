@@ -76,11 +76,6 @@ typedef enum {
     //
     FLAVOR_INSTRUCTION_SPLICE,
 
-    // Pairlists are used by map! (note that Unreadable() is used for zombie
-    // keys, but it's not an antiform...)
-    //
-    FLAVOR_PAIRLIST,
-
     // A "Sea" of Vars is what's used to hold a sparse mapping of Symbol to
     // Variable, such as with MODULE!
     //
@@ -97,6 +92,12 @@ typedef enum {
     // with some additional values.)
     //
     FLAVOR_DATASTACK = MIN_FLAVOR_ANTIFORMS_OK,
+
+    // Pairlists are used by map! (note that Unreadable() is used for zombie
+    // keys.)  It was relaxed to be allowed to store antiforms, just not
+    // nulled or trash keys.
+    //
+    FLAVOR_PAIRLIST,
 
     // This indicates this Flex represents the "varlist" of a context (which
     // is interchangeable with the identity of the varlist itself).  See

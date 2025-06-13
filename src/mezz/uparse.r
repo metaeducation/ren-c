@@ -262,7 +262,7 @@ block-combinator: ~  ; need in variable for recursion implementing "..."
 ; combinator named ANY).  This is part of the general issues with binding that
 ; need to have answers.
 ;
-default-combinators: to map! reduce [
+default-combinators: make map! [
 
     === NOT COMBINATOR ===
 
@@ -1243,7 +1243,7 @@ default-combinators: to map! reduce [
     ; value is the rule in the string and binary case, but the item in the
     ; data in the block case.
 
-    (lift text!) combinator [
+    text! combinator [
         return: "The rule series matched against (not input value)"
             [text!]
         value [text!]
@@ -1286,14 +1286,14 @@ default-combinators: to map! reduce [
         return value
     ]
 
-    === TOKEN! COMBINATOR (currently RUNE! and CHAR!) ===
+    === RUNE! COMBINATOR ===
 
-    ; The TOKEN! type is an optimized immutable form of string that will
+    ; The RUNE! type is an optimized immutable form of string that will
     ; often be able to fit into a cell with no series allocation.  This makes
     ; it good for representing characters, but it can also represent short
     ; strings.  It matches case-sensitively.
 
-    (lift rune!) combinator [
+    rune! combinator [
         return: "The token matched against (not input value)"
             [rune!]
         value [rune!]
@@ -1363,7 +1363,7 @@ default-combinators: to map! reduce [
     ; may not be desirable.  Also you could match partial characters and
     ; then not be able to set a string position.  So we don't do that.
 
-    (lift blob!) combinator [
+    blob! combinator [
         return: "The binary matched against (not input value)"
             [blob!]
         value [blob!]
@@ -1439,7 +1439,7 @@ default-combinators: to map! reduce [
     ; counts as a phase).  This is done using the <delay> tag (may not be
     ; the best name).
 
-    (lift group!) combinator [
+    group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-atom?]
         :pending [blank? block!]
@@ -1558,7 +1558,7 @@ default-combinators: to map! reduce [
             ^r: envelop [] ^r  ; enable arity-0 combinators [2]
         ]
 
-        if not comb: select state.combinators (lift type of ^r) [
+        if not comb: select state.combinators (type of ^r) [
             panic [
                 "Unhandled type in GET-GROUP! combinator:" to word! type of ^r
             ]
@@ -1588,7 +1588,7 @@ default-combinators: to map! reduce [
     ; a sort of "INTO" switch that could change the way the input is being
     ; viewed, e.g. being able to do INTO BLOB! on a TEXT! (?)
 
-    (lift bitset!) combinator [
+    bitset! combinator [
         return: "The matched input value"
             [char? integer!]
         value [bitset!]
@@ -1629,7 +1629,7 @@ default-combinators: to map! reduce [
     ;     >> parse "<a> 100 (b c)" ['<a> space '100 space '(b c)]
     ;     == (b c)
 
-    (lift quoted!) combinator [
+    quoted! combinator [
         return: "The matched value"
             [element?]
         value [quoted!]
@@ -1680,7 +1680,7 @@ default-combinators: to map! reduce [
         ; Though generic quoting exists, being able to say [lit ''x] instead
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
-        comb: (state.combinators).(lift quoted!)
+        comb: state.combinators.(quoted!)
         return [{_} remainder pending]: run comb state input (lift value)
     ]
 
@@ -1702,7 +1702,7 @@ default-combinators: to map! reduce [
         return void
     ]
 
-    (lift keyword!) combinator [
+    keyword! combinator [
         return: [ghost!]
         value [keyword!]
         <local> comb neq?
@@ -1718,7 +1718,7 @@ default-combinators: to map! reduce [
         panic ["Unknown keyword" mold lift value]
     ]
 
-    (lift splice!) combinator [
+    splice! combinator [
         return: [<divergent>]
         :pending [blank? block!]
         value [splice!]
@@ -1758,7 +1758,7 @@ default-combinators: to map! reduce [
     ;
     ; Note that REPEAT allows the use of SPACE to opt out of an iteration.
 
-    (lift integer!) combinator [
+    integer! combinator [
         return: "Just the INTEGER! (see REPEAT for repeating rules)"
             [integer!]
         value [integer!]
@@ -1844,7 +1844,7 @@ default-combinators: to map! reduce [
         return ^result
     ]
 
-    === TYPE-XXX! COMBINATORS ===
+    === DATATYPE! COMBINATORS ===
 
     ; Traditionally you could only use a datatype with ANY-LIST? types,
     ; but since Ren-C uses UTF-8 Everywhere it makes it practical to merge in
@@ -1860,7 +1860,7 @@ default-combinators: to map! reduce [
     ;     == 1020
     ;
 
-    (lift datatype!) combinator [
+    datatype! combinator [
         return: "Matched or synthesized value"
             [element?]
         value [datatype!]
@@ -1979,7 +1979,7 @@ default-combinators: to map! reduce [
 
     ; @ combinator is used for a different purpose [1]
 
-    (lift pinned!) combinator compose [
+    pinned! combinator compose [
         return: [any-atom?]
         :pending [blank? block!]
         value [@any-element?]
@@ -1989,7 +1989,7 @@ default-combinators: to map! reduce [
 
         case [
             group? value [  ; run GROUP! to get *actual* value to match
-                comb: runs (state.combinators).(lift group!)
+                comb: runs state.combinators.(group!)
                 [^result remainder pending]: comb state input value
                     except e -> [
                         return fail e
@@ -2005,7 +2005,7 @@ default-combinators: to map! reduce [
                 remainder: input  ; didn't need to consume input to get result
             ]
             block? value [  ; match literal block redundant [4]
-                comb: runs (state.combinators).(lift block!)
+                comb: runs state.combinators.(block!)
                 [^result remainder pending]: comb state input value
                     except e -> [
                         return fail e
@@ -2014,7 +2014,7 @@ default-combinators: to map! reduce [
         ]
 
         ensure [quoted! quasiform!] result  ; quasi means antiform [2]
-        comb: runs state.combinators.(lift type of result)  ; quoted or quasi
+        comb: runs state.combinators.(type of result)  ; quoted or quasi
         [^result remainder subpending]: comb state remainder result  ; metaform
             except e -> [
                 return fail e
@@ -2102,7 +2102,7 @@ default-combinators: to map! reduce [
     ; you can make a PATH! that starts with / and that will be run as a normal
     ; action but whose arguments are fulfilled via PARSE.
 
-    (lift frame!) combinator [
+    frame! combinator [
         "Run an ordinary action with parse rule products as its arguments"
         return: "The return value of the action"
             [any-value? pack!]
@@ -2154,7 +2154,7 @@ default-combinators: to map! reduce [
     ;
     ; The operation is basically the same for TUPLE!, so the same code is used.
 
-    (lift word!) combinator [
+    word! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-value? pack!]
         :pending [blank? block!]
@@ -2212,7 +2212,7 @@ default-combinators: to map! reduce [
             ]
         ]
 
-        if not comb: select state.combinators (lift type of ^r) [
+        if not comb: select state.combinators (type of ^r) [
             panic ["Unhandled type in WORD! combinator:" to word! type of ^r]
         ]
 
@@ -2321,7 +2321,7 @@ default-combinators: to map! reduce [
     ; function...rather than being able to build a small function for each
     ; step that could short circuit before the others were needed.)
 
-    (lift block!) (block-combinator: combinator [
+    block! (block-combinator: combinator [
         return: "Last result value"
             [any-value? pack! ghost!]
         :pending [blank? block!]
@@ -2542,8 +2542,8 @@ s: ~
 ; just by saying `end: <end>` and `here: <here>`.
 
 comment [
-    default-combinators.('here): default-combinators.<here>
-    default-combinators.('end): default-combinators.<end>
+    default-combinators.here: default-combinators.<here>
+    default-combinators.end: default-combinators.<end>
 ]
 
 
@@ -2738,7 +2738,7 @@ parsify: func [
     ]
     rules: my next
 
-    while [comb: try state.combinators.(r)] [  ; literal match first [2]
+    while [comb: select state.combinators r] [  ; literal match first [2]
         if match frame! comb [
             return combinatorize comb rules state
         ]
@@ -2776,7 +2776,7 @@ parsify: func [
             if not frame? let gotten: unrun get:any r [
                 panic "In UPARSE PATH starting in / must be action or frame"
             ]
-            if not comb: select state.combinators (lift frame!) [
+            if not comb: select state.combinators frame! [
                 panic "No frame! combinator, can't use PATH starting with /"
             ]
 
@@ -2833,7 +2833,7 @@ parsify: func [
                 comb: try state.combinators.(as type of r '.*)  ; hack!
             ]
         ]]
-        try state.combinators.(lift type of r)  ; datatypes dispatch meta
+        select state.combinators (type of r)  ; datatypes dispatch meta
     ] [
         panic ["Unhandled type in PARSIFY:" to word! type of r "-" mold r]
     ]
@@ -2944,7 +2944,7 @@ parse*: func [
     ;
     let state: binding of $return
 
-    let f: make frame! combinators.(lift block!)
+    let f: make frame! combinators.(block!)
     f.state: state
     f.input: input
     f.value: rules

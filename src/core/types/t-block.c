@@ -528,10 +528,20 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         INCLUDE_PARAMS_OF_FIND; // must be same as select
         UNUSED(PARAM(SERIES));
 
-        Value* pattern = ARG(PATTERN);
+        Value* pattern = ARG(PATTERN);  // SELECT takes antiforms literally
 
-        if (Is_Datatype(pattern))
-            Init_Typechecker(pattern, pattern);  // out = in is okay
+        if (Is_Antiform(pattern)) {
+            if (id == SYM_SELECT)
+                return PANIC("Cannot SELECT with antiforms on lists");
+
+            if (Is_Datatype(pattern))
+                Init_Typechecker(pattern, pattern);  // out = in is okay
+            else if (Is_Action(pattern)) {
+                // treat as FIND function
+            }
+            else
+                return PANIC(Error_Bad_Antiform(pattern));
+        }
 
         Flags flags = (
             (Bool_ARG(MATCH) ? AM_FIND_MATCH : 0)

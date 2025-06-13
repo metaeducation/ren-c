@@ -339,7 +339,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     Level* sub = Make_Level_At(executor, block, flags);
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
-} reduce_next: {
+} reduce_next: { ////////////////////////////////////////////////////////////
 
     if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;

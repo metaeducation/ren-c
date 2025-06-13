@@ -330,7 +330,7 @@ DECLARE_NATIVE(FIND)  // Must be frame-compatible with SELECT
 //
 //      return: [any-value?]
 //      series [<opt-out> any-series? any-context? map! bitset!]
-//      value [<opt-out> element? splice! action!]
+//      value [<opt-out> any-value?]
 //      :part "Limits the search to a given length or position"
 //          [any-number? any-series? pair!]
 //      :case "Characters are case-sensitive"
