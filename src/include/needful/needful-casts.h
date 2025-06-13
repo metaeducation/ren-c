@@ -1,7 +1,7 @@
 //
-//  file: %c-casts.h
+//  file: %needful-casts.h
 //  summary: "Cast macros with added features when built as C++11 or higher"
-//  homepage: http://blog.hostilefork.com/c-casts-for-the-masses/
+//  homepage: <needful homepage TBD>
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
@@ -15,7 +15,9 @@
 //
 // The goal of this file is to define a set of macros for casting which have
 // trivial definitions when built as C, but offer enhanced features when built
-// as C++11 or higher.
+// as C++11 or higher.  It is an evolution of code from this blog article:
+//
+//  http://blog.hostilefork.com/c-casts-for-the-masses/
 //
 // It provides *easier-to-spot* variants of the parentheses cast, and also
 // helps document at the callsite what the purpose of the cast is.  When
@@ -100,38 +102,8 @@
 //
 
 
-#ifndef C_CASTS_H  // "include guard" allows multiple #includes
-#define C_CASTS_H
-
-
-//=//// TYPE_TRAITS IN C++11 AND ABOVE ///////////////////////////////////=//
-//
-// One of the most powerful tools you can get from allowing a C codebase to
-// compile as C++ comes from type_traits:
-//
-// http://en.cppreference.com/w/cpp/header/type_traits
-//
-// This is essentially an embedded query language for types, allowing one to
-// create compile-time errors for any C construction that isn't being used
-// in the way one might want.
-//
-// 1. The type trait is_explicitly_convertible() is useful, but it was taken
-//    out of GCC.  This uses a simple implementation that was considered to
-//    be buggy for esoteric reasons, but is good enough for our purposes.
-//
-//    https://stackoverflow.com/a/16944130
-//
-//    Note this is not defined in the `std::` namespace since it is a shim.
-//
-#if CPLUSPLUS_11
-    #include <type_traits>
-
-  namespace shim {  // [1]
-    template<typename _From, typename _To>
-    struct is_explicitly_convertible : public std::is_constructible<_To, _From>
-      { };
-  }
-#endif
+#ifndef NEEDFUL_CASTS_H  // "include guard" allows multiple #includes
+#define NEEDFUL_CASTS_H
 
 
 //=//// UNCHECKED CAST ////////////////////////////////////////////////////=//
@@ -456,55 +428,4 @@
 #endif
 
 
-//=//// TYPE LIST HELPER //////////////////////////////////////////////////=//
-//
-// Type lists allow checking if a type is in a list of types at compile time:
-//
-//     template<typename T>
-//     void process(T value) {
-//         using NumericTypes = c_type_list<int, float, double>;
-//         static_assert(NumericTypes::contains<T>(), "T must be numeric");
-//         // ...
-//     }
-//
-// 1. Due to wanting C++11 compatibility, it must be `List::contains<T>()` with
-//    the parentheses, which is a bit of a wart.  C++14 or higher is needed
-//    for variable templates, which allows `List::contains<T>` without parens:
-//
-//        struct contains_impl {  /* instead of calling this `contains` */
-//            enum { value = false };
-//        };
-//        template<typename T>
-//        static constexpr bool contains = contains_impl<T>::value;
-//
-//    Without that capability, best we can do is to construct an instance via
-//    a default constructor (the parentheses), and then have a constexpr
-//    implicit boolean coercion for that instance.
-//
-#if CPLUSPLUS_11
-    template<typename... Ts>
-    struct c_type_list {
-        template<typename T>
-        struct contains {
-            enum { value = false };
-
-            // Allow usage without ::value in most contexts [1]
-            constexpr operator bool() const { return value; }
-        };
-    };
-
-    template<typename T1, typename... Ts>
-    struct c_type_list<T1, Ts...> {  // Specialization for non-empty lists
-        template<typename T>
-        struct contains {
-            enum { value = std::is_same<T, T1>::value or
-                        typename c_type_list<Ts...>::template contains<T>() };
-
-            // Allow usage without ::value in most contexts [1]
-            constexpr operator bool() const { return value; }
-        };
-    };
-#endif
-
-
-#endif  // C_CASTS_H
+#endif  // NEEDFUL_CASTS_H

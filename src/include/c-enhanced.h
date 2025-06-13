@@ -46,48 +46,6 @@
 #define C_ENHANCED_H
 
 
-//=//// CONFIGURATION /////////////////////////////////////////////////////=//
-
-#if !defined(RUNTIME_CHECKS)  // prefer "RUNTIME_CHECKS" as integer #define
-    #if defined(NDEBUG)
-       #define RUNTIME_CHECKS  0
-    #else
-       #define RUNTIME_CHECKS  1
-    #endif
-#endif
-#if !defined(NO_RUNTIME_CHECKS)
-    #define NO_RUNTIME_CHECKS (! RUNTIME_CHECKS)
-#endif
-
-#if !defined(DEBUG_STATIC_ANALYZING)
-    #define DEBUG_STATIC_ANALYZING  0
-#endif
-
-#if !defined(CHECK_OPTIONAL_TYPEMACRO)
-    #define CHECK_OPTIONAL_TYPEMACRO  0
-#endif
-
-#if !defined(CHECK_NEVERNULL_TYPEMACRO)
-    #define CHECK_NEVERNULL_TYPEMACRO  0
-#endif
-
-#if !defined(DEBUG_USE_SINKS)
-    #define DEBUG_USE_SINKS  0
-#endif
-
-#if !defined(DEBUG_CHECK_INIT_SINKS)
-    #define DEBUG_CHECK_INIT_SINKS  0
-#endif
-
-#if !defined(ASSIGN_UNUSED_FIELDS)
-    #define ASSIGN_UNUSED_FIELDS 1
-#endif
-
-#if !defined(PERFORM_CORRUPTIONS)  // 1. See Corrupt_If_Debug()
-    #define PERFORM_CORRUPTIONS \
-        (RUNTIME_CHECKS && (! DEBUG_STATIC_ANALYZING))  // [1]
-#endif
-
 
 //=//// STDINT.H AND STDBOOL.H ////////////////////////////////////////////=//
 //
@@ -210,25 +168,6 @@
 #endif
 
 
-//=//// INCLUDE "CASTS FOR THE MASSES" ////////////////////////////////////=//
-//
-// This defines macros of the style `cast(T, value)` as a replacement for the
-// hard-to-discern `(T)value` classic C cast.  The rationale is laid out in
-// this article:
-//
-//   http://blog.hostilefork.com/c-casts-for-the-masses/
-//
-// ...but the implementation has evolved significantly since 2015.  Until the
-// article is updated to reflect the code, see the comments for details.
-//
-// The file dependens on the definitions of CPLUSPLUS_11 and NO_CPLUSPLUS_11,
-// so inclusion can't be earlier than this point.
-//
-// (c-casts.h includes <type_traits>)
-//
-#include "c-casts.h"
-
-
 //=//// FEATURE TESTING AND ATTRIBUTE MACROS //////////////////////////////=//
 //
 // Feature testing macros __has_builtin() and __has_feature() were originally
@@ -301,31 +240,6 @@
 //
 
 /* THESE HAVE BEEN RELOCATED TO %rebol.h, SEE DEFINITIONS THERE */
-
-
-//=//// STATIC ASSERT /////////////////////////////////////////////////////=//
-//
-// Some conditions can be checked at compile-time, instead of deferred to a
-// runtime assert.  This macro triggers an error message at compile time.
-// `static_assert` is an arity-2 keyword in C++11 and can act as arity-1 in
-// C++17, for expedience we mock up an arity-1 form.
-//
-// It's possible to hack up a static assert in C:
-//
-// http://stackoverflow.com/questions/3385515/static-assert-in-c
-//
-// But it's too limited.  Since the code can (and should) be built as C++11
-// to test anyway, just make it a no-op in the C build.
-//
-#if !defined(STATIC_ASSERT)  // used in %reb-config.h so also defined there
-    #if CPLUSPLUS_11
-        #define STATIC_ASSERT(cond) \
-            static_assert((cond), #cond) // callsite has semicolon, see C trick
-    #else
-        #define STATIC_ASSERT(cond) \
-            struct GlobalScopeNoopTrick // https://stackoverflow.com/q/53923706
-    #endif
-#endif
 
 
 //=//// CONDITIONAL C++ NAME MANGLING MACROS //////////////////////////////=//
@@ -478,66 +392,6 @@
 #endif
 
 
-//=//// CONST COPYING TYPE TRAIT //////////////////////////////////////////=//
-//
-// This is a simple trait which adds const to the first type if the second
-// type is const.
-//
-#if CPLUSPLUS_11
-    template<typename U,typename T>
-    struct copy_const {
-        using type = typename std::conditional<
-            std::is_const<T>::value,
-            typename std::add_const<U>::type,
-            U
-        >::type;
-    };
-
-    template<typename U,typename T>
-    using copy_const_t = typename copy_const<U,T>::type;
-#endif
-
-
-//=//// ENABLE IF FOR SAME TYPE ///////////////////////////////////////////=//
-//
-// This is useful for SFINAE (Substitution Failure Is Not An Error), as a
-// very common pattern.  It's variadic, so you can use it like:
-//
-//   template <typename T, EnableIfSame<T, TypeOne, TypeTwo> = nullptr>
-//   INLINE bool operator==(const TypeThree& three, T&& t) = delete;
-//
-// Written out long form that would look like:
-//
-//    template <
-//        typename T,
-//        typename std::enable_if<
-//            std::is_same<T, TypeOne>::value
-//            or std::is_same<T, TypeTwo>::value
-//        >::type* = nullptr
-//     >
-//     INLINE bool operator==(const TypeThree& three, T&& t) = delete;
-//
-#if CPLUSPLUS_11
-    template <typename T, typename... Allowed>
-    struct IsSameAny;
-
-    template <typename T, typename First, typename... Rest>
-    struct IsSameAny<T, First, Rest...> {
-        static constexpr bool value =
-            std::is_same<T, First>::value or IsSameAny<T, Rest...>::value;
-    };
-
-    template <typename T>
-    struct IsSameAny<T> {
-        static constexpr bool value = false;
-    };
-
-    template <typename T, typename... Allowed>
-    using EnableIfSame =
-        typename std::enable_if<IsSameAny<T, Allowed...>::value>::type*;
-#endif
-
-
 //=//// NOOP a.k.a. VOID GENERATOR ////////////////////////////////////////=//
 //
 // VOID would be a more purposeful name, but Windows headers define that
@@ -546,59 +400,6 @@
 #ifndef NOOP
     #define NOOP ((void)0)
 #endif
-
-
-//=//// "ATTEMPT" AND "UNTIL" CONSTRUCTS //////////////////////////////////=//
-//
-// This is a fun trick that brings a little bit of the ATTEMPT and UNTIL loop
-// functionality from Ren-C into C.
-//
-// The `attempt` macro is a loop that runs its body just once, and then
-// evaluates the `then` or `else` clause (if present):
-//
-//     attempt {
-//         ... some code ...
-//         if (condition) { break; }  /* exit attempt, run "else" clause */
-//         if (condition) { continue; }  /* exit attempt, run "then" clause */
-//         if (condition) { again; }  /* jump to attempt and run it again */
-//         ... more code ...
-//     }
-//     then {  /* optional then clause */
-//        ... code to run if no break happened ...
-//     }
-//     else {  /* optional else clause (must have then clause to use else) */
-//        ... code to run if a break happened ...
-//     }
-//
-// It doesn't do anything you couldn't do with defining some goto labels.
-// But if you have B breaks and C continues and A agains, you don't have to
-// type the label names ((B + 1) + (C + 1) + (A + 1)) times.  And you don't
-// have to worry about coming up with the names for those labels!
-//
-// The `until` macro is a negated sense while loop that also is able to have
-// compatibility with the `then` and `else` clauses.
-//
-// BUT NOTE: Since the macros define variables tracking whether the `then`
-// clause should run or not, and whether an `again` should signal continuing
-// to run...this can only be used in one scope at a time.  To use more than
-// once in a function, define another scope.  Also, you can't use an `else`
-// clause without a `then` clause.
-
-#define attempt \
-    bool run_then_ = false;  /* as long as run_then_ is false, keep going */ \
-    bool run_again_ = false;  /* if run_again_, don't set run_then_ */ \
-    for (; not run_then_; \
-        run_again_ ? (run_again_ = false), true  /* again doesn't exit loop */ \
-        : (run_then_ = true))  /* normal continue, exits the loop */
-
-#define until(condition) \
-    bool run_then_ = false; \
-    bool run_again_ = false; \
-    for (; run_again_ ? (run_again_ = false), true :  /* skip condition */ \
-        (condition) ? (run_then_ = true, false) : true; )
-
-#define then  if (run_then_)
-#define again  { run_again_ = true; continue; }
 
 
 //=//// C FUNCTION TYPE (__cdecl) /////////////////////////////////////////=//
@@ -658,386 +459,67 @@
 #endif
 
 
-//=//// STATIC ASSERT LVALUE TO HELP EVIL MACRO USAGE /////////////////////=//
+//=//// TYPE_TRAITS IN C++11 AND ABOVE ///////////////////////////////////=//
 //
-// Macros are generally bad, but especially bad if they use their arguments
-// more than once...because if that argument has a side-effect, they will
-// have that side effect more than once.
+// One of the most powerful tools you can get from allowing a C codebase to
+// compile as C++ comes from type_traits:
 //
-// However, checked builds will not inline functions.  Some code is run so
-// often that not defining it in a macro leads to excessive cost in these
-// checked builds, and "evil macros" which repeat arguments are a pragmatic
-// solution to factoring code in these cases.  You just have to be careful
-// to call them with simple references.
+// http://en.cppreference.com/w/cpp/header/type_traits
 //
-// Rather than need to give mean-sounding names like XXX_EVIL_MACRO() to
-// these macros (which doesn't have any enforcement), this lets the C++
-// build ensure the argument is assignable (an lvalue).
+// This is essentially an embedded query language for types, allowing one to
+// create compile-time errors for any C construction that isn't being used
+// in the way one might want.
 //
-// 1. Double-parentheses needed to force reference qualifiers for decltype.
+// 1. The type trait is_explicitly_convertible() is useful, but it was taken
+//    out of GCC.  This uses a simple implementation that was considered to
+//    be buggy for esoteric reasons, but is good enough for our purposes.
+//
+//    https://stackoverflow.com/a/16944130
+//
+//    Note this is not defined in the `std::` namespace since it is a shim.
 //
 #if CPLUSPLUS_11
-    #define STATIC_ASSERT_LVALUE(x) \
-        static_assert( \
-            std::is_lvalue_reference<decltype((x))>::value, /* [1] */ \
-            "must be lvalue reference")
-#else
-    #define STATIC_ASSERT_LVALUE(x) NOOP
+    #include <type_traits>
+
+  namespace shim {  // [1]
+    template<typename _From, typename _To>
+    struct is_explicitly_convertible : public std::is_constructible<_To, _From>
+      { };
+  }
 #endif
 
 
-//=//// MEMORY POISONING and POINTER CORRUPTING ///////////////////////////=//
+//=//// INCLUDE NEEDFUL LIBRARY HEADERS //////////////////////////////////=//
 //
-// If one wishes to indicate a region of memory as being "off-limits", modern
-// tools like Address Sanitizer allow instrumented builds to augment reads
-// from memory to check to see if that region is in a blacklist.
+// The "needful" library is being factored out of the Ren-C codebase as an
+// independent library.  It's still being worked out what parts of this file
+// will wind up in it, but these are files that are likely to be in it.
 //
-// These "poisoned" areas are generally sub-regions of valid malloc()'d memory
-// that contain bad data.  Yet they cannot be free()d because they also
-// contain some good data.  (Or it is merely desirable to avoid freeing and
-// then re-allocating them for performance reasons, yet a checked build still
-// would prefer to intercept accesses as if they were freed.)
+// NOTE: Needful introduces creative TypeMacros like Option(T).  So we need
+// special handling in %make-headers.r to recognize the format...
 //
-// Also, in order to overwrite a pointer with garbage, the historical method
-// of using 0xBADF00D or 0xDECAFBAD is formalized in Corrupt_Pointer_If_Debug.
-// This makes the instances easier to find and standardizes how it is done.
-// Special choices are made for 0xF4EEF4EE to indicate a freed thing, and
-// 0x5AFE5AFE to indicate an allocated thing.
+// ...see the `typemacro_parentheses` rule.
 //
-// 1. <IMPORTANT>: Address sanitizer's memory poisoning must not have two
-//    threads both poisoning/unpoisoning the same addresses at the same time.
-//
-// 2. @HostileFork wrote a tiny C++ "poor man's memory poisoner" that uses
-//    XOR to poison bits and then unpoison them back.  This might be useful
-//    to instrument C++-based builds on platforms that did not have address
-//    sanitizer (if that ever becomes interesting).
-//
-//        http://blog.hostilefork.com/poison-memory-without-asan/
-//
-#if __has_feature(address_sanitizer)
-    #include <sanitizer/asan_interface.h>
 
-    #define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__ ((no_sanitize_address))
+#include "needful/configure-needful.h"
 
-    #define Poison_Memory_If_Sanitize(reg, mem_size) \
-        ASAN_POISON_MEMORY_REGION(reg, mem_size)  // one thread at a time [1]
+#include "needful/needful-asserts.h"
 
-    #define Unpoison_Memory_If_Sanitize(reg, mem_size) \
-        ASAN_UNPOISON_MEMORY_REGION(reg, mem_size)  // one thread at a time [1]
-#else
-    #define ATTRIBUTE_NO_SANITIZE_ADDRESS  // cheap approaches possible [2]
+#include "needful/needful-casts.h"
 
-    #define Poison_Memory_If_Sanitize(reg, mem_size)    NOOP
-    #define Unpoison_Memory_If_Sanitize(reg, mem_size)  NOOP
-#endif
+#include "needful/needful-ensure.h"
 
+#include "needful/needful-poison.h"
 
-#if NO_RUNTIME_CHECKS
-    #define Corrupt_Pointer_If_Debug(p)                 NOOP
-    #define Corrupt_Function_Pointer_If_Debug(p)        NOOP
-#elif NO_CPLUSPLUS_11
-    #define Corrupt_Pointer_If_Debug(p) \
-        ((p) = p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
+#include "needful/needful-corruption.h"
 
-    #define Corrupt_Function_Pointer_If_Debug(p) \
-        ((p) = 0)  // is there any way to do this generically in C?
+#include "needful/needful-option.h"
 
-    #define FreeCorrupt_Pointer_Debug(p) \
-        ((p) = p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
+#include "needful/needful-sinks.h"
 
-    #define Is_Pointer_Corrupt_Debug(p) \
-        ((p) == p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
-#else
-    template<class T>
-    INLINE void Corrupt_Pointer_If_Debug(T* &p)
-      { p = p_cast(T*, cast(uintptr_t, 0xDECAFBAD)); }
+#include "needful/needful-loops.h"
 
-    #define Corrupt_Function_Pointer_If_Debug Corrupt_Pointer_If_Debug
-
-    template<class T>
-    INLINE void FreeCorrupt_Pointer_Debug(T* &p)
-      { p = p_cast(T*, cast(uintptr_t, 0xF4EEF4EEE)); }
-
-    template<class T>
-    INLINE bool Is_Pointer_Corrupt_Debug(T* p)
-      { return (p == p_cast(T*, cast(uintptr_t, 0xDECAFBAD))); }
-#endif
-
-
-//=//// TYPE ENSURING HELPERS /////////////////////////////////////////////=//
-//
-// It's useful when building macros to make inline functions that just check
-// a type, for example:
-//
-//      INLINE Foo* ensure_foo(Foo* f) { return f; }
-//
-// This has the annoying property that you have to write that function and
-// put it somewhere.  But also, there's a problem with constness... if you
-// want to retain it, you will need two overloads in C++ (and C does not
-// have overloading).
-//
-// This introduces a simple `ensure` construct:
-//
-//      void *p = ensure(Flex*, s);
-//
-// 1. Because ensure is a no-op in non-checked builds, it does no casting in
-//    the checked builds.  It only validates the type is convertible, and
-//    then passes it through as its original self!  So if you say something
-//    like `ensure(const foo*, bar)` and bar is a pointer to a mutable foo,
-//    it will be valid...but pass the mutable bar as-is.
-//
-// 2. There was a macro for `ensureNullptr(p) = xxx` which did a runtime
-//    check that a pointer was already nulled before assigning.  It turned
-//    out templates specialize with nullptr, so `ensure(nullptr, p) = xxx`
-//    happens to work out as an overloading of this construct, even though
-//    it's rather different as a runtime value check instead of a compile-time
-//    type check.  Avoids needing another name.
-//
-#if NO_CPLUSPLUS_11
-    #define ensure(T,v) (v)
-#else
-    template<typename V, typename T>
-    constexpr V const& ensure_impl(V const& v) {
-        static_assert(
-            std::is_convertible<V,T>::value, "ensure() failed"
-        );
-        return v;  // doesn't coerce to type T [1]
-    }
-    template<typename V, nullptr_t>  // runtime check of nullptr [2]
-    V & ensure_impl(V & v) {
-        assert(v == nullptr);
-        return v;  // doesn't coerce to type T [1]
-    }
-    #define ensure(T,v) (ensure_impl<decltype(v),T>(v))
-#endif
-
-
-//=//// "POSSIBLY" NON-ASSERT, and "UNNECESSARY" //////////////////////////=//
-//
-// Comments often carry information about when something may be true:
-//
-//     int i = Get_Integer(...);  // i may be < 0
-//
-// `possibly` is a no-op construct which makes sure the expression you pass
-// it compiles, but doesn't do anything with it.
-//
-//     int i = Get_Integer(...);
-//     possibly(i < 0);
-//
-// Separating it out like that may provide a better visual flow (e.g. the
-// comment might have made a line overlong), but also it's less likely to
-// get out of date because it checks that the expression is well-formed.
-//
-// `unnecessary` is another strange construct of this sort, where you can
-// put some code that people might think you have to write--but don't.  This
-// helps cue people into realizing that the omission was intentional, with
-// the advantage of showing the precise code they might think they need.
-//
-// `dont` exists to point out something you really *shouldn't* do, not
-// because it's unnecessary or redundant, but because it would break things.
-//
-// `heeded` is when you do something that seems like it wouldn't be needed,
-// but is actually a signal to something to show you know what you're doing.
-// This happens e.g. when corrupting a variable in debug builds for the sole
-// purpose of showing a routine you call that you weren't expecting it to
-// have valid data at the end of their call.
-//
-// `impossible` when you want to document something that could be an assert,
-// but it would waste time because you know it should never happen.  (Uses
-// of this are a bit of a red flag that the design may benefit from rethinking
-// such that the impossible case isn't expressable at all.)
-//
-#if NO_CPLUSPLUS_11
-    #define STATIC_ASSERT_DECLTYPE_BOOL(expr)     NOOP
-    #define STATIC_ASSERT_DECLTYPE_VALID(expr)      NOOP
-#else
-    #define STATIC_ASSERT_DECLTYPE_BOOL(expr) \
-        static_assert(std::is_convertible<decltype((expr)), bool>::value, \
-            "expression must be convertible to bool")
-
-    #define STATIC_ASSERT_DECLTYPE_VALID(expr) \
-        static_assert(std::is_same<decltype((void)(expr)), void>::value, "")
-#endif
-
-#define possibly(expr)       STATIC_ASSERT_DECLTYPE_BOOL(expr)
-#define unnecessary(expr)    STATIC_ASSERT_DECLTYPE_VALID(expr)
-#define dont(expr)           STATIC_ASSERT_DECLTYPE_VALID(expr)
-#define heeded(expr)         (expr)
-#define impossible(expr)     STATIC_ASSERT_DECLTYPE_BOOL(expr)
-
-// Macros. For GlobalScopeNoopTrick: https://stackoverflow.com/q/53923706
-
-#define POSSIBLY(expr)       struct GlobalScopeNoopTrick
-#define UNNECESSARY(expr)    struct GlobalScopeNoopTrick
-#define DONT(expr)           struct GlobalScopeNoopTrick
-#define HEEDED(expr)         expr
-#define IMPOSSIBLE(expr)     struct GlobalScopeNoopTrick
-
-
-//=//// MARK UNUSED VARIABLES /////////////////////////////////////////////=//
-//
-// Used in coordination with the `-Wunused-variable` setting of the compiler.
-// While a simple cast to void is what people usually use for this purpose,
-// there's some potential for side-effects with volatiles:
-//
-// http://stackoverflow.com/a/4030983/211160
-//
-// The tricks suggested there for avoiding it seem to still trigger warnings
-// as compilers get new ones, so assume that won't be an issue.  As an
-// added check, this gives the UNUSED() macro "teeth" in C++11:
-//
-// http://codereview.stackexchange.com/q/159439
-//
-// Though the version here is more verbose, it uses the specializations to
-// avoid excessive calls to memset() in the checked build.
-//
-// 1. We do not do Corrupt_If_Debug() with static analysis, because that would
-//    make variables look like they had been assigned to the static analyzer.
-//    It should use its own notion of when things are "garbage" (e.g. this
-//    allows reporting of use of unassigned values from inline functions.)
-
-#define USED(x) \
-    ((void)(x))
-
-#if (! PERFORM_CORRUPTIONS)
-
-    #define Corrupt_If_Debug(x)  NOOP
-
-    #define UNUSED(x) \
-        ((void)(x))
-
-#elif NO_CPLUSPLUS_11
-    STATIC_ASSERT(! DEBUG_STATIC_ANALYZING);  // [1]
-
-    #include <string.h>
-
-    // See definition of Cell for why casting to void* is needed.
-    // (Mem_Fill() macro that does this is not defined for %c-enhanced.h)
-    //
-    #define Corrupt_If_Debug(x) \
-        memset(cast(void*, &(x)), 0xBD, sizeof(x));
-
-    #define UNUSED(x) \
-        ((void)(x))
-#else
-    STATIC_ASSERT(! DEBUG_STATIC_ANALYZING);  // [1]
-
-    #include <cstring>  // for memset
-
-    // Introduce some variation in the runtimes based on something that is
-    // deterministic about the build.  Whether you're using clang works.
-    //
-  #if defined(__clang__)
-    #define CORRUPT_IF_DEBUG_SEED 5  // e.g. fifth corrupt pointer is zero
-    #define CORRUPT_IF_DEBUG_DOSE 11
-  #else
-    #define CORRUPT_IF_DEBUG_SEED 0  // e.g. first corrupt pointer is zero
-    #define CORRUPT_IF_DEBUG_DOSE 7
-  #endif
-
-    // Helper stuct for Corrupt_If_Debug() with generalized memset() fallback.
-    //
-    // Function templates can't be partially specialized, class templates can.
-    // Using a struct allows us to provide custom behavior for type families
-    // (e.g. "all classes derived from some Base") while still being able to
-    // have a generic fallback.  (A function template would see a generic
-    // fallback as ambiguous with SFINAE trying to "carve up" the space.)
-    //
-    // 1. It's unsafe to memory fill an arbitrary C++ class by value with
-    //    garbage bytes, because they can have extra vtables and such--you
-    //    can overwrite private compiler data.  But this is a C codebase
-    //    which uses just a few C++ features.  If you don't have virtual
-    //    methods then is_standard_layout<> should be true, and the memset()
-    //    shouldn't be a problem...
-    //
-    // 2. See definition of Cell and Mem_Set() for why casting to void* is
-    //    needed.  (Mem_Set() macro that is not defined for %c-enhanced.h)
-    //
-    template<typename T, typename Enable = void>
-    struct Corrupter {
-      static void corrupt(T& ref) {  // fallback if no other specialization
-        static_assert(
-            std::is_standard_layout<T>::value,  // would break C++ [1]
-            "Cannot memset() a C++ struct or class that's not standard layout"
-        );
-        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
-        if (countdown == 0) {
-            memset(cast(void*, &ref), 0, sizeof(T));  // void cast needed [2]
-            countdown = CORRUPT_IF_DEBUG_DOSE;
-        }
-        else {
-            memset(cast(void*, &ref), 189, sizeof(T));  // void cast needed [2]
-            --countdown;
-        }
-      }
-    };
-
-    // Pointer, set to null or corrupt pointer (faster than memset() template)
-    //
-    template<typename T>
-    struct Corrupter<T*> {
-      static void corrupt(T*& ref) {  // faster pointer corruption
-        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
-        if (countdown == 0) {
-            ref = nullptr;  // nullptr occasionally, deterministic
-            countdown = CORRUPT_IF_DEBUG_DOSE;
-        }
-        else {
-            Corrupt_Pointer_If_Debug(ref); // corrupt other half of the time
-            --countdown;
-        }
-      }
-    };
-
-    // Integer/bool/float, set to spam or 0 (faster than memset() template)
-    //
-    template<typename T>
-    struct Corrupter<
-        T,
-        typename std::enable_if<
-            not std::is_pointer<T>::value and std::is_arithmetic<T>::value
-        >::type
-    >{
-      static void corrupt(T& ref) {
-        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
-        if (countdown == 0) {
-            ref = static_cast<T>(0);  // false/0 occasionally, deterministic
-            countdown = CORRUPT_IF_DEBUG_DOSE;
-        }
-        else {
-            ref = static_cast<T>(12345678);  // garbage the rest of the time
-            --countdown;
-        }
-      }
-    };
-
-    // Use macro for efficiency, avoid another function call overhead
-    //
-    // decltype(ref) deduces the type of ref (incl. reference/cv qualifiers)
-    //
-    // std::remove_reference strips the reference, so the template matches
-    // the Corrupter<T> specializations
-    //
-    #define Corrupt_If_Debug(ref) \
-        Corrupter< \
-            typename std::remove_reference<decltype(ref)>::type \
-        >::corrupt(ref)
-
-    // We want to be able to write UNUSED() for things that aren't used
-    // even if they are RValues and can't be corrupted, like UNUSED(Bool_ARG(FOO)).
-    //
-    template<typename T>
-    void Unused_Helper(const T& ref)
-      { USED(ref); }
-
-    // For UNUSED() on a mutable ref, we fall through to Corrupt_If_Debug().
-    //
-    template<typename T>
-    void Unused_Helper(T& ref)
-      { Corrupt_If_Debug(ref); }
-
-    #define UNUSED Unused_Helper
-#endif
+#include "needful/needful-nevernull.h"
 
 
 //=//// SLIGHTLY SAFER MIN AND MAX MACROS IN C++ //////////////////////////=//
@@ -1196,661 +678,116 @@
 #define PP_NARGS(...) \
     PP_EXPAND(PP_NARGS_IMPL(__VA_ARGS__,10,9,8,7,6,5,4,3,2,1,0))
 
+
+//=//// CONST COPYING TYPE TRAIT //////////////////////////////////////////=//
+//
+// This is a simple trait which adds const to the first type if the second
+// type is const.
+//
+#if CPLUSPLUS_11
+    template<typename U,typename T>
+    struct copy_const {
+        using type = typename std::conditional<
+            std::is_const<T>::value,
+            typename std::add_const<U>::type,
+            U
+        >::type;
+    };
+
+    template<typename U,typename T>
+    using copy_const_t = typename copy_const<U,T>::type;
+#endif
+
+
+//=//// ENABLE IF FOR SAME TYPE ///////////////////////////////////////////=//
+//
+// This is useful for SFINAE (Substitution Failure Is Not An Error), as a
+// very common pattern.  It's variadic, so you can use it like:
+//
+//   template <typename T, EnableIfSame<T, TypeOne, TypeTwo> = nullptr>
+//   INLINE bool operator==(const TypeThree& three, T&& t) = delete;
+//
+// Written out long form that would look like:
+//
+//    template <
+//        typename T,
+//        typename std::enable_if<
+//            std::is_same<T, TypeOne>::value
+//            or std::is_same<T, TypeTwo>::value
+//        >::type* = nullptr
+//     >
+//     INLINE bool operator==(const TypeThree& three, T&& t) = delete;
+//
+#if CPLUSPLUS_11
+    template <typename T, typename... Allowed>
+    struct IsSameAny;
+
+    template <typename T, typename First, typename... Rest>
+    struct IsSameAny<T, First, Rest...> {
+        static constexpr bool value =
+            std::is_same<T, First>::value or IsSameAny<T, Rest...>::value;
+    };
+
+    template <typename T>
+    struct IsSameAny<T> {
+        static constexpr bool value = false;
+    };
+
+    template <typename T, typename... Allowed>
+    using EnableIfSame =
+        typename std::enable_if<IsSameAny<T, Allowed...>::value>::type*;
+#endif
+
+
+//=//// TYPE LIST HELPER //////////////////////////////////////////////////=//
+//
+// Type lists allow checking if a type is in a list of types at compile time:
+//
+//     template<typename T>
+//     void process(T value) {
+//         using NumericTypes = c_type_list<int, float, double>;
+//         static_assert(NumericTypes::contains<T>(), "T must be numeric");
+//         // ...
+//     }
+//
+// 1. Due to wanting C++11 compatibility, it must be `List::contains<T>()` with
+//    the parentheses, which is a bit of a wart.  C++14 or higher is needed
+//    for variable templates, which allows `List::contains<T>` without parens:
+//
+//        struct contains_impl {  /* instead of calling this `contains` */
+//            enum { value = false };
+//        };
+//        template<typename T>
+//        static constexpr bool contains = contains_impl<T>::value;
+//
+//    Without that capability, best we can do is to construct an instance via
+//    a default constructor (the parentheses), and then have a constexpr
+//    implicit boolean coercion for that instance.
+//
+#if CPLUSPLUS_11
+    template<typename... Ts>
+    struct c_type_list {
+        template<typename T>
+        struct contains {
+            enum { value = false };
+
+            // Allow usage without ::value in most contexts [1]
+            constexpr operator bool() const { return value; }
+        };
+    };
+
+    template<typename T1, typename... Ts>
+    struct c_type_list<T1, Ts...> {  // Specialization for non-empty lists
+        template<typename T>
+        struct contains {
+            enum { value = std::is_same<T, T1>::value or
+                        typename c_type_list<Ts...>::template contains<T>() };
+
+            // Allow usage without ::value in most contexts [1]
+            constexpr operator bool() const { return value; }
+        };
+    };
+#endif
+
+
 #endif  // !defined(C_ENHANCED_H)
-
-
-//=//// PREVENT NULL ASSIGNMENTS /////////////////////////////////////////=//
-//
-// This came in handly for a debugging scenario.  But because it uses deep
-// voodoo to accomplish its work (like overloading -> and &), it interferes
-// with more important applications of that voodoo.  So it shouldn't be used
-// on types that depend on that (like Cell pointers).
-//
-#if (! CHECK_NEVERNULL_TYPEMACRO)
-    #define NeverNull(type) \
-        type
-#else
-    template <typename P>
-    class NeverNullEnforcer {  // named so error message hints what's wrong
-        typedef typename std::remove_pointer<P>::type T;
-        P p;
-
-      public:
-        NeverNullEnforcer () : p () {}
-        NeverNullEnforcer (P & p) : p (p) {
-            assert(p != nullptr);
-        }
-        T& operator*() { return *p; }
-        P operator->() { return p; }
-        operator P() { return p; }
-        P operator= (const P rhs) {  // if it returned reference, loses check
-            assert(rhs != nullptr);
-            this->p = rhs;
-            return p;
-        }
-    };
-
-    #define NeverNull(type) \
-        NeverNullEnforcer<type>
-
-    template<class P>
-    INLINE void Corrupt_Pointer_If_Debug(NeverNull(P) &nn)
-        { Corrupt_Pointer_If_Debug(nn.p); }
-
-    template<class P>
-    INLINE bool Is_Pointer_Corrupt_Debug(NeverNull(P) &nn)
-        { return Is_Pointer_Corrupt_Debug(nn.p); }
-
-  #if (! DEBUG_STATIC_ANALYZING)
-    template<typename T>
-    struct Corrupter<NeverNullEnforcer<T>> {
-      static void corrupt(NeverNullEnforcer<T>& nn) {
-        Corrupt_If_Debug(nn.p);
-     }
-    };
-  #endif
-#endif
-
-
-//=//// OPTIONAL TRICK FOR BOOLEAN COERCIBLE TYPES ////////////////////////=//
-//
-// This is a light wrapper class that uses a trick to provide limited
-// functionality in the vein of `std::optional` and Rust's `Option`:
-//
-//     Option(char*) abc = "abc";
-//     Option(char*) xxx = nullptr;
-//
-//     if (abc)
-//        printf("abc is truthy, so `unwrap abc` is safe!\n")
-//
-//     if (xxx)
-//        printf("XXX is falsey, so don't `unwrap xxx`...\n")
-//
-//     char* s1 = abc;                  // **compile time error
-//     Option(char*) s2 = abc;          // legal
-//
-//     char* s3 = unwrap xxx;           // **runtime error
-//     char* s4 = maybe xxx;            // gets nullptr out
-//
-// The trick is that in a plain C build, it doesn't use a wrapper class at all.
-// It falls back on the natural boolean coercibility of the standalone type.
-// Hence you can only use this with things like pointers, integers or enums
-// where 0 means no value.  If used in the C++ build with smart pointer
-// classes, they must be boolean coercible, e.g. `operator bool() const {...}`
-//
-// Comparison is lenient, allowing direct comparison to the contained value.
-//
-// 1. Uppercase Option() is chosen vs. option(), to keep `option` available
-//    as a variable name, and to better fit the new DataType NamingConvention.
-//
-// 2. This needs special handling in %make-headers.r to recognize the format.
-//    See the `typemacro_parentheses` rule.
-//
-// 3. Because we want this to work in plain C, we can't take advantage of a
-//    default construction to a zeroed value.  But we also can't disable the
-//    default constructor, because we want to be able to default construct
-//    structures with members that are Option().  :-(
-//
-// 4. While the combinatorics may seem excessive with repeating the equality
-//    and inequality operators, this is the way std::optional does it too.
-//
-// 5. To avoid the need for parentheses and give a "keyword" look to the
-//    `unwrap` and `maybe` operators they are defined as putting a global
-//    variable on the left of an output stream operator.  The variable holds
-//    a dummy class which only implements the extraction.
-//
-#if (! CHECK_OPTIONAL_TYPEMACRO)
-    #define Option(T) T
-    #define unwrap
-    #define maybe
-#else
-    template<typename T>
-    struct OptionWrapper {
-        T p;  // not always pointer, but use common convention with Sink/Need
-
-        OptionWrapper () = default;  // garbage, or 0 if global [2]
-
-        template <typename U>
-        OptionWrapper (const U& something) : p (something)
-          {}
-
-        template <typename X>
-        OptionWrapper (const OptionWrapper<X>& other) : p (other.p)
-          {}
-
-        operator uintptr_t() const  // so it works in switch() statements
-          { return cast(uintptr_t, p); }
-
-        explicit operator T()  // must be an *explicit* cast
-          { return p; }
-
-        explicit operator bool() {
-           // explicit exception in if https://stackoverflow.com/q/39995573/
-           return p ? true : false;
-        }
-    };
-
-    template<typename L, typename R>
-    bool operator==(const OptionWrapper<L>& left, const OptionWrapper<R>& right)
-        { return left.p == right.p; }
-
-    template<typename L, typename R>
-    bool operator==(const OptionWrapper<L>& left, R right)
-        { return left.p == right; }
-
-    template<typename L, typename R>
-    bool operator==(L left, const OptionWrapper<R>& right)
-        { return left == right.p; }
-
-    template<typename L, typename R>
-    bool operator!=(const OptionWrapper<L>& left, const OptionWrapper<R>& right)
-        { return left.p != right.p; }
-
-    template<typename L, typename R>
-    bool operator!=(const OptionWrapper<L>& left, R right)
-        { return left.p != right; }
-
-    template<typename L, typename R>
-    bool operator!=(L left, const OptionWrapper<R>& right)
-        { return left != right.p; }
-
-    struct UnwrapHelper {};
-    struct MaybeHelper {};
-
-    template<typename T>
-    T operator<<(  // [5]
-        const UnwrapHelper& left,
-        const OptionWrapper<T>& option
-    ){
-        UNUSED(left);
-        assert(option.p);  // non-null pointers or int/enum checks != 0
-        return option.p;
-    }
-
-    template<typename T>
-    T operator<<(  // [5]
-        const MaybeHelper& left,
-        const OptionWrapper<T>& option
-    ){
-        UNUSED(left);
-        return option.p;
-    }
-
-    constexpr UnwrapHelper g_unwrap_helper = {};
-    constexpr MaybeHelper g_maybe_helper = {};
-
-    #define Option(T) OptionWrapper<T>
-    #define unwrap g_unwrap_helper <<      // [5]
-    #define maybe g_maybe_helper <<        // [5]
-
-    template<class P>
-    INLINE void Corrupt_Pointer_If_Debug(OptionWrapper<P> &option)
-      { Corrupt_Pointer_If_Debug(option.p); }
-
-    template<class P>
-    INLINE bool Is_Pointer_Corrupt_Debug(OptionWrapper<P> &option)
-      { return Is_Pointer_Corrupt_Debug(option.p); }
-
-  #if (! DEBUG_STATIC_ANALYZING)
-    template<typename P>
-    struct Corrupter<OptionWrapper<P>> {
-      static void corrupt(OptionWrapper<P>& option) {
-        Corrupt_If_Debug(option.p);
-      }
-    };
-  #endif
-#endif
-
-
-//=//// SINK (OUTPUT ARGUMENTS) AND "NEED" ////////////////////////////////=//
-//
-// The idea behind a Sink() is to be able to mark on a function's interface
-// when a function argument passed by pointer is intended as an output.
-//
-// This has benefits of documentation, and can also be given some teeth by
-// scrambling the memory that the pointer points at (so long as it isn't an
-// "in-out" parameter).  But it also applied in CHECK_CELL_SUBCLASSES, by
-// enforcing "covariance" for input parameters, and "contravariance" for
-// output parameters.
-//
-// 1. If CHECK_CELL_SUBCLASSES is enabled, then the inheritance heirarchy has
-//    Atom at the base, with Element at the top.  Since what Elements can
-//    contain is more constrained than what Atoms can contain, this means
-//    you can pass Atom* to Element*, but not vice-versa.
-//
-//    However, when you have a Sink(Element) parameter instead of an Element*,
-//    the checking needs to be reversed.  You are -writing- an Element, so
-//    the receiving caller can pass an Atom* and it will be okay.  But if you
-//    were writing an Atom, then passing an Element* would not be okay, as
-//    after the initialization the Element could hold invalid states.
-//
-//    We use "SFINAE" to selectively enable the upside-down hierarchy, based
-//    on the `std::is_base_of<>` type trait.
-//
-// 2. The original implementation was simpler, by just doing the corruption
-//    at the moment of construction.  But this faced a problem:
-//
-//        bool some_function(Sink(char*) out, char* in) { ... }
-//
-//        if (some_function(&ptr, ptr)) { ...}
-//
-//    If you corrupt the data at the address the sink points to, you can
-//    actually be corrupting the value of a stack variable being passed as
-//    another argument before it's calculated as an argument.  So deferring
-//    the corruption after construction is necessary.  It's a bit tricky
-//    in terms of the handoffs and such.
-//
-//    While this could be factored, function calls aren't inlined in the
-//    debug build, so given the simplicity of the code it's just repeated.
-//
-// !!! Review: the copy-and-swap idiom doesn't seem to be very helpful here,
-// as we aren't dealing with exceptions and self-assignment has to be handled
-// manually due to the handoff of the corruption_pending flag.
-//
-//    https://stackoverflow.com/questions/3279543/
-//
-#if DEBUG_USE_SINKS
-    template<typename T> struct NeedWrapper;
-    template<typename T> struct SinkWrapper;
-    template<typename T> struct InitWrapper;
-
-    template<typename U, typename T>
-    struct AllowSinkConversion : std::false_type {};
-
-    //=//// NEED WRAPPER (INPUT PARAMETERS) /////////////////////////////////=//
-
-    template<typename T>
-    struct NeedWrapper {
-        T* p;
-
-        using MT = typename std::remove_const<T>::type;  // mutable type
-
-        template<typename U>
-        using IfReverseInheritable = typename std::enable_if<
-            std::is_same<U, T>::value
-            or std::is_base_of<U, T>::value
-        >::type;
-
-        // Default constructor from nullptr
-        NeedWrapper(nullptr_t) : p {nullptr}
-          {}
-
-        // Special constructor to convert from non-const to const wrapper
-        template<typename U,
-                typename = typename std::enable_if<
-                    std::is_same<typename std::remove_const<T>::type, U>::value
-                    and std::is_const<T>::value
-                >::type>
-        NeedWrapper(const NeedWrapper<U>& other)
-            : p {static_cast<T*>(other.p)}
-          {}
-
-        // Constructor from raw pointer
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper(U* u) : p {(MT*)(u)}
-          {}
-
-        // Copy constructor
-        NeedWrapper(const NeedWrapper& other) : p {other.p}
-          {}
-
-        // Construct from SinkWrapper
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper(const SinkWrapper<U>& sink) {
-            dont(assert(not sink.corruption_pending));  // must allow corrupt
-            this->p = static_cast<T*>(sink);  // not sink.p (flush corruption)
-        }
-
-        // Construct from InitWrapper
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper(const InitWrapper<U>& init)
-            : p {static_cast<T*>(init.p)}
-          {}
-
-        // Assignment operators
-        NeedWrapper& operator=(nullptr_t) {
-            this->p = nullptr;
-            return *this;
-        }
-
-        NeedWrapper& operator=(const NeedWrapper& other) {
-            if (this != &other) {
-                this->p = other.p;
-            }
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper& operator=(U* ptr) {
-            this->p = static_cast<T*>(ptr);
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper& operator=(const SinkWrapper<U>& sink) {
-            dont(assert(not sink.corruption_pending));  // must allow corrupt
-            this->p = static_cast<T*>(sink);  // not sink.p (flush corruption)
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        NeedWrapper& operator=(const InitWrapper<U>& init) {
-            this->p = static_cast<T*>(init.p);
-            return *this;
-        }
-
-        // OPERATORS
-
-        operator bool() const { return p != nullptr; }
-
-        operator T*() const { return p; }
-
-        template<typename U>
-        explicit operator U*() const
-          { return const_cast<U*>(reinterpret_cast<const U*>(p)); }
-
-        T* operator->() const { return p; }
-    };
-
-    //=//// SINK WRAPPER (OUTPUT PARAMETERS) ////////////////////////////////=//
-
-    template<typename T>
-    struct SinkWrapper {
-        T* p;
-        mutable bool corruption_pending;
-
-        using MT = typename std::remove_const<T>::type;  // mutable type
-
-        template<typename U>
-        using IfReverseInheritable = typename std::enable_if<
-            std::is_same<U, T>::value
-            or std::is_base_of<U, T>::value  // Contravariant for sinks
-            or AllowSinkConversion<U, T>::value
-        >::type;
-
-        // Default constructor from nullptr
-        SinkWrapper(nullptr_t) : p {nullptr}, corruption_pending {false} {}
-
-        // Constructor from raw pointer
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        SinkWrapper(U* u) {
-            this->p = static_cast<T*>(u);
-            this->corruption_pending = (u != nullptr);
-        }
-
-        // Copy constructor - creates new corruption obligation
-        SinkWrapper(const SinkWrapper& other) {
-            this->p = other.p;
-            this->corruption_pending = (other.p != nullptr);  // corrupt
-            other.corruption_pending = false;  // we take over corrupting
-        }
-
-        // Constructor from NeedWrapper
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        SinkWrapper(const NeedWrapper<U>& need) {
-            this->p = static_cast<T*>(need.p);
-            this->corruption_pending = (need.p != nullptr);  // corrupt
-        }
-
-        // Constructor from SinkWrapper
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        SinkWrapper(const SinkWrapper<U>& other) {
-            this->p = reinterpret_cast<MT*>(other.p);
-            this->corruption_pending = (other.p != nullptr);  // corrupt
-            other.corruption_pending = false;  // we take over corrupting
-        }
-
-        // Constructor from InitWrapper
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        SinkWrapper(const InitWrapper<U>& init) {
-            this->p = reinterpret_cast<T*>(init.p);
-            this->corruption_pending = (init.p != nullptr);  // corrupt
-        }
-
-        // Assignment operators
-        SinkWrapper& operator=(nullptr_t) {
-            this->p = nullptr;
-            this->corruption_pending = false;
-            return *this;
-        }
-
-        SinkWrapper& operator=(const SinkWrapper& other) {
-            if (this != &other) {
-                this->p = other.p;
-                this->corruption_pending = (other.p != nullptr);  // corrupt
-                other.corruption_pending = false;  // we take over corrupting
-            }
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        SinkWrapper& operator=(U* ptr) {
-            this->p = u_cast(T*, ptr);
-            this->corruption_pending = (ptr != nullptr);
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        SinkWrapper& operator=(const NeedWrapper<U>& need) {
-            this->p = u_cast(T*, need.p);
-            this->corruption_pending = (need.p != nullptr);  // corrupt
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        SinkWrapper& operator=(const InitWrapper<U>& init) {
-            this->p = u_cast(T*, init.p);
-            this->corruption_pending = (init.p != nullptr);  // corrupt
-            return *this;
-        }
-
-        // OPERRATORS
-
-        operator bool() const { return p != nullptr; }
-
-        operator T*() const {  // corrupt before yielding pointer
-            if (corruption_pending) {
-                Corrupt_If_Debug(*const_cast<MT*>(p));
-                corruption_pending = false;
-            }
-            return p;
-        }
-
-        template<typename U>
-        explicit operator U*() const {  // corrupt before yielding pointer
-            if (corruption_pending) {
-                Corrupt_If_Debug(*const_cast<MT*>(p));
-                corruption_pending = false;
-            }
-            return const_cast<U*>(reinterpret_cast<const U*>(p));
-        }
-
-        T* operator->() const {  // handle corruption before dereference
-            if (corruption_pending) {
-                Corrupt_If_Debug(*const_cast<MT*>(p));
-                corruption_pending = false;
-            }
-            return p;
-        }
-
-        ~SinkWrapper() {  // make sure we don't leave scope without corrupting
-            if (corruption_pending)
-                Corrupt_If_Debug(*const_cast<MT*>(p));
-        }
-    };
-
-    template<typename T>
-    struct Corrupter<SinkWrapper<T>&> {  // C pointer corrupt fails
-      static void corrupt(SinkWrapper<T>& wrapper) {
-        Corrupt_If_Debug(wrapper.p);
-        wrapper.corruption_pending = false;
-      }
-    };
-
-    // taking SinkWrapper<T> by value corrupts via temp, make ref version
-    template<typename V, typename T>
-    struct CastHelper<SinkWrapper<V>,T*> {  // don't use SinkWrapper<V>& here
-      static constexpr T* convert(SinkWrapper<V>& sink)  // must be ref here
-        { return static_cast<T*>(sink); }  // not sink.p (flush corrupt)
-    };
-
-    //=//// INIT WRAPPER (PERFORMANCE SINK) ///////////////////////////////=//
-
-    template<typename T>
-    struct InitWrapper {
-        T* p;
-
-        template<typename U>
-        using IfReverseInheritable = typename std::enable_if<
-            std::is_same<U, T>::value
-            or std::is_base_of<U, T>::value  // Contravariant for sink/init
-            or AllowSinkConversion<U, T>::value  // inits conceptually sink
-        >::type;
-
-        InitWrapper(nullptr_t) : p {nullptr}
-          {}
-
-        // Constructor from raw pointer
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        InitWrapper(U* u) : p {reinterpret_cast<T*>(u)}
-          {}
-
-        // Copy constructor
-        InitWrapper(const InitWrapper& other) : p {other.p}
-          {}
-
-        // Constructor from InitWrapper
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        InitWrapper(const InitWrapper<U>& init)
-            : p {reinterpret_cast<T*>(init.p)}
-          {}
-
-        // Constructor from NeedWrapper
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        InitWrapper(const NeedWrapper<U>& need)
-            : p {static_cast<T*>(need.p)}
-          {}
-
-        // Constructor from SinkWrapper
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        InitWrapper(const SinkWrapper<U>& sink) {
-            this->p = static_cast<T*>(sink.p);
-            sink.corruption_pending = false;  // squash corruption
-        }
-
-        // Assignment operators
-        InitWrapper& operator=(nullptr_t) {
-            this->p = nullptr;
-            return *this;
-        }
-
-        InitWrapper& operator=(const InitWrapper& other) {
-            if (this != &other) {
-                this->p = other.p;
-            }
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        InitWrapper& operator=(U* ptr) {
-            this->p = u_cast(T*, ptr);
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        InitWrapper& operator=(const NeedWrapper<U>& need) {
-            this->p = static_cast<T*>(need.p);
-            return *this;
-        }
-
-        template<typename U, IfReverseInheritable<U>* = nullptr>
-        InitWrapper& operator=(const SinkWrapper<U>& sink) {
-            this->p = static_cast<T*>(sink.p);
-            sink.corruption_pending = false;  // squash corruption
-            return *this;
-        }
-
-        // OPERATORS
-
-        operator bool() const { return p != nullptr; }
-
-        operator T*() const { return p; }
-
-        template<typename U>
-        explicit operator U*() const
-          { return const_cast<U*>(reinterpret_cast<const U*>(p)); }
-
-        T* operator->() const { return p; }
-    };
-#endif
-
-
-//=//// Init() Variant Of Sink() //////////////////////////////////////////=//
-//
-// When we write initialization routines, the output is technically a Sink(),
-// in the sense that it's intended to be overwritten.  But Sink() has a cost
-// since it corrupts the target.  It's unlikely to help catch bugs with
-// initialization, because Init_Xxx() routines are typically not code with
-// any branches in it that might fail to overwrite the cell.
-//
-// This defines Init() as typically just being a class that squashes any
-// pending corruptions.  So all it's doing is the work to make sure that the
-// caller's pointer can legitimately store the subclass, without doing any
-// corrupting of the cell.
-//
-// BUT if you want to double check the initializations, it should still work
-// to make Init() equivalent to Sink() and corrupt the cell.  It's not likely
-// to catch any bugs...but it's not likely to hurt either.
-//
-#if DEBUG_USE_SINKS
-    #define SinkTypemacro(T) SinkWrapper<T>
-    #define NeedTypemacro(TP) NeedWrapper<typename std::remove_pointer<TP>::type>
-
-    #if DEBUG_CHECK_INIT_SINKS
-        #define InitTypemacro(T) SinkWrapper<T>
-    #else
-        #define InitTypemacro(T) SinkWrapper<T>
-    #endif
-#else
-    #define SinkTypemacro(T) T *
-    #define NeedTypemacro(TP) TP
-    #define InitTypemacro(T) T *
-#endif
-
-
-//=//// CORRUPT UNUSED FIELDS /////////////////////////////////////////////=//
-//
-// It would seem that structs which don't use their payloads could just leave
-// them uninitialized...saving time on the assignments.
-//
-// Unfortunately, this is a technically gray area in C.  If you try to
-// copy the memory of that cell (as cells are often copied), it might be a
-// "trap representation".  Reading such representations to copy them...
-// even if not interpreted... is undefined behavior:
-//
-//   https://stackoverflow.com/q/60112841
-//   https://stackoverflow.com/q/33393569/
-//
-// Odds are it would still work fine if you didn't zero them.  However,
-// compilers will warn you--especially at higher optimization levels--if
-// they notice uninitialized values being used in copies.  This is a bad
-// warning to turn off, because it often points out defective code.
-//
-// So to play it safe and be able to keep warnings on, fields are zeroed out.
-// But it's set up as its own independent flag, so that someone looking
-// to squeak out a tiny bit more optimization could turn this off in a
-// release build.  It would save on a few null assignments.
-//
-// (In release builds, the fields are assigned 0 because it's presumably a
-// fast value to assign as an immediate.  In checked builds, they're assigned
-// a corrupt value because it's more likely to cause trouble if accessed.)
-//
-#if ASSIGN_UNUSED_FIELDS
-  #if RUNTIME_CHECKS
-    #define Corrupt_Unused_Field(ref)  Corrupt_If_Debug(ref)
-  #else
-    #define Corrupt_Unused_Field(ref)  ((ref) = 0)
-  #endif
-#else
-    #define Corrupt_Unused_Field(ref)  NOOP
-#endif
