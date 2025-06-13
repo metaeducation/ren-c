@@ -59,18 +59,18 @@
 // be accomplished in this file's comments.  *But you don't need to understand
 // it to use it.*  If a debugging scenario would benefit from rigging in some
 // code at the moment datatypes are cast, then just edit the bodies of the
-// `cast_helper::convert<>` functions and ignore everything else.
+// `CastHelper::convert<>` functions and ignore everything else.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// 1. The main cast_helper template take two parameters: the "value's type (V)"
+// 1. The main CastHelper template take two parameters: the "value's type (V)"
 //    that is cast from, and the "type (T)" being cast to.  This file has
 //    template partial specializations that only take one parameter: the `V`
 //    type being cast from.  (e.g. we want to define an operator that does the
 //    handling for casting to an Array*, that gets the arbitrary type being
 //    cast from to inspect).  In order to not get in the way of smart pointer
 //    classes, we narrow the specializations to V* raw pointer types (the
-//    smart pointers can overload cast_helper and extract that raw pointer,
+//    smart pointers can overload CastHelper and extract that raw pointer,
 //    then delegate back to cast again)
 //
 // 3. We want to be able to pick different convert() implementations to use
@@ -121,7 +121,7 @@
 //=//// cast(Node*, ...) //////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,const Node*> {  // [2]
+struct CastHelper<V*,const Node*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
@@ -153,7 +153,7 @@ struct cast_helper<V*,const Node*> {  // [2]
 };
 
 template<typename V>
-struct cast_helper<V*,Node*> {
+struct CastHelper<V*,Node*> {
     static constexpr Node* convert(V* p) {
         static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<Node*>(cast(const Node*, rr_cast(p)));
@@ -161,7 +161,7 @@ struct cast_helper<V*,Node*> {
 };
 
 template<typename V>
-struct cast_helper<V*,Node*&&> {  // [5]
+struct CastHelper<V*,Node*&&> {  // [5]
     static constexpr Node* convert(V* p)
       { return const_cast<Node*>(cast(Node*, p)); }
 };
@@ -170,7 +170,7 @@ struct cast_helper<V*,Node*&&> {  // [5]
 //=//// cast(Stub*, ...) //////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,const Stub*> {  // [2]
+struct CastHelper<V*,const Stub*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
@@ -207,17 +207,17 @@ struct cast_helper<V*,const Stub*> {  // [2]
 };
 
 template<typename V>
-struct cast_helper<V*,Stub*> {
+struct CastHelper<V*,Stub*> {
     static constexpr Stub* convert(V* p) {
         static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<Stub*>(
-            cast_helper<decltype(rr_cast(p)), const Stub*>::convert(rr_cast(p))
+            CastHelper<decltype(rr_cast(p)), const Stub*>::convert(rr_cast(p))
             /*cast(const Stub*, rr_cast(p))*/);
     }
 };
 
 template<typename V>
-struct cast_helper<V*,Stub*&&> {  // [5]
+struct CastHelper<V*,Stub*&&> {  // [5]
     static constexpr Stub* convert(V* p)
       { return const_cast<Stub*>(cast(Stub*, p)); }  // cast away ref
 };
@@ -226,7 +226,7 @@ struct cast_helper<V*,Stub*&&> {  // [5]
 //=//// cast(Flex*, ...) //////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,const Flex*> {  // [2]
+struct CastHelper<V*,const Flex*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
@@ -263,17 +263,17 @@ struct cast_helper<V*,const Flex*> {  // [2]
 };
 
 template<typename V>
-struct cast_helper<V*,Flex*> {
+struct CastHelper<V*,Flex*> {
     static constexpr Flex* convert(V* p) {
         static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<Flex*>(
-            cast_helper<decltype(rr_cast(p)), const Flex*>::convert(rr_cast(p))
+            CastHelper<decltype(rr_cast(p)), const Flex*>::convert(rr_cast(p))
             /*cast(const Flex*, rr_cast(p))*/);
     }
 };
 
 template<typename V>
-struct cast_helper<V*,Flex*&&> {  // [5]
+struct CastHelper<V*,Flex*&&> {  // [5]
     static constexpr Flex* convert(V* p)
       { return const_cast<Flex*>(cast(Flex*, p)); }  // cast away ref
 };
@@ -282,7 +282,7 @@ struct cast_helper<V*,Flex*&&> {  // [5]
 //=//// cast(Binary*, ...) ////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,const Binary*> {  // [2]
+struct CastHelper<V*,const Binary*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
@@ -322,7 +322,7 @@ struct cast_helper<V*,const Binary*> {  // [2]
 };
 
 template<typename V>
-struct cast_helper<V*,Binary*> {
+struct CastHelper<V*,Binary*> {
     static constexpr Binary* convert(V* p) {
         static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<Binary*>(cast(const Binary*, rr_cast(p)));
@@ -333,7 +333,7 @@ struct cast_helper<V*,Binary*> {
 //=//// cast(String*, ...) ////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,const String*> {  // [2]
+struct CastHelper<V*,const String*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     static const String* convert(V* p) {
@@ -367,7 +367,7 @@ struct cast_helper<V*,const String*> {  // [2]
 };
 
 template<typename V>
-struct cast_helper<V*,String*> {
+struct CastHelper<V*,String*> {
     static constexpr String* convert(V* p) {
         static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<String*>(cast(const String*, rr_cast(p)));
@@ -378,7 +378,7 @@ struct cast_helper<V*,String*> {
 //=//// cast(Symbol*, ...) ////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,const Symbol*> {  // [2]
+struct CastHelper<V*,const Symbol*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     static const Symbol* convert(V* p) {
@@ -412,7 +412,7 @@ struct cast_helper<V*,const Symbol*> {  // [2]
 
 /*
 template<typename V>
-struct cast_helper<V*,Symbol*> {
+struct CastHelper<V*,Symbol*> {
     template<typename V_ = V>
     static constexpr typename std::enable_if<
         std::is_same<V_, V>::value,  // [6]
@@ -430,7 +430,7 @@ struct cast_helper<V*,Symbol*> {
 //=//// cast(Array*, ...) /////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,const Array*> {  // [2]
+struct CastHelper<V*,const Array*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
@@ -467,7 +467,7 @@ struct cast_helper<V*,const Array*> {  // [2]
 };
 
 template<typename V>
-struct cast_helper<V*,Array*> {
+struct CastHelper<V*,Array*> {
     static constexpr Array* convert(V* pq) {
         static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<Array*>(cast(const Array*, rr_cast(pq)));
@@ -478,7 +478,7 @@ struct cast_helper<V*,Array*> {
 //=//// cast(VarList*, ...) ///////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,VarList*> {  // [2]
+struct CastHelper<V*,VarList*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
@@ -510,7 +510,7 @@ struct cast_helper<V*,VarList*> {  // [2]
 };
 
 template<typename V>
-struct cast_helper<V*,const VarList*> {
+struct CastHelper<V*,const VarList*> {
     template<typename V_ = V>
     static constexpr typename std::enable_if<
         std::is_same<V_, V>::value,  // [3]
@@ -528,7 +528,7 @@ struct cast_helper<V*,const VarList*> {
 //=//// cast(Phase*, ...) ////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,Phase*> {  // [2]
+struct CastHelper<V*,Phase*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
@@ -575,7 +575,7 @@ struct cast_helper<V*,Phase*> {  // [2]
 };
 
 template<typename V>
-struct cast_helper<V*,const Phase*> {
+struct CastHelper<V*,const Phase*> {
     template<typename V_ = V>
     static constexpr typename std::enable_if<
         std::is_same<V_, V>::value,  // [3]
@@ -593,7 +593,7 @@ struct cast_helper<V*,const Phase*> {
 //=//// cast(Level*, ...) /////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,Level*> {  // [2]
+struct CastHelper<V*,Level*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
@@ -623,7 +623,7 @@ struct cast_helper<V*,Level*> {  // [2]
 };
 
 template<typename V>
-struct cast_helper<V*,const Level*> {
+struct CastHelper<V*,const Level*> {
     template<typename V_ = V>
     static constexpr typename std::enable_if<
         std::is_same<V_, V>::value,  // [3]

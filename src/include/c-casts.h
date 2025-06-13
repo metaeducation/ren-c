@@ -141,11 +141,11 @@
 // - For explicitly convertible types: static_cast
 //
 // CUSTOMIZATION:
-// To hook the cast, you define `cast_helper` for the types you are interested
+// To hook the cast, you define `CastHelper` for the types you are interested
 // in hooking. Example specialization:
 //
 //    template<>
-//    struct cast_helper<SourceType, TargetType> {
+//    struct CastHelper<SourceType, TargetType> {
 //        static TargetType convert(SourceType value) {
 //            // Add validation logic here
 //            return reinterpret_cast<TargetType>(value);
@@ -203,11 +203,11 @@
 //
 // Because Float* is not a smart pointer class, there's not a place in typical
 // C++ to add any runtime validation at the moment of casting.  But the cast()
-// macro is based on a `cast_helper` template you can inject any validation for
+// macro is based on a `CastHelper` template you can inject any validation for
 // that pointer pairing that you want:
 //
 //    template<>
-//    struct cast_helper<Number*,Float*> {
+//    struct CastHelper<Number*,Float*> {
 //        static Float* convert(Number* num) {
 //            assert(num->is_float);
 //            return reinterpret_cast<Float*>(num);
@@ -222,7 +222,7 @@
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
     template<typename V, typename T>
-    struct cast_helper {
+    struct CastHelper {
         // arithmetic/enum types that aren't explicitly convertible
         template<typename V_ = V, typename T_ = T>
         static constexpr typename std::enable_if<
@@ -248,11 +248,11 @@
     };
 
     template<typename V>
-    struct cast_helper<V,void>
+    struct CastHelper<V,void>
       { static void convert(V v) { (void)(v); } };  // void can't be constexpr
 
     #define cast(T,v)  /* needs outer parens, see [A] */ \
-        (cast_helper<typename std::remove_reference< \
+        (CastHelper<typename std::remove_reference< \
             decltype(v)>::type, T>::convert(v))
 #endif
 
@@ -270,7 +270,7 @@
 //         return c_cast(Float*, n);  // briefer than `cast(const Float*, n)`
 //     }
 //
-// It's built on top of the `cast_helper` used by plain `cast()`, so debug
+// It's built on top of the `CastHelper` used by plain `cast()`, so debug
 // checks applicable to a plain cast will also be run by `c_cast()`.
 //
 #if NO_CPLUSPLUS_11
@@ -278,7 +278,7 @@
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
     template<typename TP, typename VQPR>
-    struct c_cast_helper {
+    struct ConstPreservingCastHelper {
         static_assert(std::is_pointer<TP>::value, "c_cast() non pointer!");
         typedef typename std::remove_reference<VQPR>::type VQP;
         typedef typename std::remove_pointer<VQP>::type VQ;
@@ -293,8 +293,8 @@
     };
 
     #define c_cast(TP,v)  /* needs outer parens, see [A] */ \
-        (cast_helper< \
-            decltype(v), typename c_cast_helper<TP,decltype(v)>::type \
+        (CastHelper< \
+            decltype(v), typename ConstPreservingCastHelper<TP,decltype(v)>::type \
         >::convert(v))
 #endif
 
@@ -305,7 +305,7 @@
 // without changing other aspects of the type.  It's allowed for the input
 // pointer to already be mutable.
 //
-// It is hookable via `m_cast_helper()` for the case of when C++ builds are
+// It is hookable via `MutableCastHelper()` for the case of when C++ builds are
 // using a smart pointer class instead of a raw pointer.
 //
 #if NO_CPLUSPLUS_11
@@ -313,7 +313,7 @@
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
     template<typename T, typename V>
-    constexpr T m_cast_helper(V v) {
+    constexpr T MutableCastHelper(V v) {
         static_assert(not std::is_const<T>::value,
             "invalid m_cast() - requested a const type for output result");
         static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
@@ -322,7 +322,7 @@
     }
 
     #define m_cast(T,v) \
-        m_cast_helper<T>(v)
+        MutableCastHelper<T>(v)
 #endif
 
 
@@ -333,7 +333,7 @@
 // unchecked `u_cast()`, because it enforces the input and output types as
 // being pointers.
 //
-// It is not built on `cast_helper`, so an `x_cast()` won't run the debug
+// It is not built on `CastHelper`, so an `x_cast()` won't run the debug
 // checks that `cast()` and `c_cast()` would.  Use sparingly!
 //
 #if NO_CPLUSPLUS_11
@@ -341,7 +341,7 @@
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
     template<typename TQP>
-    struct x_cast_pointer_helper {
+    struct ArbitraryPointerCastHelper {
         static_assert(std::is_pointer<TQP>::value, "x_cast() non pointer!");
         typedef typename std::remove_pointer<TQP>::type TQ;
         typedef typename std::add_const<TQ>::type TC;
@@ -349,16 +349,16 @@
     };
 
     template<typename T>
-    struct x_cast_helper {
+    struct XCastHelper {
         typedef typename std::conditional<
             std::is_pointer<T>::value,
-            typename x_cast_pointer_helper<T>::type,
+            typename ArbitraryPointerCastHelper<T>::type,
             T
         >::type type;
     };
 
     #define x_cast(T,v)  /* needs outer parens, see [A] */ \
-        (const_cast<T>((typename x_cast_helper<T>::type)(v)))
+        (const_cast<T>((typename XCastHelper<T>::type)(v)))
 #endif
 
 
@@ -419,7 +419,7 @@
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
     template<typename V>
-    struct rr_cast_helper {
+    struct RemoveReferenceCastHelper {
         typedef typename std::conditional<
             std::is_reference<V>::value,
             typename std::remove_reference<V>::type,
@@ -428,7 +428,7 @@
     };
 
     #define rr_cast(v) \
-        static_cast<typename rr_cast_helper<decltype(v)>::type>(v)
+        static_cast<typename RemoveReferenceCastHelper<decltype(v)>::type>(v)
 #endif
 
 

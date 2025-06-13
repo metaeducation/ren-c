@@ -182,12 +182,12 @@
     };
 
     template<>
-    struct c_cast_helper<Byte*, OnStack(Value*) const&> {
+    struct ConstPreservingCastHelper<Byte*, OnStack(Value*) const&> {
         typedef Byte* type;
     };
 
     template<typename S, typename T>
-    struct cast_helper<OnStackPointer<S>,T>
+    struct CastHelper<OnStackPointer<S>,T>
       { static T convert(OnStackPointer<S> stk) { return (T)(stk.p);} };
 #endif
 

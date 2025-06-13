@@ -95,7 +95,7 @@
     //
     // 5. Wrapper classes don't know how to do `const_cast<>`, so things
     //    like std::shared_ptr<> have std::const_cast_pointer.  Ren-C's
-    //    m_cast() is smart enough to delegate to m_cast_helper so that
+    //    m_cast() is smart enough to delegate to MutableCastHelper so that
     //    m_cast(Utf8(*)) of a Utf8(const*) can be made to work.
 
     template<>
@@ -165,34 +165,34 @@
     };
 
     template<>
-    struct c_cast_helper<char*, Utf8(const*)>  // [4]
+    struct ConstPreservingCastHelper<char*, Utf8(const*)>  // [4]
       { typedef const char* type; };
 
     template<>
-    struct c_cast_helper<char*, Utf8(*)>  // [4]
+    struct ConstPreservingCastHelper<char*, Utf8(*)>  // [4]
       { typedef char* type; };
 
     template<>
-    struct c_cast_helper<Byte*, Utf8(const*)>  // [4]
+    struct ConstPreservingCastHelper<Byte*, Utf8(const*)>  // [4]
       { typedef const Byte* type; };
 
     template<>
-    struct c_cast_helper<Byte*, Utf8(*)>  // [4]
+    struct ConstPreservingCastHelper<Byte*, Utf8(*)>  // [4]
       { typedef Byte* type; };
 
     template<>
-    struct c_cast_helper<Utf8(*), const Byte*>  // [4]
+    struct ConstPreservingCastHelper<Utf8(*), const Byte*>  // [4]
       { typedef Utf8(const*) type; };
 
     template<>
-    struct c_cast_helper<Utf8(*), Byte*>  // [4]
+    struct ConstPreservingCastHelper<Utf8(*), Byte*>  // [4]
       { typedef Utf8(*) type; };
 
     template<>
-    inline Utf8(*) m_cast_helper(Utf8(const*) utf8)  // [5]
+    inline Utf8(*) MutableCastHelper(Utf8(const*) utf8)  // [5]
       { return cast(Utf8(*), m_cast(Byte*, utf8.p)); }
 
     template<>
-    constexpr inline Utf8(*) m_cast_helper(Utf8(*) utf8)  // [5]
+    constexpr inline Utf8(*) MutableCastHelper(Utf8(*) utf8)  // [5]
       { return utf8; }
 #endif
