@@ -31,6 +31,9 @@
 // `static_assert` is an arity-2 keyword in C++11 and can act as arity-1 in
 // C++17, for expedience we mock up an arity-1 form.
 //
+// Note: STATIC_ASSERT((std::is_same<T, U>::value)) is a common pattern,
+// and needs double parentheses for the < and > to work with the macro.
+
 // 1. It's possible to hack up a static assert in C:
 //
 //      http://stackoverflow.com/questions/3385515/static-assert-in-c
@@ -46,6 +49,27 @@
         #define STATIC_ASSERT(cond) \
             STATIC_IGNORE(cond)  // C static assert would be too limited [1]
     #endif
+#endif
+
+
+//=//// STATIC FAILURE FOR C AND C++ //////////////////////////////////////=//
+//
+// If you want to trigger a compile-time failure with a message, this macro
+// can do the job.  For example:
+//
+//    #if (NEEDFUL_DONT_INCLUDE_STDARG_H)
+//      #define v_cast(T,v)  STATIC_FAIL(v_cast_disabled)
+//    #else
+//      #define v_cast(T,v)  ...
+//    #endif
+//
+// Your message has to be able to be embedded in a C identifier, since the C
+// case uses it to declare a negative sized array.
+//
+#if CPLUSPLUS_11
+    #define STATIC_FAIL(msg)  static_assert(0, #msg)
+#else
+    #define STATIC_FAIL(msg)  typedef int static_fail_##msg[-1]
 #endif
 
 
@@ -161,5 +185,11 @@
 // Outside of wasting time there shouldn't be any harm in asserting it, so
 // comprehensive debug builds can request to treat these as asserts.
 //
-#define impossible(expr)     STATIC_ASSERT_DECLTYPE_BOOL(expr)
-#define IMPOSSIBLE(expr)     STATIC_IGNORE(expr)
+
+#if ASSERT_IMPOSSIBLE_THINGS
+    #define impossible(expr)   assert(expr)
+#else
+    #define impossible(expr)   STATIC_ASSERT_DECLTYPE_BOOL(expr)
+#endif
+
+#define IMPOSSIBLE(expr)     STATIC_ASSERT(!(expr))  // no runtime cost...

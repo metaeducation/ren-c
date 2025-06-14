@@ -89,48 +89,28 @@
     #include <stophere>  // https://stackoverflow.com/a/45661130
 #endif
 
-// Byte alias for `unsigned char` is used below vs. `uint8_t`, due to the
-// strict aliasing exemption for char types (some say uint8_t should count...)
+
+// Access memory at a pointer as a Byte.  Can act as a read, or a write when
+// used as the left-hand side of an assignment.  Strict-aliasing safe.
 //
-// To make it possible to use these as the left hand side of assignments,
-// the C build throws away the const information in the macro.  But the
-// C++11 build can use references to accomplish it.  This requires inline
-// functions that cost a little in the checked build for these very commonly
-// used functions... so it's only in the DEBUG_CHECK_CASTS builds.
+//  https://en.cppreference.com/w/c/language/object.html
 //
-// x_cast() is used so that if the input pointer is const, the output will
-// be a `const Byte*` and not a `Byte*`.
+// 1. The macros are in all-caps to show they are "weird" and usable as
+//    LValues.
+//
+// 2. u_c_cast() is used for "unchecked const-preserving casts" in the C++
+//    build, so if (p) is const Byte* the Byte won't be mutable.  (The C
+//    build throws away constness in u_c_cast(), since it can't "sense" it.)
+//
+// 3. Byte alias for `unsigned char` is used vs. `uint8_t`, due to strict
+//    aliasing exemption for char types (some say uint8_t should count...).
+//    This means supposedly, it doesn't matter what type the memory you are
+//    reading from...you will get the correct up-to-date value of that byte.
 
-#if (! DEBUG_CHECK_CASTS)  // use x_cast and throw away const knowledge
-    #define FIRST_BYTE(p)       x_cast(Byte*, (p))[0]
-    #define SECOND_BYTE(p)      x_cast(Byte*, (p))[1]
-    #define THIRD_BYTE(p)       x_cast(Byte*, (p))[2]
-    #define FOURTH_BYTE(p)      x_cast(Byte*, (p))[3]
-#else
-    INLINE Byte FIRST_BYTE(const void* p)
-      { return cast(const Byte*, p)[0]; }
-
-    INLINE Byte& FIRST_BYTE(void* p)
-      { return cast(Byte*, p)[0]; }
-
-    INLINE Byte SECOND_BYTE(const void* p)
-      { return cast(const Byte*, p)[1]; }
-
-    INLINE Byte& SECOND_BYTE(void* p)
-      { return cast(Byte*, p)[1]; }
-
-    INLINE Byte THIRD_BYTE(const void* p)
-      { return cast(const Byte*, p)[2]; }
-
-    INLINE Byte& THIRD_BYTE(void *p)
-      { return cast(Byte*, p)[2]; }
-
-    INLINE Byte FOURTH_BYTE(const void* p)
-      { return cast(const Byte*, p)[3]; }
-
-    INLINE Byte& FOURTH_BYTE(void* p)
-      { return cast(Byte*, p)[3]; }
-#endif
+#define FIRST_BYTE(p)       u_c_cast(Byte*, (p))[0]  // CAPS_NAME: LValue [1]
+#define SECOND_BYTE(p)      u_c_cast(Byte*, (p))[1]  // const-preserving [2]
+#define THIRD_BYTE(p)       u_c_cast(Byte*, (p))[2]  // Byte strict exempt [3]
+#define FOURTH_BYTE(p)      u_c_cast(Byte*, (p))[3]
 
 
 // There might not seem to be a good reason to keep the uint16_t variant in

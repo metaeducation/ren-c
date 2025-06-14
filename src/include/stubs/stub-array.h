@@ -50,6 +50,13 @@
 
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value Array_Last() should not be called on it.
+//
+// NOTE: These return unchecked pointers, because the data it points to may
+// be uninitilized.  Even if an array is valid, the Array_Head() pointer may
+// be to the tail, and hence not valid.  This means it's not really viable
+// to make checked versions of these functions...you just have to know at
+// the callsite if you expect the data to be valid or not, and use Element*
+// or Sink/Init(Element) as appropriate.
 
 #define Array_At(a,n)           Flex_At(Element, (a), (n))
 #define Array_Head(a)           Flex_Head(Element, (a))

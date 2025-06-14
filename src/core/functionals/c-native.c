@@ -217,7 +217,7 @@ static Bounce Native_Native_Core(Level* level_)
         Value* action = rebFunctionCore(
             cast(RebolContext*, g_currently_loading_module),
             spec,
-            cast(RebolActionCFunction*, cfunc)
+            f_cast(RebolActionCFunction*, cfunc)
         );
         Copy_Cell(OUT, action);
         rebRelease(action);
@@ -228,7 +228,7 @@ static Bounce Native_Native_Core(Level* level_)
             &details,
             spec,
             native_type,
-            cast(Dispatcher*, cfunc)
+            f_cast(Dispatcher*, cfunc)
         );
         if (e)
             return PANIC(unwrap e);
@@ -581,7 +581,7 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
         &details,
         spec,
         native_type,
-        cast(Dispatcher*, *g_native_cfunc_pos)
+        f_cast(Dispatcher*, *g_native_cfunc_pos)
     );
     if (e)
         crash (unwrap e);

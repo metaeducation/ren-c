@@ -28,7 +28,7 @@
 // help with locality.  Also makes sure that locations are accurately labeled
 // as to whether they have a valid Element/Value/Atom or are Sink()/Init().
 //
-// Another big benefit is that casts to Element can enure that no antiforms
+// Another big benefit is that casts to Element can enusre that no antiforms
 // are in the cell, and casts to Value don't hold unstable antiforms.  This
 // could be accomplished without casts with helper functions such as
 // Known_Element() or Known_Stable(), but using a cast makes the checks
@@ -36,99 +36,77 @@
 // helps point out "ugliness" that encourages caution at these points, and
 // looking to find another way to do it.
 //
-//=////////////////////////////////////////////////////////////////////////=//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// A. See README.md's explanation of why we specialize one parameter and
-//    leave the other free, so CastHelper fixes the type cast to while the
-//    type being cast from is arbitrary and can be subsetted or reacted to.
+// A. CastHelper<> has two parameters (From and To types), but we pin down the
+//    "To" type, then match a pattern for any "From" type (F).
 //
-// B. See README.md's explanation of why you need both a const T* and T*
-//    case in your handling, due to general design nature of C++ and const.
+// B. See the definition of CastHelper for why the generalized casting
+//    mechanic runs through const pointers only.
 //
-// C. A loophole we throw in here is that "checked" casts of Byte* or char*
-//    to a Cell subclass are not validated.  This random-seeming choice is
-//    just a way to avoid having to come up with arbitrary variations of
-//    unchecked casts, such as "unchecked const-preserving cast"...because
-//    there's diminishing benefit, given that the casts from Byte* pretty
-//    much always are on raw array data that has to be tolerant of being
-//    at a tail condition.  If you want validation of Byte* or char* data
-//    then just cast to a void* first.
+// C. See the definitions of UpcastTag and DowncastTag for an explanation of
+//    why we trust upcasts by default (you can override it if needed).
 //
+//
+
+// We don't bother with the "trusted" upcast here (yet?) but just check all
+// conversions from these types.
+//
+// char* is included because some storage blocks use it to make reading UTF-8
+// payloads easier in some debuggers, and Cells may be put there.
+//
+using CellConversionTypes = c_type_list<
+    Cell,Atom,Element,Value,Node,Byte,char,Pairing,void
+>;
+
 
 //=//// cast(Atom*, ...) //////////////////////////////////////////////////=//
 
-template<typename V>  // [A]
-struct CastHelper<V*, const Atom*> {  // const Atom* case [B]
-    typedef typename std::remove_const<V>::type V0;
+template<typename F>  // [A]
+struct CastHelper<const F*, const Atom*> {  // both must be const [B]
+    static const Atom* convert(const F* p) {
+        STATIC_ASSERT((
+            CellConversionTypes::contains<F>()
+        ));
 
-    static const Atom* convert(V* p) {
-        if (c_type_list<Byte,char>::contains<V0>())  // exempt Byte/char [C]
-            return reinterpret_cast<const Atom*>(p);
-
-        const Cell* c = reinterpret_cast<const Cell*>(p);
+        const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
-        unnecessary(LIFT_BYTE(c) >= ANTIFORM_0);  // always true
-        return reinterpret_cast<const Atom*>(c);
-    }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,Atom*> {  // Atom* case [B]
-    static Atom* convert(V* p) {
-        static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<Atom*>(cast(const Atom*, p));
+        unnecessary(assert(LIFT_BYTE(c) >= ANTIFORM_0));  // always true
+        return u_cast(const Atom*, c);
     }
 };
 
 
 //=//// cast(Value*, ...) //////////////////////////////////////////////////=//
 
-template<typename V>  // [A]
-struct CastHelper<V*, const Value*> {  // const Value* case [B]
-    typedef typename std::remove_const<V>::type V0;
+template<typename F>  // [A]
+struct CastHelper<const F*, const Value*> {  // both must be const [B]
+    static const Value* convert(const F* p) {
+        STATIC_ASSERT((
+            CellConversionTypes::contains<F>()
+        ));
 
-    static const Value* convert(V* p) {
-        if (c_type_list<Byte,char>::contains<V0>())  // exempt Byte/char* [C]
-            return reinterpret_cast<const Value*>(p);
-
-        const Cell* c = reinterpret_cast<const Cell*>(p);
+        const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
         if (LIFT_BYTE(c) == ANTIFORM_0)
             assert(Is_Stable_Antiform_Heart_Byte(HEART_BYTE_RAW(c)));
-        return reinterpret_cast<const Value*>(c);
-    }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,Value*> {  // Value* case [B]
-    static Value* convert(V* p) {
-        static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<Value*>(cast(const Value*, p));
+        return u_cast(const Value*, c);
     }
 };
 
 
 //=//// cast(Element*, ...) ///////////////////////////////////////////////=//
 
-template<typename V>  // [A]
-struct CastHelper<V*, const Element*> {  // const Element* case [B]
-    typedef typename std::remove_const<V>::type V0;
+template<typename F>  // [A]
+struct CastHelper<const F*, const Element*> {  // both must be const [B]
+    static const Element* convert(const F* p) {
+        STATIC_ASSERT((
+            CellConversionTypes::contains<F>()
+        ));
 
-    static const Element* convert(V* p) {
-        if (c_type_list<Byte,char>::contains<V0>())  // exempt Byte/char* [C]
-            return reinterpret_cast<const Element*>(p);
-
-        const Cell* c = reinterpret_cast<const Cell*>(p);
+        const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
         assert(LIFT_BYTE(c) != ANTIFORM_0);
-        return reinterpret_cast<const Element*>(c);
-    }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,Element*> {  // Element* case [B]
-    static Element* convert(V* p) {
-        static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<Element*>(cast(const Element*, p));
+        return u_cast(const Element*, c);
     }
 };

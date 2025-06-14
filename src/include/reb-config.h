@@ -80,6 +80,9 @@
 // It's inconvenient to not have STATIC_ASSERT in this file, but we want it
 // in %c-enhanced.h as well.  Allow the redundant definition (%c-enhanced.h
 // checks to see if it's already defined).
+//
+// Note: STATIC_ASSERT((std::is_same<T, U>::value)) is a common pattern,
+// and needs double parentheses for the < and > to work with the macro.
 
 #if CPLUSPLUS_11
     #define STATIC_ASSERT(cond) \

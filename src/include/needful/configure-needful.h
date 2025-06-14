@@ -66,3 +66,20 @@
     #define CORRUPT_IF_DEBUG_DOSE 7
   #endif
 #endif
+
+// Not all clients necessarily want to #include <stdarg.h> ... it may not be
+// available on the platform or could cause problems if included in some
+// codebases.  Default to including it since it offers protections people
+// may not be aware are necessary, but allow it to be turned off.
+//
+#if !defined(NEEDFUL_DONT_INCLUDE_STDARG_H)
+    #define NEEDFUL_DONT_INCLUDE_STDARG_H  0
+#endif
+
+#if (! NEEDFUL_DONT_INCLUDE_STDARG_H)
+    #include <stdarg.h>  // va_list disallowed in cast() and used in v_cast()
+#endif
+
+#if !defined(ASSERT_IMPOSSIBLE_THINGS)
+    #define ASSERT_IMPOSSIBLE_THINGS  0  // don't bother with impossible()
+#endif

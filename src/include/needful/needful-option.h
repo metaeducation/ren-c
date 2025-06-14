@@ -74,7 +74,7 @@
           {}
 
         operator uintptr_t() const  // so it works in switch() statements
-          { return cast(uintptr_t, p); }
+          { return u_cast(uintptr_t, p); }  // remember, may not be a pointer
 
         explicit operator T()  // must be an *explicit* cast
           { return p; }

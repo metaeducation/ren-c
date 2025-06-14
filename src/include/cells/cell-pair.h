@@ -38,7 +38,7 @@
 #define CELL_PAIRLIKE_PAIRING_NODE(c)  CELL_SERIESLIKE_NODE(c)
 
 #define Pairing_Head(p) \
-    c_cast(Element*, ensure(const Pairing*, (p)))
+    u_c_cast(Element*, ensure(const Pairing*, (p)))
 
 #define Pairing_Tail(p) \
     (Pairing_Head(p) + 2)

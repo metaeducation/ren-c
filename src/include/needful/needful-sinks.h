@@ -311,12 +311,12 @@
 #if DEBUG_USE_SINKS
     template<typename V, typename T>
     struct CastHelper<SinkWrapper<V>,T*> {  // don't use SinkWrapper<V>& [D]
-      static T* convert(SinkWrapper<V>& sink) {  // must be ref here
+      static T* convert(const SinkWrapper<V>& sink) {  // must be ref here
         if (sink.corruption_pending) {
             Corrupt_If_Debug(*sink.p);  // flush corruption
             sink.corruption_pending = false;
         }
-        return cast(T*, sink.p);  // run validating cast if applicable [1]
+        return v_cast(T*, sink.p);  // run validating cast if applicable [1]
       }
     };
 #endif
@@ -437,8 +437,8 @@
 #if DEBUG_USE_SINKS
     template<typename V, typename T>
     struct CastHelper<InitWrapper<V>,T*> {  // don't use InitWrapper<V>& [D]
-      static constexpr T* convert(InitWrapper<V>& init) {  // ref is faster
-        return cast(T*, init.p);
+      static constexpr T* convert(const InitWrapper<V>& init) {  // ref faster
+        return v_cast(T*, init.p);
       }
     };
 #endif
@@ -561,8 +561,8 @@
 #if DEBUG_USE_SINKS
     template<typename V, typename T>
     struct CastHelper<NeedWrapper<V>,T*> {  // don't use NeedWrapper<V>& [D]
-      static constexpr T* convert(NeedWrapper<V>& need) {  // ref is faster
-        return cast(T*, need.p);
+      static constexpr T* convert(const NeedWrapper<V>& need) {  // ref faster
+        return v_cast(T*, need.p);
       }
     };
 #endif

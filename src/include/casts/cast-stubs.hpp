@@ -24,15 +24,14 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// A. See README.md's explanation of why we specialize one parameter and
-//    leave the other free, so CastHelper fixes the type cast to while the
-//    type being cast from is arbitrary and can be subsetted or reacted to.
+// A. CastHelper<> has two parameters (From and To types), but we pin down the
+//    "To" type, then match a pattern for any "From" type (F).
 //
-// B. See README.md's explanation of why you need both a const T* and T*
-//    case in your handling, due to general design nature of C++ and const.
+// B. See the definition of CastHelper for why the generalized casting
+//    mechanic runs through const pointers only.
 //
-// C. See README.md's explanation of why we trust the type system in upcast
-//    situations by default (though you can edit this to override it).
+// C. See the definitions of UpcastTag and DowncastTag for an explanation of
+//    why we trust upcasts by default (you can override it if needed).
 //
 // D. If you find yourself having trouble with `static_assert(false, ...)`
 //    triggering in SFINAE, see `static_assert(always_false<T>::value, ...)`
@@ -40,22 +39,21 @@
 
 //=//// cast(Stub*, ...) //////////////////////////////////////////////////=//
 
-template<typename V0>
-const Stub* stub_cast_impl(V0* p, UpcastTag) {  // trust types [C]
-    return reinterpret_cast<const Flex*>(p);
+template<typename F>
+const Stub* stub_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
+    return u_cast(const Flex*, p);
 }
 
-template<typename V0>
-const Stub* stub_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
-    static_assert(
-        c_type_list<void, Byte, Node>::contains<V0>(),
-        "Invalid type for downcast to Stub*"
-    );
+template<typename F>
+const Stub* stub_cast_impl(const F* p, DowncastTag) {  // validate [C]
+    STATIC_ASSERT((
+        c_type_list<void, Byte, Node>::contains<F>()
+    ));
 
     if (not p)
         return nullptr;
 
-    if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
+    if ((u_cast(const Stub*, p)->leader.bits & (
         NODE_FLAG_NODE | NODE_FLAG_CELL  // NODE_FLAG_UNREADABLE ok
     )) != (
         NODE_FLAG_NODE
@@ -63,88 +61,71 @@ const Stub* stub_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
         crash (p);
     }
 
-    return reinterpret_cast<const Stub*>(p);
+    return u_cast(const Stub*, p);
 }
 
-template<typename V>  // [A]
-struct CastHelper<V*, const Stub*> {  // const Stub* case [B]
-    typedef typename std::remove_const<V>::type V0;
-
-    static const Stub* convert(V* p) {
-        return flex_cast_impl(const_cast<V0*>(p), WhichCast<V0, Stub>{});
-    }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,Stub*> {  // Stub* case [B]
-    static Stub* convert(V* p) {
-        static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<Stub*>(cast(const Stub*, p));
+template<typename F>  // [A]
+struct CastHelper<const F*, const Stub*> {  // both must be const [B]
+    static const Stub* convert(const F* p) {
+        return stub_cast_impl(p, WhichCastDirection<F, Stub>{});
     }
 };
 
 
 //=//// cast(Flex*, ...) //////////////////////////////////////////////////=//
 
-template<typename V0>
-const Flex* flex_cast_impl(V0* p, UpcastTag) {  // trust types [C]
-    return reinterpret_cast<const Flex*>(p);
+template<typename F>
+const Flex* flex_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
+    return u_cast(const Flex*, p);
 }
 
-template<typename V0>
-const Flex* flex_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
-    static_assert(
-        c_type_list<void,Byte,Node,Stub>::contains<V0>(),
-        "Invalid type for downcast to Flex*"
-    );
+template<typename F>
+const Flex* flex_cast_impl(const F* p, DowncastTag) {  // validate [C]
+    STATIC_ASSERT((
+        c_type_list<void,Byte,Node,Stub>::contains<F>()
+    ));
+
     if (not p)
         return nullptr;
-    if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
+
+    if ((u_cast(const Stub*, p)->leader.bits & (
         NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
     )) != (
         NODE_FLAG_NODE
     )){
         crash (p);
     }
-    return reinterpret_cast<const Flex*>(p);
+
+    return u_cast(const Flex*, p);
 }
 
-template<typename V>  // [A]
-struct CastHelper<V*, const Flex*> {  // const Flex* case [B]
-    typedef typename std::remove_const<V>::type V0;
-
-    static const Flex* convert(V* p) {
-        return flex_cast_impl(const_cast<V0*>(p), WhichCast<V0, Flex>{});
-    }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,Flex*> {  // Flex* case [B]
-    static Flex* convert(V* p) {
-        static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<Flex*>(cast(const Flex*, p));
+template<typename F>  // [A]
+struct CastHelper<const F*, const Flex*> {  // both must be const [B]
+    static const Flex* convert(const F* p) {
+        return flex_cast_impl(p, WhichCastDirection<F, Flex>{});
     }
 };
 
 
 //=//// cast(Binary*, ...) ////////////////////////////////////////////////=//
 
-template<typename V0>
-const Binary* binary_cast_impl(V0* p, UpcastTag) {  // trust types [C]
-    return reinterpret_cast<const Binary*>(p);
+template<typename F>
+const Binary* binary_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
+    return u_cast(const Binary*, p);
 }
 
-template<typename V0>
-const Binary* binary_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
-    static_assert(
-        c_type_list<void,Byte,Node,Flex>::contains<V0>(),
-        "Invalid type for downcast to Binary*"
-    );
+template<typename F>
+const Binary* binary_cast_impl(const F* p, DowncastTag) {  // validate [C]
+    STATIC_ASSERT((
+        c_type_list<void,Byte,Node,Flex>::contains<F>()
+    ));
 
     if (not p)
         return nullptr;
 
-    if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
+    const Stub* stub = u_cast(const Stub*, p);
+
+    if ((stub->leader.bits & (
         NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
     )) != (
         NODE_FLAG_NODE  // NODE_FLAG_UNREADABLE is diminished Stub
@@ -152,48 +133,36 @@ const Binary* binary_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
         crash (p);
     }
 
-    // assert Flex width here (trouble with Flex_Wide() from within
-    // cast at the moment)
+    impossible(Flex_Wide(stub) != 1);  // we *could* check this here
 
-    return reinterpret_cast<const Binary*>(p);
+    return u_cast(const Binary*, p);
 };
 
-template<typename V>  // [A]
-struct CastHelper<V*, const Binary*> {  // const Binary* case [B]
-    typedef typename std::remove_const<V>::type V0;
-
-    static const Binary* convert(V* p) {
-        return binary_cast_impl(const_cast<V0*>(p), WhichCast<V0, Binary>{});
-    }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,Binary*> {  // Binary* case [B]
-    static Binary* convert(V* p) {
-        static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<Binary*>(cast(const Binary*, p));
+template<typename F>  // [A]
+struct CastHelper<const F*, const Binary*> {  // both must be const [B]
+    static const Binary* convert(const F* p) {
+        return binary_cast_impl(p, WhichCastDirection<F, Binary>{});
     }
 };
 
 
 //=//// cast(String*, ...) ////////////////////////////////////////////////=//
 
-template<typename V0>
-const String* string_cast_impl(V0* p, UpcastTag) {  // trust types [C]
-    return reinterpret_cast<const String*>(p);
+template<typename F>
+const String* string_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
+    return u_cast(const String*, p);
 }
 
-template<typename V0>
-const String* string_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
-    static_assert(
-        c_type_list<void,Byte,Node,Stub,Flex,Binary>::contains<V0>(),
-        "Invalid type for downcast to String*"
-    );
+template<typename F>
+const String* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
+    STATIC_ASSERT((
+        c_type_list<void,Byte,Node,Stub,Flex,Binary>::contains<F>()
+    ));
 
     if (not p)
         return nullptr;
 
-    const Stub* stub = reinterpret_cast<const Stub*>(p);
+    const Stub* stub = u_cast(const Stub*, p);
 
     Byte taste = TASTE_BYTE(stub);
     if (taste != FLAVOR_NONSYMBOL and taste != FLAVOR_SYMBOL)
@@ -210,43 +179,32 @@ const String* string_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
         crash (p);
     }
 
-    return reinterpret_cast<const String*>(p);
+    impossible(Flex_Wide(stub) != 1);  // we *could* check this here
+
+    return u_cast(const String*, p);
 };
 
-template<typename V>  // [A]
-struct CastHelper<V*, const String*> {  // const String* case [B]
-    typedef typename std::remove_const<V>::type V0;
-
-    static const String* convert(V* p) {
-        return string_cast_impl(const_cast<V0*>(p), WhichCast<V0, String>{});
-    }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,String*> {  // String* case [B]
-    static String* convert(V* p) {
-        static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<String*>(cast(const String*, p));
+template<typename F>  // [A]
+struct CastHelper<const F*, const String*> {  // both must be const [B]
+    static const String* convert(const F* p) {
+        return string_cast_impl(p, WhichCastDirection<F, String>{});
     }
 };
 
 
 //=//// cast(Symbol*, ...) ////////////////////////////////////////////////=//
 
-template<typename V>  // [A]
-struct CastHelper<V*,const Symbol*> {  // const Symbol* case [B]
-    typedef typename std::remove_const<V>::type V0;
-
-    static const Symbol* convert(V* p) {
-        static_assert(
-            c_type_list<void,Byte,Node,Stub,Flex,Binary,String>::contains<V0>(),
-            "Invalid type for downcast to Symbol*"
-        );
+template<typename F>
+struct CastHelper<const F*, const Symbol*> {
+    static const Symbol* convert(const F* p) {
+        STATIC_ASSERT((
+            c_type_list<void,Byte,Node,Stub,Flex,Binary,String>::contains<F>()
+        ));
 
         if (not p)
             return nullptr;
 
-        const Stub* stub = reinterpret_cast<const Stub*>(p);
+        const Stub* stub = u_cast(const Stub*, p);
         if ((stub->leader.bits & (
             (FLEX_MASK_SYMBOL | FLAG_TASTE_BYTE(255))
                 | NODE_FLAG_UNREADABLE
@@ -257,41 +215,30 @@ struct CastHelper<V*,const Symbol*> {  // const Symbol* case [B]
             crash (p);
         }
 
-        return reinterpret_cast<const Symbol*>(p);
+        impossible(Flex_Wide(stub) != 1);  // we *could* check this here
+
+        return u_cast(const Symbol*, p);
     }
 };
-
-// If we didn't supply a cast in the const case, it would be unchecked.  The
-// only time Symbols should be mutable is at creation time, or when bits are
-// being tweaked in binding slots.  Stored or external pointers should always
-// be const if downcasting.
-
-/*
-template<typename V>
-struct CastHelper<V*,Symbol*> {  // Symbol* case [B]
-    static Symbol* convert(V* p) = delete;
-};
-*/
 
 
 //=//// cast(Array*, ...) /////////////////////////////////////////////////=//
 
-template<typename V0>
-const Array* array_cast_impl(V0* p, UpcastTag) {  // trust types [C]
-    return reinterpret_cast<const Array*>(p);
+template<typename F>
+const Array* array_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
+    return u_cast(const Array*, p);
 }
 
-template<typename V0>
-const Array* array_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
-    static_assert(
-        c_type_list<void,Byte,Stub,Node,Flex>::contains<V0>(),
-        "Invalid type for downcast to Array*"
-    );
+template<typename F>
+const Array* array_cast_impl(const F* p, DowncastTag) {  // validate [C]
+    STATIC_ASSERT((
+        c_type_list<void,Byte,Stub,Node,Flex>::contains<F>()
+    ));
 
     if (not p)
         return nullptr;
 
-    if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
+    if ((u_cast(const Stub*, p)->leader.bits & (
         NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
     )) != (
         NODE_FLAG_NODE
@@ -299,45 +246,34 @@ const Array* array_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
         crash (p);
     }
 
-    return reinterpret_cast<const Array*>(p);
+    return u_cast(const Array*, p);
 };
 
-template<typename V>  // [A]
-struct CastHelper<V*, const Array*> {  // const Array* case [B]
-    typedef typename std::remove_const<V>::type V0;
-
-    static const Array* convert(V* p) {
-        return array_cast_impl(const_cast<V0*>(p), WhichCast<V0, Array>{});
-    }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,Array*> {  // Array* case [B]
-    static Array* convert(V* p) {
-        static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<Array*>(cast(const Array*, p));
+template<typename F>  // [A]
+struct CastHelper<const F*, const Array*> {  // both must be const [B]
+    static const Array* convert(const F* p) {
+        return array_cast_impl(p, WhichCastDirection<F, Array>{});
     }
 };
 
 
 //=//// cast(VarList*, ...) ///////////////////////////////////////////////=//
 
-template<typename V>
-VarList* varlist_cast_impl(V* p, UpcastTag) {  // trust types [C]
-    return reinterpret_cast<VarList*>(p);
+template<typename F>
+const VarList* varlist_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
+    return u_cast(const VarList*, p);
 }
 
-template<typename V>
-VarList* varlist_cast_impl(V* p, DowncastTag) {  // validate bits [C]
-    static_assert(
-        c_type_list<void,Byte,Node,Stub,Flex,Array>::contains<V>(),
-        "Invalid type for downcast to VarList*"
-    );
+template<typename F>
+const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
+    STATIC_ASSERT((
+        c_type_list<void,Byte,Node,Stub,Flex,Array>::contains<F>()
+    ));
 
     if (not p)
         return nullptr;
 
-    if ((reinterpret_cast<Stub*>(p)->leader.bits & (
+    if ((u_cast(const Stub*, p)->leader.bits & (
         FLEX_MASK_LEVEL_VARLIST  // MISC_NODE_NEEDS_MARK
             | NODE_FLAG_UNREADABLE
             | NODE_FLAG_CELL
@@ -348,37 +284,31 @@ VarList* varlist_cast_impl(V* p, DowncastTag) {  // validate bits [C]
         crash (p);
     }
 
-    return reinterpret_cast<VarList*>(p);
+    return u_cast(const VarList*, p);
 };
 
-template<typename V>  // [A]
-struct CastHelper<V*, VarList*> {  // VarList* case [B]
-    static VarList* convert(V* p) {
-        return varlist_cast_impl(p, WhichCast<V, VarList>{});
+template<typename F>  // [A]
+struct CastHelper<const F*, const VarList*> {  // both must be const [B]
+    static const VarList* convert(const F* p) {
+        return varlist_cast_impl(p, WhichCastDirection<F, VarList>{});
     }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,const VarList*> {  // const VarList* case [B]
-    static const VarList* convert(V* p) = delete;  // no const Varlist*
 };
 
 
 //=//// cast(Phase*, ...) ////////////////////////////////////////////////=//
 
-template<typename V>  // [A]
-struct CastHelper<V*,Phase*> {  // Phase* case [B]
-    static Phase* convert(V* p) {
-        static_assert(
-            c_type_list<void,Byte,Node,Stub,Flex,Array>::contains<V>()
-                and not std::is_const<V>::value,
-            "Invalid type for downcast to Phase*"
-        );
+template<typename F>  // [A]
+struct CastHelper<const F*, const Phase*> {  // both must be const [B]
+    static const Phase* convert(const F* p) {
+        STATIC_ASSERT((
+            c_type_list<void,Byte,Node,Stub,Flex,Array>::contains<F>()
+            and not std::is_const<F>::value
+        ));
 
         if (not p)
             return nullptr;
 
-        const Stub* stub = reinterpret_cast<Stub*>(p);
+        const Stub* stub = u_cast(const Stub*, p);
 
         if (TASTE_BYTE(stub) == FLAVOR_DETAILS) {
             if ((stub->leader.bits & (
@@ -404,11 +334,6 @@ struct CastHelper<V*,Phase*> {  // Phase* case [B]
             }
         }
 
-        return reinterpret_cast<Phase*>(p);
+        return u_cast(const Phase*, p);
     }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,const Phase*> {  // const Phase* case [B]
-    static const Phase* convert(V* p) = delete;  // no const Phase*
 };

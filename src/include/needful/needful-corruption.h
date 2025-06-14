@@ -76,11 +76,11 @@
         );
         static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
         if (countdown == 0) {
-            memset(cast(void*, &ref), 0, sizeof(T));  // void cast needed [3]
+            memset(u_cast(void*, &ref), 0, sizeof(T));  // cast needed [3]
             countdown = CORRUPT_IF_DEBUG_DOSE;
         }
         else {
-            memset(cast(void*, &ref), 189, sizeof(T));  // void cast needed [3]
+            memset(u_cast(void*, &ref), 189, sizeof(T));  // cast needed [3]
             --countdown;
         }
       }
@@ -116,17 +116,17 @@
 #else
     template<class T>
     INLINE void Corrupt_Pointer_If_Debug(T* &p)
-      { p = p_cast(T*, cast(uintptr_t, 0xDECAFBAD)); }
+      { p = p_cast(T*, u_cast(uintptr_t, 0xDECAFBAD)); }
 
     #define Corrupt_Function_Pointer_If_Debug Corrupt_Pointer_If_Debug
 
     template<class T>
     INLINE void FreeCorrupt_Pointer_Debug(T* &p)
-      { p = p_cast(T*, cast(uintptr_t, 0xF4EEF4EEE)); }
+      { p = p_cast(T*, u_cast(uintptr_t, 0xF4EEF4EEE)); }
 
     template<class T>
     INLINE bool Is_Pointer_Corrupt_Debug(T* p)
-      { return (p == p_cast(T*, cast(uintptr_t, 0xDECAFBAD))); }
+      { return (p == p_cast(T*, u_cast(uintptr_t, 0xDECAFBAD))); }
 #endif
 
 #if USE_CORRUPTER_HELPERS

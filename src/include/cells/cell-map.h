@@ -26,7 +26,7 @@
 
 #define CELL_MAP_PAIRLIST(c)  CELL_NODE1(c)
 
-INLINE const Map* VAL_MAP(const Value* c) {
+INLINE const Map* VAL_MAP(const Cell* c) {
     assert(Heart_Of(c) == TYPE_MAP);
 
     Node* node = CELL_MAP_PAIRLIST(c);

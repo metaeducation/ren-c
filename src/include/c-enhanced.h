@@ -488,6 +488,7 @@
 //
 #if CPLUSPLUS_11
     #include <type_traits>
+    #include <utility>  // for std::forward()
 
   namespace shim {  // [1]
     template<typename _From, typename _To>
@@ -531,6 +532,8 @@
 #include "needful/needful-loops.h"
 
 #include "needful/needful-nevernull.h"
+
+#define cast  v_cast  // don't want to force a definition of this
 
 
 //=//// SLIGHTLY SAFER MIN AND MAX MACROS IN C++ //////////////////////////=//

@@ -56,7 +56,7 @@
 INLINE Option(HandleCleaner*) Handle_Cleaner(Stub* handle_stub) {
     assert(Stub_Flavor(handle_stub) == FLAVOR_HANDLE);
     assert(Get_Stub_Flag(handle_stub, CLEANS_UP_BEFORE_GC_DECAY));
-    return cast(HandleCleaner*, MISC_HANDLE_CLEANER(handle_stub));
+    return f_cast(HandleCleaner*, MISC_HANDLE_CLEANER(handle_stub));
 }
 
 INLINE void Tweak_Handle_Cleaner(
@@ -65,7 +65,7 @@ INLINE void Tweak_Handle_Cleaner(
 ){
     assert(Stub_Flavor(handle_stub) == FLAVOR_HANDLE);
     assert(Get_Stub_Flag(handle_stub, CLEANS_UP_BEFORE_GC_DECAY));
-    MISC_HANDLE_CLEANER(handle_stub) = cast(CFunction*, maybe cleaner);
+    MISC_HANDLE_CLEANER(handle_stub) = f_cast(CFunction*, maybe cleaner);
 }
 
 

@@ -88,9 +88,9 @@ enum TokenEnum {
 };
 typedef enum TokenEnum Token;
 
-STATIC_ASSERT(TOKEN_CARET == cast(int, SIGIL_META));
-STATIC_ASSERT(TOKEN_AT == cast(int, SIGIL_PIN));
-STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_TIE));
+STATIC_ASSERT(TOKEN_CARET == u_cast(int, SIGIL_META));
+STATIC_ASSERT(TOKEN_AT == u_cast(int, SIGIL_PIN));
+STATIC_ASSERT(TOKEN_DOLLAR == u_cast(int, SIGIL_TIE));
 
 
 

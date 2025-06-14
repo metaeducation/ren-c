@@ -417,10 +417,10 @@ typedef void (StubCleaner)(Stub*);
 INLINE StubCleaner* Stub_Cleaner(const Stub* s) {
     assert(Get_Stub_Flag(s, CLEANS_UP_BEFORE_GC_DECAY));
     assert(MISC_STUB_CLEANER(s) != nullptr);
-    return cast(StubCleaner*, MISC_STUB_CLEANER(s));
+    return f_cast(StubCleaner*, MISC_STUB_CLEANER(s));
 }
 
 INLINE void Tweak_Stub_Cleaner(Stub* s, StubCleaner* cleaner) {
     assert(Get_Stub_Flag(s, CLEANS_UP_BEFORE_GC_DECAY));
-    MISC_STUB_CLEANER(s) = cast(CFunction*, cleaner);
+    MISC_STUB_CLEANER(s) = f_cast(CFunction*, cleaner);
 }

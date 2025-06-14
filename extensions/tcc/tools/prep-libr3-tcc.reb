@@ -45,7 +45,7 @@ for-each-api [
         Add_API_Symbol_Helper(
             state,
             "API_$<Name>",
-            cast(CFunction*, &API_$<Name>)
+            f_cast(CFunction*, &API_$<Name>)
         );
     ]--]
 ]

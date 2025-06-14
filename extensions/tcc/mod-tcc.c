@@ -643,7 +643,7 @@ DECLARE_NATIVE(COMPILE_P)
         //      Add_API_Symbol_Helper(
         //          state,
         //          "API_rebXXX",
-        //          cast(CFunction*, &API_rebXXX)
+        //          f_cast(CFunction*, &API_rebXXX)
         //      );
         //
         #include "tmp-librebol-symbols.inc"
@@ -700,7 +700,7 @@ DECLARE_NATIVE(COMPILE_P)
 
         Init_Handle_Cfunc(
             Details_At(details_api, IDX_API_ACTION_CFUNC),
-            cast(CFunction*, cfunc)
+            f_cast(CFunction*, cfunc)
         );
         Element* block = Init_Block(
             Details_At(details_api, IDX_API_ACTION_BINDING_BLOCK),

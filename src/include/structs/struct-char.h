@@ -165,30 +165,6 @@
     };
 
     template<>
-    struct ConstPreservingCastHelper<char*, Utf8(const*)>  // [4]
-      { typedef const char* type; };
-
-    template<>
-    struct ConstPreservingCastHelper<char*, Utf8(*)>  // [4]
-      { typedef char* type; };
-
-    template<>
-    struct ConstPreservingCastHelper<Byte*, Utf8(const*)>  // [4]
-      { typedef const Byte* type; };
-
-    template<>
-    struct ConstPreservingCastHelper<Byte*, Utf8(*)>  // [4]
-      { typedef Byte* type; };
-
-    template<>
-    struct ConstPreservingCastHelper<Utf8(*), const Byte*>  // [4]
-      { typedef Utf8(const*) type; };
-
-    template<>
-    struct ConstPreservingCastHelper<Utf8(*), Byte*>  // [4]
-      { typedef Utf8(*) type; };
-
-    template<>
     inline Utf8(*) MutableCastHelper(Utf8(const*) utf8)  // [5]
       { return cast(Utf8(*), m_cast(Byte*, utf8.p)); }
 

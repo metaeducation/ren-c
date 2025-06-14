@@ -494,9 +494,9 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     possibly(Is_Frame(out));
     Quotify(Known_Element(out));  // frame would run if eval sees unquoted
 
-    DECLARE_ATOM (temp);
+    DECLARE_VALUE (temp);
     if (rebRunThrows(
-        cast(RebolValue*, temp),
+        temp,  // output cell
         CANON(PICK),
         out,  // was quoted above
         rebQ(cast(const RebolValue*, at)))  // Cell, but is Element*
@@ -504,7 +504,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
         e = Error_No_Catch_For_Throw(TOP_LEVEL);
         goto return_error;
     }
-    Copy_Cell(out, Decay_If_Unstable(temp));
+    Copy_Cell(out, temp);
 
     goto ensure_out_is_action;
 

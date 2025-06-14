@@ -41,30 +41,59 @@
 //
 //=//// CAST SELECTION GUIDE ///////////////////////////////////////////////=//
 //
+// DEFAULT CAST
+//    * Defaults to v_cast():      cast()      // #undef to change it [A]
+//
 // SAFETY LEVEL
-//    * Normal usage:             cast()      // safe default choice
-//    * Unchecked completely:     u_cast()    // use with fresh malloc()s
-//                                              // ...or critical debug paths
+//    * Validated cast:            v_cast()    // safe default, runs hooks
+//    * Unchecked completely:      u_cast()    // use with fresh malloc()s
+//                                               // ...or critical debug paths
+//                                               // ...!!! or va_lists !!! [B]
 //
 // POINTER CONSTNESS
-//    * Preserving constness:     c_cast()    // T1* => T2* ...or...
-//                                              // const T1* => const T2*
-//    * Adding mutability:        m_cast()    // const T* => T*
-//    * Type and mutability:      x_cast()    // const T1* => T2*
+//    * Adding mutability:         m_cast()    // const T* => T*
+//    * Type AND mutability:       x_cast()    // const T1* => T2*
+//    * Preserving constness:      c_cast()    // T1* => T2* ...or...
+//                                               // const T1* => const T2*
+//    * Unchecked c_cast():      u_c_cast()    // c_cast() w/no v_cast() hooks
 //
 // TYPE CONVERSIONS
-//    * Non-pointer to pointer:    p_cast()   // int => T*
-//    * Non-integral to integral:  i_cast()   // ptr => intptr_t
+//    * Non-pointer to pointer:    p_cast()    // intptr_t => T*
+//    * Non-integral to integral:  i_cast()    // T* => intptr_t
+//    * Function to function:      f_cast()    // ret1(*)(...) => ret2(*)(...)
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// A. The C preprocessor doesn't know about templates, so it parses things
+// A. Because `cast` has a fair likelihood of being defined as the name of a
+//    function or variable in C codebases, Needful does not force a definition
+//    of `cast`.  But in an ideal situation, you could adapt your codebase
+//    such that cast() can be defined, and defined as v_cast().
+//
+//    It's also potentially the case that you might want to start it out as
+//    meaning u_cast()...especially if gradually adding Needful to existing
+//    code.  You could start by turning all the old (T)(V) casts into cast()
+//    defined as u_cast()...and redefine it as v_cast() after a process over
+//    the span of time, having figured out which needed to be other casts.
+//
+// B. The va_list type is compiler magic, and the standard doesn't even
+//    guarantee you can pass a `va_list*` through a `void*` and cast it back
+//    to `va_list*`!  But in practice, that works on most platforms—**as long
+//    as you are only passing the `va_list` object by address and not copying
+//    or dereferencing it in a way that violates its ABI requirements**.
+//
+//    But since `const va_list*` MAY be illegal, and va_list COULD be any type
+//    (including fundamentals like `char`), the generic machinery behind
+//    cast() could be screwed up if you ever use va_list* with it.  We warn
+//    you to use u_cast() if possible--but it's not always possible, since
+//    it might look like a completely mundane type.  :-(
+//
+// C. The C preprocessor doesn't know about templates, so it parses things
 //    like FOO(something<a,b>) as taking "something<a" and "b>".  This is a
 //    headache for implementing the macros, but also if a macro produces a
 //    comma and gets passed to another macro.  To work around it, we wrap
 //    the product of the macro containing commas in parentheses.
 //
-// B. The casts are implemented with a static method of a templated struct vs.
+// D. The casts are implemented with a static method of a templated struct vs.
 //    just as a templated function.  This is because partial specialization of
 //    function templates is not legal in C++ due to the fact that functions can
 //    be overloaded, while structs and classes can't:
@@ -78,7 +107,7 @@
 //     signature. Everyone can specialize that -- both fully and partially,
 //     and without affecting the results of overload resolution."
 //
-// C. decltype(v) when v is a variable and not an expression will not be
+// E. decltype(v) when v is a variable and not an expression will not be
 //    a reference type.  decltype((v)) will be a reference if v is a lvalue.
 //
 //    When decltype() is used in a macro like cast(), we don't want there to
@@ -101,7 +130,6 @@
 //          { static Y* convert(Foo<X>& foo) { ... } }
 //
 
-
 #ifndef NEEDFUL_CASTS_H  // "include guard" allows multiple #includes
 #define NEEDFUL_CASTS_H
 
@@ -122,7 +150,7 @@
     ((T)(v))  // in both C and C++, just an alias for parentheses cast
 
 
-//=//// BASIC CAST /////////////////////////////////////////////////////////=//
+//=//// v_cast(): VALIDATED CAST, DEFAULT MEANING OF cast() [A] ///////////=//
 //
 // This is the form of hookable cast you should generally reach for.  Default
 // hooks are provided for pointer-to-pointer, or integral-to-integral.
@@ -202,109 +230,211 @@
 // that pointer pairing that you want:
 //
 //    template<>
-//    struct CastHelper<Number*,Float*> {
-//        static Float* convert(Number* num) {
+//    struct CastHelper<const Number*,const Float*> {  // const pointers! [1]
+//        static const Float* convert(const Number* num) {
 //            assert(num->is_float);
-//            return reinterpret_cast<Float*>(num);
+//            return reinterpret_cast<const Float*>(num);
 //        }
 //    };
 //
 // This way, whenever you cast from a Number* to a Float*, debug builds can
-// check that the number actually was allocated as a float.
+// check that the number actually was allocated as a float.  You can also do
+// partial specialization of the cast helper, and do checks on the types
+// being cast from... here's the same helper done with partial specialization
+// just to give you the idea of the mechanism:
 //
-// 1. This has to be an object template and not a function template, in order
+//    template<typename V>
+//    struct CastHelper<const Number*,const V*> {  // const pointers! [1]
+//        static const Float* convert(const V* v) {
+//            static_assert(std::is_same<V, Float>::value, "Float expected");
+//            assert(num->is_float);
+//            return reinterpret_cast<const Float*>(num);
+//        }
+//    };
+//
+// 1. For pointer types, the system consolidates the dispatch mechanism based
+//    on const pointers.  This is the natural choice for the general mechanic
+//    because it is the most constrained (mutable pointers can be made const,
+//    and have const methods called on them, not necessarily vice versa).
+//    Hence mutable casts from Number* to Float* above runs the same code,
+//    while returning the correct mutable output from the cast()...and it
+//    correctly prohibits casting from a const Number* to a mutable Float*.
+//
+// 2. This has to be an object template and not a function template, in order
 //    to allow partial specialization.  Without partial specialization you
 //    can't provide a default that doesn't create ambiguities with the
 //    SFINAE that come afterwards.
 //
-// 2. It's ugly to have a nested template<typename V_ = V, typename T_ = T>,
-//    but unfortunately there is no other way in C++ to get SFINAE inside
-//    this struct.  Really.  Other cases can be simplified, not this one.
+// 3. If you want things like char[10] to be decayed to char* for casting
+//    purposes, it has to go through a decaying process.
 //
+
 #if NO_CPLUSPLUS_11
-  #define cast(T,v) \
+  #define v_cast(T,v) \
     ((T)(v))  // in C, just another alias for parentheses cast
 #else
-  template<typename V, typename T>
-  struct CastHelper  // must be object with static member functions [1]
-  {
-    // Prohibit const-to-non-const pointer casts
-    template<
-        typename V_ = V, typename T_ = T,  // [2]
-        typename std::enable_if<
-            std::is_pointer<V_>::value and
-            std::is_pointer<T_>::value and
-            std::is_const<typename std::remove_pointer<V_>::type>::value and
-            not std::is_const<typename std::remove_pointer<T_>::type>::value
-        >::type* = nullptr
+
+    template<typename T>
+    struct is_function_pointer : std::false_type {};
+
+    template<typename Ret, typename... Args>
+    struct is_function_pointer<Ret (*)(Args...)> : std::true_type {};
+
+    template<typename From, typename To>
+    struct is_const_removing_pointer_cast {  // catching const incorrectness
+        static constexpr bool value =
+            std::is_pointer<From>::value and std::is_pointer<To>::value
+            and (
+                std::is_const<typename std::remove_pointer<From>::type>::value
+            ) and not (
+                std::is_const<typename std::remove_pointer<To>::type>::value
+            );
+    };
+
+    template<typename T>
+    struct make_const_ptr {
+        typedef T type;
+    };
+
+    template<typename T>
+    struct make_const_ptr<T*> {
+        typedef const T* type;
+    };
+
+    #define DEFINE_MAKE_CONST_PTR_FOR_CONVENTION(...) \
+        template<typename Ret, typename... Args> \
+        struct make_const_ptr<Ret(__VA_ARGS__ *)(Args...)> { \
+            using type = Ret(__VA_ARGS__ *)(Args...); \
+        }
+
+    DEFINE_MAKE_CONST_PTR_FOR_CONVENTION();
+    /* DEFINE_MAKE_CONST_PTR_FOR_CONVENTION(__cdecl); */
+    /* DEFINE_MAKE_CONST_PTR_FOR_CONVENTION(__stdcall); */
+    /* DEFINE_MAKE_CONST_PTR_FOR_CONVENTION(__fastcall); */
+    #undef DEFINE_MAKE_CONST_PTR_FOR_CONVENTION
+
+    // Helper to check if a cast would remove constness
+    template<typename From, typename To>
+    struct removes_constness {
+        static const bool value = false;
+    };
+
+    template<typename T1, typename T2>
+    struct removes_constness<const T1*, T2*> {
+        static const bool value = true;
+    };
+
+    template<typename V, typename T>
+    struct CastHelper {  // object template for partial specialization [2]
+      static T convert(V v) {
+        return u_cast(T, v);  // plain C cast is most versatile here
+      }
+    };
+
+    template<typename From, typename To>
+    struct ConstAwareCastDispatcher {  // implements const canonization [1]
+        // Case 1: Both are pointers - dispatch to const version
+        template<typename F = From, typename T = To>
+        static typename std::enable_if<
+            std::is_pointer<F>::value and std::is_pointer<T>::value,
+            T
+        >::type convert(const F& from) {
+            typedef typename make_const_ptr<F>::type ConstFrom;
+            typedef typename make_const_ptr<T>::type ConstTo;
+
+            ConstTo const_result = CastHelper<ConstFrom, ConstTo>::convert(
+                const_cast<ConstFrom>(from)
+            );
+
+            return const_cast<T>(const_result);
+        }
+
+        // Case 2: Not both pointers - direct cast
+        template<typename F = From, typename T = To>
+        static typename std::enable_if<
+            not (std::is_pointer<F>::value and std::is_pointer<T>::value),
+            T
+        >::type convert(const F& from) {
+            return CastHelper<F, T>::convert(from);
+        }
+    };
+
+    template<  // Main cast with constness validation
+        typename From,
+        typename To,
+        bool RemovesConst = is_const_removing_pointer_cast<From, To>::value
     >
-    static T_ convert(V_ v) {
-        static_assert(always_false<V_>::value,
-            "Mutable cast on const pointer--use m_cast() or x_cast()");
-        UNUSED(v);
+    struct ValidatedCastHelper {
+        static_assert(
+            not is_function_pointer<From>::value
+            and not is_function_pointer<To>::value,
+            "Use f_cast() for function pointer casts instead of cast()"
+        );
+
+        static_assert(
+            not is_const_removing_pointer_cast<From, To>::value,
+            "cast() removing const: use m_cast() or x_cast() if you mean it"
+        );
+
+      #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
+        static_assert(
+            (   // v-- we can't warn you about va_list* cast() if this is true
+                std::is_pointer<va_list>::value
+                and std::is_fundamental<
+                    typename std::remove_pointer<va_list>::type
+                >::value
+            )
+            or (  // v-- but if it's a struct or something we can warn you
+                not std::is_same<From, va_list*>::value
+                and not std::is_same<To, va_list*>::value
+            ),
+            "can't cast() va_list*!  u_cast() mutable va_list* <-> void* only"
+        );  // read [B] at top of file for more information
+      #endif
+
+      static To convert(const From& v) {
+        return ConstAwareCastDispatcher<From, To>::convert(v);
+      }
+    };
+
+    template<typename From, typename To>  // const removal specialization
+    struct ValidatedCastHelper<From, To, true> {
+      static To convert(From /*v*/) {
+        static_assert(
+            false,
+            "cast() removing const: use m_cast() or x_cast() if you mean it"
+        );
         return nullptr;
+      }
+    };
+
+
+    template<typename To, typename From>
+    typename std::enable_if<  // For arrays: decay to pointer
+        std::is_array<typename std::remove_reference<From>::type>::value,
+        To
+    >::type
+    v_cast_decaying_helper(From&& v) {
+        return ValidatedCastHelper<
+            typename std::decay<From>::type, To
+        >::convert(std::forward<From>(v));
     }
 
-    // Fallback for const-to-const pointer casts
-    template<
-        typename V_ = V, typename T_ = T,  // [2]
-        typename std::enable_if<
-            std::is_pointer<V_>::value and
-            std::is_pointer<T_>::value and
-            (not std::is_const<typename std::remove_pointer<V_>::type>::value
-            or (
-                std::is_const<typename std::remove_pointer<V_>::type>::value
-                   and
-                std::is_const<typename std::remove_pointer<T_>::type>::value
-            ))
-        >::type* = nullptr
-    >
-    static constexpr T_ convert(V_ v) {
-        return reinterpret_cast<T>(v);
+    template<typename To, typename From>
+    typename std::enable_if<  // For non-arrays: forward as-is
+        !std::is_array<typename std::remove_reference<From>::type>::value,
+        To
+    >::type
+    v_cast_decaying_helper(From&& v) {
+        return ValidatedCastHelper<From, To>::convert(
+            std::forward<From>(v)  // preserves reference-ness
+        );
     }
-
-    // arithmetic/enum types that aren't explicitly convertible
-    template<
-        typename V_ = V, typename T_ = T,  // [2]
-        typename std::enable_if<
-            (not std::is_pointer<V_>::value or not std::is_pointer<T_>::value)
-                and
-            (not shim::is_explicitly_convertible<V_,T_>::value and (
-                (std::is_arithmetic<V_>::value or std::is_enum<V_>::value)
-                and (std::is_arithmetic<T_>::value or std::is_enum<T_>::value)
-            ))
-        >::type* = nullptr
-    >
-    static constexpr T_ convert(V_ v) {
-        return static_cast<T>(v);
-    }
-
-    // for types that are explicitly convertible
-    template<
-        typename V_ = V, typename T_ = T,  // [2]
-        typename std::enable_if<
-            (not std::is_pointer<V_>::value or not std::is_pointer<T_>::value)
-                and
-            shim::is_explicitly_convertible<V_,T_>::value,
-        T>::type* = nullptr
-    >
-    static constexpr T_ convert(V_ v) {
-        return static_cast<T>(v);
-    }
-  };
-
-  template<typename V>
-  struct CastHelper<V,void> {
-    static void convert(V /* v */) { }  // void can't be constexpr
-  };
-
-  #define cast(T,v)  /* needs outer parens, see [A] */ \
-    (CastHelper<typename std::remove_reference< \
-        decltype(v)>::type, T>::convert(v))  // remove ref for sanity [C]
+    #define v_cast(T, v)  v_cast_decaying_helper<T>(v)
 #endif
 
 
-//=//// CONST-PRESERVING CAST //////////////////////////////////////////////=//
+//=//// c_cast(): CONST-PRESERVING CAST WITH u_c_cast() UNCHECKED /////////=//
 //
 // This cast is useful for defining macros that want to mirror the constness
 // of the input pointer, when you don't know if the caller is passing a
@@ -317,33 +447,45 @@
 //         return c_cast(Float*, n);  // briefer than `cast(const Float*, n)`
 //     }
 //
-// It's built on top of the `CastHelper` used by plain `cast()`, so debug
-// checks applicable to a plain cast will also be run by `c_cast()`.
+// 1. The default `c_cast()` is It's built on top of the `CastHelper` used
+//    by `v_cast()`, so debug checks applicable to a validated cast will also
+//    be run by `c_cast()`.
+//
+// 2. If you don't want the validation checks and just want the const
+//    preserving behavior, you can use `u_c_cast()` instead, for "unchecked
+//    version of c_cast()"
 //
 #if NO_CPLUSPLUS_11
     #define c_cast(T,v) \
         ((T)(v))  // in C, just another alias for parentheses cast
-#else
-    template<typename TP, typename VQPR>
-    struct ConstPreservingCastHelper {
-        static_assert(std::is_pointer<TP>::value, "c_cast() non pointer!");
-        typedef typename std::remove_reference<VQPR>::type VQP;
-        typedef typename std::remove_pointer<VQP>::type VQ;
-        typedef typename std::remove_pointer<TP>::type T;
-        typedef typename std::add_const<T>::type TC;
-        typedef typename std::add_pointer<TC>::type TCP;
-        typedef typename std::conditional<
-            std::is_const<VQ>::value,
-            TCP,
-            TP
-        >::type type;
-    };
 
-    #define c_cast(TP,v)  /* needs outer parens, see [A] */ \
-        (CastHelper< \
-            decltype(v), \
-            typename ConstPreservingCastHelper<TP,decltype(v)>::type \
-        >::convert(v))
+    #define u_c_cast(T,v) \
+        ((T)(v))  // in C, just another alias for parentheses cast
+#else
+// Fixed const-preserving cast
+template<typename TP, typename VQPR>
+struct ConstPreservingCastHelper {
+    static_assert(std::is_pointer<TP>::value, "c_cast() non pointer!");
+    typedef typename std::remove_reference<VQPR>::type VQP;
+    typedef typename std::remove_pointer<VQP>::type VQ;
+    typedef typename std::remove_pointer<TP>::type T;
+    typedef typename std::add_const<T>::type TC;
+    typedef typename std::add_pointer<TC>::type TCP;
+    typedef typename std::conditional<
+        std::is_const<VQ>::value,
+        TCP,
+        TP
+    >::type type;
+};
+
+#define c_cast(TP,v)  /* checked variation, runs v_cast() hooks [1] */ \
+    (ConstAwareCastDispatcher< \
+        decltype(v), \
+        typename ConstPreservingCastHelper<TP,decltype(v)>::type \
+    >::convert(v))
+
+#define u_c_cast(TP,v)  /* unchecked variation [2] */ \
+    ((typename ConstPreservingCastHelper<TP,decltype(v)>::type)(v))
 #endif
 
 
@@ -405,7 +547,7 @@
         >::type type;
     };
 
-    #define x_cast(T,v)  /* needs outer parens, see [A] */ \
+    #define x_cast(T,v)  /* needs outer parens, see [B] */ \
         (const_cast<T>((typename XCastHelper<T>::type)(v)))
 #endif
 
@@ -455,6 +597,84 @@
 
     #define i_cast(T,v) \
         i_cast_helper<T>(v)
+#endif
+
+
+//=//// FUNCTION POINTER CAST /////////////////////////////////////////////=//
+//
+// Function pointer casting is a nightmare, and there's nothing all that
+// productive you could really do with it if cast() allowed you to hook it
+// in terms of validating the "bits".  You can really only make it legal to
+// cast from certain function pointer types to others.  Rather than making
+// cast() bend itself into a pretzel to accommodate all the quirks of
+// funciton pointers, this defines a separate `f_cast()`.
+//
+#if NO_CPLUSPLUS_11
+    #define f_cast(T,v) \
+        ((T)(v))  // in C, just another alias for parentheses cast
+#else
+    template<typename From, typename To>
+    struct FunctionPointerCastHelper {
+        static_assert(
+            is_function_pointer<From>::value && is_function_pointer<To>::value,
+            "f_cast() requires both source and target to be function pointers."
+        );
+        static To convert(From from) {
+            return u_cast(To, from);
+        }
+    };
+
+    template<typename To, typename From>
+    To FunctionPointerCastDecayer(From&& from) {
+        typedef typename std::decay<From>::type FromDecay;
+        return FunctionPointerCastHelper<FromDecay, To>::convert(from);
+    }
+
+    #define f_cast(T, v)  FunctionPointerCastDecayer<T>(v)
+#endif
+
+
+//=//// UPCAST AND DOWNCAST TAG DISPATCH //////////////////////////////////=//
+//
+// By default, if you upcast (e.g. casting from a derived class like Array to
+// a base class like Flex), we do this with a very-low-cost constexpr that
+// does the cast for free.  This is because every Array is-a Flex, and if you
+// have an Array* in your hand we can assume you got it through a means that
+// you knew it was valid.
+//
+// But if you downcast (e.g. from a Node* to a VarList*), then it's a riskier
+// operation, so validation code is run:
+//
+//   https://en.wikipedia.org/wiki/Downcasting
+//
+// However, this rule can be bent when you need to.  If debugging a scenario
+// and you suspect corruption is happening in placees an upcast could help
+// locate, just comment out the optimization and run the checks for all casts.
+//
+// Pursuant to [D], we generally want to trust the type system when it comes
+// to upcasting, and be more skeptical of downcasts...verifying the bits.
+//
+// To make this easier to do, this factors out the logic for determining if
+// something is an upcast or downcast into a tag type.  You can then write
+// two functions taking a pointer and either an UpcastTag or DowncastTag,
+// and use the `WhichCastDirection<...>` to select which one to call.
+//
+#if CPLUSPLUS_11
+    template<typename V, typename Base>
+    struct IsUpcastTo : std::integral_constant<
+        bool,
+        std::is_base_of<Base, V>::value
+    > {};
+
+    struct UpcastTag {};
+    struct DowncastTag {};
+
+    template<typename V, typename Base>
+    using WhichCastDirection = typename std::conditional<  // tag selector
+        IsUpcastTo<V, Base>::value,
+        UpcastTag,
+        DowncastTag
+    >::type;  // WhichCastDirection<...>{} will instantiate the appropriate tag
 #endif
 
 

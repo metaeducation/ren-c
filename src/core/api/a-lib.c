@@ -922,7 +922,10 @@ void API_rebModifyHandleCleaner(
         panic ("rebModifyHandleCleaner() called on non-HANDLE!");
 
     Stub* stub = Extract_Cell_Handle_Stub(v);  // api only sees managed handles
-    Tweak_Handle_Cleaner(stub, cast(Option(RebolHandleCleaner*), opt_cleaner));
+    Tweak_Handle_Cleaner(
+        stub,
+        opt_cleaner ? opt_cleaner : nullptr
+    );
 }
 
 
@@ -964,7 +967,10 @@ const RebolNodeInternal* API_rebArgR(
     const void* p2;
     if (vaptr) {
         name = c_cast(char*, p);
-        p2 = va_arg(*cast(va_list*, vaptr), const void*);
+        p2 = va_arg(
+            *u_cast(va_list*, vaptr),  // can't cast() va_list*!
+            const void*
+        );
     }
     else {
         const void* const *packed = cast(const void* const*, p);
@@ -1122,7 +1128,7 @@ static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     Option(void*) vaptr  // guides interpretation of p [4]
 ){
     Feed* feed = Make_Variadic_Feed(
-        p, cast(va_list*, maybe vaptr),
+        p, u_cast(va_list*, maybe vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
     );
 
@@ -1221,7 +1227,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     const void* p, void* vaptr
 ){
     Feed* feed = Make_Variadic_Feed(
-        p, cast(va_list*, vaptr),
+        p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
     );
 
@@ -1294,7 +1300,7 @@ RebolValue* API_rebTranscodeInto(
     ENTER_API;
 
     Feed* feed = Make_Variadic_Feed(
-        p, cast(va_list*, vaptr),
+        p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
     );
     Add_Feed_Reference(feed);
@@ -3085,7 +3091,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     RebolContext* context = cast(RebolContext*, L->varlist);  // [1]
 
     Value* cfunc_handle = Details_At(details, IDX_API_ACTION_CFUNC);
-    RebolActionCFunction* cfunc = cast(RebolActionCFunction*,
+    RebolActionCFunction* cfunc = f_cast(RebolActionCFunction*,
         Cell_Handle_Cfunc(cfunc_handle)
     );
 
@@ -3186,7 +3192,7 @@ RebolValue* API_rebFunctionFlipped(
     const void* p, void* vaptr
 ){
     Feed* feed = Make_Variadic_Feed(
-        p, cast(va_list*, vaptr),
+        p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
     );
     Add_Feed_Reference(feed);
@@ -3235,7 +3241,7 @@ RebolValue* API_rebFunctionFlipped(
 
     Init_Handle_Cfunc(
         Details_At(details, IDX_API_ACTION_CFUNC),
-        cast(CFunction*, cfunc)
+        f_cast(CFunction*, cfunc)
     );
     Element* holder = Init_Block(  // only care about binding GC safety
         Details_At(details, IDX_API_ACTION_BINDING_BLOCK),

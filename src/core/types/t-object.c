@@ -848,9 +848,13 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Append_Spelling(mo->string, Key_Symbol(evars.key));
             Append_Ascii(mo->string, ": ");
 
-            Value* var = Slot_Hack(evars.slot);
+            DECLARE_ATOM (var);
+            Option(Error*) e = Trap_Read_Slot_Meta(var, evars.slot);
+            if (e)
+                return PANIC(unwrap e);  // !! rethink accessor error here
+
             if (Is_Antiform(var)) {
-                panic (Error_Bad_Antiform(var));  // can't FORM antiforms
+                return PANIC(Error_Bad_Antiform(var));  // can't FORM antiforms
             }
             else
                 Mold_Element(mo, Known_Element(var));

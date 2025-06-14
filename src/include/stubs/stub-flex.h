@@ -351,24 +351,24 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
 #endif
 
 #define Flex_At(T,f,i) \
-    c_cast(T*, Flex_Data_At(sizeof(T), (f), (i)))  // zero-based [4]
+    u_c_cast(T*, Flex_Data_At(sizeof(T), (f), (i)))  // zero-based [4]
 
 #if RUNTIME_CHECKS
     #define Flex_Head(T,f) \
         Flex_At(T, (f), 0)  // Flex_Data() doesn't check width, _At() does
 #else
     #define Flex_Head(T,f) \
-        c_cast(T*, Flex_Data(f))  // slightly faster, but no width check
+        u_c_cast(T*, Flex_Data(f))  // slightly faster, but no width check
 #endif
 
 #define Flex_Head_Dynamic(T,f) \
-    c_cast(T*, (f)->content.dynamic.data)  // faster when you know it's dynamic
+    u_c_cast(T*, (f)->content.dynamic.data)  // faster if you know it's dynamic
 
 #define Flex_Data_Tail(w,f) \
-    c_cast(Byte*, Flex_Data_At((w), (f), Flex_Used(f)))
+    u_c_cast(Byte*, Flex_Data_At((w), (f), Flex_Used(f)))
 
 #define Flex_Tail(T,f) \
-    c_cast(T*, Flex_Data_Tail(sizeof(T), (f)))
+    u_c_cast(T*, Flex_Data_Tail(sizeof(T), (f)))
 
 INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
     assert(Flex_Used(f) != 0);
@@ -383,7 +383,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 #endif
 
 #define Flex_Last(T,f) \
-    c_cast(T*, Flex_Data_Last(sizeof(T), (f)))
+    u_c_cast(T*, Flex_Data_Last(sizeof(T), (f)))
 
 
 //=//// FLEX TERMINATION //////////////////////////////////////////////////=//

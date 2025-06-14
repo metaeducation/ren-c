@@ -24,58 +24,29 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// A. See README.md's explanation of why we specialize one parameter and
-//    leave the other free, so CastHelper fixes the type cast to while the
-//    type being cast from is arbitrary and can be subsetted or reacted to.
+// A. CastHelper<> has two parameters (From and To types), but we pin down the
+//    "To" type, then match a pattern for any "From" type (F).
 //
-// B. See README.md's explanation of why you need both a const T* and T*
-//    case in your handling, due to general design nature of C++ and const.
+// B. See the definition of CastHelper for why the generalized casting
+//    mechanic runs through const pointers only.
 //
-// C. See README.md's explanation of why we trust the type system in upcast
-//    situations by default (though you can edit this to override it).
+// C. See the definitions of UpcastTag and DowncastTag for an explanation of
+//    why we trust upcasts by default (you can override it if needed).
 //
-
-//=//// UPCAST AND DOWNCAST TAG DISPATCH //////////////////////////////////=//
-//
-// Pursuant to [C], we generally want to trust the type system when it comes
-// to upcasting, and be more skeptical of downcasts...verifying the bits.
-//
-// To make this easier to do, this factors out the logic for determining if
-// something is an upcast or downcast into a tag type.  You can then write
-// two functions taking a pointer and either an UpcastTag or DowncastTag,
-// and use the `WhichCast<...>` to select which one to call.
-//
-
-template<typename V0, typename Base>
-struct IsUpcastTo : std::integral_constant<
-    bool,
-    std::is_base_of<Base, V0>::value
-> {};
-
-struct UpcastTag {};
-struct DowncastTag {};
-
-template<typename V0, typename Base>
-using WhichCast = typename std::conditional<  // tag selector
-    IsUpcastTo<V0, Base>::value,
-    UpcastTag,
-    DowncastTag
->::type;  // if you see WhichCast<...>{} that instantiates the selected tag
 
 
 //=//// cast(Node*, ...) //////////////////////////////////////////////////=//
 
-template<typename V0>
-const Node* node_cast_impl(V0* p, UpcastTag) {  // trust types [C]
-    return reinterpret_cast<const Flex*>(p);
+template<typename F>
+const Node* node_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
+    return u_cast(const Node*, p);
 }
 
-template<typename V0>
-const Node* node_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
-    static_assert(
-        c_type_list<void, Byte>::contains<V0>(),
-        "Invalid type for downcast to Node*"
-    );
+template<typename F>
+const Node* node_cast_impl(const F* p, DowncastTag) {  // validate [C]
+    STATIC_ASSERT((
+        c_type_list<void, Byte>::contains<F>()
+    ));
 
     if (not p)
         return nullptr;
@@ -83,22 +54,12 @@ const Node* node_cast_impl(V0* p, DowncastTag) {  // validate bits [C]
     if (not (*reinterpret_cast<const Byte*>(p) & NODE_BYTEMASK_0x80_NODE))
         crash (p);
 
-    return reinterpret_cast<const Node*>(p);
+    return u_cast(const Node*, p);
 };
 
-template<typename V>  // [A]
-struct CastHelper<V*, const Node*> {  // const Node* case [B]
-    typedef typename std::remove_const<V>::type V0;
-
-    static const Node* convert(V* p) {
-        return node_cast_impl(const_cast<V0*>(p), WhichCast<V0, Node>{});
-    }
-};
-
-template<typename V>  // [A]
-struct CastHelper<V*,Node*> {  // Node* case [B]
-    static Node* convert(V* p) {
-        static_assert(not std::is_const<V>::value, "casting discards const");
-        return const_cast<Node*>(cast(const Node*, p));
+template<typename F>  // [A]
+struct CastHelper<const F*, const Node*> {  // both must be const [B]
+    static const Node* convert(const F* p) {
+        return node_cast_impl(p, WhichCastDirection<F, Node>{});
     }
 };
