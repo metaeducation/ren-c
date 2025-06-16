@@ -70,7 +70,7 @@
     #include "sys-core.h"
 #endif
 
-#include "c-enhanced.h"  // provides cast(), UNUSED(), etc.
+#include "needful/needful.h"  // provides cast(), UNUSED(), etc.
 
 
 // Initialization done by rebStartup() is intended to be as basic as possible

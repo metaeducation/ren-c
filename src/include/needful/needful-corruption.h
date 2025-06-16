@@ -37,8 +37,8 @@
 //    methods then is_standard_layout<> should be true, and the memset()
 //    shouldn't be a problem...
 //
-// 3. See definition of Cell and Mem_Set() for why casting to void* is
-//    needed.  (Mem_Set() macro that is not defined for %c-enhanced.h)
+// 3. See definition of Cell and Mem_Fill() for why casting to void* is
+//    needed.  (Mem_Fill() macro is not defined in the Needful library)
 //
 // 4. Use macro for efficiency, avoid another function call overhead
 //

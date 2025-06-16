@@ -55,13 +55,13 @@
 
 //=//// [REDUNDANT] CPLUSPLUS_11 PREPROCESSOR DEFINE ///////////////////////=//
 //
-// There is a Catch-22 in defining CPLUSPLUS_11 from %c-enhanced.h, because it
+// There is a Catch-22 in defining CPLUSPLUS_11 from %needful.h, because it
 // currently depends on TO_WINDOWS and %reb-config.h depends on CPLUSPLUS_11.
 // For the moment, sort that out by defining the macro here...but we might
 // just say it's the responsibility of whoever's doing the compiling to supply
 // it on the command line, as you have to for MSVC anyway.
 //
-// (See notes on definition in %c-enhanced.h)
+// (See notes on definition in %needful/needful.h)
 
 #if !defined(CPLUSPLUS_11)
   #if defined(__cplusplus) && __cplusplus >= 201103L
@@ -78,7 +78,7 @@
 //=//// [REDUNDANT] STATIC_ASSERT PREPROCESSOR DEFINE /////////////////////=//
 //
 // It's inconvenient to not have STATIC_ASSERT in this file, but we want it
-// in %c-enhanced.h as well.  Allow the redundant definition (%c-enhanced.h
+// in %needful-asserts.h as well.  Allow the redundant definition (Needful
 // checks to see if it's already defined).
 //
 // Note: STATIC_ASSERT((std::is_same<T, U>::value)) is a common pattern,

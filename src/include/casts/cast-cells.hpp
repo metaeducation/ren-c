@@ -47,17 +47,16 @@
 // C. See the definitions of UpcastTag and DowncastTag for an explanation of
 //    why we trust upcasts by default (you can override it if needed).
 //
-//
 
 // We don't bother with the "trusted" upcast here (yet?) but just check all
 // conversions from these types.
 //
-// char* is included because some storage blocks use it to make reading UTF-8
-// payloads easier in some debuggers, and Cells may be put there.
-//
-using CellConversionTypes = c_type_list<
-    Cell,Atom,Element,Value,Node,Byte,char,Pairing,void
->;
+DECLARE_C_TYPE_LIST(g_convertible_to_cell,
+    Cell, Atom, Element, Value,
+    Pairing,  // same size as Stub, holds two Cells
+    char,  // some memory blobs use char* for debuggers to read UTF-8 easier
+    Node, Byte, void
+);
 
 
 //=//// cast(Atom*, ...) //////////////////////////////////////////////////=//
@@ -65,13 +64,11 @@ using CellConversionTypes = c_type_list<
 template<typename F>  // [A]
 struct CastHelper<const F*, const Atom*> {  // both must be const [B]
     static const Atom* convert(const F* p) {
-        STATIC_ASSERT((
-            CellConversionTypes::contains<F>()
-        ));
+        STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
 
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
-        unnecessary(assert(LIFT_BYTE(c) >= ANTIFORM_0));  // always true
+        unnecessary(assert(LIFT_BYTE_RAW(c) >= ANTIFORM_0));  // always true
         return u_cast(const Atom*, c);
     }
 };
@@ -82,13 +79,11 @@ struct CastHelper<const F*, const Atom*> {  // both must be const [B]
 template<typename F>  // [A]
 struct CastHelper<const F*, const Value*> {  // both must be const [B]
     static const Value* convert(const F* p) {
-        STATIC_ASSERT((
-            CellConversionTypes::contains<F>()
-        ));
+        STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
 
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
-        if (LIFT_BYTE(c) == ANTIFORM_0)
+        if (LIFT_BYTE_RAW(c) == ANTIFORM_0)
             assert(Is_Stable_Antiform_Heart_Byte(HEART_BYTE_RAW(c)));
         return u_cast(const Value*, c);
     }
@@ -100,13 +95,11 @@ struct CastHelper<const F*, const Value*> {  // both must be const [B]
 template<typename F>  // [A]
 struct CastHelper<const F*, const Element*> {  // both must be const [B]
     static const Element* convert(const F* p) {
-        STATIC_ASSERT((
-            CellConversionTypes::contains<F>()
-        ));
+        STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
 
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
-        assert(LIFT_BYTE(c) != ANTIFORM_0);
+        assert(LIFT_BYTE_RAW(c) != ANTIFORM_0);
         return u_cast(const Element*, c);
     }
 };

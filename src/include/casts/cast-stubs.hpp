@@ -46,9 +46,10 @@ const Stub* stub_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 
 template<typename F>
 const Stub* stub_cast_impl(const F* p, DowncastTag) {  // validate [C]
-    STATIC_ASSERT((
-        c_type_list<void, Byte, Node>::contains<F>()
-    ));
+    DECLARE_C_TYPE_LIST(type_list,
+        void, Byte, Node
+    );
+    STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
         return nullptr;
@@ -81,9 +82,10 @@ const Flex* flex_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 
 template<typename F>
 const Flex* flex_cast_impl(const F* p, DowncastTag) {  // validate [C]
-    STATIC_ASSERT((
-        c_type_list<void,Byte,Node,Stub>::contains<F>()
-    ));
+    DECLARE_C_TYPE_LIST(type_list,
+        void, Byte, Node, Stub
+    );
+    STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
         return nullptr;
@@ -116,9 +118,10 @@ const Binary* binary_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 
 template<typename F>
 const Binary* binary_cast_impl(const F* p, DowncastTag) {  // validate [C]
-    STATIC_ASSERT((
-        c_type_list<void,Byte,Node,Flex>::contains<F>()
-    ));
+    DECLARE_C_TYPE_LIST(type_list,
+        void, Byte, Node, Flex
+    );
+    STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
         return nullptr;
@@ -155,9 +158,10 @@ const String* string_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 
 template<typename F>
 const String* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
-    STATIC_ASSERT((
-        c_type_list<void,Byte,Node,Stub,Flex,Binary>::contains<F>()
-    ));
+    DECLARE_C_TYPE_LIST(type_list,
+        void, Byte, Node, Stub, Flex, Binary
+    );
+    STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
         return nullptr;
@@ -194,12 +198,13 @@ struct CastHelper<const F*, const String*> {  // both must be const [B]
 
 //=//// cast(Symbol*, ...) ////////////////////////////////////////////////=//
 
-template<typename F>
+template<typename F>  // [A]
 struct CastHelper<const F*, const Symbol*> {
     static const Symbol* convert(const F* p) {
-        STATIC_ASSERT((
-            c_type_list<void,Byte,Node,Stub,Flex,Binary,String>::contains<F>()
-        ));
+        DECLARE_C_TYPE_LIST(type_list,
+            void, Byte, Node, Stub, Flex, Binary, String
+        );
+        STATIC_ASSERT(In_C_Type_List(type_list, F));
 
         if (not p)
             return nullptr;
@@ -231,9 +236,10 @@ const Array* array_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 
 template<typename F>
 const Array* array_cast_impl(const F* p, DowncastTag) {  // validate [C]
-    STATIC_ASSERT((
-        c_type_list<void,Byte,Stub,Node,Flex>::contains<F>()
-    ));
+    DECLARE_C_TYPE_LIST(type_list,
+        void, Byte, Node, Stub, Flex
+    );
+    STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
         return nullptr;
@@ -266,9 +272,10 @@ const VarList* varlist_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 
 template<typename F>
 const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
-    STATIC_ASSERT((
-        c_type_list<void,Byte,Node,Stub,Flex,Array>::contains<F>()
-    ));
+    DECLARE_C_TYPE_LIST(type_list,
+        void, Byte, Node, Stub, Flex, Array
+    );
+    STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
         return nullptr;
@@ -300,10 +307,10 @@ struct CastHelper<const F*, const VarList*> {  // both must be const [B]
 template<typename F>  // [A]
 struct CastHelper<const F*, const Phase*> {  // both must be const [B]
     static const Phase* convert(const F* p) {
-        STATIC_ASSERT((
-            c_type_list<void,Byte,Node,Stub,Flex,Array>::contains<F>()
-            and not std::is_const<F>::value
-        ));
+        DECLARE_C_TYPE_LIST(type_list,
+            void, Byte, Node, Stub, Flex, Array
+        );
+        STATIC_ASSERT(In_C_Type_List(type_list, F));
 
         if (not p)
             return nullptr;

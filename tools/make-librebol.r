@@ -579,7 +579,7 @@ e-lib/emit [ver --[
     #ifndef __has_builtin
         #define __has_builtin(x) 0
     #endif
-    #if !defined(GCC_VERSION_AT_LEAST)  /* !!! duplicated in %c-enhanced.h */
+    #if !defined(GCC_VERSION_AT_LEAST)  /* !!! dup in %configure-needful.h */
         #ifdef __GNUC__
             #define GCC_VERSION_AT_LEAST(m, n) \
                 (__GNUC__ > (m) || (__GNUC__ == (m) && __GNUC_MINOR__ >= (n)))

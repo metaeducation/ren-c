@@ -32,11 +32,11 @@
 //
 
 
-// !!! Note: %c-enhanced.h must include prior to this for proper CPLUSPLUS_11
+// !!! Note: %needful.h must include prior to this for proper CPLUSPLUS_11
 // detection (MSVC doesn't do this correctly).  We do not do it here because
 // of lack of include guards, but maybe we should put include guards in?
 //
-/* #include %c-enhanced.h */
+/* #include %needful/needful.h */
 
 
 #if (! TO_WINDOWS) && (TO_EMSCRIPTEN || defined(NO_TTY_ATTRIBUTES))

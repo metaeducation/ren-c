@@ -4,10 +4,10 @@
 template<typename F>
 struct CastHelper<const F*, const Level*> {
     static const Level* convert(const F* p) {
-        STATIC_ASSERT((
-            c_type_list<void,Byte,Node>::contains<F>()
-            and not std::is_const<F>::value
-        ));
+        DECLARE_C_TYPE_LIST(type_list,
+            void, Byte, Node
+        );
+        STATIC_ASSERT(In_C_Type_List(type_list, F));
 
         if (not p)
             return nullptr;

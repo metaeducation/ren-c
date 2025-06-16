@@ -44,7 +44,8 @@
 #include <stdlib.h> // size_t and other types used in rebol.h
 
 #include "assert-fix.h"
-#include "c-enhanced.h"
+#include "needful/needful.h"
+#define cast  v_cast
 
 #include "tmp-constants.h" // need the extern definitions
 

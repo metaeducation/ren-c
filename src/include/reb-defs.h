@@ -24,7 +24,7 @@
 // (the internal Rebol API).  They must be at least mentioned before that file
 // will be able to compile, after which the structures are defined in order.
 //
-// Shouldn't depend on other include files before it (besides %c-enhanced.h)
+// Shouldn't depend on other includes before it (besides %needful/needful.h)
 //
 
 

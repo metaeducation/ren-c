@@ -194,11 +194,11 @@ typedef RebolHandleCleaner HandleCleaner;
 // define your macros after including system headers, not before...
 //
 
-#include "c-enhanced.h"
-
-#define Need NeedTypemacro
-#define Sink SinkTypemacro
-#define Init InitTypemacro
+#include "needful/needful.h"
+#define cast  v_cast
+#define Need  NeedTypemacro
+#define Sink  SinkTypemacro
+#define Init  InitTypemacro
 
 
 

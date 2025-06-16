@@ -3425,7 +3425,7 @@ RebolBounce API_rebContinueInterruptible(
 //
 // 1. The proto parser chokes on `void (**cfuncs)(void)`.  We would have to
 //    fix that, or create some typedef that's available in the API to
-//    clients who don't include %c-enhanced.h.  This is all due to the fact
+//    clients who don't include %needful.h.  This is all due to the fact
 //    that the cfuncs can be Dispatcher* or RebolActionCFunction*  :-(
 //
 RebolValue* API_rebCollateExtension_internal(

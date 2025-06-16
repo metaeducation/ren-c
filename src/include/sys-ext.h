@@ -24,7 +24,7 @@
 // available in librebol.
 //
 
-// See notes on definition in %c-enhanced.h
+// See notes on definition in %needful/needful.h
 //
 // We don't want to necessarily include that file, so redefine.
 //

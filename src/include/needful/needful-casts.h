@@ -634,6 +634,69 @@ struct ConstPreservingCastHelper {
 #endif
 
 
+//=//// BYTE STRINGS VS UNENCODED CHARACTER STRINGS ///////////////////////=//
+//
+// With UTF-8 Everywhere, the term "length" of a string refers to its number
+// of codepoints, while "size" returns to the number of bytes (in the size_t
+// sense of the word).  This makes the byte-based C function `strlen()`
+// something of a misnomer.
+//
+// To address this issue, we define `strsize()`.  Besides having a name that
+// helps emphasize it returns a byte count, it is also made polymorphic to
+// accept unsigned character pointers as well as signed ones.  To do this in
+// C it has to use a cast that foregoes type checking.  But the C++ build
+// checks that only `const char*` and `const unsigned char*` are passed.
+// (Strict aliasing rules permit casting between pointers to char types.)
+//
+// We also include some convenience functions for switching between char*
+// and unsigned char*, from:
+//
+// http://blog.hostilefork.com/c-casts-for-the-masses/
+//
+// !!! Are these really necessary?  Should they be in %needful-casts.h?
+//
+
+#include <string.h>  // for strlen() etc, but also defines `size_t`
+
+#if CPLUSPLUS_11
+    INLINE size_t strsize(const char *cp)
+      { return strlen(cp); }
+
+    INLINE size_t strsize(const unsigned char *bp)
+      { return strlen((const char*)bp); }
+#else
+    #define strsize(bp) \
+        strlen((const char*)bp)
+#endif
+
+#if NO_RUNTIME_CHECKS
+    /* These [S]tring and [B]inary casts are for "flips" between a 'char *'
+     * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
+     * Being single-arity with no type passed in, they are succinct to use:
+     */
+    #define s_cast(b)       ((char *)(b))
+    #define cs_cast(b)      ((const char *)(b))
+    #define b_cast(s)       ((unsigned char *)(s))
+    #define cb_cast(s)      ((const unsigned char *)(s))
+#else
+    /* We want to ensure the input type is what we thought we were flipping,
+     * particularly not the already-flipped type.  Instead of type_traits, 4
+     * functions check in both C and C++ (here only during Debug builds):
+     */
+    INLINE unsigned char *b_cast(char *s)
+      { return (unsigned char*)s; }
+
+    INLINE const unsigned char *cb_cast(const char *s)
+      { return (const unsigned char*)s; }
+
+    INLINE char *s_cast(unsigned char *s)
+      { return (char*)s; }
+
+    INLINE const char *cs_cast(const unsigned char *s)
+      { return (const char*)s; }
+#endif
+
+
 //=//// UPCAST AND DOWNCAST TAG DISPATCH //////////////////////////////////=//
 //
 // By default, if you upcast (e.g. casting from a derived class like Array to

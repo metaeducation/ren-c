@@ -45,7 +45,9 @@
 
 #define _GNU_SOURCE  // so we get F_OFD_XXX and not just F_XXX
 #include <fcntl.h>
-#include "c-enhanced.h"
+
+#include "needful/needful.h"
+#define cast  v_cast
 
 // "symver" does the remapping so that fcntl64 is given the meaning of an
 // older linkage in Glibc.

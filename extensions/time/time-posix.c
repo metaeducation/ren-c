@@ -59,8 +59,8 @@
 #include "rebol.h"
 typedef RebolValue Value;
 
-#include "c-enhanced.h"
-
+#include "needful/needful.h"
+#define cast  v_cast
 
 
 //

@@ -1,7 +1,8 @@
 # cast() Validation Hooks for Ren-C Types
 
-This gives powerful checks that you can apply to `cast(SomeType*, expression)`
-at both compile-time and runtime...
+In C, `cast(Type, expression)` macros just turn into ordinary C parentheses
+casts, e.g. `(Type)(expression)`.  But if you build the codebase as C++, then
+these casts can do powerful checking, at both compile-time and runtime...
 
 * You can put in rules that prohibit nonsensical casts at compile-time.  This
   means you can catch things like casting from a Cell* to a String*, or

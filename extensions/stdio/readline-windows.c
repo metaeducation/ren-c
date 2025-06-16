@@ -35,9 +35,11 @@
 // covers the characters you wish to display:
 // https://superuser.com/a/927575
 
-#include "assert-fix.h"
 #include <stdint.h>
-#include "c-enhanced.h"
+
+#include "assert-fix.h"
+#include "needful/needful.h"
+#define cast  v_cast
 
 #include "rebol.h"  // not %sys-core.h !
 typedef RebolValue Value;

@@ -44,14 +44,15 @@ const Node* node_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 
 template<typename F>
 const Node* node_cast_impl(const F* p, DowncastTag) {  // validate [C]
-    STATIC_ASSERT((
-        c_type_list<void, Byte>::contains<F>()
-    ));
+    DECLARE_C_TYPE_LIST(type_list,
+        void, Byte
+    );
+    STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
         return nullptr;
 
-    if (not (*reinterpret_cast<const Byte*>(p) & NODE_BYTEMASK_0x80_NODE))
+    if (not (*u_cast(const Byte*, p) & NODE_BYTEMASK_0x80_NODE))
         crash (p);
 
     return u_cast(const Node*, p);

@@ -75,7 +75,8 @@
 #endif
 
 #include "assert-fix.h"
-#include "c-enhanced.h"
+#include "needful/needful.h"
+#define cast  v_cast
 
 #include "rebol.h"
 #include "tmp-mod-odbc.h"

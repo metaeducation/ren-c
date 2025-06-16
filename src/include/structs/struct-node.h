@@ -356,8 +356,8 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
 //
 // Assignments to bits and fields in the header are done through a native
 // pointer-sized integer...while still being able to control the underlying
-// order of those bits in memory.  See FLAG_LEFT_BIT() in %c-enhanced.h for
-// how this is achieved.
+// order of those bits in memory.  See the FLAG_LEFT_BIT() definition for how
+// this is achieved.
 //
 // This control allows the leftmost byte of a Rebol header (the one you'd
 // get by casting Value* to an unsigned char*) to always start with the bit

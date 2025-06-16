@@ -15,6 +15,40 @@
 //
 
 
+//=//// UNREACHABLE CODE ANNOTATIONS //////////////////////////////////////=//
+//
+// Because Rebol uses `longjmp` and `exit` there are cases where a function
+// might look like not all paths return a value, when those paths actually
+// aren't supposed to return at all.  For instance:
+//
+//     int foo(int x) {
+//         if (x < 1020)
+//             return x + 304;
+//         panic ("x is too big"); // compiler may warn about no return value
+//     }
+//
+// One way of annotating to say this is okay is on the caller, with DEAD_END:
+//
+//     int foo(int x) {
+//         if (x < 1020)
+//             return x + 304;
+//         panic ("x is too big");
+//         DEAD_END; // our warning-suppression macro for applicable compilers
+//     }
+//
+// DEAD_END is just a no-op in compilers that don't have the feature of
+// suppressing the warning--which can often mean they don't have the warning
+// in the first place.
+//
+// Another macro we define is ATTRIBUTE_NO_RETURN.  This can be put on the
+// declaration site of a function like `panic()` itself, so the callsites don't
+// need to be changed.  As with DEAD_END it degrades into a no-op in compilers
+// that don't support it.
+//
+
+/* THESE HAVE BEEN RELOCATED TO %rebol.h, SEE DEFINITIONS THERE */
+
+
 //=//// STATIC IGNORE /////////////////////////////////////////////////////=//
 //
 // This is a trick for commenting things out in global scope.
