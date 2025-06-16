@@ -1016,6 +1016,60 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
     return sweep_count;
 }
 
+
+//
+//  Emergency_Shutdown_Gc_Debug: C
+//
+// This is a debug-only function that clears all GC marks on Stubs and Pairings
+// in the STUB_POOL and PAIR_POOL.  It is used to reset the GC state in
+// emergency situations such as crashing during the GC.  The GC may still
+// be on the stack, but the hope is that this will make it safe to run the
+// evaluator enough to do some inspections.
+//
+void Emergency_Shutdown_Gc_Debug(void)
+{
+    printf("!!! Emergency Shutdown of GC to try and allow Probe() to work");
+    g_gc.disabled = true;  // stop further GCs
+
+    if (not g_gc.recycling)
+        return;
+
+    printf("!!! Rolling back state of GC while its still on stack, crazy!\n");
+    g_gc.recycling = false;  // pulling the rug out from under running GC
+
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
+        Byte* stub = cast(Byte*, seg + 1);
+
+        for (; n > 0; --n, stub += sizeof(Stub)) {
+            if (*stub == FREE_POOLUNIT_BYTE)
+                continue;
+
+            if (*stub & NODE_BYTEMASK_0x01_MARKED)
+                Remove_GC_Mark(u_cast(Node*, stub));
+        }
+    }
+
+  #if UNUSUAL_CELL_SIZE  // pairing pool is separate in this case
+    Segment* pseg = g_mem.pools[PAIR_POOL].segments;
+
+    for (; pseg != nullptr; pseg = pseg->next) {
+        Count n = g_mem.pools[PAIR_POOL].num_units_per_segment;
+        Byte* pairing = cast(Byte*, pseg + 1);
+
+        for (; n > 0; --n, pairing += sizeof(Pairing)) {
+            if (*pairing == FREE_POOLUNIT_BYTE)
+                continue;
+
+            if (*pairing & NODE_BYTEMASK_0x01_MARKED)
+                Remove_GC_Mark(u_cast(Node*, pairing));
+        }
+    }
+  #endif
+}
+
 #endif
 
 
