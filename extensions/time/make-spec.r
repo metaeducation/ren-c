@@ -5,14 +5,14 @@ Rebol [
 
 use-librebol: 'no
 
-sources: %mod-time.c
+sources: [mod-time.c]
 
 depends: compose [
     (switch platform-config.os-base [
         'Windows [
-            %time-windows.c
+            'time-windows.c
         ]
     ] else [
-        %time-posix.c
+        'time-posix.c
     ])
 ]

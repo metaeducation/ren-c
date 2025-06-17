@@ -6,22 +6,22 @@ Rebol [
 includes: []
 
 sources: [
-    %mod-stdio.c
-    %p-stdio.c
+    mod-stdio.c
+    p-stdio.c
 ]
 
 depends: compose [
     (switch platform-config.os-base [
         'Windows [
             spread [
-                [%stdio-windows.c]
-                [%readline-windows.c]
+                stdio-windows.c
+                readline-windows.c
             ]
         ]
     ] else [
         spread [
-            [%stdio-posix.c]
-            [%readline-posix.c]
+            stdio-posix.c
+            readline-posix.c
         ]
     ])
 ]

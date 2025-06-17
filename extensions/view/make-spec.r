@@ -5,7 +5,7 @@ Rebol [
 
 use-librebol: 'yes
 
-sources: %mod-view.c
+sources: [mod-view.c]
 
 ; The Windows REQUEST-FILE does not introduce any new dependencies.
 ; REQUEST-DIR depends on OLE32 for CoInitialize() because it is done

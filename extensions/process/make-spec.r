@@ -7,7 +7,7 @@ use-librebol: 'no
 
 requires: 'Filesystem  ; for FILE-TO-LOCAL in CALL
 
-sources: %mod-process.c
+sources: [mod-process.c]
 
 ; The implementation CALL is pretty much entirely different on Windows.  The
 ; only sensible abstraction is CALL itself.  We don't want to repeat the
@@ -16,8 +16,8 @@ sources: %mod-process.c
 ;
 depends: switch platform-config.os-base [
     'Windows [
-        [%call-windows.c]
+        [call-windows.c]
     ]
 ] else [
-    [%call-posix.c]
+    [call-posix.c]
 ]

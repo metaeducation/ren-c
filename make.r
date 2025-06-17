@@ -230,31 +230,19 @@ to-obj-path: func [
 gen-obj: func [
     return: "Rebmake specification object for OBJ"
         [object!]
-    spec "single file representation, or spec block with file as first item"
-        [file! word! path! tuple! block!]
-    dir "directory" [<opt> file!]
+    name "single file representation (bootstrap says file/c for file.c)"
+        [file! path! tuple!]
+    dir "subdirectory (if applicable)"
+        [<opt> file!]
+    options "settings in the compiler-switch dialect"
+        [<opt> block!]
     :D "definitions" [block!]
     :I "includes" [block!]
     :F "cflags" [block!]
     :main "for main object"
 ][
-    let file
-    let overrides
-    if block? spec [
-        overrides: next spec
-        file: spec.1
-    ] else [
-        overrides: []
-        file: spec
-    ]
-
-    if not match [file! path! tuple! word!] file [
-        panic [
-            "Unexpected argument passed to GEN-OBJ:" mold spec, newline
-            "Should be FILE!/PATH!/TUPLE!: %file.c, path/tuple.c, etc." newline
-            "or BLOCK! spec like: [%foo.c <msc:/Wd1020> <gcc:-Wno-whammies>]"
-        ]
-    ]
+    let file: to file! name
+    options: default ['[]]
 
     file: to file! file  ; bootstrap exe loads (file.c) as (file/c)
 
@@ -264,8 +252,8 @@ gen-obj: func [
     let cplusplus: 'no  ; determined for just this file
     let flags: make block! 8
 
-    for-each 'flag overrides [
-        switch flag [
+    for-each 'item options [
+        switch item [
             #no-c++ [
                 ;
                 ; !!! The cfg-cplusplus flag is currently set if any files
@@ -728,20 +716,22 @@ gen-obj: func [
     ; Now add build flags overridden by the inclusion of the specific file
     ; (e.g. third party files we don't want to edit to remove warnings from)
     ;
-    for-each 'flag overrides [
-        let mapped: try cflags-map.(flag)  ; if found, it's a block
+    for-each 'item options [
+        let mapped: try cflags-map.(item)  ; if found, it's a block
         case [
             mapped [
                 append flags spread mapped
             ]
-            flag = #prefer-O2-optimization [
+            item = #prefer-O2-optimization [
                 prefer-O2: 'yes
             ]
-            flag = #no-c++ [
+            item = #no-c++ [
                 standard: 'c
             ]
             <else> [
-                append flags (ensure [text! tag!] flag)
+                append flags (match [text! tag!] item else [
+                    panic ["Bad %make.r file options dialect item:" mold item]
+                ])
             ]
         ]
     ]
@@ -888,11 +878,6 @@ for-each 'entry read extension-dir [
             eval as block! config
         ]
     ]
-
-    ; Normalize format to [[%file1.c] [%file2.c <options>] [%file3.c]]
-    ;
-    ext.sources: to-block-of-file-blocks opt ext.sources
-    ext.depends: to-block-of-file-blocks opt ext.depends
 
     ; Blockify libraries
     ;
@@ -1405,19 +1390,25 @@ libr3-core: make rebmake.object-library-class [
     depends: collect [
         let core-dir: join src-dir %core/
         let subdir: null
-        let item: null
+        let item
+        let options
+        let item-rule: [
+            item: [tuple! | path!] options: try block! (
+                keep gen-obj item subdir opt options
+            )
+        ]
         parse3 file-base.core [some [
             ahead [path! '->] subdir: path! '-> ahead block! into [
                 (subdir: join core-dir to file! subdir)
-                some [item: one (keep gen-obj item subdir)]
-                (subdir: null)
+                some item-rule
+                (subdir: core-dir)
             ]
             |
-            item: one (keep gen-obj item core-dir)
+            item-rule
         ]
     ]]
     append depends spread map-each 'w file-base.generated [
-        gen-obj w %prep/core/
+        gen-obj w %prep/core/ (<no-options> [])
     ]
 ]
 
@@ -1433,9 +1424,9 @@ main: make libr3-core [
 
     depends: reduce [
         either user-config.main [
-            gen-obj user-config.main (<no-directory> null)
+            gen-obj user-config.main (<no-directory> null) (<no-options> [])
         ][
-            gen-obj file-base.main (join src-dir %main/)
+            gen-obj file-base.main (join src-dir %main/) (<no-options> [])
         ]
     ]
 ]
@@ -1502,12 +1493,15 @@ for-each [category entries] file-base [
         continue  ; these categories are taken care of elsewhere
     ]
     let dir
+    if match [tuple! path!] entries [  ; main.c
+        entries: reduce [entries]
+    ]
     parse3 entries [opt some [
         ahead [path! '->] dir: path! '-> block! (
             append folders join %objs/ to file! dir
         )
         |
-        one
+        [tuple! | path!] opt block!
     ]]
 ]
 
@@ -1652,26 +1646,27 @@ for-each 'ext extensions [
     let ext-objlib: make rebmake.object-library-class [  ; #object-library
         name: ext.name
 
-        depends: map-each 's (
+        depends: collect [let name, let options, let obj, parse3 (
             append copy ext.sources opt spread ext.depends
-        )[
-            let dep: case [
-                block? s [
-                    gen-obj s (ext.directory)
-                ]
-                all [
-                    object? s
-                    find [#object-library #object-file] s.class
-                ][
-                    s
+        ) [some [
+            name: [file! | tuple! | path!] options: try [block!] (
+                let file: to file! name
+                keep gen-obj file ext.directory opt options
+            )
+            |
+            obj: [object!] (
+                if find [#object-library #object-file] obj.class [
+                    keep s
                     ; #object-library has already been taken care of above
-                    ; if s.class = #object-library [s]
                 ]
-            ] else [
-                dump s
-                panic [type of s "can't be a dependency of a module"]
-            ]
-        ]
+                else [
+                    veto
+                ]
+            )
+            |
+            name: one
+            (panic [type of name "can't be a dependency of a module"])
+        ]]]
 
         libraries: map-each 'lib ext.libraries [
             case [
@@ -1718,6 +1713,7 @@ for-each 'ext extensions [
     append ext-objlib.depends gen-obj // [
         ext-init-source
         ext-prep-dir
+        []  ; no options dialect
         I: ext.includes
         D: ext.definitions
         F: ext.cflags
@@ -1895,8 +1891,12 @@ prep: make rebmake.entry-class [
         ]
 
         for-each 'ext extensions [
-            let molded-sources: mold map-each 'item ext.sources [
-                ensure file! item.1
+            let molded-sources: mold collect [
+                parse3 ext.sources [some [
+                    name: [tuple! | path! | file!] opt block! (
+                        keep to file! name
+                    )
+                ]]
             ]
             replace molded-sources newline space
 

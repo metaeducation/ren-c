@@ -177,20 +177,17 @@ e-funcs/emit [--[
 handle-item: func [
     "Handle a single item in %file-base.r"
     return: []
-    item [path! tuple! block!]  ; bootstrap EXE loads [foo.c] as [foo/c]
+    name [path! tuple! file!]  ; bootstrap EXE loads [foo.c] as [foo/c]
     dir [<opt> file!]
+    options [<opt> block!]
 ][
-    if block? item [
-        all [
-            2 <= length of item
-            <no-make-header> = item.2
-        ] then [
-            return ~  ; skip this file
-        ]
+    file: to file! name
 
-        file: to file! first item
-    ] else [
-        file: to file! item
+    all [
+        block? options
+        find options <no-make-header>
+    ] then [
+        return ~  ; skip this file
     ]
 
     assert [
@@ -205,16 +202,21 @@ handle-item: func [
     proto-parser/process (as text! read proto-parser.file)
 ]
 
-item: null
+name: null
+options: null
 subdir: null
 parse3 file-base.core [some [
     ahead [path! '->] subdir: path! '-> ahead block! into [  ; descend
         (subdir: to file! subdir)
-        some [item: one (handle-item item subdir)]
+        some [name: [tuple! | path! | file!] options: opt block! (
+            handle-item name subdir opt options
+        )]
         (subdir: null)
     ]
     |
-    item: one (handle-item item void)
+    name: [tuple! | path! | file!] options: opt block! (
+        handle-item name void opt options
+    )
 ]]
 
 

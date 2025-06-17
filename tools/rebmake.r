@@ -374,7 +374,7 @@ application-class: make project-class [
     ][
         let cc: any [.compiler, default-compiler]
         return cc.link // [
-            .output, .depends, .searches, .ldflags,
+            .output, .depends, any [.searches []], .ldflags,
             debug: on? .debug
         ]
     ]
@@ -396,7 +396,7 @@ dynamic-library-class: make project-class [
     ][
         let cc: any [.compiler, default-compiler]
         return cc.link // [
-            .output, .depends, .searches, .ldflags
+            .output, .depends, any [.searches []], .ldflags
             debug: on? .debug
             dynamic: okay
         ]
@@ -759,7 +759,9 @@ emcc: make gcc [
         ; custom link behavior could go here
 
         return link-backup // [
-            output depends searches ldflags dynamic: dynamic debug: debug
+            output depends any [searches []] ldflags
+            dynamic: dynamic
+            debug: debug
         ]
     ]
 ]

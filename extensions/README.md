@@ -100,31 +100,27 @@ will be scanned for DECLARE_NATIVE() and IMPLEMENT_GENERIC().
 
 You can specify a single file:
 
-    sources: %mod-vector.c
+    sources: 'mod-vector.c
 
-Or you can specify a single file with flags, which is assumed when you have
-a block containing one FILE! and no other BLOCK!s:
+Or you can specify a file with flags.  Flags appear in blocks after the file
+to which they apply:
 
-    sources: [%mod-locale.c <msc:/wd4204>]
+    sources: [mod-locale.c [<msc:/wd4204>]]
 
-If the block contains more than one FILE! or has BLOCK!s inside of it, then
-it is assumed to be a list of files and options:
+You can mix files with blocks with those without it:
 
     sources: [
-        %mod-filesystem.c
-        [%p-file.c <msc:/wd5220>]
-        [%p-dir.c <msc:/wd5220>]
-        [%file-posix.c <msc:/wd5220>]
+        mod-filesystem.c
+        p-file.c [<msc:/wd5220>]
+        p-dir.c [<msc:/wd5220>]
+        file-posix.c [<msc:/wd5220>]
     ]
 
-(Note: Bootstrap issues prevent us from being able to omit the % and use
-just a TUPLE!, e.g. `[mod-locale.c <msc:/wd42024>]`  The problem is that is
-loaded by the compatibility layer as `mod-locale/c` to make what looks like
-tuple picking act like path picking, in an executable which lacks generic
-TUPLE!.  The dialect intentionally avoided use of WORD! or PATH! to permit
-omitting the %, so that will likely be resumed in the future.  There is a
-hack for PATH!s that end in TUPLE! that preserves the "tuple" as a WORD!, so
-that's okay.)
+(Note that you can specify files with TUPLE! or PATH!, not just FILE!.  A
+Bootstrap issue means that what would be TUPLE! will be loaded as a PATH,
+e.g. `[mod-locale.c]` => `[mod-locale/c]`.  This is compensated for by the
+TO FILE! mechanics in bootstrap, which assumes the last slash in a path
+is for the extension.)
 
 ### depends:
 
@@ -133,10 +129,10 @@ IMPLEMENT_GENERIC(), etc.  These are typically third-party sources which
 would not contain any such definitions:
 
     depends: [
-        [%mbedtls/library/rsa.c  #no-c++]
-        [%mbedtls/library/rsa_alt_helpers.c  #no-c++]
-        [%mbedtls/library/oid.c  #no-c++]
-        [%tf_snprintf.c  #no-c++]
+        mbedtls/library/rsa.c  [#no-c++]
+        mbedtls/library/rsa_alt_helpers.c  [#no-c++]
+        mbedtls/library/oid.c  [#no-c++]
+        tf_snprintf.c  [#no-c++]
     ]
 
 ## ldflags:

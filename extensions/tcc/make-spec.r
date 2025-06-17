@@ -21,7 +21,7 @@ Rebol [
 
 requires: 'Filesystem  ; uses LOCAL-TO-FILE
 
-sources: %mod-tcc.c
+sources: [mod-tcc.c]
 
 includes: []
 

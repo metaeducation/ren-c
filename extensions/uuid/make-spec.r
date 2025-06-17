@@ -9,21 +9,21 @@ includes: [
     %libuuid/
 ]
 
+sources: [mod-uuid.c]
+
 ; Windows has UUID APIs via library %rpcrt4, OSX has them via CoreFoundation,
 ; but on Linux/Haiku we need to build in libuuid.
 ;
 depends: switch platform-config.os-base [
     'Linux 'Haiku [
         [
-            %libuuid/gen_uuid.c
-            %libuuid/unpack.c
-            %libuuid/pack.c
-            %libuuid/randutils.c
+            libuuid/gen_uuid.c
+            libuuid/unpack.c
+            libuuid/pack.c
+            libuuid/randutils.c
         ]
     ]
 ]
-
-sources: %mod-uuid.c
 
 libraries: switch platform-config.os-base [
     'Windows [
