@@ -260,9 +260,6 @@ Let* Make_Let_Variable(
 }
 
 
-#define CELL_FLAG_BIND_NOTE_REUSE CELL_FLAG_NOTE
-#define CELL_FLAG_BIND_MARKED_META NODE_FLAG_ROOT
-
 //
 //  Get_Word_Container: C
 //
@@ -1267,8 +1264,13 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
             if (Is_Space(check)) {
                 // Will be transformed into dummy item, no rebinding needed
             }
-            else if (Is_Word(check) or Is_Metaform(WORD, check))
+            else if (
+                Is_Word(check)
+                or Is_Metaform(WORD, check)
+                or Is_Tied(WORD, check)
+            ){
                 rebinding = true;
+            }
             else if (not Is_Pinned(WORD, check)) {
                 //
                 // Better to error here, because if we wait until we're in
@@ -1325,7 +1327,11 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
             if (rebinding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove
         }
-        else if (Is_Word(item) or Is_Metaform(WORD, item)) {
+        else if (
+            Is_Word(item)
+            or Is_Metaform(WORD, item)
+            or Is_Tied(WORD, item)
+        ){
             assert(rebinding); // shouldn't get here unless we're rebinding
 
             symbol = Cell_Word_Symbol(item);
@@ -1333,7 +1339,9 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
             if (Try_Add_Binder_Index(binder, symbol, index)) {
                 Value* var = Init_Tripwire(Append_Context(varlist, symbol));
                 if (Is_Metaform(WORD, item))
-                    Set_Cell_Flag(var, BIND_MARKED_META);
+                    Set_Cell_Flag(var, LOOP_SLOT_ROOT_META);
+                else if (Is_Tied(WORD, item))
+                    Set_Cell_Flag(var, LOOP_SLOT_NOTE_TIE);
             }
             else {  // note for-each [x @x] is bad, too
                 DECLARE_ELEMENT (word);
@@ -1434,8 +1442,6 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 //
 Option(Error*) Trap_Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
 {
-    assert(Not_Cell_Flag(slot, BIND_MARKED_META));
-
     if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {
         if (not Any_Lifted_Dual(slot))
             goto handle_dual_signal;
@@ -1484,9 +1490,9 @@ Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot) {
 //
 //  Trap_Write_Slot: C
 //
-Option(Error*) Trap_Write_Slot(Slot* slot, const Value* write)
+Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
 {
-    // assert(Not_Cell_Flag(slot, BIND_MARKED_META));
+    Flags persist = (slot->header.bits & CELL_MASK_PERSIST_SLOT);
 
     if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {
         if (not Any_Lifted_Dual(slot))
@@ -1499,10 +1505,14 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Value* write)
 
     Value* var = u_cast(Value*, slot);
 
-    Copy_Cell(var, write);
-    if (Get_Cell_Flag(slot, BIND_MARKED_META))
-        Liftify(var);
+    if (Is_Stable(write))
+        Copy_Cell(var, u_cast(Value*, write));
+    else {
+        Copy_Lifted_Cell(var, m_cast(Atom*, write));
+        Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);
+    }
 
+    slot->header.bits |= persist;  // preserve persist bits
     return SUCCESS;
 
 } handle_dual_signal: { //////////////////////////////////////////////////////
@@ -1510,11 +1520,69 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Value* write)
     if (Is_Space(u_cast(Value*, slot)))  // e.g. `for-each _ [1 2 3] [...]`
         return SUCCESS;  // toss it
 
-    assert(Is_Pinned(WORD, slot));
-    rebElide(CANON(SET), slot, rebQ(write));
+    assert(Is_Stable(write));
 
+    assert(Is_Pinned(WORD, slot));
+    rebElide(CANON(SET), slot, rebQ(u_c_cast(Value*, write)));
+
+    slot->header.bits |= persist;  // preserve persist bits
     return SUCCESS;
 }}
+
+
+//
+//  Trap_Write_Loop_Slot_May_Bind_Or_Decay: C
+//
+Option(Error*) Trap_Write_Loop_Slot_May_Bind_Or_Decay(
+    Slot* slot,
+    Option(Atom*) write,
+    const Value* container
+){
+    if (not write)
+        return Trap_Write_Slot(slot, LIB(NULL));
+
+    if (
+        Is_Atom_Action(unwrap write)
+        and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)
+    ){
+        return Error_User(
+            "Cannot write to loop slot with ACTION! unless it is ^META"
+        );
+    }
+    else if (
+        not Is_Stable(unwrap write)
+        and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)
+    ){
+        Decay_If_Unstable(unwrap write);
+    }
+
+    if (Not_Cell_Flag(slot, LOOP_SLOT_NOTE_TIE))
+        return Trap_Write_Slot(slot, unwrap write);
+
+    if (not Any_List(container))
+        return Error_User("Loop data must be list to use $var notation");
+
+    DECLARE_ELEMENT (temp);
+    Derelativize(
+        temp,
+        cast(const Element*, unwrap write),
+        Cell_List_Binding(cast(const Element*, container))
+    );
+    Copy_Cell(unwrap write, temp);
+    return Trap_Write_Slot(slot, temp);
+}
+
+
+//
+//  Trap_Write_Loop_Slot_May_Bind: C
+//
+Option(Error*) Trap_Write_Loop_Slot_May_Bind(
+    Slot* slot,
+    Option(Value*) write,
+    const Value* container
+){
+    return Trap_Write_Loop_Slot_May_Bind_Or_Decay(slot, write, container);
+}
 
 
 #if RUNTIME_CHECKS

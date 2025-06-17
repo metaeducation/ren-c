@@ -148,13 +148,13 @@ module: func [
     ]
 
     if spec [  ; validate the important fields of the header, if there is one
-        for-each [var types] [
+        for-each [$var $types] [  ; need bound to GET, use $
             spec.name [null? word!]
             spec.type [word!]  ; `script` default from system.standard.header
             spec.version [null? tuple!]
             spec.options [null? block!]
         ][
-            if not (match:lift inside [] types get inside [] var) [
+            if not (match:lift types get var) [
                 panic ["Module" var "must be" mold types "not" @(reify get var)]
             ]
         ]

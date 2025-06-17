@@ -476,3 +476,9 @@ INLINE Context* Derive_Binding(
 
 #define Unbind_Values_Deep(at,tail) \
     Unbind_Values_Core((at), (tail), nullptr, true)
+
+
+// Loop Slots
+
+#define CELL_FLAG_LOOP_SLOT_NOTE_TIE  CELL_FLAG_NOTE
+#define CELL_FLAG_LOOP_SLOT_ROOT_META  NODE_FLAG_ROOT

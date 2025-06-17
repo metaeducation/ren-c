@@ -131,7 +131,7 @@ INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
 }
 
 
-// Some packs (e.g. those with lifted unstbale antiforms in them) can't be
+// Some packs (e.g. those with lifted unstable antiforms in them) can't be
 // decayed automatically.  They must be explicitly unpacked.
 //
 // Type checking has to be aware of this, and know that such packs shouldn't

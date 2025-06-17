@@ -309,10 +309,6 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (Is_Metaform(WORD, vars)) {  // Note: converted to object in next step
-        assert(!"need to review REDUCE-EACH with meta word");
-    }
-
     VarList* varlist;
     Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
         &varlist, body, vars
@@ -357,29 +353,19 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Slot* slot = Varlist_Slot(Cell_Varlist(vars), 1);
 
-    Value* spare = Decay_If_Unstable(SPARE);  // !!! shouldn't always decay
+    if (Is_Endlike_Tripwire(SPARE))
+        goto finished;
 
-    Option(Error*) e = Trap_Write_Slot(slot, spare);
+    if (Is_Ghost(SPARE) and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META))
+        goto reduce_next;  // skip ghost unless meta?
+
+    Option(Error*) e = Trap_Write_Loop_Slot_May_Bind_Or_Decay(
+        slot, SPARE, block
+    );
     if (e)
         return PANIC(unwrap e);
 
-    // !!! This intelligence needs to be in Trap_Write_Slot(), probably?
-    // !!! Review after "LIFT THE UNIVERSE"
-
-    /*if (Is_Ghost_Or_Void(SPARE)) {  // if REDUCE culls voids/ghosts, so do we
-        Init_Void(OUT);
-        goto reduce_next;
-    }
-    if (Is_Error(SPARE))
-        return PANIC(Cell_Error(SPARE));
-
-    if (Is_Action(spare) or Is_Trash(spare))
-        return PANIC(
-            "Need ^LIFT variables in REDUCE-EACH to accept ACTION! or TRASH!"
-        );
-    */
-
-} next_reduce_each: {
+} next_reduce_each: { ////////////////////////////////////////////////////////
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
 

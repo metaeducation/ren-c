@@ -291,9 +291,13 @@ bool Func_Details_Querier(
       case SYM_BODY_OF: {
         Element* body = cast(Element*, Array_At(details, IDX_DETAILS_1));
 
-        Value* example = Slot_Hack(  // [1]
-            Get_System(SYS_STANDARD, STD_FUNC_BODY)
-        );
+        Slot* std_func_body_slot = Get_System(SYS_STANDARD, STD_FUNC_BODY);
+
+        DECLARE_VALUE (example);
+        Option(Error*) e = Trap_Read_Slot(example, std_func_body_slot);
+        if (e)
+            panic (unwrap e);
+
         REBLEN real_body_index = 6;
 
         Source* fake = cast(Source*, Copy_Array_Shallow_Flags(

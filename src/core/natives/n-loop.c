@@ -576,7 +576,7 @@ DECLARE_NATIVE(FOR_SKIP)
             VAL_INDEX_UNBOUNDED(spare) = index;
         }
 
-        e = Trap_Write_Slot(slot, spare);
+        e = Trap_Write_Loop_Slot_May_Bind(slot, spare, body);
         if (e)
             return PANIC(unwrap e);
 
@@ -872,11 +872,22 @@ void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
 //
 // It's possible to opt out of variable slots using SPACE.
 //
-static Option(Error*) Trap_Loop_Each_Next(
-    Sink(bool) done,
-    const Value* iterator,
-    VarList* vars_ctx
-){
+static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
+{
+    INCLUDE_PARAMS_OF_FOR_EACH;  // must be frame-compatible
+
+  #if PERFORM_CORRUPTIONS
+    assert(Not_Cell_Readable(SPARE));
+    assert(Not_Cell_Readable(SCRATCH));
+  #endif
+
+    Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
+    UNUSED(ARG(DATA));  // les->data is used, may be API handle (?)
+    UNUSED(ARG(BODY));
+
+    Value* iterator = LOCAL(ITERATOR);  // reuse to hold Loop_Each_State
+
+    VarList* vars_ctx = Cell_Varlist(vars);
     LoopEachState *les = Cell_Handle_Pointer(LoopEachState, iterator);
 
     if (not les->more_data) {
@@ -890,7 +901,7 @@ static Option(Error*) Trap_Loop_Each_Next(
     Slot* slot = Varlist_Slots(&slot_tail, vars_ctx);
     for (; slot != slot_tail; ++slot) {
         if (not les->more_data) {  // Y is null in `for-each [x y] [1] ...`
-            e = Trap_Write_Slot(slot, LIB(NULL));
+            e = Trap_Write_Loop_Slot_May_Bind(slot, nullptr, les->data);
             if (e)
                 return e;
 
@@ -904,7 +915,7 @@ static Option(Error*) Trap_Loop_Each_Next(
                 and Is_Error_Done_Signal(Cell_Error(generated))
             )) {
                 Unliftify_Decayed(generated);
-                e = Trap_Write_Slot(slot, generated);
+                e = Trap_Write_Loop_Slot_May_Bind(slot, generated, les->data);
                 rebRelease(generated);
                 if (e)
                     return e;
@@ -920,7 +931,7 @@ static Option(Error*) Trap_Loop_Each_Next(
                     *done = true;
                     return SUCCESS;
                 }
-                e = Trap_Write_Slot(slot, LIB(NULL));
+                e = Trap_Write_Loop_Slot_May_Bind(slot, nullptr, les->data);
                 if (e)
                     return e;
             }
@@ -933,10 +944,11 @@ static Option(Error*) Trap_Loop_Each_Next(
         Heart heart = Heart_Of_Builtin_Fundamental(Known_Element(les->data));
 
         if (Any_List_Type(heart)) {
-            e = Trap_Write_Slot(
-                slot,
+            Element* spare_element = Copy_Cell(
+                SPARE,
                 Array_At(c_cast(Array*, les->flex), les->u.eser.index)
             );
+            e = Trap_Write_Loop_Slot_May_Bind(slot, spare_element, les->data);
             if (e)
                 return e;
             if (++les->u.eser.index == les->u.eser.len)
@@ -948,22 +960,23 @@ static Option(Error*) Trap_Loop_Each_Next(
         if (Any_Context_Type(heart)) {
             assert(les->u.evars.index != 0);
 
-            DECLARE_ELEMENT (word);
-            Init_Word(word, Key_Symbol(les->u.evars.key));
+            Element* spare_key = Init_Word(
+                SPARE, Key_Symbol(les->u.evars.key)
+            );
 
             if (heart == TYPE_MODULE) {
-                Tweak_Cell_Word_Index(word, INDEX_PATCHED);
-                Tweak_Cell_Binding(word, Sea_Patch(
+                Tweak_Cell_Word_Index(spare_key, INDEX_PATCHED);
+                Tweak_Cell_Binding(spare_key, Sea_Patch(
                     Cell_Module_Sea(les->data),
                     Key_Symbol(les->u.evars.key),
                     true
                 ));
             }
             else {
-                Tweak_Cell_Word_Index(word, les->u.evars.index);
-                Tweak_Cell_Binding(word, Cell_Varlist(les->data));
+                Tweak_Cell_Word_Index(spare_key, les->u.evars.index);
+                Tweak_Cell_Binding(spare_key, Cell_Varlist(les->data));
             }
-            e = Trap_Write_Slot(slot, word);
+            e = Trap_Write_Loop_Slot_May_Bind(slot, spare_key, les->data);
             if (e)
                 return e;
 
@@ -975,8 +988,13 @@ static Option(Error*) Trap_Loop_Each_Next(
                 //
                 // Want keys and values (`for-each 'key val obj [...]`)
                 //
+                Sink(Value) spare_val = SPARE;
+                e = Trap_Read_Slot(spare_val, les->u.evars.slot);
+                if (e)
+                    return e;
+
                 ++slot;
-                e = Trap_Read_Slot(Slot_Init_Hack(slot), les->u.evars.slot);
+                e = Trap_Write_Loop_Slot_May_Bind(slot, spare_val, les->data);
                 if (e)
                     return e;
             }
@@ -1012,7 +1030,8 @@ static Option(Error*) Trap_Loop_Each_Next(
                 }
             } while (Is_Zombie(val));
 
-            e = Trap_Write_Slot(slot, key);
+            Value* spare_key = Copy_Cell(SPARE, key);
+            e = Trap_Write_Loop_Slot_May_Bind(slot, spare_key, les->data);
             if (e)
                 return e;
 
@@ -1025,7 +1044,8 @@ static Option(Error*) Trap_Loop_Each_Next(
                 // Want keys and values (`for-each 'key val map [...]`)
                 //
                 ++slot;
-                e = Trap_Write_Slot(slot, val);
+                Value* spare_val = Copy_Cell(SPARE, val);
+                e = Trap_Write_Loop_Slot_May_Bind(slot, spare_val, les->data);
                 if (e)
                     return e;
             }
@@ -1036,13 +1056,12 @@ static Option(Error*) Trap_Loop_Each_Next(
         }
 
         if (Any_String_Type(heart)) {
-            DECLARE_ELEMENT (rune);
-            Init_Char_Unchecked(
-                rune,
+            Element* spare_rune = Init_Char_Unchecked(
+                SPARE,
                 Get_Char_At(c_cast(String*, les->flex), les->u.eser.index)
             );
 
-            e = Trap_Write_Slot(slot, rune);
+            e = Trap_Write_Loop_Slot_May_Bind(slot, spare_rune, les->data);
             if (e)
                 return e;
 
@@ -1055,9 +1074,10 @@ static Option(Error*) Trap_Loop_Each_Next(
         if (heart == TYPE_BLOB) {
             const Binary* b = c_cast(Binary*, les->flex);
 
-            DECLARE_ELEMENT (i);
-            Init_Integer(i, Binary_Head(b)[les->u.eser.index]);
-            e = Trap_Write_Slot(slot, i);
+            Element* spare_integer = Init_Integer(
+                SPARE, Binary_Head(b)[les->u.eser.index]
+            );
+            e = Trap_Write_Loop_Slot_May_Bind(slot, spare_integer, les->data);
             if (e)
                 return e;
 
@@ -1176,8 +1196,11 @@ DECLARE_NATIVE(FOR_EACH)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
+    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Debug(SCRATCH));
+
     bool done;
-    Option(Error*) e = Trap_Loop_Each_Next(&done, iterator, Cell_Varlist(vars));
+    Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
     if (e)
         panic (unwrap e);  // !!! review shutdown mechanic
     if (done)
@@ -1286,8 +1309,11 @@ DECLARE_NATIVE(EVERY)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
+    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Debug(SCRATCH));
+
     bool done;
-    Option(Error*) e = Trap_Loop_Each_Next(&done, iterator, Cell_Varlist(vars));
+    Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
     if (e)
         panic (unwrap e);  // !!! review shutdown mechanic
     if (done)
@@ -1849,8 +1875,11 @@ DECLARE_NATIVE(MAP)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
+    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Debug(SCRATCH));
+
     bool done;
-    Option(Error*) e = Trap_Loop_Each_Next(&done, iterator, Cell_Varlist(vars));
+    Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
     if (e)
         panic (unwrap e);  // !!! review shutdown mechanic
     if (done)
@@ -2094,7 +2123,7 @@ DECLARE_NATIVE(FOR)
     Value* spare_one = Init_Integer(SPARE, 1);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
-    e = Trap_Write_Slot(slot, spare_one);
+    e = Trap_Write_Loop_Slot_May_Bind(slot, spare_one, body);
     if (e)
         return PANIC(unwrap e);
 
@@ -2129,7 +2158,7 @@ DECLARE_NATIVE(FOR)
     if (Add_I64_Overflows(&mutable_VAL_INT64(spare), VAL_INT64(spare), 1))
         return PANIC(Error_Overflow_Raw());
 
-    e = Trap_Write_Slot(slot, spare);
+    e = Trap_Write_Loop_Slot_May_Bind(slot, spare, body);
     if (e)
         return PANIC(unwrap e);
 

@@ -161,7 +161,7 @@
 //
 // !!! Due to the fact that this is a "sticky" bit, it is currently abused
 // by the FOR-EACH type of machinery to mark slots in an object as accepting
-// meta.  See CELL_FLAG_BIND_MARKED_META.  That code is going to be redone
+// meta.  See CELL_FLAG_LOOP_SLOT_ROOT_META.  That code is going to be redone
 // completely, so it may not be an issue...but it does raise the general
 // question of whether this is an approved use for a generic bit.
 //
