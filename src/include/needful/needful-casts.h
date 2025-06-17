@@ -41,8 +41,7 @@
 //
 //=//// CAST SELECTION GUIDE ///////////////////////////////////////////////=//
 //
-// DEFAULT CAST
-//    * Defaults to v_cast():      cast()      // #undef to change it [A]
+//        PRO-TIP: #define cast() as v_cast() in your codebase!!! [A]
 //
 // SAFETY LEVEL
 //    * Validated cast:            v_cast()    // safe default, runs hooks
@@ -107,17 +106,7 @@
 //     signature. Everyone can specialize that -- both fully and partially,
 //     and without affecting the results of overload resolution."
 //
-// E. decltype(v) when v is a variable and not an expression will not be
-//    a reference type.  decltype((v)) will be a reference if v is a lvalue.
-//
-//    When decltype() is used in a macro like cast(), we don't want there to
-//    be a difference between `cast(T, v)` and `cast(T, (v))`...so we have
-//    to decide to either remove the reference from the type or always have
-//    the reference.  It's best to remove it.
-//
-//    Consequently, the CastHelper classes do not use references in their
-//    specialization.
-//
+// E. The CastHelper classes do not use references in their specialization.
 //    So don't write:
 //
 //        struct CastHelper<Foo<X>&, Y*>
@@ -150,13 +139,13 @@
     ((T)(v))  // in both C and C++, just an alias for parentheses cast
 
 
-//=//// v_cast(): VALIDATED CAST, DEFAULT MEANING OF cast() [A] ///////////=//
+//=//// v_cast(): VALIDATED CAST, IDEALLY cast() = v_cast() [A] ///////////=//
 //
 // This is the form of hookable cast you should generally reach for.  Default
 // hooks are provided for pointer-to-pointer, or integral-to-integral.
 //
 // USAGE:
-//    T result = cast(T, value);
+//    T result = v_cast(T, value);
 //
 // BEHAVIOR:
 // - For arithmetic/enum types: static_cast if not explicitly convertible
@@ -225,7 +214,7 @@
 //    }
 //
 // Because Float* is not a smart pointer class, there's not a place in typical
-// C++ to add any runtime validation at the moment of casting.  But the cast()
+// C++ to add any runtime validation at the moment of casting.  But v_cast()
 // macro is based on a `CastHelper` template you can inject any validation for
 // that pointer pairing that you want:
 //
@@ -257,7 +246,7 @@
 //    because it is the most constrained (mutable pointers can be made const,
 //    and have const methods called on them, not necessarily vice versa).
 //    Hence mutable casts from Number* to Float* above runs the same code,
-//    while returning the correct mutable output from the cast()...and it
+//    while returning the correct mutable output from the v_cast()...and it
 //    correctly prohibits casting from a const Number* to a mutable Float*.
 //
 // 2. This has to be an object template and not a function template, in order
@@ -368,12 +357,12 @@
         static_assert(
             not is_function_pointer<From>::value
             and not is_function_pointer<To>::value,
-            "Use f_cast() for function pointer casts instead of cast()"
+            "Use f_cast() for function pointer casts"
         );
 
         static_assert(
             not is_const_removing_pointer_cast<From, To>::value,
-            "cast() removing const: use m_cast() or x_cast() if you mean it"
+            "cast removing const: use m_cast() or x_cast() if you mean it"
         );
 
       #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
@@ -388,7 +377,7 @@
                 not std::is_same<From, va_list*>::value
                 and not std::is_same<To, va_list*>::value
             ),
-            "can't cast() va_list*!  u_cast() mutable va_list* <-> void* only"
+            "can't cast va_list*!  u_cast() mutable va_list* <-> void* only"
         );  // read [B] at top of file for more information
       #endif
 
@@ -402,7 +391,7 @@
       static To convert(From /*v*/) {
         static_assert(
             false,
-            "cast() removing const: use m_cast() or x_cast() if you mean it"
+            "cast removing const: use m_cast() or x_cast() if you mean it"
         );
         return nullptr;
       }
@@ -462,30 +451,30 @@
     #define u_c_cast(T,v) \
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
-// Fixed const-preserving cast
-template<typename TP, typename VQPR>
-struct ConstPreservingCastHelper {
-    static_assert(std::is_pointer<TP>::value, "c_cast() non pointer!");
-    typedef typename std::remove_reference<VQPR>::type VQP;
-    typedef typename std::remove_pointer<VQP>::type VQ;
-    typedef typename std::remove_pointer<TP>::type T;
-    typedef typename std::add_const<T>::type TC;
-    typedef typename std::add_pointer<TC>::type TCP;
-    typedef typename std::conditional<
-        std::is_const<VQ>::value,
-        TCP,
-        TP
-    >::type type;
-};
+    // Fixed const-preserving cast
+    template<typename TP, typename VQP>
+    struct ConstPreservingCastHelper {
+        static_assert(std::is_pointer<TP>::value, "c_cast() non pointer!");
+        static_assert(not std::is_reference<VQP>::value, "use rr_decltype()");
+        typedef typename std::remove_pointer<VQP>::type VQ;
+        typedef typename std::remove_pointer<TP>::type T;
+        typedef typename std::add_const<T>::type TC;
+        typedef typename std::add_pointer<TC>::type TCP;
+        typedef typename std::conditional<
+            std::is_const<VQ>::value,
+            TCP,
+            TP
+        >::type type;
+    };
 
-#define c_cast(TP,v)  /* checked variation, runs v_cast() hooks [1] */ \
-    (ConstAwareCastDispatcher< \
-        decltype(v), \
-        typename ConstPreservingCastHelper<TP,decltype(v)>::type \
-    >::convert(v))
+    #define c_cast(TP,v)  /* checked variation, runs v_cast() hooks [1] */ \
+        (ConstAwareCastDispatcher< \
+            rr_decltype(v), \
+            typename ConstPreservingCastHelper<TP,rr_decltype(v)>::type \
+        >::convert(v))
 
-#define u_c_cast(TP,v)  /* unchecked variation [2] */ \
-    ((typename ConstPreservingCastHelper<TP,decltype(v)>::type)(v))
+    #define u_c_cast(TP,v)  /* unchecked variation [2] */ \
+        ((typename ConstPreservingCastHelper<TP,rr_decltype(v)>::type)(v))
 #endif
 
 
@@ -738,31 +727,6 @@ struct ConstPreservingCastHelper {
         UpcastTag,
         DowncastTag
     >::type;  // WhichCastDirection<...>{} will instantiate the appropriate tag
-#endif
-
-
-//=//// REMOVE REFERENCE CAST /////////////////////////////////////////////=//
-//
-// Simplifying remove-reference cast.
-//
-// !!! This was used in the past, but isn't currently used.  Should it be
-// kept around or removed?
-//
-#if NO_CPLUSPLUS_11
-    #define rr_cast(T,v) \
-        ((T)(v))  // in C, just another alias for parentheses cast
-#else
-    template<typename V>
-    struct RemoveReferenceCastHelper {
-        typedef typename std::conditional<
-            std::is_reference<V>::value,
-            typename std::remove_reference<V>::type,
-            V
-        >::type type;
-    };
-
-    #define rr_cast(v) \
-        static_cast<typename RemoveReferenceCastHelper<decltype(v)>::type>(v)
 #endif
 
 

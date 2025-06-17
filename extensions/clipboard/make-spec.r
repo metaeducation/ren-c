@@ -3,7 +3,7 @@ Rebol [
     notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
-sources: %mod-clipboard.c
+sources: [mod-clipboard.c]
 
 libraries: switch platform-config.os-base [
     'Windows [%user32]

@@ -16,10 +16,10 @@ includes: [
 ; will get warning 5220.
 ;
 sources: [
-    [%mod-filesystem.c <msc:/wd5220>]
-    [%p-file.c <msc:/wd5220>]
-    [%p-dir.c <msc:/wd5220>]
-    [%file-posix.c <msc:/wd5220>]
+    mod-filesystem.c [<msc:/wd5220>]
+    p-file.c [<msc:/wd5220>]
+    p-dir.c [<msc:/wd5220>]
+    file-posix.c [<msc:/wd5220>]
 ]
 
 ; !!! Note: There are nuances between os-base, os-name, and platform's name
@@ -43,32 +43,31 @@ if os = 'Windows [
         ;
         ; files in %src/windows/
         ;
-        ; !!! Can't be `foo.c` as TUPLE! because bootstrap loads as `foo/c`
-        %async.c
-        %core.c
-        %detect-wakeup.c
-        %dl.c
-        %error.c
-        %fs.c
-        %fs-event.c
-        %getaddrinfo.c
-        %getnameinfo.c
-        %handle.c
-        %loop-watcher.c
-        %pipe.c
-        %thread.c
-        %poll.c
-        %process.c
-        %process-stdio.c
-        %signal.c
-        %snprintf.c
-        %stream.c
-        %tcp.c
-        %tty.c
-        %udp.c
-        %util.c
-        %winapi.c
-        %winsock.c
+        async.c
+        core.c
+        detect-wakeup.c
+        dl.c
+        error.c
+        fs.c
+        fs-event.c
+        getaddrinfo.c
+        getnameinfo.c
+        handle.c
+        loop-watcher.c
+        pipe.c
+        thread.c
+        poll.c
+        process.c
+        process-stdio.c
+        signal.c
+        snprintf.c
+        stream.c
+        tcp.c
+        tty.c
+        udp.c
+        util.c
+        winapi.c
+        winsock.c
     ]
     append uv-libraries spread [
         ;
@@ -163,24 +162,24 @@ else [
         ;
         ; files in %src/unix/
         ;
-        %async.c
-        %core.c
-        %dl.c
-        [%fs.c <gcc:-Wno-unused-variable>]  ; "r" unused in Haiku builds
-        %getaddrinfo.c
-        %getnameinfo.c
-        %loop-watcher.c
-        %loop.c
-        %pipe.c
-        %poll.c
-        %process.c
-        %random-devurandom.c
-        %signal.c
-        %stream.c
-        %tcp.c
-        %thread.c
-        %tty.c
-        %udp.c
+        async.c
+        core.c
+        dl.c
+        fs.c [<gcc:-Wno-unused-variable>]  ; "r" unused in Haiku builds
+        getaddrinfo.c
+        getnameinfo.c
+        loop-watcher.c
+        loop.c
+        pipe.c
+        poll.c
+        process.c
+        random-devurandom.c
+        signal.c
+        stream.c
+        tcp.c
+        thread.c
+        tty.c
+        udp.c
     ]
     if not find [Android OS390 QNX] os [
         append uv-libraries spread [
@@ -219,15 +218,15 @@ if os = 'Android [
     ]
     append uv-sources spread [
        ; Note: android-ifaddrs.c was removed
-       %linux-core.c
-       %linux-inotify.c
-       %linux-syscalls.c
-       %procfs-exepath.c
-       %pthread-fixes.c
-       %random-getentropy.c
-       %random-getrandom.c
-       %random-sysctl-linux.c
-       %epoll.c
+       linux-core.c
+       linux-inotify.c
+       linux-syscalls.c
+       procfs-exepath.c
+       pthread-fixes.c
+       random-getentropy.c
+       random-getrandom.c
+       random-sysctl-linux.c
+       epoll.c
     ]
     append uv-libraries spread [
         %dl
@@ -236,39 +235,39 @@ if os = 'Android [
 
 if find [Macintosh Android Linux] os [
     append uv-sources spread [
-        %proctitle.c
+        proctitle.c
     ]
 ]
 
 if find [DragonFly FreeBSD] os [
     append uv-sources spread [
-        %freebsd.c
+        freebsd.c
     ]
 ]
 
 if find [DragonFly FreeBSD NetBSD OpenBSD] os [
     append uv-sources spread [
-        %posix-hrtime.c
-        %bsd-proctitle.c
+        posix-hrtime.c
+        bsd-proctitle.c
     ]
 ]
 
 if find [Macintosh iOS DragonFly FreeBSD NetBSD OpenBSD] os [
     append uv-sources spread [
-        %bsd-ifaddrs.c
-        %kqueue.c
+        bsd-ifaddrs.c
+        kqueue.c
     ]
 ]
 
 if os = 'FreeBSD [
     append uv-sources spread [
-        %random-getrandom.c
+        random-getrandom.c
     ]
 ]
 
 if find [Macintosh OpenBSD] os [
     append uv-sources spread [
-        %random-getentropy.c
+        random-getentropy.c
     ]
 ]
 
@@ -278,9 +277,9 @@ if os = 'Macintosh [
         _DARWIN_USE_64_BIT_INODE=1
     ]
     append uv-sources spread [
-       %darwin-proctitle.c
-       %darwin.c
-       %fsevents.c
+        darwin-proctitle.c
+        darwin.c
+        fsevents.c
     ]
 ]
 
@@ -290,13 +289,13 @@ if os = 'Linux [
         _POSIX_C_SOURCE=200112
     ]
     append uv-sources spread [
-        %linux-core.c
-        %linux-inotify.c
-        %linux-syscalls.c
-        %procfs-exepath.c
-        %random-getrandom.c
-        %random-sysctl-linux.c
-        %epoll.c
+        linux-core.c
+        linux-inotify.c
+        linux-syscalls.c
+        procfs-exepath.c
+        random-getrandom.c
+        random-sysctl-linux.c
+        epoll.c
     ]
     append uv-libraries spread [
         %dl
@@ -307,21 +306,21 @@ if os = 'Linux [
 if os = 'NetBSD [
     append uv-libraries spread [%kvm]
     append uv-sources spread [
-        %netbsd.c
+        netbsd.c
     ]
 ]
 
 if os = 'OpenBSD [
     append uv-sources spread [
-        %openbsd.c
+        openbsd.c
     ]
 ]
 
 if os = 'Sun [
     append definitions spread [__EXTENSIONS__ _XOPEN_SOURCE=500 _REENTRANT]
     append uv-sources spread [
-        %no-proctitle.c
-        %sunos.c
+        no-proctitle.c
+        sunos.c
     ]
     append uv-libraries spread [
         %kstat
@@ -334,12 +333,12 @@ if os = 'Sun [
 if os = 'Haiku [
     append definitions spread [_BSD_SOURCE]
     append uv-sources spread [
-        %haiku.c
-        %bsd-ifaddrs.c
-        %no-fsevents.c
-        %no-proctitle.c
-        %posix-hrtime.c
-        %posix-poll.c
+        haiku.c
+        bsd-ifaddrs.c
+        no-fsevents.c
+        no-proctitle.c
+        posix-hrtime.c
+        posix-poll.c
     ]
     append uv-libraries spread [
         %bsd
@@ -349,12 +348,12 @@ if os = 'Haiku [
 
 if os = 'QNX [
     append uv-sources spread [
-        %posix-hrtime.c
-        %posix-poll.c
-        %qnx.c
-        %bsd-ifaddrs.c
-        %no-proctitle.c
-        %no-fsevents.c
+        posix-hrtime.c
+        posix-poll.c
+        qnx.c
+        bsd-ifaddrs.c
+        no-proctitle.c
+        no-fsevents.c
     ]
     append uv-libraries spread [
         %socket
@@ -364,37 +363,52 @@ if os = 'QNX [
 
 === "TRANSFORM PATHS FOR SOURCES TO FULL PATHS AND DISABLE WARNINGS" ===
 
-uv-depends: map-each 'item uv-sources [  ; WORD! in bootstrap
-    let file: ensure file! either block? item [item.1] [item]
-    let flags: either block? item [next item] [null]
-    file: if os = 'Windows [
-        join %libuv/src/win/ file
-    ] else [
-        join %libuv/src/unix/ file
+uv-depends: []
+
+; extend uv-depends...
+reeval func [:name :options] [
+    parse3 uv-sources [
+        some [
+            name: [tuple! | path!] options: try block! (
+                file: if os = 'Windows [
+                    join %libuv/src/win/ to file! name
+                ] else [
+                    join %libuv/src/unix/ to file! name
+                ]
+                append uv-depends file
+                append uv-depends compose [
+                    #no-c++ (spread uv-nowarn) (spread opt options)
+                ]
+            )
+        ]
     ]
-    compose [(file) #no-c++ (spread uv-nowarn) (opt spread flags)]
 ]
 
-append uv-depends spread map-each 'tuple [  ; WORD! in bootstrap
-    %fs-poll.c
-    %idna.c
-    [
-        %inet.c
-        <clang:-Wno-deprecated-declarations>  ; uses sprintf()
-    ]
-    %random.c
-    %strscpy.c
-    %strtok.c  ; Note: seems only used in unix build (?)
-    %threadpool.c
-    %timer.c
-    %uv-common.c
-    %uv-data-getter-setters.c
-    %version.c
-][
-    let file: if block? tuple [first tuple] else [tuple]
-    let flags: if block? tuple [next tuple] else [[]]
-    compose [
-        (join %libuv/src/ file) #no-c++ (spread uv-nowarn) (spread flags)
+; extend uv-depends...
+reeval func [:name :options] [
+    parse3 [
+        fs-poll.c
+        idna.c
+        inet.c [
+            <clang:-Wno-deprecated-declarations>  ; uses sprintf()
+        ]
+        random.c
+        strscpy.c
+        strtok.c  ; Note: seems only used in unix build (?)
+        threadpool.c
+        timer.c
+        uv-common.c
+        uv-data-getter-setters.c
+        version.c
+    ][
+        some [
+            name: [tuple! | path!] options: try block! (
+                append uv-depends (join %libuv/src/ to file! name)
+                append uv-depends compose [
+                    #no-c++ (spread uv-nowarn) (spread opt options)
+                ]
+            )
+        ]
     ]
 ]
 
@@ -403,7 +417,7 @@ depends: compose [
 
     (? if "1" = get-env "USE_BACKDATED_GLIBC" [
         spread [
-            [%fcntl-patch.c]
+            [fcntl-patch.c]
         ]
     ])
 ]

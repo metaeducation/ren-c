@@ -1334,7 +1334,7 @@ DECLARE_NATIVE(ENCODE_UTF_8) {
     Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
 
     Binary* b = Make_Binary(utf8_size);
-    memcpy(Binary_Head(b), utf8, utf8_size);
+    memcpy(Binary_Head(b), c_cast(Byte*, utf8), utf8_size);
     Term_Binary_Len(b, utf8_size);
     return Init_Blob(OUT, b);
 }

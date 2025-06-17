@@ -150,7 +150,11 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
         out,
         FLAG_HEART_ENUM(heart) | CELL_MASK_NO_NODES
     );
-    memcpy(&out->payload.at_least_8, utf8, size + 1);  // copy '\0' term
+    memcpy(
+        &out->payload.at_least_8,
+        c_cast(Byte*, utf8),
+        size + 1  // copy '\0' term
+    );
     out->payload.at_least_8[size] = '\0';
     out->extra.at_least_4[IDX_EXTRA_USED] = size;
     out->extra.at_least_4[IDX_EXTRA_LEN] = len;

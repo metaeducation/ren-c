@@ -4,10 +4,11 @@ Rebol [
 ]
 
 sources: [
-    %mod-javascript.c
-
-    ; Emscripten says "wontfix"
-    ; https://github.com/emscripten-core/emscripten/issues/7113
-    ;
-    <clang:-Wno-dollar-in-identifier-extension>
+    mod-javascript.c [
+        ;
+        ; Emscripten says "wontfix"
+        ; https://github.com/emscripten-core/emscripten/issues/7113
+        ;
+        <clang:-Wno-dollar-in-identifier-extension>
+    ]
 ]

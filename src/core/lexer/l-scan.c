@@ -846,6 +846,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
 
             Size size = transcode.at - cp;
             Size original_used = Binary_Len(buf);
+            Size original_len = String_Len(buf);
             Expand_Flex_Tail(buf, size);  // updates used size
             Byte* dest = Binary_At(buf, original_used);
             Length len = 0;
@@ -855,7 +856,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
                 *dest = *cp;
             }
             Term_String_Len_Size(
-                buf, String_Len(buf) + len, original_used + size
+                buf, original_len + len, original_used + size
             );
             continue;
         }
@@ -2625,7 +2626,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     Size mold_size = String_Size(mo->string) - mo->base.size;
     Length mold_len = String_Len(mo->string) - mo->base.index;
-    Utf8(const*) utf8 = Binary_At(mo->string, mo->base.size);
+    Utf8(const*) utf8 = c_cast(Utf8(*), Binary_At(mo->string, mo->base.size));
 
     if (mold_size == 0) {
         assert(mold_len == 0);

@@ -7,7 +7,7 @@ use-librebol: 'yes
 
 includes: []
 
-sources: %mod-console.c
+sources: [mod-console.c]
 
 ; Note: shell32 actually needed for CommandLineToArgvW(), which makes it more
 ; a dependency of "main" than the console module.  However, main doesn't have

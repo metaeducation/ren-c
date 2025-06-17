@@ -376,7 +376,7 @@ DECLARE_NATIVE(CRASH)
     }
     else {  // interpret reason as a message
         if (Is_Text(info)) {
-            p = Cell_Utf8_At(info);
+            p = c_cast(char*, Cell_Utf8_At(info));
         }
         else if (Is_Warning(info)) {
             p = Cell_Varlist(info);

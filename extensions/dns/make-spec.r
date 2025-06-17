@@ -5,4 +5,4 @@ Rebol [
 
 use-librebol: 'no
 
-sources: %mod-dns.c
+sources: [mod-dns.c]

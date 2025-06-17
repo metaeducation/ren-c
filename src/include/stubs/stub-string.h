@@ -169,6 +169,19 @@ INLINE Utf8(*) Utf8_Skip(
     }
 #endif
 
+INLINE bool Codepoint_At_Is_NUL_0(Utf8(const*) utf8) {
+    Byte b = u_c_cast(Byte*, utf8)[0];
+    possibly(Is_Continuation_Byte(b));
+    return b == '\0';
+}
+
+INLINE bool Codepoint_Back_Is_Ascii_Value(Utf8(const*) utf8, Codepoint ascii) {
+    assert(ascii < 0x80);
+    Byte b = u_c_cast(Byte*, utf8)[-1];
+    possibly(Is_Continuation_Byte(b));
+    return b == ascii;
+}
+
 INLINE Codepoint Codepoint_At(Utf8(const*) utf8) {
     Codepoint codepoint;
     Utf8_Next(&codepoint, utf8);
@@ -407,7 +420,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
         if (delta < 0) {  // shuffle forward, memmove() vs memcpy(), overlaps!
             memmove(
                 cast(Byte*, cp) + size,
-                old_next_cp,
+                cast(Byte*, old_next_cp),
                 String_Tail(s) - old_next_cp
             );
 
@@ -421,7 +434,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
             Byte* later = cast(Byte*, cp) + delta;
             memmove(
                 later,
-                cp,
+                cast(Byte*, cp),
                 cast(Byte*, String_Tail(s)) - later
             );  // Note: may not be terminated
         }

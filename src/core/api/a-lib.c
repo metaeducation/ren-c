@@ -1939,7 +1939,7 @@ static Size Spell_Into(
     }
 
     Size limit = MIN(bsize, utf8_size);
-    memcpy(buf, utf8, limit);
+    memcpy(buf, c_cast(char*, utf8), limit);
     buf[limit] = 0;
     return utf8_size;
 }

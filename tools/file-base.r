@@ -102,17 +102,15 @@ core: [
     ]
 
     evaluator/ -> [  ; use #prefer-O2-optimization, see [B]
-        [c-eval.c  #prefer-O2-optimization]
-        [c-step.c  #prefer-O2-optimization]
-        [c-action.c  #prefer-O2-optimization]
-        [c-trampoline.c  #prefer-O2-optimization]
+        c-eval.c [#prefer-O2-optimization]
+        c-step.c [#prefer-O2-optimization]
+        c-action.c [#prefer-O2-optimization]
+        c-trampoline.c [#prefer-O2-optimization]
     ]
 
     ; (F)???
     f-blocks.c
-    [
-        f-dtoa.c  ; old third-party file, see [C]
-
+    f-dtoa.c [ ; old third-party file, see [C]
         <msc:/wd5045>  ; https://stackoverflow.com/q/50399940
         <msc:/wd4146>  ; unary minus operator applied to unsigned type
 
@@ -125,9 +123,7 @@ core: [
         <no-uninitialized>
         <implicit-fallthru>
     ]
-    [
-        f-enbase.c
-
+    f-enbase.c [
         ; At time of writing there are 4 Spectre mitigations, which should
         ; be looked at and rewritten when there is time:
         ;
@@ -137,10 +133,7 @@ core: [
     f-int.c
     f-math.c
     f-modify.c
-    [
-        f-qsort.c
-        <gcc:-Wno-null-pointer-subtraction>
-    ]
+    f-qsort.c [<gcc:-Wno-null-pointer-subtraction>]
     f-random.c
     f-round.c
     f-series.c
@@ -153,7 +146,7 @@ core: [
 
     memory/ -> [
         m-gc.c
-        [m-pools.c  <no-uninitialized>]
+        m-pools.c [<no-uninitialized>]
         m-series.c
         m-stacks.c
     ]
@@ -219,9 +212,7 @@ core: [
 
     ; (U)??? (3rd-party code extractions)
     u-compress.c
-    [
-        u-zlib.c  ; 3rd party-file, use mitigations, see [D]
-
+    u-zlib.c [  ; 3rd party-file, use mitigations, see [D]
         <no-make-header>
         <implicit-fallthru>
         <no-constant-conditional>
@@ -261,8 +252,4 @@ main: 'main.c
 
 boot-files: [
     version.r
-]
-
-mezz-files: [
-    ; There were some of these in the R3/View build
 ]

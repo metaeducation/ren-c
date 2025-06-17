@@ -1139,7 +1139,9 @@ DECLARE_NATIVE(COMPOSE2)
     transcode->at = at;  // scanner needs at, e.g. "a])", not "([a])", see [2]
 
     Count pattern_depth = TOP_INDEX - base;  // number of pattern levels pushed
-    Utf8(const*) start = at - pattern_depth;  // start replacement at "([a])"
+    Utf8(const*) start = c_cast(Utf8(*),
+        u_c_cast(Byte*, at) - pattern_depth  // start replacement at "([a])"
+    );
 
   allocate_or_push_levels_for_each_pattern_end_delimiter: { //////////////////
 
@@ -1233,7 +1235,7 @@ DECLARE_NATIVE(COMPOSE2)
     Init_Block(PUSH(), a);
     Init_Integer(PUSH(), end_offset);
 
-    if (*at != '\0')
+    if (not Codepoint_At_Is_NUL_0(at))
         goto string_find_next_pattern;
 
     goto string_scan_finished;
@@ -1354,7 +1356,7 @@ DECLARE_NATIVE(COMPOSE2)
             const Byte* at = c_cast(Byte*, head) + at_offset;
             bool eval_slash_tail = (
                 Cell_Series_Len_At(eval) != 0
-                and Cell_String_Tail(eval)[-1] == '/'
+                and Codepoint_Back_Is_Ascii_Value(Cell_String_Tail(eval), '/')
             );
             bool slash_after_splice = (at[0] == '/');
 

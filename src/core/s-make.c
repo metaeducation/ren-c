@@ -81,7 +81,7 @@ String* Copy_String_At_Limit(const Cell* src, Option(const Length*) limit)
     );
 
     String* dst = Make_String(limited_size);
-    memcpy(String_Head(dst), utf8, limited_size);
+    memcpy(cast(Byte*, String_Head(dst)), c_cast(Byte*, utf8), limited_size);
     Term_String_Len_Size(dst, limited_length, limited_size);
 
     return dst;
@@ -203,7 +203,7 @@ void Append_Utf8(String* dst, Utf8(const*) utf8, Length len, Size size)
     REBLEN tail = String_Size(dst);
     Expand_Flex(dst, tail, size);  // Flex_Used() changes too
 
-    memcpy(Binary_At(dst, tail), utf8, size);
+    memcpy(Binary_At(dst, tail), c_cast(Byte*, utf8), size);
     Term_String_Len_Size(dst, old_len + len, old_used + size);
 }
 
@@ -407,7 +407,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, val);
 
             Expand_Flex_Tail(buf, utf8_size);
-            memcpy(Binary_At(buf, tail), utf8, utf8_size);
+            memcpy(Binary_At(buf, tail), c_cast(Byte*, utf8), utf8_size);
             Set_Flex_Len(buf, tail + utf8_size);
             break; }
 

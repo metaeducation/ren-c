@@ -14,4 +14,4 @@ requires: 'Console
 
 use-librebol: 'no
 
-sources: %mod-debugger.c
+sources: [mod-debugger.c]

@@ -680,7 +680,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
         String* s = Make_String(size);
-        memcpy(String_Head(s), utf8, size);
+        memcpy(cast(Byte*, String_Head(s)), c_cast(Byte*, utf8), size);
         Term_String_Len_Size(s, len, size);
         return Init_Any_String(OUT, to, s);
     }
@@ -809,7 +809,11 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
             FLEX_MASK_STRING | NODE_FLAG_MANAGED,
             size
         );
-        memcpy(Flex_Data(str), utf8, size + 1);  // +1 to include '\0'
+        memcpy(
+            Flex_Data(str),
+            c_cast(Byte*, utf8),
+            size + 1  // +1 to include '\0'
+        );
         Term_String_Len_Size(str, len, size);
         Freeze_Flex(str);
         possibly(as == TYPE_BLOB);  // index 0 so byte transform not needed

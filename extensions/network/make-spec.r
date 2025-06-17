@@ -16,12 +16,13 @@ includes: [
 ]
 
 sources: [
-    %mod-network.c
-
-    ; If you `#include "uv.h"` and try to build as C++ with warnings up you
-    ; will get warning 5220.
-    ;
-    <msc:/wd5220>
+    mod-network.c [
+        ;
+        ; If you `#include "uv.h"` and try to build as C++ with warnings up you
+        ; will get warning 5220.
+        ;
+        <msc:/wd5220>
+    ]
 ]
 
 depends: []

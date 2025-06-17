@@ -200,3 +200,29 @@
     #define xor ^
     #define xor_eq ^=
 #endif
+
+
+//=//// rr_decltype(): REMOVE REFERENCE DECLTYPE //////////////////////////=//
+//
+// decltype(v) when v is a variable and not an expression will not be a
+// reference type.  decltype((v)) will be a reference if v is a lvalue.
+//
+// When decltype() is used in a macro like cast(), we don't want there to be
+// a difference between `cast(T, v)` and `cast(T, (v))`...so we have to decide
+// to either remove the reference from the type or always have the reference.
+// It's best to remove it, and this makes that a bit easier, as it works for
+// either reference or non-reference types.
+//
+#if CPLUSPLUS_11
+    template<typename V>
+    struct RemoveReferenceDecltypeHelper {
+        typedef typename std::conditional<
+            std::is_reference<V>::value,
+            typename std::remove_reference<V>::type,
+            V
+        >::type type;
+    };
+
+    #define rr_decltype(v) \
+        typename RemoveReferenceDecltypeHelper<decltype(v)>::type
+#endif
