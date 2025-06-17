@@ -865,14 +865,14 @@ Bounce Call_Core(Level* level_) {
         // child is stopped
         //
         assert(false);
-        rebFreeMaybe(infobuf);
+        rebFreeOpt(infobuf);
         return "panic -[Child process is stopped]-";
     }
     else {
         non_errno_ret = -2048;  // !!! randomly picked
     }
 
-    rebFreeMaybe(infobuf);
+    rebFreeOpt(infobuf);
 
   info_pipe_err:
 
@@ -954,7 +954,7 @@ Bounce Call_Core(Level* level_) {
     else
         assert(errbuf == nullptr);
 
-    rebFreeMaybe(inbuf);
+    rebFreeOpt(inbuf);
 
     if (ret != 0)
         rebPanic_OS (ret);

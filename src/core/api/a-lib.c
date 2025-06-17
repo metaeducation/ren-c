@@ -273,7 +273,7 @@ unsigned char* API_rebReallocBytes(void *ptr, size_t new_size)
 
 
 //
-//  rebFreeMaybe: API
+//  rebFreeOpt: API
 //
 // * As with free(), null is accepted as a no-op.  Use rebFree() if you want
 //   the code to error on null input
@@ -281,7 +281,7 @@ unsigned char* API_rebReallocBytes(void *ptr, size_t new_size)
 // * Because of the practical usefulness, this operation is legal to call
 //   during a GC... although it's a little bit shaky to do so.
 //
-void API_rebFreeMaybe(void *ptr)
+void API_rebFreeOpt(void *ptr)
 {
     ENTER_API_RECYCLING_OK;
 
@@ -324,15 +324,15 @@ void API_rebFreeMaybe(void *ptr)
 //
 //  rebFree: API
 //
-// Variant of rebFreeMaybe() that errors on null input
+// Variant of rebFreeOpt() that errors on null input
 //
 void API_rebFree(void *ptr) {
     ENTER_API_RECYCLING_OK;
 
     if (ptr == nullptr)
-        panic ("rebFree() does not take NULL, see rebFreeMaybe()");
+        panic ("rebFree() does not take NULL, see rebFreeOpt()");
 
-    API_rebFreeMaybe(ptr);
+    API_rebFreeOpt(ptr);
 }
 
 

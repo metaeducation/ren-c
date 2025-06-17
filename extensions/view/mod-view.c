@@ -305,9 +305,9 @@ DECLARE_NATIVE(REQUEST_FILE_P)
 
     rebFree(chosen_utf16);  // was always allocated
 
-    rebFreeMaybe(filter_utf16);
-    rebFreeMaybe(initial_dir_utf16);
-    rebFreeMaybe(title_utf16);
+    rebFreeOpt(filter_utf16);
+    rebFreeOpt(initial_dir_utf16);
+    rebFreeOpt(title_utf16);
 
   #elif defined(USE_GTK_FILECHOOSER)
 
@@ -402,8 +402,8 @@ DECLARE_NATIVE(REQUEST_FILE_P)
 
     gtk_widget_destroy(dialog);
 
-    rebFreeMaybe(initial_utf8);
-    rebFreeMaybe(title_utf8);
+    rebFreeOpt(initial_utf8);
+    rebFreeOpt(title_utf8);
 
     while (gtk_events_pending()) {
         //
@@ -564,8 +564,8 @@ DECLARE_NATIVE(REQUEST_DIR_P)
         result = rebValue("as file!", rebT(folder));
     }
 
-    rebFreeMaybe(title_utf16);
-    rebFreeMaybe(path_utf16);
+    rebFreeOpt(title_utf16);
+    rebFreeOpt(path_utf16);
   #else
     error = rebValue(
         "make error -[Temporary implementation of REQ-DIR only on Windows]-"

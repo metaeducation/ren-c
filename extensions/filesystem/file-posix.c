@@ -1024,7 +1024,7 @@ Value* Get_Current_Exec(void)
         char *path_utf8 = rebAllocN(char, PATH_MAX);
         int r = readlink(self, path_utf8, PATH_MAX);
 
-        rebFreeMaybe(buffer);
+        rebFreeOpt(buffer);
 
         if (r < 0) {
             rebFree(path_utf8);

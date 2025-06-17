@@ -934,7 +934,7 @@ static void Force_ColumnList_Cleanup(ColumnList* list) {
     SQLSMALLINT col_num;
     for (col_num = 0; col_num < list->num_columns; ++col_num) {
         Column* col = &list->columns[col_num];
-        rebFreeMaybe(col->buffer);
+        rebFreeOpt(col->buffer);
         rebRelease(col->title);
     }
     rebFree(list->columns);

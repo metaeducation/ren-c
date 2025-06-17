@@ -113,7 +113,7 @@ Option(ErrorValue*) Trap_Update_Environment_Variable(
         e = rebError_OS(GetLastError());
     }
 
-    rebFreeMaybe(maybe val_wide);
+    rebFreeOpt(maybe val_wide);
     rebFree(key_wide);
 
     return e;

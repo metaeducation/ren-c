@@ -726,7 +726,7 @@ Bounce Call_Core(Level* level_) {
     else
         assert(errbuf == nullptr);
 
-    rebFreeMaybe(inbuf);
+    rebFreeOpt(inbuf);
 
     if (ret != 0)
         rebPanic_OS (ret);
