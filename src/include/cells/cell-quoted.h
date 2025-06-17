@@ -70,7 +70,7 @@ INLINE Count Quotes_Of(const Element* v) {
 #define Is_Quoted(cell) \
     (LIFT_BYTE(Ensure_Readable(cell)) >= ONEQUOTE_NONQUASI_3)
 
-INLINE bool Any_Metaform(const Cell* cell) {  // quasiform or quoted
+INLINE bool Is_Metaform(const Cell* cell) {  // quasiform or quoted
     LiftByte lift_byte = LIFT_BYTE(Ensure_Readable(cell));
     return lift_byte >= QUASIFORM_2;
 }

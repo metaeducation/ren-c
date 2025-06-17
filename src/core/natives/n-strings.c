@@ -169,7 +169,7 @@ DECLARE_NATIVE(JOIN)
             if (
                 rest and (
                     not Is_Block(unwrap rest)
-                    and not Is_Pinned(BLOCK,unwrap rest)
+                    and not Is_Pinned_Form_Of(BLOCK,unwrap rest)
                 )
             ){
                 return PANIC("JOIN of list or sequence must join with BLOCK!");
@@ -193,7 +193,7 @@ DECLARE_NATIVE(JOIN)
         goto stack_step_dual_in_spare;
 
       case ST_JOIN_EVALUATING_THE_GROUP:
-        if (Is_Pinned(BLOCK, unwrap rest))
+        if (Is_Pinned_Form_Of(BLOCK, unwrap rest))
             SUBLEVEL->executor = &Inert_Stepper_Executor;
         else {
             assert(Is_Block(unwrap rest));
@@ -241,7 +241,7 @@ DECLARE_NATIVE(JOIN)
     if (Is_Block(unwrap rest)) {
         sub = Make_Level_At(&Stepper_Executor, unwrap rest, flags);
     }
-    else if (Is_Pinned(BLOCK, unwrap rest))
+    else if (Is_Pinned_Form_Of(BLOCK, unwrap rest))
         sub = Make_Level_At(&Inert_Stepper_Executor, unwrap rest, flags);
     else {
         Feed* feed = Prep_Array_Feed(  // leverage feed mechanics [1]
@@ -351,10 +351,10 @@ DECLARE_NATIVE(JOIN)
         goto next_mold_step;
     }
 
-    if (Any_Pinned(item)) {  // fetch and mold
+    if (Is_Pinned(item)) {  // fetch and mold
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
-        if (Is_Pinned(WORD, item)) {
+        if (Is_Pinned_Form_Of(WORD, item)) {
             Option(Error*) e = Trap_Get_Var(
                 SPARE, NO_STEPS, item, Level_Binding(sub)
             );
@@ -365,7 +365,7 @@ DECLARE_NATIVE(JOIN)
             goto mold_step_result_in_spare;
         }
 
-        if (Is_Pinned(GROUP, item)) {
+        if (Is_Pinned_Form_Of(GROUP, item)) {
             SUBLEVEL->executor = &Just_Use_Out_Executor;
             Derelativize(SCRATCH, item, Level_Binding(sub));
             HEART_BYTE(SCRATCH) = TYPE_BLOCK;  // the-block is different

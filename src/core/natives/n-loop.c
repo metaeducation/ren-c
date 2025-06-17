@@ -452,7 +452,7 @@ DECLARE_NATIVE(CFOR)
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
-    if (Is_Block(body) or Is_Metaform(BLOCK, body))
+    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
@@ -545,7 +545,7 @@ DECLARE_NATIVE(FOR_SKIP)
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
-    if (Is_Block(body) or Is_Metaform(BLOCK, body))
+    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
@@ -705,7 +705,7 @@ DECLARE_NATIVE(CYCLE)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Block(body) or Is_Metaform(BLOCK, body)) {
+    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body)) {
         Add_Definitional_Break_Continue(body, level_);
         Add_Definitional_Stop(body, level_);
     }
@@ -1185,7 +1185,7 @@ DECLARE_NATIVE(FOR_EACH)
 
     Remember_Cell_Is_Lifeguard(Init_Object(vars, varlist));
 
-    if (Is_Block(body) or Is_Metaform(BLOCK, body))
+    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
@@ -1298,7 +1298,7 @@ DECLARE_NATIVE(EVERY)
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
-    if (Is_Block(body) or Is_Metaform(BLOCK, body))
+    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
@@ -1837,7 +1837,7 @@ DECLARE_NATIVE(MAP)
     if (Is_Blank(data))  // same response as to empty series
         return Init_Block(OUT, Make_Source(0));
 
-    if (Is_Block(body) or Is_Metaform(BLOCK, body))
+    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
     if (Is_Action(data)) {

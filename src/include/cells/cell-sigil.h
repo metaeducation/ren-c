@@ -54,22 +54,22 @@ INLINE bool Any_Plain(const Element* e) {
     return not (e->header.bits & CELL_MASK_SIGIL_BITS);
 }
 
-#define Any_Metaform(v)  (Type_Of(v) == TYPE_METAFORM)
-#define Any_Pinned(v)  (Type_Of(v) == TYPE_PINNED)
-#define Any_Tied(v)    (Type_Of(v) == TYPE_TIED)
+#define Is_Metaform(v)  (Type_Of(v) == TYPE_METAFORM)
+#define Is_Pinned(v)  (Type_Of(v) == TYPE_PINNED)
+#define Is_Tied(v)    (Type_Of(v) == TYPE_TIED)
 
 #define Is_Sigiled(heart,sigil,v) \
     ((Ensure_Readable(v)->header.bits & CELL_HEART_LIFT_MASK) == \
         (FLAG_LIFT_BYTE(NOQUOTE_1) | \
             (FLAG_HEART_ENUM(heart) | FLAG_SIGIL_ENUM(sigil))))
 
-#define Is_Pinned(heartname, v) \
+#define Is_Pinned_Form_Of(heartname, v) \
     Is_Sigiled(TYPE_##heartname, SIGIL_PIN, (v))
 
-#define Is_Metaform(heartname, v) \
+#define Is_Meta_Form_Of(heartname, v) \
     Is_Sigiled(TYPE_##heartname, SIGIL_META, (v))
 
-#define Is_Tied(heartname, v) \
+#define Is_Tied_Form_Of(heartname, v) \
     Is_Sigiled(TYPE_##heartname, SIGIL_TIE, (v))
 
 

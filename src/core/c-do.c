@@ -143,7 +143,7 @@ bool Pushed_Continuation(
     if (Is_Antiform(branch))  // no other antiforms can be branches
         panic (Error_Bad_Antiform(branch));
 
-    if (Is_Pinned(GROUP, branch)) {  // [2] for GET-GROUP!
+    if (Is_Pinned_Form_Of(GROUP, branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_FORCE_HEAVY_NULLS);  // needed for trick
         Level* grouper = Make_Level_At_Core(
             &The_Group_Branch_Executor,  // evaluates to synthesize branch

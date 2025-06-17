@@ -682,7 +682,7 @@ DECLARE_NATIVE(LET)
 
     const Symbol* symbol;
 
-    if (Is_Word(vars) or Is_Metaform(WORD, vars)) {
+    if (Is_Word(vars) or Is_Meta_Form_Of(WORD, vars)) {
         symbol = Cell_Word_Symbol(vars);
         goto handle_word_or_set_word;
     }
@@ -716,7 +716,7 @@ DECLARE_NATIVE(LET)
         else
             assert(Heart_Of(vars) == TYPE_CHAIN);
     }
-    if (Any_Metaform(vars))
+    if (Is_Metaform(vars))
         Metafy(where);
 
     Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
@@ -840,7 +840,7 @@ DECLARE_NATIVE(LET)
         goto eval_right_hand_side_if_let_is_setting;
 
     Element* out = Known_Element(OUT);
-    assert(Is_Word(out) or Is_Block(out) or Is_Metaform(WORD, out));
+    assert(Is_Word(out) or Is_Block(out) or Is_Meta_Form_Of(WORD, out));
     USED(out);
     goto integrate_let_bindings;
 
@@ -1266,12 +1266,12 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
             }
             else if (
                 Is_Word(check)
-                or Is_Metaform(WORD, check)
-                or Is_Tied(WORD, check)
+                or Is_Meta_Form_Of(WORD, check)
+                or Is_Tied_Form_Of(WORD, check)
             ){
                 rebinding = true;
             }
-            else if (not Is_Pinned(WORD, check)) {
+            else if (not Is_Pinned_Form_Of(WORD, check)) {
                 //
                 // Better to error here, because if we wait until we're in
                 // the middle of building the context, the managed portion
@@ -1286,7 +1286,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
         item = cast(Element*, spec);
         tail = cast(Element*, spec);
         binding = SPECIFIED;
-        rebinding = Is_Word(item) or Is_Metaform(WORD, item);
+        rebinding = Is_Word(item) or Is_Meta_Form_Of(WORD, item);
     }
 
     // KeyLists are always managed, but varlist is unmanaged by default (so
@@ -1329,8 +1329,8 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
         }
         else if (
             Is_Word(item)
-            or Is_Metaform(WORD, item)
-            or Is_Tied(WORD, item)
+            or Is_Meta_Form_Of(WORD, item)
+            or Is_Tied_Form_Of(WORD, item)
         ){
             assert(rebinding); // shouldn't get here unless we're rebinding
 
@@ -1338,9 +1338,9 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 
             if (Try_Add_Binder_Index(binder, symbol, index)) {
                 Value* var = Init_Tripwire(Append_Context(varlist, symbol));
-                if (Is_Metaform(WORD, item))
+                if (Is_Meta_Form_Of(WORD, item))
                     Set_Cell_Flag(var, LOOP_SLOT_ROOT_META);
-                else if (Is_Tied(WORD, item))
+                else if (Is_Tied_Form_Of(WORD, item))
                     Set_Cell_Flag(var, LOOP_SLOT_NOTE_TIE);
             }
             else {  // note for-each [x @x] is bad, too
@@ -1350,7 +1350,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
                 break;
             }
         }
-        else if (Is_Pinned(WORD, item)) {
+        else if (Is_Pinned_Form_Of(WORD, item)) {
 
             // Pinned word indicates that we wish to use the original binding.
             // So `for-each @x [1 2 3] [...]` will actually set that x
@@ -1465,7 +1465,7 @@ Option(Error*) Trap_Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
     assert(not Is_Space(u_cast(Value*, slot)));
 
     Sink(Value) out_value = u_cast(Value*, out);
-    assert(Is_Pinned(WORD, slot));
+    assert(Is_Pinned_Form_Of(WORD, slot));
     if (rebRunThrows(out_value, CANON(GET), slot))
         return Error_No_Catch_For_Throw(TOP_LEVEL);
 
@@ -1522,7 +1522,7 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
 
     assert(Is_Stable(write));
 
-    assert(Is_Pinned(WORD, slot));
+    assert(Is_Pinned_Form_Of(WORD, slot));
     rebElide(CANON(SET), slot, rebQ(u_c_cast(Value*, write)));
 
     slot->header.bits |= persist;  // preserve persist bits

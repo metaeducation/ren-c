@@ -609,7 +609,7 @@ static REBIXO Parse_One_Rule(
         if (Is_Quoted(rule)) {  // fall through to direct match
             rule = Unquotify(Copy_Cell(SPARE, rule));
         }
-        else if (Is_Pinned(WORD, rule)) {
+        else if (Is_Pinned_Form_Of(WORD, rule)) {
             Option(Error*) e = Trap_Get_Var(
                 SPARE, NO_STEPS, rule, P_RULE_BINDING
             );
@@ -659,7 +659,7 @@ static REBIXO Parse_One_Rule(
     else {
         assert(Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB);
 
-        if (Is_Pinned(WORD, rule)) {
+        if (Is_Pinned_Form_Of(WORD, rule)) {
             Option(Error*) e = Trap_Get_Var(
                 SPARE, NO_STEPS, rule, P_RULE_BINDING
             );
@@ -1054,7 +1054,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Unquotify(Derelativize(temp, rule, P_RULE_BINDING));
         }
-        else if (Is_Pinned(WORD, rule)) {
+        else if (Is_Pinned_Form_Of(WORD, rule)) {
             Option(Error*) e = Trap_Get_Var(
                 temp, NO_STEPS, rule, P_RULE_BINDING
             );
@@ -1095,7 +1095,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         return i;
     }
     else {
-        if (Is_Pinned(WORD, rule)) {
+        if (Is_Pinned_Form_Of(WORD, rule)) {
             Option(Error*) e = Trap_Get_Var(
                 SPARE, NO_STEPS, rule, P_RULE_BINDING
             );

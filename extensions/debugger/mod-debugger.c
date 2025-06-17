@@ -93,7 +93,7 @@ bool Do_Breakpoint_Throws(
     // the console's sandbox and return its result.  It's possible to use
     // quoting to return simple values, like ^('x)
 
-    assert(Is_Metaform(GROUP, inst));
+    assert(Is_Meta_Form_Of(GROUP, inst));
 
     bool threw = Eval_Any_List_At_Throws(out, inst, SPECIFIED);
 

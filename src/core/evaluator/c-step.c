@@ -1072,7 +1072,7 @@ Bounce Stepper_Executor(Level* L)
 
       case TRAILING_SPACE_AND(WORD): {  // FOO: or ^FOO:
         Copy_Cell(CURRENT, Derelativize(SPARE, CURRENT, L_binding));
-        if (Any_Metaform(CURRENT)) {  // ^foo: -> ^foo
+        if (Is_Metaform(CURRENT)) {  // ^foo: -> ^foo
             Plainify(CURRENT);
             Unchain(CURRENT);
             Metafy(CURRENT);
@@ -1210,7 +1210,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Group(CURRENT))
         goto lookahead;  // not decayed, result is good
 
-    assert(Is_Metaform(GROUP, CURRENT));
+    assert(Is_Meta_Form_Of(GROUP, CURRENT));
 
     if (not Any_Lifted(OUT))
         return PANIC("^GROUP! can only UNLIFT quoted/quasiforms");
@@ -1426,7 +1426,7 @@ Bounce Stepper_Executor(Level* L)
     // * Antiform assignments are allowed: https://forum.rebol.info/t/895/4
 
     assert(
-        Is_Word(CURRENT) or Is_Metaform(WORD, CURRENT)
+        Is_Word(CURRENT) or Is_Meta_Form_Of(WORD, CURRENT)
         or Is_Tuple(CURRENT)
         or Is_Lifted_Void(CURRENT)
     );
@@ -1625,8 +1625,8 @@ for (; check != tail; ++check) {  // push variables
 
     if (
         Is_Group(CURRENT)
-        or Is_Pinned(GROUP, CURRENT)
-        or Is_Metaform(GROUP, CURRENT)
+        or Is_Pinned_Form_Of(GROUP, CURRENT)
+        or Is_Meta_Form_Of(GROUP, CURRENT)
     ){
         if (Eval_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
             Drop_Data_Stack_To(STACK_BASE);
@@ -1640,10 +1640,10 @@ for (; check != tail; ++check) {  // push variables
             if (Is_Antiform(spare))
                 return PANIC(Error_Bad_Antiform(spare));
 
-            if (Is_Pinned(GROUP, CURRENT)) {
+            if (Is_Pinned_Form_Of(GROUP, CURRENT)) {
                 Pinify(Known_Element(spare));  // add @ decoration
             }
-            else if (Is_Metaform(GROUP, CURRENT)) {
+            else if (Is_Meta_Form_Of(GROUP, CURRENT)) {
                 Metafy(Known_Element(spare));  // add ^ decoration
             }
             else
@@ -1663,7 +1663,7 @@ for (; check != tail; ++check) {  // push variables
     if (circle_this)
         circled = TOP_INDEX;
 
-    if (Is_Meta_Sigil(TOP) or Is_Metaform(WORD, TOP))  // meta-assign result
+    if (Is_Meta_Sigil(TOP) or Is_Meta_Form_Of(WORD, TOP))  // meta-assign result
         continue;
 
     if (Is_Word(TOP) or Is_Tuple(TOP))
@@ -1767,7 +1767,7 @@ for (; check != tail; ++check) {  // push variables
     if (Is_Meta_Sigil(var))
         goto circled_check;
 
-    if (Is_Metaform(WORD, var)) {
+    if (Is_Meta_Form_Of(WORD, var)) {
         heeded(Corrupt_Cell_If_Debug(SPARE));
         Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
         if (e)
@@ -1784,7 +1784,7 @@ for (; check != tail; ++check) {  // push variables
     if (Is_Space(var))
         goto circled_check;
 
-    if (Is_Word(var) or Is_Tuple(var) or Is_Pinned(WORD, var)) {
+    if (Is_Word(var) or Is_Tuple(var) or Is_Pinned_Form_Of(WORD, var)) {
         heeded(Corrupt_Cell_If_Debug(SPARE));
         Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);
         if (e)

@@ -461,7 +461,7 @@ INLINE bool Pack_Native_Core_Throws(
     const Value* block,
     const Value* predicate
 ){
-    if (Is_Pinned(BLOCK, block)) {  // pack @[1 + 2] -> ~['1 '+ '2']~ anti
+    if (Is_Pinned_Form_Of(BLOCK, block)) {  // pack @[1 + 2] -> ~['1 '+ '2']~
         const Element* tail;
         const Element* at = Cell_List_At(&tail, block);
 

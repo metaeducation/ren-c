@@ -179,7 +179,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 
     Decay_If_Unstable(branch);
 
-    if (Is_Pinned(WORD, branch))
+    if (Is_Pinned_Form_Of(WORD, branch))
         return PANIC(Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
 
     STATE = ST_GROUP_BRANCH_RUNNING_BRANCH;
@@ -467,7 +467,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     assert(Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST));
 
     Executor* executor;
-    if (Is_Pinned(BLOCK, block))
+    if (Is_Pinned_Form_Of(BLOCK, block))
         executor = &Inert_Stepper_Executor;
     else {
         assert(Is_Block(block));
@@ -1052,7 +1052,7 @@ DECLARE_NATIVE(SWITCH)
         if (at == nullptr)
             goto reached_end;
 
-        if (Is_Block(at) or Is_Metaform(BLOCK, at) or Is_Frame(at))
+        if (Is_Block(at) or Is_Meta_Form_Of(BLOCK, at) or Is_Frame(at))
             break;
 
         Fetch_Next_In_Feed(SUBLEVEL->feed);
@@ -1182,7 +1182,7 @@ DECLARE_NATIVE(DEFAULT)
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
-    assert(Any_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
+    assert(Is_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);

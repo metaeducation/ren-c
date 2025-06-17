@@ -58,7 +58,7 @@ DECLARE_NATIVE(BIND)
             return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         for (; at != tail; ++at) {
-            if (not Is_Pinned(WORD, at))
+            if (not Is_Pinned_Form_Of(WORD, at))
                 return PANIC("BLOCK! binds all @word for the moment");
 
             Use* use = Alloc_Use_Inherits(Cell_Binding(v));
@@ -83,7 +83,7 @@ DECLARE_NATIVE(BIND)
         context = spec;
     }
     else {
-        assert(Is_Pinned(WORD, spec));
+        assert(Is_Pinned_Form_Of(WORD, spec));
         if (not IS_WORD_BOUND(spec))
             return PANIC(Error_Not_Bound_Raw(spec));
 

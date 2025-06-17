@@ -410,7 +410,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
 
     Executor* executor;
-    if (Is_Pinned(BLOCK, arg))
+    if (Is_Pinned_Form_Of(BLOCK, arg))
         executor = &Inert_Stepper_Executor;
     else {
         if (not Is_Block(arg))

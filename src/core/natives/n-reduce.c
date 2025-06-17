@@ -325,7 +325,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     Add_Definitional_Break_Continue(body, level_);
 
     Executor* executor;
-    if (Is_Pinned(BLOCK, block))
+    if (Is_Pinned_Form_Of(BLOCK, block))
         executor = &Inert_Stepper_Executor;
     else {
         assert(Is_Block(block));
@@ -340,7 +340,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;
 
-    if (Is_Pinned(BLOCK, block))  // undo &Just_Use_Out_Executor
+    if (Is_Pinned_Form_Of(BLOCK, block))  // undo &Just_Use_Out_Executor
         SUBLEVEL->executor = &Inert_Stepper_Executor;
     else
         SUBLEVEL->executor = &Stepper_Executor;
@@ -988,7 +988,7 @@ DECLARE_NATIVE(COMPOSE2)
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    if (Any_Pinned(pattern)) {  // @() means use pattern's binding
+    if (Is_Pinned(pattern)) {  // @() means use pattern's binding
         Plainify(pattern);  // drop the @ from the pattern for processing
         if (Cell_Binding(pattern) == nullptr)
             return PANIC("@... patterns must have bindings");

@@ -177,7 +177,7 @@ DECLARE_NATIVE(ARROW)
     else if (
         Is_Word(spec)
         or Is_Get_Word(spec)
-        or Is_Metaform(WORD, spec)
+        or Is_Meta_Form_Of(WORD, spec)
         or Is_Quoted(spec)
         or (Is_Path(spec) and Is_Refinement(spec))
     ){
@@ -198,7 +198,7 @@ DECLARE_NATIVE(ARROW)
             pclass = PARAMCLASS_NORMAL;
             symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_Metaform(WORD, item)) {
+        else if (Is_Meta_Form_Of(WORD, item)) {
             pclass = PARAMCLASS_META;
             symbol = Cell_Word_Symbol(item);
         }
@@ -211,7 +211,7 @@ DECLARE_NATIVE(ARROW)
                 return PANIC(item);
             symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_Pinned(WORD, item)) {
+        else if (Is_Pinned_Form_Of(WORD, item)) {
             pclass = PARAMCLASS_THE;
             symbol = Cell_Word_Symbol(item);
         }

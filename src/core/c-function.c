@@ -144,7 +144,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         bool must_be_action;
         bool meta = false;
         Option(SingleHeart) singleheart;
-        if (Is_Word(item) or (meta = Is_Metaform(WORD, item))) {
+        if (Is_Word(item) or (meta = Is_Meta_Form_Of(WORD, item))) {
             symbol = Cell_Word_Symbol(item);
             must_be_action = false;
         }
@@ -331,7 +331,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 break;
             }
         }
-        else if (Is_Pinned(GROUP, item)) {  // @(...) is PARAMCLASS_SOFT atm.
+        else if (Is_Pinned_Form_Of(GROUP, item)) {  // @(...) PARAMCLASS_SOFT
             if (Cell_Series_Len_At(item) == 1) {
                 const Element* word = Cell_List_Item_At(item);
                 if (Is_Word(word)) {
@@ -343,12 +343,12 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         else if (Heart_Of(item) == TYPE_WORD) {
             symbol = Cell_Word_Symbol(item);
 
-            if (Is_Pinned(WORD, item)) {  // output
+            if (Is_Pinned_Form_Of(WORD, item)) {  // output
                 if (quoted)
                     return Error_User("Can't quote @WORD! parameters");
                 pclass = PARAMCLASS_THE;
             }
-            else if (Is_Metaform(WORD, item)) {
+            else if (Is_Meta_Form_Of(WORD, item)) {
                 if (not quoted)
                     pclass = PARAMCLASS_META;
             }

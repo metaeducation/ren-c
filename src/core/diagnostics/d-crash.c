@@ -368,7 +368,7 @@ DECLARE_NATIVE(CRASH)
 
     const void *p;
 
-    if (Is_Pinned(WORD, info)) {  // interpret reason as value to diagnose
+    if (Is_Pinned_Form_Of(WORD, info)) {  // interpret as value to diagnose
         Value* fetched = rebValue(CANON(GET), rebQ(info));
         Copy_Cell(info, fetched);
         rebRelease(fetched);

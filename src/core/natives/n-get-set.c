@@ -683,7 +683,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     }
     else {
         Element* pick_instruction = Known_Element(picker_arg);
-        if (Any_Metaform(pick_instruction))
+        if (Is_Metaform(pick_instruction))
             picker_was_meta = true;  // assume pick product is meta, unlift
         else
             picker_was_meta = false;
@@ -890,7 +890,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     if (Any_Sequence(scratch_var))
         goto handle_scratch_var_as_sequence;
 
-    if (Is_Pinned(BLOCK, scratch_var))
+    if (Is_Pinned_Form_Of(BLOCK, scratch_var))
         goto handle_scratch_var_as_pinned_steps_block;
 
     e = Error_Bad_Value(scratch_var);
@@ -1054,7 +1054,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
         if (Any_Lifted(SPARE)) {  // most common answer--successful pick
 
-            if (not Any_Metaform(Data_Stack_At(Element, stackindex))) {
+            if (not Is_Metaform(Data_Stack_At(Element, stackindex))) {
                 Unliftify_Undecayed(SPARE);  // review unlift + lift
                 Decay_If_Unstable(SPARE);
                 Liftify(SPARE);  // need lifted for dual protocol (review)
@@ -1068,7 +1068,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             e = Error_Bad_Pick_Raw(Known_Element(SPARE));
             if (
                 stackindex == limit - 1
-                and not Any_Metaform(Data_Stack_At(Element, stackindex))
+                and not Is_Metaform(Data_Stack_At(Element, stackindex))
             ){
                 Init_Warning(OUT, unwrap e);
                 Failify(OUT);  // signal bad pick distinct from panics
@@ -1331,7 +1331,7 @@ DECLARE_NATIVE(TWEAK)
     if (not (
         Any_Word(spare)
         or Any_Sequence(spare)
-        or Is_Pinned(BLOCK, spare)
+        or Is_Pinned_Form_Of(BLOCK, spare)
     )){
         return PANIC(spare);
     }

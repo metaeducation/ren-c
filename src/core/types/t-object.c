@@ -1906,7 +1906,7 @@ DECLARE_NATIVE(CONSTRUCT)
     Init_Object(OUT, varlist);  // GC protects context
 
     Executor* executor;
-    if (Is_Pinned(BLOCK, spec))
+    if (Is_Pinned_Form_Of(BLOCK, spec))
         executor = &Inert_Stepper_Executor;
     else {
         assert(Is_Block(spec) or Is_Fence(spec));
@@ -1958,7 +1958,7 @@ DECLARE_NATIVE(CONSTRUCT)
 
     } while ((symbol = Try_Get_Settable_Word_Symbol(nullptr, at)));
 
-    if (not Is_Pinned(BLOCK, spec)) {
+    if (not Is_Pinned_Form_Of(BLOCK, spec)) {
         Copy_Cell(Level_Scratch(SUBLEVEL), TOP);
         DROP();
 
