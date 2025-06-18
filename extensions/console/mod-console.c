@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2016-2024 Ren-C Open Source Contributors
+// Copyright 2016-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -145,7 +145,7 @@ void Enable_Ctrl_C(void)
 // blocking read() calls will not be interrupted with EINTR.  One needs to
 // use sigaction() if available...it's a slightly newer API.
 //
-// http://250bpm.com/blog:12
+//   http://250bpm.com/blog:12
 //
 // !!! What should be done about SIGTERM ("polite request to end", default
 // unix kill) or SIGHUP ("user's terminal disconnected")?  Is it useful to
@@ -218,11 +218,19 @@ void Enable_Ctrl_C(void)
 //          was-ctrl-c-enabled
 //          can-recover
 //          code
-//          result'
+//          result'  ; intentionally result', to discern PANIC from ERROR! [1]
 //          state
 //  ]
 //
 DECLARE_NATIVE(CONSOLE)
+//
+// 1. In much of the system, you don't need to store variables in lifted form,
+//    because (^var: whatever) can really store anything, and (^var) can then
+//    read back anything.  But in the console, we want to store unstable
+//    ERROR! antiforms -and- we want to know if a PANIC was intercepted.  It
+//    would be possible to do this with a separate flag, but storing normal
+//    results (including "normal" ERROR! antiform results) in lifted form
+//    means we can store the PANIC as a WARNING! in the unlifted form.
 //
 // !!! The idea behind the console is that it can be called with skinning;
 // so that if BREAKPOINT wants to spin up a console, it can...but with a
@@ -250,19 +258,19 @@ DECLARE_NATIVE(CONSOLE)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. The initial usermode console implementation was geared toward a
-    //    single `system.console` object.  But the debugger raised the issue
-    //    of nested sessions which might have a different skin.  So save
-    //    whatever the console object was if it is being overridden.
-    //
-    // 2. We only enable halting (e.g. Ctrl-C, or Escape, or whatever) when
-    //    console requests or user requests are running...not when the
-    //    HOST-CONSOLE function itself is, or during startup.  (Enabling it
-    //    during startup would require a special "kill" mode that did not call
-    //    rebRequestHalt(), as basic startup cannot meaningfully be halted.
-    //    The system would be in an incomplete state.)
+  // 1. The initial usermode console implementation was geared toward a single
+  //    `system.console` object.  But the debugger raised the issue of nested
+  //    sessions which might have a different skin.  So save whatever the
+  //    console object was if it is being overridden.
+  //
+  // 2. We only enable halting (e.g. Ctrl-C, or Escape, or whatever) when
+  //    console requests or user requests are running...not when HOST-CONSOLE
+  //    itself is running, or during startup.  (Enabling it during startup
+  //    would require a special "kill" mode that didn't call rebRequestHalt(),
+  //    as basic startup cannot meaningfully be halted.  The system would be
+  //    in an incomplete state.)
 
-    rebElide("old-console: get:any $system.console");  // !!! for debug [1]
+    rebElide("^old-console: system.^console");  // !!! for debug [1]
 
     rebElide(
         "if skin [system.console: null]",  // !!! needed for now
@@ -281,24 +289,23 @@ DECLARE_NATIVE(CONSOLE)
 
 } run_skin: {  ///////////////////////////////////////////////////////////////
 
-    // 1. This runs CONSOLE*, which returns *requests* to execute arbitrary
-    //    code by way of its return results.  The ENTRAP is thus here to
-    //    intercept bugs in CONSOLE* itself.  Any evaluations for the user
-    //    (or on behalf of the console) are done in their own separate step
-    //    with rebContinue()
-    //
-    // 2. If the CONSOLE* function has any of its own implementation that
-    //    could panic (or act as an uncaught throw) then that code should be
-    //    returned as a BLOCK!.  This way the "console skin" can be reset to
-    //    the default.  If CONSOLE* itself panics (e.g. a typo in the
-    //    implementation) there's probably not much use in trying again...but
-    //    give it a chance rather than just crash.  Pass it back something
-    //    that looks like an instruction it might have generated (a BLOCK!)
-    //    asking itself to report an error more gracefully.
+  // 1. This runs CONSOLE*, which returns *requests* to execute arbitrary
+  //    code by way of its return results.  The ENTRAP is thus here to catch
+  //    bugs in CONSOLE* itself.  Any evaluations for the user (or on behalf
+  //    of the console) are in their own separate step with rebContinue()
+  //
+  // 2. If the CONSOLE* function has any of its own implementation that could
+  //    PANIC (or act as an uncaught throw) then that code should be returned
+  //    as a BLOCK!.  This way the "console skin" can be reset to the default.
+  //    If CONSOLE* itself panics (e.g. a typo in the implementation) there's
+  //    probably not much use in trying again...but give it a chance rather
+  //    than just crash.  Pass it back a thing that looks like an instruction
+  //    it might have generated (a BLOCK!) asking itself to report an error
+  //    more gracefully.
 
     assert(not ctrl_c_enabled);  // not while CONSOLE* is on the stack
 
-  recover: ;  // Note: semicolon needed as next statement is declaration
+  recover: { /////////////////////////////////////////////////////////////////
 
     Value* code;
     Value* warning = rebRescue(  // Rescue catches buggy CONSOLE* [1]
@@ -327,46 +334,46 @@ DECLARE_NATIVE(CONSOLE)
     rebElide("code: @", code);  // lifts non-error
     rebRelease(code); // don't need the outer block any more
 
-} provoked: {  ///////////////////////////////////////////////////////////////
+}} provoked: {  //////////////////////////////////////////////////////////////
 
-    // 1. Both console-initiated and user-initiated code is cancellable with
-    //    Ctrl-C (though it's up to HOST-CONSOLE on the next iteration to
-    //    decide whether to accept the cancellation or consider it an error
-    //    condition or a reason to fall back to the default skin).
-    //
-    // 2. If the user was able to get to the point of requesting evaluation,
-    //    then the console skin must not be broken beyond all repair.  So
-    //    re-enable recovery.
-    //
-    // 3. This once used a ^GROUP! to reduce the amount of code on the stack
-    //    which the user might see in a backtrace.  So instead of:
-    //
-    //        ^result': eval [print "hi"]
-    //
-    //    It would just execute the code directly:
-    //
-    //        result': ^(print "hi")  ; BUT ^(...) no longer means META!
-    //
-    //    That might be a nice idea, but as it turns out there's no mechanism
-    //    for rescuing abrupt panics in the API...and I'm not entirely sure
-    //    what a good version of that would wind up looking like.  Internal
-    //    natives use DISPATCHER_CATCHES but it is very easy to screw it up or
-    //    overlook it, and we don't have a way to tunnel that value into a
-    //    callback from a continuation.  For the moment, just to get things
-    //    working, we give in and use SYS.UTIL/ENRESCUE, along with other
-    //    functions that are necessary.
-    //
-    // 4. Under the new understanding of definitional quits, a QUIT is just
-    //    a function that throws a value specifically to the "generator" of
-    //    the QUIT.  In the case of the console, that means each time we
-    //    run code, a new QUIT needs to be created.  It's poked into the same
-    //    place every time--the user context--but it's a new function.
-    //
-    //    (This idea that quits expire actually makes a lot of sense--e.g. when
-    //    you think about running a module, it should only be able to quit
-    //    during its initialization.  After that moment the module system isn't
-    //    on the stack and dealing with it, so really it can only call the
-    //    SYS.UTIL/EXIT function and exit the interpreter completely.)
+  // 1. Both console-initiated and user-initiated code is cancellable with
+  //    Ctrl-C (though it's up to HOST-CONSOLE on the next iteration to decide
+  //    whether to accept the cancellation or consider it an error condition
+  //    or a reason to fall back to the default skin).
+  //
+  // 2. If the user was able to get to the point of requesting evaluation,
+  //    then the console skin must not be broken beyond all repair.  So
+  //    re-enable recovery.
+  //
+  // 3. This once used a ^GROUP! to reduce the amount of code on the stack
+  //    which the user might see in a backtrace.  So instead of:
+  //
+  //        ^result': eval [print "hi"]
+  //
+  //    It would just execute the code directly:
+  //
+  //        result': ^(print "hi")  ; BUT ^(...) no longer means META!
+  //
+  //    That might be a nice idea, but as it turns out there's no mechanism
+  //    for rescuing abrupt panics in the API...and I'm not entirely sure
+  //    what a good version of that would wind up looking like.  Internal
+  //    natives use DISPATCHER_CATCHES but it is very easy to screw it up or
+  //    overlook it, and we don't have a way to tunnel that value into a
+  //    callback from a continuation.  For the moment, just to get things
+  //    working, we give in and use SYS.UTIL/ENRESCUE, along with other
+  //    functions that are necessary.
+  //
+  // 4. Under the new understanding of definitional quits, a QUIT is just a
+  //    function that throws a value specifically to the "generator" of the
+  //    QUIT.  In the case of the console, that means each time we run code,
+  //    a new QUIT needs to be created.  It's poked into the same place every
+  //    time--the user context--but it's a new function.
+  //
+  //    (This idea that quits expire actually makes a lot of sense--e.g. when
+  //    you think about running a module, it should only be able to quit
+  //    during its initialization.  After that moment the module system isn't
+  //    on the stack and dealing with it, so really it can only call the
+  //    SYS.UTIL/EXIT function and exit the interpreter completely.)
 
     if (rebUnboxLogic("integer? code"))
         goto finished;  // if HOST-CONSOLE returns INTEGER! it means exit code
@@ -398,16 +405,16 @@ DECLARE_NATIVE(CONSOLE)
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    // Exit code is now an INTEGER! or a resume instruction PATH!
-    //
-    // 1. Exit codes aren't particularly well formalized (and are particularly
-    //    tricky when you ask a shell to execute a process, to know whether
-    //    the code is coming from the shell or what you wanted to run)
-    //
-    //      http://stackoverflow.com/q/1101957/
+  // Exit code is now an INTEGER! or a resume instruction PATH!
+  //
+  // 1. Exit codes aren't particularly well formalized (and are particularly
+  //    tricky when you ask a shell to execute a process, to know whether the
+  //    code is coming from the shell or what you wanted to run)
+  //
+  //      http://stackoverflow.com/q/1101957/
 
     if (rebUnboxLogic(
-        "system.console: old-console",
+        "system.^console: ^old-console",
         "was-ctrl-c-enabled"
     )){
         Enable_Ctrl_C();

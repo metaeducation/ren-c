@@ -64,7 +64,7 @@ make-quit: lambda [
             [any-atom? (? if console [<end>])]  ; endability has pitfalls [2]
         :value "Return any value, non-errors all signify exit code 0"
     ][
-        result: default [just '0]
+        result: default [0]
         if value [  ; not an exit status integer
             if not console [
                 quit* ^result  ; may be error
