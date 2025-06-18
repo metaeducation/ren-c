@@ -286,8 +286,12 @@ INLINE Option(Error*) Trap_Test_Conditional(
         return SUCCESS;
     }
 
-    if (Heart_Of(v) == TYPE_RUNE)  // trash--not legal to test conditionally
+    if (Heart_Of(v) == TYPE_RUNE) {  // trash--not legal to test conditionally
+      #if APPEASE_WEAK_STATIC_ANALYSIS
+        *cond = false;
+      #endif
         return Error_Trash_Condition_Raw(v);
+    }
 
     if (Heart_Of(v) != TYPE_WORD) {
         *cond = true;  // !!! all stable non-word antiforms are truthy
@@ -303,6 +307,10 @@ INLINE Option(Error*) Trap_Test_Conditional(
         *cond = true;  // ~okay~ antiform is the only truthy keyword
         return SUCCESS;
     }
+
+  #if APPEASE_WEAK_STATIC_ANALYSIS
+    *cond = false;
+  #endif
     return Error_Keyword_Condition_Raw(v);  // none exist yet, review [2]
 }
 

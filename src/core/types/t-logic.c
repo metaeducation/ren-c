@@ -506,8 +506,12 @@ INLINE Option(Error*) Trap_Eval_Logic_Operation_Right_Side(
         Option(Error*) e = Trap_Get_Var(
             spare, NO_STEPS, right, SPECIFIED
         );
-        if (e)
+        if (e) {
+          #if APPEASE_WEAK_STATIC_ANALYSIS
+            *cond = false;
+          #endif
             return e;
+        }
 
         if (Is_Action(spare))
             panic ("words/tuples can't be action as right side of OR AND XOR");
@@ -516,8 +520,12 @@ INLINE Option(Error*) Trap_Eval_Logic_Operation_Right_Side(
     }
 
     Option(Error*) e = Trap_Test_Conditional(cond, synthesized);
-    if (e)
+    if (e) {
+      #if APPEASE_WEAK_STATIC_ANALYSIS
+        *cond = false;
+      #endif
         return e;
+    }
 
     return SUCCESS;
 }

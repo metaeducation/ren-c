@@ -121,7 +121,9 @@ INLINE bool Is_Block_Style_Varargs(
 
     Array* source = Cell_Varargs_Origin(vararg);
     if (Is_Stub_Varlist(source)) {
-        *shared_out = nullptr;  // avoid compiler warning in -Og build
+      #if APPEASE_WEAK_STATIC_ANALYSIS
+        *shared_out = nullptr;
+      #endif
         return false;  // it's an ordinary vararg, representing a FRAME!
     }
 
@@ -155,7 +157,9 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
         return true;
     }
 
-    *L_out = nullptr;  // avoid compiler warning in -Og build
+  #if APPEASE_WEAK_STATIC_ANALYSIS
+    *L_out = nullptr;
+  #endif
     return false;  // it's a block varargs, made via MAKE VARARGS!
 }
 

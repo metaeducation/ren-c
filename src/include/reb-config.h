@@ -414,6 +414,21 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 //    So we have to disable warnings pertaining to that.
 //
+// 3. Static analysis can trigger false positives--e.g. noticing you're not
+//    assigning an output parameter in an inline function, but then not
+//    noticing that you only use it on control paths where you knew it
+//    returned a value.  The unfortunate thing about bad static analysis is
+//    that if you then write meaningless data into variables, you trip up an
+//    actually *good* static analyzer that won't catch cases where you did
+//    make a mistake...because the code path looks to return a valid value.
+//
+//    If you're stuck with having to do an assignment, do it under a flag
+//    saying you're only doing it to appease the static analyzer.  Note that
+//    use of Sink() in the debug build will actually randomize the data so
+//    if you don't assign it you get a better fuzz test of that bad usage,
+//    so there's no need to do the appeasing when you're using sinks (as it
+//    will always look to be assigned).  But for this reason sinks should
+//    not be used with static analysis!
 
 #if !defined(DEBUG_STATIC_ANALYZING)
     #if defined(__clang_analyzer__)
@@ -427,6 +442,14 @@ Special internal defines used by RT, not Host-Kit developers:
     #pragma warning(disable : 6282)  // suppress "incorrect operator" [1]
     #pragma warning(disable : 6244)  // suppress hiding previous decl [2]
 #endif
+
+#if !defined(APPEASE_WEAK_STATIC_ANALYSIS)  // static analysis can be bad [3]
+    #define APPEASE_WEAK_STATIC_ANALYSIS \
+        ((! DEBUG_STATIC_ANALYZING) && (! DEBUG_USE_SINKS))
+#else
+    STATIC_ASSERT(DEBUG_STATIC_ANALYZING == 0)
+#endif
+
 
 
 //=//// CONTROL TICK COUNTING IN THE TRAMPOLINE ///////////////////////////=//
