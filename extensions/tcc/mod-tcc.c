@@ -371,7 +371,8 @@ DECLARE_NATIVE(MAKE_NATIVE)
     assert(Misc_Phase_Adjunct(details) == nullptr);
     Tweak_Misc_Phase_Adjunct(details, adjunct);
 
-    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
+    return UNSURPRISING(OUT);
 }
 
 
