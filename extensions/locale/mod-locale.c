@@ -46,7 +46,7 @@ typedef RebolValue Value;
 //   "Get locale specific information"
 //
 //      return: [null? text!]
-//      category ['language 'language* 'territory 'territory*]
+//      category [~(language language* territory territory*)~]
 //          --[language: English name of the language,
 //          territory: English name of the country/region,
 //          language*: Full localized primary name of the language
