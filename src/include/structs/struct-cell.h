@@ -230,7 +230,7 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
     #define QUASIFORM_2     quasiform_2
 #else
     #define ANTIFORM_0      0  // also "QUASI" (NONQUASI_BIT is clear)
-    #define QUASIFORM_2     1
+    #define QUASIFORM_2     2
 #endif
 
 // see above for ANTIFORM_0

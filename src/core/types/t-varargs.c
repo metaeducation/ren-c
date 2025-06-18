@@ -340,7 +340,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         return false;
     }
 
-    if (param and not Is_Atom_Trash(out)) {
+    if (param and not Is_Trash(out_value)) {
         heeded(Corrupt_Cell_If_Debug(Level_Spare(TOP_LEVEL)));
         heeded(Corrupt_Cell_If_Debug(Level_Scratch(TOP_LEVEL)));
 

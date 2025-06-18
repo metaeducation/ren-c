@@ -793,7 +793,7 @@ Bounce Stepper_Executor(Level* L)
     dont(Quotify(Known_Element(SPARE)));  // want to run word
 
     Value* temp = rebLift_helper(
-        Level_Binding(L),
+        cast(RebolContext*, Level_Binding(L)),
         spare, out, rebEND
     );
     Copy_Cell(OUT, temp);
@@ -1847,7 +1847,7 @@ for (; check != tail; ++check) {  // push variables
     dont(Quotify(Known_Element(SPARE)));  // want to run word
 
     Value* temp = rebValue_helper(  // passing binding explicitly, use helper
-        Level_Binding(L),
+        cast(RebolContext*, Level_Binding(L)),
         spare, out,
         rebEND  // must pass END explicitly to helper
     );
@@ -1958,6 +1958,7 @@ for (; check != tail; ++check) {  // push variables
                 check, L_next, Feed_Binding(L->feed)
             );
             assert(not e);
+            UNUSED(e);
             assert(
                 memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
             );

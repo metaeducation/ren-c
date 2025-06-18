@@ -494,6 +494,7 @@ static void Init_System_Object(
         Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT)
     );
     assert(not e);
+    UNUSED(e);
     assert(
         0 == CT_Context(
             Known_Element(check),

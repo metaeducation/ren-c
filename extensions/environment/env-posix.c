@@ -1,4 +1,6 @@
 #include <unistd.h>
+extern char **environ;  // not guaranteed to be defined by unistd.h
+
 #include <stdlib.h>
 
 #ifdef USING_LIBREBOL  // need %sys-core.h variation for IMPLEMENT_GENERIC()

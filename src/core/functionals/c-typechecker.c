@@ -389,9 +389,10 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     ){
         Copy_Cell(SCRATCH, test);  // intrinsic may need action
 
+        Liftify(SPARE);
+
       #if DEBUG_CELL_READ_WRITE
         assert(Not_Cell_Flag(SPARE, PROTECTED));
-        Liftify(SPARE);
         Set_Cell_Flag(SPARE, PROTECTED);
       #endif
 
@@ -402,8 +403,9 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
       #if DEBUG_CELL_READ_WRITE
         Clear_Cell_Flag(SPARE, PROTECTED);
-        Unliftify_Undecayed(SPARE);
       #endif
+
+        Unliftify_Undecayed(SPARE);
 
         if (bounce == nullptr or bounce == BOUNCE_BAD_INTRINSIC_ARG)
             goto test_failed;

@@ -61,7 +61,7 @@
 #define PRIMED  cast(Atom*, &L->u.eval.primed)
 
 
-static INLINE bool Using_Sublevel_For_Stepping(Level* L) {  // see [A]
+static bool Using_Sublevel_For_Stepping(Level* L) {  // see [A]
     if (L == TOP_LEVEL)
         return false;
     assert(TOP_LEVEL->prior == L);

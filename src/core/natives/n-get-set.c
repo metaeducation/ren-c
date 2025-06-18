@@ -510,7 +510,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
 
 }} ensure_out_is_action: { ///////////////////////////////////////////////////
 
-    const Value* out = Known_Stable(OUT);
+    Value* out = Known_Stable(OUT);
 
     if (Is_Action(out))
         goto return_success;
@@ -1028,7 +1028,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     ++stackindex;
 
-} calculate_pick_stack_limit:
+} calculate_pick_stack_limit: {
 
     StackIndex limit = stackindex_top;
     if (Is_Dual_Nulled_Pick_Signal(OUT))
@@ -1100,7 +1100,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     Drop_Level(sub);
 
-} check_for_updater: {
+}} check_for_updater: {
 
     // 1. SPARE was picked via dual protocol.  At the moment of the PICK,
     //    the picker may have been ^META, in which case we wouldn't want to

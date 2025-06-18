@@ -184,6 +184,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
         DECLARE_VALUE (check);
         Option(Error*) e = Trap_Get_Word(check, L_next, L_binding);
         assert(not e);
+        UNUSED(e);
         assert(
             memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
         );

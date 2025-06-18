@@ -502,6 +502,7 @@ Value* Create_Directory(const Value* port)
 {
     FileReq* dir = unwrap Filereq_Of_Port(port);
     assert(dir->is_dir);
+    UNUSED(dir);
 
     DECLARE_VALUE (dir_path);
     Option(Error*) e = Trap_Get_Port_Path_From_Spec(

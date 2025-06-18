@@ -831,7 +831,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
         cp = ep;
     }
 
-  end_date:
+  end_date: {
 
     // Overwriting scanned TYPE_TIME...
     // payload.time.nanoseconds set
@@ -850,7 +850,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     CELL_DATE_YMDZ(top).zone = tz;
 
     return cp;
-}
+}}
 
 
 //
