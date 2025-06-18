@@ -342,7 +342,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
         if (Is_Library_Closed(Cell_Library(lib)))
             return PANIC(Error_Bad_Library_Raw());
 
-        OS_CLOSE_LIBRARY(Cell_Library_FD(lib));
+        OS_CLOSE_LIBRARY(Cell_Library_Fd(lib));
     */
 
    Slot* shutdown_action = maybe Sea_Slot(

@@ -78,12 +78,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
     UNUSED(ARG(FORM));
 
     Element* custom = Element_ARG(ELEMENT);
-    assert(Heart_Of_Is_0(custom));
-
-    const Value* datatype = Datatype_Of(custom);
+    /*assert(Heart_Of_Is_0(custom));*/  // !!! currently does HANDLE!
 
     Begin_Non_Lexical_Mold(mo, custom);
-    Mold_Or_Form_Cell_Ignore_Quotes(mo, Cell_List_Item_At(datatype), false);
+    Mold_Or_Form_Cell_Ignore_Quotes(mo, g_empty_block, false);
     End_Non_Lexical_Mold(mo);
 
     return TRIPWIRE;  // no return value

@@ -124,8 +124,9 @@ void Begin_Non_Lexical_Mold(Molder* mo, const Element* v)
 {
     Append_Ascii(mo->string, "&[");
 
-    Heart heart = Heart_Of_Builtin_Fundamental(v);
-    const Symbol* type_name = Canon_Symbol(Symbol_Id_From_Type(heart));
+    const Value* datatype = Datatype_Of(v);
+    const Element* word = Cell_List_Item_At(datatype);
+    const Symbol* type_name = Cell_Word_Symbol(word);;
     Append_Spelling(mo->string, type_name);  // includes the "!"
 
     Append_Codepoint(mo->string, ' ');
