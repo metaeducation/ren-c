@@ -371,10 +371,9 @@ DECLARE_NATIVE(ANTIFORM_Q)
 //
 //  "Give the antiform of the plain argument (like UNMETA QUASI)"
 //
-//      return: "Antiform of input (will be unbound)"
-//          [antiform?]
+//      return: [antiform?]
 //      element "Any non-QUOTED!, non-QUASI value"
-//          [element?]  ; there isn't an any-nonquoted! typeset
+//          [fundamental?]
 //  ]
 //
 DECLARE_NATIVE(ANTI)
@@ -383,18 +382,31 @@ DECLARE_NATIVE(ANTI)
 
     Element* elem = Element_ARG(ELEMENT);
 
-    if (Is_Quoted(elem))
-        return PANIC("QUOTED! values have no antiform");
-
-    if (Is_Quasiform(elem))  // Review: Allow this?
-        return PANIC("QUASIFORM! values can be made into antiforms with UNMETA");
-
     Copy_Cell(OUT, elem);
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
     if (e)
         return PANIC(unwrap e);
 
     return OUT;
+}
+
+
+//
+//  unanti: native [
+//
+//  "Give the plain form of the antiform argument"
+//
+//      return: [plain?]
+//      ^antiform [antiform?]
+//  ]
+//
+DECLARE_NATIVE(UNANTI)
+{
+    INCLUDE_PARAMS_OF_UNANTI;
+
+    Element* lifted_antiform = Element_ARG(ANTIFORM);  // ^META in native lifts
+
+    return COPY(Unquasify(lifted_antiform));
 }
 
 

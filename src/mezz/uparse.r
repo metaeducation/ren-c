@@ -1073,10 +1073,10 @@ default-combinators: make map! [
         ;
         case [
             element? ^result [
-                pending: glom pending result  ; retain lifting quote as signal
+                pending: glom pending quote result  ; quoteds target COLLECT
             ]
             splice? ^result [
-                for-each 'item unquasi result [
+                for-each 'item unanti result [
                     pending: glom pending quote item  ; quoteds target COLLECT
                 ]
             ]
@@ -1736,7 +1736,7 @@ default-combinators: make map! [
         ]
 
         neq?: ^ either state.case [not-equal?/] [lax-not-equal?/]
-        for-each 'item unquasi lift value [
+        for-each 'item unanti value [
             if neq? remainder.1 item [
                 return fail [
                     "Value at input position didn't match splice element"

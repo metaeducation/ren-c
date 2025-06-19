@@ -126,7 +126,7 @@ export console!: make object! [
         ; it looks ugly to show the molded antiform object.
 
         if error? ^v [
-            print form unquasi lift* ^v
+            print form unanti ^v
             return ~
         ]
 
@@ -147,7 +147,7 @@ export console!: make object! [
         ; 0-length packs (~[]~ antiform, a.k.a. "void") mold like antiforms.
 
         if pack? ^v [
-            v: unquasi lift ^v
+            v: unanti ^v
             if 0 = length of v [  ; mold like a regular antiform, for now
                 print unspaced [result _ "~[]~" _ _ ";" _ "anti (void)"]
                 return ~

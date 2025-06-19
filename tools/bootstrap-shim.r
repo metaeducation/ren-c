@@ -132,7 +132,7 @@ sys.util/rescue [
     export load3: enclose (
         augment load/ [:header]  ; no multi-return values
     ) func [f] [
-        let result': unquasi lift eval f
+        let result': unanti eval f
         if f.header [
             ensure block! unquote result'.1
             ensure object! unquote result'.2

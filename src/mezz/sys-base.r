@@ -71,7 +71,7 @@ make-quit: lambda [
             ]
             quit* any [
                 if not error? ^result [0]  ; non-error is shell success
-                try (unquasi result).exit-code  ; null if no exit-code field
+                try (unanti ^result).exit-code  ; null if no exit-code field
                 1  ; generic quit signal for all non-exit-code-bearing errors
             ]
         ]
