@@ -168,10 +168,7 @@ help-action: func [
     ]
 
     ; !!! Note that an action can have an ordinary parameter named RETURN.
-    ; If it does then it will be listed in the arguments.  This hasn't been
-    ; completely worked out, but the idea here is that if it doesn't have
-    ; an *actual* by-contract return value documentation, then there will
-    ; be no RETURNS: in the help.
+    ; If it does then it will be listed in the arguments.
     ;
     let return-param: return of frame
 
@@ -196,8 +193,6 @@ help-action: func [
         print "REFINEMENTS:"
         print-args:indent-words refinements
     ]
-
-    return ~
 ]
 
 
