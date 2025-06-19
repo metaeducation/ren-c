@@ -107,8 +107,8 @@ export console!: make object! [
         ; We don't want to use PRINT here because it would put the cursor on
         ; a new line.
         ;
-        write-stdout unspaced prompt
-        write-stdout space
+        write stdout unspaced prompt
+        write stdout space
     ]
 
     print-result: method [
@@ -703,9 +703,9 @@ console*: func [
 
                 repeat n 25 [
                     if 1 = remainder n 5 [
-                        write-stdout form (5 - to-integer (n / 5))
+                        write stdout form (5 - to-integer (n / 5))
                     ] else [
-                        write-stdout "."
+                        write stdout "."
                     ]
                     wait 0.25
                 ]
@@ -809,7 +809,7 @@ console*: func [
                 ; *Note this is not running in a continuation at present*,
                 ; so the WRITE-STDOUT can only be done via the EMIT.
                 ;
-                emit [write-stdout unspaced [(<*> unclosed) "\" _ _]]
+                emit [write stdout unspaced [(<*> unclosed) "\" _ _]]
 
                 emit [reduce [  ; reduce will runs in sandbox
                     (<*> spread result)  ; splice previous inert literal lines

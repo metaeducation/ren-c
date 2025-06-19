@@ -45,6 +45,10 @@ bindable?
 newline
 space
 
+stdout
+stdin
+stderr
+
 sys
 system
 lib

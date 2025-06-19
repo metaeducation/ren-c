@@ -67,7 +67,7 @@ prin: func [
     return: []
     value [<opt> element?]
 ][
-    write-stdout switch:type value [
+    write stdout switch:type value [
         null?/ [return ~]  ; type of VOID is currently null
         text! rune! [value]
         block! [spaced value]

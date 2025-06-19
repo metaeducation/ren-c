@@ -466,7 +466,7 @@ source: func [
     ; The system doesn't preserve the literal spec, so it must be rebuilt
     ; from combining the the ADJUNCT-OF information.
 
-    write-stdout unspaced [
+    write stdout unspaced [
         mold name ":" _ "lambda" _ mold spec-of f
     ]
 

@@ -219,8 +219,8 @@ ask: func [
 
     cycle [  ; while not canceled, loop while input can't be converted to type
         if prompt [
-            write-stdout prompt
-            write-stdout space  ; space after prompt is implicit
+            write stdout prompt
+            write stdout space  ; space after prompt is implicit
         ]
 
         let line: read-line stdin except e -> [

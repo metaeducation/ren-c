@@ -50,12 +50,12 @@ probe: func [
 ][
     ; Remember this is early in the boot, so many things not defined.
 
-    write-stdout if antiform? ^atom [
+    write stdout if antiform? ^atom [
         unspaced [mold lift* ^atom _ _ "; anti"]  ; lifted is quasiform
     ] else [
         mold ^atom  ; possibly ACTION! or TRASH!, use ^atom to "defuse"
     ]
-    write-stdout newline
+    write stdout newline
 
     return ^atom
 ]
@@ -281,7 +281,7 @@ print: func [
         if line <> newline [
             panic "PRINT only allows CHAR! of newline (see WRITE-STDOUT)"
         ]
-        write-stdout line
+        write stdout line
         return ~
     ]
 
@@ -294,8 +294,8 @@ print: func [
         ]
     ]
 
-    write-stdout (opt spaced line) then [
-        write-stdout newline
+    write stdout (opt spaced line) then [
+        write stdout newline
     ] else [
         return null
     ]
@@ -321,7 +321,7 @@ echo: func [
             ]
         ]
     ]
-    write-stdout form map-each 'item line [
+    write stdout form map-each 'item line [
         switch:type item [
             word?:pinned/
             group?:pinned/ [
@@ -331,5 +331,5 @@ echo: func [
             item
         ]
     ]
-    write-stdout newline
+    write stdout newline
 ]

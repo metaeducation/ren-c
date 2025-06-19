@@ -70,16 +70,16 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.]--
         ;
         if focus-frame [
             if label of focus-frame [
-                write-stdout unspaced [label of focus-frame ":"]
+                write stdout unspaced [label of focus-frame ":"]
             ]
-            write-stdout unspaced ["|" focus-index "|"]
+            write stdout unspaced ["|" focus-index "|"]
         ]
 
         ; We don't want to use PRINT here because it would put the cursor on
         ; a new line.
         ;
-        write-stdout unspaced prompt
-        write-stdout space
+        write stdout unspaced prompt
+        write stdout space
     ]
 
     dialect-hook: method [

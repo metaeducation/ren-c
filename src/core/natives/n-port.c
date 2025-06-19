@@ -142,8 +142,8 @@ DECLARE_NATIVE(READ)
 //
 //  "Writes to a file, URL, or port - auto-converts text strings"
 //
-//      return: [port! block!]  ; !!! http write returns BLOCK!, why?
-//      destination [port! file! url! block!]
+//      return: [port! block! @word!]  ; !!! http write returns BLOCK!, why?
+//      destination [port! file! url! block! @word!]
 //      data "Data to write (non-binary converts to UTF-8)"
 //          [blob! text! block! object! rune!]
 //      :part "Partial write a given number of units"
@@ -156,7 +156,34 @@ DECLARE_NATIVE(READ)
 //
 DECLARE_NATIVE(WRITE)
 {
-    Element* port = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_WRITE;
+
+    Element* port = Element_ARG(DESTINATION);
+    Element* data = Element_ARG(DATA);
+
+    if (Is_Pinned_Form_Of(WORD, port)) {
+        if (Cell_Word_Id(port) != SYM_STDOUT)
+            return PANIC("only @stdout support on WRITE for @ right now");
+
+        if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(APPEND))
+            return PANIC(Error_Bad_Refines_Raw());
+
+        if (Bool_ARG(LINES)) {
+            if (Is_Block(data))
+                Pinify(data);  // don't reduce
+            Value* delimited = rebValue("delimit:tail newline", rebQ(data));
+            if (not delimited)  // e.g. [] input
+                return COPY(port);
+            Copy_Cell(data, Known_Element(delimited));
+            rebRelease(delimited);
+        }
+
+        return rebDelegate(
+            CANON(WRITE_STDOUT), rebQ(data),
+            port
+        );
+    }
+
     return Run_Generic_Dispatch(port, LEVEL, CANON(WRITE));
 }
 

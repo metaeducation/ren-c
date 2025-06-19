@@ -28,7 +28,7 @@ log: func [
 
     ; By default we echo the log to the screen also.  This should be an option.
     ;
-    write-stdout unspaced report
+    write stdout unspaced report
 ]
 
 ; counters

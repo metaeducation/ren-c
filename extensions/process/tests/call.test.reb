@@ -68,7 +68,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     (/echoer: enclose specialize call:input:output/ [
         command: [
             (system.options.boot) --suppress -["*"]- -q
-            --do "write-stdout read system.ports.input"
+            --do "write stdout read system.ports.input"
         ]
     ] frame -> [
         eval frame

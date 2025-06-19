@@ -43,7 +43,7 @@ if find (words of import/) 'into [  ; non-bootstrap Ren-C
 verbose: null  ; happens before verbose in %common.r
 
 if verbose [
-    write-stdout "LOADING %import-shim.r --- "  ; adds "COMPLETE!" on finish
+    write stdout "LOADING %import-shim.r --- "  ; adds "COMPLETE!" on finish
 ]
 
 
