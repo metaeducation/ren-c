@@ -109,7 +109,7 @@ combinator: func [
     body [block!]
 ]
 bind construct [
-    wrapper: lambda [
+    ^wrapper: lambda [  ; ^wrapper to not store WRAPPER as label
         "Enclosing function for hooking all combinators"
         f [frame!]
     ][
@@ -123,7 +123,7 @@ bind construct [
     let autopipe: ~
     let ghostable: ~  ; need to UNGHOST return result if no GHOST! return
 
-    let action: func compose [
+    let ^action: func compose [  ; ^action to not store ACTION as label
         ; Get the text description if given
         (? if text? spec.1 [spec.1, elide spec: my next])
 
@@ -2813,7 +2813,7 @@ parsify: func [
         ]
 
         (path? r) and (space? last r) [  ; type constraint combinator
-            let action: get r
+            let ^action: get r  ; ^ to not store ACTION as label
             comb: state.combinators.match
             return combinatorize:value comb rules state action/
         ]
