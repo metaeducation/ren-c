@@ -3523,14 +3523,27 @@ DECLARE_NATIVE(TRANSCODE)
         UNUSED(*OUT);
     }
 
-    if (TOP_INDEX == STACK_BASE) {  // (transcode "") is null, not []
-        Init_Nulled(OUT);
-    }
-    else if (Bool_ARG(NEXT)) {
-        assert(TOP_INDEX == STACK_BASE + 1);
-        Move_Drop_Top_Stack_Element(OUT);
+} process_stack_results_if_any: {
+
+  // 1. If you're doing a plain TRANSCODE on content that turns out to be
+  //    empty (or all comments and whitespace), then the result is not NULL,
+  //    but an empty BLOCK!.  This makes TRY TRANSCODE more useful (as you
+  //    know that if you get NULL there was an actual error), and it is more
+  //    often than not the case that empty content evaluating to GHOST! is
+  //    what you want (e.g. scripts that are empty besides a header are ok).
+
+    if (Bool_ARG(NEXT)) {
+        if (TOP_INDEX == STACK_BASE) {
+            Init_Nulled(OUT);
+        }
+        else {
+            assert(TOP_INDEX == STACK_BASE + 1);
+            Move_Drop_Top_Stack_Element(OUT);
+        }
     }
     else {
+        possibly(TOP_INDEX == STACK_BASE);  // transcode "" is [], not null [1]
+
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
         if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
             Set_Source_Flag(a, NEWLINE_AT_TAIL);
@@ -3543,17 +3556,25 @@ DECLARE_NATIVE(TRANSCODE)
 
     Drop_Level(SUBLEVEL);
 
-    if (Is_Nulled(OUT))  // no more Elements were left to transcode
-        return nullptr;  // must return pure null for THEN/ELSE to work right
-
     if (not Bool_ARG(NEXT)) {
         assert(Is_Block(Known_Element(OUT)));
         return OUT;  // single block result
     }
 
-    // Return the input BLOB! or TEXT! advanced by how much the transcode
-    // operation consumed.
-    //
+    if (Is_Nulled(OUT))  // no more Elements were left to transcode
+        return nullptr;  // must return pure null for THEN/ELSE to work right
+
+} calculate_and_return_how_far_transcode_advanced: {
+
+  // 1. The scanner does not currently keep track of how many codepoints it
+  //    went past, it only advances bytes.  But if TEXT! input was given, we
+  //    need to push it forward by a codepoint-based index to return how
+  //    much it advanced.  Count characters by going backwards from the byte
+  //    position of the finished scan until the byte we started at is found.
+  //
+  //    (It would probably be better if the scanner kept count, though maybe
+  //    that would make it slower when this isn't needed often?)
+
     Sink(Element) spare_rest = SPARE;
     Copy_Cell(spare_rest, source);
 
@@ -3564,19 +3585,9 @@ DECLARE_NATIVE(TRANSCODE)
         else
             VAL_INDEX_UNBOUNDED(spare_rest) = Binary_Len(b);
     }
-    else {
+    else {  // must count codepoints [1]
         assert(Is_Text(source));
 
-        // !!! The scanner does not currently keep track of how many
-        // codepoints it went past, it only advances bytes.  But the TEXT!
-        // we're returning here needs a codepoint-based index.
-        //
-        // Count characters by going backwards from the byte position of
-        // the finished scan until the byte we started at is found.
-        //
-        // (It would probably be better if the scanner kept count, though
-        // maybe that would make it slower when this isn't needed?)
-        //
         if (transcode->at)
             VAL_INDEX_RAW(spare_rest) += Num_Codepoints_For_Bytes(
                 bp, transcode->at
@@ -3586,7 +3597,7 @@ DECLARE_NATIVE(TRANSCODE)
     }
 
     Source* pack = Make_Source_Managed(2);
-    Set_Flex_Len(pack, 2);
+    Set_Flex_Len(pack, 2);  // PACK! of advanced input, and transcoded item
 
     Copy_Lifted_Cell(Array_At(pack, 0), spare_rest);
     Copy_Lifted_Cell(Array_At(pack, 1), OUT);

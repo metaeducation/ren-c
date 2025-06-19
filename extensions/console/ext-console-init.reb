@@ -827,12 +827,12 @@ console*: func [
         return <prompt>
     ]
 
-    ; If the transcode returned null, then it was like (transcode "") or
-    ; transcode "; some comment" - rather than have the console print out
+    ; If the transcode returned [], then it was like (transcode "") or
+    ; transcode "; some comment".  But rather than have the console print out
     ; a note that evaluated to GHOST!, we just cycle the prompt.  This is
     ; more pleasing if you just hit enter to see if the console is responding.
     ;
-    if not code [
+    if [] = code [
         return <prompt>
     ]
 
