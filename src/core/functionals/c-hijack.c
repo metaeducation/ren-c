@@ -154,8 +154,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     L2->baseline.stack_base = base;
 
     Push_Level_Erase_Out_If_State_0(out, L2);
-    Push_Action(L2, run);
-    Begin_Action(L2, Cell_Frame_Label_Deep(run), PREFIX_0);
+    Push_Action(L2, run, PREFIX_0);
 }
 
 

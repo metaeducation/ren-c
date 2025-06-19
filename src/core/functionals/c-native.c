@@ -607,9 +607,9 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
 // e.g. (native: native ["A function that creates natives" ...]), so of course
 // that has to be manually constructed.
 //
-// But further than that, we also don't want to use the evaluator to do the
-// assignments.  Because (poke: native ["A function that pokes" ...]) would
-// have trouble since POKE is used to implement SET-WORD assignments in the
+// But further than that, we also need to do a manual construction of the
+// TWEAK* native, e.g. (tweak*: native ["A function that tweaks" ...]) would
+// have trouble since TWEAK* is used to implement SET-WORD assignments in the
 // general case.  Hence we write into the library slots directly just to
 // get the ball rolling.
 //
@@ -625,8 +625,9 @@ void Startup_Natives(const Element* boot_natives)
 
     DECLARE_ATOM (dual_step);
     Level* L = Make_Level_At_Core(
-        &Stepper_Executor, boot_natives, lib, LEVEL_MASK_NONE
+        &Evaluator_Executor, boot_natives, lib, LEVEL_MASK_NONE
     );
+    Init_Void(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(dual_step, L);
 
   setup_native_dispatcher_enumeration: {
@@ -662,47 +663,29 @@ void Startup_Natives(const Element* boot_natives)
     Make_Native_In_Lib_By_Hand(L, SYM_NATIVE_BOOTSTRAP);
     Make_Native_In_Lib_By_Hand(L, SYM_TWEAK_P_BOOTSTRAP);
 
-    goto make_next_native;
-
-} make_next_native: { ////////////////////////////////////////////////////////
+} make_other_natives: {
 
     // For the rest of the natives, we can actually use the evaluator to
-    // execute the NATIVE invocation.  This defers to refinement processing
+    // execute the NATIVE invocations.  This defers to refinement processing
     // of chains to handle things like NATIVE:COMBINATOR and NATIVE:INTRINSIC.
     // It also means natives could take more arguments if they wanted to,
     // without having to write special code to handle it.
-    //
-    // 1. See notes at top of function for why we don't use the evaluator to
-    //    do the SET-WORD! assignments.
 
-    Reset_Evaluator_Erase_Out(L);
+    bool threw = Trampoline_With_Top_As_Root_Throws();
+    assert(not threw);
+    UNUSED(threw);
 
-    assert(Is_Set_Word(At_Level(L)));
-    const Symbol* symbol = unwrap Try_Get_Settable_Word_Symbol(
-        nullptr,
-        At_Level(L)
-    );
-    Sink(Value) slot = Sink_Lib_Var(unwrap Symbol_Id(symbol));
+    assert(Is_Okay(Known_Stable(L->out)));
 
-    Fetch_Next_In_Feed(L->feed);
+} forget_bootstrap_native_and_tweak: {
 
-    possibly(  // could be more complex (INFIX NATIVE, NATIVE:COMBINATOR...)
-        Is_Word(At_Level(L)) and Cell_Word_Id(At_Level(L)) == SYM_NATIVE
-    );
+    // During the make_other_natives evaluation, the NATIVE and TWEAK* lib
+    // variables were overwritten with the typechecked versions.  Get rid of
+    // the bootstrap versions that were made by hand, so that they don't
+    // cause confusion.
 
-    if (Eval_Step_Throws(dual_step, L))  // write directly to var [1]
-        crash (Error_No_Catch_For_Throw(TOP_LEVEL));
-
-    assert(Is_Atom_Action(dual_step));
-
-    Copy_Cell(slot, Known_Stable(dual_step));
-
-    if (not Is_Quasi_Word(At_Level(L)))
-        goto make_next_native;
-
-    assert(Cell_Word_Id(At_Level(L)) == SYM_OKAY);
-    Fetch_Next_In_Feed(L->feed);
-    assert(Is_Feed_At_End(L->feed));
+    Init_Tripwire(Sink_Lib_Var(SYM_NATIVE_BOOTSTRAP));
+    Init_Tripwire(Sink_Lib_Var(SYM_TWEAK_P_BOOTSTRAP));
 
 } finished: {
 

@@ -493,13 +493,7 @@ Bounce Stepper_Executor(Level* L)
 } right_hand_literal_infix_wins: { ///////////////////////////////////////////
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, L_current_gotten_raw);
-
-    Option(const Symbol*) label = Is_Word(CURRENT)
-        ? Cell_Word_Symbol(CURRENT)
-        : Cell_Frame_Label_Deep(CURRENT);
-
-    Begin_Action(sub, label, infix_mode);
+    Push_Action(sub, L_current_gotten_raw, infix_mode);
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
     goto process_action;
 
@@ -897,11 +891,11 @@ Bounce Stepper_Executor(Level* L)
     if (Cell_Frame_Lens(CURRENT))  // running frame if lensed
         return PANIC("Use REDO to restart a running FRAME! (can't EVAL)");
 
-    Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, CURRENT);
     Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(CURRENT);
+
+    Level* sub = Make_Action_Sublevel(L);
     assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
-    Begin_Action(sub, Cell_Frame_Label_Deep(CURRENT), infix_mode);
+    Push_Action(sub, CURRENT, infix_mode);
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
 
     goto process_action;
@@ -975,7 +969,6 @@ Bounce Stepper_Executor(Level* L)
 
     Value* out = cast(Value*, OUT);
     Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(out);
-    const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
 
     if (infix_mode) {
         if (infix_mode != INFIX_TIGHT) {  // defer or postpone
@@ -1003,12 +996,11 @@ Bounce Stepper_Executor(Level* L)
         and Not_Level_At_End(L)  // can't do <end>, fallthru to error
         and not SPORADICALLY(10)  // checked builds sometimes bypass
     ){
-        Option(VarList*) coupling = Cell_Frame_Coupling(out);
         Init_Frame(
             CURRENT,
             details,
-            label,
-            coupling
+            Cell_Frame_Label_Deep(out),
+            Cell_Frame_Coupling(out)
         );
         Param* param = Phase_Param(details, 1);
         Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
@@ -1042,10 +1034,9 @@ Bounce Stepper_Executor(Level* L)
   #endif
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, out);
-    Push_Level_Erase_Out_If_State_0(OUT, sub);  // *always* clear out
-    Begin_Action(sub, label, infix_mode);
-    unnecessary(Push_Level_Erase_Out_If_State_0(OUT, sub)); // see [1]
+    Push_Action(sub, out, infix_mode);  // action first, before OUT erased
+    Erase_Cell(OUT);  // want OUT clear, even if infix_mode sets state nonzero
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     goto process_action;
 
@@ -1153,11 +1144,8 @@ Bounce Stepper_Executor(Level* L)
     Level* sub = Make_Action_Sublevel(L);
     sub->baseline.stack_base = STACK_BASE;  // refinements
 
-    Option(const Symbol*) label = Cell_Frame_Label_Deep(out);
-
-    Push_Action(sub, out);
-    Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
-    Push_Level_Erase_Out_If_State_0(OUT, sub);
+    Push_Action(sub, out, PREFIX_0);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);  // not infix, sub state is 0
     goto process_action;
 
 
@@ -2114,13 +2102,7 @@ for (; check != tail; ++check) {  // push variables
     // into the new function's frame.
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, L_next_gotten_raw);
-
-    Option(const Symbol*) label = Is_Word(L_next)
-        ? Cell_Word_Symbol(L_next)
-        : Cell_Frame_Label_Deep(L_next);
-
-    Begin_Action(sub, label, infix_mode);
+    Push_Action(sub, L_next_gotten_raw, infix_mode);
     Fetch_Next_In_Feed(L->feed);
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state

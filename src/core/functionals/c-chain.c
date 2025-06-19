@@ -197,9 +197,7 @@ Bounce Cascader_Executor(Level* const L)
     ++VAL_INDEX_RAW(pipeline);  // update series index to next FRAME! to call
 
     Restart_Action_Level(sub);  // see notes
-    Push_Action(sub, pipeline_at);
-
-    Begin_Action(sub, Cell_Frame_Label_Deep(pipeline_at), PREFIX_0);
+    Push_Action(sub, pipeline_at, PREFIX_0);
 
     LEVEL_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [1]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);

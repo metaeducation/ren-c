@@ -237,8 +237,7 @@ DECLARE_NATIVE(SHOVE)
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_INFIX);  // [1]
 
     Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
-    Push_Action(sub, shovee);
-    Begin_Action(sub, label, infix_mode);  // can know if it's infix [2]
+    Push_Action(sub, shovee, infix_mode);  // can know if it's infix [2]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
@@ -514,6 +513,8 @@ DECLARE_NATIVE(EVAL_FREE)
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     );
 
+    Set_Action_Level_Label(L, Cell_Frame_Label_Deep(frame));
+
     L->varlist = Varlist_Array(varlist);
     L->rootvar = Rootvar_Of_Varlist(varlist);
     assert(Get_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
@@ -532,7 +533,7 @@ DECLARE_NATIVE(EVAL_FREE)
     L->u.action.param = Phase_Params_Head(phase);
     L->u.action.arg = L->rootvar + 1;
 
-    Begin_Action(L, Cell_Frame_Label_Deep(frame), PREFIX_0);
+    Begin_Action(L, PREFIX_0);
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
@@ -1039,8 +1040,7 @@ DECLARE_NATIVE(RUN)
 
     Level* sub = Make_Action_Sublevel(level_);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
-    Push_Action(sub, action);
-    Begin_Action(sub, Cell_Frame_Label_Deep(action), PREFIX_0);
+    Push_Action(sub, action, PREFIX_0);
 
     return DELEGATE_SUBLEVEL(sub);
 }

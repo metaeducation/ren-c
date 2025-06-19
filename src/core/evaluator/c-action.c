@@ -1109,12 +1109,8 @@ Bounce Action_Executor(Level* L)
 // GC have to be sensitive to how far fulfillment has progressed, to avoid
 // marking uninitialized memory.
 //
-// This is separated from Begin_Action() because the idea was that you could
-// use an already existing VarList*, in which case you'd not need allocations
-// done by this routine.  In practice, Begin_Action() is a tiny amount of
-// reused work.  This separation may be reconsidered.
-//
-void Push_Action(Level* L, const Value* frame) {
+void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
+{
     assert(L->executor == &Action_Executor);
 
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
@@ -1125,6 +1121,8 @@ void Push_Action(Level* L, const Value* frame) {
     Length num_args = Phase_Num_Params(phase);  // includes specialized, locals
 
     assert(L->varlist == nullptr);
+
+    Set_Action_Level_Label(L, Cell_Frame_Label_Deep(frame));
 
     Flex* s = cast(Flex*, Prep_Stub(
         FLEX_MASK_LEVEL_VARLIST
@@ -1188,19 +1186,24 @@ void Push_Action(Level* L, const Value* frame) {
     KEY = Phase_Keys(&KEY_TAIL, ORIGINAL);
     PARAM = Phase_Params_Head(ORIGINAL);
     ARG = L->rootvar + 1;
+
+    Begin_Action(L, infix_mode);
 }
 
 
 //
 //  Begin_Action: C
 //
+// This is separated from Push_Action() because the idea was that you could
+// use an already existing VarList*, in which case you'd not need allocations
+// done by Push_Action().  But most clients don't need the separation, so
+// Push_Action() just calls Begin_Action().
+//
 // 1. This can happen during Encloser_Dispatcher().  Review.
 //
-void Begin_Action(
-    Level* L,
-    Option(const Symbol*) label,
-    Option(InfixMode) infix_mode
-){
+void Begin_Action(Level* L, Option(InfixMode) infix_mode)
+{
+    assert(not L->u.action.label or Is_Stub_Symbol(unwrap L->u.action.label));
     assert(not Is_Level_Infix(L));
     /* assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX)); */  // !!! happens? [1]
 
@@ -1209,8 +1212,6 @@ void Begin_Action(
 
     assert(Not_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
     Set_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
-
-    Set_Action_Level_Label(L, label);
 
     if (not infix_mode) {
         assert(not Is_Level_Infix(L));

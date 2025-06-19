@@ -419,9 +419,9 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
         assert(not Is_Space(at));  // two blanks would be `/` as WORD!
     }
 
-    Sink(Value) out = OUT;
+    Sink(Value) spare_left = SPARE;
     if (Is_Group(at)) {
-        if (Eval_Value_Throws(out, at, binding)) {
+        if (Eval_Value_Throws(spare_left, at, binding)) {
             e = Error_No_Catch_For_Throw(TOP_LEVEL);
             goto return_error;
         }
@@ -429,13 +429,13 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     else if (Is_Tuple(at)) {
         DECLARE_ELEMENT (steps);
         e = Trap_Get_Tuple_Maybe_Trash(
-            out, steps, at, binding
+            spare_left, steps, at, binding
         );
         if (e)
             goto return_error;
     }
     else if (Is_Word(at)) {
-        e = Trap_Get_Word(out, at, binding);
+        e = Trap_Get_Word(spare_left, at, binding);
         if (e)
             goto return_error;
     }
@@ -445,8 +445,8 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
             goto return_error;
         }
         e = Trap_Get_Chain_Push_Refinements(
-            out,
-            SPARE,  // scratch space...
+            u_cast(Init(Value), OUT),
+            SPARE,
             c_cast(Element*, at),
             Derive_Binding(binding, at)
         );
@@ -462,8 +462,10 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
 
     ++at;
 
-    if (at == tail or Is_Space(at))
+    if (at == tail or Is_Space(at)) {
+        Copy_Cell(OUT, spare_left);
         goto ensure_out_is_action;
+    }
 
     if (at + 1 != tail and not Is_Space(at + 1))
         return Error_User("PATH! can only be two items max at this time");
@@ -471,19 +473,21 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     // When we see `lib/append` for instance, we want to pick APPEND out of
     // LIB and make sure it is an action.
     //
-    if (not Any_Context(out)) {
+    if (not Any_Context(spare_left)) {
         e = Error_Bad_Value(path);
         goto return_error;
     }
 
   handle_context_on_left_of_at: {
 
+    Sink(Value) out = OUT;
+
     if (Is_Chain(at)) {  // lib/append:dup
         e = Trap_Get_Chain_Push_Refinements(
             out,
-            SPARE,  // scratch space...
-            c_cast(Element*, at),
-            Cell_Context(out)  // need to find head of chain in object
+            SPARE,  // scratch space (Cell_Context() extracts)
+            at,
+            Cell_Context(spare_left)  // need to find head of chain in object
         );
         if (e)
             goto return_error;
@@ -491,20 +495,19 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
         goto return_success;  // chain must resolve to an action (?!)
     }
 
-    possibly(Is_Frame(out));
-    Quotify(Known_Element(out));  // frame would run if eval sees unquoted
+    possibly(Is_Frame(spare_left));
+    Quotify(Known_Element(spare_left));  // frame runs if eval sees unquoted
 
     DECLARE_VALUE (temp);
     if (rebRunThrows(
-        temp,  // output cell
+        out,  // output cell
         CANON(PICK),
-        out,  // was quoted above
-        rebQ(cast(const RebolValue*, at)))  // Cell, but is Element*
-    ){
+        spare_left,  // was quoted above
+        rebQ(at)
+    )){
         e = Error_No_Catch_For_Throw(TOP_LEVEL);
         goto return_error;
     }
-    Copy_Cell(out, temp);
 
     goto ensure_out_is_action;
 
@@ -532,7 +535,9 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
 } return_success: { //////////////////////////////////////////////////////////
 
   // Currently there are no success modes that return ERROR! antiforms (as
-  // described by [A] at top of file.)  Would you ever TRY a PATH! (?)
+  // described by [A] at top of file.)  Would you ever TRY a PATH! and not
+  // mean "try the result of the function invoked by the path"?  e.g. TRY
+  // on a PATH! that ends in slash?
 
     assert(Is_Atom_Action(OUT));
 
@@ -631,8 +636,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     if (Is_Quasiform(SPARE))
         return Error_User("TWEAK* cannot be used on antiforms");
 
-    Push_Action(sub, LIB(TWEAK_P));
-    Begin_Action(sub, CANON(TWEAK_P), PREFIX_0);
+    Push_Action(sub, LIB(TWEAK_P), PREFIX_0);
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     bool picker_was_meta;
@@ -722,8 +726,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
 
     Atom* spare_location_dual = SPARE;
 
-    Push_Action(sub, LIB(TWEAK_P));
-    Begin_Action(sub, CANON(TWEAK_P), PREFIX_0);
+    Push_Action(sub, LIB(TWEAK_P), PREFIX_0);
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     Element* location_arg;
@@ -812,7 +815,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
             stable_poke = TOP;
         }
 
-        if (Is_Action(stable_poke)) {  // not lifted now...
+        if (Is_Lifted_Action(stable_poke)) {
             if (Not_Cell_Flag(stable_poke, OUT_HINT_UNSURPRISING))
                 return Error_User(
                     "Surprising ACTION! assignment, use ^ to APPROVE"

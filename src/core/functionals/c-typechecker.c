@@ -431,8 +431,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     );
     Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // sub's out is L->scratch
-    Push_Action(sub, test);
-    Begin_Action(sub, Cell_Frame_Label_Deep(test), PREFIX_0);
+    Push_Action(sub, test, PREFIX_0);
 
     const Key* key = sub->u.action.key;
     const Param* param = sub->u.action.param;

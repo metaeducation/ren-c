@@ -469,9 +469,8 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     );
-    const Value* action = LIB(EQUAL_Q);
-    Push_Action(L, action);
-    Begin_Action(L, Cell_Frame_Label_Deep(action), PREFIX_0);
+
+    Push_Action(L, LIB(EQUAL_Q), PREFIX_0);
 
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_EQUAL_Q;
@@ -530,9 +529,8 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     );
-    const Value* action = LIB(LESSER_Q);
-    Push_Action(L, action);
-    Begin_Action(L, Cell_Frame_Label_Deep(action), PREFIX_0);
+
+    Push_Action(L, LIB(LESSER_Q), PREFIX_0);
 
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_LESSER_Q;

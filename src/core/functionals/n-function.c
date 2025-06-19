@@ -213,8 +213,7 @@ Bounce Func_Dispatcher(Level* const L)
     Value* out = cast(Value*, OUT);
 
     Restart_Action_Level(L);
-    Push_Action(L, out);
-    Begin_Action(L, Cell_Frame_Label_Deep(out), PREFIX_0);
+    Push_Action(L, out, PREFIX_0);
 
     Erase_Cell(OUT);  // invariant for ST_ACTION_INITIAL_ENTRY
 

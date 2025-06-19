@@ -242,8 +242,7 @@ static bool Subparse_Throws(
 
     Push_Level_Erase_Out_If_State_0(out, L);
 
-    Push_Action(L, LIB(SUBPARSE));
-    Begin_Action(L, CANON(SUBPARSE), PREFIX_0);
+    Push_Action(L, LIB(SUBPARSE), PREFIX_0);
 
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what
     // ensures that usermode accesses to the frame won't be able to fiddle
