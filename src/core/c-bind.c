@@ -51,10 +51,10 @@ void Bind_Values_Inner_Loop(
           if (Is_Stub_Sea(context)) {
             SeaOfVars* sea = cast(SeaOfVars*, context);
             bool strict = true;
-            Slot* lookup = maybe Sea_Slot(sea, symbol, strict);
-            if (lookup) {
-                Tweak_Cell_Word_Index(v, INDEX_PATCHED);
-                Tweak_Cell_Binding(v, Compact_Stub_From_Cell(Slot_Hack(lookup)));
+            Patch* patch = maybe Sea_Patch(sea, symbol, strict);
+            if (patch) {
+                Tweak_Cell_Binding(v, sea);
+                Tweak_Cell_Word_Stub(v, patch);
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -83,8 +83,8 @@ void Bind_Values_Inner_Loop(
                 // We're overwriting any previous binding, which may have
                 // been relative.
 
-                Tweak_Cell_Word_Index(v, n);
                 Tweak_Cell_Binding(v, varlist);
+                Tweak_Cell_Word_Index(v, n);
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -212,8 +212,8 @@ bool Try_Bind_Word(const Element* context, Element* word)
         );
         if (not patch)
             return false;
-        Tweak_Cell_Word_Index(word, INDEX_PATCHED);
-        Tweak_Cell_Binding(word, unwrap patch);
+        Tweak_Cell_Binding(word, Cell_Module_Sea(context));
+        Tweak_Cell_Word_Stub(word, unwrap patch);
         return true;
     }
 
@@ -225,8 +225,8 @@ bool Try_Bind_Word(const Element* context, Element* word)
     if (not index)
         return false;
 
-    Tweak_Cell_Word_Index(word, unwrap index);  // ^-- may have been relative
     Tweak_Cell_Binding(word, Cell_Varlist(context));
+    Tweak_Cell_Word_Index(word, unwrap index);
     return true;
 }
 
@@ -261,114 +261,72 @@ Let* Make_Let_Variable(
 
 
 //
-//  Get_Word_Container: C
+//  Try_Get_Binding_Of: C
 //
-// Find the context a word is bound into.  This must account for the various
-// binding forms: Relative Binding, Derived Binding, and Virtual Binding.
+// Find the context a word is bound into.  This has to account for things
+// including what "Lens" should be used for the phase of a function.
 //
-// This function is used by Derelativize(), and so it shouldn't have any
-// failure mode while it's running...even if the context is inaccessible or
-// the word is unbound.  Errors should be panicked by callers if applicable.
-//
-// 1. We want to continue the next_context loop from inside sub-loops, which
-//    means we need a `goto` and not a `continue`.  But putting the goto at
-//    the end of the loop would jump over variable initializations.  Stylizing
-//    this way makes it work without a warning.
-//
-// 2. !!! One original goal with Sea of Words was to enable something like
-//    JavaScript's "strict mode", to prevent writing to variables that had not
-//    been somehow previously declared.  However, that is a bit too ambitious
-//    for a first rollout...as just having the traditional behavior of "any
-//    assignment works" is something people are used to.  Don't do it for the
-//    g_lib_context (so mezzanine is still guarded) but as a first phase, permit
-//    the "emergence" of any variable that is attached to a module.
-//
-// 3. RELATIVE BINDING: The word was made during a deep copy of the block
-//    that was given as a function's body, and stored a reference to that
-//    ACTION! as its binding.  To get a variable for the word, we must
-//    find the right function call on the stack (if any) for the word to
-//    refer to (the FRAME!)
-//
-//    We can only check for a match of the underlying function.  If we checked
-//    for an exact match, then the same function body could not be repurposed
-//    for dispatch e.g. in copied, hijacked, or adapted code, because the
-//    identity of the derived function would not match up with the body it
-//    intended to reuse.
-//
-// 4. !!! FOR-EACH uses the slots in an object to count how many arguments
-//    there are...and if a slot is reusing an existing variable it holds that
-//    variable.  This ties into general questions of hiding (same bit).  Don't
-//    count it as a hit.
-//
-Option(Stub*) Get_Word_Container(
-    Sink(REBLEN) index_out,
-    const Element* any_word,
-    Context* context
-){
-    Context* binding = Cell_Binding(any_word);
-    const Symbol* symbol = Cell_Word_Symbol(any_word);
+bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
+{
+    Context* binding = Cell_Binding(wordlike);
+    const Symbol* symbol = Cell_Word_Symbol(wordlike);
 
-    if (IS_WORD_BOUND(any_word)) {  // leave binding alone
-        *index_out = VAL_WORD_INDEX(any_word);
-        return binding;
-    }
-
-    Context* c = context;
+    Context* c = binding;
     Context* next;
-
-  #if RUNTIME_CHECKS
-    Corrupt_Pointer_If_Debug(context);  // make sure we use `c` below
-    Context* context_in = c;  // save in local for easier debugging
-    USED(context_in);
-  #endif
 
     goto loop_body;  // stylize loop to avoid annoying indentation level
 
   next_context: //////////////////////////////////////////////////////////////
+
+  // We want to continue the next_context loop from inside sub-loops, which
+  // means we need a `goto` and not a `continue`.  But putting the goto at
+  // the end of the loop would jump over variable initializations.  Stylizing
+  // this way makes it work without a warning.
 
     c = next;
 
   loop_body: /////////////////////////////////////////////////////////////////
 
     if (c == nullptr)
-        return nullptr;
+        return false;
 
     Flavor flavor = Stub_Flavor(c);
     Option(Phase*) lens = nullptr;
 
   //=//// ALTER `c` IF USE STUB ///////////////////////////////////////////=//
 
-    // Sometimes the Link_Inherit_Bind() is already taken by another binding
-    // chain, and so a Use Stub has to be fabricated to hold an alternative
-    // binding to use in another chain.  But the effect should be the same,
-    // so we transform the context to the one that the Use Stub points to.
-    //
-    // 1. The "final phase" of a function application is allowed to use the
-    //    VarList of the Level directly as a context, and put the next context
-    //    into Link_Inherit_Bind().  There's no Lens in that case, so we use
-    //    the Details of the function as the Lens--providing full visibility
-    //    to all non-sealed locals and arguments.  A null lens cues this
-    //    behavior below, so we can't leave it null when we have a USE of a
-    //    Lens-less FRAME!.  Lensing with Details would incorrectly give
-    //    full visibility, so Lens with the ParamList.
+  // Sometimes the Link_Inherit_Bind() is already taken by another binding
+  // chain, and so a Use Stub has to be fabricated to hold an alternative
+  // binding to use in another chain.  But the effect should be the same, so
+  // we transform the context to the one that the Use Stub points to.
+  //
+  // 1. The "final phase" of a function application is allowed to use the
+  //    VarList of the Level directly as a context, and put the next context
+  //    into Link_Inherit_Bind().  There's no Lens in that case, so we use the
+  //    Details of the function as the Lens--providing full visibility to all
+  //    non-sealed locals and arguments.  A null lens cues this behavior
+  //    below, so we can't leave it null when we have a USE of a Lens-less
+  //    FRAME!.  Lensing with Details would incorrectly give full visibility,
+  //    so Lens with the ParamList.
 
     next = maybe Link_Inherit_Bind(c);  // save so we can update `c`
 
     if (flavor == FLAVOR_USE) {
         if (  // some USEs only affect SET-WORD!s
             Get_Flavor_Flag(USE, c, SET_WORDS_ONLY)
-            and not Is_Set_Word(any_word)
+            and not Is_Set_Word(wordlike)
         ){
             goto next_context;
         }
 
         if (Is_Word(Stub_Cell(c))) {  // OVERBIND use of single WORD!
-            Element* word = u_cast(Element*, Stub_Cell(c));
-            if (Cell_Word_Symbol(word) == symbol) {
-                *index_out = VAL_WORD_INDEX(word);
-                return Cell_Binding(word);
-            }
-            goto next_context;
+            Element* overbind = u_cast(Element*, Stub_Cell(c));
+            if (Cell_Word_Symbol(overbind) != symbol)
+                goto next_context;
+
+            c = Cell_Binding(overbind);  // use its context, I guess?
+            Corrupt_If_Debug(next);  // don't need it
+            goto loop_body;  // skips assignment via next
         }
 
         if (Is_Frame(Stub_Cell(c))) {
@@ -383,34 +341,37 @@ Option(Stub*) Get_Word_Container(
 
   //=//// MODULE LOOKUP ///////////////////////////////////////////////////=//
 
-    // Module lookup is very common so we do it first.  It's relatively fast
-    // in most cases, see the definition of SeaOfVars for an explanation of
-    // the linked list of "Patch" pointed to by each Symbol, holding variables
-    // for any module that has that symbol in it.
+  // Module lookup is very common so we do it first.  It's relatively fast in
+  // most cases, see the definition of SeaOfVars for an explanation of the
+  // linked list of "Patch" pointed to by each Symbol, holding variables for
+  // any module that has that symbol in it.
 
     if (flavor == FLAVOR_SEA) {
         SeaOfVars* sea = cast(SeaOfVars*, c);
-        Option(Patch*) patch = Sea_Patch(sea, symbol, true);  // strict=true
+        bool strict = true;
+        Patch* patch = maybe Sea_Patch(sea, symbol, strict);
         if (patch) {
-            *index_out = INDEX_PATCHED;
-            return patch;
+            Init_Module(out, sea);
+            Tweak_Cell_Word_Stub(wordlike, patch);
+            return true;
         }
         goto next_context;
     }
 
   //=//// LET STUBS ///////////////////////////////////////////////////////=//
 
-    // A Let Stub is currently very simple, it just holds a single variable.
-    // There may be a way to unify this with VarList in such a way that the
-    // use of a single Symbol* key in the keylist position could cue it to
-    // know that it's a single element context, which could unify the way
-    // that Let and VarList work, though it would mean sacrificing the [0]
-    // slot which is needed by ParamList to hold the inherited phase.
+  // A Let Stub is currently very simple, it just holds a single variable.
+  // There may be a way to unify this with VarList in such a way that the use
+  // of a single Symbol* key in the keylist position could cue it to know that
+  // it's a single element context, which could unify the way that Let and
+  // VarList work, though it would mean sacrificing the [0] slot which is
+  // needed by ParamList to hold the inherited phase.
 
     if (flavor == FLAVOR_LET) {
         if (Let_Symbol(c) == symbol) {
-            *index_out = INDEX_PATCHED;
-            return c;
+            Init_Let(out, c);
+            Tweak_Cell_Word_Stub(wordlike, c);
+            return true;
         }
         goto next_context;
     }
@@ -419,79 +380,43 @@ Option(Stub*) Get_Word_Container(
 
   //=//// VARLIST LOOKUP //////////////////////////////////////////////////=//
 
-    // VarLists are currently very basic, and require us to do a linear search
-    // on the KeyList to see if a Symbol is present.  There aren't any fancy
-    // hashings to accelerate the search by accelerating with some method
-    // that might have some false positives about whether the key is there.
-    // (Symbols are immutable, and hence there could be some fingerprinting
-    // done that is tested against information stored in KeyLists.)  It's
-    // technically not as big a problem as it used to be, because modules
-    // are based on SeaOfVars and not VarLists...so VarLists have many
-    // fewer keys than they used to.
-    //
-    // But there are a couple of things that make searching in VarList more
-    // complicated.  One is that the VarList may be a frame, and the frame
-    // can even have duplicate keys--where only some of keys are applicable
-    // when viewing the frame through a certain "Lens".  The other thing is
-    // that there's an attempted acceleration of the search by caching a
-    // function's identity in WORD! cells and a negative index that tells
-    // you where to find the variable if that word is searched in a frame
-    // for that function.
+  // VarLists are currently very basic, and require us to do a linear search
+  // on the KeyList to see if a Symbol is present.  There aren't any fancy
+  // hashings to accelerate the search by accelerating with some method that
+  // might have some false positives about whether the key is there.  (Symbols
+  // are immutable, and hence there could be some fingerprinting done that is
+  // tested against information stored in KeyLists.)  It's technically not as
+  // big a problem as it used to be, because modules are based on SeaOfVars
+  // and not VarLists...so VarLists have many fewer keys than they used to.
+  //
+  // But there are a couple of things that make searching in VarList more
+  // complicated.  One is that the VarList may be a frame, and the frame can
+  // even have duplicate keys--where only some of keys are applicable when
+  // viewing the frame through a certain "Lens".
 
     VarList* vlist = cast(VarList*, c);
 
-    if (
-        CTX_TYPE(vlist) == TYPE_FRAME
-        and binding  // word has a cache for if it's in an action frame
-        and Action_Is_Base_Of(
-            cast(Phase*, binding),
-            cast(ParamList*, vlist)
-        )
-    ){
-        assert(CELL_WORD_INDEX_I32(any_word) <= 0);
-        if (CELL_WORD_INDEX_I32(any_word) == 0)
-            goto next_context;
-        *index_out = -(CELL_WORD_INDEX_I32(any_word));
-        return vlist;
-    }
-
-    DECLARE_ELEMENT (elem);
     if (CTX_TYPE(vlist) == TYPE_FRAME) {
         if (not lens) {  // want full visibility (Use would have defaulted...)
             lens = Phase_Details(cast(ParamList*, vlist));
         }
         Init_Lensed_Frame(
-            elem, cast(ParamList*, vlist), lens, NONMETHOD
+            out, cast(ParamList*, vlist), lens, NONMETHOD
         );
     }
     else {
-        Copy_Cell(elem, Varlist_Archetype(vlist));
+        Copy_Cell(out, Varlist_Archetype(vlist));
     }
 
     Option(Index) index = Find_Symbol_In_Context(  // must search
-        elem,
+        out,
         symbol,
         true
     );
 
-    // Note: if frame, caching here seems to slow things down?
-  #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
-    if (CTX_TYPE(vlist) == TYPE_FRAME) {
-        if (CELL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
-            CELL_WORD_INDEX_I32(
-                m_cast(Cell*, any_word)
-            ) = -(maybe index);
-            Tweak_Cell_Binding(
-                m_cast(Cell*, any_word),
-                Phase_Details(vlist)
-            );
-        }
-    }
-  #endif
-
     if (index) {
-        *index_out = unwrap index;
-        return vlist;
+        Tweak_Cell_Word_Index(wordlike, unwrap index);
+        return true;
     }
 
     goto next_context;
@@ -703,7 +628,7 @@ DECLARE_NATIVE(LET)
         ? SPARE
         : OUT;
 
-    Init_Word_Bound(where, symbol, bindings, INDEX_PATCHED);
+    Init_Word_Bound(where, symbol, bindings);
     if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
         Setify(where);
         if (Heart_Of(vars) == TYPE_PATH) {
@@ -801,8 +726,8 @@ DECLARE_NATIVE(LET)
             Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
             const Symbol* symbol = Cell_Word_Symbol(temp);
             bindings = Make_Let_Variable(symbol, bindings);
-            CELL_WORD_INDEX_I32(TOP_ELEMENT) = INDEX_PATCHED;
             Tweak_Cell_Binding(TOP_ELEMENT, bindings);
+            Tweak_Cell_Word_Stub(TOP_ELEMENT, bindings);
             break; }
 
           default:
@@ -1029,6 +954,11 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
 //    action at the positive index.  If it has zero and a binding, that
 //    means it CAN'T be found in the action's frame.
 //
+//    !!! This feature became disabled when $word bound to environments.
+//    Review if a similar optimization could be helpful in the future.
+//
+//      https://rebol.metaeducation.com/t/copying-function-bodies/2119/4
+//
 // 3. If we're cloning a sequence, we have to copy the mirror byte.  If it's
 //    a plain array that happens to have been aliased somewhere as a sequence,
 //    we don't know if it's going to be aliased as that same sequence type
@@ -1050,11 +980,7 @@ void Clonify_And_Bind_Relative(
         and Wordlike_Cell(v)
         and IS_WORD_UNBOUND(v)  // use unbound words as "in frame" cache [1]
     ){
-        REBINT n = maybe Try_Get_Binder_Index(
-            unwrap binder, Cell_Word_Symbol(v)
-        );
-        CELL_WORD_INDEX_I32(v) = -(n);  // negative or zero signals unbound [2]
-        Tweak_Cell_Relative_Binding(v, unwrap relative);
+        // [2] is not active at this time
     }
     else if (deeply and (Any_Series_Type(heart) or Any_Sequence_Type(heart))) {
         //
@@ -1612,21 +1538,16 @@ void Assert_Cell_Binding_Valid_Core(const Value* cell)
     }
 
     if (Is_Stub_Let(binding)) {
-        if (Wordlike_Cell(cell))
-            assert(CELL_WORD_INDEX_I32(cell) == INDEX_PATCHED);
         return;
     }
 
     if (Is_Stub_Patch(binding)) {
-        assert(
-            Wordlike_Cell(cell)
-            and CELL_WORD_INDEX_I32(cell) == INDEX_PATCHED
-        );
+        assert(!"Direct binding to module patch cells is not allowed");
         return;
     }
 
     if (Is_Stub_Use(binding)) {
-        assert(Listlike_Cell(cell));  // can't bind words to use
+        /*assert(Listlike_Cell(cell));  // can't bind words to use */
         return;
     }
 
@@ -1636,10 +1557,6 @@ void Assert_Cell_Binding_Valid_Core(const Value* cell)
     }
 
     if (Is_Stub_Sea(binding)) {
-        assert(
-            Listlike_Cell(cell)
-            or heart == TYPE_COMMA  // feed cells, use for binding ATM
-        );
         // attachment binding no longer exists
         return;
     }

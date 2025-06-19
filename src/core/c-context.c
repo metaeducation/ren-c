@@ -213,8 +213,8 @@ Init(Slot) Append_To_Sea_Core(
     Tweak_Misc_Hitch(updating, patch);  // may be binding stump
 
     if (any_word) {  // bind word while we're at it
-        Tweak_Cell_Word_Index(unwrap any_word, INDEX_PATCHED);
-        Tweak_Cell_Binding(unwrap any_word, patch);
+        Tweak_Cell_Binding(unwrap any_word, sea);
+        Tweak_Cell_Word_Stub(unwrap any_word, patch);
     }
 
 } assert_if_duplicate_patch: {
@@ -263,8 +263,8 @@ static Init(Slot) Append_To_Varlist_Core(
 
     if (any_word) {
         Length len = Varlist_Len(varlist);  // length we just bumped
-        Tweak_Cell_Word_Index(unwrap any_word, len);
         Tweak_Cell_Binding(unwrap any_word, varlist);
+        Tweak_Cell_Word_Index(unwrap any_word, len);
     }
 
     return u_cast(Init(Slot), slot);  // location we just added (void cell)
@@ -895,14 +895,11 @@ Source* Context_To_Array(const Element* context, REBINT mode)
             if (mode & 2)
                 Setify(TOP_ELEMENT);
             if (Is_Module(context)) {
-                Tweak_Cell_Word_Index(TOP_ELEMENT, INDEX_PATCHED);
-                Tweak_Cell_Binding(TOP_ELEMENT, Sea_Patch(
-                    cast(SeaOfVars*, e.ctx), Key_Symbol(e.key), true
-                ));
+                Tweak_Cell_Binding(TOP_ELEMENT, e.ctx);
             }
             else {
-                Tweak_Cell_Word_Index(TOP_ELEMENT, e.index);
                 Tweak_Cell_Binding(TOP_ELEMENT, e.ctx);
+                Tweak_Cell_Word_Index(TOP_ELEMENT, e.index);
             }
 
             if (mode & 2)
@@ -953,7 +950,7 @@ Option(Index) Find_Symbol_In_Context(
         // list with other modules who also have variables of that name.
         //
         SeaOfVars* sea = Cell_Module_Sea(context);
-        return Sea_Slot(sea, symbol, strict) ? INDEX_PATCHED : 0;
+        return Sea_Patch(sea, symbol, strict) ? INDEX_PATCHED : 0;
     }
 
     EVARS e;

@@ -348,19 +348,12 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         //
         assert(Not_Flavor_Flag(SYMBOL, spelling, HITCH_IS_BIND_STUMP));
 
-        REBINT index = CELL_WORD_INDEX_I32(v);
-        Context* binding = Cell_Binding(v);
-        if (binding) {
-            if (Is_Stub_Varlist(binding)) {
-                assert(index != 0);
-            }
-            else if (Is_Stub_Let(binding))
-                assert(index == INDEX_PATCHED);
-            else
-                assert(index != 0 or Is_Stub_Details(binding));
+        if (Cell_Has_Node2(v)) {
+            Stub* stub = u_cast(Stub*, CELL_NODE2(v));
+            assert(Is_Stub_Let(stub) or Is_Stub_Patch(stub));
         }
         else
-            assert(index == 0);
+            possibly(CELL_WORD_INDEX_I32(v) == 0);
         break; }
 
       default:

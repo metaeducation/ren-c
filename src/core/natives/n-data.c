@@ -233,7 +233,8 @@ DECLARE_NATIVE(HAS)
 
     if (not Is_Module(context)) {
         VarList* varlist = Cell_Varlist(context);
-        Element* out = Init_Word_Bound(OUT, symbol, varlist, unwrap index);
+        Element* out = Init_Word_Bound(OUT, symbol, varlist);
+        Tweak_Cell_Word_Index(out, unwrap index);
         Copy_Heart_Byte(out, v);
         return OUT;
     }
@@ -241,8 +242,7 @@ DECLARE_NATIVE(HAS)
     SeaOfVars* sea = Cell_Module_Sea(context);
     Element* out = Init_Word(OUT, symbol);
     Copy_Heart_Byte(out, v);
-    Tweak_Cell_Word_Index(out, INDEX_PATCHED);
-    Tweak_Cell_Binding(out, Sea_Patch(sea, symbol, strict));
+    Tweak_Cell_Binding(out, sea);
     return OUT;
 }
 
@@ -281,9 +281,9 @@ DECLARE_NATIVE(WITHOUT)
         Init_Word_Bound(
             OUT,
             symbol,  // !!! incoming case...consider impact of strict if false?
-            ctx,
-            unwrap index
+            ctx
         );
+        Tweak_Cell_Word_Index(OUT, unwrap index);
         Copy_Heart_Byte(Known_Element(OUT), v);
         return OUT;
     }
@@ -337,61 +337,6 @@ DECLARE_NATIVE(USE)
         return THROWN;
 
     return OUT;
-}
-
-
-//
-//  Try_Get_Binding_Of: C
-//
-bool Try_Get_Binding_Of(Sink(Element) out, const Element* v)
-{
-    if (Any_Word(v)) {
-        if (IS_WORD_UNBOUND(v))
-            return false;
-
-        if (Is_Stub_Let(Cell_Binding(v))) {
-            Init_Let(out, u_cast(Let*, Cell_Binding(v)));
-            return true;
-        }
-
-        // Requesting the context of a word that is relatively bound may
-        // result in that word having a FRAME! incarnated as a Stub (if
-        // it was not already reified.)
-        //
-        Context* c = VAL_WORD_CONTEXT(v);
-
-        // If it's a FRAME! we want the phase to match the execution phase at
-        // the current moment of execution.
-        //
-        if (CTX_TYPE(c) == TYPE_FRAME) {
-            Level* L = Level_Of_Varlist_If_Running(cast(VarList*, c));
-            if (L == nullptr)
-                Init_Frame(out, cast(ParamList*, c), ANONYMOUS, NONMETHOD);
-            else {
-                Phase* lens = Level_Phase(L);
-                Init_Lensed_Frame(
-                    out,
-                    Varlist_Of_Level_Force_Managed(L),
-                    lens,
-                    Level_Coupling(L)
-                );
-            }
-        }
-        else if (CTX_TYPE(c) == TYPE_MODULE)
-            Init_Module(out, cast(SeaOfVars*, c));
-        else
-            Copy_Cell(out, Varlist_Archetype(cast(VarList*, c)));
-    }
-    else {
-        //
-        // Will OBJECT!s or FRAME!s have "contexts"?  Or if they are passed
-        // in should they be passed trough as "the context"?  For now, keep
-        // things clear?
-        //
-        assert(false);
-    }
-
-    return true;
 }
 
 

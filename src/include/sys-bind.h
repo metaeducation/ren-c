@@ -57,75 +57,15 @@ INLINE Element* Derelativize_Untracked(
     Copy_Cell_Header(out, v);
     out->payload = v->payload;
 
-    Option(Heart) heart = Unchecked_Heart_Of(v);
-
     if (
-        not context  // should bindings always be left as-is in this case?
-        or not Is_Bindable_Heart(heart)
+        not Is_Bindable_Heart_Byte(HEART_BYTE_RAW(v))
+        or v->extra.node
     ){
         out->extra = v->extra;
-        return out;
     }
-
-    Context* binding = Cell_Binding(v);
-
-    if (Bindable_Heart_Is_Any_Word(unwrap heart)) {
-      any_wordlike:
-        if (
-            binding
-            and not Is_Stub_Details(binding)  // relativized binding is cache/hint
-        ){
-            out->extra = v->extra;
-        }
-        else {
-            REBLEN index;
-            Stub* s = maybe Get_Word_Container(&index, v, context);
-            if (not s) {
-                out->extra = v->extra;
-            }
-            else {
-                Tweak_Cell_Word_Index(out, index);
-                Tweak_Cell_Binding(out, s);
-            }
-        }
-    }
-    else if (Bindable_Heart_Is_Any_List(unwrap heart)) {
-      any_listlike:
-        if (binding) {  // currently not overriding (review: hole punch)
-            assert(not Is_Stub_Details(binding));  // shouldn't be relativized
-            out->extra = v->extra;
-        }
-        else if (
-            Is_Stub_Use(context)
-            and Get_Flavor_Flag(USE, context, SET_WORDS_ONLY)
-        ){
-            Tweak_Cell_Binding(out, Link_Inherit_Bind(context));
-        }
-        else
-            Tweak_Cell_Binding(out, context);
-    }
-    else if (not Sequence_Has_Node(v)) {
-        out->extra = v->extra;  // packed numeric sequence, 1.2.3 or similar
-    }
-    else {  // path or tuple, may be wordlike or listlike
-        const Node* node1 = CELL_NODE1(v);
-        if (Is_Node_A_Cell(node1))  // x.y pairing
-            goto any_listlike;
-        const Stub* stub1 = c_cast(Stub*, node1);
-        if (FLAVOR_SYMBOL == Stub_Flavor(stub1)) {  // x. or /x, wordlike
-            if (
-                heart == TYPE_TUPLE
-                and Get_Cell_Flag(v, LEADING_SPACE)  // !!! HACK for .word form
-            ){
-                context = Adjust_Context_For_Coupling(context);
-                if (not context) {
-                    out->extra = v->extra;
-                    return out;
-                }
-            }
-            goto any_wordlike;
-        }
-        goto any_listlike;
+    else {
+        possibly(context == nullptr);  // SPECIFIED
+        out->extra.node = context;
     }
 
     return out;
@@ -136,15 +76,15 @@ INLINE Element* Derelativize_Untracked(
     Derelativize_Untracked(TRACK(dest), (v), (context))
 
 
-// Inefficient - replaced in subsequent commit
-//
 INLINE Element* Bind_If_Unbound(Element* elem, Context* context) {
-    DECLARE_ELEMENT (temp);
-    Derelativize(temp, elem, context);
-    Move_Cell(elem, temp);
+    assert(Is_Bindable_Heart_Byte(HEART_BYTE_RAW(elem)));
+    possibly(context == nullptr);  // SPECIFIED
+
+    if (not elem->extra.node)
+        elem->extra.node = context;
+
     return elem;
 }
-
 
 // The concept behind `Cell` usage is that it represents a view of a cell
 // where the quoting doesn't matter.  This view is taken by things like the
@@ -371,9 +311,7 @@ struct CollectorStruct {
 
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Wordlike_Cell(v));
-    if (CELL_WORD_INDEX_I32(v) < 0)
-        assert(Is_Stub_Details(Cell_Binding(v)));
-    return CELL_WORD_INDEX_I32(v) <= 0;
+    return Cell_Binding(v) == UNBOUND;
 }
 
 #define IS_WORD_BOUND(v) \
@@ -390,6 +328,7 @@ INLINE REBINT VAL_WORD_INDEX(const Cell* v) {
 INLINE void Unbind_Any_Word(Element* v) {
     assert(Wordlike_Cell(v));
     CELL_WORD_INDEX_I32(v) = 0;
+    Set_Cell_Flag(v, DONT_MARK_NODE2);
     Tweak_Cell_Binding(v, UNBOUND);
 }
 

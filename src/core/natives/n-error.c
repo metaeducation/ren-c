@@ -305,18 +305,18 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
 {
     INCLUDE_PARAMS_OF_SET_LOCATION_OF_ERROR;
 
-    Value* location = ARG(LOCATION);
+    Element* location = Element_ARG(LOCATION);
 
     VarList* varlist;
     if (Is_Word(location)) {
-        Context* context;
+        Sink(Element) spare_context = SPARE;
         if (
-            not IS_WORD_BOUND(location)
-            or CTX_TYPE(context = VAL_WORD_CONTEXT(location)) != TYPE_FRAME
+            not Try_Get_Binding_Of(spare_context, location)
+            or not Is_Frame(spare_context)
         ){
             return PANIC("SET-LOCATION-OF-ERROR requires FRAME!-bound WORD!");
         }
-        varlist = cast(VarList*, context);
+        varlist = Cell_Varlist(spare_context);
     }
     else {
         assert(Is_Frame(location));

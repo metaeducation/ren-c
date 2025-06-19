@@ -966,15 +966,11 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
 
             if (heart == TYPE_MODULE) {
                 Tweak_Cell_Word_Index(spare_key, INDEX_PATCHED);
-                Tweak_Cell_Binding(spare_key, Sea_Patch(
-                    Cell_Module_Sea(les->data),
-                    Key_Symbol(les->u.evars.key),
-                    true
-                ));
+                Tweak_Cell_Binding(spare_key, Cell_Module_Sea(les->data));
             }
             else {
-                Tweak_Cell_Word_Index(spare_key, les->u.evars.index);
                 Tweak_Cell_Binding(spare_key, Cell_Varlist(les->data));
+                Tweak_Cell_Word_Index(spare_key, les->u.evars.index);
             }
             e = Trap_Write_Loop_Slot_May_Bind(slot, spare_key, les->data);
             if (e)

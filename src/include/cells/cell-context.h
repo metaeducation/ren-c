@@ -100,39 +100,6 @@ INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
     return out;
 }
 
-INLINE Option(const Slot*) Cell_Context_Slot_Core(
-    const Element* context,
-    const Symbol* symbol,
-    bool writable
-){
-    bool strict = false;
-    Option(Slot*) slot;
-    if (Is_Module(context)) {
-        slot = Sea_Slot(Cell_Module_Sea(context), symbol, strict);
-    }
-    else if (Is_Let(context)) {
-        slot = Lookup_Let_Slot(Cell_Let(context), symbol, strict);
-    }
-    else {
-        Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
-        if (not index)
-            slot = nullptr;
-        else
-            slot = Varlist_Slot(Cell_Varlist(context), unwrap index);
-    }
-    if (slot and writable and Get_Cell_Flag(unwrap slot, PROTECTED))
-        panic (Error_Protected_Key(symbol));
-    return slot;
-}
-
-#define Cell_Context_Slot(context,symbol) \
-    Cell_Context_Slot_Core((context), (symbol), false)
-
-#define Cell_Context_Slot_Mutable(context,symbol) \
-    cast(Option(Value*), m_cast(Value*, \
-        maybe Cell_Context_Slot_Core((context), (symbol), true)))
-
-
 INLINE Context* Cell_Context(const Cell* c) {
     if (Heart_Of(c) == TYPE_MODULE)
         return Cell_Module_Sea(c);

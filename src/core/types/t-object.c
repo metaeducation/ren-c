@@ -96,8 +96,8 @@ void Init_Evars(EVARS *e, const Element* v) {
             }
             if (patch_found) {
                 Init_Word(PUSH(), *psym);
-                Tweak_Cell_Word_Index(TOP_ELEMENT, INDEX_PATCHED);
-                Tweak_Cell_Binding(TOP_ELEMENT, patch_found);
+                Tweak_Cell_Binding(TOP_ELEMENT, e->ctx);
+                Tweak_Cell_Word_Stub(TOP_ELEMENT, patch_found);
             }
         }
 
@@ -1087,11 +1087,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
                 context, Cell_Word_Symbol(def), strict
             );
             if (i) {
-                CELL_WORD_INDEX_I32(def) = unwrap i;
                 if (Is_Module(context))
-                    Tweak_Cell_Binding(def, Sea_Patch(
-                        cast(SeaOfVars*, c), Cell_Word_Symbol(def), strict
-                    ));
+                    Tweak_Cell_Binding(def, cast(SeaOfVars*, c));
                 else
                     Tweak_Cell_Binding(def, c);
                 return COPY(def);
@@ -1110,10 +1107,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         if (e)
             return PANIC(unwrap e);
 
-        Use* use = Alloc_Use_Inherits_Core(
-            USE_FLAG_SET_WORDS_ONLY,
-            Cell_Binding(def)
-        );
+        Use* use = Alloc_Use_Inherits(Cell_Binding(def));
         Copy_Cell(Stub_Cell(use), context);
 
         Tweak_Cell_Binding(def, use);
@@ -1228,7 +1222,22 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     const Value* picker = ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    const Slot* slot = maybe Cell_Context_Slot(context, symbol);
+    bool strict = false;
+    Slot* slot;
+    if (Is_Module(context)) {
+        slot = maybe Sea_Slot(Cell_Module_Sea(context), symbol, strict);
+    }
+    else if (Is_Let(context)) {
+        slot = maybe Lookup_Let_Slot(Cell_Let(context), symbol, strict);
+    }
+    else {
+        Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
+        if (not index)
+            slot = nullptr;
+        else
+            slot = Varlist_Slot(Cell_Varlist(context), unwrap index);
+    }
+
     if (not slot)
         return DUAL_SIGNAL_NULL_ABSENT;
 
@@ -1945,7 +1954,7 @@ DECLARE_NATIVE(CONSTRUCT)
 
         Copy_Cell(PUSH(), at);
         Tweak_Cell_Binding(TOP_ELEMENT, varlist);
-        CELL_WORD_INDEX_I32(TOP_ELEMENT) = unwrap index;
+        Tweak_Cell_Word_Index(TOP_ELEMENT, unwrap index);
 
         Fetch_Next_In_Feed(SUBLEVEL->feed);
 
@@ -1975,7 +1984,7 @@ DECLARE_NATIVE(CONSTRUCT)
     VarList* varlist = Cell_Varlist(OUT);
 
     while (TOP_INDEX != STACK_BASE) {
-        Option(Index) index = CELL_WORD_INDEX_I32(TOP_ELEMENT);
+        Option(Index) index = VAL_WORD_INDEX(TOP_ELEMENT);
         assert(index);  // created a key for every SET-WORD! above!
 
         Copy_Cell(Slot_Init_Hack(Varlist_Slot(varlist, unwrap index)), spare);

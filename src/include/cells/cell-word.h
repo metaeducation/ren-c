@@ -61,10 +61,18 @@ INLINE const Symbol* Cell_Word_Symbol(const Cell* c) {
 
 #define CELL_WORD_INDEX_I32(c)         (c)->payload.split.two.i32
 
-INLINE void Tweak_Cell_Word_Index(Cell* v, Index i) {
+INLINE void Tweak_Cell_Word_Index(const Cell* v, Index i) {
     assert(Wordlike_Cell(v));
     assert(i != 0);
-    CELL_WORD_INDEX_I32(v) = i;
+    CELL_WORD_INDEX_I32(m_cast(Cell*, v)) = i;
+    Set_Cell_Flag(v, DONT_MARK_NODE2);
+}
+
+INLINE void Tweak_Cell_Word_Stub(const Cell* v, Stub* stub) {
+    assert(Wordlike_Cell(v));
+    assert(Is_Stub_Let(stub) or Is_Stub_Patch(stub));
+    m_cast(Cell*, v)->payload.split.two.node = stub;
+    Clear_Cell_Flag(v, DONT_MARK_NODE2);
 }
 
 INLINE Element* Init_Word_Untracked(
@@ -79,22 +87,24 @@ INLINE Element* Init_Word_Untracked(
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
-    CELL_WORD_INDEX_I32(out) = 0;
+    CELL_WORD_INDEX_I32(out) = 0;  // !!! hint used in special cases
     CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, sym);
-    Tweak_Cell_Binding(out, UNBOUND);
+    unnecessary(Tweak_Cell_Binding(out, UNBOUND));  // don't need checks...
+    out->extra.node = UNBOUND;  // ...just assign directly, always valid
     return out;
 }
 
 #define Init_Word(out,str) \
     TRACK(Init_Word_Untracked((out), NOQUOTE_1, (str)))
 
+#define Init_Quasi_Word(out,symbol) \
+    TRACK(Init_Word_Untracked((out), QUASIFORM_2, (symbol)))
+
 INLINE Element* Init_Word_Bound_Untracked(
     Sink(Element) out,
     const Symbol* symbol,
-    Context* binding,  // spelling determined by linked-to thing
-    REBLEN index  // must be INDEX_PATCHED if LET patch
+    Context* binding
 ){
-    assert(index != 0);
     Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_ENUM(TYPE_WORD)
@@ -102,26 +112,14 @@ INLINE Element* Init_Word_Bound_Untracked(
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
     CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, symbol);
-    CELL_WORD_INDEX_I32(out) = index;
-    Tweak_Cell_Binding(out, binding);
-
-    if (Is_Stub_Varlist(binding)) {
-        assert(symbol == *Varlist_Key(cast(VarList*, binding), index));
-    }
-    else {
-        assert(Is_Stub_Let(binding));
-        assert(index == INDEX_PATCHED);
-        assert(symbol == Let_Symbol(binding));
-    }
+    CELL_WORD_INDEX_I32(out) = 0;  // !!! hint used in special cases
+    Tweak_Cell_Binding(out, binding);  // validates if DEBUG_CHECK_BINDING
 
     return out;
 }
 
-#define Init_Word_Bound(out,symbol,context,index) \
-    TRACK(Init_Word_Bound_Untracked((out), (symbol), (context), (index)))
-
-#define Init_Quasi_Word(out,symbol) \
-    TRACK(Init_Word_Untracked((out), QUASIFORM_2, (symbol)))
+#define Init_Word_Bound(out,symbol,context) \
+    TRACK(Init_Word_Bound_Untracked((out), (symbol), (context)))
 
 
 // !!! It used to be that ANY-WORD? included sigilized words.  That is no

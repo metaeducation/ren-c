@@ -215,7 +215,8 @@ DECLARE_NATIVE(REORDER)
             goto cleanup_binder;
         }
 
-        Init_Word_Bound(PUSH(), symbol, paramlist, index);
+        Init_Word_Bound(PUSH(), symbol, paramlist);
+        Tweak_Cell_Word_Index(TOP_ELEMENT, index);
     }
 
     // Make sure that all parameters that were mandatory got a place in the
