@@ -124,7 +124,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     Sink(Atom) atom_out = u_cast(Atom*, out);
     Push_Level_Erase_Out_If_State_0(atom_out, level_);
 
-    Derelativize(SCRATCH, tuple, context);
+    heeded(Derelativize(SCRATCH, tuple, context));
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);

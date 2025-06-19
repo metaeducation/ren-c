@@ -136,6 +136,16 @@ INLINE Element* Derelativize_Untracked(
     Derelativize_Untracked(TRACK(dest), (v), (context))
 
 
+// Inefficient - replaced in subsequent commit
+//
+INLINE Element* Bind_If_Unbound(Element* elem, Context* context) {
+    DECLARE_ELEMENT (temp);
+    Derelativize(temp, elem, context);
+    Move_Cell(elem, temp);
+    return elem;
+}
+
+
 // The concept behind `Cell` usage is that it represents a view of a cell
 // where the quoting doesn't matter.  This view is taken by things like the
 // handlers for MOLD, where it's assumed the quoting levels were rendered by

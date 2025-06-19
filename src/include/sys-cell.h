@@ -906,7 +906,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 #endif
 
 #define Cell_Binding(v) \
-    x_cast(Context*, (v)->extra.node)
+    u_c_cast(Context*, (v)->extra.node)
 
 #if (! DEBUG_CHECK_BINDING)
     #define Tweak_Cell_Binding(c,binding) \
@@ -928,10 +928,10 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 #endif
 
 #define SPECIFIED \
-    x_cast(Context*, nullptr)  // x_cast (don't want DEBUG_CHECK_CASTS)
+    u_cast(Context*, nullptr)  // u_cast (don't want DEBUG_CHECK_CASTS)
 
 #define UNBOUND \
-    x_cast(Context*, nullptr)  // using a stub did not improve performance [1]
+    u_cast(Context*, nullptr)  // using a stub did not improve performance [1]
 
 
 //=//// COPYING CELLS /////////////////////////////////////////////////////=//

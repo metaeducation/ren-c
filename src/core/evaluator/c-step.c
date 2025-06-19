@@ -696,8 +696,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Antiform(OUT))
         return PANIC("$ operator cannot bind antiforms");
 
-    Derelativize(SPARE, cast(Element*, OUT), Level_Binding(L));
-    Copy_Cell(OUT, SPARE);  // !!! inefficient
+    Bind_If_Unbound(Known_Element(OUT), Level_Binding(L));
     goto lookahead;
 
 
@@ -745,8 +744,7 @@ Bounce Stepper_Executor(Level* L)
 
     Plainify(CURRENT);  // remove the ^ sigil
 
-    Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
-    Move_Atom(CURRENT, SPARE);
+    heeded(Bind_If_Unbound(CURRENT, L_binding));
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
@@ -946,12 +944,9 @@ Bounce Stepper_Executor(Level* L)
 
     assert(not Sigil_Of(CURRENT));
 
-    Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
-    Move_Atom(CURRENT, SPARE);
+    heeded(Bind_If_Unbound(CURRENT, L_binding));
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
-    assert(L == LEVEL);
-    assert(L == TOP_LEVEL);
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
     if (e)
         return PANIC(unwrap e);
@@ -1071,7 +1066,7 @@ Bounce Stepper_Executor(Level* L)
         break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
       case TRAILING_SPACE_AND(WORD): {  // FOO: or ^FOO:
-        Copy_Cell(CURRENT, Derelativize(SPARE, CURRENT, L_binding));
+        Bind_If_Unbound(CURRENT, L_binding);
         if (Is_Metaform(CURRENT)) {  // ^foo: -> ^foo
             Plainify(CURRENT);
             Unchain(CURRENT);
@@ -1117,10 +1112,10 @@ Bounce Stepper_Executor(Level* L)
 
       case LEADING_SPACE_AND(BLOCK):  // !!! :[a b] reduces, not great...
         Unchain(CURRENT);
-        Derelativize(SPARE, CURRENT, L_binding);
+        Bind_If_Unbound(CURRENT, L_binding);
         if (rebRunThrows(
             u_cast(Sink(Value), OUT),  // <-- output, API won't make atoms
-            CANON(REDUCE), SPARE
+            CANON(REDUCE), CURRENT
         )){
             goto return_thrown;
         }
@@ -1248,8 +1243,7 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead;
     }
 
-    Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
-    Move_Atom(CURRENT, SPARE);
+    heeded(Bind_If_Unbound(CURRENT, L_binding));
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
@@ -1362,8 +1356,7 @@ Bounce Stepper_Executor(Level* L)
   //    running infix with paths is `left ->- right/side`, which uses an infix
   //    WORD! to mediate the interaction.
 
-    Derelativize(SPARE, CURRENT, L_binding);  // !!! fix
-    Move_Atom(CURRENT, SPARE);
+    heeded(Bind_If_Unbound(CURRENT, L_binding));
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Get_Path_Push_Refinements(LEVEL);
@@ -1446,8 +1439,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Lifted_Void(CURRENT))  // e.g. `(void): ...`  !!! use space var!
         goto lookahead;  // pass through everything
 
-    Derelativize(SPARE, CURRENT, L_binding);  // !!! workaround !!! FIX !!!
-    Move_Atom(CURRENT, SPARE);
+    heeded(Bind_If_Unbound(CURRENT, L_binding));
     heeded(Corrupt_Cell_If_Debug(SPARE));
 
     Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);

@@ -69,6 +69,9 @@ INLINE bool Is_Extra_Mark_Heart(Option(Heart) heart)
 INLINE bool Is_Bindable_Heart(Option(Heart) h)
   { return (maybe h) >= TYPE_WORD; }
 
+#define Is_Bindable_Heart_Byte(heart_byte) \
+    (heart_byte >= u_cast(HeartByte, TYPE_WORD))  // fast macro!
+
 #undef Any_Bindable  // use Is_Bindable(), faster than a range check [1]
 
 #define Is_Bindable(v) \
