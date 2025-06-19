@@ -250,7 +250,8 @@ Let* Make_Let_Variable(
 ){
     Stub* let = Make_Untracked_Stub(STUB_MASK_LET);  // one variable
 
-    Init_Tripwire(x_cast(Value*, Stub_Cell(let)));  // start as unset
+    Init(Slot) slot = Slot_Init_Hack(u_cast(Slot*, Stub_Cell(let)));
+    Init_Dual_Unset(slot);
 
     Tweak_Link_Inherit_Bind(let, inherit);  // linked list [1]
     Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
