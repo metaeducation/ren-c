@@ -283,58 +283,93 @@ static Bounce Unloaded_Dispatcher(Level* level_)
 //
 //  unload-extension: native [
 //
-//  "Unload an extension"
+//  "Unload an extension (calls module's SHUTDOWN* if it exists)"
 //
 //      return: []
-//      extension "The extension to be unloaded"
-//          [module!]
+//      extension [module!]
 //  ]
 //
 DECLARE_NATIVE(UNLOAD_EXTENSION)
-//
-// !!! The initial extension model had support for not just loading extensions
-// from a DLL, but also unloading them.  It raises a lot of questions that are
-// somewhat secondary to any known use cases, and the semantics of the system
-// were not pinned down well enough to support it.
-//
-// But one important feature it achieved was that if an extension initialized
-// something (perhaps e.g. initializing memory) then it could call code to free
-// that memory.  For the moment this is done by calling a method named
-// `shutdown*` if it exists in the module.
 {
     INCLUDE_PARAMS_OF_UNLOAD_EXTENSION;
 
     Value* extension = ARG(EXTENSION);
 
+  remove_from_loaded_extensions_list: {
+
+  // !!! This is inefficient in the Shutdown_Extensions() case, because we
+  // have to walk a copy of the array.  This likely calls for making the
+  // "unload_extension 'all" walk a copy of the array here in the native or
+  // some other optimization.  Review.
+
     Value* pos = rebValue(CANON(FIND), "system.extensions", extension);
 
-    // Remove the extension from the loaded extensions list.
-    //
-    // !!! This is inefficient in the Shutdown_Extensions() case, because we
-    // have to walk a copy of the array.  This likely calls for making the
-    // "unload_extension 'all" walk a copy of the array here in the native or
-    // some other optimization.  Review.
-    //
     if (not pos)
         return PANIC("Could not find extension in loaded extensions list");
     rebElide(CANON(TAKE), rebR(pos));
 
-    // There is a murky issue about how to disconnect DECLARE_NATIVE()s from
-    // dispatchers that have been unloaded.  If an extension is unloaded
-    // and reloaded again, should old ACTION! values work again?  If so, how
-    // would this deal with a recompiled extension which might have changed
-    // the parameters--thus breaking any specializations, etc?
-    //
-    // Idea: Check for a match, and if it is a match wire it up compatibly.
-    // If not warn the user, leave a non-running stub in the place of the
-    // old function...and they can reboot if they need to or unload and
-    // reload the dependent modules.  Note that this would happen more often
-    // than one might think for any locals declared as part of the frame, as
-    // adding a local changes the "interface"--affecting downstream frames.
-    //
+} disconnect_natives: {
+
+  // There is a murky issue about how to disconnect DECLARE_NATIVE()s from
+  // dispatchers that have been unloaded.  If an extension is unloaded and
+  // reloaded again, should old ACTION! values work again?  If so, how would
+  // this deal with a recompiled extension which might have changed the
+  // parameters--thus breaking any specializations, etc?
+  //
+  // Idea: Check for a match, and if it is a match wire it up compatibly.
+  // If not, warn the user...leave a non-running stub in the place of the old
+  // function...and they can reboot if they need to or unload and reload the
+  // dependent modules.
+  //
+  // Note that this would happen more often than one might think for any
+  // locals declared as part of the frame, as adding a local changes the
+  // "interface"--affecting downstream frames.
+
     UNUSED(&Unloaded_Dispatcher);
 
-    // Note: The mechanical act of unloading a DLL involved these calls.
+} call_shutdown_p_if_it_exists: {
+
+  // SHUTDOWN* is an optional function the extension author can provide which
+  // will do clean up.  This can be a native, or a usermode function, or a
+  // usermode function that calls a native, or a native that calls a usermode
+  // function, etc. etc.
+
+    Slot* shutdown_slot = maybe Sea_Slot(
+       Cell_Module_Sea(extension),
+       CANON(SHUTDOWN_P),
+       true
+   );
+   if (shutdown_slot) {
+        Sink(Value) spare_shutdown = SPARE;
+        Option(Error*) e = Trap_Read_Slot(spare_shutdown, shutdown_slot);
+        if (e)
+            return PANIC(unwrap e);
+        rebElide(rebRUN(spare_shutdown));
+   }
+
+} unregister_extension: {
+
+  // "Unregister" is the system-side of the extension unloading--e.g. the
+  // stuff that happens whether the extension author wrote a SHUTDOWN*
+  // function or not.
+
+    Slot* unregister_slot = maybe Sea_Slot(
+       Cell_Module_Sea(extension),
+       CANON(UNREGISTER_EXTENSION_P),
+       true
+   );
+   if (unregister_slot) {
+        Sink(Value) spare_unregister = SPARE;
+        Option(Error*) e = Trap_Read_Slot(spare_unregister, unregister_slot);
+        if (e)
+            return PANIC(unwrap e);
+        rebElide(rebRUN(spare_unregister));
+   }
+
+} unload_dll_if_applicable: { ////////////////////////////////////////////////
+
+  // Note: The mechanical act of unloading a DLL involved these calls.
+
     /*
         if (not IS_LIBRARY(lib))
             return PANIC(PARAM(EXT));
@@ -345,21 +380,5 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
         OS_CLOSE_LIBRARY(Cell_Library_Fd(lib));
     */
 
-   Slot* shutdown_action = maybe Sea_Slot(
-       Cell_Module_Sea(extension),
-       CANON(SHUTDOWN_P),
-       true
-    );
-   if (shutdown_action)
-        rebElide(rebRUN(Slot_Hack(shutdown_action)));
-
-   Slot* unregister_extension_action = maybe Sea_Slot(
-       Cell_Module_Sea(extension),
-       CANON(UNREGISTER_EXTENSION_P),
-       true
-    );
-   if (unregister_extension_action)
-        rebElide(rebRUN(Slot_Hack(unregister_extension_action)));
-
    return TRIPWIRE;
-}
+}}
