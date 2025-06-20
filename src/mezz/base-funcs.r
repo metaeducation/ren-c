@@ -136,9 +136,9 @@ redescribe: func [
 )
 
 /vacant?: redescribe [
-    "Determine if a variable is nothing or antiform tag"
+    "Determine if a variable would be considered empty for purposes of DEFAULT"
 ](
-    cascade [get:any/ trash?/]
+    cascade [get:any/ vacancy?/]
 )
 
 defined?: func [

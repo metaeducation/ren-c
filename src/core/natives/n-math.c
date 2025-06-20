@@ -815,7 +815,7 @@ DECLARE_NATIVE(SQUARE_ROOT)
 
 
 //
-//  vacant?: native [
+//  vacancy?: native [
 //
 //  "Tells you if default would overwrite a value (TRASH, NULL?, BLANK?)"
 //
@@ -823,13 +823,13 @@ DECLARE_NATIVE(SQUARE_ROOT)
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(VACANT_Q)
+DECLARE_NATIVE(VACANCY_Q)
 //
 // 1. Because TRASH! antiforms signify unspecialized function call slots,
 //    they must be taken as ^META values if passed as an argument--even
 //    though they are stable antiforms.
 {
-    INCLUDE_PARAMS_OF_VACANT_Q;
+    INCLUDE_PARAMS_OF_VACANCY_Q;
 
     Value* v = ARG(VALUE);  // meta
     Unliftify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
