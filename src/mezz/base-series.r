@@ -246,3 +246,17 @@ trim: func [
 
     return series
 ]
+
+
+measure: func [
+    "Delta of indices of two references to the same series"  ; Redbol OFFSET?
+
+    return: [integer!]
+    series1 [any-series?]
+    series2 [any-series?]
+][
+    if not aliases? series1 series2 [
+        panic "MEASURE requires both series arguments to point to same data"
+    ]
+    return (index of series2) - (index of series1)
+]

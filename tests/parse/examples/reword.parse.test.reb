@@ -86,7 +86,7 @@ bind construct [
             prefix  ; consume prefix (if no-op, may not be at start of match)
             ||
             [let keyword-match: any (keyword-suffix-rules), (
-                append:part out a offset? a b  ; output before prefix
+                append:part out a measure a b  ; output before prefix
 
                 let v: select // [values keyword-match, case: case_REWORD]
                 append out switch:type v [
