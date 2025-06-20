@@ -348,6 +348,7 @@ DECLARE_NATIVE(UNLIFT_P)
 //
 //      return: [logic?]
 //      ^atom
+//      :type
 //  ]
 //
 DECLARE_NATIVE(ANTIFORM_Q)
@@ -357,6 +358,22 @@ DECLARE_NATIVE(ANTIFORM_Q)
 // another routine like integer? might say it's an integer.  Be aware.
 {
     INCLUDE_PARAMS_OF_ANTIFORM_Q;
+
+    if (
+        Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)
+        and Bool_ARG(TYPE)
+    ){
+        const Element* atom = Get_Lifted_Atom_Intrinsic(LEVEL);;
+        if (not Is_Lifted_Datatype(atom))
+            return PANIC("ANTIFORM?:TYPE only accepts DATATYPE!");
+
+        Copy_Cell(SPARE, atom);
+        Value* spare_datatype = Unliftify_Known_Stable(SPARE);
+        Option(Type) type = Cell_Datatype_Type(spare_datatype);
+        if (u_cast(Byte, type) > u_cast(Byte, MAX_TYPE_ELEMENT))
+            return LOGIC(true);
+        return LOGIC(false);
+    }
 
     Option(Heart) heart;
     LiftByte lift_byte;

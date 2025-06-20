@@ -34,7 +34,13 @@
 //
 // 1. Things like INTEGER! are defined to be ~{integer!}~ antiforms.
 //
-// 2. Many places in the system want to be able to just off-the-cuff refer to
+// 2. Right now the symbols in the spots where symbols for antiforms of
+//    hearts that can't be antiforms would be are things like ANTIFORM-38!.
+//    This could be reused for something else.  But we certainly don't want
+//    to make datatypes for those.  Leave the Patch corresponding to it
+//    empty as undefined.
+//
+// 3. Many places in the system want to be able to just off-the-cuff refer to
 //    a built-in datatype, without allocating a cell to initialize.  This is
 //    done with Datatype_From_Type(), that returns it from the lib context.
 //
@@ -47,6 +53,16 @@ void Startup_Datatypes(void)
     for (; id16 <= MAX_SYM_BUILTIN_TYPES; ++id16) {
         SymId id = cast(SymId, id16);
         Type type = Type_From_Symbol_Id(id);
+
+        if (type > MAX_TYPE_ELEMENT) {  // antiform
+            Heart heart = u_cast(
+                Heart,
+                u_cast(Byte, type) - u_cast(Byte, MAX_TYPE_ELEMENT)
+            );
+            if (not Any_Isotopic_Type(heart))
+                continue;  // don't define the dummy antiform for this [2]
+        }
+
         Patch* patch = &g_datatype_patches[cast(Byte, type)];
         assert(Is_Stub_Erased(patch));  // pre-boot state
 
@@ -56,7 +72,7 @@ void Startup_Datatypes(void)
         assert(LINK_PATCH_RESERVED(patch) == nullptr);
         Tweak_Info_Patch_Sea(patch, datatypes);
 
-        Symbol* symbol =  &g_symbols.builtin_canons[id];
+        Symbol* symbol = &g_symbols.builtin_canons[id];
         assert(Misc_Hitch(symbol) == symbol);  // no module patches yet
         Tweak_Misc_Hitch(symbol, patch);  // ...but now it has one!
         Tweak_Misc_Hitch(patch, symbol);  // link back for singly-linked-list
@@ -68,7 +84,7 @@ void Startup_Datatypes(void)
         Init_Fence(datatype, a);
         LIFT_BYTE_RAW(datatype) = ANTIFORM_0;  // fences are isotopic
 
-        assert(datatype == Datatype_From_Type(type));  // convenient [2]
+        assert(datatype == Datatype_From_Type(type));  // convenient [3]
         assert(Cell_Datatype_Type(datatype) == type);  // sanity check
     }
 
@@ -95,6 +111,9 @@ void Shutdown_Datatypes(void)
         SymId id = cast(SymId, id16);
         Type type = Type_From_Symbol_Id(id);
         Patch* patch = &g_datatype_patches[cast(Byte, type)];
+
+        if (Is_Stub_Erased(patch))
+            continue;  // isotope slot for non-isotopic type
 
         assert(INFO_PATCH_SEA(patch) == g_datatypes_context);  // freed [1]
         INFO_PATCH_SEA(patch) = nullptr;

@@ -1131,6 +1131,8 @@ REBLEN Recycle_Core(Flex* sweeplist)
     ){
         Type type = Type_From_Symbol_Id(cast(SymId, id16));
         Patch* patch = &g_datatype_patches[cast(Byte, type)];
+        if (Is_Stub_Erased(patch))
+            continue;  // isotope slot for non-isotopic type
         if (Not_Node_Marked(patch)) {  // this loop's prior steps can mark
             Add_GC_Mark(patch);
             Queue_Mark_Maybe_Erased_Cell_Deep(Stub_Cell(patch));
@@ -1248,6 +1250,8 @@ REBLEN Recycle_Core(Flex* sweeplist)
     ){
         Type type = Type_From_Symbol_Id(cast(SymId, id));
         Patch* patch = &g_datatype_patches[cast(Byte, type)];
+        if (Is_Stub_Erased(patch))
+            continue;  // isotope slot for non-isotopic type
         Remove_GC_Mark(patch);
     }
 
