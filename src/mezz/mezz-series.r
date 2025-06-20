@@ -57,7 +57,7 @@ array: func [
         [<opt-out> integer! block!]
     :initial "Initial value (will be called each time if action)"
         [element? action!]
-    <local> rest block
+    <local> rest (null) block
 ][
     initial: default ['~]  ; if not specified, array will be all quasars
     if block? size [
@@ -74,14 +74,13 @@ array: func [
         ]
         if tail? rest [rest: null]  ; want `array [2]` => `[~ ~]`, no recurse
     ]
-    else [rest: null]
 
     block: make block! size
     case [
-        block? rest [
+        rest [
             repeat size [append block (array:initial rest :initial)]
         ]
-        action? :initial [
+        action? ^initial [
             repeat size [append block initial]  ; Called every time
         ]
         any-series? initial [
