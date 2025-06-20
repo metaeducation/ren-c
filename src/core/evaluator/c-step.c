@@ -545,12 +545,24 @@ Bounce Stepper_Executor(Level* L)
     // 1. Not all quasiforms have legal antiforms.  For instance: while all
     //    WORD!s have quasiforms, only a few are allowed to become antiform
     //    keywords (e.g. ~null~ and ~okay~)
+    //
+    // 2. !!! We don't really want generic quasiforms of frames to act as
+    //    "unsurprising antiforms", because that means that going through
+    //    any lift indirection would subvert the surprising bit.  e.g.
+    //
+    //        make object! compose [x: (lift some-random-thing)]
+    //
+    //    If quasiforms are de-facto unsurprising, that doesn't really catch
+    //    any of the intended surprises.  More thinking is needed on this,
+    //    but the change was made to work on other things while thinking.
 
     Copy_Cell_Core(OUT, CURRENT, CELL_MASK_THROW);
 
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);  // may be illegal [1]
     if (e)
         return PANIC(unwrap e);
+
+    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // !!! hack [2]
 
     STATE = cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
     goto lookahead;
