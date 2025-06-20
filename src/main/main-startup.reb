@@ -370,7 +370,7 @@ bind construct [
         "Return HOME path (e.g. $HOME on *nix)"
         return: [null? element? file!]
     ][
-        let get-env: ^ if select system.modules 'Environment [
+        let /get-env: if select system.modules 'Environment [
             system.modules.Environment.get-env/
         ] else [
             loud-print [

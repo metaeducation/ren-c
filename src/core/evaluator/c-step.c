@@ -159,7 +159,7 @@
 // for the phase after the right hand side is evaluated--vs. making it pick
 // apart the path again.
 //
-#define CELL_FLAG_STACK_NOTE_OPTIONAL CELL_FLAG_NOTE
+#define CELL_FLAG_STACK_HINT_OPTIONAL  CELL_FLAG_HINT
 
 
 //
@@ -1299,12 +1299,12 @@ Bounce Stepper_Executor(Level* L)
         switch (Try_Get_Sequence_Singleheart(CURRENT)) {
           case TRAILING_SPACE_AND(WORD):  // /abc: is set actions only
             Unchain(CURRENT);
-            Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
+            Set_Cell_Flag(CURRENT, SCRATCH_VAR_NOTE_ONLY_ACTION);
             goto handle_generic_set;
 
           case TRAILING_SPACE_AND(TUPLE):  // /a.b.c: is set actions only
             Unchain(CURRENT);
-            Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
+            Set_Cell_Flag(CURRENT, SCRATCH_VAR_NOTE_ONLY_ACTION);
             goto handle_generic_set;
 
           default:
@@ -1434,18 +1434,6 @@ Bounce Stepper_Executor(Level* L)
     if (e)
         return PANIC(unwrap e);
 
-    // assignments of /foo: or /obj.field: require action
-    //
-    // !!! This is too late, needs to be folded in with Set_Var...()
-    // But we don't pre-decay, so have to do it here for now.
-    //
-    /*if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION)) {
-        if (not Is_Atom_Action(OUT))
-            return PANIC(
-                "/word: and /obj.field: assignments require Action"
-            );
-    }*/
-
     Invalidate_Gotten(L_next_gotten_raw);  // cache tampers with lookahead [1]
 
     goto lookahead;
@@ -1529,7 +1517,7 @@ Bounce Stepper_Executor(Level* L)
 
     Option(StackIndex) circled = 0;
 
-for (; check != tail; ++check) {  // push variables
+  push_variables_loop: for (; check != tail; ++check) {
 
     // We pre-process the SET-BLOCK! first and collect the variables to write
     // on the stack.  (It makes more sense for any GROUP!s in the set-block to
@@ -1581,6 +1569,7 @@ for (; check != tail; ++check) {  // push variables
 } circle_detection_finished: {
 
     bool is_optional;
+    bool is_action;
 
     if (not Is_Chain(CURRENT)) {
         is_optional = false;
@@ -1602,6 +1591,25 @@ for (; check != tail; ++check) {  // push variables
     is_optional = true;
 
 } optional_detection_finished: {
+
+    if (not Is_Path(CURRENT)) {
+        is_action = false;
+        goto path_detection_finished;
+    }
+
+    Option(SingleHeart) single;
+    if (
+        not (single = Try_Get_Sequence_Singleheart(CURRENT))
+        or not Singleheart_Has_Leading_Space(unwrap single)
+    ){
+        return PANIC(
+            "Only leading SPACE PATH! in SET BLOCK! dialect"
+        );
+    }
+    Unpath(CURRENT);
+    is_action = true;
+
+} path_detection_finished: {
 
     if (
         Is_Group(CURRENT)
@@ -1638,7 +1646,10 @@ for (; check != tail; ++check) {  // push variables
     UNUSED(*CURRENT);  // look at stack top now
 
     if (is_optional)  // so next phase won't worry about leading slash
-        Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
+        Set_Cell_Flag(TOP, STACK_HINT_OPTIONAL);
+
+    if (is_action)
+        Set_Cell_Flag(TOP, SCRATCH_VAR_NOTE_ONLY_ACTION);
 
     if (circle_this)
         circled = TOP_INDEX;
@@ -1720,11 +1731,20 @@ for (; check != tail; ++check) {  // push variables
 
     bool is_optional = Get_Cell_Flag(
         Data_Stack_Cell_At(stackindex_var),
-        STACK_NOTE_OPTIONAL
+        STACK_HINT_OPTIONAL
+    );
+
+    bool is_action = Get_Cell_Flag(
+        Data_Stack_Cell_At(stackindex_var),
+        SCRATCH_VAR_NOTE_ONLY_ACTION
     );
 
     Element* var = CURRENT;  // stable location (scratch), safe across SET
     Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
+    if (is_action) {
+        assert(var == &level_->scratch);
+        heeded(Set_Cell_Flag(var, SCRATCH_VAR_NOTE_ONLY_ACTION));
+    }
 
     assert(LIFT_BYTE(var) == NOQUOTE_1);
 

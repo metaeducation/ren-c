@@ -1251,7 +1251,7 @@ default-combinators: make map! [
     ][
         case [
             any-list? input [
-                neq?: ^ either state.case [not-equal?/] [lax-not-equal?/]
+                /neq?: either state.case [not-equal?/] [lax-not-equal?/]
                 if neq? try input.1 value [
                     return fail "Value at parse position does not match TEXT!"
                 ]
@@ -1641,7 +1641,7 @@ default-combinators: make map! [
         ]
 
         if any-list? input [
-            neq?: ^ either state.case [not-equal?/] [lax-not-equal?/]
+            /neq?: either state.case [not-equal?/] [lax-not-equal?/]
             remainder: next input
             if neq? input.1 unquote value [
                 if negated [
@@ -1735,7 +1735,7 @@ default-combinators: make map! [
             panic "Splice combinators only match ANY-LIST? input"
         ]
 
-        neq?: ^ either state.case [not-equal?/] [lax-not-equal?/]
+        /neq?: either state.case [not-equal?/] [lax-not-equal?/]
         for-each 'item unanti value [
             if neq? remainder.1 item [
                 return fail [
@@ -2295,7 +2295,7 @@ default-combinators: make map! [
             ; Turn next alternative into a parser ACTION!, and run it.
             ; We take the first parser that succeeds.
             ;
-            let [parser 'block]: parsify state block
+            let [/parser 'block]: parsify state block  ; /parser for surprising
             return [{^result} remainder pending]: parser input except [
                 continue
             ]

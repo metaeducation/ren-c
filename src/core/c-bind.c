@@ -717,7 +717,21 @@ DECLARE_NATIVE(LET)
 
         if (Is_Set_Word(temp))
             goto wordlike;
-        else switch (Heart_Of(temp)) {  // permit quasi
+
+        if (Is_Path(temp)) {
+            Option(SingleHeart) singleheart;
+            switch ((singleheart = Try_Get_Sequence_Singleheart(temp))) {
+              case LEADING_SPACE_AND(WORD):
+                goto wordlike;
+
+              case LEADING_SPACE_AND(TUPLE):  // should pass through!
+              default:
+                break;
+            }
+            return PANIC("LET only supports /WORD for paths for now...");
+        }
+
+        switch (Heart_Of(temp)) {  // permit quasi
           case TYPE_RUNE:  // is multi-return opt for dialect, passthru
             Derelativize(PUSH(), temp, temp_binding);
             break;

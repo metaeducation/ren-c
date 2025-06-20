@@ -121,8 +121,12 @@ script: [
     expect-type:        [:arg1 :arg2 "field must be of type" :arg3]
     cannot-use:         ["cannot use" :arg1 "on" :arg2 "value"]
 
+    no-binding:         ["Couldn't get binding for" :arg1]
+
     ambiguous-infix:    "Ambiguous infix expression--use GROUP! to clarify"
     literal-left-path:  "Use ->- to pass literal left PATH! parameters right"
+
+    surprising-action:  ["Surprising ACTION! assign to" :arg1 "^^ to APPROVE"]
 
     sequence-too-short: "PATH!, CHAIN!, and TUPLE! must have more than 2 items"
     conflated-sequence: ["Sequence would conflate with" :arg1 "--" :arg2]

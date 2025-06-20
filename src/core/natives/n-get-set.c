@@ -715,11 +715,10 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 }}
 
 
-Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
+Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
     Level* level_,
     Level* sub,
-    StackIndex picker_index,
-    Option(Value*) dual_poke_if_not_on_stack
+    StackIndex picker_index
 ){
     if (Is_Quasiform(SPARE))
         return Error_User("TWEAK* cannot be used on antiforms");
@@ -769,69 +768,53 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
                     "PICK with keyword or trash picker never allowed"
                 );
 
-            if (dual_poke_if_not_on_stack)
-                Copy_Cell(value_arg, unwrap dual_poke_if_not_on_stack);
-            else {
-                Copy_Cell(value_arg, TOP);
-                DROP();
-            }
-
+            Copy_Cell(value_arg, TOP_ELEMENT);
+            Unliftify_Undecayed(value_arg);
+            Decay_If_Unstable(value_arg);
+            Liftify(value_arg);
             break;
         }
 
         Element* picker_instruction = Known_Element(picker_arg);
         Option(Sigil) picker_sigil = Sigil_Of(picker_instruction);
         if (picker_sigil == SIGIL_META) {
-            if (dual_poke_if_not_on_stack)
-                Copy_Cell(value_arg, unwrap dual_poke_if_not_on_stack);
-            else {
-                Copy_Cell(value_arg, TOP_ELEMENT);
-                DROP();
-            }
+            Copy_Cell(value_arg, TOP_ELEMENT);  // don't decay
             continue;
         }
 
         // if not meta, needs to decay if unstable
-        Value* stable_poke;
-        if (dual_poke_if_not_on_stack) {
-            if (not Any_Lifted(unwrap dual_poke_if_not_on_stack)) {
-                Copy_Cell(value_arg, unwrap dual_poke_if_not_on_stack);
-                continue;  // dual signal, do not lift dual
-            }
 
-            if (Is_Lifted_Void(unwrap dual_poke_if_not_on_stack)) {
-                assert(OUT == unwrap dual_poke_if_not_on_stack);
-                Init_Dual_Word_Remove_Signal(value_arg);
-                continue;  // do not lift dual null
-            }
-
-            Atom* atom = unwrap dual_poke_if_not_on_stack;  // !!! FIX
-            Unliftify_Undecayed(atom);
-            Decay_If_Unstable(atom);
-            Liftify(atom);
-            stable_poke = unwrap dual_poke_if_not_on_stack;
-        }
-        else {
-            stable_poke = TOP;
+        if (not Any_Lifted(TOP)) {
+            Copy_Cell(value_arg, TOP);
+            continue;  // dual signal, do not lift dual
         }
 
-        if (Is_Lifted_Action(stable_poke)) {
-            if (Not_Cell_Flag(stable_poke, OUT_HINT_UNSURPRISING))
-                return Error_User(
-                    "Surprising ACTION! assignment, use ^ to APPROVE"
-                );
+        if (Is_Lifted_Void(TOP)) {
+            Init_Dual_Word_Remove_Signal(value_arg);
+            continue;  // do not lift dual signal
+        }
+
+        Copy_Cell(value_arg, TOP_ELEMENT);
+        Unliftify_Undecayed(value_arg);
+        Decay_If_Unstable(value_arg);
+        Liftify(value_arg);
+
+        if (Is_Lifted_Action(value_arg)) {
+            if (Not_Cell_Flag(TOP, OUT_HINT_UNSURPRISING))
+                return Error_Surprising_Action_Raw(picker_arg);
 
             if (Is_Word(picker_arg)) {
-                Update_Frame_Cell_Label(
-                    stable_poke, Cell_Word_Symbol(picker_arg)
+                Update_Frame_Cell_Label(  // !!! is this a good idea?
+                    Known_Stable(value_arg), Cell_Word_Symbol(picker_arg)
                 );
             }
         }
-        Copy_Cell(value_arg, stable_poke);  // lift it to be ^META arg
     }
     then {  // not quoted...
         Plainify(Known_Element(picker_arg));  // drop any sigils
     }
+
+    Corrupt_Cell_If_Debug(TOP);  // shouldn't use past this point
 
 } call_updater: {
 
@@ -865,6 +848,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     bool groups_ok
 ){
     assert(LEVEL == TOP_LEVEL);
+    possibly(Get_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION));
 
   #if PERFORM_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
@@ -881,6 +865,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
   #if RUNTIME_CHECKS
     Protect_Cell(SCRATCH);  // (common exit path undoes this protect)
+    if (not Is_Dual_Nulled_Pick_Signal(OUT))
+        Protect_Cell(OUT);
   #endif
 
   dispatch_based_on_scratch_var_type: {
@@ -902,7 +888,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
   handle_scratch_var_as_wordlike: {
 
     if (not Try_Get_Binding_Of(SPARE, scratch_var)) {
-        e = Error_User("Couldn't get binding...");
+        e = Error_No_Binding_Raw(scratch_var);
         goto return_error;
     }
 
@@ -966,7 +952,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             PUSH(), Derelativize(SPARE, head, at_binding)
         )){
             DROP();
-            e = Error_User("Couldn't get binding...");
+            e = Error_No_Binding_Raw(Known_Element(SPARE));
             goto return_error;
         }
 
@@ -1012,9 +998,14 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
 }} set_from_steps_on_stack: { ////////////////////////////////////////////////
 
-    Option(Value*) dual_poke_if_not_on_stack = Known_Stable(OUT);
+    // We always poke from the top of the stack, not from OUT.  This is
+    // because we may have to decay it, and we don't want to modify OUT.
+    // It also simplifies the bookkeeping because we don't have to remember
+    // if we're looking to poke from the stack or not.
 
-    stackindex_top = TOP_INDEX;
+    stackindex_top = TOP_INDEX;  // capture "top of stack" before push
+
+    Copy_Cell_Core(PUSH(), Known_Stable(OUT), CELL_MASK_THROW);
 
   poke_again: { //////////////////////////////////////////////////////////////
 
@@ -1112,8 +1103,19 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     //    value here if the picker wasn't ^META.
 
     if (Is_Dual_Nulled_Pick_Signal(OUT)) {
+        assert(Is_Nulled(TOP));
         Copy_Cell(OUT, spare_location_dual);
         goto return_success;
+    }
+
+    if (Get_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION)) {
+        Clear_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION);  // consider *once*
+
+        if (not Is_Lifted_Action(TOP)) {
+            e = Error_User("/word: and /obj.field: assignments need ACTION!");
+            goto return_error;
+        }
+        Set_Cell_Flag(TOP, OUT_HINT_UNSURPRISING);
     }
 
     // This may be the first time we do an update, or it may be a writeback
@@ -1122,11 +1124,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     Level* sub = Make_End_Level(&Action_Executor, flags);
 
-    e = Trap_Tweak_Spare_Is_Dual_Put_Writeback_Dual_In_Spare(
+    e = Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         level_,
         sub,
-        stackindex,  // picker_index
-        dual_poke_if_not_on_stack
+        stackindex  // picker_index
     );
     if (sub != TOP_LEVEL) {
         assert(e);  // ack, fix!
@@ -1156,9 +1157,6 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Assert_Cell_Stable(spare_writeback_dual);
     Copy_Cell(Data_Stack_At(Atom, TOP_INDEX), spare_writeback_dual);
 
-    possibly(dual_poke_if_not_on_stack == nullptr);
-    dual_poke_if_not_on_stack = nullptr;  // signal it's on stack now
-
     --stackindex_top;
 
     goto poke_again;
@@ -1174,6 +1172,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     possibly(Is_Error(OUT));  // success may be ERROR! antiform, see [A]
 
     assert(not e);
+
+    DROP();  // drop pushed cell for decaying OUT/etc.
+
     goto finalize_and_return;
 
 } finalize_and_return: { /////////////////////////////////////////////////////
@@ -1184,6 +1185,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
   #if RUNTIME_CHECKS
     Unprotect_Cell(SCRATCH);
+    if (Get_Cell_Flag(OUT, PROTECTED))
+        Unprotect_Cell(OUT);
   #endif
 
     return e;
