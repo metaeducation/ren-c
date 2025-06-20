@@ -307,7 +307,7 @@ list-dir: func [
         panic ["No directory listing protocol registered for" save-dir]
     ]
 
-    switch:type :path [
+    switch:type path [
         null?/ []  ; Stay here
         file! [change-dir path]
         text! [change-dir local-to-file path]
@@ -315,7 +315,7 @@ list-dir: func [
     ]
 
     if r [l: ok]
-    if not l [l: make text! 62] ; approx width
+    l: default [make text! 62]  ; approx width
 
     let files
     sys.util/rescue [
