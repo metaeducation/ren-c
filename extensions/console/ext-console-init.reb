@@ -172,7 +172,7 @@ export console!: make object! [
             ]
 
             print ["; first in pack of length" length of v]
-            v: first v  ; items in pack are ^META'd
+            ^v: unlift first v  ; items in pack are LIFT'ed
         ]
 
         === PRINT NO OUTPUT FOR TRASH! (antiform RUNE!) ===

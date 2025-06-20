@@ -572,7 +572,7 @@ default-combinators: make map! [
         <local> f ^result
     ][
         ^result: ~  ; default `[stop]` returns trash (tripwire)
-        if :parser [  ; parser argument is optional
+        if not unset? $parser [  ; parser argument is optional
             [^result input]: parser input except e -> [
                 return fail e
             ]
@@ -687,7 +687,7 @@ default-combinators: make map! [
 
     'change combinator [
         "Substitute a match with new data"
-        return: [~#change~]
+        return: [trash!]
         parser [action!]
         replacer [action!]  ; !!! How to say result is used here?
         <local> ^replacement
@@ -702,13 +702,13 @@ default-combinators: make map! [
 
         ; CHANGE returns tail, use as new remainder
         ;
-        remainder: change:part ^replacement remainder
+        remainder: change:part input ^replacement remainder
         return ~#change~
     ]
 
     'remove combinator [
         "Remove data that matches a parse rule"
-        return: [~#remove~]
+        return: [trash!]
         parser [action!]
     ][
         [^ remainder]: parser input except e -> [  ; first find end position
@@ -721,7 +721,7 @@ default-combinators: make map! [
 
     'insert combinator [
         "Insert literal data into the input series"
-        return: [~#insert~]
+        return: [trash!]
         parser [action!]
         <local> ^insertion
     ][
@@ -1189,10 +1189,10 @@ default-combinators: make map! [
             return fail e
         ]
 
-        ; The value is quoted or quasi because of ^ on ^(parser input).
-        ; This lets us emit antiforms, since the MAKE OBJECT! evaluates.
+        ; We lift the result.  This lets us emit antiforms, since the MAKE
+        ; OBJECT! evaluates.
         ;
-        pending: glom pending reduce [target result]
+        pending: glom pending reduce [target lift ^result]
         return ^result
     ]
 
@@ -1908,7 +1908,7 @@ default-combinators: make map! [
         return: "Element if it matches the match rule" [element?]
         value [frame!]
     ][
-        if run value opt input.1 [
+        if run value opt try input.1 [
             remainder: next input
             return input.1
         ]
@@ -2090,9 +2090,9 @@ default-combinators: make map! [
         return remainder
     ]
 
-    === FRAME! COMBINATOR ===
+    === ACTION! COMBINATOR ===
 
-    ; The frame combinator is a new idea of letting you call a normal
+    ; The action combinator is a new idea of letting you call a normal
     ; function with parsers fulfilling the arguments.  At the Montreal
     ; conference Carl said he was skeptical of PARSE getting any harder to read
     ; than it was already, so the isolation of DO code to GROUP!s seemed like
@@ -2102,7 +2102,7 @@ default-combinators: make map! [
     ; you can make a PATH! that starts with / and that will be run as a normal
     ; action but whose arguments are fulfilled via PARSE.
 
-    frame! combinator [
+    action! combinator [
         "Run an ordinary action with parse rule products as its arguments"
         return: "The return value of the action"
             [any-value? pack!]
@@ -2446,7 +2446,9 @@ default-combinators: make map! [
             ] else [
                 ^result: ghost  ; reset, e.g. `[veto |]`
 
-                free pending  ; proactively release memory
+                if pending <> blank [
+                    free pending  ; proactively release memory
+                ]
                 pending: blank
 
                 ; If we fail a match, we skip ahead to the next alternate rule
@@ -2618,7 +2620,7 @@ comment [combinatorize: func [
                     if not param.endable [
                         panic "Too few parameters for combinator"
                     ]
-                    set key null
+                    ; leave unset
                 ]
                 else [
                     set key either param.class = 'just [r] [inside rules r]
@@ -2773,11 +2775,11 @@ parsify: func [
         ]
 
         (path? r) and (space? first r) [  ; "action combinator" [5]
-            if not frame? let gotten: unrun get:any r [
+            if not frame? let gotten: unrun get resolve r [
                 panic "In UPARSE PATH starting in / must be action or frame"
             ]
-            if not comb: select state.combinators frame! [
-                panic "No frame! combinator, can't use PATH starting with /"
+            if not comb: select state.combinators action! [
+                panic "No action! combinator, can't use PATH starting with /"
             ]
 
             comb: unrun adapt (augment comb inside [] collect [
@@ -2813,7 +2815,7 @@ parsify: func [
         ]
 
         (path? r) and (space? last r) [  ; type constraint combinator
-            let ^action: get r  ; ^ to not store ACTION as label
+            let ^action: get resolve r  ; ^ to not store ACTION as label
             comb: state.combinators.match
             return combinatorize:value comb rules state action/
         ]
