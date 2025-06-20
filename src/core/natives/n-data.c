@@ -1372,7 +1372,7 @@ DECLARE_NATIVE(LIGHT)
 //  "Handle unstable isotopes like assignments do, pass through other values"
 //
 //      return: [any-value?]
-//      ^atom
+//      value
 //  ]
 //
 DECLARE_NATIVE(DECAY)
@@ -1383,7 +1383,6 @@ DECLARE_NATIVE(DECAY)
     if (bounce)
         return unwrap bounce;
 
-    Decay_If_Unstable(OUT);
     return OUT;
 }
 
