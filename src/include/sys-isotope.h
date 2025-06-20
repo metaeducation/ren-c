@@ -98,7 +98,9 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
             ){
                 return Error_Bad_Value(elem);
             }
-            Copy_Cell(atom, cast(Atom*, Stub_Cell(unwrap patch)));
+            // !!! don't mess with flags (e.g. SLOT_WEIRD_MARKED_DUAL)
+            atom->payload = Stub_Cell(unwrap patch)->payload;
+            atom->extra = Stub_Cell(unwrap patch)->extra;
         }
         else {
             assert(Any_List_Type(heart) or heart == TYPE_COMMA);
