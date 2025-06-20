@@ -981,18 +981,27 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
                 // Only wanted the key (`for-each 'key obj [...]`)
             }
             else if (Varlist_Len(vars_ctx) == 2) {
-                //
+                ++slot;
+
                 // Want keys and values (`for-each 'key val obj [...]`)
                 //
-                Sink(Value) spare_val = SPARE;
-                e = Trap_Read_Slot(spare_val, les->u.evars.slot);
-                if (e)
-                    return e;
+                if (Is_Dual_Unset(les->u.evars.slot)) {
+                    Flags persist = (
+                        slot->header.bits & CELL_MASK_PERSIST_SLOT
+                    );
+                    Init_Dual_Unset(slot);  // !!! hack!
+                    slot->header.bits |= persist;  // preserve persist flags
+                }
+                else {
+                    Sink(Value) spare_val = SPARE;
+                    e = Trap_Read_Slot(spare_val, les->u.evars.slot);
+                    if (e)
+                        return e;
 
-                ++slot;
-                e = Trap_Write_Loop_Slot_May_Bind(slot, spare_val, les->data);
-                if (e)
-                    return e;
+                    e = Trap_Write_Loop_Slot_May_Bind(slot, spare_val, les->data);
+                    if (e)
+                        return e;
+                }
             }
             else
                 panic ("Loop enumeration of contexts must be 1 or 2 vars");

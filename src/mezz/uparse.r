@@ -179,7 +179,7 @@ bind construct [
                     continue
                 ]
                 all [
-                    not trash? ^val
+                    not unset? $val
                     action? opt ^val
                 ] then [
                     ; All parsers passed as arguments, we want it to be

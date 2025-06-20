@@ -99,7 +99,7 @@ DECLARE_NATIVE(AUGMENT)
     const Param* param = Phase_Params_Head(augmentee);
     for (; key != key_tail; ++key, ++param) {
         Init_Word(PUSH(), *key);
-        Copy_Cell(PUSH(), param);
+        Copy_Cell_Core(PUSH(), param, CELL_MASK_COPY_SLOT);
 
         if (Is_Specialized(param))
             Set_Cell_Flag(TOP, STACK_NOTE_SEALED);  // seal parameters [1]

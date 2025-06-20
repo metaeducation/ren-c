@@ -432,6 +432,14 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 //    store this information in a side-structure, it can be stored on the
 //    Slot itself...but it can't be overwritten or it would be forgotten on
 //    each loop iteration.
+//
+// 3. Things are proceeding in a hacky way to start making use of the "sub
+//    band" of things that are not lifted, e.g. "true unset".  True unset
+//    indicated by having CELL_FLAG_SLOT_WEIRD_DUAL set on a slot.  Generally
+//    speaking, you have to go through the mainline slot reading machinery
+//    to deal with it.  But FRAME! machinery currently has some exceptions
+//    and copies slots directly, in which case it needs to preserve the
+//    CELL_FLAG_SLOT_WEIRD_DUAL bit.
 
 #define CELL_MASK_PERSIST \
     (NODE_FLAG_MANAGED | NODE_FLAG_ROOT | NODE_FLAG_MARKED)
@@ -446,6 +454,9 @@ STATIC_ASSERT(not (CELL_MASK_PERSIST & CELL_FLAG_NOTE));
 
 #define CELL_MASK_PERSIST_SLOT \
     (CELL_MASK_PERSIST | CELL_FLAG_NOTE)  // special persistence for slots [2]
+
+#define CELL_MASK_COPY_SLOT \
+    (CELL_MASK_COPY | CELL_FLAG_SLOT_WEIRD_DUAL)  // review usages [3]
 
 
 //=//// GETTING, SETTING, and CLEARING VALUE FLAGS ////////////////////////=//

@@ -850,7 +850,7 @@ bool Typecheck_Coerce(
     bool unquoted = false;
 
     if (Cell_Parameter_Class(param) == PARAMCLASS_META) {
-        if (Is_Nulled(atom))
+        if (Is_Dual_Unset(atom))
             return Get_Parameter_Flag(param, ENDABLE);
 
         if (not Is_Quasiform(atom) and not Is_Quoted(atom))

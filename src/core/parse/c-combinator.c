@@ -702,7 +702,7 @@ static bool Combinator_Param_Hook(
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 panic ("Too few parameters for combinator");  // !!! Error_No_Arg
-            Init_Nulled(var);
+            Init_Tripwire_Due_To_End(u_cast(Atom*, var));
         }
         else {
             if (Cell_Parameter_Class(param) == PARAMCLASS_THE)
@@ -727,7 +727,7 @@ static bool Combinator_Param_Hook(
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 panic ("Too few parameters for combinator");  // !!! Error_No_Arg
-            Init_Nulled(var);
+            Init_Tripwire_Due_To_End(u_cast(Atom*, var));
         }
         else {
             // !!! Getting more than one value back from a libRebol API is not

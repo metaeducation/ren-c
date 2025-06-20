@@ -1436,6 +1436,9 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
     Flags persist = (slot->header.bits & CELL_MASK_PERSIST_SLOT);
 
     if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {
+        if (Is_Dual_Unset(slot))
+            goto handle_non_weird;  // can be overwritten
+
         if (not Any_Lifted_Dual(slot))
             goto handle_dual_signal;
 
