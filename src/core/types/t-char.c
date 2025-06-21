@@ -722,7 +722,9 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
             ){
                 return FAIL(Error_Scan_Invalid_Raw(ARG(TYPE), v));
             }
-            return Move_Drop_Top_Stack_Element(OUT);
+            Move_Cell(OUT, TOP_ELEMENT);
+            DROP();
+            return OUT;
         }
 
         if (
@@ -731,7 +733,9 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         ){
             return FAIL(Error_Scan_Invalid_Raw(ARG(TYPE), v));
         }
-        return Move_Drop_Top_Stack_Element(OUT);
+        Move_Cell(OUT, TOP_ELEMENT);
+        DROP();
+        return OUT;
     }
 
     if (

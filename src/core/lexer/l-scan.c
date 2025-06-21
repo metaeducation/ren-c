@@ -3376,8 +3376,10 @@ DECLARE_NATIVE(TRANSCODE)
 
       case ST_TRANSCODE_ENSURE_NO_MORE:
         if (not Is_Error(OUT)) {  // !!! return this error, or new one?
-            if (TOP_INDEX == STACK_BASE + 1)  // didn't scan anything else
-                Move_Drop_Top_Stack_Element(OUT);
+            if (TOP_INDEX == STACK_BASE + 1) {  // didn't scan anything else
+                Move_Cell(OUT, TOP_ELEMENT);
+                DROP();
+            }
             else {  // scanned another item, we only wanted one!
                 assert(TOP_INDEX == STACK_BASE + 2);
                 Drop_Data_Stack_To(STACK_BASE);
@@ -3538,7 +3540,8 @@ DECLARE_NATIVE(TRANSCODE)
         }
         else {
             assert(TOP_INDEX == STACK_BASE + 1);
-            Move_Drop_Top_Stack_Element(OUT);
+            Move_Cell(OUT, TOP_ELEMENT);
+            DROP();
         }
     }
     else {

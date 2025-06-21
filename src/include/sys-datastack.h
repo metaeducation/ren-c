@@ -92,12 +92,15 @@
     #define Assert_No_DataStack_Pointers_Extant() \
         do { if (g_ds.num_refs_extant != 0) { \
             if (not g_gc.disabled or g_ds.movable_top == g_ds.movable_tail) \
-                assert(!"PUSH() while OnStack(Value*) pointers are extant"); \
+                assert(!"PUSH() while OnStack(Cell*) pointers are extant"); \
         } } while (0)
 
     template<typename T>
     struct OnStackPointer {
         T* p;
+
+        static_assert(std::is_base_of<Cell, T>::value,
+            "OnStack(T) must be used with a Cell-derived type");
 
       public:
         OnStackPointer () : p (nullptr) {}
@@ -123,20 +126,16 @@
             return *this;
         }
 
-        operator T* () const { return p; }
+        template<
+            typename U,
+            typename std::enable_if<
+                std::is_convertible<T*, U>::value
+            >::type* = nullptr
+        >
+        operator U () const { return p; }
 
-        operator NeedWrapper<Value> () const { return p; }
-        operator NeedWrapper<const Value> () const { return p; }
-        operator NeedWrapper<Element> () const { return p; }
-        operator NeedWrapper<const Element> () const { return p; }
-        operator SinkWrapper<Value> () const { return p; }
-        operator SinkWrapper<Element> () const { return p; }
-        operator InitWrapper<Value> () const { return p; }
-        operator InitWrapper<Element> () const { return p; }
-
-        operator SymbolOrValue(const*) () const { return p; }
-
-        explicit operator Byte* () const { return cast(Byte*, p); }
+        template<typename U>
+        explicit operator U*() const { return u_cast(U*, p); }
 
         T* operator->() const { return p; }
 
@@ -202,6 +201,9 @@
 #define TOP_ELEMENT \
     cast(OnStack(Element*), cast(Element*, g_ds.movable_top))  // assume valid
 
+#define TOP_ATOM \
+    cast(OnStack(Atom*), cast(Atom*, g_ds.movable_top))  // assume valid
+
 
 // 1. Use the fact that the data stack is always dynamic to avoid having to
 //    check if it is or not.
@@ -254,7 +256,7 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
 
 // Note: g_ds.movable_top is just TOP, but accessing TOP asserts on ENDs
 //
-INLINE OnStack(Value*) PUSH(void) {  // !!! OnStack(Init(Value)) ?
+INLINE OnStack(Atom*) PUSH(void) {
     Assert_No_DataStack_Pointers_Extant();
 
     ++g_ds.index;
@@ -267,10 +269,9 @@ INLINE OnStack(Value*) PUSH(void) {  // !!! OnStack(Init(Value)) ?
   #endif
 
     Erase_Cell(g_ds.movable_top);
-    return u_cast(Value*, g_ds.movable_top);  // must u_cast(), erased
+    return u_cast(Atom*, g_ds.movable_top);  // must u_cast(), erased
 }
 
-#define atom_PUSH() cast(Atom*, PUSH())
 
 
 //
@@ -298,17 +299,6 @@ INLINE void Drop_Data_Stack_To(StackIndex i) {
     while (TOP_INDEX != i)
         DROP();
 }
-
-INLINE Value* Move_Drop_Top_Stack_Value(Init(Value) out)
-  { Move_Cell(out, TOP); DROP(); return out; }
-
-INLINE Element* Move_Drop_Top_Stack_Element(Init(Element) out) {
-    assert(not Is_Antiform(TOP));
-    Move_Cell(out, TOP_ELEMENT);
-    DROP();
-    return out;
-}
-
 
 #define Pop_Source_From_Stack(base) \
     cast(Source*, Pop_Stack_Values_Core(FLEX_MASK_UNMANAGED_SOURCE, (base)))

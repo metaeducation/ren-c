@@ -598,7 +598,8 @@ DECLARE_NATIVE(JOIN)
         ){
             return FAIL("Invalid EMAIL!");
         }
-        Move_Drop_Top_Stack_Element(OUT);
+        Move_Cell(OUT, TOP_ELEMENT);
+        DROP();
     }
     else if (heart == TYPE_URL) {
         if (
@@ -607,7 +608,8 @@ DECLARE_NATIVE(JOIN)
         ){
             return FAIL("Invalid URL!");
         }
-        Move_Drop_Top_Stack_Element(OUT);
+        Move_Cell(OUT, TOP_ELEMENT);
+        DROP();
     }
     else
         return PANIC(PARAM(BASE));
@@ -1402,7 +1404,8 @@ DECLARE_NATIVE(TO_HEX)
     if (not Try_Scan_Rune_To_Stack(Binary_At(mo->string, mo->base.size), len))
         return PANIC(PARAM(VALUE));
 
-    Move_Drop_Top_Stack_Element(OUT);
+    Move_Cell(OUT, TOP_ELEMENT);
+    DROP();
     Drop_Mold(mo);
     return OUT;
 }

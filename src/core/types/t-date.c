@@ -572,7 +572,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
         ){
             goto bad_make;
         }
-        return Move_Drop_Top_Stack_Element(OUT);
+        Move_Cell(OUT, TOP_ELEMENT);
+        DROP();
+        return OUT;
     }
 
     goto bad_make;

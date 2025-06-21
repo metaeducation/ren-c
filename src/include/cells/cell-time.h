@@ -34,18 +34,20 @@
 
 #define CELL_DATE_YMDZ(c)  (c)->extra.ymdz
 
-#if DONT_CHECK_CELL_SUBCLASSES
+#if NO_RUNTIME_CHECKS
     #define Ensure_Date(v)  (v)
 #else
-    INLINE const Cell* Ensure_Date(const Cell* v) {
+    INLINE Cell* Ensure_Date(const_if_c Cell* v) {
         assert(Heart_Of(v) == TYPE_DATE);
         return v;
     }
 
-    INLINE Element* Ensure_Date(Atom* v) {
-        assert(Type_Of(v) == TYPE_DATE);
-        return cast(Element*, v);
+  #if CPLUSPLUS_11
+    INLINE const Cell* Ensure_Date(const Cell* v) {
+        assert(Heart_Of(v) == TYPE_DATE);
+        return v;
     }
+  #endif
 #endif
 
 #define MAX_YEAR 0x3fff

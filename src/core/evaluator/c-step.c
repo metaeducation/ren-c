@@ -1711,22 +1711,21 @@ Bounce Stepper_Executor(Level* L)
     //    overwrite of the returned OUT for the whole evaluation will happen
     //    *after* the original OUT was captured into any desired variable.
 
-    Liftify(OUT);  // so we can put it on the stack
-    Copy_Cell(PUSH(), Known_Element(OUT));  // free up OUT cell [1]
+    Copy_Cell(PUSH(), OUT);  // free up OUT cell [1]
 
     const Source* pack_array;  // needs GC guarding when OUT overwritten
-    const Element* pack_at;  // individualpack block items are lifted
+    const Element* pack_at_lifted;  // individual pack block items are lifted
     const Element* pack_tail;
 
-    if (Is_Lifted_Pack(OUT)) {  // antiform block
-        pack_at = Cell_List_At(&pack_tail, OUT);
+    if (Is_Pack(OUT)) {  // antiform block
+        pack_at_lifted = Cell_List_At(&pack_tail, OUT);
 
         pack_array = Cell_Array(OUT);
         Push_Lifeguard(pack_array);
     }
-    else {  // single lifted item (lifted state aligns with pack items)
-        Move_Atom(SPARE, OUT);
-        pack_at = cast(Element*, SPARE);
+    else {  // single item
+        Copy_Lifted_Cell(SPARE, OUT);
+        pack_at_lifted = cast(Element*, SPARE);
         pack_tail = cast(Element*, SPARE) + 1;  // not a valid cell
 
         pack_array = nullptr;
@@ -1759,7 +1758,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(LIFT_BYTE(var) == NOQUOTE_1);
 
-    if (pack_at == pack_tail) {
+    if (pack_at_lifted == pack_tail) {
         if (not is_optional)
             return PANIC("Not enough values for required multi-return");
 
@@ -1770,8 +1769,7 @@ Bounce Stepper_Executor(Level* L)
         Init_Nulled(OUT);
     }
     else {
-        Copy_Cell(OUT, pack_at);
-        assert(Any_Lifted(OUT));  // out is lifted'd
+        Copy_Cell(OUT, pack_at_lifted);
         Unliftify_Undecayed(OUT);  // unlift for output...
     }
 
@@ -1807,10 +1805,10 @@ Bounce Stepper_Executor(Level* L)
 } circled_check: { // Note: no circling passes through the original OUT
 
     if (circled == stackindex_var)
-        Copy_Lifted_Cell(TOP_ELEMENT, OUT);  // unlift'd on finalization
+        Copy_Cell(TOP_ATOM, OUT);
 
     ++stackindex_var;
-    ++pack_at;
+    ++pack_at_lifted;
     goto next_pack_item;
 
 } set_block_finalize_and_drop_stack: {
@@ -1825,8 +1823,7 @@ Bounce Stepper_Executor(Level* L)
     if (pack_array)
         Drop_Lifeguard(pack_array);
 
-    Move_Cell(OUT, TOP_ELEMENT);  // restore OUT (or circled) from stack [1]
-    Unliftify_Undecayed(OUT);
+    Move_Atom(OUT, TOP_ATOM);  // restore OUT (or circled) from stack [1]
 
 }} set_block_drop_stack_and_continue: {
 

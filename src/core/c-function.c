@@ -167,12 +167,12 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         Fetch_Next_In_Feed(L->feed);
 
         if (Is_Level_At_End(L)) {  // default initializer for local
-            Init_Tripwire_Due_To_End(u_cast(Atom*, PUSH()));
+            Init_Tripwire_Due_To_End(PUSH());
             break;
         }
 
         if (not Is_Group(At_Level(L))) {
-            Init_Tripwire_Due_To_End(u_cast(Atom*, PUSH()));
+            Init_Tripwire_Due_To_End(PUSH());
             goto loop_dont_fetch_next;
         }
 
@@ -424,7 +424,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         }
         else {  // Pushing description values for a new named element...
             Init_Word(PUSH(), symbol);  // duplicates caught when popping
-            param = PUSH();
+            param = u_cast(Value*, PUSH());
         }
 
         // Non-annotated arguments allow all parameter types.
