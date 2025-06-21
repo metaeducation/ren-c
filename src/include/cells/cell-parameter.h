@@ -360,14 +360,12 @@ INLINE bool Is_Specialized(const Param* p) {
 
 #define CELL_FLAG_PARAM_NOTE_TYPECHECKED  CELL_FLAG_NOTE
 
-INLINE bool Is_Typechecked(const Value* v) {
-    Assert_Cell_Stable(v);
-    return Get_Cell_Flag(v, PARAM_NOTE_TYPECHECKED);
+INLINE bool Is_Typechecked(const Atom* arg) {
+    return Get_Cell_Flag(arg, PARAM_NOTE_TYPECHECKED);
 }
 
-INLINE void Mark_Typechecked(const Value* v) {
-    Assert_Cell_Stable(v);
-    Set_Cell_Flag(v, PARAM_NOTE_TYPECHECKED);
+INLINE void Mark_Typechecked(const Atom* arg) {
+    Set_Cell_Flag(arg, PARAM_NOTE_TYPECHECKED);
 }
 
 INLINE bool Is_Parameter_Final_Type(const Param* p) {

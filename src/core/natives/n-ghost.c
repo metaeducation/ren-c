@@ -60,11 +60,9 @@ DECLARE_NATIVE(GHOST_Q)
 {
     INCLUDE_PARAMS_OF_GHOST_Q;
 
-    Option(Heart) heart;
-    LiftByte lift_byte;
-    Get_Heart_And_Lift_Of_Atom_Intrinsic(&heart, &lift_byte, LEVEL);
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    return LOGIC(lift_byte == ANTIFORM_0 and heart == TYPE_COMMA);
+    return LOGIC(Is_Ghost(atom));
 }
 
 
@@ -81,9 +79,9 @@ DECLARE_NATIVE(GHOST_OR_VOID_Q)
 {
     INCLUDE_PARAMS_OF_GHOST_OR_VOID_Q;
 
-    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    return LOGIC(Is_Lifted_Ghost_Or_Void(lifted));
+    return LOGIC(Is_Ghost_Or_Void(atom));
 }
 
 
@@ -139,10 +137,10 @@ DECLARE_NATIVE(UNGHOST)
 {
     INCLUDE_PARAMS_OF_UNGHOST;
 
-    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    if (Is_Lifted_Ghost(lifted))
+    if (Is_Ghost(atom))
         return VOID;
 
-    return UNLIFT(lifted);
+    return COPY(atom);
 }

@@ -219,19 +219,19 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 // contains a Cell that needs to be marked.
 //
 
-INLINE Value* Stub_Cell(const_if_c Stub* s) {
+INLINE Atom* Stub_Cell(const_if_c Stub* s) {
     assert(Not_Stub_Flag(s, DYNAMIC));
     assert(Stub_Holds_Cells(s));
     assert(Is_Node_Readable(s));
-    return x_cast(Value*, &s->content.fixed.cell);
+    return u_cast(Atom*, &s->content.fixed.cell);
 }
 
 #if CPLUSPLUS_11
-    INLINE const Value* Stub_Cell(const Stub* s) {
+    INLINE const Atom* Stub_Cell(const Stub* s) {
         assert(Not_Stub_Flag(s, DYNAMIC));
         assert(Stub_Holds_Cells(s));
         assert(Is_Node_Readable(s));
-        return u_cast(const Value*, &s->content.fixed.cell);
+        return u_cast(const Atom*, &s->content.fixed.cell);
     }
 #endif
 

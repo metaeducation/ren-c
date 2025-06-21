@@ -757,7 +757,7 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 //
 // There is one exception: an Init(Slot) e.g. what you get from adding a
 // fresh variable to a context, is able to be initialized by any routine
-// that could do an Init(Element) or Init(Value).  This is because a slot that
+// that could do an Init(Atom/Value/Element).  This is because a slot that
 // does not carry CELL_FLAG_SLOT_WEIRD_DUAL is assumed to be literal.
 //
 // Hence instead of writing:
@@ -785,6 +785,9 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
     struct Slot : public Cell {};  // can hold unstable antiforms
 
   #if DEBUG_USE_SINKS
+    template<>
+    struct AllowSinkConversion<Slot, Atom> : std::true_type {};
+
     template<>
     struct AllowSinkConversion<Slot, Value> : std::true_type {};
 

@@ -303,7 +303,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // vs. putting it in fetched/MARKED_TEMPORARY...but that makes
         // this more convoluted.  Review.
 
-        Value* single = Stub_Cell(inst1);
+        Value* single = Known_Stable(Stub_Cell(inst1));
         feed->p = single;
         feed->p = Copy_Reified_Variadic_Feed_Cell(
             &feed->fetched,

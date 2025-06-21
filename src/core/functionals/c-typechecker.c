@@ -76,17 +76,16 @@ Bounce Typechecker_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    if (Is_Lifted_Void(lifted))
+    if (Is_Void(atom))
         return LOGIC(false);  // opt-out of the typecheck (null fails)
 
     Details* details = Level_Intrinsic_Details(L);
     assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
 
     DECLARE_ATOM (temp);  // can't overwrite scratch if error can be raised
-    Copy_Cell(temp, lifted);
-    Unliftify_Undecayed(temp);
+    Copy_Cell(temp, atom);
     Value* v = Decay_If_Unstable(temp);
 
     Option(Type) type = Type_Of(v);
@@ -390,8 +389,6 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     ){
         Copy_Cell(SCRATCH, test);  // intrinsic may need action
 
-        Liftify(SPARE);
-
       #if DEBUG_CELL_READ_WRITE
         assert(Not_Cell_Flag(SPARE, PROTECTED));
         Set_Cell_Flag(SPARE, PROTECTED);
@@ -405,8 +402,6 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
       #if DEBUG_CELL_READ_WRITE
         Clear_Cell_Flag(SPARE, PROTECTED);
       #endif
-
-        Unliftify_Undecayed(SPARE);
 
         if (bounce == nullptr or bounce == BOUNCE_BAD_INTRINSIC_ARG)
             goto test_failed;
@@ -454,9 +449,6 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         panic (Error_No_Arg_Typecheck(label));  // must take argument
 
     Copy_Cell(arg, v);  // do not decay [4]
-
-    if (Cell_Parameter_Class(param) == PARAMCLASS_META)
-        Liftify(arg);
 
     heeded(Corrupt_Cell_If_Debug(Level_Spare(sub)));
     heeded(Corrupt_Cell_If_Debug(Level_Scratch(sub)));
@@ -835,7 +827,9 @@ bool Typecheck_Coerce(
   #endif
 
     assert(atom != SCRATCH and atom != SPARE);
-    assert(not Is_Endlike_Tripwire(atom));  // no DUAL flag on trash atoms
+
+    if (Is_Dual_Unset(atom))
+        return Get_Parameter_Flag(param, ENDABLE);
 
     if (Get_Parameter_Flag(param, OPT_OUT))
         assert(not Is_Void(atom));  // should have bypassed this check
@@ -847,27 +841,15 @@ bool Typecheck_Coerce(
 
     bool coerced = false;
 
-    // We do an adjustment of the argument to accommodate meta parameters,
-    // which check the unquoted type.
-    //
-    bool unquoted = false;
-
     if (Cell_Parameter_Class(param) == PARAMCLASS_META) {
-        if (Is_Dual_Unset(atom))
-            return Get_Parameter_Flag(param, ENDABLE);
-
-        if (not Is_Quasiform(atom) and not Is_Quoted(atom))
-            return false;
-
-        Unliftify_Undecayed(atom);  // temp adjustment (easiest option)
-        unquoted = true;
+        //
+        // check as-is, try coercing if it doesn't work
     }
     else if (is_return) {
-        unquoted = false;
+        //
+        // same as PARAMCLASS_META
     }
     else {
-        unquoted = false;
-
         if (Not_Stable(atom))
             goto do_coercion;
     }
@@ -974,11 +956,8 @@ bool Typecheck_Coerce(
 
 } return_result: { ///////////////////////////////////////////////////////////
 
-    if (unquoted)
-        Liftify(atom);
-
     if ((result == true) and Not_Stable(atom))
-        assert(is_return);
+        assert(is_return or Cell_Parameter_Class(param) == PARAMCLASS_META);
 
   #if RUNTIME_CHECKS  // always corrupt to emphasize that we *could* have [1]
     Init_Unreadable(SPARE);
@@ -1108,10 +1087,10 @@ DECLARE_NATIVE(MATCH)
 
     Value* test = ARG(TEST);
 
-    Copy_Cell(SPARE, ARG(VALUE));
+    Value* spare = Copy_Cell(SPARE, ARG(VALUE));
 
     if (not Bool_ARG(LIFT)) {
-        if (Is_Light_Null(SPARE))
+        if (Is_Nulled(spare))
             return FAIL(Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
     }
 
@@ -1139,7 +1118,7 @@ DECLARE_NATIVE(MATCH)
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
-    Copy_Cell(OUT, SPARE);
+    Copy_Cell(OUT, spare);
 
     if (Bool_ARG(LIFT))
         Liftify(OUT);

@@ -78,7 +78,10 @@ INLINE Value* Extract_Cell_Handle_Canon(const_if_c Value* c) {
     assert(Unchecked_Heart_Of(c) == TYPE_HANDLE);
     if (not Cell_Has_Node1(c))
         return m_cast(Value*, c);  // changing instance won't be seen by copies
-    return Stub_Cell(Extract_Cell_Handle_Stub(c));  // has shared node
+
+    return Known_Stable(
+        Stub_Cell(Extract_Cell_Handle_Stub(c))  // has shared node
+    );
 }
 
 #if CPLUSPLUS_11
@@ -86,7 +89,10 @@ INLINE Value* Extract_Cell_Handle_Canon(const_if_c Value* c) {
         assert(Unchecked_Heart_Of(c) == TYPE_HANDLE);
         if (not Cell_Has_Node1(c))
             return c;  // changing handle instance won't be seen by copies
-        return Stub_Cell(Extract_Cell_Handle_Stub(c));  // has shared node
+
+        return Known_Stable(
+            Stub_Cell(Extract_Cell_Handle_Stub(c))  // has shared node
+        );
     }
 #endif
 
@@ -201,7 +207,7 @@ INLINE void Init_Handle_Managed_Common(
 
     Tweak_Handle_Cleaner(stub, cleaner);  // FLAVOR_HANDLE in Diminish_Stub()
 
-    Value* single = Stub_Cell(stub);
+    Sink(Element) single = Stub_Cell(stub);
     Reset_Cell_Header_Noquote(
         single,
         FLAG_HEART(HANDLE)
@@ -267,7 +273,7 @@ INLINE Element* Init_Handle_Node_Managed(
 
     // Leave the non-singular cdata corrupt; clients should not be using
 
-    Value* cell = Stub_Cell(Extract_Cell_Handle_Stub(out));
+    Cell* cell = Stub_Cell(Extract_Cell_Handle_Stub(out));
     Clear_Cell_Flag(cell, DONT_MARK_NODE2);
     CELL_HANDLE_NODE_P(cell) = m_cast(Node*, node);  // extracted as const
     return out;

@@ -72,14 +72,21 @@
 //
 
 
-// Intrinsics always receive their arguments as a Lifted representation.  Many
-// are not allowed to modify the SPARE cell.  This requirement of not
-// modifying is important for instance in type checking... the typechecks
-// have to be applied multiple times to the same value.
+// Intrinsics always receive their arguments as a Lifted representation.
 //
-INLINE const Element* Level_Intrinsic_Arg_Lifted(Level* L) {
+// 1. Typechecking intrinsics are not allowed to modify the SPARE cell.
+//    Many checks may be applied to the same value.  (You also can't write
+//    over the OUT Cell, use `return LOGIC(true)` or `return LOGIC(false)`)
+//
+//    But non-typechecking intrinsics can write to the SPARE cell, so we
+//    return it non-const here, and trust the PROTECTED flag to catch bad
+//    writes at runtime in the debug build.
+//
+INLINE Atom* Level_Dispatching_Intrinsic_Atom_Arg(Level* L) {
     assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));
-    return Known_Element(Level_Spare(L));
+
+    possibly(Get_Cell_Flag(Level_Spare(L), PROTECTED));  // if typechecker [1]
+    return Level_Spare(L);
 }
 
 INLINE Details* Level_Intrinsic_Details(Level* L) {
@@ -99,29 +106,20 @@ INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
 }
 
 
-// If the intrinsic just wants to look at the heart byte and lift byte of
-// an unconstrained ^META parameter, that can be done without making
-// another Cell at the callsite.
+// Unchecked argument to an intrinsic function, adjusted for whether you
+// are dispatching an intrinsic or not.
 //
-// 1. Typechecker intrinsics aren't allowed to modify SPARE, because it is
-//    used multiple times in the same type check.
+// Typically use this when you take an ^atom with no type constraints.
 //
-INLINE void Get_Heart_And_Lift_Of_Atom_Intrinsic(
-    Sink(Option(Heart)) heart,
-    Sink(LiftByte) lift_byte,
-    Level* L
-){
-    const Element* lifted;
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
-        lifted = Known_Element(Level_Arg(L, 1));  // already checked
-    else
-        lifted = Level_Intrinsic_Arg_Lifted(L);
+INLINE Atom* Intrinsic_Atom_ARG(Level* L) {
+    if (Get_Level_Flag(L, DISPATCHING_INTRINSIC))
+        return Level_Spare(L);
 
-    *heart = Heart_Of(lifted);
-    assert(LIFT_BYTE(lifted) >= QUASIFORM_2);
-    *lift_byte = LIFT_BYTE(lifted) - Quote_Shift(1);
-    return;
+    return Level_Arg(L, 1);
 }
+
+#define Intrinsic_Typechecker_Atom_ARG(L) \
+    u_cast(const Atom*, Intrinsic_Atom_ARG(L))
 
 
 // 1. The <opt-out> parameter convention has to be handled by the intrinsic,
@@ -134,78 +132,49 @@ INLINE void Get_Heart_And_Lift_Of_Atom_Intrinsic(
 //    `return Init_Nulled(OUT)` here.
 //
 INLINE Option(Bounce) Trap_Bounce_Opt_Out_Element_Intrinsic(
-    Sink(Element) out,
+    Sink(Element) elem_out,
     Level* L  // writing OUT and SPARE is allowed in this helper
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Copy_Cell(out, Known_Element(Level_Arg(L, 1)));  // already checked
+        Copy_Cell(elem_out, Known_Element(Level_Arg(L, 1)));  // was checked
         return nullptr;
     }
 
-    const Element* lifted = Level_Intrinsic_Arg_Lifted(L);
+    const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
-    if (Is_Lifted_Void(lifted))  // do PARAMETER_FLAG_OPT_OUT [1]
+    if (Is_Error(atom_arg))
+        return Native_Panic_Result(L, Cell_Error(atom_arg));
+
+    if (Is_Void(atom_arg))  // do PARAMETER_FLAG_OPT_OUT [1]
         return Init_Nulled(L->out);  // !!! overwrites out, illegal [2]
 
-    if (Is_Quasiform(lifted))  // antiform including
+    Init(Atom) atom_out = u_cast(Atom*, elem_out);
+    Copy_Cell(atom_out, atom_arg);
+    Decay_If_Unstable(atom_out);
+
+    if (Is_Antiform(atom_out))
         return BOUNCE_BAD_INTRINSIC_ARG;
 
-    Copy_Cell(out, lifted);
-    Unquotify(out);
-
     return nullptr;
-}
-
-INLINE const Element* Get_Lifted_Atom_Intrinsic(Level* L) {
-    const Element* lifted;
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
-        lifted = Known_Element(Level_Arg(L, 1));  // already checked
-    else
-        lifted = Level_Intrinsic_Arg_Lifted(L);  // intrinsic arg always lifted
-
-    assert(LIFT_BYTE(lifted) >= QUASIFORM_2);
-    return lifted;
 }
 
 INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
-    Sink(Value) v,
+    Sink(Value) val_out,
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Copy_Cell(v, Level_Arg(L, 1));  // already checked
+        Copy_Cell(val_out, Known_Stable(Level_Arg(L, 1)));  // was checked
         return nullptr;
     }
 
-    const Element* lifted = Level_Intrinsic_Arg_Lifted(L);
+    const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
-    if (Is_Lifted_Error(lifted))
-        return Native_Panic_Result(L, Cell_Error(lifted));
+    if (Is_Error(atom_arg))
+        return Native_Panic_Result(L, Cell_Error(atom_arg));
 
-    Copy_Cell(v, lifted);
-    Unliftify_Undecayed(u_cast(Atom*, v));
-    Decay_If_Unstable(u_cast(Atom*, v));
-    return nullptr;
-}
-
-INLINE Option(Bounce) Trap_Bounce_Lifted_Decay_Value_Intrinsic(
-    Sink(Element) out,
-    Level* L
-){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Element* lifted = Known_Element(Level_Arg(L, 1));  // already checked
-        Copy_Cell(out, lifted);
-        return nullptr;
-    }
-
-    const Element* lifted = Level_Intrinsic_Arg_Lifted(L);
-
-    if (Is_Lifted_Error(lifted))
-        return Native_Panic_Result(L, Cell_Error(lifted));
-
-    Copy_Cell(out, lifted);
-    Unliftify_Undecayed(u_cast(Atom*, out));
-    Decay_If_Unstable(u_cast(Atom*, out));
-    Liftify(out);
+    Init(Atom) atom_out = u_cast(Atom*, val_out);
+    Copy_Cell(atom_out, atom_arg);
+    Decay_If_Unstable(atom_out);
 
     return nullptr;
 }

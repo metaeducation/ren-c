@@ -78,12 +78,12 @@ DECLARE_NATIVE(VETO_Q)
 {
     INCLUDE_PARAMS_OF_VETO_Q;
 
-    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    if (not Is_Lifted_Error(lifted))
+    if (not Is_Error(atom))
         return nullptr;
 
-    return LOGIC(Is_Error_Veto_Signal(Cell_Error(lifted)));
+    return LOGIC(Is_Error_Veto_Signal(Cell_Error(atom)));
 }
 
 

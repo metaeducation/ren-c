@@ -293,8 +293,8 @@ DECLARE_NATIVE(THEN_Q)
 {
     INCLUDE_PARAMS_OF_THEN_Q;
 
-    Element* lifted = Element_ARG(ATOM);
-    return LOGIC(not Is_Lifted_Null(lifted));
+    Atom* atom = Atom_ARG(ATOM);
+    return LOGIC(not Is_Light_Null(atom));
 }
 
 
@@ -311,8 +311,8 @@ DECLARE_NATIVE(ELSE_Q)
 {
     INCLUDE_PARAMS_OF_ELSE_Q;
 
-    Element* lifted = Element_ARG(ATOM);
-    return LOGIC(Is_Lifted_Null(lifted));
+    Atom* atom = Atom_ARG(ATOM);
+    return LOGIC(Is_Light_Null(atom));
 }
 
 
@@ -333,16 +333,13 @@ DECLARE_NATIVE(THEN)
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Element* lifted = Element_ARG(ATOM);
+    Atom* atom = Atom_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
-    if (Is_Lifted_Null(lifted))
+    if (Is_Light_Null(atom))
         return nullptr;
 
-    Copy_Cell(SPARE, lifted);
-    Unliftify_Undecayed(SPARE);
-
-    return DELEGATE_BRANCH(OUT, branch, SPARE);
+    return DELEGATE_BRANCH(OUT, branch, atom);
 }
 
 
@@ -362,16 +359,13 @@ DECLARE_NATIVE(ELSE)
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    Element* lifted = Element_ARG(ATOM);
+    Atom* atom = Atom_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
-    if (not Is_Lifted_Null(lifted))
-        return UNLIFT(lifted);
+    if (not Is_Light_Null(atom))
+        return COPY(atom);
 
-    Copy_Cell(SPARE, lifted);
-    Unliftify_Undecayed(SPARE);
-
-    return DELEGATE_BRANCH(OUT, branch, SPARE);
+    return DELEGATE_BRANCH(OUT, branch, atom);
 }
 
 
@@ -392,7 +386,7 @@ DECLARE_NATIVE(ALSO)
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Element* lifted = Element_ARG(ATOM);
+    Atom* atom = Atom_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
     enum {
@@ -405,25 +399,24 @@ DECLARE_NATIVE(ALSO)
         goto initial_entry;
 
       case ST_ALSO_RUNNING_BRANCH:
-        goto branch_result_in_out;
+        goto discard_branch_result_in_out_and_return_input;
 
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Lifted_Null(lifted))
+    if (Is_Light_Null(atom))
         return nullptr;
 
-    Copy_Cell(SPARE, lifted);
-    Unliftify_Undecayed(SPARE);
-
     STATE = ST_ALSO_RUNNING_BRANCH;
-    return CONTINUE_BRANCH(OUT, branch, SPARE);
+    return CONTINUE_BRANCH(OUT, branch, atom);
 
-} branch_result_in_out: {  ///////////////////////////////////////////////////
+} discard_branch_result_in_out_and_return_input: {  //////////////////////////
 
-    return UNLIFT(lifted);  // discard branch result, return input value
+    dont(UNUSED(OUT));  // would corrupt the OUT pointer itself
+
+    return COPY(atom);
 }}
 
 
@@ -523,7 +516,8 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     if (Is_Void(SCRATCH))  // !!! should void predicate results opt-out?
         return PANIC(Error_Bad_Void());
 
-    Packify_If_Inhibitor(SCRATCH);  // predicates can approve null [1]
+    if (Is_Light_Null(SCRATCH))  // predicates can approve null [1]
+        Init_Heavy_Null(SCRATCH);
 
     SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ANY_ALL_NONE_EVAL_STEP;
@@ -1217,15 +1211,19 @@ DECLARE_NATIVE(MAYBE)
     INCLUDE_PARAMS_OF_MAYBE;
 
     Element* target = Element_ARG(TARGET);
-    Element* lifted = Element_ARG(ATOM);
+    Atom* atom = Atom_ARG(ATOM);
 
-    if (Is_Lifted_Error(lifted))
-        return UNLIFT(lifted);  // pass through but don't assign anything
+    if (Is_Error(atom))
+        return COPY(atom);  // pass through but don't assign anything
 
-    if (Is_Lifted_Null(lifted))
-        return rebDelegate("get:any @", target);
+    Element* quoted_target = Quotify(target);
 
-    return rebDelegate("set @", target, lifted);  // should decay if needed
+    if (Is_Light_Null(atom))
+        return rebDelegate("get:any", quoted_target);
+
+    Element* lifted_atom = Liftify(atom);
+
+    return rebDelegate(CANON(SET), quoted_target, lifted_atom);  // may decay
 }
 
 
@@ -1315,8 +1313,7 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_THROW;
 
-    Atom* atom = Copy_Cell(SPARE, ARG(ATOM));
-    Unliftify_Undecayed(atom);
+    Atom* atom = Atom_ARG(ATOM);
 
     Level* throw_level = LEVEL;  // Level of this RETURN call
 

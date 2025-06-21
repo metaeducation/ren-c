@@ -82,12 +82,12 @@ DECLARE_NATIVE(DONE_Q)
 {
     INCLUDE_PARAMS_OF_DONE_Q;
 
-    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    if (not Is_Lifted_Error(lifted))
+    if (not Is_Error(atom))
         return nullptr;
 
-    return LOGIC(Is_Error_Done_Signal(Cell_Error(lifted)));
+    return LOGIC(Is_Error_Done_Signal(Cell_Error(atom)));
 }
 
 
@@ -302,12 +302,12 @@ Bounce Yielder_Dispatcher(Level* const L)
     const Key* key_tail;  // move this yielder call frame into old varlist [1]
     const Key* key = Varlist_Keys(&key_tail, original_varlist);
     Param* param = Phase_Params_Head(Level_Phase(L));
-    Value* dest = Slot_Hack(Varlist_Slots_Head(original_varlist));
-    Value* src = Level_Args_Head(L);
+    Atom* dest = Slot_Hack(Varlist_Slots_Head(original_varlist));
+    Atom* src = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {
         if (Is_Specialized(param))
             continue;  // don't overwrite locals (including definitional YIELD)
-        Move_Cell(dest, src);  // all arguments/refinements are fair game
+        Move_Atom(dest, src);  // all arguments/refinements are fair game
     }
 
     if (Not_Node_Managed(L->varlist))  // don't need it [2]
@@ -589,7 +589,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
       default: assert(false);
     }
 
-    Element* lifted = Element_ARG(ATOM);
+    Atom* atom = Atom_ARG(ATOM);
 
   //=//// EXTRACT YIELDER FROM DEFINITIONAL YIELD'S CELL ///////////////////=//
 
@@ -625,14 +625,14 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     // of one value, YIELD DONE, or YIELD of any other error antiform which the
     // yielder will elevate to an abrupt panic.
 
-    if (Is_Lifted_Error(lifted) or Bool_ARG(FINAL)) {  // not resumable, throw
+    if (Is_Error(atom) or Bool_ARG(FINAL)) {  // not resumable, throw
         Value* spare = Init_Action(
             SPARE,  // use as label for throw
             Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),
             CANON(YIELD),
             Level_Varlist(yielder_level)
         );
-        return Init_Thrown_With_Label(LEVEL, lifted, spare);
+        return Init_Thrown_With_Label(LEVEL, atom, spare);
     }
 
   //=//// PLAIN YIELD MUST "UNPLUG STACK" FOR LATER RESUMPTION ////////////=//
@@ -653,7 +653,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     Unplug_Stack(plug, yielder_level, yield_level);  // preserve stack [1]
     assert(yielder_level == TOP_LEVEL);
 
-    Copy_Cell(yielded_lifted, lifted);  // atom argument is already ^META
+    Copy_Lifted_Cell(yielded_lifted, atom);
 
     STATE = ST_YIELD_SUSPENDED;  // can't BOUNCE_CONTINUE with STATE_0 [2]
     return BOUNCE_CONTINUE;  // now continues yielder_level, not yield_level

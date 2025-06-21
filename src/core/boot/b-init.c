@@ -526,7 +526,7 @@ static void Init_System_Object(
 
     Slot* std_error_slot = Get_System(SYS_STANDARD, STD_ERROR);
     assert(HEART_BYTE(std_error_slot) == TYPE_OBJECT);
-    assert(LIFT_BYTE_RAW(std_error_slot) == ONEQUOTE_NONQUASI_3);
+    assert(LIFT_BYTE_RAW(std_error_slot) == NOQUOTE_1);
     VarList* varlist = Cell_Varlist(u_cast(Element*, std_error_slot));
     HEART_BYTE(std_error_slot) = TYPE_WARNING;
 

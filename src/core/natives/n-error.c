@@ -27,27 +27,27 @@
 
 
 //
-//  try: native [
+//  try: native:intrinsic [
 //
 //  "Suppress escalation to PANIC from ERROR!s, by returning NULL"
 //
 //      return: [any-value?]
-//      ^atom [any-atom?]  ; e.g. TRY on a pack returns the pack
+//      ^atom  ; e.g. TRY on a pack returns the pack
 //  ]
 //
 DECLARE_NATIVE(TRY)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    Element* lifted = Element_ARG(ATOM);
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    if (Is_Lifted_Void(lifted) or Is_Lifted_Null(lifted))
-        return Init_Nulled(OUT);
-
-    if (Is_Lifted_Error(lifted))
+    if (Is_Void(atom) or Is_Light_Null(atom))
         return nullptr;
 
-    return UNLIFT(lifted);  // !!! also tolerates other antiforms, should it?
+    if (Is_Error(atom))
+        return nullptr;
+
+    return COPY(atom);  // !!! also tolerates other antiforms, should it?
 }
 
 
@@ -253,20 +253,29 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 //  ]
 //
 DECLARE_NATIVE(EXCEPT)
+//
+// 1. While it was once "obvious" that an EXCEPT branch wouldn't want to get
+//    an unstable antiform, it's now not as clear... since they could do
+//    (... except ^e -> [...]) and use ^e in the branch, which might permit
+//    things like (^e.id) and not give an error.  This would make it easier
+//    to propagate the error without having the complexity or cost of doing
+//    another call to FAIL.
+//
+//    This is of course contingent on the behavior of (^e.id) and such, so
+//    we'll see how that shapes up.
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Element* lifted_atom = Element_ARG(ATOM);
+    Atom* atom = Atom_ARG(ATOM);
     Value* branch = ARG(BRANCH);
 
-    if (not Is_Lifted_Error(lifted_atom))
-        return UNLIFT(lifted_atom);  // pass thru any non-errors
+    if (not Is_Error(atom))
+        return COPY(atom);  // pass thru any non-errors
 
-    return DELEGATE_BRANCH(
-        OUT,
-        branch,  // if branch is an action, wants plain ERROR! as argument...
-        Unquasify(lifted_atom)  // lifted_atom is ~QUASI-ERROR!~, unquasify it
-    );
+    LIFT_BYTE(atom) = NOQUOTE_1;  // turn antiform error into plain warning
+    Element* warning = Known_Element(atom);
+
+    return DELEGATE_BRANCH(OUT, branch, warning);  // !!! pass antiform? [1]
 }
 
 
@@ -283,11 +292,9 @@ DECLARE_NATIVE(ERROR_Q)
 {
     INCLUDE_PARAMS_OF_ERROR_Q;
 
-    Option(Heart) heart;
-    LiftByte lift_byte;
-    Get_Heart_And_Lift_Of_Atom_Intrinsic(&heart, &lift_byte, LEVEL);
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    return LOGIC(lift_byte == ANTIFORM_0 and heart == TYPE_WARNING);
+    return LOGIC(Is_Error(atom));
 }
 
 

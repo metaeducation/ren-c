@@ -535,7 +535,7 @@ const Param* Last_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
 //
 // Helper built on First_Unspecialized_Param(), can also give you the param.
 //
-Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
+Atom* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
 {
     Phase* phase = Level_Phase(L);
     const Param* param = First_Unspecialized_Param(nullptr, phase);

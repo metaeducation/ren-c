@@ -1410,9 +1410,12 @@ DECLARE_NATIVE(SET)
     INCLUDE_PARAMS_OF_TWEAK;  // !!! must have compatible frame
 
     USED(ARG(TARGET));
-    // ARG(VALUE) used below
+    // is actually ARG(DUAL) in TWEAK, need to lift it
     USED(ARG(ANY));
     USED(ARG(GROUPS));
+
+    Atom* dual = Atom_ARG(DUAL);
+    Liftify(dual);
 
     Option(Bounce) b = Irreducible_Bounce(
         LEVEL,
@@ -1421,7 +1424,7 @@ DECLARE_NATIVE(SET)
     if (b)
         return unwrap b;  // keep bouncing while we couldn't get OUT as answer
 
-    Element* lifted = Known_Element(ARG(DUAL));
+    Element* lifted = Known_Element(dual);
     assert(Any_Lifted(lifted));
 
     return UNLIFT(lifted);

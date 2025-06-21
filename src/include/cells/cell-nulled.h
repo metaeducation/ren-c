@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -45,7 +45,7 @@
 //
 //    >> append [a b] ? find [c d] 'e
 //    == [a b]
-
+//
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * In the libRebol API, a nulled RebolValue* actually uses C's concept of

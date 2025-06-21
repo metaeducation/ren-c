@@ -717,7 +717,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
 
     Option(Stump*) stump = cl->binder.stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
-        REBINT index = VAL_INT32(Stub_Cell(unwrap stump));
+        REBINT index = VAL_INT32(Known_Element(Stub_Cell(unwrap stump)));
         assert(index != 0);
         if (index < 0)
             continue;
@@ -851,8 +851,6 @@ VarList* Make_Varlist_Detect_Managed(
                 Clonify(Known_Element(dest), clone_flags, deeply);
                 Clear_Cell_Flag(dest, CONST);  // remove constness from copies
             }
-            Liftify(dest);
-            Set_Cell_Flag(dest, SLOT_WEIRD_DUAL);  // arbitrary antiforms
         }
     }
 

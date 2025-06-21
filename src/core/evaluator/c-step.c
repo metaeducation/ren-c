@@ -283,7 +283,6 @@ Bounce Stepper_Executor(Level* L)
         Details* details = Ensure_Cell_Frame_Details(CURRENT);
         Dispatcher* dispatcher = Details_Dispatcher(details);
 
-        Liftify(SPARE);  // always pass lifted (review concept...)
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);  // level_ is not its Level
         Bounce bounce = Apply_Cfunc(dispatcher, L);

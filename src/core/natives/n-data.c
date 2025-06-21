@@ -65,8 +65,9 @@ DECLARE_NATIVE(BIND)
             Derelativize(Stub_Cell(use), at, Cell_Binding(spec));
             HEART_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
-            if (not IS_WORD_BOUND(Stub_Cell(use)))
-                return PANIC(Error_Not_Bound_Raw(Stub_Cell(use)));
+            Element* overbind = Known_Element(Stub_Cell(use));
+            if (not IS_WORD_BOUND(overbind))
+                return PANIC(Error_Not_Bound_Raw(overbind));
 
             Tweak_Cell_Binding(v, use);
         }
@@ -1009,21 +1010,27 @@ DECLARE_NATIVE(INFIX)
 
 
 //
-//  identity: native [
+//  identity: native:intrinsic [
 //
 //  "Returns input value (https://en.wikipedia.org/wiki/Identity_function)"
 //
-//      return: [any-value? pack!]
-//      ^value [any-value? pack!]
+//      return: [any-atom?]
+//      ^atom
 //  ]
 //
-DECLARE_NATIVE(IDENTITY) // sample uses: https://stackoverflow.com/q/3136338
+DECLARE_NATIVE(IDENTITY)  // sample uses: https://stackoverflow.com/q/3136338
+//
+// Note: a peculiar definition in the default setup for identity is as the
+// meaning of the left arrow `<-` ... this strange choice gives you the
+// ability to annotate when information is flowing leftward:
+//
+//   https://rebol.metaeducation.com/t/weird-old-idea-for-identity/2165
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    Element* lifted = Element_ARG(VALUE);
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    return UNLIFT(lifted);
+    return COPY(atom);
 }
 
 
@@ -1131,14 +1138,12 @@ DECLARE_NATIVE(ANY_VALUE_Q)
 {
     INCLUDE_PARAMS_OF_ANY_VALUE_Q;
 
-    Option(Heart) heart;
-    LiftByte lift_byte;
-    Get_Heart_And_Lift_Of_Atom_Intrinsic(&heart, &lift_byte, LEVEL);
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    if (lift_byte != ANTIFORM_0)
-        return LOGIC(true);
+    if (not Is_Antiform(atom))
+        return LOGIC(true);  // all ELEMENT? are ANY-VALUE?
 
-    return LOGIC(Is_Stable_Antiform_Heart_Byte(u_cast(HeartByte, maybe heart)));
+    return LOGIC(Is_Stable_Antiform_Heart_Byte(HEART_BYTE_RAW(atom)));
 }
 
 
@@ -1203,9 +1208,9 @@ DECLARE_NATIVE(VOID_Q)
 {
     INCLUDE_PARAMS_OF_VOID_Q;
 
-    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    return LOGIC(Is_Lifted_Void(lifted));
+    return LOGIC(Is_Void(atom));
 }
 
 
@@ -1314,55 +1319,55 @@ DECLARE_NATIVE(SPACE_Q)
 
 
 //
-//  heavy: native [
+//  heavy: native:intrinsic [
 //
 //  "Make the heavy form of NULL (passes through all other values)"
 //
-//      return: [any-value? pack! ghost!]
-//      ^atom [any-value? pack! ghost!]
+//      return: [any-atom?]
+//      ^atom
 //  ]
 //
 DECLARE_NATIVE(HEAVY)
 {
     INCLUDE_PARAMS_OF_HEAVY;
 
-    Element* lifted = Element_ARG(ATOM);
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    if (Is_Lifted_Null(lifted))
+    if (Is_Light_Null(atom))
         return Init_Heavy_Null(OUT);
 
-    return UNLIFT(lifted);
+    return COPY(atom);
 }
 
 
 //
-//  light: native [
+//  light: native:intrinsic [
 //
 //  "Make the light form of NULL (passes through all other values)"
 //
-//      return: [any-value? pack!]
-//      ^atom [any-value? pack!]
+//      return: [any-atom?]
+//      ^atom
 //  ]
 //
 DECLARE_NATIVE(LIGHT)
 {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Element* lifted = Element_ARG(ATOM);
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    if (not Is_Lifted_Pack(lifted))
-        return UNLIFT(lifted);
+    if (not Is_Pack(atom))
+        return COPY(atom);
 
     Length len;
-    const Element* first = Cell_List_Len_At(&len, lifted);
+    const Element* first = Cell_List_Len_At(&len, atom);
 
     if (len != 1)
-        return UNLIFT(lifted);
+        return COPY(atom);
 
-    if (Is_Lifted_Null(first))
-        return nullptr;
+    if (Is_Lifted_Null(first))  // only case we care about, pack of one null
+        return nullptr;  // return the null, no longer in a pack
 
-    return UNLIFT(lifted);
+    return COPY(atom);
 }
 
 

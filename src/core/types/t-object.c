@@ -1259,41 +1259,45 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    Value* out = Copy_Cell(OUT, u_cast(Value*, slot));
+    possibly(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
+    Copy_Cell(OUT, u_cast(Atom*, slot));
+    impossible(Get_Cell_Flag(OUT, SLOT_WEIRD_DUAL));
+
+    if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {  // not lifted
+        assert(Is_Tripwire(Known_Stable(OUT)));
+        return OUT;  // not lifted, so not a "normal" state
+    }
 
     if (  // !!! BUGGY, new system needed
-        HEART_BYTE(slot) == TYPE_FRAME
-        and LIFT_BYTE_RAW(slot) == ANTIFORM_0
-        and Cell_Frame_Coupling(u_cast(Value*, slot)) == UNCOUPLED
+        HEART_BYTE(OUT) == TYPE_FRAME
+        and LIFT_BYTE_RAW(OUT) == ANTIFORM_0
+        and Cell_Frame_Coupling(u_cast(Value*, OUT)) == UNCOUPLED
     ){
         Context* c = Cell_Context(context);
-        Tweak_Cell_Frame_Coupling(out, cast(VarList*, c));
+        Tweak_Cell_Frame_Coupling(u_cast(Value*, OUT), cast(VarList*, c));
     }
 
-    if (Not_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {  // not lifted
-        Liftify(OUT);
-        return OUT;
-    }
-
-    assert(Any_Lifted(OUT) or Is_Tripwire(Known_Stable(OUT)));
+    Liftify(OUT);  // lift the cell to indicate "normal" state
     return OUT;
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    Value* poke_lifted = dual;
-    assert(Any_Lifted(poke_lifted) or Is_Tripwire(poke_lifted));
+    assert(Any_Lifted(dual) or Is_Tripwire(dual));  // more to come!
 
     if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
         return PANIC(Error_Protected_Key(symbol));
 
-    Copy_Cell(m_cast(Value*, u_cast(Value*, slot)), poke_lifted);
+    possibly(Get_Cell_Flag(dual, SLOT_WEIRD_DUAL));
+    Copy_Cell(m_cast(Value*, u_cast(Value*, slot)), dual);
+    impossible(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
 
-    if (Cell_Context(context) == g_lib_context) {
-        Unliftify_Known_Stable(m_cast(Value*, u_cast(Value*, slot)));
-        return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
+    if (Any_Lifted(dual)) {  // don't antagonize...yet [1]
+        Unliftify_Undecayed(m_cast(Atom*, u_cast(Atom*, slot)));
+        impossible(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
+        return NO_WRITEBACK_NEEDED;
     }
 
-    Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);  // mark as lifted
+    Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);
 
     return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
 

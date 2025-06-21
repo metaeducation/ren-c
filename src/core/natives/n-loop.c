@@ -525,12 +525,12 @@ DECLARE_NATIVE(FOR_SKIP)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
+    if (Is_Blank(ARG(SERIES)))
+        return VOID;
+
     Element* word = Element_ARG(WORD);
     Element* series = Element_ARG(SERIES);
     Element* body = Element_ARG(BODY);
-
-    if (Is_Blank(series))
-        return VOID;
 
     REBINT skip = Int32(ARG(SKIP));
     if (skip == 0)

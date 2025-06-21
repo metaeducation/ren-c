@@ -984,10 +984,16 @@ const RebolNodeInternal* API_rebArgR(
 
     const Key* tail;
     const Key* key = Phase_Keys(&tail, phase);
-    Value* arg = Level_Args_Head(L);
+    Atom* arg = Level_Args_Head(L);
     for (; key != tail; ++key, ++arg) {
-        if (Are_Synonyms(Key_Symbol(key), symbol))
-            return c_cast(RebolNodeInternal*, NULLIFY_NULLED(arg));
+        if (Are_Synonyms(Key_Symbol(key), symbol)) {
+            if (not Is_Stable(arg))
+                panic ("rebArg() called on non-stable argument");
+            return c_cast(
+                RebolNodeInternal*,
+                NULLIFY_NULLED(Known_Stable(arg))
+            );
+        }
     }
 
     panic ("Unknown rebArg(...) name.");
@@ -2620,10 +2626,12 @@ RebolNodeInternal* API_rebRUN(const void* p)
         panic ("rebRUN() received nullptr");
 
     Stub* stub;
+    Value* v;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, c_cast(Stub*, p));
+        v = cast(Value*, Stub_Cell(stub));
         if (Not_Flavor_Flag(API, stub, RELEASE))
             panic ("Can't quote instructions (besides rebR())");
         break; }
@@ -2633,7 +2641,7 @@ RebolNodeInternal* API_rebRUN(const void* p)
         if (Is_Nulled(at))
             panic ("rebRUN() received null cell");
 
-        Value* v = Copy_Cell(Alloc_Value(), at);
+        v = Copy_Cell(Alloc_Value(), at);
         stub = Compact_Stub_From_Cell(v);
         Set_Flavor_Flag(API, stub, RELEASE);
         break; }
@@ -2642,7 +2650,6 @@ RebolNodeInternal* API_rebRUN(const void* p)
         panic ("Unknown pointer");
     }
 
-    Value* v = Stub_Cell(stub);
     if (Is_Action(v))
         LIFT_BYTE(v) = NOQUOTE_1;
     else if (not Is_Frame(v))

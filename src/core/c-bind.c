@@ -320,8 +320,9 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
             goto next_context;
         }
 
-        if (Is_Word(Stub_Cell(c))) {  // OVERBIND use of single WORD!
-            Element* overbind = u_cast(Element*, Stub_Cell(c));
+        Element* overbind = Known_Element(Stub_Cell(c));
+
+        if (Is_Word(overbind)) {  // OVERBIND use of single WORD!
             if (Cell_Word_Symbol(overbind) != symbol)
                 goto next_context;
 
@@ -330,13 +331,13 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
             goto loop_body;  // skips assignment via next
         }
 
-        if (Is_Frame(Stub_Cell(c))) {
-            lens = Cell_Frame_Lens(Stub_Cell(c));
+        if (Is_Frame(overbind)) {
+            lens = Cell_Frame_Lens(overbind);
             if (not lens)  // need lens to not default to full visibility [1]
-                lens = Phase_Paramlist(Cell_Frame_Phase(Stub_Cell(c)));
+                lens = Phase_Paramlist(Cell_Frame_Phase(overbind));
         }
 
-        c = Cell_Context(Stub_Cell(c));  // do search on other contexts
+        c = Cell_Context(overbind);  // do search on other contexts
         flavor = Stub_Flavor(c);
     }
 
@@ -867,8 +868,8 @@ DECLARE_NATIVE(LET)
 //
 //      return: [frame! any-list?]
 //      environment [frame! any-list?]
-//      word [word!]
-//      ^value [any-value?]
+//      word [word! ^word!]
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(ADD_LET_BINDING)
@@ -880,15 +881,13 @@ DECLARE_NATIVE(ADD_LET_BINDING)
 // with an updated binding.  A function that wants to add to the evaluator
 // environment uses the frame at the moment.
 //
-// 1. This function allows you to set the value to nothing, which requires
-//    taking parameters as ^META even though nothing is "stable".
 {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
     Element* env = Element_ARG(ENVIRONMENT);
     Context* parent;
 
-    Value* v = Unliftify_Known_Stable(ARG(VALUE));  // can be nothing [1]
+    Element* word = Element_ARG(WORD);
 
     if (Is_Frame(env)) {
         Level* L = Level_Of_Varlist_May_Panic(Cell_Varlist(env));
@@ -902,7 +901,15 @@ DECLARE_NATIVE(ADD_LET_BINDING)
 
     Let* let = Make_Let_Variable(Cell_Word_Symbol(ARG(WORD)), parent);
 
-    Move_Cell(Stub_Cell(let), v);
+    Atom* atom = Atom_ARG(VALUE);
+    if (Is_Meta_Form_Of(WORD, word)) {
+        Copy_Cell(Stub_Cell(let), atom);  // don't decay
+    }
+    else {
+        assert(Is_Word(word));
+        Value* value = Decay_If_Unstable(atom);
+        Copy_Cell(Stub_Cell(let), value);
+    }
 
     if (Is_Frame(env)) {
         Level* L = Level_Of_Varlist_May_Panic(Cell_Varlist(env));
@@ -1447,14 +1454,9 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
 
   handle_non_weird: {
 
-    Value* var = u_cast(Value*, slot);
+    Atom* var = u_cast(Atom*, slot);
 
-    if (Is_Stable(write))
-        Copy_Cell(var, u_cast(Value*, write));
-    else {
-        Copy_Lifted_Cell(var, m_cast(Atom*, write));
-        Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);
-    }
+    Copy_Cell(var, write);
 
     slot->header.bits |= persist;  // preserve persist bits
     return SUCCESS;

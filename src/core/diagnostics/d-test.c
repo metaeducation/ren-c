@@ -67,15 +67,15 @@
 //
 //      return: "Block of test numbers and failures"
 //          [text! block!]
-//      ^value "Argument that may be useful for ad hoc tests"
-//          [any-value?]  ; ^META to allow passing antiform space (TRASH)
+//      value "Argument that may be useful for ad hoc tests"
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(TEST_LIBREBOL)
 {
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
 
-    Value* v = Unliftify_Known_Stable(ARG(VALUE));
+    Value* v = ARG(VALUE);
     USED(v);
 
   start: { ///////////////////////////////////////////////////////////////////

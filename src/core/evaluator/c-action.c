@@ -67,7 +67,6 @@
 
 #undef ARG                       // undefine the ARG(X) macro that natives use
 #define ARG L->u.action.arg      // ...aredefine as currently fulfilling arg
-#define stable_ARG Stable_Unchecked(ARG)
 
 #undef PARAM
 #define PARAM L->u.action.param
@@ -229,31 +228,6 @@ Bounce Action_Executor(Level* L)
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
-            if (Is_Endlike_Tripwire(ARG))
-                goto continue_fulfilling;  // use "unset" state to convey
-
-            if (Cell_Parameter_Class(PARAM) == PARAMCLASS_META) {
-                Liftify(ARG);
-            }
-            else {
-                if (Is_Ghost(ARG)) {
-                    STATE = ST_ACTION_BARRIER_HIT;
-                    Init_Tripwire_Due_To_End(ARG);
-                }
-                else if (Is_Void(ARG)) {
-                    if (Get_Parameter_Flag(PARAM, OPT_OUT))
-                        Init_Blank(ARG);  // !!! Temporary hack
-                    else if (Get_Parameter_Flag(PARAM, UNDO_OPT))
-                        Init_Nulled(ARG);
-                    else
-                        return PANIC(
-                            Error_No_Arg(Level_Label(L), Key_Symbol(KEY))
-                        );
-                }
-                else {
-                    Decay_If_Unstable(ARG);
-                }
-            }
             goto continue_fulfilling;
 
           case ST_ACTION_TYPECHECKING:
@@ -287,9 +261,6 @@ Bounce Action_Executor(Level* L)
         goto fulfill_loop_body;  // optimized out
 
       continue_fulfilling:
-        /* assert(Is_Stable(ARG)); */  // also checks ARG is readable
-        if (not Is_Stable(ARG))
-            return PANIC("ARG is unstable--FIX!");
 
         if (Get_Action_Executor_Flag(L, DOING_PICKUPS)) {
             if (TOP_INDEX != L->baseline.stack_base)
@@ -478,7 +449,7 @@ Bounce Action_Executor(Level* L)
                 break;
 
               case PARAMCLASS_META: {
-                Move_Lifted_Atom(ARG, OUT);
+                Move_Atom(ARG, OUT);
                 break; }
 
               case PARAMCLASS_JUST:
@@ -842,12 +813,10 @@ Bounce Action_Executor(Level* L)
     PARAM = Phase_Params_Head(Level_Phase(L));
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
-        Assert_Cell_Stable(ARG);  // implicitly asserts Ensure_Readable(ARG)
-        Value* arg = u_cast(Value*, ARG);
-
-        if (Is_Typechecked(arg)) {
-            /*assert(Not_Cell_Flag(arg, SLOT_WEIRD_DUAL));*/
-            continue;  // Note: typechecked trash is legal (e.g. locals)
+        if (Is_Typechecked(ARG)) {
+            if (Get_Cell_Flag(ARG, SLOT_WEIRD_DUAL))
+                assert(Is_Endlike_Tripwire(ARG));  // locals, <end>-ables
+            continue;
         }
 
         Phase* phase = Level_Phase(L);
@@ -855,65 +824,62 @@ Bounce Action_Executor(Level* L)
         while (Is_Specialized(param)) {
             Element* archetype = Flex_Head(Element, phase);
             phase = Cell_Frame_Phase(archetype);
-            param = Phase_Param(phase, arg - cast(Value*, L->rootvar));
+            param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
 
-        if (Is_Endlike_Tripwire(arg)) {  // special state, SLOT_WEIRD_DUAL
+        if (Is_Endlike_Tripwire(ARG)) {  // special state, SLOT_WEIRD_DUAL
             if (Get_Parameter_Flag(param, ENDABLE))  // !!! "<unset>?
                 continue;
             return PANIC(Error_Unspecified_Arg(L));
         }
 
-        if (Cell_Parameter_Class(param) != PARAMCLASS_META) {
-            if (Get_Cell_Flag(arg, SLOT_WEIRD_DUAL)) {  // !!! temp
-                Unliftify_Known_Stable(arg);
-                Clear_Cell_Flag(arg, SLOT_WEIRD_DUAL);
-            }
-        }
-        else {
-            assert(Any_Lifted(arg));
-            Set_Cell_Flag(arg, SLOT_WEIRD_DUAL);
-            // leave dual flag for a moment...
-            // this *should* screw up ARG() etc. but they ignore it
-        }
+        assert(Not_Cell_Flag(ARG, SLOT_WEIRD_DUAL));  // not a tripwire
 
-        if (Is_Blank(arg)) {
+        if (Is_Void(ARG)) {
             if (Get_Parameter_Flag(param, OPT_OUT)) {  // <opt-out> param
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
-                Mark_Typechecked(arg);
+                Mark_Typechecked(ARG);
                 Init_Nulled(OUT);
                 continue;
             }
         }
 
-        if (Get_Parameter_Flag(param, UNDO_OPT) and Is_Nulled(arg)) {
-            Mark_Typechecked(arg);  // null generally not in typeset
+        if (Get_Parameter_Flag(param, UNDO_OPT) and Is_Void(ARG)) {
+            Init_Nulled(ARG);
+            Mark_Typechecked(ARG);  // null generally not in typeset
             continue;
         }
 
         if (Get_Parameter_Flag(param, VARIADIC)) {  // can't check now [2]
-            if (not Is_Varargs(arg))  // argument itself is always VARARGS!
+            if (
+                not Is_Stable(ARG)
+                or not Is_Varargs(Known_Stable(ARG))
+            ){
+                Value* arg = Decay_If_Unstable(ARG);
                 return PANIC(Error_Not_Varargs(L, KEY, param, arg));
+            }
 
-            Tweak_Cell_Varargs_Phase(arg, phase);
+            Tweak_Cell_Varargs_Phase(ARG, phase);
 
             bool infix = false;  // !!! how does infix matter?
-            CELL_VARARGS_SIGNED_PARAM_INDEX(arg) =  // store offset [3]
+            CELL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [3]
                 infix
-                    ? -(arg - Level_Args_Head(L) + 1)
-                    : arg - Level_Args_Head(L) + 1;
+                    ? -(ARG - Level_Args_Head(L) + 1)
+                    : ARG - Level_Args_Head(L) + 1;
 
-            assert(CELL_VARARGS_SIGNED_PARAM_INDEX(arg) != 0);
+            assert(CELL_VARARGS_SIGNED_PARAM_INDEX(ARG) != 0);
             continue;
         }
 
         heeded(Corrupt_Cell_If_Debug(SPARE));
         heeded(Corrupt_Cell_If_Debug(SCRATCH));
 
-        if (not Typecheck_Coerce(L, param, ARG, false))
+        if (not Typecheck_Coerce(L, param, ARG, false)) {
+            Value* arg = Decay_If_Unstable(ARG);
             return PANIC(Error_Phase_Arg_Type(L, KEY, param, arg));
+        }
 
-        Mark_Typechecked(stable_ARG);
+        Mark_Typechecked(ARG);
     }
 
     Tweak_Level_Phase(L, Phase_Details(Level_Phase(L)));  // ensure Details [4]

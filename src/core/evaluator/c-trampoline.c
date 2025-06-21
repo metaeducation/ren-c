@@ -203,8 +203,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             assert(Get_Level_Flag(L, FORCE_SURPRISING));  // true as of now
             if (Is_Ghost(L->out))
                 Init_Void(L->out);  // !!! should this be a separate flag?
-            else
-                Packify_If_Inhibitor(L->out);  // heavy nulls
+            else if (Is_Light_Null(L->out))
+                Init_Heavy_Null(L->out);
         }
 
         if (Get_Level_Flag(L, FORCE_SURPRISING))

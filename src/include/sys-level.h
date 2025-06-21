@@ -318,16 +318,16 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 // 1-based indexing into the arglist (0 slot is for FRAME! value)
 
 #define Level_Args_Head(L) \
-    (u_cast(Value*, (L)->rootvar) + 1)
+    (u_cast(Atom*, (L)->rootvar) + 1)
 
 #if NO_RUNTIME_CHECKS
     #define Level_Arg(L,n) \
-        (u_cast(Value*, (L)->rootvar) + (n))
+        (u_cast(Atom*, (L)->rootvar) + (n))
 #else
-    INLINE Value* Level_Arg(Level* L, REBLEN n) {
+    INLINE Atom* Level_Arg(Level* L, REBLEN n) {
         assert(n != 0 and n <= Level_Num_Args(L));
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
-        return L->rootvar + n;  // 1-indexed
+        return u_cast(Atom*, L->rootvar) + n;  // 1-indexed
     }
 #endif
 
@@ -681,18 +681,21 @@ INLINE Level* Prep_Level_Core(
     Erase_Cell(Level_Arg(level_, param_##name##_))
 
 #define ARG(name) \
-    Level_Arg(level_, param_##name##_)
+    Known_Stable(Level_Arg(level_, param_##name##_))
 
 #define Element_ARG(name) \
     Known_Element(Level_Arg(level_, param_##name##_))  // checked build asserts
 
+#define Atom_ARG(name) \
+    Level_Arg(level_, param_##name##_)
+
 #define Bool_ARG(name) \
-    (not Is_Nulled(Level_Arg(level_, param_##name##_)))
+    (not Is_Nulled(Known_Stable(Level_Arg(level_, param_##name##_))))
 
 
 INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 {
-    Value* arg = Level_Arg(L, n);
+    Value* arg = Known_Stable(Level_Arg(L, n));
     if (Is_Nulled(arg))
         return nullptr;
     return Known_Element(arg);
@@ -701,8 +704,8 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 #define Optional_Element_ARG(name) /* Note: can only be called ONCE! */ \
     Optional_Element_Level_Arg(level_, param_##name##_)
 
-#define LOCAL(name) \
-    Level_Arg(level_, (param_##name##_))  // alias (enforce not argument?)
+#define LOCAL(name) /* alias for ARG() when slot is <local> */ \
+    Known_Stable(Level_Arg(level_, (param_##name##_)))  // enforce not ARG()?
 
 #define Element_LOCAL(name) \
     Known_Element(Level_Arg(level_, (param_##name##_)))
@@ -712,7 +715,7 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 
 
 #define ARG_N(n) \
-    Level_Arg(level_, (n))
+    Known_Stable(Level_Arg(level_, (n)))
 
 #define PARAM_N(n) \
     Phase_Param(Level_Phase(level_), (n))
@@ -859,11 +862,11 @@ INLINE Atom* Native_Copy_Result_Untracked(
     return level_->out;
 }
 
-INLINE Bounce Native_Branched_Result(Level* level_, Atom* v) {
-    assert(v == level_->out);  // would not be zero cost if we supported copy
-    if (Is_Light_Null(v))
-        Init_Heavy_Null(v);  // box up for THEN reactivity [2]
-    Clear_Cell_Flag(v, OUT_HINT_UNSURPRISING);  // all branches are surprises
+INLINE Bounce Native_Branched_Result(Level* level_, Atom* atom) {
+    assert(atom == level_->out);  // wouldn't be zero cost if we supported copy
+    if (Is_Light_Null(atom))
+        Init_Heavy_Null(atom);  // box up for THEN reactivity [2]
+    Clear_Cell_Flag(atom, OUT_HINT_UNSURPRISING);  // all branches surprise
     return level_->out;
 }
 
@@ -1034,7 +1037,7 @@ INLINE void Inject_Definitional_Returner(
     assert(Key_Id(Phase_Keys_Head(Ensure_Level_Details(L))) == returner);
     assert(Is_Node_Managed(L->varlist));
 
-    Value* cell = Level_Arg(L, 1);  // should start out specialized
+    Atom* cell = Level_Arg(L, 1);  // should start out specialized
     assert(
         LIFT_BYTE(cell) == ONEQUOTE_NONQUASI_3
         and Heart_Of(cell) == TYPE_PARAMETER

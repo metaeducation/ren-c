@@ -183,7 +183,7 @@ Bounce Func_Dispatcher(Level* const L)
     L->u.action.key_tail = key_tail;
     Param* param = Phase_Params_Head(details);
     L->u.action.param = param;
-    Value* arg = Level_Args_Head(L);
+    Atom* arg = Level_Args_Head(L);
     L->u.action.arg = arg;
     for (; key != key_tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param)) {  // must reset [1]
@@ -544,11 +544,9 @@ DECLARE_NATIVE(UNWIND)
     INCLUDE_PARAMS_OF_UNWIND;
 
     Value* level = ARG(LEVEL);
+    Atom* result = Atom_ARG(RESULT);
 
-    Copy_Cell(SPARE, ARG(RESULT));  // SPARE can hold unstable isotopes
-    Unliftify_Undecayed(SPARE);
-
-    return Init_Thrown_Unwind_Value(LEVEL, level, SPARE, level_);
+    return Init_Thrown_Unwind_Value(LEVEL, level, result, level_);
 }
 
 
@@ -684,8 +682,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
-    Atom* atom = Copy_Cell(OUT, ARG(ATOM));  // ARG can't be unstable
-    Unliftify_Undecayed(atom);
+    Atom* atom = Atom_ARG(ATOM);
 
     Level* return_level = LEVEL;  // Level of this RETURN call
 
@@ -706,14 +703,14 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         heeded(Corrupt_Cell_If_Debug(SPARE));
         heeded(Corrupt_Cell_If_Debug(SCRATCH));
 
-        if (not Typecheck_Coerce_Return(LEVEL, param, OUT))  // do it now [2]
-            return PANIC(Error_Bad_Return_Type(target_level, OUT, param));
+        if (not Typecheck_Coerce_Return(LEVEL, param, atom))  // do it now [2]
+            return PANIC(Error_Bad_Return_Type(target_level, atom, param));
 
         DECLARE_VALUE (label);
         Copy_Cell(label, LIB(UNWIND)); // see Make_Thrown_Unwind_Value
         g_ts.unwind_level = target_level;
 
-        return Init_Thrown_With_Label(LEVEL, OUT, label);
+        return Init_Thrown_With_Label(LEVEL, atom, label);
     }
 
   //=//// TAIL-CALL HANDLING //////////////////////////////////////////////=//

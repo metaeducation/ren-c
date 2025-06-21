@@ -820,19 +820,15 @@ DECLARE_NATIVE(SQUARE_ROOT)
 //  "Tells you if default would overwrite a value (TRASH, NULL?, BLANK?)"
 //
 //      return: [logic?]
-//      ^value [any-value?]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(VACANCY_Q)
-//
-// 1. Because TRASH! antiforms signify unspecialized function call slots,
-//    they must be taken as ^META values if passed as an argument--even
-//    though they are stable antiforms.
 {
     INCLUDE_PARAMS_OF_VACANCY_Q;
 
-    Value* v = ARG(VALUE);  // meta
-    Unliftify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
+    Value* v = ARG(VALUE);
+
     return Init_Logic(OUT, Is_Trash(v) or Is_Nulled(v) or Is_Blank(v));
 }
 
@@ -879,31 +875,30 @@ DECLARE_NATIVE(EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    Value* v1 = ARG(VALUE1);
-    Value* v2 = ARG(VALUE2);
+    Atom* atom1 = Atom_ARG(VALUE1);
+    Atom* atom2 = Atom_ARG(VALUE2);
     bool relax = Bool_ARG(RELAX);
 
-    if (Is_Lifted_Trash(v1)) {
-        Unliftify_Known_Stable(v1);
+    if (Is_Atom_Trash(atom1))
         return PANIC(PARAM(VALUE1));
-    }
 
-    if (Is_Lifted_Trash(v2)) {
-        Unliftify_Known_Stable(v2);
+    if (Is_Atom_Trash(atom2))
         return PANIC(PARAM(VALUE2));
-    }
 
-    if (LIFT_BYTE(v1) != LIFT_BYTE(v2))
+    if (LIFT_BYTE(atom1) != LIFT_BYTE(atom2))
         return nullptr;
 
-    LIFT_BYTE(v1) = NOQUOTE_1;  // should work for VOID equality, too
-    LIFT_BYTE(v2) = NOQUOTE_1;
+    LIFT_BYTE(atom1) = NOQUOTE_1;  // should work for VOID equality, too
+    LIFT_BYTE(atom2) = NOQUOTE_1;
 
-    if (Sigil_Of(u_cast(Element*, v1)) != Sigil_Of(u_cast(Element*, v2)))
+    Element* v1 = Known_Element(atom1);
+    Element* v2 = Known_Element(atom2);
+
+    if (Sigil_Of(v1) != Sigil_Of(v2))
         return nullptr;
 
-    Plainify(u_cast(Element*, v1));
-    Plainify(u_cast(Element*, v2));
+    Plainify(v1);
+    Plainify(v2);
 
     if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
         if (not relax)
@@ -1000,17 +995,20 @@ DECLARE_NATIVE(SAME_Q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    Value* v1 = ARG(VALUE1);
-    Value* v2 = ARG(VALUE2);
+    Atom* atom1 = Atom_ARG(VALUE1);
+    Atom* atom2 = Atom_ARG(VALUE2);
 
-    if (LIFT_BYTE(v1) != LIFT_BYTE(v2))
+    if (LIFT_BYTE(atom1) != LIFT_BYTE(atom2))
         return Init_Logic(OUT, false);  // not "same" value if not same quote
 
-    if (HEART_BYTE(v1) != HEART_BYTE(v2))
+    if (HEART_BYTE(atom1) != HEART_BYTE(atom2))
         return Init_Logic(OUT, false);  // not "same" value if not same heart
 
-    LIFT_BYTE(v1) = NOQUOTE_1;  // trick works for VOID equality, too
-    LIFT_BYTE(v2) = NOQUOTE_1;
+    LIFT_BYTE(atom1) = NOQUOTE_1;  // trick works for VOID equality, too
+    LIFT_BYTE(atom2) = NOQUOTE_1;
+
+    Element* v1 = Known_Element(atom1);
+    Element* v2 = Known_Element(atom2);
 
     if (Is_Bitset(v1))  // same if binaries are same
         return Init_Logic(OUT, VAL_BITSET(v1) == VAL_BITSET(v2));

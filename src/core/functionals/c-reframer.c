@@ -313,7 +313,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     if (e)
         return PANIC(unwrap e);
 
-    Value* arg = Level_Arg(L, VAL_INT32(param_index));
+    Atom* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, spare);
 
     Tweak_Level_Phase(L, Cell_Frame_Phase(shim));

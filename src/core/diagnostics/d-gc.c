@@ -169,7 +169,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             Stub* stub = Extract_Cell_Handle_Stub(v);
             assert(Is_Node_Marked(stub));
 
-            Value* single = Stub_Cell(stub);
+            Element* single = Known_Element(Stub_Cell(stub));
             assert(Is_Handle(single));
             assert(Extract_Cell_Handle_Stub(single) == stub);
             if (v != single) {

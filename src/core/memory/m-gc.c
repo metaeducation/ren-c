@@ -398,8 +398,7 @@ static void Propagate_All_GC_Marks(void)
                 if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
                     crash (v);  // antiforms not legal in many array types
 
-                if (Is_Antiform_Unstable(cast(Atom*, v)))  // always illegal
-                    crash (v);
+                dont(assert(not Is_Antiform_Unstable(cast(Atom*, v))));
             }
           #endif
 
@@ -790,7 +789,7 @@ static void Mark_Level(Level* L) {
         key_tail = L->u.action.key + 1;  // don't mark uninitialized bits [3]
     }
 
-    Value* arg = Level_Args_Head(L);
+    Atom* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg) {  // key_tail may be truncated [3]
         if (Is_Cell_Erased(arg)) {
             assert(Is_Level_Fulfilling(L) and key == L->u.action.key);

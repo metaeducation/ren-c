@@ -165,13 +165,15 @@ DECLARE_NATIVE(PICK)
 
     // Non-LIFTED?s are signals in dual protocol
 
-    if (Is_Atom_Action(OUT))
-        return PANIC("TWEAK* delegation machinery not done yet");
-
     if (Is_Error(OUT))
         return OUT;
 
-    if (Is_Light_Null(OUT))  // absent (distinct from lift "NULL-but-present")
+    Value* dual = Known_Stable(OUT);
+
+    if (Is_Atom_Action(dual))
+        return PANIC("TWEAK* delegation machinery not done yet");
+
+    if (Is_Dual_Nulled_Absent_Signal(dual))  // lifted is "NULL-but-present"
         return FAIL(Error_Bad_Pick_Raw(ARG(PICKER)));
 
     return PANIC("Non-ACTION! antiform returned by TWEAK* dual protocol");
@@ -342,7 +344,7 @@ DECLARE_NATIVE(POKE)
 
     Element* location = Element_ARG(LOCATION);
     Value* picker = ARG(PICKER);
-    Element* lifted_value = Element_ARG(VALUE);
+    Atom* atom = Atom_ARG(VALUE);
 
     if (Get_Level_Flag(LEVEL, POKE_NOT_INITIAL_ENTRY))
         goto dispatch_generic;
@@ -360,20 +362,20 @@ DECLARE_NATIVE(POKE)
     if (Is_Keyword(picker) or Is_Trash(picker))
         return PANIC("PICK with keyword or trash picker never allowed");
 
-    if (Is_Lifted_Error(lifted_value))
-        return UNLIFT(lifted_value);  // bypass and don't do the poke
+    if (Is_Error(atom))
+        return COPY(atom);  // bypass and don't do the poke
 
     Set_Level_Flag(LEVEL, POKE_NOT_INITIAL_ENTRY);
 
-    Copy_Cell(LOCAL(STORE), lifted_value);  // save value to return [1]
+    Copy_Cell(Atom_ARG(STORE), atom);  // save value to return [1]
 
     Value* dual = ARG(VALUE);  // same slot (TWEAK* reuses this frame!) [2]
 
-    if (Is_Lifted_Void(lifted_value)) {
+    if (Is_Void(atom)) {
         Init_Dual_Word_Remove_Signal(dual);  // signal to TWEAK*
     }
     else {
-        // leave lifted, TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL
+        Liftify(dual);  // TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL
     }
 
     goto dispatch_generic;
@@ -391,13 +393,14 @@ DECLARE_NATIVE(POKE)
     if (bounce)
         return bounce;  // we will get a callback (if not error/etc.)
 
-    if (not Is_Light_Null(OUT))  // see TWEAK* for meaning of non-null results
+    Value* writeback = Known_Stable(OUT);
+
+    if (not Is_Nulled(writeback))  // see TWEAK* for meaning of non-null
         return PANIC(
             "Can't writeback to immediate in POKE (use TWEAK* if intentional)"
         );
 
-    Copy_Cell(OUT, LOCAL(STORE));
-    return Unliftify_Undecayed(OUT);  // stored ^VALUE argument was meta
+    return COPY(Atom_ARG(STORE));  // stored ^VALUE argument was meta
 }}
 
 

@@ -917,7 +917,8 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 
     const Symbol* param_symbol = Key_Symbol(Phase_Key(Level_Phase(L), index));
 
-    Value* arg = Level_Arg(L, index);
+    Atom* atom_arg = Level_Arg(L, index);
+    Value *arg = Decay_If_Unstable(atom_arg);
     return Error_Invalid_Arg_Raw(maybe label, param_symbol, arg);
 }
 
@@ -932,7 +933,7 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 {
     assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // valid otherwise [1]
-    Atom* atom_arg = Level_Spare(L);
+    Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
     Details* details = Level_Intrinsic_Details(L);
     Option(const Symbol*) label = Level_Intrinsic_Label(L);
@@ -992,10 +993,8 @@ Error* Error_No_Catch_For_Throw(Level* level_)
         return Cell_Error(label);
     }
 
-    if (Is_Antiform(arg) and Is_Antiform_Unstable(arg))
-        Liftify(arg);  // !!! Review, error can't take Atom*
-
-    return Error_No_Catch_Raw(cast(Value*, arg), label);
+    Value* stable_arg = Decay_If_Unstable(arg);
+    return Error_No_Catch_Raw(stable_arg, label);
 }
 
 

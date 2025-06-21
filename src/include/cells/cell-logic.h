@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -312,10 +312,4 @@ INLINE Option(Error*) Trap_Test_Conditional(
     *cond = false;
   #endif
     return Error_Keyword_Condition_Raw(v);  // none exist yet, review [2]
-}
-
-INLINE Atom* Packify_If_Inhibitor(Atom* v) {
-    if (Is_Light_Null(v))
-        Init_Heavy_Null(v);
-    return v;
 }

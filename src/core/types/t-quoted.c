@@ -212,13 +212,13 @@ DECLARE_NATIVE(UNQUASI)
 
 
 //
-//  lift: native [
+//  lift: native:intrinsic [
 //
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
 //      return: "Keywords and plain forms if :LITE, plain ERROR! ok if :EXCEPT"
 //          [quoted! quasiform! keyword! element? warning!]
-//      ^atom [any-atom?]
+//      ^atom
 //      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
 //      :except "If argument is antiform ERROR!, give back as plain ERROR!"
 //  ]
@@ -232,28 +232,31 @@ DECLARE_NATIVE(LIFT)
 {
     INCLUDE_PARAMS_OF_LIFT;
 
-    Value* lifted = ARG(ATOM); // arg already ^META, no need to Liftify()
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    if (Is_Lifted_Error(lifted)) {
+    if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
+        return COPY(Liftify(atom));
+
+    if (Is_Error(atom)) {
         if (not Bool_ARG(EXCEPT))
-            return PANIC(Cell_Error(ARG(ATOM)));
+            return PANIC(Cell_Error(atom));
 
-        LIFT_BYTE(lifted) = NOQUOTE_1;
-        return COPY(lifted);  // no longer meta, just a plain ERROR!
+        LIFT_BYTE(atom) = NOQUOTE_1;
+        return COPY(atom);  // plain WARNING!
     }
 
     if (
         Bool_ARG(LITE)  // LIFT:LITE handles quasiforms specially
-        and Is_Quasiform(lifted)
+        and Is_Antiform(atom)
     ){
-        if (Is_Lifted_Null(lifted) or Is_Lifted_Void(lifted))
-            return UNLIFT(Known_Element(lifted));  // ^META valid [1]
+        if (Is_Light_Null(atom) or Is_Void(atom))
+            return COPY(atom);  // ^META valid [1]
 
-        LIFT_BYTE(lifted) = NOQUOTE_1;  // META:LITE gives plain for the rest
-        return COPY(lifted);
+        LIFT_BYTE(atom) = NOQUOTE_1;  // META:LITE gives plain for the rest
+        return COPY(atom);
     }
 
-    return COPY(lifted);
+    return COPY(Liftify(atom));
 }
 
 
@@ -270,14 +273,14 @@ DECLARE_NATIVE(LIFT_P)
 {
     INCLUDE_PARAMS_OF_LIFT_P;
 
-    const Element* lifted = Get_Lifted_Atom_Intrinsic(LEVEL);
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    return Copy_Cell(OUT, lifted);  // argument was ^META by convention
+    return COPY(Liftify(atom));
 }
 
 
 //
-//  unlift: native [
+//  unlift: native:intrinsic [
 //
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
@@ -291,21 +294,26 @@ DECLARE_NATIVE(UNLIFT)
 {
     INCLUDE_PARAMS_OF_UNLIFT;
 
-    Element* lifted_lifted = Element_ARG(VALUE);
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    if (Is_Quasiform(lifted_lifted)) {  // e.g. value is antiform
-        assert(Is_Lifted_Void(lifted_lifted) or Is_Lifted_Null(lifted_lifted));
-        if (not Bool_ARG(LITE))
-            return PANIC("UNLIFT only accepts NULL or VOID if :LITE");
-        return UNLIFT(lifted_lifted);
+    if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {  // intrinsic shortcut
+        if (not Any_Lifted(atom))
+            return PANIC("Plain UNLIFT only accepts quasiforms and quoteds");
+        return COPY(Unliftify_Undecayed(atom));
     }
 
-    Element* lifted = Unquotify(lifted_lifted);
+    if (Is_Antiform(atom)) {
+        assert(Is_Void(atom) or Is_Light_Null(atom));
+        if (not Bool_ARG(LITE))
+            return PANIC("UNLIFT only accepts NULL or VOID if :LITE");
+        return COPY(atom);  // pass through as-is
+    }
 
-    if (LIFT_BYTE(lifted) == NOQUOTE_1) {
+    if (LIFT_BYTE(atom) == NOQUOTE_1) {
         if (not Bool_ARG(LITE))
             return PANIC("UNLIFT only takes non quoted/quasi things if :LITE");
-        Copy_Cell(OUT, lifted);
+
+        Copy_Cell(OUT, atom);
 
         Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
         if (e)
@@ -314,12 +322,12 @@ DECLARE_NATIVE(UNLIFT)
         return OUT;
     }
 
-    if (LIFT_BYTE(lifted) == QUASIFORM_2 and Bool_ARG(LITE))
+    if (LIFT_BYTE(atom) == QUASIFORM_2 and Bool_ARG(LITE))
         return PANIC(
             "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
         );
 
-    return UNLIFT(lifted);  // quoted or quasi
+    return COPY(Unliftify_Undecayed(atom));  // quoted or quasi
 }
 
 
@@ -356,30 +364,32 @@ DECLARE_NATIVE(ANTIFORM_Q)
 // !!! This can be deceptive, in the sense that you could ask if something
 // like an antiform pack is an antiform, and it will say yes...but then
 // another routine like integer? might say it's an integer.  Be aware.
+//
+// 1. If you're not running as an intrinsic, then the rules for immutable
+//    arguments don't apply...the frame got its own copy of the thing being
+//    typechecked so it can be modified.
 {
     INCLUDE_PARAMS_OF_ANTIFORM_Q;
 
-    if (
-        Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)
-        and Bool_ARG(TYPE)
-    ){
-        const Element* atom = Get_Lifted_Atom_Intrinsic(LEVEL);;
-        if (not Is_Lifted_Datatype(atom))
-            return PANIC("ANTIFORM?:TYPE only accepts DATATYPE!");
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-        Copy_Cell(SPARE, atom);
-        Value* spare_datatype = Unliftify_Known_Stable(Known_Stable(SPARE));
-        Option(Type) type = Cell_Datatype_Type(spare_datatype);
-        if (u_cast(Byte, type) > u_cast(Byte, MAX_TYPE_ELEMENT))
-            return LOGIC(true);
-        return LOGIC(false);
-    }
+    if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
+        return LOGIC(Is_Antiform(atom));
 
-    Option(Heart) heart;
-    LiftByte lift_byte;
-    Get_Heart_And_Lift_Of_Atom_Intrinsic(&heart, &lift_byte, LEVEL);
+    if (not Bool_ARG(TYPE))
+        return LOGIC(Is_Antiform(atom));
 
-    return LOGIC(lift_byte == ANTIFORM_0);
+    Value* datatype = Decay_If_Unstable(m_cast(Atom*, atom));  // mutable [1]
+
+    if (not Is_Datatype(datatype))
+        return PANIC("ANTIFORM?:TYPE only accepts DATATYPE!");
+
+    Option(Type) type = Cell_Datatype_Type(datatype);
+
+    if (u_cast(Byte, type) > u_cast(Byte, MAX_TYPE_ELEMENT))
+        return LOGIC(true);
+
+    return LOGIC(false);
 }
 
 
@@ -409,7 +419,7 @@ DECLARE_NATIVE(ANTI)
 
 
 //
-//  unanti: native [
+//  unanti: native:intrinsic [
 //
 //  "Give the plain form of the antiform argument"
 //
@@ -421,9 +431,10 @@ DECLARE_NATIVE(UNANTI)
 {
     INCLUDE_PARAMS_OF_UNANTI;
 
-    Element* lifted_antiform = Element_ARG(ANTIFORM);  // ^META in native lifts
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    LIFT_BYTE(atom) = NOQUOTE_1;  // turn to plain form
 
-    return COPY(Unquasify(lifted_antiform));
+    return COPY(Known_Element(atom));
 }
 
 
@@ -590,11 +601,9 @@ DECLARE_NATIVE(PACK_Q)
 {
     INCLUDE_PARAMS_OF_PACK_Q;
 
-    Option(Heart) heart;
-    LiftByte lift_byte;
-    Get_Heart_And_Lift_Of_Atom_Intrinsic(&heart, &lift_byte, LEVEL);
+    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    return LOGIC(lift_byte == ANTIFORM_0 and heart == TYPE_BLOCK);
+    return LOGIC(Is_Pack(atom));
 }
 
 
@@ -655,28 +664,28 @@ DECLARE_NATIVE(UNRUN)
 // with a refinement.  Share the code.
 //
 static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
-    const Element* lifted = Get_Lifted_Atom_Intrinsic(level_);
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    if (Is_Lifted_Error(lifted))
-        return UNLIFT(lifted);  // will pass thru vetos, and other errors
+    if (Is_Error(atom))
+        return COPY(atom);  // will pass thru vetos, and other errors
 
-    if (Is_Lifted_Void(lifted))
-        goto opt_out;  // void => void in OPT, or void => veto in OPT:VETO
+    if (Is_Void(atom))
+        goto opting_out;  // void => void in OPT, or void => veto in OPT:VETO
 
-    if (Is_Lifted_Ghost(lifted))
+    if (Is_Ghost(atom))
         return PANIC("Cannot OPT a GHOST!");  // !!! Should we opt out ghosts?
 
-  perform_unlift: {
+  decay_if_unstable: {
 
-    Value* out = Copy_Cell(OUT, lifted);
-    Unliftify_Decayed(out);
+    Copy_Cell(OUT, atom);
+    Value* out = Decay_If_Unstable(OUT);
 
     if (Is_Nulled(out))
-        goto opt_out;
+        goto opting_out;
 
-    return OUT;
+    return out;
 
-} opt_out: { /////////////////////////////////////////////////////////////////
+} opting_out: { //////////////////////////////////////////////////////////////
 
     return veto ? FAIL(Cell_Error(g_error_veto)) : VOID;
 }}
