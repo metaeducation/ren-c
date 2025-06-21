@@ -74,7 +74,7 @@ void Probe_Cell_Print_Helper(
 ){
     Probe_Print_Helper(p, expr, "Value", file, line);
 
-    const Atom* atom = c_cast(Value*, p);
+    const Atom* atom = c_cast(Atom*, p);
 
     if (Is_Cell_Poisoned(atom)) {
         Append_Ascii(mo->string, "\\\\poisoned\\\\");
@@ -113,6 +113,9 @@ void* Probe_Core_Debug(
     Option(const char*) file,
     Option(LineNumber) line
 ){
+    bool top_was_intrinsic = Get_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
+    Clear_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
+
     DECLARE_MOLDER (mo);
     if (limit != 0) {
         SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
@@ -370,6 +373,9 @@ void* Probe_Core_Debug(
 
     assert(g_gc.disabled);
     g_gc.disabled = was_disabled;
+
+    if (top_was_intrinsic)
+        Set_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
 
     return m_cast(void*, p); // must be cast back to const if source was const
 }}
