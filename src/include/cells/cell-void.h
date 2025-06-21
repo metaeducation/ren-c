@@ -58,7 +58,7 @@ INLINE bool Is_Lifted_Void(const Atom* v) {
     return tail == at;
 }
 
-INLINE bool Is_Ghost_Or_Void(Need(Atom*) v) {
+INLINE bool Is_Ghost_Or_Void(Need(const Atom*) v) {
     return Is_Ghost(v) or Is_Void(v);
 }
 

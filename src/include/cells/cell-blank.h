@@ -59,7 +59,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 #define Init_Quasar(out) \
     TRACK(Init_Quasar_Untracked(out))
 
-INLINE bool Is_Quasar(Need(const Element*) v) {
+INLINE bool Is_Quasar(const Value* v) {
     if (LIFT_BYTE(v) != QUASIFORM_2)
         return false;
     return IS_CHAR_CELL(v) and Cell_Codepoint(v) == ' ';

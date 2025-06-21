@@ -861,7 +861,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
 
 INLINE Bounce Native_Branched_Result(Level* level_, Atom* v) {
     assert(v == level_->out);  // would not be zero cost if we supported copy
-    if (Is_Nulled(v))
+    if (Is_Light_Null(v))
         Init_Heavy_Null(v);  // box up for THEN reactivity [2]
     Clear_Cell_Flag(v, OUT_HINT_UNSURPRISING);  // all branches are surprises
     return level_->out;
@@ -899,7 +899,7 @@ INLINE Bounce Native_Branched_Result(Level* level_, Atom* v) {
 //
 INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     assert(atom == level_->out);  // wouldn't be zero cost if we supported copy
-    if (Is_Nulled(atom))
+    if (Is_Light_Null(atom))
         Init_Heavy_Null_Untracked(atom);  // distinguish from null for BREAK
     else if (Is_Void(atom))
         Init_Tripwire_Untracked(atom);  // distinguish from loop that never ran

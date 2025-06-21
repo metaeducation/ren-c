@@ -932,15 +932,10 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 {
     assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // valid otherwise [1]
-
-    USE_LEVEL_SHORTHANDS (L);
+    Atom* atom_arg = Level_Spare(L);
 
     Details* details = Level_Intrinsic_Details(L);
     Option(const Symbol*) label = Level_Intrinsic_Label(L);
-
-    Need(Value*) arg = Get_Level_Flag(L, DISPATCHING_INTRINSIC)
-        ? SPARE
-        : Level_Arg(L, 1);
 
     Param* param = Phase_Param(details, 1);
     assert(Is_Parameter(param));
@@ -948,6 +943,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 
     const Symbol* param_symbol = Key_Symbol(Phase_Key(details, 1));
 
+    Value* arg = Decay_If_Unstable(atom_arg);
     return Error_Invalid_Arg_Raw(maybe label, param_symbol, arg);
 }
 
@@ -992,7 +988,7 @@ Error* Error_No_Catch_For_Throw(Level* level_)
     CATCH_THROWN(arg, level_);
 
     if (Is_Warning(label)) {  // what would have been panic()
-        assert(Is_Nulled(arg));
+        assert(Is_Light_Null(arg));
         return Cell_Error(label);
     }
 

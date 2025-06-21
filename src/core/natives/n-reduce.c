@@ -869,7 +869,7 @@ Bounce Composer_Executor(Level* const L)
     //    arrays that don't have some substitution under them.  This may need
     //    to be controlled by a refinement.
 
-    if (Is_Nulled(OUT)) {  // VETO encountered
+    if (Is_Light_Null(OUT)) {  // VETO encountered
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);  // [1]
         Drop_Level(SUBLEVEL);
         return OUT;
@@ -886,7 +886,7 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
-    Need(Value*) out = OUT;
+    Value* out = Known_Stable(OUT);
     Option(Error*) e = Trap_Finalize_Composer_Level(
         out, SUBLEVEL, At_Level(L), conflate
     );
@@ -919,7 +919,7 @@ Bounce Composer_Executor(Level* const L)
 
     assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs [1]
 
-    assert(Is_Logic(OUT));  // null if veto
+    assert(Is_Logic(Known_Stable(OUT)));  // null if veto
 
     return OUT;
 }}}
@@ -1019,7 +1019,7 @@ DECLARE_NATIVE(COMPOSE2)
 
 } list_compose_finished_out_is_null_if_vetoed: {  ////////////////////////////
 
-    assert(Is_Logic(OUT));
+    assert(Is_Logic(Known_Stable(OUT)));
 
     Option(Error*) e = Trap_Finalize_Composer_Level(
         cast(Value*, OUT), SUBLEVEL, input, Bool_ARG(CONFLATE)

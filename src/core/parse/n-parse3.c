@@ -591,7 +591,7 @@ static REBIXO Parse_One_Rule(
 
         P_POS = pos_before;  // restore input position
 
-        if (Is_Nulled(subresult))
+        if (Is_Light_Null(subresult))
             return END_FLAG;
 
         REBINT index = VAL_INT32(Known_Element(subresult));
@@ -2038,7 +2038,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                 // !!! ignore interrupted? (e.g. ACCEPT or REJECT ran)
 
-                if (Is_Nulled(OUT)) {
+                if (Is_Light_Null(OUT)) {
                     i = END_FLAG;
                 }
                 else {
@@ -2087,7 +2087,7 @@ DECLARE_NATIVE(SUBPARSE)
 
             // Non-breaking out of loop instances of match or not.
 
-            if (Is_Nulled(SPARE))
+            if (Is_Light_Null(SPARE))
                 i = END_FLAG;
             else {
                 Value* spare = Known_Element(SPARE);
@@ -2487,7 +2487,7 @@ DECLARE_NATIVE(PARSE3)
         return THROWN;
     }
 
-    if (Is_Nulled(OUT)) {  // a match failed (but may be at end of input)
+    if (Is_Light_Null(OUT)) {  // a match failed (but may be at end of input)
         if (Bool_ARG(MATCH))
             return nullptr;
         return FAIL(Error_Parse3_Incomplete_Raw());

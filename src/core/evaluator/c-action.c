@@ -301,7 +301,7 @@ Bounce Action_Executor(Level* L)
 
       skip_fulfilling_arg_for_now:
         assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
-        assert(Is_Nulled(ARG));  // couldn't leave erased, so make it nulled
+        assert(Is_Light_Null(ARG));  // couldn't leave erased, so make nulled
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
@@ -776,7 +776,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill_and_any_pickups_done;
         }
 
-        assert(Is_Nulled(ARG));  // had to null before (could not leave erased)
+        assert(Is_Light_Null(ARG));  // had to null (could not leave erased)
 
         Set_Action_Executor_Flag(L, DOING_PICKUPS);
         goto fulfill_arg;
@@ -972,7 +972,7 @@ Bounce Action_Executor(Level* L)
     assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
 
     if (Get_Action_Executor_Flag(L, TYPECHECK_ONLY)) {  // <opt-out>
-        assert(Is_Nulled(OUT));
+        assert(Is_Light_Null(OUT));
         goto skip_output_check;
     }
 

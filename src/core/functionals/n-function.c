@@ -117,7 +117,7 @@ Bounce Func_Dispatcher(Level* const L)
 
         CATCH_THROWN(OUT, level_);
 
-        if (Is_Nulled(OUT))
+        if (Is_Light_Null(OUT))
             goto redo_with_current_frame_values;
 
         assert(Heart_Of(OUT) == TYPE_FRAME);

@@ -847,6 +847,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     bool groups_ok
 ){
+    Value* out = Known_Stable(OUT);
+
     assert(LEVEL == TOP_LEVEL);
     possibly(Get_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION));
 
@@ -865,7 +867,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
   #if RUNTIME_CHECKS
     Protect_Cell(SCRATCH);  // (common exit path undoes this protect)
-    if (not Is_Dual_Nulled_Pick_Signal(OUT))
+    if (not Is_Dual_Nulled_Pick_Signal(out))
         Protect_Cell(OUT);
   #endif
 
@@ -1025,7 +1027,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 } calculate_pick_stack_limit: {
 
     StackIndex limit = stackindex_top;
-    if (Is_Dual_Nulled_Pick_Signal(OUT))
+    if (Is_Dual_Nulled_Pick_Signal(out))
         limit = stackindex_top + 1;
 
     if (stackindex == limit)
@@ -1057,7 +1059,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             continue;
         }
 
-        if (Is_Dual_Nulled_Absent_Signal(SPARE)) {
+        if (Is_Dual_Nulled_Absent_Signal(Known_Stable(SPARE))) {
             Copy_Cell(SPARE, Data_Stack_At(Element, stackindex));
             e = Error_Bad_Pick_Raw(Known_Element(SPARE));
             if (
@@ -1075,10 +1077,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto return_error;
         }
 
-        if (Is_Dual_Tripwire_Unset_Signal(SPARE)) {
+        if (Is_Dual_Tripwire_Unset_Signal(Known_Stable(SPARE))) {
             if (
                 stackindex == limit - 1
-                and Is_Dual_Nulled_Pick_Signal(OUT)
+                and Is_Dual_Nulled_Pick_Signal(out)
             ){
                 break;  // let tweak return the unset signal
             }
@@ -1102,7 +1104,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     //    (it just re-lifted it) so the undecayed won't make an unstable
     //    value here if the picker wasn't ^META.
 
-    if (Is_Dual_Nulled_Pick_Signal(OUT)) {
+    if (Is_Dual_Nulled_Pick_Signal(out)) {
         assert(Is_Nulled(TOP));
         Copy_Cell(OUT, spare_location_dual);
         goto return_success;
@@ -1269,7 +1271,7 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
     if (Is_Error(OUT))  // !!! weird can't pick case
         return SUCCESS;
 
-    if (Is_Dual_Tripwire_Unset_Signal(OUT))
+    if (Is_Dual_Tripwire_Unset_Signal(Known_Stable(OUT)))
         return Error_User("UNSET variable");
 
     Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]

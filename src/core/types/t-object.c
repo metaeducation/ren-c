@@ -1275,7 +1275,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         return OUT;
     }
 
-    assert(Any_Lifted(OUT) or Is_Tripwire(OUT));
+    assert(Any_Lifted(OUT) or Is_Tripwire(Known_Stable(OUT)));
     return OUT;
 
 } handle_poke: { /////////////////////////////////////////////////////////////

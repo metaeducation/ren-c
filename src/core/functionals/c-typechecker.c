@@ -355,7 +355,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     assert(test != SCRATCH);
     assert(test != SPARE);
 
-    Need(const Value*) const v = SPARE;
+    const Atom* v = SPARE;
 
   try_builtin_typeset_checker_dispatch: {
 
@@ -472,10 +472,12 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     Drop_Level(sub);
 
-    if (not Is_Logic(SCRATCH))  // sub wasn't limited to intrinsics
+    Value* scratch = Known_Stable(SCRATCH);
+
+    if (not Is_Logic(scratch))  // sub wasn't limited to intrinsics
         panic (Error_No_Logic_Typecheck(label));
 
-    if (Cell_Logic(SCRATCH))
+    if (Cell_Logic(scratch))
         goto test_succeeded;
 
     goto test_failed;
@@ -873,8 +875,12 @@ bool Typecheck_Coerce(
   typecheck_again: {
 
     if (Is_Antiform(atom)) {
-        if (Get_Parameter_Flag(param, NULL_DEFINITELY_OK) and Is_Nulled(atom))
+        if (
+            Get_Parameter_Flag(param, NULL_DEFINITELY_OK)
+            and Is_Light_Null(atom)
+        ){
             goto return_true;
+        }
 
         if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
             goto return_true;
@@ -1105,7 +1111,7 @@ DECLARE_NATIVE(MATCH)
     Copy_Cell(SPARE, ARG(VALUE));
 
     if (not Bool_ARG(LIFT)) {
-        if (Is_Nulled(SPARE))
+        if (Is_Light_Null(SPARE))
             return FAIL(Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
     }
 

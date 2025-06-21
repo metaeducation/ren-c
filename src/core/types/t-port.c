@@ -211,7 +211,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         UNUSED(PARAM(PART));
         UNUSED(PARAM(SEEK));
 
-        if (Is_Nulled(OUT))
+        if (Is_Light_Null(OUT))
             return nullptr;  // !!! `read dns://` returns nullptr on failure
 
         Element* out = Known_Element(OUT);

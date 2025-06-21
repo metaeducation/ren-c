@@ -481,12 +481,16 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
     Copy_Lifted_Cell(Erase_ARG(VALUE2), t);
     Init_Logic(Erase_ARG(RELAX), relax);
 
-    DECLARE_ATOM (out);
+    DECLARE_ATOM (atom_out);
 
-    bool threw = Trampoline_Throws(out, L);
+    bool threw = Trampoline_Throws(atom_out, L);
     if (threw)
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 
+    if (Is_Error(atom_out))
+        return false;
+
+    Value* out = Decay_If_Unstable(atom_out);
     return Cell_Logic(out);
 }
 
@@ -538,15 +542,16 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     Copy_Cell(Erase_ARG(VALUE1), s);
     Copy_Cell(Erase_ARG(VALUE2), t);
 
-    DECLARE_ATOM (out);
+    DECLARE_ATOM (atom_out);
 
-    bool threw = Trampoline_Throws(out, L);
+    bool threw = Trampoline_Throws(atom_out, L);
     if (threw)
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    if (Is_Error(out))
+    if (Is_Error(atom_out))
         return false;
 
+    Value* out = Decay_If_Unstable(atom_out);
     *lesser = Cell_Logic(out);
     return true;
 }

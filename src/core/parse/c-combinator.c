@@ -100,7 +100,7 @@ Bounce Combinator_Dispatcher(Level* L)
 
     Atom* r = Atom_From_Bounce(b);
 
-    if (r == nullptr or Is_Nulled(r))
+    if (r == nullptr or Is_Light_Null(r))
         return r;  // did not advance, don't update furthest
 
     // This particular parse succeeded, but did the furthest point exceed the
@@ -536,7 +536,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 
 } first_parse_result_in_out: {  //////////////////////////////////////////////
 
-    if (Is_Nulled(OUT)) {  // didn't match even once, so not enough
+    if (Is_Light_Null(OUT)) {  // didn't match even once, so not enough
         Remove_Flex_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
         return nullptr;
     }
@@ -552,7 +552,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 
 } later_parse_result_in_spare: {  ////////////////////////////////////////////
 
-    if (Is_Nulled(SPARE)) {  // first still succeeded, so we're okay.
+    if (Is_Light_Null(SPARE)) {  // first still succeeded, so we're okay.
         Copy_Cell(remainder, input);  // put back [3]
         Remove_Flex_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
         return OUT;  // return previous successful parser result
@@ -607,7 +607,7 @@ DECLARE_NATIVE(FURTHER_COMBINATOR)
 
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 
-    if (Is_Nulled(OUT))
+    if (Is_Light_Null(OUT))
         return nullptr;  // the parse rule did not match
 
     Copy_Cell(SPARE, remainder);

@@ -315,7 +315,7 @@ INLINE Option(Error*) Trap_Test_Conditional(
 }
 
 INLINE Atom* Packify_If_Inhibitor(Atom* v) {
-    if (Is_Nulled(v))
+    if (Is_Light_Null(v))
         Init_Heavy_Null(v);
     return v;
 }

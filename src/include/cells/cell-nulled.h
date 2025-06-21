@@ -67,7 +67,14 @@
 //   frame output.
 //
 
-INLINE bool Is_Nulled(Need(const Value*) v) {
+INLINE bool Is_Light_Null(Need(const Atom*) a) {
+    Assert_Cell_Readable(a);
+    return LIFT_BYTE(a) == ANTIFORM_0
+        and Heart_Of(a) == TYPE_WORD
+        and Cell_Word_Id(a) == SYM_NULL;
+}
+
+INLINE bool Is_Nulled(const Value* v) {
     Assert_Cell_Readable(v);
     return LIFT_BYTE(v) == ANTIFORM_0
         and Heart_Of(v) == TYPE_WORD

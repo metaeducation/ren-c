@@ -171,7 +171,7 @@ DECLARE_NATIVE(PICK)
     if (Is_Error(OUT))
         return OUT;
 
-    if (Is_Nulled(OUT))  // absent (distinct from lifted "NULL-but-present")
+    if (Is_Light_Null(OUT))  // absent (distinct from lift "NULL-but-present")
         return FAIL(Error_Bad_Pick_Raw(ARG(PICKER)));
 
     return PANIC("Non-ACTION! antiform returned by TWEAK* dual protocol");
@@ -391,7 +391,7 @@ DECLARE_NATIVE(POKE)
     if (bounce)
         return bounce;  // we will get a callback (if not error/etc.)
 
-    if (not Is_Nulled(OUT))  // see TWEAK* for its meaning of non-null results
+    if (not Is_Light_Null(OUT))  // see TWEAK* for meaning of non-null results
         return PANIC(
             "Can't writeback to immediate in POKE (use TWEAK* if intentional)"
         );

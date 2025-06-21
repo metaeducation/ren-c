@@ -183,9 +183,9 @@ DECLARE_NATIVE(QUASI)
         return PANIC("Use QUASI:PASS if QUASI argument is already a quasiform");
     }
 
-    Copy_Cell(OUT, elem);
+    Element* out = Copy_Cell(OUT, elem);
 
-    Option(Error*) e = Trap_Coerce_To_Quasiform(OUT);
+    Option(Error*) e = Trap_Coerce_To_Quasiform(out);
     if (e)
         return FAIL(unwrap e);  // RAISE so (try quasi ':foo:) gives null
 
@@ -368,7 +368,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
             return PANIC("ANTIFORM?:TYPE only accepts DATATYPE!");
 
         Copy_Cell(SPARE, atom);
-        Value* spare_datatype = Unliftify_Known_Stable(SPARE);
+        Value* spare_datatype = Unliftify_Known_Stable(Known_Stable(SPARE));
         Option(Type) type = Cell_Datatype_Type(spare_datatype);
         if (u_cast(Byte, type) > u_cast(Byte, MAX_TYPE_ELEMENT))
             return LOGIC(true);

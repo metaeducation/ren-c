@@ -653,7 +653,7 @@ Bounce Stepper_Executor(Level* L)
     The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
 
     if (antiform)  // exception [2]
-        Unliftify_Known_Stable(L->out);
+        Unliftify_Known_Stable(Known_Stable(L->out));
 
     goto lookahead;
 

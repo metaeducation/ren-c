@@ -753,7 +753,7 @@ DECLARE_NATIVE(CYCLE)
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
 
-        if (Is_Nulled(OUT))
+        if (Is_Light_Null(OUT))
             return Init_Heavy_Null(OUT);  // NULL usually for BREAK [2]
 
         return OUT;
@@ -1365,7 +1365,7 @@ DECLARE_NATIVE(EVERY)
     if (not cond) {
         Init_Nulled(OUT);
     }
-    else if (Is_Cell_Erased(OUT) or not Is_Nulled(OUT)) {
+    else if (Is_Cell_Erased(OUT) or not Is_Light_Null(OUT)) {
         Move_Atom(OUT, SPARE);
     }
 
@@ -1603,7 +1603,7 @@ DECLARE_NATIVE(REMOVE_EACH)
             } while (start != index);
         }
 
-        if (Is_Nulled(OUT))
+        if (Is_Light_Null(OUT))
             Init_Heavy_Null(OUT);  // reserve pure NULL for BREAK
     }
 
@@ -1950,7 +1950,7 @@ DECLARE_NATIVE(MAP)
         return THROWN;  // automatically drops to baseline
 
     if (Not_Cell_Erased(OUT)) {  // only modifies on break or veto
-        assert(Is_Nulled(OUT));  // BREAK or VETO, so *must* return null
+        assert(Is_Light_Null(OUT));  // BREAK or VETO, so *must* return null
         Drop_Data_Stack_To(STACK_BASE);
         return nullptr;
     }
@@ -1987,7 +1987,7 @@ DECLARE_NATIVE(REPEAT)
     Value* count = ARG(COUNT);
     Element* body = Element_ARG(BODY);
 
-    Need(Value*) index = SPARE;  // spare holds current index, erased on entry
+    Value* index = u_cast(Value*, SPARE);  // current index, erased on entry
 
     enum {
         ST_REPEAT_INITIAL_ENTRY = STATE_0,

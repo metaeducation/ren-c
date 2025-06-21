@@ -1359,7 +1359,7 @@ void API_rebPushContinuation_internal(
 
     Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
     Init_Unsurprising_Ghost(Evaluator_Primed_Cell(L));
-    Push_Level_Erase_Out_If_State_0(u_cast(Cell*, out), L);
+    Push_Level_Erase_Out_If_State_0(u_cast(Atom*, out), L);
 }
 
 

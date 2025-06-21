@@ -544,7 +544,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Varargs)
         assert(false);
         return THROWN;
     }
-    assert(Is_Logic(OUT));
+    assert(Is_Logic(Known_Stable(OUT)));
     return OUT;
 }
 

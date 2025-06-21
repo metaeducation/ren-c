@@ -501,7 +501,10 @@ void Startup_Trampoline(void)
         &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
         LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
     );
-    Push_Level_Dont_Inherit_Interruptibility(&g_erased_cell, L);  // API [3]
+    Push_Level_Dont_Inherit_Interruptibility(  // to attach API handles to [3]
+        u_cast(Atom*, &g_erased_cell),
+        L
+    );
 
     Corrupt_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level
     g_ts.bottom_level = L;

@@ -491,7 +491,13 @@
         : p {static_cast<T*>(other.p)}
         {}
 
-    template<typename U, IfReverseInheritable<U>* = nullptr>
+    template<
+        typename U,
+        typename = typename std::enable_if<  // don't disregard constness
+            std::is_convertible<U*, T*>::value
+        >::type,
+        IfReverseInheritable<U>* = nullptr
+    >
     NeedWrapper(U* u) : p {(MT*)(u)}
         {}
 

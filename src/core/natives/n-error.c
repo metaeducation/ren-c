@@ -127,7 +127,7 @@ DECLARE_NATIVE(ENRESCUE)
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(LEVEL));
     CATCH_THROWN(SPARE, LEVEL);
-    assert(Is_Nulled(SPARE));  // all error throws are null-valued
+    assert(Is_Light_Null(SPARE));  // all error throws are null-valued
 
     return OUT;
   }
