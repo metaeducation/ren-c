@@ -133,7 +133,7 @@ INLINE void Get_Heart_And_Lift_Of_Atom_Intrinsic(
 //    extracted.  So if we actually want to return a null cell, we use
 //    `return Init_Nulled(OUT)` here.
 //
-INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
+INLINE Option(Bounce) Trap_Bounce_Opt_Out_Element_Intrinsic(
     Sink(Element) out,
     Level* L  // writing OUT and SPARE is allowed in this helper
 ){

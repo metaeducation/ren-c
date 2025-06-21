@@ -123,7 +123,7 @@ DECLARE_NATIVE(BOOLEAN_Q)
     INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
+    Option(Bounce) b = Trap_Bounce_Opt_Out_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -145,7 +145,7 @@ DECLARE_NATIVE(ONOFF_Q)
     INCLUDE_PARAMS_OF_ONOFF_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
+    Option(Bounce) b = Trap_Bounce_Opt_Out_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -167,7 +167,7 @@ DECLARE_NATIVE(YESNO_Q)
     INCLUDE_PARAMS_OF_YESNO_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
+    Option(Bounce) b = Trap_Bounce_Opt_Out_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
