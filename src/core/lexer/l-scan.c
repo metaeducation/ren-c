@@ -3354,48 +3354,14 @@ DECLARE_NATIVE(TRANSCODE)
     Size size;
     const Byte* bp = Cell_Bytes_At(&size, source);
 
-    TranscodeState* transcode;
-    Value* transcode_buffer = LOCAL(BUFFER);  // kept as a BLOB!, gets GC'd
-
     enum {
         ST_TRANSCODE_INITIAL_ENTRY = STATE_0,
         ST_TRANSCODE_SCANNING,
         ST_TRANSCODE_ENSURE_NO_MORE
     };
 
-    switch (STATE) {
-      case ST_TRANSCODE_INITIAL_ENTRY:
-        goto initial_entry;
-
-      case ST_TRANSCODE_SCANNING:
-        transcode = cast(
-            TranscodeState*,
-            Binary_Head(Cell_Binary_Known_Mutable(transcode_buffer))
-        );
-        goto scan_to_stack_maybe_failed;
-
-      case ST_TRANSCODE_ENSURE_NO_MORE:
-        if (not Is_Error(OUT)) {  // !!! return this error, or new one?
-            if (TOP_INDEX == STACK_BASE + 1) {  // didn't scan anything else
-                Move_Cell(OUT, TOP_ELEMENT);
-                DROP();
-            }
-            else {  // scanned another item, we only wanted one!
-                assert(TOP_INDEX == STACK_BASE + 2);
-                Drop_Data_Stack_To(STACK_BASE);
-                Init_Warning(
-                    OUT,
-                    Error_User("TRANSCODE:ONE scanned more than one element")
-                );
-                Failify(OUT);
-            }
-        }
-        Drop_Level(SUBLEVEL);
-        return OUT;
-
-      default:
-        assert(false);
-    }
+    if (STATE != ST_TRANSCODE_INITIAL_ENTRY)
+        goto not_initial_entry;
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
@@ -3478,10 +3444,11 @@ DECLARE_NATIVE(TRANSCODE)
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
     Binary* bin = Make_Binary(sizeof(TranscodeState));
-    transcode = cast(TranscodeState*, Binary_Head(bin));
+    TranscodeState* transcode = cast(TranscodeState*, Binary_Head(bin));
     Init_Transcode(transcode, file, start_line, bp);
     Term_Binary_Len(bin, sizeof(TranscodeState));
-    Init_Blob(transcode_buffer, bin);
+
+    Init_Blob(LOCAL(BUFFER), bin);
 
     UNUSED(size);  // currently we don't use this information
 
@@ -3491,7 +3458,42 @@ DECLARE_NATIVE(TRANSCODE)
     STATE = ST_TRANSCODE_SCANNING;
     return CONTINUE_SUBLEVEL(sub);
 
-} scan_to_stack_maybe_failed: {  /////////////////////////////////////////////
+} not_initial_entry: { //////////////////////////////////////////////////////
+
+    Element* transcode_buffer = Element_LOCAL(BUFFER);  // BLOB!, gets GC'd
+    TranscodeState* transcode = cast(
+        TranscodeState*,
+        Binary_Head(Cell_Binary_Known_Mutable(transcode_buffer))
+    );
+
+    switch (STATE) {
+      case ST_TRANSCODE_SCANNING:
+        goto scan_to_stack_maybe_failed;
+
+      case ST_TRANSCODE_ENSURE_NO_MORE:
+        if (not Is_Error(OUT)) {  // !!! return this error, or new one?
+            if (TOP_INDEX == STACK_BASE + 1) {  // didn't scan anything else
+                Move_Cell(OUT, TOP_ELEMENT);
+                DROP();
+            }
+            else {  // scanned another item, we only wanted one!
+                assert(TOP_INDEX == STACK_BASE + 2);
+                Drop_Data_Stack_To(STACK_BASE);
+                Init_Warning(
+                    OUT,
+                    Error_User("TRANSCODE:ONE scanned more than one element")
+                );
+                Failify(OUT);
+            }
+        }
+        Drop_Level(SUBLEVEL);
+        return OUT;
+
+      default:
+        assert(false);
+    }
+
+  scan_to_stack_maybe_failed: {  /////////////////////////////////////////////
 
     // If the source data bytes are "1" then the scanner will push INTEGER! 1
     // if the source data is "[1]" then the scanner will push BLOCK! [1]
@@ -3606,7 +3608,7 @@ DECLARE_NATIVE(TRANSCODE)
     Copy_Lifted_Cell(Array_At(pack, 1), OUT);
 
     return Init_Pack(OUT, pack);
-}}
+}}}
 
 
 //

@@ -327,6 +327,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     INLINE Atom* Level_Arg(Level* L, REBLEN n) {
         assert(n != 0 and n <= Level_Num_Args(L));
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
+        possibly(Is_Endlike_Tripwire(u_cast(Atom*, L->rootvar) + n));
         return u_cast(Atom*, L->rootvar) + n;  // 1-indexed
     }
 #endif
@@ -705,7 +706,7 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
     Optional_Element_Level_Arg(level_, param_##name##_)
 
 #define LOCAL(name) /* alias for ARG() when slot is <local> */ \
-    Known_Stable(Level_Arg(level_, (param_##name##_)))  // enforce not ARG()?
+    Level_Arg(level_, (param_##name##_))  // initialized to unset state!
 
 #define Element_LOCAL(name) \
     Known_Element(Level_Arg(level_, (param_##name##_)))

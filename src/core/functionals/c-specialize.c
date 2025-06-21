@@ -445,7 +445,7 @@ DECLARE_NATIVE(SPECIALIZE)
 
     Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(specializee);
 
-    Value* out = Copy_Cell(OUT, LOCAL(FRAME));
+    Value* out = Copy_Cell(OUT, Element_LOCAL(FRAME));
     Actionify(out);
 
     Tweak_Cell_Frame_Infix_Mode(out, infix_mode);

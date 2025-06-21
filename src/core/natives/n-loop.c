@@ -793,7 +793,7 @@ typedef struct {
 //    this would break the invariant that sequences that could be optimized
 //    are optimized).
 //
-void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
+Element* Init_Loop_Each_May_Alias_Data(Sink(Element) iterator, Value* data)
 {
     assert(not Is_Api_Value(data));  // used to be cue to free, but not now
 
@@ -856,7 +856,7 @@ void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
 
     les->data = data;  // shorter to use plain `data` above
 
-    Init_Handle_Cdata(iterator, les, sizeof(les));
+    return Init_Handle_Cdata(iterator, les, sizeof(les));
 }
 
 
@@ -885,7 +885,7 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
     UNUSED(ARG(DATA));  // les->data is used, may be API handle (?)
     UNUSED(ARG(BODY));
 
-    Value* iterator = LOCAL(ITERATOR);  // reuse to hold Loop_Each_State
+    Element* iterator = Element_LOCAL(ITERATOR);  // holds Loop_Each_State
 
     VarList* vars_ctx = Cell_Varlist(vars);
     LoopEachState *les = Cell_Handle_Pointer(LoopEachState, iterator);
@@ -1148,7 +1148,7 @@ DECLARE_NATIVE(FOR_EACH)
     Value* data = ARG(DATA);
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
-    Value* iterator = LOCAL(ITERATOR);  // reuse to hold Loop_Each_State
+    Element* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
     bool breaking = false;
 
@@ -1158,21 +1158,10 @@ DECLARE_NATIVE(FOR_EACH)
         ST_FOR_EACH_RUNNING_BODY
     };
 
-    switch (STATE) {
-      case ST_FOR_EACH_INITIAL_ENTRY:
-        goto initial_entry;
+    if (STATE != ST_FOR_EACH_INITIAL_ENTRY)
+        goto not_initial_entry;
 
-      case ST_FOR_EACH_INITIALIZED_ITERATOR:
-        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
-        goto finalize_for_each;
-
-      case ST_FOR_EACH_RUNNING_BODY:
-        goto body_result_in_spare_or_threw;
-
-      default: assert(false);
-    }
-
-  initial_entry: {  //////////////////////////////////////////////////////////
+  initial_entry: {
 
     // 1. If there is an abrupt panic, e.g. a `panic()` that could happen
     //    even in the code of this dispatcher, we need to clean up the
@@ -1193,11 +1182,26 @@ DECLARE_NATIVE(FOR_EACH)
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
+    iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), data);
     STATE = ST_FOR_EACH_INITIALIZED_ITERATOR;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_for_each
 
     goto next_iteration;
+
+} not_initial_entry: {  //////////////////////////////////////////////////////
+
+    iterator = Element_LOCAL(ITERATOR);
+
+    switch (STATE) {
+      case ST_FOR_EACH_INITIALIZED_ITERATOR:
+        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
+        goto finalize_for_each;
+
+      case ST_FOR_EACH_RUNNING_BODY:
+        goto body_result_in_spare_or_threw;
+
+      default: assert(false);
+    }
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
@@ -1267,7 +1271,7 @@ DECLARE_NATIVE(EVERY)
     Value* data = ARG(DATA);
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
-    Value* iterator = LOCAL(ITERATOR);  // place to store iteration state
+    Element* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
     enum {
         ST_EVERY_INITIAL_ENTRY = STATE_0,
@@ -1275,21 +1279,10 @@ DECLARE_NATIVE(EVERY)
         ST_EVERY_RUNNING_BODY
     };
 
-    switch (STATE) {
-      case ST_EVERY_INITIAL_ENTRY:
-        goto initial_entry;
+    if (STATE != ST_EVERY_INITIAL_ENTRY)
+        goto not_initial_entry;
 
-      case ST_EVERY_INITIALIZED_ITERATOR:
-        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
-        goto finalize_every;
-
-      case ST_EVERY_RUNNING_BODY:
-        goto body_result_in_spare;
-
-      default: assert(false);
-    }
-
-  initial_entry: {  //////////////////////////////////////////////////////////
+  initial_entry: {
 
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
@@ -1306,11 +1299,26 @@ DECLARE_NATIVE(EVERY)
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
+    iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), data);
     STATE = ST_EVERY_INITIALIZED_ITERATOR;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_every
 
     goto next_iteration;
+
+} not_initial_entry: {  //////////////////////////////////////////////////////
+
+    iterator = Element_LOCAL(ITERATOR);
+
+    switch (STATE) {
+      case ST_EVERY_INITIALIZED_ITERATOR:
+        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
+        goto finalize_every;
+
+      case ST_EVERY_RUNNING_BODY:
+        goto body_result_in_spare;
+
+      default: assert(false);
+    }
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
@@ -1813,7 +1821,7 @@ DECLARE_NATIVE(MAP)
     Value* data = ARG(DATA);  // action invokes, frame enumerates
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
-    Value* iterator = LOCAL(ITERATOR);  // reuse to hold Loop_Each_State
+    Element* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
     enum {
         ST_MAP_INITIAL_ENTRY = STATE_0,
@@ -1821,21 +1829,10 @@ DECLARE_NATIVE(MAP)
         ST_MAP_RUNNING_BODY
     };
 
-    switch (STATE) {
-      case ST_MAP_INITIAL_ENTRY:
-        goto initial_entry;
+    if (STATE != ST_MAP_INITIAL_ENTRY)
+        goto not_initial_entry;
 
-      case ST_MAP_INITIALIZED_ITERATOR:
-        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
-        goto finalize_map;
-
-      case ST_MAP_RUNNING_BODY:
-        goto body_result_in_spare;
-
-      default: assert(false);
-    }
-
-  initial_entry: {  //////////////////////////////////////////////////////////
+  initial_entry: {
 
     assert(Is_Cell_Erased(OUT));  // output only written in MAP if BREAK hit
 
@@ -1872,11 +1869,26 @@ DECLARE_NATIVE(MAP)
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
-    Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
+    iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), data);
     STATE = ST_MAP_INITIALIZED_ITERATOR;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_map
 
     goto next_iteration;
+
+} not_initial_entry: {  //////////////////////////////////////////////////////
+
+    iterator = Element_LOCAL(ITERATOR);
+
+    switch (STATE) {
+      case ST_MAP_INITIALIZED_ITERATOR:
+        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
+        goto finalize_map;
+
+      case ST_MAP_RUNNING_BODY:
+        goto body_result_in_spare;
+
+      default: assert(false);
+    }
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 

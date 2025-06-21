@@ -141,7 +141,7 @@ DECLARE_NATIVE(JOIN)
         ? nullptr
         : Element_ARG(REST);
 
-    Value* original_index = LOCAL(ORIGINAL_INDEX);
+    Element* original_index;
 
     Option(Element*) delimiter = Is_Nulled(ARG(WITH))
         ? nullptr
@@ -156,35 +156,64 @@ DECLARE_NATIVE(JOIN)
         ST_JOIN_EVALUATING_THE_GROUP
     };
 
+    if (STATE != ST_JOIN_INITIAL_ENTRY)
+        goto not_initial_entry;
+
+  initial_entry: {
+
+    STATIC_ASSERT(
+        CELL_FLAG_DELIMITER_NOTE_PENDING
+        == CELL_FLAG_PARAM_NOTE_TYPECHECKED
+    );
+    assert(Get_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED));
+    Clear_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED);
+
+    if (Any_List(ARG(BASE)) or Any_Sequence(ARG(BASE))) {
+        if (
+            rest and (
+                not Is_Block(unwrap rest)
+                and not Is_Pinned_Form_Of(BLOCK,unwrap rest)
+            )
+        ){
+            return PANIC("JOIN of list or sequence must join with BLOCK!");
+        }
+    }
+
+    if (not rest) {  // simple base case: nullptr or COPY
+        if (joining_datatype)
+            return nullptr;
+        return rebValue(CANON(COPY), unwrap base);
+    }
+    if (joining_datatype and Any_Utf8(unwrap rest))
+        goto simple_join;
+
+    goto start_complex_join;
+
+} simple_join: { /////////////////////////////////////////////////////////////
+
+    // 1. Hard to unify this mold with code below that uses a level due to
+    //    asserts on states balancing.  Easiest to repeat a small bit of code!
+
+    assert(Any_Utf8(unwrap rest));  // shortcut, no evals needed [1]
+
+    DECLARE_MOLDER (mo);
+    Push_Mold(mo);
+
+    if (Bool_ARG(HEAD) and delimiter)
+        Form_Element(mo, unwrap delimiter);
+
+    Form_Element(mo, unwrap rest);
+
+    if (Bool_ARG(TAIL) and delimiter)
+        Form_Element(mo, unwrap delimiter);
+
+    return Init_Text(OUT, Pop_Molded_String(mo));
+
+} not_initial_entry: { ///////////////////////////////////////////////////////
+
+    original_index = Element_LOCAL(ORIGINAL_INDEX);
+
     switch (STATE) {
-      case ST_JOIN_INITIAL_ENTRY: {
-        STATIC_ASSERT(
-            CELL_FLAG_DELIMITER_NOTE_PENDING
-            == CELL_FLAG_PARAM_NOTE_TYPECHECKED
-        );
-        assert(Get_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED));
-        Clear_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED);
-
-        if (Any_List(ARG(BASE)) or Any_Sequence(ARG(BASE))) {
-            if (
-                rest and (
-                    not Is_Block(unwrap rest)
-                    and not Is_Pinned_Form_Of(BLOCK,unwrap rest)
-                )
-            ){
-                return PANIC("JOIN of list or sequence must join with BLOCK!");
-            }
-        }
-
-        if (not rest) {  // simple base case: nullptr or COPY
-            if (joining_datatype)
-                return nullptr;
-            return rebValue(CANON(COPY), unwrap base);
-        }
-        if (joining_datatype and Any_Utf8(unwrap rest))
-            goto simple_join;
-        goto join_initial_entry; }
-
       case ST_JOIN_MOLD_STEPPING:
         assert(Not_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
         goto mold_step_result_in_spare;
@@ -205,27 +234,7 @@ DECLARE_NATIVE(JOIN)
       default: assert(false);
     }
 
-  simple_join: { /////////////////////////////////////////////////////////////
-
-    // 1. Hard to unify this mold with code below that uses a level due to
-    //    asserts on states balancing.  Easiest to repeat a small bit of code!
-
-    assert(Any_Utf8(unwrap rest));  // shortcut, no evals needed [1]
-
-    DECLARE_MOLDER (mo);
-    Push_Mold(mo);
-
-    if (Bool_ARG(HEAD) and delimiter)
-        Form_Element(mo, unwrap delimiter);
-
-    Form_Element(mo, unwrap rest);
-
-    if (Bool_ARG(TAIL) and delimiter)
-        Form_Element(mo, unwrap delimiter);
-
-    return Init_Text(OUT, Pop_Molded_String(mo));
-
-} join_initial_entry: { //////////////////////////////////////////////////////
+} start_complex_join: { //////////////////////////////////////////////////////
 
     // 1. It's difficult to handle the edge cases like `join:with:head` when
     //    you are doing (join 'a 'b) and get it right.  So we make a feed
@@ -275,7 +284,7 @@ DECLARE_NATIVE(JOIN)
     if (Bool_ARG(HEAD) and delimiter)  // speculatively start with
         Copy_Cell(PUSH(), unwrap delimiter);  // may be tossed
 
-    Init_Integer(original_index, TOP_INDEX);
+    original_index = Init_Integer(LOCAL(ORIGINAL_INDEX), TOP_INDEX);
 
     goto first_mold_step;
 
@@ -307,7 +316,7 @@ DECLARE_NATIVE(JOIN)
     if (Bool_ARG(HEAD) and delimiter)  // speculatively start with
         Copy_Cell(PUSH(), unwrap delimiter);  // may be tossed
 
-    Init_Integer(original_index, TOP_INDEX);
+    original_index = Init_Integer(LOCAL(ORIGINAL_INDEX), TOP_INDEX);
 
     SUBLEVEL->baseline.stack_base = TOP_INDEX;
     STATE = ST_JOIN_STACK_STEPPING;

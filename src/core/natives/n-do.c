@@ -637,36 +637,14 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     Element* op = Element_ARG(OPERATION);
     Element* args = Element_ARG(ARGS);
 
-    Value* frame = LOCAL(FRAME);  // local variable for holding GC-safe frame
-    Value* iterator = LOCAL(ITERATOR);  // reuse to hold Evars iterator
+    Element* frame;
+    Element* iterator;
 
     Value* var;  // may come from evars iterator or found by index
     Param* param;  // (same)
 
-    switch (STATE) {
-      case ST_FRAME_FILLER_INITIAL_ENTRY:
-        goto initial_entry;
-
-      case ST_FRAME_FILLER_INITIALIZED_ITERATOR:
-        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
-        goto finalize_maybe_throwing;
-
-      case ST_FRAME_FILLER_LABELED_EVAL_STEP:
-        if (THROWING)
-            goto finalize_maybe_throwing;
-        goto labeled_step_dual_in_spare;
-
-      case ST_FRAME_FILLER_UNLABELED_EVAL_STEP:
-        if (THROWING)
-            goto finalize_maybe_throwing;
-        if (Not_Cell_Readable(iterator)) {
-            assert(Bool_ARG(RELAX));
-            goto handle_next_item;
-        }
-        goto unlabeled_step_dual_in_spare;
-
-      default : assert(false);
-    }
+    if (STATE != ST_FRAME_FILLER_INITIAL_ENTRY)
+        goto not_initial_entry;
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
@@ -688,8 +666,8 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         nullptr  // leave unspecialized slots as antiform parameter!
     );
     Manage_Flex(exemplar); // Putting into a frame
-    Init_Frame(
-        frame,
+    frame = Init_Frame(
+        LOCAL(FRAME),
         exemplar,
         Cell_Frame_Label(op),
         Cell_Frame_Coupling(op)
@@ -706,13 +684,43 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     Push_Level_Erase_Out_If_State_0(SPARE, L);
 
     EVARS *e = Try_Alloc_Memory(EVARS);
-    Init_Evars(e, Known_Element(frame));  // sees locals [3]
+    Init_Evars(e, frame);  // sees locals [3]
 
-    Init_Handle_Cdata(iterator, e, sizeof(EVARS));
+    iterator = Init_Handle_Cdata(LOCAL(ITERATOR), e, sizeof(EVARS));
     STATE = ST_FRAME_FILLER_INITIALIZED_ITERATOR;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // finalize_maybe_throwing
 
     goto handle_next_item;
+
+} not_initial_entry: { ///////////////////////////////////////////////////////
+
+    // After the initial entry, we can take for granted that the FRAME and
+    // ITERATOR locals are initialized.
+
+    frame = Element_LOCAL(FRAME);
+    iterator = Element_LOCAL(ITERATOR);
+
+    switch (STATE) {
+      case ST_FRAME_FILLER_INITIALIZED_ITERATOR:
+        assert(Is_Throwing_Panic(LEVEL));  // this dispatcher panic()'d
+        goto finalize_maybe_throwing;
+
+      case ST_FRAME_FILLER_LABELED_EVAL_STEP:
+        if (THROWING)
+            goto finalize_maybe_throwing;
+        goto labeled_step_dual_in_spare;
+
+      case ST_FRAME_FILLER_UNLABELED_EVAL_STEP:
+        if (THROWING)
+            goto finalize_maybe_throwing;
+        if (Not_Cell_Readable(iterator)) {
+            assert(Bool_ARG(RELAX));
+            goto handle_next_item;
+        }
+        goto unlabeled_step_dual_in_spare;
+
+      default : assert(false);
+    }
 
 } handle_next_item: {  ///////////////////////////////////////////////////////
 
@@ -761,9 +769,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     const Symbol* symbol = Cell_Word_Symbol(At_Level(L));
 
-    Option(Index) index = Find_Symbol_In_Context(
-        Known_Element(frame), symbol, false
-    );
+    Option(Index) index = Find_Symbol_In_Context(frame, symbol, false);
     if (not index)
         return PANIC(Error_Bad_Parameter_Raw(at));
 
@@ -930,7 +936,7 @@ DECLARE_NATIVE(APPLY)
         return b;
     }
 
-    return DELEGATE(OUT, LOCAL(FRAME));
+    return DELEGATE(OUT, Element_LOCAL(FRAME));
 }
 
 
@@ -1009,7 +1015,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
         return b;
     }
 
-    return DELEGATE(OUT, LOCAL(FRAME));
+    return DELEGATE(OUT, Element_LOCAL(FRAME));
 }}
 
 
