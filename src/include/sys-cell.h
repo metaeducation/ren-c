@@ -567,18 +567,18 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
         HEART_BYTE_RAW(cell)
 #else
     struct HeartHolder {  // class for intercepting heart assignments [2]
-        Cell* & ref;
+        Cell* cell;
 
-        HeartHolder(const Cell* const& ref)
-            : ref (const_cast<Cell* &>(ref))
+        HeartHolder(const Cell* cell)
+            : cell (const_cast<Cell*>(cell))
           {}
 
         operator HeartByte() const {  // implicit cast, add read checks here
-            return HEART_BYTE_RAW(ref);
+            return HEART_BYTE_RAW(cell);
         }
 
         void operator=(HeartByte right) {  // add write checks you want here
-            HEART_BYTE_RAW(ref) = right;
+            HEART_BYTE_RAW(cell) = right;
         }
 
         void operator=(const HeartHolder& right)  // must write explicitly
@@ -598,16 +598,16 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
     };
 
     INLINE bool operator==(const HeartHolder& holder, HeartEnum h)
-      { return HEART_BYTE_RAW(holder.ref) == cast(Byte, h); }
+      { return HEART_BYTE_RAW(holder.cell) == cast(Byte, h); }
 
     INLINE bool operator==(HeartEnum h, const HeartHolder& holder)
-      { return cast(Byte, h) == HEART_BYTE_RAW(holder.ref); }
+      { return cast(Byte, h) == HEART_BYTE_RAW(holder.cell); }
 
     INLINE bool operator!=(const HeartHolder& holder, HeartEnum h)
-      { return HEART_BYTE_RAW(holder.ref) != cast(Byte, h); }
+      { return HEART_BYTE_RAW(holder.cell) != cast(Byte, h); }
 
     INLINE bool operator!=(HeartEnum h, const HeartHolder& holder)
-      { return cast(Byte, h) != HEART_BYTE_RAW(holder.ref); }
+      { return cast(Byte, h) != HEART_BYTE_RAW(holder.cell); }
 
     #define HEART_BYTE(cell) \
         HeartHolder{cell}
@@ -660,32 +660,39 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 //    care to handle, so a Slot must knowingly check the flag and use the
 //    LIFT_BYTE_RAW() when dealing with Slots.
 //
+// 2. When LiftHolder() was changed to take a const Cell* instead of a
+//    const Cell*&, this caused gcc to ambiguously try to invoke the default
+//    copy constructor when doing (LIFT_BYTE(OnStack(Cell*)) = NOQUOTE_1) or
+//    similar with wrapper classes.  Doesn't happen in MSVC.  Deleting the
+//    default copy constructor seemed to fix it.
 
 #if (! DEBUG_HOOK_LIFT_BYTE)
     #define LIFT_BYTE(cell) \
         LIFT_BYTE_RAW(cell)
 #else
     struct LiftHolder {  // class for intercepting lift assignments
-        Cell* & ref;
+        Cell* cell;
 
-        LiftHolder(const Cell* const& ref)
-            : ref (const_cast<Cell* &>(ref))
+        LiftHolder(const Cell* cell)
+            : cell (const_cast<Cell*>(cell))
           {}
 
-        LiftHolder(const Slot* const& ref) = delete;  // may be dual [1]
+        LiftHolder(const Slot*) = delete;  // may be dual [1]
+
+        LiftHolder(const LiftHolder&) = delete;  // avoid gcc ambiguities [2]
 
         operator LiftByte() const {  // implicit cast, add read checks here
-            return LIFT_BYTE_RAW(ref);
+            return LIFT_BYTE_RAW(cell);
         }
 
         void operator=(int right) {  // add write checks you want here
             assert(right >= 0 and right <= 255);
 
-            Option(Heart) heart = Unchecked_Heart_Of(ref);
+            Option(Heart) heart = Unchecked_Heart_Of(cell);
             if (not (right & NONQUASI_BIT))
                 assert(Any_Isotopic_Type(heart));  // has quasiforms/antiforms
 
-            LIFT_BYTE_RAW(ref) = right;
+            LIFT_BYTE_RAW(cell) = right;
         }
 
         void operator=(const Antiform_0_Struct& right) = delete;
@@ -695,10 +702,10 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
           { *this = u_cast(LiftByte, right); }
 
         void operator-=(int shift)  // must write explicitly
-          { LIFT_BYTE_RAW(ref) -= shift; }
+          { LIFT_BYTE_RAW(cell) -= shift; }
 
         void operator+=(int shift)  // must write explicitly
-          { LIFT_BYTE_RAW(ref) += shift; }
+          { LIFT_BYTE_RAW(cell) += shift; }
     };
 
     #define LIFT_BYTE(cell) \
