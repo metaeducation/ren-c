@@ -175,7 +175,7 @@ run-test-cluster: func [
         ]
         (
             wrap* isolate group  ; gather top-level declarations
-            run-single-test inside isolate group expected-id
+            run-single-test inside isolate group opt expected-id
         )
     ]]
 ]

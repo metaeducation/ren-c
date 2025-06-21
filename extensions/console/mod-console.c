@@ -314,7 +314,7 @@ DECLARE_NATIVE(CONSOLE)
             "code",  // group! or block! executed prior (or null)
             "result'",  // prior result lifted, or error (or null)
             "to-yesno resumable",
-            "skin"
+            "opt skin"
     );
 
     if (warning) {  // panic happened in CONSOLE* code itself [2]

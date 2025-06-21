@@ -43,7 +43,8 @@
 //
 //      return: "Whether the type matched"
 //          [logic?]
-//      ^value "Value to test"
+//      value "Value to test"
+//          [<opt-out> any-value?]
 //      :type "Test a concrete type, (integer?:type integer!) passes"
 //      :quoted
 //      :tied

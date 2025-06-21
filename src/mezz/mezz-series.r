@@ -15,28 +15,28 @@ Rebol [
 (sys.util/register-codec
     'BE
     []
-    null
+    void
     decode-integer/
     encode-integer/)
 
 (sys.util/register-codec
     'LE
     []
-    null
+    void
     decode-integer:LE/
     encode-integer:LE/)
 
 (sys.util/register-codec
     'UTF-8
     []
-    null
+    void
     decode-UTF-8/
     encode-UTF-8/)
 
 (sys.util/register-codec
     'IEEE-754
     []
-    null
+    void
     decode-IEEE-754/
     encode-IEEE-754/)
 

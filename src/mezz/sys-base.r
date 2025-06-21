@@ -268,5 +268,5 @@ do: func [
     :args "Args passed as system.script.args to a script (normally a string)"
         [element?]
 ][
-    return [_ _ {_}]: import*:args null source args
+    return [_ _ {_}]: import*:args void source args
 ]
