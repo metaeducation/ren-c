@@ -718,7 +718,14 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
     Phase_Param(Level_Phase(level_), (n))
 
 
+// 1. In the case of an abrupt panic, the stack may be unwound without the
+//    participation of code that protected the output Cell as a sanity check,
+//    so it will still be protected.  We could Force_Erase_Cell(), but that
+//    might cover up other bugs.
+//
 INLINE Bounce Native_Thrown_Result(Level* L) {
+    Clear_Lingering_Out_Cell_Protect_If_Debug(L);  // for abrupt panics [1]
+
     Erase_Cell(L->out);
     assert(Is_Throwing(L));
 

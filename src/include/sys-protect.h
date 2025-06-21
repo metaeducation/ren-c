@@ -48,6 +48,18 @@ INLINE void Unprotect_Cell(Cell* c) {
 }
 
 
+// There are some functions that set the output cell to protected to make
+// sure it's not changed.  But if throwing gets in the mix, that means the
+// code path that would clean it up may not be run.  Clear it.
+//
+#if NO_RUNTIME_CHECKS
+    #define Clear_Lingering_Out_Cell_Protect_If_Debug(L)  NOOP
+#else
+    #define Clear_Lingering_Out_Cell_Protect_If_Debug(L) \
+        ((L)->out->header.bits &= ~(CELL_FLAG_PROTECTED))
+#endif
+
+
 //
 // Freezing and Locking
 //

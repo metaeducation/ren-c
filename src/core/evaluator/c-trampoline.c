@@ -370,12 +370,16 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     //    pushed to process its block will be above it on the stack.  If the
     //    ALL decides to call panic(), the non-running stack level can be
     //    "TOP_LEVEL" above the ALL's level whose executor was pushed.)
+    //
+    // 2. If a native protected the output Cell as a sanity check in the
+    //    debug build, it won't run the code path to clean that up here.
 
     Level* L = TOP_LEVEL;  // may not be same as L whose executor() called [1]
 
     Assert_Varlist(error);
     assert(CTX_TYPE(error) == TYPE_WARNING);
 
+    Clear_Lingering_Out_Cell_Protect_If_Debug(L);  // abrupt skips cleanup [2]
     Init_Thrown_Panic(L, error);
 
     possibly(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // panic in intrinsic
