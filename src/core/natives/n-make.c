@@ -214,11 +214,10 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Set_Executor_Flag(ACTION, level_, IN_DISPATCH);
 
     INCLUDE_PARAMS_OF_TO;
-    Erase_Cell(ARG(TYPE));
-    Erase_Cell(ARG(ELEMENT));
 
-    Copy_Cell(ARG(TYPE), Datatype_From_Type(from));
-    Copy_Cell(ARG(ELEMENT), out);
+    Copy_Cell(Erase_ARG(TYPE), Datatype_From_Type(from));
+    Copy_Cell(Erase_ARG(ELEMENT), out);
+
     STATE = STATE_0;
 
     assert(Get_Level_Flag(level_, TRAMPOLINE_KEEPALIVE));

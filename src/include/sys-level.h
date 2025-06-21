@@ -677,6 +677,9 @@ INLINE Level* Prep_Level_Core(
 #define DECLARE_INTRINSIC_PARAM(name)  /* was used, not used at the moment */ \
     NOOP  // the INCLUDE_PARAMS_OF_XXX macros still make this, may find a use
 
+#define Erase_ARG(name) \
+    Erase_Cell(Level_Arg(level_, param_##name##_))
+
 #define ARG(name) \
     Level_Arg(level_, param_##name##_)
 

@@ -477,9 +477,9 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
 
     bool relax = not strict;
 
-    Copy_Lifted_Cell(Erase_Cell(ARG(VALUE1)), s);
-    Copy_Lifted_Cell(Erase_Cell(ARG(VALUE2)), t);
-    Init_Logic(Erase_Cell(ARG(RELAX)), relax);
+    Copy_Lifted_Cell(Erase_ARG(VALUE1), s);
+    Copy_Lifted_Cell(Erase_ARG(VALUE2), t);
+    Init_Logic(Erase_ARG(RELAX), relax);
 
     DECLARE_ATOM (out);
 
@@ -535,8 +535,8 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    Copy_Cell(Erase_Cell(ARG(VALUE1)), s);
-    Copy_Cell(Erase_Cell(ARG(VALUE2)), t);
+    Copy_Cell(Erase_ARG(VALUE1), s);
+    Copy_Cell(Erase_ARG(VALUE2), t);
 
     DECLARE_ATOM (out);
 

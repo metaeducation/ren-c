@@ -254,20 +254,20 @@ static bool Subparse_Throws(
     INCLUDE_PARAMS_OF_SUBPARSE;
 
     Derelativize(
-        Erase_Cell(ARG(INPUT)),
+        Erase_ARG(INPUT),
         c_cast(Element*, input),
         input_binding
     );
 
     assert((flags & PF_STATE_MASK) == 0);  // no "parse state" flags allowed
-    Init_Integer(Erase_Cell(ARG(FLAGS)), flags);
+    Init_Integer(Erase_ARG(FLAGS), flags);
 
     // Locals in frame would be unset on entry if called by action dispatch.
     //
-    Init_Tripwire(Erase_Cell(ARG(NUM_QUOTES)));
-    Init_Tripwire(Erase_Cell(ARG(POSITION)));
-    Init_Tripwire(Erase_Cell(ARG(SAVE)));
-    Init_Tripwire(Erase_Cell(ARG(LOOKBACK)));
+    Init_Tripwire(Erase_ARG(NUM_QUOTES));
+    Init_Tripwire(Erase_ARG(POSITION));
+    Init_Tripwire(Erase_ARG(SAVE));
+    Init_Tripwire(Erase_ARG(LOOKBACK));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do
