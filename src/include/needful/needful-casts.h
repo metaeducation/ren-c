@@ -730,4 +730,60 @@
 #endif
 
 
+//=//// strict_..._cast(): STANDARDS-COMPLIANCE CAST //////////////////////=//
+//
+// Microsoft Visual C++ is stricter than GCC/Clang about which conversions
+// are considered valid in template deduction and overload resolution,
+// especially when user-defined conversion operators are involved.
+//
+// In particular, MSVC will not consider user-defined conversions (e.g. class
+// with `operator T*()`) when deducing template arguments for a constructor or
+// function template that takes its argument by `const U&`. GCC and Clang are
+// more permissive and will allow such conversions in more contexts.
+//
+// This difference most often appears when using wrapper types (such as smart
+// pointers or pointer-like classes) that can convert to raw pointers. In GCC,
+// you can often pass such a wrapper directly to a function or constructor
+// expecting a raw pointer, and the conversion will be found. In MSVC, you may
+// need to explicitly cast at the callsite, or provide overloads that take the
+// wrapper type directly.
+//
+// According to the C++ standard, MSVC's behavior is right: template argument
+// deduction does not consider user-defined conversions. GCC's behavior is
+// considered bad because it increases compile time and complexity by having
+// to consider user-defined conversions in deduction, and creates unnecessary
+// ambiguities in overload resolution.
+//
+// To avoid littering the codebase with explanations at every callsite, and
+// to ensure that the casts are still readable, we define `strict_*_cast()`
+// macros. These are no-ops on GCC/Clang, but expand to the appropriate cast
+// macros (e.g. `u_cast`, `v_cast`, etc.) in standards-compilant compilers.
+// This centralizes the workaround and documents the reason for its existence.
+//
+// (Using plain casts would run the risk of someone using GCC or Clang just
+// deleting the cast when they think it isn't needed.)
+//
+#if defined(__GNUC__) || defined(__clang__)
+    // GCC and Clang are non-conforming: user-defined conversions in deduction
+    #define strict_u_cast(T,v)    (v)
+    #define strict_v_cast(T,v)    (v)
+    #define strict_c_cast(T,v)    (v)
+    #define strict_u_c_cast(T,v)  (v)
+
+    #define strict_cast(T,v)      (v)
+#else
+    // Standard-conforming (MSVC, Intel, etc.): cast needed
+    #define strict_u_cast(T,v)    u_cast(T,v)
+    #define strict_v_cast(T,v)    v_cast(T,v)
+    #define strict_c_cast(T,v)    c_cast(T,v)
+    #define strict_u_c_cast(T,v)  u_c_cast(T,v)
+
+    #define strict_cast(T,v)      cast(T,v)  // however you defined cast()
+#endif
+
+#define strict_m_cast(T,v)  STATIC_FAIL(just_use_m_cast)
+#define strict_f_cast(T,v)  STATIC_FAIL(just_use_f_cast)
+#define strict_i_cast(T,v)  STATIC_FAIL(just_use_i_cast)
+#define strict_p_cast(T,v)  STATIC_FAIL(just_use_p_cast)
+
 #endif  // NEEDFUL_CASTS_H

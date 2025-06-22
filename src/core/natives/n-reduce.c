@@ -1042,7 +1042,7 @@ DECLARE_NATIVE(COMPOSE2)
         transcode,
         ANONYMOUS,  // %tmp-boot.r name in boot overwritten by this
         start_line,
-        head  // we'll assign this after each pattern find
+        strict_c_cast(Byte*, head)
     );
 
     transcode->saved_levels = nullptr;  // level reuse optimization
