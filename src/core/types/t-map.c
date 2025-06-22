@@ -50,22 +50,10 @@ Count Num_Map_Entries_Used(const Map* map)
 }
 
 
-//
-//  CT_Map: C
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
 //
 // !!! Was never implemented in R3-Alpha; called into raw array comparison,
 // which is clearly incorrect.  Needs to be written.
-//
-REBINT CT_Map(const Element* a, const Element* b, bool strict)
-{
-    UNUSED(a);
-    UNUSED(b);
-    UNUSED(strict);
-    panic ("https://github.com/rebol/rebol-issues/issues/2340");
-}
-
-
-IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
     bool strict = not Bool_ARG(RELAX);
@@ -73,7 +61,11 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
 
-    return LOGIC(CT_Map(v1, v2, strict) == 0);
+    UNUSED(strict);
+    UNUSED(v1);
+    UNUSED(v2);
+
+    return PANIC("https://github.com/rebol/rebol-issues/issues/2340");
 }
 
 

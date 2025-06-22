@@ -257,6 +257,12 @@
 // 3. If you want things like char[10] to be decayed to char* for casting
 //    purposes, it has to go through a decaying process.
 //
+// 4. Many of the "helpers" in this file use structs with static member
+//    functions, to work around the fact that functions can't be partially
+//    specialized while objects can.  However, we want "universal references"
+//    which is how (T&& arg) is interpreted for functions vs. objects.
+//
+
 
 #if NO_CPLUSPLUS_11
   #define v_cast(T,v) \
@@ -399,8 +405,23 @@
 
 
     template<typename To, typename From>
+    typename std::enable_if<  // For ints/enums: use & as && can't bind const
+        not std::is_array<typename std::remove_reference<From>::type>::value
+            and std::is_fundamental<To>::value
+            or std::is_enum<To>::value,
+        To
+    >::type
+    v_cast_decaying_helper(const From& v) {
+        return ValidatedCastHelper<
+            typename std::decay<From>::type, To
+        >::convert(v);
+    }
+
+    template<typename To, typename From>
     typename std::enable_if<  // For arrays: decay to pointer
-        std::is_array<typename std::remove_reference<From>::type>::value,
+        std::is_array<typename std::remove_reference<From>::type>::value
+            and not std::is_fundamental<To>::value
+            and not std::is_enum<To>::value,
         To
     >::type
     v_cast_decaying_helper(From&& v) {
@@ -411,7 +432,9 @@
 
     template<typename To, typename From>
     typename std::enable_if<  // For non-arrays: forward as-is
-        !std::is_array<typename std::remove_reference<From>::type>::value,
+        not std::is_array<typename std::remove_reference<From>::type>::value
+            and not std::is_fundamental<To>::value
+            and not std::is_enum<To>::value,
         To
     >::type
     v_cast_decaying_helper(From&& v) {
@@ -419,7 +442,8 @@
             std::forward<From>(v)  // preserves reference-ness
         );
     }
-    #define v_cast(T, v)  v_cast_decaying_helper<T>(v)
+    #define v_cast(T, v) \
+        v_cast_decaying_helper<T>(v)  // function for universal references [3]
 #endif
 
 
