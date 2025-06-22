@@ -70,7 +70,8 @@
           {}
 
         template <typename X>
-        OptionWrapper (const OptionWrapper<X>& other) : p (other.p)
+        OptionWrapper (const OptionWrapper<X>& other)
+          : p (other.p)  // necessary...won't use the (U something) template
           {}
 
         operator uintptr_t() const  // so it works in switch() statements

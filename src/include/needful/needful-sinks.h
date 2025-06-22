@@ -66,6 +66,17 @@
 //    references removed when matching the specialization, even if the convert
 //    function wants to take a reference.
 //
+// E. In the initial design, default constructing things like SinkWrapper<>
+//    was not supported.  But in MSVC it seems that some cases (for instance
+//    Option(Sink(bool))) will utilize default construction in mechanics for
+//    things like passing nullptr, even when a (SinkWrapper<bool> nullptr_t)
+//    constructor exists.
+//
+//    AI seems to think MSVC is on the right side of the standard and is
+//    allowed to require a default constructor.  It's not useless to be
+//    able to default construct these types, but they can't give semantic
+//    meanings to default construction... C builds couldn't have parity.
+//
 
 
 //=//// FORWARD DEFINITIONS ///////////////////////////////////////////////=//
@@ -135,6 +146,10 @@
     template<typename U>
     using IfSinkConvertible
         = typename IfOutputConvertible2<U, T>::enable::type;
+
+    SinkWrapper() : corruption_pending {false} {  // compiler MIGHT need [E]
+        Corrupt_Pointer_If_Debug(p);  // pointer itself, not contents!
+    }
 
     SinkWrapper(nullptr_t) : p {nullptr}, corruption_pending {false} {}
 
@@ -209,7 +224,7 @@
 
     operator T*() const {  // corrupt before yielding pointer
         if (corruption_pending) {
-            Corrupt_If_Debug(*const_cast<MT*>(p));
+            Corrupt_If_Debug(*p);  // corrupt pointed-to item
             corruption_pending = false;
         }
         return p;
@@ -218,7 +233,7 @@
     template<typename U>
     explicit operator U*() const {  // corrupt before yielding pointer
         if (corruption_pending) {
-            Corrupt_If_Debug(*const_cast<MT*>(p));  // corrupt pointed-to item
+            Corrupt_If_Debug(*p);  // corrupt pointed-to item
             corruption_pending = false;
         }
         return const_cast<U*>(reinterpret_cast<const U*>(p));
@@ -226,7 +241,7 @@
 
     T* operator->() const {  // handle corruption before dereference
         if (corruption_pending) {
-            Corrupt_If_Debug(*const_cast<MT*>(p));  // corrupt pointed-to item
+            Corrupt_If_Debug(*p);  // corrupt pointed-to item
             corruption_pending = false;
         }
         return p;
@@ -234,7 +249,7 @@
 
     ~SinkWrapper() {  // make sure we don't leave scope without corrupting
         if (corruption_pending)
-            Corrupt_If_Debug(*const_cast<MT*>(p));  // corrupt pointed-to item
+            Corrupt_If_Debug(*p);  // corrupt pointed-to item
     }
   };
 #endif
@@ -268,7 +283,7 @@
     template<typename T>
     struct Corrupter<SinkWrapper<T>&> {  // C pointer corrupt fails
       static void corrupt(SinkWrapper<T>& wrapper) {
-        Corrupt_If_Debug(wrapper.p);  // corrupt pointer itself (not contents)
+        Corrupt_Pointer_If_Debug(wrapper.p);  // pointer itself (not contents)
         wrapper.corruption_pending = false;
       }
     };
@@ -358,6 +373,10 @@
     template<typename U>
     using IfInitConvertible
         = typename IfOutputConvertible2<U, T>::enable::type;
+
+    InitWrapper() {  // compiler might need [E]
+        dont(Corrupt_Pointer_If_Debug(p));  // lightweight behavior vs. Sink()
+    }
 
     InitWrapper(nullptr_t) : p {nullptr}
         {}
@@ -478,6 +497,9 @@
     template<typename U>
     using IfReverseInheritable
         = typename IfReverseInheritable2<U, T>::enable::type;
+
+    NeedWrapper()  // compiler MIGHT need [E]
+        { dont(Corrupt_If_Debug(p)); }  // may be zero in global scope
 
     NeedWrapper(nullptr_t) : p {nullptr}
         {}
