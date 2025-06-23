@@ -168,9 +168,13 @@
     (PARAMLIST_FLAG_QUOTES_FIRST)
 
 
-#define CELL_MASK_ANY_CONTEXT \
-    ((not CELL_FLAG_DONT_MARK_PAYLOAD_1)  /* varlist */ \
-        | (not CELL_FLAG_DONT_MARK_PAYLOAD_2)  /* phase (for FRAME!) */)
+// The Coupling is for FRAME! only.  We default CELL_MASK_ANY_CONTEXT to
+// saying you don't mark the payload slot 2 for coupling.
+//
+#define CELL_MASK_ANY_CONTEXT ( \
+    (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  /* varlist */ \
+        | CELL_FLAG_DONT_MARK_PAYLOAD_2  /* coupling only on frames */ \
+)
 
 
 
@@ -181,15 +185,18 @@
 // to reclaim the dynamic memory to make a singular cell...but that flag
 // can't be FLEX_FLAG_FIXED_SIZE, because most varlists can expand.
 //
-#define FLEX_MASK_LEVEL_VARLIST \
-    (BASE_FLAG_BASE \
+#define FLEX_MASK_LEVEL_VARLIST ( \
+    BASE_FLAG_BASE \
         | FLAG_FLAVOR(VARLIST) \
         | STUB_FLAG_DYNAMIC \
-        | STUB_FLAG_LINK_NEEDS_MARK  /* NextVirtual */ \
-        /* STUB_FLAG_MISC_NEEDS_MARK */  /* Runlevel, not Adjunct */)
+        | 0 /* STUB_FLAG_LINK_NEEDS_MARK */  /* NextVirtual, maybe null */ \
+        | (not STUB_FLAG_MISC_NEEDS_MARK)  /* Runlevel, not Adjunct */ \
+)
 
-#define FLEX_MASK_VARLIST \
-    (FLEX_MASK_LEVEL_VARLIST | STUB_FLAG_MISC_NEEDS_MARK  /* Adjunct */)
+#define FLEX_MASK_VARLIST ( \
+    FLEX_MASK_LEVEL_VARLIST \
+        | 0 /* STUB_FLAG_MISC_NEEDS_MARK */  /* Adjunct, maybe null */ \
+)
 
 // LINK of VarList is LINK_CONTEXT_INHERIT_BIND
 #define BONUS_VARLIST_KEYLIST(varlist)     STUB_BONUS(varlist)

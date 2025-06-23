@@ -1112,14 +1112,14 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     }
 
     L->varlist = x_cast(Array*, s);
-
     L->rootvar = Flex_Head_Dynamic(Element, s);
-    TRACK(L->rootvar)->header.bits =
-        BASE_FLAG_BASE
-            | BASE_FLAG_CELL
-            | CELL_FLAG_PROTECTED  // payload/coupling tweaked, but not by user
-            | CELL_MASK_FRAME
-            | FLAG_LIFT_BYTE(NOQUOTE_1);
+
+    possibly(LIFT_BYTE(frame) != NOQUOTE_1);  // can be ACTION!, quasi, etc.
+
+    TRACK(L->rootvar)->header.bits
+        = (frame->header.bits & ~FLAG_LIFT_BYTE(255))
+            | FLAG_LIFT_BYTE(NOQUOTE_1)  // canonize as FRAME!
+            | CELL_FLAG_PROTECTED;  // rootvars protected from modification
     L->rootvar->extra = frame->extra;
     L->rootvar->payload = frame->payload;
 

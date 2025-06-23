@@ -57,10 +57,14 @@
 //
 // These are used in the phase archetype slot, so they need to be defined
 // earlier than %cell-frame.h
+//
+// 1. We choose to put the Lens/Label in the extra slot, because it's more
+//    likely to be changed or tweaked over the lifetime of a single Cell,
+//    and may be tweaked to or from null.
 
-#define CELL_FRAME_COUPLING(c)         CELL_EXTRA(c)
-#define CELL_FRAME_PHASE(c)            CELL_PAYLOAD_1(c)
-#define CELL_FRAME_LENS_OR_LABEL(c)    CELL_PAYLOAD_2(c)
+#define CELL_FRAME_EXTRA_LENS_OR_LABEL(c)  CELL_EXTRA(c)  // maybe null [1]
+#define CELL_FRAME_PAYLOAD_1_PHASE(c)  CELL_PAYLOAD_1(c)  // never null
+#define CELL_FRAME_PAYLOAD_2_COUPLING(c)  CELL_PAYLOAD_2(c)  // maybe null [1]
 
 
 
@@ -72,7 +76,7 @@
 
 INLINE Details* Phase_Details(Phase* p) {
     while (not Is_Stub_Details(p)) {
-        p = cast(Phase*, CELL_FRAME_PHASE(Phase_Archetype(p)));
+        p = cast(Phase*, CELL_FRAME_PAYLOAD_1_PHASE(Phase_Archetype(p)));
     }
     return cast(Details*, p);
 }
@@ -80,7 +84,7 @@ INLINE Details* Phase_Details(Phase* p) {
 
 INLINE bool Is_Frame_Details(const Cell* v) {
     assert(Heart_Of(v) == TYPE_FRAME);
-    return Is_Stub_Details(c_cast(Stub*, CELL_FRAME_PHASE(v)));
+    return Is_Stub_Details(c_cast(Stub*, CELL_FRAME_PAYLOAD_1_PHASE(v)));
 }
 
 #define Is_Frame_Exemplar(v) (not Is_Frame_Details(v))
@@ -94,12 +98,12 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 
 INLINE void Tweak_Cell_Frame_Lens_Or_Label(Cell* c, Option(const Flex*) f) {
     assert(Heart_Of(c) == TYPE_FRAME);
-    CELL_FRAME_LENS_OR_LABEL(c) = m_cast(Flex*, maybe f);
+    CELL_FRAME_EXTRA_LENS_OR_LABEL(c) = m_cast(Flex*, maybe f);  // no flag
 }
 
 INLINE ParamList* Phase_Paramlist(Phase* p) {
     while (Is_Stub_Details(p))
-        p = u_cast(Phase*, CELL_FRAME_PHASE(Phase_Archetype(p)));
+        p = u_cast(Phase*, CELL_FRAME_PAYLOAD_1_PHASE(Phase_Archetype(p)));
     return u_cast(ParamList*, p);
 }
 
@@ -220,6 +224,10 @@ INLINE void Tweak_Misc_Details_Adjunct(
 ){
     assert(Is_Stub_Details(details));
     MISC_DETAILS_ADJUNCT(details) = maybe adjunct;
+    if (adjunct)
+        Set_Stub_Flag(details, MISC_NEEDS_MARK);
+    else
+        Clear_Stub_Flag(details, MISC_NEEDS_MARK);
 }
 
 

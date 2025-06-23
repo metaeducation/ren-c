@@ -548,7 +548,7 @@ void RunPromise(void)
         // Note: Expired, can't use VAL_CONTEXT
         //
         assert(Is_Frame(result));
-        const Base* frame_ctx = CELL_FRAME_PHASE(result);
+        const Base* frame_ctx = CELL_FRAME_PAYLOAD_1_PHASE(result);
         heapaddr_t throw_id = Heapaddr_From_Pointer(frame_ctx);
 
         EM_ASM(

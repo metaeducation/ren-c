@@ -57,6 +57,10 @@ INLINE void Tweak_Misc_Varlist_Adjunct(
 ){
     assert(Is_Stub_Varlist(varlist));
     MISC_VARLIST_ADJUNCT(varlist) = maybe adjunct;
+    if (adjunct)
+        Set_Stub_Flag(varlist, MISC_NEEDS_MARK);
+    else
+        Clear_Stub_Flag(varlist, MISC_NEEDS_MARK);
 }
 
 INLINE void Tweak_Misc_Phase_Adjunct(Phase* a, Option(VarList*) adjunct) {
@@ -150,12 +154,16 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 
 INLINE Option(VarList*) Cell_Frame_Coupling(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
-    return cast(VarList*, CELL_FRAME_COUPLING(c));
+    return cast(VarList*, CELL_FRAME_PAYLOAD_2_COUPLING(c));
 }
 
 INLINE void Tweak_Cell_Frame_Coupling(Value* c, Option(VarList*) coupling) {
     assert(Heart_Of(c) == TYPE_FRAME);
-    CELL_FRAME_COUPLING(c) = maybe coupling;
+    CELL_FRAME_PAYLOAD_2_COUPLING(c) = maybe coupling;
+    if (coupling)
+        Clear_Cell_Flag(c, DONT_MARK_PAYLOAD_2);
+    else
+        Set_Cell_Flag(c, DONT_MARK_PAYLOAD_2);
 }
 
 
@@ -172,8 +180,8 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
             | CELL_FLAG_PROTECTED  // should not be modified
     );
     CELL_CONTEXT_VARLIST(rootvar) = varlist;
-    rootvar->extra.base = nullptr;  // no coupling, but extra is marked
-    CELL_FRAME_LENS_OR_LABEL(rootvar) = nullptr;  // not a frame
+    CELL_FRAME_PAYLOAD_2_COUPLING(rootvar) = nullptr;  // not a frame
+    CELL_FRAME_EXTRA_LENS_OR_LABEL(rootvar) = nullptr;  // not a frame
 }
 
 #define Tweak_Non_Frame_Varlist_Rootvar(heart,varlist) \
@@ -320,8 +328,9 @@ INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
 INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {
     assert(Is_Stub_Varlist(varlist));
     possibly(CTX_TYPE(varlist) == TYPE_FRAME);  // may not be fully formed yet
-    assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
     MISC_VARLIST_RUNLEVEL(varlist) = maybe L;
+    assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
+
 }
 
 INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {

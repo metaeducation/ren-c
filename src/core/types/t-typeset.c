@@ -147,7 +147,7 @@ void Set_Parameter_Spec(
     ParamClass pclass = Cell_Parameter_Class(param);
     assert(pclass != PARAMCLASS_0);  // must have class
 
-    uintptr_t* flags = &PARAMETER_FLAGS(param);
+    uintptr_t* flags = &CELL_PARAMETER_PAYLOAD_2_FLAGS(param);
     if (*flags & PARAMETER_FLAG_REFINEMENT) {
         assert(*flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
     }
@@ -186,7 +186,8 @@ void Set_Parameter_Spec(
 
 } process_parameter_spec: {
 
-    CELL_PARAMETER_SPEC(param) = copy;  // should GC protect the copy
+    CELL_PARAMETER_PAYLOAD_1_SPEC(param) = copy;  // should GC protect the copy
+    Clear_Cell_Flag(param, DONT_MARK_PAYLOAD_1);  // sync flag
 
     const Element* tail;
     const Element* item = Cell_List_At(&tail, spec);

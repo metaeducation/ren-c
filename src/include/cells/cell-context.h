@@ -26,7 +26,9 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
     while (not Is_Stub_Varlist(cast(Stub*, base))) {
         assert(Unchecked_Heart_Of(c) == TYPE_FRAME);
         assert(Is_Stub_Details(cast(Stub*, base)));
-        c = Flex_Head_Dynamic(Cell, cast(Details*, CELL_FRAME_PHASE(c)));
+        c = Flex_Head_Dynamic(Cell,
+            cast(Details*, CELL_FRAME_PAYLOAD_1_PHASE(c))
+        );
         base = CELL_PAYLOAD_1(c);  // ParamList or Details
     }
     return cast(VarList*, base);

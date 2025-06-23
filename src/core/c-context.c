@@ -69,11 +69,11 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 SeaOfVars* Alloc_Sea_Core(Flags flags) {
     assert(Flavor_From_Flags(flags) == FLAVOR_0);  // always make sea
 
-    Stub* s = Prep_Stub(flags | FLEX_MASK_SEA, Alloc_Stub());
+    Stub* s = Prep_Stub(flags | FLEX_MASK_SEA_NO_MARKING, Alloc_Stub());
     Force_Erase_Cell(&s->content.fixed.cell);
     Init_Space(Stub_Cell(s));
-    Tweak_Link_Inherit_Bind(s, nullptr);
-    MISC_SEA_ADJUNCT(s) = nullptr;  // adjunct
+    LINK_CONTEXT_INHERIT_BIND(s) = nullptr;  // no LINK_NEEDS_MARK flag
+    MISC_SEA_ADJUNCT(s) = nullptr;  // no MISC_NEEDS_MARK flag
 
     return cast(SeaOfVars*, s);
 }

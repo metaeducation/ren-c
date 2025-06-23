@@ -376,7 +376,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     if (Bool_ARG(STEP))  // !!! may be legal (or mandatory) in the future [1]
         return PANIC(":STEP not implemented for FRAME! in EVALUATE");
 
-    if (Not_Base_Readable(CELL_FRAME_PHASE(source)))
+    if (Not_Base_Readable(CELL_FRAME_PAYLOAD_1_PHASE(source)))
         return PANIC(Error_Series_Data_Freed_Raw());
 
     Option(const Atom*) with = nullptr;
@@ -497,7 +497,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    if (Not_Base_Readable(CELL_FRAME_PHASE(frame)))
+    if (Not_Base_Readable(CELL_FRAME_PAYLOAD_1_PHASE(frame)))
         return PANIC(Error_Series_Data_Freed_Raw());
 
     if (Is_Stub_Details(Cell_Frame_Phase(frame)))
@@ -517,9 +517,10 @@ DECLARE_NATIVE(EVAL_FREE)
 
     L->varlist = Varlist_Array(varlist);
     L->rootvar = Rootvar_Of_Varlist(varlist);
-    assert(Get_Stub_Flag(varlist, MISC_NEEDS_MARK));
+    if (MISC_VARLIST_ADJUNCT(varlist) != nullptr)  // might have adjunct
+        assert(Get_Stub_Flag(varlist, MISC_NEEDS_MARK));
     Clear_Stub_Flag(varlist, MISC_NEEDS_MARK);
-    Tweak_Misc_Runlevel(varlist, L);
+    Tweak_Misc_Runlevel(varlist, L);  // wipes out any adjunct
 
     Phase* phase = Level_Phase(L);
     assert(phase == Cell_Frame_Phase(

@@ -109,11 +109,14 @@
 #endif
 
 
-static void Queue_Mark_Cell_Deep(const Cell* v);
+static void Queue_Mark_Cell_Deep(const Cell* c);
 
-INLINE void Queue_Mark_Maybe_Erased_Cell_Deep(const Cell* v) {
-    if (not Is_Cell_Erased(v))
-        Queue_Mark_Cell_Deep(v);
+// This is convenient when the Cell is produced by an expression, and you
+// don't want to have to repeat the expression
+//
+INLINE void Queue_Mark_Maybe_Erased_Cell_Deep(const Cell* c) {
+    if (not Is_Cell_Erased(c))
+        Queue_Mark_Cell_Deep(c);
 }
 
 
@@ -218,21 +221,62 @@ static void Queue_Mark_Base_Deep(Base** npp) {  // ** for canonizing
 //
 static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
 {
-    assert(Is_Base_Readable(s));
+  #if RUNTIME_CHECKS  // give helpful details on common/uncommon problems
+    if (not Is_Base_Readable(s)) {
+        Byte base_byte = BASE_BYTE(s);
+        switch (base_byte) {
+          case FREE_POOLUNIT_BYTE:
+            printf("Queue Stub w/FREE_POOLUNIT_BYTE, Stub wasn't GC safe\n");
+            printf("Not using safe Cells?  Missing a Push_Lifeguard()?\n");
+            break;
+
+          case END_SIGNAL_BYTE:
+            printf("Queue stub w/END_SIGNAL_BYTE, crazy corruption!\n");
+            printf("END_SIGNAL_BYTE should never be found in the Stub Pool\n");
+            break;
+
+          case BASE_BYTE_WILD:
+            printf("Queue stub w/BASE_BYTE_WILD, crazy corruption!\n");
+            printf("BASE_BYTE_WILD should never be found in the Stub Pool\n");
+            break;
+
+          case DIMINISHED_NON_CANON_BYTE:
+            printf("Queue stub w/DIMINISHED_NON_CANON_BYTE, not accessible!\n");
+            printf("Checked before Queue_Unmarked_Accessible_Stub_Deep()!\n");
+            break;
+
+          case DIMINISHED_CANON_BYTE:
+            printf("Queue stub w/DIMINISHED_CANON_BYTE, it's marked!\n");
+            printf("Checked before Queue_Unmarked_Accessible_Stub_Deep()!\n");
+            break;
+
+          default:
+            printf("Queue stub with mystery unreadable BASE_BYTE\n");
+            printf("%x (%d) can't be in Stub Pool\n", base_byte, base_byte);
+            break;
+        }
+        crash (s);
+    }
+  #endif
 
     Add_GC_Mark(s);
 
-  //=//// MARK LINK AND MISC IF DESIRED ////////////////////////////////////=//
+  //=//// MARK LINK AND MISC IF DESIRED ///////////////////////////////////=//
 
     // All stubs have both link and misc fields available, but they don't
     // necessarily hold base pointers (and even if they do, they may not be
-    // references that are intended to keep them live).  So the Flex header
+    // references that are intended to keep them live).  So the Stub header
     // flags control whether the marking is done or not.
+    //
+    // 1. To improve GC performance, it's asked that the manipulators of
+    //    Stubs keep the flag in sync with whether it's a nullptr or not.
+    //    This means we can just check the flag--without needing to check
+    //    the pointer--to know if it needs to be marked.
 
-    if (Get_Stub_Flag(s, LINK_NEEDS_MARK) and s->link.base)
+    if (Get_Stub_Flag(s, LINK_NEEDS_MARK))
         Queue_Mark_Base_Deep(&m_cast(Stub*, s)->link.base);
 
-    if (Get_Stub_Flag(s, MISC_NEEDS_MARK) and s->misc.base)
+    if (Get_Stub_Flag(s, MISC_NEEDS_MARK))
         Queue_Mark_Base_Deep(&m_cast(Stub*, s)->misc.base);
 
   //=//// MARK INODE IF NOT USED FOR INFO //////////////////////////////////=//
@@ -241,7 +285,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
     // flag is what determines whether the slot is used for info or not.  So
     // if it's available for non-info uses, it is always a live marked base.
 
-    if (Get_Stub_Flag(s, INFO_NEEDS_MARK) and s->info.base)
+    if (Get_Stub_Flag(s, INFO_NEEDS_MARK))
         Queue_Mark_Base_Deep(&m_cast(Stub*, s)->info.base);
 
     if (Is_Stub_Keylist(s)) {
@@ -303,9 +347,19 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
 //
 //  Queue_Mark_Cell_Deep: C
 //
+// 1. We want the GC to be as fast as possible if it doesn't represent an
+//    undue burden.  So if we can duck a null check we do so.  This means if
+//    you fiddle the GC marking status for PAYLOAD_1 and PAYLOAD_2 you have
+//    to make sure you don't have it set to mark when the pointers are null.
+//
+//    Because marking the extra is not a flag that can be controlled but
+//    rather comes from the order in the %types.r table, null tolerance is
+//    required there.  This makes it more convenient to adjust bindings,
+//    since you don't have to match parity with a flag.
+//
 static void Queue_Mark_Cell_Deep(const Cell* c)
 {
-    if (Not_Cell_Readable(c))
+    if (Not_Cell_Readable(c))  // unreadable cells legal in GC view
         return;
 
     Option(Heart) heart = Unchecked_Heart_Of(c);  // readability checked above
@@ -320,12 +374,10 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
             Queue_Mark_Base_Deep(&m_cast(Cell*, c)->extra.base);
 
     if (Not_Cell_Flag_Unchecked(c, DONT_MARK_PAYLOAD_1))
-        if (c->payload.split.one.base)
-            Queue_Mark_Base_Deep(&m_cast(Cell*, c)->payload.split.one.base);
+        Queue_Mark_Base_Deep(&m_cast(Cell*, c)->payload.split.one.base);
 
     if (Not_Cell_Flag_Unchecked(c, DONT_MARK_PAYLOAD_2))
-        if (c->payload.split.two.base)
-            Queue_Mark_Base_Deep(&m_cast(Cell*, c)->payload.split.two.base);
+        Queue_Mark_Base_Deep(&m_cast(Cell*, c)->payload.split.two.base);
 
   #if RUNTIME_CHECKS
     in_mark = false;

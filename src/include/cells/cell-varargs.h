@@ -48,29 +48,33 @@
 //   will be kept going forward, or if functions will just be able to get
 //   access to their FRAME! and simulate varargs-like behavior that way.
 //
-// * If CELL_VARARGS_ORIGIN of the varargs is not nullptr, it represents the
+// * If CELL_VARARGS_EXTRA_ORIGIN of the varargs is not nullptr, it represents the
 //   frame in which this VARARGS! was tied to a parameter.  A 0-based
 //   offset can be used to find the param the varargs is tied to, in order
 //   to know whether it is quoted or not (and its name for error delivery).
 //
 
-#define CELL_VARARGS_ORIGIN(c)              CELL_EXTRA(c)
+#define CELL_VARARGS_EXTRA_ORIGIN(c)  CELL_EXTRA(c)
 #define CELL_VARARGS_SIGNED_PARAM_INDEX(c)  (c)->payload.split.one.i
-#define CELL_VARARGS_PHASE_NODE(c)          CELL_PAYLOAD_2(c)
+#define CELL_VARARGS_PAYLOAD_2_PHASE(c)  CELL_PAYLOAD_2(c)
 
 INLINE Phase* Extract_Cell_Varargs_Phase(const Cell* c) {
     assert(Heart_Of(c) == TYPE_VARARGS);
-    return cast(Phase*, CELL_VARARGS_PHASE_NODE(c));
+    return cast(Phase*, CELL_VARARGS_PAYLOAD_2_PHASE(c));
 }
 
-INLINE void Tweak_Cell_Varargs_Phase(Cell* c, Phase* phase) {
+INLINE void Tweak_Cell_Varargs_Phase(Cell* c, Option(Phase*) phase) {
     assert(Heart_Of(c) == TYPE_VARARGS);
-    CELL_VARARGS_PHASE_NODE(c) = phase;
+    CELL_VARARGS_PAYLOAD_2_PHASE(c) = maybe phase;
+    if (phase)
+        Clear_Cell_Flag(c, DONT_MARK_PAYLOAD_2);
+    else
+        Set_Cell_Flag(c, DONT_MARK_PAYLOAD_2);
 }
 
 INLINE Array* Cell_Varargs_Origin(const Cell* c) {
     assert(Heart_Of(c) == TYPE_VARARGS);
-    return cast(Array*, CELL_VARARGS_ORIGIN(c));
+    return cast(Array*, CELL_VARARGS_EXTRA_ORIGIN(c));
 }
 
 INLINE void Tweak_Cell_Varargs_Origin(
@@ -78,7 +82,7 @@ INLINE void Tweak_Cell_Varargs_Origin(
     Stub* source  // either a feed, or a frame varlist
 ){
     assert(Heart_Of(c) == TYPE_VARARGS);
-    CELL_VARARGS_ORIGIN(c) = source;
+    CELL_VARARGS_EXTRA_ORIGIN(c) = source;
 }
 
 

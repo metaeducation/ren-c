@@ -368,8 +368,6 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
             or Any_Context_Type(CTX_TYPE(unwrap Misc_Phase_Adjunct(phase)))
         );
     }
-    else
-        assert(Is_Stub_Varlist(phase));  // running Level* is allowed
 }
 
 #endif

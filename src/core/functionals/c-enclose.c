@@ -132,7 +132,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 
     assert(Misc_Runlevel(varlist) == L);  // need to change runlevel [1]
     Tweak_Misc_Runlevel(varlist, nullptr);
-    Set_Stub_Flag(varlist, MISC_NEEDS_MARK);
+    assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);  // no more encloser [2]
     Unprotect_Rootvar_If_Debug(rootvar);

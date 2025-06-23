@@ -76,7 +76,7 @@
 INLINE Phase* Cell_Frame_Phase(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
 
-    Base* base = CELL_FRAME_PHASE(c);  // const irrelevant
+    Base* base = CELL_FRAME_PAYLOAD_1_PHASE(c);  // const irrelevant
     if (Not_Base_Readable(base))
         panic (Error_Series_Data_Freed_Raw());
 
@@ -131,7 +131,7 @@ INLINE void Tweak_Cell_Frame_Lens(Value* v, Phase* lens) {
 
 INLINE Option(Phase*) Cell_Frame_Lens(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
-    Flex* f = cast(Flex*, CELL_FRAME_LENS_OR_LABEL(c));
+    Flex* f = cast(Flex*, CELL_FRAME_EXTRA_LENS_OR_LABEL(c));
     if (not f or Is_Stub_Symbol(f))
         return nullptr;
     assert(Is_Stub_Varlist(f) or Is_Stub_Details(f));
@@ -140,7 +140,7 @@ INLINE Option(Phase*) Cell_Frame_Lens(const Value* c) {
 
 INLINE Option(const Symbol*) Cell_Frame_Label(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
-    Flex* f = cast(Flex*, CELL_FRAME_LENS_OR_LABEL(c));
+    Flex* f = cast(Flex*, CELL_FRAME_EXTRA_LENS_OR_LABEL(c));
     if (not f)
         return nullptr;
     if (not Is_Stub_Symbol(f)) { // label in value
@@ -182,10 +182,18 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
     Option(const Flex*) lens_or_label,
     Option(VarList*) coupling
 ){
-    Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
-    CELL_FRAME_PHASE(out) = phase;
-    Tweak_Cell_Frame_Lens_Or_Label(out, maybe lens_or_label);
-    Tweak_Cell_Frame_Coupling(out, coupling);
+    Reset_Cell_Header_Noquote(
+        out,
+        BASE_FLAG_BASE | BASE_FLAG_CELL
+            | FLAG_HEART_ENUM(TYPE_FRAME)
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is phase
+            | (coupling ? 0 : CELL_FLAG_DONT_MARK_PAYLOAD_2)
+    );
+    CELL_FRAME_PAYLOAD_1_PHASE(out) = phase;
+    CELL_FRAME_EXTRA_LENS_OR_LABEL(out) = m_cast(  // no flag
+        Flex*, maybe lens_or_label
+    );
+    CELL_FRAME_PAYLOAD_2_COUPLING(out) = maybe coupling;  // flag sync above
     return out;
 }
 

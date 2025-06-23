@@ -101,6 +101,8 @@ for-each-datatype: func [
                     (cellmask*: null)  ; don't define a CELL_MASK_XXX
                 | ['payload1 'payload2]
                     (cellmask*: the (0))
+                | ['payload1 the :payload2]
+                    (cellmask*: null)  ; don't define a CELL_MASK_XXX
                 | ['payload2 <end>]
                     (cellmask*: the (CELL_FLAG_DONT_MARK_PAYLOAD_1))
             ]

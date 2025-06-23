@@ -281,8 +281,10 @@ const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
         return nullptr;
 
     if ((u_cast(const Stub*, p)->leader.bits & (
-        FLEX_MASK_LEVEL_VARLIST  // MISC_NEEDS_MARK
-            | BASE_FLAG_UNREADABLE
+        (FLEX_MASK_LEVEL_VARLIST
+            & (~ STUB_FLAG_LINK_NEEDS_MARK)  // next virtual, maybe null
+            & (~ STUB_FLAG_MISC_NEEDS_MARK)  // adjunct, maybe null
+        )   | BASE_FLAG_UNREADABLE
             | BASE_FLAG_CELL
             | FLAG_TASTE_BYTE(255)
     )) !=

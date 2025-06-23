@@ -64,6 +64,10 @@ INLINE void Tweak_Misc_Sea_Adjunct(
 ){
     assert(Is_Stub_Sea(sea));
     MISC_SEA_ADJUNCT(sea) = maybe adjunct;
+    if (adjunct)
+        Set_Stub_Flag(sea, MISC_NEEDS_MARK);
+    else
+        Clear_Stub_Flag(sea, MISC_NEEDS_MARK);
 }
 
 

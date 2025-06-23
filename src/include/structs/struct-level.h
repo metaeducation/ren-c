@@ -325,7 +325,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // output cell involves a level of indirection to address.)
     //
     // Other executors can use this for what they want -but- if you use
-    // LEVEL_FLAG_DISPATCHING_INTRINSIC then current must hold the cell of
+    // LEVEL_FLAG_DISPATCHING_INTRINSIC then scratch must hold the cell of
     // the intrinsic being run.
     //
     Atom scratch;  // raw vs. derived class due to union/destructor combo

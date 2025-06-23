@@ -61,36 +61,35 @@
 //   object, but Ren-C only uses a single pointer-to-symbol.)
 //
 
-#define CELL_PARAMETER_SPEC(c)    CELL_PAYLOAD_1(c)
-#define CELL_PARAMETER_STRING(c)  CELL_PAYLOAD_2(c)
+#define CELL_PARAMETER_PAYLOAD_1_SPEC(c)    CELL_PAYLOAD_1(c)
+#define CELL_PARAMETER_EXTRA_STRING(c)  CELL_EXTRA(c)
+
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
+    #define CELL_PARAMETER_PAYLOAD_2_FLAGS(c)  (c)->payload.split.two.flags
+#else
+    INLINE const uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(const Cell* c) {
+        assert(Unchecked_Heart_Of(c) == TYPE_PARAMETER);
+        return c->payload.split.two.flags;
+    }
+
+    INLINE uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(Cell* c) {
+        assert(Unchecked_Heart_Of(c) == TYPE_PARAMETER);
+        return c->payload.split.two.flags;
+    }
+#endif
+
+#define PARAMCLASS_BYTE(c)  FIRST_BYTE(&CELL_PARAMETER_PAYLOAD_2_FLAGS(c))
+#define FLAG_PARAMCLASS_BYTE(b)     FLAG_FIRST_BYTE(b)
 
 INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     assert(Heart_Of(c) == TYPE_PARAMETER);
 
-    const Base* base = CELL_PARAMETER_SPEC(c);
+    const Base* base = CELL_PARAMETER_PAYLOAD_1_SPEC(c);
     if (base != nullptr and Not_Base_Readable(base))
         panic (Error_Series_Data_Freed_Raw());
 
     return c_cast(Source*, base);
 }
-
-
-#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define PARAMETER_FLAGS(p)  (p)->extra.flags
-#else
-    INLINE const uintptr_t& PARAMETER_FLAGS(const Cell* p) {
-        assert(Unchecked_Heart_Of(p) == TYPE_PARAMETER);
-        return p->extra.flags;
-    }
-
-    INLINE uintptr_t& PARAMETER_FLAGS(Cell* p) {
-        assert(Unchecked_Heart_Of(p) == TYPE_PARAMETER);
-        return p->extra.flags;
-    }
-#endif
-
-#define PARAMCLASS_BYTE(p)          FIRST_BYTE(&PARAMETER_FLAGS(p))
-#define FLAG_PARAMCLASS_BYTE(b)     FLAG_FIRST_BYTE(b)
 
 
 //=//// PARAMETER_FLAG_REFINEMENT /////////////////////////////////////////=//
@@ -294,16 +293,16 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
 
 #define Get_Parameter_Flag(v,name) \
-    ((PARAMETER_FLAGS(v) & PARAMETER_FLAG_##name) != 0)
+    ((CELL_PARAMETER_PAYLOAD_2_FLAGS(v) & PARAMETER_FLAG_##name) != 0)
 
 #define Not_Parameter_Flag(v,name) \
-    ((PARAMETER_FLAGS(v) & PARAMETER_FLAG_##name) == 0)
+    ((CELL_PARAMETER_PAYLOAD_2_FLAGS(v) & PARAMETER_FLAG_##name) == 0)
 
 #define Set_Parameter_Flag(v,name) \
-    (PARAMETER_FLAGS(v) |= PARAMETER_FLAG_##name)
+    (CELL_PARAMETER_PAYLOAD_2_FLAGS(v) |= PARAMETER_FLAG_##name)
 
 #define Clear_Param_Flag(v,name) \
-    (PARAMETER_FLAGS(v) &= ~PARAMETER_FLAG_##name)
+    (CELL_PARAMETER_PAYLOAD_2_FLAGS(v) &= ~PARAMETER_FLAG_##name)
 
 
 
@@ -315,12 +314,12 @@ INLINE ParamClass Cell_Parameter_Class(const Element* param) {
 
 INLINE Option(const String*) Cell_Parameter_String(const Element* param) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
-    return cast(const String*, CELL_PARAMETER_STRING(param));
+    return cast(const String*, CELL_PARAMETER_EXTRA_STRING(param));
 }
 
 INLINE void Set_Parameter_String(Element* param, Option(const String*) string) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
-    CELL_PARAMETER_STRING(param) = m_cast(String*, maybe string);
+    CELL_PARAMETER_EXTRA_STRING(param) = m_cast(String*, maybe string);
 }
 
 
@@ -468,10 +467,16 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     }
     UNUSED(pclass);
 
-    Reset_Cell_Header_Noquote(param, CELL_MASK_PARAMETER);
-    PARAMETER_FLAGS(param) = flags;
-    CELL_PARAMETER_SPEC(param) = nullptr;
-    CELL_PARAMETER_STRING(param) = nullptr;
+    Reset_Cell_Header_Noquote(
+        param,
+        BASE_FLAG_BASE | BASE_FLAG_CELL
+            | FLAG_HEART_ENUM(TYPE_PARAMETER)
+            | CELL_FLAG_DONT_MARK_PAYLOAD_1  // spec (starting off null here)
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // flags, never marked
+    );
+    CELL_PARAMETER_PAYLOAD_1_SPEC(param) = nullptr;
+    CELL_PARAMETER_PAYLOAD_2_FLAGS(param) = flags;
+    CELL_PARAMETER_EXTRA_STRING(param) = nullptr;
 
     return param;
 }

@@ -227,18 +227,16 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     //=//// BEGIN BINDABLE TYPES ////////////////////////////////////////=//
 
       case TYPE_FRAME: {
-        Base* base = CELL_FRAME_PHASE(v);
+        Base* base = CELL_FRAME_PAYLOAD_1_PHASE(v);
         if (not Is_Base_Readable(base))  // e.g. EVAL-FREE freed it
             break;
         if (Is_Stub_Varlist(cast(Stub*, base)))
             goto mark_object;
 
-        assert((v->header.bits & CELL_MASK_FRAME) == CELL_MASK_FRAME);
-
         Details* details = cast(Details*, base);
         assert(Is_Base_Marked(details));
-        if (CELL_FRAME_LENS_OR_LABEL(v))
-            assert(Is_Base_Marked(CELL_FRAME_LENS_OR_LABEL(v)));
+        if (CELL_FRAME_EXTRA_LENS_OR_LABEL(v))
+            assert(Is_Base_Marked(CELL_FRAME_EXTRA_LENS_OR_LABEL(v)));
 
         // We used to check the [0] slot of the details holds an archetype
         // that is consistent with the details itself.  That is no longer true

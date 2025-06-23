@@ -33,7 +33,13 @@ INLINE Option(Context*) Link_Inherit_Bind(Context* context)
   { return u_cast(Context*, context->link.base); }
 
 INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next) {
-    if (next) {
+    LINK_CONTEXT_INHERIT_BIND(context) = maybe next;
+
+    if (not next)
+        Clear_Stub_Flag(context, LINK_NEEDS_MARK);
+    else {
+        Set_Stub_Flag(context, LINK_NEEDS_MARK);
+
         Flavor flavor = Stub_Flavor(unwrap next);
         assert(
             flavor == FLAVOR_LET
@@ -44,12 +50,11 @@ INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next) {
         UNUSED(flavor);
         assert(Is_Base_Managed(unwrap next));
     }
-    context->link.base = maybe next;
 }
 
 INLINE void Add_Link_Inherit_Bind(Context* context, Option(Context*) next) {
     assert(LINK_CONTEXT_INHERIT_BIND(context) == nullptr);
-    LINK_CONTEXT_INHERIT_BIND(context) = maybe next;
+    Tweak_Link_Inherit_Bind(context, next);
 }
 
 

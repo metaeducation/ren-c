@@ -64,11 +64,12 @@
 #endif
 
 
-#define FLEX_MASK_SEA \
+#define FLEX_MASK_SEA_NO_MARKING \
     (BASE_FLAG_BASE \
         | FLAG_FLAVOR(SEA) \
-        | STUB_FLAG_LINK_NEEDS_MARK  /* NextVirtual */ \
-        | STUB_FLAG_MISC_NEEDS_MARK  /* Adjunct metadata */)
+        | 0 /* STUB_FLAG_LINK_NEEDS_MARK */  /* NextVirtual, maybe null */ \
+        | 0 /* STUB_FLAG_MISC_NEEDS_MARK */  /* Adjunct, maybe null */ \
+    )
 
 #define MISC_SEA_ADJUNCT(sea)      STUB_MISC(sea)
 

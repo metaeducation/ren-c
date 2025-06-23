@@ -77,7 +77,7 @@ date        "day, month, year, time of day, and timezone"
             [any-inert?]
 
 parameter   "function parameter description"
-            (payload1 payload2)
+            (payload1 :payload2)
             [any-inert?]
 
 bitset      "set of bit flags"
@@ -170,7 +170,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
     frame       "arguments and locals of a function state"
     ~action~    "will trigger function execution from words"
-                (payload1 payload2)
+                (:payload1)
                 [any-branch?]
 
     let         "context containing a single variable"

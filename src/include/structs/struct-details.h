@@ -154,8 +154,9 @@ typedef enum {
         | FLAG_FLAVOR(DETAILS) \
         | STUB_FLAG_DYNAMIC \
         | not STUB_FLAG_LINK_NEEDS_MARK  /* don't mark dispatcher */ \
-        | STUB_FLAG_MISC_NEEDS_MARK  /* adjunct needs mark */ \
-        | not STUB_FLAG_INFO_NEEDS_MARK  /* info not currently used */ )
+        | 0 /* STUB_FLAG_MISC_NEEDS_MARK */  /* Adjunct, maybe null */ \
+        | not STUB_FLAG_INFO_NEEDS_MARK  /* info not currently used */ \
+    )
 
 #define LINK_DETAILS_DISPATCHER(details)  (details)->link.cfunc
 #define MISC_DETAILS_ADJUNCT(details)     STUB_MISC(details)

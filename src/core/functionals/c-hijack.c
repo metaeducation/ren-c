@@ -332,9 +332,9 @@ DECLARE_NATIVE(HIJACK)
 
     Swap_Flex_Content(victim, proxy);  // after swap, victim is hijacker
 
-    Element* victim_archetype = Phase_Archetype(victim);
-    assert(CELL_FRAME_PHASE(victim_archetype) == victim);  // inf. recursive!
-    CELL_FRAME_PHASE(victim_archetype) = proxy;  // adjust for swap
+    Element* victim_archetype = Phase_Archetype(victim);  // v-- inf. recurse!
+    assert(CELL_FRAME_PAYLOAD_1_PHASE(victim_archetype) == victim);
+    CELL_FRAME_PAYLOAD_1_PHASE(victim_archetype) = proxy;  // adjust for swap
 
     if (victim_unimplemented)
         return TRIPWIRE;
