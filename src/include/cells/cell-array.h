@@ -237,7 +237,7 @@ INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
 
 INLINE Value* Splicify(Need(Value*) val) {
     assert(Any_List(val) and LIFT_BYTE(val) == NOQUOTE_1);
-    HEART_BYTE(val) = TYPE_GROUP;  // splice drops knowledge of list type
+    KIND_BYTE(val) = TYPE_GROUP;  // splice drops knowledge of list type
     Option(Error*) e = Trap_Coerce_To_Antiform(cast(Atom*, val));
     assert(not e);
     UNUSED(e);

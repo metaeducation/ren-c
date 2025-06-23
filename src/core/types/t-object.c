@@ -1181,7 +1181,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
         VarList* v = cast(VarList*, c);
         VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
         Value* rootvar = Rootvar_Of_Varlist(copy);
-        HEART_BYTE(rootvar) = TYPE_PORT;
+        KIND_BYTE(rootvar) = TYPE_PORT;
         return Init_Port(OUT, copy);
     }
 
@@ -1267,7 +1267,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     }
 
     if (  // !!! BUGGY, new system needed
-        HEART_BYTE(OUT) == TYPE_FRAME
+        KIND_BYTE(OUT) == TYPE_FRAME
         and LIFT_BYTE_RAW(OUT) == ANTIFORM_0
         and Cell_Frame_Coupling(u_cast(Value*, OUT)) == UNCOUPLED
     ){

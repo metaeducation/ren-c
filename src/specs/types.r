@@ -131,17 +131,17 @@ money       "digits and decimal points as a string, preserved precisely"
 
 
 ; ============================================================================
-; ABOVE THIS LINE, CELL's "Extra" IS RAW BITS: Cell_Extra_Needs_Mark() = false
+; ABOVE THIS LINE, Don't Mark "Extra": (not Heart_Implies_Extra_Needs_Mark())
 ; ============================================================================
 
-; With CELL_FLAG_DONT_MARK_PAYLOAD_1 and CELL_FLAG_DONT_MARK_PAYLOAD_2, each cell
-; can say whether the GC needs to consider marking the first or second slots
-; in the payload.  But rather than sacrifice another bit for whether the
-; EXTRA slot is a node, the types are in order so that all the ones that need
-; it marked come after this point.
+; With CELL_FLAG_DONT_MARK_PAYLOAD_1 and CELL_FLAG_DONT_MARK_PAYLOAD_2, each
+; Cell can say whether the GC needs to consider marking the first or second
+; slots in the payload.  But rather than sacrifice another bit for whether the
+; EXTRA slot needs marking, the types are in order so that all the ones that
+; need to mark Extra come after this point.
 
 ; ============================================================================
-; BELOW THIS LINE, CELL's "Extra" USES A NODE: Cell_Extra_Needs_Mark() = true
+; BELOW THIS LINE, Mark "Extra": Heart_Implies_Extra_Needs_Mark() is true
 ; ============================================================================
 
 
@@ -249,7 +249,7 @@ varargs     "evaluator position for variable numbers of arguments"
 ; ============================================================================
 
 ; The TYPE_QUOTED, TYPE_QUASIFORM, and all the antiform types (TYPE_SPLICE,
-; TYPE_TRASH, etc.) enum values never appear in the HEART_BYTE() of a cell.
+; TYPE_TRASH, etc.) enum values never appear in the KIND_BYTE() of a cell.
 ; These are synthesized datatypes when the LIFT_BYTE() contains values other
 ; than one (NOQUOTE_1).
 ;

@@ -341,7 +341,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
         }
 
         Trust_Const(Copy_Cell(out, seq));
-        HEART_BYTE(out) = as;
+        KIND_BYTE(out) = as;
         possibly(Get_Cell_Flag(out, LEADING_SPACE));
         return SUCCESS;
     }
@@ -375,11 +375,11 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
             if (Get_Cell_Flag(seq, LEADING_SPACE)) {
                 Init_Space(Array_At(a, 0));
                 Copy_Cell(Array_At(a, 1), seq);
-                HEART_BYTE(Array_At(a, 1)) = TYPE_WORD;
+                KIND_BYTE(Array_At(a, 1)) = TYPE_WORD;
             }
             else {
                 Copy_Cell(Array_At(a, 0), seq);
-                HEART_BYTE(Array_At(a, 0)) = TYPE_WORD;
+                KIND_BYTE(Array_At(a, 0)) = TYPE_WORD;
                 Init_Space(Array_At(a, 1));
             }
             Freeze_Source_Shallow(a);
@@ -400,14 +400,14 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
                     tweak = Copy_Cell(Array_At(two, 0), seq);
                     Init_Space(Array_At(two, 1));
                 }
-                HEART_BYTE(tweak) = MIRROR_BYTE(a);
+                KIND_BYTE(tweak) = MIRROR_BYTE(a);
                 Clear_Cell_Flag(tweak, LEADING_SPACE);
                 Init_Any_List(out, as, two);
             }
             else {
                 assert(Is_Source_Frozen_Shallow(a));
                 Copy_Cell(out, seq);
-                HEART_BYTE(out) = TYPE_BLOCK;
+                KIND_BYTE(out) = TYPE_BLOCK;
                 Clear_Cell_Flag(out, LEADING_SPACE);  // don't want stray flag
             }
             break; }
@@ -565,7 +565,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
         if (one_or_two == 1)
             return Init_Space(OUT);
         Copy_Cell(OUT, seq);
-        HEART_BYTE(OUT) = TYPE_WORD;
+        KIND_BYTE(OUT) = TYPE_WORD;
         return OUT;
     }
 
@@ -579,7 +579,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     if (Listlike_Cell(seq)) {  // alias as BLOCK! and dispatch to list pick
         possibly(Pairlike_Cell(seq));  // why we tested pairlike first
-        HEART_BYTE(seq) = TYPE_BLOCK;
+        KIND_BYTE(seq) = TYPE_BLOCK;
         return GENERIC_CFUNC(RANDOM_PICK, Any_List)(LEVEL);
     }
 

@@ -42,20 +42,17 @@
 
 //=//// EXTRA NEEDING GC MARK /////////////////////////////////////////////=//
 //
-// Note that the HEART_BYTE() is what is being tested--e.g. the type that the
+// Note that the Heart_Of() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
 // indicators in the LIFT_BYTE() do not affect it.
 
-INLINE bool Is_Extra_Mark_Heart(Option(Heart) heart)
-  { return (maybe heart) >= TYPE_VARARGS; }
-
-#define Cell_Extra_Needs_Mark(cell) \
-    Is_Extra_Mark_Heart(HEART_BYTE(cell))  // readable checked elsewhere
+#define Heart_Implies_Extra_Needs_Mark(opt_heart) \
+    ((maybe opt_heart) >= TYPE_VARARGS)
 
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
 //
-// Note that the HEART_BYTE() is what is being tested--e.g. the type that the
+// Note that the KIND_BYTE() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
 // indicators in the LIFT_BYTE() do not affect it.
 //
@@ -66,11 +63,8 @@ INLINE bool Is_Extra_Mark_Heart(Option(Heart) heart)
 //    comparison.  Is_Bindable() was the historical name of the function
 //    and reads a bit beter than Any_Bindable().
 
-INLINE bool Is_Bindable_Heart(Option(Heart) h)
-  { return (maybe h) >= TYPE_WORD; }
-
-#define Is_Bindable_Heart_Byte(heart_byte) \
-    (heart_byte >= u_cast(HeartByte, TYPE_WORD))  // fast macro!
+#define Is_Bindable_Heart(opt_heart) \
+    ((maybe opt_heart) >= TYPE_WORD)
 
 #undef Any_Bindable  // use Is_Bindable(), faster than a range check [1]
 

@@ -23,7 +23,7 @@
 // they are decorations that can be applied to any plain form.  Unlike
 // quoting, they can be applied only once...so there is no $$ or @$
 //
-// Sigils (or their absence) are represented via 2 bits in the HEART_BYTE().
+// Sigils (or their absence) are represented via 2 bits in the KIND_BYTE().
 // This limits the number of fundamental types to 63 (as TYPE_0 is reserved
 // for representing an extension type.)  This limitation is not of much
 // concern in the modern system, as extension types allow making as many as
@@ -34,7 +34,7 @@
 // * The quasiform state ~XXX~ was once thought of as the QUASI (~~) Sigil.
 //   This was when it was believed something could not be both quoted and
 //   quasi at the same time.  Being a 2-character Sigil broke the rhythm,
-//   as did being derived from the LIFT_BYTE() and not the HEART_BYTE().
+//   as did being derived from the LIFT_BYTE() and not the KIND_BYTE().
 //   Today it is believed that quoted and quasi at the same time is something
 //   with legitimate use cases, e.g. ~$~ is useful and ~@foo~ may be too.
 //   So the value of ~~ as a Sigil is not emergent.
@@ -74,7 +74,7 @@ INLINE bool Any_Plain(const Element* e) {
 
 
 INLINE Option(Sigil) Sigil_Of(const Element* e)
-  { return u_cast(Sigil, HEART_BYTE_RAW(e) >> HEART_SIGIL_SHIFT); }
+  { return u_cast(Sigil, KIND_BYTE_RAW(e) >> KIND_SIGIL_SHIFT); }
 
 
 
@@ -105,7 +105,7 @@ INLINE Element* Plainify(Element* elem) {
 #define Pinify(elem)   Sigilize((elem), SIGIL_PIN)
 #define Tieify(elem)   Sigilize((elem), SIGIL_TIE)
 
-INLINE Element* Copy_Heart_Byte(Element* out, const Element* in) {
-    HEART_BYTE(out) = HEART_BYTE(in);
+INLINE Element* Copy_Kind_Byte(Element* out, const Element* in) {
+    KIND_BYTE(out) = KIND_BYTE(in);
     return out;
 }

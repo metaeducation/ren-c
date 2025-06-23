@@ -341,7 +341,7 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & BASE_BYTEMASK_0x08_CELL));
         int _01_unreadable:1;
         int _00_base_always_true:1;
 
-        unsigned int _08to15_heart_byte:8;
+        unsigned int _08to15_kind_byte:8;
 
         unsigned int _16to23_lift_byte:8;
 

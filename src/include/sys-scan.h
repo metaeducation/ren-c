@@ -22,24 +22,6 @@
 //
 
 
-//=//// SIGIL ORDER ///////////////////////////////////////////////////////=//
-//
-// This order needs to match the ordering of the corresponding types for
-// within each category that carry sigils.
-//
-// Also, there is a silly optimization that the scanner uses the same values
-// for sits tokens as the sigils.
-
-enum SigilEnum {
-    SIGIL_0 = 0,
-    SIGIL_META = 1,     // ^
-    SIGIL_PIN = 2,      // @
-    SIGIL_TIE = 3,      // $
-    MAX_SIGIL = SIGIL_TIE
-};
-typedef enum SigilEnum Sigil;
-
-
 //
 //  Tokens returned by the scanner.  Keep in sync with g_token_names[].
 //

@@ -469,7 +469,7 @@ DECLARE_NATIVE(SPREAD)
 
     if (Any_List(v)) {  // most common case
         Copy_Cell(OUT, v);
-        HEART_BYTE(OUT) = TYPE_GROUP;  // throws away original heart
+        KIND_BYTE(OUT) = TYPE_GROUP;  // throws away original heart
 
         Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
         assert(not e);

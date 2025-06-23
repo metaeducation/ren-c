@@ -34,7 +34,7 @@
 //   establish whether this is a Cell or a "Stub", among other features.
 //   See %struct-base.h for explanations of these flags.
 //
-// * HEART_BYTE: the second byte indicates what type of information the other
+// * KIND_BYTE: the second byte indicates what type of information the other
 //   3 slots in the cell describe.  It corresponds to a datatype, such as
 //   TYPE_INTEGER, TYPE_BLOCK, TYPE_TEXT, tec.
 //
@@ -45,7 +45,7 @@
 // * The fourth byte contains other cell flags.  Some of them apply to any
 //   cell type (such as whether the cell should have a new-line after it when
 //   molded out during display of its containing array), and others have a
-//   different purpose depending on what the HEART_BYTE is.
+//   different purpose depending on what the KIND_BYTE is.
 //
 // As for the other 3 slots...obviously, an arbitrary long string won't fit
 // into the remaining 3*32 bits, or even 3*64 bits!  You can fit the data for
@@ -149,43 +149,77 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
     (CELL_FLAG_DONT_MARK_PAYLOAD_1 | CELL_FLAG_DONT_MARK_PAYLOAD_2)
 
 
-//=//// BITS 8-15: CELL LAYOUT TYPE BYTE ("HEART") ////////////////////////=//
+//=//// BITS 8-15: CELL "KIND" BYTE, HEART AND SIGIL //////////////////////=//
 //
-// The "heart" is the fundamental datatype of a cell, dictating its payload
+// The "Heart" is the fundamental datatype of a Cell, dictating its payload
 // layout and interpretation.  It's 64 fundamental types taking up 6 bits,
-// and then an extra 2 bits ("crumb") that can be used on a per-heart basis
-// to encode special states.
+// and then an extra 2 bits ("crumb") that that encode whether one of 3
+// different Sigil [@ ^ $] are present.
+//
+// Heart and Sigil are multiplexed into a single byte, called KIND_BYTE.
 //
 // Most of the time code wants to check the Type_Of() of a cell and not it's
-// HEART, because that treats quoted cells differently.  If you only check
-// the heart, then (''''x) will equal (x) because both hearts are WORD!.
+// Heart_Of(), as Type treats quoted/quasi/antiform cells differently.  If you
+// only check Heart, then (''''x) equals (x) because both hearts are WORD!.
 //
-// 1. There's a complex runtime check to ensure coherence in the heart byte
+// 1. It's good to document where a Byte means a KindByte.  This doesn't
+//    come up too often because most code isn't set up to handle the
+//    multiplexing of the Heart byte with a Sigil, so most code should just
+//    be dealing with Heart or Option(Heart).
+//
+// 2. There's a complex runtime check to ensure coherence in the KIND_BYTE
 //    with the rest of the cell, which is triggered in some C++ builds when
-//    you use HEART_BYTE() directly.  This raw accessor is used to implement
+//    you use KIND_BYTE() directly.  This raw accessor is used to implement
 //    that layer, and can also be used for efficiency in some cases that
 //    want to subvert those checks.
 
-typedef Byte HeartByte;  // help document when Byte means a heart byte
+typedef Byte KindByte;  // help document when Byte is Heart + Sigil [1]
 
-#define HEART_BYTE_RAW(cell) /* don't go through HeartHolder() [1] */ \
+#define KIND_BYTE_RAW(cell) /* don't go through HeartHolder() [2] */ \
     SECOND_BYTE(&(cell)->header.bits)
 
-#define FLAG_HEART_BYTE(byte) \
+#define FLAG_KIND_BYTE(byte) \
     FLAG_SECOND_BYTE(byte)
 
 #define FLAG_HEART_ENUM(heart) \
-    FLAG_HEART_BYTE(cast(Byte, ensure(HeartEnum, (heart))))
+    FLAG_KIND_BYTE(cast(KindByte, ensure(HeartEnum, (heart))))
 
 #define FLAG_HEART(name) \
-    FLAG_SECOND_BYTE(u_cast(Byte, u_cast(HeartEnum, TYPE_##name)))
+    FLAG_KIND_BYTE(u_cast(KindByte, u_cast(HeartEnum, TYPE_##name)))
 
-#define MOD_HEART_64  64  /* 64 fundamental types, 2 bit crumb in byte */
-#define FLAG_HEART_BYTE_63  FLAG_SECOND_BYTE(MOD_HEART_64 - 1)
+#define MOD_HEART_64  64  /* 64 fundamental types, 2 bit crumb for Sigil */
+#define FLAG_KIND_BYTE_63  FLAG_SECOND_BYTE(MOD_HEART_64 - 1)
 
-#define FLAG_HEART_BYTE_255  FLAG_SECOND_BYTE(63)  // for masking only
+#define FLAG_KIND_BYTE_255  FLAG_SECOND_BYTE(63)  // for masking only
 
-#define HEART_SIGIL_SHIFT 6
+#define KIND_SIGIL_SHIFT  6
+
+
+//=//// CELL 2-bit SIGIL! /////////////////////////////////////////////////=//
+//
+// The KIND_BYTE() is structured so that the top two bits of the byte are
+// used for the "Sigil".  This can be [$ @ ^] or nothing.
+//
+
+enum SigilEnum {
+    SIGIL_0 = 0,
+    SIGIL_META = 1,     // ^
+    SIGIL_PIN = 2,      // @
+    SIGIL_TIE = 3,      // $
+    MAX_SIGIL = SIGIL_TIE
+};
+typedef enum SigilEnum Sigil;
+
+#define FLAG_SIGIL_CRUMB(crumb) \
+    FLAG_KIND_BYTE((crumb) << KIND_SIGIL_SHIFT)
+
+#define FLAG_SIGIL_ENUM(sigil) \
+    FLAG_SIGIL_CRUMB(u_cast(Byte, ensure(Sigil, sigil)))
+
+#define FLAG_SIGIL(name) \
+    FLAG_SIGIL_ENUM(SIGIL_##name)
+
+#define CELL_MASK_SIGIL_BITS  FLAG_SIGIL_CRUMB(3)  // 0b11 << KIND_SIGIL_SHIFT
 
 
 //=//// BITS 16-23: QUOTED/QUASIFORM/ANTIFORM BYTE ("LIFT") ///////////////=//
@@ -245,13 +279,13 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 #define FLAG_LIFT_BYTE(byte)         FLAG_THIRD_BYTE(byte)
 
 #define CELL_HEART_LIFT_MASK /* mask in both heart and lift bytes */ \
-    (FLAG_HEART_BYTE(255) | FLAG_LIFT_BYTE(255))
+    (FLAG_KIND_BYTE(255) | FLAG_LIFT_BYTE(255))
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
 //
 // Because the header for cells is only 32 bits on 32-bit platforms, there
-// are only 8 bits left over when you've used up the BASE_BYTE, HEART_BYTE,
+// are only 8 bits left over when you've used up the BASE_BYTE, KIND_BYTE,
 // and LIFT_BYTE.  These 8 scarce remaining cell bits have to be used very
 // carefully...and are multiplexed across types that can be tricky.
 //
@@ -529,7 +563,7 @@ STATIC_ASSERT(sizeof(UintptrUnion) == sizeof(uintptr_t));
 //
 
 
-// COMMA! is not Cell_Extra_Needs_Mark(), and doesn't use its payload.
+// COMMA! doesn't use its payload (or extra) for anything.
 //
 // That is exploited by feeds when they are variadic instead of arrays.  The
 // feed cell is used to store va_list information along with a binding in
@@ -695,7 +729,7 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
     memset(cast(char*, (dst)), (byte), (size))  // [4]
 
 
-//=//// CELL SUBCLASSES FOR QUARANTINING STABLE AND UNSTABLE ANTIFORMS /////=//
+//=//// CELL SUBCLASSES FOR QUARANTINING STABLE/UNSTABLE ANTIFORMS ////////=//
 //
 // Systemically, we want to stop antiforms from being put into the array
 // elements of blocks, groups, paths, and tuples.  We also want to prevent

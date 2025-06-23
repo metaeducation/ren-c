@@ -574,14 +574,14 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
 
     const Flex* f = c_cast(Flex*, payload1);
     if (Is_Stub_Symbol(f)) {
-        HEART_BYTE(out) = TYPE_WORD;
+        KIND_BYTE(out) = TYPE_WORD;
         Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary?
         return SUCCESS;
     }
 
     Option(Heart) mirror = Mirror_Of(c_cast(Source*, f));
     if (mirror) {  // no length 2 sequence arrays unless mirror
-        HEART_BYTE(out) = unwrap mirror;
+        KIND_BYTE(out) = unwrap mirror;
         Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary
         return SUCCESS;
     }

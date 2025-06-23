@@ -782,7 +782,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         if (not Is_Word(item))
             return FAIL("TO ANY-WORD? needs list with one word in it");
         Copy_Cell(OUT, item);
-        HEART_BYTE(OUT) = to;
+        KIND_BYTE(OUT) = to;
         return OUT;
     }
 
@@ -862,7 +862,7 @@ Option(Error*) Trap_Alias_Any_List_As(
 ){
     if (Any_List_Type(as)) {
         Copy_Cell(out, list);
-        HEART_BYTE(out) = as;
+        KIND_BYTE(out) = as;
         return SUCCESS;
     }
 
@@ -1535,7 +1535,7 @@ DECLARE_NATIVE(GLOM)
     if (Is_Splice(value)) {  // see note: index may be nonzero
         Copy_Cell(OUT, value);
         LIFT_BYTE(OUT) = NOQUOTE_1;
-        HEART_BYTE(OUT) = TYPE_BLOCK;
+        KIND_BYTE(OUT) = TYPE_BLOCK;
         return OUT;
     }
 

@@ -84,7 +84,7 @@ struct CastHelper<const F*, const Value*> {  // both must be const [B]
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
         if (LIFT_BYTE_RAW(c) == ANTIFORM_0)
-            assert(Is_Stable_Antiform_Heart_Byte(HEART_BYTE_RAW(c)));
+            assert(Is_Stable_Antiform_Kind_Byte(KIND_BYTE_RAW(c)));
         return u_cast(const Value*, c);
     }
 };

@@ -114,7 +114,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
         } while (Any_Sequence(arg));
 
         if (Any_Word(arg)) {
-            HEART_BYTE(arg) = heart;
+            KIND_BYTE(arg) = heart;
             return COPY(arg);
         }
 

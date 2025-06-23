@@ -308,19 +308,15 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     if (Not_Cell_Readable(c))
         return;
 
-    // We mark based on the type of payload in the cell, e.g. its "unescaped"
-    // form.  So if '''a fits in a WORD! (despite being a QUOTED?), we want
-    // to mark the cell as if it were a plain word.  Use the Heart_Of().
-    //
-    Option(Heart) heart = Heart_Of(c);
+    Option(Heart) heart = Unchecked_Heart_Of(c);  // readability checked above
 
   #if RUNTIME_CHECKS  // see Queue_Mark_Base_Deep() for notes on recursion
     assert(not in_mark);
     in_mark = true;
   #endif
 
-    if (Is_Extra_Mark_Heart(heart))
-        if (c->extra.base)
+    if (Heart_Implies_Extra_Needs_Mark(heart))
+        if (c->extra.base != nullptr)  // not guided by flag, allow null [1]
             Queue_Mark_Base_Deep(&m_cast(Cell*, c)->extra.base);
 
     if (Not_Cell_Flag_Unchecked(c, DONT_MARK_PAYLOAD_1))

@@ -463,7 +463,7 @@ bool Try_Match_For_Compose(
     }
 
     LIFT_BYTE(match) = NOQUOTE_1;  // want to get rid of quasi, too
-    HEART_BYTE(match) = TYPE_BLOCK;
+    KIND_BYTE(match) = TYPE_BLOCK;
     Tweak_Cell_Binding(match, binding);  // override? combine?
     return true;
 }

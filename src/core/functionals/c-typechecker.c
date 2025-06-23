@@ -706,7 +706,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
     DECLARE_ELEMENT (temp_item_word);
     Copy_Cell(temp_item_word, item);
-    HEART_BYTE(temp_item_word) = TYPE_WORD;
+    KIND_BYTE(temp_item_word) = TYPE_WORD;
     LIFT_BYTE(temp_item_word) = NOQUOTE_1;  // ~word!~ or 'word! etc.
 
     Option(Error*) error = Trap_Get_Word(test, temp_item_word, derived);

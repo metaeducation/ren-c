@@ -322,7 +322,7 @@ void Set_Parameter_Spec(
             else
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
         }
-        else if (HEART_BYTE(lookup) == TYPE_WORD) {  // @word! etc.
+        else if (KIND_BYTE(lookup) == TYPE_WORD) {  // @word! etc.
             *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
         }
         else {

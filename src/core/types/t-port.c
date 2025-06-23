@@ -87,7 +87,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         //
         VarList* context = Copy_Varlist_Shallow_Managed(Cell_Varlist(arg));
         Value* rootvar = Rootvar_Of_Varlist(context);
-        HEART_BYTE(rootvar) = TYPE_PORT;
+        KIND_BYTE(rootvar) = TYPE_PORT;
         return Init_Port(OUT, context);
     }
 

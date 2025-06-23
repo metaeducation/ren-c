@@ -1021,7 +1021,7 @@ Option(Error*) Trap_Any_String_As(
 ){
     if (Any_String_Type(as)) {  // special handling not in Utf8 generic [1]
         Copy_Cell(out, any_string);
-        HEART_BYTE(out) = as;
+        KIND_BYTE(out) = as;
         Inherit_Const(out, any_string);
         return SUCCESS;
     }

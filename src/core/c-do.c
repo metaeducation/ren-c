@@ -227,7 +227,7 @@ bool Pushed_Continuation(
 
         arg = First_Unspecialized_Arg(&param, L);
         Derelativize(arg, c_cast(Element*, branch), binding);
-        HEART_BYTE(arg) = TYPE_BLOCK;  // :[1 + 2] => [3], not :[3]
+        KIND_BYTE(arg) = TYPE_BLOCK;  // :[1 + 2] => [3], not :[3]
 
         Push_Level_Erase_Out_If_State_0(out, L);
         goto pushed_continuation; }

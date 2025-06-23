@@ -931,11 +931,19 @@ Special internal defines used by RT, not Host-Kit developers:
   #endif
 #endif
 
-#if !defined(DEBUG_HOOK_HEART_BYTE)
+#if !defined(DEBUG_HOOK_KIND_BYTE)
   #if defined(_MSC_VER)  // can use enum class for TYPE_XXX, so needs hook
-    #define DEBUG_HOOK_HEART_BYTE  DEBUG_EXTRA_HEART_CHECKS
+    #define DEBUG_HOOK_KIND_BYTE  DEBUG_EXTRA_HEART_CHECKS
   #else
-    #define DEBUG_HOOK_HEART_BYTE  0
+    #define DEBUG_HOOK_KIND_BYTE  0
+  #endif
+#endif
+
+#if !defined(DEBUG_TYPE_ENUMS_USE_ENUM_CLASS)
+  #if defined(_MSC_VER)
+    #define DEBUG_TYPE_ENUMS_USE_ENUM_CLASS  DEBUG_HOOK_KIND_BYTE
+  #else
+    #define DEBUG_TYPE_ENUMS_USE_ENUM_CLASS  0
   #endif
 #endif
 

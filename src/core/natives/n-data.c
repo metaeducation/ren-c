@@ -63,7 +63,7 @@ DECLARE_NATIVE(BIND)
 
             Use* use = Alloc_Use_Inherits(Cell_Binding(v));
             Derelativize(Stub_Cell(use), at, Cell_Binding(spec));
-            HEART_BYTE(Stub_Cell(use)) = TYPE_WORD;
+            KIND_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
             Element* overbind = Known_Element(Stub_Cell(use));
             if (not IS_WORD_BOUND(overbind))
@@ -93,7 +93,7 @@ DECLARE_NATIVE(BIND)
 
         Use* use = Alloc_Use_Inherits(Cell_Binding(v));
         Copy_Cell(Stub_Cell(use), spec);
-        HEART_BYTE(Stub_Cell(use)) = TYPE_WORD;
+        KIND_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
         Tweak_Cell_Binding(v, use);
 
@@ -236,13 +236,13 @@ DECLARE_NATIVE(HAS)
         VarList* varlist = Cell_Varlist(context);
         Element* out = Init_Word_Bound(OUT, symbol, varlist);
         Tweak_Cell_Word_Index(out, unwrap index);
-        Copy_Heart_Byte(out, v);
+        Copy_Kind_Byte(out, v);
         return OUT;
     }
 
     SeaOfVars* sea = Cell_Module_Sea(context);
     Element* out = Init_Word(OUT, symbol);
-    Copy_Heart_Byte(out, v);
+    Copy_Kind_Byte(out, v);
     Tweak_Cell_Binding(out, sea);
     return OUT;
 }
@@ -285,7 +285,7 @@ DECLARE_NATIVE(WITHOUT)
             ctx
         );
         Tweak_Cell_Word_Index(OUT, unwrap index);
-        Copy_Heart_Byte(Known_Element(OUT), v);
+        Copy_Kind_Byte(Known_Element(OUT), v);
         return OUT;
     }
 
@@ -821,12 +821,12 @@ DECLARE_NATIVE(RESOLVE)
     Element* source = Element_ARG(SOURCE);
 
     if (Any_Word(source)) {
-        HEART_BYTE(source) = TYPE_WORD;
+        KIND_BYTE(source) = TYPE_WORD;
         return COPY(source);
     }
 
     if (Is_Tuple(source)) {
-        HEART_BYTE(source) = TYPE_TUPLE;
+        KIND_BYTE(source) = TYPE_TUPLE;
         return COPY(source);
     }
 
@@ -1143,7 +1143,7 @@ DECLARE_NATIVE(ANY_VALUE_Q)
     if (not Is_Antiform(atom))
         return LOGIC(true);  // all ELEMENT? are ANY-VALUE?
 
-    return LOGIC(Is_Stable_Antiform_Heart_Byte(HEART_BYTE_RAW(atom)));
+    return LOGIC(Is_Stable_Antiform_Kind_Byte(KIND_BYTE_RAW(atom)));
 }
 
 

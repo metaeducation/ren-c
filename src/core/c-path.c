@@ -209,41 +209,8 @@ static Bounce Tweak_P_Native_Core(Level* level_)
 
     possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for POKE's use
 
-  ensure_lifted_antiforms_are_stable: {
-
-    // We don't want to make it possible for TWEAK* to take unstable antiforms.
-    // That might seem to enable interesting features, like a container that
-    // could store PACK! or ERROR! states:
-    //
-    //     >> magic-store.x: pack [1 2]
-    //     == \~['1 '2]~\  ; antiform (pack!)
-    //
-    //     >> magic-store.x
-    //     == \~['1 '2]~\  ; antiform (pack!)
-    //
-    // But this would likely cause more problems than it could possibly solve.
-    // Working with unstable antiforms is a pain, and the internal machinery
-    // would get more complex and face existential questions trying to
-    // do this "correctly".
-    //
-    // Perhaps enabled in the future, but right now the "freedom from" needing
-    // to confront this in the mechanics outweighs the "freedom to" do it.
-    //
-    // 1. It's expected that magic inside the SET and GET code will bypass
-    //    calling TWEAK* and use Dispatch_Generic() directly.  When that
-    //    happens, this check (as well as other type checking) would not
-    //    be applied.
-
-    // !!! REVIEW: New rules, ^x gets/sets unstable antiforms
-    /*
-    if (Is_Quasiform(dual))  // this check may be bypassed by optimization [1]
-        assert(Is_Stable_Antiform_Heart_Byte(Heart_Of(dual)));
-    */
-
-} dispatch_generic: {
-
     return Dispatch_Generic(TWEAK_P, location, LEVEL);
-}}
+}
 
 
 //

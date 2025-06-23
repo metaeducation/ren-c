@@ -438,8 +438,8 @@ e-typespecs: make-emitter "Type Help Descriptions" (
     join prep-dir %specs/tmp-typespecs.r
 )
 
-plains: make block! 64  ; "TYPE_XXX = (num)" for all HEART_BYTE
-pseudotype-hearts: make block! 128  ; "PSEUDO_XXX = (num)" for all HEART_BYTE
+plains: make block! 64  ; "TYPE_XXX = (num)" for all KIND_BYTE
+pseudotype-hearts: make block! 128  ; "PSEUDO_XXX = (num)" for all KIND_BYTE
 pseudotypes: make block! 128  ; "TYPE_XXX = (num)" for all pseudotypes
 types: make block! 128
 typedefines: make block! 128
@@ -743,7 +743,7 @@ e-hearts/emit [rebs --[
         /*
          * The "Extra Heart Byte Checks" are designed to make sure you don't
          * pass Type where Heart is expected, or write things like TYPE_QUOTED
-         * or TYPE_SPLICE into the HEART_BYTE().
+         * or TYPE_SPLICE into the KIND_BYTE().
          *
          * Accomplishing this rigorously requires using C++ enum classes.
          * An enum class has to be used so that the values can be in a
@@ -756,7 +756,7 @@ e-hearts/emit [rebs --[
          * can pull it off.)
          */
 
-      #if defined(_MSC_VER)  // MSVC has lax enum class conversions we can use
+      #if DEBUG_TYPE_ENUMS_USE_ENUM_CLASS  /* needs msvc for lax comparison */
         enum class HeartEnum {
       #else
         enum HeartEnum {
@@ -765,7 +765,7 @@ e-hearts/emit [rebs --[
             $(Plains),
         };
 
-      #if defined(_MSC_VER)  // MSVC has lax enum class conversions we can use
+      #if DEBUG_TYPE_ENUMS_USE_ENUM_CLASS  /* needs msvc for lax comparison */
         enum class TypeEnum {
       #else
         enum TypeEnum {
@@ -777,7 +777,7 @@ e-hearts/emit [rebs --[
             $(Pseudotypes),
         };
 
-    #if defined(_MSC_VER)  // `enum class` needs qualifiers
+    #if DEBUG_TYPE_ENUMS_USE_ENUM_CLASS  /* enum class needs qualifiers */
       #define HEART_ENUM(name)  HeartEnum::ENUM_TYPE_##name
       #define TYPE_ENUM(name)   TypeEnum::ENUM_TYPE_##name
     #else

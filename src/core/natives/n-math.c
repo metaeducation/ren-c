@@ -167,7 +167,7 @@ DECLARE_NATIVE(MULTIPLY)
 //    ensure commutativity, we swap the arguments if their heart bytes are
 //    not in "canon order".
 //
-//    (Using the HEART_BYTE as the canon order is a bit of a hack, as the
+//    (Using the KIND_BYTE as the canon order is a bit of a hack, as the
 //    table can be reordered.  But we try to order the types in %types.r
 //    such that more complex types come later, so that we dispatch to the
 //    more complex type...e.g. multiplying a PAIR! by a DECIMAL! should
@@ -1001,7 +1001,7 @@ DECLARE_NATIVE(SAME_Q)
     if (LIFT_BYTE(atom1) != LIFT_BYTE(atom2))
         return Init_Logic(OUT, false);  // not "same" value if not same quote
 
-    if (HEART_BYTE(atom1) != HEART_BYTE(atom2))
+    if (KIND_BYTE(atom1) != KIND_BYTE(atom2))
         return Init_Logic(OUT, false);  // not "same" value if not same heart
 
     LIFT_BYTE(atom1) = NOQUOTE_1;  // trick works for VOID equality, too

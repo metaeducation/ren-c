@@ -304,7 +304,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 #define CELL_MASK_UNREADABLE \
     (BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_UNREADABLE \
         | CELL_FLAG_DONT_MARK_PAYLOAD_1 | CELL_FLAG_DONT_MARK_PAYLOAD_2 \
-        | FLAG_HEART_BYTE_255 | FLAG_LIFT_BYTE(255))
+        | FLAG_KIND_BYTE_255 | FLAG_LIFT_BYTE(255))
 
 #if CORRUPT_CELL_HEADERS_ONLY
     #define Init_Unreadable_Untracked_Evil_Macro(out) do { \
@@ -493,24 +493,6 @@ STATIC_ASSERT(not (CELL_MASK_PERSIST & CELL_FLAG_NOTE));
         &= ~CELL_FLAG_##name
 
 
-//=//// CELL 2-bit SIGIL! /////////////////////////////////////////////////=//
-//
-// The HEART_BYTE() is structured so that the top two bits of the byte are
-// used for the "Sigil".  This can be [$ @ ^] or nothing.
-//
-
-#define FLAG_SIGIL_CRUMB(crumb) \
-    FLAG_HEART_BYTE((crumb) << HEART_SIGIL_SHIFT)
-
-#define FLAG_SIGIL_ENUM(sigil) \
-    FLAG_SIGIL_CRUMB(u_cast(Byte, ensure(Sigil, sigil)))
-
-#define FLAG_SIGIL(name) \
-    FLAG_SIGIL_ENUM(SIGIL_##name)
-
-#define CELL_MASK_SIGIL_BITS  FLAG_SIGIL_CRUMB(3)  // 0b11 << HEART_SIGIL_SHIFT
-
-
 //=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
 //
 // The cell flags are structured so that the top two bits of the byte are
@@ -545,7 +527,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 }
 
 
-//=//// HOOKABLE HEART_BYTE() ACCESSOR ////////////////////////////////////=//
+//=//// HOOKABLE KIND_BYTE() ACCESSOR ////////////////////////////////////=//
 //
 // This has to be defined after `Cell` is fully defined.
 //
@@ -555,16 +537,16 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 //    worth it.  To help avoid accidentally passing stubs, the HeaderUnion in
 //    a Stub is named "leader" instead of "header".
 //
-// 2. It can often be helpful to inject code to when the HEART_BYTE() is being
-//    assigned.  This mechanism also intercepts reads of the HEART_BYTE() too,
+// 2. It can often be helpful to inject code to when the KIND_BYTE() is being
+//    assigned.  This mechanism also intercepts reads of the KIND_BYTE() too,
 //    which is done pervasively.  It slows down the code in checked builds by
 //    a noticeable amount, so we don't put it in all checked builds...only
 //    special situations.
 //
 
-#if (! DEBUG_HOOK_HEART_BYTE)
-    #define HEART_BYTE(cell) \
-        HEART_BYTE_RAW(cell)
+#if (! DEBUG_HOOK_KIND_BYTE)
+    #define KIND_BYTE(cell) \
+        KIND_BYTE_RAW(cell)
 #else
     struct HeartHolder {  // class for intercepting heart assignments [2]
         Cell* cell;
@@ -573,22 +555,22 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
             : cell (const_cast<Cell*>(cell))
           {}
 
-        operator HeartByte() const {  // implicit cast, add read checks here
-            return HEART_BYTE_RAW(cell);
+        operator KindByte() const {  // implicit cast, add read checks here
+            return KIND_BYTE_RAW(cell);
         }
 
-        void operator=(HeartByte right) {  // add write checks you want here
-            HEART_BYTE_RAW(cell) = right;
+        void operator=(KindByte right) {  // add write checks you want here
+            KIND_BYTE_RAW(cell) = right;
         }
 
         void operator=(const HeartHolder& right)  // must write explicitly
-          { *this = u_cast(HeartByte, right); }
+          { *this = u_cast(KindByte, right); }
 
         template <typename T, EnableIfSame<T,
             HeartEnum, HeartHolder, Heart
         > = nullptr>
         void operator=(T right)
-          { *this = u_cast(HeartByte, right); }  // inherit operator= checks
+          { *this = u_cast(KindByte, right); }  // inherit operator= checks
 
         template <typename T, EnableIfSame<T,
             Heart, HeartEnum
@@ -598,23 +580,23 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
     };
 
     INLINE bool operator==(const HeartHolder& holder, HeartEnum h)
-      { return HEART_BYTE_RAW(holder.cell) == cast(Byte, h); }
+      { return KIND_BYTE_RAW(holder.cell) == cast(Byte, h); }
 
     INLINE bool operator==(HeartEnum h, const HeartHolder& holder)
-      { return cast(Byte, h) == HEART_BYTE_RAW(holder.cell); }
+      { return cast(Byte, h) == KIND_BYTE_RAW(holder.cell); }
 
     INLINE bool operator!=(const HeartHolder& holder, HeartEnum h)
-      { return HEART_BYTE_RAW(holder.cell) != cast(Byte, h); }
+      { return KIND_BYTE_RAW(holder.cell) != cast(Byte, h); }
 
     INLINE bool operator!=(HeartEnum h, const HeartHolder& holder)
-      { return cast(Byte, h) != HEART_BYTE_RAW(holder.cell); }
+      { return cast(Byte, h) != KIND_BYTE_RAW(holder.cell); }
 
-    #define HEART_BYTE(cell) \
+    #define KIND_BYTE(cell) \
         HeartHolder{cell}
 #endif
 
 #define Unchecked_Heart_Of(c) \
-    u_cast(Option(Heart), u_cast(HeartEnum, HEART_BYTE_RAW(c) % MOD_HEART_64))
+    u_cast(Option(Heart), u_cast(HeartEnum, KIND_BYTE_RAW(c) % MOD_HEART_64))
 
 #define Heart_Of(c) \
     Unchecked_Heart_Of(Ensure_Readable(c))
@@ -638,7 +620,7 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 }
 
 #define Heart_Of_Is_0(cell) \
-    (0 == HEART_BYTE_RAW(Ensure_Readable(cell)))
+    (TYPE_0 == maybe Heart_Of(cell))
 
 INLINE bool Type_Of_Is_0(const Cell* cell) {
     return Heart_Of_Is_0(cell) and LIFT_BYTE_RAW(cell) == NOQUOTE_1;
@@ -725,13 +707,13 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
     switch (LIFT_BYTE(atom)) {
       case 0:  // ANTIFORM_0 (not constant in some debug builds)
         return u_cast(TypeEnum,
-            (HEART_BYTE(atom) % MOD_HEART_64) + MAX_TYPE_BYTE_ELEMENT
+            (KIND_BYTE(atom) % MOD_HEART_64) + MAX_TYPE_BYTE_ELEMENT
         );
 
       case NOQUOTE_1:  // heart might be TYPE_0 to be extension type
-        switch (u_cast(Sigil, HEART_BYTE(atom) >> HEART_SIGIL_SHIFT)) {
+        switch (u_cast(Sigil, KIND_BYTE(atom) >> KIND_SIGIL_SHIFT)) {
           case SIGIL_0:
-            return u_cast(HeartEnum, (HEART_BYTE(atom) % MOD_HEART_64));
+            return u_cast(HeartEnum, (KIND_BYTE(atom) % MOD_HEART_64));
 
           case SIGIL_META:
             return TYPE_METAFORM;
@@ -766,9 +748,9 @@ INLINE Option(Type) Type_Of_Unquoted(const Element* elem) {
 
     assert(LIFT_BYTE(elem) != ANTIFORM_0);
 
-    switch (u_cast(Sigil, HEART_BYTE(elem) >> HEART_SIGIL_SHIFT)) {
+    switch (u_cast(Sigil, KIND_BYTE(elem) >> KIND_SIGIL_SHIFT)) {
       case SIGIL_0:
-        return u_cast(HeartEnum, (HEART_BYTE(elem) % MOD_HEART_64));
+        return u_cast(HeartEnum, (KIND_BYTE(elem) % MOD_HEART_64));
 
       case SIGIL_META:
         return TYPE_METAFORM;
@@ -811,7 +793,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     const ExtraHeart* extra_heart,
     uintptr_t flags
 ){
-    assert((flags & FLAG_HEART_BYTE_255) == 0);
+    assert((flags & FLAG_KIND_BYTE_255) == 0);
     assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(ANTIFORM_0));
 
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
@@ -862,8 +844,10 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     #define Ensure_Cell_Payload_1_Needs_Mark(c)  (c)
     #define Ensure_Cell_Payload_2_Needs_Mark(c)  (c)
 #else
-    INLINE Cell* Ensure_Cell_Extra_Needs_Mark(const_if_c Cell* c)
-      { assert(Is_Extra_Mark_Heart(Heart_Of(c))); return c; }
+    INLINE Cell* Ensure_Cell_Extra_Needs_Mark(const_if_c Cell* c) {
+        assert(Heart_Implies_Extra_Needs_Mark(Unchecked_Heart_Of(c)));
+        return c;
+    }
 
     INLINE Cell* Ensure_Cell_Payload_1_Needs_Mark(const_if_c Cell* c)
       { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_1)); return c; }
@@ -872,8 +856,10 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
       { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_2)); return c; }
 
   #if CPLUSPLUS_11
-    INLINE const Cell* Ensure_Cell_Extra_Needs_Mark(const Cell* c)
-      { assert(Is_Extra_Mark_Heart(Heart_Of(c))); return c; }
+    INLINE const Cell* Ensure_Cell_Extra_Needs_Mark(const Cell* c) {
+        assert(Heart_Implies_Extra_Needs_Mark(Unchecked_Heart_Of(c)));
+        return c;
+    }
 
     INLINE const Cell* Ensure_Cell_Payload_1_Needs_Mark(const Cell* c)
       { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_1)); return c; }
@@ -939,8 +925,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
         ((c)->extra.base = binding)
 #else
     INLINE void Tweak_Cell_Binding(Element* c, Option(Context*) binding) {
-        assert(Is_Bindable_Heart(Heart_Of(c)));
         Assert_Cell_Writable(c);
+        assert(Is_Bindable_Heart(Unchecked_Heart_Of(c)));
         c->extra.base = maybe binding;
         if (binding)
             Assert_Cell_Binding_Valid(c);

@@ -210,7 +210,7 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
 
         out->extra.at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
         out->extra.at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
-        HEART_BYTE(out) = TYPE_RUNE;  // heart is TEXT, presents as issue
+        KIND_BYTE(out) = TYPE_RUNE;  // heart is TEXT, presents as issue
     }
 
     assert(Cell_Codepoint(out) == c);

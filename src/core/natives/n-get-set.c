@@ -393,7 +393,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {  // `/a` or `a/`
         Element* spare = Copy_Cell(SPARE, path);
-        HEART_BYTE(spare) = TYPE_WORD;
+        KIND_BYTE(spare) = TYPE_WORD;
         e = Trap_Get_Any_Word_Maybe_Trash(OUT, spare, SPECIFIED);
         if (e)
             goto return_error;

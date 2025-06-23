@@ -798,7 +798,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
             possibly(Is_Flex_Frozen(Cell_String(v)));
             possibly(Is_Stub_Symbol(Cell_String(v)));
             Copy_Cell(out, v);
-            HEART_BYTE(out) = as;
+            KIND_BYTE(out) = as;
             return SUCCESS;
         }
 
@@ -859,7 +859,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
                 Cell_String(v),
                 VAL_BYTEOFFSET(v)  // index has to be in terms of bytes
             );
-            HEART_BYTE(out) = TYPE_BLOB;
+            KIND_BYTE(out) = TYPE_BLOB;
             return SUCCESS;
         }
 
@@ -894,7 +894,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
             return SUCCESS;
 
         Copy_Cell(out, v);  // index heeded internally, not exposed
-        HEART_BYTE(out) = as;
+        KIND_BYTE(out) = as;
         return SUCCESS;
     }
 

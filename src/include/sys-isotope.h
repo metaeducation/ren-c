@@ -53,18 +53,19 @@
 //
 INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
     Element* elem = Known_Element(atom);  // guaranteed element on input (?)
+
+    if (Sigil_Of(elem))
+        return Error_User("Cells with sigils cannot become antiforms");
+
     Option(Heart) heart = Heart_Of(atom);
 
-    if (not Is_Stable_Antiform_Heart_Byte(u_cast(HeartByte, maybe heart)))
+    if (not Is_Stable_Antiform_Kind_Byte(u_cast(KindByte, heart)))
         assert(not Is_Api_Value(elem));  // no unstable antiforms in API [1]
 
     if (not Any_Isotopic_Type(heart)) {
         LIFT_BYTE(elem) = NOQUOTE_1;
         return Error_Non_Isotopic_Type_Raw(elem);
     }
-
-    if (Sigil_Of(elem))
-        return Error_User("Cells with sigils cannot become antiforms");
 
     if (Is_Bindable_Heart(heart)) {  // strip off any binding [2]
         if (heart == TYPE_WORD) {
@@ -166,7 +167,7 @@ INLINE bool Is_Pack_Undecayable(Atom* pack)
             continue;  // most common case, lifted normal Elements
 
         if (LIFT_BYTE(at) == QUASIFORM_2) {
-            if (Is_Stable_Antiform_Heart_Byte(HEART_BYTE(at)))
+            if (Is_Stable_Antiform_Kind_Byte(u_cast(KindByte, Heart_Of(at))))
                 continue;  // lifted stable antiform, decayable
 
             return true;  // lifted unstable antiform... not decayable

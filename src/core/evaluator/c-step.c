@@ -400,7 +400,7 @@ Bounce Stepper_Executor(Level* L)
     if (LIFT_BYTE(L_next) != NOQUOTE_1)
        goto give_up_backward_quote_priority;
 
-    switch (HEART_BYTE_RAW(L_next)) {  // ignore Sigil
+    switch (KIND_BYTE_RAW(L_next)) {  // ignore Sigil
       case TYPE_WORD: {
         Option(Error*) e = Trap_Get_Word(
             L_next_gotten_raw,
@@ -789,7 +789,7 @@ Bounce Stepper_Executor(Level* L)
     //    == ~null~  ; anti
 
     Element* out = Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    HEART_BYTE(out) = TYPE_BLOCK;
+    KIND_BYTE(out) = TYPE_BLOCK;
     Quotify(out);  // !!! was quoting, to avoid binding?
 
     Element* spare = Init_Word(SPARE, CANON(PACK));

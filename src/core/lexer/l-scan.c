@@ -2574,7 +2574,7 @@ Bounce Scanner_Executor(Level* const L) {
         return FAIL(Error_Syntax(S, token));
 
     if (S->begin[len - 1] == '%')
-        HEART_BYTE(TOP) = TYPE_PERCENT;
+        KIND_BYTE(TOP) = TYPE_PERCENT;
 
     goto lookahead;
 

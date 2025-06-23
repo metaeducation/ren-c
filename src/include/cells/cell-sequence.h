@@ -219,7 +219,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     if (Is_Word(e)) {  // see notes at top of file on `/a` cell optimization
         e->header.bits &= (~ CELL_FLAG_LEADING_SPACE);
         e->header.bits |= flag;
-        HEART_BYTE(e) = heart;  // e.g. TYPE_WORD => TYPE_PATH
+        KIND_BYTE(e) = heart;  // e.g. TYPE_WORD => TYPE_PATH
         return SUCCESS;
     }
 
@@ -230,7 +230,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
         Option(Heart) h = Heart_Of(e);
         if (not mirror or ((unwrap mirror) == (unwrap h))) {
             MIRROR_BYTE(a) = Heart_Of(e);  // remember what kind it is
-            HEART_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
+            KIND_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;
             return SUCCESS;
         }
@@ -659,7 +659,7 @@ INLINE Element* Derelativize_Sequence_At(
             return Init_Space(out);
 
         Derelativize(out, sequence, context);  // [2]
-        HEART_BYTE(out) = TYPE_WORD;
+        KIND_BYTE(out) = TYPE_WORD;
         LIFT_BYTE(out) = NOQUOTE_1;  // [3]
         return out; }
 
@@ -671,7 +671,7 @@ INLINE Element* Derelativize_Sequence_At(
                 return Init_Space(out);
 
             Derelativize(out, sequence, context);
-            HEART_BYTE(out) = MIRROR_BYTE(a);
+            KIND_BYTE(out) = MIRROR_BYTE(a);
             LIFT_BYTE(out) = NOQUOTE_1;  // [3]
             return out;
         }
@@ -785,13 +785,13 @@ INLINE void Get_Tuple_Bytes(
 
 INLINE Element* Init_Set_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);
-    HEART_BYTE(out) = TYPE_CHAIN;
+    KIND_BYTE(out) = TYPE_CHAIN;
     return out;
 }
 
 INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);
-    HEART_BYTE(out) = TYPE_CHAIN;
+    KIND_BYTE(out) = TYPE_CHAIN;
     Set_Cell_Flag(out, LEADING_SPACE);
     return out;
 }

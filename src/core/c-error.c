@@ -710,7 +710,7 @@ Error* Make_Error_Managed_Vaptr(
 
     assert(Varlist_Len(varlist) == Varlist_Len(root_varlist) + expected_args);
 
-    HEART_BYTE(Rootvar_Of_Varlist(varlist)) = TYPE_WARNING;
+    KIND_BYTE(Rootvar_Of_Varlist(varlist)) = TYPE_WARNING;
 
     // C struct mirroring fixed portion of error fields
     //

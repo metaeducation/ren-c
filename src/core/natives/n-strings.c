@@ -377,7 +377,7 @@ DECLARE_NATIVE(JOIN)
         if (Is_Pinned_Form_Of(GROUP, item)) {
             SUBLEVEL->executor = &Just_Use_Out_Executor;
             Derelativize(SCRATCH, item, Level_Binding(sub));
-            HEART_BYTE(SCRATCH) = TYPE_BLOCK;  // the-block is different
+            KIND_BYTE(SCRATCH) = TYPE_BLOCK;  // the-block is different
             Fetch_Next_In_Feed(sub->feed);
 
             SUBLEVEL->baseline.stack_base = TOP_INDEX;

@@ -38,10 +38,10 @@
 // make-work to check for them when you're sure you're dealing with something
 // that is constrained to being a valid cell heart.
 //
-// Hence, only some TYPE_XXX values can be written into HEART_BYTE():
+// Hence, only some TYPE_XXX values can be written into KIND_BYTE():
 //
-//    HEART_BYTE(cell) = TYPE_INTEGER;  // valid
-//    HEART_BYTE(cell) = TYPE_QUOTED;  // invalid, it's a pseudotype
+//    KIND_BYTE(cell) = TYPE_INTEGER;  // valid
+//    KIND_BYTE(cell) = TYPE_QUOTED;  // invalid, it's a pseudotype
 //
 // And you shouldn't really be comparing Heart against pseudotypes:
 //
@@ -64,7 +64,7 @@
 // now, this goes the hard road of only using TYPE_XXX constants.
 //
 // The only way to do static analysis to stop the invalid bytes is to make
-// HEART_BYTE() a macro that creates a C++ class that holds onto the cell,
+// KIND_BYTE() a macro that creates a C++ class that holds onto the cell,
 // and has an assignment operator that does the desired check before it
 // writes the byte to the intended location.  In order to do this, TYPE_XXX
 // values can't be "plain" C enums, because there's no way to overload
@@ -74,7 +74,7 @@
 // on mixed enum class values.  So even though TYPE_INTEGER comes from the
 // HeartEnum and TYPE_QUOTED comes from the TypeEnum, you can mix and match
 // them in a switch().  So only MSVC is able to statically prevent non-heart
-// assignments to HEART_BYTE(), or comparisons of Pseudotypes against literal
+// assignments to KIND_BYTE(), or comparisons of Pseudotypes against literal
 // heart TYPE_XXX enum states.
 //
 // GCC won't interconvert enum classes, which rules out that ability.  But
@@ -381,10 +381,11 @@ INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
 //
 // !!! Would this be faster as a flag in g_sparse_memberships[]?  Test that.
 //
-INLINE bool Is_Stable_Antiform_Heart_Byte(HeartByte heart_byte) {
+INLINE bool Is_Stable_Antiform_Kind_Byte(KindByte kind_byte) {
+    assert((kind_byte / MOD_HEART_64) == 0);  // antiforms don't have sigils
     return (
-        heart_byte != u_cast(HeartByte, TYPE_BLOCK)  // Is_Pack()
-        and heart_byte != u_cast(HeartByte, TYPE_WARNING)  // Is_Error()
-        and heart_byte != u_cast(HeartByte, TYPE_COMMA)  // Is_Ghost()
+        kind_byte != u_cast(KindByte, TYPE_BLOCK)  // Is_Pack()
+        and kind_byte != u_cast(KindByte, TYPE_WARNING)  // Is_Error()
+        and kind_byte != u_cast(KindByte, TYPE_COMMA)  // Is_Ghost()
     );
 }
