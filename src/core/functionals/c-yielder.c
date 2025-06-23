@@ -310,7 +310,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         Move_Atom(dest, src);  // all arguments/refinements are fair game
     }
 
-    if (Not_Node_Managed(L->varlist))  // don't need it [2]
+    if (Not_Base_Managed(L->varlist))  // don't need it [2]
         GC_Kill_Flex(L->varlist);
     else
         Diminish_Stub(L->varlist);  // maybe lingering references [3]

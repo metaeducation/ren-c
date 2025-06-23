@@ -23,7 +23,7 @@
 // API cells live in the single-Cell-worth of content of a "compact" Stub.
 // But they aren't kept alive by references from other Cells, the way that an
 // Array Stub used by a BLOCK! is kept alive.  They are kept alive by being
-/// "roots" (currently implemented with a flag NODE_FLAG_ROOT, but it could
+/// "roots" (currently implemented with a flag BASE_FLAG_ROOT, but it could
 // also mean living in a distinct pool from other Stubs).
 //
 // The Stub.link and Stub.misc slots point to the next and previous API handles
@@ -51,10 +51,10 @@ enum {
 
 
 #define LINK_API_STUB_NEXT(stub) \
-    *x_cast(Node**, &ensure_flavor(FLAVOR_API, (stub))->link.node)
+    *x_cast(Base**, &ensure_flavor(FLAVOR_API, (stub))->link.base)
 
 #define MISC_API_STUB_PREV(stub) \
-    *x_cast(Node**, &ensure_flavor(FLAVOR_API, (stub))->misc.node)
+    *x_cast(Base**, &ensure_flavor(FLAVOR_API, (stub))->misc.base)
 
 
 // The rebR() function can be used with an API handle to tell a variadic
@@ -64,22 +64,22 @@ enum {
     STUB_SUBCLASS_FLAG_24
 
 
-// What distinguishes an API value is that it has both the NODE_FLAG_CELL and
-// NODE_FLAG_ROOT bits set.
+// What distinguishes an API value is that it has both the BASE_FLAG_CELL and
+// BASE_FLAG_ROOT bits set.
 //
 INLINE bool Is_Api_Value(const Value* v) {
     Assert_Cell_Readable(v);
-    return Is_Node_Root_Bit_Set(v);
+    return Is_Base_Root_Bit_Set(v);
 }
 
 INLINE bool Is_Atom_Api_Value(const Atom* v) {
     Assert_Cell_Readable(v);
-    return Is_Node_Root_Bit_Set(v);
+    return Is_Base_Root_Bit_Set(v);
 }
 
 // 1. The head of the list isn't null, but points at the level, so that
 //    API freeing operations can update the head of the list in the level
-//    when given only the node pointer.
+//    when given only the base pointer.
 //
 INLINE void Connect_Api_Handle_To_Level(Stub* stub, Level* L)
 {
@@ -98,27 +98,27 @@ INLINE void Connect_Api_Handle_To_Level(Stub* stub, Level* L)
 
 INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 {
-    Node* prev_node = MISC_API_STUB_PREV(stub);
-    Node* next_node = LINK_API_STUB_NEXT(stub);
-    bool at_head = Is_Node_A_Cell(prev_node);
-    bool at_tail = Is_Node_A_Cell(next_node);
+    Base* prev_base = MISC_API_STUB_PREV(stub);
+    Base* next_base = LINK_API_STUB_NEXT(stub);
+    bool at_head = Is_Base_A_Cell(prev_base);
+    bool at_tail = Is_Base_A_Cell(next_base);
 
     if (at_head) {
-        Level* L = cast(Level*, prev_node);
-        L->alloc_value_list = next_node;
+        Level* L = cast(Level*, prev_base);
+        L->alloc_value_list = next_base;
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            Stub* next = cast(Stub*, next_node);
+            Stub* next = cast(Stub*, next_base);
             MISC_API_STUB_PREV(next) = L;
         }
     }
     else {
-        Stub* prev = cast(Stub*, prev_node);  // not at head, api val before us
-        LINK_API_STUB_NEXT(prev) = next_node;  // forward prev next to our next
+        Stub* prev = cast(Stub*, prev_base);  // not at head, api val before us
+        LINK_API_STUB_NEXT(prev) = next_base;  // forward prev next to our next
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            Stub* next = cast(Stub*, next_node);
-            MISC_API_STUB_PREV(next) = prev_node;
+            Stub* next = cast(Stub*, next_base);
+            MISC_API_STUB_PREV(next) = prev_base;
         }
     }
 
@@ -127,31 +127,31 @@ INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 }
 
 
-// 1. We are introducing the containing node for this cell to the GC and can't
+// 1. We are introducing the containing base for this cell to the GC and can't
 //    leave it uninitialized.  e.g. if `Do_Eval_Into(Alloc_Value(), ...)`
 //    is used, there might be a recycle during the evaluation that sees it.
 //
 // 2. We link the API handle into a doubly linked list maintained by the
 //    topmost level at the time the allocation happens.  This level will
-//    be responsible for marking the node live, freeing the node in case
+//    be responsible for marking the base live, freeing the base in case
 //    of a panic() that interrupts the level, and reporting any leaks.
 //
-// 3. Giving the cell itself NODE_FLAG_ROOT lets a Value* be discerned as
+// 3. Giving the cell itself BASE_FLAG_ROOT lets a Value* be discerned as
 //    either a "public" API handle or not.  We don't want evaluation targets
 //    to have this flag, because it's legal for the Level's ->out cell to be
 //    erased--not legal for API values.  So if an evaluation is done into an
 //    API handle, the flag has to be off...and then added later.
 //
-//    Having NODE_FLAG_ROOT is still tolerated as a "fresh" state for
+//    Having BASE_FLAG_ROOT is still tolerated as a "fresh" state for
 //    purposes of init.  The flag is not copied by Copy_Cell().
 
 #define CELL_MASK_API_INITABLE \
-    (CELL_MASK_UNREADABLE | NODE_FLAG_ROOT)
+    (CELL_MASK_UNREADABLE | BASE_FLAG_ROOT)
 
 INLINE Init(Value) Alloc_Value_Core(Flags flags)
 {
     Stub* stub = Make_Untracked_Stub(
-        FLAG_FLAVOR(API) | NODE_FLAG_ROOT | NODE_FLAG_MANAGED
+        FLAG_FLAVOR(API) | BASE_FLAG_ROOT | BASE_FLAG_MANAGED
     );
 
     Cell* cell = Stub_Cell(stub);
@@ -172,12 +172,12 @@ INLINE void Free_Value(Value* v)
 {
     Stub* stub = Compact_Stub_From_Cell(v);
     assert(Stub_Flavor(stub) == FLAVOR_API);
-    assert(Is_Node_Root_Bit_Set(stub));
+    assert(Is_Base_Root_Bit_Set(stub));
 
-    if (Is_Node_Managed(stub))
+    if (Is_Base_Managed(stub))
         Disconnect_Api_Handle_From_Level(stub);
 
-    Force_Poison_Cell(v);  // do last (removes NODE_FLAG_ROOT if set)
+    Force_Poison_Cell(v);  // do last (removes BASE_FLAG_ROOT if set)
     stub->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
     GC_Kill_Stub(stub);
 }
@@ -194,7 +194,7 @@ INLINE void Free_Value(Value* v)
 // hold thrown returns, and these API handles are elsewhere.
 //
 INLINE void Release_Api_Value_If_Unmanaged(const Atom* r) {
-    assert(Is_Node_Root_Bit_Set(r));
-    if (Not_Node_Managed(r))
+    assert(Is_Base_Root_Bit_Set(r));
+    if (Not_Base_Managed(r))
         rebRelease(x_cast(Value*, r));
 }

@@ -332,7 +332,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Heart heart, VarList* v) {
     // Currently only FRAME! uses the extra field, in order to capture the
     // ->coupling of the function value it links to (which is in ->phase)
     //
-    assert(archetype->extra.node == nullptr or heart == TYPE_FRAME);
+    assert(archetype->extra.base == nullptr or heart == TYPE_FRAME);
 
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
@@ -362,7 +362,7 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
         == FLEX_MASK_KEYLIST
     );
 
-    if (Get_Stub_Flag(phase, MISC_NODE_NEEDS_MARK)) {
+    if (Get_Stub_Flag(phase, MISC_NEEDS_MARK)) {
         assert(
             Misc_Phase_Adjunct(phase) == nullptr
             or Any_Context_Type(CTX_TYPE(unwrap Misc_Phase_Adjunct(phase)))
@@ -549,15 +549,15 @@ Element* Setify(Element* out) {  // called on stack values; can't call eval
 //
 Option(Error*) Trap_Unsingleheart(Element* out) {
     assert(Any_Sequence_Type(Heart_Of(out)));
-    if (not Sequence_Has_Node(out)) {
+    if (not Sequence_Has_Pointer(out)) {
         goto unchain_error;  // compressed bytes don't encode blanks
     }
 
   { //////////////////////////////////////////////////////////////////////////
 
-    const Node* node1 = CELL_NODE1(out);
-    if (Is_Node_A_Cell(node1)) {  // compressed 2-elements, sizeof(Stub)
-        const Pairing* pairing = c_cast(Pairing*, node1);
+    const Base* payload1 = CELL_PAYLOAD_1(out);
+    if (Is_Base_A_Cell(payload1)) {  // compressed 2-elements, sizeof(Stub)
+        const Pairing* pairing = c_cast(Pairing*, payload1);
         if (Is_Space(Pairing_First(pairing))) {
             assert(not Is_Space(Pairing_Second(pairing)));
             Derelativize(out, Pairing_Second(pairing), Cell_Binding(out));
@@ -572,7 +572,7 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
 
   { //////////////////////////////////////////////////////////////////////////
 
-    const Flex* f = c_cast(Flex*, node1);
+    const Flex* f = c_cast(Flex*, payload1);
     if (Is_Stub_Symbol(f)) {
         HEART_BYTE(out) = TYPE_WORD;
         Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary?

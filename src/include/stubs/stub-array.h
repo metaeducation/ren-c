@@ -113,14 +113,14 @@ INLINE void Prep_Array(
 
 INLINE Option(const String*) Link_Filename(const Source* source) {
     assert(Stub_Flavor(source) == FLAVOR_SOURCE);
-    if (Get_Stub_Flag(source, LINK_NODE_NEEDS_MARK)) {
+    if (Get_Stub_Flag(source, LINK_NEEDS_MARK)) {
         const String* filename = cast(const String*,
             LINK_SOURCE_FILENAME_NODE(source)
         );
         assert(Stub_Flavor(filename) == FLAVOR_NONSYMBOL);
         return filename;
     }
-    assert(Is_Pointer_Corrupt_Debug(source->link.node));
+    assert(Is_Pointer_Corrupt_Debug(source->link.base));
     return nullptr;
 }
 
@@ -128,12 +128,12 @@ INLINE void Tweak_Link_Filename(Source* source, Option(const String*) filename)
 {
     assert(Stub_Flavor(source) == FLAVOR_SOURCE);
     if (filename) {
-        Set_Stub_Flag(source, LINK_NODE_NEEDS_MARK);
+        Set_Stub_Flag(source, LINK_NEEDS_MARK);
         LINK_SOURCE_FILENAME_NODE(source) = m_cast(String*, unwrap filename);
     }
     else {
-        Clear_Stub_Flag(source, LINK_NODE_NEEDS_MARK);
-        Corrupt_Pointer_If_Debug(source->link.node);
+        Clear_Stub_Flag(source, LINK_NEEDS_MARK);
+        Corrupt_Pointer_If_Debug(source->link.base);
     }
 }
 

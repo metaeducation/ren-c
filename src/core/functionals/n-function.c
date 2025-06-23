@@ -367,7 +367,7 @@ Option(Error*) Trap_Make_Interpreted_Action(
         return e;
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
+        BASE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         dispatcher,
         details_capacity  // we fill in details[0], caller fills any extra

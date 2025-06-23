@@ -650,10 +650,15 @@ e-lib/emit [ver --[
      * You should not cache references to them in variables, but only pass
      * them directly in the variadic stream.  This is because the feeding of
      * the va_list in case of error is the only way they are cleaned up.
+     *
+     * They are named with "Internal" to follow the naming convention of
+     * "_internal" for things you should not be using in client code.
+     * It could be "RebolBase_internal" though that looks less like a data
+     * type in the current naming system.
      */
 
-    struct RebolNodeStruct;
-    typedef struct RebolNodeStruct RebolNodeInternal;
+    struct RebolBaseStruct;
+    typedef struct RebolBaseStruct RebolBaseInternal;
 
 
     /*
@@ -676,7 +681,7 @@ e-lib/emit [ver --[
      * implicitly by the macros that implement variadic API functions.
      */
 
-    typedef struct RebolNodeStruct RebolContext;
+    typedef struct RebolBaseStruct RebolContext;
 
 
     /*
@@ -986,7 +991,7 @@ e-lib/emit [ver --[
      *
      *     0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
      *
-     * The first bit being 1 means it's a "Node", the second that it is
+     * The first bit being 1 means it's a "Base", the second that it is
      * "Unreadable", the third and fourth bits would pertain to GC behavior
      * if applicable, the fifth bit being clear means it's *not* a Cell.
      * The seventh bit is for GC marking by design (to leverage the special
@@ -1050,7 +1055,7 @@ e-lib/emit [ver --[
         inline const void* to_rebarg(const RebolValue* val)
           { return val; }
 
-        inline const void* to_rebarg(const RebolNodeInternal* instruction)
+        inline const void* to_rebarg(const RebolBaseInternal* instruction)
           { return instruction; }
 
         inline const void* to_rebarg(const char *source)

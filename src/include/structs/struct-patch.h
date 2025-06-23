@@ -45,7 +45,7 @@
 
 //=//// "LET" FOR VIRTUAL BINDING OF "MINI-OBJECT" ////////////////////////=//
 //
-// Next node is either to another let, a frame binding context, or nullptr.
+// Next Base* is either to another Let, a frame binding context, or nullptr.
 
 
 #define INFO_LET_SYMBOL(let)    STUB_INFO(let)

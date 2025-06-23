@@ -2,7 +2,7 @@
 
 
 INLINE bool Stringlike_Cell(const Cell* v) {
-    return Any_Utf8_Type(Heart_Of(v)) and Stringlike_Has_Node(v);
+    return Any_Utf8_Type(Heart_Of(v)) and Stringlike_Has_Stub(v);
 }
 
 INLINE const String* Cell_String(const Cell* v) {
@@ -55,7 +55,7 @@ INLINE Length Cell_Series_Len_At(const Cell* v) {
 INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     assert(Any_Utf8_Type(Heart_Of(c)));
 
-    if (not Cell_Has_Node1(c))  // must store bytes in cell direct
+    if (not Cell_Payload_1_Needs_Mark(c))  // must store bytes in cell direct
         return cast(Utf8(const*), c->payload.at_least_8);
 
     const String* str = c_cast(String*, CELL_SERIESLIKE_NODE(c));
@@ -80,7 +80,7 @@ INLINE Utf8(const*) Cell_String_At(const Cell* v) {
 INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
     assert(Any_Utf8_Type(Heart_Of(c)));
 
-    if (not Stringlike_Has_Node(c)) {  // content in cell direct
+    if (not Stringlike_Has_Stub(c)) {  // content in cell direct
         Size size = c->extra.at_least_4[IDX_EXTRA_USED];
         return cast(Utf8(const*), c->payload.at_least_8 + size);
     }
@@ -102,7 +102,7 @@ INLINE REBLEN Cell_String_Len_At(const Cell* c) {
     if (Any_String_Type(heart))  // can have an index position
         return Cell_Series_Len_At(c);
 
-    if (not Stringlike_Has_Node(c))  // content directly in cell
+    if (not Stringlike_Has_Stub(c))  // content directly in cell
         return c->extra.at_least_4[IDX_EXTRA_LEN];
 
     const String* str = c_cast(String*, CELL_SERIESLIKE_NODE(c));

@@ -59,13 +59,13 @@ INLINE Element* Derelativize_Untracked(
 
     if (
         not Is_Bindable_Heart_Byte(HEART_BYTE_RAW(v))
-        or v->extra.node
+        or v->extra.base
     ){
         out->extra = v->extra;
     }
     else {
         possibly(context == nullptr);  // SPECIFIED
-        out->extra.node = context;
+        out->extra.base = context;
     }
 
     return out;
@@ -80,8 +80,8 @@ INLINE Element* Bind_If_Unbound(Element* elem, Context* context) {
     assert(Is_Bindable_Heart_Byte(HEART_BYTE_RAW(elem)));
     possibly(context == nullptr);  // SPECIFIED
 
-    if (not elem->extra.node)
-        elem->extra.node = context;
+    if (not elem->extra.base)
+        elem->extra.base = context;
 
     return elem;
 }
@@ -182,8 +182,8 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
         Clear_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP);
         Tweak_Misc_Hitch(m_cast(Symbol*, symbol), Misc_Hitch(stump));
 
-        assert(Is_Node_Readable(stump));
-        Set_Node_Unreadable_Bit(stump);
+        assert(Is_Base_Readable(stump));
+        Set_Base_Unreadable_Bit(stump);
         GC_Kill_Stub(stump);  // expects node diminished/inaccessible (free)
     }
 
@@ -328,7 +328,7 @@ INLINE REBINT VAL_WORD_INDEX(const Cell* v) {
 INLINE void Unbind_Any_Word(Element* v) {
     assert(Wordlike_Cell(v));
     CELL_WORD_INDEX_I32(v) = 0;
-    Set_Cell_Flag(v, DONT_MARK_NODE2);
+    Set_Cell_Flag(v, DONT_MARK_PAYLOAD_2);
     Tweak_Cell_Binding(v, UNBOUND);
 }
 
@@ -430,4 +430,4 @@ INLINE Context* Derive_Binding(
 // Loop Slots
 
 #define CELL_FLAG_LOOP_SLOT_NOTE_TIE  CELL_FLAG_NOTE
-#define CELL_FLAG_LOOP_SLOT_ROOT_META  NODE_FLAG_ROOT
+#define CELL_FLAG_LOOP_SLOT_ROOT_META  BASE_FLAG_ROOT

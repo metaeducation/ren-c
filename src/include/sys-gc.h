@@ -3,7 +3,7 @@
 
 //=//// FLEX MANAGED MEMORY ///////////////////////////////////////////////=//
 //
-// If NODE_FLAG_MANAGED is not explicitly passed to Make_Flex(), a
+// If BASE_FLAG_MANAGED is not explicitly passed to Make_Flex(), a
 // Flex will be manually memory-managed by default.  Hence you don't need
 // to worry about the Flex being freed out from under you while building it.
 // Manual Flexes are tracked, and automatically freed in the case of a panic().
@@ -54,15 +54,15 @@ INLINE void Untrack_Manual_Flex(const Flex* f)
 
 INLINE void Manage_Flex(const Flex* f)  // give manual Flex to GC
 {
-    assert(not Is_Node_Managed(f));
+    assert(not Is_Base_Managed(f));
     Untrack_Manual_Flex(f);
-    Set_Node_Managed_Bit(f);
+    Set_Base_Managed_Bit(f);
 }
 
 INLINE void Force_Flex_Managed(const Flex* f) {
-    if (Not_Node_Managed(f)) {
+    if (Not_Base_Managed(f)) {
         Untrack_Manual_Flex(f);
-        Set_Node_Managed_Bit(f);
+        Set_Base_Managed_Bit(f);
     }
 }
 
@@ -70,7 +70,7 @@ INLINE void Force_Flex_Managed(const Flex* f) {
     #define Assert_Flex_Managed(f) NOOP
 #else
     INLINE void Assert_Flex_Managed(const Flex* f) {
-        if (Not_Node_Managed(f))
+        if (Not_Base_Managed(f))
             crash (f);
     }
 #endif
@@ -85,7 +85,7 @@ INLINE void Force_Flex_Managed(const Flex* f) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The garbage collector can run anytime the trampoline runs (and possibly
-// at certain other times).  So if a Flex has NODE_FLAG_MANAGED on it, the
+// at certain other times).  So if a Flex has BASE_FLAG_MANAGED on it, the
 // potential exists that any C pointers that are outstanding may "go bad"
 // if the Flex wasn't reachable from the root set.  This is important to
 // remember any time a pointer is held across a call that runs arbitrary
@@ -105,7 +105,7 @@ INLINE void Force_Flex_Managed(const Flex* f) {
 
 // Push_Lifeguard() is not INLINE
 
-INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Node)
+INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Base)
   #if NO_RUNTIME_CHECKS
     UNUSED(p);
   #else

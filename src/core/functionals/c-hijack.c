@@ -315,7 +315,7 @@ DECLARE_NATIVE(HIJACK)
     Option(VarList*) adjunct = Misc_Phase_Adjunct(victim);
 
     Details* proxy = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED,
+        BASE_FLAG_MANAGED,
         ARG(VICTIM),  // not changing the interface [1]
         opt_hijacker
             ? &Hijacker_Dispatcher

@@ -592,8 +592,8 @@ DECLARE_NATIVE(LET)
 
     Context* bindings = L_binding;  // context chain we may be adding to
 
-    if (bindings and Not_Node_Managed(bindings))
-        Set_Node_Managed_Bit(bindings);  // natives don't always manage
+    if (bindings and Not_Base_Managed(bindings))
+        Set_Base_Managed_Bit(bindings);  // natives don't always manage
 
     assert(Not_Level_Flag(L, LET_IS_SETTING));
 
@@ -893,7 +893,7 @@ DECLARE_NATIVE(ADD_LET_BINDING)
         Level* L = Level_Of_Varlist_May_Panic(Cell_Varlist(env));
         parent = Level_Binding(L);
         if (parent)
-            Set_Node_Managed_Bit(parent);
+            Set_Base_Managed_Bit(parent);
     } else {
         assert(Any_List(env));
         parent = Cell_List_Binding(env);
@@ -942,7 +942,7 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
     Context* L_binding = Level_Binding(L);
 
     if (L_binding)
-        Set_Node_Managed_Bit(L_binding);
+        Set_Base_Managed_Bit(L_binding);
 
     Use* use = Alloc_Use_Inherits(L_binding);
     Copy_Cell(Stub_Cell(use), object);
@@ -993,7 +993,7 @@ void Clonify_And_Bind_Relative(
     Option(Binder*) binder,
     Option(Phase*) relative
 ){
-    assert(flags & NODE_FLAG_MANAGED);
+    assert(flags & BASE_FLAG_MANAGED);
 
     Option(Heart) heart = Unchecked_Heart_Of(v);
 
@@ -1014,7 +1014,7 @@ void Clonify_And_Bind_Relative(
         if (Pairlike_Cell(v)) {
             Pairing* copy = Copy_Pairing(
                 Cell_Pairing(v),
-                NODE_FLAG_MANAGED
+                BASE_FLAG_MANAGED
             );
             CELL_PAIRLIKE_PAIRING_NODE(v) = copy;
 
@@ -1047,7 +1047,7 @@ void Clonify_And_Bind_Relative(
             deep_tail = Array_Tail(copy);
         }
         else if (Any_Series_Type(heart)) {
-            Flex* copy = Copy_Flex_Core(NODE_FLAG_MANAGED, Cell_Flex(v));
+            Flex* copy = Copy_Flex_Core(BASE_FLAG_MANAGED, Cell_Flex(v));
             CELL_PAIRLIKE_PAIRING_NODE(v) = copy;
         }
 
@@ -1132,7 +1132,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
         Copy_Cell(dest, src);
         Clonify_And_Bind_Relative(
             dest,
-            flags | NODE_FLAG_MANAGED,
+            flags | BASE_FLAG_MANAGED,
             deeply,
             binder,
             relative
@@ -1541,16 +1541,16 @@ void Assert_Cell_Binding_Valid_Core(const Value* cell)
     Option(Heart) heart = Unchecked_Heart_Of(cell);
     assert(Is_Bindable_Heart(heart));
 
-    Context* binding = u_cast(Context*, cell->extra.node);
+    Context* binding = u_cast(Context*, cell->extra.base);
     if (not binding)
         return;
 
     assert(not Is_Antiform(cell));  // antiforms should not have bindings
 
-    assert(Is_Node(binding));
-    assert(Is_Node_Managed(binding));
-    assert(Is_Node_A_Stub(binding));
-    assert(Is_Node_Readable(binding));
+    assert(Is_Base(binding));
+    assert(Is_Base_Managed(binding));
+    assert(Is_Base_A_Stub(binding));
+    assert(Is_Base_Readable(binding));
 
     if (heart == TYPE_FRAME) {
         assert(Is_Stub_Varlist(binding));  // actions/frames bind contexts only

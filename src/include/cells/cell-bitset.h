@@ -40,7 +40,7 @@
 
 #define MAX_BITSET 0x7fffffff
 
-#define CELL_BITSET_BINARY(c)  CELL_NODE1(c)
+#define CELL_BITSET_BINARY(c)  CELL_PAYLOAD_1(c)
 
 
 // Because a BITSET! can get very large, the negation state is stored

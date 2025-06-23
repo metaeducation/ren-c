@@ -132,7 +132,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 
     assert(Misc_Runlevel(varlist) == L);  // need to change runlevel [1]
     Tweak_Misc_Runlevel(varlist, nullptr);
-    Set_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK);
+    Set_Stub_Flag(varlist, MISC_NEEDS_MARK);
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);  // no more encloser [2]
     Unprotect_Rootvar_If_Debug(rootvar);
@@ -142,8 +142,8 @@ Bounce Encloser_Dispatcher(Level* const L)
     assert(Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]
 
-    possibly(Is_Node_Managed(varlist));
-    Set_Node_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
+    possibly(Is_Base_Managed(varlist));
+    Set_Base_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
 
     ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(inner));
     Element* arg = Init_Lensed_Frame(  // the FRAME! passed as an arg [5]
@@ -229,7 +229,7 @@ DECLARE_NATIVE(ENCLOSE)
     Element* outer = Element_ARG(OUTER);
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED,
+        BASE_FLAG_MANAGED,
         inner,  // same interface as inner [1]
         &Encloser_Dispatcher,
         MAX_IDX_ENCLOSER  // details array capacity => [inner, outer]

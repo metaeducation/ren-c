@@ -52,9 +52,9 @@ typedef Context Let;
 
 #define STUB_MASK_LET ( \
     FLAG_FLAVOR(LET) \
-        | NODE_FLAG_MANAGED \
-        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* Inherit_Bind() */ \
-        | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* Let symbol */ \
+        | BASE_FLAG_MANAGED \
+        | STUB_FLAG_LINK_NEEDS_MARK  /* Inherit_Bind() */ \
+        | STUB_FLAG_INFO_NEEDS_MARK  /* Let symbol */ \
     )
 
 #define INFO_LET_SYMBOL(let)  STUB_INFO(let)
@@ -78,10 +78,10 @@ typedef Context Use;
 
 #define STUB_MASK_USE ( \
     FLAG_FLAVOR(USE) \
-        | NODE_FLAG_MANAGED \
-        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* Inherit_Bind() */ \
-        | not STUB_FLAG_INFO_NODE_NEEDS_MARK  /* not yet used */ \
-        | not STUB_FLAG_MISC_NODE_NEEDS_MARK  /* unused, was "Variant" [1] */ \
+        | BASE_FLAG_MANAGED \
+        | STUB_FLAG_LINK_NEEDS_MARK  /* Inherit_Bind() */ \
+        | not STUB_FLAG_INFO_NEEDS_MARK  /* not yet used */ \
+        | not STUB_FLAG_MISC_NEEDS_MARK  /* unused, was "Variant" [1] */ \
     )
 
 

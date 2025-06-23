@@ -91,9 +91,9 @@
 
 
 #define FLEX_MASK_KEYLIST \
-    (NODE_FLAG_NODE  /* NOT always dynamic */ \
+    (BASE_FLAG_BASE  /* NOT always dynamic */ \
         | FLAG_FLAVOR(KEYLIST) \
-        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
+        | STUB_FLAG_LINK_NEEDS_MARK  /* ancestor */ )
 
 #define LINK_KEYLIST_ANCESTOR(keylist)  STUB_LINK(keylist)
 
@@ -169,8 +169,8 @@
 
 
 #define CELL_MASK_ANY_CONTEXT \
-    ((not CELL_FLAG_DONT_MARK_NODE1)  /* varlist */ \
-        | (not CELL_FLAG_DONT_MARK_NODE2)  /* phase (for FRAME!) */)
+    ((not CELL_FLAG_DONT_MARK_PAYLOAD_1)  /* varlist */ \
+        | (not CELL_FLAG_DONT_MARK_PAYLOAD_2)  /* phase (for FRAME!) */)
 
 
 
@@ -182,14 +182,14 @@
 // can't be FLEX_FLAG_FIXED_SIZE, because most varlists can expand.
 //
 #define FLEX_MASK_LEVEL_VARLIST \
-    (NODE_FLAG_NODE \
+    (BASE_FLAG_BASE \
         | FLAG_FLAVOR(VARLIST) \
         | STUB_FLAG_DYNAMIC \
-        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
-        /* STUB_FLAG_MISC_NODE_NEEDS_MARK */  /* Runlevel, not Adjunct */)
+        | STUB_FLAG_LINK_NEEDS_MARK  /* NextVirtual */ \
+        /* STUB_FLAG_MISC_NEEDS_MARK */  /* Runlevel, not Adjunct */)
 
 #define FLEX_MASK_VARLIST \
-    (FLEX_MASK_LEVEL_VARLIST | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
+    (FLEX_MASK_LEVEL_VARLIST | STUB_FLAG_MISC_NEEDS_MARK  /* Adjunct */)
 
 // LINK of VarList is LINK_CONTEXT_INHERIT_BIND
 #define BONUS_VARLIST_KEYLIST(varlist)     STUB_BONUS(varlist)

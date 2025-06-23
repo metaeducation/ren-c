@@ -535,7 +535,7 @@ void Push_Mold(Molder* mo)
         Remake_Flex(
             s,
             Flex_Used(s) + MIN_COMMON,
-            NODE_FLAG_NODE // NODE_FLAG_NODE means preserve the data
+            BASE_FLAG_BASE // BASE_FLAG_BASE means preserve the data
         );
         Term_String_Len_Size(mo->string, len, Flex_Used(s));
     }
@@ -709,7 +709,7 @@ void Startup_Mold(Size encoded_capacity)
 
     ensure(nullptr, g_mold.buffer) = Make_String_Core(
         FLEX_MASK_STRING
-            | (not NODE_FLAG_MANAGED)
+            | (not BASE_FLAG_MANAGED)
             | STUB_FLAG_DYNAMIC,
         encoded_capacity
     );

@@ -255,7 +255,7 @@ DECLARE_NATIVE(REORDER)
         return PANIC(unwrap error);
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED,
+        BASE_FLAG_MANAGED,
         Phase_Archetype(paramlist),
         &Reorderer_Dispatcher,
         MAX_IDX_REORDERER

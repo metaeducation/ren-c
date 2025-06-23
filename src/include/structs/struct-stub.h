@@ -55,7 +55,7 @@
 //   passed a Cell vs. Stub unintentionally, the header in a Stub is called
 //   `->leader`, distinguishing it from the stub's `->header`.
 //
-// * See %struct-node.h for how obeying the header-in-first-slot convention
+// * See %struct-base.h for how obeying the header-in-first-slot convention
 //   allows a Stub to be distinguished from a Cell or a UTF-8 string, and not
 //   run afoul of strict aliasing requirements!
 //
@@ -74,48 +74,48 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// BITS 0-7: TAKEN FOR NODE_FLAG_XXX
+// BITS 0-7: TAKEN FOR BASE_FLAG_XXX
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
 // At one time all the flags were aliased, like:
 //
-//     #define STUB_FLAG_MANAGED NODE_FLAG_MANAGED
-//     #define STUB_FLAG_FREE NODE_FLAG_UNREADABLE
+//     #define STUB_FLAG_MANAGED  BASE_FLAG_MANAGED
+//     #define STUB_FLAG_FREE  BASE_FLAG_UNREADABLE
 //     ...
 //
 // This created weird inconsistencies where it would make an equal amount of
-// sense to pass STUB_FLAG_MANAGED or NODE_FLAG_MANAGED, and introduces the
+// sense to pass STUB_FLAG_MANAGED or BASE_FLAG_MANAGED, and introduces the
 // risk that the checks might be performed on pointers that don't know if
 // what they point at is a Cell or a Stub.  The duplication was removed, and
-// now you say `Is_Node_Managed(stub)` vs. `Get_Stub_Flag(stub, MANAGED)` etc.
+// now say `Is_Base_Managed(stub)` vs. `Get_Stub_Flag(stub, MANAGED)` etc.
 //
-// Aliases for the NODE_FLAG_GC_ONE and NODE_FLAG_GC_TWO are kept, as there
+// Aliases for the BASE_FLAG_GC_ONE and BASE_FLAG_GC_TWO are kept, as there
 // is no corresponding ambiguity.
 
 
-//=//// STUB_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//
+//=//// STUB_FLAG_LINK_NEEDS_MARK //////////////////////////////////=//
 //
 // This indicates that the Stub.link.node field is in use, and should be
 // marked (if not null).
 //
-// Note: Even if this flag is not set, *link.node might still be assigned*,
-// just not to a node that needs to be marked.
+// Note: Even if this flag is not set, *link.base might still be assigned*,
+// just not to a Base that needs to be marked.
 //
-#define STUB_FLAG_LINK_NODE_NEEDS_MARK \
-    NODE_FLAG_GC_ONE
+#define STUB_FLAG_LINK_NEEDS_MARK \
+    BASE_FLAG_GC_ONE
 
 
-//=//// STUB_FLAG_MISC_NODE_NEEDS_MARK //////////////////////////////////=//
+//=//// STUB_FLAG_MISC_NEEDS_MARK //////////////////////////////////=//
 //
 // This indicates that the Stub.misc.node field is in use, and should be
 // marked (if not null).
 //
-// Note: Even if this flag is not set, *misc.node might still be assigned*,
-// just not to a node that needs to be marked.
+// Note: Even if this flag is not set, *misc.base might still be assigned*,
+// just not to a Base that needs to be marked.
 //
-#define STUB_FLAG_MISC_NODE_NEEDS_MARK \
-    NODE_FLAG_GC_TWO
+#define STUB_FLAG_MISC_NEEDS_MARK \
+    BASE_FLAG_GC_TWO
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -170,19 +170,19 @@
 // flag applicable to their subclass.
 
 
-//=//// STUB_FLAG_INFO_NODE_NEEDS_MARK ////////////////////////////////////=//
+//=//// STUB_FLAG_INFO_NEEDS_MARK ////////////////////////////////////=//
 //
 // Bits are hard to come by in a Stub, especially a Compact Stub which
 // uses the cell content for an arbitrary value (e.g. API handles).  The
 // space for the INFO bits is thus sometimes claimed for a node
 //
-// This indicates that the Stub.info.node field is in use, and should be
+// This indicates that the Stub.info.base field is in use, and should be
 // marked (if not null).
 //
-// Note: Even if this flag is not set, *info.node might still be assigned*,
-// just not to a node that needs to be marked.
+// Note: Even if this flag is not set, *info.base might still be assigned*,
+// just not to a Base that needs to be marked.
 //
-#define STUB_FLAG_INFO_NODE_NEEDS_MARK \
+#define STUB_FLAG_INFO_NEEDS_MARK \
     FLAG_LEFT_BIT(16)
 
 
@@ -216,7 +216,7 @@
 // This is a generic bit for the "coloring API", e.g. Is_Stub_Black(),
 // Flip_Stub_White(), etc.  These let native routines engage in marking
 // and unmarking Flexes without potentially wrecking the garbage collector by
-// reusing NODE_FLAG_MARKED.  Purposes could be for recursion protection or
+// reusing BASE_FLAG_MARKED.  Purposes could be for recursion protection or
 // other features, to avoid having to make a map from Stub to bool.
 //
 #define STUB_FLAG_BLACK \
@@ -395,14 +395,14 @@ typedef union {
 
 
 #if CPLUSPLUS_11
-    struct StubStruct : public Node  // Note: empty base class optimization
+    struct StubStruct : public Base  // Note: empty base class optimization
 #else
     struct StubStruct
 #endif
 {
     // See the description of FLEX_FLAG_XXX for the bits in this header.
     // It is in the same position as a Cell header, and the first byte
-    // can be read via NODE_BYTE() to determine which it is.  It's named
+    // can be read via BASE_BYTE() to determine which it is.  It's named
     // "leader" to be distinct from a Cell's "header" to achieve a kind of
     // poor-man's macro typechecking which doesn't incur checked build costs.
     //
@@ -413,7 +413,7 @@ typedef union {
     // to see.  This cannot be done (easily) for properties that are held
     // in a Cell directly.
     //
-    // This field is in the second pointer-sized slot in the Stub node to
+    // This field is in the second pointer-sized slot in the Stub, picked to
     // push the `content` so it is 64-bit aligned on 32-bit platforms.  This
     // is because a Cell may be the StubContentUnion, and a cell assumes
     // it is on a 64-bit boundary to start with...in order to position its
@@ -429,7 +429,7 @@ typedef union {
     //
     StubContentUnion content;
 
-    // If STUB_FLAG_INFO_NODE_NEEDS_MARK, then the `info.node` field is marked
+    // If STUB_FLAG_INFO_NEEDS_MARK, then the `info.node` field is marked
     // by the garbage collector.
     //
     // Otherwise it is used for 32-bits [1] of FLEX_INFO_XXX flags, and other

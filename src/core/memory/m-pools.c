@@ -185,7 +185,7 @@ const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
 {
     // R3-Alpha had a "0-8 small string pool".  e.g. a pool of allocations for
     // payloads 0 to 8 bytes in length.  These are not technically possible in
-    // Ren-C's pool, because it requires 2*sizeof(void*) for each node at the
+    // Ren-C's pool, because it requires 2*sizeof(void*) for each base at the
     // minimum...because instead of just the freelist pointer, it has a
     // standardized header (0 when free).
     //
@@ -356,14 +356,14 @@ void Shutdown_Pools(void)
             ++num_leaks;
 
             Stub* stub = x_cast(Stub*, unit);
-            if (Is_Node_Managed(stub)) {
+            if (Is_Base_Managed(stub)) {
                 printf("MANAGED Stub leak, this REALLY shouldn't happen\n");
                 leaked = stub;  // report a managed one if found
             }
             else if (not leaked) {
                 leaked = stub;  // first one found
             }
-            else if (Not_Node_Managed(leaked)) {
+            else if (Not_Base_Managed(leaked)) {
               #if TRAMPOLINE_COUNTS_TICKS && DEBUG_STUB_ORIGINS
                 if (leaked->tick < stub->tick)
                     leaked = stub;  // update if earlier tick reference
@@ -490,13 +490,13 @@ bool Try_Fill_Pool(Pool* pool)
 #if DEBUG_FANCY_CRASH
 
 //
-//  Try_Find_Containing_Node_Debug: C
+//  Try_Find_Containing_Base_Debug: C
 //
 // This debug-build-only routine will look to see if it can find what Flex
 // a data pointer lives in.  It returns nullptr if it can't find one.  It's
 // very slow, because it has to look at all the Stubs.  Use sparingly!
 //
-Node* Try_Find_Containing_Node_Debug(const void *p)
+Base* Try_Find_Containing_Base_Debug(const void *p)
 {
     Segment* seg = g_mem.pools[STUB_POOL].segments;
 
@@ -508,7 +508,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x08_CELL) {  // a "pairing"
+            if (unit[0] & BASE_BYTEMASK_0x08_CELL) {  // a "pairing"
                 Pairing* pairing = x_cast(Pairing*, unit);
                 if (
                     p >= cast(void*, Pairing_Head(pairing))
@@ -583,10 +583,10 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 //
 // !!! Pairings are not currently put into any tracking lists, so they'll
 // leak if not freed or managed.  This shouldn't be hard to fix--it just
-// means the GC manuals list needs to be Node* and not just Flex*.
+// means the GC manuals list needs to be Base* and not just Flex*.
 //
 Pairing* Alloc_Pairing(Flags flags) {
-    assert(flags == 0 or flags == NODE_FLAG_MANAGED);
+    assert(flags == 0 or flags == BASE_FLAG_MANAGED);
     Pairing* p = cast(Pairing*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
 
     Pairing_First(p)->header.bits = CELL_MASK_UNREADABLE | flags;
@@ -600,7 +600,7 @@ Pairing* Alloc_Pairing(Flags flags) {
 //  Copy_Pairing: C
 //
 Pairing* Copy_Pairing(const Pairing* p, Flags flags) {
-    assert(flags == 0 or flags == NODE_FLAG_MANAGED);
+    assert(flags == 0 or flags == BASE_FLAG_MANAGED);
 
     Pairing* copy = Alloc_Pairing(flags);
     Copy_Cell(Pairing_First(copy), Pairing_First(p));
@@ -617,8 +617,8 @@ Pairing* Copy_Pairing(const Pairing* p, Flags flags) {
 // paired value) header.
 //
 void Manage_Pairing(Pairing* p) {
-    assert(Not_Node_Managed(p));
-    Set_Node_Managed_Bit(p);
+    assert(Not_Base_Managed(p));
+    Set_Base_Managed_Bit(p);
 }
 
 
@@ -632,8 +632,8 @@ void Manage_Pairing(Pairing* p) {
 // their lifetime.
 //
 void Unmanage_Pairing(Pairing* p) {
-    assert(Is_Node_Managed(p));
-    Clear_Node_Managed_Bit(p);
+    assert(Is_Base_Managed(p));
+    Clear_Base_Managed_Bit(p);
 }
 
 
@@ -641,12 +641,12 @@ void Unmanage_Pairing(Pairing* p) {
 //  Free_Pairing: C
 //
 void Free_Pairing(Cell* paired) {
-    assert(Not_Node_Managed(paired));
+    assert(Not_Base_Managed(paired));
     Free_Pooled(STUB_POOL, paired);
 
   #if DEBUG_STUB_ORIGINS && TRAMPOLINE_COUNTS_TICKS
     //
-    // This wasn't actually a Series, but poke the tick where the node was
+    // This wasn't actually a Series, but poke the tick where the base was
     // freed into the memory spot so crash() finds it.
     //
     x_cast(Stub*, paired)->tick = g_tick;
@@ -670,7 +670,7 @@ static void Free_Unbiased_Flex_Data(char *unbiased, Size total)
 
     if (pool_id < SYSTEM_POOL) {
         //
-        // The Flex data does not honor "Node protocol" when it is in use
+        // The Flex data does not honor "Base protocol" when it is in use
         // The pools are not swept the way the Stub pool is, so only the
         // free nodes have significance to their PoolUnit headers.
         //
@@ -908,7 +908,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
     g_mem.num_flex_expanded += 1;
   #endif
 
-    assert(Not_Node_Marked(f));
+    assert(Not_Base_Marked(f));
     Term_Flex_If_Necessary(f);  // code will not copy terminator over
 }
 
@@ -939,8 +939,8 @@ void Swap_Flex_Content(Flex* a, Flex* b)
     if (Stub_Flavor(b) == FLAVOR_SOURCE)
         assert(not Mirror_Of(cast(Source*, b)));
 
-    bool a_managed = Is_Node_Managed(a);
-    bool b_managed = Is_Node_Managed(b);
+    bool a_managed = Is_Base_Managed(a);
+    bool b_managed = Is_Base_Managed(b);
 
     Stub temp;
     Mem_Copy(&temp, a, sizeof(Stub));
@@ -949,14 +949,14 @@ void Swap_Flex_Content(Flex* a, Flex* b)
 
     if (a_managed != b_managed) {  // managedness mismatches do come up [2]
         if (a_managed)
-            Set_Node_Managed_Bit(a);
+            Set_Base_Managed_Bit(a);
         else
-            Clear_Node_Managed_Bit(a);
+            Clear_Base_Managed_Bit(a);
 
         if (b_managed)
-            Set_Node_Managed_Bit(b);
+            Set_Base_Managed_Bit(b);
         else
-            Clear_Node_Managed_Bit(b);
+            Clear_Base_Managed_Bit(b);
     }
 }
 
@@ -999,16 +999,16 @@ DECLARE_NATIVE(SWAP_CONTENTS)
 //  Remake_Flex: C
 //
 // Reallocate a Flex as a given maximum size.  Content in the retained
-// portion of the length will be preserved if NODE_FLAG_NODE is passed in.
+// portion of the length will be preserved if BASE_FLAG_BASE is passed in.
 //
 void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.
     //
-    assert((flags & ~(NODE_FLAG_NODE | FLEX_FLAG_POWER_OF_2)) == 0);
+    assert((flags & ~(BASE_FLAG_BASE | FLEX_FLAG_POWER_OF_2)) == 0);
 
-    bool preserve = did (flags & NODE_FLAG_NODE);
+    bool preserve = did (flags & BASE_FLAG_BASE);
 
     REBLEN used_old = Flex_Used(f);
     Byte wide = Flex_Wide(f);
@@ -1094,17 +1094,17 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 //    during the garbage collector, and arbitrary API calls are not allowed.
 //    So pass the extracted properties instead.
 //
-// 3. Unlike the policy for CELL_FLAG_DONT_MARK_NODE1-style flags, the cleaner
+// 3. Unlike how CELL_FLAG_DONT_MARK_PAYLOAD_1-style flags work, the cleaner
 //    can't be nullptr if MISC_IS_GC_CLEANER is set.  Generally speaking
 //    there isn't as much dynamism of tweaking cleaners on and off--once
 //    a stub is created and gets a cleaner, it tends to keep it for its
-//    entire lifetime.  It may be that Stub flags like LINK_NODE_NEEDS_MARK
+//    entire lifetime.  It may be that Stub flags like LINK_NEEDS_MARK
 //    should also not tolerate nullptr, for efficiency, as Stub fields tend
 //    not to be fiddled to null and back as often as Cell flags.
 //
 Stub* Diminish_Stub(Stub* s)
 {
-    assert(Is_Node_Readable(s));
+    assert(Is_Base_Readable(s));
 
     if (Not_Stub_Flag(s, CLEANS_UP_BEFORE_GC_DECAY))
         goto do_decay;
@@ -1146,7 +1146,7 @@ Stub* Diminish_Stub(Stub* s)
   do_decay: { /////////////////////////////////////////////////////////////=//
 
     // 1. !!! Contexts and actions keep their archetypes, for now, in the
-    //    now collapsed node.  For FRAME! this means holding onto the binding
+    //    now collapsed base.  For FRAME! this means holding onto the binding
     //    which winds up being used in Derelativize().  See SPC_BINDING.
     //    Preserving ACTION!'s archetype is speculative--to point out the
     //    possibility exists for the other array with a "canon" [0]
@@ -1200,7 +1200,7 @@ Stub* Diminish_Stub(Stub* s)
 void GC_Kill_Stub(Stub* s)
 {
   #if RUNTIME_CHECKS
-    if (NODE_BYTE(s) == FREE_POOLUNIT_BYTE) {
+    if (BASE_BYTE(s) == FREE_POOLUNIT_BYTE) {
         printf("Killing already deallocated stub.\n");
         crash (s);
     }
@@ -1215,7 +1215,7 @@ void GC_Kill_Stub(Stub* s)
     Touch_Stub_If_Debug(s);
 
   #if RUNTIME_CHECKS
-    FreeCorrupt_Pointer_Debug(s->info.node);
+    FreeCorrupt_Pointer_Debug(s->info.base);
     // The spot LINK occupies will be used by Free_Pooled() to link the freelist
     FreeCorrupt_Pointer_Debug(s->misc.corrupt);
   #endif
@@ -1239,12 +1239,12 @@ void GC_Kill_Stub(Stub* s)
 void Free_Unmanaged_Flex(Flex* f)
 {
   #if RUNTIME_CHECKS
-    if (NODE_BYTE(f) == FREE_POOLUNIT_BYTE or Not_Node_Readable(f)) {
+    if (BASE_BYTE(f) == FREE_POOLUNIT_BYTE or Not_Base_Readable(f)) {
         printf("Called Free_Unmanaged_Flex() on decayed or freed Flex\n");
         crash (f);  // erroring here helps not conflate with tracking problems
     }
 
-    if (Is_Node_Managed(f)) {
+    if (Is_Base_Managed(f)) {
         printf("Trying to Free_Unmanaged_Flex() on a GC-managed Flex\n");
         crash (f);
     }
@@ -1265,8 +1265,8 @@ void Free_Unmanaged_Flex(Flex* f)
 //
 void Assert_Pointer_Detection_Working(void)
 {
-    uintptr_t cell_flag = NODE_FLAG_CELL;
-    assert(FIRST_BYTE(&cell_flag) == NODE_BYTEMASK_0x08_CELL);
+    uintptr_t cell_flag = BASE_FLAG_CELL;
+    assert(FIRST_BYTE(&cell_flag) == BASE_BYTEMASK_0x08_CELL);
     uintptr_t type_specific_b = CELL_FLAG_TYPE_SPECIFIC_B;
     assert(FOURTH_BYTE(&type_specific_b) == 0x01);
 
@@ -1294,7 +1294,7 @@ void Assert_Pointer_Detection_Working(void)
 // Traverse the free lists of all pools -- just to prove we can.
 //
 // Note: This was useful in R3-Alpha for finding corruption from bad memory
-// writes, because a write past the end of a node destroys the pointer for the
+// writes, because a write past the end of a base destroys the pointer for the
 // next free area.  The Always_Malloc option for Ren-C leverages the faster
 // checking built into Valgrind or Address Sanitizer for the same problem.
 // However, a call to this is kept in the checked build on init and shutdown
@@ -1312,7 +1312,7 @@ REBLEN Check_Memory_Debug(void)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x08_CELL)
+            if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue; // a pairing
 
             Flex* f = x_cast(Flex*, unit);
@@ -1331,17 +1331,17 @@ REBLEN Check_Memory_Debug(void)
         }
     }
 
-    Count total_free_nodes = 0;
+    Count total_free_units = 0;
 
     PoolId pool_id;
     for (pool_id = 0; pool_id != SYSTEM_POOL; pool_id++) {
-        Count pool_free_nodes = 0;
+        Count pool_free_units = 0;
 
         PoolUnit* unit = g_mem.pools[pool_id].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
             assert(FIRST_BYTE(unit) == FREE_POOLUNIT_BYTE);
 
-            ++pool_free_nodes;
+            ++pool_free_units;
 
             bool found = false;
             seg = g_mem.pools[pool_id].segments;
@@ -1365,13 +1365,13 @@ REBLEN Check_Memory_Debug(void)
             }
         }
 
-        if (g_mem.pools[pool_id].free != pool_free_nodes)
+        if (g_mem.pools[pool_id].free != pool_free_units)
             crash ("actual free unit count does not agree with pool header");
 
-        total_free_nodes += pool_free_nodes;
+        total_free_units += pool_free_units;
     }
 
-    return total_free_nodes;
+    return total_free_units;
 }
 
 
@@ -1449,7 +1449,7 @@ void Dump_All_Series_Of_Width(Size wide)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x08_CELL)  // a pairing
+            if (unit[0] & BASE_BYTEMASK_0x08_CELL)  // a pairing
                 continue;
 
             Flex* f = x_cast(Flex*, unit);
@@ -1485,7 +1485,7 @@ void Dump_All_Flex_In_Pool(PoolId pool_id)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x08_CELL)
+            if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue;  // pairing
 
             Flex* f = x_cast(Flex*, unit);
@@ -1589,7 +1589,7 @@ REBU64 Inspect_Flex(bool show)
 
             ++tot;
 
-            if (unit[0] & NODE_BYTEMASK_0x08_CELL)
+            if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue;
 
             Flex* f = x_cast(Flex*, unit);
@@ -1653,7 +1653,7 @@ REBU64 Inspect_Flex(bool show)
             cast(unsigned long, tot_size)
         );
         printf("  %lu free headers\n", cast(unsigned long, fre));
-        printf("  %lu bytes node-space\n", cast(unsigned long, fre_size));
+        printf("  %lu bytes base-space\n", cast(unsigned long, fre_size));
         printf("\n");
     }
 

@@ -68,14 +68,14 @@ PVAR Codepoint *Lower_Cases;
 PVAR Value PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
 
 // These are special return values that can be checked easily by pointer.  They
-// are turned into a `Bounce` (which is a `Node*` at time of writing).
+// are turned into a `Bounce` (which is a `Base*` at time of writing).
 //
 // * If Bounce were `void*`, then these could just be `char` turned into
 //   `char*` and have their first byte checked for UTF-8 and act as the signal.
 //   But type checking is a little better if we make sure it's at least a
-//   Node*, and direct pointer comparison is faster than dereference anyway.
+//   Base*, and direct pointer comparison is faster than dereference anyway.
 //
-// * Comparisons to literal pointers like (Node*)0x00000010 might be faster,
+// * Comparisons to literal pointers like (Base*)0x00000010 might be faster,
 //   but that is "implementation defined behavior" and could have problems.
 //   Consider investigating if it's worth going outside the C standard in some
 //   builds to use such "magic numbers":

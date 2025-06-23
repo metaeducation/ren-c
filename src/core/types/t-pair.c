@@ -183,7 +183,7 @@ REBINT Index_From_Picker_For_Pair(
 // for two values into a single cell).  This meant they were neither INTEGER!
 // nor DECIMAL!.  Ren-C stepped away from this idea of introducing a new
 // numeric type and instead created a more compact "Pairing" that could fit
-// in a single STUB_POOL node and hold two arbitrary values.
+// in a single STUB_POOL Unit and hold two arbitrary values.
 //
 // With the exception of operations that are specifically pair-aware (e.g.
 // REVERSE swapping X and Y), this chains to retrigger the action onto the

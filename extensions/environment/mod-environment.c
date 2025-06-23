@@ -47,8 +47,8 @@ INLINE Element* Init_Environment(Init(Element) out) {
     Reset_Extended_Cell_Header_Noquote(
         out,
         EXTRA_HEART_ENVIRONMENT,
-        (CELL_FLAG_DONT_MARK_NODE1)  // currently no details
-            | CELL_FLAG_DONT_MARK_NODE2  // none of it should be marked
+        (CELL_FLAG_DONT_MARK_PAYLOAD_1)  // currently no details
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // none of it should be marked
     );
 
     return out;

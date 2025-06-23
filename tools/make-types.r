@@ -91,21 +91,21 @@ for-each-datatype: func [
             (antiname*: null, antidescription*: null, unstable*: null)
         ][
             ahead group! into [
-                ['CELL_MASK_NO_NODES <end>]
-                    (cellmask*: the (CELL_MASK_NO_NODES))
-                | ['node1 <end>]
-                    (cellmask*: the (CELL_FLAG_DONT_MARK_NODE2))
-                | [the :node1 <end>]
+                ['CELL_MASK_NO_MARKING <end>]
+                    (cellmask*: the (CELL_MASK_NO_MARKING))
+                | ['payload1 <end>]
+                    (cellmask*: the (CELL_FLAG_DONT_MARK_PAYLOAD_2))
+                | [the :payload1 <end>]
                     (cellmask*: null)  ; don't define a CELL_MASK_XXX
-                | [the :node1 the :node2]
+                | [the :payload1 the :payload2]
                     (cellmask*: null)  ; don't define a CELL_MASK_XXX
-                | ['node1 'node2]
+                | ['payload1 'payload2]
                     (cellmask*: the (0))
-                | ['node2 <end>]
-                    (cellmask*: the (CELL_FLAG_DONT_MARK_NODE1))
+                | ['payload2 <end>]
+                    (cellmask*: the (CELL_FLAG_DONT_MARK_PAYLOAD_1))
             ]
             | pos: <here> (
-                panic ["Bad node1/node2 spec for" name* "in %types.r"]
+                panic ["Bad payload1/payload2 spec for" name* "in %types.r"]
             )
         ]
         [typesets*: block!]

@@ -570,11 +570,11 @@ void Shutdown_Trampoline(void)
 //    mold buffer...we clean it up automatically in these cases.
 //
 void Rollback_Level(Level* L) {
-    Node* n = L->alloc_value_list;
-    while (n != L) {
-        Stub* s = cast(Stub*, n);
-        n = LINK_API_STUB_NEXT(s);
-        Force_Poison_Cell(Stub_Cell(s));  // lose NODE_FLAG_ROOT
+    Base* b = L->alloc_value_list;
+    while (b != L) {
+        Stub* s = cast(Stub*, b);
+        b = LINK_API_STUB_NEXT(s);
+        Force_Poison_Cell(Stub_Cell(s));  // lose BASE_FLAG_ROOT
         s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
         GC_Kill_Stub(s);
     }

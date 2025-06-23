@@ -223,7 +223,7 @@ typedef RebolHandleCleaner HandleCleaner;
 #include "reb-defs.h"  // basic typedefs like Byte (wraps symbol IDs as SymId)
 
 #include "sys-flags.h"  // byte-order sensitive macros, used by node
-#include "structs/struct-node.h"
+#include "structs/struct-base.h"
 
 #include "mem-pools.h"
 
@@ -294,7 +294,7 @@ struct Reb_Enum_Vars {
 
     // !!! Enumerating key/val pairs in modules in the "sea of words" model is
     // tricky, as what it really is hooks the variables in a linked list off
-    // the Symbol Stub Node for the word.  This is accessed via a global
+    // the Symbol Stub Base for the word.  This is accessed via a global
     // hash table that can expand and rearrange freely...it's not possible
     // to lock the table during enumeration.  Locking the module itself may
     // be possible, but the iteration order could get messed up by a hash
@@ -355,7 +355,7 @@ typedef struct {
   #endif
 
   #if DEBUG_MONITOR_FLEX
-    const Node* monitor_node;
+    Option(const Base*) monitoring;
   #endif
 
   #if RUNTIME_CHECKS
@@ -397,7 +397,7 @@ typedef struct {
     Flex* manuals;  // Manually memory managed (not by GC)
 
   #if RUNTIME_CHECKS
-    intptr_t mark_count;  // Count of stubs with NODE_FLAG_MARKED, must balance
+    intptr_t mark_count;  // Count of stubs with BASE_FLAG_MARKED, must balance
   #endif
 
   #if RUNTIME_CHECKS
@@ -551,7 +551,7 @@ enum {
 
 #include "sys-rescue.h" // includes RESCUE_SCOPE, panic()
 
-#include "sys-node.h"
+#include "sys-base.h"
 
 #include "sys-trampoline.h"
 
@@ -577,7 +577,7 @@ enum {
 // fundamental definitions that are important for the casts.
 //
 #if DEBUG_CHECK_CASTS
-    #include "casts/cast-node.hpp"
+    #include "casts/cast-base.hpp"
     #include "casts/cast-stubs.hpp"
     #include "casts/cast-cells.hpp"
     #include "casts/cast-misc.hpp"

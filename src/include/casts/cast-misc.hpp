@@ -5,7 +5,7 @@ template<typename F>
 struct CastHelper<const F*, const Level*> {
     static const Level* convert(const F* p) {
         DECLARE_C_TYPE_LIST(type_list,
-            void, Byte, Node
+            void, Byte, Base
         );
         STATIC_ASSERT(In_C_Type_List(type_list, F));
 
@@ -13,10 +13,10 @@ struct CastHelper<const F*, const Level*> {
             return nullptr;
 
         if ((*u_cast(const Byte*, p) & (
-            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_UNREADABLE
-                | NODE_BYTEMASK_0x08_CELL
+            BASE_BYTEMASK_0x80_NODE | BASE_BYTEMASK_0x40_UNREADABLE
+                | BASE_BYTEMASK_0x08_CELL
         )) != (
-            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL
+            BASE_BYTEMASK_0x80_NODE | BASE_BYTEMASK_0x08_CELL
         )){
             crash (p);
         }

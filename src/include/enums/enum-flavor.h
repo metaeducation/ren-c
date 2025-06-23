@@ -176,8 +176,8 @@ typedef enum {
     FLAVOR_SYMBOL,
 
     // Right now there is only one instance of FLAVOR_THE_GLOBAL_INACCESSIBLE
-    // Flex.  All Stubs that have NODE_FLAG_UNREADABLE will be canonized
-    // to this Node.
+    // Flex.  All Stubs that have BASE_FLAG_UNREADABLE will be canonized
+    // to this Base.
     //
     FLAVOR_THE_GLOBAL_INACCESSIBLE,
 

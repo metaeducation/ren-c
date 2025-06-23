@@ -7,20 +7,20 @@ INLINE bool Listlike_Cell(const Atom* v) {  // PACK!s are allowed
         return true;
     if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))
         return false;
-    if (not Cell_Has_Node1(v))
+    if (not Cell_Payload_1_Needs_Mark(v))
         return false;
-    const Node* node1 = CELL_SERIESLIKE_NODE(v);
-    if (Is_Node_A_Cell(node1))
+    const Base* payload1 = CELL_SERIESLIKE_NODE(v);
+    if (Is_Base_A_Cell(payload1))
         return true;  // Cell_List_At() works, but Cell_Array() won't work!
-    return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SOURCE;
+    return Stub_Flavor(u_cast(const Flex*, payload1)) == FLAVOR_SOURCE;
 }
 
 INLINE const Source* Cell_Array(const Atom* c) {  // PACK!s are allowed
     assert(Listlike_Cell(c));
 
-    const Node* series = CELL_SERIESLIKE_NODE(c);
-    assert(Is_Node_A_Stub(series));  // not a pairing arraylike!
-    if (Not_Node_Readable(series))
+    const Base* series = CELL_SERIESLIKE_NODE(c);
+    assert(Is_Base_A_Stub(series));  // not a pairing arraylike!
+    if (Not_Base_Readable(series))
         panic (Error_Series_Data_Freed_Raw());
 
     return c_cast(Source*, series);
@@ -45,15 +45,15 @@ INLINE const Element* Cell_List_Len_At(
     Option(Sink(Length)) len_at_out,
     const Atom* v  // want to be able to pass PACK!s, SPLICE!, etc.
 ){
-    const Node* node = CELL_SERIESLIKE_NODE(v);
-    if (Is_Node_A_Cell(node)) {
+    const Base* base = CELL_SERIESLIKE_NODE(v);
+    if (Is_Base_A_Cell(base)) {
         assert(Any_Sequence_Type(Heart_Of(v)));
         assert(VAL_INDEX_RAW(v) == 0);
         if (len_at_out)
             *(unwrap len_at_out) = PAIRING_LEN;
-        return c_cast(Element*, node);
+        return c_cast(Element*, base);
     }
-    const Array* arr = c_cast(Array*, node);
+    const Array* arr = c_cast(Array*, base);
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's a series
     Length len = Array_Len(arr);
     if (i < 0 or i > len)
@@ -67,15 +67,15 @@ INLINE const Element* Cell_List_At(
     Option(const Element**) tail_out,
     const Atom* v  // want to be able to pass PACK!s, SPLICE!, etc.
 ){
-    const Node* node = CELL_SERIESLIKE_NODE(v);
-    if (Is_Node_A_Cell(node)) {
+    const Base* base = CELL_SERIESLIKE_NODE(v);
+    if (Is_Base_A_Cell(base)) {
         assert(Any_Sequence_Type(Heart_Of(v)));
-        const Pairing* p = c_cast(Pairing*, node);
+        const Pairing* p = c_cast(Pairing*, base);
         if (tail_out)
             *(unwrap tail_out) = Pairing_Tail(p);
         return Pairing_Head(p);
     }
-    const Array* arr = c_cast(Array*, node);
+    const Array* arr = c_cast(Array*, base);
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's arraylike
     Length len = Array_Len(arr);
     if (i < 0 or i > len)

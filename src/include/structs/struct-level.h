@@ -36,10 +36,10 @@
 // and should be reviewed now that many features no longer depend on it.
 
 #define LEVEL_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0)  // IS a node
-STATIC_ASSERT(LEVEL_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
+STATIC_ASSERT(LEVEL_FLAG_0_IS_TRUE == BASE_FLAG_BASE);
 
 #define LEVEL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1)  // is NOT free
-STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
+STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == BASE_FLAG_UNREADABLE);
 
 
 //=//// LEVEL_FLAG_2 //////////////////////////////////////////////////////=//
@@ -71,7 +71,7 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 #define LEVEL_FLAG_4_IS_TRUE \
     FLAG_LEFT_BIT(4)
 
-STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == NODE_FLAG_CELL);
+STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == BASE_FLAG_CELL);
 
 
 //=//// LEVEL_FLAG_FORCE_SURPRISING ///////////////////////////////////////=//
@@ -279,7 +279,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 //
 
 #if CPLUSPLUS_11
-    struct LevelStruct : public Node
+    struct LevelStruct : public Base
 #else
     struct LevelStruct
 #endif
@@ -287,7 +287,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // These are LEVEL_FLAG_XXX or'd together--see their documentation above.
     //
     // Note: In order to use the memory pools, this must be in first position,
-    // and it must not have the NODE_FLAG_UNREADABLE bit set when in use.
+    // and it must not have the BASE_FLAG_UNREADABLE bit set when in use.
     //
     HeaderUnion flags;
 
@@ -423,7 +423,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // the ends is not nullptr, but a pointer to the Level* itself (which
     // can be noticed as not being an API handle).
     //
-    Node* alloc_value_list;
+    Base* alloc_value_list;
 
    #if TRAMPOLINE_COUNTS_TICKS
     //

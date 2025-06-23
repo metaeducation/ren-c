@@ -46,7 +46,7 @@
 //
 void Startup_Datatypes(void)
 {
-    SeaOfVars* datatypes = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+    SeaOfVars* datatypes = Alloc_Sea_Core(BASE_FLAG_MANAGED);
 
     SymId16 id16 = MIN_SYM_BUILTIN_TYPES;
 

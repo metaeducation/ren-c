@@ -247,7 +247,7 @@ INLINE Element* Evaluator_Level_Current(Level* L) {
 // put in the "untracked manuals" list... created as unmanaged/untracked.
 //
 #define Force_Level_Varlist_Managed(L) \
-    Set_Node_Managed_Bit((L)->varlist)
+    Set_Base_Managed_Bit((L)->varlist)
 
 INLINE ParamList* Level_Varlist(Level* L) {
     assert(not Is_Level_Fulfilling(L));
@@ -427,9 +427,9 @@ INLINE void Free_Level_Internal(Level* L) {
     possibly(L != TOP_LEVEL);  // e.g. called by Plug_Handle_Cleaner()
 
   #if RUNTIME_CHECKS
-    Node* n = L->alloc_value_list;
-    while (n != L) {
-        Stub* stub = cast(Stub*, n);
+    Base* b = L->alloc_value_list;
+    while (b != L) {
+        Stub* stub = cast(Stub*, b);
         printf("API handle was allocated but not freed, crashing on leak\n");
         crash (stub);
     }
@@ -440,7 +440,7 @@ INLINE void Free_Level_Internal(Level* L) {
 
     if (L->varlist) {  // !!! Can be not null if abrupt panic [1]
         assert(Misc_Runlevel(L->varlist) == nullptr);  // Drop_Action() nulls
-        if (Not_Node_Managed(L->varlist))
+        if (Not_Base_Managed(L->varlist))
             GC_Kill_Flex(L->varlist);
     }
 
@@ -472,7 +472,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //    that cells in L->out don't count for the rule, but this would confuse
 //    some invariants...and it's better to just say that evaluations into
 //    API cells must leave those cells erased until the eval is complete,
-//    and put NODE_FLAG_ROOT on afterward).
+//    and put BASE_FLAG_ROOT on afterward).
 //
 // 2. The commitment of an Intrinsic is that if it runs without a Level, then
 //    it won't perform evaluations or use continuations.  Those mechanics are
@@ -504,7 +504,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
 
     assert(
         not (L->out->header.bits &
-            (NODE_FLAG_ROOT | NODE_FLAG_MARKED | NODE_FLAG_MANAGED)
+            (BASE_FLAG_ROOT | BASE_FLAG_MARKED | BASE_FLAG_MANAGED)
         )
     );
     if (not (L->flags.bits & FLAG_STATE_BYTE(255)))  // no FLAG_STATE_BYTE()
@@ -1036,7 +1036,7 @@ INLINE void Inject_Definitional_Returner(
     SymId returner  // SYM_YIELD, SYM_RETURN
 ){
     assert(Key_Id(Phase_Keys_Head(Ensure_Level_Details(L))) == returner);
-    assert(Is_Node_Managed(L->varlist));
+    assert(Is_Base_Managed(L->varlist));
 
     Atom* cell = Level_Arg(L, 1);  // should start out specialized
     assert(

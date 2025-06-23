@@ -37,7 +37,7 @@
 // with MOLD or to BIND depends on the frame's phase.  For instance, while a
 // frame is running the body of an interpreted function...that phase has to
 // see the locals defined for that function.  This means you can't tell from a
-// frame context node pointer alone whether a key is visible...the full FRAME!
+// frame context stub pointer alone whether a key is visible...the full FRAME!
 // cell--phase included--must be used.
 //
 // Because this logic is tedious to honor every time a context is enumerated,
@@ -102,7 +102,7 @@ void Init_Evars(EVARS *e, const Element* v) {
         }
 
         e->wordlist = Pop_Managed_Source_From_Stack(base);
-        Clear_Node_Managed_Bit(e->wordlist);  // [1]
+        Clear_Base_Managed_Bit(e->wordlist);  // [1]
 
         e->word = Array_Head(e->wordlist) - 1;
         e->word_tail = Array_Tail(e->wordlist);
@@ -288,9 +288,7 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
     if (a_heart != b_heart)  // e.g. ERROR! won't equal OBJECT!
         return u_cast(Byte, a_heart) > u_cast(Byte, b_heart) ? 1 : 0;
 
-    Node* n1 = CELL_NODE1(a);
-    Node* n2 = CELL_NODE1(b);
-    if (n1 == n2)
+    if (Cell_Context(a) == Cell_Context(b))
         return 0;  // short-circuit, always equal if same context pointer
 
     // Note: can't short circuit on unequal frame lengths alone, as hidden
@@ -483,7 +481,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
     if (not Any_List(arg))
         return FAIL("Currently only (MAKE MODULE! LIST) is allowed");
 
-    SeaOfVars* sea = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+    SeaOfVars* sea = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(sea, Cell_Binding(arg));
     return Init_Module(OUT, sea);
 }
@@ -670,7 +668,7 @@ DECLARE_NATIVE(SET_ADJUNCT)
 // duplicating those links.
 //
 SeaOfVars* Copy_Sea_Managed(SeaOfVars* original) {
-    Stub* sea = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+    Stub* sea = Alloc_Sea_Core(BASE_FLAG_MANAGED);
 
     if (Misc_Sea_Adjunct(original)) {
         Tweak_Misc_Sea_Adjunct(sea, Copy_Varlist_Shallow_Managed(
@@ -726,7 +724,7 @@ VarList* Copy_Varlist_Extra_Managed(
     REBLEN len = Varlist_Len(original);
 
     Array* varlist = Make_Array_For_Copy(
-        FLEX_MASK_VARLIST | NODE_FLAG_MANAGED,
+        FLEX_MASK_VARLIST | BASE_FLAG_MANAGED,
         nullptr,  // original_array, N/A because link/misc used otherwise
         len + extra + 1
     );
@@ -757,7 +755,7 @@ VarList* Copy_Varlist_Extra_Managed(
             CELL_MASK_ALL  // include VAR_MARKED_HIDDEN, PARAM_NOTE_TYPECHECKED
         );
 
-        Flags flags = NODE_FLAG_MANAGED;  // !!! Review, which flags?
+        Flags flags = BASE_FLAG_MANAGED;  // !!! Review, which flags?
         if (not Is_Antiform(dest)) {
             Clonify(Known_Element(dest), flags, deeply);
         }
@@ -776,7 +774,7 @@ VarList* Copy_Varlist_Extra_Managed(
         assert(CTX_TYPE(original) != TYPE_FRAME);  // can't expand FRAME!s
 
         KeyList* keylist = cast(KeyList*, Copy_Flex_At_Len_Extra(
-            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
+            FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,
             Bonus_Keylist(original),
             0,
             Varlist_Len(original),

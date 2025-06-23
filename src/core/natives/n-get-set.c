@@ -379,18 +379,18 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     const Element* path = Known_Element(SCRATCH);
     assert(Is_Path(path));
 
-    if (not Sequence_Has_Node(path)) {  // byte compressed
+    if (not Sequence_Has_Pointer(path)) {  // byte compressed
         e = Error_Bad_Value(path);  // no meaning to 1.2.3/ or /1.2.3 etc.
         goto return_error;
     }
 
  detect_path_compression: {
 
-    const Node* node1 = CELL_NODE1(path);
-    if (Is_Node_A_Cell(node1)) {
+    const Base* payload1 = CELL_PAYLOAD_1(path);
+    if (Is_Base_A_Cell(payload1)) {
         // pairing, but "Listlike", so Cell_List_At() will work on it
     }
-    else switch (Stub_Flavor(c_cast(Flex*, node1))) {
+    else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {  // `/a` or `a/`
         Element* spare = Copy_Cell(SPARE, path);
         HEART_BYTE(spare) = TYPE_WORD;
@@ -909,16 +909,16 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     // GROUP! by value).  These evaluations should only be allowed if the
     // caller has asked us to return steps.
 
-    if (not Sequence_Has_Node(scratch_var)) {  // compressed byte form
+    if (not Sequence_Has_Pointer(scratch_var)) {  // compressed byte form
         e = Error_Bad_Value(scratch_var);
         goto return_error;
     }
 
-    const Node* node1 = CELL_NODE1(scratch_var);
-    if (Is_Node_A_Cell(node1)) {  // pair optimization
+    const Base* payload1 = CELL_PAYLOAD_1(scratch_var);
+    if (Is_Base_A_Cell(payload1)) {  // pair optimization
         // pairings considered "Listlike", handled by Cell_List_At()
     }
-    else switch (Stub_Flavor(c_cast(Flex*, node1))) {
+    else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {
         if (Get_Cell_Flag(scratch_var, LEADING_SPACE)) {  // `/a` or `.a`
             panic ("Leading dot selection is being redesigned.");

@@ -32,7 +32,7 @@
 INLINE void Probe_Print_Helper(
     const void *p,  // the Cell*, Stub*, or UTF-8 char*
     const char *expr,  // stringified contents of the PROBE() macro
-    const char *type,  // detected type of `p` (see %struct-node.h)
+    const char *type,  // detected type of `p` (see %struct-base.h)
     Option(const char*) file,  // file where this PROBE() was invoked
     Option(LineNumber) line  // line where this PROBE() was invoked
 ){
@@ -171,7 +171,7 @@ void* Probe_Core_Debug(
   handle_flex: {
 
     const Flex* f = c_cast(Flex* , p);
-    assert(Is_Node_Readable(f));
+    assert(Is_Base_Readable(f));
     Flavor flavor = Stub_Flavor(f);
     Assert_Flex(f);  // if corrupt, gives better info than a print crash
 
@@ -206,10 +206,10 @@ void* Probe_Core_Debug(
         VarList* varlist = cast(VarList*, m_cast(void*, p));
         if (CTX_TYPE(varlist) == TYPE_FRAME) {
             if (
-                Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK)
-                and Not_Node_Managed(varlist)
+                Not_Stub_Flag(varlist, MISC_NEEDS_MARK)
+                and Not_Base_Managed(varlist)
             ){
-                Set_Node_Managed_Bit(varlist);
+                Set_Base_Managed_Bit(varlist);
             }
             Init_Frame(elem, cast(ParamList*, varlist), ANONYMOUS, NONMETHOD);
         }
@@ -303,7 +303,7 @@ void* Probe_Core_Debug(
         break;
 
       case FLAVOR_NODELIST:  // e.g. GC protect list
-        Probe_Print_Helper(p, expr, "Flex of Node*", file, line);
+        Probe_Print_Helper(p, expr, "Flex of Base*", file, line);
         break;
 
       case FLAVOR_FLEXLIST:  // e.g. manually allocated Flex* list

@@ -40,7 +40,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 
     Array* a = Make_Array_Core(
         FLEX_MASK_VARLIST  // includes assurance of dynamic allocation
-            | flags,  // e.g. NODE_FLAG_MANAGED
+            | flags,  // e.g. BASE_FLAG_MANAGED
         capacity + 1  // size + room for rootvar (array terminator implicit)
     );
     Tweak_Misc_Varlist_Adjunct(a, nullptr);
@@ -50,7 +50,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
 
     KeyList* keylist = Make_Flex(
-        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,  // always shareable
+        FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,  // always shareable
         KeyList,
         capacity  // no terminator
     );
@@ -73,7 +73,7 @@ SeaOfVars* Alloc_Sea_Core(Flags flags) {
     Force_Erase_Cell(&s->content.fixed.cell);
     Init_Space(Stub_Cell(s));
     Tweak_Link_Inherit_Bind(s, nullptr);
-    s->misc.node = nullptr;  // adjunct
+    MISC_SEA_ADJUNCT(s) = nullptr;  // adjunct
 
     return cast(SeaOfVars*, s);
 }
@@ -155,16 +155,16 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 // 2. The GC behavior of these patches is special and does not fit into the
 //    usual patterns.  There is a pass in the GC that propagates context
 //    survival into the patches from the global bind table.  Although we say
-//    INFO_NODE_NEEDS_MARK to keep a context alive, that marking isn't done in
+//    INFO_NEEDS_MARK to keep a context alive, that marking isn't done in
 //    that pass...otherwise the variables could never GC.  Instead, it only
 //    happens if the patch is cached in a variable...then that reference
 //    touches the patch which touches the context.  But if not cached, the
 //    context keeps vars alive; not vice-versa (e.g. the mere existence of a
 //    variable--not cached in a cell reference--should not keep it alive).
-//    MISC_NODE_NEEDS_MARK is not done as that would keep alive patches from
+//    MISC_NEEDS_MARK is not done as that would keep alive patches from
 //    other contexts in the hitch chain.
 //
-//    !!! Should there be a "decay and forward" general mechanic, so a node
+//    !!! Should there be a "decay and forward" general mechanic, so a base
 //    can tell the GC to touch up all references and point to something else,
 //    e.g. to forward references to a cache back to the context in order to
 //    "delete" variables?
@@ -194,7 +194,7 @@ Init(Slot) Append_To_Sea_Core(
 
   add_to_circularly_linked_list_hung_on_symbol: {
 
-    // The variables are linked reachable from the symbol node for the word's
+    // The variables are linked reachable from the symbol base for the word's
     // spelling, and can be directly linked to from a word as a singular value
     // (with binding index as INDEX_PATCHED).  A circularly linked list is
     // used, to facilitate circling around to remove from the list (in lieu of
@@ -361,8 +361,8 @@ void Construct_Collector_Core(
 //
 //  Destruct_Collector_Core: C
 //
-// Reset the bind markers in the canon Stub Nodes so they can be reused,
-// and drop the collected words from the stack.
+// Reset the bind markers in the canon Stubs so they can be reused, and drop
+// the collected words from the stack.
 //
 void Destruct_Collector_Core(Collector *cl)
 {
@@ -769,7 +769,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     Array* a = Make_Array_Core(
         FLEX_MASK_VARLIST
-            | NODE_FLAG_MANAGED, // Note: Rebind below requires managed context
+            | BASE_FLAG_MANAGED, // Note: Rebind below requires managed context
         1 + len  // needs room for rootvar
     );
     Set_Flex_Len(a, 1 + len);
@@ -787,7 +787,7 @@ VarList* Make_Varlist_Detect_Managed(
     }
     else {  // new keys, need new keylist
         KeyList* keylist = Make_Flex(
-            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
+            FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,
             KeyList,
             len  // no terminator, 0-based
         );
@@ -836,7 +836,7 @@ VarList* Make_Varlist_Detect_Managed(
         const Slot* src_tail;
         Slot* src = Varlist_Slots(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
-            Flags clone_flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
+            Flags clone_flags = BASE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(Is_Atom_Trash(dest));
 
             // !!! If we are creating a derived object, should it be able

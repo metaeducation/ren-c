@@ -18,7 +18,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// To facilitate the tricks of the Rebol Node, these macros are purposefully
+// To facilitate the tricks of the Rebol Base, these macros are purposefully
 // arranging bit flags with respect to the "leftmost" and "rightmost" bytes of
 // the underlying platform, when encoding them into an unsigned integer the
 // size of a platform pointer:

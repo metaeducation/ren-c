@@ -524,7 +524,7 @@ Option(Error*) Trap_Pop_Paramlist(
     Count num_params = (TOP_INDEX - base) / 2;
 
     KeyList* keylist = Make_Flex(
-        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
+        FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,
         KeyList,
         num_params
     );
@@ -752,7 +752,7 @@ Details* Make_Dispatch_Details(
     Option(Index) details_max  // 1-based max index desired for Phase_Details
 ){
     assert(0 == (flags & (~ (  // make sure no stray flags passed in
-        NODE_FLAG_MANAGED
+        BASE_FLAG_MANAGED
             | DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC
             | DETAILS_FLAG_API_CONTINUATIONS_OK
             | DETAILS_FLAG_RAW_NATIVE
@@ -763,7 +763,7 @@ Details* Make_Dispatch_Details(
     // the dispatcher understands it to be, by contract.
     //
     Array* a = Make_Array_Core(
-        FLEX_MASK_DETAILS | flags,  // don't add NODE_FLAG_MANAGED
+        FLEX_MASK_DETAILS | flags,  // don't add BASE_FLAG_MANAGED
         (maybe details_max) + 1  // if max is 0, then only Phase_Archetype()
     );
     Set_Flex_Len(a, (maybe details_max) + 1);

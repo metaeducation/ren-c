@@ -105,8 +105,8 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     Set_Cell_Flag(Init_Integer(PUSH(), 2), NEWLINE_BEFORE);
     intptr_t getter = rebUnboxInteger64("api-transient -[Hello]-");
     Recycle();  // transient should survive a recycle
-    Node* getter_node = p_cast(Node*, getter);
-    bool equal = rebUnboxLogic("-[Hello]- = @", getter_node);
+    Base* getter_base = p_cast(Base*, getter);
+    bool equal = rebUnboxLogic("-[Hello]- = @", getter_base);
 
     Init_Boolean(PUSH(), equal);  // ^-- see NOTICE
 

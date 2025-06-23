@@ -59,7 +59,7 @@
         );
         const Byte* bp = c_cast(Byte*, p);
         if (*bp != END_SIGNAL_BYTE) {
-            assert(*bp & NODE_BYTEMASK_0x08_CELL);
+            assert(*bp & BASE_BYTEMASK_0x08_CELL);
             return false;
         }
         assert(bp[1] == 0);  // not strictly necessary, but rebEND is 2 bytes
@@ -96,7 +96,7 @@
 
 INLINE Option(const Cell*) Misc_Feedstub_Pending(Stub* stub) {
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
-    return u_cast(const Cell*, stub->misc.node);
+    return u_cast(const Cell*, stub->misc.base);
 }
 
 INLINE void Tweak_Misc_Feedstub_Pending(
@@ -104,12 +104,12 @@ INLINE void Tweak_Misc_Feedstub_Pending(
     Option(const Cell*) pending
 ){
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
-    stub->misc.node = m_cast(Cell*, maybe pending);  // extracted as const
+    stub->misc.base = m_cast(Cell*, maybe pending);  // extracted as const
 }
 
 INLINE Option(Stub*) Link_Feedstub_Splice(Stub* stub) {
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
-    return u_cast(Stub*, stub->link.node);
+    return u_cast(Stub*, stub->link.base);
 }
 
 INLINE void Tweak_Link_Feedstub_Splice(
@@ -117,7 +117,7 @@ INLINE void Tweak_Link_Feedstub_Splice(
     Option(Stub*) splice
 ){
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
-    stub->link.node = maybe splice;
+    stub->link.base = maybe splice;
 }
 
 #define FEED_SPLICE(feed) \
@@ -171,7 +171,7 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
 // if we're not using an array.  So for the moment, that means using a
 // COMMA! (which for technical reasons has a nullptr binding and is thus
 // always SPECIFIED).  However, Cell_List_Binding() only runs on arrays, so
-// we sneak past that by accessing the node directly.
+// we sneak past that by accessing the base directly.
 //
 #define Feed_Binding(feed) \
     Cell_Binding(Feed_Data(feed))
@@ -296,7 +296,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // needs of API-TRANSIENT are such that a handle which outlives
         // the level is returned as a SINGULAR_API_RELEASE.  Review.
         //
-        /*assert(Is_Node_Managed(inst1));*/
+        /*assert(Is_Base_Managed(inst1));*/
 
         // See notes above (duplicate code, fix!) about how we might like
         // to use the as-is value and wait to free until the next cycle
@@ -511,7 +511,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
                     splice,
                     sizeof(Stub)
                 );
-                Set_Node_Unreadable_Bit(splice);
+                Set_Base_Unreadable_Bit(splice);
                 GC_Kill_Stub(splice);  // Array* would hold reference
                 goto retry_splice;
             }
@@ -630,7 +630,7 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     Force_Erase_Cell(&feed->fetched);
 
     Stub* s = Prep_Stub(
-        NODE_FLAG_NODE | FLAG_FLAVOR(FEED),
+        BASE_FLAG_BASE | FLAG_FLAVOR(FEED),
         &feed->singular  // preallocated
     );
     Force_Erase_Cell(Stub_Cell(s));
@@ -654,7 +654,7 @@ INLINE Feed* Prep_Array_Feed(
     Context* binding,
     Flags flags
 ){
-    assert(not binding or Is_Node_Managed(binding));
+    assert(not binding or Is_Base_Managed(binding));
 
     Feed* feed = Prep_Feed_Common(preallocated, flags);
 

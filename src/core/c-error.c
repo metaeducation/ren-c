@@ -71,7 +71,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 
         const Value* v = c_cast(Value*, p);
 
-        if (Is_Node_Root_Bit_Set(v)) {  // API handles must be errors [1]
+        if (Is_Base_Root_Bit_Set(v)) {  // API handles must be errors [1]
             Error* error;
             if (Is_Warning(v)) {
                 error = Cell_Error(v);

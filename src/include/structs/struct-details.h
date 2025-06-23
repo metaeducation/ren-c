@@ -150,12 +150,12 @@ typedef enum {
 //=//// DETAILS STUB SLOT USAGE ///////////////////////////////////////////=//
 
 #define FLEX_MASK_DETAILS \
-    (NODE_FLAG_NODE \
+    (BASE_FLAG_BASE \
         | FLAG_FLAVOR(DETAILS) \
         | STUB_FLAG_DYNAMIC \
-        | not STUB_FLAG_LINK_NODE_NEEDS_MARK  /* don't mark dispatcher */ \
-        | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* adjunct needs mark */ \
-        | not STUB_FLAG_INFO_NODE_NEEDS_MARK  /* info not currently used */ )
+        | not STUB_FLAG_LINK_NEEDS_MARK  /* don't mark dispatcher */ \
+        | STUB_FLAG_MISC_NEEDS_MARK  /* adjunct needs mark */ \
+        | not STUB_FLAG_INFO_NEEDS_MARK  /* info not currently used */ )
 
 #define LINK_DETAILS_DISPATCHER(details)  (details)->link.cfunc
 #define MISC_DETAILS_ADJUNCT(details)     STUB_MISC(details)

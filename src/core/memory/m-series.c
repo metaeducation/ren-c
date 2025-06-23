@@ -476,7 +476,7 @@ void Assert_Flex_Term_Core(const Flex* f)
 //
 void Assert_Flex_Basics_Core(const Flex* f)
 {
-    if (Not_Node_Readable(f))
+    if (Not_Base_Readable(f))
         crash (f);
 
     assert(TASTE_BYTE(f) != FLAVOR_0);

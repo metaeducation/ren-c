@@ -24,16 +24,16 @@
 //   (but the discussion has not yet finaliezd).
 //
 
-#define CELL_MAP_PAIRLIST(c)  CELL_NODE1(c)
+#define CELL_MAP_PAIRLIST(c)  CELL_PAYLOAD_1(c)
 
 INLINE const Map* VAL_MAP(const Cell* c) {
     assert(Heart_Of(c) == TYPE_MAP);
 
-    Node* node = CELL_MAP_PAIRLIST(c);
-    if (Not_Node_Readable(node))
+    Base* base = CELL_MAP_PAIRLIST(c);
+    if (Not_Base_Readable(base))
         panic (Error_Series_Data_Freed_Raw());
 
-    return cast(Map*, node);  // identity is the PairList
+    return cast(Map*, base);  // identity is the PairList
 }
 
 #define VAL_MAP_Ensure_Mutable(v) \

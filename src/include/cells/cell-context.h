@@ -16,25 +16,25 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
         and Any_Context_Type(heart)
     );
 
-    Node* node = CELL_NODE1(c);  // ParamList or Details
-    if (Not_Node_Readable(node)) {
+    Base* base = CELL_PAYLOAD_1(c);  // ParamList or Details
+    if (Not_Base_Readable(base)) {
         if (heart == TYPE_FRAME)
             panic (Error_Expired_Frame_Raw());  // !!! different warning?
         panic (Error_Series_Data_Freed_Raw());
     }
 
-    while (not Is_Stub_Varlist(cast(Stub*, node))) {
+    while (not Is_Stub_Varlist(cast(Stub*, base))) {
         assert(Unchecked_Heart_Of(c) == TYPE_FRAME);
-        assert(Is_Stub_Details(cast(Stub*, node)));
+        assert(Is_Stub_Details(cast(Stub*, base)));
         c = Flex_Head_Dynamic(Cell, cast(Details*, CELL_FRAME_PHASE(c)));
-        node = CELL_NODE1(c);  // ParamList or Details
+        base = CELL_PAYLOAD_1(c);  // ParamList or Details
     }
-    return cast(VarList*, node);
+    return cast(VarList*, base);
 }
 
 INLINE SeaOfVars* Cell_Module_Sea(const Cell* c) {
     assert(Heart_Of(c) == TYPE_MODULE);
-    return cast(SeaOfVars*, CELL_NODE1(c));
+    return cast(SeaOfVars*, CELL_PAYLOAD_1(c));
 }
 
 
@@ -72,10 +72,10 @@ INLINE Element* Init_Context_Cell(
 
 
 INLINE Element* Init_Let(Init(Element) out, Let* let) {
-    assert(Is_Node_Managed(let));
+    assert(Is_Base_Managed(let));
     Reset_Cell_Header_Noquote(out, CELL_MASK_LET);
     CELL_EXTRA(out) = nullptr;
-    CELL_NODE1(out) = let;
+    CELL_PAYLOAD_1(out) = let;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
     return out;
 }
@@ -83,19 +83,19 @@ INLINE Element* Init_Let(Init(Element) out, Let* let) {
 INLINE Let* Cell_Let(const Cell* c) {
     assert(Heart_Of(c) == TYPE_LET);
 
-    Node* node = CELL_NODE1(c);
-    if (Not_Node_Readable(node))
+    Base* base = CELL_PAYLOAD_1(c);
+    if (Not_Base_Readable(base))
         panic (Error_Series_Data_Freed_Raw());
 
-    return cast(Let*, node);
+    return cast(Let*, base);
 }
 
 
 INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
-    assert(Is_Node_Managed(sea));
+    assert(Is_Base_Managed(sea));
     Reset_Cell_Header_Noquote(out, CELL_MASK_MODULE);
     CELL_EXTRA(out) = nullptr;
-    CELL_NODE1(out) = sea;
+    CELL_PAYLOAD_1(out) = sea;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
     return out;
 }

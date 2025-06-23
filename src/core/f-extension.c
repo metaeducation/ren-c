@@ -184,7 +184,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
-    SeaOfVars* sea = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+    SeaOfVars* sea = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(sea, g_lib_context);
 
     g_native_cfunc_pos = cfuncs;

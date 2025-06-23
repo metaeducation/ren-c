@@ -70,7 +70,7 @@ DECLARE_NATIVE(EXIT)  // moved to SYS.UTIL/EXIT by boot code, for safety
 //
 //  "Recycles unused memory"
 //
-//      return: "Number of Flex Nodes recycled (if applicable)"
+//      return: "Number of Stubs/Pairings recycled (if applicable)"
 //          [null? integer!]
 //      :off "Disable auto-recycling"
 //      :on "Enable auto-recycling"
@@ -118,9 +118,9 @@ DECLARE_NATIVE(RECYCLE)
 
         REBLEN index = 0;
         for (index = 0; index < count; ++index) {
-            Node* node = *Flex_At(Node*, sweeplist, index);
-            PROBE(node);
-            UNUSED(node);
+            Base* base = *Flex_At(Base*, sweeplist, index);
+            PROBE(base);
+            UNUSED(base);
         }
 
         Free_Unmanaged_Flex(sweeplist);

@@ -40,7 +40,7 @@
 // the only option.
 //
 // Rather than let nullptr in the link slot indicate there is no filename,
-// the routines go on the basis of STUB_FLAG_LINK_NODE_NEEDS_MARK.  This lets
+// the routines go on the basis of STUB_FLAG_LINK_NEEDS_MARK.  This lets
 // marking source arrays without a filename be a bit faster, since it doesn't
 // have to test for null.
 //

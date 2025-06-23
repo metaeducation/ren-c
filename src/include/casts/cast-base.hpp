@@ -1,6 +1,6 @@
 //
-//  file: %cast-node.hpp
-//  summary: "Instrumented operators for casting Node"
+//  file: %cast-base.hpp
+//  summary: "Instrumented operators for casting to Base"
 //  project: "Ren-C Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,7 +20,7 @@
 //
 // See src/include/casts/README.md for general information about CastHelper.
 //
-// This file is specifically for checking casts to Nodes.
+// This file is specifically for checking casts to Base.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -35,15 +35,15 @@
 //
 
 
-//=//// cast(Node*, ...) //////////////////////////////////////////////////=//
+//=//// cast(Base*, ...) //////////////////////////////////////////////////=//
 
 template<typename F>
-const Node* node_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
-    return u_cast(const Node*, p);
+const Base* base_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
+    return u_cast(const Base*, p);
 }
 
 template<typename F>
-const Node* node_cast_impl(const F* p, DowncastTag) {  // validate [C]
+const Base* base_cast_impl(const F* p, DowncastTag) {  // validate [C]
     DECLARE_C_TYPE_LIST(type_list,
         void, Byte
     );
@@ -52,15 +52,15 @@ const Node* node_cast_impl(const F* p, DowncastTag) {  // validate [C]
     if (not p)
         return nullptr;
 
-    if (not (*u_cast(const Byte*, p) & NODE_BYTEMASK_0x80_NODE))
+    if (not (*u_cast(const Byte*, p) & BASE_BYTEMASK_0x80_NODE))
         crash (p);
 
-    return u_cast(const Node*, p);
+    return u_cast(const Base*, p);
 };
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Node*> {  // both must be const [B]
-    static const Node* convert(const F* p) {
-        return node_cast_impl(p, WhichCastDirection<F, Node>{});
+struct CastHelper<const F*, const Base*> {  // both must be const [B]
+    static const Base* convert(const F* p) {
+        return base_cast_impl(p, WhichCastDirection<F, Base>{});
     }
 };

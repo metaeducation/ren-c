@@ -395,17 +395,17 @@ DECLARE_NATIVE(UNPROTECT)
 // in order to do things like use blocks as map keys, etc.
 //
 bool Is_Value_Frozen_Deep(const Cell* v) {
-    if (not Cell_Has_Node1(v))
+    if (not Cell_Payload_1_Needs_Mark(v))
         return true;  // payloads that live in cell are already immutable
 
-    Node* node = CELL_NODE1(v);
-    if (node == nullptr or Is_Node_A_Cell(node))
+    Base* base = CELL_PAYLOAD_1(v);
+    if (base == nullptr or Is_Base_A_Cell(base))
         return true;  // !!! Will all non-quoted Pairings be frozen?
 
     // Frozen deep should be set even on non-Arrays, e.g. all frozen shallow
     // Strings should also have FLEX_INFO_FROZEN_DEEP.
     //
-    return Get_Flex_Info(x_cast(Flex*, node), FROZEN_DEEP);
+    return Get_Flex_Info(x_cast(Flex*, base), FROZEN_DEEP);
 }
 
 

@@ -181,7 +181,7 @@ Bounce Cascader_Executor(Level* const L)
     //    but it might be bugs waiting to happen, trying it this way for now.
 
     Level* sub = SUBLEVEL;
-    if (sub->varlist and Not_Node_Managed(sub->varlist))
+    if (sub->varlist and Not_Base_Managed(sub->varlist))
         GC_Kill_Flex(sub->varlist);
 
     sub->varlist = nullptr;
@@ -286,7 +286,7 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
     }
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED,
+        BASE_FLAG_MANAGED,
         first,  // cascade has same interface as its first action [2]
         &Cascader_Executor,
         MAX_IDX_CASCADER  // details array capacity

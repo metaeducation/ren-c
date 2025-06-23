@@ -203,7 +203,7 @@ uint32_t Hash_Value(const Value* cell)
       case TYPE_CHAIN:
       case TYPE_TUPLE:
       case TYPE_PATH: {
-        if (not Sequence_Has_Node(cell)) {
+        if (not Sequence_Has_Pointer(cell)) {
             hash = Hash_Bytes(
                 cell->payload.at_least_8 + 1,
                 cell->payload.at_least_8[IDX_SEQUENCE_USED]
@@ -211,12 +211,12 @@ uint32_t Hash_Value(const Value* cell)
             break;
         }
 
-        const Node* node1 = CELL_NODE1(cell);
+        const Base* payload1 = CELL_PAYLOAD_1(cell);
 
-        if (Is_Node_A_Cell(node1))
+        if (Is_Base_A_Cell(payload1))
             goto hash_pair;
 
-        switch (Stub_Flavor(c_cast(Flex*, node1))) {
+        switch (Stub_Flavor(c_cast(Flex*, payload1))) {
           case FLAVOR_SYMBOL:
             goto hash_any_word;
 

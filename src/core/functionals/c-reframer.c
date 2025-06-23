@@ -112,7 +112,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     if (Trampoline_With_Top_As_Root_Throws())
         return L;
 
-    assert(Not_Node_Managed(varlist));  // shouldn't be [3]
+    assert(Not_Base_Managed(varlist));  // shouldn't be [3]
     L->varlist = varlist;  // put varlist back
 
     assert(Is_Atom_Trash(L->out));  // should only have gathered arguments
@@ -205,7 +205,7 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
     //
     assert(Level_Coupling(L) == Cell_Frame_Coupling(action));
 
-    assert(Not_Node_Managed(L->varlist));
+    assert(Not_Base_Managed(L->varlist));
 
     ParamList* varlist = cast(ParamList*, L->varlist);  // executor is nullptr
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
@@ -213,7 +213,7 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
     Drop_Level(L);
     Drop_Lifeguard(action);
 
-    Set_Node_Managed_Bit(varlist);  // can't use Manage_Flex
+    Set_Base_Managed_Bit(varlist);  // can't use Manage_Flex
 
     ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(action));
     Init_Lensed_Frame(out, varlist, lens, coupling);
@@ -396,7 +396,7 @@ Details* Alloc_Action_From_Exemplar(
     Init_Frame(elem, paramlist, ANONYMOUS, NONMETHOD);
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED,
+        BASE_FLAG_MANAGED,
         elem,
         dispatcher,
         details_capacity

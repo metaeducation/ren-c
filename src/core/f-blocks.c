@@ -148,7 +148,7 @@ Array* Copy_Array_Core_Managed(  // always managed, [1]
     REBLEN extra,
     bool deeply
 ){
-    assert(flags & NODE_FLAG_MANAGED);  // [1]
+    assert(flags & BASE_FLAG_MANAGED);  // [1]
 
     if (index > tail) // !!! should this be asserted?
         index = tail;
@@ -172,7 +172,7 @@ Array* Copy_Array_Core_Managed(  // always managed, [1]
         Copy_Cell(dest, src);
         Clonify(
             dest,
-            flags | NODE_FLAG_MANAGED,
+            flags | BASE_FLAG_MANAGED,
             deeply
         );
     }

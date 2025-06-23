@@ -88,16 +88,16 @@
 //
 // * Compressed forms detect their compression as follows:
 //
-//   - Byte compressed forms have CELL_FLAG_DONT_MARK_NODE1, which you can
-//     test for more clearly with (not Sequence_Has_Node(cell))
+//   - Byte compressed forms have CELL_FLAG_DONT_MARK_PAYLOAD_1, which you can
+//     test for more clearly with (not Sequence_Has_Pointer(cell))
 //
-//   - Pair compression has the first node with NODE_FLAG_CELL
+//   - Pair compression has CELL_PAYLOAD_1() with BASE_FLAG_CELL
 //
-//   - Single WORD! forms have the first node as FLAVOR_SYMBOL
+//   - Single WORD! forms have CELL_PAYLOAD_1() as FLAVOR_SYMBOL
 //        If CELL_FLAG_LEADING_SPACE it is either a `/foo` or `.foo` case
 //        Without the flag, it is either a `foo/` or `foo.` case
 //
-//   - Uncompressed forms have the first node as FLAVOR_SOURCE
+//   - Uncompressed forms have CELL_PAYLOAD_1() as FLAVOR_SOURCE
 //
 
 
@@ -245,7 +245,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
         // fallthrough (should be able to single cell optimize any INTEGER!)
     }
 
-    Pairing* p = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Pairing* p = Alloc_Pairing(BASE_FLAG_MANAGED);
     if (flag == CELL_FLAG_LEADING_SPACE) {
         Init_Space(Pairing_First(p));
         Copy_Cell(Pairing_Second(p), e);
@@ -258,8 +258,8 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     Reset_Cell_Header_Noquote(
         e,
         FLAG_HEART_ENUM(heart)
-            | (not CELL_FLAG_DONT_MARK_NODE1)  // mark the pairing
-            | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // mark the pairing
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // payload second not used
     );
     Tweak_Cell_Binding(e, UNBOUND);  // "arraylike", needs binding
     CELL_SERIESLIKE_NODE(e) = p;
@@ -294,7 +294,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
     assert(Any_Sequence_Type(heart));
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_NODES
+        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_MARKING
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths bindable, can't have garbage
 
@@ -334,7 +334,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_NODES
+        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_MARKING
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths are bindable, can't be garbage
 
@@ -439,15 +439,15 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     if (err2)
         return err2;
 
-    Pairing* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Pairing* pairing = Alloc_Pairing(BASE_FLAG_MANAGED);
     Copy_Cell(Pairing_First(pairing), first);
     Copy_Cell(Pairing_Second(pairing), second);
 
     Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_ENUM(heart)
-            | (not CELL_FLAG_DONT_MARK_NODE1)  // first is pairing
-            | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is pairing
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // payload second not used
     );
     Tweak_Cell_Binding(out, UNBOUND);  // "arraylike", needs binding
     CELL_PAIRLIKE_PAIRING_NODE(out) = pairing;
@@ -584,21 +584,21 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
 INLINE Length Cell_Sequence_Len(const Cell* c) {
     assert(Any_Sequence_Type(Heart_Of(c)));
 
-    if (not Sequence_Has_Node(c)) {  // compressed bytes
-        assert(not Cell_Has_Node2(c));
+    if (not Sequence_Has_Pointer(c)) {  // compressed bytes
+        assert(not Cell_Payload_2_Needs_Mark(c));
         return c->payload.at_least_8[IDX_SEQUENCE_USED];
     }
 
-    const Node* node1 = CELL_NODE1(c);
-    if (Is_Node_A_Cell(node1))  // see if it's a pairing
+    const Base* payload1 = CELL_PAYLOAD_1(c);
+    if (Is_Base_A_Cell(payload1))  // see if it's a pairing
         return 2;  // compressed 2-element sequence, sizeof(Stub)
 
-    switch (Stub_Flavor(c_cast(Flex*, node1))) {
+    switch (Stub_Flavor(c_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL :  // compressed single WORD! sequence
         return 2;
 
       case FLAVOR_SOURCE : {  // uncompressed sequence
-        const Source* a = c_cast(Source*, node1);
+        const Source* a = c_cast(Source*, payload1);
         if (Mirror_Of(a))
             return 2;  // e.g. `(a):` stores TYPE_GROUP in the mirror byte
         assert(Array_Len(a) >= 2);
@@ -625,8 +625,8 @@ INLINE Length Cell_Sequence_Len(const Cell* c) {
 //    the path or tuple.  If implemented as a pseudo-WORD!
 //
 // 4. "Mirror Bytes" are the idea that things like a GROUP! or a BLOCK! which
-//    are put into a sequence already have a node allocated, and that array
-//    node has a place where size is written for non-array types when using
+//    are put into a sequence already have a Stub allocated, and that array
+//    Stub has a place where size is written for non-array types when using
 //    the small series optimization.
 //
 INLINE Element* Derelativize_Sequence_At(
@@ -638,21 +638,21 @@ INLINE Element* Derelativize_Sequence_At(
     assert(out != sequence);
     assert(Any_Sequence_Type(Heart_Of(sequence)));  // !!! should not be cell
 
-    if (not Sequence_Has_Node(sequence)) {  // compressed bytes
+    if (not Sequence_Has_Pointer(sequence)) {  // compressed bytes
         assert(n < sequence->payload.at_least_8[IDX_SEQUENCE_USED]);
         return Init_Integer(out, sequence->payload.at_least_8[n + 1]);
     }
 
-    const Node* node1 = CELL_NODE1(sequence);
-    if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
-        const Pairing* p = c_cast(Pairing*, node1);  // compressed pair
+    const Base* payload1 = CELL_PAYLOAD_1(sequence);
+    if (Is_Base_A_Cell(payload1)) {  // test if it's a pairing
+        const Pairing* p = c_cast(Pairing*, payload1);  // compressed pair
         if (n == 0)
             return Derelativize(out, Pairing_First(p), context);
         assert(n == 1);
         return Derelativize(out, Pairing_Second(p), context);
     }
 
-    switch (Stub_Flavor(x_cast(Flex*, node1))) {
+    switch (Stub_Flavor(x_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
         if (Get_Cell_Flag(sequence, LEADING_SPACE) ? n == 0 : n != 0)
@@ -709,14 +709,14 @@ INLINE Context* Cell_Sequence_Binding(const Element* sequence) {
     // does not provide a layer of communication connecting the interior
     // to a frame instance (because there is no actual layer).
 
-    if (not Sequence_Has_Node(sequence))  // compressed bytes
+    if (not Sequence_Has_Pointer(sequence))  // compressed bytes
         return SPECIFIED;
 
-    const Node* node1 = CELL_NODE1(sequence);
-    if (Is_Node_A_Cell(node1))  // see if it's a pairing
+    const Base* payload1 = CELL_PAYLOAD_1(sequence);
+    if (Is_Base_A_Cell(payload1))  // see if it's a pairing
         return Cell_Binding(sequence);  // compressed 2-element sequence
 
-    switch (Stub_Flavor(c_cast(Flex*, node1))) {
+    switch (Stub_Flavor(c_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL:  // compressed single WORD! sequence
         return SPECIFIED;
 
@@ -800,10 +800,10 @@ INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
 INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
     assert(Any_Sequence_Type(Heart_Of(c)));
 
-    if (not Sequence_Has_Node(c))  // compressed bytes
+    if (not Sequence_Has_Pointer(c))  // compressed bytes
         return NOT_SINGLEHEART_0;
 
-    if (Is_Node_A_Cell(CELL_SERIESLIKE_NODE(c))) {
+    if (Is_Base_A_Cell(CELL_SERIESLIKE_NODE(c))) {
         const Pairing* p = u_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(c));
 
         if (Is_Space(Pairing_First(p)))
@@ -815,7 +815,7 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         return NOT_SINGLEHEART_0;
     }
 
-    const Flex* f = cast(Flex*, CELL_NODE1(c));
+    const Flex* f = cast(Flex*, CELL_PAYLOAD_1(c));
     if (Stub_Flavor(f) == FLAVOR_SYMBOL) {
         if (c->header.bits & CELL_FLAG_LEADING_SPACE)
             return Leading_Space_And(TYPE_WORD);

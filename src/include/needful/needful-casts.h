@@ -718,7 +718,7 @@
 // have an Array* in your hand we can assume you got it through a means that
 // you knew it was valid.
 //
-// But if you downcast (e.g. from a Node* to a VarList*), then it's a riskier
+// But if you downcast (e.g. from a Base* to a VarList*), then it's a riskier
 // operation, so validation code is run:
 //
 //   https://en.wikipedia.org/wiki/Downcasting

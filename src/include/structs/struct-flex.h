@@ -142,13 +142,13 @@
 // The INFO bits are resident immediately after the content description, and
 // in the case of singular Arrays a cell is stored in the Stub itself.  An
 // array traversal might step outside the bounds, so it's easiest just to say
-// the location is not a Node to avoid writing it.
+// the location is not a Base to avoid writing it.
 //
 // !!! This can be reviewed if getting another bit seems important.
 //
 #define FLEX_INFO_0_IS_FALSE \
     FLAG_LEFT_BIT(0)
-STATIC_ASSERT(FLEX_INFO_0_IS_FALSE == NODE_FLAG_NODE);
+STATIC_ASSERT(FLEX_INFO_0_IS_FALSE == BASE_FLAG_BASE);
 
 
 //=//// FLEX_INFO_1 /////////////////////////////////////////////////////=//

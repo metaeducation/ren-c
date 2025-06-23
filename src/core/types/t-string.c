@@ -989,7 +989,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 // TO conversions of strings make copies (if the destination is mutable),
 // and hence need only use read routines like Cell_Utf8_XXX() to access
 // the bytes.  The ANY-UTF8? handler needs to deal with cells that might
-// use storage in their cell for the data, or an allocated node (as all
+// use storage in their cell for the data, or an allocated stub (as all
 // strings do).  Hence its concerns are a superset of those for strings.
 //
 // (We could just omit a TO handler here and it would fall through to

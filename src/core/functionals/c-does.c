@@ -91,7 +91,7 @@ DECLARE_NATIVE(DOES)
         nullptr,  // don't set up a binder; just poke specializee in frame
         nullptr  // leave unspecialized slots with parameter! antiforms
     );
-    assert(Is_Node_Managed(exemplar));
+    assert(Is_Base_Managed(exemplar));
 
     assert(Key_Id(Varlist_Key(exemplar, 1)) == SYM_RETURN);
     Copy_Cell(Slot_Init_Hack(Varlist_Slot(exemplar, 2)), source);

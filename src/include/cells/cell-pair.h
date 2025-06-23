@@ -1,6 +1,6 @@
 //
 //  file: %cell-pair.h
-//  summary: "Definitions for Pairing Nodes and the Pair Datatype"
+//  summary: "Definitions for Stub-sized Pairings and the Pair Datatype"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -33,7 +33,7 @@
 
 #define PAIRING_LEN 2
 
-#define CELL_SERIESLIKE_NODE(c)  CELL_NODE1(c)
+#define CELL_SERIESLIKE_NODE(c)  CELL_PAYLOAD_1(c)
 
 #define CELL_PAIRLIKE_PAIRING_NODE(c)  CELL_SERIESLIKE_NODE(c)
 
@@ -56,9 +56,9 @@ INLINE bool Pairlike_Cell(const Cell* v) {
         return true;
     if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))
         return false;
-    if (not Sequence_Has_Node(v))  // compressed bytes
+    if (not Sequence_Has_Pointer(v))  // compressed bytes
         return false;
-    return Is_Node_A_Cell(CELL_PAIRLIKE_PAIRING_NODE(v));
+    return Is_Base_A_Cell(CELL_PAIRLIKE_PAIRING_NODE(v));
 }
 
 INLINE Pairing* Cell_Pairing(const Cell* v) {
@@ -79,7 +79,7 @@ INLINE REBI64 Cell_Pair_Y(const Cell* v)
   { return VAL_INT64(Cell_Pair_Second(v)); }
 
 INLINE Value* Init_Pair_Untracked(Init(Element) out, REBI64 x, REBI64 y) {
-    Pairing* p = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Pairing* p = Alloc_Pairing(BASE_FLAG_MANAGED);
     Init_Integer(Pairing_First(p), x);
     Init_Integer(Pairing_Second(p), y);
 

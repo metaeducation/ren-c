@@ -65,7 +65,7 @@ ATTRIBUTE_NO_RETURN void Crash_With_Stub_Debug(const Stub* s)
     fflush(stdout);
     fflush(stderr);
 
-    if (Is_Node_Managed(s))
+    if (Is_Base_Managed(s))
         Printf_Stderr("managed");
     else
         Printf_Stderr("unmanaged");
@@ -74,7 +74,7 @@ ATTRIBUTE_NO_RETURN void Crash_With_Stub_Debug(const Stub* s)
   #if DEBUG_STUB_ORIGINS
     #if TRAMPOLINE_COUNTS_TICKS
         Printf_Stderr(" was likely ");
-        if (Not_Node_Readable(s))
+        if (Not_Base_Readable(s))
             Printf_Stderr("freed");
         else
             Printf_Stderr("created");
@@ -131,34 +131,34 @@ ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
     Printf_Stderr("cell heart name=%s\n", name);
     Printf_Stderr("lift_byte=%d\n", u_cast(int, LIFT_BYTE(c)));
 
-    if (Cell_Has_Node1(c))
-        Printf_Stderr("has node1: %p\n", c_cast(void*, CELL_NODE1(c)));
-    if (Cell_Has_Node2(c))
-        Printf_Stderr("has node2: %p\n", c_cast(void*, CELL_NODE2(c)));
+    if (Cell_Payload_1_Needs_Mark(c))
+        Printf_Stderr("has payload1: %p\n", c_cast(void*, CELL_PAYLOAD_1(c)));
+    if (Cell_Payload_2_Needs_Mark(c))
+        Printf_Stderr("has payload2: %p\n", c_cast(void*, CELL_PAYLOAD_2(c)));
 
-    Node* containing = Try_Find_Containing_Node_Debug(c);
+    Base* containing = Try_Find_Containing_Base_Debug(c);
 
     if (not containing) {
         Printf_Stderr("No containing Stub or Pairing (global variable?)\n");
-        if (Cell_Has_Node1(c) and Is_Node_A_Stub(CELL_NODE1(c))) {
-            Printf_Stderr("Crashing on node1 in case it helps\n");
-            Crash_With_Stub_Debug(c_cast(Stub*, CELL_NODE1(c)));
+        if (Cell_Payload_1_Needs_Mark(c) and Is_Base_A_Stub(CELL_PAYLOAD_1(c))) {
+            Printf_Stderr("Crashing on payload1 in case it helps\n");
+            Crash_With_Stub_Debug(c_cast(Stub*, CELL_PAYLOAD_1(c)));
         }
-        if (Cell_Has_Node2(c) and Is_Node_A_Stub(CELL_NODE2(c))) {
-            Printf_Stderr("No node1, crashing on node2 in case it helps\n");
-            Crash_With_Stub_Debug(c_cast(Stub*, CELL_NODE2(c)));
+        if (Cell_Payload_2_Needs_Mark(c) and Is_Base_A_Stub(CELL_PAYLOAD_2(c))) {
+            Printf_Stderr("No payload1, crashing on payload2 in case it helps\n");
+            Crash_With_Stub_Debug(c_cast(Stub*, CELL_PAYLOAD_2(c)));
         }
-        Printf_Stderr("No node1 or node2 for further info, aborting\n");
+        Printf_Stderr("No payload1 or payload2 for further info, aborting\n");
         abort();
     }
 
-    if (Is_Node_A_Stub(containing))
+    if (Is_Base_A_Stub(containing))
         Printf_Stderr("Containing Stub");
     else
         Printf_Stderr("Containing Pairing");
     Printf_Stderr("for value pointer found, %p:\n", cast(void*, containing));
 
-    if (Is_Node_A_Stub(containing)) {
+    if (Is_Base_A_Stub(containing)) {
         Printf_Stderr("Panicking the Stub containing the Cell...\n");
         Crash_With_Stub_Debug(cast(Stub*, containing));
     }
@@ -450,13 +450,13 @@ DECLARE_NATIVE(PANIC)
 // Only called when Assert_Cell_Readable() fails, no reason to inline it.
 //
 void Crash_On_Unreadable_Cell(const Cell* c) {
-    if (not Is_Node(c))
+    if (not Is_Base(c))
         printf("Non-node passed to cell read routine\n");
-    else if (not Is_Node_A_Cell(c))
+    else if (not Is_Base_A_Cell(c))
         printf("Non-cell passed to cell read routine\n");
     else {
-        assert(Not_Node_Readable(c));
-        printf("Assert_Cell_Readable() on NODE_FLAG_UNREADABLE cell\n");
+        assert(Not_Base_Readable(c));
+        printf("Assert_Cell_Readable() on BASE_FLAG_UNREADABLE cell\n");
     }
     crash (c);
 }
@@ -468,9 +468,9 @@ void Crash_On_Unreadable_Cell(const Cell* c) {
 // Only called when Assert_Cell_Writable() fails, no reason to inline it.
 //
 void Crash_On_Unwritable_Cell(const Cell* c) {
-    if (not Is_Node(c))
+    if (not Is_Base(c))
         printf("Non-node passed to cell write routine\n");
-    else if (not Is_Node_A_Cell(c))
+    else if (not Is_Base_A_Cell(c))
         printf("Non-cell passed to cell write routine\n");
     else {
         assert(Get_Cell_Flag(c, PROTECTED));

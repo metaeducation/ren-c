@@ -4,10 +4,10 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
     assert(
         Any_Series_Type(heart)
-        or (Any_Utf8_Type(heart) and Stringlike_Has_Node(v))
+        or (Any_Utf8_Type(heart) and Stringlike_Has_Stub(v))
     );
     UNUSED(heart);
-    if (Not_Node_Readable(CELL_SERIESLIKE_NODE(v)))
+    if (Not_Base_Readable(CELL_SERIESLIKE_NODE(v)))
         panic (Error_Series_Data_Freed_Raw());
 
     return cast(Flex*, CELL_SERIESLIKE_NODE(v));
@@ -41,13 +41,13 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     //
     INLINE REBIDX VAL_INDEX_UNBOUNDED(const Cell* c) {
         assert(Any_Series_Type(Unchecked_Heart_Of(c)));
-        assert(Cell_Has_Node1(c));
+        assert(Cell_Payload_1_Needs_Mark(c));
         return VAL_INDEX_RAW(c);
     }
     INLINE REBIDX & VAL_INDEX_UNBOUNDED(Cell* c) {
         Assert_Cell_Writable(c);
         assert(Any_Series_Type(Unchecked_Heart_Of(c)));
-        assert(Cell_Has_Node1(c));
+        assert(Cell_Payload_1_Needs_Mark(c));
         return VAL_INDEX_RAW(c);  // returns a C++ reference
     }
 #endif
@@ -64,7 +64,7 @@ INLINE REBLEN VAL_INDEX_STRINGLIKE_OK(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
     assert(Any_Series_Type(heart) or Stringlike_Cell(v));
     UNUSED(heart);
-    assert(Cell_Has_Node1(v));
+    assert(Cell_Payload_1_Needs_Mark(v));
     REBIDX i = VAL_INDEX_RAW(v);
     if (i < 0 or i > Cell_Series_Len_Head(v))
         panic (Error_Index_Out_Of_Range_Raw());
@@ -94,10 +94,9 @@ INLINE Size Cell_String_Size_Limit_At(
 //
 // 2. Many Array Flexes (such as varlists) allow antiforms.  We don't want
 //    these making it into things like BLOCK! or GROUP! values, as the user
-//    should never see antiforms in what they see as "ANY-ARRAY!".  Plus
-//    we want to interpret the LINK node as a filename and the MISC as a
-//    line number, and that's contentious with other array forms' purposes
-//    for LINK and MISC.
+//    should never see antiforms in what they see as "ANY-ARRAY!".  Plus we
+//    want to interpret the LINK as a filename and the MISC as a line number.
+//    That's contentious with other array forms' purposes for LINK and MISC.
 //
 INLINE Element* Init_Series_At_Core_Untracked(
     Init(Element) out,
@@ -135,13 +134,13 @@ INLINE Element* Init_Series_At_Core_Untracked(
     Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_ENUM(heart)
-            | (not CELL_FLAG_DONT_MARK_NODE1)  // series stub needs mark
-            | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // series stub needs mark
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
     CELL_SERIESLIKE_NODE(out) = m_cast(Flex*, f);  // const bit guides extract
     VAL_INDEX_RAW(out) = index;
 
-    out->extra.node = binding;  // checked below if DEBUG_CHECK_BINDING
+    out->extra.base = binding;  // checked below if DEBUG_CHECK_BINDING
 
   #if DEBUG_CHECK_BINDING
     if (Any_Bindable_Type(heart))

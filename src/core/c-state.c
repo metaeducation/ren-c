@@ -67,7 +67,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
     Drop_Data_Stack_To(s->stack_base);
 
     // Free any manual Flexes that were extant (e.g. Make_Flex() nodes
-    // which weren't created with NODE_FLAG_MANAGED and were not transitioned
+    // which weren't created with BASE_FLAG_MANAGED and were not transitioned
     // into the managed state).  This will include any Flexes used as backing
     // store for rebAlloc() calls.
     //
@@ -126,8 +126,8 @@ INLINE void Tweak_Plug_Suspended_Level(Array* plug, Level* L)
 // compressed form that just holds the Level directly.
 //
 static Level* Level_Of_Plug(const Value* plug) {
-    if (Handle_Holds_Node(plug)) {
-        const Array* a = c_cast(Array*, Cell_Handle_Node(plug));
+    if (Handle_Holds_Base(plug)) {
+        const Array* a = c_cast(Array*, Cell_Handle_Base(plug));
         assert(Stub_Flavor(a) == FLAVOR_DATASTACK);
         return Plug_Suspended_Level(a);
     }
@@ -293,11 +293,11 @@ void Unplug_Stack(
     }
     else {
         Array* a = Pop_Stack_Values_Core(
-            flags | FLAG_FLAVOR(DATASTACK) | NODE_FLAG_MANAGED,
+            flags | FLAG_FLAVOR(DATASTACK) | BASE_FLAG_MANAGED,
             base->baseline.stack_base
         );
         Tweak_Plug_Suspended_Level(a, L);
-        Init_Handle_Node_Managed(plug, a, &Plug_Handle_Cleaner);
+        Init_Handle_Base_Managed(plug, a, &Plug_Handle_Cleaner);
     }
     assert(L == Level_Of_Plug(plug));
 
@@ -351,12 +351,12 @@ void Replug_Stack(Level* base, Value* plug) {
     // Now add in all the residual elements from the plug to global buffers
     // like the mold buffer and data stack.
 
-    if (not Handle_Holds_Node(plug))  // no array of additional information
+    if (not Handle_Holds_Base(plug))  // no array of additional information
         goto finished;
 
   restore_state_components: {
 
-    Array* array = x_cast(Array*, Cell_Handle_Node(plug));
+    Array* array = x_cast(Array*, Cell_Handle_Base(plug));
     assert(Stub_Flavor(array) == FLAVOR_DATASTACK);
 
     Value* item = Flex_Tail(Value, array);
@@ -437,8 +437,8 @@ void Assert_State_Balanced_Debug(
             "Push_Lifeguard()x%d without Drop_Lifeguard()\n",
             cast(int, Flex_Used(g_gc.guarded) - s->guarded_len)
         );
-        Node* guarded = *Flex_At(
-            Node*,
+        Base* guarded = *Flex_At(
+            Base*,
             g_gc.guarded,
             Flex_Used(g_gc.guarded) - 1
         );

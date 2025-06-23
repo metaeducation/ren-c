@@ -47,7 +47,7 @@
 //   describes the function.  This is read by help.  A similar facility is
 //   enabled by the `misc.meta` field of varlists.
 //
-// * By storing the C function dispatcher pointer in the `details` array node
+// * By storing the C function dispatcher pointer in the `details` array base
 //   instead of in the value cell itself, it also means the dispatcher can be
 //   HIJACKed--or otherwise hooked to affect all instances of a function.
 //
@@ -59,8 +59,8 @@
 // earlier than %cell-frame.h
 
 #define CELL_FRAME_COUPLING(c)         CELL_EXTRA(c)
-#define CELL_FRAME_PHASE(c)            CELL_NODE1(c)
-#define CELL_FRAME_LENS_OR_LABEL(c)    CELL_NODE2(c)
+#define CELL_FRAME_PHASE(c)            CELL_PAYLOAD_1(c)
+#define CELL_FRAME_LENS_OR_LABEL(c)    CELL_PAYLOAD_2(c)
 
 
 
@@ -225,7 +225,7 @@ INLINE void Tweak_Misc_Details_Adjunct(
 
 //=//// ANCESTRY / FRAME COMPATIBILITY ////////////////////////////////////=//
 //
-// Keylist.link.node points at a keylist which has the same number of keys or
+// Keylist.link.base points at a keylist which has the same number of keys or
 // fewer, which represents an object which this object is derived from.  Note
 // that when new object instances are created which do not require expanding
 // the object, their keylist will be the same as the object derived from.
@@ -260,7 +260,7 @@ INLINE void Tweak_Link_Keylist_Ancestor(KeyList* keylist, KeyList* ancestor) {
     LINK_KEYLIST_ANCESTOR(keylist) = ancestor;
 }
 
-INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
+INLINE bool Action_Is_Derived_From(Phase* derived, Phase* base) {
     if (derived == base)
         return true;  // fast common case (review how common)
 

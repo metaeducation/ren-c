@@ -32,7 +32,7 @@
 // the C code using the library isn't competing as much for definitions in
 // the global namespace.
 //
-// Also, due to the nature of the Node superclass (see %sys-node.h), it's
+// Also, due to the nature of the Base superclass (see %sys-base.h), it's
 // possible to feed the scanner with a list of pointers that may be to UTF-8
 // strings or to Rebol values.  The behavior is to "splice" in the values at
 // the point in the scan that they occur, e.g.
@@ -171,7 +171,7 @@ unsigned char* API_rebAllocBytes(size_t size)
 
     Binary* b = Make_Flex(
         FLAG_FLAVOR(BINARY)  // rebRepossess() only creates BLOB! ATM
-            | NODE_FLAG_ROOT  // indicate this originated from the API
+            | BASE_FLAG_ROOT  // indicate this originated from the API
             | STUB_FLAG_DYNAMIC  // rebRepossess() needs bias field
             | FLEX_FLAG_DONT_RELOCATE,  // direct data pointer handed back
         Binary,
@@ -255,7 +255,7 @@ unsigned char* API_rebReallocBytes(void *ptr, size_t new_size)
     Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
 
     Binary* b = *pb;
-    assert(Is_Node_Root_Bit_Set(b));
+    assert(Is_Base_Root_Bit_Set(b));
 
     Size old_size = Binary_Len(b) - ALIGN_SIZE;
 
@@ -293,7 +293,7 @@ void API_rebFreeOpt(void *ptr)
 
     Binary* b = *pb;
 
-    if (Is_Node_A_Cell(b) or not (NODE_BYTE(b) & NODE_BYTEMASK_0x02_ROOT)) {
+    if (Is_Base_A_Cell(b) or not (BASE_BYTE(b) & BASE_BYTEMASK_0x02_ROOT)) {
         rebJumps(
             "crash [",
                 "-[rebFree() mismatched with allocator!]-"
@@ -304,17 +304,17 @@ void API_rebFreeOpt(void *ptr)
 
     assert(Flex_Wide(b) == 1);
 
-    if (g_gc.recycling and Is_Node_Marked(b)) {
-        assert(Is_Node_Managed(b));
-        Clear_Node_Marked_Bit(b);
+    if (g_gc.recycling and Is_Base_Marked(b)) {
+        assert(Is_Base_Managed(b));
+        Clear_Base_Marked_Bit(b);
       #if RUNTIME_CHECKS
         g_gc.mark_count -= 1;
       #endif
     }
 
-    Clear_Node_Root_Bit(b);
+    Clear_Base_Root_Bit(b);
 
-    if (Is_Node_Managed(b))  // set by rebUnmanageMemory()
+    if (Is_Base_Managed(b))  // set by rebUnmanageMemory()
         GC_Kill_Flex(b);
     else
         Free_Unmanaged_Flex(b);
@@ -368,13 +368,13 @@ RebolValue* API_rebRepossess(void* ptr, size_t size)
     Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
 
     Binary* b = *pb;
-    assert(Is_Node_Root_Bit_Set(b));  // may or may not be managed
+    assert(Is_Base_Root_Bit_Set(b));  // may or may not be managed
     assert(Get_Flex_Flag(b, DONT_RELOCATE));
 
     if (size > Binary_Len(b) - ALIGN_SIZE)
         panic ("Attempt to rebRepossess() more than rebAlloc() capacity");
 
-    Clear_Node_Root_Bit(b);
+    Clear_Base_Root_Bit(b);
     Clear_Flex_Flag(b, DONT_RELOCATE);
 
     if (Get_Stub_Flag(b, DYNAMIC)) {
@@ -425,11 +425,11 @@ void* API_rebUnmanageMemory(void* ptr)
     Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
 
     // We "manage" the Flex to remove it from the tracked manuals list.
-    // But the fact that it still has NODE_FLAG_ROOT means it should not be
+    // But the fact that it still has BASE_FLAG_ROOT means it should not be
     // garbage collected.
     //
     Binary* b = *pb;
-    assert(Is_Node_Root_Bit_Set(b));
+    assert(Is_Base_Root_Bit_Set(b));
     Manage_Flex(b);  // crashes if already unmanaged... should it tolerate?
 
     Poison_Memory_If_Sanitize(pb, sizeof(Binary*));  // catch underruns
@@ -888,7 +888,7 @@ void API_rebModifyHandleCData(
     if (not Is_Handle(v))
         panic ("rebModifyHandleCData() called on non-HANDLE!");
 
-    assert(Cell_Has_Node1(v));  // api only sees managed handles
+    assert(Cell_Payload_1_Needs_Mark(v));  // api only sees managed handles
 
     Tweak_Cell_Handle_Cdata(v, data);
 }
@@ -903,7 +903,7 @@ void API_rebModifyHandleLength(RebolValue* v, size_t length) {
     if (not Is_Handle(v))
         panic ("rebModifyHandleLength() called on non-HANDLE!");
 
-    assert(Cell_Has_Node1(v));  // api only sees managed handles
+    assert(Cell_Payload_1_Needs_Mark(v));  // api only sees managed handles
 
     Tweak_Cell_Handle_Len(v, length);
 }
@@ -948,7 +948,7 @@ void API_rebModifyHandleCleaner(
 // For the moment, this routine specifically accesses arguments of the most
 // recent ACTION! on the stack.
 //
-const RebolNodeInternal* API_rebArgR(
+const RebolBaseInternal* API_rebArgR(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
@@ -990,7 +990,7 @@ const RebolNodeInternal* API_rebArgR(
             if (not Is_Stable(arg))
                 panic ("rebArg() called on non-stable argument");
             return c_cast(
-                RebolNodeInternal*,
+                RebolBaseInternal*,
                 NULLIFY_NULLED(Known_Stable(arg))
             );
         }
@@ -1143,7 +1143,7 @@ static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
         binding = cast(RebolContext*, g_user_context);
     }
 
-    assert(Is_Node_Managed(binding));
+    assert(Is_Base_Managed(binding));
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
     Level* L = Make_Level(&Evaluator_Executor, feed, LEVEL_MASK_NONE);
@@ -1242,7 +1242,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
         binding = cast(RebolContext*, g_user_context);
     }
 
-    assert(Is_Node_Managed(binding));
+    assert(Is_Base_Managed(binding));
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
     Sink(Atom) atom_out = u_cast(Atom*, out);
@@ -1288,7 +1288,7 @@ RebolValue* API_rebValue(
         return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
     }
 
-    Set_Node_Root_Bit(v);
+    Set_Base_Root_Bit(v);
     return v;  // caller must rebRelease()
 }
 
@@ -1389,7 +1389,7 @@ RebolValue* API_rebLift(
 
     assert(not Is_Nulled(v));  // lift operations cannot produce NULL
 
-    Set_Node_Root_Bit(v);
+    Set_Base_Root_Bit(v);
     return v;  // caller must rebRelease()
 }
 
@@ -1419,7 +1419,7 @@ RebolValue* API_rebEntrap(
     else
         assert(LIFT_BYTE(v) > NOQUOTE_1);
 
-    Set_Node_Root_Bit(v);
+    Set_Base_Root_Bit(v);
     return v;  // caller must rebRelease()
 }
 
@@ -1447,12 +1447,12 @@ RebolValue* API_rebRescue(
 
     if (e) {
         Init_Warning(v, unwrap e);
-        Set_Node_Root_Bit(v);
+        Set_Base_Root_Bit(v);
         Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
     }
     Decay_If_Unstable(cast(Atom*, v));
-    Set_Node_Root_Bit(v);
+    Set_Base_Root_Bit(v);
     *value = v;
     return nullptr;
 }
@@ -1481,12 +1481,12 @@ RebolValue* API_rebRescueInterruptible(
 
     if (e) {
         Init_Warning(v, unwrap e);
-        Set_Node_Root_Bit(v);
+        Set_Base_Root_Bit(v);
         Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
         return v;
     }
     Decay_If_Unstable(cast(Atom*, v));
-    Set_Node_Root_Bit(v);
+    Set_Base_Root_Bit(v);
     *value = v;
     return nullptr;
 }
@@ -2200,7 +2200,7 @@ static size_t Bytes_Into(
         }
 
         assert(Is_Rune(v));
-        assert(not Stringlike_Has_Node(v));
+        assert(not Stringlike_Has_Stub(v));
         assert(v->extra.at_least_4[IDX_EXTRA_LEN] == 1);
 
         memcpy(buf, v->payload.at_least_8, limit);  // !!! '\0' term?
@@ -2481,12 +2481,12 @@ bool API_rebWasHaltRequested(void)
 // Note: This arity-1 version is pared back from a more complex variadic form:
 // https://forum.rebol.info/t/1050/4
 //
-const RebolNodeInternal* API_rebQUOTING(const void* p)
+const RebolBaseInternal* API_rebQUOTING(const void* p)
 {
     ENTER_API;
 
     if (p == nullptr)
-        return c_cast(RebolNodeInternal*, g_quasi_null);
+        return c_cast(RebolBaseInternal*, g_quasi_null);
 
     const Stub* stub;
 
@@ -2501,7 +2501,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
         const Value* at = cast(const Value*, p);
         if (Is_Nulled(at)) {
             assert(not Is_Api_Value(at));  // only internals use nulled cells
-            return c_cast(RebolNodeInternal*, g_quasi_null);
+            return c_cast(RebolBaseInternal*, g_quasi_null);
         }
 
         Value* v = Alloc_Value();
@@ -2516,7 +2516,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
 
     Value* v = x_cast(Value*, Stub_Cell(stub));
     Liftify(v);
-    return c_cast(RebolNodeInternal*, stub);  // C needs cast
+    return c_cast(RebolBaseInternal*, stub);  // C needs cast
 }
 
 
@@ -2528,7 +2528,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
 // Note: This arity-1 version is pared back from a more complex variadic form:
 // https://forum.rebol.info/t/1050/4
 //
-RebolNodeInternal* API_rebUNQUOTING(const void* p)
+RebolBaseInternal* API_rebUNQUOTING(const void* p)
 {
     ENTER_API;
 
@@ -2559,7 +2559,7 @@ RebolNodeInternal* API_rebUNQUOTING(const void* p)
         panic ("rebUNQUOTING()/rebU() can only unquote QUOTED? values");
 
     Unquotify(cast(Element*, v));
-    return cast(RebolNodeInternal*, stub);  // cast needed in C
+    return cast(RebolBaseInternal*, stub);  // cast needed in C
 }
 
 
@@ -2571,7 +2571,7 @@ RebolNodeInternal* API_rebUNQUOTING(const void* p)
 // they are seen (or even if they are not seen, if there is a failure on that
 // call it will still process the va_list in order to release these handles)
 //
-RebolNodeInternal* API_rebRELEASING(RebolValue* v)
+RebolBaseInternal* API_rebRELEASING(RebolValue* v)
 {
     ENTER_API;
 
@@ -2586,7 +2586,7 @@ RebolNodeInternal* API_rebRELEASING(RebolValue* v)
         panic ("Cannot apply rebR() more than once to the same API value");
 
     Set_Flavor_Flag(API, stub, RELEASE);
-    return cast(RebolNodeInternal*, stub);  // cast needed in C
+    return cast(RebolBaseInternal*, stub);  // cast needed in C
 }
 
 
@@ -2595,7 +2595,7 @@ RebolNodeInternal* API_rebRELEASING(RebolValue* v)
 //
 // This will splice a list, single value, or no-op into the execution feed.
 //
-RebolNodeInternal* API_rebINLINE(const RebolValue* v)
+RebolBaseInternal* API_rebINLINE(const RebolValue* v)
 {
     ENTER_API;
 
@@ -2606,7 +2606,7 @@ RebolNodeInternal* API_rebINLINE(const RebolValue* v)
 
     Copy_Cell(Stub_Cell(s), v);
 
-    return cast(RebolNodeInternal*, s);  // cast needed in C
+    return cast(RebolBaseInternal*, s);  // cast needed in C
 }
 
 
@@ -2618,7 +2618,7 @@ RebolNodeInternal* API_rebINLINE(const RebolValue* v)
 // quasi-action, that would just evaluate to an antiform.  Something like a
 // rebREIFY would also work, but it would not do type checking.
 //
-RebolNodeInternal* API_rebRUN(const void* p)
+RebolBaseInternal* API_rebRUN(const void* p)
 {
     ENTER_API;
 
@@ -2655,7 +2655,7 @@ RebolNodeInternal* API_rebRUN(const void* p)
     else if (not Is_Frame(v))
         panic ("rebRUN() requires FRAME! or actions (aka FRAME! antiforms)");
 
-    return cast(RebolNodeInternal*, stub);  // cast needed in C
+    return cast(RebolBaseInternal*, stub);  // cast needed in C
 }
 
 
@@ -2676,12 +2676,12 @@ RebolValue* API_rebManage(RebolValue* v)
     assert(Is_Api_Value(v));
 
     Stub* stub = Compact_Stub_From_Cell(v);
-    assert(Is_Node_Root_Bit_Set(stub));
+    assert(Is_Base_Root_Bit_Set(stub));
 
-    if (Is_Node_Managed(stub))
+    if (Is_Base_Managed(stub))
         panic ("Attempt to rebManage() an API value that's already managed.");
 
-    Set_Node_Managed_Bit(stub);
+    Set_Base_Managed_Bit(stub);
     Connect_Api_Handle_To_Level(stub, TOP_LEVEL);
 
     return v;
@@ -2700,9 +2700,9 @@ RebolValue* API_rebUnmanage(RebolValue *v)
     assert(Is_Api_Value(v));
 
     Stub* stub = Compact_Stub_From_Cell(v);
-    assert(Is_Node_Root_Bit_Set(stub));
+    assert(Is_Base_Root_Bit_Set(stub));
 
-    if (Not_Node_Managed(stub))
+    if (Not_Base_Managed(stub))
         panic ("Attempt to rebUnmanage() API value with indefinite lifetime.");
 
     // It's not safe to convert the average Flex that might be referred to
@@ -2711,7 +2711,7 @@ RebolValue* API_rebUnmanage(RebolValue *v)
     // pointers to its cell being held by client C code only.  It's at their
     // own risk to do this, and not use those pointers after a free.
     //
-    Clear_Node_Managed_Bit(stub);
+    Clear_Base_Managed_Bit(stub);
     Disconnect_Api_Handle_From_Level(stub);
 
     return v;
@@ -3092,7 +3092,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     //    So the cast is needed here.
     //
 
-    assert(Is_Node_Managed(L->varlist));
+    assert(Is_Base_Managed(L->varlist));
     assert(Link_Inherit_Bind(L->varlist));  // must inherit from something (?)
 
     RebolContext* context = cast(RebolContext*, L->varlist);  // [1]
@@ -3238,7 +3238,7 @@ RebolValue* API_rebFunctionFlipped(
         panic (unwrap e);
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED
+        BASE_FLAG_MANAGED
             | DETAILS_FLAG_OWNS_PARAMLIST
             | DETAILS_FLAG_API_CONTINUATIONS_OK,
         Phase_Archetype(paramlist),

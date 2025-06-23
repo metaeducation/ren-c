@@ -39,7 +39,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     Offset offset
 ){
     assert(Any_Sequence_Type(heart));
-    assert(Is_Node_Managed(a));
+    assert(Is_Base_Managed(a));
     Assert_Flex_Term_If_Needed(a);
     assert(Is_Source_Frozen_Shallow(a));  // must be immutable (may be aliased)
 

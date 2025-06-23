@@ -19,7 +19,7 @@ implementation from a "Dispatcher" C function.  As in R3-Alpha, there is an
 array which serves as the identity of an action, while also holding an ordered
 list of its parameters (a "paramlist").  But a second array is linked to from
 an ACTION! cell which holds instance information for that action...and this
-"details" array node holds the dispatcher which interprets it when the action
+"details" array stub holds the dispatcher which interprets it when the action
 is invoked.
 
 (See %sys-action.h for more information on this subject)

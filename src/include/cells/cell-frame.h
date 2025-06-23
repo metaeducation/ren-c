@@ -76,11 +76,11 @@
 INLINE Phase* Cell_Frame_Phase(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
 
-    Node* node = CELL_FRAME_PHASE(c);  // const irrelevant
-    if (Not_Node_Readable(node))
+    Base* base = CELL_FRAME_PHASE(c);  // const irrelevant
+    if (Not_Base_Readable(base))
         panic (Error_Series_Data_Freed_Raw());
 
-    Flex* f = cast(Flex*, node);
+    Flex* f = cast(Flex*, base);
     assert(Is_Stub_Details(f) or Is_Stub_Varlist(f));
     return cast(Phase*, f);
 }
@@ -106,7 +106,7 @@ INLINE Option(Details*) Try_Cell_Frame_Details(const Value* c) {
 // an adaptation's frame contains the adaptee's variables, it should not be
 // able to do things like assign its locals).
 //
-// But if the node where a Lens would usually be found is a Symbol* then that
+// But if the base where a Lens would usually be found is a Symbol* then that
 // implies there isn't any special Lens besides the action stored by the
 // archetype.  Hence the value cell is storing a name to be used with the
 // action when it is extracted from the frame.  That's why this works:

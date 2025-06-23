@@ -199,7 +199,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
     assert(g_mem.num_black_stubs == 0);
 
     if (L->varlist)
-        assert(Not_Node_Managed(L->varlist));
+        assert(Not_Base_Managed(L->varlist));
 
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 

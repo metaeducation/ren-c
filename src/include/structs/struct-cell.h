@@ -29,10 +29,10 @@
 // Of the four 32-or-64-bit slots that each value has, the first slot is used
 // for the value's "Header".  Those four bytes are:
 //
-// * NODE_BYTE: the first byte is a set of flags specially chosen to not
+// * BASE_BYTE: the first byte is a set of flags specially chosen to not
 //   collide with the leading byte of a valid UTF-8 sequence.  The flags
 //   establish whether this is a Cell or a "Stub", among other features.
-//   See %struct-node.h for explanations of these flags.
+//   See %struct-base.h for explanations of these flags.
 //
 // * HEART_BYTE: the second byte indicates what type of information the other
 //   3 slots in the cell describe.  It corresponds to a datatype, such as
@@ -72,7 +72,7 @@
 //
 // * Forward declarations are in %reb-defs.h
 //
-// * See %struct-node.h for an explanation of FLAG_LEFT_BIT.
+// * See %struct-base.h for an explanation of FLAG_LEFT_BIT.
 //
 
 typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
@@ -80,11 +80,11 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 //=//// BITS 0-7: NODE FLAGS //////////////////////////////////////////////=//
 //
-// See the defininitions of NODE_FLAG_XXX for the design points explaining
+// See the defininitions of BASE_FLAG_XXX for the design points explaining
 // why the first byte of cells and stubs are engineered with these specific
 // common flags.
 //
-// The use of NODE_FLAG_MARKED in cells is a little unusual, because it is a
+// The use of BASE_FLAG_MARKED in cells is a little unusual, because it is a
 // property of the cell location and not of the value (e.g. it is not included
 // in CELL_MASK_COPY, and is part of CELL_MASK_PERSIST).  So writing a new
 // value into the cell will not update the status of its mark.  It must be
@@ -98,7 +98,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// * VAR_MARKED_HIDDEN -- This uses the NODE_FLAG_MARKED bit on args in
+// * VAR_MARKED_HIDDEN -- This uses the BASE_FLAG_MARKED bit on args in
 //   action frames, and in particular specialization uses it to denote which
 //   arguments in a frame are actually specialized.  This helps notice the
 //   difference during an APPLY of encoded partial refinement specialization
@@ -110,43 +110,43 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //   be fully optimized and needs to process the array, then anything with
 //   this mark on it can be skipped.
 //
-#define CELL_FLAG_VAR_MARKED_HIDDEN         NODE_FLAG_MARKED
-#define CELL_FLAG_PARAMSPEC_SPOKEN_FOR      NODE_FLAG_MARKED
+#define CELL_FLAG_VAR_MARKED_HIDDEN         BASE_FLAG_MARKED
+#define CELL_FLAG_PARAMSPEC_SPOKEN_FOR      BASE_FLAG_MARKED
 
 
-//=//// CELL_FLAG_DONT_MARK_NODE1 /////////////////////////////////////////=//
+//=//// CELL_FLAG_DONT_MARK_PAYLOAD_1 //////////////////////////////////////=//
 //
-// If this flag is *NOT* set, that indicates the cell uses the "Any" payload
-// and Cell.payload.split.one.node should be marked as a node by the GC
+// If this flag is *NOT* set, that indicates the cell uses the "Split" payload
+// and Cell.payload.split.one.base should be marked as a Base by the GC
 // (if it is not nullptr)
 //
 // IT'S IN THE REVERSE SENSE ON PURPOSE.  This means a "free" cell can have
 // the following bit pattern WHICH IS NOT A LEGAL LEADING BYTE FOR UTF-8:
 //
-//    11111xxx: Flags: NODE | UNREADABLE | GC_ONE | GC_TWO | CELL | ...
+//    11111xxx: Flags: BASE | UNREADABLE | GC_ONE | GC_TWO | CELL | ...
 //
 // The free bit denotes an Init_Unreadable() cell, and so long as we set the
 // GC_ONE and GC_TWO flags we can still have free choices of `xxx` (e.g.
 // arbitrary ROOT, MANAGED, and MARKED flags), while Detect_Rebol_Pointer()
 // can be certain it's a cell and not UTF-8.
 //
-#define CELL_FLAG_DONT_MARK_NODE1 \
-    NODE_FLAG_GC_ONE
+#define CELL_FLAG_DONT_MARK_PAYLOAD_1 \
+    BASE_FLAG_GC_ONE
 
 
-//=//// CELL_FLAG_DONT_MARK_NODE2 ////////////////////////////////////////=//
+//=//// CELL_FLAG_DONT_MARK_PAYLOAD_2 //////////////////////////////////////=//
 //
-// If this flag is *NOT* set, that indicates the cell uses the "Any" payload
-// and Cell.payload.split.two.node should be marked as a node by the GC
+// If this flag is *NOT* set, that indicates the cell uses the "Split" payload
+// and Cell.payload.split.two.base should be marked as a Base by the GC
 // (if it is not nullptr)
 //
-// IT'S IN THE REVERSE SENSE ON PURPOSE.  See CELL_FLAG_DONT_MARK_NODE1.
+// IT'S IN THE REVERSE SENSE ON PURPOSE.  See CELL_FLAG_DONT_MARK_PAYLOAD_1.
 //
-#define CELL_FLAG_DONT_MARK_NODE2 \
-    NODE_FLAG_GC_TWO
+#define CELL_FLAG_DONT_MARK_PAYLOAD_2 \
+    BASE_FLAG_GC_TWO
 
-#define CELL_MASK_NO_NODES \
-    (CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2)
+#define CELL_MASK_NO_MARKING \
+    (CELL_FLAG_DONT_MARK_PAYLOAD_1 | CELL_FLAG_DONT_MARK_PAYLOAD_2)
 
 
 //=//// BITS 8-15: CELL LAYOUT TYPE BYTE ("HEART") ////////////////////////=//
@@ -251,7 +251,7 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
 //
 // Because the header for cells is only 32 bits on 32-bit platforms, there
-// are only 8 bits left over when you've used up the NODE_BYTE, HEART_BYTE,
+// are only 8 bits left over when you've used up the BASE_BYTE, HEART_BYTE,
 // and LIFT_BYTE.  These 8 scarce remaining cell bits have to be used very
 // carefully...and are multiplexed across types that can be tricky.
 //
@@ -308,7 +308,7 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 // value to the copy.
 //
 // (A Flex has more than one kind of protection in "info" bits that can all
-// be checked at once...hence there's not "NODE_FLAG_PROTECTED" in common.)
+// be checked at once...hence there's not "BASE_FLAG_PROTECTED" in common.)
 //
 #define CELL_FLAG_PROTECTED \
     FLAG_LEFT_BIT(27)
@@ -386,7 +386,7 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 //
 // 2-element sequences can be stored in an optimized form if one of the two
 // elements is a SPACE.  This permits things like `/a` and `b.` to fit in
-// a single cell.  It assumes that if the node flavor is FLAVOR_SYMBOL then
+// a single cell.  It assumes that if the Stub flavor is FLAVOR_SYMBOL then
 // the nonblank thing is a WORD!.
 //
 #define CELL_FLAG_TYPE_SPECIFIC_B \
@@ -405,14 +405,14 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 // The idea is that extensions that want to have their own custom Stub or
 // Cell types would be able to define those custom types without needing to
 // rebuild the core, since there's enough data types here and they can
-// indicate whether they need GC marking with STUB_FLAG_LINK_NODE_NEEDS_MARK
-// and CELL_FLAG_DONT_MARK_NODE1, etc.  But for built-in Cells and Stubs it's
-// okay to add fields here just for the sake of clarity...though all Node
-// subclasses have to be assigned to just node. [1]
+// indicate whether they need GC marking with STUB_FLAG_LINK_NEEDS_MARK
+// and CELL_FLAG_DONT_MARK_PAYLOAD_1, etc.  But for built-in Cells and Stubs it's
+// okay to add fields here just for the sake of clarity...though all Base
+// subclasses have to be assigned to just base. [1]
 //
-// 1. The garbage collector is designed to generically mark `Node*` entities
+// 1. The garbage collector is designed to generically mark `Base*` entities
 //    living in Cell and Stub slots.  To do this generic marking, no matter
-//    what node subclass was used, the same ->node field in a Union has to be
+//    what Base subclass was used, the same ->base field in a Union has to be
 //    assigned in all cases...because if differently typed or different named
 //    fields were assigned, then C++ compilers are not obligated to allow
 //    access through some kind of canon "type pun":
@@ -420,7 +420,7 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 //      https://en.wikipedia.org/wiki/Type_punning#Use_of_union
 //
 //    This means generic slots that want to have nodes marked by the GC have
-//    to use the ->node field of this union...regardless of what Node subtype
+//    to use the ->node field of this union...regardless of what Base subtype
 //    (Stub, Cell, VarList, Array, String, etc.) they refer to.
 //
 //    Care should be taken on extraction to give back a `const` reference
@@ -436,11 +436,11 @@ struct YmdzStruct  // see %sys-time.h
 };
 
 typedef union {
-    Node* node;  // all Node subclasses should be assigned to this [1]
+    Base* base;  // all Base subclasses should be assigned to this [1]
 
   #if DEBUG_USE_UNION_PUNS  // dodgy, use in debug watch at your own risk!
-    Stub* stub_pun;  // *maybe* see node as a Stub
-    RebolValue* cell_pun;  // *maybe* see node as a Cell
+    Stub* stub_pun;  // *maybe* see base as a Stub
+    RebolValue* cell_pun;  // *maybe* see base as a Cell
   #endif
 
     bool bit;  // "wasteful" to just use for one flag, but fast read and write
@@ -588,7 +588,7 @@ typedef union { //=///////////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     struct CommaPayloadStruct comma;
 
     // Due to strict aliasing, if a routine is going to generically access a
-    // node (e.g. to exploit common checks for mutability) it has to do a
+    // Base (e.g. to exploit common checks for mutability) it has to do a
     // read through the same field that was assigned.  Hence, many types
     // whose payloads are nodes use the "Split" payload, which is two separate
     // variant fields.
@@ -651,9 +651,9 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 //    https://stackoverflow.com/a/76426676
 //
 #if CHECK_CELL_SUBCLASSES
-    struct alignas(ALIGN_SIZE) Cell : public Node  // Type_Of() illegal
+    struct alignas(ALIGN_SIZE) Cell : public Base  // Type_Of() illegal
 #elif CPLUSPLUS_11
-    struct alignas(ALIGN_SIZE) RebolValueStruct : public Node
+    struct alignas(ALIGN_SIZE) RebolValueStruct : public Base
 #elif C_11
     struct alignas(ALIGN_SIZE) RebolValueStruct  // exported name for API [1]
 #else

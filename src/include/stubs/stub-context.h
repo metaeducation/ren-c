@@ -23,14 +23,14 @@
 
 //=//// INHERITED BINDING LINK ////////////////////////////////////////////=//
 //
-// All Context* subtypes use their Stub.link.node field to point to the next
+// All Context* subtypes use their Stub.link.base field to point to the next
 // context in their inheritance chain.  So a Stub representing a Let might
 // point to a VarList for a FRAME! which might in turn point to a SeaOfVars
 // for a MODULE!.  This is how "Virtual Binding" works.
 //
 
 INLINE Option(Context*) Link_Inherit_Bind(Context* context)
-  { return u_cast(Context*, context->link.node); }
+  { return u_cast(Context*, context->link.base); }
 
 INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next) {
     if (next) {
@@ -42,9 +42,9 @@ INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next) {
             or flavor == FLAVOR_SEA
         );
         UNUSED(flavor);
-        assert(Is_Node_Managed(unwrap next));
+        assert(Is_Base_Managed(unwrap next));
     }
-    context->link.node = maybe next;
+    context->link.base = maybe next;
 }
 
 INLINE void Add_Link_Inherit_Bind(Context* context, Option(Context*) next) {

@@ -46,7 +46,7 @@
 //
 // [READABILITY]
 //
-// Readable cells have NODE_FLAG_NODE and NODE_FLAG_CELL set.  It's important
+// Readable cells have BASE_FLAG_BASE and BASE_FLAG_CELL set.  It's important
 // that they do, because if they don't then the first byte of the header
 // could be mistaken for valid UTF-8.
 //
@@ -55,7 +55,7 @@
 //
 // [WRITABILITY]
 //
-// A writable cell is one that has NODE_FLAG_NODE and NODE_FLAG_CELL set, but
+// A writable cell is one that has BASE_FLAG_BASE and BASE_FLAG_CELL set, but
 // that also does not have CELL_FLAG_PROTECTED.
 //
 // Note that this code asserts about CELL_FLAG_PROTECTED just to be safe.
@@ -103,8 +103,8 @@
         STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
         if ( \
             (((c)->header.bits) & ( \
-                NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
-            )) != (NODE_FLAG_NODE | NODE_FLAG_CELL) \
+                BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_UNREADABLE \
+            )) != (BASE_FLAG_BASE | BASE_FLAG_CELL) \
         ){ \
             Crash_On_Unreadable_Cell(c); \
         } \
@@ -114,8 +114,8 @@
         /* don't STATIC_ASSERT_LVALUE(out), it's evil on purpose */ \
         if ( \
             (((c)->header.bits) & ( \
-                NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_PROTECTED \
-            )) != (NODE_FLAG_NODE | NODE_FLAG_CELL) \
+                BASE_FLAG_BASE | BASE_FLAG_CELL | CELL_FLAG_PROTECTED \
+            )) != (BASE_FLAG_BASE | BASE_FLAG_CELL) \
         ){ \
             Crash_On_Unwritable_Cell(c);  /* despite write, pass const [2] */ \
         } \
@@ -185,8 +185,8 @@
 //    the header bits won't lose important information.  For instance: it's
 //    used in the optimized array representation that fits 0 or 1 cells into
 //    the Array Stub itself.  But if you were to poison an API handle it would
-//    overwrite NODE_FLAG_ROOT, and a managed pairing would overwrite
-//    NODE_FLAG_MANAGED.  This check helps make sure you're not losing
+//    overwrite BASE_FLAG_ROOT, and a managed pairing would overwrite
+//    BASE_FLAG_MANAGED.  This check helps make sure you're not losing
 //    important information.
 //
 // 3. Sometimes you want to set a cell in uninitialized memory to poison,
@@ -198,18 +198,18 @@
 //    what assert (if any) should be here.
 
 #define CELL_MASK_POISON \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL | \
-        NODE_FLAG_UNREADABLE | CELL_FLAG_PROTECTED)  // no read or write [1]
+    (BASE_FLAG_BASE | BASE_FLAG_CELL | \
+        BASE_FLAG_UNREADABLE | CELL_FLAG_PROTECTED)  // no read or write [1]
 
 #define Assert_Cell_Header_Overwritable(c) do {  /* conservative check [2] */ \
     STATIC_ASSERT_LVALUE(c); \
     assert( \
         (c)->header.bits == CELL_MASK_POISON \
         or (c)->header.bits == CELL_MASK_ERASED_0 \
-        or (NODE_FLAG_NODE | NODE_FLAG_CELL) == ((c)->header.bits & \
-            (NODE_FLAG_NODE | NODE_FLAG_CELL \
-                | NODE_FLAG_ROOT | NODE_FLAG_MARKED \
-                | NODE_FLAG_MANAGED | CELL_FLAG_PROTECTED) \
+        or (BASE_FLAG_BASE | BASE_FLAG_CELL) == ((c)->header.bits & \
+            (BASE_FLAG_BASE | BASE_FLAG_CELL \
+                | BASE_FLAG_ROOT | BASE_FLAG_MARKED \
+                | BASE_FLAG_MANAGED | CELL_FLAG_PROTECTED) \
         ) \
     ); \
   } while (0)
@@ -238,7 +238,7 @@ INLINE Cell* Force_Poison_Cell_Untracked(Cell* c) {  // for random bits [3]
 
 //=//// CELL "ERASING" ////////////////////////////////////////////////////=//
 //
-// To help be robust, the code ensures that NODE_FLAG_NODE and NODE_FLAG_CELL
+// To help be robust, the code ensures that BASE_FLAG_BASE and BASE_FLAG_CELL
 // are set in the header of a memory slot before reading or writing info for
 // a cell.  But an exception is made for efficiency that allows initialization
 // in the case of a header that is all zeros.  This pattern is efficiently
@@ -248,8 +248,8 @@ INLINE Cell* Force_Poison_Cell_Untracked(Cell* c) {  // for random bits [3]
 //
 // 1. If you do not fully control the location you are writing, Erase_Cell()
 //    is NOT what you want to use to make a cell writable.  You could be
-//    overwriting persistent cell bits such as NODE_FLAG_ROOT that indicates
-//    an API handle, or NODE_FLAG_MANAGED that indicates a Pairing.  This is
+//    overwriting persistent cell bits such as BASE_FLAG_ROOT that indicates
+//    an API handle, or BASE_FLAG_MANAGED that indicates a Pairing.  This is
 //    to be used for evaluator-controlled cells (OUT, SPARE, SCRATCH), or
 //    restoring 0-initialized global variables back to the 0-init state, or
 //    things like that.
@@ -285,7 +285,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 //
 // Unreadable cells are write-only cells.  They will give errors on attempts
 // to read from them e.g. with Type_Of(), which is similar to erased cells.
-// But with the advantage that they have NODE_FLAG_NODE and NODE_FLAG_CELL
+// But with the advantage that they have BASE_FLAG_BASE and BASE_FLAG_CELL
 // set in their header, hence they do not conflate with empty UTF-8 strings.
 // The GC tolerates them in places where an erased cell would trigger an
 // assertion indicating an element hadn't been initialized.
@@ -293,8 +293,8 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 // They're not legal in Source arrays exposed to users.  But are found in
 // other places, such as in MAP! to denote "zombie" slots.
 //
-// 1. Setting a cell unreadable does not affect bits like NODE_FLAG_ROOT
-//    or NODE_FLAG_MARKED, so it's "safe" to use them with cells that need
+// 1. Setting a cell unreadable does not affect bits like BASE_FLAG_ROOT
+//    or BASE_FLAG_MARKED, so it's "safe" to use them with cells that need
 //    these persistent bits preserved.
 //
 // 2. If you're going to set uninitialized memory to an unreadable cell,
@@ -302,8 +302,8 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 //    you can't Assert_Cell_Initable() on random bits.
 
 #define CELL_MASK_UNREADABLE \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
-        | CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2 \
+    (BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_UNREADABLE \
+        | CELL_FLAG_DONT_MARK_PAYLOAD_1 | CELL_FLAG_DONT_MARK_PAYLOAD_2 \
         | FLAG_HEART_BYTE_255 | FLAG_LIFT_BYTE(255))
 
 #if CORRUPT_CELL_HEADERS_ONLY
@@ -344,8 +344,8 @@ INLINE Cell* Force_Unreadable_Cell_Untracked_Inline(Cell* out) {
     Force_Unreadable_Cell_Untracked_Inline(TRACK(out))
 
 INLINE bool Is_Cell_Readable(const Cell* c) {
-    if (Is_Node_Readable(c)) {
-        Assert_Cell_Readable(c);  // also needs NODE_FLAG_NODE, NODE_FLAG_CELL
+    if (Is_Base_Readable(c)) {
+        Assert_Cell_Readable(c);  // also needs BASE_FLAG_BASE, BASE_FLAG_CELL
         return true;
     }
     assert((c->header.bits & CELL_MASK_UNREADABLE) == CELL_MASK_UNREADABLE);
@@ -403,7 +403,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 //=//// CELL "FRESHNESS" //////////////////////////////////////////////////=//
 //
 // Most read and write operations of cells assert that the header has both
-// NODE_FLAG_NODE and NODE_FLAG_CELL set.  But there is an exception made when
+// BASE_FLAG_BASE and BASE_FLAG_CELL set.  But there is an exception made when
 // it comes to initialization: a cell is allowed to have a header that is all
 // 0 bits (e.g. CELL_MASK_ERASED_0).  Ranges of cells can be memset() to 0
 // quickly, and the OS sets C globals to all 0 bytes when the process starts
@@ -412,7 +412,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 // So a "fresh" cell is one that does not need to have its CELL_MASK_PERSIST
 // portions masked out.  An initialization routine can just bitwise OR the
 // flags it wants overlaid on the persisted flags (if any).  However, it
-// should include NODE_FLAG_NODE and NODE_FLAG_CELL in that masking in case
+// should include BASE_FLAG_BASE and BASE_FLAG_CELL in that masking in case
 // they weren't there.
 //
 // Fresh cells can occur "naturally" (from memset() or other 0 memory), be
@@ -442,7 +442,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 //    CELL_FLAG_SLOT_WEIRD_DUAL bit.
 
 #define CELL_MASK_PERSIST \
-    (NODE_FLAG_MANAGED | NODE_FLAG_ROOT | NODE_FLAG_MARKED)
+    (BASE_FLAG_MANAGED | BASE_FLAG_ROOT | BASE_FLAG_MARKED)
 
 #define Freshen_Cell_Header(c) do { \
     STATIC_ASSERT_LVALUE(c);  /* evil macro [1] */ \
@@ -463,7 +463,7 @@ STATIC_ASSERT(not (CELL_MASK_PERSIST & CELL_FLAG_NOTE));
 //
 // The header of a cell contains information about what kind of cell it is,
 // as well as some flags that are reserved for system purposes.  These are
-// the NODE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
+// the BASE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
 //
 // 1. Avoid cost that inline functions (even constexpr) add to checked builds
 //    by "typechecking" via finding the name ->header.bits in (c).
@@ -793,7 +793,7 @@ INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
     assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(ANTIFORM_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_1)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_1)
     );
 }
 
@@ -802,7 +802,7 @@ INLINE void Reset_Cell_Header(Cell* c, LiftByte lift_byte, uintptr_t flags)
     assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(ANTIFORM_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_LIFT_BYTE(lift_byte)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(lift_byte)
     );
 }
 
@@ -816,25 +816,25 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_1)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_1)
     );
-    c->extra.node = m_cast(ExtraHeart*, extra_heart);
+    c->extra.base = m_cast(ExtraHeart*, extra_heart);
 }
 
 
 //=//// CELL PAYLOAD ACCESS ///////////////////////////////////////////////=//
 
-#define Cell_Has_Node1(c) \
-    Not_Cell_Flag_Unchecked((c), DONT_MARK_NODE1)
+#define Cell_Payload_1_Needs_Mark(c) \
+    Not_Cell_Flag_Unchecked((c), DONT_MARK_PAYLOAD_1)
 
-#define Cell_Has_Node2(c) \
-    Not_Cell_Flag_Unchecked((c), DONT_MARK_NODE2)
+#define Cell_Payload_2_Needs_Mark(c) \
+    Not_Cell_Flag_Unchecked((c), DONT_MARK_PAYLOAD_2)
 
-#define Stringlike_Has_Node(c) /* make findable */ \
-    Cell_Has_Node1(c)
+#define Stringlike_Has_Stub(c) /* make findable */ \
+    Cell_Payload_1_Needs_Mark(c)
 
-#define Sequence_Has_Node(c) /* make findable */ \
-    Cell_Has_Node1(c)
+#define Sequence_Has_Pointer(c) /* make findable */ \
+    Cell_Payload_1_Needs_Mark(c)
 
 
 //=//// CELL NODE EXTRACTORS FOR CLARIFYING SLOT USAGE ////////////////////=//
@@ -850,48 +850,53 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 // can do:
 //
 //     #define CELL_SOMETHING_PROPERTY_A(c)  CELL_EXTRA(c)
-//     #define CELL_SOMETHING_PROPERTY_B(c)  CELL_NODE1(c)
-//     #define CELL_SOMETHING_PROPERTY_C(c)  CELL_NODE2(c)
+//     #define CELL_SOMETHING_PROPERTY_B(c)  CELL_PAYLOAD_1(c)
+//     #define CELL_SOMETHING_PROPERTY_C(c)  CELL_PAYLOAD_2(c)
 //
-// Then, don't use CELL_NODE1/NODE2/EXTRA in any of the implementation.  This
+// Then, don't use CELL_PAYLOAD_1/NODE2/EXTRA in any of the implementation.  This
 // makes it much easier to see up front what a certain cell's use of its
 // slots is, and a lot easier to adjust when there are changes.
 //
 #if (! DEBUG_CHECK_GC_HEADER_FLAGS)
-    #define Ensure_Cell_Has_Extra_Node(c)   (c)
-    #define Ensure_Cell_Has_Node1(c)        (c)
-    #define Ensure_Cell_Has_Node2(c)        (c)
+    #define Ensure_Cell_Extra_Needs_Mark(c)      (c)
+    #define Ensure_Cell_Payload_1_Needs_Mark(c)  (c)
+    #define Ensure_Cell_Payload_2_Needs_Mark(c)  (c)
 #else
-    INLINE Cell* Ensure_Cell_Has_Extra_Node(const_if_c Cell* c)
+    INLINE Cell* Ensure_Cell_Extra_Needs_Mark(const_if_c Cell* c)
       { assert(Is_Extra_Mark_Heart(Heart_Of(c))); return c; }
 
-    INLINE Cell* Ensure_Cell_Has_Node1(const_if_c Cell* c)
-      { assert(Not_Cell_Flag(c, DONT_MARK_NODE1)); return c; }
+    INLINE Cell* Ensure_Cell_Payload_1_Needs_Mark(const_if_c Cell* c)
+      { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_1)); return c; }
 
-    INLINE Cell* Ensure_Cell_Has_Node2(const_if_c Cell* c)
-      { assert(Not_Cell_Flag(c, DONT_MARK_NODE2)); return c; }
+    INLINE Cell* Ensure_Cell_Payload_2_Needs_Mark(const_if_c Cell* c)
+      { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_2)); return c; }
 
   #if CPLUSPLUS_11
-    INLINE const Cell* Ensure_Cell_Has_Extra_Node(const Cell* c)
+    INLINE const Cell* Ensure_Cell_Extra_Needs_Mark(const Cell* c)
       { assert(Is_Extra_Mark_Heart(Heart_Of(c))); return c; }
 
-    INLINE const Cell* Ensure_Cell_Has_Node1(const Cell* c)
-      { assert(Not_Cell_Flag(c, DONT_MARK_NODE1)); return c; }
+    INLINE const Cell* Ensure_Cell_Payload_1_Needs_Mark(const Cell* c)
+      { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_1)); return c; }
 
-    INLINE const Cell* Ensure_Cell_Has_Node2(const Cell* c)
-     { assert(Not_Cell_Flag(c, DONT_MARK_NODE2)); return c; }
+    INLINE const Cell* Ensure_Cell_Payload_2_Needs_Mark(const Cell* c)
+     { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_2)); return c; }
   #endif
 #endif
 
-#define CELL_EXTRA(c)  Ensure_Cell_Has_Extra_Node(c)->extra.node
-#define CELL_NODE1(c)  Ensure_Cell_Has_Node1(c)->payload.split.one.node
-#define CELL_NODE2(c)  Ensure_Cell_Has_Node2(c)->payload.split.two.node
+#define CELL_EXTRA(c) \
+    Ensure_Cell_Extra_Needs_Mark(c)->extra.base
+
+#define CELL_PAYLOAD_1(c) \
+    Ensure_Cell_Payload_1_Needs_Mark(c)->payload.split.one.base
+
+#define CELL_PAYLOAD_2(c) \
+    Ensure_Cell_Payload_2_Needs_Mark(c)->payload.split.two.base
 
 
 //=///// BINDING //////////////////////////////////////////////////////////=//
 //
 // Some value types use their `->extra` field in order to store a pointer to
-// a Node which constitutes their notion of "binding".
+// a Base which constitutes their notion of "binding".
 //
 // This can either be null (a.k.a. UNBOUND), or to a function's paramlist
 // (indicates a relative binding), or to a context's varlist (which indicates
@@ -902,11 +907,11 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 //     and had its ->header and ->info bits set in such a way as to avoid the
 //     need for some conditional checks.  e.g. instead of writing:
 //
-//         if (binding and binding->header.bits & NODE_FLAG_MANAGED) {...}
+//         if (binding and binding->header.bits & BASE_FLAG_MANAGED) {...}
 //
 //     The special UNBOUND stub set some bits, e.g. pretend to be managed:
 //
-//        if (binding->header.bits & NODE_FLAG_MANAGED) {...}  // UNBOUND ok
+//        if (binding->header.bits & BASE_FLAG_MANAGED) {...}  // UNBOUND ok
 //
 //     Question was whether avoiding the branching involved from the extra
 //     test for null would be worth it for consistent dereferencing ability.
@@ -924,24 +929,24 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 #endif
 
 #define Cell_Binding(v) \
-    u_c_cast(Context*, (v)->extra.node)
+    u_c_cast(Context*, (v)->extra.base)
 
 #if (! DEBUG_CHECK_BINDING)
     #define Tweak_Cell_Binding(c,binding) \
-        ((c)->extra.node = binding)
+        ((c)->extra.base = binding)
 
     #define Tweak_Cell_Relative_Binding(c,binding) \
-        ((c)->extra.node = binding)
+        ((c)->extra.base = binding)
 #else
     INLINE void Tweak_Cell_Binding(Element* c, Option(Context*) binding) {
         assert(Is_Bindable_Heart(Heart_Of(c)));
         Assert_Cell_Writable(c);
-        c->extra.node = maybe binding;
+        c->extra.base = maybe binding;
         if (binding)
             Assert_Cell_Binding_Valid(c);
     }
     INLINE void Tweak_Cell_Relative_Binding(Element* c, Phase* phase) {
-        c->extra.node = phase;
+        c->extra.base = phase;
     }
 #endif
 
@@ -997,7 +1002,7 @@ INLINE void Copy_Cell_Header(
   #endif
 
     Freshen_Cell_Header(out);
-    out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
+    out->header.bits |= (BASE_FLAG_BASE | BASE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & CELL_MASK_COPY));
 
   #if DEBUG_TRACK_COPY_PRESERVES
@@ -1021,7 +1026,7 @@ INLINE Cell* Copy_Cell_Untracked(
   #endif
 
     Freshen_Cell_Header(out);  // optimizer elides this after erasure [1]
-    out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
+    out->header.bits |= (BASE_FLAG_BASE | BASE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & copy_mask));
 
     out->payload = v->payload;  // before init binding anachronism [2]

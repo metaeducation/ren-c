@@ -347,7 +347,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
     }
 
     if (Any_List_Type(as)) {  // give immutable form, try to share memory
-        if (not Sequence_Has_Node(seq)) {  // byte packed sequence
+        if (not Sequence_Has_Pointer(seq)) {  // byte packed sequence
             Source* a = Make_Source_Managed(len);
             Set_Flex_Len(a, len);
             Offset i;
@@ -357,9 +357,9 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
             return SUCCESS;
         }
 
-        const Node* node1 = CELL_NODE1(seq);
-        if (Is_Node_A_Cell(node1)) {  // reusing node complicated [2]
-            const Pairing* p = c_cast(Pairing*, node1);
+        const Base* payload1 = CELL_PAYLOAD_1(seq);
+        if (Is_Base_A_Cell(payload1)) {  // Pairings hold two items [2]
+            const Pairing* p = c_cast(Pairing*, payload1);
             Context *binding = Cell_List_Binding(seq);
             Source* a = Make_Source_Managed(2);
             Set_Flex_Len(a, 2);
@@ -368,7 +368,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
             Freeze_Source_Shallow(a);
             Init_Any_List(out, as, a);
         }
-        else switch (Stub_Flavor(c_cast(Flex*, node1))) {
+        else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
           case FLAVOR_SYMBOL: {
             Source* a = Make_Source_Managed(2);
             Set_Flex_Len(a, 2);
@@ -583,7 +583,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
         return GENERIC_CFUNC(RANDOM_PICK, Any_List)(LEVEL);
     }
 
-    assert(not Sequence_Has_Node(seq));  // packed byte sequence
+    assert(not Sequence_Has_Pointer(seq));  // packed byte sequence
 
     Byte used = seq->payload.at_least_8[IDX_SEQUENCE_USED];
 

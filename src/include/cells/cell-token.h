@@ -33,8 +33,8 @@
 // simply a sigle-length token, which is translated to a codepoint using the
 // `CODEPOINT OF` operation, or by using FIRST on the token.
 //
-// TYPE_RUNE has two forms: one with a separate node allocation and one that
-// stores data where a node and index would be.  Stringlike_Has_Node()
+// TYPE_RUNE has two forms: one with a String* allocation and one that stores
+// content data where a String* and index would be.  Stringlike_Has_Stub()
 // is what discerns the two categories, and can only be treated as a string
 // when it has that flag.  Hence generically speaking, RUNE! is not considered
 // an ANY-SERIES? or ANY-STRING? type.
@@ -106,7 +106,7 @@ INLINE bool IS_CHAR_CELL(const Value* c) {
     if (Heart_Of(c) != TYPE_RUNE)
         return false;
 
-    if (Stringlike_Has_Node(c))
+    if (Stringlike_Has_Stub(c))
         return false;  // allocated form, too long to be a character
 
     return c->extra.at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
@@ -123,7 +123,7 @@ INLINE Codepoint Cell_Codepoint(const Value* c) {  // must pass IS_CHAR_CELL()
         return 0;
 
     assert(Heart_Of(c) == TYPE_RUNE);
-    assert(not Stringlike_Has_Node(c));
+    assert(not Stringlike_Has_Stub(c));
 
     assert(c->extra.at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
 
@@ -148,7 +148,7 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
         return false;
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_NODES
+        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_MARKING
     );
     memcpy(
         &out->payload.at_least_8,
@@ -197,7 +197,7 @@ INLINE Element* Init_Utf8_Non_String(
 INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(RUNE) | CELL_MASK_NO_NODES
+        FLAG_HEART(RUNE) | CELL_MASK_NO_MARKING
     );
 
     if (c == 0) {  // NUL is #{00}, a BLOB! not an RUNE! (see Is_NUL())
@@ -271,7 +271,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         size_out = &dummy_size;  // force size calculation for debug check
   #endif
 
-    if (not Stringlike_Has_Node(v)) {  // SIGIL!, some RUNE!...
+    if (not Stringlike_Has_Stub(v)) {  // SIGIL!, some RUNE!...
         assert(not Any_String_Type(Heart_Of(v)));
 
         REBLEN len;

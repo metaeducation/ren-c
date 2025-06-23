@@ -22,7 +22,7 @@ Rebol [
         description - short statement of type's purpose (used by HELP)
         antiform    - (optional) the name of the antiform of the type
         antinotes   - (optional) if antiform, statement of antiform purpose
-        node flags  - indication of if cell payload slot 1 or 2 hold nodes
+        mark flags  - indication of if cell payload slot 1 or 2 mark Base*
         constraints - sparse type constraints this type will answer true to
     ]--
     notes: --[
@@ -49,84 +49,84 @@ Rebol [
 
 
 integer     "64 bit integer"
-            (CELL_MASK_NO_NODES)  ; would change with bignum ints
+            (CELL_MASK_NO_MARKING)  ; would change with bignum ints
             [any-number? any-scalar? any-inert? any-sequencable?]
 
 <ANY-FLOAT?>
 
     decimal     "64bit floating point number (IEEE standard)"
-                (CELL_MASK_NO_NODES)
+                (CELL_MASK_NO_MARKING)
                 [any-number? any-scalar? any-inert?]
 
     percent     "special form of decimals (used mainly for layout)"
-                (CELL_MASK_NO_NODES)
+                (CELL_MASK_NO_MARKING)
                 [any-number? any-scalar? any-inert?]
 
 </ANY-FLOAT?>
 
 pair        "two dimensional point or size"
-            (node1)
+            (payload1)
             [any-scalar? any-inert?]
 
 time        "time of day or duration"
-            (CELL_MASK_NO_NODES)
+            (CELL_MASK_NO_MARKING)
             [any-scalar? any-inert?]
 
 date        "day, month, year, time of day, and timezone"
-            (CELL_MASK_NO_NODES)
+            (CELL_MASK_NO_MARKING)
             [any-inert?]
 
 parameter   "function parameter description"
-            (node1 node2)
+            (payload1 payload2)
             [any-inert?]
 
 bitset      "set of bit flags"
-            (node1)
+            (payload1)
             [any-inert?]
 
 map         "name-value pairs (hash associative)"
-            (node1)
+            (payload1)
             [any-inert?]
 
 handle      "arbitrary internal object or value"
-            (:node1)  ; managed handles use a node to get a shared instance
+            (:payload1)  ; managed handles use a Stub to get a shared instance
             [any-inert?]
 
 blob        "series of bytes"
-            (node1)
+            (payload1)
             [any-series? any-inert?]  ; note: not an ANY-STRING?
 
 <ANY-STRING?>  ; (order does not currently matter)
 
     text        "text string series of characters"
-                (node1)
+                (payload1)
                 [any-series? any-utf8? any-inert? any-sequencable?]
 
     file        "file name or path"
-                (node1)
+                (payload1)
                 [any-series? any-utf8? any-inert?]
 
     tag         "markup string (HTML or XML)"
-                (node1)
+                (payload1)
                 [any-series? any-utf8? any-inert? any-sequencable?]
 
 </ANY-STRING?>
 
 url         "uniform resource locator or identifier"
-            (:node1)  ; may or may not embed data in url vs. use node
+            (:payload1)  ; may or may not embed data in url vs. use node
             [any-utf8? any-inert?]
 
 email       "email address"
-            (:node1)  ; may or may not embed data in email vs. use node
+            (:payload1)  ; may or may not embed data in email vs. use node
             [any-utf8? any-inert?]
 
 rune        "immutable codepoint or codepoint sequence"
 ~trash~     "state held by unset variables, can't be passed as normal argument"
-            (:node1)  ; may or may not embed data in rune vs. use node
+            (:payload1)  ; may or may not embed data in rune vs. use node
             [any-utf8? any-inert? any-sequencable?]
 
 money       "digits and decimal points as a string, preserved precisely"
-            (CELL_MASK_NO_NODES)
+            (CELL_MASK_NO_MARKING)
             [any-utf8? any-inert? any-sequencable?]
 
 
@@ -134,7 +134,7 @@ money       "digits and decimal points as a string, preserved precisely"
 ; ABOVE THIS LINE, CELL's "Extra" IS RAW BITS: Cell_Extra_Needs_Mark() = false
 ; ============================================================================
 
-; With CELL_FLAG_DONT_MARK_NODE1 and CELL_FLAG_DONT_MARK_NODE2, each cell
+; With CELL_FLAG_DONT_MARK_PAYLOAD_1 and CELL_FLAG_DONT_MARK_PAYLOAD_2, each cell
 ; can say whether the GC needs to consider marking the first or second slots
 ; in the payload.  But rather than sacrifice another bit for whether the
 ; EXTRA slot is a node, the types are in order so that all the ones that need
@@ -146,35 +146,35 @@ money       "digits and decimal points as a string, preserved precisely"
 
 
 varargs     "evaluator position for variable numbers of arguments"
-            (node2)
+            (payload2)
             [any-inert?]
 
 <ANY-CONTEXT?>
 
     object      "context of names with values"
-                (node1 node2)
+                (payload1 payload2)
                 [any-inert?]
 
     module      "loadable context of code and data"
-                (node1)
+                (payload1)
                 [any-inert?]
 
     warning     "context with id, arguments, and stack origin"
     ~error~:U   "error state that is escalated to a panic if not triaged"
-                (node1 node2)
+                (payload1 payload2)
                 [any-inert?]
 
     port        "external series, an I/O channel"
-                (node1 node2)
+                (payload1 payload2)
                 [any-inert?]
 
     frame       "arguments and locals of a function state"
     ~action~    "will trigger function execution from words"
-                (node1 node2)
+                (payload1 payload2)
                 [any-branch?]
 
     let         "context containing a single variable"
-                (node1)
+                (payload1)
                 [any-inert?]
 
 </ANY-CONTEXT?>
@@ -188,21 +188,21 @@ varargs     "evaluator position for variable numbers of arguments"
 
     word        "evaluates a variable or action"
     ~keyword~   "special constant values (e.g. ~null~, ~okay~)"
-                (node1)
+                (payload1)
                 [any-utf8? any-sequencable?]
 
   <ANY-SEQUENCE?>
 
     tuple       "member selection with inert bias"
-                (:node1)
+                (:payload1)
                 [any-scalar?]  ; !!! 1.2.3 maybe, but not all are scalars...
 
     chain       "refinement and function call dialect"
-                (:node1)
+                (:payload1)
                 []
 
     path        "member or refinement selection with execution bias"
-                (:node1)
+                (:payload1)
                 []
 
   </ANY-SEQUENCE?>
@@ -211,17 +211,17 @@ varargs     "evaluator position for variable numbers of arguments"
 
     block       "list of elements that blocks evaluation unless EVAL is used"
     ~pack~:U    "multi-return that can be unpacked or decays to first item"
-                (node1)
+                (payload1)
                 [any-series? any-branch? any-sequencable?]
 
     fence       "list of elements that are used in construction via MAKE"
     ~datatype~  "the type of a value expressed as an antiform"
-                (node1)
+                (payload1)
                 [any-series? any-branch? any-sequencable?]
 
     group       "list that evaluates expressions as an isolated group"
     ~splice~    "fragment of multiple values without a surrounding block"
-                (node1)
+                (payload1)
                 [any-series? any-sequencable?]
 
   </ANY-LIST?>
@@ -232,7 +232,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
     comma         "separator between full evaluations"
     ~ghost~:U     "elision state that is discarded by the evaluator"
-                  (CELL_MASK_NO_NODES)
+                  (CELL_MASK_NO_MARKING)
                   [any-unit?]  ; NOT inert
 
 </ANY-BINDABLE?>

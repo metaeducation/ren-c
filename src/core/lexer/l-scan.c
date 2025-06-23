@@ -3118,10 +3118,10 @@ Bounce Scanner_Executor(Level* const L) {
   // Can only store file and line information if it has an array
 
     if (
-        Cell_Has_Node1(TOP)
-        and CELL_NODE1(TOP) != nullptr  // null legal in node slots ATM
-        and not Is_Node_A_Cell(CELL_NODE1(TOP))
-        and Is_Stub_Source(cast(Stub*, CELL_NODE1(TOP)))
+        Cell_Payload_1_Needs_Mark(TOP)
+        and CELL_PAYLOAD_1(TOP) != nullptr  // null legal in node slots ATM
+        and not Is_Base_A_Cell(CELL_PAYLOAD_1(TOP))
+        and Is_Stub_Source(cast(Stub*, CELL_PAYLOAD_1(TOP)))
     ){
         Source* a = cast(Source*, CELL_SERIESLIKE_NODE(TOP));
         MISC_SOURCE_LINE(a) = transcode->line;

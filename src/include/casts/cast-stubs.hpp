@@ -47,7 +47,7 @@ const Stub* stub_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 template<typename F>
 const Stub* stub_cast_impl(const F* p, DowncastTag) {  // validate [C]
     DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Node
+        void, Byte, Base
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
@@ -55,9 +55,9 @@ const Stub* stub_cast_impl(const F* p, DowncastTag) {  // validate [C]
         return nullptr;
 
     if ((u_cast(const Stub*, p)->leader.bits & (
-        NODE_FLAG_NODE | NODE_FLAG_CELL  // NODE_FLAG_UNREADABLE ok
+        BASE_FLAG_BASE | BASE_FLAG_CELL  // BASE_FLAG_UNREADABLE ok
     )) != (
-        NODE_FLAG_NODE
+        BASE_FLAG_BASE
     )){
         crash (p);
     }
@@ -83,7 +83,7 @@ const Flex* flex_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 template<typename F>
 const Flex* flex_cast_impl(const F* p, DowncastTag) {  // validate [C]
     DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Node, Stub
+        void, Byte, Base, Stub
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
@@ -91,9 +91,9 @@ const Flex* flex_cast_impl(const F* p, DowncastTag) {  // validate [C]
         return nullptr;
 
     if ((u_cast(const Stub*, p)->leader.bits & (
-        NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
+        BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
-        NODE_FLAG_NODE
+        BASE_FLAG_BASE
     )){
         crash (p);
     }
@@ -119,7 +119,7 @@ const Binary* binary_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 template<typename F>
 const Binary* binary_cast_impl(const F* p, DowncastTag) {  // validate [C]
     DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Node, Flex
+        void, Byte, Base, Flex
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
@@ -129,9 +129,9 @@ const Binary* binary_cast_impl(const F* p, DowncastTag) {  // validate [C]
     const Stub* stub = u_cast(const Stub*, p);
 
     if ((stub->leader.bits & (
-        NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
+        BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
-        NODE_FLAG_NODE  // NODE_FLAG_UNREADABLE is diminished Stub
+        BASE_FLAG_BASE  // BASE_FLAG_UNREADABLE is diminished Stub
     )){
         crash (p);
     }
@@ -159,7 +159,7 @@ const String* string_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 template<typename F>
 const String* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
     DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Node, Stub, Flex, Binary
+        void, Byte, Base, Stub, Flex, Binary
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
@@ -174,8 +174,8 @@ const String* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
 
     if ((stub->leader.bits & (
         FLEX_MASK_SYMBOL_STRING_COMMON
-            | NODE_FLAG_UNREADABLE
-            | NODE_FLAG_CELL
+            | BASE_FLAG_UNREADABLE
+            | BASE_FLAG_CELL
     )) !=
         FLEX_MASK_SYMBOL_STRING_COMMON
     ){
@@ -202,7 +202,7 @@ template<typename F>  // [A]
 struct CastHelper<const F*, const Symbol*> {
     static const Symbol* convert(const F* p) {
         DECLARE_C_TYPE_LIST(type_list,
-            void, Byte, Node, Stub, Flex, Binary, String
+            void, Byte, Base, Stub, Flex, Binary, String
         );
         STATIC_ASSERT(In_C_Type_List(type_list, F));
 
@@ -212,8 +212,8 @@ struct CastHelper<const F*, const Symbol*> {
         const Stub* stub = u_cast(const Stub*, p);
         if ((stub->leader.bits & (
             (FLEX_MASK_SYMBOL | FLAG_TASTE_BYTE(255))
-                | NODE_FLAG_UNREADABLE
-                | NODE_FLAG_CELL
+                | BASE_FLAG_UNREADABLE
+                | BASE_FLAG_CELL
         )) !=
             FLEX_MASK_SYMBOL
         ){
@@ -237,7 +237,7 @@ const Array* array_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 template<typename F>
 const Array* array_cast_impl(const F* p, DowncastTag) {  // validate [C]
     DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Node, Stub, Flex
+        void, Byte, Base, Stub, Flex
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
@@ -245,9 +245,9 @@ const Array* array_cast_impl(const F* p, DowncastTag) {  // validate [C]
         return nullptr;
 
     if ((u_cast(const Stub*, p)->leader.bits & (
-        NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
+        BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
-        NODE_FLAG_NODE
+        BASE_FLAG_BASE
     )){
         crash (p);
     }
@@ -273,7 +273,7 @@ const VarList* varlist_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
 template<typename F>
 const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
     DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Node, Stub, Flex, Array
+        void, Byte, Base, Stub, Flex, Array
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
@@ -281,9 +281,9 @@ const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
         return nullptr;
 
     if ((u_cast(const Stub*, p)->leader.bits & (
-        FLEX_MASK_LEVEL_VARLIST  // MISC_NODE_NEEDS_MARK
-            | NODE_FLAG_UNREADABLE
-            | NODE_FLAG_CELL
+        FLEX_MASK_LEVEL_VARLIST  // MISC_NEEDS_MARK
+            | BASE_FLAG_UNREADABLE
+            | BASE_FLAG_CELL
             | FLAG_TASTE_BYTE(255)
     )) !=
         FLEX_MASK_LEVEL_VARLIST
@@ -308,7 +308,7 @@ template<typename F>  // [A]
 struct CastHelper<const F*, const Phase*> {  // both must be const [B]
     static const Phase* convert(const F* p) {
         DECLARE_C_TYPE_LIST(type_list,
-            void, Byte, Node, Stub, Flex, Array
+            void, Byte, Base, Stub, Flex, Array
         );
         STATIC_ASSERT(In_C_Type_List(type_list, F));
 
@@ -320,8 +320,8 @@ struct CastHelper<const F*, const Phase*> {  // both must be const [B]
         if (TASTE_BYTE(stub) == FLAVOR_DETAILS) {
             if ((stub->leader.bits & (
                 (FLEX_MASK_DETAILS | FLAG_TASTE_BYTE(255))
-                    | NODE_FLAG_UNREADABLE
-                    | NODE_FLAG_CELL
+                    | BASE_FLAG_UNREADABLE
+                    | BASE_FLAG_CELL
             )) !=
                 FLEX_MASK_DETAILS
             ){
@@ -331,11 +331,11 @@ struct CastHelper<const F*, const Phase*> {  // both must be const [B]
         else {
             if ((stub->leader.bits & ((
                 (FLEX_MASK_LEVEL_VARLIST | FLAG_TASTE_BYTE(255))
-                    | NODE_FLAG_UNREADABLE
-                    | NODE_FLAG_CELL
+                    | BASE_FLAG_UNREADABLE
+                    | BASE_FLAG_CELL
                 )
             )) !=
-                FLEX_MASK_LEVEL_VARLIST  // maybe no MISC_NODE_NEEDS_MARK
+                FLEX_MASK_LEVEL_VARLIST  // maybe no MISC_NEEDS_MARK
             ){
                 crash (p);
             }

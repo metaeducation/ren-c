@@ -49,7 +49,7 @@
     FLAG_FLAVOR(SOURCE)
 
 #define FLEX_MASK_MANAGED_SOURCE \
-    (FLAG_FLAVOR(SOURCE) | NODE_FLAG_MANAGED)
+    (FLAG_FLAVOR(SOURCE) | BASE_FLAG_MANAGED)
 
 #define Make_Source(capacity) \
     cast(Source*, Make_Array_Core(FLEX_MASK_UNMANAGED_SOURCE, (capacity)))
@@ -140,7 +140,7 @@
 // copying an array to turn it into a paramlist or varlist, or to use as the
 // kind of array the use might see.  If we used plain Make_Source() then it
 // would add a flag saying there were line numbers available, which may
-// compete with the usage of the ->misc and ->link fields of the Stub Node
+// compete with the usage of the ->misc and ->link fields of the Stub Base
 // for internal arrays.
 //
 INLINE Array* Make_Array_For_Copy(

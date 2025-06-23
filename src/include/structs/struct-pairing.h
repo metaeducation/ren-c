@@ -25,7 +25,7 @@
 //
 
 #if CPLUSPLUS_11
-    struct Pairing : public Node {};
+    struct Pairing : public Base {};
 #else
     typedef Cell Pairing;
 #endif

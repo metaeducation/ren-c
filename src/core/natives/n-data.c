@@ -1052,7 +1052,7 @@ DECLARE_NATIVE(FREE)
     if (Any_Context(v) or Is_Handle(v))
         return PANIC("FREE only implemented for ANY-SERIES? at the moment");
 
-    if (Not_Node_Readable(CELL_NODE1(v)))
+    if (Not_Base_Readable(CELL_PAYLOAD_1(v)))
         return PANIC("Cannot FREE already freed series");
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
@@ -1074,7 +1074,7 @@ DECLARE_NATIVE(FREE)
 DECLARE_NATIVE(FREE_Q)
 //
 // 1. Currently we don't have a "diminished" Pairing...because Cells use
-//    the NODE_FLAG_UNREADABLE for meaningfully unreadable cells, that have a
+//    the BASE_FLAG_UNREADABLE for meaningfully unreadable cells, that have a
 //    different purpose than canonizing references to a diminished form.
 //
 //    (We could use something like the CELL_FLAG_NOTE or other signal on
@@ -1088,14 +1088,14 @@ DECLARE_NATIVE(FREE_Q)
     if (Is_Nulled(v))
         return LOGIC(false);
 
-    if (not Cell_Has_Node1(v))  // freeable values have Flex in payload node1
+    if (not Cell_Payload_1_Needs_Mark(v))  // freeable values have Flex in payload payload1
         return LOGIC(false);
 
-    Node* n = CELL_NODE1(v);
-    if (n == nullptr or Is_Node_A_Cell(n))
+    Base* b = CELL_PAYLOAD_1(v);
+    if (b == nullptr or not Is_Base_A_Stub(b))
         return LOGIC(false);  // no decayed pairing form at this time [1]
 
-    if (Is_Stub_Diminished(cast(Stub*, n)))
+    if (Is_Stub_Diminished(cast(Stub*, b)))
         return LOGIC(true);  // decayed is as "free" as outstanding refs get
 
     return LOGIC(false);

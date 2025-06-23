@@ -28,7 +28,7 @@
 // HANDLE that employs a shared stub.  This means that operations can change
 // the data and have the change reflected in other references to that handle.
 //
-// Another feature of the managed form is that the node can hold a hook for
+// Another feature of the managed form is that the base can hold a hook for
 // a "cleanup" function.  The GC will call this when there are no references
 // left to the handle.
 //
@@ -40,7 +40,7 @@
 //   the spec and has different forms for functions and data.
 //
 
-#define CELL_HANDLE_STUB(c)             CELL_NODE1(c)
+#define CELL_HANDLE_STUB(c)             CELL_PAYLOAD_1(c)
 
 #define Extract_Cell_Handle_Stub(c)     cast(Stub*, CELL_HANDLE_STUB(c))
 
@@ -48,7 +48,7 @@
 
 #define CELL_HANDLE_CDATA_P(c)          (c)->payload.split.two.p
 #define CELL_HANDLE_CFUNC_P(c)          (c)->payload.split.two.cfunc
-#define CELL_HANDLE_NODE_P(c)           (c)->payload.split.two.node
+#define CELL_HANDLE_NODE_P(c)           (c)->payload.split.two.base
 
 
 #define MISC_HANDLE_CLEANER(stub)       (stub)->misc.cfunc
@@ -76,22 +76,22 @@ INLINE bool Is_Handle_Cfunc(const Value* v) {
 
 INLINE Value* Extract_Cell_Handle_Canon(const_if_c Value* c) {
     assert(Unchecked_Heart_Of(c) == TYPE_HANDLE);
-    if (not Cell_Has_Node1(c))
+    if (not Cell_Payload_1_Needs_Mark(c))
         return m_cast(Value*, c);  // changing instance won't be seen by copies
 
     return Known_Stable(
-        Stub_Cell(Extract_Cell_Handle_Stub(c))  // has shared node
+        Stub_Cell(Extract_Cell_Handle_Stub(c))  // has shared base
     );
 }
 
 #if CPLUSPLUS_11
     INLINE const Value* Extract_Cell_Handle_Canon(const Value* c) {
         assert(Unchecked_Heart_Of(c) == TYPE_HANDLE);
-        if (not Cell_Has_Node1(c))
+        if (not Cell_Payload_1_Needs_Mark(c))
             return c;  // changing handle instance won't be seen by copies
 
         return Known_Stable(
-            Stub_Cell(Extract_Cell_Handle_Stub(c))  // has shared node
+            Stub_Cell(Extract_Cell_Handle_Stub(c))  // has shared base
         );
     }
 #endif
@@ -99,21 +99,21 @@ INLINE Value* Extract_Cell_Handle_Canon(const_if_c Value* c) {
 INLINE uintptr_t Cell_Handle_Len(const Value* v) {
     assert(not Is_Handle_Cfunc(v));
     const Value* canon = Extract_Cell_Handle_Canon(v);
-    assert(Get_Cell_Flag(canon, DONT_MARK_NODE2));
+    assert(Get_Cell_Flag(canon, DONT_MARK_PAYLOAD_2));
     return CELL_HANDLE_LENGTH_U(canon);
 }
 
 INLINE void* Cell_Handle_Void_Pointer(const Value* v) {
     assert(not Is_Handle_Cfunc(v));
     const Value* canon = Extract_Cell_Handle_Canon(v);
-    assert(Get_Cell_Flag(canon, DONT_MARK_NODE2));
+    assert(Get_Cell_Flag(canon, DONT_MARK_PAYLOAD_2));
     return CELL_HANDLE_CDATA_P(canon);
 }
 
-INLINE const Node* Cell_Handle_Node(const Value* v) {
+INLINE const Base* Cell_Handle_Base(const Value* v) {
     assert(not Is_Handle_Cfunc(v));
     const Value* canon = Extract_Cell_Handle_Canon(v);
-    assert(Not_Cell_Flag(canon, DONT_MARK_NODE2));
+    assert(Not_Cell_Flag(canon, DONT_MARK_PAYLOAD_2));
     return CELL_HANDLE_NODE_P(canon);
 }
 
@@ -127,7 +127,7 @@ INLINE CFunction* Cell_Handle_Cfunc(const Value* v) {
 
 INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Value* v) {
     assert(Unchecked_Heart_Of(v) == TYPE_HANDLE);
-    if (not Cell_Has_Node1(v))
+    if (not Cell_Payload_1_Needs_Mark(v))
         return nullptr;
     Stub* stub = Extract_Cell_Handle_Stub(v);
     return Handle_Cleaner(stub);
@@ -158,7 +158,7 @@ INLINE Element* Init_Handle_Cdata(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(HANDLE) | CELL_MASK_NO_NODES
+        FLAG_HEART(HANDLE) | CELL_MASK_NO_MARKING
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_CDATA_P(out) = cdata;
@@ -173,7 +173,7 @@ INLINE Element* Init_Handle_Cfunc(
 ){
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(HANDLE) | CELL_MASK_NO_NODES
+        FLAG_HEART(HANDLE) | CELL_MASK_NO_MARKING
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_CFUNC_P(out) = cfunc;
@@ -181,16 +181,16 @@ INLINE Element* Init_Handle_Cfunc(
     return out;
 }
 
-INLINE Element* Init_Handle_Node(
+INLINE Element* Init_Handle_Base(
     Init(Element) out,
-    const Node* node
+    const Base* base
 ){
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(HANDLE) | CELL_FLAG_DONT_MARK_NODE1
+        FLAG_HEART(HANDLE) | CELL_FLAG_DONT_MARK_PAYLOAD_1
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
-    CELL_HANDLE_NODE_P(out) = m_cast(Node*, node);  // extracted as const
+    CELL_HANDLE_NODE_P(out) = m_cast(Base*, base);  // extracted as const
     CELL_HANDLE_LENGTH_U(out) = 1;
     return out;
 }
@@ -203,7 +203,7 @@ INLINE void Init_Handle_Managed_Common(
     Stub* stub = Make_Untracked_Stub(
         FLAG_FLAVOR(HANDLE)
             | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  // calls the HandleCleaner
-            | NODE_FLAG_MANAGED);
+            | BASE_FLAG_MANAGED);
 
     Tweak_Handle_Cleaner(stub, cleaner);  // FLAVOR_HANDLE in Diminish_Stub()
 
@@ -211,8 +211,8 @@ INLINE void Init_Handle_Managed_Common(
     Reset_Cell_Header_Noquote(
         single,
         FLAG_HEART(HANDLE)
-            | (not CELL_FLAG_DONT_MARK_NODE1)  // points to singular
-            | CELL_FLAG_DONT_MARK_NODE2
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // points to singular
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2
     );
     CELL_HANDLE_STUB(single) = stub;
     CELL_HANDLE_LENGTH_U(single) = length;
@@ -226,8 +226,8 @@ INLINE void Init_Handle_Managed_Common(
     Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART(HANDLE)
-            | (not CELL_FLAG_DONT_MARK_NODE1)  // points to stub
-            | CELL_FLAG_DONT_MARK_NODE2
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // points to stub
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2
     );
     CELL_HANDLE_STUB(out) = stub;
 
@@ -264,9 +264,9 @@ INLINE Element* Init_Handle_Cfunc_Managed(
     return out;
 }
 
-INLINE Element* Init_Handle_Node_Managed(
+INLINE Element* Init_Handle_Base_Managed(
     Init(Element) out,
-    const Node* node,
+    const Base* base,
     Option(HandleCleaner*) cleaner
 ){
     Init_Handle_Managed_Common(out, 1, cleaner);
@@ -274,10 +274,10 @@ INLINE Element* Init_Handle_Node_Managed(
     // Leave the non-singular cdata corrupt; clients should not be using
 
     Cell* cell = Stub_Cell(Extract_Cell_Handle_Stub(out));
-    Clear_Cell_Flag(cell, DONT_MARK_NODE2);
-    CELL_HANDLE_NODE_P(cell) = m_cast(Node*, node);  // extracted as const
+    Clear_Cell_Flag(cell, DONT_MARK_PAYLOAD_2);
+    CELL_HANDLE_NODE_P(cell) = m_cast(Base*, base);  // extracted as const
     return out;
 }
 
-#define Handle_Holds_Node(c) \
-    Cell_Has_Node2(Stub_Cell(Extract_Cell_Handle_Stub(c)))
+#define Handle_Holds_Base(c) \
+    Cell_Payload_2_Needs_Mark(Stub_Cell(Extract_Cell_Handle_Stub(c)))

@@ -60,8 +60,8 @@
 // When the GC runs, it canonizes all inaccessible Flexes to a single canon
 // inaccessible stub.  This compacts memory of references that have expired.
 //
-// 1. We can't just set NODE_FLAG_UNREADABLE, because if the only flag that
-//    was set in the Stub header was NODE_FLAG_NODE then this would give
+// 1. We can't just set BASE_FLAG_UNREADABLE, because if the only flag that
+//    was set in the Stub header was BASE_FLAG_BASE then this would give
 //    us a bit pattern of 11000000, which is FREE_POOLUNIT_BYTE.  We want
 //    the decayed state to be distinct and potentially encode more info,
 //    so we push it out of the valid leading UTF-8 byte range...the patterns
@@ -71,9 +71,9 @@
 //
 
 INLINE bool Is_Stub_Diminished(const Stub* s) {
-    if (Is_Node_Readable(s))
+    if (Is_Base_Readable(s))
         return false;
-    Byte n = NODE_BYTE(s);
+    Byte n = BASE_BYTE(s);
     assert(n == DIMINISHED_CANON_BYTE or n == DIMINISHED_NON_CANON_BYTE);
     UNUSED(n);
     return true;
@@ -87,12 +87,12 @@ INLINE bool Is_Stub_Diminished(const Stub* s) {
     (not Is_Stub_Diminished(s))
 
 #define STUB_MASK_NON_CANON_UNREADABLE \
-    NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | FLAG_TASTE_BYTE(255)
+    BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | FLAG_TASTE_BYTE(255)
 
 INLINE Stub* Set_Stub_Unreadable(Stub* s) {
-    assert(Is_Node_Readable(s));
+    assert(Is_Base_Readable(s));
     s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
-    assert(NODE_BYTE(s) == DIMINISHED_NON_CANON_BYTE);
+    assert(BASE_BYTE(s) == DIMINISHED_NON_CANON_BYTE);
 
     Corrupt_Pointer_If_Debug(s->link.corrupt);
     Corrupt_Pointer_If_Debug(s->misc.corrupt);
@@ -138,20 +138,20 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 // Using token pasting macros helps avoid mixups with FLEX_FLAG_XXX!
 //
 // Not all Flex Stubs have info bits, as some use Stub.node to store a GC
-// markable Node.
+// markable Base.
 //
 // 1. See mutability notes on Set_Flex_Flag()/Get_Flex_Flag().  The same
 //    applies to the info flags.
 //
 // 2. We check that the info is being used for bits, not an "INODE".
-//    Assume Flavor has INFO_NODE_NEEDS_MARK right.
+//    Assume Flavor has INFO_NEEDS_MARK right.
 //
 #if NO_CPLUSPLUS_11
     #define FLEX_INFO(f) \
         x_cast(Flex*, ensure(const Flex*, (f)))->info.flags  // [1]
 #else
     INLINE uintptr_t &FLEX_INFO(const Flex* f) {
-        assert(Not_Stub_Flag(f, INFO_NODE_NEEDS_MARK));  // [2]
+        assert(Not_Stub_Flag(f, INFO_NEEDS_MARK));  // [2]
         return m_cast(Flex*, f)->info.flags;  // [1]
     }
 #endif
@@ -284,7 +284,7 @@ INLINE Length Flex_Dynamic_Used(const Flex* f) {
 //=//// FLEX DATA ACCESSORS ///////////////////////////////////////////////=//
 //
 // 1. Callers like Cell_String() or Cell_Array() are expected to test for
-//    NODE_FLAG_UNREADABLE and panic before ever calling these routines.
+//    BASE_FLAG_UNREADABLE and panic before ever calling these routines.
 //
 // 2. Because these inline functions are called so often, Flex_Data_At()
 //    duplicates the code in Flex_Data() rather than call it.  Be sure
@@ -314,9 +314,9 @@ INLINE Byte* Flex_Data(const_if_c Flex* f) {  // assume valid [1]
 INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
   #if RUNTIME_CHECKS
     if (w != Flex_Wide(f)) {
-        if (NODE_BYTE(f) == FREE_POOLUNIT_BYTE)
+        if (BASE_BYTE(f) == FREE_POOLUNIT_BYTE)
             printf("Flex_Data_At() asked on free PoolUnit\n");
-        else if (Not_Node_Readable(f))
+        else if (Not_Base_Readable(f))
             printf("Flex_Data_At() asked on diminished Flex\n");
         else
             printf(
@@ -584,7 +584,7 @@ INLINE Flex* Make_Flex_Into(
         Set_Stub_Flag(s, DYNAMIC);
 
         if (not Try_Flex_Data_Alloc(s, capacity)) {
-            Clear_Node_Managed_Bit(s);
+            Clear_Base_Managed_Bit(s);
             Set_Stub_Unreadable(s);
             GC_Kill_Stub(s);
 
@@ -596,7 +596,7 @@ INLINE Flex* Make_Flex_Into(
       #endif
     }
 
-    if (not (flags & NODE_FLAG_MANAGED)) {  // more efficient if managed [1]
+    if (not (flags & BASE_FLAG_MANAGED)) {  // more efficient if managed [1]
         if (Is_Flex_Full(g_gc.manuals))
             Extend_Flex_If_Necessary(g_gc.manuals, 8);
 
@@ -626,6 +626,6 @@ INLINE Flex* Make_Flex_Into(
     INLINE void Debug_Monitor_Flex(void *p) {
         printf("Adding monitor to %p on TICK %" PRIu64 "\n", p, TICK);
         fflush(stdout);
-        g_mem.monitor_node = cast(Flex*, p);
+        g_mem.monitoring = cast(Flex*, p);
     }
 #endif

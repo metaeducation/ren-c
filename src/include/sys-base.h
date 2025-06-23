@@ -1,13 +1,13 @@
 //
-//  file: %sys-node.h
-//  summary: -[Convenience routines for the Node "superclass" structure]-
+//  file: %sys-base.h
+//  summary: -[Convenience routines for the Base "superclass" structure]-
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -21,98 +21,98 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // This provides some convenience routines that require more definitions than
-// are available when %struct-node.h is being processed.  (e.g. Value*,
+// are available when %struct-base.h is being processed.  (e.g. Value*,
 // Flex*, Level*...)
 //
-// See %struct-node.h for what a "Node" means in this context.
+// See %struct-base.h for what a "Base" means in this context.
 //
 
 
-// 1. Just checking that the NODE_FLAG_NODE bit is set is quite costly to
-//    be doing on *every* NODE_BYTE() operation.  But, sometimes it comes in
+// 1. Just checking that the BASE_FLAG_BASE bit is set is quite costly to
+//    be doing on *every* BASE_BYTE() operation.  But, sometimes it comes in
 //    handy when tracing down misunderstandings.  A build that enables this
 //    should be run every so often.
 //
-// 2. Losing const information for fetching NODE_BYTE() is intentional.  GC
+// 2. Losing const information for fetching BASE_BYTE() is intentional.  GC
 //    needs to fiddle with the marked flag bit even on Flex that are
 //    conceptually immutable, and the managed bit needs to be set on bindings
 //    where the reference is const.  If you're changing something from a Cell
 //    to a Stub--or otherwise--you have much bigger concerns regarding safety
 //    and unsafety than C-level constness!
 //
-#if !defined(HEAVY_NODE_BYTE_CHECK)  // [1]
-    #define NODE_BYTE(p) \
-        FIRST_BYTE(x_cast(Node*, ensure(const Node*, (p))))  // x_cast [2]
+#if !defined(HEAVY_BASE_BYTE_CHECK)  // [1]
+    #define BASE_BYTE(p) \
+        FIRST_BYTE(x_cast(Base*, ensure(const Base*, (p))))  // x_cast [2]
 
 #else
-    INLINE Byte& NODE_BYTE(const Node* node) {
-        assert(cast(const Byte*, node)[0] & NODE_BYTEMASK_0x80_NODE);
+    INLINE Byte& BASE_BYTE(const Base* base) {
+        assert(cast(const Byte*, node)[0] & BASE_BYTEMASK_0x80_NODE);
         return x_cast(Byte*, node)[0];   // cast away constness [2]
     }
 #endif
 
-#define FLAG_NODE_BYTE(byte)    FLAG_FIRST_BYTE(byte)
+#define FLAG_BASE_BYTE(byte)    FLAG_FIRST_BYTE(byte)
 
-#define Is_Node(p) \
-    (c_cast(Byte*, (p))[0] & NODE_BYTEMASK_0x80_NODE)
+#define Is_Base(p) \
+    (c_cast(Byte*, (p))[0] & BASE_BYTEMASK_0x80_NODE)
 
-#define Is_Node_A_Cell(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x08_CELL))
-#define Is_Node_A_Stub(n)   (not Is_Node_A_Cell(n))
+#define Is_Base_A_Cell(n)   (did (BASE_BYTE(n) & BASE_BYTEMASK_0x08_CELL))
+#define Is_Base_A_Stub(n)   (not Is_Base_A_Cell(n))
 
-#define Is_Node_Marked(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_MARKED))
-#define Not_Node_Marked(n)  (not Is_Node_Marked(n))
+#define Is_Base_Marked(n)   (did (BASE_BYTE(n) & BASE_BYTEMASK_0x01_MARKED))
+#define Not_Base_Marked(n)  (not Is_Base_Marked(n))
 
-#define Is_Node_Managed(n)  (did (NODE_BYTE(n) & NODE_BYTEMASK_0x04_MANAGED))
-#define Not_Node_Managed(n) (not Is_Node_Managed(n))
+#define Is_Base_Managed(n)  (did (BASE_BYTE(n) & BASE_BYTEMASK_0x04_MANAGED))
+#define Not_Base_Managed(n) (not Is_Base_Managed(n))
 
-#define Is_Node_Readable(n) \
-    (not (NODE_BYTE(n) & NODE_BYTEMASK_0x40_UNREADABLE))
+#define Is_Base_Readable(n) \
+    (not (BASE_BYTE(n) & BASE_BYTEMASK_0x40_UNREADABLE))
 
-#define Not_Node_Readable(n) (not Is_Node_Readable(n))
+#define Not_Base_Readable(n) (not Is_Base_Readable(n))
 
-// Is_Node_Root() sounds like it might be the only node.
-// Is_Node_A_Root() sounds like a third category vs Is_Node_A_Cell()/Stub()
+// Is_Base_Root() sounds like it might be the only node.
+// Is_Base_A_Root() sounds like a third category vs Is_Base_A_Cell()/Stub()
 //
-#define Is_Node_Root_Bit_Set(n) \
-    (did (NODE_BYTE(n) & NODE_BYTEMASK_0x02_ROOT))
+#define Is_Base_Root_Bit_Set(n) \
+    (did (BASE_BYTE(n) & BASE_BYTEMASK_0x02_ROOT))
 
-#define Not_Node_Root_Bit_Set(n) \
-    (not (NODE_BYTE(n) & NODE_BYTEMASK_0x02_ROOT))
+#define Not_Base_Root_Bit_Set(n) \
+    (not (BASE_BYTE(n) & BASE_BYTEMASK_0x02_ROOT))
 
 // Add "_Bit" suffix to reinforce lack of higher level function.  (A macro
-// with the name Set_Node_Managed() might sound like it does more, like
+// with the name Set_Base_Managed() might sound like it does more, like
 // removing from the manuals list the way Manage_Flex() etc. do)
 
-#define Set_Node_Root_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x02_ROOT
+#define Set_Base_Root_Bit(n) \
+    BASE_BYTE(n) |= BASE_BYTEMASK_0x02_ROOT
 
-#define Clear_Node_Root_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x02_ROOT)
+#define Clear_Base_Root_Bit(n) \
+    BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x02_ROOT)
 
-#define Set_Node_Marked_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x01_MARKED
+#define Set_Base_Marked_Bit(n) \
+    BASE_BYTE(n) |= BASE_BYTEMASK_0x01_MARKED
 
-#define Clear_Node_Marked_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x01_MARKED)
+#define Clear_Base_Marked_Bit(n) \
+    BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x01_MARKED)
 
-#define Set_Node_Managed_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x04_MANAGED
+#define Set_Base_Managed_Bit(n) \
+    BASE_BYTE(n) |= BASE_BYTEMASK_0x04_MANAGED
 
-#define Clear_Node_Managed_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x04_MANAGED)
+#define Clear_Base_Managed_Bit(n) \
+    BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x04_MANAGED)
 
-#define Set_Node_Unreadable_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x40_UNREADABLE
+#define Set_Base_Unreadable_Bit(n) \
+    BASE_BYTE(n) |= BASE_BYTEMASK_0x40_UNREADABLE
 
-#define Clear_Node_Unreadable_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x40_UNREADABLE)
+#define Clear_Base_Unreadable_Bit(n) \
+    BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x40_UNREADABLE)
 
 
 //=//// POINTER DETECTION (UTF-8, STUB, CELL, END) ////////////////////////=//
 //
-// Ren-C's "Nodes" (Cell and Stub derivatives) all have a platform-pointer
-// sized header of bits, which is constructed using byte-order-sensitive bit
-// flags (see FLAG_LEFT_BIT and related definitions for how those work).
+// Ren-C's Cell and Stub derivatives all have a platform-pointer-sized header
+// of bits, which is constructed using byte-order-sensitive bit flags (see
+// FLAG_LEFT_BIT and related definitions for how those work).
 //
 // The values for the bits were chosen carefully, so that the leading byte of
 // Cell and Stub could be distinguished from the leading byte of a UTF-8
@@ -137,20 +137,20 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
 {
     Byte b = FIRST_BYTE(p);
 
-    if (not (b & NODE_BYTEMASK_0x80_NODE))  // test for 1xxxxxxx
+    if (not (b & BASE_BYTEMASK_0x80_NODE))  // test for 1xxxxxxx
         return DETECTED_AS_UTF8;  // < 0x80 is string w/1st char in ASCII range
 
-    if (not (b & NODE_BYTEMASK_0x40_UNREADABLE)) {  // test for 10xxxxxx
-        if (b & NODE_BYTEMASK_0x08_CELL)  // 10xxxxxx never starts UTF-8
+    if (not (b & BASE_BYTEMASK_0x40_UNREADABLE)) {  // test for 10xxxxxx
+        if (b & BASE_BYTEMASK_0x08_CELL)  // 10xxxxxx never starts UTF-8
             return DETECTED_AS_CELL;
         return DETECTED_AS_STUB;
     }
 
     if (  // we know it's 11xxxxxx... now test for 1111xxxx
-        (b & (NODE_BYTEMASK_0x20_GC_ONE | NODE_BYTEMASK_0x10_GC_TWO))
-            == (NODE_BYTEMASK_0x20_GC_ONE | NODE_BYTEMASK_0x10_GC_TWO)
+        (b & (BASE_BYTEMASK_0x20_GC_ONE | BASE_BYTEMASK_0x10_GC_TWO))
+            == (BASE_BYTEMASK_0x20_GC_ONE | BASE_BYTEMASK_0x10_GC_TWO)
     ){
-        if (b & NODE_BYTEMASK_0x08_CELL)  // ...now test for 11111xxx
+        if (b & BASE_BYTEMASK_0x08_CELL)  // ...now test for 11111xxx
             return DETECTED_AS_CELL;  // 11111xxx never starts UTF-8!
 
         // There are 3 patterns of 0b11110xxx that are illegal in UTF-8:
@@ -159,7 +159,7 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
         //
         // Hence if the sixth bit is clear (0b111100xx) detect it as UTF-8.
         //
-        if (not (b & NODE_BYTEMASK_0x04_MANAGED))
+        if (not (b & BASE_BYTEMASK_0x04_MANAGED))
             return DETECTED_AS_UTF8;
 
         if (b == END_SIGNAL_BYTE) {  // 0xF7
@@ -170,7 +170,7 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
         if (b == FREE_POOLUNIT_BYTE)  // 0xF6
             return DETECTED_AS_FREE;
 
-        if (b == NODE_BYTE_WILD)  // 0xF5
+        if (b == BASE_BYTE_WILD)  // 0xF5
             return DETECTED_AS_WILD;
 
         return DETECTED_AS_STUB;
@@ -183,7 +183,7 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
 }
 
 
-// Allocate a node from a pool.
+// Allocate a Unit from a pool.
 //
 // 1. The first byte of the returned allocation will be FREE_POOLUNIT_BYTE
 //    in release builds.  It's up to the client to update the bytes of the
@@ -273,14 +273,14 @@ INLINE void *Alloc_Pooled(PoolId pool_id) {
     Alloc_Pooled(STUB_POOL))  // not a formed stub yet, don't cast it
 
 
-// Free a node, returning it to its pool.  Once it is freed, its header will
-// have NODE_FLAG_UNREADABLE...which will identify the node as not in use to anyone
-// who enumerates the nodes in the pool (such as the garbage collector).
+// Free a Unit, returning it to its pool.  Once it is freed, its header will
+// have BASE_FLAG_UNREADABLE...which will identify the Unit as not in use to
+// anyone enumerating Units in the pool (such as the garbage collector).
 //
 INLINE void Free_Pooled(PoolId pool_id, void* p)
 {
   #if DEBUG_MONITOR_FLEX
-    if (p == g_mem.monitor_node) {
+    if (p == maybe g_mem.monitoring) {
         printf("Freeing Flex %p on TICK %" PRIu64 "\n", p, TICK);
         fflush(stdout);
     }
@@ -296,11 +296,11 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
     unit->next_if_free = pool->first;
     pool->first = unit;
   #else
-    // !!! In R3-Alpha, the most recently freed node would become the first
-    // node to hand out.  This is a simple and likely good strategy for
+    // !!! In R3-Alpha, the most recently freed Unit would become the first
+    // Unit to hand out.  This is a simple and likely good strategy for
     // cache usage, but makes the "poisoning" nearly useless.
     //
-    // This code was added to insert an empty segment, such that this node
+    // This code was added to insert an empty segment, such that this Unit
     // won't be picked by the next Alloc_Pooled.  That enlongates the poisonous
     // time of this area to catch stale pointers.  But doing this in the
     // checked build only creates a source of variant behavior.
@@ -314,7 +314,7 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
 
     if (out_of_memory) {
         //
-        // We don't want Free_Node to panic with an "out of memory" error, so
+        // We don't want Free_Base to panic with an "out of memory" error, so
         // just fall back to the release build behavior in this case.
         //
         unit->next_if_free = pool->first;

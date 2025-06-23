@@ -74,7 +74,7 @@ INLINE Option(VarList*) Misc_Phase_Adjunct(Phase* a) {
 
 
 
-#define CELL_CONTEXT_VARLIST(c)  CELL_NODE1(c)
+#define CELL_CONTEXT_VARLIST(c)  CELL_PAYLOAD_1(c)
 
 
 //=//// CONTEXT ARCHETYPE VALUE CELL (ROOTVAR)  ///////////////////////////=//
@@ -172,7 +172,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
             | CELL_FLAG_PROTECTED  // should not be modified
     );
     CELL_CONTEXT_VARLIST(rootvar) = varlist;
-    rootvar->extra.node = nullptr;  // no coupling, but extra is marked
+    rootvar->extra.base = nullptr;  // no coupling, but extra is marked
     CELL_FRAME_LENS_OR_LABEL(rootvar) = nullptr;  // not a frame
 }
 
@@ -313,20 +313,20 @@ INLINE Fixed(Slot*) Varlist_Fixed_Slots(Sink(const Slot*) tail, VarList* v) {
 INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
     assert(Is_Stub_Varlist(varlist));
     assert(CTX_TYPE(varlist) == TYPE_FRAME);
-    assert(Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
+    assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
     return cast(Level*, MISC_VARLIST_RUNLEVEL(varlist));
 }
 
 INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {
     assert(Is_Stub_Varlist(varlist));
     possibly(CTX_TYPE(varlist) == TYPE_FRAME);  // may not be fully formed yet
-    assert(Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
+    assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
     MISC_VARLIST_RUNLEVEL(varlist) = maybe L;
 }
 
 INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {
     assert(Is_Frame(Varlist_Archetype(varlist)));
-    if (Get_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK))
+    if (Get_Stub_Flag(varlist, MISC_NEEDS_MARK))
         return nullptr;  // Stub.misc is Misc_Varlist_Adjunct(), not Level*
 
     Level* L = maybe Misc_Runlevel(varlist);
@@ -362,7 +362,7 @@ INLINE Level* Level_Of_Varlist_May_Panic(VarList* c) {
 #define Copy_Varlist_Shallow_Managed(src) \
     Copy_Varlist_Extra_Managed((src), 0, 0)
 
-// Useful if you want to start a context out as NODE_FLAG_MANAGED so it does
+// Useful if you want to start a context out as BASE_FLAG_MANAGED so it does
 // not have to go in the unmanaged roots list and be removed later.  (Be
 // careful not to do any evaluations or trigger GC until it's well formed)
 //

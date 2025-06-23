@@ -190,7 +190,7 @@ INLINE const ExtraHeart* Cell_Datatype_Extra_Heart(const Value* v) {
 
 INLINE const ExtraHeart* Cell_Extra_Heart(const Cell* v) {
     assert(Heart_Of_Is_0(v));
-    return c_cast(ExtraHeart*, v->extra.node);
+    return c_cast(ExtraHeart*, v->extra.base);
 }
 
 

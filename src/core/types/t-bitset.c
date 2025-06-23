@@ -695,7 +695,7 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
     if (Bool_ARG(PART) or Bool_ARG(DEEP))
         return PANIC(Error_Bad_Refines_Raw());
 
-    Binary* copy = cast(Binary*, Copy_Flex_Core(NODE_FLAG_MANAGED, bits));
+    Binary* copy = cast(Binary*, Copy_Flex_Core(BASE_FLAG_MANAGED, bits));
     INIT_BITS_NOT(copy, BITS_NOT(bits));
 
     return Init_Bitset(OUT, copy);
@@ -731,7 +731,7 @@ IMPLEMENT_GENERIC(COMPLEMENT, Is_Bitset)
 
     Binary* copy = cast(
         Binary*,
-        Copy_Flex_Core(NODE_FLAG_MANAGED, VAL_BITSET(bset))
+        Copy_Flex_Core(BASE_FLAG_MANAGED, VAL_BITSET(bset))
     );
     INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(bset)));
     return Init_Bitset(OUT, copy);

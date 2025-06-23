@@ -34,8 +34,8 @@
 // * Using a Cell would put us in contention with discerning between legitmate
 //   Cells and these signals.
 //
-// The cleanest choice was deemed to be using the NODE_BYTE_WILD byte, which
-// doesn't carry NODE_FLAG_CELL.  We can make simple two byte global pointers
+// The cleanest choice was deemed to be using the BASE_BYTE_WILD byte, which
+// doesn't carry BASE_FLAG_CELL.  We can make simple two byte global pointers
 // for the instances, that can be tested via switch() on their bytes or by
 // comparison to direct values.
 //
@@ -46,7 +46,7 @@
 INLINE void Init_Bounce_Wild(WildTwo out, char ch) {
     assert(out[0] == 0);  // is there any good reason Erase_Bounce_Wild()
     assert(out[1] == 0);
-    out[0] = NODE_BYTE_WILD;
+    out[0] = BASE_BYTE_WILD;
     out[1] = ch;
 }
 
@@ -58,13 +58,13 @@ INLINE void Erase_Bounce_Wild(WildTwo out) {
 INLINE bool Is_Bounce_An_Atom(Bounce b) {
     const void* p = cast(const void*, b);
     return (
-        FIRST_BYTE(p) & (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL)
-    ) == (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL);
+        FIRST_BYTE(p) & (BASE_BYTEMASK_0x80_NODE | BASE_BYTEMASK_0x08_CELL)
+    ) == (BASE_BYTEMASK_0x80_NODE | BASE_BYTEMASK_0x08_CELL);
 }
 
 INLINE bool Is_Bounce_Wild(Bounce b) {
     const void* p = cast(const void*, b);
-    return FIRST_BYTE(p) == NODE_BYTE_WILD;
+    return FIRST_BYTE(p) == BASE_BYTE_WILD;
 }
 
 INLINE char Bounce_Type(Bounce b) {

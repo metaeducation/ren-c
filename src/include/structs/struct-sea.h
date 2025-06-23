@@ -65,10 +65,10 @@
 
 
 #define FLEX_MASK_SEA \
-    (NODE_FLAG_NODE \
+    (BASE_FLAG_BASE \
         | FLAG_FLAVOR(SEA) \
-        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
-        | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct metadata */)
+        | STUB_FLAG_LINK_NEEDS_MARK  /* NextVirtual */ \
+        | STUB_FLAG_MISC_NEEDS_MARK  /* Adjunct metadata */)
 
 #define MISC_SEA_ADJUNCT(sea)      STUB_MISC(sea)
 
@@ -96,11 +96,11 @@
 
 #define STUB_MASK_PATCH ( \
     FLAG_FLAVOR(PATCH) \
-        | NODE_FLAG_NODE \
-        | NODE_FLAG_MANAGED \
+        | BASE_FLAG_BASE \
+        | BASE_FLAG_MANAGED \
         | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* remove from hitches [1] */ \
-        | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* context, weird keepalive [2] */ \
-        | not STUB_FLAG_LINK_NODE_NEEDS_MARK  /* reserved */ \
+        | STUB_FLAG_INFO_NEEDS_MARK  /* context, weird keepalive [2] */ \
+        | not STUB_FLAG_LINK_NEEDS_MARK  /* reserved */ \
     )
 
 #define LINK_PATCH_RESERVED(patch)  STUB_LINK_UNMANAGED(patch)
@@ -113,7 +113,7 @@
 // A "Stump" is a Stub that is ephemeral that is hitched directly onto a
 // symbol.  It is used to build mappings from Symbols to indexes in a binder.
 //
-// 1. We mark the stub's info node as being a symbol, but there's no actual
+// 1. We mark the stub's Info* as being a symbol, but there's no actual
 //    garbage collection that should be happening while the binder is in use.
 //    So there are unlikely to be any GC runs that would see this, unless
 //    it was a debug situation of some kind that wound up evaluating and
@@ -127,9 +127,9 @@
 
 #define STUB_MASK_STUMP ( \
     FLAG_FLAVOR(STUMP) \
-        | NODE_FLAG_NODE \
-        | not STUB_FLAG_LINK_NODE_NEEDS_MARK  /* next stump (not managed) */ \
-        | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* symbol (but no GC runs!) [1] */ \
+        | BASE_FLAG_BASE \
+        | not STUB_FLAG_LINK_NEEDS_MARK  /* next stump (not managed) */ \
+        | STUB_FLAG_INFO_NEEDS_MARK  /* symbol (but no GC runs!) [1] */ \
     )
 
 #define LINK_STUMP_NEXT(stump)      STUB_LINK(stump)

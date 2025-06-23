@@ -1463,7 +1463,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     REBLEN start = VAL_INDEX(data);
 
     DECLARE_MOLDER (mo);
-    if (Any_List(data)) {  // use NODE_FLAG_MARKED to mark for removal [1]
+    if (Any_List(data)) {  // use BASE_FLAG_MARKED to mark for removal [1]
         Corrupt_Pointer_If_Debug(mo);
     }
     else {  // generate new data allocation and swap content in the Flex [2]

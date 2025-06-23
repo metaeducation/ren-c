@@ -65,13 +65,6 @@
 #include "sys-int-funcs.h"
 
 
-#define LINK_Node_TYPE      Node*
-#define LINK_Node_CAST
-
-#define MISC_Node_TYPE      Node*
-#define MISC_Node_CAST
-
-
 #if RUNTIME_CHECKS
     static bool in_mark = false; // needs to be per-GC thread
 #endif
@@ -83,36 +76,36 @@
 // To avoid the cost of incrementing and decrementing, only in checked builds.
 //
 #if RUNTIME_CHECKS
-    INLINE void Remove_GC_Mark(const Node* node) {  // stub or pairing
-        assert(Is_Node_Marked(node));
-        Clear_Node_Marked_Bit(node);
+    INLINE void Remove_GC_Mark(const Base* base) {  // stub or pairing
+        assert(Is_Base_Marked(base));
+        Clear_Base_Marked_Bit(base);
         g_gc.mark_count -= 1;
     }
 
-    INLINE void Remove_GC_Mark_If_Marked(const Node* node) {
-        if (Is_Node_Marked(node)) {
-            Clear_Node_Marked_Bit(node);
+    INLINE void Remove_GC_Mark_If_Marked(const Base* base) {
+        if (Is_Base_Marked(base)) {
+            Clear_Base_Marked_Bit(base);
             g_gc.mark_count -= 1;
         }
     }
 
-    INLINE void Add_GC_Mark(const Node* node) {
-        assert(not Is_Node_Marked(node));
-        Set_Node_Marked_Bit(node);
+    INLINE void Add_GC_Mark(const Base* base) {
+        assert(not Is_Base_Marked(base));
+        Set_Base_Marked_Bit(base);
         g_gc.mark_count += 1;
     }
 
-    INLINE void Add_GC_Mark_If_Not_Already_Marked(const Node* node) {
-        if (not Is_Node_Marked(node)) {
-            Set_Node_Marked_Bit(node);
+    INLINE void Add_GC_Mark_If_Not_Already_Marked(const Base* base) {
+        if (not Is_Base_Marked(base)) {
+            Set_Base_Marked_Bit(base);
             g_gc.mark_count += 1;
         }
     }
 #else
-    #define Remove_GC_Mark(n)                       Clear_Node_Marked_Bit(n)
-    #define Remove_GC_Mark_If_Marked(n)             Clear_Node_Marked_Bit(n)
-    #define Add_GC_Mark(n)                          Set_Node_Marked_Bit(n)
-    #define Add_GC_Mark_If_Not_Already_Marked(n)    Set_Node_Marked_Bit(n)
+    #define Remove_GC_Mark(n)                       Clear_Base_Marked_Bit(n)
+    #define Remove_GC_Mark_If_Marked(n)             Clear_Base_Marked_Bit(n)
+    #define Add_GC_Mark(n)                          Set_Base_Marked_Bit(n)
+    #define Add_GC_Mark_If_Not_Already_Marked(n)    Set_Base_Marked_Bit(n)
 #endif
 
 
@@ -124,10 +117,10 @@ INLINE void Queue_Mark_Maybe_Erased_Cell_Deep(const Cell* v) {
 }
 
 
-// Ren-C's PAIR! uses a special kind of Node (called a "Pairing") that embeds
+// Ren-C's PAIR! uses a special kind of Base (called a "Pairing") that embeds
 // two Cells in a Stub allocation--a C array of fixed length 2.  It can do this
 // because a Cell has a uintptr_t header at the beginning of its struct--just
-// like a Stub--and cells reserve the NODE_FLAG_MARKED bit for the GC.  So
+// like a Stub--and cells reserve the BASE_FLAG_MARKED bit for the GC.  So
 // pairings can stealthily participate in the marking, as long as the bit is
 // cleared at the end.
 //
@@ -162,13 +155,13 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub*);
 
 
 //
-//   Queue_Mark_Node_Deep: C
+//   Queue_Mark_Base_Deep: C
 //
-// This routine is given the *address* of the Node to mark, so that the node
+// This routine is given the *address* of the Base to mark, so that the base
 // pointer can be updated.  This allows us to fix up lingering references to
-// Nodes that are conceptually freed, but only being kept around until
+// Bases that are conceptually freed, but only being kept around until
 // referencing sites can be fixed up to not refer to them.  As the GC marks
-// the nodes, it canonizes such "diminished" pointers to a single global
+// the bases, it canonizes such "diminished" pointers to a single global
 // "diminished thing".  See Diminish_Stub()
 //
 // Note: This strategy created some friction when bound words depended on
@@ -177,14 +170,14 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub*);
 // no longer bound through some flag in the cell.  For now it's not an issue
 // since that optimization was removed, but a similar issue could arise again.
 //
-static void Queue_Mark_Node_Deep(Node** npp) {  // ** for canonizing
-    Byte nodebyte = NODE_BYTE(*npp);
-    if (nodebyte & NODE_BYTEMASK_0x01_MARKED)  // incl. canon diminished Stub
+static void Queue_Mark_Base_Deep(Base** npp) {  // ** for canonizing
+    Byte base_byte = BASE_BYTE(*npp);
+    if (base_byte & BASE_BYTEMASK_0x01_MARKED)  // incl. canon diminished Stub
         return;  // may not be finished marking yet, but has been queued
 
-    if (nodebyte & NODE_BYTEMASK_0x08_CELL) {  // e.g. a pairing
+    if (base_byte & BASE_BYTEMASK_0x08_CELL) {  // e.g. a pairing
         const Pairing* p = u_cast(const Pairing*, *npp);
-        if (Is_Node_Managed(p))
+        if (Is_Base_Managed(p))
             Queue_Mark_Pairing_Deep(p);
         else {
             // !!! It's a frame?  API handle?  Skip frame case (keysource)
@@ -195,13 +188,13 @@ static void Queue_Mark_Node_Deep(Node** npp) {  // ** for canonizing
 
     const Stub* s = u_cast(const Stub*, *npp);
 
-    if (nodebyte == DIMINISHED_NON_CANON_BYTE) {  // fixup to global diminished
-        *npp = &PG_Inaccessible_Stub;
-        return;
+    if (base_byte == DIMINISHED_NON_CANON_BYTE) {
+        *npp = &PG_Inaccessible_Stub;  // adjust to the global diminished
+        return;  // skip marking, it will be GC'd
     }
 
   #if RUNTIME_CHECKS
-    if (Not_Node_Managed(*npp)) {
+    if (Not_Base_Managed(*npp)) {
         printf("Link to non-MANAGED item reached by GC\n");
         crash (*npp);
     }
@@ -225,36 +218,36 @@ static void Queue_Mark_Node_Deep(Node** npp) {  // ** for canonizing
 //
 static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
 {
-    assert(Is_Node_Readable(s));
+    assert(Is_Base_Readable(s));
 
     Add_GC_Mark(s);
 
   //=//// MARK LINK AND MISC IF DESIRED ////////////////////////////////////=//
 
     // All stubs have both link and misc fields available, but they don't
-    // necessarily hold node pointers (and even if they do, they may not be
+    // necessarily hold base pointers (and even if they do, they may not be
     // references that are intended to keep them live).  So the Flex header
     // flags control whether the marking is done or not.
 
-    if (Get_Stub_Flag(s, LINK_NODE_NEEDS_MARK) and s->link.node)
-        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->link.node);
+    if (Get_Stub_Flag(s, LINK_NEEDS_MARK) and s->link.base)
+        Queue_Mark_Base_Deep(&m_cast(Stub*, s)->link.base);
 
-    if (Get_Stub_Flag(s, MISC_NODE_NEEDS_MARK) and s->misc.node)
-        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->misc.node);
+    if (Get_Stub_Flag(s, MISC_NEEDS_MARK) and s->misc.base)
+        Queue_Mark_Base_Deep(&m_cast(Stub*, s)->misc.base);
 
   //=//// MARK INODE IF NOT USED FOR INFO //////////////////////////////////=//
 
     // In the case of the INFO/INODE slot, the setting of the needing mark
     // flag is what determines whether the slot is used for info or not.  So
-    // if it's available for non-info uses, it is always a live marked node.
+    // if it's available for non-info uses, it is always a live marked base.
 
-    if (Get_Stub_Flag(s, INFO_NODE_NEEDS_MARK) and s->info.node)
-        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->info.node);
+    if (Get_Stub_Flag(s, INFO_NEEDS_MARK) and s->info.base)
+        Queue_Mark_Base_Deep(&m_cast(Stub*, s)->info.base);
 
     if (Is_Stub_Keylist(s)) {
         //
         // !!! KeyLists may not be the only category that are just a straight
-        // list of node pointers.
+        // list of base pointers.
         //
         const KeyList* keylist = u_cast(const KeyList*, s);
         const Key* tail = Flex_Tail(Key, keylist);
@@ -264,8 +257,8 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
             // Symbol* are not available to the user to free out from under
             // a keylist (can't use FREE on them) and shouldn't vanish.
             //
-            assert(Is_Node_Readable(*key));
-            if (Is_Node_Marked(*key))
+            assert(Is_Base_Readable(*key));
+            if (Is_Base_Marked(*key))
                 continue;
             Queue_Unmarked_Accessible_Stub_Deep(*key);
         }
@@ -280,7 +273,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         //
         if (Is_Stub_Varlist(a)) {  // bonus is keylist (if not module varlist)
             assert(Is_Stub_Keylist(cast(Stub*, BONUS_VARLIST_KEYLIST(a))));
-            Queue_Mark_Node_Deep(&a->content.dynamic.bonus.node);
+            Queue_Mark_Base_Deep(&a->content.dynamic.bonus.base);
         }
 
     //=//// MARK ARRAY ELEMENT CELLS (if array) ///////////////////////////=//
@@ -321,22 +314,22 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     //
     Option(Heart) heart = Heart_Of(c);
 
-  #if RUNTIME_CHECKS  // see Queue_Mark_Node_Deep() for notes on recursion
+  #if RUNTIME_CHECKS  // see Queue_Mark_Base_Deep() for notes on recursion
     assert(not in_mark);
     in_mark = true;
   #endif
 
     if (Is_Extra_Mark_Heart(heart))
-        if (c->extra.node)
-            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.node);
+        if (c->extra.base)
+            Queue_Mark_Base_Deep(&m_cast(Cell*, c)->extra.base);
 
-    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE1))
-        if (c->payload.split.one.node)
-            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.one.node);
+    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_PAYLOAD_1))
+        if (c->payload.split.one.base)
+            Queue_Mark_Base_Deep(&m_cast(Cell*, c)->payload.split.one.base);
 
-    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE2))
-        if (c->payload.split.two.node)
-            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.two.node);
+    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_PAYLOAD_2))
+        if (c->payload.split.two.base)
+            Queue_Mark_Base_Deep(&m_cast(Cell*, c)->payload.split.two.base);
 
   #if RUNTIME_CHECKS
     in_mark = false;
@@ -385,7 +378,7 @@ static void Propagate_All_GC_Marks(void)
         // We should have marked this Flex at queueing time to keep it from
         // being doubly added before the queue had a chance to be processed
         //
-        assert(Is_Node_Marked(a));
+        assert(Is_Base_Marked(a));
 
         Element* v = Array_Head(a);
         const Element* tail = Array_Tail(a);
@@ -511,7 +504,7 @@ void Run_All_Handle_Cleaners(void) {
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x08_CELL)
+            if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue;  // not a stub
 
             Stub* stub = cast(Stub*, unit);
@@ -521,7 +514,7 @@ void Run_All_Handle_Cleaners(void) {
             if (Stub_Flavor(stub) != FLAVOR_HANDLE)
                 continue;  // only interested in handles
 
-            assert(Is_Node_Managed(stub));  // it's why handle stubs exist
+            assert(Is_Base_Managed(stub));  // it's why handle stubs exist
 
             Diminish_Stub(stub);
         }
@@ -538,7 +531,7 @@ void Run_All_Handle_Cleaners(void) {
 // For root Stubs, this checks to see if their lifetime was dependent on a
 // FRAME!, and if that frame is no longer on the stack.  If so, it (currently)
 // will crash if that frame did not end due to a panic().  This could be
-// relaxed to automatically free those Nodes as a normal GC.
+// relaxed to automatically free those Stubs as a normal GC.
 //
 // !!! This implementation walks over *all* the Stubs.  It wouldn't have to
 // if API Stubs were in their own pool, or if the outstanding manuals list
@@ -561,22 +554,22 @@ static void Mark_Root_Stubs(void)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            assert(unit[0] & NODE_BYTEMASK_0x80_NODE);
+            assert(unit[0] & BASE_BYTEMASK_0x80_NODE);
 
-            if (not (unit[0] & NODE_BYTEMASK_0x02_ROOT))
+            if (not (unit[0] & BASE_BYTEMASK_0x02_ROOT))
                 continue;
 
-            assert(not (unit[0] & NODE_BYTEMASK_0x08_CELL));  // no root pairs
+            assert(not (unit[0] & BASE_BYTEMASK_0x08_CELL));  // no root pairs
 
             Stub* s = cast(Stub*, unit);
-            assert(Is_Node_Readable(s));
+            assert(Is_Base_Readable(s));
 
             // This stub came from Alloc_Value() or rebAlloc(); the only
             // references should be from the C stack.  So this pass is the
             // only place where these stubs could be marked.
 
-            if (Not_Node_Managed(s))
-                assert(not Is_Node_Marked(s));
+            if (Not_Base_Managed(s))
+                assert(not Is_Base_Marked(s));
             else
                 Add_GC_Mark(s);
 
@@ -585,7 +578,7 @@ static void Mark_Root_Stubs(void)
                 // 1. Mark_Level_Stack_Deep() marks the owner.
                 //
                 // 2. Evaluation may target API cells, may be Is_Cell_Erased().
-                // (though they should not have NODE_FLAG_ROOT set until after
+                // (though they should not have BASE_FLAG_ROOT set until after
                 // the evaluation is finished).  (They should only be fresh if
                 // targeted by some Level's L->out...could we verify that?)
                 //
@@ -628,14 +621,14 @@ static void Mark_Data_Stack(void)
 
 
 //
-//  Mark_Guarded_Nodes: C
+//  Mark_Guarded: C
 //
 // Mark Stubs and Cells that have been temporarily protected from garbage
 // collection with Push_Lifeguard.
 //
 // 1. For efficiency, the system allows ranges of places that cells will be
 //    put to be memset() to 0.  The Init_XXX() routines will then make sure
-//    the NODE_FLAG_NODE and NODE_FLAG_CELL are OR'd onto it.  If you GC Guard
+//    the BASE_FLAG_BASE and BASE_FLAG_CELL are OR'd onto it.  If you GC Guard
 //    a cell made with DECLARE_ATOM()/DECLARE_VALUE()/DECLARE_ELEMENT() it
 //    will be in the erased state, and even if you put the NODE and CELL
 //    bits on it, the evaluator may transitionally Erase_Cell() on it.
@@ -644,7 +637,7 @@ static void Mark_Data_Stack(void)
 //    to not live in a Flex or Pairing.  Marks on the Cell itself are not
 //    covered... if this happens, treat it as a bug.
 //
-static void Mark_Guarded_Nodes(void)
+static void Mark_Guarded(void)
 {
     void* *pp = Flex_Head(void*, g_gc.guarded);
     REBLEN n = Flex_Used(g_gc.guarded);
@@ -654,13 +647,13 @@ static void Mark_Guarded_Nodes(void)
             continue;
         }
 
-        Node** npp = cast(Node**, pp);
-        if (Is_Node_A_Cell(*npp)) {
-            assert(Not_Node_Marked(*npp));  // shouldn't live in array [2]
+        Base** npp = cast(Base**, pp);
+        if (Is_Base_A_Cell(*npp)) {
+            assert(Not_Base_Marked(*npp));  // shouldn't live in array [2]
             Queue_Mark_Maybe_Erased_Cell_Deep(c_cast(Cell*, *npp));
         }
         else  // a Stub
-            Queue_Mark_Node_Deep(npp);
+            Queue_Mark_Base_Deep(npp);
 
         Propagate_All_GC_Marks();
     }
@@ -698,9 +691,9 @@ static void Mark_Level(Level* L) {
     Context* L_binding = Level_Binding(L);  // marks binding, not feed->p [2]
     if (
         L_binding != SPECIFIED
-        and (L_binding->leader.bits & NODE_FLAG_MANAGED)
+        and (L_binding->leader.bits & BASE_FLAG_MANAGED)
     ){
-        Queue_Mark_Node_Deep(&Feed_Data(L->feed)->extra.node);
+        Queue_Mark_Base_Deep(&Feed_Data(L->feed)->extra.base);
     }
 
     Queue_Mark_Maybe_Erased_Cell_Deep(&L->feed->gotten);  // have to mark [3]
@@ -743,8 +736,8 @@ static void Mark_Level(Level* L) {
     //    and only in the slot that is being fulfilled at the present moment
     //    (skipped arguments picked up later are set to CELL_MASK_UNREADABLE).
 
-    Queue_Mark_Node_Deep(  // L->u.action.original is never nullptr
-        cast(Node**, m_cast(Phase**, &L->u.action.original))
+    Queue_Mark_Base_Deep(  // L->u.action.original is never nullptr
+        cast(Base**, m_cast(Phase**, &L->u.action.original))
     );
 
   #if DEBUG_LEVEL_LABELS
@@ -752,18 +745,18 @@ static void Mark_Level(Level* L) {
   #endif
     if (L->u.action.label) {  // nullptr if ANONYMOUS
         const Symbol* s = unwrap L->u.action.label;
-        if (not Is_Node_Marked(s))
+        if (not Is_Base_Marked(s))
             Queue_Unmarked_Accessible_Stub_Deep(s);
     }
 
-    if (L->varlist and Is_Node_Managed(L->varlist)) {  // normal marking [1]
+    if (L->varlist and Is_Base_Managed(L->varlist)) {  // normal marking [1]
         assert(
             not Is_Level_Fulfilling(L)
             or LEVEL_STATE_BYTE(L) == ST_ACTION_TYPECHECKING  // filled/safe
         );
 
-        Queue_Mark_Node_Deep(  // may be incomplete, can't cast(VarList*) [2]
-            cast(Node**, m_cast(Array**, &L->varlist))
+        Queue_Mark_Base_Deep(  // may be incomplete, can't cast(VarList*) [2]
+            cast(Base**, m_cast(Array**, &L->varlist))
         );
         return;
     }
@@ -803,7 +796,7 @@ static void Mark_Level(Level* L) {
 //
 //  Mark_All_Levels: C
 //
-// Levels are not "Nodes" and are not garbage collected.  But they may not
+// Levels are not "Bases" and are not garbage collected.  But they may not
 // all be reachable from the TOP_LEVEL -> BOTTOM_LEVEL stack, due to the
 // fact that ranges of Levels are sometimes "unplugged" by Generators and
 // Yielders.  The HANDLE!s holding those Levels are responsible for the
@@ -850,12 +843,12 @@ static REBLEN Sweep_Distinct_Pairing_Pool(void)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            assert(unit[0] & NODE_BYTEMASK_0x08_CELL);
+            assert(unit[0] & BASE_BYTEMASK_0x08_CELL);
 
             Value* v = cast(Value*, unit);
-            if (v->header.bits & NODE_FLAG_MANAGED) {
-                assert(not (v->header.bits & NODE_FLAG_ROOT));
-                if (Is_Node_Marked(v)) {
+            if (v->header.bits & BASE_FLAG_MANAGED) {
+                assert(not (v->header.bits & BASE_FLAG_ROOT));
+                if (Is_Base_Marked(v)) {
                     Remove_GC_Mark(v);
                 }
                 else {
@@ -875,15 +868,15 @@ static REBLEN Sweep_Distinct_Pairing_Pool(void)
 //
 //  Sweep_Stubs: C
 //
-// Scans all Stub Nodes (Stub structs) in all segments that are part of
-// the STUB_POOL.  If a Stub had its lifetime management delegated to the
-// garbage collector with Manage_Flex(), then if it didn't get "marked" as
-// live during the marking phase then free it.
+// Scans all Stub structs in all segments that are part of the STUB_POOL.  If
+// a Stub had its lifetime management delegated to the garbage collector with
+// Manage_Flex(), then if it didn't get "marked" as live during the marking
+// phase then free it.
 //
 // 1. We use a generic byte pointer (unsigned char*) to dodge the rules for
 //    strict aliases, as the pool contain pairs of Cell from Alloc_Pairing(),
-//    or a Stub from Prep_Stub().  The shared first byte node masks are
-//    defined and explained in %struct-node.h
+//    or a Stub from Prep_Stub().  The shared first byte base masks are
+//    defined and explained in %struct-base.h
 //
 // 2. For efficiency of memory use, Stub is nominally 2*sizeof(Cell), and so
 //    Pairings can use the same Stub nodes.  But features that might make the
@@ -905,36 +898,36 @@ Count Sweep_Stubs(void)
 
         for (; n > 0; --n, unit += sizeof(Stub)) {
             if (unit[0] == FREE_POOLUNIT_BYTE)
-                continue;  // only unit without NODE_FLAG_NODE (in ASCII range)
+                continue;  // only unit without BASE_FLAG_BASE (in ASCII range)
 
-            assert(unit[0] & NODE_BYTEMASK_0x80_NODE);
+            assert(unit[0] & BASE_BYTEMASK_0x80_NODE);
 
-            if (not (unit[0] & NODE_BYTEMASK_0x04_MANAGED)) {
-                assert(not (unit[0] & NODE_BYTEMASK_0x01_MARKED));
+            if (not (unit[0] & BASE_BYTEMASK_0x04_MANAGED)) {
+                assert(not (unit[0] & BASE_BYTEMASK_0x01_MARKED));
 
                 if (unit[0] == DIMINISHED_NON_CANON_BYTE) {
                     Free_Pooled(STUB_POOL, unit);
                     continue;
                 }
-                assert(not (unit[0] & NODE_BYTEMASK_0x40_UNREADABLE));
+                assert(not (unit[0] & BASE_BYTEMASK_0x40_UNREADABLE));
                 continue;  // ignore all unmanaged Stubs/Pairings
             }
 
-            if (unit[0] & NODE_BYTEMASK_0x01_MARKED) {  // managed and marked
-                Remove_GC_Mark(u_cast(Node*, unit));  // just remove mark
+            if (unit[0] & BASE_BYTEMASK_0x01_MARKED) {  // managed and marked
+                Remove_GC_Mark(u_cast(Base*, unit));  // just remove mark
                 continue;
             }
 
-            assert(not (unit[0] & NODE_BYTEMASK_0x02_ROOT));  // roots marked
+            assert(not (unit[0] & BASE_BYTEMASK_0x02_ROOT));  // roots marked
 
             ++sweep_count;  // managed but not marked => free it!
 
-            if (unit[0] & NODE_BYTEMASK_0x08_CELL) {  // managed pairing
+            if (unit[0] & BASE_BYTEMASK_0x08_CELL) {  // managed pairing
                 Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing()
                 continue;
             }
 
-            if (unit[0] & NODE_BYTEMASK_0x40_UNREADABLE) {
+            if (unit[0] & BASE_BYTEMASK_0x40_UNREADABLE) {
                 //
                 // Stubs that have been marked freed may have outstanding
                 // references at the moment of being marked free...but the GC
@@ -964,7 +957,7 @@ Count Sweep_Stubs(void)
 //
 REBLEN Fill_Sweeplist(Flex* sweeplist)
 {
-    assert(Flex_Wide(sweeplist) == sizeof(Node*));
+    assert(Flex_Wide(sweeplist) == sizeof(Base*));
     assert(Flex_Used(sweeplist) == 0);
 
     Count sweep_count = 0;
@@ -980,12 +973,12 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
               case 9: {  // 0x8 + 0x1
                 Flex* s = x_cast(Flex*, stub);
                 Assert_Flex_Managed(s);
-                if (Is_Node_Marked(s)) {
+                if (Is_Base_Marked(s)) {
                     Remove_GC_Mark(s);
                 }
                 else {
                     Expand_Flex_Tail(sweeplist, 1);
-                    *Flex_At(Node*, sweeplist, sweep_count) = s;
+                    *Flex_At(Base*, sweeplist, sweep_count) = s;
                     ++sweep_count;
                 }
                 break; }
@@ -998,13 +991,13 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                 // !!! It is (usually) in the STUB_POOL, but *not* a "Stub".
                 //
                 Pairing* pairing = x_cast(Pairing*, stub);
-                assert(Is_Node_Managed(pairing));
-                if (Is_Node_Marked(pairing)) {
+                assert(Is_Base_Managed(pairing));
+                if (Is_Base_Marked(pairing)) {
                     Remove_GC_Mark(pairing);
                 }
                 else {
                     Expand_Flex_Tail(sweeplist, 1);
-                    *Flex_At(Node*, sweeplist, sweep_count) = pairing;
+                    *Flex_At(Base*, sweeplist, sweep_count) = pairing;
                     ++sweep_count;
                 }
                 break; }
@@ -1046,8 +1039,8 @@ void Emergency_Shutdown_Gc_Debug(void)
             if (*stub == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (*stub & NODE_BYTEMASK_0x01_MARKED)
-                Remove_GC_Mark(u_cast(Node*, stub));
+            if (*stub & BASE_BYTEMASK_0x01_MARKED)
+                Remove_GC_Mark(u_cast(Base*, stub));
         }
     }
 
@@ -1062,8 +1055,8 @@ void Emergency_Shutdown_Gc_Debug(void)
             if (*pairing == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (*pairing & NODE_BYTEMASK_0x01_MARKED)
-                Remove_GC_Mark(u_cast(Node*, pairing));
+            if (*pairing & BASE_BYTEMASK_0x01_MARKED)
+                Remove_GC_Mark(u_cast(Base*, pairing));
         }
     }
   #endif
@@ -1132,7 +1125,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
         Patch* patch = &g_datatype_patches[cast(Byte, type)];
         if (Is_Stub_Erased(patch))
             continue;  // isotope slot for non-isotopic type
-        if (Not_Node_Marked(patch)) {  // this loop's prior steps can mark
+        if (Not_Base_Marked(patch)) {  // this loop's prior steps can mark
             Add_GC_Mark(patch);
             Queue_Mark_Maybe_Erased_Cell_Deep(Stub_Cell(patch));
         }
@@ -1143,7 +1136,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
 
     for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];
-        if (Not_Node_Marked(patch)) {  // this loop's prior steps can mark
+        if (Not_Base_Marked(patch)) {  // this loop's prior steps can mark
             Add_GC_Mark(patch);
             Queue_Mark_Maybe_Erased_Cell_Deep(Stub_Cell(patch));
         }
@@ -1170,7 +1163,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     Mark_Data_Stack();
     Assert_No_GC_Marks_Pending();
 
-    Mark_Guarded_Nodes();
+    Mark_Guarded();
     Assert_No_GC_Marks_Pending();
 
     Mark_All_Levels();
@@ -1194,11 +1187,11 @@ REBLEN Recycle_Core(Flex* sweeplist)
             Stub* stub = Misc_Hitch(*psym);
             for (; stub != *psym; stub = Misc_Hitch(stub)) {
                 SeaOfVars* sea = Info_Patch_Sea(cast(Patch*, stub));
-                if (Is_Node_Marked(stub)) {
-                    assert(Is_Node_Marked(sea));
+                if (Is_Base_Marked(stub)) {
+                    assert(Is_Base_Marked(sea));
                     continue;
                 }
-                if (Is_Node_Marked(sea)) {
+                if (Is_Base_Marked(sea)) {
                     Add_GC_Mark(stub);
                     added_marks = true;
 
@@ -1224,7 +1217,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // The PG_Inaccessible_Stub always looks marked, so we can skip it
     // quickly in GC (and not confuse it with non-canon diminished stubs).
     //
-    assert(Is_Node_Marked(&PG_Inaccessible_Stub));
+    assert(Is_Base_Marked(&PG_Inaccessible_Stub));
 
     REBLEN sweep_count;
 
@@ -1342,7 +1335,7 @@ REBLEN Recycle(void)
 //
 //  Push_Lifeguard: C
 //
-// 1. It is legal to guard erased cells, which do not have the NODE_FLAG_NODE
+// 1. It is legal to guard erased cells, which do not have the BASE_FLAG_BASE
 //    bit set.  So an exemption is made if a header slot is all 0 bits.
 //
 // 2. Technically we should never call this routine to guard a value that lives
@@ -1356,26 +1349,26 @@ REBLEN Recycle(void)
 //    didn't get any usage, and allowing unmanaged guards here just obfuscated
 //    errors when they occurred.  So the assert has been put back.  Review.
 //
-void Push_Lifeguard(const void* p)  // NODE_FLAG_NODE may not be set [1]
+void Push_Lifeguard(const void* p)  // BASE_FLAG_BASE may not be set [1]
 {
     if (FIRST_BYTE(p) == 0) {  // assume erased cell [1]
         assert(Is_Cell_Erased(c_cast(Cell*, p)));
     }
-    else if (Is_Node_A_Cell(c_cast(Node*, p))) {
-        assert(Not_Node_Marked(c_cast(Node*, p)));  // don't guard during GC
+    else if (Is_Base_A_Cell(c_cast(Base*, p))) {
+        assert(Not_Base_Marked(c_cast(Base*, p)));  // don't guard during GC
 
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER
         const Cell* cell = c_cast(Cell*, p);
 
-        Node* containing = Try_Find_Containing_Node_Debug(v);
+        Base* containing = Try_Find_Containing_Base_Debug(v);
         if (containing)  // cell shouldn't live in array or pairing [2]
             crash (containing);
       #endif
     }
     else {  // It's a Stub
-        assert(Is_Node_Readable(c_cast(Node*, p)));  // not diminished
-        assert(Not_Node_Marked(c_cast(Node*, p)));  // don't guard during GC
-        assert(Is_Node_Managed(c_cast(Node*, p)));  // [3]
+        assert(Is_Base_Readable(c_cast(Base*, p)));  // not diminished
+        assert(Not_Base_Marked(c_cast(Base*, p)));  // don't guard during GC
+        assert(Is_Base_Managed(c_cast(Base*, p)));  // [3]
     }
 
     if (Is_Flex_Full(g_gc.guarded))
@@ -1411,13 +1404,13 @@ void Startup_GC(void)
     // managed, then sneak the flag off.
     //
     ensure(nullptr, g_gc.manuals) = Make_Flex(
-        FLAG_FLAVOR(FLEXLIST) | NODE_FLAG_MANAGED,  // lie!
+        FLAG_FLAVOR(FLEXLIST) | BASE_FLAG_MANAGED,  // lie!
         Flex,
         15
     );
-    Clear_Node_Managed_Bit(g_gc.manuals);  // untracked and indefinite lifetime
+    Clear_Base_Managed_Bit(g_gc.manuals);  // untracked and indefinite lifetime
 
-    // Flexes and Cells protected from GC.  Holds node pointers.
+    // Flexes and Cells protected from GC.  Holds base pointers.
     //
     ensure(nullptr, g_gc.guarded) = Make_Flex(
         FLAG_FLAVOR(NODELIST),
@@ -1460,19 +1453,19 @@ void Startup_GC(void)
     // When a Flex needs to expire its content for some reason (including
     // the user explicitly saying FREE), then there can still be references to
     // that Flex around.  Since we don't want to trigger a GC synchronously
-    // each time this happens, the NODE_FLAG_UNREADABLE flag is added to Flex,
+    // each time this happens, the BASE_FLAG_UNREADABLE flag is added to Flex,
     // it is checked for by value extractors (like Cell_Varlist()).  But once
     // the GC gets a chance to run, those stubs can be swept with all the
     // inaccessible references canonized to this one global Stub.
     //
     Stub* s = Prep_Stub(
         FLAG_FLAVOR(THE_GLOBAL_INACCESSIBLE)
-            | NODE_FLAG_UNREADABLE
-            | NODE_FLAG_MARKED,
+            | BASE_FLAG_UNREADABLE
+            | BASE_FLAG_MARKED,
         &PG_Inaccessible_Stub
     );
     assert(Is_Stub_Diminished(&PG_Inaccessible_Stub));
-    assert(NODE_BYTE(s) == DIMINISHED_CANON_BYTE);
+    assert(BASE_BYTE(s) == DIMINISHED_CANON_BYTE);
     UNUSED(s);
 }
 
@@ -1484,7 +1477,7 @@ void Shutdown_GC(void)
 {
     assert(not g_gc.recycling);
 
-    Clear_Node_Marked_Bit(&PG_Inaccessible_Stub);
+    Clear_Base_Marked_Bit(&PG_Inaccessible_Stub);
     GC_Kill_Stub(&PG_Inaccessible_Stub);
 
     assert(Flex_Used(g_gc.guarded) == 0);

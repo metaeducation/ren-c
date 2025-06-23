@@ -76,10 +76,10 @@
 //    singular Cell and enumerated as an Array.  But arrays are now
 //    enumerated according to their stored length, and only have termination
 //    if DEBUG_POISON_FLEX_TAILS.  But the phenomenon still has some leverage
-//    by ensuring the NODE_FLAG_CELL bit is clear in the info field--which
+//    by ensuring the BASE_FLAG_CELL bit is clear in the info field--which
 //    helps catch a few stray reads or writes.
 //
-// 4. See the %sys-node.h file for an explanation of what these are, and
+// 4. See the %sys-base.h file for an explanation of what these are, and
 //    why having them work is fundamental to the API.
 //
 static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
@@ -159,7 +159,7 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 //
 static void Startup_Lib(void)
 {
-    SeaOfVars* lib = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+    SeaOfVars* lib = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     assert(Link_Inherit_Bind(lib) == nullptr);
     Tweak_Link_Inherit_Bind(lib, g_datatypes_context);
 
@@ -324,7 +324,7 @@ static void Init_Root_Vars(void)
     Length len = 0;
     Array* a = Make_Array_Core(
         FLEX_MASK_VARLIST
-            | NODE_FLAG_MANAGED, // Note: Rebind below requires managed context
+            | BASE_FLAG_MANAGED, // Note: Rebind below requires managed context
         1 + len  // needs room for rootvar
     );
     Set_Flex_Len(a, 1 + len);
@@ -332,7 +332,7 @@ static void Init_Root_Vars(void)
     Tweak_Link_Inherit_Bind(a, nullptr);
 
     KeyList* keylist = Make_Flex(
-        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
+        FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,
         KeyList,
         len  // no terminator, 0-based
     );
@@ -515,7 +515,7 @@ static void Init_System_Object(
     //
     Init_Object(
         Slot_Init_Hack(Get_System(SYS_CODECS, 0)),
-        Alloc_Varlist_Core(NODE_FLAG_MANAGED, TYPE_OBJECT, 10)
+        Alloc_Varlist_Core(BASE_FLAG_MANAGED, TYPE_OBJECT, 10)
     );
 
   fix_standard_error: {
@@ -912,7 +912,7 @@ void Startup_Core(void)
     //    we don't have MODULE or EXPORT available.  Do the exports manually,
     //    and then import the results to lib.
 
-    SeaOfVars* util = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+    SeaOfVars* util = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(util, g_lib_context);
     ensure(nullptr, g_sys_util_module) = Alloc_Element();
     Init_Module(g_sys_util_module, util);

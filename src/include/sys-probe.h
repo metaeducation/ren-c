@@ -48,7 +48,7 @@
     template <
         typename T,
         typename std::enable_if<
-            std::is_pointer<T>::value  // assume pointers are Node*
+            std::is_pointer<T>::value  // assume pointers are Base*
             or std::is_convertible<T,Cell*>::value
             or std::is_convertible<T,Stub*>::value
         >::type* = nullptr

@@ -270,7 +270,7 @@ DECLARE_NATIVE(ARROW)
         return PANIC(unwrap e);
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
+        BASE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Lambda_Dispatcher,
         MAX_IDX_ARROW

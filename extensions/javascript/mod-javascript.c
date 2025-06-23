@@ -232,7 +232,7 @@ static void Js_Object_Handle_Cleaner(void *p, size_t length) {
 //
 
 INLINE heapaddr_t Frame_Id_For_Level(Level* L) {
-    assert(Is_Node_Managed(L->varlist));
+    assert(Is_Base_Managed(L->varlist));
     return Heapaddr_From_Pointer(L->varlist);
 }
 
@@ -405,8 +405,8 @@ EXTERN_C intptr_t API_rebPromise(
     API_rebTranscodeInto(binding, block, p, vaptr);
 
     Array* code = Cell_Array_Ensure_Mutable(block);
-    assert(Is_Node_Managed(code));
-    Clear_Node_Managed_Bit(code);  // using array as ID, don't GC it
+    assert(Is_Base_Managed(code));
+    Clear_Base_Managed_Bit(code);  // using array as ID, don't GC it
 
     // We singly link the promises such that they will be executed backwards.
     // What's good about that is that it will help people realize that over
@@ -456,8 +456,8 @@ void RunPromise(void)
     info->state = PROMISE_STATE_RUNNING;
 
     Source* a = cast(Source*, Pointer_From_Heapaddr(info->promise_id));
-    assert(Not_Node_Managed(a));  // took off so it didn't GC
-    Set_Node_Managed_Bit(a);  // but need it back on to execute it
+    assert(Not_Base_Managed(a));  // took off so it didn't GC
+    Set_Base_Managed_Bit(a);  // but need it back on to execute it
 
     DECLARE_ELEMENT (code);
     Init_Block(code, a);
@@ -548,7 +548,7 @@ void RunPromise(void)
         // Note: Expired, can't use VAL_CONTEXT
         //
         assert(Is_Frame(result));
-        const Node* frame_ctx = CELL_FRAME_PHASE(result);
+        const Base* frame_ctx = CELL_FRAME_PHASE(result);
         heapaddr_t throw_id = Heapaddr_From_Pointer(frame_ctx);
 
         EM_ASM(
@@ -929,7 +929,7 @@ DECLARE_NATIVE(JS_NATIVE)
         return PANIC(unwrap e);
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED
+        BASE_FLAG_MANAGED
             | DETAILS_FLAG_OWNS_PARAMLIST
             | DETAILS_FLAG_API_CONTINUATIONS_OK,
         Phase_Archetype(paramlist),

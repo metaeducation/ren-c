@@ -125,7 +125,7 @@ typedef struct PoolUnitStruct {
     // assigned through a Stub or a Cell.  *You have to read out the
     // bits using the same type that initialized it.*  So only the first
     // byte here should be consulted...accessed through an `unsigned char*`
-    // in order to defeat strict aliasing.  See NODE_BYTE()
+    // in order to defeat strict aliasing.  See BASE_BYTE()
     //
     // The first byte should *only* be read through a char*!
     //
@@ -133,8 +133,8 @@ typedef struct PoolUnitStruct {
 
     struct PoolUnitStruct* next_if_free;  // if not free, full item available
 
-    // Size of a node must be a multiple of 64-bits.  This is because there
-    // must be a baseline guarantee for node allocations to be able to know
+    // Size of a Unit must be a multiple of 64-bits.  This is because there
+    // must be a baseline guarantee for Unit allocations to be able to know
     // where 64-bit alignment boundaries are.
     //
     /* REBI64 payload[N];*/

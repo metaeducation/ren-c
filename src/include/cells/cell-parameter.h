@@ -61,17 +61,17 @@
 //   object, but Ren-C only uses a single pointer-to-symbol.)
 //
 
-#define CELL_PARAMETER_SPEC(c)    CELL_NODE1(c)
-#define CELL_PARAMETER_STRING(c)  CELL_NODE2(c)
+#define CELL_PARAMETER_SPEC(c)    CELL_PAYLOAD_1(c)
+#define CELL_PARAMETER_STRING(c)  CELL_PAYLOAD_2(c)
 
 INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     assert(Heart_Of(c) == TYPE_PARAMETER);
 
-    const Node* node = CELL_PARAMETER_SPEC(c);
-    if (node != nullptr and Not_Node_Readable(node))
+    const Base* base = CELL_PARAMETER_SPEC(c);
+    if (base != nullptr and Not_Base_Readable(base))
         panic (Error_Series_Data_Freed_Raw());
 
-    return c_cast(Source*, node);
+    return c_cast(Source*, base);
 }
 
 
@@ -432,16 +432,16 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
     assert(Is_Cell_Poisoned(out) or Is_Cell_Erased(out));
   #endif
     out->header.bits = (
-        NODE_FLAG_NODE | NODE_FLAG_CELL
+        BASE_FLAG_BASE | BASE_FLAG_CELL
             | FLAG_HEART(WORD)
             | FLAG_LIFT_BYTE(ANTIFORM_0)
-            | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
-            | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED
     );
     CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, symbol);
     CELL_WORD_INDEX_I32(out) = 0;
-    out->extra.node = UNBOUND;
+    out->extra.base = UNBOUND;
     return out;
 }
 

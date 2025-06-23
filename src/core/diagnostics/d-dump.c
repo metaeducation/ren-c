@@ -97,7 +97,7 @@ void Dump_Info(void)
 
     printf("    Ballast: %d\n", cast(int, g_gc.depletion));
     printf("    Disable: %s\n", g_gc.disabled ? "yes" : "no");
-    printf("    Guarded Nodes: %d\n", cast(int, Flex_Used(g_gc.guarded)));
+    printf("    Guarded: %d\n", cast(int, Flex_Used(g_gc.guarded)));
     fflush(stdout);
 }
 

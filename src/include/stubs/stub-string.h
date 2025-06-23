@@ -43,8 +43,9 @@
 //
 // * UTF-8 String Flexes are "byte-sized", which is also true in BLOB!
 //   datatypes.  However, the Flex used to store UTF-8 strings also stores
-//   information about their length in codepoints in their Stub Nodes (the
-//   main "number of bytes used" in the Flex conveys bytes, not codepoints).
+//   information about their length in codepoints in their Stubs (the main
+//   "number of bytes used" in the Flex conveys bytes, not codepoints).
+//
 //   See the distinction between Flex_Used() and String_Len().
 //
 
@@ -61,7 +62,7 @@ INLINE void Tweak_Misc_Num_Codepoints(String* s, Length num_codepoints) {
 
 INLINE Option(BookmarkList*) Link_Bookmarks(const String* string) {
     assert(Is_Stub_Non_Symbol(string));
-    return cast(BookmarkList*, string->link.node);
+    return cast(BookmarkList*, string->link.base);
 }
 
 INLINE void Tweak_Link_Bookmarks(
@@ -69,7 +70,7 @@ INLINE void Tweak_Link_Bookmarks(
     Option(BookmarkList*) book
 ){
     assert(Is_Stub_Non_Symbol(string));
-    m_cast(String*, string)->link.node = maybe book;
+    m_cast(String*, string)->link.base = maybe book;
 }
 
 
@@ -314,11 +315,11 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
 INLINE BookmarkList* Alloc_BookmarkList(void) {
     BookmarkList* books = Make_Flex(
         FLAG_FLAVOR(BOOKMARKLIST)
-            | NODE_FLAG_MANAGED,  // lie to be untracked
+            | BASE_FLAG_MANAGED,  // lie to be untracked
         BookmarkList,
         1
     );
-    Clear_Node_Managed_Bit(books);  // untracked and indefinite lifetime
+    Clear_Base_Managed_Bit(books);  // untracked and indefinite lifetime
     Set_Flex_Len(books, 1);
     return books;
 }

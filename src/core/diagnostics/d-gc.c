@@ -36,10 +36,10 @@
 
 #if RUNTIME_CHECKS
 
-static bool Not_Node_Accessible_Canon(const Node* n) {
-    if (Is_Node_Readable(n))
+static bool Not_Base_Accessible_Canon(const Base* b) {
+    if (Is_Base_Readable(b))
         return false;
-    assert(n == &PG_Inaccessible_Stub);
+    assert(b == &PG_Inaccessible_Stub);
     return true;
 }
 
@@ -59,10 +59,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (not binding)
             break;
 
-        if (Not_Node_Accessible_Canon(binding))
+        if (Not_Base_Accessible_Canon(binding))
             break;
 
-        assert(Is_Node_Managed(binding));
+        assert(Is_Base_Managed(binding));
         assert(Stub_Holds_Cells(binding));
 
         if (not Is_Stub_Varlist(binding))
@@ -78,7 +78,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         ){
             crash (binding);
         }
-        if (Not_Node_Managed(keylist))
+        if (Not_Base_Managed(keylist))
             crash (keylist);
         break;
     }
@@ -97,10 +97,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             NOOP;
         }
         else {  // it's an extension type
-            if (Not_Cell_Flag(v, DONT_MARK_NODE1))
-                assert(Is_Node_Marked(CELL_NODE1(v)));
-            if (Not_Cell_Flag(v, DONT_MARK_NODE2))
-                assert(Is_Node_Marked(CELL_NODE2(v)));
+            if (Not_Cell_Flag(v, DONT_MARK_PAYLOAD_1))
+                assert(Is_Base_Marked(CELL_PAYLOAD_1(v)));
+            if (Not_Cell_Flag(v, DONT_MARK_PAYLOAD_2))
+                assert(Is_Base_Marked(CELL_PAYLOAD_2(v)));
         }
         break;
 
@@ -116,7 +116,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_EMAIL:
       case TYPE_URL:
       case TYPE_RUNE: {
-        if (Stringlike_Has_Node(v)) {
+        if (Stringlike_Has_Stub(v)) {
             const Flex* f = Cell_String(v);
             assert(Is_Flex_Frozen(f));
 
@@ -129,7 +129,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case TYPE_PAIR: {
         Pairing* pairing = x_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
-        assert(Is_Node_Marked(pairing));
+        assert(Is_Base_Marked(pairing));
         break; }
 
       case TYPE_TIME:
@@ -138,27 +138,27 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case TYPE_PARAMETER: {
         if (Cell_Parameter_Spec(v))
-            assert(Is_Node_Marked(unwrap Cell_Parameter_Spec(v)));
+            assert(Is_Base_Marked(unwrap Cell_Parameter_Spec(v)));
         break; }
 
       case TYPE_BITSET: {
-        assert(Cell_Has_Node1(v));
-        if (Not_Node_Accessible_Canon(CELL_BITSET_BINARY(v)))
+        assert(Cell_Payload_1_Needs_Mark(v));
+        if (Not_Base_Accessible_Canon(CELL_BITSET_BINARY(v)))
             break;
         const Flex* f = c_cast(Flex*, CELL_BITSET_BINARY(v));
         Assert_Flex_Term_Core(f);
-        assert(Is_Node_Marked(f));
+        assert(Is_Base_Marked(f));
         break; }
 
       case TYPE_MAP: {
-        assert(Cell_Has_Node1(v));
+        assert(Cell_Payload_1_Needs_Mark(v));
         const Map* map = VAL_MAP(v);
-        assert(Is_Node_Marked(map));
+        assert(Is_Base_Marked(map));
         assert(Stub_Holds_Cells(MAP_PAIRLIST(map)));
         break; }
 
       case TYPE_HANDLE: { // See %sys-handle.h
-        if (not Cell_Has_Node1(v)) {
+        if (not Cell_Payload_1_Needs_Mark(v)) {
             // simple handle, no GC interaction
         }
         else {
@@ -167,7 +167,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             // data for the handle lives in that shared location.
 
             Stub* stub = Extract_Cell_Handle_Stub(v);
-            assert(Is_Node_Marked(stub));
+            assert(Is_Base_Marked(stub));
 
             Element* single = Known_Element(Stub_Cell(stub));
             assert(Is_Handle(single));
@@ -188,27 +188,27 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case TYPE_BLOB: {
-        assert(Cell_Has_Node1(v));
-        if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
+        assert(Cell_Payload_1_Needs_Mark(v));
+        if (Not_Base_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
         const Binary* b = c_cast(Binary*, CELL_SERIESLIKE_NODE(v));
         assert(Flex_Wide(b) == sizeof(Byte));
         Assert_Flex_Term_If_Needed(b);
-        assert(Is_Node_Marked(b));
+        assert(Is_Base_Marked(b));
         break; }
 
       case TYPE_TEXT:
       case TYPE_FILE:
       case TYPE_TAG: {
-        if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
+        if (Not_Base_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
         const String* s = c_cast(String*, CELL_SERIESLIKE_NODE(v));
         Assert_Flex_Term_If_Needed(s);
 
         assert(Flex_Wide(s) == sizeof(Byte));
-        assert(Is_Node_Marked(s));
+        assert(Is_Base_Marked(s));
 
         if (not Is_String_Symbol(s)) {
             BookmarkList* book = maybe Link_Bookmarks(s);
@@ -218,8 +218,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                 // The intent is that bookmarks are unmanaged stubs, which
                 // get freed when the string GCs.
                 //
-                assert(not Is_Node_Marked(book));
-                assert(Not_Node_Managed(book));
+                assert(not Is_Base_Marked(book));
+                assert(Not_Base_Managed(book));
             }
         }
         break; }
@@ -227,18 +227,18 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     //=//// BEGIN BINDABLE TYPES ////////////////////////////////////////=//
 
       case TYPE_FRAME: {
-        Node* node = CELL_FRAME_PHASE(v);
-        if (not Is_Node_Readable(node))  // e.g. EVAL-FREE freed it
+        Base* base = CELL_FRAME_PHASE(v);
+        if (not Is_Base_Readable(base))  // e.g. EVAL-FREE freed it
             break;
-        if (Is_Stub_Varlist(cast(Stub*, node)))
+        if (Is_Stub_Varlist(cast(Stub*, base)))
             goto mark_object;
 
         assert((v->header.bits & CELL_MASK_FRAME) == CELL_MASK_FRAME);
 
-        Details* details = cast(Details*, node);
-        assert(Is_Node_Marked(details));
+        Details* details = cast(Details*, base);
+        assert(Is_Base_Marked(details));
         if (CELL_FRAME_LENS_OR_LABEL(v))
-            assert(Is_Node_Marked(CELL_FRAME_LENS_OR_LABEL(v)));
+            assert(Is_Base_Marked(CELL_FRAME_LENS_OR_LABEL(v)));
 
         // We used to check the [0] slot of the details holds an archetype
         // that is consistent with the details itself.  That is no longer true
@@ -252,16 +252,16 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_OBJECT:
       case TYPE_WARNING:
       case TYPE_PORT: {
-        Node* node = CELL_CONTEXT_VARLIST(v);
-        if (Not_Node_Accessible_Canon(node))
+        Base* base = CELL_CONTEXT_VARLIST(v);
+        if (Not_Base_Accessible_Canon(base))
             break;
 
         assert(
             (v->header.bits & CELL_MASK_ANY_CONTEXT)
             == CELL_MASK_ANY_CONTEXT
         );
-        VarList* context = cast(VarList*, node);
-        assert(Is_Node_Marked(context));
+        VarList* context = cast(VarList*, base);
+        assert(Is_Base_Marked(context));
 
         // Currently the "binding" in a context is only used by FRAME! to
         // preserve the binding of the ACTION! value that spawned that
@@ -284,9 +284,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                 assert(Is_Stub_Let(Compact_Stub_From_Cell(v)));
         }
 
-        if (v->payload.split.two.node) {
+        if (v->payload.split.two.base) {
             assert(heart == TYPE_FRAME); // may be heap-based frame
-            assert(Is_Node_Marked(v->payload.split.two.node));  // lens/label
+            assert(Is_Base_Marked(v->payload.split.two.base));  // lens/label
         }
 
         const Value* archetype = Varlist_Archetype(context);
@@ -309,18 +309,18 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert((v->header.bits & CELL_MASK_VARARGS) == CELL_MASK_VARARGS);
         Phase* phase = Extract_Cell_Varargs_Phase(v);
         if (phase)  // null if came from MAKE VARARGS!
-            assert(Is_Node_Marked(phase));
+            assert(Is_Base_Marked(phase));
         break; }
 
       case TYPE_BLOCK:
       case TYPE_FENCE:
       case TYPE_GROUP: {
-        if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
+        if (Not_Base_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
         const Array* a = c_cast(Array*, CELL_SERIESLIKE_NODE(v));
         Assert_Flex_Term_If_Needed(a);
-        assert(Is_Node_Marked(a));
+        assert(Is_Base_Marked(a));
         break; }
 
       case TYPE_TUPLE:
@@ -329,27 +329,27 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         goto any_sequence;
 
       any_sequence: {
-        if (not Sequence_Has_Node(v))
+        if (not Sequence_Has_Pointer(v))
             break;  // should be just bytes
 
-        const Node* node1 = CELL_NODE1(v);
-        assert(Is_Node_Marked(node1));
+        const Base* payload1 = CELL_PAYLOAD_1(v);
+        assert(Is_Base_Marked(payload1));
         break; }
 
       case TYPE_WORD: {
-        assert(Cell_Has_Node1(v));
+        assert(Cell_Payload_1_Needs_Mark(v));
 
         const String *spelling = Cell_Word_Symbol(v);
         assert(Is_Flex_Frozen(spelling));
 
-        assert(Is_Node_Marked(spelling));
+        assert(Is_Base_Marked(spelling));
 
         // GC can't run during bind
         //
         assert(Not_Flavor_Flag(SYMBOL, spelling, HITCH_IS_BIND_STUMP));
 
-        if (Cell_Has_Node2(v)) {
-            Stub* stub = u_cast(Stub*, CELL_NODE2(v));
+        if (Cell_Payload_2_Needs_Mark(v)) {
+            Stub* stub = u_cast(Stub*, CELL_PAYLOAD_2(v));
             assert(Is_Stub_Let(stub) or Is_Stub_Patch(stub));
         }
         else
@@ -366,7 +366,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 //  Assert_Array_Marked_Correctly: C
 //
 void Assert_Array_Marked_Correctly(const Array* a) {
-    assert(Is_Node_Marked(a));
+    assert(Is_Base_Marked(a));
 
     #ifdef HEAVY_CHECKS
         //
@@ -380,7 +380,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // For a lighter check, make sure it's marked as a value-bearing array
         // and that it hasn't been diminished.
         //
-        assert(Is_Node_Readable(a));
+        assert(Is_Base_Readable(a));
         assert(Stub_Holds_Cells(a));
     #endif
 
@@ -393,7 +393,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // to Queue_Mark_Function_Deep.
 
         Phase* arch_phase = Cell_Frame_Phase(archetype);
-        assert(Is_Node_Marked(arch_phase));
+        assert(Is_Base_Marked(arch_phase));
         assert(Is_Stub_Varlist(arch_phase) or Is_Stub_Details(arch_phase));
     }
     else if (Is_Stub_Varlist(a)) {
@@ -405,7 +405,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         //
         assert(Any_Context(archetype));
         assert(
-            archetype->extra.node == nullptr
+            archetype->extra.base == nullptr
             or Type_Of(archetype) == TYPE_FRAME
         );
 

@@ -512,7 +512,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
         }
     }
 
-    if (no_quotes or not Stringlike_Has_Node(v)) {  // !!! hack
+    if (no_quotes or not Stringlike_Has_Stub(v)) {  // !!! hack
         if (len == 1 and not no_quotes) {  // use historical CHAR! molding
             bool parened = true;  // !!! used to depend on MOLD's :ALL flag
 
@@ -543,7 +543,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     assert(Any_Utf8(rune) and not Any_Word(rune));
     possibly(Any_String(rune));  // gets priority, but may delegate
 
-    if (Stringlike_Has_Node(rune)) {
+    if (Stringlike_Has_Stub(rune)) {
         assert(not IS_CHAR(rune));  // no string math
         return GENERIC_CFUNC(OLDGENERIC, Any_String)(level_);
     }
@@ -760,7 +760,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
     }
 
     if (Any_List_Type(to)) {  // limited TRANSCODE (how limited?...) [1]
-        if (Stringlike_Has_Node(v)) {
+        if (Stringlike_Has_Stub(v)) {
             if (Stub_Flavor(Cell_String(v)) == FLAVOR_SYMBOL)  // [2]
                 return rebValue(CANON(ENVELOP), rebQ(ARG(TYPE)), rebQ(v));
         }
@@ -792,9 +792,9 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
 ){
     assert(not Any_Word(v));  // not delegated
 
-    if (Any_String_Type(as)) {  // have to create a Flex if not node [1]
+    if (Any_String_Type(as)) {  // have to create a Flex if not stub [1]
         assert(not Any_String(v));  // not delegated by string generic
-        if (Stringlike_Has_Node(v)) {
+        if (Stringlike_Has_Stub(v)) {
             possibly(Is_Flex_Frozen(Cell_String(v)));
             possibly(Is_Stub_Symbol(Cell_String(v)));
             Copy_Cell(out, v);
@@ -810,7 +810,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         assert(size + 1 <= Size_Of(v->payload.at_least_8));
 
         String* str = Make_String_Core(
-            FLEX_MASK_STRING | NODE_FLAG_MANAGED,
+            FLEX_MASK_STRING | BASE_FLAG_MANAGED,
             size
         );
         memcpy(
@@ -826,7 +826,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
     }}
 
     if (as == TYPE_WORD) {  // aliasing as WORD! freezes data
-        if (Stringlike_Has_Node(v)) {
+        if (Stringlike_Has_Stub(v)) {
             const String* str = Cell_String(v);
             if (VAL_INDEX(v) != 0)
                 return Error_User("Can't alias string as WORD! unless at head");
@@ -853,7 +853,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
     }
 
     if (as == TYPE_BLOB) {  // resulting binary is UTF-8 constrained [2]
-        if (Stringlike_Has_Node(v)) {
+        if (Stringlike_Has_Stub(v)) {
             Init_Blob_At(
                 out,
                 Cell_String(v),
@@ -878,7 +878,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
     if (as == TYPE_RUNE or as == TYPE_MONEY) {  // fits cell or freeze string
         assert(as != TYPE_WORD and not (Any_String_Type(as)));
 
-        if (Stringlike_Has_Node(v)) {
+        if (Stringlike_Has_Stub(v)) {
             const String *s = Cell_String(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
@@ -899,7 +899,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
     }
 
     if (as == TYPE_EMAIL or as == TYPE_URL) {
-        if (Stringlike_Has_Node(v)) {
+        if (Stringlike_Has_Stub(v)) {
             const String *s = Cell_String(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
@@ -1086,7 +1086,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Rune)
     assert(Is_Rune(rune));
 
     if (
-        Stringlike_Has_Node(rune)
+        Stringlike_Has_Stub(rune)
         or rune->extra.at_least_4[IDX_EXTRA_LEN] != 1
     ){
         return FAIL(Error_Not_One_Codepoint_Raw());

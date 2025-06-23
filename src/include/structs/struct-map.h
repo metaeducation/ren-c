@@ -55,7 +55,7 @@
 
 #define FLEX_MASK_PAIRLIST \
     (FLAG_FLAVOR(PAIRLIST) \
-        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* hashlist */)
+        | STUB_FLAG_LINK_NEEDS_MARK  /* hashlist */)
 
 #define LINK_PAIRLIST_HASHLIST_NODE(pairlist)  STUB_LINK(pairlist)
 // MISC is unused

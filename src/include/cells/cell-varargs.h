@@ -56,7 +56,7 @@
 
 #define CELL_VARARGS_ORIGIN(c)              CELL_EXTRA(c)
 #define CELL_VARARGS_SIGNED_PARAM_INDEX(c)  (c)->payload.split.one.i
-#define CELL_VARARGS_PHASE_NODE(c)          CELL_NODE2(c)
+#define CELL_VARARGS_PHASE_NODE(c)          CELL_PAYLOAD_2(c)
 
 INLINE Phase* Extract_Cell_Varargs_Phase(const Cell* c) {
     assert(Heart_Of(c) == TYPE_VARARGS);
@@ -101,7 +101,7 @@ INLINE Element* Init_Varargs_Untyped_Infix(
         Source* singular = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
         Copy_Cell(Stub_Cell(singular), unwrap left);
 
-        feed = Make_Untracked_Stub(FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED);
+        feed = Make_Untracked_Stub(FLAG_FLAVOR(FEED) | BASE_FLAG_MANAGED);
         Init_Block(Stub_Cell(feed), singular);  // index 0
     }
 

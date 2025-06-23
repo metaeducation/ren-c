@@ -147,7 +147,7 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
     }
 
     assert(Link_Inherit_Bind(L->varlist) != nullptr);
-    assert(Is_Node_Managed(L->varlist));
+    assert(Is_Base_Managed(L->varlist));
     rebDelegateCore(cast(RebolContext*, L->varlist), cp);
     return BOUNCE_DELEGATE;
 }}
@@ -1115,8 +1115,8 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
 
     L->rootvar = Flex_Head_Dynamic(Element, s);
     TRACK(L->rootvar)->header.bits =
-        NODE_FLAG_NODE
-            | NODE_FLAG_CELL
+        BASE_FLAG_BASE
+            | BASE_FLAG_CELL
             | CELL_FLAG_PROTECTED  // payload/coupling tweaked, but not by user
             | CELL_MASK_FRAME
             | FLAG_LIFT_BYTE(NOQUOTE_1);
@@ -1145,7 +1145,7 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     Force_Poison_Cell(Array_Tail(L->varlist));
   #endif
 
-    assert(Not_Node_Managed(L->varlist));
+    assert(Not_Base_Managed(L->varlist));
 
     ORIGINAL = phase;
 
@@ -1221,7 +1221,7 @@ void Drop_Action(Level* L) {
     assert(Misc_Runlevel(L->varlist) == L);
 
     if (
-        Is_Node_Managed(L->varlist)  // outstanding references may exist [1]
+        Is_Base_Managed(L->varlist)  // outstanding references may exist [1]
         or Get_Action_Executor_Flag(L, FULFILL_ONLY)
     ){
         Tweak_Misc_Runlevel(L->varlist, nullptr);

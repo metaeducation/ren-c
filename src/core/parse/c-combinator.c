@@ -269,7 +269,7 @@ DECLARE_NATIVE(COMBINATOR)
         return PANIC(unwrap e);
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED,
+        BASE_FLAG_MANAGED,
         Phase_Archetype(paramlist),
         &Combinator_Dispatcher,
         MAX_IDX_COMBINATOR  // details array capacity

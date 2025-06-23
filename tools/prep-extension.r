@@ -214,7 +214,7 @@ if yes? use-librebol [
          *
          * Note: The argument is currently called "level_" for consistency.
          * It may be that actual consistency is desired to pass a level_ and
-         * make it possible for LIBREBOL_CONTEXT to look at the Node* and
+         * make it possible for LIBREBOL_CONTEXT to look at the Base* and
          * tell the difference.  But right now, that name consistency is
          * important for the passthru done by STARTUP-HOOKS and SHUTDOWN-HOOKS
          */

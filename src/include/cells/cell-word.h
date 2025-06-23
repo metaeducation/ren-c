@@ -38,12 +38,12 @@ INLINE bool Wordlike_Cell(const Cell* v) {
         return true;
     if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))
         return false;
-    if (not Cell_Has_Node1(v))
+    if (not Cell_Payload_1_Needs_Mark(v))
         return false;
-    const Node* node1 = CELL_SERIESLIKE_NODE(v);
-    if (Is_Node_A_Cell(node1))
+    const Base* payload1 = CELL_SERIESLIKE_NODE(v);
+    if (Is_Base_A_Cell(payload1))
         return false;
-    return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SYMBOL;
+    return Stub_Flavor(u_cast(const Flex*, payload1)) == FLAVOR_SYMBOL;
 }
 
 INLINE const Symbol* Cell_Word_Symbol(const Cell* c) {
@@ -65,14 +65,14 @@ INLINE void Tweak_Cell_Word_Index(const Cell* v, Index i) {
     assert(Wordlike_Cell(v));
     assert(i != 0);
     CELL_WORD_INDEX_I32(m_cast(Cell*, v)) = i;
-    Set_Cell_Flag(v, DONT_MARK_NODE2);
+    Set_Cell_Flag(v, DONT_MARK_PAYLOAD_2);
 }
 
 INLINE void Tweak_Cell_Word_Stub(const Cell* v, Stub* stub) {
     assert(Wordlike_Cell(v));
     assert(Is_Stub_Let(stub) or Is_Stub_Patch(stub));
-    m_cast(Cell*, v)->payload.split.two.node = stub;
-    Clear_Cell_Flag(v, DONT_MARK_NODE2);
+    m_cast(Cell*, v)->payload.split.two.base = stub;
+    Clear_Cell_Flag(v, DONT_MARK_PAYLOAD_2);
 }
 
 INLINE Element* Init_Word_Untracked(
@@ -82,15 +82,15 @@ INLINE Element* Init_Word_Untracked(
 ){
     Freshen_Cell_Header(out);
     out->header.bits |= (
-        NODE_FLAG_NODE | NODE_FLAG_CELL
+        BASE_FLAG_BASE | BASE_FLAG_CELL
             | FLAG_HEART_ENUM(TYPE_WORD) | FLAG_LIFT_BYTE(lift_byte)
-            | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
-            | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
     CELL_WORD_INDEX_I32(out) = 0;  // !!! hint used in special cases
     CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, sym);
     unnecessary(Tweak_Cell_Binding(out, UNBOUND));  // don't need checks...
-    out->extra.node = UNBOUND;  // ...just assign directly, always valid
+    out->extra.base = UNBOUND;  // ...just assign directly, always valid
     return out;
 }
 
@@ -108,8 +108,8 @@ INLINE Element* Init_Word_Bound_Untracked(
     Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_ENUM(TYPE_WORD)
-            | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
-            | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
     CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, symbol);
     CELL_WORD_INDEX_I32(out) = 0;  // !!! hint used in special cases

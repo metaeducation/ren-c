@@ -247,7 +247,7 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     assert(adjunct == nullptr);
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED | DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC,
+        BASE_FLAG_MANAGED | DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC,
         Phase_Archetype(paramlist),
         &Typechecker_Dispatcher,
         MAX_IDX_TYPECHECKER  // details array capacity

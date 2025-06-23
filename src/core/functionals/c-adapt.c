@@ -191,7 +191,7 @@ DECLARE_NATIVE(ADAPT)
     Element* prelude = Element_ARG(PRELUDE);
 
     Details* details = Make_Dispatch_Details(
-        NODE_FLAG_MANAGED,
+        BASE_FLAG_MANAGED,
         adaptee,  // same parameters as adaptee [1]
         &Adapter_Dispatcher,
         MAX_IDX_ADAPTER

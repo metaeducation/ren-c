@@ -241,7 +241,7 @@ Flex* Make_Set_Operation_Flex(
 
                 DECLARE_ELEMENT (mo_value);
                 Reset_Cell_Header_Noquote(TRACK(mo_value), CELL_MASK_TEXT);
-                CELL_NODE1(mo_value) = mo->string;
+                CELL_PAYLOAD_1(mo_value) = mo->string;
                 VAL_INDEX_RAW(mo_value) = mo->base.index;
 
                 if (
@@ -321,7 +321,7 @@ Flex* Make_Set_Operation_Flex(
                     TRACK(buf_value),
                     CELL_MASK_BLOB
                 );
-                CELL_NODE1(buf_value) = buf;
+                CELL_PAYLOAD_1(buf_value) = buf;
                 VAL_INDEX_RAW(buf_value) = buf_start_len;
 
                 if (

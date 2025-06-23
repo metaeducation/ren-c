@@ -121,7 +121,7 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
     Assert_Flex_Term_If_Needed(paramlist);
 
     Flags details_flags = (
-        NODE_FLAG_MANAGED
+        BASE_FLAG_MANAGED
             | DETAILS_FLAG_RAW_NATIVE
             | DETAILS_FLAG_API_CONTINUATIONS_OK
             | DETAILS_FLAG_OWNS_PARAMLIST
@@ -148,7 +148,7 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
         DECLARE_ELEMENT (native);
         Init_Frame(native, details, ANONYMOUS, NONMETHOD);
         details = Make_Dispatch_Details(
-            NODE_FLAG_MANAGED,  // *not* a native, calls one...
+            BASE_FLAG_MANAGED,  // *not* a native, calls one...
             native,
             &Combinator_Dispatcher,
             MAX_IDX_COMBINATOR  // details array capacity
@@ -524,7 +524,7 @@ void Startup_Action_Adjunct_Shim(void) {
     SymId field_syms[1] = {
         SYM_DESCRIPTION
     };
-    VarList* adjunct = Alloc_Varlist_Core(NODE_FLAG_MANAGED, TYPE_OBJECT, 2);
+    VarList* adjunct = Alloc_Varlist_Core(BASE_FLAG_MANAGED, TYPE_OBJECT, 2);
     REBLEN i = 1;
     for (; i != 2; ++i)
         Init_Nulled(Append_Context(adjunct, Canon_Symbol(field_syms[i - 1])));

@@ -241,7 +241,7 @@ void Expand_Hashlist(HashList* hashlist)
     Remake_Flex(
         hashlist,
         prime + 1,
-        FLEX_FLAG_POWER_OF_2  // not(NODE_FLAG_NODE) => don't keep data
+        FLEX_FLAG_POWER_OF_2  // not(BASE_FLAG_BASE) => don't keep data
     );
 
     Clear_Flex(hashlist);
@@ -474,7 +474,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 } finished: { ////////////////////////////////////////////////////////////////
 
     Array* pairlist = Pop_Stack_Values_Core(
-        FLEX_MASK_PAIRLIST | NODE_FLAG_MANAGED,
+        FLEX_MASK_PAIRLIST | BASE_FLAG_MANAGED,
         STACK_BASE
     );
     assert(Array_Len(pairlist) % 2 == 0);  // is [key value key value...]
@@ -502,7 +502,7 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
     // its own copy so new map's hashes will reflect its own mutations)
     //
     HashList* hashlist = cast(HashList*, Copy_Flex_Core(
-        FLEX_FLAGS_NONE | FLAG_FLAVOR(HASHLIST),  // !!! No NODE_FLAG_MANAGED?
+        FLEX_FLAGS_NONE | FLAG_FLAVOR(HASHLIST),  // !!! No BASE_FLAG_MANAGED?
         MAP_HASHLIST(map)
     ));
     Tweak_Link_Hashlist(copy, hashlist);
@@ -526,7 +526,7 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
         if (Is_Zombie(v))
             continue;
 
-        Flags flags = NODE_FLAG_MANAGED;  // !!! Review
+        Flags flags = BASE_FLAG_MANAGED;  // !!! Review
         if (not Is_Antiform(v)) {
             Clonify(Known_Element(v), flags, deeply);
         }

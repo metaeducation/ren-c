@@ -123,7 +123,7 @@ INLINE Flavor Flavor_From_Flags(Flags flags)
     #define Stub_Flavor  Stub_Flavor_Unchecked
 #else
     INLINE Flavor Stub_Flavor(const Stub *s) {
-        assert(Is_Node_Readable(s));
+        assert(Is_Base_Readable(s));
         assert(TASTE_BYTE(s) != FLAVOR_0);
         return Stub_Flavor_Unchecked(s);
     }
@@ -222,7 +222,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 INLINE Atom* Stub_Cell(const_if_c Stub* s) {
     assert(Not_Stub_Flag(s, DYNAMIC));
     assert(Stub_Holds_Cells(s));
-    assert(Is_Node_Readable(s));
+    assert(Is_Base_Readable(s));
     return u_cast(Atom*, &s->content.fixed.cell);
 }
 
@@ -230,7 +230,7 @@ INLINE Atom* Stub_Cell(const_if_c Stub* s) {
     INLINE const Atom* Stub_Cell(const Stub* s) {
         assert(Not_Stub_Flag(s, DYNAMIC));
         assert(Stub_Holds_Cells(s));
-        assert(Is_Node_Readable(s));
+        assert(Is_Base_Readable(s));
         return u_cast(const Atom*, &s->content.fixed.cell);
     }
 #endif
@@ -252,18 +252,18 @@ INLINE Stub* Compact_Stub_From_Cell(const Cell* v) {
 // length 0!  Only two are set here.
 //
 INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
-    assert(not (flags & NODE_FLAG_CELL));
+    assert(not (flags & BASE_FLAG_CELL));
 
     Stub *s = u_cast(Stub*, preallocated);
-    s->leader.bits = flags | NODE_FLAG_NODE;  // #1
+    s->leader.bits = flags | BASE_FLAG_BASE;  // #1
 
   #if (NO_RUNTIME_CHECKS)
     s->info.flags = FLEX_INFO_MASK_NONE;  // #7
   #else
     Corrupt_Pointer_If_Debug(s->link.corrupt);  // #2
     Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
-    if (flags & STUB_FLAG_INFO_NODE_NEEDS_MARK)
-        Corrupt_Pointer_If_Debug(s->info.node);  // #7
+    if (flags & STUB_FLAG_INFO_NEEDS_MARK)
+        Corrupt_Pointer_If_Debug(s->info.base);  // #7
     else
         s->info.flags = FLEX_INFO_MASK_NONE;  // #7
     Corrupt_Pointer_If_Debug(s->misc.corrupt);  // #8
@@ -285,7 +285,7 @@ INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
 
 // This is a lightweight alternative to Alloc_Singular() when the stub being
 // created does not need to be tracked.  It replaces a previous hack of
-// allocating the singular as NODE_FLAG_MANAGED so it didn't get into the
+// allocating the singular as BASE_FLAG_MANAGED so it didn't get into the
 // manuals tracking list, but then clearing the bit immediately afterward.
 //
 // (Because this leaks easily, it should really only be used by low-level code
@@ -368,41 +368,41 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
     #define Ensure_Stub_Bonus_Managed(s)  (s)
 #else
     INLINE Stub* Ensure_Stub_Link_Managed(const_if_c Stub* s)
-      { assert(Get_Stub_Flag(s, LINK_NODE_NEEDS_MARK)); return s; }
+      { assert(Get_Stub_Flag(s, LINK_NEEDS_MARK)); return s; }
 
     INLINE Stub* Ensure_Stub_Misc_Managed(const_if_c Stub* s)
-      { assert(Get_Stub_Flag(s, MISC_NODE_NEEDS_MARK)); return s; }
+      { assert(Get_Stub_Flag(s, MISC_NEEDS_MARK)); return s; }
 
     INLINE Stub* Ensure_Stub_Info_Managed(const_if_c Stub* s)
-      { assert(Get_Stub_Flag(s, INFO_NODE_NEEDS_MARK)); return s; }
+      { assert(Get_Stub_Flag(s, INFO_NEEDS_MARK)); return s; }
 
     INLINE Stub* Ensure_Stub_Bonus_Managed(const_if_c Stub* s)
       { return s; }  // review: needs check
 
   #if CPLUSPLUS_11
     INLINE const Stub* Ensure_Stub_Link_Managed(const Stub* s)
-      { assert(Get_Stub_Flag(s, LINK_NODE_NEEDS_MARK)); return s; }
+      { assert(Get_Stub_Flag(s, LINK_NEEDS_MARK)); return s; }
 
     INLINE const Stub* Ensure_Stub_Misc_Managed(const Stub* s)
-      { assert(Get_Stub_Flag(s, MISC_NODE_NEEDS_MARK)); return s; }
+      { assert(Get_Stub_Flag(s, MISC_NEEDS_MARK)); return s; }
 
     INLINE const Stub* Ensure_Stub_Info_Managed(const Stub* s)
-      { assert(Get_Stub_Flag(s, INFO_NODE_NEEDS_MARK)); return s; }
+      { assert(Get_Stub_Flag(s, INFO_NEEDS_MARK)); return s; }
 
     INLINE const Stub* Ensure_Stub_Bonus_Managed(const Stub* s)
       { return s; }  // review: needs check
   #endif
 #endif
 
-#define STUB_LINK(s)  Ensure_Stub_Link_Managed(s)->link.node
-#define STUB_MISC(s)  Ensure_Stub_Misc_Managed(s)->misc.node
-#define STUB_INFO(s)  Ensure_Stub_Info_Managed(s)->info.node
-#define STUB_BONUS(s) Ensure_Stub_Bonus_Managed(s)->content.dynamic.bonus.node
+#define STUB_LINK(s)  Ensure_Stub_Link_Managed(s)->link.base
+#define STUB_MISC(s)  Ensure_Stub_Misc_Managed(s)->misc.base
+#define STUB_INFO(s)  Ensure_Stub_Info_Managed(s)->info.base
+#define STUB_BONUS(s) Ensure_Stub_Bonus_Managed(s)->content.dynamic.bonus.base
 
-#define STUB_LINK_UNMANAGED(s)  (s)->link.node
-#define STUB_MISC_UNMANAGED(s)  (s)->misc.node
-#define STUB_INFO_UNMANAGED(s)  (s)->info.node
-#define STUB_BONUS_UNMANAGED(s) (s)->content.dynamic.bonus.node
+#define STUB_LINK_UNMANAGED(s)  (s)->link.base
+#define STUB_MISC_UNMANAGED(s)  (s)->misc.base
+#define STUB_INFO_UNMANAGED(s)  (s)->info.base
+#define STUB_BONUS_UNMANAGED(s) (s)->content.dynamic.bonus.base
 
 
 //=//// STUB CLEANER //////////////////////////////////////////////////////=//
