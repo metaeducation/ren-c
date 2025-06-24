@@ -400,8 +400,8 @@ static void Propagate_All_GC_Marks(void)
 {
     assert(not in_mark);
 
-    while (Flex_Used(g_gc.mark_stack) != 0) {
-        Set_Flex_Used(g_gc.mark_stack, Flex_Used(g_gc.mark_stack) - 1);
+    while (Flex_Dynamic_Used(g_gc.mark_stack) != 0) {
+        Set_Flex_Used(g_gc.mark_stack, Flex_Dynamic_Used(g_gc.mark_stack) - 1);
 
         // Data pointer may change in response to an expansion during
         // Mark_Array_Deep_Core(), so must be refreshed on each loop.
@@ -409,7 +409,7 @@ static void Propagate_All_GC_Marks(void)
         Array* a = *Flex_At(
             Array*,
             g_gc.mark_stack,
-            Flex_Used(g_gc.mark_stack)
+            Flex_Dynamic_Used(g_gc.mark_stack)
         );
 
         // Termination is not required in the release build (the length is
@@ -419,7 +419,7 @@ static void Propagate_All_GC_Marks(void)
             *Flex_At(
                 Array*,
                 g_gc.mark_stack,
-                Flex_Used(g_gc.mark_stack)
+                Flex_Dynamic_Used(g_gc.mark_stack)
             )
         );
 
