@@ -76,9 +76,7 @@ INLINE char Bounce_Type(Bounce b) {
 
 INLINE Atom* Atom_From_Bounce(Bounce b) {
     assert(Is_Bounce_An_Atom(b));
-
-    const void* p = cast(const void*, b);
-    return cast(Atom*, m_cast(void*, p));
+    return cast(Atom*, m_cast(void*, b));
 }
 
 

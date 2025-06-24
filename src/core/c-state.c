@@ -109,8 +109,8 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 #define DATASTACK_FLAG_HAS_SPARE            STUB_SUBCLASS_FLAG_26
 #define DATASTACK_FLAG_HAS_SCRATCH          STUB_SUBCLASS_FLAG_27
 
-#define SPARE_PROXY     x_cast(Atom*, LIB(SPACE))
-#define SCRATCH_PROXY   x_cast(Atom*, LIB(NULL))
+#define SPARE_PROXY     m_cast(Atom*, LIB(SPACE))
+#define SCRATCH_PROXY   m_cast(Atom*, LIB(NULL))
 
 #define PLUG_SUSPENDED_LEVEL(plug)   (plug)->link.p
 
@@ -356,7 +356,7 @@ void Replug_Stack(Level* base, Value* plug) {
 
   restore_state_components: {
 
-    Array* array = x_cast(Array*, Cell_Handle_Base(plug));
+    Array* array = u_cast(Array*, Cell_Handle_Base(plug));
     assert(Stub_Flavor(array) == FLAVOR_DATASTACK);
 
     Value* item = Flex_Tail(Value, array);

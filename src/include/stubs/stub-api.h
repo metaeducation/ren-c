@@ -51,10 +51,10 @@ enum {
 
 
 #define LINK_API_STUB_NEXT(stub) \
-    *x_cast(Base**, &ensure_flavor(FLAVOR_API, (stub))->link.base)
+    *m_cast(Base**, &ensure_flavor(FLAVOR_API, (stub))->link.base)
 
 #define MISC_API_STUB_PREV(stub) \
-    *x_cast(Base**, &ensure_flavor(FLAVOR_API, (stub))->misc.base)
+    *m_cast(Base**, &ensure_flavor(FLAVOR_API, (stub))->misc.base)
 
 
 // The rebR() function can be used with an API handle to tell a variadic
@@ -193,8 +193,8 @@ INLINE void Free_Value(Value* v)
 // so that is something to think about.  At the moment, only L->out can
 // hold thrown returns, and these API handles are elsewhere.
 //
-INLINE void Release_Api_Value_If_Unmanaged(const Atom* r) {
+INLINE void Release_Api_Value_If_Unmanaged(const Value* r) {
     assert(Is_Base_Root_Bit_Set(r));
     if (Not_Base_Managed(r))
-        rebRelease(x_cast(Value*, r));
+        rebRelease(r);
 }

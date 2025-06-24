@@ -135,7 +135,7 @@ INLINE void Tweak_Details_Dispatcher(Details* details, Dispatcher* dispatcher)
 //
 INLINE Array* Details_Array(Details* details) {
     assert(Is_Stub_Details(details));
-    return x_cast(Array*, details);
+    return u_cast(Array*, details);  // performance critical, u_cast()
 }
 
 

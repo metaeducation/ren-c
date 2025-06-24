@@ -126,7 +126,7 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
         assert(Is_Atom_Api_Value(atom));
         Assert_Cell_Stable(atom);  // API cells always stable, for now [1]
         Copy_Cell_Core(OUT, atom, CELL_MASK_THROW);  // keep unsurprising [2]
-        Release_Api_Value_If_Unmanaged(atom);
+        Release_Api_Value_If_Unmanaged(Known_Stable(atom));
         return nullptr;
     }
 
@@ -1106,7 +1106,7 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
         );
     }
 
-    L->varlist = x_cast(Array*, s);
+    L->varlist = u_cast(Array*, s);
     L->rootvar = Flex_Head_Dynamic(Element, s);
 
     possibly(LIFT_BYTE(frame) != NOQUOTE_1);  // can be ACTION!, quasi, etc.

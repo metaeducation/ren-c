@@ -57,7 +57,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         return Error_User(c_cast(char*, p));
 
       case DETECTED_AS_STUB: {
-        Flex* f = m_cast(Flex*, c_cast(Flex* , p));  // don't mutate
+        Flex* f = m_cast(Flex*, c_cast(Flex*, p));  // don't mutate
         if (not Is_Stub_Varlist(f))
             crash (f);  // only kind of Flex allowed are contexts of ERROR!
         if (CTX_TYPE(cast(VarList*, f)) != TYPE_WARNING)

@@ -47,16 +47,16 @@
 
 
 INLINE PairList* MAP_PAIRLIST(const_if_c Map* map)
-  { return x_cast(PairList*, map); }
+  { return cast(PairList*, map); }
 
 #if CPLUSPLUS_11
     INLINE const PairList* MAP_PAIRLIST(const Map* map)
-      { return x_cast(const PairList*, map); }
+      { return cast(const PairList*, map); }
 #endif
 
 INLINE HashList* Link_Hashlist(const Array* pairlist) {
     assert(Is_Stub_Pairlist(pairlist));
-    return u_cast(HashList*, LINK_PAIRLIST_HASHLIST_NODE(pairlist));
+    return cast(HashList*, LINK_PAIRLIST_HASHLIST_NODE(pairlist));
 }
 
 INLINE void Tweak_Link_Hashlist(Array* pairlist, HashList* hashlist) {

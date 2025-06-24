@@ -87,8 +87,8 @@ INLINE void Erase_Stub(Stub* s) {
 //    "leader" is chosen to prevent calls with cells, which use "header".)
 //
 // 2. Stub flags are managed distinctly from conceptual immutability of their
-//    data, and so we m_cast away constness.  We do this on the HeaderUnion
-//    vs. x_cast() on the (f) to get the typechecking of [1]
+//    data, and so we w_cast away constness.  We do this on the HeaderUnion
+//    vs. m_cast() on the (f) to get the typechecking of [1]
 
 #define Get_Stub_Flag(f,name) \
     (((f)->leader.bits & STUB_FLAG_##name) != 0)

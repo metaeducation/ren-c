@@ -156,7 +156,7 @@ INLINE Array* Make_Array_Core_Into(
         capacity += 1;  // account for space needed for poison cell
   #endif
 
-    Array* a = x_cast(Array*, Make_Flex_Into(flags, preallocated, capacity));
+    Array* a = u_cast(Array*, Make_Flex_Into(flags, preallocated, capacity));
     assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
 
     if (Get_Stub_Flag(a, DYNAMIC)) {

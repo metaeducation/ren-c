@@ -377,7 +377,7 @@ void* Probe_Core_Debug(
     if (top_was_intrinsic)
         Set_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
 
-    return m_cast(void*, p); // must be cast back to const if source was const
+    return m_cast(void*, p);  // must cast back to const if source was const
 }}
 
 

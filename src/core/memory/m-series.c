@@ -449,7 +449,7 @@ void Assert_Flex_Term_Core(const Flex* f)
     if (Stub_Holds_Cells(f)) {
       #if DEBUG_POISON_FLEX_TAILS
         if (Get_Stub_Flag(f, DYNAMIC)) {
-            const Cell* tail = Array_Tail(x_cast(Array*, f));
+            const Cell* tail = Array_Tail(u_cast(Array*, f));
             if (not Is_Cell_Poisoned(tail))
                 crash (tail);
         }

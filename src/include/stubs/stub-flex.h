@@ -115,8 +115,8 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 //    "leader" is chosen to prevent calls with cells, which use "header".)
 //
 // 2. Flex flags are managed distinctly from conceptual immutability of their
-//    data, and so we m_cast away constness.  We do this on the HeaderUnion
-//    vs. x_cast() on the (f) to get the typechecking of [1]
+//    data, and so we w_cast away constness.  We do this on the HeaderUnion
+//    vs. m_cast() on the (f) to get the typechecking of [1]
 
 #define Get_Flex_Flag(f,name) \
     (((f)->leader.bits & FLEX_FLAG_##name) != 0)
@@ -148,7 +148,7 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 //
 #if NO_CPLUSPLUS_11
     #define FLEX_INFO(f) \
-        x_cast(Flex*, ensure(const Flex*, (f)))->info.flags  // [1]
+        m_cast(Flex*, ensure(const Flex*, (f)))->info.flags  // [1]
 #else
     INLINE uintptr_t &FLEX_INFO(const Flex* f) {
         assert(Not_Stub_Flag(f, INFO_NEEDS_MARK));  // [2]

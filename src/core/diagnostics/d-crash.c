@@ -268,7 +268,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
         Printf_Stderr("Stub detected...\n");
         if (Stub_Flavor(s) == FLAVOR_VARLIST) {
             Printf_Stderr("...and it's a varlist...\n");
-            if (CTX_TYPE(x_cast(VarList*, s)) == TYPE_WARNING) {
+            if (CTX_TYPE(cast(VarList*, m_cast(Stub*, s))) == TYPE_WARNING) {
                 Printf_Stderr("...and it's an Error, trying to PROBE...\n");
                 PROBE(s);  // this may crash recursively if it's corrupt
             }

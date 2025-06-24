@@ -2050,7 +2050,7 @@ DECLARE_NATIVE(SUBPARSE)
                 }
 
                 if (Is_Api_Value(into))
-                    rebRelease(x_cast(Value*, into));  // !!! or use SPARE?
+                    rebRelease(m_cast(Value*, into));  // !!! or use SPARE?
 
                 Erase_Cell(OUT);  // restore invariant
                 break; }

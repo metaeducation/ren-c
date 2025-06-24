@@ -192,8 +192,8 @@ Flex* Make_Set_Operation_Flex(
         // The buffer may have been allocated too large, so copy it at the
         // used capacity size
         //
-        out_flex = Copy_Array_Shallow(x_cast(Array*, buffer));
-        Free_Unmanaged_Flex(x_cast(Array*, buffer));
+        out_flex = Copy_Array_Shallow(m_cast(Array*, buffer));
+        Free_Unmanaged_Flex(m_cast(Array*, buffer));
     }
     else if (Any_String(val1)) {
         DECLARE_MOLDER (mo);

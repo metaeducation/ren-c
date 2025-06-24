@@ -155,8 +155,8 @@ void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
 
     Flip_Stub_To_Black(f);  // recursion protection
 
-    const Value* val_tail = Flex_Tail(Value, x_cast(Array*, f));
-    const Value* val = Flex_At(Value, x_cast(Array*, f), index);
+    const Value* val_tail = Flex_Tail(Value, u_cast(Array*, f));
+    const Value* val = Flex_At(Value, u_cast(Array*, f), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }
@@ -405,7 +405,7 @@ bool Is_Value_Frozen_Deep(const Cell* v) {
     // Frozen deep should be set even on non-Arrays, e.g. all frozen shallow
     // Strings should also have FLEX_INFO_FROZEN_DEEP.
     //
-    return Get_Flex_Info(x_cast(Flex*, base), FROZEN_DEEP);
+    return Get_Flex_Info(u_cast(Flex*, base), FROZEN_DEEP);
 }
 
 

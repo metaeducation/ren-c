@@ -77,7 +77,7 @@ INLINE void Tweak_Link_Bookmarks(
 //=//// STRING NAVIGATION /////////////////////////////////////////////////=//
 
 INLINE Utf8(*) Skip_Codepoint(Utf8(const_if_c*) utf8) {
-    Byte* bp = x_cast(Byte*, utf8);
+    Byte* bp = m_cast(Byte*, utf8);
     do {
         ++bp;
     } while (Is_Continuation_Byte(*bp));
@@ -85,7 +85,7 @@ INLINE Utf8(*) Skip_Codepoint(Utf8(const_if_c*) utf8) {
 }
 
 INLINE Utf8(*) Step_Back_Codepoint(Utf8(const_if_c*) utf8) {
-    Byte* bp = x_cast(Byte*, utf8);
+    Byte* bp = m_cast(Byte*, utf8);
     do {
         --bp;
     } while (Is_Continuation_Byte(*bp));
@@ -96,7 +96,7 @@ INLINE Utf8(*) Utf8_Next(
     Codepoint* codepoint_out,
     Utf8(const_if_c*) utf8
 ){
-    Byte* bp = x_cast(Byte*, utf8);
+    Byte* bp = m_cast(Byte*, utf8);
     if (*bp < 0x80)
         *codepoint_out = *bp;
     else
@@ -108,7 +108,7 @@ INLINE Utf8(*) Utf8_Back(
     Codepoint* codepoint_out,
     Utf8(const_if_c*) utf8
 ){
-    Byte* bp = x_cast(Byte*, utf8);
+    Byte* bp = m_cast(Byte*, utf8);
     --bp;
     while (Is_Continuation_Byte(*bp))
         --bp;
@@ -134,7 +134,7 @@ INLINE Utf8(*) Utf8_Skip(
         }
     }
     Utf8_Next(codepoint_out, utf8);
-    return m_cast(Utf8(*), utf8);
+    return w_cast(Utf8(*), utf8);
 }
 
 #if CPLUSPLUS_11
@@ -142,23 +142,23 @@ INLINE Utf8(*) Utf8_Skip(
     // overloading technique is needed to make output constness match input.
 
     INLINE Utf8(const*) Skip_Codepoint(Utf8(const*) utf8)
-      { return Skip_Codepoint(m_cast(Utf8(*), utf8)); }
+      { return Skip_Codepoint(w_cast(Utf8(*), utf8)); }
 
     INLINE Utf8(const*) Step_Back_Codepoint(Utf8(const*) utf8)
-      { return Step_Back_Codepoint(m_cast(Utf8(*), utf8)); }
+      { return Step_Back_Codepoint(w_cast(Utf8(*), utf8)); }
 
     INLINE Utf8(const*) Utf8_Next(
         Codepoint* codepoint_out,
         Utf8(const*) utf8
     ){
-        return Utf8_Next(codepoint_out, m_cast(Utf8(*), utf8));
+        return Utf8_Next(codepoint_out, w_cast(Utf8(*), utf8));
     }
 
     INLINE Utf8(const*) Utf8_Back(
         Codepoint* codepoint_out,
         Utf8(const*) utf8
     ){
-        return Utf8_Back(codepoint_out, m_cast(Utf8(*), utf8));
+        return Utf8_Back(codepoint_out, w_cast(Utf8(*), utf8));
     }
 
     INLINE Utf8(const*) Utf8_Skip(
@@ -166,7 +166,7 @@ INLINE Utf8(*) Utf8_Skip(
         Utf8(const*) utf8,
         REBINT delta
     ){
-        return Utf8_Skip(codepoint_out, m_cast(Utf8(*), utf8), delta);
+        return Utf8_Skip(codepoint_out, w_cast(Utf8(*), utf8), delta);
     }
 #endif
 

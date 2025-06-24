@@ -263,7 +263,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
 
     switch (Stub_Flavor(f)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
-        Array* inst1 = x_cast(Array*, f);
+        Array* inst1 = u_cast(Array*, f);
         Element* single = cast(Element*, Stub_Cell(inst1));
         if (Is_Space(single)) {
             GC_Kill_Flex(inst1);
@@ -283,7 +283,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         break; }
 
       case FLAVOR_API: {
-        Array* inst1 = x_cast(Array*, f);
+        Array* inst1 = u_cast(Array*, f);
 
         // We usually get the API *cells* passed to us, not the singular
         // array holding them.  But the rebR() function will actually

@@ -652,7 +652,7 @@ INLINE Element* Derelativize_Sequence_At(
         return Derelativize(out, Pairing_Second(p), context);
     }
 
-    switch (Stub_Flavor(x_cast(Flex*, payload1))) {
+    switch (Stub_Flavor(u_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
         if (Get_Cell_Flag(sequence, LEADING_SPACE) ? n == 0 : n != 0)
@@ -804,7 +804,7 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         return NOT_SINGLEHEART_0;
 
     if (Is_Base_A_Cell(CELL_SERIESLIKE_NODE(c))) {
-        const Pairing* p = u_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(c));
+        const Pairing* p = cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(c));
 
         if (Is_Space(Pairing_First(p)))
             return Leading_Space_And(Heart_Of_Builtin(Pairing_Second(p)));

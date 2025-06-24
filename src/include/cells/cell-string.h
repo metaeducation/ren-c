@@ -91,10 +91,10 @@ INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
 
 
 #define Cell_String_At_Ensure_Mutable(v) \
-    m_cast(Utf8(*), Cell_String_At(Ensure_Mutable(v)))
+    u_cast(Utf8(*), m_cast(Byte*, Cell_String_At(Ensure_Mutable(v))))
 
 #define Cell_String_At_Known_Mutable(v) \
-    m_cast(Utf8(*), Cell_String_At(Known_Mutable(v)))
+    u_cast(Utf8(*), m_cast(Byte*, Cell_String_At(Known_Mutable(v))))
 
 
 INLINE REBLEN Cell_String_Len_At(const Cell* c) {

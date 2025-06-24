@@ -178,15 +178,15 @@
 
   // Wrapper classes don't know how to do `const_cast<>`.  In the C standard
   // library  things like std::shared_ptr<> use std::const_cast_pointer.  But
-  // Ren-C's m_cast() is smart enough to delegate to MutableCastHelper so that
-  // m_cast(Utf8(*)) of a Utf8(const*) can be made to work.
+  // Ren-C's w_cast() is smart enough to delegate to WrapperCastHelper so that
+  // w_cast(Utf8(*)) of a Utf8(const*) can be made to work.
 
     template<>
-    inline Utf8(*) MutableCastHelper(Utf8(const*) utf8)  // [5]
+    inline Utf8(*) WrapperCastHelper(Utf8(const*) utf8)  // [5]
       { return u_cast(Utf8(*), const_cast<Byte*>(utf8.p)); }
 
     template<>
-    constexpr inline Utf8(*) MutableCastHelper(Utf8(*) utf8)  // [5]
+    constexpr inline Utf8(*) WrapperCastHelper(Utf8(*) utf8)  // [5]
       { return utf8; }
 
   //=//// CONST-PRESERVING CAST HELPERS ///////////////////////////////////=//

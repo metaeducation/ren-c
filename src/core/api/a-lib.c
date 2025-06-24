@@ -2514,7 +2514,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         panic ("Unknown pointer");
     }
 
-    Value* v = x_cast(Value*, Stub_Cell(stub));
+    Value* v = u_cast(Value*, Stub_Cell(stub));
     Liftify(v);
     return c_cast(RebolBaseInternal*, stub);  // C needs cast
 }
@@ -2893,7 +2893,7 @@ Error* Error_OS(int errnum) {
     //
     // 1. Use old-style parentheses cast to get past ambiguity of whether the
     //    strerr_r function returns a char* or an int.  (The "casts for the
-    //    masses) casts like c_cast/x_cast etc. don't support this scenario.)
+    //    masses) casts like c_cast/m_cast etc. don't support this scenario.)
     //
     // 2. !!! TCC appears to use the `int` returning form of strerror_r().
     //    But it seems to return a random positive or negative value.  It is

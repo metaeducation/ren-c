@@ -120,7 +120,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 // passing a separate flag, the g_tripwire pointer is used (mutable, but it
 // has the protected bit set to avoid accidents)
 //
-#define GROUPS_OK  cast(Option(Element*), x_cast(Element*, g_empty_text))
+#define GROUPS_OK  cast(Option(Element*), m_cast(Element*, g_empty_text))
 #define NO_STEPS  cast(Option(Element*), nullptr)
 
 

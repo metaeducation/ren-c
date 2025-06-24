@@ -691,9 +691,9 @@ Bounce Call_Core(Level* level_) {
 
     int i;
     for (i = 0; i != argc; ++i)
-        rebFree(m_cast(REBWCHAR*, argv[i]));
+        rebFree(w_cast(REBWCHAR*, argv[i]));
 
-    rebFree(m_cast(REBWCHAR**, argv));
+    rebFree(w_cast(REBWCHAR**, argv));
 
     // We can actually recover the rebAlloc'd buffers as BLOB!.  If the
     // target is TEXT!, we DELINE it first to eliminate any CRs.  Note the

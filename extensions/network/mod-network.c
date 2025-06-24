@@ -913,7 +913,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 
         uv_buf_t buf;
-        buf.base = s_cast(m_cast(Byte*, Cell_Blob_At(rebreq->binary)));
+        buf.base = s_cast(Cell_Blob_At_Ensure_Mutable(rebreq->binary));
         buf.len = Cell_Series_Len_At(rebreq->binary);
         int r = uv_write(&rebreq->req, sock->stream, &buf, 1, on_write_finished);
         if (r < 0)

@@ -36,18 +36,17 @@
 // 2. Losing const information for fetching BASE_BYTE() is intentional.  GC
 //    needs to fiddle with the marked flag bit even on Flex that are
 //    conceptually immutable, and the managed bit needs to be set on bindings
-//    where the reference is const.  If you're changing something from a Cell
-//    to a Stub--or otherwise--you have much bigger concerns regarding safety
-//    and unsafety than C-level constness!
+//    where the reference is const.  m_cast() still enforces that the type
+//    isn't something random (so Base*-compatible)
 //
 #if !defined(HEAVY_BASE_BYTE_CHECK)  // [1]
     #define BASE_BYTE(p) \
-        FIRST_BYTE(x_cast(Base*, ensure(const Base*, (p))))  // x_cast [2]
+        FIRST_BYTE(m_cast(Base*, (p)))  // m_cast [2]
 
 #else
     INLINE Byte& BASE_BYTE(const Base* base) {
-        assert(cast(const Byte*, node)[0] & BASE_BYTEMASK_0x80_NODE);
-        return x_cast(Byte*, node)[0];   // cast away constness [2]
+        assert(u_c_cast(Byte*, base)[0] & BASE_BYTEMASK_0x80_NODE);
+        return m_cast(Byte*, base)[0];   // cast away constness [2]
     }
 #endif
 

@@ -469,8 +469,8 @@ STATIC_ASSERT(not (CELL_MASK_PERSIST & CELL_FLAG_NOTE));
 //    by "typechecking" via finding the name ->header.bits in (c).
 //
 // 2. Cell flags are managed distinctly from conceptual immutability of their
-//    data, and so we m_cast away constness.  We do this on the HeaderUnion
-//    vs. x_cast() on the (c) to get the typechecking of [1]
+//    data, and so we w_cast away constness.  We do this on the HeaderUnion
+//    vs. m_cast() on the (c) to get the typechecking of [1]
 
 #define Get_Cell_Flag(c,name) /* [1] */ \
     ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) != 0)

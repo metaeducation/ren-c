@@ -63,7 +63,7 @@ INLINE bool Pairlike_Cell(const Cell* v) {
 
 INLINE Pairing* Cell_Pairing(const Cell* v) {
     assert(Pairlike_Cell(v));
-    return x_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
+    return cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
 }
 
 #define Cell_Pair_First(v) \

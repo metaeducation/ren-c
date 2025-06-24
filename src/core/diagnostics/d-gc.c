@@ -128,7 +128,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case TYPE_PAIR: {
-        Pairing* pairing = x_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
+        Pairing* pairing = cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
         assert(Is_Base_Marked(pairing));
         break; }
 

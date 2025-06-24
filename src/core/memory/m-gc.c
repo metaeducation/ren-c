@@ -308,7 +308,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         }
     }
     else if (Stub_Holds_Cells(s)) {
-        Array* a = x_cast(Array*, s);
+        Array* a = u_cast(Array*, s);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
 
@@ -1024,7 +1024,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
         for (; n > 0; --n, stub += sizeof(Stub)) {
             switch (*stub >> 4) {
               case 9: {  // 0x8 + 0x1
-                Flex* s = x_cast(Flex*, stub);
+                Flex* s = u_cast(Flex*, stub);
                 Assert_Flex_Managed(s);
                 if (Is_Base_Marked(s)) {
                     Remove_GC_Mark(s);
@@ -1043,7 +1043,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                 //
                 // !!! It is (usually) in the STUB_POOL, but *not* a "Stub".
                 //
-                Pairing* pairing = x_cast(Pairing*, stub);
+                Pairing* pairing = u_cast(Pairing*, stub);
                 assert(Is_Base_Managed(pairing));
                 if (Is_Base_Marked(pairing)) {
                     Remove_GC_Mark(pairing);

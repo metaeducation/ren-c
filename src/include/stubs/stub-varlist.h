@@ -122,7 +122,7 @@ INLINE Option(VarList*) Misc_Phase_Adjunct(Phase* a) {
 
 
 INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
-  { return m_cast(Element*, Varlist_Archetype(c)); }  // inline checks mutability
+  { return m_cast(Element*, Varlist_Archetype(c)); }  // inline checks mutable
 
 
 //=//// FRAME COUPLING ////////////////////////////////////////////////////=//

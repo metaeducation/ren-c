@@ -50,8 +50,8 @@
 //                                               // ...!!! or va_lists !!! [B]
 //
 // POINTER CONSTNESS
-//    * Adding mutability:         m_cast()    // const T* => T*
-//    * Type AND mutability:       x_cast()    // const T1* => T2*
+//    * Adding mutability:         w_cast()    // const T* => T*
+//    * Type AND mutability:       m_cast()    // const T1* => T2*
 //    * Preserving constness:      c_cast()    // T1* => T2* ...or...
 //                                               // const T1* => const T2*
 //    * Unchecked c_cast():      u_c_cast()    // c_cast() w/no v_cast() hooks
@@ -368,7 +368,7 @@
 
         static_assert(
             not is_const_removing_pointer_cast<From, To>::value,
-            "cast removing const: use m_cast() or x_cast() if you mean it"
+            "cast removing const: use w_cast() or m_cast() if you mean it"
         );
 
       #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
@@ -397,7 +397,7 @@
       static To convert(From /*v*/) {
         static_assert(
             false,
-            "cast removing const: use m_cast() or x_cast() if you mean it"
+            "cast removing const: use w_cast() or m_cast() if you mean it"
         );
         return nullptr;
       }
@@ -502,66 +502,88 @@
 #endif
 
 
-//=//// MUTABLE CAST //////////////////////////////////////////////////////=//
+//=//// m_cast(): MUTABILITY CAST FOR COMPATIBLE POINTER TYPES ////////////=//
 //
-// This is a cast whose sole purpose is to get mutable access to a pointer,
-// without changing other aspects of the type.  It's allowed for the input
-// pointer to already be mutable.
+// This is a cast for producing a mutable pointer from a compatible pointer
+// type (that may or may not already be mutable).  Because it works with
+// compatible pointer types, it's more permissive than C++'s const_cast<>
+// which modifies the constness but won't do any other changes.
 //
-// It is hookable via `MutableCastHelper()` for the case of when C++ builds are
-// using a smart pointer class instead of a raw pointer.
+// However, it doesn't let you do absolutely anything.  This would be legal:
+//
+//     const Derived* derived = ...;
+//     Base* base = m_cast(Base*, derived);
+//
+// But this would not be legal:
+//
+//     const Base* base = ...;
+//     Derived* derived = m_cast(Derived*, base);  /* !!! Error !!! */
+//
+// It is not built on `CastHelper`, so an `m_cast()` won't run the debug
+// checks that `cast()` and `c_cast()` would.  It's also not built on the
+// w_cast() which has unavoidable runtime cost in debug builds.
 //
 #if NO_CPLUSPLUS_11
     #define m_cast(T,v) \
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
-    template<typename T, typename V>
-    constexpr T MutableCastHelper(V v) {
-        static_assert(not std::is_const<T>::value,
-            "invalid m_cast() - requested a const type for output result");
-        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-            "invalid m_cast() - input and output have mismatched volatility");
-        return const_cast<T>(v);
-    }
+    template<typename To, typename From>
+    struct XCastHelper {
+        static_assert(
+            std::is_pointer<To>::value, "m_cast() target must be pointer"
+        );
 
-    #define m_cast(T,v) \
-        MutableCastHelper<T>(v)
+        typedef typename std::remove_pointer<To>::type T;
+
+        static_assert(
+            not std::is_const<T>::value, "m_cast() target must be mutable"
+        );
+
+        typedef typename std::add_const<T>::type TC;
+        typedef typename std::add_pointer<TC>::type ConstTo;
+
+        static_assert(
+            std::is_convertible<From, ConstTo>::value,
+            "m_cast() source must be convertible to target pointer type"
+        );
+    };
+
+    #define m_cast(T,v)  /* needs outer parens, see [B] */ \
+        (const_cast<T>((typename XCastHelper<T, rr_decltype(v)>::ConstTo)(v)))
 #endif
 
 
-//=//// ARBITRARY POINTER CAST ////////////////////////////////////////////=//
+//=//// w_cast(): WRITABILITY CAST FOR POINTER WRAPPERS ///////////////////=//
 //
-// This is a cast for making arbitrary changes to a pointer, including
-// casting away constness.  It's still slightly more restrictive than the
-// unchecked `u_cast()`, because it enforces the input and output types as
-// being pointers.
+// m_cast() is optimized to not have any cost in debug builds, by not relying
+// on a templated function.  That can work when the type you are converting
+// from is a pointer wrapper cast, because C++ is willing to look for a
+// conversion operator to a raw pointer (e.g. `operator T*()`).  But when the
+// pointer wrapper is the type you're converting *to*, the type traits like
+// `std::is_pointer<To>` and `std::reomve_pointer<To>` don't recognize the
+// wrapper as a pointer type.
 //
-// It is not built on `CastHelper`, so an `x_cast()` won't run the debug
-// checks that `cast()` and `c_cast()` would.  Use sparingly!
+// So w_cast() is a variation to use when circumstances require it.  You can
+// specialize the WrapperCastHelper for your pointer wrapper types.
+//
+// !!! At the moment this is necessary also for casting pointers-to-pointers,
+// which is not handled by m_cast().  Review.
 //
 #if NO_CPLUSPLUS_11
-    #define x_cast(T,v) \
+    #define w_cast(T,v) \
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
-    template<typename TQP>
-    struct ArbitraryPointerCastHelper {
-        static_assert(std::is_pointer<TQP>::value, "x_cast() non pointer!");
-        typedef typename std::remove_pointer<TQP>::type TQ;
-        typedef typename std::add_const<TQ>::type TC;
-        typedef typename std::add_pointer<TC>::type type;
-    };
+    template<typename T, typename V>
+    constexpr T WrapperCastHelper(V v) {
+        static_assert(not std::is_const<T>::value,
+            "invalid w_cast() - requested a const type for output result");
+        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+            "invalid w_cast() - input and output have mismatched volatility");
+        return const_cast<T>(v);
+    }
 
-    template<typename T>
-    struct XCastHelper {
-        typedef typename std::conditional<
-            std::is_pointer<T>::value,
-            typename ArbitraryPointerCastHelper<T>::type,
-            T
-        >::type type;
-    };
-
-    #define x_cast(T,v)  /* needs outer parens, see [B] */ \
-        (const_cast<T>((typename XCastHelper<T>::type)(v)))
+    #define w_cast(T,v) \
+        WrapperCastHelper<T>(v)
 #endif
 
 
