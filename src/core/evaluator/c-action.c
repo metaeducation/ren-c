@@ -576,11 +576,6 @@ Bounce Action_Executor(Level* L)
 
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META: {
-            if (Is_Level_At_End(L)) {
-                Init_Tripwire_Due_To_End(ARG);
-                goto continue_fulfilling;
-            }
-
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
             Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
