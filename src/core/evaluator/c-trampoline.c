@@ -160,10 +160,87 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     // Note that the executor may push more levels, or change the executor of
     // the level it receives.
-    //
-    // **STEP IN** if you want to debug the next evaluation...!
-    Bounce bounce = ((( L->executor )))((( L )));
 
+    // v-- **STEP IN** --v  ...if you want to debug the next evaluation...!
+
+    Bounce bounce = (( Apply_Cfunc(L->executor, L) ));
+
+    // ^-- **STEP IN** --^  ...if you want to debug the next evaluation...!
+
+  //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) FAILURES //////////////////=//
+
+  // We have to handle throws first (e.g. before recycling)...because it is
+  // possible to do things like Push_Lifeguard() on a stack cell.  That state
+  // has to be rolled back before you do something like try to mark the
+  // guarded list.
+  //
+  // 1. Having handling of UNWIND be in the trampoline means that any level
+  //    can be "teleported to" with a result, not just action levels.  It
+  //    has a notable use by RETURN from a FUNC, which considers its type
+  //    checking to be finished so it can skip past the Action_Executor().
+  //
+  //    !!! Using BOUNCE_THROWN makes it possible for UNWIND to be offered to
+  //    dispatchers that catch throws.  This is used for instance in MACRO,
+  //    which intercepts the UNWIND issued by RETURN, because it doesn't want
+  //    to actually return the block (it wants to splice it).  But that may
+  //    suggest MACRO wants to use its own throw type in a definitional
+  //    return, so that you could generically UNWIND to a macro level and
+  //    overwrite the result verbatim.
+  //
+  // 2. Note L->varlist may be garbage here.  This can happen in RETURN during
+  //    an ENCLOSE.  Don't cast(VarList*, L->varlist) here, as that would try
+  //    to validate it in the DEBUG_CHECK_CASTS build.
+  //
+  // 3. Constructs like REDUCE-EACH keep a sublevel pushed to do evaluation,
+  //    but then want to keep that state while doing another evaluation
+  //    (e.g. the body block).  To "punch a hole" through the evaluation
+  //    level it sets the executor to Just_Use_Out and can get the result
+  //    without dropping the level.  But thrown values like CONTINUE lead
+  //    to a problem of how to express wanting TRAMPOLINE_KEEPALIVE to be
+  //    applicable to throw situations as well--not all want it.  For now
+  //    we conflate Just_Use_Out with the intent of keepalive on throw.
+
+    if (bounce == BOUNCE_THROWN) {
+      handle_thrown:
+        UNUSED(bounce);  // ignore, as whatever jumped here wants to throw
+
+        L = Adjust_Level_For_Downshift(L);
+
+        possibly(Is_Cell_Erased(L->out));  // not completely enforced ATM
+
+        // Corrupting the pointer here was well-intentioned, but Drop_Level()
+        // needs to know if it is an Action_Executor to drop a stack cell.
+        //
+        /*assert(not Is_Pointer_Corrupt_Debug(L->executor));
+        Corrupt_Pointer_If_Debug(L->executor);*/
+
+        const Value* label = VAL_THROWN_LABEL(L);  // unwind [1]
+        if (
+            Is_Frame(label)
+            and Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(UNWIND))
+            and g_ts.unwind_level == L  // may be inaccessible [2]
+        ){
+            CATCH_THROWN(L->out, L);
+            goto result_in_out;
+        }
+
+        if (Get_Level_Flag(L, ROOT_LEVEL)) {  // don't abort top
+            assert(Not_Level_Flag(TOP_LEVEL, TRAMPOLINE_KEEPALIVE));
+            CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
+            return BOUNCE_THROWN;
+        }
+
+        Rollback_Level(L);  // restores to baseline
+        Drop_Level(L);
+        L = TOP_LEVEL;
+
+        if (L->executor == &Just_Use_Out_Executor) {
+            if (Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE))
+                L = L->prior;  // don't let it be aborted [3]
+        }
+
+        goto bounce_on_trampoline;  // executor will see the throw
+    }
 
   //=//// PROCESS SIGNALS (RECYCLE, HALT, ETC.) ///////////////////////////=//
 
@@ -255,76 +332,6 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (bounce == BOUNCE_SUSPEND) {  // to get emscripten started w/o Asyncify
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return BOUNCE_SUSPEND;
-    }
-
-  //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) FAILURES //////////////////=//
-
-  // 1. Having handling of UNWIND be in the trampoline means that any level
-  //    can be "teleported to" with a result, not just action levels.  It
-  //    has a notable use by RETURN from a FUNC, which considers its type
-  //    checking to be finished so it can skip past the Action_Executor().
-  //
-  //    !!! Using BOUNCE_THROWN makes it possible for UNWIND to be offered to
-  //    dispatchers that catch throws.  This is used for instance in MACRO,
-  //    which intercepts the UNWIND issued by RETURN, because it doesn't want
-  //    to actually return the block (it wants to splice it).  But that may
-  //    suggest MACRO wants to use its own throw type in a definitional
-  //    return, so that you could generically UNWIND to a macro level and
-  //    overwrite the result verbatim.
-  //
-  // 2. Note L->varlist may be garbage here.  This can happen in RETURN during
-  //    an ENCLOSE.  Don't cast(VarList*, L->varlist) here, as that would try
-  //    to validate it in the DEBUG_CHECK_CASTS build.
-  //
-  // 3. Constructs like REDUCE-EACH keep a sublevel pushed to do evaluation,
-  //    but then want to keep that state while doing another evaluation
-  //    (e.g. the body block).  To "punch a hole" through the evaluation
-  //    level it sets the executor to Just_Use_Out and can get the result
-  //    without dropping the level.  But thrown values like CONTINUE lead
-  //    to a problem of how to express wanting TRAMPOLINE_KEEPALIVE to be
-  //    applicable to throw situations as well--not all want it.  For now
-  //    we conflate Just_Use_Out with the intent of keepalive on throw.
-
-    if (bounce == BOUNCE_THROWN) {
-      handle_thrown:
-        UNUSED(bounce);  // ignore, as whatever jumped here wants to throw
-
-        L = Adjust_Level_For_Downshift(L);
-
-        possibly(Is_Cell_Erased(L->out));  // not completely enforced ATM
-
-        // Corrupting the pointer here was well-intentioned, but Drop_Level()
-        // needs to know if it is an Action_Executor to drop a stack cell.
-        //
-        /*assert(not Is_Pointer_Corrupt_Debug(L->executor));
-        Corrupt_Pointer_If_Debug(L->executor);*/
-
-        const Value* label = VAL_THROWN_LABEL(L);  // unwind [1]
-        if (
-            Is_Frame(label)
-            and Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(UNWIND))
-            and g_ts.unwind_level == L  // may be inaccessible [2]
-        ){
-            CATCH_THROWN(L->out, L);
-            goto result_in_out;
-        }
-
-        if (Get_Level_Flag(L, ROOT_LEVEL)) {  // don't abort top
-            assert(Not_Level_Flag(TOP_LEVEL, TRAMPOLINE_KEEPALIVE));
-            CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
-            return BOUNCE_THROWN;
-        }
-
-        Rollback_Level(L);  // restores to baseline
-        Drop_Level(L);
-        L = TOP_LEVEL;
-
-        if (L->executor == &Just_Use_Out_Executor) {
-            if (Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE))
-                L = L->prior;  // don't let it be aborted [3]
-        }
-
-        goto bounce_on_trampoline;  // executor will see the throw
     }
 
   //=//// HANDLE `return PANIC()` CASE /////////////////////////////////////=//
