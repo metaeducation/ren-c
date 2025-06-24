@@ -224,7 +224,7 @@
 #endif
 
 #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)
-    #include <stdarg.h>  // va_list disallowed in cast() and used in v_cast()
+    #include <stdarg.h>  // va_list disallowed in cast() and used in h_cast()
 #endif
 
 

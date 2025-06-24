@@ -18,16 +18,16 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// See src/include/casts/README.md for general information about CastHelper.
+// See src/include/casts/README.md for general information about CastHook.
 //
 // This file is specifically for checking casts to Base.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// A. CastHelper<> has two parameters (From and To types), but we pin down the
+// A. CastHook<> has two parameters (From and To types), but we pin down the
 //    "To" type, then match a pattern for any "From" type (F).
 //
-// B. See the definition of CastHelper for why the generalized casting
+// B. See the definition of CastHook for why the generalized casting
 //    mechanic runs through const pointers only.
 //
 // C. See the definitions of UpcastTag and DowncastTag for an explanation of
@@ -59,7 +59,7 @@ const Base* base_cast_impl(const F* p, DowncastTag) {  // validate [C]
 };
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Base*> {  // both must be const [B]
+struct CastHook<const F*, const Base*> {  // both must be const [B]
     static const Base* convert(const F* p) {
         return base_cast_impl(p, WhichCastDirection<F, Base>{});
     }

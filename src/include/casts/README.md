@@ -17,7 +17,7 @@ these casts can do powerful checking, at both compile-time and runtime...
   everything out manually.  The compiler can ask questions of the datatypes
   to see if they fit rules, and these rules can be extended as you need.
 
-See the definition of CastHelper<> in the Needful library for documentation
+See the definition of CastHook<> in the Needful library for documentation
 and explanations of the usage.
 
 ## **DON'T BE AFRAID, C++ IS HERE TO HELP**

@@ -76,7 +76,7 @@
 
 #include "assert-fix.h"
 #include "needful/needful.h"
-#define cast  v_cast
+#define cast  h_cast
 
 // Note: sys-zlib defines Byte
 #include "sys-zlib.h"  // needed for the ADLER32 hash

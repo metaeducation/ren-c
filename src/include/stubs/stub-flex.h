@@ -324,7 +324,7 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
             printf(
                 "Flex_Data_At() asked %d on width=%d\n",
                 w,
-                cast(int, Flex_Wide(f))
+                u_cast(int, Flex_Wide(f))
             );
         crash (f);
     }
@@ -334,8 +334,8 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
 
     return ((w) * (i)) + (  // v-- inlining of Flex_Data() [2]
         Get_Stub_Flag(f, DYNAMIC)
-            ? cast(Byte*, f->content.dynamic.data)
-            : cast(Byte*, &f->content)
+            ? u_cast(Byte*, f->content.dynamic.data)
+            : u_cast(Byte*, &f->content)
         );
 }
 

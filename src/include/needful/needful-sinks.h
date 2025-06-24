@@ -61,8 +61,8 @@
 //    particularly likely to be defined in existing codebases...so you can
 //    #define these to whatever name is appropriate for your code.
 //
-// D. When doing CastHelper specializations, you should not use reference
-//    types.  See the documentation for CastHelper for why decltype() has
+// D. When doing CastHook specializations, you should not use reference
+//    types.  See the documentation for CastHook for why decltype() has
 //    references removed when matching the specialization, even if the convert
 //    function wants to take a reference.
 //
@@ -315,23 +315,23 @@
 // it can create an unwanted corruption out of thin air.
 //
 // Hence we hook the cast() macros to use a reference to SinkWrapper instead
-// of falling back on the default CastHelper which uses value semantics
+// of falling back on the default CastHook which uses value semantics
 // for simplicity.
 //
 // 1. If you happen to cast a SinkWrapper<T> to a T*, and there are validating
-//    hooks in the CastHelper<> specialization for that type, then it better
+//    hooks in the CastHook<> specialization for that type, then it better
 //    not be corrupt!  So if you think it might be corrupt, then you need to
 //    cast to another Sink() or Init() and not the raw type.
 //
 #if DEBUG_USE_SINKS
     template<typename V, typename T>
-    struct CastHelper<SinkWrapper<V>,T*> {  // don't use SinkWrapper<V>& [D]
+    struct CastHook<SinkWrapper<V>,T*> {  // don't use SinkWrapper<V>& [D]
       static T* convert(const SinkWrapper<V>& sink) {  // must be ref here
         if (sink.corruption_pending) {
             Corrupt_If_Debug(*sink.p);  // flush corruption
             sink.corruption_pending = false;
         }
-        return v_cast(T*, sink.p);  // run validating cast if applicable [1]
+        return h_cast(T*, sink.p);  // run validating cast if applicable [1]
       }
     };
 #endif
@@ -451,13 +451,13 @@
 //=//// INIT() CAST HELPER TO RUN VALIDATING CASTS ON TYPE ////////////////=//
 //
 // When you cast a variable that is InitWrapper<T> to a T*, that should run
-// whatever the CastHelper<> specializations for T* are.
+// whatever the CastHook<> specializations for T* are.
 //
 #if DEBUG_USE_SINKS
     template<typename V, typename T>
-    struct CastHelper<InitWrapper<V>,T*> {  // don't use InitWrapper<V>& [D]
+    struct CastHook<InitWrapper<V>,T*> {  // don't use InitWrapper<V>& [D]
       static constexpr T* convert(const InitWrapper<V>& init) {  // ref faster
-        return v_cast(T*, init.p);
+        return h_cast(T*, init.p);
       }
     };
 #endif
@@ -584,13 +584,13 @@
 //=//// NEED() CAST HELPER TO RUN VALIDATING CASTS ON TYPE ////////////////=//
 //
 // When you cast a variable that is NeedWrapper<T> to a T*, that should run
-// whatever the CastHelper<> specializations for T* are.
+// whatever the CastHook<> specializations for T* are.
 //
 #if DEBUG_USE_SINKS
     template<typename V, typename T>
-    struct CastHelper<NeedWrapper<V>,T*> {  // don't use NeedWrapper<V>& [D]
+    struct CastHook<NeedWrapper<V>,T*> {  // don't use NeedWrapper<V>& [D]
       static constexpr T* convert(const NeedWrapper<V>& need) {  // ref faster
-        return v_cast(T*, need.p);
+        return h_cast(T*, need.p);
       }
     };
 #endif

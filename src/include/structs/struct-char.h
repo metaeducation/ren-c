@@ -182,11 +182,11 @@
   // w_cast(Utf8(*)) of a Utf8(const*) can be made to work.
 
     template<>
-    inline Utf8(*) WrapperCastHelper(Utf8(const*) utf8)  // [5]
+    inline Utf8(*) WritableWrapperCastHelper(Utf8(const*) utf8)  // [5]
       { return u_cast(Utf8(*), const_cast<Byte*>(utf8.p)); }
 
     template<>
-    constexpr inline Utf8(*) WrapperCastHelper(Utf8(*) utf8)  // [5]
+    constexpr inline Utf8(*) WritableWrapperCastHelper(Utf8(*) utf8)  // [5]
       { return utf8; }
 
   //=//// CONST-PRESERVING CAST HELPERS ///////////////////////////////////=//

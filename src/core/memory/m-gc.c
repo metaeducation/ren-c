@@ -64,6 +64,7 @@
 
 #include "sys-int-funcs.h"
 
+#include "needful/cast-hooks-off.h"  // want cast() macros to be fast here
 
 #if RUNTIME_CHECKS
     static bool in_mark = false; // needs to be per-GC thread
@@ -179,7 +180,7 @@ static void Queue_Mark_Base_Deep(Base** npp) {  // ** for canonizing
         return;  // may not be finished marking yet, but has been queued
 
     if (base_byte & BASE_BYTEMASK_0x08_CELL) {  // e.g. a pairing
-        const Pairing* p = u_cast(const Pairing*, *npp);
+        const Pairing* p = d_cast(Pairing*, *npp);
         if (Is_Base_Managed(p))
             Queue_Mark_Pairing_Deep(p);
         else {
@@ -189,7 +190,7 @@ static void Queue_Mark_Base_Deep(Base** npp) {  // ** for canonizing
         return;
     }
 
-    const Stub* s = u_cast(const Stub*, *npp);
+    const Stub* s = d_cast(Stub*, *npp);
 
     if (base_byte == DIMINISHED_NON_CANON_BYTE) {
         *npp = &PG_Inaccessible_Stub;  // adjust to the global diminished
@@ -293,7 +294,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // !!! KeyLists may not be the only category that are just a straight
         // list of base pointers.
         //
-        const KeyList* keylist = u_cast(const KeyList*, s);
+        const KeyList* keylist = d_cast(const KeyList*, s);
         const Key* tail = Flex_Tail(Key, keylist);
         const Key* key = Flex_Head(Key, keylist);
         for (; key != tail; ++key) {
@@ -308,7 +309,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         }
     }
     else if (Stub_Holds_Cells(s)) {
-        Array* a = u_cast(Array*, s);
+        Array* a = d_cast(Array*, s);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
 
@@ -316,7 +317,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // Flex Flavor, not an extension-usable flag (due to flag scarcity).
         //
         if (Is_Stub_Varlist(a)) {  // bonus is keylist (if not module varlist)
-            assert(Is_Stub_Keylist(cast(Stub*, BONUS_VARLIST_KEYLIST(a))));
+            assert(Is_Stub_Keylist(d_cast(Stub*, BONUS_VARLIST_KEYLIST(a))));
             Queue_Mark_Base_Deep(&a->content.dynamic.bonus.base);
         }
 
@@ -891,18 +892,18 @@ static REBLEN Sweep_Distinct_Pairing_Pool(void)
     for (; seg != nullptr; seg = seg->next) {
         Length n = g_mem.pools[PAIR_POOL].num_units_per_segment;
 
-        Byte *unit = cast(Byte*, seg + 1);
+        Byte* unit = u_cast(Byte*, seg + 1);
         for (; n > 0; --n, unit += wide) {
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
             assert(unit[0] & BASE_BYTEMASK_0x08_CELL);
 
-            Value* v = cast(Value*, unit);
-            if (v->header.bits & BASE_FLAG_MANAGED) {
-                assert(not (v->header.bits & BASE_FLAG_ROOT));
-                if (Is_Base_Marked(v)) {
-                    Remove_GC_Mark(v);
+            Cell* c = u_cast(Cell*, unit);
+            if (c->header.bits & BASE_FLAG_MANAGED) {
+                assert(not (c->header.bits & BASE_FLAG_ROOT));
+                if (Is_Base_Marked(c)) {
+                    Remove_GC_Mark(c);
                 }
                 else {
                     Free_Pooled(PAIR_POOL, unit);  // manuals use Free_Pairing
@@ -1019,13 +1020,13 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        Byte* stub = cast(Byte*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
-        for (; n > 0; --n, stub += sizeof(Stub)) {
-            switch (*stub >> 4) {
-              case 9: {  // 0x8 + 0x1
-                Flex* s = u_cast(Flex*, stub);
-                Assert_Flex_Managed(s);
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            switch (*unit >> 4) {  // note: SHIFTING the base byte...
+              case 0x8 + 0x1: {
+                Stub* s = u_cast(Stub*, unit);
+                assert(Is_Base_Managed(s));
                 if (Is_Base_Marked(s)) {
                     Remove_GC_Mark(s);
                 }
@@ -1036,14 +1037,14 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                 }
                 break; }
 
-              case 11: {  // 0x8 + 0x2 + 0x1
+              case 0x8 + 0x2 + 0x1: {
                 //
                 // It's a cell which is managed where the value is not an END.
                 // This is a managed Pairing, so mark bit should be heeded.
                 //
                 // !!! It is (usually) in the STUB_POOL, but *not* a "Stub".
                 //
-                Pairing* pairing = u_cast(Pairing*, stub);
+                Pairing* pairing = u_cast(Pairing*, unit);
                 assert(Is_Base_Managed(pairing));
                 if (Is_Base_Marked(pairing)) {
                     Remove_GC_Mark(pairing);
@@ -1102,14 +1103,14 @@ void Emergency_Shutdown_Gc_Debug(void)
 
     for (; pseg != nullptr; pseg = pseg->next) {
         Count n = g_mem.pools[PAIR_POOL].num_units_per_segment;
-        Byte* pairing = cast(Byte*, pseg + 1);
+        Byte* unit = cast(Byte*, pseg + 1);
 
-        for (; n > 0; --n, pairing += sizeof(Pairing)) {
-            if (*pairing == FREE_POOLUNIT_BYTE)
+        for (; n > 0; --n, unit += sizeof(Pairing)) {
+            if (*unit == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (*pairing & BASE_BYTEMASK_0x01_MARKED)
-                Remove_GC_Mark(u_cast(Base*, pairing));
+            if (*unit & BASE_BYTEMASK_0x01_MARKED)
+                Remove_GC_Mark(u_cast(Pairing*, unit));
         }
     }
   #endif
@@ -1167,15 +1168,15 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // speeds up references that would mark them to see they're spoken for
     // (so they don't have to detect it's an array, queue the cell...)
 
-    assert(Is_Stub_Erased(&g_datatype_patches[cast(Byte, TYPE_0)]));  // skip
+    assert(Is_Stub_Erased(&g_datatype_patches[u_cast(Byte, TYPE_0)]));  // skip
 
     for (
         SymId16 id16 = MIN_SYM_BUILTIN_TYPES;
         id16 <= MAX_SYM_BUILTIN_TYPES;
         ++id16
     ){
-        Type type = Type_From_Symbol_Id(cast(SymId, id16));
-        Patch* patch = &g_datatype_patches[cast(Byte, type)];
+        Type type = Type_From_Symbol_Id(u_cast(SymId, id16));
+        Patch* patch = &g_datatype_patches[u_cast(Byte, type)];
         if (Is_Stub_Erased(patch))
             continue;  // isotope slot for non-isotopic type
         if (Not_Base_Marked(patch)) {  // this loop's prior steps can mark

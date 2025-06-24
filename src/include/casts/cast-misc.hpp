@@ -2,7 +2,7 @@
 //=//// cast(Level*, ...) /////////////////////////////////////////////////=//
 
 template<typename F>
-struct CastHelper<const F*, const Level*> {
+struct CastHook<const F*, const Level*> {
     static const Level* convert(const F* p) {
         DECLARE_C_TYPE_LIST(type_list,
             void, Byte, Base

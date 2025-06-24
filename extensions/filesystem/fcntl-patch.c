@@ -47,7 +47,7 @@
 #include <fcntl.h>
 
 #include "needful/needful.h"
-#define cast  v_cast
+#define cast  h_cast
 
 // "symver" does the remapping so that fcntl64 is given the meaning of an
 // older linkage in Glibc.

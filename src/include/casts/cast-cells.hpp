@@ -18,7 +18,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// See src/include/casts/README.md for general information about CastHelper.
+// See src/include/casts/README.md for general information about CastHook.
 //
 // This file is specifically for checking casts to Cells.
 //
@@ -38,10 +38,10 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// A. CastHelper<> has two parameters (From and To types), but we pin down the
+// A. CastHook<> has two parameters (From and To types), but we pin down the
 //    "To" type, then match a pattern for any "From" type (F).
 //
-// B. See the definition of CastHelper for why the generalized casting
+// B. See the definition of CastHook for why the generalized casting
 //    mechanic runs through const pointers only.
 //
 // C. See the definitions of UpcastTag and DowncastTag for an explanation of
@@ -62,7 +62,7 @@ DECLARE_C_TYPE_LIST(g_convertible_to_cell,
 //=//// cast(Atom*, ...) //////////////////////////////////////////////////=//
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Atom*> {  // both must be const [B]
+struct CastHook<const F*, const Atom*> {  // both must be const [B]
     static const Atom* convert(const F* p) {
         STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
 
@@ -77,7 +77,7 @@ struct CastHelper<const F*, const Atom*> {  // both must be const [B]
 //=//// cast(Value*, ...) //////////////////////////////////////////////////=//
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Value*> {  // both must be const [B]
+struct CastHook<const F*, const Value*> {  // both must be const [B]
     static const Value* convert(const F* p) {
         STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
 
@@ -93,7 +93,7 @@ struct CastHelper<const F*, const Value*> {  // both must be const [B]
 //=//// cast(Element*, ...) ///////////////////////////////////////////////=//
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Element*> {  // both must be const [B]
+struct CastHook<const F*, const Element*> {  // both must be const [B]
     static const Element* convert(const F* p) {
         STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
 

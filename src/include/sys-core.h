@@ -195,7 +195,7 @@ typedef RebolHandleCleaner HandleCleaner;
 //
 
 #include "needful/needful.h"
-#define cast  v_cast
+#define cast  h_cast
 #define Need  NeedTypemacro
 #define Sink  SinkTypemacro
 #define Init  InitTypemacro

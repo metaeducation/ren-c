@@ -18,16 +18,16 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// See src/include/casts/README.md for general information about CastHelper.
+// See src/include/casts/README.md for general information about CastHook.
 //
 // This file is specifically for checking casts to Stub-derived types.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// A. CastHelper<> has two parameters (From and To types), but we pin down the
+// A. CastHook<> has two parameters (From and To types), but we pin down the
 //    "To" type, then match a pattern for any "From" type (F).
 //
-// B. See the definition of CastHelper for why the generalized casting
+// B. See the definition of CastHook for why the generalized casting
 //    mechanic runs through const pointers only.
 //
 // C. See the definitions of UpcastTag and DowncastTag for an explanation of
@@ -66,7 +66,7 @@ const Stub* stub_cast_impl(const F* p, DowncastTag) {  // validate [C]
 }
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Stub*> {  // both must be const [B]
+struct CastHook<const F*, const Stub*> {  // both must be const [B]
     static const Stub* convert(const F* p) {
         return stub_cast_impl(p, WhichCastDirection<F, Stub>{});
     }
@@ -102,7 +102,7 @@ const Flex* flex_cast_impl(const F* p, DowncastTag) {  // validate [C]
 }
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Flex*> {  // both must be const [B]
+struct CastHook<const F*, const Flex*> {  // both must be const [B]
     static const Flex* convert(const F* p) {
         return flex_cast_impl(p, WhichCastDirection<F, Flex>{});
     }
@@ -142,7 +142,7 @@ const Binary* binary_cast_impl(const F* p, DowncastTag) {  // validate [C]
 };
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Binary*> {  // both must be const [B]
+struct CastHook<const F*, const Binary*> {  // both must be const [B]
     static const Binary* convert(const F* p) {
         return binary_cast_impl(p, WhichCastDirection<F, Binary>{});
     }
@@ -189,7 +189,7 @@ const String* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
 };
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const String*> {  // both must be const [B]
+struct CastHook<const F*, const String*> {  // both must be const [B]
     static const String* convert(const F* p) {
         return string_cast_impl(p, WhichCastDirection<F, String>{});
     }
@@ -199,7 +199,7 @@ struct CastHelper<const F*, const String*> {  // both must be const [B]
 //=//// cast(Symbol*, ...) ////////////////////////////////////////////////=//
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Symbol*> {
+struct CastHook<const F*, const Symbol*> {
     static const Symbol* convert(const F* p) {
         DECLARE_C_TYPE_LIST(type_list,
             void, Byte, Base, Stub, Flex, Binary, String
@@ -256,7 +256,7 @@ const Array* array_cast_impl(const F* p, DowncastTag) {  // validate [C]
 };
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Array*> {  // both must be const [B]
+struct CastHook<const F*, const Array*> {  // both must be const [B]
     static const Array* convert(const F* p) {
         return array_cast_impl(p, WhichCastDirection<F, Array>{});
     }
@@ -297,7 +297,7 @@ const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
 };
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const VarList*> {  // both must be const [B]
+struct CastHook<const F*, const VarList*> {  // both must be const [B]
     static const VarList* convert(const F* p) {
         return varlist_cast_impl(p, WhichCastDirection<F, VarList>{});
     }
@@ -307,7 +307,7 @@ struct CastHelper<const F*, const VarList*> {  // both must be const [B]
 //=//// cast(Phase*, ...) ////////////////////////////////////////////////=//
 
 template<typename F>  // [A]
-struct CastHelper<const F*, const Phase*> {  // both must be const [B]
+struct CastHook<const F*, const Phase*> {  // both must be const [B]
     static const Phase* convert(const F* p) {
         DECLARE_C_TYPE_LIST(type_list,
             void, Byte, Base, Stub, Flex, Array

@@ -41,11 +41,11 @@
 //
 //=//// CAST SELECTION GUIDE ///////////////////////////////////////////////=//
 //
-//        PRO-TIP: #define cast() as v_cast() in your codebase!!! [A]
+//        PRO-TIP: #define cast() as h_cast() in your codebase!!! [A]
 //
 // SAFETY LEVEL
-//    * Validated cast:            v_cast()    // safe default, runs hooks
-//    * Unchecked completely:      u_cast()    // use with fresh malloc()s
+//    * Hookable cast:            h_cast()    // safe default, runs hooks
+//    * Unhookable cast:          u_cast()    // use with fresh malloc()s
 //                                               // ...or critical debug paths
 //                                               // ...!!! or va_lists !!! [B]
 //
@@ -54,24 +54,26 @@
 //    * Type AND mutability:       m_cast()    // const T1* => T2*
 //    * Preserving constness:      c_cast()    // T1* => T2* ...or...
 //                                               // const T1* => const T2*
-//    * Unchecked c_cast():      u_c_cast()    // c_cast() w/no v_cast() hooks
+//    * Unhookable c_cast():     u_c_cast()    // c_cast() w/no h_cast() hooks
 //
 // TYPE CONVERSIONS
 //    * Non-pointer to pointer:    p_cast()    // intptr_t => T*
 //    * Non-integral to integral:  i_cast()    // T* => intptr_t
 //    * Function to function:      f_cast()    // ret1(*)(...) => ret2(*)(...)
+//    * Downcasting                d_cast()    // Base* => Derived*
+//    * Unhookable downcasting:  u_d_cast()    // d_cast() w/no h_cast() hooks
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
 // A. Because `cast` has a fair likelihood of being defined as the name of a
 //    function or variable in C codebases, Needful does not force a definition
 //    of `cast`.  But in an ideal situation, you could adapt your codebase
-//    such that cast() can be defined, and defined as v_cast().
+//    such that cast() can be defined, and defined as h_cast().
 //
 //    It's also potentially the case that you might want to start it out as
 //    meaning u_cast()...especially if gradually adding Needful to existing
 //    code.  You could start by turning all the old (T)(V) casts into cast()
-//    defined as u_cast()...and redefine it as v_cast() after a process over
+//    defined as u_cast()...and redefine it as h_cast() after a process over
 //    the span of time, having figured out which needed to be other casts.
 //
 // B. The va_list type is compiler magic, and the standard doesn't even
@@ -106,26 +108,39 @@
 //     signature. Everyone can specialize that -- both fully and partially,
 //     and without affecting the results of overload resolution."
 //
-// E. The CastHelper classes do not use references in their specialization.
+// E. The CastHook classes do not use references in their specialization.
 //    So don't write:
 //
-//        struct CastHelper<Foo<X>&, Y*>
+//        struct CastHook<Foo<X>&, Y*>
 //          { static Y* convert(Foo<X>& foo) { ... } }
 //
 //    It won't ever match since the reference was removed by the macro.  But
 //    do note you can leave the reference on the convert method if needed:
 //
-//        struct CastHelper<Foo<X>, Y*>  // note no reference on Foo<X>
+//        struct CastHook<Foo<X>, Y*>  // note no reference on Foo<X>
 //          { static Y* convert(Foo<X>& foo) { ... } }
+//
+// F. By default, most of the cast() are defined to use the runtime validation
+//    hooks.  However, it's possible to easily turn them off...so that a
+//    macro like d_cast() would not run validation.  Simply do an #include:
+//
+//       #include "needful/cast-hooks-off.h"
+//
+//    This can be used in performance-critical code, where you don't want to
+//    have the overhead of the runtime cast validation...and don't want to
+//    decorate all your casts with "u_" to say they are unchecked.  You can
+//    turn the cast runtime back on with:
+//
+//       #include "needful/cast-hooks-on.h"
 //
 
 #ifndef NEEDFUL_CASTS_H  // "include guard" allows multiple #includes
-#define NEEDFUL_CASTS_H
+#define NEEDFUL_CASTS_H  1
 
 
 //=//// UNCHECKED CAST ////////////////////////////////////////////////////=//
 //
-// Unchecked cast which does not offer any validation hooks.  Use e.g. when
+// Unhookable cast which does not offer any validation hooks.  Use e.g. when
 // casting a fresh allocation to avoid triggering validation of uninitialized
 // structures in debug builds.
 //
@@ -135,17 +150,24 @@
 // be worth it for speeding up debug builds in critical trusted functions,
 // while still being easier to spot than a parentheses-based cast.
 //
-#define u_cast(T,v) \
-    ((T)(v))  // in both C and C++, just an alias for parentheses cast
+#if NO_CPLUSPLUS_11
+    #define u_cast(T,v) \
+        ((T)(v))  // in both C and C++, just an alias for parentheses cast
+#else
+    #define Unhookable_Cast(T,v) \
+        ((T)(v))  // in both C and C++, just an alias for parentheses cast
+
+    #define u_cast  Unhookable_Cast
+#endif
 
 
-//=//// v_cast(): VALIDATED CAST, IDEALLY cast() = v_cast() [A] ///////////=//
+//=//// h_cast(): HOOKABLE CAST, IDEALLY cast() = h_cast() [A] ////////////=//
 //
 // This is the form of hookable cast you should generally reach for.  Default
 // hooks are provided for pointer-to-pointer, or integral-to-integral.
 //
 // USAGE:
-//    T result = v_cast(T, value);
+//    T result = h_cast(T, value);
 //
 // BEHAVIOR:
 // - For arithmetic/enum types: static_cast if not explicitly convertible
@@ -153,11 +175,11 @@
 // - For explicitly convertible types: static_cast
 //
 // CUSTOMIZATION:
-// To hook the cast, you define `CastHelper` for the types you are interested
+// To hook the cast, you define `CastHook` for the types you are interested
 // in hooking. Example specialization:
 //
 //    template<>
-//    struct CastHelper<SourceType, TargetType> {
+//    struct CastHook<SourceType, TargetType> {
 //        static TargetType convert(SourceType value) {
 //            // Add validation logic here
 //            return reinterpret_cast<TargetType>(value);
@@ -214,12 +236,12 @@
 //    }
 //
 // Because Float* is not a smart pointer class, there's not a place in typical
-// C++ to add any runtime validation at the moment of casting.  But v_cast()
-// macro is based on a `CastHelper` template you can inject any validation for
+// C++ to add any runtime validation at the moment of casting.  But h_cast()
+// macro is based on a `CastHook` template you can inject any validation for
 // that pointer pairing that you want:
 //
 //    template<>
-//    struct CastHelper<const Number*,const Float*> {  // const pointers! [1]
+//    struct CastHook<const Number*,const Float*> {  // const pointers! [1]
 //        static const Float* convert(const Number* num) {
 //            assert(num->is_float);
 //            return reinterpret_cast<const Float*>(num);
@@ -233,7 +255,7 @@
 // just to give you the idea of the mechanism:
 //
 //    template<typename V>
-//    struct CastHelper<const Number*,const V*> {  // const pointers! [1]
+//    struct CastHook<const Number*,const V*> {  // const pointers! [1]
 //        static const Float* convert(const V* v) {
 //            static_assert(std::is_same<V, Float>::value, "Float expected");
 //            assert(num->is_float);
@@ -246,7 +268,7 @@
 //    because it is the most constrained (mutable pointers can be made const,
 //    and have const methods called on them, not necessarily vice versa).
 //    Hence mutable casts from Number* to Float* above runs the same code,
-//    while returning the correct mutable output from the v_cast()...and it
+//    while returning the correct mutable output from the h_cast()...and it
 //    correctly prohibits casting from a const Number* to a mutable Float*.
 //
 // 2. This has to be an object template and not a function template, in order
@@ -262,10 +284,8 @@
 //    specialized while objects can.  However, we want "universal references"
 //    which is how (T&& arg) is interpreted for functions vs. objects.
 //
-
-
 #if NO_CPLUSPLUS_11
-  #define v_cast(T,v) \
+  #define h_cast(T,v) \
     ((T)(v))  // in C, just another alias for parentheses cast
 #else
 
@@ -320,7 +340,7 @@
     };
 
     template<typename V, typename T>
-    struct CastHelper {  // object template for partial specialization [2]
+    struct CastHook {  // object template for partial specialization [2]
       static T convert(V v) {
         return u_cast(T, v);  // plain C cast is most versatile here
       }
@@ -337,7 +357,7 @@
             typedef typename make_const_ptr<F>::type ConstFrom;
             typedef typename make_const_ptr<T>::type ConstTo;
 
-            ConstTo const_result = CastHelper<ConstFrom, ConstTo>::convert(
+            ConstTo const_result = CastHook<ConstFrom, ConstTo>::convert(
                 const_cast<ConstFrom>(from)
             );
 
@@ -350,7 +370,7 @@
             not (std::is_pointer<F>::value and std::is_pointer<T>::value),
             T
         >::type convert(const F& from) {
-            return CastHelper<F, T>::convert(from);
+            return CastHook<F, T>::convert(from);
         }
     };
 
@@ -359,7 +379,7 @@
         typename To,
         bool RemovesConst = is_const_removing_pointer_cast<From, To>::value
     >
-    struct ValidatedCastHelper {
+    struct HookableCastHelper {
         static_assert(
             not is_function_pointer<From>::value
             and not is_function_pointer<To>::value,
@@ -393,7 +413,7 @@
     };
 
     template<typename From, typename To>  // const removal specialization
-    struct ValidatedCastHelper<From, To, true> {
+    struct HookableCastHelper<From, To, true> {
       static To convert(From /*v*/) {
         static_assert(
             false,
@@ -411,8 +431,8 @@
             or std::is_enum<To>::value,
         To
     >::type
-    v_cast_decaying_helper(const From& v) {
-        return ValidatedCastHelper<
+    Hookable_Cast_Decay_Prelude(const From& v) {
+        return HookableCastHelper<
             typename std::decay<From>::type, To
         >::convert(v);
     }
@@ -424,8 +444,8 @@
             and not std::is_enum<To>::value,
         To
     >::type
-    v_cast_decaying_helper(From&& v) {
-        return ValidatedCastHelper<
+    Hookable_Cast_Decay_Prelude(From&& v) {
+        return HookableCastHelper<
             typename std::decay<From>::type, To
         >::convert(std::forward<From>(v));
     }
@@ -437,17 +457,20 @@
             and not std::is_enum<To>::value,
         To
     >::type
-    v_cast_decaying_helper(From&& v) {
-        return ValidatedCastHelper<From, To>::convert(
+    Hookable_Cast_Decay_Prelude(From&& v) {
+        return HookableCastHelper<From, To>::convert(
             std::forward<From>(v)  // preserves reference-ness
         );
     }
-    #define v_cast(T, v) \
-        v_cast_decaying_helper<T>(v)  // function for universal references [3]
+
+    #define Hookable_Cast(T, v) /* outer parens [C] */ \
+        (Hookable_Cast_Decay_Prelude<T>(v))  // function: universal refs [3]
+
+    #define h_cast  Hookable_Cast  // can override [F]
 #endif
 
 
-//=//// c_cast(): CONST-PRESERVING CAST WITH u_c_cast() UNCHECKED /////////=//
+//=//// c_cast(): CONST-PRESERVING CAST ///////////////////////////////////=//
 //
 // This cast is useful for defining macros that want to mirror the constness
 // of the input pointer, when you don't know if the caller is passing a
@@ -460,14 +483,6 @@
 //         return c_cast(Float*, n);  // briefer than `cast(const Float*, n)`
 //     }
 //
-// 1. The default `c_cast()` is It's built on top of the `CastHelper` used
-//    by `v_cast()`, so debug checks applicable to a validated cast will also
-//    be run by `c_cast()`.
-//
-// 2. If you don't want the validation checks and just want the const
-//    preserving behavior, you can use `u_c_cast()` instead, for "unchecked
-//    version of c_cast()"
-//
 #if NO_CPLUSPLUS_11
     #define c_cast(T,v) \
         ((T)(v))  // in C, just another alias for parentheses cast
@@ -475,7 +490,6 @@
     #define u_c_cast(T,v) \
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
-    // Fixed const-preserving cast
     template<typename TP, typename VQP>
     struct ConstPreservingCastHelper {
         static_assert(std::is_pointer<TP>::value, "c_cast() non pointer!");
@@ -491,14 +505,18 @@
         >::type type;
     };
 
-    #define c_cast(TP,v)  /* checked variation, runs v_cast() hooks [1] */ \
+    #define Hookable_Const_Preserving_Cast(TP,v) /* outer parens [C] */ \
         (ConstAwareCastDispatcher< \
             rr_decltype(v), \
-            typename ConstPreservingCastHelper<TP,rr_decltype(v)>::type \
+            typename ConstPreservingCastHelper<TP, rr_decltype(v)>::type \
         >::convert(v))
 
-    #define u_c_cast(TP,v)  /* unchecked variation [2] */ \
-        ((typename ConstPreservingCastHelper<TP,rr_decltype(v)>::type)(v))
+    #define Unhookable_Const_Preserving_Cast(TP,v) /* outer parens [C] */ \
+        ((typename ConstPreservingCastHelper<TP, rr_decltype(v)>::type)(v))
+
+    #define c_cast  Hookable_Const_Preserving_Cast  // can override [F]
+
+    #define u_c_cast  Unhookable_Const_Preserving_Cast
 #endif
 
 
@@ -519,16 +537,16 @@
 //     const Base* base = ...;
 //     Derived* derived = m_cast(Derived*, base);  /* !!! Error !!! */
 //
-// It is not built on `CastHelper`, so an `m_cast()` won't run the debug
-// checks that `cast()` and `c_cast()` would.  It's also not built on the
-// w_cast() which has unavoidable runtime cost in debug builds.
+// 1. There's no validation hook run on an m_cast(), because other than the
+//    mutability, it's not casting anything that wouldn't just be allowed
+//    by ordinary pointer assignment.  Hence no need for u_m_cast().
 //
 #if NO_CPLUSPLUS_11
     #define m_cast(T,v) \
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
     template<typename To, typename From>
-    struct XCastHelper {
+    struct MutableCastHelper {
         static_assert(
             std::is_pointer<To>::value, "m_cast() target must be pointer"
         );
@@ -548,8 +566,57 @@
         );
     };
 
-    #define m_cast(T,v)  /* needs outer parens, see [B] */ \
-        (const_cast<T>((typename XCastHelper<T, rr_decltype(v)>::ConstTo)(v)))
+    #define Mutable_Cast(T,v) /* outer parens [C] */ \
+        (const_cast<T>( \
+            (typename MutableCastHelper<T, rr_decltype(v)>::ConstTo \
+        )(v)))
+
+    #define m_cast  Mutable_Cast
+
+    // no u_m_cast() defined, as m_cast() is not validated [1]
+#endif
+
+
+//=//// d_cast(): DOCUMENT DOWNCASTS //////////////////////////////////////=//
+//
+// This cast documents specifically that you think you are performing a
+// downcast, and it ensures that you are--e.g. that it would be legal to just
+// do an assignment of the To* type to the From* type, but you are going the
+// other direction.  This helps you to know that the types you are casting
+// have some relationship.
+//
+// (Since Needful is a library targeting C codebases, the idea of downcasting
+// would seem to only be applicable to void*, because no other datatypes have
+// any "inheritance" relationship.  But if you've augmented your C codebase
+// to use inheritance when built as C++, it may be applicable.)
+//
+#if NO_CPLUSPLUS_11
+    #define d_cast(T,v) \
+        ((T)(v))  // in C, just another alias for parentheses cast
+
+    #define u_d_cast(T,v) \
+        ((T)(v))  // in C, just another alias for parentheses cast
+#else
+    template<typename To, typename From>
+    struct DowncastHelper {
+        static_assert(
+            std::is_pointer<To>::value, "d_cast() target must be pointer"
+        );
+        static_assert(
+            std::is_convertible<To, From>::value,
+            "d_cast() target must be convertible to source pointer type"
+        );
+    };
+
+    #define Hookable_Downcast(T,v) /* outer parens [C] */ \
+        (DowncastHelper<T, rr_decltype(v)>{}, cast(T, (v)))
+
+    #define Unhookable_Downcast(T,v) /* outer parens [C] */ \
+        (DowncastHelper<T, rr_decltype(v)>{}, u_cast(T, (v)))
+
+    #define d_cast  Hookable_Downcast  // can override [F]
+
+    #define u_d_cast  Unhookable_Downcast
 #endif
 
 
@@ -574,7 +641,7 @@
         ((T)(v))  // in C, just another alias for parentheses cast
 #else
     template<typename T, typename V>
-    constexpr T WrapperCastHelper(V v) {
+    constexpr T WritableWrapperCastHelper(V v) {
         static_assert(not std::is_const<T>::value,
             "invalid w_cast() - requested a const type for output result");
         static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
@@ -582,8 +649,10 @@
         return const_cast<T>(v);
     }
 
-    #define w_cast(T,v) \
-        WrapperCastHelper<T>(v)
+    #define Writable_Wrapper_Cast(T,v) /* outer parens [C] */ \
+        (WritableWrapperCastHelper<T>(v))
+
+    #define w_cast  Writable_Wrapper_Cast
 #endif
 
 
@@ -665,7 +734,7 @@
         return FunctionPointerCastHelper<FromDecay, To>::convert(from);
     }
 
-    #define f_cast(T, v)  FunctionPointerCastDecayer<T>(v)
+    #define f_cast(T,v)  FunctionPointerCastDecayer<T>(v)
 #endif
 
 
@@ -803,7 +872,7 @@
 // To avoid littering the codebase with explanations at every callsite, and
 // to ensure that the casts are still readable, we define `strict_*_cast()`
 // macros. These are no-ops on GCC/Clang, but expand to the appropriate cast
-// macros (e.g. `u_cast`, `v_cast`, etc.) in standards-compilant compilers.
+// macros (e.g. `u_cast`, `h_cast`, etc.) in standards-compilant compilers.
 // This centralizes the workaround and documents the reason for its existence.
 //
 // (Using plain casts would run the risk of someone using GCC or Clang just
@@ -820,7 +889,7 @@
 #else
     // Standard-conforming (MSVC, Intel, etc.): cast needed
     #define strict_u_cast(T,v)    u_cast(T,v)
-    #define strict_v_cast(T,v)    v_cast(T,v)
+    #define strict_v_cast(T,v)    h_cast(T,v)
     #define strict_c_cast(T,v)    c_cast(T,v)
     #define strict_u_c_cast(T,v)  u_c_cast(T,v)
 

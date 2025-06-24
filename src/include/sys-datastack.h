@@ -186,7 +186,7 @@
     };
 
     template<typename S, typename T>
-    struct CastHelper<OnStackPointer<S>,T>
+    struct CastHook<OnStackPointer<S>,T>
       { static T convert(OnStackPointer<S> stk) { return (T)(stk.p);} };
 #endif
 

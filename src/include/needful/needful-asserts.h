@@ -92,9 +92,9 @@
 // can do the job.  For example:
 //
 //    #if (NEEDFUL_DONT_INCLUDE_STDARG_H)
-//      #define v_cast(T,v)  STATIC_FAIL(v_cast_disabled)
+//      #define h_cast(T,v)  STATIC_FAIL(v_cast_disabled)
 //    #else
-//      #define v_cast(T,v)  ...
+//      #define h_cast(T,v)  ...
 //    #endif
 //
 // Your message has to be able to be embedded in a C identifier, since the C
