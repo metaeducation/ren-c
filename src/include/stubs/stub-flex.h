@@ -73,9 +73,9 @@
 INLINE bool Is_Stub_Diminished(const Stub* s) {
     if (Is_Base_Readable(s))
         return false;
-    Byte n = BASE_BYTE(s);
-    assert(n == DIMINISHED_CANON_BYTE or n == DIMINISHED_NON_CANON_BYTE);
-    UNUSED(n);
+    BaseByte b = BASE_BYTE(s);
+    assert(b == DIMINISHED_CANON_BYTE or b == DIMINISHED_NON_CANON_BYTE);
+    UNUSED(b);
     return true;
 }
 
@@ -119,16 +119,18 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 //    vs. m_cast() on the (f) to get the typechecking of [1]
 
 #define Get_Flex_Flag(f,name) \
-    (((f)->leader.bits & FLEX_FLAG_##name) != 0)
+    ((ensure(const Flex*, (f))->leader.bits & FLEX_FLAG_##name) != 0)
 
 #define Not_Flex_Flag(f,name) \
-    (((f)->leader.bits & FLEX_FLAG_##name) == 0)
+    ((ensure(const Flex*, (f))->leader.bits & FLEX_FLAG_##name) == 0)
 
 #define Set_Flex_Flag(f,name) \
-    m_cast(HeaderUnion*, &(f)->leader)->bits |= FLEX_FLAG_##name
+    (m_cast(HeaderUnion*, &ensure(const Flex*, (f))->leader)->bits \
+        |= FLEX_FLAG_##name)
 
 #define Clear_Flex_Flag(f,name) \
-    m_cast(HeaderUnion*, &(f)->leader)->bits &= ~FLEX_FLAG_##name
+    (m_cast(HeaderUnion*, &ensure(const Flex*, (f))->leader)->bits \
+        &= ~FLEX_FLAG_##name)
 
 
 //=//// FLEX "INFO" BITS (or INODE) ///////////////////////////////////////=//

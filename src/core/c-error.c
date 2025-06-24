@@ -1297,7 +1297,7 @@ VarList* Startup_Errors(const Element* boot_errors)
 //
 void Startup_Stackoverflow(void)
 {
-    ensure(nullptr, g_error_stack_overflow) = Init_Warning(
+    ensure_nullptr(g_error_stack_overflow) = Init_Warning(
         Alloc_Value(),
         Error_Stack_Overflow_Raw()
     );
@@ -1305,7 +1305,7 @@ void Startup_Stackoverflow(void)
     DECLARE_ELEMENT (temp);
     Init_Integer(temp, 1020);  // !!! arbitrary [1]
 
-    ensure(nullptr, g_error_no_memory) = Init_Warning(
+    ensure_nullptr(g_error_no_memory) = Init_Warning(
         Alloc_Value(),
         Error_No_Memory_Raw(temp)
     );
@@ -1335,27 +1335,27 @@ void Shutdown_Stackoverflow(void)
 //
 void Startup_Utf8_Errors(void)
 {
-    ensure(nullptr, g_error_utf8_too_short) = Init_Warning(
+    ensure_nullptr(g_error_utf8_too_short) = Init_Warning(
         Alloc_Value(),
         Error_Utf8_Too_Short_Raw()
     );
-    ensure(nullptr, g_error_utf8_trail_bad_bit) = Init_Warning(
+    ensure_nullptr(g_error_utf8_trail_bad_bit) = Init_Warning(
         Alloc_Value(),
         Error_Utf8_Trail_Bad_Bit_Raw()
     );
-    ensure(nullptr, g_error_overlong_utf8) = Init_Warning(
+    ensure_nullptr(g_error_overlong_utf8) = Init_Warning(
         Alloc_Value(),
         Error_Overlong_Utf8_Raw()
     );
-    ensure(nullptr, g_error_codepoint_too_high) = Init_Warning(
+    ensure_nullptr(g_error_codepoint_too_high) = Init_Warning(
         Alloc_Value(),
         Error_Codepoint_Too_High_Raw()
     );
-    ensure(nullptr, g_error_no_utf8_surrogates) = Init_Warning(
+    ensure_nullptr(g_error_no_utf8_surrogates) = Init_Warning(
         Alloc_Value(),
         Error_No_Utf8_Surrogates_Raw()
     );
-    ensure(nullptr, g_error_illegal_zero_byte) = Init_Warning(
+    ensure_nullptr(g_error_illegal_zero_byte) = Init_Warning(
         Alloc_Value(),
         Error_Illegal_Zero_Byte_Raw()
     );

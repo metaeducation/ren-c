@@ -707,7 +707,7 @@ void Startup_Mold(Size encoded_capacity)
 {
     g_mold.stack = Make_Flex(FLAG_FLAVOR(MOLDSTACK), Flex, 10);
 
-    ensure(nullptr, g_mold.buffer) = Make_String_Core(
+    ensure_nullptr(g_mold.buffer) = Make_String_Core(
         FLEX_MASK_STRING
             | (not BASE_FLAG_MANAGED)
             | STUB_FLAG_DYNAMIC,

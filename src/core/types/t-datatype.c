@@ -89,7 +89,7 @@ void Startup_Datatypes(void)
         assert(Cell_Datatype_Type(datatype) == type);  // sanity check
     }
 
-    ensure(nullptr, g_datatypes_context) = datatypes;
+    ensure_nullptr(g_datatypes_context) = datatypes;
 }
 
 

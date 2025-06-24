@@ -262,13 +262,12 @@ for-each-datatype 't [
     ]
 
     e-types/emit [propercase-of t --[
-        INLINE bool Is_${propercase-of T.name}_Core(const Atom* cell) {
-            return ((cell->header.bits & CELL_HEART_LIFT_MASK)
-                == (FLAG_LIFT_BYTE(NOQUOTE_1) | FLAG_HEART($<T.NAME>)));
-        }
+        #define Unchecked_Is_${propercase-of T.name}(atom) \
+            ((ensure(const Atom*, atom)->header.bits & CELL_HEART_LIFT_MASK) \
+                == (FLAG_LIFT_BYTE(NOQUOTE_1) | FLAG_HEART($<T.NAME>)))
 
         #define Is_${propercase-of T.name}(cell)  /* $<T.HEART> */ \
-            Is_${propercase-of T.name}_Core(Ensure_Readable(cell))
+            Unchecked_Is_${propercase-of T.name}(Ensure_Readable(cell))
     ]--]
 ]
 
@@ -356,13 +355,13 @@ for-each-datatype 't [
     ; a macro vs. an inline function.  Revisit.
     ;
     e-types/emit [t proper-name --[
-        INLINE bool Is_$<Proper-Name>_Core(const $<Need>* cell) {
-            return ((cell->header.bits & CELL_HEART_LIFT_MASK)
-                == (FLAG_LIFT_BYTE(ANTIFORM_0) | FLAG_HEART($<T.NAME>)));
-        }
+        #define Unchecked_Is_$<Proper-Name>(cell) \
+            ((ensure(const $<Need>*, (cell))->header.bits & CELL_HEART_LIFT_MASK) \
+                == (FLAG_LIFT_BYTE(ANTIFORM_0) | FLAG_HEART($<T.NAME>)))
+
 
         #define Is_$<Proper-Name>(cell) \
-            Is_$<Proper-Name>_Core(Ensure_Readable(cell))
+            Unchecked_Is_$<Proper-Name>(Ensure_Readable(cell))
 
         #define Is_Lifted_$<Proper-Name>(cell) \
             ((Ensure_Readable(cell)->header.bits & CELL_HEART_LIFT_MASK) \
@@ -383,13 +382,12 @@ for-each-datatype 't [
     ; thought from testing casually.
     ;
     e-types/emit [t proper-name --[
-        INLINE bool Is_Atom_$<Proper-Name>_Core(const Atom* cell) {
-            return ((cell->header.bits & CELL_HEART_LIFT_MASK)
-                == (FLAG_LIFT_BYTE(ANTIFORM_0) | FLAG_HEART($<T.NAME>)));
-        }
+        #define Unchecked_Is_Atom_$<Proper-Name>(atom) \
+            ((ensure(const Atom*, (atom))->header.bits & CELL_HEART_LIFT_MASK) \
+                == (FLAG_LIFT_BYTE(ANTIFORM_0) | FLAG_HEART($<T.NAME>)))
 
         #define Is_Atom_$<Proper-Name>(cell) \
-            Is_Atom_$<Proper-Name>_Core(Ensure_Readable(cell))
+            Unchecked_Is_Atom_$<Proper-Name>(Ensure_Readable(cell))
     ]--]
 ]
 

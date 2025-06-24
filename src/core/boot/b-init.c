@@ -183,7 +183,7 @@ static void Startup_Lib(void)
         Init_Tripwire(Stub_Cell(patch));  // start as unset variable
     }
 
-    ensure(nullptr, g_lib_context) = lib;
+    ensure_nullptr(g_lib_context) = lib;
 }
 
 
@@ -255,17 +255,17 @@ static Element* Make_Locked_Tag(const char *utf8) { // helper
 //
 static void Init_Action_Spec_Tags(void)
 {
-    ensure(nullptr, g_tag_with) = Make_Locked_Tag("with");
-    ensure(nullptr, g_tag_variadic) = Make_Locked_Tag("variadic");
-    ensure(nullptr, g_tag_end) = Make_Locked_Tag("end");
-    ensure(nullptr, g_tag_opt_out) = Make_Locked_Tag("opt-out");
-    ensure(nullptr, g_tag_opt) = Make_Locked_Tag("opt");
-    ensure(nullptr, g_tag_local) = Make_Locked_Tag("local");
-    ensure(nullptr, g_tag_const) = Make_Locked_Tag("const");
-    ensure(nullptr, g_tag_divergent) = Make_Locked_Tag("divergent");
-    ensure(nullptr, g_tag_unrun) = Make_Locked_Tag("unrun");
+    ensure_nullptr(g_tag_with) = Make_Locked_Tag("with");
+    ensure_nullptr(g_tag_variadic) = Make_Locked_Tag("variadic");
+    ensure_nullptr(g_tag_end) = Make_Locked_Tag("end");
+    ensure_nullptr(g_tag_opt_out) = Make_Locked_Tag("opt-out");
+    ensure_nullptr(g_tag_opt) = Make_Locked_Tag("opt");
+    ensure_nullptr(g_tag_local) = Make_Locked_Tag("local");
+    ensure_nullptr(g_tag_const) = Make_Locked_Tag("const");
+    ensure_nullptr(g_tag_divergent) = Make_Locked_Tag("divergent");
+    ensure_nullptr(g_tag_unrun) = Make_Locked_Tag("unrun");
 
-    ensure(nullptr, g_tag_here) = Make_Locked_Tag("here");  // used by PARSE
+    ensure_nullptr(g_tag_here) = Make_Locked_Tag("here");  // used by PARSE
 }
 
 static void Shutdown_Action_Spec_Tags(void)
@@ -313,7 +313,7 @@ static void Init_Root_Vars(void)
     g_empty_array = Make_Source_Managed(0);
     Freeze_Source_Deep(g_empty_array);
 
-    ensure(nullptr, g_empty_block) = Init_Block(
+    ensure_nullptr(g_empty_block) = Init_Block(
         Alloc_Value(),
         g_empty_array  // holds empty array alive
     );
@@ -346,7 +346,7 @@ static void Init_Root_Vars(void)
 
     g_empty_varlist = cast(VarList*, a);
 
-    ensure(nullptr, g_empty_object) = Init_Object(
+    ensure_nullptr(g_empty_object) = Init_Object(
         Alloc_Value(),
         g_empty_varlist  // holds empty varlist alive
     );
@@ -359,13 +359,13 @@ static void Init_Root_Vars(void)
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
     Init_Quasi_Null(Stub_Cell(a));
     Freeze_Source_Deep(a);
-    ensure(nullptr, g_1_quasi_null_array) = a;
-    ensure(nullptr, g_lifted_heavy_null) = Init_Lifted_Pack(Alloc_Value(), a);
+    ensure_nullptr(g_1_quasi_null_array) = a;
+    ensure_nullptr(g_lifted_heavy_null) = Init_Lifted_Pack(Alloc_Value(), a);
     Force_Value_Frozen_Deep(g_lifted_heavy_null);
 
 } make_other_things: {
 
-    ensure(nullptr, Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
+    ensure_nullptr(Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
     Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_NOTE_META);
     Protect_Cell(Root_Feed_Null_Substitute);
 
@@ -380,20 +380,20 @@ static void Init_Root_Vars(void)
     assert(String_Len(nulled_uni) == 0);
   #endif
 
-    ensure(nullptr, g_empty_text) = Init_Text(Alloc_Value(), nulled_uni);
+    ensure_nullptr(g_empty_text) = Init_Text(Alloc_Value(), nulled_uni);
     Force_Value_Frozen_Deep(g_empty_text);
 
     Binary* bzero = Make_Binary(0);
-    ensure(nullptr, g_empty_blob) = Init_Blob(Alloc_Value(), bzero);
+    ensure_nullptr(g_empty_blob) = Init_Blob(Alloc_Value(), bzero);
     Force_Value_Frozen_Deep(g_empty_blob);
 
-    ensure(nullptr, g_quasi_null) = Init_Quasi_Null(Alloc_Value());
+    ensure_nullptr(g_quasi_null) = Init_Quasi_Null(Alloc_Value());
     Protect_Cell(g_quasi_null);
 
-    ensure(nullptr, g_tripwire) = Init_Tripwire(Alloc_Value());
+    ensure_nullptr(g_tripwire) = Init_Tripwire(Alloc_Value());
     Protect_Cell(g_tripwire);
 
-    ensure(nullptr, g_dispatcher_table) = Make_Flex(
+    ensure_nullptr(g_dispatcher_table) = Make_Flex(
         FLAG_FLAVOR(DISPATCHERTABLE) | STUB_FLAG_DYNAMIC,
         Flex,
         15
@@ -633,7 +633,7 @@ void Startup_Core(void)
 
     Startup_Datatypes();
 
-    ensure(nullptr, g_datatypes_module) = Alloc_Element();
+    ensure_nullptr(g_datatypes_module) = Alloc_Element();
     Init_Module(g_datatypes_module, g_datatypes_context);  // GC protect
 
 } startup_lib: {
@@ -655,7 +655,7 @@ void Startup_Core(void)
 
     Startup_Lib();
 
-    ensure(nullptr, g_lib_module) = Alloc_Element();
+    ensure_nullptr(g_lib_module) = Alloc_Element();
     Init_Module(g_lib_module, g_lib_context);  // GC protect
 
 } initialize_core_api_binding: {
@@ -665,7 +665,7 @@ void Startup_Core(void)
     //
     // (We have to cast it because API RebolContext* is a typedef of void*.)
 
-    ensure(nullptr, librebol_binding) = cast(RebolContext*, g_lib_context);
+    ensure_nullptr(librebol_binding) = cast(RebolContext*, g_lib_context);
 
 } create_global_objects: {
 
@@ -914,9 +914,9 @@ void Startup_Core(void)
 
     SeaOfVars* util = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(util, g_lib_context);
-    ensure(nullptr, g_sys_util_module) = Alloc_Element();
+    ensure_nullptr(g_sys_util_module) = Alloc_Element();
     Init_Module(g_sys_util_module, util);
-    ensure(nullptr, g_sys_util_context) = util;
+    ensure_nullptr(g_sys_util_context) = util;
 
     rebElide(
         "sys.util:", g_sys_util_module,  // overwrite [1]

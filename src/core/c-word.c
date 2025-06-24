@@ -491,7 +491,7 @@ void Startup_Interning(void)
         n = 1; // force exercise of rehashing logic half the time on startup
   #endif
 
-    ensure(nullptr, g_symbols.by_hash) = Make_Flex(
+    ensure_nullptr(g_symbols.by_hash) = Make_Flex(
         FLAG_FLAVOR(CANONTABLE) | FLEX_FLAG_POWER_OF_2,
         Flex,
         n

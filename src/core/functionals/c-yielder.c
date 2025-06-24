@@ -36,7 +36,7 @@
 //
 void Startup_Yielder_Errors(void)
 {
-    ensure(nullptr, g_error_done) = Init_Warning(
+    ensure_nullptr(g_error_done) = Init_Warning(
         Alloc_Value(),
         Error_Done_Raw()
     );

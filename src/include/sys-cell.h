@@ -233,7 +233,7 @@ INLINE Cell* Force_Poison_Cell_Untracked(Cell* c) {  // for random bits [3]
     TRACK(Force_Poison_Cell_Untracked(c))
 
 #define Is_Cell_Poisoned(c)  /* non-poison state not always readable [4] */ \
-    ((c)->header.bits == CELL_MASK_POISON)
+    (ensure(const Cell*, (c))->header.bits == CELL_MASK_POISON)
 
 
 //=//// CELL "ERASING" ////////////////////////////////////////////////////=//
@@ -275,8 +275,8 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 #define Force_Erase_Cell(c)  /* unchecked version, use sparingly! [2] */ \
     TRACK(Force_Erase_Cell_Untracked(c))
 
-#define Is_Cell_Erased(c) \
-    ((c)->header.bits == CELL_MASK_ERASED_0)  // initable, not read/writable
+#define Is_Cell_Erased(c) /* initable, not read/writable */ \
+    (ensure(const Cell*, (c))->header.bits == CELL_MASK_ERASED_0)
 
 #define Not_Cell_Erased(c)  (not Is_Cell_Erased(c))
 
@@ -465,30 +465,26 @@ STATIC_ASSERT(not (CELL_MASK_PERSIST & CELL_FLAG_NOTE));
 // as well as some flags that are reserved for system purposes.  These are
 // the BASE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
 //
-// 1. Avoid cost that inline functions (even constexpr) add to checked builds
-//    by "typechecking" via finding the name ->header.bits in (c).
-//
-// 2. Cell flags are managed distinctly from conceptual immutability of their
-//    data, and so we w_cast away constness.  We do this on the HeaderUnion
-//    vs. m_cast() on the (c) to get the typechecking of [1]
+// 1. Cell flags are managed distinctly from conceptual immutability of their
+//    data, and so we m_cast away constness.
 
-#define Get_Cell_Flag(c,name) /* [1] */ \
+#define Get_Cell_Flag(c,name) \
     ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) != 0)
 
 #define Not_Cell_Flag(c,name) \
     ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) == 0)
 
 #define Get_Cell_Flag_Unchecked(c,name) \
-    (((c)->header.bits & CELL_FLAG_##name) != 0)
+    ((ensure(const Cell*, (c))->header.bits & CELL_FLAG_##name) != 0)
 
 #define Not_Cell_Flag_Unchecked(c,name) \
-    (((c)->header.bits & CELL_FLAG_##name) == 0)
+    ((ensure(const Cell*, (c))->header.bits & CELL_FLAG_##name) == 0)
 
-#define Set_Cell_Flag(c,name) /* [2] */ \
+#define Set_Cell_Flag(c,name) /* cast away const [1] */ \
     m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
         |= CELL_FLAG_##name
 
-#define Clear_Cell_Flag(c,name) \
+#define Clear_Cell_Flag(c,name) /* cast away const [1] */ \
     m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
         &= ~CELL_FLAG_##name
 

@@ -174,7 +174,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub*);
 // since that optimization was removed, but a similar issue could arise again.
 //
 static void Queue_Mark_Base_Deep(Base** npp) {  // ** for canonizing
-    Byte base_byte = BASE_BYTE(*npp);
+    BaseByte base_byte = BASE_BYTE(*npp);
     if (base_byte & BASE_BYTEMASK_0x01_MARKED)  // incl. canon diminished Stub
         return;  // may not be finished marking yet, but has been queued
 
@@ -223,7 +223,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
 {
   #if RUNTIME_CHECKS  // give helpful details on common/uncommon problems
     if (not Is_Base_Readable(s)) {
-        Byte base_byte = BASE_BYTE(s);
+        BaseByte base_byte = BASE_BYTE(s);
         switch (base_byte) {
           case FREE_POOLUNIT_BYTE:
             printf("Queue Stub w/FREE_POOLUNIT_BYTE, Stub wasn't GC safe\n");
@@ -1456,7 +1456,7 @@ void Startup_GC(void)
     // As a trick to keep this Flex from trying to track itself, say it's
     // managed, then sneak the flag off.
     //
-    ensure(nullptr, g_gc.manuals) = Make_Flex(
+    ensure_nullptr(g_gc.manuals) = Make_Flex(
         FLAG_FLAVOR(FLEXLIST) | BASE_FLAG_MANAGED,  // lie!
         Flex,
         15
@@ -1465,7 +1465,7 @@ void Startup_GC(void)
 
     // Flexes and Cells protected from GC.  Holds base pointers.
     //
-    ensure(nullptr, g_gc.guarded) = Make_Flex(
+    ensure_nullptr(g_gc.guarded) = Make_Flex(
         FLAG_FLAVOR(NODELIST),
         Flex,
         15
@@ -1474,7 +1474,7 @@ void Startup_GC(void)
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    ensure(nullptr, g_gc.mark_stack) = Make_Flex(
+    ensure_nullptr(g_gc.mark_stack) = Make_Flex(
         FLAG_FLAVOR(NODELIST),
         Flex,
         100

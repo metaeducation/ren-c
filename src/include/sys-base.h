@@ -38,7 +38,9 @@
 //    conceptually immutable, and the managed bit needs to be set on bindings
 //    where the reference is const.  m_cast() still enforces that the type
 //    isn't something random (so Base*-compatible)
-//
+
+typedef Byte BaseByte;
+
 #if !defined(HEAVY_BASE_BYTE_CHECK)  // [1]
     #define BASE_BYTE(p) \
         FIRST_BYTE(m_cast(Base*, (p)))  // m_cast [2]
