@@ -28,7 +28,7 @@
 // This distinction has led to a difference in considering the "Type_Of()" of
 // a cell in comparison with the "Heart_Of()".  If you ask a word at any
 // quoting level what the heart of the cell is, it will say TYPE_WORD.  But
-// only a word at the NOQUOTE_1 quoting level will respond with TYPE_WORD to
+// only a word at the NOQUOTE_2 quoting level will respond with TYPE_WORD to
 // Type_Of().  Otherwise it gives TYPE_QUOTED, TYPE_QUASIFORM, or an antiform
 // byte (like TYPE_SPLICE, TYPE_PACK, etc.)
 //

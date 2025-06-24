@@ -229,9 +229,9 @@ typedef enum SigilEnum Sigil;
 // each quoting level effectively adds 2 to the lift byte.
 //
 // A Cell's underlying "HEART" can report it as something like TYPE_WORD, but
-// that is only reported as the result of Type_Of() when LIFT_BYTE() is 1.
-// When LIFT_BYTE() is 2 it says it is TYPE_QUASIFORM, and when it's greater
-// than 2 then Type_Of() reports TYPE_QUOTED.  A LIFT_BYTE() of 0 will give
+// that is only reported as the result of Type_Of() when LIFT_BYTE() is 2.
+// When LIFT_BYTE() is 3 it says it is TYPE_QUASIFORM, and when it's greater
+// than 4 then Type_Of() reports TYPE_QUOTED.  A LIFT_BYTE() of 1 will give
 // back various TYPE_XXX answers corresponding to the antiforms (such as
 // TYPE_SPLICE, TYPE_TRASH, TYPE_ERROR, etc.)
 //
@@ -243,7 +243,7 @@ typedef enum SigilEnum Sigil;
 //
 // 2. Not all datatypes have quasiforms/antiforms (e.g. ~/foo/~ is a PATH!
 //    with a Quasi-Space in the first and last slots, not a quasiform).  To
-//    help avoid casual assignments to LIFT_BYTE() of the 0 and 2 values
+//    help avoid casual assignments to LIFT_BYTE() of the 1 and 3 values
 //    we prohibit them in certain builds, requiring LIFT_BYTE_RAW() to be
 //    used if you are truly sure it's safe.
 //
@@ -253,25 +253,27 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 #define LIFT_BYTE_RAW(cell) /* don't go through LiftHolder() [1] */ \
     THIRD_BYTE(&(cell)->header.bits)
 
-#if DEBUG_HOOK_LIFT_BYTE  // Stop `LIFT_BYTE(cell) = ANTIFORM_0` [2]
-    struct Antiform_0_Struct { operator LiftByte() const { return 0; } };
-    struct Quasiform_2_Struct { operator LiftByte() const { return 2; } };
+#define DUAL_0  0
 
-    constexpr Antiform_0_Struct antiform_0;
-    constexpr Quasiform_2_Struct quasiform_2;
+#if DEBUG_HOOK_LIFT_BYTE  // Stop `LIFT_BYTE(cell) = ANTIFORM_1` [2]
+    struct Antiform_1_Struct { operator LiftByte() const { return 1; } };
+    struct Quasiform_3_Struct { operator LiftByte() const { return 3; } };
 
-    #define ANTIFORM_0      antiform_0
-    #define QUASIFORM_2     quasiform_2
+    constexpr Antiform_1_Struct antiform_1;
+    constexpr Quasiform_3_Struct quasiform_3;
+
+    #define ANTIFORM_1      antiform_1
+    #define QUASIFORM_3     quasiform_3
 #else
-    #define ANTIFORM_0      0  // also "QUASI" (NONQUASI_BIT is clear)
-    #define QUASIFORM_2     2
+    #define ANTIFORM_1      1  // also "QUASI" (QUASI_BIT is set)
+    #define QUASIFORM_3     3
 #endif
 
-// see above for ANTIFORM_0
-#define NOQUOTE_1               1
-#define NONQUASI_BIT            1
-// see above for QUASIFORM_2
-#define ONEQUOTE_NONQUASI_3     3  // non-quasiquoted state of 1 quote
+// see above for ANTIFORM_1
+#define NOQUOTE_2               2
+#define QUASI_BIT               1
+// see above for QUASIFORM_3
+#define ONEQUOTE_NONQUASI_4     4  // non-quasiquoted state of 1 quote
 
 #define MAX_QUOTE_DEPTH     126         // highest legal quoting level
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites

@@ -888,8 +888,8 @@ DECLARE_NATIVE(EQUAL_Q)
     if (LIFT_BYTE(atom1) != LIFT_BYTE(atom2))
         return nullptr;
 
-    LIFT_BYTE(atom1) = NOQUOTE_1;  // should work for VOID equality, too
-    LIFT_BYTE(atom2) = NOQUOTE_1;
+    LIFT_BYTE(atom1) = NOQUOTE_2;  // should work for VOID equality, too
+    LIFT_BYTE(atom2) = NOQUOTE_2;
 
     Element* v1 = Known_Element(atom1);
     Element* v2 = Known_Element(atom2);
@@ -939,8 +939,8 @@ DECLARE_NATIVE(LESSER_Q)
     if (LIFT_BYTE(v1) != LIFT_BYTE(v2))
         return FAIL("Differing quote levels are not comparable");
 
-    LIFT_BYTE(v1) = NOQUOTE_1;
-    LIFT_BYTE(v2) = NOQUOTE_1;
+    LIFT_BYTE(v1) = NOQUOTE_2;
+    LIFT_BYTE(v2) = NOQUOTE_2;
 
     if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
         if (Is_Integer(v1) and Is_Decimal(v2))
@@ -1004,8 +1004,8 @@ DECLARE_NATIVE(SAME_Q)
     if (KIND_BYTE(atom1) != KIND_BYTE(atom2))
         return Init_Logic(OUT, false);  // not "same" value if not same heart
 
-    LIFT_BYTE(atom1) = NOQUOTE_1;  // trick works for VOID equality, too
-    LIFT_BYTE(atom2) = NOQUOTE_1;
+    LIFT_BYTE(atom1) = NOQUOTE_2;  // trick works for VOID equality, too
+    LIFT_BYTE(atom2) = NOQUOTE_2;
 
     Element* v1 = Known_Element(atom1);
     Element* v2 = Known_Element(atom2);

@@ -1415,9 +1415,9 @@ RebolValue* API_rebEntrap(
     assert(not Is_Nulled(v));  // lift operations cannot produce NULL
 
     if (Is_Lifted_Error(v))
-        LIFT_BYTE(v) = NOQUOTE_1;  // plain error
+        LIFT_BYTE(v) = NOQUOTE_2;  // plain error
     else
-        assert(LIFT_BYTE(v) > NOQUOTE_1);
+        assert(LIFT_BYTE(v) > NOQUOTE_2);
 
     Set_Base_Root_Bit(v);
     return v;  // caller must rebRelease()
@@ -2651,7 +2651,7 @@ RebolBaseInternal* API_rebRUN(const void* p)
     }
 
     if (Is_Action(v))
-        LIFT_BYTE(v) = NOQUOTE_1;
+        LIFT_BYTE(v) = NOQUOTE_2;
     else if (not Is_Frame(v))
         panic ("rebRUN() requires FRAME! or actions (aka FRAME! antiforms)");
 

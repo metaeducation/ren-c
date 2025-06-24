@@ -3052,28 +3052,37 @@ Bounce Scanner_Executor(Level* const L) {
   // from the stack items...transferring the quotes and sigils from the head
   // item onto the overall popped sequence (or subsequence).
 
-    Flags sigil_and_quote_mask;
+    Flags sigil_and_lift_mask;
+
+  #if RUNTIME_CHECKS
+    Count quotes_before;
+  #endif
 
   extract_sigil_and_quotes_of_head: {
 
-    // Though we take the Sigil and Quotes of the head, we leave the quasi
-    // state.  Quasiforms are currently legal in PATH!/CHAIN!/TUPLE!.  There's
-    // not a particularly proofund reason...it's just that `~/foo/bar.txt` is
-    // a very useful path form (more useful than quasipaths and antituples).
-    // Given that we know tildes in paths don't mean the path itself is a
-    // quasiform, we are able to unambiguously interpret `~abc~.~def~` or
-    // similar.  It may be useful, so enabling it for now.
+  // Though we take the Sigil and Quotes of the head, we leave the quasi
+  // state.  Quasiforms are currently legal in PATH!/CHAIN!/TUPLE!.  There's
+  // not a particularly profound reason...it's just that `~/foo/bar.txt` is
+  // a very useful path form (more useful than quasipaths and antituples).
+  // Given that we know tildes in paths don't mean the path itself is a
+  // quasiform, we are able to unambiguously interpret `~abc~.~def~` or
+  // similar.  It may be useful, so enabling it for now.
 
     OnStack(Element*) head = Data_Stack_At(Element, stackindex_path_head);
 
-    sigil_and_quote_mask = head->header.bits & (
-        CELL_MASK_SIGIL_BITS | FLAG_LIFT_BYTE(255 - NONQUASI_BIT)
-    );
-    head->header.bits &= ~(
-        CELL_MASK_SIGIL_BITS | FLAG_LIFT_BYTE(255 - NONQUASI_BIT)
-    );
-    if (LIFT_BYTE_RAW(head) == ANTIFORM_0)  // was an antiform...
-        LIFT_BYTE_RAW(head) = QUASIFORM_2;  // ... so quasiforms legal
+  #if RUNTIME_CHECKS
+    quotes_before = Quotes_Of(head);
+  #endif
+
+    sigil_and_lift_mask = head->header.bits &  // don't include quasi bit
+        (CELL_MASK_SIGIL_BITS | FLAG_LIFT_BYTE(255 - QUASI_BIT));
+
+    if (LIFT_BYTE_RAW(head) & QUASI_BIT)
+        LIFT_BYTE_RAW(head) = QUASIFORM_3;
+    else
+        LIFT_BYTE_RAW(head) = NOQUOTE_2;
+
+    head->header.bits &= (~ CELL_MASK_SIGIL_BITS);
 
 } trap_pop: {
 
@@ -3109,7 +3118,14 @@ Bounce Scanner_Executor(Level* const L) {
     assert(Sigil_Of(TOP_ELEMENT) == 0);
     assert(Quotes_Of(TOP_ELEMENT) == 0);
 
-    TOP_ELEMENT->header.bits |= sigil_and_quote_mask;
+    LIFT_BYTE(TOP_ELEMENT) = DUAL_0;  // clear out so masking in works
+    TOP_ELEMENT->header.bits |= sigil_and_lift_mask;
+
+  #if RUNTIME_CHECKS
+    Count quotes_check = Quotes_Of(TOP_ELEMENT);
+    assert(quotes_check == quotes_before);
+    assert(not (LIFT_BYTE(TOP_ELEMENT) & QUASI_BIT));
+  #endif
 
     goto sequence_or_conflation_was_pushed;
 

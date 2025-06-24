@@ -95,10 +95,10 @@ INLINE Element* Init_Word_Untracked(
 }
 
 #define Init_Word(out,str) \
-    TRACK(Init_Word_Untracked((out), NOQUOTE_1, (str)))
+    TRACK(Init_Word_Untracked((out), NOQUOTE_2, (str)))
 
 #define Init_Quasi_Word(out,symbol) \
-    TRACK(Init_Word_Untracked((out), QUASIFORM_2, (symbol)))
+    TRACK(Init_Word_Untracked((out), QUASIFORM_3, (symbol)))
 
 INLINE Element* Init_Word_Bound_Untracked(
     Sink(Element) out,
@@ -149,7 +149,7 @@ INLINE const String* Intern_Unsized_Managed(const char *utf8)
 INLINE bool Is_Bar(const Value* v) {
     return (
         Heart_Of(v) == TYPE_WORD
-        and LIFT_BYTE(v) == NOQUOTE_1
+        and LIFT_BYTE(v) == NOQUOTE_2
         and Cell_Word_Symbol(v) == CANON(BAR_1)  // caseless | always canon
     );
 }
@@ -157,7 +157,7 @@ INLINE bool Is_Bar(const Value* v) {
 INLINE bool Is_Bar_Bar(const Atom* v) {
     return (
         Heart_Of(v) == TYPE_WORD
-        and LIFT_BYTE(v) == NOQUOTE_1
+        and LIFT_BYTE(v) == NOQUOTE_2
         and Cell_Word_Symbol(v) == CANON(_B_B)  // caseless || always canon
     );
 }

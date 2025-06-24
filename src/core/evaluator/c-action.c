@@ -1109,11 +1109,11 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     L->varlist = u_cast(Array*, s);
     L->rootvar = Flex_Head_Dynamic(Element, s);
 
-    possibly(LIFT_BYTE(frame) != NOQUOTE_1);  // can be ACTION!, quasi, etc.
+    possibly(LIFT_BYTE(frame) != NOQUOTE_2);  // can be ACTION!, quasi, etc.
 
     TRACK(L->rootvar)->header.bits
         = (frame->header.bits & ~FLAG_LIFT_BYTE(255))
-            | FLAG_LIFT_BYTE(NOQUOTE_1)  // canonize as FRAME!
+            | FLAG_LIFT_BYTE(NOQUOTE_2)  // canonize as FRAME!
             | CELL_FLAG_PROTECTED;  // rootvars protected from modification
     L->rootvar->extra = frame->extra;
     L->rootvar->payload = frame->payload;

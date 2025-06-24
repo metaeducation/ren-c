@@ -148,7 +148,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 //
 INLINE bool Any_Lifted_Dual(const Slot* slot) {
     assert(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
-    return LIFT_BYTE_RAW(slot) >= QUASIFORM_2;
+    return LIFT_BYTE_RAW(slot) >= QUASIFORM_3;
 }
 
 INLINE Slot* Init_Dual_Unset(Init(Slot) slot) {

@@ -76,7 +76,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     assert(Is_Action(action) or Is_Frame(action));  // tolerate either?
     Value* rootvar = Flex_Head_Dynamic(Element, a);
     Copy_Cell(rootvar, action);
-    LIFT_BYTE(rootvar) = NOQUOTE_1;  // make sure it's a plain FRAME!
+    LIFT_BYTE(rootvar) = NOQUOTE_2;  // make sure it's a plain FRAME!
     Protect_Rootvar_If_Debug(rootvar);
 
     const Key* tail;

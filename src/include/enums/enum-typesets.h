@@ -82,7 +82,7 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
 }
 
 #define Any_Fundamental(v) \
-    (LIFT_BYTE(Ensure_Readable(v)) == NOQUOTE_1)
+    (LIFT_BYTE(Ensure_Readable(v)) == NOQUOTE_2)
 
 
 INLINE bool Any_Sequence_Or_List_Type(Option(Heart) h)  // !!! optimize?

@@ -236,7 +236,7 @@ INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
 //
 
 INLINE Value* Splicify(Need(Value*) val) {
-    assert(Any_List(val) and LIFT_BYTE(val) == NOQUOTE_1);
+    assert(Any_List(val) and LIFT_BYTE(val) == NOQUOTE_2);
     KIND_BYTE(val) = TYPE_GROUP;  // splice drops knowledge of list type
     Option(Error*) e = Trap_Coerce_To_Antiform(cast(Atom*, val));
     assert(not e);
@@ -247,7 +247,7 @@ INLINE Value* Splicify(Need(Value*) val) {
 
 INLINE Value* Init_Splice_Untracked(Init(Value) out, Source* a) {
     Init_Group(out, a);
-    LIFT_BYTE_RAW(out) = ANTIFORM_0;  // groups are isotopic
+    LIFT_BYTE_RAW(out) = ANTIFORM_1;  // groups are isotopic
     return out;
 }
 

@@ -684,10 +684,10 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
 } adjust_quote_level_and_run_type_constraint: {
 
-    if (LIFT_BYTE(item) != NOQUOTE_1) {
+    if (LIFT_BYTE(item) != NOQUOTE_2) {
         if (LIFT_BYTE(item) != LIFT_BYTE(SPARE))
             goto test_failed;  // should be willing to accept subset quotes
-        LIFT_BYTE(SPARE) = NOQUOTE_1;
+        LIFT_BYTE(SPARE) = NOQUOTE_2;
     }
 
 } handle_after_any_quoting_adjustments: {
@@ -707,7 +707,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     DECLARE_ELEMENT (temp_item_word);
     Copy_Cell(temp_item_word, item);
     KIND_BYTE(temp_item_word) = TYPE_WORD;
-    LIFT_BYTE(temp_item_word) = NOQUOTE_1;  // ~word!~ or 'word! etc.
+    LIFT_BYTE(temp_item_word) = NOQUOTE_2;  // ~word!~ or 'word! etc.
 
     Option(Error*) error = Trap_Get_Word(test, temp_item_word, derived);
     if (error)
@@ -923,7 +923,7 @@ bool Typecheck_Coerce(
       do_coercion:
 
         if (Is_Atom_Action(atom)) {
-            LIFT_BYTE(atom) = NOQUOTE_1;
+            LIFT_BYTE(atom) = NOQUOTE_2;
             coerced = true;
             goto typecheck_again;
         }

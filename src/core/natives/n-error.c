@@ -113,7 +113,7 @@ DECLARE_NATIVE(ENRESCUE)
 
     if (not THROWING) {  // successful result
         if (Is_Error(OUT)) {
-            LIFT_BYTE(OUT) = NOQUOTE_1;  // turn it into normal error
+            LIFT_BYTE(OUT) = NOQUOTE_2;  // turn it into normal error
             return OUT;
         }
         return Liftify(OUT);
@@ -214,7 +214,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
     if (Is_Error(SPARE)) {
         Drop_Level(SUBLEVEL);
         Move_Atom(OUT, SPARE);
-        LIFT_BYTE(OUT) = NOQUOTE_1;  // change antiform error to plain
+        LIFT_BYTE(OUT) = NOQUOTE_2;  // change antiform error to plain
         return BRANCHED(OUT);
     }
 
@@ -272,7 +272,7 @@ DECLARE_NATIVE(EXCEPT)
     if (not Is_Error(atom))
         return COPY(atom);  // pass thru any non-errors
 
-    LIFT_BYTE(atom) = NOQUOTE_1;  // turn antiform error into plain warning
+    LIFT_BYTE(atom) = NOQUOTE_2;  // turn antiform error into plain warning
     Element* warning = Known_Element(atom);
 
     return DELEGATE_BRANCH(OUT, branch, warning);  // !!! pass antiform? [1]

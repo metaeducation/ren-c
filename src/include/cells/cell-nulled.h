@@ -69,14 +69,14 @@
 
 INLINE bool Is_Light_Null(Need(const Atom*) a) {
     Assert_Cell_Readable(a);
-    return LIFT_BYTE(a) == ANTIFORM_0
+    return LIFT_BYTE(a) == ANTIFORM_1
         and Heart_Of(a) == TYPE_WORD
         and Cell_Word_Id(a) == SYM_NULL;
 }
 
 INLINE bool Is_Nulled(const Value* v) {
     Assert_Cell_Readable(v);
-    return LIFT_BYTE(v) == ANTIFORM_0
+    return LIFT_BYTE(v) == ANTIFORM_1
         and Heart_Of(v) == TYPE_WORD
         and Cell_Word_Id(v) == SYM_NULL;
 }
@@ -84,7 +84,7 @@ INLINE bool Is_Nulled(const Value* v) {
 #define Init_Nulled(out) \
     TRACK(Init_Word_Untracked( \
         (out), \
-        ANTIFORM_0,  /* NULL is valid keyword symbol */ \
+        ANTIFORM_1,  /* NULL is valid keyword symbol */ \
         CANON(NULL)))
 
 #define Init_Quasi_Null(out) \

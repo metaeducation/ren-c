@@ -84,7 +84,7 @@ void Startup_Datatypes(void)
 
         Freeze_Source_Deep(a);
         Init_Fence(datatype, a);
-        LIFT_BYTE_RAW(datatype) = ANTIFORM_0;  // fences are isotopic
+        LIFT_BYTE_RAW(datatype) = ANTIFORM_1;  // fences are isotopic
         Set_Cell_Flag(datatype, PROTECTED);
 
         assert(datatype == Datatype_From_Type(type));  // convenient [3]

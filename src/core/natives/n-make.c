@@ -67,8 +67,8 @@ DECLARE_NATIVE(MAKE)
 //
 Bounce Copy_Quoter_Executor(Level* level_)
 {
-    if (STATE == NOQUOTE_1)  // actually means antiform
-        LIFT_BYTE_RAW(OUT) = ANTIFORM_0;
+    if (STATE == NOQUOTE_2)  // actually means antiform
+        LIFT_BYTE_RAW(OUT) = ANTIFORM_1;
     else
         LIFT_BYTE_RAW(OUT) = STATE;
 
@@ -107,7 +107,7 @@ DECLARE_NATIVE(COPY)
     Element* elem = Element_ARG(VALUE);
 
     LiftByte lift_byte = LIFT_BYTE(elem);
-    LIFT_BYTE(elem) = NOQUOTE_1;  // dispatch requires unquoted items
+    LIFT_BYTE(elem) = NOQUOTE_2;  // dispatch requires unquoted items
 
     Option(Dispatcher*) dispatcher = Get_Generic_Dispatcher(
         &GENERIC_TABLE(COPY),
@@ -124,7 +124,7 @@ DECLARE_NATIVE(COPY)
         return COPY(elem);
     }
 
-    if (lift_byte == NOQUOTE_1)  // don't have to requote/etc.
+    if (lift_byte == NOQUOTE_2)  // don't have to requote/etc.
         return Apply_Cfunc(unwrap dispatcher, LEVEL);
 
     Option(const Symbol*) label = Level_Label(level_);
@@ -144,8 +144,8 @@ DECLARE_NATIVE(COPY)
     sub->u.action.original = Cell_Frame_Phase(LIB(COPY));
     Set_Action_Level_Label(sub, label);
 
-    if (lift_byte == ANTIFORM_0)
-        STATE = NOQUOTE_1;  // 0 state is reserved
+    if (lift_byte == ANTIFORM_1)
+        STATE = NOQUOTE_2;  // 0 state is reserved
     else
         STATE = lift_byte;
 

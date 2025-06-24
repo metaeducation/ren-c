@@ -236,7 +236,7 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
     if (Is_Nulled(v))
         assert(not Is_Api_Value(v));  // only internals can be nulled [1]
 
-    if (LIFT_BYTE(v) == ANTIFORM_0) {
+    if (LIFT_BYTE(v) == ANTIFORM_1) {
         Assert_Cell_Stable(v);
         Liftify(u_cast(Atom*, Copy_Cell_Core(out, v, CELL_MASK_THROW)));
         Set_Cell_Flag(out, FEED_NOTE_META);  // @ turns back [2]

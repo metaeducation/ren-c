@@ -270,7 +270,7 @@ INLINE Element* Init_Frame_Untracked(
 //
 
 INLINE Value* Actionify(Need(Value*) val) {
-    assert(Is_Frame(val) and LIFT_BYTE(val) == NOQUOTE_1);
+    assert(Is_Frame(val) and LIFT_BYTE(val) == NOQUOTE_2);
     Option(Error*) e = Trap_Coerce_To_Antiform(cast(Atom*, val));
     assert(not e);
     UNUSED(e);
@@ -285,7 +285,7 @@ INLINE Value* Actionify(Need(Value*) val) {
 
 INLINE Value* Deactivate_If_Action(Need(Value*) v) {
     if (Is_Action(v))
-        LIFT_BYTE(v) = NOQUOTE_1;
+        LIFT_BYTE(v) = NOQUOTE_2;
     return v;
 }
 

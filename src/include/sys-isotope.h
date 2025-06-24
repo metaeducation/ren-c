@@ -63,7 +63,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
         assert(not Is_Api_Value(elem));  // no unstable antiforms in API [1]
 
     if (not Any_Isotopic_Type(heart)) {
-        LIFT_BYTE(elem) = NOQUOTE_1;
+        LIFT_BYTE(elem) = NOQUOTE_2;
         return Error_Non_Isotopic_Type_Raw(elem);
     }
 
@@ -79,7 +79,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
                 break;
 
               default: {
-                LIFT_BYTE(elem) = NOQUOTE_1;
+                LIFT_BYTE(elem) = NOQUOTE_2;
                 return Error_Illegal_Keyword_Raw(elem);  // only a few ok [4]
               }
             }
@@ -113,7 +113,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
             Tweak_Cell_Frame_Lens_Or_Label(elem, ANONYMOUS);
     }
 
-    LIFT_BYTE_RAW(atom) = ANTIFORM_0;  // few places should use LIFT_BYTE_RAW!
+    LIFT_BYTE_RAW(atom) = ANTIFORM_1;  // few places should use LIFT_BYTE_RAW!
     return SUCCESS;
 }
 
@@ -125,11 +125,11 @@ INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
     Option(Heart) heart = Heart_Of(v);
 
     if (not Any_Isotopic_Type(heart)) {  // Note: all words have quasiforms [1]
-        LIFT_BYTE(v) = NOQUOTE_1;
+        LIFT_BYTE(v) = NOQUOTE_2;
         return Error_Non_Isotopic_Type_Raw(v);
     }
 
-    LIFT_BYTE_RAW(v) = QUASIFORM_2;  // few places should use LIFT_BYTE_RAW!
+    LIFT_BYTE_RAW(v) = QUASIFORM_3;  // few places should use LIFT_BYTE_RAW!
     return SUCCESS;
 }
 
@@ -163,17 +163,17 @@ INLINE bool Is_Pack_Undecayable(Atom* pack)
         return true;
 
     for (; at != tail; ++at) {  // all pack elements get checked [1]
-        if (LIFT_BYTE(at) >= ONEQUOTE_NONQUASI_3)
+        if (LIFT_BYTE(at) >= ONEQUOTE_NONQUASI_4)
             continue;  // most common case, lifted normal Elements
 
-        if (LIFT_BYTE(at) == QUASIFORM_2) {
+        if (LIFT_BYTE(at) == QUASIFORM_3) {
             if (Is_Stable_Antiform_Kind_Byte(u_cast(KindByte, Heart_Of(at))))
                 continue;  // lifted stable antiform, decayable
 
             return true;  // lifted unstable antiform... not decayable
         }
 
-        assert(LIFT_BYTE(at) == NOQUOTE_1);
+        assert(LIFT_BYTE(at) == NOQUOTE_2);
         return true;  // today we consider this corrupt [2]
     }
 

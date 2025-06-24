@@ -241,7 +241,7 @@ DECLARE_NATIVE(LIFT)
         if (not Bool_ARG(EXCEPT))
             return PANIC(Cell_Error(atom));
 
-        LIFT_BYTE(atom) = NOQUOTE_1;
+        LIFT_BYTE(atom) = NOQUOTE_2;
         return COPY(atom);  // plain WARNING!
     }
 
@@ -252,7 +252,7 @@ DECLARE_NATIVE(LIFT)
         if (Is_Light_Null(atom) or Is_Void(atom))
             return COPY(atom);  // ^META valid [1]
 
-        LIFT_BYTE(atom) = NOQUOTE_1;  // META:LITE gives plain for the rest
+        LIFT_BYTE(atom) = NOQUOTE_2;  // META:LITE gives plain for the rest
         return COPY(atom);
     }
 
@@ -309,7 +309,7 @@ DECLARE_NATIVE(UNLIFT)
         return COPY(atom);  // pass through as-is
     }
 
-    if (LIFT_BYTE(atom) == NOQUOTE_1) {
+    if (LIFT_BYTE(atom) == NOQUOTE_2) {
         if (not Bool_ARG(LITE))
             return PANIC("UNLIFT only takes non quoted/quasi things if :LITE");
 
@@ -322,7 +322,7 @@ DECLARE_NATIVE(UNLIFT)
         return OUT;
     }
 
-    if (LIFT_BYTE(atom) == QUASIFORM_2 and Bool_ARG(LITE))
+    if (LIFT_BYTE(atom) == QUASIFORM_3 and Bool_ARG(LITE))
         return PANIC(
             "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
         );
@@ -432,7 +432,7 @@ DECLARE_NATIVE(UNANTI)
     INCLUDE_PARAMS_OF_UNANTI;
 
     Atom* atom = Intrinsic_Atom_ARG(LEVEL);
-    LIFT_BYTE(atom) = NOQUOTE_1;  // turn to plain form
+    LIFT_BYTE(atom) = NOQUOTE_2;  // turn to plain form
 
     return COPY(Known_Element(atom));
 }
@@ -655,7 +655,7 @@ DECLARE_NATIVE(UNRUN)
     INCLUDE_PARAMS_OF_UNRUN;
 
     Value* action = ARG(ACTION);  // may or may not be antiform
-    LIFT_BYTE(action) = NOQUOTE_1;  // now it's known to not be antiform
+    LIFT_BYTE(action) = NOQUOTE_2;  // now it's known to not be antiform
     return COPY(action);
 }
 
@@ -755,6 +755,6 @@ DECLARE_NATIVE(NOQUOTE)
     if (b)
         return unwrap b;
 
-    LIFT_BYTE(OUT) = NOQUOTE_1;
+    LIFT_BYTE(OUT) = NOQUOTE_2;
     return OUT;
 }

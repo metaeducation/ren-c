@@ -503,7 +503,7 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
 //
 bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
 {
-    if (LIFT_BYTE(s) == ANTIFORM_0 or LIFT_BYTE(t) == ANTIFORM_0)
+    if (LIFT_BYTE(s) == ANTIFORM_1 or LIFT_BYTE(t) == ANTIFORM_1)
         return false;  // can't do less than on antiforms
 
     if (LIFT_BYTE(s) != LIFT_BYTE(t))

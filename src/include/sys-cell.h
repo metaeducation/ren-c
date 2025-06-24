@@ -598,7 +598,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
     Unchecked_Heart_Of(Ensure_Readable(c))
 
 INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
-    assert(LIFT_BYTE_RAW(c) == NOQUOTE_1);
+    assert(LIFT_BYTE_RAW(c) == NOQUOTE_2);
     return Heart_Of(c);
 }
 
@@ -609,7 +609,7 @@ INLINE Heart Heart_Of_Builtin(const Cell* c) {
 }
 
 INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
-    assert(LIFT_BYTE_RAW(c) == NOQUOTE_1);
+    assert(LIFT_BYTE_RAW(c) == NOQUOTE_2);
     Option(Heart) heart = Heart_Of(c);
     assert(heart != TYPE_0);
     return maybe heart;  // faster than unwrap, we already checked for 0
@@ -619,7 +619,7 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
     (TYPE_0 == maybe Heart_Of(cell))
 
 INLINE bool Type_Of_Is_0(const Cell* cell) {
-    return Heart_Of_Is_0(cell) and LIFT_BYTE_RAW(cell) == NOQUOTE_1;
+    return Heart_Of_Is_0(cell) and LIFT_BYTE_RAW(cell) == NOQUOTE_2;
 }
 
 
@@ -640,7 +640,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 //
 // 2. When LiftHolder() was changed to take a const Cell* instead of a
 //    const Cell*&, this caused gcc to ambiguously try to invoke the default
-//    copy constructor when doing (LIFT_BYTE(OnStack(Cell*)) = NOQUOTE_1) or
+//    copy constructor when doing (LIFT_BYTE(OnStack(Cell*)) = NOQUOTE_2) or
 //    similar with wrapper classes.  Doesn't happen in MSVC.  Deleting the
 //    default copy constructor seemed to fix it.
 
@@ -667,14 +667,14 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
             assert(right >= 0 and right <= 255);
 
             Option(Heart) heart = Unchecked_Heart_Of(cell);
-            if (not (right & NONQUASI_BIT))
+            if (right & QUASI_BIT)
                 assert(Any_Isotopic_Type(heart));  // has quasiforms/antiforms
 
             LIFT_BYTE_RAW(cell) = right;
         }
 
-        void operator=(const Antiform_0_Struct& right) = delete;
-        void operator=(const Quasiform_2_Struct& right) = delete;
+        void operator=(const Antiform_1_Struct& right) = delete;
+        void operator=(const Quasiform_3_Struct& right) = delete;
 
         void operator=(const LiftHolder& right)  // must write explicitly
           { *this = u_cast(LiftByte, right); }
@@ -701,12 +701,12 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 
 INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
     switch (LIFT_BYTE(atom)) {
-      case 0:  // ANTIFORM_0 (not constant in some debug builds)
+      case 1:  // ANTIFORM_1 (not constant in some debug builds)
         return u_cast(TypeEnum,
             (KIND_BYTE(atom) % MOD_HEART_64) + MAX_TYPE_BYTE_ELEMENT
         );
 
-      case NOQUOTE_1:  // heart might be TYPE_0 to be extension type
+      case NOQUOTE_2:  // heart might be TYPE_0 to be extension type
         switch (u_cast(Sigil, KIND_BYTE(atom) >> KIND_SIGIL_SHIFT)) {
           case SIGIL_0:
             return u_cast(HeartEnum, (KIND_BYTE(atom) % MOD_HEART_64));
@@ -722,7 +722,7 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
         }
         return TYPE_TIED;  // workaround "not all control paths return a value"
 
-      case 2:  // QUASIFORM_2 (not constant in some debug builds)
+      case 3:  // QUASIFORM_3 (not constant in some debug builds)
         return TYPE_QUASIFORM;
 
       default:
@@ -739,10 +739,10 @@ INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
 
 
 INLINE Option(Type) Type_Of_Unquoted(const Element* elem) {
-    if (LIFT_BYTE(elem) == QUASIFORM_2)
+    if (LIFT_BYTE(elem) == QUASIFORM_3)
         return TYPE_QUASIFORM;
 
-    assert(LIFT_BYTE(elem) != ANTIFORM_0);
+    assert(LIFT_BYTE(elem) != ANTIFORM_1);
 
     switch (u_cast(Sigil, KIND_BYTE(elem) >> KIND_SIGIL_SHIFT)) {
       case SIGIL_0:
@@ -768,16 +768,16 @@ INLINE Option(Type) Type_Of_Unquoted(const Element* elem) {
 
 INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
 {
-    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(ANTIFORM_0));
+    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(DUAL_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_1)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_2)
     );
 }
 
 INLINE void Reset_Cell_Header(Cell* c, LiftByte lift_byte, uintptr_t flags)
 {
-    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(ANTIFORM_0));
+    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(DUAL_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
         BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(lift_byte)
@@ -790,11 +790,11 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     uintptr_t flags
 ){
     assert((flags & FLAG_KIND_BYTE_255) == 0);
-    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(ANTIFORM_0));
+    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(DUAL_0));
 
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_1)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_2)
     );
     c->extra.base = m_cast(ExtraHeart*, extra_heart);
 }

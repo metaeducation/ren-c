@@ -694,7 +694,7 @@ DECLARE_NATIVE(LIT_WORD_Q)
         return unwrap b;
 
     return LOGIC(
-        LIFT_BYTE(e) == ONEQUOTE_NONQUASI_3 and Heart_Of(e) == TYPE_WORD
+        LIFT_BYTE(e) == ONEQUOTE_NONQUASI_4 and Heart_Of(e) == TYPE_WORD
     );
 }
 
@@ -1442,7 +1442,7 @@ DECLARE_NATIVE(NOQUASI)
         return unwrap b;
 
     if (Is_Quasiform(OUT))
-        LIFT_BYTE(OUT) = NOQUOTE_1;
+        LIFT_BYTE(OUT) = NOQUOTE_2;
     return OUT;
 }
 
@@ -1493,6 +1493,6 @@ DECLARE_NATIVE(NOANTIFORM)
         return unwrap bounce;
 
     if (Is_Antiform(v))
-        LIFT_BYTE(v) = NOQUOTE_1;
+        LIFT_BYTE(v) = NOQUOTE_2;
     return COPY(v);
 }

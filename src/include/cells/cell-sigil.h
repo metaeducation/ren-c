@@ -49,7 +49,7 @@
 //
 
 INLINE bool Any_Plain(const Element* e) {
-    if (LIFT_BYTE(e) != NOQUOTE_1)
+    if (LIFT_BYTE(e) != NOQUOTE_2)
         return false;
     return not (e->header.bits & CELL_MASK_SIGIL_BITS);
 }
@@ -60,7 +60,7 @@ INLINE bool Any_Plain(const Element* e) {
 
 #define Is_Sigiled(heart,sigil,v) \
     ((Ensure_Readable(v)->header.bits & CELL_HEART_LIFT_MASK) == \
-        (FLAG_LIFT_BYTE(NOQUOTE_1) | \
+        (FLAG_LIFT_BYTE(NOQUOTE_2) | \
             (FLAG_HEART_ENUM(heart) | FLAG_SIGIL_ENUM(sigil))))
 
 #define Is_Pinned_Form_Of(heartname, v) \
@@ -89,14 +89,14 @@ INLINE Option(Sigil) Sigil_Of(const Element* e)
 //
 
 INLINE Element* Sigilize(Element* elem, Sigil sigil) {
-    assert(LIFT_BYTE(elem) == NOQUOTE_1);  // no quotes, no quasiforms
+    assert(LIFT_BYTE(elem) == NOQUOTE_2);  // no quotes, no quasiforms
     assert(not (elem->header.bits & CELL_MASK_SIGIL_BITS));  // clearest [1]
     elem->header.bits |= FLAG_SIGIL_ENUM(sigil);
     return elem;
 }
 
 INLINE Element* Plainify(Element* elem) {
-    assert(LIFT_BYTE(elem) == NOQUOTE_1);  // no quotes, no quasiforms
+    assert(LIFT_BYTE(elem) == NOQUOTE_2);  // no quotes, no quasiforms
     elem->header.bits &= ~(CELL_MASK_SIGIL_BITS);
     return elem;
 }

@@ -409,7 +409,7 @@ static Option(Error*) Trap_Get_Parse_Value(
             Init_Typechecker(checker, out_value);
             assert(Heart_Of(checker) == TYPE_FRAME);
             Copy_Cell(out_value, checker);
-            LIFT_BYTE(out_value) = NOQUOTE_1;
+            LIFT_BYTE(out_value) = NOQUOTE_2;
         }
         else {
             return Error_Bad_Antiform(out_value);
@@ -1795,7 +1795,7 @@ DECLARE_NATIVE(SUBPARSE)
 
         if (Is_Datatype(spare)) {
             Init_Typechecker(u_cast(Value*, P_SAVE), spare);  // will be FRAME!
-            LIFT_BYTE(spare) = NOQUOTE_1;
+            LIFT_BYTE(spare) = NOQUOTE_2;
             rule = Known_Element(spare);
         }
         else if (Is_Antiform(spare))
@@ -1814,7 +1814,7 @@ DECLARE_NATIVE(SUBPARSE)
         if (not Is_Action(spare))
             return PANIC("PATH! in PARSE3 must be an ACTION!");
 
-        LIFT_BYTE(spare) = NOQUOTE_1;
+        LIFT_BYTE(spare) = NOQUOTE_2;
         rule = Copy_Cell(P_SAVE, Known_Element(spare));
     }
     else if (Is_Set_Tuple(rule)) {

@@ -433,7 +433,7 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
     out->header.bits = (
         BASE_FLAG_BASE | BASE_FLAG_CELL
             | FLAG_HEART(WORD)
-            | FLAG_LIFT_BYTE(ANTIFORM_0)
+            | FLAG_LIFT_BYTE(ANTIFORM_1)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED

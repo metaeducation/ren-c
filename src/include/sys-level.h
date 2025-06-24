@@ -1040,7 +1040,7 @@ INLINE void Inject_Definitional_Returner(
 
     Atom* cell = Level_Arg(L, 1);  // should start out specialized
     assert(
-        LIFT_BYTE(cell) == ONEQUOTE_NONQUASI_3
+        LIFT_BYTE(cell) == ONEQUOTE_NONQUASI_4
         and Heart_Of(cell) == TYPE_PARAMETER
     );
     Init_Action(

@@ -320,7 +320,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         Assert_Flex_Term_If_Needed(a);
         assert(Is_Base_Marked(a));
 
-        if (LIFT_BYTE(v) == ANTIFORM_0) {
+        if (LIFT_BYTE(v) == ANTIFORM_1) {
             if (heart == TYPE_FENCE) {
                 const Value* value = d_cast(const Value*, v);
                 assert(

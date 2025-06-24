@@ -97,7 +97,7 @@ INLINE Element* Bind_If_Unbound(Element* elem, Context* context) {
 INLINE Element* Copy_Dequoted_Cell(Sink(Element) out, const Cell* in) {
     Assert_Cell_Stable(in);
     Copy_Cell_Untracked(u_cast(Cell*, out), in, CELL_MASK_COPY);
-    LIFT_BYTE(out) = NOQUOTE_1;
+    LIFT_BYTE(out) = NOQUOTE_2;
     return out;
 }
 
