@@ -73,6 +73,14 @@
 //   start of the enumeration.
 //
 
+// Datatypes cache a byte of their datatype in the array of the FENCE!.
+// This is only available on antiforms, which are canonized from arbitrary
+// FENCE!s created by the user to the ones made in Startup_Datatypes() which
+// have the DATATYPE_BYTE() set.
+//
+#define DATATYPE_BYTE(source) \
+    SECOND_BYTE(&FLEX_INFO(source))
+
 
 // 1. This returns a RebolValue* to hold the datatype.  This paves the way
 //    for the ability to GC datatypes if all references disappear.  (Right
@@ -145,7 +153,7 @@ INLINE SymId Symbol_Id_From_Type(Type type) {
 
 
 INLINE Option(SymId) Cell_Datatype_Id(const Value* v) {
-    assert(Type_Of(v) == TYPE_DATATYPE);
+    assert(Is_Datatype(v));
     if (Cell_Series_Len_At(v) != 1)
         panic ("Type blocks only allowed one element for now");
     const Element* item = Cell_List_At(nullptr, v);
@@ -154,12 +162,23 @@ INLINE Option(SymId) Cell_Datatype_Id(const Value* v) {
     return Cell_Word_Id(item);
 }
 
+// 1. When a user writes (type: anti '{integer!}) then converting to an
+//    antiform is what canonizes the fence's array to one that has the
+//    DATATYPE_BYTE() set.  So you can only ask this of antiforms.
+//
 INLINE Option(Type) Cell_Datatype_Type(const Value* v) {
-    Option(SymId) id = Cell_Datatype_Id(v);
-    if (id and Is_Symbol_Id_Of_Builtin_Type(unwrap id))
-        return Type_From_Symbol_Id(unwrap id);
-    return TYPE_0;
+    assert(Is_Datatype(v));  // only works on antiform [1]
+    return u_cast(Option(Type), DATATYPE_BYTE(Cell_Array(v)));
 }
+
+#if RUNTIME_CHECKS
+    INLINE Option(Type) Cell_Datatype_Type_Slow_Debug(const Value* v) {
+        Option(SymId) id = Cell_Datatype_Id(v);
+        if (id and Is_Symbol_Id_Of_Builtin_Type(unwrap id))
+            return Type_From_Symbol_Id(unwrap id);
+        return TYPE_0;
+    }
+#endif
 
 INLINE Option(Heart) Cell_Datatype_Heart(const Value* v) {
     Option(SymId) id = Cell_Datatype_Id(v);

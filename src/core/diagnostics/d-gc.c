@@ -319,6 +319,16 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         const Array* a = c_cast(Array*, CELL_SERIESLIKE_NODE(v));
         Assert_Flex_Term_If_Needed(a);
         assert(Is_Base_Marked(a));
+
+        if (LIFT_BYTE(v) == ANTIFORM_0) {
+            if (heart == TYPE_FENCE) {
+                const Value* value = d_cast(const Value*, v);
+                assert(
+                    Cell_Datatype_Type(value)
+                    == Cell_Datatype_Type_Slow_Debug(value)
+                );
+            }
+        }
         break; }
 
       case TYPE_TUPLE:
