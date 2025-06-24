@@ -475,7 +475,7 @@ Bounce Init_Thrown_Unwind_Value(
             if (not Is_Action_Level(L))
                 continue; // only exit functions
 
-            if (Is_Level_Fulfilling(L))
+            if (Is_Level_Fulfilling_Or_Typechecking(L))
                 continue; // not ready to exit
 
             if (Cell_Frame_Phase(seek) == L->u.action.original) {
@@ -499,7 +499,7 @@ Bounce Init_Thrown_Unwind_Value(
             if (not Is_Action_Level(L))
                 continue; // only exit functions
 
-            if (Is_Level_Fulfilling(L))
+            if (Is_Level_Fulfilling_Or_Typechecking(L))
                 continue; // not ready to exit
 
             --count;

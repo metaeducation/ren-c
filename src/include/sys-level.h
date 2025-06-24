@@ -250,7 +250,7 @@ INLINE Element* Evaluator_Level_Current(Level* L) {
     Set_Base_Managed_Bit((L)->varlist)
 
 INLINE ParamList* Level_Varlist(Level* L) {
-    assert(not Is_Level_Fulfilling(L));
+    assert(Is_Level_Dispatching(L));
     return u_cast(ParamList*, L->varlist);
 }
 
@@ -354,12 +354,12 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     (In_Debug_Mode(32) ? false : Is_Feed_At_End((L)->feed))
 
 INLINE VarList* Varlist_Of_Level_Maybe_Unmanaged(Level* L) {
-    assert(not Is_Level_Fulfilling(L));
+    assert(Is_Level_Dispatching(L));
     return cast(VarList*, L->varlist);
 }
 
 INLINE ParamList* Varlist_Of_Level_Force_Managed(Level* L) {
-    assert(not Is_Level_Fulfilling(L));
+    assert(Is_Level_Dispatching(L));
     Force_Level_Varlist_Managed(L);  // may already be managed
     return cast(ParamList*, L->varlist);
 }

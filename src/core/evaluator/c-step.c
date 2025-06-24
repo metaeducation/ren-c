@@ -2097,7 +2097,7 @@ Bounce Stepper_Executor(Level* L)
             // would reuse levels while fulfilling arguments...but stackless
             // changed this and has setting words start new Levels.  Review.
             //
-            and not Is_Level_Fulfilling(L->prior)
+            and not Is_Level_Fulfilling_Or_Typechecking(L->prior)
         ){
             // This should mean it's a variadic level, e.g. when we have
             // the 2 in the output slot and are at the THEN in:

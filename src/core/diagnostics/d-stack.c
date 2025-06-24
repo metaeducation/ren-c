@@ -140,7 +140,7 @@ Element* Init_Near_For_Level(Sink(Element) out, Level* L)
     // yet.  This needs some way of differentiation, consider it.
     //
     /*
-    if (Is_Action_Level(L) and Is_Level_Fulfilling(L)) {
+    if (Is_Action_Level(L) and Is_Level_Fulfilling_Or_Typechecking(L)) {
         ???
     }
     */
@@ -167,7 +167,7 @@ bool Is_Varlist_Running_Or_Pending(VarList* varlist)
     if (not L)
         return false;
 
-    if (Is_Level_Fulfilling(L))
+    if (Is_Level_Fulfilling_Or_Typechecking(L))
         return false;
 
     return true;
@@ -191,7 +191,7 @@ DECLARE_NATIVE(RUNNING_Q)
 
     Level* L = Level_Of_Varlist_May_Panic(frame_ctx);
 
-    if (Is_Level_Fulfilling(L))
+    if (Is_Level_Fulfilling_Or_Typechecking(L))
         return Init_Logic(OUT, false);
 
     return Init_Logic(OUT, true);
@@ -215,7 +215,7 @@ DECLARE_NATIVE(PENDING_Q)
 
     Level* L = Level_Of_Varlist_May_Panic(frame_ctx);
 
-    if (Is_Level_Fulfilling(L))
+    if (Is_Level_Fulfilling_Or_Typechecking(L))
         return Init_Logic(OUT, true);
 
     return Init_Logic(OUT, false);

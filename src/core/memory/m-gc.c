@@ -799,7 +799,7 @@ static void Mark_Level(Level* L) {
 
     if (L->varlist and Is_Base_Managed(L->varlist)) {  // normal marking [1]
         assert(
-            not Is_Level_Fulfilling(L)
+            not Is_Level_Fulfilling_Or_Typechecking(L)
             or LEVEL_STATE_BYTE(L) == ST_ACTION_TYPECHECKING  // filled/safe
         );
 
@@ -810,7 +810,7 @@ static void Mark_Level(Level* L) {
     }
 
     if (
-        Is_Level_Fulfilling(L)
+        Is_Level_Fulfilling_Or_Typechecking(L)
         and (
             LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY
             or LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY_INFIX
@@ -824,7 +824,8 @@ static void Mark_Level(Level* L) {
     const Key* key = Phase_Keys(&key_tail, phase);
 
     if (
-        Is_Level_Fulfilling(L)
+        Is_Level_Fulfilling_Or_Typechecking(L)
+        and LEVEL_STATE_BYTE(L) != ST_ACTION_TYPECHECKING
         and Not_Executor_Flag(ACTION, L, DOING_PICKUPS)
     ){
         key_tail = L->u.action.key + 1;  // don't mark uninitialized bits [3]
@@ -833,7 +834,11 @@ static void Mark_Level(Level* L) {
     Atom* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg) {  // key_tail may be truncated [3]
         if (Is_Cell_Erased(arg)) {
-            assert(Is_Level_Fulfilling(L) and key == L->u.action.key);
+            assert(
+                Is_Level_Fulfilling_Or_Typechecking(L)
+                and LEVEL_STATE_BYTE(L) != ST_ACTION_TYPECHECKING
+                and key == L->u.action.key
+            );
             continue;  // only the current cell is allowed to be erased [4]
         }
         Queue_Mark_Cell_Deep(arg);

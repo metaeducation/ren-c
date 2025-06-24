@@ -89,7 +89,7 @@
 #define ACTION_EXECUTOR_FLAG_IN_DISPATCH \
     LEVEL_FLAG_26
 
-#define Is_Level_Fulfilling(L) \
+#define Is_Level_Fulfilling_Or_Typechecking(L) \
     Not_Executor_Flag(ACTION, L, IN_DISPATCH)
 
 #define Is_Level_Dispatching(L) \

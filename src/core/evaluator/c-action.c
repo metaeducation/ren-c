@@ -55,7 +55,7 @@
 // By the same token, prefer direct testing of IN_DISPATCH to the macros
 
 #undef Is_Level_Dispatching
-#undef Is_Level_Fulfilling
+#undef Is_Level_Fulfilling_Or_Typechecking
 
 
 #define L_next              cast(const Cell*, L->feed->p)

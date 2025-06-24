@@ -232,7 +232,7 @@ REBLEN Stack_Depth(void)
     Level* L = TOP_LEVEL;
     while (L) {
         if (Is_Action_Level(L))
-            if (not Is_Level_Fulfilling(L)) {
+            if (Is_Level_Dispatching(L)) {
                 //
                 // We only count invoked functions (not group or path
                 // evaluations or "pending" functions that are building their
@@ -365,7 +365,7 @@ void Set_Location_Of_Error(
         else
             Init_Quasar(PUSH());  // [2]
 
-        if (Is_Level_Fulfilling(L)) { // differentiate fulfilling levels [3]
+        if (Is_Level_Fulfilling_Or_Typechecking(L)) { // differentiate [3]
             Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
             Move_Cell(Stub_Cell(a), TOP);
             Init_Fence(TOP, a);
