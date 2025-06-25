@@ -437,7 +437,6 @@ Bounce Action_Executor(Level* L)
             }
 
             if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
-                assert(not Is_Atom_Trash(OUT));
                 Value* out = Decay_If_Unstable(OUT);  // !!! ^META variadics?
                 Init_Varargs_Untyped_Infix(ARG, out);
                 Erase_Cell(OUT);
@@ -847,7 +846,7 @@ Bounce Action_Executor(Level* L)
 
         if (Get_Parameter_Flag(param, VARIADIC)) {  // can't check now [2]
             if (
-                not Is_Stable(ARG)
+                Not_Cell_Stable(ARG)
                 or not Is_Varargs(Known_Stable(ARG))
             ){
                 Value* arg = Decay_If_Unstable(ARG);

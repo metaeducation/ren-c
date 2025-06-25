@@ -66,7 +66,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 
       case DETECTED_AS_CELL: {
         const Atom* atom = c_cast(Atom*, p);
-        assert(Is_Stable(atom));  // !!! Should unstable args be allowed?
+        assert(Is_Cell_Stable(atom));  // !!! Should unstable args be allowed?
         UNUSED(atom);
 
         const Value* v = c_cast(Value*, p);

@@ -718,7 +718,7 @@ Bounce Stepper_Executor(Level* L)
     if (error)
         return PANIC(unwrap error);
 
-    possibly(Not_Stable(OUT) or Is_Atom_Trash(OUT));
+    possibly(Not_Cell_Stable(OUT) or Is_Trash(Known_Stable(OUT)));
 
     goto lookahead;
 
@@ -838,8 +838,9 @@ Bounce Stepper_Executor(Level* L)
     //    (Possibly ^ should turn surprising ghosts into voids, but it should
     //    definitely not turn surprising ghosts into unsurprising ghosts.)
 
-    if (Is_Atom_Action(OUT))  // don't do ghosts, just actions [1]
-        Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // see flag notes
+    Value* out = Decay_If_Unstable(OUT);
+    if (Is_Action(out))  // don't do ghosts, just actions [1]
+        Set_Cell_Flag(out, OUT_HINT_UNSURPRISING);  // see flag notes
     goto lookahead;
 
 
@@ -955,7 +956,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Error(OUT))  // e.g. couldn't pick word as field from binding
         return PANIC(Cell_Error(OUT));  // don't conflate with action result
 
-    assert(Is_Stable(OUT));  // plain WORD! pick, ERROR! is only antiform
+    assert(Is_Cell_Stable(OUT));  // plain WORD! pick, ERROR! is only antiform
     Value* out = cast(Value*, OUT);
 
     if (Is_Action(out))
@@ -1245,9 +1246,9 @@ Bounce Stepper_Executor(Level* L)
     if (e)
         return PANIC(unwrap e);
 
-    possibly(Not_Stable(OUT));  // last step or unmeta'd item [1]
+    possibly(Not_Cell_Stable(OUT));  // last step or unmeta'd item [1]
 
-    if (Is_Atom_Action(OUT))
+    if (Is_Possibly_Unstable_Atom_Action(OUT))
         assert(Not_Cell_Flag(OUT, OUT_HINT_UNSURPRISING));
 
     goto lookahead;

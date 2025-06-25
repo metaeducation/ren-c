@@ -183,7 +183,7 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
 #define Is_Antiform_Stable(a) \
     (not Is_Antiform_Unstable(a))
 
-INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
+INLINE bool Is_Cell_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
     Assert_Cell_Readable(a);
     if (LIFT_BYTE(a) != ANTIFORM_1)
         return true;
@@ -194,17 +194,17 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
     );
 }
 
-#define Not_Stable(atom) (not Is_Stable(atom))
+#define Not_Cell_Stable(atom) (not Is_Cell_Stable(atom))
 
 #if NO_RUNTIME_CHECKS
     #define Assert_Cell_Stable(c)  NOOP
     #define Known_Stable(a)  u_cast(Value*, (a))
 #else
     #define Assert_Cell_Stable(c) \
-        assert(Is_Stable(cast(const Atom*, (c))));
+        assert(Is_Cell_Stable(cast(const Atom*, (c))));
 
     INLINE Value* Known_Stable(Atom* atom) {
-        assert(Is_Stable(atom));
+        assert(Is_Cell_Stable(atom));
         return u_cast(Value*, atom);
     }
 #endif

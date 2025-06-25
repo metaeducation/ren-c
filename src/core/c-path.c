@@ -170,7 +170,7 @@ DECLARE_NATIVE(PICK)
 
     Value* dual = Known_Stable(OUT);
 
-    if (Is_Atom_Action(dual))
+    if (Is_Action(dual))
         return PANIC("TWEAK* delegation machinery not done yet");
 
     if (Is_Dual_Nulled_Absent_Signal(dual))  // lifted is "NULL-but-present"
@@ -182,7 +182,7 @@ DECLARE_NATIVE(PICK)
 
     Unliftify_Undecayed(OUT);
 
-    if (Not_Stable(OUT)) {
+    if (Not_Cell_Stable(OUT)) {
         assert(false);  // Note: once usermode TWEAK* exists, it may screw up
         return PANIC("TWEAK* returned a lifted unstable antiform");
     }

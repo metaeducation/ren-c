@@ -284,7 +284,7 @@ void Do_After_Action_Checks_Debug(Level* level_) {
     //
   #if CHECK_RAW_NATIVE_RETURNS
     Details* details = Ensure_Level_Details(LEVEL);
-    if (Get_Details_Flag(details, RAW_NATIVE) and Is_Stable(OUT)) {
+    if (Get_Details_Flag(details, RAW_NATIVE) and Is_Cell_Stable(OUT)) {
         const Param* param = cast(Param*,
             Details_At(details, IDX_RAW_NATIVE_RETURN)
         );

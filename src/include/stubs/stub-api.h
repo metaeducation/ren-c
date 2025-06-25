@@ -72,9 +72,13 @@ INLINE bool Is_Api_Value(const Value* v) {
     return Is_Base_Root_Bit_Set(v);
 }
 
-INLINE bool Is_Atom_Api_Value(const Atom* v) {
-    Assert_Cell_Readable(v);
-    return Is_Base_Root_Bit_Set(v);
+INLINE bool Is_Atom_Api_Value(const Atom* atom) {
+    Assert_Cell_Readable(atom);
+    if (Is_Base_Root_Bit_Set(atom)) {
+        assert(Is_Cell_Stable(atom));
+        return true;
+    }
+    return false;
 }
 
 // 1. The head of the list isn't null, but points at the level, so that

@@ -1427,7 +1427,7 @@ Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot) {
     Option(Error*) e = Trap_Read_Slot_Meta(atom_out, slot);
     if (e)
         return e;
-    if (not Is_Stable(atom_out))
+    if (Not_Cell_Stable(atom_out))
         return Error_User("Cannot read unstable slot with Trap_Read_Slot()");
     return SUCCESS;  // out is Known_Stable()
 }
@@ -1461,7 +1461,7 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
     if (Is_Blackhole_Slot(slot))  // e.g. `for-each _ [1 2 3] [...]`
         return SUCCESS;  // toss it
 
-    assert(Is_Stable(write));
+    assert(Is_Cell_Stable(write));
 
     DECLARE_ELEMENT (temp);
     Copy_Cell(temp, u_cast(Element*, slot));
@@ -1490,19 +1490,24 @@ Option(Error*) Trap_Write_Loop_Slot_May_Bind_Or_Decay(
     if (not write)
         return Trap_Write_Slot(slot, LIB(NULL));
 
-    if (
-        Is_Atom_Action(unwrap write)
-        and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)
-    ){
-        return Error_User(
-            "Cannot write to loop slot with ACTION! unless it is ^META"
-        );
+    attempt {  // attempt to get stable antiform to write
+        if (Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)) {
+            Decay_If_Unstable(unwrap write);
+            continue;
+        }
+
+        if (Not_Cell_Stable(unwrap write))
+            break;
     }
-    else if (
-        not Is_Stable(unwrap write)
-        and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)
-    ){
-        Decay_If_Unstable(unwrap write);
+    then {  // `write` is stable
+        if (
+            Is_Action(Known_Stable(unwrap write))
+            and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)
+        ){
+            return Error_User(
+                "Cannot write to loop slot with ACTION! unless it is ^META"
+            );
+        }
     }
 
     if (Not_Cell_Flag(slot, LOOP_SLOT_NOTE_TIE))

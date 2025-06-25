@@ -90,7 +90,7 @@ INLINE Atom* Init_Ghost_Untracked(Init(Atom) out, bool surprising) {
     TRACK(Init_Ghost_Untracked((out), false))
 
 INLINE Atom* UNSURPRISING(Atom* atom) {
-    assert(Is_Ghost(atom) or Is_Atom_Action(atom));
+    assert(Is_Ghost(atom) or Is_Action(Known_Stable(atom)));
     Set_Cell_Flag(atom, OUT_HINT_UNSURPRISING);
     return atom;
 }

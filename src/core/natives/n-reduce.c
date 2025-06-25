@@ -633,13 +633,13 @@ Bounce Composer_Executor(Level* const L)
 
   extract_arguments_from_original_compose_call: { ////////////////////////////
 
-    // There's a Level for each "recursion" that processes the :DEEP blocks
-    // in a COMPOSE.  (These don't recurse as C functions, the levels are
-    // stacklessly processed by the trampoline, see %c-trampoline.c)
-    //
-    // But each level wants to access the arguments to the COMPOSE that
-    // kicked off the process.  A pointer to the Level of the main compose is
-    // tucked into each Composer_Executor() level to use.
+  // There's a Level for each "recursion" that processes the :DEEP blocks in a
+  // COMPOSE.  (These don't recurse as C functions, the levels are stacklessly
+  // processed by the trampoline, see %c-trampoline.c)
+  //
+  // But each level wants to access the arguments to the COMPOSE that kicked
+  // off the process.  A pointer to the Level of the main compose is tucked
+  // into each Composer_Executor() level to use.
 
     Level* level_ = main_level;  // level_ aliases L when outside this scope
 
@@ -766,20 +766,20 @@ Bounce Composer_Executor(Level* const L)
 
   push_single_element_in_out: {
 
-    // 1. When composing a single element, we use the newline intent from the
-    //    GROUP! in the compose pattern...because there is no meaning to
-    //    the newline flag of an evaluative product:
-    //
-    //        >> block: [foo
-    //               bar]
-    //
-    //        >> compose [a (block.2) b]
-    //        == [a bar b]
-    //
-    //        >> compose [a
-    //               (block.2) b]
-    //        == [a
-    //               bar b]
+  // 1. When composing a single element, we use the newline intent from the
+  //    GROUP! in the compose pattern...because there is no meaning to the
+  //    newline flag of an evaluative product:
+  //
+  //        >> block: [foo
+  //               bar]
+  //
+  //        >> compose [a (block.2) b]
+  //        == [a bar b]
+  //
+  //        >> compose [a
+  //               (block.2) b]
+  //        == [a
+  //               bar b]
 
     Copy_Cell(PUSH(), Known_Element(out));
 
@@ -813,34 +813,34 @@ Bounce Composer_Executor(Level* const L)
 
 } push_out_spliced:  /////////////////////////////////////////////////////////
 
-    // Splices are merged itemwise:
-    //
-    //    >> compose [(spread [a b]) merges]
-    //    == [a b merges]
-    //
-    // 1. There's not any technical reason why we couldn't allow you to
-    //    compose a quoted splice, applying the quote to each item:
-    //
-    //        >> compose [a '(spread [b 'c]) d]
-    //        == [a 'b ''c d]
-    //
-    //    But how often would that be useful, vs. it being a mistake?  Err on
-    //    the side of caution and don't allow it for now.
-    //
-    // 2. Only proxy newline flag from template on *first* value spliced in,
-    //    where it may have its own newline flag.  Not necessarily obvious,
-    //    e.g. would you want the composed block below to all fit on one line?
-    //
-    //        >> block-of-things: [
-    //               thing2  ; newline flag on thing1
-    //               thing3
-    //           ]
-    //
-    //        >> compose [thing1 (spread block-of-things)]  ; no newline flag
-    //        == [thing1
-    //               thing2  ; we proxy the flag, but is this what you wanted?
-    //               thing3
-    //           ]
+  // Splices are merged itemwise:
+  //
+  //    >> compose [(spread [a b]) merges]
+  //    == [a b merges]
+  //
+  // 1. There's not any technical reason why we couldn't allow you to compose
+  //     a quoted splice, applying the quote to each item:
+  //
+  //        >> compose [a '(spread [b 'c]) d]
+  //        == [a 'b ''c d]
+  //
+  //    But how often would that be useful, vs. it being a mistake?  Err on
+  //    the side of caution and don't allow it for now.
+  //
+  // 2. Only proxy newline flag from template on *first* value spliced in,
+  //    where it may have its own newline flag.  Not necessarily obvious,
+  //    e.g. would you want the composed block below to all fit on one line?
+  //
+  //        >> block-of-things: [
+  //               thing2  ; newline flag on thing1
+  //               thing3
+  //           ]
+  //
+  //        >> compose [thing1 (spread block-of-things)]  ; no newline flag
+  //        == [thing1
+  //               thing2  ; we proxy the flag, but is this what you wanted?
+  //               thing3
+  //           ]
 
     assert(Is_Splice(out));
 
@@ -866,11 +866,11 @@ Bounce Composer_Executor(Level* const L)
 
 } composer_finished_recursion: {  ////////////////////////////////////////////
 
-    // 1. Compose stack of the nested compose is relative to *its* baseline.
-    //
-    // 2. To save on memory usage, Rebol historically does not make copies of
-    //    arrays that don't have some substitution under them.  This may need
-    //    to be controlled by a refinement.
+  // 1. Compose stack of the nested compose is relative to *its* baseline.
+  //
+  // 2. To save on memory usage, Rebol historically does not make copies of
+  //    arrays that don't have some substitution under them.  This may need
+  //    to be controlled by a refinement.
 
     if (Is_Light_Null(OUT)) {  // VETO encountered
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);  // [1]
@@ -878,7 +878,7 @@ Bounce Composer_Executor(Level* const L)
         return OUT;
     }
 
-    assert(Is_Atom_Okay(OUT));  // "return values" are data stack contents
+    assert(Is_Okay(Known_Stable(OUT)));  // "return values" are on data stack
 
     if (not SUBLEVEL->u.compose.changed) {  // optimize on no substitutions [2]
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);  // [1]
@@ -914,11 +914,11 @@ Bounce Composer_Executor(Level* const L)
 
 } finished_out_is_null_if_veto: {  ///////////////////////////////////////////
 
-    // 1. At the end of the composer, we do not Drop_Data_Stack_To() and the
-    //    level will still be alive for the caller.  This lets them have
-    //    access to this level's BASELINE->stack_base, so it knows what all
-    //    was pushed...and also means the caller can decide if they want the
-    //    accrued items or not depending on the `changed` field in the level.
+  // 1. At the end of the composer, we do not Drop_Data_Stack_To() and the
+  //    level will still be alive for the caller.  This lets them have access
+  //    to this level's BASELINE->stack_base, so it knows what all was pushed,
+  //    and also means the caller can decide if they want the accrued items or
+  //    not depending on the `changed` field in the level.
 
     assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs [1]
 
@@ -1063,17 +1063,17 @@ DECLARE_NATIVE(COMPOSE2)
     Utf8(const*) head = Cell_Utf8_At(input);
     Utf8(const*) at = cast(Utf8(const*), transcode->at);
 
-  push_pattern_terminators_to_data_stack: { //////////////////////////////////
+  push_pattern_terminators_to_data_stack: {
 
-    // 1. If we're matching @(([])) and we see "((some(([thing]))", then when
-    //    we see the "s" that means we didn't see "(([".  So the scan has to
-    //    start looking for the first paren again.
-    //
-    // 2. When we call into the scanner for a pattern like "({[foo]})" we
-    //    start it scanning at "foo]})".  The reason we can get away with it
-    //    is that we've push levels manually that account for if the scanner
-    //    had seen "({[", so it expects to have consumed those tokens and
-    //    knows what end delimiters it's looking for.
+  // 1. If we're matching @(([])) and we see "((some(([thing]))", then when we
+  //    see the "s" that means we didn't see "(([".  So the scan has to start
+  //    looking for the first paren again.
+  //
+  // 2. When we call into the scanner for a pattern like "({[foo]})" we start
+  //    it scanning at "foo]})".  The reason we can get away with it is that
+  //    we've push levels manually that account for if the scanner had seen
+  //    "({[", so it expects to have consumed those tokens and knows what end
+  //    delimiters it's looking for.
 
     Codepoint c;
     Utf8(const*) next = Utf8_Next(&c, at);
@@ -1146,11 +1146,11 @@ DECLARE_NATIVE(COMPOSE2)
         u_c_cast(Byte*, at) - pattern_depth  // start replacement at "([a])"
     );
 
-  allocate_or_push_levels_for_each_pattern_end_delimiter: { //////////////////
+  allocate_or_push_levels_for_each_pattern_end_delimiter: {
 
-    // We don't want to allocate or push a scanner level until we are sure
-    // it's necessary.  (If no patterns are found, all we need to do is COPY
-    // the string if there aren't any substitutions.)
+  // We don't want to allocate or push a scanner level until we are sure it's
+  // necessary.  (If no patterns are found, all we need to do is COPY the
+  // string if there aren't any substitutions.)
 
     if (not transcode->saved_levels) {  // first match... no Levels yet
         StackIndex stack_index = base;
@@ -1205,13 +1205,14 @@ DECLARE_NATIVE(COMPOSE2)
 
 }}} string_scan_results_on_stack: { //////////////////////////////////////////
 
-    // 1. While transcoding in a general case can't assume the data is valid
-    //    UTF-8, we're scanning an already validated ANY-UTF8? value here.
-    //
-    // 2. Each pattern found will push 3 values to the data stack: the
-    //    start offset where the pattern first begins, the code that was
-    //    scanned from inside the pattern, and the offset right after the
-    //    end character of where the pattern matched.
+  // 1. While transcoding in a general case can't assume the data is valid
+  //    UTF-8, we're scanning an already validated ANY-UTF8? value here.
+  //
+  // 2. Each pattern found will push 3 values to the data stack:
+  //
+  //    * the start offset where the pattern first begins
+  //    * the code that was scanned from inside the pattern
+  //    * the offset right after the end character where the pattern matched
 
     if (Is_Error(OUT))  // transcode had a problem
         return PANIC(Cell_Error(OUT));
@@ -1241,13 +1242,11 @@ DECLARE_NATIVE(COMPOSE2)
     if (not Codepoint_At_Is_NUL_0(at))
         goto string_find_next_pattern;
 
-    goto string_scan_finished;
+} string_scan_finished: {
 
-} string_scan_finished: { ///////////////////////////////////////////////////
-
-    // 1. !!! If we never found our pattern, should we validate that the
-    //    pattern was legal?  Or we could just say that if you use an illegal
-    //    pattern but no instances come up, that's ok?
+  // 1. !!! If we never found our pattern, should we validate the pattern was
+  //    legal?  Or we could just say that if you use an illegal pattern but
+  //    no instances come up, that's ok?
 
     Element* handle = Known_Element(SCRATCH);
     TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, handle);
@@ -1271,10 +1270,10 @@ DECLARE_NATIVE(COMPOSE2)
 
 } do_string_eval_scratch_is_stackindex: { ////////////////////////////////////
 
-    // We do all the scans first, and then the evaluations.  This means that
-    // no user code is run if the string being interpolated is malformed,
-    // which is preferable.  It also helps with locality.  But it means the
-    // evaluations have to be done on an already built stack.
+  // We do all the scans first, and then the evaluations.  This means that no
+  // user code is run if the string being interpolated is malformed, which is
+  // preferable.  It also helps with locality.  But it means the evaluations
+  // have to be done on an already built stack.
 
     StackIndex triples = VAL_INT32(Known_Element(SCRATCH));
 
@@ -1313,17 +1312,16 @@ DECLARE_NATIVE(COMPOSE2)
     Copy_Cell(Data_Stack_At(Value, triples + 1), result);  // replace w/eval
 
     triples += 3;  // skip to next set of 3
-    if (triples > TOP_INDEX)
-        goto string_evaluations_done;
+    if (triples <= TOP_INDEX) {
+        Init_Integer(SCRATCH, triples);
+        goto do_string_eval_scratch_is_stackindex;
+    }
 
-    Init_Integer(SCRATCH, triples);
-    goto do_string_eval_scratch_is_stackindex;
+} string_evaluations_done: {
 
-} string_evaluations_done: { /////////////////////////////////////////////////
-
-    // 1. "File calculus" says that if we are splicing a FILE! into a FILE!,
-    //    then if the splice ends in slash the template must have a slash
-    //    after the splicing slot.  MORE RULES TO BE ADDED...
+  // 1. "File calculus" says that if we are splicing a FILE! into a FILE!,
+  //    then if the splice ends in slash the template must have a slash after
+  //    the splicing slot.  MORE RULES TO BE ADDED...
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);

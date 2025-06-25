@@ -192,7 +192,7 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
         if (error)
             return error;
 
-        assert(Is_Atom_Action(out));
+        assert(Is_Action(Known_Stable(out)));
 
         if (TOP_INDEX != base) {
             DECLARE_VALUE (action);
@@ -539,7 +539,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
   // mean "try the result of the function invoked by the path"?  e.g. TRY
   // on a PATH! that ends in slash?
 
-    assert(Is_Atom_Action(OUT));
+    assert(Is_Action(Known_Stable(OUT)));
 
     assert(not e);
     goto finalize_and_return;

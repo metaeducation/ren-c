@@ -377,17 +377,17 @@ for-each-datatype 't [
     ; stable type (antiform or otherwise) because it might be a PACK! or an
     ; ERROR! and need to decay.  But occasionally code is checking return
     ; types and has special reasons to see if an Atom is an ACTION! or a
-    ; TRASH!, etc.  Allow the test, but throw in a speedbump by making them
-    ; call Is_Atom_Action() instead of just Is_Action(), to provoke some
-    ; thought from testing casually.
+    ; TRASH!, etc.  Allow the test, but throw in a speedbump by naming them
+    ; Is_Possibly_Unstable_Atom_Action() instead of just Is_Action(), to
+    ; provoke some thought from testing casually.
     ;
     e-types/emit [t proper-name --[
-        #define Unchecked_Is_Atom_$<Proper-Name>(atom) \
+        #define Unchecked_Is_Possibly_Unstable_Atom_$<Proper-Name>(atom) \
             ((ensure(const Atom*, (atom))->header.bits & CELL_HEART_LIFT_MASK) \
                 == (FLAG_LIFT_BYTE(ANTIFORM_1) | FLAG_HEART($<T.NAME>)))
 
-        #define Is_Atom_$<Proper-Name>(cell) \
-            Unchecked_Is_Atom_$<Proper-Name>(Ensure_Readable(cell))
+        #define Is_Possibly_Unstable_Atom_$<Proper-Name>(cell) \
+            Unchecked_Is_Possibly_Unstable_Atom_$<Proper-Name>(Ensure_Readable(cell))
     ]--]
 ]
 

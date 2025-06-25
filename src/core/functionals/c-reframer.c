@@ -115,7 +115,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     assert(Not_Base_Managed(varlist));  // shouldn't be [3]
     L->varlist = varlist;  // put varlist back
 
-    assert(Is_Atom_Trash(L->out));  // should only have gathered arguments
+    assert(Is_Tripwire(Known_Stable(L->out)));  // only gathers arguments
 
     assert(Get_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);  // [2]

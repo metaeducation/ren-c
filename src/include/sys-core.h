@@ -566,6 +566,8 @@ enum {
 #endif
 
 #include "sys-cell.h"
+#include "cells/cell-quoted.h"  // defines Is_Cell_Stable(), used by API stubs
+
 #include "sys-stub.h"
 
 //=//// INSTRUMENTATION HOOKS INTO THE CAST() OPERATOR ////////////////////=//
@@ -612,12 +614,10 @@ enum {
 
 //=//// API HANDLES ///////////////////////////////////////////////////////=//
 
-#include "stubs/stub-api.h"
+#include "stubs/stub-api.h"  // requires Is_Cell_Stable() to be defined
 
 
 //=//// CELL ACCESSOR FUNCTIONS ///////////////////////////////////////////=//
-
-#include "cells/cell-quoted.h"  // has special handling for voids/nones
 
 #include "sys-datastack.h"
 

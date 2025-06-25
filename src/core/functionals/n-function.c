@@ -574,8 +574,12 @@ bool Typecheck_Coerce_Return(
     if (Is_Error(atom))
         return true;  // For now, all functions return definitional errors
 
-    if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Atom_Trash(atom))
+    if (
+        Get_Parameter_Flag(param, TRASH_DEFINITELY_OK)
+        and Is_Possibly_Unstable_Atom_Trash(atom)
+    ){
         return true;  // common case, make fast
+    }
 
     if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
         return true;  // kind of common... necessary?
@@ -610,7 +614,7 @@ bool Typecheck_Coerce_Return(
         if (
             Get_Details_Flag(details, RAW_NATIVE)
             and Not_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
-            and (Is_Atom_Action(atom) or Is_Ghost(atom))
+            and (Is_Possibly_Unstable_Atom_Action(atom) or Is_Ghost(atom))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
             and (details != Cell_Frame_Phase(LIB(LET)))  // review
@@ -628,7 +632,7 @@ bool Typecheck_Coerce_Return(
         if (
             Get_Details_Flag(details, RAW_NATIVE)
             and Get_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
-            and (Is_Atom_Action(atom) or Is_Ghost(atom))
+            and (Is_Possibly_Unstable_Atom_Action(atom) or Is_Ghost(atom))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
             and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
             and (details != Cell_Frame_Phase(LIB(LET)))  // review

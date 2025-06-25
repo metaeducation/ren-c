@@ -829,7 +829,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     REBINT i;
     for (i = 1; i <= len; ++i, ++var)  // 0th item is rootvar, already filled
-        Init_Tripwire(var);
+        Init_Tripwire(var);  // need all slots valid before Read_Slot() call?
 
     if (parent) {
         Atom* dest = Flex_At(Atom, a, 1);
@@ -837,7 +837,7 @@ VarList* Make_Varlist_Detect_Managed(
         Slot* src = Varlist_Slots(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
             Flags clone_flags = BASE_FLAG_MANAGED;  // !!! Review, what flags?
-            assert(Is_Atom_Trash(dest));
+            unnecessary(assert(Is_Tripwire(Known_Stable(dest))));
 
             // !!! If we are creating a derived object, should it be able
             // to copy the ACCESSOR/etc.?

@@ -533,7 +533,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     }
     else switch (Type_Of(tests)) {
       case TYPE_DATATYPE:
-        return Is_Stable(v) and (Type_Of(v) == Cell_Datatype_Type(tests));
+        return Is_Cell_Stable(v) and (Type_Of(v) == Cell_Datatype_Type(tests));
 
       case TYPE_BLOCK:
         item = Cell_List_At(&tail, tests);
@@ -607,7 +607,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         goto handle_non_word_quoted;
 
     if (Is_Space(item)) {
-        if (Is_Stable(SPARE) and Is_Space(cast(Value*, SPARE)))
+        if (Is_Cell_Stable(SPARE) and Is_Space(cast(Value*, SPARE)))
             goto test_succeeded;
         goto test_failed;
     }
@@ -850,7 +850,7 @@ bool Typecheck_Coerce(
         // same as PARAMCLASS_META
     }
     else {
-        if (Not_Stable(atom))
+        if (Not_Cell_Stable(atom))
             goto do_coercion;
     }
 
@@ -869,13 +869,13 @@ bool Typecheck_Coerce(
 
         if (
             Get_Parameter_Flag(param, TRASH_DEFINITELY_OK)
-            and Is_Atom_Trash(atom)
+            and Is_Possibly_Unstable_Atom_Trash(atom)
         ){
             goto return_true;
         }
     }
 
-    if (Get_Parameter_Flag(param, ANY_VALUE_OK) and Is_Stable(atom))
+    if (Get_Parameter_Flag(param, ANY_VALUE_OK) and Is_Cell_Stable(atom))
         goto return_true;
 
     if (Get_Parameter_Flag(param, ANY_ATOM_OK))
@@ -883,15 +883,16 @@ bool Typecheck_Coerce(
 
     if (Is_Parameter_Unconstrained(param)) {
         if (Get_Parameter_Flag(param, REFINEMENT)) {  // no-arg refinement
-            if (Is_Atom_Okay(atom))
-                goto return_true;  // nulls handled by NULL_DEFINITELY_OK
+            assert(not Is_Light_Null(atom));  // NULL_DEFINITELY_OK handles
+            if (Is_Possibly_Unstable_Atom_Okay(atom))
+                goto return_true;
             goto return_false;
         }
         goto return_true;  // other parameters
     }
 
     if (Get_Parameter_Flag(param, SPACE_DEFINITELY_OK))
-        if (Is_Stable(atom) and Is_Space(u_cast(Value*, atom)))
+        if (Is_Cell_Stable(atom) and Is_Space(u_cast(Value*, atom)))
             goto return_true;
 
 } do_optimized_checks_signaled_by_bytes: {
@@ -922,8 +923,9 @@ bool Typecheck_Coerce(
 
       do_coercion:
 
-        if (Is_Atom_Action(atom)) {
+        if (Is_Possibly_Unstable_Atom_Action(atom)) {
             LIFT_BYTE(atom) = NOQUOTE_2;
+            possibly(coerced);  // this may be a coercion after decay...
             coerced = true;
             goto typecheck_again;
         }
@@ -939,6 +941,7 @@ bool Typecheck_Coerce(
 
         if (Is_Antiform(atom) and Is_Antiform_Unstable(atom)) {
             Decay_If_Unstable(atom);
+            assert(not coerced);  // should only decay once...
             coerced = true;
             goto typecheck_again;
         }
@@ -956,7 +959,7 @@ bool Typecheck_Coerce(
 
 } return_result: { ///////////////////////////////////////////////////////////
 
-    if ((result == true) and Not_Stable(atom))
+    if ((result == true) and Not_Cell_Stable(atom))
         assert(is_return or Cell_Parameter_Class(param) == PARAMCLASS_META);
 
   #if RUNTIME_CHECKS  // always corrupt to emphasize that we *could* have [1]

@@ -987,7 +987,7 @@ const RebolBaseInternal* API_rebArgR(
     Atom* arg = Level_Args_Head(L);
     for (; key != tail; ++key, ++arg) {
         if (Are_Synonyms(Key_Symbol(key), symbol)) {
-            if (not Is_Stable(arg))
+            if (Not_Cell_Stable(arg))
                 panic ("rebArg() called on non-stable argument");
             return c_cast(
                 RebolBaseInternal*,

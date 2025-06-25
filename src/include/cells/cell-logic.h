@@ -79,8 +79,11 @@ INLINE bool Is_Logic(Need(const Value*) v) {
 #define Is_Okay(v) \
     Is_Anti_Word_With_Id((v), SYM_OKAY)
 
-#define Is_Atom_Okay(a) \
-    Is_Anti_Word_With_Id(u_cast(Value*, (a)), SYM_OKAY)  // !!! hack, temporary
+INLINE bool Is_Possibly_Unstable_Atom_Okay(Atom* atom) {  // typecheck only!
+    if (not Is_Possibly_Unstable_Atom_Keyword(atom))
+        return false;
+    return Cell_Word_Id(atom) == SYM_OKAY;
+}
 
 #define Init_Okay(out) \
     TRACK(Init_Word_Untracked( \
