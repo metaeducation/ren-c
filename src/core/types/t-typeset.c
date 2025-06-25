@@ -535,7 +535,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
         Manage_Flex(string);
         Freeze_Flex(string);
         Set_Parameter_String(param, string);
-        return WRITEBACK(COPY(param)); }  // update of pointer in cell needed
+        return WRITEBACK(Copy_Cell(OUT, param)); }  // need Cell pointer update
 
       default:
         break;

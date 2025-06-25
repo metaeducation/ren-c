@@ -52,7 +52,7 @@
 
 INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
-    LIFT_BYTE_RAW(out) = QUASIFORM_3;  // spaces are isotopic
+    Quasify_Isotopic_Fundamental(out);
     return out;
 }
 
@@ -102,9 +102,16 @@ INLINE bool Is_Quasar(const Value* v) {
 //    at all (UNSET? would be a weird name for that).
 //
 
+INLINE bool Is_Tripwire(Need(const Value*) v) {
+    if (LIFT_BYTE(v) != ANTIFORM_1)
+        return false;
+    return IS_CHAR_CELL(v) and Cell_Codepoint(v) == ' ';
+}
+
 INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
     Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
-    LIFT_BYTE_RAW(out) = ANTIFORM_1;  // spaces are isotopic
+    Stably_Antiformize_Unbound_Fundamental(out);
+    assert(Is_Tripwire(out));
     return out;
 }
 
@@ -113,12 +120,6 @@ INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
 
 #define Init_Lifted_Tripwire(out) \
     Init_Quasar(out)
-
-INLINE bool Is_Tripwire(Need(const Value*) v) {
-    if (LIFT_BYTE(v) != ANTIFORM_1)
-        return false;
-    return IS_CHAR_CELL(v) and Cell_Codepoint(v) == ' ';
-}
 
 
 //=//// STANDALONE "SIGIL?" ELEMENTS (@ ^ $) //////////////////////////////=//

@@ -207,7 +207,9 @@ INLINE Element* Init_Relative_Block_At(
 
 INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
     Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, a, 0, SPECIFIED);
-    return Destabilize_Unbound_Fundamental(out);
+    Unstably_Antiformize_Unbound_Fundamental(out);
+    assert(Is_Pack(out));
+    return out;
 }
 
 #define Init_Pack(out,a) \
@@ -238,16 +240,16 @@ INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
 INLINE Value* Splicify(Need(Value*) val) {
     assert(Any_List(val) and LIFT_BYTE(val) == NOQUOTE_2);
     KIND_BYTE(val) = TYPE_GROUP;  // splice drops knowledge of list type
-    Option(Error*) e = Trap_Coerce_To_Antiform(cast(Atom*, val));
-    assert(not e);
-    UNUSED(e);
+    Tweak_Cell_Binding(u_cast(Element*, val), UNBOUND);
+    Stably_Antiformize_Unbound_Fundamental(val);
     assert(Is_Splice(val));
     return val;
 }
 
 INLINE Value* Init_Splice_Untracked(Init(Value) out, Source* a) {
     Init_Group(out, a);
-    LIFT_BYTE_RAW(out) = ANTIFORM_1;  // groups are isotopic
+    Stably_Antiformize_Unbound_Fundamental(out);
+    assert(Is_Splice(out));
     return out;
 }
 

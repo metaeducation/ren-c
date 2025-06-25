@@ -408,7 +408,8 @@ DECLARE_NATIVE(FAIL_P)
 
     Value* v = ARG(REASON);
 
-    return Failify(COPY(v));
+    Copy_Cell(OUT, v);
+    return Failify(OUT);
 }
 
 

@@ -850,7 +850,7 @@ INLINE Bounce Native_Panic_Result(Level* L, Error* error) {
 // in the dispatcher because it's too easy to think that will work for an
 // arbitrary local variable, which would be dead after the return.
 //
-INLINE Atom* Native_Copy_Result_Untracked(
+INLINE Bounce Native_Copy_Result_Untracked(
     Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_,
     const Atom* v

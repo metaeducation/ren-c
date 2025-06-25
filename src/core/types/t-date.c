@@ -1121,7 +1121,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
     if (zone != NO_DATE_ZONE)
         Adjust_Date_Zone_Core(date, zone);
 
-    return WRITEBACK(COPY(date));  // all bits in the cell, must writeback
+    return WRITEBACK(Copy_Cell(OUT, date));  // all bits must writeback
 }}
 
 

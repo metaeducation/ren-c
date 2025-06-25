@@ -271,9 +271,7 @@ INLINE Element* Init_Frame_Untracked(
 
 INLINE Value* Actionify(Need(Value*) val) {
     assert(Is_Frame(val) and LIFT_BYTE(val) == NOQUOTE_2);
-    Option(Error*) e = Trap_Coerce_To_Antiform(cast(Atom*, val));
-    assert(not e);
-    UNUSED(e);
+    Stably_Antiformize_Unbound_Fundamental(val);
     assert(Is_Action(val));
     return val;
 }

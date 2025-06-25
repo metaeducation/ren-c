@@ -98,7 +98,9 @@ INLINE void Force_Location_Of_Error(Error* error, Level* L) {
 INLINE Atom* Failify(Need(Atom*) atom) {  // WARNING! => ERROR!
     assert(Heart_Of(atom) == TYPE_WARNING and LIFT_BYTE(atom) == NOQUOTE_2);
     Force_Location_Of_Error(Cell_Error(atom), TOP_LEVEL);  // ideally a noop
-    return Destabilize_Unbound_Fundamental(atom);
+    Unstably_Antiformize_Unbound_Fundamental(atom);
+    assert(Is_Error(atom));
+    return atom;
 }
 
 

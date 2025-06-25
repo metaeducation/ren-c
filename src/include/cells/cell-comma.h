@@ -76,7 +76,8 @@ INLINE Element* Init_Comma_Untracked(Init(Element) out) {
 
 INLINE Atom* Init_Ghost_Untracked(Init(Atom) out, bool surprising) {
     Init_Comma_Untracked(out);
-    LIFT_BYTE_RAW(out) = ANTIFORM_1;  // commas are isotopic
+    Unstably_Antiformize_Unbound_Fundamental(out);
+    assert(Is_Ghost(out));
     if (not surprising)
         Set_Cell_Flag(out, OUT_HINT_UNSURPRISING);
     return out;

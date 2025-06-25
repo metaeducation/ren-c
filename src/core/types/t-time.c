@@ -640,7 +640,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
 
     Tweak_Cell_Nanoseconds(time, Join_Time(&tf, false));
 
-    return WRITEBACK(COPY(time));  // caller needs to update their time bits
+    return WRITEBACK(Copy_Cell(OUT, time));  // caller must update time bits
 }}
 
 

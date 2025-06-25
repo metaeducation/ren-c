@@ -450,9 +450,8 @@ DECLARE_NATIVE(UNANTI)
 //
 DECLARE_NATIVE(SPREAD)
 //
-// !!! The name SPREAD is being chosen because it is more uncommon than splice,
-// and there is no particular contention for its design.  SPLICE may be a more
-// complex operation.
+// SPREAD is chosen as the verb instead of SPLICE, because SPLICE! is the
+// "noun" for a group antiform representing a splice.
 //
 // 1. Generally speaking, functions are not supposed to conflate quasiforms
 //    with their antiforms.  But it seems like being willing to DEGRADE a
@@ -467,16 +466,8 @@ DECLARE_NATIVE(SPREAD)
 
     Value* v = ARG(VALUE);
 
-    if (Any_List(v)) {  // most common case
-        Copy_Cell(OUT, v);
-        KIND_BYTE(OUT) = TYPE_GROUP;  // throws away original heart
-
-        Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
-        assert(not e);
-        UNUSED(e);
-        assert(Is_Atom_Splice(OUT));
-        return OUT;
-    }
+    if (Any_List(v))  // most common case
+        return COPY(Splicify(v));
 
     if (Is_Blank(v))
         return VOID;  // immutable empty array makes problems for GLOM [3]
@@ -613,31 +604,27 @@ DECLARE_NATIVE(PACK_Q)
 //  "Make frames run when fetched through word access"
 //
 //      return: [action!]
-//      frame [frame! action!]
+//      frame [frame! action!]  ; !!! is allowing already action! a good idea?
 //  ]
 //
 DECLARE_NATIVE(RUNS)
 //
-// 1. Is allowing things that are already antiforms a good idea?
-//
-// 2. This is mostly a type checked synonym for `anti`, with the exception
-//    that it sets the "unsurprising" flag on the result.  This means you
-//    can directly assign the result of RUNS e.g. (x: runs frame) and you will
-//    not be required to say (x: ^ runs frame)
+// This is mostly a type-checked synonym for `anti`, with the exception that
+// it sets the "unsurprising" flag on the result.  This means you can directly
+// assign the result of RUNS e.g. (x: runs frame) and not be required to say
+// (x: ^ runs frame)
 {
     INCLUDE_PARAMS_OF_RUNS;
 
     Value* frame = ARG(FRAME);
-    if (Is_Action(frame))  // already antiform, no need to pay for coercion [1]
-        return COPY(frame);
 
-    Copy_Cell(OUT, frame);
+    if (Is_Action(frame))
+        return UNSURPRISING(Copy_Cell(OUT, frame));
 
-    Option(Error*) e = Trap_Coerce_To_Antiform(OUT);  // same code as anti [2]
-    if (e)
-        return PANIC(unwrap e);
+    Stably_Antiformize_Unbound_Fundamental(frame);
+    assert(Is_Action(frame));
 
-    return UNSURPRISING(OUT);
+    return UNSURPRISING(Copy_Cell(OUT, frame));
 }
 
 

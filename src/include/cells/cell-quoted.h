@@ -286,18 +286,28 @@ INLINE Element* Unquasify(Element* elem) {
 
 INLINE Element* Quasify_Isotopic_Fundamental(Element* elem) {
     assert(Any_Isotopic(elem));
-    if (Is_Bindable(elem))
-        assert(not Cell_Binding(elem));
     assert(LIFT_BYTE(elem) == NOQUOTE_2);
     LIFT_BYTE_RAW(elem) = QUASIFORM_3;
     return elem;
 }
 
-INLINE Atom* Destabilize_Unbound_Fundamental(Need(Atom*) atom) {
+INLINE Value* Stably_Antiformize_Unbound_Fundamental(Need(Value*) v) {
+    assert(Any_Isotopic(v));
+    assert(LIFT_BYTE(v) == NOQUOTE_2);
+    assert(Is_Stable_Antiform_Kind_Byte(KIND_BYTE(v)));
+    if (Is_Bindable(v))
+        assert(not Cell_Binding(v));
+    LIFT_BYTE_RAW(v) = ANTIFORM_1;
+    return v;
+}
+
+INLINE Atom* Unstably_Antiformize_Unbound_Fundamental(Need(Atom*) atom) {
     assert(Any_Isotopic(atom));
     assert(LIFT_BYTE(atom) == NOQUOTE_2);
+    assert(not Is_Stable_Antiform_Kind_Byte(KIND_BYTE(atom)));
+    if (Is_Bindable(atom))
+        assert(not Cell_Binding(atom));
     LIFT_BYTE_RAW(atom) = ANTIFORM_1;
-    assert(Is_Antiform_Unstable(atom));
     return atom;
 }
 
