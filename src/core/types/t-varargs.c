@@ -670,8 +670,8 @@ DECLARE_NATIVE(VARIADIC_Q)
     const Value* param = Phase_Params_Head(phase);
     for (; key != key_tail; ++param, ++key) {
         if (Get_Parameter_Flag(param, VARIADIC))
-            return Init_Logic(OUT, true);
+            return LOGIC(true);
     }
 
-    return Init_Logic(OUT, false);
+    return LOGIC(false);
 }

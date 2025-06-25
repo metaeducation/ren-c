@@ -917,5 +917,5 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Map)
     Element* map = Element_ARG(ELEMENT);
     const Map* m = VAL_MAP(map);
 
-    return Init_Logic(OUT, Num_Map_Entries_Used(m) == 0);
+    return LOGIC(Num_Map_Entries_Used(m) == 0);
 }

@@ -81,7 +81,7 @@ DECLARE_NATIVE(VETO_Q)
     const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     if (not Is_Error(atom))
-        return nullptr;
+        return LOGIC(false);
 
     return LOGIC(Is_Error_Veto_Signal(Cell_Error(atom)));
 }
@@ -397,7 +397,7 @@ DECLARE_NATIVE(REDUCE_EACH)
         return VOID;
 
     if (breaking)
-        return nullptr;  // BREAK encountered
+        return BREAKING_NULL;
 
     return BRANCHED(OUT);
 }}
@@ -1297,7 +1297,7 @@ DECLARE_NATIVE(COMPOSE2)
         Drop_Data_Stack_To(STACK_BASE);
 
         if (Is_Error_Veto_Signal(Cell_Error(OUT)))
-            return nullptr;
+            return VETOING_NULL;
 
         return PANIC(Cell_Error(OUT));
     }

@@ -310,7 +310,7 @@ DECLARE_NATIVE(STDIO_ACTOR)
 
     switch (Symbol_Id(verb)) {
       case SYM_OPEN_Q:
-        return Init_Logic(OUT, true);  // stdio port always open
+        return LOGIC(true);  // stdio port always open
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;

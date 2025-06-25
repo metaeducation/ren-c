@@ -61,7 +61,7 @@ DECLARE_NATIVE(CONST_Q) {
     // besides just if the value is *const*, specifically?  Knowing the flag
     // is helpful for debugging at least.
 
-    return Init_Logic(OUT, Get_Cell_Flag(ARG(VALUE), CONST));
+    return LOGIC(Get_Cell_Flag(ARG(VALUE), CONST));
 }
 
 
@@ -103,7 +103,7 @@ DECLARE_NATIVE(MUTABLE_Q) {
     // besides just if the value is *const*, specifically?  Knowing the flag
     // is helpful for debugging at least.
 
-    return Init_Logic(OUT, Not_Cell_Flag(ARG(VALUE), CONST));
+    return LOGIC(Not_Cell_Flag(ARG(VALUE), CONST));
 }
 
 
@@ -422,7 +422,7 @@ DECLARE_NATIVE(LOCKED_Q)
 {
     INCLUDE_PARAMS_OF_LOCKED_Q;
 
-    return Init_Logic(OUT, Is_Value_Frozen_Deep(ARG(VALUE)));
+    return LOGIC(Is_Value_Frozen_Deep(ARG(VALUE)));
 }
 
 

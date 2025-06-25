@@ -512,10 +512,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         // unary actions
         switch (id) {
           case SYM_ODD_Q:
-            return Init_Logic(OUT, (SECS_FROM_NANO(secs) & 1) != 0);
+            return LOGIC((SECS_FROM_NANO(secs) & 1) != 0);
 
           case SYM_EVEN_Q:
-            return Init_Logic(OUT, (SECS_FROM_NANO(secs) & 1) == 0);
+            return LOGIC((SECS_FROM_NANO(secs) & 1) == 0);
 
           case SYM_NEGATE:
             secs = -secs;

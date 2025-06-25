@@ -950,8 +950,13 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define UNLIFT(v)   Native_Unlift_Result(level_, (v))
-    #define BRANCHED(v) Native_Branched_Result(level_, (v))
-    #define LOOPED(v)   Native_Looped_Result(level_, (v))
+
+    #define BRANCHED(v)  Native_Branched_Result(level_, (v))
+
+    #define VETOING_NULL  u_cast(Bounce, nullptr)
+
+    #define LOOPED(v)      Native_Looped_Result(level_, (v))
+    #define BREAKING_NULL  VETOING_NULL  // does break it need to be distinct?
 
     // Note: For efficiency, intrinsic typecheckers must return BOUNCE_OKAY
     // or nullptr.  This means that trying to make LOGIC(b) "more efficient"

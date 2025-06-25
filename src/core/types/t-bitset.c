@@ -581,7 +581,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
         if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), Bool_ARG(CASE)))
             return nullptr;
-        return Init_Logic(OUT, true); }
+        return LOGIC(true); }
 
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
       case SYM_INSERT: {
@@ -719,7 +719,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Bitset)
     INCLUDE_PARAMS_OF_TAIL_Q;
 
     Element* bset = Element_ARG(ELEMENT);
-    return Init_Logic(OUT, Binary_Len(VAL_BITSET(bset)) == 0);
+    return LOGIC(Binary_Len(VAL_BITSET(bset)) == 0);
 }
 
 

@@ -279,7 +279,7 @@ IMPLEMENT_GENERIC(HEAD_Q, Any_Series)
 
     Element* ser = Element_ARG(ELEMENT);
 
-    return Init_Logic(OUT, VAL_INDEX_RAW(ser) == 0);
+    return LOGIC(VAL_INDEX_RAW(ser) == 0);
 }
 
 

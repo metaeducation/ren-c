@@ -56,7 +56,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
 
     switch (Symbol_Id(verb)) {
       case SYM_OPEN_Q:
-        return Init_Logic(OUT, true); // !!! need "port state"?  :-/
+        return LOGIC(true); // !!! need "port state"?  :-/
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;

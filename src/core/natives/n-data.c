@@ -966,7 +966,7 @@ DECLARE_NATIVE(INFIX_Q)
     INCLUDE_PARAMS_OF_INFIX_Q;
 
     Element* frame = Element_ARG(FRAME);
-    return Init_Logic(OUT, Is_Cell_Frame_Infix(frame));
+    return LOGIC(Is_Cell_Frame_Infix(frame));
 }
 
 
@@ -1116,7 +1116,7 @@ DECLARE_NATIVE(ALIASES_Q)
 {
     INCLUDE_PARAMS_OF_ALIASES_Q;
 
-    return Init_Logic(OUT, Cell_Flex(ARG(VALUE1)) == Cell_Flex(ARG(VALUE2)));
+    return LOGIC(Cell_Flex(ARG(VALUE1)) == Cell_Flex(ARG(VALUE2)));
 }
 
 

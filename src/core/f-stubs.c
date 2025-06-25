@@ -238,7 +238,7 @@ const Value* Datatype_Of(const Atom* value)
 //
 //  Datatype_Of_Fundamental: C
 //
-const Value* Datatype_Of_Fundamental(const Atom* value)
+const Value* Datatype_Of_Fundamental(const Element* value)
 {
     assert(Any_Fundamental(value));
     return Datatype_Of(value);
@@ -248,7 +248,7 @@ const Value* Datatype_Of_Fundamental(const Atom* value)
 //
 //  Datatype_Of_Builtin_Fundamental: C
 //
-const Value* Datatype_Of_Builtin_Fundamental(const Atom* value)
+const Value* Datatype_Of_Builtin_Fundamental(const Element* value)
 {
     assert(Any_Fundamental(value));
 
@@ -260,7 +260,7 @@ const Value* Datatype_Of_Builtin_Fundamental(const Atom* value)
 //
 //  Type_Of_Builtin_Fundamental: C
 //
-Type Type_Of_Builtin_Fundamental(const Atom* value)
+Type Type_Of_Builtin_Fundamental(const Element* value)
 {
     assert(Any_Fundamental(value));
 

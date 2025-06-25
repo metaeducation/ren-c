@@ -244,7 +244,7 @@ static Bounce Loop_Series_Common(
                 return THROWN;
 
             if (breaking)
-                return nullptr;
+                return BREAKING_NULL;
         }
 
         if (
@@ -299,7 +299,7 @@ static Bounce Loop_Integer_Common(
                 return THROWN;
 
             if (breaking)
-                return nullptr;
+                return BREAKING_NULL;
         }
         return LOOPED(OUT);
     }
@@ -310,7 +310,7 @@ static Bounce Loop_Integer_Common(
     //
     const bool counting_up = (start < end);  // equal checked above
     if ((counting_up and bump <= 0) or (not counting_up and bump >= 0))
-        return nullptr;  // avoid infinite loops
+        return BREAKING_NULL;  // avoid infinite loops !!! void, or null?
 
     while (counting_up ? *state <= end : *state >= end) {
         if (Eval_Branch_Throws(OUT, body)) {
@@ -319,7 +319,7 @@ static Bounce Loop_Integer_Common(
                 return THROWN;
 
             if (breaking)
-                return nullptr;
+                return BREAKING_NULL;
         }
 
         if (not Is_Integer(var))
@@ -384,7 +384,7 @@ static Bounce Loop_Number_Common(
                 return THROWN;
 
             if (breaking)
-                return nullptr;
+                return BREAKING_NULL;
         }
         return LOOPED(OUT);
     }
@@ -402,7 +402,7 @@ static Bounce Loop_Number_Common(
                 return THROWN;
 
             if (breaking)
-                return nullptr;
+                return BREAKING_NULL;
         }
 
         if (not Is_Decimal(var))
@@ -586,7 +586,7 @@ DECLARE_NATIVE(FOR_SKIP)
                 return THROWN;
 
             if (breaking)
-                return nullptr;
+                return BREAKING_NULL;
         }
 
         // Modifications to var are allowed, to another ANY-SERIES? value.
@@ -740,7 +740,7 @@ DECLARE_NATIVE(CYCLE)
     bool breaking;
     if (Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking)) {
         if (breaking)
-            return nullptr;
+            return BREAKING_NULL;
 
         return CONTINUE(OUT, body);  // plain continue
     }
@@ -1238,7 +1238,7 @@ DECLARE_NATIVE(FOR_EACH)
         return THROWN;
 
     if (breaking)
-        return nullptr;
+        return BREAKING_NULL;
 
     if (Is_Cell_Erased(OUT))
         return VOID;
@@ -1732,7 +1732,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         return THROWN;
 
     if (breaking)
-        return nullptr;
+        return BREAKING_NULL;
 
     assert(Type_Of(OUT) == Type_Of(data));
 
@@ -2042,7 +2042,7 @@ DECLARE_NATIVE(REPEAT)
             return THROWN;
 
         if (breaking)
-            return nullptr;
+            return BREAKING_NULL;
     }
 
     if (Is_Logic(count)) {
@@ -2156,7 +2156,7 @@ DECLARE_NATIVE(FOR)
             return THROWN;
 
         if (breaking)
-            return nullptr;
+            return BREAKING_NULL;
     }
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(Cell_Varlist(vars), 1);
@@ -2258,7 +2258,7 @@ DECLARE_NATIVE(INSIST)
             return THROWN;
 
         if (breaking)
-            return nullptr;
+            return BREAKING_NULL;
 
         // continue acts like body evaluated to its argument [1]
     }
@@ -2366,7 +2366,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
             return THROWN;
 
         if (breaking)
-            return nullptr;
+            return BREAKING_NULL;
     }
 
     Disable_Dispatcher_Catching_Of_Throws(LEVEL);

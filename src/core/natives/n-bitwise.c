@@ -49,7 +49,7 @@ DECLARE_NATIVE(BITWISE_NOT)
 {
     if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
-        return Init_Logic(OUT, not b1);
+        return LOGIC(not b1);
     }
 
     Element* e = cast(Element*, ARG_N(1));
@@ -84,7 +84,7 @@ DECLARE_NATIVE(BITWISE_AND)
     if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
         bool b2 = Math_Arg_For_Logic(ARG_N(2));
-        return Init_Logic(OUT, b1 and b2);
+        return LOGIC(b1 and b2);
     }
 
     Element* e1 = cast(Element*, ARG_N(1));
@@ -107,7 +107,7 @@ DECLARE_NATIVE(BITWISE_OR)
     if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
         bool b2 = Math_Arg_For_Logic(ARG_N(2));
-        return Init_Logic(OUT, b1 or b2);
+        return LOGIC(b1 or b2);
     }
 
     Element* e1 = cast(Element*, ARG_N(1));
@@ -130,7 +130,7 @@ DECLARE_NATIVE(BITWISE_XOR)
    if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
         bool b2 = Math_Arg_For_Logic(ARG_N(2));
-        return Init_Logic(OUT, b1 != b2);
+        return LOGIC(b1 != b2);
     }
 
     Element* e1 = cast(Element*, ARG_N(1));
@@ -153,7 +153,7 @@ DECLARE_NATIVE(BITWISE_AND_NOT)
    if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
         bool b2 = Math_Arg_For_Logic(ARG_N(2));
-        return Init_Logic(OUT, b1 and not b2);
+        return LOGIC(b1 and not b2);
     }
 
     Element* e1 = cast(Element*, ARG_N(1));

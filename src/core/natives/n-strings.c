@@ -63,7 +63,7 @@ DECLARE_NATIVE(ASCII_Q)
 {
     INCLUDE_PARAMS_OF_ASCII_Q;
 
-    return Init_Logic(OUT, Check_Char_Range(ARG(VALUE), 0x7f));
+    return LOGIC(Check_Char_Range(ARG(VALUE), 0x7f));
 }
 
 
@@ -80,7 +80,7 @@ DECLARE_NATIVE(LATIN1_Q)
 {
     INCLUDE_PARAMS_OF_LATIN1_Q;
 
-    return Init_Logic(OUT, Check_Char_Range(ARG(VALUE), 0xff));
+    return LOGIC(Check_Char_Range(ARG(VALUE), 0xff));
 }
 
 
@@ -732,7 +732,7 @@ DECLARE_NATIVE(JOIN)
     Drop_Data_Stack_To(STACK_BASE);
     Drop_Level(SUBLEVEL);
 
-    return nullptr;
+    return VETOING_NULL;
 }}
 
 

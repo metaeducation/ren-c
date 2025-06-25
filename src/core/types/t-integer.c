@@ -317,8 +317,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
         // falls through
       case SYM_ODD_Q:
         if (num & 1)
-            return Init_Logic(OUT, true);
-        return Init_Logic(OUT, false);
+            return LOGIC(true);
+        return LOGIC(false);
 
       default:
         break;

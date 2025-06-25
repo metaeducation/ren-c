@@ -829,7 +829,7 @@ DECLARE_NATIVE(VACANCY_Q)
 
     Value* v = ARG(VALUE);
 
-    return Init_Logic(OUT, Is_Trash(v) or Is_Nulled(v) or Is_Blank(v));
+    return LOGIC(Is_Trash(v) or Is_Nulled(v) or Is_Blank(v));
 }
 
 
@@ -875,41 +875,38 @@ DECLARE_NATIVE(EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    Atom* atom1 = Atom_ARG(VALUE1);
-    Atom* atom2 = Atom_ARG(VALUE2);
     bool relax = Bool_ARG(RELAX);
 
-    if (Is_Atom_Trash(atom1))
-        return PANIC(PARAM(VALUE1));
+    if (Is_Void(Atom_ARG(VALUE1)))
+        return LOGIC(Is_Void(Atom_ARG(VALUE2)));
+    else if (Is_Void(Atom_ARG(VALUE2)))
+        return LOGIC(false);
 
-    if (Is_Atom_Trash(atom2))
-        return PANIC(PARAM(VALUE2));
+    if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
+        return LOGIC(false);
 
-    if (LIFT_BYTE(atom1) != LIFT_BYTE(atom2))
-        return nullptr;
+    LIFT_BYTE(ARG(VALUE1)) = NOQUOTE_2;
+    LIFT_BYTE(ARG(VALUE2)) = NOQUOTE_2;
 
-    LIFT_BYTE(atom1) = NOQUOTE_2;  // should work for VOID equality, too
-    LIFT_BYTE(atom2) = NOQUOTE_2;
-
-    Element* v1 = Known_Element(atom1);
-    Element* v2 = Known_Element(atom2);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
 
     if (Sigil_Of(v1) != Sigil_Of(v2))
-        return nullptr;
+        return LOGIC(false);
 
     Plainify(v1);
     Plainify(v2);
 
     if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
         if (not relax)
-            return nullptr;
+            return LOGIC(false);
 
         if (Is_Integer(v1) and Is_Decimal(v2))
             Init_Decimal(v1, cast(REBDEC, VAL_INT64(v1)));
         else if (Is_Decimal(v1) and Is_Integer(v2))
             Init_Decimal(v2, cast(REBDEC, VAL_INT64(v2)));
         else
-            return nullptr;
+            return LOGIC(false);
     }
 
     return Dispatch_Generic(EQUAL_Q, v1, LEVEL);
@@ -933,8 +930,8 @@ DECLARE_NATIVE(LESSER_Q)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    Value* v1 = ARG(VALUE1);
-    Value* v2 = ARG(VALUE2);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
 
     if (LIFT_BYTE(v1) != LIFT_BYTE(v2))
         return FAIL("Differing quote levels are not comparable");
@@ -995,42 +992,42 @@ DECLARE_NATIVE(SAME_Q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    Atom* atom1 = Atom_ARG(VALUE1);
-    Atom* atom2 = Atom_ARG(VALUE2);
+    if (Is_Void(Atom_ARG(VALUE1)))
+        return LOGIC(Is_Void(Atom_ARG(VALUE2)));
+    else if (Is_Void(Atom_ARG(VALUE2)))
+        return LOGIC(false);
 
-    if (LIFT_BYTE(atom1) != LIFT_BYTE(atom2))
-        return Init_Logic(OUT, false);  // not "same" value if not same quote
+    if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
+        return LOGIC(false);
 
-    if (KIND_BYTE(atom1) != KIND_BYTE(atom2))
-        return Init_Logic(OUT, false);  // not "same" value if not same heart
+    LIFT_BYTE(ARG(VALUE1)) = NOQUOTE_2;
+    LIFT_BYTE(ARG(VALUE2)) = NOQUOTE_2;
 
-    LIFT_BYTE(atom1) = NOQUOTE_2;  // trick works for VOID equality, too
-    LIFT_BYTE(atom2) = NOQUOTE_2;
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
 
-    Element* v1 = Known_Element(atom1);
-    Element* v2 = Known_Element(atom2);
+    if (KIND_BYTE(v1) != KIND_BYTE(v2))
+        return LOGIC(false);  // not "same" value if not same heart
 
     if (Is_Bitset(v1))  // same if binaries are same
-        return Init_Logic(OUT, VAL_BITSET(v1) == VAL_BITSET(v2));
+        return LOGIC(VAL_BITSET(v1) == VAL_BITSET(v2));
 
     if (Any_Series(v1))  // pointers -and- indices must match
-        return Init_Logic(
-            OUT,
+        return LOGIC(
             Cell_Flex(v1) == Cell_Flex(v2)
-                and VAL_INDEX_RAW(v1) == VAL_INDEX_RAW(v2)  // permissive
+            and VAL_INDEX_RAW(v1) == VAL_INDEX_RAW(v2)  // permissive
         );
 
     if (Any_Context(v1))  // same if varlists match
-        return Init_Logic(OUT, Cell_Varlist(v1) == Cell_Varlist(v2));
+        return LOGIC(Cell_Varlist(v1) == Cell_Varlist(v2));
 
     if (Is_Map(v1))  // same if map pointer matches
-        return Init_Logic(OUT, VAL_MAP(v1) == VAL_MAP(v2));
+        return LOGIC(VAL_MAP(v1) == VAL_MAP(v2));
 
     if (Any_Word(v1))  // !!! "same" was spelling -and- binding in R3-Alpha
-        return Init_Logic(
-            OUT,
+        return LOGIC(
             Cell_Word_Symbol(v1) == Cell_Word_Symbol(v2)
-                and Cell_Binding(v1) == Cell_Binding(v2)
+            and Cell_Binding(v1) == Cell_Binding(v2)
         );
 
     if (Is_Decimal(v1) or Is_Percent(v1)) {
@@ -1038,14 +1035,10 @@ DECLARE_NATIVE(SAME_Q)
         // !!! R3-Alpha's STRICT-EQUAL? for DECIMAL! did not require *exactly*
         // the same bits, but SAME? did.  :-/
         //
-        return Init_Logic(
-            OUT,
+        return LOGIC(
             0 == memcmp(&VAL_DECIMAL(v1), &VAL_DECIMAL(v2), sizeof(REBDEC))
         );
     }
-
-    Liftify(v1);  // may be null or other antiform :-/
-    Liftify(v2);
 
     return rebDelegate(CANON(EQUAL_Q), v1, v2);
 }

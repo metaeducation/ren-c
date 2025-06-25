@@ -1413,7 +1413,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Context)
 
     if (Is_Stub_Sea(c))
         return PANIC("SeaOfVars TAIL? not implemented");
-    return Init_Logic(OUT, Varlist_Len(cast(VarList*, c)) == 0);
+    return LOGIC(Varlist_Len(cast(VarList*, c)) == 0);
 }
 
 

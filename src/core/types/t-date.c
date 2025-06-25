@@ -747,10 +747,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
     else {
         switch (id) {
           case SYM_EVEN_Q:
-            return Init_Logic(OUT, ((~day) & 1) == 0);
+            return LOGIC(((~day) & 1) == 0);
 
           case SYM_ODD_Q:
-            return Init_Logic(OUT, (day & 1) == 0);
+            return LOGIC((day & 1) == 0);
 
           default:
             break;

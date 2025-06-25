@@ -85,7 +85,7 @@ DECLARE_NATIVE(DONE_Q)
     const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     if (not Is_Error(atom))
-        return nullptr;
+        return LOGIC(false);
 
     return LOGIC(Is_Error_Done_Signal(Cell_Error(atom)));
 }

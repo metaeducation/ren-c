@@ -52,7 +52,7 @@ DECLARE_NATIVE(FORM)
 //  "Stopgap concept for methodizing mold using new generics"
 //
 //      return: []  ; returning a string would be too slow to compound
-//      element [element?]
+//      element [fundamental?]
 //      molder "Settings for the mold, including in progress series"
 //          [handle!]
 //      form "Do not put system delimiters on item"
@@ -66,7 +66,7 @@ DECLARE_NATIVE(MOLDIFY)
     USED(ARG(MOLDER));  // passed via LEVEL
     USED(ARG(FORM));
 
-    return Dispatch_Generic(MOLDIFY, ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(MOLDIFY, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -280,7 +280,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
                 //    bool case_one = rebUnboxLogic("new-line?", "[\n]");
                 //    bool case_two = rebUnboxLogic(new_line_q, "[\n]");
                 //
-                return Init_Logic(OUT, false);
+                return LOGIC(false);
             }
 
             arr = Level_Array(L);
@@ -307,9 +307,9 @@ DECLARE_NATIVE(NEW_LINE_Q)
     }
 
     if (item != tail)
-        return Init_Logic(OUT, Get_Cell_Flag(item, NEWLINE_BEFORE));
+        return LOGIC(Get_Cell_Flag(item, NEWLINE_BEFORE));
 
-    return Init_Logic(OUT, Get_Source_Flag(arr, NEWLINE_AT_TAIL));
+    return LOGIC(Get_Source_Flag(arr, NEWLINE_AT_TAIL));
 }
 
 

@@ -105,7 +105,7 @@ DECLARE_NATIVE(LOGICAL)
     INCLUDE_PARAMS_OF_LOGICAL;
 
     Element* n = Element_ARG(NUMBER);
-    return Init_Logic(OUT, VAL_INT64(n) != 0);
+    return LOGIC(VAL_INT64(n) != 0);
 }
 
 
@@ -188,7 +188,7 @@ DECLARE_NATIVE(TRUE_Q)
 {
     INCLUDE_PARAMS_OF_TRUE_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_TRUE);
+    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_TRUE);
 }
 
 
@@ -205,7 +205,7 @@ DECLARE_NATIVE(FALSE_Q)
 {
     INCLUDE_PARAMS_OF_FALSE_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_FALSE);
+    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_FALSE);
 }
 
 
@@ -244,7 +244,7 @@ DECLARE_NATIVE(YES_Q)
 {
     INCLUDE_PARAMS_OF_YES_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_YES);
+    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_YES);
 }
 
 
@@ -261,7 +261,7 @@ DECLARE_NATIVE(NO_Q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_NO);
+    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_NO);
 }
 
 
@@ -300,7 +300,7 @@ DECLARE_NATIVE(ON_Q)
 {
     INCLUDE_PARAMS_OF_ON_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_ON);
+    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_ON);
 }
 
 
@@ -317,7 +317,7 @@ DECLARE_NATIVE(OFF_Q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_OFF);
+    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_OFF);
 }
 
 
@@ -368,9 +368,9 @@ DECLARE_NATIVE(AND_Q)
         return PANIC(unwrap e);
 
     if (cond1 and cond2)
-        return Init_Logic(OUT, true);
+        return LOGIC(true);
 
-    return Init_Logic(OUT, false);
+    return LOGIC(false);
 }
 
 
@@ -399,9 +399,9 @@ DECLARE_NATIVE(OR_Q)
         return PANIC(unwrap e);
 
     if (cond1 or cond2)
-        return Init_Logic(OUT, true);
+        return LOGIC(true);
 
-    return Init_Logic(OUT, false);
+    return LOGIC(false);
 }
 
 
@@ -418,7 +418,7 @@ DECLARE_NATIVE(NULL_IF_ZERO)
 {
     INCLUDE_PARAMS_OF_NULL_IF_ZERO;
 
-    return Init_Logic(OUT, VAL_INT64(ARG(INTEGER)) != 0);
+    return LOGIC(VAL_INT64(ARG(INTEGER)) != 0);
 }
 
 

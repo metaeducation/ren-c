@@ -420,7 +420,7 @@ DECLARE_NATIVE(NUL_Q)
     INCLUDE_PARAMS_OF_NUL_Q;
 
     Element* e = Element_ARG(ELEMENT);
-    return Init_Logic(OUT, Is_NUL(e));
+    return LOGIC(Is_NUL(e));
 }
 
 
@@ -623,10 +623,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
         break;
 
       case SYM_EVEN_Q:
-        return Init_Logic(OUT, did (cast(Codepoint, ~chr) & 1));
+        return LOGIC(did (cast(Codepoint, ~chr) & 1));
 
       case SYM_ODD_Q:
-        return Init_Logic(OUT, did (chr & 1));
+        return LOGIC(did (chr & 1));
 
       default:
         return UNHANDLED;

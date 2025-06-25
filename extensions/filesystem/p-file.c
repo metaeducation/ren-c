@@ -191,18 +191,18 @@ DECLARE_NATIVE(FILE_ACTOR)
         return COPY(port);
 
       case SYM_HEAD_Q:
-        return Init_Logic(OUT, file->offset == 0);
+        return LOGIC(file->offset == 0);
 
       case SYM_TAIL_Q: {
         uint64_t size = File_Size_Cacheable_May_Panic(port);
-        return Init_Logic(OUT, file->offset >= size); }
+        return LOGIC(file->offset >= size); }
 
       case SYM_PAST_Q: {
         uint64_t size = File_Size_Cacheable_May_Panic(port);
-        return Init_Logic(OUT, file->offset > size); }
+        return LOGIC(file->offset > size); }
 
       case SYM_OPEN_Q:
-        return Init_Logic(OUT, did (file->id != FILEHANDLE_NONE));
+        return LOGIC(did (file->id != FILEHANDLE_NONE));
 
     //=//// READ ///////////////////////////////////////////////////////////=//
 

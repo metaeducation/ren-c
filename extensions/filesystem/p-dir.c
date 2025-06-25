@@ -136,7 +136,7 @@ DECLARE_NATIVE(DIR_ACTOR)
         // all of it).
         //
       case SYM_OPEN_Q:
-        return Init_Logic(OUT, false);
+        return LOGIC(false);
 
     //=//// READ ///////////////////////////////////////////////////////////=//
 
