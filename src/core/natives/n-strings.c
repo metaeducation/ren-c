@@ -464,7 +464,7 @@ DECLARE_NATIVE(JOIN)
 
 } stack_step_dual_in_spare: { ////////////////////////////////////////////////
 
-    if (Is_Endlike_Tripwire(SPARE))
+    if (Is_Endlike_Unset(SPARE))
         goto finish_stack_join;
 
     if (Is_Ghost_Or_Void(SPARE))

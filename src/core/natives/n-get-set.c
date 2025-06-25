@@ -1077,7 +1077,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto return_error;
         }
 
-        if (Is_Dual_Tripwire_Unset_Signal(Known_Stable(SPARE))) {
+        if (Is_Dual_Word_Unset_Signal(Known_Stable(SPARE))) {
             if (
                 stackindex == limit - 1
                 and Is_Dual_Nulled_Pick_Signal(out)
@@ -1271,7 +1271,7 @@ Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
     if (Is_Error(OUT))  // !!! weird can't pick case
         return SUCCESS;
 
-    if (Is_Dual_Tripwire_Unset_Signal(Known_Stable(OUT)))
+    if (Is_Dual_Word_Unset_Signal(Known_Stable(OUT)))
         return Error_User("UNSET variable");
 
     Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]

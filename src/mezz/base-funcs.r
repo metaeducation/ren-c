@@ -120,13 +120,16 @@ redescribe: func [
 /unset: redescribe [
     "Put variable into a dual state that prohibits any form of GET on it"
 ](
-    specialize tweak/ [dual: ~]
+    specialize tweak/ [dual: '*unset*]
 )
 
 /unset?: redescribe [
     "Determine if a variable is truly unset (tweaked to a dual tripwire)"
 ](
-    cascade [specialize tweak/ [dual: null], trash?/]
+    cascade [
+        specialize tweak/ [dual: null]
+        specialize equal?/ [value2: '*unset*]
+    ]
 )
 
 /set?: redescribe [

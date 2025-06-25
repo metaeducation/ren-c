@@ -121,34 +121,6 @@ INLINE bool Is_Tripwire(Need(const Value*) v) {
 }
 
 
-//=//// <end> SIGNALING WITH TRIPWIRE (~ antiform) ////////////////////////=//
-//
-// Special handling is required in order to allow a kind of "light variadic"
-// form, where a parameter can be missing.
-//
-// For a time this was distinguished with a special ~end~ antiform.  But this
-// was rethought in light of the fact that trash antiforms are unique
-// among stable antiforms, as needing to be a ^META parameter in order to be
-// passed to a function.  That means it can signal willingness of a parameter
-// to be "fully missing" no matter what position it is in an argument list.
-//
-// This macro helps keep track of those places in the source that are the
-// implementation of the "tripwire due to end" behavior.
-//
-
-INLINE Atom* Init_Tripwire_Due_To_End(Sink(Atom) out) {
-    Init_Tripwire(out);
-    Set_Cell_Flag(out, SLOT_WEIRD_DUAL);
-    return out;
-}
-
-INLINE bool Is_Endlike_Tripwire(const Atom* atom) {
-    if (Not_Cell_Flag(atom, SLOT_WEIRD_DUAL))
-        return false;
-    return Is_Atom_Trash(atom);
-}
-
-
 //=//// STANDALONE "SIGIL?" ELEMENTS (@ ^ $) //////////////////////////////=//
 //
 // These are just sigilized versions of (_) which is the literal space char.

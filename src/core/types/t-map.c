@@ -427,7 +427,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
 } key_step_dual_in_out: { ////////////////////////////////////////////////////
 
-    if (Is_Endlike_Tripwire(SPARE))  // no more key, not a problem, done
+    if (Is_Endlike_Unset(SPARE))  // no more key, not a problem, done
         goto finished;
 
     if (Is_Ghost(SPARE))
@@ -449,7 +449,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
 } value_step_dual_in_out: { //////////////////////////////////////////////////
 
-    if (Is_Endlike_Tripwire(SPARE))  // no value for key, that's an error
+    if (Is_Endlike_Unset(SPARE))  // no value for key, that's an error
         return PANIC("Key without value terminating MAKE MAP!");
 
     if (Is_Ghost(SPARE))

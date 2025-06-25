@@ -219,7 +219,7 @@ static Bounce Tweak_P_Native_Core(Level* level_)
 //  "Implementation detail of PICK and POKE, also underlies SET and GET"
 //
 //      return: "DUAL PROTOCOL: null means no writeback, lifted null is null"
-//          [null? tripwire? quoted! quasiform!]
+//          [null? word! quoted! quasiform!]
 //      location [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker [<opt-out> element?]
 //      dual "DUAL PROTOCOL: action is accessor, lifted action is action"

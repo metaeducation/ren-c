@@ -408,7 +408,7 @@ Bounce Action_Executor(Level* L)
     //    first-cut approximation by unbinding.
 
         if (STATE == ST_ACTION_BARRIER_HIT) {
-            Init_Tripwire_Due_To_End(ARG);
+            Init_Unset_Due_To_End(ARG);
             goto continue_fulfilling;
         }
 
@@ -432,7 +432,7 @@ Bounce Action_Executor(Level* L)
                 if (Not_Parameter_Flag(PARAM, ENDABLE))
                     return PANIC(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
 
-                Init_Tripwire_Due_To_End(ARG);
+                Init_Unset_Due_To_End(ARG);
                 goto continue_fulfilling;
             }
 
@@ -566,7 +566,7 @@ Bounce Action_Executor(Level* L)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (Is_Level_At_End(L)) {
-            Init_Tripwire_Due_To_End(ARG);
+            Init_Unset_Due_To_End(ARG);
             goto continue_fulfilling;
         }
 
@@ -810,7 +810,7 @@ Bounce Action_Executor(Level* L)
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         if (Is_Typechecked(ARG)) {
             if (Get_Cell_Flag(ARG, SLOT_WEIRD_DUAL))
-                assert(Is_Endlike_Tripwire(ARG));  // locals, <end>-ables
+                assert(Is_Endlike_Unset(ARG));  // locals, <end>-ables
             continue;
         }
 
@@ -822,7 +822,7 @@ Bounce Action_Executor(Level* L)
             param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
 
-        if (Is_Endlike_Tripwire(ARG)) {  // special state, SLOT_WEIRD_DUAL
+        if (Is_Endlike_Unset(ARG)) {  // special state, SLOT_WEIRD_DUAL
             if (Get_Parameter_Flag(param, ENDABLE))  // !!! "<unset>?
                 continue;
             return PANIC(Error_Unspecified_Arg(L));

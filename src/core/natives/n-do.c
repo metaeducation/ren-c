@@ -316,7 +316,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         return PANIC(Cell_Error(source)); }  // would panic anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:
-        if (Is_Endlike_Tripwire(OUT)) {
+        if (Is_Endlike_Unset(OUT)) {
             Drop_Level(SUBLEVEL);
             return nullptr;  // no result, not even GHOST [3]
         }
@@ -641,7 +641,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     Element* frame;
     Element* iterator;
 
-    Value* var;  // may come from evars iterator or found by index
+    Atom* var;  // may come from evars iterator or found by index
     Param* param;  // (same)
 
     if (STATE != ST_FRAME_FILLER_INITIAL_ENTRY)
@@ -774,10 +774,12 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     if (not index)
         return PANIC(Error_Bad_Parameter_Raw(at));
 
-    var = Slot_Hack(Varlist_Slot(Cell_Varlist(frame), unwrap index));
+    var = u_cast(Atom*,
+        u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), unwrap index))
+    );
     param = Phase_Param(Cell_Frame_Phase(op), unwrap index);
 
-    if (not Is_Parameter(var))
+    if (not Is_Parameter(u_cast(Value*, var)))
         return PANIC(Error_Bad_Parameter_Raw(at));
 
     Sink(Value) lookback = SCRATCH;  // for error
@@ -850,7 +852,9 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     REBLEN index = VAL_UINT32(ARG(INDEX));
 
-    var = Slot_Hack(Varlist_Slot(Cell_Varlist(frame), index));
+    var = u_cast(Atom*,
+        u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), index))
+    );
     param = Phase_Param(Cell_Frame_Phase(op), index);
 
     goto copy_dual_spare_to_var_in_frame;
@@ -859,19 +863,20 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
-    var = Slot_Hack(e->slot);
+    var = u_cast(Atom*, u_cast(Cell*, e->slot));
     param = e->param;
 
     goto copy_dual_spare_to_var_in_frame;
 
 } copy_dual_spare_to_var_in_frame: {  ////////////////////////////////////////
 
-    if (/* param and */ Cell_Parameter_Class(param) == PARAMCLASS_META) {
-        Move_Cell(var, Liftify(SPARE));
-    }
+    possibly(param == var);  // don't overwrite until meta test done
+
+    if (/* param and */ Cell_Parameter_Class(param) != PARAMCLASS_META)
+        Move_Atom(var, SPARE);
     else {
-        Value* spare = Decay_If_Unstable(SPARE);
-        Move_Cell(var, spare);
+        Move_Atom(var, SPARE);
+        Decay_If_Unstable(var);
     }
 
     goto handle_next_item;

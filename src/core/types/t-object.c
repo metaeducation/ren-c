@@ -1244,7 +1244,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        if (Is_Dual_Tripwire_Unset_Signal(dual))
+        if (Is_Dual_Word_Unset_Signal(dual))
             goto handle_poke;
 
         if (Is_Dual_Word_Named_Signal(dual))
@@ -1262,7 +1262,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     impossible(Get_Cell_Flag(OUT, SLOT_WEIRD_DUAL));
 
     if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {  // not lifted
-        assert(Is_Tripwire(Known_Stable(OUT)));
+        assert(Is_Dual_Word_Unset_Signal(Known_Stable(OUT)));
         return OUT;  // not lifted, so not a "normal" state
     }
 
@@ -1280,7 +1280,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    assert(Any_Lifted(dual) or Is_Tripwire(dual));  // more to come!
+    assert(Any_Lifted(dual) or Is_Dual_Word_Unset_Signal(dual));  // more!
 
     if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
         return PANIC(Error_Protected_Key(symbol));

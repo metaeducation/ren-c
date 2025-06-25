@@ -476,7 +476,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
 } eval_step_dual_in_spare: {  ////////////////////////////////////////////////
 
-    if (Is_Endlike_Tripwire(SPARE))
+    if (Is_Endlike_Unset(SPARE))
         goto reached_end;
 
     if (Is_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue
@@ -1162,7 +1162,7 @@ DECLARE_NATIVE(DEFAULT)
     if (Is_Error(OUT))
         return PANIC(Cell_Error(OUT));
 
-    if (not Is_Tripwire(Known_Stable(OUT))) {
+    if (not Is_Dual_Word_Unset_Signal(Known_Stable(OUT))) {
         Unliftify_Undecayed(OUT);
 
         Value* out = Decay_If_Unstable(OUT);  // decay may be needed [2]

@@ -206,7 +206,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 
 } eval_step_dual_in_spare: {  ////////////////////////////////////////////////
 
-    if (Is_Endlike_Tripwire(SPARE))
+    if (Is_Endlike_Unset(SPARE))
         goto finished;
 
 } eval_result_in_spare: {  ///////////////////////////////////////////////////

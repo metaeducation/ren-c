@@ -120,7 +120,7 @@ DECLARE_NATIVE(REDUCE)
         goto initial_entry_non_list;  // semantics in question [1]
 
       case ST_REDUCE_EVAL_STEP:
-        if (Is_Endlike_Tripwire(SPARE))
+        if (Is_Endlike_Unset(SPARE))
             goto finished;
         goto reduce_step_dual_in_spare;
 
@@ -353,7 +353,7 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Slot* slot = Varlist_Slot(Cell_Varlist(vars), 1);
 
-    if (Is_Endlike_Tripwire(SPARE))
+    if (Is_Endlike_Unset(SPARE))
         goto finished;
 
     if (Is_Ghost(SPARE) and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META))

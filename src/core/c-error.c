@@ -689,7 +689,7 @@ Error* Make_Error_Managed_Vaptr(
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
                 assert(!"Not enough arguments in Make_Error_Managed()");
-                Init_Tripwire_Due_To_End(u_cast(Atom*, u_cast(Cell*, slot)));
+                Init_Unset_Due_To_End(u_cast(Atom*, u_cast(Cell*, slot)));
                 break;
 
               case DETECTED_AS_CELL: {
@@ -848,7 +848,7 @@ Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 //  Error_Unspecified_Arg: C
 //
 Error* Error_Unspecified_Arg(Level* L) {
-    assert(Is_Atom_Trash(L->u.action.arg));
+    assert(Is_Endlike_Unset(L->u.action.arg));
 
     const Symbol* param_symbol = Key_Symbol(L->u.action.key);
 

@@ -182,3 +182,47 @@ INLINE bool Is_Word_With_Id(const Value* v, SymId id) {
         return false;
     return id == Cell_Word_Id(v);
 }
+
+
+//=//// <end> SIGNALING WITH UNSET (_ dual) ///////////////////////////////=//
+//
+// Special handling is required in order to allow a kind of "light variadic"
+// form, where a parameter can be missing.
+//
+// This macro helps keep track of those places in the source that are the
+// implementation of the "unset due to end" behavior.
+//
+
+// Show that we know we're dealing with a lifted dual slot.
+//
+INLINE bool Any_Lifted_Dual(const Slot* slot) {
+    assert(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
+    return LIFT_BYTE_RAW(slot) >= QUASIFORM_3;
+}
+
+#define Is_Dual_Word_Unset_Signal(dual) \
+    Is_Word_With_Id((dual), SYM__PUNSET_P)
+
+#define Init_Dual_Word_Unset_Signal(dual) \
+    Init_Word((dual), CANON(_PUNSET_P))
+
+INLINE Slot* Init_Dual_Unset(Cell* slot) {
+    Init_Dual_Word_Unset_Signal(slot);
+    Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);  // special case
+    return u_cast(Slot*, slot);
+}
+
+INLINE bool Is_Dual_Unset(Cell* cell) {
+    if (Not_Cell_Flag(cell, SLOT_WEIRD_DUAL))
+        return false;
+    return Is_Dual_Word_Unset_Signal(u_cast(Value*, cell));
+}
+
+INLINE Atom* Init_Unset_Due_To_End(Init(Atom) out) {
+    Init_Dual_Word_Unset_Signal(out);
+    Set_Cell_Flag(out, SLOT_WEIRD_DUAL);  // special case
+    return out;
+}
+
+#define Is_Endlike_Unset(cell) \
+    Is_Dual_Unset(cell)

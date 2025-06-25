@@ -138,27 +138,5 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 #define Is_Dual_Word_Remove_Signal(dual)  Is_Word_With_Id((dual), SYM_REMOVE)
 #define Init_Dual_Word_Remove_Signal(dual)  Init_Word((dual), CANON(REMOVE))
 
-#define Is_Dual_Tripwire_Unset_Signal(dual)  Is_Tripwire(dual)
-#define Init_Dual_Tripwire_Unset_Signal(dual)  Init_Tripwire(dual)
 
 #define Is_Dual_Word_Named_Signal(dual)  Is_Word(dual)
-
-
-// Show that we know we're dealing with a lifted dual slot.
-//
-INLINE bool Any_Lifted_Dual(const Slot* slot) {
-    assert(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
-    return LIFT_BYTE_RAW(slot) >= QUASIFORM_3;
-}
-
-INLINE Slot* Init_Dual_Unset(Init(Slot) slot) {
-    Init_Tripwire(slot);
-    Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);  // special case
-    return slot;
-}
-
-INLINE bool Is_Dual_Unset(Cell* cell) {
-    if (Not_Cell_Flag(cell, SLOT_WEIRD_DUAL))
-        return false;
-    return Is_Tripwire(u_cast(Value*, cell));
-}

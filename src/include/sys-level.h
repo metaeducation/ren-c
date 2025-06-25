@@ -327,7 +327,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     INLINE Atom* Level_Arg(Level* L, REBLEN n) {
         assert(n != 0 and n <= Level_Num_Args(L));
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
-        possibly(Is_Endlike_Tripwire(u_cast(Atom*, L->rootvar) + n));
+        possibly(Is_Endlike_Unset(u_cast(Atom*, L->rootvar) + n));
         return u_cast(Atom*, L->rootvar) + n;  // 1-indexed
     }
 #endif
@@ -340,7 +340,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 
 // When evaluative contexts ask "Is_Level_At_End()" and see [], they might
 // think that is the end of the level.  But [, , ,] would be an end of the
-// level after an evaluation step with no result (e.g. Is_Endlike_Tripwire()
+// level after an evaluation step with no result (e.g. Is_Endlike_Unset()
 // coming back from Stepper_Executor()).  So you don't want to get
 // lulled into a false sense of security that [] is the only way a level ends.
 //

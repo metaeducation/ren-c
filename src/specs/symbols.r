@@ -26,6 +26,10 @@ Rebol [
     ]--
 ]
 
+; === DUAL SIGNALS ===
+
+*unset*
+
 ; === WORD!-based LOGIC ===
 
 true

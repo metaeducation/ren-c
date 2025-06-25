@@ -223,7 +223,7 @@ Bounce Inert_Stepper_Executor(Level* L)
     STATE = ST_INERT_STEPPER_FINISHED;  // can't leave as STATE_0
 
     if (Is_Feed_At_End(L->feed))
-        return Init_Tripwire_Due_To_End(OUT);
+        return Init_Unset_Due_To_End(OUT);
 
     Derelativize(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
     Fetch_Next_In_Feed(L->feed);
@@ -349,7 +349,7 @@ Bounce Stepper_Executor(Level* L)
 
     if (Is_Feed_At_End(L->feed)) {
         assert(Is_Cell_Erased(OUT));
-        Init_Tripwire_Due_To_End(OUT);
+        Init_Unset_Due_To_End(OUT);
         STATE = ST_STEPPER_NONZERO_STATE;
         goto finished;
     }
@@ -1432,7 +1432,7 @@ Bounce Stepper_Executor(Level* L)
 
 } generic_set_rightside_dual_in_out: {
 
-    if (Is_Endlike_Tripwire(OUT))
+    if (Is_Endlike_Unset(OUT))
         return PANIC(Error_Need_Non_End_Raw(CURRENT));
 
     if (Is_Lifted_Void(CURRENT))  // e.g. `(void): ...`  !!! use space var!
