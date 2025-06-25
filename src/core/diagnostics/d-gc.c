@@ -139,6 +139,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_PARAMETER: {
         if (Cell_Parameter_Spec(v))
             assert(Is_Base_Marked(unwrap Cell_Parameter_Spec(v)));
+        if (Cell_Parameter_String(v))
+            assert(Is_Base_Marked(unwrap Cell_Parameter_String(v)));
         break; }
 
       case TYPE_BITSET: {

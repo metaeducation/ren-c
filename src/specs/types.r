@@ -76,10 +76,6 @@ date        "day, month, year, time of day, and timezone"
             (CELL_MASK_NO_MARKING)
             [any-inert?]
 
-parameter   "function parameter description"
-            (payload1 :payload2)
-            [any-inert?]
-
 bitset      "set of bit flags"
             (payload1)
             [any-inert?]
@@ -148,6 +144,11 @@ money       "digits and decimal points as a string, preserved precisely"
 varargs     "evaluator position for variable numbers of arguments"
             (payload2)
             [any-inert?]
+
+parameter   "function parameter description"
+            (payload1 :payload2)
+            [any-inert?]
+
 
 <ANY-CONTEXT?>
 
