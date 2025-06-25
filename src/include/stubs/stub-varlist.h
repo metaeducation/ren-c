@@ -263,22 +263,21 @@ INLINE Fixed(Slot*) Varlist_Fixed_Slot(VarList* c, Index n) {  // 1-based
 //=//// TRANSITIONAL HACK FOR SLOT=>VALUE //////////////////////////////////=//
 //
 // This is a temporary workaround.  Ultimately slots should only be converted
-// to Value* directly in a narrow set of cases, where the field is controlled
-// (e.g. a LIB variable which is initialized as not SLOT_WEIRD_DUAL and then
-// PROTECT'ed in order to enusre it never gets that flag set).
+// to Value* directly in a narrow set of cases, when dual representation is
+// not a possibility.
 
 INLINE Init(Slot) Slot_Init_Hack(Slot* slot) {
     return u_cast(Init(Slot), slot);
 }
 
 INLINE Value* Slot_Hack(const_if_c Slot* slot) {
-    assert(Not_Cell_Flag(slot, SLOT_WEIRD_DUAL));
+    assert(LIFT_BYTE(slot) != DUAL_0);
     return u_cast(Value*, slot);
 }
 
 #if CPLUSPLUS_11
     INLINE const Value* Slot_Hack(const Slot* slot) {
-        assert(Not_Cell_Flag(slot, SLOT_WEIRD_DUAL));
+        assert(LIFT_BYTE(slot) != DUAL_0);
         return u_cast(Value*, slot);
     }
 #endif

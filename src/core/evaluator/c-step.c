@@ -24,11 +24,8 @@
 // for the typical interpretation of BLOCK! or GROUP!, in terms of giving
 // sequences like `x: 1 + 2` a meaning for how SET-WORD! or INTEGER! behaves.
 //
-// It returns what might be a "dual" result (with CELL_FLAG_SLOT_WEIRD_DUAL).
-// The reason for this choice is that there needs to be a way to return
-// a signal indicating that there was no evaluative product.  That's because
-// it's necessary for functions like EVAL:STEP to be able to know when there
-// is no result to return.
+// It may return a DUAL_0 signal for unset.  That's because it's necessary for
+// functions like EVAL:STEP to know when there is no result to return.
 //
 // Consider:
 //
@@ -52,8 +49,7 @@
 // be a way to return something to indicate "no synthesized result" that is
 // completely out of band of all possible expression evaluation results.
 // Rather than awkwardly make all states ^META with an unlifted value to
-// represent nothing, this uses the same concept as CELL_FLAG_SLOT_WEIRD_DUAL
-// to uniquely mark the "sub-band" state of no result.
+// represent nothing, this uses DUAL_0 to return a *unset* result.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //

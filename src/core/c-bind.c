@@ -1268,8 +1268,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
             Init(Slot) slot = Append_Context(varlist, symbol);
-            Init_Space(slot);
-            Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);
+            Init_Blackhole_Slot(slot);
             Set_Cell_Flag(slot, PROTECTED);
 
             if (rebinding)
@@ -1305,7 +1304,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
             // instead of creating a new one.
             //
             // We use the ALIAS dual convention, of storing the pinned word
-            // in the slot with CELL_FLAG_SLOT_WEIRD_DUAL
+            // in the slot with DUAL_0
             //
             if (dummy_sym == SYM_DUMMY9)
                 e = Error_User(
@@ -1317,7 +1316,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 
             Init(Slot) slot = Append_Context(varlist, symbol);
             Derelativize(slot, item, binding);
-            Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);
+            LIFT_BYTE(slot) = DUAL_0;
 
             if (rebinding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove
@@ -1390,31 +1389,30 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 //
 Option(Error*) Trap_Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
 {
-    if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {
-        if (not Any_Lifted_Dual(slot))
-            goto handle_dual_signal;
+    if (LIFT_BYTE(slot) != DUAL_0) {
+        const Value* var = Slot_Hack(slot);
 
-        Copy_Cell(out, u_cast(Value*, slot));
-        Unliftify_Undecayed(out);
+        Copy_Cell(out, var);
         return SUCCESS;
     }
 
-  handle_non_weird: {
-
-    const Value* var = Slot_Hack(slot);
-
-    Copy_Cell(out, var);
-    return SUCCESS;
-
-} handle_dual_signal: { //////////////////////////////////////////////////////
+  handle_dual_slot: {
 
     // e.g. `for-each _ [1 2 3] [...]` sets slot to "toss values"
 
-    assert(not Is_Space(u_cast(Value*, slot)));
+    assert(not Is_Blackhole_Slot(slot));
+
+    DECLARE_ELEMENT (temp);  // don't have to guard--slot guards
+    Copy_Cell(temp, u_cast(Element*, slot));
+  #if RUNTIME_CHECKS
+    LIFT_BYTE(temp) = NOQUOTE_2;
+    assert(Is_Pinned_Form_Of(WORD, temp));  // alias
+  #endif
+    LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
+    unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
     Sink(Value) out_value = u_cast(Value*, out);
-    assert(Is_Pinned_Form_Of(WORD, slot));
-    if (rebRunThrows(out_value, CANON(GET), slot))
+    if (rebRunThrows(out_value, CANON(GET), temp))
         return Error_No_Catch_For_Throw(TOP_LEVEL);
 
     return SUCCESS;
@@ -1442,14 +1440,11 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
 {
     Flags persist = (slot->header.bits & CELL_MASK_PERSIST_SLOT);
 
-    if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {
+    if (LIFT_BYTE(slot) == DUAL_0) {
         if (Is_Dual_Unset(slot))
             goto handle_non_weird;  // can be overwritten
 
-        if (not Any_Lifted_Dual(slot))
-            goto handle_dual_signal;
-
-        // fallthrough, just overwrite
+        goto handle_dual_slot;
     }
 
   handle_non_weird: {
@@ -1461,17 +1456,25 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
     slot->header.bits |= persist;  // preserve persist bits
     return SUCCESS;
 
-} handle_dual_signal: { //////////////////////////////////////////////////////
+} handle_dual_slot: { ////////////////////////////////////////////////////////
 
-    if (Is_Space(u_cast(Value*, slot)))  // e.g. `for-each _ [1 2 3] [...]`
+    if (Is_Blackhole_Slot(slot))  // e.g. `for-each _ [1 2 3] [...]`
         return SUCCESS;  // toss it
 
     assert(Is_Stable(write));
 
-    assert(Is_Pinned_Form_Of(WORD, slot));
-    rebElide(CANON(SET), slot, rebQ(u_c_cast(Value*, write)));
+    DECLARE_ELEMENT (temp);
+    Copy_Cell(temp, u_cast(Element*, slot));
+  #if RUNTIME_CHECKS
+    LIFT_BYTE(temp) = NOQUOTE_2;
+    assert(Is_Pinned_Form_Of(WORD, temp));
+  #endif
+    LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
+    unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
-    slot->header.bits |= persist;  // preserve persist bits
+    rebElide(CANON(SET), temp, rebQ(u_c_cast(Value*, write)));
+
+    unnecessary(slot->header.bits |= persist);  // didn't write actual slot
     return SUCCESS;
 }}
 

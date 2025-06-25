@@ -592,7 +592,6 @@ Option(Error*) Trap_Pop_Paramlist(
             slot,
             CELL_MASK_COPY
                 | CELL_FLAG_VAR_MARKED_HIDDEN
-                | CELL_FLAG_SLOT_WEIRD_DUAL
         );
         if (Is_Parameter(param))
             Set_Parameter_Flag(param, FINAL_TYPECHECK);

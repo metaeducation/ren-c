@@ -193,13 +193,6 @@ INLINE bool Is_Word_With_Id(const Value* v, SymId id) {
 // implementation of the "unset due to end" behavior.
 //
 
-// Show that we know we're dealing with a lifted dual slot.
-//
-INLINE bool Any_Lifted_Dual(const Slot* slot) {
-    assert(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
-    return LIFT_BYTE_RAW(slot) >= QUASIFORM_3;
-}
-
 #define Is_Dual_Word_Unset_Signal(dual) \
     Is_Word_With_Id((dual), SYM__PUNSET_P)
 
@@ -208,21 +201,49 @@ INLINE bool Any_Lifted_Dual(const Slot* slot) {
 
 INLINE Slot* Init_Dual_Unset(Cell* slot) {
     Init_Dual_Word_Unset_Signal(slot);
-    Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);  // special case
+    LIFT_BYTE(slot) = DUAL_0;
     return u_cast(Slot*, slot);
 }
 
-INLINE bool Is_Dual_Unset(Cell* cell) {
-    if (Not_Cell_Flag(cell, SLOT_WEIRD_DUAL))
+INLINE bool Is_Dual_Unset(const Cell* cell) {
+    if (LIFT_BYTE(cell) != DUAL_0)
         return false;
-    return Is_Dual_Word_Unset_Signal(u_cast(Value*, cell));
+    return Cell_Word_Id(cell) == SYM__PUNSET_P;
 }
 
 INLINE Atom* Init_Unset_Due_To_End(Init(Atom) out) {
     Init_Dual_Word_Unset_Signal(out);
-    Set_Cell_Flag(out, SLOT_WEIRD_DUAL);  // special case
+    LIFT_BYTE(out) = DUAL_0;
     return out;
 }
 
 #define Is_Endlike_Unset(cell) \
     Is_Dual_Unset(cell)
+
+
+//=//// *BLACKHOLE* DUAL SIGNAL ///////////////////////////////////////////-//
+//
+// This is what slots are set to when you do things like:
+//
+//    for-each _ [1 2 3] [...]
+//
+
+#define Is_Dual_Word_Blackhole_Signal(dual) \
+    Is_Word_With_Id((dual), SYM__PBLACKHOLE_P)
+
+#define Init_Dual_Word_Blackhole_Signal(dual) \
+    Init_Word((dual), CANON(_PBLACKHOLE_P))
+
+INLINE bool Is_Blackhole_Slot(const Slot* slot) {
+    if (LIFT_BYTE(slot) != DUAL_0)
+        return false;
+    if (KIND_BYTE(slot) != TYPE_WORD)
+        return false;
+    return Cell_Word_Id(slot) == SYM__PBLACKHOLE_P;
+}
+
+INLINE Slot* Init_Blackhole_Slot(Init(Slot) out) {
+    Init_Dual_Word_Blackhole_Signal(out);
+    LIFT_BYTE(out) = DUAL_0;
+    return out;
+}

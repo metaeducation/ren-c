@@ -1257,11 +1257,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    possibly(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
     Copy_Cell(OUT, u_cast(Atom*, slot));
-    impossible(Get_Cell_Flag(OUT, SLOT_WEIRD_DUAL));
 
-    if (Get_Cell_Flag(slot, SLOT_WEIRD_DUAL)) {  // not lifted
+    if (LIFT_BYTE(OUT) == DUAL_0) {  // return as nonquoted/nonquasi thing
+        LIFT_BYTE(OUT) = NOQUOTE_2;
         assert(Is_Dual_Word_Unset_Signal(Known_Stable(OUT)));
         return OUT;  // not lifted, so not a "normal" state
     }
@@ -1285,17 +1284,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
         return PANIC(Error_Protected_Key(symbol));
 
-    possibly(Get_Cell_Flag(dual, SLOT_WEIRD_DUAL));
     Copy_Cell(m_cast(Value*, u_cast(Value*, slot)), dual);
-    impossible(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
 
     if (Any_Lifted(dual)) {  // don't antagonize...yet [1]
         Unliftify_Undecayed(m_cast(Atom*, u_cast(Atom*, slot)));
-        impossible(Get_Cell_Flag(slot, SLOT_WEIRD_DUAL));
         return NO_WRITEBACK_NEEDED;
     }
 
-    Set_Cell_Flag(slot, SLOT_WEIRD_DUAL);
+    LIFT_BYTE(slot) = DUAL_0;
 
     return NO_WRITEBACK_NEEDED;  // VarList* in cell not changed
 

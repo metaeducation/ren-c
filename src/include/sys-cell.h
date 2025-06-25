@@ -435,11 +435,9 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 //
 // 3. Things are proceeding in a hacky way to start making use of the "sub
 //    band" of things that are not lifted, e.g. "true unset".  True unset
-//    indicated by having CELL_FLAG_SLOT_WEIRD_DUAL set on a slot.  Generally
-//    speaking, you have to go through the mainline slot reading machinery
-//    to deal with it.  But FRAME! machinery currently has some exceptions
-//    and copies slots directly, in which case it needs to preserve the
-//    CELL_FLAG_SLOT_WEIRD_DUAL bit.
+//    indicated by having DUAL_0 set in the lift byte of an *unset* WORD!.
+//    You usually have to go through the mainline slot reading machinery
+//    to deal with it.  But FRAME! machinery currently has some exceptions.
 
 #define CELL_MASK_PERSIST \
     (BASE_FLAG_MANAGED | BASE_FLAG_ROOT | BASE_FLAG_MARKED)
@@ -454,9 +452,6 @@ STATIC_ASSERT(not (CELL_MASK_PERSIST & CELL_FLAG_NOTE));
 
 #define CELL_MASK_PERSIST_SLOT \
     (CELL_MASK_PERSIST | CELL_FLAG_NOTE)  // special persistence for slots [2]
-
-#define CELL_MASK_COPY_SLOT \
-    (CELL_MASK_COPY | CELL_FLAG_SLOT_WEIRD_DUAL)  // review usages [3]
 
 
 //=//// GETTING, SETTING, and CLEARING VALUE FLAGS ////////////////////////=//
@@ -633,7 +628,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 // bad forms don't get made.
 //
 // 1. The `Slot` can be using "dual representation" to store its cell, based
-//    on CELL_FLAG_SLOT_WEIRD_DUAL.  This means that the LIFT_BYTE() may be
+//    on the LIFT_BYTE() being DUAL_0.
 //    bigger by 2 than what the actual representation is.  This requires
 //    care to handle, so a Slot must knowingly check the flag and use the
 //    LIFT_BYTE_RAW() when dealing with Slots.
@@ -654,8 +649,6 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
         LiftHolder(const Cell* cell)
             : cell (const_cast<Cell*>(cell))
           {}
-
-        LiftHolder(const Slot*) = delete;  // may be dual [1]
 
         LiftHolder(const LiftHolder&) = delete;  // avoid gcc ambiguities [2]
 

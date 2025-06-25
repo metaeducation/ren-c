@@ -809,7 +809,7 @@ Bounce Action_Executor(Level* L)
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         if (Is_Typechecked(ARG)) {
-            if (Get_Cell_Flag(ARG, SLOT_WEIRD_DUAL))
+            if (LIFT_BYTE(ARG) == DUAL_0)
                 assert(Is_Endlike_Unset(ARG));  // locals, <end>-ables
             continue;
         }
@@ -822,13 +822,13 @@ Bounce Action_Executor(Level* L)
             param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
 
-        if (Is_Endlike_Unset(ARG)) {  // special state, SLOT_WEIRD_DUAL
+        if (Is_Endlike_Unset(ARG)) {  // special state, DUAL_0
             if (Get_Parameter_Flag(param, ENDABLE))  // !!! "<unset>?
                 continue;
             return PANIC(Error_Unspecified_Arg(L));
         }
 
-        assert(Not_Cell_Flag(ARG, SLOT_WEIRD_DUAL));  // not a tripwire
+        assert(LIFT_BYTE(ARG) != DUAL_0);  // not a tripwire
 
         if (Is_Void(ARG)) {
             if (Get_Parameter_Flag(param, OPT_OUT)) {  // <opt-out> param

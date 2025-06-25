@@ -311,14 +311,9 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 
 //=//// CELL_FLAG_WEIRD ///////////////////////////////////////////////////=//
 //
-// The "Weird" flag is another non-sticky flag, which was introduced to track
-// the dual representation state of Slots.  At time of writing, it seems like
-// CELL_FLAG_NOTE is needed for typechecking, CELL_FLAG_HINT is needed for
-// tracking the "unsurprising" state, so it really does seem like a distinct
-// flag is needed.  Also at time of writing, that exhausts the flags in
-// the 32-bit build.
-//
-// * See CELL_FLAG_SLOT_WEIRD_DUAL
+// The "Weird" flag is another non-sticky flag.  It was once introduced to
+// track the dual states of lots, but that's now handled by DUAL_0.  So it's
+// just another free flag, but the name is kind of useful.
 //
 #define CELL_FLAG_WEIRD \
     FLAG_LEFT_BIT(25)
@@ -783,6 +778,7 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 // considerations for handling, because they may store bit patterns that
 // indicate a function should be run to fulfill the variable (a "GETTER") or
 // a function should be run to accept a value to store (a "SETTER").
+// These considerations apply when the Slot's LIFT_BYTE() is DUAL_0.
 //
 // This means you can't casually use something like Init_Integer() or
 // Copy_Cell() to blindly write bit patterns into a Slot, because it might
@@ -793,27 +789,8 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 //
 // There is one exception: an Init(Slot) e.g. what you get from adding a
 // fresh variable to a context, is able to be initialized by any routine
-// that could do an Init(Atom/Value/Element).  This is because a slot that
-// does not carry CELL_FLAG_SLOT_WEIRD_DUAL is assumed to be literal.
+// that could do an Init(Atom/Value/Element).
 //
-// Hence instead of writing:
-//
-//      VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
-//      Liftify(Init_Integer(Append_Context(info, CANON(ID)), pid));
-//      Liftify(Init_Integer(Append_Context(info, CANON(CODE)), code));
-//
-// You can simply say:
-//
-//      VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
-//      Init_Integer(Append_Context(info, CANON(ID)), pid);
-//      Init_Integer(Append_Context(info, CANON(CODE)), code);
-//
-// While checking for CELL_FLAG_SLOT_WEIRD_DUAL adds some overhead to GET and
-// SET operations, it avoids code like this needing to call Liftify() which
-// would have to pay the cost of checking for overflow of the LIFT_BYTE().
-//
-
-#define CELL_FLAG_SLOT_WEIRD_DUAL  CELL_FLAG_WEIRD
 
 #if DONT_CHECK_CELL_SUBCLASSES
     typedef struct RebolValueStruct Slot;
