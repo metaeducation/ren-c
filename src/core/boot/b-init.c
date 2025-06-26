@@ -770,6 +770,8 @@ void Startup_Core(void)
 
     Startup_Natives(&boot->natives);
 
+    Protect_Cell(Mutable_Lib_Var(SYM_UNIMPLEMENTED));  // can't hijack it
+
 } startup_evaluator: {
 
     Startup_Evaluator();

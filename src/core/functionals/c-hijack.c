@@ -261,12 +261,28 @@ bool Hijacker_Details_Querier(
 
 
 //
+//  unimplemented: native [
+//
+//  "Panic function returned on HIJACK-ing a function that was void-HIJACKED"
+//
+//      return: [<divergent>]
+//  ]
+//
+DECLARE_NATIVE(UNIMPLEMENTED)
+{
+    return PANIC(
+        "Invoked function returned from HIJACK after hijacking a void-HIJACK"
+    );
+}
+
+
+//
 //  hijack: native [
 //
 //  "Cause all existing references to a frame to invoke another frame"
 //
-//      return: "New identity for calling victim (nothing if victim was TBD)"
-//          [action! ~]
+//      return: "New identity for calling victim"
+//          [action!]  ; must return ACTION!-only for "unsurprisingness"
 //      victim "Frame whose inherited instances are to be affected"
 //          [<unrun> frame!]
 //      hijacker "The frame to run in its place (void to leave TBD)"
@@ -336,15 +352,18 @@ DECLARE_NATIVE(HIJACK)
     assert(CELL_FRAME_PAYLOAD_1_PHASE(victim_archetype) == victim);
     CELL_FRAME_PAYLOAD_1_PHASE(victim_archetype) = proxy;  // adjust for swap
 
-    if (victim_unimplemented)
-        return TRIPWIRE;
-
-    Init_Action(
-        OUT,
-        proxy,  // after Swap_Flex_Content(), new identity for victim
-        Cell_Frame_Label(ARG(VICTIM)),
-        Cell_Frame_Coupling(ARG(VICTIM))
-    );
+    if (victim_unimplemented) {
+        assert(Get_Cell_Flag(LIB(UNIMPLEMENTED), PROTECTED));
+        Copy_Cell(OUT, LIB(UNIMPLEMENTED));
+    }
+    else {
+        Init_Action(
+            OUT,
+            proxy,  // after Swap_Flex_Content(), new identity for victim
+            Cell_Frame_Label(ARG(VICTIM)),
+            Cell_Frame_Coupling(ARG(VICTIM))
+        );
+    }
 
     return UNSURPRISING(OUT);
 }

@@ -885,7 +885,7 @@ e-lib/emit [ver --[
         */
         extern RebolApiTable *g_librebol;  /* passed to the DLL init function */
 
-        #define LIBREBOL_PREFIX(api_name) g_librebol->api_name
+        #define LIBREBOL_PREFIX(api_name)  g_librebol->api_name
 
     #else  /* ...calling Rebol as DLL, or code built into the EXE itself */
 
@@ -900,7 +900,7 @@ e-lib/emit [ver --[
         #define RL_API
       #endif
 
-        #define LIBREBOL_PREFIX(api_name) API_##api_name
+        #define LIBREBOL_PREFIX(api_name)  API_##api_name
 
         /*
          * Extern prototypes for API_XXX, don't call these functions directly.

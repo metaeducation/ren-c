@@ -605,7 +605,8 @@ bool Typecheck_Coerce_Return(
     const TypesetByte* optimized = spec->misc.at_least_4;
 
     if (
-        optimized[1] == 0  // more than one optimized type, surprising...
+        optimized[0] != 0 and optimized[1] == 0  // > 1 type "surprising"
+        and Not_Parameter_Flag(param, INCOMPLETE_OPTIMIZATION)  // more in spec
         and optimized[0] == u_cast(Byte, Type_Of(atom))
         and Type_Of(atom) != TYPE_PACK  // all PACK! are potentially surprising
     ){
