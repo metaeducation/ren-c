@@ -54,7 +54,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
     Option(Heart) heart = Unchecked_Heart_Of(v);
 
-    while (Is_Bindable_Heart(heart)) {  // for `break` convenience
+    attempt {
+        if (not Is_Bindable_Heart(heart))
+            break;
+
         Context* binding = Cell_Binding(v);
         if (not binding)
             break;
@@ -78,9 +81,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         ){
             crash (binding);
         }
+
         if (Not_Base_Managed(keylist))
-            crash (keylist);
-        break;
+            crash (keylist);;
     }
 
     // This switch was originally done via contiguous TYPE_XXX values, in order

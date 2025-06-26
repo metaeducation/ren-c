@@ -122,6 +122,27 @@ DECLARE_NATIVE(BIND)
 
 
 //
+//  bindable?: native [
+//
+//  "Return whether a datatype is bindable or not"
+//
+//      return: [logic?]
+//      value [<opt-out> any-value?]  ; takes antiforms for fail, good idea?
+//  ]
+//
+DECLARE_NATIVE(BINDABLE_Q)
+{
+    INCLUDE_PARAMS_OF_BINDABLE_Q;
+
+    Value* v = ARG(VALUE);
+    if (Is_Antiform(v))
+        return FAIL("ANTIFORM! values are not bindable");  // caller can TRY
+
+    return LOGIC(Is_Cell_Bindable(Known_Element(v)));
+}
+
+
+//
 //  binding-of: native:generic [
 //
 //  "Get the binding of a value (binding is a loooong work in progress...)"

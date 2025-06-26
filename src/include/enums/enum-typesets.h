@@ -56,34 +56,21 @@
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
 // indicators in the LIFT_BYTE() do not affect it.
 //
-// 1. There's a range check created automatically for ANY-BINDABLE?, and
-//    that's good for fitting into the typeset optimization cases.  But it
-//    requires two comparisons, and due to careful organization of %types.r
-//    this particular check can be accomplished in the core code with a single
-//    comparison.  Is_Bindable() was the historical name of the function
-//    and reads a bit beter than Any_Bindable().
+// 1. To make this macro fast, we assume the caller passes in Option(Heart)
+//    and use compile-time-ensure to avoid an inline function.
+//
+// 2. A range check for ANY-BINDABLE? would require two comparisons.  But due
+//    to careful organization of %types.r, this particular check can be
+//    accomplished in the core code with a single comparison.
 
-#define Is_Bindable_Heart(opt_heart) \
-    ((maybe opt_heart) >= TYPE_WORD)
+#define Is_Bindable_Heart(opt_heart) /* assume Option(Heart) [1] */ \
+    (ensure(Heart, (maybe opt_heart)) >= TYPE_COMMA)  // only one test [2]
 
-#undef Any_Bindable  // use Is_Bindable(), faster than a range check [1]
+#define Is_Cell_Bindable(elem) \
+    Is_Bindable_Heart(Unchecked_Heart_Of(ensure(const Element*, (elem))))
 
-#define Is_Bindable(v) \
-    Is_Bindable_Heart(Unchecked_Heart_Of(v))  // readable checked elsewhere
 
-INLINE bool Bindable_Heart_Is_Any_Word(Heart heart) {
-    assert(heart >= TYPE_WORD);  // inlined Is_Bindable_Heart()
-    return heart < TYPE_TUPLE;
-}
-
-INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
-    assert(heart >= TYPE_WORD);  // inlined Is_Bindable_Heart()
-    return heart >= TYPE_BLOCK;
-}
-
-#define Any_Fundamental(v) \
-    (LIFT_BYTE(Ensure_Readable(ensure(const Value*, (v)))) == NOQUOTE_2)
-
+//=//// MISC /////////////////////////////////////////////////////////////=//
 
 INLINE bool Any_Sequence_Or_List_Type(Option(Heart) h)  // !!! optimize?
   { return Any_Sequence_Type(h) or Any_List_Type(h); }

@@ -58,7 +58,7 @@ INLINE Element* Derelativize_Untracked(
     out->payload = v->payload;
 
     if (
-        not Is_Bindable_Heart(Unchecked_Heart_Of(v))  // if not bindable...
+        not Is_Cell_Bindable(v)  // if not bindable...
         or v->extra.base != nullptr  // ...or bindable, already has a binding
     ){
         out->extra = v->extra;
@@ -77,7 +77,7 @@ INLINE Element* Derelativize_Untracked(
 
 
 INLINE Element* Bind_If_Unbound(Element* elem, Context* context) {
-    assert(Is_Bindable_Heart(Unchecked_Heart_Of(elem)));
+    assert(Is_Cell_Bindable(elem));
     possibly(context == nullptr);  // SPECIFIED
 
     if (not elem->extra.base)

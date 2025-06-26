@@ -1,17 +1,36 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Rebol datatypes and their related attributes"
+
     rights: --[
         Copyright 2012 REBOL Technologies
         Copyright 2012-2025 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
+
     license: --[
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     ]--
-    purpose: --[
-        This table is used to make C defines and intialization tables.
+
+    description: --[
+        This table is used to make C defines and intialization tables for
+        the "Heart" enumeration, which tags a Cell with how its contents
+        (Payload, Extra, and Flags) will be interpreted.
+
+        Most code should avoid dependence on exact values of the Heart bytes,
+        and this should never be exposed via the user-visible API.  The
+        values are chosen and tweaked in order to make certain tests fast.
+        Where possible, those orderings are captured in this table by tag
+        ranges like <TYPERANGE-BEGIN?> ... </TYPERANGE-END?>.
+
+        Any relative ordering dependencies not captured in this type table
+        should be captured as macros/functions in %enum-typesets.h.  As an
+        example, see Is_Cell_Bindable().
+    ]--
+
+    usage: --[
+      Entries look like:
 
             name            "description"
             ~antiform~      "antinotes"    ; ~antiform~:U means unstable
@@ -25,11 +44,8 @@ Rebol [
         mark flags  - indication of if cell payload slot 1 or 2 mark Base*
         constraints - sparse type constraints this type will answer true to
     ]--
-    notes: --[
-      * Code should avoid dependence on exact values of the heart bytes.
-        Any relative ordering dependencies not captured in this type table
-        should be captured as macros/functions in %enum-typesets.h
 
+    notes: --[
       * ANY-SCALAR? is weird at this point, because TUPLE? may or may not be
         fully numeric (1.2.3 vs alpha.beta.gamma).  What the this was for
         was defining input types things like ADD would accept, and now that's
@@ -182,17 +198,21 @@ parameter   "function parameter description"
 
 
 ; ============================================================================
-; BEGIN BINDABLE TYPES - SEE Is_Bindable() - Cell's "extra" USED FOR BINDING
+; BELOW THIS LINE ALL TYPES USE "Extra" FOR BINDING: SEE Is_Bindable_Heart()
 ; ============================================================================
 
-<ANY-BINDABLE?>
 
-    word        "evaluates a variable or action"
-    ~keyword~   "special constant values (e.g. ~null~, ~okay~)"
-                (payload1)
-                [any-utf8? any-sequencable?]
+; COMMA! is weirdly bindable, due to its application in variadic feeds.
+; It's an implementation detail which would require inventing another
+; datatype that was FEED-specific.  Better ideas welcome.
 
-  <ANY-SEQUENCE?>
+comma         "separator between full evaluations"
+~ghost~:U     "elision state that is discarded by the evaluator"
+              (CELL_MASK_NO_MARKING)
+              [any-unit?]  ; NOT inert
+
+
+<ANY-SEQUENCE?>
 
     tuple       "member selection with inert bias"
                 (:payload1)
@@ -206,9 +226,10 @@ parameter   "function parameter description"
                 (:payload1)
                 []
 
-  </ANY-SEQUENCE?>
+</ANY-SEQUENCE?>
 
-  <ANY-LIST?>
+
+<ANY-LIST?>
 
     block       "list of elements that blocks evaluation unless EVAL is used"
     ~pack~:U    "multi-return that can be unpacked or decays to first item"
@@ -225,18 +246,14 @@ parameter   "function parameter description"
                 (payload1)
                 [any-series? any-sequencable?]
 
-  </ANY-LIST?>
+</ANY-LIST?>
 
-    ; COMMA! is weirdly bindable, due to its application in variadic feeds.
-    ; It's an implementation detail which would require inventing another
-    ; datatype that was FEED-specific.  Better ideas welcome.
 
-    comma         "separator between full evaluations"
-    ~ghost~:U     "elision state that is discarded by the evaluator"
-                  (CELL_MASK_NO_MARKING)
-                  [any-unit?]  ; NOT inert
+word        "evaluates a variable or action"
+~keyword~   "special constant values (e.g. ~null~, ~okay~)"
+            (payload1)
+            [any-utf8? any-sequencable?]
 
-</ANY-BINDABLE?>
 
 
 ; ======= END "FUNDAMENTALS" THAT AREN'T QUOTED, QUASI, OR ANTIFORM ==========
@@ -263,9 +280,5 @@ parameter   "function parameter description"
 ; However the sheer number of edge cases involved made it better to clean
 ; up the %make-types.r process to do the pseudotype generation itself.
 ;
-; (Just one example: ANY-VALUE? is currently defined in such a way that it
-; tolerates the state of an unset variable, since it's supposed to model
-; anything that can be stored in a variable (the `Value` typedef can hold
-; antiform space).  But since the ANY-VALUE? function must thus take its
-; argument as ^META to receive the state, we don't automatically produce the
-; ANY-VALUE? function by means of this table, it has to be a native.)
+; !!! Could ANY-VALUE? be generated in a more automatic fashion, now that
+; a ^META parameter is not required to receive TRASH! ?

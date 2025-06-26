@@ -143,7 +143,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     out->extra.base = binding;  // checked below if DEBUG_CHECK_BINDING
 
   #if DEBUG_CHECK_BINDING
-    if (Any_Bindable_Type(heart))
+    if (Is_Cell_Bindable(out))
         Assert_Cell_Binding_Valid(out);
     else
         assert(binding == nullptr);  // all non-bindables use nullptr for now

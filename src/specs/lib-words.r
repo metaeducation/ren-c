@@ -40,7 +40,6 @@ element?
 fundamental?
 plain?
 quasi?
-bindable?
 
 newline
 space

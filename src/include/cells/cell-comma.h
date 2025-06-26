@@ -53,7 +53,7 @@
 
 INLINE Element* Init_Comma_Untracked(Init(Element) out) {
     Reset_Cell_Header_Noquote(out, CELL_MASK_COMMA);
-    Tweak_Cell_Binding(out, UNBOUND);  // Is_Bindable() due to niche feed use
+    Tweak_Cell_Binding(out, UNBOUND);  // Is_Bindable_Heart() due to niche use
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
 

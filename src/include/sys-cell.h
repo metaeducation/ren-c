@@ -915,7 +915,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 #else
     INLINE void Tweak_Cell_Binding(Element* c, Option(Context*) binding) {
         Assert_Cell_Writable(c);
-        assert(Is_Bindable_Heart(Unchecked_Heart_Of(c)));
+        assert(Is_Cell_Bindable(c));
         c->extra.base = maybe binding;
         if (binding)
             Assert_Cell_Binding_Valid(c);

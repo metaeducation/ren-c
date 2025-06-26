@@ -75,10 +75,8 @@ INLINE Count Quotes_From_Lift_Byte(LiftByte lift_byte) {
 #define Is_Quoted(cell) \
     (LIFT_BYTE(Ensure_Readable(cell)) >= ONEQUOTE_NONQUASI_4)
 
-INLINE bool Is_Metaform(const Cell* cell) {  // quasiform or quoted
-    LiftByte lift_byte = LIFT_BYTE(Ensure_Readable(cell));
-    return lift_byte >= QUASIFORM_3;
-}
+#define Any_Fundamental(v) \
+    (LIFT_BYTE(Ensure_Readable(ensure(const Value*, (v)))) == NOQUOTE_2)
 
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
@@ -295,7 +293,7 @@ INLINE Value* Stably_Antiformize_Unbound_Fundamental(Need(Value*) v) {
     assert(Any_Isotopic(v));
     assert(LIFT_BYTE(v) == NOQUOTE_2);
     assert(Is_Stable_Antiform_Kind_Byte(KIND_BYTE(v)));
-    if (Is_Bindable(v))
+    if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
         assert(not Cell_Binding(v));
     LIFT_BYTE_RAW(v) = ANTIFORM_1;
     return v;
@@ -305,7 +303,7 @@ INLINE Atom* Unstably_Antiformize_Unbound_Fundamental(Need(Atom*) atom) {
     assert(Any_Isotopic(atom));
     assert(LIFT_BYTE(atom) == NOQUOTE_2);
     assert(not Is_Stable_Antiform_Kind_Byte(KIND_BYTE(atom)));
-    if (Is_Bindable(atom))
+    if (Is_Bindable_Heart(Unchecked_Heart_Of(atom)))
         assert(not Cell_Binding(atom));
     LIFT_BYTE_RAW(atom) = ANTIFORM_1;
     return atom;

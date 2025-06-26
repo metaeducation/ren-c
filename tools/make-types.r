@@ -725,8 +725,8 @@ e-hearts/emit [rebs --[
      *
      * Do not export these values via libRebol, as the numbers can change.
      * Their ordering is for supporting tricks--like being able to quickly
-     * check if a type Is_Bindable().  So when types are added or removed, the
-     * numbers must shuffle around to preserve invariants.
+     * check if a type Is_Bindable_Heart().  So when types are added or
+     * removed, the numbers must shuffle around to preserve invariants.
      *
      * NOTE ABOUT C++11 ENUM TYPING: It is best not to specify an "underlying
      * type" because that prohibits certain optimizations, which the compiler
