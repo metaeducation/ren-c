@@ -1312,7 +1312,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (not transcode->line_head) {
                 assert(FEED_VAPTR(L->feed) or FEED_PACKED(L->feed));
                 assert(not S->start_line_head);
-                S->start_line_head = transcode->line_head = S->begin;
+                S->start_line_head = transcode->line_head = transcode->at;
             }
             break; }
 
@@ -2058,7 +2058,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 // Initialize a state structure for capturing the global state of a transcode.
 //
 void Init_Transcode(
-    TranscodeState* transcode,
+    Init(TranscodeState) transcode,
     Option(const String*) file,
     LineNumber line,
     Option(const Byte*) bp
