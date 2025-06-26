@@ -163,21 +163,21 @@ INLINE bool Is_Bar_Bar(const Atom* v) {
 }
 
 INLINE bool Is_Anti_Word_With_Id(const Value* v, SymId id) {
-    assert(id != 0);
+    assert(id != SYM_0_constexpr);
     if (not Is_Keyword(v))
         return false;
     return id == Cell_Word_Id(v);
 }
 
 INLINE bool Is_Quasi_Word_With_Id(const Value* v, SymId id) {
-    assert(id != 0);
+    assert(id != SYM_0_constexpr);
     if (not Is_Quasi_Word(v))
         return false;
     return id == Cell_Word_Id(v);
 }
 
 INLINE bool Is_Word_With_Id(const Value* v, SymId id) {
-    assert(id != 0);
+    assert(id != SYM_0_constexpr);
     if (not Is_Word(v))
         return false;
     return id == Cell_Word_Id(v);

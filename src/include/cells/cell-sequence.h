@@ -229,7 +229,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
         Option(Heart) mirror = Mirror_Of(a);
         Option(Heart) h = Heart_Of(e);
         if (not mirror or ((unwrap mirror) == (unwrap h))) {
-            MIRROR_BYTE(a) = Heart_Of(e);  // remember what kind it is
+            MIRROR_BYTE(a) = unwrap Heart_Of(e);  // remember what kind it is
             KIND_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;
             return SUCCESS;

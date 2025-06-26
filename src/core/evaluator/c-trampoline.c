@@ -545,7 +545,9 @@ void Startup_Trampoline(void)
 void Shutdown_Trampoline(void)
 {
     assert(TOP_LEVEL == BOTTOM_LEVEL);
+  #if PERFORM_CORRUPTIONS
     assert(Is_Pointer_Corrupt_Debug(BOTTOM_LEVEL->prior));  // corrupt [1]
+  #endif
 
     Drop_Level_Unbalanced(TOP_LEVEL);  // can't do balance check [2]
 

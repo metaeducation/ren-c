@@ -215,7 +215,9 @@
   } while (0)
 
 INLINE Cell* Poison_Cell_Untracked(Cell* c) {
+  #if DEBUG_POISON_UNINITIALIZED_CELLS
     Assert_Cell_Header_Overwritable(c);
+  #endif
     c->header.bits = CELL_MASK_POISON;
     return c;
 }
@@ -258,7 +260,9 @@ INLINE Cell* Force_Poison_Cell_Untracked(Cell* c) {  // for random bits [3]
 //    you can't do the checks for [1].
 
 INLINE Cell* Erase_Cell_Untracked(Cell* c) {
+  #if DEBUG_POISON_UNINITIALIZED_CELLS
     Assert_Cell_Header_Overwritable(c);
+  #endif
     c->header.bits = CELL_MASK_ERASED_0;
     return c;
 }

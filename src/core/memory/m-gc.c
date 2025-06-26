@@ -402,7 +402,9 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
 //
 static void Propagate_All_GC_Marks(void)
 {
+  #if RUNTIME_CHECKS
     assert(not in_mark);
+  #endif
 
     while (Flex_Dynamic_Used(g_gc.mark_stack) != 0) {
         Set_Flex_Used(g_gc.mark_stack, Flex_Dynamic_Used(g_gc.mark_stack) - 1);

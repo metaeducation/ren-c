@@ -843,7 +843,9 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         or STATE == ST_FRAME_FILLER_UNLABELED_EVAL_STEP
     );
 
+  #if PERFORM_CORRUPTIONS
     assert(not Is_Pointer_Corrupt_Debug(param));  // nullptr means toss result
+  #endif
 
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);

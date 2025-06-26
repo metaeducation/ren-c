@@ -1861,7 +1861,7 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case HEART_ENUM(0): //// "INERT" TYPES (EXTENSIBILITY TBD) /////////////////
+} case TYPE_0_constexpr: //// "INERT" TYPES (EXTENSIBILITY TBD) //////////////
   case TYPE_BLOCK:
   case TYPE_BLOB:
   case TYPE_TEXT:

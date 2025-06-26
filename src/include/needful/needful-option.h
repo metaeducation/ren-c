@@ -51,9 +51,24 @@
 // 1. Because we want this to work in plain C, we can't take advantage of a
 //    default construction to a zeroed value.  But we also can't disable the
 //    default constructor, because we want to be able to default construct
-//    structures with members that are Option().  :-(
+//    structures with members that are Option().  :-(  Also, global variables
+//    need to be compatible with the 0-initialization property they'd have
+//    if they weren't marked Option().
 //
-// 2. While the combinatorics may seem excessive with repeating the equality
+// 2. If doing something like `u_cast(Option(SomeEnum), 17)` there has to be
+//    a universal reference to grab onto these constants.  Make the explicit
+//    converting constructor willing to do such conversions use &&.
+//
+// 3. For convenience, an Option(SomeEnum) is allowed to work in switch()
+//    statements without unwrapping it.  Also, wrapper classes which may
+//    be able to convert to uintptr_t are allowed.  Raw pointers are not.
+//
+// 4. In order to accomplish [3] but still allow Option(uintptr_t), you can't
+//    have an `operator uintptr_t()` defined.  But there's no way to SFINAE
+//    away such operators for fundamental types...specialization is the
+//    only way to do it.  :-(
+//
+// 5. While the combinatorics may seem excessive with repeating the equality
 //    and inequality operators, this is the way std::optional does it too.
 //
 #if (! CHECK_OPTIONAL_TYPEMACRO)
@@ -69,24 +84,62 @@
         OptionWrapper (const U& something) : p (something)
           {}
 
+        template <typename U>
+        explicit OptionWrapper(U&& something)  // needed for Byte->enum [2]
+            : p (u_cast(T, std::forward<U>(something)))
+          {}
+
         template <typename X>
         OptionWrapper (const OptionWrapper<X>& other)
           : p (other.p)  // necessary...won't use the (U something) template
           {}
 
-        operator uintptr_t() const  // so it works in switch() statements
-          { return u_cast(uintptr_t, p); }  // remember, may not be a pointer
+        operator uintptr_t() const {  // to work in switch() cases [3]
+            static_assert(
+                std::is_enum<T>::value or std::is_class<T>::value,
+                "non-explicit Option() -> uintptr_t() only for enums/classes"
+            );
+            return u_cast(uintptr_t, p);  // an enum, not a pointer!
+        }
 
-        explicit operator T()  // must be an *explicit* cast
-          { return p; }
+        template<typename U>
+        explicit operator U() const  // *explicit* cast if not using `unwrap`
+          { return u_cast(U, p); }  // remember: p not always a pointer
 
-        explicit operator bool() {
-           // explicit exception in if https://stackoverflow.com/q/39995573/
+        explicit operator bool() const {
+           // explicit exception in `if` https://stackoverflow.com/q/39995573/
            return p ? true : false;
         }
     };
 
-    //=//// LABORIOUS REPEATED OPERATORS [2] //////////////////////////////=//
+    template<>
+    struct OptionWrapper<uintptr_t> {  // for removing uintptr_t operator [4]
+        uintptr_t p;
+
+        OptionWrapper () = default;
+
+        template <typename U>
+        OptionWrapper (const U& something) : p (something)
+          {}
+
+        template <typename U>
+        explicit OptionWrapper(U&& something)
+            : p (u_cast(intptr_t, std::forward<U>(something)))
+          {}
+
+        template <typename X>
+        OptionWrapper (const OptionWrapper<X>& other)
+          : p (other.p)  // necessary...won't use the (U something) template
+          {}
+
+        explicit operator uintptr_t() const
+           { return p; }
+
+        explicit operator bool() const
+          { return p ? true : false; }
+    };
+
+  //=//// LABORIOUS REPEATED OPERATORS [5] ////////////////////////////////=//
 
     template<typename L, typename R>
     bool operator==(const OptionWrapper<L>& left, const OptionWrapper<R>& right)
@@ -112,6 +165,7 @@
     bool operator!=(L left, const OptionWrapper<R>& right)
         { return left != right.p; }
 
+  #if PERFORM_CORRUPTIONS
     template<class P>
     INLINE void Corrupt_Pointer_If_Debug(OptionWrapper<P> &option)
       { Corrupt_Pointer_If_Debug(option.p); }
@@ -120,7 +174,6 @@
     INLINE bool Is_Pointer_Corrupt_Debug(OptionWrapper<P> &option)
       { return Is_Pointer_Corrupt_Debug(option.p); }
 
-  #if (! DEBUG_STATIC_ANALYZING)
     template<typename P>
     struct Corrupter<OptionWrapper<P>> {
       static void corrupt(OptionWrapper<P>& option) {

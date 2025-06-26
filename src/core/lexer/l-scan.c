@@ -997,8 +997,13 @@ static const Byte* Seek_To_End_Of_Tag(const Byte* cp)
 // e.g. where the end point of the token is seen.
 //
 static Error* Error_Syntax(ScanState* S, Token token) {
-    assert(S->begin and not Is_Pointer_Corrupt_Debug(S->begin));
-    assert(S->end and not Is_Pointer_Corrupt_Debug(S->end));
+  #if PERFORM_CORRUPTIONS
+    assert(
+        not Is_Pointer_Corrupt_Debug(S->begin)
+        and not Is_Pointer_Corrupt_Debug(S->end)
+    );
+  #endif
+    assert(S->begin and S->end);
     assert(S->end >= S->begin);  // can get out of sync [1]
 
     DECLARE_ELEMENT (token_name);
@@ -1072,7 +1077,9 @@ static Error* Error_Mismatch(Byte wanted, Byte seen) {
 //
 static LexFlags Prescan_Fingerprint(ScanState* S)
 {
+  #if PERFORM_CORRUPTIONS
     assert(Is_Pointer_Corrupt_Debug(S->end));  // prescan only uses ->begin
+  #endif
 
     const Byte* cp = S->transcode->at;
     LexFlags flags = 0;  // flags for all LEX_SPECIALs seen after S->begin[0]

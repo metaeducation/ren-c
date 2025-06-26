@@ -284,13 +284,11 @@
 // checking that differentiates places that haven't checked if the type is
 // built in or not.
 //
-// 1. The enum value is called TYPE_0, but it's legal to in the preprocessor
-//    define TYPE_0 to add the extra safety of the Option().  This is good
-//    because it helps stop people from using the raw TYPE_0 value without
-//    the protections.  (You can't omit the value 0 in the enum, or that can
-//    cause problems, so it's best to overwrite the unsafe value via a
-//    preprocessor define.)  HEART_ENUM(0) can be used in the rare cases where
-//    you want the raw value and don't want to just say "0".
+// 1. The enum value is called TYPE_0_constexpr, because TYPE_0 adds the extra
+//    safety of the Option().  This is good because it helps stop people from
+//    passing the raw TYPE_0 to functions taking Heart and not Option(Heart).
+//    But in case labels of switch() you can't use a class like Option(), so
+//    TYPE_0_constexpr must be used instead.
 //
 // 2. Disabling comparison of Option(Heart) and Option(Type) with each other
 //    helps avoid the false positives of extension types comparing as equal:
@@ -301,8 +299,11 @@
 //    compare equal if this were allowed.  Thankfully the C++ build lets
 //    us catch this case at compile time.
 //
-#define TYPE_0 /* #define w/same name as enum TYPE_0 sneaky but legal [1] */ \
-    u_cast(Option(Heart), u_cast(HeartEnum, 0))
+
+#define TYPE_0_constexpr  HEART_ENUM(0_internal)
+
+#define TYPE_0 /* add safety of the Option() [1] */ \
+    u_cast(Option(Heart), TYPE_0_constexpr)
 
 #if CHECK_OPTIONAL_TYPEMACRO  // make safe for extension types [2]
     bool operator==(Option(Type)& a, Option(Type)& b) = delete;

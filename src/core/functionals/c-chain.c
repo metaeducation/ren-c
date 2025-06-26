@@ -213,7 +213,10 @@ Bounce Cascader_Executor(Level* const L)
 
     Drop_Level(SUBLEVEL);
 
-    assert(L->varlist == nullptr and Is_Pointer_Corrupt_Debug(L->rootvar));
+    assert(L->varlist == nullptr);
+  #if PERFORM_CORRUPTIONS
+    assert(Is_Pointer_Corrupt_Debug(L->rootvar));
+  #endif
 
     return OUT;
 }}

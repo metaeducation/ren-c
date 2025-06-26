@@ -734,7 +734,7 @@ e-hearts/emit [rebs --[
      */
     #if (! DEBUG_EXTRA_HEART_CHECKS)
         typedef enum {
-            TYPE_0 = 0,  /* reserved */
+            TYPE_0_internal = 0,  /* use TYPE_0 or TYPE_0_constexpr */
             $(Types),
         } TypeEnum;
 
@@ -761,7 +761,7 @@ e-hearts/emit [rebs --[
       #else
         enum HeartEnum {
       #endif
-            ENUM_TYPE_0 = 0,  /* reserved falsey case for Option(Heart) */
+            ENUM_TYPE_0_internal = 0,  /* use TYPE_0 or TYPE_0_constexpr */
             $(Plains),
         };
 
@@ -770,10 +770,11 @@ e-hearts/emit [rebs --[
       #else
         enum TypeEnum {
       #endif
-            ENUM_PSEUDO_0 = 0,  /* reserved falsey case for Option(Type) */
             /* PSEUDO_XXX placeholders for values in range of heart byte */
+            ENUM_PSEUDO_0_internal = 0,
             $[Pseudotype-Hearts],
-            /* TYPE_XXX pseudotypes for vlaues out of range of heart byte */
+
+            /* TYPE_XXX pseudotypes for values out of range of heart byte */
             $(Pseudotypes),
         };
 

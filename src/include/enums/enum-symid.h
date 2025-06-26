@@ -44,7 +44,7 @@ typedef enum SymIdEnum SymId;
 typedef uint_fast16_t SymId16;  // 16 bits for SymId in symbol header
 
 #define SYM_0 \
-    u_cast(Option(SymId), u_cast(SymId, 0))
+    u_cast(Option(SymId), SYM_0_constexpr)
 
 #if CHECK_OPTIONAL_TYPEMACRO
     bool operator==(Option(SymId)& a, Option(SymId)& b) = delete;

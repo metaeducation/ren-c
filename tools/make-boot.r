@@ -734,7 +734,7 @@ e-symids/emit [syms-cscape --[
      * by preventing such comparisons.
      */
     enum SymIdEnum {
-        /* SYM_0 defined as Option(SymId) for safety, see definition */
+        SYM_0_constexpr,  /* SYM_0 defined as Option(SymId) for safety */
 
         $(Sym-Enum-Items),
     };

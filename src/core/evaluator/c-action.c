@@ -248,7 +248,9 @@ Bounce Action_Executor(Level* L)
 
   fulfill: {  ////////////////////////////////////////////////////////////////
 
+  #if PERFORM_CORRUPTIONS
     assert(not Is_Pointer_Corrupt_Debug(ORIGINAL));  // set by Begin_Action()
+  #endif
 
     assert(TOP_INDEX >= L->baseline.stack_base);  // paths push refinements
 

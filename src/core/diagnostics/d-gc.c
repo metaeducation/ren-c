@@ -96,7 +96,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     // still can speed things up to go in order.
     //
     switch (heart) {
-      case HEART_ENUM(0):
+      case TYPE_0_constexpr:
         if (Is_Cell_Erased(v)) {  // legal if Mark_Maybe_Erased() was called
             NOOP;
         }

@@ -118,7 +118,7 @@ uint32_t Hash_Value(const Value* cell)
     uint32_t hash;
 
     switch (heart) {
-      case HEART_ENUM(0):
+      case TYPE_0_constexpr:
           panic ("Cannot hash 0-custom datatype");
 
       case TYPE_COMMA:

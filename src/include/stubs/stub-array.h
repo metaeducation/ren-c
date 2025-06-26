@@ -120,7 +120,9 @@ INLINE Option(const String*) Link_Filename(const Source* source) {
         assert(Stub_Flavor(filename) == FLAVOR_NONSYMBOL);
         return filename;
     }
+  #if PERFORM_CORRUPTIONS
     assert(Is_Pointer_Corrupt_Debug(source->link.base));
+  #endif
     return nullptr;
 }
 

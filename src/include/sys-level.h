@@ -446,7 +446,9 @@ INLINE void Free_Level_Internal(Level* L) {
 
     Corrupt_Pointer_If_Debug(L->varlist);
 
+  #if PERFORM_CORRUPTIONS
     assert(Is_Pointer_Corrupt_Debug(L->alloc_value_list));
+  #endif
 
   #if TRAMPOLINE_COUNTS_TICKS
     L->tick = TICK;
