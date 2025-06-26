@@ -259,7 +259,7 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
 INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
     Feed* feed
 ){
-    const Flex* f = c_cast(Flex*, feed->p);
+    Flex* f = m_cast(Flex*, c_cast(Flex*, feed->p));
 
     switch (Stub_Flavor(f)) {
       case FLAVOR_INSTRUCTION_SPLICE: {

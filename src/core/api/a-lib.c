@@ -2488,11 +2488,11 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
     if (p == nullptr)
         return c_cast(RebolBaseInternal*, g_quasi_null);
 
-    const Stub* stub;
+    Stub* stub;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
-        stub = c_cast(Stub*, p);
+        stub = m_cast(Stub*, c_cast(Stub*, p));
         if (Not_Flavor_Flag(API, stub, RELEASE))
             panic ("Can't quote instructions (besides rebR())");
         break; }

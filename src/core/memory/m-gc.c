@@ -62,6 +62,9 @@
 
 #include "sys-core.h"
 
+#undef panic
+#define panic  STATIC_FAIL(dont_use_panic_in_this_file_use_crash_or_assert)
+
 #include "sys-int-funcs.h"
 
 #include "needful/cast-hooks-off.h"  // want cast() macros to be fast here
@@ -180,7 +183,7 @@ static void Queue_Mark_Base_Deep(Base** npp) {  // ** for canonizing
         return;  // may not be finished marking yet, but has been queued
 
     if (base_byte & BASE_BYTEMASK_0x08_CELL) {  // e.g. a pairing
-        const Pairing* p = d_cast(Pairing*, *npp);
+        Pairing* p = cast(Pairing*, *npp);
         if (Is_Base_Managed(p))
             Queue_Mark_Pairing_Deep(p);
         else {
@@ -190,7 +193,7 @@ static void Queue_Mark_Base_Deep(Base** npp) {  // ** for canonizing
         return;
     }
 
-    const Stub* s = d_cast(Stub*, *npp);
+    Stub* s = cast(Stub*, *npp);  // (define before needed for debug watching)
 
     if (base_byte == DIMINISHED_NON_CANON_BYTE) {
         *npp = &PG_Inaccessible_Stub;  // adjust to the global diminished
@@ -294,7 +297,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // !!! KeyLists may not be the only category that are just a straight
         // list of base pointers.
         //
-        const KeyList* keylist = d_cast(const KeyList*, s);
+        const KeyList* keylist = c_cast(KeyList*, s);
         const Key* tail = Flex_Tail(Key, keylist);
         const Key* key = Flex_Head(Key, keylist);
         for (; key != tail; ++key) {
@@ -309,7 +312,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         }
     }
     else if (Stub_Holds_Cells(s)) {
-        Array* a = d_cast(Array*, s);
+        Array* a = m_cast(Array*, c_cast(Array*, s));
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
 
@@ -317,7 +320,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // Flex Flavor, not an extension-usable flag (due to flag scarcity).
         //
         if (Is_Stub_Varlist(a)) {  // bonus is keylist (if not module varlist)
-            assert(Is_Stub_Keylist(d_cast(Stub*, BONUS_VARLIST_KEYLIST(a))));
+            assert(Is_Stub_Keylist(cast(Stub*, BONUS_VARLIST_KEYLIST(a))));
             Queue_Mark_Base_Deep(&a->content.dynamic.bonus.base);
         }
 

@@ -694,7 +694,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
     sigil = Sigil_Of(item);
     if (sigil) {
-        if (Is_Antiform(v) or Sigil_Of(u_cast(Element*, v)) != sigil) {
+        if (Is_Antiform(v) or Sigil_Of(c_cast(Element*, v)) != sigil) {
             sigil = SIGIL_0;  // don't unsigilize at test_failed
             goto test_failed;
         }

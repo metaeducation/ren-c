@@ -278,7 +278,7 @@ INLINE Value* Slot_Hack(const_if_c Slot* slot) {
 #if CPLUSPLUS_11
     INLINE const Value* Slot_Hack(const Slot* slot) {
         assert(LIFT_BYTE(slot) != DUAL_0);
-        return u_cast(Value*, slot);
+        return u_c_cast(Value*, slot);
     }
 #endif
 

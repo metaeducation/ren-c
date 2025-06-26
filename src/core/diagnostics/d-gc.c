@@ -32,7 +32,8 @@
 
 #include "sys-core.h"
 
-#undef panic  /* cannot panic in this file, use assert() and crash() instead */
+#undef panic
+#define panic  STATIC_FAIL(dont_use_panic_in_this_file_use_crash_or_assert)
 
 #if RUNTIME_CHECKS
 
@@ -327,7 +328,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         if (LIFT_BYTE(v) == ANTIFORM_1) {
             if (heart == TYPE_FENCE) {
-                const Value* value = d_cast(const Value*, v);
+                const Value* value = c_cast(Value*, v);
                 assert(
                     Cell_Datatype_Type(value)
                     == Cell_Datatype_Type_Slow_Debug(value)

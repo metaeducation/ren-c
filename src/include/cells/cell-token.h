@@ -115,7 +115,7 @@ INLINE bool IS_CHAR_CELL(const Value* c) {
 INLINE bool IS_CHAR(const Value* v) {
     if (LIFT_BYTE(v) != NOQUOTE_2)
         return false;
-    return not Sigil_Of(u_cast(Element*, v)) and IS_CHAR_CELL(v);
+    return not Sigil_Of(c_cast(Element*, v)) and IS_CHAR_CELL(v);
 }
 
 INLINE Codepoint Cell_Codepoint(const Value* c) {  // must pass IS_CHAR_CELL()

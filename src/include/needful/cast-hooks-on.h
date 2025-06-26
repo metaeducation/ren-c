@@ -3,12 +3,9 @@
 #endif
 
 #if CPLUSPLUS_11
-    #undef d_cast
-    #define d_cast  Validated_Downcast
-
     #undef h_cast
-    #define h_cast  Validated_Cast
+    #define h_cast  Hookable_Cast
 
     #undef c_cast
-    #define c_cast  Validated_Const_Preserving_Cast
+    #define c_cast  Hookable_Const_Preserving_Cast
 #endif

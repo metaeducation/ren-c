@@ -45,7 +45,7 @@
 //
 // SAFETY LEVEL
 //    * Hookable cast:            h_cast()    // safe default, runs hooks
-//    * Unhookable cast:          u_cast()    // use with fresh malloc()s
+//    * Unhooked/unchecked cast:  u_cast()    // use with fresh malloc()s
 //                                               // ...or critical debug paths
 //                                               // ...!!! or va_lists !!! [B]
 //
@@ -60,8 +60,6 @@
 //    * Non-pointer to pointer:    p_cast()    // intptr_t => T*
 //    * Non-integral to integral:  i_cast()    // T* => intptr_t
 //    * Function to function:      f_cast()    // ret1(*)(...) => ret2(*)(...)
-//    * Downcasting                d_cast()    // Base* => Derived*
-//    * Unhookable downcasting:  u_d_cast()    // d_cast() w/no h_cast() hooks
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
@@ -122,7 +120,7 @@
 //
 // F. By default, most of the cast() are defined to use the runtime validation
 //    hooks.  However, it's possible to easily turn them off...so that a
-//    macro like d_cast() would not run validation.  Simply do an #include:
+//    macro like c_cast() would not run validation.  Simply do an #include:
 //
 //       #include "needful/cast-hooks-off.h"
 //
@@ -577,49 +575,6 @@
 #endif
 
 
-//=//// d_cast(): DOCUMENT DOWNCASTS //////////////////////////////////////=//
-//
-// This cast documents specifically that you think you are performing a
-// downcast, and it ensures that you are--e.g. that it would be legal to just
-// do an assignment of the To* type to the From* type, but you are going the
-// other direction.  This helps you to know that the types you are casting
-// have some relationship.
-//
-// (Since Needful is a library targeting C codebases, the idea of downcasting
-// would seem to only be applicable to void*, because no other datatypes have
-// any "inheritance" relationship.  But if you've augmented your C codebase
-// to use inheritance when built as C++, it may be applicable.)
-//
-#if NO_CPLUSPLUS_11
-    #define d_cast(T,v) \
-        ((T)(v))  // in C, just another alias for parentheses cast
-
-    #define u_d_cast(T,v) \
-        ((T)(v))  // in C, just another alias for parentheses cast
-#else
-    template<typename To, typename From>
-    struct DowncastHelper {
-        static_assert(
-            std::is_pointer<To>::value, "d_cast() target must be pointer"
-        );
-        static_assert(
-            std::is_convertible<To, From>::value,
-            "d_cast() target must be convertible to source pointer type"
-        );
-    };
-
-    #define Hookable_Downcast(T,v) /* outer parens [C] */ \
-        (DowncastHelper<T, rr_decltype(v)>{}, cast(T, (v)))
-
-    #define Unhookable_Downcast(T,v) /* outer parens [C] */ \
-        (DowncastHelper<T, rr_decltype(v)>{}, u_cast(T, (v)))
-
-    #define d_cast  Hookable_Downcast  // can override [F]
-
-    #define u_d_cast  Unhookable_Downcast
-#endif
-
-
 //=//// w_cast(): WRITABILITY CAST FOR POINTER WRAPPERS ///////////////////=//
 //
 // m_cast() is optimized to not have any cost in debug builds, by not relying
@@ -881,7 +836,7 @@
 #if defined(__GNUC__) || defined(__clang__)
     // GCC and Clang are non-conforming: user-defined conversions in deduction
     #define strict_u_cast(T,v)    (v)
-    #define strict_v_cast(T,v)    (v)
+    #define strict_h_cast(T,v)    (v)
     #define strict_c_cast(T,v)    (v)
     #define strict_u_c_cast(T,v)  (v)
 
@@ -889,7 +844,7 @@
 #else
     // Standard-conforming (MSVC, Intel, etc.): cast needed
     #define strict_u_cast(T,v)    u_cast(T,v)
-    #define strict_v_cast(T,v)    h_cast(T,v)
+    #define strict_h_cast(T,v)    h_cast(T,v)
     #define strict_c_cast(T,v)    c_cast(T,v)
     #define strict_u_c_cast(T,v)  u_c_cast(T,v)
 
@@ -897,6 +852,7 @@
 #endif
 
 #define strict_m_cast(T,v)  STATIC_FAIL(just_use_m_cast)
+#define strict_w_cast(T,v)  STATIC_FAIL(just_use_w_cast)
 #define strict_f_cast(T,v)  STATIC_FAIL(just_use_f_cast)
 #define strict_i_cast(T,v)  STATIC_FAIL(just_use_i_cast)
 #define strict_p_cast(T,v)  STATIC_FAIL(just_use_p_cast)
