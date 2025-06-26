@@ -410,9 +410,10 @@ void Shutdown_Pools(void)
     g_mem.objects_made = 0;
   #endif
 
-  #if RUNTIME_CHECKS
     if (g_mem.usage != 0) {
-        //
+      #if NO_RUNTIME_CHECKS
+        crash ("g_mem.usage != 0 on exit, please report this memory leak");
+      #else
         // If using valgrind or address sanitizer, they can present more
         // information about leaks than just how much was leaked.  So don't
         // assert...exit normally so they go through their process of
@@ -430,8 +431,8 @@ void Shutdown_Pools(void)
             "Run under Valgrind with --leak-check=full --track-origins=yes\n"
             "to find out why this is happening.\n"
         );
+      #endif
     }
-  #endif
 }}
 
 

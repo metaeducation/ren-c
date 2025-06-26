@@ -1123,7 +1123,7 @@ DECLARE_NATIVE(SHUTDOWN_P)
 
     int result = uv_loop_close(uv_default_loop());  // else valgrind leak [2]
     if (result != 0)
-        panic (rebError_UV(result));
+        return PANIC(rebError_UV(result));
 
     return "~";
 }

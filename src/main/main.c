@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -23,14 +23,6 @@
 // This contains the main() routine, which uses the libRebol API to start up
 // an interactive console system for environments that can compile C.
 //
-// On POSIX systems it uses <termios.h> to implement line editing:
-//
-// http://pubs.opengroup.org/onlinepubs/7908799/xbd/termios.html
-//
-// On Windows it uses the Console API:
-//
-// https://msdn.microsoft.com/en-us/library/ms682087.aspx
-//
 // Very little work is done in C.  For instance, the command line arguments
 // are processed using PARSE by Rebol code that is embedded into the
 // executable as compressed bytes.  And the majority of the console behavior
@@ -43,6 +35,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "assert-fix.h"
 
 #if TO_WINDOWS
@@ -54,8 +49,11 @@
     #include <shellapi.h>  // for CommandLineToArgvW()
 #endif
 
-#include <stdint.h>
-#include <stdbool.h>
+#define DUMP_ADDRESS_SANITIZER_REACHABILITY  0
+
+#if DUMP_ADDRESS_SANITIZER_REACHABILITY
+    #include <sanitizer/common_interface_defs.h>  // for printing reachable
+#endif
 
 // This file should only use the external API.  However, it can be helpful in
 // debug situations to have access to PROBE() and other internal features.
@@ -186,25 +184,30 @@
 //
 int main(int argc, char *argv_ansi[])
 {
-    // Note: By default, Ctrl-C is not hooked or handled.  This is done by
-    // the console extension (%extensions/console).  Halting should not be
-    // possible while the mezzanine is loading.
+    int exit_status;
+
+  startup_the_interpreter: {
+
+  // Note: By default, Ctrl-C is not hooked or handled.  This is done by the
+  // console extension (%extensions/console).  Halting should not be possible
+  // while the mezzanine is loading, so Ctrl-C should just exit to the OS.
 
     rebStartup();
 
-    // With interpreter startup done, we want to turn the platform-dependent
-    // argument strings into a block of Rebol strings as soon as possible.
-    // That way the command line argument processing can be taken care of by
-    // PARSE in the MAIN-STARTUP user function, instead of C code!
-    //
+} convert_argv_to_cells: {
+
+  // With interpreter startup done, we want to turn the platform-dependent
+  // argument strings into a block of Rebol strings as soon as possible.
+  // That way the command line argument processing can be taken care of by
+  // PARSE in the MAIN-STARTUP user function, instead of C code!
+  //
+  // 1. Were we using WinMain we'd be getting our arguments in Unicode, but
+  //    since we're using an ordinary main() we do not.  But Windows APIs
+  //    let us slip out and pick up the arguments in Unicode form (UTF-16).
+
     Value* argv_block = rebValue("[]");
 
-  #if TO_WINDOWS
-    //
-    // Were we using WinMain we'd be getting our arguments in Unicode, but
-    // since we're using an ordinary main() we do not.  However, this call
-    // lets us slip out and pick up the arguments in Unicode form (UTF-16).
-    //
+  #if TO_WINDOWS  // use trick to get main() args in Unicode [1]
     WCHAR **argv_utf16 = CommandLineToArgvW(GetCommandLineW(), &argc);
     UNUSED(argv_ansi);
 
@@ -214,56 +217,64 @@ int main(int argc, char *argv_ansi[])
     for (i = 0; i != argc; ++i) {
         rebElide("append", argv_block, rebR(rebTextWide(argv_utf16[i])));
     }
-  #else
-    // Just take the ANSI C "char*" args...which should ideally be in UTF-8.
-    //
+  #else  // use ANSI-C Unicode args as char*, hopefully in UTF-8 [2]
     int i = 0;
     for (; i != argc; ++i) {
         rebElide("append", argv_block, rebT(argv_ansi[i]));
     }
   #endif
 
-    // Unzip the Gzip'd compressed startup code (embedded as bytes in a C
-    // global variable) to make a BLOB!.  GUNZIP accepts a HANDLE! as input,
-    // so pass it in here.
-    //
+ extract_startup_code: {
+
+  // The embedded startup data contains the source code for several basic
+  // modules that are useful to have built in:
+  //
+  //   * Compressing and Decompressing .ZIP files
+  //   * Encapping and un-Encapping data into an R3 Executable
+  //   * Support for HTTP and TLS/HTTPS Protocols (needs Crypt extension)
+  //   * Experimental code not yet written as natives
+  //
+  // The string of code is stylized to look like:
+  //
+  //     import module [Name: Zip ...] [...]
+  //     import module [Name: Encap ...] [...]
+  //     ...
+  //     import module [Name: Main-Startup ...] [...]
+  //     main-startup/
+  //
+  // There are no top-level SET-WORD!s, and it doesn't leak any declarations
+  // into LIB.  The last value being MAIN-STARTUP/ means the evaluation will
+  // synthesize a usermode function that is ready to process the command line
+  // arguments.
+  //
+  // 1. The startup code was compressed with gzip, and embedded as bytes in
+  //    a C global variable.  Use the GUNZIP function to make a BLOB! of bytes
+  //    from that static data.  (GUNZIP accepts a HANDLE! as input, so pass it
+  //    in here).
+  //
+  // 2. rebHandle() takes a mutable void*.  This is a common C problem, of
+  //    having to tunnel using either a const pointer or not.  The API should
+  //    probably offer const and non-const HANDLE! constructors, and have
+  //    runtime checks disallowing mutable extractions of const pointers.
+
     Value* startup_bin = rebValue(
-        "gunzip", rebR(rebHandle(
-            m_cast(unsigned char*, &Main_Startup_Code[0]),
+        "gunzip", rebR(rebHandle(  // uncompress [1]
+            m_cast(unsigned char*, &Main_Startup_Code[0]),  // mutable [2]
             MAIN_STARTUP_SIZE,
             nullptr
         ))
     );
 
-    // The embedded startup data contains the source code for several basic
-    // modules that are useful to have built in:
-    //
-    //   * Compressing and Decompressing .ZIP files
-    //   * Encapping and un-Encapping data into an R3 Executable
-    //   * Support for HTTP and TLS/HTTPS Protocols (needs Crypt extension)
-    //   * Experimental code not yet written as natives
-    //
-    // The string of code is stylized to look like:
-    //
-    //     import module [Name: Zip ...] [...]
-    //     import module [Name: Encap ...] [...]
-    //     ...
-    //     import module [Name: Main-Startup ...] [...]
-    //     main-startup/
-    //
-    // There are no top-level SET-WORD!s, and it doesn't leak any declarations
-    // into LIB.  The return of the MAIN-STARTUP function as the last item
-    // means we get back a usermode function that is ready to process the
-    // command line arguments.
-    //
     Value* main_startup = rebValue(
         "ensure action! eval inside lib transcode", rebR(startup_bin)
     );
 
-    // This runs the MAIN-STARTUP, which returns *requests* to execute
-    // arbitrary code by way of its return results.  The ENTRAP is thus here
-    // to intercept bugs *in MAIN-STARTUP itself*.
-    //
+  run_startup_code_to_get_its_evaluation_requests: {
+
+  // This runs MAIN-STARTUP, which returns a *request* to execute arbitrary
+  // code (such as `--do` code on the command line) by way of its return
+  // results.  ENRESCUE is thus to intercept bugs *in MAIN-STARTUP itself*.
+
     Value* enrescued = rebValue(
         "sys.util/enrescue [",  // MAIN-STARTUP takes one argument (argv[])
             rebRUN(main_startup), rebR(argv_block),
@@ -277,20 +288,63 @@ int main(int argc, char *argv_ansi[])
     Value* code = rebValue("unlift @", enrescued);  // non-errors are ^META
     rebRelease(enrescued);
 
-    // !!! For the moment, the CONSOLE extension does all the work of running
-    // usermode code or interpreting exit codes.  This requires significant
-    // logic which is reused by the debugger, which ranges from the managing
-    // of Ctrl-C enablement and disablement (and how that affects the ability
-    // to set unix flags for unblocking file-I/O) to protecting against other
-    // kinds of errors.  Hence there is a /PROVOKE refinement to CONSOLE
-    // which feeds it an instruction, as if the console gave it to itself.
+  delegate_evals_to_console_may_start_interactive_session: {
+
+  // If you pass any scripts or code on the command line, such as:
+  //
+  //    $ r3 --do "cycle [print -[infinite loop...]-]"
+  //
+  // There needs to be handling of Ctrl-C, hooking it at the right times to
+  // queue an interruption (and how that affects the ability to set unix flags
+  // for unblocking file-I/O) to protecting against other kinds of errors.
+  //
+  // This is sensitive platform-specific code, which is already implemented in
+  // the CONSOLE extension.  So even if you aren't invoking an interactive
+  // session, we pass the usermode requests to the console via the :PROVOKE
+  // refinement.  This feeds it an instruction, as if the user had entered
+  // it directly at the prompt.
 
     Value* result = rebValue("console:provoke", rebR(code));
 
-    int exit_status = rebUnboxInteger(rebR(result));
+    exit_status = rebUnboxInteger(rebR(result));
 
-    const bool clean = false;  // process exiting, not necessary
-    rebShutdown(clean);  // Note: checked build runs a clean shutdown anyway
+}}}} shutdown_the_interpreter: {
+
+  // Since we are just exiting to the OS here, we typically don't need to do
+  // a "clean" shutdown of the interpreter.  This only runs semantically
+  // important functions (like closing open files to flush writes) and does
+  // not do things like free() all malloc()s...since the OS takes care of
+  // that automatically.
+  //
+  // (Note: the RUNTIME_CHECKS build runs a clean shutdown regardless.)
+
+    const bool clean = (DUMP_ADDRESS_SANITIZER_REACHABILITY == 1);
+    rebShutdown(clean);
+
+} dump_address_sanitizer_reachability_if_requested: {
+
+  // Unlike Valgrind, Address Sanitizer does not default to reporting all
+  // pointers that were malloc()'d but not free()'d.  If the variable is
+  // reachable from a global variable on shutdown, it's considered "ok":
+  //
+  //   https://stackoverflow.com/q/55510739/addresssanitizer-global-variable
+  //
+  // If you want a report that's like what you'd get from Valgrind "memcheck"
+  // you actually have to call a function in the address sanitizer API in
+  // order to do it.  However, known system functions on Linux "leak" in
+  // this fashion, so it will have some false positives.
+  //
+  // The false positives cannot be filtered by LSAN_OPTIONS="suppressions=..."
+  // if they are dumped using this function.  So if you decide to use this
+  // you'll have to manually inspect the output for any false positives.
+
+  #if DUMP_ADDRESS_SANITIZER_REACHABILITY
+    size_t top_percent = 100;
+    size_t max_number_of_contexts = 20;
+    __sanitizer_print_memory_profile(top_percent, max_number_of_contexts);
+  #endif
+
+} finished: {
 
     return exit_status;  // http://stackoverflow.com/q/1101957/
-}
+}}

@@ -20,6 +20,15 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// On POSIX systems it uses <termios.h> to implement line editing:
+//
+//   http://pubs.opengroup.org/onlinepubs/7908799/xbd/termios.html
+//
+// On Windows it uses the Console API:
+//
+//   https://msdn.microsoft.com/en-us/library/ms682087.aspx
+//
+
 
 #include "reb-config.h"
 
